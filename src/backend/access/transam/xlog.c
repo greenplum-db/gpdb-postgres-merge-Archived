@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.325 2008/12/24 20:41:29 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.407 2010/04/29 21:49:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -10469,6 +10469,12 @@ do_pg_start_backup(const char *backupidstr, bool fast, char **labelfile)
 				 errmsg("backup label too long (max %d bytes)",
 						MAXPGPATH)));
 
+	if (!XLogIsNeeded())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("WAL level not sufficient for making an online backup"),
+				 errhint("wal_level must be set to \"archive\" or \"hot_standby\" at server start.")));
+
 	/*
 	 * Mark backup active in shared memory.  We must do full-page WAL writes
 	 * during an on-line backup even if not doing so at other times, because
@@ -10738,11 +10744,11 @@ do_pg_stop_backup(char *labelfile)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 		 (errmsg("must be superuser or replication role to run a backup"))));
 
-	if (!XLogArchivingActive())
+	if (!XLogIsNeeded())
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("WAL archiving is not active"),
-				 errhint("archive_mode must be enabled at server start.")));
+				 errmsg("WAL level not sufficient for making an online backup"),
+				 errhint("wal_level must be set to \"archive\" or \"hot_standby\" at server start.")));
 
 	/*
 	 * OK to update backup counters and forcePageWrites
@@ -10906,15 +10912,25 @@ do_pg_stop_backup(char *labelfile)
 	CleanupBackupHistory();
 
 	/*
-	 * Wait until both the last WAL file filled during backup and the history
-	 * file have been archived.  We assume that the alphabetic sorting
-	 * property of the WAL files ensures any earlier WAL files are safely
-	 * archived as well.
+	 * If archiving is enabled, wait for all the required WAL files to be
+	 * archived before returning. If archiving isn't enabled, the required
+	 * WAL needs to be transported via streaming replication (hopefully
+	 * with wal_keep_segments set high enough), or some more exotic
+	 * mechanism like polling and copying files from pg_xlog with script.
+	 * We have no knowledge of those mechanisms, so it's up to the user to
+	 * ensure that he gets all the required WAL.
+	 *
+	 * We wait until both the last WAL file filled during backup and the
+	 * history file have been archived, and assume that the alphabetic
+	 * sorting property of the WAL files ensures any earlier WAL files are
+	 * safely archived as well.
 	 *
 	 * We wait forever, since archive_command is supposed to work and
 	 * we assume the admin wanted his backup to work completely. If you
 	 * don't wish to wait, you can set statement_timeout.
 	 */
+	if (XLogArchivingActive())
+	{
 	XLByteToPrevSeg(stoppoint, _logId, _logSeg);
 	XLogFileName(lastxlogfilename, ThisTimeLineID, _logId, _logSeg);
 
@@ -10940,6 +10956,10 @@ do_pg_stop_backup(char *labelfile)
 							waits)));
 		}
 	}
+	}
+	else
+		ereport(NOTICE,
+				(errmsg("WAL archiving is not enabled; you must ensure that all required WAL segments are copied through other means to complete the backup")));
 
 	/*
 	 * We're done.  As a convenience, return the ending WAL location.
