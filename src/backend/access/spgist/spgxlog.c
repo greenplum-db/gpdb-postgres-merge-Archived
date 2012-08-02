@@ -16,7 +16,7 @@
 
 #include "access/spgist_private.h"
 #include "access/xlogutils.h"
-#include "storage/bufmgr.h"
+#include "storage/standby.h"
 #include "utils/memutils.h"
 
 
@@ -1044,8 +1044,9 @@ spg_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
 			break;
 		case XLOG_SPGIST_VACUUM_REDIRECT:
 			out_target(buf, ((spgxlogVacuumRedirect *) rec)->node);
-			appendStringInfo(buf, "vacuum redirect tuples on page %u",
-							 ((spgxlogVacuumRedirect *) rec)->blkno);
+			appendStringInfo(buf, "vacuum redirect tuples on page %u, newest XID %u",
+							 ((spgxlogVacuumRedirect *) rec)->blkno,
+							 ((spgxlogVacuumRedirect *) rec)->newestRedirectXid);
 			break;
 		default:
 			appendStringInfo(buf, "unknown spgist op code %u", info);

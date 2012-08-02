@@ -24,7 +24,6 @@
 #include "storage/bufmgr.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
-#include "storage/procarray.h"
 #include "utils/snapmgr.h"
 
 
@@ -49,7 +48,6 @@ typedef struct spgBulkDeleteState
 	SpGistState spgstate;		/* for SPGiST operations that need one */
 	spgVacPendingItem *pendingList;		/* TIDs we need to (re)visit */
 	TransactionId myXmin;		/* for detecting newly-added redirects */
-	TransactionId OldestXmin;	/* for deciding a redirect is obsolete */
 	BlockNumber lastFilledBlock;	/* last non-deletable block */
 } spgBulkDeleteState;
 
@@ -489,8 +487,7 @@ vacuumLeafRoot(spgBulkDeleteState *bds, Relation index, Buffer buffer)
  * Unlike the routines above, this works on both leaf and inner pages.
  */
 static void
-vacuumRedirectAndPlaceholder(Relation index, Buffer buffer,
-							 TransactionId OldestXmin)
+vacuumRedirectAndPlaceholder(Relation index, Buffer buffer)
 {
 	Page		page = BufferGetPage(buffer);
 	SpGistPageOpaque opaque = SpGistPageGetOpaque(page);
@@ -507,6 +504,7 @@ vacuumRedirectAndPlaceholder(Relation index, Buffer buffer,
 	xlrec.node = index->rd_node;
 	xlrec.blkno = BufferGetBlockNumber(buffer);
 	xlrec.nToPlaceholder = 0;
+	xlrec.newestRedirectXid = InvalidTransactionId;
 
 	START_CRIT_SECTION();
 
@@ -524,12 +522,17 @@ vacuumRedirectAndPlaceholder(Relation index, Buffer buffer,
 		dt = (SpGistDeadTuple) PageGetItem(page, PageGetItemId(page, i));
 
 		if (dt->tupstate == SPGIST_REDIRECT &&
-			TransactionIdPrecedes(dt->xid, OldestXmin))
+			TransactionIdPrecedes(dt->xid, RecentGlobalXmin))
 		{
 			dt->tupstate = SPGIST_PLACEHOLDER;
 			Assert(opaque->nRedirection > 0);
 			opaque->nRedirection--;
 			opaque->nPlaceholder++;
+
+			/* remember newest XID among the removed redirects */
+			if (!TransactionIdIsValid(xlrec.newestRedirectXid) ||
+				TransactionIdPrecedes(xlrec.newestRedirectXid, dt->xid))
+				xlrec.newestRedirectXid = dt->xid;
 
 			ItemPointerSetInvalid(&dt->pointer);
 
@@ -637,13 +640,13 @@ spgvacuumpage(spgBulkDeleteState *bds, BlockNumber blkno)
 		else
 		{
 			vacuumLeafPage(bds, index, buffer, false);
-			vacuumRedirectAndPlaceholder(index, buffer, bds->OldestXmin);
+			vacuumRedirectAndPlaceholder(index, buffer);
 		}
 	}
 	else
 	{
 		/* inner page */
-		vacuumRedirectAndPlaceholder(index, buffer, bds->OldestXmin);
+		vacuumRedirectAndPlaceholder(index, buffer);
 	}
 
 	/*
@@ -720,7 +723,7 @@ spgprocesspending(spgBulkDeleteState *bds)
 			/* deal with any deletable tuples */
 			vacuumLeafPage(bds, index, buffer, true);
 			/* might as well do this while we are here */
-			vacuumRedirectAndPlaceholder(index, buffer, bds->OldestXmin);
+			vacuumRedirectAndPlaceholder(index, buffer);
 
 			SpGistSetLastUsedPage(index, buffer);
 
@@ -803,7 +806,6 @@ spgvacuumscan(spgBulkDeleteState *bds)
 	initSpGistState(&bds->spgstate, index);
 	bds->pendingList = NULL;
 	bds->myXmin = GetActiveSnapshot()->xmin;
-	bds->OldestXmin = GetOldestXmin(true, false);
 	bds->lastFilledBlock = SPGIST_LAST_FIXED_BLKNO;
 
 	/*
