@@ -1163,6 +1163,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	CachedPlan *cplan;
 	List	   *stmt_list;
 	char	   *query_string;
+	Snapshot	snapshot;
 	MemoryContext oldcontext;
 	Portal		portal;
 
@@ -1311,6 +1312,15 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 		}
 	}
 
+	/* Set up the snapshot to use. */
+	if (read_only)
+		snapshot = GetActiveSnapshot();
+	else
+	{
+		CommandCounterIncrement();
+		snapshot = GetTransactionSnapshot();
+	}
+
 	/*
 	 * If the plan has parameters, copy them into the portal.  Note that this
 	 * must be done after revalidating the plan, because in dynamic parameter
@@ -1326,13 +1336,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	/*
 	 * Start portal execution.
 	 */
-	if (read_only)
-		PortalStart(portal, paramLI, 0, true, NULL);
-	else
-	{
-		CommandCounterIncrement();
-		PortalStart(portal, paramLI, 0, false, NULL);
-	}
+	PortalStart(portal, paramLI, 0, snapshot, NULL);
 
 	Assert(portal->strategy != PORTAL_MULTI_QUERY);
 
