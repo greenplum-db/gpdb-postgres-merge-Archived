@@ -500,8 +500,6 @@ typedef struct XLogCtlData
 	 */
 	XLogRecPtr	lastReplayedEndRecPtr;
 	XLogRecPtr	replayEndRecPtr;
-	/* end+1 of the last record replayed */
-	XLogRecPtr	recoveryLastRecPtr;
 	/* timestamp of last COMMIT/ABORT record replayed (or being replayed) */
 	TimestampTz recoveryLastXTime;
 	/* current effective recovery target timeline */
@@ -7236,16 +7234,20 @@ StartupXLOG(void)
 		}
 
 		/*
-		 * Initialize shared variables for tracking progress of WAL replay,
-		 * as if we had just replayed the record before the REDO location
-		 * (or the checkpoint record itself, if it's a shutdown checkpoint).
+		 * Initialize shared replayEndRecPtr, lastReplayedEndRecPtr, and
+		 * recoveryLastXTime.
+		 *
+		 * This is slightly confusing if we're starting from an online
+		 * checkpoint; we've just read and replayed the chekpoint record, but
+		 * we're going to start replay from its redo pointer, which precedes
+		 * the location of the checkpoint record itself. So even though the
+		 * last record we've replayed is indeed ReadRecPtr, we haven't
+		 * replayed all the preceding records yet. That's OK for the current
+		 * use of these variables.
 		 */
 		SpinLockAcquire(&xlogctl->info_lck);
-		if (XLByteLT(checkPoint.redo, RecPtr))
-			xlogctl->replayEndRecPtr = checkPoint.redo;
-		else
-			xlogctl->replayEndRecPtr = EndRecPtr;
-		xlogctl->lastReplayedEndRecPtr = xlogctl->replayEndRecPtr;
+		xlogctl->replayEndRecPtr = ReadRecPtr;
+		xlogctl->lastReplayedEndRecPtr = EndRecPtr;
 		xlogctl->recoveryLastXTime = 0;
 		xlogctl->currentChunkStartTime = 0;
 		xlogctl->recoveryPause = false;
@@ -7341,6 +7343,22 @@ StartupXLOG(void)
 #endif
 				/* Handle interrupt signals of startup process */
 				HandleStartupProcInterrupts();
+
+				/*
+				 * Pause WAL replay, if requested by a hot-standby session via
+				 * SetRecoveryPause().
+				 *
+				 * Note that we intentionally don't take the info_lck spinlock
+				 * here.  We might therefore read a slightly stale value of
+				 * the recoveryPause flag, but it can't be very stale (no
+				 * worse than the last spinlock we did acquire).  Since a
+				 * pause request is a pretty asynchronous thing anyway,
+				 * possibly responding to it one WAL record later than we
+				 * otherwise would is a minor issue, so it doesn't seem worth
+				 * adding another spinlock cycle to prevent that.
+				 */
+				if (xlogctl->recoveryPause)
+					recoveryPausesHere();
 
 				/*
 				 * Have we reached our recovery target?
@@ -7458,11 +7476,11 @@ StartupXLOG(void)
 				}
 
 				/*
-				 * Update shared recoveryLastRecPtr after this record has been
-				 * replayed.
+				 * Update lastReplayedEndRecPtr after this record has been
+				 * successfully replayed.
 				 */
 				SpinLockAcquire(&xlogctl->info_lck);
-				xlogctl->recoveryLastRecPtr = EndRecPtr;
+				xlogctl->lastReplayedEndRecPtr = EndRecPtr;
 				SpinLockRelease(&xlogctl->info_lck);
 
 				LastRec = ReadRecPtr;
@@ -7470,8 +7488,13 @@ StartupXLOG(void)
 				/* Allow read-only connections if we're consistent now */
 				CheckRecoveryConsistency();
 
+				/* Exit loop if we reached inclusive recovery target */
+				if (!recoveryContinue)
+					break;
+
+				/* Else, try to fetch the next WAL record */
 				record = XLogReadRecord(NULL, LOG, false);
-			} while (record != NULL && recoveryContinue);
+			} while (record != NULL);
 
 			ereport(LOG,
 					(errmsg("redo done at %X/%X",
@@ -8052,10 +8075,14 @@ CheckRecoveryConsistency(void)
 		return;
 
 	/*
-	 * Have we passed our safe starting point?
+	 * Have we passed our safe starting point? Note that minRecoveryPoint
+	 * is known to be incorrectly set if ControlFile->backupEndRequired,
+	 * until the XLOG_BACKUP_RECORD arrives to advise us of the correct
+	 * minRecoveryPoint. All we know prior to that is that we're not
+	 * consistent yet.
 	 */
-	if (!reachedConsistency &&
-		XLByteLE(minRecoveryPoint, EndRecPtr) &&
+	if (!reachedConsistency && !ControlFile->backupEndRequired &&
+		XLByteLE(minRecoveryPoint, XLogCtl->lastReplayedEndRecPtr) &&
 		XLogRecPtrIsInvalid(ControlFile->backupStartPoint))
 	{
 		/*
@@ -8067,7 +8094,8 @@ CheckRecoveryConsistency(void)
 		reachedConsistency = true;
 		ereport(LOG,
 				(errmsg("consistent recovery state reached at %X/%X",
-						EndRecPtr.xlogid, EndRecPtr.xrecoff)));
+						XLogCtl->lastReplayedEndRecPtr.xlogid,
+						XLogCtl->lastReplayedEndRecPtr.xrecoff)));
 	}
 
 	/*
@@ -12387,7 +12415,7 @@ last_xlog_replay_location()
 	XLogRecPtr	recptr;
 
 	SpinLockAcquire(&xlogctl->info_lck);
-	recptr = xlogctl->recoveryLastRecPtr;
+	recptr = xlogctl->lastReplayedEndRecPtr;
 	SpinLockRelease(&xlogctl->info_lck);
 
 	return recptr;
