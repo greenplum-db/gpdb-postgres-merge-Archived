@@ -7246,8 +7246,8 @@ StartupXLOG(void)
 		 * use of these variables.
 		 */
 		SpinLockAcquire(&xlogctl->info_lck);
-		xlogctl->replayEndRecPtr = ReadRecPtr;
-		xlogctl->lastReplayedEndRecPtr = EndRecPtr;
+		xlogctl->replayEndRecPtr = checkPoint.redo;
+		xlogctl->lastReplayedEndRecPtr = checkPoint.redo;
 		xlogctl->recoveryLastXTime = 0;
 		xlogctl->currentChunkStartTime = 0;
 		xlogctl->recoveryPause = false;
@@ -8067,12 +8067,48 @@ XLogGetRecoveryStart(char *callerStr, char *reasonStr, XLogRecPtr *redoCheckPoin
 static void
 CheckRecoveryConsistency(void)
 {
+	XLogRecPtr lastReplayedEndRecPtr;
+
 	/*
 	 * During crash recovery, we don't reach a consistent state until we've
 	 * replayed all the WAL.
 	 */
 	if (XLogRecPtrIsInvalid(minRecoveryPoint))
 		return;
+
+	/*
+	 * assume that we are called in the startup process, and hence don't need
+	 * a lock to read lastReplayedEndRecPtr
+	 */
+	lastReplayedEndRecPtr = XLogCtl->lastReplayedEndRecPtr;
+
+	/*
+	 * Have we reached the point where our base backup was completed?
+	 */
+	if (!XLogRecPtrIsInvalid(ControlFile->backupEndPoint) &&
+		XLByteLE(ControlFile->backupEndPoint, lastReplayedEndRecPtr))
+	{
+		/*
+		 * We have reached the end of base backup, as indicated by pg_control.
+		 * The data on disk is now consistent. Reset backupStartPoint and
+		 * backupEndPoint, and update minRecoveryPoint to make sure we don't
+		 * allow starting up at an earlier point even if recovery is stopped
+		 * and restarted soon after this.
+		 */
+		elog(DEBUG1, "end of backup reached");
+
+		LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
+
+		if (XLByteLT(ControlFile->minRecoveryPoint, lastReplayedEndRecPtr))
+			ControlFile->minRecoveryPoint = lastReplayedEndRecPtr;
+
+		MemSet(&ControlFile->backupStartPoint, 0, sizeof(XLogRecPtr));
+		MemSet(&ControlFile->backupEndPoint, 0, sizeof(XLogRecPtr));
+		ControlFile->backupEndRequired = false;
+		UpdateControlFile();
+
+		LWLockRelease(ControlFileLock);
+	}
 
 	/*
 	 * Have we passed our safe starting point? Note that minRecoveryPoint
@@ -8082,7 +8118,7 @@ CheckRecoveryConsistency(void)
 	 * consistent yet.
 	 */
 	if (!reachedConsistency && !ControlFile->backupEndRequired &&
-		XLByteLE(minRecoveryPoint, XLogCtl->lastReplayedEndRecPtr) &&
+		XLByteLE(minRecoveryPoint, lastReplayedEndRecPtr) &&
 		XLogRecPtrIsInvalid(ControlFile->backupStartPoint))
 	{
 		/*
@@ -8094,8 +8130,8 @@ CheckRecoveryConsistency(void)
 		reachedConsistency = true;
 		ereport(LOG,
 				(errmsg("consistent recovery state reached at %X/%X",
-						XLogCtl->lastReplayedEndRecPtr.xlogid,
-						XLogCtl->lastReplayedEndRecPtr.xrecoff)));
+						lastReplayedEndRecPtr.xlogid,
+						lastReplayedEndRecPtr.xrecoff)));
 	}
 
 	/*
