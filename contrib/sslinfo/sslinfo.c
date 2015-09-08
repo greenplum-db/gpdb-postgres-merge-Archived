@@ -8,15 +8,16 @@
  */
 
 #include "postgres.h"
-#include "fmgr.h"
-#include "utils/numeric.h"
+
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+#include <openssl/asn1.h>
+
+#include "access/htup_details.h"
+#include "funcapi.h"
 #include "libpq/libpq-be.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
-#include "mb/pg_wchar.h"
-
-#include <openssl/x509.h>
-#include <openssl/asn1.h>
 
 PG_MODULE_MAGIC;
 
@@ -24,6 +25,13 @@ static Datum X509_NAME_field_to_text(X509_NAME *name, text *fieldName);
 static Datum X509_NAME_to_text(X509_NAME *name);
 static Datum ASN1_STRING_to_text(ASN1_STRING *str);
 
+/*
+ * Function context for data persisting over repeated calls.
+ */
+typedef struct
+{
+	TupleDesc	tupdesc;
+} SSLExtensionInfoContext;
 
 /*
  * Indicates whether current session uses SSL
