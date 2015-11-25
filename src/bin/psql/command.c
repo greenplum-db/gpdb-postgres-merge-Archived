@@ -1683,13 +1683,17 @@ do_connect(enum trivalue reuse_previous_specification,
 	/*
 	 * Any change in the parameters read above makes us discard the password.
 	 * We also discard it if we're to use a conninfo rather than the
-	 * positional syntax.
+	 * positional syntax.  Note that currently, PQhost() can return NULL for a
+	 * default Unix-socket connection, so we have to allow NULL for host.
 	 */
-	keep_password =
-		((strcmp(user, PQuser(o_conn)) == 0) &&
-		 (!host || strcmp(host, PQhost(o_conn)) == 0) &&
-		 (strcmp(port, PQport(o_conn)) == 0) &&
-		 !has_connection_string);
+	if (has_connection_string)
+		keep_password = false;
+	else
+		keep_password =
+			(user && PQuser(o_conn) && strcmp(user, PQuser(o_conn)) == 0) &&
+			((host && PQhost(o_conn) && strcmp(host, PQhost(o_conn)) == 0) ||
+			 (host == NULL && PQhost(o_conn) == NULL)) &&
+			(port && PQport(o_conn) && strcmp(port, PQport(o_conn)) == 0);
 
 	/*
 	 * Grab dbname from old connection unless supplied by caller.  No password
