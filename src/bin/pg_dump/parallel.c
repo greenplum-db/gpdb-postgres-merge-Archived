@@ -178,6 +178,7 @@ static void set_cancel_slot_archive(ParallelSlot *slot, ArchiveHandle *AH);
 static void RunWorker(ArchiveHandle *AH, ParallelSlot *slot, RestoreOptions *ropt);
 static bool HasEveryWorkerTerminated(ParallelState *pstate);
 static void lockTableForWorker(ArchiveHandle *AH, TocEntry *te);
+
 static void WaitForCommands(ArchiveHandle *AH, int pipefd[2]);
 static char *getMessageFromMaster(int pipefd[2]);
 static void sendMessageToMaster(int pipefd[2], const char *str);
@@ -804,7 +805,7 @@ set_cancel_slot_archive(ParallelSlot *slot, ArchiveHandle *AH)
  * upon return.
  */
 static void
-RunWorker(ArchiveHandle *AH, ParallelSlot *slot, RestoreOptions *ropt)
+RunWorker(ArchiveHandle *AH, ParallelSlot *slot)
 {
 	int			pipefd[2];
 
@@ -829,7 +830,7 @@ RunWorker(ArchiveHandle *AH, ParallelSlot *slot, RestoreOptions *ropt)
 	/*
 	 * Call the setup worker function that's defined in the ArchiveHandle.
 	 */
-	(AH->SetupWorkerPtr) ((Archive *) AH, dopt, ropt);
+	(AH->SetupWorkerPtr) ((Archive *) AH);
 
 	/*
 	 * Execute commands until done.
@@ -853,7 +854,6 @@ init_spawned_worker_win32(WorkerInfo *wi)
 {
 	ArchiveHandle *AH = wi->AH;
 	ParallelSlot *slot = wi->slot;
-	RestoreOptions *ropt = wi->ropt;
 
 	/* Don't need WorkerInfo anymore */
 	free(wi);
@@ -873,7 +873,7 @@ init_spawned_worker_win32(WorkerInfo *wi)
  * workers are created with fork().
  */
 ParallelState *
-ParallelBackupStart(ArchiveHandle *AH, DumpOptions *dopt, RestoreOptions *ropt)
+ParallelBackupStart(ArchiveHandle *AH)
 {
 	ParallelState *pstate;
 	int			i;
@@ -954,7 +954,6 @@ ParallelBackupStart(ArchiveHandle *AH, DumpOptions *dopt, RestoreOptions *ropt)
 
 		wi->AH = AH;
 		wi->slot = slot;
-		wi->ropt = ropt;
 
 		handle = _beginthreadex(NULL, 0, (void *) &init_spawned_worker_win32,
 								wi, 0, &(slot->threadId));
@@ -988,7 +987,7 @@ ParallelBackupStart(ArchiveHandle *AH, DumpOptions *dopt, RestoreOptions *ropt)
 			}
 
 			/* Run the worker ... */
-			RunWorker(AH, slot, ropt);
+			RunWorker(AH, slot);
 
 			/* We can just exit(0) when done */
 			exit(0);
@@ -1207,7 +1206,7 @@ lockTableForWorker(ArchiveHandle *AH, TocEntry *te)
  * Read and execute commands from the master until we see EOF on the pipe.
  */
 static void
-WaitForCommands(ArchiveHandle *AH, DumpOptions *dopt, int pipefd[2])
+WaitForCommands(ArchiveHandle *AH, int pipefd[2])
 {
 	char	   *command;
 	DumpId		dumpId;
