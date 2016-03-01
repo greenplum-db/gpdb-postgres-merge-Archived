@@ -4,12 +4,8 @@
  *	  POSTGRES error reporting/logging definitions.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.90.2.2 2008/10/27 19:37:29 tgl Exp $
@@ -365,7 +361,6 @@ extern PGDLLIMPORT ErrorContextCallback *error_context_stack;
 
 /*
  * gcc understands __attribute__((noreturn)); for other compilers, insert
-<<<<<<< HEAD
  * pg_unreachable() so that the compiler gets the point.
  */
 #ifdef __GNUC__
@@ -374,16 +369,6 @@ extern PGDLLIMPORT ErrorContextCallback *error_context_stack;
 #else
 #define PG_RE_THROW()  \
 	(pg_re_throw(), pg_unreachable())
-=======
- * a useless exit() call so that the compiler gets the point.
- */
-#ifdef __GNUC__
-#define PG_RE_THROW()  \
-	pg_re_throw()
-#else
-#define PG_RE_THROW()  \
-	(pg_re_throw(), exit(1))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif
 
 extern PGDLLIMPORT sigjmp_buf *PG_exception_stack;
@@ -403,14 +388,10 @@ typedef struct ErrorData
 	bool		output_to_server;		/* will report to server log? */
 	bool		output_to_client;		/* will report to client? */
 	bool		show_funcname;	/* true to force funcname inclusion */
-<<<<<<< HEAD
     bool        omit_location;  /* GPDB: don't add filename:line# and stack trace */
     bool        fatal_return;   /* GPDB: true => return instead of proc_exit() */
-	bool		hide_stmt;		/* true to prevent STATEMENT: inclusion */
 	bool		send_alert;		/* GPDB: send e-mail alert and/or SNMP trap/inform */
-=======
 	bool		hide_stmt;		/* true to prevent STATEMENT: inclusion */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	const char *filename;		/* __FILE__ of ereport() call */
 	int			lineno;			/* __LINE__ of ereport() call */
 	const char *funcname;		/* __func__ of ereport() call */
@@ -434,7 +415,6 @@ extern void EmitErrorReport(void);
 extern ErrorData *CopyErrorData(void);
 extern void FreeErrorData(ErrorData *edata);
 extern void FlushErrorState(void);
-<<<<<<< HEAD
 extern void ReThrowError(ErrorData *edata)  __attribute__((__noreturn__));
 extern void pg_re_throw(void) __attribute__((noreturn));
 
@@ -486,10 +466,6 @@ bool        elog_dismiss(int downgrade_to_elevel);
 int         elog_geterrcode(void);      
 int         elog_getelevel(void);      
 char        *elog_message(void);
-=======
-extern void ReThrowError(ErrorData *edata);
-extern void pg_re_throw(void) __attribute__((noreturn));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 /* GUC-configurable parameters */
