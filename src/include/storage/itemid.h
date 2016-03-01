@@ -33,26 +33,6 @@ typedef ItemIdData *ItemId;
 /*
  * lp_flags has these possible states.	An UNUSED line pointer is available
  * for immediate re-use, the other states are not.
-<<<<<<< HEAD
- */
-#define LP_UNUSED		0		/* unused (should always have lp_len=0) */
-#define LP_USED			0x01	/* this line pointer is being used */
-#define LP_DELETE		0x02	/* item is to be deleted */
-#define LP_DEAD			3		/* dead, may or may not have storage */
-
-#define ItemIdDeleted(itemId) \
-	(((itemId)->lp_flags & LP_DELETE) != 0)
-
-#define ItemIdIsNormal(itemid) \
-	(((itemid)->lp_flags == LP_USED))
-
-#define ItemIdIsDead(itemid) \
-	(((itemid)->lp_flags == LP_DEAD))
-/*
- * This bit may be passed to PageAddItem together with
- * LP_USED & LP_DELETE bits to specify overwrite mode
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 #define LP_UNUSED		0		/* unused (should always have lp_len=0) */
 #define LP_NORMAL		1		/* used (should always have lp_len>0) */

@@ -18,10 +18,7 @@
  * everything that should be freed.  See utils/mmgr/README for more info.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -95,14 +92,11 @@ typedef struct MemoryContextData *MemoryContext;
  * directly!  Instead, use MemoryContextSwitchTo() to change the setting.
  */
 extern PGDLLIMPORT MemoryContext CurrentMemoryContext;
-<<<<<<< HEAD
 
 extern bool gp_mp_inited;
 extern volatile OOMTimeType* segmentOOMTime;
 extern volatile OOMTimeType oomTrackerStartTime;
 extern volatile OOMTimeType alreadyReportedOOMTime;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * Fundamental memory-allocation operations (more are in utils/memutils.h)
