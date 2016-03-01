@@ -211,7 +211,6 @@ typedef enum NodeTag
 	T_WindowKey,
 	T_Grouping,
 	T_GroupId,
-	T_IntoClause,
     T_AggOrder,
 	T_PercentileExpr,
 	T_DMLActionExpr,
