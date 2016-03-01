@@ -26,7 +26,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pgsql.c,v 1.11 2009/06/11 14:48:52 momjian Exp $
+=======
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pgsql.c,v 1.9 2007/02/27 23:48:06 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 
 #include "postgres.h"
@@ -149,7 +153,14 @@ convert_charset(text *src, int cset_from, int cset_to)
 	if (dst == csrc)
 		return src;
 
+<<<<<<< HEAD
 	res = cstring_to_text((char *) dst);
+=======
+	dst_len = strlen((char *) dst);
+	res = palloc(dst_len + VARHDRSZ);
+	memcpy(VARDATA(res), dst, dst_len);
+	SET_VARSIZE(res, dst_len + VARHDRSZ);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	pfree(dst);
 	return res;
 }

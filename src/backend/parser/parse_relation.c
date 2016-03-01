@@ -3,13 +3,16 @@
  * parse_relation.c
  *	  parser support routines dealing with relations
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.127 2007/01/05 22:19:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.130.2.1 2008/04/05 01:58:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -481,6 +484,7 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname,
 		attnum = specialAttNum(colname);
 		if (attnum != InvalidAttrNumber)
 		{
+<<<<<<< HEAD
 			/* now check to see if column actually is defined */
 			if (caql_getcount(
 						NULL,
@@ -489,6 +493,20 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname,
 							" AND attnum = :2 ",
 							ObjectIdGetDatum(rte->relid),
 							Int16GetDatum(attnum))))
+=======
+			/*
+			 * Now check to see if column actually is defined.  Because of
+			 * an ancient oversight in DefineQueryRewrite, it's possible that
+			 * pg_attribute contains entries for system columns for a view,
+			 * even though views should not have such --- so we also check
+			 * the relkind.  This kluge will not be needed in 9.3 and later.
+			 */
+			if (SearchSysCacheExists(ATTNUM,
+									 ObjectIdGetDatum(rte->relid),
+									 Int16GetDatum(attnum),
+									 0, 0) &&
+				get_rel_relkind(rte->relid) != RELKIND_VIEW)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			{
 				result = (Node *) make_var(pstate, rte, attnum, location);
 				/* Require read access */
@@ -1170,8 +1188,12 @@ addRangeTableEntryForFunction(ParseState *pstate,
 						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 						 errmsg("column \"%s\" cannot be declared SETOF",
 								attrname)));
+<<<<<<< HEAD
 			attrtype = typenameTypeId(pstate, n->typname);
 			attrtypmod = typenameTypeMod(pstate, n->typname, attrtype);
+=======
+			attrtype = typenameTypeId(pstate, n->typename, &attrtypmod);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			eref->colnames = lappend(eref->colnames, makeString(attrname));
 			rte->funccoltypes = lappend_oid(rte->funccoltypes, attrtype);
 			rte->funccoltypmods = lappend_int(rte->funccoltypmods, attrtypmod);

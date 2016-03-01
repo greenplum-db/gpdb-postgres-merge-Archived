@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.37 2007/01/05 22:19:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.38.2.1 2009/03/30 04:09:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,14 @@
  * else need to be "materialized" into physical tuples.  Note also that a
  * virtual tuple does not have any "system columns".
  *
+ * It is also possible for a TupleTableSlot to hold both physical and minimal
+ * copies of a tuple.  This is done when the slot is requested to provide
+ * the format other than the one it currently holds.  (Originally we attempted
+ * to handle such requests by replacing one format with the other, but that
+ * had the fatal defect of invalidating any pass-by-reference Datums pointing
+ * into the existing slot contents.)  Both copies must contain identical data
+ * payloads when this is the case.
+ *
  * The Datum/isnull arrays of a TupleTableSlot serve double duty.  When the
  * slot contains a virtual tuple, they are the authoritative data.	When the
  * slot contains a physical tuple, the arrays contain data extracted from
@@ -93,12 +101,12 @@
  *
  * tts_mintuple must always be NULL if the slot does not hold a "minimal"
  * tuple.  When it does, tts_mintuple points to the actual MinimalTupleData
- * object (the thing to be pfree'd if tts_shouldFree is true).  In this case
- * tts_tuple points at tts_minhdr and the fields of that are set correctly
+ * object (the thing to be pfree'd if tts_shouldFreeMin is true).  If the slot
+ * has only a minimal and not also a regular physical tuple, then tts_tuple
+ * points at tts_minhdr and the fields of that struct are set correctly
  * for access to the minimal tuple; in particular, tts_minhdr.t_data points
- * MINIMAL_TUPLE_OFFSET bytes before tts_mintuple.	(tts_mintuple is therefore
- * redundant, but for code simplicity we store it explicitly anyway.)  This
- * case otherwise behaves identically to the regular-physical-tuple case.
+ * MINIMAL_TUPLE_OFFSET bytes before tts_mintuple.  This allows column
+ * extraction to treat the case identically to regular physical tuples.
  *
  * tts_slow/tts_off are saved state for slot_deform_tuple, and should not
  * be touched by any other code.
@@ -112,6 +120,7 @@
 
 typedef struct TupleTableSlot
 {
+<<<<<<< HEAD
 	NodeTag		type;		/* vestigial ... allows IsA tests */
 	int         PRIVATE_tts_flags;      /* TTS_xxx flags */
 
@@ -133,10 +142,19 @@ typedef struct TupleTableSlot
 	Datum 	*PRIVATE_tts_values;		/* virtual tuple values */
 	bool 	*PRIVATE_tts_isnull;		/* virtual tuple nulls */
 
+=======
+	NodeTag		type;			/* vestigial ... allows IsA tests */
+	bool		tts_isempty;	/* true = slot is empty */
+	bool		tts_shouldFree;	/* should pfree tts_tuple? */
+	bool		tts_shouldFreeMin;		/* should pfree tts_mintuple? */
+	bool		tts_slow;		/* saved state for slot_deform_tuple */
+	HeapTuple	tts_tuple;		/* physical tuple, or NULL if virtual */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	TupleDesc	tts_tupleDescriptor;	/* slot's tuple descriptor */
 	MemTupleBinding *tts_mt_bind;		/* mem tuple's binding */ 
 	MemoryContext 	tts_mcxt;		/* slot itself is in this context */
 	Buffer		tts_buffer;		/* tuple's buffer, or InvalidBuffer */
+<<<<<<< HEAD
 
     /* System attributes */
     Oid         tts_tableOid;
@@ -355,6 +373,18 @@ static inline bool slot_attisnull(TupleTableSlot *slot, int attnum)
 	Assert(TupHasMemTuple(slot));
 	return memtuple_attisnull(slot->PRIVATE_tts_memtuple, slot->tts_mt_bind, attnum);
 }
+=======
+	int			tts_nvalid;		/* # of valid values in tts_values */
+	Datum	   *tts_values;		/* current per-attribute values */
+	bool	   *tts_isnull;		/* current per-attribute isnull flags */
+	MinimalTuple tts_mintuple;	/* minimal tuple, or NULL if none */
+	HeapTupleData tts_minhdr;	/* workspace for minimal-tuple-only case */
+	long		tts_off;		/* saved state for slot_deform_tuple */
+} TupleTableSlot;
+
+#define TTS_HAS_PHYSICAL_TUPLE(slot)  \
+	((slot)->tts_tuple != NULL && (slot)->tts_tuple != &((slot)->tts_minhdr))
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * Tuple table data structure: an array of TupleTableSlots.

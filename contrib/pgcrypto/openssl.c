@@ -26,7 +26,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.33 2009/06/11 14:48:52 momjian Exp $
+=======
+ * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.32 2007/11/15 21:14:31 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 
 #include "postgres.h"
@@ -435,6 +439,7 @@ bf_init(PX_Cipher *c, const uint8 *key, unsigned klen, const uint8 *iv)
 	 * could be be a problem when user transfer crypted data from one server
 	 * to another.
 	 */
+<<<<<<< HEAD
 
 	if (bf_is_strong == -1)
 		bf_is_strong = bf_check_supported_key_len();
@@ -442,6 +447,15 @@ bf_init(PX_Cipher *c, const uint8 *key, unsigned klen, const uint8 *iv)
 	if (!bf_is_strong && klen > 16)
 		return PXE_KEY_TOO_BIG;
 
+=======
+
+	if (bf_is_strong == -1)
+		bf_is_strong = bf_check_supported_key_len();
+
+	if (!bf_is_strong && klen > 16)
+		return PXE_KEY_TOO_BIG;
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/* Key len is supported. We can use it. */
 	BF_set_key(&od->u.bf.key, klen, key);
 	if (iv)
@@ -756,7 +770,11 @@ ossl_aes_init(PX_Cipher *c, const uint8 *key, unsigned klen, const uint8 *iv)
 }
 
 static int
+<<<<<<< HEAD
 ossl_aes_key_init(ossldata *od, int type)
+=======
+ossl_aes_key_init(ossldata * od, int type)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	int			err;
 

@@ -547,7 +547,11 @@ drop table atacc1;
 
 -- adding a new column as primary key to a non-empty table.
 -- should fail unless the column has a non-null default value.
+<<<<<<< HEAD
 create table atacc1 ( test int ) distributed by (test);
+=======
+create table atacc1 ( test int );
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 insert into atacc1 (test) values (0);
 -- add a primary key column without a default (fails).
 alter table atacc1 add column test2 int primary key;
@@ -1102,6 +1106,15 @@ alter table another
 select * from another order by 1,2;
 
 drop table another;
+
+-- disallow recursive containment of row types
+create temp table recur1 (f1 int);
+alter table recur1 add column f2 recur1; -- fails
+alter table recur1 add column f2 recur1[]; -- fails
+create temp table recur2 (f1 int, f2 recur1);
+alter table recur1 add column f2 recur2; -- fails
+alter table recur1 add column f2 int;
+alter table recur1 alter column f2 type recur2; -- fails
 
 --
 -- alter function

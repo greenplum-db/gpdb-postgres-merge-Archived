@@ -3,11 +3,15 @@
  * user.c
  *	  Commands for manipulating roles (formerly called users).
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.176 2007/02/01 19:10:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.178.2.1 2010/03/25 14:45:06 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1187,12 +1191,17 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 	HeapTuple	oldtuple,
 				newtuple;
 	Datum		repl_val[Natts_pg_authid];
+<<<<<<< HEAD
 	bool		repl_null[Natts_pg_authid];
 	bool		repl_repl[Natts_pg_authid];
 	char	   *alter_subtype = "SET"; /* metadata tracking */
 	cqContext  *pcqCtx;
+=======
+	char		repl_null[Natts_pg_authid];
+	char		repl_repl[Natts_pg_authid];
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
-	valuestr = flatten_set_variable_args(stmt->variable, stmt->value);
+	valuestr = ExtractSetVariableArgs(stmt->setstmt);
 
 	pcqCtx = caql_beginscan(
 			NULL,
@@ -1228,6 +1237,7 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 					 errmsg("permission denied")));
 	}
 
+<<<<<<< HEAD
 	memset(repl_repl, false, sizeof(repl_repl));
 	repl_repl[Anum_pg_authid_rolconfig - 1] = true;
 
@@ -1235,6 +1245,13 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 	{
 		alter_subtype = "RESET ALL";
 
+=======
+	memset(repl_repl, ' ', sizeof(repl_repl));
+	repl_repl[Anum_pg_authid_rolconfig - 1] = 'r';
+
+	if (stmt->setstmt->kind == VAR_RESET_ALL)
+	{
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		ArrayType  *new = NULL;
 		Datum		datum;
 		bool		isnull;
@@ -1244,18 +1261,32 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 		 * left, we can set rolconfig to null; otherwise use the returned
 		 * array
 		 */
+<<<<<<< HEAD
 		datum = caql_getattr(pcqCtx,
 							 Anum_pg_authid_rolconfig, &isnull);
+=======
+		datum = SysCacheGetAttr(AUTHNAME, oldtuple,
+								Anum_pg_authid_rolconfig, &isnull);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		if (!isnull)
 			new = GUCArrayReset(DatumGetArrayTypeP(datum));
 		if (new)
 		{
 			repl_val[Anum_pg_authid_rolconfig - 1] = PointerGetDatum(new);
+<<<<<<< HEAD
 			repl_null[Anum_pg_authid_rolconfig - 1] = false;
 		}
 		else
 		{
 			repl_null[Anum_pg_authid_rolconfig - 1] = true;
+=======
+			repl_repl[Anum_pg_authid_rolconfig - 1] = 'r';
+			repl_null[Anum_pg_authid_rolconfig - 1] = ' ';
+		}
+		else
+		{
+			repl_null[Anum_pg_authid_rolconfig - 1] = 'n';
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			repl_val[Anum_pg_authid_rolconfig - 1] = (Datum) 0;
 		}
 	}
@@ -1265,21 +1296,33 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 		bool		isnull;
 		ArrayType  *array;
 
+<<<<<<< HEAD
 		repl_null[Anum_pg_authid_rolconfig - 1] = false;
 
 		/* Extract old value of rolconfig */
 		datum = caql_getattr(pcqCtx,
 							 Anum_pg_authid_rolconfig, &isnull);
+=======
+		repl_null[Anum_pg_authid_rolconfig - 1] = ' ';
+
+		/* Extract old value of rolconfig */
+		datum = SysCacheGetAttr(AUTHNAME, oldtuple,
+								Anum_pg_authid_rolconfig, &isnull);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		array = isnull ? NULL : DatumGetArrayTypeP(datum);
 
 		/* Update (valuestr is NULL in RESET cases) */
 		if (valuestr)
-			array = GUCArrayAdd(array, stmt->variable, valuestr);
+			array = GUCArrayAdd(array, stmt->setstmt->name, valuestr);
 		else
+<<<<<<< HEAD
 		{
 			alter_subtype = "RESET";
 			array = GUCArrayDelete(array, stmt->variable);
 		}
+=======
+			array = GUCArrayDelete(array, stmt->setstmt->name);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (array)
 			repl_val[Anum_pg_authid_rolconfig - 1] = PointerGetDatum(array);

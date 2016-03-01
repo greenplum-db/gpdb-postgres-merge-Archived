@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.61 2007/02/17 00:55:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.65 2008/01/01 19:45:56 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -168,6 +168,7 @@ DATA(insert ( 2113	interval_pl		interval_mi interval_pl		interval_mi -				0	1186
 DATA(insert ( 2114	numeric_add		numeric_sub numeric_add		numeric_sub -				0	1700	_null_  f));
 
 /* max */
+<<<<<<< HEAD
 DATA(insert ( 2115	int8larger		- int8larger		- -				413		20		_null_  f));
 DATA(insert ( 2116	int4larger		- int4larger		- -				521		23		_null_  f));
 DATA(insert ( 2117	int2larger		- int2larger		- -				520		21		_null_  f));
@@ -210,6 +211,50 @@ DATA(insert ( 2051	array_smaller	- array_smaller		- -				1072	2277	_null_  f));
 DATA(insert ( 2245	bpchar_smaller	- bpchar_smaller	- -				1058	1042	_null_  f));
 DATA(insert ( 2798	tidsmaller		- tidsmaller		- -				2799	27		_null_  f));
 DATA(insert ( 3333	gpxloglocsmaller - gpxloglocsmaller		- -			3327	3310	_null_  f));
+=======
+DATA(insert ( 2115	int8larger		-				413		20		_null_ ));
+DATA(insert ( 2116	int4larger		-				521		23		_null_ ));
+DATA(insert ( 2117	int2larger		-				520		21		_null_ ));
+DATA(insert ( 2118	oidlarger		-				610		26		_null_ ));
+DATA(insert ( 2119	float4larger	-				623		700		_null_ ));
+DATA(insert ( 2120	float8larger	-				674		701		_null_ ));
+DATA(insert ( 2121	int4larger		-				563		702		_null_ ));
+DATA(insert ( 2122	date_larger		-				1097	1082	_null_ ));
+DATA(insert ( 2123	time_larger		-				1112	1083	_null_ ));
+DATA(insert ( 2124	timetz_larger	-				1554	1266	_null_ ));
+DATA(insert ( 2125	cashlarger		-				903		790		_null_ ));
+DATA(insert ( 2126	timestamp_larger	-			2064	1114	_null_ ));
+DATA(insert ( 2127	timestamptz_larger	-			1324	1184	_null_ ));
+DATA(insert ( 2128	interval_larger -				1334	1186	_null_ ));
+DATA(insert ( 2129	text_larger		-				666		25		_null_ ));
+DATA(insert ( 2130	numeric_larger	-				1756	1700	_null_ ));
+DATA(insert ( 2050	array_larger	-				1073	2277	_null_ ));
+DATA(insert ( 2244	bpchar_larger	-				1060	1042	_null_ ));
+DATA(insert ( 2797	tidlarger		-				2800	27		_null_ ));
+DATA(insert ( 3526	enum_larger		-				3519	3500	_null_ ));
+
+/* min */
+DATA(insert ( 2131	int8smaller		-				412		20		_null_ ));
+DATA(insert ( 2132	int4smaller		-				97		23		_null_ ));
+DATA(insert ( 2133	int2smaller		-				95		21		_null_ ));
+DATA(insert ( 2134	oidsmaller		-				609		26		_null_ ));
+DATA(insert ( 2135	float4smaller	-				622		700		_null_ ));
+DATA(insert ( 2136	float8smaller	-				672		701		_null_ ));
+DATA(insert ( 2137	int4smaller		-				562		702		_null_ ));
+DATA(insert ( 2138	date_smaller	-				1095	1082	_null_ ));
+DATA(insert ( 2139	time_smaller	-				1110	1083	_null_ ));
+DATA(insert ( 2140	timetz_smaller	-				1552	1266	_null_ ));
+DATA(insert ( 2141	cashsmaller		-				902		790		_null_ ));
+DATA(insert ( 2142	timestamp_smaller	-			2062	1114	_null_ ));
+DATA(insert ( 2143	timestamptz_smaller -			1322	1184	_null_ ));
+DATA(insert ( 2144	interval_smaller	-			1332	1186	_null_ ));
+DATA(insert ( 2145	text_smaller	-				664		25		_null_ ));
+DATA(insert ( 2146	numeric_smaller -				1754	1700	_null_ ));
+DATA(insert ( 2051	array_smaller	-				1072	2277	_null_ ));
+DATA(insert ( 2245	bpchar_smaller	-				1058	1042	_null_ ));
+DATA(insert ( 2798	tidsmaller		-				2799	27		_null_ ));
+DATA(insert ( 3527	enum_smaller	-				3518	3500	_null_ ));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* count */
 DATA(insert ( 2147	int8inc_any		- int8pl	int8mi -				0		20		"0"  f));

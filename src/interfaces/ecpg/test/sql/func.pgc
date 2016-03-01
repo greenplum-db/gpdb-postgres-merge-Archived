@@ -4,7 +4,11 @@
 
 EXEC SQL INCLUDE ../regression;
 
+<<<<<<< HEAD
 int main() {
+=======
+int main(int argc, char* argv[]) {
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
   EXEC SQL char text[25];
 
   ECPGdebug(1, stderr);

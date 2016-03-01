@@ -109,5 +109,12 @@ select thousand, tenthous from tenk1
 where (thousand, tenthous) >= (997, 5000)
 order by thousand, tenthous;
 
+<<<<<<< HEAD
 -- empty row constructor is valid
 select ROW();
+=======
+-- Check some corner cases involving empty rowtypes
+select ROW();
+select ROW() IS NULL;
+select ROW() = ROW();
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

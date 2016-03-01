@@ -18,7 +18,10 @@ test: preproc/autoprep
 test: preproc/comment
 test: preproc/define
 test: preproc/init
+<<<<<<< HEAD
 test: preproc/strings
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 test: preproc/type
 test: preproc/variable
 test: preproc/whenever

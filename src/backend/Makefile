@@ -2,10 +2,14 @@
 #
 # Makefile for the postgres backend
 #
+<<<<<<< HEAD
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+# Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.122 2007/02/09 15:55:57 petere Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.125 2008/01/01 19:45:45 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,6 +18,7 @@ subdir = src/backend
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
+<<<<<<< HEAD
 BLD_TOP = $(top_builddir)/gpAux
 ifeq ($(enable_orca),yes)
 include $(BLD_TOP)/releng/releng.mk
@@ -24,6 +29,11 @@ ifdef ADDON_DIR
 include $(BLD_TOP)/$(ADDON_DIR)/src/Makefile
 endif
 
+=======
+DIRS = access bootstrap catalog parser commands executor lib libpq \
+	main nodes optimizer port postmaster regex rewrite \
+	storage tcop tsearch utils $(top_builddir)/src/timezone
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 SUBDIRS = access bootstrap catalog parser commands executor \
 	fts lib libpq gp_libpq_fe main nodes optimizer port postmaster regex \
@@ -214,6 +224,7 @@ ifeq ($(MAKE_DLL), true)
 endif
 endif
 	$(MAKE) -C catalog install-data
+	$(MAKE) -C tsearch install-data
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_hba.conf.sample '$(DESTDIR)$(datadir)/pg_hba.conf.sample'
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_ident.conf.sample '$(DESTDIR)$(datadir)/pg_ident.conf.sample'
 	$(INSTALL_DATA) $(srcdir)/utils/misc/postgresql.conf.sample '$(DESTDIR)$(datadir)/postgresql.conf.sample'
@@ -232,6 +243,7 @@ else
 endif
 ifeq ($(MAKE_EXPORTS), true)
 	$(INSTALL_DATA) $(POSTGRES_IMP) '$(DESTDIR)$(pkglibdir)/$(POSTGRES_IMP)'
+	$(INSTALL_PROGRAM) $(MKLDEXPORT) '$(DESTDIR)$(pgxsdir)/$(MKLDEXPORT_DIR)/mkldexport.sh'
 endif
 
 .PHONY: install-bin
@@ -249,7 +261,12 @@ ifeq ($(MAKE_DLL), true)
 endif
 endif
 ifeq ($(MAKE_EXPORTS), true)
+<<<<<<< HEAD
 	$(MKDIR_P) '$(DESTDIR)$(pkglibdir)'
+=======
+	$(mkinstalldirs) '$(DESTDIR)$(pkglibdir)'
+	$(mkinstalldirs) '$(DESTDIR)$(pgxsdir)/$(MKLDEXPORT_DIR)'
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 endif
 
 
@@ -259,6 +276,7 @@ uninstall:
 	rm -f $(DESTDIR)$(bindir)/postgres$(X) $(DESTDIR)$(bindir)/postmaster $(DESTDIR)$(bindir)/cdbsyncmaster
 ifeq ($(MAKE_EXPORTS), true)
 	rm -f '$(DESTDIR)$(pkglibdir)/$(POSTGRES_IMP)'
+	rm -f '$(DESTDIR)$(pgxsdir)/$(MKLDEXPORT_DIR)/mkldexport.sh'
 endif
 ifeq ($(PORTNAME), cygwin)
 ifeq ($(MAKE_DLL), true)
@@ -271,6 +289,7 @@ ifeq ($(MAKE_DLL), true)
 endif
 endif
 	$(MAKE) -C catalog uninstall-data
+	$(MAKE) -C tsearch uninstall-data
 	rm -f '$(DESTDIR)$(datadir)/pg_hba.conf.sample' \
 	      '$(DESTDIR)$(datadir)/pg_ident.conf.sample' \
               '$(DESTDIR)$(datadir)/postgresql.conf.sample' \

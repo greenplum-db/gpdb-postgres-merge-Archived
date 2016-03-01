@@ -13,10 +13,16 @@
  * fact that a particular page needs to be visited.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Copyright (c) 2003-2008, PostgreSQL Global Development Group
  *
  * $PostgreSQL: pgsql/src/include/nodes/tidbitmap.h,v 1.3 2005/10/15 02:49:45 momjian Exp $
+=======
+ * Copyright (c) 2003-2008, PostgreSQL Global Development Group
+ *
+ * $PostgreSQL: pgsql/src/include/nodes/tidbitmap.h,v 1.6 2008/01/01 19:45:58 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */

@@ -1,10 +1,15 @@
+<<<<<<< HEAD
 # $PostgreSQL: pgsql/src/template/linux,v 1.31 2008/10/29 16:06:47 petere Exp $
+=======
+# $PostgreSQL: pgsql/src/template/linux,v 1.30 2007/09/21 02:33:46 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 # Force _GNU_SOURCE on; plperl is broken with Perl 5.8.0 otherwise
 CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE"
 
 # If --enable-profiling is specified, we need -DLINUX_PROFILE
 PLATFORM_PROFILE_FLAGS="-DLINUX_PROFILE"
+<<<<<<< HEAD
 
 if test "$SUN_STUDIO_CC" = "yes" ; then
   CC="$CC -Xa"			# relaxed ISO C mode
@@ -28,3 +33,5 @@ if test "$SUN_STUDIO_CC" = "yes" ; then
     ;;
   esac
 fi
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

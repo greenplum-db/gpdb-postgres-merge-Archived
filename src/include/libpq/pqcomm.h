@@ -6,10 +6,17 @@
  * NOTE: for historical reasons, this does not correspond to pqcomm.c.
  * pqcomm.c's routines are declared in libpq.h.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/libpq/pqcomm.h,v 1.111 2010/01/02 16:58:04 momjian Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/include/libpq/pqcomm.h,v 1.108 2008/01/01 19:45:58 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +82,11 @@ typedef struct
 
 /*
  * The maximum workable length of a socket path is what will fit into
+<<<<<<< HEAD
  * struct sockaddr_un.	This is usually only 100 or so bytes :-(.
+=======
+ * struct sockaddr_un.  This is usually only 100 or so bytes :-(.
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * For consistency, always pass a MAXPGPATH-sized buffer to UNIXSOCK_PATH(),
  * then complain if the resulting string is >= UNIXSOCK_PATH_BUFLEN bytes.

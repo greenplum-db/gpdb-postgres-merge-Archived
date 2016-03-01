@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.23 2009/06/11 14:49:13 momjian Exp $ */
+=======
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.19.2.1 2010/03/08 13:15:51 meskes Exp $ */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -100,6 +104,7 @@ ecpg_raise(int line, int code, const char *sqlstate, const char *str)
 			break;
 
 		case ECPG_CONVERT_BOOL:
+<<<<<<< HEAD
 			if (str)
 				snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
 
@@ -116,6 +121,10 @@ ecpg_raise(int line, int code, const char *sqlstate, const char *str)
 				 * expanded.
 				 */
 						 ecpg_gettext("could not convert boolean value: size mismatch, on line %d"), line);
+=======
+			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
+					 "Could not convert %s to bool on line %d.", str, line);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			break;
 
 		case ECPG_EMPTY:
@@ -280,7 +289,11 @@ ecpg_raise(int line, int code, const char *sqlstate, const char *str)
 	}
 
 	sqlca->sqlerrm.sqlerrml = strlen(sqlca->sqlerrm.sqlerrmc);
+<<<<<<< HEAD
 	ecpg_log("raising sqlcode %d on line %d: %s\n", code, line, sqlca->sqlerrm.sqlerrmc);
+=======
+	ecpg_log("raising sqlcode %d in line %d, '%s'.\n", code, line, sqlca->sqlerrm.sqlerrmc);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* free all memory we have allocated for the user */
 	ECPGfree_auto_mem();
@@ -306,6 +319,17 @@ ecpg_raise_backend(int line, PGresult *result, PGconn *conn, int compat)
 		message = PQerrorMessage(conn);
 	}
 
+	if (strcmp(sqlstate, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR) == 0)
+	{
+		/* we might get here if the connection breaks down, so let's
+		 * check for this instead of giving just the generic internal error */
+		if (PQstatus(conn) == CONNECTION_BAD)
+		{
+			sqlstate = "57P02";
+			message = "the connection to the server was lost";
+		}
+	}
+
 	/* copy error message */
 	snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc), "%s on line %d", message, line);
 	sqlca->sqlerrm.sqlerrml = strlen(sqlca->sqlerrm.sqlerrmc);
@@ -321,7 +345,11 @@ ecpg_raise_backend(int line, PGresult *result, PGconn *conn, int compat)
 	else
 		sqlca->sqlcode = ECPG_PGSQL;
 
+<<<<<<< HEAD
 	ecpg_log("raising sqlstate %.*s (sqlcode %d) on line %d: %s\n",
+=======
+	ecpg_log("raising sqlstate %.*s (sqlcode: %d) in line %d, '%s'.\n",
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			 sizeof(sqlca->sqlstate), sqlca->sqlstate, sqlca->sqlcode, line, sqlca->sqlerrm.sqlerrmc);
 
 	/* free all memory we have allocated for the user */
@@ -334,7 +362,11 @@ ecpg_check_PQresult(PGresult *results, int lineno, PGconn *connection, enum COMP
 {
 	if (results == NULL)
 	{
+<<<<<<< HEAD
 		ecpg_log("ecpg_check_PQresult on line %d: %s", lineno, PQerrorMessage(connection));
+=======
+		ecpg_log("ecpg_check_PQresult line %d: error: %s", lineno, PQerrorMessage(connection));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		ecpg_raise_backend(lineno, NULL, connection, compat);
 		return (false);
 	}
@@ -357,7 +389,11 @@ ecpg_check_PQresult(PGresult *results, int lineno, PGconn *connection, enum COMP
 		case PGRES_NONFATAL_ERROR:
 		case PGRES_FATAL_ERROR:
 		case PGRES_BAD_RESPONSE:
+<<<<<<< HEAD
 			ecpg_log("ecpg_check_PQresult on line %d: %s", lineno, PQresultErrorMessage(results));
+=======
+			ecpg_log("ecpg_check_PQresult line %d: Error: %s", lineno, PQresultErrorMessage(results));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			ecpg_raise_backend(lineno, results, connection, compat);
 			PQclear(results);
 			return (false);
@@ -366,13 +402,21 @@ ecpg_check_PQresult(PGresult *results, int lineno, PGconn *connection, enum COMP
 			return (true);
 			break;
 		case PGRES_COPY_IN:
+<<<<<<< HEAD
 			ecpg_log("ecpg_check_PQresult on line %d: COPY IN data transfer in progress\n", lineno);
+=======
+			ecpg_log("ecpg_check_PQresult line %d: Got PGRES_COPY_IN ... tossing.\n", lineno);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			PQendcopy(connection);
 			PQclear(results);
 			return (false);
 			break;
 		default:
+<<<<<<< HEAD
 			ecpg_log("ecpg_check_PQresult on line %d: unknown execution status type\n",
+=======
+			ecpg_log("ecpg_check_PQresult line %d: Got something else, postgres error.\n",
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					 lineno);
 			ecpg_raise_backend(lineno, results, connection, compat);
 			PQclear(results);

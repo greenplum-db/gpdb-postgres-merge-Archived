@@ -10,11 +10,19 @@
  * analyze.c and related files.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
  *	  $PostgreSQL: pgsql/src/backend/parser/parser.c,v 1.78 2009/06/11 14:49:00 momjian Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *	  $PostgreSQL: pgsql/src/backend/parser/parser.c,v 1.73 2008/01/01 19:45:51 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -28,8 +36,8 @@
 
 List	   *parsetree;			/* result of parsing is left here */
 
-static bool have_lookahead;			/* is lookahead info valid? */
-static int	lookahead_token;		/* one-token lookahead */
+static bool have_lookahead;		/* is lookahead info valid? */
+static int	lookahead_token;	/* one-token lookahead */
 static YYSTYPE lookahead_yylval;	/* yylval for lookahead token */
 static YYLTYPE lookahead_yylloc;	/* yylloc for lookahead token */
 
@@ -128,6 +136,7 @@ filtered_base_yylex(void)
 	switch (cur_token)
 	{
 		case NULLS_P:
+
 			/*
 			 * NULLS FIRST and NULLS LAST must be reduced to one token
 			 */
@@ -156,6 +165,7 @@ filtered_base_yylex(void)
 			break;
 
 		case WITH:
+
 			/*
 			 * WITH TIME, CASCADED, LOCAL, or CHECK must be reduced to one token
 			 *

@@ -3,13 +3,17 @@
  * heap.c
  *	  code to create and destroy POSTGRES heap relations
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.317 2007/02/14 01:58:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.327.2.1 2009/02/24 01:38:49 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -59,6 +63,7 @@
 #include "cdb/cdbpartition.h"
 #include "cdb/cdbsreh.h"
 #include "commands/tablecmds.h"
+#include "commands/typecmds.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
@@ -104,7 +109,12 @@ static Oid AddNewRelationType(const char *typeName,
 				   Oid typeNamespace,
 				   Oid new_rel_oid,
 				   char new_rel_kind,
+<<<<<<< HEAD
 				   Oid ownerid);
+=======
+				   Oid ownerid,
+				   Oid new_array_type);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static void RelationRemoveInheritance(Oid relid);
 static Oid StoreRelCheck(Relation rel, char *ccname, char *ccbin, Oid conoid);
 static Node* cookConstraint (ParseState *pstate,
@@ -501,7 +511,7 @@ CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind)
 					   NameStr(tupdesc->attrs[i]->attname)) == 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_COLUMN),
-						 errmsg("column name \"%s\" is duplicated",
+						 errmsg("column name \"%s\" specified more than once",
 								NameStr(tupdesc->attrs[j]->attname))));
 		}
 	}
@@ -512,7 +522,8 @@ CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind)
 	for (i = 0; i < natts; i++)
 	{
 		CheckAttributeType(NameStr(tupdesc->attrs[i]->attname),
-						   tupdesc->attrs[i]->atttypid);
+						   tupdesc->attrs[i]->atttypid,
+						   NIL /* assume we're creating a new rowtype */);
 	}
 }
 
@@ -520,15 +531,25 @@ CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind)
  *		CheckAttributeType
  *
  *		Verify that the proposed datatype of an attribute is legal.
- *		This is needed because there are types (and pseudo-types)
+ *		This is needed mainly because there are types (and pseudo-types)
  *		in the catalogs that we do not support as elements of real tuples.
+ *		We also check some other properties required of a table column.
+ *
+ * If the attribute is being proposed for addition to an existing table or
+ * composite type, pass a one-element list of the rowtype OID as
+ * containing_rowtypes.  When checking a to-be-created rowtype, it's
+ * sufficient to pass NIL, because there could not be any recursive reference
+ * to a not-yet-existing rowtype.
  * --------------------------------
  */
 void
-CheckAttributeType(const char *attname, Oid atttypid)
+CheckAttributeType(const char *attname, Oid atttypid,
+				   List *containing_rowtypes)
 {
 	char		att_typtype = get_typtype(atttypid);
+	Oid			att_typelem;
 
+<<<<<<< HEAD
 	/*
 	 * Warn user, but don't fail, if column to be created has UNKNOWN type
 	 * (usually as a result of a 'retrieve into' - jolly)
@@ -539,19 +560,81 @@ CheckAttributeType(const char *attname, Oid atttypid)
 	if (Gp_role == GP_ROLE_EXECUTE)
 		return;
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (atttypid == UNKNOWNOID)
+	{
+		/*
+		 * Warn user, but don't fail, if column to be created has UNKNOWN type
+		 * (usually as a result of a 'retrieve into' - jolly)
+		 */
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("column \"%s\" has type \"unknown\"", attname),
 				 errdetail("Proceeding with relation creation anyway.")));
-	else if (att_typtype == 'p')
+	}
+	else if (att_typtype == TYPTYPE_PSEUDO)
 	{
-		/* Special hack for pg_statistic: allow ANYARRAY during initdb */
+		/*
+		 * Refuse any attempt to create a pseudo-type column, except for a
+		 * special hack for pg_statistic: allow ANYARRAY during initdb
+		 */
 		if (atttypid != ANYARRAYOID || IsUnderPostmaster)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 					 errmsg("column \"%s\" has pseudo-type %s",
 							attname, format_type_be(atttypid))));
+	}
+	else if (att_typtype == TYPTYPE_COMPOSITE)
+	{
+		/*
+		 * For a composite type, recurse into its attributes.  You might think
+		 * this isn't necessary, but since we allow system catalogs to break
+		 * the rule, we have to guard against the case.
+		 */
+		Relation	relation;
+		TupleDesc	tupdesc;
+		int			i;
+
+		/*
+		 * Check for self-containment.  Eventually we might be able to allow
+		 * this (just return without complaint, if so) but it's not clear how
+		 * many other places would require anti-recursion defenses before it
+		 * would be safe to allow tables to contain their own rowtype.
+		 */
+		if (list_member_oid(containing_rowtypes, atttypid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("composite type %s cannot be made a member of itself",
+							format_type_be(atttypid))));
+
+		containing_rowtypes = lcons_oid(atttypid, containing_rowtypes);
+
+		relation = relation_open(get_typ_typrelid(atttypid), AccessShareLock);
+
+		tupdesc = RelationGetDescr(relation);
+
+		for (i = 0; i < tupdesc->natts; i++)
+		{
+			Form_pg_attribute attr = tupdesc->attrs[i];
+
+			if (attr->attisdropped)
+				continue;
+			CheckAttributeType(NameStr(attr->attname), attr->atttypid,
+							   containing_rowtypes);
+		}
+
+		relation_close(relation, AccessShareLock);
+
+		containing_rowtypes = list_delete_first(containing_rowtypes);
+	}
+	else if (OidIsValid((att_typelem = get_element_type(atttypid))))
+	{
+		/*
+		 * Must recurse into array types, too, in case they are composite.
+		 */
+		CheckAttributeType(attname, att_typelem,
+						   containing_rowtypes);
 	}
 }
 
@@ -1079,13 +1162,10 @@ AddNewRelationTuple(Relation pg_class_desc,
 	{
 		/*
 		 * Initialize to the minimum XID that could put tuples in the table.
-		 * We know that no xacts older than RecentXmin are still running,
-		 * so that will do.
+		 * We know that no xacts older than RecentXmin are still running, so
+		 * that will do.
 		 */
-		if (!IsBootstrapProcessingMode())
-			new_rel_reltup->relfrozenxid = RecentXmin;
-		else
-			new_rel_reltup->relfrozenxid = FirstNormalTransactionId;
+		new_rel_reltup->relfrozenxid = RecentXmin;
 	}
 	else
 	{
@@ -1121,17 +1201,27 @@ AddNewRelationType(const char *typeName,
 				   Oid typeNamespace,
 				   Oid new_rel_oid,
 				   char new_rel_kind,
+<<<<<<< HEAD
 				   Oid ownerid)
+=======
+				   Oid ownerid,
+				   Oid new_array_type)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	return
-		TypeCreate(typeName,	/* type name */
+		TypeCreate(InvalidOid,	/* no predetermined OID */
+				   typeName,	/* type name */
 				   typeNamespace,		/* type namespace */
 				   new_rel_oid, /* relation oid */
 				   new_rel_kind,	/* relation kind */
+<<<<<<< HEAD
 				   ownerid,             /* owner's ID */
+=======
+				   ownerid,		/* owner's ID */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				   -1,			/* internal size (varlena) */
-				   'c',			/* type-type (complex) */
-				   ',',			/* default array delimiter */
+				   TYPTYPE_COMPOSITE,	/* type-type (composite) */
+				   DEFAULT_TYPDELIM,	/* default array delimiter */
 				   F_RECORD_IN, /* input procedure */
 				   F_RECORD_OUT,	/* output procedure */
 				   F_RECORD_RECV,		/* receive procedure */
@@ -1140,6 +1230,8 @@ AddNewRelationType(const char *typeName,
 				   InvalidOid,	/* typmodout procedure - none */
 				   InvalidOid,	/* analyze procedure - default */
 				   InvalidOid,	/* array element type - irrelevant */
+				   false,		/* this is not an array type */
+				   new_array_type,		/* array type if any */
 				   InvalidOid,	/* domain base type - irrelevant */
 				   NULL,		/* default value - none */
 				   NULL,		/* default binary representation */
@@ -1337,10 +1429,15 @@ heap_create_with_catalog(const char *relname,
 	Relation	pg_class_desc;
 	Relation	gp_relation_node_desc;
 	Relation	new_rel_desc;
+	Oid			old_type_oid;
 	Oid			new_type_oid;
+<<<<<<< HEAD
 	bool		appendOnlyRel;
 	StdRdOptions *stdRdOptions;
 	int			safefswritesize = gp_safefswritesize;
+=======
+	Oid			new_array_oid = InvalidOid;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	pg_class_desc = heap_open(RelationRelationId, RowExclusiveLock);
 
@@ -1409,6 +1506,46 @@ heap_create_with_catalog(const char *relname,
 				 errmsg("relation \"%s\" already exists", relname)));
 
 	/*
+	 * Since we are going to create a rowtype as well, also check for
+	 * collision with an existing type name.  If there is one and it's an
+	 * autogenerated array, we can rename it out of the way; otherwise we can
+	 * at least give a good error message.
+	 */
+	old_type_oid = GetSysCacheOid(TYPENAMENSP,
+								  CStringGetDatum(relname),
+								  ObjectIdGetDatum(relnamespace),
+								  0, 0);
+	if (OidIsValid(old_type_oid))
+	{
+		if (!moveArrayTypeName(old_type_oid, relname, relnamespace))
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("type \"%s\" already exists", relname),
+			   errhint("A relation has an associated type of the same name, "
+					   "so you must use a name that doesn't conflict "
+					   "with any existing type.")));
+	}
+
+	/*
+	 * Validate shared/non-shared tablespace (must check this before doing
+	 * GetNewRelFileNode, to prevent Assert therein)
+	 */
+	if (shared_relation)
+	{
+		if (reltablespace != GLOBALTABLESPACE_OID)
+			/* elog since this is not a user-facing error */
+			elog(ERROR,
+				 "shared relations must be placed in pg_global tablespace");
+	}
+	else
+	{
+		if (reltablespace == GLOBALTABLESPACE_OID)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("only shared relations can be placed in pg_global tablespace")));
+	}
+
+	/*
 	 * Allocate an OID for the relation, unless we were told what to use.
 	 *
 	 * The OID will be the relfilenode as well, so make sure it doesn't
@@ -1450,9 +1587,27 @@ heap_create_with_catalog(const char *relname,
 	}
 
 	/*
-	 * since defining a relation also defines a complex type, we add a new
+	 * Decide whether to create an array type over the relation's rowtype. We
+	 * do not create any array types for system catalogs (ie, those made
+	 * during initdb).	We create array types for regular relations, views,
+	 * and composite types ... but not, eg, for toast tables or sequences.
+	 */
+	if (IsUnderPostmaster && (relkind == RELKIND_RELATION ||
+							  relkind == RELKIND_VIEW ||
+							  relkind == RELKIND_COMPOSITE_TYPE))
+	{
+		/* OK, so pre-assign a type OID for the array type */
+		Relation	pg_type = heap_open(TypeRelationId, AccessShareLock);
+
+		new_array_oid = GetNewOid(pg_type);
+		heap_close(pg_type, AccessShareLock);
+	}
+
+	/*
+	 * Since defining a relation also defines a complex type, we add a new
 	 * system type corresponding to the new relation.
 	 *
+<<<<<<< HEAD
 	 * NOTE: we could get a unique-index failure here, in case the same name
 	 * has already been used for a type.
 	 *
@@ -1502,6 +1657,58 @@ heap_create_with_catalog(const char *relname,
 					   *comptypeOid,
 					   0);
 		}
+=======
+	 * NOTE: we could get a unique-index failure here, in case someone else is
+	 * creating the same type name in parallel but hadn't committed yet when
+	 * we checked for a duplicate name above.
+	 */
+	new_type_oid = AddNewRelationType(relname,
+									  relnamespace,
+									  relid,
+									  relkind,
+									  ownerid,
+									  new_array_oid);
+
+	/*
+	 * Now make the array type if wanted.
+	 */
+	if (OidIsValid(new_array_oid))
+	{
+		char	   *relarrayname;
+
+		relarrayname = makeArrayTypeName(relname, relnamespace);
+
+		TypeCreate(new_array_oid,		/* force the type's OID to this */
+				   relarrayname,	/* Array type name */
+				   relnamespace,	/* Same namespace as parent */
+				   InvalidOid,	/* Not composite, no relationOid */
+				   0,			/* relkind, also N/A here */
+				   ownerid,		/* owner's ID */
+				   -1,			/* Internal size (varlena) */
+				   TYPTYPE_BASE,	/* Not composite - typelem is */
+				   DEFAULT_TYPDELIM,	/* default array delimiter */
+				   F_ARRAY_IN,	/* array input proc */
+				   F_ARRAY_OUT, /* array output proc */
+				   F_ARRAY_RECV,	/* array recv (bin) proc */
+				   F_ARRAY_SEND,	/* array send (bin) proc */
+				   InvalidOid,	/* typmodin procedure - none */
+				   InvalidOid,	/* typmodout procedure - none */
+				   InvalidOid,	/* analyze procedure - default */
+				   new_type_oid,	/* array element type - the rowtype */
+				   true,		/* yes, this is an array type */
+				   InvalidOid,	/* this has no array type */
+				   InvalidOid,	/* domain base type - irrelevant */
+				   NULL,		/* default value - none */
+				   NULL,		/* default binary representation */
+				   false,		/* passed by reference */
+				   'd',			/* alignment - must be the largest! */
+				   'x',			/* fully TOASTable */
+				   -1,			/* typmod */
+				   0,			/* array dimensions for typBaseType */
+				   false);		/* Type NOT NULL */
+
+		pfree(relarrayname);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	if (comptypeOid)
@@ -2169,6 +2376,13 @@ heap_drop_with_catalog(Oid relid)
 	is_external_rel = RelationIsExternal(rel);
 
 	/*
+	 * There can no longer be anyone *else* touching the relation, but we
+	 * might still have open queries or cursors, or pending trigger events,
+	 * in our own session.
+	 */
+	CheckTableNotInUse(rel, "DROP TABLE");
+
+	/*
 	 * Schedule unlinking of the relation's physical file at commit.
 	 */
 	if (relkind != RELKIND_VIEW &&
@@ -2579,8 +2793,27 @@ AddRelationConstraints(Relation rel,
 			expr = stringToNode(colDef->cooked_default);
 		}
 
+<<<<<<< HEAD
 		colDef->default_oid = StoreAttrDefault(rel, colDef->attnum,
 											   expr, colDef->default_oid);
+=======
+		/*
+		 * If the expression is just a NULL constant, we do not bother to make
+		 * an explicit pg_attrdef entry, since the default behavior is
+		 * equivalent.
+		 *
+		 * Note a nonobvious property of this test: if the column is of a
+		 * domain type, what we'll get is not a bare null Const but a
+		 * CoerceToDomain expr, so we will not discard the default.  This is
+		 * critical because the column default needs to be retained to
+		 * override any default that the domain might have.
+		 */
+		if (expr == NULL ||
+			(IsA(expr, Const) &&((Const *) expr)->constisnull))
+			continue;
+
+		StoreAttrDefault(rel, colDef->attnum, nodeToString(expr));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		cooked = (CookedConstraint *) palloc(sizeof(CookedConstraint));
 		cooked->contype = CONSTR_DEFAULT;
@@ -3018,7 +3251,7 @@ RelationTruncateIndexes(Relation heapRelation)
 
 		/* Initialize the index and rebuild */
 		/* Note: we do not need to re-establish pkey setting */
-		index_build(heapRelation, currentIndex, indexInfo, false);
+		index_build(heapRelation, currentIndex, indexInfo, false, true);
 
 		/* We're done with this index */
 		index_close(currentIndex, NoLock);

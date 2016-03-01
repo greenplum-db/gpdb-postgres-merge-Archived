@@ -3,12 +3,15 @@
  * schemacmds.c
  *	  schema creation/manipulation commands
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.43 2007/02/01 19:10:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.49.2.1 2009/12/09 21:58:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +29,7 @@
 #include "commands/dbcommands.h"
 #include "commands/schemacmds.h"
 #include "miscadmin.h"
-#include "parser/analyze.h"
+#include "parser/parse_utilcmd.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -51,8 +54,13 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 {
 	const char *schemaName = stmt->schemaname;
 	const char *authId = stmt->authid;
+<<<<<<< HEAD
 	const bool  istemp = stmt->istemp;
 	Oid			namespaceId = 0;
+=======
+	Oid			namespaceId;
+	OverrideSearchPath *overridePath;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
 	Oid			owner_uid;
@@ -177,22 +185,29 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	 * well as the default creation target namespace.  This will be undone at
 	 * the end of this routine, or upon error.
 	 */
-	PushSpecialNamespace(namespaceId);
+	overridePath = GetOverrideSearchPath(CurrentMemoryContext);
+	overridePath->schemas = lcons_oid(namespaceId, overridePath->schemas);
+	/* XXX should we clear overridePath->useTemp? */
+	PushOverrideSearchPath(overridePath);
 
 	/*
 	 * Examine the list of commands embedded in the CREATE SCHEMA command, and
 	 * reorganize them into a sequentially executable order with no forward
-	 * references.	Note that the result is still a list of raw parsetrees in
-	 * need of parse analysis --- we cannot, in general, run analyze.c on one
-	 * statement until we have actually executed the prior ones.
+	 * references.	Note that the result is still a list of raw parsetrees ---
+	 * we cannot, in general, run parse analysis on one statement until we
+	 * have actually executed the prior ones.
 	 */
-	parsetree_list = analyzeCreateSchemaStmt(stmt);
+	parsetree_list = transformCreateSchemaStmt(stmt);
 
 	/*
-	 * Analyze and execute each command contained in the CREATE SCHEMA
+	 * Execute each command contained in the CREATE SCHEMA.  Since the grammar
+	 * allows only utility commands in CREATE SCHEMA, there is no need to pass
+	 * them through parse_analyze() or the rewriter; we can just hand them
+	 * straight to ProcessUtility.
 	 */
 	foreach(parsetree_item, parsetree_list)
 	{
+<<<<<<< HEAD
 		Node	   *parsetree = (Node *) lfirst(parsetree_item);
 		List	   *querytree_list;
 		ListCell   *querytree_item;
@@ -215,10 +230,23 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 			/* make sure later steps can see the object created here */
 			CommandCounterIncrement();
 		}
+=======
+		Node	   *stmt = (Node *) lfirst(parsetree_item);
+
+		/* do this step */
+		ProcessUtility(stmt,
+					   queryString,
+					   NULL,
+					   false,	/* not top level */
+					   None_Receiver,
+					   NULL);
+		/* make sure later steps can see the object created here */
+		CommandCounterIncrement();
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	/* Reset search path to normal state */
-	PopSpecialNamespace(namespaceId);
+	PopOverrideSearchPath();
 
 	/* Reset current user and security context */
 	SetUserIdAndSecContext(saved_uid, save_sec_context);

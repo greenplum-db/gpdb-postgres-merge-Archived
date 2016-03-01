@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.28 2007/02/13 19:39:42 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.39.2.3 2009/11/23 09:59:00 heikki Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -60,11 +60,15 @@
 #include "storage/procarray.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
+<<<<<<< HEAD
 #include "utils/faultinjector.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "access/distributedlog.h"
 #include "storage/backendid.h"
+=======
+#include "utils/memutils.h"
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #include "cdb/cdbtm.h"
 #include "cdb/cdbvars.h"
@@ -118,9 +122,15 @@ extern List *expectedTLIs;
 
 typedef struct GlobalTransactionData
 {
+<<<<<<< HEAD
 	PGPROC          proc;                   /* dummy proc */
 	TimestampTz prepared_at;        /* time of preparation */
 	XLogRecPtr  prepare_begin_lsn;  /* XLOG begging offset of prepare record */
+=======
+	PGPROC		proc;			/* dummy proc */
+	BackendId	dummyBackendId;	/* similar to backend id for backends */
+	TimestampTz prepared_at;	/* time of preparation */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	XLogRecPtr	prepare_lsn;	/* XLOG offset of prepare record */
 	Oid			owner;			/* ID of user that executed the xact */
 	BackendId	locking_backend; /* backend currently working on the xact */
@@ -422,6 +432,20 @@ TwoPhaseShmemInit(void)
 		{
 			gxacts[i].proc.links.next = TwoPhaseState->freeGXacts;
 			TwoPhaseState->freeGXacts = MAKE_OFFSET(&gxacts[i]);
+
+			/*
+			 * Assign a unique ID for each dummy proc, so that the range of
+			 * dummy backend IDs immediately follows the range of normal
+			 * backend IDs. We don't dare to assign a real backend ID to
+			 * dummy procs, because prepared transactions don't take part in
+			 * cache invalidation like a real backend ID would imply, but
+			 * having a unique ID for them is nevertheless handy. This
+			 * arrangement allows you to allocate an array of size
+			 * (MaxBackends + max_prepared_xacts + 1), and have a slot for
+			 * every backend and prepared transaction. Currently multixact.c
+			 * uses that technique.
+			 */
+			gxacts[i].dummyBackendId = MaxBackends + 1 + i;
 		}
 	}
 	else
@@ -560,15 +584,23 @@ MarkAsPreparing(TransactionId xid,
 	MemSet(&gxact->proc, 0, sizeof(PGPROC));
 	SHMQueueElemInit(&(gxact->proc.links));
 	gxact->proc.waitStatus = STATUS_OK;
+	/* We set up the gxact's VXID as InvalidBackendId/XID */
+	gxact->proc.lxid = (LocalTransactionId) xid;
 	gxact->proc.xid = xid;
 	gxact->proc.xmin = InvalidTransactionId;
 	gxact->proc.pid = 0;
+	gxact->proc.backendId = InvalidBackendId;
 	gxact->proc.databaseId = databaseid;
 	gxact->proc.roleId = owner;
+<<<<<<< HEAD
 	gxact->proc.inVacuum = false;
 	gxact->proc.isAutovacuum = false;
 	gxact->proc.serializableIsoLevel = false;
 	gxact->proc.inDropTransaction = false;
+=======
+	gxact->proc.inCommit = false;
+	gxact->proc.vacuumFlags = 0;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	gxact->proc.lwWaiting = false;
 	gxact->proc.lwExclusive = false;
 	gxact->proc.lwWaitLink = NULL;
@@ -675,7 +707,7 @@ MarkAsPrepared(GlobalTransaction gxact)
 		 gxact->gid);
 
 	/*
-	 * Put it into the global ProcArray so TransactionIdInProgress considers
+	 * Put it into the global ProcArray so TransactionIdIsInProgress considers
 	 * the XID as still running.
 	 */
 	ProcArrayAdd(&gxact->proc);
@@ -745,15 +777,15 @@ LockGXact(const char *gid, Oid user, bool raiseErrorIfNotFound)
 
 
 		/*
-		 * Note: it probably would be possible to allow committing from another
-		 * database; but at the moment NOTIFY is known not to work and there
-		 * may be some other issues as well.  Hence disallow until someone
-		 * gets motivated to make it work.
+		 * Note: it probably would be possible to allow committing from
+		 * another database; but at the moment NOTIFY is known not to work and
+		 * there may be some other issues as well.	Hence disallow until
+		 * someone gets motivated to make it work.
 		 */
 		if (MyDatabaseId != gxact->proc.databaseId)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("prepared transaction belongs to another database"),
+				  errmsg("prepared transaction belongs to another database"),
 					 errhint("Connect to the database where the transaction was prepared to finish it.")));
 
 		/* OK for me to lock it */
@@ -1004,6 +1036,22 @@ pg_prepared_xact(PG_FUNCTION_ARGS)
 
 /*
  * TwoPhaseGetDummyProc
+ *		Get the dummy backend ID for prepared transaction specified by XID
+ *
+ * Dummy backend IDs are similar to real backend IDs of real backends.
+ * They start at MaxBackends + 1, and are unique across all currently active
+ * real backends and prepared transactions.
+ */
+BackendId
+TwoPhaseGetDummyBackendId(TransactionId xid)
+{
+	PGPROC *proc = TwoPhaseGetDummyProc(xid);
+
+	return ((GlobalTransaction) proc)->dummyBackendId;
+}
+
+/*
+ * TwoPhaseGetDummyProc
  *		Get the PGPROC that represents a prepared transaction specified by XID
  */
 PGPROC *
@@ -1184,11 +1232,16 @@ StartPrepare(GlobalTransaction gxact)
 	hdr.prepared_at = gxact->prepared_at;
 	hdr.owner = gxact->owner;
 	hdr.nsubxacts = xactGetCommittedChildren(&children);
+<<<<<<< HEAD
 	persistentPrepareSerializeLen =
 		PersistentEndXactRec_FetchObjectsFromSmgr(
 			&persistentPrepareObjects,
 			EndXactRecKind_Prepare,
 			&hdr.persistentPrepareObjectCount);
+=======
+	hdr.ncommitrels = smgrGetPendingDeletes(true, &commitrels, NULL);
+	hdr.nabortrels = smgrGetPendingDeletes(false, &abortrels, NULL);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	StrNCpy(hdr.gid, gxact->gid, GIDSIZE);
 
 	save_state_data(&hdr, sizeof(TwoPhaseFileHeader));
@@ -1199,7 +1252,6 @@ StartPrepare(GlobalTransaction gxact)
 		save_state_data(children, hdr.nsubxacts * sizeof(TransactionId));
 		/* While we have the child-xact data, stuff it in the gxact too */
 		GXactLoadSubxactData(gxact, hdr.nsubxacts, children);
-		pfree(children);
 	}
 	if (hdr.persistentPrepareObjectCount > 0)
 	{
@@ -1248,6 +1300,43 @@ void
 EndPrepare(GlobalTransaction gxact)
 {
 	TransactionId xid = gxact->proc.xid;
+<<<<<<< HEAD
+=======
+	TwoPhaseFileHeader *hdr;
+	char		path[MAXPGPATH];
+	XLogRecData *record;
+	pg_crc32	statefile_crc;
+	pg_crc32	bogus_crc;
+	int			fd;
+
+	/* Add the end sentinel to the list of 2PC records */
+	RegisterTwoPhaseRecord(TWOPHASE_RM_END_ID, 0,
+						   NULL, 0);
+
+	/* Go back and fill in total_len in the file header record */
+	hdr = (TwoPhaseFileHeader *) records.head->data;
+	Assert(hdr->magic == TWOPHASE_MAGIC);
+	hdr->total_len = records.total_len + sizeof(pg_crc32);
+
+	/*
+	 * If the file size exceeds MaxAllocSize, we won't be able to read it in
+	 * ReadTwoPhaseFile. Check for that now, rather than fail at commit time.
+	 */
+	if (hdr->total_len > MaxAllocSize)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("two-phase state file maximum length exceeded")));
+
+	/*
+	 * Create the 2PC state file.
+	 *
+	 * Note: because we use BasicOpenFile(), we are responsible for ensuring
+	 * the FD gets closed in any error exit path.  Once we get into the
+	 * critical section, though, it doesn't matter since any failure causes
+	 * PANIC anyway.
+	 */
+	TwoPhaseFilePath(path, xid);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	MIRRORED_LOCK_DECLARE;
 	CHECKPOINT_START_LOCK_DECLARE;
@@ -1267,11 +1356,30 @@ EndPrepare(GlobalTransaction gxact)
 	MIRRORED_LOCK;
 
 	/*
+<<<<<<< HEAD
 	 * We have to lock out checkpoint start here, too; otherwise a checkpoint
 	 * starting immediately after the WAL record is inserted could complete
 	 * without fsync'ing our state file.  (This is essentially the same kind
 	 * of race condition as the COMMIT-to-clog-write case that
 	 * RecordTransactionCommit uses CheckpointStartLock for; see notes there.)
+=======
+	 * The state file isn't valid yet, because we haven't written the correct
+	 * CRC yet.  Before we do that, insert entry in WAL and flush it to disk.
+	 *
+	 * Between the time we have written the WAL entry and the time we write
+	 * out the correct state file CRC, we have an inconsistency: the xact is
+	 * prepared according to WAL but not according to our on-disk state. We
+	 * use a critical section to force a PANIC if we are unable to complete
+	 * the write --- then, WAL replay should repair the inconsistency.	The
+	 * odds of a PANIC actually occurring should be very tiny given that we
+	 * were able to write the bogus CRC above.
+	 *
+	 * We have to set inCommit here, too; otherwise a checkpoint starting
+	 * immediately after the WAL record is inserted could complete without
+	 * fsync'ing our state file.  (This is essentially the same kind of race
+	 * condition as the COMMIT-to-clog-write case that RecordTransactionCommit
+	 * uses inCommit for; see notes there.)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 *
 	 * We save the PREPARE record's location in the gxact for later use by
 	 * CheckPointTwoPhase.
@@ -1282,11 +1390,15 @@ EndPrepare(GlobalTransaction gxact)
 
 	START_CRIT_SECTION();
 
+<<<<<<< HEAD
 	gxact->prepare_lsn       = XLogInsert(RM_XACT_ID, XLOG_XACT_PREPARE, records.head);
 	gxact->prepare_begin_lsn = XLogLastInsertBeginLoc();
 
 	/* Add the prepared record to our global list */
 	add_recover_post_checkpoint_prepared_transactions_map_entry(xid, &gxact->prepare_begin_lsn, "EndPrepare");
+=======
+	MyProc->inCommit = true;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	XLogFlush(gxact->prepare_lsn);
 
@@ -1316,8 +1428,8 @@ EndPrepare(GlobalTransaction gxact)
 	 * NB: a side effect of this is to make a dummy ProcArray entry for the
 	 * prepared XID.  This must happen before we clear the XID from MyProc,
 	 * else there is a window where the XID is not running according to
-	 * TransactionIdInProgress, and onlookers would be entitled to assume the
-	 * xact crashed.  Instead we have a window where the same XID appears
+	 * TransactionIdIsInProgress, and onlookers would be entitled to assume
+	 * the xact crashed.  Instead we have a window where the same XID appears
 	 * twice in ProcArray, which is OK.
 	 */
 	MarkAsPrepared(gxact);
@@ -1334,10 +1446,15 @@ EndPrepare(GlobalTransaction gxact)
 	END_CRIT_SECTION();
 
 	/*
-	 * Now we can release the checkpoint start lock: a checkpoint starting
-	 * after this will certainly see the gxact as a candidate for fsyncing.
+	 * Now we can mark ourselves as out of the commit critical section: a
+	 * checkpoint starting after this will certainly see the gxact as a
+	 * candidate for fsyncing.
 	 */
+<<<<<<< HEAD
 	CHECKPOINT_START_UNLOCK;
+=======
+	MyProc->inCommit = false;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	MIRRORED_UNLOCK;
 
@@ -1387,10 +1504,75 @@ PrepareIntentAppendOnlyCommitWork(char *gid)
 	gxact->prepareAppendOnlyIntentCount++;
 }
 
+<<<<<<< HEAD
 void
 PrepareDecrAppendOnlyCommitWork(char *gid)
 {
 	GlobalTransaction gxact;
+=======
+	/*
+	 * Check file length.  We can determine a lower bound pretty easily. We
+	 * set an upper bound to avoid palloc() failure on a corrupt file, though
+	 * we can't guarantee that we won't get an out of memory error anyway,
+	 * even on a valid file.
+	 */
+	if (fstat(fd, &stat))
+	{
+		close(fd);
+		ereport(WARNING,
+				(errcode_for_file_access(),
+				 errmsg("could not stat two-phase state file \"%s\": %m",
+						path)));
+		return NULL;
+	}
+
+	if (stat.st_size < (MAXALIGN(sizeof(TwoPhaseFileHeader)) +
+						MAXALIGN(sizeof(TwoPhaseRecordOnDisk)) +
+						sizeof(pg_crc32)) ||
+		stat.st_size > MaxAllocSize)
+	{
+		close(fd);
+		return NULL;
+	}
+
+	crc_offset = stat.st_size - sizeof(pg_crc32);
+	if (crc_offset != MAXALIGN(crc_offset))
+	{
+		close(fd);
+		return NULL;
+	}
+
+	/*
+	 * OK, slurp in the file.
+	 */
+	buf = (char *) palloc(stat.st_size);
+
+	if (read(fd, buf, stat.st_size) != stat.st_size)
+	{
+		close(fd);
+		ereport(WARNING,
+				(errcode_for_file_access(),
+				 errmsg("could not read two-phase state file \"%s\": %m",
+						path)));
+		pfree(buf);
+		return NULL;
+	}
+
+	close(fd);
+
+	hdr = (TwoPhaseFileHeader *) buf;
+	if (hdr->magic != TWOPHASE_MAGIC || hdr->total_len != stat.st_size)
+	{
+		pfree(buf);
+		return NULL;
+	}
+
+	INIT_CRC32(calc_crc);
+	COMP_CRC32(calc_crc, buf, crc_offset);
+	FIN_CRC32(calc_crc);
+
+	file_crc = *((pg_crc32 *) (buf + crc_offset));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	gxact = FindPrepareGXact(gid);
 
@@ -1414,6 +1596,7 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	char	   *bufptr;
 	char	   *dummy;
 	TwoPhaseFileHeader *hdr;
+	TransactionId latestXid;
 	TransactionId *children;
 
 	PersistentEndXactRecObjects persistentPrepareObjects;
@@ -1541,6 +1724,9 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	 */
 	CHECKPOINT_START_LOCK;
 
+	/* compute latestXid among all children */
+	latestXid = TransactionIdLatest(xid, hdr->nsubxacts, children);
+
 	/*
 	 * The order of operations here is critical: make the XLOG entry for
 	 * commit or abort, then mark the transaction committed or aborted in
@@ -1561,7 +1747,11 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 
 	prepareAppendOnlyIntentCount = gxact->prepareAppendOnlyIntentCount;
 
+<<<<<<< HEAD
 	ProcArrayRemove(&gxact->proc, /* forPrepare */ true, isCommit);
+=======
+	ProcArrayRemove(&gxact->proc, latestXid);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * In case we fail while running the callbacks, mark the gxact invalid so
@@ -1597,6 +1787,12 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	else
 		ProcessRecords(bufptr, xid, twophase_postabort_callbacks);
 
+<<<<<<< HEAD
+=======
+	/* Count the prepared xact as committed or aborted */
+	AtEOXact_PgStat(isCommit);
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/*
 	 * And now we can clean up our mess.
 	 */
@@ -1651,9 +1847,21 @@ ProcessRecords(char *bufptr, TransactionId xid,
 void
 RemoveTwoPhaseFile(TransactionId xid, bool giveWarning)
 {
+<<<<<<< HEAD
 	remove_recover_post_checkpoint_prepared_transactions_map_entry(xid,
         "RemoveTwoPhaseFile: Removing from list");
 
+=======
+	char		path[MAXPGPATH];
+
+	TwoPhaseFilePath(path, xid);
+	if (unlink(path))
+		if (errno != ENOENT || giveWarning)
+			ereport(WARNING,
+					(errcode_for_file_access(),
+				   errmsg("could not remove two-phase state file \"%s\": %m",
+						  path)));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
@@ -1747,6 +1955,7 @@ PrescanPreparedTransactions(void)
 			tfXLogRecPtr = (XLogRecPtr *) &entry->xlogrecptr;
 	}
 
+<<<<<<< HEAD
 	while (tfXLogRecPtr != NULL)
 	{
         if (Debug_persistent_print)
@@ -1761,6 +1970,30 @@ PrescanPreparedTransactions(void)
 		if (TransactionIdDidCommit(xid) == false && TransactionIdDidAbort(xid) == false)
 		{
 			int			i;
+=======
+			/* Read and validate file */
+			buf = ReadTwoPhaseFile(xid);
+			if (buf == NULL)
+			{
+				ereport(WARNING,
+					  (errmsg("removing corrupt two-phase state file \"%s\"",
+							  clde->d_name)));
+				RemoveTwoPhaseFile(xid, true);
+				continue;
+			}
+
+			/* Deconstruct header */
+			hdr = (TwoPhaseFileHeader *) buf;
+			if (!TransactionIdEquals(hdr->xid, xid))
+			{
+				ereport(WARNING,
+					  (errmsg("removing corrupt two-phase state file \"%s\"",
+							  clde->d_name)));
+				RemoveTwoPhaseFile(xid, true);
+				pfree(buf);
+				continue;
+			}
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			/*
 			 * Incorporate xid into the running-minimum result.
@@ -1937,11 +2170,24 @@ RecoverPreparedTransactions(void)
 		for (int iSub = 0; iSub < hdr->nsubxacts; iSub++)
 			SubTransSetParent(subxids[iSub], xid);
 
+<<<<<<< HEAD
 		/*
 		 * Crack open the gid to get the DTM start time and distributed
 		 * transaction id.
 		 */
 		dtxCrackOpenGid(hdr->gid, &distribTimeStamp, &distribXid);
+=======
+			/* Read and validate file */
+			buf = ReadTwoPhaseFile(xid);
+			if (buf == NULL)
+			{
+				ereport(WARNING,
+					  (errmsg("removing corrupt two-phase state file \"%s\"",
+							  clde->d_name)));
+				RemoveTwoPhaseFile(xid, true);
+				continue;
+			}
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/*
 		 * Recreate its GXACT and dummy PGPROC
@@ -1996,7 +2242,7 @@ RecoverPreparedTransactions(void)
  *	RecordTransactionCommitPrepared
  *
  * This is basically the same as RecordTransactionCommit: in particular,
- * we must take the CheckpointStartLock to avoid a race condition.
+ * we must set the inCommit flag to avoid a race condition.
  *
  * We know the transaction made at least one XLOG entry (its PREPARE),
  * so it is never possible to optimize out the commit record.
@@ -2027,6 +2273,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 			persistentPrepareObjects,
 			EndXactRecKind_Commit);
 
+<<<<<<< HEAD
 	/*
 	 * Ensure the caller already has MirroredLock then CheckpointStartLock.
 	 */
@@ -2035,6 +2282,15 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	xlrec.xid = xid;
 	xlrec.crec.xtime = time(NULL);
 	xlrec.crec.persistentCommitObjectCount = persistentCommitObjectCount;
+=======
+	/* See notes in RecordTransactionCommit */
+	MyProc->inCommit = true;
+
+	/* Emit the XLOG commit record */
+	xlrec.xid = xid;
+	xlrec.crec.xact_time = GetCurrentTimestamp();
+	xlrec.crec.nrels = nrels;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	xlrec.crec.nsubxacts = nchildren;
 	rdata[0].data = (char *) (&xlrec);
 	rdata[0].len = MinSizeOfXactCommitPrepared;
@@ -2087,6 +2343,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	}
 	rdata[lastrdata].next = NULL;
 
+<<<<<<< HEAD
 #ifdef FAULT_INJECTOR
 	FaultInjector_InjectFaultIfSet(
 		TwoPhaseTransactionCommitPrepared,
@@ -2098,8 +2355,15 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	recptr = XLogInsert(RM_XACT_ID,
 						XLOG_XACT_COMMIT_PREPARED | XLOG_NO_TRAN,
 						rdata);
+=======
+	recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT_PREPARED, rdata);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
-	/* we don't currently try to sleep before flush here ... */
+	/*
+	 * We don't currently try to sleep before flush here ... nor is there any
+	 * support for async commit of a prepared xact (the very idea is probably
+	 * a contradiction)
+	 */
 
 	/* Flush XLOG to disk */
 	XLogFlush(recptr);
@@ -2129,6 +2393,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	/* to avoid race conditions, the parent must commit first */
 	TransactionIdCommitTree(nchildren, children);
 
+<<<<<<< HEAD
 	/*
 	 * Wait for synchronous replication, if required.
 	 *
@@ -2136,6 +2401,10 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	 * in the procarray and continue to hold locks.
 	 */
 	SyncRepWaitForLSN(recptr);
+=======
+	/* Checkpoint can proceed now */
+	MyProc->inCommit = false;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (persistentCommitBuffer != NULL)
 		pfree(persistentCommitBuffer);
@@ -2181,8 +2450,13 @@ RecordTransactionAbortPrepared(TransactionId xid,
 
 	/* Emit the XLOG abort record */
 	xlrec.xid = xid;
+<<<<<<< HEAD
 	xlrec.arec.xtime = time(NULL);
 	xlrec.arec.persistentAbortObjectCount = persistentAbortObjectCount;
+=======
+	xlrec.arec.xact_time = GetCurrentTimestamp();
+	xlrec.arec.nrels = nrels;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	xlrec.arec.nsubxacts = nchildren;
 	rdata[0].data = (char *) (&xlrec);
 	rdata[0].len = MinSizeOfXactAbortPrepared;
@@ -2234,6 +2508,7 @@ RecordTransactionAbortPrepared(TransactionId xid,
 	}
 	rdata[lastrdata].next = NULL;
 
+<<<<<<< HEAD
 #ifdef FAULT_INJECTOR
 	FaultInjector_InjectFaultIfSet(
 		TwoPhaseTransactionAbortPrepared,
@@ -2245,6 +2520,9 @@ RecordTransactionAbortPrepared(TransactionId xid,
 	recptr = XLogInsert(RM_XACT_ID,
 						XLOG_XACT_ABORT_PREPARED | XLOG_NO_TRAN,
 						rdata);
+=======
+	recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_ABORT_PREPARED, rdata);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Always flush, since we're about to remove the 2PC state file */
 	XLogFlush(recptr);

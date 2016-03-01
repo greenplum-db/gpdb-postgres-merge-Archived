@@ -1,7 +1,11 @@
+<<<<<<< HEAD
 $PostgreSQL: pgsql/src/backend/catalog/README,v 1.13 2008/03/21 13:23:28 momjian Exp $
 
 System Catalog
 ==============
+=======
+$PostgreSQL: pgsql/src/backend/catalog/README,v 1.11 2007/05/11 17:57:11 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 This directory contains .c files that manipulate the system catalogs;
 src/include/catalog contains the .h files that define the structure

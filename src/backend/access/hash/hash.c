@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.93 2007/01/20 18:43:35 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.98.2.1 2008/11/13 17:42:18 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -67,8 +67,13 @@ hashbuild(PG_FUNCTION_ARGS)
 	buildstate.indtuples = 0;
 
 	/* do the heap scan */
+<<<<<<< HEAD
 	reltuples = IndexBuildScan(heap, index, indexInfo,
 							   hashbuildCallback, (void *) &buildstate);
+=======
+	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
+								   hashbuildCallback, (void *) &buildstate);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Return statistics
@@ -200,11 +205,11 @@ hashgettuple(PG_FUNCTION_ARGS)
 		if (scan->kill_prior_tuple)
 		{
 			/*
-			 * Yes, so mark it by setting the LP_DELETE bit in the item flags.
+			 * Yes, so mark it by setting the LP_DEAD state in the item flags.
 			 */
 			offnum = ItemPointerGetOffsetNumber(&(so->hashso_curpos));
 			page = BufferGetPage(so->hashso_curbuf);
-			PageGetItemId(page, offnum)->lp_flags |= LP_DELETE;
+			ItemIdMarkDead(PageGetItemId(page, offnum));
 
 			/*
 			 * Since this can be redone later if needed, it's treated the same
@@ -231,7 +236,7 @@ hashgettuple(PG_FUNCTION_ARGS)
 		{
 			offnum = ItemPointerGetOffsetNumber(&(so->hashso_curpos));
 			page = BufferGetPage(so->hashso_curbuf);
-			if (!ItemIdDeleted(PageGetItemId(page, offnum)))
+			if (!ItemIdIsDead(PageGetItemId(page, offnum)))
 				break;
 			res = _hash_next(scan, dir);
 		}
@@ -300,7 +305,7 @@ hashgetmulti(PG_FUNCTION_ARGS)
 
 				offnum = ItemPointerGetOffsetNumber(&(so->hashso_curpos));
 				page = BufferGetPage(so->hashso_curbuf);
-				if (!ItemIdDeleted(PageGetItemId(page, offnum)))
+				if (!ItemIdIsDead(PageGetItemId(page, offnum)))
 					break;
 				res = _hash_next(scan, ForwardScanDirection);
 			}
@@ -530,12 +535,16 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 	 * array cannot change under us; and it beats rereading the metapage for
 	 * each bucket.
 	 */
+<<<<<<< HEAD
 	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ);
 	_hash_checkpage(rel, metabuf, LH_META_PAGE);
+=======
+	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	metap = (HashMetaPage) BufferGetPage(metabuf);
 	orig_maxbucket = metap->hashm_maxbucket;
 	orig_ntuples = metap->hashm_ntuples;
@@ -576,8 +585,9 @@ loop_top:
 
 			vacuum_delay_point();
 
-			buf = _hash_getbuf(rel, blkno, HASH_WRITE);
-			_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
+			buf = _hash_getbuf_with_strategy(rel, blkno, HASH_WRITE,
+										   LH_BUCKET_PAGE | LH_OVERFLOW_PAGE,
+											 info->strategy);
 			page = BufferGetPage(buf);
 			opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 			Assert(opaque->hasho_bucket == cur_bucket);
@@ -625,7 +635,8 @@ loop_top:
 
 		/* If we deleted anything, try to compact free space */
 		if (bucket_dirty)
-			_hash_squeezebucket(rel, cur_bucket, bucket_blkno);
+			_hash_squeezebucket(rel, cur_bucket, bucket_blkno,
+								info->strategy);
 
 		/* Release bucket lock */
 		_hash_droplock(rel, bucket_blkno, HASH_EXCLUSIVE);
@@ -635,8 +646,7 @@ loop_top:
 	}
 
 	/* Write-lock metapage and check for split since we started */
-	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_WRITE);
-	_hash_checkpage(rel, metabuf, LH_META_PAGE);
+	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_WRITE, LH_META_PAGE);
 	metap = (HashMetaPage) BufferGetPage(metabuf);
 
 	if (cur_maxbucket != metap->hashm_maxbucket)

@@ -2,10 +2,17 @@
  *
  *	  EUC_JIS_2004, SHIFT_JIS_2004
  *
+<<<<<<< HEAD
  * Copyright (c) 2007-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_jis_2004_and_shift_jis_2004/euc_jis_2004_and_shift_jis_2004.c,v 1.6 2009/01/29 19:23:39 tgl Exp $
+=======
+ * Copyright (c) 2007-2008, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_jis_2004_and_shift_jis_2004/euc_jis_2004_and_shift_jis_2004.c,v 1.3.2.1 2009/01/29 19:23:56 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -206,7 +213,10 @@ get_ten(int b, int *ku)
 	else
 	{
 		ten = -1;				/* error */
+<<<<<<< HEAD
 		*ku = 0;				/* keep compiler quiet */
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 	return ten;
 }
@@ -218,8 +228,12 @@ get_ten(int b, int *ku)
 static void
 shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len)
 {
+<<<<<<< HEAD
 	int			c1,
 				c2;
+=======
+	int			c1;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	int			ku,
 				ten,
 				kubun;
@@ -229,7 +243,10 @@ shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len
 	while (len > 0)
 	{
 		c1 = *sjis;
+<<<<<<< HEAD
 		c2 = sjis[1];
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (!IS_HIGHBIT_SET(c1))
 		{
@@ -245,7 +262,11 @@ shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len
 
 		l = pg_encoding_verifymb(PG_SHIFT_JIS_2004, (const char *) sjis, len);
 
+<<<<<<< HEAD
 		if (l < 0)
+=======
+		if (l < 0 || l > len)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			report_invalid_encoding(PG_SHIFT_JIS_2004,
 									(const char *) sjis, len);
 
@@ -257,6 +278,11 @@ shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len
 		}
 		else if (l == 2)
 		{
+<<<<<<< HEAD
+=======
+			int			c2 = sjis[1];
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			plane = 1;
 			ku = 1;
 			ten = 1;

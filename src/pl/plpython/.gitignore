@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 libplpython.so.0
 libplpython.so.0.0
 libplpython.so
 libplpython.a
 plpython.so
+=======
+# Generated subdirectories
+/results/
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

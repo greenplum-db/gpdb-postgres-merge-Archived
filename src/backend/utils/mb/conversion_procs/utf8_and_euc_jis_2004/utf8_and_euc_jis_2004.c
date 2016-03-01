@@ -2,11 +2,19 @@
  *
  *	  EUC_JIS_2004 <--> UTF8
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
  *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_euc_jis_2004/utf8_and_euc_jis_2004.c,v 1.5 2009/01/29 19:23:40 tgl Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_euc_jis_2004/utf8_and_euc_jis_2004.c,v 1.3.2.1 2009/01/29 19:23:57 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */

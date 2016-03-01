@@ -36,6 +36,7 @@ main(void)
 	  
 	
 #line 8 "desc.pgc"
+<<<<<<< HEAD
  char * stmt1 = "INSERT INTO test1 VALUES ($1, $2)" ;
  
 #line 9 "desc.pgc"
@@ -43,6 +44,15 @@ main(void)
  
 #line 10 "desc.pgc"
  char * stmt3 = "SELECT * from test1 where :var = a" ;
+=======
+ char * stmt1   = "INSERT INTO test1 VALUES ($1, $2)" ;
+ 
+#line 9 "desc.pgc"
+ char * stmt2   = "SELECT * from test1 where a = $1 and b = $2" ;
+ 
+#line 10 "desc.pgc"
+ char * stmt3   = "SELECT * from test1 where :var = a" ;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  
 #line 12 "desc.pgc"
  int val1 = 1 ;
@@ -102,7 +112,11 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 27 "desc.pgc"
 
 
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table test1 ( a int , b text )", ECPGt_EOIT, ECPGt_EORT);
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table test1 ( a int   , b text    )    ", ECPGt_EOIT, ECPGt_EORT);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 29 "desc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -242,10 +256,17 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 	printf("output = %s\n", val2output);
 
+<<<<<<< HEAD
 	/* declare c1 cursor for $1 */
 #line 57 "desc.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare c1 cursor for $1", 
+=======
+	/* declare c1  cursor  for $1 */
+#line 57 "desc.pgc"
+
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare c1  cursor  for $1", 
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_char_variable,(ECPGprepared_statement(NULL, "foo2", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_descriptor, "indesc", 0L, 0L, 0L, 
@@ -292,10 +313,17 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 67 "desc.pgc"
 
 
+<<<<<<< HEAD
 	/* declare c2 cursor for $1 */
 #line 69 "desc.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare c2 cursor for $1", 
+=======
+	/* declare c2  cursor  for $1 */
+#line 69 "desc.pgc"
+
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare c2  cursor  for $1", 
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_char_variable,(ECPGprepared_statement(NULL, "foo3", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_descriptor, "indesc", 0L, 0L, 0L, 
@@ -325,7 +353,11 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 75 "desc.pgc"
 
 
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select * from test1 where a = 3", ECPGt_EOIT, 
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  *  from test1 where a = 3  ", ECPGt_EOIT, 
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_int,&(val1output),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char,(val2output),(long)sizeof("AAA"),(long)1,(sizeof("AAA"))*sizeof(char), 
@@ -337,7 +369,11 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 	printf("val1=%d val2=%c%c%c%c warn=%c truncate=%d\n", val1output, val2output[0], val2output[1], val2output[2], val2output[3], sqlca.sqlwarn[0], val2i);
 
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table test1", ECPGt_EOIT, ECPGt_EORT);
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table test1 ", ECPGt_EOIT, ECPGt_EORT);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 80 "desc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

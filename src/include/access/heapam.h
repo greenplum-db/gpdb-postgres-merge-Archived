@@ -4,10 +4,17 @@
  *	  POSTGRES heap access method definitions.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.121 2007/03/29 00:15:39 tgl Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.130.2.1 2008/03/08 21:58:07 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -146,6 +153,13 @@ inline static void RelationFetchGpRelationNodeForXLog(
 }
 
 
+typedef enum
+{
+	LockTupleShared,
+	LockTupleExclusive
+} LockTupleMode;
+
+
 /* ----------------
  *		function prototypes for heap access method
  *
@@ -154,6 +168,7 @@ inline static void RelationFetchGpRelationNodeForXLog(
  * ----------------
  */
 
+<<<<<<< HEAD
 /* heapam.c */
 
 typedef enum
@@ -190,6 +205,9 @@ inline static void xl_heapnode_set(
 	heapnode->persistentSerialNum = rel->rd_segfile0_relationnodeinfo.persistentSerialNum;
 }
 
+=======
+/* in heap/heapam.c */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern Relation relation_open(Oid relationId, LOCKMODE lockmode);
 extern Relation try_relation_open(Oid relationId, LOCKMODE lockmode, 
 								  bool noWait);
@@ -219,6 +237,11 @@ extern Relation CdbOpenRelationRv(const RangeVar *relation, LOCKMODE reqmode,
 
 extern HeapScanDesc heap_beginscan(Relation relation, Snapshot snapshot,
 			   int nkeys, ScanKey key);
+extern HeapScanDesc heap_beginscan_strat(Relation relation, Snapshot snapshot,
+					 int nkeys, ScanKey key,
+					 bool allow_strat, bool allow_sync);
+extern HeapScanDesc heap_beginscan_bm(Relation relation, Snapshot snapshot,
+				  int nkeys, ScanKey key);
 extern void heap_rescan(HeapScanDesc scan, ScanKey key);
 extern void heap_endscan(HeapScanDesc scan);
 extern HeapTuple heap_getnext(HeapScanDesc scan, ScanDirection direction);
@@ -231,7 +254,15 @@ extern bool heap_fetch(Relation relation, Snapshot snapshot,
 		   Relation stats_relation);
 extern bool heap_release_fetch(Relation relation, Snapshot snapshot,
 				   HeapTuple tuple, Buffer *userbuf, bool keep_buf,
+<<<<<<< HEAD
 		   		   Relation stats_relation);
+=======
+				   Relation stats_relation);
+extern bool heap_hot_search_buffer(ItemPointer tid, Buffer buffer,
+					   Snapshot snapshot, bool *all_dead);
+extern bool heap_hot_search(ItemPointer tid, Relation relation,
+				Snapshot snapshot, bool *all_dead);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 extern void heap_get_latest_tid(Relation relation, Snapshot snapshot,
 					ItemPointer tid);
@@ -254,7 +285,7 @@ extern void heap_inplace_update(Relation relation, HeapTuple tuple);
 extern void frozen_heap_inplace_update(Relation relation, HeapTuple tuple);
 extern void frozen_heap_inplace_delete(Relation relation, HeapTuple tuple);
 extern bool heap_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
-							  Buffer buf);
+				  Buffer buf);
 
 extern Oid	simple_heap_insert(Relation relation, HeapTuple tup);
 extern Oid frozen_heap_insert(Relation relation, HeapTuple tup);
@@ -267,6 +298,7 @@ extern void heap_markpos(HeapScanDesc scan);
 extern void heap_markposx(HeapScanDesc scan, HeapTuple tuple);
 extern void heap_restrpos(HeapScanDesc scan);
 
+<<<<<<< HEAD
 extern void heap_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *rptr);
 extern void heap_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
 extern bool heap_getrelfilenode(
@@ -274,6 +306,14 @@ extern bool heap_getrelfilenode(
 	RelFileNode		*relFileNode);
 extern void heap2_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *rptr);
 extern void heap2_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
+=======
+extern void heap_sync(Relation relation);
+
+extern void heap_redo(XLogRecPtr lsn, XLogRecord *rptr);
+extern void heap_desc(StringInfo buf, uint8 xl_info, char *rec);
+extern void heap2_redo(XLogRecPtr lsn, XLogRecord *rptr);
+extern void heap2_desc(StringInfo buf, uint8 xl_info, char *rec);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 extern void log_heap_newpage(Relation rel, 
 							 Page page,
@@ -282,17 +322,22 @@ extern XLogRecPtr log_heap_move(Relation reln, Buffer oldbuf,
 			  ItemPointerData from,
 			  Buffer newbuf, HeapTuple newtup);
 extern XLogRecPtr log_heap_clean(Relation reln, Buffer buffer,
-			   OffsetNumber *unused, int uncnt);
+			   OffsetNumber *redirected, int nredirected,
+			   OffsetNumber *nowdead, int ndead,
+			   OffsetNumber *nowunused, int nunused,
+			   bool redirect_move);
 extern XLogRecPtr log_heap_freeze(Relation reln, Buffer buffer,
-								  TransactionId cutoff_xid,
-								  OffsetNumber *offsets, int offcnt);
+				TransactionId cutoff_xid,
+				OffsetNumber *offsets, int offcnt);
+extern XLogRecPtr log_newpage(RelFileNode *rnode, BlockNumber blk, Page page);
 
 /* in common/heaptuple.c */
 extern Size heap_compute_data_size(TupleDesc tupleDesc,
 					   Datum *values, bool *isnull);
 extern Size heap_fill_tuple(TupleDesc tupleDesc,
 				Datum *values, bool *isnull,
-				char *data, uint16 *infomask, bits8 *bit);
+				char *data, Size data_size,
+				uint16 *infomask, bits8 *bit);
 extern bool heap_attisnull(HeapTuple tup, int attnum);
 extern bool heap_attisnull_normalattr(HeapTuple tup, int attnum);
 
@@ -330,6 +375,23 @@ extern void heap_freetuple(HeapTuple htup);
 extern HeapTuple heap_addheader(int natts, bool withoid,
 			   Size structlen, void *structure);
 
-extern void heap_sync(Relation relation);
+/* in heap/pruneheap.c */
+extern void heap_page_prune_opt(Relation relation, Buffer buffer,
+					TransactionId OldestXmin);
+extern int heap_page_prune(Relation relation, Buffer buffer,
+				TransactionId OldestXmin,
+				bool redirect_move, bool report_stats);
+extern void heap_page_prune_execute(Relation reln, Buffer buffer,
+						OffsetNumber *redirected, int nredirected,
+						OffsetNumber *nowdead, int ndead,
+						OffsetNumber *nowunused, int nunused,
+						bool redirect_move);
+extern void heap_get_root_tuples(Page page, OffsetNumber *root_offsets);
+
+/* in heap/syncscan.c */
+extern void ss_report_location(Relation rel, BlockNumber location);
+extern BlockNumber ss_get_location(Relation rel, BlockNumber relnblocks);
+extern void SyncScanShmemInit(void);
+extern Size SyncScanShmemSize(void);
 
 #endif   /* HEAPAM_H */

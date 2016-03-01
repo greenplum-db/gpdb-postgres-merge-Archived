@@ -5,7 +5,11 @@
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.9.2.1 2007/03/11 06:44:11 alvherre Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.16.2.2 2010/01/23 21:29:12 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  */
 
@@ -129,6 +133,8 @@ db_dir_size(const char *path)
 	{
 		struct stat fst;
 
+		CHECK_FOR_INTERRUPTS();
+
 		if (strcmp(direntry->d_name, ".") == 0 ||
 			strcmp(direntry->d_name, "..") == 0)
 			continue;
@@ -157,12 +163,21 @@ db_dir_size(const char *path)
 static int64
 calculate_database_size(Oid dbOid)
 {
+<<<<<<< HEAD
 	int64		 totalsize = 0;
 	char		 pathname[MAXPGPATH];
 	Relation     rel;
 	HeapScanDesc scandesc;
 	HeapTuple    tuple;
 	AclResult	 aclresult;
+=======
+	int64		totalsize;
+	DIR		   *dirdesc;
+	struct dirent *direntry;
+	char		dirpath[MAXPGPATH];
+	char		pathname[MAXPGPATH];
+	AclResult	aclresult;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* User must have connect privilege for target database */
 	aclresult = pg_database_aclcheck(dbOid, GetUserId(), ACL_CONNECT);
@@ -170,6 +185,7 @@ calculate_database_size(Oid dbOid)
 		aclcheck_error(aclresult, ACL_KIND_DATABASE,
 					   get_database_name(dbOid));
 
+<<<<<<< HEAD
 	/* Scan through all tablespaces */
 	rel = heap_open(TableSpaceRelationId, AccessShareLock);
 	scandesc = heap_beginscan(rel, SnapshotNow, 0, NULL);
@@ -193,6 +209,30 @@ calculate_database_size(Oid dbOid)
 			
 			totalsize += db_dir_size(pathname);
 		}
+=======
+	/* Shared storage in pg_global is not counted */
+
+	/* Include pg_default storage */
+	snprintf(pathname, MAXPGPATH, "base/%u", dbOid);
+	totalsize = db_dir_size(pathname);
+
+	/* Scan the non-default tablespaces */
+	snprintf(dirpath, MAXPGPATH, "pg_tblspc");
+	dirdesc = AllocateDir(dirpath);
+	if (!dirdesc)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not open tablespace directory \"%s\": %m",
+						dirpath)));
+
+	while ((direntry = ReadDir(dirdesc, dirpath)) != NULL)
+	{
+		CHECK_FOR_INTERRUPTS();
+
+		if (strcmp(direntry->d_name, ".") == 0 ||
+			strcmp(direntry->d_name, "..") == 0)
+			continue;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		tuple = heap_getnext(scandesc, ForwardScanDirection);
 	}
@@ -303,6 +343,8 @@ calculate_tablespace_size(Oid tblspcOid)
 	while ((direntry = ReadDir(dirdesc, tblspcPath)) != NULL)
 	{
 		struct stat fst;
+
+		CHECK_FOR_INTERRUPTS();
 
 		if (strcmp(direntry->d_name, ".") == 0 ||
 			strcmp(direntry->d_name, "..") == 0)
@@ -456,6 +498,7 @@ pg_relation_size_oid(PG_FUNCTION_ARGS)
 		elog(ERROR, "This query is not currently supported by GPDB.");
 	}
 
+<<<<<<< HEAD
 	rel = try_relation_open(relOid, AccessShareLock, false);
 		
 	/*
@@ -476,6 +519,16 @@ pg_relation_size_oid(PG_FUNCTION_ARGS)
 		StringInfoData buffer;
 		char *schemaName;
 		char *relName;
+=======
+		CHECK_FOR_INTERRUPTS();
+
+		if (segcount == 0)
+			snprintf(pathname, MAXPGPATH, "%s",
+					 relationpath);
+		else
+			snprintf(pathname, MAXPGPATH, "%s.%u",
+					 relationpath, segcount);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		schemaName = get_namespace_name(get_rel_namespace(relOid));
 		if (schemaName == NULL)
@@ -775,33 +828,33 @@ pg_size_pretty(PG_FUNCTION_ARGS)
 	int64		size = PG_GETARG_INT64(0);
 	char	   *result = palloc(50 + VARHDRSZ);
 	int64		limit = 10 * 1024;
-	int64		mult = 1;
+	int64		limit2 = limit * 2 - 1;
 
-	if (size < limit * mult)
+	if (size < limit)
 		snprintf(VARDATA(result), 50, INT64_FORMAT " bytes", size);
 	else
 	{
-		mult *= 1024;
-		if (size < limit * mult)
+		size >>= 9;				/* keep one extra bit for rounding */
+		if (size < limit2)
 			snprintf(VARDATA(result), 50, INT64_FORMAT " kB",
-					 (size + mult / 2) / mult);
+					 (size + 1) / 2);
 		else
 		{
-			mult *= 1024;
-			if (size < limit * mult)
+			size >>= 10;
+			if (size < limit2)
 				snprintf(VARDATA(result), 50, INT64_FORMAT " MB",
-						 (size + mult / 2) / mult);
+						 (size + 1) / 2);
 			else
 			{
-				mult *= 1024;
-				if (size < limit * mult)
+				size >>= 10;
+				if (size < limit2)
 					snprintf(VARDATA(result), 50, INT64_FORMAT " GB",
-							 (size + mult / 2) / mult);
+							 (size + 1) / 2);
 				else
 				{
-					mult *= 1024;
+					size >>= 10;
 					snprintf(VARDATA(result), 50, INT64_FORMAT " TB",
-							 (size + mult / 2) / mult);
+							 (size + 1) / 2);
 				}
 			}
 		}

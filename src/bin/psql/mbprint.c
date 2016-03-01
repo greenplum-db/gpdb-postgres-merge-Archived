@@ -1,9 +1,17 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
+<<<<<<< HEAD
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
+=======
+ * Copyright (c) 2000-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
- * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.25 2007/01/05 22:19:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.29.2.2 2010/08/16 00:06:37 tgl Exp $
+ *
+ * XXX this file does not really belong in psql/.  Perhaps move to libpq?
+ * It also seems that the mbvalidate function is redundant with existing
+ * functionality.
  */
 
 #include "postgres_fe.h"
@@ -27,7 +35,11 @@
 typedef unsigned int pg_wchar;
 
 static int
+<<<<<<< HEAD
 pg_get_utf8_id(void)
+=======
+get_utf8_id(void)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	static int	utf8_id = -1;
 
@@ -36,7 +48,11 @@ pg_get_utf8_id(void)
 	return utf8_id;
 }
 
+<<<<<<< HEAD
 #define PG_UTF8		pg_get_utf8_id()
+=======
+#define PG_UTF8		get_utf8_id()
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 static pg_wchar
@@ -245,7 +261,7 @@ pg_wcssize(unsigned char *pwcs, size_t len, int encoding,
 				linewidth += 4;
 				format_size += 4;
 			}
-			else				/* Output it as-is */
+			else	/* Output it as-is */
 			{
 				linewidth += w;
 				format_size += 1;
@@ -256,7 +272,7 @@ pg_wcssize(unsigned char *pwcs, size_t len, int encoding,
 			linewidth += 6;		/* \u0000 */
 			format_size += 6;
 		}
-		else					/* All other chars */
+		else	/* All other chars */
 		{
 			linewidth += w;
 			format_size += chlen;
@@ -265,7 +281,11 @@ pg_wcssize(unsigned char *pwcs, size_t len, int encoding,
 	}
 	if (linewidth > width)
 		width = linewidth;
+<<<<<<< HEAD
 	format_size += 1;			/* For NUL char */
+=======
+	format_size += 1;		/* For NUL char */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Set results */
 	if (result_width)
@@ -277,8 +297,13 @@ pg_wcssize(unsigned char *pwcs, size_t len, int encoding,
 }
 
 /*
+<<<<<<< HEAD
  *	Format a string into one or more "struct lineptr" lines.
  *	lines[i].ptr == NULL indicates the end of the array.
+=======
+ *  Format a string into one or more "struct lineptr" lines.
+ *  lines[i].ptr == NULL indicates the end of the array.
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * This MUST be kept in sync with pg_wcssize!
  */
@@ -333,7 +358,7 @@ pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
 				linewidth += 4;
 				ptr += 4;
 			}
-			else				/* Output it as-is */
+			else	/* Output it as-is */
 			{
 				linewidth += w;
 				*ptr++ = *pwcs;
@@ -355,7 +380,7 @@ pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
 			ptr += 6;
 			linewidth += 6;
 		}
-		else					/* All other chars */
+		else	/* All other chars */
 		{
 			int			i;
 

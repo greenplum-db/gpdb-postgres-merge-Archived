@@ -2,7 +2,11 @@
 #
 # Makefile for backend/catalog
 #
+<<<<<<< HEAD
 # src/backend/catalog/Makefile
+=======
+# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.65 2007/08/21 01:11:13 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +19,7 @@ QUICKLZ_COMPRESSION = quicklz_compression.o
 endif
 
 OBJS = catalog.o dependency.o heap.o index.o indexing.o namespace.o aclchk.o \
-       pg_aggregate.o pg_constraint.o pg_conversion.o pg_depend.o \
+       pg_aggregate.o pg_constraint.o pg_conversion.o pg_depend.o pg_enum.o \
        pg_largeobject.o pg_namespace.o pg_operator.o pg_proc.o pg_shdepend.o \
        pg_type.o toasting.o \
        pg_exttable.o pg_extprotocol.o \
@@ -62,8 +66,9 @@ POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/, \
 	pg_opfamily.h pg_opclass.h pg_am.h pg_amop.h pg_amproc.h \
 	pg_language.h pg_largeobject.h pg_aggregate.h pg_statistic.h \
 	pg_rewrite.h pg_trigger.h pg_listener.h pg_description.h pg_cast.h \
-	pg_namespace.h pg_conversion.h pg_depend.h \
+	pg_enum.h pg_namespace.h pg_conversion.h pg_depend.h \
 	pg_database.h pg_tablespace.h pg_pltemplate.h \
+<<<<<<< HEAD
 	pg_authid.h pg_auth_members.h pg_shdepend.h pg_shdescription.h pg_resqueue.h \
 	gp_configuration.h gp_id.h gp_policy.h gp_version.h \
 	gp_segment_config.h gp_san_config.h \
@@ -73,6 +78,11 @@ POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/, \
 	pg_partition.h pg_partition_rule.h pg_filespace.h pg_filespace_entry.h \
 	gp_global_sequence.h gp_persistent.h \
 	$(TIDYCAT_BKI_SRCS) \
+=======
+	pg_authid.h pg_auth_members.h pg_shdepend.h pg_shdescription.h \
+	pg_ts_config.h pg_ts_config_map.h pg_ts_dict.h \
+	pg_ts_parser.h pg_ts_template.h \
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	toasting.h indexing.h \
     )
 

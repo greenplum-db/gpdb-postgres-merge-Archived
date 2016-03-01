@@ -99,16 +99,20 @@ _WriteBlobData(ArchiveHandle *AH, const void *data, size_t dLen)
 {
 	if (dLen > 0)
 	{
-		unsigned char *str;
-		size_t		len;
+		PQExpBuffer buf = createPQExpBuffer();
 
-		str = PQescapeBytea((const unsigned char *) data, dLen, &len);
-		if (!str)
-			die_horribly(AH, NULL, "out of memory\n");
+		appendByteaLiteralAHX(buf,
+							  (const unsigned char *) data,
+							  dLen,
+							  AH);
 
+<<<<<<< HEAD
 		ahprintf(AH, "SELECT pg_catalog.lowrite(0, '%s');\n", str);
+=======
+		ahprintf(AH, "SELECT pg_catalog.lowrite(0, %s);\n", buf->data);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
-		free(str);
+		destroyPQExpBuffer(buf);
 	}
 	return dLen;
 }

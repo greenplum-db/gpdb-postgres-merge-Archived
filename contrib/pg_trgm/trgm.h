@@ -31,6 +31,7 @@ typedef char trgm[3];
 	*(((char*)(a))+2) = *(((char*)(b))+2);	\
 } while(0);
 
+<<<<<<< HEAD
 uint32		trgm2int(trgm *ptr);
 
 #ifdef KEEPONLYALNUM
@@ -39,6 +40,9 @@ uint32		trgm2int(trgm *ptr);
 #define ISPRINTABLECHAR(a)	( isascii( *(unsigned char*)(a) ) && isprint( *(unsigned char*)(a) ) )
 #endif
 #define ISPRINTABLETRGM(t)	( ISPRINTABLECHAR( ((char*)t) ) && ISPRINTABLECHAR( ((char*)t)+1 ) && ISPRINTABLECHAR( ((char*)t)+2 ) )
+=======
+#define TRGMINT(a) ( (*(((char*)(a))+2)<<16)+(*(((char*)(a))+1)<<8)+*(((char*)(a))+0) )
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 typedef struct
 {

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.53 2007/01/05 22:19:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.58.2.1 2008/04/30 23:28:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,6 +79,7 @@ TidListCreate(TidScanState *tidstate)
 	tidList = (ItemPointerData *)
 		palloc(numAllocTids * sizeof(ItemPointerData));
 	numTids = 0;
+	tidstate->tss_isCurrentOf = false;
 
 	foreach(l, evalList)
 	{
@@ -164,6 +165,7 @@ TidListCreate(TidScanState *tidstate)
 		}
 		else if (expr && IsA(expr, CurrentOfExpr))
 		{
+<<<<<<< HEAD
 			/* 
 			 * CURRENT OF must be the only expr. This allows us to avoid
 			 * a repalloc of the tidList. 
@@ -190,6 +192,26 @@ TidListCreate(TidScanState *tidstate)
 					tidList[numTids++] = cexpr->ctid;
 			}
 		} 
+=======
+			CurrentOfExpr *cexpr = (CurrentOfExpr *) expr;
+			ItemPointerData cursor_tid;
+
+			if (execCurrentOf(cexpr, econtext,
+						   RelationGetRelid(tidstate->ss.ss_currentRelation),
+							  &cursor_tid))
+			{
+				if (numTids >= numAllocTids)
+				{
+					numAllocTids *= 2;
+					tidList = (ItemPointerData *)
+						repalloc(tidList,
+								 numAllocTids * sizeof(ItemPointerData));
+				}
+				tidList[numTids++] = cursor_tid;
+				tidstate->tss_isCurrentOf = true;
+			}
+		}
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		else
 			elog(ERROR, "could not identify CTID expression");
 	}
@@ -204,6 +226,9 @@ TidListCreate(TidScanState *tidstate)
 	{
 		int			lastTid;
 		int			i;
+
+		/* CurrentOfExpr could never appear OR'd with something else */
+		Assert(!tidstate->tss_isCurrentOf);
 
 		qsort((void *) tidList, numTids, sizeof(ItemPointerData),
 			  itemptr_comparator);
@@ -292,7 +317,8 @@ TidNext(TidScanState *node)
 
 		/*
 		 * XXX shouldn't we check here to make sure tuple matches TID list? In
-		 * runtime-key case this is not certain, is it?
+		 * runtime-key case this is not certain, is it?  However, in the WHERE
+		 * CURRENT OF case it might not match anyway ...
 		 */
 
 		ExecStoreGenericTuple(estate->es_evTuple[scanrelid - 1], slot, false);
@@ -346,6 +372,15 @@ TidNext(TidScanState *node)
 	while (node->tss_TidPtr >= 0 && node->tss_TidPtr < numTids)
 	{
 		tuple->t_self = tidList[node->tss_TidPtr];
+
+		/*
+		 * For WHERE CURRENT OF, the tuple retrieved from the cursor might
+		 * since have been updated; if so, we should fetch the version that is
+		 * current according to our snapshot.
+		 */
+		if (node->tss_isCurrentOf)
+			heap_get_latest_tid(heapRelation, snapshot, &tuple->t_self);
+
 		if (heap_fetch(heapRelation, snapshot, tuple, &buffer, false, NULL))
 		{
 			/*

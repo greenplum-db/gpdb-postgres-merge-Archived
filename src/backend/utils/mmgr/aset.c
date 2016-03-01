@@ -7,12 +7,15 @@
  * type.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.71 2007/01/05 22:19:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.76 2008/01/01 19:45:55 momjian Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -192,6 +195,7 @@ static void AllocSetReset(MemoryContext context);
 static void AllocSetDelete(MemoryContext context);
 static Size AllocSetGetChunkSpace(MemoryContext context, void *pointer);
 static bool AllocSetIsEmpty(MemoryContext context);
+<<<<<<< HEAD
 static void AllocSet_GetStats(MemoryContext context, uint64 *nBlocks, uint64 *nChunks,
 		uint64 *currentAvailable, uint64 *allAllocated, uint64 *allFreed, uint64 *maxHeld);
 static void AllocSetReleaseAccountingForAllAllocatedChunks(MemoryContext context);
@@ -203,6 +207,9 @@ static void dump_allocset_freelist(FILE *file, AllocSet set);
 static void dump_mc_for(FILE *file, MemoryContext mc);
 void dump_mc(const char *fname, MemoryContext mc);
 void dump_tmc(const char *fname);
+=======
+static void AllocSetStats(MemoryContext context, int level);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #ifdef MEMORY_CONTEXT_CHECKING
 static void AllocSetCheck(MemoryContext context);
@@ -823,13 +830,13 @@ AllocSetContextCreate(MemoryContext parent,
 #endif
 
 	/*
-	 * Compute the allocation chunk size limit for this context.  It can't
-	 * be more than ALLOC_CHUNK_LIMIT because of the fixed number of
-	 * freelists.  If maxBlockSize is small then requests exceeding the
-	 * maxBlockSize should be treated as large chunks, too.  We have to
-	 * have allocChunkLimit a power of two, because the requested and
-	 * actually-allocated sizes of any chunk must be on the same side of
-	 * the limit, else we get confused about whether the chunk is "big".
+	 * Compute the allocation chunk size limit for this context.  It can't be
+	 * more than ALLOC_CHUNK_LIMIT because of the fixed number of freelists.
+	 * If maxBlockSize is small then requests exceeding the maxBlockSize
+	 * should be treated as large chunks, too.	We have to have
+	 * allocChunkLimit a power of two, because the requested and
+	 * actually-allocated sizes of any chunk must be on the same side of the
+	 * limit, else we get confused about whether the chunk is "big".
 	 */
 	context->allocChunkLimit = ALLOC_CHUNK_LIMIT;
 	while (context->allocChunkLimit >
@@ -1200,6 +1207,11 @@ AllocSetAllocImpl(MemoryContext context, Size size, bool isHeader)
 	if (chunk != NULL)
 	{
 		Assert(chunk->size >= size);
+<<<<<<< HEAD
+=======
+
+		set->freelist[fidx] = (AllocChunk) chunk->aset;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		set->freelist[fidx] = (AllocChunk) chunk->sharedHeader;
 
@@ -1698,12 +1710,15 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		 */
 		AllocPointer newPointer;
 
+<<<<<<< HEAD
 		/*
 		 * We do not call AllocAllocInfo() or AllocFreeInfo() in this case.
 		 * The corresponding AllocSetAlloc() and AllocSetFree() take care
 		 * of updating the memory accounting.
 		 */
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		/* allocate new chunk */
 		newPointer = AllocSetAlloc((MemoryContext) set, size);
 
@@ -1771,13 +1786,18 @@ AllocSetIsEmpty(MemoryContext context)
  *		maxHeld: maximum bytes held during lifetime
  */
 static void
+<<<<<<< HEAD
 AllocSet_GetStats(MemoryContext context, uint64 *nBlocks, uint64 *nChunks,
 		uint64 *currentAvailable, uint64 *allAllocated, uint64 *allFreed, uint64 *maxHeld)
+=======
+AllocSetStats(MemoryContext context, int level)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	AllocSet	set = (AllocSet) context;
     AllocBlock	block;
 	AllocChunk	chunk;
 	int			fidx;
+<<<<<<< HEAD
 	uint64 currentAllocated = 0;
 
     *nBlocks = 0;
@@ -1792,6 +1812,15 @@ AllocSet_GetStats(MemoryContext context, uint64 *nBlocks, uint64 *nChunks,
     {
     	*nBlocks = *nBlocks + 1;
     	currentAllocated += block->endptr - ((char *) block);
+=======
+	int			i;
+
+	for (block = set->blocks; block != NULL; block = block->next)
+	{
+		nblocks++;
+		totalspace += block->endptr - ((char *) block);
+		freespace += block->endptr - block->freeptr;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
     /* Space at end of first block is available for use. */
@@ -1811,6 +1840,17 @@ AllocSet_GetStats(MemoryContext context, uint64 *nBlocks, uint64 *nChunks,
 			*currentAvailable += chunk->size;
 		}
 	}
+<<<<<<< HEAD
+=======
+
+	for (i = 0; i < level; i++)
+		fprintf(stderr, "  ");
+
+	fprintf(stderr,
+			"%s: %lu total in %ld blocks; %lu free (%ld chunks); %lu used\n",
+			set->header.name, totalspace, nblocks, freespace, nchunks,
+			totalspace - freespace);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 #ifdef MEMORY_CONTEXT_CHECKING

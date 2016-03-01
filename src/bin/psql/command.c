@@ -1,9 +1,15 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
+<<<<<<< HEAD
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
  * src/bin/psql/command.c
+=======
+ * Copyright (c) 2000-2008, PostgreSQL Global Development Group
+ *
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.186.2.1 2010/03/09 01:10:05 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -327,7 +333,11 @@ exec_command(const char *cmd,
 												 OT_WHOLE_LINE, NULL, false);
 
 		if (pset.timing)
+<<<<<<< HEAD
 			INSTR_TIME_SET_CURRENT(before);
+=======
+			GETTIMEOFDAY(&before);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		success = do_copy(opt);
 
@@ -475,6 +485,10 @@ exec_command(const char *cmd,
 						break;
 				}
 				break;
+<<<<<<< HEAD
+=======
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			default:
 				status = PSQL_CMD_UNKNOWN;
 		}
@@ -1311,7 +1325,11 @@ do_connect(char *dbname, char *user, char *host, char *port)
 		 * Connection attempt failed; either retry the connection attempt with
 		 * a new password, or give up.
 		 */
+<<<<<<< HEAD
 		if (!password && PQconnectionNeedsPassword(n_conn) && pset.getPassword != TRI_NO)
+=======
+		if (!password && PQconnectionNeedsPassword(n_conn))
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		{
 			PQfinish(n_conn);
 			password = prompt_for_password(user);
@@ -1604,7 +1622,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf, bool *edited)
 		ret = GetTempPath(MAXPGPATH, tmpdir);
 		if (ret == 0 || ret > MAXPGPATH)
 		{
-			psql_error("cannot locate temporary directory: %s",
+			psql_error("cannot locate temporary directory: %s\n",
 					   !ret ? strerror(errno) : "");
 			return false;
 		}
@@ -1762,10 +1780,14 @@ process_file(char *filename, bool single_txn)
 		if ((res = PSQLexec("BEGIN", false)) == NULL)
 		{
 			if (pset.on_error_stop)
+<<<<<<< HEAD
 			{
 				result = EXIT_USER;
 				goto error;
 			}
+=======
+				return EXIT_USER;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 		else
 			PQclear(res);
@@ -1778,10 +1800,14 @@ process_file(char *filename, bool single_txn)
 		if ((res = PSQLexec("COMMIT", false)) == NULL)
 		{
 			if (pset.on_error_stop)
+<<<<<<< HEAD
 			{
 				result = EXIT_USER;
 				goto error;
 			}
+=======
+				return EXIT_USER;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 		else
 			PQclear(res);

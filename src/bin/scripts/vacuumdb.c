@@ -2,10 +2,17 @@
  *
  * vacuumdb
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.26 2009/04/28 02:37:09 momjian Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.20 2008/01/01 19:45:56 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -17,9 +24,15 @@
 static void vacuum_one_database(const char *dbname, bool full, bool verbose, bool analyze,
 					bool freeze, const char *table,
 					const char *host, const char *port,
+<<<<<<< HEAD
 					const char *username, enum trivalue prompt_password,
 					const char *progname, bool echo);
 static void vacuum_all_databases(bool full, bool verbose, bool analyze, bool freeze,
+=======
+					const char *username, bool password,
+					const char *progname, bool echo);
+static void vacuum_all_databases(bool full, bool verbose, bool analyze,
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					 const char *host, const char *port,
 					 const char *username, enum trivalue prompt_password,
 					 const char *progname, bool echo, bool quiet);
@@ -170,8 +183,13 @@ main(int argc, char *argv[])
 				dbname = get_user_name(progname);
 		}
 
+<<<<<<< HEAD
 		vacuum_one_database(dbname, full, verbose, analyze, freeze, table,
 							host, port, username, prompt_password,
+=======
+		vacuum_one_database(dbname, full, verbose, analyze, table,
+							host, port, username, password,
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 							progname, echo);
 	}
 
@@ -183,7 +201,11 @@ static void
 vacuum_one_database(const char *dbname, bool full, bool verbose, bool analyze,
 					bool freeze, const char *table,
 					const char *host, const char *port,
+<<<<<<< HEAD
 					const char *username, enum trivalue prompt_password,
+=======
+					const char *username, bool password,
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					const char *progname, bool echo)
 {
 	PQExpBufferData sql;
@@ -205,7 +227,11 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool analyze,
 		appendPQExpBuffer(&sql, " %s", table);
 	appendPQExpBuffer(&sql, ";\n");
 
+<<<<<<< HEAD
 	conn = connectDatabase(dbname, host, port, username, prompt_password, progname);
+=======
+	conn = connectDatabase(dbname, host, port, username, password, progname);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{
 		if (table)
@@ -246,8 +272,13 @@ vacuum_all_databases(bool full, bool verbose, bool analyze, bool freeze,
 			fflush(stdout);
 		}
 
+<<<<<<< HEAD
 		vacuum_one_database(dbname, full, verbose, analyze, freeze, NULL,
 							host, port, username, prompt_password,
+=======
+		vacuum_one_database(dbname, full, verbose, analyze, NULL,
+							host, port, username, password,
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 							progname, echo);
 	}
 
@@ -277,7 +308,10 @@ help(const char *progname)
 	printf(_("  -h, --host=HOSTNAME       database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT           database server port\n"));
 	printf(_("  -U, --username=USERNAME   user name to connect as\n"));
+<<<<<<< HEAD
 	printf(_("  -w, --no-password         never prompt for password\n"));
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	printf(_("  -W, --password            force password prompt\n"));
 	printf(_("\nRead the description of the SQL command VACUUM for details.\n"));
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));

@@ -4,12 +4,20 @@
  * bootscanner.l
  *	  a lexical scanner for the bootstrap parser
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootscanner.l,v 1.48 2009/01/01 17:23:36 momjian Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootscanner.l,v 1.45 2008/01/01 19:45:48 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */

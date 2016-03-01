@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/typecmds.h,v 1.17 2007/01/05 22:19:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/typecmds.h,v 1.22 2008/01/01 19:45:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,12 @@ extern void RemoveType(List *names, DropBehavior behavior, bool missing_ok);
 extern void RemoveTypeById(Oid typeOid);
 extern void DefineDomain(CreateDomainStmt *stmt);
 extern void RemoveDomain(List *names, DropBehavior behavior, bool missing_ok);
+<<<<<<< HEAD
 extern Oid	DefineCompositeType(const RangeVar *typevar, List *coldeflist, Oid relOid, Oid comptypeOid);
+=======
+extern void DefineEnum(CreateEnumStmt *stmt);
+extern Oid	DefineCompositeType(const RangeVar *typevar, List *coldeflist);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 extern void AlterDomainDefault(List *names, Node *defaultRaw);
 extern void AlterDomainNotNull(List *names, bool notNull);
@@ -36,9 +41,14 @@ extern List *GetDomainConstraints(Oid typeOid);
 
 extern void AlterTypeOwner(List *names, Oid newOwnerId);
 extern void AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId,
+<<<<<<< HEAD
 								   bool hasDependEntry);
+=======
+					   bool hasDependEntry);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern void AlterTypeNamespace(List *names, const char *newschema);
 extern void AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
+						   bool isImplicitArray,
 						   bool errorOnTableType);
 extern void AlterType(AlterTypeStmt *stmt);
 extern void AlterType(AlterTypeStmt *stmt);

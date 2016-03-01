@@ -53,7 +53,11 @@ SELECT '' AS two, p.* FROM POINT_TBL p
 
 SELECT '' AS six, p.f1, p.f1 <-> point '(0,0)' AS dist
    FROM POINT_TBL p
+<<<<<<< HEAD
    ORDER BY dist ;
+=======
+   ORDER BY dist;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 SELECT '' AS thirtysix, p1.f1 AS point1, p2.f1 AS point2, p1.f1 <-> p2.f1 AS dist
    FROM POINT_TBL p1, POINT_TBL p2

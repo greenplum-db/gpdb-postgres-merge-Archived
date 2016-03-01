@@ -4,11 +4,19 @@
  *		Functions for handling locale-related info
  *
  *
+<<<<<<< HEAD
  * Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
  *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.11 2009/02/10 19:29:39 petere Exp $
+=======
+ * Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ *
+ *
+ * IDENTIFICATION
+ *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.9 2008/01/01 19:46:00 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +70,11 @@ static const struct encoding_match encoding_match_list[] = {
 	{PG_EUC_KR, "IBM-eucKR"},
 	{PG_EUC_KR, "deckorean"},
 	{PG_EUC_KR, "5601"},
+<<<<<<< HEAD
 	{PG_EUC_KR, "CP51949"},
+=======
+	{PG_EUC_KR, "CP51949"},		/* or 20949 ? */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	{PG_EUC_TW, "EUC-TW"},
 	{PG_EUC_TW, "eucTW"},
@@ -123,9 +135,12 @@ static const struct encoding_match encoding_match_list[] = {
 	{PG_KOI8R, "KOI8-R"},
 	{PG_KOI8R, "CP20866"},
 
+<<<<<<< HEAD
 	{PG_KOI8U, "KOI8-U"},
 	{PG_KOI8U, "CP21866"},
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{PG_WIN866, "CP866"},
 	{PG_WIN874, "CP874"},
 	{PG_WIN1250, "CP1250"},
@@ -172,7 +187,10 @@ static const struct encoding_match encoding_match_list[] = {
 	{PG_GBK, "CP936"},
 
 	{PG_UHC, "UHC"},
+<<<<<<< HEAD
 	{PG_UHC, "CP949"},
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	{PG_JOHAB, "JOHAB"},
 	{PG_JOHAB, "CP1361"},
@@ -182,8 +200,11 @@ static const struct encoding_match encoding_match_list[] = {
 
 	{PG_SHIFT_JIS_2004, "SJIS_2004"},
 
+<<<<<<< HEAD
 	{PG_SQL_ASCII, "US-ASCII"},
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{PG_SQL_ASCII, NULL}		/* end marker */
 };
 
@@ -218,6 +239,7 @@ win32_langinfo(const char *ctype)
 
 /*
  * Given a setting for LC_CTYPE, return the Postgres ID of the associated
+<<<<<<< HEAD
  * encoding, if we can determine it.  Return -1 if we can't determine it.
  *
  * Pass in NULL to get the encoding for the current locale setting.
@@ -225,6 +247,15 @@ win32_langinfo(const char *ctype)
  *
  * If the result is PG_SQL_ASCII, callers should treat it as being compatible
  * with any desired encoding.
+=======
+ * encoding, if we can determine it.
+ *
+ * Pass in NULL to get the encoding for the current locale setting.
+ *
+ * If the result is PG_SQL_ASCII, callers should treat it as being compatible
+ * with any desired encoding.  We return this if the locale is C/POSIX or we
+ * can't determine the encoding.
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 int
 pg_get_encoding_from_locale(const char *ctype)
@@ -327,7 +358,11 @@ pg_get_encoding_from_locale(const char *ctype)
 	ereport(WARNING,
 			(errmsg("could not determine encoding for locale \"%s\": codeset is \"%s\"",
 					ctype, sys),
+<<<<<<< HEAD
 		   errdetail("Please report this to <bugs@greenplum.org>.")));
+=======
+		   errdetail("Please report this to <pgsql-bugs@postgresql.org>.")));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif
 
 	free(sys);

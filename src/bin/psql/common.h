@@ -1,9 +1,13 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
+<<<<<<< HEAD
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
+=======
+ * Copyright (c) 2000-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.54 2007/01/05 22:19:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.56 2008/01/01 19:45:55 momjian Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
@@ -63,10 +67,6 @@ extern const char *session_username(void);
 
 extern char *expand_tilde(char **filename);
 
-/* Workarounds for Windows */
-/* Probably to be moved up the source tree in the future, perhaps to be replaced by
- * more specific checks like configure-style HAVE_GETTIMEOFDAY macros.
- */
 #ifndef WIN32
 
 #include <sys/time.h>
@@ -78,16 +78,25 @@ typedef struct timeval TimevalStruct;
 	((((int) ((T)->tv_sec - (U)->tv_sec)) * 1000000.0 + \
 	  ((int) ((T)->tv_usec - (U)->tv_usec))) / 1000.0)
 #else
+/*
+ * To get good resolution (better than ~15ms) on Windows, use
+ * the high resolution performance counters. They can't be used
+ * to get absolute times, but are good for measuring differences.
+ */
+static __inline__ double
+GetTimerFrequency(void)
+{
+	LARGE_INTEGER f;
 
-#include <sys/types.h>
-#include <sys/timeb.h>
+	QueryPerformanceFrequency(&f);
+	return (double) f.QuadPart;
+}
 
-typedef struct _timeb TimevalStruct;
+typedef LARGE_INTEGER TimevalStruct;
 
-#define GETTIMEOFDAY(T) _ftime(T)
+#define GETTIMEOFDAY(T) QueryPerformanceCounter((T))
 #define DIFF_MSEC(T, U) \
-	(((T)->time - (U)->time) * 1000.0 + \
-	 ((T)->millitm - (U)->millitm))
-#endif
+	(((T)->QuadPart - (U)->QuadPart) * 1000.0 / GetTimerFrequency())
+#endif   /* WIN32 */
 
 #endif   /* COMMON_H */

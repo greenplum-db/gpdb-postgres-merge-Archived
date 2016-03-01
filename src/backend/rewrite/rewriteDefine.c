@@ -3,13 +3,17 @@
  * rewriteDefine.c
  *	  routines for defining a rewrite rule
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.117 2007/02/01 19:10:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.124 2008/01/01 19:45:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,10 +23,12 @@
 #include "catalog/catquery.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_rewrite.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "parser/parse_expr.h"
+#include "parser/parse_utilcmd.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteManip.h"
 #include "rewrite/rewriteSupport.h"
@@ -32,11 +38,15 @@
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
+<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp.h"
 #include "cdb/cdbmirroredfilesysobj.h"
 #include "catalog/heap.h"
 #include "cdb/cdbpersistentfilesysobj.h"
+=======
+#include "utils/inval.h"
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 static void checkRuleResultList(List *targetList, TupleDesc resultDesc,
@@ -87,6 +97,7 @@ InsertRule(char *rulname,
 	values[i++] = ObjectIdGetDatum(eventrel_oid);		/* ev_class */
 	values[i++] = Int16GetDatum(evslot_index);	/* ev_attr */
 	values[i++] = CharGetDatum(evtype + '0');	/* ev_type */
+	values[i++] = CharGetDatum(RULE_FIRES_ON_ORIGIN);	/* ev_enabled */
 	values[i++] = BoolGetDatum(evinstead);		/* is_instead */
 	values[i++] = CStringGetTextDatum(evqual);	/* ev_qual */
 	values[i++] = CStringGetTextDatum(actiontree);		/* ev_action */
@@ -191,17 +202,56 @@ InsertRule(char *rulname,
 	return rewriteObjectId;
 }
 
+/*
+ * DefineRule
+ *		Execute a CREATE RULE command.
+ */
 void
-DefineQueryRewrite(RuleStmt *stmt)
+DefineRule(RuleStmt *stmt, const char *queryString)
 {
-	RangeVar   *event_obj = stmt->relation;
-	Node	   *event_qual = stmt->whereClause;
-	CmdType		event_type = stmt->event;
-	bool		is_instead = stmt->instead;
-	bool		replace = stmt->replace;
-	List	   *action = stmt->actions;
+	List	   *actions;
+	Node	   *whereClause;
+	Oid			relId;
+
+	/* Parse analysis ... */
+	transformRuleStmt(stmt, queryString, &actions, &whereClause);
+
+	/* ... find the relation ... */
+	relId = RangeVarGetRelid(stmt->relation, false);
+
+	/* ... and execute */
+	DefineQueryRewrite(stmt->rulename,
+					   relId,
+					   whereClause,
+					   stmt->event,
+					   stmt->instead,
+					   stmt->replace,
+					   actions);
+}
+
+
+/*
+ * DefineQueryRewrite
+ *		Create a rule
+ *
+ * This is essentially the same as DefineRule() except that the rule's
+ * action and qual have already been passed through parse analysis.
+ */
+void
+DefineQueryRewrite(char *rulename,
+				   Oid event_relid,
+				   Node *event_qual,
+				   CmdType event_type,
+				   bool is_instead,
+				   bool replace,
+				   List *action)
+{
 	Relation	event_relation;
+<<<<<<< HEAD
 	Oid			ev_relid;
+=======
+	Oid			ruleId;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	int			event_attno;
 	ListCell   *l;
 	Query	   *query;
@@ -214,13 +264,12 @@ DefineQueryRewrite(RuleStmt *stmt)
 	 * grab ShareLock to lock out insert/update/delete actions.  But for now,
 	 * let's just grab AccessExclusiveLock all the time.
 	 */
-	event_relation = heap_openrv(event_obj, AccessExclusiveLock);
-	ev_relid = RelationGetRelid(event_relation);
+	event_relation = heap_open(event_relid, AccessExclusiveLock);
 
 	/*
 	 * Check user has permission to apply rules to this relation.
 	 */
-	if (!pg_class_ownercheck(ev_relid, GetUserId()))
+	if (!pg_class_ownercheck(event_relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 					   RelationGetRelationName(event_relation));
 
@@ -273,7 +322,13 @@ DefineQueryRewrite(RuleStmt *stmt)
 		 */
 		query = (Query *) linitial(action);
 		if (!is_instead ||
+<<<<<<< HEAD
 			query->commandType != CMD_SELECT || query->intoClause != NULL)
+=======
+			query->commandType != CMD_SELECT ||
+			query->utilityStmt != NULL ||
+			query->intoClause != NULL)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("rules on SELECT must have action INSTEAD SELECT")));
@@ -317,7 +372,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		/*
 		 * ... and finally the rule must be named _RETURN.
 		 */
-		if (strcmp(stmt->rulename, ViewSelectRuleName) != 0)
+		if (strcmp(rulename, ViewSelectRuleName) != 0)
 		{
 			/*
 			 * In versions before 7.3, the expected name was _RETviewname. For
@@ -328,14 +383,15 @@ DefineQueryRewrite(RuleStmt *stmt)
 			 * worry about where a multibyte character might have gotten
 			 * truncated.
 			 */
-			if (strncmp(stmt->rulename, "_RET", 4) != 0 ||
-				strncmp(stmt->rulename + 4, event_obj->relname,
+			if (strncmp(rulename, "_RET", 4) != 0 ||
+				strncmp(rulename + 4, RelationGetRelationName(event_relation),
 						NAMEDATALEN - 4 - 4) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("view rule for \"%s\" must be named \"%s\"",
-								event_obj->relname, ViewSelectRuleName)));
-			stmt->rulename = pstrdup(ViewSelectRuleName);
+								RelationGetRelationName(event_relation),
+								ViewSelectRuleName)));
+			rulename = pstrdup(ViewSelectRuleName);
 		}
 
 		/*
@@ -354,27 +410,27 @@ DefineQueryRewrite(RuleStmt *stmt)
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						 errmsg("could not convert table \"%s\" to a view because it is not empty",
-								event_obj->relname)));
+								RelationGetRelationName(event_relation))));
 			heap_endscan(scanDesc);
 
 			if (event_relation->rd_rel->reltriggers != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						 errmsg("could not convert table \"%s\" to a view because it has triggers",
-								event_obj->relname),
+								RelationGetRelationName(event_relation)),
 						 errhint("In particular, the table cannot be involved in any foreign key relationships.")));
 
 			if (event_relation->rd_rel->relhasindex)
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						 errmsg("could not convert table \"%s\" to a view because it has indexes",
-								event_obj->relname)));
+								RelationGetRelationName(event_relation))));
 
 			if (event_relation->rd_rel->relhassubclass)
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						 errmsg("could not convert table \"%s\" to a view because it has child tables",
-								event_obj->relname)));
+								RelationGetRelationName(event_relation))));
 
 			RelisBecomingView = true;
 		}
@@ -424,9 +480,13 @@ DefineQueryRewrite(RuleStmt *stmt)
 	/* discard rule if it's null action and not INSTEAD; it's a no-op */
 	if (action != NIL || is_instead)
 	{
+<<<<<<< HEAD
 		stmt->ruleOid = InsertRule(stmt->rulename,
+=======
+		ruleId = InsertRule(rulename,
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 							event_type,
-							ev_relid,
+							event_relid,
 							event_attno,
 							is_instead,
 							event_qual,
@@ -443,7 +503,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		 * backends (including me!) to update relcache entries with the new
 		 * rule.
 		 */
-		SetRelationRuleStatus(ev_relid, true, RelisBecomingView);
+		SetRelationRuleStatus(event_relid, true, RelisBecomingView);
 	}
 
 	/*
@@ -684,9 +744,75 @@ setRuleCheckAsUser_Query(Query *qry, Oid userid)
 
 
 /*
+ * Change the firing semantics of an existing rule.
+ *
+ */
+void
+EnableDisableRule(Relation rel, const char *rulename,
+				  char fires_when)
+{
+	Relation	pg_rewrite_desc;
+	Oid			owningRel = RelationGetRelid(rel);
+	Oid			eventRelationOid;
+	HeapTuple	ruletup;
+	bool		changed = false;
+
+	/*
+	 * Find the rule tuple to change.
+	 */
+	pg_rewrite_desc = heap_open(RewriteRelationId, RowExclusiveLock);
+	ruletup = SearchSysCacheCopy(RULERELNAME,
+								 ObjectIdGetDatum(owningRel),
+								 PointerGetDatum(rulename),
+								 0, 0);
+	if (!HeapTupleIsValid(ruletup))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("rule \"%s\" for relation \"%s\" does not exist",
+						rulename, get_rel_name(owningRel))));
+
+	/*
+	 * Verify that the user has appropriate permissions.
+	 */
+	eventRelationOid = ((Form_pg_rewrite) GETSTRUCT(ruletup))->ev_class;
+	Assert(eventRelationOid == owningRel);
+	if (!pg_class_ownercheck(eventRelationOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   get_rel_name(eventRelationOid));
+
+	/*
+	 * Change ev_enabled if it is different from the desired new state.
+	 */
+	if (DatumGetChar(((Form_pg_rewrite) GETSTRUCT(ruletup))->ev_enabled) !=
+		fires_when)
+	{
+		((Form_pg_rewrite) GETSTRUCT(ruletup))->ev_enabled =
+			CharGetDatum(fires_when);
+		simple_heap_update(pg_rewrite_desc, &ruletup->t_self, ruletup);
+
+		/* keep system catalog indexes current */
+		CatalogUpdateIndexes(pg_rewrite_desc, ruletup);
+
+		changed = true;
+	}
+
+	heap_freetuple(ruletup);
+	heap_close(pg_rewrite_desc, RowExclusiveLock);
+
+	/*
+	 * If we changed anything, broadcast a SI inval message to force each
+	 * backend (including our own!) to rebuild relation's relcache entry.
+	 * Otherwise they will fail to apply the change promptly.
+	 */
+	if (changed)
+		CacheInvalidateRelcache(rel);
+}
+
+
+/*
  * Rename an existing rewrite rule.
  *
- * This is unused code at the moment.
+ * This is unused code at the moment.  Note that it lacks a permissions check.
  */
 #ifdef NOT_USED
 void

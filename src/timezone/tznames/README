@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 src/timezone/tznames/README
+=======
+$PostgreSQL: pgsql/src/timezone/tznames/README,v 1.2.4.1 2009/09/06 15:25:39 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 tznames
 =======

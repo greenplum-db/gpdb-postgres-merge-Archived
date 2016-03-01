@@ -5,18 +5,26 @@
  *	  and related modules.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/execdesc.h,v 1.33 2007/01/05 22:19:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/execdesc.h,v 1.37 2008/01/01 19:45:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef EXECDESC_H
 #define EXECDESC_H
 
+<<<<<<< HEAD
 #include "nodes/parsenodes.h"
+=======
+#include "nodes/execnodes.h"
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "nodes/plannodes.h"
 #include "tcop/dest.h"
 #include "gpmon/gpmon.h"
@@ -43,7 +51,10 @@ typedef struct QueryDesc
 	CmdType		operation;		/* CMD_SELECT, CMD_UPDATE, etc. */
 	PlannedStmt *plannedstmt;	/* planner's output, or null if utility */
 	Node	   *utilitystmt;	/* utility statement, or null */
+<<<<<<< HEAD
 	const char *sourceText;		/* source text of the query */
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	Snapshot	snapshot;		/* snapshot to use for query */
 	Snapshot	crosscheck_snapshot;	/* crosscheck for RI update/delete */
 	DestReceiver *dest;			/* the destination for tuple output */
@@ -74,7 +85,10 @@ typedef struct QueryDesc
 
 /* in pquery.c */
 extern QueryDesc *CreateQueryDesc(PlannedStmt *plannedstmt,
+<<<<<<< HEAD
 								  const char *sourceText,
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				Snapshot snapshot,
 				Snapshot crosscheck_snapshot,
 				DestReceiver *dest,
@@ -82,10 +96,16 @@ extern QueryDesc *CreateQueryDesc(PlannedStmt *plannedstmt,
 				bool doInstrument);
 
 extern QueryDesc *CreateUtilityQueryDesc(Node *utilitystmt,
+<<<<<<< HEAD
 										 const char *sourceText,
 										 Snapshot snapshot,
 										 DestReceiver *dest,
 										 ParamListInfo params);
+=======
+					   Snapshot snapshot,
+					   DestReceiver *dest,
+					   ParamListInfo params);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 extern void FreeQueryDesc(QueryDesc *qdesc);
 

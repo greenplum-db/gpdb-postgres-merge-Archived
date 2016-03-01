@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.51 2009/06/11 14:49:13 momjian Exp $ */
+=======
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.44 2007/11/15 21:14:45 momjian Exp $ */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #include "postgres_fe.h"
 
@@ -1483,7 +1487,11 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm, bool EuroDates)
  *	can be used to represent time spans.
  */
 int
+<<<<<<< HEAD
 DecodeTime(char *str, int *tmask, struct tm * tm, fsec_t *fsec)
+=======
+DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, fsec_t *fsec)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	char	   *cp;
 

@@ -3,7 +3,11 @@
  * 2006-07-17 by Arthur David Olson.
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.24 2009/06/11 14:49:15 momjian Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.22 2007/10/26 13:30:10 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 
 #include "postgres_fe.h"

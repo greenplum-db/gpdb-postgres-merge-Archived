@@ -3,9 +3,15 @@
  * syslogger.h
  *	  Exports from postmaster/syslogger.c.
  *
+<<<<<<< HEAD
  * Copyright (c) 2004-2009, PostgreSQL Global Development Group
  *
  * $PostgreSQL: pgsql/src/include/postmaster/syslogger.h,v 1.7.2.1 2007/06/14 01:49:39 adunstan Exp $
+=======
+ * Copyright (c) 2004-2008, PostgreSQL Global Development Group
+ *
+ * $PostgreSQL: pgsql/src/include/postmaster/syslogger.h,v 1.14 2008/01/01 19:45:58 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +20,7 @@
 
 #include <limits.h>				/* for PIPE_BUF */
 
+<<<<<<< HEAD
 /*
  * We really want line-buffered mode for logfile output, but Windows does
  * not have it, and interprets _IOLBF as _IOFBF (bozos).  So use _IONBF
@@ -28,10 +35,15 @@
 #endif
 
 /* 
+=======
+
+/*
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Primitive protocol structure for writing to syslogger pipe(s).  The idea
  * here is to divide long messages into chunks that are not more than
  * PIPE_BUF bytes long, which according to POSIX spec must be written into
  * the pipe atomically.  The pipe reader then uses the protocol headers to
+<<<<<<< HEAD
  * reassemble the parts of a message into a single string.  The reader can
  * also cope with non-protocol data coming down the pipe, though we cannot
  * guarantee long strings won't get split apart.
@@ -39,6 +51,15 @@
  * We use 't' or 'f' instead of a bool for is_last to make the protocol a tiny
  * bit more robust against finding a false double nul byte prologue.  But we
  * still might find it in the len and/or pid bytes unless we're careful.
+=======
+ * reassemble the parts of a message into a single string.	The reader can
+ * also cope with non-protocol data coming down the pipe, though we cannot
+ * guarantee long strings won't get split apart.
+ *
+ * We use non-nul bytes in is_last to make the protocol a tiny bit
+ * more robust against finding a false double nul byte prologue. But
+ * we still might find it in the len and/or pid bytes unless we're careful.
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 
 #ifdef PIPE_BUF
@@ -48,11 +69,16 @@
 #else
 #define PIPE_CHUNK_SIZE  ((int) PIPE_BUF)
 #endif
+<<<<<<< HEAD
 #else  /* not defined */
+=======
+#else							/* not defined */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* POSIX says the value of PIPE_BUF must be at least 512, so use that */
 #define PIPE_CHUNK_SIZE  512
 #endif
 
+<<<<<<< HEAD
 /*
  * This is used to fake the thread id to be used inside the SEGV/BUS/ILL
  * handler.
@@ -163,9 +189,30 @@ typedef struct
 	/* The depth of stack frame addresses that are stored after this structure */
 	int32 frame_depth;
 } GpSegvErrorData;
+=======
+typedef struct
+{
+	char		nuls[2];		/* always \0\0 */
+	uint16		len;			/* size of this chunk (counts data only) */
+	int32		pid;			/* writer's pid */
+	char		is_last;		/* last chunk of message? 't' or 'f' ('T' or
+								 * 'F' for CSV case) */
+	char		data[1];		/* data payload starts here */
+} PipeProtoHeader;
+
+typedef union
+{
+	PipeProtoHeader proto;
+	char		filler[PIPE_CHUNK_SIZE];
+} PipeProtoChunk;
+
+#define PIPE_HEADER_SIZE  offsetof(PipeProtoHeader, data)
+#define PIPE_MAX_PAYLOAD  ((int) (PIPE_CHUNK_SIZE - PIPE_HEADER_SIZE))
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* GUC options */
-extern bool Redirect_stderr;
+extern bool Logging_collector;
 extern int	Log_RotationAge;
 extern int	Log_RotationSize;
 extern PGDLLIMPORT char *Log_directory;
@@ -184,7 +231,7 @@ extern HANDLE syslogPipe[2];
 
 extern int	SysLogger_Start(void);
 
-extern void write_syslogger_file(const char *buffer, int count);
+extern void write_syslogger_file(const char *buffer, int count, int dest);
 
 extern void syslogger_append_timestamp(pg_time_t stamp_time, bool amsyslogger, bool append_comma);
 extern void syslogger_append_current_timestamp(bool amsyslogger);

@@ -8,12 +8,20 @@
  * exit-time cleanup for either a postmaster or a backend.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.105 2009/06/11 14:49:01 momjian Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.100.2.2 2010/03/20 00:58:21 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +37,11 @@
 #include "postmaster/autovacuum.h"
 #endif
 #include "storage/ipc.h"
+<<<<<<< HEAD
 #include "libpq/pqsignal.h"
+=======
+#include "tcop/tcopprot.h"
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 /*
@@ -184,6 +196,7 @@ proc_exit_prepare(int code)
 	 * case of elog(FATAL) for example.)
 	 */
 	error_context_stack = NULL;
+<<<<<<< HEAD
 
 	/*
 	 * Make sure threads get cleaned up: there might be still ongoing
@@ -211,6 +224,12 @@ proc_exit_prepare(int code)
 	* necessary to receive more motion data.
 	*/
 	WaitInterconnectQuit();
+=======
+	/* For the same reason, reset debug_query_string before it's clobbered */
+	debug_query_string = NULL;
+
+	elog(DEBUG3, "proc_exit(%d)", code);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* do our shared memory exits first */
 	shmem_exit(code);
@@ -231,7 +250,47 @@ proc_exit_prepare(int code)
 		(*on_proc_exit_list[on_proc_exit_index].function) (code,
 								  on_proc_exit_list[on_proc_exit_index].arg);
 
+<<<<<<< HEAD
 	on_proc_exit_index = 0;
+=======
+	elog(DEBUG3, "exit(%d)", code);
+
+#ifdef PROFILE_PID_DIR
+	{
+		/*
+		 * If we are profiling ourself then gprof's mcleanup() is about to
+		 * write out a profile to ./gmon.out.  Since mcleanup() always uses a
+		 * fixed file name, each backend will overwrite earlier profiles. To
+		 * fix that, we create a separate subdirectory for each backend
+		 * (./gprof/pid) and 'cd' to that subdirectory before we exit() - that
+		 * forces mcleanup() to write each profile into its own directory.	We
+		 * end up with something like: $PGDATA/gprof/8829/gmon.out
+		 * $PGDATA/gprof/8845/gmon.out ...
+		 *
+		 * To avoid undesirable disk space bloat, autovacuum workers are
+		 * discriminated against: all their gmon.out files go into the same
+		 * subdirectory.  Without this, an installation that is "just sitting
+		 * there" nonetheless eats megabytes of disk space every few seconds.
+		 *
+		 * Note that we do this here instead of in an on_proc_exit() callback
+		 * because we want to ensure that this code executes last - we don't
+		 * want to interfere with any other on_proc_exit() callback.
+		 */
+		char		gprofDirName[32];
+
+		if (IsAutoVacuumWorkerProcess())
+			snprintf(gprofDirName, 32, "gprof/avworker");
+		else
+			snprintf(gprofDirName, 32, "gprof/%d", (int) getpid());
+
+		mkdir("gprof", 0777);
+		mkdir(gprofDirName, 0777);
+		chdir(gprofDirName);
+	}
+#endif
+
+	exit(code);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /* ------------------
@@ -348,6 +407,24 @@ on_shmem_exit(pg_on_exit_callback function, Datum arg)
 #endif
 		atexit_callback_setup = true;
 	}
+}
+
+/* ----------------------------------------------------------------
+ *		cancel_shmem_exit
+ *
+ *		this function removes an entry, if present, from the list of
+ *		functions to be invoked by shmem_exit().  For simplicity,
+ *		only the latest entry can be removed.  (We could work harder
+ *		but there is no need for current uses.)
+ * ----------------------------------------------------------------
+ */
+void
+cancel_shmem_exit(pg_on_exit_callback function, Datum arg)
+{
+	if (on_shmem_exit_index > 0 &&
+		on_shmem_exit_list[on_shmem_exit_index - 1].function == function &&
+		on_shmem_exit_list[on_shmem_exit_index - 1].arg == arg)
+		--on_shmem_exit_index;
 }
 
 /* ----------------------------------------------------------------

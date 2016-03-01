@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.84 2006/10/14 23:07:22 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.85 2007/12/11 19:01:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,7 +140,11 @@ main(int argc, char **argv)
 		}
 	}
 
+<<<<<<< HEAD
 	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:iI:lL:n:Op:P:RsS:t:T:uU:vwWxX:1",
+=======
+	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:iI:lL:n:Op:P:RsS:t:T:U:vWxX:1",
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 							cmdopts, NULL)) != -1)
 	{
 		switch (c)
@@ -226,11 +230,14 @@ main(int argc, char **argv)
 				opts->tableNames = strdup(optarg);
 				break;
 
+<<<<<<< HEAD
 			case 'u':
 				opts->promptPassword = TRI_YES;
 				opts->username = simple_prompt("User name: ", 100, true);
 				break;
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			case 'U':
 				opts->username = optarg;
 				break;

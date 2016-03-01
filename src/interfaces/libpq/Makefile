@@ -2,7 +2,11 @@
 #
 # Makefile for src/interfaces/libpq library
 #
+<<<<<<< HEAD
 # Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+# Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.159.2.3 2008/10/01 15:35:34 mha Exp $
@@ -19,7 +23,11 @@ NAME= pq
 SO_MAJOR_VERSION= 5
 SO_MINOR_VERSION= 3
 
+<<<<<<< HEAD
 override CPPFLAGS :=  -DFRONTEND -DUNSAFE_STAT_OK -I$(srcdir) $(CPPFLAGS) -I$(top_builddir)/src/port -I$(top_srcdir)/src/port
+=======
+override CPPFLAGS :=  -DFRONTEND -DUNSAFE_STAT_OK -I$(srcdir) $(CPPFLAGS) -I$(top_builddir)/src/port
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 ifneq ($(PORTNAME), win32)
 override CFLAGS += $(PTHREAD_CFLAGS)
 endif
@@ -35,10 +43,15 @@ LIBS := $(filter-out -lresolv -lbz2, $(LIBS))
 
 OBJS=	fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
 	fe-protocol2.o fe-protocol3.o pqexpbuffer.o pqsignal.o fe-secure.o \
+<<<<<<< HEAD
 	libpq-events.o \
 	md5.o ip.o wchar.o encnames.o inet_net_ntop.o noblock.o pgstrcasecmp.o \
 	thread.o  \
 	$(filter crypt.o getaddrinfo.o getpeereid.o inet_aton.o open.o snprintf.o strerror.o strlcpy.o win32error.o, $(LIBOBJS))
+=======
+	md5.o ip.o wchar.o encnames.o noblock.o pgstrcasecmp.o thread.o \
+	$(filter crypt.o getaddrinfo.o inet_aton.o open.o snprintf.o strerror.o strlcpy.o win32error.o, $(LIBOBJS))
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 ifeq ($(PORTNAME), cygwin)
 override shlib = cyg$(NAME)$(DLSUFFIX)
@@ -46,6 +59,10 @@ endif
 
 ifeq ($(PORTNAME), win32)
 OBJS += win32.o pgsleep.o libpqrc.o
+<<<<<<< HEAD
+=======
+DLL_DEFFILE=libpqdll.def
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 libpqrc.o: libpq.rc
 	$(WINDRES) -i $< -o $@
@@ -65,7 +82,11 @@ else
 SHLIB_LINK += $(filter -lcrypt -ldes -lcom_err -lcrypto -lk5crypto -lkrb5 -lgssapi32 -lssl -lsocket -lnsl -lresolv -lintl $(PTHREAD_LIBS), $(LIBS)) $(LDAP_LIBS_FE)
 endif
 ifeq ($(PORTNAME), win32)
+<<<<<<< HEAD
 SHLIB_LINK += -L../../../../gpAux/ext/win32/kfw-3-2-2/lib -L../../../src/bin/gpfdist/ext/lib -lgssapi32 -lshfolder -lwsock32 -lws2_32 -lsecur32 $(filter -leay32 -lssleay32 -lcomerr32 -lkrb5_32, $(LIBS))
+=======
+SHLIB_LINK += -lshfolder -lwsock32 -lws2_32 -lsecur32 $(filter -leay32 -lssleay32 -lcomerr32 -lkrb5_32, $(LIBS))
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 endif
 
 SHLIB_EXPORTS = exports.txt
@@ -84,7 +105,11 @@ backend_src = $(top_srcdir)/src/backend
 # For port modules, this only happens if configure decides the module
 # is needed (see filter hack in OBJS, above).
 
+<<<<<<< HEAD
 crypt.c getaddrinfo.c getpeereid.c inet_aton.c inet_net_ntop.c noblock.c open.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c thread.c win32error.c pgsleep.c: % : $(top_srcdir)/src/port/%
+=======
+crypt.c getaddrinfo.c inet_aton.c noblock.c open.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c thread.c win32error.c pgsleep.c: % : $(top_srcdir)/src/port/%
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	rm -f $@ && $(LN_S) $< .
 
 md5.c ip.c: % : $(backend_src)/libpq/%
@@ -127,7 +152,11 @@ uninstall: uninstall-lib
 	rm -f '$(DESTDIR)$(datadir)/pg_service.conf.sample'
 
 clean distclean: clean-lib
+<<<<<<< HEAD
 	rm -f $(OBJS) pg_config_paths.h crypt.c getaddrinfo.c getpeereid.c inet_aton.c inet_net_ntop.c noblock.c open.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c thread.c md5.c ip.c encnames.c wchar.c win32error.c pgsleep.c pthread.h libpq.rc exports.list
+=======
+	rm -f $(OBJS) pg_config_paths.h crypt.c getaddrinfo.c inet_aton.c noblock.c open.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c thread.c md5.c ip.c encnames.c wchar.c win32error.c pgsleep.c pthread.h exports.list
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 # Might be left over from a Win32 client-only build
 	rm -f pg_config_paths.h
 

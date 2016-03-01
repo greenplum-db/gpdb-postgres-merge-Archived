@@ -3,12 +3,16 @@
  * pg_conversion.c
  *	  routines to support manipulation of the pg_conversion relation
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.35 2007/02/14 01:58:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.40 2008/01/01 19:45:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -291,6 +295,7 @@ FindConversion(const char *conname, Oid connamespace)
 
 	return conoid;
 }
+<<<<<<< HEAD
 
 /*
  * Execute SQL99's CONVERT function.
@@ -362,3 +367,5 @@ pg_convert_using(PG_FUNCTION_ARGS)
 
 	PG_RETURN_TEXT_P(retval);
 }
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

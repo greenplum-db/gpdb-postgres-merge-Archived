@@ -3,13 +3,16 @@
  * nodeSort.c
  *	  Routines to handle sorting of relations.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.60 2007/01/09 02:14:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.62 2008/01/01 19:45:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,6 +115,7 @@ ExecSort(SortState *node)
 		outerNode = outerPlanState(node);
 		tupDesc = ExecGetResultType(outerNode);
 
+<<<<<<< HEAD
 		if(plannode->share_type == SHARE_SORT_XSLICE)
 		{
 			char rwfile_prefix[100];
@@ -258,6 +262,18 @@ ExecSort(SortState *node)
 	{
 
 		Assert(outerNode != NULL);
+=======
+		tuplesortstate = tuplesort_begin_heap(tupDesc,
+											  plannode->numCols,
+											  plannode->sortColIdx,
+											  plannode->sortOperators,
+											  plannode->nullsFirst,
+											  work_mem,
+											  node->randomAccess);
+		if (node->bounded)
+			tuplesort_set_bound(tuplesortstate, node->bound);
+		node->tuplesortstate = (void *) tuplesortstate;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/*
 		 * Scan the subplan and feed all the tuples to tuplesort.
@@ -310,6 +326,8 @@ ExecSort(SortState *node)
 		 * finally set the sorted flag to true
 		 */
 		node->sort_Done = true;
+		node->bounded_Done = node->bounded;
+		node->bound_Done = node->bound;
 		SO1_printf("ExecSort: %s\n", "sorting done");
 
 		/* for share input, do not need to return any tuple */
@@ -395,10 +413,14 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 										 EXEC_FLAG_BACKWARD |
 										 EXEC_FLAG_MARK)) != 0;
 
+<<<<<<< HEAD
 	/* If the sort is shared, we need random access */
 	if(node->share_type != SHARE_NOTSHARED) 
 		sortstate->randomAccess = true;
 
+=======
+	sortstate->bounded = false;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	sortstate->sort_Done = false;
 	sortstate->tuplesortstate = palloc0(sizeof(GenericTupStore));
 	sortstate->share_lk_ctxt = NULL;
@@ -612,13 +634,20 @@ ExecReScanSort(SortState *node, ExprContext *exprCtxt)
 
 	/*
 	 * If subnode is to be rescanned then we forget previous sort results; we
-	 * have to re-read the subplan and re-sort.
+	 * have to re-read the subplan and re-sort.  Also must re-sort if the
+	 * bounded-sort parameters changed or we didn't select randomAccess.
 	 *
 	 * Otherwise we can just rewind and rescan the sorted output.
 	 */
 	if (((PlanState *) node)->lefttree->chgParam != NULL ||
+<<<<<<< HEAD
 		!node->randomAccess ||
 		(NULL == node->tuplesortstate->sortstore_mk && NULL == node->tuplesortstate->sortstore))
+=======
+		node->bounded != node->bounded_Done ||
+		node->bound != node->bound_Done ||
+		!node->randomAccess)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		node->sort_Done = false;
 

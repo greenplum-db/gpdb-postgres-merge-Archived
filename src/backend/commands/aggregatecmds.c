@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.42 2007/01/05 22:19:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.45.2.1 2008/06/08 21:09:52 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -159,7 +159,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 		{
 			numArgs = 1;
 			aggArgTypes = (Oid *) palloc(sizeof(Oid));
-			aggArgTypes[0] = typenameTypeId(NULL, baseType);
+			aggArgTypes[0] = typenameTypeId(NULL, baseType, NULL);
 		}
 	}
 	else
@@ -181,7 +181,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 		{
 			TypeName   *curTypeName = (TypeName *) lfirst(lc);
 
-			aggArgTypes[i++] = typenameTypeId(NULL, curTypeName);
+			aggArgTypes[i++] = typenameTypeId(NULL, curTypeName, NULL);
 		}
 	}
 
@@ -193,10 +193,16 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	 * However, we can allow polymorphic transtype in some cases
 	 * (AggregateCreate will check).
 	 */
+<<<<<<< HEAD
 	transTypeId = typenameTypeId(NULL, transType);
 	if ((get_typtype(transTypeId) == 'p' &&
 		 transTypeId != ANYARRAYOID &&
 		 transTypeId != ANYELEMENTOID))
+=======
+	transTypeId = typenameTypeId(NULL, transType, NULL);
+	if (get_typtype(transTypeId) == TYPTYPE_PSEUDO &&
+		!IsPolymorphicType(transTypeId))
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("aggregate transition data type cannot be %s",

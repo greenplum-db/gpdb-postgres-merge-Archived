@@ -4,10 +4,14 @@
  *	  Definitions for using the POSTGRES copy command.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/copy.h,v 1.29 2007/01/05 22:19:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/copy.h,v 1.31 2008/01/01 19:45:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +24,7 @@
 #include "executor/executor.h"
 
 
+<<<<<<< HEAD
 /*
  * Represents the different source/dest cases we need to worry about at
  * the bottom level
@@ -256,6 +261,8 @@ extern void ValidateControlChars(bool copy, bool load, bool csv_mode, char *deli
 								 List *force_quote, List *force_notnull,
 								 bool header_line, bool fill_missing, char *newline,
 								 int numcols);
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern uint64 DoCopy(const CopyStmt *stmt, const char *queryString);
 
 extern DestReceiver *CreateCopyDestReceiver(void);

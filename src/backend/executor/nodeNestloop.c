@@ -3,13 +3,16 @@
  * nodeNestloop.c
  *	  routines to support nest-loop joins
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeNestloop.c,v 1.45 2007/02/02 00:07:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeNestloop.c,v 1.46 2008/01/01 19:45:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

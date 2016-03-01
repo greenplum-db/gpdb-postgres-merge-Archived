@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.103 2007/01/05 22:19:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.112.2.1 2008/09/16 01:56:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #define LOCK_H_
 
 #include "nodes/pg_list.h"
+#include "storage/backendid.h"
 #include "storage/itemptr.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
@@ -40,6 +41,38 @@ extern bool Trace_userlocks;
 extern int	Trace_lock_table;
 extern bool Debug_deadlocks;
 #endif   /* LOCK_DEBUG */
+
+
+/*
+ * Top-level transactions are identified by VirtualTransactionIDs comprising
+ * the BackendId of the backend running the xact, plus a locally-assigned
+ * LocalTransactionId.	These are guaranteed unique over the short term,
+ * but will be reused after a database restart; hence they should never
+ * be stored on disk.
+ *
+ * Note that struct VirtualTransactionId can not be assumed to be atomically
+ * assignable as a whole.  However, type LocalTransactionId is assumed to
+ * be atomically assignable, and the backend ID doesn't change often enough
+ * to be a problem, so we can fetch or assign the two fields separately.
+ * We deliberately refrain from using the struct within PGPROC, to prevent
+ * coding errors from trying to use struct assignment with it; instead use
+ * GET_VXID_FROM_PGPROC().
+ */
+typedef struct
+{
+	BackendId	backendId;		/* determined at backend startup */
+	LocalTransactionId localTransactionId;		/* backend-local transaction
+												 * id */
+} VirtualTransactionId;
+
+#define InvalidLocalTransactionId		0
+#define LocalTransactionIdIsValid(lxid) ((lxid) != InvalidLocalTransactionId)
+#define VirtualTransactionIdIsValid(vxid) \
+	(((vxid).backendId != InvalidBackendId) && \
+	 LocalTransactionIdIsValid((vxid).localTransactionId))
+#define GET_VXID_FROM_PGPROC(vxid, proc) \
+	((vxid).backendId = (proc).backendId, \
+	 (vxid).localTransactionId = (proc).lxid)
 
 
 /*
@@ -155,10 +188,15 @@ typedef enum LockTagType
 	/* ID info for a tuple is PAGE info + OffsetNumber */
 	LOCKTAG_TRANSACTION,		/* transaction (for waiting for xact done) */
 	/* ID info for a transaction is its TransactionId */
+<<<<<<< HEAD
 	LOCKTAG_RELATION_RESYNCHRONIZE,			/* whole relation for resynchronize */
 	/* ID info for a relation is DB OID + REL OID; DB OID = 0 if shared */
 	LOCKTAG_RELATION_APPENDONLY_SEGMENT_FILE,	/* Segment file within an Append-Only relation */
 	/* ID info for a relation is DB OID + REL OID + (LOGICAL) SEGMENT FILE # */
+=======
+	LOCKTAG_VIRTUALTRANSACTION, /* virtual transaction (ditto) */
+	/* ID info for a virtual transaction is its VirtualTransactionId */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	LOCKTAG_OBJECT,				/* non-relation database object */
 	/* ID info for an object is DB OID + CLASS OID + OBJECT OID + SUBID */
 
@@ -171,6 +209,8 @@ typedef enum LockTagType
 	LOCKTAG_USERLOCK,			/* reserved for old contrib/userlock code */
 	LOCKTAG_ADVISORY			/* advisory user locks */
 } LockTagType;
+
+#define LOCKTAG_LAST_TYPE	LOCKTAG_ADVISORY
 
 /*
  * The LOCKTAG struct is defined with malice aforethought to fit into 16
@@ -235,6 +275,7 @@ typedef struct LOCKTAG
 	 (locktag).locktag_type = LOCKTAG_TRANSACTION, \
 	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
+<<<<<<< HEAD
 #define SET_LOCKTAG_RELATION_RESYNCHRONIZE(locktag,dboid,reloid) \
 	((locktag).locktag_field1 = (dboid), \
 	 (locktag).locktag_field2 = (reloid), \
@@ -249,6 +290,14 @@ typedef struct LOCKTAG
 	 (locktag).locktag_field3 = (segno), \
 	 (locktag).locktag_field4 = 0, \
 	 (locktag).locktag_type = LOCKTAG_RELATION_APPENDONLY_SEGMENT_FILE, \
+=======
+#define SET_LOCKTAG_VIRTUALTRANSACTION(locktag,vxid) \
+	((locktag).locktag_field1 = (vxid).backendId, \
+	 (locktag).locktag_field2 = (vxid).localTransactionId, \
+	 (locktag).locktag_field3 = 0, \
+	 (locktag).locktag_field4 = 0, \
+	 (locktag).locktag_type = LOCKTAG_VIRTUALTRANSACTION, \
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
 #define SET_LOCKTAG_OBJECT(locktag,dboid,classoid,objoid,objsubid) \
@@ -399,7 +448,10 @@ typedef struct LOCALLOCK
 	LOCK	   *lock;			/* associated LOCK object in shared mem */
 	PROCLOCK   *proclock;		/* associated PROCLOCK object in shmem */
 	uint32		hashcode;		/* copy of LOCKTAG's hash value */
+<<<<<<< HEAD
 	bool		preparable;		/* MPP: During prepare we populate this to avoid MPP-1094 */
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	int64		nLocks;			/* total number of times lock is held */
 	int			numLockOwners;	/* # of relevant ResourceOwners */
 	int			maxLockOwners;	/* allocated size of array */
@@ -436,6 +488,17 @@ typedef enum
 	LOCKACQUIRE_OK,				/* lock successfully acquired */
 	LOCKACQUIRE_ALREADY_HELD	/* incremented count for lock already held */
 } LockAcquireResult;
+
+/* Deadlock states identified by DeadLockCheck() */
+typedef enum
+{
+	DS_NOT_YET_CHECKED,			/* no deadlock check has run yet */
+	DS_NO_DEADLOCK,				/* no deadlock detected */
+	DS_SOFT_DEADLOCK,			/* deadlock avoided by queue rearrangement */
+	DS_HARD_DEADLOCK,			/* deadlock, no way out but ERROR */
+	DS_BLOCKED_BY_AUTOVACUUM	/* no deadlock; queue blocked by autovacuum
+								 * worker */
+} DeadLockState;
 
 
 /*
@@ -485,7 +548,8 @@ extern bool LockRelease(const LOCKTAG *locktag,
 extern void LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks);
 extern void LockReleaseCurrentOwner(void);
 extern void LockReassignCurrentOwner(void);
-extern List *GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode);
+extern VirtualTransactionId *GetLockConflicts(const LOCKTAG *locktag,
+				 LOCKMODE lockmode);
 extern void AtPrepare_Locks(void);
 extern void PostPrepare_Locks(TransactionId xid);
 extern int LockCheckConflicts(LockMethod lockMethodTable,
@@ -506,7 +570,8 @@ extern void lock_twophase_postcommit(TransactionId xid, uint16 info,
 extern void lock_twophase_postabort(TransactionId xid, uint16 info,
 						void *recdata, uint32 len);
 
-extern bool DeadLockCheck(PGPROC *proc);
+extern DeadLockState DeadLockCheck(PGPROC *proc);
+extern PGPROC *GetBlockingAutoVacuumPgproc(void);
 extern void DeadLockReport(void);
 extern void RememberSimpleDeadLock(PGPROC *proc1,
 					   LOCKMODE lockmode,

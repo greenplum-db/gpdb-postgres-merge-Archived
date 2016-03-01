@@ -3,13 +3,16 @@
  * relnode.c
  *	  Relation-node lookup/construction routines
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.85 2007/01/20 20:45:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.89 2008/01/01 19:45:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,9 +40,9 @@ typedef struct JoinHashEntry
 } JoinHashEntry;
 
 static List *build_joinrel_restrictlist(PlannerInfo *root,
-										RelOptInfo *joinrel,
-										RelOptInfo *outer_rel,
-										RelOptInfo *inner_rel);
+						   RelOptInfo *joinrel,
+						   RelOptInfo *outer_rel,
+						   RelOptInfo *inner_rel);
 static void build_joinrel_joinlist(RelOptInfo *joinrel,
 					   RelOptInfo *outer_rel,
 					   RelOptInfo *inner_rel);
@@ -60,17 +63,19 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	RelOptInfo *rel;
 	RangeTblEntry *rte;
 
-	/* Fetch RTE for relation */
-	Assert(relid > 0 && relid <= list_length(root->parse->rtable));
-	rte = rt_fetch(relid, root->parse->rtable);
-
 	/* Rel should not exist already */
-	Assert(relid < root->simple_rel_array_size);
+	Assert(relid > 0 && relid < root->simple_rel_array_size);
 	if (root->simple_rel_array[relid] != NULL)
 		elog(ERROR, "rel %d already exists", relid);
 
+<<<<<<< HEAD
     /* CDB: Rel isn't expected to have any pseudo columns yet. */
     Assert(!rte->pseudocols);
+=======
+	/* Fetch RTE for relation */
+	rte = root->simple_rte_array[relid];
+	Assert(rte != NULL);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	rel = makeNode(RelOptInfo);
 	rel->reloptkind = reloptkind;
@@ -91,6 +96,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->tuples = 0;
 	rel->subplan = NULL;
 	rel->subrtable = NIL;
+<<<<<<< HEAD
 	rel->locationlist = NIL;
 	rel->execcommand = NULL;
 	rel->fmttype = '\0';
@@ -101,6 +107,8 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->ext_encoding = -1;
 	rel->isrescannable = true;
 	rel->writable = false;
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	rel->baserestrictinfo = NIL;
 	rel->baserestrictcost.startup = 0;
 	rel->baserestrictcost.per_tuple = 0;
@@ -582,8 +590,9 @@ build_joinrel_restrictlist(PlannerInfo *root,
 	 */
 	result = subbuild_joinrel_restrictlist(joinrel, outer_rel->joininfo, NIL);
 	result = subbuild_joinrel_restrictlist(joinrel, inner_rel->joininfo, result);
+
 	/*
-	 * Add on any clauses derived from EquivalenceClasses.  These cannot be
+	 * Add on any clauses derived from EquivalenceClasses.	These cannot be
 	 * redundant with the clauses in the joininfo lists, so don't bother
 	 * checking.
 	 */
@@ -671,10 +680,10 @@ subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 		{
 			/*
 			 * This clause is still a join clause at this level, so add it to
-			 * the new joininfo list, being careful to eliminate
-			 * duplicates. (Since RestrictInfo nodes in different joinlists
-			 * will have been multiply-linked rather than copied, pointer
-			 * equality should be a sufficient test.)
+			 * the new joininfo list, being careful to eliminate duplicates.
+			 * (Since RestrictInfo nodes in different joinlists will have been
+			 * multiply-linked rather than copied, pointer equality should be
+			 * a sufficient test.)
 			 */
 			new_joininfo = list_append_unique_ptr(new_joininfo, rinfo);
 		}

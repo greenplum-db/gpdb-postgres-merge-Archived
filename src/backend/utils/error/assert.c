@@ -3,13 +3,17 @@
  * assert.c
  *	  Assert code.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/assert.c,v 1.33 2007/01/05 22:19:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/assert.c,v 1.35 2008/01/01 19:45:53 momjian Exp $
  *
  * NOTE
  *	  This should eventually work with elog()
@@ -56,6 +60,21 @@ ExceptionalCondition(const char *conditionName,
 		fflush(stderr);
 	}
 
+<<<<<<< HEAD
+=======
+	/* Usually this shouldn't be needed, but make sure the msg went out */
+	fflush(stderr);
+
+#ifdef SLEEP_ON_ASSERT
+
+	/*
+	 * It would be nice to use pg_usleep() here, but only does 2000 sec or 33
+	 * minutes, which seems too short.
+	 */
+	sleep(1000000);
+#endif
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	abort();
 	return 0;
 }

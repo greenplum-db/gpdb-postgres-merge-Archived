@@ -11,11 +11,15 @@
  * LWLocks to protect its shared state.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.48 2007/01/05 22:19:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.50.2.1 2009/03/11 00:08:07 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +31,10 @@
 #include "access/subtrans.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
+<<<<<<< HEAD
 #include "storage/barrier.h"
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/spin.h"
@@ -214,7 +221,7 @@ NumLWLocks(void)
  *		a loadable module.
  *
  * This is only useful if called from the _PG_init hook of a library that
- * is loaded into the postmaster via shared_preload_libraries.  Once
+ * is loaded into the postmaster via shared_preload_libraries.	Once
  * shared memory has been allocated, calls will be ignored.  (We could
  * raise an error, but it seems better to make it a no-op, so that
  * libraries containing such calls can be reloaded if needed.)

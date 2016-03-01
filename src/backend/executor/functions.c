@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.110 2007/02/02 00:02:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.120 2008/01/01 19:45:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,7 +94,12 @@ static execution_state *init_execution_state(List *queryTree_list,
 					 bool readonly_func);
 static void init_sql_fcache(FmgrInfo *finfo);
 static void postquel_start(execution_state *es, SQLFunctionCachePtr fcache);
+<<<<<<< HEAD
 static TupleTableSlot * postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache);
+=======
+static TupleTableSlot *postquel_getnext(execution_state *es,
+				 SQLFunctionCachePtr fcache);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static void postquel_end(execution_state *es);
 static void postquel_sub_params(SQLFunctionCachePtr fcache,
 					FunctionCallInfo fcinfo);
@@ -189,7 +194,11 @@ init_execution_state(List *queryTree_list, SQLFunctionCache *fcache, bool readon
 
 	foreach(qtl_item, queryTree_list)
 	{
+<<<<<<< HEAD
 		Query	   *queryTree = (Query *) lfirst(qtl_item);
+=======
+		Query	   *queryTree = lfirst(qtl_item);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		Node	   *stmt;
 		execution_state *newes;
 
@@ -198,7 +207,11 @@ init_execution_state(List *queryTree_list, SQLFunctionCache *fcache, bool readon
 		if (queryTree->commandType == CMD_UTILITY)
 			stmt = queryTree->utilityStmt;
 		else
+<<<<<<< HEAD
 			stmt = (Node *) pg_plan_query(queryTree, NULL);
+=======
+			stmt = (Node *) pg_plan_query(queryTree, 0, NULL);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/* Precheck all commands for validity in a function */
 		if (IsA(stmt, TransactionStmt))
@@ -265,7 +278,7 @@ init_sql_fcache(FmgrInfo *finfo)
 	 */
 	rettype = procedureStruct->prorettype;
 
-	if (rettype == ANYARRAYOID || rettype == ANYELEMENTOID)
+	if (IsPolymorphicType(rettype))
 	{
 		rettype = get_fn_expr_rettype(finfo);
 		if (rettype == InvalidOid)		/* this probably should not happen */
@@ -301,7 +314,7 @@ init_sql_fcache(FmgrInfo *finfo)
 		{
 			Oid			argtype = argOidVect[argnum];
 
-			if (argtype == ANYARRAYOID || argtype == ANYELEMENTOID)
+			if (IsPolymorphicType(argtype))
 			{
 				argtype = get_fn_expr_argtype(finfo, argnum);
 				if (argtype == InvalidOid)
@@ -318,7 +331,7 @@ init_sql_fcache(FmgrInfo *finfo)
 	fcache->argtypes = argOidVect;
 
 	/*
-	 * Parse and rewrite the queries in the function text.
+	 * And of course we need the function body text.
 	 */
 	tmp = SysCacheGetAttr(PROCOID,
 						  procedureTuple,
@@ -326,6 +339,7 @@ init_sql_fcache(FmgrInfo *finfo)
 						  &isNull);
 	if (isNull)
 		elog(ERROR, "null prosrc for function %u", foid);
+<<<<<<< HEAD
 	fcache->src = TextDatumGetCString(tmp);
 
 	queryTree_list = pg_parse_and_rewrite(fcache->src, argOidVect, nargs);
@@ -372,18 +386,26 @@ init_sql_fcache(FmgrInfo *finfo)
 				elog(ERROR,"SQL function %s cannot be executed from the segment databases",NameStr(procedureStruct->proname));		
 		}
 	}
+=======
+	fcache->src = DatumGetCString(DirectFunctionCall1(textout, tmp));
 
 	/*
-	 * Check that the function returns the type it claims to.  Although
-	 * in simple cases this was already done when the function was defined,
-	 * we have to recheck because database objects used in the function's
-	 * queries might have changed type.  We'd have to do it anyway if the
-	 * function had any polymorphic arguments.
+	 * Parse and rewrite the queries in the function text.
+	 */
+	queryTree_list = pg_parse_and_rewrite(fcache->src, argOidVect, nargs);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+
+	/*
+	 * Check that the function returns the type it claims to.  Although in
+	 * simple cases this was already done when the function was defined, we
+	 * have to recheck because database objects used in the function's queries
+	 * might have changed type.  We'd have to do it anyway if the function had
+	 * any polymorphic arguments.
 	 *
-	 * Note: we set fcache->returnsTuple according to whether we are
-	 * returning the whole tuple result or just a single column.  In the
-	 * latter case we clear returnsTuple because we need not act different
-	 * from the scalar result case, even if it's a rowtype column.
+	 * Note: we set fcache->returnsTuple according to whether we are returning
+	 * the whole tuple result or just a single column.	In the latter case we
+	 * clear returnsTuple because we need not act different from the scalar
+	 * result case, even if it's a rowtype column.
 	 *
 	 * In the returnsTuple case, check_sql_fn_retval will also construct a
 	 * JunkFilter we can use to coerce the returned rowtype to the desired
@@ -428,6 +450,7 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 	}
 
 	if (IsA(es->stmt, PlannedStmt))
+<<<<<<< HEAD
 	{
 		es->qd = CreateQueryDesc((PlannedStmt *) es->stmt,
 								 fcache->src,
@@ -463,6 +486,17 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 										None_Receiver,
 										fcache->paramLI);
 	}
+=======
+		es->qd = CreateQueryDesc((PlannedStmt *) es->stmt,
+								 snapshot, InvalidSnapshot,
+								 None_Receiver,
+								 fcache->paramLI, false);
+	else
+		es->qd = CreateUtilityQueryDesc(es->stmt,
+										snapshot,
+										None_Receiver,
+										fcache->paramLI);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* We assume we don't need to set up ActiveSnapshot for ExecutorStart */
 
@@ -470,8 +504,8 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 	if (es->qd->utilitystmt == NULL)
 	{
 		/*
-		 * Only set up to collect queued triggers if it's not a SELECT.
-		 * This isn't just an optimization, but is necessary in case a SELECT
+		 * Only set up to collect queued triggers if it's not a SELECT. This
+		 * isn't just an optimization, but is necessary in case a SELECT
 		 * returns multiple rows to caller --- we mustn't exit from the
 		 * function execution with a stacked AfterTrigger level still active.
 		 */
@@ -504,16 +538,29 @@ postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache)
 	{
 		ActiveSnapshot = es->qd->snapshot;
 
+<<<<<<< HEAD
 		if (es->qd->utilitystmt != NULL)
+=======
+		if (es->qd->utilitystmt)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		{
 			/* ProcessUtility needs the PlannedStmt for DECLARE CURSOR */
 			ProcessUtility((es->qd->plannedstmt ?
 							(Node *) es->qd->plannedstmt :
+<<<<<<< HEAD
 							es->qd->utilitystmt), 
 						   fcache->src,
 						   es->qd->params,
 						   false, /* not top level */
 						   es->qd->dest, NULL);
+=======
+							es->qd->utilitystmt),
+						   fcache->src,
+						   es->qd->params,
+						   false,		/* not top level */
+						   es->qd->dest,
+						   NULL);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			result = NULL;
 		}
 		else
@@ -526,6 +573,10 @@ postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache)
 			 */
 			if (LAST_POSTQUEL_COMMAND(es) &&
 				es->qd->operation == CMD_SELECT &&
+<<<<<<< HEAD
+=======
+				es->qd->plannedstmt->utilityStmt == NULL &&
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				es->qd->plannedstmt->intoClause == NULL)
 				count = 1L;
 			else
@@ -1056,9 +1107,9 @@ ShutdownSQLFunction(Datum arg)
  * to be sure that the user is returning the type he claims.
  *
  * For a polymorphic function the passed rettype must be the actual resolved
- * output type of the function; we should never see ANYARRAY or ANYELEMENT
- * as rettype.  (This means we can't check the type during function definition
- * of a polymorphic function.)
+ * output type of the function; we should never see a polymorphic pseudotype
+ * such as ANYELEMENT as rettype.  (This means we can't check the type during
+ * function definition of a polymorphic function.)
  *
  * This function returns true if the sql function returns the entire tuple
  * result of its final SELECT, and false otherwise.  Note that because we
@@ -1081,6 +1132,8 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	char		fn_typtype;
 	Oid			restype;
 
+	AssertArg(!IsPolymorphicType(rettype));
+
 	if (junkFilter)
 		*junkFilter = NULL;		/* default result */
 
@@ -1102,12 +1155,21 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	/*
 	 * If the last query isn't a SELECT, the return type must be VOID.
 	 *
+<<<<<<< HEAD
 	 * Note: eventually replace this test with QueryReturnsTuples?  We'd need
 	 * a more general method of determining the output type, though.
 	 */
 	if (!(parse->commandType == CMD_SELECT && 
 		  parse->intoClause == NULL &&
 		  parse->utilityStmt == NULL))
+=======
+	 * Note: eventually replace this test with QueryReturnsTuples?	We'd need
+	 * a more general method of determining the output type, though.
+	 */
+	if (!(parse->commandType == CMD_SELECT &&
+		  parse->utilityStmt == NULL &&
+		  parse->intoClause == NULL))
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		if (rettype != VOIDOID)
 			ereport(ERROR,
@@ -1121,10 +1183,16 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	/*
 	 * OK, it's a SELECT, so it must return something matching the declared
 	 * type.  (We used to insist that the declared type not be VOID in this
+<<<<<<< HEAD
 	 * case, but that makes it hard to write a void function that exits
 	 * after calling another void function.  Instead, we insist that the
 	 * SELECT return void ... so void is treated as if it were a scalar type
 	 * below.)
+=======
+	 * case, but that makes it hard to write a void function that exits after
+	 * calling another void function.  Instead, we insist that the SELECT
+	 * return void ... so void is treated as if it were a scalar type below.)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 
 	/*
@@ -1135,7 +1203,13 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 
 	fn_typtype = get_typtype(rettype);
 
+<<<<<<< HEAD
 	if (fn_typtype == 'b' || fn_typtype == 'd' ||
+=======
+	if (fn_typtype == TYPTYPE_BASE ||
+		fn_typtype == TYPTYPE_DOMAIN ||
+		fn_typtype == TYPTYPE_ENUM ||
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		rettype == VOIDOID)
 	{
 		/*
@@ -1159,7 +1233,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 					 errdetail("Actual return type is %s.",
 							   format_type_be(restype))));
 	}
-	else if (fn_typtype == 'c' || rettype == RECORDOID)
+	else if (fn_typtype == TYPTYPE_COMPOSITE || rettype == RECORDOID)
 	{
 		/* Returns a rowtype */
 		TupleDesc	tupdesc;
@@ -1173,6 +1247,11 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		 * This can happen, for example, where the body of the function is
 		 * 'SELECT func2()', where func2 has the same return type as the
 		 * function that's calling it.
+		 *
+		 * XXX Note that if rettype is RECORD, the IsBinaryCoercible check
+		 * will succeed for any composite restype.  For the moment we rely on
+		 * runtime type checking to catch any discrepancy, but it'd be nice to
+		 * do better at parse time.
 		 */
 		if (tlistlen == 1)
 		{
@@ -1267,13 +1346,13 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		/* Report that we are returning entire tuple result */
 		return true;
 	}
-	else if (rettype == ANYARRAYOID || rettype == ANYELEMENTOID)
+	else if (IsPolymorphicType(rettype))
 	{
 		/* This should already have been caught ... */
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("cannot determine result data type"),
-				 errdetail("A function returning \"anyarray\" or \"anyelement\" must have at least one argument of either type.")));
+				 errdetail("A function returning a polymorphic type must have at least one polymorphic argument.")));
 	}
 	else
 		ereport(ERROR,

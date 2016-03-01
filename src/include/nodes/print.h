@@ -4,11 +4,14 @@
  *	  definitions for nodes/print.c
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/print.h,v 1.26 2007/01/05 22:19:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/print.h,v 1.28 2008/01/01 19:45:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,8 +35,5 @@ extern void print_expr(Node *expr, List *rtable);
 extern void print_pathkeys(List *pathkeys, List *rtable);
 extern void print_tl(List *tlist, List *rtable);
 extern void print_slot(TupleTableSlot *slot);
-extern void print_plan_recursive(Plan *p, Query *parsetree,
-					 int indentLevel, char *label);
-extern void print_plan(Plan *p, Query *parsetree);
 
 #endif   /* PRINT_H */

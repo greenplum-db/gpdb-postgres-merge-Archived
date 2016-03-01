@@ -4,11 +4,18 @@
  *	  Relation descriptor cache definitions.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.59 2007/03/29 00:15:39 tgl Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.61 2008/01/01 19:45:59 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +56,7 @@ extern List *RelationGetIndexList(Relation relation);
 extern Oid	RelationGetOidIndex(Relation relation);
 extern List *RelationGetIndexExpressions(Relation relation);
 extern List *RelationGetIndexPredicate(Relation relation);
+extern Bitmapset *RelationGetIndexAttrBitmap(Relation relation);
 
 extern void RelationSetIndexList(Relation relation,
 					 List *indexIds, Oid oidIndex);
@@ -92,6 +100,7 @@ extern void RelationCacheMarkNewRelfilenode(Relation rel);
  * Routines to help manage rebuilding of relcache init file
  */
 extern bool RelationIdIsInInitFile(Oid relationId);
+<<<<<<< HEAD
 extern void RelationCacheInitFileInvalidate(bool beforeSend);
 extern void RelationCacheInitFileRemove(void);
 
@@ -103,6 +112,11 @@ extern void IndexSupportInitialize(oidvector *indclass,
 					   StrategyNumber maxStrategyNumber,
 					   StrategyNumber maxSupportNumber,
 					   AttrNumber maxAttributeNumber);
+=======
+extern void RelationCacheInitFilePreInvalidate(void);
+extern void RelationCacheInitFilePostInvalidate(void);
+extern void RelationCacheInitFileRemove(const char *dbPath);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* should be used only by relcache.c and catcache.c */
 extern bool criticalRelcachesBuilt;

@@ -3,10 +3,17 @@
  * test_thread_funcs.c
  *		libc thread test program
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	$PostgreSQL: pgsql/src/test/thread/thread_test.c,v 1.7 2009/01/01 17:24:04 momjian Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ *	$PostgreSQL: pgsql/src/test/thread/thread_test.c,v 1.5 2008/01/01 19:46:01 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.

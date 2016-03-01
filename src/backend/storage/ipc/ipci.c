@@ -3,12 +3,20 @@
  * ipci.c
  *	  POSTGRES inter-process communication initialization code.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.100 2009/05/05 19:59:00 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.94 2008/01/01 19:45:51 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -166,6 +174,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		size = add_size(size, ProcSignalShmemSize());
 		size = add_size(size, primaryMirrorModeShmemSize());
 		size = add_size(size, FreeSpaceShmemSize());
+<<<<<<< HEAD
 		//size = add_size(size, AutoVacuumShmemSize());
 		size = add_size(size, FtsShmemSize());
 		size = add_size(size, tmShmemSize());
@@ -198,6 +207,12 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		size = add_size(size, FaultInjector_ShmemSize());
 #endif			
 		
+=======
+		size = add_size(size, BgWriterShmemSize());
+		size = add_size(size, AutoVacuumShmemSize());
+		size = add_size(size, BTreeShmemSize());
+		size = add_size(size, SyncScanShmemSize());
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #ifdef EXEC_BACKEND
 		size = add_size(size, ShmemBackendArraySize());
 #endif
@@ -408,7 +423,11 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	 * Set up other modules that need some shared memory space
 	 */
 	BTreeShmemInit();
+<<<<<<< HEAD
 	workfile_mgr_cache_init();
+=======
+	SyncScanShmemInit();
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #ifdef EXEC_BACKEND
 

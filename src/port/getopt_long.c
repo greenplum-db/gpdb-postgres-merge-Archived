@@ -31,7 +31,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/port/getopt_long.c,v 1.8 2009/06/11 14:49:15 momjian Exp $
+=======
+ * $PostgreSQL: pgsql/src/port/getopt_long.c,v 1.6 2007/03/26 21:44:11 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 
 #include "c.h"

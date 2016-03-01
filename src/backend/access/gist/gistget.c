@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.64 2007/01/20 18:43:35 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.69.2.3 2008/10/22 12:54:25 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@ static bool gistindex_keytest(IndexTuple tuple, IndexScanDesc scan,
 static void
 killtuple(Relation r, GISTScanOpaque so, ItemPointer iptr)
 {
+<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_DECLARE;
 
 	Page        p;
@@ -39,6 +40,10 @@ killtuple(Relation r, GISTScanOpaque so, ItemPointer iptr)
 
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
+=======
+	Page		p;
+	OffsetNumber offset;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	LockBuffer(so->curbuf, GIST_SHARE);
 	gistcheckpage(r, so->curbuf);
@@ -48,7 +53,11 @@ killtuple(Relation r, GISTScanOpaque so, ItemPointer iptr)
 	{
 		/* page unchanged, so all is simple */
 		offset = ItemPointerGetOffsetNumber(iptr);
+<<<<<<< HEAD
 		PageGetItemId(p, offset)->lp_flags |= LP_DELETE;
+=======
+		ItemIdMarkDead(PageGetItemId(p, offset));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		SetBufferCommitInfoNeedsSave(so->curbuf);
 	}
 	else
@@ -62,7 +71,11 @@ killtuple(Relation r, GISTScanOpaque so, ItemPointer iptr)
 			if (ItemPointerEquals(&(ituple->t_tid), iptr))
 			{
 				/* found */
+<<<<<<< HEAD
 				PageGetItemId(p, offset)->lp_flags |= LP_DELETE;
+=======
+				ItemIdMarkDead(PageGetItemId(p, offset));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				SetBufferCommitInfoNeedsSave(so->curbuf);
 				break;
 			}
@@ -70,9 +83,12 @@ killtuple(Relation r, GISTScanOpaque so, ItemPointer iptr)
 	}
 
 	LockBuffer(so->curbuf, GIST_UNLOCK);
+<<<<<<< HEAD
 
 	MIRROREDLOCK_BUFMGR_UNLOCK;
 	// -------- MirroredLock ----------
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
@@ -156,8 +172,13 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids,
 
 	so = (GISTScanOpaque) scan->opaque;
 
+<<<<<<< HEAD
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
+=======
+	if ( so->qual_ok == false )
+		return 0;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (ItemPointerIsValid(&so->curpos) == false)
 	{
@@ -172,7 +193,11 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids,
 		stk->next = NULL;
 		stk->block = GIST_ROOT_BLKNO;
 
+<<<<<<< HEAD
 			pgstat_count_index_scan(scan->indexRelation);
+=======
+		pgstat_count_index_scan(scan->indexRelation);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 	else if (so->curbuf == InvalidBuffer)
 	{
@@ -190,7 +215,11 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids,
 		while( ntids < maxtids && so->curPageData < so->nPageData )
 		{
 			tids[ ntids ] = scan->xs_ctup.t_self = so->pageData[ so->curPageData ].heapPtr;
+<<<<<<< HEAD
 			ItemPointerSet(&so->curpos,
+=======
+			ItemPointerSet(&(so->curpos),
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 							   BufferGetBlockNumber(so->curbuf), 
 							   so->pageData[ so->curPageData ].pageOffset);
 
@@ -200,12 +229,16 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids,
 		}
 
 		if ( ntids == maxtids )
+<<<<<<< HEAD
 		{
 			MIRROREDLOCK_BUFMGR_UNLOCK;
 			// -------- MirroredLock ----------
 
 			return ntids;
 		}
+=======
+			return ntids;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		
 		/*
 		 * Go to the next page
@@ -219,10 +252,13 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids,
 		{
 			ReleaseBuffer(so->curbuf);
 			so->curbuf = InvalidBuffer;
+<<<<<<< HEAD
 
 			MIRROREDLOCK_BUFMGR_UNLOCK;
 			// -------- MirroredLock ----------
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			return ntids;
 		}
 
@@ -303,7 +339,11 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids,
 					tids[ ntids ] = scan->xs_ctup.t_self = 
 						so->pageData[ so->curPageData ].heapPtr;
 				
+<<<<<<< HEAD
 					ItemPointerSet(&so->curpos,
+=======
+					ItemPointerSet(&(so->curpos),
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 								   BufferGetBlockNumber(so->curbuf), 
 								   so->pageData[ so->curPageData ].pageOffset);
 
@@ -314,10 +354,13 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids,
 				if ( ntids == maxtids )
 				{
 					LockBuffer(so->curbuf, GIST_UNLOCK);
+<<<<<<< HEAD
 					
 					MIRROREDLOCK_BUFMGR_UNLOCK;
 					// -------- MirroredLock ----------
 					
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					return ntids;
 				}
 
@@ -359,7 +402,11 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids,
 				 * we can efficiently resume the index scan later.
 				 */
 
+<<<<<<< HEAD
 				if (!(ignore_killed_tuples && ItemIdDeleted(PageGetItemId(p, n))))
+=======
+				if (!(ignore_killed_tuples && ItemIdIsDead(PageGetItemId(p, n))))
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				{
 					it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
 					so->pageData[ so->nPageData ].heapPtr = it->t_tid;
@@ -449,37 +496,46 @@ gistindex_keytest(IndexTuple tuple,
 		if (key->sk_flags & SK_ISNULL)
 		{
 			/*
-			 * is the compared-to datum NULL? on non-leaf page it's possible
-			 * to have nulls in childs :(
+			 * On non-leaf page we can't conclude that child hasn't NULL
+			 * values because of assumption in GiST: uinon (VAL, NULL) is VAL
+			 * But if on non-leaf page key IS  NULL then all childs has NULL.
 			 */
 
-			if (isNull || !GistPageIsLeaf(p))
-				return true;
-			return false;
+			Assert(key->sk_flags & SK_SEARCHNULL);
+
+			if (GistPageIsLeaf(p) && !isNull)
+				return false;
 		}
 		else if (isNull)
+		{
 			return false;
+		}
+		else
+		{
 
-		gistdentryinit(giststate, key->sk_attno - 1, &de,
-					   datum, r, p, offset,
-					   FALSE, isNull);
+			gistdentryinit(giststate, key->sk_attno - 1, &de,
+						   datum, r, p, offset,
+						   FALSE, isNull);
 
-		/*
-		 * Call the Consistent function to evaluate the test.  The arguments
-		 * are the index datum (as a GISTENTRY*), the comparison datum, and
-		 * the comparison operator's strategy number and subtype from pg_amop.
-		 *
-		 * (Presently there's no need to pass the subtype since it'll always
-		 * be zero, but might as well pass it for possible future use.)
-		 */
-		test = FunctionCall4(&key->sk_func,
-							 PointerGetDatum(&de),
-							 key->sk_argument,
-							 Int32GetDatum(key->sk_strategy),
-							 ObjectIdGetDatum(key->sk_subtype));
+			/*
+			 * Call the Consistent function to evaluate the test.  The
+			 * arguments are the index datum (as a GISTENTRY*), the comparison
+			 * datum, and the comparison operator's strategy number and
+			 * subtype from pg_amop.
+			 *
+			 * (Presently there's no need to pass the subtype since it'll
+			 * always be zero, but might as well pass it for possible future
+			 * use.)
+			 */
+			test = FunctionCall4(&key->sk_func,
+								 PointerGetDatum(&de),
+								 key->sk_argument,
+								 Int32GetDatum(key->sk_strategy),
+								 ObjectIdGetDatum(key->sk_subtype));
 
-		if (!DatumGetBool(test))
-			return false;
+			if (!DatumGetBool(test))
+				return false;
+		}
 
 		keySize--;
 		key++;

@@ -9,7 +9,11 @@
 # to build using the surrounding source tree.
 #
 # IDENTIFICATION
+<<<<<<< HEAD
 #    $PostgreSQL: pgsql/src/tutorial/Makefile,v 1.21 2008/04/07 14:15:58 petere Exp $
+=======
+#    $PostgreSQL: pgsql/src/tutorial/Makefile,v 1.20 2007/06/26 22:05:04 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #
 #-------------------------------------------------------------------------
 

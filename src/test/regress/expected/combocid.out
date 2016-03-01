@@ -14,8 +14,13 @@ INSERT INTO combocidtest SELECT 1 LIMIT 0;
 INSERT INTO combocidtest SELECT 1 LIMIT 0;
 INSERT INTO combocidtest SELECT 1 LIMIT 0;
 INSERT INTO combocidtest SELECT 1 LIMIT 0;
+<<<<<<< HEAD
 INSERT INTO combocidtest VALUES (1,1);
 INSERT INTO combocidtest VALUES (2,2);
+=======
+INSERT INTO combocidtest VALUES (1);
+INSERT INTO combocidtest VALUES (2);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 SELECT ctid,cmin,* FROM combocidtest;
  ctid  | cmin | a | foobar 
 -------+------+---+--------
@@ -27,10 +32,17 @@ SAVEPOINT s1;
 UPDATE combocidtest SET foobar = foobar + 10;
 -- here we should see only updated tuples
 SELECT ctid,cmin,* FROM combocidtest;
+<<<<<<< HEAD
  ctid  | cmin | a | foobar 
 -------+------+---+--------
  (0,2) |   25 | 1 |     11
  (0,2) |   25 | 2 |     12
+=======
+ ctid  | cmin | foobar 
+-------+------+--------
+ (0,3) |   12 |     11
+ (0,4) |   12 |     12
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 (2 rows)
 
 ROLLBACK TO s1;
@@ -57,19 +69,34 @@ INSERT INTO combocidtest VALUES (3,333);
 DECLARE c CURSOR FOR SELECT ctid,cmin,* FROM combocidtest;
 DELETE FROM combocidtest;
 FETCH ALL FROM c;
+<<<<<<< HEAD
  ctid  | cmin | a | foobar 
 -------+------+---+--------
  (0,1) |    0 | 1 |      1
  (0,1) |    0 | 2 |      2
  (0,3) |    0 | 3 |    333
+=======
+ ctid  | cmin | foobar 
+-------+------+--------
+ (0,1) |    1 |      1
+ (0,2) |    1 |      2
+ (0,5) |    0 |    333
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 (3 rows)
 
 ROLLBACK;
 SELECT ctid,cmin,* FROM combocidtest;
+<<<<<<< HEAD
  ctid  | cmin | a | foobar 
 -------+------+---+--------
  (0,1) |    4 | 1 |      1
  (0,1) |    4 | 2 |      2
+=======
+ ctid  | cmin | foobar 
+-------+------+--------
+ (0,1) |    1 |      1
+ (0,2) |    1 |      2
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 (2 rows)
 
 -- check behavior with locked tuples
@@ -85,6 +112,7 @@ INSERT INTO combocidtest SELECT 1 LIMIT 0;
 INSERT INTO combocidtest SELECT 1 LIMIT 0;
 INSERT INTO combocidtest SELECT 1 LIMIT 0;
 INSERT INTO combocidtest SELECT 1 LIMIT 0;
+<<<<<<< HEAD
 INSERT INTO combocidtest VALUES (3,444);
 SELECT ctid,cmin,* FROM combocidtest;
  ctid  | cmin | a | foobar 
@@ -92,11 +120,21 @@ SELECT ctid,cmin,* FROM combocidtest;
  (0,1) |    4 | 1 |      1
  (0,1) |    4 | 2 |      2
  (0,4) |   20 | 3 |    444
+=======
+INSERT INTO combocidtest VALUES (444);
+SELECT ctid,cmin,* FROM combocidtest;
+ ctid  | cmin | foobar 
+-------+------+--------
+ (0,1) |    1 |      1
+ (0,2) |    1 |      2
+ (0,6) |   10 |    444
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 (3 rows)
 
 SAVEPOINT s1;
 -- this doesn't affect cmin
 SELECT ctid,cmin,* FROM combocidtest FOR UPDATE;
+<<<<<<< HEAD
  ctid  | cmin | a | foobar 
 -------+------+---+--------
  (0,1) |    4 | 1 |      1
@@ -110,33 +148,72 @@ SELECT ctid,cmin,* FROM combocidtest;
  (0,1) |    4 | 1 |      1
  (0,1) |    4 | 2 |      2
  (0,4) |   20 | 3 |    444
+=======
+ ctid  | cmin | foobar 
+-------+------+--------
+ (0,1) |    1 |      1
+ (0,2) |    1 |      2
+ (0,6) |   10 |    444
+(3 rows)
+
+SELECT ctid,cmin,* FROM combocidtest;
+ ctid  | cmin | foobar 
+-------+------+--------
+ (0,1) |    1 |      1
+ (0,2) |    1 |      2
+ (0,6) |   10 |    444
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 (3 rows)
 
 -- but this does
 UPDATE combocidtest SET foobar = foobar + 10;
 SELECT ctid,cmin,* FROM combocidtest;
+<<<<<<< HEAD
  ctid  | cmin | a | foobar 
 -------+------+---+--------
  (0,5) |   28 | 1 |     11
  (0,3) |   28 | 2 |     12
  (0,6) |   28 | 3 |    454
+=======
+ ctid  | cmin | foobar 
+-------+------+--------
+ (0,7) |   12 |     11
+ (0,8) |   12 |     12
+ (0,9) |   12 |    454
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 (3 rows)
 
 ROLLBACK TO s1;
 SELECT ctid,cmin,* FROM combocidtest;
+<<<<<<< HEAD
  ctid  | cmin | a | foobar 
 -------+------+---+--------
  (0,1) |   28 | 1 |      1
  (0,1) |   28 | 2 |      2
  (0,4) |    0 | 3 |    444
+=======
+ ctid  | cmin | foobar 
+-------+------+--------
+ (0,1) |   12 |      1
+ (0,2) |   12 |      2
+ (0,6) |    0 |    444
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 (3 rows)
 
 COMMIT;
 SELECT ctid,cmin,* FROM combocidtest;
+<<<<<<< HEAD
  ctid  | cmin | a | foobar 
 -------+------+---+--------
  (0,1) |   28 | 1 |      1
  (0,1) |   28 | 2 |      2
  (0,4) |    0 | 3 |    444
+=======
+ ctid  | cmin | foobar 
+-------+------+--------
+ (0,1) |   12 |      1
+ (0,2) |   12 |      2
+ (0,6) |    0 |    444
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 (3 rows)
 

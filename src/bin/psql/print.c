@@ -1,9 +1,18 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
+<<<<<<< HEAD
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
  * src/bin/psql/print.c
+=======
+ * Copyright (c) 2000-2008, PostgreSQL Global Development Group
+ *
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.96.2.1 2010/03/01 20:55:59 heikki Exp $
+ *
+ * Note: we include postgres.h not postgres_fe.h so that we can include
+ * catalog/pg_type.h, and thereby have access to INT4OID and similar macros.
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 #include "postgres_fe.h"
 
@@ -274,9 +283,16 @@ fputnbytes(FILE *f, const char *str, size_t n)
 static void
 print_unaligned_text(const printTableContent *cont, FILE *fout)
 {
+<<<<<<< HEAD
 	const char *opt_fieldsep = cont->opt->fieldSep;
 	const char *opt_recordsep = cont->opt->recordSep;
 	bool		opt_tuples_only = cont->opt->tuples_only;
+=======
+	const char *opt_fieldsep = opt->fieldSep;
+	const char *opt_recordsep = opt->recordSep;
+	bool		opt_tuples_only = opt->tuples_only;
+	unsigned int col_count = 0;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	unsigned int i;
 	const char *const * ptr;
 	bool		need_recordsep = false;
@@ -357,9 +373,16 @@ print_unaligned_text(const printTableContent *cont, FILE *fout)
 static void
 print_unaligned_vertical(const printTableContent *cont, FILE *fout)
 {
+<<<<<<< HEAD
 	const char *opt_fieldsep = cont->opt->fieldSep;
 	const char *opt_recordsep = cont->opt->recordSep;
 	bool		opt_tuples_only = cont->opt->tuples_only;
+=======
+	const char *opt_fieldsep = opt->fieldSep;
+	const char *opt_recordsep = opt->recordSep;
+	bool		opt_tuples_only = opt->tuples_only;
+	unsigned int col_count = 0;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	unsigned int i;
 	const char *const * ptr;
 	bool		need_recordsep = false;
@@ -402,7 +425,11 @@ print_unaligned_vertical(const printTableContent *cont, FILE *fout)
 		fputs(opt_fieldsep, fout);
 		fputs(*ptr, fout);
 
+<<<<<<< HEAD
 		if ((i + 1) % cont->ncolumns)
+=======
+		if ((i + 1) % col_count)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			fputs(opt_recordsep, fout);
 		else
 			need_recordsep = true;
@@ -479,6 +506,7 @@ _print_horizontal_line(const unsigned int ncolumns, const unsigned int *widths,
 static void
 print_aligned_text(const printTableContent *cont, FILE *fout)
 {
+<<<<<<< HEAD
 	bool		opt_tuples_only = cont->opt->tuples_only;
 	int			encoding = cont->opt->encoding;
 	unsigned short opt_border = cont->opt->border;
@@ -498,6 +526,19 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 	unsigned int *max_nl_lines, /* value split by newlines */
 			   *curr_nl_line,
 			   *max_bytes;
+=======
+	bool		opt_tuples_only = opt->tuples_only;
+	unsigned short int opt_border = opt->border;
+	int			encoding = opt->encoding;
+	unsigned int col_count = 0;
+	unsigned int cell_count = 0;
+	unsigned int i;
+	int			tmp;
+	unsigned int *widths,
+				total_w;
+	unsigned int *heights;
+	unsigned int *format_space;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	unsigned char **format_buf;
 	unsigned int width_total;
 	unsigned int total_header_width;
@@ -579,6 +620,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 	/* scan all cells, find maximum width, compute cell_count */
 	for (i = 0, ptr = cont->cells; *ptr; ptr++, i++, cell_count++)
 	{
+<<<<<<< HEAD
 		int			width,
 					nl_lines,
 					bytes_required;
@@ -594,6 +636,19 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 			max_bytes[i % col_count] = bytes_required;
 
 		width_average[i % col_count] += width;
+=======
+		int			height,
+					space;
+
+		/* Get width, ignore height */
+		pg_wcssize((unsigned char *) *ptr, strlen(*ptr), encoding, &tmp, &height, &space);
+		if (tmp > widths[i % col_count])
+			widths[i % col_count] = tmp;
+		if (height > heights[i % col_count])
+			heights[i % col_count] = height;
+		if (space > format_space[i % col_count])
+			format_space[i % col_count] = space;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	/* If we have rows, compute average */
@@ -925,11 +980,17 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 
 					if (cont->aligns[j] == 'r') /* Right aligned cell */
 					{
+<<<<<<< HEAD
 						/* spaces first */
 						fprintf(fout, "%*s", width_wrap[j] - chars_to_output, "");
 						fputnbytes(fout,
 								 (char *) (this_line->ptr + bytes_output[j]),
 								   bytes_to_output);
+=======
+						fprintf(fout, "%*s%s",
+								widths[j] - this_line->width, "",
+								this_line->ptr);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					}
 					else	/* Left aligned cell */
 					{
@@ -1057,6 +1118,7 @@ print_aligned_vertical_line(const printTableContent *cont,
 							printTextRule pos,
 							FILE *fout)
 {
+<<<<<<< HEAD
 	const printTextFormat *format = get_line_style(cont->opt);
 	const printTextLineFormat *lformat = &format->lrule[pos];
 	unsigned short opt_border = cont->opt->border;
@@ -1115,6 +1177,13 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 	const printTextLineFormat *dformat = &format->lrule[PRINT_RULE_DATA];
 	int			encoding = cont->opt->encoding;
 	unsigned long record = cont->opt->prior_records + 1;
+=======
+	bool		opt_tuples_only = opt->tuples_only;
+	unsigned short int opt_border = opt->border;
+	int			encoding = opt->encoding;
+	unsigned int col_count = 0;
+	unsigned long record = opt->prior_records + 1;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	const char *const * ptr;
 	unsigned int i,
 				hwidth = 0,
@@ -1159,6 +1228,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 	/* find longest data cell */
 	for (i = 0, ptr = cont->cells; *ptr; ptr++, i++)
 	{
+<<<<<<< HEAD
 		int			width,
 					height,
 					fs;
@@ -1167,6 +1237,14 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 				   &width, &height, &fs);
 		if (width > dwidth)
 			dwidth = width;
+=======
+		int			height,
+					fs;
+
+		pg_wcssize((unsigned char *) *ptr, strlen(*ptr), encoding, &tmp, &height, &fs);
+		if (tmp > dwidth)
+			dwidth = tmp;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		if (height > dheight)
 			dheight = height;
 		if (fs > dformatsize)
@@ -1253,9 +1331,14 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 				if (opt_border < 2)
 					fprintf(fout, "%s\n", dlineptr[line_count].ptr);
 				else
+<<<<<<< HEAD
 					fprintf(fout, "%-s%*s %s\n", dlineptr[line_count].ptr,
 							dwidth - dlineptr[line_count].width, "",
 							dformat->rightvrule);
+=======
+					fprintf(fout, "%-s%*s |\n", dlineptr[line_count].ptr,
+							dwidth - dlineptr[line_count].width, "");
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 				if (!dlineptr[line_count + 1].ptr)
 					dcomplete = 1;
@@ -1347,9 +1430,16 @@ html_escaped_print(const char *in, FILE *fout)
 static void
 print_html_text(const printTableContent *cont, FILE *fout)
 {
+<<<<<<< HEAD
 	bool		opt_tuples_only = cont->opt->tuples_only;
 	unsigned short opt_border = cont->opt->border;
 	const char *opt_table_attr = cont->opt->tableAttr;
+=======
+	bool		opt_tuples_only = opt->tuples_only;
+	unsigned short int opt_border = opt->border;
+	const char *opt_table_attr = opt->tableAttr;
+	unsigned int col_count = 0;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	unsigned int i;
 	const char *const * ptr;
 
@@ -1434,10 +1524,18 @@ print_html_text(const printTableContent *cont, FILE *fout)
 static void
 print_html_vertical(const printTableContent *cont, FILE *fout)
 {
+<<<<<<< HEAD
 	bool		opt_tuples_only = cont->opt->tuples_only;
 	unsigned short opt_border = cont->opt->border;
 	const char *opt_table_attr = cont->opt->tableAttr;
 	unsigned long record = cont->opt->prior_records + 1;
+=======
+	bool		opt_tuples_only = opt->tuples_only;
+	unsigned short int opt_border = opt->border;
+	const char *opt_table_attr = opt->tableAttr;
+	unsigned int col_count = 0;
+	unsigned long record = opt->prior_records + 1;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	unsigned int i;
 	const char *const * ptr;
 
@@ -1558,8 +1656,14 @@ latex_escaped_print(const char *in, FILE *fout)
 static void
 print_latex_text(const printTableContent *cont, FILE *fout)
 {
+<<<<<<< HEAD
 	bool		opt_tuples_only = cont->opt->tuples_only;
 	unsigned short opt_border = cont->opt->border;
+=======
+	bool		opt_tuples_only = opt->tuples_only;
+	unsigned short int opt_border = opt->border;
+	unsigned int col_count = 0;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	unsigned int i;
 	const char *const * ptr;
 
@@ -1656,9 +1760,16 @@ print_latex_text(const printTableContent *cont, FILE *fout)
 static void
 print_latex_vertical(const printTableContent *cont, FILE *fout)
 {
+<<<<<<< HEAD
 	bool		opt_tuples_only = cont->opt->tuples_only;
 	unsigned short opt_border = cont->opt->border;
 	unsigned long record = cont->opt->prior_records + 1;
+=======
+	bool		opt_tuples_only = opt->tuples_only;
+	unsigned short int opt_border = opt->border;
+	unsigned int col_count = 0;
+	unsigned long record = opt->prior_records + 1;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	unsigned int i;
 	const char *const * ptr;
 
@@ -1727,11 +1838,17 @@ print_latex_vertical(const printTableContent *cont, FILE *fout)
 		/* print footers */
 		if (cont->footers && !opt_tuples_only && !cancel_pressed)
 		{
+<<<<<<< HEAD
 			printTableFooter *f;
 
 			for (f = cont->footers; f; f = f->next)
 			{
 				latex_escaped_print(f->data, fout);
+=======
+			for (ptr = footers; *ptr; ptr++)
+			{
+				latex_escaped_print(*ptr, fout);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				fputs(" \\\\\n", fout);
 			}
 		}
@@ -1766,8 +1883,14 @@ troff_ms_escaped_print(const char *in, FILE *fout)
 static void
 print_troff_ms_text(const printTableContent *cont, FILE *fout)
 {
+<<<<<<< HEAD
 	bool		opt_tuples_only = cont->opt->tuples_only;
 	unsigned short opt_border = cont->opt->border;
+=======
+	bool		opt_tuples_only = opt->tuples_only;
+	unsigned short int opt_border = opt->border;
+	unsigned int col_count = 0;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	unsigned int i;
 	const char *const * ptr;
 
@@ -1822,7 +1945,11 @@ print_troff_ms_text(const printTableContent *cont, FILE *fout)
 	{
 		troff_ms_escaped_print(*ptr, fout);
 
+<<<<<<< HEAD
 		if ((i + 1) % cont->ncolumns == 0)
+=======
+		if ((i + 1) % col_count == 0)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		{
 			fputc('\n', fout);
 			if (cancel_pressed)
@@ -1856,9 +1983,16 @@ print_troff_ms_text(const printTableContent *cont, FILE *fout)
 static void
 print_troff_ms_vertical(const printTableContent *cont, FILE *fout)
 {
+<<<<<<< HEAD
 	bool		opt_tuples_only = cont->opt->tuples_only;
 	unsigned short opt_border = cont->opt->border;
 	unsigned long record = cont->opt->prior_records + 1;
+=======
+	bool		opt_tuples_only = opt->tuples_only;
+	unsigned short int opt_border = opt->border;
+	unsigned int col_count = 0;
+	unsigned long record = opt->prior_records + 1;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	unsigned int i;
 	const char *const * ptr;
 	unsigned short current_format = 0;	/* 0=none, 1=header, 2=body */
@@ -2372,18 +2506,55 @@ printTable(const printTableContent *cont, FILE *fout, FILE *flog)
 void
 printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *flog)
 {
+<<<<<<< HEAD
 	printTableContent cont;
 	int			i,
 				r,
 				c;
+=======
+	int			ntuples;
+	int			nfields;
+	int			ncells;
+	const char **headers;
+	const char **cells;
+	char	  **footers;
+	char	   *align;
+	int			i,
+				r,
+				c;
+	bool	   *cellmustfree = NULL;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (cancel_pressed)
 		return;
 
+<<<<<<< HEAD
 	printTableInit(&cont, &opt->topt, opt->title,
 				   PQnfields(result), PQntuples(result));
 
 	for (i = 0; i < cont.ncolumns; i++)
+=======
+	/* extract headers */
+	ntuples = PQntuples(result);
+	nfields = PQnfields(result);
+
+	headers = pg_local_calloc(nfields + 1, sizeof(*headers));
+
+	for (i = 0; i < nfields; i++)
+	{
+		headers[i] = (char *) mbvalidate((unsigned char *) PQfname(result, i),
+										 opt->topt.encoding);
+#ifdef ENABLE_NLS
+		if (opt->trans_headers)
+			headers[i] = _(headers[i]);
+#endif
+	}
+
+	/* set alignment */
+	align = pg_local_calloc(nfields + 1, sizeof(*align));
+
+	for (i = 0; i < nfields; i++)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		char		align;
 		Oid			ftype = PQftype(result, i);
@@ -2437,6 +2608,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 		}
 	}
 
+<<<<<<< HEAD
 	/* set footers */
 	if (opt->footers)
 	{
@@ -2446,6 +2618,83 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 			printTableAddFooter(&cont, *footer);
 	}
 	else if (!opt->topt.expanded && opt->default_footer)
+=======
+	/* set cells */
+	ncells = ntuples * nfields;
+	cells = pg_local_calloc(ncells + 1, sizeof(*cells));
+
+	i = 0;
+	for (r = 0; r < ntuples; r++)
+	{
+		for (c = 0; c < nfields; c++)
+		{
+			if (PQgetisnull(result, r, c))
+				cells[i] = opt->nullPrint ? opt->nullPrint : "";
+			else
+			{
+				cells[i] = (char *)
+					mbvalidate((unsigned char *) PQgetvalue(result, r, c),
+							   opt->topt.encoding);
+#ifdef ENABLE_NLS
+				if (opt->trans_columns && opt->trans_columns[c])
+					cells[i] = _(cells[i]);
+#endif
+
+				if (align[c] == 'r' && opt->topt.numericLocale)
+				{
+					cells[i] = format_numeric_locale(cells[i]);
+
+					/*
+					 * format_numeric_locale() returns a malloc'd string, 
+					 * remember that it needs to be freed.
+					 */
+					if (cellmustfree == NULL)
+						cellmustfree = pg_local_calloc(ncells + 1, sizeof(bool));
+
+					cellmustfree[i] = true;
+				}
+			}
+			i++;
+		}
+	}
+
+	/* set footers */
+
+	if (opt->footers)
+		footers = opt->footers;
+	else if (!opt->topt.expanded && opt->default_footer)
+	{
+		unsigned long total_records;
+
+		footers = pg_local_calloc(2, sizeof(*footers));
+		footers[0] = pg_local_malloc(100);
+		total_records = opt->topt.prior_records + ntuples;
+		if (total_records == 1)
+			snprintf(footers[0], 100, _("(1 row)"));
+		else
+			snprintf(footers[0], 100, _("(%lu rows)"), total_records);
+	}
+	else
+		footers = NULL;
+
+	/* call table printer */
+	printTable(opt->title, headers, cells,
+			   (const char *const *) footers,
+			   align, &opt->topt, fout, flog);
+
+	free(headers);
+	if (cellmustfree)
+	{
+		for (i = 0; i < ncells; i++)
+		{
+			if (cellmustfree[i])
+				free((char *) cells[i]);
+		}
+		free(cellmustfree);
+	}
+	free(cells);
+	if (footers && !opt->footers)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		unsigned long total_records;
 		char		default_footer[100];
@@ -2481,7 +2730,11 @@ setDecimalLocale(void)
 
 	/* similar code exists in formatting.c */
 	if (*extlconv->thousands_sep)
+<<<<<<< HEAD
 		thousands_sep = pg_strdup(extlconv->thousands_sep);
+=======
+		thousands_sep = strdup(extlconv->thousands_sep);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/* Make sure thousands separator doesn't match decimal point symbol. */
 	else if (strcmp(decimal_point, ",") != 0)
 		thousands_sep = ",";

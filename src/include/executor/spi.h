@@ -3,10 +3,17 @@
  * spi.h
  *				Server Programming Interface public declarations
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.72 2009/06/11 14:49:11 momjian Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.65.2.2 2009/01/07 20:39:05 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -20,17 +27,19 @@
 #include "postgres.h"
 
 /*
- *	These are not needed by this file, but used by other programs
- *	using SPI
+ *	Most of these are not needed by this file, but may be used by
+ *	user-written code that uses SPI
  */
 #include "access/heapam.h"
 #include "access/xact.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "executor/execdefs.h"
 #include "executor/executor.h"
 #include "nodes/execnodes.h"
 #include "nodes/params.h"
+#include "nodes/parsenodes.h"
 #include "nodes/plannodes.h"
 #include "nodes/primnodes.h"
 #include "nodes/relation.h"
@@ -43,7 +52,6 @@
 #include "utils/portal.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
-#include "executor/execdefs.h"
 
 
 typedef struct SPITupleTable
@@ -86,7 +94,10 @@ typedef struct _SPI_plan *SPIPlanPtr;
 #define SPI_OK_REWRITTEN		14
 
 extern PGDLLIMPORT uint32 SPI_processed;
+<<<<<<< HEAD
 extern PGDLLIMPORT uint64 SPI_processed64;
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern PGDLLIMPORT Oid SPI_lastoid;
 extern PGDLLIMPORT SPITupleTable *SPI_tuptable;
 extern PGDLLIMPORT int SPI_result;
@@ -110,12 +121,21 @@ extern int SPI_execute_snapshot(SPIPlanPtr plan,
 					 Snapshot crosscheck_snapshot,
 					 bool read_only, bool fire_triggers, long tcount);
 extern SPIPlanPtr SPI_prepare(const char *src, int nargs, Oid *argtypes);
+<<<<<<< HEAD
+=======
+extern SPIPlanPtr SPI_prepare_cursor(const char *src, int nargs, Oid *argtypes,
+				   int cursorOptions);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern SPIPlanPtr SPI_saveplan(SPIPlanPtr plan);
 extern int	SPI_freeplan(SPIPlanPtr plan);
 
 extern Oid	SPI_getargtypeid(SPIPlanPtr plan, int argIndex);
 extern int	SPI_getargcount(SPIPlanPtr plan);
 extern bool SPI_is_cursor_plan(SPIPlanPtr plan);
+<<<<<<< HEAD
+=======
+extern bool SPI_plan_is_valid(SPIPlanPtr plan);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern const char *SPI_result_code_string(int code);
 
 extern HeapTuple SPI_copytuple(HeapTuple tuple);
@@ -141,6 +161,8 @@ extern Portal SPI_cursor_open(const char *name, SPIPlanPtr plan,
 extern Portal SPI_cursor_find(const char *name);
 extern void SPI_cursor_fetch(Portal portal, bool forward, long count);
 extern void SPI_cursor_move(Portal portal, bool forward, long count);
+extern void SPI_scroll_cursor_fetch(Portal, FetchDirection direction, long count);
+extern void SPI_scroll_cursor_move(Portal, FetchDirection direction, long count);
 extern void SPI_cursor_close(Portal portal);
 
 extern void AtEOXact_SPI(bool isCommit);

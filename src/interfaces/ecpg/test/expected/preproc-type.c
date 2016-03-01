@@ -119,7 +119,11 @@ main (void)
       exit (sqlca.sqlcode);
     }
 
+<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table empl ( idnum integer , name char ( 20 ) , accs smallint , string1 char ( 10 ) , string2 char ( 10 ) , string3 char ( 10 ) )", ECPGt_EOIT, ECPGt_EORT);}
+=======
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table empl ( idnum integer   , name char  ( 20 )    , accs smallint   , string1 char  ( 10 )    , string2 char  ( 10 )    , string3 char  ( 10 )    )    ", ECPGt_EOIT, ECPGt_EORT);}
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 51 "type.pgc"
 
   if (sqlca.sqlcode)
@@ -128,7 +132,11 @@ main (void)
       exit (sqlca.sqlcode);
     }
 
+<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into empl values ( 1 , 'user name' , 320 , 'first str' , 'second str' , 'third str' )", ECPGt_EOIT, ECPGt_EORT);}
+=======
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into empl values ( 1 , 'user name' , 320 , 'first str' , 'second str' , 'third str' ) ", ECPGt_EOIT, ECPGt_EORT);}
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 58 "type.pgc"
 
   if (sqlca.sqlcode)
@@ -137,7 +145,11 @@ main (void)
       exit (sqlca.sqlcode);
     }
 
+<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select idnum , name , accs , string1 , string2 , string3 from empl where idnum = $1 ", 
+=======
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  idnum , name , accs , string1 , string2 , string3  from empl where idnum =  $1   ", 
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_long,&(empl.idnum),(long)1,(long)1,sizeof(long), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, 
 	ECPGt_long,&(empl.idnum),(long)1,(long)1,sizeof(long), 

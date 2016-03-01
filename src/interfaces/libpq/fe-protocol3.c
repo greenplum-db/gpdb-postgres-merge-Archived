@@ -3,12 +3,20 @@
  * fe-protocol3.c
  *	  functions that are specific to frontend/backend protocol version 3
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-protocol3.c
+=======
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.34 2008/01/17 21:21:50 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -1408,8 +1416,12 @@ getCopyDataMessage(PGconn *conn)
 			 * Before returning, enlarge the input buffer if needed to hold
 			 * the whole message.  See notes in parseInput.
 			 */
+<<<<<<< HEAD
 			if (pqCheckInBufferSpace(conn->inCursor + (size_t) msgLength - 4,
 									 conn))
+=======
+			if (pqCheckInBufferSpace(conn->inCursor + msgLength - 4, conn))
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			{
 				/*
 				 * XXX add some better recovery code... plan is to skip over
@@ -1448,6 +1460,7 @@ getCopyDataMessage(PGconn *conn)
 			default:			/* treat as end of copy */
 				return -1;
 		}
+<<<<<<< HEAD
 
 		/* Drop the processed message and loop around for another */
 		conn->inStart = conn->inCursor;
@@ -1473,6 +1486,32 @@ pqGetCopyData3(PGconn *conn, char **buffer, int async)
 	{
 		/*
 		 * Collect the next input message.	To make life simpler for async
+=======
+
+		/* Drop the processed message and loop around for another */
+		conn->inStart = conn->inCursor;
+	}
+}
+
+/*
+ * PQgetCopyData - read a row of data from the backend during COPY OUT
+ *
+ * If successful, sets *buffer to point to a malloc'd row of data, and
+ * returns row length (always > 0) as result.
+ * Returns 0 if no row available yet (only possible if async is true),
+ * -1 if end of copy (consult PQgetResult), or -2 if error (consult
+ * PQerrorMessage).
+ */
+int
+pqGetCopyData3(PGconn *conn, char **buffer, int async)
+{
+	int			msgLength;
+
+	for (;;)
+	{
+		/*
+		 * Collect the next input message.  To make life simpler for async
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 * callers, we keep returning 0 until the next message is fully
 		 * available, even if it is not Copy Data.
 		 */
@@ -1480,6 +1519,7 @@ pqGetCopyData3(PGconn *conn, char **buffer, int async)
 		if (msgLength < 0)
 		{
 			/*
+<<<<<<< HEAD
 			 * On end-of-copy, exit COPY_OUT or COPY_BOTH mode and let caller
 			 * read status with PQgetResult().	The normal case is that it's
 			 * Copy Done, but we let parseInput read that.	If error, we
@@ -1488,6 +1528,16 @@ pqGetCopyData3(PGconn *conn, char **buffer, int async)
 			if (msgLength == -1)
 				conn->asyncStatus = PGASYNC_BUSY;
 			return msgLength;	/* end-of-copy or error */
+=======
+			 * On end-of-copy, exit COPY_OUT mode and let caller read status
+			 * with PQgetResult().  The normal case is that it's Copy Done,
+			 * but we let parseInput read that.  If error, we expect the
+			 * state was already changed.
+			 */
+			if (msgLength == -1)
+				conn->asyncStatus = PGASYNC_BUSY;
+			return msgLength;		/* end-of-copy or error */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 		if (msgLength == 0)
 		{

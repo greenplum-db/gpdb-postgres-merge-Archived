@@ -3,13 +3,16 @@
  * nodeMaterial.c
  *	  Routines to handle materialization nodes.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.58 2007/01/05 22:19:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.61 2008/01/01 19:45:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,6 +80,7 @@ ExecMaterial(MaterialState *node)
 	/*
 	 * If first time through, and we need a tuplestore, initialize it.
 	 */
+<<<<<<< HEAD
 	if (ts == NULL && (ma->share_type != SHARE_NOTSHARED || node->randomAccess))
 	{
 		/*
@@ -91,6 +95,14 @@ ExecMaterial(MaterialState *node)
 				elog(LOG, "Material Exec on CrossSlice, current slice %d", currentSliceId);
 				return NULL;
 			}
+=======
+	if (tuplestorestate == NULL && node->eflags != 0)
+	{
+		tuplestorestate = tuplestore_begin_heap(true, false, work_mem);
+		tuplestore_set_eflags(tuplestorestate, node->eflags);
+		node->tuplestorestate = (void *) tuplestorestate;
+	}
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			shareinput_create_bufname_prefix(rwfile_prefix, sizeof(rwfile_prefix), ma->share_id);
 			elog(LOG, "Material node creates shareinput rwfile %s", rwfile_prefix);
@@ -286,15 +298,21 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	matstate->ss.ps.state = estate;
 
 	/*
-	 * We must have random access to the subplan output to do backward scan or
-	 * mark/restore.  We also prefer to materialize the subplan output if we
-	 * might be called on to rewind and replay it many times. However, if none
-	 * of these cases apply, we can skip storing the data.
+	 * We must have a tuplestore buffering the subplan output to do backward
+	 * scan or mark/restore.  We also prefer to materialize the subplan output
+	 * if we might be called on to rewind and replay it many times. However,
+	 * if none of these cases apply, we can skip storing the data.
 	 */
+<<<<<<< HEAD
 	matstate->randomAccess = node->cdb_strict ||
 							(eflags & (EXEC_FLAG_REWIND |
 										EXEC_FLAG_BACKWARD |
 										EXEC_FLAG_MARK)) != 0;
+=======
+	matstate->eflags = (eflags & (EXEC_FLAG_REWIND |
+								  EXEC_FLAG_BACKWARD |
+								  EXEC_FLAG_MARK));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	matstate->eof_underlying = false;
 	matstate->ts_state = palloc0(sizeof(GenericTupStore));
@@ -458,7 +476,7 @@ ExecEndMaterial(MaterialState *node)
 void
 ExecMaterialMarkPos(MaterialState *node)
 {
-	Assert(node->randomAccess);
+	Assert(node->eflags & EXEC_FLAG_MARK);
 
 #ifdef DEBUG
 	{
@@ -495,7 +513,7 @@ ExecMaterialMarkPos(MaterialState *node)
 void
 ExecMaterialRestrPos(MaterialState *node)
 {
-	Assert(node->randomAccess);
+	Assert(node->eflags & EXEC_FLAG_MARK);
 
 #ifdef DEBUG
 	{
@@ -584,7 +602,7 @@ ExecMaterialReScan(MaterialState *node, ExprContext *exprCtxt)
 {
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 
-	if (node->randomAccess)
+	if (node->eflags != 0)
 	{
 		/*
 		 * If tuple store is empty, then either we have not materialized yet
@@ -605,14 +623,26 @@ ExecMaterialReScan(MaterialState *node, ExprContext *exprCtxt)
 
 		/*
 		 * If subnode is to be rescanned then we forget previous stored
-		 * results; we have to re-read the subplan and re-store.
+		 * results; we have to re-read the subplan and re-store.  Also, if we
+		 * told tuplestore it needn't support rescan, we lose and must
+		 * re-read.  (This last should not happen in common cases; else our
+		 * caller lied by not passing EXEC_FLAG_REWIND to us.)
 		 *
 		 * Otherwise we can just rewind and rescan the stored output. The
 		 * state of the subnode does not change.
 		 */
-		if (((PlanState *) node)->lefttree->chgParam != NULL)
+		if (((PlanState *) node)->lefttree->chgParam != NULL ||
+			(node->eflags & EXEC_FLAG_REWIND) == 0)
 		{
+<<<<<<< HEAD
 			DestroyTupleStore(node);
+=======
+			tuplestore_end((Tuplestorestate *) node->tuplestorestate);
+			node->tuplestorestate = NULL;
+			if (((PlanState *) node)->lefttree->chgParam == NULL)
+				ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
+			node->eof_underlying = false;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 		else
 		{

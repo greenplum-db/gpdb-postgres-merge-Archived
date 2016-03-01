@@ -36,8 +36,12 @@ create or replace function uses_global() returns text language plperl as $$
   return 'uses_global worked';
 
 $$;
+<<<<<<< HEAD
 ERROR:  creation of Perl function failed
 DETAIL:  Global symbol "$global" requires explicit package name at line 3.
+=======
+ERROR:  creation of Perl function "uses_global" failed: Global symbol "$global" requires explicit package name at line 3.
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 Global symbol "$other_global" requires explicit package name at line 4.
 select uses_global();
 ERROR:  function uses_global() does not exist

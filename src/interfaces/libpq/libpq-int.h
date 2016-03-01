@@ -9,10 +9,17 @@
  *	  more likely to break across PostgreSQL releases than code that uses
  *	  only the official API.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/interfaces/libpq/libpq-int.h
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.129 2008/01/01 19:46:00 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -55,9 +62,12 @@
 
 #ifdef ENABLE_SSPI
 #define SECURITY_WIN32
+<<<<<<< HEAD
 #if defined(WIN32) && !defined(WIN32_ONLY_COMPILER)
 #include <ntsecapi.h>
 #endif
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include <security.h>
 #undef SECURITY_WIN32
 
@@ -69,7 +79,11 @@ typedef struct
 {
 	void	   *value;
 	int			length;
+<<<<<<< HEAD
 } gss_buffer_desc;
+=======
+}	gss_buffer_desc;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif
 #endif   /* ENABLE_SSPI */
 
@@ -85,6 +99,7 @@ typedef struct
 /*
  * POSTGRES backend dependent Constants.
  */
+<<<<<<< HEAD
 
 /* 
  * Note:  GPDB uses 72 for COMPLETION_TAG_BUFSIZE, PostgreSQL uses 64.  
@@ -97,6 +112,9 @@ typedef struct
  */
 
 #define CMDSTATUS_LEN 72		/* should match COMPLETION_TAG_BUFSIZE */
+=======
+#define CMDSTATUS_LEN 64		/* should match COMPLETION_TAG_BUFSIZE */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * PGresult and the subsidiary types PGresAttDesc, PGresAttValue
@@ -325,6 +343,7 @@ struct pg_conn
 	char	   *replication;	/* connect as the replication standby? */
 	char	   *pguser;			/* Postgres username and password, if any */
 	char	   *pgpass;
+<<<<<<< HEAD
 	char	   *keepalives;		/* use TCP keepalives? */
 	char	   *keepalives_idle;	/* time between TCP keepalives */
 	char	   *keepalives_interval;	/* time between TCP keepalive
@@ -339,6 +358,10 @@ struct pg_conn
 	char	   *sslcrl;			/* certificate revocation list filename */
 	char	   *requirepeer;	/* required peer credentials for local sockets */
 
+=======
+	bool		pgpass_from_client;	/* did password come from connect args? */
+	char	   *sslmode;		/* SSL mode (require,prefer,allow,disable) */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	char	   *krbsrvname;		/* Kerberos service name */
 #endif
@@ -377,12 +400,16 @@ struct pg_conn
 	SockAddr	raddr;			/* Remote address */
 	ProtocolVersion pversion;	/* FE/BE protocol version in use */
 	int			sversion;		/* server version, e.g. 70401 for 7.4.1 */
+<<<<<<< HEAD
 	bool		auth_req_received;		/* true if any type of auth req
 										 * received */
 	bool		password_needed;	/* true if server demanded a password */
 	bool		dot_pgpass_used;	/* true if used .pgpass */
 	bool		sigpipe_so;		/* have we masked SIGPIPE via SO_NOSIGPIPE? */
 	bool		sigpipe_flag;	/* can we mask SIGPIPE via MSG_NOSIGNAL? */
+=======
+	bool		password_needed;	/* true if server demanded a password */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Transient state needed while establishing connection */
 	struct addrinfo *addrlist;	/* list of possible backend addresses */
@@ -463,6 +490,28 @@ struct pg_conn
 	int			usesspi;		/* Indicate if SSPI is in use on the
 								 * connection */
 #endif
+
+#ifdef ENABLE_GSS
+	gss_ctx_id_t gctx;			/* GSS context */
+	gss_name_t	gtarg_nam;		/* GSS target name */
+	gss_buffer_desc ginbuf;		/* GSS input token */
+	gss_buffer_desc goutbuf;	/* GSS output token */
+#endif
+
+#ifdef ENABLE_SSPI
+#ifndef ENABLE_GSS
+	gss_buffer_desc ginbuf;		/* GSS input token */
+#else
+	char	   *gsslib;			/* What GSS librart to use ("gssapi" or
+								 * "sspi") */
+#endif
+	CredHandle *sspicred;		/* SSPI credentials handle */
+	CtxtHandle *sspictx;		/* SSPI context */
+	char	   *sspitarget;		/* SSPI target name */
+	int			usesspi;		/* Indicate if SSPI is in use on the
+								 * connection */
+#endif
+
 
 	/* Buffer for current error message */
 	PQExpBufferData errorMessage;		/* expansible string */

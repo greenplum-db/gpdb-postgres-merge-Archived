@@ -3,12 +3,16 @@
  * genam.c
  *	  general index access method routines
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.61 2007/01/20 18:43:35 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.64 2008/01/01 19:45:46 momjian Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -21,7 +25,10 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+<<<<<<< HEAD
 #include "access/relscan.h"
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "access/transam.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -100,6 +107,12 @@ RelationGetIndexScan(Relation indexRelation,
 	ItemPointerSetInvalid(&scan->xs_ctup.t_self);
 	scan->xs_ctup.t_data = NULL;
 	scan->xs_cbuf = InvalidBuffer;
+<<<<<<< HEAD
+=======
+	scan->xs_prev_xmax = InvalidTransactionId;
+	scan->xs_next_hot = InvalidOffsetNumber;
+	scan->xs_hot_dead = false;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Let the AM fill in the key and any opaque data it wants.
@@ -212,7 +225,16 @@ systable_beginscan(Relation heapRelation,
 	}
 	else
 	{
-		sysscan->scan = heap_beginscan(heapRelation, snapshot, nkeys, key);
+		/*
+		 * We disallow synchronized scans when forced to use a heapscan on a
+		 * catalog.  In most cases the desired rows are near the front, so
+		 * that the unpredictable start point of a syncscan is a serious
+		 * disadvantage; and there are no compensating advantages, because
+		 * it's unlikely that such scans will occur in parallel.
+		 */
+		sysscan->scan = heap_beginscan_strat(heapRelation, snapshot,
+											 nkeys, key,
+											 true, false);
 		sysscan->iscan = NULL;
 	}
 

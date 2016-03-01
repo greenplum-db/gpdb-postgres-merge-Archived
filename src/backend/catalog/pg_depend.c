@@ -3,12 +3,16 @@
  * pg_depend.c
  *	  routines to support manipulation of the pg_depend relation
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_depend.c,v 1.24 2007/01/05 22:19:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_depend.c,v 1.26 2008/01/01 19:45:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +28,11 @@
 #include "miscadmin.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
+<<<<<<< HEAD
 #include "utils/rel.h"
 #include "utils/tqual.h"
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 static bool isObjectPinned(const ObjectAddress *object, Relation rel);
@@ -251,6 +258,7 @@ static bool
 isObjectPinned(const ObjectAddress *object, Relation rel)
 {
 	bool		ret = false;
+<<<<<<< HEAD
 	cqContext	cqc;
 	HeapTuple	tup;
 
@@ -261,6 +269,24 @@ isObjectPinned(const ObjectAddress *object, Relation rel)
 				" AND refobjid = :2 ",
 				ObjectIdGetDatum(object->classId),
 				ObjectIdGetDatum(object->objectId)));
+=======
+	SysScanDesc scan;
+	HeapTuple	tup;
+	ScanKeyData key[2];
+
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_refclassid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object->classId));
+
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_refobjid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object->objectId));
+
+	scan = systable_beginscan(rel, DependReferenceIndexId, true,
+							  SnapshotNow, 2, key);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Since we won't generate additional pg_depend entries for pinned
@@ -268,7 +294,11 @@ isObjectPinned(const ObjectAddress *object, Relation rel)
 	 * Hence, it's sufficient to look at the first returned tuple; we don't
 	 * need to loop.
 	 */
+<<<<<<< HEAD
 
+=======
+	tup = systable_getnext(scan);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (HeapTupleIsValid(tup))
 	{
 		Form_pg_depend foundDep = (Form_pg_depend) GETSTRUCT(tup);
@@ -277,6 +307,11 @@ isObjectPinned(const ObjectAddress *object, Relation rel)
 			ret = true;
 	}
 
+<<<<<<< HEAD
+=======
+	systable_endscan(scan);
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	return ret;
 }
 
@@ -380,6 +415,7 @@ Oid
 get_constraint_index(Oid constraintId)
 {
 	Oid			indexId = InvalidOid;
+<<<<<<< HEAD
 	HeapTuple	tup;
 	cqContext  *pcqCtx;
 
@@ -444,12 +480,112 @@ get_index_constraint(Oid indexId)
 				Int32GetDatum(0)));
 
 	while (HeapTupleIsValid(tup = caql_getnext(pcqCtx)))
+=======
+	Relation	depRel;
+	ScanKeyData key[3];
+	SysScanDesc scan;
+	HeapTuple	tup;
+
+	/* Search the dependency table for the dependent index */
+	depRel = heap_open(DependRelationId, AccessShareLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_refclassid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(ConstraintRelationId));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_refobjid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(constraintId));
+	ScanKeyInit(&key[2],
+				Anum_pg_depend_refobjsubid,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(0));
+
+	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
+							  SnapshotNow, 3, key);
+
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		Form_pg_depend deprec = (Form_pg_depend) GETSTRUCT(tup);
 
 		/*
+<<<<<<< HEAD
 		 * We assume any internal dependency on a constraint must be what we
 		 * are looking for.
+		 */
+		if (deprec->refclassid == ConstraintRelationId &&
+			deprec->refobjsubid == 0 &&
+			deprec->deptype == DEPENDENCY_INTERNAL)
+		{
+			constraintId = deprec->refobjid;
+=======
+		 * We assume any internal dependency of an index on the constraint
+		 * must be what we are looking for.  (The relkind test is just
+		 * paranoia; there shouldn't be any such dependencies otherwise.)
+		 */
+		if (deprec->classid == RelationRelationId &&
+			deprec->objsubid == 0 &&
+			deprec->deptype == DEPENDENCY_INTERNAL &&
+			get_rel_relkind(deprec->objid) == RELKIND_INDEX)
+		{
+			indexId = deprec->objid;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+			break;
+		}
+	}
+
+<<<<<<< HEAD
+	caql_endscan(pcqCtx);
+
+=======
+	systable_endscan(scan);
+	heap_close(depRel, AccessShareLock);
+
+	return indexId;
+}
+
+/*
+ * get_index_constraint
+ *		Given the OID of an index, return the OID of the owning unique or
+ *		primary-key constraint, or InvalidOid if no such constraint.
+ */
+Oid
+get_index_constraint(Oid indexId)
+{
+	Oid			constraintId = InvalidOid;
+	Relation	depRel;
+	ScanKeyData key[3];
+	SysScanDesc scan;
+	HeapTuple	tup;
+
+	/* Search the dependency table for the index */
+	depRel = heap_open(DependRelationId, AccessShareLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_classid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationRelationId));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_objid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(indexId));
+	ScanKeyInit(&key[2],
+				Anum_pg_depend_objsubid,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(0));
+
+	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+							  SnapshotNow, 3, key);
+
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
+	{
+		Form_pg_depend deprec = (Form_pg_depend) GETSTRUCT(tup);
+
+		/*
+		 * We assume any internal dependency on a constraint
+		 * must be what we are looking for.
 		 */
 		if (deprec->refclassid == ConstraintRelationId &&
 			deprec->refobjsubid == 0 &&
@@ -460,7 +596,9 @@ get_index_constraint(Oid indexId)
 		}
 	}
 
-	caql_endscan(pcqCtx);
+	systable_endscan(scan);
+	heap_close(depRel, AccessShareLock);
 
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	return constraintId;
 }

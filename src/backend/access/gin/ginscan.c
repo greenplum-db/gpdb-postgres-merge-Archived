@@ -4,11 +4,15 @@
  *	  routines to manage scans inverted index relations
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.9 2007/01/31 15:09:45 teodor Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.12 2008/01/01 19:45:46 momjian Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -167,13 +171,13 @@ newScanKey(IndexScanDesc scan)
 									   UInt16GetDatum(scankey[i].sk_strategy)
 															  )
 			);
-		if ( nEntryValues < 0 )
+		if (nEntryValues < 0)
 		{
 			/*
-			 * extractQueryFn signals that nothing will be found,
-			 * so we can just set isVoidRes flag...
+			 * extractQueryFn signals that nothing will be found, so we can
+			 * just set isVoidRes flag...
 			 */
-			so->isVoidRes = true;	
+			so->isVoidRes = true;
 			break;
 		}
 		if (entryValues == NULL || nEntryValues == 0)
@@ -190,7 +194,7 @@ newScanKey(IndexScanDesc scan)
 	if (so->nkeys == 0 && !so->isVoidRes)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("GIN index does not support search with void query")));
+			   errmsg("GIN index does not support search with void query")));
 
 	pgstat_count_index_scan(scan->indexRelation);
 }

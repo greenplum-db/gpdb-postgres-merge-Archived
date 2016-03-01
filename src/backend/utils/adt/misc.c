@@ -3,12 +3,20 @@
  * misc.c
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.71 2009/06/11 14:49:03 momjian Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.58 2008/01/01 19:45:52 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -222,10 +230,10 @@ pg_rotate_logfile(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to rotate log files"))));
 
-	if (!Redirect_stderr)
+	if (!Logging_collector)
 	{
 		ereport(WARNING,
-		(errmsg("rotation not possible because log redirection not active")));
+		(errmsg("rotation not possible because log collection not active")));
 		PG_RETURN_BOOL(false);
 	}
 

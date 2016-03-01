@@ -4,12 +4,20 @@
  *		Functions for finding and validating executable files
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.63 2009/06/11 14:49:15 momjian Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.57.2.3 2009/11/14 15:39:41 mha Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +64,11 @@ static int	resolve_symlinks(char *path);
 static char *pipe_read_line(char *cmd, char *line, int maxsize);
 
 #ifdef WIN32
+<<<<<<< HEAD
 static BOOL GetUserSid(PSID *ppSidUser, HANDLE hToken);
+=======
+static BOOL GetUserSid(PSID * ppSidUser, HANDLE hToken);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif
 
 /*
@@ -392,6 +404,7 @@ find_other_exec(const char *argv0, const char *target,
 	if (validate_exec(retpath) != 0)
 		return -1;
 
+<<<<<<< HEAD
 	/*
 	 * In PostgreSQL, the version check is always performed. In GPDB, this
 	 * is also used to find scripts that don't necessarily have the same
@@ -400,6 +413,9 @@ find_other_exec(const char *argv0, const char *target,
 	if (versionstr)
 	{
 		snprintf(cmd, sizeof(cmd), "\"%s\" -V 2>%s", retpath, DEVNULL);
+=======
+	snprintf(cmd, sizeof(cmd), "\"%s\" -V", retpath);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (!pipe_read_line(cmd, line, sizeof(line)))
 			return -1;
@@ -430,12 +446,21 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 	fflush(stdout);
 	fflush(stderr);
 
+	errno = 0;
 	if ((pgver = popen(cmd, "r")) == NULL)
+	{
+		perror("popen failure");
 		return NULL;
+	}
 
+	errno = 0;
 	if (fgets(line, maxsize, pgver) == NULL)
 	{
-		perror("fgets failure");
+		if (feof(pgver))
+			fprintf(stderr, "no data was returned by command \"%s\"\n", cmd);
+		else
+			perror("fgets failure");
+		pclose(pgver);			/* no error checking */
 		return NULL;
 	}
 
@@ -672,11 +697,18 @@ set_pglocale_pgservice(const char *argv0, const char *app)
 #ifdef WIN32
 
 /*
+<<<<<<< HEAD
  * AddUserToDacl(HANDLE hProcess)
  *
  * This function adds the current user account to the default DACL
  * which gets attached to the restricted token used when we create
  * a restricted process.
+=======
+ * AddUserToTokenDacl(HANDLE hToken)
+ *
+ * This function adds the current user account to the restricted
+ * token used when we create a restricted process.
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * This is required because of some security changes in Windows
  * that appeared in patches to XP/2K3 and in Vista/2008.
@@ -689,6 +721,7 @@ set_pglocale_pgservice(const char *argv0, const char *app)
  * and CreateProcess() calls when running as Administrator.
  *
  * This function fixes this problem by modifying the DACL of the
+<<<<<<< HEAD
  * specified process and explicitly re-adding the current user account.
  * This is still secure because the Administrator account inherits it's
  * privileges from the Administrators group - it doesn't have any of
@@ -696,6 +729,15 @@ set_pglocale_pgservice(const char *argv0, const char *app)
  */
 BOOL
 AddUserToDacl(HANDLE hProcess)
+=======
+ * token the process will use, and explicitly re-adding the current
+ * user account.  This is still secure because the Administrator account
+ * inherits its privileges from the Administrators group - it doesn't
+ * have any of its own.
+ */
+BOOL
+AddUserToTokenDacl(HANDLE hToken)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	int			i;
 	ACL_SIZE_INFORMATION asi;
@@ -703,7 +745,11 @@ AddUserToDacl(HANDLE hProcess)
 	DWORD		dwNewAclSize;
 	DWORD		dwSize = 0;
 	DWORD		dwTokenInfoLength = 0;
+<<<<<<< HEAD
 	HANDLE		hToken = NULL;
+=======
+	DWORD		dwResult = 0;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	PACL		pacl = NULL;
 	PSID		psidUser = NULL;
 	TOKEN_DEFAULT_DACL tddNew;
@@ -711,6 +757,7 @@ AddUserToDacl(HANDLE hProcess)
 	TOKEN_INFORMATION_CLASS tic = TokenDefaultDacl;
 	BOOL		ret = FALSE;
 
+<<<<<<< HEAD
 	/* Get the token for the process */
 	if (!OpenProcessToken(hProcess, TOKEN_QUERY | TOKEN_ADJUST_DEFAULT, &hToken))
 	{
@@ -718,6 +765,8 @@ AddUserToDacl(HANDLE hProcess)
 		goto cleanup;
 	}
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/* Figure out the buffer size for the DACL info */
 	if (!GetTokenInformation(hToken, tic, (LPVOID) NULL, dwTokenInfoLength, &dwSize))
 	{
@@ -726,85 +775,143 @@ AddUserToDacl(HANDLE hProcess)
 			ptdd = (TOKEN_DEFAULT_DACL *) LocalAlloc(LPTR, dwSize);
 			if (ptdd == NULL)
 			{
+<<<<<<< HEAD
 				log_error("could not allocate %lu bytes of memory", dwSize);
+=======
+				log_error("could not allocate %i bytes of memory", dwSize);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				goto cleanup;
 			}
 
 			if (!GetTokenInformation(hToken, tic, (LPVOID) ptdd, dwSize, &dwSize))
 			{
+<<<<<<< HEAD
 				log_error("could not get token information: %lu", GetLastError());
+=======
+				log_error("could not get token information: %ui", GetLastError());
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				goto cleanup;
 			}
 		}
 		else
 		{
+<<<<<<< HEAD
 			log_error("could not get token information buffer size: %lu", GetLastError());
+=======
+			log_error("could not get token information buffer size: %ui", GetLastError());
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			goto cleanup;
 		}
 	}
 
 	/* Get the ACL info */
+<<<<<<< HEAD
 	if (!GetAclInformation(ptdd->DefaultDacl, (LPVOID) &asi,
 						   (DWORD) sizeof(ACL_SIZE_INFORMATION),
 						   AclSizeInformation))
 	{
 		log_error("could not get ACL information: %lu", GetLastError());
+=======
+	if (!GetAclInformation(ptdd->DefaultDacl, (LPVOID) & asi,
+						   (DWORD) sizeof(ACL_SIZE_INFORMATION),
+						   AclSizeInformation))
+	{
+		log_error("could not get ACL information: %ui", GetLastError());
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		goto cleanup;
 	}
 
 	/* Get the SID for the current user. We need to add this to the ACL. */
 	if (!GetUserSid(&psidUser, hToken))
 	{
+<<<<<<< HEAD
 		log_error("could not get user SID: %lu", GetLastError());
+=======
+		log_error("could not get user SID: %ui", GetLastError());
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		goto cleanup;
 	}
 
 	/* Figure out the size of the new ACL */
+<<<<<<< HEAD
 	dwNewAclSize = asi.AclBytesInUse + sizeof(ACCESS_ALLOWED_ACE) + GetLengthSid(psidUser) -sizeof(DWORD);
+=======
+	dwNewAclSize = asi.AclBytesInUse + sizeof(ACCESS_ALLOWED_ACE) + GetLengthSid(psidUser) - sizeof(DWORD);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Allocate the ACL buffer & initialize it */
 	pacl = (PACL) LocalAlloc(LPTR, dwNewAclSize);
 	if (pacl == NULL)
 	{
+<<<<<<< HEAD
 		log_error("could not allocate %lu bytes of memory", dwNewAclSize);
+=======
+		log_error("could not allocate %i bytes of memory", dwNewAclSize);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		goto cleanup;
 	}
 
 	if (!InitializeAcl(pacl, dwNewAclSize, ACL_REVISION))
 	{
+<<<<<<< HEAD
 		log_error("could not initialize ACL: %lu", GetLastError());
+=======
+		log_error("could not initialize ACL: %ui", GetLastError());
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		goto cleanup;
 	}
 
 	/* Loop through the existing ACEs, and build the new ACL */
 	for (i = 0; i < (int) asi.AceCount; i++)
 	{
+<<<<<<< HEAD
 		if (!GetAce(ptdd->DefaultDacl, i, (LPVOID *) &pace))
 		{
 			log_error("could not get ACE: %lu", GetLastError());
+=======
+		if (!GetAce(ptdd->DefaultDacl, i, (LPVOID *) & pace))
+		{
+			log_error("could not get ACE: %ui", GetLastError());
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			goto cleanup;
 		}
 
 		if (!AddAce(pacl, ACL_REVISION, MAXDWORD, pace, ((PACE_HEADER) pace)->AceSize))
 		{
+<<<<<<< HEAD
 			log_error("could not add ACE: %lu", GetLastError());
+=======
+			log_error("could not add ACE: %ui", GetLastError());
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			goto cleanup;
 		}
 	}
 
 	/* Add the new ACE for the current user */
+<<<<<<< HEAD
 	if (!AddAccessAllowedAce(pacl, ACL_REVISION, GENERIC_ALL, psidUser))
 	{
 		log_error("could not add access allowed ACE: %lu", GetLastError());
+=======
+	if (!AddAccessAllowedAceEx(pacl, ACL_REVISION, OBJECT_INHERIT_ACE, GENERIC_ALL, psidUser))
+	{
+		log_error("could not add access allowed ACE: %ui", GetLastError());
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		goto cleanup;
 	}
 
 	/* Set the new DACL in the token */
 	tddNew.DefaultDacl = pacl;
 
+<<<<<<< HEAD
 	if (!SetTokenInformation(hToken, tic, (LPVOID) &tddNew, dwNewAclSize))
 	{
 		log_error("could not set token information: %lu", GetLastError());
+=======
+	if (!SetTokenInformation(hToken, tic, (LPVOID) & tddNew, dwNewAclSize))
+	{
+		log_error("could not set token information: %ui", GetLastError());
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		goto cleanup;
 	}
 
@@ -820,9 +927,12 @@ cleanup:
 	if (ptdd)
 		LocalFree((HLOCAL) ptdd);
 
+<<<<<<< HEAD
 	if (hToken)
 		CloseHandle(hToken);
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	return ret;
 }
 
@@ -832,9 +942,17 @@ cleanup:
  * Get the SID for the current user
  */
 static BOOL
+<<<<<<< HEAD
 GetUserSid(PSID *ppSidUser, HANDLE hToken)
 {
 	DWORD		dwLength;
+=======
+GetUserSid(PSID * ppSidUser, HANDLE hToken)
+{
+	DWORD		dwLength;
+	DWORD		cbName = 250;
+	DWORD		cbDomainName = 250;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	PTOKEN_USER pTokenUser = NULL;
 
 
@@ -850,13 +968,21 @@ GetUserSid(PSID *ppSidUser, HANDLE hToken)
 
 			if (pTokenUser == NULL)
 			{
+<<<<<<< HEAD
 				log_error("could not allocate %lu bytes of memory", dwLength);
+=======
+				log_error("could not allocate %ui bytes of memory", dwLength);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				return FALSE;
 			}
 		}
 		else
 		{
+<<<<<<< HEAD
 			log_error("could not get token information buffer size: %lu", GetLastError());
+=======
+			log_error("could not get token information buffer size: %ui", GetLastError());
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			return FALSE;
 		}
 	}
@@ -870,7 +996,11 @@ GetUserSid(PSID *ppSidUser, HANDLE hToken)
 		HeapFree(GetProcessHeap(), 0, pTokenUser);
 		pTokenUser = NULL;
 
+<<<<<<< HEAD
 		log_error("could not get token information: %lu", GetLastError());
+=======
+		log_error("could not get token information: %ui", GetLastError());
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		return FALSE;
 	}
 

@@ -1,7 +1,11 @@
 /*
  * Butchered version of sshblowf.c from putty-0.59.
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/contrib/pgcrypto/blf.c,v 1.10 2009/06/11 14:48:52 momjian Exp $
+=======
+ * $PostgreSQL: pgsql/contrib/pgcrypto/blf.c,v 1.9 2007/11/15 21:14:31 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 
 /*
@@ -251,7 +255,11 @@ static const uint32 sbox3[] = {
 
 static void
 blowfish_encrypt(uint32 xL, uint32 xR, uint32 *output,
+<<<<<<< HEAD
 				 BlowfishContext *ctx)
+=======
+				 BlowfishContext * ctx)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	uint32	   *S0 = ctx->S0;
 	uint32	   *S1 = ctx->S1;
@@ -285,7 +293,11 @@ blowfish_encrypt(uint32 xL, uint32 xR, uint32 *output,
 
 static void
 blowfish_decrypt(uint32 xL, uint32 xR, uint32 *output,
+<<<<<<< HEAD
 				 BlowfishContext *ctx)
+=======
+				 BlowfishContext * ctx)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	uint32	   *S0 = ctx->S0;
 	uint32	   *S1 = ctx->S1;
@@ -318,7 +330,11 @@ blowfish_decrypt(uint32 xL, uint32 xR, uint32 *output,
 }
 
 void
+<<<<<<< HEAD
 blowfish_encrypt_cbc(uint8 *blk, int len, BlowfishContext *ctx)
+=======
+blowfish_encrypt_cbc(uint8 *blk, int len, BlowfishContext * ctx)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	uint32		xL,
 				xR,
@@ -351,7 +367,11 @@ blowfish_encrypt_cbc(uint8 *blk, int len, BlowfishContext *ctx)
 }
 
 void
+<<<<<<< HEAD
 blowfish_decrypt_cbc(uint8 *blk, int len, BlowfishContext *ctx)
+=======
+blowfish_decrypt_cbc(uint8 *blk, int len, BlowfishContext * ctx)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	uint32		xL,
 				xR,
@@ -384,7 +404,11 @@ blowfish_decrypt_cbc(uint8 *blk, int len, BlowfishContext *ctx)
 }
 
 void
+<<<<<<< HEAD
 blowfish_encrypt_ecb(uint8 *blk, int len, BlowfishContext *ctx)
+=======
+blowfish_encrypt_ecb(uint8 *blk, int len, BlowfishContext * ctx)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	uint32		xL,
 				xR,
@@ -405,7 +429,11 @@ blowfish_encrypt_ecb(uint8 *blk, int len, BlowfishContext *ctx)
 }
 
 void
+<<<<<<< HEAD
 blowfish_decrypt_ecb(uint8 *blk, int len, BlowfishContext *ctx)
+=======
+blowfish_decrypt_ecb(uint8 *blk, int len, BlowfishContext * ctx)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	uint32		xL,
 				xR,
@@ -426,7 +454,11 @@ blowfish_decrypt_ecb(uint8 *blk, int len, BlowfishContext *ctx)
 }
 
 void
+<<<<<<< HEAD
 blowfish_setkey(BlowfishContext *ctx,
+=======
+blowfish_setkey(BlowfishContext * ctx,
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				const uint8 *key, short keybytes)
 {
 	uint32	   *S0 = ctx->S0;
@@ -492,7 +524,11 @@ blowfish_setkey(BlowfishContext *ctx,
 }
 
 void
+<<<<<<< HEAD
 blowfish_setiv(BlowfishContext *ctx, const uint8 *iv)
+=======
+blowfish_setiv(BlowfishContext * ctx, const uint8 *iv)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	ctx->iv0 = GET_32BIT_MSB_FIRST(iv);
 	ctx->iv1 = GET_32BIT_MSB_FIRST(iv + 4);

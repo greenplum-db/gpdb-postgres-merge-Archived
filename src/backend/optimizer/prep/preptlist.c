@@ -12,12 +12,15 @@
  * We may also need junk tlist entries for Vars used in the RETURNING list.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.86 2007/02/19 07:03:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.88 2008/01/01 19:45:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -338,7 +341,11 @@ expand_targetlist(List *tlist, int command_type,
 					if (!att_tup->attisdropped)
 					{
 						new_expr = (Node *) makeConst(atttype,
+<<<<<<< HEAD
 								                      -1,
+=======
+													  -1,
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 													  att_tup->attlen,
 													  (Datum) 0,
 													  true,		/* isnull */
@@ -355,7 +362,11 @@ expand_targetlist(List *tlist, int command_type,
 					{
 						/* Insert NULL for dropped column */
 						new_expr = (Node *) makeConst(INT4OID,
+<<<<<<< HEAD
 								                      -1,
+=======
+													  -1,
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 													  sizeof(int32),
 													  (Datum) 0,
 													  true,		/* isnull */
@@ -375,6 +386,7 @@ expand_targetlist(List *tlist, int command_type,
 					{
 						/* Insert NULL for dropped column */
 						new_expr = (Node *) makeConst(INT4OID,
+													  -1,
 													  sizeof(int32),
 													  (Datum) 0,
 													  true,		/* isnull */

@@ -2,11 +2,19 @@
  *
  *	  UTF8 and Cyrillic
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
  *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_cyrillic/utf8_and_cyrillic.c,v 1.24 2009/02/10 19:29:39 petere Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_cyrillic/utf8_and_cyrillic.c,v 1.21.2.1 2009/01/29 19:23:57 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +75,7 @@ koi8r_to_utf8(PG_FUNCTION_ARGS)
 	int			len = PG_GETARG_INT32(4);
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_KOI8R, PG_UTF8);
+<<<<<<< HEAD
 
 	LocalToUtf(src, dest, LUmapKOI8R, NULL,
 			 sizeof(LUmapKOI8R) / sizeof(pg_local_to_utf), 0, PG_KOI8R, len);
@@ -100,6 +109,11 @@ koi8u_to_utf8(PG_FUNCTION_ARGS)
 
 	LocalToUtf(src, dest, LUmapKOI8U, NULL,
 			 sizeof(LUmapKOI8U) / sizeof(pg_local_to_utf), 0, PG_KOI8U, len);
+=======
+
+	LocalToUtf(src, dest, LUmapKOI8R, NULL,
+			 sizeof(LUmapKOI8R) / sizeof(pg_local_to_utf), 0, PG_KOI8R, len);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	PG_RETURN_VOID();
 }

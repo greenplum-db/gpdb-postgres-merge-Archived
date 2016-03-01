@@ -2166,15 +2166,18 @@ Fr Feb 2 09:53:48 CET 2007
 	- Cleaned up va_list handling. Hopefully this now works on all archs.
 	- Applied Magnus Hagander's patch to take away some compiler warnings.
 
-Su 11. Feb 16:09:31 CET 2007
+Su Feb 11 16:09:31 CET 2007
 
 	- Fixed multibyte handling as reported by <harada.toshi@oss.ntt.co.jp>.
+<<<<<<< HEAD
 	- Set ecpg library version to 5.3.
 	- Set ecpg version to 4.3.1.
 
 Su Feb 11 16:09:31 CET 2007
 
 	- Fixed multibyte handling as reported by <harada.toshi@oss.ntt.co.jp>.
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 Th Mar 15 08:27:53 CET 2007
 
@@ -2337,6 +2340,7 @@ Sun, 02 Mar 2008 11:50:48 +0100
 Thu, 20 Mar 2008 16:54:27 +0100
 
 	- Changed statement escaping to not escape continuation line markers.
+<<<<<<< HEAD
 	- Added ECPGget_PGconn() function to ecpglib, courtesy of Mike Aubury.
 
 Tue, 25 Mar 2008 13:42:26 +0100
@@ -2420,4 +2424,13 @@ Mon, 02 Feb 2009 16:34:53 +0100
 	- Set compat library version to 3.1.
 	- Set ecpg library version to 6.2.
 	- Set ecpg version to 4.5.
+=======
+	- Bumped ecpg version to 4.4.1.
+	- Added ECPGget_PGconn() function to ecpglib, courtesy of Mike Aubury.
+
+Tue, 25 Mar 2008 13:43:27 +0100
+
+	- Also added ECPGget_PGconn to exports.txt.
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 

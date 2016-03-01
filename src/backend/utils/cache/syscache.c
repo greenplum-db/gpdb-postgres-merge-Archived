@@ -3,13 +3,17 @@
  * syscache.c
  *	  System cache management routines
  *
+<<<<<<< HEAD
  * Copyright (c) 2007-2010, Greenplum inc
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.111 2007/02/14 01:58:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.114 2008/01/01 19:45:53 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -35,6 +39,7 @@
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
+#include "catalog/pg_enum.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
@@ -45,6 +50,11 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_statistic.h"
+#include "catalog/pg_ts_config.h"
+#include "catalog/pg_ts_config_map.h"
+#include "catalog/pg_ts_dict.h"
+#include "catalog/pg_ts_parser.h"
+#include "catalog/pg_ts_template.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_window.h"
 #include "catalog/pg_tidycat.h"
@@ -322,7 +332,35 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		4
 	},
+<<<<<<< HEAD
 	{IndexRelationId,					/* INDEXRELID */
+=======
+	{EnumRelationId,			/* ENUMOID */
+		EnumOidIndexId,
+		0,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+		},
+		256
+	},
+	{EnumRelationId,			/* ENUMTYPOIDNAME */
+		EnumTypIdLabelIndexId,
+		0,
+		2,
+		{
+			Anum_pg_enum_enumtypid,
+			Anum_pg_enum_enumlabel,
+			0,
+			0
+		},
+		256
+	},
+	{IndexRelationId,			/* INDEXRELID */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		IndexRelidIndexId,
 		1,
 		{
@@ -509,7 +547,119 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		1024
 	},
+<<<<<<< HEAD
 	{TypeRelationId,					/* TYPENAMENSP */
+=======
+	{TSConfigMapRelationId,		/* TSCONFIGMAP */
+		TSConfigMapIndexId,
+		0,
+		3,
+		{
+			Anum_pg_ts_config_map_mapcfg,
+			Anum_pg_ts_config_map_maptokentype,
+			Anum_pg_ts_config_map_mapseqno,
+			0
+		},
+		4
+	},
+	{TSConfigRelationId,		/* TSCONFIGNAMENSP */
+		TSConfigNameNspIndexId,
+		0,
+		2,
+		{
+			Anum_pg_ts_config_cfgname,
+			Anum_pg_ts_config_cfgnamespace,
+			0,
+			0
+		},
+		16
+	},
+	{TSConfigRelationId,		/* TSCONFIGOID */
+		TSConfigOidIndexId,
+		0,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+		},
+		16
+	},
+	{TSDictionaryRelationId,	/* TSDICTNAMENSP */
+		TSDictionaryNameNspIndexId,
+		0,
+		2,
+		{
+			Anum_pg_ts_dict_dictname,
+			Anum_pg_ts_dict_dictnamespace,
+			0,
+			0
+		},
+		16
+	},
+	{TSDictionaryRelationId,	/* TSDICTOID */
+		TSDictionaryOidIndexId,
+		0,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+		},
+		16
+	},
+	{TSParserRelationId,		/* TSPARSERNAMENSP */
+		TSParserNameNspIndexId,
+		0,
+		2,
+		{
+			Anum_pg_ts_parser_prsname,
+			Anum_pg_ts_parser_prsnamespace,
+			0,
+			0
+		},
+		4
+	},
+	{TSParserRelationId,		/* TSPARSEROID */
+		TSParserOidIndexId,
+		0,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+		},
+		4
+	},
+	{TSTemplateRelationId,		/* TSTEMPLATENAMENSP */
+		TSTemplateNameNspIndexId,
+		0,
+		2,
+		{
+			Anum_pg_ts_template_tmplname,
+			Anum_pg_ts_template_tmplnamespace,
+			0,
+			0
+		},
+		16
+	},
+	{TSTemplateRelationId,		/* TSTEMPLATEOID */
+		TSTemplateOidIndexId,
+		0,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+		},
+		16
+	},
+	{TypeRelationId,			/* TYPENAMENSP */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		TypeNameNspIndexId,
 		2,
 		{

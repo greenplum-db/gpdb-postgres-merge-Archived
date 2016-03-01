@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 $PostgreSQL: pgsql/src/backend/utils/misc/README,v 1.10 2008/03/20 17:55:15 momjian Exp $
+=======
+$PostgreSQL: pgsql/src/backend/utils/misc/README,v 1.8 2007/12/28 00:23:23 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 Guc Implementation Notes
 ========================
@@ -111,6 +115,7 @@ remembered to restore after transaction commit.
 During initialization we set the actual value and reset_val based on
 whichever non-interactive source has the highest priority.  They will
 have the same value.
+<<<<<<< HEAD
 
 The possible transactional operations on a GUC value are:
 
@@ -121,6 +126,18 @@ Entry to a function with a SET option:
 
 Plain SET command:
 
+=======
+
+The possible transactional operations on a GUC value are:
+
+Entry to a function with a SET option:
+
+	Push a stack entry with the prior variable value and state SAVE,
+	then set the variable.
+
+Plain SET command:
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	If no stack entry of current level:
 		Push new stack entry w/prior value and state SET
 	else if stack entry's state is SAVE, SET, or LOCAL:
@@ -143,6 +160,7 @@ SET LOCAL command:
 	Now set new value.
 
 Transaction or subtransaction abort:
+<<<<<<< HEAD
 
 	Pop stack entries, restoring prior value, until top < subxact depth
 
@@ -167,6 +185,32 @@ The merged entry will have level N-1 and prior = older prior, so easiest
 to keep older entry and free newer.  There are 12 possibilities since
 we already handled level N state = SAVE:
 
+=======
+
+	Pop stack entries, restoring prior value, until top < subxact depth
+
+Transaction or subtransaction commit (incl. successful function exit):
+
+	While stack entry level >= subxact depth
+
+		if entry's state is SAVE:
+			pop, restoring prior value
+		else if level is 1 and entry's state is SET+LOCAL:
+			pop, restoring *masked* value
+		else if level is 1 and entry's state is SET:
+			pop, discarding old value
+		else if level is 1 and entry's state is LOCAL:
+			pop, restoring prior value
+		else if there is no entry of exactly level N-1:
+			decrement entry's level, no other state change
+		else
+			merge entries of level N-1 and N as specified below
+
+The merged entry will have level N-1 and prior = older prior, so easiest
+to keep older entry and free newer.  There are 12 possibilities since
+we already handled level N state = SAVE:
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 N-1		N
 
 SAVE		SET		discard top prior, set state SET

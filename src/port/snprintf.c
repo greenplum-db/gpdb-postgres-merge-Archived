@@ -27,7 +27,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/port/snprintf.c,v 1.35 2008/03/18 01:49:44 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/port/snprintf.c,v 1.34 2007/03/26 21:44:11 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 
 #include "c.h"

@@ -3,15 +3,31 @@
 /blibpqdll.def
 /libpqddll.def
 /libpqdll.def
+<<<<<<< HEAD
 /inet_aton.c
 /noblock.c
 /pgstrcasecmp.c
 /strlcpy.c
 /thread.c
+=======
+/crypt.c
+/getaddrinfo.c
+/inet_aton.c
+/noblock.c
+/open.c
+/pgstrcasecmp.c
+/snprintf.c
+/strerror.c
+/strlcpy.c
+/thread.c
+/win32error.c
+/pgsleep.c
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /md5.c
 /ip.c
 /encnames.c
 /wchar.c
+<<<<<<< HEAD
 
 getpeereid.c
 inet_net_ntop.c
@@ -21,3 +37,5 @@ libpq.so.5
 libpq.so.5.0
 lipq-dist.rc
 libpq.so.5.2
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.41 2009/06/11 14:49:13 momjian Exp $ */
+=======
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.37 2007/08/22 08:20:58 meskes Exp $ */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #include "postgres_fe.h"
 #include <time.h>
@@ -14,6 +18,7 @@
 #include "pgtypes_error.h"
 #include "pgtypes_interval.h"
 
+<<<<<<< HEAD
 /* copy&pasted from .../src/backend/utils/adt/datetime.c */
 static int
 strtoi(const char *nptr, char **endptr, int base)
@@ -324,6 +329,11 @@ DecodeISO8601Interval(char *str,
 
 /* copy&pasted from .../src/backend/utils/adt/datetime.c
  * with 3 exceptions
+=======
+/* DecodeInterval()
+ * Interpret previously parsed fields for general time interval.
+ * Return 0 if decoded and -1 if problems.
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *	* changesd struct pg_tm to struct tm
  *

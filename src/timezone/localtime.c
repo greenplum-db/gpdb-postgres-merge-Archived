@@ -3,7 +3,11 @@
  * 1996-06-05 by Arthur David Olson.
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/timezone/localtime.c
+=======
+ *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.19 2007/11/15 21:14:46 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 
 /*
@@ -91,10 +95,14 @@ static struct pg_tm *localsub(const pg_time_t *timep, long offset,
 							   struct pg_tm *tmp, const pg_tz *tz);
 static int increment_overflow(int *number, int delta);
 static pg_time_t transtime(pg_time_t janfirst, int year,
+<<<<<<< HEAD
 		  const struct rule *rulep, long offset);
 static int typesequiv(const struct state *sp, int a, int b);
 static struct pg_tm *timesub(const pg_time_t *timep, long offset,
 							 const struct state *sp, struct pg_tm *tmp);
+=======
+		  const struct rule * rulep, long offset);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* GMT timezone */
 static struct state gmtmem;
@@ -149,7 +157,11 @@ differ_by_repeat(pg_time_t t1, pg_time_t t0)
 }
 
 int
+<<<<<<< HEAD
 tzload(const char *name, char *canonname, struct state * sp, int doextend)
+=======
+tzload(const char *name, char *canonname, struct state * sp)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	const char *p;
 	int			i;
@@ -758,7 +770,11 @@ tzparse(const char *name, struct state * sp, int lastditch)
 		name = getoffset(name, &stdoffset);
 		if (name == NULL)
 			return -1;
+<<<<<<< HEAD
 		load_result = tzload(TZDEFRULES, NULL, sp, FALSE);
+=======
+		load_result = tzload(TZDEFRULES, NULL, sp);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 	if (load_result != 0)
 		sp->leapcnt = 0;		/* so, we're off a little */
@@ -1303,20 +1319,21 @@ increment_overflow(int *number, int delta)
 }
 
 /*
- * Find the next DST transition time at or after the given time
+ * Find the next DST transition time after the given time
  *
  * *timep is the input value, the other parameters are output values.
  *
  * When the function result is 1, *boundary is set to the time_t
- * representation of the next DST transition time at or after *timep,
+ * representation of the next DST transition time after *timep,
  * *before_gmtoff and *before_isdst are set to the GMT offset and isdst
- * state prevailing just before that boundary, and *after_gmtoff and
- * *after_isdst are set to the state prevailing just after that boundary.
+ * state prevailing just before that boundary (in particular, the state
+ * prevailing at *timep), and *after_gmtoff and *after_isdst are set to
+ * the state prevailing just after that boundary.
  *
- * When the function result is 0, there is no known DST transition at or
+ * When the function result is 0, there is no known DST transition
  * after *timep, but *before_gmtoff and *before_isdst indicate the GMT
  * offset and isdst state prevailing at *timep.  (This would occur in
- * DST-less time zones, for example.)
+ * DST-less time zones, or if a zone has permanently ceased using DST.)
  *
  * A function result of -1 indicates failure (this case does not actually
  * occur in our current implementation).
@@ -1352,6 +1369,7 @@ pg_next_dst_boundary(const pg_time_t *timep,
 		*before_isdst = ttisp->tt_isdst;
 		return 0;
 	}
+<<<<<<< HEAD
 	if ((sp->goback && t < sp->ats[0]) ||
 		(sp->goahead && t > sp->ats[sp->timecnt - 1]))
 	{
@@ -1397,15 +1415,18 @@ pg_next_dst_boundary(const pg_time_t *timep,
 	}
 
 	if (t > sp->ats[sp->timecnt - 1])
+=======
+	if (t >= sp->ats[sp->timecnt - 1])
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
-		/* No known transition >= t, so use last known segment's type */
+		/* No known transition > t, so use last known segment's type */
 		i = sp->types[sp->timecnt - 1];
 		ttisp = &sp->ttis[i];
 		*before_gmtoff = ttisp->tt_gmtoff;
 		*before_isdst = ttisp->tt_isdst;
 		return 0;
 	}
-	if (t <= sp->ats[0])
+	if (t < sp->ats[0])
 	{
 		/* For "before", use lowest-numbered standard type */
 		i = 0;
@@ -1426,6 +1447,7 @@ pg_next_dst_boundary(const pg_time_t *timep,
 		*after_isdst = ttisp->tt_isdst;
 		return 1;
 	}
+<<<<<<< HEAD
 	/* Else search to find the containing segment */
 	{
 		int    lo = 1;
@@ -1442,6 +1464,12 @@ pg_next_dst_boundary(const pg_time_t *timep,
 		}
 		i = lo;
 	}
+=======
+	/* Else search to find the boundary following t */
+	for (i = 1; i < sp->timecnt; ++i)
+		if (t < sp->ats[i])
+			break;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	j = sp->types[i - 1];
 	ttisp = &sp->ttis[j];
 	*before_gmtoff = ttisp->tt_gmtoff;

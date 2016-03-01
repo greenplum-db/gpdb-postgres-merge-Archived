@@ -1,4 +1,9 @@
 my @def;
+#
+# Script that generates a .DEF file for all objects in a directory
+# 
+# $PostgreSQL: pgsql/src/tools/msvc/gendef.pl,v 1.8 2008/01/31 16:30:24 adunstan Exp $
+#
 
 #
 # Script that generates a .DEF file for all objects in a directory
@@ -58,7 +63,11 @@ foreach my $f (sort @def)
 {
     next if ($f eq $last);
     $last = $f;
+<<<<<<< HEAD
     $f =~ s/^_// unless ($platform eq "x64"); # win64 has new format of exports
+=======
+    $f =~ s/^_//;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     $i++;
 
     #   print DEF "  $f \@ $i\n";  # ordinaled exports?

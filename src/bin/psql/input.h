@@ -1,9 +1,15 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
+<<<<<<< HEAD
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
  * src/bin/psql/input.h
+=======
+ * Copyright (c) 2000-2008, PostgreSQL Global Development Group
+ *
+ * $PostgreSQL: pgsql/src/bin/psql/input.h,v 1.30.2.1 2009/08/24 16:18:25 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 #ifndef INPUT_H
 #define INPUT_H
@@ -22,18 +28,32 @@
 #if defined(HAVE_READLINE_HISTORY_H)
 #include <readline/history.h>
 #endif
+<<<<<<< HEAD
+=======
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #elif defined(HAVE_EDITLINE_READLINE_H)
 #include <editline/readline.h>
 #if defined(HAVE_EDITLINE_HISTORY_H)
 #include <editline/history.h>
 #endif
+<<<<<<< HEAD
+=======
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #elif defined(HAVE_READLINE_H)
 #include <readline.h>
 #if defined(HAVE_HISTORY_H)
 #include <history.h>
 #endif
+<<<<<<< HEAD
 #endif   /* HAVE_READLINE_READLINE_H, etc */
 #endif   /* HAVE_LIBREADLINE */
+=======
+
+#endif /* HAVE_READLINE_READLINE_H, etc */
+#endif /* HAVE_LIBREADLINE */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #include "pqexpbuffer.h"
 

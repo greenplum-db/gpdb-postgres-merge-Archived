@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 libecpg.a
 libecpg.so
 libecpg.so.5
@@ -9,3 +10,14 @@ exports.list
 pgstrcasecmp.c
 libecpg.so.6
 libecpg.so.6.1
+=======
+/libecpgdll.def
+/libecpgddll.def
+/blibecpgdll.def
+/exports.list
+
+/path.c
+/pgstrcasecmp.c
+/strlcpy.c
+/thread.c
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

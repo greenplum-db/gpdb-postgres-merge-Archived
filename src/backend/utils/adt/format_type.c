@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/format_type.c,v 1.46 2007/01/05 22:19:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/format_type.c,v 1.49 2008/01/01 19:45:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,11 +179,17 @@ format_type_internal(Oid type_oid, int32 typemod,
 	 */
 	array_base_type = typeform->typelem;
 
+<<<<<<< HEAD
 	if (OidIsValid(array_base_type) &&
 		typeform->typtype != TYPTYPE_DOMAIN &&
 		/* TODO: Change test to use pg_type.typarray when introducing 8.3 updates */
 		NameStr(typeform->typname)[0] == '_' &&
 		typeform->typinput == F_ARRAY_IN)
+=======
+	if (array_base_type != InvalidOid &&
+		typeform->typstorage != 'p' &&
+		typeform->typtype != TYPTYPE_DOMAIN)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		HeapTuple base_tuple;
 		Form_pg_type base_typeform;
@@ -415,7 +421,7 @@ format_type_internal(Oid type_oid, int32 typemod,
 static char *
 printTypmod(const char *typname, int32 typmod, Oid typmodout)
 {
-	char	*res;
+	char	   *res;
 
 	/* Shouldn't be called if typmod is -1 */
 	Assert(typmod >= 0);
@@ -429,7 +435,7 @@ printTypmod(const char *typname, int32 typmod, Oid typmodout)
 	else
 	{
 		/* Use the type-specific typmodout procedure */
-		char *tmstr;
+		char	   *tmstr;
 
 		tmstr = DatumGetCString(OidFunctionCall1(typmodout,
 												 Int32GetDatum(typmod)));

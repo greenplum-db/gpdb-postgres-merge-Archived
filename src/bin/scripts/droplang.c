@@ -2,10 +2,17 @@
  *
  * droplang
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/bin/scripts/droplang.c,v 1.31 2009/02/26 16:02:39 petere Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/bin/scripts/droplang.c,v 1.26 2008/01/01 19:45:56 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -140,7 +147,11 @@ main(int argc, char *argv[])
 	if (listlangs)
 	{
 		printQueryOpt popt;
+<<<<<<< HEAD
 		static const bool translate_columns[] = {false, true};
+=======
+		static const bool trans_columns[] = {false, true};
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		conn = connectDatabase(dbname, host, port, username, prompt_password,
 							   progname);
@@ -160,8 +171,13 @@ main(int argc, char *argv[])
 		popt.topt.stop_table = true;
 		popt.topt.encoding = PQclientEncoding(conn);
 		popt.title = _("Procedural Languages");
+<<<<<<< HEAD
 		popt.translate_header = true;
 		popt.translate_columns = translate_columns;
+=======
+		popt.trans_headers = true;
+		popt.trans_columns = trans_columns;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		printQuery(result, &popt, stdout, NULL);
 
 		PQfinish(conn);
@@ -341,7 +357,14 @@ help(const char *progname)
 	printf(_("  -h, --host=HOSTNAME       database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT           database server port\n"));
 	printf(_("  -U, --username=USERNAME   user name to connect as\n"));
+<<<<<<< HEAD
 	printf(_("  -w, --no-password         never prompt for password\n"));
 	printf(_("  -W, --password            force password prompt\n"));
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
+=======
+	printf(_("  -W, --password            force password prompt\n"));
+	printf(_("  --help                    show this help, then exit\n"));
+	printf(_("  --version                 output version information, then exit\n"));
+	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }

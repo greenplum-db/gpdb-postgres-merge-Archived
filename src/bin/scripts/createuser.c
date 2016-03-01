@@ -2,10 +2,17 @@
  *
  * createuser
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.43 2009/02/26 16:20:55 petere Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.38 2008/01/01 19:45:56 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -101,6 +108,12 @@ main(int argc, char *argv[])
 			case 'e':
 				echo = true;
 				break;
+<<<<<<< HEAD
+=======
+			case 'q':
+				/* obsolete; remove in 8.4 */
+				break;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			case 'd':
 				createdb = TRI_YES;
 				break;
@@ -311,20 +324,29 @@ help(const char *progname)
 	printf(_("  -l, --login               role can login (default)\n"));
 	printf(_("  -L, --no-login            role cannot login\n"));
 	printf(_("  -N, --unencrypted         do not encrypt stored password\n"));
+<<<<<<< HEAD
 	printf(_("  -P, --pwprompt            assign a password to new role\n"));
 	printf(_("  -r, --createrole          role can create new roles\n"));
 	printf(_("  -R, --no-createrole       role cannot create roles\n"));
 	printf(_("  -s, --superuser           role will be superuser\n"));
 	printf(_("  -S, --no-superuser        role will not be superuser\n"));
+=======
+	printf(_("  -e, --echo                show the commands being sent to the server\n"));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	printf(_("  --help                    show this help, then exit\n"));
 	printf(_("  --version                 output version information, then exit\n"));
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME       database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT           database server port\n"));
 	printf(_("  -U, --username=USERNAME   user name to connect as (not the one to create)\n"));
+<<<<<<< HEAD
 	printf(_("  -w, --no-password         never prompt for password\n"));
 	printf(_("  -W, --password            force password prompt\n"));
 	printf(_("\nIf one of -d, -D, -r, -R, -s, -S, and ROLENAME is not specified, you will\n"
+=======
+	printf(_("  -W, --password            force password prompt\n"));
+	printf(_("\nIf one of -s, -S, -d, -D, -r, -R and ROLENAME is not specified, you will\n"
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			 "be prompted interactively.\n"));
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
 }

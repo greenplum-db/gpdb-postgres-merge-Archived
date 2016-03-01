@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.3 2007/01/05 22:19:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.8 2008/01/01 19:45:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,6 +312,7 @@ transformRelOptions(Datum oldOptions, List *defList,
 			t = (text *) palloc(len + 1);
 			SET_VARSIZE(t, len);
 			sprintf(VARDATA(t), "%s=%s", def->defname, value);
+<<<<<<< HEAD
 
 			if (need_free_value)
 			{
@@ -320,6 +321,8 @@ transformRelOptions(Datum oldOptions, List *defList,
 			}
 
 			AssertImply(need_free_value, NULL == value);
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			astate = accumArrayResult(astate, PointerGetDatum(t),
 									  false, TEXTOID,
@@ -834,6 +837,50 @@ untransformRelOptions(Datum options)
 
 
 /*
+ * Convert the text-array format of reloptions into a List of DefElem.
+ * This is the inverse of transformRelOptions().
+ */
+List *
+untransformRelOptions(Datum options)
+{
+	List	   *result = NIL;
+	ArrayType  *array;
+	Datum	   *optiondatums;
+	int			noptions;
+	int			i;
+
+	/* Nothing to do if no options */
+	if (options == (Datum) 0)
+		return result;
+
+	array = DatumGetArrayTypeP(options);
+
+	Assert(ARR_ELEMTYPE(array) == TEXTOID);
+
+	deconstruct_array(array, TEXTOID, -1, false, 'i',
+					  &optiondatums, NULL, &noptions);
+
+	for (i = 0; i < noptions; i++)
+	{
+		char	   *s;
+		char	   *p;
+		Node	   *val = NULL;
+
+		s = DatumGetCString(DirectFunctionCall1(textout, optiondatums[i]));
+		p = strchr(s, '=');
+		if (p)
+		{
+			*p++ = '\0';
+			val = (Node *) makeString(pstrdup(p));
+		}
+		result = lappend(result, makeDefElem(pstrdup(s), val));
+	}
+
+	return result;
+}
+
+
+/*
  * Interpret reloptions that are given in text-array format.
  *
  *	options: array of "keyword=value" strings, as built by transformRelOptions
@@ -892,8 +939,8 @@ parseRelOptions(Datum options, int numkeywords, const char *const * keywords,
 				if (values[j] && validate)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("duplicate parameter \"%s\"",
-									keywords[j])));
+						  errmsg("parameter \"%s\" specified more than once",
+								 keywords[j])));
 				value_len = text_len - kw_len - 1;
 				value = (char *) palloc(value_len + 1);
 				memcpy(value, text_str + kw_len + 1, value_len);
@@ -1025,6 +1072,7 @@ parse_validate_reloptions(StdRdOptions *result, Datum reloptions,
 		}
 	}
 
+<<<<<<< HEAD
 	/* blocksize */
 	if (values[2] != NULL)
 	{
@@ -1034,6 +1082,10 @@ parse_validate_reloptions(StdRdOptions *result, Datum reloptions,
 					 errmsg("usage of parameter \"blocksize\" in a non "
 							"relation object is not supported"),
 					 errOmitLocation(false)));
+=======
+	result = (StdRdOptions *) palloc(sizeof(StdRdOptions));
+	SET_VARSIZE(result, sizeof(StdRdOptions));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (!result->appendonly && validate)
 			ereport(ERROR,

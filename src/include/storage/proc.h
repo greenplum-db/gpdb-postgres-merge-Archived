@@ -4,11 +4,18 @@
  *	  per-process shared memory data structures
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.98 2007/04/16 18:30:04 alvherre Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.104 2008/01/26 19:55:08 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -77,10 +84,20 @@ struct PGPROC
 	PGSemaphoreData sem;		/* ONE semaphore to sleep on */
 	int			waitStatus;		/* STATUS_WAITING, STATUS_OK or STATUS_ERROR */
 
+<<<<<<< HEAD
 	Latch		procLatch;		/* generic latch for process */
 
 	TransactionId xid;			/* transaction currently being executed by
 								 * this proc */
+=======
+	LocalTransactionId lxid;	/* local id of top-level transaction currently
+								 * being executed by this proc, if running;
+								 * else InvalidLocalTransactionId */
+
+	TransactionId xid;			/* id of top-level transaction currently being
+								 * executed by this proc, if running and XID
+								 * is assigned; else InvalidTransactionId */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	LocalDistribXactRef	localDistribXactRef;
 								/* Reference to the LocalDistribXact 
@@ -91,6 +108,7 @@ struct PGPROC
 								 * xid >= xmin ! */
 
 	int			pid;			/* This backend's process id, or 0 */
+	BackendId	backendId;		/* This backend's backend ID (if assigned) */
 	Oid			databaseId;		/* OID of database this backend is using */
 	Oid			roleId;			/* OID of role using this backend */
     int         mppSessionId;   /* serial num of the qDisp process */
@@ -98,8 +116,9 @@ struct PGPROC
     bool		mppIsWriter;	/* The writer gang member, holder of locks */
 	bool		postmasterResetRequired; /* Whether postmaster reset is required when this child exits */
 
-	bool		inVacuum;		/* true if current xact is a LAZY VACUUM */
-	bool		isAutovacuum;	/* true if it's autovacuum */
+	bool		inCommit;		/* true if within commit critical section */
+
+	uint8		vacuumFlags;	/* vacuum-related flags, see above */
 
 	/* Info about LWLock the process is currently waiting for, if any. */
 	bool		lwWaiting;		/* true if waiting for an LW lock */
@@ -155,8 +174,13 @@ struct PGPROC
 
 extern PGDLLIMPORT PGPROC *MyProc;
 
+<<<<<<< HEAD
 /* Special for MPP reader gangs */
 extern PGDLLIMPORT PGPROC *lockHolderProcPtr;
+=======
+extern PGDLLIMPORT PGPROC *MyProc;
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * There is one ProcGlobal struct for the whole database cluster.
@@ -218,12 +242,21 @@ typedef struct PROC_HDR
  *					5) Consumer Verification
  *					6) Sender Ack
  */
+<<<<<<< HEAD
 #define NUM_AUXILIARY_PROCS	 14
+=======
+#define NUM_AUXILIARY_PROCS		3
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* configurable options */
 extern int	DeadlockTimeout;
 extern int	StatementTimeout;
+<<<<<<< HEAD
 extern int IdleSessionGangTimeout;
+=======
+extern bool log_lock_waits;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 extern volatile bool cancel_from_timeout;
 
@@ -244,7 +277,7 @@ extern void ProcQueueInit(PROC_QUEUE *queue);
 extern int	ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable);
 extern PGPROC *ProcWakeup(PGPROC *proc, int waitStatus);
 extern void ProcLockWakeup(LockMethod lockMethodTable, LOCK *lock);
-extern bool LockWaitCancel(void);
+extern void LockWaitCancel(void);
 
 extern void ProcWaitForSignal(void);
 extern void ProcSendSignal(int pid);

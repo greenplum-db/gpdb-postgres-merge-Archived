@@ -1,5 +1,9 @@
 /* Processed by ecpg (regression mode) */
 /* These include files are added by the preprocessor */
+<<<<<<< HEAD
+=======
+#include <ecpgtype.h>
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include <ecpglib.h>
 #include <ecpgerrno.h>
 #include <sqlca.h>
@@ -23,12 +27,20 @@
 #line 6 "parser.pgc"
 
 
+<<<<<<< HEAD
 int main() {
+=======
+int main(int argc, char* argv[]) {
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
   /* exec sql begin declare section */
   	   
   
 #line 10 "parser.pgc"
+<<<<<<< HEAD
  int item [ 3 ] , ind [ 3 ] , i ;
+=======
+ int  item [ 3 ]    ,  ind [ 3 ]    ,  i    ;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* exec sql end declare section */
 #line 11 "parser.pgc"
 
@@ -48,7 +60,11 @@ int main() {
 #line 18 "parser.pgc"
 
 
+<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table T ( Item1 int , Item2 int )", ECPGt_EOIT, ECPGt_EORT);
+=======
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table T ( Item1 int   , Item2 int   )    ", ECPGt_EOIT, ECPGt_EORT);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 20 "parser.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -58,7 +74,11 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 20 "parser.pgc"
 
 
+<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into T values ( 1 , null )", ECPGt_EOIT, ECPGt_EORT);
+=======
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into T values ( 1 , null ) ", ECPGt_EOIT, ECPGt_EORT);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 22 "parser.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -67,7 +87,11 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 22 "parser.pgc"
 
+<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into T values ( 1 , 1 )", ECPGt_EOIT, ECPGt_EORT);
+=======
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into T values ( 1 , 1 ) ", ECPGt_EOIT, ECPGt_EORT);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 23 "parser.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -76,7 +100,11 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 23 "parser.pgc"
 
+<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into T values ( 1 , 2 )", ECPGt_EOIT, ECPGt_EORT);
+=======
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into T values ( 1 , 2 ) ", ECPGt_EOIT, ECPGt_EORT);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 24 "parser.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -86,7 +114,11 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 24 "parser.pgc"
 
 
+<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select Item2 from T order by Item2 nulls last", ECPGt_EOIT, 
+=======
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  Item2  from T    order by Item2  nulls last", ECPGt_EOIT, 
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_int,(item),(long)1,(long)3,sizeof(int), 
 	ECPGt_int,(ind),(long)1,(long)3,sizeof(int), ECPGt_EORT);
 #line 26 "parser.pgc"
@@ -101,7 +133,11 @@ if (sqlca.sqlcode < 0) sqlprint();}
   for (i=0; i<3; i++)
   	printf("item[%d] = %d\n", i, ind[i] ? -1 : item[i]);
 
+<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "alter table T alter Item1 type bigint", ECPGt_EOIT, ECPGt_EORT);
+=======
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table T ", ECPGt_EOIT, ECPGt_EORT);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 31 "parser.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -110,6 +146,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 31 "parser.pgc"
 
+<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "alter table T alter column Item2 set data type smallint", ECPGt_EOIT, ECPGt_EORT);
 #line 32 "parser.pgc"
 
@@ -138,6 +175,17 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 36 "parser.pgc"
+=======
+
+  { ECPGdisconnect(__LINE__, "ALL");
+#line 33 "parser.pgc"
+
+if (sqlca.sqlwarn[0] == 'W') sqlprint();
+#line 33 "parser.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 33 "parser.pgc"
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
   return 0;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.31 2007/02/14 01:58:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.32.2.1 2009/02/27 16:35:31 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,6 +110,10 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 					 CStringGetDatum(""),
 					 CStringGetDatum(result),
 					 Int32GetDatum(0));
+<<<<<<< HEAD
+=======
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/*
 	 * All seem ok, go ahead (possible failure would be a duplicate conversion
 	 * name)

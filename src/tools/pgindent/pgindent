@@ -1,6 +1,10 @@
 #!/bin/sh
 
+<<<<<<< HEAD
 # src/tools/pgindent/pgindent
+=======
+# $PostgreSQL: pgsql/src/tools/pgindent/pgindent,v 1.98 2008/01/16 20:13:44 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 # Known bugs:
 #
@@ -25,6 +29,14 @@ if [ -z "$INDENT" ]
 then
 	INDENT=indent
 fi
+
+if [ "$#" -lt 2 ]
+then	echo "Usage:  `basename $0` typedefs file [...]" 1>&2
+	exit 1
+fi
+
+TYPEDEFS="$1"
+shift
 
 trap "rm -f /tmp/$$ /tmp/$$a" 0 1 2 3 15
 entab </dev/null >/dev/null
@@ -143,7 +155,11 @@ do
 # We get the list of typedef's from /src/tools/find_typedef
 	$INDENT -bad -bap -bc -bl -d0 -cdb -nce -nfc1 -di12 -i4 -l79 \
 		-lp -nip -npro -bbb $EXTRA_OPTS \
+<<<<<<< HEAD
 		`egrep -v '^(FD_SET|date|interval|timestamp|ANY)$' "$TYPEDEFS" | sed -e '/^$/d' -e 's/.*/-T& /'` \
+=======
+		`cat "$TYPEDEFS" | sed 's/.*/-T& /'` \
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		/tmp/$$a >/tmp/$$ 2>&1
 
 	if [ "$?" -ne 0 -o -s /tmp/$$ ]
@@ -257,7 +273,11 @@ do
 		{
 			if (NR != 1)
 			{
+<<<<<<< HEAD
 				if ($0 ~ "/[*] _PGMV")
+=======
+				if ($0 ~ "/\* _PGMV")
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				{
 					# remove tag
 					sub(" _PGMV", "", $0);
@@ -331,7 +351,11 @@ do
 			print line1;
 		}' |
 
+<<<<<<< HEAD
 #  Move prototype names to the same line as return type.  Useful for ctags.
+=======
+#  Move prototype names to the same line as return type.  Useful for ctags. 
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #  Indent should do this, but it does not.  It formats prototypes just
 #  like real functions.
 	awk '	BEGIN	{paren_level = 0}

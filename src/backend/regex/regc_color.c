@@ -28,7 +28,11 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/backend/regex/regc_color.c,v 1.9 2008/02/14 17:33:37 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/backend/regex/regc_color.c,v 1.8 2008/01/03 20:47:55 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *
  * Note that there are some incestuous relationships between this code and
@@ -66,8 +70,9 @@ initcm(struct vars * v,
 	cd = cm->cd;				/* cm->cd[WHITE] */
 	cd->sub = NOSUB;
 	cd->arcs = NULL;
-	cd->flags = 0;
+	cd->firstchr = CHR_MIN;
 	cd->nchrs = CHR_MAX - CHR_MIN + 1;
+	cd->flags = 0;
 
 	/* upper levels of tree */
 	for (t = &cm->tree[0], j = NBYTS - 1; j > 0; t = nextt, j--)
@@ -272,6 +277,7 @@ newcolor(struct colormap * cm)
 	cd->nchrs = 0;
 	cd->sub = NOSUB;
 	cd->arcs = NULL;
+	cd->firstchr = CHR_MIN;		/* in case never set otherwise */
 	cd->flags = 0;
 	cd->block = NULL;
 
@@ -371,6 +377,8 @@ subcolor(struct colormap * cm, chr c)
 	if (co == sco)				/* already in an open subcolor */
 		return co;				/* rest is redundant */
 	cm->cd[co].nchrs--;
+	if (cm->cd[sco].nchrs == 0)
+		cm->cd[sco].firstchr = c;
 	cm->cd[sco].nchrs++;
 	setcolor(cm, c, sco);
 	return sco;
@@ -438,6 +446,11 @@ subrange(struct vars * v,
 
 /*
  * subblock - allocate new subcolors for one tree block of chrs, fill in arcs
+ *
+ * Note: subcolors that are created during execution of this function
+ * will not be given a useful value of firstchr; it'll be left as CHR_MIN.
+ * For the current usage of firstchr in pg_regprefix, this does not matter
+ * because such subcolors won't occur in the common prefix of a regex.
  */
 static void
 subblock(struct vars * v,
@@ -632,6 +645,24 @@ uncolorchain(struct colormap * cm,
 		a->colorchain->colorchainRev = aa;
 	a->colorchain = NULL;		/* paranoia */
 	a->colorchainRev = NULL;
+<<<<<<< HEAD
+=======
+}
+
+/*
+ * singleton - is this character in its own color?
+ */
+static int						/* predicate */
+singleton(struct colormap * cm,
+		  chr c)
+{
+	color		co;				/* color of c */
+
+	co = GETCOLOR(cm, c);
+	if (cm->cd[co].nchrs == 1 && cm->cd[co].sub == NOSUB)
+		return 1;
+	return 0;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*

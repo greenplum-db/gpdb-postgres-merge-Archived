@@ -15,7 +15,7 @@
  * this module.
  *
  * To allow reusing existing combo cids, we also keep a hash table that
- * maps cmin,cmax pairs to combo cids.  This keeps the data structure size
+ * maps cmin,cmax pairs to combo cids.	This keeps the data structure size
  * reasonable in most cases, since the number of unique pairs used by any
  * one transaction is likely to be small.
  *
@@ -34,7 +34,11 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL$
+=======
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/combocid.c,v 1.4.2.1 2008/09/01 18:53:03 heikki Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -54,12 +58,21 @@
 
 #include "storage/buffile.h"
 
+<<<<<<< HEAD
 /*
  * We now maintain two hashtables.
  *
  * 1) local hash for lookup of combocid with the key (cmin, cmax) by the writer
  * 2) shared-hash for lookup of cmin/cmax with the key (parent-xid, combocid, writer-pid) by the readers.
  */
+=======
+/* Key and entry structures for the hash table */
+typedef struct
+{
+	CommandId	cmin;
+	CommandId	cmax;
+} ComboCidKeyData;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* HASH TABLE 1 */
 
@@ -82,9 +95,15 @@ typedef ComboCidEntryData *ComboCidEntry;
  * An array of cmin,cmax pairs, indexed by combo command id.
  * To convert a combo cid to cmin and cmax, you do a simple array lookup.
  */
+<<<<<<< HEAD
 volatile ComboCidKey comboCids = NULL;
 volatile int usedComboCids = 0;			/* number of elements in comboCids */
 volatile int sizeComboCids = 0;			/* allocated size of array */
+=======
+static ComboCidKey comboCids = NULL;
+static int	usedComboCids = 0;	/* number of elements in comboCids */
+static int	sizeComboCids = 0;	/* allocated size of array */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* Initial size of the array */
 #define CCID_ARRAY_SIZE			100
@@ -190,7 +209,11 @@ HeapTupleHeaderAdjustCmax(HeapTupleHeader tup,
 	if (!(tup->t_infomask & HEAP_XMIN_COMMITTED) &&
 		TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(tup)))
 	{
+<<<<<<< HEAD
 		CommandId	cmin = HeapTupleHeaderGetRawCommandId(tup);
+=======
+		CommandId	cmin = HeapTupleHeaderGetCmin(tup);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		*cmax = GetComboCommandId(HeapTupleHeaderGetXmin(tup), cmin, *cmax);
 		*iscombo = true;
@@ -236,6 +259,7 @@ GetComboCommandId(TransactionId xmin, CommandId cmin, CommandId cmax)
 	ComboCidKeyData key;
 	ComboCidEntry entry;
 	bool		found;
+<<<<<<< HEAD
 
 	if (Gp_role == GP_ROLE_EXECUTE && !Gp_is_writer)
 	{
@@ -246,6 +270,8 @@ GetComboCommandId(TransactionId xmin, CommandId cmin, CommandId cmax)
 	}
 
 	/* We're either GP_ROLE_DISPATCH, GP_ROLE_UTILITY, or a QE-writer */
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Create the hash table and array the first time we need to use combo

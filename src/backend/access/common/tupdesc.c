@@ -3,12 +3,16 @@
  * tupdesc.c
  *	  POSTGRES tuple descriptor support code
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.120 2007/01/05 22:19:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.122 2008/01/01 19:45:46 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -560,9 +564,14 @@ BuildDescForRelation(List *schema)
 		attnum++;
 
 		attname = entry->colname;
+<<<<<<< HEAD
 		atttypid = typenameTypeId(NULL, entry->typname);
 		atttypmod = typenameTypeMod(NULL, entry->typname, atttypid);
 		attdim = list_length(entry->typname->arrayBounds);
+=======
+		atttypid = typenameTypeId(NULL, entry->typename, &atttypmod);
+		attdim = list_length(entry->typename->arrayBounds);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (entry->typname->setof)
 			ereport(ERROR,

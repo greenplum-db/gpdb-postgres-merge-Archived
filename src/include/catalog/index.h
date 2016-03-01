@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/index.h,v 1.73 2007/01/09 02:14:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/index.h,v 1.75.2.1 2008/11/13 17:42:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,13 @@ typedef void (*IndexBuildCallback) (Relation index,
 									bool *isnull,
 									bool tupleIsAlive,
 									void *state);
+
+/* Action code for index_set_state_flags */
+typedef enum
+{
+	INDEX_CREATE_SET_READY,
+	INDEX_CREATE_SET_VALID
+} IndexStateFlagsAction;
 
 
 extern Oid index_create(Oid heapRelationId,
@@ -58,24 +65,38 @@ extern void FormIndexDatum(IndexInfo *indexInfo,
 			   Datum *values,
 			   bool *isnull);
 
+<<<<<<< HEAD
+=======
+extern void setNewRelfilenode(Relation relation, TransactionId freezeXid);
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern void index_build(Relation heapRelation,
 			Relation indexRelation,
 			IndexInfo *indexInfo,
-			bool isprimary);
+			bool isprimary,
+			bool isreindex);
 
 extern double IndexBuildScan(Relation heapRelation,
 				   Relation indexRelation,
 				   IndexInfo *indexInfo,
+				   bool allow_sync,
 				   IndexBuildCallback callback,
 				   void *callback_state);
 
 extern void validate_index(Oid heapId, Oid indexId, Snapshot snapshot);
 
+<<<<<<< HEAD
 extern Oid reindex_index(Oid indexId, Oid newrelfilenode, List **extra_oids);
 extern bool reindex_relation(Oid relid, bool toast_too, bool aoseg_too, 
 							 bool aoblkdir_too, bool aovisimap_too,
 							 List **oidmap, bool build_map);
 
 extern Oid IndexGetRelation(Oid indexId);
+=======
+extern void index_set_state_flags(Oid indexId, IndexStateFlagsAction action);
+
+extern void reindex_index(Oid indexId);
+extern bool reindex_relation(Oid relid, bool toast_too);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #endif   /* INDEX_H */

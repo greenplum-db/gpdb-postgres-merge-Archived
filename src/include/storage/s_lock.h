@@ -63,10 +63,17 @@
  *	when using the SysV semaphore code.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.171 2010/01/05 11:06:28 mha Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.164 2008/01/01 19:45:59 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -252,12 +259,32 @@ tas(volatile slock_t *lock)
 #endif	 /* __ia64__ || __ia64 */
 
 
+/*
+ * On ARM, we use __sync_lock_test_and_set(int *, int) if available, and if
+ * not fall back on the SWPB instruction.  SWPB does not work on ARMv6 or
+ * later, so the compiler builtin is preferred if available.  Note also that
+ * the int-width variant of the builtin works on more chips than other widths.
+ */
 #if defined(__arm__) || defined(__arm)
 #define HAS_TEST_AND_SET
 
-typedef unsigned char slock_t;
-
 #define TAS(lock) tas(lock)
+
+#ifdef HAVE_GCC_INT_ATOMICS
+
+typedef int slock_t;
+
+static __inline__ int
+tas(volatile slock_t *lock)
+{
+	return __sync_lock_test_and_set(lock, 1);
+}
+
+#define S_UNLOCK(lock) __sync_lock_release(lock)
+
+#else /* !HAVE_GCC_INT_ATOMICS */
+
+typedef unsigned char slock_t;
 
 static __inline__ int
 tas(volatile slock_t *lock)
@@ -272,6 +299,7 @@ tas(volatile slock_t *lock)
 	return (int) _res;
 }
 
+#endif	 /* HAVE_GCC_INT_ATOMICS */
 #endif	 /* __arm__ */
 
 
@@ -568,6 +596,7 @@ typedef int slock_t;
 #endif /* __m32r__ */
 
 
+<<<<<<< HEAD
 #if defined(__sh__)				/* Renesas' SuperH */
 #define HAS_TEST_AND_SET
 
@@ -598,6 +627,8 @@ tas(volatile slock_t *lock)
 #endif	 /* __sh__ */
 
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* These live in s_lock.c, but only for gcc */
 
 

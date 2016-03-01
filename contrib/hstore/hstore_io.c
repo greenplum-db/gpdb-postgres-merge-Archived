@@ -447,7 +447,11 @@ hstore_out(PG_FUNCTION_ARGS)
 	HStore	   *in = PG_GETARG_HS(0);
 	int			buflen,
 				i,
+<<<<<<< HEAD
 				nnulls = 0;
+=======
+				nnulls=0;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	char	   *out,
 			   *ptr;
 	char	   *base = STRPTR(in);
@@ -465,11 +469,19 @@ hstore_out(PG_FUNCTION_ARGS)
 		if (entries[i].valisnull)
 			nnulls++;
 
+<<<<<<< HEAD
 	buflen = (4 /* " */ + 2 /* => */ ) * (in->size - nnulls) +
 		(2 /* " */ + 2 /* => */ + 4 /* NULL */ ) * nnulls +
 		2 /* ,	*/ * (in->size - 1) +
 		2 /* esc */ * (VARSIZE(in) - CALCDATASIZE(in->size, 0)) +
 		1 /* \0 */ ;
+=======
+	buflen = (4 /* " */ + 2 /* => */ ) * ( in->size - nnulls ) +
+		( 2 /* " */ + 2 /* => */ + 4 /* NULL */ ) * nnulls  +
+		2 /* ,  */ * ( in->size - 1 ) +
+		2 /* esc */ * (VARSIZE(in) - CALCDATASIZE(in->size, 0)) + 
+		1 /* \0 */;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	out = ptr = palloc(buflen);
 	for (i = 0; i < in->size; i++)

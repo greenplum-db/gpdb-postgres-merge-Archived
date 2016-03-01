@@ -3,12 +3,20 @@
  * be-fsstubs.c
  *	  Builtin functions for open/close/read/write operations on large objects
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.94 2010/02/26 02:00:42 momjian Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.87 2008/01/01 19:45:49 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -160,6 +168,7 @@ lo_read(int fd, char *buf, int len)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("invalid large-object descriptor: %d", fd)));
+<<<<<<< HEAD
 
 #if 0
 	/* Permission checks */
@@ -173,6 +182,8 @@ lo_read(int fd, char *buf, int len)
 				 errmsg("permission denied for large object %u",
 						cookies[fd]->id)));
 #endif
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	status = inv_read(cookies[fd], buf, len);
 
@@ -522,6 +533,7 @@ lo_truncate(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("invalid large-object descriptor: %d", fd)));
 
+<<<<<<< HEAD
 #if 0
 	/* Permission checks */
 	if (!lo_compat_privileges &&
@@ -535,6 +547,8 @@ lo_truncate(PG_FUNCTION_ARGS)
 						cookies[fd]->id)));
 #endif
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	inv_truncate(cookies[fd], len);
 
 	PG_RETURN_INT32(0);

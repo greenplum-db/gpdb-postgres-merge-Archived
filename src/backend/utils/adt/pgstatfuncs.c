@@ -3,12 +3,16 @@
  * pgstatfuncs.c
  *	  Functions for accessing the statistics collector data
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.38 2007/02/07 23:11:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.48 2008/01/01 19:45:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +37,7 @@ extern Datum pg_stat_get_tuples_fetched(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_tuples_inserted(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_tuples_updated(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_tuples_deleted(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_tuples_hot_updated(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_live_tuples(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_dead_tuples(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_blocks_fetched(PG_FUNCTION_ARGS);
@@ -63,6 +68,19 @@ extern Datum pg_stat_get_db_xact_commit(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_xact_rollback(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_blocks_fetched(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_blocks_hit(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_db_tuples_returned(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_db_tuples_fetched(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_db_tuples_inserted(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_db_tuples_updated(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_db_tuples_deleted(PG_FUNCTION_ARGS);
+
+extern Datum pg_stat_get_bgwriter_timed_checkpoints(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_bgwriter_requested_checkpoints(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_bgwriter_buf_written_checkpoints(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_bgwriter_buf_written_clean(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_bgwriter_maxwritten_clean(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_buf_written_backend(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_buf_alloc(PG_FUNCTION_ARGS);
 
 extern Datum pg_stat_get_queue_num_exec(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_queue_num_wait(PG_FUNCTION_ARGS);
@@ -76,6 +94,7 @@ extern Datum pg_stat_reset(PG_FUNCTION_ARGS);
 
 /* Global bgwriter statistics, from bgwriter.c */
 extern PgStat_MsgBgWriter bgwriterStats;
+<<<<<<< HEAD
 
 static char *
 pgstat_waiting_string(char reason)
@@ -90,6 +109,8 @@ pgstat_waiting_string(char reason)
 			return NULL;
 	}
 }
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 Datum
 pg_stat_get_numscans(PG_FUNCTION_ARGS)
@@ -188,33 +209,49 @@ pg_stat_get_tuples_deleted(PG_FUNCTION_ARGS)
 
 
 Datum
+pg_stat_get_tuples_hot_updated(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_StatTabEntry *tabentry;
+
+	if ((tabentry = pgstat_fetch_stat_tabentry(relid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (tabentry->tuples_hot_updated);
+
+	PG_RETURN_INT64(result);
+}
+
+
+Datum
 pg_stat_get_live_tuples(PG_FUNCTION_ARGS)
-{ 
-	Oid		relid = PG_GETARG_OID(0);
-	int64	result;
-	PgStat_StatTabEntry	*tabentry;
- 
+{
+	Oid			relid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_StatTabEntry *tabentry;
+
 	if ((tabentry = pgstat_fetch_stat_tabentry(relid)) == NULL)
 		result = 0;
 	else
 		result = (int64) (tabentry->n_live_tuples);
-        
+
 	PG_RETURN_INT64(result);
 }
 
-        
+
 Datum
 pg_stat_get_dead_tuples(PG_FUNCTION_ARGS)
 {
-	Oid		relid = PG_GETARG_OID(0);
-	int64	result;
-	PgStat_StatTabEntry	*tabentry;
+	Oid			relid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_StatTabEntry *tabentry;
 
 	if ((tabentry = pgstat_fetch_stat_tabentry(relid)) == NULL)
 		result = 0;
 	else
 		result = (int64) (tabentry->n_dead_tuples);
-        
+
 	PG_RETURN_INT64(result);
 }
 
@@ -694,7 +731,16 @@ pg_stat_get_backend_activity(PG_FUNCTION_ARGS)
 	else
 		activity = beentry->st_activity;
 
+<<<<<<< HEAD
 	PG_RETURN_TEXT_P(cstring_to_text(activity));
+=======
+	len = strlen(activity);
+	result = palloc(VARHDRSZ + len);
+	SET_VARSIZE(result, VARHDRSZ + len);
+	memcpy(VARDATA(result), activity, len);
+
+	PG_RETURN_TEXT_P(result);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 
@@ -829,7 +875,12 @@ pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS)
 
 	clean_ipv6_addr(beentry->st_clientaddr.addr.ss_family, remote_host);
 
+<<<<<<< HEAD
 	return DirectFunctionCall1(inet_in, CStringGetDatum(remote_host));
+=======
+	PG_RETURN_INET_P(DirectFunctionCall1(inet_in,
+										 CStringGetDatum(remote_host)));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 Datum
@@ -983,6 +1034,128 @@ pg_stat_get_db_blocks_hit(PG_FUNCTION_ARGS)
 		result = (int64) (dbentry->n_blocks_hit);
 
 	PG_RETURN_INT64(result);
+}
+
+
+Datum
+pg_stat_get_db_tuples_returned(PG_FUNCTION_ARGS)
+{
+	Oid			dbid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_StatDBEntry *dbentry;
+
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (dbentry->n_tuples_returned);
+
+	PG_RETURN_INT64(result);
+}
+
+
+Datum
+pg_stat_get_db_tuples_fetched(PG_FUNCTION_ARGS)
+{
+	Oid			dbid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_StatDBEntry *dbentry;
+
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (dbentry->n_tuples_fetched);
+
+	PG_RETURN_INT64(result);
+}
+
+
+Datum
+pg_stat_get_db_tuples_inserted(PG_FUNCTION_ARGS)
+{
+	Oid			dbid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_StatDBEntry *dbentry;
+
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (dbentry->n_tuples_inserted);
+
+	PG_RETURN_INT64(result);
+}
+
+
+Datum
+pg_stat_get_db_tuples_updated(PG_FUNCTION_ARGS)
+{
+	Oid			dbid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_StatDBEntry *dbentry;
+
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (dbentry->n_tuples_updated);
+
+	PG_RETURN_INT64(result);
+}
+
+
+Datum
+pg_stat_get_db_tuples_deleted(PG_FUNCTION_ARGS)
+{
+	Oid			dbid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_StatDBEntry *dbentry;
+
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (dbentry->n_tuples_deleted);
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
+pg_stat_get_bgwriter_timed_checkpoints(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT64(pgstat_fetch_global()->timed_checkpoints);
+}
+
+Datum
+pg_stat_get_bgwriter_requested_checkpoints(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT64(pgstat_fetch_global()->requested_checkpoints);
+}
+
+Datum
+pg_stat_get_bgwriter_buf_written_checkpoints(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT64(pgstat_fetch_global()->buf_written_checkpoints);
+}
+
+Datum
+pg_stat_get_bgwriter_buf_written_clean(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT64(pgstat_fetch_global()->buf_written_clean);
+}
+
+Datum
+pg_stat_get_bgwriter_maxwritten_clean(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT64(pgstat_fetch_global()->maxwritten_clean);
+}
+
+Datum
+pg_stat_get_buf_written_backend(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT64(pgstat_fetch_global()->buf_written_backend);
+}
+
+Datum
+pg_stat_get_buf_alloc(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT64(pgstat_fetch_global()->buf_alloc);
 }
 
 

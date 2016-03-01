@@ -398,6 +398,7 @@ end$$ language plpgsql;
 create function sql_if(bool, anyelement, anyelement) returns anyelement as $$
 select case when $1 then $2 else $3 end $$ language sql;
 
+<<<<<<< HEAD
 -- create a table with two columns and insert all the rows into the same segment
 -- by having the same value for the distributed column for multiple rows.
 -- We need this to ensure that the NOTICE raised by bleat function gets returned
@@ -410,3 +411,46 @@ insert into int4_tbl_new values(1, 123456), (1, -2147483647), (1, 0), (1, -12345
 select f2, sql_if(f2 > 0, bleat(f2), bleat(f2 + 1)) from int4_tbl_new;
 
 select q2, sql_if(q2 > 0, q2, q2 + 1) from int8_tbl;
+=======
+-- Note this would fail with integer overflow, never mind wrong bleat() output,
+-- if the CASE expression were not successfully inlined
+select f1, sql_if(f1 > 0, bleat(f1), bleat(f1 + 1)) from int4_tbl;
+
+select q2, sql_if(q2 > 0, q2, q2 + 1) from int8_tbl;
+
+-- another kind of polymorphic aggregate
+
+create function add_group(grp anyarray, ad anyelement, size integer)
+  returns anyarray
+  as $$
+begin
+  if grp is null then
+    return array[ad];
+  end if;
+  if array_upper(grp, 1) < size then
+    return grp || ad;
+  end if;
+  return grp;
+end;
+$$
+  language plpgsql immutable;
+
+create aggregate build_group(anyelement, integer) (
+  SFUNC = add_group,
+  STYPE = anyarray
+);
+
+select build_group(q1,3) from int8_tbl;
+
+-- this should fail because stype isn't compatible with arg
+create aggregate build_group(int8, integer) (
+  SFUNC = add_group,
+  STYPE = int2[]
+);
+
+-- but we can make a non-poly agg from a poly sfunc if types are OK
+create aggregate build_group(int8, integer) (
+  SFUNC = add_group,
+  STYPE = int8[]
+);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

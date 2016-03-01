@@ -3,13 +3,16 @@
  * joinpath.c
  *	  Routines to find all possible paths for processing a set of joins
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.111 2007/01/20 20:45:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.115.2.1 2008/03/24 21:53:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +44,8 @@ static void hash_inner_and_outer(PlannerInfo *root, RelOptInfo *joinrel,
 					 JoinType jointype);
 static Path *best_appendrel_indexscan(PlannerInfo *root, RelOptInfo *rel,
 						 RelOptInfo *outer_rel, JoinType jointype);
-static List *select_mergejoin_clauses(RelOptInfo *joinrel,
+static List *select_mergejoin_clauses(PlannerInfo *root,
+						 RelOptInfo *joinrel,
 						 RelOptInfo *outerrel,
 						 RelOptInfo *innerrel,
 						 List *restrictlist,
@@ -89,11 +93,21 @@ add_paths_to_joinrel(PlannerInfo *root,
      *
      * CDB: Always build mergeclause_list.  We need it for motion planning.
 	 */
+<<<<<<< HEAD
 	mergeclause_list = select_mergejoin_clauses(joinrel,
 												outerrel,
 												innerrel,
 												restrictlist,
 												jointype);
+=======
+	if (enable_mergejoin || jointype == JOIN_FULL)
+		mergeclause_list = select_mergejoin_clauses(root,
+													joinrel,
+													outerrel,
+													innerrel,
+													restrictlist,
+													jointype);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * 1. Consider mergejoin paths where both relations must be explicitly
@@ -238,7 +252,7 @@ sort_inner_and_outer(PlannerInfo *root,
 	 *
 	 * Actually, it's not quite true that every mergeclause ordering will
 	 * generate a different path order, because some of the clauses may be
-	 * partially redundant (refer to the same EquivalenceClasses).  Therefore,
+	 * partially redundant (refer to the same EquivalenceClasses).	Therefore,
 	 * what we do is convert the mergeclause list to a list of canonical
 	 * pathkeys, and then consider different orderings of the pathkeys.
 	 *
@@ -275,7 +289,7 @@ sort_inner_and_outer(PlannerInfo *root,
 							  list_delete_ptr(list_copy(all_pathkeys),
 											  front_pathkey));
 		else
-			outerkeys = all_pathkeys;		/* no work at first one... */
+			outerkeys = all_pathkeys;	/* no work at first one... */
 
 		/* Sort the mergeclauses into the corresponding ordering */
 		cur_mergeclauses = find_mergeclauses_for_pathkeys(root,
@@ -513,13 +527,31 @@ match_unsorted_outer(PlannerInfo *root,
 											  restrictlist,
                                               mergeclause_list,     /*CDB*/
 											  merge_pathkeys));
+<<<<<<< HEAD
 			if (index_cheapest_startup != NULL &&
 				index_cheapest_startup != index_cheapest_total)
 				add_path(root, joinrel, (Path *)
+=======
+			if (index_cheapest_total != NULL)
+				add_path(joinrel, (Path *)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 						 create_nestloop_path(root,
 											  joinrel,
 											  jointype,
 											  outerpath,
+<<<<<<< HEAD
+=======
+											  index_cheapest_total,
+											  restrictlist,
+											  merge_pathkeys));
+			if (index_cheapest_startup != NULL &&
+				index_cheapest_startup != index_cheapest_total)
+				add_path(joinrel, (Path *)
+						 create_nestloop_path(root,
+											  joinrel,
+											  jointype,
+											  outerpath,
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 											  index_cheapest_startup,
 											  restrictlist,
                                               mergeclause_list,
@@ -885,11 +917,9 @@ best_appendrel_indexscan(PlannerInfo *root, RelOptInfo *rel,
 
 		/*
 		 * Check to see if child was rejected by constraint exclusion. If so,
-		 * it will have a cheapest_total_path that's an Append path with no
-		 * members (see set_plain_rel_pathlist).
+		 * it will have a cheapest_total_path that's a "dummy" path.
 		 */
-		if (IsA(childrel->cheapest_total_path, AppendPath) &&
-			((AppendPath *) childrel->cheapest_total_path)->subpaths == NIL)
+		if (IS_DUMMY_PATH(childrel->cheapest_total_path))
 			continue;			/* OK, we can ignore it */
 
 		/*
@@ -933,7 +963,8 @@ best_appendrel_indexscan(PlannerInfo *root, RelOptInfo *rel,
  * currently of interest.
  */
 static List *
-select_mergejoin_clauses(RelOptInfo *joinrel,
+select_mergejoin_clauses(PlannerInfo *root,
+						 RelOptInfo *joinrel,
 						 RelOptInfo *outerrel,
 						 RelOptInfo *innerrel,
 						 List *restrictlist,
@@ -985,6 +1016,35 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 		{
 			have_nonmergeable_joinclause = true;
 			continue;			/* no good for these input relations */
+		}
+
+		/*
+		 * Insist that each side have a non-redundant eclass.  This
+		 * restriction is needed because various bits of the planner expect
+		 * that each clause in a merge be associatable with some pathkey in a
+		 * canonical pathkey list, but redundant eclasses can't appear in
+		 * canonical sort orderings.  (XXX it might be worth relaxing this,
+		 * but not enough time to address it for 8.3.)
+		 *
+		 * Note: it would be bad if this condition failed for an otherwise
+		 * mergejoinable FULL JOIN clause, since that would result in
+		 * undesirable planner failure.  I believe that is not possible
+		 * however; a variable involved in a full join could only appear
+		 * in below_outer_join eclasses, which aren't considered redundant.
+		 *
+		 * This case *can* happen for left/right join clauses: the
+		 * outer-side variable could be equated to a constant.  Because we
+		 * will propagate that constant across the join clause, the loss of
+		 * ability to do a mergejoin is not really all that big a deal, and
+		 * so it's not clear that improving this is important.
+		 */
+		cache_mergeclause_eclasses(root, restrictinfo);
+
+		if (EC_MUST_BE_REDUNDANT(restrictinfo->left_ec) ||
+			EC_MUST_BE_REDUNDANT(restrictinfo->right_ec))
+		{
+			have_nonmergeable_joinclause = true;
+			continue;			/* can't handle redundant eclasses */
 		}
 
 		result_list = lappend(result_list, restrictinfo);

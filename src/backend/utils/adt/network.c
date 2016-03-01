@@ -1,7 +1,11 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
+<<<<<<< HEAD
  *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.74 2009/06/11 14:49:03 momjian Exp $
+=======
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.72.2.1 2009/10/08 04:46:37 heikki Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -22,7 +26,6 @@
 #include "utils/inet.h"
 
 
-static inet *text_network(text *src, bool is_cidr);
 static int32 network_cmp_internal(inet *a1, inet *a2);
 static int	bitncmp(void *l, void *r, int n);
 static bool addressOK(unsigned char *a, int bits, int family);
@@ -173,7 +176,7 @@ network_out(inet *src, bool is_cidr)
 Datum
 inet_out(PG_FUNCTION_ARGS)
 {
-	inet	   *src = PG_GETARG_INET_P(0);
+	inet	   *src = PG_GETARG_INET_PP(0);
 
 	PG_RETURN_CSTRING(network_out(src, false));
 }
@@ -181,7 +184,7 @@ inet_out(PG_FUNCTION_ARGS)
 Datum
 cidr_out(PG_FUNCTION_ARGS)
 {
-	inet	   *src = PG_GETARG_INET_P(0);
+	inet	   *src = PG_GETARG_INET_PP(0);
 
 	PG_RETURN_CSTRING(network_out(src, true));
 }
@@ -300,7 +303,7 @@ network_send(inet *addr, bool is_cidr)
 Datum
 inet_send(PG_FUNCTION_ARGS)
 {
-	inet	   *addr = PG_GETARG_INET_P(0);
+	inet	   *addr = PG_GETARG_INET_PP(0);
 
 	PG_RETURN_BYTEA_P(network_send(addr, false));
 }
@@ -308,12 +311,13 @@ inet_send(PG_FUNCTION_ARGS)
 Datum
 cidr_send(PG_FUNCTION_ARGS)
 {
-	inet	   *addr = PG_GETARG_INET_P(0);
+	inet	   *addr = PG_GETARG_INET_PP(0);
 
 	PG_RETURN_BYTEA_P(network_send(addr, true));
 }
 
 
+<<<<<<< HEAD
 static inet *
 text_network(text *src, bool is_cidr)
 {
@@ -344,10 +348,12 @@ text_cidr(PG_FUNCTION_ARGS)
 }
 
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 Datum
 inet_to_cidr(PG_FUNCTION_ARGS)
 {
-	inet	   *src = PG_GETARG_INET_P(0);
+	inet	   *src = PG_GETARG_INET_PP(0);
 	inet	   *dst;
 	int			bits;
 	int			byte;
@@ -387,7 +393,7 @@ inet_to_cidr(PG_FUNCTION_ARGS)
 Datum
 inet_set_masklen(PG_FUNCTION_ARGS)
 {
-	inet	   *src = PG_GETARG_INET_P(0);
+	inet	   *src = PG_GETARG_INET_PP(0);
 	int			bits = PG_GETARG_INT32(1);
 	inet	   *dst;
 
@@ -411,7 +417,7 @@ inet_set_masklen(PG_FUNCTION_ARGS)
 Datum
 cidr_set_masklen(PG_FUNCTION_ARGS)
 {
-	inet	   *src = PG_GETARG_INET_P(0);
+	inet	   *src = PG_GETARG_INET_PP(0);
 	int			bits = PG_GETARG_INT32(1);
 	inet	   *dst;
 	int			byte;
@@ -486,8 +492,8 @@ network_cmp_internal(inet *a1, inet *a2)
 Datum
 network_cmp(PG_FUNCTION_ARGS)
 {
-	inet	   *a1 = PG_GETARG_INET_P(0);
-	inet	   *a2 = PG_GETARG_INET_P(1);
+	inet	   *a1 = PG_GETARG_INET_PP(0);
+	inet	   *a2 = PG_GETARG_INET_PP(1);
 
 	PG_RETURN_INT32(network_cmp_internal(a1, a2));
 }
@@ -498,8 +504,8 @@ network_cmp(PG_FUNCTION_ARGS)
 Datum
 network_lt(PG_FUNCTION_ARGS)
 {
-	inet	   *a1 = PG_GETARG_INET_P(0);
-	inet	   *a2 = PG_GETARG_INET_P(1);
+	inet	   *a1 = PG_GETARG_INET_PP(0);
+	inet	   *a2 = PG_GETARG_INET_PP(1);
 
 	PG_RETURN_BOOL(network_cmp_internal(a1, a2) < 0);
 }
@@ -507,8 +513,8 @@ network_lt(PG_FUNCTION_ARGS)
 Datum
 network_le(PG_FUNCTION_ARGS)
 {
-	inet	   *a1 = PG_GETARG_INET_P(0);
-	inet	   *a2 = PG_GETARG_INET_P(1);
+	inet	   *a1 = PG_GETARG_INET_PP(0);
+	inet	   *a2 = PG_GETARG_INET_PP(1);
 
 	PG_RETURN_BOOL(network_cmp_internal(a1, a2) <= 0);
 }
@@ -516,8 +522,8 @@ network_le(PG_FUNCTION_ARGS)
 Datum
 network_eq(PG_FUNCTION_ARGS)
 {
-	inet	   *a1 = PG_GETARG_INET_P(0);
-	inet	   *a2 = PG_GETARG_INET_P(1);
+	inet	   *a1 = PG_GETARG_INET_PP(0);
+	inet	   *a2 = PG_GETARG_INET_PP(1);
 
 	PG_RETURN_BOOL(network_cmp_internal(a1, a2) == 0);
 }
@@ -525,8 +531,8 @@ network_eq(PG_FUNCTION_ARGS)
 Datum
 network_ge(PG_FUNCTION_ARGS)
 {
-	inet	   *a1 = PG_GETARG_INET_P(0);
-	inet	   *a2 = PG_GETARG_INET_P(1);
+	inet	   *a1 = PG_GETARG_INET_PP(0);
+	inet	   *a2 = PG_GETARG_INET_PP(1);
 
 	PG_RETURN_BOOL(network_cmp_internal(a1, a2) >= 0);
 }
@@ -534,8 +540,8 @@ network_ge(PG_FUNCTION_ARGS)
 Datum
 network_gt(PG_FUNCTION_ARGS)
 {
-	inet	   *a1 = PG_GETARG_INET_P(0);
-	inet	   *a2 = PG_GETARG_INET_P(1);
+	inet	   *a1 = PG_GETARG_INET_PP(0);
+	inet	   *a2 = PG_GETARG_INET_PP(1);
 
 	PG_RETURN_BOOL(network_cmp_internal(a1, a2) > 0);
 }
@@ -543,8 +549,8 @@ network_gt(PG_FUNCTION_ARGS)
 Datum
 network_ne(PG_FUNCTION_ARGS)
 {
-	inet	   *a1 = PG_GETARG_INET_P(0);
-	inet	   *a2 = PG_GETARG_INET_P(1);
+	inet	   *a1 = PG_GETARG_INET_PP(0);
+	inet	   *a2 = PG_GETARG_INET_PP(1);
 
 	PG_RETURN_BOOL(network_cmp_internal(a1, a2) != 0);
 }
@@ -555,7 +561,7 @@ network_ne(PG_FUNCTION_ARGS)
 Datum
 hashinet(PG_FUNCTION_ARGS)
 {
-	inet	   *addr = PG_GETARG_INET_P(0);
+	inet	   *addr = PG_GETARG_INET_PP(0);
 	int			addrsize = ip_addrsize(addr);
 
 	/* XXX this assumes there are no pad bytes in the data structure */
@@ -568,8 +574,8 @@ hashinet(PG_FUNCTION_ARGS)
 Datum
 network_sub(PG_FUNCTION_ARGS)
 {
-	inet	   *a1 = PG_GETARG_INET_P(0);
-	inet	   *a2 = PG_GETARG_INET_P(1);
+	inet	   *a1 = PG_GETARG_INET_PP(0);
+	inet	   *a2 = PG_GETARG_INET_PP(1);
 
 	if (ip_family(a1) == ip_family(a2))
 	{
@@ -583,8 +589,8 @@ network_sub(PG_FUNCTION_ARGS)
 Datum
 network_subeq(PG_FUNCTION_ARGS)
 {
-	inet	   *a1 = PG_GETARG_INET_P(0);
-	inet	   *a2 = PG_GETARG_INET_P(1);
+	inet	   *a1 = PG_GETARG_INET_PP(0);
+	inet	   *a2 = PG_GETARG_INET_PP(1);
 
 	if (ip_family(a1) == ip_family(a2))
 	{
@@ -598,8 +604,8 @@ network_subeq(PG_FUNCTION_ARGS)
 Datum
 network_sup(PG_FUNCTION_ARGS)
 {
-	inet	   *a1 = PG_GETARG_INET_P(0);
-	inet	   *a2 = PG_GETARG_INET_P(1);
+	inet	   *a1 = PG_GETARG_INET_PP(0);
+	inet	   *a2 = PG_GETARG_INET_PP(1);
 
 	if (ip_family(a1) == ip_family(a2))
 	{
@@ -613,8 +619,8 @@ network_sup(PG_FUNCTION_ARGS)
 Datum
 network_supeq(PG_FUNCTION_ARGS)
 {
-	inet	   *a1 = PG_GETARG_INET_P(0);
-	inet	   *a2 = PG_GETARG_INET_P(1);
+	inet	   *a1 = PG_GETARG_INET_PP(0);
+	inet	   *a2 = PG_GETARG_INET_PP(1);
 
 	if (ip_family(a1) == ip_family(a2))
 	{
@@ -631,7 +637,13 @@ network_supeq(PG_FUNCTION_ARGS)
 Datum
 network_host(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	inet	   *ip = PG_GETARG_INET_P(0);
+=======
+	inet	   *ip = PG_GETARG_INET_PP(0);
+	text	   *ret;
+	int			len;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	char	   *ptr;
 	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
@@ -646,7 +658,16 @@ network_host(PG_FUNCTION_ARGS)
 	if ((ptr = strchr(tmp, '/')) != NULL)
 		*ptr = '\0';
 
+<<<<<<< HEAD
 	PG_RETURN_TEXT_P(cstring_to_text(tmp));
+=======
+	/* Return string as a text datum */
+	len = strlen(tmp);
+	ret = (text *) palloc(len + VARHDRSZ);
+	SET_VARSIZE(ret, len + VARHDRSZ);
+	memcpy(VARDATA(ret), tmp, len);
+	PG_RETURN_TEXT_P(ret);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
@@ -657,7 +678,12 @@ network_host(PG_FUNCTION_ARGS)
 Datum
 network_show(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	inet	   *ip = PG_GETARG_INET_P(0);
+=======
+	inet	   *ip = PG_GETARG_INET_PP(0);
+	text	   *ret;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	int			len;
 	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
@@ -674,13 +700,27 @@ network_show(PG_FUNCTION_ARGS)
 		snprintf(tmp + len, sizeof(tmp) - len, "/%u", ip_bits(ip));
 	}
 
+<<<<<<< HEAD
 	PG_RETURN_TEXT_P(cstring_to_text(tmp));
+=======
+	/* Return string as a text datum */
+	len = strlen(tmp);
+	ret = (text *) palloc(len + VARHDRSZ);
+	SET_VARSIZE(ret, len + VARHDRSZ);
+	memcpy(VARDATA(ret), tmp, len);
+	PG_RETURN_TEXT_P(ret);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 Datum
 inet_abbrev(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	inet	   *ip = PG_GETARG_INET_P(0);
+=======
+	inet	   *ip = PG_GETARG_INET_PP(0);
+	text	   *ret;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	char	   *dst;
 	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
@@ -692,13 +732,27 @@ inet_abbrev(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("could not format inet value: %m")));
 
+<<<<<<< HEAD
 	PG_RETURN_TEXT_P(cstring_to_text(tmp));
+=======
+	/* Return string as a text datum */
+	len = strlen(tmp);
+	ret = (text *) palloc(len + VARHDRSZ);
+	SET_VARSIZE(ret, len + VARHDRSZ);
+	memcpy(VARDATA(ret), tmp, len);
+	PG_RETURN_TEXT_P(ret);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 Datum
 cidr_abbrev(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	inet	   *ip = PG_GETARG_INET_P(0);
+=======
+	inet	   *ip = PG_GETARG_INET_PP(0);
+	text	   *ret;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	char	   *dst;
 	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
@@ -710,13 +764,22 @@ cidr_abbrev(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("could not format cidr value: %m")));
 
+<<<<<<< HEAD
 	PG_RETURN_TEXT_P(cstring_to_text(tmp));
+=======
+	/* Return string as a text datum */
+	len = strlen(tmp);
+	ret = (text *) palloc(len + VARHDRSZ);
+	SET_VARSIZE(ret, len + VARHDRSZ);
+	memcpy(VARDATA(ret), tmp, len);
+	PG_RETURN_TEXT_P(ret);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 Datum
 network_masklen(PG_FUNCTION_ARGS)
 {
-	inet	   *ip = PG_GETARG_INET_P(0);
+	inet	   *ip = PG_GETARG_INET_PP(0);
 
 	PG_RETURN_INT32(ip_bits(ip));
 }
@@ -724,7 +787,7 @@ network_masklen(PG_FUNCTION_ARGS)
 Datum
 network_family(PG_FUNCTION_ARGS)
 {
-	inet	   *ip = PG_GETARG_INET_P(0);
+	inet	   *ip = PG_GETARG_INET_PP(0);
 
 	switch (ip_family(ip))
 	{
@@ -743,7 +806,7 @@ network_family(PG_FUNCTION_ARGS)
 Datum
 network_broadcast(PG_FUNCTION_ARGS)
 {
-	inet	   *ip = PG_GETARG_INET_P(0);
+	inet	   *ip = PG_GETARG_INET_PP(0);
 	inet	   *dst;
 	int			byte;
 	int			bits;
@@ -792,7 +855,7 @@ network_broadcast(PG_FUNCTION_ARGS)
 Datum
 network_network(PG_FUNCTION_ARGS)
 {
-	inet	   *ip = PG_GETARG_INET_P(0);
+	inet	   *ip = PG_GETARG_INET_PP(0);
 	inet	   *dst;
 	int			byte;
 	int			bits;
@@ -835,7 +898,7 @@ network_network(PG_FUNCTION_ARGS)
 Datum
 network_netmask(PG_FUNCTION_ARGS)
 {
-	inet	   *ip = PG_GETARG_INET_P(0);
+	inet	   *ip = PG_GETARG_INET_PP(0);
 	inet	   *dst;
 	int			byte;
 	int			bits;
@@ -876,7 +939,7 @@ network_netmask(PG_FUNCTION_ARGS)
 Datum
 network_hostmask(PG_FUNCTION_ARGS)
 {
-	inet	   *ip = PG_GETARG_INET_P(0);
+	inet	   *ip = PG_GETARG_INET_PP(0);
 	inet	   *dst;
 	int			byte;
 	int			bits;
@@ -933,7 +996,7 @@ convert_network_to_scalar(Datum value, Oid typid)
 		case INETOID:
 		case CIDROID:
 			{
-				inet	   *ip = DatumGetInetP(value);
+				inet	   *ip = DatumGetInetPP(value);
 				int			len;
 				double		res;
 				int			i;
@@ -998,7 +1061,7 @@ bitncmp(void *l, void *r, int n)
 
 	b = n / 8;
 	x = memcmp(l, r, b);
-	if (x)
+	if (x || (n % 8) == 0)
 		return x;
 
 	lb = ((const u_char *) l)[b];
@@ -1243,7 +1306,7 @@ inet_server_port(PG_FUNCTION_ARGS)
 Datum
 inetnot(PG_FUNCTION_ARGS)
 {
-	inet	   *ip = PG_GETARG_INET_P(0);
+	inet	   *ip = PG_GETARG_INET_PP(0);
 	inet	   *dst;
 
 	dst = (inet *) palloc0(sizeof(inet));
@@ -1268,8 +1331,8 @@ inetnot(PG_FUNCTION_ARGS)
 Datum
 inetand(PG_FUNCTION_ARGS)
 {
-	inet	   *ip = PG_GETARG_INET_P(0);
-	inet	   *ip2 = PG_GETARG_INET_P(1);
+	inet	   *ip = PG_GETARG_INET_PP(0);
+	inet	   *ip2 = PG_GETARG_INET_PP(1);
 	inet	   *dst;
 
 	dst = (inet *) palloc0(sizeof(inet));
@@ -1300,8 +1363,8 @@ inetand(PG_FUNCTION_ARGS)
 Datum
 inetor(PG_FUNCTION_ARGS)
 {
-	inet	   *ip = PG_GETARG_INET_P(0);
-	inet	   *ip2 = PG_GETARG_INET_P(1);
+	inet	   *ip = PG_GETARG_INET_PP(0);
+	inet	   *ip2 = PG_GETARG_INET_PP(1);
 	inet	   *dst;
 
 	dst = (inet *) palloc0(sizeof(inet));
@@ -1372,8 +1435,8 @@ internal_inetpl(inet *ip, int64 addend)
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("result is out of range")));
 	}
-	ip_bits(dst) = ip_bits(ip);
 
+	ip_bits(dst) = ip_bits(ip);
 	ip_family(dst) = ip_family(ip);
 	SET_INET_VARSIZE(dst);
 
@@ -1384,7 +1447,7 @@ internal_inetpl(inet *ip, int64 addend)
 Datum
 inetpl(PG_FUNCTION_ARGS)
 {
-	inet	   *ip = PG_GETARG_INET_P(0);
+	inet	   *ip = PG_GETARG_INET_PP(0);
 	int64		addend = PG_GETARG_INT64(1);
 
 	PG_RETURN_INET_P(internal_inetpl(ip, addend));
@@ -1394,7 +1457,7 @@ inetpl(PG_FUNCTION_ARGS)
 Datum
 inetmi_int8(PG_FUNCTION_ARGS)
 {
-	inet	   *ip = PG_GETARG_INET_P(0);
+	inet	   *ip = PG_GETARG_INET_PP(0);
 	int64		addend = PG_GETARG_INT64(1);
 
 	PG_RETURN_INET_P(internal_inetpl(ip, -addend));
@@ -1404,8 +1467,8 @@ inetmi_int8(PG_FUNCTION_ARGS)
 Datum
 inetmi(PG_FUNCTION_ARGS)
 {
-	inet	   *ip = PG_GETARG_INET_P(0);
-	inet	   *ip2 = PG_GETARG_INET_P(1);
+	inet	   *ip = PG_GETARG_INET_PP(0);
+	inet	   *ip2 = PG_GETARG_INET_PP(1);
 	int64		res = 0;
 
 	if (ip_family(ip) != ip_family(ip2))
@@ -1470,9 +1533,15 @@ inetmi(PG_FUNCTION_ARGS)
  * XXX This should go away someday!
  *
  * This is a kluge needed because we don't yet support zones in stored inet
+<<<<<<< HEAD
  * values.  Since the result of getnameinfo() might include a zone spec,
  * call this to remove it anywhere we want to feed getnameinfo's output to
  * network_in.  Beats failing entirely.
+=======
+ * values.	Since the result of getnameinfo() might include a zone spec,
+ * call this to remove it anywhere we want to feed getnameinfo's output to
+ * network_in.	Beats failing entirely.
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * An alternative approach would be to let network_in ignore %-parts for
  * itself, but that would mean we'd silently drop zone specs in user input,
@@ -1484,7 +1553,11 @@ clean_ipv6_addr(int addr_family, char *addr)
 #ifdef HAVE_IPV6
 	if (addr_family == AF_INET6)
 	{
+<<<<<<< HEAD
 		char *pct = strchr(addr, '%');
+=======
+		char	   *pct = strchr(addr, '%');
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (pct)
 			*pct = '\0';

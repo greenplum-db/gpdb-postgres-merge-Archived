@@ -3,13 +3,16 @@
  * pathnode.c
  *	  Routines to manipulate pathlists and create path nodes
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.138 2007/02/06 02:59:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.142.2.1 2008/04/21 20:54:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1685,6 +1688,64 @@ create_unique_path(PlannerInfo *root,
 	 */
 	pathnode->path.pathkeys = NIL;
 
+<<<<<<< HEAD
+=======
+	pathnode->subpath = subpath;
+
+	/*
+	 * Try to identify the targetlist that will actually be unique-ified. In
+	 * current usage, this routine is only used for sub-selects of IN clauses,
+	 * so we should be able to find the tlist in in_info_list.	Get the IN
+	 * clause's operators, too, because they determine what "unique" means.
+	 */
+	sub_targetlist = NIL;
+	in_operators = NIL;
+	foreach(l, root->in_info_list)
+	{
+		InClauseInfo *ininfo = (InClauseInfo *) lfirst(l);
+
+		if (bms_equal(ininfo->righthand, rel->relids))
+		{
+			sub_targetlist = ininfo->sub_targetlist;
+			in_operators = ininfo->in_operators;
+			break;
+		}
+	}
+
+	/*
+	 * If the input is a subquery whose output must be unique already, then we
+	 * don't need to do anything.  The test for uniqueness has to consider
+	 * exactly which columns we are extracting; for example "SELECT DISTINCT
+	 * x,y" doesn't guarantee that x alone is distinct. So we cannot check for
+	 * this optimization unless we found our own targetlist above, and it
+	 * consists only of simple Vars referencing subquery outputs.  (Possibly
+	 * we could do something with expressions in the subquery outputs, too,
+	 * but for now keep it simple.)
+	 */
+	if (sub_targetlist && rel->rtekind == RTE_SUBQUERY)
+	{
+		RangeTblEntry *rte = planner_rt_fetch(rel->relid, root);
+		List	   *sub_tlist_colnos;
+
+		sub_tlist_colnos = translate_sub_tlist(sub_targetlist, rel->relid);
+
+		if (sub_tlist_colnos &&
+			query_is_distinct_for(rte->subquery,
+								  sub_tlist_colnos, in_operators))
+		{
+			pathnode->umethod = UNIQUE_PATH_NOOP;
+			pathnode->rows = rel->rows;
+			pathnode->path.startup_cost = subpath->startup_cost;
+			pathnode->path.total_cost = subpath->total_cost;
+			pathnode->path.pathkeys = subpath->pathkeys;
+
+			rel->cheapest_unique_path = (Path *) pathnode;
+
+			return pathnode;
+		}
+	}
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/*
 	 * If we know the targetlist, try to estimate number of result rows;
 	 * otherwise punt.
@@ -1705,8 +1766,14 @@ create_unique_path(PlannerInfo *root,
 	 */
 	cost_sort(&sort_path, root, NIL,
 			  subpath->total_cost,
+<<<<<<< HEAD
 			  subpath_rows,
 			  rel->width);
+=======
+			  rel->rows,
+			  rel->width,
+			  -1.0);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Charge one cpu_operator_cost per comparison per input tuple. We assume
@@ -2031,7 +2098,7 @@ make_unique_path(Path *subpath)
 /*
  * translate_sub_tlist - get subquery column numbers represented by tlist
  *
- * The given targetlist should contain only Vars referencing the given relid.
+ * The given targetlist usually contains only Vars referencing the given relid.
  * Extract their varattnos (ie, the column numbers of the subquery) and return
  * as an integer List.
  *
@@ -2064,7 +2131,7 @@ translate_sub_tlist(List *tlist, int relid)
  *
  * colnos is an integer list of output column numbers (resno's).  We are
  * interested in whether rows consisting of just these columns are certain
- * to be distinct.  "Distinctness" is defined according to whether the
+ * to be distinct.	"Distinctness" is defined according to whether the
  * corresponding upper-level equality operators listed in opids would think
  * the values are distinct.  (Note: the opids entries could be cross-type
  * operators, and thus not exactly the equality operators that the subquery
@@ -2081,8 +2148,8 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 
 	/*
 	 * DISTINCT (including DISTINCT ON) guarantees uniqueness if all the
-	 * columns in the DISTINCT clause appear in colnos and operator
-	 * semantics match.
+	 * columns in the DISTINCT clause appear in colnos and operator semantics
+	 * match.
 	 */
 	if (query->distinctClause)
 	{
@@ -2142,9 +2209,8 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 	 *
 	 * XXX this code knows that prepunion.c will adopt the default ordering
 	 * operator for each column datatype as the sortop.  It'd probably be
-	 * better if these operators were chosen at parse time and stored into
-	 * the parsetree, instead of leaving bits of the planner to decide
-	 * semantics.
+	 * better if these operators were chosen at parse time and stored into the
+	 * parsetree, instead of leaving bits of the planner to decide semantics.
 	 */
 	if (query->setOperations)
 	{
@@ -2166,7 +2232,7 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 				opid = distinct_col_search(tle->resno, colnos, opids);
 				if (!OidIsValid(opid) ||
 					!ops_in_same_btree_opfamily(opid,
-												ordering_oper_opid(exprType((Node *) tle->expr))))
+						   ordering_oper_opid(exprType((Node *) tle->expr))))
 					break;		/* exit early if no match */
 			}
 			if (l == NULL)		/* had matches for all? */
@@ -2186,7 +2252,7 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
  * distinct_col_search - subroutine for query_is_distinct_for
  *
  * If colno is in colnos, return the corresponding element of opids,
- * else return InvalidOid.  (We expect colnos does not contain duplicates,
+ * else return InvalidOid.	(We expect colnos does not contain duplicates,
  * so the result is well-defined.)
  */
 static Oid

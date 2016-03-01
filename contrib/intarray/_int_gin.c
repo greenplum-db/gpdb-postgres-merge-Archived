@@ -65,7 +65,11 @@ ginint4_queryextract(PG_FUNCTION_ARGS)
 		}
 	}
 
+<<<<<<< HEAD
 	if (nentries == 0)
+=======
+	if (*nentries == 0)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		switch (strategy)
 		{

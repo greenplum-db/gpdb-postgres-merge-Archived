@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.107 2007/02/01 00:28:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.109 2007/07/17 05:02:00 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -20,6 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
+<<<<<<< HEAD
 CREATE [[GLOBAL | LOCAL] {TEMPORARY | TEMP}] TABLE table_name ( 
 [ { column_name data_type [ DEFAULT default_expr ]     [column_constraint [ ... ]
 [ ENCODING ( storage_directive [,...] ) ]
@@ -113,6 +114,45 @@ where storage_directive is:
 Where column_reference_storage_directive is:
    COLUMN column_name ENCODING ( storage_directive [, ... ] ), ... 
  | DEFAULT COLUMN ENCODING ( storage_directive [, ... ] )
+=======
+CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PARAMETER">table_name</replaceable> ( [
+  { <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ DEFAULT <replaceable>default_expr</> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+    | <replaceable>table_constraint</replaceable>
+    | LIKE <replaceable>parent_table</replaceable> [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS | INDEXES } ] ... }
+    [, ... ]
+] )
+[ INHERITS ( <replaceable>parent_table</replaceable> [, ... ] ) ]
+[ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
+[ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
+[ TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ]
+
+where <replaceable class="PARAMETER">column_constraint</replaceable> is:
+
+[ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
+{ NOT NULL | 
+  NULL | 
+  UNIQUE <replaceable class="PARAMETER">index_parameters</replaceable> |
+  PRIMARY KEY <replaceable class="PARAMETER">index_parameters</replaceable> |
+  CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) |
+  REFERENCES <replaceable class="PARAMETER">reftable</replaceable> [ ( <replaceable class="PARAMETER">refcolumn</replaceable> ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]
+    [ ON DELETE <replaceable class="parameter">action</replaceable> ] [ ON UPDATE <replaceable class="parameter">action</replaceable> ] }
+[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
+
+and <replaceable class="PARAMETER">table_constraint</replaceable> is:
+
+[ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
+{ UNIQUE ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) <replaceable class="PARAMETER">index_parameters</replaceable> |
+  PRIMARY KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) <replaceable class="PARAMETER">index_parameters</replaceable> |
+  CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) |
+  FOREIGN KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) REFERENCES <replaceable class="PARAMETER">reftable</replaceable> [ ( <replaceable class="PARAMETER">refcolumn</replaceable> [, ... ] ) ]
+    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE <replaceable class="parameter">action</replaceable> ] [ ON UPDATE <replaceable class="parameter">action</replaceable> ] }
+[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
+
+<replaceable class="PARAMETER">index_parameters</replaceable> in <literal>UNIQUE</> and <literal>PRIMARY KEY</> constraints are:
+
+[ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) ]
+[ USING INDEX TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ]
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 </synopsis>
 
  </refsynopsisdiv>
@@ -300,7 +340,7 @@ Where column_reference_storage_directive is:
    </varlistentry>
 
    <varlistentry>
-    <term><literal>LIKE <replaceable>parent_table</replaceable> [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS } ]</literal></term>
+    <term><literal>LIKE <replaceable>parent_table</replaceable> [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS | INDEXES } ]</literal></term>
     <listitem>
      <para>
       The <literal>LIKE</literal> clause specifies a table from which
@@ -329,10 +369,15 @@ Where column_reference_storage_directive is:
       requested, all check constraints are copied.
      </para>
      <para>
+      Any indexes on the original table will not be created on the new
+      table, unless the <literal>INCLUDING INDEXES</literal> clause is
+      specified.
+     </para>
+     <para>
       Note also that unlike <literal>INHERITS</literal>, copied columns and
       constraints are not merged with similarly named columns and constraints.
       If the same name is specified explicitly or in another
-      <literal>LIKE</literal> clause an error is signalled.
+      <literal>LIKE</literal> clause, an error is signalled.
      </para>
     </listitem>
    </varlistentry>
@@ -717,9 +762,8 @@ Where column_reference_storage_directive is:
       The <replaceable class="PARAMETER">tablespace</replaceable> is the name
       of the tablespace in which the new table is to be created.
       If not specified,
-      <xref linkend="guc-default-tablespace"> is used, or the database's
-      default tablespace if <varname>default_tablespace</> is an empty
-      string.
+      <xref linkend="guc-default-tablespace"> is consulted, or
+      <xref linkend="guc-temp-tablespaces"> if the table is temporary.
      </para>
     </listitem>
    </varlistentry>
@@ -732,9 +776,8 @@ Where column_reference_storage_directive is:
       associated with a <literal>UNIQUE</literal> or <literal>PRIMARY
       KEY</literal> constraint will be created.
       If not specified,
-      <xref linkend="guc-default-tablespace"> is used, or the database's
-      default tablespace if <varname>default_tablespace</> is an empty
-      string.
+      <xref linkend="guc-default-tablespace"> is consulted, or
+      <xref linkend="guc-temp-tablespaces"> if the table is temporary.
      </para>
     </listitem>
    </varlistentry>

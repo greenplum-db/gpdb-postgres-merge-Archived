@@ -34,12 +34,15 @@
  *		plan normally and pass back the results.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc.
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.39 2007/02/16 03:49:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.42 2008/01/01 19:45:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,6 +199,7 @@ ExecResult(ResultState *node)
 			econtext->ecxt_outertuple = inputSlot;
 			econtext->ecxt_scantuple = inputSlot;
 
+<<<<<<< HEAD
 			ExprDoneCond isDone;
 
 			/*
@@ -209,6 +213,13 @@ ExecResult(ResultState *node)
 				node->isSRF = true;
 				node->lastSRFCond = isDone;
 			}
+=======
+			/*
+			 * prepare to compute projection expressions, which will expect to
+			 * access the input tuples as varno OUTER.
+			 */
+			econtext->ecxt_outertuple = outerTupleSlot;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 		else if (TupIsNull(candidateOutputSlot) && !outerPlanState(node) && !(node->inputFullyConsumed))
 		{
@@ -480,9 +491,9 @@ ExecReScanResult(ResultState *node, ExprContext *exprCtxt)
 
 	/*
 	 * If chgParam of subnode is not null then plan will be re-scanned by
-	 * first ExecProcNode.  However, if caller is passing us an exprCtxt
-	 * then forcibly rescan the subnode now, so that we can pass the
-	 * exprCtxt down to the subnode (needed for gated indexscan).
+	 * first ExecProcNode.	However, if caller is passing us an exprCtxt then
+	 * forcibly rescan the subnode now, so that we can pass the exprCtxt down
+	 * to the subnode (needed for gated indexscan).
 	 */
 	if (node->ps.lefttree &&
 		(node->ps.lefttree->chgParam == NULL || exprCtxt != NULL))

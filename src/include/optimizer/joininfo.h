@@ -4,10 +4,14 @@
  *	  prototypes for joininfo.c.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/joininfo.h,v 1.34 2007/01/20 20:45:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/joininfo.h,v 1.36 2008/01/01 19:45:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +22,7 @@
 
 
 extern bool have_relevant_joinclause(PlannerInfo *root,
-									 RelOptInfo *rel1, RelOptInfo *rel2);
+						 RelOptInfo *rel1, RelOptInfo *rel2);
 
 extern void add_join_clause_to_rels(PlannerInfo *root,
 						RestrictInfo *restrictinfo,

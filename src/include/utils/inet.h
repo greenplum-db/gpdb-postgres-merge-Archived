@@ -4,10 +4,17 @@
  *	  Declarations for operations on INET datatypes.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/utils/inet.h,v 1.30 2009/01/01 17:24:02 momjian Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/include/utils/inet.h,v 1.28.2.1 2008/02/23 19:11:55 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -70,9 +77,15 @@ typedef struct macaddr
 /*
  * fmgr interface macros
  */
+<<<<<<< HEAD
 #define DatumGetInetP(X)	((inet *) PG_DETOAST_DATUM_PACKED(X))
+=======
+#define DatumGetInetP(X)	((inet *) PG_DETOAST_DATUM(X))
+#define DatumGetInetPP(X)	((inet *) PG_DETOAST_DATUM_PACKED(X))
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #define InetPGetDatum(X)	PointerGetDatum(X)
 #define PG_GETARG_INET_P(n) DatumGetInetP(PG_GETARG_DATUM(n))
+#define PG_GETARG_INET_PP(n) DatumGetInetPP(PG_GETARG_DATUM(n))
 #define PG_RETURN_INET_P(x) return InetPGetDatum(x)
 /* macaddr is a fixed-length pass-by-reference datatype */
 #define DatumGetMacaddrP(X)    ((macaddr *) DatumGetPointer(X))

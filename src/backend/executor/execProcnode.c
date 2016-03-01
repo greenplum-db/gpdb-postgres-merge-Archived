@@ -7,13 +7,16 @@
  *	 ExecProcNode, or ExecEndNode on its subnodes and do the appropriate
  *	 processing.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.60 2007/01/05 22:19:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.62 2008/01/01 19:45:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -701,11 +704,16 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 		SubPlan    *subplan = (SubPlan *) lfirst(l);
 		SubPlanState *sstate;
 
+<<<<<<< HEAD
 		setSubplanSliceId(subplan, estate);
 
 		sstate = ExecInitExprInitPlan(subplan, result);
 		ExecInitSubPlan(sstate, estate, eflags);
 
+=======
+		Assert(IsA(subplan, SubPlan));
+		sstate = ExecInitSubPlan(subplan, result);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		subps = lappend(subps, sstate);
 	}
 	if (result != NULL)
@@ -714,6 +722,7 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 	estate->currentSliceIdInPlan = origSliceIdInPlan;
 	estate->currentExecutingSliceId = origExecutingSliceId;
 
+<<<<<<< HEAD
 	/*
 	 * Initialize any subPlans present in this node.  These were found by
 	 * ExecInitExpr during initialization of the PlanState.  Note we must do
@@ -738,6 +747,8 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 		}
 	}
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/* Set up instrumentation for this node if requested */
 	if (estate->es_instrument && result != NULL)
 		result->instrument = InstrAlloc(1);
@@ -1523,14 +1534,13 @@ ExecUpdateTransportState(PlanState *node, ChunkTransportState *state)
 void
 ExecEndNode(PlanState *node)
 {
-	ListCell   *subp;
-
 	/*
 	 * do nothing when we get to the end of a leaf on tree.
 	 */
 	if (node == NULL)
 		return;
 
+<<<<<<< HEAD
 	EState *estate = node->state;
 	Assert(estate != NULL);
 	int origSliceIdInPlan = estate->currentSliceIdInPlan;
@@ -1546,6 +1556,8 @@ ExecEndNode(PlanState *node)
 	foreach(subp, node->subPlan)
 		ExecEndSubPlan((SubPlanState *) lfirst(subp));
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (node->chgParam != NULL)
 	{
 		bms_free(node->chgParam);

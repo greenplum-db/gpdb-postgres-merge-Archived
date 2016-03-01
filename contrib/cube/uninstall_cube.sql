@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /* $PostgreSQL: pgsql/contrib/cube/uninstall_cube.sql,v 1.8 2008/04/14 17:05:32 tgl Exp $ */
+=======
+/* $PostgreSQL: pgsql/contrib/cube/uninstall_cube.sql,v 1.7 2007/11/13 04:24:27 momjian Exp $ */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;
@@ -94,9 +98,5 @@ DROP FUNCTION cube_lt(cube, cube);
 DROP FUNCTION cube_ne(cube, cube);
 
 DROP FUNCTION cube_eq(cube, cube);
-
-DROP CAST (text AS cube);
-
-DROP FUNCTION cube(text);
 
 DROP TYPE cube CASCADE;

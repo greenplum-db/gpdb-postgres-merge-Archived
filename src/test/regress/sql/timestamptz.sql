@@ -144,7 +144,11 @@ INSERT INTO TIMESTAMPTZ_TBL VALUES ('Jan 01 17:32:01 2001');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('Feb 16 17:32:01 -0097');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('Feb 16 17:32:01 5097 BC');
 
+<<<<<<< HEAD
 -- Alternate field order that we've historically supported (sort of)
+=======
+-- Alternative field order that we've historically supported (sort of)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 -- with regular and POSIXy timezone specs
 SELECT 'Wed Jul 11 10:51:14 America/New_York 2001'::timestamptz;
 SELECT 'Wed Jul 11 10:51:14 GMT-4 2001'::timestamptz;

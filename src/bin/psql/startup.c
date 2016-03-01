@@ -1,9 +1,15 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
+<<<<<<< HEAD
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
  * src/bin/psql/startup.c
+=======
+ * Copyright (c) 2000-2008, PostgreSQL Global Development Group
+ *
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.146 2008/01/01 19:45:56 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 #include "postgres_fe.h"
 
@@ -171,6 +177,7 @@ main(int argc, char *argv[])
 	/* loop until we have a password if requested by backend */
 	do
 	{
+<<<<<<< HEAD
 #define PARAMS_ARRAY_SIZE	7
 		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
 		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
@@ -196,11 +203,22 @@ main(int argc, char *argv[])
 		pset.db = PQconnectdbParams(keywords, values, true);
 		free(keywords);
 		free(values);
+=======
+		new_pass = false;
+		pset.db = PQsetdbLogin(options.host, options.port, NULL, NULL,
+					options.action == ACT_LIST_DB && options.dbname == NULL ?
+							   "postgres" : options.dbname,
+							   options.username, password);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (PQstatus(pset.db) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(pset.db) &&
 			password == NULL &&
+<<<<<<< HEAD
 			pset.getPassword != TRI_NO)
+=======
+			!feof(stdin))
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		{
 			PQfinish(pset.db);
 			password = simple_prompt(password_prompt, 100, false);
@@ -366,7 +384,11 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 
 	memset(options, 0, sizeof *options);
 
+<<<<<<< HEAD
 	while ((c = getopt_long(argc, argv, "aAc:d:eEf:F:h:HlL:no:p:P:qR:sStT:U:v:VwWxX?1",
+=======
+	while ((c = getopt_long(argc, argv, "aAc:d:eEf:F:h:HlL:no:p:P:qR:sStT:U:v:VWxX?1",
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 							long_options, &optindex)) != -1)
 	{
 		switch (c)

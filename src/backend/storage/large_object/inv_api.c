@@ -19,7 +19,11 @@
  * memory context given to inv_open (for LargeObjectDesc structs).
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -358,7 +362,11 @@ inv_getsize(LargeObjectDesc *obj_desc)
 		if (VARATT_IS_EXTENDED(datafield))
 		{
 			datafield = (bytea *)
+<<<<<<< HEAD
 				heap_tuple_untoast_attr(datafield);
+=======
+				heap_tuple_untoast_attr((struct varlena *) datafield);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			pfreeit = true;
 		}
 		lastbyte = data->pageno * LOBLKSIZE + getbytealen(datafield);
@@ -494,7 +502,11 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			if (VARATT_IS_EXTENDED(datafield))
 			{
 				datafield = (bytea *)
+<<<<<<< HEAD
 					heap_tuple_untoast_attr(datafield);
+=======
+					heap_tuple_untoast_attr((struct varlena *) datafield);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				pfreeit = true;
 			}
 			len = getbytealen(datafield);
@@ -623,7 +635,11 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 			if (VARATT_IS_EXTENDED(datafield))
 			{
 				datafield = (bytea *)
+<<<<<<< HEAD
 					heap_tuple_untoast_attr(datafield);
+=======
+					heap_tuple_untoast_attr((struct varlena *) datafield);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				pfreeit = true;
 			}
 			len = getbytealen(datafield);
@@ -743,8 +759,13 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 	char	   *workb = VARDATA(&workbuf.hdr);
 	HeapTuple	newtup;
 	Datum		values[Natts_pg_largeobject];
+<<<<<<< HEAD
 	bool		nulls[Natts_pg_largeobject];
 	bool		replace[Natts_pg_largeobject];
+=======
+	char		nulls[Natts_pg_largeobject];
+	char		replace[Natts_pg_largeobject];
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	CatalogIndexState indstate;
 
 	Assert(PointerIsValid(obj_desc));
@@ -759,6 +780,7 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 	open_lo_relation();
 
 	indstate = CatalogOpenIndexes(lo_heap_r);
+<<<<<<< HEAD
 	/* XXX XXX: index scan ORDER BY */
 	cql0("SELECT * FROM pg_largeobject "
 		 " WHERE loid = :1 "
@@ -767,6 +789,8 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 		 " FOR UPDATE ",
 		 ObjectIdGetDatum(obj_desc->id),
 		 Int32GetDatum(pageno));
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	ScanKeyInit(&skey[0],
 				Anum_pg_largeobject_loid,
@@ -810,7 +834,11 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 		if (VARATT_IS_EXTENDED(datafield))
 		{
 			datafield = (bytea *)
+<<<<<<< HEAD
 				heap_tuple_untoast_attr(datafield);
+=======
+				heap_tuple_untoast_attr((struct varlena *) datafield);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			pfreeit = true;
 		}
 		pagelen = getbytealen(datafield);
@@ -833,12 +861,21 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 		 * Form and insert updated tuple
 		 */
 		memset(values, 0, sizeof(values));
+<<<<<<< HEAD
 		memset(nulls, false, sizeof(nulls));
 		memset(replace, false, sizeof(replace));
 		values[Anum_pg_largeobject_data - 1] = PointerGetDatum(&workbuf);
 		replace[Anum_pg_largeobject_data - 1] = true;
 		newtup = heap_modify_tuple(oldtuple, RelationGetDescr(lo_heap_r),
 								   values, nulls, replace);
+=======
+		memset(nulls, ' ', sizeof(nulls));
+		memset(replace, ' ', sizeof(replace));
+		values[Anum_pg_largeobject_data - 1] = PointerGetDatum(&workbuf);
+		replace[Anum_pg_largeobject_data - 1] = 'r';
+		newtup = heap_modifytuple(oldtuple, RelationGetDescr(lo_heap_r),
+								  values, nulls, replace);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		simple_heap_update(lo_heap_r, &newtup->t_self, newtup);
 		CatalogIndexInsert(indstate, newtup);
 		heap_freetuple(newtup);
@@ -868,11 +905,19 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 		 * Form and insert new tuple
 		 */
 		memset(values, 0, sizeof(values));
+<<<<<<< HEAD
 		memset(nulls, false, sizeof(nulls));
 		values[Anum_pg_largeobject_loid - 1] = ObjectIdGetDatum(obj_desc->id);
 		values[Anum_pg_largeobject_pageno - 1] = Int32GetDatum(pageno);
 		values[Anum_pg_largeobject_data - 1] = PointerGetDatum(&workbuf);
 		newtup = heap_form_tuple(lo_heap_r->rd_att, values, nulls);
+=======
+		memset(nulls, ' ', sizeof(nulls));
+		values[Anum_pg_largeobject_loid - 1] = ObjectIdGetDatum(obj_desc->id);
+		values[Anum_pg_largeobject_pageno - 1] = Int32GetDatum(pageno);
+		values[Anum_pg_largeobject_data - 1] = PointerGetDatum(&workbuf);
+		newtup = heap_formtuple(lo_heap_r->rd_att, values, nulls);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		simple_heap_insert(lo_heap_r, newtup);
 		CatalogIndexInsert(indstate, newtup);
 		heap_freetuple(newtup);

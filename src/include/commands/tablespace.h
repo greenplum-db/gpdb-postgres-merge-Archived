@@ -7,7 +7,11 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/commands/tablespace.h,v 1.14 2007/01/05 22:19:54 momjian Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/commands/tablespace.h,v 1.19 2008/01/01 19:45:57 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +46,13 @@ extern void AlterTableSpaceOwner(const char *name, Oid newOwnerId);
 
 extern void TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo);
 
+<<<<<<< HEAD
 extern Oid	GetDefaultTablespace(void);
+=======
+extern Oid	GetDefaultTablespace(bool forTemp);
+
+extern void PrepareTempTablespaces(void);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 extern Oid	get_tablespace_oid(const char *tablespacename);
 extern char *get_tablespace_name(Oid spc_oid);

@@ -1,5 +1,9 @@
 <!--
+<<<<<<< HEAD
 $PostgreSQL: pgsql/doc/src/sgml/ref/create_group.sgml,v 1.19 2008/11/14 10:22:46 petere Exp $
+=======
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_group.sgml,v 1.18 2007/05/15 19:43:51 neilc Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 PostgreSQL documentation
 -->
 

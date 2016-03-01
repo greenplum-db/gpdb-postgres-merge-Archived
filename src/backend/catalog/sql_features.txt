@@ -527,6 +527,7 @@ X034	XMLAgg			YES
 X035	XMLAgg: ORDER BY option			NO	
 X036	XMLComment			YES	
 X037	XMLPI			YES	
+<<<<<<< HEAD
 X038	XMLText			NO	
 X040	Basic table mapping			NO	
 X041	Basic table mapping: nulls absent			NO	
@@ -549,6 +550,28 @@ X058	Advanced table mapping: base64 encoding of binary strings			NO
 X059	Advanced table mapping: hex encoding of binary strings			NO	
 X060	XMLParse: Character string input and CONTENT option			YES	
 X061	XMLParse: Character string input and DOCUMENT option			YES	
+=======
+X041	Basic table mapping: nulls absent			YES	
+X042	Basic table mapping: null as nil			YES	
+X043	Basic table mapping: table as forest			YES	
+X044	Basic table mapping: table as element			YES	
+X045	Basic table mapping: with target namespace			YES	
+X046	Basic table mapping: data mapping			YES	
+X047	Basic table mapping: metadata mapping			YES	
+X048	Basic table mapping: base64 encoding of binary strings			YES	
+X049	Basic table mapping: hex encoding of binary strings			YES	
+X051	Advanced table mapping: nulls absent			YES	
+X052	Advanced table mapping: null as nil			YES	
+X053	Advanced table mapping: table as forest			YES	
+X054	Advanced table mapping: table as element			YES	
+X055	Advanced table mapping: target namespace			YES	
+X056	Advanced table mapping: data mapping			YES	
+X057	Advanced table mapping: metadata mapping			YES	
+X058	Advanced table mapping: base64 encoding of binary strings			YES	
+X059	Advanced table mapping: hex encoding of binary strings			YES	
+X060	XMLParse: CONTENT option			YES	
+X061	XMLParse: DOCUMENT option			YES	
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 X062	XMLParse: explicit WHITESPACE option			YES	
 X065	XMLParse: BLOB input and CONTENT option			NO	
 X066	XMLParse: BLOB input and DOCUMENT option			NO	

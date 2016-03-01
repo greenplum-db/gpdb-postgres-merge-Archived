@@ -8,10 +8,13 @@
  * but also length coercion functions.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.31 2007/02/03 14:06:55 petere Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.38 2008/01/01 19:45:56 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -198,11 +201,25 @@ DATA(insert (	21 2206  313 i ));
 DATA(insert (	23 2206    0 i ));
 DATA(insert ( 2206	 20 1288 a ));
 DATA(insert ( 2206	 23    0 a ));
+DATA(insert (	26 3734    0 i ));
+DATA(insert ( 3734	 26    0 i ));
+DATA(insert (	20 3734 1287 i ));
+DATA(insert (	21 3734  313 i ));
+DATA(insert (	23 3734    0 i ));
+DATA(insert ( 3734	 20 1288 a ));
+DATA(insert ( 3734	 23    0 a ));
+DATA(insert (	26 3769    0 i ));
+DATA(insert ( 3769	 26    0 i ));
+DATA(insert (	20 3769 1287 i ));
+DATA(insert (	21 3769  313 i ));
+DATA(insert (	23 3769    0 i ));
+DATA(insert ( 3769	 20 1288 a ));
+DATA(insert ( 3769	 23    0 a ));
 DATA(insert (	25 2205 1079 i ));
 DATA(insert ( 1043 2205 1079 i ));
 
 /*
- * String category: this needs to be tightened up
+ * String category
  */
 DATA(insert (	25 1042    0 i ));
 DATA(insert (	25 1043    0 i ));
@@ -222,7 +239,8 @@ DATA(insert ( 1043	 18  944 a ));
 DATA(insert (	25	 19  407 i ));
 DATA(insert ( 1042	 19  409 i ));
 DATA(insert ( 1043	 19 1400 i ));
-/* Cross-category casts between int4 and "char" */
+
+/* Allow explicit coercions between int4 and "char" */
 DATA(insert (	18	 23   77 e ));
 DATA(insert (	23	 18   78 e ));
 
@@ -294,9 +312,16 @@ DATA(insert ( 1560	 23 1684 e ));
 /*
  * Cross-category casts to and from TEXT
  *
- * For historical reasons, most casts to TEXT are implicit.  This is BAD
- * and should be reined in.
+ * We need entries here only for a few specialized cases where the behavior
+ * of the cast function differs from the datatype's I/O functions.  Otherwise,
+ * parse_coerce.c will generate CoerceViaIO operations without any prompting.
+ *
+ * Note that the castcontext values specified here should be no stronger than
+ * parse_coerce.c's automatic casts ('a' to text, 'e' from text) else odd
+ * behavior will ensue when the automatic cast is applied instead of the
+ * pg_cast entry!
  */
+<<<<<<< HEAD
 DATA(insert (	20	 25 1289 i ));
 DATA(insert (	25	 20 1290 e ));
 DATA(insert (	21	 25  113 i ));
@@ -331,12 +356,20 @@ DATA(insert ( 1700	 25 1688 i ));
 DATA(insert (	25 1700 1686 e ));
 DATA(insert (  142   25 2922 e ));
 DATA(insert (   25  142	2896 e ));
+=======
+DATA(insert (  650	 25  730 a ));
+DATA(insert (  869	 25  730 a ));
+DATA(insert (	16	 25 2971 a ));
+DATA(insert (  142	 25    0 a ));
+DATA(insert (	25	142 2896 e ));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * Cross-category casts to and from VARCHAR
  *
- * We support all the same casts as for TEXT, but none are implicit.
+ * We support all the same casts as for TEXT.
  */
+<<<<<<< HEAD
 DATA(insert (	20 1043 1289 a ));
 DATA(insert ( 1043	 20 1290 e ));
 DATA(insert (	21 1043  113 a ));
@@ -371,15 +404,20 @@ DATA(insert ( 1700 1043 1688 a ));
 DATA(insert ( 1043 1700 1686 e ));
 DATA(insert (  142 1043 2922 e ));
 DATA(insert ( 1043  142 2896 e ));
+=======
+DATA(insert (  650 1043  730 a ));
+DATA(insert (  869 1043  730 a ));
+DATA(insert (	16 1043 2971 a ));
+DATA(insert (  142 1043    0 a ));
+DATA(insert ( 1043	142 2896 e ));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * Cross-category casts to and from BPCHAR
  *
- * A function supporting cast to TEXT/VARCHAR can be used for cast to BPCHAR,
- * but the other direction is okay only if the function treats trailing
- * blanks as insignificant.  So this is a subset of the VARCHAR list.
- * (Arguably the holdouts should be fixed, but I'm not doing that now...)
+ * We support all the same casts as for TEXT.
  */
+<<<<<<< HEAD
 DATA(insert (	20 1042 1289 a ));
 DATA(insert ( 1042	 20 1290 e ));
 DATA(insert (	21 1042  113 a ));
@@ -411,6 +449,13 @@ DATA(insert ( 1042 1266  938 e ));
 DATA(insert ( 1700 1042 1688 a ));
 DATA(insert ( 1042 1700 1686 e ));
 DATA(insert (  142 1042 2922 e ));
+=======
+DATA(insert (  650 1042  730 a ));
+DATA(insert (  869 1042  730 a ));
+DATA(insert (	16 1042 2971 a ));
+DATA(insert (  142 1042    0 a ));
+DATA(insert ( 1042	142 2896 e ));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * Length-coercion functions
@@ -426,6 +471,7 @@ DATA(insert ( 1560 1560 1685 i ));
 DATA(insert ( 1562 1562 1687 i ));
 DATA(insert ( 1700 1700 1703 i ));
 
+<<<<<<< HEAD
 /* casts to and from uuid */ 
 DATA(insert (   25 2950 2964 a ));
 DATA(insert ( 2950   25 2965 a ));
@@ -447,4 +493,6 @@ DATA(insert OID = 9901 (	27 3300    0 e ));
 DATA(insert OID = 9902 ( 3300	 27    0 e ));
 
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif   /* PG_CAST_H */

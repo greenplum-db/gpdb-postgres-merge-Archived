@@ -1,9 +1,15 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
+<<<<<<< HEAD
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
  * src/bin/psql/input.c
+=======
+ * Copyright (c) 2000-2008, PostgreSQL Global Development Group
+ *
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.64 2008/01/01 19:45:56 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 #include "postgres_fe.h"
 
@@ -95,10 +101,10 @@ void
 pg_append_history(const char *s, PQExpBuffer history_buf)
 {
 #ifdef USE_READLINE
-	if (useHistory && s && s[0])
+	if (useHistory && s)
 	{
 		appendPQExpBufferStr(history_buf, s);
-		if (s[strlen(s) - 1] != '\n')
+		if (!s[0] || s[strlen(s) - 1] != '\n')
 			appendPQExpBufferChar(history_buf, '\n');
 	}
 #endif
@@ -195,8 +201,12 @@ gets_fromFile(FILE *source)
 		{
 			if (ferror(source))
 			{
+<<<<<<< HEAD
 				psql_error("could not read from input file: %s\n",
 						   strerror(errno));
+=======
+				psql_error("could not read from input file: %s\n", strerror(errno));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				return NULL;
 			}
 			break;

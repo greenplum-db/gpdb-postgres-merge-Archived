@@ -1,5 +1,9 @@
 <!--
+<<<<<<< HEAD
 $PostgreSQL: pgsql/doc/src/sgml/ref/drop_user.sgml,v 1.23.2.1 2007/05/15 19:43:59 neilc Exp $
+=======
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_user.sgml,v 1.24 2007/05/15 19:43:51 neilc Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 PostgreSQL documentation
 -->
 

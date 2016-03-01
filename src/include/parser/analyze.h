@@ -4,10 +4,17 @@
  *		parse analysis for optimizable statements
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/parser/analyze.h,v 1.34.2.1 2008/12/13 02:00:53 tgl Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/include/parser/analyze.h,v 1.38.2.1 2008/12/13 02:00:30 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -17,16 +24,29 @@
 #include "parser/parse_node.h"
 
 
+<<<<<<< HEAD
 /* fwd declarations */
 struct GpPolicy;
 
 extern List *parse_analyze(Node *parseTree, const char *sourceText,
+=======
+extern Query *parse_analyze(Node *parseTree, const char *sourceText,
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			  Oid *paramTypes, int numParams);
-extern List *parse_analyze_varparams(Node *parseTree, const char *sourceText,
+extern Query *parse_analyze_varparams(Node *parseTree, const char *sourceText,
 						Oid **paramTypes, int *numParams);
+<<<<<<< HEAD
 extern List *parse_sub_analyze(Node *parseTree, ParseState *parentParseState);
 extern bool analyze_requires_snapshot(Node *parseTree);
 extern List *analyzeCreateSchemaStmt(CreateSchemaStmt *stmt);
+=======
+
+extern Query *parse_sub_analyze(Node *parseTree, ParseState *parentParseState);
+extern Query *transformStmt(ParseState *pstate, Node *parseTree);
+
+extern bool analyze_requires_snapshot(Node *parseTree);
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern void CheckSelectLocking(Query *qry);
 extern void applyLockingClause(Query *qry, Index rtindex,
 				   bool forUpdate, bool noWait);

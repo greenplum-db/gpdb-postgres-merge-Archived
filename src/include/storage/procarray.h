@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/procarray.h,v 1.12 2007/01/16 13:28:57 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/storage/procarray.h,v 1.20 2008/01/09 21:52:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,20 +22,33 @@ struct SnapshotData;           /* utils/tqual.h */
 extern Size ProcArrayShmemSize(void);
 extern void CreateSharedProcArray(void);
 extern void ProcArrayAdd(PGPROC *proc);
+<<<<<<< HEAD
 extern void ProcArrayRemove(PGPROC *proc, bool forPrepare, bool isCommit);
+=======
+extern void ProcArrayRemove(PGPROC *proc, TransactionId latestXid);
+
+extern void ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid);
+extern void ProcArrayClearTransaction(PGPROC *proc);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 extern bool TransactionIdIsInProgress(TransactionId xid);
 extern bool TransactionIdIsActive(TransactionId xid);
 extern TransactionId GetOldestXmin(bool allDbs);
 
+extern int	GetTransactionsInCommit(TransactionId **xids_p);
+extern bool HaveTransactionsInCommit(TransactionId *xids, int nxids);
+
 extern PGPROC *BackendPidGetProc(int pid);
 extern int	BackendXidGetPid(TransactionId xid);
 extern bool IsBackendPid(int pid);
 
+extern VirtualTransactionId *GetCurrentVirtualXIDs(TransactionId limitXmin,
+					  bool allDbs, int excludeVacuum);
 extern int	CountActiveBackends(void);
 extern int	CountDBBackends(Oid databaseid);
 extern int	CountUserBackends(Oid roleid);
 extern bool CheckOtherDBBackends(Oid databaseId);
+<<<<<<< HEAD
 extern bool HasSerializableBackends(bool allDbs);
 extern bool HasDropTransaction(bool allDbs);
 
@@ -51,5 +64,11 @@ extern void updateSharedLocalSnapshot(struct DtxContextInfo *dtxContextInfo, str
 extern void GetSlotTableDebugInfo(void **snapshotArray, int *maxSlots);
 
 extern bool FindAndSignalProcess(int sessionId, int commandId);
+=======
+
+extern void XidCacheRemoveRunningXids(TransactionId xid,
+						  int nxids, const TransactionId *xids,
+						  TransactionId latestXid);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #endif   /* PROCARRAY_H */

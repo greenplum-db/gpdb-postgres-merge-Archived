@@ -7,11 +7,15 @@
  *	  and join trees.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.125 2007/02/19 07:03:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.137 2008/01/01 19:45:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,6 +85,20 @@ typedef struct RangeVar
 	Alias	   *alias;			/* table alias & optional column aliases */
 	int			location;		/* token location, or -1 if unknown */
 } RangeVar;
+
+/*
+ * IntoClause - target information for SELECT INTO and CREATE TABLE AS
+ */
+typedef struct IntoClause
+{
+	NodeTag		type;
+
+	RangeVar   *rel;			/* target relation name */
+	List	   *colNames;		/* column names to assign, or NIL */
+	List	   *options;		/* options from WITH clause */
+	OnCommitAction onCommit;	/* what do we do at COMMIT? */
+	char	   *tableSpaceName; /* table space to use, or NULL */
+} IntoClause;
 
 
 typedef struct TableOidInfo
@@ -396,8 +414,6 @@ typedef struct WindowRef
 typedef struct ArrayRef
 {
 	Expr		xpr;
-	Oid			refrestype;		/* type of the result of the ArrayRef
-								 * operation */
 	Oid			refarraytype;	/* type of the array proper */
 	Oid			refelemtype;	/* type of the array elements */
 	int32		reftypmod;		/* typmod of the array (and elements too) */
@@ -644,6 +660,7 @@ typedef struct SubPlan
 	/* The combining operators, transformed to an executable expression: */
 	Node	   *testexpr;		/* OpExpr or RowCompareExpr expression tree */
 	List	   *paramIds;		/* IDs of Params embedded in the above */
+<<<<<<< HEAD
  	
     int         qDispSliceId;   /* CDB: slice# of initplan's root slice, or 0 */
  	
@@ -657,6 +674,12 @@ typedef struct SubPlan
 	/* Extra data useful for determining subplan's output type: */
 	Oid			firstColType;	/* Type of first column of subplan result */
 	int32		firstColTypmod;	/* Typmod of first column of subplan result */
+=======
+	/* Identification of the Plan tree to use: */
+	int			plan_id;		/* Index (from 1) in PlannedStmt.subplans */
+	/* Extra data useful for determining subplan's output type: */
+	Oid			firstColType;	/* Type of first column of subplan result */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/* Information about execution strategy: */
 	bool		useHashTable;	/* TRUE to store subselect output in a hash
 								 * table (implies we are doing "IN") */
@@ -743,6 +766,47 @@ typedef struct RelabelType
 	CoercionForm relabelformat; /* how to display this node */
 	int			location;		/* token location, or -1 if unknown */
 } RelabelType;
+
+/* ----------------
+ * CoerceViaIO
+ *
+ * CoerceViaIO represents a type coercion between two types whose textual
+ * representations are compatible, implemented by invoking the source type's
+ * typoutput function then the destination type's typinput function.
+ * ----------------
+ */
+
+typedef struct CoerceViaIO
+{
+	Expr		xpr;
+	Expr	   *arg;			/* input expression */
+	Oid			resulttype;		/* output type of coercion */
+	/* output typmod is not stored, but is presumed -1 */
+	CoercionForm coerceformat;	/* how to display this node */
+} CoerceViaIO;
+
+/* ----------------
+ * ArrayCoerceExpr
+ *
+ * ArrayCoerceExpr represents a type coercion from one array type to another,
+ * which is implemented by applying the indicated element-type coercion
+ * function to each element of the source array.  If elemfuncid is InvalidOid
+ * then the element types are binary-compatible, but the coercion still
+ * requires some effort (we have to fix the element type ID stored in the
+ * array header).
+ * ----------------
+ */
+
+typedef struct ArrayCoerceExpr
+{
+	Expr		xpr;
+	Expr	   *arg;			/* input expression (yields an array) */
+	Oid			elemfuncid;		/* OID of element coercion function, or 0 */
+	Oid			resulttype;		/* output type of coercion (an array type) */
+	int32		resulttypmod;	/* output typmod (also element typmod) */
+	bool		isExplicit;		/* conversion semantics flag to pass to func */
+	CoercionForm coerceformat;	/* how to display this node */
+} ArrayCoerceExpr;
 
 /* ----------------
  * ConvertRowtypeExpr
@@ -1099,6 +1163,7 @@ typedef struct SetToDefault
  * correctly during planning.  We can assume however that its "levelsup" is
  * always zero, due to the syntactic constraints on where it can appear.
  *
+<<<<<<< HEAD
  * CURRENT OF is a bit like a stable function, in that it must be evaluated
  * once during constant folding to give the QEs a consistent view of the query.
  * To accomplish this, during constant folding, we evaluate the CURRENT OF
@@ -1119,6 +1184,18 @@ typedef struct CurrentOfExpr
 	int		 		gp_segment_id;
 	ItemPointerData	ctid;
 	Oid				tableoid;
+=======
+ * The referenced cursor can be represented either as a hardwired string
+ * or as a reference to a run-time parameter of type REFCURSOR.  The latter
+ * case is for the convenience of plpgsql.
+ */
+typedef struct CurrentOfExpr
+{
+	Expr		xpr;
+	Index		cvarno;			/* RT index of target relation */
+	char	   *cursor_name;	/* name of referenced cursor, or NULL */
+	int			cursor_param;	/* refcursor parameter number, or 0 */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } CurrentOfExpr;
 
 /*--------------------

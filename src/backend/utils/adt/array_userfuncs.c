@@ -6,7 +6,7 @@
  * Copyright (c) 2003-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.21 2007/01/05 22:19:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.23 2008/01/01 19:45:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -376,7 +376,11 @@ array_cat(PG_FUNCTION_ARGS)
 		dataoffset = 0;			/* marker for no null bitmap */
 		nbytes = ndatabytes + ARR_OVERHEAD_NONULLS(ndims);
 	}
+<<<<<<< HEAD
 	result = (ArrayType *) palloc(nbytes);
+=======
+	result = (ArrayType *) palloc0(nbytes);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	SET_VARSIZE(result, nbytes);
 	result->ndim = ndims;
 	result->dataoffset = dataoffset;

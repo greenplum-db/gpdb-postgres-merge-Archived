@@ -24,7 +24,11 @@ typedef struct
 	char	   *ident;
 	int			nplans;
 	SPIPlanPtr *splan;
+<<<<<<< HEAD
 } EPlan;
+=======
+}	EPlan;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 static EPlan *FPlans = NULL;
 static int	nFPlans = 0;

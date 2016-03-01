@@ -3,13 +3,16 @@
  * view.c
  *	  use rewrite rules to construct views
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.99 2007/01/05 22:19:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.104 2008/01/01 19:45:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +29,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
+#include "parser/analyze.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "rewrite/rewriteDefine.h"
@@ -285,15 +289,19 @@ checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc)
 	 */
 }
 
+<<<<<<< HEAD
 static RuleStmt *
 FormViewRetrieveRule(const RangeVar *view, Query *viewParse, bool replace, Oid rewriteOid)
+=======
+static void
+DefineViewRules(Oid viewOid, Query *viewParse, bool replace)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
-	RuleStmt   *rule;
-
 	/*
-	 * Create a RuleStmt that corresponds to the suitable rewrite rule args
-	 * for DefineQueryRewrite();
+	 * Set up the ON SELECT rule.  Since the query has already been through
+	 * parse analysis, we use DefineQueryRewrite() directly.
 	 */
+<<<<<<< HEAD
 	rule = makeNode(RuleStmt);
 	rule->relation = copyObject((RangeVar *) view);
 	rule->rulename = pstrdup(ViewSelectRuleName);
@@ -334,7 +342,19 @@ DefineViewRules(const RangeVar *view, Query *viewParse, bool replace, Oid* rewri
 	DefineQueryRewrite(append_rule);
 	DefineQueryRewrite(delete_rule);
 #endif
+=======
+	DefineQueryRewrite(pstrdup(ViewSelectRuleName),
+					   viewOid,
+					   NULL,
+					   CMD_SELECT,
+					   true,
+					   replace,
+					   list_make1(viewParse));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
+	/*
+	 * Someday: automatic ON INSERT, etc
+	 */
 }
 
 /*---------------------------------------------------------------
@@ -403,40 +423,98 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 	return viewParse;
 }
 
-/*-------------------------------------------------------------------
+/*
  * DefineView
- *
- *		- takes a "viewname", "parsetree" pair and then
- *		1)		construct the "virtual" relation
- *		2)		commit the command but NOT the transaction,
- *				so that the relation exists
- *				before the rules are defined.
- *		2)		define the "n" rules specified in the PRS2 paper
- *				over the "virtual" relation
- *-------------------------------------------------------------------
+ *		Execute a CREATE VIEW command.
  */
 void
+<<<<<<< HEAD
 DefineView(ViewStmt *stmt)
 {
 	Oid			viewOid = stmt->relOid;
 	RangeVar   *view = stmt->view;
 	Query	   *viewParse = stmt->query;
 	bool		replace = stmt->replace;
+=======
+DefineView(ViewStmt *stmt, const char *queryString)
+{
+	Query	   *viewParse;
+	Oid			viewOid;
+	RangeVar   *view;
+
+	/*
+	 * Run parse analysis to convert the raw parse tree to a Query.  Note this
+	 * also acquires sufficient locks on the source table(s).
+	 *
+	 * Since parse analysis scribbles on its input, copy the raw parse tree;
+	 * this ensures we don't corrupt a prepared statement, for example.
+	 */
+	viewParse = parse_analyze((Node *) copyObject(stmt->query),
+							  queryString, NULL, 0);
+
+	/*
+	 * The grammar should ensure that the result is a single SELECT Query.
+	 */
+	if (!IsA(viewParse, Query) ||
+		viewParse->commandType != CMD_SELECT)
+		elog(ERROR, "unexpected parse analysis result");
+
+	/*
+	 * If a list of column names was given, run through and insert these into
+	 * the actual query tree. - thomas 2000-03-08
+	 */
+	if (stmt->aliases != NIL)
+	{
+		ListCell   *alist_item = list_head(stmt->aliases);
+		ListCell   *targetList;
+
+		foreach(targetList, viewParse->targetList)
+		{
+			TargetEntry *te = (TargetEntry *) lfirst(targetList);
+
+			Assert(IsA(te, TargetEntry));
+			/* junk columns don't get aliases */
+			if (te->resjunk)
+				continue;
+			te->resname = pstrdup(strVal(lfirst(alist_item)));
+			alist_item = lnext(alist_item);
+			if (alist_item == NULL)
+				break;			/* done assigning aliases */
+		}
+
+		if (alist_item != NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("CREATE VIEW specifies more column "
+							"names than columns")));
+	}
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (Gp_role != GP_ROLE_EXECUTE)
 		viewOid = 0;
 	/*
 	 * If the user didn't explicitly ask for a temporary view, check whether
-	 * we need one implicitly.
+	 * we need one implicitly.	We allow TEMP to be inserted automatically as
+	 * long as the CREATE command is consistent with that --- no explicit
+	 * schema name.
 	 */
-	if (!view->istemp)
+	view = stmt->view;
+	if (!view->istemp && isViewOnTempTable(viewParse))
 	{
+<<<<<<< HEAD
 		view->istemp = isViewOnTempTable(viewParse);
 		if (view->istemp)
 			if (Gp_role != GP_ROLE_EXECUTE)
 			ereport(NOTICE,
 					(errmsg("view \"%s\" will be a temporary view",
 							view->relname)));
+=======
+		view = copyObject(view);	/* don't corrupt original command */
+		view->istemp = true;
+		ereport(NOTICE,
+				(errmsg("view \"%s\" will be a temporary view",
+						view->relname)));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	/*
@@ -445,9 +523,14 @@ DefineView(ViewStmt *stmt)
 	 * NOTE: if it already exists and replace is false, the xact will be
 	 * aborted.
 	 */
+<<<<<<< HEAD
 	viewOid = DefineVirtualRelation(view, viewParse->targetList, replace, viewOid, &stmt->comptypeOid);
 
 	stmt->relOid = viewOid;
+=======
+	viewOid = DefineVirtualRelation(view, viewParse->targetList,
+									stmt->replace);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * The relation we have just created is not visible to any other commands
@@ -465,6 +548,7 @@ DefineView(ViewStmt *stmt)
 	/*
 	 * Now create the rules associated with the view.
 	 */
+<<<<<<< HEAD
 	DefineViewRules(view, viewParse, replace, &stmt->rewriteOid);
 
 	if (Gp_role == GP_ROLE_DISPATCH)
@@ -472,6 +556,9 @@ DefineView(ViewStmt *stmt)
 		CdbDispatchUtilityStatement((Node *) stmt, "DefineView");
 
 	}
+=======
+	DefineViewRules(viewOid, viewParse, stmt->replace);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*

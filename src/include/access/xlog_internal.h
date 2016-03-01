@@ -11,7 +11,11 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.21 2007/05/20 21:08:19 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.22 2008/01/01 19:45:56 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 #ifndef XLOG_INTERNAL_H
 #define XLOG_INTERNAL_H

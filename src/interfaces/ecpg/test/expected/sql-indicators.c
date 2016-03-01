@@ -109,31 +109,53 @@ int main()
 	ECPGdebug(1,stderr);
 
 	{ ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); }
+<<<<<<< HEAD
 #line 15 "indicators.pgc"
+=======
+#line 16 "indicators.pgc"
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	{ ECPGsetcommit(__LINE__, "off", NULL);}
 #line 16 "indicators.pgc"
 
 
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table indicator_test ( \"id\" int primary key , \"str\" text not null , val int null )", ECPGt_EOIT, ECPGt_EORT);}
 #line 21 "indicators.pgc"
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table indicator_test ( \"id\" int   primary key   , \"str\" text    not null , val int   null )    ", ECPGt_EOIT, ECPGt_EORT);}
+#line 22 "indicators.pgc"
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	{ ECPGtrans(__LINE__, NULL, "commit work");}
 #line 22 "indicators.pgc"
 
 
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into indicator_test ( id , str , val ) values ( 1 , 'Hello' , 0 )", ECPGt_EOIT, ECPGt_EORT);}
 #line 24 "indicators.pgc"
 
 
 	/* use indicator in insert */
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into indicator_test ( id , str , val ) values ( 2 , 'Hi there' , $1  )", 
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into indicator_test ( id  , str  , val  ) values ( 1 , 'Hello' , 0 ) ", ECPGt_EOIT, ECPGt_EORT);}
+#line 25 "indicators.pgc"
+
+
+	/* use indicator in insert */
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into indicator_test ( id  , str  , val  ) values ( 2 , 'Hi there' ,  $1  ) ", 
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_int,&(intvar),(long)1,(long)1,sizeof(int), 
 	ECPGt_int,&(nullind),(long)1,(long)1,sizeof(int), ECPGt_EOIT, ECPGt_EORT);}
 #line 27 "indicators.pgc"
 
 	nullind = 0;
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into indicator_test ( id , str , val ) values ( 3 , 'Good evening' , $1  )", 
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into indicator_test ( id  , str  , val  ) values ( 3 , 'Good evening' ,  $1  ) ", 
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_int,&(intvar),(long)1,(long)1,sizeof(int), 
 	ECPGt_int,&(nullind),(long)1,(long)1,sizeof(int), ECPGt_EOIT, ECPGt_EORT);}
 #line 29 "indicators.pgc"
@@ -143,18 +165,30 @@ int main()
 
 
 	/* use indicators to get information about selects */
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select val from indicator_test where id = 1", ECPGt_EOIT, 
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  val  from indicator_test where id = 1  ", ECPGt_EOIT, 
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_int,&(intvar),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
 #line 33 "indicators.pgc"
 
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select val from indicator_test where id = 2", ECPGt_EOIT, 
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  val  from indicator_test where id = 2  ", ECPGt_EOIT, 
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_int,&(intvar),(long)1,(long)1,sizeof(int), 
 	ECPGt_int,&(nullind),(long)1,(long)1,sizeof(int), ECPGt_EORT);}
 #line 34 "indicators.pgc"
 
 	printf("intvar: %d, nullind: %d\n", intvar, nullind);
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select val from indicator_test where id = 3", ECPGt_EOIT, 
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  val  from indicator_test where id = 3  ", ECPGt_EOIT, 
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_int,&(intvar),(long)1,(long)1,sizeof(int), 
 	ECPGt_int,&(nullind),(long)1,(long)1,sizeof(int), ECPGt_EORT);}
 #line 36 "indicators.pgc"
@@ -163,20 +197,33 @@ int main()
 
 	/* use indicators for update */
 	intvar = 5; nullind = -1;
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "update indicator_test set val = $1  where id = 1", 
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "update indicator_test set val  =  $1   where id = 1 ", 
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_int,&(intvar),(long)1,(long)1,sizeof(int), 
 	ECPGt_int,&(nullind),(long)1,(long)1,sizeof(int), ECPGt_EOIT, ECPGt_EORT);}
 #line 41 "indicators.pgc"
 
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select val from indicator_test where id = 1", ECPGt_EOIT, 
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  val  from indicator_test where id = 1  ", ECPGt_EOIT, 
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_int,&(intvar),(long)1,(long)1,sizeof(int), 
 	ECPGt_int,&(nullind),(long)1,(long)1,sizeof(int), ECPGt_EORT);}
 #line 42 "indicators.pgc"
 
 	printf("intvar: %d, nullind: %d\n", intvar, nullind);
 
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table indicator_test", ECPGt_EOIT, ECPGt_EORT);}
 #line 45 "indicators.pgc"
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table indicator_test ", ECPGt_EOIT, ECPGt_EORT);}
+#line 46 "indicators.pgc"
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	{ ECPGtrans(__LINE__, NULL, "commit work");}
 #line 46 "indicators.pgc"

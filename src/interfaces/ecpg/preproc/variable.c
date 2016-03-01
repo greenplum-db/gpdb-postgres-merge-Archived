@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/variable.c,v 1.49 2009/06/11 14:49:13 momjian Exp $ */
+=======
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/variable.c,v 1.44 2008/02/07 11:09:13 meskes Exp $ */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #include "postgres_fe.h"
 
@@ -100,7 +104,11 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member * members, in
 						}
 						break;
 					case '-':
-						return (find_struct_member(name, end, members->type->u.element->u.members, brace_level));
+						if (members->type->type == ECPGt_array)
+							return (find_struct_member(name, ++end, members->type->u.element->u.members, brace_level));
+						else
+							return (find_struct_member(name, ++end, members->type->u.members, brace_level));
+						break;
 						break;
 					case '.':
 						if (members->type->type == ECPGt_array)

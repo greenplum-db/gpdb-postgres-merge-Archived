@@ -2,6 +2,11 @@ For All Releases (major, minor, beta, RC)
 ================
 
 * Release version number changes
+<<<<<<< HEAD
+=======
+	o update doc/FAQ and doc/src/FAQ/FAQ.html
+	o copy FAQs from HEAD to top-most branch
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	o run src/tools/version_stamp.pl, then run autoconf
 	  (by packager) (beta)
 
@@ -55,6 +60,7 @@ For Major Releases
 * Update inet/cidr data types with newest Bind patches
 
 
+<<<<<<< HEAD
 Starting a New Development Cycle
 ================================
 
@@ -65,11 +71,14 @@ Starting a New Development Cycle
 * Run "src/tools/version_stamp.pl devel", then run autoconf
 
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 Creating Back-Branch Release Notes
 ==================================
 
 * Do 'cvs log' on each back-branch and run pgcvslog
 
+<<<<<<< HEAD
 * In CVS HEAD, edit and create SGML markup for the most recent branch
   in that branch's release-N.N.sgml file
 
@@ -78,6 +87,17 @@ Creating Back-Branch Release Notes
   any that are needed)
 
 * Copy the appropriate release-N.N.sgml files into each back CVS branch
+=======
+* Edit and create SGML markup for the most recent branch
+
+* Make copies of the SGML for each branch, then remove items
+  that do not apply based on cvs logs for that branch
+
+* Copy the SGML for each branch into release.sgml in CVS HEAD
+
+* Use src/tools/major_release_split to create a release.sgml for
+  each branch and copy them to the branch's CVS
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 ---------------------------------------------------------------------------
@@ -116,10 +136,13 @@ The minor version number should be updated whenever the functionality of
 the library has changed, typically a change in source code between releases
 would mean an increase in the minor version number so long as it does not
 require a major version increase.
+<<<<<<< HEAD
 
 Given that we make at least minor changes to our libraries in every major
 PostgreSQL version, we always bump all minor library version numbers at the
 start of each development cycle as a matter of policy.
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 Minimizing Changes
 ==================

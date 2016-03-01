@@ -4,10 +4,17 @@
  *		Common support routines for bin/scripts/
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.40 2010/02/26 02:01:20 momjian Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.31 2008/01/01 19:45:56 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -112,6 +119,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	 */
 	do
 	{
+<<<<<<< HEAD
 #define PARAMS_ARRAY_SIZE	7
 		const char **keywords = malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
 		const char **values = malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
@@ -142,6 +150,10 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 
 		free(keywords);
 		free(values);
+=======
+		new_pass = false;
+		conn = PQsetdbLogin(pghost, pgport, NULL, NULL, dbname, pguser, password);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (!conn)
 		{
@@ -153,7 +165,11 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		if (PQstatus(conn) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(conn) &&
 			password == NULL &&
+<<<<<<< HEAD
 			prompt_password != TRI_NO)
+=======
+			!feof(stdin))
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		{
 			PQfinish(conn);
 			password = simple_prompt("Password: ", 100, false);
@@ -257,6 +273,7 @@ executeMaintenanceCommand(PGconn *conn, const char *query, bool echo)
 	return r;
 }
 
+<<<<<<< HEAD
 /*
  * "Safe" wrapper around strdup().	Pulled from psql/common.c
  */
@@ -278,6 +295,8 @@ pg_strdup(const char *string)
 	}
 	return tmp;
 }
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * Check yes/no answer in a localized way.	1=yes, 0=no, -1=neither.
@@ -323,6 +342,10 @@ yesno_prompt(const char *question)
 	}
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * SetCancelConn
  *

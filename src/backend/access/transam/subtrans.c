@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/subtrans.c,v 1.18 2007/01/05 22:19:23 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/subtrans.c,v 1.20 2008/01/01 19:45:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,8 +140,13 @@ SubTransSetParent(TransactionId xid, TransactionId parent)
 
 	LWLockAcquire(SubtransControlLock, LW_EXCLUSIVE);
 
+<<<<<<< HEAD
 	slotno = SimpleLruReadPage(SubTransCtl, pageno, xid);
 	ptr = (SubTransData *) SubTransCtl->shared->page_buffer[slotno];
+=======
+	slotno = SimpleLruReadPage(SubTransCtl, pageno, true, xid);
+	ptr = (TransactionId *) SubTransCtl->shared->page_buffer[slotno];
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ptr += entryno;
 
 	/* Current state should be 0 */
@@ -192,15 +197,20 @@ SubTransGetTopmostTransaction(TransactionId xid)
 Size
 SUBTRANSShmemSize(void)
 {
-	return SimpleLruShmemSize(NUM_SUBTRANS_BUFFERS);
+	return SimpleLruShmemSize(NUM_SUBTRANS_BUFFERS, 0);
 }
 
 void
 SUBTRANSShmemInit(void)
 {
 	SubTransCtl->PagePrecedes = SubTransPagePrecedes;
+<<<<<<< HEAD
 	SimpleLruInit(SubTransCtl, "SUBTRANS Ctl", NUM_SUBTRANS_BUFFERS,
 				  SubtransControlLock, SUBTRANS_DIR);
+=======
+	SimpleLruInit(SubTransCtl, "SUBTRANS Ctl", NUM_SUBTRANS_BUFFERS, 0,
+				  SubtransControlLock, "pg_subtrans");
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/* Override default assumption that writes should be fsync'd */
 	SubTransCtl->do_fsync = false;
 }

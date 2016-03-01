@@ -9,12 +9,16 @@
  * always use NAMEDATALEN as the symbolic constant!   - jolly 8/21/95
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/name.c,v 1.60 2007/01/05 22:19:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/name.c,v 1.61 2008/01/01 19:45:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,13 +50,17 @@ Datum
 namein(PG_FUNCTION_ARGS)
 {
 	char	   *s = PG_GETARG_CSTRING(0);
-	NameData   *result;
+	Name		result;
 	int			len;
 
 	len = strlen(s);
-	len = pg_mbcliplen(s, len, NAMEDATALEN - 1);
 
-	result = (NameData *) palloc0(NAMEDATALEN);
+	/* Truncate oversize input */
+	if (len >= NAMEDATALEN)
+		len = pg_mbcliplen(s, len, NAMEDATALEN - 1);
+
+	/* We use palloc0 here to ensure result is zero-padded */
+	result = (Name) palloc0(NAMEDATALEN);
 	memcpy(NameStr(*result), s, len);
 
 	PG_RETURN_NAME(result);

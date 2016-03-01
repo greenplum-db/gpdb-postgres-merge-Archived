@@ -3,13 +3,16 @@
  * nodeHashjoin.c
  *	  Routines to handle hash join nodes
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.89 2007/02/02 00:07:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.93 2008/01/01 19:45:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -717,6 +720,7 @@ ExecHashJoinOuterGetTuple(PlanState *outerNode,
 			 */
 			econtext = hjstate->js.ps.ps_ExprContext;
 			econtext->ecxt_outertuple = slot;
+<<<<<<< HEAD
 
 			bool hashkeys_null = false;
 			bool keep_nulls = (hjstate->js.jointype == JOIN_LEFT) ||
@@ -730,6 +734,13 @@ ExecHashJoinOuterGetTuple(PlanState *outerNode,
 						hashvalue,
 						&hashkeys_null
 						))
+=======
+			if (ExecHashGetHashValue(hashtable, econtext,
+									 hjstate->hj_OuterHashKeys,
+									 true,		/* outer tuple */
+									 (hjstate->js.jointype == JOIN_LEFT),
+									 hashvalue))
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			{
 				/* remember outer relation is not empty for possible rescan */
 				hjstate->hj_OuterNotEmpty = true;
@@ -737,8 +748,8 @@ ExecHashJoinOuterGetTuple(PlanState *outerNode,
 				return slot;
 			}
 			/*
-			 * That tuple couldn't match because of a NULL, so discard it
-			 * and continue with the next one.
+			 * That tuple couldn't match because of a NULL, so discard it and
+			 * continue with the next one.
 			 */
 		}
 

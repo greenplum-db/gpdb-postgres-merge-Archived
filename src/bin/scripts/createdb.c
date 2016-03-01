@@ -2,10 +2,17 @@
  *
  * createdb
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.34 2009/04/06 08:42:53 heikki Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.26 2008/01/01 19:45:56 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -83,6 +90,12 @@ main(int argc, char *argv[])
 			case 'e':
 				echo = true;
 				break;
+<<<<<<< HEAD
+=======
+			case 'q':
+				/* obsolete; remove in 8.4 */
+				break;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			case 'O':
 				owner = optarg;
 				break;
@@ -213,13 +226,20 @@ help(const char *progname)
 	printf(_("  -E, --encoding=ENCODING      encoding for the database\n"));
 	printf(_("  -O, --owner=OWNER            database user to own the new database\n"));
 	printf(_("  -T, --template=TEMPLATE      template database to copy\n"));
+<<<<<<< HEAD
+=======
+	printf(_("  -e, --echo                   show the commands being sent to the server\n"));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	printf(_("  --help                       show this help, then exit\n"));
 	printf(_("  --version                    output version information, then exit\n"));
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME          database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT              database server port\n"));
 	printf(_("  -U, --username=USERNAME      user name to connect as\n"));
+<<<<<<< HEAD
 	printf(_("  -w, --no-password            never prompt for password\n"));
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	printf(_("  -W, --password               force password prompt\n"));
 	printf(_("\nBy default, a database with the same name as the current user is created.\n"));
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));

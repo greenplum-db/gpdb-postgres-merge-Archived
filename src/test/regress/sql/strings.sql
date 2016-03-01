@@ -128,7 +128,11 @@ SELECT regexp_matches('foobarbequebaz', $re$(bar)(.+)?(beque)$re$);
 SELECT regexp_matches('foobarbequebaz', $re$barbeque$re$);
 
 -- give me errors
+<<<<<<< HEAD
 SELECT regexp_matches('foobarbequebaz', $re$(bar)(beque)$re$, 'zipper');
+=======
+SELECT regexp_matches('foobarbequebaz', $re$(bar)(beque)$re$, 'gz');
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 SELECT regexp_matches('foobarbequebaz', $re$(barbeque$re$);
 SELECT regexp_matches('foobarbequebaz', $re$(bar)(beque){2,1}$re$);
 
@@ -146,9 +150,19 @@ SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e'
 -- no match of pattern
 SELECT foo, length(foo) FROM regexp_split_to_table('the quick brown fox jumped over the lazy dog', 'nomatch') AS foo;
 SELECT regexp_split_to_array('the quick brown fox jumped over the lazy dog', 'nomatch');
+<<<<<<< HEAD
 -- errors
 SELECT foo, length(foo) FROM regexp_split_to_table('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'zippy') AS foo;
 SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'zippy');
+=======
+-- some corner cases
+SELECT regexp_split_to_array('123456','1');
+SELECT regexp_split_to_array('123456','6');
+SELECT regexp_split_to_array('123456','.');
+-- errors
+SELECT foo, length(foo) FROM regexp_split_to_table('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'zippy') AS foo;
+SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'iz');
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 -- global option meaningless for regexp_split
 SELECT foo, length(foo) FROM regexp_split_to_table('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'g') AS foo;
 SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'g');
@@ -159,7 +173,7 @@ SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e'
 -- E021-11 position expression
 SELECT POSITION('4' IN '1234567890') = '4' AS "4";
 
-SELECT POSITION(5 IN '1234567890') = '5' AS "5";
+SELECT POSITION('5' IN '1234567890') = '5' AS "5";
 
 -- T312 character overlay function
 SELECT OVERLAY('abcdef' PLACING '45' FROM 4) AS "abc45f";
@@ -264,6 +278,19 @@ SELECT 'hawkeye' NOT ILIKE 'H%Eye' AS "false";
 
 SELECT 'Hawkeye' ILIKE 'h%' AS "true";
 SELECT 'Hawkeye' NOT ILIKE 'h%' AS "false";
+
+--
+-- test %/_ combination cases, cf bugs #4821 and #5478
+--
+
+SELECT 'foo' LIKE '_%' as t, 'f' LIKE '_%' as t, '' LIKE '_%' as f;
+SELECT 'foo' LIKE '%_' as t, 'f' LIKE '%_' as t, '' LIKE '%_' as f;
+
+SELECT 'foo' LIKE '__%' as t, 'foo' LIKE '___%' as t, 'foo' LIKE '____%' as f;
+SELECT 'foo' LIKE '%__' as t, 'foo' LIKE '%___' as t, 'foo' LIKE '%____' as f;
+
+SELECT 'jack' LIKE '%____%' AS t;
+
 
 --
 -- test implicit type conversion
@@ -382,12 +409,21 @@ DROP TABLE toasttest;
 
 -- test internally compressing datums
 
+<<<<<<< HEAD
 -- note this tests compressing a datum to a very small size which tests a
 -- particular case in the packed varlena where very small compressed datums
 -- must be given a 4-byte header because there are no bits to indicate
 -- compression in a 1-byte header
 
 CREATE TABLE toasttest (c char(2048));
+=======
+-- this tests compressing a datum to a very small size which exercises a
+-- corner case in packed-varlena handling: even though small, the compressed
+-- datum must be given a 4-byte header because there are no bits to indicate
+-- compression in a 1-byte header
+
+CREATE TABLE toasttest (c char(4096));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 INSERT INTO toasttest VALUES('x');
 SELECT length(c), c::text FROM toasttest;
 SELECT c FROM toasttest;

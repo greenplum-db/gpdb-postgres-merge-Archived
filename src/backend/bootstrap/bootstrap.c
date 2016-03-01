@@ -4,11 +4,15 @@
  *	  routines to support running postgres in 'bootstrap' mode
  *	bootstrap mode is used to create the initial template database
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.232 2007/02/16 02:10:07 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.238 2008/01/01 19:45:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +24,6 @@
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
-
-#define BOOTSTRAP_INCLUDE		/* mask out stuff in tcop/tcopprot.h */
 
 #include "access/genam.h"
 #include "access/heapam.h"
@@ -36,9 +38,13 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "postmaster/bgwriter.h"
+<<<<<<< HEAD
 #include "postmaster/checkpoint.h"
 #include "postmaster/primary_mirror_mode.h"
 #include "replication/walreceiver.h"
+=======
+#include "postmaster/walwriter.h"
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/pmsignal.h"
@@ -182,8 +188,12 @@ struct typmap
 static struct typmap **Typ = NULL;
 static struct typmap *Ap = NULL;
 
+<<<<<<< HEAD
 static int	Warnings = 0;
 static bool Nulls[MAXATTR];
+=======
+static char Blanks[MAXATTR];
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 Form_pg_attribute attrtypes[MAXATTR];	/* points to attribute info */
 static Datum values[MAXATTR];	/* corresponding attribute values */
@@ -220,6 +230,10 @@ AuxiliaryProcessMain(int argc, char *argv[])
 {
 	char	   *progname = argv[0];
 	int			flag;
+<<<<<<< HEAD
+=======
+	AuxProcType auxType = CheckerProcess;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	char	   *userDoption = NULL;
 	char		stack_base;
 
@@ -230,9 +244,12 @@ AuxiliaryProcessMain(int argc, char *argv[])
 
 	MyStartTime = time(NULL);
 
+<<<<<<< HEAD
 	/* Set up reference point for stack depth checking */
 	stack_base_ptr = &stack_base;
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/*
 	 * Fire up essential subsystems: error and memory management
 	 *
@@ -296,7 +313,11 @@ AuxiliaryProcessMain(int argc, char *argv[])
 				strlcpy(OutputFileName, optarg, MAXPGPATH);
 				break;
 			case 'x':
+<<<<<<< HEAD
 				MyAuxProcType = atoi(optarg);
+=======
+				auxType = atoi(optarg);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				break;
 			case 'c':
 			case '-':
@@ -346,11 +367,16 @@ AuxiliaryProcessMain(int argc, char *argv[])
 	{
 		const char *statmsg;
 
+<<<<<<< HEAD
 		switch (MyAuxProcType)
+=======
+		switch (auxType)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		{
 			case StartupProcess:
 				statmsg = "startup process";
 				break;
+<<<<<<< HEAD
 			case StartupPass2Process:
 				statmsg = "startup pass 2 process";
 				break;
@@ -374,6 +400,13 @@ AuxiliaryProcessMain(int argc, char *argv[])
 				break;
 			case FilerepResetPeerProcess:
 				statmsg = "filerep reset peer process";
+=======
+			case BgWriterProcess:
+				statmsg = "writer process";
+				break;
+			case WalWriterProcess:
+				statmsg = "wal writer process";
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				break;
 			default:
 				statmsg = "??? process";
@@ -443,7 +476,11 @@ AuxiliaryProcessMain(int argc, char *argv[])
 	 */
 	SetProcessingMode(NormalProcessing);
 
+<<<<<<< HEAD
 	switch (MyAuxProcType)
+=======
+	switch (auxType)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		case CheckerProcess:
 			bootstrap_signals();
@@ -458,6 +495,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			proc_exit(1);		/* should never return */
 
 		case StartupProcess:
+<<<<<<< HEAD
 			/* don't set signals, startup process has its own agenda */
 			StartupProcessMain(1);
 			proc_exit(1);		/* should never return */
@@ -477,12 +515,21 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			StartupProcessMain(4);
 			proc_exit(1);		/* should never return */
 
+=======
+			bootstrap_signals();
+			StartupXLOG();
+			LoadFreeSpaceMap();
+			BuildFlatFiles(false);
+			proc_exit(0);		/* startup done */
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		case BgWriterProcess:
 			/* don't set signals, bgwriter has its own agenda */
 			InitXLOGAccess();
 			BackgroundWriterMain();
 			proc_exit(1);		/* should never return */
 
+<<<<<<< HEAD
 		case CheckpointProcess:
 			/* don't set signals, checkpoint is similar to bgwriter and has its own agenda */
 			InitXLOGAccess();
@@ -504,6 +551,16 @@ AuxiliaryProcessMain(int argc, char *argv[])
 
 		default:
 			elog(PANIC, "unrecognized process type: %d", MyAuxProcType);
+=======
+		case WalWriterProcess:
+			/* don't set signals, walwriter has its own agenda */
+			InitXLOGAccess();
+			WalWriterMain();
+			proc_exit(1);		/* should never return */
+
+		default:
+			elog(PANIC, "unrecognized process type: %d", auxType);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			proc_exit(1);
 	}
 }
@@ -551,7 +608,11 @@ BootstrapModeMain(void)
 	 * Do backend-like initialization for bootstrap mode
 	 */
 	InitProcess();
+<<<<<<< HEAD
 	(void) InitPostgres(NULL, InvalidOid, NULL, NULL);
+=======
+	InitPostgres(NULL, InvalidOid, NULL, NULL);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Initialize stuff for bootstrap-file processing */
 	for (i = 0; i < MAXATTR; i++)
@@ -571,11 +632,9 @@ BootstrapModeMain(void)
 
 	/* Perform a checkpoint to ensure everything's down to disk */
 	SetProcessingMode(NormalProcessing);
-	CreateCheckPoint(true, true);
-	SetProcessingMode(BootstrapProcessing);
+	CreateCheckPoint(CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_IMMEDIATE);
 
 	/* Clean up and exit */
-	StartTransactionCommand();
 	cleanup();
 	proc_exit(0);
 }
@@ -651,18 +710,6 @@ ShutdownAuxiliaryProcess(int code, Datum arg)
 {
 	LWLockReleaseAll();
 }
-
-/* ----------------
- *		error handling / abort routines
- * ----------------
- */
-void
-err_out(void)
-{
-	Warnings++;
-	cleanup();
-}
-
 
 /* ----------------------------------------------------------------
  *				MANUAL BACKEND INTERACTIVE INTERFACE COMMANDS
@@ -917,15 +964,7 @@ InsertOneValue(char *value, int i)
 
 	elog(DEBUG4, "inserting column %d value \"%s\"", i, value);
 
-	if (Typ != NULL)
-	{
-		typoid = boot_reldesc->rd_att->attrs[i]->atttypid;
-	}
-	else
-	{
-		/* XXX why is typoid determined differently in this case? */
-		typoid = attrtypes[i]->atttypid;
-	}
+	typoid = boot_reldesc->rd_att->attrs[i]->atttypid;
 
 	boot_get_type_io_data(typoid,
 						  &typlen, &typbyval, &typalign,
@@ -958,19 +997,8 @@ InsertOneNull(int i)
 static void
 cleanup(void)
 {
-	static int	beenhere = 0;
-
-	if (!beenhere)
-		beenhere = 1;
-	else
-	{
-		elog(FATAL, "cleanup called twice");
-		proc_exit(1);
-	}
 	if (boot_reldesc != NULL)
 		closerel(NULL);
-	CommitTransactionCommand();
-	proc_exit(Warnings ? 1 : 0);
 }
 
 /* ----------------
@@ -1052,7 +1080,6 @@ gettype(char *type)
 		return gettype(type);
 	}
 	elog(ERROR, "unrecognized type \"%s\"", type);
-	err_out();
 	/* not reached, here to make compiler happy */
 	return 0;
 }
@@ -1421,8 +1448,12 @@ build_indices(void)
 		heap = heap_open(ILHead->il_heap, NoLock);
 		ind = index_open(ILHead->il_ind, NoLock);
 
+<<<<<<< HEAD
 		elog(DEBUG4, "building index %s on %s", NameStr(ind->rd_rel->relname), NameStr(heap->rd_rel->relname));
 		index_build(heap, ind, ILHead->il_info, false);
+=======
+		index_build(heap, ind, ILHead->il_info, false, false);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		index_close(ind, NoLock);
 		heap_close(heap, NoLock);

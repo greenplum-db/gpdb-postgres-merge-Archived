@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 pg_regress
 results
 yml
@@ -13,3 +14,12 @@ config.ini
 pgbouncer.log
 pgbouncer.pid
 tmp_check
+=======
+# Local binaries
+/pg_regress
+
+# Generated subdirectories
+/tmp_check/
+/results/
+/log/
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

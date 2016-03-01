@@ -11,9 +11,15 @@
  *			- Add a pgstat config column to pg_database, so this
  *			  entire thing can be enabled/disabled on a per db basis.
  *
+<<<<<<< HEAD
  *	Copyright (c) 2001-2009, PostgreSQL Global Development Group
  *
  *    $PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.151 2007/03/28 22:17:12 alvherre Exp $ 
+=======
+ *	Copyright (c) 2001-2008, PostgreSQL Global Development Group
+ *
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.169.2.2 2009/10/02 22:50:03 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * ----------
  */
 #include "postgres.h"
@@ -115,6 +121,7 @@
 bool		pgstat_track_activities = false;
 bool		pgstat_track_counts = false;
 
+<<<<<<< HEAD
 bool		pgstat_collect_queuelevel = false;
 
 int			pgstat_track_functions = TRACK_FUNC_OFF;
@@ -126,6 +133,8 @@ int			pgstat_track_functions = TRACK_FUNC_OFF;
 char	   *pgstat_stat_filename = NULL;
 char	   *pgstat_stat_tmpname = NULL;
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * BgWriter global statistics counters (unused in other processes).
  * Stored directly in a stats message structure so it can be sent
@@ -157,7 +166,11 @@ static bool pgStatRunningInCollector = false;
  * repeatedly opened during a transaction.
  */
 #define TABSTAT_QUANTUM		100 /* we alloc this many at a time */
+<<<<<<< HEAD
  
+=======
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 typedef struct TabStatusArray
 {
 	struct TabStatusArray *tsa_next;	/* link to next array, if any */
@@ -166,6 +179,7 @@ typedef struct TabStatusArray
 } TabStatusArray;
 
 static TabStatusArray *pgStatTabList = NULL;
+<<<<<<< HEAD
 
 /*
  * Backends store per-function info that's waiting to be sent to the collector
@@ -178,6 +192,8 @@ static HTAB *pgStatFunctions = NULL;
  * sent to the collector.
  */
 static bool have_function_stats = false;
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * Tuple insertion/deletion counts for an open transaction can't be propagated
@@ -226,12 +242,15 @@ static int	localNumBackends = 0;
  */
 static PgStat_GlobalStats globalStats;
 
+<<<<<<< HEAD
 /* Last time the collector successfully wrote the stats file */
 static TimestampTz last_statwrite;
 
 /* Latest statistics request time from backends */
 static TimestampTz last_statrequest;
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static volatile bool need_exit = false;
 static volatile bool got_SIGHUP = false;
 
@@ -266,7 +285,10 @@ static void backend_read_statsfile(void);
 static void pgstat_read_current_status(void);
 
 static void pgstat_send_tabstat(PgStat_MsgTabstat *tsmsg);
+<<<<<<< HEAD
 static void pgstat_send_funcstats(void);
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static HTAB *pgstat_collect_oids(Oid catalogid);
 
 static PgStat_TableStatus *get_tabstat_entry(Oid rel_id, bool isshared);
@@ -284,10 +306,14 @@ static void pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len);
 static void pgstat_recv_autovac(PgStat_MsgAutovacStart *msg, int len);
 static void pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len);
 static void pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len);
+<<<<<<< HEAD
 static void pgstat_recv_queuestat(PgStat_MsgQueuestat *msg, int len); /* GPDB */
 static void pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len);
 static void pgstat_recv_funcstat(PgStat_MsgFuncstat *msg, int len);
 static void pgstat_recv_funcpurge(PgStat_MsgFuncpurge *msg, int len);
+=======
+static void pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 /* ------------------------------------------------------------
@@ -321,6 +347,7 @@ pgstat_init(void)
 #define TESTBYTEVAL ((char) 199)
 
 	/*
+<<<<<<< HEAD
 	 * Create stats temp directory if not present; ignore errors.
 	 * This avoids the need to initdb... This is temporary code, and
 	 * can be removed in the future, as initdb does this for us.
@@ -328,6 +355,8 @@ pgstat_init(void)
 	mkdir("pg_stat_tmp", 0700);
 	
 	/*
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 * Create the UDP socket for sending and receiving statistic messages
 	 */
 	hints.ai_flags = AI_PASSIVE;
@@ -548,10 +577,14 @@ startup_failed:
 	 * use PGC_S_OVERRIDE because there is no point in trying to turn it back
 	 * on from postgresql.conf without a restart.
 	 */
+<<<<<<< HEAD
 
 	SetConfigOption("track_counts", "off", PGC_INTERNAL, PGC_S_OVERRIDE);
 	pgstat_track_counts = false;
 	pgstat_collect_queuelevel = false;
+=======
+	SetConfigOption("track_counts", "off", PGC_INTERNAL, PGC_S_OVERRIDE);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
@@ -681,6 +714,7 @@ allow_immediate_pgstat_restart(void)
  * pgstat_report_stat() -
  *
  *	Called from tcop/postgres.c to send the so far collected per-table
+<<<<<<< HEAD
  *	and function usage statistics to the collector.  Note that this is
  *	called only when not within a transaction, so it is fair to use
  *	transaction stop time as an approximation of current time.
@@ -688,6 +722,15 @@ allow_immediate_pgstat_restart(void)
  */
 void
 pgstat_report_stat(bool force)
+=======
+ *	access statistics to the collector.  Note that this is called only
+ *	when not within a transaction, so it is fair to use transaction stop
+ *	time as an approximation of current time.
+ * ----------
+ */
+void
+pgstat_report_tabstat(bool force)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	/* we assume this inits to all zeroes: */
 	static const PgStat_TableCounts all_zeroes;
@@ -700,6 +743,7 @@ pgstat_report_stat(bool force)
 	int			i;
 
 	/* Don't expend a clock check if nothing to do */
+<<<<<<< HEAD
 	if ((pgStatTabList == NULL || pgStatTabList->tsa_used == 0)
 		&& !have_function_stats)
 		return;
@@ -786,6 +830,91 @@ pgstat_send_tabstat(PgStat_MsgTabstat *tsmsg)
 	{
 		int			n;
 		int			len;
+=======
+	if (pgStatTabList == NULL ||
+		pgStatTabList->tsa_used == 0)
+		return;
+
+	/*
+	 * Don't send a message unless it's been at least PGSTAT_STAT_INTERVAL
+	 * msec since we last sent one, or the caller wants to force stats out.
+	 */
+	now = GetCurrentTransactionStopTimestamp();
+	if (!force &&
+		!TimestampDifferenceExceeds(last_report, now, PGSTAT_STAT_INTERVAL))
+		return;
+	last_report = now;
+
+	/*
+	 * Scan through the TabStatusArray struct(s) to find tables that actually
+	 * have counts, and build messages to send.  We have to separate shared
+	 * relations from regular ones because the databaseid field in the message
+	 * header has to depend on that.
+	 */
+	regular_msg.m_databaseid = MyDatabaseId;
+	shared_msg.m_databaseid = InvalidOid;
+	regular_msg.m_nentries = 0;
+	shared_msg.m_nentries = 0;
+
+	for (tsa = pgStatTabList; tsa != NULL; tsa = tsa->tsa_next)
+	{
+		for (i = 0; i < tsa->tsa_used; i++)
+		{
+			PgStat_TableStatus *entry = &tsa->tsa_entries[i];
+			PgStat_MsgTabstat *this_msg;
+			PgStat_TableEntry *this_ent;
+
+			/* Shouldn't have any pending transaction-dependent counts */
+			Assert(entry->trans == NULL);
+
+			/*
+			 * Ignore entries that didn't accumulate any actual counts, such
+			 * as indexes that were opened by the planner but not used.
+			 */
+			if (memcmp(&entry->t_counts, &all_zeroes,
+					   sizeof(PgStat_TableCounts)) == 0)
+				continue;
+
+			/*
+			 * OK, insert data into the appropriate message, and send if full.
+			 */
+			this_msg = entry->t_shared ? &shared_msg : &regular_msg;
+			this_ent = &this_msg->m_entry[this_msg->m_nentries];
+			this_ent->t_id = entry->t_id;
+			memcpy(&this_ent->t_counts, &entry->t_counts,
+				   sizeof(PgStat_TableCounts));
+			if (++this_msg->m_nentries >= PGSTAT_NUM_TABENTRIES)
+			{
+				pgstat_send_tabstat(this_msg);
+				this_msg->m_nentries = 0;
+			}
+		}
+		/* zero out TableStatus structs after use */
+		MemSet(tsa->tsa_entries, 0,
+			   tsa->tsa_used * sizeof(PgStat_TableStatus));
+		tsa->tsa_used = 0;
+	}
+
+	/*
+	 * Send partial messages.  If force is true, make sure that any pending
+	 * xact commit/abort gets counted, even if no table stats to send.
+	 */
+	if (regular_msg.m_nentries > 0 ||
+		(force && (pgStatXactCommit > 0 || pgStatXactRollback > 0)))
+		pgstat_send_tabstat(&regular_msg);
+	if (shared_msg.m_nentries > 0)
+		pgstat_send_tabstat(&shared_msg);
+}
+
+/*
+ * Subroutine for pgstat_report_tabstat: finish and send a tabstat message
+ */
+static void
+pgstat_send_tabstat(PgStat_MsgTabstat *tsmsg)
+{
+	int			n;
+	int			len;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* It's unlikely we'd get here with no socket, but maybe not impossible */
 	if (pgStatSock < 0)
@@ -806,6 +935,7 @@ pgstat_send_tabstat(PgStat_MsgTabstat *tsmsg)
 	{
 		tsmsg->m_xact_commit = 0;
 		tsmsg->m_xact_rollback = 0;
+<<<<<<< HEAD
 	}
 
 		n = tsmsg->m_nentries;
@@ -869,6 +999,16 @@ pgstat_send_funcstats(void)
 					msg.m_nentries * sizeof(PgStat_FunctionEntry));
 
 	have_function_stats = false;
+=======
+	}
+
+	n = tsmsg->m_nentries;
+	len = offsetof(PgStat_MsgTabstat, m_entry[0]) +
+		n * sizeof(PgStat_TableEntry);
+
+	pgstat_setheader(&tsmsg->m_hdr, PGSTAT_MTYPE_TABSTAT);
+	pgstat_send(tsmsg, len);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 
@@ -1121,10 +1261,17 @@ pgstat_drop_database(Oid databaseid)
  *
  *	Tell the collector that we just dropped a relation.
  *	(If the message gets lost, we will still clean the dead entry eventually
+<<<<<<< HEAD
  *	via future invocations of pgstat_vacuum_stat().)
  *
  *	Currently not used for lack of any good place to call it; we rely
  *	entirely on pgstat_vacuum_stat() to clean out stats for dead rels.
+=======
+ *	via future invocations of pgstat_vacuum_tabstat().)
+ *
+ *	Currently not used for lack of any good place to call it; we rely
+ *	entirely on pgstat_vacuum_tabstat() to clean out stats for dead rels.
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * ----------
  */
 #ifdef NOT_USED
@@ -1218,7 +1365,7 @@ pgstat_report_vacuum(Oid tableoid, bool shared, bool scanned_all,
 	msg.m_tableoid = tableoid;
 	msg.m_scanned_all = scanned_all;
 	msg.m_analyze = analyze;
-	msg.m_autovacuum = IsAutoVacuumWorkerProcess();	/* is this autovacuum? */
+	msg.m_autovacuum = IsAutoVacuumWorkerProcess();		/* is this autovacuum? */
 	msg.m_vacuumtime = GetCurrentTimestamp();
 	msg.m_tuples = tuples;
 	pgstat_send(&msg, sizeof(msg));
@@ -1240,6 +1387,7 @@ pgstat_report_analyze(Relation rel, PgStat_Counter livetuples,
 		return;
 
 	/*
+<<<<<<< HEAD
 	 * Unlike VACUUM, ANALYZE might be running inside a transaction that has
 	 * already inserted and/or deleted rows in the target table. ANALYZE will
 	 * have counted such rows as live or dead respectively. Because we will
@@ -1248,6 +1396,16 @@ pgstat_report_analyze(Relation rel, PgStat_Counter livetuples,
 	 * be double-counted after commit.	(This approach also ensures that the
 	 * collector ends up with the right numbers if we abort instead of
 	 * committing.)
+=======
+	 * Unlike VACUUM, ANALYZE might be running inside a transaction that
+	 * has already inserted and/or deleted rows in the target table.
+	 * ANALYZE will have counted such rows as live or dead respectively.
+	 * Because we will report our counts of such rows at transaction end,
+	 * we should subtract off these counts from what we send to the collector
+	 * now, else they'll be double-counted after commit.  (This approach also
+	 * ensures that the collector ends up with the right numbers if we abort
+	 * instead of committing.)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	if (rel->pgstat_info != NULL)
 	{
@@ -1294,6 +1452,7 @@ pgstat_ping(void)
 	pgstat_send(&msg, sizeof(msg));
 }
 
+<<<<<<< HEAD
 /* ----------
  * pgstat_send_inquiry() -
  *
@@ -1620,7 +1779,510 @@ pgstat_count_heap_update(Relation rel, bool hot)
 		/* An UPDATE both inserts a new tuple and deletes the old */
 		pgstat_info->trans->tuples_inserted++;
 		pgstat_info->trans->tuples_deleted++;
+=======
+
+/* ----------
+ * pgstat_initstats() -
+ *
+ *	Initialize a relcache entry to count access statistics.
+ *	Called whenever a relation is opened.
+ *
+ *	We assume that a relcache entry's pgstat_info field is zeroed by
+ *	relcache.c when the relcache entry is made; thereafter it is long-lived
+ *	data.  We can avoid repeated searches of the TabStatus arrays when the
+ *	same relation is touched repeatedly within a transaction.
+ * ----------
+ */
+void
+pgstat_initstats(Relation rel)
+{
+	Oid			rel_id = rel->rd_id;
+	char		relkind = rel->rd_rel->relkind;
+
+	/* We only count stats for things that have storage */
+	if (!(relkind == RELKIND_RELATION ||
+		  relkind == RELKIND_INDEX ||
+		  relkind == RELKIND_TOASTVALUE ||
+		  relkind == RELKIND_SEQUENCE))
+	{
+		rel->pgstat_info = NULL;
+		return;
 	}
+
+	if (pgStatSock < 0 || !pgstat_track_counts)
+	{
+		/* We're not counting at all */
+		rel->pgstat_info = NULL;
+		return;
+	}
+
+	/*
+	 * If we already set up this relation in the current transaction, nothing
+	 * to do.
+	 */
+	if (rel->pgstat_info != NULL &&
+		rel->pgstat_info->t_id == rel_id)
+		return;
+
+	/* Else find or make the PgStat_TableStatus entry, and update link */
+	rel->pgstat_info = get_tabstat_entry(rel_id, rel->rd_rel->relisshared);
+}
+
+/*
+ * get_tabstat_entry - find or create a PgStat_TableStatus entry for rel
+ */
+static PgStat_TableStatus *
+get_tabstat_entry(Oid rel_id, bool isshared)
+{
+	PgStat_TableStatus *entry;
+	TabStatusArray *tsa;
+	TabStatusArray *prev_tsa;
+	int			i;
+
+	/*
+	 * Search the already-used tabstat slots for this relation.
+	 */
+	prev_tsa = NULL;
+	for (tsa = pgStatTabList; tsa != NULL; prev_tsa = tsa, tsa = tsa->tsa_next)
+	{
+		for (i = 0; i < tsa->tsa_used; i++)
+		{
+			entry = &tsa->tsa_entries[i];
+			if (entry->t_id == rel_id)
+				return entry;
+		}
+
+		if (tsa->tsa_used < TABSTAT_QUANTUM)
+		{
+			/*
+			 * It must not be present, but we found a free slot instead. Fine,
+			 * let's use this one.  We assume the entry was already zeroed,
+			 * either at creation or after last use.
+			 */
+			entry = &tsa->tsa_entries[tsa->tsa_used++];
+			entry->t_id = rel_id;
+			entry->t_shared = isshared;
+			return entry;
+		}
+	}
+
+	/*
+	 * We ran out of tabstat slots, so allocate more.  Be sure they're zeroed.
+	 */
+	tsa = (TabStatusArray *) MemoryContextAllocZero(TopMemoryContext,
+													sizeof(TabStatusArray));
+	if (prev_tsa)
+		prev_tsa->tsa_next = tsa;
+	else
+		pgStatTabList = tsa;
+
+	/*
+	 * Use the first entry of the new TabStatusArray.
+	 */
+	entry = &tsa->tsa_entries[tsa->tsa_used++];
+	entry->t_id = rel_id;
+	entry->t_shared = isshared;
+	return entry;
+}
+
+/*
+ * get_tabstat_stack_level - add a new (sub)transaction stack entry if needed
+ */
+static PgStat_SubXactStatus *
+get_tabstat_stack_level(int nest_level)
+{
+	PgStat_SubXactStatus *xact_state;
+
+	xact_state = pgStatXactStack;
+	if (xact_state == NULL || xact_state->nest_level != nest_level)
+	{
+		xact_state = (PgStat_SubXactStatus *)
+			MemoryContextAlloc(TopTransactionContext,
+							   sizeof(PgStat_SubXactStatus));
+		xact_state->nest_level = nest_level;
+		xact_state->prev = pgStatXactStack;
+		xact_state->first = NULL;
+		pgStatXactStack = xact_state;
+	}
+	return xact_state;
+}
+
+/*
+ * add_tabstat_xact_level - add a new (sub)transaction state record
+ */
+static void
+add_tabstat_xact_level(PgStat_TableStatus *pgstat_info, int nest_level)
+{
+	PgStat_SubXactStatus *xact_state;
+	PgStat_TableXactStatus *trans;
+
+	/*
+	 * If this is the first rel to be modified at the current nest level, we
+	 * first have to push a transaction stack entry.
+	 */
+	xact_state = get_tabstat_stack_level(nest_level);
+
+	/* Now make a per-table stack entry */
+	trans = (PgStat_TableXactStatus *)
+		MemoryContextAllocZero(TopTransactionContext,
+							   sizeof(PgStat_TableXactStatus));
+	trans->nest_level = nest_level;
+	trans->upper = pgstat_info->trans;
+	trans->parent = pgstat_info;
+	trans->next = xact_state->first;
+	xact_state->first = trans;
+	pgstat_info->trans = trans;
+}
+
+/*
+ * pgstat_count_heap_insert - count a tuple insertion
+ */
+void
+pgstat_count_heap_insert(Relation rel)
+{
+	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
+
+	if (pgstat_track_counts && pgstat_info != NULL)
+	{
+		int			nest_level = GetCurrentTransactionNestLevel();
+
+		/* t_tuples_inserted is nontransactional, so just advance it */
+		pgstat_info->t_counts.t_tuples_inserted++;
+
+		/* We have to log the transactional effect at the proper level */
+		if (pgstat_info->trans == NULL ||
+			pgstat_info->trans->nest_level != nest_level)
+			add_tabstat_xact_level(pgstat_info, nest_level);
+
+		pgstat_info->trans->tuples_inserted++;
+	}
+}
+
+/*
+ * pgstat_count_heap_update - count a tuple update
+ */
+void
+pgstat_count_heap_update(Relation rel, bool hot)
+{
+	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
+
+	if (pgstat_track_counts && pgstat_info != NULL)
+	{
+		int			nest_level = GetCurrentTransactionNestLevel();
+
+		/* t_tuples_updated is nontransactional, so just advance it */
+		pgstat_info->t_counts.t_tuples_updated++;
+		/* ditto for the hot_update counter */
+		if (hot)
+			pgstat_info->t_counts.t_tuples_hot_updated++;
+
+		/* We have to log the transactional effect at the proper level */
+		if (pgstat_info->trans == NULL ||
+			pgstat_info->trans->nest_level != nest_level)
+			add_tabstat_xact_level(pgstat_info, nest_level);
+
+		/* An UPDATE both inserts a new tuple and deletes the old */
+		pgstat_info->trans->tuples_inserted++;
+		pgstat_info->trans->tuples_deleted++;
+	}
+}
+
+/*
+ * pgstat_count_heap_delete - count a tuple deletion
+ */
+void
+pgstat_count_heap_delete(Relation rel)
+{
+	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
+
+	if (pgstat_track_counts && pgstat_info != NULL)
+	{
+		int			nest_level = GetCurrentTransactionNestLevel();
+
+		/* t_tuples_deleted is nontransactional, so just advance it */
+		pgstat_info->t_counts.t_tuples_deleted++;
+
+		/* We have to log the transactional effect at the proper level */
+		if (pgstat_info->trans == NULL ||
+			pgstat_info->trans->nest_level != nest_level)
+			add_tabstat_xact_level(pgstat_info, nest_level);
+
+		pgstat_info->trans->tuples_deleted++;
+	}
+}
+
+/*
+ * pgstat_update_heap_dead_tuples - update dead-tuples count
+ *
+ * The semantics of this are that we are reporting the nontransactional
+ * recovery of "delta" dead tuples; so t_new_dead_tuples decreases
+ * rather than increasing, and the change goes straight into the per-table
+ * counter, not into transactional state.
+ */
+void
+pgstat_update_heap_dead_tuples(Relation rel, int delta)
+{
+	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
+
+	if (pgstat_track_counts && pgstat_info != NULL)
+		pgstat_info->t_counts.t_new_dead_tuples -= delta;
+}
+
+
+/* ----------
+ * AtEOXact_PgStat
+ *
+ *	Called from access/transam/xact.c at top-level transaction commit/abort.
+ * ----------
+ */
+void
+AtEOXact_PgStat(bool isCommit)
+{
+	PgStat_SubXactStatus *xact_state;
+
+	/*
+	 * Count transaction commit or abort.  (We use counters, not just bools,
+	 * in case the reporting message isn't sent right away.)
+	 */
+	if (isCommit)
+		pgStatXactCommit++;
+	else
+		pgStatXactRollback++;
+
+	/*
+	 * Transfer transactional insert/update counts into the base tabstat
+	 * entries.  We don't bother to free any of the transactional state, since
+	 * it's all in TopTransactionContext and will go away anyway.
+	 */
+	xact_state = pgStatXactStack;
+	if (xact_state != NULL)
+	{
+		PgStat_TableXactStatus *trans;
+
+		Assert(xact_state->nest_level == 1);
+		Assert(xact_state->prev == NULL);
+		for (trans = xact_state->first; trans != NULL; trans = trans->next)
+		{
+			PgStat_TableStatus *tabstat;
+
+			Assert(trans->nest_level == 1);
+			Assert(trans->upper == NULL);
+			tabstat = trans->parent;
+			Assert(tabstat->trans == trans);
+			if (isCommit)
+			{
+				tabstat->t_counts.t_new_live_tuples +=
+					trans->tuples_inserted - trans->tuples_deleted;
+				tabstat->t_counts.t_new_dead_tuples += trans->tuples_deleted;
+			}
+			else
+			{
+				/* inserted tuples are dead, deleted tuples are unaffected */
+				tabstat->t_counts.t_new_dead_tuples += trans->tuples_inserted;
+			}
+			tabstat->trans = NULL;
+		}
+	}
+	pgStatXactStack = NULL;
+
+	/* Make sure any stats snapshot is thrown away */
+	pgstat_clear_snapshot();
+}
+
+/* ----------
+ * AtEOSubXact_PgStat
+ *
+ *	Called from access/transam/xact.c at subtransaction commit/abort.
+ * ----------
+ */
+void
+AtEOSubXact_PgStat(bool isCommit, int nestDepth)
+{
+	PgStat_SubXactStatus *xact_state;
+
+	/*
+	 * Transfer transactional insert/update counts into the next higher
+	 * subtransaction state.
+	 */
+	xact_state = pgStatXactStack;
+	if (xact_state != NULL &&
+		xact_state->nest_level >= nestDepth)
+	{
+		PgStat_TableXactStatus *trans;
+		PgStat_TableXactStatus *next_trans;
+
+		/* delink xact_state from stack immediately to simplify reuse case */
+		pgStatXactStack = xact_state->prev;
+
+		for (trans = xact_state->first; trans != NULL; trans = next_trans)
+		{
+			PgStat_TableStatus *tabstat;
+
+			next_trans = trans->next;
+			Assert(trans->nest_level == nestDepth);
+			tabstat = trans->parent;
+			Assert(tabstat->trans == trans);
+			if (isCommit)
+			{
+				if (trans->upper && trans->upper->nest_level == nestDepth - 1)
+				{
+					trans->upper->tuples_inserted += trans->tuples_inserted;
+					trans->upper->tuples_deleted += trans->tuples_deleted;
+					tabstat->trans = trans->upper;
+					pfree(trans);
+				}
+				else
+				{
+					/*
+					 * When there isn't an immediate parent state, we can just
+					 * reuse the record instead of going through a
+					 * palloc/pfree pushup (this works since it's all in
+					 * TopTransactionContext anyway).  We have to re-link it
+					 * into the parent level, though, and that might mean
+					 * pushing a new entry into the pgStatXactStack.
+					 */
+					PgStat_SubXactStatus *upper_xact_state;
+
+					upper_xact_state = get_tabstat_stack_level(nestDepth - 1);
+					trans->next = upper_xact_state->first;
+					upper_xact_state->first = trans;
+					trans->nest_level = nestDepth - 1;
+				}
+			}
+			else
+			{
+				/*
+				 * On abort, inserted tuples are dead (and can be bounced out
+				 * to the top-level tabstat), deleted tuples are unaffected
+				 */
+				tabstat->t_counts.t_new_dead_tuples += trans->tuples_inserted;
+				tabstat->trans = trans->upper;
+				pfree(trans);
+			}
+		}
+		pfree(xact_state);
+	}
+}
+
+
+/*
+ * AtPrepare_PgStat
+ *		Save the transactional stats state at 2PC transaction prepare.
+ *
+ * In this phase we just generate 2PC records for all the pending
+ * transaction-dependent stats work.
+ */
+void
+AtPrepare_PgStat(void)
+{
+	PgStat_SubXactStatus *xact_state;
+
+	xact_state = pgStatXactStack;
+	if (xact_state != NULL)
+	{
+		PgStat_TableXactStatus *trans;
+
+		Assert(xact_state->nest_level == 1);
+		Assert(xact_state->prev == NULL);
+		for (trans = xact_state->first; trans != NULL; trans = trans->next)
+		{
+			PgStat_TableStatus *tabstat;
+			TwoPhasePgStatRecord record;
+
+			Assert(trans->nest_level == 1);
+			Assert(trans->upper == NULL);
+			tabstat = trans->parent;
+			Assert(tabstat->trans == trans);
+
+			record.tuples_inserted = trans->tuples_inserted;
+			record.tuples_deleted = trans->tuples_deleted;
+			record.t_id = tabstat->t_id;
+			record.t_shared = tabstat->t_shared;
+
+			RegisterTwoPhaseRecord(TWOPHASE_RM_PGSTAT_ID, 0,
+								   &record, sizeof(TwoPhasePgStatRecord));
+		}
+	}
+}
+
+/*
+ * PostPrepare_PgStat
+ *		Clean up after successful PREPARE.
+ *
+ * All we need do here is unlink the transaction stats state from the
+ * nontransactional state.	The nontransactional action counts will be
+ * reported to the stats collector immediately, while the effects on live
+ * and dead tuple counts are preserved in the 2PC state file.
+ *
+ * Note: AtEOXact_PgStat is not called during PREPARE.
+ */
+void
+PostPrepare_PgStat(void)
+{
+	PgStat_SubXactStatus *xact_state;
+
+	/*
+	 * We don't bother to free any of the transactional state, since it's all
+	 * in TopTransactionContext and will go away anyway.
+	 */
+	xact_state = pgStatXactStack;
+	if (xact_state != NULL)
+	{
+		PgStat_TableXactStatus *trans;
+
+		for (trans = xact_state->first; trans != NULL; trans = trans->next)
+		{
+			PgStat_TableStatus *tabstat;
+
+			tabstat = trans->parent;
+			tabstat->trans = NULL;
+		}
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	}
+	pgStatXactStack = NULL;
+
+	/* Make sure any stats snapshot is thrown away */
+	pgstat_clear_snapshot();
+}
+
+/*
+ * 2PC processing routine for COMMIT PREPARED case.
+ *
+ * Load the saved counts into our local pgstats state.
+ */
+void
+pgstat_twophase_postcommit(TransactionId xid, uint16 info,
+						   void *recdata, uint32 len)
+{
+	TwoPhasePgStatRecord *rec = (TwoPhasePgStatRecord *) recdata;
+	PgStat_TableStatus *pgstat_info;
+
+	/* Find or create a tabstat entry for the rel */
+	pgstat_info = get_tabstat_entry(rec->t_id, rec->t_shared);
+
+	pgstat_info->t_counts.t_new_live_tuples +=
+		rec->tuples_inserted - rec->tuples_deleted;
+	pgstat_info->t_counts.t_new_dead_tuples += rec->tuples_deleted;
+}
+
+/*
+ * 2PC processing routine for ROLLBACK PREPARED case.
+ *
+ * Load the saved counts into our local pgstats state, but treat them
+ * as aborted.
+ */
+void
+pgstat_twophase_postabort(TransactionId xid, uint16 info,
+						  void *recdata, uint32 len)
+{
+	TwoPhasePgStatRecord *rec = (TwoPhasePgStatRecord *) recdata;
+	PgStat_TableStatus *pgstat_info;
+
+	/* Find or create a tabstat entry for the rel */
+	pgstat_info = get_tabstat_entry(rec->t_id, rec->t_shared);
+
+	/* inserted tuples are dead, deleted tuples are no-ops */
+	pgstat_info->t_counts.t_new_dead_tuples += rec->tuples_inserted;
 }
 
 /*
@@ -2186,7 +2848,10 @@ CreateSharedBackendStatus(void)
  *	Called from InitPostgres.  MyBackendId must be set,
  *	but we must not have started any transaction yet (since the
  *	exit hook must run after the last transaction exit).
+<<<<<<< HEAD
  *	NOTE: MyDatabaseId isn't set yet; so the shutdown hook has to be careful.
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * ----------
  */
 void
@@ -2204,8 +2869,12 @@ pgstat_initialize(void)
  * pgstat_bestart() -
  *
  *	Initialize this backend's entry in the PgBackendStatus array.
+<<<<<<< HEAD
  *	Called from InitPostgres.
  *	MyDatabaseId, session userid, and application_name must be set
+=======
+ *	Called from InitPostgres.  MyDatabaseId and session userid must be set
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *	(hence, this cannot be combined with pgstat_initialize).
  * ----------
  */
@@ -2269,6 +2938,7 @@ pgstat_bestart(void)
 
 	beentry->st_changecount++;
 	Assert((beentry->st_changecount & 1) == 0);
+<<<<<<< HEAD
 
 	/*
 	 * GPDB: Initialize per-portal statistics hash for resource queues.
@@ -2285,6 +2955,8 @@ pgstat_bestart(void)
 	/* Update app name to current GUC setting */
 	if (application_name)
 		pgstat_report_appname(application_name);
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
@@ -2301,6 +2973,7 @@ pgstat_beshutdown_hook(int code, Datum arg)
 {
 	volatile PgBackendStatus *beentry = MyBEEntry;
 
+<<<<<<< HEAD
 	/*
 	 * If we got as far as discovering our own database ID, we can report what
 	 * we did to the collector.  Otherwise, we'd be sending an invalid
@@ -2309,6 +2982,9 @@ pgstat_beshutdown_hook(int code, Datum arg)
 	 */
 	if (OidIsValid(MyDatabaseId))
 	    pgstat_report_stat(true);
+=======
+	pgstat_report_tabstat(true);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Clear my status entry, following the protocol of bumping st_changecount
@@ -2339,8 +3015,11 @@ pgstat_report_activity(const char *cmd_str)
 	TimestampTz start_timestamp;
 	int			len;
 
+<<<<<<< HEAD
 	// TRACE_POSTGRESQL_STATEMENT_STATUS(cmd_str);
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (!pgstat_track_activities || !beentry)
 		return;
 
@@ -2759,8 +3438,17 @@ PgstatCollectorMain(int argc, char *argv[])
 	/*
 	 * Arrange to write the initial status file right away
 	 */
+<<<<<<< HEAD
     last_statrequest = GetCurrentTimestamp();
 	last_statwrite = last_statrequest - 1;
+=======
+	need_statwrite = true;
+
+	/* Preset the delay between status file writes */
+	MemSet(&write_timeout, 0, sizeof(struct itimerval));
+	write_timeout.it_value.tv_sec = PGSTAT_STAT_INTERVAL / 1000;
+	write_timeout.it_value.tv_usec = (PGSTAT_STAT_INTERVAL % 1000) * 1000;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Read in an existing statistics stats file or initialize the stats to
@@ -2861,9 +3549,9 @@ PgstatCollectorMain(int argc, char *argv[])
 
 		got_data = FD_ISSET(pgStatSock, &rfds);
 #endif   /* HAVE_POLL */
-#else /* WIN32 */
+#else							/* WIN32 */
 		got_data = pgwin32_waitforsinglesocket(pgStatSock, FD_READ,
-											   PGSTAT_SELECT_TIMEOUT*1000);
+											   PGSTAT_SELECT_TIMEOUT * 1000);
 #endif
 
 		/*
@@ -2938,6 +3626,7 @@ PgstatCollectorMain(int argc, char *argv[])
 
 				case PGSTAT_MTYPE_BGWRITER:
 					pgstat_recv_bgwriter((PgStat_MsgBgWriter *) &msg, len);
+<<<<<<< HEAD
                     break;
 
 				case PGSTAT_MTYPE_QUEUESTAT:  /* GPDB */
@@ -2946,6 +3635,11 @@ PgstatCollectorMain(int argc, char *argv[])
 
 				case PGSTAT_MTYPE_FUNCSTAT:
 					pgstat_recv_funcstat((PgStat_MsgFuncstat *) &msg, len);
+=======
+					break;
+
+				default:
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					break;
 
 				case PGSTAT_MTYPE_FUNCPURGE:
@@ -3248,6 +3942,7 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 	 */
 	memset(&globalStats, 0, sizeof(globalStats));
 
+<<<<<<< HEAD
 
 	/**
 	 ** Create the Queue hashtable
@@ -3267,6 +3962,8 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 	 */
 	memset(&globalStats, 0, sizeof(globalStats));
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/*
 	 * Try to open the status file. If it doesn't exist, the backends simply
 	 * return zero for anything and the collector simply starts from scratch
@@ -3364,6 +4061,7 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 											  PGSTAT_TAB_HASH_SIZE,
 											  &hash_ctl,
 								   HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+<<<<<<< HEAD
 
 				memset(&hash_ctl, 0, sizeof(hash_ctl));
 				hash_ctl.keysize = sizeof(Oid);
@@ -3374,6 +4072,8 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 												 PGSTAT_FUNCTION_HASH_SIZE,
 												 &hash_ctl,
 								   HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 				/*
 				 * Arrange that following records add entries to this
@@ -4031,6 +4731,7 @@ pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len)
 	globalStats.buf_written_backend += msg->m_buf_written_backend;
 	globalStats.buf_alloc += msg->m_buf_alloc;
 }
+<<<<<<< HEAD
 
 
 /*
@@ -4310,3 +5011,5 @@ pgstat_recv_funcpurge(PgStat_MsgFuncpurge *msg, int len)
 						   HASH_REMOVE, NULL);
 	}
 }
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

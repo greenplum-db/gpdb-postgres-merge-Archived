@@ -12,6 +12,7 @@
 *.mo
 objfiles.txt
 .deps/
+<<<<<<< HEAD
 *.log
 *.vcproj
 *.gcno
@@ -27,11 +28,14 @@ lib*dll.defautom4te.cache
 **/tags
 *.pyc
 **/vagrant-local.yml
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 # Local excludes in root directory
 /GNUmakefile
 /config.log
 /config.status
+<<<<<<< HEAD
 a.out.dSYM
 confdefs.h
 conftest.c
@@ -52,3 +56,5 @@ build.sh
 *.out
 
 VERSION
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

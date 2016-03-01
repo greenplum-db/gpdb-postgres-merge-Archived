@@ -3,18 +3,23 @@
  * execGrouping.c
  *	  executor utility routines for grouping, hashing, and aggregation
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execGrouping.c,v 1.25 2007/02/06 02:59:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execGrouping.c,v 1.26 2008/01/01 19:45:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "executor/executor.h"
+#include "miscadmin.h"
 #include "parser/parse_oper.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -278,8 +283,19 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 	TupleHashTable hashtable;
 	HASHCTL		hash_ctl;
 
-	Assert(nbuckets > 0);
+	/*
+	 * Many callers pass "long" values for nbuckets, which means that we can
+	 * receive a bogus value on 64-bit machines.  It seems unwise to change
+	 * this function's signature in released branches, so instead assume that
+	 * a negative input means long->int overflow occurred.
+	 */
+	if (nbuckets <= 0)
+		nbuckets = INT_MAX;
+
 	Assert(entrysize >= sizeof(TupleHashEntryData));
+
+	/* Limit initial table size request to not more than work_mem */
+	nbuckets = Min(nbuckets, (long) ((work_mem * 1024L) / entrysize));
 
 	hashtable = (TupleHashTable) MemoryContextAlloc(tablecxt,
 												 sizeof(TupleHashTableData));

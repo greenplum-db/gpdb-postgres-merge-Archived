@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.154 2007/01/05 22:19:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.162.2.1 2008/03/13 18:32:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,7 +277,7 @@ byteain(PG_FUNCTION_ARGS)
 Datum
 byteaout(PG_FUNCTION_ARGS)
 {
-	bytea	   *vlena = PG_GETARG_BYTEA_P(0);
+	bytea	   *vlena = PG_GETARG_BYTEA_PP(0);
 	char	   *result;
 	char	   *vp;
 	char	   *rp;
@@ -379,6 +379,7 @@ textin(PG_FUNCTION_ARGS)
 Datum
 textout(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	char *result;
 
 	Datum d = PG_GETARG_DATUM(0);
@@ -387,6 +388,15 @@ textout(PG_FUNCTION_ARGS)
 
 	result = (char *) palloc(len + 1);
 	memcpy(result, p, len);
+=======
+	text	   *t = PG_GETARG_TEXT_PP(0);
+	int			len;
+	char	   *result;
+
+	len = VARSIZE_ANY_EXHDR(t);
+	result = (char *) palloc(len + 1);
+	memcpy(result, VARDATA_ANY(t), len);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	result[len] = '\0';
 
 	if(tofree != NULL)
@@ -504,6 +514,7 @@ text_length(Datum str)
 		PG_RETURN_INT32(toast_raw_datum_size(str) - VARHDRSZ);
 	else
 	{
+<<<<<<< HEAD
 		int32 ret;
 		char *p; void *tofree; int len;
 		varattrib_untoast_ptr_len(str, &p, &len, &tofree);
@@ -513,6 +524,12 @@ text_length(Datum str)
 			pfree(tofree);
 
 		PG_RETURN_INT32(ret);
+=======
+		text	   *t = DatumGetTextPP(str);
+
+		PG_RETURN_INT32(pg_mbstrlen_with_len(VARDATA_ANY(t),
+											 VARSIZE_ANY_EXHDR(t)));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 }
 
@@ -551,6 +568,7 @@ textoctetlen(PG_FUNCTION_ARGS)
  */
 static inline Datum generic_varlena_cat(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	Datum d0 = PG_GETARG_DATUM(0);
 	char *p0; void *tofree0; int len0;
 
@@ -563,6 +581,23 @@ static inline Datum generic_varlena_cat(PG_FUNCTION_ARGS)
 
 	varattrib_untoast_ptr_len(d0, &p0, &len0, &tofree0);
 	varattrib_untoast_ptr_len(d1, &p1, &len1, &tofree1);
+=======
+	text	   *t1 = PG_GETARG_TEXT_PP(0);
+	text	   *t2 = PG_GETARG_TEXT_PP(1);
+	int			len1,
+				len2,
+				len;
+	text	   *result;
+	char	   *ptr;
+
+	len1 = VARSIZE_ANY_EXHDR(t1);
+	if (len1 < 0)
+		len1 = 0;
+
+	len2 = VARSIZE_ANY_EXHDR(t2);
+	if (len2 < 0)
+		len2 = 0;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	len = len0 + len1 + VARHDRSZ;
 	result = (text *) palloc(len);
@@ -576,7 +611,13 @@ static inline Datum generic_varlena_cat(PG_FUNCTION_ARGS)
 	if (len0 > 0)
 		memcpy(ptr, p0, len0); 
 	if (len1 > 0)
+<<<<<<< HEAD
 		memcpy(ptr + len0, p1, len1); 
+=======
+		memcpy(ptr, VARDATA_ANY(t1), len1);
+	if (len2 > 0)
+		memcpy(ptr + len1, VARDATA_ANY(t2), len2);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	PG_RETURN_TEXT_P(result);
 }
@@ -861,8 +902,12 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 		 * If we're working with an untoasted source, no need to do an extra
 		 * copying step.
 		 */
+<<<<<<< HEAD
 		if (VARATT_IS_COMPRESSED(DatumGetPointer(str)) ||
 			VARATT_IS_EXTERNAL(DatumGetPointer(str)))
+=======
+		if (VARATT_IS_COMPRESSED(str) || VARATT_IS_EXTERNAL(str))
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			slice = DatumGetTextPSlice(str, slice_start, slice_size);
 		else
 			slice = (text *) DatumGetPointer(str);
@@ -942,8 +987,13 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 Datum
 textpos(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	Datum d0 = PG_GETARG_DATUM(0);
 	char *p0; void *tofree0; int len0;
+=======
+	text	   *str = PG_GETARG_TEXT_PP(0);
+	text	   *search_str = PG_GETARG_TEXT_PP(1);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	Datum d1 = PG_GETARG_DATUM(1);
 	char *p1; void *tofree1; int len1;
@@ -1016,12 +1066,23 @@ text_position_ptr_len(char* p1, int len1, char* p2, int len2)
 static void 
 text_position_setup_ptr_len(char* p1, int len1, char* p2, int len2, TextPositionState *state)
 {
+<<<<<<< HEAD
+=======
+	int			len1 = VARSIZE_ANY_EXHDR(t1);
+	int			len2 = VARSIZE_ANY_EXHDR(t2);
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (pg_database_encoding_max_length() == 1)
 	{
 		/* simple case - single byte encoding */
 		state->use_wchar = false;
+<<<<<<< HEAD
 		state->str1 = p1; 
 		state->str2 = p2; 
+=======
+		state->str1 = VARDATA_ANY(t1);
+		state->str2 = VARDATA_ANY(t2);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		state->len1 = len1;
 		state->len2 = len2;
 	}
@@ -1031,10 +1092,17 @@ text_position_setup_ptr_len(char* p1, int len1, char* p2, int len2, TextPosition
 		pg_wchar   *wp1,
 				   *wp2;
 
+<<<<<<< HEAD
 		wp1 = (pg_wchar *) palloc((len1 + 1) * sizeof(pg_wchar));
 		len1 = pg_mb2wchar_with_len(p1, wp1, len1);
 		wp2 = (pg_wchar *) palloc((len2 + 1) * sizeof(pg_wchar));
 		len2 = pg_mb2wchar_with_len(p2, wp2, len2);
+=======
+		p1 = (pg_wchar *) palloc((len1 + 1) * sizeof(pg_wchar));
+		len1 = pg_mb2wchar_with_len(VARDATA_ANY(t1), p1, len1);
+		p2 = (pg_wchar *) palloc((len2 + 1) * sizeof(pg_wchar));
+		len2 = pg_mb2wchar_with_len(VARDATA_ANY(t2), p2, len2);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		state->use_wchar = true;
 		state->wstr1 = wp1;
@@ -1286,11 +1354,19 @@ static inline Datum generic_varlena_eq(PG_FUNCTION_ARGS)
 {
 	bool		result;
 
+<<<<<<< HEAD
 	Datum d0 = PG_GETARG_DATUM(0);
 	char *p0; void *tofree0; int len0;
 
 	Datum d1 = PG_GETARG_DATUM(1);
 	char *p1; void *tofree1; int len1;
+=======
+	a1p = VARDATA_ANY(arg1);
+	a2p = VARDATA_ANY(arg2);
+
+	len1 = VARSIZE_ANY_EXHDR(arg1);
+	len2 = VARSIZE_ANY_EXHDR(arg2);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	varattrib_untoast_ptr_len(d0, &p0, &len0, &tofree0);
 	varattrib_untoast_ptr_len(d1, &p1, &len1, &tofree1);
@@ -1323,21 +1399,74 @@ static inline Datum generic_varlena_eq(PG_FUNCTION_ARGS)
 Datum
 texteq(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	return generic_varlena_eq(fcinfo);
+=======
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
+	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	bool		result;
+
+	/*
+	 * Since we only care about equality or not-equality, we can avoid all the
+	 * expense of strcoll() here, and just do bitwise comparison.
+	 */
+	if (VARSIZE_ANY_EXHDR(arg1) != VARSIZE_ANY_EXHDR(arg2))
+		result = false;
+	else
+		result = (strncmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2),
+						  VARSIZE_ANY_EXHDR(arg1)) == 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 Datum
 textne(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	Datum d = generic_varlena_eq(fcinfo);
 	return (d==0 ? 1 : 0);
+=======
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
+	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	bool		result;
+
+	/*
+	 * Since we only care about equality or not-equality, we can avoid all the
+	 * expense of strcoll() here, and just do bitwise comparison.
+	 */
+	if (VARSIZE_ANY_EXHDR(arg1) != VARSIZE_ANY_EXHDR(arg2))
+		result = true;
+	else
+		result = (strncmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2),
+						  VARSIZE_ANY_EXHDR(arg1)) != 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 Datum
 text_lt(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	Datum d0 = PG_GETARG_DATUM(0);
 	Datum d1 = PG_GETARG_DATUM(1);
+=======
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
+	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	bool		result;
+
+	result = (text_cmp(arg1, arg2) < 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	bool result = (text_cmp_datum(d0, d1) < 0); 
 	PG_RETURN_BOOL(result);
@@ -1345,9 +1474,21 @@ text_lt(PG_FUNCTION_ARGS)
 
 Datum
 text_le(PG_FUNCTION_ARGS)
+<<<<<<< HEAD
 {	
 	Datum d0 = PG_GETARG_DATUM(0);
 	Datum d1 = PG_GETARG_DATUM(1);
+=======
+{
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
+	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	bool		result;
+
+	result = (text_cmp(arg1, arg2) <= 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	bool result = (text_cmp_datum(d0, d1) <= 0); 
 	PG_RETURN_BOOL(result);
@@ -1356,8 +1497,19 @@ text_le(PG_FUNCTION_ARGS)
 Datum
 text_gt(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	Datum d0 = PG_GETARG_DATUM(0);
 	Datum d1 = PG_GETARG_DATUM(1);
+=======
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
+	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	bool		result;
+
+	result = (text_cmp(arg1, arg2) > 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	bool result = (text_cmp_datum(d0, d1) > 0); 
 	PG_RETURN_BOOL(result);
@@ -1366,8 +1518,19 @@ text_gt(PG_FUNCTION_ARGS)
 Datum
 text_ge(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	Datum d0 = PG_GETARG_DATUM(0);
 	Datum d1 = PG_GETARG_DATUM(1);
+=======
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
+	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	bool		result;
+
+	result = (text_cmp(arg1, arg2) >= 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	bool result = (text_cmp_datum(d0, d1) >= 0); 
 	PG_RETURN_BOOL(result);
@@ -1376,8 +1539,19 @@ text_ge(PG_FUNCTION_ARGS)
 Datum
 bttextcmp(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	Datum d0 = PG_GETARG_DATUM(0);
 	Datum d1 = PG_GETARG_DATUM(1);
+=======
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
+	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	int32		result;
+
+	result = text_cmp(arg1, arg2);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	int result = text_cmp_datum(d0, d1);
 	PG_RETURN_INT32(result);
@@ -1387,8 +1561,16 @@ bttextcmp(PG_FUNCTION_ARGS)
 Datum
 text_larger(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	Datum d0 = PG_GETARG_DATUM(0);
 	Datum d1 = PG_GETARG_DATUM(1);
+=======
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
+	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	text	   *result;
+
+	result = ((text_cmp(arg1, arg2) > 0) ? arg1 : arg2);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	int cmp = text_cmp_datum(d0, d1);
 	return (cmp > 0 ? d0 : d1);
@@ -1397,8 +1579,14 @@ text_larger(PG_FUNCTION_ARGS)
 Datum
 text_smaller(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	Datum d0 = PG_GETARG_DATUM(0);
 	Datum d1 = PG_GETARG_DATUM(1);
+=======
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
+	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	text	   *result;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	int cmp = text_cmp_datum(d0, d1);
 	return (cmp < 0 ? d0 : d1);
@@ -1417,6 +1605,7 @@ static inline int generic_varlena_cmp(PG_FUNCTION_ARGS)
 
 	int			result;
 
+<<<<<<< HEAD
 	char *p0; void *tofree0; int len0;
 	char *p1; void *tofree1; int len1;
 
@@ -1436,6 +1625,15 @@ static inline int generic_varlena_cmp(PG_FUNCTION_ARGS)
 	if (len0 < len1)
 		return -1;
 	else if (len0 > len1)
+=======
+	result = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2),
+					Min(VARSIZE_ANY_EXHDR(arg1), VARSIZE_ANY_EXHDR(arg2)));
+	if (result != 0)
+		return result;
+	else if (VARSIZE_ANY_EXHDR(arg1) < VARSIZE_ANY_EXHDR(arg2))
+		return -1;
+	else if (VARSIZE_ANY_EXHDR(arg1) > VARSIZE_ANY_EXHDR(arg2))
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		return 1;
 	else
 		return 0;
@@ -1444,7 +1642,19 @@ static inline int generic_varlena_cmp(PG_FUNCTION_ARGS)
 Datum
 text_pattern_lt(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	int result = generic_varlena_cmp(fcinfo); 
+=======
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
+	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	int			result;
+
+	result = internal_text_pattern_compare(arg1, arg2);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	PG_RETURN_BOOL(result < 0);
 }
 
@@ -1452,16 +1662,61 @@ text_pattern_lt(PG_FUNCTION_ARGS)
 Datum
 text_pattern_le(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	int result = generic_varlena_cmp(fcinfo); 
+=======
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
+	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	int			result;
+
+	result = internal_text_pattern_compare(arg1, arg2);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	PG_RETURN_BOOL(result <= 0);
 }
 
 
+<<<<<<< HEAD
+=======
+Datum
+text_pattern_eq(PG_FUNCTION_ARGS)
+{
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
+	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	int			result;
+
+	if (VARSIZE_ANY_EXHDR(arg1) != VARSIZE_ANY_EXHDR(arg2))
+		result = 1;
+	else
+		result = internal_text_pattern_compare(arg1, arg2);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result == 0);
+}
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 Datum
 text_pattern_ge(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	int result = generic_varlena_cmp(fcinfo); 
+=======
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
+	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	int			result;
+
+	result = internal_text_pattern_compare(arg1, arg2);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	PG_RETURN_BOOL(result >= 0);
 }
 
@@ -1469,17 +1724,63 @@ text_pattern_ge(PG_FUNCTION_ARGS)
 Datum
 text_pattern_gt(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	int result = generic_varlena_cmp(fcinfo); 
+=======
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
+	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	int			result;
+
+	result = internal_text_pattern_compare(arg1, arg2);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	PG_RETURN_BOOL(result > 0);
 }
 
 
+<<<<<<< HEAD
+=======
+Datum
+text_pattern_ne(PG_FUNCTION_ARGS)
+{
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
+	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	int			result;
+
+	if (VARSIZE_ANY_EXHDR(arg1) != VARSIZE_ANY_EXHDR(arg2))
+		result = 1;
+	else
+		result = internal_text_pattern_compare(arg1, arg2);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result != 0);
+}
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 Datum
 bttext_pattern_cmp(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	int result = generic_varlena_cmp(fcinfo); 
 	PG_RETURN_INT32(result); 
+=======
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
+	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	int			result;
+
+	result = internal_text_pattern_compare(arg1, arg2);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_INT32(result);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*-------------------------------------------------------------
@@ -1507,7 +1808,40 @@ byteaoctetlen(PG_FUNCTION_ARGS)
 Datum
 byteacat(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	return generic_varlena_cat(fcinfo);
+=======
+	bytea	   *t1 = PG_GETARG_BYTEA_PP(0);
+	bytea	   *t2 = PG_GETARG_BYTEA_PP(1);
+	int			len1,
+				len2,
+				len;
+	bytea	   *result;
+	char	   *ptr;
+
+	len1 = VARSIZE_ANY_EXHDR(t1);
+	if (len1 < 0)
+		len1 = 0;
+
+	len2 = VARSIZE_ANY_EXHDR(t2);
+	if (len2 < 0)
+		len2 = 0;
+
+	len = len1 + len2 + VARHDRSZ;
+	result = (bytea *) palloc(len);
+
+	/* Set size of result string... */
+	SET_VARSIZE(result, len);
+
+	/* Fill data field of result string... */
+	ptr = VARDATA(result);
+	if (len1 > 0)
+		memcpy(ptr, VARDATA_ANY(t1), len1);
+	if (len2 > 0)
+		memcpy(ptr + len1, VARDATA_ANY(t2), len2);
+
+	PG_RETURN_BYTEA_P(result);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 #define PG_STR_GET_BYTEA(str_) \
@@ -1598,6 +1932,7 @@ bytea_substr_no_len(PG_FUNCTION_ARGS)
 Datum
 byteapos(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	Datum d0 = PG_GETARG_DATUM(0);
 	char *p0; void *tofree0; int len0;
 
@@ -1613,6 +1948,26 @@ byteapos(PG_FUNCTION_ARGS)
 	/* empty pattern */
 	if(len1 == 0)
 		PG_RETURN_INT32(1);
+=======
+	bytea	   *t1 = PG_GETARG_BYTEA_PP(0);
+	bytea	   *t2 = PG_GETARG_BYTEA_PP(1);
+	int			pos;
+	int			px,
+				p;
+	int			len1,
+				len2;
+	char	   *p1,
+			   *p2;
+
+	len1 = VARSIZE_ANY_EXHDR(t1);
+	len2 = VARSIZE_ANY_EXHDR(t2);
+
+	if (len2 <= 0)
+		PG_RETURN_INT32(1);		/* result for empty pattern */
+
+	p1 = VARDATA_ANY(t1);
+	p2 = VARDATA_ANY(t2);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	pos = 0;
 	px = (len0 - len1);
@@ -1644,13 +1999,21 @@ byteapos(PG_FUNCTION_ARGS)
 Datum
 byteaGetByte(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	Datum d0 = PG_GETARG_DATUM(0);
 	char *p0; void *tofree0; int len0;
 
+=======
+	bytea	   *v = PG_GETARG_BYTEA_PP(0);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	int32		n = PG_GETARG_INT32(1);
 	int32 result;
 
+<<<<<<< HEAD
 	varattrib_untoast_ptr_len(d0, &p0, &len0, &tofree0);
+=======
+	len = VARSIZE_ANY_EXHDR(v);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (n < 0 || n >= len0)
 		ereport(ERROR,
@@ -1658,7 +2021,11 @@ byteaGetByte(PG_FUNCTION_ARGS)
 				 errmsg("index %d out of valid range, 0..%d",
 						n, len0 - 1)));
 
+<<<<<<< HEAD
 	result = (unsigned char) p0[n];
+=======
+	byte = ((unsigned char *) VARDATA_ANY(v))[n];
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if(tofree0)
 		pfree(tofree0);
@@ -1677,13 +2044,21 @@ byteaGetByte(PG_FUNCTION_ARGS)
 Datum
 byteaGetBit(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	Datum d0 = PG_GETARG_DATUM(0);
 	char *p0; void *tofree0; int len0;
 
+=======
+	bytea	   *v = PG_GETARG_BYTEA_PP(0);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	int32		n = PG_GETARG_INT32(1);
 
+<<<<<<< HEAD
 	int			byteNo, bitNo;
 	int			result;
+=======
+	len = VARSIZE_ANY_EXHDR(v);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	varattrib_untoast_ptr_len(d0, &p0, &len0, &tofree0);
 
@@ -1696,10 +2071,14 @@ byteaGetBit(PG_FUNCTION_ARGS)
 	byteNo = n / 8;
 	bitNo = n % 8;
 
+<<<<<<< HEAD
 	result = (unsigned char) p0[byteNo]; 
 
 	if(tofree0)
 		pfree(tofree0);
+=======
+	byte = ((unsigned char *) VARDATA_ANY(v))[byteNo];
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (result & (1 << bitNo))
 		PG_RETURN_INT32(1);
@@ -1814,10 +2193,15 @@ byteaSetBit(PG_FUNCTION_ARGS)
 Datum
 text_name(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	Datum d0 = PG_GETARG_DATUM(0);
 	char *p0; void *tofree0; int len0;
+=======
+	text	   *s = PG_GETARG_TEXT_PP(0);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	Name		result;
 
+<<<<<<< HEAD
 	varattrib_untoast_ptr_len(d0, &p0, &len0, &tofree0);
 
 	/* Truncate oversize input */
@@ -1833,6 +2217,17 @@ text_name(PG_FUNCTION_ARGS)
 		*(NameStr(*result) + len0) = '\0';
 		len0++;
 	}
+=======
+	len = VARSIZE_ANY_EXHDR(s);
+
+	/* Truncate oversize input */
+	if (len >= NAMEDATALEN)
+		len = pg_mbcliplen(VARDATA_ANY(s), len, NAMEDATALEN - 1);
+
+	/* We use palloc0 here to ensure result is zero-padded */
+	result = (Name) palloc0(NAMEDATALEN);
+	memcpy(NameStr(*result), VARDATA_ANY(s), len);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if(tofree0)
 		pfree(tofree0);
@@ -1848,7 +2243,15 @@ name_text(PG_FUNCTION_ARGS)
 {
 	Name		s = PG_GETARG_NAME(0);
 
+<<<<<<< HEAD
 	PG_RETURN_TEXT_P(cstring_to_text(NameStr(*s)));
+=======
+	result = palloc(VARHDRSZ + len);
+	SET_VARSIZE(result, VARHDRSZ + len);
+	memcpy(VARDATA(result), NameStr(*s), len);
+
+	PG_RETURN_TEXT_P(result);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 
@@ -2031,49 +2434,185 @@ SplitIdentifierString(char *rawstring, char separator,
 Datum
 byteaeq(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	return generic_varlena_eq(fcinfo);
+=======
+	bytea	   *arg1 = PG_GETARG_BYTEA_PP(0);
+	bytea	   *arg2 = PG_GETARG_BYTEA_PP(1);
+	int			len1,
+				len2;
+	bool		result;
+
+	len1 = VARSIZE_ANY_EXHDR(arg1);
+	len2 = VARSIZE_ANY_EXHDR(arg2);
+
+	/* fast path for different-length inputs */
+	if (len1 != len2)
+		result = false;
+	else
+		result = (memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), len1) == 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 Datum
 byteane(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	Datum d = generic_varlena_eq(fcinfo);
 	return (d==0 ? 1 : 0);
+=======
+	bytea	   *arg1 = PG_GETARG_BYTEA_PP(0);
+	bytea	   *arg2 = PG_GETARG_BYTEA_PP(1);
+	int			len1,
+				len2;
+	bool		result;
+
+	len1 = VARSIZE_ANY_EXHDR(arg1);
+	len2 = VARSIZE_ANY_EXHDR(arg2);
+
+	/* fast path for different-length inputs */
+	if (len1 != len2)
+		result = true;
+	else
+		result = (memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), len1) != 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 Datum
 bytealt(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	int result = generic_varlena_cmp(fcinfo);
 	PG_RETURN_BOOL(result < 0); 
+=======
+	bytea	   *arg1 = PG_GETARG_BYTEA_PP(0);
+	bytea	   *arg2 = PG_GETARG_BYTEA_PP(1);
+	int			len1,
+				len2;
+	int			cmp;
+
+	len1 = VARSIZE_ANY_EXHDR(arg1);
+	len2 = VARSIZE_ANY_EXHDR(arg2);
+
+	cmp = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL((cmp < 0) || ((cmp == 0) && (len1 < len2)));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 Datum
 byteale(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	int result = generic_varlena_cmp(fcinfo);
 	PG_RETURN_BOOL(result <= 0); 
+=======
+	bytea	   *arg1 = PG_GETARG_BYTEA_PP(0);
+	bytea	   *arg2 = PG_GETARG_BYTEA_PP(1);
+	int			len1,
+				len2;
+	int			cmp;
+
+	len1 = VARSIZE_ANY_EXHDR(arg1);
+	len2 = VARSIZE_ANY_EXHDR(arg2);
+
+	cmp = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL((cmp < 0) || ((cmp == 0) && (len1 <= len2)));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 Datum
 byteagt(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	int result = generic_varlena_cmp(fcinfo);
 	PG_RETURN_BOOL(result > 0); 
+=======
+	bytea	   *arg1 = PG_GETARG_BYTEA_PP(0);
+	bytea	   *arg2 = PG_GETARG_BYTEA_PP(1);
+	int			len1,
+				len2;
+	int			cmp;
+
+	len1 = VARSIZE_ANY_EXHDR(arg1);
+	len2 = VARSIZE_ANY_EXHDR(arg2);
+
+	cmp = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL((cmp > 0) || ((cmp == 0) && (len1 > len2)));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 Datum
 byteage(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	int result = generic_varlena_cmp(fcinfo);
 	PG_RETURN_BOOL(result >= 0); 
+=======
+	bytea	   *arg1 = PG_GETARG_BYTEA_PP(0);
+	bytea	   *arg2 = PG_GETARG_BYTEA_PP(1);
+	int			len1,
+				len2;
+	int			cmp;
+
+	len1 = VARSIZE_ANY_EXHDR(arg1);
+	len2 = VARSIZE_ANY_EXHDR(arg2);
+
+	cmp = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL((cmp > 0) || ((cmp == 0) && (len1 >= len2)));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 Datum
 byteacmp(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	int result = generic_varlena_cmp(fcinfo);
 	PG_RETURN_INT32(result); 
+=======
+	bytea	   *arg1 = PG_GETARG_BYTEA_PP(0);
+	bytea	   *arg2 = PG_GETARG_BYTEA_PP(1);
+	int			len1,
+				len2;
+	int			cmp;
+
+	len1 = VARSIZE_ANY_EXHDR(arg1);
+	len2 = VARSIZE_ANY_EXHDR(arg2);
+
+	cmp = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
+	if ((cmp == 0) && (len1 != len2))
+		cmp = (len1 < len2) ? -1 : 1;
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_INT32(cmp);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
@@ -2085,7 +2624,11 @@ byteacmp(PG_FUNCTION_ARGS)
 static void
 appendStringInfoText(StringInfo str, const text *t)
 {
+<<<<<<< HEAD
 	appendBinaryStringInfo(str, VARDATA_ANY((void *) t), VARSIZE_ANY_EXHDR((void *) t));
+=======
+	appendBinaryStringInfo(str, VARDATA_ANY(t), VARSIZE_ANY_EXHDR(t));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
@@ -2099,6 +2642,7 @@ appendStringInfoText(StringInfo str, const text *t)
 Datum
 replace_text(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	Datum d0 = PG_GETARG_DATUM(0);
 	char *p0; void *tofree0; int len0;
 
@@ -2120,6 +2664,14 @@ replace_text(PG_FUNCTION_ARGS)
 		0, /* len1 */
 		0, /* len2 */
 		};
+=======
+	text	   *src_text = PG_GETARG_TEXT_PP(0);
+	text	   *from_sub_text = PG_GETARG_TEXT_PP(1);
+	text	   *to_sub_text = PG_GETARG_TEXT_PP(2);
+	int			src_text_len;
+	int			from_sub_text_len;
+	TextPositionState state;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	text	   *ret_text;
 	int			start_posn;
 	int			curr_posn;
@@ -2127,6 +2679,7 @@ replace_text(PG_FUNCTION_ARGS)
 	char	   *start_ptr;
 	StringInfoData str;
 
+<<<<<<< HEAD
 	varattrib_untoast_ptr_len(d0, &p0, &len0, &tofree0);
 	varattrib_untoast_ptr_len(d1, &p1, &len1, &tofree1);
 	varattrib_untoast_ptr_len(d2, &p2, &len2, &tofree2);
@@ -2148,6 +2701,23 @@ replace_text(PG_FUNCTION_ARGS)
 	}
 
 	text_position_setup_ptr_len(p0, len0, p1, len1, &state); 
+=======
+	text_position_setup(src_text, from_sub_text, &state);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+
+	/*
+	 * Note: we check the converted string length, not the original, because
+	 * they could be different if the input contained invalid encoding.
+	 */
+	src_text_len = state.len1;
+	from_sub_text_len = state.len2;
+
+	/* Return unmodified source string if empty source or pattern */
+	if (src_text_len < 1 || from_sub_text_len < 1)
+	{
+		text_position_cleanup(&state);
+		PG_RETURN_TEXT_P(src_text);
+	}
 
 	start_posn = 1;
 	curr_posn = text_position_next(1, &state);
@@ -2167,12 +2737,18 @@ replace_text(PG_FUNCTION_ARGS)
 	}
 
 	/* start_ptr points to the start_posn'th character of src_text */
+<<<<<<< HEAD
 	start_ptr = p0; 
+=======
+	start_ptr = VARDATA_ANY(src_text);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	initStringInfo(&str);
 
 	do
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		/* copy the data skipped over by last text_position_next() */
 		chunk_len = charlen_to_bytelen(start_ptr, curr_posn - start_posn);
 		appendBinaryStringInfo(&str, start_ptr, chunk_len);
@@ -2188,7 +2764,11 @@ replace_text(PG_FUNCTION_ARGS)
 	while (curr_posn > 0);
 
 	/* copy trailing data */
+<<<<<<< HEAD
 	chunk_len = ((char *) p0 + len0) - start_ptr;
+=======
+	chunk_len = ((char *) src_text + VARSIZE_ANY(src_text)) - start_ptr;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	appendBinaryStringInfo(&str, start_ptr, chunk_len);
 
 	text_position_cleanup(&state);
@@ -2213,8 +2793,13 @@ replace_text(PG_FUNCTION_ARGS)
 static bool
 check_replace_text_has_escape_char(const text *replace_text)
 {
+<<<<<<< HEAD
 	const char *p = VARDATA_ANY((void *) replace_text);
 	const char *p_end = p + VARSIZE_ANY((void *) replace_text);
+=======
+	const char *p = VARDATA_ANY(replace_text);
+	const char *p_end = p + VARSIZE_ANY_EXHDR(replace_text);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (pg_database_encoding_max_length() == 1)
 	{
@@ -2417,6 +3002,7 @@ replace_text_regexp(text *src_text, void *regexp,
 			chunk_len = charlen_to_bytelen(start_ptr,
 										   pmatch[0].rm_so - data_pos);
 			appendBinaryStringInfo(&buf, start_ptr, chunk_len);
+
 			/*
 			 * Advance start_ptr over that text, to avoid multiple rescans of
 			 * it if the replace_text contains multiple back-references.
@@ -2481,6 +3067,7 @@ replace_text_regexp(text *src_text, void *regexp,
 Datum
 split_text(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	Datum d0 = PG_GETARG_DATUM(0);
 	char *p0; void *tofree0; int len0;
 
@@ -2502,6 +3089,14 @@ split_text(PG_FUNCTION_ARGS)
 		0, /* len2 */
 		};
 
+=======
+	text	   *inputstring = PG_GETARG_TEXT_PP(0);
+	text	   *fldsep = PG_GETARG_TEXT_PP(1);
+	int			fldnum = PG_GETARG_INT32(2);
+	int			inputstring_len;
+	int			fldsep_len;
+	TextPositionState state;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	int			start_posn;
 	int			end_posn;
 	text	   *result_text;
@@ -2526,25 +3121,42 @@ split_text(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("field position must be greater than zero")));
 
+	text_position_setup(inputstring, fldsep, &state);
+
+	/*
+	 * Note: we check the converted string length, not the original, because
+	 * they could be different if the input contained invalid encoding.
+	 */
+	inputstring_len = state.len1;
+	fldsep_len = state.len2;
+
 	/* return empty string for empty input string */
 	if (inputstring_len < 1)
 	{
+<<<<<<< HEAD
 		if(tofree0)
 			pfree(tofree0);
 		if(tofree1)
 			pfree(tofree1);
 
+=======
+		text_position_cleanup(&state);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
 	}
 
 	/* empty field separator */
 	if (fldsep_len < 1)
 	{
+<<<<<<< HEAD
 		if(tofree0)
 			pfree(tofree0);
 		if(tofree1)
 			pfree(tofree1);
 
+=======
+		text_position_cleanup(&state);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		/* if first field, return input string, else empty string */
 		if (fldnum == 1)
 			return d0;
@@ -2552,8 +3164,11 @@ split_text(PG_FUNCTION_ARGS)
 			PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
 	}
 
+<<<<<<< HEAD
 	text_position_setup_ptr_len(p0, len0, p1, len1, &state);
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/* identify bounds of first field */
 	start_posn = 1;
 	end_posn = text_position_next(1, &state);
@@ -2632,6 +3247,7 @@ split_text(PG_FUNCTION_ARGS)
 static char* text_to_array_impl(char *string, int stringByteLen, char *delimiter,
 		int delimiterByteLen, int delimiterCharLen, ArrayBuildState **arrayState, bool endOfString)
 {
+<<<<<<< HEAD
 	int start_posn = 1;
 	int fldnum = 1;
 	int end_posn = 0;
@@ -2652,9 +3268,56 @@ static char* text_to_array_impl(char *string, int stringByteLen, char *delimiter
 		};
 
 	text_position_setup_ptr_len(string, stringByteLen, delimiter, delimiterByteLen, &state);
+=======
+	text	   *inputstring = PG_GETARG_TEXT_PP(0);
+	text	   *fldsep = PG_GETARG_TEXT_PP(1);
+	int			inputstring_len;
+	int			fldsep_len;
+	TextPositionState state;
+	int			fldnum;
+	int			start_posn;
+	int			end_posn;
+	int			chunk_len;
+	char	   *start_ptr;
+	text	   *result_text;
+	ArrayBuildState *astate = NULL;
+
+	text_position_setup(inputstring, fldsep, &state);
+
+	/*
+	 * Note: we check the converted string length, not the original, because
+	 * they could be different if the input contained invalid encoding.
+	 */
+	inputstring_len = state.len1;
+	fldsep_len = state.len2;
+
+	/* return NULL for empty input string */
+	if (inputstring_len < 1)
+	{
+		text_position_cleanup(&state);
+		PG_RETURN_NULL();
+	}
+
+	/*
+	 * empty field separator return one element, 1D, array using the input
+	 * string
+	 */
+	if (fldsep_len < 1)
+	{
+		text_position_cleanup(&state);
+		PG_RETURN_ARRAYTYPE_P(create_singleton_array(fcinfo, TEXTOID,
+										   PointerGetDatum(inputstring), 1));
+	}
+
+	start_posn = 1;
+	/* start_ptr points to the start_posn'th character of inputstring */
+	start_ptr = VARDATA_ANY(inputstring);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	for (fldnum = 1;; fldnum++) /* field number is 1 based */
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		end_posn = text_position_next(start_posn, &state);
 
 		if (end_posn == 0 && !endOfString)
@@ -2664,7 +3327,11 @@ static char* text_to_array_impl(char *string, int stringByteLen, char *delimiter
 		else if (end_posn == 0)
 		{
 			/* fetch last field */
+<<<<<<< HEAD
 			chunk_len = (string + stringByteLen) - cur_ptr;
+=======
+			chunk_len = ((char *) inputstring + VARSIZE_ANY(inputstring)) - start_ptr;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 		else
 		{
@@ -2673,7 +3340,13 @@ static char* text_to_array_impl(char *string, int stringByteLen, char *delimiter
 		}
 
 		/* must build a temp text datum to pass to accumArrayResult */
+<<<<<<< HEAD
 		result_text = cstring_to_text_with_len(cur_ptr, chunk_len);
+=======
+		result_text = (text *) palloc(VARHDRSZ + chunk_len);
+		SET_VARSIZE(result_text, VARHDRSZ + chunk_len);
+		memcpy(VARDATA(result_text), start_ptr, chunk_len);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/* stash away this field */
 		*arrayState = accumArrayResult(*arrayState,

@@ -20,7 +20,11 @@ EXEC SQL TYPE cust_ind IS
         short   phone_ind;
     };
 
+<<<<<<< HEAD
 int main()
+=======
+int main( int argc, char * argv[] )
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
     EXEC SQL begin declare section;
       customer  custs1[10];
@@ -42,7 +46,10 @@ int main()
         int     phone;
       } custs4;
       int r;
+<<<<<<< HEAD
       varchar onlyname[2][50];
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     EXEC SQL end declare section;
 
     ECPGdebug(1, stderr);
@@ -82,6 +89,7 @@ int main()
     printf( "name  - %s\n", custs4.name.arr );
     printf( "phone - %d\n", custs4.phone );
 
+<<<<<<< HEAD
     EXEC SQL select c INTO :onlyname from customers limit 2;
     printf("\nname:\n");
     for (r = 0; r < 2; r++)
@@ -89,6 +97,8 @@ int main()
 	    printf( "name  - %s\n", onlyname[r].arr );
     }
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     EXEC SQL disconnect all;
 
     return( 0 );

@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.78 2007/02/15 23:23:22 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.81 2008/01/01 19:45:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,11 @@ int xid_warn_limit;
 
 /*
  * Allocate the next XID for my new transaction or subtransaction.
+<<<<<<< HEAD
+=======
+ *
+ * The new XID is also stored into MyProc before returning.
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 TransactionId
 GetNewTransactionId(bool isSubXact, bool setProcXid)
@@ -52,7 +57,11 @@ GetNewTransactionId(bool isSubXact, bool setProcXid)
 	if (IsBootstrapProcessingMode())
 	{
 		Assert(!isSubXact);
+<<<<<<< HEAD
 		//MyProc->xid = BootstrapTransactionId;
+=======
+		MyProc->xid = BootstrapTransactionId;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		return BootstrapTransactionId;
 	}
 
@@ -79,6 +88,7 @@ GetNewTransactionId(bool isSubXact, bool setProcXid)
 		TransactionIdIsValid(ShmemVariableCache->xidVacLimit))
 	{
 		/*
+<<<<<<< HEAD
 		 * To avoid swamping the postmaster with signals, we issue the
 		 * autovac request only once per 64K transaction starts.  This
 		 * still gives plenty of chances before we get into real trouble.
@@ -90,6 +100,11 @@ GetNewTransactionId(bool isSubXact, bool setProcXid)
 		 * }
 		 *
 		 * MPP-19652: autovacuum disabled
+=======
+		 * To avoid swamping the postmaster with signals, we issue the autovac
+		 * request only once per 64K transaction starts.  This still gives
+		 * plenty of chances before we get into real trouble.
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 */
 		if (IsUnderPostmaster &&
 		 TransactionIdFollowsOrEquals(xid, ShmemVariableCache->xidStopLimit))
@@ -130,19 +145,19 @@ GetNewTransactionId(bool isSubXact, bool setProcXid)
 	TransactionIdAdvance(ShmemVariableCache->nextXid);
 
 	/*
-	 * We must store the new XID into the shared PGPROC array before releasing
-	 * XidGenLock.	This ensures that when GetSnapshotData calls
-	 * ReadNewTransactionId, all active XIDs before the returned value of
-	 * nextXid are already present in PGPROC.  Else we have a race condition.
+	 * We must store the new XID into the shared ProcArray before releasing
+	 * XidGenLock.	This ensures that every active XID older than
+	 * latestCompletedXid is present in the ProcArray, which is essential for
+	 * correct OldestXmin tracking; see src/backend/access/transam/README.
 	 *
 	 * XXX by storing xid into MyProc without acquiring ProcArrayLock, we are
 	 * relying on fetch/store of an xid to be atomic, else other backends
 	 * might see a partially-set xid here.	But holding both locks at once
-	 * would be a nasty concurrency hit (and in fact could cause a deadlock
-	 * against GetSnapshotData).  So for now, assume atomicity. Note that
-	 * readers of PGPROC xid field should be careful to fetch the value only
-	 * once, rather than assume they can read it multiple times and get the
-	 * same answer each time.
+	 * would be a nasty concurrency hit.  So for now, assume atomicity.
+	 *
+	 * Note that readers of PGPROC xid fields should be careful to fetch the
+	 * value only once, rather than assume they can read a value multiple
+	 * times and get the same answer each time.
 	 *
 	 * The same comments apply to the subxact xid count and overflow fields.
 	 *
@@ -160,7 +175,10 @@ GetNewTransactionId(bool isSubXact, bool setProcXid)
 	 * window *will* include the parent XID, so they will deliver the correct
 	 * answer later on when someone does have a reason to inquire.)
 	 */
+<<<<<<< HEAD
 	if (setProcXid && MyProc != NULL)
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		/*
 		 * Use volatile pointer to prevent code rearrangement; other backends
@@ -275,12 +293,15 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid,
 	 * assign hook (too many processes would try to execute the hook,
 	 * resulting in race conditions as well as crashes of those not connected
 	 * to shared memory).  Perhaps this can be improved someday.
+<<<<<<< HEAD
 	 *
 	 * MPP-19652: autovacuum disabled
 	 * 
 	 *	xidVacLimit = oldest_datfrozenxid + autovacuum_freeze_max_age;
 	 *	if (xidVacLimit < FirstNormalTransactionId)
 	 *		xidVacLimit += FirstNormalTransactionId;
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	xidVacLimit = xidWarnLimit;
 

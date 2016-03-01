@@ -331,7 +331,10 @@ SELECT justify_interval(interval '1 month -1 hour') as "1 month -1 hour";
 
 -- test fractional second input, and detection of duplicate units
 SET DATESTYLE = 'ISO';
+<<<<<<< HEAD
 SET IntervalStyle TO postgres;
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 SELECT '1 millisecond'::interval, '1 microsecond'::interval,
        '500 seconds 99 milliseconds 51 microseconds'::interval;
    interval   |    interval     |    interval     
@@ -347,6 +350,7 @@ SELECT '3 days 5 milliseconds'::interval;
 
 SELECT '1 second 2 seconds'::interval;              -- error
 ERROR:  invalid input syntax for type interval: "1 second 2 seconds"
+<<<<<<< HEAD
 LINE 1: SELECT '1 second 2 seconds'::interval;
                ^
 SELECT '10 milliseconds 20 milliseconds'::interval; -- error
@@ -361,3 +365,24 @@ SELECT '1:20:05 5 microseconds'::interval;          -- error
 ERROR:  invalid input syntax for type interval: "1:20:05 5 microseconds"
 LINE 1: SELECT '1:20:05 5 microseconds'::interval;
                ^
+=======
+SELECT '10 milliseconds 20 milliseconds'::interval; -- error
+ERROR:  invalid input syntax for type interval: "10 milliseconds 20 milliseconds"
+SELECT '5.5 seconds 3 milliseconds'::interval;      -- error
+ERROR:  invalid input syntax for type interval: "5.5 seconds 3 milliseconds"
+SELECT '1:20:05 5 microseconds'::interval;          -- error
+ERROR:  invalid input syntax for type interval: "1:20:05 5 microseconds"
+-- check that '30 days' equals '1 month' according to the hash function
+select '30 days'::interval = '1 month'::interval as t;
+ t 
+---
+ t
+(1 row)
+
+select interval_hash('30 days'::interval) = interval_hash('1 month'::interval) as t;
+ t 
+---
+ t
+(1 row)
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

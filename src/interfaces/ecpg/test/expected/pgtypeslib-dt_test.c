@@ -65,7 +65,11 @@ main(void)
 if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 28 "dt_test.pgc"
 
+<<<<<<< HEAD
         { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table date_test ( d date , ts timestamp )", ECPGt_EOIT, ECPGt_EORT);
+=======
+        { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table date_test ( d date    , ts timestamp    )    ", ECPGt_EOIT, ECPGt_EORT);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 29 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
@@ -87,7 +91,11 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	date1 = PGTYPESdate_from_asc(d1, NULL); 
 	ts1 = PGTYPEStimestamp_from_asc(t1, NULL); 
 
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into date_test ( d , ts ) values ( $1  , $2  )", 
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into date_test ( d  , ts  ) values (  $1  ,  $2  ) ", 
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_date,&(date1),(long)1,(long)1,sizeof(date), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_timestamp,&(ts1),(long)1,(long)1,sizeof(timestamp), 
@@ -98,7 +106,11 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 36 "dt_test.pgc"
 
 
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select * from date_test where d = $1 ", 
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  *  from date_test where d =  $1   ", 
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_date,&(date1),(long)1,(long)1,sizeof(date), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, 
 	ECPGt_date,&(date1),(long)1,(long)1,sizeof(date), 

@@ -1,6 +1,10 @@
 /*	$OpenBSD: rijndael.c,v 1.6 2000/12/09 18:51:34 markus Exp $ */
 
+<<<<<<< HEAD
 /* $PostgreSQL: pgsql/contrib/pgcrypto/rijndael.c,v 1.14 2009/06/11 14:48:52 momjian Exp $ */
+=======
+/* $PostgreSQL: pgsql/contrib/pgcrypto/rijndael.c,v 1.13 2007/04/06 05:36:50 tgl Exp $ */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* This is an independent implementation of the encryption algorithm:	*/
 /*																		*/

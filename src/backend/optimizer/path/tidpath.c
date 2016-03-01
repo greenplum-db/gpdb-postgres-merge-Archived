@@ -12,6 +12,12 @@
  * this allows
  *		WHERE ctid IN (tid1, tid2, ...)
  *
+ * We also support "WHERE CURRENT OF cursor" conditions (CurrentOfExpr),
+ * which amount to "CTID = run-time-determined-TID".  These could in
+ * theory be translated to a simple comparison of CTID to the result of
+ * a function, but in practice it works better to keep the special node
+ * representation all the way through to execution.
+ *
  * There is currently no special support for joins involving CTID; in
  * particular nothing corresponding to best_inner_indexscan().	Since it's
  * not very useful to store TIDs of one table in another table, there
@@ -19,13 +25,16 @@
  * for that.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/tidpath.c,v 1.29 2007/01/05 22:19:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/tidpath.c,v 1.31 2008/01/01 19:45:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,8 +187,13 @@ TidQualFromExpr(Node *expr, int varno)
 	else if (expr && IsA(expr, CurrentOfExpr))
 	{
 		/* another base case: check for CURRENT OF on this rel */
+<<<<<<< HEAD
 		Insist(((CurrentOfExpr *) expr)->cvarno == varno);
 		rlst = list_make1(expr);
+=======
+		if (((CurrentOfExpr *) expr)->cvarno == varno)
+			rlst = list_make1(expr);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 	else if (and_clause(expr))
 	{

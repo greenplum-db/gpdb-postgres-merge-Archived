@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.83 2009/06/11 14:49:13 momjian Exp $ */
+=======
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.77.2.3 2008/11/26 15:37:01 meskes Exp $ */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #include "postgres_fe.h"
 
@@ -255,7 +259,11 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 					break;
 				default:
 					if (!IS_SIMPLE_TYPE(type->u.element->type))
+<<<<<<< HEAD
 						base_yyerror("internal error: unknown datatype, please report this to <bugs@greenplum.org>");
+=======
+						base_yyerror("Internal error: unknown datatype, please inform pgsql-bugs@postgresql.org");
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 					ECPGdump_a_simple(o, name,
 									  type->u.element->type,
@@ -280,7 +288,11 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 			ECPGdump_a_struct(o, name, ind_name, make_str("1"), type, ind_type, NULL, prefix, ind_prefix);
 			break;
 		case ECPGt_union:		/* cannot dump a complete union */
+<<<<<<< HEAD
 			base_yyerror("type of union has to be specified");
+=======
+			base_yyerror("Type of union has to be specified");
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			break;
 		case ECPGt_char_variable:
 			if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
@@ -327,10 +339,16 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 		fprintf(o, "\n\tECPGt_descriptor, %s, 0L, 0L, 0L, ", name);
 	else
 	{
+<<<<<<< HEAD
 		char	   *variable = (char *) mm_alloc(strlen(name) + ((prefix == NULL) ? 0 : strlen(prefix)) + 4);
 		char	   *offset = (char *) mm_alloc(strlen(name) + strlen("sizeof(struct varchar_)") + 1 + strlen(varcharsize) + sizeof(int) * CHAR_BIT * 10 / 3);
 		char	   *var_name,
 				   *ptr;
+=======
+		char *variable = (char *) mm_alloc(strlen(name) + ((prefix == NULL) ? 0 : strlen(prefix)) + 4);
+		char *offset = (char *) mm_alloc(strlen(name) + strlen("sizeof(struct varchar_)") + 1 + strlen(varcharsize) + sizeof(int) * CHAR_BIT * 10 / 3);
+		char *var_name, *ptr; 
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		switch (type)
 		{
@@ -353,10 +371,16 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 					sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
 
 				/* remove trailing [] is name is array element */
+<<<<<<< HEAD
 				var_name = mm_strdup(name);
 				ptr = strchr(var_name, '[');
 				if (ptr)
 					*ptr = '\0';
+=======
+				var_name = strdup(name);
+				ptr = strchr(var_name, '[');
+				if (ptr) *ptr = '\0';
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				if (lineno)
 					sprintf(offset, "sizeof(struct varchar_%s_%d)", var_name, lineno);
 				else
@@ -533,7 +557,11 @@ ECPGfree_type(struct ECPGtype * type)
 				switch (type->u.element->type)
 				{
 					case ECPGt_array:
+<<<<<<< HEAD
 						base_yyerror("internal error: found multidimensional array\n");
+=======
+						base_yyerror("internal error, found multidimensional array\n");
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 						break;
 					case ECPGt_struct:
 					case ECPGt_union:
@@ -543,7 +571,11 @@ ECPGfree_type(struct ECPGtype * type)
 						break;
 					default:
 						if (!IS_SIMPLE_TYPE(type->u.element->type))
+<<<<<<< HEAD
 							base_yyerror("internal error: unknown datatype, please report this to <bugs@greenplum.org>");
+=======
+							base_yyerror("Internal error: unknown datatype, please inform pgsql-bugs@postgresql.org");
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 						free(type->u.element);
 				}

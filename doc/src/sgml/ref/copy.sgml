@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.78 2007/01/31 23:26:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.81.2.1 2008/10/10 21:46:43 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,6 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
+<<<<<<< HEAD
 COPY table [(column [, ...])] FROM {'file' | STDIN}
      [ [WITH] 
        [OIDS]
@@ -44,6 +45,31 @@ COPY {table [(column [, ...])] | (query)} TO {'file' | STDOUT}
         [ESCAPE [ AS ] 'escape' | 'OFF']
         [CSV [QUOTE [ AS ] 'quote'] 
              [FORCE QUOTE column [, ...]] ]
+=======
+COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
+    FROM { '<replaceable class="parameter">filename</replaceable>' | STDIN }
+    [ [ WITH ] 
+          [ BINARY ]
+          [ OIDS ]
+          [ DELIMITER [ AS ] '<replaceable class="parameter">delimiter</replaceable>' ]
+          [ NULL [ AS ] '<replaceable class="parameter">null string</replaceable>' ]
+          [ CSV [ HEADER ]
+                [ QUOTE [ AS ] '<replaceable class="parameter">quote</replaceable>' ] 
+                [ ESCAPE [ AS ] '<replaceable class="parameter">escape</replaceable>' ]
+                [ FORCE NOT NULL <replaceable class="parameter">column</replaceable> [, ...] ]
+
+COPY { <replaceable class="parameter">tablename</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ] | ( <replaceable class="parameter">query</replaceable> ) }
+    TO { '<replaceable class="parameter">filename</replaceable>' | STDOUT }
+    [ [ WITH ] 
+          [ BINARY ]
+          [ OIDS ]
+          [ DELIMITER [ AS ] '<replaceable class="parameter">delimiter</replaceable>' ]
+          [ NULL [ AS ] '<replaceable class="parameter">null string</replaceable>' ]
+          [ CSV [ HEADER ]
+                [ QUOTE [ AS ] '<replaceable class="parameter">quote</replaceable>' ] 
+                [ ESCAPE [ AS ] '<replaceable class="parameter">escape</replaceable>' ]
+                [ FORCE QUOTE <replaceable class="parameter">column</replaceable> [, ...] ]
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 </synopsis>
  </refsynopsisdiv>
  
@@ -213,7 +239,7 @@ COPY {table [(column [, ...])] | (query)} TO {'file' | STDOUT}
     <term><literal>HEADER</literal></term>
     <listitem>
      <para>
-      Specifies the file contains a header line with the names of each
+      Specifies that the file contains a header line with the names of each
       column in the file.  On output, the first line contains the column 
       names from the table, and on input, the first line is ignored.
      </para>
@@ -353,6 +379,13 @@ COPY <replaceable class="parameter">count</replaceable>
    </para>
 
    <para>
+    Input data is interpreted according to the current client encoding,
+    and output data is encoded in the the current client encoding, even
+    if the data does not pass through the client but is read from or
+    written to a file.
+   </para>
+
+   <para>
     <command>COPY</command> stops operation at the first error. This
     should not lead to problems in the event of a <command>COPY
     TO</command>, but the target table will already have received
@@ -362,6 +395,7 @@ COPY <replaceable class="parameter">count</replaceable>
     happened well into a large copy operation. You might wish to invoke
     <command>VACUUM</command> to recover the wasted space.
    </para>
+
  </refsect1>
  
  <refsect1>

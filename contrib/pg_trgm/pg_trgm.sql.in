@@ -58,37 +58,65 @@ CREATE TYPE gtrgm (
 CREATE OR REPLACE FUNCTION gtrgm_consistent(gtrgm,internal,int4)
 RETURNS bool
 AS 'MODULE_PATHNAME'
+<<<<<<< HEAD
 LANGUAGE C IMMUTABLE STRICT;
+=======
+LANGUAGE C IMMUTABLE;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  
 CREATE OR REPLACE FUNCTION gtrgm_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
+<<<<<<< HEAD
 LANGUAGE C IMMUTABLE STRICT;
+=======
+LANGUAGE C IMMUTABLE;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 CREATE OR REPLACE FUNCTION gtrgm_decompress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
+<<<<<<< HEAD
 LANGUAGE C IMMUTABLE STRICT;
+=======
+LANGUAGE C IMMUTABLE;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 CREATE OR REPLACE FUNCTION gtrgm_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
+<<<<<<< HEAD
 LANGUAGE C IMMUTABLE STRICT;
+=======
+LANGUAGE C STRICT IMMUTABLE;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 CREATE OR REPLACE FUNCTION gtrgm_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
+<<<<<<< HEAD
 LANGUAGE C IMMUTABLE STRICT;
+=======
+LANGUAGE C IMMUTABLE;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 CREATE OR REPLACE FUNCTION gtrgm_union(bytea, internal)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
+<<<<<<< HEAD
 LANGUAGE C IMMUTABLE STRICT;
+=======
+LANGUAGE C IMMUTABLE;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 CREATE OR REPLACE FUNCTION gtrgm_same(gtrgm, gtrgm, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
+<<<<<<< HEAD
 LANGUAGE C IMMUTABLE STRICT;
+=======
+LANGUAGE C IMMUTABLE;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 -- create the operator class for gist
 CREATE OPERATOR CLASS gist_trgm_ops
@@ -108,17 +136,29 @@ AS
 CREATE OR REPLACE FUNCTION gin_extract_trgm(text, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
+<<<<<<< HEAD
 LANGUAGE C IMMUTABLE STRICT;
+=======
+LANGUAGE C IMMUTABLE;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 CREATE OR REPLACE FUNCTION gin_extract_trgm(text, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
+<<<<<<< HEAD
 LANGUAGE C IMMUTABLE STRICT;
+=======
+LANGUAGE C IMMUTABLE;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 CREATE OR REPLACE FUNCTION gin_trgm_consistent(internal, internal, text)
 RETURNS internal
 AS 'MODULE_PATHNAME'
+<<<<<<< HEAD
 LANGUAGE C IMMUTABLE STRICT;
+=======
+LANGUAGE C IMMUTABLE;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 -- create the operator class for gin
 CREATE OPERATOR CLASS gin_trgm_ops

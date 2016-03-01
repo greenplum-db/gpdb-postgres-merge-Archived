@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.49 2009/06/11 14:49:13 momjian Exp $ */
+=======
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.41 2007/11/15 21:14:45 momjian Exp $ */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -110,7 +114,11 @@ ecpg_init(const struct connection * con, const char *connection_name, const int 
 	if (con == NULL)
 	{
 		ecpg_raise(lineno, ECPG_NO_CONN, ECPG_SQLSTATE_CONNECTION_DOES_NOT_EXIST,
+<<<<<<< HEAD
 				   connection_name ? connection_name : ecpg_gettext("NULL"));
+=======
+				   connection_name ? connection_name : "NULL");
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		return (false);
 	}
 
@@ -179,7 +187,11 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 	if (!ecpg_init(con, connection_name, lineno))
 		return (false);
 
+<<<<<<< HEAD
 	ecpg_log("ECPGtrans on line %d: action \"%s\"; connection \"%s\"\n", lineno, transaction, con ? con->name : "null");
+=======
+	ecpg_log("ECPGtrans line %d action = %s connection = %s\n", lineno, transaction, con ? con->name : "(nil)");
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* if we have no connection we just simulate the command */
 	if (con && con->connection)
@@ -266,6 +278,7 @@ ecpg_log(const char *format,...)
 	else
 		snprintf(fmt, bufsize, "[%d]: %s", (int) getpid(), intl_format);
 
+<<<<<<< HEAD
 #ifdef ENABLE_THREAD_SAFETY
 	pthread_mutex_lock(&debug_mutex);
 #endif
@@ -273,19 +286,54 @@ ecpg_log(const char *format,...)
 	va_start(ap, format);
 	vfprintf(debugstream, fmt, ap);
 	va_end(ap);
+=======
+	if (simple_debug)
+	{
+		int			bufsize = strlen(format) + 100;
+		char	   *f = (char *) malloc(bufsize);
+
+		if (f == NULL)
+			return;
+
+		/*
+		 * regression tests set this environment variable to get the same
+		 * output for every run.
+		 */
+		if (ecpg_internal_regression_mode)
+			snprintf(f, bufsize, "[NO_PID]: %s", format);
+		else
+			snprintf(f, bufsize, "[%d]: %s", (int) getpid(), format);
+
+#ifdef ENABLE_THREAD_SAFETY
+		pthread_mutex_lock(&debug_mutex);
+#endif
+
+		va_start(ap, format);
+		vfprintf(debugstream, f, ap);
+		va_end(ap);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* dump out internal sqlca variables */
 	if (ecpg_internal_regression_mode)
 		fprintf(debugstream, "[NO_PID]: sqlca: code: %ld, state: %s\n",
 				sqlca->sqlcode, sqlca->sqlstate);
 
+<<<<<<< HEAD
 	fflush(debugstream);
+=======
+		fflush(debugstream);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #ifdef ENABLE_THREAD_SAFETY
-	pthread_mutex_unlock(&debug_mutex);
+		pthread_mutex_unlock(&debug_mutex);
 #endif
 
+<<<<<<< HEAD
 	free(fmt);
+=======
+		free(f);
+	}
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 void
@@ -426,11 +474,19 @@ win32_pthread_mutex(volatile pthread_mutex_t *mutex)
 {
 	if (mutex->handle == NULL)
 	{
+<<<<<<< HEAD
 		while (InterlockedExchange((LONG *) &mutex->initlock, 1) == 1)
 			Sleep(0);
 		if (mutex->handle == NULL)
 			mutex->handle = CreateMutex(NULL, FALSE, NULL);
 		InterlockedExchange((LONG *) &mutex->initlock, 0);
+=======
+		while (InterlockedExchange((LONG *) & mutex->initlock, 1) == 1)
+			Sleep(0);
+		if (mutex->handle == NULL)
+			mutex->handle = CreateMutex(NULL, FALSE, NULL);
+		InterlockedExchange((LONG *) & mutex->initlock, 0);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 }
 
@@ -451,6 +507,7 @@ win32_pthread_once(volatile pthread_once_t *once, void (*fn) (void))
 	}
 }
 #endif   /* ENABLE_THREAD_SAFETY */
+<<<<<<< HEAD
 #endif   /* WIN32 */
 
 #ifdef ENABLE_NLS
@@ -487,3 +544,7 @@ ecpg_gettext(const char *msgid)
 }
 
 #endif   /* ENABLE_NLS */
+=======
+
+#endif   /* WIN32 */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

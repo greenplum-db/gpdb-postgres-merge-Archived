@@ -4,11 +4,15 @@
  *	  definitions for executor state nodes
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.167 2007/02/06 02:59:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.183.2.1 2010/07/28 04:51:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +60,12 @@ struct SliceTable;
  *		Predicate			partial-index predicate, or NIL if none
  *		PredicateState		exec state for predicate, or NIL if none
  *		Unique				is it a unique index?
+ *		ReadyForInserts		is it valid for inserts?
  *		Concurrent			are we doing a concurrent index build?
+ *		BrokenHotChain		did we detect any broken HOT chains?
+ *
+ * ii_Concurrent and ii_BrokenHotChain are used only during index build;
+ * they're conventionally set to false otherwise.
  * ----------------
  */
 typedef struct IndexInfo
@@ -69,7 +78,9 @@ typedef struct IndexInfo
 	List	   *ii_Predicate;	/* list of Expr */
 	List	   *ii_PredicateState;		/* list of ExprState */
 	bool		ii_Unique;
+	bool		ii_ReadyForInserts;
 	bool		ii_Concurrent;
+<<<<<<< HEAD
 
 	/* Additional info needed by index creation.
 	 * Used for
@@ -79,6 +90,9 @@ typedef struct IndexInfo
 	 */
 	void       *opaque;
 
+=======
+	bool		ii_BrokenHotChain;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } IndexInfo;
 
 typedef struct IndexInfoOpaque
@@ -531,7 +545,10 @@ typedef struct EState
 	ScanDirection es_direction; /* current scan direction */
 	Snapshot	es_snapshot;	/* time qual to use */
 	Snapshot	es_crosscheck_snapshot; /* crosscheck time qual for RI */
-	List	   *es_range_table; /* List of RangeTableEntrys */
+	List	   *es_range_table; /* List of RangeTblEntry */
+
+	/* If query can insert/delete tuples, the command ID to mark them with */
+	CommandId	es_output_cid;
 
 	/* Info about target table for insert/update/delete queries: */
 	ResultRelInfo *es_result_relations; /* array of ResultRelInfos */
@@ -539,21 +556,30 @@ typedef struct EState
 	ResultRelInfo *es_result_relation_info;		/* currently active array elt */
 	JunkFilter *es_junkFilter;	/* currently active junk filter */
 
+<<<<<<< HEAD
 	/* partitioning info for target relation */
 	PartitionNode *es_result_partitions;
 
 	/* AO fileseg info for target relation */
 	List	   *es_result_aosegnos;
 
+=======
+	/* Stuff used for firing triggers: */
+	List	   *es_trig_target_relations;		/* trigger-only ResultRelInfos */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	TupleTableSlot *es_trig_tuple_slot; /* for trigger output tuples */
 
 	/* Stuff used for SELECT INTO: */
 	Relation	es_into_relation_descriptor;
+<<<<<<< HEAD
 	bool		es_into_relation_is_bulkload;
 
 	ItemPointerData es_into_relation_last_heap_tid;
 
 	struct MirroredBufferPoolBulkLoadInfo *es_into_relation_bulkloadinfo;
+=======
+	bool		es_into_relation_use_wal;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Parameter info: */
 	ParamListInfo es_param_list_info;	/* values of external params */
@@ -568,13 +594,13 @@ typedef struct EState
 	Oid			es_lastoid;		/* last oid processed (by INSERT) */
 	List	   *es_rowMarks;	/* not good place, but there is no other */
 
-	bool		es_is_subquery;	/* true if subquery (es_query_cxt not mine) */
-
 	bool		es_instrument;	/* true requests runtime instrumentation */
 	bool		es_select_into; /* true if doing SELECT INTO */
 	bool		es_into_oids;	/* true to generate OIDs in SELECT INTO */
 
 	List	   *es_exprcontexts;	/* List of ExprContexts within EState */
+
+	List	   *es_subplanstates;		/* List of PlanState for SubPlans */
 
 	/*
 	 * this ExprContext is for per-output-tuple operations, such as constraint
@@ -706,7 +732,7 @@ typedef struct TupleHashTableData
 	HTAB	   *hashtab;		/* underlying dynahash table */
 	int			numCols;		/* number of columns in lookup key */
 	AttrNumber *keyColIdx;		/* attr numbers of key columns */
-	FmgrInfo   *tab_hash_funcs;	/* hash functions for table datatype(s) */
+	FmgrInfo   *tab_hash_funcs; /* hash functions for table datatype(s) */
 	FmgrInfo   *tab_eq_funcs;	/* equality functions for table datatype(s) */
 	MemoryContext tablecxt;		/* memory context containing table */
 	MemoryContext tempcxt;		/* context for function evaluations */
@@ -813,6 +839,17 @@ typedef struct GenericExprState
 	ExprState	xprstate;
 	ExprState  *arg;			/* state of my child node */
 } GenericExprState;
+
+/* ----------------
+ *		WholeRowVarExprState node
+ * ----------------
+ */
+typedef struct WholeRowVarExprState
+{
+	ExprState	xprstate;
+	struct PlanState *parent;	/* parent PlanState, or NULL if none */
+	JunkFilter *wrv_junkFilter; /* JunkFilter to remove resjunk cols */
+} WholeRowVarExprState;
 
 /* ----------------
  *		AggrefExprState node
@@ -1048,13 +1085,17 @@ typedef struct PartBoundOpenExprState
 typedef struct SubPlanState
 {
 	ExprState	xprstate;
-	EState	   *sub_estate;		/* subselect plan has its own EState */
 	struct PlanState *planstate;	/* subselect plan's state tree */
 	ExprState  *testexpr;		/* state of combining expression */
 	List	   *args;			/* states of argument expression(s) */
+<<<<<<< HEAD
 	bool		needShutdown;	/* TRUE = need to shutdown subplan */
 
 	struct MemTupleData *curTuple;                /* copy of most recent tuple from subplan */
+=======
+	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */
+	Datum		curArray;		/* most recent array from ARRAY() subplan */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/* these are used when hashing the subselect's output: */
 	ProjectionInfo *projLeft;	/* for projecting lefthand exprs */
 	ProjectionInfo *projRight;	/* for projecting subselect output */
@@ -1062,14 +1103,20 @@ typedef struct SubPlanState
 	TupleHashTable hashnulls;	/* hash table for rows with null(s) */
 	bool		havehashrows;	/* TRUE if hashtable is not empty */
 	bool		havenullrows;	/* TRUE if hashnulls is not empty */
+<<<<<<< HEAD
 
 	MemoryContext hashtablecxt;	/* memory context containing hash tables */
 	MemoryContext hashtempcxt;	/* temp memory context for hash tables */
 	ExprContext *innerecontext;	/* working context for comparisons */
+=======
+	MemoryContext hashtablecxt;	/* memory context containing hash tables */
+	MemoryContext hashtempcxt;	/* temp memory context for hash tables */
+	ExprContext *innerecontext; /* econtext for computing inner tuples */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	AttrNumber *keyColIdx;		/* control data for hash tables */
-	FmgrInfo   *tab_hash_funcs;	/* hash functions for table datatype(s) */
+	FmgrInfo   *tab_hash_funcs; /* hash functions for table datatype(s) */
 	FmgrInfo   *tab_eq_funcs;	/* equality functions for table datatype(s) */
-	FmgrInfo   *lhs_hash_funcs;	/* hash functions for lefthand datatype(s) */
+	FmgrInfo   *lhs_hash_funcs; /* hash functions for lefthand datatype(s) */
 	FmgrInfo   *cur_eq_funcs;	/* equality functions for LHS vs. table */
 } SubPlanState;
 
@@ -1095,6 +1142,33 @@ typedef struct FieldStoreState
 	List	   *newvals;		/* new value(s) for field(s) */
 	TupleDesc	argdesc;		/* tupdesc for most recent input */
 } FieldStoreState;
+
+/* ----------------
+ *		CoerceViaIOState node
+ * ----------------
+ */
+typedef struct CoerceViaIOState
+{
+	ExprState	xprstate;
+	ExprState  *arg;			/* input expression */
+	FmgrInfo	outfunc;		/* lookup info for source output function */
+	FmgrInfo	infunc;			/* lookup info for result input function */
+	Oid			intypioparam;	/* argument needed for input function */
+} CoerceViaIOState;
+
+/* ----------------
+ *		ArrayCoerceExprState node
+ * ----------------
+ */
+typedef struct ArrayCoerceExprState
+{
+	ExprState	xprstate;
+	ExprState  *arg;			/* input array value */
+	Oid			resultelemtype; /* element type of result array */
+	FmgrInfo	elemfunc;		/* lookup info for element coercion function */
+	/* use struct pointer to avoid including array.h here */
+	struct ArrayMapState *amstate;		/* workspace for array_map */
+} ArrayCoerceExprState;
 
 /* ----------------
  *		ConvertRowtypeExprState node
@@ -1204,7 +1278,7 @@ typedef struct XmlExprState
 {
 	ExprState	xprstate;
 	List	   *named_args;		/* ExprStates for named arguments */
-	FmgrInfo   *named_outfuncs;	/* array of output fns for named arguments */
+	FmgrInfo   *named_outfuncs; /* array of output fns for named arguments */
 	List	   *args;			/* ExprStates for other arguments */
 } XmlExprState;
 
@@ -1771,6 +1845,7 @@ typedef struct BitmapTableScanState
 /* ----------------
  *	 TidScanState information
  *
+ *		isCurrentOf    scan has a CurrentOfExpr qual
  *		NumTids		   number of tids in this scan
  *		TidPtr		   index of currently fetched tid
  *		TidList		   evaluated item pointers (array of size NumTids)
@@ -1780,6 +1855,7 @@ typedef struct TidScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
 	List	   *tss_tidquals;	/* list of ExprState nodes */
+	bool		tss_isCurrentOf;
 	int			tss_NumTids;
 	int			tss_TidPtr;
 	int			tss_MarkTidPtr;
@@ -1791,19 +1867,19 @@ typedef struct TidScanState
  *	 SubqueryScanState information
  *
  *		SubqueryScanState is used for scanning a sub-query in the range table.
- *		The sub-query will have its own EState, which we save here.
  *		ScanTupleSlot references the current output tuple of the sub-query.
- *
- *		SubEState		   exec state for sub-query
  * ----------------
  */
 typedef struct SubqueryScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
 	PlanState  *subplan;
+<<<<<<< HEAD
 	EState	   *sss_SubEState;
 	bool		cdb_want_ctid;	/* true => ctid is referenced in targetlist */
 	ItemPointerData cdb_fake_ctid;
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } SubqueryScanState;
 
 /* ----------------
@@ -2064,6 +2140,7 @@ typedef struct NestLoopState
  *		NumClauses		   number of mergejoinable join clauses
  *		Clauses			   info for each mergejoinable clause
  *		JoinState		   current "state" of join.  see execdefs.h
+ *		ExtraMarks		   true to issue extra Mark operations on inner scan
  *		FillOuter		   true if should emit unjoined outer tuples anyway
  *		FillInner		   true if should emit unjoined inner tuples anyway
  *		MatchedOuter	   true if found a join match for current outer tuple
@@ -2086,6 +2163,7 @@ typedef struct MergeJoinState
 	int			mj_NumClauses;
 	MergeJoinClause mj_Clauses; /* array of length mj_NumClauses */
 	int			mj_JoinState;
+	bool		mj_ExtraMarks;
 	bool		mj_FillOuter;
 	bool		mj_FillInner;
 	bool		mj_MatchedOuter;
@@ -2189,7 +2267,7 @@ typedef union GenericTupStore
 typedef struct MaterialState
 {
 	ScanState	ss;				/* its first field is NodeTag */
-	bool		randomAccess;	/* need random access to subplan output? */
+	int			eflags;			/* capability flags to pass to tuplestore */
 	bool		eof_underlying; /* reached end of underlying plan? */
 	bool		ts_destroyed;	/* called destroy tuple store? */
 
@@ -2237,12 +2315,21 @@ typedef struct SortState
 {
 	ScanState	ss;				/* its first field is NodeTag */
 	bool		randomAccess;	/* need random access to sort output? */
+	bool		bounded;		/* is the result set bounded? */
+	int64		bound;			/* if bounded, how many tuples are needed */
 	bool		sort_Done;		/* sort completed yet? */
+<<<<<<< HEAD
 	GenericTupStore *tuplesortstate; /* private state of tuplesort.c */
 	/* CDB */ /* limit state */
 	ExprState  *limitOffset;	/* OFFSET parameter, or NULL if none */
 	ExprState  *limitCount;		/* COUNT parameter, or NULL if none */
 	bool		noduplicates;	/* true if discard duplicate rows */
+=======
+	bool		bounded_Done;	/* value of bounded we did the sort with */
+	int64		bound_Done;		/* value of bound we did the sort with */
+	void	   *tuplesortstate; /* private state of tuplesort.c */
+} SortState;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	void	   *share_lk_ctxt;
 
@@ -2436,6 +2523,7 @@ typedef struct SetOpState
 typedef enum
 {
 	LIMIT_INITIAL,				/* initial state for LIMIT node */
+	LIMIT_RESCAN,				/* rescan after recomputing parameters */
 	LIMIT_EMPTY,				/* there are no returnable rows */
 	LIMIT_INWINDOW,				/* have returned a row in the window */
 	LIMIT_SUBPLANEOF,			/* at EOF of subplan (within window) */

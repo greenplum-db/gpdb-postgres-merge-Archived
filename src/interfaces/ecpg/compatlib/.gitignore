@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 libecpg_compat.a
 libecpg_compat.so
 libecpg_compat.so.2
@@ -6,3 +7,9 @@ libecpg_compat.so.3.0
 libecpg_compat.so.3
 exports.list
 libecpg_compat.so.3.1
+=======
+/libecpg_compatdll.def
+/libecpg_compatddll.def
+/blibecpg_compatdll.def
+/exports.list
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

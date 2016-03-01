@@ -3,10 +3,14 @@
  * lsyscache.h
  *	  Convenience routines for common queries in the system catalog cache.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.117 2007/02/14 01:58:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.122 2008/01/01 19:45:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,28 +47,28 @@ typedef enum CmpType
 extern bool op_in_opfamily(Oid opno, Oid opfamily);
 extern int	get_op_opfamily_strategy(Oid opno, Oid opfamily);
 extern void get_op_opfamily_properties(Oid opno, Oid opfamily,
-						  int *strategy,
-						  Oid *lefttype,
-						  Oid *righttype,
-						  bool *recheck);
-extern Oid	get_opfamily_member(Oid opfamily, Oid lefttype, Oid righttype,
-								int16 strategy);
+						   int *strategy,
+						   Oid *lefttype,
+						   Oid *righttype,
+						   bool *recheck);
+extern Oid get_opfamily_member(Oid opfamily, Oid lefttype, Oid righttype,
+					int16 strategy);
 extern bool get_ordering_op_properties(Oid opno,
 						   Oid *opfamily, Oid *opcintype, int16 *strategy);
 extern bool get_compare_function_for_ordering_op(Oid opno,
-												 Oid *cmpfunc, bool *reverse);
+									 Oid *cmpfunc, bool *reverse);
 extern Oid	get_equality_op_for_ordering_op(Oid opno);
 extern Oid	get_ordering_op_for_equality_op(Oid opno, bool use_lhs_type);
 extern List *get_mergejoin_opfamilies(Oid opno);
 extern bool get_compatible_hash_operators(Oid opno,
-										  Oid *lhs_opno, Oid *rhs_opno);
+							  Oid *lhs_opno, Oid *rhs_opno);
 extern bool get_op_hash_functions(Oid opno,
 					  RegProcedure *lhs_procno, RegProcedure *rhs_procno);
 extern void get_op_btree_interpretation(Oid opno,
 							List **opfamilies, List **opstrats);
 extern bool ops_in_same_btree_opfamily(Oid opno1, Oid opno2);
-extern Oid	get_opfamily_proc(Oid opfamily, Oid lefttype, Oid righttype,
-							  int16 procnum);
+extern Oid get_opfamily_proc(Oid opfamily, Oid lefttype, Oid righttype,
+				  int16 procnum);
 extern char *get_attname(Oid relid, AttrNumber attnum);
 extern char *get_relid_attribute_name(Oid relid, AttrNumber attnum);
 extern AttrNumber get_attnum(Oid relid, const char *attname);
@@ -115,10 +119,14 @@ extern char *get_rel_name_partition(Oid relid);
 extern Oid	get_rel_namespace(Oid relid);
 extern Oid	get_rel_type_id(Oid relid);
 extern char get_rel_relkind(Oid relid);
+<<<<<<< HEAD
 extern float4 get_rel_reltuples(Oid relid);
 extern char get_rel_relstorage(Oid relid);
 extern Oid	get_rel_tablespace(Oid relid);
 extern char *get_type_name(Oid typid);
+=======
+extern Oid	get_rel_tablespace(Oid relid);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern bool get_typisdefined(Oid typid);
 extern int16 get_typlen(Oid typid);
 extern bool get_typbyval(Oid typid);
@@ -138,6 +146,7 @@ extern char get_typstorage(Oid typid);
 extern Node *get_typdefault(Oid typid);
 extern char get_typtype(Oid typid);
 extern bool type_is_rowtype(Oid typid);
+extern bool type_is_enum(Oid typid);
 extern Oid	get_typ_typrelid(Oid typid);
 extern Oid	get_element_type(Oid typid);
 extern Oid	get_array_type(Oid typid);
@@ -165,6 +174,7 @@ extern char *get_namespace_name(Oid nspid);
 extern Oid	get_roleid(const char *rolname);
 extern Oid	get_roleid_checked(const char *rolname);
 
+<<<<<<< HEAD
 extern List *relation_oids(void);
 extern List *operator_oids(void);
 extern List *function_oids(void);
@@ -202,6 +212,9 @@ extern List *get_operator_opfamilies(Oid opno);
 extern List *get_index_opfamilies(Oid oidIndex);
 
 #define is_array_type(typid)  (get_element_type(typid) != InvalidOid)
+=======
+#define type_is_array(typid)  (get_element_type(typid) != InvalidOid)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #define TypeIsToastable(typid)	(get_typstorage(typid) != 'p')
 

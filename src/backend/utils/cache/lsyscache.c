@@ -3,12 +3,16 @@
  * lsyscache.c
  *	  Convenience routines for common queries in the system catalog cache.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2009, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.148 2007/02/14 01:58:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.155.2.1 2010/07/09 22:58:01 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -170,13 +174,13 @@ get_opfamily_member(Oid opfamily, Oid lefttype, Oid righttype,
  * (This indicates that the operator is not a valid ordering operator.)
  *
  * Note: the operator could be registered in multiple families, for example
- * if someone were to build a "reverse sort" opfamily.  This would result in
+ * if someone were to build a "reverse sort" opfamily.	This would result in
  * uncertainty as to whether "ORDER BY USING op" would default to NULLS FIRST
  * or NULLS LAST, as well as inefficient planning due to failure to match up
  * pathkeys that should be the same.  So we want a determinate result here.
  * Because of the way the syscache search works, we'll use the interpretation
  * associated with the opfamily with smallest OID, which is probably
- * determinate enough.  Since there is no longer any particularly good reason
+ * determinate enough.	Since there is no longer any particularly good reason
  * to build reverse-sort opfamilies, it doesn't seem worth expending any
  * additional effort on ensuring consistency.
  */
@@ -259,7 +263,7 @@ get_compare_function_for_ordering_op(Oid opno, Oid *cmpfunc, bool *reverse)
 									 opcintype,
 									 opcintype,
 									 BTORDER_PROC);
-		if (!OidIsValid(*cmpfunc))				/* should not happen */
+		if (!OidIsValid(*cmpfunc))		/* should not happen */
 			elog(ERROR, "missing support function %d(%u,%u) in opfamily %u",
 				 BTORDER_PROC, opcintype, opcintype, opfamily);
 		*reverse = (strategy == BTGreaterStrategyNumber);
@@ -343,7 +347,7 @@ get_ordering_op_for_equality_op(Oid opno, bool use_lhs_type)
 		if (aform->amopstrategy == BTEqualStrategyNumber)
 		{
 			/* Found a suitable opfamily, get matching ordering operator */
-			Oid		typid;
+			Oid			typid;
 
 			typid = use_lhs_type ? aform->amoplefttype : aform->amoprighttype;
 			result = get_opfamily_member(aform->amopfamily,
@@ -371,7 +375,7 @@ get_ordering_op_for_equality_op(Oid opno, bool use_lhs_type)
  *
  * The planner currently uses simple equal() tests to compare the lists
  * returned by this function, which makes the list order relevant, though
- * strictly speaking it should not be.  Because of the way syscache list
+ * strictly speaking it should not be.	Because of the way syscache list
  * searches are handled, in normal operation the result will be sorted by OID
  * so everything works fine.  If running with system index usage disabled,
  * the result ordering is unspecified and hence the planner might fail to
@@ -466,6 +470,7 @@ get_compatible_hash_operators(Oid opno,
 				result = true;
 				break;
 			}
+
 			/*
 			 * Get the matching single-type operator(s).  Failure probably
 			 * shouldn't happen --- it implies a bogus opfamily --- but
@@ -1668,6 +1673,7 @@ bool agg_has_prelim_or_invprelim_func(Oid aggid)
 		elog(ERROR, "cache lookup failed for aggregate %u", aggid);
 	}
 
+<<<<<<< HEAD
 	Form_pg_aggregate aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
 	bool has_prelimfunc = (InvalidOid != aggform->aggprelimfn);
 	bool has_invprelimfunc = (InvalidOid != aggform->agginvprelimfn);
@@ -1677,6 +1683,37 @@ bool agg_has_prelim_or_invprelim_func(Oid aggid)
 
 	return has_prelimfunc || has_invprelimfunc;
 }
+=======
+/*
+ * get_rel_tablespace
+ *
+ *		Returns the pg_tablespace OID associated with a given relation.
+ *
+ * Note: InvalidOid might mean either that we couldn't find the relation,
+ * or that it is in the database's default tablespace.
+ */
+Oid
+get_rel_tablespace(Oid relid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache(RELOID,
+						ObjectIdGetDatum(relid),
+						0, 0, 0);
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_class reltup = (Form_pg_class) GETSTRUCT(tp);
+		Oid			result;
+
+		result = reltup->reltablespace;
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return InvalidOid;
+}
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 /*
@@ -3242,6 +3279,7 @@ get_typmodout(Oid typid)
 {
 	HeapTuple	tp;
 
+<<<<<<< HEAD
 	tp = SearchSysCache(TYPEOID,
 						ObjectIdGetDatum(typid),
 						0, 0, 0);
@@ -3254,6 +3292,15 @@ get_typmodout(Oid typid)
 		ReleaseSysCache(tp);
 		return result;
 	}
+=======
+	/*
+	 * Array types get their typelem as parameter; everybody else gets their
+	 * own type OID as parameter.  (As of 8.2, domains must get their own OID
+	 * even if their base type is an array.)
+	 */
+	if (typeStruct->typtype == TYPTYPE_BASE && OidIsValid(typeStruct->typelem))
+		return typeStruct->typelem;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	else
 		return InvalidOid;
 }
@@ -3607,6 +3654,7 @@ get_namespace_name(Oid nspid)
 
 /*				---------- PG_AUTHID CACHE ----------					 */
 
+<<<<<<< HEAD
 /*
  * get_roleid
  *	  Given a role name, look up the role's OID.
@@ -3617,6 +3665,29 @@ get_roleid(const char *rolname)
 {
 	Oid			result;
 	int			fetchCount;
+=======
+			/* Convert text datum to C string */
+			strDefaultVal = DatumGetCString(DirectFunctionCall1(textout,
+																datum));
+			/* Convert C string to a value of the given type */
+			datum = OidInputFunctionCall(type->typinput, strDefaultVal,
+										 getTypeIOParam(typeTuple), -1);
+			/* Build a Const node containing the value */
+			expr = (Node *) makeConst(typid,
+									  -1,
+									  type->typlen,
+									  datum,
+									  false,
+									  type->typbyval);
+			pfree(strDefaultVal);
+		}
+		else
+		{
+			/* No default */
+			expr = NULL;
+		}
+	}
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	result = caql_getoid_plus(
 			NULL,
@@ -3671,7 +3742,17 @@ relation_oids()
 	{
 		Form_pg_class pgclassEntry = (Form_pg_class) GETSTRUCT(tuple);
 
+<<<<<<< HEAD
 		switch (pgclassEntry->relstorage)
+=======
+		tup = SearchSysCache(TYPEOID,
+							 ObjectIdGetDatum(typid),
+							 0, 0, 0);
+		if (!HeapTupleIsValid(tup))
+			elog(ERROR, "cache lookup failed for type %u", typid);
+		typTup = (Form_pg_type) GETSTRUCT(tup);
+		if (typTup->typtype != TYPTYPE_DOMAIN)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		{
 			case RELSTORAGE_HEAP:
 			case RELSTORAGE_AOCOLS:
@@ -3753,7 +3834,21 @@ function_oids()
 bool
 relation_exists(Oid oid)
 {
+<<<<<<< HEAD
 	return SearchSysCacheExists(RELOID, oid, 0, 0, 0);
+=======
+	return (typid == RECORDOID || get_typtype(typid) == TYPTYPE_COMPOSITE);
+}
+
+/*
+ * type_is_enum
+ *	  Returns true if the given type is an enum type.
+ */
+bool
+type_is_enum(Oid typid)
+{
+	return (get_typtype(typid) == TYPTYPE_ENUM);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
@@ -3797,14 +3892,26 @@ function_exists(Oid oid)
 }
 
 /*
+<<<<<<< HEAD
  * aggregate_exists
  *	  Is there an aggregate with the given oid
+=======
+ * get_array_type
+ *
+ *		Given the type OID, get the corresponding "true" array type.
+ *		Returns InvalidOid if no array type can be found.
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 bool
 aggregate_exists(Oid oid)
 {
+<<<<<<< HEAD
 	return SearchSysCacheExists(AGGFNOID, oid, 0, 0, 0);
 }
+=======
+	HeapTuple	tp;
+	Oid			result = InvalidOid;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 // Get oid of aggregate with given name and argument type
 Oid
@@ -3822,6 +3929,7 @@ get_aggregate(const char *aggname, Oid oidType)
 	Oid oidResult = InvalidOid;
 	while (HeapTupleIsValid(htup = caql_getnext(pcqCtx)))
 	{
+<<<<<<< HEAD
 		Oid oidProc = HeapTupleGetOid(htup);
 		
 		Form_pg_proc proctuple = (Form_pg_proc) GETSTRUCT(htup);
@@ -3846,6 +3954,12 @@ get_aggregate(const char *aggname, Oid oidType)
 	caql_endscan(pcqCtx);
 
 	return oidResult;
+=======
+		result = ((Form_pg_type) GETSTRUCT(tp))->typarray;
+		ReleaseSysCache(tp);
+	}
+	return result;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
@@ -4186,6 +4300,13 @@ get_comparison_operator(Oid oidLeft, Oid oidRight, CmpType cmpt)
 		result = amoptup->amopopr;
 		break;
 	}
+<<<<<<< HEAD
+=======
+	else
+		return InvalidOid;
+}
+#endif   /* NOT_USED */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	caql_endscan(pcqCtx);
 
@@ -4231,15 +4352,41 @@ has_subclass_fast(Oid relationId)
 /*
  * has_subclass
  *
+<<<<<<< HEAD
  * Performs the exhaustive check whether a relation has a subclass. This is 
  * different from has_subclass_fast, in that the latter can return true if a relation.
  * *might* have a subclass. See comments in has_subclass_fast for more details.
  * 
+=======
+ * If assigned, values and numbers are set to point to palloc'd arrays.
+ * If the attribute type is pass-by-reference, the values referenced by
+ * the values array are themselves palloc'd.  The palloc'd stuff can be
+ * freed by calling free_attstatsslot.
+ *
+ * Note: at present, atttype/atttypmod aren't actually used here at all.
+ * But the caller must have the correct (or at least binary-compatible)
+ * type ID to pass to free_attstatsslot later.
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 bool
 has_subclass(Oid relationId)
 {
+<<<<<<< HEAD
 	if (!has_subclass_fast(relationId))
+=======
+	Form_pg_statistic stats = (Form_pg_statistic) GETSTRUCT(statstuple);
+	int			i,
+				j;
+	Datum		val;
+	bool		isnull;
+	ArrayType  *statarray;
+	Oid			arrayelemtype;
+	int			narrayelem;
+	HeapTuple	typeTuple;
+	Form_pg_type typeForm;
+
+	for (i = 0; i < STATISTIC_NUM_SLOTS; i++)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		return false;
 	}
@@ -4251,6 +4398,7 @@ has_subclass(Oid relationId)
 						ObjectIdGetDatum(relationId))));
 }
 
+<<<<<<< HEAD
 /*
  * get_operator_opfamilies
  *		Get the oid of operator families the given operator belongs to
@@ -4263,6 +4411,30 @@ get_operator_opfamilies(Oid opno)
 	HeapTuple	htup;
 	List	   *opfam_oids;
 	cqContext  *pcqCtx;
+=======
+		/*
+		 * Need to get info about the array element type.  We look at the
+		 * actual element type embedded in the array, which might be only
+		 * binary-compatible with the passed-in atttype.  The info we
+		 * extract here should be the same either way, but deconstruct_array
+		 * is picky about having an exact type OID match.
+		 */
+		arrayelemtype = ARR_ELEMTYPE(statarray);
+		typeTuple = SearchSysCache(TYPEOID,
+								   ObjectIdGetDatum(arrayelemtype),
+								   0, 0, 0);
+		if (!HeapTupleIsValid(typeTuple))
+			elog(ERROR, "cache lookup failed for type %u", arrayelemtype);
+		typeForm = (Form_pg_type) GETSTRUCT(typeTuple);
+
+		/* Deconstruct array into Datum elements; NULLs not expected */
+		deconstruct_array(statarray,
+						  arrayelemtype,
+						  typeForm->typlen,
+						  typeForm->typbyval,
+						  typeForm->typalign,
+						  values, NULL, nvalues);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	pcqCtx = caql_beginscan(NULL,
 							cql("SELECT * FROM pg_amop "

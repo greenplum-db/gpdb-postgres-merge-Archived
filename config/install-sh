@@ -1,7 +1,11 @@
 #!/bin/sh
 # install - install a program, script, or datafile
 
+<<<<<<< HEAD
 # config/install-sh
+=======
+# $PostgreSQL: pgsql/config/install-sh,v 1.7 2007/11/13 18:50:54 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 scriptversion=2009-08-26.20
 
@@ -87,10 +91,27 @@ initialize_posix_glob='
   }
 '
 
+<<<<<<< HEAD
 posix_mkdir=
 
 # Desired mode of installed file.
 mode=0755
+=======
+mvprog="${MVPROG-mv}"
+cpprog="${CPPROG-cp}"
+chmodprog="${CHMODPROG-chmod}"
+chownprog="${CHOWNPROG-chown}"
+chgrpprog="${CHGRPPROG-chgrp}"
+# Darwin normal strip removes symbols from shared libraries
+# that are later needed for dynamic linking, so use strip -x.
+# http://archives.postgresql.org/pgsql-hackers/2007-10/msg01470.php
+if test `expr "\`uname -a\`" : 'Darwin'` -ne 0
+then	stripprog="${STRIPPROG-strip -x}"
+else	stripprog="${STRIPPROG-strip}"
+fi
+rmprog="${RMPROG-rm}"
+mkdirprog="${MKDIRPROG-mkdir}"
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 chgrpcmd=
 chmodcmd=$chmodprog

@@ -4,11 +4,15 @@
  *	  prototypes for various files in optimizer/plan
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.99 2007/01/22 01:35:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.106.2.1 2008/04/17 21:22:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +74,7 @@ typedef struct GroupContext
  * prototypes for plan/planmain.c
  */
 extern void query_planner(PlannerInfo *root, List *tlist,
-			  double tuple_fraction,
+			  double tuple_fraction, double limit_tuples,
 			  Path **cheapest_path, Path **sorted_path,
 			  double *num_groups);
 
@@ -128,12 +132,21 @@ extern Plan *add_repeat_node(Plan *result_plan, int repeat_count, uint64 groupin
 /*
  * prototypes for plan/createplan.c
  */
+<<<<<<< HEAD
 extern Plan *create_plan(PlannerInfo *root, Path *path);
 extern SubqueryScan *make_subqueryscan(PlannerInfo *root, List *qptlist, List *qpqual,
 				  Index scanrelid, Plan *subplan, List *subrtable);
 extern Append *make_append(List *appendplans, bool isTarget, List *tlist);
 extern Sort *make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree,
 						List *pathkeys, double limit_tuples, bool add_keys_to_targetlist);
+=======
+extern Plan *create_plan(PlannerInfo *root, Path *best_path);
+extern SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
+				  Index scanrelid, Plan *subplan, List *subrtable);
+extern Append *make_append(List *appendplans, bool isTarget, List *tlist);
+extern Sort *make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree,
+						List *pathkeys, double limit_tuples);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern Sort *make_sort_from_sortclauses(PlannerInfo *root, List *sortcls,
 						   Plan *lefttree);
 extern Sort *make_sort_from_groupcols(PlannerInfo *root, List *groupcls,
@@ -151,6 +164,7 @@ extern List *reconstruct_group_clause(List *orig_groupClause, List *tlist,
 						 AttrNumber *grpColIdx, int numcols);
 
 extern Agg *make_agg(PlannerInfo *root, List *tlist, List *qual,
+<<<<<<< HEAD
 					 AggStrategy aggstrategy, bool streaming,
 					 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
 					 long numGroups, int numNullCols,
@@ -181,17 +195,33 @@ extern Window *make_window(PlannerInfo *root, List *tlist,
 			List *windowKeys, Plan *lefttree);
 extern Material *make_material(Plan *lefttree);
 extern Plan *materialize_finished_plan(PlannerInfo *root, Plan *subplan);
+=======
+		 AggStrategy aggstrategy,
+		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
+		 long numGroups, int numAggs,
+		 Plan *lefttree);
+extern Group *make_group(PlannerInfo *root, List *tlist, List *qual,
+		   int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
+		   double numGroups,
+		   Plan *lefttree);
+extern Plan *materialize_finished_plan(Plan *subplan);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern Unique *make_unique(Plan *lefttree, List *distinctList);
 extern Limit *make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount,
 		   int64 offset_est, int64 count_est);
 extern SetOp *make_setop(SetOpCmd cmd, Plan *lefttree,
 		   List *distinctList, AttrNumber flagColIdx);
+<<<<<<< HEAD
 extern Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 extern Repeat *make_repeat(List *tlist,
 						   List *qual,
 						   Expr *repeatCountExpr,
 						   uint64 grouping,
 						   Plan *subplan);
+=======
+extern Result *make_result(PlannerInfo *root, List *tlist,
+			Node *resconstantqual, Plan *subplan);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern bool is_projection_capable_plan(Plan *plan);
 extern Plan *add_sort_cost(PlannerInfo *root, Plan *input, 
 						   int numCols, 
@@ -215,11 +245,12 @@ extern void add_base_rels_to_query(PlannerInfo *root, Node *jtnode);
 extern void build_base_rel_tlists(PlannerInfo *root, List *final_tlist);
 extern void add_IN_vars_to_tlists(PlannerInfo *root);
 extern void add_vars_to_targetlist(PlannerInfo *root, List *vars,
-								   Relids where_needed);
+					   Relids where_needed);
 extern List *deconstruct_jointree(PlannerInfo *root);
 extern void distribute_restrictinfo_to_rels(PlannerInfo *root,
-											RestrictInfo *restrictinfo);
+								RestrictInfo *restrictinfo);
 extern void process_implied_equality(PlannerInfo *root,
+<<<<<<< HEAD
 									 Oid opno,
 									 Expr *item1,
 									 Expr *item2,
@@ -233,18 +264,33 @@ extern void distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 						Relids ojscope,
 						Relids outerjoin_nonnullable,
 						List **postponed_qual_list);
+=======
+						 Oid opno,
+						 Expr *item1,
+						 Expr *item2,
+						 Relids qualscope,
+						 Relids nullable_relids,
+						 bool below_outer_join,
+						 bool both_const);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern RestrictInfo *build_implied_join_equality(Oid opno,
 							Expr *item1,
 							Expr *item2,
-							Relids qualscope);
+							Relids qualscope,
+							Relids nullable_relids);
 
 /*
  * prototypes for plan/setrefs.c
  */
 extern Plan *set_plan_references(PlannerGlobal *glob,
+<<<<<<< HEAD
 								 Plan *plan,
 								 List *rtable);
 
+=======
+					Plan *plan,
+					List *rtable);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern List *set_returning_clause_references(PlannerGlobal *glob,
 								List *rlist,
 								Plan *topplan,

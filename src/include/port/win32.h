@@ -1,19 +1,31 @@
+<<<<<<< HEAD
 /* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.88 2009/06/11 14:49:12 momjian Exp $ */
+=======
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.83.2.1 2009/08/11 11:51:20 mha Exp $ */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
 #endif
 
+<<<<<<< HEAD
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0501
 #endif
 
+=======
+#define _WIN32_WINNT 0x0500
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * Always build with SSPI support. Keep it as a #define in case
  * we want a switch to disable it sometime in the future.
  */
 #ifndef __BORLANDC__
+<<<<<<< HEAD
 #undef ENABLE_SSPI
+=======
+#define ENABLE_SSPI 1
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif
 
 /* undefine and redefine after #include */
@@ -37,16 +49,31 @@
 /* Must be here to avoid conflicting with prototype in windows.h */
 #define mkdir(a,b)	mkdir(a)
 
-#define HAVE_FSYNC_WRITETHROUGH
-#define HAVE_FSYNC_WRITETHROUGH_ONLY
 #define ftruncate(a,b)	chsize(a,b)
-/*
- *	Even though we don't support 'fsync' as a wal_sync_method,
- *	we do fsync() a few other places where _commit() is just fine.
- */
+
+/* Windows doesn't have fsync() as such, use _commit() */
 #define fsync(fd) _commit(fd)
 
+/*
+ * For historical reasons, we allow setting wal_sync_method to
+ * fsync_writethrough on Windows, even though it's really identical to fsync
+ * (both code paths wind up at _commit()).
+ */
+#define HAVE_FSYNC_WRITETHROUGH
+#define FSYNC_WRITETHROUGH_IS_FSYNC
+
 #define USES_WINSOCK
+
+/*
+ * Ensure that anyone building an extension is using a 32 bit time_t.
+ * On Mingw/Msys, that should always be the case, but MSVC++ defaults
+ * to 64 bits. We set that for our own build in the project files
+ */
+#if defined(WIN32_ONLY_COMPILER) && !defined(FRONTEND)
+#ifndef _USE_32BIT_TIME_T
+#error "Postgres uses 32 bit time_t - add #define _USE_32BIT_TIME_T on Windows"
+#endif
+#endif
 
 /* defines for dynamic linking on Win32 platform */
 #if defined(WIN32) || defined(__CYGWIN__)
@@ -305,6 +332,9 @@ extern int	pgwin32_is_admin(void);
 extern int	pgwin32_is_service(void);
 #endif
 
+/* in backend/port/win32_shmem.c */
+extern int	pgwin32_ReserveSharedMemoryRegion(HANDLE);
+
 /* in port/win32error.c */
 extern void _dosmaperr(unsigned long);
 
@@ -331,12 +361,16 @@ extern void pgwin32_unsetenv(const char *);
 
 /* Things that exist in MingW headers, but need to be added to MSVC & BCC */
 #ifdef WIN32_ONLY_COMPILER
+<<<<<<< HEAD
 #ifndef _WIN64
 typedef long ssize_t;
 #else
 typedef __int64 ssize_t;
 #endif
 
+=======
+typedef long ssize_t;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #ifndef __BORLANDC__
 typedef unsigned short mode_t;
 #endif
@@ -371,6 +405,7 @@ typedef unsigned short mode_t;
 
 /* Pulled from Makefile.port in mingw */
 #define DLSUFFIX ".dll"
+<<<<<<< HEAD
 
 #ifdef __BORLANDC__
 
@@ -389,5 +424,7 @@ typedef unsigned short mode_t;
 #endif /* ifndef O_RANDOM */
 
 #endif /* __BORLANDC__ */
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #endif

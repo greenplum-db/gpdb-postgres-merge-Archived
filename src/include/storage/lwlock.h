@@ -4,10 +4,17 @@
  *	  Lightweight lock manager
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/storage/lwlock.h,v 1.36 2007/04/16 18:30:04 alvherre Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/include/storage/lwlock.h,v 1.38 2008/01/01 19:45:59 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +69,6 @@ typedef enum LWLockId
 	WALWriteLock,
 	ControlFileLock,
 	CheckpointLock,
-	CheckpointStartLock,
 	CLogControlLock,
 	SubtransControlLock,
 	MultiXactGenLock,
@@ -76,6 +82,7 @@ typedef enum LWLockId
 	AddinShmemInitLock,
 	AutovacuumLock,
 	AutovacuumScheduleLock,
+<<<<<<< HEAD
 	SharedSnapshotLock,
 	DistributedLogControlLock,
 	SeqServerControlLock,
@@ -95,6 +102,11 @@ typedef enum LWLockId
 	FirstWorkfileMgrLock,
 	FirstWorkfileQuerySpaceLock = FirstWorkfileMgrLock + NUM_WORKFILEMGR_PARTITIONS,
 	FirstBufMappingLock = FirstWorkfileQuerySpaceLock + NUM_WORKFILE_QUERYSPACE_PARTITIONS,
+=======
+	SyncScanLock,
+	/* Individual lock IDs end here */
+	FirstBufMappingLock,
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	FirstLockMgrLock = FirstBufMappingLock + NUM_BUFFER_PARTITIONS,
 	SessionStateLock = FirstLockMgrLock + NUM_LOCK_PARTITIONS,
 

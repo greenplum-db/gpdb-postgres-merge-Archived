@@ -345,6 +345,7 @@ SELECT has_table_privilege('regressuser3', 'atest4', 'SELECT'); -- false
 SELECT has_table_privilege('regressuser1', 'atest4', 'SELECT WITH GRANT OPTION'); -- true
 
 
+<<<<<<< HEAD
 -- Admin options
 
 SET SESSION AUTHORIZATION regressuser4;
@@ -372,6 +373,8 @@ DROP FUNCTION dogrant_ok();
 REVOKE regressgroup2 FROM regressuser5;
 
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 -- test that dependent privileges are revoked (or not) properly
 \c -
 
@@ -424,4 +427,7 @@ DROP USER regressuser2;
 DROP USER regressuser3;
 DROP USER regressuser4;
 DROP USER regressuser5;
+<<<<<<< HEAD
 reset optimizer;
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

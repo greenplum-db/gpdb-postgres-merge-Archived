@@ -1,5 +1,9 @@
 /* Processed by ecpg (regression mode) */
 /* These include files are added by the preprocessor */
+<<<<<<< HEAD
+=======
+#include <ecpgtype.h>
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include <ecpglib.h>
 #include <ecpgerrno.h>
 #include <sqlca.h>
@@ -38,6 +42,7 @@ main(void)
 	 
 
 #line 14 "oldexec.pgc"
+<<<<<<< HEAD
  int amount [ 8 ] ;
  
 #line 15 "oldexec.pgc"
@@ -51,6 +56,21 @@ main(void)
  
 #line 18 "oldexec.pgc"
  char command [ 128 ] ;
+=======
+ int  amount [ 8 ]    ;
+ 
+#line 15 "oldexec.pgc"
+ int  increment   = 100 ;
+ 
+#line 16 "oldexec.pgc"
+ char  name [ 8 ] [ 8 ]    ;
+ 
+#line 17 "oldexec.pgc"
+ char  letter [ 8 ] [ 1 ]    ;
+ 
+#line 18 "oldexec.pgc"
+ char  command [ 128 ]    ;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* exec sql end declare section */
 #line 19 "oldexec.pgc"
 
@@ -64,7 +84,11 @@ main(void)
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 24 "oldexec.pgc"
 
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 1, ECPGst_normal, "create table test ( name char ( 8 ) , amount int , letter char ( 1 ) )", ECPGt_EOIT, ECPGt_EORT);
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 1, ECPGst_normal, "create  table test ( name char  ( 8 )    , amount int   , letter char  ( 1 )    )    ", ECPGt_EOIT, ECPGt_EORT);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 25 "oldexec.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -136,11 +160,19 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 49 "oldexec.pgc"
 
+<<<<<<< HEAD
 	/* declare CUR cursor for $1 */
 #line 50 "oldexec.pgc"
 
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 1, ECPGst_normal, "declare CUR cursor for $1", 
+=======
+	/* declare CUR  cursor  for $1 */
+#line 50 "oldexec.pgc"
+
+
+	{ ECPGdo(__LINE__, 0, 1, NULL, 1, ECPGst_normal, "declare CUR  cursor  for $1", 
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_char_variable,(ECPGprepared_statement(NULL, "f", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 52 "oldexec.pgc"
@@ -168,10 +200,17 @@ if (sqlca.sqlcode < 0) sqlprint();}
 		   
 		
 #line 58 "oldexec.pgc"
+<<<<<<< HEAD
  char n [ 8 ] , l = letter [ i ] [ 0 ] ;
  
 #line 59 "oldexec.pgc"
  int a = amount [ i ] ;
+=======
+ char  n [ 8 ]    ,  l   = letter [ i ] [ 0 ] ;
+ 
+#line 59 "oldexec.pgc"
+ int  a   = amount [ i ] ;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* exec sql end declare section */
 #line 60 "oldexec.pgc"
 
@@ -195,11 +234,19 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 70 "oldexec.pgc"
 
+<<<<<<< HEAD
 	/* declare CUR3 cursor for $1 */
 #line 71 "oldexec.pgc"
 
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 1, ECPGst_normal, "declare CUR3 cursor for $1", 
+=======
+	/* declare CUR3  cursor  for $1 */
+#line 71 "oldexec.pgc"
+
+
+	{ ECPGdo(__LINE__, 0, 1, NULL, 1, ECPGst_normal, "declare CUR3  cursor  for $1", 
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_char_variable,(ECPGprepared_statement(NULL, "f", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_const,"1",(long)1,(long)1,strlen("1"), 
@@ -229,10 +276,17 @@ if (sqlca.sqlcode < 0) sqlprint();}
 		   
 		
 #line 79 "oldexec.pgc"
+<<<<<<< HEAD
  char n [ 8 ] , l = letter [ i ] [ 0 ] ;
  
 #line 80 "oldexec.pgc"
  int a = amount [ i ] ;
+=======
+ char  n [ 8 ]    ,  l   = letter [ i ] [ 0 ] ;
+ 
+#line 80 "oldexec.pgc"
+ int  a   = amount [ i ] ;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* exec sql end declare section */
 #line 81 "oldexec.pgc"
 
@@ -247,7 +301,11 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 87 "oldexec.pgc"
 
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 1, ECPGst_normal, "drop table test", ECPGt_EOIT, ECPGt_EORT);
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 1, ECPGst_normal, "drop table test ", ECPGt_EOIT, ECPGt_EORT);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 88 "oldexec.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

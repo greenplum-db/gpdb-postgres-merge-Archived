@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.110 2009/06/11 14:49:13 momjian Exp $ */
+=======
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.103 2007/12/21 14:33:20 meskes Exp $ */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -46,6 +50,7 @@ help(const char *progname)
 #ifdef YYDEBUG
 	printf(_("  -d             generate parser debug output\n"));
 #endif
+<<<<<<< HEAD
 	printf(_("  -D SYMBOL      define SYMBOL\n"));
 	printf(_("  -h             parse a header file, this option includes option \"-c\"\n"));
 	printf(_("  -i             parse system include files as well\n"));
@@ -60,6 +65,25 @@ help(const char *progname)
 	printf(_("\nIf no output file is specified, the name is formed by adding .c to the\n"
 			 "input file name, after stripping off .pgc if present.\n"));
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
+=======
+	printf("  -D SYMBOL      define SYMBOL\n");
+	printf("  -h             parse a header file, this option includes option \"-c\"\n");
+	printf("  -i             parse system include files as well\n");
+	printf("  -I DIRECTORY   search DIRECTORY for include files\n");
+	printf("  -o OUTFILE     write result to OUTFILE\n");
+	printf("  -r OPTION      specify runtime behaviour;\n"
+		   "                 OPTION can be:\n"
+		   "                  \"no_indicator\"\n"
+		   "                  \"prepare\"\n"
+		   "                  \"questionmarks\"\n");
+	printf("  -t             turn on autocommit of transactions\n");
+	printf("  --help         show this help, then exit\n");
+	printf("  --regression   run in regression testing mode\n");
+	printf("  --version      output version information, then exit\n");
+	printf("\nIf no output file is specified, the name is formed by adding .c to the\n"
+		   "input file name, after stripping off .pgc if present.\n");
+	printf("\nReport bugs to <pgsql-bugs@postgresql.org>.\n");
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 static void
@@ -180,7 +204,11 @@ main(int argc, char *const argv[])
 
 				if (yyout == NULL)
 				{
+<<<<<<< HEAD
 					fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
+=======
+					fprintf(stderr, "%s: could not open file \"%s\": %s\n",
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 							progname, output_filename, strerror(errno));
 					output_filename = NULL;
 				}
@@ -454,6 +482,14 @@ main(int argc, char *const argv[])
 
 				/* and parse the source */
 				base_yyparse();
+<<<<<<< HEAD
+=======
+
+				/* check if all cursors were indeed opened */
+				for (ptr = cur; ptr != NULL;)
+				{
+					char		errortext[128];
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 				/*
 				 * Check whether all cursors were indeed opened.  It does not

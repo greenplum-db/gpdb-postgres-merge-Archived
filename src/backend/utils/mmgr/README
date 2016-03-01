@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 $PostgreSQL: pgsql/src/backend/utils/mmgr/README,v 1.15 2008/04/09 01:00:46 momjian Exp $
+=======
+$PostgreSQL: pgsql/src/backend/utils/mmgr/README,v 1.11 2007/05/29 04:19:35 neilc Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 Notes About Memory Allocation Redesign
 ======================================
@@ -201,6 +205,7 @@ have dangling pointers leading to a crash at top-level commit.  An example of
 data kept here is pending NOTIFY messages, which are sent at top-level commit,
 but only if the generating subtransaction did not abort.
 
+<<<<<<< HEAD
 QueryContext --- this is not actually a separate context, but a global
 variable pointing to the context that holds the current command's parse tree.
 (In simple-Query mode this points to MessageContext; when executing a
@@ -210,6 +215,8 @@ Generally it is not appropriate for any code to use QueryContext as an
 allocation target --- from the point of view of any code that would be
 referencing the QueryContext variable, it's a read-only context.
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 PortalContext --- this is not actually a separate context, but a
 global variable pointing to the per-portal context of the currently active
 execution portal.  This can be used if it's necessary to allocate storage

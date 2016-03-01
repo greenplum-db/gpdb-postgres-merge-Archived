@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tuplestore.h,v 1.20 2007/01/05 22:20:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tuplestore.h,v 1.22 2008/01/01 19:45:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,18 +63,29 @@ extern Tuplestorestate* tuplestore_begin_heap(bool randomAccess,
 					  bool interXact,
 					  int maxKBytes);
 
+<<<<<<< HEAD
 extern void tuplestore_puttupleslot_pos(Tuplestorestate *state, TuplestorePos *pos, TupleTableSlot *slot);
 extern void tuplestore_puttupleslot(Tuplestorestate *state, TupleTableSlot *slot);
 
 extern void tuplestore_puttuple_pos(Tuplestorestate *state, TuplestorePos *pos, HeapTuple tuple);
 
+=======
+extern void tuplestore_set_eflags(Tuplestorestate *state, int eflags);
+
+extern void tuplestore_puttupleslot(Tuplestorestate *state,
+						TupleTableSlot *slot);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern void tuplestore_puttuple(Tuplestorestate *state, HeapTuple tuple);
 
 /* tuplestore_donestoring() used to be required, but is no longer used */
 #define tuplestore_donestoring(state)	((void) 0)
 
+<<<<<<< HEAD
 /* backwards scan is only allowed if randomAccess was specified 'true' */
 extern bool tuplestore_gettupleslot_pos(Tuplestorestate *state, TuplestorePos *pos, bool forward,
+=======
+extern bool tuplestore_gettupleslot(Tuplestorestate *state, bool forward,
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 						TupleTableSlot *slot);
 extern bool tuplestore_gettupleslot(Tuplestorestate *state, bool forward, TupleTableSlot *slot);
 

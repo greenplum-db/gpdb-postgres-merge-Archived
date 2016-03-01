@@ -4,11 +4,15 @@
  *	  prototypes for optimizer/util/var.c.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/var.h,v 1.35 2007/01/05 22:19:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/var.h,v 1.37 2008/01/01 19:45:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,8 +33,14 @@ bool        cdb_walk_vars(Node                         *node,
                           int                           levelsup);
 
 extern Relids pull_varnos(Node *node);
+<<<<<<< HEAD
 
 extern bool contain_ctid_var_reference(Scan *scan);
+=======
+extern void pull_varattnos(Node *node, Bitmapset **varattnos);
+extern bool contain_var_reference(Node *node, int varno, int varattno,
+					  int levelsup);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern bool contain_var_clause(Node *node);
 extern bool contain_vars_of_level(Node *node, int levelsup);
 extern bool contain_vars_of_level_or_above(Node *node, int levelsup);

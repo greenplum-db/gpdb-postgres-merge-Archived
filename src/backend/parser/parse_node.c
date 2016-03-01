@@ -8,13 +8,17 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.96 2007/01/05 22:19:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.99 2008/01/01 19:45:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+<<<<<<< HEAD
 #include "catalog/catquery.h"
+=======
+#include "access/heapam.h"
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "catalog/pg_type.h"
 #include "mb/pg_wchar.h"
 #include "nodes/makefuncs.h"
@@ -29,9 +33,11 @@
 #include "utils/varbit.h"
 
 
-/* make_parsestate()
- * Allocate and initialize a new ParseState.
- * The CALLER is responsible for freeing the ParseState* returned.
+/*
+ * make_parsestate
+ *		Allocate and initialize a new ParseState.
+ *
+ * Caller should eventually release the ParseState via free_parsestate().
  */
 ParseState *
 make_parsestate(ParseState *parentParseState)
@@ -69,6 +75,7 @@ make_parsestate(ParseState *parentParseState)
 void
 free_parsestate(ParseState *pstate)
 {
+<<<<<<< HEAD
 	if (pstate->p_namecache)
 		hash_destroy(pstate->p_namecache);
 
@@ -113,6 +120,25 @@ parser_get_namecache(ParseState *pstate)
 	/* Return the cache */
 	return pstate->p_namecache;
 }
+=======
+	/*
+	 * Check that we did not produce too many resnos; at the very least we
+	 * cannot allow more than 2^16, since that would exceed the range of a
+	 * AttrNumber. It seems safest to use MaxTupleAttributeNumber.
+	 */
+	if (pstate->p_next_resno - 1 > MaxTupleAttributeNumber)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("target lists can have at most %d entries",
+						MaxTupleAttributeNumber)));
+
+	if (pstate->p_target_relation != NULL)
+		heap_close(pstate->p_target_relation, NoLock);
+
+	pfree(pstate);
+}
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * parser_errposition
@@ -214,7 +240,8 @@ transformArrayType(Oid arrayType)
  * arrayType	OID of array's datatype (should match type of arrayBase)
  * elementType	OID of array's element type (fetch with transformArrayType,
  *				or pass InvalidOid to do it here)
- * elementTypMod typmod to be applied to array elements (if storing)
+ * elementTypMod typmod to be applied to array elements (if storing) or of
+ *				the source array (if fetching)
  * indirection	Untransformed list of subscripts (must not be NIL)
  * assignFrom	NULL for array fetch, else transformed expression for source.
  */
@@ -227,7 +254,6 @@ transformArraySubscripts(ParseState *pstate,
 						 List *indirection,
 						 Node *assignFrom)
 {
-	Oid			resultType;
 	bool		isSlice = false;
 	List	   *upperIndexpr = NIL;
 	List	   *lowerIndexpr = NIL;
@@ -256,16 +282,6 @@ transformArraySubscripts(ParseState *pstate,
 			break;
 		}
 	}
-
-	/*
-	 * The type represented by the subscript expression is the element type if
-	 * we are fetching a single element, but it is the same as the array type
-	 * if we are fetching a slice or storing.
-	 */
-	if (isSlice || assignFrom != NULL)
-		resultType = arrayType;
-	else
-		resultType = elementType;
 
 	/*
 	 * Transform the subscript expressions.
@@ -349,9 +365,9 @@ transformArraySubscripts(ParseState *pstate,
 	 * Ready to build the ArrayRef node.
 	 */
 	aref = makeNode(ArrayRef);
-	aref->refrestype = resultType;
 	aref->refarraytype = arrayType;
 	aref->refelemtype = elementType;
+	aref->reftypmod = elementTypMod;
 	aref->refupperindexpr = upperIndexpr;
 	aref->reflowerindexpr = lowerIndexpr;
 	aref->refexpr = (Expr *) arrayBase;
@@ -477,7 +493,11 @@ make_const(ParseState *pstate, Value *value, int location)
 	}
 
 	con = makeConst(typeid,
+<<<<<<< HEAD
 			        -1,
+=======
+					-1,			/* typmod -1 is OK for all cases */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					typelen,
 					val,
 					false,

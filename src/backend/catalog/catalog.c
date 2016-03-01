@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.69 2007/01/05 22:19:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.72.2.1 2008/02/20 17:44:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "access/transam.h"
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_database.h"
@@ -601,15 +602,17 @@ IsSystemNamespace(Oid namespaceId)
 
 /*
  * IsToastNamespace
- *		True iff namespace is pg_toast.
+ *		True iff namespace is pg_toast or my temporary-toast-table namespace.
  *
- * NOTE: the reason this isn't a macro is to avoid having to include
- * catalog/pg_namespace.h in a lot of places.
+ * Note: this will return false for temporary-toast-table namespaces belonging
+ * to other backends.  Those are treated the same as other backends' regular
+ * temp table namespaces, and access is prevented where appropriate.
  */
 bool
 IsToastNamespace(Oid namespaceId)
 {
-	return namespaceId == PG_TOAST_NAMESPACE;
+	return (namespaceId == PG_TOAST_NAMESPACE) ||
+		isTempToastNamespace(namespaceId);
 }
 
 /*
@@ -939,9 +942,12 @@ Oid
 GetNewOidWithIndex(Relation relation, Relation indexrel)
 {
 	Oid			newOid;
+	SnapshotData SnapshotDirty;
 	IndexScanDesc scan;
 	ScanKeyData key;
 	bool		collides;
+
+	InitDirtySnapshot(SnapshotDirty);
 
 	/* Generate new OIDs until we find one not in the table */
 	do
@@ -957,7 +963,7 @@ GetNewOidWithIndex(Relation relation, Relation indexrel)
 
 		/* see notes above about using SnapshotDirty */
 		scan = index_beginscan(relation, indexrel,
-							   SnapshotDirty, 1, &key);
+							   &SnapshotDirty, 1, &key);
 
 		collides = HeapTupleIsValid(index_getnext(scan, ForwardScanDirection));
 

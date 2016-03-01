@@ -5,11 +5,14 @@
  *	  definitions for query plan nodes
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.90 2007/02/19 02:23:12 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.99 2008/01/01 19:45:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,12 +68,16 @@ typedef struct PlannedStmt
 
 	CmdType		commandType;	/* select|insert|update|delete */
 
+<<<<<<< HEAD
 	PlanGenerator	planGen;		/* optimizer generation */
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	bool		canSetTag;		/* do I set the command result tag? */
 
 	bool		transientPlan;	/* redo plan when TransactionXmin changes? */
 
+<<<<<<< HEAD
 	/* Field qdContext communicates memory context on the QD  from portal to
 	 * dispatch.
 	 *
@@ -81,6 +88,8 @@ typedef struct PlannedStmt
 	 */
 	MemoryContext qdContext;
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	struct Plan *planTree;		/* tree of Plan nodes */
 
 	List	   *rtable;			/* list of RangeTblEntry nodes */
@@ -108,6 +117,7 @@ typedef struct PlannedStmt
 	 */
 	List	   *returningLists; /* list of lists of TargetEntry, or NIL */
 
+<<<<<<< HEAD
 	/*
 	 * If the resultRelation turns out to be the parent of an inheritance
 	 * tree, the planner will add all the child tables to the rtable and store
@@ -131,10 +141,13 @@ typedef struct PlannedStmt
 	 */
 	List	   *numSelectorsPerScanId;
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	List	   *rowMarks;		/* a list of RowMarkClause's */
 
 	List	   *relationOids;	/* OIDs of relations the plan depends on */
 
+<<<<<<< HEAD
 	List	   *invalItems;		/* other dependencies, as PlanInvalItems */
 
 	int			nCrossLevelParams;		/* number of PARAM_EXEC Params used */
@@ -190,6 +203,14 @@ static inline void exec_subplan_put_plan(struct PlannedStmt *plannedstmt, SubPla
 	ListCell *cell = list_nth_cell(plannedstmt->subplans, subplan->plan_id-1);
 	cell->data.ptr_value = plan;
 }
+=======
+	int			nParamExec;		/* number of PARAM_EXEC Params used */
+} PlannedStmt;
+
+/* macro for fetching the Plan associated with a SubPlan node */
+#define exec_subplan_get_plan(plannedstmt, subplan) \
+	((Plan *) list_nth((plannedstmt)->subplans, (subplan)->plan_id - 1))
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 /* ----------------
@@ -248,6 +269,7 @@ typedef struct Plan
 	 */
 	Bitmapset  *extParam;
 	Bitmapset  *allParam;
+<<<<<<< HEAD
 
 	int			nParamExec;		/* Also in PlannedStmt */
 
@@ -306,6 +328,8 @@ typedef struct Plan
 
 	/* MemoryAccount to use for recording the memory usage of different plan nodes. */
 	MemoryAccount* memoryAccount;
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } Plan;
 
 /* ----------------
@@ -768,7 +792,7 @@ typedef struct NestLoop
  *
  * The expected ordering of each mergeable column is described by a btree
  * opfamily OID, a direction (BTLessStrategyNumber or BTGreaterStrategyNumber)
- * and a nulls-first flag.  Note that the two sides of each mergeclause may
+ * and a nulls-first flag.	Note that the two sides of each mergeclause may
  * be of different datatypes, but they are ordered the same way according to
  * the common opfamily.  The operator in each mergeclause must be an equality
  * operator of the indicated opfamily.
@@ -777,9 +801,9 @@ typedef struct NestLoop
 typedef struct MergeJoin
 {
 	Join		join;
-	List	   *mergeclauses;		/* mergeclauses as expression trees */
+	List	   *mergeclauses;	/* mergeclauses as expression trees */
 	/* these are arrays, but have the same length as the mergeclauses list: */
-	Oid		   *mergeFamilies;		/* per-clause OIDs of btree opfamilies */
+	Oid		   *mergeFamilies;	/* per-clause OIDs of btree opfamilies */
 	int		   *mergeStrategies;	/* per-clause ordering (ASC or DESC) */
 	bool	   *mergeNullsFirst;	/* per-clause nulls ordering */
 	bool		unique_outer; /*CDB-OLAP true => outer is unique in merge key */

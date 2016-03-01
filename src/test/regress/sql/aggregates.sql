@@ -80,6 +80,12 @@ group by ten
 having exists (select 1 from onek b
                where sum(distinct a.four + b.four) = b.four);
 
+-- Test handling of sublinks within outer-level aggregates.
+-- Per bug report from Daniel Grace.
+select
+  (select max((select i.unique2 from tenk1 i where i.unique1 = o.unique1)))
+from tenk1 o;
+
 --
 -- test for bitwise integer aggregates
 --
@@ -223,6 +229,7 @@ select distinct max(unique2) from tenk1;
 select max(unique2) from tenk1 order by 1;
 select max(unique2) from tenk1 order by max(unique2);
 select max(unique2) from tenk1 order by max(unique2)+1;
+<<<<<<< HEAD
 
 -- MPP: This works in Postgres
 select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
@@ -455,3 +462,6 @@ reset enable_hashjoin;
 reset enable_mergejoin;
 
 drop table l, ps;
+=======
+select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

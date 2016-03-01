@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.70 2007/01/05 22:19:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.73 2008/01/01 19:45:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
  *****************************************************************************/
 
 static Oid
-oidin_subr(const char *funcname, const char *s, char **endloc)
+oidin_subr(const char *s, char **endloc)
 {
 	unsigned long cvt;
 	char	   *endptr;
@@ -112,7 +112,7 @@ oidin(PG_FUNCTION_ARGS)
 	char	   *s = PG_GETARG_CSTRING(0);
 	Oid			result;
 
-	result = oidin_subr("oidin", s, NULL);
+	result = oidin_subr(s, NULL);
 	PG_RETURN_OID(result);
 }
 
@@ -198,7 +198,7 @@ oidvectorin(PG_FUNCTION_ARGS)
 			oidString++;
 		if (*oidString == '\0')
 			break;
-		result->values[n] = oidin_subr("oidvectorin", oidString, &oidString);
+		result->values[n] = oidin_subr(oidString, &oidString);
 	}
 	while (*oidString && isspace((unsigned char) *oidString))
 		oidString++;
@@ -415,6 +415,7 @@ oidvectorgt(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL(cmp > 0);
 }
+<<<<<<< HEAD
 
 Datum
 oid_text(PG_FUNCTION_ARGS)
@@ -457,3 +458,5 @@ text_oid(PG_FUNCTION_ARGS)
 
 	PG_RETURN_OID(result);
 }
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

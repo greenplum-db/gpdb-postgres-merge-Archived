@@ -26,7 +26,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/contrib/pgcrypto/pgp.h,v 1.6 2009/06/11 14:48:52 momjian Exp $
+=======
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp.h,v 1.4.6.1 2009/03/25 15:03:19 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 
 enum PGP_S2K_TYPE

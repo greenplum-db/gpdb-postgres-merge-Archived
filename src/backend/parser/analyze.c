@@ -14,17 +14,22 @@
  * optimizable statements.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.360 2007/02/01 19:10:27 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.371.2.2 2009/01/30 16:59:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+<<<<<<< HEAD
 #include "access/heapam.h"
 #include "access/reloptions.h"
 #include "catalog/catquery.h"
@@ -40,6 +45,9 @@
 #include "commands/defrem.h"
 #include "commands/prepare.h"
 #include "commands/tablecmds.h"
+=======
+#include "catalog/pg_type.h"
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -48,11 +56,11 @@
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/analyze.h"
-#include "parser/gramparse.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
+<<<<<<< HEAD
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_partition.h"
@@ -94,6 +102,12 @@ typedef struct
 	List	   *alist;			/* "after list" of things to do after creating
 								 * the schema */
 } CreateSchemaStmtContext;
+=======
+#include "parser/parse_relation.h"
+#include "parser/parse_target.h"
+#include "parser/parsetree.h"
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 typedef struct
 {
@@ -124,17 +138,20 @@ typedef struct
 	TargetEntry *tle;
 } grouped_window_ctx;
 
+<<<<<<< HEAD
 static List *do_parse_analyze(Node *parseTree, ParseState *pstate);
 static void parse_analyze_error_callback(void *parsestate);     /*CDB*/
 static Query *transformStmt(ParseState *pstate, Node *stmt,
 			  List **extras_before, List **extras_after);
 static Query *transformViewStmt(ParseState *pstate, ViewStmt *stmt,
 				  List **extras_before, List **extras_after);
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static Query *transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt);
-static Query *transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
-					List **extras_before, List **extras_after);
+static Query *transformInsertStmt(ParseState *pstate, InsertStmt *stmt);
 static List *transformInsertRow(ParseState *pstate, List *exprlist,
 				   List *stmtcols, List *icolumns, List *attrnos);
+<<<<<<< HEAD
 
 /*
  * MPP-2506 [insert/update/delete] RETURNING clause not supported:
@@ -150,13 +167,20 @@ static Query *transformIndexStmt(ParseState *pstate, IndexStmt *stmt,
 								 List **extras_before, List **extras_after);
 static Query *transformRuleStmt(ParseState *query, RuleStmt *stmt,
 				  List **extras_before, List **extras_after);
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformValuesClause(ParseState *pstate, SelectStmt *stmt);
 static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt);
 static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt);
+static void getSetColTypes(ParseState *pstate, Node *node,
+			   List **colTypes, List **colTypmods);
+static void applyColumnNames(List *dst, List *src);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
+static List *transformReturningList(ParseState *pstate, List *returningList);
 static Query *transformDeclareCursorStmt(ParseState *pstate,
 						   DeclareCursorStmt *stmt);
+<<<<<<< HEAD
 static bool isSimplyUpdatableQuery(Query *query);
 static Query *transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt);
 static Query *transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt);
@@ -186,11 +210,11 @@ static int collectSetopTypes(ParseState *pstate, SelectStmt *stmt,
 							 List **types, List **typmods);
 static void getSetColTypes(ParseState *pstate, Node *node,
 			   List **colTypes, List **colTypmods);
+=======
+static Query *transformExplainStmt(ParseState *pstate,
+					 ExplainStmt *stmt);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static void transformLockingClause(Query *qry, LockingClause *lc);
-static void transformConstraintAttrs(List *constraintList);
-static void transformColumnType(ParseState *pstate, ColumnDef *column);
-static void release_pstate_resources(ParseState *pstate);
-static FromExpr *makeFromExpr(List *fromlist, Node *quals);
 static bool check_parameter_resolution_walker(Node *node,
 								check_parameter_resolution_context *context);
 
@@ -221,28 +245,27 @@ static List *transformAttributeEncoding(List *stenc, CreateStmt *stmt,
  * Optionally, information about $n parameter types can be supplied.
  * References to $n indexes not defined by paramTypes[] are disallowed.
  *
- * The result is a List of Query nodes (we need a list since some commands
- * produce multiple Queries).  Optimizable statements require considerable
- * transformation, while many utility-type statements are simply hung off
+ * The result is a Query node.	Optimizable statements require considerable
+ * transformation, while utility-type statements are simply hung off
  * a dummy CMD_UTILITY Query node.
  */
-List *
+Query *
 parse_analyze(Node *parseTree, const char *sourceText,
 			  Oid *paramTypes, int numParams)
 {
 	ParseState *pstate = make_parsestate(NULL);
-	List	   *result;
+	Query	   *query;
 
 	pstate->p_sourcetext = sourceText;
 	pstate->p_paramtypes = paramTypes;
 	pstate->p_numparams = numParams;
 	pstate->p_variableparams = false;
 
-	result = do_parse_analyze(parseTree, pstate);
+	query = transformStmt(pstate, parseTree);
 
 	free_parsestate(pstate);
 
-	return result;
+	return query;
 }
 
 /*
@@ -252,19 +275,19 @@ parse_analyze(Node *parseTree, const char *sourceText,
  * symbol datatypes from context.  The passed-in paramTypes[] array can
  * be modified or enlarged (via repalloc).
  */
-List *
+Query *
 parse_analyze_varparams(Node *parseTree, const char *sourceText,
 						Oid **paramTypes, int *numParams)
 {
 	ParseState *pstate = make_parsestate(NULL);
-	List	   *result;
+	Query	   *query;
 
 	pstate->p_sourcetext = sourceText;
 	pstate->p_paramtypes = *paramTypes;
 	pstate->p_numparams = *numParams;
 	pstate->p_variableparams = true;
 
-	result = do_parse_analyze(parseTree, pstate);
+	query = transformStmt(pstate, parseTree);
 
 	*paramTypes = pstate->p_paramtypes;
 	*numParams = pstate->p_numparams;
@@ -278,20 +301,21 @@ parse_analyze_varparams(Node *parseTree, const char *sourceText,
 
 		context.paramTypes = *paramTypes;
 		context.numParams = *numParams;
-		check_parameter_resolution_walker((Node *) result, &context);
+		check_parameter_resolution_walker((Node *) query, &context);
 	}
 
-	return result;
+	return query;
 }
 
 /*
  * parse_sub_analyze
  *		Entry point for recursively analyzing a sub-statement.
  */
-List *
+Query *
 parse_sub_analyze(Node *parseTree, ParseState *parentParseState)
 {
 	ParseState *pstate = make_parsestate(parentParseState);
+<<<<<<< HEAD
 	List	   *result;
 
 	result = do_parse_analyze(parseTree, pstate);
@@ -467,39 +491,15 @@ do_parse_analyze(Node *parseTree, ParseState *pstate)
 	}
 	else
 		result = list_concat(result, tmp);
+=======
+	Query	   *query;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
-	/*
-	 * Make sure that only the original query is marked original. We have to
-	 * do this explicitly since recursive calls of do_parse_analyze will have
-	 * marked some of the added-on queries as "original".  Also mark only the
-	 * original query as allowed to set the command-result tag.
-	 */
-	foreach(l, result)
-	{
-		Query	   *q = lfirst(l);
+	query = transformStmt(pstate, parseTree);
 
-		if (q == query)
-		{
-			q->querySource = QSRC_ORIGINAL;
-			q->canSetTag = true;
-		}
-		else
-		{
-			q->querySource = QSRC_PARSER;
-			q->canSetTag = false;
-		}
-	}
+	free_parsestate(pstate);
 
-	return result;
-}
-
-static void
-release_pstate_resources(ParseState *pstate)
-{
-	if (pstate->p_target_relation != NULL)
-		heap_close(pstate->p_target_relation, NoLock);
-	pstate->p_target_relation = NULL;
-	pstate->p_target_rangetblentry = NULL;
+	return query;
 }
 
 
@@ -550,15 +550,15 @@ parse_analyze_error_callback(void *parsestate)
  * transformStmt -
  *	  transform a Parse tree into a Query tree.
  */
-static Query *
-transformStmt(ParseState *pstate, Node *parseTree,
-			  List **extras_before, List **extras_after)
+Query *
+transformStmt(ParseState *pstate, Node *parseTree)
 {
-	Query	   *result = NULL;
+	Query	   *result;
 
 	switch (nodeTag(parseTree))
 	{
 			/*
+<<<<<<< HEAD
 			 * Non-optimizable statements
 			 */
 		case T_CreateStmt:
@@ -626,11 +626,12 @@ transformStmt(ParseState *pstate, Node *parseTree,
 			break;
 
 			/*
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			 * Optimizable statements
 			 */
 		case T_InsertStmt:
-			result = transformInsertStmt(pstate, (InsertStmt *) parseTree,
-										 extras_before, extras_after);
+			result = transformInsertStmt(pstate, (InsertStmt *) parseTree);
 			break;
 
 		case T_DeleteStmt:
@@ -654,9 +655,17 @@ transformStmt(ParseState *pstate, Node *parseTree,
 			}
 			break;
 
+			/*
+			 * Special cases
+			 */
 		case T_DeclareCursorStmt:
 			result = transformDeclareCursorStmt(pstate,
 											(DeclareCursorStmt *) parseTree);
+			break;
+
+		case T_ExplainStmt:
+			result = transformExplainStmt(pstate,
+										  (ExplainStmt *) parseTree);
 			break;
 
 		default:
@@ -675,17 +684,6 @@ transformStmt(ParseState *pstate, Node *parseTree,
 	result->querySource = QSRC_ORIGINAL;
 	result->canSetTag = true;
 
-	/*
-	 * Check that we did not produce too many resnos; at the very least we
-	 * cannot allow more than 2^16, since that would exceed the range of a
-	 * AttrNumber. It seems safest to use MaxTupleAttributeNumber.
-	 */
-	if (pstate->p_next_resno - 1 > MaxTupleAttributeNumber)
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("target lists can have at most %d entries",
-						MaxTupleAttributeNumber)));
-
 	return result;
 }
 
@@ -699,6 +697,7 @@ transformStmt(ParseState *pstate, Node *parseTree,
  */
 bool
 analyze_requires_snapshot(Node *parseTree)
+<<<<<<< HEAD
 {
 	bool		result;
 
@@ -742,15 +741,15 @@ analyze_requires_snapshot(Node *parseTree)
 static Query *
 transformViewStmt(ParseState *pstate, ViewStmt *stmt,
 				  List **extras_before, List **extras_after)
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
-	Query	   *result = makeNode(Query);
+	bool		result;
 
-	result->commandType = CMD_UTILITY;
-	result->utilityStmt = (Node *) stmt;
+	if (parseTree == NULL)
+		return false;
 
-	stmt->query = transformStmt(pstate, (Node *) stmt->query,
-								extras_before, extras_after);
-
+<<<<<<< HEAD
 	if (pstate->p_hasDynamicFunction)
 	{
 		ereport(ERROR,
@@ -767,29 +766,40 @@ transformViewStmt(ParseState *pstate, ViewStmt *stmt,
 	 * entries.
 	 */
 	if (stmt->aliases != NIL)
+=======
+	switch (nodeTag(parseTree))
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
-		ListCell   *alist_item = list_head(stmt->aliases);
-		ListCell   *targetList;
+			/*
+			 * Optimizable statements
+			 */
+		case T_InsertStmt:
+		case T_DeleteStmt:
+		case T_UpdateStmt:
+		case T_SelectStmt:
+			result = true;
+			break;
 
-		foreach(targetList, stmt->query->targetList)
-		{
-			TargetEntry *te = (TargetEntry *) lfirst(targetList);
+			/*
+			 * Special cases
+			 */
+		case T_DeclareCursorStmt:
+			/* yes, because it's analyzed just like SELECT */
+			result = true;
+			break;
 
-			Assert(IsA(te, TargetEntry));
-			/* junk columns don't get aliases */
-			if (te->resjunk)
-				continue;
-			te->resname = pstrdup(strVal(lfirst(alist_item)));
-			alist_item = lnext(alist_item);
-			if (alist_item == NULL)
-				break;			/* done assigning aliases */
-		}
+		case T_ExplainStmt:
+			/*
+			 * We only need a snapshot in varparams case, but it doesn't seem
+			 * worth complicating this function's API to distinguish that.
+			 */
+			result = true;
+			break;
 
-		if (alist_item != NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("CREATE VIEW specifies more column "
-							"names than columns")));
+		default:
+			/* utility statements don't have any active parse analysis */
+			result = false;
+			break;
 	}
 
 	return result;
@@ -864,8 +874,7 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
  *	  transform an Insert Statement
  */
 static Query *
-transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
-					List **extras_before, List **extras_after)
+transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
 	SelectStmt *selectStmt = (SelectStmt *) stmt->selectStmt;
@@ -889,8 +898,16 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	 * We have three cases to deal with: DEFAULT VALUES (selectStmt == NULL),
 	 * VALUES list, or general SELECT input.  We special-case VALUES, both for
 	 * efficiency and so we can handle DEFAULT specifications.
+	 *
+	 * The grammar allows attaching ORDER BY, LIMIT, or FOR UPDATE to a
+	 * VALUES clause.  If we have any of those, treat it as a general SELECT;
+	 * so it will work, but you can't use DEFAULT items together with those.
 	 */
-	isGeneralSelect = (selectStmt && selectStmt->valuesLists == NIL);
+	isGeneralSelect = (selectStmt && (selectStmt->valuesLists == NIL ||
+									  selectStmt->sortClause != NIL ||
+									  selectStmt->limitOffset != NULL ||
+									  selectStmt->limitCount != NULL ||
+									  selectStmt->lockingClause != NIL));
 
 	/*
 	 * If a non-nil rangetable/namespace was passed in, and we are doing
@@ -966,18 +983,21 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 		sub_pstate->p_relnamespace = sub_relnamespace;
 		sub_pstate->p_varnamespace = sub_varnamespace;
 
-		/*
-		 * Note: we are not expecting that extras_before and extras_after are
-		 * going to be used by the transformation of the SELECT statement.
-		 */
-		selectQuery = transformStmt(sub_pstate, stmt->selectStmt,
-									extras_before, extras_after);
+		selectQuery = transformStmt(sub_pstate, stmt->selectStmt);
 
+<<<<<<< HEAD
 		release_pstate_resources(sub_pstate);
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		free_parsestate(sub_pstate);
 
+		/* The grammar should have produced a SELECT, but it might have INTO */
 		Assert(IsA(selectQuery, Query));
 		Assert(selectQuery->commandType == CMD_SELECT);
+<<<<<<< HEAD
+=======
+		Assert(selectQuery->utilityStmt == NULL);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		if (selectQuery->intoClause)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1244,6 +1264,7 @@ transformInsertRow(ParseState *pstate, List *exprlist,
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("INSERT has more target columns than expressions")));
+<<<<<<< HEAD
 
 	/*
 	 * Prepare columns for assignment to target table.
@@ -3751,42 +3772,30 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 						 (int) stmt->event);
 					break;
 			}
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
-			/*
-			 * For efficiency's sake, add OLD to the rule action's jointree
-			 * only if it was actually referenced in the statement or qual.
-			 *
-			 * For INSERT, NEW is not really a relation (only a reference to
-			 * the to-be-inserted tuple) and should never be added to the
-			 * jointree.
-			 *
-			 * For UPDATE, we treat NEW as being another kind of reference to
-			 * OLD, because it represents references to *transformed* tuples
-			 * of the existing relation.  It would be wrong to enter NEW
-			 * separately in the jointree, since that would cause a double
-			 * join of the updated relation.  It's also wrong to fail to make
-			 * a jointree entry if only NEW and not OLD is mentioned.
-			 */
-			if (has_old || (has_new && stmt->event == CMD_UPDATE))
-			{
-				/*
-				 * If sub_qry is a setop, manipulating its jointree will do no
-				 * good at all, because the jointree is dummy. (This should be
-				 * a can't-happen case because of prior tests.)
-				 */
-				if (sub_qry->setOperations != NULL)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("conditional UNION/INTERSECT/EXCEPT statements are not implemented")));
-				/* hack so we can use addRTEtoQuery() */
-				sub_pstate->p_rtable = sub_qry->rtable;
-				sub_pstate->p_joinlist = sub_qry->jointree->fromlist;
-				addRTEtoQuery(sub_pstate, oldrte, true, false, false);
-				sub_qry->jointree->fromlist = sub_pstate->p_joinlist;
-			}
+	/*
+	 * Prepare columns for assignment to target table.
+	 */
+	result = NIL;
+	icols = list_head(icolumns);
+	attnos = list_head(attrnos);
+	foreach(lc, exprlist)
+	{
+		Expr	   *expr = (Expr *) lfirst(lc);
+		ResTarget  *col;
 
-			newactions = lappend(newactions, top_subqry);
+		col = (ResTarget *) lfirst(icols);
+		Assert(IsA(col, ResTarget));
 
+		expr = transformAssignedExpr(pstate, expr,
+									 col->name,
+									 lfirst_int(attnos),
+									 col->indirection,
+									 col->location);
+
+<<<<<<< HEAD
 			release_pstate_resources(sub_pstate);
 			free_parsestate(sub_pstate);
 		}
@@ -4387,12 +4396,19 @@ generate_alternate_vars(Var *invar, grouped_window_ctx *ctx)
 		{
 			alternates = lappend(alternates, copyObject(ja));
 		}
+=======
+		result = lappend(result, expr);
+
+		icols = lnext(icols);
+		attnos = lnext(attnos);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 	else
 	{
 		ListCell *jlc;
 		Index varno = 0;
 
+<<<<<<< HEAD
 		foreach (jlc, rtable)
 		{
 			RangeTblEntry *rte = (RangeTblEntry*)lfirst(jlc);
@@ -4432,6 +4448,9 @@ generate_alternate_vars(Var *invar, grouped_window_ctx *ctx)
 		}
 	}
 	return alternates;
+=======
+	return result;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 
@@ -4440,7 +4459,8 @@ generate_alternate_vars(Var *invar, grouped_window_ctx *ctx)
  * transformSelectStmt -
  *	  transforms a Select Statement
  *
- * Note: this is also used for DECLARE CURSOR statements.
+ * Note: this covers only cases with no set operations and no VALUES lists;
+ * see below for the other cases.
  */
 static Query *
 transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
@@ -4549,13 +4569,19 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
     pstate->p_breadcrumb.node = NULL;
 
 	/* handle any SELECT INTO/CREATE TABLE AS spec */
+<<<<<<< HEAD
 	qry->intoClause = NULL;
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (stmt->intoClause)
 	{
 		qry->intoClause = stmt->intoClause;
 		if (stmt->intoClause->colNames)
 			applyColumnNames(qry->targetList, stmt->intoClause->colNames);
+<<<<<<< HEAD
 		/* XXX XXX:		qry->partitionBy = stmt->partitionBy; */
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	/*
@@ -4602,7 +4628,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
  *	  transforms a VALUES clause that's being used as a standalone SELECT
  *
  * We build a Query containing a VALUES RTE, rather as if one had written
- *			SELECT * FROM (VALUES ...)
+ *			SELECT * FROM (VALUES ...) AS "*VALUES*"
  */
 static Query *
 transformValuesClause(ParseState *pstate, SelectStmt *stmt)
@@ -4724,6 +4750,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	rtr->rtindex = list_length(pstate->p_rtable);
 	Assert(rte == rt_fetch(rtr->rtindex, pstate->p_rtable));
 	pstate->p_joinlist = lappend(pstate->p_joinlist, rtr);
+	pstate->p_relnamespace = lappend(pstate->p_relnamespace, rte);
 	pstate->p_varnamespace = lappend(pstate->p_varnamespace, rte);
 
 	/*
@@ -4759,7 +4786,10 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 		setQryDistributionPolicy(stmt, qry);
 
 	/* handle any CREATE TABLE AS spec */
+<<<<<<< HEAD
 	qry->intoClause = NULL;
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (stmt->intoClause)
 	{
 		qry->intoClause = stmt->intoClause;
@@ -4858,16 +4888,17 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 
 	/*
 	 * Find leftmost leaf SelectStmt; extract the one-time-only items from it
-	 * and from the top-level node.  (Most of the INTO options can be
-	 * transferred to the Query immediately, but intoColNames has to be saved
-	 * to apply below.)
+	 * and from the top-level node.
 	 */
 	leftmostSelect = stmt->larg;
 	while (leftmostSelect && leftmostSelect->op != SETOP_NONE)
 		leftmostSelect = leftmostSelect->larg;
 	Assert(leftmostSelect && IsA(leftmostSelect, SelectStmt) &&
 		   leftmostSelect->larg == NULL);
+<<<<<<< HEAD
 	qry->intoClause = NULL;
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (leftmostSelect->intoClause)
 	{
 		qry->intoClause = leftmostSelect->intoClause;
@@ -5190,6 +5221,9 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 {
 	Assert(stmt && IsA(stmt, SelectStmt));
 
+	/* Guard against stack overflow due to overly complex set-expressions */
+	check_stack_depth();
+
 	/*
 	 * Validity-check both leaf and internal SELECTs for disallowed ops.
 	 */
@@ -5206,7 +5240,6 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 	if (isSetopLeaf(stmt))
 	{
 		/* Process leaf SELECT */
-		List	   *selectList;
 		Query	   *selectQuery;
 		char		selectName[32];
 		RangeTblEntry *rte;
@@ -5219,11 +5252,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		 * of this sub-query, because they are not in the toplevel pstate's
 		 * namespace list.
 		 */
-		selectList = parse_sub_analyze((Node *) stmt, pstate);
-
-		Assert(list_length(selectList) == 1);
-		selectQuery = (Query *) linitial(selectList);
-		Assert(IsA(selectQuery, Query));
+		selectQuery = parse_sub_analyze((Node *) stmt, pstate);
 
 		/*
 		 * Check for bogus references to Vars on the current query level (but
@@ -5545,7 +5574,10 @@ getSetColTypes(ParseState *pstate, Node *node,
 		elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
 }
 
-/* Attach column names from a ColumnDef list to a TargetEntry list */
+/*
+ * Attach column names from a ColumnDef list to a TargetEntry list
+ * (for CREATE TABLE AS)
+ */
 static void
 applyColumnNames(List *dst, List *src)
 {
@@ -5782,7 +5814,7 @@ transformReturningList(ParseState *pstate, List *returningList)
 	if (list_length(pstate->p_rtable) != length_rtable)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		 errmsg("RETURNING cannot contain references to other relations")));
+		  errmsg("RETURNING cannot contain references to other relations")));
 
 	/* mark column origins */
 	markTargetListOrigins(pstate, rlist);
@@ -5988,11 +6020,20 @@ transformAlterTable_all_PartitionStmt(
 	return cmd;
 } /* end transformAlterTable_all_PartitionStmt */
 
+
 /*
- * transformAlterTableStmt -
- *	transform an Alter Table Statement
+ * transformDeclareCursorStmt -
+ *	transform a DECLARE CURSOR Statement
+ *
+ * DECLARE CURSOR is a hybrid case: it's an optimizable statement (in fact not
+ * significantly different from a SELECT) as far as parsing/rewriting/planning
+ * are concerned, but it's not passed to the executor and so in that sense is
+ * a utility statement.  We transform it into a Query exactly as if it were
+ * a SELECT, then stick the original DeclareCursorStmt into the utilityStmt
+ * field to carry the cursor name and options.
  */
 static Query *
+<<<<<<< HEAD
 transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 						List **extras_before, List **extras_after)
 {
@@ -6224,14 +6265,11 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
  * field to carry the cursor name and options.
  */
 static Query *
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
 {
-	Query	   *result = makeNode(Query);
-	List	   *extras_before = NIL,
-			   *extras_after = NIL;
-
-	result->commandType = CMD_UTILITY;
-	result->utilityStmt = (Node *) stmt;
+	Query	   *result;
 
 	/*
 	 * Don't allow both SCROLL and NO SCROLL to be specified
@@ -6242,6 +6280,7 @@ transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
 				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
 				 errmsg("cannot specify both SCROLL and NO SCROLL")));
 
+<<<<<<< HEAD
 	result = transformStmt(pstate, stmt->query,
 									&extras_before, &extras_after);
 
@@ -6254,6 +6293,14 @@ transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
 		result->commandType != CMD_SELECT ||
 		result->utilityStmt != NULL)
 		elog(ERROR, "unexpected non-SELECT command in DECLARE CURSOR");
+=======
+	result = transformStmt(pstate, stmt->query);
+
+	if (!IsA(result, Query) ||
+		result->commandType != CMD_SELECT ||
+		result->utilityStmt != NULL)
+		elog(ERROR, "unexpected non-SELECT command in cursor statement");
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* But we must explicitly disallow DECLARE CURSOR ... SELECT INTO */
 	if (result->intoClause)
@@ -6261,6 +6308,7 @@ transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
 				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
 				 errmsg("DECLARE CURSOR cannot specify INTO")));
 
+<<<<<<< HEAD
 	/* We won't need the raw querytree any more */
 	stmt->query = NULL;
 
@@ -6356,50 +6404,61 @@ transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)
 	queries = parse_analyze_varparams((Node *) stmt->query,
 									  pstate->p_sourcetext,
 									  &argtoids, &nargs);
+=======
+	/* FOR UPDATE and WITH HOLD are not compatible */
+	if (result->rowMarks != NIL && (stmt->options & CURSOR_OPT_HOLD))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("DECLARE CURSOR WITH HOLD ... FOR UPDATE/SHARE is not supported"),
+				 errdetail("Holdable cursors must be READ ONLY.")));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
-	/*
-	 * Shouldn't get any extra statements, since grammar only allows
-	 * OptimizableStmt
-	 */
-	if (list_length(queries) != 1)
-		elog(ERROR, "unexpected extra stuff in prepared statement");
+	/* FOR UPDATE and SCROLL are not compatible */
+	if (result->rowMarks != NIL && (stmt->options & CURSOR_OPT_SCROLL))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+		errmsg("DECLARE SCROLL CURSOR ... FOR UPDATE/SHARE is not supported"),
+				 errdetail("Scrollable cursors must be READ ONLY.")));
 
-	/*
-	 * Check that all parameter types were determined, and convert the array
-	 * of OIDs into a list for storage.
-	 */
-	argtype_oids = NIL;
-	for (i = 0; i < nargs; i++)
-	{
-		Oid			argtype = argtoids[i];
+	/* FOR UPDATE and INSENSITIVE are not compatible */
+	if (result->rowMarks != NIL && (stmt->options & CURSOR_OPT_INSENSITIVE))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("DECLARE INSENSITIVE CURSOR ... FOR UPDATE/SHARE is not supported"),
+				 errdetail("Insensitive cursors must be READ ONLY.")));
 
-		if (argtype == InvalidOid || argtype == UNKNOWNOID)
-			ereport(ERROR,
-					(errcode(ERRCODE_INDETERMINATE_DATATYPE),
-					 errmsg("could not determine data type of parameter $%d",
-							i + 1)));
+	/* We won't need the raw querytree any more */
+	stmt->query = NULL;
 
-		argtype_oids = lappend_oid(argtype_oids, argtype);
-	}
+	result->utilityStmt = (Node *) stmt;
 
-	stmt->argtype_oids = argtype_oids;
-	stmt->query = linitial(queries);
 	return result;
 }
 
+
+/*
+ * transformExplainStmt -
+ *	transform an EXPLAIN Statement
+ *
+ * EXPLAIN is just like other utility statements in that we emit it as a
+ * CMD_UTILITY Query node with no transformation of the raw parse tree.
+ * However, if p_variableparams is set, it could be that the client is
+ * expecting us to resolve parameter types in something like
+ *		EXPLAIN SELECT * FROM tab WHERE col = $1
+ * To deal with such cases, we run parse analysis and throw away the result;
+ * this is a bit grotty but not worth contorting the rest of the system for.
+ * (The approach we use for DECLARE CURSOR won't work because the statement
+ * being explained isn't necessarily a SELECT, and in particular might rewrite
+ * to multiple parsetrees.)
+ */
 static Query *
-transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
+transformExplainStmt(ParseState *pstate, ExplainStmt *stmt)
 {
-	Query	   *result = makeNode(Query);
-	List	   *paramtypes;
+	Query	   *result;
 
-	result->commandType = CMD_UTILITY;
-	result->utilityStmt = (Node *) stmt;
-
-	paramtypes = FetchPreparedStatementParams(stmt->name);
-
-	if (stmt->params || paramtypes)
+	if (pstate->p_variableparams)
 	{
+<<<<<<< HEAD
 		int			nparams = list_length(stmt->params);
 		int			nexpected = list_length(paramtypes);
 		ListCell   *l,
@@ -6457,10 +6516,20 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 			lfirst(l) = expr;
 			i++;
 		}
+=======
+		/* Since parse analysis scribbles on its input, copy the tree first! */
+		(void) transformStmt(pstate, copyObject(stmt->query));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
+
+	/* Now return the untransformed command as a utility Query */
+	result = makeNode(Query);
+	result->commandType = CMD_UTILITY;
+	result->utilityStmt = (Node *) stmt;
 
 	return result;
 }
+
 
 /* exported so planner can check again after rewriting, query pullup, etc */
 void
@@ -6665,6 +6734,7 @@ applyLockingClause(Query *qry, Index rtindex, bool forUpdate, bool noWait)
 
 
 /*
+<<<<<<< HEAD
  * Preprocess a list of column constraint clauses
  * to attach constraint attributes to their primary constraint nodes
  * and detect inconsistent/misplaced constraint attributes.
@@ -6950,6 +7020,8 @@ analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
 }
 
 /*
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Traverse a fully-analyzed tree to verify that parameter symbols
  * match their types.  We need this because some Params might still
  * be UNKNOWN, if there wasn't anything to force their coercion,

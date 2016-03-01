@@ -2,7 +2,11 @@
 #
 # Makefile for the plpgsql shared object
 #
+<<<<<<< HEAD
 # $PostgreSQL: pgsql/src/pl/plpgsql/src/Makefile,v 1.33 2008/08/29 13:02:33 petere Exp $
+=======
+# $PostgreSQL: pgsql/src/pl/plpgsql/src/Makefile,v 1.31 2007/07/15 22:18:24 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #
 #-------------------------------------------------------------------------
 

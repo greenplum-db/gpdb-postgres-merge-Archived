@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.154 2007/01/05 22:19:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.156.2.2 2008/11/13 17:42:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,6 +125,7 @@ btbuild(PG_FUNCTION_ARGS)
 		if (indexInfo->ii_Unique)
 			buildstate.spool2 = _bt_spoolinit(index, false, true);
 
+<<<<<<< HEAD
 		/* do the heap scan */
 		reltuples = IndexBuildScan(heap, index, indexInfo,
 				btbuildCallback, (void *) &buildstate);
@@ -151,6 +152,11 @@ btbuild(PG_FUNCTION_ARGS)
 			_bt_spooldestroy(buildstate.spool2);
 			buildstate.spool2 = NULL;
 		}
+=======
+	/* do the heap scan */
+	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
+								   btbuildCallback, (void *) &buildstate);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	}
 	PG_CATCH();
@@ -650,8 +656,11 @@ btbulkdelete(PG_FUNCTION_ARGS)
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(_bt_end_vacuum_callback, PointerGetDatum(rel));
 	_bt_end_vacuum(rel);
+<<<<<<< HEAD
 
 	MIRROREDLOCK_BUFMGR_VERIFY_NO_LOCK_LEAK_EXIT;
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	PG_RETURN_POINTER(stats);
 }
@@ -900,13 +909,18 @@ restart:
 	/*
 	 * We can't use _bt_getbuf() here because it always applies
 	 * _bt_checkpage(), which will barf on an all-zero page. We want to
-	 * recycle all-zero pages, not fail.
+	 * recycle all-zero pages, not fail.  Also, we want to use a nondefault
+	 * buffer access strategy.
 	 */
+<<<<<<< HEAD
 	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
 	buf = ReadBuffer(rel, blkno);
+=======
+	buf = ReadBufferWithStrategy(rel, blkno, info->strategy);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	LockBuffer(buf, BT_READ);
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);

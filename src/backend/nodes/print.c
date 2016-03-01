@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.84 2007/02/10 14:58:54 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.87 2008/01/01 19:45:50 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -25,6 +25,10 @@
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * print
  *	  print contents of Node to stdout
@@ -426,7 +430,7 @@ print_pathkeys(List *pathkeys, List *rtable)
 	printf("(");
 	foreach(i, pathkeys)
 	{
-		PathKey	   *pathkey = (PathKey *) lfirst(i);
+		PathKey    *pathkey = (PathKey *) lfirst(i);
 		EquivalenceClass *eclass;
 		ListCell   *k;
 		bool		first = true;
@@ -496,6 +500,7 @@ print_slot(TupleTableSlot *slot)
 
 	fflush(stdout);
 }
+<<<<<<< HEAD
 
 char *
 plannode_type(Plan *p)
@@ -683,3 +688,5 @@ print_plan(Plan *p, Query *parsetree)
 {
 	print_plan_recursive(p, parsetree, 0, "");
 }
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

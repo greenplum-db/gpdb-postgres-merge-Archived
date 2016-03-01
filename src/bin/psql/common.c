@@ -1,9 +1,15 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
+<<<<<<< HEAD
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
  * src/bin/psql/common.c
+=======
+ * Copyright (c) 2000-2008, PostgreSQL Global Development Group
+ *
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.138 2008/01/01 19:45:55 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -87,7 +93,7 @@ pg_calloc(size_t nmemb, size_t size)
 	tmp = calloc(nmemb, size);
 	if (!tmp)
 	{
-		psql_error("out of memory");
+		psql_error("out of memory\n");
 		exit(EXIT_FAILURE);
 	}
 	return tmp;
@@ -936,7 +942,7 @@ SendQuery(const char *query)
 	PQclear(results);
 
 	/* Possible microtiming output */
-	if (OK && pset.timing)
+	if (OK && pset.timing && !pset.quiet)
 		printf(_("Time: %.3f ms\n"), elapsed_msec);
 
 	/* check for events that may occur during query execution */
@@ -1100,7 +1106,15 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 
 		printQuery(results, &my_popt, pset.queryFout, pset.logfile);
 
+<<<<<<< HEAD
 		PQclear(results);
+=======
+		/*
+		 * Make sure to flush the output stream, so intermediate results are
+		 * visible to the client immediately.
+		 */
+		fflush(pset.queryFout);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/* after the first result set, disallow header decoration */
 		my_popt.topt.start_table = false;

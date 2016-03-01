@@ -28,10 +28,17 @@ int main() {
      
   
 #line 9 "quote.pgc"
+<<<<<<< HEAD
  char var [ 25 ] ;
  
 #line 10 "quote.pgc"
  int i ;
+=======
+ char  var [ 25 ]    ;
+ 
+#line 10 "quote.pgc"
+ int  i    ;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* exec sql end declare section */
 #line 11 "quote.pgc"
 
@@ -51,7 +58,11 @@ int main() {
 #line 18 "quote.pgc"
 
 
+<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table \"My_Table\" ( Item1 int , Item2 text )", ECPGt_EOIT, ECPGt_EORT);
+=======
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table \"My_Table\" ( Item1 int   , Item2 text    )    ", ECPGt_EOIT, ECPGt_EORT);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 20 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -75,7 +86,11 @@ if (sqlca.sqlcode < 0) sqlprint();}
   printf("Standard conforming strings: %s\n", var);
 
   /* this is a\\b actually */
+<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into \"My_Table\" values ( 1 , 'a\\\\\\\\b' )", ECPGt_EOIT, ECPGt_EORT);
+=======
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into \"My_Table\" values ( 1 , 'a\\\\\\\\b' ) ", ECPGt_EOIT, ECPGt_EORT);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 26 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -85,7 +100,11 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 26 "quote.pgc"
 
   /* this is a\\b */
+<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into \"My_Table\" values ( 1 , E'a\\\\\\\\b' )", ECPGt_EOIT, ECPGt_EORT);
+=======
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into \"My_Table\" values ( 1 , E'a\\\\\\\\b' ) ", ECPGt_EOIT, ECPGt_EORT);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 28 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -106,7 +125,11 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
   /* this is a\\\\b actually */
+<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into \"My_Table\" values ( 2 , 'a\\\\\\\\b' )", ECPGt_EOIT, ECPGt_EORT);
+=======
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into \"My_Table\" values ( 2 , 'a\\\\\\\\b' ) ", ECPGt_EOIT, ECPGt_EORT);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 33 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -116,7 +139,11 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 33 "quote.pgc"
 
   /* this is a\\b */
+<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into \"My_Table\" values ( 2 , E'a\\\\\\\\b' )", ECPGt_EOIT, ECPGt_EORT);
+=======
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into \"My_Table\" values ( 2 , E'a\\\\\\\\b' ) ", ECPGt_EOIT, ECPGt_EORT);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 35 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -126,7 +153,11 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 35 "quote.pgc"
 
 
+<<<<<<< HEAD
   { ECPGtrans(__LINE__, NULL, "begin");
+=======
+  { ECPGtrans(__LINE__, NULL, "begin transaction ");
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 37 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -135,11 +166,19 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 37 "quote.pgc"
 
+<<<<<<< HEAD
   /* declare C cursor for select * from \"My_Table\" */
 #line 38 "quote.pgc"
 
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare C cursor for select * from \"My_Table\"", ECPGt_EOIT, ECPGt_EORT);
+=======
+  /* declare C  cursor  for select  *  from \"My_Table\"    */
+#line 38 "quote.pgc"
+
+
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare C  cursor  for select  *  from \"My_Table\"   ", ECPGt_EOIT, ECPGt_EORT);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 40 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -183,7 +222,11 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 50 "quote.pgc"
 
+<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table \"My_Table\"", ECPGt_EOIT, ECPGt_EORT);
+=======
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table \"My_Table\" ", ECPGt_EOIT, ECPGt_EORT);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 51 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();

@@ -66,6 +66,11 @@ SELECT relname, relhasindex
  interval_tbl            | f
  iportaltest             | f
  lseg_tbl                | f
+<<<<<<< HEAD
+=======
+ main_table              | f
+ money_data              | f
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  num_data                | f
  num_exp_add             | t
  num_exp_div             | t
@@ -97,9 +102,13 @@ SELECT relname, relhasindex
  pg_database             | t
  pg_depend               | t
  pg_description          | t
+<<<<<<< HEAD
  pg_exttable             | t
  pg_foreign_data_wrapper | t
  pg_foreign_server       | t
+=======
+ pg_enum                 | t
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  pg_index                | t
  pg_inherits             | t
  pg_language             | t
@@ -117,6 +126,11 @@ SELECT relname, relhasindex
  pg_statistic            | t
  pg_tablespace           | t
  pg_trigger              | t
+ pg_ts_config            | t
+ pg_ts_config_map        | t
+ pg_ts_dict              | t
+ pg_ts_parser            | t
+ pg_ts_template          | t
  pg_type                 | t
  pg_user_mapping         | t
  pg_window               | t
@@ -139,6 +153,7 @@ SELECT relname, relhasindex
  student                 | f
  tenk1                   | t
  tenk2                   | t
+ test_tsvector           | f
  text_tbl                | f
  time_tbl                | f
  timestamp_tbl           | f
@@ -146,7 +161,11 @@ SELECT relname, relhasindex
  timetz_tbl              | f
  tinterval_tbl           | f
  varchar_tbl             | f
+<<<<<<< HEAD
 (133 rows)
+=======
+(138 rows)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 --
 -- another sanity check: every system catalog that has OIDs should have

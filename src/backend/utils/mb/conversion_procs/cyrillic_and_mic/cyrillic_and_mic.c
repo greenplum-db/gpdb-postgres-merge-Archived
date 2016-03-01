@@ -2,11 +2,19 @@
  *
  *	  Cyrillic and MULE_INTERNAL
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
  *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/cyrillic_and_mic/cyrillic_and_mic.c,v 1.21 2009/06/11 14:49:06 momjian Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/cyrillic_and_mic/cyrillic_and_mic.c,v 1.16.2.3 2009/02/28 18:49:53 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -278,8 +286,13 @@ win866_to_win1251(PG_FUNCTION_ARGS)
 	/*
 	 * Note: There are a few characters like the "Numero" sign that exist in
 	 * all the other cyrillic encodings (win1251, ISO_8859-5 and cp866), but
+<<<<<<< HEAD
 	 * not in KOI8R. As we use MULE_INTERNAL/KOI8R as an intermediary, we will
 	 * fail to convert those characters.
+=======
+	 * not in KOI8R. As we use MULE_INTERNAL/KOI8R as an intermediary, we
+	 * will fail to convert those characters.
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
 	win8662mic(src, buf, len);

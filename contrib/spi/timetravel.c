@@ -29,7 +29,11 @@ typedef struct
 {
 	char	   *ident;
 	SPIPlanPtr	splan;
+<<<<<<< HEAD
 } EPlan;
+=======
+}	EPlan;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 static EPlan *Plans = NULL;		/* for UPDATE/DELETE */
 static int	nPlans = 0;

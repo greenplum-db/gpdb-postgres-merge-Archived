@@ -3,12 +3,20 @@
  * fe-lobj.c
  *	  Front-end large object interface
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-lobj.c
+=======
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.64 2008/01/01 19:46:00 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -137,7 +145,11 @@ lo_truncate(PGconn *conn, int fd, size_t len)
 	int			retval;
 	int			result_len;
 
+<<<<<<< HEAD
 	if (conn == NULL || conn->lobjfuncs == NULL)
+=======
+	if (conn->lobjfuncs == NULL)
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		if (lo_initialize(conn) < 0)
 			return -1;
@@ -569,10 +581,16 @@ lo_import_internal(PGconn *conn, const char *filename, Oid oid)
 
 	if (nbytes < 0)
 	{
+		/* We must do lo_close before setting the errorMessage */
+		int			save_errno = errno;
+
+		(void) lo_close(conn, lobj);
+		(void) close(fd);
 		printfPQExpBuffer(&conn->errorMessage,
 					  libpq_gettext("could not read from file \"%s\": %s\n"),
-						  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
-		lobjOid = InvalidOid;
+						  filename,
+						  pqStrerror(save_errno, sebuf, sizeof(sebuf)));
+		return InvalidOid;
 	}
 
 	(void) close(fd);
@@ -617,11 +635,15 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 	 */
 	fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC | PG_BINARY, 0666);
 	if (fd < 0)
-	{							/* error */
+	{
+		/* We must do lo_close before setting the errorMessage */
+		int			save_errno = errno;
+
+		(void) lo_close(conn, lobj);
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not open file \"%s\": %s\n"),
-						  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
-		(void) lo_close(conn, lobj);
+						  filename,
+						  pqStrerror(save_errno, sebuf, sizeof(sebuf)));
 		return -1;
 	}
 
@@ -633,11 +655,15 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 		tmp = write(fd, buf, nbytes);
 		if (tmp != nbytes)
 		{
-			printfPQExpBuffer(&conn->errorMessage,
-					   libpq_gettext("could not write to file \"%s\": %s\n"),
-						  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
+			/* We must do lo_close before setting the errorMessage */
+			int			save_errno = errno;
+
 			(void) lo_close(conn, lobj);
 			(void) close(fd);
+			printfPQExpBuffer(&conn->errorMessage,
+					   libpq_gettext("could not write to file \"%s\": %s\n"),
+							  filename,
+							  pqStrerror(save_errno, sebuf, sizeof(sebuf)));
 			return -1;
 		}
 	}
@@ -655,7 +681,8 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 		result = -1;
 	}
 
-	if (close(fd))
+	/* if we already failed, don't overwrite that msg with a close error */
+	if (close(fd) && result >= 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 					   libpq_gettext("could not write to file \"%s\": %s\n"),
@@ -767,9 +794,15 @@ lo_initialize(PGconn *conn)
 			lobjfuncs->fn_lo_lseek = foid;
 		else if (strcmp(fname, "lo_tell") == 0)
 			lobjfuncs->fn_lo_tell = foid;
+<<<<<<< HEAD
 		else if (strcmp(fname, "lo_truncate") == 0)
 			lobjfuncs->fn_lo_truncate = foid;
 		else if (strcmp(fname, "loread") == 0)
+=======
+		else if (!strcmp(fname, "lo_truncate"))
+			lobjfuncs->fn_lo_truncate = foid;
+		else if (!strcmp(fname, "loread"))
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			lobjfuncs->fn_lo_read = foid;
 		else if (strcmp(fname, "lowrite") == 0)
 			lobjfuncs->fn_lo_write = foid;

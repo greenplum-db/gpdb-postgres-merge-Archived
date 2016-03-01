@@ -4,10 +4,17 @@
  *	  routines for signaling the postmaster from its child processes
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/storage/pmsignal.h,v 1.25 2009/06/11 14:49:12 momjian Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/include/storage/pmsignal.h,v 1.19 2008/01/01 19:45:59 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +37,7 @@ typedef enum
 	PMSIGNAL_ROTATE_LOGFILE,	/* send SIGUSR1 to syslogger to rotate logfile */
 	PMSIGNAL_START_AUTOVAC_LAUNCHER,	/* start an autovacuum launcher */
 	PMSIGNAL_START_AUTOVAC_WORKER,		/* start an autovacuum worker */
+<<<<<<< HEAD
 
 	PMSIGNAL_START_AUTOVAC,
 	PMSIGNAL_START_WALRECEIVER, /* start a walreceiver */
@@ -46,6 +54,8 @@ typedef enum
     PMSIGNAL_POSTMASTER_RESET_BY_PEER,
 
 	PMSIGNAL_SEGCONFIG_CHANGE,	/* segment configuration hs changed */
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	NUM_PMSIGNALS				/* Must be last value of enum! */
 } PMSignalReason;

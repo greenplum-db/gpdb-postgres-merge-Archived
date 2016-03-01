@@ -145,6 +145,7 @@ macaddr_send(PG_FUNCTION_ARGS)
 
 
 /*
+<<<<<<< HEAD
  * Convert macaddr to text data type.
  */
 
@@ -198,6 +199,8 @@ text_macaddr(PG_FUNCTION_ARGS)
 }
 
 /*
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *	Comparison function for sorting:
  */
 

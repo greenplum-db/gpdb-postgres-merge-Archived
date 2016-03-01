@@ -13,7 +13,11 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/executor/tstoreReceiver.c,v 1.17.2.1 2008/12/01 17:06:35 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/executor/tstoreReceiver.c,v 1.19.2.2 2009/12/29 17:41:18 heikki Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -95,11 +99,67 @@ static void
 tstoreReceiveSlot_notoast(TupleTableSlot *slot, DestReceiver *self)
 {
 	TStoreState *myState = (TStoreState *) self;
-	MemoryContext oldcxt = MemoryContextSwitchTo(myState->cxt);
 
 	tuplestore_puttupleslot(myState->tstore, slot);
+}
 
+/*
+ * Receive a tuple from the executor and store it in the tuplestore.
+ * This is for the case where we have to detoast any toasted values.
+ */
+static void
+tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self)
+{
+	TStoreState *myState = (TStoreState *) self;
+	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
+	Form_pg_attribute *attrs = typeinfo->attrs;
+	int			natts = typeinfo->natts;
+	int			nfree;
+	int			i;
+	HeapTuple	tuple;
+	MemoryContext oldcxt;
+
+	/* Make sure the tuple is fully deconstructed */
+	slot_getallattrs(slot);
+
+	/*
+	 * Fetch back any out-of-line datums.  We build the new datums array in
+	 * myState->outvalues[] (but we can re-use the slot's isnull array).
+	 * Also, remember the fetched values to free afterwards.
+	 */
+	nfree = 0;
+	for (i = 0; i < natts; i++)
+	{
+		Datum		val = slot->tts_values[i];
+
+		if (!attrs[i]->attisdropped &&
+			attrs[i]->attlen == -1 &&
+			!slot->tts_isnull[i])
+		{
+			if (VARATT_IS_EXTERNAL(DatumGetPointer(val)))
+			{
+				val = PointerGetDatum(heap_tuple_fetch_attr((struct varlena *)
+														DatumGetPointer(val)));
+				myState->tofree[nfree++] = val;
+			}
+		}
+
+		myState->outvalues[i] = val;
+	}
+
+	/*
+	 * Push the modified tuple into the tuplestore.
+	 */
+	tuple = heap_form_tuple(typeinfo,
+							myState->outvalues, slot->tts_isnull);
+	oldcxt = MemoryContextSwitchTo(myState->cxt);
+	tuplestore_puttuple(myState->tstore, tuple);
 	MemoryContextSwitchTo(oldcxt);
+	heap_freetuple(tuple);
+
+	/* And release any temporary detoasted values */
+	for (i = 0; i < nfree; i++)
+		pfree(DatumGetPointer(myState->tofree[i]));
 }
 
 /*

@@ -2,9 +2,12 @@
 /pl_gram.h
 /pl.tab.h
 /pl_scan.c
+<<<<<<< HEAD
 
 /libplpgsql.a
 /libplpgsql.so
 /libplpgsql.so.1
 /libplpgsql.so.1.0
 /plpgsql.so
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

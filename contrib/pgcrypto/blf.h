@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /* $PostgreSQL: pgsql/contrib/pgcrypto/blf.h,v 1.8 2009/06/11 14:48:52 momjian Exp $ */
+=======
+/* $PostgreSQL: pgsql/contrib/pgcrypto/blf.h,v 1.7 2007/11/15 21:14:31 momjian Exp $ */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * PuTTY is copyright 1997-2007 Simon Tatham.
  *
@@ -36,6 +40,7 @@ typedef struct
 				P[18];
 	uint32		iv0,
 				iv1;			/* for CBC mode */
+<<<<<<< HEAD
 } BlowfishContext;
 
 void		blowfish_setkey(BlowfishContext *ctx, const uint8 *key, short keybytes);
@@ -44,3 +49,13 @@ void		blowfish_encrypt_cbc(uint8 *blk, int len, BlowfishContext *ctx);
 void		blowfish_decrypt_cbc(uint8 *blk, int len, BlowfishContext *ctx);
 void		blowfish_encrypt_ecb(uint8 *blk, int len, BlowfishContext *ctx);
 void		blowfish_decrypt_ecb(uint8 *blk, int len, BlowfishContext *ctx);
+=======
+}	BlowfishContext;
+
+void		blowfish_setkey(BlowfishContext * ctx, const uint8 *key, short keybytes);
+void		blowfish_setiv(BlowfishContext * ctx, const uint8 *iv);
+void		blowfish_encrypt_cbc(uint8 *blk, int len, BlowfishContext * ctx);
+void		blowfish_decrypt_cbc(uint8 *blk, int len, BlowfishContext * ctx);
+void		blowfish_encrypt_ecb(uint8 *blk, int len, BlowfishContext * ctx);
+void		blowfish_decrypt_ecb(uint8 *blk, int len, BlowfishContext * ctx);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

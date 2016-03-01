@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /* $PostgreSQL: pgsql/contrib/btree_gist/uninstall_btree_gist.sql,v 1.5 2008/04/14 17:05:32 tgl Exp $ */
+=======
+/* $PostgreSQL: pgsql/contrib/btree_gist/uninstall_btree_gist.sql,v 1.4 2007/11/13 04:24:27 momjian Exp $ */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;

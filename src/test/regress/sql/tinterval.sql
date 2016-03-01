@@ -68,7 +68,11 @@ SELECT '' AS three, t.*
 SELECT '' AS three, t1.*
    FROM TINTERVAL_TBL t1
    WHERE t1.f1 &&
+<<<<<<< HEAD
         tinterval '["Aug 15 14:23:19 1983" "Sep 16 14:23:19 1983"]' ORDER BY 2;
+=======
+        tinterval '["Aug 15 14:23:19 1983" "Sep 16 14:23:19 1983"]';
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 SELECT '' AS five, t1.f1, t2.f1
    FROM TINTERVAL_TBL t1, TINTERVAL_TBL t2

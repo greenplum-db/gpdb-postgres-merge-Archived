@@ -40,12 +40,17 @@
 /* This file is generated from MingW ./configure, and with the following
  * changes to be valid for Visual C++ (and compatible):
  *
+<<<<<<< HEAD
  * HAVE_CBRT, HAVE_FUNCNAME_FUNC, HAVE_FUNCNAME_FUNCTION, HAVE_GETOPT,
  * HAVE_GETOPT_H, HAVE_GETOPT_LONG, HAVE_RINT, HAVE_STRINGS_H,
  * HAVE_STRTOLL, HAVE_STRTOULL, HAVE_STRUCT_OPTION, ENABLE_THREAD_SAFETY,
  * USE_SSE42_CRC32C_WITH_RUNTIME_CHECK
+=======
+ * HAVE_CBRT, HAVE_FUNCNAME_FUNC, HAVE_GETOPT, HAVE_GETOPT_H,
+ * HAVE_GETOPT_LONG, HAVE_RINT, HAVE_STRINGS_H, HAVE_STRTOLL,
+ * HAVE_STRTOULL, HAVE_STRUCT_OPTION, ENABLE_THREAD_SAFETY
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
- * For now, also HAVE_IPV6
  */
 
 /* Define to the type of arg 1 of 'accept' */
@@ -143,9 +148,6 @@
 
 /* Define to 1 if you have the <editline/readline.h> header file. */
 /* #undef HAVE_EDITLINE_READLINE_H */
-
-/* Define to 1 if you have the <endian.h> header file. */
-/* #undef HAVE_ENDIAN_H */
 
 /* Define to 1 if you have the `fcvt' function. */
 #define HAVE_FCVT 1
@@ -616,16 +618,20 @@
 #define PACKAGE_NAME "Greenplum Database"
 
 /* Define to the full name and version of this package. */
+<<<<<<< HEAD
 #define PACKAGE_STRING "Greenplum Database 8.3devel"
+=======
+#define PACKAGE_STRING "PostgreSQL 8.3.22"
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "8.3"
+#define PACKAGE_VERSION "8.3.22"
 
 /* PostgreSQL version as a string */
-#define PG_VERSION "8.3"
+#define PG_VERSION "8.3.22"
 
 /* PostgreSQL version as a number */
-#define PG_VERSION_NUM 80300
+#define PG_VERSION_NUM 80322
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "greenplum"

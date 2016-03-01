@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.89 2007/01/05 22:19:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.95 2008/01/01 19:45:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,11 @@
 #define BM_IO_ERROR				(1 << 4)		/* previous I/O failed */
 #define BM_JUST_DIRTIED			(1 << 5)		/* dirtied since write started */
 #define BM_PIN_COUNT_WAITER		(1 << 6)		/* have waiter for sole pin */
+<<<<<<< HEAD
 // unused #define BM_CHECKPOINT_NEEDED	(1 << 7)		/* must write for checkpoint */
+=======
+#define BM_CHECKPOINT_NEEDED	(1 << 7)		/* must write for checkpoint */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 typedef bits16 BufFlags;
 
@@ -165,13 +169,14 @@ typedef struct sbufdesc
 
 
 /* in buf_init.c */
+<<<<<<< HEAD
 extern PGDLLIMPORT volatile BufferDesc *BufferDescriptors;
+=======
+extern PGDLLIMPORT BufferDesc *BufferDescriptors;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* in localbuf.c */
 extern BufferDesc *LocalBufferDescriptors;
-
-/* in freelist.c */
-extern bool strategy_hint_vacuum;
 
 /* event counters in buf_init.c */
 extern long int ReadBufferCount;
@@ -187,9 +192,13 @@ extern long int LocalBufferFlushCount;
  */
 
 /* freelist.c */
-extern volatile BufferDesc *StrategyGetBuffer(void);
-extern void StrategyFreeBuffer(volatile BufferDesc *buf, bool at_head);
-extern int	StrategySyncStart(void);
+extern volatile BufferDesc *StrategyGetBuffer(BufferAccessStrategy strategy,
+				  bool *lock_held);
+extern void StrategyFreeBuffer(volatile BufferDesc *buf);
+extern bool StrategyRejectBuffer(BufferAccessStrategy strategy,
+					 volatile BufferDesc *buf);
+
+extern int	StrategySyncStart(uint32 *complete_passes, uint32 *num_buf_alloc);
 extern Size StrategyShmemSize(void);
 extern void StrategyInitialize(bool init);
 

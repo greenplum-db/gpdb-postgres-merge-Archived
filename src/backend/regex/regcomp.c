@@ -28,7 +28,11 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/backend/regex/regcomp.c,v 1.46 2008/02/14 17:33:37 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/backend/regex/regcomp.c,v 1.45 2007/10/06 16:05:54 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  */
 
@@ -162,7 +166,7 @@ static void dumparcs(struct state *, FILE *);
 static int	dumprarcs(struct arc *, struct state *, FILE *, int);
 static void dumparc(struct arc *, struct state *, FILE *);
 static void dumpcnfa(struct cnfa *, FILE *);
-static void dumpcstate(int, struct carc *, struct cnfa *, FILE *);
+static void dumpcstate(int, struct cnfa *, FILE *);
 #endif
 /* === regc_cvec.c === */
 static struct cvec *newcvec(int, int);
@@ -277,6 +281,9 @@ static struct fns functions = {
 
 /*
  * pg_regcomp - compile regular expression
+ *
+ * Note: on failure, no resources remain allocated, so pg_regfree()
+ * need not be applied to re.
  */
 int
 pg_regcomp(regex_t *re,
@@ -1073,8 +1080,12 @@ parseqatom(struct vars * v,
 		NOERR();
 	}
 
-	/* it's quantifier time; first, turn x{0,...} into x{1,...}|empty */
-	if (m == 0)
+	/*
+	 * It's quantifier time.  If the atom is just a BACKREF, we'll let it deal
+	 * with quantifiers internally.  Otherwise, the first step is to turn
+	 * x{0,...} into x{1,...}|empty
+	 */
+	if (m == 0 && atomtype != BACKREF)
 	{
 		EMPTYARC(s2, atom->end);	/* the bypass */
 		assert(PREF(qprefer) != 0);
@@ -1833,15 +1844,18 @@ rfree(regex_t *re)
 	g = (struct guts *) re->re_guts;
 	re->re_guts = NULL;
 	re->re_fns = NULL;
-	g->magic = 0;
-	freecm(&g->cmap);
-	if (g->tree != NULL)
-		freesubre((struct vars *) NULL, g->tree);
-	if (g->lacons != NULL)
-		freelacons(g->lacons, g->nlacons);
-	if (!NULLCNFA(g->search))
-		freecnfa(&g->search);
-	FREE(g);
+	if (g != NULL)
+	{
+		g->magic = 0;
+		freecm(&g->cmap);
+		if (g->tree != NULL)
+			freesubre((struct vars *) NULL, g->tree);
+		if (g->lacons != NULL)
+			freelacons(g->lacons, g->nlacons);
+		if (!NULLCNFA(g->search))
+			freecnfa(&g->search);
+		FREE(g);
+	}
 }
 
 #ifdef REG_DEBUG

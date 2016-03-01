@@ -3,7 +3,11 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
+<<<<<<< HEAD
 # src/tools/msvc/Install.pm
+=======
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.28.2.1 2008/02/28 12:18:03 mha Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #
 use strict;
 use warnings;
@@ -28,7 +32,11 @@ sub lcopy
         }
 
 	copy($src,$target)
+<<<<<<< HEAD
           || carp "Could not copy $src to $target\n";
+=======
+          || confess "Could not copy $src to $target\n";
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 }
 
@@ -38,8 +46,12 @@ sub Install
 
     my $target = shift;
     our $config;
+<<<<<<< HEAD
     require "config_default.pl";
     require "config.pl" if (-f "config.pl");
+=======
+    require 'config.pl';
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
     chdir("../../..") if (-f "../../../configure");
     chdir("../../../..") if (-f "../../../../configure");
@@ -53,11 +65,18 @@ sub Install
         $conf = "release";
     }
     die "Could not find debug or release binaries" if ($conf eq "");
+<<<<<<< HEAD
     my $majorver = DetermineMajorVersion();
     print "Installing version $majorver for $conf in $target\n";
 
     EnsureDirectories($target, 'bin','lib','share','share/timezonesets','share/contrib','doc',
         'doc/contrib', 'symbols');
+=======
+    print "Installing for $conf in $target\n";
+
+    EnsureDirectories($target, 'bin','lib','share','share/timezonesets','share/contrib','doc',
+        'doc/contrib', 'symbols', 'share/tsearch_data');
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
     CopySolutionOutput($conf, $target);
     lcopy($target . '/lib/libpq.dll', $target . '/bin/libpq.dll');
@@ -93,10 +112,24 @@ sub Install
     );
     GenerateConversionScript($target);
     GenerateTimezoneFiles($target,$conf);
+<<<<<<< HEAD
     CopyContribFiles($config,$target);
     CopyIncludeFiles($target);
 
     GenerateNLSFiles($target,$config->{nls},$majorver) if ($config->{nls});
+=======
+    GenerateTsearchFiles($target);
+    CopySetOfFiles('Stopword files', 
+				   [ glob ("src\\backend\\snowball\\stopwords\\*.stop") ], 
+				   $target . '/share/tsearch_data/');
+    CopySetOfFiles('Dictionaries sample files', 
+				   [ glob ("src\\backend\\tsearch\\*_sample.*" ) ], 
+				   $target . '/share/tsearch_data/');
+    CopyContribFiles($config,$target);
+    CopyIncludeFiles($target);
+
+    GenerateNLSFiles($target,$config->{nls}) if ($config->{nls});
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
     print "Installation complete.\n";
 }
@@ -182,8 +215,13 @@ sub CopySolutionOutput
             # Static lib, such as libpgport, only used internally during build, don't install
             next;
         }
+<<<<<<< HEAD
         lcopy("$conf\\$pf\\$pf.$ext","$target\\$dir\\$pf.$ext") || carp "Could not copy $conf\\$pf\\$pf.$ext to $target\\$dir\\$pf.$ext\n";
         lcopy("$conf\\$pf\\$pf.pdb","$target\\symbols\\$pf.pdb") || carp "Could not copy $pf.pdb\n";
+=======
+        lcopy("$conf\\$pf\\$pf.$ext","$target\\$dir\\$pf.$ext") || croak "Could not copy $pf.$ext\n";
+        lcopy("$conf\\$pf\\$pf.pdb","$target\\symbols\\$pf.pdb") || croak "Could not copy $pf.pdb\n";
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
         print ".";
     }
     print "\n";
@@ -211,11 +249,16 @@ sub GenerateConversionScript
         $sql .= "-- $se --> $de\n";
         $sql .=
 "CREATE OR REPLACE FUNCTION $func (INTEGER, INTEGER, CSTRING, INTERNAL, INTEGER) RETURNS VOID AS '\$libdir/$obj', '$func' LANGUAGE C STRICT;\n";
+<<<<<<< HEAD
         $sql .=
 "COMMENT ON FUNCTION $func(INTEGER, INTEGER, CSTRING, INTERNAL, INTEGER) IS 'internal conversion function for $se to $de';\n";
         $sql .= "DROP CONVERSION pg_catalog.$name;\n";
         $sql .= "CREATE DEFAULT CONVERSION pg_catalog.$name FOR '$se' TO '$de' FROM $func;\n";
         $sql .= "COMMENT ON CONVERSION pg_catalog.$name IS 'conversion for $se to $de';\n";
+=======
+        $sql .= "DROP CONVERSION pg_catalog.$name;\n";
+        $sql .= "CREATE DEFAULT CONVERSION pg_catalog.$name FOR '$se' TO '$de' FROM $func;\n";
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     }
     open($F,">$target/share/conversion_create.sql")
       || die "Could not write to conversion_create.sql\n";
@@ -260,8 +303,12 @@ sub GenerateTsearchFiles
         my $txt = $tmpl;
         my $stop = '';
 
+<<<<<<< HEAD
         if (-s "src/backend/snowball/stopwords/$lang.stop")
         {
+=======
+        if (-s "src/backend/snowball/stopwords/$lang.stop") {
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
             $stop = ", StopWords=$lang";
         }
 
@@ -311,7 +358,25 @@ sub CopyContribFiles
             foreach my $f (split /\s+/,$flist)
             {
                 lcopy('contrib/' . $d . '/' . $f,$target . '/share/contrib/' . basename($f))
+<<<<<<< HEAD
                   || carp("Could not copy file $f in contrib $d");
+=======
+                  || croak("Could not copy file $f in contrib $d");
+                print '.';
+            }
+        }
+
+        $flist = '';
+        if ($mf =~ /^DATA_TSEARCH\s*=\s*(.*)$/m) {$flist .= $1}
+        if ($flist ne '')
+        {
+            $flist = ParseAndCleanRule($flist, $mf);
+
+            foreach my $f (split /\s+/,$flist)
+            {
+                lcopy('contrib/' . $d . '/' . $f,$target . '/share/tsearch_data/' . basename($f))
+                  || croak("Could not copy file $f in contrib $d");
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
                 print '.';
             }
         }
@@ -329,7 +394,11 @@ sub CopyContribFiles
             foreach my $f (split /\s+/,$flist)
             {
                 lcopy('contrib/' . $d . '/' . $f, $target . '/doc/contrib/' . $f)
+<<<<<<< HEAD
                   || carp("Could not copy file $f in contrib $d");
+=======
+                  || croak("Could not copy file $f in contrib $d");
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
                 print '.';
             }
         }
@@ -373,11 +442,17 @@ sub CopyIncludeFiles
         'src/include/', 'postgres_ext.h', 'pg_config.h', 'pg_config_os.h', 'pg_config_manual.h'
     );
     lcopy('src/include/libpq/libpq-fs.h', $target . '/include/libpq/')
+<<<<<<< HEAD
       || carp 'Could not copy libpq-fs.h';
 
     CopyFiles('Libpq headers',
 	      $target . '/include/', 'src/interfaces/libpq/',
 	      'libpq-fe.h', 'libpq-events.h');
+=======
+      || croak 'Could not copy libpq-fs.h';
+
+    CopyFiles('Libpq headers', $target . '/include/', 'src/interfaces/libpq/', 'libpq-fe.h');
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     CopyFiles(
         'Libpq internal headers',
         $target .'/include/internal/',
@@ -389,8 +464,13 @@ sub CopyIncludeFiles
         $target . '/include/internal/',
         'src/include/', 'c.h', 'port.h', 'postgres_fe.h'
     );
+<<<<<<< HEAD
 	lcopy('src/include/libpq/pqcomm.h', $target . '/include/internal/libpq/')
       || carp 'Could not copy pqcomm.h';
+=======
+    lcopy('src/include/libpq/pqcomm.h', $target . '/include/internal/libpq/')
+      || croak 'Could not copy pqcomm.h';
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
     CopyFiles(
         'Server headers',
@@ -403,6 +483,7 @@ sub CopyIncludeFiles
     my $D;
     opendir($D, 'src/include') || croak "Could not opendir on src/include!\n";
 
+<<<<<<< HEAD
     while (my $d = readdir($D))
     {
         next if ($d =~ /^\./);
@@ -412,6 +493,18 @@ sub CopyIncludeFiles
         EnsureDirectories($target . '/include/server', $d);
         system(
             "xcopy /s /i /q /r /y src\\include\\$d\\*.h \"$target\\include\\server\\$d\\\"")
+=======
+	# some xcopy progs don't like mixed slash style paths
+	(my $ctarget = $target) =~ s!/!\\!g;
+	while (my $d = readdir($D))
+    {
+        next if ($d =~ /^\./);
+        next if ($d eq 'CVS');
+        next unless (-d "src/include/$d");
+
+        EnsureDirectories("$target/include/server/$d");
+        system(qq{xcopy /s /i /q /r /y src\\include\\$d\\*.h "$ctarget\\include\\server\\$d\\"})
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
           && croak("Failed to copy include directory $d\n");
     }
     closedir($D);
@@ -439,11 +532,15 @@ sub GenerateNLSFiles
 {
     my $target = shift;
     my $nlspath = shift;
+<<<<<<< HEAD
     my $majorver = shift;
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
     print "Installing NLS files...";
     EnsureDirectories($target, "share/locale");
 	my @flist;
+<<<<<<< HEAD
 	File::Find::find({wanted => 
 						  sub { /^nls\.mk\z/s && 
 									!                                                                       push(@flist, $File::Find::name); 	
@@ -455,6 +552,20 @@ sub GenerateNLSFiles
         s/nls.mk/po/;
         my $dir = $_;
         next unless ($dir =~ /([^\/]+)\/po$/);
+=======
+	File::Find::find({wanted =>
+						  sub { /^nls\.mk\z/s &&
+									!push(@flist, $File::Find::name);
+							}
+				  }, "src");
+    foreach (@flist)
+    {
+        s/nls.mk/po/;
+        my $dir = $_;
+        next unless ($dir =~ /([^\/]+)\/po$/);
+        my $prgm = $1;
+        $prgm = 'postgres' if ($prgm eq 'backend');
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
         foreach (glob("$dir/*.po"))
         {
             my $lang;
@@ -463,7 +574,11 @@ sub GenerateNLSFiles
 
             EnsureDirectories($target, "share/locale/$lang", "share/locale/$lang/LC_MESSAGES");
             system(
+<<<<<<< HEAD
 "\"$nlspath\\bin\\msgfmt\" -o \"$target\\share\\locale\\$lang\\LC_MESSAGES\\$prgm-$majorver.mo\" $_"
+=======
+"\"$nlspath\\bin\\msgfmt\" -o \"$target\\share\\locale\\$lang\\LC_MESSAGES\\$prgm.mo\" $_"
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
               )
               && croak("Could not run msgfmt on $dir\\$_");
             print ".";
@@ -472,6 +587,7 @@ sub GenerateNLSFiles
     print "\n";
 }
 
+<<<<<<< HEAD
 sub DetermineMajorVersion
 {
     my $f = read_file('src/include/pg_config.h') || croak 'Could not open pg_config.h';
@@ -488,6 +604,8 @@ sub DetermineCatalogName
     return $1;
 }
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 sub read_file
 {
     my $filename = shift;

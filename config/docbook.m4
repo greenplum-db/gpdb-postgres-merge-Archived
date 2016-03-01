@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # config/docbook.m4
+=======
+# $PostgreSQL: pgsql/config/docbook.m4,v 1.8 2007/08/09 02:33:58 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 # PGAC_PROG_JADE
 # --------------

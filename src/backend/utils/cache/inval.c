@@ -80,7 +80,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.79 2007/01/05 22:19:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.83.2.1 2008/03/13 18:00:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -439,7 +439,11 @@ RegisterRelcacheInvalidation(Oid dbId, Oid relId)
 	 * hack to ensure that the next CommandCounterIncrement() will think
 	 * that we need to do CommandEndInvalidationMessages().
 	 */
+<<<<<<< HEAD
 	(void) GetCurrentCommandId(/*true*/);
+=======
+	(void) GetCurrentCommandId(true);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * If the relation being invalidated is one of those cached in the
@@ -463,6 +467,7 @@ RegisterSmgrInvalidation(RelFileNode rnode)
 	/*
 	 * As above, just in case there is not an associated catalog change.
 	 */
+<<<<<<< HEAD
 	(void) GetCurrentCommandId(/*true*/);
 }
 
@@ -495,6 +500,9 @@ si_to_str(SharedInvalidationMessage *msg)
 
 	}
 	return buf.data;
+=======
+	(void) GetCurrentCommandId(true);
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 #endif
 
@@ -671,7 +679,7 @@ PrepareForTupleInvalidation(Relation relation, HeapTuple tuple)
 		 * KLUGE ALERT: we always send the relcache event with MyDatabaseId,
 		 * even if the rel in question is shared (which we can't easily tell).
 		 * This essentially means that only backends in this same database
-		 * will react to the relcache flush request. This is in fact
+		 * will react to the relcache flush request.  This is in fact
 		 * appropriate, since only those backends could see our pg_attribute
 		 * change anyway.  It looks a bit ugly though.	(In practice, shared
 		 * relations can't have schema changes after bootstrap, so we should
@@ -679,6 +687,7 @@ PrepareForTupleInvalidation(Relation relation, HeapTuple tuple)
 		 */
 		databaseId = MyDatabaseId;
 	}
+<<<<<<< HEAD
 	else if (tupleRelId == GpPolicyRelationId)
 	{
 		FormData_gp_policy *gptup = (FormData_gp_policy *) GETSTRUCT(tuple);
@@ -686,6 +695,8 @@ PrepareForTupleInvalidation(Relation relation, HeapTuple tuple)
 		relationId = gptup->localoid;
 		databaseId = MyDatabaseId;
 	}
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	else if (tupleRelId == IndexRelationId)
 	{
 		Form_pg_index indextup = (Form_pg_index) GETSTRUCT(tuple);
@@ -896,10 +907,10 @@ inval_twophase_postcommit(TransactionId xid, uint16 info,
 			SendSharedInvalidMessages(msg, 1);
 			break;
 		case TWOPHASE_INFO_FILE_BEFORE:
-			RelationCacheInitFileInvalidate(true);
+			RelationCacheInitFilePreInvalidate();
 			break;
 		case TWOPHASE_INFO_FILE_AFTER:
-			RelationCacheInitFileInvalidate(false);
+			RelationCacheInitFilePostInvalidate();
 			break;
 		default:
 			Assert(false);
@@ -946,7 +957,7 @@ AtEOXact_Inval(bool isCommit)
 		 * unless we committed.
 		 */
 		if (transInvalInfo->RelcacheInitFileInval)
-			RelationCacheInitFileInvalidate(true);
+			RelationCacheInitFilePreInvalidate();
 
 		AppendInvalidationMessages(&transInvalInfo->PriorCmdInvalidMsgs,
 								   &transInvalInfo->CurrentCmdInvalidMsgs);
@@ -955,7 +966,7 @@ AtEOXact_Inval(bool isCommit)
 										SendSharedInvalidMessages);
 
 		if (transInvalInfo->RelcacheInitFileInval)
-			RelationCacheInitFileInvalidate(false);
+			RelationCacheInitFilePostInvalidate();
 	}
 	else if (transInvalInfo != NULL)
 	{
@@ -1064,6 +1075,99 @@ CommandEndInvalidationMessages(void)
 	AppendInvalidationMessages(&transInvalInfo->PriorCmdInvalidMsgs,
 							   &transInvalInfo->CurrentCmdInvalidMsgs);
 }
+
+
+/*
+ * BeginNonTransactionalInvalidation
+ *		Prepare for invalidation messages for nontransactional updates.
+ *
+ * A nontransactional invalidation is one that must be sent whether or not
+ * the current transaction eventually commits.  We arrange for all invals
+ * queued between this call and EndNonTransactionalInvalidation() to be sent
+ * immediately when the latter is called.
+ *
+ * Currently, this is only used by heap_page_prune(), and only when it is
+ * invoked during VACUUM FULL's first pass over a table.  We expect therefore
+ * that we are not inside a subtransaction and there are no already-pending
+ * invalidations.  This could be relaxed by setting up a new nesting level of
+ * invalidation data, but for now there's no need.  Note that heap_page_prune
+ * knows that this function does not change any state, and therefore there's
+ * no need to worry about cleaning up if there's an elog(ERROR) before
+ * reaching EndNonTransactionalInvalidation (the invals will just be thrown
+ * away if that happens).
+ */
+void
+BeginNonTransactionalInvalidation(void)
+{
+	/* Must be at top of stack */
+	Assert(transInvalInfo != NULL && transInvalInfo->parent == NULL);
+
+	/* Must not have any previously-queued activity */
+	Assert(transInvalInfo->PriorCmdInvalidMsgs.cclist == NULL);
+	Assert(transInvalInfo->PriorCmdInvalidMsgs.rclist == NULL);
+	Assert(transInvalInfo->CurrentCmdInvalidMsgs.cclist == NULL);
+	Assert(transInvalInfo->CurrentCmdInvalidMsgs.rclist == NULL);
+	Assert(transInvalInfo->RelcacheInitFileInval == false);
+}
+
+/*
+ * EndNonTransactionalInvalidation
+ *		Process queued-up invalidation messages for nontransactional updates.
+ *
+ * We expect to find messages in CurrentCmdInvalidMsgs only (else there
+ * was a CommandCounterIncrement within the "nontransactional" update).
+ * We must process them locally and send them out to the shared invalidation
+ * message queue.
+ *
+ * We must also reset the lists to empty and explicitly free memory (we can't
+ * rely on end-of-transaction cleanup for that).
+ */
+void
+EndNonTransactionalInvalidation(void)
+{
+	InvalidationChunk *chunk;
+	InvalidationChunk *next;
+
+	/* Must be at top of stack */
+	Assert(transInvalInfo != NULL && transInvalInfo->parent == NULL);
+
+	/* Must not have any prior-command messages */
+	Assert(transInvalInfo->PriorCmdInvalidMsgs.cclist == NULL);
+	Assert(transInvalInfo->PriorCmdInvalidMsgs.rclist == NULL);
+
+	/*
+	 * At present, this function is only used for CTID-changing updates;
+	 * since the relcache init file doesn't store any tuple CTIDs, we
+	 * don't have to invalidate it.  That might not be true forever
+	 * though, in which case we'd need code similar to AtEOXact_Inval.
+	 */
+
+	/* Send out the invals */
+	ProcessInvalidationMessages(&transInvalInfo->CurrentCmdInvalidMsgs,
+								LocalExecuteInvalidationMessage);
+	ProcessInvalidationMessages(&transInvalInfo->CurrentCmdInvalidMsgs,
+								SendSharedInvalidMessage);
+
+	/* Clean up and release memory */
+	for (chunk = transInvalInfo->CurrentCmdInvalidMsgs.cclist;
+		 chunk != NULL;
+		 chunk = next)
+	{
+		next = chunk->next;
+		pfree(chunk);
+	}
+	for (chunk = transInvalInfo->CurrentCmdInvalidMsgs.rclist;
+		 chunk != NULL;
+		 chunk = next)
+	{
+		next = chunk->next;
+		pfree(chunk);
+	}
+	transInvalInfo->CurrentCmdInvalidMsgs.cclist = NULL;
+	transInvalInfo->CurrentCmdInvalidMsgs.rclist = NULL;
+	transInvalInfo->RelcacheInitFileInval = false;
+}
+
 
 /*
  * CacheInvalidateHeapTuple

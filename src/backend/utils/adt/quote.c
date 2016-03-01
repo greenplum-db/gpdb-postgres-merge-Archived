@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/quote.c,v 1.21 2007/01/05 22:19:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/quote.c,v 1.23 2008/01/01 19:45:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,10 +72,14 @@ quote_literal(PG_FUNCTION_ARGS)
 
 	qstr = quote_literal_internal(str);
 
+<<<<<<< HEAD
 	len = strlen(qstr);
 	result = (text *) palloc(len + VARHDRSZ);
 	SET_VARSIZE(result, len + VARHDRSZ);
 	memcpy(VARDATA(result), qstr, len);
+=======
+	SET_VARSIZE(result, cp2 - ((char *) result));
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	PG_RETURN_TEXT_P(result);
 }

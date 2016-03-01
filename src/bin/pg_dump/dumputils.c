@@ -5,10 +5,14 @@
  *	Lately it's also being used by psql and bin/scripts/ ...
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.35 2007/01/05 22:19:48 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.40 2008/01/01 19:45:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +75,11 @@ fmtId(const char *rawid)
 	 * use islower() etc.
 	 */
 	/* slightly different rules for first character */
+<<<<<<< HEAD
 	if (!((rawid[0] >= 'a' && rawid[0] <= 'z') || (rawid[0] == '_')))
+=======
+	if (!((rawid[0] >= 'a' && rawid[0] <= 'z') || rawid[0] == '_'))
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		need_quotes = true;
 	else
 	{
@@ -292,6 +300,84 @@ appendStringLiteralDQ(PQExpBuffer buf, const char *str, const char *dqprefix)
 
 
 /*
+ * Convert a bytea value (presented as raw bytes) to an SQL string literal
+ * and append it to the given buffer.  We assume the specified
+ * standard_conforming_strings setting.
+ *
+ * This is needed in situations where we do not have a PGconn available.
+ * Where we do, PQescapeByteaConn is a better choice.
+ */
+void
+appendByteaLiteral(PQExpBuffer buf, const unsigned char *str, size_t length,
+				   bool std_strings)
+{
+	const unsigned char *vp;
+	unsigned char *rp;
+	size_t		i;
+	size_t		len;
+	size_t		bslash_len = (std_strings ? 1 : 2);
+
+	len = 2;					/* for the quote marks */
+	vp = str;
+	for (i = length; i > 0; i--, vp++)
+	{
+		if (*vp < 0x20 || *vp > 0x7e)
+			len += bslash_len + 3;
+		else if (*vp == '\'')
+			len += 2;
+		else if (*vp == '\\')
+			len += bslash_len + bslash_len;
+		else
+			len++;
+	}
+
+	if (!enlargePQExpBuffer(buf, len))
+		return;
+
+	rp = (unsigned char *) (buf->data + buf->len);
+	*rp++ = '\'';
+
+	vp = str;
+	for (i = length; i > 0; i--, vp++)
+	{
+		if (*vp < 0x20 || *vp > 0x7e)
+		{
+			int			val = *vp;
+
+			if (!std_strings)
+				*rp++ = '\\';
+			*rp++ = '\\';
+			*rp++ = (val >> 6) + '0';
+			*rp++ = ((val >> 3) & 07) + '0';
+			*rp++ = (val & 07) + '0';
+		}
+		else if (*vp == '\'')
+		{
+			*rp++ = '\'';
+			*rp++ = '\'';
+		}
+		else if (*vp == '\\')
+		{
+			if (!std_strings)
+			{
+				*rp++ = '\\';
+				*rp++ = '\\';
+			}
+			*rp++ = '\\';
+			*rp++ = '\\';
+		}
+		else
+			*rp++ = *vp;
+	}
+
+	*rp++ = '\'';
+	*rp = '\0';
+
+	buf->len = ((char *) rp) - buf->data;
+}
+
+
+/*
  * Convert backend's version string into a number.
  */
 int
@@ -472,8 +558,8 @@ buildACLCommands(const char *name, const char *type,
 	 * We still need some hacking though to cover the case where new default
 	 * public privileges are added in new versions: the REVOKE ALL will revoke
 	 * them, leading to behavior different from what the old version had,
-	 * which is generally not what's wanted.  So add back default privs if
-	 * the source database is too old to have had that particular priv.
+	 * which is generally not what's wanted.  So add back default privs if the
+	 * source database is too old to have had that particular priv.
 	 */
 	if (remoteVersion < 80200 && strcmp(type, "DATABASE") == 0)
 	{

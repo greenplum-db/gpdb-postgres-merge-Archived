@@ -3,12 +3,16 @@
  * pg_constraint.c
  *	  routines to support manipulation of the pg_constraint relation
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.35 2007/02/14 01:58:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.38 2008/01/17 18:56:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +32,10 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
+<<<<<<< HEAD
 #include "utils/rel.h"
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "utils/syscache.h"
 
 
@@ -293,10 +300,10 @@ CreateConstraintEntry(const char *constraintName,
 	if (foreignNKeys > 0)
 	{
 		/*
-		 * Register normal dependencies on the equality operators that
-		 * support a foreign-key constraint.  If the PK and FK types
-		 * are the same then all three operators for a column are the
-		 * same; otherwise they are different.
+		 * Register normal dependencies on the equality operators that support
+		 * a foreign-key constraint.  If the PK and FK types are the same then
+		 * all three operators for a column are the same; otherwise they are
+		 * different.
 		 */
 		ObjectAddress oprobject;
 
@@ -598,6 +605,67 @@ GetConstraintNameByOid(Oid constraintId)
 				ObjectIdGetDatum(constraintId)));
 	
 	return result;
+}
+
+/*
+ * RenameConstraintById
+ *		Rename a constraint.
+ *
+ * Note: this isn't intended to be a user-exposed function; it doesn't check
+ * permissions etc.  Currently this is only invoked when renaming an index
+ * that is associated with a constraint, but it's made a little more general
+ * than that with the expectation of someday having ALTER TABLE RENAME
+ * CONSTRAINT.
+ */
+void
+RenameConstraintById(Oid conId, const char *newname)
+{
+	Relation	conDesc;
+	HeapTuple	tuple;
+	Form_pg_constraint con;
+
+	conDesc = heap_open(ConstraintRelationId, RowExclusiveLock);
+
+	tuple = SearchSysCacheCopy(CONSTROID,
+							   ObjectIdGetDatum(conId),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for constraint %u", conId);
+	con = (Form_pg_constraint) GETSTRUCT(tuple);
+
+	/*
+	 * We need to check whether the name is already in use --- note that
+	 * there currently is not a unique index that would catch this.
+	 */
+	if (OidIsValid(con->conrelid) &&
+		ConstraintNameIsUsed(CONSTRAINT_RELATION,
+							 con->conrelid,
+							 con->connamespace,
+							 newname))
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("constraint \"%s\" for relation \"%s\" already exists",
+						newname, get_rel_name(con->conrelid))));
+	if (OidIsValid(con->contypid) &&
+		ConstraintNameIsUsed(CONSTRAINT_DOMAIN,
+							 con->contypid,
+							 con->connamespace,
+							 newname))
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("constraint \"%s\" for domain \"%s\" already exists",
+						newname, format_type_be(con->contypid))));
+
+	/* OK, do the rename --- tuple is a copy, so OK to scribble on it */
+	namestrcpy(&(con->conname), newname);
+
+	simple_heap_update(conDesc, &tuple->t_self, tuple);
+
+	/* update the system catalog indexes */
+	CatalogUpdateIndexes(conDesc, tuple);
+
+	heap_freetuple(tuple);
+	heap_close(conDesc, RowExclusiveLock);
 }
 
 /*

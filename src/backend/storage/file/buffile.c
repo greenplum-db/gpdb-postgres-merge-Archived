@@ -3,12 +3,19 @@
  * buffile.c
  *	  Management of large buffered files, primarily temporary files.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/storage/file/buffile.c,v 1.24.2.1 2007/06/01 23:43:17 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/buffile.c,v 1.29 2008/01/01 19:45:51 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * NOTES:
  *
@@ -38,8 +45,22 @@
 #include "utils/workfile_mgr.h"
 
 /*
+<<<<<<< HEAD
  * This data structure represents a buffered file that consists of one
  * physical file (accessed through a virtual file descriptor
+=======
+ * The maximum safe file size is presumed to be RELSEG_SIZE * BLCKSZ.
+ * Note we adhere to this limit whether or not LET_OS_MANAGE_FILESIZE
+ * is defined, although md.c ignores it when that symbol is defined.
+ * The reason for doing this is that we'd like large temporary BufFiles
+ * to be spread across multiple tablespaces when available.
+ */
+#define MAX_PHYSICAL_FILESIZE  (RELSEG_SIZE * BLCKSZ)
+
+/*
+ * This data structure represents a buffered file that consists of one or
+ * more physical files (each accessed through a virtual file descriptor
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * managed by fd.c).
  */
 struct BufFile
@@ -64,7 +85,7 @@ static void BufFileUpdateSize(BufFile *buffile);
 
 /*
  * Create a BufFile given the first underlying physical file.
- * NOTE: caller must set isTemp true if appropriate.
+ * NOTE: caller must set isTemp and isInterXact if appropriate.
  */
 static BufFile *
 makeBufFile(File firstfile)
@@ -74,7 +95,11 @@ makeBufFile(File firstfile)
 	file->file = firstfile;
 
 	file->isTemp = false;
+<<<<<<< HEAD
 	file->isWorkfile = false;
+=======
+	file->isInterXact = false;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	file->dirty = false;
 	/*
 	 * "current pos" is a position of start of buffer within the logical file.
@@ -123,6 +148,14 @@ BufFileCreateTemp(const char *filePrefix, bool interXact)
  *
  * Does not add the pgsql_tmp/ prefix to the file path before creating.
  *
+<<<<<<< HEAD
+=======
+ * If interXact is true, the temp file will not be automatically deleted
+ * at end of transaction.
+ *
+ * Note: if interXact is true, the caller had better be calling us in a
+ * memory context that will survive across transaction boundaries.
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 BufFile *
 BufFileCreateFile(const char *fileName, bool delOnClose, bool interXact)
@@ -306,8 +339,17 @@ static void BufFileDumpBuffer(BufFile *file, const void* buffer, Size nbytes)
 			}
 			elog(ERROR, "could not write %d bytes to temporary file: %m", (int)bytestowrite);
 		}
+<<<<<<< HEAD
 		file->offset += wrote;
 		wpos += wrote;
+=======
+		bytestowrite = FileWrite(thisfile, file->buffer + wpos, bytestowrite);
+		if (bytestowrite <= 0)
+			return;				/* failed to write */
+		file->offsets[file->curFile] += bytestowrite;
+		file->curOffset += bytestowrite;
+		wpos += bytestowrite;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 	file->dirty = false;
 

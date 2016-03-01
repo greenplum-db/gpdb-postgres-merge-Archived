@@ -4,11 +4,15 @@
  *	  Definitions for tagged nodes.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.195 2007/02/19 07:03:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.205 2008/01/01 19:45:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,6 +185,8 @@ typedef enum NodeTag
 	T_FieldSelect,
 	T_FieldStore,
 	T_RelabelType,
+	T_CoerceViaIO,
+	T_ArrayCoerceExpr,
 	T_ConvertRowtypeExpr,
 	T_CaseExpr,
 	T_CaseWhen,
@@ -202,6 +208,7 @@ typedef enum NodeTag
 	T_RangeTblRef,
 	T_JoinExpr,
 	T_FromExpr,
+<<<<<<< HEAD
 	T_Flow,
 	T_WindowFrame,
 	T_WindowFrameEdge,
@@ -217,6 +224,9 @@ typedef enum NodeTag
 	T_PartBoundExpr,
 	T_PartBoundInclusionExpr,
 	T_PartBoundOpenExpr,
+=======
+	T_IntoClause,
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * TAGS FOR EXPRESSION STATE NODES (execnodes.h)
@@ -234,6 +244,8 @@ typedef enum NodeTag
 	T_SubPlanState,
 	T_FieldSelectState,
 	T_FieldStoreState,
+	T_CoerceViaIOState,
+	T_ArrayCoerceExprState,
 	T_ConvertRowtypeExprState,
 	T_CaseExprState,
 	T_CaseWhenState,
@@ -246,6 +258,7 @@ typedef enum NodeTag
 	T_NullTestState,
 	T_CoerceToDomainState,
 	T_DomainConstraintState,
+<<<<<<< HEAD
 	T_WindowRefExprState,
 	T_GroupingFuncExprState,
 	T_PercentileExprState,
@@ -254,6 +267,9 @@ typedef enum NodeTag
 	T_PartBoundExprState,
 	T_PartBoundInclusionExprState,
 	T_PartBoundOpenExprState,
+=======
+	T_WholeRowVarExprState,		/* will be in a more natural position in 9.3 */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * TAGS FOR PLANNER NODES (relation.h)
@@ -330,7 +346,7 @@ typedef enum NodeTag
 	T_OidList,
 
 	/*
-	 * TAGS FOR PARSE TREE NODES (parsenodes.h)
+	 * TAGS FOR STATEMENT NODES (mostly in parsenodes.h)
 	 */
 	T_Query = 700,
 	T_PlannedStmt,
@@ -377,7 +393,7 @@ typedef enum NodeTag
 	T_AlterSeqStmt,
 	T_VariableSetStmt,
 	T_VariableShowStmt,
-	T_VariableResetStmt,
+	T_DiscardStmt,
 	T_CreateTrigStmt,
 	T_DropPropertyStmt,
 	T_CreatePLangStmt,
@@ -414,6 +430,7 @@ typedef enum NodeTag
 	T_AlterOwnerStmt,
 	T_DropOwnedStmt,
 	T_ReassignOwnedStmt,
+<<<<<<< HEAD
 	T_WindowSpec,
 	T_WindowSpecParse,
 	T_PartitionBy,
@@ -436,6 +453,17 @@ typedef enum NodeTag
 	/**/
 	
 	T_A_Expr = 850,
+=======
+	T_CompositeTypeStmt,
+	T_CreateEnumStmt,
+	T_AlterTSDictionaryStmt,
+	T_AlterTSConfigurationStmt,
+
+	/*
+	 * TAGS FOR PARSE TREE NODES (parsenodes.h)
+	 */
+	T_A_Expr = 900,
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	T_ColumnRef,
 	T_ParamRef,
 	T_A_Const,
@@ -462,7 +490,6 @@ typedef enum NodeTag
 	T_FuncWithArgs,
 	T_PrivTarget,
 	T_CreateOpClassItem,
-	T_CompositeTypeStmt,
 	T_InhRelation,
 	T_FunctionParameter,
 	T_LockingClause,
@@ -487,7 +514,7 @@ typedef enum NodeTag
 	 * purposes (usually because they are involved in APIs where we want to
 	 * pass multiple object types through the same pointer).
 	 */
-	T_TriggerData = 900,		/* in commands/trigger.h */
+	T_TriggerData = 950,		/* in commands/trigger.h */
 	T_ReturnSetInfo,			/* in nodes/execnodes.h */
     T_HashBitmap,               /* in nodes/tidbitmap.h */
     T_StreamBitmap,             /* in nodes/tidbitmap.h */
@@ -615,10 +642,9 @@ typedef double Cost;			/* execution cost (in page-access units) */
 
 /*
  * CmdType -
- *	  enums for type of operation represented by a Query
+ *	  enums for type of operation represented by a Query or PlannedStmt
  *
- * ??? could have put this in parsenodes.h but many files not in the
- *	  optimizer also need this...
+ * This is needed in both parsenodes.h and plannodes.h, so put it here...
  */
 typedef enum CmdType
 {

@@ -1,9 +1,15 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
+<<<<<<< HEAD
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
  * src/bin/psql/describe.h
+=======
+ * Copyright (c) 2000-2008, PostgreSQL Global Development Group
+ *
+ * $PostgreSQL: pgsql/src/bin/psql/describe.h,v 1.35 2008/01/01 19:45:56 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 #ifndef DESCRIBE_H
 #define DESCRIBE_H
@@ -41,6 +47,18 @@ extern bool objectDescription(const char *pattern, bool showSystem);
 
 /* \d foo */
 extern bool describeTableDetails(const char *pattern, bool verbose, bool showSystem);
+
+/* \dF */
+extern bool listTSConfigs(const char *pattern, bool verbose);
+
+/* \dFp */
+extern bool listTSParsers(const char *pattern, bool verbose);
+
+/* \dFd */
+extern bool listTSDictionaries(const char *pattern, bool verbose);
+
+/* \dFt */
+extern bool listTSTemplates(const char *pattern, bool verbose);
 
 /* \dF */
 extern bool listTSConfigs(const char *pattern, bool verbose);

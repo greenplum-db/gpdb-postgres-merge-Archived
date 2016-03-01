@@ -4,7 +4,11 @@
 #   a template for timezones you could need.  See the `Date/Time Support'
 #   appendix in the PostgreSQL documentation for more information.
 #
+<<<<<<< HEAD
 # src/timezone/tznames/Africa.txt
+=======
+# $PostgreSQL: pgsql/src/timezone/tznames/Africa.txt,v 1.2.4.1 2009/09/06 15:25:39 tgl Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #
 
 CAT      7200    # Central Africa Time

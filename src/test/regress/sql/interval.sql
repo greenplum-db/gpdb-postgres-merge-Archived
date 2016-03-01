@@ -122,8 +122,11 @@ SELECT justify_interval(interval '1 month -1 hour') as "1 month -1 hour";
 
 -- test fractional second input, and detection of duplicate units
 SET DATESTYLE = 'ISO';
+<<<<<<< HEAD
 SET IntervalStyle TO postgres;
 
+=======
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 SELECT '1 millisecond'::interval, '1 microsecond'::interval,
        '500 seconds 99 milliseconds 51 microseconds'::interval;
 SELECT '3 days 5 milliseconds'::interval;
@@ -131,4 +134,12 @@ SELECT '3 days 5 milliseconds'::interval;
 SELECT '1 second 2 seconds'::interval;              -- error
 SELECT '10 milliseconds 20 milliseconds'::interval; -- error
 SELECT '5.5 seconds 3 milliseconds'::interval;      -- error
+<<<<<<< HEAD
 SELECT '1:20:05 5 microseconds'::interval;          -- error
+=======
+SELECT '1:20:05 5 microseconds'::interval;          -- error
+
+-- check that '30 days' equals '1 month' according to the hash function
+select '30 days'::interval = '1 month'::interval as t;
+select interval_hash('30 days'::interval) = interval_hash('1 month'::interval) as t;
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

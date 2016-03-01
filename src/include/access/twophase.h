@@ -4,10 +4,17 @@
  *	  Two-phase-commit related declarations.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/access/twophase.h,v 1.11 2009/01/01 17:23:56 momjian Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/include/access/twophase.h,v 1.10.2.1 2009/11/23 09:59:00 heikki Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +22,11 @@
 #define TWOPHASE_H
 
 #include "access/xlogdefs.h"
+<<<<<<< HEAD
 #include "access/xlogmm.h"
+=======
+#include "storage/backendid.h"
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "storage/proc.h"
 #include "utils/timestamp.h"
 
@@ -67,6 +78,7 @@ extern void AtAbort_Twophase(void);
 extern void PostPrepare_Twophase(void);
 
 extern PGPROC *TwoPhaseGetDummyProc(TransactionId xid);
+extern BackendId TwoPhaseGetDummyBackendId(TransactionId xid);
 
 extern GlobalTransaction MarkAsPreparing(TransactionId xid, 
 				LocalDistribXactRef *distribToLocalXactRef,

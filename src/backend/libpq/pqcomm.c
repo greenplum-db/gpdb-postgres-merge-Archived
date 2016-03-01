@@ -27,10 +27,17 @@
  * the backend's "backend/libpq" is quite separate from "interfaces/libpq".
  * All that remains is similarities of names to trap the unwary...
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.212 2010/07/08 16:19:50 mha Exp $
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.198 2008/01/01 19:45:49 momjian Exp $
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -195,6 +202,7 @@ pq_close(int code, Datum arg)
 #ifdef ENABLE_GSS
 		OM_uint32	min_s;
 
+<<<<<<< HEAD
 		/*
 		 * Shutdown GSSAPI layer.  This section does nothing when interrupting
 		 * BackendInitialize(), because pg_GSS_recvauth() makes first use of
@@ -219,6 +227,21 @@ pq_close(int code, Datum arg)
 		 * Cleanly shut down SSL layer.  Nowhere else does a postmaster child
 		 * call this, so this is safe when interrupting BackendInitialize().
 		 */
+=======
+		/* Shutdown GSSAPI layer */
+		if (MyProcPort->gss->ctx != GSS_C_NO_CONTEXT)
+			gss_delete_sec_context(&min_s, &MyProcPort->gss->ctx, NULL);
+
+		if (MyProcPort->gss->cred != GSS_C_NO_CREDENTIAL)
+			gss_release_cred(&min_s, &MyProcPort->gss->cred);
+#endif   /* ENABLE_GSS */
+		/* GSS and SSPI share the port->gss struct */
+
+		free(MyProcPort->gss);
+#endif   /* ENABLE_GSS || ENABLE_SSPI */
+
+		/* Cleanly shut down SSL layer */
+>>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		secure_close(MyProcPort);
 
 		/*
@@ -431,7 +454,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		}
 #endif
 
-#ifdef IPV6_V6ONLY
+#if defined(IPV6_V6ONLY) && defined(IPPROTO_IPV6)
 		if (addr->ai_family == AF_INET6)
 		{
 			if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY,
@@ -524,6 +547,14 @@ static int
 Lock_AF_UNIX(unsigned short portNumber, char *unixSocketName)
 {
 	UNIXSOCK_PATH(sock_path, portNumber, unixSocketName);
+	if (strlen(sock_path) >= UNIXSOCK_PATH_BUFLEN)
+	{
+		ereport(LOG,
+				(errmsg("Unix-domain socket path \"%s\" is too long (maximum %d bytes)",
+						sock_path,
+						(int) (UNIXSOCK_PATH_BUFLEN - 1))));
+		return STATUS_ERROR;
+	}
 
 	/*
 	 * Grab an interlock file associated with the socket file.

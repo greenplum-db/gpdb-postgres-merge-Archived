@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.36 2007/01/30 22:05:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.38 2008/01/01 19:46:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,8 +159,7 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 			istrigger = true;
 		else if (proc->prorettype != RECORDOID &&
 				 proc->prorettype != VOIDOID &&
-				 proc->prorettype != ANYARRAYOID &&
-				 proc->prorettype != ANYELEMENTOID)
+				 !IsPolymorphicType(proc->prorettype))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("PL/pgSQL functions cannot return type %s",
@@ -175,8 +174,7 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 	{
 		if (get_typtype(argtypes[i]) == TYPTYPE_PSEUDO)
 		{
-			if (argtypes[i] != ANYARRAYOID &&
-				argtypes[i] != ANYELEMENTOID)
+			if (!IsPolymorphicType(argtypes[i]))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("PL/pgSQL functions cannot accept type %s",
