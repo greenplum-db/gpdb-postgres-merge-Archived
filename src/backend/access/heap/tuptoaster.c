@@ -158,22 +158,6 @@ do { \
 
 
 <<<<<<< HEAD
-/* 
- * Although this macro sets var_len_1be, data stored in GPDB might
- * not have anything set in this byte, so you can't count on it's value
- * Not really a problem, since it is always based on TOAST_POINTER_LEN
- */
-#define SET_VARSIZE_1B_E(PTR,len) \
-	(((varattrib_1b_e *) (PTR))->va_header = 0x80, \
-	 ((varattrib_1b_e *) (PTR))->va_len_1be = (len))
-
-
-#define VARRAWSIZE_4B_C(PTR) \
-	(((varattrib_4b *) (PTR))->va_compressed.va_rawsize)
-
-
-#define SET_VARSIZE_EXTERNAL(PTR, len)		SET_VARSIZE_1B_E(PTR, len)
-
 
 #define SET_VARSIZE_C(PTR)			(((varattrib_1b *) (PTR))->va_header |= 0x40)
 
