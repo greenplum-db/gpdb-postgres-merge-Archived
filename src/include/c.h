@@ -9,18 +9,11 @@
  *	  polluting the namespace with lots of stuff...
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2011, Greenplum inc
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/c.h
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.222.2.3 2010/04/01 20:12:34 heikki Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -959,16 +952,6 @@ typedef NameData *Name;
 #include <unistd.h>
 #endif
 
-<<<<<<< HEAD
-=======
-/*
- * This only works on Unix, not on Windows! This isn't used in PostgreSQL
- * anymore, use the platform-aware DEVNULL instead. This is kept here just
- * in case a 3rd party module uses it.
- */
-#define NULL_DEV		"/dev/null"
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * Provide prototypes for routines not present in a particular machine's
  * standard C library.
@@ -986,17 +969,12 @@ extern int	vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 #define memmove(d, s, c)		bcopy(s, d, c)
 #endif
 
-<<<<<<< HEAD
 /* no special DLL markers on most ports */
 #ifndef PGDLLIMPORT
 #define PGDLLIMPORT				/* no special DLL markers on most ports */
 #endif
 #ifndef PGDLLEXPORT
 #define PGDLLEXPORT
-=======
-#ifndef PGDLLIMPORT
-#define PGDLLIMPORT				/* no special DLL markers on most ports */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif
 
 /*

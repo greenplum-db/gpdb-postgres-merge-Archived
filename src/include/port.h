@@ -310,11 +310,7 @@ extern void copydir(char *fromdir, char *todir, bool recurse);
 
 extern bool rmtree(const char *path, bool rmtopdir);
 
-<<<<<<< HEAD
 /*
-=======
-/* 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * stat() is not guaranteed to set the st_size field on win32, so we
  * redefine it to our own implementation that is.
  *
@@ -326,12 +322,8 @@ extern bool rmtree(const char *path, bool rmtopdir);
  */
 #if defined(WIN32) && !defined(__CYGWIN__) && !defined(UNSAFE_STAT_OK)
 #include <sys/stat.h>
-<<<<<<< HEAD
 extern int	pgwin32_safestat(const char *path, struct stat * buf);
 
-=======
-extern int	pgwin32_safestat(const char *path, struct stat *buf);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #define stat(a,b) pgwin32_safestat(a,b)
 #endif
 
@@ -353,13 +345,6 @@ extern FILE *pgwin32_fopen(const char *, const char *);
 #define popen(a,b) _popen(a,b)
 #define pclose(a) _pclose(a)
 
-<<<<<<< HEAD
-=======
-/* Missing rand functions */
-extern long lrand48(void);
-extern void srand48(long seed);
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* New versions of MingW have gettimeofday, old mingw and msvc don't */
 #ifndef HAVE_GETTIMEOFDAY
 /* Last parameter not used */
@@ -481,7 +466,6 @@ extern void qsort_arg(void *base, size_t nel, size_t elsize,
 /* port/chklocale.c */
 extern int	pg_get_encoding_from_locale(const char *ctype);
 
-<<<<<<< HEAD
 /* port/inet_net_ntop.c */
 extern char *inet_net_ntop(int af, const void *src, int bits,
 			  char *dst, size_t size);
@@ -495,6 +479,4 @@ extern int	pg_mkdir_p(char *path, int omode);
 /* port/quotes.c */
 extern char *escape_single_quotes_ascii(const char *src);
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif   /* PG_PORT_H */
