@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-# config/programs.m4
+# $PostgreSQL: pgsql/config/programs.m4,v 1.24 2008/08/29 13:02:32 petere Exp $
 
 
 # PGAC_PATH_BISON
@@ -11,7 +10,7 @@
 AC_DEFUN([PGAC_PATH_BISON],
 [# Let the user override the search
 if test -z "$BISON"; then
-  AC_PATH_PROGS(BISON, bison)
+  AC_CHECK_PROGS(BISON, bison)
 fi
 
 if test "$BISON"; then
@@ -20,15 +19,15 @@ if test "$BISON"; then
   if echo "$pgac_bison_version" | $AWK '{ if ([$]4 < 1.875) exit 0; else exit 1;}'
   then
     AC_MSG_WARN([
-*** The installed version of Bison, $BISON, is too old to use with PostgreSQL.
-*** Bison version 1.875 or later is required, but this is $pgac_bison_version.])
+*** The installed version of Bison is too old to use with PostgreSQL.
+*** Bison version 1.875 or later is required.])
     BISON=""
   fi
 fi
 
 if test -z "$BISON"; then
   AC_MSG_WARN([
-*** Without Bison you will not be able to build PostgreSQL from Git nor
+*** Without Bison you will not be able to build PostgreSQL from CVS nor
 *** change any of the parser definition files.  You can obtain Bison from
 *** a GNU mirror site.  (If you are using the official distribution of
 *** PostgreSQL then you do not need to worry about this, because the Bison
@@ -37,59 +36,14 @@ fi
 # We don't need AC_SUBST(BISON) because AC_PATH_PROG did it
 AC_SUBST(BISONFLAGS)
 ])# PGAC_PATH_BISON
-=======
-# $PostgreSQL: pgsql/config/programs.m4,v 1.21.2.1 2008/05/27 22:18:11 tgl Exp $
-
-
-# PGAC_PATH_YACC
-# --------------
-# Look for Bison, set the output variable YACC to its path if found.
-# Reject versions before 1.875 (they have bugs or capacity limits).
-# Note we do not accept other implementations of yacc.
-
-AC_DEFUN([PGAC_PATH_YACC],
-[# Let the user override the search
-if test -z "$YACC"; then
-  AC_CHECK_PROGS(YACC, ['bison -y'])
-fi
-
-if test "$YACC"; then
-  pgac_yacc_version=`$YACC --version 2>/dev/null | sed q`
-  AC_MSG_NOTICE([using $pgac_yacc_version])
-  if echo "$pgac_yacc_version" | $AWK '{ if ([$]4 < 1.875) exit 0; else exit 1;}'
-  then
-    AC_MSG_WARN([
-*** The installed version of Bison is too old to use with PostgreSQL.
-*** Bison version 1.875 or later is required.])
-    YACC=""
-  fi
-fi
-
-if test -z "$YACC"; then
-  AC_MSG_WARN([
-*** Without Bison you will not be able to build PostgreSQL from CVS nor
-*** change any of the parser definition files.  You can obtain Bison from
-*** a GNU mirror site.  (If you are using the official distribution of
-*** PostgreSQL then you do not need to worry about this, because the Bison
-*** output is pre-generated.)  To use a different yacc program (possible,
-*** but not recommended), set the environment variable YACC before running
-*** 'configure'.])
-fi
-# We don't need AC_SUBST(YACC) because AC_PATH_PROG did it
-AC_SUBST(YFLAGS)
-])# PGAC_PATH_YACC
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 
 # PGAC_PATH_FLEX
 # --------------
 # Look for Flex, set the output variable FLEX to its path if found.
-# Reject versions before 2.5.31, as we need a reasonably non-buggy reentrant
-# scanner.  (Note: the well-publicized security problem in 2.5.31 does not
-# affect Postgres, and there are still distros shipping patched 2.5.31,
-# so allow it.)  Also find Flex if its installed under `lex', but do not
-# accept other Lex programs.
+# Avoid the buggy version 2.5.3. Also find Flex if its installed
+# under `lex', but do not accept other Lex programs.
 
 AC_DEFUN([PGAC_PATH_FLEX],
 [AC_CACHE_CHECK([for flex], pgac_cv_path_flex,
@@ -111,16 +65,13 @@ else
       then
         echo '%%'  > conftest.l
         if $pgac_candidate -t conftest.l 2>/dev/null | grep FLEX_SCANNER >/dev/null 2>&1; then
-          pgac_flex_version=`$pgac_candidate --version 2>/dev/null`
-          if echo "$pgac_flex_version" | sed ['s/[^0-9]/ /g'] | $AWK '{ if ([$]1 = 2 && [$]2 = 5 && [$]3 >= 4) exit 0; else exit 1;}'
-          then
-            pgac_cv_path_flex=$pgac_candidate
-            break 2
-          else
-            AC_MSG_WARN([
-*** The installed version of Flex, $pgac_candidate, is too old to use with Greenplum DB.
-*** Flex version 2.5.4 or later is required, but this is $pgac_flex_version.])
+          if $pgac_candidate --version | grep ' 2\.5\.3$' >/dev/null 2>&1; then
+            pgac_broken_flex=$pgac_candidate
+            continue
           fi
+
+          pgac_cv_path_flex=$pgac_candidate
+          break 2
         fi
       fi
     done
@@ -131,8 +82,14 @@ fi
 ])[]dnl AC_CACHE_CHECK
 
 if test x"$pgac_cv_path_flex" = x"no"; then
+  if test -n "$pgac_broken_flex"; then
+    AC_MSG_WARN([
+*** The Flex version 2.5.3 you have at $pgac_broken_flex contains a bug. You
+*** should get version 2.5.4 or later.])
+  fi
+
   AC_MSG_WARN([
-*** Without Flex you will not be able to build PostgreSQL from Git nor
+*** Without Flex you will not be able to build PostgreSQL from CVS or
 *** change any of the scanner definition files.  You can obtain Flex from
 *** a GNU mirror site.  (If you are using the official distribution of
 *** PostgreSQL then you do not need to worry about this because the Flex
@@ -141,11 +98,7 @@ if test x"$pgac_cv_path_flex" = x"no"; then
   FLEX=
 else
   FLEX=$pgac_cv_path_flex
-<<<<<<< HEAD
-  pgac_flex_version=`$FLEX --version 2>/dev/null`
-=======
   pgac_flex_version=`$FLEX -V 2>/dev/null`
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
   AC_MSG_NOTICE([using $pgac_flex_version])
 fi
 
@@ -164,7 +117,7 @@ AC_SUBST(FLEXFLAGS)
 AC_DEFUN([PGAC_CHECK_READLINE],
 [AC_REQUIRE([AC_CANONICAL_HOST])
 
-AC_CACHE_CHECK([for library containing readline], [pgac_cv_check_readline],
+AC_CACHE_VAL([pgac_cv_check_readline],
 [pgac_cv_check_readline=no
 pgac_save_LIBS=$LIBS
 if test x"$with_libedit_preferred" != x"yes"
@@ -172,6 +125,7 @@ then	READLINE_ORDER="-lreadline -ledit"
 else	READLINE_ORDER="-ledit -lreadline"
 fi
 for pgac_rllib in $READLINE_ORDER ; do
+  AC_MSG_CHECKING([for ${pgac_rllib}])
   for pgac_lib in "" " -ltermcap" " -lncurses" " -lcurses" ; do
     LIBS="${pgac_rllib}${pgac_lib} $pgac_save_LIBS"
     AC_TRY_LINK_FUNC([readline], [[
@@ -190,11 +144,14 @@ for pgac_rllib in $READLINE_ORDER ; do
     ]])
   done
   if test "$pgac_cv_check_readline" != no ; then
+    AC_MSG_RESULT([yes ($pgac_cv_check_readline)])
     break
+  else
+    AC_MSG_RESULT(no)
   fi
 done
 LIBS=$pgac_save_LIBS
-])[]dnl AC_CACHE_CHECK
+])[]dnl AC_CACHE_VAL
 
 if test "$pgac_cv_check_readline" != no ; then
   LIBS="$pgac_cv_check_readline $LIBS"
@@ -210,8 +167,8 @@ fi
 # Readline versions < 2.1 don't have rl_completion_append_character
 
 AC_DEFUN([PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER],
-[AC_CACHE_CHECK([for rl_completion_append_character], pgac_cv_var_rl_completion_append_character,
-[AC_TRY_LINK([#include <stdio.h>
+[AC_MSG_CHECKING([for rl_completion_append_character])
+AC_TRY_LINK([#include <stdio.h>
 #ifdef HAVE_READLINE_READLINE_H
 # include <readline/readline.h>
 #elif defined(HAVE_READLINE_H)
@@ -219,12 +176,10 @@ AC_DEFUN([PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER],
 #endif
 ],
 [rl_completion_append_character = 'x';],
-[pgac_cv_var_rl_completion_append_character=yes],
-[pgac_cv_var_rl_completion_append_character=no])])
-if test x"$pgac_cv_var_rl_completion_append_character" = x"yes"; then
+[AC_MSG_RESULT(yes)
 AC_DEFINE(HAVE_RL_COMPLETION_APPEND_CHARACTER, 1,
-          [Define to 1 if you have the global variable 'rl_completion_append_character'.])
-fi])# PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER
+          [Define to 1 if you have the global variable 'rl_completion_append_character'.])],
+[AC_MSG_RESULT(no)])])# PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER
 
 
 
