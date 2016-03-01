@@ -4,11 +4,7 @@
 #    Makefile for the timezone library
 
 # IDENTIFICATION
-<<<<<<< HEAD
 #    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.31 2009/01/06 02:25:29 momjian Exp $
-=======
-#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.28 2007/08/25 20:29:25 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #
 #-------------------------------------------------------------------------
 
@@ -39,11 +35,7 @@ ifneq (,$(with_system_tzdata))
 override CPPFLAGS += '-DSYSTEMTZDIR="$(with_system_tzdata)"'
 endif
 
-<<<<<<< HEAD
 include $(top_srcdir)/src/backend/common.mk
-=======
-all: SUBSYS.o
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 ifeq (,$(with_system_tzdata))
 all: submake-libpgport zic
@@ -62,11 +54,7 @@ zic: $(ZICOBJS)
 
 install: all installdirs
 ifeq (,$(with_system_tzdata))
-<<<<<<< HEAD
 	$(ZIC) -d '$(DESTDIR)$(datadir)/timezone' -p '$(POSIXRULES)' $(TZDATAFILES)
-=======
-	./zic -d '$(DESTDIR)$(datadir)/timezone' -p '$(POSIXRULES)' $(TZDATAFILES)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 endif
 	$(MAKE) -C tznames $@
 

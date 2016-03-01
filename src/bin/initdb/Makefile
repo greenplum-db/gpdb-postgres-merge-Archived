@@ -2,17 +2,10 @@
 #
 # Makefile for src/bin/initdb
 #
-<<<<<<< HEAD
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # $PostgreSQL: pgsql/src/bin/initdb/Makefile,v 1.57 2009/01/01 17:23:53 momjian Exp $
-=======
-# Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
-# Portions Copyright (c) 1994, Regents of the University of California
-#
-# $PostgreSQL: pgsql/src/bin/initdb/Makefile,v 1.56 2008/01/01 19:45:55 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #
 #-------------------------------------------------------------------------
 
@@ -27,14 +20,11 @@ OBJS=	initdb.o encnames.o pqsignal.o $(WIN32RES)
 
 all: submake-libpgport initdb
 
-<<<<<<< HEAD
 # The frontend doesn't need everything that's in LIBS, some are backend only
 LIBS := $(filter-out -lresolv -lbz2, $(LIBS))
 # This program isn't interactive, so doesn't need these
 LIBS := $(filter-out -lreadline -ledit -ltermcap -lncurses -lcurses -lcurl -lssl -lcrypto -lz, $(LIBS))
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 initdb: $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) $(LIBS) -o $@$(X)
 

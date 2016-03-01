@@ -2,11 +2,7 @@
 #
 # Makefile for the postgres backend
 #
-<<<<<<< HEAD
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
-# Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # $PostgreSQL: pgsql/src/backend/Makefile,v 1.125 2008/01/01 19:45:45 momjian Exp $
@@ -18,7 +14,6 @@ subdir = src/backend
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-<<<<<<< HEAD
 BLD_TOP = $(top_builddir)/gpAux
 ifeq ($(enable_orca),yes)
 include $(BLD_TOP)/releng/releng.mk
@@ -29,15 +24,9 @@ ifdef ADDON_DIR
 include $(BLD_TOP)/$(ADDON_DIR)/src/Makefile
 endif
 
-=======
-DIRS = access bootstrap catalog parser commands executor lib libpq \
-	main nodes optimizer port postmaster regex rewrite \
-	storage tcop tsearch utils $(top_builddir)/src/timezone
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-
 SUBDIRS = access bootstrap catalog parser commands executor \
 	fts lib libpq gp_libpq_fe main nodes optimizer port postmaster regex \
-	replication rewrite storage tcop utils $(top_builddir)/src/timezone cdb \
+	replication rewrite storage tcop tsearch utils $(top_builddir)/src/timezone cdb \
 	$(ADDON_SUBDIR)
 
 ifeq ($(enable_orca),yes)
@@ -261,12 +250,8 @@ ifeq ($(MAKE_DLL), true)
 endif
 endif
 ifeq ($(MAKE_EXPORTS), true)
-<<<<<<< HEAD
 	$(MKDIR_P) '$(DESTDIR)$(pkglibdir)'
-=======
-	$(mkinstalldirs) '$(DESTDIR)$(pkglibdir)'
-	$(mkinstalldirs) '$(DESTDIR)$(pgxsdir)/$(MKLDEXPORT_DIR)'
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	$(MKDIR_P) '$(DESTDIR)$(pgxsdir)/$(MKLDEXPORT_DIR)'
 endif
 
 

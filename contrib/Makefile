@@ -5,7 +5,6 @@ top_builddir = ..
 include $(top_builddir)/src/Makefile.global
 
 WANTED_DIRS = \
-<<<<<<< HEAD
 		xlogdump \
 		pgbench \
 		changetrackingdump \
@@ -15,41 +14,11 @@ WANTED_DIRS = \
 		gp_distribution_policy \
 		gp_internal_tools \
 		gp_cancel_query \
-		indexscan
-
-=======
-		adminpack	\
-		btree_gist	\
-		chkpass		\
-		cube		\
-		dblink		\
-		dict_int	\
-		dict_xsyn	\
-		earthdistance	\
-		fuzzystrmatch	\
-		hstore		\
-		intagg		\
-		intarray	\
-		isn		\
-		lo		\
-		ltree		\
-		oid2name	\
-		pageinspect	\
-		pg_buffercache	\
-		pg_freespacemap \
-		pg_standby	\
-		pg_trgm		\
-		pgbench		\
-		pgcrypto	\
-		pgrowlocks	\
-		pgstattuple	\
-		seg		\
-		spi		\
-		tablefunc	\
-		test_parser	\
-		tsearch2	\
-		vacuumlo
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+		indexscan \
+		dict_int \
+		dict_xsyn \
+		pageinspect \
+		test_parser
 
 ifeq ($(with_openssl),yes)
 WANTED_DIRS += sslinfo

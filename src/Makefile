@@ -61,11 +61,10 @@ clean:
 	$(MAKE) -C tools/fsync $@
 
 distclean maintainer-clean:
-<<<<<<< HEAD
 	$(MAKE) -C port $@
 	$(MAKE) -C timezone $@
 	$(MAKE) -C backend $@
-	#$(MAKE) -C backend/snowball $@
+	$(MAKE) -C backend/snowball $@
 	$(MAKE) -C include $@
 	$(MAKE) -C interfaces $@
 	$(MAKE) -C bin $@
@@ -75,20 +74,6 @@ distclean maintainer-clean:
 	$(MAKE) -C tutorial NO_PGXS=1 $@
 	$(MAKE) -C test/thread $@
 	$(MAKE) -C tools/fsync $@
-=======
-	-$(MAKE) -C port $@
-	-$(MAKE) -C timezone $@
-	-$(MAKE) -C backend $@
-	-$(MAKE) -C backend/snowball $@
-	-$(MAKE) -C include $@
-	-$(MAKE) -C interfaces $@
-	-$(MAKE) -C bin $@
-	-$(MAKE) -C pl $@
-	-$(MAKE) -C makefiles $@
-	-$(MAKE) -C test $@
-	-$(MAKE) -C tutorial NO_PGXS=1 $@
-	-$(MAKE) -C test/thread $@
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	rm -f Makefile.port Makefile.global
 
 

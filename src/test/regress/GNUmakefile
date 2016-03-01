@@ -6,11 +6,7 @@
 # Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-<<<<<<< HEAD
-# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.68 2007/06/12 11:07:32 mha Exp $
-=======
 # $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.71 2008/01/01 19:46:00 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #
 #-------------------------------------------------------------------------
 
@@ -68,11 +64,7 @@ LIBS := $(filter-out -lreadline -ledit -ltermcap -lncurses -lcurses -lcurl -lssl
 all: submake-libpgport pg_regress$(X)
 
 pg_regress$(X): pg_regress.o pg_regress_main.o
-<<<<<<< HEAD
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
-=======
-	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LIBS) -o $@
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 # dependencies ensure that path changes propagate
 pg_regress.o: pg_regress.c $(top_builddir)/src/port/pg_config_paths.h
@@ -113,7 +105,6 @@ all: all-lib
 # don't have a rule to create them.  We do need rules to clean them however.
 ifile_list := $(subst .source,, $(notdir $(wildcard $(top_srcdir)/$(subdir)/input/*.source)))
 input_files  := $(foreach file, $(ifile_list), sql/$(file).sql)
-<<<<<<< HEAD
 bb_ifile_list := $(subst .source,, $(notdir $(wildcard $(top_srcdir)/$(subdir)/bugbuster/input/*.source)))
 bb_input_files := $(foreach file, $(bb_ifile_list), bugbuster/sql/$(file).sql)
 ofile_list := $(subst .source,, $(notdir $(wildcard $(top_srcdir)/$(subdir)/output/*.source)))
@@ -121,10 +112,6 @@ output_files := $(foreach file, $(ofile_list), expected/$(file).out)
 bb_ofile_list := $(subst .source,, $(notdir $(wildcard $(top_srcdir)/$(subdir)/bugbuster/output/*.source)))
 bb_output_files := $(foreach file, $(bb_ofile_list), bugbuster/expected/$(file).out)
 
-=======
-ofile_list := $(subst .source,, $(notdir $(wildcard $(top_srcdir)/$(subdir)/output/*.source)))
-output_files := $(foreach file, $(ofile_list), expected/$(file).out)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 ifneq ($(PORTNAME),win32)
 abs_srcdir := $(shell cd "$(srcdir)" && pwd)
@@ -172,9 +159,6 @@ includecheck:
 ##
 ## Run tests
 ##
-
-<<<<<<< HEAD
-## To load a procedural language use "--load-language=..."
 
 pg_regress_call = ./pg_regress --inputdir=$(srcdir) --multibyte=$(MULTIBYTE) $(MAXCONNOPT) $(NOLOCALE) --init-file=$(srcdir)/init_file
 pg_regress_call_bb = ./pg_regress --inputdir=$(srcdir)/bugbuster --outputdir=$(srcdir)/bugbuster --multibyte=$(MULTIBYTE) $(MAXCONNOPT) $(NOLOCALE) --init-file=$(srcdir)/init_file
@@ -235,16 +219,6 @@ upg2-setup:
 ugpart-setup:
 	@cp -f $(srcdir)/data/upgrade_pg_partitions.sql.in data/upgrade_pg_partitions.sql
 	@gpstringsubs.pl data/upgrade_pg_partitions.sql	
-=======
-check: all
-	./pg_regress --temp-install=./tmp_check --top-builddir=$(top_builddir) --srcdir="$(abs_srcdir)" --temp-port=$(TEMP_PORT) --schedule="$(srcdir)"/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE) $(TEMP_CONF)
-
-installcheck: all
-	./pg_regress --psqldir="$(PSQLDIR)" --schedule="$(srcdir)"/serial_schedule --srcdir="$(abs_srcdir)" --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE)
-
-installcheck-parallel: all
-	./pg_regress --psqldir="$(PSQLDIR)" --schedule="$(srcdir)"/parallel_schedule --srcdir="$(abs_srcdir)" --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 # old interfaces follow...
@@ -254,7 +228,6 @@ runtest: installcheck
 runtest-parallel: installcheck-parallel
 
 bigtest: all
-<<<<<<< HEAD
 	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule --srcdir=$(abs_srcdir) numeric_big 
 
 bigcheck: all
@@ -262,12 +235,6 @@ bigcheck: all
 
 bkuprestore: all
 	$(pg_regress_call)  --psqldir=$(PSQLDIR) --schedule=$(srcdir)/bkuprestore_schedule --srcdir=$(abs_srcdir)
-=======
-	./pg_regress --psqldir="$(PSQLDIR)" --schedule="$(srcdir)"/serial_schedule --srcdir="$(abs_srcdir)" --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE) numeric_big 
-
-bigcheck: all
-	./pg_regress --temp-install=./tmp_check --top-builddir=$(top_builddir) --srcdir="$(abs_srcdir)" --temp-port=$(TEMP_PORT) --schedule="$(srcdir)"/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE) numeric_big
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 installcheck-olaptest: all
 	$(pg_regress_call)  --psqldir=$(PSQLDIR) --schedule=$(srcdir)/olap_schedule --srcdir=$(abs_srcdir)
@@ -281,15 +248,12 @@ clean distclean maintainer-clean: clean-lib
 	rm -f $(NAME)$(DLSUFFIX) $(OBJS)
 	$(MAKE) -C $(contribdir)/spi clean
 	rm -f $(output_files) $(input_files) pg_regress_main.o pg_regress.o pg_regress$(X)
-<<<<<<< HEAD
 	rm -f $(bb_output_files) $(bb_input_files)
 # things created by dynamic configs
 	find sql -type l | xargs rm -f
 	find bugbuster/sql -type l | xargs rm -f
 	find expected -type l | xargs rm -f
 	find bugbuster/expected -type l | xargs rm -f 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 # things created by various check targets
 	rm -rf testtablespace
 	rm -rf results tmp_check log

@@ -2,15 +2,9 @@
 #
 # Makefile for src/bin/pg_config
 #
-<<<<<<< HEAD
 # Copyright (c) 1998-2009, PostgreSQL Global Development Group
 #
 # $PostgreSQL: pgsql/src/bin/pg_config/Makefile,v 1.21 2009/01/01 17:23:54 momjian Exp $
-=======
-# Copyright (c) 1998-2008, PostgreSQL Global Development Group
-#
-# $PostgreSQL: pgsql/src/bin/pg_config/Makefile,v 1.20 2008/01/01 19:45:55 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #
 #-------------------------------------------------------------------------
 

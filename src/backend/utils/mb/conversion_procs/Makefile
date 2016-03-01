@@ -4,11 +4,7 @@
 #    Makefile for utils/mb/conversion_procs
 #
 # IDENTIFICATION
-<<<<<<< HEAD
 #    $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.21 2009/02/10 19:29:39 petere Exp $
-=======
-#    $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.18 2007/03/25 11:56:02 ishii Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #
 #-------------------------------------------------------------------------
 

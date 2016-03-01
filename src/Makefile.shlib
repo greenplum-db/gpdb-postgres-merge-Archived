@@ -6,11 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-<<<<<<< HEAD
 #    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.120 2009/01/05 09:27:19 petere Exp $
-=======
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.109 2007/02/20 22:45:57 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #
 #-------------------------------------------------------------------------
 
@@ -136,16 +132,12 @@ ifeq ($(PORTNAME), darwin)
   ifdef soname
     # linkable library
     DLSUFFIX		= .dylib
-<<<<<<< HEAD
     ifneq ($(SO_MAJOR_VERSION), 0)
       version_link	= -compatibility_version $(SO_MAJOR_VERSION) -current_version $(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
     endif
-    LINK.shared		= $(COMPILER) -dynamiclib -install_name $(libdir)/lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX) $(version_link) $(exported_symbols_list) -multiply_defined suppress
+    LINK.shared		= $(COMPILER) -dynamiclib -install_name "$(libdir)/lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX)" $(version_link) $(exported_symbols_list) -multiply_defined suppress
     shlib		= lib$(NAME).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)$(DLSUFFIX)
     shlib_major		= lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX)
-=======
-    LINK.shared		= $(COMPILER) -dynamiclib -install_name "$(libdir)/lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX)" $(version_link) $(exported_symbols_list) -multiply_defined suppress
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
   else
     # loadable module
     DLSUFFIX		= .so
@@ -268,11 +260,7 @@ endif
 
 ifeq ($(PORTNAME), solaris)
   ifeq ($(GCC), yes)
-<<<<<<< HEAD
     LINK.shared		= $(COMPILER) -shared
-=======
-    LINK.shared		= $(COMPILER) -shared # $(COMPILER) needed for -m64
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
   else
     LINK.shared		= $(COMPILER) -G
   endif

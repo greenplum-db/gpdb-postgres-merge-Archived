@@ -5,11 +5,7 @@
 # Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-<<<<<<< HEAD
 # $PostgreSQL: pgsql/src/bin/scripts/Makefile,v 1.42 2009/03/07 02:09:22 alvherre Exp $
-=======
-# $PostgreSQL: pgsql/src/bin/scripts/Makefile,v 1.39 2008/01/01 19:45:56 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #
 #-------------------------------------------------------------------------
 
