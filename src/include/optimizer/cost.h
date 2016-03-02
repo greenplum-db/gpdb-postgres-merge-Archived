@@ -4,10 +4,7 @@
  *	  prototypes for costsize.c and clausesel.c.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -62,8 +59,6 @@ extern PGDLLIMPORT double cpu_tuple_cost;
 extern PGDLLIMPORT double cpu_index_tuple_cost;
 extern PGDLLIMPORT double cpu_operator_cost;
 extern PGDLLIMPORT int effective_cache_size;
-<<<<<<< HEAD
-=======
 extern Cost disable_cost;
 extern bool enable_seqscan;
 extern bool enable_indexscan;
@@ -74,11 +69,13 @@ extern bool enable_hashagg;
 extern bool enable_nestloop;
 extern bool enable_mergejoin;
 extern bool enable_hashjoin;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern bool constraint_exclusion;
-/* CDB: The enable_xxx globals have been moved to paths.h */
 
 extern Cost disable_cost;
+
+extern bool gp_enable_hashjoin_size_heuristic;          /*CDB*/
+extern bool gp_enable_fallback_plan;
+extern bool gp_enable_predicate_propagation;
 
 extern double index_pages_fetched(double tuples_fetched, BlockNumber pages,
 					double index_pages, PlannerInfo *root);

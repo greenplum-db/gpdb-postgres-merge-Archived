@@ -4,10 +4,7 @@
  *	  prototypes for various files in optimizer/path
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -24,19 +21,6 @@
 /*
  * allpaths.c
  */
-extern bool enable_seqscan;
-extern bool enable_indexscan;
-extern bool enable_bitmapscan;
-extern bool enable_tidscan;
-extern bool enable_sort;
-extern bool enable_hashagg;
-extern bool enable_groupagg;
-extern bool enable_nestloop;
-extern bool enable_mergejoin;
-extern bool enable_hashjoin;
-extern bool gp_enable_hashjoin_size_heuristic;          /*CDB*/
-extern bool gp_enable_fallback_plan;
-extern bool gp_enable_predicate_propagation;
 
 /* Hook for plugins to replace standard_join_search() */
 typedef RelOptInfo *(*join_search_hook_type) (PlannerInfo *root,
