@@ -7,12 +7,8 @@
  *	  and join trees.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.137 2008/01/01 19:45:58 momjian Exp $
@@ -86,21 +82,6 @@ typedef struct RangeVar
 	int			location;		/* token location, or -1 if unknown */
 } RangeVar;
 
-/*
- * IntoClause - target information for SELECT INTO and CREATE TABLE AS
- */
-typedef struct IntoClause
-{
-	NodeTag		type;
-
-	RangeVar   *rel;			/* target relation name */
-	List	   *colNames;		/* column names to assign, or NIL */
-	List	   *options;		/* options from WITH clause */
-	OnCommitAction onCommit;	/* what do we do at COMMIT? */
-	char	   *tableSpaceName; /* table space to use, or NULL */
-} IntoClause;
-
-
 typedef struct TableOidInfo
 {
 	Oid         relOid;			/* If the heap is (re-)created, create  with this relOid */
@@ -131,7 +112,7 @@ typedef struct IntoClause
 	List	   *options;		/* options from WITH clause */
 	OnCommitAction onCommit;	/* what do we do at COMMIT? */
 	char	   *tableSpaceName; /* table space to use, or NULL */
-	
+
 	/* MPP */
 	TableOidInfo oidInfo;
 } IntoClause;
@@ -660,26 +641,19 @@ typedef struct SubPlan
 	/* The combining operators, transformed to an executable expression: */
 	Node	   *testexpr;		/* OpExpr or RowCompareExpr expression tree */
 	List	   *paramIds;		/* IDs of Params embedded in the above */
-<<<<<<< HEAD
- 	
+
     int         qDispSliceId;   /* CDB: slice# of initplan's root slice, or 0 */
- 	
-	/* The subselect, transformed to a Plan: */
 
 	/* Identification of the Plan tree to use: */
 	int			plan_id;		/* Index (from 1) in PlannedStmt.subplans */
+
 	/* Identification of the SubPlan for EXPLAIN and debugging purposes: */
 	char	   *plan_name;		/* A name assigned during planning */
 
 	/* Extra data useful for determining subplan's output type: */
 	Oid			firstColType;	/* Type of first column of subplan result */
 	int32		firstColTypmod;	/* Typmod of first column of subplan result */
-=======
-	/* Identification of the Plan tree to use: */
-	int			plan_id;		/* Index (from 1) in PlannedStmt.subplans */
-	/* Extra data useful for determining subplan's output type: */
-	Oid			firstColType;	/* Type of first column of subplan result */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+
 	/* Information about execution strategy: */
 	bool		useHashTable;	/* TRUE to store subselect output in a hash
 								 * table (implies we are doing "IN") */
@@ -1163,7 +1137,6 @@ typedef struct SetToDefault
  * correctly during planning.  We can assume however that its "levelsup" is
  * always zero, due to the syntactic constraints on where it can appear.
  *
-<<<<<<< HEAD
  * CURRENT OF is a bit like a stable function, in that it must be evaluated
  * once during constant folding to give the QEs a consistent view of the query.
  * To accomplish this, during constant folding, we evaluate the CURRENT OF
@@ -1173,29 +1146,17 @@ typedef struct SetToDefault
  */
 typedef struct CurrentOfExpr
 {
-	Expr    		xpr;
-	char     		*cursor_name;  	/* name of referenced cursor */
-	/* for planning */
-	Index    		cvarno;      	/* RT index of target relation */
-	/* for validation */
-	Oid				target_relid;	/* OID of original target relation, 
-									 * before any inheritance expansion */
-	/* for constant folding */
-	int		 		gp_segment_id;
-	ItemPointerData	ctid;
-	Oid				tableoid;
-=======
- * The referenced cursor can be represented either as a hardwired string
- * or as a reference to a run-time parameter of type REFCURSOR.  The latter
- * case is for the convenience of plpgsql.
- */
-typedef struct CurrentOfExpr
-{
 	Expr		xpr;
-	Index		cvarno;			/* RT index of target relation */
 	char	   *cursor_name;	/* name of referenced cursor, or NULL */
-	int			cursor_param;	/* refcursor parameter number, or 0 */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	/* for planning */
+	Index		cvarno;			/* RT index of target relation */
+	/* for validation */
+	Oid			target_relid;	/* OID of original target relation, 
+								 * before any inheritance expansion */
+	/* for constant folding */
+	int		 	gp_segment_id;
+	ItemPointerData	ctid;
+	Oid			tableoid;
 } CurrentOfExpr;
 
 /*--------------------
