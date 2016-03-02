@@ -5,12 +5,8 @@
  *	  along with the relation's initial contents.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.134 2008/01/01 19:45:56 momjian Exp $
@@ -339,7 +335,6 @@ DATA(insert ( 1247 gp_segment_id   23 0  4  -8 0 -1 -1 t p i t f f t 0));
 { 1255, {"pronamespace"},		26, -1, 4,	2, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1255, {"proowner"},			26, -1, 4,	3, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1255, {"prolang"},			26, -1, 4,	4, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
-<<<<<<< HEAD
 { 1255, {"procost"},		   700, -1, 4,	5, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1255, {"prorows"},		   700, -1, 4,	6, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1255, {"provariadic"},        26, -1, 4,  7, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
@@ -359,33 +354,14 @@ DATA(insert ( 1247 gp_segment_id   23 0  4  -8 0 -1 -1 t p i t f f t 0));
 { 1255, {"proargdefaults"},		25, -1, -1, 21, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
 { 1255, {"prosrc"},				25, -1, -1, 22, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
 { 1255, {"probin"},				17, -1, -1, 23, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
-{ 1255, {"proacl"},			  1034, -1, -1, 24, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
-{ 1255, {"prodataaccess"},		18, -1, 1, 25, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }
-=======
-{ 1255, {"procost"},		   700, -1, 4,	5, 0, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
-{ 1255, {"prorows"},		   700, -1, 4,	6, 0, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
-{ 1255, {"proisagg"},			16, -1, 1,	7, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
-{ 1255, {"prosecdef"},			16, -1, 1,	8, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
-{ 1255, {"proisstrict"},		16, -1, 1,	9, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
-{ 1255, {"proretset"},			16, -1, 1, 10, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
-{ 1255, {"provolatile"},		18, -1, 1, 11, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
-{ 1255, {"pronargs"},			21, -1, 2, 12, 0, -1, -1, true, 'p', 's', true, false, false, true, 0 }, \
-{ 1255, {"prorettype"},			26, -1, 4, 13, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
-{ 1255, {"proargtypes"},		30, -1, -1, 14, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
-{ 1255, {"proallargtypes"},   1028, -1, -1, 15, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
-{ 1255, {"proargmodes"},	  1002, -1, -1, 16, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
-{ 1255, {"proargnames"},	  1009, -1, -1, 17, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
-{ 1255, {"prosrc"},				25, -1, -1, 18, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
-{ 1255, {"probin"},				17, -1, -1, 19, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
-{ 1255, {"proconfig"},		  1009, -1, -1, 20, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
-{ 1255, {"proacl"},			  1034, -1, -1, 21, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+{ 1255, {"proconfig"},		  1009, -1, -1, 24, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
+{ 1255, {"proacl"},			  1034, -1, -1, 25, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
+{ 1255, {"prodataaccess"},		18, -1, 1, 26, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }
 
 DATA(insert ( 1255 proname			19 -1 NAMEDATALEN	1 0 -1 -1 f p i t f f t 0));
 DATA(insert ( 1255 pronamespace		26 -1 4   2 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1255 proowner			26 -1 4   3 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1255 prolang			26 -1 4   4 0 -1 -1 t p i t f f t 0));
-<<<<<<< HEAD
 DATA(insert ( 1255 procost		   700 -1 4   5 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1255 prorows		   700 -1 4   6 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1255 provariadic      26 -1 4   7 0 -1 -1 t p i t f f t 0));
@@ -405,27 +381,9 @@ DATA(insert ( 1255 proargnames	  1009 -1 -1 20 1 -1 -1 f x i f f f t 0));
 DATA(insert ( 1255 proargdefaults	25 -1 -1 21 0 -1 -1 f x i f f f t 0));
 DATA(insert ( 1255 prosrc			25 -1 -1 22 0 -1 -1 f x i f f f t 0));
 DATA(insert ( 1255 probin			17 -1 -1 23 0 -1 -1 f x i f f f t 0));
-DATA(insert ( 1255 proacl		  1034 -1 -1 24 1 -1 -1 f x i f f f t 0));
-DATA(insert ( 1255 prodataaccess	18 -1 1  25 0 -1 -1 t p c t f f t 0));
-=======
-DATA(insert ( 1255 procost		   700 -1 4   5 0 -1 -1 f p i t f f t 0));
-DATA(insert ( 1255 prorows		   700 -1 4   6 0 -1 -1 f p i t f f t 0));
-DATA(insert ( 1255 proisagg			16 -1 1   7 0 -1 -1 t p c t f f t 0));
-DATA(insert ( 1255 prosecdef		16 -1 1   8 0 -1 -1 t p c t f f t 0));
-DATA(insert ( 1255 proisstrict		16 -1 1   9 0 -1 -1 t p c t f f t 0));
-DATA(insert ( 1255 proretset		16 -1 1  10 0 -1 -1 t p c t f f t 0));
-DATA(insert ( 1255 provolatile		18 -1 1  11 0 -1 -1 t p c t f f t 0));
-DATA(insert ( 1255 pronargs			21 -1 2  12 0 -1 -1 t p s t f f t 0));
-DATA(insert ( 1255 prorettype		26 -1 4  13 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1255 proargtypes		30 -1 -1 14 1 -1 -1 f p i t f f t 0));
-DATA(insert ( 1255 proallargtypes 1028 -1 -1 15 1 -1 -1 f x i f f f t 0));
-DATA(insert ( 1255 proargmodes	  1002 -1 -1 16 1 -1 -1 f x i f f f t 0));
-DATA(insert ( 1255 proargnames	  1009 -1 -1 17 1 -1 -1 f x i f f f t 0));
-DATA(insert ( 1255 prosrc			25 -1 -1 18 0 -1 -1 f x i f f f t 0));
-DATA(insert ( 1255 probin			17 -1 -1 19 0 -1 -1 f x i f f f t 0));
-DATA(insert ( 1255 proconfig	  1009 -1 -1 20 1 -1 -1 f x i f f f t 0));
-DATA(insert ( 1255 proacl		  1034 -1 -1 21 1 -1 -1 f x i f f f t 0));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+DATA(insert ( 1255 proconfig	  1009 -1 -1 24 1 -1 -1 f x i f f f t 0));
+DATA(insert ( 1255 proacl		  1034 -1 -1 25 1 -1 -1 f x i f f f t 0));
+DATA(insert ( 1255 prodataaccess	18 -1 1  26 0 -1 -1 t p c t f f t 0));
 DATA(insert ( 1255 ctid				27 0  6  -1 0 -1 -1 f p s t f f t 0));
 DATA(insert ( 1255 oid				26 0  4  -2 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1255 xmin				28 0  4  -3 0 -1 -1 t p i t f f t 0));
