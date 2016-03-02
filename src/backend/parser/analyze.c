@@ -6846,17 +6846,6 @@ transformConstraintAttrs(List *constraintList)
 	}
 }
 
-/* Build a FromExpr node */
-static FromExpr *
-makeFromExpr(List *fromlist, Node *quals)
-{
-	FromExpr   *f = makeNode(FromExpr);
-
-	f->fromlist = fromlist;
-	f->quals = quals;
-	return f;
-}
-
 /*
  * Special handling of type definition for a column
  */
