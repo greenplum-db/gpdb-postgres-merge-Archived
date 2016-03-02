@@ -5,10 +5,7 @@
  *	  definitions for query plan nodes
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -68,16 +65,12 @@ typedef struct PlannedStmt
 
 	CmdType		commandType;	/* select|insert|update|delete */
 
-<<<<<<< HEAD
 	PlanGenerator	planGen;		/* optimizer generation */
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	bool		canSetTag;		/* do I set the command result tag? */
 
 	bool		transientPlan;	/* redo plan when TransactionXmin changes? */
 
-<<<<<<< HEAD
 	/* Field qdContext communicates memory context on the QD  from portal to
 	 * dispatch.
 	 *
@@ -88,8 +81,6 @@ typedef struct PlannedStmt
 	 */
 	MemoryContext qdContext;
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	struct Plan *planTree;		/* tree of Plan nodes */
 
 	List	   *rtable;			/* list of RangeTblEntry nodes */
@@ -117,7 +108,6 @@ typedef struct PlannedStmt
 	 */
 	List	   *returningLists; /* list of lists of TargetEntry, or NIL */
 
-<<<<<<< HEAD
 	/*
 	 * If the resultRelation turns out to be the parent of an inheritance
 	 * tree, the planner will add all the child tables to the rtable and store
@@ -141,14 +131,13 @@ typedef struct PlannedStmt
 	 */
 	List	   *numSelectorsPerScanId;
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	List	   *rowMarks;		/* a list of RowMarkClause's */
 
 	List	   *relationOids;	/* OIDs of relations the plan depends on */
 
-<<<<<<< HEAD
 	List	   *invalItems;		/* other dependencies, as PlanInvalItems */
+
+	int			nParamExec;		/* number of PARAM_EXEC Params used */
 
 	int			nCrossLevelParams;		/* number of PARAM_EXEC Params used */
 
@@ -186,7 +175,6 @@ typedef struct PlannedStmt
 	List	   *transientTypeRecords;
 } PlannedStmt;
 
-
 /*
  * Fetch the Plan associated with a SubPlan node in a completed PlannedStmt.
  */
@@ -203,14 +191,6 @@ static inline void exec_subplan_put_plan(struct PlannedStmt *plannedstmt, SubPla
 	ListCell *cell = list_nth_cell(plannedstmt->subplans, subplan->plan_id-1);
 	cell->data.ptr_value = plan;
 }
-=======
-	int			nParamExec;		/* number of PARAM_EXEC Params used */
-} PlannedStmt;
-
-/* macro for fetching the Plan associated with a SubPlan node */
-#define exec_subplan_get_plan(plannedstmt, subplan) \
-	((Plan *) list_nth((plannedstmt)->subplans, (subplan)->plan_id - 1))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 /* ----------------
@@ -269,9 +249,6 @@ typedef struct Plan
 	 */
 	Bitmapset  *extParam;
 	Bitmapset  *allParam;
-<<<<<<< HEAD
-
-	int			nParamExec;		/* Also in PlannedStmt */
 
 	/*
 	 * MPP needs to keep track of the characteristics of flow of output
@@ -328,8 +305,6 @@ typedef struct Plan
 
 	/* MemoryAccount to use for recording the memory usage of different plan nodes. */
 	MemoryAccount* memoryAccount;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } Plan;
 
 /* ----------------
