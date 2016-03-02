@@ -4,12 +4,8 @@
  *	  Definitions for planner's internal data structures.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.154.2.4 2009/04/16 20:42:28 tgl Exp $
@@ -104,7 +100,6 @@ typedef struct PlannerGlobal
 
 	List	   *relationOids;	/* OIDs of relations the plan depends on */
 
-<<<<<<< HEAD
 	List	   *invalItems;		/* other dependencies, as PlanInvalItems */
 
 	bool		transientPlan;	/* redo plan when TransactionXmin changes? */
@@ -136,14 +131,6 @@ typedef struct CtePlanInfo
 	 */
 	List *pathkeys;
 } CtePlanInfo;
-=======
-	bool		transientPlan;	/* redo plan when TransactionXmin changes? */
-} PlannerGlobal;
-
-/* macro for fetching the Plan associated with a SubPlan node */
-#define planner_subplan_get_plan(root, subplan) \
-	((Plan *) list_nth((root)->glob->subplans, (subplan)->plan_id - 1))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 /*----------
@@ -198,32 +185,9 @@ typedef struct PlannerInfo
 	List	   *join_rel_list;	/* list of join-relation RelOptInfos */
 	struct HTAB *join_rel_hash; /* optional hashtable for join relations */
 
-<<<<<<< HEAD
-	/* Note:  Prior to 3.4, these fields were in the Query node.  Now they
-	 *        are managed here for later installation in PlannedStmt.
-	 */
-	List	   *resultRelations;	/* integer list of RT indexes, or NIL */
-	PartitionNode *result_partitions;
-	List	   *returningLists; /* list of lists of TargetEntry, or NIL */
-	List	   *result_aosegnos;
-
-	List	   *init_plans;				/* init subplans for query */
-
-	List       *list_cteplaninfo; /* list of CtePlannerInfo, one for each CTE */
-
-    /* Jointree result is a subset of the cross product of these relids... */
-    Relids      currlevel_relids;   /* CDB: all relids of current query level,
-                                     * omitting any pulled-up subquery relids */
-
-	/*
-	 * Outer join info
-	 */
-	List	   *eq_classes;				/* list of active EquivalenceClasses */
-=======
 	List	   *resultRelations;	/* integer list of RT indexes, or NIL */
 
 	List	   *returningLists; /* list of lists of TargetEntry, or NIL */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	List	   *init_plans;		/* init subplans for query */
 
@@ -231,6 +195,18 @@ typedef struct PlannerInfo
 
 	List	   *canon_pathkeys; /* list of "canonical" PathKeys */
 
+	PartitionNode *result_partitions;
+	List	   *result_aosegnos;
+
+	List       *list_cteplaninfo; /* list of CtePlannerInfo, one for each CTE */
+
+    /* Jointree result is a subset of the cross product of these relids... */
+	Relids		currlevel_relids;	/* CDB: all relids of current query level,
+									 * omitting any pulled-up subquery relids */
+
+	/*
+	 * Outer join info
+	 */
 	List	   *left_join_clauses;		/* list of RestrictInfos for
 										 * mergejoinable outer join clauses
 										 * w/nonnullable var on left */
@@ -268,9 +244,6 @@ typedef struct PlannerInfo
 	bool		hasPseudoConstantQuals; /* true if any RestrictInfo has
 										 * pseudoconstant = true */
 
-	/* At the end to avoid breaking existing 8.2 add-ons */
-	List	   *initial_rels;	/* RelOptInfos we are now trying to join */
-
 	PlannerConfig *config;		/* Planner configuration */
 
 } PlannerInfo;
@@ -286,7 +259,6 @@ typedef struct PlannerInfo
 	 rt_fetch(rti, (root)->parse->rtable))
 
 
-<<<<<<< HEAD
 /*
  * Fetch the Plan associated with a SubPlan node during planning.
  */
@@ -312,9 +284,6 @@ static inline void planner_subplan_put_plan(struct PlannerInfo *root, SubPlan *s
 	cell->data.ptr_value = plan;
 }
 
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*----------
  * RelOptInfo
  *		Per-relation information for planning/optimization
@@ -474,7 +443,6 @@ typedef struct RelOptInfo
     bool        cdb_default_stats_used; /* true if ANALYZE needed */
 	struct Plan *subplan;		/* if subquery */
 	List	   *subrtable;		/* if subquery */
-<<<<<<< HEAD
 
 	/* used by external scan */
 	List		*locationlist;
@@ -487,8 +455,6 @@ typedef struct RelOptInfo
 	int32		ext_encoding;
 	bool		isrescannable; /* false for ext web tables */
 	bool		writable;	   /* true for writable, false for readable ext tables*/
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* used by various scans and joins: */
 	List	   *baserestrictinfo;		/* RestrictInfo structures (if base
@@ -566,15 +532,12 @@ typedef struct IndexOptInfo
 	bool		predOK;			/* true if predicate matches query */
 	bool		unique;			/* true if a unique index */
 	bool		amoptionalkey;	/* can query omit key for the first column? */
-<<<<<<< HEAD
+	bool		amsearchnulls;	/* can AM search for NULL index entries? */
     bool        cdb_default_stats_used; /* true if ANALYZE needed */
     int         num_leading_eq; /* CDB: always 0, except amcostestimate proc may
                                  * set it briefly; it is transferred forthwith
                                  * to the IndexPath (q.v.), then reset. Kludge.
                                  */
-=======
-	bool		amsearchnulls;	/* can AM search for NULL index entries? */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } IndexOptInfo;
 
 
@@ -1304,11 +1267,7 @@ typedef struct RestrictInfo
 
 	bool		is_pushed_down; /* TRUE if clause was pushed down in level */
 
-<<<<<<< HEAD
-	bool		outerjoin_delayed;	/* TRUE if delayed by outer join */
-=======
 	bool		outerjoin_delayed;	/* TRUE if delayed by lower outer join */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	bool		can_join;		/* see comment above */
 
@@ -1411,13 +1370,8 @@ typedef struct InnerIndexscanInfo
 	Relids		other_relids;	/* a set of relevant other relids */
 	bool		isouterjoin;	/* true if join is outer */
 	/* Best paths for this lookup key (NULL if no available indexscans): */
-<<<<<<< HEAD
-	Path	   *cheapest_startup_innerpath;	/* cheapest startup cost */
-	Path	   *cheapest_total_innerpath;	/* cheapest total cost */
-=======
 	Path	   *cheapest_startup_innerpath;		/* cheapest startup cost */
 	Path	   *cheapest_total_innerpath;		/* cheapest total cost */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } InnerIndexscanInfo;
 
 /*
@@ -1448,11 +1402,7 @@ typedef struct InnerIndexscanInfo
  * to be evaluated after this join is formed (because it references the RHS).
  * Any outer joins that have such a clause and this join in their RHS cannot
  * commute with this join, because that would leave noplace to check the
-<<<<<<< HEAD
- * pushed-down clause.  (We don't track this for FULL JOINs, either.)
-=======
  * pushed-down clause.	(We don't track this for FULL JOINs, either.)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * Note: OuterJoinInfo directly represents only LEFT JOIN and FULL JOIN;
  * RIGHT JOIN is handled by switching the inputs to make it a LEFT JOIN.
@@ -1467,15 +1417,9 @@ typedef struct OuterJoinInfo
 	Relids		min_righthand;	/* base relids in minimum RHS for join */
 	Relids		syn_lefthand;	/* base relids syntactically within LHS */
 	Relids		syn_righthand;	/* base relids syntactically within RHS */
-<<<<<<< HEAD
 	JoinType	join_type;		/* LEFT, FULL, or ANTI */
 	bool		lhs_strict;		/* joinclause is strict for some LHS rel */
-	bool		delay_upper_joins;	/* can't commute with upper RHS */
-=======
-	bool		is_full_join;	/* it's a FULL OUTER JOIN */
-	bool		lhs_strict;		/* joinclause is strict for some LHS rel */
 	bool		delay_upper_joins;		/* can't commute with upper RHS */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } OuterJoinInfo;
 
 /*
@@ -1497,20 +1441,14 @@ typedef struct InClauseInfo
 	NodeTag		type;
 	Relids		lefthand;		/* base relids in lefthand expressions */
 	Relids		righthand;		/* base relids coming from the subselect */
-<<<<<<< HEAD
-	List	   *sub_targetlist; /* targetlist of original RHS subquery */
-	List	   *in_operators;	/* OIDs of the IN's equality operator(s) */
+	List	   *sub_targetlist; /* RHS expressions of the IN's comparisons */
+	List	   *in_operators;	/* OIDs of the IN's equality operators */
 
     bool        try_join_unique;
                                 /* CDB: true => comparison is equality op and
                                  *  subquery is not correlated.  Ok to consider
                                  *  JOIN_UNIQUE method of duplicate suppression.
                                  */
-
-=======
-	List	   *sub_targetlist; /* RHS expressions of the IN's comparisons */
-	List	   *in_operators;	/* OIDs of the IN's equality operators */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } InClauseInfo;
 
 /*

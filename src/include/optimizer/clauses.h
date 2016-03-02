@@ -98,13 +98,10 @@ extern Node *strip_implicit_coercions(Node *node);
 extern void set_coercionform_dontcare(Node *node);
 
 extern Node *eval_const_expressions(PlannerInfo *root, Node *node);
-<<<<<<< HEAD
 
 extern Query *fold_constants(Query *q, ParamListInfo boundParams, Size max_size);
 
 extern Node *fold_arrayexpr_constants(ArrayExpr *arrayexpr);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 extern Node *estimate_expression_value(PlannerInfo *root, Node *node);
 
