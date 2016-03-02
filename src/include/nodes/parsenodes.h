@@ -9,13 +9,8 @@
  * the node.  Access to the original source text is needed to make use of
  * the location.
  *
-<<<<<<< HEAD
- *
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.359 2008/02/07 17:09:51 tgl Exp $
@@ -102,14 +97,7 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
  *	  but the original DeclareCursorStmt is stored in utilityStmt.
  *
  *	  Planning converts a Query tree into a Plan tree headed by a PlannedStmt
-<<<<<<< HEAD
- *	  node.  Eventually, the Query tree will not used by the executor.
- *    Currently, however, the Query structure is carried by the PlannedStmt.
- *
- *    TODO Update the preceding comment, when PlannedStmt support is complete.
-=======
  *	  node --- the Query structure is not used by the executor.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 typedef struct Query
 {
@@ -178,26 +166,12 @@ typedef struct Query
 
 	Node	   *setOperations;	/* set-operation tree if this is top level of
 								 * a UNION/INTERSECT/EXCEPT query */
-<<<<<<< HEAD
-
-	/*
-	 * TODO Eventually we should remove these 4 members because they're not
-	 * used here. Instead they're in PlannedStmt.  However, we need to read
-	 * old formats, e.g. for catalog upgrade. So for now, it's easier to leave
-	 * them here.
-	 */
-	List	   *resultRelations;	/* Unused. Now in PlannedStmt. */
-	PartitionNode *result_partitions;	/* Unused. Now in PlannedStmt. */
-	List	   *result_aosegnos;	/* Unused. Now in PlannedStmt. */
-	List	   *returningLists; /* Unused. Now in PlannedStmt. */
 
 	/*
 	 * MPP: Used only on QD. Don't serialize. Holds the result distribution
 	 * policy for SELECT ... INTO and set operations.
 	 */
 	struct GpPolicy *intoPolicy;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } Query;
 
 /****************************************************************************
@@ -2126,10 +2100,7 @@ typedef struct DeclareCursorStmt
 	char	   *portalname;		/* name of the portal (cursor) */
 	int			options;		/* bitmask of options (see above) */
 	Node	   *query;			/* the raw SELECT query */
-<<<<<<< HEAD
 	bool		is_simply_updatable;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } DeclareCursorStmt;
 
 /* ----------------------
@@ -2182,12 +2153,7 @@ typedef struct IndexStmt
 	List	   *indexParams;	/* a list of IndexElem */
 	List	   *options;		/* options from WITH clause */
 	Node	   *whereClause;	/* qualification (partial-index predicate) */
-<<<<<<< HEAD
-	List	   *rangetable;		/* range table for qual and/or expressions,
-								 * filled in by transformStmt() */
 	bool		is_part_child;	/* in service of a part of a partition? */
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	bool		unique;			/* is index unique? */
 	bool		primary;		/* is index on primary key? */
 	bool		isconstraint;	/* is it from a CONSTRAINT clause? */
@@ -2534,12 +2500,8 @@ typedef struct VacuumStmt
 	bool		full;			/* do FULL (non-concurrent) vacuum */
 	bool		analyze;		/* do ANALYZE step */
 	bool		verbose;		/* print progress info */
-<<<<<<< HEAD
 	bool		rootonly;		/* only ANALYZE root partition tables */
-	int			freeze_min_age;	/* min freeze age, or -1 to use default */
-=======
 	int			freeze_min_age; /* min freeze age, or -1 to use default */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	RangeVar   *relation;		/* single table to process, or NULL */
 	List	   *va_cols;		/* list of column names, or NIL for all */
 
@@ -2724,12 +2686,7 @@ typedef struct PrepareStmt
 	NodeTag		type;
 	char	   *name;			/* Name of plan, arbitrary */
 	List	   *argtypes;		/* Types of parameters (List of TypeName) */
-<<<<<<< HEAD
-	List	   *argtype_oids;	/* Types of parameters (OIDs) */
-	Query	   *query;			/* The query itself */
-=======
 	Node	   *query;			/* The query itself (as a raw parsetree) */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } PrepareStmt;
 
 
@@ -2742,15 +2699,7 @@ typedef struct ExecuteStmt
 {
 	NodeTag		type;
 	char	   *name;			/* The name of the plan to execute */
-<<<<<<< HEAD
-	IntoClause *into;			/* CTAS target or NULL */
-//	RangeVar   *into;			/* Optional table to store results in */
-//	List	   *intoOptions;	/* Options from WITH clause */
-//	OnCommitAction into_on_commit;		/* What do we do at COMMIT? */
-//	char	   *into_tbl_space; /* Tablespace to use, or NULL */
-=======
 	IntoClause *into;			/* Optional table to store results in */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	List	   *params;			/* Values to assign to parameters */
 } ExecuteStmt;
 
