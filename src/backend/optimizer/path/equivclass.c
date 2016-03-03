@@ -467,26 +467,16 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 
 	/*
 	 * add_eq_member doesn't check for volatile functions, set-returning
-<<<<<<< HEAD
-	 * functions, or aggregates, but such could appear in sort expressions;
-	 * so we have to check whether its const-marking was correct.
-=======
 	 * functions, or aggregates, but such could appear in sort expressions; so
 	 * we have to check whether its const-marking was correct.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	if (newec->ec_has_const)
 	{
 		if (newec->ec_has_volatile ||
 			expression_returns_set((Node *) expr) ||
-<<<<<<< HEAD
 			contain_agg_clause((Node *) expr) ||
 			contain_window_functions((Node *) expr))
-	{
-=======
-			contain_agg_clause((Node *) expr))
 		{
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			newec->ec_has_const = false;
 			newem->em_is_const = false;
 		}

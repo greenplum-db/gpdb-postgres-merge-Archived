@@ -7,10 +7,7 @@
  *	  of the API of the memory management subsystem.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -192,18 +189,11 @@ extern PGDLLIMPORT MemoryContext CacheMemoryContext;
 extern PGDLLIMPORT MemoryContext MessageContext;
 extern PGDLLIMPORT MemoryContext TopTransactionContext;
 extern PGDLLIMPORT MemoryContext CurTransactionContext;
-<<<<<<< HEAD
 extern PGDLLIMPORT MemoryContext MemoryAccountMemoryContext;
-
-/* These two are transient links to contexts owned by other objects: */
-extern PGDLLIMPORT MemoryContext QueryContext;
-extern PGDLLIMPORT MemoryContext PortalContext;
-=======
 
 /* This is a transient link to the active portal's memory context: */
 extern PGDLLIMPORT MemoryContext PortalContext;
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * Memory-context-type-independent functions in mcxt.c

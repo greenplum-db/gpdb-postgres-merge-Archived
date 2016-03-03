@@ -4,12 +4,8 @@
  *	  support for the POSTGRES executor module
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.146 2008/01/01 19:45:57 momjian Exp $
@@ -21,11 +17,8 @@
 
 #include "executor/execdesc.h"
 #include "nodes/parsenodes.h"
-<<<<<<< HEAD
 #include "nodes/execnodes.h"
 #include "utils/tuplestore.h"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #include "cdb/cdbdef.h"                 /* CdbVisitOpt */
 
@@ -226,27 +219,20 @@ extern TupleTableSlot *ExecutorRun(QueryDesc *queryDesc,
 			ScanDirection direction, long count);
 extern void ExecutorEnd(QueryDesc *queryDesc);
 extern void ExecutorRewind(QueryDesc *queryDesc);
-<<<<<<< HEAD
-extern void ExecCheckRTPerms(List *rangeTable);
+/* GPDB_83MERGE_FIXME: Is this still needed? ExecCheckRTPerms got removed in the merge */
 extern void ExecCheckRTEPerms(RangeTblEntry *rte);
 extern void ExecEndPlan(PlanState *planstate, EState *estate);
-=======
 extern ResultRelInfo *ExecGetTriggerResultRel(EState *estate, Oid relid);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern bool ExecContextForcesOids(PlanState *planstate, bool *hasoids);
 extern void ExecConstraints(ResultRelInfo *resultRelInfo,
 				TupleTableSlot *slot, EState *estate);
 extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti,
-<<<<<<< HEAD
-			 ItemPointer tid, TransactionId priorXmax, CommandId curCid);
+			 ItemPointer tid, TransactionId priorXmax);
+extern PlanState *ExecGetActivePlanTree(QueryDesc *queryDesc);
 extern HeapTuple GetUpdatedTuple_Int(Relation relation,
 									 ItemPointer tid, 
 									 TransactionId priorXmax, 
 									 CommandId curCid);
-=======
-			 ItemPointer tid, TransactionId priorXmax);
-extern PlanState *ExecGetActivePlanTree(QueryDesc *queryDesc);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern DestReceiver *CreateIntoRelDestReceiver(void);
 
 extern AttrMap *makeAttrMap(int base_count, AttrNumber *base_map);

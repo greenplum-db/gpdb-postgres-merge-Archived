@@ -4,10 +4,7 @@
  *	  Routines to determine which indexes are usable for scanning a
  *	  given relation, and create Paths accordingly.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -75,11 +72,7 @@ static Cost bitmap_scan_cost_est(PlannerInfo *root, RelOptInfo *rel,
 static Cost bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel,
 					List *paths, RelOptInfo *outer_rel);
 static PathClauseUsage *classify_index_clause_usage(Path *path,
-<<<<<<< HEAD
-													List **clauselist);
-=======
 							List **clauselist);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static void find_indexpath_quals(Path *bitmapqual, List **quals, List **preds);
 static int	find_list_position(Node *node, List **nodelist);
 static bool match_clause_to_indexcol(IndexOptInfo *index,
@@ -678,12 +671,8 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 	List	   *clauselist;
 	List	   *bestpaths = NIL;
 	Cost		bestcost = 0;
-<<<<<<< HEAD
-	int			i, j;
-=======
 	int			i,
 				j;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ListCell   *l;
 
 	Assert(npaths > 0);			/* else caller error */
@@ -694,35 +683,6 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 	 * In theory we should consider every nonempty subset of the given paths.
 	 * In practice that seems like overkill, given the crude nature of the
 	 * estimates, not to mention the possible effects of higher-level AND and
-<<<<<<< HEAD
-	 * OR clauses.  Moreover, it's completely impractical if there are a large
-	 * number of paths, since the work would grow as O(2^N).
-	 *
-	 * As a heuristic, we first check for paths using exactly the same
-	 * sets of WHERE clauses + index predicate conditions, and reject all
-	 * but the cheapest-to-scan in any such group.  This primarily gets rid
-	 * of indexes that include the interesting columns but also irrelevant
-	 * columns.  (In situations where the DBA has gone overboard on creating
-	 * variant indexes, this can make for a very large reduction in the number
-	 * of paths considered further.)
-	 *
-	 * We then sort the surviving paths with the cheapest-to-scan first,
-	 * and for each path, consider using that path alone as the basis for
-	 * a bitmap scan.  Then we consider bitmap AND scans formed from that
-	 * path plus each subsequent (higher-cost) path, adding on a subsequent
-	 * path if it results in a reduction in the estimated total scan cost.
-	 * This means we consider about O(N^2) rather than O(2^N) path
-	 * combinations, which is quite tolerable, especially given than N is
-	 * usually reasonably small because of the prefiltering step.  The
-	 * cheapest of these is returned.
-	 *
-	 * We will only consider AND combinations in which no two indexes use
-	 * the same WHERE clause.  This is a bit of a kluge: it's needed because
-	 * costsize.c and clausesel.c aren't very smart about redundant clauses.
-	 * They will usually double-count the redundant clauses, producing a
-	 * too-small selectivity that makes a redundant AND step look like it
-	 * reduces the total cost.  Perhaps someday that code will be smarter and
-=======
 	 * OR clauses.	Moreover, it's completely impractical if there are a large
 	 * number of paths, since the work would grow as O(2^N).
 	 *
@@ -749,18 +709,13 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 	 * They will usually double-count the redundant clauses, producing a
 	 * too-small selectivity that makes a redundant AND step look like it
 	 * reduces the total cost.	Perhaps someday that code will be smarter and
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 * we can remove this limitation.  (But note that this also defends
 	 * against flat-out duplicate input paths, which can happen because
 	 * best_inner_indexscan will find the same OR join clauses that
 	 * create_or_index_quals has pulled OR restriction clauses out of.)
 	 *
 	 * For the same reason, we reject AND combinations in which an index
-<<<<<<< HEAD
-	 * predicate clause duplicates another clause.  Here we find it necessary
-=======
 	 * predicate clause duplicates another clause.	Here we find it necessary
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 * to be even stricter: we'll reject a partial index if any of its
 	 * predicate clauses are implied by the set of WHERE clauses and predicate
 	 * clauses used so far.  This covers cases such as a condition "x = 42"
@@ -774,15 +729,9 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 	 */
 
 	/*
-<<<<<<< HEAD
-	 * Extract clause usage info and detect any paths that use exactly
-	 * the same set of clauses; keep only the cheapest-to-scan of any such
-	 * groups.  The surviving paths are put into an array for qsort'ing.
-=======
 	 * Extract clause usage info and detect any paths that use exactly the
 	 * same set of clauses; keep only the cheapest-to-scan of any such groups.
 	 * The surviving paths are put into an array for qsort'ing.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	pathinfoarray = (PathClauseUsage **)
 		palloc(npaths * sizeof(PathClauseUsage *));
@@ -790,11 +739,7 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 	npaths = 0;
 	foreach(l, paths)
 	{
-<<<<<<< HEAD
-		Path   *ipath = (Path *) lfirst(l);
-=======
 		Path	   *ipath = (Path *) lfirst(l);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		pathinfo = classify_index_clause_usage(ipath, &clauselist);
 		for (i = 0; i < npaths; i++)
@@ -825,17 +770,6 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 	/* If only one surviving path, we're done */
 	if (npaths == 1)
 		return pathinfoarray[0]->path;
-<<<<<<< HEAD
-
-	/* Sort the surviving paths by index access cost */
-	qsort(pathinfoarray, npaths, sizeof(PathClauseUsage *),
-		  path_usage_comparator);
-
-	/*
-	 * For each surviving index, consider it as an "AND group leader", and
-	 * see whether adding on any of the later indexes results in an AND path
-	 * with cheaper total cost than before.  Then take the cheapest AND group.
-=======
 
 	/* Sort the surviving paths by index access cost */
 	qsort(pathinfoarray, npaths, sizeof(PathClauseUsage *),
@@ -845,7 +779,6 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 	 * For each surviving index, consider it as an "AND group leader", and see
 	 * whether adding on any of the later indexes results in an AND path with
 	 * cheaper total cost than before.	Then take the cheapest AND group.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	for (i = 0; i < npaths; i++)
 	{
@@ -862,28 +795,17 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 		clauseidsofar = bms_copy(pathinfo->clauseids);
 		lastcell = list_head(paths);	/* for quick deletions */
 
-<<<<<<< HEAD
-		for (j = i+1; j < npaths; j++)
-=======
 		for (j = i + 1; j < npaths; j++)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		{
 			Cost		newcost;
 
 			pathinfo = pathinfoarray[j];
 			/* Check for redundancy */
 			if (bms_overlap(pathinfo->clauseids, clauseidsofar))
-<<<<<<< HEAD
-				continue;			/* consider it redundant */
-			if (pathinfo->preds)
-			{
-				bool	redundant = false;
-=======
 				continue;		/* consider it redundant */
 			if (pathinfo->preds)
 			{
 				bool		redundant = false;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 				/* we check each predicate clause separately */
 				foreach(l, pathinfo->preds)
@@ -893,11 +815,7 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 					if (predicate_implied_by(list_make1(np), qualsofar))
 					{
 						redundant = true;
-<<<<<<< HEAD
-						break;		/* out of inner foreach loop */
-=======
 						break;	/* out of inner foreach loop */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					}
 				}
 				if (redundant)
@@ -938,11 +856,7 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 	}
 
 	if (list_length(bestpaths) == 1)
-<<<<<<< HEAD
-		return (Path *) linitial(bestpaths);		/* no need for AND */
-=======
 		return (Path *) linitial(bestpaths);	/* no need for AND */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	return (Path *) create_bitmap_and_path(root, rel, bestpaths);
 }
 
@@ -1048,22 +962,14 @@ classify_index_clause_usage(Path *path, List **clauselist)
 	clauseids = NULL;
 	foreach(lc, result->quals)
 	{
-<<<<<<< HEAD
-		Node   *node = (Node *) lfirst(lc);
-=======
 		Node	   *node = (Node *) lfirst(lc);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		clauseids = bms_add_member(clauseids,
 								   find_list_position(node, clauselist));
 	}
 	foreach(lc, result->preds)
 	{
-<<<<<<< HEAD
-		Node   *node = (Node *) lfirst(lc);
-=======
 		Node	   *node = (Node *) lfirst(lc);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		clauseids = bms_add_member(clauseids,
 								   find_list_position(node, clauselist));
@@ -1128,11 +1034,7 @@ find_indexpath_quals(Path *bitmapqual, List **quals, List **preds)
 /*
  * find_list_position
  *		Return the given node's position (counting from 0) in the given
-<<<<<<< HEAD
- *		list of nodes.  If it's not equal() to any existing list member,
-=======
  *		list of nodes.	If it's not equal() to any existing list member,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *		add it at the end, and return that position.
  */
 static int
@@ -1144,11 +1046,7 @@ find_list_position(Node *node, List **nodelist)
 	i = 0;
 	foreach(lc, *nodelist)
 	{
-<<<<<<< HEAD
-		Node   *oldnode = (Node *) lfirst(lc);
-=======
 		Node	   *oldnode = (Node *) lfirst(lc);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (equal(node, oldnode))
 			return i;
@@ -1987,19 +1885,11 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 	if (indexpaths != NIL)
 	{
 		*cheapest_startup = *cheapest_total = (Path *) linitial(indexpaths);
-<<<<<<< HEAD
 
 		for_each_cell(l, lnext(list_head(indexpaths)))
 		{
 			Path	   *path = (Path *) lfirst(l);
 
-=======
-
-		for_each_cell(l, lnext(list_head(indexpaths)))
-		{
-			Path	   *path = (Path *) lfirst(l);
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			if (compare_path_costs(path, *cheapest_startup, STARTUP_COST) < 0)
 				*cheapest_startup = path;
 			if (compare_path_costs(path, *cheapest_total, TOTAL_COST) < 0)
@@ -2981,11 +2871,7 @@ prefix_quals(Node *leftop, Oid opfamily,
 	 *-------
 	 */
 	oproid = get_opfamily_member(opfamily, datatype, datatype,
-<<<<<<< HEAD
-								BTLessStrategyNumber);
-=======
 								 BTLessStrategyNumber);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (oproid == InvalidOid)
 		elog(ERROR, "no < operator for opfamily %u", opfamily);
 	fmgr_info(get_opcode(oproid), &ltproc);
@@ -3109,11 +2995,7 @@ string_to_const(const char *str, Oid datatype)
 {
 	Datum		conval = string_to_datum(str, datatype);
 
-<<<<<<< HEAD
-	return makeConst(datatype, -1, ((datatype == NAMEOID) ? NAMEDATALEN : -1),
-=======
 	return makeConst(datatype, -1,
 					 ((datatype == NAMEOID) ? NAMEDATALEN : -1),
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					 conval, false, false);
 }
