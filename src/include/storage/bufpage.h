@@ -7,11 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.71 2007/02/21 20:02:17 momjian Exp $
-=======
  * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.77 2008/01/01 19:45:58 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -104,20 +100,12 @@ typedef uint16 LocationIndex;
  * The LSN is used by the buffer manager to enforce the basic rule of WAL:
  * "thou shalt write xlog before data".  A dirty buffer cannot be dumped
  * to disk until xlog has been flushed at least as far as the page's LSN.
-<<<<<<< HEAD
- * We also store the TLI for identification purposes (it is not clear that
- * this is actually necessary, but it seems like a good idea).
- * We also store the 16 least significant bits of the TLI for identification
- * purposes (it is not clear that this is actually necessary, but it seems
- * like a good idea).
-=======
  * We also store the 16 least significant bits of the TLI for identification
  * purposes (it is not clear that this is actually necessary, but it seems
  * like a good idea).
  *
  * pd_prune_xid is a hint field that helps determine whether pruning will be
  * useful.	It is currently unused in index pages.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * The page version number and page size are packed together into a single
  * uint16 field.  This is for historical reasons: before PostgreSQL 7.3,
@@ -154,15 +142,6 @@ typedef PageHeaderData *PageHeader;
  * pd_flags contains the following flag bits.  Undefined bits are initialized
  * to zero and may be used in the future.
  *
-<<<<<<< HEAD
- * PD_HAS_FREE_LINES is set if there are any not-LP_USED line pointers before
- * pd_lower.  This should be considered a hint rather than the truth, since
- * changes to it are not WAL-logged.
- */
-#define PD_HAS_FREE_LINES	0x0001	/* are there any unused line pointers? */
-
-#define PD_VALID_FLAG_BITS	0x0001	/* OR of all valid pd_flags bits */
-=======
  * PD_HAS_FREE_LINES is set if there are any LP_UNUSED line pointers before
  * pd_lower.  This should be considered a hint rather than the truth, since
  * changes to it are not WAL-logged.
@@ -176,7 +155,6 @@ typedef PageHeaderData *PageHeader;
 										 * tuple? */
 
 #define PD_VALID_FLAG_BITS	0x0003		/* OR of all valid pd_flags bits */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * Page layout version number 0 is for pre-7.3 Postgres releases.
@@ -184,12 +162,8 @@ typedef PageHeaderData *PageHeader;
  * Release 8.0 uses 2; it changed the HeapTupleHeader layout again.
  * Release 8.1 uses 3; it redefined HeapTupleHeader infomask bits.
  * Release 8.3 uses 4; it changed the HeapTupleHeader layout again, and
-<<<<<<< HEAD
- * added the pd_flags field (by stealing some bits from pd_tli).
-=======
  *		added the pd_flags field (by stealing some bits from pd_tli),
  *		as well as adding the pd_prune_xid field (which enlarges the header).
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 #define PG_PAGE_LAYOUT_VERSION		4
 
@@ -430,10 +404,7 @@ extern void PageRestoreTempPage(Page tempPage, Page oldPage);
 extern void PageRepairFragmentation(Page page);
 extern Size PageGetFreeSpace(Page page);
 extern Size PageGetExactFreeSpace(Page page);
-<<<<<<< HEAD
-=======
 extern Size PageGetHeapFreeSpace(Page page);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern void PageIndexTupleDelete(Page page, OffsetNumber offset);
 extern void PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems);
 

@@ -22,13 +22,10 @@ extern void ChangeVarNodes(Node *node, int old_varno, int new_varno,
 			   int sublevels_up);
 extern void IncrementVarSublevelsUp(Node *node, int delta_sublevels_up,
 						int min_sublevels_up);
-<<<<<<< HEAD
-extern void IncrementVarSublevelsUpInTransformGroupedWindows(Node *node,
-		int delta_sublevels_up, int min_sublevels_up);
-=======
 extern void IncrementVarSublevelsUp_rtable(List *rtable,
 							   int delta_sublevels_up,	int min_sublevels_up);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+extern void IncrementVarSublevelsUpInTransformGroupedWindows(Node *node,
+		int delta_sublevels_up, int min_sublevels_up);
 
 extern bool rangeTableEntry_used(Node *node, int rt_index,
 					 int sublevels_up);

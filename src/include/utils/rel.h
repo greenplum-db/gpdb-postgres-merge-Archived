@@ -152,9 +152,8 @@ typedef struct RelationData
 	char		rd_indexvalid;	/* state of rd_indexlist: 0 = not valid, 1 =
 								 * valid, 2 = temporarily forced */
 	SubTransactionId rd_createSubid;	/* rel was created in current xact */
-<<<<<<< HEAD
-	SubTransactionId rd_newRelfilenodeSubid;	/* new relfilenode assigned
-												 * in current xact */
+	SubTransactionId rd_newRelfilenodeSubid;	/* new relfilenode assigned in
+												 * current xact */
 
 	/*
 	 * Debugging information, Values from CREATE TABLE, if present.
@@ -163,25 +162,15 @@ typedef struct RelationData
 	bool				rd_createDebugIsZeroTid;
 	ItemPointerData		rd_createDebugPersistentTid;
 	int64				rd_createDebugPersistentSerialNum;
-=======
-	SubTransactionId rd_newRelfilenodeSubid;	/* new relfilenode assigned in
-												 * current xact */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * rd_createSubid is the ID of the highest subtransaction the rel has
 	 * survived into; or zero if the rel was not created in the current top
 	 * transaction.  This should be relied on only for optimization purposes;
 	 * it is possible for new-ness to be "forgotten" (eg, after CLUSTER).
-<<<<<<< HEAD
-	 * Likewise, rd_newRelfilenodeSubid is the ID of the highest subtransaction
-	 * the relfilenode change has survived into, or zero if not changed in
-	 * the current transaction (or we have forgotten changing it).
-=======
 	 * Likewise, rd_newRelfilenodeSubid is the ID of the highest
 	 * subtransaction the relfilenode change has survived into, or zero if not
 	 * changed in the current transaction (or we have forgotten changing it).
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	Form_pg_class rd_rel;		/* RELATION tuple */
 	TupleDesc	rd_att;			/* tuple descriptor */
@@ -237,13 +226,12 @@ typedef struct RelationData
 	List	   *rd_indpred;		/* index predicate tree, if any */
 	void	   *rd_amcache;		/* available for use by index AM */
 
-<<<<<<< HEAD
 	/*
 	 * Physical file-system information.
 	 */
 	struct RelationNodeInfo rd_segfile0_relationnodeinfo;
 								/* Values from gp_relation_node, if present */
-=======
+
 	/* use "struct" here to avoid needing to include pgstat.h: */
 	struct PgStat_TableStatus *pgstat_info;		/* statistics collection area */
 } RelationData;
@@ -258,11 +246,6 @@ typedef RelationData *Relation;
  * ----------------
  */
 typedef Relation *RelationPtr;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-
-	/* use "struct" here to avoid needing to include pgstat.h: */
-	struct PgStat_TableStatus *pgstat_info;		/* statistics collection area */
-} RelationData;
 
 /*
  * StdRdOptions

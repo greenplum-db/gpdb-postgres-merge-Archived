@@ -172,7 +172,6 @@ typedef enum
 	HEAPTUPLE_DELETE_IN_PROGRESS	/* deleting xact is still in progress */
 } HTSV_Result;
 
-<<<<<<< HEAD
 #ifdef WATCH_VISIBILITY_IN_ACTION
 
 /* Watch visibility flag bits */
@@ -359,31 +358,22 @@ extern void lookupSharedSnapshot(char *lookerDescription, char *creatorDescripti
 extern void dumpSharedLocalSnapshot_forCursor(void);
 extern void readSharedLocalSnapshot_forCursor(Snapshot snapshot);
 
-extern bool HeapTupleSatisfiesItself(Relation relation, HeapTupleHeader tuple, Buffer buffer);
-extern bool HeapTupleSatisfiesNow(Relation relation, HeapTupleHeader tuple, Buffer buffer);
-extern bool HeapTupleSatisfiesDirty(Relation relation, HeapTupleHeader tuple, Buffer buffer);
-extern bool HeapTupleSatisfiesToast(Relation relation, HeapTupleHeader tuple, Buffer buffer);
-extern bool HeapTupleSatisfiesSnapshot(Relation relation, HeapTupleHeader tuple,
-						   Snapshot snapshot, Buffer buffer);
-extern HTSU_Result HeapTupleSatisfiesUpdate(Relation relation, HeapTupleHeader tuple,
-=======
 /* These are the "satisfies" test routines for the various snapshot types */
-extern bool HeapTupleSatisfiesMVCC(HeapTupleHeader tuple,
+extern bool HeapTupleSatisfiesMVCC(Relation relation, HeapTupleHeader tuple,
 					   Snapshot snapshot, Buffer buffer);
-extern bool HeapTupleSatisfiesNow(HeapTupleHeader tuple,
+extern bool HeapTupleSatisfiesNow(Relation relation, HeapTupleHeader tuple,
 					  Snapshot snapshot, Buffer buffer);
-extern bool HeapTupleSatisfiesSelf(HeapTupleHeader tuple,
+extern bool HeapTupleSatisfiesSelf(Relation relation, HeapTupleHeader tuple,
 					   Snapshot snapshot, Buffer buffer);
-extern bool HeapTupleSatisfiesAny(HeapTupleHeader tuple,
+extern bool HeapTupleSatisfiesAny(Relation relation, HeapTupleHeader tuple,
 					  Snapshot snapshot, Buffer buffer);
-extern bool HeapTupleSatisfiesToast(HeapTupleHeader tuple,
+extern bool HeapTupleSatisfiesToast(Relation relation, HeapTupleHeader tuple,
 						Snapshot snapshot, Buffer buffer);
-extern bool HeapTupleSatisfiesDirty(HeapTupleHeader tuple,
+extern bool HeapTupleSatisfiesDirty(Relation relation, HeapTupleHeader tuple,
 						Snapshot snapshot, Buffer buffer);
 
 /* Special "satisfies" routines with different APIs */
-extern HTSU_Result HeapTupleSatisfiesUpdate(HeapTupleHeader tuple,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+extern HTSU_Result HeapTupleSatisfiesUpdate(Relation relation, HeapTupleHeader tuple,
 						 CommandId curcid, Buffer buffer);
 extern HTSV_Result HeapTupleSatisfiesVacuum(HeapTupleHeader tuple,
 						 TransactionId OldestXmin, Buffer buffer);

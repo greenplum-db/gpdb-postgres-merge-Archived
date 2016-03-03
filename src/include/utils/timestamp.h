@@ -3,11 +3,7 @@
  * timestamp.h
  *	  Definitions for the SQL92 "timestamp" and "interval" types.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.74 2008/01/23 21:26:13 tgl Exp $
@@ -278,13 +274,10 @@ extern Datum interval_larger(PG_FUNCTION_ARGS);
 extern Datum interval_justify_interval(PG_FUNCTION_ARGS);
 extern Datum interval_justify_hours(PG_FUNCTION_ARGS);
 extern Datum interval_justify_days(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
 extern float8 interval_li_fraction(Interval *x, Interval *x0, Interval *x1, 
 								   bool *eq_bounds, bool *eq_abscissas);
 extern Interval *interval_li_value(float8 f, Interval *y0, Interval *y1);
-=======
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern Datum timestamp_trunc(PG_FUNCTION_ARGS);
 extern Datum interval_trunc(PG_FUNCTION_ARGS);
 extern Datum timestamp_part(PG_FUNCTION_ARGS);
@@ -373,14 +366,9 @@ extern void TimestampDifference(TimestampTz start_time, TimestampTz stop_time,
 extern bool TimestampDifferenceExceeds(TimestampTz start_time,
 						   TimestampTz stop_time,
 						   int msec);
-<<<<<<< HEAD
 
 extern TimestampTz time_t_to_timestamptz(pg_time_t tm);
 extern pg_time_t timestamptz_to_time_t(TimestampTz t);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-
-extern const char *timestamptz_to_str(TimestampTz t);
 
 extern const char *timestamptz_to_str(TimestampTz t);
 

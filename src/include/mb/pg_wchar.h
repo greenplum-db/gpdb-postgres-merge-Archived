@@ -3,17 +3,10 @@
  * pg_wchar.h
  *	  multibyte-character support
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.91 2009/06/11 14:49:11 momjian Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.78.2.1 2009/01/29 19:23:58 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *	NOTES
  *		This is used both by the backend and by libpq, but should not be
@@ -280,7 +273,6 @@ typedef struct pg_enc2name
 
 extern pg_enc2name pg_enc2name_tbl[];
 
-<<<<<<< HEAD
 /*
  * Encoding names for gettext
  */
@@ -292,8 +284,6 @@ typedef struct pg_enc2gettext
 
 extern pg_enc2gettext pg_enc2gettext_tbl[];
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * pg_wchar stuff
  */
@@ -469,17 +459,10 @@ extern int pg_verify_mbstr_len(int encoding, const char *mbstr, int len,
 					bool noError);
 
 extern void check_encoding_conversion_args(int src_encoding,
-<<<<<<< HEAD
 							   int dest_encoding,
 							   int len,
 							   int expected_src_encoding,
 							   int expected_dest_encoding);
-=======
-										   int dest_encoding,
-										   int len,
-										   int expected_src_encoding,
-										   int expected_dest_encoding);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 extern void report_invalid_encoding(int encoding, const char *mbstr, int len);
 extern void report_untranslatable_char(int src_encoding, int dest_encoding,
