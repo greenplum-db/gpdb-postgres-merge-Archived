@@ -46,11 +46,7 @@
  * only work with varlena arrays.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.66 2008/01/01 19:45:59 momjian Exp $
@@ -203,13 +199,7 @@ extern Datum array_ndims(PG_FUNCTION_ARGS);
 extern Datum array_dims(PG_FUNCTION_ARGS);
 extern Datum array_lower(PG_FUNCTION_ARGS);
 extern Datum array_upper(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
 extern Datum array_length(PG_FUNCTION_ARGS);
-extern Datum array_type_coerce(PG_FUNCTION_ARGS);
-extern Datum array_type_length_coerce(PG_FUNCTION_ARGS);
-extern Datum array_length_coerce(PG_FUNCTION_ARGS);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern Datum array_larger(PG_FUNCTION_ARGS);
 extern Datum array_smaller(PG_FUNCTION_ARGS);
 extern Datum generate_subscripts(PG_FUNCTION_ARGS);

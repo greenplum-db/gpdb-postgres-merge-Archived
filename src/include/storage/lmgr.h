@@ -4,10 +4,7 @@
  *	  POSTGRES lock manager definitions.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -19,10 +16,7 @@
 #define LMGR_H
 
 #include "lib/stringinfo.h"
-<<<<<<< HEAD
 #include "storage/itemptr.h"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "storage/lock.h"
 #include "utils/rel.h"
 
@@ -91,13 +85,8 @@ extern void LockSharedObject(Oid classid, Oid objid, uint16 objsubid,
 				 LOCKMODE lockmode);
 extern void UnlockSharedObject(Oid classid, Oid objid, uint16 objsubid,
 				   LOCKMODE lockmode);
-<<<<<<< HEAD
-/* Knowledge about which locktags describe temp objects */
-extern bool LockTagIsTemp(const LOCKTAG *tag);
-=======
 
 /* Describe a locktag for error messages */
 extern void DescribeLockTag(StringInfo buf, const LOCKTAG *tag);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #endif   /* LMGR_H */

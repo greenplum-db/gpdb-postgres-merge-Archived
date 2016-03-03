@@ -37,11 +37,7 @@
 #define BM_IO_ERROR				(1 << 4)		/* previous I/O failed */
 #define BM_JUST_DIRTIED			(1 << 5)		/* dirtied since write started */
 #define BM_PIN_COUNT_WAITER		(1 << 6)		/* have waiter for sole pin */
-<<<<<<< HEAD
-// unused #define BM_CHECKPOINT_NEEDED	(1 << 7)		/* must write for checkpoint */
-=======
 #define BM_CHECKPOINT_NEEDED	(1 << 7)		/* must write for checkpoint */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 typedef bits16 BufFlags;
 
@@ -169,11 +165,7 @@ typedef struct sbufdesc
 
 
 /* in buf_init.c */
-<<<<<<< HEAD
-extern PGDLLIMPORT volatile BufferDesc *BufferDescriptors;
-=======
 extern PGDLLIMPORT BufferDesc *BufferDescriptors;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* in localbuf.c */
 extern BufferDesc *LocalBufferDescriptors;

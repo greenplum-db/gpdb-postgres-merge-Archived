@@ -63,17 +63,10 @@
  *	when using the SysV semaphore code.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.171 2010/01/05 11:06:28 mha Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.164 2008/01/01 19:45:59 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -596,39 +589,6 @@ typedef int slock_t;
 #endif /* __m32r__ */
 
 
-<<<<<<< HEAD
-#if defined(__sh__)				/* Renesas' SuperH */
-#define HAS_TEST_AND_SET
-
-typedef unsigned char slock_t;
-
-#define TAS(lock) tas(lock)
-
-static __inline__ int
-tas(volatile slock_t *lock)
-{
-	register int _res;
-
-	/*
-	 * This asm is coded as if %0 could be any register, but actually SuperH
-	 * restricts the target of xor-immediate to be R0.  That's handled by
-	 * the "z" constraint on _res.
-	 */
-	__asm__ __volatile__(
-		"	tas.b @%2    \n"
-		"	movt  %0     \n"
-		"	xor   #1,%0  \n"
-:		"=z"(_res), "+m"(*lock)
-:		"r"(lock)
-:		"memory", "t");
-	return _res;
-}
-
-#endif	 /* __sh__ */
-
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* These live in s_lock.c, but only for gcc */
 
 
@@ -639,7 +599,7 @@ typedef unsigned char slock_t;
 #endif
 
 
-#endif	/* defined(__GNUC__) || defined(__INTEL_COMPILER) */
+#endif	/* __GNUC__ */
 
 
 
@@ -843,7 +803,7 @@ typedef unsigned char slock_t;
 #endif
 
 
-#if defined(__SUNPRO_C) && (defined(__i386) || defined(__x86_64__) || defined(__sparc__) || defined(__sparc))
+#if defined(__sun) && (defined(__i386) || defined(__x86_64__) || defined(__sparc__) || defined(__sparc))
 #define HAS_TEST_AND_SET
 
 #if defined(__i386) || defined(__x86_64__) || defined(__sparcv9) || defined(__sparcv8plus)

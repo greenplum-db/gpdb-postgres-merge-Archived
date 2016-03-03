@@ -4,10 +4,7 @@
  *	  storage manager switch public interface declarations.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -344,7 +341,6 @@ extern bool smgrgetpersistentinfo(
 
 	int64		*persistentSerialNum);
 extern void smgrimmedsync(SMgrRelation reln);
-<<<<<<< HEAD
 extern void smgrappendonlymirrorresynceofs(
 	RelFileNode						*relFileNode,
 
@@ -387,11 +383,6 @@ extern bool	smgrIsPendingFileSysWork(
 	EndXactRecKind						endXactRecKind);
 extern bool smgrIsAppendOnlyMirrorResyncEofs(
 	EndXactRecKind						endXactRecKind);
-=======
-extern void smgrDoPendingDeletes(bool isCommit);
-extern int smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr,
-					  bool *haveNonTemp);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern void AtSubCommit_smgr(void);
 extern void AtSubAbort_smgr(void);
 extern void AtEOXact_smgr(bool forCommit);

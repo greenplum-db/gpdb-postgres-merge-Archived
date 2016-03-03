@@ -4,18 +4,11 @@
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2010, Greenplum inc
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.78 2007/01/09 21:31:17 momjian Exp $
-=======
- * Copyright (c) 2000-2008, PostgreSQL Global Development Group
- * Written by Peter Eisentraut <peter_e@gmx.net>.
- *
  * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.90.2.1 2010/03/25 14:45:06 alvherre Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -606,11 +599,8 @@ extern void ProcessGUCArray(ArrayType *array,
 extern ArrayType *GUCArrayAdd(ArrayType *array, const char *name, const char *value);
 extern ArrayType *GUCArrayDelete(ArrayType *array, const char *name);
 extern ArrayType *GUCArrayReset(ArrayType *array);
-<<<<<<< HEAD
-=======
 
 extern int	GUC_complaint_elevel(GucSource source);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 extern void pg_timezone_abbrev_initialize(void);
 
@@ -651,9 +641,6 @@ extern const char *assign_search_path(const char *newval,
 extern const char *assign_xlog_sync_method(const char *method,
 						bool doit, GucSource source);
 
-<<<<<<< HEAD
 extern StdRdOptions *defaultStdRdOptions(char relkind);
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif   /* GUC_H */

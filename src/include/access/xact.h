@@ -4,11 +4,7 @@
  *	  postgres transaction system definitions
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.93.2.1 2008/03/04 19:54:13 tgl Exp $
@@ -95,16 +91,12 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 
 typedef struct xl_xact_commit
 {
-<<<<<<< HEAD
+	TimestampTz xact_time;		/* time of commit */
 	time_t		xtime;
 
 	int16		persistentCommitObjectCount;	
 								/* number of PersistentEndXactRec style objects */
 
-=======
-	TimestampTz xact_time;		/* time of commit */
-	int			nrels;			/* number of RelFileNodes */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	int			nsubxacts;		/* number of subtransaction XIDs */
 
 	/* PersistentEndXactRec style objects for commit */
@@ -117,16 +109,12 @@ typedef struct xl_xact_commit
 
 typedef struct xl_xact_abort
 {
-<<<<<<< HEAD
+	TimestampTz xact_time;		/* time of abort */
 	time_t		xtime;
 
 	int16		persistentAbortObjectCount;	
 								/* number of PersistentEndXactRec style objects */
 
-=======
-	TimestampTz xact_time;		/* time of abort */
-	int			nrels;			/* number of RelFileNodes */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	int			nsubxacts;		/* number of subtransaction XIDs */
 	
 	/* PersistentEndXactRec style objects for abort */
@@ -262,15 +250,11 @@ extern void UnregisterXactCallbackOnce(XactCallback callback, void *arg);
 extern void RegisterSubXactCallback(SubXactCallback callback, void *arg);
 extern void UnregisterSubXactCallback(SubXactCallback callback, void *arg);
 
-<<<<<<< HEAD
-extern void RecordTransactionCommit(void);
+extern TransactionId RecordTransactionCommit(void);
 extern void RecordDistributedForgetCommitted(struct TMGXACT_LOG *gxact_log);
 extern bool RecordCrashTransactionAbortRecord(
 	TransactionId				xid,
 	PersistentEndXactRecObjects *persistentAbortObjects);
-=======
-extern TransactionId RecordTransactionCommit(void);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 extern int	xactGetCommittedChildren(TransactionId **ptr);
 

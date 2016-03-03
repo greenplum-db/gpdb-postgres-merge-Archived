@@ -82,7 +82,7 @@ typedef enum LWLockId
 	AddinShmemInitLock,
 	AutovacuumLock,
 	AutovacuumScheduleLock,
-<<<<<<< HEAD
+	SyncScanLock,
 	SharedSnapshotLock,
 	DistributedLogControlLock,
 	SeqServerControlLock,
@@ -102,11 +102,6 @@ typedef enum LWLockId
 	FirstWorkfileMgrLock,
 	FirstWorkfileQuerySpaceLock = FirstWorkfileMgrLock + NUM_WORKFILEMGR_PARTITIONS,
 	FirstBufMappingLock = FirstWorkfileQuerySpaceLock + NUM_WORKFILE_QUERYSPACE_PARTITIONS,
-=======
-	SyncScanLock,
-	/* Individual lock IDs end here */
-	FirstBufMappingLock,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	FirstLockMgrLock = FirstBufMappingLock + NUM_BUFFER_PARTITIONS,
 	SessionStateLock = FirstLockMgrLock + NUM_LOCK_PARTITIONS,
 

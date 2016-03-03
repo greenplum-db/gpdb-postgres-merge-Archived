@@ -119,14 +119,10 @@ extern char *get_rel_name_partition(Oid relid);
 extern Oid	get_rel_namespace(Oid relid);
 extern Oid	get_rel_type_id(Oid relid);
 extern char get_rel_relkind(Oid relid);
-<<<<<<< HEAD
 extern float4 get_rel_reltuples(Oid relid);
 extern char get_rel_relstorage(Oid relid);
 extern Oid	get_rel_tablespace(Oid relid);
 extern char *get_type_name(Oid typid);
-=======
-extern Oid	get_rel_tablespace(Oid relid);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern bool get_typisdefined(Oid typid);
 extern int16 get_typlen(Oid typid);
 extern bool get_typbyval(Oid typid);
@@ -174,7 +170,6 @@ extern char *get_namespace_name(Oid nspid);
 extern Oid	get_roleid(const char *rolname);
 extern Oid	get_roleid_checked(const char *rolname);
 
-<<<<<<< HEAD
 extern List *relation_oids(void);
 extern List *operator_oids(void);
 extern List *function_oids(void);
@@ -211,10 +206,7 @@ extern List *find_all_inheritors(Oid parentrel);
 extern List *get_operator_opfamilies(Oid opno);
 extern List *get_index_opfamilies(Oid oidIndex);
 
-#define is_array_type(typid)  (get_element_type(typid) != InvalidOid)
-=======
 #define type_is_array(typid)  (get_element_type(typid) != InvalidOid)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #define TypeIsToastable(typid)	(get_typstorage(typid) != 'p')
 

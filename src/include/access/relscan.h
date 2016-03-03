@@ -92,12 +92,9 @@ typedef struct IndexScanDescData
 	HeapTupleData xs_ctup;		/* current heap tuple, if any */
 	Buffer		xs_cbuf;		/* current heap buffer in scan, if any */
 	/* NB: if xs_cbuf is not InvalidBuffer, we hold a pin on that buffer */
-<<<<<<< HEAD
-=======
 	TransactionId xs_prev_xmax; /* previous HOT chain member's XMAX, if any */
 	OffsetNumber xs_next_hot;	/* next member of HOT chain, if any */
 	bool		xs_hot_dead;	/* T if all members of HOT chain are dead */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } IndexScanDescData;
 
 typedef IndexScanDescData *IndexScanDesc;

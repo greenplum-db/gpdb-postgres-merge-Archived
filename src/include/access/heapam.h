@@ -4,17 +4,10 @@
  *	  POSTGRES heap access method definitions.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.121 2007/03/29 00:15:39 tgl Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
  * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.130.2.1 2008/03/08 21:58:07 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -168,14 +161,6 @@ typedef enum
  * ----------------
  */
 
-<<<<<<< HEAD
-/* heapam.c */
-
-typedef enum
-{
-	LockTupleShared,
-	LockTupleExclusive
-} LockTupleMode;
 
 typedef enum
 {
@@ -205,9 +190,7 @@ inline static void xl_heapnode_set(
 	heapnode->persistentSerialNum = rel->rd_segfile0_relationnodeinfo.persistentSerialNum;
 }
 
-=======
 /* in heap/heapam.c */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern Relation relation_open(Oid relationId, LOCKMODE lockmode);
 extern Relation try_relation_open(Oid relationId, LOCKMODE lockmode, 
 								  bool noWait);
@@ -254,15 +237,11 @@ extern bool heap_fetch(Relation relation, Snapshot snapshot,
 		   Relation stats_relation);
 extern bool heap_release_fetch(Relation relation, Snapshot snapshot,
 				   HeapTuple tuple, Buffer *userbuf, bool keep_buf,
-<<<<<<< HEAD
-		   		   Relation stats_relation);
-=======
 				   Relation stats_relation);
 extern bool heap_hot_search_buffer(ItemPointer tid, Buffer buffer,
 					   Snapshot snapshot, bool *all_dead);
 extern bool heap_hot_search(ItemPointer tid, Relation relation,
 				Snapshot snapshot, bool *all_dead);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 extern void heap_get_latest_tid(Relation relation, Snapshot snapshot,
 					ItemPointer tid);
@@ -298,7 +277,8 @@ extern void heap_markpos(HeapScanDesc scan);
 extern void heap_markposx(HeapScanDesc scan, HeapTuple tuple);
 extern void heap_restrpos(HeapScanDesc scan);
 
-<<<<<<< HEAD
+extern void heap_sync(Relation relation);
+
 extern void heap_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *rptr);
 extern void heap_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
 extern bool heap_getrelfilenode(
@@ -306,14 +286,6 @@ extern bool heap_getrelfilenode(
 	RelFileNode		*relFileNode);
 extern void heap2_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *rptr);
 extern void heap2_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
-=======
-extern void heap_sync(Relation relation);
-
-extern void heap_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void heap_desc(StringInfo buf, uint8 xl_info, char *rec);
-extern void heap2_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void heap2_desc(StringInfo buf, uint8 xl_info, char *rec);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 extern void log_heap_newpage(Relation rel, 
 							 Page page,

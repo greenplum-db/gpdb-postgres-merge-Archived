@@ -6,11 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.77 2007/05/20 21:08:19 tgl Exp $
-=======
  * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.87 2008/01/01 19:45:56 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -22,13 +18,10 @@
 #include "lib/stringinfo.h"
 #include "storage/buf.h"
 #include "utils/pg_crc.h"
-<<<<<<< HEAD
 #include "utils/relcache.h"
 #include "utils/segadmin.h"
-#include "cdb/cdbpublic.h"
-=======
 #include "utils/timestamp.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+#include "cdb/cdbpublic.h"
 
 /*
  * REDO Tracking DEFINEs.
@@ -112,15 +105,6 @@ typedef struct XLogRecord
  * prevent partial-page-write problems, and not to ensure consistency of PITR
  * recovery).  The compression algorithm would need to extract data from the
  * blocks to create an equivalent non-full-page XLOG record.
-<<<<<<< HEAD
- */
-#define XLR_BKP_REMOVABLE		0x01
-
-/*
- * Sometimes we log records which are out of transaction control.
- * Rmgr may "or" XLOG_NO_TRAN into info passed to XLogInsert to indicate this.
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 #define XLR_BKP_REMOVABLE		0x01
 
@@ -172,15 +156,7 @@ typedef struct XLogRecData
 
 extern TimeLineID ThisTimeLineID;		/* current TLI */
 extern bool InRecovery;
-<<<<<<< HEAD
-
-extern XLogRecPtr MyLastRecPtr;
-extern bool MyXactMadeXLogEntry;
-extern bool MyXactMadeTempRelUpdate;
-extern XLogRecPtr ProcLastRecEnd;
-=======
 extern XLogRecPtr XactLastRecEnd;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* these variables are GUC parameters related to XLOG */
 extern int	CheckPointSegments;
@@ -190,12 +166,9 @@ extern char *XLogArchiveCommand;
 extern int	XLogArchiveTimeout;
 extern char *XLOG_sync_method;
 extern const char XLOG_sync_method_default[];
-<<<<<<< HEAD
 extern bool gp_keep_all_xlog;
 extern int keep_wal_segments;
-=======
 extern bool log_checkpoints;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #define XLogArchivingActive()	(XLogArchiveMode)
 #define XLogArchiveCommandSet() (XLogArchiveCommand[0] != '\0')
@@ -264,7 +237,6 @@ extern XLogRecPtr XLogLastChangeTrackedLoc(void);
 extern uint32 XLogLastInsertTotalLen(void);
 extern uint32 XLogLastInsertDataLen(void);
 extern void XLogFlush(XLogRecPtr RecPtr);
-<<<<<<< HEAD
 extern void XLogFileRepFlushCache(
 	XLogRecPtr	*lastChangeTrackingEndLoc);
 
@@ -274,13 +246,11 @@ extern void xlog_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr ls
 extern void xlog_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
 
 extern void issue_xlog_fsync(int fd, uint32 log, uint32 seg);
-=======
 extern void XLogBackgroundFlush(void);
 extern void XLogAsyncCommitFlush(void);
 extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
 
 extern void XLogSetAsyncCommitLSN(XLogRecPtr record);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 extern bool RecoveryInProgress(void);
 extern XLogRecPtr GetInsertRecPtr(void);

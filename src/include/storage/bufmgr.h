@@ -291,15 +291,12 @@ typedef struct MirroredLockBufMgrLocalVars
  * prototypes for functions in bufmgr.c
  */
 extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
-<<<<<<< HEAD
-extern Buffer ReadBuffer_Ex_SMgr(SMgrRelation smgr, BlockNumber blockNum, volatile bool isLocalBuf, bool isTemp);
-extern Buffer ReadBuffer_Resync(SMgrRelation reln, BlockNumber blockNum);
-
-=======
 extern Buffer ReadBufferWithStrategy(Relation reln, BlockNumber blockNum,
 					   BufferAccessStrategy strategy);
 extern Buffer ReadOrZeroBuffer(Relation reln, BlockNumber blockNum);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+extern Buffer ReadBuffer_Ex_SMgr(SMgrRelation smgr, BlockNumber blockNum, volatile bool isLocalBuf, bool isTemp);
+extern Buffer ReadBuffer_Resync(SMgrRelation reln, BlockNumber blockNum);
+
 extern void ReleaseBuffer(Buffer buffer);
 extern void UnlockReleaseBuffer(Buffer buffer);
 extern void MarkBufferDirty(Buffer buffer);

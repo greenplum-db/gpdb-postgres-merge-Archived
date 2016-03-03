@@ -188,15 +188,12 @@ typedef enum LockTagType
 	/* ID info for a tuple is PAGE info + OffsetNumber */
 	LOCKTAG_TRANSACTION,		/* transaction (for waiting for xact done) */
 	/* ID info for a transaction is its TransactionId */
-<<<<<<< HEAD
+	LOCKTAG_VIRTUALTRANSACTION, /* virtual transaction (ditto) */
+	/* ID info for a virtual transaction is its VirtualTransactionId */
 	LOCKTAG_RELATION_RESYNCHRONIZE,			/* whole relation for resynchronize */
 	/* ID info for a relation is DB OID + REL OID; DB OID = 0 if shared */
 	LOCKTAG_RELATION_APPENDONLY_SEGMENT_FILE,	/* Segment file within an Append-Only relation */
 	/* ID info for a relation is DB OID + REL OID + (LOGICAL) SEGMENT FILE # */
-=======
-	LOCKTAG_VIRTUALTRANSACTION, /* virtual transaction (ditto) */
-	/* ID info for a virtual transaction is its VirtualTransactionId */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	LOCKTAG_OBJECT,				/* non-relation database object */
 	/* ID info for an object is DB OID + CLASS OID + OBJECT OID + SUBID */
 
@@ -275,7 +272,14 @@ typedef struct LOCKTAG
 	 (locktag).locktag_type = LOCKTAG_TRANSACTION, \
 	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
-<<<<<<< HEAD
+#define SET_LOCKTAG_VIRTUALTRANSACTION(locktag,vxid) \
+	((locktag).locktag_field1 = (vxid).backendId, \
+	 (locktag).locktag_field2 = (vxid).localTransactionId, \
+	 (locktag).locktag_field3 = 0, \
+	 (locktag).locktag_field4 = 0, \
+	 (locktag).locktag_type = LOCKTAG_VIRTUALTRANSACTION, \
+	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
+
 #define SET_LOCKTAG_RELATION_RESYNCHRONIZE(locktag,dboid,reloid) \
 	((locktag).locktag_field1 = (dboid), \
 	 (locktag).locktag_field2 = (reloid), \
@@ -290,14 +294,6 @@ typedef struct LOCKTAG
 	 (locktag).locktag_field3 = (segno), \
 	 (locktag).locktag_field4 = 0, \
 	 (locktag).locktag_type = LOCKTAG_RELATION_APPENDONLY_SEGMENT_FILE, \
-=======
-#define SET_LOCKTAG_VIRTUALTRANSACTION(locktag,vxid) \
-	((locktag).locktag_field1 = (vxid).backendId, \
-	 (locktag).locktag_field2 = (vxid).localTransactionId, \
-	 (locktag).locktag_field3 = 0, \
-	 (locktag).locktag_field4 = 0, \
-	 (locktag).locktag_type = LOCKTAG_VIRTUALTRANSACTION, \
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
 #define SET_LOCKTAG_OBJECT(locktag,dboid,classoid,objoid,objsubid) \
@@ -448,10 +444,7 @@ typedef struct LOCALLOCK
 	LOCK	   *lock;			/* associated LOCK object in shared mem */
 	PROCLOCK   *proclock;		/* associated PROCLOCK object in shmem */
 	uint32		hashcode;		/* copy of LOCKTAG's hash value */
-<<<<<<< HEAD
 	bool		preparable;		/* MPP: During prepare we populate this to avoid MPP-1094 */
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	int64		nLocks;			/* total number of times lock is held */
 	int			numLockOwners;	/* # of relevant ResourceOwners */
 	int			maxLockOwners;	/* allocated size of array */
