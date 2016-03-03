@@ -126,19 +126,11 @@ typedef uint32 TimeLineID;
 #endif
 #endif
 
-<<<<<<< HEAD
-/*
- * We don't want the default for Solaris to be OPEN_DATASYNC, because
- * (for some reason) it is absurdly slow.
- */
-#if !defined(pg_on_solaris) && defined(OPEN_DATASYNC_FLAG)
-=======
 #if defined(PLATFORM_DEFAULT_SYNC_METHOD)
 #define DEFAULT_SYNC_METHOD_STR	PLATFORM_DEFAULT_SYNC_METHOD_STR
 #define DEFAULT_SYNC_METHOD		PLATFORM_DEFAULT_SYNC_METHOD
 #define DEFAULT_SYNC_FLAGBIT	PLATFORM_DEFAULT_SYNC_FLAGBIT
 #elif defined(OPEN_DATASYNC_FLAG)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #define DEFAULT_SYNC_METHOD_STR "open_datasync"
 #define DEFAULT_SYNC_METHOD		SYNC_METHOD_OPEN
 #define DEFAULT_SYNC_FLAGBIT	OPEN_DATASYNC_FLAG
