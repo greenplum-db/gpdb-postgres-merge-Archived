@@ -194,7 +194,7 @@
 /* Proper align with zero padding */
 static inline char * att_align_zero(char *data, char alignchar)
 {
-    size_t  misalignment = (size_t)att_align(1, alignchar) - 1;
+    size_t  misalignment = (size_t)att_align_nominal(1, alignchar) - 1;
 
     while ((size_t)data & misalignment)
 		*(data++) = 0;
@@ -207,14 +207,15 @@ static inline char * att_align_zero(char *data, char alignchar)
 #define VARATT_COULD_SHORT_D(D) VARATT_COULD_SHORT(DatumGetPointer(D))
 #endif
 
-/* Determin if a datum of type oid can be stored in short varlena format */
+/* Determine if a datum of type oid can be stored in short varlena format */
 static inline bool value_type_could_short(Datum d, Oid typid)
 {
-        return	!VARATT_IS_EXTERNAL_D(d) &&
-                (VARATT_IS_SHORT_D(d) || 
-                 (VARATT_COULD_SHORT_D(d) &&
-                  typid != INT2VECTOROID &&
-                  typid != OIDVECTOROID &&
-                  typid < FirstNormalObjectId));
+	Pointer ptr = DatumGetPointer(d);
+	return !VARATT_IS_EXTERNAL(ptr) &&
+		(VARATT_IS_SHORT(ptr) ||
+		 (VARATT_CAN_MAKE_SHORT(ptr) &&
+		  typid != INT2VECTOROID &&
+		  typid != OIDVECTOROID &&
+		  typid < FirstNormalObjectId));
 }
 #endif
