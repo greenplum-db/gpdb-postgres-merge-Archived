@@ -41,13 +41,10 @@ typedef struct IndexVacuumInfo
 	bool		vacuum_full;	/* VACUUM FULL (we have exclusive lock) */
 	int			message_level;	/* ereport level for progress messages */
 	double		num_heap_tuples;	/* tuples remaining in heap */
-<<<<<<< HEAD
+	BufferAccessStrategy strategy;		/* access strategy for reads */
 	List        *extra_oids;    /* For bitmap indexes: store three relfilenode oids
 								 * for reindexing a bitmap index.
 								 */
-=======
-	BufferAccessStrategy strategy;		/* access strategy for reads */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } IndexVacuumInfo;
 
 /*

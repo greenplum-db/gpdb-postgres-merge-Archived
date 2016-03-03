@@ -3,10 +3,7 @@
  * clausesel.c
  *	  Routines to compute clause selectivities
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -139,7 +136,7 @@ clauselist_selectivity(PlannerInfo *root,
 	 */
 	if (list_length(clauses) == 1)
 		return clause_selectivity(root, (Node *) linitial(clauses),
-								  varRelid, jointype);
+								  varRelid, jointype, use_damping);
 
 	/*
 	 * Initial scan over clauses.  Anything that doesn't look like a potential

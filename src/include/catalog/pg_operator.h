@@ -419,15 +419,9 @@ DATA(insert OID =  793 (  "<"	   PGNSP PGUID b f f	602  602	 16  794  0 path_n_l
 DATA(insert OID =  794 (  ">"	   PGNSP PGUID b f f	602  602	 16  793  0 path_n_gt - - ));
 DATA(insert OID =  795 (  "<="	   PGNSP PGUID b f f	602  602	 16  796  0 path_n_le - - ));
 DATA(insert OID =  796 (  ">="	   PGNSP PGUID b f f	602  602	 16  795  0 path_n_ge - - ));
-<<<<<<< HEAD
-DATA(insert OID =  797 (  "#"	   PGNSP PGUID l f f	0  602	 23    0  0 path_npoints - - ));
-DATA(insert OID =  798 (  "?#"	   PGNSP PGUID b f f	602  602	 16    0  0 path_inter - - ));
-DATA(insert OID =  799 (  "@-@"    PGNSP PGUID l f f	0  602	701    0  0 path_length - - ));
-=======
 DATA(insert OID =  797 (  "#"	   PGNSP PGUID l f f	0	 602	 23    0  0 path_npoints - - ));
 DATA(insert OID =  798 (  "?#"	   PGNSP PGUID b f f	602  602	 16    0  0 path_inter - - ));
 DATA(insert OID =  799 (  "@-@"    PGNSP PGUID l f f	0	 602	701    0  0 path_length - - ));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 DATA(insert OID =  800 (  ">^"	   PGNSP PGUID b f f	603  603	 16    0  0 box_above_eq positionsel positionjoinsel ));
 DATA(insert OID =  801 (  "<^"	   PGNSP PGUID b f f	603  603	 16    0  0 box_below_eq positionsel positionjoinsel ));
 DATA(insert OID =  802 (  "?#"	   PGNSP PGUID b f f	603  603	 16    0  0 box_overlap areasel areajoinsel ));
@@ -741,10 +735,7 @@ DATA(insert OID = 1630 (  "!~~*"  PGNSP PGUID b f f  1042 25	16 0 1629 bpcharicn
 /* NUMERIC type - OID's 1700-1799 */
 DATA(insert OID = 1751 (  "-"	   PGNSP PGUID l f f	0 1700 1700    0	0 numeric_uminus - - ));
 DATA(insert OID = 1752 (  "="	   PGNSP PGUID b t t 1700 1700	 16 1752 1753 numeric_eq eqsel eqjoinsel ));
-<<<<<<< HEAD
 #define NumericEqualOperator 1752
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 DATA(insert OID = 1753 (  "<>"	   PGNSP PGUID b f f 1700 1700	 16 1753 1752 numeric_ne neqsel neqjoinsel ));
 DATA(insert OID = 1754 (  "<"	   PGNSP PGUID b f f 1700 1700	 16 1756 1757 numeric_lt scalarltsel scalarltjoinsel ));
 DATA(insert OID = 1755 (  "<="	   PGNSP PGUID b f f 1700 1700	 16 1757 1756 numeric_le scalarltsel scalarltjoinsel ));

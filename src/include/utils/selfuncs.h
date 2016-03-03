@@ -119,11 +119,7 @@ extern double convert_timevalue_to_scalar(Datum value, Oid typid);
 extern Pattern_Prefix_Status pattern_fixed_prefix(Const *patt,
 					 Pattern_Type ptype,
 					 Const **prefix,
-<<<<<<< HEAD
-					 Const **rest);
-=======
 					 Selectivity *rest_selec);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern Const *make_greater_string(const Const *str_const, FmgrInfo *ltproc);
 
 extern Datum eqsel(PG_FUNCTION_ARGS);
