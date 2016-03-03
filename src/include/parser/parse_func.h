@@ -88,10 +88,8 @@ extern Oid LookupFuncNameTypeNames(List *funcname, List *argtypes,
 extern Oid LookupAggNameTypeNames(List *aggname, List *argtypes,
 					   bool noError);
 
-<<<<<<< HEAD
-extern void parseCheckTableFunctions(ParseState *pstate, Query *qry);
-=======
 extern void check_pg_get_expr_args(ParseState *pstate, Oid fnoid, List *args);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+
+extern void parseCheckTableFunctions(ParseState *pstate, Query *qry);
 
 #endif   /* PARSE_FUNC_H */

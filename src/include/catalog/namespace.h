@@ -34,10 +34,6 @@ typedef struct _FuncCandidateList
 	Oid			args[1];		/* arg types --- VARIABLE LENGTH ARRAY */
 }	*FuncCandidateList;	/* VARIABLE LENGTH STRUCT */
 
-<<<<<<< HEAD
-typedef void (*RangeVarGetRelidCallback) (const RangeVar *relation, Oid relId,
-										   Oid oldRelId, void *callback_arg);
-=======
 /*
  *	Structure for xxxOverrideSearchPath functions
  */
@@ -48,7 +44,8 @@ typedef struct OverrideSearchPath
 	bool		addTemp;		/* implicitly prepend temp schema? */
 } OverrideSearchPath;
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+typedef void (*RangeVarGetRelidCallback) (const RangeVar *relation, Oid relId,
+										   Oid oldRelId, void *callback_arg);
 
 extern Oid	RangeVarGetRelid(const RangeVar *relation, bool failOK);
 extern Oid  RangeVarGetRelidExtended(const RangeVar *relation,

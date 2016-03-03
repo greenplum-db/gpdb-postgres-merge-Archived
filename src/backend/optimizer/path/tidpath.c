@@ -187,13 +187,8 @@ TidQualFromExpr(Node *expr, int varno)
 	else if (expr && IsA(expr, CurrentOfExpr))
 	{
 		/* another base case: check for CURRENT OF on this rel */
-<<<<<<< HEAD
-		Insist(((CurrentOfExpr *) expr)->cvarno == varno);
-		rlst = list_make1(expr);
-=======
 		if (((CurrentOfExpr *) expr)->cvarno == varno)
 			rlst = list_make1(expr);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 	else if (and_clause(expr))
 	{

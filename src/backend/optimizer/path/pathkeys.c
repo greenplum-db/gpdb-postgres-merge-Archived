@@ -7,10 +7,7 @@
  * the nature and use of path keys.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -41,18 +38,6 @@
 #include "cdb/cdbdef.h"         /* CdbSwap() */
 #include "cdb/cdbpullup.h"      /* cdbpullup_expr(), cdbpullup_make_var() */
 
-<<<<<<< HEAD
-/*
- * If an EC contains a const and isn't below-outer-join, any PathKey depending
- * on it must be redundant, since there's only one possible value of the key.
- */
-#define MUST_BE_REDUNDANT(eclass)  \
-	((eclass)->ec_has_const && !(eclass)->ec_below_outer_join)
-
-=======
-static PathKey *makePathKey(EquivalenceClass *eclass, Oid opfamily,
-			int strategy, bool nulls_first);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static PathKey *make_canonical_pathkey(PlannerInfo *root,
 					   EquivalenceClass *eclass, Oid opfamily,
 					   int strategy, bool nulls_first);
@@ -62,12 +47,7 @@ static PathKey *make_pathkey_from_sortinfo(PlannerInfo *root,
 						   bool nulls_first,
 						   Index sortref,
 						   bool canonicalize);
-<<<<<<< HEAD
-=======
-static Var *find_indexkey_var(PlannerInfo *root, RelOptInfo *rel,
-				  AttrNumber varattno);
 static bool right_merge_direction(PlannerInfo *root, PathKey *pathkey);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 /****************************************************************************
@@ -1226,7 +1206,7 @@ cdb_make_pathkey_for_expr(PlannerInfo    *root,
 		if (strategy)
 			break;
 	}
-	eclass = get_eclass_for_sort_expr(root, (Expr *) expr, typeoid, mergeopfamilies);
+	eclass = get_eclass_for_sort_expr(root, (Expr *) expr, typeoid, mergeopfamilies, 0);
 	if (!canonical)
 		pk = makePathKey(eclass, opfamily, strategy, false);
 	else
@@ -1322,7 +1302,8 @@ cdb_pull_up_pathkey(PlannerInfo    *root,
 	outer_ec = get_eclass_for_sort_expr(root,
 										newexpr,
 										exprType((Node *) newexpr),
-										pathkey->pk_eclass->ec_opfamilies);
+										pathkey->pk_eclass->ec_opfamilies,
+										0);
 
     /* Find or create the equivalence class for the transformed expr. */
     return make_canonical_pathkey(root,
@@ -1424,7 +1405,7 @@ make_pathkeys_for_groupclause(PlannerInfo *root,
 		{
 			GroupClause *gc = (GroupClause*) node;
 			sortkey = (Expr *) get_sortgroupclause_expr(gc, tlist);
-			pathkey = make_pathkey_from_sortinfo(root, sortkey, gc->sortop, gc->nulls_first, false);
+			pathkey = make_pathkey_from_sortinfo(root, sortkey, gc->sortop, gc->nulls_first, false, 0);
 
 			/*
 			 * Similar to SortClauses, the pathkey becomes a one-elment sublist.
