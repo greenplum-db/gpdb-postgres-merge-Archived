@@ -4,18 +4,11 @@
  *	  prototypes for files in optimizer/prep/
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/prep.h,v 1.57.2.1 2008/11/11 18:13:54 tgl Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
  * $PostgreSQL: pgsql/src/include/optimizer/prep.h,v 1.59.2.1 2008/11/11 18:13:44 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -60,12 +53,4 @@ extern void expand_inherited_tables(PlannerInfo *root);
 
 extern Node *adjust_appendrel_attrs(PlannerInfo *root, Node *node, AppendRelInfo *appinfo);
 
-<<<<<<< HEAD
-extern Relids *adjust_appendrel_attr_needed(PlannerInfo *root, RelOptInfo *oldrel,
-							 AppendRelInfo *appinfo,
-							 AttrNumber new_min_attr,
-							 AttrNumber new_max_attr);
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif   /* PREP_H */

@@ -86,9 +86,6 @@ extern PGDLLIMPORT SnapshotData SnapshotSelfData;
 extern PGDLLIMPORT SnapshotData SnapshotAnyData;
 extern PGDLLIMPORT SnapshotData SnapshotToastData;
 
-<<<<<<< HEAD
-extern PGDLLIMPORT Snapshot SnapshotDirty;
-=======
 #define SnapshotNow			(&SnapshotNowData)
 #define SnapshotSelf		(&SnapshotSelfData)
 #define SnapshotAny			(&SnapshotAnyData)
@@ -101,7 +98,6 @@ extern PGDLLIMPORT Snapshot SnapshotDirty;
  */
 #define InitDirtySnapshot(snapshotdata)  \
 	((snapshotdata).satisfies = HeapTupleSatisfiesDirty)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* This macro encodes the knowledge of which snapshots are MVCC-safe */
 #define IsMVCCSnapshot(snapshot)  \
@@ -116,7 +112,6 @@ extern TransactionId TransactionXmin;
 extern TransactionId RecentXmin;
 extern TransactionId RecentGlobalXmin;
 
-<<<<<<< HEAD
 /* MPP Shared Snapshot */
 typedef struct SharedSnapshotSlot
 {
@@ -141,8 +136,6 @@ typedef struct SharedSnapshotSlot
 
 extern volatile SharedSnapshotSlot *SharedLocalSnapshotSlot;
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * HeapTupleSatisfiesVisibility
  *		True iff heap tuple satisfies a time qual.
@@ -150,42 +143,14 @@ extern volatile SharedSnapshotSlot *SharedLocalSnapshotSlot;
  * Notes:
  *	Assumes heap tuple is valid.
  *	Beware of multiple evaluations of snapshot argument.
-<<<<<<< HEAD
- *	Hint bits in the HeapTuple's t_infomask may be updated as a side effect.
+ *	Hint bits in the HeapTuple's t_infomask may be updated as a side effect;
+ *	if so, the indicated buffer is marked dirty.
  *
  *   GP: The added relation parameter helps us decide if we are going to set tuple hint
  *   bits.  If it is null, we ignore the gp_disable_tuple_hints GUC.
- *
- */
-#define HeapTupleSatisfiesVisibility(relation, tuple, snapshot, buffer) \
-((snapshot) == SnapshotNow ? \
-	HeapTupleSatisfiesNow(relation, (tuple)->t_data, buffer) \
-: \
-	((snapshot) == SnapshotSelf ? \
-		HeapTupleSatisfiesItself(relation, (tuple)->t_data, buffer) \
-	: \
-		((snapshot) == SnapshotAny ? \
-			true \
-		: \
-			((snapshot) == SnapshotToast ? \
-				HeapTupleSatisfiesToast(relation, (tuple)->t_data, buffer) \
-			: \
-				((snapshot) == SnapshotDirty ? \
-					HeapTupleSatisfiesDirty(relation, (tuple)->t_data, buffer) \
-				: \
-					HeapTupleSatisfiesSnapshot(relation, (tuple)->t_data, snapshot, buffer) \
-				) \
-			) \
-		) \
-	) \
-)
-=======
- *	Hint bits in the HeapTuple's t_infomask may be updated as a side effect;
- *	if so, the indicated buffer is marked dirty.
  */
 #define HeapTupleSatisfiesVisibility(tuple, snapshot, buffer) \
 	((*(snapshot)->satisfies) ((tuple)->t_data, snapshot, buffer))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* Result codes for HeapTupleSatisfiesUpdate */
 typedef enum
