@@ -50,10 +50,7 @@
  * the non-cost fields of the passed XXXPath to be filled in.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -110,13 +107,8 @@ typedef struct
 } cost_qual_eval_context;
 
 static MergeScanSelCache *cached_scansel(PlannerInfo *root,
-<<<<<<< HEAD
-										 RestrictInfo *rinfo,
-										 PathKey *pathkey);
-=======
 			   RestrictInfo *rinfo,
 			   PathKey *pathkey);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static bool cost_qual_eval_walker(Node *node, cost_qual_eval_context *context);
 static Selectivity approx_selectivity(PlannerInfo *root, List *quals,
 				   JoinType jointype);
@@ -1342,18 +1334,13 @@ cost_sort(Path *path, PlannerInfo *root,
 {
 	Cost		startup_cost = input_cost;
 	Cost		run_cost = 0;
-<<<<<<< HEAD
-	double		nbytes = relation_byte_size(tuples, width);
-	long		work_mem_bytes = (long) global_work_mem(root);
-=======
 	double		input_bytes = relation_byte_size(tuples, width);
 	double		output_bytes;
 	double		output_tuples;
-	long		work_mem_bytes = work_mem * 1024L;
+	long		work_mem_bytes = (long) global_work_mem(root);
 
 	if (!enable_sort)
 		startup_cost += disable_cost;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * We want to be sure the cost of a sort is never estimated as zero, even
@@ -1852,8 +1839,6 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 	Selectivity joininfactor;
 	Path		sort_path;		/* dummy for result of cost_sort */
 
-<<<<<<< HEAD
-=======
 	/* Protect some assumptions below that rowcounts aren't zero */
 	if (outer_path_rows <= 0)
 		outer_path_rows = 1;
@@ -1863,7 +1848,6 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 	if (!enable_mergejoin)
 		startup_cost += disable_cost;
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/*
 	 * Compute cost and selectivity of the mergequals and qpquals (other
 	 * restriction clauses) separately.  We use approx_selectivity here for
@@ -1973,18 +1957,13 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 			innerstartsel = cache->leftstartsel;
 			innerendsel = cache->leftendsel;
 		}
-<<<<<<< HEAD
 		if (path->jpath.jointype == JOIN_LEFT || 
 			path->jpath.jointype == JOIN_LASJ ||
 			path->jpath.jointype == JOIN_LASJ_NOTIN)
-			outerscansel = 1.0;
-=======
-		if (path->jpath.jointype == JOIN_LEFT)
 		{
 			outerstartsel = 0.0;
 			outerendsel = 1.0;
 		}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		else if (path->jpath.jointype == JOIN_RIGHT)
 		{
 			innerstartsel = 0.0;
@@ -2468,10 +2447,7 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 			locContext.root = context->root;
 			locContext.total.startup = 0;
 			locContext.total.per_tuple = 0;
-<<<<<<< HEAD
-=======
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			/*
 			 * For an OR clause, recurse into the marked-up tree so that we
 			 * set the eval_cost for contained RestrictInfos too.
@@ -2480,10 +2456,7 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 				cost_qual_eval_walker((Node *) rinfo->orclause, &locContext);
 			else
 				cost_qual_eval_walker((Node *) rinfo->clause, &locContext);
-<<<<<<< HEAD
-=======
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			/*
 			 * If the RestrictInfo is marked pseudoconstant, it will be tested
 			 * only once, so treat its cost as all startup cost.
@@ -2684,8 +2657,6 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 	/* recurse into children */
 	return expression_tree_walker(node, cost_qual_eval_walker,
 								  (void *) context);
-<<<<<<< HEAD
-=======
 }
 
 
@@ -2723,7 +2694,6 @@ get_initplan_cost(PlannerInfo *root, SubPlan *subplan)
 	}
 
 	return result;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 

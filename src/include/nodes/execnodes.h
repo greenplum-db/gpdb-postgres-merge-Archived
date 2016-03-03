@@ -4,12 +4,8 @@
  *	  definitions for executor state nodes
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.183.2.1 2010/07/28 04:51:14 tgl Exp $
@@ -80,7 +76,7 @@ typedef struct IndexInfo
 	bool		ii_Unique;
 	bool		ii_ReadyForInserts;
 	bool		ii_Concurrent;
-<<<<<<< HEAD
+	bool		ii_BrokenHotChain;
 
 	/* Additional info needed by index creation.
 	 * Used for
@@ -90,9 +86,6 @@ typedef struct IndexInfo
 	 */
 	void       *opaque;
 
-=======
-	bool		ii_BrokenHotChain;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } IndexInfo;
 
 typedef struct IndexInfoOpaque
@@ -556,30 +549,25 @@ typedef struct EState
 	ResultRelInfo *es_result_relation_info;		/* currently active array elt */
 	JunkFilter *es_junkFilter;	/* currently active junk filter */
 
-<<<<<<< HEAD
+	/* Stuff used for firing triggers: */
+	List	   *es_trig_target_relations;		/* trigger-only ResultRelInfos */
+
 	/* partitioning info for target relation */
 	PartitionNode *es_result_partitions;
 
 	/* AO fileseg info for target relation */
 	List	   *es_result_aosegnos;
 
-=======
-	/* Stuff used for firing triggers: */
-	List	   *es_trig_target_relations;		/* trigger-only ResultRelInfos */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	TupleTableSlot *es_trig_tuple_slot; /* for trigger output tuples */
 
 	/* Stuff used for SELECT INTO: */
 	Relation	es_into_relation_descriptor;
-<<<<<<< HEAD
+	bool		es_into_relation_use_wal;
 	bool		es_into_relation_is_bulkload;
 
 	ItemPointerData es_into_relation_last_heap_tid;
 
 	struct MirroredBufferPoolBulkLoadInfo *es_into_relation_bulkloadinfo;
-=======
-	bool		es_into_relation_use_wal;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Parameter info: */
 	ParamListInfo es_param_list_info;	/* values of external params */
@@ -1088,14 +1076,8 @@ typedef struct SubPlanState
 	struct PlanState *planstate;	/* subselect plan's state tree */
 	ExprState  *testexpr;		/* state of combining expression */
 	List	   *args;			/* states of argument expression(s) */
-<<<<<<< HEAD
-	bool		needShutdown;	/* TRUE = need to shutdown subplan */
-
 	struct MemTupleData *curTuple;                /* copy of most recent tuple from subplan */
-=======
-	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */
 	Datum		curArray;		/* most recent array from ARRAY() subplan */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/* these are used when hashing the subselect's output: */
 	ProjectionInfo *projLeft;	/* for projecting lefthand exprs */
 	ProjectionInfo *projRight;	/* for projecting subselect output */
@@ -1103,16 +1085,9 @@ typedef struct SubPlanState
 	TupleHashTable hashnulls;	/* hash table for rows with null(s) */
 	bool		havehashrows;	/* TRUE if hashtable is not empty */
 	bool		havenullrows;	/* TRUE if hashnulls is not empty */
-<<<<<<< HEAD
-
-	MemoryContext hashtablecxt;	/* memory context containing hash tables */
-	MemoryContext hashtempcxt;	/* temp memory context for hash tables */
-	ExprContext *innerecontext;	/* working context for comparisons */
-=======
 	MemoryContext hashtablecxt;	/* memory context containing hash tables */
 	MemoryContext hashtempcxt;	/* temp memory context for hash tables */
 	ExprContext *innerecontext; /* econtext for computing inner tuples */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	AttrNumber *keyColIdx;		/* control data for hash tables */
 	FmgrInfo   *tab_hash_funcs; /* hash functions for table datatype(s) */
 	FmgrInfo   *tab_eq_funcs;	/* equality functions for table datatype(s) */
@@ -1874,12 +1849,8 @@ typedef struct SubqueryScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
 	PlanState  *subplan;
-<<<<<<< HEAD
-	EState	   *sss_SubEState;
 	bool		cdb_want_ctid;	/* true => ctid is referenced in targetlist */
 	ItemPointerData cdb_fake_ctid;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } SubqueryScanState;
 
 /* ----------------
@@ -2318,18 +2289,15 @@ typedef struct SortState
 	bool		bounded;		/* is the result set bounded? */
 	int64		bound;			/* if bounded, how many tuples are needed */
 	bool		sort_Done;		/* sort completed yet? */
-<<<<<<< HEAD
+	bool		bounded_Done;	/* value of bounded we did the sort with */
+	int64		bound_Done;		/* value of bound we did the sort with */
 	GenericTupStore *tuplesortstate; /* private state of tuplesort.c */
 	/* CDB */ /* limit state */
+
+	/* GPDB_83MERGE_FIXME: Are these redundant with the "bound" fields? */
 	ExprState  *limitOffset;	/* OFFSET parameter, or NULL if none */
 	ExprState  *limitCount;		/* COUNT parameter, or NULL if none */
 	bool		noduplicates;	/* true if discard duplicate rows */
-=======
-	bool		bounded_Done;	/* value of bounded we did the sort with */
-	int64		bound_Done;		/* value of bound we did the sort with */
-	void	   *tuplesortstate; /* private state of tuplesort.c */
-} SortState;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	void	   *share_lk_ctxt;
 

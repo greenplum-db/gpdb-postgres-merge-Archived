@@ -10,17 +10,10 @@
  *	  Over time, this has also become the preferred place for widely known
  *	  resource-limitation stuff, such as work_mem and check_stack_depth().
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.194 2007/04/16 18:29:56 alvherre Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
  * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.199.2.1 2009/12/09 21:58:17 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -30,12 +23,8 @@
 #ifndef MISCADMIN_H
 #define MISCADMIN_H
 
-<<<<<<< HEAD
 #include "pgtime.h"				/* for pg_time_t */
-=======
-#include <time.h>				/* for time_t */
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #define PG_VERSIONSTR "postgres (Greenplum Database) " PG_VERSION "\n"
 #define PG_BACKEND_VERSIONSTR "postgres (Greenplum Database) " PG_VERSION "\n"
@@ -93,15 +82,10 @@ extern volatile bool ClientConnectionLost;
 
 /* these are marked volatile because they are examined by signal handlers: */
 extern volatile bool ImmediateInterruptOK;
-<<<<<<< HEAD
 extern volatile bool ImmediateDieOK;
 extern volatile bool TermSignalReceived;
 extern PGDLLIMPORT volatile int32 InterruptHoldoffCount;
 extern PGDLLIMPORT volatile int32 CritSectionCount;
-=======
-extern PGDLLIMPORT volatile uint32 InterruptHoldoffCount;
-extern PGDLLIMPORT volatile uint32 CritSectionCount;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* in tcop/postgres.c */
 extern void ProcessInterrupts(void);
@@ -221,16 +205,10 @@ extern PGDLLIMPORT char *DataDir;
 extern PGDLLIMPORT int NBuffers;
 extern int	MaxBackends;
 extern int	MaxConnections;
-<<<<<<< HEAD
 extern int gp_workfile_max_entries;
 
 extern PGDLLIMPORT int MyProcPid;
 extern PGDLLIMPORT pg_time_t MyStartTime;
-=======
-
-extern PGDLLIMPORT int MyProcPid;
-extern PGDLLIMPORT time_t MyStartTime;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern PGDLLIMPORT struct Port *MyProcPort;
 extern long MyCancelKey;
 extern int	MyPMChildSlot;
@@ -258,14 +236,8 @@ extern PGDLLIMPORT bool  pljava_release_lingering_savepoints;
  * extern BackendId    MyBackendId;
  */
 extern PGDLLIMPORT Oid MyDatabaseId;
-<<<<<<< HEAD
 
 extern PGDLLIMPORT Oid MyDatabaseTableSpace;
-
-=======
-
-extern PGDLLIMPORT Oid MyDatabaseTableSpace;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * Date/Time Configuration
@@ -330,7 +302,6 @@ extern int	CTimeZone;
 #define MAXTZLEN		10		/* max TZ name len, not counting tr. null */
 
 extern bool enableFsync;
-<<<<<<< HEAD
 extern bool allowSystemTableModsDDL;
 extern bool allowSystemTableModsDML;
 extern PGDLLIMPORT int planner_work_mem;
@@ -340,11 +311,6 @@ extern PGDLLIMPORT int maintenance_work_mem;
 extern PGDLLIMPORT int statement_mem;
 extern PGDLLIMPORT int max_statement_mem;
 extern PGDLLIMPORT int gp_vmem_limit_per_query;
-=======
-extern bool allowSystemTableMods;
-extern PGDLLIMPORT int work_mem;
-extern PGDLLIMPORT int maintenance_work_mem;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 extern int	VacuumCostPageHit;
 extern int	VacuumCostPageMiss;
@@ -393,12 +359,9 @@ extern char *GetUserNameFromId(Oid roleid);
 extern Oid	GetUserId(void);
 extern Oid	GetOuterUserId(void);
 extern Oid	GetSessionUserId(void);
-<<<<<<< HEAD
 extern void 	SetSessionUserId(Oid, bool);
 extern Oid	GetAuthenticatedUserId(void);
 extern bool IsAuthenticatedUserSuperUser(void);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern void GetUserIdAndSecContext(Oid *userid, int *sec_context);
 extern void SetUserIdAndSecContext(Oid userid, int sec_context);
 extern bool InLocalUserIdChange(void);
