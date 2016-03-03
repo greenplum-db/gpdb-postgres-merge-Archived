@@ -195,7 +195,8 @@ extern Repeat *make_repeat(List *tlist,
 extern bool is_projection_capable_plan(Plan *plan);
 extern Plan *add_sort_cost(PlannerInfo *root, Plan *input, 
 						   int numCols, 
-						   AttrNumber *sortColIdx, Oid *sortOperators);
+						   AttrNumber *sortColIdx, Oid *sortOperators,
+						   double limit_tuples);
 extern Plan *add_agg_cost(PlannerInfo *root, Plan *plan, 
 		 List *tlist, List *qual,
 		 AggStrategy aggstrategy, 
@@ -203,7 +204,7 @@ extern Plan *add_agg_cost(PlannerInfo *root, Plan *plan,
 		 int numGroupCols, AttrNumber *grpColIdx,
 		 long numGroups, int num_nullcols,
 		 int numAggs, int transSpace);
-extern Plan *plan_pushdown_tlist(Plan *plan, List *tlist);      /*CDB*/
+extern Plan *plan_pushdown_tlist(PlannerInfo *root, Plan *plan, List *tlist);      /*CDB*/
 
 /*
  * prototypes for plan/initsplan.c
@@ -233,6 +234,7 @@ extern void distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 						Relids qualscope,
 						Relids ojscope,
 						Relids outerjoin_nonnullable,
+						Relids deduced_nullable_relids,
 						List **postponed_qual_list);
 extern RestrictInfo *build_implied_join_equality(Oid opno,
 							Expr *item1,
