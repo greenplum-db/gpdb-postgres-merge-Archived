@@ -3,10 +3,7 @@
  * joinpath.c
  *	  Routines to find all possible paths for processing a set of joins
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -93,21 +90,12 @@ add_paths_to_joinrel(PlannerInfo *root,
      *
      * CDB: Always build mergeclause_list.  We need it for motion planning.
 	 */
-<<<<<<< HEAD
-	mergeclause_list = select_mergejoin_clauses(joinrel,
+	mergeclause_list = select_mergejoin_clauses(root,
+												joinrel,
 												outerrel,
 												innerrel,
 												restrictlist,
 												jointype);
-=======
-	if (enable_mergejoin || jointype == JOIN_FULL)
-		mergeclause_list = select_mergejoin_clauses(root,
-													joinrel,
-													outerrel,
-													innerrel,
-													restrictlist,
-													jointype);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * 1. Consider mergejoin paths where both relations must be explicitly
@@ -527,31 +515,13 @@ match_unsorted_outer(PlannerInfo *root,
 											  restrictlist,
                                               mergeclause_list,     /*CDB*/
 											  merge_pathkeys));
-<<<<<<< HEAD
 			if (index_cheapest_startup != NULL &&
 				index_cheapest_startup != index_cheapest_total)
 				add_path(root, joinrel, (Path *)
-=======
-			if (index_cheapest_total != NULL)
-				add_path(joinrel, (Path *)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 						 create_nestloop_path(root,
 											  joinrel,
 											  jointype,
 											  outerpath,
-<<<<<<< HEAD
-=======
-											  index_cheapest_total,
-											  restrictlist,
-											  merge_pathkeys));
-			if (index_cheapest_startup != NULL &&
-				index_cheapest_startup != index_cheapest_total)
-				add_path(joinrel, (Path *)
-						 create_nestloop_path(root,
-											  joinrel,
-											  jointype,
-											  outerpath,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 											  index_cheapest_startup,
 											  restrictlist,
                                               mergeclause_list,

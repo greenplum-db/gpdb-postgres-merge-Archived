@@ -4,10 +4,7 @@
  *	  Declarations for operations on built-in types.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -614,11 +611,7 @@ extern char *deparse_expr_sweet(Node *expr, List *dpcontext,
 extern List *deparse_context_for(const char *aliasname, Oid relid);
 extern List *deparse_context_for_plan(Node *outer_plan, Node *inner_plan,
 						 List *rtable);
-<<<<<<< HEAD
-extern Node *deparse_context_for_subplan(const char *name, Node *subplan);
 extern const char *quote_literal_internal(const char *literal);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern const char *quote_identifier(const char *ident);
 extern char *quote_qualified_identifier(const char *qualifier,
 						   const char *ident);
@@ -1000,7 +993,7 @@ extern Datum int8_avg(PG_FUNCTION_ARGS);
 extern Datum float8_avg(PG_FUNCTION_ARGS);
 extern Datum width_bucket_numeric(PG_FUNCTION_ARGS);
 extern Datum hash_numeric(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
+
 extern Datum numeric_amalg(PG_FUNCTION_ARGS); /* MPP */
 extern Datum int8_avg_amalg(PG_FUNCTION_ARGS); /* MPP */
 extern Datum float8_avg_amalg(PG_FUNCTION_ARGS); /* MPP */
@@ -1009,8 +1002,6 @@ extern Datum numeric_demalg(PG_FUNCTION_ARGS); /* MPP */
 extern Datum int8_avg_demalg(PG_FUNCTION_ARGS); /* MPP */
 extern Datum float8_avg_demalg(PG_FUNCTION_ARGS); /* MPP */
 extern Datum numeric_avg_demalg(PG_FUNCTION_ARGS); /* MPP */
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* ri_triggers.c */
 extern Datum RI_FKey_check_ins(PG_FUNCTION_ARGS);
@@ -1035,10 +1026,6 @@ extern Datum PG_char_to_encoding(PG_FUNCTION_ARGS);
 extern Datum PG_character_set_name(PG_FUNCTION_ARGS);
 extern Datum PG_character_set_id(PG_FUNCTION_ARGS);
 extern Datum pg_convert(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
-extern Datum pg_convert2(PG_FUNCTION_ARGS);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern Datum pg_convert_to(PG_FUNCTION_ARGS);
 extern Datum pg_convert_from(PG_FUNCTION_ARGS);
 extern Datum length_in_encoding(PG_FUNCTION_ARGS);
