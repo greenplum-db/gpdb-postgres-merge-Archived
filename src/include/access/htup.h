@@ -4,12 +4,8 @@
  *	  POSTGRES heap tuple definitions.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.98 2008/01/01 19:45:56 momjian Exp $
@@ -192,9 +188,7 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 /*
  * information stored in t_infomask2:
  */
-<<<<<<< HEAD
-#define HEAP_NATTS_MASK			0x7FF	/* 11 bits for number of attributes */
-
+#define HEAP_NATTS_MASK			0x07FF	/* 11 bits for number of attributes */
 #define HEAP_XMIN_DISTRIBUTED_SNAPSHOT_IGNORE		0x0800	
 										/* t_xmin is either an old committed 
 										 * distributed transaction or local.
@@ -203,15 +197,10 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 										 */
 #define HEAP_XMAX_DISTRIBUTED_SNAPSHOT_IGNORE		0x1000
 										/* t_xmax same as above. */
-/* bits 0xE000 are currently unused */
-=======
-#define HEAP_NATTS_MASK			0x07FF	/* 11 bits for number of attributes */
-/* bits 0x3800 are available */
 #define HEAP_HOT_UPDATED		0x4000	/* tuple was HOT-updated */
 #define HEAP_ONLY_TUPLE			0x8000	/* this is heap-only tuple */
 
 #define HEAP2_XACT_MASK			0xC000	/* visibility-related bits */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * HeapTupleHeader accessor macros
@@ -369,6 +358,7 @@ do { \
 	(tup)->t_infomask2 = ((tup)->t_infomask2 & ~HEAP_NATTS_MASK) | (natts) \
 )
 
+
 /*
  * BITMAPLEN(NATTS) -
  *		Computes size of null bitmap given number of data columns.
@@ -411,22 +401,6 @@ do { \
  * at 10Mb which seems like a reasonable number --- tgl 8/6/00.
  */
 #define MaxAttrSize		(10 * 1024 * 1024)
-
-
-/*
-<<<<<<< HEAD
-=======
- * Attribute numbers for the system-defined attributes
- */
-#define SelfItemPointerAttributeNumber			(-1)
-#define ObjectIdAttributeNumber					(-2)
-#define MinTransactionIdAttributeNumber			(-3)
-#define MinCommandIdAttributeNumber				(-4)
-#define MaxTransactionIdAttributeNumber			(-5)
-#define MaxCommandIdAttributeNumber				(-6)
-#define TableOidAttributeNumber					(-7)
-#define FirstLowInvalidHeapAttributeNumber		(-8)
-
 
 /*
  * MinimalTuple is an alternative representation that is used for transient
@@ -485,7 +459,6 @@ typedef MinimalTupleData *MinimalTuple;
 
 
 /*
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * HeapTupleData is an in-memory data structure that points to a tuple.
  *
  * There are several ways in which this data structure is used:
