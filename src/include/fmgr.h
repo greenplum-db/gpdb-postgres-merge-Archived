@@ -8,17 +8,10 @@
  * or call fmgr-callable functions.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.62 2009/01/01 17:23:55 momjian Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.57 2008/01/01 19:45:56 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -434,7 +427,6 @@ typedef const Pg_magic_struct *(*PGModuleMagicFunction) (void);
 #define PG_MAGIC_FUNCTION_NAME Pg_magic_func
 #define PG_MAGIC_FUNCTION_NAME_STRING "Pg_magic_func"
 
-<<<<<<< HEAD
 /*
  * magic function name for C++ dynamic libraries;
  * we need a different name to avoid duplicate symbol problems
@@ -444,10 +436,6 @@ typedef const Pg_magic_struct *(*PGModuleMagicFunction) (void);
 
 #define PG_MAGIC_FUNC(func) \
 extern PGDLLIMPORT const Pg_magic_struct *func(void); \
-=======
-#define PG_MODULE_MAGIC \
-extern PGDLLIMPORT const Pg_magic_struct *PG_MAGIC_FUNCTION_NAME(void); \
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 const Pg_magic_struct * \
 func(void) \
 { \
