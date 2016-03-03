@@ -3,12 +3,8 @@
  * syscache.c
  *	  System cache management routines
  *
-<<<<<<< HEAD
  * Copyright (c) 2007-2010, Greenplum inc
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -332,12 +328,8 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		4
 	},
-<<<<<<< HEAD
-	{IndexRelationId,					/* INDEXRELID */
-=======
 	{EnumRelationId,			/* ENUMOID */
 		EnumOidIndexId,
-		0,
 		1,
 		{
 			ObjectIdAttributeNumber,
@@ -349,7 +341,6 @@ static const struct cachedesc cacheinfo[] = {
 	},
 	{EnumRelationId,			/* ENUMTYPOIDNAME */
 		EnumTypIdLabelIndexId,
-		0,
 		2,
 		{
 			Anum_pg_enum_enumtypid,
@@ -359,8 +350,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		256
 	},
-	{IndexRelationId,			/* INDEXRELID */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	{IndexRelationId,					/* INDEXRELID */
 		IndexRelidIndexId,
 		1,
 		{
@@ -547,12 +537,8 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		1024
 	},
-<<<<<<< HEAD
-	{TypeRelationId,					/* TYPENAMENSP */
-=======
 	{TSConfigMapRelationId,		/* TSCONFIGMAP */
 		TSConfigMapIndexId,
-		0,
 		3,
 		{
 			Anum_pg_ts_config_map_mapcfg,
@@ -564,7 +550,6 @@ static const struct cachedesc cacheinfo[] = {
 	},
 	{TSConfigRelationId,		/* TSCONFIGNAMENSP */
 		TSConfigNameNspIndexId,
-		0,
 		2,
 		{
 			Anum_pg_ts_config_cfgname,
@@ -576,7 +561,6 @@ static const struct cachedesc cacheinfo[] = {
 	},
 	{TSConfigRelationId,		/* TSCONFIGOID */
 		TSConfigOidIndexId,
-		0,
 		1,
 		{
 			ObjectIdAttributeNumber,
@@ -588,7 +572,6 @@ static const struct cachedesc cacheinfo[] = {
 	},
 	{TSDictionaryRelationId,	/* TSDICTNAMENSP */
 		TSDictionaryNameNspIndexId,
-		0,
 		2,
 		{
 			Anum_pg_ts_dict_dictname,
@@ -600,7 +583,6 @@ static const struct cachedesc cacheinfo[] = {
 	},
 	{TSDictionaryRelationId,	/* TSDICTOID */
 		TSDictionaryOidIndexId,
-		0,
 		1,
 		{
 			ObjectIdAttributeNumber,
@@ -612,7 +594,6 @@ static const struct cachedesc cacheinfo[] = {
 	},
 	{TSParserRelationId,		/* TSPARSERNAMENSP */
 		TSParserNameNspIndexId,
-		0,
 		2,
 		{
 			Anum_pg_ts_parser_prsname,
@@ -624,7 +605,6 @@ static const struct cachedesc cacheinfo[] = {
 	},
 	{TSParserRelationId,		/* TSPARSEROID */
 		TSParserOidIndexId,
-		0,
 		1,
 		{
 			ObjectIdAttributeNumber,
@@ -636,7 +616,6 @@ static const struct cachedesc cacheinfo[] = {
 	},
 	{TSTemplateRelationId,		/* TSTEMPLATENAMENSP */
 		TSTemplateNameNspIndexId,
-		0,
 		2,
 		{
 			Anum_pg_ts_template_tmplname,
@@ -648,7 +627,6 @@ static const struct cachedesc cacheinfo[] = {
 	},
 	{TSTemplateRelationId,		/* TSTEMPLATEOID */
 		TSTemplateOidIndexId,
-		0,
 		1,
 		{
 			ObjectIdAttributeNumber,
@@ -658,8 +636,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		16
 	},
-	{TypeRelationId,			/* TYPENAMENSP */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	{TypeRelationId,					/* TYPENAMENSP */
 		TypeNameNspIndexId,
 		2,
 		{
