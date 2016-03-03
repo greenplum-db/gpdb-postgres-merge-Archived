@@ -63,7 +63,7 @@ static void set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 static void set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 						Index rti, RangeTblEntry *rte);
 static bool has_multiple_baserels(PlannerInfo *root);
-static void set_dummy_rel_pathlist(RelOptInfo *rel);
+static void set_dummy_rel_pathlist(PlannerInfo *root, RelOptInfo *rel);
 static void set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					  Index rti, RangeTblEntry *rte);
 static void set_function_pathlist(PlannerInfo *root, RelOptInfo *rel,
@@ -277,7 +277,7 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	if (rel->reloptkind == RELOPT_BASEREL &&
 		relation_excluded_by_constraints(root, rel, rte))
 	{
-		set_dummy_rel_pathlist(rel);
+		set_dummy_rel_pathlist(root, rel);
 		return;
 	}
 
@@ -491,7 +491,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 			 * appendrel.  Mark it with a dummy cheapest-path though, in case
 			 * best_appendrel_indexscan() looks at it later.
 			 */
-			set_dummy_rel_pathlist(childrel);
+			set_dummy_rel_pathlist(root, childrel);
 			continue;
 		}
 
@@ -500,7 +500,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 			adjust_appendrel_attrs(root, (Node *) rel->joininfo,
 								   appinfo);
 		childrel->reltargetlist = (List *)
-			adjust_appendrel_attrs((Node *) rel->reltargetlist,
+			adjust_appendrel_attrs(root, (Node *) rel->reltargetlist,
 								   appinfo);
 
 		/*
@@ -594,16 +594,16 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
  * AppendPath with no members (see also IS_DUMMY_PATH macro).
  */
 static void
-set_dummy_rel_pathlist(RelOptInfo *rel)
+set_dummy_rel_pathlist(PlannerInfo *root, RelOptInfo *rel)
 {
 	/* Set dummy size estimates --- we leave attr_widths[] as zeroes */
 	rel->rows = 0;
 	rel->width = 0;
 
-	add_path(rel, (Path *) create_append_path(rel, NIL));
+	add_path(root, rel, (Path *) create_append_path(root, rel, NIL));
 
 	/* Select cheapest path (pretty easy in this case...) */
-	set_cheapest(rel);
+	set_cheapest(root, rel);
 }
 
 /* quick-and-dirty test to see if any joining is needed */
@@ -640,9 +640,9 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	double		tuple_fraction;
 	PlannerInfo *subroot;
 	List	   *pathkeys;
-	PlannerInfo *subroot;
 	bool	   forceDistRand;
 	Path	   *subquery_path;
+	PlannerConfig *config;
 
 	/*
 	 * Must copy the Query so that planning doesn't mess up the RTE contents
@@ -705,7 +705,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 			tuple_fraction = root->tuple_fraction;
 
 		/* Generate the plan for the subquery */
-		PlannerConfig *config = CopyPlannerConfig(root->config);
+		config = CopyPlannerConfig(root->config);
 
 		rel->subplan = subquery_planner(root->glob, subquery, root, tuple_fraction,
 										&subroot, config);
@@ -733,7 +733,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	set_baserel_size_estimates(root, rel);
 
 	/* Convert subquery pathkeys to outer representation */
-	pathkeys = convert_subquery_pathkeys(root, rel, subquery_pathkeys);
+	pathkeys = convert_subquery_pathkeys(root, rel, subroot->query_pathkeys);
 
 	/* Generate appropriate path */
 	subquery_path = create_subqueryscan_path(root, rel, pathkeys);
@@ -757,6 +757,16 @@ void set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	/* Find the referenced CTE based on the given range table entry */
 	Index levelsup = rte->ctelevelsup;
 	PlannerInfo *cteroot = root;
+	ListCell *lc;
+	CommonTableExpr *cte = NULL;
+	int			planinfo_id;
+	double tuple_fraction = 0.0;
+	CtePlanInfo *cteplaninfo;
+	Plan *subplan = NULL;
+	List *subrtable = NULL;
+	List *pathkeys = NULL;
+	PlannerInfo *subroot = NULL;
+
 	while (levelsup > 0)
 	{
 		cteroot = cteroot->parent_root;
@@ -764,9 +774,7 @@ void set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 		levelsup--;
 	}
 
-	ListCell *lc;
-	CommonTableExpr *cte = NULL;
-	int planinfo_id = 0;
+	planinfo_id = 0;
 	foreach(lc, cteroot->parse->cteList)
 	{
 		cte = (CommonTableExpr *) lfirst(lc);
@@ -779,7 +787,7 @@ void set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	Assert(lc != NULL);
 	Assert(cte != NULL);
 
-	double tuple_fraction = 0.0;
+
 	Assert(IsA(cte->ctequery, Query));
 
 	/*
@@ -797,12 +805,7 @@ void set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	 *       in cteplaninfo so that they can be used later.
 	 */
 	Assert(list_length(cteroot->list_cteplaninfo) > planinfo_id);
-	CtePlanInfo *cteplaninfo = list_nth(cteroot->list_cteplaninfo, planinfo_id);
-
-	Plan *subplan = NULL;
-	List *subrtable = NULL;
-	List *pathkeys = NULL;
-	PlannerInfo *subroot = NULL;
+	cteplaninfo = list_nth(cteroot->list_cteplaninfo, planinfo_id);
 
 	/*
 	 * If there is exactly one reference to this CTE in the query, or plan
@@ -833,16 +836,16 @@ void set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 		PlannerConfig *config = CopyPlannerConfig(root->config);
 
 		/*
-		 * Having multiple SharedScans can lead to deadlocks. For now,
-		 * disallow sharing of ctes at lower levels.
-		 */
-		config->gp_cte_sharing = false;
-
-		/*
 		 * Copy query node since subquery_planner may trash it, and we need
 		 * it intact in case we need to create another plan for the CTE
 		 */
 		Query		  *subquery = (Query *) copyObject(cte->ctequery);
+
+		/*
+		 * Having multiple SharedScans can lead to deadlocks. For now,
+		 * disallow sharing of ctes at lower levels.
+		 */
+		config->gp_cte_sharing = false;
 
 		/*
 		 * Push down quals, like we do in set_subquery_pathlist()
@@ -1458,8 +1461,6 @@ qual_contains_winref(Query *topquery,
 				Index rti,  /* index of RTE of subquery where qual needs to be checked */
 				Node *qual)
 {
-	Assert(topquery);
-
 	/*
 	 * extract subquery where qual needs to be checked
 	 */
@@ -1494,10 +1495,7 @@ qual_contains_winref(Query *topquery,
 static bool
 qual_is_pushdown_safe_set_operation(Query *subquery, Node *qual)
 {
-	Assert(subquery);
-
 	SetOperationStmt *setop = (SetOperationStmt *)subquery->setOperations;
-	Assert(setop);
 
 	/*
 	 * MPP-21075
