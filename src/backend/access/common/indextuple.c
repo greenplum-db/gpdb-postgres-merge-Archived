@@ -73,7 +73,7 @@ index_form_tuple(TupleDesc tupleDescriptor,
 		 * If value is stored EXTERNAL, must fetch it so we are not depending
 		 * on outside storage.	This should be improved someday.
 		 */
-		if (VARATT_IS_EXTERNAL_D(values[i]))
+		if (VARATT_IS_EXTERNAL(DatumGetPointer(values[i])))
 		{
 			untoasted_values[i] =
 				PointerGetDatum(heap_tuple_fetch_attr((struct varlena *)
@@ -426,9 +426,6 @@ nocache_index_getattr(IndexTuple tup,
 
 			if (usecache && att[i]->attlen <= 0)
 				usecache = false;
-
-			off = att_addlength(off, att[i]->attlen, PointerGetDatum(tp + off));
-
 		}
 	}
 

@@ -834,50 +834,6 @@ untransformRelOptions(Datum options)
 
 
 /*
- * Convert the text-array format of reloptions into a List of DefElem.
- * This is the inverse of transformRelOptions().
- */
-List *
-untransformRelOptions(Datum options)
-{
-	List	   *result = NIL;
-	ArrayType  *array;
-	Datum	   *optiondatums;
-	int			noptions;
-	int			i;
-
-	/* Nothing to do if no options */
-	if (options == (Datum) 0)
-		return result;
-
-	array = DatumGetArrayTypeP(options);
-
-	Assert(ARR_ELEMTYPE(array) == TEXTOID);
-
-	deconstruct_array(array, TEXTOID, -1, false, 'i',
-					  &optiondatums, NULL, &noptions);
-
-	for (i = 0; i < noptions; i++)
-	{
-		char	   *s;
-		char	   *p;
-		Node	   *val = NULL;
-
-		s = DatumGetCString(DirectFunctionCall1(textout, optiondatums[i]));
-		p = strchr(s, '=');
-		if (p)
-		{
-			*p++ = '\0';
-			val = (Node *) makeString(pstrdup(p));
-		}
-		result = lappend(result, makeDefElem(pstrdup(s), val));
-	}
-
-	return result;
-}
-
-
-/*
  * Interpret reloptions that are given in text-array format.
  *
  *	options: array of "keyword=value" strings, as built by transformRelOptions
