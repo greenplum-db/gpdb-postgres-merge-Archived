@@ -2102,46 +2102,6 @@ UtilityTupleDescriptor(Node *parsetree)
 
 
 /*
- * QueryReturnsTuples
- *		Return "true" if this Query will send output to the destination.
- */
-#ifdef NOT_USED
-bool
-QueryReturnsTuples(Query *parsetree)
-{
-	switch (parsetree->commandType)
-	{
-		case CMD_SELECT:
-<<<<<<< HEAD
-			/* returns tuples ... unless it's SELECT INTO */
-			if (parsetree->intoClause == NULL)
-=======
-			/* returns tuples ... unless it's DECLARE CURSOR or SELECT INTO */
-			if (parsetree->utilityStmt == NULL &&
-				parsetree->intoClause == NULL)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-				return true;
-			break;
-		case CMD_INSERT:
-		case CMD_UPDATE:
-		case CMD_DELETE:
-			/* the forms with RETURNING return tuples */
-			if (parsetree->returningList)
-				return true;
-			break;
-		case CMD_UTILITY:
-			return UtilityReturnsTuples(parsetree->utilityStmt);
-		case CMD_UNKNOWN:
-		case CMD_NOTHING:
-			/* probably shouldn't get here */
-			break;
-	}
-	return false;				/* default */
-}
-#endif
-
-
-/*
  * CreateCommandTag
  *		utility to get a string representation of the command operation,
  *		given either a raw (un-analyzed) parsetree or a planned query.

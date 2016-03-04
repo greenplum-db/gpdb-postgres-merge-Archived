@@ -18,11 +18,7 @@
  * backend PGPROCs at need by checking for pid == 0.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -186,11 +182,7 @@ ProcArrayAdd(PGPROC *proc)
  * twophase.c depends on the latter.)
  */
 void
-<<<<<<< HEAD
-ProcArrayRemove(PGPROC *proc, bool forPrepare, bool isCommit)
-=======
-ProcArrayRemove(PGPROC *proc, TransactionId latestXid)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+ProcArrayRemove(PGPROC *proc, TransactionId latestXid, bool forPrepare, bool isCommit)
 {
 	ProcArrayStruct *arrayP = procArray;
 	int			index;
@@ -669,12 +661,6 @@ HasSerializableBackends(bool allDbs)
  * If allDbs is TRUE then all backends are considered; if allDbs is FALSE
  * then only backends running in my own database are considered.
  *
-<<<<<<< HEAD
-=======
- * If ignoreVacuum is TRUE then backends with the PROC_IN_VACUUM flag set are
- * ignored.
- *
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * This is used by VACUUM to decide which deleted tuples must be preserved
  * in a table.	allDbs = TRUE is needed for shared relations, but allDbs =
  * FALSE is sufficient for non-shared relations, since only backends in my
@@ -684,6 +670,8 @@ HasSerializableBackends(bool allDbs)
  *
  * This is also used to determine where to truncate pg_subtrans.  allDbs
  * must be TRUE for that case, and ignoreVacuum FALSE.
+ *
+ * GPDB: ignoreVacuum is removed.
  *
  * Note: we include all currently running xids in the set of considered xids.
  * This ensures that if a just-started xact has not yet set its snapshot,
@@ -712,12 +700,6 @@ GetOldestXmin(bool allDbs)
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
 		volatile PGPROC *proc = arrayP->procs[index];
-<<<<<<< HEAD
-=======
-
-		if (ignoreVacuum && (proc->vacuumFlags & PROC_IN_VACUUM))
-			continue;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (allDbs || proc->databaseId == MyDatabaseId)
 		{
@@ -748,7 +730,6 @@ GetOldestXmin(bool allDbs)
 	return result;
 }
 
-<<<<<<< HEAD
 void
 updateSharedLocalSnapshot(DtxContextInfo *dtxContextInfo, Snapshot snapshot, char *debugCaller)
 {
@@ -998,9 +979,6 @@ QEwriterSnapshotUpToDate(void)
 }
 
 /*----------
-=======
-/*
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * GetSnapshotData -- returns information about running transactions.
  *
  * The returned snapshot includes xmin (lowest still-running xact ID),
@@ -1105,7 +1083,6 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 		}
 	}
 
-<<<<<<< HEAD
 	/*
 	 * MPP Addition.  if we are in EXECUTE mode and not the writer... then we
 	 * want to just get the shared snapshot and make it our own.
@@ -1328,11 +1305,6 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 	 * doesn't matter whether another backend concurrently doing
 	 * GetSnapshotData or GetOldestXmin sees our xmin as set or not;
 	 * he'd compute the same xmin for himself either way.
-=======
-	/*
-	 * It is sufficient to get shared lock on ProcArrayLock, even if we are
-	 * going to set MyProc->xmin.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
@@ -1345,7 +1317,6 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 	globalxmin = xmin = xmax;
 
 	/*
-<<<<<<< HEAD
 	 * Get the distributed snapshot if needed and copy it into the field 
 	 * called distribSnapshotWithLocalMapping in the snapshot structure.
 	 *
@@ -1385,11 +1356,6 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 
 	/*
 	 * Scan the PGPROC array to fill in the local snapshot.
-=======
-	 * Spin over procArray checking xid, xmin, and subxids.  The goal is to
-	 * gather all active xids, find the lowest xmin, and try to record
-	 * subxids.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
@@ -1474,11 +1440,7 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 				if (nxids > 0)
 				{
 					memcpy(snapshot->subxip + subcount,
-<<<<<<< HEAD
-						   ((PGPROC *)proc)->subxids.xids,
-=======
 						   (void *) proc->subxids.xids,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 						   nxids * sizeof(TransactionId));
 					subcount += nxids;
 				}

@@ -3,11 +3,7 @@
  * spi.c
  *				Server Programming Interface
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -1010,49 +1006,11 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
 					 errmsg("cannot open multi-query plan as cursor")));
-<<<<<<< HEAD
-		queryTree = (Query *) PortalListGetPrimaryStmt((List *) linitial(spiplan->qtlist));
-		if (queryTree == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
-					 errmsg("cannot open empty query as cursor")));
-=======
 		plansource = (CachedPlanSource *) linitial(plan->plancache_list);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
 		/* translator: %s is name of a SQL command, eg INSERT */
 				 errmsg("cannot open %s query as cursor",
-<<<<<<< HEAD
-						CreateCommandTag((Node*)queryTree))));
-	}
-
-	Assert(list_length(spiplan->qtlist) == 1);
-	qtlist = (List *) linitial(spiplan->qtlist);
-	ptlist = spiplan->ptlist;
-	if (list_length(qtlist) != list_length(ptlist))
-		insist_log(false, "corrupted SPI plan lists");
-
-	/*
-	 * If told to be read-only, we'd better check for read-only queries.
-	 */
-	if (read_only)
-	{
-		ListCell   *lc;
-
-		foreach(lc, qtlist)
-		{
-			Query  *qry = (Query *) lfirst(lc);
-
-			if (!QueryIsReadOnly(qry))
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 /* translator: %s is a SQL statement name */
-						 errmsg("%s is not allowed in a non-volatile function",
-								CreateCommandTag((Node*)qry))));
-		}
-	}
-=======
 						plansource->commandTag)));
 	}
 
@@ -1062,7 +1020,6 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 	/* Push the SPI stack */
 	if (_SPI_begin_call(false) < 0)
 		elog(ERROR, "SPI_cursor_open called while not connected");
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Reset SPI result (note we deliberately don't touch lastoid) */
 	SPI_processed64 = 0;

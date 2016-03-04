@@ -3,17 +3,10 @@
  * spi.h
  *				Server Programming Interface public declarations
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.72 2009/06/11 14:49:11 momjian Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.65.2.2 2009/01/07 20:39:05 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -94,10 +87,7 @@ typedef struct _SPI_plan *SPIPlanPtr;
 #define SPI_OK_REWRITTEN		14
 
 extern PGDLLIMPORT uint32 SPI_processed;
-<<<<<<< HEAD
 extern PGDLLIMPORT uint64 SPI_processed64;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern PGDLLIMPORT Oid SPI_lastoid;
 extern PGDLLIMPORT SPITupleTable *SPI_tuptable;
 extern PGDLLIMPORT int SPI_result;
@@ -121,21 +111,15 @@ extern int SPI_execute_snapshot(SPIPlanPtr plan,
 					 Snapshot crosscheck_snapshot,
 					 bool read_only, bool fire_triggers, long tcount);
 extern SPIPlanPtr SPI_prepare(const char *src, int nargs, Oid *argtypes);
-<<<<<<< HEAD
-=======
 extern SPIPlanPtr SPI_prepare_cursor(const char *src, int nargs, Oid *argtypes,
 				   int cursorOptions);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern SPIPlanPtr SPI_saveplan(SPIPlanPtr plan);
 extern int	SPI_freeplan(SPIPlanPtr plan);
 
 extern Oid	SPI_getargtypeid(SPIPlanPtr plan, int argIndex);
 extern int	SPI_getargcount(SPIPlanPtr plan);
 extern bool SPI_is_cursor_plan(SPIPlanPtr plan);
-<<<<<<< HEAD
-=======
 extern bool SPI_plan_is_valid(SPIPlanPtr plan);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern const char *SPI_result_code_string(int code);
 
 extern HeapTuple SPI_copytuple(HeapTuple tuple);

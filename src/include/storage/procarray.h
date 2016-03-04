@@ -22,14 +22,10 @@ struct SnapshotData;           /* utils/tqual.h */
 extern Size ProcArrayShmemSize(void);
 extern void CreateSharedProcArray(void);
 extern void ProcArrayAdd(PGPROC *proc);
-<<<<<<< HEAD
-extern void ProcArrayRemove(PGPROC *proc, bool forPrepare, bool isCommit);
-=======
-extern void ProcArrayRemove(PGPROC *proc, TransactionId latestXid);
-
+extern void ProcArrayRemove(PGPROC *proc, TransactionId latestXid,
+							bool forPrepare, bool isCommit);
 extern void ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid);
 extern void ProcArrayClearTransaction(PGPROC *proc);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 extern bool TransactionIdIsInProgress(TransactionId xid);
 extern bool TransactionIdIsActive(TransactionId xid);
@@ -48,12 +44,12 @@ extern int	CountActiveBackends(void);
 extern int	CountDBBackends(Oid databaseid);
 extern int	CountUserBackends(Oid roleid);
 extern bool CheckOtherDBBackends(Oid databaseId);
-<<<<<<< HEAD
 extern bool HasSerializableBackends(bool allDbs);
 extern bool HasDropTransaction(bool allDbs);
 
 extern void XidCacheRemoveRunningXids(TransactionId xid,
-						  int nxids, TransactionId *xids);
+						  int nxids, const TransactionId *xids,
+						  TransactionId latestXid);
 						  
 extern PGPROC *FindProcByGpSessionId(long gp_session_id);
 extern void UpdateSerializableCommandId(void);
@@ -64,11 +60,5 @@ extern void updateSharedLocalSnapshot(struct DtxContextInfo *dtxContextInfo, str
 extern void GetSlotTableDebugInfo(void **snapshotArray, int *maxSlots);
 
 extern bool FindAndSignalProcess(int sessionId, int commandId);
-=======
-
-extern void XidCacheRemoveRunningXids(TransactionId xid,
-						  int nxids, const TransactionId *xids,
-						  TransactionId latestXid);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #endif   /* PROCARRAY_H */
