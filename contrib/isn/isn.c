@@ -4,17 +4,10 @@
  *	  PostgreSQL type definitions for ISNs (ISBN, ISMN, ISSN, EAN13, UPC)
  *
  * Copyright (c) 2004-2006, Germán Méndez Bravo (Kronuz)
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  $PostgreSQL: pgsql/contrib/isn/isn.c,v 1.11 2009/06/11 14:48:51 momjian Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- *
- * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/isn/isn.c,v 1.8 2008/01/01 19:45:45 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -504,12 +497,7 @@ ean2UPC(char *isn)
  *
  * Returns the ean13 value of the string.
  */
-<<<<<<< HEAD
 static ean13
-=======
-static
-			ean13
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 str2ean(const char *num)
 {
 	ean13		ean = 0;		/* current ean */
