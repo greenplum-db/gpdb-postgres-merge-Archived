@@ -18,21 +18,10 @@
 
 /* GUC options */
 extern int	BgWriterDelay;
-<<<<<<< HEAD
 
 extern void BackgroundWriterMain(void);
 
 extern void RequestCheckpointSmgrCloseAll(void);
-=======
-extern int	CheckPointTimeout;
-extern int	CheckPointWarning;
-extern double CheckPointCompletionTarget;
-
-extern void BackgroundWriterMain(void);
-
-extern void RequestCheckpoint(int flags);
-extern void CheckpointWriteDelay(int flags, double progress);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 extern bool ForwardFsyncRequest(RelFileNode rnode, BlockNumber segno);
 extern void AbsorbFsyncRequests(void);

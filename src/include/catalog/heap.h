@@ -128,8 +128,8 @@ extern Form_pg_attribute SystemAttributeByName(const char *attname,
 
 extern void CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind);
 
-<<<<<<< HEAD
-extern void CheckAttributeType(const char *attname, Oid atttypid);
+extern void CheckAttributeType(const char *attname, Oid atttypid,
+							   List *containing_rowtypes);
 extern void SetRelationNumChecks(Relation rel, int numchecks);
 
 /* MPP-6929: metadata tracking */
@@ -151,9 +151,5 @@ extern void MetaTrackDropObject(Oid		classid,
 		|| ((relkind) == RELKIND_INDEX) \
 		|| ((relkind) == RELKIND_SEQUENCE) \
 		|| ((relkind) == RELKIND_VIEW)) 
-=======
-extern void CheckAttributeType(const char *attname, Oid atttypid,
-							   List *containing_rowtypes);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #endif   /* HEAP_H */

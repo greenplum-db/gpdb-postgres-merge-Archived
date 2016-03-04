@@ -84,12 +84,8 @@ struct PGPROC
 	PGSemaphoreData sem;		/* ONE semaphore to sleep on */
 	int			waitStatus;		/* STATUS_WAITING, STATUS_OK or STATUS_ERROR */
 
-<<<<<<< HEAD
 	Latch		procLatch;		/* generic latch for process */
 
-	TransactionId xid;			/* transaction currently being executed by
-								 * this proc */
-=======
 	LocalTransactionId lxid;	/* local id of top-level transaction currently
 								 * being executed by this proc, if running;
 								 * else InvalidLocalTransactionId */
@@ -97,7 +93,6 @@ struct PGPROC
 	TransactionId xid;			/* id of top-level transaction currently being
 								 * executed by this proc, if running and XID
 								 * is assigned; else InvalidTransactionId */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	LocalDistribXactRef	localDistribXactRef;
 								/* Reference to the LocalDistribXact 
@@ -174,13 +169,9 @@ struct PGPROC
 
 extern PGDLLIMPORT PGPROC *MyProc;
 
-<<<<<<< HEAD
 /* Special for MPP reader gangs */
 extern PGDLLIMPORT PGPROC *lockHolderProcPtr;
-=======
-extern PGDLLIMPORT PGPROC *MyProc;
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * There is one ProcGlobal struct for the whole database cluster.
@@ -242,21 +233,14 @@ typedef struct PROC_HDR
  *					5) Consumer Verification
  *					6) Sender Ack
  */
-<<<<<<< HEAD
 #define NUM_AUXILIARY_PROCS	 14
-=======
-#define NUM_AUXILIARY_PROCS		3
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* configurable options */
 extern int	DeadlockTimeout;
 extern int	StatementTimeout;
-<<<<<<< HEAD
-extern int IdleSessionGangTimeout;
-=======
 extern bool log_lock_waits;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+extern int IdleSessionGangTimeout;
 
 extern volatile bool cancel_from_timeout;
 

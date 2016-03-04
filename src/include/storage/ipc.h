@@ -19,10 +19,7 @@
 #define IPC_H
 
 typedef void (*pg_on_exit_callback) (int code, Datum arg);
-<<<<<<< HEAD
 typedef void (*shmem_startup_hook_type) (void);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*----------
  * API for handling cleanup that must occur during either ereport(ERROR)
