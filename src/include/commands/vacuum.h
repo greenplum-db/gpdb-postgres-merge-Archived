@@ -129,13 +129,9 @@ typedef struct VPgClassStats
 } VPgClassStats;
 
 /* GUC parameters */
-<<<<<<< HEAD
-extern PGDLLIMPORT int default_statistics_target; /* PGDLLIMPORT for PostGIS */
-extern PGDLLIMPORT double analyze_relative_error;
-=======
 extern PGDLLIMPORT int default_statistics_target;		/* PGDLLIMPORT for
 														 * PostGIS */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+extern PGDLLIMPORT double analyze_relative_error;
 extern int	vacuum_freeze_min_age;
 
 
@@ -145,7 +141,6 @@ extern void vacuum(VacuumStmt *vacstmt, List *relids,
 extern void vac_open_indexes(Relation relation, LOCKMODE lockmode,
 				 int *nindexes, Relation **Irel);
 extern void vac_close_indexes(int nindexes, Relation *Irel, LOCKMODE lockmode);
-<<<<<<< HEAD
 extern void vac_update_relstats(Relation rel,
 								BlockNumber num_pages,
 								double num_tuples,
@@ -155,15 +150,7 @@ extern void vac_update_relstats_from_list(Relation rel,
 							  BlockNumber num_pages, double num_tuples,
 							  bool hasindex, TransactionId frozenxid,
 										  List *updated_stats);
-extern void vacuum_set_xid_limits(VacuumStmt *vacstmt, bool sharedRel,
-=======
-extern void vac_update_relstats(Oid relid,
-					BlockNumber num_pages,
-					double num_tuples,
-					bool hasindex,
-					TransactionId frozenxid);
 extern void vacuum_set_xid_limits(int freeze_min_age, bool sharedRel,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					  TransactionId *oldestXmin,
 					  TransactionId *freezeLimit);
 extern void vac_update_datfrozenxid(void);
@@ -177,8 +164,8 @@ extern bool vacuumStatement_IsInAppendOnlyCompactionPhase(VacuumStmt* vacstmt);
 extern bool vacuumStatement_IsInAppendOnlyPseudoCompactionPhase(VacuumStmt* vacstmt);
 
 /* in commands/vacuumlazy.c */
-<<<<<<< HEAD
-extern void lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt, List *updated_stats);
+extern bool lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
+				BufferAccessStrategy bstrategy);
 extern void vacuum_appendonly_rel(Relation aorel, VacuumStmt *vacstmt);
 extern void vacuum_appendonly_fill_stats(Relation aorel, Snapshot snapshot,
 										 BlockNumber *rel_pages, double *rel_tuples,
@@ -192,13 +179,9 @@ extern List *get_oids_for_bitmap(List *all_extra_oids, Relation Irel, Relation o
 extern void analyze_rel(Oid relid, VacuumStmt *vacstmt);
 extern void analyzeStatement(VacuumStmt *vacstmt, List *relids);
 //extern void analyzeStmt(VacuumStmt *vacstmt, List *relids);
-=======
-extern bool lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
-				BufferAccessStrategy bstrategy);
 
 /* in commands/analyze.c */
 extern void analyze_rel(Oid relid, VacuumStmt *vacstmt,
 			BufferAccessStrategy bstrategy);
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif   /* VACUUM_H */
