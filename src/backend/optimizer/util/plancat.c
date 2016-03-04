@@ -45,11 +45,14 @@
 
 
 /* GUC parameter */
+bool		constraint_exclusion = false;
 
-<<<<<<< HEAD
+/* Hook for plugins to get control in get_relation_info() */
+get_relation_info_hook_type get_relation_info_hook = NULL;
+
 static List *get_relation_constraints(PlannerInfo *root,
-									  Oid relationObjectId, RelOptInfo *rel,
-									  bool include_notnull);
+						 Oid relationObjectId, RelOptInfo *rel,
+						 bool include_notnull);
 
 static void
 estimate_tuple_width(Relation   rel,
@@ -65,17 +68,6 @@ cdb_estimate_rel_size(RelOptInfo   *relOptInfo,
 				      BlockNumber  *pages,
                       double       *tuples,
                       bool         *default_stats_used);
-=======
-/* Hook for plugins to get control in get_relation_info() */
-get_relation_info_hook_type get_relation_info_hook = NULL;
-
-
-static void estimate_rel_size(Relation rel, int32 *attr_widths,
-				  BlockNumber *pages, double *tuples);
-static List *get_relation_constraints(PlannerInfo *root,
-						 Oid relationObjectId, RelOptInfo *rel,
-						 bool include_notnull);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 static void
 cdb_default_stats_warning_for_index(Oid reloid, Oid indexoid);
@@ -862,12 +854,8 @@ get_relation_constraints(PlannerInfo *root,
  * it can be called before filling in other fields of the RelOptInfo.
  */
 bool
-<<<<<<< HEAD
-relation_excluded_by_constraints(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
-=======
 relation_excluded_by_constraints(PlannerInfo *root,
 								 RelOptInfo *rel, RangeTblEntry *rte)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	List	   *safe_restrictions;
 	List	   *constraint_pred;
