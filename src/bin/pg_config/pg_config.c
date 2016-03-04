@@ -15,15 +15,9 @@
  *
  * This code is released under the terms of the PostgreSQL License.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.31 2009/02/25 13:35:18 petere Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- *
- * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.26 2008/01/01 19:45:55 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
