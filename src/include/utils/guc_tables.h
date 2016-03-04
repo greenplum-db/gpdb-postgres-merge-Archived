@@ -5,16 +5,10 @@
  *
  * See src/backend/utils/misc/README for design notes.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.29.2.2 2009/12/09 21:58:30 tgl Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- *
  *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.38.2.2 2009/12/09 21:58:17 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -197,13 +191,10 @@ struct config_generic
 
 #define GUC_NOT_WHILE_SEC_REST	0x8000	/* can't set if security restricted */
 
-<<<<<<< HEAD
 #define GUC_GPDB_ADDOPT        0x10000  /* Send by cdbgang */
 
 #define GUC_DISALLOW_USER_SET  0x20000 /* Do not allow this GUC to be set by the user */
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* bit values in status field */
 #define GUC_IS_IN_FILE		0x0001		/* found it in config file */
 /*

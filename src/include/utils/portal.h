@@ -95,12 +95,8 @@ typedef enum PortalStrategy
  */
 typedef enum PortalStatus
 {
-<<<<<<< HEAD
-	PORTAL_NEW = 0,				/* in process of creation */
-=======
-	PORTAL_NEW,					/* freshly created */
+	PORTAL_NEW = 0,				/* freshly created */
 	PORTAL_DEFINED,				/* PortalDefineQuery done */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	PORTAL_READY,				/* PortalStart complete, can run it */
 	PORTAL_QUEUE, 				/* portal is queued (cannot delete it) */
 	PORTAL_ACTIVE,				/* portal is running (can't delete it) */
@@ -140,21 +136,8 @@ typedef struct PortalData
 	/* The query or queries the portal will execute */
 	const char *sourceText;		/* text of query (as of PlannedStmt, never NULL) */
 	const char *commandTag;		/* command tag for original query */
-<<<<<<< HEAD
-	List	   *stmts;			/* PlannedStmts and/or utility Querys */
-	MemoryContext queryContext; /* where the parse trees live */
-
-	/*
-	 * Note: queryContext effectively identifies which prepared statement the
-	 * portal depends on, if any.  The queryContext is *not* owned by the
-	 * portal and is not to be deleted by portal destruction.  (But for a
-	 * cursor it is the same as "heap", and that context is deleted by portal
-	 * destruction.)  The plan trees may be in either queryContext or heap.
-	 */
-=======
 	List	   *stmts;			/* PlannedStmts and/or utility statements */
 	CachedPlan *cplan;			/* CachedPlan, if stmts are from one */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	ParamListInfo portalParams; /* params to pass to query */
 
@@ -164,14 +147,11 @@ typedef struct PortalData
 
 	/* Status data */
 	PortalStatus status;		/* see above */
-<<<<<<< HEAD
 	bool	holdingResLock;	/* true => resscheduler lock must be released, however,
 				 * in an extreme case when a portal receives a SIGTERM just
 				 * after being granted the resource lock, the holding ResLock
 				 * is not set but it is indeed holding the ResLock */
-=======
 	bool		portalPinned;	/* a pinned portal can't be dropped */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* If not NULL, Executor is active; call ExecutorEnd eventually: */
 	QueryDesc  *queryDesc;		/* info needed for executor invocation */
@@ -252,20 +232,12 @@ extern void PortalDefineQuery(Portal portal,
 				  NodeTag	  sourceTag, /* GPDB */
 				  const char *commandTag,
 				  List *stmts,
-<<<<<<< HEAD
-//				  List *parseTrees,
-//				  List *planTrees,
-				  MemoryContext queryContext);
-extern Node *PortalListGetPrimaryStmt(List *stmts);
-extern void PortalCreateHoldStore(Portal portal);
-extern void AtExitCleanup_ResPortals(void);
-extern void TotalResPortalIncrements(int pid, Oid queueid,
-									 Cost *totalIncrements, int *num);
-=======
 				  CachedPlan *cplan);
 extern Node *PortalListGetPrimaryStmt(List *stmts);
 extern void PortalCreateHoldStore(Portal portal);
 extern void PortalHashTableDeleteAll(void);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+extern void AtExitCleanup_ResPortals(void);
+extern void TotalResPortalIncrements(int pid, Oid queueid,
+									 Cost *totalIncrements, int *num);
 
 #endif   /* PORTAL_H */

@@ -4,11 +4,7 @@
  *	  Interface to hba.c
  *
  *
-<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/libpq/hba.h,v 1.62 2010/04/19 19:02:18 sriggs Exp $
-=======
- * $PostgreSQL: pgsql/src/include/libpq/hba.h,v 1.47 2007/07/23 10:16:54 mha Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -27,15 +23,6 @@ typedef enum UserAuth
 	uaTrust,
 	uaIdent,
 	uaPassword,
-<<<<<<< HEAD
-	uaMD5,
-	uaGSS,
-	uaSSPI,
-	uaPAM,
-	uaLDAP,
-	uaCert,
-	uaRADIUS
-=======
 	uaCrypt,
 	uaMD5,
 	uaGSS,
@@ -46,7 +33,8 @@ typedef enum UserAuth
 #ifdef USE_LDAP
 	,uaLDAP
 #endif
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	,uaCert
+	,uaRADIUS
 } UserAuth;
 
 typedef enum IPCompareMethod
