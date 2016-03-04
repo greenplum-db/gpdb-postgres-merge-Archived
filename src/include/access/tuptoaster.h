@@ -16,7 +16,6 @@
 #include "access/htup.h"
 #include "access/memtup.h"
 #include "storage/bufpage.h"
-#include "utils/relcache.h"
 
 #ifndef VARSIZE_TO_SHORT
 #define VARSIZE_TO_SHORT(PTR)   ((char)(VARSIZE(PTR)-VARHDRSZ+VARHDRSZ_SHORT) | 0x80)

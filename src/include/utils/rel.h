@@ -229,17 +229,6 @@ typedef struct RelationData
 	struct PgStat_TableStatus *pgstat_info;		/* statistics collection area */
 } RelationData;
 
-typedef RelationData *Relation;
-
-
-/* ----------------
- *		RelationPtr is used in the executor to support index scans
- *		where we have to keep track of several index relations in an
- *		array.	-cim 9/10/89
- * ----------------
- */
-typedef Relation *RelationPtr;
-
 /*
  * StdRdOptions
  *		Standard contents of rd_options for heaps and generic indexes.

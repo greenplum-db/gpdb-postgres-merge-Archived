@@ -21,8 +21,16 @@
 #include "nodes/bitmapset.h"
 #include "nodes/pg_list.h"
 #include "catalog/pg_class.h"
-#include "utils/rel.h"
 
+typedef struct RelationData *Relation;
+
+/* ----------------
+ *		RelationPtr is used in the executor to support index scans
+ *		where we have to keep track of several index relations in an
+ *		array.	-cim 9/10/89
+ * ----------------
+ */
+typedef Relation *RelationPtr;
 
 struct SysScanDescData; /* defined in access/genam.h */
 

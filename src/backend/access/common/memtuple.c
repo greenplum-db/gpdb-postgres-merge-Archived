@@ -16,7 +16,6 @@
 #include "cdb/cdbvars.h"
 
 #include "utils/debugbreak.h"
-#include "utils/rel.h"
 
 #define MAX_ATTR_COUNT_STATIC_ALLOC 20
 
