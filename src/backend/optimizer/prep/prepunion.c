@@ -17,10 +17,7 @@
  * append relations, and thenceforth share code with the UNION ALL case.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -175,11 +172,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		RangeTblRef *rtr = (RangeTblRef *) setOp;
 		RangeTblEntry *rte = rt_fetch(rtr->rtindex, root->parse->rtable);
 		Query	   *subquery = rte->subquery;
-<<<<<<< HEAD
 		PlannerInfo *subroot = NULL;
-=======
-		PlannerInfo *subroot;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		Plan	   *subplan,
 				   *plan;
 
@@ -192,12 +185,8 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		subplan = subquery_planner(root->glob, subquery,
 								   root,
 								   tuple_fraction,
-<<<<<<< HEAD
 								   &subroot,
 								   config);
-=======
-								   &subroot);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/*
 		 * Add a SubqueryScan with the caller-requested targetlist
@@ -212,10 +201,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 							  rtr->rtindex,
 							  subplan,
 							  subroot->parse->rtable);
-<<<<<<< HEAD
 		mark_passthru_locus(plan, FALSE, FALSE); /* CDB: no hash/sort keys */
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/*
 		 * We don't bother to determine the subquery's output ordering since
@@ -258,14 +244,9 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 			!tlist_same_datatypes(plan->targetlist, colTypes, junkOK))
 		{
 			plan = (Plan *)
-<<<<<<< HEAD
-				make_result(generate_setop_tlist(colTypes, flag,
-												 OUTER,
-=======
 				make_result(root,
 							generate_setop_tlist(colTypes, flag,
-												 0,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+												 OUTER,
 												 false,
 												 plan->targetlist,
 												 refnames_tlist),
@@ -1014,7 +995,6 @@ make_inh_translation_lists(Relation oldrelation, Relation newrelation,
 	int			oldnatts = old_tupdesc->natts;
 	int			newnatts = new_tupdesc->natts;
 	int			old_attno = 0;
-	int			att_offset = 0;
 	
 	for (old_attno = 0; old_attno < oldnatts; old_attno++)
 	{
@@ -1055,24 +1035,6 @@ make_inh_translation_lists(Relation oldrelation, Relation newrelation,
 		 * Otherwise we have to search for the matching column by name.
 		 * There's no guarantee it'll have the same column position, because
 		 * of cases like ALTER TABLE ADD COLUMN and multiple inheritance.
-<<<<<<< HEAD
-		 * We first check old_attno since it is quite likely that they will match
-		 * and then examine other attributes cyclically.
-		 */
-		for (att_offset = 0; att_offset < newnatts; att_offset++)
-		{
-			new_attno = (old_attno + att_offset) % newnatts;
-			Assert(0 <= new_attno && new_attno <= newnatts - 1);
-
-			att = new_tupdesc->attrs[new_attno];
-			if (att->attisdropped || att->attinhcount == 0)
-				continue;
-			if (strcmp(attname, NameStr(att->attname)) != 0)
-				continue;
-			/* Found it, check type */
-			if (atttypid != att->atttypid || atttypmod != att->atttypmod)
-				elog(ERROR, "attribute \"%s\" of relation \"%s\" does not match parent's type",
-=======
 		 * However, in simple cases it will be the same column number, so try
 		 * that before we go groveling through all the columns.
 		 *
@@ -1095,7 +1057,6 @@ make_inh_translation_lists(Relation oldrelation, Relation newrelation,
 			}
 			if (new_attno >= newnatts)
 				elog(ERROR, "could not find inherited attribute \"%s\" of relation \"%s\"",
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					 attname, RelationGetRelationName(newrelation));
 		}
 
@@ -1263,13 +1224,8 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfoContext *ctx)
 	{
 		CurrentOfExpr *cexpr = (CurrentOfExpr *) copyObject(node);
 
-<<<<<<< HEAD
 		if (cexpr->cvarno == appinfo->parent_relid)
 			cexpr->cvarno = appinfo->child_relid;
-=======
-		if (cexpr->cvarno == context->parent_relid)
-			cexpr->cvarno = context->child_relid;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		return (Node *) cexpr;
 	}
 	if (IsA(node, RangeTblRef))
@@ -1335,16 +1291,11 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfoContext *ctx)
 												  appinfo->parent_relid,
 												  appinfo->child_relid);
 		newinfo->required_relids = adjust_relid_set(oldinfo->required_relids,
-<<<<<<< HEAD
 													appinfo->parent_relid,
 													appinfo->child_relid);
-=======
-													context->parent_relid,
-													context->child_relid);
 		newinfo->nullable_relids = adjust_relid_set(oldinfo->nullable_relids,
-													context->parent_relid,
-													context->child_relid);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+													appinfo->parent_relid,
+													appinfo->child_relid);
 		newinfo->left_relids = adjust_relid_set(oldinfo->left_relids,
 												appinfo->parent_relid,
 												appinfo->child_relid);
@@ -1421,90 +1372,6 @@ adjust_relid_set(Relids relids, Index oldrelid, Index newrelid)
 }
 
 /*
-<<<<<<< HEAD
- * adjust_appendrel_attr_needed
- *		Adjust an attr_needed[] array to reference a member rel instead of
- *		the original appendrel
- *
- * oldrel: source of data (we use the attr_needed, min_attr, max_attr fields)
- * appinfo: supplies parent_relid, child_relid, col_mappings
- * new_min_attr, new_max_attr: desired bounds of new attr_needed array
- *
- * The relid sets are adjusted by substituting child_relid for parent_relid.
- * (NOTE: oldrel is not necessarily the parent_relid relation!)  We are also
- * careful to map attribute numbers within the array properly.	User
- * attributes have to be mapped through col_mappings, but system attributes
- * and whole-row references always have the same attno.
- *
- * Returns a palloc'd array with the specified bounds
- */
-Relids *
-adjust_appendrel_attr_needed(PlannerInfo *root,
-                             RelOptInfo *oldrel, AppendRelInfo *appinfo,
-							 AttrNumber new_min_attr, AttrNumber new_max_attr)
-{
-	Relids	   *new_attr_needed;
-	Index		parent_relid = appinfo->parent_relid;
-	Index		child_relid = appinfo->child_relid;
-	int			parent_attr;
-	ListCell   *lm;
-    RangeTblEntry  *parent_rte = rt_fetch(parent_relid, root->parse->rtable);
-    RangeTblEntry  *child_rte = rt_fetch(child_relid, root->parse->rtable);
-    ListCell       *parent_cell;
-    ListCell       *child_cell;
-
-	/* Create empty result array */
-	new_attr_needed = (Relids *)
-		palloc0((new_max_attr - new_min_attr + 1) * sizeof(Relids));
-	/* Process user attributes, with appropriate attno mapping */
-	parent_attr = 1;
-	foreach(lm, appinfo->col_mappings)
-	{
-		int			child_attr = lfirst_int(lm);
-
-		if (child_attr > 0)
-		{
-			Relids		attrneeded;
-
-			Assert(parent_attr <= oldrel->max_attr);
-			Assert(child_attr <= new_max_attr);
-			attrneeded = oldrel->attr_needed[parent_attr - oldrel->min_attr];
-			attrneeded = adjust_relid_set(attrneeded,
-										  parent_relid, child_relid);
-			new_attr_needed[child_attr - new_min_attr] = attrneeded;
-		}
-		parent_attr++;
-	}
-	/* Process system attributes, including whole-row references */
-	Assert(new_min_attr <= oldrel->min_attr);
-	for (parent_attr = oldrel->min_attr; parent_attr <= 0; parent_attr++)
-	{
-		Relids		attrneeded;
-
-		attrneeded = oldrel->attr_needed[parent_attr - oldrel->min_attr];
-		attrneeded = adjust_relid_set(attrneeded,
-									  parent_relid, child_relid);
-		new_attr_needed[parent_attr - new_min_attr] = attrneeded;
-	}
-
-    /* CDB: Process pseudo columns. */
-    Assert(list_length(parent_rte->pseudocols) == list_length(child_rte->pseudocols));
-    forboth(parent_cell, parent_rte->pseudocols,
-            child_cell, child_rte->pseudocols)
-    {
-        CdbRelColumnInfo   *parent_crci = (CdbRelColumnInfo *)parent_cell;
-        CdbRelColumnInfo   *child_crci = (CdbRelColumnInfo *)child_cell;
-
-        child_crci->where_needed = adjust_relid_set(parent_crci->where_needed,
-                                                    parent_relid, child_relid);
-    }
-
-	return new_attr_needed;
-}
-
-/*
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Adjust the targetlist entries of an inherited UPDATE operation
  *
  * The expressions have already been fixed, but we have to make sure that

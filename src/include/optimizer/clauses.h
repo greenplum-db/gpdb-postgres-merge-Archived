@@ -105,7 +105,7 @@ extern Node *fold_arrayexpr_constants(ArrayExpr *arrayexpr);
 
 extern Node *estimate_expression_value(PlannerInfo *root, Node *node);
 
-extern Expr *evaluate_expr(Expr *expr, Oid result_type);
+extern Expr *evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod);
 
 extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (),
 												 void *context);

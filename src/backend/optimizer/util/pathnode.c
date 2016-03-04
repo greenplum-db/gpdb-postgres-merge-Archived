@@ -3,10 +3,7 @@
  * pathnode.c
  *	  Routines to manipulate pathlists and create path nodes
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -1688,64 +1685,6 @@ create_unique_path(PlannerInfo *root,
 	 */
 	pathnode->path.pathkeys = NIL;
 
-<<<<<<< HEAD
-=======
-	pathnode->subpath = subpath;
-
-	/*
-	 * Try to identify the targetlist that will actually be unique-ified. In
-	 * current usage, this routine is only used for sub-selects of IN clauses,
-	 * so we should be able to find the tlist in in_info_list.	Get the IN
-	 * clause's operators, too, because they determine what "unique" means.
-	 */
-	sub_targetlist = NIL;
-	in_operators = NIL;
-	foreach(l, root->in_info_list)
-	{
-		InClauseInfo *ininfo = (InClauseInfo *) lfirst(l);
-
-		if (bms_equal(ininfo->righthand, rel->relids))
-		{
-			sub_targetlist = ininfo->sub_targetlist;
-			in_operators = ininfo->in_operators;
-			break;
-		}
-	}
-
-	/*
-	 * If the input is a subquery whose output must be unique already, then we
-	 * don't need to do anything.  The test for uniqueness has to consider
-	 * exactly which columns we are extracting; for example "SELECT DISTINCT
-	 * x,y" doesn't guarantee that x alone is distinct. So we cannot check for
-	 * this optimization unless we found our own targetlist above, and it
-	 * consists only of simple Vars referencing subquery outputs.  (Possibly
-	 * we could do something with expressions in the subquery outputs, too,
-	 * but for now keep it simple.)
-	 */
-	if (sub_targetlist && rel->rtekind == RTE_SUBQUERY)
-	{
-		RangeTblEntry *rte = planner_rt_fetch(rel->relid, root);
-		List	   *sub_tlist_colnos;
-
-		sub_tlist_colnos = translate_sub_tlist(sub_targetlist, rel->relid);
-
-		if (sub_tlist_colnos &&
-			query_is_distinct_for(rte->subquery,
-								  sub_tlist_colnos, in_operators))
-		{
-			pathnode->umethod = UNIQUE_PATH_NOOP;
-			pathnode->rows = rel->rows;
-			pathnode->path.startup_cost = subpath->startup_cost;
-			pathnode->path.total_cost = subpath->total_cost;
-			pathnode->path.pathkeys = subpath->pathkeys;
-
-			rel->cheapest_unique_path = (Path *) pathnode;
-
-			return pathnode;
-		}
-	}
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/*
 	 * If we know the targetlist, try to estimate number of result rows;
 	 * otherwise punt.
@@ -1766,14 +1705,9 @@ create_unique_path(PlannerInfo *root,
 	 */
 	cost_sort(&sort_path, root, NIL,
 			  subpath->total_cost,
-<<<<<<< HEAD
 			  subpath_rows,
-			  rel->width);
-=======
-			  rel->rows,
 			  rel->width,
 			  -1.0);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Charge one cpu_operator_cost per comparison per input tuple. We assume
@@ -1899,7 +1833,7 @@ create_unique_exprlist_path(PlannerInfo *root, Path *subpath,
 	 */
 	if (rel->rtekind == RTE_SUBQUERY)
 	{
-		RangeTblEntry *rte = rt_fetch(rel->relid, root->parse->rtable);
+		RangeTblEntry *rte = planner_rt_fetch(rel->relid, root);
 		List	   *sub_tlist_colnos;
 
 		sub_tlist_colnos = translate_sub_tlist(distinct_on_exprs, rel->relid);

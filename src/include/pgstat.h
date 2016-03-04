@@ -3,11 +3,7 @@
  *
  *	Definitions for the PostgreSQL statistics collector daemon.
  *
-<<<<<<< HEAD
  *	Copyright (c) 2001-2009, PostgreSQL Global Development Group
-=======
- *	Copyright (c) 2001-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.71.2.1 2008/04/03 16:27:32 tgl Exp $
  * ----------
@@ -46,14 +42,10 @@ typedef enum StatMsgType
 	PGSTAT_MTYPE_AUTOVAC_START,
 	PGSTAT_MTYPE_VACUUM,
 	PGSTAT_MTYPE_ANALYZE,
-<<<<<<< HEAD
 	PGSTAT_MTYPE_QUEUESTAT, /* GPDB */
 	PGSTAT_MTYPE_BGWRITER,
 	PGSTAT_MTYPE_FUNCSTAT,
 	PGSTAT_MTYPE_FUNCPURGE
-=======
-	PGSTAT_MTYPE_BGWRITER
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } StatMsgType;
 
 /* ----------
@@ -318,8 +310,6 @@ typedef struct PgStat_MsgAnalyze
 
 
 /* ----------
-<<<<<<< HEAD
- 
  * PgStat_MsgQueuestat			Sent by the backend to report resource queue
  *								activity statistics.
  * ----------  GPDB 
@@ -336,8 +326,6 @@ typedef struct PgStat_MsgQueuestat
 
 
 /* ----------
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * PgStat_MsgBgWriter			Sent by the bgwriter to update statistics.
  * ----------
  */
@@ -356,7 +344,6 @@ typedef struct PgStat_MsgBgWriter
 
 
 /* ----------
-<<<<<<< HEAD
  * PgStat_FunctionCounts	The actual per-function counts kept by a backend
  *
  * This struct should contain only actual event counters, because we memcmp
@@ -431,8 +418,6 @@ typedef struct PgStat_MsgFuncpurge
 
 
 /* ----------
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * PgStat_Msg					Union over all possible messages.
  * ----------
  */
@@ -448,14 +433,10 @@ typedef union PgStat_Msg
 	PgStat_MsgAutovacStart msg_autovacuum;
 	PgStat_MsgVacuum msg_vacuum;
 	PgStat_MsgAnalyze msg_analyze;
-<<<<<<< HEAD
 	PgStat_MsgQueuestat msg_queuestat;  /* GPDB */
 	PgStat_MsgBgWriter msg_bgwriter;
 	PgStat_MsgFuncstat msg_funcstat;
 	PgStat_MsgFuncpurge msg_funcpurge;
-=======
-	PgStat_MsgBgWriter msg_bgwriter;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } PgStat_Msg;
 
 
@@ -467,11 +448,7 @@ typedef union PgStat_Msg
  * ------------------------------------------------------------
  */
 
-<<<<<<< HEAD
 #define PGSTAT_FILE_FORMAT_ID	0x01A5BC98
-=======
-#define PGSTAT_FILE_FORMAT_ID	0x01A5BC97
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* ----------
  * PgStat_StatDBEntry			The collector's data per database
@@ -530,21 +507,6 @@ typedef struct PgStat_StatTabEntry
 	TimestampTz analyze_timestamp;		/* user initiated */
 	TimestampTz autovac_analyze_timestamp;		/* autovacuum initiated */
 } PgStat_StatTabEntry;
-
-
-/*
- * Global statistics kept in the stats collector
- */
-typedef struct PgStat_GlobalStats
-{
-	PgStat_Counter timed_checkpoints;
-	PgStat_Counter requested_checkpoints;
-	PgStat_Counter buf_written_checkpoints;
-	PgStat_Counter buf_written_clean;
-	PgStat_Counter maxwritten_clean;
-	PgStat_Counter buf_written_backend;
-	PgStat_Counter buf_alloc;
-} PgStat_GlobalStats;
 
 
 /* ----------
@@ -698,12 +660,8 @@ typedef struct PgStat_FunctionCallUsage
  * GUC parameters
  * ----------
  */
-<<<<<<< HEAD
-extern bool pgstat_collect_startcollector;  // NOT USED
-
+extern bool pgstat_track_activities;
 extern bool pgstat_track_counts;
-extern bool pgstat_track_counts;	// NOT USED
-extern bool pgstat_track_activities;  // NOT USED
 
 extern bool pgstat_collect_queuelevel;
 
@@ -712,11 +670,6 @@ extern int	pgstat_track_functions;
 extern char *pgstat_stat_tmpname;
 extern char *pgstat_stat_filename;
 
-=======
-extern bool pgstat_track_activities;
-extern bool pgstat_track_counts;
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * BgWriter statistics counters are updated directly by bgwriter and bufmgr
  */
@@ -745,14 +698,9 @@ extern void PgstatCollectorMain(int argc, char *argv[]);
  */
 extern void pgstat_ping(void);
 
-<<<<<<< HEAD
 extern void pgstat_report_stat(bool force);
 extern void pgstat_vacuum_stat(void);
 extern void pgstat_report_queuestat(void); /* GPDB */
-=======
-extern void pgstat_report_tabstat(bool force);
-extern void pgstat_vacuum_tabstat(void);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern void pgstat_drop_database(Oid databaseid);
 
 extern void pgstat_clear_snapshot(void);
@@ -769,7 +717,6 @@ extern void pgstat_initialize(void);
 extern void pgstat_bestart(void);
 
 extern void pgstat_report_activity(const char *what);
-<<<<<<< HEAD
 extern void pgstat_report_txn_timestamp(TimestampTz tstamp);
 extern void pgstat_report_waiting(char reason);
 
@@ -785,31 +732,15 @@ extern PgStat_StatPortalEntry *pgstat_getportalentry(uint32 portalid,
 
 /* nontransactional event counts are simple enough to inline */
 
-=======
-extern void pgstat_report_xact_timestamp(TimestampTz tstamp);
-extern void pgstat_report_waiting(bool waiting);
-
-extern void pgstat_initstats(Relation rel);
-
-/* nontransactional event counts are simple enough to inline */
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #define pgstat_count_heap_scan(rel)									\
 	do {															\
 		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
 			(rel)->pgstat_info->t_counts.t_numscans++;				\
-<<<<<<< HEAD
 	} while (0)
-/* kluge for bitmap scans: */
-#define pgstat_discount_heap_scan(rel)									\
-	do {																\
-		if (pgstat_track_counts && (rel)->pgstat_info != NULL)			\
-			(rel)->pgstat_info->t_counts.t_numscans--;		\
-	} while (0)
-#define pgstat_count_heap_getnext(rel)									\
-	do {																\
-		if (pgstat_track_counts && (rel)->pgstat_info != NULL)			\
-			(rel)->pgstat_info->t_counts.t_tuples_returned++; \
+#define pgstat_count_heap_getnext(rel)								\
+	do {															\
+		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
+			(rel)->pgstat_info->t_counts.t_tuples_returned++;		\
 	} while (0)
 #define pgstat_count_heap_fetch(rel)								\
 	do {															\
@@ -840,29 +771,10 @@ extern void pgstat_initstats(Relation rel);
 		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
 			(rel)->pgstat_info->t_counts.t_numscans++;				\
 	} while (0)
-=======
-	} while (0)
-#define pgstat_count_heap_getnext(rel)								\
-	do {															\
-		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
-			(rel)->pgstat_info->t_counts.t_tuples_returned++;		\
-	} while (0)
-#define pgstat_count_heap_fetch(rel)								\
-	do {															\
-		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
-			(rel)->pgstat_info->t_counts.t_tuples_fetched++;		\
-	} while (0)
-#define pgstat_count_index_scan(rel)								\
-	do {															\
-		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
-			(rel)->pgstat_info->t_counts.t_numscans++;				\
-	} while (0)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #define pgstat_count_index_tuples(rel, n)							\
 	do {															\
 		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
 			(rel)->pgstat_info->t_counts.t_tuples_returned += (n);	\
-<<<<<<< HEAD
 	} while (0)
 #define pgstat_count_buffer_read(rel)								\
 	do {															\
@@ -873,7 +785,6 @@ extern void pgstat_initstats(Relation rel);
 	do {															\
 		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
 			(rel)->pgstat_info->t_counts.t_blocks_hit++;			\
-	} while (0)
 
 /* Resource queue statistics: */
 #define pgstat_count_queue_exec(p, q) 									\
@@ -927,18 +838,6 @@ extern void pgstat_initstats(Relation rel);
 			pentry = pgstat_getportalentry(p, q);						\
 			(pentry)->t_wait_start = time(NULL);						\
 		}																\
-=======
-	} while (0)
-#define pgstat_count_buffer_read(rel)								\
-	do {															\
-		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
-			(rel)->pgstat_info->t_counts.t_blocks_fetched++;		\
-	} while (0)
-#define pgstat_count_buffer_hit(rel)								\
-	do {															\
-		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
-			(rel)->pgstat_info->t_counts.t_blocks_hit++;			\
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	} while (0)
 #define pgstat_record_end_queue_wait(p, q) 								\
 	do {																\
@@ -974,14 +873,6 @@ extern void pgstat_twophase_postcommit(TransactionId xid, uint16 info,
 extern void pgstat_twophase_postabort(TransactionId xid, uint16 info,
 						  void *recdata, uint32 len);
 
-<<<<<<< HEAD
-extern void pgstat_send_bgwriter(void);
-
-/* OLD?
-extern void pgstat_count_xact_commit(void);
-extern void pgstat_count_xact_rollback(void);
-*/
-=======
 extern void pgstat_count_heap_insert(Relation rel);
 extern void pgstat_count_heap_update(Relation rel, bool hot);
 extern void pgstat_count_heap_delete(Relation rel);
@@ -999,7 +890,6 @@ extern void pgstat_twophase_postabort(TransactionId xid, uint16 info,
 						  void *recdata, uint32 len);
 
 extern void pgstat_send_bgwriter(void);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* ----------
  * Support functions for the SQL-callable functions to

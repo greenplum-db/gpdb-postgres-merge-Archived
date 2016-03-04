@@ -66,12 +66,8 @@
 
 CATALOG(pg_language,2612)
 {
-<<<<<<< HEAD
- 	NameData	lanname;		
-=======
 	NameData	lanname;		/* Language name */
 	Oid			lanowner;		/* Language's owner */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	bool		lanispl;		/* Is a procedural language */
 	bool		lanpltrusted;	/* PL is trusted */
 	Oid			lanplcallfoid;	/* Call handler for PL */
@@ -94,20 +90,12 @@ typedef FormData_pg_language *Form_pg_language;
  */
 #define Natts_pg_language				7
 #define Anum_pg_language_lanname		1
-<<<<<<< HEAD
-#define Anum_pg_language_lanispl		2
-#define Anum_pg_language_lanpltrusted	3
-#define Anum_pg_language_lanplcallfoid	4
-#define Anum_pg_language_lanvalidator	5
-#define Anum_pg_language_lanacl			6
-=======
 #define Anum_pg_language_lanowner		2
 #define Anum_pg_language_lanispl		3
 #define Anum_pg_language_lanpltrusted	4
 #define Anum_pg_language_lanplcallfoid	5
 #define Anum_pg_language_lanvalidator	6
 #define Anum_pg_language_lanacl			7
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 /* TIDYCAT_END_CODEGEN */
