@@ -3,10 +3,7 @@
  * relnode.c
  *	  Relation-node lookup/construction routines
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -68,14 +65,12 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	if (root->simple_rel_array[relid] != NULL)
 		elog(ERROR, "rel %d already exists", relid);
 
-<<<<<<< HEAD
-    /* CDB: Rel isn't expected to have any pseudo columns yet. */
-    Assert(!rte->pseudocols);
-=======
 	/* Fetch RTE for relation */
 	rte = root->simple_rte_array[relid];
 	Assert(rte != NULL);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+
+    /* CDB: Rel isn't expected to have any pseudo columns yet. */
+    Assert(!rte->pseudocols);
 
 	rel = makeNode(RelOptInfo);
 	rel->reloptkind = reloptkind;
@@ -96,7 +91,6 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->tuples = 0;
 	rel->subplan = NULL;
 	rel->subrtable = NIL;
-<<<<<<< HEAD
 	rel->locationlist = NIL;
 	rel->execcommand = NULL;
 	rel->fmttype = '\0';
@@ -107,8 +101,6 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->ext_encoding = -1;
 	rel->isrescannable = true;
 	rel->writable = false;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	rel->baserestrictinfo = NIL;
 	rel->baserestrictcost.startup = 0;
 	rel->baserestrictcost.per_tuple = 0;

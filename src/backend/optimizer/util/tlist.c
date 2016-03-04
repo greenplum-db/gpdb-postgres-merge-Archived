@@ -3,10 +3,7 @@
  * tlist.c
  *	  Target list manipulation routines
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -62,7 +59,6 @@ tlist_member(Node *node, List *targetlist)
 }
 
 /*
-<<<<<<< HEAD
  * tlist_members
  *	  Finds all members of the given tlist whose expression is
  *	  equal() to the given expression.	Result is NIL if no such member.
@@ -75,25 +71,10 @@ tlist_members(Node *node, List *targetlist)
 {
 	List *tlist = NIL;
 	ListCell   *temp = NULL;
-=======
- * tlist_member_ignore_relabel
- *	  Same as above, except that we ignore top-level RelabelType nodes
- *	  while checking for a match.  This is needed for some scenarios
- *	  involving binary-compatible sort operations.
- */
-TargetEntry *
-tlist_member_ignore_relabel(Node *node, List *targetlist)
-{
-	ListCell   *temp;
-
-	while (node && IsA(node, RelabelType))
-		node = (Node *) ((RelabelType *) node)->arg;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	foreach(temp, targetlist)
 	{
 		TargetEntry *tlentry = (TargetEntry *) lfirst(temp);
-<<<<<<< HEAD
 
         Assert(IsA(tlentry, TargetEntry));
 
@@ -107,38 +88,22 @@ tlist_member_ignore_relabel(Node *node, List *targetlist)
 }
 
 /*
- * tlist_member_ignoring_RelabelType
- *	  Finds the (first) member of the given tlist whose expression is
- *	  equal() to the given expression.	Result is NULL if no such member.
- *
- * Disregards the presence or absence of a RelabelType node atop the
- * given expression and/or the tlist expressions.
+ * tlist_member_ignore_relabel
+ *	  Same as above, except that we ignore top-level RelabelType nodes
+ *	  while checking for a match.  This is needed for some scenarios
+ *	  involving binary-compatible sort operations.
  */
 TargetEntry *
-tlist_member_ignoring_RelabelType(Expr *expr, List *targetlist)
+tlist_member_ignore_relabel(Node *node, List *targetlist)
 {
-    ListCell   *temp;
+	ListCell   *temp;
 
-    if (IsA(expr, RelabelType))
-        expr = ((RelabelType *)expr)->arg;
+	while (node && IsA(node, RelabelType))
+		node = (Node *) ((RelabelType *) node)->arg;
 
-    foreach(temp, targetlist)
-    {
-        TargetEntry *tlentry = (TargetEntry *)lfirst(temp);
-        Expr        *tlexpr = tlentry->expr;
-
-        Assert(IsA(tlentry, TargetEntry));
-
-        if (IsA(tlexpr, RelabelType))
-            tlexpr = ((RelabelType *)tlexpr)->arg;
-
-        if (equal(expr, tlexpr))
-            return tlentry;
-	}
-	return NULL;
-}                               /* tlist_member_ignoring_RelabelType */
-
-=======
+	foreach(temp, targetlist)
+	{
+		TargetEntry *tlentry = (TargetEntry *) lfirst(temp);
 		Expr	   *tlexpr = tlentry->expr;
 
 		while (tlexpr && IsA(tlexpr, RelabelType))
@@ -149,7 +114,7 @@ tlist_member_ignoring_RelabelType(Expr *expr, List *targetlist)
 	}
 	return NULL;
 }
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+
 
 /*
  * flatten_tlist
@@ -234,7 +199,6 @@ get_sortgroupref_tle(Index sortref, List *targetList)
 }
 
 /*
-<<<<<<< HEAD
  * get_sortgroupclauses_tles
  *      Find a list of unique targetlist entries matching the given list of
  *      SortClause, GroupClause, or GroupingClauses.
@@ -313,20 +277,6 @@ get_sortgroupclauses_tles(List *clauses, List *targetList,
 
 	get_sortgroupclauses_tles_recurse(clauses, targetList,
 									  tles, sortops);
-=======
- * get_sortgroupclause_tle
- *		Find the targetlist entry matching the given SortClause
- *		(or GroupClause) by ressortgroupref, and return it.
- *
- * Because GroupClause is typedef'd as SortClause, either kind of
- * node can be passed without casting.
- */
-TargetEntry *
-get_sortgroupclause_tle(SortClause *sortClause,
-						List *targetList)
-{
-	return get_sortgroupref_tle(sortClause->tleSortGroupRef, targetList);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*

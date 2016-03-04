@@ -3,10 +3,7 @@
  * var.c
  *	  Var node manipulation routines
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -57,14 +54,8 @@ typedef struct
 	bool		inserted_sublink;		/* have we inserted a SubLink? */
 } flatten_join_alias_vars_context;
 
-<<<<<<< HEAD
-=======
-static bool pull_varnos_walker(Node *node,
-				   pull_varnos_context *context);
 static bool pull_varattnos_walker(Node *node, Bitmapset **varattnos);
-static bool contain_var_reference_walker(Node *node,
-							 contain_var_reference_context *context);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+
 static bool contain_var_clause_walker(Node *node, void *context);
 static bool pull_var_clause_walker(Node *node,
 					   pull_var_clause_context *context);
@@ -176,29 +167,10 @@ pull_varnos_cbCurrentOf(CurrentOfExpr *expr, void *context, int sublevelsup)
 	return false;
 }
 
-<<<<<<< HEAD
 static inline Relids
 pull_varnos_of_level(Node *node, int levelsup)      /*CDB*/
 {
 	pull_varnos_context context;
-=======
-		if (var->varlevelsup == context->sublevels_up)
-			context->varnos = bms_add_member(context->varnos, var->varno);
-		return false;
-	}
-	if (IsA(node, CurrentOfExpr))
-	{
-		CurrentOfExpr *cexpr = (CurrentOfExpr *) node;
-
-		if (context->sublevels_up == 0)
-			context->varnos = bms_add_member(context->varnos, cexpr->cvarno);
-		return false;
-	}
-	if (IsA(node, Query))
-	{
-		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
-		bool		result;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	context.varnos = NULL;
     cdb_walk_vars(node, pull_varnos_cbVar, NULL, pull_varnos_cbCurrentOf, &context, levelsup);
@@ -360,7 +332,6 @@ contain_vars_of_level_cbVar(Var *var, void *unused, int sublevelsup)
 static bool
 contain_vars_of_level_cbAggref(Aggref *aggref, void *unused, int sublevelsup)
 {
-<<<<<<< HEAD
 	if ((int)aggref->agglevelsup == sublevelsup)
         return true;
 
@@ -382,38 +353,6 @@ contain_vars_of_level(Node *node, int levelsup)
                          NULL,
                          NULL,
                          levelsup);
-=======
-	if (node == NULL)
-		return false;
-	if (IsA(node, Var))
-	{
-		if (((Var *) node)->varlevelsup == *sublevels_up)
-			return true;		/* abort tree traversal and return true */
-		return false;
-	}
-	if (IsA(node, CurrentOfExpr))
-	{
-		if (*sublevels_up == 0)
-			return true;
-		return false;
-	}
-	if (IsA(node, Query))
-	{
-		/* Recurse into subselects */
-		bool		result;
-
-		(*sublevels_up)++;
-		result = query_tree_walker((Query *) node,
-								   contain_vars_of_level_walker,
-								   (void *) sublevels_up,
-								   0);
-		(*sublevels_up)--;
-		return result;
-	}
-	return expression_tree_walker(node,
-								  contain_vars_of_level_walker,
-								  (void *) sublevels_up);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
@@ -500,34 +439,8 @@ find_minimum_var_level_cbVar(Var   *var,
 				return true;
 		}
 	}
-<<<<<<< HEAD
     return false;
 }
-=======
-	if (IsA(node, CurrentOfExpr))
-	{
-		int			varlevelsup = 0;
-
-		/* convert levelsup to frame of reference of original query */
-		varlevelsup -= context->sublevels_up;
-		/* ignore local vars of subqueries */
-		if (varlevelsup >= 0)
-		{
-			if (context->min_varlevel < 0 ||
-				context->min_varlevel > varlevelsup)
-			{
-				context->min_varlevel = varlevelsup;
-
-				/*
-				 * As soon as we find a local variable, we can abort the tree
-				 * traversal, since min_varlevel is then certainly 0.
-				 */
-				if (varlevelsup == 0)
-					return true;
-			}
-		}
-	}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 static bool
 find_minimum_var_level_cbAggref(Aggref *aggref,
@@ -759,7 +672,6 @@ flatten_join_alias_vars_mutator(Node *node,
 												ininfo->righthand);
 		return (Node *) ininfo;
 	}
-
 	if (IsA(node, Query))
 	{
 		/* Recurse into RTE subquery or not-yet-planned sublink subquery */

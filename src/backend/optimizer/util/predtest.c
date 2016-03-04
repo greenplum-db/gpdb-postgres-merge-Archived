@@ -115,10 +115,7 @@ static void arrayexpr_cleanup_fn(PredIterInfo info);
 static bool predicate_implied_by_simple_clause(Expr *predicate, Node *clause);
 static bool predicate_refuted_by_simple_clause(Expr *predicate, Node *clause);
 static Node *extract_not_arg(Node *clause);
-<<<<<<< HEAD
-=======
 static Node *extract_strong_not_arg(Node *clause);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static bool list_member_strip(List *list, Expr *datum);
 static bool btree_predicate_proof(Expr *predicate, Node *clause,
 					  bool refute_it);
@@ -475,11 +472,8 @@ predicate_implied_by_recurse(Node *clause, Node *predicate)
  * Unfortunately we *cannot* use
  *	NOT A R=> B if:					B => A
  * because this type of reasoning fails to prove that B doesn't yield NULL.
-<<<<<<< HEAD
-=======
  * We can however make the more limited deduction that
  *	NOT A R=> A
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * Other comments are as for predicate_implied_by_recurse().
  *----------
@@ -665,16 +659,7 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 
 		case CLASS_ATOM:
 
-#ifdef NOT_USED
 			/*
-<<<<<<< HEAD
-			 * If A is a NOT-clause, A R=> B if B => A's arg
-			 *
-			 * Unfortunately not: this would only prove that B is not-TRUE,
-			 * not that it's not NULL either.  Keep this code as a comment
-			 * because it would be useful if we ever had a need for the
-			 * weak form of refutation.
-=======
 			 * If A is a strong NOT-clause, A R=> B if B equals A's arg
 			 *
 			 * We cannot make the stronger conclusion that B is refuted if
@@ -682,15 +667,10 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 			 * not that it's not NULL either.  Hence use equal() rather than
 			 * predicate_implied_by_recurse().  We could do the latter if we
 			 * ever had a need for the weak form of refutation.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			 */
 			not_arg = extract_strong_not_arg(clause);
 			if (not_arg && equal(predicate, not_arg))
 				return true;
-<<<<<<< HEAD
-#endif
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			switch (pclass)
 			{
@@ -761,21 +741,12 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
  * If the expression is classified as AND- or OR-type, then *info is filled
  * in with the functions needed to iterate over its components.
  *
-<<<<<<< HEAD
- * This function also implements enforcement of MAX_BRANCHES_TO_TEST: if an
- * AND/OR expression has too many branches, we just classify it as an atom.
- * (This will result in its being passed as-is to the simple_clause functions,
- * which will fail to prove anything about it.)  Note that we cannot just stop
- * after considering MAX_BRANCHES_TO_TEST branches; in general that would
- * result in wrong proofs rather than failing to prove anything.
-=======
  * This function also implements enforcement of MAX_SAOP_ARRAY_SIZE: if a
  * ScalarArrayOpExpr's array has too many elements, we just classify it as an
  * atom.  (This will result in its being passed as-is to the simple_clause
  * functions, which will fail to prove anything about it.)  Note that we
  * cannot just stop after considering MAX_SAOP_ARRAY_SIZE elements; in general
  * that would result in wrong proofs, rather than failing to prove anything.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 static PredClass
 predicate_classify(Node *clause, PredIterInfo info)
@@ -1411,36 +1382,6 @@ list_member_strip(List *list, Expr *datum)
 	foreach(cell, list)
 	{
 		Expr	   *elem = (Expr *) lfirst(cell);
-
-		if (elem && IsA(elem, RelabelType))
-			elem = ((RelabelType *) elem)->arg;
-
-		if (equal(elem, datum))
-			return true;
-	}
-
-	return false;
-}
-
-
-/*
- * Check whether an Expr is equal() to any member of a list, ignoring
- * any top-level RelabelType nodes.  This is legitimate for the purposes
- * we use it for (matching IS [NOT] NULL arguments to arguments of strict
- * functions) because RelabelType doesn't change null-ness.  It's helpful
- * for cases such as a varchar argument of a strict function on text.
- */
-static bool
-list_member_strip(List *list, Expr *datum)
-{
-	ListCell   *cell;
-
-	if (datum && IsA(datum, RelabelType))
-		datum = ((RelabelType *) datum)->arg;
-
-	foreach(cell, list)
-	{
-		Expr *elem = (Expr *) lfirst(cell);
 
 		if (elem && IsA(elem, RelabelType))
 			elem = ((RelabelType *) elem)->arg;
