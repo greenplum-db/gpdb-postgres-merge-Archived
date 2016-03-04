@@ -39,12 +39,12 @@ extern Plan *subquery_planner(PlannerGlobal *glob,
 							  PlannerInfo **subroot,
 							  PlannerConfig *config);
 
-extern bool choose_hashed_grouping(PlannerInfo *root, 
-								   double tuple_fraction,
-								   Path *cheapest_path, 
+extern bool choose_hashed_grouping(PlannerInfo *root,
+								   double tuple_fraction, double limit_tuples,
+								   Path *cheapest_path,
 								   Path *sorted_path,
 								   Oid *groupOperators, int numGroupOps,
-								   double dNumGroups, 
+								   double dNumGroups,
 								   AggClauseCounts *agg_counts);
 
 #endif   /* PLANNER_H */

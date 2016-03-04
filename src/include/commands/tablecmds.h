@@ -7,11 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/commands/tablecmds.h,v 1.31.2.1 2007/05/11 20:18:17 tgl Exp $
-=======
  * $PostgreSQL: pgsql/src/include/commands/tablecmds.h,v 1.37 2008/01/30 19:46:48 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -84,11 +80,8 @@ extern void AlterRelationNamespaceInternal(Relation classRel, Oid relOid,
 							   Oid oldNspOid, Oid newNspOid,
 							   bool hasDependEntry);
 
-<<<<<<< HEAD
 extern void ATAddColumn(Relation rel, ColumnDef *colDef);
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern void CheckTableNotInUse(Relation rel, const char *stmt);
 
 extern void ExecuteTruncate(TruncateStmt *stmt);
@@ -101,15 +94,12 @@ extern void renameatt(Oid myrelid,
 
 extern void renamerel(Oid myrelid,
 		  const char *newrelname,
-<<<<<<< HEAD
+		  ObjectType reltype,
 		  RenameStmt *stmt /* MPP */);
 
 extern void find_composite_type_dependencies(Oid typeOid,
 											 const char *origTblName,
 											 const char *origTypeName);
-=======
-		  ObjectType reltype);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 extern void find_composite_type_dependencies(Oid typeOid,
 								 const char *origTblName,

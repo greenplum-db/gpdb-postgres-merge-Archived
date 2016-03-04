@@ -3,10 +3,7 @@
  * planner.c
  *	  The query optimizer external interface.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -60,11 +57,9 @@
 #include "cdb/cdbsubselect.h"   /* cdbsubselect_flatten_sublinks() */
 #include "cdb/cdbvars.h"
 
+
 /* GUC parameter */
 double cursor_tuple_fraction = DEFAULT_CURSOR_TUPLE_FRACTION;
-
-/* Hook for plugins to get control in planner() */
-planner_hook_type planner_hook = NULL;
 
 /* Hook for plugins to get control in planner() */
 planner_hook_type planner_hook = NULL;
@@ -88,18 +83,9 @@ static Plan *grouping_planner(PlannerInfo *root, double tuple_fraction);
 static double preprocess_limit(PlannerInfo *root,
 				 double tuple_fraction,
 				 int64 *offset_est, int64 *count_est);
-<<<<<<< HEAD
 #ifdef NOT_USED
 static Oid *extract_grouping_ops(List *groupClause, int *numGroupOps);
 #endif
-=======
-static Oid *extract_grouping_ops(List *groupClause);
-static bool choose_hashed_grouping(PlannerInfo *root,
-					   double tuple_fraction, double limit_tuples,
-					   Path *cheapest_path, Path *sorted_path,
-					   Oid *groupOperators, double dNumGroups,
-					   AggClauseCounts *agg_counts);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static List *make_subplanTargetList(PlannerInfo *root, List *tlist,
 					   AttrNumber **groupColIdx, Oid **groupOperators, bool *need_tlist_eval);
 static List *register_ordered_aggs(List *tlist, Node *havingqual, List *sub_tlist);
@@ -253,11 +239,8 @@ optimize_query(Query *parse, ParamListInfo boundParams)
  * so you'd better copy that data structure if you want to plan more than once.
  *
  *****************************************************************************/
-<<<<<<< HEAD
-
 PlannedStmt *
-planner(Query *parse, int cursorOptions,
-		ParamListInfo boundParams)
+planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 {
 	PlannedStmt *result = NULL;
 	instr_time	starttime, endtime;
@@ -323,46 +306,22 @@ planner(Query *parse, int cursorOptions,
 	return result;
 }
 
-
-=======
-PlannedStmt *
-planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
-{
-	PlannedStmt *result;
-
-	if (planner_hook)
-		result = (*planner_hook) (parse, cursorOptions, boundParams);
-	else
-		result = standard_planner(parse, cursorOptions, boundParams);
-	return result;
-}
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 PlannedStmt *
 standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 {
 	PlannedStmt *result;
 	PlannerGlobal *glob;
-	bool isCursor = false;
 	double		tuple_fraction;
 	PlannerInfo *root;
 	Plan	   *top_plan;
 	ListCell   *lp,
 			   *lr;
+	PlannerConfig *config;
 
-<<<<<<< HEAD
-	/* Cursor options may come from caller or from DECLARE CURSOR stmt. */
-	if (parse->utilityStmt && IsA(parse->utilityStmt, DeclareCursorStmt))
-	{
-		isCursor = true;
-		cursorOptions |= ((DeclareCursorStmt *) parse->utilityStmt)->options;
-	}
-=======
 	/* Cursor options may come from caller or from DECLARE CURSOR stmt */
 	if (parse->utilityStmt &&
 		IsA(parse->utilityStmt, DeclareCursorStmt))
 		cursorOptions |= ((DeclareCursorStmt *) parse->utilityStmt)->options;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Set up global state for this planner invocation.  This data is needed
@@ -379,7 +338,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->rewindPlanIDs = NULL;
 	glob->finalrtable = NIL;
 	glob->relationOids = NIL;
-<<<<<<< HEAD
 	glob->invalItems = NIL;
 	glob->transientPlan = false;
 	/* ApplyShareInputContext initialization. */
@@ -390,9 +348,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->share.qdSlices = NIL;
 	glob->share.planNodes = NIL;
 	glob->share.nextPlanId = 0;
-=======
-	glob->transientPlan = false;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Determine what fraction of the plan is likely to be scanned */
 	if (cursorOptions & CURSOR_OPT_FAST_PLAN)
@@ -426,14 +381,10 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 
 	parse = normalize_query(parse);
 
-	PlannerConfig *config = DefaultPlannerConfig();
+	config = DefaultPlannerConfig();
 
 	/* primary planning entry point (may recurse for subqueries) */
-<<<<<<< HEAD
 	top_plan = subquery_planner(glob, parse, NULL, tuple_fraction, &root, config);
-=======
-	top_plan = subquery_planner(glob, parse, 1, tuple_fraction, &root);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * If creating a plan for a scrollable cursor, make sure it can run
@@ -442,35 +393,28 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	if (cursorOptions & CURSOR_OPT_SCROLL)
 	{
 		if (!ExecSupportsBackwardScan(top_plan))
-<<<<<<< HEAD
 			top_plan = materialize_finished_plan(root, top_plan);
 	}
 
 
-	/* Fix sharing id and shared id.  
+	/*
+	 * Fix sharing id and shared id.  
 	 *
 	 * This must be called before set_plan_references and cdbparallelize.  The other mutator
 	 * or tree walker assumes the input is a tree.  If there is plan sharing, we have a DAG. 
 	 *
 	 * apply_shareinput will fix shared_id, and change the DAG to a tree.
 	 */
-
 	foreach(lp, glob->subplans)
 	{
 		Plan	   *subplan = (Plan *) lfirst(lp);
 		lfirst(lp) = apply_shareinput_dag_to_tree(subplan, &glob->share);
-=======
-			top_plan = materialize_finished_plan(top_plan);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 	top_plan = apply_shareinput_dag_to_tree(top_plan, &glob->share);
 
 	/* final cleanup of the plan */
 	Assert(glob->finalrtable == NIL);
-<<<<<<< HEAD
 	Assert(parse == root->parse);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	top_plan = set_plan_references(glob, top_plan, root->parse->rtable);
 	/* ... and the subplans (both regular subplans and initplans) */
 	Assert(list_length(glob->subplans) == list_length(glob->subrtables));
@@ -478,16 +422,12 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	{
 		Plan	   *subplan = (Plan *) lfirst(lp);
 		List	   *subrtable = (List *) lfirst(lr);
-<<<<<<< HEAD
-		
+
 		lfirst(lp) = set_plan_references(glob, subplan, subrtable);
 	}
 
 	/* walk plan and remove unused initplans and their params */
 	remove_unused_initplans(top_plan, root);
-
-	/* executor wants to know total number of Params used overall */
-	top_plan->nParamExec = list_length(glob->paramlist);
 
 	if ( Gp_role == GP_ROLE_DISPATCH )
 	{
@@ -516,19 +456,9 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 
 	top_plan = zap_trivial_result(root, top_plan);
 
-	
-	/* build the PlannedStmt result */
-	result = makeNode(PlannedStmt);
-	
-=======
-
-		lfirst(lp) = set_plan_references(glob, subplan, subrtable);
-	}
-
 	/* build the PlannedStmt result */
 	result = makeNode(PlannedStmt);
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	result->commandType = parse->commandType;
 	result->canSetTag = parse->canSetTag;
 	result->transientPlan = glob->transientPlan;
@@ -540,11 +470,11 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->subplans = glob->subplans;
 	result->rewindPlanIDs = glob->rewindPlanIDs;
 	result->returningLists = root->returningLists;
-<<<<<<< HEAD
 	result->result_partitions = root->result_partitions;
 	result->result_aosegnos = root->result_aosegnos;
 	result->rowMarks = parse->rowMarks;
 	result->relationOids = glob->relationOids;
+	result->nParamExec = list_length(glob->paramlist);
 	result->invalItems = glob->invalItems;
 	result->nCrossLevelParams = list_length(glob->paramlist);
 	result->nMotionNodes = top_plan->nMotionNodes;
@@ -553,9 +483,9 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->queryPartOids = NIL;
 	result->queryPartsMetadata = NIL;
 	result->numSelectorsPerScanId = NIL;
-	
+
 	Assert(result->utilityStmt == NULL || IsA(result->utilityStmt, DeclareCursorStmt));
-	
+
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		/*
@@ -565,14 +495,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 		 */
 		assign_plannode_id(result);
 	}
-=======
-	result->rowMarks = parse->rowMarks;
-	result->relationOids = glob->relationOids;
-	result->nParamExec = list_length(glob->paramlist);
-
-	return result;
-}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	return result;
 }
@@ -605,18 +527,11 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
  *--------------------
  */
 Plan *
-<<<<<<< HEAD
-subquery_planner(PlannerGlobal *glob,
-				 Query *parse, 
+subquery_planner(PlannerGlobal *glob, Query *parse, 
 				 PlannerInfo *parent_root,
 				 double tuple_fraction,
 				 PlannerInfo **subroot,
 				 PlannerConfig *config)
-=======
-subquery_planner(PlannerGlobal *glob, Query *parse,
-				 Index level, double tuple_fraction,
-				 PlannerInfo **subroot)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	int			num_old_subplans = list_length(glob->subplans);
 	PlannerInfo *root;
@@ -912,18 +827,12 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	 * initPlan list and extParam/allParam sets for plan nodes, and attach the
 	 * initPlans to the top plan node.
 	 */
-<<<<<<< HEAD
 	if (list_length(glob->subplans) != num_old_subplans || 
 		root->query_level > 1)
 	{
 		Assert(root->parse == parse); /* GPDP isn't always careful about this. */
-		SS_finalize_plan(root, root->parse->rtable, plan, true);
+		SS_finalize_plan(root, plan, true);
 	}
-=======
-	if (list_length(glob->subplans) != num_old_subplans ||
-		root->query_level > 1)
-		SS_finalize_plan(root, plan);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Return internal info if caller wants it */
 	if (subroot)
@@ -973,15 +882,7 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	 * careful to maintain AND/OR flatness --- that is, do not generate a tree
 	 * with AND directly under AND, nor OR directly under OR.
 	 */
-<<<<<<< HEAD
 	expr = eval_const_expressions(root, expr);
-=======
-	if (kind != EXPRKIND_VALUES &&
-		(root->parse->jointree->fromlist != NIL ||
-		 kind == EXPRKIND_QUAL ||
-		 root->query_level > 1))
-		expr = eval_const_expressions(root, expr);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * If it's a qual or havingQual, canonicalize it.
@@ -1210,7 +1111,6 @@ inheritance_planner(PlannerInfo *root)
 		}
 	}
 
-<<<<<<< HEAD
 	/**
 	 * If due to constraint exclusions all the result relations have been removed,
 	 * we need something upstream.
@@ -1225,11 +1125,7 @@ inheritance_planner(PlannerInfo *root)
 	}
 	
 	root->returningLists = returningLists;
-=======
-	root->resultRelations = resultRelations;
-	root->returningLists = returningLists;
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/* Mark result as unordered (probably unnecessary) */
 	root->query_pathkeys = NIL;
 
@@ -1248,8 +1144,12 @@ inheritance_planner(PlannerInfo *root)
 									NULL);
 	}
 
-	plan = (Plan *) make_append(subplans, true, tlist);
-	
+	/* Suppress Append if there's only one surviving child rel */
+	if (list_length(subplans) == 1)
+		plan = (Plan *) linitial(subplans);
+	else
+		plan = (Plan *) make_append(subplans, true, tlist);
+
 	/* MPP dispatch needs to know the kind of locus. */
 	if ( Gp_role == GP_ROLE_DISPATCH )
 	{
@@ -1289,8 +1189,6 @@ static void grouping_planner_output_asserts(PlannerInfo *root, Plan *plan);
  */
 void grouping_planner_output_asserts(PlannerInfo *root, Plan *plan)
 {
-	Assert(plan);
-
 	/* Ensure that plan refers to vars that have varlevelsup = 0 AND varno is in the rtable */
 	List *allVars = extract_nodes(root->glob, (Node *) plan, T_Var);
 	ListCell *lc = NULL;
@@ -1336,7 +1234,6 @@ getAnySubplan(Plan *node)
 		return (Plan *)linitial(append->appendplans);
 	}
 
-<<<<<<< HEAD
 	else if (IsA(node, SubqueryScan))
 	{
 		SubqueryScan *subqueryScan = (SubqueryScan *)node;
@@ -1344,13 +1241,6 @@ getAnySubplan(Plan *node)
 	}
 	
 	return node->lefttree;
-=======
-	/* Suppress Append if there's only one surviving child rel */
-	if (list_length(subplans) == 1)
-		return (Plan *) linitial(subplans);
-
-	return (Plan *) make_append(subplans, true, tlist);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*--------------------
@@ -1386,7 +1276,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	List	   *sort_pathkeys;
     Path       *best_path = NULL;
 	double		dNumGroups = 0;
-<<<<<<< HEAD
 	double		numDistinct = 1;
 	List	   *distinctExprs = NIL;
 
@@ -1402,22 +1291,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
     {
         tuple_fraction = preprocess_limit(root, tuple_fraction,
                                           &offset_est, &count_est);
-
-        /*
-         * If we have a known LIMIT, and don't have an unknown OFFSET, we can
-         * estimate the effects of using a bounded sort.
-         */
-        if (count_est > 0 && offset_est >= 0)
-            limit_tuples = (double) count_est + (double) offset_est;
-    }
-=======
-
-	/* Tweak caller-supplied tuple_fraction if have LIMIT/OFFSET */
-	if (parse->limitCount || parse->limitOffset)
-	{
-		tuple_fraction = preprocess_limit(root, tuple_fraction,
-										  &offset_est, &count_est);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/*
 		 * If we have a known LIMIT, and don't have an unknown OFFSET, we can
@@ -1816,25 +1689,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				 * evaluation, we must insert a Result node to project the
 				 * desired tlist.
 				 */
-<<<<<<< HEAD
-				result_plan = plan_pushdown_tlist(result_plan, sub_tlist);
-=======
-				if (!is_projection_capable_plan(result_plan))
-				{
-					result_plan = (Plan *) make_result(root,
-													   sub_tlist,
-													   NULL,
-													   result_plan);
-				}
-				else
-				{
-					/*
-					 * Otherwise, just replace the subplan's flat tlist with
-					 * the desired tlist.
-					 */
-					result_plan->targetlist = sub_tlist;
-				}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+				result_plan = plan_pushdown_tlist(root, result_plan, sub_tlist);
 
 				/*
 				 * Also, account for the cost of evaluation of the sub_tlist.
@@ -1990,14 +1845,10 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				/*
 				 * Make a copy of tlist. Really need to?
 				 */
-<<<<<<< HEAD
 				List *new_tlist = copyObject(tlist);
 
 				/* Make EXPLAIN output look nice */
 				foreach(lc, result_plan->targetlist)
-=======
-				if (need_sort_for_grouping)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				{
 					TargetEntry *tle = (TargetEntry*)lfirst(lc);
 
@@ -2113,7 +1964,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				base_cost = motion_cost_per_row * result_plan->plan_rows;
 				alt_cost = motion_cost_per_row * numDistinct;
 				cost_sort(&sort_path, root, NIL, alt_cost, 
-						  numDistinct, result_plan->plan_rows);
+						  numDistinct, result_plan->plan_rows, -1.0);
 				alt_cost += sort_path.startup_cost;
 				alt_cost += cpu_operator_cost * numDistinct 
 							* list_length(parse->distinctClause);
@@ -2191,14 +2042,9 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		{
 			result_plan = (Plan *) make_sort_from_pathkeys(root,
 														   result_plan,
-<<<<<<< HEAD
 														   sort_pathkeys, limit_tuples, false);
 			if (result_plan == NULL)
 				elog(ERROR, "could not find sort pathkeys in result target list");
-=======
-														   sort_pathkeys,
-														   limit_tuples);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			current_pathkeys = sort_pathkeys;
 			mark_sort_locus(result_plan);
 		}
@@ -2691,7 +2537,6 @@ extract_grouping_ops(List *groupClause, int *numGroupOps)
 			Oid		   *subops;
 			int			nsubops;
 
-<<<<<<< HEAD
 			subops = extract_grouping_ops(groupsets, &nsubops);
 			while (colno + nsubops > maxCols)
 			{
@@ -2702,13 +2547,6 @@ extract_grouping_ops(List *groupClause, int *numGroupOps)
 			memcpy(&groupOperators[colno], subops, nsubops * sizeof(Oid));
 			colno += nsubops;
 		}
-=======
-		groupOperators[colno] = get_equality_op_for_ordering_op(groupcl->sortop);
-		if (!OidIsValid(groupOperators[colno])) /* shouldn't happen */
-			elog(ERROR, "could not find equality operator for ordering operator %u",
-				 groupcl->sortop);
-		colno++;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	*numGroupOps = colno;
@@ -2720,14 +2558,9 @@ extract_grouping_ops(List *groupClause, int *numGroupOps)
 /*
  * choose_hashed_grouping - should we use hashed grouping?
  */
-<<<<<<< HEAD
 bool
-choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
-=======
-static bool
 choose_hashed_grouping(PlannerInfo *root,
 					   double tuple_fraction, double limit_tuples,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					   Path *cheapest_path, Path *sorted_path,
 					   Oid *groupOperators, int numGroupOps, double dNumGroups,
 					   AggClauseCounts *agg_counts)

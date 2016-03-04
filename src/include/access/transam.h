@@ -14,12 +14,9 @@
 #ifndef TRANSAM_H
 #define TRANSAM_H
 
-<<<<<<< HEAD
 #include "catalog/pg_magic_oid.h"
-=======
 #include "access/xlogdefs.h"
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* ----------------
  *		Special transaction ID values
@@ -56,41 +53,12 @@
 			(dest) = FirstNormalTransactionId; \
 	} while(0)
 
-<<<<<<< HEAD
-=======
 /* back up a transaction ID variable, handling wraparound correctly */
 #define TransactionIdRetreat(dest)	\
 	do { \
 		(dest)--; \
 	} while ((dest) < FirstNormalTransactionId)
 
-
-/* ----------
- *		Object ID (OID) zero is InvalidOid.
- *
- *		OIDs 1-9999 are reserved for manual assignment (see the files
- *		in src/include/catalog/).
- *
- *		OIDS 10000-16383 are reserved for assignment during initdb
- *		using the OID generator.  (We start the generator at 10000.)
- *
- *		OIDs beginning at 16384 are assigned from the OID generator
- *		during normal multiuser operation.	(We force the generator up to
- *		16384 as soon as we are in normal operation.)
- *
- * The choices of 10000 and 16384 are completely arbitrary, and can be moved
- * if we run low on OIDs in either category.  Changing the macros below
- * should be sufficient to do this.
- *
- * NOTE: if the OID generator wraps around, we skip over OIDs 0-16383
- * and resume with 16384.  This minimizes the odds of OID conflict, by not
- * reassigning OIDs that might have been assigned during initdb.
- * ----------
- */
-#define FirstBootstrapObjectId	10000
-#define FirstNormalObjectId		16384
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * VariableCache is a data structure in shared memory that is used to track
  * OID and XID assignment state.  For largely historical reasons, there is

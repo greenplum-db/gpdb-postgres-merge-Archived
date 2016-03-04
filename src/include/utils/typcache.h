@@ -86,10 +86,6 @@ extern TupleDesc lookup_rowtype_tupdesc_copy(Oid type_id, int32 typmod);
 
 extern void assign_record_type_typmod(TupleDesc tupDesc);
 
-<<<<<<< HEAD
-extern void flush_rowtype_cache(Oid type_id);
-
 extern void build_tuple_node_list(List **transientTypeList);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+
 #endif   /* TYPCACHE_H */

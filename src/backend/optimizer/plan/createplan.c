@@ -163,7 +163,6 @@ static BitmapOr *make_bitmap_or(List *bitmapplans);
 static Sort *make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
 		  AttrNumber *sortColIdx, Oid *sortOperators, bool *nullsFirst,
 		  double limit_tuples);
-static Material *make_material(Plan *lefttree);
 static List *flatten_grouping_list(List *groupcls);
 
 
@@ -3984,7 +3983,7 @@ make_subqueryscan(PlannerInfo *root,
 	 * Ensure that the plan we're going to attach to the subquery scan has all the
 	 * parameter fields figured out.
 	 */
-	SS_finalize_plan(root, subrtable, subplan, false);
+	SS_finalize_plan(root, subplan, false);
 
 	/*
 	 * Cost is figured here for the convenience of prepunion.c.  Note this is
@@ -4840,7 +4839,7 @@ reconstruct_group_clause(List *orig_groupClause, List *tlist, AttrNumber *grpCol
 	return new_groupClause;
 }
 
-static Material *
+Material *
 make_material(Plan *lefttree)
 {
 	Material   *node = makeNode(Material);

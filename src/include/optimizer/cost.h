@@ -66,6 +66,7 @@ extern bool enable_bitmapscan;
 extern bool enable_tidscan;
 extern bool enable_sort;
 extern bool enable_hashagg;
+extern bool enable_groupagg;
 extern bool enable_nestloop;
 extern bool enable_mergejoin;
 extern bool enable_hashjoin;

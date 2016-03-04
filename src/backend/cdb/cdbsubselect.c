@@ -1112,6 +1112,12 @@ convert_IN_to_join(PlannerInfo *root, List** rtrlist_inout, SubLink *sublink)
 	rtindex = list_length(root->parse->rtable);
     Assert(rt_fetch(rtindex, root->parse->rtable)->subquery == subselect);
 
+	/*
+	 * GPDB_83MERGE_FIXME: The changes from upstream commit
+	 *  5f26db502b13e91ee1484213c0689fa19841c07a should go around here, but didn't
+	 * apply cleanly so I postponed that..
+	 */
+	
     /*
      * Uncorrelated "=ANY" subqueries can use JOIN_UNIQUE dedup technique.  We
 	 * expect that the test expression will be either a single OpExpr, or an

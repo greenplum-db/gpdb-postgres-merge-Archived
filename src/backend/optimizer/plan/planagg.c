@@ -3,10 +3,7 @@
  * planagg.c
  *	  Special planning for aggregate queries.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -494,13 +491,8 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 	subroot.init_plans = NIL;
 	subparse->commandType = CMD_SELECT;
 	subparse->resultRelation = 0;
-<<<<<<< HEAD
-	subparse->resultRelations = NIL;
-	subparse->returningLists = NIL;
-=======
 	subparse->returningList = NIL;
 	subparse->utilityStmt = NULL;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	subparse->intoClause = NULL;
 	subparse->hasAggs = false;
 	subparse->groupClause = NIL;
@@ -571,7 +563,7 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 	plan = create_plan(&subroot, (Path *) info->path);
 
     /* Replace the plan's tlist with a copy of the one we built above. */
-    plan = plan_pushdown_tlist(plan, copyObject(subparse->targetList));
+    plan = plan_pushdown_tlist(root, plan, copyObject(subparse->targetList));
 
 	if (IsA(plan, Result))
 		iplan = plan->lefttree;

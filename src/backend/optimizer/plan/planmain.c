@@ -9,10 +9,7 @@
  * shorn of features like subselects, inheritance, aggregates, grouping,
  * and so on.  (Those are the things planner.c deals with.)
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -102,7 +99,6 @@ query_planner(PlannerInfo *root, List *tlist,
 	Index		rti;
 	ListCell   *lc;
 	double		total_pages;
-	ListCell   *lc;
 
 	/* Make tuple_fraction accessible to lower-level routines */
 	root->tuple_fraction = tuple_fraction;
@@ -119,16 +115,10 @@ query_planner(PlannerInfo *root, List *tlist,
 		*cheapest_path = (Path *)
 			create_result_path((List *) parse->jointree->quals);
 		*sorted_path = NULL;
-<<<<<<< HEAD
-		/*
-		 * We still are required to canonicalize any pathkeys, in case
-		 * it's something like "SELECT 2+2 ORDER BY 1".
-=======
 
 		/*
 		 * We still are required to canonicalize any pathkeys, in case it's
 		 * something like "SELECT 2+2 ORDER BY 1".
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 */
 		root->canon_pathkeys = NIL;
 		root->query_pathkeys = canonicalize_pathkeys(root,
@@ -164,11 +154,7 @@ query_planner(PlannerInfo *root, List *tlist,
 	 * OK because the rangetable won't change any more).
 	 */
 	root->simple_rte_array = (RangeTblEntry **)
-<<<<<<< HEAD
-	palloc0(root->simple_rel_array_size * sizeof(RangeTblEntry *));
-=======
 		palloc0(root->simple_rel_array_size * sizeof(RangeTblEntry *));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	rti = 1;
 	foreach(lc, parse->rtable)
 	{
@@ -421,12 +407,8 @@ query_planner(PlannerInfo *root, List *tlist,
 			/* Figure cost for sorting */
 			cost_sort(&sort_path, root, root->query_pathkeys,
 					  cheapestpath->total_cost,
-<<<<<<< HEAD
-					  cdbpath_rows(root, cheapestpath), final_rel->width);
-=======
-					  final_rel->rows, final_rel->width,
+					  cdbpath_rows(root, cheapestpath), final_rel->width,
 					  limit_tuples);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 
 		if (compare_fractional_path_costs(sortedpath, &sort_path,
@@ -556,13 +538,14 @@ PlannerConfig *DefaultPlannerConfig(void)
 	return c1;
 }
 
-/**
+/*
  * Copy configuration information
  */
-PlannerConfig *CopyPlannerConfig(const PlannerConfig *c1)
+PlannerConfig *
+CopyPlannerConfig(const PlannerConfig *c1)
 {
-	Assert(c1);
 	PlannerConfig *c2 = (PlannerConfig *) palloc(sizeof(PlannerConfig));
+
 	memcpy(c2, c1, sizeof(PlannerConfig));
 	return c2;
 }
