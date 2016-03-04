@@ -4,15 +4,9 @@
  *	  POSTGRES definitions for external and compressed storage
  *	  of variable size attributes.
  *
-<<<<<<< HEAD
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.33 2007/03/29 00:15:39 tgl Exp $
-=======
- * Copyright (c) 2000-2008, PostgreSQL Global Development Group
- *
  * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.38 2008/01/01 19:45:56 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -112,14 +106,9 @@
  * ----------
  */
 extern HeapTuple toast_insert_or_update(Relation rel,
-<<<<<<< HEAD
 					   HeapTuple newtup, HeapTuple oldtup, 
 					   MemTupleBinding *pbind, int toast_tuple_target,
 					   bool isFrozen, bool use_wal, bool use_fsm);
-=======
-					   HeapTuple newtup, HeapTuple oldtup,
-					   bool use_wal, bool use_fsm);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* ----------
  * toast_delete -
@@ -137,7 +126,6 @@ extern void toast_delete(Relation rel, HeapTuple oldtup, MemTupleBinding *pbind)
  *		in compressed format.
  * ----------
  */
-<<<<<<< HEAD
 extern struct varlena *heap_tuple_fetch_attr(struct varlena *attr);
 
 /* ----------
@@ -155,9 +143,6 @@ extern void varattrib_untoast_ptr_len(Datum d, char **datastart, int *len, void 
  * ----------
  */
 extern int varattrib_untoast_len(Datum d);
-=======
-extern struct varlena *heap_tuple_fetch_attr(struct varlena * attr);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* ----------
  * heap_tuple_untoast_attr() -
@@ -166,11 +151,7 @@ extern struct varlena *heap_tuple_fetch_attr(struct varlena * attr);
  *		it as needed.
  * ----------
  */
-<<<<<<< HEAD
 extern struct varlena *heap_tuple_untoast_attr(struct varlena *attr);
-=======
-extern struct varlena *heap_tuple_untoast_attr(struct varlena * attr);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* ----------
  * heap_tuple_untoast_attr_slice() -
@@ -179,11 +160,7 @@ extern struct varlena *heap_tuple_untoast_attr(struct varlena * attr);
  *		(Handles all cases for attribute storage)
  * ----------
  */
-<<<<<<< HEAD
 extern struct varlena *heap_tuple_untoast_attr_slice(struct varlena *attr,
-=======
-extern struct varlena *heap_tuple_untoast_attr_slice(struct varlena * attr,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 							  int32 sliceoffset,
 							  int32 slicelength);
 
