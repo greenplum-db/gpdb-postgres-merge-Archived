@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 $PostgreSQL: pgsql/src/backend/access/transam/README,v 1.12 2008/10/20 19:18:18 alvherre Exp $
-=======
-$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.9 2007/09/08 20:31:14 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 The Transaction System
 ======================
@@ -191,7 +187,6 @@ Another difference is that BeginInternalSubtransaction is allowed when no
 explicit transaction block has been established, while DefineSavepoint is not.
 
 
-<<<<<<< HEAD
 Transaction and Subtransaction Numbering
 ----------------------------------------
 
@@ -205,21 +200,6 @@ than their parents, which is assumed in a number of places.
 The subsidiary actions of obtaining a lock on the XID and and entering it into
 pg_subtrans and PG_PROC are done at the time it is assigned.
 
-=======
-Transaction and subtransaction numbering
-----------------------------------------
-
-Transactions and subtransactions are assigned permanent XIDs only when/if
-they first do something that requires one --- typically, insert/update/delete
-a tuple, though there are a few other places that need an XID assigned.
-If a subtransaction requires an XID, we always first assign one to its
-parent.  This maintains the invariant that child transactions have XIDs later
-than their parents, which is assumed in a number of places.
-
-The subsidiary actions of obtaining a lock on the XID and and entering it into
-pg_subtrans and PG_PROC are done at the time it is assigned.
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 A transaction that has no XID still needs to be identified for various
 purposes, notably holding locks.  For this purpose we assign a "virtual
 transaction ID" or VXID to each top-level transaction.  VXIDs are formed from
@@ -241,11 +221,7 @@ InvalidSubTransactionId.)  Note that subtransactions do not have their
 own VXIDs; they use the parent top transaction's VXID.
 
 
-<<<<<<< HEAD
 Interlocking Transaction Begin, Transaction End, and Snapshots
-=======
-Interlocking transaction begin, transaction end, and snapshots
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 --------------------------------------------------------------
 
 We try hard to minimize the amount of overhead and lock contention involved
