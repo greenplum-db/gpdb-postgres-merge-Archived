@@ -312,7 +312,6 @@ transformRelOptions(Datum oldOptions, List *defList,
 			t = (text *) palloc(len + 1);
 			SET_VARSIZE(t, len);
 			sprintf(VARDATA(t), "%s=%s", def->defname, value);
-<<<<<<< HEAD
 
 			if (need_free_value)
 			{
@@ -321,8 +320,6 @@ transformRelOptions(Datum oldOptions, List *defList,
 			}
 
 			AssertImply(need_free_value, NULL == value);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			astate = accumArrayResult(astate, PointerGetDatum(t),
 									  false, TEXTOID,
@@ -1072,7 +1069,6 @@ parse_validate_reloptions(StdRdOptions *result, Datum reloptions,
 		}
 	}
 
-<<<<<<< HEAD
 	/* blocksize */
 	if (values[2] != NULL)
 	{
@@ -1082,10 +1078,6 @@ parse_validate_reloptions(StdRdOptions *result, Datum reloptions,
 					 errmsg("usage of parameter \"blocksize\" in a non "
 							"relation object is not supported"),
 					 errOmitLocation(false)));
-=======
-	result = (StdRdOptions *) palloc(sizeof(StdRdOptions));
-	SET_VARSIZE(result, sizeof(StdRdOptions));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (!result->appendonly && validate)
 			ereport(ERROR,
