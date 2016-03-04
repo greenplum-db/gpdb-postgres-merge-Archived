@@ -9,11 +9,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/access/common/indextuple.c,v 1.81 2007-02-27 23:48:06 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/access/common/indextuple.c,v 1.85 2008/01/01 19:45:45 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -80,12 +76,8 @@ index_form_tuple(TupleDesc tupleDescriptor,
 		if (VARATT_IS_EXTERNAL_D(values[i]))
 		{
 			untoasted_values[i] =
-<<<<<<< HEAD
-				PointerGetDatum(heap_tuple_fetch_attr(DatumGetPointer(values[i])));
-=======
 				PointerGetDatum(heap_tuple_fetch_attr((struct varlena *)
 												DatumGetPointer(values[i])));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			untoasted_free[i] = true;
 		}
 
@@ -93,14 +85,8 @@ index_form_tuple(TupleDesc tupleDescriptor,
 		 * If value is above size target, and is of a compressible datatype,
 		 * try to compress it in-line.
 		 */
-<<<<<<< HEAD
-		if (!VARATT_IS_SHORT_D(untoasted_values[i]) &&
-			VARSIZE_D(untoasted_values[i]) > TOAST_INDEX_TARGET &&
-			!VARATT_IS_COMPRESSED_D(untoasted_values[i]) &&
-=======
 		if (!VARATT_IS_EXTENDED(untoasted_values[i]) &&
 			VARSIZE(untoasted_values[i]) > TOAST_INDEX_TARGET &&
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			(att->attstorage == 'x' || att->attstorage == 'm'))
 		{
 			Datum		cvalue = toast_compress_datum(untoasted_values[i]);
@@ -309,14 +295,6 @@ nocache_index_getattr(IndexTuple tup,
 
 	tp = (char *) tup + data_off;
 
-<<<<<<< HEAD
-	/*
-	 * now check for any non-fixed length attrs before our attribute. Note that
-	 * we use <= not < because we can't use cached offsets even for the first
-	 * varlena any more.
-	 */
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (!slow)
 	{
 		/*
@@ -434,21 +412,6 @@ nocache_index_getattr(IndexTuple tup,
 			}
 			else
 			{
-<<<<<<< HEAD
-				/* if it's a varlena it may or may not be aligned becuase
-				 * heap_deform_tuple compressees short varlenas using 1-byte
-				 * headers, so check for something that looks like a padding byte
-				 * before aligning. If we're already aligned it may be the leading
-				 * byte of a 4-byte header but then the att_align is harmless.
-				 * Don't bother looking if it's not a varlena though.*/
-				if (att[i]->attlen != -1 || !tp[off])
-					off = att_align(off, att[i]->attalign);
-				if (usecache && att[i]->attlen != -1)
-					att[i]->attcacheoff = off;
-			}
-
-			if (att[i]->attlen < 0)
-=======
 				/* not varlena, so safe to use att_align_nominal */
 				off = att_align_nominal(off, att[i]->attalign);
 
@@ -462,20 +425,11 @@ nocache_index_getattr(IndexTuple tup,
 			off = att_addlength_pointer(off, att[i]->attlen, tp + off);
 
 			if (usecache && att[i]->attlen <= 0)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				usecache = false;
 
 			off = att_addlength(off, att[i]->attlen, PointerGetDatum(tp + off));
 
 		}
-<<<<<<< HEAD
-
-		if (att[attnum]->attlen != -1 || !tp[off])
-			off = att_align(off, att[attnum]->attalign);
-
-		return fetchatt(att[attnum], tp + off);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	return fetchatt(att[attnum], tp + off);
