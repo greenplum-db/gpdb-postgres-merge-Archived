@@ -176,12 +176,9 @@ extern void gen_oids_for_bitmaps(VacuumStmt *vacstmt, Relation onerel);
 extern List *get_oids_for_bitmap(List *all_extra_oids, Relation Irel, Relation onerel, int occurrence);
 
 /* in commands/analyze.c */
-extern void analyze_rel(Oid relid, VacuumStmt *vacstmt);
-extern void analyzeStatement(VacuumStmt *vacstmt, List *relids);
-//extern void analyzeStmt(VacuumStmt *vacstmt, List *relids);
-
-/* in commands/analyze.c */
 extern void analyze_rel(Oid relid, VacuumStmt *vacstmt,
 			BufferAccessStrategy bstrategy);
+extern void analyzeStatement(VacuumStmt *vacstmt, List *relids);
+//extern void analyzeStmt(VacuumStmt *vacstmt, List *relids);
 
 #endif   /* VACUUM_H */
