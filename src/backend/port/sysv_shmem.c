@@ -6,19 +6,11 @@
  * These routines represent a fairly thin layer on top of SysV shared
  * memory functionality.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
  *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.54 2009/01/01 17:23:46 momjian Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.53.2.1 2010/05/01 22:46:42 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +95,6 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 			return NULL;
 
 		/*
-<<<<<<< HEAD
 		 * Some BSD-derived kernels are known to return EINVAL, not EEXIST, if
 		 * there is an existing segment but it's smaller than "size" (this is
 		 * a result of poorly-thought-out ordering of error tests). To
@@ -114,20 +105,6 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 		 */
 		if (shmget_errno == EINVAL)
 		{
-=======
-		 * Some BSD-derived kernels are known to return EINVAL, not EEXIST,
-		 * if there is an existing segment but it's smaller than "size"
-		 * (this is a result of poorly-thought-out ordering of error tests).
-		 * To distinguish between collision and invalid size in such cases,
-		 * we make a second try with size = 0.  These kernels do not test
-		 * size against SHMMIN in the preexisting-segment case, so we will
-		 * not get EINVAL a second time if there is such a segment.
-		 */
-		if (errno == EINVAL)
-		{
-			int		save_errno = errno;
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			shmid = shmget(memKey, 0, IPC_CREAT | IPC_EXCL | IPCProtection);
 
 			if (shmid < 0)
@@ -145,21 +122,14 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 			{
 				/*
 				 * On most platforms we cannot get here because SHMMIN is
-<<<<<<< HEAD
 				 * greater than zero.  However, if we do succeed in creating a
 				 * zero-size segment, free it and then fall through to report
 				 * the original error.
-=======
-				 * greater than zero.  However, if we do succeed in creating
-				 * a zero-size segment, free it and then fall through to
-				 * report the original error.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				 */
 				if (shmctl(shmid, IPC_RMID, NULL) < 0)
 					elog(LOG, "shmctl(%d, %d, 0) failed: %m",
 						 (int) shmid, IPC_RMID);
 			}
-<<<<<<< HEAD
 		}
 
 		/*
@@ -170,14 +140,6 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 		 * (BSDen) or ENOSPC (Linux); the Single Unix Spec fails to say which
 		 * it should be.  SHMMNI violation is ENOSPC, per spec.  Just plain
 		 * not-enough-RAM is ENOMEM.
-=======
-
-			errno = save_errno;
-		}
-
-		/*
-		 * Else complain and abort
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 */
 		errno = shmget_errno;
 		ereport(FATAL,

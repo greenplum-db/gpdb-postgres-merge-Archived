@@ -4,17 +4,10 @@
  *	  header file for integrated autovacuum daemon
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/postmaster/autovacuum.h,v 1.15 2009/01/01 17:24:01 momjian Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/include/postmaster/autovacuum.h,v 1.14 2008/01/01 19:45:58 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -22,10 +15,7 @@
 #define AUTOVACUUM_H
 
 #include "storage/lock.h"
-<<<<<<< HEAD
 #include "tcop/utility.h"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* GUC variables */
 extern bool autovacuum_start_daemon;
@@ -44,12 +34,6 @@ extern int	AutovacuumLauncherPid;
 
 extern int	Log_autovacuum_min_duration;
 
-<<<<<<< HEAD
-/* autovacuum launcher PID, only valid when worker is shutting down */
-extern int	AutovacuumLauncherPid;
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* Status inquiry functions */
 extern bool AutoVacuumingActive(void);
 extern bool IsAutoVacuumLauncherProcess(void);
@@ -68,12 +52,6 @@ extern void AutoVacWorkerFailed(void);
 /* autovacuum cost-delay balancer */
 extern void AutoVacuumUpdateDelay(void);
 
-<<<<<<< HEAD
-/* autovacuum cost-delay balancer */
-extern void AutoVacuumUpdateDelay(void);
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #ifdef EXEC_BACKEND
 extern void AutoVacMain(int argc, char *argv[]); // OLD interface
 extern void AutovacuumIAm(void);

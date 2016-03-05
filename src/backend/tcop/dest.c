@@ -166,7 +166,10 @@ EndCommand(const char *commandTag, CommandDest dest)
 	{
 		case DestRemote:
 		case DestRemoteExecute:
-<<<<<<< HEAD
+			/*
+			 * We assume the commandTag is plain ASCII and therefore
+			 * requires no encoding conversion.
+			 */
 			if (Gp_role == GP_ROLE_EXECUTE && Gp_is_writer)
 			{
 				/*
@@ -176,15 +179,7 @@ EndCommand(const char *commandTag, CommandDest dest)
 				sendQEDetails();
 
 				pq_beginmessage(&buf, 'g');
-				pq_sendstring(&buf, commandTag);
-=======
-			/*
-			 * We assume the commandTag is plain ASCII and therefore
-			 * requires no encoding conversion.
-			 */
-			pq_putmessage('C', commandTag, strlen(commandTag) + 1);
-			break;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+				pq_send_ascii_string(&buf, commandTag);
 
 				AddQEWriterTransactionInfo(&buf);
 
@@ -195,11 +190,11 @@ EndCommand(const char *commandTag, CommandDest dest)
 				sendQEDetails();
 
 				pq_beginmessage(&buf, 'C');
-				pq_sendstring(&buf, commandTag);
+				pq_send_ascii_string(&buf, commandTag);
 				pq_endmessage(&buf);
 			}
 			else
-				pq_puttextmessage('C', commandTag);
+				pq_putmessage('C', commandTag, strlen(commandTag) + 1);
 			break;
 		case DestNone:
 		case DestDebug:

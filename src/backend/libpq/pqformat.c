@@ -225,11 +225,7 @@ pq_send_ascii_string(StringInfo buf, const char *str)
 {
 	while (*str)
 	{
-<<<<<<< HEAD
-		char		ch = *str++;
-=======
 		char	ch = *str++;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (IS_HIGHBIT_SET(ch))
 			ch = '?';

@@ -459,15 +459,9 @@ errstart(int elevel, const char *filename, int lineno,
 
 		/*
 		 * Infinite error recursion might be due to something broken
-<<<<<<< HEAD
-		 * in a context traceback routine.  Abandon them too.  We also
-		 * abandon attempting to print the error statement (which, if long,
-		 * could itself be the source of the recursive failure).
-=======
 		 * in a context traceback routine.	Abandon them too.  We also abandon
 		 * attempting to print the error statement (which, if long, could
 		 * itself be the source of the recursive failure).
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 */
 		if (in_error_recursion_trouble())
 		{

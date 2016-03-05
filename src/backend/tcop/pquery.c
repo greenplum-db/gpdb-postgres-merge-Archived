@@ -46,7 +46,6 @@
  */
 Portal		ActivePortal = NULL;
 
-<<<<<<< HEAD
 static void ProcessQuery(Portal portal, /* Resource queueing need SQL, so we pass portal. */
 			 PlannedStmt *stmt,
              ParamListInfo params,
@@ -54,15 +53,6 @@ static void ProcessQuery(Portal portal, /* Resource queueing need SQL, so we pas
 			 char *completionTag);
 static void FillPortalStore(Portal portal, bool isTopLevel);
 static uint64 RunFromStore(Portal portal, ScanDirection direction, int64 count,
-=======
-
-static void ProcessQuery(PlannedStmt *plan,
-			 ParamListInfo params,
-			 DestReceiver *dest,
-			 char *completionTag);
-static void FillPortalStore(Portal portal, bool isTopLevel);
-static uint32 RunFromStore(Portal portal, ScanDirection direction, long count,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			 DestReceiver *dest);
 static int64 PortalRunSelect(Portal portal, bool forward, int64 count,
 				DestReceiver *dest);
@@ -88,10 +78,7 @@ static void PortalSetBackoffWeight(Portal portal);
  */
 QueryDesc *
 CreateQueryDesc(PlannedStmt *plannedstmt,
-<<<<<<< HEAD
 				const char *sourceText,
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				Snapshot snapshot,
 				Snapshot crosscheck_snapshot,
 				DestReceiver *dest,
@@ -103,10 +90,7 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 	qd->operation = plannedstmt->commandType;	/* operation */
 	qd->plannedstmt = plannedstmt;		/* plan */
 	qd->utilitystmt = plannedstmt->utilityStmt; /* in case DECLARE CURSOR */
-<<<<<<< HEAD
 	qd->sourceText = pstrdup(sourceText);		/* query text */
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	qd->snapshot = snapshot;	/* snapshot */
 	qd->crosscheck_snapshot = crosscheck_snapshot;		/* RI check snapshot */
 	qd->dest = dest;			/* output dest */
@@ -224,10 +208,7 @@ FreeQueryDesc(QueryDesc *qdesc)
  *		Execute a single plannable query within a PORTAL_MULTI_QUERY
  *		or PORTAL_ONE_RETURNING portal
  *
-<<<<<<< HEAD
  *	portal: the portal
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *	plan: the plan tree for the query
  *	sourceText: the source text of the query
  *	params: any parameters needed
@@ -241,31 +222,20 @@ FreeQueryDesc(QueryDesc *qdesc)
  * error; otherwise the executor's memory usage will be leaked.
  */
 static void
-<<<<<<< HEAD
 ProcessQuery(Portal portal,
 			 PlannedStmt *stmt,
              ParamListInfo params,
-=======
-ProcessQuery(PlannedStmt *plan,
-			 ParamListInfo params,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			 DestReceiver *dest,
 			 char *completionTag)
 {
 	QueryDesc  *queryDesc;
-<<<<<<< HEAD
 	Oid			truncOid = InvalidOid;
 	
 	/* auto-stats related */
 	Oid	relationOid = InvalidOid; 	/* relation that is modified */
 	AutoStatsCmdType cmdType = AUTOSTATS_CMDTYPE_SENTINEL; 	/* command type */
 	
-	ereport(DEBUG3,
-			(errmsg_internal("ProcessQuery")));
-=======
-
 	elog(DEBUG3, "ProcessQuery");
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Must always set snapshot for plannable queries.	Note we assume that
@@ -276,7 +246,6 @@ ProcessQuery(PlannedStmt *plan,
 	/*
 	 * Create the QueryDesc object
 	 */
-<<<<<<< HEAD
 	Assert(portal);
 	
 	if (portal->sourceTag == T_SelectStmt && gp_select_invisible)
@@ -328,11 +297,6 @@ ProcessQuery(PlannedStmt *plan,
 	{
 		queryDesc->plannedstmt->query_mem = ResourceQueueGetSuperuserQueryMemoryLimit();
 	}
-=======
-	queryDesc = CreateQueryDesc(plan,
-								ActiveSnapshot, InvalidSnapshot,
-								dest, params, false);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Set up to collect AFTER triggers
@@ -1844,11 +1808,7 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 	 */
 	foreach(stmtlist_item, portal->stmts)
 	{
-<<<<<<< HEAD
-		Node *stmt = lfirst(stmtlist_item);
-=======
 		Node	   *stmt = (Node *) lfirst(stmtlist_item);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/*
 		 * If we got a cancel signal in prior command, quit
@@ -1862,33 +1822,21 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 			 * process a plannable query.
 			 */
 			PlannedStmt *pstmt = (PlannedStmt *) stmt;
-<<<<<<< HEAD
-			
-=======
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			if (log_executor_stats)
 				ResetUsage();
 
 			if (pstmt->canSetTag)
 			{
 				/* statement can set tag string */
-<<<<<<< HEAD
 				ProcessQuery(portal, pstmt,
-=======
-				ProcessQuery(pstmt,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 							 portal->portalParams,
 							 dest, completionTag);
 			}
 			else
 			{
 				/* stmt added by rewrite cannot set tag */
-<<<<<<< HEAD
 				ProcessQuery(portal, pstmt,
-=======
-				ProcessQuery(pstmt,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 							 portal->portalParams,
 							 altdest, NULL);
 			}

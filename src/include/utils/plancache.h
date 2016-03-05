@@ -49,6 +49,7 @@ typedef struct CachedPlanSource
 	Node	   *raw_parse_tree; /* output of raw_parser() */
 	char	   *query_string;	/* text of query, or NULL */
 	const char *commandTag;		/* command tag (a constant!), or NULL */
+	NodeTag		sourceTag;		/* GPDB: Original statement NodeTag */
 	Oid		   *param_types;	/* array of parameter type OIDs, or NULL */
 	int			num_params;		/* length of param_types array */
 	int			cursor_options; /* cursor options used for planning */
