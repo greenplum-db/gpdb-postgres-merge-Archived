@@ -93,7 +93,7 @@ extern void DeconstructQualifiedName(List *names,
 extern Oid	LookupExplicitNamespace(const char *nspname);
 
 extern void DropTempTableNamespaceForResetSession(Oid namespaceOid);
-extern void SetTempNamespace(Oid namespaceOid);
+extern void SetTempNamespace(Oid namespaceOid, Oid toastNamespaceOid);
 extern Oid  ResetTempNamespace(void);
 extern bool TempNamespaceOidIsValid(void);  /* GPDB only:  used by cdbgang.c */
 

@@ -2372,15 +2372,15 @@ DESCR("deparse an encoded expression");
 DATA(insert OID = 1665 (  pg_get_serial_sequence	PGNSP PGUID 12 1 0 f f t f s 2 25 "25 25" _null_ _null_ _null_	pg_get_serial_sequence - _null_ _null_ ));
 DESCR("name of sequence for a serial column");
 /* pg_get_function_arguments(oid) => text */
-DATA(insert OID = 2096 ( pg_get_function_arguments  PGNSP PGUID 12 1 0 f f t f s 1 25 "26" _null_ _null_ _null_ pg_get_function_arguments - _null_ ));
+DATA(insert OID = 2096 ( pg_get_function_arguments  PGNSP PGUID 12 1 0 f f t f s 1 25 "26" _null_ _null_ _null_ pg_get_function_arguments - _null_ _null_ ));
 DESCR("argument list of a function");
 
 /* pg_get_function_result(oid) => text */
-DATA(insert OID = 3238 ( pg_get_function_result  PGNSP PGUID 12 1 0 f f t f s 1 25 "26" _null_ _null_ _null_ pg_get_function_result - _null_ ));
+DATA(insert OID = 3238 ( pg_get_function_result  PGNSP PGUID 12 1 0 f f t f s 1 25 "26" _null_ _null_ _null_ pg_get_function_result - _null_ _null_ ));
 DESCR("result type of a function");
 
 /* pg_get_function_identity_arguments(oid) => text */
-DATA(insert OID = 3239 ( pg_get_function_identity_arguments  PGNSP PGUID 12 1 0 f f t f s 1 25 "26" _null_ _null_ _null_ pg_get_function_identity_arguments - _null_ ));
+DATA(insert OID = 3239 ( pg_get_function_identity_arguments  PGNSP PGUID 12 1 0 f f t f s 1 25 "26" _null_ _null_ _null_ pg_get_function_identity_arguments - _null_ _null_ ));
 DESCR("identity argument list of a function");
 
 
@@ -3036,7 +3036,7 @@ DESCR("convert bytea value into some ascii-only text string");
 DATA(insert OID = 1947 (  decode						PGNSP PGUID 12 1 0 f f t f i 2 17 "25 25" _null_ _null_ _null_	binary_decode - _null_ _null_ ));
 DESCR("convert ascii-encoded text string into bytea value");
 
-DATA(insert OID = 1948 (  byteaeq		   PGNSP PGUID 12 1 0 f f t f i 2 16 "17 17" _null_ _null_ _null_ byteaeq - _null_ ));
+DATA(insert OID = 1948 (  byteaeq		   PGNSP PGUID 12 1 0 f f t f i 2 16 "17 17" _null_ _null_ _null_ byteaeq - _null_ _null_ ));
 DESCR("equal");
 DATA(insert OID = 1949 (  bytealt		   PGNSP PGUID 12 1 0 f f t f i 2 16 "17 17" _null_ _null_ _null_ bytealt - _null_ _null_ ));
 DESCR("less-than");
@@ -3353,12 +3353,12 @@ DATA(insert OID = 2727 (  stddev_pop		PGNSP PGUID 12 1 0 t f f f i 1 701 "700" _
 DATA(insert OID = 2728 (  stddev_pop		PGNSP PGUID 12 1 0 t f f f i 1 701 "701" _null_ _null_ _null_  aggregate_dummy - _null_ _null_ ));
 DATA(insert OID = 2729 (  stddev_pop		PGNSP PGUID 12 1 0 t f f f i 1 1700 "1700" _null_ _null_ _null_ aggregate_dummy - _null_ _null_ ));
 
-DATA(insert OID = 2712 (  stddev_samp		PGNSP PGUID 12 1 0 t f f f i 1 1700 "20" _null_ _null_ _null_  aggregate_dummy - _null_ ));
-DATA(insert OID = 2713 (  stddev_samp		PGNSP PGUID 12 1 0 t f f f i 1 1700 "23" _null_ _null_ _null_  aggregate_dummy - _null_ ));
-DATA(insert OID = 2714 (  stddev_samp		PGNSP PGUID 12 1 0 t f f f i 1 1700 "21" _null_ _null_ _null_  aggregate_dummy - _null_ ));
-DATA(insert OID = 2715 (  stddev_samp		PGNSP PGUID 12 1 0 t f f f i 1 701 "700" _null_ _null_ _null_  aggregate_dummy - _null_ ));
-DATA(insert OID = 2716 (  stddev_samp		PGNSP PGUID 12 1 0 t f f f i 1 701 "701" _null_ _null_ _null_  aggregate_dummy - _null_ ));
-DATA(insert OID = 2717 (  stddev_samp		PGNSP PGUID 12 1 0 t f f f i 1 1700 "1700" _null_ _null_ _null_ aggregate_dummy - _null_ ));
+DATA(insert OID = 2712 (  stddev_samp		PGNSP PGUID 12 1 0 t f f f i 1 1700 "20" _null_ _null_ _null_  aggregate_dummy - _null_ _null_ ));
+DATA(insert OID = 2713 (  stddev_samp		PGNSP PGUID 12 1 0 t f f f i 1 1700 "23" _null_ _null_ _null_  aggregate_dummy - _null_ _null_ ));
+DATA(insert OID = 2714 (  stddev_samp		PGNSP PGUID 12 1 0 t f f f i 1 1700 "21" _null_ _null_ _null_  aggregate_dummy - _null_ _null_ ));
+DATA(insert OID = 2715 (  stddev_samp		PGNSP PGUID 12 1 0 t f f f i 1 701 "700" _null_ _null_ _null_  aggregate_dummy - _null_ _null_ ));
+DATA(insert OID = 2716 (  stddev_samp		PGNSP PGUID 12 1 0 t f f f i 1 701 "701" _null_ _null_ _null_  aggregate_dummy - _null_ _null_ ));
+DATA(insert OID = 2717 (  stddev_samp		PGNSP PGUID 12 1 0 t f f f i 1 1700 "1700" _null_ _null_ _null_ aggregate_dummy - _null_ _null_ ));
 
 DATA(insert OID = 2154 (  stddev			PGNSP PGUID 12 1 0 t f f f i 1 1700 "20" _null_ _null_ _null_  aggregate_dummy - _null_ _null_ ));
 DATA(insert OID = 2155 (  stddev			PGNSP PGUID 12 1 0 t f f f i 1 1700 "23" _null_ _null_ _null_  aggregate_dummy - _null_ _null_ ));
@@ -4510,11 +4510,11 @@ DESCR("is txid visible in snapshot?");
  * syntax, we need to create the DATA statement manually and place it here.
  */
 /* gp_read_error_log(IN exttable text, OUT cmdtime timestamptz, OUT relname text, OUT filename text, OUT linenum int4, OUT bytenum int4, OUT errmsg text, OUT rawdata text, OUT rawbytes bytea) => SETOF record */ 
-DATA(insert OID = 3000 ( gp_read_error_log  PGNSP PGUID 12 1 1000 0 f f t t v 1 0 2249 f "25" "{25,1184,25,25,23,23,25,25,17}" "{i,o,o,o,o,o,o,o,o}" "{exttable,cmdtime,relname,filename,linenum,bytenum,errmsg,rawdata,rawbytes}" _null_ gp_read_error_log _null_ _null_ s ));
+DATA(insert OID = 3000 ( gp_read_error_log  PGNSP PGUID 12 1 1000 0 f f t t v 1 0 2249 f "25" "{25,1184,25,25,23,23,25,25,17}" "{i,o,o,o,o,o,o,o,o}" "{exttable,cmdtime,relname,filename,linenum,bytenum,errmsg,rawdata,rawbytes}" _null_ gp_read_error_log _null_ _null_ _null_ s ));
 DESCR("read the error log for the specified external table");
 
 /* gp_truncate_error_log(text) => bool */ 
-DATA(insert OID = 3069 ( gp_truncate_error_log  PGNSP PGUID 12 1 0 0 f f t f v 1 0 16 f "25" _null_ _null_ _null_ _null_ gp_truncate_error_log _null_ _null_ m ));
+DATA(insert OID = 3069 ( gp_truncate_error_log  PGNSP PGUID 12 1 0 0 f f t f v 1 0 16 f "25" _null_ _null_ _null_ _null_ gp_truncate_error_log _null_ _null_ _null_ m ));
 DESCR("truncate the error log for the specified external table");
 
 /*

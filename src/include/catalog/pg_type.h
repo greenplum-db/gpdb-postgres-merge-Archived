@@ -391,16 +391,16 @@ DATA(insert OID = 81 (	pg_proc			PGNSP PGUID -1 f c t \054 1255 0 0 record_in re
 DATA(insert OID = 83 (	pg_class		PGNSP PGUID -1 f c t \054 1259 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
 #define PG_CLASS_RELTYPE_OID 83
 
-DATA(insert OID = 2967 (	pg_authid	   PGNSP PGUID -1 f c t \054 1260	0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2967 (	pg_authid	   PGNSP PGUID -1 f c t \054 1260 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
 #define PG_AUTHID_RELTYPE_OID 2967
 
-DATA(insert OID = 2966 (	pg_auth_members	   PGNSP PGUID -1 f c t \054 1261	0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2966 (	pg_auth_members	   PGNSP PGUID -1 f c t \054 1261 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
 #define PG_AUTH_MEMBERS_RELTYPE_OID 2966
 
-DATA(insert OID = 2970 (	pg_database	   PGNSP PGUID -1 f c t \054 1262	0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2970 (	pg_database	   PGNSP PGUID -1 f c t \054 1262 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
 #define PG_DATABASE_RELTYPE_OID 2970
 
-DATA(insert OID = 6995 (	gp_global_sequence	   PGNSP PGUID -1 f c t \054 5096	0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 6995 (	gp_global_sequence	   PGNSP PGUID -1 f c t \054 5096 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
 #define GP_GLOBAL_SEQUENCE_RELTYPE_OID 6995
 
 /* OIDS 100 - 199 */
@@ -695,6 +695,11 @@ DATA(insert OID = 2282 ( opaque			PGNSP PGUID  4 t p t \054 0 0 0 opaque_in opaq
 #define OPAQUEOID		2282
 DATA(insert OID = 2283 ( anyelement		PGNSP PGUID  4 t p t \054 0 0 0 anyelement_in anyelement_out - - - - - i p f 0 -1 0 _null_ _null_ ));
 #define ANYELEMENTOID	2283
+DATA(insert OID = 2776 ( anynonarray	PGNSP PGUID  4 t p t \054 0 0 0 anynonarray_in anynonarray_out - - - - - i p f 0 -1 0 _null_ _null_ ));
+#define ANYNONARRAYOID	2776
+DATA(insert OID = 3500 ( anyenum		PGNSP PGUID  4 t p t \054 0 0 0 anyenum_in anyenum_out - - - - - i p f 0 -1 0 _null_ _null_ ));
+#define ANYENUMOID		3500
+
 DATA(insert OID = 3053 (	anytable	   PGNSP PGUID -1 f p t \054 0	0 0 anytable_in anytable_out - - - - - d x f 0 -1 0 _null_ _null_ ));
 DESCR("Represents a generic TABLE value expression");
 #define ANYTABLEOID     3053
@@ -706,15 +711,15 @@ DESCR("Represents a generic TABLE value expression");
  * Note: For this to work correctly it requires some hackery in bootparse.y
  * When extending this list make sure to update there as well.
  */
-DATA(insert OID = 6990 (gp_persistent_relation_node PGNSP PGUID -1 f c t \054 5090 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_));
+DATA(insert OID = 6990 (gp_persistent_relation_node PGNSP PGUID -1 f c t \054 5090 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_));
 #define GP_PERSISTENT_RELATION_NODE_OID 6990
-DATA(insert OID = 6991 (gp_persistent_database_node PGNSP PGUID -1 f c t \054 5091 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_));
+DATA(insert OID = 6991 (gp_persistent_database_node PGNSP PGUID -1 f c t \054 5091 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_));
 #define GP_PERSISTENT_DATABASE_NODE_OID 6991
-DATA(insert OID = 6992 (gp_persistent_tablespace_node PGNSP PGUID -1 f c t \054 5092 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_));
+DATA(insert OID = 6992 (gp_persistent_tablespace_node PGNSP PGUID -1 f c t \054 5092 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_));
 #define GP_PERSISTENT_TABLESPACE_NODE_OID 6992
-DATA(insert OID = 6993 (gp_persistent_filespace_node PGNSP PGUID -1 f c t \054 5093 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_));
+DATA(insert OID = 6993 (gp_persistent_filespace_node PGNSP PGUID -1 f c t \054 5093 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_));
 #define GP_PERSISTENT_FILESPACE_NODE_OID 6993
-DATA(insert OID = 6994 (gp_relation_node PGNSP PGUID -1 f c t \054 5094 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_));
+DATA(insert OID = 6994 (gp_relation_node PGNSP PGUID -1 f c t \054 5094 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_));
 #define GP_RELATION_NODE_OID 6994
 
 
@@ -752,9 +757,9 @@ DATA(insert OID = 6994 (gp_relation_node PGNSP PGUID -1 f c t \054 5094 0 record
 /* Is a type OID a polymorphic pseudotype?	(Beware of multiple evaluation) */
 #define IsPolymorphicType(typid)  \
 	((typid) == ANYELEMENTOID || \
-	 (typid) == ANYARRAYOID)
-	 //(typid) == ANYNONARRAYOID || \   /// added in pg 8.4
-	// (typid) == ANYENUMOID)
+	 (typid) == ANYARRAYOID || \
+	 (typid) == ANYNONARRAYOID || \
+	 (typid) == ANYENUMOID)
 
 /* Is a type OID suitable for describe callback functions? */
 #define TypeSupportsDescribe(typid)  \
@@ -798,8 +803,9 @@ extern Oid TypeCreate(Oid newTypeOid,
 		   int32 typeMod,
 		   int32 typNDims,
 		   bool typeNotNull);
-		   
-extern Oid TypeCreateWithOid(const char *typeName,
+
+extern Oid TypeCreateWithOptions(Oid newtypeOid,
+		   const char *typeName,
 		   Oid typeNamespace,
 		   Oid relationOid,
 		   char relationKind,
@@ -815,6 +821,8 @@ extern Oid TypeCreateWithOid(const char *typeName,
 		   Oid typmodoutProcedure,
 		   Oid analyzeProcedure,
 		   Oid elementType,
+		   bool isImplicitArray,
+		   Oid arrayType,
 		   Oid baseType,
 		   const char *defaultTypeValue,
 		   char *defaultTypeBin,
@@ -824,7 +832,6 @@ extern Oid TypeCreateWithOid(const char *typeName,
 		   int32 typeMod,
 		   int32 typNDims,
 		   bool typeNotNull,
-		   Oid newtypeOid,
 		   Datum typoptions);
 
 extern void GenerateTypeDependencies(Oid typeNamespace,
