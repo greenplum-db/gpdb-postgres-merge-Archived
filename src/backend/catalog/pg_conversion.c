@@ -3,11 +3,7 @@
  * pg_conversion.c
  *	  routines to support manipulation of the pg_conversion relation
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -295,77 +291,3 @@ FindConversion(const char *conname, Oid connamespace)
 
 	return conoid;
 }
-<<<<<<< HEAD
-
-/*
- * Execute SQL99's CONVERT function.
- *
- * CONVERT <left paren> <character value expression>
- * USING <form-of-use conversion name> <right paren>
- *
- * TEXT convert_using(TEXT string, TEXT conversion_name)
- */
-Datum
-pg_convert_using(PG_FUNCTION_ARGS)
-{
-	text	   *string = PG_GETARG_TEXT_P(0);
-	text	   *conv_name = PG_GETARG_TEXT_P(1);
-	text	   *retval;
-	List	   *parsed_name;
-	Oid			convoid;
-	HeapTuple	tuple;
-	Form_pg_conversion body;
-	char	   *str;
-	char	   *result;
-	int			len;
-
-	/* Convert input string to null-terminated form */
-	len = VARSIZE(string) - VARHDRSZ;
-	str = palloc(len + 1);
-	memcpy(str, VARDATA(string), len);
-	*(str + len) = '\0';
-
-	/* Look up the conversion name */
-	parsed_name = textToQualifiedNameList(conv_name);
-	convoid = FindConversionByName(parsed_name);
-	if (!OidIsValid(convoid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("conversion \"%s\" does not exist",
-						NameListToString(parsed_name))));
-
-	tuple = SearchSysCache(CONVOID,
-						   ObjectIdGetDatum(convoid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup failed for conversion %u", convoid);
-	body = (Form_pg_conversion) GETSTRUCT(tuple);
-
-	/* Temporary result area should be more than big enough */
-	result = palloc(len * 4 + 1);
-
-	OidFunctionCall5(body->conproc,
-					 Int32GetDatum(body->conforencoding),
-					 Int32GetDatum(body->contoencoding),
-					 CStringGetDatum(str),
-					 CStringGetDatum(result),
-					 Int32GetDatum(len));
-
-	ReleaseSysCache(tuple);
-
-	/*
-	 * build text result structure. we cannot use textin() here, since textin
-	 * assumes that input string encoding is same as database encoding.
-	 */
-	len = strlen(result) + VARHDRSZ;
-	retval = palloc(len);
-	SET_VARSIZE(retval, len);
-	memcpy(VARDATA(retval), result, len - VARHDRSZ);
-
-	pfree(result);
-	pfree(str);
-
-	PG_RETURN_TEXT_P(retval);
-}
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

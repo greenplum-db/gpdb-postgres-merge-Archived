@@ -3,11 +3,7 @@
  * pg_proc.c
  *	  routines to support manipulation of the pg_proc relation
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -87,11 +83,8 @@ ProcedureCreate(const char *procedureName,
 				Datum allParameterTypes,
 				Datum parameterModes,
 				Datum parameterNames,
-<<<<<<< HEAD
 				List *parameterDefaults,
-=======
 				Datum proconfig,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				float4 procost,
 				float4 prorows,
 				char prodataaccess,
@@ -105,11 +98,8 @@ ProcedureCreate(const char *procedureName,
 	bool		genericOutParam = false;
 	bool		internalInParam = false;
 	bool		internalOutParam = false;
-<<<<<<< HEAD
 	Oid			variadicType = InvalidOid;
-=======
 	Oid			proowner = GetUserId();
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	Relation	rel;
 	HeapTuple	tup;
 	HeapTuple	oldtup;
@@ -212,17 +202,8 @@ ProcedureCreate(const char *procedureName,
 		}
 	}
 
-<<<<<<< HEAD
-	/* Normally, we don't allow ANY* return type without an ANY* input type.
-	 * But during upgrade, we're creating "special" function used by aggregate
-	 * and we'll bypass this check for those functions.
-	 */
-	if ((returnType == ANYARRAYOID || returnType == ANYELEMENTOID ||
-		 genericOutParam) && !genericInParam)
-=======
 	if ((IsPolymorphicType(returnType) || genericOutParam)
 		&& !genericInParam)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("cannot determine result data type"),
@@ -347,24 +328,16 @@ ProcedureCreate(const char *procedureName,
 	if (parameterNames != PointerGetDatum(NULL))
 		values[Anum_pg_proc_proargnames - 1] = parameterNames;
 	else
-<<<<<<< HEAD
 		nulls[Anum_pg_proc_proargnames - 1] = true;
 	values[Anum_pg_proc_prosrc - 1] = CStringGetTextDatum(prosrc);
 	if (probin)
 		values[Anum_pg_proc_probin - 1] = CStringGetTextDatum(probin);
 	else
 		nulls[Anum_pg_proc_probin - 1] = true;
-=======
-		nulls[Anum_pg_proc_proargnames - 1] = 'n';
-	values[Anum_pg_proc_prosrc - 1] = DirectFunctionCall1(textin,
-													CStringGetDatum(prosrc));
-	values[Anum_pg_proc_probin - 1] = DirectFunctionCall1(textin,
-													CStringGetDatum(probin));
 	if (proconfig != PointerGetDatum(NULL))
 		values[Anum_pg_proc_proconfig - 1] = proconfig;
 	else
 		nulls[Anum_pg_proc_proconfig - 1] = 'n';
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/* start out with empty permissions */
 	nulls[Anum_pg_proc_proacl - 1] = true;
 	values[Anum_pg_proc_prodataaccess - 1] = CharGetDatum(prodataaccess);
@@ -403,11 +376,7 @@ ProcedureCreate(const char *procedureName,
 					(errcode(ERRCODE_DUPLICATE_FUNCTION),
 			errmsg("function \"%s\" already exists with same argument types",
 				   procedureName)));
-<<<<<<< HEAD
-		if (!pg_proc_ownercheck(oldOid, GetUserId()))
-=======
-		if (!pg_proc_ownercheck(HeapTupleGetOid(oldtup), proowner))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+		if (!pg_proc_ownercheck(oldOid, proowner))
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
 						   procedureName);
 
@@ -558,18 +527,12 @@ ProcedureCreate(const char *procedureName,
 								procedureName)));
 		}
 
-<<<<<<< HEAD
-		/* do not change existing ownership or permissions, either */
-		replaces[Anum_pg_proc_proowner - 1] = false;
-		replaces[Anum_pg_proc_proacl - 1] = false;
-=======
 		/*
 		 * Do not change existing ownership or permissions, either.  Note
 		 * dependency-update code below has to agree with this decision.
 		 */
-		replaces[Anum_pg_proc_proowner - 1] = ' ';
-		replaces[Anum_pg_proc_proacl - 1] = ' ';
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+		replaces[Anum_pg_proc_proowner - 1] = false;
+		replaces[Anum_pg_proc_proacl - 1] = false;
 
 		/* Okay, do it... */
 		tup = caql_modify_current(pcqCtx, values, nulls, replaces);
@@ -607,13 +570,10 @@ ProcedureCreate(const char *procedureName,
 	 * shared dependencies do *not* need to change, and we leave them alone.)
 	 */
 	if (is_update)
+	{
 		deleteDependencyRecordsFor(ProcedureRelationId, retval);
-<<<<<<< HEAD
-		deleteSharedDependencyRecordsFor(ProcedureRelationId, retval);
 		deleteProcCallbacks(retval);
 	}
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	myself.classId = ProcedureRelationId;
 	myself.objectId = retval;

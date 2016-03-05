@@ -527,17 +527,13 @@ typedef struct
 char *
 checkSharedDependencies(Oid classId, Oid objectId)
 {
+	Relation	sdepRel;
+	ScanKeyData key[2];
+	SysScanDesc scan;
 	HeapTuple	tup;
-<<<<<<< HEAD
-	cqContext  *pcqCtx;	
-	int			totalDeps = 0;
-	int			numLocalDeps = 0;
-	int			numSharedDeps = 0;
-=======
 	int			numReportedDeps = 0;
 	int			numNotReportedDeps = 0;
 	int			numNotReportedDbs = 0;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	List	   *remDeps = NIL;
 	ListCell   *cell;
 	ObjectAddress object;
@@ -556,15 +552,21 @@ checkSharedDependencies(Oid classId, Oid objectId)
 	initStringInfo(&descs);
 	initStringInfo(&alldescs);
 
-	pcqCtx = caql_beginscan(
-			NULL,
-			cql("SELECT * FROM pg_shdepend "
-				" WHERE refclassid = :1 "
-				" AND refobjid = :2 ",
-				ObjectIdGetDatum(classId),
-				ObjectIdGetDatum(objectId)));
+	sdepRel = heap_open(SharedDependRelationId, AccessShareLock);
 
-	while (HeapTupleIsValid(tup = caql_getnext(pcqCtx)))
+	ScanKeyInit(&key[0],
+				Anum_pg_shdepend_refclassid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(classId));
+	ScanKeyInit(&key[1],
+				Anum_pg_shdepend_refobjid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(objectId));
+
+	scan = systable_beginscan(sdepRel, SharedDependReferenceIndexId, true,
+							  SnapshotNow, 2, key);
+
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
 		Form_pg_shdepend sdepForm = (Form_pg_shdepend) GETSTRUCT(tup);
 
@@ -661,7 +663,9 @@ checkSharedDependencies(Oid classId, Oid objectId)
 		}
 	}
 
-	caql_endscan(pcqCtx);
+	systable_endscan(scan);
+
+	heap_close(sdepRel, AccessShareLock);
 
 	/*
 	 * Report dependencies on remote databases.  If we're truncating the

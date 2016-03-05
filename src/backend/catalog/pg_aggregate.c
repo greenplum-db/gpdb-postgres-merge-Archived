@@ -3,11 +3,7 @@
  * pg_aggregate.c
  *	  routines to support manipulation of the pg_aggregate relation
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -270,17 +266,12 @@ AggregateCreateWithOid(const char		*aggName,
 							  PointerGetDatum(NULL),	/* allParamTypes */
 							  PointerGetDatum(NULL),	/* parameterModes */
 							  PointerGetDatum(NULL),	/* parameterNames */
-<<<<<<< HEAD
 							  NIL,						/* parameterDefaults */
+							  PointerGetDatum(NULL),	/* proconfig */
 							  1,				/* procost */
 							  0,				/* prorows */
 							  PRODATAACCESS_NONE,		/* prodataaccess */
 							  procOid);
-=======
-							  PointerGetDatum(NULL),	/* proconfig */
-							  1,	/* procost */
-							  0);		/* prorows */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Okay to create the pg_aggregate entry.

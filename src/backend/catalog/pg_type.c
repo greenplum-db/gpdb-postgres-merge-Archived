@@ -3,11 +3,7 @@
  * pg_type.c
  *	  routines to support manipulation of the pg_type relation
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -19,11 +15,8 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-<<<<<<< HEAD
 #include "catalog/catquery.h"
-=======
 #include "access/xact.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_namespace.h"
@@ -84,7 +77,6 @@ add_type_encoding(Oid typid, Datum typoptions)
  * ----------------------------------------------------------------
  */
 Oid
-<<<<<<< HEAD
 TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId,
 			  Oid shelloid)
 {
@@ -94,9 +86,6 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId,
 Oid
 TypeShellMakeWithOid(const char *typeName, Oid typeNamespace, Oid ownerId,
 					 Oid shelltypeOid)
-=======
-TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	int			i;
 	HeapTuple	tup;
@@ -137,11 +126,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	namestrcpy(&name, typeName);
 	values[i++] = NameGetDatum(&name);	/* typname */
 	values[i++] = ObjectIdGetDatum(typeNamespace);		/* typnamespace */
-<<<<<<< HEAD
-	values[i++] = ObjectIdGetDatum(ownerId);		/* typowner */
-=======
 	values[i++] = ObjectIdGetDatum(ownerId);	/* typowner */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	values[i++] = Int16GetDatum(sizeof(int4));	/* typlen */
 	values[i++] = BoolGetDatum(true);	/* typbyval */
 	values[i++] = CharGetDatum(TYPTYPE_PSEUDO); /* typtype */
@@ -223,7 +208,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
  * ----------------------------------------------------------------
  */
 Oid
-TypeCreate(Oid newTypeOid,
+TypeCreateWithOptions(Oid newTypeOid,
 		   const char *typeName,
 		   Oid typeNamespace,
 		   Oid relationOid,		/* only for relation rowtypes */
@@ -386,7 +371,7 @@ TypeCreate(Oid newTypeOid,
 		/*
 		 * Okay to update existing shell type tuple
 		 */
-		tup = heap_modifytuple(tup,
+		tup = heap_modify_tuple(tup,
 							   RelationGetDescr(pg_type_desc),
 							   values,
 							   nulls,
@@ -399,7 +384,7 @@ TypeCreate(Oid newTypeOid,
 	}
 	else
 	{
-		tup = heap_formtuple(RelationGetDescr(pg_type_desc),
+		tup = heap_form_tuple(RelationGetDescr(pg_type_desc),
 							 values,
 							 nulls);
 
@@ -450,7 +435,9 @@ TypeCreate(Oid newTypeOid,
 	return typeObjectId;
 }
 
-Oid TypeCreate(const char *typeName,
+Oid
+TypeCreate(Oid newTypeOid,
+		   const char *typeName,
 		   Oid typeNamespace,
 		   Oid relationOid,
 		   char relationKind,
@@ -466,6 +453,8 @@ Oid TypeCreate(const char *typeName,
 		   Oid typmodoutProcedure,
 		   Oid analyzeProcedure,
 		   Oid elementType,
+		   bool isImplicitArray,
+		   Oid arrayType,
 		   Oid baseType,
 		   const char *defaultTypeValue,
 		   char *defaultTypeBin,
@@ -476,7 +465,13 @@ Oid TypeCreate(const char *typeName,
 		   int32 typNDims,
 		   bool typeNotNull)
 {
-	return TypeCreateWithOid(typeName,typeNamespace,relationOid,relationKind,ownerId,internalSize,
+	return TypeCreateWithOptions(newTypeOid,
+		   typeName,
+		   typeNamespace,
+		   relationOid,
+		   relationKind,
+		   ownerId,
+		   internalSize,
 		   typeType,
 		   typDelim,
 		   inputProcedure,
@@ -487,6 +482,8 @@ Oid TypeCreate(const char *typeName,
 		   typmodoutProcedure,
 		   analyzeProcedure,
 		   elementType,
+		   isImplicitArray,
+		   arrayType,
 		   baseType,
 		   defaultTypeValue,
 		   defaultTypeBin,
@@ -496,8 +493,7 @@ Oid TypeCreate(const char *typeName,
 		   typeMod,
 		   typNDims,
 		   typeNotNull,
-		   InvalidOid,
-		   0);
+		   NULL);
 }
 
 /*
@@ -539,11 +535,6 @@ GenerateTypeDependencies(Oid typeNamespace,
 	myself.objectId = typeObjectId;
 	myself.objectSubId = 0;
 
-<<<<<<< HEAD
-	/* dependency on namespace */
-	/* skip for relation rowtype, since we have indirect dependency */
-	if (!OidIsValid(relationOid) || relationKind == RELKIND_COMPOSITE_TYPE)
-=======
 	/*
 	 * Make dependency on namespace and shared dependency on owner.
 	 *
@@ -554,7 +545,6 @@ GenerateTypeDependencies(Oid typeNamespace,
 	 */
 	if ((!OidIsValid(relationOid) || relationKind == RELKIND_COMPOSITE_TYPE) &&
 		!isImplicitArray)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		referenced.classId = NamespaceRelationId;
 		referenced.objectId = typeNamespace;
@@ -668,10 +658,6 @@ GenerateTypeDependencies(Oid typeNamespace,
 	/* Normal dependency on the default expression. */
 	if (defaultExpr)
 		recordDependencyOnExpr(&myself, defaultExpr, NIL, DEPENDENCY_NORMAL);
-<<<<<<< HEAD
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
@@ -683,47 +669,6 @@ GenerateTypeDependencies(Oid typeNamespace,
  * Currently this is only used for renaming table rowtypes.
  */
 void
-<<<<<<< HEAD
-TypeRename(Oid typeOid, const char *newTypeName)
-{
-	Relation		pg_type_desc;
-	HeapTuple		tuple;
-	Form_pg_type	form;
-	cqContext	   *pcqCtx;
-	cqContext		cqc, cqc2;
-
-	pg_type_desc = heap_open(TypeRelationId, RowExclusiveLock);
-
-	pcqCtx = caql_addrel(cqclr(&cqc), pg_type_desc);
-
-	tuple = caql_getfirst(
-			pcqCtx,
-			cql("SELECT * FROM pg_type "
-				" WHERE oid = :1 "
-				" FOR UPDATE ",
-				ObjectIdGetDatum(typeOid)));
-
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("type with OID \"%d\" does not exist", typeOid)));
-
-	form = (Form_pg_type) GETSTRUCT(tuple);
-	if (namestrcmp(&(form->typname), newTypeName))
-	{
-		if (caql_getcount(
-					caql_addrel(cqclr(&cqc2), pg_type_desc),
-					cql("SELECT COUNT(*) FROM pg_type "
-						" WHERE typname = :1 "
-						" AND typnamespace = :2 ",
-						CStringGetDatum((char *) newTypeName),
-						ObjectIdGetDatum(form->typnamespace))))
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_DUPLICATE_OBJECT),
-					 errmsg("type \"%s\" already exists", newTypeName)));
-		}
-=======
 TypeRename(Oid typeOid, const char *newTypeName, Oid typeNamespace)
 {
 	Relation	pg_type_desc;
@@ -756,13 +701,11 @@ TypeRename(Oid typeOid, const char *newTypeName, Oid typeNamespace)
 
 	/* OK, do the rename --- tuple is a copy, so OK to scribble on it */
 	namestrcpy(&(typ->typname), newTypeName);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
-		namestrcpy(&(form->typname), newTypeName);
+	simple_heap_update(pg_type_desc, &tuple->t_self, tuple);
 
-		caql_update_current(pcqCtx, tuple);
-		/* update the system catalog indexes (implicit) */
-	}
+	/* update the system catalog indexes */
+	CatalogUpdateIndexes(pg_type_desc, tuple);
 
 	heap_freetuple(tuple);
 	heap_close(pg_type_desc, RowExclusiveLock);

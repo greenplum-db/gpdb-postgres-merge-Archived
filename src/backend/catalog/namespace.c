@@ -80,25 +80,6 @@
  * namespace when searching for any object type other than relations and
  * types.  (We must allow types since temp tables have rowtypes.)
  *
-<<<<<<< HEAD
- * The default creation target namespace is normally equal to the first
- * element of the explicit list, but is the "special" namespace when one
- * has been set.  If the explicit list is empty and there is no special
- * namespace, there is no default target.
- *
- * The textual specification of search_path can include "$user" to refer to
- * the namespace named the same as the current user, if any.  (This is just
- * ignored if there is no such namespace.)  Also, it can include "pg_temp"
- * to refer to the current backend's temp namespace.  This is usually also
- * ignorable if the temp namespace hasn't been set up, but there's a special
- * case: if "pg_temp" appears first then it should be the default creation
- * target.  We kluge this case a little bit so that the temp namespace isn't
- * set up until the first attempt to create something in it.  (The reason for
- * klugery is that we can't create the temp namespace outside a transaction,
- * but initial GUC processing of search_path happens outside a transaction.)
- * tempCreationPending is TRUE if "pg_temp" appears first in the string but
- * is not reflected in defaultCreationNamespace because the namespace isn't
-=======
  * The default creation target namespace is always the first element of the
  * explicit list.  If the explicit list is empty, there is no default target.
  *
@@ -114,18 +95,12 @@
  * but initial GUC processing of search_path happens outside a transaction.)
  * activeTempCreationPending is TRUE if "pg_temp" appears first in the string
  * but is not reflected in activeCreationNamespace because the namespace isn't
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * set up yet.
  *
  * In bootstrap mode, the search path is set equal to "pg_catalog", so that
  * the system namespace is the only one searched or inserted into.
-<<<<<<< HEAD
- * The initdb script is also careful to set search_path to "pg_catalog" for
- * its post-bootstrap standalone backend runs.	Otherwise the default search
-=======
  * initdb is also careful to set search_path to "pg_catalog" for its
  * post-bootstrap standalone backend runs.	Otherwise the default search
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * path is determined by GUC.  The factory default path contains the PUBLIC
  * namespace (if it exists), preceded by the user's personal namespace
  * (if one exists).
@@ -184,15 +159,7 @@ typedef struct
 	int			nestLevel;		/* subtransaction nesting level */
 } OverrideStackEntry;
 
-<<<<<<< HEAD
-/* if TRUE, defaultCreationNamespace is wrong, it should be temp namespace */
-static bool tempCreationPending = false;
-
-/* The above five values are valid only if namespaceSearchPathValid */
-static bool namespaceSearchPathValid = true;
-=======
 static List *overrideStack = NIL;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * myTempNamespace is InvalidOid until and unless a TEMP namespace is set up
@@ -524,7 +491,6 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 	if (newRelation->istemp)
 	{
 		/* TEMP tables are created in our backend-local temp namespace */
-<<<<<<< HEAD
 		if (Gp_role != GP_ROLE_EXECUTE && newRelation->schemaname)
 		{
 			char		namespaceName[NAMEDATALEN];
@@ -532,14 +498,8 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 			if (strcmp(newRelation->schemaname,namespaceName)!=0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					  errmsg("temporary tables cannot specify a schema name")));
-		}
-=======
-		if (newRelation->schemaname)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				   errmsg("temporary tables cannot specify a schema name")));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+		}
 		/* Initialize temp namespace if first time through */
 		if (!TempNamespaceValid(false))
 			InitTempTableNamespace();
@@ -552,11 +512,7 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 		if (strcmp(newRelation->schemaname, "pg_temp") == 0)
 		{
 			/* Initialize temp namespace if first time through */
-<<<<<<< HEAD
 			if (!TempNamespaceValid(false))
-=======
-			if (!OidIsValid(myTempNamespace))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				InitTempTableNamespace();
 			return myTempNamespace;
 		}
@@ -578,21 +534,13 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 	{
 		/* use the default creation namespace */
 		recomputeNamespacePath();
-<<<<<<< HEAD
-		if (tempCreationPending)
-=======
 		if (activeTempCreationPending)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		{
 			/* Need to initialize temp namespace */
 			InitTempTableNamespace();
 			return myTempNamespace;
 		}
-<<<<<<< HEAD
-		namespaceId = defaultCreationNamespace;
-=======
 		namespaceId = activeCreationNamespace;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		if (!OidIsValid(namespaceId))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_SCHEMA),
@@ -1427,13 +1375,8 @@ OpernameGetCandidates(List *names, char oprkind)
 		else
 		{
 			/*
-<<<<<<< HEAD
-			 * Consider only opers that are in the search path and are not
-			 * in the temp namespace.
-=======
 			 * Consider only opers that are in the search path and are not in
 			 * the temp namespace.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			 */
 			ListCell   *nsp;
 
@@ -1776,21 +1719,10 @@ ConversionGetConid(const char *conname)
 		if (namespaceId == myTempNamespace)
 			continue;			/* do not look in temp namespace */
 
-<<<<<<< HEAD
-		conid = caql_getoid(
-				NULL,
-				cql("SELECT oid FROM pg_conversion "
-					" WHERE conname = :1 "
-					" AND connamespace = :2 ",
-					CStringGetDatum((char *) conname),
-					ObjectIdGetDatum(namespaceId)));
-
-=======
 		conid = GetSysCacheOid(CONNAMENSP,
 							   PointerGetDatum(conname),
 							   ObjectIdGetDatum(namespaceId),
 							   0, 0);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		if (OidIsValid(conid))
 			return conid;
 	}
@@ -1919,38 +1851,12 @@ TSParserIsVisible(Oid prsId)
 	Oid			namespace;
 	bool		visible;
 
-<<<<<<< HEAD
-	/* check for pg_temp alias */
-	if (strcmp(nspname, "pg_temp") == 0)
-	{
-		if (TempNamespaceValid(true))
-			return myTempNamespace;
-		/*
-		 * Since this is used only for looking up existing objects, there
-		 * is no point in trying to initialize the temp namespace here;
-		 * and doing so might create problems for some callers.
-		 * Just fall through and give the "does not exist" error.
-		 */
-	}
-
-	namespaceId = caql_getoid(
-			NULL,
-			cql("SELECT oid FROM pg_namespace "
-				" WHERE nspname = :1 ",
-				CStringGetDatum((char *) nspname)));
-
-	if (!OidIsValid(namespaceId))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_SCHEMA),
-				 errmsg("schema \"%s\" does not exist", nspname)));
-=======
 	tup = SearchSysCache(TSPARSEROID,
 						 ObjectIdGetDatum(prsId),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for text search parser %u", prsId);
 	form = (Form_pg_ts_parser) GETSTRUCT(tup);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	recomputeNamespacePath();
 
@@ -1973,43 +1879,6 @@ TSParserIsVisible(Oid prsId)
 		char	   *name = NameStr(form->prsname);
 		ListCell   *l;
 
-<<<<<<< HEAD
-/*
- * LookupCreationNamespace
- *		Look up the schema and verify we have CREATE rights on it.
- *
- * This is just like LookupExplicitNamespace except for the permission check,
- * and that we are willing to create pg_temp if needed.
- *
- * Note: calling this may result in a CommandCounterIncrement operation,
- * if we have to create or clean out the temp namespace.
- */
-Oid
-LookupCreationNamespace(const char *nspname)
-{
-	Oid			namespaceId;
-	AclResult	aclresult;
-
-	/* check for pg_temp alias */
-	if (strcmp(nspname, "pg_temp") == 0)
-	{
-		/* Initialize temp namespace if first time through */
-		if (!TempNamespaceValid(false))
-			InitTempTableNamespace();
-		return myTempNamespace;
-	}
-
-	namespaceId = caql_getoid(
-			NULL,
-			cql("SELECT oid FROM pg_namespace "
-				" WHERE nspname = :1 ",
-				CStringGetDatum((char *) nspname)));
-
-	if (!OidIsValid(namespaceId))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_SCHEMA),
-				 errmsg("schema \"%s\" does not exist", nspname)));
-=======
 		visible = false;
 		foreach(l, activeSearchPath)
 		{
@@ -2017,7 +1886,6 @@ LookupCreationNamespace(const char *nspname)
 
 			if (namespaceId == myTempNamespace)
 				continue;		/* do not look in temp namespace */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			if (namespaceId == namespace)
 			{
@@ -2044,31 +1912,19 @@ LookupCreationNamespace(const char *nspname)
 /*
  * TSDictionaryGetDictid - find a TS dictionary by possibly qualified name
  *
-<<<<<<< HEAD
- * Note: calling this may result in a CommandCounterIncrement operation,
- * if we have to create or clean out the temp namespace.
-=======
  * If not found, returns InvalidOid if failOK, else throws error
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 Oid
 TSDictionaryGetDictid(List *names, bool failOK)
 {
 	char	   *schemaname;
-<<<<<<< HEAD
-=======
 	char	   *dict_name;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	Oid			namespaceId;
 	Oid			dictoid = InvalidOid;
 	ListCell   *l;
 
 	/* deconstruct the name list */
-<<<<<<< HEAD
-	DeconstructQualifiedName(names, &schemaname, objname_p);
-=======
 	DeconstructQualifiedName(names, &schemaname, &dict_name);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (schemaname)
 	{
@@ -2081,56 +1937,16 @@ TSDictionaryGetDictid(List *names, bool failOK)
 			return myTempNamespace;
 		}
 		/* use exact schema given */
-<<<<<<< HEAD
-		namespaceId = caql_getoid(
-				NULL,
-				cql("SELECT oid FROM pg_namespace "
-					" WHERE nspname = :1 ",
-					CStringGetDatum(schemaname)));
-
-		if (!OidIsValid(namespaceId))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_SCHEMA),
-					 errmsg("schema \"%s\" does not exist", schemaname)));
-		/* we do not check for USAGE rights here! */
-=======
 		namespaceId = LookupExplicitNamespace(schemaname);
 		dictoid = GetSysCacheOid(TSDICTNAMENSP,
 								 PointerGetDatum(dict_name),
 								 ObjectIdGetDatum(namespaceId),
 								 0, 0);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 	else
 	{
 		/* search for it in search path */
 		recomputeNamespacePath();
-<<<<<<< HEAD
-		if (tempCreationPending)
-		{
-			/* Need to initialize temp namespace */
-			InitTempTableNamespace();
-			return myTempNamespace;
-		}
-		namespaceId = defaultCreationNamespace;
-		if (!OidIsValid(namespaceId))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_SCHEMA),
-					 errmsg("no schema has been selected to create in")));
-	}
-
-	return namespaceId;
-}
-
-/*
- * makeRangeVarFromNameList
- *		Utility routine to convert a qualified-name list into RangeVar form.
- */
-RangeVar *
-makeRangeVarFromNameList(List *names)
-{
-	RangeVar   *rel = makeRangeVar(NULL, NULL, -1);
-=======
 
 		foreach(l, activeSearchPath)
 		{
@@ -2138,7 +1954,6 @@ makeRangeVarFromNameList(List *names)
 
 			if (namespaceId == myTempNamespace)
 				continue;		/* do not look in temp namespace */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			dictoid = GetSysCacheOid(TSDICTNAMENSP,
 									 PointerGetDatum(dict_name),
@@ -2556,7 +2371,7 @@ LookupExplicitNamespace(const char *nspname)
 	/* check for pg_temp alias */
 	if (strcmp(nspname, "pg_temp") == 0)
 	{
-		if (OidIsValid(myTempNamespace))
+		if (TempNamespaceValid(true))
 			return myTempNamespace;
 
 		/*
@@ -2603,7 +2418,7 @@ LookupCreationNamespace(const char *nspname)
 	if (strcmp(nspname, "pg_temp") == 0)
 	{
 		/* Initialize temp namespace if first time through */
-		if (!OidIsValid(myTempNamespace))
+		if (!TempNamespaceValid(false))
 			InitTempTableNamespace();
 		return myTempNamespace;
 	}
@@ -2692,7 +2507,7 @@ QualifiedNameGetCreationNamespace(List *names, char **objname_p)
 RangeVar *
 makeRangeVarFromNameList(List *names)
 {
-	RangeVar   *rel = makeRangeVar(NULL, NULL);
+	RangeVar   *rel = makeRangeVar(NULL, NULL, -1);
 
 	switch (list_length(names))
 	{
@@ -2827,17 +2642,13 @@ isAnyTempNamespace(Oid namespaceId)
 	bool		result;
 	char	   *nspname;
 
-<<<<<<< HEAD
 	/* Metadata tracking: don't check at bootstrap (before
 	 * pg_namespace is loaded 
 	 */
 	if (IsBootstrapProcessingMode())
 		return false;
 
-	/* If the namespace name starts with "pg_temp_", say "true" */
-=======
 	/* True if the namespace name starts with "pg_temp_" or "pg_toast_temp_" */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	nspname = get_namespace_name(namespaceId);
 	if (!nspname)
 		return false;			/* no such namespace? */
@@ -3055,11 +2866,7 @@ FindConversionByName(List *name)
 			namespaceId = lfirst_oid(l);
 
 			if (namespaceId == myTempNamespace)
-<<<<<<< HEAD
-				continue;			/* do not look in temp namespace */
-=======
 				continue;		/* do not look in temp namespace */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			conoid = FindConversion(conversion_name, namespaceId);
 			if (OidIsValid(conoid))
@@ -3178,12 +2985,7 @@ recomputeNamespacePath(void)
 		else if (strcmp(curname, "pg_temp") == 0)
 		{
 			/* pg_temp --- substitute temp namespace, if any */
-<<<<<<< HEAD
-
 			if (TempNamespaceValid(true))
-=======
-			if (OidIsValid(myTempNamespace))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			{
 				if (!list_member_oid(oidlist, myTempNamespace))
 					oidlist = lappend_oid(oidlist, myTempNamespace);
@@ -3213,11 +3015,7 @@ recomputeNamespacePath(void)
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Remember the first member of the explicit list.  (Note: this is
-=======
 	 * Remember the first member of the explicit list.	(Note: this is
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 * nominally wrong if temp_missing, but we need it anyway to distinguish
 	 * explicit from implicit mention of pg_catalog.)
 	 */
@@ -3246,33 +3044,11 @@ recomputeNamespacePath(void)
 	newpath = list_copy(oidlist);
 	MemoryContextSwitchTo(oldcxt);
 
-<<<<<<< HEAD
-	/* Now safe to assign to state variable. */
-	list_free(namespaceSearchPath);
-	namespaceSearchPath = newpath;
-
-	/*
-	 * Update info derived from search path.
-	 */
-	firstExplicitNamespace = firstNS;
-	if (OidIsValid(mySpecialNamespace))
-	{
-		defaultCreationNamespace = mySpecialNamespace;
-		/* don't have to create temp in this state */
-		tempCreationPending = false;
-	}
-	else
-	{
-		defaultCreationNamespace = firstNS;
-		tempCreationPending = temp_missing;
-	}
-=======
 	/* Now safe to assign to state variables. */
 	list_free(baseSearchPath);
 	baseSearchPath = newpath;
 	baseCreationNamespace = firstNS;
 	baseTempCreationPending = temp_missing;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Mark the path valid. */
 	baseSearchPathValid = true;
@@ -3297,14 +3073,10 @@ static void
 InitTempTableNamespace(void)
 {
 	char		namespaceName[NAMEDATALEN];
-<<<<<<< HEAD
+	char		toastNamespaceName[NAMEDATALEN];
 	int			fetchCount;
 	char	   *rolname;
 	CreateSchemaStmt *stmt;
-=======
-	Oid			namespaceId;
-	Oid			toastspaceId;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	Assert(!OidIsValid(myTempNamespace));
 
@@ -3334,10 +3106,14 @@ InitTempTableNamespace(void)
 		case GP_ROLE_DISPATCH:
 			snprintf(namespaceName, sizeof(namespaceName), "pg_temp_%d", 
 					 gp_session_id);
+			snprintf(toastNamespaceName, sizeof(namespaceName), "pg_toast_temp_%d", 
+					 gp_session_id);
 			break;
 
 		case GP_ROLE_UTILITY:
 			snprintf(namespaceName, sizeof(namespaceName), "pg_temp_%d", 
+					 MyBackendId);
+			snprintf(toastNamespaceName, sizeof(namespaceName), "pg_toast_temp_%d", 
 					 MyBackendId);
 			break;
 
@@ -3348,7 +3124,6 @@ InitTempTableNamespace(void)
 	}
 
 	/*
-<<<<<<< HEAD
 	 * First use of this temp namespace in this database; create it. The
 	 * temp namespaces are always owned by the superuser.  We leave their
 	 * permissions at default --- i.e., no access except to superuser ---
@@ -3384,6 +3159,14 @@ InitTempTableNamespace(void)
 	stmt->authid	 = rolname;
 	ProcessUtility((Node*) stmt, "(internal create temp schema command)",
 				   NULL, false, None_Receiver, NULL);
+
+	/* And the same for the toast temp namespace */
+	stmt = makeNode(CreateSchemaStmt);
+	stmt->schemaname = toastNamespaceName;
+	stmt->istemp	 = true;
+	stmt->authid	 = rolname;
+	ProcessUtility((Node*) stmt, "(internal create temp schema command)",
+				   NULL, false, None_Receiver, NULL);
 }
 
 /*
@@ -3406,40 +3189,18 @@ DropTempTableNamespaceForResetSession(Oid namespaceOid)
  * Called by CreateSchemaCommand when creating a temporary schema 
  */
 void
-SetTempNamespace(Oid namespaceOid)
+SetTempNamespace(Oid namespaceId, Oid toastNamespaceId)
 {
 	if (TempNamespaceValid(false))
 		elog(ERROR, "temporary namespace already exists");
-=======
-	 * If the corresponding toast-table namespace doesn't exist yet, create it.
-	 * (We assume there is no need to clean it out if it does exist, since
-	 * dropping a parent table should make its toast table go away.)
-	 */
-	snprintf(namespaceName, sizeof(namespaceName), "pg_toast_temp_%d",
-			 MyBackendId);
-
-	toastspaceId = GetSysCacheOid(NAMESPACENAME,
-								  CStringGetDatum(namespaceName),
-								  0, 0, 0);
-	if (!OidIsValid(toastspaceId))
-	{
-		toastspaceId = NamespaceCreate(namespaceName, BOOTSTRAP_SUPERUSERID);
-		/* Advance command counter to make namespace visible */
-		CommandCounterIncrement();
-	}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Okay, we've prepared the temp namespace ... but it's not committed yet,
 	 * so all our work could be undone by transaction rollback.  Set flag for
 	 * AtEOXact_Namespace to know what to do.
 	 */
-<<<<<<< HEAD
-	myTempNamespace = namespaceOid;
-=======
 	myTempNamespace = namespaceId;
-	myTempToastNamespace = toastspaceId;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	myTempToastNamespace = toastNamespaceId;
 
 	/* It should not be done already. */
 	AssertState(myTempNamespaceSubID == InvalidSubTransactionId);
@@ -3469,7 +3230,7 @@ ResetTempNamespace(void)
 
 	myTempNamespace = InvalidOid;
 	myTempNamespaceSubID = InvalidSubTransactionId;
-	namespaceSearchPathValid = false;	/* need to rebuild list */
+	baseSearchPathValid = false;	/* need to rebuild list */
 
 	return result;
 }
@@ -3713,27 +3474,15 @@ assign_search_path(const char *newval, bool doit, GucSource source)
 				continue;
 			if (strcmp(curname, "pg_temp") == 0)
 				continue;
-<<<<<<< HEAD
-
-			if (0 == caql_getcount(
-						NULL,
-						cql("SELECT COUNT(*) FROM pg_namespace "
-							" WHERE nspname = :1 ",
-							CStringGetDatum(curname))))
-			{
-				if (Gp_role != GP_ROLE_EXECUTE)
-					ereport((source == PGC_S_TEST) ? NOTICE : ERROR,
-							(errcode(ERRCODE_UNDEFINED_SCHEMA),
-							 errmsg("schema \"%s\" does not exist", curname)));
-			}
-=======
 			if (!SearchSysCacheExists(NAMESPACENAME,
 									  CStringGetDatum(curname),
 									  0, 0, 0))
-				ereport((source == PGC_S_TEST) ? NOTICE : ERROR,
+			{
+				if (Gp_role != GP_ROLE_EXECUTE)
+					ereport((source == PGC_S_TEST) ? NOTICE : ERROR,
 						(errcode(ERRCODE_UNDEFINED_SCHEMA),
 						 errmsg("schema \"%s\" does not exist", curname)));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+			}
 		}
 	}
 
@@ -3770,16 +3519,9 @@ InitializeSearchPath(void)
 		oldcxt = MemoryContextSwitchTo(TopMemoryContext);
 		baseSearchPath = list_make1_oid(PG_CATALOG_NAMESPACE);
 		MemoryContextSwitchTo(oldcxt);
-<<<<<<< HEAD
-		defaultCreationNamespace = PG_CATALOG_NAMESPACE;
-		firstExplicitNamespace = PG_CATALOG_NAMESPACE;
-		tempCreationPending = false;
-		namespaceSearchPathValid = true;
-=======
 		baseCreationNamespace = PG_CATALOG_NAMESPACE;
 		baseTempCreationPending = false;
 		baseSearchPathValid = true;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		namespaceUser = GetUserId();
 		activeSearchPath = baseSearchPath;
 		activeCreationNamespace = baseCreationNamespace;
@@ -3878,15 +3620,6 @@ fetch_search_path(bool includeImplicit)
 	recomputeNamespacePath();
 
 	/*
-<<<<<<< HEAD
-	 * If the temp namespace should be first, force it to exist.  This is
-	 * so that callers can trust the result to reflect the actual default
-	 * creation namespace.  It's a bit bogus to do this here, since
-	 * current_schema() is supposedly a stable function without side-effects,
-	 * but the alternatives seem worse.
-	 */
-	if (tempCreationPending)
-=======
 	 * If the temp namespace should be first, force it to exist.  This is so
 	 * that callers can trust the result to reflect the actual default
 	 * creation namespace.	It's a bit bogus to do this here, since
@@ -3894,17 +3627,12 @@ fetch_search_path(bool includeImplicit)
 	 * but the alternatives seem worse.
 	 */
 	if (activeTempCreationPending)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		InitTempTableNamespace();
 		recomputeNamespacePath();
 	}
 
-<<<<<<< HEAD
-	result = list_copy(namespaceSearchPath);
-=======
 	result = list_copy(activeSearchPath);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (!includeImplicit)
 	{
 		while (result && linitial_oid(result) != activeCreationNamespace)

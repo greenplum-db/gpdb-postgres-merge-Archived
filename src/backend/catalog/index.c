@@ -2734,8 +2734,6 @@ validate_index_heapscan(Relation heapRelation,
 						Snapshot snapshot,
 						v_i_state *state)
 {
-	MIRROREDLOCK_BUFMGR_DECLARE;
-
 	HeapScanDesc scan;
 	HeapTuple	heapTuple;
 	Datum		values[INDEX_MAX_KEYS];
