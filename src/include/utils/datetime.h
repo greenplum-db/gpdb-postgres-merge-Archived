@@ -6,17 +6,10 @@
  *	   including abstime, reltime, date, and time.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.75 2009/06/11 14:49:13 momjian Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.69 2008/01/01 19:45:59 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -121,14 +114,11 @@
 /* generic fields to help with parsing */
 #define ISODATE 22
 #define ISOTIME 23
-<<<<<<< HEAD
 /* these are only for parsing intervals */
 #define WEEK		24
 #define DECADE		25
 #define CENTURY		26
 #define MILLENNIUM	27
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* reserved for unrecognized string values */
 #define UNKNOWN_FIELD	31
 

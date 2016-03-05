@@ -376,11 +376,7 @@ array_cat(PG_FUNCTION_ARGS)
 		dataoffset = 0;			/* marker for no null bitmap */
 		nbytes = ndatabytes + ARR_OVERHEAD_NONULLS(ndims);
 	}
-<<<<<<< HEAD
-	result = (ArrayType *) palloc(nbytes);
-=======
 	result = (ArrayType *) palloc0(nbytes);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	SET_VARSIZE(result, nbytes);
 	result->ndim = ndims;
 	result->dataoffset = dataoffset;

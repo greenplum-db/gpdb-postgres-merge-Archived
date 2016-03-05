@@ -1148,6 +1148,7 @@ typedef struct CurrentOfExpr
 {
 	Expr		xpr;
 	char	   *cursor_name;	/* name of referenced cursor, or NULL */
+	int			cursor_param;	/* refcursor parameter number, or 0 */
 	/* for planning */
 	Index		cvarno;			/* RT index of target relation */
 	/* for validation */

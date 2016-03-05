@@ -246,27 +246,16 @@ Datum
 booltext(PG_FUNCTION_ARGS)
 {
 	bool		arg1 = PG_GETARG_BOOL(0);
-<<<<<<< HEAD
 	const char *str;
-=======
-	char	   *str;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (arg1)
 		str = "true";
 	else
 		str = "false";
 
-<<<<<<< HEAD
 	PG_RETURN_TEXT_P(cstring_to_text(str));
 }
 
-
-=======
-	PG_RETURN_DATUM(DirectFunctionCall1(textin, CStringGetDatum(str)));
-}
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*****************************************************************************
  *	 PUBLIC ROUTINES														 *

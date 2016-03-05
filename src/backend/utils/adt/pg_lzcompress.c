@@ -164,15 +164,9 @@
  *
  *			Jan Wieck
  *
-<<<<<<< HEAD
  * Copyright (c) 1999-2009, PostgreSQL Global Development Group
  *
  * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.34 2009/06/11 14:49:03 momjian Exp $
-=======
- * Copyright (c) 1999-2008, PostgreSQL Global Development Group
- *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.29.2.1 2008/05/28 21:58:03 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * ----------
  */
 #include "postgres.h"
@@ -216,7 +210,6 @@ typedef struct PGLZ_HistEntry
  * ----------
  */
 static const PGLZ_Strategy strategy_default_data = {
-<<<<<<< HEAD
 	32,							/* Data chunks less than 32 bytes are not
 								 * compressed */
 	INT_MAX,					/* No upper limit on what we'll try to
@@ -228,32 +221,15 @@ static const PGLZ_Strategy strategy_default_data = {
 								 * is found */
 	10							/* Lower good match size by 10% at every loop
 								 * iteration */
-=======
-	256,						/* Data chunks less than 256 bytes are not
-								 * compressed */
-	6144,						/* Data chunks >= 6K force compression, unless
-								 * compressed output is larger than input */
-	20,							/* Below 6K, compression rates below 20% mean
-								 * fallback to uncompressed */
-	128,						/* Stop history lookup if a match of 128 bytes
-								 * is found */
-	10							/* Lower good match size by 10% at every
-								 * lookup loop iteration */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 };
 const PGLZ_Strategy *const PGLZ_strategy_default = &strategy_default_data;
 
 
 static const PGLZ_Strategy strategy_always_data = {
 	0,							/* Chunks of any size are compressed */
-<<<<<<< HEAD
 	INT_MAX,
 	0,							/* It's enough to save one single byte */
 	INT_MAX,					/* Never give up early */
-=======
-	0,
-	0,							/* It's enough to save one single byte */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	128,						/* Stop history lookup if a match of 128 bytes
 								 * is found */
 	6							/* Look harder for a good match */
@@ -536,12 +512,8 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 	 * of range), fail.
 	 */
 	if (strategy->match_size_good <= 0 ||
-<<<<<<< HEAD
 		slen < strategy->min_input_size ||
 		slen > strategy->max_input_size)
-=======
-		slen < strategy->min_input_size)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		return false;
 
 	/*
@@ -688,19 +660,11 @@ pglz_decompress(const PGLZ_Header *source, char *dest)
 	while (sp < srcend && dp < destend)
 	{
 		/*
-<<<<<<< HEAD
 		 * Read one control byte and process the next 8 items (or as many as
 		 * remain in the compressed input).
 		 */
 		unsigned char ctrl = *sp++;
 		int			ctrlc;
-=======
-		 * Read one control byte and process the next 8 items (or as many
-		 * as remain in the compressed input).
-		 */
-		unsigned char ctrl = *sp++;
-		int		ctrlc;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		for (ctrlc = 0; ctrlc < 8 && sp < srcend; ctrlc++)
 		{
@@ -723,19 +687,11 @@ pglz_decompress(const PGLZ_Header *source, char *dest)
 					len += *sp++;
 
 				/*
-<<<<<<< HEAD
 				 * Check for output buffer overrun, to ensure we don't clobber
 				 * memory in case of corrupt input.  Note: we must advance dp
 				 * here to ensure the error is detected below the loop.  We
 				 * don't simply put the elog inside the loop since that will
 				 * probably interfere with optimization.
-=======
-				 * Check for output buffer overrun, to ensure we don't
-				 * clobber memory in case of corrupt input.  Note: we must
-				 * advance dp here to ensure the error is detected below
-				 * the loop.  We don't simply put the elog inside the loop
-				 * since that will probably interfere with optimization.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				 */
 				if (dp + len > destend)
 				{
@@ -761,13 +717,8 @@ pglz_decompress(const PGLZ_Header *source, char *dest)
 				 * An unset control bit means LITERAL BYTE. So we just copy
 				 * one from INPUT to OUTPUT.
 				 */
-<<<<<<< HEAD
 				if (dp >= destend)		/* check for buffer overrun */
 					break;		/* do not clobber memory */
-=======
-				if (dp >= destend)	/* check for buffer overrun */
-					break;			/* do not clobber memory */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 				*dp++ = *sp++;
 			}

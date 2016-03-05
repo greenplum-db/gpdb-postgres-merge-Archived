@@ -77,12 +77,8 @@ typedef struct macaddr
 /*
  * fmgr interface macros
  */
-<<<<<<< HEAD
-#define DatumGetInetP(X)	((inet *) PG_DETOAST_DATUM_PACKED(X))
-=======
 #define DatumGetInetP(X)	((inet *) PG_DETOAST_DATUM(X))
 #define DatumGetInetPP(X)	((inet *) PG_DETOAST_DATUM_PACKED(X))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #define InetPGetDatum(X)	PointerGetDatum(X)
 #define PG_GETARG_INET_P(n) DatumGetInetP(PG_GETARG_DATUM(n))
 #define PG_GETARG_INET_PP(n) DatumGetInetPP(PG_GETARG_DATUM(n))

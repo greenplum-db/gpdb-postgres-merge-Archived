@@ -34,10 +34,7 @@
 #include "catalog/pg_trigger.h"
 #include "cdb/cdbpartition.h"
 #include "commands/defrem.h"
-<<<<<<< HEAD
 #include "commands/tablecmds.h"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "commands/tablespace.h"
 #include "executor/spi.h"
 #include "funcapi.h"
@@ -111,16 +108,9 @@ typedef struct
 typedef struct
 {
 	List	   *rtable;			/* List of RangeTblEntry nodes */
-<<<<<<< HEAD
 	List	   *ctes;			/* List of CommonTableExpr nodes */
-	int			outer_varno;	/* varno for outer_rte */
-	RangeTblEntry *outer_rte;	/* special RangeTblEntry, or NULL */
-	int			inner_varno;	/* varno for inner_rte */
-	RangeTblEntry *inner_rte;	/* special RangeTblEntry, or NULL */
-=======
 	Plan	   *outer_plan;		/* OUTER subplan, or NULL if none */
 	Plan	   *inner_plan;		/* INNER subplan, or NULL if none */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } deparse_namespace;
 
 /* ----------
@@ -184,15 +174,8 @@ static void get_rule_groupingclause(GroupingClause *grp, List *tlist,
 static Node *get_rule_sortgroupclause(SortClause *srt, List *tlist,
 						 bool force_colno,
 						 deparse_context *context);
-<<<<<<< HEAD
-static void get_names_for_var(Var *var, int levelsup, deparse_context *context,
-				  const char **schemaname,
-                  const char **refname,
-                  const char **attname);
-=======
 static char *get_variable(Var *var, int levelsup, bool istoplevel,
 			 deparse_context *context);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static RangeTblEntry *find_rte_by_refname(const char *refname,
 					deparse_context *context);
 static const char *get_simple_binary_op_name(OpExpr *expr);
@@ -208,22 +191,17 @@ static void get_func_expr(FuncExpr *expr, deparse_context *context,
 static void get_groupingfunc_expr(GroupingFunc *grpfunc,
 								  deparse_context *context);
 static void get_agg_expr(Aggref *aggref, deparse_context *context);
-<<<<<<< HEAD
 static void get_windowedge_expr(WindowFrameEdge *edge, 
 								deparse_context *context);
 static void get_sortlist_expr(List *l, List *targetList, bool force_colno,
                               deparse_context *context, char *keyword_clause);
 static void get_windowspec_expr(WindowSpec *spec, deparse_context *context);
 static void get_windowref_expr(WindowRef *wref, deparse_context *context);
-static void get_const_expr(Const *constval, deparse_context *context,
-						   int showtype);
-=======
 static void get_coercion_expr(Node *arg, deparse_context *context,
 				  Oid resulttype, int32 resulttypmod,
 				  Node *parentNode);
 static void get_const_expr(Const *constval, deparse_context *context,
 			   int showtype);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static void get_sublink_expr(SubLink *sublink, deparse_context *context);
 static void get_from_clause(Query *query, const char *prefix,
 				deparse_context *context);
@@ -238,15 +216,10 @@ static void get_opclass_name(Oid opclass, Oid actual_datatype,
 static Node *processIndirection(Node *node, deparse_context *context,
 				   bool printit);
 static void printSubscripts(ArrayRef *aref, deparse_context *context);
-<<<<<<< HEAD
+static char *get_relation_name(Oid relid);
 static char *generate_relation_name(Oid relid, List *namespaces);
 static char *generate_function_name(Oid funcid, int nargs, Oid *argtypes,
 									bool *is_variadic);
-=======
-static char *get_relation_name(Oid relid);
-static char *generate_relation_name(Oid relid);
-static char *generate_function_name(Oid funcid, int nargs, Oid *argtypes);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
 static text *string_to_text(char *str);
 static char *flatten_reloptions(Oid relid);
@@ -657,11 +630,7 @@ pg_get_indexdef_ext(PG_FUNCTION_ARGS)
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : 0;
 	PG_RETURN_TEXT_P(string_to_text(pg_get_indexdef_worker(indexrelid, colno,
-<<<<<<< HEAD
-														 false, prettyFlags)));
-=======
 													   false, prettyFlags)));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /* Internal version that returns a palloc'd C string */
@@ -879,11 +848,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, bool showTblSpc,
 			tblspc = get_rel_tablespace(indexrelid);
 			if (OidIsValid(tblspc))
 				appendStringInfo(&buf, " TABLESPACE %s",
-<<<<<<< HEAD
-								 quote_identifier(get_tablespace_name(tblspc)));
-=======
 							  quote_identifier(get_tablespace_name(tblspc)));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 
 		/*
@@ -1141,11 +1106,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 					tblspc = get_rel_tablespace(indexId);
 					if (OidIsValid(tblspc))
 						appendStringInfo(&buf, " USING INDEX TABLESPACE %s",
-<<<<<<< HEAD
-										 quote_identifier(get_tablespace_name(tblspc)));
-=======
 							  quote_identifier(get_tablespace_name(tblspc)));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				}
 
 				break;
@@ -1776,13 +1737,8 @@ deparse_context_for(const char *aliasname, Oid relid)
 
 	/* Build one-element rtable */
 	dpns->rtable = list_make1(rte);
-<<<<<<< HEAD
 	dpns->ctes = NIL;
-	dpns->outer_varno = dpns->inner_varno = 0;
-	dpns->outer_rte = dpns->inner_rte = NULL;
-=======
 	dpns->outer_plan = dpns->inner_plan = NULL;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Return a one-deep namespace stack */
 	return list_make1(dpns);
@@ -1813,56 +1769,14 @@ deparse_context_for_plan(Node *outer_plan, Node *inner_plan,
 	dpns = (deparse_namespace *) palloc(sizeof(deparse_namespace));
 
 	dpns->rtable = rtable;
-<<<<<<< HEAD
 	dpns->ctes = NIL;
-	dpns->outer_varno = outer_varno;
-	dpns->outer_rte = (RangeTblEntry *) outercontext;
-	dpns->inner_varno = inner_varno;
-	dpns->inner_rte = (RangeTblEntry *) innercontext;
-=======
 	dpns->outer_plan = (Plan *) outer_plan;
 	dpns->inner_plan = (Plan *) inner_plan;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Return a one-deep namespace stack */
 	return list_make1(dpns);
 }
 
-<<<<<<< HEAD
-/*
- * deparse_context_for_subplan	- Build deparse context for a plan node
- *
- * Helper routine to build one of the inputs for deparse_context_for_plan.
- * Pass the name to be used to reference the subplan, plus the Plan node.
- * (subplan really ought to be declared as "Plan *", but we use "Node *"
- * to avoid having to include plannodes.h in builtins.h.)
- *
- * The returned node is actually a RangeTblEntry, but we declare it as just
- * Node to discourage callers from assuming anything.
- */
-Node *
-deparse_context_for_subplan(const char *name, Node *subplan)
-{
-	RangeTblEntry *rte = makeNode(RangeTblEntry);
-
-	/*
-	 * We create an RTE_SPECIAL RangeTblEntry, and store the subplan in its
-	 * funcexpr field.	RTE_SPECIAL nodes shouldn't appear in deparse contexts
-	 * otherwise.
-	 */
-	rte->rtekind = RTE_SPECIAL;
-	rte->relid = InvalidOid;
-	rte->funcexpr = subplan;
-	rte->alias = NULL;
-    rte->eref = name ? makeAlias(name, NIL) : NULL;     /*CDB*/
-	rte->inh = false;
-	rte->inFromCl = true;
-
-	return (Node *) rte;
-}
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* ----------
  * make_ruledef			- reconstruct the CREATE RULE command
  *				  for a given pg_rewrite tuple
@@ -2005,13 +1919,8 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 		context.prettyFlags = prettyFlags;
 		context.indentLevel = PRETTYINDENT_STD;
 		dpns.rtable = query->rtable;
-<<<<<<< HEAD
 		dpns.ctes = query->cteList;
-		dpns.outer_varno = dpns.inner_varno = 0;
-		dpns.outer_rte = dpns.inner_rte = NULL;
-=======
 		dpns.outer_plan = dpns.inner_plan = NULL;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		get_rule_expr(qual, &context, false);
 	}
@@ -2163,13 +2072,8 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 	context.query = query;
 
 	dpns.rtable = query->rtable;
-<<<<<<< HEAD
 	dpns.ctes = query->cteList;
-	dpns.outer_varno = dpns.inner_varno = 0;
-	dpns.outer_rte = dpns.inner_rte = NULL;
-=======
 	dpns.outer_plan = dpns.inner_plan = NULL;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	switch (query->commandType)
 	{
@@ -2353,58 +2257,11 @@ get_select_query_def(Query *query, deparse_context *context,
 	/* Add the ORDER BY clause if given */
 	if (query->sortClause != NIL)
 	{
-<<<<<<< HEAD
         get_sortlist_expr(query->sortClause,
                           query->targetList,
                           force_colno,
                           context,
                           " ORDER BY ");
-=======
-		appendContextKeyword(context, " ORDER BY ",
-							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
-		sep = "";
-		foreach(l, query->sortClause)
-		{
-			SortClause *srt = (SortClause *) lfirst(l);
-			Node	   *sortexpr;
-			Oid			sortcoltype;
-			TypeCacheEntry *typentry;
-
-			appendStringInfoString(buf, sep);
-			sortexpr = get_rule_sortgroupclause(srt, query->targetList,
-												force_colno, context);
-			sortcoltype = exprType(sortexpr);
-			/* See whether operator is default < or > for datatype */
-			typentry = lookup_type_cache(sortcoltype,
-										 TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
-			if (srt->sortop == typentry->lt_opr)
-			{
-				/* ASC is default, so emit nothing for it */
-				if (srt->nulls_first)
-					appendStringInfo(buf, " NULLS FIRST");
-			}
-			else if (srt->sortop == typentry->gt_opr)
-			{
-				appendStringInfo(buf, " DESC");
-				/* DESC defaults to NULLS FIRST */
-				if (!srt->nulls_first)
-					appendStringInfo(buf, " NULLS LAST");
-			}
-			else
-			{
-				appendStringInfo(buf, " USING %s",
-								 generate_operator_name(srt->sortop,
-														sortcoltype,
-														sortcoltype));
-				/* be specific to eliminate ambiguity */
-				if (srt->nulls_first)
-					appendStringInfo(buf, " NULLS FIRST");
-				else
-					appendStringInfo(buf, " NULLS LAST");
-			}
-			sep = ", ";
-		}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	/* Add the LIMIT clause if given */
@@ -2633,42 +2490,7 @@ get_target_list(List *targetList, deparse_context *context,
 		 */
 		if (tle->expr && IsA(tle->expr, Var))
 		{
-<<<<<<< HEAD
-			Var		   *var = (Var *) (tle->expr);
-			const char *schemaname;
-			const char *refname;
-
-			get_names_for_var(var, 0, context,
-							  &schemaname, &refname, &attname);
-			if (refname && (context->varprefix || attname == NULL))
-			{
-				if (schemaname)
-					appendStringInfo(buf, "%s.",
-									 quote_identifier(schemaname));
-
-				if (strcmp(refname, "*NEW*") == 0)
-					appendStringInfoString(buf, "new");
-				else if (strcmp(refname, "*OLD*") == 0)
-					appendStringInfoString(buf, "old");
-				else
-					appendStringInfoString(buf, quote_identifier(refname));
-
-				if (attname)
-					appendStringInfoChar(buf, '.');
-			}
-			if (attname)
-				appendStringInfoString(buf, quote_identifier(attname));
-			else
-			{
-				/*
-				 * In the whole-row Var case, refname is what the default AS
-				 * name would be.
-				 */
-				attname = refname;
-			}
-=======
 			attname = get_variable((Var *) tle->expr, 0, true, context);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 		else
 		{
@@ -2799,7 +2621,6 @@ get_rule_grouplist(List *grplist, List *tlist,
 	char *sep;
 	ListCell *lc;
 
-<<<<<<< HEAD
 	sep = "";
 	foreach (lc, grplist)
 	{
@@ -2808,25 +2629,6 @@ get_rule_grouplist(List *grplist, List *tlist,
 				IsA(node, List) ||
 				IsA(node, GroupClause) ||
 				IsA(node, GroupingClause));
-=======
-	/*
-	 * Use column-number form if requested by caller.  Otherwise, if
-	 * expression is a constant, force it to be dumped with an explicit
-	 * cast as decoration --- this is because a simple integer constant
-	 * is ambiguous (and will be misinterpreted by findTargetlistEntry())
-	 * if we dump it without any decoration.  Otherwise, just dump the
-	 * expression normally.
-	 */
-	if (force_colno)
-	{
-		Assert(!tle->resjunk);
-		appendStringInfo(buf, "%d", tle->resno);
-	}
-	else if (expr && IsA(expr, Const))
-		get_const_expr((Const *) expr, context, 1);
-	else
-		get_rule_expr(expr, context, true);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		appendStringInfoString(buf, sep);
 
@@ -2985,13 +2787,8 @@ get_insert_query_def(Query *query, deparse_context *context)
 		context->indentLevel += PRETTYINDENT_STD;
 		appendStringInfoChar(buf, ' ');
 	}
-<<<<<<< HEAD
-	appendStringInfo(buf, "INSERT INTO %s (",
-					 generate_relation_name(rte->relid, NIL));
-=======
 	appendStringInfo(buf, "INSERT INTO %s ",
-					 generate_relation_name(rte->relid));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+					 generate_relation_name(rte->relid, NIL));
 
 	/*
 	 * Add the insert-column-names list.  To handle indirection properly, we
@@ -3107,11 +2904,7 @@ get_update_query_def(Query *query, deparse_context *context)
 	}
 	appendStringInfo(buf, "UPDATE %s%s",
 					 only_marker(rte),
-<<<<<<< HEAD
 					 generate_relation_name(rte->relid, NIL));
-=======
-					 generate_relation_name(rte->relid));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (rte->alias != NULL)
 		appendStringInfo(buf, " %s",
 						 quote_identifier(rte->alias->aliasname));
@@ -3192,11 +2985,7 @@ get_delete_query_def(Query *query, deparse_context *context)
 	}
 	appendStringInfo(buf, "DELETE FROM %s%s",
 					 only_marker(rte),
-<<<<<<< HEAD
 					 generate_relation_name(rte->relid, NIL));
-=======
-					 generate_relation_name(rte->relid));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (rte->alias != NULL)
 		appendStringInfo(buf, " %s",
 						 quote_identifier(rte->alias->aliasname));
@@ -3360,55 +3149,16 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 		dpns->inner_plan = save_inner;
 		return NULL;
 	}
-<<<<<<< HEAD
-	else if (var->varno == dpns->outer_varno || var->varno == 0)
-		rte = dpns->outer_rte;
-	else if (var->varno == dpns->inner_varno)
-		rte = dpns->inner_rte;
-	else
-		rte = NULL;
-	return rte;
-}
-=======
 	else if (var->varno == INNER && dpns->inner_plan)
 	{
 		TargetEntry *tle;
 		Plan	   *save_outer;
 		Plan	   *save_inner;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		tle = get_tle_by_resno(dpns->inner_plan->targetlist, var->varattno);
 		if (!tle)
 			elog(ERROR, "bogus varattno for INNER var: %d", var->varattno);
 
-<<<<<<< HEAD
-/*
- * Get the schemaname, refname and attname for a (possibly nonlocal) Var.
- *
- * In some cases (currently only when recursing into an unnamed join)
- * the Var's varlevelsup has to be interpreted with respect to a context
- * above the current one; levelsup indicates the offset.
- *
- * schemaname is usually returned as NULL.	It will be non-null only if
- * use of the unqualified refname would find the wrong RTE.
- *
- * refname will be returned as NULL if the Var references an unnamed join.
- * In this case the Var *must* be displayed without any qualification.
- *
- * attname will be returned as NULL if the Var represents a whole tuple
- * of the relation.  (Typically we'd want to display the Var as "foo.*",
- * but it's convenient to return NULL to make it easier for callers to
- * distinguish this case.)
- */
-static void
-get_names_for_var(Var *var, int levelsup, deparse_context *context,
-				  const char  **schemaname,
-                  const char  **refname,
-                  const char  **attname)
-{
-	RangeTblEntry *rte;
-	AttrNumber	attnum;
-=======
 		Assert(netlevelsup == 0);
 		save_outer = dpns->outer_plan;
 		save_inner = dpns->inner_plan;
@@ -3423,7 +3173,6 @@ get_names_for_var(Var *var, int levelsup, deparse_context *context,
 		get_rule_expr((Node *) tle->expr, context, true);
 		if (!IsA(tle->expr, Var))
 			appendStringInfoChar(buf, ')');
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		dpns->outer_plan = save_outer;
 		dpns->inner_plan = save_inner;
@@ -3435,30 +3184,9 @@ get_names_for_var(Var *var, int levelsup, deparse_context *context,
 		return NULL;			/* keep compiler quiet */
 	}
 
-<<<<<<< HEAD
-	/* Emit results */
-	*schemaname = NULL;			/* default assumptions */
-
-    if (rte == NULL ||
-        rte->rtekind == RTE_VOID)
-    {
-        *attname = NULL;
-        *refname = "*BOGUS*";
-        ereport(WARNING, (errcode(ERRCODE_INTERNAL_ERROR),
-                          errmsg_internal("bogus var: varno=%d varattno=%d",
-                                          var->varno, var->varattno) ));
-        return;
-    }
-
-    if (rte->eref)
-        *refname = rte->eref->aliasname;
-    else
-        *refname = NULL;
-=======
 	/* Identify names to use */
-	schemaname = NULL;			/* default assumptions */
+	schemaname = NULL;                      /* default assumptions */
 	refname = rte->eref->aliasname;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Exceptions occur only if the RTE is alias-less */
 	if (rte->alias == NULL)
@@ -3470,15 +3198,8 @@ get_names_for_var(Var *var, int levelsup, deparse_context *context,
 			 * more-closely-nested RTE, or be ambiguous, in which case we need
 			 * to specify the schemaname to avoid these errors.
 			 */
-<<<<<<< HEAD
-			if (rte->eref &&
-                find_rte_by_refname(rte->eref->aliasname, context) != rte)
-				*schemaname =
-					get_namespace_name(get_rel_namespace(rte->relid));
-=======
 			if (find_rte_by_refname(rte->eref->aliasname, context) != rte)
 				schemaname = get_namespace_name(get_rel_namespace(rte->relid));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 		else if (rte->rtekind == RTE_JOIN)
 		{
@@ -3516,27 +3237,7 @@ get_names_for_var(Var *var, int levelsup, deparse_context *context,
 			 * to create a whole-row Var for it.  So we don't have to cover
 			 * that case below.)
 			 */
-<<<<<<< HEAD
-			TargetEntry    *tle = NULL;
-
-			if (rte->funcexpr)
-				tle = get_tle_by_resno(((Plan *)rte->funcexpr)->targetlist, attnum);
-
-			if (tle && tle->resname)
-			{
-				*attname = tle->resname;
-			}
-			else
-			{
-				char		buf[32];
-
-				snprintf(buf, sizeof(buf), "?column%d?", attnum);
-				*attname = pstrdup(buf);
-			}
-			return;
-=======
 			refname = NULL;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 	}
 
@@ -3722,38 +3423,6 @@ get_name_for_var_field(Var *var, int fieldno,
 			break;
 		case RTE_SUBQUERY:
 			{
-<<<<<<< HEAD
-				/* Subselect-in-FROM: examine sub-select's output expr */
-				TargetEntry *ste = get_tle_by_resno(rte->subquery->targetList,
-													attnum);
-
-				if (ste == NULL || ste->resjunk)
-                {
-                    ereport(WARNING, (errcode(ERRCODE_INTERNAL_ERROR),
-                                      errmsg_internal("bogus var: varno=%d varattno=%d",
-                                                      var->varno, var->varattno) ));
-                    return "*BOGUS*";
-                }
-				expr = (Node *) ste->expr;
-				if (IsA(expr, Var))
-				{
-					const char *result = NULL;
-
-					/*
-					 * Recurse into the sub-select to see what its Var
-					 * refers to. We have to build an additional level of
-					 * namespace to keep in step with varlevelsup in the
-					 * subselect.
-					 */
-					deparse_namespace mydpns;
-					memset(&mydpns, 0, sizeof(mydpns));
-					Assert(rte->subquery != NULL);
-					mydpns.rtable = rte->subquery->rtable;
-					mydpns.ctes = rte->subquery->cteList;
-					
-					context->namespaces = lcons(&mydpns,
-												context->namespaces);
-=======
 				if (rte->subquery)
 				{
 					/* Subselect-in-FROM: examine sub-select's output expr */
@@ -3783,15 +3452,10 @@ get_name_for_var_field(Var *var, int fieldno,
 
 						result = get_name_for_var_field((Var *) expr, fieldno,
 														0, context);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 						context->namespaces =
 							list_delete_first(context->namespaces);
 
-<<<<<<< HEAD
-					context->namespaces =
-						list_delete_first(context->namespaces);
-=======
 						return result;
 					}
 					/* else fall through to inspect the expression */
@@ -3809,7 +3473,6 @@ get_name_for_var_field(Var *var, int fieldno,
 					Plan	   *save_outer;
 					Plan	   *save_inner;
 					const char *result;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 					if (!dpns->inner_plan)
 						elog(ERROR, "failed to find plan for subquery %s",
@@ -3927,65 +3590,9 @@ get_name_for_var_field(Var *var, int fieldno,
 			 * its result columns as RECORD, which is not allowed.
 			 */
 			break;
-<<<<<<< HEAD
-		case RTE_SPECIAL:
-			{
-				/*
-				 * We are looking at a deparse context node set up by
-				 * deparse_context_for_subplan().  The Var must refer to an
-				 * expression computed by this subplan (or possibly one of its
-				 * inputs), rather than any simple attribute of an RTE entry.
-				 * Look into the subplan's target list to get the referenced
-				 * expression, digging down as far as needed to find something
-				 * that's not a Var, and then pass it to
-				 * get_expr_result_type().
-				 */
-				Plan	   *subplan = (Plan *) rte->funcexpr;
-
-				while (subplan)
-				{
-					TargetEntry *ste;
-
-					ste = get_tle_by_resno(subplan->targetlist,
-										   ((Var *) expr)->varattno);
-					if (!ste || !ste->expr)
-						break;
-					expr = (Node *) ste->expr;
-					if (!IsA(expr, Var))
-						break;
-					switch (((Var *)expr)->varno)
-                    {
-                        case 0:
-                        case OUTER:
-						    subplan = outerPlan(subplan);
-                            break;
-                        case INNER:
-						    subplan = innerPlan(subplan);
-                            break;
-                        default:
-                            ereport(WARNING, (errcode(ERRCODE_INTERNAL_ERROR),
-                                errmsg_internal("bogus var: varno=%d varattno=%d "
-                                                "subvarno=%d subattno=%d",
-                                                var->varno, var->varattno,
-                                                ((Var *)expr)->varno,
-                                                ((Var *)expr)->varattno) ));
-                            return "*BOGUS*";
-                    }
-				}
-				if (!subplan)
-                {
-                    ereport(WARNING, (errcode(ERRCODE_INTERNAL_ERROR),
-                        errmsg_internal("bogus var: varno=%d varattno=%d",
-                                        var->varno, var->varattno) ));
-                    return "*BOGUS*";
-                }
-			}
-			break;
-        case RTE_VOID:
+		case RTE_VOID:
             /* No references should exist to a deleted RTE. */
-            break;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+			break;
 	}
 
 	/*
@@ -4039,25 +3646,6 @@ find_rte_by_refname(const char *refname, deparse_context *context)
 				result = rte;
 			}
 		}
-<<<<<<< HEAD
-		if (dpns->outer_rte &&
-            dpns->outer_rte->eref &&
-			strcmp(dpns->outer_rte->eref->aliasname, refname) == 0)
-		{
-			if (result)
-				return NULL;	/* it's ambiguous */
-			result = dpns->outer_rte;
-		}
-		if (dpns->inner_rte &&
-			dpns->inner_rte->eref &&
-			strcmp(dpns->inner_rte->eref->aliasname, refname) == 0)
-		{
-			if (result)
-				return NULL;	/* it's ambiguous */
-			result = dpns->inner_rte;
-		}
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		if (result)
 			break;
 	}
@@ -4235,12 +3823,8 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 				case T_RowExpr:	/* other separators */
 				case T_CoalesceExpr:	/* own parentheses */
 				case T_MinMaxExpr:		/* own parentheses */
-<<<<<<< HEAD
-=======
 				case T_XmlExpr:	/* own parentheses */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				case T_NullIfExpr:		/* other separators */
-				case T_XmlExpr:			/* own parentheses */
 				case T_Aggref:	/* own parentheses */
 				case T_CaseExpr:		/* other separators */
 					return true;
@@ -4288,12 +3872,8 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 				case T_RowExpr:	/* other separators */
 				case T_CoalesceExpr:	/* own parentheses */
 				case T_MinMaxExpr:		/* own parentheses */
-<<<<<<< HEAD
-=======
 				case T_XmlExpr:	/* own parentheses */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				case T_NullIfExpr:		/* other separators */
-				case T_XmlExpr:			/* own parentheses */
 				case T_Aggref:	/* own parentheses */
 				case T_CaseExpr:		/* other separators */
 					return true;
@@ -4408,37 +3988,7 @@ get_rule_expr(Node *node, deparse_context *context,
 	switch (nodeTag(node))
 	{
 		case T_Var:
-<<<<<<< HEAD
-			{
-				Var		   *var = (Var *) node;
-				const char *schemaname;
-				const char *refname;
-				const char *attname;
-
-				get_names_for_var(var, 0, context,
-								  &schemaname, &refname, &attname);
-				if (refname && (context->varprefix || attname == NULL))
-				{
-					if (schemaname)
-						appendStringInfo(buf, "%s.",
-										 quote_identifier(schemaname));
-
-					if (strcmp(refname, "*NEW*") == 0)
-						appendStringInfoString(buf, "new.");
-					else if (strcmp(refname, "*OLD*") == 0)
-						appendStringInfoString(buf, "old.");
-					else
-						appendStringInfo(buf, "%s.",
-										 quote_identifier(refname));
-				}
-				if (attname)
-					appendStringInfoString(buf, quote_identifier(attname));
-				else
-					appendStringInfoString(buf, "*");
-			}
-=======
 			(void) get_variable((Var *) node, 0, false, context);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			break;
 
 		case T_Const:
@@ -4774,18 +4324,10 @@ get_rule_expr(Node *node, deparse_context *context,
 						 */
 						if (IsA(w, OpExpr))
 						{
-<<<<<<< HEAD
-                            OpExpr     *opexpr = (OpExpr *)w;
-						    Node	   *rhs;
-
-                            Assert(IsA(linitial(opexpr->args), CaseTestExpr) ||
-								   IsA(linitial(opexpr->args), Const) ||
-                                   IsA(linitial(opexpr->args), RelabelType));
-							rhs = (Node *) lsecond(opexpr->args);
-						    get_rule_expr(rhs, context, false);
-					    }
-						else if (IsA(w, CaseTestExpr))
-							appendStringInfo(buf, "TRUE");
+/* GPDB_83MERGE_FIXME: This block is to handle the GPDB-specific
+ * CASE .. WHEN IS NOT DISTINCT FROM construct. This needs to be fixed.
+ */
+#if 0							
 						else if (not_clause(w))
 						{
 							Expr *arg = get_notclausearg((Expr *) w);
@@ -4804,14 +4346,14 @@ get_rule_expr(Node *node, deparse_context *context,
 								rhs = (Node *) lsecond(dexpr->args);
 								get_rule_expr(rhs, context, false);
 							}
-=======
+#endif
 							List	   *args = ((OpExpr *) w)->args;
 
 							if (list_length(args) == 2 &&
 								IsA(strip_implicit_coercions(linitial(args)),
 									CaseTestExpr))
 								w = (Node *) lsecond(args);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+
 						}
 					}
 
@@ -5221,14 +4763,8 @@ get_rule_expr(Node *node, deparse_context *context,
 
 				}
 				if (xexpr->op == IS_XMLSERIALIZE)
-<<<<<<< HEAD
-					appendStringInfo(buf, " AS %s",
-									 format_type_with_typemod(xexpr->type,
-															  xexpr->typmod));
-=======
 					appendStringInfo(buf, " AS %s", format_type_with_typemod(xexpr->type,
 															 xexpr->typmod));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				if (xexpr->op == IS_DOCUMENT)
 					appendStringInfoString(buf, " IS DOCUMENT");
 				else
@@ -5249,29 +4785,12 @@ get_rule_expr(Node *node, deparse_context *context,
 				}
 				else
 				{
-					if (!PRETTY_PAREN(context))
-						appendStringInfoChar(buf, '(');
-					get_rule_expr_paren(arg, context, false, node);
-					if (!PRETTY_PAREN(context))
-						appendStringInfoChar(buf, ')');
-					appendStringInfo(buf, "::%s",
-								  format_type_with_typemod(ctest->resulttype,
-													   ctest->resulttypmod));
+					get_coercion_expr(arg, context,
+									  ctest->resulttype,
+									  ctest->resulttypmod,
+									  node);
 				}
 			}
-			break;
-
-		case T_CoerceToDomainValue:
-			appendStringInfo(buf, "VALUE");
-			break;
-
-		case T_SetToDefault:
-			appendStringInfo(buf, "DEFAULT");
-			break;
-
-		case T_CurrentOfExpr:
-			appendStringInfo(buf, "CURRENT OF %s",
-			quote_identifier(((CurrentOfExpr *) node)->cursor_name));
 			break;
 
 		case T_PercentileExpr:
@@ -5289,7 +4808,6 @@ get_rule_expr(Node *node, deparse_context *context,
 				}
 				else
 				{
-<<<<<<< HEAD
 					if (p->perckind == PERC_CONT)
 					{
 						appendStringInfoString(buf, "percentile_cont(");
@@ -5306,18 +4824,10 @@ get_rule_expr(Node *node, deparse_context *context,
 									  p->sortTargets,
 									  false, context, "ORDER BY ");
 					appendStringInfoString(buf, ") ");
-=======
-					get_coercion_expr(arg, context,
-									  ctest->resulttype,
-									  ctest->resulttypmod,
-									  node);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				}
 			}
 			break;
 
-<<<<<<< HEAD
-=======
 		case T_CoerceToDomainValue:
 			appendStringInfo(buf, "VALUE");
 			break;
@@ -5339,7 +4849,6 @@ get_rule_expr(Node *node, deparse_context *context,
 			}
 			break;
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		case T_List:
 			{
 				char	   *sep;
@@ -5818,7 +5327,6 @@ get_windowspec_expr(WindowSpec *spec, deparse_context *context)
 	appendStringInfoChar(buf, ')');
 }
 
-<<<<<<< HEAD
 /*
  * get_windowref_expr			- Parse back a WindowRef node
  */
@@ -5877,7 +5385,8 @@ get_windowref_expr(WindowRef *wref, deparse_context *context)
 	{
 		get_windowspec_expr(spec, context);
 	}
-=======
+}
+
 /* ----------
  * get_coercion_expr
  *
@@ -5916,7 +5425,6 @@ get_coercion_expr(Node *arg, deparse_context *context,
 	}
 	appendStringInfo(buf, "::%s",
 					 format_type_with_typemod(resulttype, resulttypmod));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /* ----------
@@ -5950,11 +5458,7 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 		if (showtype >= 0)
 			appendStringInfo(buf, "::%s",
 							 format_type_with_typemod(constval->consttype,
-<<<<<<< HEAD
-													  -1));
-=======
 													  constval->consttypmod));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		return;
 	}
 

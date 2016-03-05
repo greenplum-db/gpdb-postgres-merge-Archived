@@ -3,20 +3,12 @@
  * arrayfuncs.c
  *	  Support functions for arrays.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.160 2009/06/22 04:37:18 tgl Exp $
-=======
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.140.2.1 2008/04/11 22:52:17 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -105,18 +97,11 @@ static void array_insert_slice(ArrayType *destArray, ArrayType *origArray,
 				   int *st, int *endp,
 				   int typlen, bool typbyval, char typalign);
 static int	array_cmp(FunctionCallInfo fcinfo);
-<<<<<<< HEAD
 static ArrayType *create_array_envelope(int ndims, int *dimv, int *lbv, int nbytes,
 					  Oid elmtype, int dataoffset);
 static ArrayType *array_fill_internal(ArrayType *dims, ArrayType *lbs,
 					Datum value, bool isnull, Oid elmtype,
 					FunctionCallInfo fcinfo);
-static Datum array_type_length_coerce_internal(ArrayType *src,
-								  int32 desttypmod,
-								  bool isExplicit,
-								  FmgrInfo *fmgr_info);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * array_in :
@@ -1289,11 +1274,7 @@ array_recv(PG_FUNCTION_ARGS)
 		dataoffset = 0;			/* marker for no null bitmap */
 		nbytes += ARR_OVERHEAD_NONULLS(ndim);
 	}
-<<<<<<< HEAD
-	retval = (ArrayType *) palloc(nbytes);
-=======
 	retval = (ArrayType *) palloc0(nbytes);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	SET_VARSIZE(retval, nbytes);
 	retval->ndim = ndim;
 	retval->dataoffset = dataoffset;
@@ -1599,10 +1580,6 @@ array_dims(PG_FUNCTION_ARGS)
 		sprintf(p, "[%d:%d]", lb[i], dimv[i] + lb[i] - 1);
 		p += strlen(p);
 	}
-<<<<<<< HEAD
-=======
-	SET_VARSIZE(result, strlen(VARDATA(result)) + VARHDRSZ);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	PG_RETURN_TEXT_P(cstring_to_text(buf));
 }
@@ -1935,11 +1912,7 @@ array_get_slice(ArrayType *array,
 		bytes += ARR_OVERHEAD_NONULLS(ndim);
 	}
 
-<<<<<<< HEAD
-	newarray = (ArrayType *) palloc(bytes);
-=======
 	newarray = (ArrayType *) palloc0(bytes);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	SET_VARSIZE(newarray, bytes);
 	newarray->ndim = ndim;
 	newarray->dataoffset = dataoffset;
@@ -2192,11 +2165,7 @@ array_set(ArrayType *array,
 	/*
 	 * OK, create the new array and fill in header/dimensions
 	 */
-<<<<<<< HEAD
-	newarray = (ArrayType *) palloc(newsize);
-=======
 	newarray = (ArrayType *) palloc0(newsize);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	SET_VARSIZE(newarray, newsize);
 	newarray->ndim = ndim;
 	newarray->dataoffset = newhasnulls ? overheadlen : 0;
@@ -2526,11 +2495,7 @@ array_set_slice(ArrayType *array,
 
 	newsize = overheadlen + olddatasize - olditemsize + newitemsize;
 
-<<<<<<< HEAD
-	newarray = (ArrayType *) palloc(newsize);
-=======
 	newarray = (ArrayType *) palloc0(newsize);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	SET_VARSIZE(newarray, newsize);
 	newarray->ndim = ndim;
 	newarray->dataoffset = newhasnulls ? overheadlen : 0;
@@ -2789,11 +2754,7 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType,
 		dataoffset = 0;			/* marker for no null bitmap */
 		nbytes += ARR_OVERHEAD_NONULLS(ndim);
 	}
-<<<<<<< HEAD
-	result = (ArrayType *) palloc(nbytes);
-=======
 	result = (ArrayType *) palloc0(nbytes);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	SET_VARSIZE(result, nbytes);
 	result->ndim = ndim;
 	result->dataoffset = dataoffset;
@@ -2934,9 +2895,8 @@ construct_md_array(Datum *elems,
 				}
 			}
 		}
-<<<<<<< HEAD
 
-		nbytes = att_align(nbytes, elmalign);
+		nbytes = att_align_nominal(nbytes, elmalign);
 	} 
 	else 
 	{
@@ -2959,19 +2919,6 @@ construct_md_array(Datum *elems,
 						 errmsg("array size exceeds the maximum allowed (%d)",
 								(int) MaxAllocSize)));
 		}
-=======
-		/* make sure data is not toasted */
-		if (elmlen == -1)
-			elems[i] = PointerGetDatum(PG_DETOAST_DATUM(elems[i]));
-		nbytes = att_addlength_datum(nbytes, elmlen, elems[i]);
-		nbytes = att_align_nominal(nbytes, elmalign);
-		/* check for overflow of total request */
-		if (!AllocSizeIsValid(nbytes))
-			ereport(ERROR,
-					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("array size exceeds the maximum allowed (%d)",
-							(int) MaxAllocSize)));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	/* Allocate and initialize result array */
@@ -3016,11 +2963,7 @@ construct_empty_array(Oid elmtype)
 {
 	ArrayType  *result;
 
-<<<<<<< HEAD
-	result = (ArrayType *) palloc(sizeof(ArrayType));
-=======
 	result = (ArrayType *) palloc0(sizeof(ArrayType));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	SET_VARSIZE(result, sizeof(ArrayType));
 	result->ndim = 0;
 	result->dataoffset = 0;

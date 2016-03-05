@@ -5,20 +5,12 @@
  *	  Functions for the built-in type "RelativeTime".
  *	  Functions for the built-in type "TimeInterval".
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.161 2009/06/11 14:49:03 momjian Exp $
-=======
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.152 2008/01/01 19:45:52 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -1593,13 +1585,5 @@ timeofday(PG_FUNCTION_ARGS)
 				pg_localtime(&tt, session_timezone));
 	snprintf(buf, sizeof(buf), templ, tp.tv_usec);
 
-<<<<<<< HEAD
 	PG_RETURN_TEXT_P(cstring_to_text(buf));
-=======
-	len = VARHDRSZ + strlen(buf);
-	result = (text *) palloc(len);
-	SET_VARSIZE(result, len);
-	memcpy(VARDATA(result), buf, len - VARHDRSZ);
-	PG_RETURN_TEXT_P(result);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }

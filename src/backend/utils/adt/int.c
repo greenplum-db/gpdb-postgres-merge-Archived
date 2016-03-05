@@ -3,20 +3,12 @@
  * int.c
  *	  Functions for the built-in integer types (except int8).
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.84.2.1 2009/09/03 18:48:21 tgl Exp $
-=======
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.81 2008/01/01 19:45:52 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -348,71 +340,6 @@ i4toi2(PG_FUNCTION_ARGS)
 	PG_RETURN_INT16((int16) arg1);
 }
 
-<<<<<<< HEAD
-Datum
-int2_text(PG_FUNCTION_ARGS)
-{
-	int16		arg1 = PG_GETARG_INT16(0);
-	text	   *result = (text *) palloc(7 + VARHDRSZ); /* sign,5 digits, '\0' */
-
-	pg_itoa(arg1, VARDATA(result));
-	SET_VARSIZE(result, strlen(VARDATA(result)) + VARHDRSZ);
-	PG_RETURN_TEXT_P(result);
-}
-
-Datum
-text_int2(PG_FUNCTION_ARGS)
-{
-	text	   *string = PG_GETARG_TEXT_P(0);
-	Datum		result;
-	int			len;
-	char	   *str;
-
-	len = VARSIZE(string) - VARHDRSZ;
-
-	str = palloc(len + 1);
-	memcpy(str, VARDATA(string), len);
-	*(str + len) = '\0';
-
-	result = DirectFunctionCall1(int2in, CStringGetDatum(str));
-	pfree(str);
-
-	return result;
-}
-
-Datum
-int4_text(PG_FUNCTION_ARGS)
-{
-	int32		arg1 = PG_GETARG_INT32(0);
-	text	   *result = (text *) palloc(12 + VARHDRSZ);		/* sign,10 digits,'\0' */
-
-	pg_ltoa(arg1, VARDATA(result));
-	SET_VARSIZE(result, strlen(VARDATA(result)) + VARHDRSZ);
-	PG_RETURN_TEXT_P(result);
-}
-
-Datum
-text_int4(PG_FUNCTION_ARGS)
-{
-	text	   *string = PG_GETARG_TEXT_P(0);
-	Datum		result;
-	int			len;
-	char	   *str;
-
-	len = VARSIZE(string) - VARHDRSZ;
-
-	str = palloc(len + 1);
-	memcpy(str, VARDATA(string), len);
-	*(str + len) = '\0';
-
-	result = DirectFunctionCall1(int4in, CStringGetDatum(str));
-	pfree(str);
-
-	return result;
-}
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* Cast int4 -> bool */
 Datum
 int4_bool(PG_FUNCTION_ARGS)
@@ -804,19 +731,6 @@ int4div(PG_FUNCTION_ARGS)
 
 	result = arg1 / arg2;
 
-<<<<<<< HEAD
-	/*
-	 * Overflow check.	The only possible overflow case is for arg1 = INT_MIN,
-	 * arg2 = -1, where the correct result is -INT_MIN, which can't be
-	 * represented on a two's-complement machine.  Most machines produce
-	 * INT_MIN but it seems some produce zero.
-	 */
-	if (arg2 == -1 && arg1 < 0 && result <= 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("integer out of range")));
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	PG_RETURN_INT32(result);
 }
 
@@ -939,17 +853,6 @@ int2div(PG_FUNCTION_ARGS)
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Overflow check.	The only possible overflow case is for arg1 =
-	 * SHRT_MIN, arg2 = -1, where the correct result is -SHRT_MIN, which can't
-	 * be represented on a two's-complement machine.  Most machines produce
-	 * SHRT_MIN but it seems some produce zero.
-	 */
-	if (arg2 == -1 && arg1 < 0 && result <= 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallint out of range")));
-=======
 	 * SHRT_MIN / -1 is problematic, since the result can't be represented on
 	 * a two's-complement machine.  Some machines produce SHRT_MIN, some
 	 * produce zero, some throw an exception.  We can dodge the problem by
@@ -970,7 +873,6 @@ int2div(PG_FUNCTION_ARGS)
 
 	result = arg1 / arg2;
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	PG_RETURN_INT16(result);
 }
 
@@ -1059,7 +961,6 @@ int24div(PG_FUNCTION_ARGS)
 	}
 
 	/* No overflow is possible */
-
 	PG_RETURN_INT32((int32) arg1 / arg2);
 }
 
@@ -1149,17 +1050,6 @@ int42div(PG_FUNCTION_ARGS)
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Overflow check.	The only possible overflow case is for arg1 = INT_MIN,
-	 * arg2 = -1, where the correct result is -INT_MIN, which can't be
-	 * represented on a two's-complement machine.  Most machines produce
-	 * INT_MIN but it seems some produce zero.
-	 */
-	if (arg2 == -1 && arg1 < 0 && result <= 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("integer out of range")));
-=======
 	 * INT_MIN / -1 is problematic, since the result can't be represented on a
 	 * two's-complement machine.  Some machines produce INT_MIN, some produce
 	 * zero, some throw an exception.  We can dodge the problem by recognizing
@@ -1180,7 +1070,6 @@ int42div(PG_FUNCTION_ARGS)
 
 	result = arg1 / arg2;
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	PG_RETURN_INT32(result);
 }
 

@@ -231,11 +231,7 @@ win32_utf8_wcstotext(const wchar_t *str)
 				 errmsg("UTF-16 to UTF-8 translation failed: %lu",
 						GetLastError())));
 
-<<<<<<< HEAD
-	SET_VARSIZE(result, nbytes + VARHDRSZ - 1);		/* -1 to ignore null */
-=======
 	SET_VARSIZE(result, nbytes + VARHDRSZ - 1); /* -1 to ignore null */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	return result;
 }
@@ -326,11 +322,7 @@ wstring_lower(char *str)
 		workspace[i] = towlower(workspace[i]);
 
 	out_text = wcstotext(workspace, i);
-<<<<<<< HEAD
-	
-=======
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	nbytes = VARSIZE(out_text) - VARHDRSZ;
 	result = palloc(nbytes + 1);
 	memcpy(result, VARDATA(out_text), nbytes);
@@ -907,9 +899,9 @@ dotrim(const char *string, int stringlen,
 				}
 			}
 
-			pfree((void *)stringchars);
+			pfree(stringchars);
 			pfree(stringmblen);
-			pfree((void *)setchars);
+			pfree(setchars);
 			pfree(setmblen);
 		}
 		else
@@ -1177,17 +1169,10 @@ translate(PG_FUNCTION_ARGS)
 	int			source_len;
 	int			from_index;
 
-<<<<<<< HEAD
-	m = VARSIZE(string) - VARHDRSZ;
-	if (m <= 0)
-		PG_RETURN_TEXT_P(string);
-	source = VARDATA(string);
-=======
 	m = VARSIZE_ANY_EXHDR(string);
 	if (m <= 0)
 		PG_RETURN_TEXT_P(string);
 	source = VARDATA_ANY(string);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	fromlen = VARSIZE_ANY_EXHDR(from);
 	from_ptr = VARDATA_ANY(from);
@@ -1200,27 +1185,12 @@ translate(PG_FUNCTION_ARGS)
 	 */
 	worst_len = pg_database_encoding_max_length() * m;
 
-<<<<<<< HEAD
-	/*
-	 * The worst-case expansion is to substitute a max-length character for
-	 * a single-byte character at each position of the string.
-	 */
-	worst_len = pg_database_encoding_max_length() * m;
-
 	/* check for integer overflow */
 	if (worst_len / pg_database_encoding_max_length() != m)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("requested length too large")));
 
-=======
-	/* check for integer overflow */
-	if (worst_len / pg_database_encoding_max_length() != m)
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("requested length too large")));
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	result = (text *) palloc(worst_len + VARHDRSZ);
 	target = VARDATA(result);
 	retlen = 0;
@@ -1274,15 +1244,9 @@ translate(PG_FUNCTION_ARGS)
 	SET_VARSIZE(result, retlen + VARHDRSZ);
 
 	/*
-<<<<<<< HEAD
-	 * The function result is probably much bigger than needed, if we're
-	 * using a multibyte encoding, but it's not worth reallocating it;
-	 * the result probably won't live long anyway.
-=======
 	 * The function result is probably much bigger than needed, if we're using
 	 * a multibyte encoding, but it's not worth reallocating it; the result
 	 * probably won't live long anyway.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 
 	PG_RETURN_TEXT_P(result);
@@ -1392,7 +1356,7 @@ ascii(PG_FUNCTION_ARGS)
  ********************************************************************/
 
 Datum
-chr(PG_FUNCTION_ARGS)
+chr			(PG_FUNCTION_ARGS)
 {
 	uint32		cvalue = PG_GETARG_UINT32(0);
 	text	   *result;
@@ -1417,60 +1381,6 @@ chr(PG_FUNCTION_ARGS)
 			bytes = 3;
 		else
 			bytes = 2;
-<<<<<<< HEAD
-
-		result = (text *) palloc(VARHDRSZ + bytes);
-		SET_VARSIZE(result, VARHDRSZ + bytes);
-		wch = VARDATA(result);
-
-		if (bytes == 2)
-		{
-			wch[0] = 0xC0 | ((cvalue >> 6) & 0x1F);
-			wch[1] = 0x80 | (cvalue & 0x3F);;
-		}
-		else if (bytes == 3)
-		{
-			wch[0] = 0xE0 | ((cvalue >> 12) & 0x0F);
-			wch[1] = 0x80 | ((cvalue >> 6) & 0x3F);
-			wch[2] = 0x80 | (cvalue & 0x3F);
-		}
-		else
-		{
-			wch[0] = 0xF0 | ((cvalue >> 18) & 0x07);
-			wch[1] = 0x80 | ((cvalue >> 12) & 0x3F);
-			wch[2] = 0x80 | ((cvalue >> 6) & 0x3F);
-			wch[3] = 0x80 | (cvalue & 0x3F);
-		}
-
-	}
-
-	else
-	{
-		bool		is_mb;
-
-		/*
-		 * Error out on arguments that make no sense or that we can't validly
-		 * represent in the encoding.
-		 */
-
-		if (cvalue == 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("null character not permitted")));
-
-		is_mb = pg_encoding_max_length(encoding) > 1;
-
-		if ((is_mb && (cvalue > 127)) || (!is_mb && (cvalue > 255)))
-			ereport(ERROR,
-					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("requested character too large for encoding: %d",
-							cvalue)));
-
-
-	result = (text *) palloc(VARHDRSZ + 1);
-	SET_VARSIZE(result, VARHDRSZ + 1);
-	*VARDATA(result) = (char) cvalue;
-=======
 
 		result = (text *) palloc(VARHDRSZ + bytes);
 		SET_VARSIZE(result, VARHDRSZ + bytes);
@@ -1523,7 +1433,6 @@ chr(PG_FUNCTION_ARGS)
 		result = (text *) palloc(VARHDRSZ + 1);
 		SET_VARSIZE(result, VARHDRSZ + 1);
 		*VARDATA(result) = (char) cvalue;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	PG_RETURN_TEXT_P(result);

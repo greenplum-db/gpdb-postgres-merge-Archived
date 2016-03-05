@@ -21,6 +21,7 @@
 #ifndef PG_ENUM_H
 #define PG_ENUM_H
 
+#include "catalog/genbki.h"
 #include "nodes/pg_list.h"
 
 /* ----------------

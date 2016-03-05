@@ -3,11 +3,7 @@
  * pgstatfuncs.c
  *	  Functions for accessing the statistics collector data
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -94,7 +90,6 @@ extern Datum pg_stat_reset(PG_FUNCTION_ARGS);
 
 /* Global bgwriter statistics, from bgwriter.c */
 extern PgStat_MsgBgWriter bgwriterStats;
-<<<<<<< HEAD
 
 static char *
 pgstat_waiting_string(char reason)
@@ -109,8 +104,6 @@ pgstat_waiting_string(char reason)
 			return NULL;
 	}
 }
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 Datum
 pg_stat_get_numscans(PG_FUNCTION_ARGS)
@@ -731,16 +724,7 @@ pg_stat_get_backend_activity(PG_FUNCTION_ARGS)
 	else
 		activity = beentry->st_activity;
 
-<<<<<<< HEAD
 	PG_RETURN_TEXT_P(cstring_to_text(activity));
-=======
-	len = strlen(activity);
-	result = palloc(VARHDRSZ + len);
-	SET_VARSIZE(result, VARHDRSZ + len);
-	memcpy(VARDATA(result), activity, len);
-
-	PG_RETURN_TEXT_P(result);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 
@@ -875,12 +859,7 @@ pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS)
 
 	clean_ipv6_addr(beentry->st_clientaddr.addr.ss_family, remote_host);
 
-<<<<<<< HEAD
 	return DirectFunctionCall1(inet_in, CStringGetDatum(remote_host));
-=======
-	PG_RETURN_INET_P(DirectFunctionCall1(inet_in,
-										 CStringGetDatum(remote_host)));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 Datum

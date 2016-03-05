@@ -4,17 +4,10 @@
  *	  Declarations for XML data type support.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/xml.h
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/include/utils/xml.h,v 1.23.2.2 2010/03/03 17:30:01 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -44,14 +37,11 @@ extern Datum texttoxml(PG_FUNCTION_ARGS);
 extern Datum xmltotext(PG_FUNCTION_ARGS);
 extern Datum xmlvalidate(PG_FUNCTION_ARGS);
 extern Datum xpath(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
 extern Datum xpath_exists(PG_FUNCTION_ARGS);
 extern Datum xmlexists(PG_FUNCTION_ARGS);
 extern Datum xml_is_well_formed(PG_FUNCTION_ARGS);
 extern Datum xml_is_well_formed_document(PG_FUNCTION_ARGS);
 extern Datum xml_is_well_formed_content(PG_FUNCTION_ARGS);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 extern Datum table_to_xml(PG_FUNCTION_ARGS);
 extern Datum query_to_xml(PG_FUNCTION_ARGS);

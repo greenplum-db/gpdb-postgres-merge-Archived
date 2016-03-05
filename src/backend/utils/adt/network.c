@@ -317,39 +317,6 @@ cidr_send(PG_FUNCTION_ARGS)
 }
 
 
-<<<<<<< HEAD
-static inet *
-text_network(text *src, bool is_cidr)
-{
-	int			len = VARSIZE(src) - VARHDRSZ;
-	char	   *str = palloc(len + 1);
-
-	memcpy(str, VARDATA(src), len);
-	str[len] = '\0';
-
-	//elog(LOG,"text_network leaks %d bytes",len+1);
-	return network_in(str, is_cidr);
-}
-
-Datum
-text_inet(PG_FUNCTION_ARGS)
-{
-	text	   *src = PG_GETARG_TEXT_P(0);
-
-	PG_RETURN_INET_P(text_network(src, false));
-}
-
-Datum
-text_cidr(PG_FUNCTION_ARGS)
-{
-	text	   *src = PG_GETARG_TEXT_P(0);
-
-	PG_RETURN_INET_P(text_network(src, true));
-}
-
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 Datum
 inet_to_cidr(PG_FUNCTION_ARGS)
 {
@@ -637,13 +604,7 @@ network_supeq(PG_FUNCTION_ARGS)
 Datum
 network_host(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	inet	   *ip = PG_GETARG_INET_P(0);
-=======
 	inet	   *ip = PG_GETARG_INET_PP(0);
-	text	   *ret;
-	int			len;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	char	   *ptr;
 	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
@@ -658,16 +619,7 @@ network_host(PG_FUNCTION_ARGS)
 	if ((ptr = strchr(tmp, '/')) != NULL)
 		*ptr = '\0';
 
-<<<<<<< HEAD
 	PG_RETURN_TEXT_P(cstring_to_text(tmp));
-=======
-	/* Return string as a text datum */
-	len = strlen(tmp);
-	ret = (text *) palloc(len + VARHDRSZ);
-	SET_VARSIZE(ret, len + VARHDRSZ);
-	memcpy(VARDATA(ret), tmp, len);
-	PG_RETURN_TEXT_P(ret);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
@@ -678,12 +630,7 @@ network_host(PG_FUNCTION_ARGS)
 Datum
 network_show(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	inet	   *ip = PG_GETARG_INET_P(0);
-=======
 	inet	   *ip = PG_GETARG_INET_PP(0);
-	text	   *ret;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	int			len;
 	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
@@ -700,27 +647,13 @@ network_show(PG_FUNCTION_ARGS)
 		snprintf(tmp + len, sizeof(tmp) - len, "/%u", ip_bits(ip));
 	}
 
-<<<<<<< HEAD
 	PG_RETURN_TEXT_P(cstring_to_text(tmp));
-=======
-	/* Return string as a text datum */
-	len = strlen(tmp);
-	ret = (text *) palloc(len + VARHDRSZ);
-	SET_VARSIZE(ret, len + VARHDRSZ);
-	memcpy(VARDATA(ret), tmp, len);
-	PG_RETURN_TEXT_P(ret);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 Datum
 inet_abbrev(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
 	inet	   *ip = PG_GETARG_INET_P(0);
-=======
-	inet	   *ip = PG_GETARG_INET_PP(0);
-	text	   *ret;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	char	   *dst;
 	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
@@ -732,27 +665,13 @@ inet_abbrev(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("could not format inet value: %m")));
 
-<<<<<<< HEAD
 	PG_RETURN_TEXT_P(cstring_to_text(tmp));
-=======
-	/* Return string as a text datum */
-	len = strlen(tmp);
-	ret = (text *) palloc(len + VARHDRSZ);
-	SET_VARSIZE(ret, len + VARHDRSZ);
-	memcpy(VARDATA(ret), tmp, len);
-	PG_RETURN_TEXT_P(ret);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 Datum
 cidr_abbrev(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	inet	   *ip = PG_GETARG_INET_P(0);
-=======
 	inet	   *ip = PG_GETARG_INET_PP(0);
-	text	   *ret;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	char	   *dst;
 	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
@@ -764,16 +683,7 @@ cidr_abbrev(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("could not format cidr value: %m")));
 
-<<<<<<< HEAD
 	PG_RETURN_TEXT_P(cstring_to_text(tmp));
-=======
-	/* Return string as a text datum */
-	len = strlen(tmp);
-	ret = (text *) palloc(len + VARHDRSZ);
-	SET_VARSIZE(ret, len + VARHDRSZ);
-	memcpy(VARDATA(ret), tmp, len);
-	PG_RETURN_TEXT_P(ret);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 Datum
@@ -1533,15 +1443,9 @@ inetmi(PG_FUNCTION_ARGS)
  * XXX This should go away someday!
  *
  * This is a kluge needed because we don't yet support zones in stored inet
-<<<<<<< HEAD
  * values.  Since the result of getnameinfo() might include a zone spec,
  * call this to remove it anywhere we want to feed getnameinfo's output to
  * network_in.  Beats failing entirely.
-=======
- * values.	Since the result of getnameinfo() might include a zone spec,
- * call this to remove it anywhere we want to feed getnameinfo's output to
- * network_in.	Beats failing entirely.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * An alternative approach would be to let network_in ignore %-parts for
  * itself, but that would mean we'd silently drop zone specs in user input,
@@ -1553,11 +1457,7 @@ clean_ipv6_addr(int addr_family, char *addr)
 #ifdef HAVE_IPV6
 	if (addr_family == AF_INET6)
 	{
-<<<<<<< HEAD
 		char *pct = strchr(addr, '%');
-=======
-		char	   *pct = strchr(addr, '%');
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (pct)
 			*pct = '\0';

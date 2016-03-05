@@ -98,7 +98,8 @@ scanint8(const char *str, bool errorOK, int64 *result)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for integer: \"%s\"",str)));
+					 errmsg("invalid input syntax for integer: \"%s\"",
+							str)));
 	}
 
 	/* process digits */
@@ -113,7 +114,8 @@ scanint8(const char *str, bool errorOK, int64 *result)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					   errmsg("value \"%s\" is out of range for type bigint",str)));
+					   errmsg("value \"%s\" is out of range for type bigint",
+							  str)));
 		}
 		tmp = newtmp;
 	}
@@ -576,14 +578,6 @@ int8mul(PG_FUNCTION_ARGS)
 	 * range; if so, no overflow is possible.  (But that only works if we
 	 * really have a 64-bit int64 datatype...)
 	 */
-<<<<<<< HEAD
-
-	if (arg2 != 0 &&
-		(result / arg2 != arg1 || (arg2 == -1 && arg1 < 0 && result < 0)))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("bigint out of range")));
-=======
 #ifndef INT64_IS_BUSTED
 	if (arg1 != (int64) ((int32) arg1) || arg2 != (int64) ((int32) arg2))
 #endif
@@ -595,7 +589,6 @@ int8mul(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("bigint out of range")));
 	}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	PG_RETURN_INT64(result);
 }
 
@@ -616,17 +609,6 @@ int8div(PG_FUNCTION_ARGS)
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Overflow check.	The only possible overflow case is for arg1 =
-	 * INT64_MIN, arg2 = -1, where the correct result is -INT64_MIN, which
-	 * can't be represented on a two's-complement machine.	Most machines
-	 * produce INT64_MIN but it seems some produce zero.
-	 */
-	if (arg2 == -1 && arg1 < 0 && result <= 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("bigint out of range")));
-=======
 	 * INT64_MIN / -1 is problematic, since the result can't be represented on
 	 * a two's-complement machine.  Some machines produce INT64_MIN, some
 	 * produce zero, some throw an exception.  We can dodge the problem by
@@ -647,7 +629,6 @@ int8div(PG_FUNCTION_ARGS)
 
 	result = arg1 / arg2;
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	PG_RETURN_INT64(result);
 }
 
@@ -866,17 +847,6 @@ int84div(PG_FUNCTION_ARGS)
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Overflow check.	The only possible overflow case is for arg1 =
-	 * INT64_MIN, arg2 = -1, where the correct result is -INT64_MIN, which
-	 * can't be represented on a two's-complement machine.	Most machines
-	 * produce INT64_MIN but it seems some produce zero.
-	 */
-	if (arg2 == -1 && arg1 < 0 && result <= 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("bigint out of range")));
-=======
 	 * INT64_MIN / -1 is problematic, since the result can't be represented on
 	 * a two's-complement machine.  Some machines produce INT64_MIN, some
 	 * produce zero, some throw an exception.  We can dodge the problem by
@@ -897,7 +867,6 @@ int84div(PG_FUNCTION_ARGS)
 
 	result = arg1 / arg2;
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	PG_RETURN_INT64(result);
 }
 
@@ -985,7 +954,6 @@ int48div(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-<<<<<<< HEAD
 	/* No overflow is possible */
 	PG_RETURN_INT64((int64) arg1 / arg2);
 }
@@ -1170,10 +1138,7 @@ int28div(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/* No overflow is possible */
-
 	PG_RETURN_INT64((int64) arg1 / arg2);
 }
 
@@ -1396,51 +1361,6 @@ oidtoi8(PG_FUNCTION_ARGS)
 	PG_RETURN_INT64((int64) arg);
 }
 
-<<<<<<< HEAD
-Datum
-text_int8(PG_FUNCTION_ARGS)
-{
-	text	   *str = PG_GETARG_TEXT_P(0);
-	int			len;
-	char	   *s;
-	Datum		result;
-
-	len = (VARSIZE(str) - VARHDRSZ);
-	s = palloc(len + 1);
-	memcpy(s, VARDATA(str), len);
-	*(s + len) = '\0';
-
-	result = DirectFunctionCall1(int8in, CStringGetDatum(s));
-
-	pfree(s);
-
-	return result;
-}
-
-Datum
-int8_text(PG_FUNCTION_ARGS)
-{
-	/* arg is int64, but easier to leave it as Datum */
-	Datum		arg = PG_GETARG_DATUM(0);
-	char	   *s;
-	int			len;
-	text	   *result;
-
-	s = DatumGetCString(DirectFunctionCall1(int8out, arg));
-	len = strlen(s);
-
-	result = (text *) palloc(VARHDRSZ + len);
-
-	SET_VARSIZE(result, VARHDRSZ + len);
-	memcpy(VARDATA(result), s, len);
-
-	pfree(s);
-
-	PG_RETURN_TEXT_P(result);
-}
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * non-persistent numeric series generator
  */

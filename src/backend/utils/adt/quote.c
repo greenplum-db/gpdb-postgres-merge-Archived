@@ -72,14 +72,10 @@ quote_literal(PG_FUNCTION_ARGS)
 
 	qstr = quote_literal_internal(str);
 
-<<<<<<< HEAD
 	len = strlen(qstr);
 	result = (text *) palloc(len + VARHDRSZ);
 	SET_VARSIZE(result, len + VARHDRSZ);
 	memcpy(VARDATA(result), qstr, len);
-=======
-	SET_VARSIZE(result, cp2 - ((char *) result));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	PG_RETURN_TEXT_P(result);
 }

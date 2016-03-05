@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.79 2008/03/19 02:40:37 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.78.2.1 2008/03/19 02:40:43 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -39,40 +35,13 @@
 #include "utils/builtins.h"
 #include "utils/guc.h"
 
-<<<<<<< HEAD
-#define PG_GETARG_TEXT_P_IF_EXISTS(_n) \
-	(PG_NARGS() > (_n) ? PG_GETARG_TEXT_P(_n) : NULL)
-=======
 #define PG_GETARG_TEXT_PP_IF_EXISTS(_n) \
 	(PG_NARGS() > (_n) ? PG_GETARG_TEXT_PP(_n) : NULL)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 /* GUC-settable flavor parameter */
-int	regex_flavor = REG_ADVANCED;
+static int	regex_flavor = REG_ADVANCED;
 
-
-/* all the options of interest for regex functions */
-typedef struct pg_re_flags
-{
-	int			cflags;			/* compile flags for Spencer's regex code */
-	bool		glob;			/* do it globally (for each occurrence) */
-} pg_re_flags;
-
-/* cross-call state for regexp_matches(), also regexp_split() */
-typedef struct regexp_matches_ctx
-{
-	text	   *orig_str;		/* data string in original TEXT form */
-	int			nmatches;		/* number of places where pattern matched */
-	int			npatterns;		/* number of capturing subpatterns */
-	/* We store start char index and end+1 char index for each match */
-	/* so the number of entries in match_locs is nmatches * npatterns * 2 */
-	int		   *match_locs;		/* 0-based character indexes */
-	int			next_match;		/* 0-based index of next match to process */
-	/* workspace for build_regexp_matches_result() */
-	Datum	   *elems;			/* has npatterns elements */
-	bool	   *nulls;			/* has npatterns elements */
-} regexp_matches_ctx;
 
 /* all the options of interest for regex functions */
 typedef struct pg_re_flags
@@ -363,8 +332,6 @@ RE_compile_and_execute(text *text_re, char *dat, int dat_len,
 
 	return RE_execute(re, dat, dat_len, nmatch, pmatch);
 }
-<<<<<<< HEAD
-=======
 
 
 /*
@@ -445,7 +412,6 @@ parse_re_flags(pg_re_flags *flags, text *opts)
 	}
 }
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * assign_regex_flavor - GUC hook to validate and set REGEX_FLAVOR
@@ -471,94 +437,6 @@ assign_regex_flavor(const char *value, bool doit, GucSource source)
 	else
 		return NULL;			/* fail */
 	return value;			   /* OK */
-}
-
-/*
- * parse_re_flags - parse the options argument of regexp_matches and friends
- *
- *	flags --- output argument, filled with desired options
- *	opts --- TEXT object, or NULL for defaults
- *
- * This accepts all the options allowed by any of the callers; callers that
- * don't want some have to reject them after the fact.
- */
-static void
-parse_re_flags(pg_re_flags *flags, text *opts)
-{
-	/* regex_flavor is always folded into the compile flags */
-	flags->cflags = regex_flavor;
-	flags->glob = false;
-
-	if (opts)
-	{
-		char	   *opt_p = VARDATA_ANY(opts);
-		int			opt_len = VARSIZE_ANY_EXHDR(opts);
-		int			i;
-
-		for (i = 0; i < opt_len; i++)
-		{
-			switch (opt_p[i])
-			{
-				case 'g':
-					flags->glob = true;
-					break;
-				case 'b':		/* BREs (but why???) */
-					flags->cflags &= ~(REG_ADVANCED | REG_EXTENDED | REG_QUOTE);
-					break;
-				case 'c':		/* case sensitive */
-					flags->cflags &= ~REG_ICASE;
-					break;
-				case 'e':		/* plain EREs */
-					flags->cflags |= REG_EXTENDED;
-					flags->cflags &= ~(REG_ADVANCED | REG_QUOTE);
-					break;
-				case 'i':		/* case insensitive */
-					flags->cflags |= REG_ICASE;
-					break;
-				case 'm':		/* Perloid synonym for n */
-				case 'n':		/* \n affects ^ $ . [^ */
-					flags->cflags |= REG_NEWLINE;
-					break;
-				case 'p':		/* ~Perl, \n affects . [^ */
-					flags->cflags |= REG_NLSTOP;
-					flags->cflags &= ~REG_NLANCH;
-					break;
-				case 'q':		/* literal string */
-					flags->cflags |= REG_QUOTE;
-					flags->cflags &= ~(REG_ADVANCED | REG_EXTENDED);
-					break;
-				case 's':		/* single line, \n ordinary */
-					flags->cflags &= ~REG_NEWLINE;
-					break;
-				case 't':		/* tight syntax */
-					flags->cflags &= ~REG_EXPANDED;
-					break;
-				case 'w':		/* weird, \n affects ^ $ only */
-					flags->cflags &= ~REG_NLSTOP;
-					flags->cflags |= REG_NLANCH;
-					break;
-				case 'x':		/* expanded syntax */
-					flags->cflags |= REG_EXPANDED;
-					break;
-				default:
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("invalid regexp option: \"%c\"",
-									opt_p[i])));
-					break;
-			}
-		}
-	}
-}
-
-
-/*
- * report whether regex_flavor is currently BASIC
- */
-bool
-regex_flavor_is_basic(void)
-{
-	return (regex_flavor == REG_BASIC);
 }
 
 
@@ -695,13 +573,8 @@ texticregexne(PG_FUNCTION_ARGS)
 Datum
 textregexsubstr(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	text	   *s = PG_GETARG_TEXT_P(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
-=======
 	text	   *s = PG_GETARG_TEXT_PP(0);
 	text	   *p = PG_GETARG_TEXT_PP(1);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	regex_t    *re;
 	regmatch_t	pmatch[2];
 	int			so,
@@ -776,17 +649,10 @@ textregexreplace_noopt(PG_FUNCTION_ARGS)
 Datum
 textregexreplace(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	text	   *s = PG_GETARG_TEXT_P(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
-	text	   *r = PG_GETARG_TEXT_P(2);
-	text	   *opt = PG_GETARG_TEXT_P(3);
-=======
 	text	   *s = PG_GETARG_TEXT_PP(0);
 	text	   *p = PG_GETARG_TEXT_PP(1);
 	text	   *r = PG_GETARG_TEXT_PP(2);
 	text	   *opt = PG_GETARG_TEXT_PP(3);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	regex_t    *re;
 	pg_re_flags flags;
 
@@ -819,11 +685,7 @@ similar_escape(PG_FUNCTION_ARGS)
 	/* This function is not strict, so must test explicitly */
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
-<<<<<<< HEAD
-	pat_text = PG_GETARG_TEXT_P(0);
-=======
 	pat_text = PG_GETARG_TEXT_PP(0);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	p = VARDATA_ANY(pat_text);
 	plen = VARSIZE_ANY_EXHDR(pat_text);
 	if (PG_ARGISNULL(1))
@@ -834,11 +696,7 @@ similar_escape(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-<<<<<<< HEAD
-		esc_text = PG_GETARG_TEXT_P(1);
-=======
 		esc_text = PG_GETARG_TEXT_PP(1);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		e = VARDATA_ANY(esc_text);
 		elen = VARSIZE_ANY_EXHDR(esc_text);
 		if (elen == 0)
@@ -939,13 +797,8 @@ regexp_matches(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-<<<<<<< HEAD
-		text	   *pattern = PG_GETARG_TEXT_P(1);
-		text	   *flags = PG_GETARG_TEXT_P_IF_EXISTS(2);
-=======
 		text	   *pattern = PG_GETARG_TEXT_PP(1);
 		text	   *flags = PG_GETARG_TEXT_PP_IF_EXISTS(2);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		MemoryContext oldcontext;
 
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -1202,13 +1055,8 @@ regexp_split_to_table(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-<<<<<<< HEAD
-		text	   *pattern = PG_GETARG_TEXT_P(1);
-		text	   *flags = PG_GETARG_TEXT_P_IF_EXISTS(2);
-=======
 		text	   *pattern = PG_GETARG_TEXT_PP(1);
 		text	   *flags = PG_GETARG_TEXT_PP_IF_EXISTS(2);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		MemoryContext oldcontext;
 
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -1257,15 +1105,9 @@ regexp_split_to_array(PG_FUNCTION_ARGS)
 	ArrayBuildState *astate = NULL;
 	regexp_matches_ctx *splitctx;
 
-<<<<<<< HEAD
-	splitctx = setup_regexp_matches(PG_GETARG_TEXT_P(0),
-									PG_GETARG_TEXT_P(1),
-									PG_GETARG_TEXT_P_IF_EXISTS(2),
-=======
 	splitctx = setup_regexp_matches(PG_GETARG_TEXT_PP(0),
 									PG_GETARG_TEXT_PP(1),
 									PG_GETARG_TEXT_PP_IF_EXISTS(2),
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 									true, false, true);
 
 	while (splitctx->next_match <= splitctx->nmatches)
@@ -1284,11 +1126,7 @@ regexp_split_to_array(PG_FUNCTION_ARGS)
 	 * memory context anyway.
 	 */
 
-<<<<<<< HEAD
 	PG_RETURN_DATUM(makeArrayResult(astate, CurrentMemoryContext));
-=======
-	PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate, CurrentMemoryContext));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /* This is separate to keep the opr_sanity regression test from complaining */
@@ -1334,8 +1172,6 @@ build_regexp_split_result(regexp_matches_ctx *splitctx)
 								   PointerGetDatum(splitctx->orig_str),
 								   Int32GetDatum(startpos + 1));
 	}
-<<<<<<< HEAD
-=======
 }
 
 /*
@@ -1401,5 +1237,4 @@ regexp_fixed_prefix(text *text_re, bool case_insensitive,
 	free(str);
 
 	return result;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }

@@ -149,8 +149,8 @@ extern volatile SharedSnapshotSlot *SharedLocalSnapshotSlot;
  *   GP: The added relation parameter helps us decide if we are going to set tuple hint
  *   bits.  If it is null, we ignore the gp_disable_tuple_hints GUC.
  */
-#define HeapTupleSatisfiesVisibility(tuple, snapshot, buffer) \
-	((*(snapshot)->satisfies) ((tuple)->t_data, snapshot, buffer))
+#define HeapTupleSatisfiesVisibility(rel, tuple, snapshot, buffer)	\
+	((*(snapshot)->satisfies) (rel, (tuple)->t_data, snapshot, buffer))
 
 /* Result codes for HeapTupleSatisfiesUpdate */
 typedef enum

@@ -115,13 +115,8 @@ regprocin(PG_FUNCTION_ARGS)
 	 * Normal case: parse the name into components and see if it matches any
 	 * pg_proc entries in the current search path.
 	 */
-<<<<<<< HEAD
-	names = stringToQualifiedNameList(pro_name_or_oid, "regprocin");
-	clist = FuncnameGetCandidates(names, -1, false, false);
-=======
 	names = stringToQualifiedNameList(pro_name_or_oid);
-	clist = FuncnameGetCandidates(names, -1);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	clist = FuncnameGetCandidates(names, -1, false, false);
 
 	if (clist == NULL)
 		ereport(ERROR,
