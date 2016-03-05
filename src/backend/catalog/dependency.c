@@ -111,17 +111,6 @@ static const Oid object_classes[MAX_OCLASS] = {
 	OperatorFamilyRelationId,	/* OCLASS_OPFAMILY */
 	AccessMethodOperatorRelationId,		/* OCLASS_AMOP */
 	AccessMethodProcedureRelationId,	/* OCLASS_AMPROC */
-<<<<<<< HEAD
-	RewriteRelationId,					/* OCLASS_REWRITE */
-	TriggerRelationId,					/* OCLASS_TRIGGER */
-	NamespaceRelationId,				/* OCLASS_SCHEMA */
-	AuthIdRelationId,					/* OCLASS_ROLE */
-	DatabaseRelationId,					/* OCLASS_DATABASE */
-	TableSpaceRelationId,				/* OCLASS_TBLSPACE */
-	FileSpaceRelationId,        		/* OCLASS_FILESPACE */
-	ExtprotocolRelationId,				/* OCLASS_EXTPROTOCOL */
-	CompressionRelationId				/* OCLASS_COMPRESSION */
-=======
 	RewriteRelationId,			/* OCLASS_REWRITE */
 	TriggerRelationId,			/* OCLASS_TRIGGER */
 	NamespaceRelationId,		/* OCLASS_SCHEMA */
@@ -131,8 +120,10 @@ static const Oid object_classes[MAX_OCLASS] = {
 	TSConfigRelationId,			/* OCLASS_TSCONFIG */
 	AuthIdRelationId,			/* OCLASS_ROLE */
 	DatabaseRelationId,			/* OCLASS_DATABASE */
-	TableSpaceRelationId		/* OCLASS_TBLSPACE */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	TableSpaceRelationId,		/* OCLASS_TBLSPACE */
+	FileSpaceRelationId,		/* OCLASS_FILESPACE */
+	ExtprotocolRelationId,		/* OCLASS_EXTPROTOCOL */
+	CompressionRelationId		/* OCLASS_COMPRESSION */
 };
 
 
@@ -1059,24 +1050,6 @@ doDeletion(const ObjectAddress *object)
 			RemoveSchemaById(object->objectId);
 			break;
 
-<<<<<<< HEAD
-		case OCLASS_FILESPACE:
-			RemoveFileSpaceById(object->objectId);
-			break;
-
-			/*
-			 * OCLASS_ROLE, OCLASS_DATABASE, OCLASS_TBLSPACE intentionally
-			 * not handled here
-			 */
-
-		case OCLASS_EXTPROTOCOL:
-			RemoveExtProtocolById(object->objectId);
-			break;
-
-		case OCLASS_COMPRESSION:
-			elog(NOTICE, "dependency: not yet implemented!");
-			break;
-=======
 		case OCLASS_TSPARSER:
 			RemoveTSParserById(object->objectId);
 			break;
@@ -1093,8 +1066,23 @@ doDeletion(const ObjectAddress *object)
 			RemoveTSConfigurationById(object->objectId);
 			break;
 
-			/* OCLASS_ROLE, OCLASS_DATABASE, OCLASS_TBLSPACE not handled */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+		case OCLASS_FILESPACE:
+			RemoveFileSpaceById(object->objectId);
+			break;
+
+
+		case OCLASS_EXTPROTOCOL:
+			RemoveExtProtocolById(object->objectId);
+			break;
+
+		case OCLASS_COMPRESSION:
+			elog(NOTICE, "dependency: not yet implemented!");
+			break;
+
+			/*
+			 * OCLASS_ROLE, OCLASS_DATABASE, OCLASS_TBLSPACE intentionally
+			 * not handled here
+			 */
 
 		default:
 			elog(ERROR, "unrecognized object class: %u",

@@ -37,7 +37,7 @@
  */
 typedef struct SnapshotData *Snapshot;
 
-typedef bool (*SnapshotSatisfiesFunc) (HeapTupleHeader tuple,
+typedef bool (*SnapshotSatisfiesFunc) (Relation relation, HeapTupleHeader tuple,
 										   Snapshot snapshot, Buffer buffer);
 
 typedef struct SnapshotData

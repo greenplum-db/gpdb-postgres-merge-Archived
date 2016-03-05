@@ -3,11 +3,7 @@
  * aclchk.c
  *	  Routines to check access control permissions.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -44,12 +40,9 @@
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_filespace.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
-#include "cdb/cdbpartition.h"
-=======
 #include "catalog/pg_ts_config.h"
 #include "catalog/pg_ts_dict.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+#include "cdb/cdbpartition.h"
 #include "commands/dbcommands.h"
 #include "commands/tablecmds.h"
 #include "miscadmin.h"
@@ -337,7 +330,6 @@ ExecuteGrantStmt(GrantStmt *stmt)
 	/* If we're dispatching, put the objects back in into the parse tree */
 	if (Gp_role == GP_ROLE_DISPATCH && added_objs)
 	{
-<<<<<<< HEAD
 		List *n = NIL;
 
 		foreach(cell, istmt.objects)
@@ -352,47 +344,6 @@ ExecuteGrantStmt(GrantStmt *stmt)
 		}
 
 		stmt->objects = n;
-=======
-			/*
-			 * Because this might be a sequence, we test both relation and
-			 * sequence bits, and later do a more limited test when we know
-			 * the object type.
-			 */
-		case ACL_OBJECT_RELATION:
-			all_privileges = ACL_ALL_RIGHTS_RELATION | ACL_ALL_RIGHTS_SEQUENCE;
-			errormsg = gettext_noop("invalid privilege type %s for relation");
-			break;
-		case ACL_OBJECT_SEQUENCE:
-			all_privileges = ACL_ALL_RIGHTS_SEQUENCE;
-			errormsg = gettext_noop("invalid privilege type %s for sequence");
-			break;
-		case ACL_OBJECT_DATABASE:
-			all_privileges = ACL_ALL_RIGHTS_DATABASE;
-			errormsg = gettext_noop("invalid privilege type %s for database");
-			break;
-		case ACL_OBJECT_FUNCTION:
-			all_privileges = ACL_ALL_RIGHTS_FUNCTION;
-			errormsg = gettext_noop("invalid privilege type %s for function");
-			break;
-		case ACL_OBJECT_LANGUAGE:
-			all_privileges = ACL_ALL_RIGHTS_LANGUAGE;
-			errormsg = gettext_noop("invalid privilege type %s for language");
-			break;
-		case ACL_OBJECT_NAMESPACE:
-			all_privileges = ACL_ALL_RIGHTS_NAMESPACE;
-			errormsg = gettext_noop("invalid privilege type %s for schema");
-			break;
-		case ACL_OBJECT_TABLESPACE:
-			all_privileges = ACL_ALL_RIGHTS_TABLESPACE;
-			errormsg = gettext_noop("invalid privilege type %s for tablespace");
-			break;
-		default:
-			/* keep compiler quiet */
-			all_privileges = ACL_NO_RIGHTS;
-			errormsg = NULL;
-			elog(ERROR, "unrecognized GrantStmt.objtype: %d",
-				 (int) stmt->objtype);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	if (stmt->cooked_privs)
@@ -423,7 +374,6 @@ ExecuteGrantStmt(GrantStmt *stmt)
 		 */
 		foreach(cell, stmt->grantees)
 		{
-<<<<<<< HEAD
 			PrivGrantee *grantee = (PrivGrantee *) lfirst(cell);
 	
 			if (grantee->rolname == NULL)
@@ -432,17 +382,6 @@ ExecuteGrantStmt(GrantStmt *stmt)
 				istmt.grantees =
 					lappend_oid(istmt.grantees,
 								get_roleid_checked(grantee->rolname));
-=======
-			char	   *privname = strVal(lfirst(cell));
-			AclMode		priv = string_to_privilege(privname);
-
-			if (priv & ~((AclMode) all_privileges))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_GRANT_OPERATION),
-						 errmsg(errormsg, privilege_to_string(priv))));
-
-			istmt.privileges |= priv;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 	
 		/*
@@ -457,35 +396,35 @@ ExecuteGrantStmt(GrantStmt *stmt)
 				 */
 			case ACL_OBJECT_RELATION:
 				all_privileges = ACL_ALL_RIGHTS_RELATION | ACL_ALL_RIGHTS_SEQUENCE;
-				errormsg = _("invalid privilege type %s for relation");
+				errormsg = gettext_noop("invalid privilege type %s for relation");
 				break;
 			case ACL_OBJECT_SEQUENCE:
 				all_privileges = ACL_ALL_RIGHTS_SEQUENCE;
-				errormsg = _("invalid privilege type %s for sequence");
+				errormsg = gettext_noop("invalid privilege type %s for sequence");
 				break;
 			case ACL_OBJECT_DATABASE:
 				all_privileges = ACL_ALL_RIGHTS_DATABASE;
-				errormsg = _("invalid privilege type %s for database");
+				errormsg = gettext_noop("invalid privilege type %s for database");
 				break;
 			case ACL_OBJECT_FUNCTION:
 				all_privileges = ACL_ALL_RIGHTS_FUNCTION;
-				errormsg = _("invalid privilege type %s for function");
+				errormsg = gettext_noop("invalid privilege type %s for function");
 				break;
 			case ACL_OBJECT_LANGUAGE:
 				all_privileges = ACL_ALL_RIGHTS_LANGUAGE;
-				errormsg = _("invalid privilege type %s for language");
+				errormsg = gettext_noop("invalid privilege type %s for language");
 				break;
 			case ACL_OBJECT_NAMESPACE:
 				all_privileges = ACL_ALL_RIGHTS_NAMESPACE;
-				errormsg = _("invalid privilege type %s for schema");
+				errormsg = gettext_noop("invalid privilege type %s for schema");
 				break;
 			case ACL_OBJECT_TABLESPACE:
 				all_privileges = ACL_ALL_RIGHTS_TABLESPACE;
-				errormsg = _("invalid privilege type %s for tablespace");
+				errormsg = gettext_noop("invalid privilege type %s for tablespace");
 				break;
 			case ACL_OBJECT_EXTPROTOCOL:
 				all_privileges = ACL_ALL_RIGHTS_EXTPROTOCOL;
-				errormsg = _("invalid privilege type %s for external protocol");
+				errormsg = gettext_noop("invalid privilege type %s for external protocol");
 				break;
 			default:
 				/* keep compiler quiet */
@@ -518,8 +457,7 @@ ExecuteGrantStmt(GrantStmt *stmt)
 				if (priv & ~((AclMode) all_privileges))
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_GRANT_OPERATION),
-							 errmsg(errormsg,
-									privilege_to_string(priv))));
+							 errmsg(errormsg, privilege_to_string(priv))));
 	
 				istmt.privileges |= priv;
 			}
@@ -1267,18 +1205,10 @@ ExecGrant_Language(InternalGrant *istmt)
 		int			nnewmembers;
 		Oid		   *oldmembers;
 		Oid		   *newmembers;
-		cqContext	cqc;
-		cqContext  *pcqCtx;
 
-		pcqCtx = caql_beginscan(
-				caql_addrel(cqclr(&cqc), relation),
-				cql("SELECT * FROM pg_language "
-					" WHERE oid = :1 "
-					" FOR UPDATE ",
-					ObjectIdGetDatum(langId)));
-
-		tuple = caql_getnext(pcqCtx);
-
+		tuple = SearchSysCache(LANGOID,
+							   ObjectIdGetDatum(langId),
+							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for language %u", langId);
 
@@ -1295,15 +1225,9 @@ ExecGrant_Language(InternalGrant *istmt)
 		 * Get owner ID and working copy of existing ACL. If there's no ACL,
 		 * substitute the proper default.
 		 */
-<<<<<<< HEAD
-		ownerId = BOOTSTRAP_SUPERUSERID;
-		aclDatum = caql_getattr(pcqCtx, Anum_pg_language_lanacl,
-								&isNull);
-=======
 		ownerId = pg_language_tuple->lanowner;
 		aclDatum = SysCacheGetAttr(LANGNAME, tuple, Anum_pg_language_lanacl,
 								   &isNull);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		if (isNull)
 			old_acl = acldefault(ACL_OBJECT_LANGUAGE, ownerId);
 		else
@@ -1347,10 +1271,13 @@ ExecGrant_Language(InternalGrant *istmt)
 		replaces[Anum_pg_language_lanacl - 1] = true;
 		values[Anum_pg_language_lanacl - 1] = PointerGetDatum(new_acl);
 
-		newtuple = caql_modify_current(pcqCtx, values, nulls, replaces);
+		newtuple = heap_modify_tuple(tuple, RelationGetDescr(relation), values,
+									 nulls, replaces);
 
-		caql_update_current(pcqCtx, newtuple);
-		/* and Update indexes (implicit) */
+		simple_heap_update(relation, &newtuple->t_self, newtuple);
+
+		/* keep the catalog indexes up to date */
+		CatalogUpdateIndexes(relation, newtuple);
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(LanguageRelationId, HeapTupleGetOid(tuple),
@@ -1358,7 +1285,7 @@ ExecGrant_Language(InternalGrant *istmt)
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
 
-		caql_endscan(pcqCtx);
+		ReleaseSysCache(tuple);
 
 		pfree(new_acl);
 
@@ -1902,17 +1829,14 @@ static const char *const no_priv_msg[MAX_ACL_KIND] =
 	gettext_noop("permission denied for conversion %s"),
 	/* ACL_KIND_TABLESPACE */
 	gettext_noop("permission denied for tablespace %s"),
-<<<<<<< HEAD
+	/* ACL_KIND_TSDICTIONARY */
+	gettext_noop("permission denied for text search dictionary %s"),
+	/* ACL_KIND_TSCONFIGURATION */
+	gettext_noop("permission denied for text search configuration %s"),
 	/* ACL_KIND_FILESPACE */
 	gettext_noop("permission denied for filespace %s"),	
 	/* ACL_KIND_EXTPROTOCOL */
 	gettext_noop("permission denied for external protocol %s")	
-=======
-	/* ACL_KIND_TSDICTIONARY */
-	gettext_noop("permission denied for text search dictionary %s"),
-	/* ACL_KIND_TSCONFIGURATION */
-	gettext_noop("permission denied for text search configuration %s")
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 };
 
 static const char *const not_owner_msg[MAX_ACL_KIND] =
@@ -1941,17 +1865,14 @@ static const char *const not_owner_msg[MAX_ACL_KIND] =
 	gettext_noop("must be owner of conversion %s"),
 	/* ACL_KIND_TABLESPACE */
 	gettext_noop("must be owner of tablespace %s"),
-<<<<<<< HEAD
+	/* ACL_KIND_TSDICTIONARY */
+	gettext_noop("must be owner of text search dictionary %s"),
+	/* ACL_KIND_TSCONFIGURATION */
+	gettext_noop("must be owner of text search configuration %s"),
 	/* ACL_KIND_FILESPACE */
 	gettext_noop("must be owner of filespace %s"),
 	/* ACL_KIND_EXTPROTOCOL */
 	gettext_noop("must be owner of external protocol %s")
-=======
-	/* ACL_KIND_TSDICTIONARY */
-	gettext_noop("must be owner of text search dictionary %s"),
-	/* ACL_KIND_TSCONFIGURATION */
-	gettext_noop("must be owner of text search configuration %s")
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 };
 
 
@@ -2488,18 +2409,7 @@ pg_tablespace_aclmask(Oid spc_oid, Oid roleid,
 	cqContext	cqc;
 	cqContext  *pcqCtx;
 
-<<<<<<< HEAD
-	/*
-	 * Only shared relations can be stored in global space; don't let even
-	 * superusers override this, except during bootstrap and upgrade.
-	 */
-	if (spc_oid == GLOBALTABLESPACE_OID && !IsBootstrapProcessingMode())
-		return 0;
-
-	/* Otherwise, superusers bypass all permission checking. */
-=======
 	/* Superusers bypass all permission checking. */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (superuser_arg(roleid))
 		return mask;
 

@@ -223,12 +223,8 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
  * ----------------------------------------------------------------
  */
 Oid
-<<<<<<< HEAD
-TypeCreateWithOid(const char *typeName,
-=======
 TypeCreate(Oid newTypeOid,
 		   const char *typeName,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		   Oid typeNamespace,
 		   Oid relationOid,		/* only for relation rowtypes */
 		   char relationKind,	/* ditto */
@@ -255,7 +251,6 @@ TypeCreate(Oid newTypeOid,
 		   int32 typeMod,
 		   int32 typNDims,		/* Array dimensions for baseType */
 		   bool typeNotNull,
-		   Oid newtypeOid,
 		   Datum typoptions)
 {
 	Relation	pg_type_desc;
@@ -267,8 +262,6 @@ TypeCreate(Oid newTypeOid,
 	Datum		values[Natts_pg_type];
 	NameData	name;
 	int			i;
-	cqContext	*pcqCtx;
-	cqContext	 cqc;
 
 	/*
 	 * We assume that the caller validated the arguments individually, but did
@@ -315,11 +308,7 @@ TypeCreate(Oid newTypeOid,
 	namestrcpy(&name, typeName);
 	values[i++] = NameGetDatum(&name);	/* typname */
 	values[i++] = ObjectIdGetDatum(typeNamespace);		/* typnamespace */
-<<<<<<< HEAD
-	values[i++] = ObjectIdGetDatum(ownerId);		/* typowner */
-=======
 	values[i++] = ObjectIdGetDatum(ownerId);	/* typowner */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	values[i++] = Int16GetDatum(internalSize);	/* typlen */
 	values[i++] = BoolGetDatum(passedByValue);	/* typbyval */
 	values[i++] = CharGetDatum(typeType);		/* typtype */
@@ -369,17 +358,10 @@ TypeCreate(Oid newTypeOid,
 	 */
 	pg_type_desc = heap_open(TypeRelationId, RowExclusiveLock);
 
-	pcqCtx = caql_addrel(cqclr(&cqc), pg_type_desc);
-
-	tup = caql_getfirst(
-			pcqCtx,
-			cql("SELECT * FROM pg_type "
-				" WHERE typname = :1 "
-				" AND typnamespace = :2 "
-				" FOR UPDATE ",
-				CStringGetDatum((char *) typeName),
-				ObjectIdGetDatum(typeNamespace)));
-
+	tup = SearchSysCacheCopy(TYPENAMENSP,
+							 CStringGetDatum(typeName),
+							 ObjectIdGetDatum(typeNamespace),
+							 0, 0);
 	if (HeapTupleIsValid(tup))
 	{
 		/*
@@ -404,13 +386,12 @@ TypeCreate(Oid newTypeOid,
 		/*
 		 * Okay to update existing shell type tuple
 		 */
-		tup = caql_modify_current(pcqCtx,
-								  values,
-								  nulls,
-								  replaces);
-
-		caql_update_current(pcqCtx, tup);
-		/* and Update indexes (implicit) */
+		tup = heap_modifytuple(tup,
+							   RelationGetDescr(pg_type_desc),
+							   values,
+							   nulls,
+							   replaces);
+		simple_heap_update(pg_type_desc, &tup->t_self, tup);
 
 		typeObjectId = HeapTupleGetOid(tup);
 
@@ -418,20 +399,6 @@ TypeCreate(Oid newTypeOid,
 	}
 	else
 	{
-<<<<<<< HEAD
-		tup = caql_form_tuple(pcqCtx, values, nulls);
-						 
-		if (newtypeOid != InvalidOid)
-		{
-			elog(DEBUG5," Setting Oid in new pg_type tuple");
-			HeapTupleSetOid(tup, newtypeOid);
-		}
-		else if (Gp_role == GP_ROLE_EXECUTE) elog(ERROR," newtypeOid NULL");
-
-		/* Insert tuple into the relation */
-		typeObjectId = caql_insert(pcqCtx, tup);
-		/* and Update indexes (implicit) */
-=======
 		tup = heap_formtuple(RelationGetDescr(pg_type_desc),
 							 values,
 							 nulls);
@@ -439,10 +406,13 @@ TypeCreate(Oid newTypeOid,
 		/* Force the OID if requested by caller, else heap_insert does it */
 		if (OidIsValid(newTypeOid))
 			HeapTupleSetOid(tup, newTypeOid);
+		else if (Gp_role == GP_ROLE_EXECUTE) elog(ERROR," newtypeOid NULL");
 
 		typeObjectId = simple_heap_insert(pg_type_desc, tup);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
+
+	/* Update indexes */
+	CatalogUpdateIndexes(pg_type_desc, tup);
 
 	/*
 	 * Create dependencies.  We can/must skip this in bootstrap mode.

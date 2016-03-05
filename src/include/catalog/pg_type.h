@@ -770,7 +770,8 @@ extern Oid TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId,
 extern Oid TypeShellMakeWithOid(const char *typeName, Oid typeNamespace,
 								Oid ownerId, Oid shelltypeOid);
 
-extern Oid TypeCreate(const char *typeName,
+extern Oid TypeCreate(Oid newTypeOid,
+		   const char *typeName,
 		   Oid typeNamespace,
 		   Oid relationOid,
 		   char relationKind,
@@ -839,13 +840,19 @@ extern void GenerateTypeDependencies(Oid typeNamespace,
 						 Oid typmodoutProcedure,
 						 Oid analyzeProcedure,
 						 Oid elementType,
+						 bool isImplicitArray,
 						 Oid baseType,
 						 Node *defaultExpr,
 						 bool rebuild);
 
-extern void TypeRename(Oid typeOid, const char *newTypeName);
+extern void TypeRename(Oid typeOid, const char *newTypeName,
+		   Oid typeNamespace);
 
-extern char *makeArrayTypeName(const char *typeName);
+extern char *makeArrayTypeName(const char *typeName, Oid typeNamespace);
+
+extern bool moveArrayTypeName(Oid typeOid, const char *typeName,
+				  Oid typeNamespace);
+
 extern void add_type_encoding(Oid typid, Datum typoptions);
 
 #endif /* !FRONTEND */

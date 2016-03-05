@@ -1077,8 +1077,10 @@ CheckNewRelFileNodeIsOk(Oid newOid, Oid reltablespace, bool relisshared,
 	char	   *rpath;
 	int			fd;
 	bool		collides;
-	
-	
+	SnapshotData SnapshotDirty;
+
+	InitDirtySnapshot(SnapshotDirty);
+
 	if (pg_class)
 	{
 		Oid			oidIndex;
@@ -1101,7 +1103,7 @@ CheckNewRelFileNodeIsOk(Oid newOid, Oid reltablespace, bool relisshared,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(newOid));
 
-		scan = index_beginscan(pg_class, indexrel, SnapshotDirty, 1, &key);
+		scan = index_beginscan(pg_class, indexrel, &SnapshotDirty, 1, &key);
 
 		collides = HeapTupleIsValid(index_getnext(scan, ForwardScanDirection));
 

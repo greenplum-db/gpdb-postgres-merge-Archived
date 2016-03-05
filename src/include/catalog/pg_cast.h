@@ -8,10 +8,7 @@
  * but also length coercion functions.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
  * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.38 2008/01/01 19:45:56 momjian Exp $
@@ -321,141 +318,33 @@ DATA(insert ( 1560	 23 1684 e ));
  * behavior will ensue when the automatic cast is applied instead of the
  * pg_cast entry!
  */
-<<<<<<< HEAD
-DATA(insert (	20	 25 1289 i ));
-DATA(insert (	25	 20 1290 e ));
-DATA(insert (	21	 25  113 i ));
-DATA(insert (	25	 21  818 e ));
-DATA(insert (	23	 25  112 i ));
-DATA(insert (	25	 23  819 e ));
-DATA(insert (	26	 25  114 i ));
-DATA(insert (	25	 26  817 e ));
-DATA(insert (	25	650 1714 e ));
-DATA(insert (  700	 25  841 i ));
-DATA(insert (	25	700  839 e ));
-DATA(insert (  701	 25  840 i ));
-DATA(insert (	25	701  838 e ));
-DATA(insert (  829	 25  752 e ));
-DATA(insert (	25	829  767 e ));
-DATA(insert (  650	 25  730 e ));
-DATA(insert (  869	 25  730 e ));
-DATA(insert (	25	869 1713 e ));
-DATA(insert ( 1082	 25  749 i ));
-DATA(insert (	25 1082  748 e ));
-DATA(insert ( 1083	 25  948 i ));
-DATA(insert (	25 1083  837 e ));
-DATA(insert ( 1114	 25 2034 i ));
-DATA(insert (	25 1114 2022 e ));
-DATA(insert ( 1184	 25 1192 i ));
-DATA(insert (	25 1184 1191 e ));
-DATA(insert ( 1186	 25 1193 i ));
-DATA(insert (	25 1186 6117 e ));
-DATA(insert ( 1266	 25  939 i ));
-DATA(insert (	25 1266  938 e ));
-DATA(insert ( 1700	 25 1688 i ));
-DATA(insert (	25 1700 1686 e ));
-DATA(insert (  142   25 2922 e ));
-DATA(insert (   25  142	2896 e ));
-=======
 DATA(insert (  650	 25  730 a ));
 DATA(insert (  869	 25  730 a ));
 DATA(insert (	16	 25 2971 a ));
 DATA(insert (  142	 25    0 a ));
 DATA(insert (	25	142 2896 e ));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * Cross-category casts to and from VARCHAR
  *
  * We support all the same casts as for TEXT.
  */
-<<<<<<< HEAD
-DATA(insert (	20 1043 1289 a ));
-DATA(insert ( 1043	 20 1290 e ));
-DATA(insert (	21 1043  113 a ));
-DATA(insert ( 1043	 21  818 e ));
-DATA(insert (	23 1043  112 a ));
-DATA(insert ( 1043	 23  819 e ));
-DATA(insert (	26 1043  114 a ));
-DATA(insert ( 1043	 26  817 e ));
-DATA(insert ( 1043	650 1714 e ));
-DATA(insert (  700 1043  841 a ));
-DATA(insert ( 1043	700  839 e ));
-DATA(insert (  701 1043  840 a ));
-DATA(insert ( 1043	701  838 e ));
-DATA(insert (  829 1043  752 e ));
-DATA(insert ( 1043	829  767 e ));
-DATA(insert (  650 1043  730 e ));
-DATA(insert (  869 1043  730 e ));
-DATA(insert ( 1043	869 1713 e ));
-DATA(insert ( 1082 1043  749 a ));
-DATA(insert ( 1043 1082  748 e ));
-DATA(insert ( 1083 1043  948 a ));
-DATA(insert ( 1043 1083  837 e ));
-DATA(insert ( 1114 1043 2034 a ));
-DATA(insert ( 1043 1114 2022 e ));
-DATA(insert ( 1184 1043 1192 a ));
-DATA(insert ( 1043 1184 1191 e ));
-DATA(insert ( 1186 1043 1193 a ));
-DATA(insert ( 1043 1186 6117 e ));
-DATA(insert ( 1266 1043  939 a ));
-DATA(insert ( 1043 1266  938 e ));
-DATA(insert ( 1700 1043 1688 a ));
-DATA(insert ( 1043 1700 1686 e ));
-DATA(insert (  142 1043 2922 e ));
-DATA(insert ( 1043  142 2896 e ));
-=======
 DATA(insert (  650 1043  730 a ));
 DATA(insert (  869 1043  730 a ));
 DATA(insert (	16 1043 2971 a ));
 DATA(insert (  142 1043    0 a ));
 DATA(insert ( 1043	142 2896 e ));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * Cross-category casts to and from BPCHAR
  *
  * We support all the same casts as for TEXT.
  */
-<<<<<<< HEAD
-DATA(insert (	20 1042 1289 a ));
-DATA(insert ( 1042	 20 1290 e ));
-DATA(insert (	21 1042  113 a ));
-DATA(insert ( 1042	 21  818 e ));
-DATA(insert (	23 1042  112 a ));
-DATA(insert ( 1042	 23  819 e ));
-DATA(insert (	26 1042  114 a ));
-DATA(insert ( 1042	 26  817 e ));
-DATA(insert (  700 1042  841 a ));
-DATA(insert ( 1042	700  839 e ));
-DATA(insert (  701 1042  840 a ));
-DATA(insert ( 1042	701  838 e ));
-DATA(insert (  829 1042  752 e ));
-DATA(insert ( 1042	829  767 e ));
-DATA(insert (  650 1042  730 e ));
-DATA(insert (  869 1042  730 e ));
-DATA(insert ( 1082 1042  749 a ));
-DATA(insert ( 1042 1082  748 e ));
-DATA(insert ( 1083 1042  948 a ));
-DATA(insert ( 1042 1083  837 e ));
-DATA(insert ( 1114 1042 2034 a ));
-DATA(insert ( 1042 1114 2022 e ));
-DATA(insert ( 1184 1042 1192 a ));
-DATA(insert ( 1042 1184 1191 e ));
-DATA(insert ( 1186 1042 1193 a ));
-DATA(insert ( 1042 1186 6117 e ));
-DATA(insert ( 1266 1042  939 a ));
-DATA(insert ( 1042 1266  938 e ));
-DATA(insert ( 1700 1042 1688 a ));
-DATA(insert ( 1042 1700 1686 e ));
-DATA(insert (  142 1042 2922 e ));
-=======
 DATA(insert (  650 1042  730 a ));
 DATA(insert (  869 1042  730 a ));
 DATA(insert (	16 1042 2971 a ));
 DATA(insert (  142 1042    0 a ));
 DATA(insert ( 1042	142 2896 e ));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * Length-coercion functions
@@ -471,7 +360,6 @@ DATA(insert ( 1560 1560 1685 i ));
 DATA(insert ( 1562 1562 1687 i ));
 DATA(insert ( 1700 1700 1703 i ));
 
-<<<<<<< HEAD
 /* casts to and from uuid */ 
 DATA(insert (   25 2950 2964 a ));
 DATA(insert ( 2950   25 2965 a ));
@@ -483,16 +371,8 @@ DATA(insert ( 2950 1043 2965 a ));
  */
 DATA(insert (   27   20 6021 e ));
 
-/* 
- * CASTS created after 3.x must have fixed oids otherwise upgrade will not work
- * correctly. 
- */
-
 /* GP: Allow explicit cast between tid and aotid. */
-DATA(insert OID = 9901 (	27 3300    0 e ));
-DATA(insert OID = 9902 ( 3300	 27    0 e ));
+DATA(insert (	27 3300    0 e ));
+DATA(insert ( 3300	 27    0 e ));
 
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif   /* PG_CAST_H */

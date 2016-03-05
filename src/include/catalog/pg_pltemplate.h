@@ -88,17 +88,6 @@ typedef FormData_pg_pltemplate *Form_pg_pltemplate;
  * ----------------
  */
 
-<<<<<<< HEAD
-DATA(insert ( "plpgsql"		t "plpgsql_call_handler" "plpgsql_validator" "$libdir/plpgsql" _null_ ));
-DATA(insert ( "pltcl"		t "pltcl_call_handler" _null_ "$libdir/pltcl" _null_ ));
-DATA(insert ( "pltclu"		f "pltclu_call_handler" _null_ "$libdir/pltcl" _null_ ));
-DATA(insert ( "plperl"		t "plperl_call_handler" "plperl_validator" "$libdir/plperl" _null_ ));
-DATA(insert ( "plperlu"		f "plperl_call_handler" "plperl_validator" "$libdir/plperl" _null_ ));
-DATA(insert ( "plpythonu"	f "plpython_call_handler" _null_ "$libdir/plpython" _null_ ));
-DATA(insert ( "plr"         f "plr_call_handler" _null_ "$libdir/plr" _null_ ));
-DATA(insert ( "pljava"      t "pljava_call_handler" _null_ "$libdir/pljava" _null_ ));
-DATA(insert ( "pljavau"     f "pljavau_call_handler" _null_ "$libdir/pljava" _null_ ));
-=======
 DATA(insert ( "plpgsql"		t t "plpgsql_call_handler" "plpgsql_validator" "$libdir/plpgsql" _null_ ));
 DATA(insert ( "pltcl"		t t "pltcl_call_handler" _null_ "$libdir/pltcl" _null_ ));
 DATA(insert ( "pltclu"		f f "pltclu_call_handler" _null_ "$libdir/pltcl" _null_ ));
@@ -106,5 +95,9 @@ DATA(insert ( "plperl"		t t "plperl_call_handler" "plperl_validator" "$libdir/pl
 DATA(insert ( "plperlu"		f f "plperl_call_handler" "plperl_validator" "$libdir/plperl" _null_ ));
 DATA(insert ( "plpythonu"	f f "plpython_call_handler" _null_ "$libdir/plpython" _null_ ));
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+/* Additional languages installed in GPDB */
+DATA(insert ( "plr"         f f "plr_call_handler" _null_ "$libdir/plr" _null_ ));
+DATA(insert ( "pljava"      t t "pljava_call_handler" _null_ "$libdir/pljava" _null_ ));
+DATA(insert ( "pljavau"     f f "pljavau_call_handler" _null_ "$libdir/pljava" _null_ ));
+
 #endif   /* PG_PLTEMPLATE_H */
