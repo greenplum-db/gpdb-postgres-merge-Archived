@@ -87,10 +87,7 @@
  * above.  Nonetheless, with large workMem we can have many tapes.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -102,20 +99,15 @@
 
 #include "postgres.h"
 
-#include <limits.h>
-
 #include "access/heapam.h"
 #include "access/nbtree.h"
 #include "catalog/catquery.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_operator.h"
-<<<<<<< HEAD
+#include "commands/tablespace.h"
 #include "executor/instrument.h"        /* Instrumentation */
 #include "executor/nodeSort.h"  		/* Gpmon */ 
 #include "lib/stringinfo.h"             /* StringInfo */
-=======
-#include "commands/tablespace.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "miscadmin.h"
 #include "utils/datum.h"
 #include "executor/execWorkfile.h"
@@ -128,9 +120,9 @@
 
 #include "cdb/cdbvars.h"
 
-<<<<<<< HEAD
+
 #include "utils/dynahash.h" /* my_log2 */
-=======
+
 /* GUC variables */
 #ifdef TRACE_SORT
 bool		trace_sort = false;
@@ -138,9 +130,6 @@ bool		trace_sort = false;
 #ifdef DEBUG_BOUNDED_SORT
 bool		optimize_bounded_sort = true;
 #endif
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-
-/* GUC variable */
 
 /*
  * The objects we actually sort are SortTuple structs.	These contain
@@ -433,12 +422,8 @@ static bool is_sortstate_rwfile(Tuplesortstate *state)
 #define COMPARETUP(state,a,b)	((*(state)->comparetup) (a, b, state))
 #define COPYTUP(state,stup,tup) ((*(state)->copytup) (state, stup, tup))
 #define WRITETUP(state,tape,stup)	((*(state)->writetup) (state, tape, stup))
-<<<<<<< HEAD
 #define READTUP(state,pos,stup,tape,len) ((*(state)->readtup) (state, pos, stup, tape, len))
-=======
-#define READTUP(state,stup,tape,len) ((*(state)->readtup) (state, stup, tape, len))
 #define REVERSEDIRECTION(state) ((*(state)->reversedirection) (state))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #define LACKMEM(state)		((state)->availMem < 0)
 
 static inline void USEMEM(Tuplesortstate *state, int amt)
@@ -509,13 +494,10 @@ static void beginmerge(Tuplesortstate *state);
 static void mergepreread(Tuplesortstate *state);
 static void mergeprereadone(Tuplesortstate *state, int srcTape);
 static void dumptuples(Tuplesortstate *state, bool alltuples);
-<<<<<<< HEAD
 static void tuplesort_sorted_insert(Tuplesortstate *state, SortTuple *tuple,
 					  int tupleindex, bool checkIndex);
-=======
 static void make_bounded_heap(Tuplesortstate *state);
 static void sort_bounded_heap(Tuplesortstate *state);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static void tuplesort_heap_insert(Tuplesortstate *state, SortTuple *tuple,
 					  int tupleindex, bool checkIndex);
 static void tuplesort_heap_siftup(Tuplesortstate *state, bool checkIndex);
@@ -524,46 +506,25 @@ static void markrunend(Tuplesortstate *state, int tapenum);
 static int comparetup_heap(const SortTuple *a, const SortTuple *b,
 				Tuplesortstate *state);
 static void copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup);
-<<<<<<< HEAD
 static void writetup_heap(Tuplesortstate *state, LogicalTape *lt, SortTuple *stup);
 static void readtup_heap(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 			 LogicalTape *lt, unsigned int len);
+static void reversedirection_heap(Tuplesortstate *state);
 static int comparetup_index(const SortTuple *a, const SortTuple *b,
 				 Tuplesortstate *state);
 static void copytup_index(Tuplesortstate *state, SortTuple *stup, void *tup);
 static void writetup_index(Tuplesortstate *state, LogicalTape *lt, SortTuple *stup);
 static void readtup_index(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 			  LogicalTape *lt, unsigned int len);
+static void reversedirection_index(Tuplesortstate *state);
 static int comparetup_datum(const SortTuple *a, const SortTuple *b,
 				 Tuplesortstate *state);
 static void copytup_datum(Tuplesortstate *state, SortTuple *stup, void *tup);
 static void writetup_datum(Tuplesortstate *state, LogicalTape *lt, SortTuple *stup);
 static void readtup_datum(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 			  LogicalTape *lt, unsigned int len);
-=======
-static void writetup_heap(Tuplesortstate *state, int tapenum,
-			  SortTuple *stup);
-static void readtup_heap(Tuplesortstate *state, SortTuple *stup,
-			 int tapenum, unsigned int len);
-static void reversedirection_heap(Tuplesortstate *state);
-static int comparetup_index(const SortTuple *a, const SortTuple *b,
-				 Tuplesortstate *state);
-static void copytup_index(Tuplesortstate *state, SortTuple *stup, void *tup);
-static void writetup_index(Tuplesortstate *state, int tapenum,
-			   SortTuple *stup);
-static void readtup_index(Tuplesortstate *state, SortTuple *stup,
-			  int tapenum, unsigned int len);
-static void reversedirection_index(Tuplesortstate *state);
-static int comparetup_datum(const SortTuple *a, const SortTuple *b,
-				 Tuplesortstate *state);
-static void copytup_datum(Tuplesortstate *state, SortTuple *stup, void *tup);
-static void writetup_datum(Tuplesortstate *state, int tapenum,
-			   SortTuple *stup);
-static void readtup_datum(Tuplesortstate *state, SortTuple *stup,
-			  int tapenum, unsigned int len);
 static void reversedirection_datum(Tuplesortstate *state);
 static void free_sort_tuple(Tuplesortstate *state, SortTuple *stup);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 /*
@@ -1302,7 +1263,7 @@ puttuple_common(Tuplesortstate *state, SortTuple *tuple)
 			{
 #ifdef TRACE_SORT
 				if (trace_sort)
-					elog(LOG, "switching to bounded heapsort at %d tuples: %s",
+					elog(LOG, "switching to bounded heapsort at %ld tuples: %s",
 						 state->memtupcount,
 						 pg_rusage_show(&state->ru_start));
 #endif
@@ -1400,8 +1361,23 @@ tuplesort_performsort(Tuplesortstate *state)
 
 	switch (state->status)
 	{
+		case TSS_BOUNDED:
+
+			/*
+			 * We were able to accumulate all the tuples required for output
+			 * in memory, using a heap to eliminate excess tuples.	Now we
+			 * have to transform the heap to a properly-sorted array.
+			 */
+			sort_bounded_heap(state);
+			state->pos.current = 0;
+			state->pos.eof_reached = false;
+			state->pos.markpos.tapepos.blkNum = 0L; 
+			state->pos.markpos.tapepos.offset = 0;
+			state->pos.markpos_eof = false;
+			state->status = TSS_SORTEDINMEM;
+			break;
+
 		case TSS_INITIAL:
-<<<<<<< HEAD
 			if(!is_sortstate_rwfile(state))
 			{
 				/*
@@ -1427,41 +1403,7 @@ tuplesort_performsort(Tuplesortstate *state)
 				inittapes(state, state->pfile_rwfile_prefix);
 				/* fall through */
 			}
-=======
 
-			/*
-			 * We were able to accumulate all the tuples within the allowed
-			 * amount of memory.  Just qsort 'em and we're done.
-			 */
-			if (state->memtupcount > 1)
-				qsort_arg((void *) state->memtuples,
-						  state->memtupcount,
-						  sizeof(SortTuple),
-						  (qsort_arg_comparator) state->comparetup,
-						  (void *) state);
-			state->current = 0;
-			state->eof_reached = false;
-			state->markpos_offset = 0;
-			state->markpos_eof = false;
-			state->status = TSS_SORTEDINMEM;
-			break;
-
-		case TSS_BOUNDED:
-
-			/*
-			 * We were able to accumulate all the tuples required for output
-			 * in memory, using a heap to eliminate excess tuples.	Now we
-			 * have to transform the heap to a properly-sorted array.
-			 */
-			sort_bounded_heap(state);
-			state->current = 0;
-			state->eof_reached = false;
-			state->markpos_offset = 0;
-			state->markpos_eof = false;
-			state->status = TSS_SORTEDINMEM;
-			break;
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		case TSS_BUILDRUNS:
 
 			/*
@@ -1552,20 +1494,16 @@ tuplesort_gettuple_common_pos(Tuplesortstate *state, TuplesortPos *pos,
 					*stup = state->memtuples[pos->current++];
 					return true;
 				}
-<<<<<<< HEAD
 				pos->eof_reached = true;
-=======
-				state->eof_reached = true;
 
 				/*
 				 * Complain if caller tries to retrieve more tuples than
 				 * originally asked for in a bounded sort.	This is because
 				 * returning EOF here might be the wrong thing.
 				 */
-				if (state->bounded && state->current >= state->bound)
+				if (state->bounded && state->pos.current >= state->bound)
 					elog(ERROR, "retrieved too many tuples in a bounded sort");
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				return false;
 			}
 			else
@@ -3311,7 +3249,6 @@ readtup_heap(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup, LogicalT
 			elog(ERROR, "unexpected end of data");
 	}
 
-<<<<<<< HEAD
 	/* For shareinput on sort, the reader will not set mt_bind.  In this case,
 	 * we will not call compare.
 	 */
@@ -3319,7 +3256,7 @@ readtup_heap(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup, LogicalT
 	if(state->mt_bind)
 		stup->datum1 = memtuple_getattr(stup->tuple, state->mt_bind, state->scanKeys[0].sk_attno, &stup->isnull1);
 }
-=======
+
 static void
 reversedirection_heap(Tuplesortstate *state)
 {
@@ -3332,7 +3269,6 @@ reversedirection_heap(Tuplesortstate *state)
 	}
 }
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * Routines specialized for IndexTuple case

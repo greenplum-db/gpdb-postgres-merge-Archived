@@ -327,24 +327,15 @@ typedef struct xl_btree_split
 	uint32		level;			/* tree level of page being split */
 	OffsetNumber firstright;	/* first item moved to right page */
 
-<<<<<<< HEAD
 	ItemPointerData persistentTid;
 	int64		persistentSerialNum;
 
-	/*
-	 * If level > 0, BlockIdData downlink follows.  (We use BlockIdData
-	 * rather than BlockNumber for alignment reasons: SizeOfBtreeSplit
-	 * is only 16-bit aligned.)
-	 *
-	 * If level > 0, an IndexTuple representing the HIKEY of the left page
-=======
 	/*
 	 * If level > 0, BlockIdData downlink follows.	(We use BlockIdData rather
 	 * than BlockNumber for alignment reasons: SizeOfBtreeSplit is only 16-bit
 	 * aligned.)
 	 *
 	 * If level > 0, an IndexTuple representing the HIKEY of the left page 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 * follows.  We don't need this on leaf pages, because it's the same
 	 * as the leftmost key in the new right page.  Also, it's suppressed if
 	 * XLogInsert chooses to store the left page's whole page image.
@@ -358,11 +349,7 @@ typedef struct xl_btree_split
 	 */
 } xl_btree_split;
 
-<<<<<<< HEAD
 #define SizeOfBtreeSplit	(offsetof(xl_btree_split, persistentSerialNum) + sizeof(int64))
-=======
-#define SizeOfBtreeSplit	(offsetof(xl_btree_split, firstright) + sizeof(OffsetNumber))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * This is what we need to know about delete of individual leaf index tuples.
@@ -602,13 +589,8 @@ extern void _bt_pageinit(Page page, Size size);
 extern bool _bt_page_recyclable(Page page);
 extern void _bt_delitems(Relation rel, Buffer buf,
 			 OffsetNumber *itemnos, int nitems, bool inVacuum);
-<<<<<<< HEAD
-extern int	_bt_pagedel(Relation rel, Buffer buf,
-						BTStack stack, bool vacuum_full);
-=======
 extern int _bt_pagedel(Relation rel, Buffer buf,
 			BTStack stack, bool vacuum_full);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * prototypes for functions in nbtsearch.c
