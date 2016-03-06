@@ -4,22 +4,14 @@
 # Gen_fmgrtab.sh
 #    shell script to generate fmgroids.h and fmgrtab.c from pg_proc.h
 #
-<<<<<<< HEAD
 # NOTE: if you change this, you need to fix Gen_fmgrtab.pl too!
 #
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
-# Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-<<<<<<< HEAD
 #    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.sh,v 1.41 2009/01/01 17:23:48 momjian Exp $
-=======
-#    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.sh,v 1.38 2008/01/01 19:45:52 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #
 #-------------------------------------------------------------------------
 
@@ -132,11 +124,7 @@ cat > "$$-$OIDSFILE" <<FuNkYfMgRsTuFf
  * These macros can be used to avoid a catalog lookup when a specific
  * fmgr-callable function needs to be referenced.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * NOTES
@@ -165,18 +153,9 @@ cat > "$$-$OIDSFILE" <<FuNkYfMgRsTuFf
  */
 FuNkYfMgRsTuFf
 
-<<<<<<< HEAD
 tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' < $SORTEDFILE | \
 $AWK "{ if (seenit[\$$prosrc]++ == 0)
 	printf \"#define F_%s %s\\n\", \$$prosrc, \$1; }" >> "$$-$OIDSFILE"
-=======
-# Note assumption here that prosrc == $(NF-3).
-
-tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' < $SORTEDFILE | \
-$AWK '
-BEGIN	{ OFS = ""; }
-	{ if (seenit[$(NF-3)]++ == 0) print "#define F_", $(NF-3), " ", $1; }' >> "$$-$OIDSFILE"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 if [ $? -ne 0 ]; then
     cleanup
@@ -200,11 +179,7 @@ cat > "$$-$TABLEFILE" <<FuNkYfMgRtAbStUfF
  * $TABLEFILE
  *    The function manager's table of internal functions.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * NOTES
@@ -225,14 +200,8 @@ cat > "$$-$TABLEFILE" <<FuNkYfMgRtAbStUfF
 
 FuNkYfMgRtAbStUfF
 
-<<<<<<< HEAD
 $AWK "{ if (seenit[\$$prosrc]++ == 0)
 	print \"extern Datum\", \$$prosrc, \"(PG_FUNCTION_ARGS);\"; }" $SORTEDFILE >> "$$-$TABLEFILE"
-=======
-# Note assumption here that prosrc == $(NF-3).
-
-$AWK '{ print "extern Datum", $(NF-3), "(PG_FUNCTION_ARGS);"; }' $SORTEDFILE >> "$$-$TABLEFILE"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 if [ $? -ne 0 ]; then
     cleanup
@@ -249,26 +218,14 @@ FuNkYfMgRtAbStUfF
 # Note: using awk arrays to translate from pg_proc values to fmgrtab values
 # may seem tedious, but avoid the temptation to write a quick x?y:z
 # conditional expression instead.  Not all awks have conditional expressions.
-<<<<<<< HEAD
-=======
-#
-# Note assumptions here that prosrc == $(NF-3), pronargs == $13,
-# proisstrict == $10, proretset == $11
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 $AWK "BEGIN {
     Bool[\"t\"] = \"true\";
     Bool[\"f\"] = \"false\";
 }
-<<<<<<< HEAD
 { printf (\"  { %d, \\\"%s\\\", %d, %s, %s, %s },\\n\"),
 	\$1, \$$prosrc, \$$pronargs, Bool[\$$proisstrict], Bool[\$$proretset], \$$prosrc ;
 }" $SORTEDFILE >> "$$-$TABLEFILE"
-=======
-{ printf ("  { %d, \"%s\", %d, %s, %s, %s },\n"), \
-	$1, $(NF-3), $13, Bool[$10], Bool[$11], $(NF-3)
-}' $SORTEDFILE >> "$$-$TABLEFILE"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 if [ $? -ne 0 ]; then
     cleanup
