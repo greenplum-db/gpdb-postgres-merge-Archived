@@ -3,12 +3,8 @@
  * lmgr.c
  *	  POSTGRES lock manager code
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -24,20 +20,12 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
-<<<<<<< HEAD
 #include "catalog/gp_policy.h"     /* CDB: POLICYTYPE_PARTiITIONED */
-#include "catalog/namespace.h"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 #include "storage/procarray.h"
 #include "utils/inval.h"
-<<<<<<< HEAD
-#include "utils/lsyscache.h"        /* CDB: get_rel_name() */
 #include "cdb/cdbvars.h"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 /*
@@ -825,23 +813,25 @@ DescribeLockTag(StringInfo buf, const LOCKTAG *tag)
 							 tag->locktag_field1);
 			break;
 		case LOCKTAG_TUPLE:
-<<<<<<< HEAD
-		case LOCKTAG_RELATION_RESYNCHRONIZE:
-		case LOCKTAG_RELATION_APPENDONLY_SEGMENT_FILE:
-			/* check for lock on a temp relation */
-			/* field1 is dboid, field2 is reloid for all of these */
-			if ((Oid) tag->locktag_field1 == InvalidOid)
-				return false;	/* shared, so not temp */
-			if (isTempNamespace(get_rel_namespace((Oid) tag->locktag_field2)))
-				return true;
-=======
 			appendStringInfo(buf,
 							 _("tuple (%u,%u) of relation %u of database %u"),
 							 tag->locktag_field3,
 							 tag->locktag_field4,
 							 tag->locktag_field2,
 							 tag->locktag_field1);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+			break;
+		case LOCKTAG_RELATION_RESYNCHRONIZE:
+			appendStringInfo(buf,
+							 _("resynchronize relation %u of database %u"),
+							 tag->locktag_field1,
+							 tag->locktag_field2);
+			break;
+		case LOCKTAG_RELATION_APPENDONLY_SEGMENT_FILE:
+			appendStringInfo(buf,
+							 _("segment file %u of appendonly relation %u of database %u"),
+							 tag->locktag_field3,
+							 tag->locktag_field2,
+							 tag->locktag_field1);
 			break;
 		case LOCKTAG_TRANSACTION:
 			appendStringInfo(buf,

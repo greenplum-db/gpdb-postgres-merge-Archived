@@ -11,11 +11,7 @@
  * LWLocks to protect its shared state.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -31,10 +27,7 @@
 #include "access/subtrans.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
-<<<<<<< HEAD
 #include "storage/barrier.h"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/spin.h"

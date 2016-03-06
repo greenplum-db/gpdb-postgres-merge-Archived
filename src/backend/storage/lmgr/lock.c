@@ -3,11 +3,7 @@
  * lock.c
  *	  POSTGRES primary lock mechanism
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1246,11 +1242,7 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 		const char *old_status;
 		int			len;
 
-<<<<<<< HEAD
 		old_status = get_real_act_ps_display(&len);
-=======
-		old_status = get_ps_display(&len);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		new_status = (char *) palloc(len + 8 + 1);
 		memcpy(new_status, old_status, len);
 		strcpy(new_status + len, " waiting");
@@ -1305,11 +1297,7 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 		/* In this path, awaitedLock remains set until LockWaitCancel */
 
 		/* Report change to non-waiting status */
-<<<<<<< HEAD
 		pgstat_report_waiting(PGBE_WAITING_NONE);
-=======
-		pgstat_report_waiting(false);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		if (update_process_title)
 		{
 			set_ps_display(new_status, false);
@@ -1324,11 +1312,7 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 	awaitedLock = NULL;
 
 	/* Report change to non-waiting status */
-<<<<<<< HEAD
 	pgstat_report_waiting(PGBE_WAITING_NONE);
-=======
-	pgstat_report_waiting(false);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (update_process_title)
 	{
 		set_ps_display(new_status, false);
@@ -2018,8 +2002,6 @@ AtPrepare_Locks(void)
 				elog(ERROR, "cannot PREPARE when session locks exist");
 		}
 
-<<<<<<< HEAD
-		
 		/* gp-change 
 		 *
 		 * We allow 2PC commit transactions to include temp objects.  
@@ -2033,11 +2015,12 @@ AtPrepare_Locks(void)
 		 * destroyed at the end of the session, while the transaction will be
 		 * committed from another session.
 		 */
+		/* GPDB_83MERGE_FIXME: see previous comments on removing LockTagIsTemp */
+#if 0
 		if (LockTagIsTemp(&locallock->tag.lock))
 			continue;
+#endif
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		/*
 		 * Create a 2PC record.
 		 */
@@ -2115,13 +2098,25 @@ PostPrepare_Locks(TransactionId xid)
 		if (!LockMethods[LOCALLOCK_LOCKMETHOD(*locallock)]->transactional)
 			continue;
 
-<<<<<<< HEAD
+		/* Ignore VXID locks */
+		if (locallock->tag.lock.locktag_type == LOCKTAG_VIRTUALTRANSACTION)
+			continue;
+
 		/* MPP change for temp objects in 2PC.  we skip over temp
 		 * objects. MPP-1094: NOTE THIS CALL MAY ADD LOCKS TO OUR
 		 * TABLE!
 		 */
+		/* GPDB_83MERGE_FIXME: LockTagIsTemp() was removed in the merge,
+		 * by upstream commit f3032cbe377ecc570989e1bd2fe1aea455c12cc3. It's
+		 * not clear to me if it's still safe to skip over temp objects. I'm
+		 * pretty sure we must allow modifying temp tables in GPDB, because
+		 * every transaction uses 2PC, but how? Do we need to resurrect
+		 * LockTagIsTemp? Needs investigation...
+		 */
+#if 0
 		if (LockTagIsTemp(&locallock->tag.lock))
 			continue;
+#endif
 
 		/* since our temp-check may be modifying our lock table, we
 		 * just mark these as requiring more work */
@@ -2130,13 +2125,6 @@ PostPrepare_Locks(TransactionId xid)
 
 	/* We've marked the entries we want to delete; now go do the real work */
 	hash_seq_init(&status, LockMethodLocalHash);
-=======
-		/* Ignore VXID locks */
-		if (locallock->tag.lock.locktag_type == LOCKTAG_VIRTUALTRANSACTION)
-			continue;
-
-		/* We already checked there are no session locks */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	while ((locallock = (LOCALLOCK *) hash_seq_search(&status)) != NULL)
 	{
