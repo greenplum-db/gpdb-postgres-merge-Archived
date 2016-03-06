@@ -19,100 +19,7 @@
 #include "tsearch/ts_type.h"
 #include "tsearch/ts_utils.h"
 
-<<<<<<< HEAD:contrib/tsearch2/query_gist.c
-#include "query.h"
-
-typedef uint64 TPQTGist;
-
-#define SIGLEN	(sizeof(TPQTGist)*BITS_PER_BYTE)
-
-
-#define GETENTRY(vec,pos) ((TPQTGist *) DatumGetPointer((vec)->vector[(pos)].key))
-
-PG_FUNCTION_INFO_V1(tsq_mcontains);
-Datum		tsq_mcontains(PG_FUNCTION_ARGS);
-
-PG_FUNCTION_INFO_V1(tsq_mcontained);
-Datum		tsq_mcontained(PG_FUNCTION_ARGS);
-
-static TPQTGist
-makesign(QUERYTYPE * a)
-{
-	int			i;
-	ITEM	   *ptr = GETQUERY(a);
-	TPQTGist	sign = 0;
-
-	for (i = 0; i < a->size; i++)
-	{
-		if (ptr->type == VAL)
-			sign |= ((TPQTGist) 1) << (ptr->val % SIGLEN);
-		ptr++;
-	}
-
-	return sign;
-}
-
-Datum
-tsq_mcontains(PG_FUNCTION_ARGS)
-{
-	QUERYTYPE  *query = (QUERYTYPE *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
-	QUERYTYPE  *ex = (QUERYTYPE *) PG_DETOAST_DATUM(PG_GETARG_DATUM(1));
-	TPQTGist	sq,
-				se;
-	int			i,
-				j;
-	ITEM	   *iq,
-			   *ie;
-
-	if (query->size < ex->size)
-	{
-		PG_FREE_IF_COPY(query, 0);
-		PG_FREE_IF_COPY(ex, 1);
-
-		PG_RETURN_BOOL(false);
-	}
-
-	sq = makesign(query);
-	se = makesign(ex);
-
-	if ((sq & se) != se)
-	{
-		PG_FREE_IF_COPY(query, 0);
-		PG_FREE_IF_COPY(ex, 1);
-
-		PG_RETURN_BOOL(false);
-	}
-
-	ie = GETQUERY(ex);
-
-	for (i = 0; i < ex->size; i++)
-	{
-		iq = GETQUERY(query);
-		if (ie[i].type != VAL)
-			continue;
-		for (j = 0; j < query->size; j++)
-			if (iq[j].type == VAL && ie[i].val == iq[j].val)
-			{
-				j = query->size + 1;
-				break;
-			}
-		if (j == query->size)
-		{
-			PG_FREE_IF_COPY(query, 0);
-			PG_FREE_IF_COPY(ex, 1);
-
-			PG_RETURN_BOOL(false);
-		}
-	}
-
-	PG_FREE_IF_COPY(query, 0);
-	PG_FREE_IF_COPY(ex, 1);
-
-	PG_RETURN_BOOL(true);
-}
-=======
 #define GETENTRY(vec,pos) ((TSQuerySign *) DatumGetPointer((vec)->vector[(pos)].key))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588:src/backend/utils/adt/tsquery_gist.c
 
 Datum
 gtsquery_compress(PG_FUNCTION_ARGS)
@@ -125,11 +32,7 @@ gtsquery_compress(PG_FUNCTION_ARGS)
 		TSQuerySign *sign = (TSQuerySign *) palloc(sizeof(TSQuerySign));
 
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
-<<<<<<< HEAD:contrib/tsearch2/query_gist.c
-		*sign = makesign((QUERYTYPE *) PG_DETOAST_DATUM(entry->key));
-=======
 		*sign = makeTSQuerySign(DatumGetTSQuery(entry->key));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588:src/backend/utils/adt/tsquery_gist.c
 
 		gistentryinit(*retval, PointerGetDatum(sign),
 					  entry->rel, entry->page,
@@ -149,13 +52,8 @@ Datum
 gtsquery_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-<<<<<<< HEAD:contrib/tsearch2/query_gist.c
-	TPQTGist   *key = (TPQTGist *) DatumGetPointer(entry->key);
-	QUERYTYPE  *query = (QUERYTYPE *) PG_DETOAST_DATUM(PG_GETARG_DATUM(1));
-=======
 	TSQuerySign *key = (TSQuerySign *) DatumGetPointer(entry->key);
 	TSQuery		query = PG_GETARG_TSQUERY(1);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588:src/backend/utils/adt/tsquery_gist.c
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	TSQuerySign sq = makeTSQuerySign(query);
 	bool		retval;
@@ -201,15 +99,6 @@ gtsquery_union(PG_FUNCTION_ARGS)
 Datum
 gtsquery_same(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD:contrib/tsearch2/query_gist.c
-	TPQTGist   *a = (TPQTGist *) PG_GETARG_POINTER(0);
-	TPQTGist   *b = (TPQTGist *) PG_GETARG_POINTER(1);
- 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
-  
- 	*result = (*a == *b) ? true : false;
- 
- 	PG_RETURN_POINTER(result);
-=======
 	TSQuerySign *a = (TSQuerySign *) PG_GETARG_POINTER(0);
 	TSQuerySign *b = (TSQuerySign *) PG_GETARG_POINTER(1);
 	bool		*result = (bool *) PG_GETARG_POINTER(2);
@@ -217,7 +106,6 @@ gtsquery_same(PG_FUNCTION_ARGS)
 	*result = (*a == *b) ? true : false;
 
 	PG_RETURN_POINTER(result);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588:src/backend/utils/adt/tsquery_gist.c
 }
 
 static int

@@ -2387,13 +2387,6 @@ timestamptz_cmp_timestamp(PG_FUNCTION_ARGS)
  *
  *		collate invalid interval at the end
  */
-<<<<<<< HEAD
-static inline TimeOffset
-interval_cmp_value(const Interval *interval)
-{
-	TimeOffset	span;
-
-=======
 #ifdef HAVE_INT64_TIMESTAMP
 typedef int64 TimeOffset;
 #else
@@ -2405,7 +2398,6 @@ interval_cmp_value(const Interval *interval)
 {
 	TimeOffset	span;
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	span = interval->time;
 
 #ifdef HAVE_INT64_TIMESTAMP
@@ -2419,13 +2411,8 @@ interval_cmp_value(const Interval *interval)
 	return span;
 }
 
-<<<<<<< HEAD
 int
 interval_cmp_internal(const Interval *interval1, const Interval *interval2)
-=======
-static int
-interval_cmp_internal(Interval *interval1, Interval *interval2)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	TimeOffset	span1 = interval_cmp_value(interval1);
 	TimeOffset	span2 = interval_cmp_value(interval2);
@@ -2744,14 +2731,6 @@ interval_hash(PG_FUNCTION_ARGS)
 {
 	Interval   *interval = PG_GETARG_INTERVAL_P(0);
 	TimeOffset	span = interval_cmp_value(interval);
-<<<<<<< HEAD
-
-#ifdef HAVE_INT64_TIMESTAMP
-	return DirectFunctionCall1(hashint8, Int64GetDatumFast(span));
-#else
-	return DirectFunctionCall1(hashfloat8, Float8GetDatumFast(span));
-#endif
-=======
 	uint32		thash;
 
 #ifdef HAVE_INT64_TIMESTAMP
@@ -2763,7 +2742,6 @@ interval_hash(PG_FUNCTION_ARGS)
 #endif
 
 	PG_RETURN_UINT32(thash);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /* overlaps_timestamp() --- implements the SQL92 OVERLAPS operator.
@@ -3174,80 +3152,7 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 {
 	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(0);
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
-<<<<<<< HEAD
 	TimestampTz result = timestamptz_offset_internal(timestamp, span);
-=======
-	TimestampTz result;
-	int			tz;
-	char	   *tzn;
-
-	if (TIMESTAMP_NOT_FINITE(timestamp))
-		result = timestamp;
-	else
-	{
-		if (span->month != 0)
-		{
-			struct pg_tm tt,
-					   *tm = &tt;
-			fsec_t		fsec;
-
-			if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						 errmsg("timestamp out of range")));
-
-			tm->tm_mon += span->month;
-			if (tm->tm_mon > MONTHS_PER_YEAR)
-			{
-				tm->tm_year += (tm->tm_mon - 1) / MONTHS_PER_YEAR;
-				tm->tm_mon = ((tm->tm_mon - 1) % MONTHS_PER_YEAR) + 1;
-			}
-			else if (tm->tm_mon < 1)
-			{
-				tm->tm_year += tm->tm_mon / MONTHS_PER_YEAR - 1;
-				tm->tm_mon = tm->tm_mon % MONTHS_PER_YEAR + MONTHS_PER_YEAR;
-			}
-
-			/* adjust for end of month boundary problems... */
-			if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
-				tm->tm_mday = (day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]);
-
-			tz = DetermineTimeZoneOffset(tm, session_timezone);
-
-			if (tm2timestamp(tm, fsec, &tz, &timestamp) != 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						 errmsg("timestamp out of range")));
-		}
-
-		if (span->day != 0)
-		{
-			struct pg_tm tt,
-					   *tm = &tt;
-			fsec_t		fsec;
-			int			julian;
-
-			if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						 errmsg("timestamp out of range")));
-
-			/* Add days by converting to and from julian */
-			julian = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + span->day;
-			j2date(julian, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
-
-			tz = DetermineTimeZoneOffset(tm, session_timezone);
-
-			if (tm2timestamp(tm, fsec, &tz, &timestamp) != 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						 errmsg("timestamp out of range")));
-		}
-
-		timestamp += span->time;
-		result = timestamp;
-	}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -4066,190 +3971,6 @@ timestamptz_li_value(float8 f, TimestampTz y0, TimestampTz y1)
  *	Conversion operators.
  *---------------------------------------------------------*/
 
-<<<<<<< HEAD
-/* timestamp_text()
- * Convert timestamp to text data type.
- */
-Datum
-timestamp_text(PG_FUNCTION_ARGS)
-{
-	/* Input is a Timestamp, but may as well leave it in Datum form */
-	Datum		timestamp = PG_GETARG_DATUM(0);
-	text	   *result;
-	char	   *str;
-	int			len;
-
-	str = DatumGetCString(DirectFunctionCall1(timestamp_out, timestamp));
-
-	len = (strlen(str) + VARHDRSZ);
-
-	result = palloc(len);
-
-	SET_VARSIZE(result, len);
-	memcpy(VARDATA(result), str, (len - VARHDRSZ));
-
-	pfree(str);
-
-	PG_RETURN_TEXT_P(result);
-}
-
-
-/* text_timestamp()
- * Convert text string to timestamp.
- * Text type is not null terminated, so use temporary string
- *	then call the standard input routine.
- */
-Datum
-text_timestamp(PG_FUNCTION_ARGS)
-{
-	text	   *str = PG_GETARG_TEXT_P(0);
-	int			i;
-	char	   *sp,
-			   *dp,
-				dstr[MAXDATELEN + 1];
-
-	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for type timestamp: \"%s\"",
-						DatumGetCString(DirectFunctionCall1(textout,
-												   PointerGetDatum(str))))));
-
-	sp = VARDATA(str);
-	dp = dstr;
-	for (i = 0; i < VARSIZE(str) - VARHDRSZ; i++)
-		*dp++ = *sp++;
-	*dp = '\0';
-
-	return DirectFunctionCall3(timestamp_in,
-							   CStringGetDatum(dstr),
-							   ObjectIdGetDatum(InvalidOid),
-							   Int32GetDatum(-1));
-}
-
-
-/* timestamptz_text()
- * Convert timestamp with time zone to text data type.
- */
-Datum
-timestamptz_text(PG_FUNCTION_ARGS)
-{
-	/* Input is a Timestamp, but may as well leave it in Datum form */
-	Datum		timestamp = PG_GETARG_DATUM(0);
-	text	   *result;
-	char	   *str;
-	int			len;
-
-	str = DatumGetCString(DirectFunctionCall1(timestamptz_out, timestamp));
-
-	len = strlen(str) + VARHDRSZ;
-
-	result = palloc(len);
-
-	SET_VARSIZE(result, len);
-	memcpy(VARDATA(result), str, (len - VARHDRSZ));
-
-	pfree(str);
-
-	PG_RETURN_TEXT_P(result);
-}
-
-/* text_timestamptz()
- * Convert text string to timestamp with time zone.
- * Text type is not null terminated, so use temporary string
- *	then call the standard input routine.
- */
-Datum
-text_timestamptz(PG_FUNCTION_ARGS)
-{
-	text	   *str = PG_GETARG_TEXT_P(0);
-	int			i;
-	char	   *sp,
-			   *dp,
-				dstr[MAXDATELEN + 1];
-
-	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for type timestamp with time zone: \"%s\"",
-						DatumGetCString(DirectFunctionCall1(textout,
-												   PointerGetDatum(str))))));
-
-	sp = VARDATA(str);
-	dp = dstr;
-	for (i = 0; i < VARSIZE(str) - VARHDRSZ; i++)
-		*dp++ = *sp++;
-	*dp = '\0';
-
-	return DirectFunctionCall3(timestamptz_in,
-							   CStringGetDatum(dstr),
-							   ObjectIdGetDatum(InvalidOid),
-							   Int32GetDatum(-1));
-}
-
-
-/* interval_text()
- * Convert interval to text data type.
- */
-Datum
-interval_text(PG_FUNCTION_ARGS)
-{
-	Interval   *interval = PG_GETARG_INTERVAL_P(0);
-	text	   *result;
-	char	   *str;
-	int			len;
-
-	str = DatumGetCString(DirectFunctionCall1(interval_out,
-											  IntervalPGetDatum(interval)));
-
-	len = strlen(str) + VARHDRSZ;
-
-	result = palloc(len);
-
-	SET_VARSIZE(result, len);
-	memcpy(VARDATA(result), str, len - VARHDRSZ);
-
-	pfree(str);
-
-	PG_RETURN_TEXT_P(result);
-}
-
-
-/* text_interval()
- * Convert text string to interval.
- * Text type may not be null terminated, so copy to temporary string
- *	then call the standard input routine.
- */
-Datum
-text_interval(PG_FUNCTION_ARGS)
-{
-	text	   *str = PG_GETARG_TEXT_P(0);
-	int			i;
-	char	   *sp,
-			   *dp,
-				dstr[MAXDATELEN + 1];
-
-	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for type interval: \"%s\"",
-						DatumGetCString(DirectFunctionCall1(textout,
-												   PointerGetDatum(str))))));
-
-	sp = VARDATA(str);
-	dp = dstr;
-	for (i = 0; i < (VARSIZE(str) - VARHDRSZ); i++)
-		*dp++ = *sp++;
-	*dp = '\0';
-
-	return DirectFunctionCall3(interval_in,
-							   CStringGetDatum(dstr),
-							   ObjectIdGetDatum(InvalidOid),
-							   Int32GetDatum(-1));
-}
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* timestamp_trunc()
  * Truncate timestamp to specified units.
@@ -5396,10 +5117,6 @@ timestamp_zone(PG_FUNCTION_ARGS)
 	TimestampTz result;
 	int			tz;
 	char		tzname[TZ_STRLEN_MAX + 1];
-<<<<<<< HEAD
-=======
-	int			len;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	char	   *lowzone;
 	int			type,
 				val;
@@ -5416,7 +5133,6 @@ timestamp_zone(PG_FUNCTION_ARGS)
 	 * important because the timezone database unwisely uses a few zone names
 	 * that are identical to offset abbreviations.)
 	 */
-<<<<<<< HEAD
 	text_to_cstring_buffer(zone, tzname, sizeof(tzname));
 	lowzone = downcase_truncate_identifier(tzname,
 										   strlen(tzname),
@@ -5424,13 +5140,6 @@ timestamp_zone(PG_FUNCTION_ARGS)
 
 	type = DecodeSpecial(0, lowzone, &val);
 
-=======
-	lowzone = downcase_truncate_identifier(VARDATA(zone),
-										   VARSIZE(zone) - VARHDRSZ,
-										   false);
-	type = DecodeSpecial(0, lowzone, &val);
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (type == TZ || type == DTZ)
 	{
 		tz = -(val * 60);
@@ -5438,22 +5147,12 @@ timestamp_zone(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-<<<<<<< HEAD
-=======
-		len = Min(VARSIZE(zone) - VARHDRSZ, TZ_STRLEN_MAX);
-		memcpy(tzname, VARDATA(zone), len);
-		tzname[len] = '\0';
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		tzp = pg_tzset(tzname);
 		if (tzp)
 		{
 			/* Apply the timezone change */
 			struct pg_tm tm;
-<<<<<<< HEAD
  			fsec_t		fsec = 0;
-=======
-			fsec_t		fsec;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, tzp) != 0)
 				ereport(ERROR,
@@ -5592,10 +5291,6 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	Timestamp	result;
 	int			tz;
 	char		tzname[TZ_STRLEN_MAX + 1];
-<<<<<<< HEAD
-=======
-	int			len;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	char	   *lowzone;
 	int			type,
 				val;
@@ -5612,7 +5307,6 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	 * important because the timezone database unwisely uses a few zone names
 	 * that are identical to offset abbreviations.)
 	 */
-<<<<<<< HEAD
 	text_to_cstring_buffer(zone, tzname, sizeof(tzname));
 	lowzone = downcase_truncate_identifier(tzname,
 										   strlen(tzname),
@@ -5620,13 +5314,6 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 
 	type = DecodeSpecial(0, lowzone, &val);
 
-=======
-	lowzone = downcase_truncate_identifier(VARDATA(zone),
-										   VARSIZE(zone) - VARHDRSZ,
-										   false);
-	type = DecodeSpecial(0, lowzone, &val);
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (type == TZ || type == DTZ)
 	{
 		tz = val * 60;
@@ -5634,22 +5321,12 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-<<<<<<< HEAD
-=======
-		len = Min(VARSIZE(zone) - VARHDRSZ, TZ_STRLEN_MAX);
-		memcpy(tzname, VARDATA(zone), len);
-		tzname[len] = '\0';
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		tzp = pg_tzset(tzname);
 		if (tzp)
 		{
 			/* Apply the timezone change */
 			struct pg_tm tm;
-<<<<<<< HEAD
  			fsec_t		fsec = 0;
-=======
-			fsec_t		fsec;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			if (timestamp2tm(timestamp, &tz, &tm, &fsec, NULL, tzp) != 0)
 				ereport(ERROR,

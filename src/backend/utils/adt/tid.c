@@ -367,16 +367,11 @@ currtid_byreloid(PG_FUNCTION_ARGS)
 	ItemPointer result;
 	Relation	rel;
 	AclResult	aclresult;
-<<<<<<< HEAD
 
 	/*
 	 * Immediately inform client that the function is not supported
 	 */
-
 	elog(ERROR, "Function currtid is not supported by GPDB");
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	result = (ItemPointer) palloc(sizeof(ItemPointerData));
 	if (!reloid)
@@ -422,15 +417,11 @@ currtid_byrelname(PG_FUNCTION_ARGS)
 	RangeVar   *relrv;
 	Relation	rel;
 	AclResult	aclresult;
-<<<<<<< HEAD
 
 	/*
 	 * Immediately inform client that the function is not supported
 	 */
-
 	elog(ERROR, "Function currtid2 is not supported by GPDB");
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = heap_openrv(relrv, AccessShareLock);

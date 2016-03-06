@@ -1,6 +1,3 @@
-<<<<<<< HEAD:contrib/tsearch2/gistidx.c
-/* $PostgreSQL: pgsql/contrib/tsearch2/gistidx.c,v 1.16 2007/02/28 22:44:38 tgl Exp $ */
-=======
 /*-------------------------------------------------------------------------
  *
  * tsgistidx.c
@@ -14,7 +11,6 @@
  *
  *-------------------------------------------------------------------------
  */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588:src/backend/utils/adt/tsgistidx.c
 
 #include "postgres.h"
 
@@ -114,11 +110,7 @@ static int	outbuf_maxlen = 0;
 Datum
 gtsvectorout(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD:contrib/tsearch2/gistidx.c
-	GISTTYPE   *key = (GISTTYPE *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
-=======
 	SignTSVector *key = (SignTSVector *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_POINTER(0)));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588:src/backend/utils/adt/tsgistidx.c
 	char	   *outbuf;
 
 	if (outbuf_maxlen == 0)
@@ -194,24 +186,15 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 
 	if (entry->leafkey)
 	{							/* tsvector */
-<<<<<<< HEAD:contrib/tsearch2/gistidx.c
-		GISTTYPE   *res;
-		tsvector   *val = (tsvector *) PG_DETOAST_DATUM(entry->key);
-=======
 		SignTSVector *res;
 		TSVector	val = DatumGetTSVector(entry->key);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588:src/backend/utils/adt/tsgistidx.c
 		int4		len;
 		int4	   *arr;
 		WordEntry  *ptr = ARRPTR(val);
 		char	   *words = STRPTR(val);
 
 		len = CALCGTSIZE(ARRKEY, val->size);
-<<<<<<< HEAD:contrib/tsearch2/gistidx.c
-		res = (GISTTYPE *) palloc(len);
-=======
 		res = (SignTSVector *) palloc(len);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588:src/backend/utils/adt/tsgistidx.c
 		SET_VARSIZE(res, len);
 		res->flag = ARRKEY;
 		arr = GETARR(res);
@@ -220,9 +203,9 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 		{
 			pg_crc32	c;
 
-			INIT_CRC32(c);
-			COMP_CRC32(c, words + ptr->pos, ptr->len);
-			FIN_CRC32(c);
+			INIT_LEGACY_CRC32(c);
+			COMP_LEGACY_CRC32(c, words + ptr->pos, ptr->len);
+			FIN_LEGACY_CRC32(c);
 
 			*arr = *(int4 *) &c;
 			arr++;
@@ -237,11 +220,7 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 			 * val->size
 			 */
 			len = CALCGTSIZE(ARRKEY, len);
-<<<<<<< HEAD:contrib/tsearch2/gistidx.c
-			res = (GISTTYPE *) repalloc((void *) res, len);
-=======
 			res = (SignTSVector *) repalloc((void *) res, len);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588:src/backend/utils/adt/tsgistidx.c
 			SET_VARSIZE(res, len);
 		}
 
@@ -251,11 +230,7 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 			SignTSVector *ressign;
 
 			len = CALCGTSIZE(SIGNKEY, 0);
-<<<<<<< HEAD:contrib/tsearch2/gistidx.c
-			ressign = (GISTTYPE *) palloc(len);
-=======
 			ressign = (SignTSVector *) palloc(len);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588:src/backend/utils/adt/tsgistidx.c
 			SET_VARSIZE(ressign, len);
 			ressign->flag = SIGNKEY;
 			makesign(GETSIGN(ressign), res);
@@ -282,11 +257,7 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 		}
 
 		len = CALCGTSIZE(SIGNKEY | ALLISTRUE, 0);
-<<<<<<< HEAD:contrib/tsearch2/gistidx.c
-		res = (GISTTYPE *) palloc(len);
-=======
 		res = (SignTSVector *) palloc(len);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588:src/backend/utils/adt/tsgistidx.c
 		SET_VARSIZE(res, len);
 		res->flag = SIGNKEY | ALLISTRUE;
 
@@ -302,11 +273,7 @@ Datum
 gtsvector_decompress(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-<<<<<<< HEAD:contrib/tsearch2/gistidx.c
-	GISTTYPE   *key = (GISTTYPE *) PG_DETOAST_DATUM(entry->key);
-=======
 	SignTSVector *key = (SignTSVector *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588:src/backend/utils/adt/tsgistidx.c
 
 	if (key != (SignTSVector *) DatumGetPointer(entry->key))
 	{
@@ -445,17 +412,12 @@ gtsvector_union(PG_FUNCTION_ARGS)
 
 	flag |= SIGNKEY;
 	len = CALCGTSIZE(flag, 0);
-<<<<<<< HEAD:contrib/tsearch2/gistidx.c
-	result = (GISTTYPE *) palloc(len);
-=======
 	result = (SignTSVector *) palloc(len);
 	*size = len;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588:src/backend/utils/adt/tsgistidx.c
 	SET_VARSIZE(result, len);
 	result->flag = flag;
 	if (!ISALLTRUE(result))
 		memcpy((void *) GETSIGN(result), (void *) base, sizeof(BITVEC));
-	*size = len;
 
 	PG_RETURN_POINTER(result);
 }
@@ -707,42 +669,26 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 	/* form initial .. */
 	if (cache[seed_1].allistrue)
 	{
-<<<<<<< HEAD:contrib/tsearch2/gistidx.c
-		datum_l = (GISTTYPE *) palloc(CALCGTSIZE(SIGNKEY | ALLISTRUE, 0));
-=======
 		datum_l = (SignTSVector *) palloc(CALCGTSIZE(SIGNKEY | ALLISTRUE, 0));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588:src/backend/utils/adt/tsgistidx.c
 		SET_VARSIZE(datum_l, CALCGTSIZE(SIGNKEY | ALLISTRUE, 0));
 		datum_l->flag = SIGNKEY | ALLISTRUE;
 	}
 	else
 	{
-<<<<<<< HEAD:contrib/tsearch2/gistidx.c
-		datum_l = (GISTTYPE *) palloc(CALCGTSIZE(SIGNKEY, 0));
-=======
 		datum_l = (SignTSVector *) palloc(CALCGTSIZE(SIGNKEY, 0));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588:src/backend/utils/adt/tsgistidx.c
 		SET_VARSIZE(datum_l, CALCGTSIZE(SIGNKEY, 0));
 		datum_l->flag = SIGNKEY;
 		memcpy((void *) GETSIGN(datum_l), (void *) cache[seed_1].sign, sizeof(BITVEC));
 	}
 	if (cache[seed_2].allistrue)
 	{
-<<<<<<< HEAD:contrib/tsearch2/gistidx.c
-		datum_r = (GISTTYPE *) palloc(CALCGTSIZE(SIGNKEY | ALLISTRUE, 0));
-=======
 		datum_r = (SignTSVector *) palloc(CALCGTSIZE(SIGNKEY | ALLISTRUE, 0));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588:src/backend/utils/adt/tsgistidx.c
 		SET_VARSIZE(datum_r, CALCGTSIZE(SIGNKEY | ALLISTRUE, 0));
 		datum_r->flag = SIGNKEY | ALLISTRUE;
 	}
 	else
 	{
-<<<<<<< HEAD:contrib/tsearch2/gistidx.c
-		datum_r = (GISTTYPE *) palloc(CALCGTSIZE(SIGNKEY, 0));
-=======
 		datum_r = (SignTSVector *) palloc(CALCGTSIZE(SIGNKEY, 0));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588:src/backend/utils/adt/tsgistidx.c
 		SET_VARSIZE(datum_r, CALCGTSIZE(SIGNKEY, 0));
 		datum_r->flag = SIGNKEY;
 		memcpy((void *) GETSIGN(datum_r), (void *) cache[seed_2].sign, sizeof(BITVEC));

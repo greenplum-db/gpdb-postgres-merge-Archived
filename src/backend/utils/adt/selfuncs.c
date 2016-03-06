@@ -10,12 +10,8 @@
  *	  Index cost functions are registered in the pg_am catalog
  *	  in the "amcostestimate" attribute.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -126,15 +122,8 @@ static void convert_bytea_to_scalar(Datum value,
 						double *scaledhibound);
 static double convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
 							int rangelo, int rangehi);
-<<<<<<< HEAD
-static bool get_variable_maximum(PlannerInfo *root, VariableStatData *vardata,
-					 Oid sortop, Datum *max);
-=======
-static char *convert_string_datum(Datum value, Oid typid);
-static double convert_timevalue_to_scalar(Datum value, Oid typid);
 static bool get_variable_range(PlannerInfo *root, VariableStatData *vardata,
 					 Oid sortop, Datum *min, Datum *max);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static Selectivity prefix_selectivity(VariableStatData *vardata,
 				   Oid vartype, Oid opfamily, Const *prefixcon);
 static Selectivity like_selectivity(const char *patt, int pattlen,
@@ -962,13 +951,8 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 
 	/*
 	 * If this is for a NOT LIKE or similar operator, get the corresponding
-<<<<<<< HEAD
-	 * positive-match operator and work with that.  Set result to the
-	 * correct default estimate, too.
-=======
 	 * positive-match operator and work with that.	Set result to the correct
 	 * default estimate, too.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	if (negate)
 	{
@@ -1151,11 +1135,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 		if (selec < 0)
 		{
 			/* Nope, so fake it with the heuristic method */
-<<<<<<< HEAD
-            selec = pattern_selectivity(rest, ptype);
-=======
 			Selectivity prefixsel;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			if (pstatus == Pattern_Prefix_Partial)
             {
@@ -1171,9 +1151,6 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
                 selec *= prefixsel;
             }
 			else
-<<<<<<< HEAD
-                fewvalues = DEFAULT_MATCH_SEL / DEFAULT_EQ_SEL;
-=======
 				prefixsel = 1.0;
 			selec = prefixsel * rest_selec;
 		}
@@ -1184,7 +1161,6 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 				selec = 0.0001;
 			else if (selec > 0.9999)
 				selec = 0.9999;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 
         /* CDB: Assume whole pattern matches at least a few distinct values. */
@@ -1478,11 +1454,7 @@ nulltestsel(PlannerInfo *root, NullTestType nulltesttype,
 	 * be taken at face value, since it's very likely being used to select the
 	 * outer-side rows that don't have a match, and thus its selectivity has
 	 * nothing whatever to do with the statistics of the original table
-<<<<<<< HEAD
-	 * column.  We do not have nearly enough context here to determine its
-=======
 	 * column.	We do not have nearly enough context here to determine its
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 * true selectivity, so for the moment punt and guess at 0.5.  Eventually
 	 * the planner should be made to provide enough info about the clause's
 	 * context to let us do better.
@@ -1672,12 +1644,8 @@ scalararraysel(PlannerInfo *root,
 			Selectivity s2;
 
 			args = list_make2(leftop,
-<<<<<<< HEAD
-							  makeConst(nominal_element_type, -1,
-=======
 							  makeConst(nominal_element_type,
 										-1,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 										elmlen,
 										elem_values[i],
 										elem_nulls[i],
@@ -2298,16 +2266,11 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 				leop,
 				revltop,
 				revleop;
-<<<<<<< HEAD
-	Datum		leftmax = 0,
-				rightmax = 0;
-=======
 	bool		isgt;
 	Datum		leftmin,
 				leftmax,
 				rightmin,
 				rightmax;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	double		selec;
 
 	/* Set default results if we can't figure anything out. */
@@ -2480,26 +2443,7 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 	selec = scalarineqsel(root, leop, isgt, &leftvar,
 						  rightmax, op_righttype);
 	if (selec != DEFAULT_INEQ_SEL)
-<<<<<<< HEAD
-	{
-		HeapTuple leftStatsTuple = NULL;
-
-		if (nulls_first)
-			leftStatsTuple = getStatsTuple(&leftvar);
-
-		if (nulls_first && HeapTupleIsValid(leftStatsTuple))
-		{
-			Form_pg_statistic stats;
-
-			stats = (Form_pg_statistic) GETSTRUCT(leftStatsTuple);
-			selec += stats->stanullfrac;
-			CLAMP_PROBABILITY(selec);
-		}
-		*leftscan = selec;
-	}
-=======
 		*leftend = selec;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* And similarly for the right variable. */
 	selec = scalarineqsel(root, revleop, isgt, &rightvar,
@@ -2558,38 +2502,27 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 	 */
 	if (nulls_first)
 	{
-<<<<<<< HEAD
-		HeapTuple rightStatsTuple = NULL;
-
-		if (nulls_first)
-			rightStatsTuple = getStatsTuple(&rightvar);
-
-		if (nulls_first && HeapTupleIsValid(rightStatsTuple))
-		{
-			Form_pg_statistic stats;
-
-			stats = (Form_pg_statistic) GETSTRUCT(rightStatsTuple);
-			selec += stats->stanullfrac;
-			CLAMP_PROBABILITY(selec);
-=======
 		Form_pg_statistic stats;
+		HeapTuple leftStatsTuple;
+		HeapTuple rightStatsTuple;
 
-		if (HeapTupleIsValid(leftvar.statsTuple))
+		leftStatsTuple = getStatsTuple(&leftvar);
+		if (HeapTupleIsValid(leftStatsTuple))
 		{
-			stats = (Form_pg_statistic) GETSTRUCT(leftvar.statsTuple);
+			stats = (Form_pg_statistic) GETSTRUCT(leftStatsTuple);
 			*leftstart += stats->stanullfrac;
 			CLAMP_PROBABILITY(*leftstart);
 			*leftend += stats->stanullfrac;
 			CLAMP_PROBABILITY(*leftend);
 		}
-		if (HeapTupleIsValid(rightvar.statsTuple))
+		rightStatsTuple = getStatsTuple(&rightvar);
+		if (HeapTupleIsValid(rightStatsTuple))
 		{
-			stats = (Form_pg_statistic) GETSTRUCT(rightvar.statsTuple);
+			stats = (Form_pg_statistic) GETSTRUCT(rightStatsTuple);
 			*rightstart += stats->stanullfrac;
 			CLAMP_PROBABILITY(*rightstart);
 			*rightend += stats->stanullfrac;
 			CLAMP_PROBABILITY(*rightend);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 	}
 
@@ -3265,249 +3198,6 @@ convert_numeric_to_scalar(Datum value, Oid typid)
 }
 
 /*
-<<<<<<< HEAD
-=======
- * Do convert_to_scalar()'s work for any character-string data type.
- *
- * String datatypes are converted to a scale that ranges from 0 to 1,
- * where we visualize the bytes of the string as fractional digits.
- *
- * We do not want the base to be 256, however, since that tends to
- * generate inflated selectivity estimates; few databases will have
- * occurrences of all 256 possible byte values at each position.
- * Instead, use the smallest and largest byte values seen in the bounds
- * as the estimated range for each byte, after some fudging to deal with
- * the fact that we probably aren't going to see the full range that way.
- *
- * An additional refinement is that we discard any common prefix of the
- * three strings before computing the scaled values.  This allows us to
- * "zoom in" when we encounter a narrow data range.  An example is a phone
- * number database where all the values begin with the same area code.
- * (Actually, the bounds will be adjacent histogram-bin-boundary values,
- * so this is more likely to happen than you might think.)
- */
-static void
-convert_string_to_scalar(char *value,
-						 double *scaledvalue,
-						 char *lobound,
-						 double *scaledlobound,
-						 char *hibound,
-						 double *scaledhibound)
-{
-	int			rangelo,
-				rangehi;
-	char	   *sptr;
-
-	rangelo = rangehi = (unsigned char) hibound[0];
-	for (sptr = lobound; *sptr; sptr++)
-	{
-		if (rangelo > (unsigned char) *sptr)
-			rangelo = (unsigned char) *sptr;
-		if (rangehi < (unsigned char) *sptr)
-			rangehi = (unsigned char) *sptr;
-	}
-	for (sptr = hibound; *sptr; sptr++)
-	{
-		if (rangelo > (unsigned char) *sptr)
-			rangelo = (unsigned char) *sptr;
-		if (rangehi < (unsigned char) *sptr)
-			rangehi = (unsigned char) *sptr;
-	}
-	/* If range includes any upper-case ASCII chars, make it include all */
-	if (rangelo <= 'Z' && rangehi >= 'A')
-	{
-		if (rangelo > 'A')
-			rangelo = 'A';
-		if (rangehi < 'Z')
-			rangehi = 'Z';
-	}
-	/* Ditto lower-case */
-	if (rangelo <= 'z' && rangehi >= 'a')
-	{
-		if (rangelo > 'a')
-			rangelo = 'a';
-		if (rangehi < 'z')
-			rangehi = 'z';
-	}
-	/* Ditto digits */
-	if (rangelo <= '9' && rangehi >= '0')
-	{
-		if (rangelo > '0')
-			rangelo = '0';
-		if (rangehi < '9')
-			rangehi = '9';
-	}
-
-	/*
-	 * If range includes less than 10 chars, assume we have not got enough
-	 * data, and make it include regular ASCII set.
-	 */
-	if (rangehi - rangelo < 9)
-	{
-		rangelo = ' ';
-		rangehi = 127;
-	}
-
-	/*
-	 * Now strip any common prefix of the three strings.
-	 */
-	while (*lobound)
-	{
-		if (*lobound != *hibound || *lobound != *value)
-			break;
-		lobound++, hibound++, value++;
-	}
-
-	/*
-	 * Now we can do the conversions.
-	 */
-	*scaledvalue = convert_one_string_to_scalar(value, rangelo, rangehi);
-	*scaledlobound = convert_one_string_to_scalar(lobound, rangelo, rangehi);
-	*scaledhibound = convert_one_string_to_scalar(hibound, rangelo, rangehi);
-}
-
-static double
-convert_one_string_to_scalar(char *value, int rangelo, int rangehi)
-{
-	int			slen = strlen(value);
-	double		num,
-				denom,
-				base;
-
-	if (slen <= 0)
-		return 0.0;				/* empty string has scalar value 0 */
-
-	/*
-	 * Since base is at least 10, need not consider more than about 20 chars
-	 */
-	if (slen > 20)
-		slen = 20;
-
-	/* Convert initial characters to fraction */
-	base = rangehi - rangelo + 1;
-	num = 0.0;
-	denom = base;
-	while (slen-- > 0)
-	{
-		int			ch = (unsigned char) *value++;
-
-		if (ch < rangelo)
-			ch = rangelo - 1;
-		else if (ch > rangehi)
-			ch = rangehi + 1;
-		num += ((double) (ch - rangelo)) / denom;
-		denom *= base;
-	}
-
-	return num;
-}
-
-/*
- * Convert a string-type Datum into a palloc'd, null-terminated string.
- *
- * When using a non-C locale, we must pass the string through strxfrm()
- * before continuing, so as to generate correct locale-specific results.
- */
-static char *
-convert_string_datum(Datum value, Oid typid)
-{
-	char	   *val;
-
-	switch (typid)
-	{
-		case CHAROID:
-			val = (char *) palloc(2);
-			val[0] = DatumGetChar(value);
-			val[1] = '\0';
-			break;
-		case BPCHAROID:
-		case VARCHAROID:
-		case TEXTOID:
-			{
-				char	   *str = (char *) VARDATA(DatumGetPointer(value));
-				int			strlength = VARSIZE(DatumGetPointer(value)) - VARHDRSZ;
-
-				val = (char *) palloc(strlength + 1);
-				memcpy(val, str, strlength);
-				val[strlength] = '\0';
-				break;
-			}
-		case NAMEOID:
-			{
-				NameData   *nm = (NameData *) DatumGetPointer(value);
-
-				val = pstrdup(NameStr(*nm));
-				break;
-			}
-		default:
-
-			/*
-			 * Can't get here unless someone tries to use scalarltsel on an
-			 * operator with one string and one non-string operand.
-			 */
-			elog(ERROR, "unsupported type: %u", typid);
-			return NULL;
-	}
-
-	if (!lc_collate_is_c())
-	{
-		char	   *xfrmstr;
-		size_t		xfrmlen;
-		size_t		xfrmlen2;
-
-		/*
-		 * Note: originally we guessed at a suitable output buffer size, and
-		 * only needed to call strxfrm twice if our guess was too small.
-		 * However, it seems that some versions of Solaris have buggy strxfrm
-		 * that can write past the specified buffer length in that scenario.
-		 * So, do it the dumb way for portability.
-		 *
-		 * Yet other systems (e.g., glibc) sometimes return a smaller value
-		 * from the second call than the first; thus the Assert must be <= not
-		 * == as you'd expect.  Can't any of these people program their way
-		 * out of a paper bag?
-		 *
-		 * XXX: strxfrm doesn't support UTF-8 encoding on Win32, it can return
-		 * bogus data or set an error. This is not really a problem unless it
-		 * crashes since it will only give an estimation error and nothing
-		 * fatal.
-		 */
-#if _MSC_VER == 1400			/* VS.Net 2005 */
-
-		/*
-		 *
-		 * http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx
-		 * ?FeedbackID=99694 */
-		{
-			char		x[1];
-
-			xfrmlen = strxfrm(x, val, 0);
-		}
-#else
-		xfrmlen = strxfrm(NULL, val, 0);
-#endif
-#ifdef WIN32
-
-		/*
-		 * On Windows, strxfrm returns INT_MAX when an error occurs. Instead
-		 * of trying to allocate this much memory (and fail), just return the
-		 * original string unmodified as if we were in the C locale.
-		 */
-		if (xfrmlen == INT_MAX)
-			return val;
-#endif
-		xfrmstr = (char *) palloc(xfrmlen + 1);
-		xfrmlen2 = strxfrm(xfrmstr, val, xfrmlen + 1);
-		Assert(xfrmlen2 <= xfrmlen);
-		pfree(val);
-		val = xfrmstr;
-	}
-
-	return val;
-}
-
-/*
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Do convert_to_scalar()'s work for any bytea data type.
  *
  * Very similar to the old convert_string_to_scalar except we can't assume
@@ -4355,42 +4045,14 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 		}
 		free_attstatsslot(vardata->atttype, values, nvalues, NULL, 0);
 	}
-	else if (get_attstatsslot(vardata->statsTuple,
+	else if (get_attstatsslot(tp,
 							  vardata->atttype, vardata->atttypmod,
 							  STATISTIC_KIND_HISTOGRAM, InvalidOid,
 							  &values, &nvalues,
 							  NULL, NULL))
 	{
-<<<<<<< HEAD
-		Oid			rsortop = get_commutator(sortop);
-
-		if (OidIsValid(rsortop) &&
-			get_attstatsslot(tp,
-							 vardata->atttype, vardata->atttypmod,
-							 STATISTIC_KIND_HISTOGRAM, rsortop,
-							 &values, &nvalues,
-							 NULL, NULL))
-		{
-			if (nvalues > 0)
-			{
-				tmax = datumCopy(values[0], typByVal, typLen);
-				have_max = true;
-			}
-			free_attstatsslot(vardata->atttype, values, nvalues, NULL, 0);
-		}
-		else if (get_attstatsslot(tp,
-								  vardata->atttype, vardata->atttypmod,
-								  STATISTIC_KIND_HISTOGRAM, InvalidOid,
-								  &values, &nvalues,
-								  NULL, NULL))
-		{
-			free_attstatsslot(vardata->atttype, values, nvalues, NULL, 0);
-			return false;
-		}
-=======
 		free_attstatsslot(vardata->atttype, values, nvalues, NULL, 0);
 		return false;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	/*
@@ -4717,11 +4379,7 @@ prefix_selectivity(VariableStatData *vardata,
 	 *-------
 	 */
 	cmpopr = get_opfamily_member(opfamily, vartype, vartype,
-<<<<<<< HEAD
-								BTLessStrategyNumber);
-=======
 								 BTLessStrategyNumber);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (cmpopr == InvalidOid)
 		elog(ERROR, "no < operator for opfamily %u", opfamily);
 	fmgr_info(get_opcode(cmpopr), &opproc);
@@ -4775,6 +4433,7 @@ prefix_selectivity(VariableStatData *vardata,
 #define FIXED_CHAR_SEL	0.20	/* about 1/5 */
 #define CHAR_RANGE_SEL	0.25
 #define ANY_CHAR_SEL	0.99	/* not 1, since it won't match end-of-string */
+#define FULL_WILDCARD_SEL 5.0
 #define CDB_RANCHOR_SEL 0.95
 #define CDB_ROLLOFF_SEL 0.14
 
@@ -4813,7 +4472,6 @@ like_selectivity(const char *patt, int pattlen, bool case_insensitive)
             fixed_char_sel += (1.0 - fixed_char_sel) * CDB_ROLLOFF_SEL;
         }
 	}
-<<<<<<< HEAD
 
     /* CDB: If no trailing wildcard, reduce selectivity slightly. */
     if (pos > 0 &&
@@ -4823,11 +4481,6 @@ like_selectivity(const char *patt, int pattlen, bool case_insensitive)
              patt[pos-2] == '\\')
         sel *= CDB_RANCHOR_SEL;
 
-=======
-	/* Could get sel > 1 if multiple wildcards */
-	if (sel > 1.0)
-		sel = 1.0;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	return sel;
 }
 
@@ -4942,10 +4595,7 @@ regex_selectivity(const char *patt, int pattlen, bool case_insensitive,
 	{
 		/* no trailing $ */
 		sel = regex_selectivity_sub(patt, pattlen, case_insensitive);
-<<<<<<< HEAD
-=======
 		sel *= FULL_WILDCARD_SEL;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	/* If there's a fixed prefix, discount its selectivity */
@@ -4973,11 +4623,7 @@ regex_selectivity(const char *patt, int pattlen, bool case_insensitive,
  * that is not a bulletproof guarantee that an extension of the string might
  * not sort after it; an example is that "foo " is less than "foo!", but it
  * is not clear that a "dictionary" sort ordering will consider "foo!" less
-<<<<<<< HEAD
- * than "foo bar".  CAUTION: Therefore, this function should be used only for
-=======
  * than "foo bar".	CAUTION: Therefore, this function should be used only for
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * estimation purposes when working in a non-C locale.
  *
  * To try to catch most cases where an extended string might otherwise sort
@@ -5003,18 +4649,10 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc)
 	text	   *cmptxt = NULL;
 
 	/*
-<<<<<<< HEAD
-	 * Get a modifiable copy of the prefix string in C-string format,
-	 * and set up the string we will compare to as a Datum.  In C locale
-	 * this can just be the given prefix string, otherwise we need to add
-	 * a suffix.  Types NAME and BYTEA sort bytewise so they don't need
-	 * a suffix either.
-=======
 	 * Get a modifiable copy of the prefix string in C-string format, and set
 	 * up the string we will compare to as a Datum.  In C locale this can just
 	 * be the given prefix string, otherwise we need to add a suffix.  Types
 	 * NAME and BYTEA sort bytewise so they don't need a suffix either.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	if (datatype == NAMEOID)
 	{
@@ -5048,11 +4686,7 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc)
 
 			if (!suffixchar)
 			{
-<<<<<<< HEAD
-				char *best;
-=======
 				char	   *best;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 				best = "Z";
 				if (varstr_cmp(best, 1, "z", 1) < 0)
@@ -5167,12 +4801,8 @@ string_to_const(const char *str, Oid datatype)
 {
 	Datum		conval = string_to_datum(str, datatype);
 
-<<<<<<< HEAD
-	return makeConst(datatype, -1, ((datatype == NAMEOID) ? NAMEDATALEN : -1),
-=======
 	return makeConst(datatype, -1,
 					 ((datatype == NAMEOID) ? NAMEDATALEN : -1),
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					 conval, false, false);
 }
 
@@ -5476,7 +5106,6 @@ btcostestimate(PG_FUNCTION_ARGS)
 	bool		found_null_op;
 	double		num_sa_scans;
 	ListCell   *l;
-	cqContext  *stacqCtx;
 
     /*
      * CDB: Tell caller how many leading indexcols are matched by '=' quals.
@@ -5593,25 +5222,15 @@ btcostestimate(PG_FUNCTION_ARGS)
 				break;
 			}
 		}
-<<<<<<< HEAD
-		op_strategy = get_op_opfamily_strategy(clause_op,
-											   index->opfamily[indexcol]);
-		Assert(op_strategy != 0);		/* not a member of opfamily?? */
-		if (op_strategy == BTEqualStrategyNumber)
-        {
-			eqQualHere = true;
-
-            /* CDB: Count leading indexcols having '=' quals. */
-            if (!IsA(clause, ScalarArrayOpExpr))
-                index->num_leading_eq = indexcol + 1;
-        }
-
-=======
 		/* check for equality operator */
 		if (is_null_op)
 		{
 			/* IS NULL is like = for purposes of selectivity determination */
 			eqQualHere = true;
+
+            /* CDB: Count leading indexcols having '=' quals. */
+            if (!IsA(clause, ScalarArrayOpExpr))
+                index->num_leading_eq = indexcol + 1;
 		}
 		else
 		{
@@ -5619,9 +5238,14 @@ btcostestimate(PG_FUNCTION_ARGS)
 												   index->opfamily[indexcol]);
 			Assert(op_strategy != 0);	/* not a member of opfamily?? */
 			if (op_strategy == BTEqualStrategyNumber)
+			{
 				eqQualHere = true;
+
+				/* CDB: Count leading indexcols having '=' quals. */
+				if (!IsA(clause, ScalarArrayOpExpr))
+					index->num_leading_eq = indexcol + 1;
+			}
 		}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		/* count up number of SA scans induced by indexBoundQuals only */
 		if (IsA(clause, ScalarArrayOpExpr))
 		{
@@ -5641,14 +5265,10 @@ btcostestimate(PG_FUNCTION_ARGS)
 	 * NullTest invalidates that theory, even though it sets eqQualHere.
 	 */
 	if (index->unique &&
-<<<<<<< HEAD
-        index->num_leading_eq == index->ncolumns)
-=======
-		indexcol == index->ncolumns - 1 &&
+        index->num_leading_eq == index->ncolumns &&
 		eqQualHere &&
 		!found_saop &&
 		!found_null_op)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		numIndexTuples = 1.0;
 	else
 	{
@@ -5701,15 +5321,10 @@ btcostestimate(PG_FUNCTION_ARGS)
 		colnum = 1;
 	}
 
-	stacqCtx = caql_beginscan(
-			NULL,
-			cql("SELECT * FROM pg_statistic "
-				" WHERE starelid = :1 "
-				" AND staattnum = :2 ",
-				ObjectIdGetDatum(relid),
-				Int16GetDatum(colnum)));
-
-	tuple = caql_getnext(stacqCtx);
+	tuple = SearchSysCache(STATRELATT,
+						   ObjectIdGetDatum(relid),
+						   Int16GetDatum(colnum),
+						   0, 0);
 
 	if (HeapTupleIsValid(tuple))
 	{
@@ -5733,8 +5348,6 @@ btcostestimate(PG_FUNCTION_ARGS)
 
 			free_attstatsslot(InvalidOid, NULL, 0, numbers, nnumbers);
 		}
-<<<<<<< HEAD
-=======
 		else if (get_attstatsslot(tuple, InvalidOid, 0,
 								  STATISTIC_KIND_CORRELATION,
 								  index->revsortop[0],
@@ -5753,9 +5366,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 			free_attstatsslot(InvalidOid, NULL, 0, numbers, nnumbers);
 		}
 		ReleaseSysCache(tuple);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
-	caql_endscan(stacqCtx);
 
 	PG_RETURN_VOID();
 }
