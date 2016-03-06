@@ -587,7 +587,8 @@ extern char *GetConfigOptionByName(const char *name, const char **varname);
 extern void GetConfigOptionByNum(int varnum, const char **values, bool *noshow);
 extern int	GetNumConfigOptions(void);
 
-extern void SetPGVariable(const char *name, List *args, bool is_local, bool gp_dispatch);
+extern void SetPGVariable(const char *name, List *args, bool is_local);
+extern void SetPGVariableOptDispatch(const char *name, List *args, bool is_local, bool gp_dispatch);
 extern void GetPGVariable(const char *name, DestReceiver *dest);
 extern TupleDesc GetPGVariableResultDesc(const char *name);
 

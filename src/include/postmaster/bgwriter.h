@@ -18,8 +18,15 @@
 
 /* GUC options */
 extern int	BgWriterDelay;
+extern int	CheckPointTimeout;
+extern int	CheckPointWarning;
+extern double CheckPointCompletionTarget;
 
 extern void BackgroundWriterMain(void);
+extern void CheckpointMain(void);
+
+extern void RequestCheckpoint(bool waitforit, bool warnontime);
+extern void CheckpointWriteDelay(int flags, double progress);
 
 extern void RequestCheckpointSmgrCloseAll(void);
 
@@ -28,6 +35,9 @@ extern void AbsorbFsyncRequests(void);
 
 extern Size BgWriterShmemSize(void);
 extern void BgWriterShmemInit(void);
+
+extern Size CheckpointShmemSize(void);
+extern void CheckpointShmemInit(void);
 
 extern bool AmBackgroundWriterProcess(void);
 

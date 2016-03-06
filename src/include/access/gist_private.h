@@ -62,13 +62,8 @@ typedef struct GISTSTATE
 
 typedef struct MatchedItemPtr 
 {
-<<<<<<< HEAD
-        ItemPointerData         heapPtr;
-        OffsetNumber            pageOffset; /* offset in index page */
-=======
 	ItemPointerData		heapPtr;
 	OffsetNumber		pageOffset; /* offset in index page */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } MatchedItemPtr;
 
 /*
@@ -88,21 +83,12 @@ typedef struct GISTScanOpaqueData
 	Buffer		markbuf;
 	ItemPointerData markpos;
 
-<<<<<<< HEAD
-	MatchedItemPtr 	pageData[BLCKSZ/sizeof(IndexTupleData)];
-	OffsetNumber    nPageData;
-	OffsetNumber    curPageData;
-	MatchedItemPtr 	markPageData[BLCKSZ/sizeof(IndexTupleData)];
-	OffsetNumber    markNPageData;
-	OffsetNumber    markCurPageData;
-=======
 	MatchedItemPtr	pageData[BLCKSZ/sizeof(IndexTupleData)];
 	OffsetNumber	nPageData;
 	OffsetNumber	curPageData;
 	MatchedItemPtr	markPageData[BLCKSZ/sizeof(IndexTupleData)];
 	OffsetNumber	markNPageData;
 	OffsetNumber	markCurPageData;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } GISTScanOpaqueData;
 
 typedef GISTScanOpaqueData *GISTScanOpaque;

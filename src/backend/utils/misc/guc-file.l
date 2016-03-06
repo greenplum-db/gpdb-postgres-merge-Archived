@@ -161,11 +161,6 @@ ProcessConfigFile(GucContext context)
 						 &head, &tail))
 		goto cleanup_list;
 
-<<<<<<< HEAD
-	/* try to apply options brute-force; depending on the context bad ones will be
-	 * logged accordingly;
-	 */
-=======
 	/*
 	 * We need the proposed new value of custom_variable_classes to check
 	 * custom variables with.  ParseConfigFile ensured that if it's in
@@ -327,7 +322,6 @@ ProcessConfigFile(GucContext context)
 
 
 	/* If we got here all the options checked out okay, so apply them. */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	for (item = head; item; item = item->next)
 	{
 		set_config_option(item->name, item->value, context,
@@ -495,15 +489,6 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 		{
 			/*
 			 * This variable must be processed first as it controls
-<<<<<<< HEAD
-			 * the validity of other variables; so apply immediately.
-			 * This may fail; plow through, all failures get logged properly.
-			 */
-			set_config_option(opt_name, opt_value, context,
-								   PGC_S_FILE, false, true);
-			pfree(opt_name);
-			pfree(opt_value);
-=======
 			 * the validity of other variables; so it goes at the head
 			 * of the result list.  If we already found a value for it,
 			 * replace with this one.
@@ -529,7 +514,6 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 				if (*tail_p == NULL)
 					*tail_p = item;
 			}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 		else
 		{

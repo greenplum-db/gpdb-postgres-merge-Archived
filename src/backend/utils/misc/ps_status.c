@@ -7,12 +7,8 @@
  *
  * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.38.2.1 2010/05/27 19:19:50 tgl Exp $
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
-=======
- * Copyright (c) 2000-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * various details abducted from various places
  *--------------------------------------------------------------------
  */
@@ -174,7 +170,6 @@ save_ps_display_args(int argc, char **argv)
 		ps_argument_size = strlen(argv[0]);
 #endif
 
-<<<<<<< HEAD
 		/* 
 		 * MPP-14501: only use argv area for status to preserve environment 
 		 *
@@ -190,13 +185,6 @@ save_ps_display_args(int argc, char **argv)
 		 * being too small to display the status information because it's
 		 * fairly large with all the arguments we pass and if that ever does
 		 * become an issue we can always just have gpstart add more arguments.
-=======
-		ps_buffer = argv[0];
-		last_status_len = ps_buffer_size = end_of_area - argv[0];
-
-		/*
-		 * move the environment out of the way
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 */
 		ps_buffer = argv[0];
 		last_status_len = ps_buffer_size = (end_of_area - ps_buffer);
@@ -276,16 +264,10 @@ init_ps_display(const char *username, const char *dbname,
     if (!IsUnderPostmaster)
         return;
 
-<<<<<<< HEAD
-    /* no ps display if you didn't call save_ps_display_args() */
-    if (!save_argv)
-        return;
-=======
 	/* no ps display if you didn't call save_ps_display_args() */
 	if (!save_argv)
 		return;
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #ifdef PS_USE_CLOBBER_ARGV
     /* If ps_buffer is a pointer, it might still be null */
     if (!ps_buffer)
@@ -365,14 +347,10 @@ init_ps_display(const char *username, const char *dbname,
 	ps_buffer[ps_buffer_fixed_size + ps_host_info_size] = PS_PADDING;
 #endif
 
-<<<<<<< HEAD
-    ps_buffer_fixed_size += ps_host_info_size;
-	real_act_prefix_size = ps_buffer_fixed_size;
-=======
 	ps_buffer_cur_len = ps_buffer_fixed_size = strlen(ps_buffer);
+	real_act_prefix_size = ps_buffer_fixed_size;
 
 	set_ps_display(initial_str, true);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif   /* not PS_USE_NONE */
 }
 
@@ -385,27 +363,17 @@ init_ps_display(const char *username, const char *dbname,
 void
 set_ps_display(const char *activity, bool force)
 {
-<<<<<<< HEAD
+#ifndef PS_USE_NONE
+	/* update_process_title=off disables updates, unless force = true */
     char   *cp = ps_buffer + ps_buffer_fixed_size;
     char   *ep = ps_buffer + ps_buffer_size;
 
     if (!force && !update_process_title)
         return;
 
-#ifndef PS_USE_NONE
     /* no ps display for stand-alone backend */
     if (!IsUnderPostmaster)
         return;
-=======
-#ifndef PS_USE_NONE
-	/* update_process_title=off disables updates, unless force = true */
-	if (!force && !update_process_title)
-		return;
-
-	/* no ps display for stand-alone backend */
-	if (!IsUnderPostmaster)
-		return;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #ifdef PS_USE_CLOBBER_ARGV
     /* If ps_buffer is a pointer, it might still be null */
@@ -413,7 +381,6 @@ set_ps_display(const char *activity, bool force)
         return;
 #endif
 
-<<<<<<< HEAD
 	/* Drop the remote host and port from the fixed prefix. */
 	if (ps_host_info_size > 0)
 	{
@@ -431,12 +398,6 @@ set_ps_display(const char *activity, bool force)
 	if (Gp_role != GP_ROLE_EXECUTE &&
 		ps_host_info[0] != '\0' && ep - cp > 0)
 		cp += snprintf(cp, ep - cp, "%s ", ps_host_info);
-=======
-	/* Update ps_buffer to contain both fixed part and activity */
-	strlcpy(ps_buffer + ps_buffer_fixed_size, activity,
-			ps_buffer_size - ps_buffer_fixed_size);
-	ps_buffer_cur_len = strlen(ps_buffer);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Which segment is accessed by this qExec? */
 	if (Gp_role == GP_ROLE_EXECUTE &&
@@ -458,6 +419,7 @@ set_ps_display(const char *activity, bool force)
 	 * effectively becomes ps_buffer_size.
 	 */
 	real_act_prefix_size = Min(cp, ep) - ps_buffer;
+	ps_buffer_cur_len = real_act_prefix_size;
 
 	/* Append caller's activity string. */
 	if (ep - cp > 0)
@@ -472,15 +434,9 @@ set_ps_display(const char *activity, bool force)
     {
         union pstun pst;
 
-<<<<<<< HEAD
-        pst.pst_command = ps_buffer;
-        pstat(PSTAT_SETCMD, pst, strlen(ps_buffer), 0, 0);
-    }
-=======
 		pst.pst_command = ps_buffer;
 		pstat(PSTAT_SETCMD, pst, ps_buffer_cur_len, 0, 0);
 	}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif   /* PS_USE_PSTAT */
 
 #ifdef PS_USE_PS_STRINGS
@@ -489,45 +445,11 @@ set_ps_display(const char *activity, bool force)
 #endif   /* PS_USE_PS_STRINGS */
 
 #ifdef PS_USE_CLOBBER_ARGV
-<<<<<<< HEAD
-    {
-        int         buflen;
-#if (defined(sun) && !defined(BSD))
-		int         request_buflen = 2 * ps_argument_size + 1;
-#endif
-
-        /* pad unused memory */
-        buflen = strlen(ps_buffer);
-
-#if (defined(sun) && !defined(BSD))
-		/*
-		 * In Solaris, to properly show the ps status display, it requires the length of
-		 * the status at least twice of the original arguments. We pad the '.'s
-		 * if buflen is not big enough. Note that using spaces to pad does not work, 
-		 * and I don't know why.
-		 */
-		if (buflen < request_buflen)
-		{
-			int pad_len = request_buflen - buflen;
-			if (ps_buffer_size < request_buflen)
-				pad_len = ps_buffer_size - buflen;
-			MemSet(ps_buffer + buflen, '.', pad_len);
-			buflen += pad_len;
-		}
-#endif
-
-		/* clobber remainder of old status string */
-		if (last_status_len > buflen)
-			MemSet(ps_buffer + buflen, PS_PADDING, last_status_len - buflen);
-		last_status_len = buflen;
-    }
-=======
 	/* pad unused memory; need only clobber remainder of old status string */
 	if (last_status_len > ps_buffer_cur_len)
 		MemSet(ps_buffer + ps_buffer_cur_len, PS_PADDING,
 			   last_status_len - ps_buffer_cur_len);
 	last_status_len = ps_buffer_cur_len;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif   /* PS_USE_CLOBBER_ARGV */
 
 #ifdef PS_USE_WIN32
@@ -566,22 +488,10 @@ get_ps_display_from_position(size_t pos, int *displen)
 		*displen = 0;
 		return "";
 	}
-<<<<<<< HEAD
-
-	/* Remove any trailing spaces to offset the effect of PS_PADDING */
-	offset = ps_buffer_size;
-	while (offset > pos && ps_buffer[offset-1] == PS_PADDING)
-		offset--;
-
-	*displen = offset - pos;
-#else
-	*displen = strlen(ps_buffer + pos);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif
-	Assert(*displen >= 0);
 
-<<<<<<< HEAD
+	*displen = (int) (ps_buffer_cur_len - ps_buffer_fixed_size);
+
 	return ps_buffer + pos;
 }
 
@@ -615,9 +525,4 @@ const char *
 get_real_act_ps_display(int *displen)
 {
 	return get_ps_display_from_position(real_act_prefix_size, displen);
-=======
-	*displen = (int) (ps_buffer_cur_len - ps_buffer_fixed_size);
-
-	return ps_buffer + ps_buffer_fixed_size;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }

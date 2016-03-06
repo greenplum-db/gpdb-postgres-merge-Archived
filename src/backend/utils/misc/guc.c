@@ -6,20 +6,12 @@
  * See src/backend/utils/misc/README for more information.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.385 2007/04/16 18:29:55 alvherre Exp $
-=======
- * Copyright (c) 2000-2008, PostgreSQL Global Development Group
- * Written by Peter Eisentraut <peter_e@gmx.net>.
- *
- * IDENTIFICATION
  *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.432.2.8 2010/03/25 14:45:06 alvherre Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *--------------------------------------------------------------------
  */
@@ -59,15 +51,11 @@
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/bgwriter.h"
-#include "postmaster/checkpoint.h"
 #include "postmaster/postmaster.h"
 #include "postmaster/syslogger.h"
-<<<<<<< HEAD
 #include "replication/walsender.h"
 #include "replication/walreceiver.h"
-=======
 #include "postmaster/walwriter.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "storage/fd.h"
 #include "storage/freespace.h"
 #include "tcop/tcopprot.h"
@@ -123,11 +111,8 @@ extern bool Log_disconnections;
 extern int	CommitDelay;
 extern int	CommitSiblings;
 extern char *default_tablespace;
-<<<<<<< HEAD
-=======
 extern char *temp_tablespaces;
 extern bool synchronize_seqscans;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 extern bool fullPageWrites;
 extern int	ssl_renegotiation_limit;
 
@@ -199,18 +184,12 @@ static const char *show_tcp_keepalives_interval(void);
 static const char *show_tcp_keepalives_count(void);
 static bool assign_autovacuum_max_workers(int newval, bool doit, GucSource source);
 static bool assign_maxconnections(int newval, bool doit, GucSource source);
-<<<<<<< HEAD
 
 static const char *assign_application_name(const char *newval, bool doit, GucSource source);
-static bool assign_autovacuum_warning(bool newval, bool doit, GucSource source);
 
 static int	defunct_int = 0;
 static bool	defunct_bool = false;
 static double defunct_double = 0;
-
-static bool dummy_autovac = false;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * GUC option variables that are exported from this module
@@ -285,11 +264,7 @@ static char *client_encoding_string;
 static char *IntervalStyle_string;
 static char *datestyle_string;
 static char *default_iso_level_string;
-<<<<<<< HEAD
-=======
 static char *session_replication_role_string;
-static char *locale_collate;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static char *locale_ctype;
 static char *regex_flavor_string;
 static char *server_encoding_string;
@@ -832,11 +807,10 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"track_counts", PGC_SUSET, STATS_COLLECTOR,
 			gettext_noop("Collects statistics on database activity."),
-<<<<<<< HEAD
 			NULL
 		},
 		&pgstat_track_counts,
-		false, NULL, NULL
+		true, NULL, NULL
 	},
 
 	{
@@ -849,17 +823,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"update_process_title", PGC_SUSET, CLIENT_CONN_OTHER,
-=======
-			NULL
-		},
-		&pgstat_track_counts,
-		true, NULL, NULL
-	},
-
-	{
 		{"update_process_title", PGC_SUSET, STATS_COLLECTOR,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			gettext_noop("Updates the process title to show the active SQL command."),
 			gettext_noop("Enables updating of the process title every time a new SQL command is received by the server.")
 		},
@@ -873,8 +837,22 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
 		},
-		&dummy_autovac,
-		false, assign_autovacuum_warning, NULL
+		&autovacuum_start_daemon,
+		/*
+		 * GPDB: The default for autovacuum is intentionally 'off', even though it's 'on'
+		 * in PostgreSQL. We may want to revisit this later, but people had bad experience
+		 * with autovacuum on GPDB 4.3 versions. Mainly, it's problematic in a cluster when
+		 * autovacuum kicks in in a single segment: the performance of the cluster is often
+		 * only as good as the slowest segment, so autovacuum running on one segment slows
+		 * down the whole system. Also, auto-analyze is problematic, because we actually
+		 * need to collect statistics across all segments in the master, rather than collect
+		 * per-segment statistics at different times in different segments.
+		 *
+		 * So, disabled by default for now. You can still turn it on manually if you know what
+		 * you're doing (e.g. it might be ok to let autovacuum handle small fact tables and
+		 * catalog tables, and schedule manual vacuums for all the big tables).
+		 */
+		false, NULL, NULL
 	},
 
 	{
@@ -1048,22 +1026,12 @@ static struct config_bool ConfigureNamesBool[] =
 		false, NULL, NULL
 	},
 	{
-<<<<<<< HEAD
-		{"redirect_stderr", PGC_POSTMASTER, DEFUNCT_OPTIONS,
-			gettext_noop("Defunct: start a subprocess to capture stderr output into log files."),
-		 	NULL,
-		 	GUC_NO_SHOW_ALL
-		},
-		&Redirect_stderr,
-		true, NULL, NULL
-=======
-		{"logging_collector", PGC_POSTMASTER, LOGGING_WHERE,
-			gettext_noop("Start a subprocess to capture stderr output and/or csvlogs into log files."),
+		{"logging_collector", PGC_POSTMASTER, DEFUNCT_OPTIONS,
+			gettext_noop("Defunct: Start a subprocess to capture stderr output and/or csvlogs into log files."),
 			NULL
 		},
 		&Logging_collector,
-		false, NULL, NULL
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+		true, NULL, NULL
 	},
 	{
 		{"log_truncate_on_rotation", PGC_SIGHUP, LOGGING_WHERE,
@@ -1166,8 +1134,6 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-<<<<<<< HEAD
-=======
 		{"synchronize_seqscans", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
 			gettext_noop("Enable synchronized sequential scans."),
 			NULL
@@ -1186,17 +1152,6 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"allow_system_table_mods", PGC_POSTMASTER, DEVELOPER_OPTIONS,
-			gettext_noop("Allows modifications of the structure of system tables."),
-			NULL,
-			GUC_NOT_IN_SAMPLE
-		},
-		&allowSystemTableMods,
-		false, NULL, NULL
-	},
-
-	{
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		{"ignore_system_indexes", PGC_BACKEND, DEVELOPER_OPTIONS,
 			gettext_noop("Disables reading from system indexes."),
 			gettext_noop("It does not prevent updating the indexes, so it is safe "
@@ -1323,13 +1278,8 @@ static struct config_int ConfigureNamesInt[] =
 	 *
 	 * MaxBackends is limited to INT_MAX/4 because some places compute
 	 * 4*MaxBackends without any overflow check.  This check is made on
-<<<<<<< HEAD
-	 * assign_maxconnections, since MaxBackends is computed as MaxConnections +
-	 * autovacuum_max_workers.
-=======
 	 * assign_maxconnections, since MaxBackends is computed as MaxConnections
 	 * + autovacuum_max_workers.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 *
 	 * Likewise we have to limit NBuffers to INT_MAX/2.
 	 */
@@ -1339,11 +1289,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&MaxConnections,
-<<<<<<< HEAD
 		200, 10, MAX_MAX_BACKENDS, assign_maxconnections, NULL
-=======
-		100, 1, INT_MAX / 4, assign_maxconnections, NULL
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	},
 
 	{
@@ -1694,17 +1640,10 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"log_min_duration_statement", PGC_SUSET, LOGGING_WHEN,
-<<<<<<< HEAD
-			gettext_noop("Sets the minimum execution time above which statements will "
-						 "be logged."),
-			gettext_noop("Zero prints all queries. The default is -1 (turning this feature off)."),
-			GUC_UNIT_MS | GUC_GPDB_ADDOPT
-=======
 			gettext_noop("Sets the minimum execution time above which "
 						 "statements will be logged."),
 			gettext_noop("Zero prints all queries. -1 turns this feature off."),
-			GUC_UNIT_MS
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+			GUC_UNIT_MS | GUC_GPDB_ADDOPT
 		},
 		&log_min_duration_statement,
 		-1, -1, INT_MAX / 1000, NULL, NULL
@@ -1738,21 +1677,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
 		},
 		&bgwriter_lru_maxpages,
-<<<<<<< HEAD
-		5, 0, 1000, NULL, NULL
-	},
-
-	{
-		{"bgwriter_all_maxpages", PGC_SIGHUP, RESOURCES,
-			gettext_noop("Background writer maximum number of all pages to flush per round."),
-			NULL,
-			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
-		},
-		&bgwriter_all_maxpages,
-		5, 0, 1000, NULL, NULL
-=======
 		100, 0, 1000, NULL, NULL
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	},
 
 	{
@@ -2063,26 +1988,10 @@ static struct config_real ConfigureNamesReal[] =
 		1.0, 0.0, 100.0, NULL, NULL
 	},
 	{
-<<<<<<< HEAD
-		{"bgwriter_lru_percent", PGC_SIGHUP, RESOURCES,
-			gettext_noop("Background writer percentage of LRU buffers to flush per round."),
-			NULL,
-			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
-		},
-		&bgwriter_lru_percent,
-		1.0, 0.0, 100.0, NULL, NULL
-	},
-
-	{
-		{"bgwriter_all_percent", PGC_SIGHUP, RESOURCES,
-			gettext_noop("Background writer percentage of all buffers to flush per round."),
-			NULL,
-			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
-=======
 		{"bgwriter_lru_multiplier", PGC_SIGHUP, RESOURCES,
 			gettext_noop("Background writer multiplier on average buffers to scan per round."),
-			NULL
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+			NULL,
+			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
 		},
 		&bgwriter_lru_multiplier,
 		2.0, 0.0, 10.0, NULL, NULL
@@ -2322,9 +2231,12 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-<<<<<<< HEAD
-		{"krb_server_keyfile", PGC_SIGHUP, CONN_AUTH_SECURITY,
-=======
+		/*
+		 * GPDB_83MERGE_FIXME: In previous GPDB versions, krb_server_keyfile was
+		 * labeled as PGC_SIGHUP. I couldn't find any explanation for why in the
+		 * git history, and there was no code comment on it, so I don't know if
+		 * that was intentional.
+		 */
 		{"krb_realm", PGC_POSTMASTER, CONN_AUTH_SECURITY,
 			gettext_noop("Sets realm to match Kerberos and GSSAPI users against."),
 			NULL,
@@ -2336,7 +2248,6 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"krb_server_keyfile", PGC_POSTMASTER, CONN_AUTH_SECURITY,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			gettext_noop("Sets the location of the Kerberos server key file."),
 			NULL,
 			GUC_SUPERUSER_ONLY
@@ -2505,20 +2416,12 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-<<<<<<< HEAD
 		{"log_destination", PGC_SIGHUP, DEFUNCT_OPTIONS,
 			gettext_noop("Defunct: Sets the destination for server log output."),
-			gettext_noop("Valid values are combinations of \"stderr\", \"syslog\", "
-						 "and \"eventlog\", depending on the platform."),
-			GUC_LIST_INPUT | GUC_NO_SHOW_ALL
-=======
-		{"log_destination", PGC_SIGHUP, LOGGING_WHERE,
-			gettext_noop("Sets the destination for server log output."),
 			gettext_noop("Valid values are combinations of \"stderr\", "
 						 "\"syslog\", \"csvlog\", and \"eventlog\", "
 						 "depending on the platform."),
-			GUC_LIST_INPUT
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+			GUC_LIST_INPUT | GUC_NO_SHOW_ALL
 		},
 		&log_destination_string,
 		"stderr", assign_log_destination, NULL
@@ -2704,7 +2607,6 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-<<<<<<< HEAD
 		{"stats_temp_directory", PGC_SIGHUP, STATS_COLLECTOR,
 			gettext_noop("Writes temporary statistics files to the specified directory."),
 			NULL,
@@ -2712,14 +2614,15 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&pgstat_temp_directory,
 		"pg_stat_tmp", assign_pgstat_temp_directory, NULL
-=======
+	},
+
+	{
 		{"default_text_search_config", PGC_USERSET, CLIENT_CONN_LOCALE,
 			gettext_noop("Sets default text search configuration."),
 			NULL
 		},
 		&TSCurrentConfig,
 		"pg_catalog.simple", assignTSCurrentConfig, NULL
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	},
 
 #ifdef USE_SSL
@@ -2733,7 +2636,6 @@ static struct config_string ConfigureNamesString[] =
 		"ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH", NULL, NULL
 	},
 #endif   /* USE_SSL */
-<<<<<<< HEAD
 
 	{
 		{"application_name", PGC_USERSET, LOGGING_WHAT,
@@ -2744,8 +2646,6 @@ static struct config_string ConfigureNamesString[] =
 		&application_name,
 		"", assign_application_name, NULL
 	},
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	{
 		{"external_pid_file", PGC_POSTMASTER, FILE_LOCATIONS,
@@ -2793,8 +2693,6 @@ static int	size_guc_variables;
 
 
 static bool guc_dirty;			/* TRUE if need to do commit/abort work */
-
-static bool guc_cannotprepare;                        /* TRUE if this transaction cannot be prepared for 2PC */
 
 static bool reporting_enabled;	/* TRUE to enable GUC_REPORT */
 
@@ -3551,7 +3449,6 @@ InitializeGUCOptions(void)
 	}
 
 	guc_dirty = false;
-	guc_cannotprepare = false;
 
 	reporting_enabled = false;
 
@@ -3793,13 +3690,6 @@ ResetAllOptions(void)
 								 conf->gen.name, (int) conf->reset_val);
 					*conf->variable = conf->reset_val;
 					conf->gen.source = conf->gen.reset_source;
-<<<<<<< HEAD
-					conf->gen.tentative_source = conf->gen.reset_source;
-					conf->gen.status |= GUC_HAVE_TENTATIVE;
-					guc_dirty = true;
-					guc_cannotprepare = true;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					break;
 				}
 			case PGC_INT:
@@ -3813,13 +3703,6 @@ ResetAllOptions(void)
 								 conf->gen.name, conf->reset_val);
 					*conf->variable = conf->reset_val;
 					conf->gen.source = conf->gen.reset_source;
-<<<<<<< HEAD
-					conf->gen.tentative_source = conf->gen.reset_source;
-					conf->gen.status |= GUC_HAVE_TENTATIVE;
-					guc_dirty = true;
-					guc_cannotprepare = true;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					break;
 				}
 			case PGC_REAL:
@@ -3833,13 +3716,6 @@ ResetAllOptions(void)
 								 conf->gen.name, conf->reset_val);
 					*conf->variable = conf->reset_val;
 					conf->gen.source = conf->gen.reset_source;
-<<<<<<< HEAD
-					conf->gen.tentative_source = conf->gen.reset_source;
-					conf->gen.status |= GUC_HAVE_TENTATIVE;
-					guc_dirty = true;
-					guc_cannotprepare = true;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					break;
 				}
 			case PGC_STRING:
@@ -3870,13 +3746,6 @@ ResetAllOptions(void)
 
 					set_string_field(conf, conf->variable, str);
 					conf->gen.source = conf->gen.reset_source;
-<<<<<<< HEAD
-					conf->gen.tentative_source = conf->gen.reset_source;
-					conf->gen.status |= GUC_HAVE_TENTATIVE;
-					guc_dirty = true;
-					guc_cannotprepare = true;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					break;
 				}
 		}
@@ -3896,11 +3765,7 @@ push_old_value(struct config_generic * gconf, GucAction action)
 {
 	GucStack   *stack;
 
-<<<<<<< HEAD
-	/* If we're not inside a transaction, do nothing */
-=======
 	/* If we're not inside a nest level, do nothing */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (GUCNestLevel == 0)
 		return;
 
@@ -3908,31 +3773,9 @@ push_old_value(struct config_generic * gconf, GucAction action)
 	stack = gconf->stack;
 	if (stack && stack->nest_level >= GUCNestLevel)
 	{
-<<<<<<< HEAD
-		/* Done if we already pushed it at this nesting depth */
-		if (gconf->stack && gconf->stack->nest_level >= GUCNestLevel)
-			return;
-
-		/*
-		 * We keep all the stack entries in TopTransactionContext so as to
-		 * avoid allocation problems when a subtransaction back-fills stack
-		 * entries for upper transaction levels.
-		 */
-		stack = (GucStack *) MemoryContextAlloc(TopTransactionContext,
-												sizeof(GucStack));
-
-		stack->prev = gconf->stack;
-		stack->nest_level = stack->prev ? stack->prev->nest_level + 1 : 1;
-		stack->status = gconf->status;
-		stack->tentative_source = gconf->tentative_source;
-		stack->source = gconf->source;
-
-		switch (gconf->vartype)
-=======
 		/* Yes, so adjust its state if necessary */
 		Assert(stack->nest_level == GUCNestLevel);
 		switch (action)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		{
 			case GUC_ACTION_SET:
 				/* SET overrides any prior action at same nest level */
@@ -3995,44 +3838,6 @@ push_old_value(struct config_generic * gconf, GucAction action)
 
 /*
  * Do GUC processing at main transaction start.
-<<<<<<< HEAD
- */
-void
-AtStart_GUC(void)
-{
-	/*
-	 * The nest level should be 0 between transactions; if it isn't,
-	 * somebody didn't call AtEOXact_GUC, or called it with the wrong
-	 * nestLevel.  We throw a warning but make no other effort to clean up.
-	 */
-	if (GUCNestLevel != 0)
-		elog(WARNING, "GUC nest level = %d at transaction start",
-			 GUCNestLevel);
-	GUCNestLevel = 1;
-}
-
-/*
- * Enter a new nesting level for GUC values.  This is called at subtransaction
- * start and when entering a function that has proconfig settings.  NOTE that
- * we must not risk error here, else subtransaction start will be unhappy.
- */
-int
-NewGUCNestLevel(void)
-{
-	return ++GUCNestLevel;
-}
-
-/*
- * Do GUC processing at transaction or subtransaction commit or abort, or
- * when exiting a function that has proconfig settings.  (The name is thus
- * a bit of a misnomer; perhaps it should be ExitGUCNestLevel or some such.)
- * During abort, we discard all GUC settings that were applied at nesting
- * levels >= nestLevel.  nestLevel == 1 corresponds to the main transaction.
- */
-void
-AtEOXact_GUC(bool isCommit, int nestLevel)
-{
-=======
  */
 void
 AtStart_GUC(void)
@@ -4070,7 +3875,6 @@ void
 AtEOXact_GUC(bool isCommit, int nestLevel)
 {
 	bool		still_dirty;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	int			i;
 
 	/*
@@ -4089,10 +3893,7 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 		return;
 	}
 
-<<<<<<< HEAD
-=======
 	still_dirty = false;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	for (i = 0; i < num_guc_variables; i++)
 	{
 		struct config_generic *gconf = guc_variables[i];
@@ -4108,48 +3909,10 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 		while ((stack = gconf->stack) != NULL &&
 			   stack->nest_level >= nestLevel)
 		{
-<<<<<<< HEAD
-			Assert(stack == NULL);
-			continue;
-		}
-		/* Assert that we stacked old value before changing it */
-		Assert(stack != NULL && (my_status & GUC_HAVE_STACK));
-		/* However, the last change may have been at an outer xact level */
-		if (stack->nest_level < nestLevel)
-			continue;
-		Assert(stack->nest_level == nestLevel);
-
-		/*
-		 * We will pop the stack entry.  Start by restoring outer xact status
-		 * (since we may want to modify it below).	Be careful to use
-		 * my_status to reference the inner xact status below this point...
-		 */
-		gconf->status = stack->status;
-
-		/*
-		 * We have two cases:
-		 *
-		 * If commit and HAVE_TENTATIVE, set actual value to tentative (this
-		 * is to override a SET LOCAL if one occurred later than SET). We keep
-		 * the tentative value and propagate HAVE_TENTATIVE to the parent
-		 * status, allowing the SET's effect to percolate up. (But if we're
-		 * exiting the outermost transaction, we'll drop the HAVE_TENTATIVE
-		 * bit below.)
-		 *
-		 * Otherwise, we have a transaction that aborted or executed only SET
-		 * LOCAL (or no SET at all).  In either case it should have no further
-		 * effect, so restore both tentative and actual values from the stack
-		 * entry.
-		 */
-
-		useTentative = isCommit && (my_status & GUC_HAVE_TENTATIVE) != 0;
-		changed = false;
-=======
 			GucStack   *prev = stack->prev;
 			bool		restorePrior = false;
 			bool		restoreMasked = false;
 			bool		changed;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			/*
 			 * In this next bit, if we don't set either restorePrior or
@@ -4286,21 +4049,6 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 							struct config_real *conf = (struct config_real *) gconf;
 							double		newval = newvalue.realval;
 
-<<<<<<< HEAD
-						set_string_field(conf, conf->variable, newval);
-						changed = true;
-					}
-					conf->gen.source = newsource;
-					/* Release stacked values if not used anymore */
-					set_string_field(conf, &stack->value.stringval,
-									 NULL);
-					set_string_field(conf, &stack->tentative_val.stringval,
-									 NULL);
-					/* Don't store tentative value separately after commit */
-					if (nestLevel == 1)
-						set_string_field(conf, &conf->tentative_val, NULL);
-					break;
-=======
 							if (*conf->variable != newval)
 							{
 								if (conf->assign_hook)
@@ -4356,27 +4104,14 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 							set_string_field(conf, &stack->masked.stringval, NULL);
 							break;
 						}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				}
 
 				gconf->source = newsource;
 			}
 
-<<<<<<< HEAD
-		/*
-		 * If we're now out of all xact levels, forget TENTATIVE status bit;
-		 * there's nothing tentative about the value anymore.
-		 */
-		if (nestLevel == 1)
-		{
-			Assert(gconf->stack == NULL);
-			gconf->status = 0;
-		}
-=======
 			/* Finish popping the state stack */
 			gconf->stack = prev;
 			pfree(stack);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			/* Report new value if we changed it */
 			if (changed && (gconf->flags & GUC_REPORT))
@@ -4387,19 +4122,8 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 			still_dirty = true;
 	}
 
-<<<<<<< HEAD
-	/*
-	 * If we're now out of all xact levels, we can clear guc_dirty. (Note: we
-	 * cannot reset guc_dirty when exiting a subtransaction, because we know
-	 * that all outer transaction levels will have stacked values to deal
-	 * with.)
-	 */
-	if (nestLevel == 1)
-		guc_dirty = false;
-=======
 	/* If there are no remaining stack entries, we can reset guc_dirty */
 	guc_dirty = still_dirty;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Update nesting level */
 	GUCNestLevel = nestLevel - 1;
@@ -4460,7 +4184,6 @@ ReportGUCOption(struct config_generic * record)
 
 
 /*
-<<<<<<< HEAD
  * Try to parse value as an integer.  The accepted formats are the
  * usual decimal, octal, or hexadecimal formats, optionally followed by
  * a unit name if "flags" indicates a unit is allowed.
@@ -4469,12 +4192,6 @@ ReportGUCOption(struct config_generic * record)
  * If okay and result is not NULL, return the value in *result.
  * If not okay and hintmsg is not NULL, *hintmsg is set to a suitable
  *	HINT message, or NULL if no hint provided.
-=======
- * Try to interpret value as boolean value.  Valid values are: true,
- * false, yes, no, on, off, 1, 0; as well as unique prefixes thereof.
- * If the string parses okay, return true, else false.
- * If okay and result is not NULL, return the value in *result.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 bool
 parse_int(const char *value, int *result, int flags, const char **hintmsg)
@@ -4679,240 +4396,9 @@ parse_int(const char *value, int *result, int flags, const char **hintmsg)
 
 
 /*
-<<<<<<< HEAD
  * Try to parse value as a floating point constant in the usual
  * format.	If the value parsed okay return true, else false.  If
  * result is not NULL, return the semantic value there.
- */
-static bool
-parse_real(const char *value, double *result, int flags)
-{
-	double		val;
-=======
- * Try to parse value as an integer.  The accepted formats are the
- * usual decimal, octal, or hexadecimal formats, optionally followed by
- * a unit name if "flags" indicates a unit is allowed.
- *
- * If the string parses okay, return true, else false.
- * If okay and result is not NULL, return the value in *result.
- * If not okay and hintmsg is not NULL, *hintmsg is set to a suitable
- *	HINT message, or NULL if no hint provided.
- */
-static bool
-parse_int(const char *value, int *result, int flags, const char **hintmsg)
-{
-	int64		val;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-	char	   *endptr;
-
-	/* To suppress compiler warnings, always set output params */
-	if (result)
-		*result = 0;
-	if (hintmsg)
-		*hintmsg = NULL;
-
-	/* We assume here that int64 is at least as wide as long */
-	errno = 0;
-	val = strtod(value, &endptr);
-
-	if (endptr == value)
-		return false;			/* no HINT for integer syntax error */
-
-	if (errno == ERANGE || val != (int64) ((int32) val))
-	{
-		if (hintmsg)
-			*hintmsg = gettext_noop("Value exceeds integer range.");
-		return false;
-	}
-
-	/* allow whitespace between integer and unit */
-	while (isspace((unsigned char) *endptr))
-		endptr++;
-
-	/* Handle possible unit */
-	if (*endptr != '\0')
-	{
-		/*
-		 * Note: the multiple-switch coding technique here is a bit tedious,
-		 * but seems necessary to avoid intermediate-value overflows.
-		 *
-		 * If INT64_IS_BUSTED (ie, it's really int32) we will fail to detect
-		 * overflow due to units conversion, but there are few enough such
-		 * machines that it does not seem worth trying to be smarter.
-		 */
-		if (flags & GUC_UNIT_MEMORY)
-		{
-			/* Set hint for use if no match or trailing garbage */
-			if (hintmsg)
-				*hintmsg = gettext_noop("Valid units for this parameter are \"kB\", \"MB\", and \"GB\".");
-
-#if BLCKSZ < 1024 || BLCKSZ > (1024*1024)
-#error BLCKSZ must be between 1KB and 1MB
-#endif
-#if XLOG_BLCKSZ < 1024 || XLOG_BLCKSZ > (1024*1024)
-#error XLOG_BLCKSZ must be between 1KB and 1MB
-#endif
-
-			if (strncmp(endptr, "kB", 2) == 0)
-			{
-				endptr += 2;
-				switch (flags & GUC_UNIT_MEMORY)
-				{
-					case GUC_UNIT_BLOCKS:
-						val /= (BLCKSZ / 1024);
-						break;
-					case GUC_UNIT_XBLOCKS:
-						val /= (XLOG_BLCKSZ / 1024);
-						break;
-				}
-			}
-			else if (strncmp(endptr, "MB", 2) == 0)
-			{
-				endptr += 2;
-				switch (flags & GUC_UNIT_MEMORY)
-				{
-					case GUC_UNIT_KB:
-						val *= KB_PER_MB;
-						break;
-					case GUC_UNIT_BLOCKS:
-						val *= KB_PER_MB / (BLCKSZ / 1024);
-						break;
-					case GUC_UNIT_XBLOCKS:
-						val *= KB_PER_MB / (XLOG_BLCKSZ / 1024);
-						break;
-				}
-			}
-			else if (strncmp(endptr, "GB", 2) == 0)
-			{
-				endptr += 2;
-				switch (flags & GUC_UNIT_MEMORY)
-				{
-					case GUC_UNIT_KB:
-						val *= KB_PER_GB;
-						break;
-					case GUC_UNIT_BLOCKS:
-						val *= KB_PER_GB / (BLCKSZ / 1024);
-						break;
-					case GUC_UNIT_XBLOCKS:
-						val *= KB_PER_GB / (XLOG_BLCKSZ / 1024);
-						break;
-				}
-			}
-		}
-		else if (flags & GUC_UNIT_TIME)
-		{
-			/* Set hint for use if no match or trailing garbage */
-			if (hintmsg)
-				*hintmsg = gettext_noop("Valid units for this parameter are \"ms\", \"s\", \"min\", \"h\", and \"d\".");
-
-			if (strncmp(endptr, "ms", 2) == 0)
-			{
-				endptr += 2;
-				switch (flags & GUC_UNIT_TIME)
-				{
-					case GUC_UNIT_S:
-						val /= MS_PER_S;
-						break;
-					case GUC_UNIT_MIN:
-						val /= MS_PER_MIN;
-						break;
-				}
-			}
-			else if (strncmp(endptr, "s", 1) == 0)
-			{
-				endptr += 1;
-				switch (flags & GUC_UNIT_TIME)
-				{
-					case GUC_UNIT_MS:
-						val *= MS_PER_S;
-						break;
-					case GUC_UNIT_MIN:
-						val /= S_PER_MIN;
-						break;
-				}
-			}
-			else if (strncmp(endptr, "min", 3) == 0)
-			{
-				endptr += 3;
-				switch (flags & GUC_UNIT_TIME)
-				{
-					case GUC_UNIT_MS:
-						val *= MS_PER_MIN;
-						break;
-					case GUC_UNIT_S:
-						val *= S_PER_MIN;
-						break;
-				}
-			}
-			else if (strncmp(endptr, "h", 1) == 0)
-			{
-				endptr += 1;
-				switch (flags & GUC_UNIT_TIME)
-				{
-					case GUC_UNIT_MS:
-						val *= MS_PER_H;
-						break;
-					case GUC_UNIT_S:
-						val *= S_PER_H;
-						break;
-					case GUC_UNIT_MIN:
-						val *= MIN_PER_H;
-						break;
-				}
-			}
-			else if (strncmp(endptr, "d", 1) == 0)
-			{
-				endptr += 1;
-				switch (flags & GUC_UNIT_TIME)
-				{
-					case GUC_UNIT_MS:
-						val *= MS_PER_D;
-						break;
-					case GUC_UNIT_S:
-						val *= S_PER_D;
-						break;
-					case GUC_UNIT_MIN:
-						val *= MIN_PER_D;
-						break;
-				}
-			}
-		}
-<<<<<<< HEAD
-	}
-
-    if (endptr == value || *endptr != '\0' || errno == ERANGE)
-	{
-		if (result)
-			*result = 0;		/* suppress compiler warning */
-=======
-
-		/* allow whitespace after unit */
-		while (isspace((unsigned char) *endptr))
-			endptr++;
-
-		if (*endptr != '\0')
-			return false;		/* appropriate hint, if any, already set */
-
-		/* Check for overflow due to units conversion */
-		if (val != (int64) ((int32) val))
-		{
-			if (hintmsg)
-				*hintmsg = gettext_noop("Value exceeds integer range.");
-			return false;
-		}
-	}
-
-	if (result)
-		*result = (int) val;
-	return true;
-}
-
-
-
-/*
- * Try to parse value as a floating point number in the usual format.
- * If the string parses okay, return true, else false.
- * If okay and result is not NULL, return the value in *result.
  */
 static bool
 parse_real(const char *value, double *result)
@@ -4926,7 +4412,6 @@ parse_real(const char *value, double *result)
 	errno = 0;
 	val = strtod(value, &endptr);
 	if (endptr == value || errno == ERANGE)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		return false;
 
 	/* allow whitespace after number */
@@ -5080,14 +4565,8 @@ set_config_option(const char *name, const char *value,
 				if (changeVal && !is_newvalue_equal(record, value))
 					ereport(elevel,
 							(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
-<<<<<<< HEAD
-					   errmsg("attempted change of parameter \"%s\" ignored",
-							  name),
-							 errdetail("This parameter cannot be changed after server start.")));
-=======
 							 errmsg("parameter \"%s\" cannot be changed after server start; configuration file change ignored",
 									name)));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				return true;
 			}
 			if (context != PGC_POSTMASTER)
@@ -5266,11 +4745,7 @@ set_config_option(const char *name, const char *value,
 	 * value to its default.
 	 */
 	makeDefault = changeVal && (source <= PGC_S_OVERRIDE) &&
-<<<<<<< HEAD
-	    (value != NULL);
-=======
 		((value != NULL) || source == PGC_S_DEFAULT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Ignore attempted set if overridden by previously processed setting.
@@ -5321,11 +4796,7 @@ set_config_option(const char *name, const char *value,
 
 				/* Save old value to support transaction abort */
 				if (changeVal && !makeDefault)
-<<<<<<< HEAD
-					push_old_value(&conf->gen);
-=======
 					push_old_value(&conf->gen, action);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 				if (conf->assign_hook)
 					if (!(*conf->assign_hook) (newval, changeVal, source))
@@ -5339,9 +4810,6 @@ set_config_option(const char *name, const char *value,
 
 				if (changeVal)
 				{
-<<<<<<< HEAD
-					if (changeVal)
-=======
 					*conf->variable = newval;
 					conf->gen.source = source;
 				}
@@ -5350,7 +4818,6 @@ set_config_option(const char *name, const char *value,
 					GucStack   *stack;
 
 					if (conf->gen.reset_source <= source)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					{
 						conf->reset_val = newval;
 						conf->gen.reset_source = source;
@@ -5377,7 +4844,6 @@ set_config_option(const char *name, const char *value,
 					const char *hintmsg;
 
 					if (!parse_int(value, &newval, conf->gen.flags, &hintmsg))
-<<<<<<< HEAD
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -5406,14 +4872,6 @@ set_config_option(const char *name, const char *value,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 								 errmsg("%d is outside the valid range for parameter \"%s\" (%d .. %d)",
 										newval, name, conf->min, max_work_mem)));
-=======
-					{
-						ereport(elevel,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid value for parameter \"%s\": \"%s\"",
-								name, value),
-								 hintmsg ? errhint(hintmsg) : 0));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 						return false;
 					}
 
@@ -5441,11 +4899,7 @@ set_config_option(const char *name, const char *value,
 
 				/* Save old value to support transaction abort */
 				if (changeVal && !makeDefault)
-<<<<<<< HEAD
-					push_old_value(&conf->gen);
-=======
 					push_old_value(&conf->gen, action);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 				if (conf->assign_hook)
 					if (!(*conf->assign_hook) (newval, changeVal, source))
@@ -5459,9 +4913,6 @@ set_config_option(const char *name, const char *value,
 
 				if (changeVal)
 				{
-<<<<<<< HEAD
-					if (changeVal)
-=======
 					*conf->variable = newval;
 					conf->gen.source = source;
 				}
@@ -5470,7 +4921,6 @@ set_config_option(const char *name, const char *value,
 					GucStack   *stack;
 
 					if (conf->gen.reset_source <= source)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					{
 						conf->reset_val = newval;
 						conf->gen.reset_source = source;
@@ -5494,7 +4944,7 @@ set_config_option(const char *name, const char *value,
 
 				if (value)
 				{
-					if (!parse_real(value, &newval, conf->gen.flags))
+					if (!parse_real(value, &newval))
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -5521,11 +4971,7 @@ set_config_option(const char *name, const char *value,
 
 				/* Save old value to support transaction abort */
 				if (changeVal && !makeDefault)
-<<<<<<< HEAD
-					push_old_value(&conf->gen);
-=======
 					push_old_value(&conf->gen, action);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 				if (conf->assign_hook)
 					if (!(*conf->assign_hook) (newval, changeVal, source))
@@ -5544,13 +4990,9 @@ set_config_option(const char *name, const char *value,
 				}
 				if (makeDefault)
 				{
-<<<<<<< HEAD
-					if (changeVal)
-=======
 					GucStack   *stack;
 
 					if (conf->gen.reset_source <= source)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					{
 						conf->reset_val = newval;
 						conf->gen.reset_source = source;
@@ -5616,15 +5058,9 @@ set_config_option(const char *name, const char *value,
 
 				/* Save old value to support transaction abort */
 				if (changeVal && !makeDefault)
-<<<<<<< HEAD
-					push_old_value(&conf->gen);
-
-				if (conf->assign_hook)
-=======
 					push_old_value(&conf->gen, action);
 
 				if (conf->assign_hook && newval)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				{
 					const char *hookresult;
 
@@ -5668,13 +5104,9 @@ set_config_option(const char *name, const char *value,
 				}
 				if (makeDefault)
 				{
-<<<<<<< HEAD
-					if (changeVal)
-=======
 					GucStack   *stack;
 
 					if (conf->gen.reset_source <= source)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					{
 						set_string_field(conf, &conf->reset_val, newval);
 						conf->gen.reset_source = source;
@@ -5943,12 +5375,8 @@ flatten_set_variable_args(const char *name, List *args)
 					Datum		interval;
 					char	   *intervalout;
 
-<<<<<<< HEAD
-					typmod = typenameTypeMod(NULL, arg->typname, INTERVALOID);
-=======
-					typoid = typenameTypeId(NULL, arg->typename, &typmod);
+					typoid = typenameTypeId(NULL, arg->typname, &typmod);
 					Assert(typoid == INTERVALOID);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 					interval =
 						DirectFunctionCall3(interval_in,
@@ -5988,9 +5416,6 @@ flatten_set_variable_args(const char *name, List *args)
  * SET command
  */
 void
-<<<<<<< HEAD
-SetPGVariable(const char *name, List *args, bool is_local, bool gp_dispatch)
-=======
 ExecSetVariableStmt(VariableSetStmt *stmt)
 {
 	GucAction	action = stmt->is_local ? GUC_ACTION_LOCAL : GUC_ACTION_SET;
@@ -6089,6 +5514,8 @@ ExtractSetVariableArgs(VariableSetStmt *stmt)
 	}
 }
 
+
+
 /*
  * SetPGVariable - SET command exported as an easily-C-callable function.
  *
@@ -6097,7 +5524,13 @@ ExtractSetVariableArgs(VariableSetStmt *stmt)
  */
 void
 SetPGVariable(const char *name, List *args, bool is_local)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+{
+	SetPGVariableOptDispatch(name, args, is_local, true);
+}
+
+/* GPDB: Like SetPGVariable, but with extra 'gp_dispatch' parameter.  */
+void
+SetPGVariableOptDispatch(const char *name, List *args, bool is_local, bool gp_dispatch)
 {
 	char	   *argstring = flatten_set_variable_args(name, args);
 
@@ -7119,13 +6552,8 @@ is_newvalue_equal(struct config_generic * record, const char *newvalue)
 				struct config_bool *conf = (struct config_bool *) record;
 				bool		newval;
 
-<<<<<<< HEAD
-				return parse_bool(newvalue, &newval) &&
-					*conf->variable == newval;
-=======
 				return parse_bool(newvalue, &newval)
 					&& *conf->variable == newval;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			}
 		case PGC_INT:
 			{
@@ -7140,11 +6568,7 @@ is_newvalue_equal(struct config_generic * record, const char *newvalue)
 				struct config_real *conf = (struct config_real *) record;
 				double		newval;
 
-<<<<<<< HEAD
-				return parse_real(newvalue, &newval, record->flags)
-=======
 				return parse_real(newvalue, &newval)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					&& *conf->variable == newval;
 			}
 		case PGC_STRING:
@@ -7679,113 +7103,6 @@ GUCArrayReset(ArrayType *array)
 }
 
 /*
- * Given a GUC array, delete all settings from it that our permission
- * level allows: if superuser, delete them all; if regular user, only
- * those that are PGC_USERSET
- */
-ArrayType *
-GUCArrayReset(ArrayType *array)
-{
-	ArrayType  *newarray;
-	int			i;
-	int			index;
-
-	/* if array is currently null, nothing to do */
-	if (!array)
-		return NULL;
-
-	/* if we're superuser, we can delete everything */
-	if (superuser())
-		return NULL;
-
-	newarray = NULL;
-	index = 1;
-
-	for (i = 1; i <= ARR_DIMS(array)[0]; i++)
-	{
-		Datum		d;
-		char	   *val;
-		char	   *eqsgn;
-		bool		isnull;
-		struct config_generic *gconf;
-
-		d = array_ref(array, 1, &i,
-					  -1 /* varlenarray */ ,
-					  -1 /* TEXT's typlen */ ,
-					  false /* TEXT's typbyval */ ,
-					  'i' /* TEXT's typalign */ ,
-					  &isnull);
-
-		if (isnull)
-			continue;
-		val = DatumGetCString(DirectFunctionCall1(textout, d));
-
-		eqsgn = strchr(val, '=');
-		*eqsgn = '\0';
-
-		gconf = find_option(val, WARNING);
-		if (!gconf)
-			continue;
-
-		/* note: superuser-ness was already checked above */
-		/* skip entry if OK to delete */
-		if (gconf->context == PGC_USERSET)
-			continue;
-
-		/* XXX do we need to worry about database owner? */
-
-		/* else add it to the output array */
-		if (newarray)
-		{
-			newarray = array_set(newarray, 1, &index,
-								 d,
-								 false,
-								 -1 /* varlenarray */ ,
-								 -1 /* TEXT's typlen */ ,
-								 false /* TEXT's typbyval */ ,
-								 'i' /* TEXT's typalign */ );
-		}
-		else
-			newarray = construct_array(&d, 1,
-									   TEXTOID,
-									   -1, false, 'i');
-
-		index++;
-		pfree(val);
-	}
-
-	return newarray;
-}
-
-static bool
-assign_maxconnections(int newval, bool doit, GucSource source)
-{
-	if (doit)
-	{
-		if (newval + autovacuum_max_workers > INT_MAX / 4)
-			return false;
-
-		MaxBackends = newval + autovacuum_max_workers;
-	}
-
-	return true;
-}
-
-static bool
-assign_autovacuum_max_workers(int newval, bool doit, GucSource source)
-{
-	if (doit)
-	{
-		if (newval + MaxConnections > INT_MAX / 4)
-			return false;
-
-		MaxBackends = newval + MaxConnections;
-	}
-
-	return true;
-}
-
-/*
  * assign_hook and show_hook subroutines
  */
 
@@ -8242,15 +7559,6 @@ assign_debug_assertions(bool newval, bool doit, GucSource source)
 }
 
 static bool
-assign_autovacuum_warning(bool newval, bool doit, GucSource source)
-{
-	if (newval)
-		elog(WARNING, "Autovacuum is not supported in GPDB.");
-
-	return true;
-}
-
-static bool
 assign_ssl(bool newval, bool doit, GucSource source)
 {
 #ifndef USE_SSL
@@ -8286,21 +7594,12 @@ assign_log_stats(bool newval, bool doit, GucSource source)
 	if (newval &&
 		(log_parser_stats || log_planner_stats || log_executor_stats || log_dispatch_stats))
 	{
-<<<<<<< HEAD
-		if (source >= PGC_S_INTERACTIVE)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cannot enable \"log_statement_stats\" when "
-							"\"log_parser_stats\", \"log_planner_stats\", "
-							"\"log_dispatch_stats\", "
-							"or \"log_executor_stats\" is true")));
-=======
 		ereport(GUC_complaint_elevel(source),
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("cannot enable \"log_statement_stats\" when "
 						"\"log_parser_stats\", \"log_planner_stats\", "
+						"\"log_dispatch_stats\", "
 						"or \"log_executor_stats\" is true")));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
 		if (source != PGC_S_OVERRIDE)
 			return false;
@@ -8520,7 +7819,6 @@ show_tcp_keepalives_count(void)
 	return nbuf;
 }
 
-<<<<<<< HEAD
 static const char *
 assign_pgstat_temp_directory(const char *newval, bool doit, GucSource source)
 {
@@ -8631,7 +7929,8 @@ show_allow_system_table_mods(void)
 		return "DML";
 	else
 		return "NONE";
-=======
+}
+
 static bool
 assign_maxconnections(int newval, bool doit, GucSource source)
 {
@@ -8654,7 +7953,6 @@ assign_autovacuum_max_workers(int newval, bool doit, GucSource source)
 		MaxBackends = newval + MaxConnections;
 
 	return true;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 #include "guc-file.c"
