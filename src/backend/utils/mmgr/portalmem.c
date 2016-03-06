@@ -7,21 +7,12 @@
  * This module provides memory management services for portals, but it
  * doesn't actually run the executor for them.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.97.2.1 2007/04/26 23:24:57 tgl Exp $
-=======
- *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * IDENTIFICATION
  *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.106.2.5 2010/07/13 09:02:46 heikki Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -156,24 +147,15 @@ GetPortalByName(const char *name)
  *		Get the "primary" stmt within a portal, ie, the one marked canSetTag.
  *
  * Returns NULL if no such stmt.  If multiple PlannedStmt structs within the
- * portal are marked canSetTag, returns the first one.	Neither of these
+ * portal are marked canSetTag, returns the first one.  Neither of these
  * cases should occur in present usages of this function.
  *
-<<<<<<< HEAD
- * Copes if given a list of Querys --- can't happen in a portal, but may
- * occur elsewhere, e.g., PreparedStatement handling or, eventually,
- * plan caching.
- *
- * For use with a portal, use PortalGetPrimaryStmt rather than calling this 
- * directly.
-=======
  * Copes if given a list of Querys --- can't happen in a portal, but this
  * code also supports plancache.c, which needs both cases.
  *
  * Note: the reason this is just handed a List is so that plancache.c
- * can share the code.	For use with a portal, use PortalGetPrimaryStmt
+ * can share the code.  For use with a portal, use PortalGetPrimaryStmt
  * rather than calling this directly.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 Node *
 PortalListGetPrimaryStmt(List *stmts)
@@ -186,11 +168,7 @@ PortalListGetPrimaryStmt(List *stmts)
 
 		if (IsA(stmt, PlannedStmt))
 		{
-<<<<<<< HEAD
-			if (((PlannedStmt *)stmt)->canSetTag)
-=======
 			if (((PlannedStmt *) stmt)->canSetTag)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				return stmt;
 		}
 		else if (IsA(stmt, Query))
@@ -310,21 +288,12 @@ CreateNewPortal(void)
  * PortalDefineQuery
  *		A simple subroutine to establish a portal's query.
  *
-<<<<<<< HEAD
- * Notes: Caller MUST supply a sourceText string; it is no longer okay
- * to pass NULL.  (If you really don't have source text, pass a constant 
- * string, e.g., "(query not available)".) 
+ * Notes: as of PG 8.4 (this part backported to GPDB already), caller MUST supply a sourceText string; it is not
+ * allowed anymore to pass NULL.  (If you really don't have source text,
+ * you can pass a constant string, perhaps "(query not available)".)
  *
  * commandTag shall be NULL if and only if the original query string
- * (before rewriting) was an empty string.	Also, commandTag must be a
- * pointer to a constant string, since it is not copied.  
- *
- * The caller is responsible for ensuring that the passed prepStmtName
- * (if not NULL) and sourceText have adequate lifetime. Also, queryContext 
- * must accurately  describe the location of the stmt list contents.
-=======
- * Notes: commandTag shall be NULL if and only if the original query string
- * (before rewriting) was an empty string.	Also, the passed commandTag must
+ * (before rewriting) was an empty string.  Also, the passed commandTag must
  * be a pointer to a constant string, since it is not copied.
  *
  * If cplan is provided, then it is a cached plan containing the stmts,
@@ -342,7 +311,6 @@ CreateNewPortal(void)
  * particular don't do anything that risks elog(ERROR).  If that were to
  * happen here before storing the cplan reference, we'd leak the plancache
  * refcount that the caller is trying to hand off to us.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 void
 PortalDefineQuery(Portal portal,
@@ -351,31 +319,18 @@ PortalDefineQuery(Portal portal,
 				  NodeTag	  sourceTag,
 				  const char *commandTag,
 				  List *stmts,
-<<<<<<< HEAD
-				  MemoryContext queryContext)
-{
-	AssertArg(PortalIsValid(portal));
-	AssertState(portal->queryContext == NULL);	/* else defined already */
-
-	AssertArg(sourceText != NULL);
-	AssertArg(commandTag != NULL || stmts == NIL);
-=======
 				  CachedPlan *cplan)
 {
 	AssertArg(PortalIsValid(portal));
 	AssertState(portal->status == PORTAL_NEW);
 
 	Assert(commandTag != NULL || stmts == NIL);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	portal->prepStmtName = prepStmtName;
 	portal->sourceText = sourceText;
 	portal->sourceTag = sourceTag;
 	portal->commandTag = commandTag;
 	portal->stmts = stmts;
-<<<<<<< HEAD
-	portal->queryContext = queryContext;
-=======
 	portal->cplan = cplan;
 	portal->status = PORTAL_DEFINED;
 }
@@ -399,7 +354,6 @@ PortalReleaseCachedPlan(Portal portal)
 		 */
 		portal->stmts = NIL;
 	}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
@@ -468,13 +422,6 @@ PortalDrop(Portal portal, bool isTopCommit)
 {
 	AssertArg(PortalIsValid(portal));
 
-<<<<<<< HEAD
-	/* Not sure if this case can validly happen or not... */
-	if (portal->status == PORTAL_ACTIVE)
-		elog(ERROR, "cannot drop active or queued portal");
-
-	TeardownSequenceServer();
-=======
 	/*
 	 * Don't allow dropping a pinned portal, it's still needed by whoever
 	 * pinned it. Not sure if the PORTAL_ACTIVE case can validly happen or
@@ -485,7 +432,8 @@ PortalDrop(Portal portal, bool isTopCommit)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_STATE),
 				 errmsg("cannot drop active portal \"%s\"", portal->name)));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+
+	TeardownSequenceServer();
 
 	/*
 	 * Remove portal from hash table.  Because we do this first, we will not
@@ -1002,7 +950,6 @@ AtSubCleanup_Portals(SubTransactionId mySubid)
 void
 AtExitCleanup_ResPortals(void)
 {
-<<<<<<< HEAD
 	HASH_SEQ_STATUS status;
 	PortalHashEnt *hentry;
 
@@ -1102,54 +1049,6 @@ pg_cursor(PG_FUNCTION_ARGS)
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	/*
-	 * build tupdesc for result tuples. This must match the definition of
-	 * the pg_cursors view in system_views.sql
-	 */
-	tupdesc = CreateTemplateTupleDesc(6, false);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
-					   TEXTOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "statement",
-					   TEXTOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "is_holdable",
-					   BOOLOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "is_binary",
-					   BOOLOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "is_scrollable",
-					   BOOLOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 6, "creation_time",
-					   TIMESTAMPTZOID, -1, 0);
-
-	/*
-	 * We put all the tuples into a tuplestore in one scan of the hashtable.
-	 * This avoids any issue of the hashtable possibly changing between calls.
-	 */
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
-
-=======
-	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
-	HASH_SEQ_STATUS hash_seq;
-	PortalHashEnt *hentry;
-
-	/* check to see if caller supports us returning a tuplestore */
-	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that cannot accept a set")));
-	if (!(rsinfo->allowedModes & SFRM_Materialize))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("materialize mode required, but it is not " \
-						"allowed in this context")));
-
-	/* need to build tuplestore in query context */
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
-
-	/*
 	 * build tupdesc for result tuples. This must match the definition of the
 	 * pg_cursors view in system_views.sql
 	 */
@@ -1176,7 +1075,6 @@ pg_cursor(PG_FUNCTION_ARGS)
 	/* generate junk in short-term context */
 	MemoryContextSwitchTo(oldcontext);
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	hash_seq_init(&hash_seq, PortalHashTable);
 	while ((hentry = hash_seq_search(&hash_seq)) != NULL)
 	{
@@ -1189,13 +1087,7 @@ pg_cursor(PG_FUNCTION_ARGS)
 		if (!portal->visible)
 			continue;
 
-<<<<<<< HEAD
-		/* generate junk in short-term context */
-		MemoryContextSwitchTo(oldcontext);
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-		MemSet(nulls, 0, sizeof(nulls));
+		MemSet(nulls, false, sizeof(nulls));
 
 		values[0] = DirectFunctionCall1(textin, CStringGetDatum((char *) portal->name));
 		if (!portal->sourceText)
@@ -1210,22 +1102,12 @@ pg_cursor(PG_FUNCTION_ARGS)
 
 		tuple = heap_form_tuple(tupdesc, values, nulls);
 
-<<<<<<< HEAD
-		/* switch to appropriate context while storing the tuple */
-		MemoryContextSwitchTo(per_query_ctx);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		tuplestore_puttuple(tupstore, tuple);
 	}
 
 	/* clean up and return the tuplestore */
 	tuplestore_donestoring(tupstore);
 
-<<<<<<< HEAD
-	MemoryContextSwitchTo(oldcontext);
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;

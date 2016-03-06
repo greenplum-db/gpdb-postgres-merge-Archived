@@ -14,11 +14,11 @@
 #ifndef PORTALCMDS_H
 #define PORTALCMDS_H
 
+/* GPDB_83FIXME: is this #include needed? */
+#if 0
 #include "nodes/parsenodes.h"
-<<<<<<< HEAD
-=======
+#endif
 #include "nodes/plannodes.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "utils/portal.h"
 
 

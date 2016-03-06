@@ -80,8 +80,6 @@ MemoryContext MemoryAccountMemoryContext = NULL;
 /* This is a transient link to the active portal's memory context: */
 MemoryContext PortalContext = NULL;
 
-static void MemoryContextStatsInternal(MemoryContext context, int level);
-
 
 /*****************************************************************************
  *	  EXPORTED ROUTINES														 *
@@ -784,7 +782,6 @@ MemoryContextStats_recur(MemoryContext topContext, MemoryContext rootContext,
 void
 MemoryContextStats(MemoryContext context)
 {
-<<<<<<< HEAD
     char*     name;
     char      namebuf[MAX_CONTEXT_NAME_SIZE];
 
@@ -808,21 +805,6 @@ MemoryContextStats(MemoryContext context)
 
     MemoryContextStats_recur(context, context, name, namebuf, namebufsize, nBlocks, nChunks,
     		currentAvailable, allAllocated, allFreed, maxHeld);
-=======
-	MemoryContextStatsInternal(context, 0);
-}
-
-static void
-MemoryContextStatsInternal(MemoryContext context, int level)
-{
-	MemoryContext child;
-
-	AssertArg(MemoryContextIsValid(context));
-
-	(*context->methods->stats) (context, level);
-	for (child = context->firstchild; child != NULL; child = child->nextchild)
-		MemoryContextStatsInternal(child, level + 1);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
