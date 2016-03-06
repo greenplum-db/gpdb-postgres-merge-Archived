@@ -228,14 +228,11 @@ pg_get_client_encoding_name(void)
  * If conversion occurs, a palloc'd null-terminated string is returned.
  * In the case of no conversion, src is returned.
  *
-<<<<<<< HEAD
  * CAUTION: although the presence of a length argument means that callers
  * can pass non-null-terminated strings, care is required because the same
  * string will be passed back if no conversion occurs.	Such callers *must*
  * check whether result == src and handle that case differently.
  *
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Note: we try to avoid raising error, since that could get us into
  * infinite recursion when this function is invoked during error message
  * sending.  It should be OK to raise error for overlength strings though,
@@ -330,11 +327,7 @@ pg_convert_to(PG_FUNCTION_ARGS)
 	result = DirectFunctionCall3(pg_convert, string,
 								 src_encoding_name, dest_encoding_name);
 
-<<<<<<< HEAD
 	PG_RETURN_DATUM(result);
-=======
-	PG_RETURN_BYTEA_P(result);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
@@ -350,7 +343,6 @@ pg_convert_from(PG_FUNCTION_ARGS)
 	Datum		dest_encoding_name = DirectFunctionCall1(namein,
 									CStringGetDatum(DatabaseEncoding->name));
 	Datum		result;
-<<<<<<< HEAD
 
 	result = DirectFunctionCall3(pg_convert, string,
 								 src_encoding_name, dest_encoding_name);
@@ -402,105 +394,6 @@ pg_convert(PG_FUNCTION_ARGS)
 	*(str + len) = '\0';
 
 	result = pg_do_encoding_conversion(str, len, src_encoding, dest_encoding);
-
-	/*
-	 * build bytea data type structure.
-	 */
-	len = strlen((char *) result) + VARHDRSZ;
-	retval = palloc(len);
-	SET_VARSIZE(retval, len);
-	memcpy(VARDATA(retval), result, len - VARHDRSZ);
-
-	if (result != str)
-		pfree(result);
-	pfree(str);
-
-	/* free memory if allocated by the toaster */
-	PG_FREE_IF_COPY(string, 0);
-
-	PG_RETURN_BYTEA_P(retval);
-}
-
-/*
- * get the length of the string considered as text in the specified
- * encoding. Raises an error if the data is not valid in that
- * encoding.
- *
- * INT4 length (BYTEA string, NAME src_encoding_name)
- */
-Datum
-length_in_encoding(PG_FUNCTION_ARGS)
-{
-	bytea	   *string = PG_GETARG_BYTEA_P(0);
-	char	   *src_encoding_name = NameStr(*PG_GETARG_NAME(1));
-	int			src_encoding = pg_char_to_encoding(src_encoding_name);
-	int			len = VARSIZE(string) - VARHDRSZ;
-	int			retval;
-
-	if (src_encoding < 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid encoding name \"%s\"",
-						src_encoding_name)));
-
-	retval = pg_verify_mbstr_len(src_encoding, VARDATA(string), len, false);
-	PG_RETURN_INT32(retval);
-
-=======
-
-	result = DirectFunctionCall3(pg_convert, string,
-								 src_encoding_name, dest_encoding_name);
-
-	/*
-	 * pg_convert returns a bytea, which we in turn return as text, relying on
-	 * the fact that they are both in fact varlena types, and thus
-	 * structurally identical. Although not all bytea values are valid text,
-	 * in this case it will be because we've told pg_convert to return one
-	 * that is valid as text in the current database encoding.
-	 */
-	PG_RETURN_TEXT_P(result);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-}
-
-/*
- * Convert string using encoding_names.
- *
- * BYTEA convert(BYTEA string, NAME src_encoding_name, NAME dest_encoding_name)
- */
-Datum
-pg_convert(PG_FUNCTION_ARGS)
-{
-	bytea	   *string = PG_GETARG_BYTEA_P(0);
-	char	   *src_encoding_name = NameStr(*PG_GETARG_NAME(1));
-	int			src_encoding = pg_char_to_encoding(src_encoding_name);
-	char	   *dest_encoding_name = NameStr(*PG_GETARG_NAME(2));
-	int			dest_encoding = pg_char_to_encoding(dest_encoding_name);
-	unsigned char *result;
-	bytea	   *retval;
-	unsigned char *str;
-	int			len;
-
-	if (src_encoding < 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid source encoding name \"%s\"",
-						src_encoding_name)));
-	if (dest_encoding < 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid destination encoding name \"%s\"",
-						dest_encoding_name)));
-
-	/* make sure that source string is valid and null terminated */
-	len = VARSIZE(string) - VARHDRSZ;
-	pg_verify_mbstr(src_encoding, VARDATA(string), len, false);
-	str = palloc(len + 1);
-	memcpy(str, VARDATA(string), len);
-	*(str + len) = '\0';
-
-	result = pg_do_encoding_conversion(str, len, src_encoding, dest_encoding);
-	if (result == NULL)
-		elog(ERROR, "encoding conversion failed");
 
 	/*
 	 * build bytea data type structure.

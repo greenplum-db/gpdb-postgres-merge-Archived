@@ -2,11 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
-<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.40 2009/10/17 00:24:51 mha Exp $
-=======
- * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.37 2007/11/15 21:14:40 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -311,7 +307,6 @@ sizeof(pg_encname_tbl) / sizeof(pg_encname_tbl[0]) - 1;
 #endif
 pg_enc2name pg_enc2name_tbl[] =
 {
-<<<<<<< HEAD
 	DEF_ENC2NAME(SQL_ASCII, 0),
 	DEF_ENC2NAME(EUC_JP, 20932),
 	DEF_ENC2NAME(EUC_CN, 20936),
@@ -396,131 +391,6 @@ pg_enc2gettext pg_enc2gettext_tbl[] =
 	{PG_EUC_TW, "EUC-TW"},
 	{PG_EUC_JIS_2004, "EUC-JP"},
 	{0, NULL}
-=======
-	{
-		"SQL_ASCII", PG_SQL_ASCII
-	},
-	{
-		"EUC_JP", PG_EUC_JP
-	},
-	{
-		"EUC_CN", PG_EUC_CN
-	},
-	{
-		"EUC_KR", PG_EUC_KR
-	},
-	{
-		"EUC_TW", PG_EUC_TW
-	},
-	{
-		"EUC_JIS_2004", PG_EUC_JIS_2004
-	},
-	{
-		"UTF8", PG_UTF8
-	},
-	{
-		"MULE_INTERNAL", PG_MULE_INTERNAL
-	},
-	{
-		"LATIN1", PG_LATIN1
-	},
-	{
-		"LATIN2", PG_LATIN2
-	},
-	{
-		"LATIN3", PG_LATIN3
-	},
-	{
-		"LATIN4", PG_LATIN4
-	},
-	{
-		"LATIN5", PG_LATIN5
-	},
-	{
-		"LATIN6", PG_LATIN6
-	},
-	{
-		"LATIN7", PG_LATIN7
-	},
-	{
-		"LATIN8", PG_LATIN8
-	},
-	{
-		"LATIN9", PG_LATIN9
-	},
-	{
-		"LATIN10", PG_LATIN10
-	},
-	{
-		"WIN1256", PG_WIN1256
-	},
-	{
-		"WIN1258", PG_WIN1258
-	},
-	{
-		"WIN866", PG_WIN866
-	},
-	{
-		"WIN874", PG_WIN874
-	},
-	{
-		"KOI8", PG_KOI8R
-	},
-	{
-		"WIN1251", PG_WIN1251
-	},
-	{
-		"WIN1252", PG_WIN1252
-	},
-	{
-		"ISO_8859_5", PG_ISO_8859_5
-	},
-	{
-		"ISO_8859_6", PG_ISO_8859_6
-	},
-	{
-		"ISO_8859_7", PG_ISO_8859_7
-	},
-	{
-		"ISO_8859_8", PG_ISO_8859_8
-	},
-	{
-		"WIN1250", PG_WIN1250
-	},
-	{
-		"WIN1253", PG_WIN1253
-	},
-	{
-		"WIN1254", PG_WIN1254
-	},
-	{
-		"WIN1255", PG_WIN1255
-	},
-	{
-		"WIN1257", PG_WIN1257
-	},
-	{
-		"SJIS", PG_SJIS
-	},
-	{
-		"BIG5", PG_BIG5
-	},
-	{
-		"GBK", PG_GBK
-	},
-	{
-		"UHC", PG_UHC
-	},
-	{
-		"GB18030", PG_GB18030
-	},
-	{
-		"JOHAB", PG_JOHAB
-	},
-	{
-		"SHIFT_JIS_2004", PG_SHIFT_JIS_2004
-	}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 };
 
 
