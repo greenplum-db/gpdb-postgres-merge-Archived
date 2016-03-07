@@ -4,11 +4,7 @@
  *	  utilities routines for the postgres GiST index access method.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -628,10 +624,7 @@ GISTInitBuffer(Buffer b, uint32 f)
 	/* memset(&(opaque->nsn), 0, sizeof(GistNSN)); */
 	opaque->rightlink = InvalidBlockNumber;
 	opaque->flags = f;
-<<<<<<< HEAD
-=======
 	opaque->gist_page_id = GIST_PAGE_ID;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
