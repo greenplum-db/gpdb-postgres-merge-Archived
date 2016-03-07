@@ -801,12 +801,8 @@ gistContinueInsert(gistIncompleteInsert *insert)
 				for (j = 0; j < ntodelete; j++)
 					PageIndexTupleDelete(pages[0], todelete[j]);
 
-<<<<<<< HEAD
-				rdata = formSplitRdata(index, insert->path[i],
-=======
 				xlinfo = XLOG_GIST_PAGE_SPLIT;
-				rdata = formSplitRdata(index->rd_node, insert->path[i],
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+				rdata = formSplitRdata(index, insert->path[i],
 									   false, &(insert->key),
 									 gistMakePageLayout(buffers, numbuffer));
 
@@ -819,12 +815,8 @@ gistContinueInsert(gistIncompleteInsert *insert)
 					PageIndexTupleDelete(pages[0], todelete[j]);
 				gistfillbuffer(index, pages[0], itup, lenitup, InvalidOffsetNumber);
 
-<<<<<<< HEAD
-				rdata = formUpdateRdata(index, buffers[0],
-=======
 				xlinfo = XLOG_GIST_PAGE_UPDATE;
-				rdata = formUpdateRdata(index->rd_node, buffers[0],
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+				rdata = formUpdateRdata(index, buffers[0],
 										todelete, ntodelete,
 										itup, lenitup, &(insert->key));
 			}
