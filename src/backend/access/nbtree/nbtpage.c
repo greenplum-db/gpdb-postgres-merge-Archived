@@ -63,43 +63,6 @@ _bt_initmetapage(Page page, BlockNumber rootbknum, uint32 level)
 }
 
 /*
- * _bt_lognewpage() -- create an XLOG entry for a new page of the btree.
- */
-void
-_bt_lognewpage(Relation index,
-			   Page newPage,
-			   BlockNumber blockNo)
-{
-	/* We use the heap NEWPAGE record type for this */
-	xl_heap_newpage xlrec;
-	XLogRecPtr	recptr;
-	XLogRecData rdata[2];
-	
-	/* NO ELOG(ERROR) from here till newpage op is logged */
-	START_CRIT_SECTION();
-	
-	xl_heapnode_set(&xlrec.heapnode, index);
-	xlrec.blkno = blockNo;
-	
-	rdata[0].data = (char *) &xlrec;
-	rdata[0].len = SizeOfHeapNewpage;
-	rdata[0].buffer = InvalidBuffer;
-	rdata[0].next = &(rdata[1]);
-	
-	rdata[1].data = (char *) newPage;
-	rdata[1].len = BLCKSZ;
-	rdata[1].buffer = InvalidBuffer;
-	rdata[1].next = NULL;
-	
-	recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_NEWPAGE, rdata);
-	
-	PageSetLSN(newPage, recptr);
-	PageSetTLI(newPage, ThisTimeLineID);
-	
-	END_CRIT_SECTION();
-}
-
-/*
  *	_bt_getroot() -- Get the root page of the btree.
  *
  *		Since the root page can move around the btree file, we have to read

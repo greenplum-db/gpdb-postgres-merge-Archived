@@ -567,9 +567,6 @@ extern void _bt_insert_parent(Relation rel, Buffer buf, Buffer rbuf,
  * prototypes for functions in nbtpage.c
  */
 extern void _bt_initmetapage(Page page, BlockNumber rootbknum, uint32 level);
-extern void _bt_lognewpage(Relation index,
-						   Page newPage,
-						   BlockNumber blockNo);
 extern Buffer _bt_getroot(Relation rel, int access);
 extern Buffer _bt_gettrueroot(Relation rel);
 extern void _bt_checkpage(Relation rel, Buffer buf);
