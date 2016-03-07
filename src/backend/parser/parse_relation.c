@@ -3,10 +3,7 @@
  * parse_relation.c
  *	  parser support routines dealing with relations
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -484,16 +481,6 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname,
 		attnum = specialAttNum(colname);
 		if (attnum != InvalidAttrNumber)
 		{
-<<<<<<< HEAD
-			/* now check to see if column actually is defined */
-			if (caql_getcount(
-						NULL,
-						cql("SELECT COUNT(*) FROM pg_attribute "
-							" WHERE attrelid = :1 "
-							" AND attnum = :2 ",
-							ObjectIdGetDatum(rte->relid),
-							Int16GetDatum(attnum))))
-=======
 			/*
 			 * Now check to see if column actually is defined.  Because of
 			 * an ancient oversight in DefineQueryRewrite, it's possible that
@@ -506,7 +493,6 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname,
 									 Int16GetDatum(attnum),
 									 0, 0) &&
 				get_rel_relkind(rte->relid) != RELKIND_VIEW)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			{
 				result = (Node *) make_var(pstate, rte, attnum, location);
 				/* Require read access */
@@ -1188,12 +1174,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 						 errmsg("column \"%s\" cannot be declared SETOF",
 								attrname)));
-<<<<<<< HEAD
-			attrtype = typenameTypeId(pstate, n->typname);
-			attrtypmod = typenameTypeMod(pstate, n->typname, attrtype);
-=======
-			attrtype = typenameTypeId(pstate, n->typename, &attrtypmod);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+			attrtype = typenameTypeId(pstate, n->typname, &attrtypmod);
 			eref->colnames = lappend(eref->colnames, makeString(attrname));
 			rte->funccoltypes = lappend_oid(rte->funccoltypes, attrtype);
 			rte->funccoltypmods = lappend_int(rte->funccoltypmods, attrtypmod);

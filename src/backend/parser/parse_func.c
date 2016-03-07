@@ -15,14 +15,11 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-<<<<<<< HEAD
 #include "catalog/catquery.h"
 #include "access/transam.h"
 #include "catalog/pg_aggregate.h"
-=======
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_constraint.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_proc_callback.h"
@@ -344,7 +341,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	}
 
 	/*
-<<<<<<< HEAD
 	 * The agg_filter rewrite in the case of agg_star is only valid for count(*)
 	 * otherwise we need to throw an error.
 	 */
@@ -381,15 +377,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	}
 
 	/*
-	 * enforce consistency with ANYARRAY and ANYELEMENT argument and return
-	 * types, possibly adjusting return type or declared_arg_types (which will
-	 * be used as the cast destination by make_fn_arguments)
-	 */
-	rettype = enforce_generic_type_consistency(actual_arg_types,
-											   declared_arg_types,
-											   nargsplusdefs,
-											   rettype);
-=======
 	 * enforce consistency with polymorphic argument and return types,
 	 * possibly adjusting return type or declared_arg_types (which will be
 	 * used as the cast destination by make_fn_arguments)
@@ -399,7 +386,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 											   nargs,
 											   rettype,
 											   false);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* perform the necessary typecasting of arguments */
 	make_fn_arguments(pstate, fargs, actual_arg_types, declared_arg_types);
@@ -1820,7 +1806,6 @@ LookupAggNameTypeNames(List *aggname, List *argtypes, bool noError)
 
 
 /*
-<<<<<<< HEAD
  * parseCheckTableFunctions
  *
  *	Check for TableValueExpr where they shouldn't be.  Currently the only
@@ -1885,7 +1870,9 @@ checkTableFunctions_walker(Node *node, check_table_func_context *context)
 									  checkTableFunctions_walker, 
 									  (void *) context);
 	}
-=======
+}
+
+/*
  * pg_get_expr() is a system function that exposes the expression
  * deparsing functionality in ruleutils.c to users. Very handy, but it was
  * later realized that the functions in ruleutils.c don't check the input
@@ -2011,5 +1998,4 @@ check_pg_get_expr_arg(ParseState *pstate, Node *arg, int netlevelsup)
 	}
 
 	return false;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }

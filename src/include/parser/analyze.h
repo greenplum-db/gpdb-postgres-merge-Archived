@@ -38,6 +38,7 @@ typedef struct
 {
 	const char *stmtType;		/* "CREATE TABLE" or "ALTER TABLE" */
 	RangeVar   *relation;		/* relation to create */
+	Relation	rel;			/* opened/locked rel, if ALTER */
 	List	   *inhRelations;	/* relations to inherit from */
 	bool		hasoids;		/* does relation have an OID column? */
 	bool		isalter;		/* true if altering existing table */
@@ -56,6 +57,8 @@ typedef struct
 								 * for later parse_analyze and dispatch */
 	IndexStmt  *pkey;			/* PRIMARY KEY index, if any */
 } CreateStmtContext;
+
+#define MaxPolicyAttributeNumber MaxHeapAttributeNumber
 
 int validate_partition_spec(ParseState 			*pstate,
 							CreateStmtContext 	*cxt, 

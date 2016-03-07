@@ -66,17 +66,11 @@ LookupTypeName(ParseState *pstate, const TypeName *typename,
 	int32		typmod;
 
 	if (typename->names == NIL)
-<<<<<<< HEAD
-		return typename->typid;
-
-	if (typename->pct_type)
-=======
 	{
 		/* We have the OID already if it's an internally generated TypeName */
-		typoid = typename->typeid;
+		typoid = typename->typid;
 	}
 	else if (typename->pct_type)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		/* Handle %TYPE reference to type of an existing field */
 		RangeVar   *rel = makeRangeVar(NULL, NULL, typename->location);
@@ -153,21 +147,10 @@ LookupTypeName(ParseState *pstate, const TypeName *typename,
 			Oid			namespaceId;
 
 			namespaceId = LookupExplicitNamespace(schemaname);
-<<<<<<< HEAD
-
-			restype = caql_getoid(
-					NULL,
-					cql("SELECT oid FROM pg_type "
-						" WHERE typname = :1 "
-						" AND typnamespace = :2 ",
-						CStringGetDatum(typname),
-						ObjectIdGetDatum(namespaceId)));
-=======
 			typoid = GetSysCacheOid(TYPENAMENSP,
 									PointerGetDatum(typname),
 									ObjectIdGetDatum(namespaceId),
 									0, 0);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 		else
 		{
@@ -182,14 +165,9 @@ LookupTypeName(ParseState *pstate, const TypeName *typename,
 
 	if (!OidIsValid(typoid))
 	{
-<<<<<<< HEAD
-		/* Look up internally-specified type */
-		appendStringInfoString(string, format_type_be(typename->typid));
-=======
 		if (typmod_p)
 			*typmod_p = -1;
 		return NULL;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	tup = SearchSysCache(TYPEOID,
@@ -300,15 +278,9 @@ typenameTypeMod(ParseState *pstate, const TypeName *typename, Type typ)
 				 parser_errposition(pstate, typename->location)));
 
 	/*
-<<<<<<< HEAD
-	 * Convert the list of raw-grammar-output  expressions to a cstring array.
-	 * Currently, we only allow simple integer constants, string literals, and
-	 * identifiers; possibly this could be extended.
-=======
 	 * Convert the list of raw-grammar-output expressions to a cstring array.
 	 * Currently, we allow simple numeric constants, string literals, and
 	 * identifiers; possibly this list could be extended.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	datums = (Datum *) palloc(list_length(typename->typmods) * sizeof(Datum));
 	n = 0;
@@ -316,7 +288,6 @@ typenameTypeMod(ParseState *pstate, const TypeName *typename, Type typ)
 	{
 		Node	   *tm = (Node *) lfirst(l);
 		char	   *cstr = NULL;
-<<<<<<< HEAD
 
 		if (IsA(tm, A_Const))
 		{
@@ -342,33 +313,6 @@ typenameTypeMod(ParseState *pstate, const TypeName *typename, Type typ)
 		{
 			ColumnRef  *cr = (ColumnRef *) tm;
 
-=======
-
-		if (IsA(tm, A_Const))
-		{
-			A_Const    *ac = (A_Const *) tm;
-
-			/*
-			 * The grammar hands back some integers with ::int4 attached, so
-			 * allow a cast decoration if it's an Integer value, but not
-			 * otherwise.
-			 */
-			if (IsA(&ac->val, Integer))
-			{
-				cstr = (char *) palloc(32);
-				snprintf(cstr, 32, "%ld", (long) ac->val.val.ival);
-			}
-			else if (ac->typename == NULL)		/* no casts allowed */
-			{
-				/* otherwise we can just use the str field directly. */
-				cstr = ac->val.val.str;
-			}
-		}
-		else if (IsA(tm, ColumnRef))
-		{
-			ColumnRef  *cr = (ColumnRef *) tm;
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			if (list_length(cr->fields) == 1)
 				cstr = strVal(linitial(cr->fields));
 		}
@@ -398,13 +342,8 @@ typenameTypeMod(ParseState *pstate, const TypeName *typename, Type typ)
  *		Append a string representing the name of a TypeName to a StringInfo.
  *		This is the shared guts of TypeNameToString and TypeNameListToString.
  *
-<<<<<<< HEAD
- * This is equivalent to typenameTypeId + syscache fetch of Type tuple.
- * NB: caller must ReleaseType the type tuple when done with it.
-=======
  * NB: this must work on TypeNames that do not describe any actual type;
  * it is mostly used for reporting lookup errors.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 static void
 appendTypeNameToBuffer(const TypeName *typename, StringInfo string)
@@ -414,26 +353,6 @@ appendTypeNameToBuffer(const TypeName *typename, StringInfo string)
 		/* Emit possibly-qualified name as-is */
 		ListCell   *l;
 
-<<<<<<< HEAD
-	typoid = LookupTypeName(pstate, typename);
-	if (!OidIsValid(typoid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("type \"%s\" does not exist",
-						TypeNameToString(typename))));
-	tup = SearchSysCache(TYPEOID,
-						 ObjectIdGetDatum(typoid),
-						 0, 0, 0);
-	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for type %u", typoid);
-	if (!((Form_pg_type) GETSTRUCT(tup))->typisdefined)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("type \"%s\" is only a shell",
-						TypeNameToString(typename)),
-				 parser_errposition(pstate, typename->location)));
-	return (Type) tup;
-=======
 		foreach(l, typename->names)
 		{
 			if (l != list_head(typename->names))
@@ -444,7 +363,7 @@ appendTypeNameToBuffer(const TypeName *typename, StringInfo string)
 	else
 	{
 		/* Look up internally-specified type */
-		appendStringInfoString(string, format_type_be(typename->typeid));
+		appendStringInfoString(string, format_type_be(typename->typid));
 	}
 
 	/*
@@ -496,7 +415,6 @@ TypeNameListToString(List *typenames)
 		appendTypeNameToBuffer(typename, &string);
 	}
 	return string.data;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /* return a Type structure, given a type id */

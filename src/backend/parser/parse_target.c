@@ -441,11 +441,7 @@ transformAssignedExpr(ParseState *pstate,
 			 * is not really a source value to work with. Insert a NULL
 			 * constant as the source value.
 			 */
-<<<<<<< HEAD
-			colVar = (Node *) makeNullConst(attrtype, -1);
-=======
 			colVar = (Node *) makeNullConst(attrtype, attrtypmod);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 		else
 		{
@@ -881,13 +877,8 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		 *
 		 * Since the grammar only accepts bare '*' at top level of SELECT, we
 		 * need not handle the targetlist==false case here.  However, we must
-<<<<<<< HEAD
-		 * test for it because the grammar currently fails to distinguish
-		 * a quoted name "*" from a real asterisk.
-=======
 		 * test for it because the grammar currently fails to distinguish a
 		 * quoted name "*" from a real asterisk.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 */
 		if (!targetlist)
 			elog(ERROR, "invalid use of *");
@@ -1420,11 +1411,7 @@ FigureColnameInternal(Node *node, char **name)
 			break;
 		case T_XmlExpr:
 			/* make SQL/XML functions act like a regular function */
-<<<<<<< HEAD
-			switch (((XmlExpr*) node)->op)
-=======
 			switch (((XmlExpr *) node)->op)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			{
 				case IS_XMLCONCAT:
 					*name = "xmlconcat";

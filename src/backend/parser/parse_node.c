@@ -14,11 +14,8 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "catalog/catquery.h"
-=======
 #include "access/heapam.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "catalog/pg_type.h"
 #include "mb/pg_wchar.h"
 #include "nodes/makefuncs.h"
@@ -75,9 +72,19 @@ make_parsestate(ParseState *parentParseState)
 void
 free_parsestate(ParseState *pstate)
 {
-<<<<<<< HEAD
-	if (pstate->p_namecache)
-		hash_destroy(pstate->p_namecache);
+	/*
+	 * Check that we did not produce too many resnos; at the very least we
+	 * cannot allow more than 2^16, since that would exceed the range of a
+	 * AttrNumber. It seems safest to use MaxTupleAttributeNumber.
+	 */
+	if (pstate->p_next_resno - 1 > MaxTupleAttributeNumber)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("target lists can have at most %d entries",
+						MaxTupleAttributeNumber)));
+
+	if (pstate->p_target_relation != NULL)
+		heap_close(pstate->p_target_relation, NoLock);
 
 	pfree(pstate);
 }
@@ -120,25 +127,6 @@ parser_get_namecache(ParseState *pstate)
 	/* Return the cache */
 	return pstate->p_namecache;
 }
-=======
-	/*
-	 * Check that we did not produce too many resnos; at the very least we
-	 * cannot allow more than 2^16, since that would exceed the range of a
-	 * AttrNumber. It seems safest to use MaxTupleAttributeNumber.
-	 */
-	if (pstate->p_next_resno - 1 > MaxTupleAttributeNumber)
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("target lists can have at most %d entries",
-						MaxTupleAttributeNumber)));
-
-	if (pstate->p_target_relation != NULL)
-		heap_close(pstate->p_target_relation, NoLock);
-
-	pfree(pstate);
-}
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * parser_errposition
@@ -493,11 +481,7 @@ make_const(ParseState *pstate, Value *value, int location)
 	}
 
 	con = makeConst(typeid,
-<<<<<<< HEAD
-			        -1,
-=======
 					-1,			/* typmod -1 is OK for all cases */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					typelen,
 					val,
 					false,

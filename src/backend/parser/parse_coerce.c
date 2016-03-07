@@ -317,7 +317,8 @@ coerce_type(ParseState *pstate, Node *node,
 
 		return (Node *) param;
 	}
-<<<<<<< HEAD
+
+#if 0 /* GPDB_83MERGE_FIXME: Is this hack still needed? */
 	if (pstate != NULL && inputTypeId == UNKNOWNOID && IsA(node, Var))
 	{
         /*
@@ -376,13 +377,11 @@ coerce_type(ParseState *pstate, Node *node,
 
 		}
 	}
-	if (find_coercion_pathway(targetTypeId, inputTypeId, ccontext,
-							  &funcId))
-=======
+#endif /* GPDB_83MERGE_FIXME */
+
 	pathtype = find_coercion_pathway(targetTypeId, inputTypeId, ccontext,
 									 &funcId);
 	if (pathtype != COERCION_PATH_NONE)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		if (pathtype != COERCION_PATH_RELABELTYPE)
 		{
@@ -1019,44 +1018,19 @@ build_coercion_expression(Node *node,
 						  Oid targetTypeId, int32 targetTypMod,
 						  CoercionForm cformat, bool isExplicit)
 {
-<<<<<<< HEAD
-	HeapTuple	tp;
-	Form_pg_proc procstruct;
-	int			nargs;
-	List	   *args;
-	Const	   *cons;
-	cqContext  *pcqCtx;
-
-	pcqCtx = caql_beginscan(
-			NULL,
-			cql("SELECT * FROM pg_proc "
-				" WHERE oid = :1 ",
-				ObjectIdGetDatum(funcId)));
-
-	tp = caql_getnext(pcqCtx);
-
-	if (!HeapTupleIsValid(tp))
-		elog(ERROR, "cache lookup failed for function %u", funcId);
-	procstruct = (Form_pg_proc) GETSTRUCT(tp);
-=======
 	int			nargs = 0;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (OidIsValid(funcId))
 	{
 		HeapTuple	tp;
 		Form_pg_proc procstruct;
 
-<<<<<<< HEAD
-	caql_endscan(pcqCtx);
-=======
 		tp = SearchSysCache(PROCOID,
 							ObjectIdGetDatum(funcId),
 							0, 0, 0);
 		if (!HeapTupleIsValid(tp))
 			elog(ERROR, "cache lookup failed for function %u", funcId);
 		procstruct = (Form_pg_proc) GETSTRUCT(tp);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/*
 		 * These Asserts essentially check that function is a legal coercion
@@ -1078,18 +1052,6 @@ build_coercion_expression(Node *node,
 
 	if (pathtype == COERCION_PATH_FUNC)
 	{
-<<<<<<< HEAD
-		/* Pass target typmod as an int4 constant */
-		cons = makeConst(INT4OID,
-				         -1,
-						 sizeof(int32),
-						 Int32GetDatum(targetTypMod),
-						 false,
-						 true);
-
-		args = lappend(args, cons);
-	}
-=======
 		/* We build an ordinary FuncExpr with special arguments */
 		List	   *args;
 		Const	   *cons;
@@ -1097,7 +1059,6 @@ build_coercion_expression(Node *node,
 		Assert(OidIsValid(funcId));
 
 		args = list_make1(node);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (nargs >= 2)
 		{
@@ -1129,17 +1090,6 @@ build_coercion_expression(Node *node,
 	}
 	else if (pathtype == COERCION_PATH_ARRAYCOERCE)
 	{
-<<<<<<< HEAD
-		/* Pass it a boolean isExplicit parameter, too */
-		cons = makeConst(BOOLOID,
-						 -1,
-						 sizeof(bool),
-						 BoolGetDatum(isExplicit),
-						 false,
-						 true);
-
-		args = lappend(args, cons);
-=======
 		/* We need to build an ArrayCoerceExpr */
 		ArrayCoerceExpr *acoerce = makeNode(ArrayCoerceExpr);
 
@@ -1157,7 +1107,6 @@ build_coercion_expression(Node *node,
 		acoerce->coerceformat = cformat;
 
 		return (Node *) acoerce;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 	else if (pathtype == COERCION_PATH_COERCEVIAIO)
 	{
@@ -1370,13 +1319,9 @@ coerce_to_specific_type(ParseState *pstate, Node *node,
 					 errmsg("argument of %s must be type %s, not type %s",
 							constructName,
 							format_type_be(targetTypeId),
-<<<<<<< HEAD
 							format_type_be(inputTypeId)),
 					 parser_errposition(pstate, exprLocation(node))));
 		node = newnode;
-=======
-							format_type_be(inputTypeId))));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	if (expression_returns_set(node))
@@ -2250,9 +2195,6 @@ IsBinaryCoercible(Oid srctype, Oid targettype)
 
 	/* Also accept any array type as coercible to ANYARRAY */
 	if (targettype == ANYARRAYOID)
-<<<<<<< HEAD
-		if (OidIsValid(get_element_type(srctype)))
-=======
 		if (type_is_array(srctype))
 			return true;
 
@@ -2264,7 +2206,6 @@ IsBinaryCoercible(Oid srctype, Oid targettype)
 	/* Also accept any enum type as coercible to ANYENUM */
 	if (targettype == ANYENUMOID)
 		if (type_is_enum(srctype))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			return true;
 
 	/* Else look in pg_cast */
@@ -2484,6 +2425,7 @@ find_typmod_coercion_function(Oid typeId,
 	CoercionPathType result;
 	Type		targetType;
 	Form_pg_type typeForm;
+	HeapTuple	tuple;
 
 	*funcid = InvalidOid;
 	result = COERCION_PATH_FUNC;
@@ -2503,15 +2445,6 @@ find_typmod_coercion_function(Oid typeId,
 	ReleaseType(targetType);
 
 	/* Look in pg_cast */
-<<<<<<< HEAD
-	funcid = caql_getoid(
-			NULL,
-			cql("SELECT castfunc FROM pg_cast "
-				" WHERE castsource = :1 "
-				" AND casttarget = :2 ",
-				ObjectIdGetDatum(typeId),
-				ObjectIdGetDatum(typeId)));
-=======
 	tuple = SearchSysCache(CASTSOURCETARGET,
 						   ObjectIdGetDatum(typeId),
 						   ObjectIdGetDatum(typeId),
@@ -2524,7 +2457,6 @@ find_typmod_coercion_function(Oid typeId,
 		*funcid = castForm->castfunc;
 		ReleaseSysCache(tuple);
 	}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (!OidIsValid(*funcid))
 		result = COERCION_PATH_NONE;

@@ -271,30 +271,8 @@ transformExpr(ParseState *pstate, Node *expr)
 			break;
 
 		case T_CurrentOfExpr:
-<<<<<<< HEAD
-			{
-				/*
-				 * The target RTE must be simply updatable. If not, we error out
-				 * early here to avoid having to deal with error cases later:
-				 * rewriting/planning against views, for example.
-				 */
-				Assert(pstate->p_target_rangetblentry != NULL);
-				if (!isSimplyUpdatableRelation(pstate->p_target_rangetblentry->relid))
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("\"%s\" is not simply updatable",
-									pstate->p_target_relation->rd_rel->relname.data)));
-
-				CurrentOfExpr *c = (CurrentOfExpr *) expr;
-				int sublevels_up;
-				c->cvarno = RTERangeTablePosn(pstate,
-											  pstate->p_target_rangetblentry,
-											  &sublevels_up);
-				c->target_relid = pstate->p_target_rangetblentry->relid;
-				Assert(sublevels_up == 0);
-				result = expr;
-				break;
-			}
+			result = transformCurrentOfExpr(pstate, (CurrentOfExpr *) expr);
+			break;
 
 		case T_GroupingFunc:
 			{
@@ -367,9 +345,6 @@ transformExpr(ParseState *pstate, Node *expr)
 
 		case T_PercentileExpr:
 			result = transformPercentileExpr(pstate, (PercentileExpr *) expr);
-=======
-			result = transformCurrentOfExpr(pstate, (CurrentOfExpr *) expr);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			break;
 
 			/*********************************************
@@ -945,7 +920,7 @@ exprIsNullConstant(Node *arg)
 		A_Const    *con = (A_Const *) arg;
 
 		if (con->val.type == T_Null &&
-			con->typename == NULL)
+			con->typname == NULL)
 			return true;
 	}
 	return false;
@@ -1544,15 +1519,13 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		return result;
 
 	pstate->p_hasSubLinks = true;
-<<<<<<< HEAD
-	qtrees = parse_sub_analyze(sublink->subselect, pstate);
+
+	qtree = parse_sub_analyze(sublink->subselect, pstate);
 
 	/*
 	 * Check that we got something reasonable.	Many of these conditions are
 	 * impossible given restrictions of the grammar, but check 'em anyway.
 	 */
-	Insist(list_length(qtrees) == 1);
-	qtree = (Query *) linitial(qtrees);
 	if (!IsA(qtree, Query) ||
 		qtree->commandType != CMD_SELECT ||
 		qtree->utilityStmt != NULL)
@@ -1562,13 +1535,6 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("subquery cannot have SELECT INTO")));
 
-=======
-	qtree = parse_sub_analyze(sublink->subselect, pstate);
-	if (qtree->commandType != CMD_SELECT ||
-		qtree->utilityStmt != NULL ||
-		qtree->intoClause != NULL)
-		elog(ERROR, "bad query in sub-select");
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	sublink->subselect = (Node *) qtree;
 
 	if (sublink->subLinkType == EXISTS_SUBLINK)
@@ -1765,7 +1731,6 @@ transformRowExpr(ParseState *pstate, RowExpr *r)
 static Node *
 transformTableValueExpr(ParseState *pstate, TableValueExpr *t)
 {
-	List		*parsetrees;
 	Query		*query;
 
 	/* If we already transformed this node, do nothing */
@@ -1780,14 +1745,12 @@ transformTableValueExpr(ParseState *pstate, TableValueExpr *t)
 	pstate->p_hasTblValueExpr = true;
 
 	/* Analyze and transform the subquery */
-	parsetrees = parse_sub_analyze(t->subquery, pstate);
+	query = parse_sub_analyze(t->subquery, pstate);
 
 	/* 
 	 * Check that we got something reasonable.  Most of these conditions
 	 * are probably impossible given restrictions in the grammar.
 	 */
-	Insist(list_length(parsetrees) == 1);
-	query = (Query *) linitial(parsetrees);
 	if (query == NULL || !IsA(query, Query))
 		elog(ERROR, "unexpected non-SELECT command in TableValueExpr");
 	if (query->commandType != CMD_SELECT)
@@ -1889,53 +1852,9 @@ transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m)
 }
 
 static Node *
-transformBooleanTest(ParseState *pstate, BooleanTest *b)
-{
-	const char *clausename;
-
-	switch (b->booltesttype)
-	{
-		case IS_TRUE:
-			clausename = "IS TRUE";
-			break;
-		case IS_NOT_TRUE:
-			clausename = "IS NOT TRUE";
-			break;
-		case IS_FALSE:
-			clausename = "IS FALSE";
-			break;
-		case IS_NOT_FALSE:
-			clausename = "IS NOT FALSE";
-			break;
-		case IS_UNKNOWN:
-			clausename = "IS UNKNOWN";
-			break;
-		case IS_NOT_UNKNOWN:
-			clausename = "IS NOT UNKNOWN";
-			break;
-		default:
-			elog(ERROR, "unrecognized booltesttype: %d",
-				 (int) b->booltesttype);
-			clausename = NULL;	/* keep compiler quiet */
-	}
-
-	b->arg = (Expr *) transformExpr(pstate, (Node *) b->arg);
-
-	b->arg = (Expr *) coerce_to_boolean(pstate,
-										(Node *) b->arg,
-										clausename);
-
-	return (Node *) b;
-}
-
-static Node *
 transformXmlExpr(ParseState *pstate, XmlExpr *x)
 {
-<<<<<<< HEAD
 	XmlExpr    *newx;
-=======
-	XmlExpr    *newx = makeNode(XmlExpr);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ListCell   *lc;
 	int			i;
 
@@ -1982,12 +1901,8 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 x->op == IS_XMLELEMENT
 			? errmsg("unnamed XML attribute value must be a column reference")
-<<<<<<< HEAD
 			: errmsg("unnamed XML element value must be a column reference"),
 					 parser_errposition(pstate, r->location)));
-=======
-					 : errmsg("unnamed XML element value must be a column reference")));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			argname = NULL;		/* keep compiler quiet */
 		}
 
@@ -2086,16 +2001,7 @@ transformXmlSerialize(ParseState *pstate, XmlSerialize *xs)
 													 XMLOID,
 													 "XMLSERIALIZE"));
 
-<<<<<<< HEAD
-	targetType = typenameTypeId(pstate, xs->typeName);
-	/*
-	 * 83MERGE_FIXME: use -1, until we merge the 8.3 patch to support typmods
-	 * for user-defined types.
-	 */
-	targetTypmod = -1;
-=======
-	targetType = typenameTypeId(pstate, xs->typename, &targetTypmod);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	targetType = typenameTypeId(pstate, xs->typeName, &targetTypmod);
 
 	xexpr->xmloption = xs->xmloption;
 	xexpr->location = xs->location;
@@ -2111,23 +2017,13 @@ transformXmlSerialize(ParseState *pstate, XmlSerialize *xs)
 	 */
 	result = coerce_to_target_type(pstate, (Node *) xexpr,
 								   TEXTOID, targetType, targetTypmod,
-<<<<<<< HEAD
-								   COERCION_IMPLICIT,
-								   COERCE_IMPLICIT_CAST,
-								   -1);
-=======
-								   COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+								   COERCION_IMPLICIT, COERCE_IMPLICIT_CAST, -1);
 	if (result == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_CANNOT_COERCE),
 				 errmsg("cannot cast XMLSERIALIZE result to %s",
-<<<<<<< HEAD
 						format_type_be(targetType)),
 				 parser_errposition(pstate, xexpr->location)));
-	return result;
-=======
-						format_type_be(targetType))));
 	return result;
 }
 
@@ -2169,13 +2065,26 @@ transformBooleanTest(ParseState *pstate, BooleanTest *b)
 										clausename);
 
 	return (Node *) b;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 static Node *
 transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr *cexpr)
 {
 	int			sublevels_up;
+
+	{
+		/*
+		 * The target RTE must be simply updatable. If not, we error out
+		 * early here to avoid having to deal with error cases later:
+		 * rewriting/planning against views, for example.
+		 */
+		Assert(pstate->p_target_rangetblentry != NULL);
+		if (!isSimplyUpdatableRelation(pstate->p_target_rangetblentry->relid))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("\"%s\" is not simply updatable",
+							pstate->p_target_relation->rd_rel->relname.data)));
+	}
 
 	/* CURRENT OF can only appear at top level of UPDATE/DELETE */
 	Assert(pstate->p_target_rangetblentry != NULL);
@@ -2741,24 +2650,15 @@ exprType(Node *expr)
 					subplan->subLinkType == ARRAY_SUBLINK)
 				{
 					/* get the type of the subselect's first target column */
-<<<<<<< HEAD
-					Oid itemtype = subplan->firstColType;
-					type = itemtype;
-=======
 					type = subplan->firstColType;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					if (subplan->subLinkType == ARRAY_SUBLINK)
 					{
-						type = get_array_type(itemtype);
+						type = get_array_type(subplan->firstColType);
 						if (!OidIsValid(type))
 							ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_OBJECT),
 									 errmsg("could not find array type for data type %s",
-<<<<<<< HEAD
-							format_type_be(itemtype))));
-=======
 									format_type_be(subplan->firstColType))));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					}
 				}
 				else
@@ -2839,7 +2739,6 @@ exprType(Node *expr)
 		case T_CurrentOfExpr:
 			type = BOOLOID;
 			break;
-<<<<<<< HEAD
 		case T_GroupingFunc:
 			type = INT8OID;
 			break;
@@ -2870,8 +2769,6 @@ exprType(Node *expr)
 		case T_PartBoundOpenExpr:
 			type = BOOLOID;
 			break;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(expr));
 			type = InvalidOid;	/* keep compiler quiet */

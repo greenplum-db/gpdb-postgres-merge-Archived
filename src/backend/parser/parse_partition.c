@@ -332,10 +332,12 @@ transformPartitionBy(ParseState *pstate, CreateStmtContext *cxt,
 
 					if (!OidIsValid(typeid))
 					{
-						Type		type = typenameType(pstate, column->typname);
+						int32		typmod;
 
-						column->typname->typid = typeid = typeTypeId(type);
-						ReleaseType(type);
+						typeid = typenameTypeId(pstate, column->typname, &typmod);
+
+						column->typname->typid = typeid;
+						column->typname->typemod = typmod;
 					}
 				}
 				break;
@@ -2981,7 +2983,7 @@ partition_arg_get_val(Node *node, bool *isnull)
 {
 	Const	   *c;
 
-	c = (Const *) evaluate_expr((Expr *) node, exprType(node));
+	c = (Const *) evaluate_expr((Expr *) node, exprType(node), exprTypmod(node));
 	if (!IsA(c, Const))
 		elog(ERROR, "partition parameter is not constant");
 
@@ -3018,10 +3020,9 @@ preprocess_range_spec(partValidationState *vstate)
 				found = true;
 				if (!OidIsValid(column->typname->typid))
 				{
-					Type		type = typenameType(vstate->pstate, column->typname);
-
-					column->typname->typid = typeTypeId(type);
-					ReleaseType(type);
+					column->typname->typid =
+						typenameTypeId(vstate->pstate, column->typname,
+									   &column->typname->typemod);
 				}
 				typname = column->typname;
 				break;
@@ -3135,9 +3136,8 @@ preprocess_range_spec(partValidationState *vstate)
 					{
 						TypeName   *typ = lfirst(lccol);
 						Node	   *newnode;
-						Oid			typid = typenameTypeId(vstate->pstate, typ);
-						int32		typmod = typenameTypeMod(vstate->pstate,
-															 typ, typid);
+						int32		typmod;
+						Oid			typid = typenameTypeId(vstate->pstate, typ,  &typmod);
 
 						newnode = coerce_partition_value(lfirst(lcstart),
 														 typid, typmod,
@@ -3219,9 +3219,8 @@ preprocess_range_spec(partValidationState *vstate)
 					Const	   *myend;
 					Const	   *clauseend;
 					Const	   *clauseevery;
-					Oid			typid = typenameTypeId(vstate->pstate, type);
-					int32		typmod = typenameTypeMod(vstate->pstate,
-														 type, typid);
+					int32		typmod;
+					Oid			typid = typenameTypeId(vstate->pstate, type, &typmod);
 					int16		len = get_typlen(typid);
 					bool		typbyval = get_typbyval(typid);
 
@@ -3405,9 +3404,8 @@ preprocess_range_spec(partValidationState *vstate)
 					Node	   *mystart = lfirst(lcstart);
 					TypeName   *typ = lfirst(lccol);
 					Node	   *newnode;
-					Oid			typid = typenameTypeId(vstate->pstate, typ);
-					int32		typmod = typenameTypeMod(vstate->pstate,
-														 typ, typid);
+					int32		typmod;
+					Oid			typid = typenameTypeId(vstate->pstate, typ, &typmod);
 
 					newnode = coerce_partition_value(mystart,
 													 typid, typmod,
@@ -3429,9 +3427,8 @@ preprocess_range_spec(partValidationState *vstate)
 					Node	   *myend = lfirst(lcend);
 					TypeName   *typ = lfirst(lccol);
 					Node	   *newnode;
-					Oid			typid = typenameTypeId(vstate->pstate, typ);
-					int32		typmod = typenameTypeMod(vstate->pstate,
-														 typ, typid);
+					int32		typmod;
+					Oid			typid = typenameTypeId(vstate->pstate, typ, &typmod);
 
 					newnode = coerce_partition_value(myend,
 													 typid, typmod,
@@ -3694,9 +3691,8 @@ partition_range_every(ParseState *pstate, PartitionBy *pBy, List *coltypes,
 				Oid			restypid;
 				Type		typ;
 				char	   *outputstr;
-				Oid			coltypid = typenameTypeId(vstate->pstate, type);
-				int32		coltypmod = typenameTypeMod(vstate->pstate,
-														type, coltypid);
+				int32		coltypmod;
+				Oid			coltypid = typenameTypeId(vstate->pstate, type, &coltypmod);
 
 				oprmul = lappend(NIL, makeString("*"));
 				oprplus = lappend(NIL, makeString("+"));
@@ -4708,10 +4704,9 @@ validate_list_partition(partValidationState *vstate)
 				found = true;
 				if (!OidIsValid(column->typname->typid))
 				{
-					Type		type = typenameType(vstate->pstate, column->typname);
-
-					column->typname->typid = typeTypeId(type);
-					ReleaseType(type);
+					column->typname->typid
+						= typenameTypeId(vstate->pstate, column->typname,
+										 &column->typname->typemod);
 				}
 				typname = column->typname;
 				break;
@@ -4783,9 +4778,8 @@ validate_list_partition(partValidationState *vstate)
 				Node	   *node = transformExpr(vstate->pstate,
 												 (Node *) lfirst(lc_val));
 				TypeName   *type = lfirst(llc2);
-				Oid			typid = typenameTypeId(vstate->pstate, type);
-				int32		typmod = typenameTypeMod(vstate->pstate,
-													 type, typid);
+				int32		typmod;
+				Oid			typid = typenameTypeId(vstate->pstate, type, &typmod);
 
 				node = coerce_partition_value(node, typid, typmod,
 											  PARTTYP_LIST);
@@ -5135,7 +5129,7 @@ coerce_partition_value(Node *node, Oid typid, int32 typmod,
 	 * And then evaluate it. evaluate_expr calls possible cast function, and
 	 * returns a Const. (the check for that below is just for paranoia)
 	 */
-	out = (Node *) evaluate_expr((Expr *) out, typid);
+	out = (Node *) evaluate_expr((Expr *) out, typid, typmod);
 	if (!IsA(out, Const))
 		elog(ERROR, "partition parameter is not constant");
 

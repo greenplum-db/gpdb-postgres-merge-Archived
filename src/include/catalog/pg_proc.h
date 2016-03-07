@@ -3278,6 +3278,7 @@ DATA(insert OID = 2111 (  sum				PGNSP PGUID 12 1 0 t f f f i 1 701 "701" _null_
 DATA(insert OID = 2112 (  sum				PGNSP PGUID 12 1 0 t f f f i 1 790 "790" _null_ _null_ _null_  aggregate_dummy - _null_ _null_ ));
 DATA(insert OID = 2113 (  sum				PGNSP PGUID 12 1 0 t f f f i 1 1186 "1186" _null_ _null_ _null_ aggregate_dummy - _null_ _null_ ));
 DATA(insert OID = 2114 (  sum				PGNSP PGUID 12 1 0 t f f f i 1 1700 "1700" _null_ _null_ _null_ aggregate_dummy - _null_ _null_ ));
+#define SUM_OID_MAX 2114
 
 DATA(insert OID = 2115 (  max				PGNSP PGUID 12 1 0 t f f f i 1 20 "20" _null_ _null_ _null_ aggregate_dummy - _null_ _null_ ));
 DATA(insert OID = 2116 (  max				PGNSP PGUID 12 1 0 t f f f i 1 23 "23" _null_ _null_ _null_ aggregate_dummy - _null_ _null_ ));
