@@ -140,11 +140,8 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	ItemPointer current;
 	OffsetNumber offnum;
 
-<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	pgstat_count_index_scan(rel);
 
 	current = &(so->hashso_curpos);
