@@ -329,30 +329,6 @@ pq_sendfloat4(StringInfo buf, float4 f)
 void
 pq_sendfloat8(StringInfo buf, float8 f)
 {
-<<<<<<< HEAD
-=======
-#ifdef INT64_IS_BUSTED
-	union
-	{
-		float8		f;
-		uint32		h[2];
-	}			swap;
-
-	swap.f = f;
-	swap.h[0] = htonl(swap.h[0]);
-	swap.h[1] = htonl(swap.h[1]);
-
-#ifdef WORDS_BIGENDIAN
-	/* machine seems to be big-endian, send h[0] first */
-	appendBinaryStringInfo(buf, (char *) &swap.h[0], 4);
-	appendBinaryStringInfo(buf, (char *) &swap.h[1], 4);
-#else
-	/* machine seems to be little-endian, send h[1] first */
-	appendBinaryStringInfo(buf, (char *) &swap.h[1], 4);
-	appendBinaryStringInfo(buf, (char *) &swap.h[0], 4);
-#endif
-#else							/* INT64 works */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	union
 	{
 		float8		f;
@@ -559,27 +535,6 @@ pq_getmsgfloat4(StringInfo msg)
 float8
 pq_getmsgfloat8(StringInfo msg)
 {
-<<<<<<< HEAD
-=======
-#ifdef INT64_IS_BUSTED
-	union
-	{
-		float8		f;
-		uint32		h[2];
-	}			swap;
-
-#ifdef WORDS_BIGENDIAN
-	/* machine seems to be big-endian, receive h[0] first */
-	swap.h[0] = pq_getmsgint(msg, 4);
-	swap.h[1] = pq_getmsgint(msg, 4);
-#else
-	/* machine seems to be little-endian, receive h[1] first */
-	swap.h[1] = pq_getmsgint(msg, 4);
-	swap.h[0] = pq_getmsgint(msg, 4);
-#endif
-	return swap.f;
-#else							/* INT64 works */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	union
 	{
 		float8		f;

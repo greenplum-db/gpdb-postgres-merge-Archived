@@ -23,18 +23,13 @@ typedef enum UserAuth
 	uaTrust,
 	uaIdent,
 	uaPassword,
-	uaCrypt,
 	uaMD5,
 	uaGSS,
-	uaSSPI
-#ifdef USE_PAM
-	,uaPAM
-#endif   /* USE_PAM */
-#ifdef USE_LDAP
-	,uaLDAP
-#endif
-	,uaCert
-	,uaRADIUS
+	uaSSPI,
+	uaPAM,
+	uaLDAP,
+	uaCert,
+	uaRADIUS
 } UserAuth;
 
 typedef enum IPCompareMethod

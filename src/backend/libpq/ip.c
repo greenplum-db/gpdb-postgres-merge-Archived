@@ -3,20 +3,12 @@
  * ip.c
  *	  IPv6-aware network access.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.51 2010/02/26 02:00:43 momjian Exp $
-=======
- *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.42 2008/01/01 19:45:49 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -86,14 +78,9 @@ pg_getaddrinfo_all(const char *hostname, const char *servname,
 	rc = getaddrinfo((!hostname || hostname[0] == '\0') ? NULL : hostname,
 					 servname, hintp, result);
 
-<<<<<<< HEAD
 
 
 #if defined(__darwin__)
-=======
-#ifdef _AIX
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/*
 	 * Attempt to work around some issues on OSX.
 	 *

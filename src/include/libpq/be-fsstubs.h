@@ -4,17 +4,10 @@
  *
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/libpq/be-fsstubs.h,v 1.35 2010/02/26 02:01:24 momjian Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/include/libpq/be-fsstubs.h,v 1.30 2008/01/01 19:45:58 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -43,14 +36,11 @@ extern Datum lo_lseek(PG_FUNCTION_ARGS);
 extern Datum lo_tell(PG_FUNCTION_ARGS);
 extern Datum lo_unlink(PG_FUNCTION_ARGS);
 extern Datum lo_truncate(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
 
 /*
  * compatibility option for access control
  */
 extern bool lo_compat_privileges;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * These are not fmgr-callable, but are available to C code.

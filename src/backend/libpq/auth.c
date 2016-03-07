@@ -3,11 +3,7 @@
  * auth.c
  *	  Routines to handle network authentication
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -31,10 +27,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-<<<<<<< HEAD
 #include <stddef.h>
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #include "cdb/cdbvars.h"
 #include "libpq/auth.h"
@@ -69,14 +62,6 @@ static void auth_failed(Port *port, int status);
 static char *recv_password_packet(Port *port);
 static int	recv_and_check_password_packet(Port *port);
 
-<<<<<<< HEAD
-=======
-char	   *pg_krb_server_keyfile;
-char	   *pg_krb_srvnam;
-bool		pg_krb_caseins_users;
-char	   *pg_krb_server_hostname = NULL;
-char	   *pg_krb_realm = NULL;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*----------------------------------------------------------------
  * Ident authentication
@@ -107,14 +92,8 @@ static bool ident_unix(int sock, char *ident_user);
 #define PGSQL_PAM_SERVICE "postgresql"	/* Service name passed to PAM */
 
 static int	CheckPAMAuth(Port *port, char *user, char *password);
-
-#if defined(pg_on_solaris) || (_AIX)
-static int pam_passwd_conv_proc(int num_msg, struct pam_message **msg,
-                    struct pam_response **resp, void *appdata_ptr);
-#else
 static int pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg,
                      struct pam_response ** resp, void *appdata_ptr);
-#endif
 
 static struct pam_conv pam_passw_conv = {
 	&pam_passwd_conv_proc,
@@ -161,20 +140,6 @@ static int	CheckLDAPAuth(Port *port);
 static int	CheckCertAuth(Port *port);
 #endif
 
-/*
- * Maximum accepted size of GSS and SSPI authentication tokens.
- *
- * Kerberos tickets are usually quite small, but the TGTs issued by Windows
- * domain controllers include an authorization field known as the Privilege
- * Attribute Certificate (PAC), which contains the user's Windows permissions
- * (group memberships etc.). The PAC is copied into all tickets obtained on
- * the basis of this TGT (even those issued by Unix realms which the Windows
- * realm trusts), and can be several kB in size. The maximum token size
- * accepted by Windows systems is determined by the MaxAuthToken Windows
- * registry setting. Microsoft recommends that it is not set higher than
- * 65535 bytes, so that seems like a reasonable limit for us as well.
- */
-#define PG_MAX_AUTH_TOKEN_LENGTH	65535
 
 /*----------------------------------------------------------------
  * Kerberos and GSSAPI GUCs
@@ -197,10 +162,6 @@ static int	pg_krb5_recvauth(Port *port);
 #if !defined(__COM_ERR_H) && !defined(__COM_ERR_H__)
 #include <com_err.h>
 #endif
-<<<<<<< HEAD
-=======
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * Various krb5 state which is not connection specfic, and a flag to
  * indicate whether we have initialised it yet.
@@ -248,6 +209,7 @@ static int pg_SSPI_recvauth(Port *port);
 #endif
 static int	CheckRADIUSAuth(Port *port);
 
+
 /*
  * Maximum accepted size of GSS and SSPI authentication tokens.
  *
@@ -261,750 +223,13 @@ static int	CheckRADIUSAuth(Port *port);
  * registry setting. Microsoft recommends that it is not set higher than
  * 65535 bytes, so that seems like a reasonable limit for us as well.
  */
-<<<<<<< HEAD
 #define PG_MAX_AUTH_TOKEN_LENGTH	65535
-=======
-static int
-pg_krb5_recvauth(Port *port)
-{
-	krb5_error_code retval;
-	int			ret;
-	krb5_auth_context auth_context = NULL;
-	krb5_ticket *ticket;
-	char	   *kusername;
-	char	   *cp;
-
-	if (get_role_line(port->user_name) == NULL)
-		return STATUS_ERROR;
-
-	ret = pg_krb5_init();
-	if (ret != STATUS_OK)
-		return ret;
-
-	retval = krb5_recvauth(pg_krb5_context, &auth_context,
-						   (krb5_pointer) & port->sock, pg_krb_srvnam,
-						   pg_krb5_server, 0, pg_krb5_keytab, &ticket);
-	if (retval)
-	{
-		ereport(LOG,
-				(errmsg("Kerberos recvauth returned error %d",
-						retval)));
-		com_err("postgres", retval, "from krb5_recvauth");
-		return STATUS_ERROR;
-	}
-
-	/*
-	 * The "client" structure comes out of the ticket and is therefore
-	 * authenticated.  Use it to check the username obtained from the
-	 * postmaster startup packet.
-	 */
-#if defined(HAVE_KRB5_TICKET_ENC_PART2)
-	retval = krb5_unparse_name(pg_krb5_context,
-							   ticket->enc_part2->client, &kusername);
-#elif defined(HAVE_KRB5_TICKET_CLIENT)
-	retval = krb5_unparse_name(pg_krb5_context,
-							   ticket->client, &kusername);
-#else
-#error "bogus configuration"
-#endif
-	if (retval)
-	{
-		ereport(LOG,
-				(errmsg("Kerberos unparse_name returned error %d",
-						retval)));
-		com_err("postgres", retval, "while unparsing client name");
-		krb5_free_ticket(pg_krb5_context, ticket);
-		krb5_auth_con_free(pg_krb5_context, auth_context);
-		return STATUS_ERROR;
-	}
-
-	cp = strchr(kusername, '@');
-	if (cp)
-	{
-		*cp = '\0';
-		cp++;
-
-		if (pg_krb_realm != NULL && strlen(pg_krb_realm))
-		{
-			/* Match realm against configured */
-			if (pg_krb_caseins_users)
-				ret = pg_strcasecmp(pg_krb_realm, cp);
-			else
-				ret = strcmp(pg_krb_realm, cp);
-
-			if (ret)
-			{
-				elog(DEBUG2,
-					 "krb5 realm (%s) and configured realm (%s) don't match",
-					 cp, pg_krb_realm);
-
-				krb5_free_ticket(pg_krb5_context, ticket);
-				krb5_auth_con_free(pg_krb5_context, auth_context);
-				return STATUS_ERROR;
-			}
-		}
-	}
-	else if (pg_krb_realm && strlen(pg_krb_realm))
-	{
-		elog(DEBUG2,
-			 "krb5 did not return realm but realm matching was requested");
-
-		krb5_free_ticket(pg_krb5_context, ticket);
-		krb5_auth_con_free(pg_krb5_context, auth_context);
-		return STATUS_ERROR;
-	}
-
-	if (pg_krb_caseins_users)
-		ret = pg_strncasecmp(port->user_name, kusername, SM_DATABASE_USER);
-	else
-		ret = strncmp(port->user_name, kusername, SM_DATABASE_USER);
-	if (ret)
-	{
-		ereport(LOG,
-				(errmsg("unexpected Kerberos user name received from client (received \"%s\", expected \"%s\")",
-						port->user_name, kusername)));
-		ret = STATUS_ERROR;
-	}
-	else
-		ret = STATUS_OK;
-
-	krb5_free_ticket(pg_krb5_context, ticket);
-	krb5_auth_con_free(pg_krb5_context, auth_context);
-	free(kusername);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 /*----------------------------------------------------------------
  * Global authentication functions
  *----------------------------------------------------------------
  */
-
-/*----------------------------------------------------------------
- * GSSAPI authentication system
- *----------------------------------------------------------------
- */
-
-#ifdef ENABLE_GSS
-
-#if defined(HAVE_GSSAPI_H)
-#include <gssapi.h>
-#else
-#include <gssapi/gssapi.h>
-#endif
-
-#if defined(WIN32) && !defined(WIN32_ONLY_COMPILER)
-/*
- * MIT Kerberos GSSAPI DLL doesn't properly export the symbols for MingW
- * that contain the OIDs required. Redefine here, values copied
- * from src/athena/auth/krb5/src/lib/gssapi/generic/gssapi_generic.c
- */
-static const gss_OID_desc GSS_C_NT_USER_NAME_desc =
-{10, (void *) "\x2a\x86\x48\x86\xf7\x12\x01\x02\x01\x02"};
-static GSS_DLLIMP gss_OID GSS_C_NT_USER_NAME = &GSS_C_NT_USER_NAME_desc;
-#endif
-
-
-static void
-pg_GSS_error(int severity, char *errmsg, OM_uint32 maj_stat, OM_uint32 min_stat)
-{
-	gss_buffer_desc gmsg;
-	OM_uint32	lmaj_s,
-				lmin_s,
-				msg_ctx;
-	char		msg_major[128],
-				msg_minor[128];
-
-	/* Fetch major status message */
-	msg_ctx = 0;
-	lmaj_s = gss_display_status(&lmin_s, maj_stat, GSS_C_GSS_CODE,
-								GSS_C_NO_OID, &msg_ctx, &gmsg);
-	strlcpy(msg_major, gmsg.value, sizeof(msg_major));
-	gss_release_buffer(&lmin_s, &gmsg);
-
-	if (msg_ctx)
-
-		/*
-		 * More than one message available. XXX: Should we loop and read all
-		 * messages? (same below)
-		 */
-		ereport(WARNING,
-				(errmsg_internal("incomplete GSS error report")));
-
-	/* Fetch mechanism minor status message */
-	msg_ctx = 0;
-	lmaj_s = gss_display_status(&lmin_s, min_stat, GSS_C_MECH_CODE,
-								GSS_C_NO_OID, &msg_ctx, &gmsg);
-	strlcpy(msg_minor, gmsg.value, sizeof(msg_minor));
-	gss_release_buffer(&lmin_s, &gmsg);
-
-	if (msg_ctx)
-		ereport(WARNING,
-				(errmsg_internal("incomplete GSS minor error report")));
-
-	/*
-	 * errmsg_internal, since translation of the first part must be done
-	 * before calling this function anyway.
-	 */
-	ereport(severity,
-			(errmsg_internal("%s", errmsg),
-			 errdetail("%s: %s", msg_major, msg_minor)));
-}
-
-static int
-pg_GSS_recvauth(Port *port)
-{
-	OM_uint32	maj_stat,
-				min_stat,
-				lmin_s,
-				gflags;
-	int			mtype;
-	int			ret;
-	StringInfoData buf;
-	gss_buffer_desc gbuf;
-
-	/*
-	 * GSS auth is not supported for protocol versions before 3, because it
-	 * relies on the overall message length word to determine the GSS payload
-	 * size in AuthenticationGSSContinue and PasswordMessage messages.
-	 * (This is, in fact, a design error in our GSS support, because protocol
-	 * messages are supposed to be parsable without relying on the length
-	 * word; but it's not worth changing it now.)
-	 */
-	if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
-		ereport(FATAL,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("GSSAPI is not supported in protocol version 2")));
-
-	if (pg_krb_server_keyfile && strlen(pg_krb_server_keyfile) > 0)
-	{
-		/*
-		 * Set default Kerberos keytab file for the Krb5 mechanism.
-		 *
-		 * setenv("KRB5_KTNAME", pg_krb_server_keyfile, 0); except setenv()
-		 * not always available.
-		 */
-		if (getenv("KRB5_KTNAME") == NULL)
-		{
-			size_t	kt_len = strlen(pg_krb_server_keyfile) + 14;
-			char   *kt_path = malloc(kt_len);
-
-			if (!kt_path)
-			{
-				ereport(LOG,
-						(errcode(ERRCODE_OUT_OF_MEMORY),
-						 errmsg("out of memory")));
-				return STATUS_ERROR;
-			}
-			snprintf(kt_path, kt_len, "KRB5_KTNAME=%s", pg_krb_server_keyfile);
-			putenv(kt_path);
-		}
-	}
-
-	/*
-	 * We accept any service principal that's present in our keytab. This
-	 * increases interoperability between kerberos implementations that see
-	 * for example case sensitivity differently, while not really opening up
-	 * any vector of attack.
-	 */
-	port->gss->cred = GSS_C_NO_CREDENTIAL;
-
-	/*
-	 * Initialize sequence with an empty context
-	 */
-	port->gss->ctx = GSS_C_NO_CONTEXT;
-
-	/*
-	 * Loop through GSSAPI message exchange. This exchange can consist of
-	 * multiple messags sent in both directions. First message is always from
-	 * the client. All messages from client to server are password packets
-	 * (type 'p').
-	 */
-	do
-	{
-		mtype = pq_getbyte();
-		if (mtype != 'p')
-		{
-			/* Only log error if client didn't disconnect. */
-			if (mtype != EOF)
-				ereport(COMMERROR,
-						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("expected GSS response, got message type %d",
-								mtype)));
-			return STATUS_ERROR;
-		}
-
-		/* Get the actual GSS token */
-		initStringInfo(&buf);
-		if (pq_getmessage(&buf, PG_MAX_AUTH_TOKEN_LENGTH))
-		{
-			/* EOF - pq_getmessage already logged error */
-			pfree(buf.data);
-			return STATUS_ERROR;
-		}
-
-		/* Map to GSSAPI style buffer */
-		gbuf.length = buf.len;
-		gbuf.value = buf.data;
-
-		elog(DEBUG4, "Processing received GSS token of length %u",
-			 (unsigned int) gbuf.length);
-
-		maj_stat = gss_accept_sec_context(
-										  &min_stat,
-										  &port->gss->ctx,
-										  port->gss->cred,
-										  &gbuf,
-										  GSS_C_NO_CHANNEL_BINDINGS,
-										  &port->gss->name,
-										  NULL,
-										  &port->gss->outbuf,
-										  &gflags,
-										  NULL,
-										  NULL);
-
-		/* gbuf no longer used */
-		pfree(buf.data);
-
-		elog(DEBUG5, "gss_accept_sec_context major: %d, "
-			 "minor: %d, outlen: %u, outflags: %x",
-			 maj_stat, min_stat,
-			 (unsigned int) port->gss->outbuf.length, gflags);
-
-		if (port->gss->outbuf.length != 0)
-		{
-			/*
-			 * Negotiation generated data to be sent to the client.
-			 */
-			OM_uint32	lmin_s;
-
-			elog(DEBUG4, "sending GSS response token of length %u",
-				 (unsigned int) port->gss->outbuf.length);
-
-			sendAuthRequest(port, AUTH_REQ_GSS_CONT);
-
-			gss_release_buffer(&lmin_s, &port->gss->outbuf);
-		}
-
-		if (maj_stat != GSS_S_COMPLETE && maj_stat != GSS_S_CONTINUE_NEEDED)
-		{
-			OM_uint32	lmin_s;
-
-			gss_delete_sec_context(&lmin_s, &port->gss->ctx, GSS_C_NO_BUFFER);
-			pg_GSS_error(ERROR,
-					   gettext_noop("accepting GSS security context failed"),
-						 maj_stat, min_stat);
-		}
-
-		if (maj_stat == GSS_S_CONTINUE_NEEDED)
-			elog(DEBUG4, "GSS continue needed");
-
-	} while (maj_stat == GSS_S_CONTINUE_NEEDED);
-
-	if (port->gss->cred != GSS_C_NO_CREDENTIAL)
-	{
-		/*
-		 * Release service principal credentials
-		 */
-		gss_release_cred(&min_stat, &port->gss->cred);
-	}
-
-	/*
-	 * GSS_S_COMPLETE indicates that authentication is now complete.
-	 *
-	 * Get the name of the user that authenticated, and compare it to the pg
-	 * username that was specified for the connection.
-	 */
-	maj_stat = gss_display_name(&min_stat, port->gss->name, &gbuf, NULL);
-	if (maj_stat != GSS_S_COMPLETE)
-		pg_GSS_error(ERROR,
-					 gettext_noop("retrieving GSS user name failed"),
-					 maj_stat, min_stat);
-
-	/*
-	 * Split the username at the realm separator
-	 */
-	if (strchr(gbuf.value, '@'))
-	{
-		char	   *cp = strchr(gbuf.value, '@');
-
-		*cp = '\0';
-		cp++;
-
-		if (pg_krb_realm != NULL && strlen(pg_krb_realm))
-		{
-			/*
-			 * Match the realm part of the name first
-			 */
-			if (pg_krb_caseins_users)
-				ret = pg_strcasecmp(pg_krb_realm, cp);
-			else
-				ret = strcmp(pg_krb_realm, cp);
-
-			if (ret)
-			{
-				/* GSS realm does not match */
-				elog(DEBUG2,
-				   "GSSAPI realm (%s) and configured realm (%s) don't match",
-					 cp, pg_krb_realm);
-				gss_release_buffer(&lmin_s, &gbuf);
-				return STATUS_ERROR;
-			}
-		}
-	}
-	else if (pg_krb_realm && strlen(pg_krb_realm))
-	{
-		elog(DEBUG2,
-			 "GSSAPI did not return realm but realm matching was requested");
-
-		gss_release_buffer(&lmin_s, &gbuf);
-		return STATUS_ERROR;
-	}
-
-	if (pg_krb_caseins_users)
-		ret = pg_strcasecmp(port->user_name, gbuf.value);
-	else
-		ret = strcmp(port->user_name, gbuf.value);
-
-	if (ret)
-	{
-		/* GSS name and PGUSER are not equivalent */
-		elog(DEBUG2,
-			 "provided username (%s) and GSSAPI username (%s) don't match",
-			 port->user_name, (char *) gbuf.value);
-
-		gss_release_buffer(&lmin_s, &gbuf);
-		return STATUS_ERROR;
-	}
-
-	gss_release_buffer(&lmin_s, &gbuf);
-
-	return STATUS_OK;
-}
-
-#else							/* no ENABLE_GSS */
-
-static int
-pg_GSS_recvauth(Port *port)
-{
-	ereport(LOG,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("GSSAPI not implemented on this server")));
-	return STATUS_ERROR;
-}
-
-#endif   /* ENABLE_GSS */
-
-/*----------------------------------------------------------------
- * SSPI authentication system
- *----------------------------------------------------------------
- */
-
-#ifdef ENABLE_SSPI
-
-typedef		SECURITY_STATUS
-			(WINAPI * QUERY_SECURITY_CONTEXT_TOKEN_FN) (
-													   PCtxtHandle, void **);
-
-static void
-pg_SSPI_error(int severity, char *errmsg, SECURITY_STATUS r)
-{
-	char		sysmsg[256];
-
-	if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, r, 0, sysmsg, sizeof(sysmsg), NULL) == 0)
-		ereport(severity,
-				(errmsg_internal("%s", errmsg),
-				 errdetail("SSPI error %x", (unsigned int) r)));
-	else
-		ereport(severity,
-				(errmsg_internal("%s", errmsg),
-				 errdetail("%s (%x)", sysmsg, (unsigned int) r)));
-}
-
-static int
-pg_SSPI_recvauth(Port *port)
-{
-	int			mtype;
-	StringInfoData buf;
-	SECURITY_STATUS r;
-	CredHandle	sspicred;
-	CtxtHandle *sspictx = NULL,
-				newctx;
-	TimeStamp	expiry;
-	ULONG		contextattr;
-	SecBufferDesc inbuf;
-	SecBufferDesc outbuf;
-	SecBuffer	OutBuffers[1];
-	SecBuffer	InBuffers[1];
-	HANDLE		token;
-	TOKEN_USER *tokenuser;
-	DWORD		retlen;
-	char		accountname[MAXPGPATH];
-	char		domainname[MAXPGPATH];
-	DWORD		accountnamesize = sizeof(accountname);
-	DWORD		domainnamesize = sizeof(domainname);
-	SID_NAME_USE accountnameuse;
-	HMODULE		secur32;
-	QUERY_SECURITY_CONTEXT_TOKEN_FN _QuerySecurityContextToken;
-
-	/*
-	 * SSPI auth is not supported for protocol versions before 3, because it
-	 * relies on the overall message length word to determine the SSPI payload
-	 * size in AuthenticationGSSContinue and PasswordMessage messages.
-	 * (This is, in fact, a design error in our SSPI support, because protocol
-	 * messages are supposed to be parsable without relying on the length
-	 * word; but it's not worth changing it now.)
-	 */
-	if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
-		ereport(FATAL,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("SSPI is not supported in protocol version 2")));
-
-	/*
-	 * Acquire a handle to the server credentials.
-	 */
-	r = AcquireCredentialsHandle(NULL,
-								 "negotiate",
-								 SECPKG_CRED_INBOUND,
-								 NULL,
-								 NULL,
-								 NULL,
-								 NULL,
-								 &sspicred,
-								 &expiry);
-	if (r != SEC_E_OK)
-		pg_SSPI_error(ERROR,
-			   gettext_noop("could not acquire SSPI credentials handle"), r);
-
-	/*
-	 * Loop through SSPI message exchange. This exchange can consist of
-	 * multiple messags sent in both directions. First message is always from
-	 * the client. All messages from client to server are password packets
-	 * (type 'p').
-	 */
-	do
-	{
-		mtype = pq_getbyte();
-		if (mtype != 'p')
-		{
-			/* Only log error if client didn't disconnect. */
-			if (mtype != EOF)
-				ereport(COMMERROR,
-						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("expected SSPI response, got message type %d",
-								mtype)));
-			return STATUS_ERROR;
-		}
-
-		/* Get the actual SSPI token */
-		initStringInfo(&buf);
-		if (pq_getmessage(&buf, PG_MAX_AUTH_TOKEN_LENGTH))
-		{
-			/* EOF - pq_getmessage already logged error */
-			pfree(buf.data);
-			return STATUS_ERROR;
-		}
-
-		/* Map to SSPI style buffer */
-		inbuf.ulVersion = SECBUFFER_VERSION;
-		inbuf.cBuffers = 1;
-		inbuf.pBuffers = InBuffers;
-		InBuffers[0].pvBuffer = buf.data;
-		InBuffers[0].cbBuffer = buf.len;
-		InBuffers[0].BufferType = SECBUFFER_TOKEN;
-
-		/* Prepare output buffer */
-		OutBuffers[0].pvBuffer = NULL;
-		OutBuffers[0].BufferType = SECBUFFER_TOKEN;
-		OutBuffers[0].cbBuffer = 0;
-		outbuf.cBuffers = 1;
-		outbuf.pBuffers = OutBuffers;
-		outbuf.ulVersion = SECBUFFER_VERSION;
-
-
-		elog(DEBUG4, "Processing received SSPI token of length %u",
-			 (unsigned int) buf.len);
-
-		r = AcceptSecurityContext(&sspicred,
-								  sspictx,
-								  &inbuf,
-								  ASC_REQ_ALLOCATE_MEMORY,
-								  SECURITY_NETWORK_DREP,
-								  &newctx,
-								  &outbuf,
-								  &contextattr,
-								  NULL);
-
-		/* input buffer no longer used */
-		pfree(buf.data);
-
-		if (outbuf.cBuffers > 0 && outbuf.pBuffers[0].cbBuffer > 0)
-		{
-			/*
-			 * Negotiation generated data to be sent to the client.
-			 */
-			elog(DEBUG4, "sending SSPI response token of length %u",
-				 (unsigned int) outbuf.pBuffers[0].cbBuffer);
-
-			port->gss->outbuf.length = outbuf.pBuffers[0].cbBuffer;
-			port->gss->outbuf.value = outbuf.pBuffers[0].pvBuffer;
-
-			sendAuthRequest(port, AUTH_REQ_GSS_CONT);
-
-			FreeContextBuffer(outbuf.pBuffers[0].pvBuffer);
-		}
-
-		if (r != SEC_E_OK && r != SEC_I_CONTINUE_NEEDED)
-		{
-			if (sspictx != NULL)
-			{
-				DeleteSecurityContext(sspictx);
-				free(sspictx);
-			}
-			FreeCredentialsHandle(&sspicred);
-			pg_SSPI_error(ERROR,
-				  gettext_noop("could not accept SSPI security context"), r);
-		}
-
-		/*
-		 * Overwrite the current context with the one we just received.
-		 * If sspictx is NULL it was the first loop and we need to allocate
-		 * a buffer for it. On subsequent runs, we can just overwrite the
-		 * buffer contents since the size does not change.
-		 */
-		if (sspictx == NULL)
-		{
-			sspictx = malloc(sizeof(CtxtHandle));
-			if (sspictx == NULL)
-				ereport(ERROR,
-						(errmsg("out of memory")));
-		}
-
-		memcpy(sspictx, &newctx, sizeof(CtxtHandle));
-
-		if (r == SEC_I_CONTINUE_NEEDED)
-			elog(DEBUG4, "SSPI continue needed");
-
-	} while (r == SEC_I_CONTINUE_NEEDED);
-
-
-	/*
-	 * Release service principal credentials
-	 */
-	FreeCredentialsHandle(&sspicred);
-
-
-	/*
-	 * SEC_E_OK indicates that authentication is now complete.
-	 *
-	 * Get the name of the user that authenticated, and compare it to the pg
-	 * username that was specified for the connection.
-	 *
-	 * MingW is missing the export for QuerySecurityContextToken in the
-	 * secur32 library, so we have to load it dynamically.
-	 */
-
-	secur32 = LoadLibrary("SECUR32.DLL");
-	if (secur32 == NULL)
-		ereport(ERROR,
-				(errmsg_internal("could not load secur32.dll: %d",
-								 (int) GetLastError())));
-
-	_QuerySecurityContextToken = (QUERY_SECURITY_CONTEXT_TOKEN_FN)
-		GetProcAddress(secur32, "QuerySecurityContextToken");
-	if (_QuerySecurityContextToken == NULL)
-	{
-		FreeLibrary(secur32);
-		ereport(ERROR,
-				(errmsg_internal("could not locate QuerySecurityContextToken in secur32.dll: %d",
-								 (int) GetLastError())));
-	}
-
-	r = (_QuerySecurityContextToken) (sspictx, &token);
-	if (r != SEC_E_OK)
-	{
-		FreeLibrary(secur32);
-		pg_SSPI_error(ERROR,
-			   gettext_noop("could not get security token from context"), r);
-	}
-
-	FreeLibrary(secur32);
-
-	/*
-	 * No longer need the security context, everything from here on uses the
-	 * token instead.
-	 */
-	DeleteSecurityContext(sspictx);
-	free(sspictx);
-
-	if (!GetTokenInformation(token, TokenUser, NULL, 0, &retlen) && GetLastError() != 122)
-		ereport(ERROR,
-			 (errmsg_internal("could not get token user size: error code %d",
-							  (int) GetLastError())));
-
-	tokenuser = malloc(retlen);
-	if (tokenuser == NULL)
-		ereport(ERROR,
-				(errmsg("out of memory")));
-
-	if (!GetTokenInformation(token, TokenUser, tokenuser, retlen, &retlen))
-		ereport(ERROR,
-				(errmsg_internal("could not get user token: error code %d",
-								 (int) GetLastError())));
-
-	if (!LookupAccountSid(NULL, tokenuser->User.Sid, accountname, &accountnamesize,
-						  domainname, &domainnamesize, &accountnameuse))
-		ereport(ERROR,
-			  (errmsg_internal("could not lookup acconut sid: error code %d",
-							   (int) GetLastError())));
-
-	free(tokenuser);
-
-	/*
-	 * Compare realm/domain if requested. In SSPI, always compare case
-	 * insensitive.
-	 */
-	if (pg_krb_realm && strlen(pg_krb_realm))
-	{
-		if (pg_strcasecmp(pg_krb_realm, domainname))
-		{
-			elog(DEBUG2,
-				 "SSPI domain (%s) and configured domain (%s) don't match",
-				 domainname, pg_krb_realm);
-
-			return STATUS_ERROR;
-		}
-	}
-
-	/*
-	 * We have the username (without domain/realm) in accountname, compare to
-	 * the supplied value. In SSPI, always compare case insensitive.
-	 */
-	if (pg_strcasecmp(port->user_name, accountname))
-	{
-		/* GSS name and PGUSER are not equivalent */
-		elog(DEBUG2,
-			 "provided username (%s) and SSPI username (%s) don't match",
-			 port->user_name, accountname);
-
-		return STATUS_ERROR;
-	}
-
-	return STATUS_OK;
-}
-
-#else							/* no ENABLE_SSPI */
-
-static int
-pg_SSPI_recvauth(Port *port)
-{
-	ereport(LOG,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("SSPI not implemented on this server")));
-	return STATUS_ERROR;
-}
-
-#endif   /* ENABLE_SSPI */
-
 
 /*
  * Tell the user the authentication failed, but not (much about) why.
@@ -1040,7 +265,6 @@ auth_failed(Port *port, int status)
 	/* internal communication failure */
 	if (!port->hba)
 	{
-<<<<<<< HEAD
 		errstr = gettext_noop("authentication failed for user \"%s\": "
 							  "invalid authentication method");
 	}
@@ -1089,44 +313,6 @@ auth_failed(Port *port, int status)
 				errstr = gettext_noop("authentication failed for user \"%s\": invalid authentication method");
 				break;
 		}
-=======
-		case uaReject:
-			errstr = gettext_noop("authentication failed for user \"%s\": host rejected");
-			break;
-		case uaKrb5:
-			errstr = gettext_noop("Kerberos 5 authentication failed for user \"%s\"");
-			break;
-		case uaGSS:
-			errstr = gettext_noop("GSSAPI authentication failed for user \"%s\"");
-			break;
-		case uaSSPI:
-			errstr = gettext_noop("SSPI authentication failed for user \"%s\"");
-			break;
-		case uaTrust:
-			errstr = gettext_noop("\"trust\" authentication failed for user \"%s\"");
-			break;
-		case uaIdent:
-			errstr = gettext_noop("Ident authentication failed for user \"%s\"");
-			break;
-		case uaMD5:
-		case uaCrypt:
-		case uaPassword:
-			errstr = gettext_noop("password authentication failed for user \"%s\"");
-			break;
-#ifdef USE_PAM
-		case uaPAM:
-			errstr = gettext_noop("PAM authentication failed for user \"%s\"");
-			break;
-#endif   /* USE_PAM */
-#ifdef USE_LDAP
-		case uaLDAP:
-			errstr = gettext_noop("LDAP authentication failed for user \"%s\"");
-			break;
-#endif   /* USE_LDAP */
-		default:
-			errstr = gettext_noop("authentication failed for user \"%s\": invalid authentication method");
-			break;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	ereport(FATAL,
@@ -1458,16 +644,6 @@ ClientAuthentication(Port *port)
 #endif
 			break;
 
-		case uaGSS:
-			sendAuthRequest(port, AUTH_REQ_GSS);
-			status = pg_GSS_recvauth(port);
-			break;
-
-		case uaSSPI:
-			sendAuthRequest(port, AUTH_REQ_SSPI);
-			status = pg_SSPI_recvauth(port);
-			break;
-
 		case uaIdent:
 
 			/*
@@ -1515,10 +691,7 @@ ClientAuthentication(Port *port)
 			break;
 
 		case uaPAM:
-<<<<<<< HEAD
 #ifdef USE_PAM
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			status = CheckPAMAuth(port, port->user_name, "");
 #else
 			Assert(false);
@@ -1602,24 +775,6 @@ sendAuthRequest(Port *port, AuthRequest areq)
 	}
 #endif
 
-#if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
-
-	/*
-	 * Add the authentication data for the next step of the GSSAPI or SSPI
-	 * negotiation.
-	 */
-	else if (areq == AUTH_REQ_GSS_CONT)
-	{
-		if (port->gss->outbuf.length > 0)
-		{
-			elog(DEBUG4, "sending GSS token of length %u",
-				 (unsigned int) port->gss->outbuf.length);
-
-			pq_sendbytes(&buf, port->gss->outbuf.value, port->gss->outbuf.length);
-		}
-	}
-#endif
-
 	pq_endmessage(&buf);
 
 	/*
@@ -1638,7 +793,6 @@ sendAuthRequest(Port *port, AuthRequest areq)
 static char *
 recv_password_packet(Port *port)
 {
-<<<<<<< HEAD
 	StringInfoData buf;
 
 	if (PG_PROTOCOL_MAJOR(port->proto) >= 3)
@@ -1677,34 +831,12 @@ recv_password_packet(Port *port)
 		pfree(buf.data);
 		return NULL;
 	}
-=======
-	char	   *passwd;
-	struct pam_response *reply;
-	int			i;
-
-	if (appdata_ptr)
-		passwd = (char *) appdata_ptr;
-	else
-	{
-		/*
-		 * Workaround for Solaris 2.6 where the PAM library is broken and does
-		 * not pass appdata_ptr to the conversation routine
-		 */
-		passwd = pam_passwd;
-	}
-
-	*resp = NULL;				/* in case of error exit */
-
-	if (num_msg <= 0 || num_msg > PAM_MAX_NUM_MSG)
-		return PAM_CONV_ERR;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Apply sanity check: password packet length should agree with length of
 	 * contained string.  Note it is safe to use strlen here because
 	 * StringInfo is guaranteed to have an appended '\0'.
 	 */
-<<<<<<< HEAD
 	if (strlen(buf.data) + 1 != buf.len)
 		ereport(COMMERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -1720,81 +852,6 @@ recv_password_packet(Port *port)
 	 * encoding, there wouldn't be much point.
 	 */
 	return buf.data;
-=======
-	if ((reply = calloc(num_msg, sizeof(struct pam_response))) == NULL)
-	{
-		ereport(LOG,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-		return PAM_CONV_ERR;
-	}
-
-	for (i = 0; i < num_msg; i++)
-	{
-		switch (msg[i]->msg_style)
-		{
-			case PAM_PROMPT_ECHO_OFF:
-				if (strlen(passwd) == 0)
-				{
-					/*
-					 * Password wasn't passed to PAM the first time around -
-					 * let's go ask the client to send a password, which we
-					 * then stuff into PAM.
-					 */
-					sendAuthRequest(pam_port_cludge, AUTH_REQ_PASSWORD);
-					passwd = recv_password_packet(pam_port_cludge);
-					if (passwd == NULL)
-					{
-						/*
-						 * Client didn't want to send password.  We
-						 * intentionally do not log anything about this.
-						 */
-						goto fail;
-					}
-					if (strlen(passwd) == 0)
-					{
-						ereport(LOG,
-								(errmsg("empty password returned by client")));
-						goto fail;
-					}
-				}
-				if ((reply[i].resp = strdup(passwd)) == NULL)
-					goto fail;
-				reply[i].resp_retcode = PAM_SUCCESS;
-				break;
-			case PAM_ERROR_MSG:
-				ereport(LOG,
-						(errmsg("error from underlying PAM layer: %s",
-								msg[i]->msg)));
-				/* FALL THROUGH */
-			case PAM_TEXT_INFO:
-				/* we don't bother to log TEXT_INFO messages */
-				if ((reply[i].resp = strdup("")) == NULL)
-					goto fail;
-				reply[i].resp_retcode = PAM_SUCCESS;
-				break;
-			default:
-				elog(LOG, "unsupported PAM conversation %d/\"%s\"",
-					 msg[i]->msg_style,
-					 msg[i]->msg ? msg[i]->msg : "(none)");
-				goto fail;
-		}
-	}
-
-	*resp = reply;
-	return PAM_SUCCESS;
-
-fail:
-	/* free up whatever we allocated */
-	for (i = 0; i < num_msg; i++)
-	{
-		if (reply[i].resp != NULL)
-			free(reply[i].resp);
-	}
-	free(reply);
-
-	return PAM_CONV_ERR;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 
@@ -1813,17 +870,7 @@ recv_and_check_password_packet(Port *port)
 	char	   *passwd;
 	int			result;
 
-<<<<<<< HEAD
 	passwd = recv_password_packet(port);
-=======
-	/*
-	 * We can't entirely rely on PAM to pass through appdata --- it appears
-	 * not to work on at least Solaris 2.6.  So use these ugly static
-	 * variables instead.
-	 */
-	pam_passwd = password;
-	pam_port_cludge = port;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (passwd == NULL)
 		return STATUS_EOF;		/* client wouldn't send password */
@@ -3897,7 +2944,6 @@ CheckRADIUSAuth(Port *port)
 	radius_add_attribute(packet, RADIUS_NAS_IDENTIFIER, (unsigned char *) identifier, strlen(identifier));
 
 	/*
-<<<<<<< HEAD
 	 * RADIUS password attributes are calculated as: e[0] = p[0] XOR
 	 * MD5(secret + vector)
 	 */
@@ -3910,59 +2956,14 @@ CheckRADIUSAuth(Port *port)
 				(errmsg("could not perform MD5 encryption of password")));
 		pfree(cryptvector);
 		return STATUS_ERROR;
-=======
-	 * Crack the LDAP url. We do a very trivial parse:
-	 *
-	 * ldap[s]://<server>[:<port>]/<basedn>[;prefix[;suffix]]
-	 *
-	 * This code originally used "%127s" for the suffix, but that doesn't
-	 * work for embedded whitespace.  We know that tokens formed by
-	 * hba.c won't include newlines, so we can use a "not newline" scanset
-	 * instead.
-	 */
-
-	server[0] = '\0';
-	basedn[0] = '\0';
-	prefix[0] = '\0';
-	suffix[0] = '\0';
-
-	/* ldap, including port number */
-	r = sscanf(port->auth_arg,
-			   "ldap://%127[^:]:%d/%127[^;];%127[^;];%127[^\n]",
-			   server, &ldapport, basedn, prefix, suffix);
-	if (r < 3)
-	{
-		/* ldaps, including port number */
-		r = sscanf(port->auth_arg,
-				   "ldaps://%127[^:]:%d/%127[^;];%127[^;];%127[^\n]",
-				   server, &ldapport, basedn, prefix, suffix);
-		if (r >= 3)
-			ssl = true;
-	}
-	if (r < 3)
-	{
-		/* ldap, no port number */
-		r = sscanf(port->auth_arg,
-				   "ldap://%127[^/]/%127[^;];%127[^;];%127[^\n]",
-				   server, basedn, prefix, suffix);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 	pfree(cryptvector);
 	for (i = 0; i < RADIUS_VECTOR_LENGTH; i++)
 	{
-<<<<<<< HEAD
 		if (i < strlen(passwd))
 			encryptedpassword[i] = passwd[i] ^ encryptedpassword[i];
 		else
 			encryptedpassword[i] = '\0' ^ encryptedpassword[i];
-=======
-		/* ldaps, no port number */
-		r = sscanf(port->auth_arg,
-				   "ldaps://%127[^/]/%127[^;];%127[^;];%127[^\n]",
-				   server, basedn, prefix, suffix);
-		if (r >= 2)
-			ssl = true;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 	radius_add_attribute(packet, RADIUS_PASSWORD, encryptedpassword, RADIUS_VECTOR_LENGTH);
 
@@ -3979,7 +2980,6 @@ CheckRADIUSAuth(Port *port)
 		return STATUS_ERROR;
 	}
 
-<<<<<<< HEAD
 	memset(&localaddr, 0, sizeof(localaddr));
 #ifdef HAVE_IPV6
 	localaddr.sin6_family = serveraddrs[0].ai_family;
@@ -3988,28 +2988,6 @@ CheckRADIUSAuth(Port *port)
 		addrsize = sizeof(struct sockaddr_in6);
 	else
 		addrsize = sizeof(struct sockaddr_in);
-=======
-	sendAuthRequest(port, AUTH_REQ_PASSWORD);
-
-	passwd = recv_password_packet(port);
-	if (passwd == NULL)
-		return STATUS_EOF;		/* client wouldn't send password */
-
-	if (strlen(passwd) == 0)
-	{
-		ereport(LOG,
-				(errmsg("empty password returned by client")));
-		return STATUS_ERROR;
-	}
-
-	ldap = ldap_init(server, ldapport);
-	if (!ldap)
-	{
-#ifndef WIN32
-		ereport(LOG,
-				(errmsg("could not initialize LDAP: error code %d",
-						errno)));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #else
 	localaddr.sin_family = serveraddrs[0].ai_family;
 	localaddr.sin_addr.s_addr = INADDR_ANY;
@@ -4028,13 +3006,9 @@ CheckRADIUSAuth(Port *port)
 			   serveraddrs[0].ai_addr, serveraddrs[0].ai_addrlen) < 0)
 	{
 		ereport(LOG,
-<<<<<<< HEAD
 				(errmsg("could not send RADIUS packet: %m")));
 		closesocket(sock);
 		pg_freeaddrinfo_all(hint.ai_family, serveraddrs);
-=======
-		  (errmsg("could not set LDAP protocol version: error code %d", r)));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		return STATUS_ERROR;
 	}
 
@@ -4055,29 +3029,17 @@ CheckRADIUSAuth(Port *port)
 			if (errno == EINTR)
 				continue;
 
-<<<<<<< HEAD
 			/* Anything else is an actual error */
 			ereport(LOG,
 					(errmsg("could not check status on RADIUS socket: %m")));
 			closesocket(sock);
 			return STATUS_ERROR;
-=======
-			/*
-			 * Leak LDAP handle on purpose, because we need the library to
-			 * stay open. This is ok because it will only ever be leaked once
-			 * per process and is automatically cleaned up on process exit.
-			 */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 		if (r == 0)
 		{
 			ereport(LOG,
-<<<<<<< HEAD
 					(errmsg("timeout waiting for RADIUS response")));
 			closesocket(sock);
-=======
-			 (errmsg("could not start LDAP TLS session: error code %d", r)));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			return STATUS_ERROR;
 		}
 

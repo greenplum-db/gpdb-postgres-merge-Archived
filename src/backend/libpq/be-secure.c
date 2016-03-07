@@ -6,20 +6,12 @@
  *	  message integrity and endpoint authentication.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.102 2010/07/06 19:18:56 momjian Exp $
-=======
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.83.2.4 2010/02/25 13:26:22 mha Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -110,11 +102,7 @@ static const char *SSLerrmessage(void);
  *	(total in both directions) before we require renegotiation.
  *	Set to 0 to disable renegotiation completely.
  */
-<<<<<<< HEAD
 int			ssl_renegotiation_limit;
-=======
-int ssl_renegotiation_limit;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #ifdef USE_SSL
 static SSL_CTX *SSL_context = NULL;
@@ -122,10 +110,6 @@ static bool ssl_loaded_verify_locations = false;
 
 /* GUC variable controlling SSL cipher list */
 char	   *SSLCipherSuites = NULL;
-<<<<<<< HEAD
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif
 
 /* ------------------------------------------------------------ */
@@ -791,24 +775,16 @@ initialize_SSL(void)
 							SSLerrmessage())));
 
 		/*
-<<<<<<< HEAD
-		 * Load and verify server's certificate and private key
-		 */
-		if (SSL_CTX_use_certificate_chain_file(SSL_context,
-										  SERVER_CERT_FILE) != 1)
-=======
 		 * Disable OpenSSL's moving-write-buffer sanity check, because it
 		 * causes unnecessary failures in nonblocking send cases.
 		 */
 		SSL_CTX_set_mode(SSL_context, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
 
 		/*
-		 * Load and verify certificate and private key
+		 * Load and verify server's certificate and private key
 		 */
-		if (SSL_CTX_use_certificate_file(SSL_context,
-										  SERVER_CERT_FILE,
-										  SSL_FILETYPE_PEM) != 1)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+		if (SSL_CTX_use_certificate_chain_file(SSL_context,
+										  SERVER_CERT_FILE) != 1)
 			ereport(FATAL,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				  errmsg("could not load server certificate file \"%s\": %s",
@@ -862,7 +838,6 @@ initialize_SSL(void)
 	 * Attempt to load CA store, so we can verify client certificates if
 	 * needed.
 	 */
-<<<<<<< HEAD
 		ssl_loaded_verify_locations = false;
 
 	if (access(ROOT_CERT_FILE, R_OK) != 0)
@@ -880,9 +855,6 @@ initialize_SSL(void)
 		}
 	else if (SSL_CTX_load_verify_locations(SSL_context, ROOT_CERT_FILE, NULL) != 1 ||
 		  (root_cert_list = SSL_load_client_CA_file(ROOT_CERT_FILE)) == NULL)
-=======
-	if (SSL_CTX_load_verify_locations(SSL_context, ROOT_CERT_FILE, NULL) != 1)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		/*
 		 * File was there, but we could not load it. This means the file is
@@ -905,10 +877,7 @@ initialize_SSL(void)
 		{
 			/* Set the flags to check against the complete CRL chain */
 			if (X509_STORE_load_locations(cvstore, ROOT_CRL_FILE, NULL) == 1)
-<<<<<<< HEAD
 			{
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* OpenSSL 0.96 does not support X509_V_FLAG_CRL_CHECK */
 #ifdef X509_V_FLAG_CRL_CHECK
 				X509_STORE_set_flags(cvstore,
@@ -926,12 +895,7 @@ initialize_SSL(void)
 				ereport(LOG,
 						(errmsg("SSL certificate revocation list file \"%s\" not found, skipping: %s",
 								ROOT_CRL_FILE, SSLerrmessage()),
-<<<<<<< HEAD
 					 errdetail("Certificates will not be checked against revocation list.")));
-=======
-						 errdetail("Certificates will not be checked against revocation list.")));
-			}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 
 			/*
@@ -1042,7 +1006,6 @@ aloop:
 	port->peer_cn = NULL;
 	if (port->peer != NULL)
 	{
-<<<<<<< HEAD
 		int len;
 
 		len = X509_NAME_get_text_by_NID(X509_get_subject_name(port->peer),
@@ -1078,33 +1041,6 @@ aloop:
 			}
 
 			port->peer_cn = peer_cn;
-=======
-		X509_NAME_oneline(X509_get_subject_name(port->peer),
-						  port->peer_dn, sizeof(port->peer_dn));
-		port->peer_dn[sizeof(port->peer_dn) - 1] = '\0';
-		r = X509_NAME_get_text_by_NID(X509_get_subject_name(port->peer),
-					   NID_commonName, port->peer_cn, sizeof(port->peer_cn));
-		port->peer_cn[sizeof(port->peer_cn) - 1] = '\0';
-		if (r == -1)
-		{
-			/* Unable to get the CN, set it to blank so it can't be used */
-			port->peer_cn[0] = '\0';
-		}
-		else
-		{
-			/*
-			 * Reject embedded NULLs in certificate common name to prevent attacks like
-			 * CVE-2009-4034.
-			 */
-			if (r != strlen(port->peer_cn))
-			{
-				ereport(COMMERROR,
-						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("SSL certificate's common name contains embedded null")));
-				close_SSL(port);
-				return -1;
-			}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 	}
 
