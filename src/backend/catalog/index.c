@@ -5,7 +5,6 @@
  *
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -47,6 +46,7 @@
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
 #include "cdb/cdbpersistentfilesysobj.h"
+#include "catalog/aoblkdir.h"
 #include "commands/tablecmds.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
