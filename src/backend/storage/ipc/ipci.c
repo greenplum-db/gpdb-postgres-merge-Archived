@@ -50,7 +50,6 @@
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/bgwriter.h"
-#include "postmaster/checkpoint.h"
 #include "postmaster/postmaster.h"
 #include "postmaster/primary_mirror_mode.h"
 #include "postmaster/seqserver.h"
@@ -174,7 +173,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		size = add_size(size, ProcSignalShmemSize());
 		size = add_size(size, primaryMirrorModeShmemSize());
 		size = add_size(size, FreeSpaceShmemSize());
-<<<<<<< HEAD
 		//size = add_size(size, AutoVacuumShmemSize());
 		size = add_size(size, FtsShmemSize());
 		size = add_size(size, tmShmemSize());
@@ -207,12 +205,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		size = add_size(size, FaultInjector_ShmemSize());
 #endif			
 		
-=======
-		size = add_size(size, BgWriterShmemSize());
-		size = add_size(size, AutoVacuumShmemSize());
-		size = add_size(size, BTreeShmemSize());
-		size = add_size(size, SyncScanShmemSize());
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #ifdef EXEC_BACKEND
 		size = add_size(size, ShmemBackendArraySize());
 #endif
@@ -231,6 +223,9 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 			 (unsigned long) size);
 
 		size = add_size(size, BgWriterShmemSize());
+		size = add_size(size, AutoVacuumShmemSize());
+		size = add_size(size, BTreeShmemSize());
+		size = add_size(size, SyncScanShmemSize());
 		size = add_size(size, CheckpointShmemSize());
 
 		size = add_size(size, WalSndShmemSize());
@@ -423,11 +418,8 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	 * Set up other modules that need some shared memory space
 	 */
 	BTreeShmemInit();
-<<<<<<< HEAD
-	workfile_mgr_cache_init();
-=======
 	SyncScanShmemInit();
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	workfile_mgr_cache_init();
 
 #ifdef EXEC_BACKEND
 

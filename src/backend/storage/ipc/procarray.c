@@ -425,14 +425,11 @@ TransactionIdIsInProgress(TransactionId xid)
 	for (i = 0; i < arrayP->numProcs; i++)
 	{
 		volatile PGPROC *proc = arrayP->procs[i];
-<<<<<<< HEAD
-=======
 		TransactionId pxid;
 
 		/* Ignore my own proc --- dealt with it above */
 		if (proc == MyProc)
 			continue;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/* Fetch xid just once - see GetNewTransactionId */
 		pxid = proc->xid;
@@ -1204,7 +1201,7 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 
 				elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),
 					 "GetSnapshotData(): READER currentcommandid %d curcid %d segmatesync %d",
-					 GetCurrentCommandId(), snapshot->curcid, SharedLocalSnapshotSlot->segmateSync);
+					 GetCurrentCommandId(false), snapshot->curcid, SharedLocalSnapshotSlot->segmateSync);
 
 				return snapshot;
 			}
@@ -1360,8 +1357,6 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
 		volatile PGPROC *proc = arrayP->procs[index];
-<<<<<<< HEAD
-=======
 		TransactionId xid;
 
 		/* Ignore procs running LAZY VACUUM */
@@ -1369,11 +1364,10 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 			continue;
 
 		/* Update globalxmin to be the smallest valid xmin */
-		xid = proc->xmin;		/* fetch just once */
+		xid = proc->xmin;               /* fetch just once */
 		if (TransactionIdIsNormal(xid) &&
 			TransactionIdPrecedes(xid, globalxmin))
 			globalxmin = xid;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/* Fetch xid just once - see GetNewTransactionId */
 		xid = proc->xid;
@@ -1387,24 +1381,6 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 		 * We don't include our own XID (if any) in the snapshot, but we must
 		 * include it into xmin.
 		 */
-<<<<<<< HEAD
-		if (proc == MyProc ||
-			!TransactionIdIsNormal(xid) ||
-			TransactionIdFollowsOrEquals(xid, xmax))
-		{
-			continue;
-		}
-		
-		if (TransactionIdPrecedes(xid, xmin))
-			xmin = xid;
-		
-		snapshot->xip[count] = xid;
-		count++;
-
-		/* Update globalxmin to be the smallest valid xmin */
-		xid = proc->xmin;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		if (TransactionIdIsNormal(xid))
 		{
 			if (TransactionIdFollowsOrEquals(xid, xmax))
@@ -1500,35 +1476,12 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 
 	elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),
 		 "GetSnapshotData(): WRITER currentcommandid %d curcid %d segmatesync %d",
-		 GetCurrentCommandId(), snapshot->curcid, QEDtxContextInfo.segmateSync);
+		 GetCurrentCommandId(false), snapshot->curcid, QEDtxContextInfo.segmateSync);
 
 	return snapshot;
 }
 
 /*
-<<<<<<< HEAD
- * MPP: Special code to update the command id in the SharedLocalSnapshot
- * when we are in SERIALIZABLE isolation mode.
- */
-void UpdateSerializableCommandId(void)
-{
-	if ((DistributedTransactionContext == DTX_CONTEXT_QE_TWO_PHASE_EXPLICIT_WRITER ||
-		 DistributedTransactionContext == DTX_CONTEXT_QE_TWO_PHASE_IMPLICIT_WRITER) &&
-		 SharedLocalSnapshotSlot != NULL &&
-		 SerializableSnapshot != NULL)
-	{
-		int combocidSize;
-
-		if (SharedLocalSnapshotSlot->QDxid != QEDtxContextInfo.distributedXid)
-		{
-			elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),"[Distributed Snapshot #%u] *Can't Update Serializable Command Id* QDxid = %u (gxid = %u, '%s')", 
-			 	  QEDtxContextInfo.distributedSnapshot.header.distribSnapshotId,
-			 	  SharedLocalSnapshotSlot->QDxid,
-			 	  getDistributedTransactionId(),
-			 	  DtxContextToString(DistributedTransactionContext));
-			return;
-		}
-=======
  * GetTransactionsInCommit -- Get the XIDs of transactions that are committing
  *
  * Constructs an array of XIDs of transactions that are currently in commit
@@ -1590,30 +1543,9 @@ HaveTransactionsInCommit(TransactionId *xids, int nxids)
 	bool		result = false;
 	ProcArrayStruct *arrayP = procArray;
 	int			index;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
-		elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),
-			 "[Distributed Snapshot #%u] *Update Serializable Command Id* segment currcid = %d, QDcid = %d, SerializableSnapshot currcid = %d, Shared currcid = %d (gxid = %u, '%s')", 
-		 	  QEDtxContextInfo.distributedSnapshot.header.distribSnapshotId,
-		 	  QEDtxContextInfo.curcid,
-		 	  SharedLocalSnapshotSlot->QDcid,
-		 	  SerializableSnapshot->curcid,
-		 	  SharedLocalSnapshotSlot->snapshot.curcid,
-		 	  getDistributedTransactionId(),
-		 	  DtxContextToString(DistributedTransactionContext));
+	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
-<<<<<<< HEAD
-		SharedLocalSnapshotSlot->ready = false;
-
-		elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),
-			 "serializable writer updating combocid: used combocids %d shared %d", usedComboCids, SharedLocalSnapshotSlot->combocidcnt);
-
-		combocidSize = ((usedComboCids < MaxComboCids) ? usedComboCids : MaxComboCids );
-
-		SharedLocalSnapshotSlot->combocidcnt = combocidSize;	
-		memcpy((void *)SharedLocalSnapshotSlot->combocids, comboCids,
-			   combocidSize * sizeof(ComboCidKeyData));
-=======
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
 		volatile PGPROC *proc = arrayP->procs[index];
@@ -1637,18 +1569,62 @@ HaveTransactionsInCommit(TransactionId *xids, int nxids)
 				break;
 		}
 	}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+
+	LWLockRelease(ProcArrayLock);
+
+	return result;
+}
+
+/*
+ * MPP: Special code to update the command id in the SharedLocalSnapshot
+ * when we are in SERIALIZABLE isolation mode.
+ */
+void UpdateSerializableCommandId(void)
+{
+	if ((DistributedTransactionContext == DTX_CONTEXT_QE_TWO_PHASE_EXPLICIT_WRITER ||
+		 DistributedTransactionContext == DTX_CONTEXT_QE_TWO_PHASE_IMPLICIT_WRITER) &&
+		 SharedLocalSnapshotSlot != NULL &&
+		 SerializableSnapshot != NULL)
+	{
+		int combocidSize;
+
+		if (SharedLocalSnapshotSlot->QDxid != QEDtxContextInfo.distributedXid)
+		{
+			elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),"[Distributed Snapshot #%u] *Can't Update Serializable Command Id* QDxid = %u (gxid = %u, '%s')", 
+			 	  QEDtxContextInfo.distributedSnapshot.header.distribSnapshotId,
+			 	  SharedLocalSnapshotSlot->QDxid,
+			 	  getDistributedTransactionId(),
+			 	  DtxContextToString(DistributedTransactionContext));
+			return;
+		}
+
+		elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),
+			 "[Distributed Snapshot #%u] *Update Serializable Command Id* segment currcid = %d, QDcid = %d, SerializableSnapshot currcid = %d, Shared currcid = %d (gxid = %u, '%s')", 
+		 	  QEDtxContextInfo.distributedSnapshot.header.distribSnapshotId,
+		 	  QEDtxContextInfo.curcid,
+		 	  SharedLocalSnapshotSlot->QDcid,
+		 	  SerializableSnapshot->curcid,
+		 	  SharedLocalSnapshotSlot->snapshot.curcid,
+		 	  getDistributedTransactionId(),
+		 	  DtxContextToString(DistributedTransactionContext));
+
+		SharedLocalSnapshotSlot->ready = false;
+
+		elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),
+			 "serializable writer updating combocid: used combocids %d shared %d", usedComboCids, SharedLocalSnapshotSlot->combocidcnt);
+
+		combocidSize = ((usedComboCids < MaxComboCids) ? usedComboCids : MaxComboCids );
+
+		SharedLocalSnapshotSlot->combocidcnt = combocidSize;	
+		memcpy((void *)SharedLocalSnapshotSlot->combocids, comboCids,
+			   combocidSize * sizeof(ComboCidKeyData));
 
 		SharedLocalSnapshotSlot->snapshot.curcid = SerializableSnapshot->curcid;
 		SharedLocalSnapshotSlot->QDcid = QEDtxContextInfo.curcid;
 		SharedLocalSnapshotSlot->segmateSync = QEDtxContextInfo.segmateSync;
 
-<<<<<<< HEAD
 		SharedLocalSnapshotSlot->ready = true;
 	}
-=======
-	return result;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
@@ -1834,15 +1810,9 @@ CountActiveBackends(void)
 		 *
 		 * If someone just decremented numProcs, 'proc' could also point to a
 		 * PGPROC entry that's no longer in the array. It still points to a
-<<<<<<< HEAD
-		 * PGPROC struct, though, because freed PGPPROC entries just go to the
-		 * free list and are recycled. Its contents are nonsense in that case,
-		 * but that's acceptable for this function.
-=======
 		 * PGPROC struct, though, because freed PGPPROC entries just go to
 		 * the free list and are recycled. Its contents are nonsense in that
 		 * case, but that's acceptable for this function.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 */
 		if (proc == NULL)
 			continue;
@@ -1963,11 +1933,7 @@ CheckOtherDBBackends(Oid databaseId)
 
 			found = true;
 
-<<<<<<< HEAD
-			if (proc->isAutovacuum)
-=======
 			if (proc->vacuumFlags & PROC_IS_AUTOVACUUM)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			{
 				/* an autovacuum --- send it SIGTERM before sleeping */
 				int			autopid = proc->pid;

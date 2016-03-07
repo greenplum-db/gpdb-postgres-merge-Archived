@@ -8,20 +8,12 @@
  * exit-time cleanup for either a postmaster or a backend.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.105 2009/06/11 14:49:01 momjian Exp $
-=======
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.100.2.2 2010/03/20 00:58:21 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -32,16 +24,13 @@
 #include <sys/stat.h>
 
 #include "cdb/cdbdisp.h"
+#include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #ifdef PROFILE_PID_DIR
 #include "postmaster/autovacuum.h"
 #endif
 #include "storage/ipc.h"
-<<<<<<< HEAD
-#include "libpq/pqsignal.h"
-=======
 #include "tcop/tcopprot.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 /*
@@ -196,7 +185,8 @@ proc_exit_prepare(int code)
 	 * case of elog(FATAL) for example.)
 	 */
 	error_context_stack = NULL;
-<<<<<<< HEAD
+	/* For the same reason, reset debug_query_string before it's clobbered */
+	debug_query_string = NULL;
 
 	/*
 	 * Make sure threads get cleaned up: there might be still ongoing
@@ -224,12 +214,8 @@ proc_exit_prepare(int code)
 	* necessary to receive more motion data.
 	*/
 	WaitInterconnectQuit();
-=======
-	/* For the same reason, reset debug_query_string before it's clobbered */
-	debug_query_string = NULL;
 
 	elog(DEBUG3, "proc_exit(%d)", code);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* do our shared memory exits first */
 	shmem_exit(code);
@@ -250,9 +236,8 @@ proc_exit_prepare(int code)
 		(*on_proc_exit_list[on_proc_exit_index].function) (code,
 								  on_proc_exit_list[on_proc_exit_index].arg);
 
-<<<<<<< HEAD
 	on_proc_exit_index = 0;
-=======
+
 	elog(DEBUG3, "exit(%d)", code);
 
 #ifdef PROFILE_PID_DIR
@@ -290,7 +275,6 @@ proc_exit_prepare(int code)
 #endif
 
 	exit(code);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /* ------------------
@@ -407,24 +391,6 @@ on_shmem_exit(pg_on_exit_callback function, Datum arg)
 #endif
 		atexit_callback_setup = true;
 	}
-}
-
-/* ----------------------------------------------------------------
- *		cancel_shmem_exit
- *
- *		this function removes an entry, if present, from the list of
- *		functions to be invoked by shmem_exit().  For simplicity,
- *		only the latest entry can be removed.  (We could work harder
- *		but there is no need for current uses.)
- * ----------------------------------------------------------------
- */
-void
-cancel_shmem_exit(pg_on_exit_callback function, Datum arg)
-{
-	if (on_shmem_exit_index > 0 &&
-		on_shmem_exit_list[on_shmem_exit_index - 1].function == function &&
-		on_shmem_exit_list[on_shmem_exit_index - 1].arg == arg)
-		--on_shmem_exit_index;
 }
 
 /* ----------------------------------------------------------------

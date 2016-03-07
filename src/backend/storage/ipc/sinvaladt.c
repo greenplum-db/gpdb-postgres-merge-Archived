@@ -3,20 +3,12 @@
  * sinvaladt.c
  *	  POSTGRES shared cache invalidation data manager.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/backend/storage/ipc/sinvaladt.c
-=======
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.66 2008/01/01 19:45:51 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -28,13 +20,10 @@
 #include "miscadmin.h"
 #include "storage/backendid.h"
 #include "storage/ipc.h"
+#include "storage/lock.h"
 #include "storage/lwlock.h"
-<<<<<<< HEAD
-#include "storage/procsignal.h"
-=======
-#include "storage/pmsignal.h"
 #include "storage/proc.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+#include "storage/procsignal.h"
 #include "storage/shmem.h"
 #include "storage/sinvaladt.h"
 #include "storage/spin.h"
@@ -165,6 +154,14 @@ typedef struct ProcState
 	 * schema changes.
 	 */
 	bool		sendOnly;		/* backend only sends, never receives */
+
+	/*
+	 * Next LocalTransactionId to use for each idle backend slot.  We keep
+	 * this here because it is indexed by BackendId and it is convenient to
+	 * copy the value to and from local memory when MyBackendId is set. It's
+	 * meaningless in an active ProcState entry.
+	 */
+	LocalTransactionId nextLXID;
 } ProcState;
 
 /* Shared cache invalidation memory segment */
@@ -214,8 +211,6 @@ SInvalShmemSize(void)
 	size = offsetof(SISeg, procState);
 	size = add_size(size, mul_size(sizeof(ProcState), MaxBackends));
 
-	size = add_size(size, mul_size(sizeof(LocalTransactionId), MaxBackends));
-
 	return size;
 }
 
@@ -226,10 +221,6 @@ SInvalShmemSize(void)
 void
 CreateSharedInvalidationState(void)
 {
-<<<<<<< HEAD
-=======
-	SISeg	   *segP;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	Size		size;
 	int			i;
 	bool		found;
@@ -238,16 +229,11 @@ CreateSharedInvalidationState(void)
 	size = offsetof(SISeg, procState);
 	size = add_size(size, mul_size(sizeof(ProcState), MaxBackends));
 
-<<<<<<< HEAD
 	shmInvalBuffer = (SISeg *)
-=======
-	shmInvalBuffer = segP = (SISeg *)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		ShmemInitStruct("shmInvalBuffer", size, &found);
 	if (found)
 		return;
 
-<<<<<<< HEAD
 	/* Clear message counters, save size of procState array, init spinlock */
 	shmInvalBuffer->minMsgNum = 0;
 	shmInvalBuffer->maxMsgNum = 0;
@@ -258,7 +244,7 @@ CreateSharedInvalidationState(void)
 
 	/* The buffer[] array is initially all unused, so we need not fill it */
 
-	/* Mark all backends inactive */
+	/* Mark all backends inactive, and initialize nextLXID */
 	for (i = 0; i < shmInvalBuffer->maxBackends; i++)
 	{
 		shmInvalBuffer->procState[i].procPid = 0;		/* inactive */
@@ -266,25 +252,7 @@ CreateSharedInvalidationState(void)
 		shmInvalBuffer->procState[i].resetState = false;
 		shmInvalBuffer->procState[i].signaled = false;
 		shmInvalBuffer->procState[i].hasMessages = false;
-=======
-	segP->nextLXID = ShmemAlloc(sizeof(LocalTransactionId) * MaxBackends);
-
-	/* Clear message counters, save size of procState array */
-	segP->minMsgNum = 0;
-	segP->maxMsgNum = 0;
-	segP->lastBackend = 0;
-	segP->maxBackends = MaxBackends;
-	segP->freeBackends = MaxBackends;
-
-	/* The buffer[] array is initially all unused, so we need not fill it */
-
-	/* Mark all backends inactive, and initialize nextLXID */
-	for (i = 0; i < segP->maxBackends; i++)
-	{
-		segP->procState[i].nextMsgNum = -1;		/* inactive */
-		segP->procState[i].resetState = false;
-		segP->nextLXID[i] = InvalidLocalTransactionId;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+		shmInvalBuffer->procState[i].nextLXID = InvalidLocalTransactionId;
 	}
 }
 
@@ -339,22 +307,12 @@ SharedInvalBackendInit(bool sendOnly)
 
 	MyBackendId = (stateP - &segP->procState[0]) + 1;
 
-<<<<<<< HEAD
-=======
-#ifdef	INVALIDDEBUG
-	elog(DEBUG2, "my backend id is %d", MyBackendId);
-#endif   /* INVALIDDEBUG */
-
 	/* Advertise assigned backend ID in MyProc */
 	MyProc->backendId = MyBackendId;
 
-	/* Reduce free slot count */
-	segP->freeBackends--;
-
 	/* Fetch next local transaction ID into local memory */
-	nextLocalTransactionId = segP->nextLXID[MyBackendId - 1];
+	nextLocalTransactionId = stateP->nextLXID;
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/* mark myself active, with all extant messages already read */
 	stateP->procPid = MyProcPid;
 	stateP->nextMsgNum = segP->maxMsgNum;
@@ -393,7 +351,7 @@ CleanupInvalidationState(int status, Datum arg)
 	stateP = &segP->procState[MyBackendId - 1];
 
 	/* Update next local transaction ID for next holder of this backendID */
-	segP->nextLXID[MyBackendId - 1] = nextLocalTransactionId;
+	nextLocalTransactionId = stateP->nextLXID;
 
 	/* Mark myself inactive */
 	stateP->procPid = 0;
