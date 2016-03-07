@@ -38,11 +38,7 @@
 
 
 static bool _hash_alloc_buckets(Relation rel, BlockNumber firstblock,
-<<<<<<< HEAD
 								uint32 nblocks);
-=======
-					uint32 nblocks);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static void _hash_splitbucket(Relation rel, Buffer metabuf,
 				  Bucket obucket, Bucket nbucket,
 				  BlockNumber start_oblkno,
@@ -114,7 +110,6 @@ _hash_droplock(Relation rel, BlockNumber whichlock, int access)
  *		requested buffer and its reference count has been incremented
  *		(ie, the buffer is "locked and pinned").
  *
-<<<<<<< HEAD
  *		P_NEW is disallowed because this routine should only be used
  *		to access pages that are known to be before the filesystem EOF.
  *		Extending the index should be done with _hash_getnewbuf.
@@ -122,22 +117,14 @@ _hash_droplock(Relation rel, BlockNumber whichlock, int access)
  *		All call sites should call either _hash_checkpage or _hash_pageinit
  *		on the returned page, depending on whether the block is expected
  *		to be valid or not.
-=======
- *		P_NEW is disallowed because this routine can only be used
- *		to access pages that are known to be before the filesystem EOF.
- *		Extending the index should be done with _hash_getnewbuf.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 Buffer
 _hash_getbuf(Relation rel, BlockNumber blkno, int access, int flags)
 {
 	Buffer		buf;
 
-<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (blkno == P_NEW)
 		elog(ERROR, "hash AM does not use P_NEW");
 
@@ -207,6 +194,8 @@ _hash_getnewbuf(Relation rel, BlockNumber blkno)
 	BlockNumber nblocks = RelationGetNumberOfBlocks(rel);
 	Buffer		buf;
 
+	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
+
 	if (blkno == P_NEW)
 		elog(ERROR, "hash AM does not use P_NEW");
 	if (blkno > nblocks)
@@ -259,53 +248,6 @@ _hash_getbuf_with_strategy(Relation rel, BlockNumber blkno,
 
 	_hash_checkpage(rel, buf, flags);
 
-	return buf;
-}
-
-/*
- *	_hash_getnewbuf() -- Get a new page at the end of the index.
- *
- *		This has the same API as _hash_getbuf, except that we are adding
- *		a page to the index, and hence expect the page to be past the
- *		logical EOF.  (However, we have to support the case where it isn't,
- *		since a prior try might have crashed after extending the filesystem
- *		EOF but before updating the metapage to reflect the added page.)
- *
- *		It is caller's responsibility to ensure that only one process can
- *		extend the index at a time.
- *
- *		All call sites should call _hash_pageinit on the returned page.
- *		Also, it's difficult to imagine why access would not be HASH_WRITE.
- */
-Buffer
-_hash_getnewbuf(Relation rel, BlockNumber blkno, int access)
-{
-	BlockNumber	nblocks = RelationGetNumberOfBlocks(rel);
-	Buffer		buf;
-
-	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
-
-	if (blkno == P_NEW)
-		elog(ERROR, "hash AM does not use P_NEW");
-	if (blkno > nblocks)
-		elog(ERROR, "access to noncontiguous page in hash index \"%s\"",
-			 RelationGetRelationName(rel));
-
-	/* smgr insists we use P_NEW to extend the relation */
-	if (blkno == nblocks)
-	{
-		buf = ReadBuffer(rel, P_NEW);
-		if (BufferGetBlockNumber(buf) != blkno)
-			elog(ERROR, "unexpected hash relation size: %u, should be %u",
-				 BufferGetBlockNumber(buf), blkno);
-	}
-	else
-		buf = ReadBuffer(rel, blkno);
-
-	if (access != HASH_NOLOCK)
-		LockBuffer(buf, access);
-
-	/* ref count and lock type are correct */
 	return buf;
 }
 
@@ -428,26 +370,16 @@ _hash_metapinit(Relation rel)
 	if (ffactor < 10)
 		ffactor = 10;
 
-	/*
-<<<<<<< HEAD
-	 * We initialize the metapage, the first two bucket pages, and the
-	 * first bitmap page in sequence, using _hash_getnewbuf to cause
-	 * smgrextend() calls to occur.  This ensures that the smgr level
-	 * has the right idea of the physical index length.
-	 */
-	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-	metabuf = _hash_getnewbuf(rel, HASH_METAPAGE, HASH_WRITE);
-=======
+	/*
 	 * We initialize the metapage, the first two bucket pages, and the first
 	 * bitmap page in sequence, using _hash_getnewbuf to cause smgrextend()
 	 * calls to occur.	This ensures that the smgr level has the right idea of
 	 * the physical index length.
 	 */
 	metabuf = _hash_getnewbuf(rel, HASH_METAPAGE);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	pg = BufferGetPage(metabuf);
 
 	pageopaque = (HashPageOpaque) PageGetSpecialPointer(pg);
@@ -504,11 +436,7 @@ _hash_metapinit(Relation rel)
 	 */
 	for (i = 0; i <= 1; i++)
 	{
-<<<<<<< HEAD
-		buf = _hash_getnewbuf(rel, BUCKET_TO_BLKNO(metap, i), HASH_WRITE);
-=======
 		buf = _hash_getnewbuf(rel, BUCKET_TO_BLKNO(metap, i));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		pg = BufferGetPage(buf);
 		pageopaque = (HashPageOpaque) PageGetSpecialPointer(pg);
 		pageopaque->hasho_prevblkno = InvalidBlockNumber;
@@ -638,17 +566,10 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	/*
 	 * Likewise lock the new bucket (should never fail).
 	 *
-<<<<<<< HEAD
-	 * Note: it is safe to compute the new bucket's blkno here, even though
-	 * we may still need to update the BUCKET_TO_BLKNO mapping.  This is
-	 * because the current value of hashm_spares[hashm_ovflpoint] correctly
-	 * shows where we are going to put a new splitpoint's worth of buckets.
-=======
 	 * Note: it is safe to compute the new bucket's blkno here, even though we
 	 * may still need to update the BUCKET_TO_BLKNO mapping.  This is because
 	 * the current value of hashm_spares[hashm_ovflpoint] correctly shows
 	 * where we are going to put a new splitpoint's worth of buckets.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	start_nblkno = BUCKET_TO_BLKNO(metap, new_bucket);
 
@@ -666,20 +587,12 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	if (spare_ndx > metap->hashm_ovflpoint)
 	{
 		Assert(spare_ndx == metap->hashm_ovflpoint + 1);
-<<<<<<< HEAD
-		/*
-		 * The number of buckets in the new splitpoint is equal to the
-		 * total number already in existence, i.e. new_bucket.  Currently
-		 * this maps one-to-one to blocks required, but someday we may need
-		 * a more complicated calculation here.
-=======
 
 		/*
 		 * The number of buckets in the new splitpoint is equal to the total
 		 * number already in existence, i.e. new_bucket.  Currently this maps
 		 * one-to-one to blocks required, but someday we may need a more
 		 * complicated calculation here.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 */
 		if (!_hash_alloc_buckets(rel, start_nblkno, new_bucket))
 		{
@@ -798,11 +711,7 @@ fail:
 static bool
 _hash_alloc_buckets(Relation rel, BlockNumber firstblock, uint32 nblocks)
 {
-<<<<<<< HEAD
-	BlockNumber	lastblock;
-=======
 	BlockNumber lastblock;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	char		zerobuf[BLCKSZ];
 
 	lastblock = firstblock + nblocks - 1;
