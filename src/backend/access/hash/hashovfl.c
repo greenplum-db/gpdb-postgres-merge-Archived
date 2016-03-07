@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.53.2.1 2007/04/19 20:24:10 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.62 2008/01/01 19:45:46 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -287,11 +283,7 @@ _hash_getovflpage(Relation rel, Buffer metabuf)
 	 * with metapage write lock held; would be better to use a lock that
 	 * doesn't block incoming searches.
 	 */
-<<<<<<< HEAD
-	newbuf = _hash_getnewbuf(rel, blkno, HASH_WRITE);
-=======
 	newbuf = _hash_getnewbuf(rel, blkno);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	metap->hashm_spares[splitnum]++;
 
@@ -535,11 +527,7 @@ _hash_initbitmap(Relation rel, HashMetaPage metap, BlockNumber blkno)
 	 * page while holding the metapage lock, but this path is taken so seldom
 	 * that it's not worth worrying about.
 	 */
-<<<<<<< HEAD
-	buf = _hash_getnewbuf(rel, blkno, HASH_WRITE);
-=======
 	buf = _hash_getnewbuf(rel, blkno);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	pg = BufferGetPage(buf);
 
 	/* initialize the page's special space */
@@ -597,14 +585,9 @@ _hash_initbitmap(Relation rel, HashMetaPage metap, BlockNumber blkno)
  */
 void
 _hash_squeezebucket(Relation rel,
-<<<<<<< HEAD
 					Bucket bucket __attribute__((unused)),
-					BlockNumber bucket_blkno)
-=======
-					Bucket bucket,
 					BlockNumber bucket_blkno,
 					BufferAccessStrategy bstrategy)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	Buffer		wbuf;
 	Buffer		rbuf = 0;
