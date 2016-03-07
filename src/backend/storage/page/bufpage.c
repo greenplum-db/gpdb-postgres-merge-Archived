@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.71 2007/02/21 20:02:17 momjian Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.78 2008/02/10 20:39:08 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -180,13 +176,6 @@ PageAddItem(Page page,
 		/* if no free slot, we'll put it at limit (1st open slot) */
 		if (PageHasFreeLinePointers(phdr))
 		{
-<<<<<<< HEAD
-			/* look for "recyclable" (unused & deallocated) ItemId */
-			for (offsetNumber = 1; offsetNumber < limit; offsetNumber++)
-			{
-				itemId = PageGetItemId(phdr, offsetNumber);
-				if (!ItemIdIsUsed(itemId) && ItemIdGetLength(itemId) == 0)
-=======
 			/*
 			 * Look for "recyclable" (unused) ItemId.  We check for no storage
 			 * as well, just to be paranoid --- unused items should never have
@@ -196,7 +185,6 @@ PageAddItem(Page page,
 			{
 				itemId = PageGetItemId(phdr, offsetNumber);
 				if (!ItemIdIsUsed(itemId) && !ItemIdHasStorage(itemId))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					break;
 			}
 			if (offsetNumber >= limit)
@@ -454,32 +442,19 @@ PageRepairFragmentation(Page page)
 	}
 
 	/* Set hint bit for PageAddItem */
-<<<<<<< HEAD
-	if (nused < nline)
-		PageSetHasFreeLinePointers(page);
-	else
-		PageClearHasFreeLinePointers(page);
-
-	return (nline - nused);
-=======
 	if (nunused > 0)
 		PageSetHasFreeLinePointers(page);
 	else
 		PageClearHasFreeLinePointers(page);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
  * PageGetFreeSpace
  *		Returns the size of the free (allocatable) space on a page,
-<<<<<<< HEAD
- *		deducted by the space needed for a new line pointer.
-=======
  *		reduced by the space needed for a new line pointer.
  *
  * Note: this should usually only be used on index pages.  Use
  * PageGetHeapFreeSpace on heap pages.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 Size
 PageGetFreeSpace(Page page)
@@ -502,12 +477,8 @@ PageGetFreeSpace(Page page)
 
 /*
  * PageGetExactFreeSpace
-<<<<<<< HEAD
- *		Returns the size of the free (allocatable) space on a page.
-=======
  *		Returns the size of the free (allocatable) space on a page,
  *		without any consideration for adding/removing line pointers.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 Size
 PageGetExactFreeSpace(Page page)
@@ -520,12 +491,9 @@ PageGetExactFreeSpace(Page page)
 	 */
 	space = (int) ((PageHeader) page)->pd_upper -
 		(int) ((PageHeader) page)->pd_lower;
-<<<<<<< HEAD
-=======
 
 	if (space < 0)
 		return 0;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	return (Size) space;
 }
