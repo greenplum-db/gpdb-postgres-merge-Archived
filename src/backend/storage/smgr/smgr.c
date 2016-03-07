@@ -6,12 +6,8 @@
  *	  All file system operations in POSTGRES dispatch through these
  *	  routines.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -44,26 +40,19 @@
 #include "cdb/cdbvars.h"
 #include "commands/filespace.h"
 #include "commands/tablespace.h"
-<<<<<<< HEAD
 #include "postmaster/postmaster.h"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/smgr.h"
-<<<<<<< HEAD
 #include "utils/builtins.h"
 #include "utils/faultinjector.h"
 #include "utils/guc.h"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "cdb/cdbtm.h"
 #include "access/twophase.h"
 
-<<<<<<< HEAD
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/file.h>
@@ -71,54 +60,6 @@
 #include <dirent.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-=======
-
-/*
- * This struct of function pointers defines the API between smgr.c and
- * any individual storage manager module.  Note that smgr subfunctions are
- * generally expected to report problems via elog(ERROR).  An exception is
- * that smgr_unlink should use elog(WARNING), rather than erroring out,
- * because we normally unlink relations during post-commit/abort cleanup,
- * and so it's too late to raise an error.  Also, various conditions that
- * would normally be errors should be allowed during bootstrap and/or WAL
- * recovery --- see comments in md.c for details.
- */
-typedef struct f_smgr
-{
-	void		(*smgr_init) (void);	/* may be NULL */
-	void		(*smgr_shutdown) (void);		/* may be NULL */
-	void		(*smgr_close) (SMgrRelation reln);
-	void		(*smgr_create) (SMgrRelation reln, bool isRedo);
-	void		(*smgr_unlink) (RelFileNode rnode, bool isRedo);
-	void		(*smgr_extend) (SMgrRelation reln, BlockNumber blocknum,
-											char *buffer, bool isTemp);
-	void		(*smgr_read) (SMgrRelation reln, BlockNumber blocknum,
-										  char *buffer);
-	void		(*smgr_write) (SMgrRelation reln, BlockNumber blocknum,
-										   char *buffer, bool isTemp);
-	BlockNumber (*smgr_nblocks) (SMgrRelation reln);
-	void		(*smgr_truncate) (SMgrRelation reln, BlockNumber nblocks,
-											  bool isTemp);
-	void		(*smgr_immedsync) (SMgrRelation reln);
-	void		(*smgr_commit) (void);	/* may be NULL */
-	void		(*smgr_abort) (void);	/* may be NULL */
-	void		(*smgr_pre_ckpt) (void);		/* may be NULL */
-	void		(*smgr_sync) (void);	/* may be NULL */
-	void		(*smgr_post_ckpt) (void);		/* may be NULL */
-} f_smgr;
-
-
-static const f_smgr smgrsw[] = {
-	/* magnetic disk */
-	{mdinit, NULL, mdclose, mdcreate, mdunlink, mdextend,
-		mdread, mdwrite, mdnblocks, mdtruncate, mdimmedsync,
-		NULL, NULL, mdpreckpt, mdsync, mdpostckpt
-	}
-};
-
-static const int NSmgr = lengthof(smgrsw);
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * Each backend has a hashtable that stores all extant SMgrRelation objects.
@@ -600,34 +541,7 @@ smgrcreatefilespacedirpending(
 
 	int16 							mirrorDbId,
 
-<<<<<<< HEAD
 	char 							*mirrorFilespaceLocation,
-=======
-	/*
-	 * Make an XLOG entry showing the file creation.  If we abort, the file
-	 * will be dropped at abort time.
-	 */
-	xlrec.rnode = reln->smgr_rnode;
-
-	rdata.data = (char *) &xlrec;
-	rdata.len = sizeof(xlrec);
-	rdata.buffer = InvalidBuffer;
-	rdata.next = NULL;
-
-	lsn = XLogInsert(RM_SMGR_ID, XLOG_SMGR_CREATE, &rdata);
-
-	/* Add the relation to the list of stuff to delete at abort */
-	pending = (PendingRelDelete *)
-		MemoryContextAlloc(TopMemoryContext, sizeof(PendingRelDelete));
-	pending->relnode = reln->smgr_rnode;
-	pending->which = reln->smgr_which;
-	pending->isTemp = isTemp;
-	pending->atCommit = false;	/* delete if abort */
-	pending->nestLevel = GetCurrentTransactionNestLevel();
-	pending->next = pendingDeletes;
-	pendingDeletes = pending;
-}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	MirroredObjectExistenceState 	mirrorExistenceState,
 
@@ -669,16 +583,7 @@ smgrcreatefilespacedir(
 
 	bool						ignoreAlreadyExists,
 
-<<<<<<< HEAD
 	int 						*primaryError,
-=======
-	/*
-	 * It'd be nice to tell the stats collector to forget it immediately, too.
-	 * But we can't because we don't know the OID (and in cases involving
-	 * relfilenode swaps, it's not always clear which table OID to forget,
-	 * anyway).
-	 */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	bool						*mirrorDataLossOccurred)
 {
@@ -798,7 +703,6 @@ smgrcreatedbdirjustintime(
 
 	StorageManagerMirrorMode 	mirrorMode,
 
-<<<<<<< HEAD
 	ItemPointer 				persistentTid,
 
 	int64 						*persistentSerialNum,
@@ -1472,16 +1376,7 @@ smgrtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp, bool isLocalBu
 	if (!isTemp)
 	{
 		/*
-		 * Make a non-transactional XLOG entry showing the file truncation.
-		 * It's non-transactional because we should replay it whether the
-		 * transaction commits or not; the underlying file change is certainly
-		 * not reversible.
-=======
-	if (!isTemp)
-	{
-		/*
 		 * Make an XLOG entry showing the file truncation.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 */
 		XLogRecPtr	lsn;
 		XLogRecData rdata;
@@ -1904,15 +1799,6 @@ smgrDoDeleteActions(
 	MIRRORED_LOCK;
 
 	/*
-	 * The logic will eventually obtain a CheckpointStartLock in PersistentRelation_Dropped(),
-	 * but functions called from this function my obtain Exclusive locks before the
-	 * CheckpointStartLock is obtained. This could cause a potential deadlock in the future.
-	 * We need to take a CheckpointStartLock here to maintain proper lock ordering
-	 * (i.e. MirrorLock -> CheckpointStartLock ).
-	 */
-	CHECKPOINT_START_LOCK;
-
-	/*
 	 * First pass does the initial State-Changes.
 	 */
 	entryIndex = 0;
@@ -2171,8 +2057,6 @@ smgrDoDeleteActions(
 	Assert(*list == NULL);
 
 	PersistentFileSysObj_FlushXLog();
-
-	CHECKPOINT_START_UNLOCK;
 
 	MIRRORED_UNLOCK;
 
@@ -2660,14 +2544,9 @@ smgrSubTransAbort(void)
  * by upper-level transactions.
  */
 int
-<<<<<<< HEAD
-smgrGetPendingFileSysWork(
-	EndXactRecKind						endXactRecKind,
-
-	PersistentEndXactFileSysActionInfo 	**ptr)
-=======
-smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr, bool *haveNonTemp)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+smgrGetPendingFileSysWork(EndXactRecKind endXactRecKind,
+						  PersistentEndXactFileSysActionInfo **ptr,
+						  bool *haveNonTemp)
 {
 	int			nestLevel = GetCurrentTransactionNestLevel();
 	int			nrels;
@@ -2678,6 +2557,9 @@ smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr, bool *haveNonTemp)
 	int			entryIndex;
 
 	PersistentEndXactFileSysAction action;
+
+	if (haveNonTemp)
+		*haveNonTemp = false;
 
 	Assert(endXactRecKind == EndXactRecKind_Commit ||
 		   endXactRecKind == EndXactRecKind_Abort ||
@@ -2728,7 +2610,6 @@ smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr, bool *haveNonTemp)
 	entryIndex = 0;
 	for (pending = pendingDeletes; pending != NULL; pending = pending->next)
 	{
-<<<<<<< HEAD
 		bool returned;
 
 		action = PendingDelete_Action(pending);
@@ -2745,6 +2626,9 @@ smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr, bool *haveNonTemp)
 
 			rptr++;
 			returned = true;
+
+			if (haveNonTemp && !pending->isLocalBuf)
+				*haveNonTemp = true;
 		}
 
 		if (Debug_persistent_print)
@@ -2774,12 +2658,6 @@ smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr, bool *haveNonTemp)
 					 pending->persistentSerialNum);
 		}
 		entryIndex++;
-=======
-		if (pending->nestLevel >= nestLevel && pending->atCommit == forCommit)
-			*rptr++ = pending->relnode;
-		if (haveNonTemp && !pending->isTemp)
-			*haveNonTemp = true;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 	return nrels;
 }
@@ -3197,22 +3075,16 @@ smgrabort(void)
 }
 
 /*
- *	smgrpreckpt() -- Prepare for checkpoint.
+ *     smgrpreckpt() -- Prepare for checkpoint.
  */
 void
 smgrpreckpt(void)
 {
-	int			i;
-
-	for (i = 0; i < NSmgr; i++)
-	{
-		if (smgrsw[i].smgr_pre_ckpt)
-			(*(smgrsw[i].smgr_pre_ckpt)) ();
-	}
+	mdpreckpt();
 }
 
 /*
- *	smgrsync() -- Sync files to disk during checkpoint.
+ *     smgrsync() -- Sync files to disk during checkpoint.
  */
 void
 smgrsync(void)
@@ -3226,13 +3098,7 @@ smgrsync(void)
 void
 smgrpostckpt(void)
 {
-	int			i;
-
-	for (i = 0; i < NSmgr; i++)
-	{
-		if (smgrsw[i].smgr_post_ckpt)
-			(*(smgrsw[i].smgr_post_ckpt)) ();
-	}
+	mdpostckpt();
 }
 
 
@@ -3266,6 +3132,9 @@ smgr_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 	}
 	else if (info == XLOG_SMGR_TRUNCATE)
 	{
+		MirrorDataLossTrackingState mirrorDataLossTrackingState;
+		int64 mirrorDataLossTrackingSessionNum;
+
 		xl_smgr_truncate *xlrec = (xl_smgr_truncate *) XLogRecGetData(record);
 		SMgrRelation reln;
 
@@ -3277,7 +3146,17 @@ smgr_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 		 * XLogOpenRelation, we prefer to recreate the rel and replay the log
 		 * as best we can until the drop is seen.
 		 */
-		smgrcreate(reln, false, true);
+		mirrorDataLossTrackingState =
+					FileRepPrimary_GetMirrorDataLossTrackingSessionNum(
+													&mirrorDataLossTrackingSessionNum);
+		smgrcreate(
+				reln,
+				/* isLocalBuf */ false,
+				/* relationName */ NULL,		// Ok to be NULL -- we don't know the name here.
+				mirrorDataLossTrackingState,
+				mirrorDataLossTrackingSessionNum,
+				/* ignoreAlreadyExists */ true,
+				&mirrorDataLossOccurred);
 
 		/* Can't use smgrtruncate because it would try to xlog */
 
