@@ -185,21 +185,24 @@ top:
 static TransactionId
 _bt_ao_check_unique(Relation rel, Relation aoRel, ItemPointer tid)
 {
+	SnapshotData SnapshotDirty;
 	TransactionId xwait = InvalidTransactionId;
 	
 	Assert(RelationIsAoRows(aoRel) ||
 		   RelationIsAoCols(aoRel));
+
+	InitDirtySnapshot(SnapshotDirty);
 	
 	if (RelationIsAoRows(aoRel))
 	{
 		AppendOnlyFetchDesc aoFetchDesc =
-			appendonly_fetch_init(aoRel, SnapshotDirty, SnapshotDirty);
+			appendonly_fetch_init(aoRel, &SnapshotDirty, &SnapshotDirty);
 
 		if (appendonly_fetch(aoFetchDesc, (AOTupleId*)tid, NULL))
 		{
 			xwait =
-				(TransactionIdIsValid(SnapshotDirty->xmin)) ?
-				SnapshotDirty->xmin : SnapshotDirty->xmax;
+				(TransactionIdIsValid(SnapshotDirty.xmin)) ?
+				SnapshotDirty.xmin : SnapshotDirty.xmax;
 
 			/*
 			 * If this tuple is not being updated by other transaction,
@@ -223,13 +226,13 @@ _bt_ao_check_unique(Relation rel, Relation aoRel, ItemPointer tid)
 		
 		/* Just set the first column */
 		proj[0] = true;
-		aocsFetchDesc =	aocs_fetch_init(aoRel, SnapshotDirty, SnapshotDirty, proj);
+		aocsFetchDesc =	aocs_fetch_init(aoRel, &SnapshotDirty, &SnapshotDirty, proj);
 
 		if (aocs_fetch(aocsFetchDesc, (AOTupleId*)tid, NULL))
 		{
 			xwait =
-				(TransactionIdIsValid(SnapshotDirty->xmin)) ?
-				SnapshotDirty->xmin : SnapshotDirty->xmax;
+				(TransactionIdIsValid(SnapshotDirty.xmin)) ?
+				SnapshotDirty.xmin : SnapshotDirty.xmax;
 
 			/*
 			 * If this tuple is not being updated by other transaction,
@@ -328,49 +331,34 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 
 				/* okay, we gotta fetch the heap tuple ... */
 				curitup = (IndexTuple) PageGetItem(page, curitemid);
-<<<<<<< HEAD
 
 				/*
 				 * If the parent relation is an AO/CO table, we have to find out
 				 * if this tuple is actually in the table.
 				 */
 				if (RelationIsAoRows(heapRel) || RelationIsAoCols(heapRel))
-=======
-				htid = curitup->t_tid;
-
-				/*
-				 * We check the whole HOT-chain to see if there is any tuple
-				 * that satisfies SnapshotDirty.  This is necessary because we
-				 * have just a single index entry for the entire chain.
-				 */
-				if (heap_hot_search(&htid, heapRel, &SnapshotDirty, &all_dead))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				{
 					TransactionId xwait =
-<<<<<<< HEAD
 						_bt_ao_check_unique(rel, heapRel, &curitup->t_tid);
-=======
-					(TransactionIdIsValid(SnapshotDirty.xmin)) ?
-					SnapshotDirty.xmin : SnapshotDirty.xmax;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 					if (TransactionIdIsValid(xwait))
 						return xwait;
-<<<<<<< HEAD
 				}
-					
 				else
 				{
-					htup.t_self = curitup->t_tid;
-					if (heap_fetch(heapRel, SnapshotDirty, &htup, &hbuffer,
-								   true, NULL))
+					htid = curitup->t_tid;
+
+					/*
+					 * We check the whole HOT-chain to see if there is any tuple
+					 * that satisfies SnapshotDirty.  This is necessary because we
+					 * have just a single index entry for the entire chain.
+					 */
+					if (heap_hot_search(&htid, heapRel, &SnapshotDirty, &all_dead))
 					{
 						/* it is a duplicate */
 						TransactionId xwait =
-							(TransactionIdIsValid(SnapshotDirty->xmin)) ?
-							SnapshotDirty->xmin : SnapshotDirty->xmax;
-
-						ReleaseBuffer(hbuffer);
+							(TransactionIdIsValid(SnapshotDirty.xmin)) ?
+							SnapshotDirty.xmin : SnapshotDirty.xmax;
 						
 						/*
 						 * If this tuple is being updated by other transaction
@@ -390,103 +378,51 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 						 * is itself now committed dead --- if so, don't complain.
 						 * This is a waste of time in normal scenarios but we must
 						 * do it to support CREATE INDEX CONCURRENTLY.
+						 *
+						 * We must follow HOT-chains here because during
+						 * concurrent index build, we insert the root TID though
+						 * the actual tuple may be somewhere in the HOT-chain.
+						 * While following the chain we might not stop at the
+						 * exact tuple which triggered the insert, but that's OK
+						 * because if we find a live tuple anywhere in this chain,
+						 * we have a unique key conflict.  The other live tuple is
+						 * not part of this chain because it had a different index
+						 * entry.
 						 */
-						htup.t_self = itup->t_tid;
-						if (heap_fetch(heapRel, SnapshotSelf, &htup, &hbuffer,
-									   false, NULL))
+						htid = itup->t_tid;
+						if (heap_hot_search(&htid, heapRel, SnapshotSelf, NULL))
 						{
 							/* Normal case --- it's still live */
-							ReleaseBuffer(hbuffer);
-						}
-						else if (htup.t_data != NULL)
-						{
-							/*
-							 * It's been deleted, so no error, and no need to
-							 * continue searching
-							 */
-							break;
 						}
 						else
 						{
-							/* couldn't find the tuple?? */
-							elog(ERROR, "failed to fetch tuple being inserted");
+							/*
+							 * It's been deleted, so no error, and no need to
+							 * continue searching.
+							 */
+							break;
 						}
-						
+
 						ereport(ERROR,
 								(errcode(ERRCODE_UNIQUE_VIOLATION),
-								 errmsg("duplicate key violates unique constraint \"%s\"",
+								 errmsg("duplicate key value violates unique constraint \"%s\"",
 										RelationGetRelationName(rel))));
-=======
 					}
-
-					/*
-					 * Otherwise we have a definite conflict.  But before
-					 * complaining, look to see if the tuple we want to insert
-					 * is itself now committed dead --- if so, don't complain.
-					 * This is a waste of time in normal scenarios but we must
-					 * do it to support CREATE INDEX CONCURRENTLY.
-					 *
-					 * We must follow HOT-chains here because during
-					 * concurrent index build, we insert the root TID though
-					 * the actual tuple may be somewhere in the HOT-chain.
-					 * While following the chain we might not stop at the
-					 * exact tuple which triggered the insert, but that's OK
-					 * because if we find a live tuple anywhere in this chain,
-					 * we have a unique key conflict.  The other live tuple is
-					 * not part of this chain because it had a different index
-					 * entry.
-					 */
-					htid = itup->t_tid;
-					if (heap_hot_search(&htid, heapRel, SnapshotSelf, NULL))
-					{
-						/* Normal case --- it's still live */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-					}
-					else
+					else if (all_dead)
 					{
 						/*
-						 * Hmm, if we can't see the tuple, maybe it can be marked
-						 * killed.	This logic should match index_getnext and
-						 * btgettuple.
+						 * The conflicting tuple (or whole HOT chain) is dead to
+						 * everyone, so we may as well mark the index entry
+						 * killed.
 						 */
-						LockBuffer(hbuffer, BUFFER_LOCK_SHARE);
-						if (HeapTupleSatisfiesVacuum(htup.t_data, RecentGlobalXmin,
-													 hbuffer) == HEAPTUPLE_DEAD)
-						{
-							curitemid->lp_flags |= LP_DELETE;
-							opaque->btpo_flags |= BTP_HAS_GARBAGE;
-							/* be sure to mark the proper buffer dirty... */
-							if (nbuf != InvalidBuffer)
-								SetBufferCommitInfoNeedsSave(nbuf);
-							else
-								SetBufferCommitInfoNeedsSave(buf);
-						}
-						LockBuffer(hbuffer, BUFFER_LOCK_UNLOCK);
+						ItemIdMarkDead(curitemid);
+						opaque->btpo_flags |= BTP_HAS_GARBAGE;
+						/* be sure to mark the proper buffer dirty... */
+						if (nbuf != InvalidBuffer)
+							SetBufferCommitInfoNeedsSave(nbuf);
+						else
+							SetBufferCommitInfoNeedsSave(buf);
 					}
-<<<<<<< HEAD
-					ReleaseBuffer(hbuffer);
-=======
-
-					ereport(ERROR,
-							(errcode(ERRCODE_UNIQUE_VIOLATION),
-							 errmsg("duplicate key value violates unique constraint \"%s\"",
-									RelationGetRelationName(rel))));
-				}
-				else if (all_dead)
-				{
-					/*
-					 * The conflicting tuple (or whole HOT chain) is dead to
-					 * everyone, so we may as well mark the index entry
-					 * killed.
-					 */
-					ItemIdMarkDead(curitemid);
-					opaque->btpo_flags |= BTP_HAS_GARBAGE;
-					/* be sure to mark the proper buffer dirty... */
-					if (nbuf != InvalidBuffer)
-						SetBufferCommitInfoNeedsSave(nbuf);
-					else
-						SetBufferCommitInfoNeedsSave(buf);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				}
 			}
 		}
@@ -1051,11 +987,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		itemsz = ItemIdGetLength(itemid);
 		item = (IndexTuple) PageGetItem(origpage, itemid);
 		if (PageAddItem(rightpage, (Item) item, itemsz, rightoff,
-<<<<<<< HEAD
-						LP_USED) == InvalidOffsetNumber)
-=======
 						false, false) == InvalidOffsetNumber)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		{
 			memset(rightpage, 0, BufferGetPageSize(rbuf));
 			elog(ERROR, "failed to add hikey to the right sibling"
@@ -1085,11 +1017,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		item = (IndexTuple) PageGetItem(origpage, itemid);
 	}
 	if (PageAddItem(leftpage, (Item) item, itemsz, leftoff,
-<<<<<<< HEAD
-					LP_USED) == InvalidOffsetNumber)
-=======
 					false, false) == InvalidOffsetNumber)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		memset(rightpage, 0, BufferGetPageSize(rbuf));
 		elog(ERROR, "failed to add hikey to the left sibling"
@@ -1277,9 +1205,8 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		XLogRecData *lastrdata;
 
 		xlrec.node = rel->rd_node;
-<<<<<<< HEAD
-		xlrec.leftsib = BufferGetBlockNumber(buf);
-		xlrec.rightsib = BufferGetBlockNumber(rbuf);
+		xlrec.leftsib = origpagenumber;
+		xlrec.rightsib = rightpagenumber;
 		xlrec.rnext = ropaque->btpo_next;
 		xlrec.level = ropaque->btpo.level;
 		xlrec.firstright = firstright;
@@ -1287,13 +1214,6 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		/* Set persistentTid and persistentSerialNum like xl_btreetid_set() does */
 		xlrec.persistentTid = rel->rd_segfile0_relationnodeinfo.persistentTid;
 		xlrec.persistentSerialNum = rel->rd_segfile0_relationnodeinfo.persistentSerialNum;
-=======
-		xlrec.leftsib = origpagenumber;
-		xlrec.rightsib = rightpagenumber;
-		xlrec.rnext = ropaque->btpo_next;
-		xlrec.level = ropaque->btpo.level;
-		xlrec.firstright = firstright;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = SizeOfBtreeSplit;
@@ -2014,12 +1934,8 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	 * Note: we *must* insert the two items in item-number order, for the
 	 * benefit of _bt_restore_page().
 	 */
-<<<<<<< HEAD
-	if (PageAddItem(rootpage, (Item) new_item, itemsz, P_HIKEY, LP_USED) == InvalidOffsetNumber)
-=======
 	if (PageAddItem(rootpage, (Item) new_item, itemsz, P_HIKEY,
 					false, false) == InvalidOffsetNumber)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		elog(PANIC, "failed to add leftkey to new root page"
 			 " while splitting block %u of index \"%s\"",
 			 BufferGetBlockNumber(lbuf), RelationGetRelationName(rel));
@@ -2038,12 +1954,8 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	/*
 	 * insert the right page pointer into the new root page.
 	 */
-<<<<<<< HEAD
-	if (PageAddItem(rootpage, (Item) new_item, itemsz, P_FIRSTKEY, LP_USED) == InvalidOffsetNumber)
-=======
 	if (PageAddItem(rootpage, (Item) new_item, itemsz, P_FIRSTKEY,
 					false, false) == InvalidOffsetNumber)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		elog(PANIC, "failed to add rightkey to new root page"
 			 " while splitting block %u of index \"%s\"",
 			 BufferGetBlockNumber(lbuf), RelationGetRelationName(rel));
@@ -2131,11 +2043,7 @@ _bt_pgaddtup(Page page,
 	}
 
 	if (PageAddItem(page, (Item) itup, itemsize, itup_off,
-<<<<<<< HEAD
-					LP_USED) == InvalidOffsetNumber)
-=======
 					false, false) == InvalidOffsetNumber)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		return false;
 
 	return true;
