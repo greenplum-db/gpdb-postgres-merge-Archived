@@ -3,12 +3,8 @@
  * rewriteDefine.c
  *	  routines for defining a rewrite rule
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -35,18 +31,15 @@
 #include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp.h"
 #include "cdb/cdbmirroredfilesysobj.h"
 #include "catalog/heap.h"
 #include "cdb/cdbpersistentfilesysobj.h"
-=======
-#include "utils/inval.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 static void checkRuleResultList(List *targetList, TupleDesc resultDesc,
@@ -68,8 +61,7 @@ InsertRule(char *rulname,
 		   bool evinstead,
 		   Node *event_qual,
 		   List *action,
-		   bool replace,
-		   Oid ruleOid)
+		   bool replace)
 {
 	char	   *evqual = nodeToString(event_qual);
 	char	   *actiontree = nodeToString((Node *) action);
@@ -150,9 +142,6 @@ InsertRule(char *rulname,
 	else
 	{
 		tup = caql_form_tuple(pcqCtx, values, nulls);
-
-		if (OidIsValid(ruleOid))
-			HeapTupleSetOid(tup, ruleOid);
 
 		rewriteObjectId = caql_insert(pcqCtx, tup);
 		/* and Update indexes (implicit) */
@@ -247,11 +236,7 @@ DefineQueryRewrite(char *rulename,
 				   List *action)
 {
 	Relation	event_relation;
-<<<<<<< HEAD
-	Oid			ev_relid;
-=======
 	Oid			ruleId;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	int			event_attno;
 	ListCell   *l;
 	Query	   *query;
@@ -322,13 +307,9 @@ DefineQueryRewrite(char *rulename,
 		 */
 		query = (Query *) linitial(action);
 		if (!is_instead ||
-<<<<<<< HEAD
-			query->commandType != CMD_SELECT || query->intoClause != NULL)
-=======
 			query->commandType != CMD_SELECT ||
 			query->utilityStmt != NULL ||
 			query->intoClause != NULL)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("rules on SELECT must have action INSTEAD SELECT")));
@@ -480,19 +461,14 @@ DefineQueryRewrite(char *rulename,
 	/* discard rule if it's null action and not INSTEAD; it's a no-op */
 	if (action != NIL || is_instead)
 	{
-<<<<<<< HEAD
-		stmt->ruleOid = InsertRule(stmt->rulename,
-=======
 		ruleId = InsertRule(rulename,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 							event_type,
 							event_relid,
 							event_attno,
 							is_instead,
 							event_qual,
 							action,
-							replace,
-							stmt->ruleOid);
+							replace);
 
 		/*
 		 * Set pg_class 'relhasrules' field TRUE for event relation. If

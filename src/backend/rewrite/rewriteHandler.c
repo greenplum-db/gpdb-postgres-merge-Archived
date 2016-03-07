@@ -57,11 +57,7 @@ static Node *get_assignment_input(Node *node);
 static void rewriteValuesRTE(RangeTblEntry *rte, Relation target_relation,
 				 List *attrnos);
 static void markQueryForLocking(Query *qry, Node *jtnode,
-<<<<<<< HEAD
-								bool forUpdate, bool noWait);
-=======
 					bool forUpdate, bool noWait);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
 		   int varno, Query *parsetree);
 static Query *fireRIRrules(Query *parsetree, List *activeRIRs);
@@ -408,13 +404,10 @@ rewriteRuleAction(Query *parsetree,
 
 			switch (rte->rtekind)
 			{
-<<<<<<< HEAD
 				case RTE_TABLEFUNCTION:
 					sub_action->hasSubLinks =
 						checkExprHasSubLink(rte->funcexpr);
 					break;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				case RTE_FUNCTION:
 					sub_action->hasSubLinks =
 						checkExprHasSubLink(rte->funcexpr);

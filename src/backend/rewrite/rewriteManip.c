@@ -1095,12 +1095,8 @@ resolve_one_var(Var *var, ResolveNew_context *context)
 		{
 			/* Otherwise replace unmatched var with a null */
 			/* need coerce_to_domain in case of NOT NULL domain constraint */
-<<<<<<< HEAD
-			return coerce_to_domain((Node *) makeNullConst(var->vartype, -1),
-=======
 			return coerce_to_domain((Node *) makeNullConst(var->vartype,
 														   var->vartypmod),
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 									InvalidOid, -1,
 									var->vartype,
 									COERCE_IMPLICIT_CAST,

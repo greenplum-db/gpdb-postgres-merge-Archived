@@ -57,9 +57,6 @@ typedef struct
 	IndexStmt  *pkey;			/* PRIMARY KEY index, if any */
 } CreateStmtContext;
 
-Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
-						   List **extras_before, List **extras_after);
-
 int validate_partition_spec(ParseState 			*pstate,
 							CreateStmtContext 	*cxt, 
 							CreateStmt 			*stmt, 
