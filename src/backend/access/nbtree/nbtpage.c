@@ -686,11 +686,7 @@ _bt_delitems(Relation rel, Buffer buf,
 	PageIndexMultiDelete(page, itemnos, nitems);
 
 	/*
-<<<<<<< HEAD
-	 * If this is within VACUUM, we can clear the vacuum cycleID since this
-=======
 	 * If this is within VACUUM, we can clear the vacuum cycle ID since this
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 * page has certainly been processed by the current vacuum scan.
 	 */
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
