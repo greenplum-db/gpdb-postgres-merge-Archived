@@ -19,19 +19,11 @@
  * routines.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
  *	  src/interfaces/libpq/fe-misc.c
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.133.2.2 2010/05/08 16:40:14 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -88,20 +80,6 @@ PQlibVersion(void)
  *
  * We avoid using %.*s here because it can misbehave if the data
  * is not valid in what libc thinks is the prevailing encoding.
- */
-static void
-fputnbytes(FILE *f, const char *str, size_t n)
-{
-	while (n-- > 0)
-		fputc(*str++, f);
-}
-
-
-/*
- * fputnbytes: print exactly N bytes to a file
- *
- * Think not to use fprintf with a %.*s format for this.  Some machines
- * believe %s's precision is measured in characters, others in bytes.
  */
 static void
 fputnbytes(FILE *f, const char *str, size_t n)
@@ -236,7 +214,6 @@ pqGetnchar(char *s, size_t len, PGconn *conn)
 		fputnbytes(conn->Pfdebug, s, len);
 		fprintf(conn->Pfdebug, "\n");
 	}
-<<<<<<< HEAD
 
 	return 0;
 }
@@ -263,8 +240,6 @@ pqSkipnchar(size_t len, PGconn *conn)
 	}
 
 	conn->inCursor += len;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	return 0;
 }
@@ -844,18 +819,11 @@ pqSendSome(PGconn *conn, int len)
 #ifndef WIN32
 		sent = pqsecure_write(conn, ptr, len);
 #else
-<<<<<<< HEAD
 
 		/*
 		 * Windows can fail on large sends, per KB article Q201213. The
 		 * failure-point appears to be different in different versions of
 		 * Windows, but 64k should always be safe.
-=======
-		/*
-		 * Windows can fail on large sends, per KB article Q201213. The failure-point
-		 * appears to be different in different versions of Windows, but 64k should
-		 * always be safe.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 */
 		sent = pqsecure_write(conn, ptr, Min(len, 65536));
 #endif

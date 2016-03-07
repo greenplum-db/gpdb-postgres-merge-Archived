@@ -3,22 +3,14 @@
  * fe-print.c
  *	  functions for pretty-printing query results
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * These functions were formerly part of fe-exec.c, but they
  * didn't really belong there.
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-print.c
-=======
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.75 2008/01/01 19:46:00 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */

@@ -3,20 +3,12 @@
  * fe-exec.c
  *	  functions related to sending a query down to the backend
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-exec.c
-=======
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.194.2.1 2008/09/10 17:01:17 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -3465,20 +3457,12 @@ PQescapeByteaInternal(PGconn *conn,
 		}
 		else if (c < 0x20 || c > 0x7e)
 		{
-			int		val = *vp;
-
 			if (!std_strings)
 				*rp++ = '\\';
 			*rp++ = '\\';
-<<<<<<< HEAD
 			*rp++ = (c >> 6) + '0';
 			*rp++ = ((c >> 3) & 07) + '0';
 			*rp++ = (c & 07) + '0';
-=======
-			*rp++ = (val >> 6) + '0';
-			*rp++ = ((val >> 3) & 07) + '0';
-			*rp++ = (val & 07) + '0';
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 		else if (c == '\'')
 		{

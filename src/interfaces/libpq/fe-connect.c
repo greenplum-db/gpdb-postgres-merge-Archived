@@ -3,20 +3,12 @@
  * fe-connect.c
  *	  functions related to setting up a connection to the backend
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-connect.c
-=======
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.356.2.2 2010/03/03 20:31:22 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -279,7 +271,6 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 		"SSL-Root-Certificate", "", 64,
 	offsetof(struct pg_conn, sslrootcert)},
 
-<<<<<<< HEAD
 	{"sslcrl", "PGSSLCRL", NULL, NULL,
 		"SSL-Revocation-List", "", 64,
 	offsetof(struct pg_conn, sslcrl)},
@@ -288,8 +279,6 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 		"Require-Peer", "", 10,
 	offsetof(struct pg_conn, requirepeer)},
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	/* Kerberos and GSSAPI authentication support specifying the service name */
 	{"krbsrvname", "PGKRBSRVNAME", PG_KRB_SRVNAM, NULL,
@@ -308,21 +297,9 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	offsetof(struct pg_conn, gsslib)},
 #endif
 
-<<<<<<< HEAD
 	{"replication", NULL, NULL, NULL,
 		"Replication", "D", 5,
 	offsetof(struct pg_conn, replication)},
-=======
-#if defined(ENABLE_GSS) && defined(ENABLE_SSPI)
-
-	/*
-	 * GSSAPI and SSPI both enabled, give a way to override which is used by
-	 * default
-	 */
-	{"gsslib", "PGGSSLIB", NULL, NULL,
-	"GSS-library", "", 7},		/* sizeof("gssapi") = 7 */
-#endif
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Terminating entry --- MUST BE LAST */
 	{NULL, NULL, NULL, NULL,
@@ -357,7 +334,7 @@ static int	connectDBStart(PGconn *conn);
 static int	connectDBComplete(PGconn *conn);
 static PGPing internal_ping(PGconn *conn);
 static PGconn *makeEmptyPGconn(void);
-static void fillPGconn(PGconn *conn, PQconninfoOption *connOptions);
+static bool fillPGconn(PGconn *conn, PQconninfoOption *connOptions);
 static void freePGconn(PGconn *conn);
 static void closePGconn(PGconn *conn);
 static PQconninfoOption *conninfo_init(PQExpBuffer errorMessage);
@@ -366,7 +343,6 @@ static PQconninfoOption *parse_connection_string(const char *conninfo,
 static int	uri_prefix_length(const char *connstr);
 static bool recognized_connection_string(const char *connstr);
 static PQconninfoOption *conninfo_parse(const char *conninfo,
-<<<<<<< HEAD
 			   PQExpBuffer errorMessage, bool use_defaults);
 static PQconninfoOption *conninfo_array_parse(const char *const * keywords,
 					 const char *const * values, PQExpBuffer errorMessage,
@@ -383,10 +359,6 @@ static bool conninfo_uri_parse_params(char *params,
 static char *conninfo_uri_decode(const char *str, PQExpBuffer errorMessage);
 static bool get_hexdigit(char digit, int *value);
 static const char *conninfo_getval(PQconninfoOption *connOptions,
-=======
-			   PQExpBuffer errorMessage, bool *password_from_string);
-static char *conninfo_getval(PQconninfoOption *connOptions,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				const char *keyword);
 static PQconninfoOption *conninfo_storeval(PQconninfoOption *connOptions,
 				  const char *keyword, const char *value,
@@ -614,7 +586,12 @@ PQconnectStartParams(const char *const * keywords,
 	/*
 	 * Move option values into conn structure
 	 */
-	fillPGconn(conn, connOptions);
+	if (!fillPGconn(conn, connOptions))
+	{
+		conn->status = CONNECTION_BAD;
+		PQconninfoFree(connOptions);
+		return conn;
+	}
 
 	/*
 	 * Free the option info - all is in conn now
@@ -694,7 +671,7 @@ PQconnectStart(const char *conninfo)
 	return conn;
 }
 
-static void
+static bool
 fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 {
 	const internalPQconninfoOption *option;
@@ -709,17 +686,28 @@ fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 	 */
 	for (option = PQconninfoOptions; option->keyword; option++)
 	{
-		const char *tmp = conninfo_getval(connOptions, option->keyword);
-
-		if (tmp && option->connofs >= 0)
+		if (option->connofs >= 0)
 		{
-			char	  **connmember = (char **) ((char *) conn + option->connofs);
+			const char *tmp = conninfo_getval(connOptions, option->keyword);
 
-			if (*connmember)
-				free(*connmember);
-			*connmember = tmp ? strdup(tmp) : NULL;
+			if (tmp)
+			{
+				char	  **connmember = (char **) ((char *) conn + option->connofs);
+
+				if (*connmember)
+					free(*connmember);
+				*connmember = strdup(tmp);
+				if  (*connmember == NULL)
+				{
+					printfPQExpBuffer(&conn->errorMessage,
+							libpq_gettext("out of memory\n"));
+					return false;
+				}
+			}
 		}
 	}
+
+	return true;
 }
 
 /*
@@ -741,12 +729,7 @@ connectOptions1(PGconn *conn, const char *conninfo)
 	/*
 	 * Parse the conninfo string
 	 */
-<<<<<<< HEAD
 	connOptions = parse_connection_string(conninfo, &conn->errorMessage, true);
-=======
-	connOptions = conninfo_parse(conninfo, &conn->errorMessage,
-								 &conn->pgpass_from_client);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (connOptions == NULL)
 	{
 		conn->status = CONNECTION_BAD;
@@ -757,48 +740,12 @@ connectOptions1(PGconn *conn, const char *conninfo)
 	/*
 	 * Move option values into conn structure
 	 */
-<<<<<<< HEAD
-	fillPGconn(conn, connOptions);
-=======
-	tmp = conninfo_getval(connOptions, "hostaddr");
-	conn->pghostaddr = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "host");
-	conn->pghost = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "port");
-	conn->pgport = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "tty");
-	conn->pgtty = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "options");
-	conn->pgoptions = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "dbname");
-	conn->dbName = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "user");
-	conn->pguser = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "password");
-	conn->pgpass = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "connect_timeout");
-	conn->connect_timeout = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslmode");
-	conn->sslmode = tmp ? strdup(tmp) : NULL;
-#ifdef USE_SSL
-	tmp = conninfo_getval(connOptions, "requiressl");
-	if (tmp && tmp[0] == '1')
+	if (!fillPGconn(conn, connOptions))
 	{
-		/* here warn that the requiressl option is deprecated? */
-		if (conn->sslmode)
-			free(conn->sslmode);
-		conn->sslmode = strdup("require");
+		conn->status = CONNECTION_BAD;
+		PQconninfoFree(connOptions);
+		return false;
 	}
-#endif
-#if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
-	tmp = conninfo_getval(connOptions, "krbsrvname");
-	conn->krbsrvname = tmp ? strdup(tmp) : NULL;
-#endif
-#if defined(ENABLE_GSS) && defined(ENABLE_SSPI)
-	tmp = conninfo_getval(connOptions, "gsslib");
-	conn->gsslib = tmp ? strdup(tmp) : NULL;
-#endif
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Free the option info - all is in conn now
@@ -828,6 +775,8 @@ connectOptions2(PGconn *conn)
 		if (conn->dbName)
 			free(conn->dbName);
 		conn->dbName = strdup(conn->pguser);
+		if (!conn->dbName)
+			goto oom_error;
 	}
 
 	/*
@@ -840,13 +789,13 @@ connectOptions2(PGconn *conn)
 		conn->pgpass = PasswordFromFile(conn->pghost, conn->pgport,
 										conn->dbName, conn->pguser);
 		if (conn->pgpass == NULL)
+		{
 			conn->pgpass = strdup(DefaultPassword);
-<<<<<<< HEAD
+			if (!conn->pgpass)
+				goto oom_error;
+		}
 		else
 			conn->dot_pgpass_used = true;
-=======
-		conn->pgpass_from_client = false;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	/*
@@ -902,7 +851,11 @@ connectOptions2(PGconn *conn)
 #endif
 	}
 	else
+	{
 		conn->sslmode = strdup(DefaultSSLMode);
+		if (!conn->sslmode)
+			goto oom_error;
+	}
 
 	/*
 	 * Resolve special "auto" client_encoding from the locale
@@ -923,6 +876,12 @@ connectOptions2(PGconn *conn)
 	conn->options_valid = true;
 
 	return true;
+
+oom_error:
+	conn->status = CONNECTION_BAD;
+	printfPQExpBuffer(&conn->errorMessage,
+			libpq_gettext("out of memory\n"));
+	return false;
 }
 
 /*
@@ -945,12 +904,10 @@ PQconninfoOption *
 PQconndefaults(void)
 {
 	PQExpBufferData errorBuf;
-	bool		password_from_string;
 	PQconninfoOption *connOptions;
 
 	/* We don't actually report any errors here, but callees want a buffer */
 	initPQExpBuffer(&errorBuf);
-<<<<<<< HEAD
 	if (PQExpBufferDataBroken(errorBuf))
 		return NULL;			/* out of memory already :-( */
 
@@ -964,9 +921,6 @@ PQconndefaults(void)
 		}
 	}
 
-=======
-	connOptions = conninfo_parse("", &errorBuf, &password_from_string);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	termPQExpBuffer(&errorBuf);
 	return connOptions;
 }
@@ -998,16 +952,10 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 		return NULL;
 
 	/*
-<<<<<<< HEAD
 	 * If the dbName parameter contains what looks like a connection string,
 	 * parse it into conn struct using connectOptions1.
 	 */
 	if (dbName && recognized_connection_string(dbName))
-=======
-	 * If the dbName parameter contains '=', assume it's a conninfo string.
-	 */
-	if (dbName && strchr(dbName, '='))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		if (!connectOptions1(conn, dbName))
 			return conn;
@@ -1027,6 +975,9 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 			if (conn->dbName)
 				free(conn->dbName);
 			conn->dbName = strdup(dbName);
+			if (!conn->dbName)
+				goto oom_error;
+
 		}
 	}
 
@@ -1039,6 +990,8 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 		if (conn->pghost)
 			free(conn->pghost);
 		conn->pghost = strdup(pghost);
+		if (!conn->pghost)
+			goto oom_error;
 	}
 
 	if (pgport && pgport[0] != '\0')
@@ -1046,6 +999,8 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 		if (conn->pgport)
 			free(conn->pgport);
 		conn->pgport = strdup(pgport);
+		if (!conn->pgport)
+			goto oom_error;
 	}
 
 	if (pgoptions && pgoptions[0] != '\0')
@@ -1053,6 +1008,8 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 		if (conn->pgoptions)
 			free(conn->pgoptions);
 		conn->pgoptions = strdup(pgoptions);
+		if (!conn->pgoptions)
+			goto oom_error;
 	}
 
 	if (pgtty && pgtty[0] != '\0')
@@ -1060,6 +1017,8 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 		if (conn->pgtty)
 			free(conn->pgtty);
 		conn->pgtty = strdup(pgtty);
+		if (!conn->pgtty)
+			goto oom_error;
 	}
 
 	if (login && login[0] != '\0')
@@ -1067,6 +1026,8 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 		if (conn->pguser)
 			free(conn->pguser);
 		conn->pguser = strdup(login);
+		if (!conn->pguser)
+			goto oom_error;
 	}
 
 	if (pwd && pwd[0] != '\0')
@@ -1074,7 +1035,8 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 		if (conn->pgpass)
 			free(conn->pgpass);
 		conn->pgpass = strdup(pwd);
-		conn->pgpass_from_client = true;
+		if (!conn->pgpass)
+			goto oom_error;
 	}
 
 	/*
@@ -1089,6 +1051,11 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	if (connectDBStart(conn))
 		(void) connectDBComplete(conn);
 
+	return conn;
+oom_error:
+	conn->status = CONNECTION_BAD;
+	printfPQExpBuffer(&conn->errorMessage,
+			libpq_gettext("out of memory\n"));
 	return conn;
 }
 
@@ -1223,17 +1190,8 @@ connectFailureMessage(PGconn *conn, int errorno)
 static int
 useKeepalives(PGconn *conn)
 {
-<<<<<<< HEAD
 	char	   *ep;
 	int			val;
-=======
-	int			portnum;
-	char		portstr[MAXPGPATH];
-	struct addrinfo *addrs = NULL;
-	struct addrinfo hint;
-	const char *node;
-	int			ret;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (conn->keepalives == NULL)
 		return 1;
@@ -1477,13 +1435,8 @@ connectDBStart(PGconn *conn)
 		{
 			appendPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("Unix-domain socket path \"%s\" is too long (maximum %d bytes)\n"),
-<<<<<<< HEAD
 							  portstr,
 							  (int) (UNIXSOCK_PATH_BUFLEN - 1));
-=======
-											portstr,
-											(int) (UNIXSOCK_PATH_BUFLEN - 1));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			conn->options_valid = false;
 			goto connect_errReturn;
 		}
@@ -2175,13 +2128,8 @@ keep_going:						/* We will come back to here until there is
 					{
 						/* mark byte consumed */
 						conn->inStart = conn->inCursor;
-<<<<<<< HEAD
 						/* Set up global SSL state if required */
 						if (pqsecure_initialize(conn) != 0)
-=======
-						/* Do one-time setup; this creates conn->ssl */
-						if (pqsecure_initialize(conn) == -1)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 							goto error_return;
 					}
 					else if (SSLok == 'N')
@@ -2189,13 +2137,9 @@ keep_going:						/* We will come back to here until there is
 						/* mark byte consumed */
 						conn->inStart = conn->inCursor;
 						/* OK to do without SSL? */
-<<<<<<< HEAD
 						if (conn->sslmode[0] == 'r' ||	/* "require" */
 							conn->sslmode[0] == 'v')	/* "verify-ca" or
 														 * "verify-full" */
-=======
-						if (conn->sslmode[0] == 'r')	/* "require" */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 						{
 							/* Require SSL, but server does not want it */
 							appendPQExpBuffer(&conn->errorMessage,
@@ -2211,11 +2155,7 @@ keep_going:						/* We will come back to here until there is
 					{
 						/*
 						 * Server failure of some sort, such as failure to
-<<<<<<< HEAD
 						 * fork a backend process.	We need to process and
-=======
-						 * fork a backend process.  We need to process and
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 						 * report the error message, which might be formatted
 						 * according to either protocol 2 or protocol 3.
 						 * Rather than duplicate the code for that, we flip
@@ -2260,9 +2200,6 @@ keep_going:						/* We will come back to here until there is
 						/* Must drop the old connection */
 						pqDropConnection(conn);
 						conn->status = CONNECTION_NEEDED;
-						/* Discard any unread/unsent data */
-						conn->inStart = conn->inCursor = conn->inEnd = 0;
-						conn->outCount = 0;
 						goto keep_going;
 					}
 				}
@@ -2374,9 +2311,6 @@ keep_going:						/* We will come back to here until there is
 						/* Must drop the old connection */
 						pqDropConnection(conn);
 						conn->status = CONNECTION_NEEDED;
-						/* Discard any unread/unsent data */
-						conn->inStart = conn->inCursor = conn->inEnd = 0;
-						conn->outCount = 0;
 						goto keep_going;
 					}
 
@@ -2443,9 +2377,6 @@ keep_going:						/* We will come back to here until there is
 						/* Must drop the old connection */
 						pqDropConnection(conn);
 						conn->status = CONNECTION_NEEDED;
-						/* Discard any unread/unsent data */
-						conn->inStart = conn->inCursor = conn->inEnd = 0;
-						conn->outCount = 0;
 						goto keep_going;
 					}
 
@@ -2462,9 +2393,6 @@ keep_going:						/* We will come back to here until there is
 						/* Must drop the old connection */
 						pqDropConnection(conn);
 						conn->status = CONNECTION_NEEDED;
-						/* Discard any unread/unsent data */
-						conn->inStart = conn->inCursor = conn->inEnd = 0;
-						conn->outCount = 0;
 						goto keep_going;
 					}
 #endif
@@ -2528,45 +2456,6 @@ keep_going:						/* We will come back to here until there is
 						return PGRES_POLLING_READING;
 					}
 				}
-<<<<<<< HEAD
-=======
-#if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
-
-				/*
-				 * Continue GSSAPI/SSPI authentication
-				 */
-				if (areq == AUTH_REQ_GSS_CONT)
-				{
-					int			llen = msgLength - 4;
-
-					/*
-					 * We can be called repeatedly for the same buffer. Avoid
-					 * re-allocating the buffer in this case - just re-use the
-					 * old buffer.
-					 */
-					if (llen != conn->ginbuf.length)
-					{
-						if (conn->ginbuf.value)
-							free(conn->ginbuf.value);
-
-						conn->ginbuf.length = llen;
-						conn->ginbuf.value = malloc(llen);
-						if (!conn->ginbuf.value)
-						{
-							printfPQExpBuffer(&conn->errorMessage,
-											  libpq_gettext("out of memory allocating GSSAPI buffer (%i)"),
-											  llen);
-							goto error_return;
-						}
-					}
-
-					if (pqGetnchar(conn->ginbuf.value, llen, conn))
-					{
-						/* We'll come back when there is more data. */
-						return PGRES_POLLING_READING;
-					}
-				}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif
 
 				/*
@@ -2879,13 +2768,9 @@ makeEmptyPGconn(void)
 	conn->std_strings = false;	/* unless server says differently */
 	conn->verbosity = PQERRORS_DEFAULT;
 	conn->sock = -1;
-<<<<<<< HEAD
 	conn->auth_req_received = false;
 	conn->password_needed = false;
 	conn->dot_pgpass_used = false;
-=======
-	conn->password_needed = false;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #ifdef USE_SSL
 	conn->allow_ssl_try = true;
 	conn->wait_ssl_try = false;
@@ -2937,7 +2822,6 @@ makeEmptyPGconn(void)
 static void
 freePGconn(PGconn *conn)
 {
-<<<<<<< HEAD
 	int			i;
 
 	/* let any event procs clean up their state data */
@@ -2955,8 +2839,6 @@ freePGconn(PGconn *conn)
 		free(conn->client_encoding_initial);
 	if (conn->events)
 		free(conn->events);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (conn->pghost)
 		free(conn->pghost);
 	if (conn->pghostaddr)
@@ -2993,7 +2875,6 @@ freePGconn(PGconn *conn)
 		free(conn->keepalives_count);
 	if (conn->sslmode)
 		free(conn->sslmode);
-<<<<<<< HEAD
 	if (conn->sslcert)
 		free(conn->sslcert);
 	if (conn->sslkey)
@@ -3006,8 +2887,6 @@ freePGconn(PGconn *conn)
 		free(conn->sslcompression);
 	if (conn->requirepeer)
 		free(conn->requirepeer);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	if (conn->krbsrvname)
 		free(conn->krbsrvname);
@@ -3040,11 +2919,7 @@ freePGconn(PGconn *conn)
  *	 - properly close a connection to the backend
  *
  * This should reset or release all transient state, but NOT the connection
-<<<<<<< HEAD
  * parameters.	On exit, the PGconn should be in condition to start a fresh
-=======
- * parameters.  On exit, the PGconn should be in condition to start a fresh
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * connection with the same parameters (see PQreset()).
  */
 static void
@@ -3108,11 +2983,6 @@ closePGconn(PGconn *conn)
 	if (conn->lobjfuncs)
 		free(conn->lobjfuncs);
 	conn->lobjfuncs = NULL;
-<<<<<<< HEAD
-=======
-	conn->inStart = conn->inCursor = conn->inEnd = 0;
-	conn->outCount = 0;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #ifdef ENABLE_GSS
 	{
 		OM_uint32	min_s;
@@ -3918,6 +3788,13 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 				{
 					if (options[i].val == NULL)
 						options[i].val = strdup(optval);
+					if (!options[i].val)
+					{
+						printfPQExpBuffer(errorMessage,
+								libpq_gettext("out of memory\n"));
+						free(result);
+						return 3;
+					}
 					found_keyword = true;
 					break;
 				}
@@ -4139,6 +4016,13 @@ parseServiceFile(const char *serviceFile,
 					{
 						if (options[i].val == NULL)
 							options[i].val = strdup(val);
+						if (!options[i].val)
+						{
+							printfPQExpBuffer(errorMessage,
+									libpq_gettext("out of memory\n"));
+							fclose(f);
+							return 3;
+						}
 						found_keyword = true;
 						break;
 					}
@@ -4288,23 +4172,11 @@ recognized_connection_string(const char *connstr)
 /*
  * Subroutine for parse_connection_string
  *
-<<<<<<< HEAD
  * Deal with a string containing key=value pairs.
  */
 static PQconninfoOption *
 conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
 			   bool use_defaults)
-=======
- * If successful, a malloc'd PQconninfoOption array is returned.
- * If not successful, NULL is returned and an error message is
- * left in errorMessage.
- * *password_from_string is set TRUE if we got a password from the
- * conninfo string, otherwise FALSE.
- */
-static PQconninfoOption *
-conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
-			   bool *password_from_string)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	char	   *pname;
 	char	   *pval;
@@ -4312,12 +4184,6 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
 	char	   *cp;
 	char	   *cp2;
 	PQconninfoOption *options;
-<<<<<<< HEAD
-=======
-	PQconninfoOption *option;
-
-	*password_from_string = false;			/* default result */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Make a working copy of PQconninfoOptions */
 	options = conninfo_init(errorMessage);
@@ -4462,12 +4328,6 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
 			PQconninfoFree(options);
 			return NULL;
 		}
-
-		/*
-		 * Special handling for password
-		 */
-		if (strcmp(option->keyword, "password") == 0)
-			*password_from_string = (option->val[0] != '\0');
 	}
 
 	return options;
@@ -4582,6 +4442,14 @@ conninfo_array_parse(const char *const * keywords, const char *const * values,
 								if (options[k].val)
 									free(options[k].val);
 								options[k].val = strdup(str_option->val);
+								if (!options[k].val)
+								{
+									printfPQExpBuffer(errorMessage,
+										libpq_gettext("out of memory\n"));
+									PQconninfoFree(options);
+									PQconninfoFree(dbname_options);
+									return NULL;
+								}
 								break;
 							}
 						}
@@ -5524,11 +5392,7 @@ PQconnectionUsedPassword(const PGconn *conn)
 {
 	if (!conn)
 		return false;
-<<<<<<< HEAD
 	if (conn->password_needed)
-=======
-	if (conn->password_needed && conn->pgpass_from_client)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		return true;
 	else
 		return false;
@@ -5820,6 +5684,12 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 			continue;
 		ret = strdup(t);
 		fclose(fp);
+
+		if (!ret)
+		{
+			/* Out of memory. XXX: an error message would be nice. */
+			return NULL;
+		}
 
 		/* De-escape password. */
 		for (p1 = p2 = ret; *p1 != ':' && *p1 != '\0'; ++p1, ++p2)

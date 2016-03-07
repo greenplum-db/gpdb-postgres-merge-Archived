@@ -3,15 +3,9 @@
 * pthread-win32.c
 *	 partial pthread implementation for win32
 *
-<<<<<<< HEAD
 * Copyright (c) 2004-2012, PostgreSQL Global Development Group
 * IDENTIFICATION
 *	src/interfaces/libpq/pthread-win32.c
-=======
-* Copyright (c) 2004-2008, PostgreSQL Global Development Group
-* IDENTIFICATION
-*	$PostgreSQL: pgsql/src/interfaces/libpq/pthread-win32.c,v 1.15 2008/01/01 19:46:00 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 *
 *-------------------------------------------------------------------------
 */

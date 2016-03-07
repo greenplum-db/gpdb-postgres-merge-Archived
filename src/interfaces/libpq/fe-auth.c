@@ -3,19 +3,11 @@
  * fe-auth.c
  *	   The front-end (client) authorization routines
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
  *	  src/interfaces/libpq/fe-auth.c
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.137.2.1 2010/03/08 10:01:20 mha Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -193,31 +185,6 @@ pg_krb5_destroy(struct krb5_info * info)
 	krb5_cc_close(info->pg_krb5_context, info->pg_krb5_ccache);
 	krb5_free_unparsed_name(info->pg_krb5_context, info->pg_krb5_name);
 	krb5_free_context(info->pg_krb5_context);
-<<<<<<< HEAD
-=======
-}
-
-
-
-/*
- * pg_krb5_authname -- returns a copy of whatever name the user
- *					   has authenticated to the system, or NULL
- */
-static char *
-pg_krb5_authname(PQExpBuffer errorMessage)
-{
-	char	   *tmp_name;
-	struct krb5_info info;
-
-	info.pg_krb5_initialised = 0;
-
-	if (pg_krb5_init(errorMessage, &info) != STATUS_OK)
-		return NULL;
-	tmp_name = strdup(info.pg_krb5_name);
-	pg_krb5_destroy(&info);
-
-	return tmp_name;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 
@@ -237,17 +204,10 @@ pg_krb5_sendauth(PGconn *conn)
 
 	info.pg_krb5_initialised = 0;
 
-<<<<<<< HEAD
 	if (!(conn->pghost && conn->pghost[0] != '\0'))
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("host name must be specified\n"));
-=======
-	if (!conn->pghost)
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  "pg_krb5_sendauth: hostname must be specified for Kerberos authentication\n");
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		return STATUS_ERROR;
 	}
 
@@ -284,11 +244,7 @@ pg_krb5_sendauth(PGconn *conn)
 	}
 
 	retval = krb5_sendauth(info.pg_krb5_context, &auth_context,
-<<<<<<< HEAD
 					   (krb5_pointer) &conn->sock, (char *) conn->krbsrvname,
-=======
-					  (krb5_pointer) & conn->sock, (char *) conn->krbsrvname,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 						   info.pg_krb5_client, server,
 						   AP_OPTS_MUTUAL_REQUIRED,
 						   NULL, 0,		/* no creds, use ccache instead */
@@ -350,15 +306,9 @@ pg_krb5_sendauth(PGconn *conn)
  * that contain the OIDs required. Redefine here, values copied
  * from src/athena/auth/krb5/src/lib/gssapi/generic/gssapi_generic.c
  */
-<<<<<<< HEAD
 const gss_OID_desc GSS_C_NT_HOSTBASED_SERVICE_desc =
 {10, (void *) "\x2a\x86\x48\x86\xf7\x12\x01\x02\x01\x04"};
 GSS_DLLIMP gss_OID GSS_C_NT_HOSTBASED_SERVICE = &GSS_C_NT_HOSTBASED_SERVICE_desc;
-=======
-static const gss_OID_desc GSS_C_NT_HOSTBASED_SERVICE_desc =
-{10, (void *) "\x2a\x86\x48\x86\xf7\x12\x01\x02\x01\x04"};
-static GSS_DLLIMP gss_OID GSS_C_NT_HOSTBASED_SERVICE = &GSS_C_NT_HOSTBASED_SERVICE_desc;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif
 
 /*
@@ -368,24 +318,14 @@ static void
 pg_GSS_error_int(PQExpBuffer str, const char *mprefix,
 				 OM_uint32 stat, int type)
 {
-<<<<<<< HEAD
 	OM_uint32	lmin_s;
-=======
-	OM_uint32	lmaj_s,
-				lmin_s;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	gss_buffer_desc lmsg;
 	OM_uint32	msg_ctx = 0;
 
 	do
 	{
-<<<<<<< HEAD
 		gss_display_status(&lmin_s, stat, type,
 						   GSS_C_NO_OID, &msg_ctx, &lmsg);
-=======
-		lmaj_s = gss_display_status(&lmin_s, stat, type,
-									GSS_C_NO_OID, &msg_ctx, &lmsg);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		appendPQExpBuffer(str, "%s: %s\n", mprefix, (char *) lmsg.value);
 		gss_release_buffer(&lmin_s, &lmsg);
 	} while (msg_ctx);
@@ -483,16 +423,10 @@ pg_GSS_startup(PGconn *conn)
 	int			maxlen;
 	gss_buffer_desc temp_gbuf;
 
-<<<<<<< HEAD
 	if (!(conn->pghost && conn->pghost[0] != '\0'))
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("host name must be specified\n"));
-=======
-	if (!conn->pghost)
-	{
-		printfPQExpBuffer(&conn->errorMessage, libpq_gettext("host name must be specified\n"));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		return STATUS_ERROR;
 	}
 
@@ -542,21 +476,13 @@ pg_GSS_startup(PGconn *conn)
  */
 
 static void
-<<<<<<< HEAD
 pg_SSPI_error(PGconn *conn, const char *mprefix, SECURITY_STATUS r)
-=======
-pg_SSPI_error(PGconn *conn, char *mprefix, SECURITY_STATUS r)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	char		sysmsg[256];
 
 	if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, r, 0,
 					  sysmsg, sizeof(sysmsg), NULL) == 0)
-<<<<<<< HEAD
 		printfPQExpBuffer(&conn->errorMessage, "%s: SSPI error %x",
-=======
-		printfPQExpBuffer(&conn->errorMessage, "%s: sspi error %x",
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 						  mprefix, (unsigned int) r);
 	else
 		printfPQExpBuffer(&conn->errorMessage, "%s: %s (%x)",
@@ -658,23 +584,14 @@ pg_SSPI_continue(PGconn *conn)
 		}
 
 		/*
-<<<<<<< HEAD
 		 * If the negotiation is complete, there may be zero bytes to send.
 		 * The server is at this point not expecting any more data, so don't
 		 * send it.
-=======
-		 * If the negotiation is complete, there may be zero bytes to send. The server is
-		 * at this point not expecting any more data, so don't send it.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 */
 		if (outbuf.pBuffers[0].cbBuffer > 0)
 		{
 			if (pqPacketSend(conn, 'p',
-<<<<<<< HEAD
 				   outbuf.pBuffers[0].pvBuffer, outbuf.pBuffers[0].cbBuffer))
-=======
-					   outbuf.pBuffers[0].pvBuffer, outbuf.pBuffers[0].cbBuffer))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			{
 				FreeContextBuffer(outbuf.pBuffers[0].pvBuffer);
 				return STATUS_ERROR;
@@ -711,7 +628,6 @@ pg_SSPI_startup(PGconn *conn, int use_negotiate)
 		return STATUS_ERROR;
 	}
 
-<<<<<<< HEAD
 	r = AcquireCredentialsHandle(NULL,
 								 use_negotiate ? "negotiate" : "kerberos",
 								 SECPKG_CRED_OUTBOUND,
@@ -724,12 +640,6 @@ pg_SSPI_startup(PGconn *conn, int use_negotiate)
 	if (r != SEC_E_OK)
 	{
 		pg_SSPI_error(conn, libpq_gettext("could not acquire SSPI credentials"), r);
-=======
-	r = AcquireCredentialsHandle(NULL, use_negotiate ? "negotiate" : "kerberos", SECPKG_CRED_OUTBOUND, NULL, NULL, NULL, NULL, conn->sspicred, &expire);
-	if (r != SEC_E_OK)
-	{
-		pg_SSPI_error(conn, "acquire credentials failed", r);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		free(conn->sspicred);
 		conn->sspicred = NULL;
 		return STATUS_ERROR;
@@ -740,16 +650,10 @@ pg_SSPI_startup(PGconn *conn, int use_negotiate)
 	 * but not more complex. We can skip the @REALM part, because Windows will
 	 * fill that in for us automatically.
 	 */
-<<<<<<< HEAD
 	if (!(conn->pghost && conn->pghost[0] != '\0'))
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("host name must be specified\n"));
-=======
-	if (conn->pghost == NULL)
-	{
-		printfPQExpBuffer(&conn->errorMessage, libpq_gettext("host name must be specified\n"));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		return STATUS_ERROR;
 	}
 	conn->sspitarget = malloc(strlen(conn->krbsrvname) + strlen(conn->pghost) + 2);
@@ -786,24 +690,12 @@ pg_local_sendauth(PGconn *conn)
 	char		buf;
 	struct iovec iov;
 	struct msghdr msg;
-<<<<<<< HEAD
 	struct cmsghdr *cmsg;
 	union
 	{
 		struct cmsghdr hdr;
 		unsigned char buf[CMSG_SPACE(sizeof(struct cmsgcred))];
 	}			cmsgbuf;
-=======
-
-#ifdef HAVE_STRUCT_CMSGCRED
-	struct cmsghdr *cmsg;
-	union
-	{
-		struct cmsghdr	hdr;
-		unsigned char	buf[CMSG_SPACE(sizeof(struct cmsgcred))];
-	} cmsgbuf;
-#endif
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * The backend doesn't care what we send here, but it wants exactly one
@@ -817,12 +709,7 @@ pg_local_sendauth(PGconn *conn)
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
 
-<<<<<<< HEAD
 	/* We must set up a message that will be filled in by kernel */
-=======
-#ifdef HAVE_STRUCT_CMSGCRED
-	/* FreeBSD needs us to set up a message that will be filled in by kernel */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	memset(&cmsgbuf, 0, sizeof(cmsgbuf));
 	msg.msg_control = &cmsgbuf.buf;
 	msg.msg_controllen = sizeof(cmsgbuf.buf);
@@ -941,13 +828,10 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 
 #if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 		case AUTH_REQ_GSS:
-<<<<<<< HEAD
 #if !defined(ENABLE_SSPI)
 			/* no native SSPI, so use GSSAPI library for it */
 		case AUTH_REQ_SSPI:
 #endif
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			{
 				int			r;
 
@@ -1005,22 +889,14 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 				pgunlock_thread();
 			}
 			break;
-<<<<<<< HEAD
 #else							/* defined(ENABLE_GSS) || defined(ENABLE_SSPI) */
 			/* No GSSAPI *or* SSPI support */
-=======
-#else
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		case AUTH_REQ_GSS:
 		case AUTH_REQ_GSS_CONT:
 			printfPQExpBuffer(&conn->errorMessage,
 					 libpq_gettext("GSSAPI authentication not supported\n"));
 			return STATUS_ERROR;
-<<<<<<< HEAD
 #endif   /* defined(ENABLE_GSS) || defined(ENABLE_SSPI) */
-=======
-#endif
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #ifdef ENABLE_SSPI
 		case AUTH_REQ_SSPI:
@@ -1040,7 +916,6 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 			pgunlock_thread();
 			break;
 #else
-<<<<<<< HEAD
 
 			/*
 			 * No SSPI support. However, if we have GSSAPI but not SSPI
@@ -1049,23 +924,14 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 			 * that case.
 			 */
 #if !defined(ENABLE_GSS)
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		case AUTH_REQ_SSPI:
 			printfPQExpBuffer(&conn->errorMessage,
 					   libpq_gettext("SSPI authentication not supported\n"));
 			return STATUS_ERROR;
-<<<<<<< HEAD
 #endif   /* !define(ENABLE_GSSAPI) */
 #endif   /* ENABLE_SSPI */
 
 
-=======
-#endif
-
-
-		case AUTH_REQ_MD5:
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		case AUTH_REQ_CRYPT:
 			printfPQExpBuffer(&conn->errorMessage,
 					  libpq_gettext("Crypt authentication not supported\n"));
@@ -1133,20 +999,6 @@ pg_fe_getauthname(PQExpBuffer errorMessage)
 	 */
 	pglock_thread();
 
-<<<<<<< HEAD
-=======
-#ifdef KRB5
-
-	/*
-	 * pg_krb5_authname gives us a strdup'd value that we need to free later,
-	 * however, we don't want to free 'name' directly in case it's *not* a
-	 * Kerberos login and we fall through to name = pw->pw_name;
-	 */
-	krb5_name = pg_krb5_authname(errorMessage);
-	name = krb5_name;
-#endif
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (!name)
 	{
 #ifdef WIN32
