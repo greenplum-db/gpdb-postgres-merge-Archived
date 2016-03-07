@@ -267,20 +267,15 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 {
 	TupleDesc	itupdesc = RelationGetDescr(rel);
 	int			natts = rel->rd_rel->relnatts;
-<<<<<<< HEAD
-=======
 	SnapshotData SnapshotDirty;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	OffsetNumber maxoff;
 	Page		page;
 	BTPageOpaque opaque;
 	Buffer		nbuf = InvalidBuffer;
 
-<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
-=======
+
 	InitDirtySnapshot(SnapshotDirty);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
