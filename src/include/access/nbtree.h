@@ -7,11 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.115 2007/11/16 19:53:50 tgl Exp $
-=======
  * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.116.2.1 2008/04/16 23:59:51 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -309,11 +305,7 @@ typedef struct xl_btree_insert
  * Note: the four XLOG_BTREE_SPLIT xl_info codes all use this data record.
  * The _L and _R variants indicate whether the inserted tuple went into the
  * left or right split page (and thus, whether newitemoff and the new item
-<<<<<<< HEAD
- * are stored or not).  The _ROOT variants indicate that we are splitting
-=======
  * are stored or not).	The _ROOT variants indicate that we are splitting
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * the root page, and thus that a newroot record rather than an insert or
  * split record should follow.	Note that a split record never carries a
  * metapage update --- we'll do that in the parent-level update.
