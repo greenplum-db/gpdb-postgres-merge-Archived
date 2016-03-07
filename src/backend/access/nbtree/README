@@ -1,11 +1,7 @@
-<<<<<<< HEAD
 $PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.20 2008/03/21 13:23:27 momjian Exp $
 
 Btree Indexing
 ==============
-=======
-$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.18 2007/09/12 22:10:26 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 This directory contains a correct implementation of Lehman and Yao's
 high-concurrency B-tree management algorithm (P. Lehman and S. Yao,
