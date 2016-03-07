@@ -85,13 +85,9 @@ gistDeleteSubtree(GistVacuum *gv, BlockNumber blkno)
 	Buffer		buffer;
 	Page		page;
 
-<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
 
-	buffer = ReadBuffer(gv->index, blkno);
-=======
 	buffer = ReadBufferWithStrategy(gv->index, blkno, gv->strategy);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	LockBuffer(buffer, GIST_EXCLUSIVE);
 	page = (Page) BufferGetPage(buffer);
 
@@ -323,14 +319,10 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 
 	vacuum_delay_point();
 
-<<<<<<< HEAD
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 
-	buffer = ReadBuffer(gv->index, blkno);
-=======
 	buffer = ReadBufferWithStrategy(gv->index, blkno, gv->strategy);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	LockBuffer(buffer, GIST_EXCLUSIVE);
 	gistcheckpage(gv->index, buffer);
 	page = (Page) BufferGetPage(buffer);
@@ -632,14 +624,10 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 
 		vacuum_delay_point();
 
-<<<<<<< HEAD
 		// -------- MirroredLock ----------
 		MIRROREDLOCK_BUFMGR_LOCK;
 
-		buffer = ReadBuffer(rel, blkno);
-=======
 		buffer = ReadBufferWithStrategy(rel, blkno, info->strategy);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		LockBuffer(buffer, GIST_SHARE);
 		page = (Page) BufferGetPage(buffer);
 
@@ -749,11 +737,7 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 
 	while (stack)
 	{
-<<<<<<< HEAD
 		Buffer		buffer;
-=======
-		Buffer		buffer = ReadBufferWithStrategy(rel, stack->blkno, info->strategy);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		Page		page;
 		OffsetNumber i,
 					maxoff;
@@ -763,7 +747,7 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 		// -------- MirroredLock ----------
 		MIRROREDLOCK_BUFMGR_LOCK;
 
-		buffer = ReadBuffer(rel, stack->blkno);
+		buffer = ReadBufferWithStrategy(rel, stack->blkno, info->strategy);
 		
 		LockBuffer(buffer, GIST_SHARE);
 		gistcheckpage(rel, buffer);
