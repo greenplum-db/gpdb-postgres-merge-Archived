@@ -1362,11 +1362,7 @@ _bt_end_vacuum(Relation rel)
  * _bt_end_vacuum wrapped as an on_shmem_exit callback function
  */
 void
-<<<<<<< HEAD
 _bt_end_vacuum_callback(int code __attribute__((unused)), Datum arg)
-=======
-_bt_end_vacuum_callback(int code, Datum arg)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	_bt_end_vacuum((Relation) DatumGetPointer(arg));
 }
