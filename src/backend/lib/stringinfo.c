@@ -6,17 +6,10 @@
  * It can be used to buffer either ordinary C strings (null-terminated text)
  * or arbitrary binary data.  All storage is allocated with palloc().
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	  $PostgreSQL: pgsql/src/backend/lib/stringinfo.c,v 1.50 2009/01/01 17:23:42 momjian Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- *	  $PostgreSQL: pgsql/src/backend/lib/stringinfo.c,v 1.49 2008/01/01 19:45:49 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -52,11 +45,7 @@ makeStringInfo(void)
 void
 initStringInfo(StringInfo str)
 {
-<<<<<<< HEAD
 	int			size = 1024;		/* initial default buffer size */
-=======
-	int			size = 1024;	/* initial default buffer size */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	str->data = (char *) palloc(size);
 	str->maxlen = size;
@@ -297,11 +286,7 @@ enlargeStringInfo(StringInfo str, int needed)
 	int			newlen;
 
 	/*
-<<<<<<< HEAD
 	 * Guard against out-of-range "needed" values.  Without this, we can get
-=======
-	 * Guard against out-of-range "needed" values.	Without this, we can get
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 * an overflow or infinite loop in the following.
 	 */
 	if (needed < 0)				/* should not happen */
