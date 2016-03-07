@@ -656,11 +656,8 @@ btbulkdelete(PG_FUNCTION_ARGS)
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(_bt_end_vacuum_callback, PointerGetDatum(rel));
 	_bt_end_vacuum(rel);
-<<<<<<< HEAD
 
 	MIRROREDLOCK_BUFMGR_VERIFY_NO_LOCK_LEAK_EXIT;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	PG_RETURN_POINTER(stats);
 }
@@ -912,15 +909,11 @@ restart:
 	 * recycle all-zero pages, not fail.  Also, we want to use a nondefault
 	 * buffer access strategy.
 	 */
-<<<<<<< HEAD
 	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-	buf = ReadBuffer(rel, blkno);
-=======
 	buf = ReadBufferWithStrategy(rel, blkno, info->strategy);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	LockBuffer(buf, BT_READ);
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
