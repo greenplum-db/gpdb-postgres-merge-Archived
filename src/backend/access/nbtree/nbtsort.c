@@ -288,12 +288,8 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 	/* XLOG stuff */
 	if (wstate->btws_use_wal)
 	{
-<<<<<<< HEAD
-		_bt_lognewpage(wstate->index, page, blkno);
-=======
 		/* We use the heap NEWPAGE record type for this */
 		log_newpage(&wstate->index->rd_node, blkno, page);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	else
