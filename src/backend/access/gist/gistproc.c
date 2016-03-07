@@ -10,11 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.9.2.1 2007/09/07 17:04:46 teodor Exp $
-=======
  *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.13.2.2 2009/09/18 14:03:12 teodor Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -431,16 +427,6 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 			ADDLIST(listT, unionT, posT, i);
 	}
 
-<<<<<<< HEAD
-#define LIMIT_RATIO	0.1
-#define _IS_BADRATIO(x,y)	( (y) == 0 || (float)(x)/(float)(y) < LIMIT_RATIO )
-#define IS_BADRATIO(x,y) ( _IS_BADRATIO((x),(y)) || _IS_BADRATIO((y),(x)) )
-	/* bad disposition, try to split by centers of boxes  */
-	if ( IS_BADRATIO(posR, posL) && IS_BADRATIO(posT, posB) )
-	{
-		double	avgCenterX=0.0, avgCenterY=0.0;
-		double	CenterX, CenterY;
-=======
 #define LIMIT_RATIO 0.1
 #define _IS_BADRATIO(x,y)	( (y) == 0 || (float)(x)/(float)(y) < LIMIT_RATIO )
 #define IS_BADRATIO(x,y) ( _IS_BADRATIO((x),(y)) || _IS_BADRATIO((y),(x)) )
@@ -451,18 +437,12 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 					avgCenterY = 0.0;
 		double		CenterX,
 					CenterY;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 		{
 			cur = DatumGetBoxP(entryvec->vector[i].key);
-<<<<<<< HEAD
-			avgCenterX +=  ((double)cur->high.x + (double)cur->low.x)/2.0;
-			avgCenterY +=  ((double)cur->high.y + (double)cur->low.y)/2.0;
-=======
 			avgCenterX += ((double) cur->high.x + (double) cur->low.x) / 2.0;
 			avgCenterY += ((double) cur->high.y + (double) cur->low.y) / 2.0;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 
 		avgCenterX /= maxoff;
@@ -472,19 +452,11 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 		for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 		{
 			cur = DatumGetBoxP(entryvec->vector[i].key);
-<<<<<<< HEAD
-			
-			CenterX =  ((double)cur->high.x + (double)cur->low.x)/2.0;
-			CenterY =  ((double)cur->high.y + (double)cur->low.y)/2.0;
-
-			if (CenterX < avgCenterX) 
-=======
 
 			CenterX = ((double) cur->high.x + (double) cur->low.x) / 2.0;
 			CenterY = ((double) cur->high.y + (double) cur->low.y) / 2.0;
 
 			if (CenterX < avgCenterX)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				ADDLIST(listL, unionL, posL, i);
 			else if (CenterX == avgCenterX)
 			{
@@ -505,10 +477,6 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 				else
 					ADDLIST(listB, unionB, posB, i);
 			}
-<<<<<<< HEAD
-			else 
-				ADDLIST(listT, unionT, posT, i);
-=======
 			else
 				ADDLIST(listT, unionT, posT, i);
 		}
@@ -517,7 +485,6 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 		{
 			fallbackSplit(entryvec, v);
 			PG_RETURN_POINTER(v);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 	}
 
