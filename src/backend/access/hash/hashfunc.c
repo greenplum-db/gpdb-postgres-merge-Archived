@@ -160,31 +160,16 @@ extern void varattrib_untoast_ptr_len(Datum d, char **datastart, int *len, void 
 Datum
 hashtext(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	Datum d0 = PG_GETARG_DATUM(0);
-	char *p0; void *tofree0; int len0;
-	
-=======
 	text	   *key = PG_GETARG_TEXT_PP(0);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	Datum		result;
-
-	varattrib_untoast_ptr_len(d0, &p0, &len0, &tofree0);
 
 	/*
 	 * Note: this is currently identical in behavior to hashvarlena, but keep
 	 * it as a separate function in case we someday want to do something
 	 * different in non-C locales.	(See also hashbpchar, if so.)
 	 */
-<<<<<<< HEAD
-	result = hash_any((unsigned char *) p0, len0);
-=======
 	result = hash_any((unsigned char *) VARDATA_ANY(key),
 					  VARSIZE_ANY_EXHDR(key));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-
-	if(tofree0)
-		pfree(tofree0);
 
 	return result;
 }
@@ -196,25 +181,11 @@ hashtext(PG_FUNCTION_ARGS)
 Datum
 hashvarlena(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	Datum d0 = PG_GETARG_DATUM(0);
-	char *p0; void *tofree0; int len0;
-	
-	Datum		result;
-
-	varattrib_untoast_ptr_len(d0, &p0, &len0, &tofree0);
-
-	result = hash_any((unsigned char *) p0, len0);
-=======
 	struct varlena *key = PG_GETARG_VARLENA_PP(0);
 	Datum		result;
 
 	result = hash_any((unsigned char *) VARDATA_ANY(key),
 					  VARSIZE_ANY_EXHDR(key));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-
-	if(tofree0)
-		pfree(tofree0);
 
 	return result;
 }
@@ -1136,7 +1107,9 @@ hash_any(register const unsigned char *k, register int keylen)
 Datum
 hash_uint32(uint32 k)
 {
-	register uint32 a, b, c;
+	register uint32 a,
+				b,
+				c;
 
 	a = 0xdeadbeef + k;
 	b = 0xdeadbeef;
@@ -1144,33 +1117,6 @@ hash_uint32(uint32 k)
 
 	mix(a, b, c);
 
-<<<<<<< HEAD
-=======
-	/* report the result */
-	return UInt32GetDatum(c);
-}
-
-/*
- * hash_uint32() -- hash a 32-bit value
- *
- * This has the same result (at least on little-endian machines) as
- *		hash_any(&k, sizeof(uint32))
- * but is faster and doesn't force the caller to store k into memory.
- */
-Datum
-hash_uint32(uint32 k)
-{
-	register uint32 a,
-				b,
-				c;
-
-	a = 0x9e3779b9 + k;
-	b = 0x9e3779b9;
-	c = 3923095 + (uint32) sizeof(uint32);
-
-	mix(a, b, c);
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/* report the result */
 	return UInt32GetDatum(c);
 }
