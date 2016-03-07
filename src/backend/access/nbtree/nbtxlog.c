@@ -8,11 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.49 2007/11/16 19:53:50 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.50 2008/01/01 19:45:46 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -389,17 +385,6 @@ btree_xlog_split(bool onleft, bool isroot,
 	 * Reconstruct left (original) sibling if needed.  Note that this code
 	 * ensures that the items remaining on the left page are in the correct
 	 * item number order, but it does not reproduce the physical order they
-<<<<<<< HEAD
-	 * would have had.  Is this worth changing?  See also _bt_restore_page().
-	 */
-	if (!(record->xl_info & XLR_BKP_BLOCK_1))
-	{
-		Buffer lbuf = XLogReadBuffer(reln, xlrec->leftsib, false);
-
-		if (BufferIsValid(lbuf))
-		{
-			Page lpage = (Page) BufferGetPage(lbuf);
-=======
 	 * would have had.	Is this worth changing?  See also _bt_restore_page().
 	 */
 	if (!(record->xl_info & XLR_BKP_BLOCK_1))
@@ -409,7 +394,6 @@ btree_xlog_split(bool onleft, bool isroot,
 		if (BufferIsValid(lbuf))
 		{
 			Page		lpage = (Page) BufferGetPage(lbuf);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			BTPageOpaque lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
 
 			if (!XLByteLE(lsn, PageGetLSN(lpage)))
@@ -417,15 +401,6 @@ btree_xlog_split(bool onleft, bool isroot,
 				OffsetNumber off;
 				OffsetNumber maxoff = PageGetMaxOffsetNumber(lpage);
 				OffsetNumber deletable[MaxOffsetNumber];
-<<<<<<< HEAD
-				int ndeletable = 0;
-
-				/*
-				 * Remove the items from the left page that were copied to
-				 * the right page.  Also remove the old high key, if any.
-				 * (We must remove everything before trying to insert any
-				 * items, else we risk not having enough space.)
-=======
 				int			ndeletable = 0;
 
 				/*
@@ -433,15 +408,11 @@ btree_xlog_split(bool onleft, bool isroot,
 				 * right page.	Also remove the old high key, if any. (We must
 				 * remove everything before trying to insert any items, else
 				 * we risk not having enough space.)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				 */
 				if (!P_RIGHTMOST(lopaque))
 				{
 					deletable[ndeletable++] = P_HIKEY;
-<<<<<<< HEAD
-=======
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					/*
 					 * newitemoff is given to us relative to the original
 					 * page's item numbering, so adjust it for this deletion.
@@ -490,21 +461,13 @@ btree_xlog_split(bool onleft, bool isroot,
 		}
 	}
 
-<<<<<<< HEAD
-	/* We no longer need the right buffer. */
-=======
 	/* We no longer need the right buffer */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	UnlockReleaseBuffer(rbuf);
 
 	/* Fix left-link of the page to the right of the new right sibling */
 	if (xlrec->rnext != P_NONE && !(record->xl_info & XLR_BKP_BLOCK_2))
 	{
-<<<<<<< HEAD
-		Buffer buffer = XLogReadBuffer(reln, xlrec->rnext, false);
-=======
 		Buffer		buffer = XLogReadBuffer(reln, xlrec->rnext, false);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (BufferIsValid(buffer))
 		{
@@ -1039,11 +1002,7 @@ btree_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
 								 xlrec->node.spcNode, xlrec->node.dbNode,
 								 xlrec->node.relNode);
 				appendStringInfo(buf, "left %u, right %u, next %u, level %u, firstright %d",
-<<<<<<< HEAD
-								 xlrec->leftsib, xlrec->rightsib, xlrec->rnext,
-=======
-							   xlrec->leftsib, xlrec->rightsib, xlrec->rnext,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+							     xlrec->leftsib, xlrec->rightsib, xlrec->rnext,
 								 xlrec->level, xlrec->firstright);
 				break;
 			}
@@ -1055,11 +1014,7 @@ btree_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
 								 xlrec->node.spcNode, xlrec->node.dbNode,
 								 xlrec->node.relNode);
 				appendStringInfo(buf, "left %u, right %u, next %u, level %u, firstright %d",
-<<<<<<< HEAD
 								 xlrec->leftsib, xlrec->rightsib, xlrec->rnext,
-=======
-							   xlrec->leftsib, xlrec->rightsib, xlrec->rnext,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 								 xlrec->level, xlrec->firstright);
 				break;
 			}
@@ -1071,11 +1026,7 @@ btree_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
 								 xlrec->node.spcNode, xlrec->node.dbNode,
 								 xlrec->node.relNode);
 				appendStringInfo(buf, "left %u, right %u, next %u, level %u, firstright %d",
-<<<<<<< HEAD
 								 xlrec->leftsib, xlrec->rightsib, xlrec->rnext,
-=======
-							   xlrec->leftsib, xlrec->rightsib, xlrec->rnext,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 								 xlrec->level, xlrec->firstright);
 				break;
 			}
@@ -1087,11 +1038,7 @@ btree_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
 								 xlrec->node.spcNode, xlrec->node.dbNode,
 								 xlrec->node.relNode);
 				appendStringInfo(buf, "left %u, right %u, next %u, level %u, firstright %d",
-<<<<<<< HEAD
 								 xlrec->leftsib, xlrec->rightsib, xlrec->rnext,
-=======
-							   xlrec->leftsib, xlrec->rightsib, xlrec->rnext,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 								 xlrec->level, xlrec->firstright);
 				break;
 			}
