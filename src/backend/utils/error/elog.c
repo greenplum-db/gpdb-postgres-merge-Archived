@@ -37,12 +37,8 @@
  * overflow.)
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -189,12 +185,7 @@ static int	recursion_depth = 0;	/* to detect actual recursion */
 
 #define FORMATTED_TS_LEN 128
 static char formatted_start_time[FORMATTED_TS_LEN];
-<<<<<<< HEAD
 //static char formatted_log_time[FORMATTED_TS_LEN];
-=======
-static char formatted_log_time[FORMATTED_TS_LEN];
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* Macro for checking errordata_stack_depth is reasonable */
 #define CHECK_STACK_DEPTH() \
@@ -215,8 +206,8 @@ static const char *useful_strerror(int errnum);
 static const char *error_severity(int elevel);
 static void append_with_tabs(StringInfo buf, const char *str);
 static bool is_log_level_output(int elevel, int log_min_level);
-<<<<<<< HEAD
-static void write_pipe_chunks(char *data, int len);
+static void write_pipe_chunks(char *data, int len, int dest);
+static void write_csvlog(ErrorData *edata);
 static void elog_debug_linger(ErrorData *edata);
 static void setup_formatted_start_time(void);
 
@@ -241,12 +232,6 @@ static void verify_and_replace_mbstr(char **str, int len)
 #include <execinfo.h>
 #endif
 
-=======
-static void write_pipe_chunks(char *data, int len, int dest);
-static void write_csvlog(ErrorData *edata);
-
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * in_error_recursion_trouble --- are we at risk of infinite error recursion?
  *
@@ -278,7 +263,6 @@ err_gettext(const char *str)
 	return str;
 #endif
 }
-<<<<<<< HEAD
 
 
 /*
@@ -304,8 +288,6 @@ elog_internalerror(const char *filename, int lineno, const char *funcname)
     /* not reached */
     abort();
 }                               /* elog_internalerror */
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 /*
@@ -467,7 +449,6 @@ errstart(int elevel, const char *filename, int lineno,
 		{
 			error_context_stack = NULL;
 			debug_query_string = NULL;
-<<<<<<< HEAD
 
 			/*
 			 * If we recurse too many times, this could mean that we have
@@ -481,8 +462,6 @@ errstart(int elevel, const char *filename, int lineno,
 				fflush(stderr);
 				return false;
 			}
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 	}
 	if (++errordata_stack_depth >= ERRORDATA_STACK_SIZE)
@@ -1153,12 +1132,9 @@ errhint(const char *fmt,...)
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
 	EVALUATE_MESSAGE(hint, false, true);
-<<<<<<< HEAD
 
 	/* enforce correct encoding */
 	verify_and_replace_mbstr(&(edata->hint), strlen(edata->hint));
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -1185,12 +1161,9 @@ errcontext(const char *fmt,...)
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
 	EVALUATE_MESSAGE(context, true, true);
-<<<<<<< HEAD
 
 	/* enforce correct encoding */
 	verify_and_replace_mbstr(&(edata->context), strlen(edata->context));
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -1500,7 +1473,6 @@ elog_start(const char *filename, int lineno, const char *funcname)
 	edata->funcname = funcname;
 	/* errno is saved now so that error parameter eval can't change it */
 	edata->saved_errno = errno;
-<<<<<<< HEAD
 #ifdef USE_ASSERT_CHECKING
 	if (IsUnderPostmaster && mainthread() != 0 && !pthread_equal(main_tid, pthread_self()))
 	{
@@ -1511,8 +1483,6 @@ elog_start(const char *filename, int lineno, const char *funcname)
 #endif
 	}
 #endif
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
@@ -1541,12 +1511,9 @@ elog_finish(int elevel, const char *fmt,...)
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
 	EVALUATE_MESSAGE(message, false, false);
-<<<<<<< HEAD
 
 	/* enforce correct encoding */
 	verify_and_replace_mbstr(&(edata->message), strlen(edata->message));
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -1802,8 +1769,6 @@ pg_re_throw(void)
 }
 
 
-<<<<<<< HEAD
-
 /*
  * CDB: elog_demote
  *
@@ -1954,8 +1919,6 @@ elog_message(void)
 				: errordata[errordata_stack_depth].message;
 }
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * Initialization of error output file
  */
@@ -2443,7 +2406,6 @@ log_line_prefix(StringInfo buf)
 				break;
 			case 'm':
 				{
-<<<<<<< HEAD
 					/*
 					 * Note: for %m, %t, and %s we deliberately use the C
 					 * library's strftime/localtime, and not the equivalent
@@ -2461,15 +2423,11 @@ log_line_prefix(StringInfo buf)
 					 * log messages to have the same time format. See MPP-2591.
 					 *
 					 */
-					pg_time_t		stamp_time;
-					char		strfbuf[128],
-								msbuf[8];
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					struct timeval tv;
 					pg_time_t	stamp_time;
 					pg_tz	   *tz;
-					char		msbuf[8];
+					char		strfbuf[128],
+								msbuf[8];
 
 					gettimeofday(&tv, NULL);
 <<<<<<< HEAD
@@ -2519,27 +2477,19 @@ log_line_prefix(StringInfo buf)
 				break;
 			case 't':
 				{
-<<<<<<< HEAD
-					pg_time_t		stamp_time = (pg_time_t)time(NULL);
-=======
 					pg_time_t	stamp_time = (pg_time_t) time(NULL);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					pg_tz	   *tz;
 					char		strfbuf[128];
 
 					tz = log_timezone ? log_timezone : gmt_timezone;
 
 					pg_strftime(strfbuf, sizeof(strfbuf),
-<<<<<<< HEAD
 					/* Win32 timezone names are too long so don't print them */
 #ifndef WIN32
 							 "%Y-%m-%d %H:%M:%S %Z",
 #else
 							 "%Y-%m-%d %H:%M:%S",
 #endif
-=======
-								"%Y-%m-%d %H:%M:%S %Z",
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 								pg_localtime(&stamp_time, tz));
 					appendStringInfoString(buf, strfbuf);
 				}
@@ -3895,11 +3845,7 @@ send_message_to_server_log(ErrorData *edata)
 		 * If stderr redirection is active, it was OK to write to stderr above
 		 * because that's really a pipe to the syslogger process.
 		 */
-<<<<<<< HEAD
-		if (pgwin32_is_service() && (!redirection_done || am_syslogger) )
-=======
-		else if (pgwin32_is_service())
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+		else if (pgwin32_is_service() && (!redirection_done || am_syslogger) )
 			write_eventlog(edata->elevel, buf.data);
 #endif
 <<<<<<< HEAD
