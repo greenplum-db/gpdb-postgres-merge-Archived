@@ -3,21 +3,13 @@
  * relcache.c
  *	  POSTGRES relation descriptor cache code
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.259 2007/03/29 00:15:38 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.266.2.10 2010/09/02 03:17:06 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -45,11 +37,8 @@
 #include "access/sysattr.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
-<<<<<<< HEAD
 #include "catalog/catquery.h"
-=======
 #include "catalog/index.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_amop.h"
@@ -64,10 +53,7 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
-<<<<<<< HEAD
 #include "catalog/pg_tablespace.h"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"
@@ -823,12 +809,9 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 	{
 		case RELKIND_RELATION:
 		case RELKIND_TOASTVALUE:
-<<<<<<< HEAD
 		case RELKIND_AOSEGMENTS:
 		case RELKIND_AOBLOCKDIR:
 		case RELKIND_AOVISIMAP:
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		case RELKIND_INDEX:
 			break;
 		default:
@@ -852,13 +835,10 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 	{
 		case RELKIND_RELATION:
 		case RELKIND_TOASTVALUE:
-<<<<<<< HEAD
 		case RELKIND_AOSEGMENTS:
 		case RELKIND_AOBLOCKDIR:
 		case RELKIND_AOVISIMAP:
 		case RELKIND_UNCATALOGED:
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			options = heap_reloptions(relation->rd_rel->relkind, datum,
 									  false);
 			break;
@@ -1254,10 +1234,7 @@ equalRuleLocks(RuleLock *rlock1, RuleLock *rlock2)
 	return true;
 }
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  *		RelationBuildDesc
  *
@@ -1638,11 +1615,7 @@ IndexSupportInitialize(oidvector *indclass,
  * Note there is no provision for flushing the cache.  This is OK at the
  * moment because there is no way to ALTER any interesting properties of an
  * existing opclass --- all you can do is drop it, which will result in
-<<<<<<< HEAD
- * a useless but harmless dead entry in the cache.	To support altering
-=======
  * a useless but harmless dead entry in the cache.  To support altering
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * opclass membership (not the same as opfamily membership!), we'd need to
  * be able to flush this cache as well as the contents of relcache entries
  * for indexes.
@@ -1902,17 +1875,10 @@ formrdesc(const char *relationName, Oid relationReltype,
 	 * initialize relation tuple form
 	 *
 	 * The data we insert here is pretty incomplete/bogus, but it'll serve to
-<<<<<<< HEAD
-	 * get us launched.  RelationCacheInitializePhase3() will read the real
-	 * data from pg_class and replace what we've done here.  Note in
-	 * particular that relowner is left as zero; this cues
-	 * RelationCacheInitializePhase3 that the real data isn't there yet.
-=======
 	 * get us launched.  RelationCacheInitializePhase2() will read the real
 	 * data from pg_class and replace what we've done here.  Note in particular
 	 * that relowner is left as zero; this cues RelationCacheInitializePhase2
 	 * that the real data isn't there yet.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	relation->rd_rel = (Form_pg_class) palloc0(CLASS_TUPLE_SIZE);
 
@@ -2063,18 +2029,10 @@ RelationIdGetRelation(Oid relationId)
 			 * a headache for indexes that reload itself depends on.
 			 */
 			if (rd->rd_rel->relkind == RELKIND_INDEX)
-<<<<<<< HEAD
-				RelationReloadClassinfo(rd);
-			else
-				RelationClearRelation(rd, true);
-		 }
-
-=======
 				RelationReloadIndexInfo(rd);
 			else
 				RelationClearRelation(rd, true);
 		}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		return rd;
 	}
 
@@ -2605,11 +2563,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 			memcpy(&tmpstruct, newrel, sizeof(RelationData));
 			memcpy(newrel, relation, sizeof(RelationData));
 			memcpy(relation, &tmpstruct, sizeof(RelationData));
-<<<<<<< HEAD
- 		}
-=======
 		}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/* rd_smgr must not be swapped, due to back-links from smgr level */
 		SWAPFIELD(SMgrRelation, rd_smgr);
@@ -2889,18 +2843,12 @@ AtEOXact_RelationCache(bool isCommit)
 	 * for us to do here, so we keep a static flag that gets set if there is
 	 * anything to do.	(Currently, this means either a relation is created in
 	 * the current xact, or one is given a new relfilenode, or an index list
-<<<<<<< HEAD
 	 * is forced.)  For simplicity, the flag remains set till end of top-level
 	 * transaction, even though we could clear it at subtransaction end in
 	 * some cases.
 	 *
 	 * MPP-3333: READERS need to *always* scan, otherwise they will not be able
 	 * to maintain a coherent view of the storage layer.
-=======
-	 * is forced.)	For simplicity, the flag remains set till end of top-level
-	 * transaction, even though we could clear it at subtransaction end in
-	 * some cases.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	if (!need_eoxact_work &&
 		DistributedTransactionContext != DTX_CONTEXT_QE_READER
@@ -3057,12 +3005,8 @@ AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 		}
 
 		/*
-<<<<<<< HEAD
-		 * Likewise, update or drop any new-relfilenode-in-subtransaction hint.
-=======
 		 * Likewise, update or drop any new-relfilenode-in-subtransaction
 		 * hint.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 */
 		if (relation->rd_newRelfilenodeSubid == mySubid)
 		{
@@ -3089,11 +3033,7 @@ AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
  * RelationCacheMarkNewRelfilenode
  *
  *	Mark the rel as having been given a new relfilenode in the current
-<<<<<<< HEAD
- *	(sub) transaction.  This is a hint that can be used to optimize
-=======
  *	(sub) transaction.	This is a hint that can be used to optimize
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *	later operations on the rel in the same transaction.
  */
 void
@@ -3540,13 +3480,8 @@ RelationCacheInitializePhase3(void)
 	 * relcache entries have rules or triggers, load that info the hard way
 	 * since it isn't recorded in the cache file.
 	 *
-<<<<<<< HEAD
-	 * Whenever we access the catalogs to read data, there is a possibility of
-	 * a shared-inval cache flush causing relcache entries to be removed.
-=======
 	 * Whenever we access the catalogs to read data, there is a possibility
 	 * of a shared-inval cache flush causing relcache entries to be removed.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 * Since hash_seq_search only guarantees to still work after the *current*
 	 * entry is removed, it's unsafe to continue the hashtable scan afterward.
 	 * We handle this by restarting the scan from scratch after each access.
@@ -3594,15 +3529,9 @@ RelationCacheInitializePhase3(void)
 
 			/*
 			 * Check the values in rd_att were set up correctly.  (We cannot
-<<<<<<< HEAD
-			 * just copy them over now: formrdesc must have set up the rd_att
-			 * data correctly to start with, because it may already have been
-			 * copied into one or more catcache entries.)
-=======
 			 * just copy them over now: formrdesc must have set up the
 			 * rd_att data correctly to start with, because it may already
 			 * have been copied into one or more catcache entries.)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			 */
 			Assert(relation->rd_att->tdtypeid == relp->reltype);
 			Assert(relation->rd_att->tdtypmod == -1);
