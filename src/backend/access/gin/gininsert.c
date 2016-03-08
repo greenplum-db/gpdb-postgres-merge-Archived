@@ -333,18 +333,12 @@ ginbuild(PG_FUNCTION_ARGS)
 	buildstate.accum.ginstate = &buildstate.ginstate;
 	ginInitBA(&buildstate.accum);
 
-<<<<<<< HEAD
-	/* do the heap scan */
-	reltuples = IndexBuildScan(heap, index, indexInfo,
-							   ginBuildCallback, (void *) &buildstate);
-=======
 	/*
 	 * Do the heap scan.  We disallow sync scan here because dataPlaceToPage
 	 * prefers to receive tuples in TID order.
 	 */
-	reltuples = IndexBuildHeapScan(heap, index, indexInfo, false,
-								   ginBuildCallback, (void *) &buildstate);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	reltuples = IndexBuildScan(heap, index, indexInfo, false,
+							   ginBuildCallback, (void *) &buildstate);
 
 	oldCtx = MemoryContextSwitchTo(buildstate.tmpCtx);
 	while ((list = ginGetEntry(&buildstate.accum, &entry, &nlist)) != NULL)
