@@ -155,33 +155,18 @@ xlogVacuumPage(Relation index, Buffer buffer)
 static bool
 ginVacuumPostingTreeLeaves(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, Buffer *rootBuffer)
 {
-<<<<<<< HEAD
 	Buffer		buffer;
 	Page		page;
-=======
-	Buffer		buffer = ReadBufferWithStrategy(gvs->index, blkno, gvs->strategy);
-	Page		page = BufferGetPage(buffer);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	bool		hasVoidPage = FALSE;
 
 	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
 
-	buffer = ReadBuffer(gvs->index, blkno);
+	buffer = ReadBufferWithStrategy(gvs->index, blkno, gvs->strategy);
 	page = BufferGetPage(buffer);
 
 	/*
 	 * We should be sure that we don't concurrent with inserts, insert process
 	 * never release root page until end (but it can unlock it and lock
-<<<<<<< HEAD
-	 * again). New scan can't start but previously started 
-	 * ones work concurrently.
-	 */
-
-	if ( isRoot ) 
-		LockBufferForCleanup(buffer);
-	else
-		LockBuffer(buffer, GIN_EXCLUSIVE); 
-=======
 	 * again). New scan can't start but previously started ones work
 	 * concurrently.
 	 */
@@ -190,7 +175,6 @@ ginVacuumPostingTreeLeaves(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, 
 		LockBufferForCleanup(buffer);
 	else
 		LockBuffer(buffer, GIN_EXCLUSIVE);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	Assert(GinPageIsData(page));
 
@@ -262,24 +246,18 @@ static void
 ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkno,
 			  BlockNumber parentBlkno, OffsetNumber myoff, bool isParentRoot)
 {
-<<<<<<< HEAD
 	Buffer		dBuffer;
 	Buffer		lBuffer;
 	Buffer		pBuffer;
-=======
-	Buffer		dBuffer = ReadBufferWithStrategy(gvs->index, deleteBlkno, gvs->strategy);
-	Buffer		lBuffer = (leftBlkno == InvalidBlockNumber) ?
-	InvalidBuffer : ReadBufferWithStrategy(gvs->index, leftBlkno, gvs->strategy);
-	Buffer		pBuffer = ReadBufferWithStrategy(gvs->index, parentBlkno, gvs->strategy);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	Page		page,
 				parentPage;
 
 	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
 
-	dBuffer = ReadBuffer(gvs->index, deleteBlkno);
-	lBuffer = (leftBlkno == InvalidBlockNumber) ? InvalidBuffer : ReadBuffer(gvs->index, leftBlkno);
-	pBuffer = ReadBuffer(gvs->index, parentBlkno);
+	dBuffer = ReadBufferWithStrategy(gvs->index, deleteBlkno, gvs->strategy);
+	lBuffer = (leftBlkno == InvalidBlockNumber) ?
+		InvalidBuffer : ReadBufferWithStrategy(gvs->index, leftBlkno, gvs->strategy);
+	pBuffer = ReadBufferWithStrategy(gvs->index, parentBlkno, gvs->strategy);
 
 	LockBuffer(dBuffer, GIN_EXCLUSIVE);
 	if (!isParentRoot)			/* parent is already locked by
@@ -313,16 +291,10 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 	PageDeletePostingItem(parentPage, myoff);
 
 	page = BufferGetPage(dBuffer);
-<<<<<<< HEAD
-	/*
-	 * we shouldn't change rightlink field to save 
-	 * workability of running search scan
-=======
 
 	/*
 	 * we shouldn't change rightlink field to save workability of running
 	 * search scan
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	GinPageGetOpaque(page)->flags = GIN_DELETED;
 
@@ -441,16 +413,11 @@ ginScanToDelete(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, DataPageDel
 		else
 			me = parent->child;
 	}
-<<<<<<< HEAD
 	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-	buffer = ReadBuffer(gvs->index, blkno);
-=======
-
 	buffer = ReadBufferWithStrategy(gvs->index, blkno, gvs->strategy);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	page = BufferGetPage(buffer);
 
 	Assert(GinPageIsData(page));
@@ -641,16 +608,11 @@ ginbulkdelete(PG_FUNCTION_ARGS)
 	gvs.callback_state = callback_state;
 	gvs.strategy = info->strategy;
 	initGinState(&gvs.ginstate, index);
-<<<<<<< HEAD
 	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-	buffer = ReadBuffer(index, blkno);
-=======
-
 	buffer = ReadBufferWithStrategy(index, blkno, info->strategy);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* find leaf page */
 	for (;;)
@@ -791,16 +753,11 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 		Page		page;
 
 		vacuum_delay_point();
-<<<<<<< HEAD
 		
 		// -------- MirroredLock ----------
 		MIRROREDLOCK_BUFMGR_LOCK;
 		
-		buffer = ReadBuffer(index, blkno);
-=======
-
 		buffer = ReadBufferWithStrategy(index, blkno, info->strategy);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		LockBuffer(buffer, GIN_SHARE);
 		page = (Page) BufferGetPage(buffer);
 
