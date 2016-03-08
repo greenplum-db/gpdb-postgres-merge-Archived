@@ -116,7 +116,7 @@ DistributedLog_SetCommitted(
 		}
 	}
 	
-	slotno = SimpleLruReadPage(DistributedLogCtl, page, localXid);
+	slotno = SimpleLruReadPage(DistributedLogCtl, page, true, localXid);
 	ptr = (DistributedLogEntry *) DistributedLogCtl->shared->page_buffer[slotno];
 	ptr += entryno;
 
@@ -216,7 +216,7 @@ DistributedLog_CommittedCheck(
 		return false;
 	}
 		
-	slotno = SimpleLruReadPage(DistributedLogCtl, page, localXid);
+	slotno = SimpleLruReadPage(DistributedLogCtl, page, true, localXid);
 	ptr = (DistributedLogEntry *) DistributedLogCtl->shared->page_buffer[slotno];
 	ptr += entryno;
 	*distribTimeStamp = ptr->distribTimeStamp;
@@ -306,7 +306,7 @@ DistributedLog_ScanForPrevCommitted(
 			return false;
 		}
 			
-		slotno = SimpleLruReadPage(DistributedLogCtl, pageno, highXid);
+		slotno = SimpleLruReadPage(DistributedLogCtl, pageno, true, highXid);
 
 		for (xid = highXid; xid >= lowXid; xid--)
 		{
@@ -377,7 +377,7 @@ DistributedLog_ShmemInit(void)
 
 	/* Set up SLRU for the distributed log. */
 	DistributedLogCtl->PagePrecedes = DistributedLog_PagePrecedes;
-	SimpleLruInit(DistributedLogCtl, "DistributedLogCtl", NUM_DISTRIBUTEDLOG_BUFFERS,
+	SimpleLruInit(DistributedLogCtl, "DistributedLogCtl", NUM_DISTRIBUTEDLOG_BUFFERS, 0,
 				  DistributedLogControlLock, DISTRIBUTEDLOG_DIR);
 
 	/* Create or attach to the shared structure */
@@ -576,7 +576,7 @@ DistributedLog_Startup(
 
 		int			remainingEntries;
 
-		slotno = SimpleLruReadPage(DistributedLogCtl, endPage, nextXid);
+		slotno = SimpleLruReadPage(DistributedLogCtl, endPage, true, nextXid);
 		ptr = (DistributedLogEntry *) DistributedLogCtl->shared->page_buffer[slotno];
 		ptr += entryno;
 
