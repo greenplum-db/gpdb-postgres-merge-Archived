@@ -3,11 +3,7 @@
  * float.c
  *	  Functions for the built-in floating-point types.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1238,7 +1234,6 @@ i2tof(PG_FUNCTION_ARGS)
 
 
 /*
-<<<<<<< HEAD
  *		float8_text		- converts a float8 number to a text string
  */
 Datum
@@ -1340,8 +1335,6 @@ text_float4(PG_FUNCTION_ARGS)
 }
 
 /*
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *		=======================
  *		RANDOM FLOAT8 OPERATORS
  *		=======================

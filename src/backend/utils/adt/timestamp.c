@@ -3,11 +3,7 @@
  * timestamp.c
  *	  Functions for the built-in SQL92 types "timestamp" and "interval".
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1112,11 +1108,7 @@ intervaltypmodin(PG_FUNCTION_ARGS)
 	tl = ArrayGetIntegerTypmods(ta, &n);
 
 	/*
-<<<<<<< HEAD
 	 * tl[0] - interval range (fields bitmask)  tl[1] - precision (optional)
-=======
-	 * tl[0] - opt_interval tl[1] - Iconst (optional)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 *
 	 * Note we must validate tl[0] even though it's normally guaranteed
 	 * correct by the grammar --- consider SELECT 'foo'::"interval"(1000).
