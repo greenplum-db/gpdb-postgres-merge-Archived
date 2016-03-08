@@ -430,21 +430,13 @@ btree_xlog_split(bool onleft, bool isroot,
 				if (onleft)
 				{
 					if (PageAddItem(lpage, newitem, newitemsz, newitemoff,
-<<<<<<< HEAD
-									LP_USED) == InvalidOffsetNumber)
-=======
 									false, false) == InvalidOffsetNumber)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 						elog(PANIC, "failed to add new item to left page after split");
 				}
 
 				/* Set high key */
 				if (PageAddItem(lpage, left_hikey, left_hikeysz,
-<<<<<<< HEAD
-								P_HIKEY, LP_USED) == InvalidOffsetNumber)
-=======
 								P_HIKEY, false, false) == InvalidOffsetNumber)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					elog(PANIC, "failed to add high key to left page after split");
 
 				/* Fix opaque fields */

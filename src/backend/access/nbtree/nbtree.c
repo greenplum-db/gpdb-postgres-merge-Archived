@@ -125,9 +125,8 @@ btbuild(PG_FUNCTION_ARGS)
 		if (indexInfo->ii_Unique)
 			buildstate.spool2 = _bt_spoolinit(index, false, true);
 
-<<<<<<< HEAD
 		/* do the heap scan */
-		reltuples = IndexBuildScan(heap, index, indexInfo,
+		reltuples = IndexBuildScan(heap, index, indexInfo, false,
 				btbuildCallback, (void *) &buildstate);
 
 		/* okay, all heap tuples are indexed */
@@ -152,12 +151,6 @@ btbuild(PG_FUNCTION_ARGS)
 			_bt_spooldestroy(buildstate.spool2);
 			buildstate.spool2 = NULL;
 		}
-=======
-	/* do the heap scan */
-	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
-								   btbuildCallback, (void *) &buildstate);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-
 	}
 	PG_CATCH();
 	{
