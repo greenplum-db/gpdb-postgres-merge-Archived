@@ -466,7 +466,8 @@ static void PersistentBuild_PopulateGpRelationNode(
 			gp_relation_node,
 			gp_relation_node_index,
 			indexInfo,
-			false);
+			false,
+			true);
 
 	DirectOpen_GpRelationNodeIndexClose(gp_relation_node_index);
 
@@ -639,7 +640,7 @@ PersistentBuild_BuildDb(
 	 * GUC, lets do a checkpoint to force out all buffer pool pages so we never
 	 * try to redo those XLOG records in Crash Recovery.
 	 */
-	CreateCheckPoint(false, true);
+	CreateCheckPoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
 
 	return count;
 }

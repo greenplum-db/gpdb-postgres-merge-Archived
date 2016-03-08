@@ -616,6 +616,20 @@ void ChangeTracking_GetRelationChangeInfoFromXlog(
 													   xlrec->heapnode.persistentSerialNum);
 					break;
 				}
+				case XLOG_HEAP2_CLEAN:
+				{
+					xl_heap_clean *xlrec = (xl_heap_clean *) data;
+
+					ChangeTracking_AddRelationChangeInfo(
+													   relationChangeInfoArray,
+													   relationChangeInfoArrayCount,
+													   relationChangeInfoMaxSize,
+													   &(xlrec->heapnode.node),
+													   xlrec->block,
+													   &xlrec->heapnode.persistentTid,
+													   xlrec->heapnode.persistentSerialNum);
+					break;
+				}
 				default:
 					elog(ERROR, "internal error: unsupported RM_HEAP2_ID op (%u) in ChangeTracking_GetRelationChangeInfoFromXlog", info);
 			}
@@ -680,20 +694,6 @@ void ChangeTracking_GetRelationChangeInfoFromXlog(
 														   &xlrec->target.persistentTid,
 														   xlrec->target.persistentSerialNum);
 						
-					break;
-				}
-				case XLOG_HEAP_CLEAN:
-				{
-					xl_heap_clean *xlrec = (xl_heap_clean *) data;
-
-					ChangeTracking_AddRelationChangeInfo(
-													   relationChangeInfoArray,
-													   relationChangeInfoArrayCount,
-													   relationChangeInfoMaxSize,
-													   &(xlrec->heapnode.node),
-													   xlrec->block,
-													   &xlrec->heapnode.persistentTid,
-													   xlrec->heapnode.persistentSerialNum);
 					break;
 				}
 				case XLOG_HEAP_NEWPAGE:
@@ -1927,11 +1927,14 @@ static void ChangeTracking_RenameLogFile(CTFType source, CTFType dest)
 static void ChangeTracking_DropLogFile(CTFType ftype)
 {
 	File	file;
+	char	path[MAXPGPATH];
 
 	Assert(ftype != CTF_META);
-	
-	file = ChangeTracking_OpenFile(ftype);
-	FileUnlink(file);
+
+	ChangeTracking_SetPathByType(ftype, path);
+
+	if (unlink(path))
+		elog(LOG, "could not unlink file \"%s\": %m", path);
 }
 
 static void ChangeTracking_DropLogFiles(void)

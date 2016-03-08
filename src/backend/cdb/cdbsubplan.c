@@ -115,7 +115,7 @@ preprocess_initplans(QueryDesc *queryDesc)
             Assert(IsA(subplan, SubPlan) &&
                    subplan->qDispSliceId > 0);
 
-			sps->planstate->plan->nParamExec = queryDesc->plannedstmt->nCrossLevelParams;
+			queryDesc->plannedstmt->nParamExec = queryDesc->plannedstmt->nCrossLevelParams;
 			sps->planstate->plan->nMotionNodes = queryDesc->plannedstmt->nMotionNodes;
 			sps->planstate->plan->dispatch = DISPATCH_PARALLEL;
 
