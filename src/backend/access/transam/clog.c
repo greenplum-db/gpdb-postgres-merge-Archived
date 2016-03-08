@@ -343,7 +343,7 @@ CLOGScanForPrevStatus(
 			return false;
 		}
 			
-		slotno = SimpleLruReadPage(ClogCtl, pageno, highXid);
+		slotno = SimpleLruReadPage(ClogCtl, pageno, false, highXid);
 
 		for (xid = highXid; xid >= lowXid; xid--)
 		{
@@ -421,13 +421,8 @@ void
 CLOGShmemInit(void)
 {
 	ClogCtl->PagePrecedes = CLOGPagePrecedes;
-<<<<<<< HEAD
-	SimpleLruInit(ClogCtl, "CLOG Ctl", NUM_CLOG_BUFFERS,
-				  CLogControlLock, CLOG_DIR);
-=======
 	SimpleLruInit(ClogCtl, "CLOG Ctl", NUM_CLOG_BUFFERS, CLOG_LSNS_PER_PAGE,
 				  CLogControlLock, "pg_clog");
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
