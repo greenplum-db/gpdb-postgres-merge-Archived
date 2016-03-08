@@ -394,32 +394,6 @@ identify_system_timezone(void)
 	 * enough to identify DST transition rules, since everybody switches on
 	 * Sundays.)  This is sufficient to cover most of the Unix time_t range,
 	 * and we don't want to look further than that since many systems won't
-<<<<<<< HEAD
-	 * have sane TZ behavior further back anyway.  The further back the zone
-	 * matches, the better we score it.  This may seem like a rather random
-	 * way of doing things, but experience has shown that system-supplied
-	 * timezone definitions are likely to have DST behavior that is right for
-	 * the recent past and not so accurate further back. Scoring in this way
-	 * allows us to recognize zones that have some commonality with the zic
-	 * database, without insisting on exact match. (Note: we probe Thursdays,
-	 * not Sundays, to avoid triggering DST-transition bugs in localtime
-	 * itself.)
-	 */
-	tnow = time(NULL);
-	tm = localtime(&tnow);
-	if (!tm)
-		return NULL;			/* give up if localtime is broken... */
-	thisyear = tm->tm_year + 1900;
-
-	t = build_time_t(thisyear, 1, 15);
-
-	/*
-	 * Round back to GMT midnight Thursday.  This depends on the knowledge
-	 * that the time_t origin is Thu Jan 01 1970.  (With a different origin
-	 * we'd be probing some other day of the week, but it wouldn't matter
-	 * anyway unless localtime() had DST-transition bugs.)
-	 */
-=======
 	 * have sane TZ behavior further back anyway.  The further
 	 * back the zone matches, the better we score it.  This may seem like a
 	 * rather random way of doing things, but experience has shown that
@@ -443,7 +417,6 @@ identify_system_timezone(void)
 	 * we'd be probing some other day of the week, but it wouldn't matter
 	 * anyway unless localtime() had DST-transition bugs.)
 	 */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	t -= (t % T_WEEK);
 
 	tt.n_test_times = 0;
@@ -677,11 +650,7 @@ static const struct
 	/*
 	 * This list was built from the contents of the registry at
 	 * HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time
-<<<<<<< HEAD
-	 * Zones on Windows XP Professional SP2
-=======
 	 * Zones on Windows 2003 R2.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 *
 	 * The zones have been matched to zic timezones by looking at the cities
 	 * listed in the win32 display name (in the comment here) in most cases.
@@ -707,13 +676,10 @@ static const struct
 		"Asia/Baghdad"
 	},							/* (GMT+03:00) Baghdad */
 	{
-<<<<<<< HEAD
-=======
 		"Argentina Standard Time", "Argentina Daylight Time",
 		"America/Buenos_Aires"
 	},							/* (GMT-03:00) Buenos Aires */
 	{
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		"Armenian Standard Time", "Armenian Daylight Time",
 		"Asia/Yerevan"
 	},							/* (GMT+04:00) Yerevan */
@@ -793,11 +759,7 @@ static const struct
 		"Central Standard Time (Mexico)", "Central Daylight Time (Mexico)",
 		"America/Mexico_City"
 	},							/* (GMT-06:00) Guadalajara, Mexico City,
-<<<<<<< HEAD
 								 * Monterrey - New */
-=======
-								   Monterrey - New */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		"China Standard Time", "China Daylight Time",
 		"Asia/Hong_Kong"
@@ -887,13 +849,10 @@ static const struct
 		"Asia/Amman"
 	},							/* (GMT+02:00) Amman */
 	{
-<<<<<<< HEAD
-=======
 		"Kamchatka Standard Time", "Kamchatka Daylight Time",
 		"Asia/Kamchatka"
 	},							/* (GMT+12:00) Petropavlovsk-Kamchatsky */
 	{
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		"Korea Standard Time", "Korea Daylight Time",
 		"Asia/Seoul"
 	},							/* (GMT+09:00) Seoul */
@@ -923,26 +882,18 @@ static const struct
 		"America/Montevideo"
 	},							/* (GMT-03:00) Montevideo */
 	{
-<<<<<<< HEAD
-=======
 		"Morocco Standard Time", "Morocco Daylight Time",
 		"Africa/Casablanca"
 	},							/* (GMT) Casablanca */
 	{
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		"Mountain Standard Time", "Mountain Daylight Time",
 		"US/Mountain"
 	},							/* (GMT-07:00) Mountain Time (US & Canada) */
 	{
 		"Mountain Standard Time (Mexico)", "Mountain Daylight Time (Mexico)",
 		"America/Chihuahua"
-<<<<<<< HEAD
 	},							/* (GMT-07:00) Chihuahua, La Paz, Mazatlan -
 								 * New */
-=======
-	},							/* (GMT-07:00) Chihuahua, La Paz, 
-								   Mazatlan - New */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		"Myanmar Standard Time", "Myanmar Daylight Time",
 		"Asia/Rangoon"
@@ -993,8 +944,6 @@ static const struct
 		"America/Tijuana"
 	},							/* (GMT-08:00) Tijuana, Baja California */
 	{
-<<<<<<< HEAD
-=======
 		"Pakistan Standard Time", "Pakistan Daylight Time",
 		"Asia/Karachi"
 	},							/* (GMT+05:00) Islamabad, Karachi */
@@ -1003,7 +952,6 @@ static const struct
 		"America/Asuncion"
 	},							/* (GMT-04:00) Asuncion */
 	{
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		"Romance Standard Time", "Romance Daylight Time",
 		"Europe/Brussels"
 	},							/* (GMT+01:00) Brussels, Copenhagen, Madrid,
@@ -1102,11 +1050,7 @@ static const struct
 		"Australia/Perth"
 	},							/* (GMT+08:00) Perth */
 /*	{"W. Central Africa Standard Time", "W. Central Africa Daylight Time",
-<<<<<<< HEAD
 	 *	 *	 *	 *	 *	 *	 *	 *	""}, Could not find a match for this one. Excluded for now. *//* (
-=======
-	 *	 *	 *	 *	 *	 *	 *	""}, Could not find a match for this one. Excluded for now. *//* (
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 * G MT+01:00) West Central Africa */
 	{
 		"W. Europe Standard Time", "W. Europe Daylight Time",
@@ -1504,7 +1448,6 @@ pg_timezone_initialize(void)
 		/* Select setting */
 		def_tz = select_default_timezone();
 		session_timezone = def_tz;
-<<<<<<< HEAD
 		/* Tell GUC about the value. Will redundantly call pg_tzset() */
 		SetConfigOption("timezone", pg_get_timezone_name(def_tz),
 						PGC_POSTMASTER, PGC_S_ARGV);
@@ -1518,21 +1461,6 @@ pg_timezone_initialize(void)
 			def_tz = select_default_timezone();
 		log_timezone = def_tz;
 		/* Tell GUC about the value. Will redundantly call pg_tzset() */
-=======
-		/* Tell GUC about the value. Will redundantly call pg_tzset() */
-		SetConfigOption("timezone", pg_get_timezone_name(def_tz),
-						PGC_POSTMASTER, PGC_S_ARGV);
-	}
-
-	/* What about the log timezone? */
-	if (pg_strcasecmp(GetConfigOption("log_timezone"), "UNKNOWN") == 0)
-	{
-		/* Select setting, but don't duplicate work */
-		if (!def_tz)
-			def_tz = select_default_timezone();
-		log_timezone = def_tz;
-		/* Tell GUC about the value. Will redundantly call pg_tzset() */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		SetConfigOption("log_timezone", pg_get_timezone_name(def_tz),
 						PGC_POSTMASTER, PGC_S_ARGV);
 	}
