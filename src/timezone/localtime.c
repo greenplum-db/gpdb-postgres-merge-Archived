@@ -1397,7 +1397,7 @@ pg_next_dst_boundary(const pg_time_t *timep,
 		return result;
 	}
 
-	if (t > sp->ats[sp->timecnt - 1])
+	if (t >= sp->ats[sp->timecnt - 1])
 	{
 		/* No known transition > t, so use last known segment's type */
 		i = sp->types[sp->timecnt - 1];
@@ -1427,11 +1427,11 @@ pg_next_dst_boundary(const pg_time_t *timep,
 		*after_isdst = ttisp->tt_isdst;
 		return 1;
 	}
-	/* Else search to find the containing segment */
+	/* Else search to find the boundary following t */
 	{
-		int    lo = 1;
-		int    hi = sp->timecnt;
- 
+		int			lo = 1;
+		int			hi = sp->timecnt - 1;
+
 		while (lo < hi)
 		{
 			int    mid = (lo + hi) >> 1;
