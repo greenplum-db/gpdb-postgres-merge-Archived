@@ -88,12 +88,9 @@ static TupleDesc *RecordCacheArray = NULL;
 static int32 RecordCacheArrayLen = 0;	/* allocated length of array */
 static int32 NextRecordTypmod = 0;		/* number of entries used */
 
-<<<<<<< HEAD
-=======
 static void TypeCacheRelCallback(Datum arg, Oid relid);
 
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * lookup_type_cache
  *
