@@ -37,11 +37,6 @@ int xid_warn_limit;
 
 /*
  * Allocate the next XID for my new transaction or subtransaction.
-<<<<<<< HEAD
-=======
- *
- * The new XID is also stored into MyProc before returning.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 TransactionId
 GetNewTransactionId(bool isSubXact, bool setProcXid)
@@ -57,11 +52,6 @@ GetNewTransactionId(bool isSubXact, bool setProcXid)
 	if (IsBootstrapProcessingMode())
 	{
 		Assert(!isSubXact);
-<<<<<<< HEAD
-		//MyProc->xid = BootstrapTransactionId;
-=======
-		MyProc->xid = BootstrapTransactionId;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		return BootstrapTransactionId;
 	}
 
@@ -88,7 +78,6 @@ GetNewTransactionId(bool isSubXact, bool setProcXid)
 		TransactionIdIsValid(ShmemVariableCache->xidVacLimit))
 	{
 		/*
-<<<<<<< HEAD
 		 * To avoid swamping the postmaster with signals, we issue the
 		 * autovac request only once per 64K transaction starts.  This
 		 * still gives plenty of chances before we get into real trouble.
@@ -100,11 +89,6 @@ GetNewTransactionId(bool isSubXact, bool setProcXid)
 		 * }
 		 *
 		 * MPP-19652: autovacuum disabled
-=======
-		 * To avoid swamping the postmaster with signals, we issue the autovac
-		 * request only once per 64K transaction starts.  This still gives
-		 * plenty of chances before we get into real trouble.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 */
 		if (IsUnderPostmaster &&
 		 TransactionIdFollowsOrEquals(xid, ShmemVariableCache->xidStopLimit))
@@ -175,10 +159,6 @@ GetNewTransactionId(bool isSubXact, bool setProcXid)
 	 * window *will* include the parent XID, so they will deliver the correct
 	 * answer later on when someone does have a reason to inquire.)
 	 */
-<<<<<<< HEAD
-	if (setProcXid && MyProc != NULL)
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		/*
 		 * Use volatile pointer to prevent code rearrangement; other backends
@@ -293,15 +273,12 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid,
 	 * assign hook (too many processes would try to execute the hook,
 	 * resulting in race conditions as well as crashes of those not connected
 	 * to shared memory).  Perhaps this can be improved someday.
-<<<<<<< HEAD
 	 *
 	 * MPP-19652: autovacuum disabled
 	 * 
 	 *	xidVacLimit = oldest_datfrozenxid + autovacuum_freeze_max_age;
 	 *	if (xidVacLimit < FirstNormalTransactionId)
 	 *		xidVacLimit += FirstNormalTransactionId;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	xidVacLimit = xidWarnLimit;
 
