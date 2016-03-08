@@ -140,13 +140,8 @@ SubTransSetParent(TransactionId xid, TransactionId parent)
 
 	LWLockAcquire(SubtransControlLock, LW_EXCLUSIVE);
 
-<<<<<<< HEAD
-	slotno = SimpleLruReadPage(SubTransCtl, pageno, xid);
-	ptr = (SubTransData *) SubTransCtl->shared->page_buffer[slotno];
-=======
 	slotno = SimpleLruReadPage(SubTransCtl, pageno, true, xid);
 	ptr = (TransactionId *) SubTransCtl->shared->page_buffer[slotno];
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ptr += entryno;
 
 	/* Current state should be 0 */
@@ -204,13 +199,8 @@ void
 SUBTRANSShmemInit(void)
 {
 	SubTransCtl->PagePrecedes = SubTransPagePrecedes;
-<<<<<<< HEAD
-	SimpleLruInit(SubTransCtl, "SUBTRANS Ctl", NUM_SUBTRANS_BUFFERS,
-				  SubtransControlLock, SUBTRANS_DIR);
-=======
 	SimpleLruInit(SubTransCtl, "SUBTRANS Ctl", NUM_SUBTRANS_BUFFERS, 0,
-				  SubtransControlLock, "pg_subtrans");
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+				  SubtransControlLock, SUBTRANS_DIR);
 	/* Override default assumption that writes should be fsync'd */
 	SubTransCtl->do_fsync = false;
 }
