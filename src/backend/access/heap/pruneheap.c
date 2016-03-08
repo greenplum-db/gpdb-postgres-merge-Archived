@@ -387,7 +387,7 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 			 * either here or while following a chain below.  Whichever path
 			 * gets there first will mark the tuple unused.
 			 */
-			if (HeapTupleSatisfiesVacuum(htup, OldestXmin, buffer)
+			if (HeapTupleSatisfiesVacuum(relation, htup, OldestXmin, buffer)
 				== HEAPTUPLE_DEAD && !HeapTupleHeaderIsHotUpdated(htup))
 			{
 				heap_prune_record_unused(prstate, rootoffnum);
@@ -465,7 +465,7 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 		 */
 		tupdead = recent_dead = false;
 
-		switch (HeapTupleSatisfiesVacuum(htup, OldestXmin, buffer))
+		switch (HeapTupleSatisfiesVacuum(relation, htup, OldestXmin, buffer))
 		{
 			case HEAPTUPLE_DEAD:
 				tupdead = true;
