@@ -1278,26 +1278,6 @@ FileClose(File file)
 	FreeVfd(file);
 }
 
-<<<<<<< HEAD
-/*
- * close a file and forcibly delete the underlying Unix file
- */
-void
-FileUnlink(File file)
-{
-	Assert(FileIsValid(file));
-
-	DO_DB(elog(LOG, "FileUnlink: %d (%s)",
-	     file, VfdCache[file].fileName));
-
-	/* force FileClose to delete it */
-	VfdCache[file].fdstate |= FD_TEMPORARY;
-
-	FileClose(file);
-}
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 int
 FileRead(File file, char *buffer, int amount)
 {
