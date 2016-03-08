@@ -439,11 +439,7 @@ RegisterRelcacheInvalidation(Oid dbId, Oid relId)
 	 * hack to ensure that the next CommandCounterIncrement() will think
 	 * that we need to do CommandEndInvalidationMessages().
 	 */
-<<<<<<< HEAD
-	(void) GetCurrentCommandId(/*true*/);
-=======
 	(void) GetCurrentCommandId(true);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * If the relation being invalidated is one of those cached in the
@@ -467,8 +463,7 @@ RegisterSmgrInvalidation(RelFileNode rnode)
 	/*
 	 * As above, just in case there is not an associated catalog change.
 	 */
-<<<<<<< HEAD
-	(void) GetCurrentCommandId(/*true*/);
+	(void) GetCurrentCommandId(true);
 }
 
 #ifdef USE_ASSERT_CHECKING
@@ -500,9 +495,6 @@ si_to_str(SharedInvalidationMessage *msg)
 
 	}
 	return buf.data;
-=======
-	(void) GetCurrentCommandId(true);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 #endif
 
@@ -687,7 +679,6 @@ PrepareForTupleInvalidation(Relation relation, HeapTuple tuple)
 		 */
 		databaseId = MyDatabaseId;
 	}
-<<<<<<< HEAD
 	else if (tupleRelId == GpPolicyRelationId)
 	{
 		FormData_gp_policy *gptup = (FormData_gp_policy *) GETSTRUCT(tuple);
@@ -695,8 +686,6 @@ PrepareForTupleInvalidation(Relation relation, HeapTuple tuple)
 		relationId = gptup->localoid;
 		databaseId = MyDatabaseId;
 	}
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	else if (tupleRelId == IndexRelationId)
 	{
 		Form_pg_index indextup = (Form_pg_index) GETSTRUCT(tuple);
