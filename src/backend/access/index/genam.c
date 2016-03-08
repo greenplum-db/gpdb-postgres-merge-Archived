@@ -3,11 +3,7 @@
  * genam.c
  *	  general index access method routines
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -25,10 +21,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-<<<<<<< HEAD
 #include "access/relscan.h"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "access/transam.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -107,12 +100,9 @@ RelationGetIndexScan(Relation indexRelation,
 	ItemPointerSetInvalid(&scan->xs_ctup.t_self);
 	scan->xs_ctup.t_data = NULL;
 	scan->xs_cbuf = InvalidBuffer;
-<<<<<<< HEAD
-=======
 	scan->xs_prev_xmax = InvalidTransactionId;
 	scan->xs_next_hot = InvalidOffsetNumber;
 	scan->xs_hot_dead = false;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Let the AM fill in the key and any opaque data it wants.
