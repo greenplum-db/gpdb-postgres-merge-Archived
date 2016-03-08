@@ -145,7 +145,6 @@ static SlruErrorCause slru_errcause;
 static int	slru_errno;
 
 
-<<<<<<< HEAD
 /*
  * GUC variable to control the batch size used to display the
  * total number of files that get shipped to the mirror.
@@ -155,11 +154,9 @@ static int	slru_errno;
  */
 int log_count_recovered_files_batch = 1000;
 
-static int SimpleLruReadPage_Internal(SlruCtl ctl, int pageno, TransactionId xid, bool *valid);
-=======
+static int SimpleLruReadPage_Internal(SlruCtl ctl, int pageno, bool write_ok, TransactionId xid, bool *valid);
 static void SimpleLruZeroLSNs(SlruCtl ctl, int slotno);
 static void SimpleLruWaitIO(SlruCtl ctl, int slotno);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static bool SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno);
 static bool SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno,
 					  SlruFlush fdata);
@@ -371,9 +368,9 @@ SimpleLruWaitIO(SlruCtl ctl, int slotno)
 
 
 int
-SimpleLruReadPage(SlruCtl ctl, int pageno, TransactionId xid)
+SimpleLruReadPage(SlruCtl ctl, int pageno, bool write_ok, TransactionId xid)
 {
-  return SimpleLruReadPage_Internal(ctl, pageno, xid, NULL);
+  return SimpleLruReadPage_Internal(ctl, pageno, write_ok, xid, NULL);
 }  /* end SimpleLruReadPage */
 
 
@@ -400,14 +397,8 @@ SimpleLruReadPage(SlruCtl ctl, int pageno, TransactionId xid)
  *
  * Control lock must be held at entry, and will be held at exit.
  */
-<<<<<<< HEAD
 static int
-SimpleLruReadPage_Internal(SlruCtl ctl, int pageno, TransactionId xid, bool *valid)
-=======
-int
-SimpleLruReadPage(SlruCtl ctl, int pageno, bool write_ok,
-				  TransactionId xid)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+SimpleLruReadPage_Internal(SlruCtl ctl, int pageno, bool write_ok, TransactionId xid, bool *valid)
 {
 	SlruShared	shared = ctl->shared;
 
@@ -544,11 +535,7 @@ SimpleLruReadPage_ReadOnly(SlruCtl ctl, int pageno, TransactionId xid, bool *val
 	LWLockRelease(shared->ControlLock);
 	LWLockAcquire(shared->ControlLock, LW_EXCLUSIVE);
 
-<<<<<<< HEAD
-	return SimpleLruReadPage_Internal(ctl, pageno, xid, valid);
-=======
-	return SimpleLruReadPage(ctl, pageno, true, xid);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	return SimpleLruReadPage_Internal(ctl, pageno, true, xid, valid);
 }
 
 /*
