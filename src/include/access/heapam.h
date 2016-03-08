@@ -238,7 +238,7 @@ extern bool heap_fetch(Relation relation, Snapshot snapshot,
 extern bool heap_release_fetch(Relation relation, Snapshot snapshot,
 				   HeapTuple tuple, Buffer *userbuf, bool keep_buf,
 				   Relation stats_relation);
-extern bool heap_hot_search_buffer(ItemPointer tid, Buffer buffer,
+extern bool heap_hot_search_buffer(Relation rel, ItemPointer tid, Buffer buffer,
 					   Snapshot snapshot, bool *all_dead);
 extern bool heap_hot_search(ItemPointer tid, Relation relation,
 				Snapshot snapshot, bool *all_dead);
@@ -280,12 +280,12 @@ extern void heap_restrpos(HeapScanDesc scan);
 extern void heap_sync(Relation relation);
 
 extern void heap_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *rptr);
-extern void heap_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
+extern void heap_desc(StringInfo buf, uint8 xl_info, char *rec);
 extern bool heap_getrelfilenode(
 	XLogRecord 		*record,
 	RelFileNode		*relFileNode);
 extern void heap2_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *rptr);
-extern void heap2_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
+extern void heap2_desc(StringInfo buf, uint8 xl_info, char *rec);
 
 extern void log_heap_newpage(Relation rel, 
 							 Page page,
