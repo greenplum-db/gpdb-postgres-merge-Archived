@@ -3,12 +3,8 @@
  * assert.c
  *	  Assert code.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -60,11 +56,6 @@ ExceptionalCondition(const char *conditionName,
 		fflush(stderr);
 	}
 
-<<<<<<< HEAD
-=======
-	/* Usually this shouldn't be needed, but make sure the msg went out */
-	fflush(stderr);
-
 #ifdef SLEEP_ON_ASSERT
 
 	/*
@@ -74,7 +65,6 @@ ExceptionalCondition(const char *conditionName,
 	sleep(1000000);
 #endif
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	abort();
 	return 0;
 }
