@@ -4,19 +4,11 @@
  *	  Support routines for external and compressed storage of
  *	  variable size attributes.
  *
-<<<<<<< HEAD
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
  *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.72 2007/03/29 00:15:37 tgl Exp $
-=======
- * Copyright (c) 2000-2008, PostgreSQL Global Development Group
- *
- *
- * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.81.2.3 2008/06/13 02:59:52 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *
  * INTERFACE ROUTINES
@@ -186,15 +178,9 @@ static struct varlena *toast_fetch_datum_slice(struct varlena * attr,
  ----------
  */
 struct varlena *
-<<<<<<< HEAD
-heap_tuple_fetch_attr(struct varlena *attr)
-{
-	struct varlena  *result;
-=======
 heap_tuple_fetch_attr(struct varlena * attr)
 {
 	struct varlena *result;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (VARATT_IS_EXTERNAL(attr))
 	{
@@ -215,11 +201,11 @@ heap_tuple_fetch_attr(struct varlena * attr)
 }
 
 
-/**
+/*
  * If this function is changed then update varattrib_untoast_ptr_len as well
  */
-<<<<<<< HEAD
-int varattrib_untoast_len(Datum d)
+int
+varattrib_untoast_len(Datum d)
 {
 	if (DatumGetPointer(d) == NULL)
 	{
@@ -267,10 +253,11 @@ int varattrib_untoast_len(Datum d)
 	return len;
 }
 
-/**
+/*
  * If this function is changed then update varattrib_untoast_len as well
  */
-void varattrib_untoast_ptr_len(Datum d, char **datastart, int *len, void **tofree)
+void
+varattrib_untoast_ptr_len(Datum d, char **datastart, int *len, void **tofree)
 {
 	if (DatumGetPointer(d) == NULL)
 	{
@@ -316,27 +303,6 @@ void varattrib_untoast_ptr_len(Datum d, char **datastart, int *len, void **tofre
 			*datastart = VARDATA_SHORT(attr);
 			attr = NULL;
 		}
-=======
-struct varlena *
-heap_tuple_untoast_attr(struct varlena * attr)
-{
-	if (VARATT_IS_EXTERNAL(attr))
-	{
-		/*
-		 * This is an externally stored datum --- fetch it back from there
-		 */
-		attr = toast_fetch_datum(attr);
-		/* If it's compressed, decompress it */
-		if (VARATT_IS_COMPRESSED(attr))
-		{
-			PGLZ_Header *tmp = (PGLZ_Header *) attr;
-
-			attr = (struct varlena *) palloc(PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
-			SET_VARSIZE(attr, PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
-			pglz_decompress(tmp, VARDATA(attr));
-			pfree(tmp);
-		}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	if(*len == -1)
@@ -356,7 +322,7 @@ heap_tuple_untoast_attr(struct varlena * attr)
  * ----------
  */
 struct varlena *
-heap_tuple_untoast_attr(struct varlena *attr)
+heap_tuple_untoast_attr(struct varlena * attr)
 {
 	if (VARATT_IS_EXTERNAL(attr))
 	{
@@ -364,36 +330,22 @@ heap_tuple_untoast_attr(struct varlena *attr)
 		 * This is an externally stored datum --- fetch it back from there
 		 */
 		attr = toast_fetch_datum(attr);
-		/* fall through to IS_COMPRESSED if it's a compressed external datum */
-	}
-	
-	if (VARATT_IS_COMPRESSED(attr))
-	{
-		/*
-		 * This is a compressed value inside of the main tuple
-		 */
-		PGLZ_Header *tmp = (PGLZ_Header *) attr;
+		/* If it's compressed, decompress it */
+		if (VARATT_IS_COMPRESSED(attr))
+		{
+			PGLZ_Header *tmp = (PGLZ_Header *) attr;
 
-		attr = (struct varlena *) palloc(PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
-		SET_VARSIZE(attr, PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
-		pglz_decompress(tmp, VARDATA(attr));
+			attr = (struct varlena *) palloc(PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
+			SET_VARSIZE(attr, PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
+			pglz_decompress(tmp, VARDATA(attr));
+			pfree(tmp);
+		}
 	}
 	else if (VARATT_IS_SHORT(attr))
 	{
 		/*
 		 * This is a short-header varlena --- convert to 4-byte header format
 		 */
-<<<<<<< HEAD
-		Size 	data_size = VARSIZE_SHORT(attr);
-		Size 	new_size = data_size - VARHDRSZ_SHORT + VARHDRSZ;
-		varattrib *tmp = (varattrib *)attr;
-		
-		/* This is a "short" varlena header but is otherwise a normal varlena */
-
-		attr = (struct varlena *) palloc(new_size);
-		SET_VARSIZE(attr, new_size);
-		memcpy(VARDATA(attr), VARDATA_SHORT(tmp), data_size - VARHDRSZ_SHORT);
-=======
 		Size		data_size = VARSIZE_SHORT(attr) - VARHDRSZ_SHORT;
 		Size		new_size = data_size + VARHDRSZ;
 		struct varlena *new_attr;
@@ -402,7 +354,6 @@ heap_tuple_untoast_attr(struct varlena *attr)
 		SET_VARSIZE(new_attr, new_size);
 		memcpy(VARDATA(new_attr), VARDATA_SHORT(attr), data_size);
 		attr = new_attr;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	return attr;
@@ -1083,12 +1034,8 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		i = biggest_attno;
 		old_value = toast_values[i];
 		toast_action[i] = 'p';
-<<<<<<< HEAD
-		toast_values[i] = toast_save_datum(rel, toast_values[i], isFrozen, use_wal, use_fsm);
-=======
-		toast_values[i] = toast_save_datum(rel, toast_values[i],
+		toast_values[i] = toast_save_datum(rel, toast_values[i], isFrozen,
 										   use_wal, use_fsm);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
 		toast_free[i] = true;
@@ -1211,12 +1158,8 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		i = biggest_attno;
 		old_value = toast_values[i];
 		toast_action[i] = 'p';
-<<<<<<< HEAD
-		toast_values[i] = toast_save_datum(rel, toast_values[i], isFrozen, use_wal, use_fsm);
-=======
-		toast_values[i] = toast_save_datum(rel, toast_values[i],
+		toast_values[i] = toast_save_datum(rel, toast_values[i], isFrozen,
 										   use_wal, use_fsm);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
 		toast_free[i] = true;
@@ -1666,12 +1609,8 @@ toast_compress_datum(Datum value)
  * ----------
  */
 static Datum
-<<<<<<< HEAD
-toast_save_datum(Relation rel, Datum value, bool isFrozen, bool use_wal, bool use_fsm)
-=======
-toast_save_datum(Relation rel, Datum value,
+toast_save_datum(Relation rel, Datum value, bool isFrozen,
 				 bool use_wal, bool use_fsm)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	Relation	toastrel;
 	Relation	toastidx;
@@ -1981,11 +1920,7 @@ toast_delete_datum(Relation rel __attribute__((unused)), Datum value)
  * ----------
  */
 static struct varlena *
-<<<<<<< HEAD
-toast_fetch_datum(struct varlena *attr)
-=======
 toast_fetch_datum(struct varlena * attr)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	Relation	toastrel;
 	Relation	toastidx;
@@ -2213,11 +2148,7 @@ toast_fetch_datum(struct varlena * attr)
  * ----------
  */
 static struct varlena *
-<<<<<<< HEAD
-toast_fetch_datum_slice(struct varlena *attr, int32 sliceoffset, int32 length)
-=======
 toast_fetch_datum_slice(struct varlena * attr, int32 sliceoffset, int32 length)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	Relation	toastrel;
 	Relation	toastidx;
