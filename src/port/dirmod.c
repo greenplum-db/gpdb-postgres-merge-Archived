@@ -316,11 +316,7 @@ pgsymlink(const char *oldpath, const char *newpath)
  * must call pgfnames_cleanup later to free the memory allocated by this
  * function.
  */
-<<<<<<< HEAD
-char	  **
-=======
 char **
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 pgfnames(const char *path)
 {
 	DIR		   *dir;
@@ -441,19 +437,11 @@ rmtree(const char *path, bool rmtopdir)
 		 * delete it anyway.
 		 *
 		 * This is not an academic possibility. One scenario where this
-<<<<<<< HEAD
-		 * happens is when bgwriter has a pending unlink request for a file in
-		 * a database that's being dropped. In dropdb(), we call
-		 * ForgetDatabaseFsyncRequests() to flush out any such pending unlink
-		 * requests, but because that's asynchronous, it's not guaranteed that
-		 * the bgwriter receives the message in time.
-=======
 		 * happens is when bgwriter has a pending unlink request for a file
 		 * in a database that's being dropped. In dropdb(), we call
 		 * ForgetDatabaseFsyncRequests() to flush out any such pending unlink
 		 * requests, but because that's asynchronous, it's not guaranteed
 		 * that the bgwriter receives the message in time.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 */
 		if (lstat(pathbuf, &statbuf) != 0)
 		{
@@ -529,24 +517,16 @@ rmtree(const char *path, bool rmtopdir)
  * field when run. So we define our own version that uses the Win32 API
  * to update this field.
  */
-<<<<<<< HEAD
 int
-pgwin32_safestat(const char *path, struct stat * buf)
-{
-	int			r;
-=======
-int 
 pgwin32_safestat(const char *path, struct stat *buf)
 {
-	int r;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	int			r;
 	WIN32_FILE_ATTRIBUTE_DATA attr;
 
 	r = stat(path, buf);
 	if (r < 0)
 		return r;
 
-<<<<<<< HEAD
 	// MPP-24774: just return if path refer to a windows named pipe file.
 	// no need to get size of a windows named pipe file
 	if (strlen(path) >2)
@@ -557,8 +537,6 @@ pgwin32_safestat(const char *path, struct stat *buf)
 		}
 	}
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (!GetFileAttributesEx(path, GetFileExInfoStandard, &attr))
 	{
 		_dosmaperr(GetLastError());
@@ -566,13 +544,8 @@ pgwin32_safestat(const char *path, struct stat *buf)
 	}
 
 	/*
-<<<<<<< HEAD
-	 * XXX no support for large files here, but we don't do that in general on
-	 * Win32 yet.
-=======
 	 * XXX no support for large files here, but we don't do that in
 	 * general on Win32 yet.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	buf->st_size = attr.nFileSizeLow;
 
