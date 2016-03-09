@@ -2337,7 +2337,7 @@ OpenOrCreateSubtransIdFile(DistributedTransactionId dxid)
 	{
 		subxip_file = OpenTemporaryFile(
 			Subtransaction_filename(dxid),
-			1, false, true, true, false);
+			false, true, true, false);
 		// What should be done if this fails ??
 	}
 }
@@ -2728,7 +2728,7 @@ GetSubXidsInXidBuffer(void)
 			subxip_file = OpenTemporaryFile(
 				Subtransaction_filename(
 					SharedLocalSnapshotSlot->QDxid),
-				1, false, false, false, false);
+				false, false, false, false);
 
 			if (subxip_file == 0)
 			{
@@ -2794,7 +2794,7 @@ ShowSubtransactionsForSharedSnapshot(void)
 			subxip_file = OpenTemporaryFile(
 				Subtransaction_filename(
 					SharedLocalSnapshotSlot->QDxid),
-				1, false, false, false, false);
+				false, false, false, false);
 
 			if (subxip_file == 0)
 			{
