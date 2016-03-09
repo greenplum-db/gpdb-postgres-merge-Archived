@@ -61,7 +61,7 @@ static Block GetLocalBufferStorage(void);
  * (hence, usage_count is always advanced).
  */
 BufferDesc *
-LocalBufferAlloc_SMgr(SMgrRelation smgr, BlockNumber blockNum, bool *foundPtr)
+LocalBufferAlloc(SMgrRelation smgr, BlockNumber blockNum, bool *foundPtr)
 {
 	BufferTag	newTag;			/* identity of requested block */
 	LocalBufferLookupEnt *hresult;
