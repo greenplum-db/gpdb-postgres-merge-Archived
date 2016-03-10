@@ -3,21 +3,13 @@
  * copy.c
  *		Implements the COPY utility command
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.279 2007/03/29 00:15:38 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.295 2008/01/01 19:45:48 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -470,9 +462,7 @@ CopySendEndOfRow(CopyState cstate)
 			return; /* don't want to reset msgbug quite yet */
 	}
 
-	/* Reset fe_msgbuf to empty */
-	fe_msgbuf->len = 0;
-	fe_msgbuf->data[0] = '\0';
+	resetStringInfo(fe_msgbuf);
 }
 
 /*
@@ -732,58 +722,10 @@ void ValidateControlChars(bool copy, bool load, bool csv_mode, char *delim,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					errmsg("Using no delimiter is only supported for external tables")));
 
-<<<<<<< HEAD
 		if (num_columns != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					errmsg("Using no delimiter is only possible for a single column table")));
-=======
-/*
- *	 DoCopy executes the SQL COPY statement
- *
- * Either unload or reload contents of table <relation>, depending on <from>.
- * (<from> = TRUE means we are inserting into the table.)  In the "TO" case
- * we also support copying the output of an arbitrary SELECT query.
- *
- * If <pipe> is false, transfer is between the table and the file named
- * <filename>.	Otherwise, transfer is between the table and our regular
- * input/output stream. The latter could be either stdin/stdout or a
- * socket, depending on whether we're running under Postmaster control.
- *
- * Iff <binary>, unload or reload in the binary format, as opposed to the
- * more wasteful but more robust and portable text format.
- *
- * Iff <oids>, unload or reload the format that includes OID information.
- * On input, we accept OIDs whether or not the table has an OID column,
- * but silently drop them if it does not.  On output, we report an error
- * if the user asks for OIDs in a table that has none (not providing an
- * OID column might seem friendlier, but could seriously confuse programs).
- *
- * If in the text format, delimit columns with delimiter <delim> and print
- * NULL values as <null_print>.
- *
- * Do not allow a Postgres user without superuser privilege to read from
- * or write to a file.
- *
- * Do not allow the copy if user doesn't have proper permission to access
- * the table.
- */
-uint64
-DoCopy(const CopyStmt *stmt, const char *queryString)
-{
-	CopyState	cstate;
-	bool		is_from = stmt->is_from;
-	bool		pipe = (stmt->filename == NULL);
-	List	   *attnamelist = stmt->attlist;
-	List	   *force_quote = NIL;
-	List	   *force_notnull = NIL;
-	AclMode		required_access = (is_from ? ACL_INSERT : ACL_SELECT);
-	AclResult	aclresult;
-	ListCell   *option;
-	TupleDesc	tupDesc;
-	int			num_phys_attrs;
-	uint64		processed;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	}
 
@@ -1097,68 +1039,8 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 			cstate->escape = cstate->quote;
 	}
 
-<<<<<<< HEAD
 	if (!cstate->csv_mode && !cstate->escape)
 		cstate->escape = "\\";			/* default escape for text mode */
-=======
-	/* Only single-character delimiter strings are supported. */
-	if (strlen(cstate->delim) != 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY delimiter must be a single ASCII character")));
-
-	/* Disallow end-of-line characters */
-	if (strchr(cstate->delim, '\r') != NULL ||
-		strchr(cstate->delim, '\n') != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			 errmsg("COPY delimiter cannot be newline or carriage return")));
-
-	if (strchr(cstate->null_print, '\r') != NULL ||
-		strchr(cstate->null_print, '\n') != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("COPY null representation cannot use newline or carriage return")));
-
-	/*
-	 * Disallow unsafe delimiter characters in non-CSV mode.  We can't allow
-	 * backslash because it would be ambiguous.  We can't allow the other
-	 * cases because data characters matching the delimiter must be
-	 * backslashed, and certain backslash combinations are interpreted
-	 * non-literally by COPY IN.  Disallowing all lower case ASCII letters
-	 * is more than strictly necessary, but seems best for consistency and
-	 * future-proofing.  Likewise we disallow all digits though only octal
-	 * digits are actually dangerous.
-	 */
-	if (!cstate->csv_mode &&
-		strchr("\\.abcdefghijklmnopqrstuvwxyz0123456789",
-			   cstate->delim[0]) != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("COPY delimiter cannot be \"%s\"", cstate->delim)));
-
-	/* Check header */
-	if (!cstate->csv_mode && cstate->header_line)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY HEADER available only in CSV mode")));
-
-	/* Check quote */
-	if (!cstate->csv_mode && cstate->quote != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY quote available only in CSV mode")));
-
-	if (cstate->csv_mode && strlen(cstate->quote) != 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY quote must be a single ASCII character")));
-
-	if (cstate->csv_mode && cstate->delim[0] == cstate->quote[0])
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("COPY delimiter and quote must be different")));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Error handling setup
@@ -1169,14 +1051,7 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 		SingleRowErrorDesc *sreh;
 		bool		log_to_file = false;
 
-<<<<<<< HEAD
 		sreh = (SingleRowErrorDesc *)stmt->sreh;
-=======
-	if (cstate->csv_mode && strlen(cstate->escape) != 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY escape must be a single ASCII character")));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (!is_from)
 			ereport(ERROR,
@@ -1291,12 +1166,9 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 
 			fstat(fileno(cstate->copy_file), &st);
 			if (S_ISDIR(st.st_mode))
-			{
-				FreeFile(cstate->copy_file);
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("\"%s\" is a directory", cstate->filename)));
-			}
 		}
 
 	}
@@ -1346,12 +1218,8 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 	else
 	{
 		List	   *rewritten;
-<<<<<<< HEAD
-		PlannedStmt	 *plannedstmt;
-=======
 		Query	   *query;
 		PlannedStmt *plan;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		DestReceiver *dest;
 
 		Assert(!is_from);
@@ -1363,40 +1231,15 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("COPY (SELECT) WITH OIDS is not supported")));
 
-<<<<<<< HEAD
-		if (query->intoClause)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("COPY (SELECT INTO) is not supported")));
-
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		/*
 		 * Run parse analysis and rewrite.	Note this also acquires sufficient
 		 * locks on the source table(s).
 		 *
-<<<<<<< HEAD
-		 * Because the planner is not cool about not scribbling on its input,
-		 * we make a preliminary copy of the source querytree.  This prevents
-		 * problems in the case that the COPY is in a portal or plpgsql
-		 * function and is executed repeatedly.  (See also the same hack in
-												  * EXPLAIN, DECLARE CURSOR and PREPARE.)  XXX the planner really
-		 * shouldn't modify its input ... FIXME someday.
-		 */
-		query = copyObject(query);
-		Assert(query->commandType == CMD_SELECT);
-
-		/*
-		 * Must acquire locks in case we didn't come fresh from the parser.
-		 * XXX this also scribbles on query, another reason for copyObject
-=======
 		 * Because the parser and planner tend to scribble on their input, we
 		 * make a preliminary copy of the source querytree.  This prevents
 		 * problems in the case that the COPY is in a portal or plpgsql
 		 * function and is executed repeatedly.  (See also the same hack in
 		 * DECLARE CURSOR and PREPARE.)  XXX FIXME someday.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 */
 		rewritten = pg_analyze_and_rewrite((Node *) copyObject(stmt->query),
 										   queryString, NULL, 0);
@@ -1416,11 +1259,7 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 					 errmsg("COPY (SELECT INTO) is not supported")));
 
 		/* plan the query */
-<<<<<<< HEAD
-		plannedstmt = planner(query, 0, NULL);
-=======
 		plan = planner(query, 0, NULL);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/*
 		 * Update snapshot command ID to ensure this query sees results of any
@@ -1436,11 +1275,7 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 		((DR_copy *) dest)->cstate = cstate;
 
 		/* Create a QueryDesc requesting no output */
-<<<<<<< HEAD
-		cstate->queryDesc = CreateQueryDesc(plannedstmt, queryString,
-=======
-		cstate->queryDesc = CreateQueryDesc(plan,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+		cstate->queryDesc = CreateQueryDesc(plan, queryString,
 											ActiveSnapshot, InvalidSnapshot,
 											dest, NULL, false);
 
@@ -1527,16 +1362,9 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 		((cstate->client_encoding != GetDatabaseEncoding() ||
 		  pg_database_encoding_max_length() > 1) && !qe_copy_from);
 
-<<<<<<< HEAD
 	cstate->encoding_embeds_ascii = (qe_copy_from ? false : PG_ENCODING_IS_CLIENT_ONLY(cstate->client_encoding));
 	cstate->line_buf_converted = (Gp_role == GP_ROLE_EXECUTE ? true : false);
 	setEncodingConversionProc(cstate, pg_get_client_encoding(), !is_from);
-=======
-	if (is_from)
-		CopyFrom(cstate);		/* copy from file to database */
-	else
-		DoCopyTo(cstate);		/* copy from database to file */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * some greenplum db specific vars
@@ -1605,14 +1433,10 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 			// Increase buffer size to improve performance  (cmcdevitt)
             setvbuf(cstate->copy_file, NULL, _IOFBF, 393216); // 384 Kbytes
 
-			fstat(fileno(cstate->copy_file), &st);
 			if (S_ISDIR(st.st_mode))
-			{
-				FreeFile(cstate->copy_file);
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("\"%s\" is a directory", cstate->filename)));
-			}
 		}
 
 
@@ -1786,7 +1610,6 @@ DoCopyTo(CopyState cstate)
 	{
 		char		relkind = cstate->rel->rd_rel->relkind;
 
-<<<<<<< HEAD
 		if (relkind != RELKIND_RELATION)
 		{
 			if (relkind == RELKIND_VIEW)
@@ -1831,13 +1654,6 @@ DoCopyTo(CopyState cstate)
 					 errmsg("COPY ignores external partition(s)")));
 			}
 		}
-=======
-		fstat(fileno(cstate->copy_file), &st);
-		if (S_ISDIR(st.st_mode))
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("\"%s\" is a directory", cstate->filename)));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	PG_TRY();
@@ -2738,16 +2554,10 @@ CopyFromDispatch(CopyState cstate)
 	ExprContext *econtext;		/* used for ExecEvalExpr for default atts */
 	MemoryContext oldcontext = CurrentMemoryContext;
 	ErrorContextCallback errcontext;
-<<<<<<< HEAD
 	bool		no_more_data = false;
 	ListCell   *cur;
 	bool		cur_row_rejected = false;
 	CdbCopy    *cdbCopy;
-=======
-	CommandId	mycid = GetCurrentCommandId(true);
-	bool		use_wal = true; /* by default, use WAL logging */
-	bool		use_fsm = true; /* by default, use FSM for free space */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * This stringInfo will contain 2 types of error messages:
@@ -2769,7 +2579,6 @@ CopyFromDispatch(CopyState cstate)
 	 */
 	StringInfoData cdbcopy_cmd;
 
-<<<<<<< HEAD
 	/*
 	 * Variables for cdbpolicy
 	 */
@@ -2784,53 +2593,6 @@ CopyFromDispatch(CopyState cstate)
 	FmgrInfo   *part_infuncs = NULL;
 	AttrNumber *part_attnum = NULL;
 	int			part_attnums = 0;
-=======
-	/*----------
-	 * Check to see if we can avoid writing WAL
-	 *
-	 * If archive logging is not enabled *and* either
-	 *	- table was created in same transaction as this COPY
-	 *	- data is being written to relfilenode created in this transaction
-	 * then we can skip writing WAL.  It's safe because if the transaction
-	 * doesn't commit, we'll discard the table (or the new relfilenode file).
-	 * If it does commit, we'll have done the heap_sync at the bottom of this
-	 * routine first.
-	 *
-	 * As mentioned in comments in utils/rel.h, the in-same-transaction test
-	 * is not completely reliable, since in rare cases rd_createSubid or
-	 * rd_newRelfilenodeSubid can be cleared before the end of the transaction.
-	 * However this is OK since at worst we will fail to make the optimization.
-	 *
-	 * Also, if the target file is new-in-transaction, we assume that checking
-	 * FSM for free space is a waste of time, even if we must use WAL because
-	 * of archiving.  This could possibly be wrong, but it's unlikely.
-	 *
-	 * The comments for heap_insert and RelationGetBufferForTuple specify that
-	 * skipping WAL logging is only safe if we ensure that our tuples do not
-	 * go into pages containing tuples from any other transactions --- but this
-	 * must be the case if we have a new table or new relfilenode, so we need
-	 * no additional work to enforce that.
-	 *----------
-	 */
-	if (cstate->rel->rd_createSubid != InvalidSubTransactionId ||
-		cstate->rel->rd_newRelfilenodeSubid != InvalidSubTransactionId)
-	{
-		use_fsm = false;
-		if (!XLogArchivingActive())
-			use_wal = false;
-	}
-
-	if (pipe)
-	{
-		if (whereToSendOutput == DestRemote)
-			ReceiveCopyBegin(cstate);
-		else
-			cstate->copy_file = stdin;
-	}
-	else
-	{
-		struct stat st;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Variables for original row number tracking
@@ -2842,7 +2604,6 @@ CopyFromDispatch(CopyState cstate)
 	 * Variables for cdbhash
 	 */
 
-<<<<<<< HEAD
 	/*
 	 * In the case of partitioned tables with children that have different
 	 * distribution policies, we maintain a hash table of CdbHashs and
@@ -2864,14 +2625,6 @@ CopyFromDispatch(CopyState cstate)
 	AttrNumber	h_attnum;		/* hash key attribute number */
 	Datum		h_key;			/* hash key value			 */
 	unsigned int target_seg = 0;	/* result segment of cdbhash */
-=======
-		fstat(fileno(cstate->copy_file), &st);
-		if (S_ISDIR(st.st_mode))
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("\"%s\" is a directory", cstate->filename)));
-	}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	tupDesc = RelationGetDescr(cstate->rel);
 	attr = tupDesc->attrs;
@@ -2979,18 +2732,8 @@ CopyFromDispatch(CopyState cstate)
 	CopyInitPartitioningState(estate);
 
 
-<<<<<<< HEAD
 	if (list_length(cstate->ao_segnos) > 0)
 		cdbCopy->ao_segnos = cstate->ao_segnos;
-=======
-	/* Initialize state variables */
-	cstate->fe_eof = false;
-	cstate->eol_type = EOL_UNKNOWN;
-	cstate->cur_relname = RelationGetRelationName(cstate->rel);
-	cstate->cur_lineno = 0;
-	cstate->cur_attname = NULL;
-	cstate->cur_attval = NULL;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* add cdbCopy reference to cdbSreh (if needed) */
 	if (cstate->errMode != ALL_OR_NOTHING)
@@ -3211,25 +2954,6 @@ CopyFromDispatch(CopyState cstate)
 		}
 		PG_CATCH();
 		{
-<<<<<<< HEAD
-=======
-			/* Place tuple in tuple slot */
-			ExecStoreTuple(tuple, slot, InvalidBuffer, false);
-
-			/* Check the constraints of the tuple */
-			if (cstate->rel->rd_att->constr)
-				ExecConstraints(resultRelInfo, slot, estate);
-
-			/* OK, store the tuple and create index entries for it */
-			heap_insert(cstate->rel, tuple, mycid, use_wal, use_fsm);
-
-			if (resultRelInfo->ri_NumIndices > 0)
-				ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
-
-			/* AFTER ROW INSERT Triggers */
-			ExecARInsertTriggers(estate, resultRelInfo, tuple);
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			/*
 			 * If we are here, we got some kind of communication error
 			 * with the client or a bad protocol message. clean up and
@@ -3241,7 +2965,6 @@ CopyFromDispatch(CopyState cstate)
 		}
 		PG_END_TRY();
 
-<<<<<<< HEAD
 		cstate->raw_buf_done = false;
 
 		/* set buffer pointers to beginning of the buffer */
@@ -3270,10 +2993,6 @@ CopyFromDispatch(CopyState cstate)
 					 * TODO: use COPY_HANDLE_ERROR here, but make sure to
 					 * ignore this error per the "note:" below.
 					 */
-=======
-	/* Done, clean up */
-	error_context_stack = errcontext.previous;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 					/*
 					 * got here? encoding conversion error occured on the
@@ -3326,29 +3045,10 @@ CopyFromDispatch(CopyState cstate)
 				/* Switch into its memory context */
 				MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 
-<<<<<<< HEAD
 				/* Initialize all values for row to NULL */
 				MemSet(values, 0, num_phys_attrs * sizeof(Datum));
 				MemSet(nulls, true, num_phys_attrs * sizeof(bool));
 				MemSet(attr_offsets, 0, num_phys_attrs * sizeof(int));
-=======
-	if (!pipe)
-	{
-		if (FreeFile(cstate->copy_file))
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not read from file \"%s\": %m",
-							cstate->filename)));
-	}
-
-	/*
-	 * If we skipped writing WAL, then we need to sync the heap (but not
-	 * indexes since those use WAL anyway)
-	 */
-	if (!use_wal)
-		heap_sync(cstate->rel);
-}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 				/* Get the line number of the first line of this data row */
 				original_lineno_for_qe = cstate->cur_lineno + 1;
@@ -3367,15 +3067,11 @@ CopyFromDispatch(CopyState cstate)
 				}
 				PG_END_TRY();
 
-<<<<<<< HEAD
 				if(cur_row_rejected)
 				{
 					ErrorIfRejectLimitReached(cstate->cdbsreh, cdbCopy);
 					QD_GOTO_NEXT_ROW;
 				}
-=======
-	resetStringInfo(&cstate->line_buf);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 				if(!cstate->line_done)
@@ -3407,22 +3103,9 @@ CopyFromDispatch(CopyState cstate)
 					/* can't be in CSV mode here */
 					oid_string = CopyReadOidAttr(cstate, &isnull);
 
-<<<<<<< HEAD
 					if (isnull)
 					{
 						/* got here? null in OID column error */
-=======
-		cvt = pg_client_to_server(cstate->line_buf.data,
-								  cstate->line_buf.len);
-		if (cvt != cstate->line_buf.data)
-		{
-			/* transfer converted data back to line_buf */
-			resetStringInfo(&cstate->line_buf);
-			appendBinaryStringInfo(&cstate->line_buf, cvt, strlen(cvt));
-			pfree(cvt);
-		}
-	}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 						if(cstate->errMode == ALL_OR_NOTHING)
 						{
@@ -3536,7 +3219,6 @@ CopyFromDispatch(CopyState cstate)
 							values[defmap[i]] = ExecEvalExpr(defexprs[i], econtext,
 															 &isnull, NULL);
 
-<<<<<<< HEAD
 							/*
 							 * prepare to concatinate next value:
 							 * remove eol characters from end of line buf
@@ -3552,62 +3234,6 @@ CopyFromDispatch(CopyState cstate)
 								nulls[defmap[i]] = false;
 
 								appendStringInfo(&cstate->line_buf, "%c", cstate->delim[0]); /* write the delimiter */
-=======
-				if (c == '\n')
-				{
-					raw_buf_ptr++;		/* eat newline */
-					cstate->eol_type = EOL_CRNL;		/* in case not set yet */
-				}
-				else
-				{
-					/* found \r, but no \n */
-					if (cstate->eol_type == EOL_CRNL)
-						ereport(ERROR,
-								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-								 !cstate->csv_mode ?
-								 errmsg("literal carriage return found in data") :
-								 errmsg("unquoted carriage return found in data"),
-								 !cstate->csv_mode ?
-								 errhint("Use \"\\r\" to represent carriage return.") :
-								 errhint("Use quoted CSV field to represent carriage return.")));
-
-					/*
-					 * if we got here, it is the first line and we didn't find
-					 * \n, so don't consume the peeked character
-					 */
-					cstate->eol_type = EOL_CR;
-				}
-			}
-			else if (cstate->eol_type == EOL_NL)
-				ereport(ERROR,
-						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 !cstate->csv_mode ?
-						 errmsg("literal carriage return found in data") :
-						 errmsg("unquoted carriage return found in data"),
-						 !cstate->csv_mode ?
-						 errhint("Use \"\\r\" to represent carriage return.") :
-						 errhint("Use quoted CSV field to represent carriage return.")));
-			/* If reach here, we have found the line terminator */
-			break;
-		}
-
-		/* Process \n */
-		if (c == '\n' && (!cstate->csv_mode || !in_quote))
-		{
-			if (cstate->eol_type == EOL_CR || cstate->eol_type == EOL_CRNL)
-				ereport(ERROR,
-						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 !cstate->csv_mode ?
-						 errmsg("literal newline found in data") :
-						 errmsg("unquoted newline found in data"),
-						 !cstate->csv_mode ?
-						 errhint("Use \"\\n\" to represent newline.") :
-						 errhint("Use quoted CSV field to represent newline.")));
-			cstate->eol_type = EOL_NL;	/* in case not set yet */
-			/* If reach here, we have found the line terminator */
-			break;
-		}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 								string = DatumGetCString(FunctionCall3(&out_functions[defmap[i]],
 																	   values[defmap[i]],
@@ -4034,7 +3660,7 @@ CopyFrom(CopyState cstate)
 	ExprContext *econtext;		/* used for ExecEvalExpr for default atts */
 	MemoryContext oldcontext = CurrentMemoryContext;
 	ErrorContextCallback errcontext;
-	CommandId	mycid = GetCurrentCommandId();
+	CommandId	mycid = GetCurrentCommandId(true);
 	bool		use_wal = true;		/* by default, use WAL logging */
 	bool		use_fsm = true;		/* by default, use FSM for free space */
 	int		   *attr_offsets;
@@ -4064,13 +3690,6 @@ CopyFrom(CopyState cstate)
 	 * is not completely reliable, since in rare cases rd_createSubid or
 	 * rd_newRelfilenodeSubid can be cleared before the end of the transaction.
 	 * However this is OK since at worst we will fail to make the optimization.
-	 *
-	 * When skipping WAL it's entirely possible that COPY itself will write no
-	 * WAL records at all.  This is of concern because RecordTransactionCommit
-	 * might decide it doesn't need to log our eventual commit, which we
-	 * certainly need it to do.  However, we need no special action here for
-	 * that, because if we have a new table or new relfilenode then there
-	 * must have been a WAL-logged pg_class update earlier in the transaction.
 	 *
 	 * Also, if the target file is new-in-transaction, we assume that checking
 	 * FSM for free space is a waste of time, even if we must use WAL because
@@ -6052,34 +5671,18 @@ CopyReadOidAttr(CopyState cstate, bool *isnull)
 		 * an invalid OID anyway)
 		 */
 
-<<<<<<< HEAD
 		attr_len = end_loc - start_loc; /* we don't include the delimiter ch */
-=======
-	resetStringInfo(&cstate->attribute_buf);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		appendBinaryStringInfo(&cstate->attribute_buf, start_loc, attr_len);
 		cstate->line_buf.cursor += attr_len + 1;
 	}
 
 
-<<<<<<< HEAD
 	/* check whether raw input matched null marker */
 	if (attr_len == cstate->null_print_len && strncmp(start_loc, cstate->null_print, attr_len) == 0)
 		*isnull = true;
 	else
 		*isnull = false;
-=======
-	/* Outer loop iterates over fields */
-	fieldno = 0;
-	for (;;)
-	{
-		bool		found_delim = false;
-		char	   *start_ptr;
-		char	   *end_ptr;
-		int			input_len;
-		bool		saw_high_bit = false;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	return cstate->attribute_buf.data;
 }
@@ -6150,75 +5753,11 @@ CopyAttributeOutText(CopyState cstate, char *string)
 				 */
 				switch (c)
 				{
-<<<<<<< HEAD
 					case '\b':
 						c = 'b';
 						break;
 					case '\f':
 						c = 'f';
-=======
-					case '0':
-					case '1':
-					case '2':
-					case '3':
-					case '4':
-					case '5':
-					case '6':
-					case '7':
-						{
-							/* handle \013 */
-							int			val;
-
-							val = OCTVALUE(c);
-							if (cur_ptr < line_end_ptr)
-							{
-								c = *cur_ptr;
-								if (ISOCTAL(c))
-								{
-									cur_ptr++;
-									val = (val << 3) + OCTVALUE(c);
-									if (cur_ptr < line_end_ptr)
-									{
-										c = *cur_ptr;
-										if (ISOCTAL(c))
-										{
-											cur_ptr++;
-											val = (val << 3) + OCTVALUE(c);
-										}
-									}
-								}
-							}
-							c = val & 0377;
-							if (IS_HIGHBIT_SET(c))
-								saw_high_bit = true;
-						}
-						break;
-					case 'x':
-						/* Handle \x3F */
-						if (cur_ptr < line_end_ptr)
-						{
-							char		hexchar = *cur_ptr;
-
-							if (isxdigit((unsigned char) hexchar))
-							{
-								int			val = GetDecimalFromHex(hexchar);
-
-								cur_ptr++;
-								if (cur_ptr < line_end_ptr)
-								{
-									hexchar = *cur_ptr;
-									if (isxdigit((unsigned char) hexchar))
-									{
-										cur_ptr++;
-										val = (val << 4) + GetDecimalFromHex(hexchar);
-									}
-								}
-								c = val & 0xff;
-								if (IS_HIGHBIT_SET(c))
-									saw_high_bit = true;
-							}
-						}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 						break;
 					case '\n':
 						c = 'n';
@@ -6394,7 +5933,6 @@ CopyAttributeOutCSV(CopyState cstate, char *string,
 		CopySendChar(cstate, quotec);
 
 		/*
-<<<<<<< HEAD
 		 * We adopt the same optimization strategy as in CopyAttributeOutText
 		 */
 		start = ptr;
@@ -6412,24 +5950,6 @@ CopyAttributeOutCSV(CopyState cstate, char *string,
 				ptr++;
 		}
 		DUMPSOFAR();
-=======
-		 * If we de-escaped a char with the high bit set, make sure we still
-		 * have valid data for the db encoding. Avoid calling strlen here for
-		 * the sake of efficiency.
-		 */
-		if (saw_high_bit)
-		{
-			char	   *fld = fieldvals[fieldno];
-
-			pg_verifymbstr(fld, output_ptr - (fld + 1), false);
-		}
-
-		/* Check whether raw input matched null marker */
-		input_len = end_ptr - start_ptr;
-		if (input_len == cstate->null_print_len &&
-			strncmp(start_ptr, cstate->null_print, input_len) == 0)
-			fieldvals[fieldno] = NULL;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		CopySendChar(cstate, quotec);
 	}
@@ -6456,36 +5976,10 @@ CopyGetAttnums(TupleDesc tupDesc, Relation rel, List *attnamelist)
 
 	if (attnamelist == NIL)
 	{
-<<<<<<< HEAD
 		/* Generate default column list */
 		Form_pg_attribute *attr = tupDesc->attrs;
 		int			attr_count = tupDesc->natts;
 		int			i;
-=======
-		if (cstate->line_buf.len != 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-					 errmsg("extra data after last expected column")));
-		return 0;
-	}
-
-	resetStringInfo(&cstate->attribute_buf);
-
-	/*
-	 * The de-escaped attributes will certainly not be longer than the input
-	 * data line, so we can just force attribute_buf to be large enough and
-	 * then transfer data without any checks for enough space.	We need to do
-	 * it this way because enlarging attribute_buf mid-stream would invalidate
-	 * pointers already stored into fieldvals[].
-	 */
-	if (cstate->attribute_buf.maxlen <= cstate->line_buf.len)
-		enlargeStringInfo(&cstate->attribute_buf, cstate->line_buf.len);
-	output_ptr = cstate->attribute_buf.data;
-
-	/* set pointer variables for loop */
-	cur_ptr = cstate->line_buf.data;
-	line_end_ptr = cstate->line_buf.data + cstate->line_buf.len;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		for (i = 0; i < attr_count; i++)
 		{
@@ -6638,7 +6132,6 @@ copy_in_error_callback(void *arg)
 		errcontext("%s", cstate->executor_err_context.data);
 		return;
 	}
-<<<<<<< HEAD
 
 	/* don't need to print out context if error wasn't local */
 	if (cstate->error_on_executor)
@@ -6648,22 +6141,6 @@ copy_in_error_callback(void *arg)
 	{
 		/* error is relevant to a particular column */
 		char	   *att_buf;
-=======
-	if (fld_size < 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-				 errmsg("invalid field size")));
-
-	/* reset attribute_buf to empty, and load raw data in it */
-	resetStringInfo(&cstate->attribute_buf);
-
-	enlargeStringInfo(&cstate->attribute_buf, fld_size);
-	if (CopyGetData(cstate, cstate->attribute_buf.data,
-					fld_size, fld_size) != fld_size)
-		ereport(ERROR,
-				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-				 errmsg("unexpected EOF in COPY data")));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		att_buf = limit_printout_length(cstate->attribute_buf.data);
 
@@ -6721,7 +6198,6 @@ extract_line_buf(CopyState cstate)
 {
 	char	   *line_buf = cstate->line_buf.data;
 
-<<<<<<< HEAD
 	if (cstate->err_loc_type == ROWNUM_EMBEDDED && !cstate->md_error)
 	{
 		/* the following is a compacted mod of CopyExtractRowMetaData */
@@ -6748,143 +6224,6 @@ extract_line_buf(CopyState cstate)
 			value_len = lineno_delim - line_start + 1;
 			line_start += value_len;
 			line_buf = line_start;
-=======
-	if (cstate->need_transcoding)
-		ptr = pg_server_to_client(string, strlen(string));
-	else
-		ptr = string;
-
-	/*
-	 * We have to grovel through the string searching for control characters
-	 * and instances of the delimiter character.  In most cases, though, these
-	 * are infrequent.	To avoid overhead from calling CopySendData once per
-	 * character, we dump out all characters between escaped characters in a
-	 * single call.  The loop invariant is that the data from "start" to "ptr"
-	 * can be sent literally, but hasn't yet been.
-	 *
-	 * We can skip pg_encoding_mblen() overhead when encoding is safe, because
-	 * in valid backend encodings, extra bytes of a multibyte character never
-	 * look like ASCII.  This loop is sufficiently performance-critical that
-	 * it's worth making two copies of it to get the IS_HIGHBIT_SET() test out
-	 * of the normal safe-encoding path.
-	 */
-	if (cstate->encoding_embeds_ascii)
-	{
-		start = ptr;
-		while ((c = *ptr) != '\0')
-		{
-			if ((unsigned char) c < (unsigned char) 0x20)
-			{
-				/*
-				 * \r and \n must be escaped, the others are traditional.
-				 * We prefer to dump these using the C-like notation, rather
-				 * than a backslash and the literal character, because it
-				 * makes the dump file a bit more proof against Microsoftish
-				 * data mangling.
-				 */
-				switch (c)
-				{
-					case '\b':
-						c = 'b';
-						break;
-					case '\f':
-						c = 'f';
-						break;
-					case '\n':
-						c = 'n';
-						break;
-					case '\r':
-						c = 'r';
-						break;
-					case '\t':
-						c = 't';
-						break;
-					case '\v':
-						c = 'v';
-						break;
-					default:
-						/* If it's the delimiter, must backslash it */
-						if (c == delimc)
-							break;
-						/* All ASCII control chars are length 1 */
-						ptr++;
-						continue;		/* fall to end of loop */
-				}
-				/* if we get here, we need to convert the control char */
-				DUMPSOFAR();
-				CopySendChar(cstate, '\\');
-				CopySendChar(cstate, c);
-				start = ++ptr;			/* do not include char in next run */
-			}
-			else if (c == '\\' || c == delimc)
-			{
-				DUMPSOFAR();
-				CopySendChar(cstate, '\\');
-				start = ptr++;	/* we include char in next run */
-			}
-			else if (IS_HIGHBIT_SET(c))
-				ptr += pg_encoding_mblen(cstate->client_encoding, ptr);
-			else
-				ptr++;
-		}
-	}
-	else
-	{
-		start = ptr;
-		while ((c = *ptr) != '\0')
-		{
-			if ((unsigned char) c < (unsigned char) 0x20)
-			{
-				/*
-				 * \r and \n must be escaped, the others are traditional.
-				 * We prefer to dump these using the C-like notation, rather
-				 * than a backslash and the literal character, because it
-				 * makes the dump file a bit more proof against Microsoftish
-				 * data mangling.
-				 */
-				switch (c)
-				{
-					case '\b':
-						c = 'b';
-						break;
-					case '\f':
-						c = 'f';
-						break;
-					case '\n':
-						c = 'n';
-						break;
-					case '\r':
-						c = 'r';
-						break;
-					case '\t':
-						c = 't';
-						break;
-					case '\v':
-						c = 'v';
-						break;
-					default:
-						/* If it's the delimiter, must backslash it */
-						if (c == delimc)
-							break;
-						/* All ASCII control chars are length 1 */
-						ptr++;
-						continue;		/* fall to end of loop */
-				}
-				/* if we get here, we need to convert the control char */
-				DUMPSOFAR();
-				CopySendChar(cstate, '\\');
-				CopySendChar(cstate, c);
-				start = ++ptr;			/* do not include char in next run */
-			}
-			else if (c == '\\' || c == delimc)
-			{
-				DUMPSOFAR();
-				CopySendChar(cstate, '\\');
-				start = ptr++;	/* we include char in next run */
-			}
-			else
-				ptr++;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 	}
 

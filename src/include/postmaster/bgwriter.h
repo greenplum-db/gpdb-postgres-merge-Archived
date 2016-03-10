@@ -25,7 +25,7 @@ extern double CheckPointCompletionTarget;
 extern void BackgroundWriterMain(void);
 extern void CheckpointMain(void);
 
-extern void RequestCheckpoint(bool waitforit, bool warnontime);
+extern void RequestCheckpoint(int flags);
 extern void CheckpointWriteDelay(int flags, double progress);
 
 extern void RequestCheckpointSmgrCloseAll(void);

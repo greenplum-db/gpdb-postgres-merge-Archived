@@ -8,12 +8,8 @@
  * stepping on each others' toes.  Formerly we used table-level locks
  * on pg_database, but that's too coarse-grained.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -50,7 +46,6 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "pgstat.h"
-#include "postmaster/checkpoint.h"
 #include "postmaster/bgwriter.h"
 #include "storage/freespace.h"
 #include "storage/ipc.h"
@@ -81,12 +76,6 @@
 #include "cdb/cdbpersistentfilesysobj.h"
 
 #include "utils/pg_rusage.h"
-
-typedef struct
-{
-	Oid			src_dboid;		/* source (template) DB */
-	Oid			dest_dboid;		/* DB we are trying to create */
-} createdb_failure_params;
 
 typedef struct
 {
@@ -662,8 +651,8 @@ createdb_int(CreatedbStmt *stmt, CdbDispatcherState *ds)
 	const char *dbtemplate = NULL;
 	int			encoding = -1;
 	int			dbconnlimit = -1;
-<<<<<<< HEAD
-
+	int			ctype_encoding;
+	createdb_failure_params fparms;
 	bool		shouldDispatch = (Gp_role == GP_ROLE_DISPATCH);
 	cqContext	cqc;
 	cqContext  *pcqCtx;
@@ -671,20 +660,6 @@ createdb_int(CreatedbStmt *stmt, CdbDispatcherState *ds)
 	if (shouldDispatch)
 		if (Persistent_BeforePersistenceWork())
 			elog(NOTICE, " Create database dispatch before persistence work!");
-
-
-	if (Gp_role != GP_ROLE_EXECUTE)
-	{
-		/*
-		 * Don't allow master to call this in a transaction block. Segments
-		 * are ok as distributed transaction participants. 
-		 */
-		PreventTransactionChain((void *) stmt, "CREATE DATABASE");
-	}
-=======
-	int			ctype_encoding;
-	createdb_failure_params fparms;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
@@ -850,34 +825,6 @@ createdb_int(CreatedbStmt *stmt, CdbDispatcherState *ds)
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("invalid server encoding %d", encoding)));
 
-<<<<<<< HEAD
-	/* check whether encoding and locale are compatible - see also related check in initdb */
-	if (gp_encoding_check_locale_compatibility)
-	{
-		char *lc_ctype = GetConfigOptionByName("lc_ctype", NULL);
-		char *lc_collate = GetConfigOptionByName("lc_collate", NULL);
-		if (!check_locale_encoding(lc_ctype, encoding))
-		{
-			ereport(ERROR,
-					(errmsg("Encoding mismatch"),
-					 errdetail("The encoding you selected (%s) and the encoding that the\n"
-								"selected locale uses (%s) do not match.  This would lead to\n"
-								"misbehavior in various character string processing functions.\n",
-							pg_encoding_to_char(encoding),
-							lc_ctype)));
-		}
-		if(!check_locale_encoding(lc_collate,encoding))
-		{
-			ereport(ERROR,
-					(errmsg("Encoding mismatch"),
-					 errdetail("The encoding you selected (%s) and the encoding that the\n"
-								"selected locale uses (%s) do not match.  This would lead to\n"
-								"misbehavior in various character string processing functions.\n",
-							pg_encoding_to_char(encoding),
-							lc_collate)));
-		}
-	}
-=======
 	/*
 	 * Check whether encoding matches server locale settings.  We allow
 	 * mismatch in three cases:
@@ -895,6 +842,8 @@ createdb_int(CreatedbStmt *stmt, CdbDispatcherState *ds)
 	 * converted to UTF16 before being used.
 	 *
 	 * Note: if you change this policy, fix initdb to match.
+	 *
+	 * GPDB_83_MERGE_FIXME: Check that initdb indeed matches!
 	 */
 	ctype_encoding = pg_get_encoding_from_locale(NULL);
 
@@ -904,13 +853,16 @@ createdb_int(CreatedbStmt *stmt, CdbDispatcherState *ds)
 		  encoding == PG_UTF8 ||
 #endif
 		  (encoding == PG_SQL_ASCII && superuser())))
-		ereport(ERROR,
+	{
+		int			elevel = gp_encoding_check_locale_compatibility ? ERROR : WARNING;
+
+		ereport(elevel,
 				(errmsg("encoding %s does not match server's locale %s",
 						pg_encoding_to_char(encoding),
 						setlocale(LC_CTYPE, NULL)),
 			 errdetail("The server's LC_CTYPE setting requires encoding %s.",
 					   pg_encoding_to_char(ctype_encoding))));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	}
 
 	/* Resolve default tablespace for new database */
 	if (dtablespacename && dtablespacename->arg)
@@ -998,21 +950,12 @@ createdb_int(CreatedbStmt *stmt, CdbDispatcherState *ds)
 	if (CheckOtherDBBackends(src_dboid))
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_IN_USE),
-<<<<<<< HEAD
-				 errmsg("source database \"%s\" is being accessed by other users",
-						dbtemplate)));
-
-	/*
-	 * Select an OID for the new database, checking that it doesn't have
-	 * a filename conflict with anything already existing in the tablespace
-=======
 			errmsg("source database \"%s\" is being accessed by other users",
 				   dbtemplate)));
 
 	/*
 	 * Select an OID for the new database, checking that it doesn't have a
 	 * filename conflict with anything already existing in the tablespace
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 * directories.
 	 */
 	pg_database_rel = heap_open(DatabaseRelationId, RowExclusiveLock);
@@ -1121,10 +1064,6 @@ createdb_int(CreatedbStmt *stmt, CdbDispatcherState *ds)
 	 */
 	RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
 
-<<<<<<< HEAD
-	CHECK_FOR_INTERRUPTS();
-	
-=======
 	/*
 	 * Once we start copying subdirectories, we need to be able to clean 'em
 	 * up if we fail.  Use an ENSURE block to make sure this happens.  (This
@@ -1136,7 +1075,6 @@ createdb_int(CreatedbStmt *stmt, CdbDispatcherState *ds)
 	fparms.dest_dboid = dboid;
 	PG_ENSURE_ERROR_CLEANUP(createdb_failure_callback,
 							PointerGetDatum(&fparms));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		PGRUsage	ru_start;
 		DatabaseInfo *info;
@@ -1341,14 +1279,12 @@ createdb_int(CreatedbStmt *stmt, CdbDispatcherState *ds)
 		 *
 		 * Note:  The index will not get inserts -- we'll rebuild afterwards.
 		 */
-<<<<<<< HEAD
 		gp_relation_node = 
 				DirectOpen_GpRelationNodeOpen(
 								dst_deftablespace, 
 								dboid);
-=======
+
 		RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/*
 		 * Manually set the persistence information so it will get recorded in
@@ -1362,7 +1298,6 @@ createdb_int(CreatedbStmt *stmt, CdbDispatcherState *ds)
 		{
 			DbInfoRel *dbInfoRel = &info->dbInfoRelArray[r];
 
-<<<<<<< HEAD
 			int g;
 			
 			for (g = 0; g < dbInfoRel->gpRelationNodesCount; g++)
@@ -1384,20 +1319,14 @@ createdb_int(CreatedbStmt *stmt, CdbDispatcherState *ds)
 		}
 
 		DirectOpen_GpRelationNodeClose(gp_relation_node);
-	}
 
-	/*
-	 * Close pg_database, but keep lock till commit (this is important to
-	 * prevent any risk of deadlock failure while updating flat file)
-	 */
-	heap_close(pg_database_rel, NoLock);
-	caql_endscan(pcqCtx);
+		/*
+		 * Close pg_database, but keep lock till commit (this is important to
+		 * prevent any risk of deadlock failure while updating flat file)
+		 */
+		heap_close(pg_database_rel, NoLock);
+		caql_endscan(pcqCtx);
 
-	/*
-	 * Set flag to update flat database file at commit.
-	 */
-	database_file_update_needed();
-=======
 		/*
 		 * Set flag to update flat database file at commit.  Note: this also
 		 * forces synchronous commit, which minimizes the window between
@@ -1425,8 +1354,8 @@ createdb_failure_callback(int code, Datum arg)
 	UnlockSharedObject(DatabaseRelationId, fparms->src_dboid, 0, ShareLock);
 
 	/* Throw away any successfully copied subdirectories */
-	remove_dbtablespaces(fparms->dest_dboid);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	// GPDB_83_MERGE_FIXME: We don't do this in GPDB. Why not?
+	//remove_dbtablespaces(fparms->dest_dboid);
 }
 
 
@@ -1440,19 +1369,6 @@ dropdb(const char *dbname, bool missing_ok)
 	bool		db_istemplate = true;
 	Oid			defaultTablespace = InvalidOid;
 	Relation	pgdbrel;
-<<<<<<< HEAD
-
-	if (Gp_role != GP_ROLE_EXECUTE)
-	{
-		/*
-		 * Don't allow master tp call this in a transaction block.  Segments are ok as
-		 * distributed transaction participants. 
-		 */
-		PreventTransactionChain((void *) dbname, "DROP DATABASE");
-	}
-=======
-	HeapTuple	tup;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Look up the target database's OID, and get exclusive lock on it. We
@@ -1606,18 +1522,12 @@ dropdb(const char *dbname, bool missing_ok)
 	ForgetDatabaseFsyncRequests(InvalidOid, db_id);
 
 	/*
-<<<<<<< HEAD
-	 * Force a checkpoint to make sure the bgwriter to push all pages to disk.
-	 */
-	RequestCheckpoint(true, false);
-=======
 	 * Force a checkpoint to make sure the bgwriter has received the message
 	 * sent by ForgetDatabaseFsyncRequests. On Windows, this also ensures that
 	 * the bgwriter doesn't hold any open files, which would cause rmdir() to
 	 * fail.
 	 */
 	RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Collect information on the database's relations from pg_class and from scanning
@@ -1781,8 +1691,6 @@ RenameDatabase(const char *oldname, const char *newname)
 	Oid			db_id = InvalidOid;
 	HeapTuple	newtup;
 	Relation	rel;
-	cqContext	cqc;
-	cqContext  *pcqCtx;
 
 	/*
 	 * Look up the target database's OID, and get exclusive lock on it. We
@@ -1840,26 +1748,14 @@ RenameDatabase(const char *oldname, const char *newname)
 						oldname)));
 
 	/* rename */
-<<<<<<< HEAD
-
-	pcqCtx = caql_addrel(cqclr(&cqc), rel);
-	newtup = caql_getfirst(
-			pcqCtx,
-			cql("SELECT * FROM pg_database "
-				" WHERE oid = :1 "
-				" FOR UPDATE ",
-				ObjectIdGetDatum(db_id)));
-
-=======
 	newtup = SearchSysCacheCopy(DATABASEOID,
 								ObjectIdGetDatum(db_id),
 								0, 0, 0);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (!HeapTupleIsValid(newtup))
 		elog(ERROR, "cache lookup failed for database %u", db_id);
 	namestrcpy(&(((Form_pg_database) GETSTRUCT(newtup))->datname), newname);
-
-	caql_update_current(pcqCtx, newtup); /* implicit update of index as well */
+	simple_heap_update(rel, &newtup->t_self, newtup);
+	CatalogUpdateIndexes(rel, newtup);
 
 	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH)
@@ -2005,9 +1901,9 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	char	   *valuestr;
 	HeapTuple	tuple,
 		newtuple;
+	ScanKeyData scankey;
+	SysScanDesc scan;
 	Relation	rel;
-	cqContext	cqc;
-	cqContext  *pcqCtx;
 	Datum		repl_val[Natts_pg_database];
 	bool		repl_null[Natts_pg_database];
 	bool		repl_repl[Natts_pg_database];
@@ -2022,15 +1918,14 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	 * connections.
 	 */
 	rel = heap_open(DatabaseRelationId, RowExclusiveLock);
-
-	pcqCtx = caql_addrel(cqclr(&cqc), rel);
-
-	tuple = caql_getfirst(
-			pcqCtx,
-			cql("SELECT * FROM pg_database" 
-				" WHERE datname = :1 FOR UPDATE", 
-				CStringGetDatum(stmt->dbname)));
-
+	rel = heap_open(DatabaseRelationId, RowExclusiveLock);
+	ScanKeyInit(&scankey,
+				Anum_pg_database_datname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(stmt->dbname));
+	scan = systable_beginscan(rel, DatabaseNameIndexId, true,
+							  SnapshotNow, 1, &scankey);
+	tuple = systable_getnext(scan);
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
@@ -2042,24 +1937,16 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
 					   stmt->dbname);
 
-<<<<<<< HEAD
 	memset(repl_repl, false, sizeof(repl_repl));
 	repl_repl[Anum_pg_database_datconfig - 1] = true;
-=======
-	memset(repl_repl, ' ', sizeof(repl_repl));
-	repl_repl[Anum_pg_database_datconfig - 1] = 'r';
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (stmt->setstmt->kind == VAR_RESET_ALL)
 	{
-<<<<<<< HEAD
-		alter_subtype = "RESET ALL";
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		ArrayType  *new = NULL;
 		Datum		datum;
 		bool		isnull;
+
+		alter_subtype = "RESET ALL";
 
 		/*
 		 * in RESET ALL, request GUC to reset the settings array; if none
@@ -2073,20 +1960,12 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 		if (new)
 		{
 			repl_val[Anum_pg_database_datconfig - 1] = PointerGetDatum(new);
-<<<<<<< HEAD
+			repl_repl[Anum_pg_database_datconfig - 1] = true;
 			repl_null[Anum_pg_database_datconfig - 1] = false;
 		}
 		else
 		{
 			repl_null[Anum_pg_database_datconfig - 1] = true;
-=======
-			repl_repl[Anum_pg_database_datconfig - 1] = 'r';
-			repl_null[Anum_pg_database_datconfig - 1] = ' ';
-		}
-		else
-		{
-			repl_null[Anum_pg_database_datconfig - 1] = 'n';
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			repl_val[Anum_pg_database_datconfig - 1] = (Datum) 0;
 		}
 	}
@@ -2107,34 +1986,22 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 		if (valuestr)
 			a = GUCArrayAdd(a, stmt->setstmt->name, valuestr);
 		else
-<<<<<<< HEAD
 		{
 			alter_subtype = "RESET";
-			a = GUCArrayDelete(a, stmt->variable);
-		}
-=======
 			a = GUCArrayDelete(a, stmt->setstmt->name);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-
+		}
 		if (a)
 			repl_val[Anum_pg_database_datconfig - 1] = PointerGetDatum(a);
 		else
 			repl_null[Anum_pg_database_datconfig - 1] = true;
 	}
 
-<<<<<<< HEAD
-	newtuple = caql_modify_current(pcqCtx,
-								   repl_val, repl_null, repl_repl);
-	caql_update_current(pcqCtx, newtuple); 
-	/* and Update indexes (implicit) */
-=======
-	newtuple = heap_modifytuple(tuple, RelationGetDescr(rel),
-								repl_val, repl_null, repl_repl);
+	newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
+								 repl_val, repl_null, repl_repl);
 	simple_heap_update(rel, &tuple->t_self, newtuple);
 
 	/* Update indexes */
 	CatalogUpdateIndexes(rel, newtuple);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH)
@@ -2156,31 +2023,30 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 
 		appendStringInfo(&buffer, "ALTER DATABASE \"%s\" ", stmt->dbname);
 		
-		if (strcmp(stmt->variable, "all") == 0 && valuestr == NULL)
+		if (strcmp(stmt->setstmt->name, "all") == 0 && valuestr == NULL)
 		{
 			appendStringInfo(&buffer, "RESET ALL");
 		}
 		else if (valuestr == NULL)
 		{
-			appendStringInfo(&buffer, "RESET \"%s\"", stmt->variable);
+			appendStringInfo(&buffer, "RESET \"%s\"", stmt->setstmt->name);
 		}
 		else
 		{
 			ListCell   *l;
-	
-			
-			appendStringInfo(&buffer, "SET \"%s\" TO ",stmt->variable);
-		
+			bool		first;
 
+			appendStringInfo(&buffer, "SET \"%s\" TO ",stmt->setstmt->name);
 		
 			/* Parse string into list of identifiers */
-
-			foreach(l, stmt->value)
+			first = true;
+			foreach(l, stmt->setstmt->args)
 			{
 				A_Const    *arg = (A_Const *) lfirst(l);
-				if (l != list_head(stmt->value))
+				if (!first)
 					appendStringInfo(&buffer, ",");
-				
+				first = false;
+
 				switch (nodeTag(&arg->val))
 				{
 					case T_Integer:
@@ -2470,61 +2336,19 @@ have_createdb_privilege(void)
 {
 	bool		result = false;
 	HeapTuple	utup;
-	cqContext  *pcqCtx;
 
 	/* Superusers can always do everything */
 	if (superuser())
 		return true;
 
-	pcqCtx = caql_beginscan(
-			NULL,
-			cql("SELECT * FROM pg_authid "
-				" WHERE oid = :1 ",
-				ObjectIdGetDatum(GetUserId())));
-
-	utup = caql_getnext(pcqCtx);
-
-<<<<<<< HEAD
+	utup = SearchSysCache(AUTHOID,
+						  ObjectIdGetDatum(GetUserId()),
+						  0, 0, 0);
 	if (HeapTupleIsValid(utup))
+	{
 		result = ((Form_pg_authid) GETSTRUCT(utup))->rolcreatedb;
-=======
-		/* Don't mess with the global tablespace */
-		if (dsttablespace == GLOBALTABLESPACE_OID)
-			continue;
-
-		dstpath = GetDatabasePath(db_id, dsttablespace);
-
-		if (lstat(dstpath, &st) < 0 || !S_ISDIR(st.st_mode))
-		{
-			/* Assume we can ignore it */
-			pfree(dstpath);
-			continue;
-		}
-
-		if (!rmtree(dstpath, true))
-			ereport(WARNING,
-					(errmsg("some useless files may be left behind in old database directory \"%s\"",
-							dstpath)));
-
-		/* Record the filesystem change in XLOG */
-		{
-			xl_dbase_drop_rec xlrec;
-			XLogRecData rdata[1];
-
-			xlrec.db_id = db_id;
-			xlrec.tablespace_id = dsttablespace;
-
-			rdata[0].data = (char *) &xlrec;
-			rdata[0].len = sizeof(xl_dbase_drop_rec);
-			rdata[0].buffer = InvalidBuffer;
-			rdata[0].next = NULL;
-
-			(void) XLogInsert(RM_DBASE_ID, XLOG_DBASE_DROP, rdata);
-		}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-
-	caql_endscan(pcqCtx);
-
+		ReleaseSysCache(utup);
+	}
 	return result;
 }
 
@@ -2672,34 +2496,6 @@ dbase_redo(XLogRecPtr beginLoc  __attribute__((unused)), XLogRecPtr lsn  __attri
 		 */
 		copydir(src_path, dst_path, false);
 	}
-<<<<<<< HEAD
-=======
-	else if (info == XLOG_DBASE_DROP)
-	{
-		xl_dbase_drop_rec *xlrec = (xl_dbase_drop_rec *) XLogRecGetData(record);
-		char	   *dst_path;
-
-		dst_path = GetDatabasePath(xlrec->db_id, xlrec->tablespace_id);
-
-		/* Drop pages for this database that are in the shared buffer cache */
-		DropDatabaseBuffers(xlrec->db_id);
-
-		/* Also, clean out any entries in the shared free space map */
-		FreeSpaceMapForgetDatabase(xlrec->db_id);
-
-		/* Also, clean out any fsync requests that might be pending in md.c */
-		ForgetDatabaseFsyncRequests(xlrec->db_id);
-
-		/* Clean out the xlog relcache too */
-		XLogDropDatabase(xlrec->db_id);
-
-		/* And remove the physical files */
-		if (!rmtree(dst_path, true))
-			ereport(WARNING,
-					(errmsg("some useless files may be left behind in old database directory \"%s\"",
-							dst_path)));
-	}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	else
 		elog(PANIC, "dbase_redo: unknown op code %u", info);
 }

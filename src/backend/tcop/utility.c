@@ -1582,7 +1582,14 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_CreatedbStmt:
-			PreventTransactionChain(isTopLevel, "CREATE DATABASE");
+			if (Gp_role != GP_ROLE_EXECUTE)
+			{
+				/*
+				 * Don't allow master to call this in a transaction block. Segments
+				 * are ok as distributed transaction participants. 
+				 */
+				PreventTransactionChain(isTopLevel, "CREATE DATABASE");
+			}
 			createdb((CreatedbStmt *) parsetree);
 			break;
 
@@ -1598,7 +1605,14 @@ ProcessUtility(Node *parsetree,
 			{
 				DropdbStmt *stmt = (DropdbStmt *) parsetree;
 
-				PreventTransactionChain(isTopLevel, "DROP DATABASE");
+				if (Gp_role != GP_ROLE_EXECUTE)
+				{
+					/*
+					 * Don't allow master tp call this in a transaction block.  Segments are ok as
+					 * distributed transaction participants. 
+					 */
+					PreventTransactionChain(isTopLevel, "DROP DATABASE");
+				}
 				dropdb(stmt->dbname, stmt->missing_ok);
 			}
 			break;
