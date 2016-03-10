@@ -27,22 +27,14 @@ findItemInPage(Page page, ItemPointer item, OffsetNumber *off)
 	OffsetNumber maxoff = GinPageGetOpaque(page)->maxoff;
 	int			res;
 
-<<<<<<< HEAD
-	if ( GinPageGetOpaque(page)->flags & GIN_DELETED )
-=======
 	if (GinPageGetOpaque(page)->flags & GIN_DELETED)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		/* page was deleted by concurrent  vacuum */
 		return false;
 
 	/*
 	 * scan page to find equal or first greater value
 	 */
-<<<<<<< HEAD
-     
-=======
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	for (*off = FirstOffsetNumber; *off <= maxoff; (*off)++)
 	{
 		res = compareItemPointers(item, (ItemPointer) GinDataPageGetItem(page, *off));
@@ -61,19 +53,12 @@ findItemInPage(Page page, ItemPointer item, OffsetNumber *off)
 static void
 startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 {
-<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_DECLARE;
 
-	GinBtreeData    btreeEntry;
-	GinBtreeStack  *stackEntry;
-	Page            page;
-	bool            needUnlock = TRUE;
-=======
 	GinBtreeData 	btreeEntry;
 	GinBtreeStack  *stackEntry;
 	Page			page;
 	bool			needUnlock = TRUE;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (entry->master != NULL)
 	{
@@ -82,23 +67,16 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 	}
 
 	/*
-<<<<<<< HEAD
-	 * We should find entry, and begin scan of posting tree
-=======
 	 * we should find entry, and begin scan of posting tree
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 * or just store posting list in memory
 	 */
 
 	prepareEntryScan(&btreeEntry, index, entry->entry, ginstate);
 	btreeEntry.searchMode = TRUE;
-<<<<<<< HEAD
 	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	stackEntry = ginFindLeafPage(&btreeEntry, NULL);
 	page = BufferGetPage(stackEntry->buffer);
 
@@ -123,29 +101,6 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 			LockBuffer(stackEntry->buffer, GIN_UNLOCK);
 			needUnlock = FALSE;
 			gdi = prepareScanPostingTree(index, rootPostingTree, TRUE);
-<<<<<<< HEAD
-
-			entry->buffer = scanBeginPostingTree(gdi);
-			/*
-			 * We keep buffer pinned because we need to prevent deletition
-			 * page during scan. See GIN's vacuum implementation. RefCount
-			 * is increased to keep buffer pinned after freeGinBtreeStack() call.
-			 */
-			IncrBufferRefCount(entry->buffer);
-
-			page = BufferGetPage(entry->buffer);
-			entry->predictNumberResult = gdi->stack->predictNumber * GinPageGetOpaque(page)->maxoff;
-
-			/*
-			 * Keep page content in memory to prevent durable page locking
-			 */
-			entry->list = (ItemPointerData *) palloc( BLCKSZ );
-			entry->nlist = GinPageGetOpaque(page)->maxoff;
-			memcpy( entry->list, GinDataPageGetItem(page, FirstOffsetNumber),
-						GinPageGetOpaque(page)->maxoff * sizeof(ItemPointerData) );
-
-            LockBuffer(entry->buffer, GIN_UNLOCK);
-=======
 
 			entry->buffer = scanBeginPostingTree(gdi);
 			/*
@@ -167,7 +122,6 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 						GinPageGetOpaque(page)->maxoff * sizeof(ItemPointerData) );
 
 			LockBuffer(entry->buffer, GIN_UNLOCK);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			freeGinBtreeStack(gdi->stack);
 			pfree(gdi);
 			entry->isFinished = FALSE;
@@ -182,15 +136,11 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 	}
 
 	if (needUnlock)
-<<<<<<< HEAD
 		LockBuffer(stackEntry->buffer, GIN_UNLOCK);
 	
 	MIRROREDLOCK_BUFMGR_UNLOCK;
 	// -------- MirroredLock ----------
 	
-=======
-			LockBuffer(stackEntry->buffer, GIN_UNLOCK);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	freeGinBtreeStack(stackEntry);
 }
 
@@ -212,17 +162,10 @@ startScanKey(Relation index, GinState *ginstate, GinScanKey key)
 	if (GinFuzzySearchLimit > 0)
 	{
 		/*
-<<<<<<< HEAD
-		 * If all of keys more than threshold we will try to reduce result,
-		 * we hope (and only hope, for intersection operation of array our
-		 * supposition isn't true), that total result will not more than
-		 * minimal predictNumberResult.
-=======
 		 * If all of keys more than threshold we will try to reduce
 		 * result, we hope (and only hope, for intersection operation of
 		 * array our supposition isn't true), that total result will not
 		 * more than minimal predictNumberResult.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 */
 
 		for (i = 0; i < key->nentries; i++)
@@ -256,17 +199,11 @@ startScan(IndexScanDesc scan)
 static void
 entryGetNextItem(Relation index, GinScanEntry entry)
 {
-<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_DECLARE;
 
 	Page		page;
 	BlockNumber blkno;
 
-=======
-	Page		page;
-	BlockNumber blkno;
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	for(;;)
 	{
 		entry->offset++;
@@ -276,14 +213,10 @@ entryGetNextItem(Relation index, GinScanEntry entry)
 			entry->curItem = entry->list[entry->offset - 1];
 			return;
 		}
-<<<<<<< HEAD
 		
 		// -------- MirroredLock ----------
 		MIRROREDLOCK_BUFMGR_LOCK;
 		
-=======
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		LockBuffer(entry->buffer, GIN_SHARE);
 		page = BufferGetPage(entry->buffer);
 		for(;;)
@@ -296,13 +229,10 @@ entryGetNextItem(Relation index, GinScanEntry entry)
 			blkno = GinPageGetOpaque(page)->rightlink;
 
 			LockBuffer(entry->buffer, GIN_UNLOCK);
-<<<<<<< HEAD
 
 			MIRROREDLOCK_BUFMGR_UNLOCK;
 			// -------- MirroredLock ----------
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			if (blkno == InvalidBlockNumber)
 			{
 				ReleaseBuffer(entry->buffer);
@@ -311,14 +241,10 @@ entryGetNextItem(Relation index, GinScanEntry entry)
 				entry->isFinished = TRUE;
 				return;
 			}
-<<<<<<< HEAD
 			
 			// -------- MirroredLock ----------
 			MIRROREDLOCK_BUFMGR_LOCK;
 			
-=======
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			entry->buffer = ReleaseAndReadBuffer(entry->buffer, index, blkno);
 			LockBuffer(entry->buffer, GIN_SHARE);
 			page = BufferGetPage(entry->buffer);
@@ -334,14 +260,10 @@ entryGetNextItem(Relation index, GinScanEntry entry)
 							GinPageGetOpaque(page)->maxoff * sizeof(ItemPointerData) );
 
 				LockBuffer(entry->buffer, GIN_UNLOCK);
-<<<<<<< HEAD
 				
 				MIRROREDLOCK_BUFMGR_UNLOCK;
 				// -------- MirroredLock ----------
 				
-=======
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				if ( !ItemPointerIsValid(&entry->curItem) || 
 					 compareItemPointers( &entry->curItem, entry->list + entry->offset - 1 ) == 0 )
 				{
@@ -557,7 +479,6 @@ gingetmulti(PG_FUNCTION_ARGS)
 
 	while (true)
 	{
-<<<<<<< HEAD
 		ItemPointerData	tid;
 		if (scanGetItem(scan,&tid))
 			tbm_add_tuples(hashBitmap, &tid, 1);
@@ -573,15 +494,6 @@ gingetmulti(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_POINTER(hashBitmap);
-=======
-		if (scanGetItem(scan, tids + *returned_tids))
-			(*returned_tids)++;
-		else
-			break;
-	} while (*returned_tids < max_tids);
-
-	PG_RETURN_BOOL(*returned_tids == max_tids);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 Datum
