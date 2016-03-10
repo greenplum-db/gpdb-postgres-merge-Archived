@@ -1857,6 +1857,16 @@ ProcessUtility(Node *parsetree,
 			 * ********************* RESOOURCE QUEUE statements ****
 			 */
 		case T_CreateQueueStmt:
+
+			/*
+			 * MPP-7960: We cannot run CREATE RESOURCE QUEUE inside a user
+			 * transaction block because the shared memory structures are not
+			 * cleaned up on abort, resulting in "leaked", unreachable queues.
+			 */
+
+			if (Gp_role == GP_ROLE_DISPATCH)
+				PreventTransactionChain(isTopLevel, "CREATE RESOURCE QUEUE");
+
 			CreateQueue((CreateQueueStmt *) parsetree);
 			break;
 

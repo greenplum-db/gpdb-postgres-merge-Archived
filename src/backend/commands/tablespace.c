@@ -32,12 +32,8 @@
  * and munge the system catalogs of the new database.
  *
  *
-<<<<<<< HEAD
  * Copyright (c) 2005-2010 Greenplum Inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -88,60 +84,13 @@
 #include "cdb/cdbpersistentrelation.h"
 #include "cdb/cdbmirroredfilesysobj.h"
 
-<<<<<<< HEAD
-=======
 /* GUC variables */
 char	   *default_tablespace = NULL;
 char	   *temp_tablespaces = NULL;
 
 
-static bool remove_tablespace_directories(Oid tablespaceoid, bool redo);
-static void set_short_version(const char *path);
+static bool remove_tablespace_directories(Oid tablespaceoid, bool redo, char *phys);
 
-
-/*
- * Each database using a table space is isolated into its own name space
- * by a subdirectory named for the database OID.  On first creation of an
- * object in the tablespace, create the subdirectory.  If the subdirectory
- * already exists, just fall through quietly.
- *
- * isRedo indicates that we are creating an object during WAL replay.
- * In this case we will cope with the possibility of the tablespace
- * directory not being there either --- this could happen if we are
- * replaying an operation on a table in a subsequently-dropped tablespace.
- * We handle this by making a directory in the place where the tablespace
- * symlink would normally be.  This isn't an exact replay of course, but
- * it's the best we can do given the available information.
- *
- * If tablespaces are not supported, you might think this could be a no-op,
- * but you'd be wrong: we still need it in case we have to re-create a
- * database subdirectory (of $PGDATA/base) during WAL replay.
- */
-void
-TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
-{
-	struct stat st;
-	char	   *dir;
-
-	/*
-	 * The global tablespace doesn't have per-database subdirectories, so
-	 * nothing to do for it.
-	 */
-	if (spcNode == GLOBALTABLESPACE_OID)
-		return;
-
-	Assert(OidIsValid(spcNode));
-	Assert(OidIsValid(dbNode));
-
-	dir = GetDatabasePath(dbNode, spcNode);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-
-/* GUC variable */
-char	   *default_tablespace = NULL;
-
-
-static bool remove_tablespace_directories(Oid tablespaceoid, bool redo,
-										  char *location);
 /*
  * Create a table space
  *
@@ -166,11 +115,6 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	cqContext	cqc;
 	cqContext  *pcqCtx;
 
-<<<<<<< HEAD
-	/* validate */
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/* Must be super user */
 	if (!superuser())
 		ereport(ERROR,
@@ -185,19 +129,6 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	else
 		ownerId = GetUserId();
 
-<<<<<<< HEAD
-=======
-	/* Unix-ify the offered path, and strip any trailing slashes */
-	location = pstrdup(stmt->location);
-	canonicalize_path(location);
-
-	/* disallow quotes, else CREATE DATABASE would be at risk */
-	if (strchr(location, '\''))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_NAME),
-				 errmsg("tablespace location cannot contain single quotes")));
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/*
 	 * Disallow creation of tablespaces named "pg_xxx"; we reserve this
 	 * namespace for system purposes.
@@ -336,8 +267,6 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 				);
 
 	}
-<<<<<<< HEAD
-=======
 
 	/*
 	 * Force synchronous commit, to minimize the window between creating the
@@ -346,18 +275,6 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	 * it larger than necessary.
 	 */
 	ForceSyncCommit();
-
-	pfree(linkloc);
-	pfree(location);
-
-	/* We keep the lock on pg_tablespace until commit */
-	heap_close(rel, NoLock);
-#else							/* !HAVE_SYMLINK */
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("tablespaces are not supported on this platform")));
-#endif   /* HAVE_SYMLINK */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
@@ -381,10 +298,6 @@ RemoveTableSpace(List *names, DropBehavior behavior, bool missing_ok)
 	ItemPointerData persistentTid;
 	int64		persistentSerialNum;
 
-<<<<<<< HEAD
-	/* don't call this in a transaction block */
-	// PreventTransactionChain((void *) stmt, "DROP TABLESPACE");
-
 	/*
 	 * General DROP (object) syntax allows fully qualified names, but
 	 * tablespaces are global objects that do not live in schemas, so
@@ -402,8 +315,6 @@ RemoveTableSpace(List *names, DropBehavior behavior, bool missing_ok)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("syntax at or near \"cascade\"")));
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/*
 	 * Find the target tuple
 	 */
@@ -490,7 +401,6 @@ RemoveTableSpace(List *names, DropBehavior behavior, bool missing_ok)
 	LWLockAcquire(TablespaceCreateLock, LW_EXCLUSIVE);
 
 	/*
-<<<<<<< HEAD
 	 * Check for any relations still defined in the tablespace.
 	 */
 	PersistentRelation_CheckTablespace(tablespaceoid, &count, &relfilenode);
@@ -499,30 +409,6 @@ RemoveTableSpace(List *names, DropBehavior behavior, bool missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("tablespace \"%s\" is not empty", tablespacename)));
-=======
-	 * Try to remove the physical infrastructure.
-	 */
-	if (!remove_tablespace_directories(tablespaceoid, false))
-	{
-		/*
-		 * Not all files deleted?  However, there can be lingering empty files
-		 * in the directories, left behind by for example DROP TABLE, that
-		 * have been scheduled for deletion at next checkpoint (see comments
-		 * in mdunlink() for details).	We could just delete them immediately,
-		 * but we can't tell them apart from important data files that we
-		 * mustn't delete.  So instead, we force a checkpoint which will clean
-		 * out any lingering files, and try again.
-		 */
-		RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
-		if (!remove_tablespace_directories(tablespaceoid, false))
-		{
-			/* Still not empty, the files must be important then */
-			ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("tablespace \"%s\" is not empty",
-							tablespacename)));
-		}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	/*
@@ -575,9 +461,6 @@ RemoveTableSpace(List *names, DropBehavior behavior, bool missing_ok)
 	 */
 
 	/*
-<<<<<<< HEAD
-	 * Allow MirroredFileSysObj_JustInTimeDbDirCreate again.
-=======
 	 * Force synchronous commit, to minimize the window between removing the
 	 * files on-disk and marking the transaction committed.  It's not great
 	 * that there is any window at all, but definitely we don't want to make
@@ -586,8 +469,7 @@ RemoveTableSpace(List *names, DropBehavior behavior, bool missing_ok)
 	ForceSyncCommit();
 
 	/*
-	 * Allow TablespaceCreateDbspace again.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	 * Allow MirroredFileSysObj_JustInTimeDbDirCreate again.
 	 */
 	LWLockRelease(TablespaceCreateLock);
 
@@ -1147,189 +1029,6 @@ GetDefaultTablespace(bool forTemp)
 	return result;
 }
 
-<<<<<<< HEAD
-
-/*
- * get_tablespace_oid - given a tablespace name, look up the OID
- *
- * Returns InvalidOid if tablespace name not found.
- */
-Oid
-get_tablespace_oid(const char *tablespacename)
-{
-	Oid			tsoid;
-	Relation	rel;
-	HeapTuple	tuple;
-	cqContext	cqc;
-
-	/*
-	 * Search pg_tablespace.  We use a heapscan here even though there is an
-	 * index on name, on the theory that pg_tablespace will usually have just
-	 * a few entries and so an indexed lookup is a waste of effort.
-	 */
-	rel = heap_open(TableSpaceRelationId, AccessShareLock);
-
-	tuple = caql_getfirst(
-			caql_addrel(cqclr(&cqc), rel),
-			cql("SELECT * FROM pg_tablespace "
-				" WHERE spcname = :1 ",
-				CStringGetDatum(tablespacename)));
-
-	/* If nothing matches then the tablespace doesn't exist */
-	if (HeapTupleIsValid(tuple))
-		tsoid = HeapTupleGetOid(tuple);
-	else
-		tsoid = InvalidOid;
-
-	/*
-	 * Anything that needs to lookup a tablespace name must need a lock
-	 * on the tablespace for the duration of its transaction, otherwise
-	 * there is nothing preventing it from being dropped.
-	 */
-	if (OidIsValid(tsoid))
-	{
-		Buffer			buffer = InvalidBuffer;
-		HTSU_Result		lockTest;
-		ItemPointerData	update_ctid;
-		TransactionId	update_xmax;
-
-		/*
-		 * Unfortunately locking of objects other than relations doesn't
-		 * really work, the work around is to lock the tuple in pg_tablespace
-		 * to prevent drops from getting the exclusive lock they need.
-		 */
-		lockTest = heap_lock_tuple(rel, tuple, &buffer,
-								   &update_ctid, &update_xmax,
-								   GetCurrentCommandId(),
-								   LockTupleShared, LockTupleWait);
-		ReleaseBuffer(buffer);
-		switch (lockTest)
-		{
-			case HeapTupleMayBeUpdated:
-				break;  /* Got the Lock */
-
-			case HeapTupleSelfUpdated:
-				Assert(false); /* Shouldn't ever occur */
-				/* fallthrough */
-
-			case HeapTupleBeingUpdated:
-				Assert(false);  /* Not possible with LockTupleWait */
-				/* fallthrough */
-=======
-
-/*
- * Routines for handling the GUC variable 'temp_tablespaces'.
- */
-
-/* assign_hook: validate new temp_tablespaces, do extra actions as needed */
-const char *
-assign_temp_tablespaces(const char *newval, bool doit, GucSource source)
-{
-	char	   *rawname;
-	List	   *namelist;
-
-	/* Need a modifiable copy of string */
-	rawname = pstrdup(newval);
-
-	/* Parse string into list of identifiers */
-	if (!SplitIdentifierString(rawname, ',', &namelist))
-	{
-		/* syntax error in name list */
-		pfree(rawname);
-		list_free(namelist);
-		return NULL;
-	}
-
-	/*
-	 * If we aren't inside a transaction, we cannot do database access so
-	 * cannot verify the individual names.	Must accept the list on faith.
-	 * Fortunately, there's then also no need to pass the data to fd.c.
-	 */
-	if (IsTransactionState())
-	{
-		/*
-		 * If we error out below, or if we are called multiple times in one
-		 * transaction, we'll leak a bit of TopTransactionContext memory.
-		 * Doesn't seem worth worrying about.
-		 */
-		Oid		   *tblSpcs;
-		int			numSpcs;
-		ListCell   *l;
-
-		tblSpcs = (Oid *) MemoryContextAlloc(TopTransactionContext,
-										list_length(namelist) * sizeof(Oid));
-		numSpcs = 0;
-		foreach(l, namelist)
-		{
-			char	   *curname = (char *) lfirst(l);
-			Oid			curoid;
-			AclResult	aclresult;
-
-			/* Allow an empty string (signifying database default) */
-			if (curname[0] == '\0')
-			{
-				tblSpcs[numSpcs++] = InvalidOid;
-				continue;
-			}
-
-			/* Else verify that name is a valid tablespace name */
-			curoid = get_tablespace_oid(curname);
-			if (curoid == InvalidOid)
-			{
-				/*
-				 * In an interactive SET command, we ereport for bad info.
-				 * When source == PGC_S_TEST, we are checking the argument of
-				 * an ALTER DATABASE SET or ALTER USER SET command.  pg_dumpall
-				 * dumps all roles before tablespaces, so if we're restoring a
-				 * pg_dumpall script the tablespace might not yet exist, but
-				 * will be created later.  Because of that, issue a NOTICE if
-				 * source == PGC_S_TEST, but accept the value anyway.
-				 * Otherwise, silently ignore any bad list elements.
-				 */
-				if (source >= PGC_S_INTERACTIVE)
-					ereport((source == PGC_S_TEST) ? NOTICE : ERROR,
-							(errcode(ERRCODE_UNDEFINED_OBJECT),
-							 errmsg("tablespace \"%s\" does not exist",
-									curname)));
-				continue;
-			}
-
-			/*
-			 * Allow explicit specification of database's default tablespace
-			 * in temp_tablespaces without triggering permissions checks.
-			 */
-			if (curoid == MyDatabaseTableSpace)
-			{
-				tblSpcs[numSpcs++] = InvalidOid;
-				continue;
-			}
-
-			/* Check permissions similarly */
-			aclresult = pg_tablespace_aclcheck(curoid, GetUserId(),
-											   ACL_CREATE);
-			if (aclresult != ACLCHECK_OK)
-			{
-				if (source >= PGC_S_INTERACTIVE)
-					aclcheck_error(aclresult, ACL_KIND_TABLESPACE, curname);
-				continue;
-			}
-
-			tblSpcs[numSpcs++] = curoid;
-		}
-
-		/* If actively "doing it", give the new list to fd.c */
-		if (doit)
-			SetTempTablespaces(tblSpcs, numSpcs);
-		else
-			pfree(tblSpcs);
-	}
-
-	pfree(rawname);
-	list_free(namelist);
-
-	return newval;
-}
-
 /*
  * PrepareTempTablespaces -- prepare to use temp tablespaces
  *
@@ -1444,7 +1143,54 @@ get_tablespace_oid(const char *tablespacename)
 	 * a few entries and so an indexed lookup is a waste of effort.
 	 */
 	rel = heap_open(TableSpaceRelationId, AccessShareLock);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+
+	ScanKeyInit(&entry[0],
+				Anum_pg_tablespace_spcname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(tablespacename));
+	scandesc = heap_beginscan(rel, SnapshotNow, 1, entry);
+	tuple = heap_getnext(scandesc, ForwardScanDirection);
+
+	/* If nothing matches then the tablespace doesn't exist */
+	if (HeapTupleIsValid(tuple))
+		result = HeapTupleGetOid(tuple);
+	else
+		result = InvalidOid;
+
+	/*
+	 * Anything that needs to lookup a tablespace name must need a lock
+	 * on the tablespace for the duration of its transaction, otherwise
+	 * there is nothing preventing it from being dropped.
+	 */
+	if (OidIsValid(result))
+	{
+		Buffer			buffer = InvalidBuffer;
+		HTSU_Result		lockTest;
+		ItemPointerData	update_ctid;
+		TransactionId	update_xmax;
+
+		/*
+		 * Unfortunately locking of objects other than relations doesn't
+		 * really work, the work around is to lock the tuple in pg_tablespace
+		 * to prevent drops from getting the exclusive lock they need.
+		 */
+		lockTest = heap_lock_tuple(rel, tuple, &buffer,
+								   &update_ctid, &update_xmax,
+								   GetCurrentCommandId(true),
+								   LockTupleShared, LockTupleWait);
+		ReleaseBuffer(buffer);
+		switch (lockTest)
+		{
+			case HeapTupleMayBeUpdated:
+				break;  /* Got the Lock */
+
+			case HeapTupleSelfUpdated:
+				Assert(false); /* Shouldn't ever occur */
+				/* fallthrough */
+
+			case HeapTupleBeingUpdated:
+				Assert(false);  /* Not possible with LockTupleWait */
+				/* fallthrough */
 
 			case HeapTupleUpdated:
 				ereport(ERROR,
@@ -1452,22 +1198,15 @@ get_tablespace_oid(const char *tablespacename)
 						 errmsg("could not serialize access to tablespace %s due to concurrent update",
 								tablespacename)));
 
-<<<<<<< HEAD
 			default:
 				elog(ERROR, "unrecognized heap_lock_tuple_status: %u", lockTest);
 		}
 	}
-=======
-	/* We assume that there can be at most one matching tuple */
-	if (HeapTupleIsValid(tuple))
-		result = HeapTupleGetOid(tuple);
-	else
-		result = InvalidOid;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
+	heap_endscan(scandesc);
 	heap_close(rel, AccessShareLock);
 
-	return tsoid;
+	return result;
 }
 
 /*
@@ -1479,19 +1218,16 @@ char *
 get_tablespace_name(Oid spc_oid)
 {
 	char	   *result;
+	Relation	rel;
+	HeapScanDesc scandesc;
+	HeapTuple	tuple;
+	ScanKeyData entry[1];
 
 	/*
 	 * Search pg_tablespace.  We use a heapscan here even though there is an
 	 * index on oid, on the theory that pg_tablespace will usually have just a
 	 * few entries and so an indexed lookup is a waste of effort.
 	 */
-<<<<<<< HEAD
-	result = caql_getcstring(
-			NULL,
-			cql("SELECT spcname FROM pg_tablespace "
-				" WHERE oid = :1 ",
-				ObjectIdGetDatum(spc_oid)));
-=======
 	rel = heap_open(TableSpaceRelationId, AccessShareLock);
 
 	ScanKeyInit(&entry[0],
@@ -1500,9 +1236,16 @@ get_tablespace_name(Oid spc_oid)
 				ObjectIdGetDatum(spc_oid));
 	scandesc = heap_beginscan(rel, SnapshotNow, 1, entry);
 	tuple = heap_getnext(scandesc, ForwardScanDirection);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* We assume that there can be at most one matching tuple */
+	if (HeapTupleIsValid(tuple))
+		result = pstrdup(NameStr(((Form_pg_tablespace) GETSTRUCT(tuple))->spcname));
+	else
+		result = NULL;
+
+	heap_endscan(scandesc);
+	heap_close(rel, AccessShareLock);
+
 	return result;
 }
 
