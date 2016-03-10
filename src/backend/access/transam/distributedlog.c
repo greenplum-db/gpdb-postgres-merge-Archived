@@ -363,7 +363,7 @@ DistributedLog_ShmemSize(void)
 {
 	Size size;
 	
-	size = SimpleLruShmemSize(NUM_DISTRIBUTEDLOG_BUFFERS);
+	size = SimpleLruShmemSize(NUM_DISTRIBUTEDLOG_BUFFERS, 0);
 
 	size += DistributedLog_SharedShmemSize();
 
@@ -785,7 +785,7 @@ DistributedLog_WriteZeroPageXlogRec(int page)
 	rdata.len = sizeof(int);
 	rdata.buffer = InvalidBuffer;
 	rdata.next = NULL;
-	(void) XLogInsert(RM_DISTRIBUTEDLOG_ID, DISTRIBUTEDLOG_ZEROPAGE | XLOG_NO_TRAN, &rdata);
+	(void) XLogInsert(RM_DISTRIBUTEDLOG_ID, DISTRIBUTEDLOG_ZEROPAGE, &rdata);
 }
 
 /*
@@ -807,7 +807,7 @@ DistributedLog_WriteTruncateXlogRec(int page)
 	rdata.len = sizeof(int);
 	rdata.buffer = InvalidBuffer;
 	rdata.next = NULL;
-	recptr = XLogInsert(RM_DISTRIBUTEDLOG_ID, DISTRIBUTEDLOG_TRUNCATE | XLOG_NO_TRAN, &rdata);
+	recptr = XLogInsert(RM_DISTRIBUTEDLOG_ID, DISTRIBUTEDLOG_TRUNCATE, &rdata);
 	XLogFlush(recptr);
 }
 
