@@ -16,6 +16,7 @@
 #include "nodes/plannodes.h"
 #include "nodes/relation.h"
 
+extern Node *convert_IN_to_join(PlannerInfo *root, List **rtrlist_inout, SubLink *sublink);
 extern Node *convert_testexpr(PlannerInfo *root,
 				 Node *testexpr,
 				 List *subst_nodes);
