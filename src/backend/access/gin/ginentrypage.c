@@ -8,11 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginentrypage.c,v 1.5.2.1 2007/06/04 15:59:19 teodor Exp $
-=======
  *			$PostgreSQL: pgsql/src/backend/access/gin/ginentrypage.c,v 1.12 2008/01/01 19:45:46 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *-------------------------------------------------------------------------
  */
 
@@ -358,11 +354,7 @@ entryPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prd
 	static XLogRecData rdata[3];
 	OffsetNumber placed;
 	static ginxlogInsert data;
-<<<<<<< HEAD
-	int 	cnt=0;
-=======
 	int			cnt = 0;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	*prdata = rdata;
 	data.updateBlkno = entryPreparePage(btree, page, off);
@@ -380,16 +372,6 @@ entryPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prd
 	data.isData = false;
 	data.isLeaf = GinPageIsLeaf(page) ? TRUE : FALSE;
 
-<<<<<<< HEAD
-    /*
-	 * Prevent full page write if child's split occurs. That is needed
-	 * to remove incomplete splits while replaying WAL
-	 *
-	 * data.updateBlkno contains new block number (of newly created right page)
-	 * for recently splited page.
-	 */
-	if ( data.updateBlkno == InvalidBlockNumber ) 
-=======
 	/*
 	 * Prevent full page write if child's split occurs. That is needed to
 	 * remove incomplete splits while replaying WAL
@@ -398,7 +380,6 @@ entryPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prd
 	 * page) for recently splited page.
 	 */
 	if (data.updateBlkno == InvalidBlockNumber)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		rdata[0].buffer = buf;
 		rdata[0].buffer_std = TRUE;
@@ -411,11 +392,7 @@ entryPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prd
 	rdata[cnt].buffer = InvalidBuffer;
 	rdata[cnt].data = (char *) &data;
 	rdata[cnt].len = sizeof(ginxlogInsert);
-<<<<<<< HEAD
-	rdata[cnt].next = &rdata[cnt+1];
-=======
 	rdata[cnt].next = &rdata[cnt + 1];
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	cnt++;
 
 	rdata[cnt].buffer = InvalidBuffer;
