@@ -1,12 +1,9 @@
-/*------------------------------------------------------------------------- 
+/*-------------------------------------------------------------------------
  *
  * schemacmds.c
  *	  schema creation/manipulation commands
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -54,13 +51,9 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 {
 	const char *schemaName = stmt->schemaname;
 	const char *authId = stmt->authid;
-<<<<<<< HEAD
 	const bool  istemp = stmt->istemp;
-	Oid			namespaceId = 0;
-=======
 	Oid			namespaceId;
 	OverrideSearchPath *overridePath;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
 	Oid			owner_uid;
@@ -177,8 +170,14 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	CommandCounterIncrement();
 
 	/* If this is the temporary namespace we must mark it specially */
+	/*
+	 * GPDB_83_MERGE_FIXME: We should set the temp toast namespace OID in the same call,
+	 * but currently the master dispatches two separate CREATE SCHEMA commands.
+	 * For now, just set InvalidOid as the temp toast namespace; temporary tables
+	 * with toast will fail...
+	 */
 	if (istemp)
-		SetTempNamespace(namespaceId);
+		SetTempNamespace(namespaceId, InvalidOid);
 
 	/*
 	 * Temporarily make the new namespace be the front of the search path, as
@@ -207,30 +206,6 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	 */
 	foreach(parsetree_item, parsetree_list)
 	{
-<<<<<<< HEAD
-		Node	   *parsetree = (Node *) lfirst(parsetree_item);
-		List	   *querytree_list;
-		ListCell   *querytree_item;
-
-		querytree_list = parse_analyze(parsetree, NULL, NULL, 0);
-
-		foreach(querytree_item, querytree_list)
-		{
-			Query	   *querytree = (Query *) lfirst(querytree_item);
-
-			/* schemas should contain only utility stmts */
-			Assert(querytree->commandType == CMD_UTILITY);
-			/* do this step */
-			ProcessUtility(querytree->utilityStmt, 
-						   queryString,
-						   NULL, 
-						   false, /* not top level */
-						   None_Receiver, 
-						   NULL);
-			/* make sure later steps can see the object created here */
-			CommandCounterIncrement();
-		}
-=======
 		Node	   *stmt = (Node *) lfirst(parsetree_item);
 
 		/* do this step */
@@ -242,7 +217,6 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 					   NULL);
 		/* make sure later steps can see the object created here */
 		CommandCounterIncrement();
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	/* Reset search path to normal state */

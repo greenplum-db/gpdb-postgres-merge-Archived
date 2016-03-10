@@ -7,11 +7,7 @@
  * accessed via the extended FE/BE query protocol.
  *
  *
-<<<<<<< HEAD
  * Copyright (c) 2002-2009, PostgreSQL Global Development Group
-=======
- * Copyright (c) 2002-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * IDENTIFICATION
  *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.80.2.2 2009/12/29 17:41:18 heikki Exp $
@@ -26,16 +22,12 @@
 #include "catalog/pg_type.h"
 #include "commands/explain.h"
 #include "commands/prepare.h"
-<<<<<<< HEAD
 #include "funcapi.h"
-#include "miscadmin.h"
-=======
 #include "miscadmin.h"
 #include "parser/analyze.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_type.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "rewrite/rewriteHandler.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
@@ -65,21 +57,13 @@ static Datum build_regtype_array(Oid *param_types, int num_params);
 void
 PrepareQuery(PrepareStmt *stmt, const char *queryString)
 {
-<<<<<<< HEAD
-	const char	*commandTag = NULL;
-	Query		*query = NULL;
-	List		*query_list = NIL;
-	List		*plan_list = NIL;
-	List		*query_list_copy = NIL;
-	NodeTag		srctag;  /* GPDB */
-=======
 	Oid		   *argtypes = NULL;
 	int			nargs;
 	Query	   *query;
 	List	   *query_list,
 			   *plan_list;
 	int			i;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	NodeTag		srctag;  /* GPDB */
 
 	/*
 	 * Disallow empty-string statement name (conflicts with protocol-level
@@ -149,45 +133,28 @@ PrepareQuery(PrepareStmt *stmt, const char *queryString)
 	switch (query->commandType)
 	{
 		case CMD_SELECT:
-<<<<<<< HEAD
-			commandTag = "SELECT";
 			srctag = T_SelectStmt;
 			break;
 		case CMD_INSERT:
-			commandTag = "INSERT";
 			srctag = T_InsertStmt;
 			break;
 		case CMD_UPDATE:
-			commandTag = "UPDATE";
 			srctag = T_UpdateStmt;
 			break;
 		case CMD_DELETE:
-			commandTag = "DELETE";
 			srctag = T_DeleteStmt;
-=======
-		case CMD_INSERT:
-		case CMD_UPDATE:
-		case CMD_DELETE:
-			/* OK */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			break;
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PSTATEMENT_DEFINITION),
 					 errmsg("utility statements cannot be prepared")));
-<<<<<<< HEAD
-			commandTag = NULL;	/* keep compiler quiet */
-			srctag = T_Query;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+			srctag = T_Query;	/* keep compiler quiet */
 			break;
 	}
 
 	/* Rewrite the query. The result could be 0, 1, or many queries. */
 	query_list = QueryRewrite(query);
 
-	query_list_copy = copyObject(query_list); /* planner scribbles on query tree */
-	
 	/* Generate plans for queries.	Snapshot is already set. */
 	plan_list = pg_plan_queries(query_list, 0, NULL, false);
 
@@ -195,21 +162,14 @@ PrepareQuery(PrepareStmt *stmt, const char *queryString)
 	 * Save the results.
 	 */
 	StorePreparedStatement(stmt->name,
-<<<<<<< HEAD
-						   queryString, /* WAS global debug_query_string, */
-						   srctag,
-						   commandTag,
-						   query_list_copy,
-						   stmt->argtype_oids,
-=======
 						   stmt->query,
 						   queryString,
+						   srctag,
 						   CreateCommandTag((Node *) query),
 						   argtypes,
 						   nargs,
 						   0,	/* default cursor options */
 						   plan_list,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 						   true);
 }
 
@@ -228,13 +188,8 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 			 DestReceiver *dest, char *completionTag)
 {
 	PreparedStatement *entry;
-<<<<<<< HEAD
-	List	   *stmt_list;
-	MemoryContext qcontext;
-=======
 	CachedPlan *cplan;
 	List	   *plan_list;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ParamListInfo paramLI = NULL;
 	EState	   *estate = NULL;
 	Portal		portal;
@@ -242,16 +197,12 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 	/* Look it up in the hash table */
 	entry = FetchPreparedStatement(stmt->name, true);
 
-<<<<<<< HEAD
-	qcontext = entry->context;
-=======
 	/* Shouldn't have a non-fully-planned plancache entry */
 	if (!entry->plansource->fully_planned)
 		elog(ERROR, "EXECUTE does not support unplanned prepared statements");
 	/* Shouldn't get any non-fixed-result cached plan, either */
 	if (!entry->plansource->fixed_result)
 		elog(ERROR, "EXECUTE does not support variable-result cached plans");
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Evaluate parameters, if any */
 	if (entry->plansource->num_params > 0)
@@ -274,6 +225,11 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 	/* Plan the query.  If this is a CTAS, copy the "into" information into
 	 * the query so that we construct the plan correctly.  Else the table
 	 * might not be created on the segments.  (MPP-8135) */
+
+	/* GPDB_83_MERGE_FIXME: I don't know what to do with this. The query was already
+	 * planned in PrepareQuery, do we really need to plan it again here?
+	 */
+#if 0	
 	{
 		List *query_list = copyObject(entry->query_list); /* planner scribbles on query tree :( */
 		
@@ -286,7 +242,8 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 		
 		stmt_list = pg_plan_queries(query_list, paramLI, false);
 	}
-
+#endif
+	
 	/*
 	 * For CREATE TABLE / AS EXECUTE, we must make a copy of the stored query
 	 * so that we can modify its destination (yech, but this has always been
@@ -296,25 +253,6 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 	if (stmt->into)
 	{
 		MemoryContext oldContext;
-<<<<<<< HEAD
-		PlannedStmt	 *pstmt;
-
-		if (list_length(stmt_list) != 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("prepared statement is not a SELECT")));
-
-		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
-
-		stmt_list = copyObject(stmt_list);
-		qcontext = PortalGetHeapMemory(portal);
-		pstmt = (PlannedStmt *) linitial(stmt_list);
-		pstmt->qdContext = qcontext;
-		if (pstmt->commandType != CMD_SELECT)
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("prepared statement is not a SELECT")));
-=======
 		PlannedStmt *pstmt;
 
 		/* Replan if needed, and increment plan refcount transiently */
@@ -336,9 +274,6 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("prepared statement is not a SELECT")));
-		pstmt->intoClause = copyObject(stmt->into);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-
 		pstmt->intoClause = copyObject(stmt->into);
 
 		/* XXX  Is it legitimate to assign a constant default policy without 
@@ -364,20 +299,6 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 		plan_list = cplan->stmt_list;
 	}
 
-<<<<<<< HEAD
-	/* Copy the plan's saved query string into the portal's memory */
-	Assert(entry->query_string != NULL); 
-	char *query_string = MemoryContextStrdup(PortalGetHeapMemory(portal),
-					   entry->query_string);
-
-	PortalDefineQuery(portal,
-					  NULL,
-					  query_string,
-					  entry->sourceTag,
-					  entry->commandTag,
-					  stmt_list,
-					  qcontext);
-=======
 	/*
 	 * Note: we don't bother to copy the source query string into the portal.
 	 * Any errors it might be useful for will already have been reported.
@@ -385,10 +306,10 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 	PortalDefineQuery(portal,
 					  NULL,
 					  NULL,
+					  entry->plansource->sourceTag,
 					  entry->plansource->commandTag,
 					  plan_list,
 					  cplan);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Run the portal to completion.
@@ -396,16 +317,7 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 	PortalStart(portal, paramLI, ActiveSnapshot,
 				savedSeqServerHost, savedSeqServerPort);
 
-<<<<<<< HEAD
-	(void) PortalRun(portal, 
-					FETCH_ALL, 
-					 true, /* Effectively always top level. */
-					 dest, 
-					 dest, 
-					 completionTag);
-=======
 	(void) PortalRun(portal, FETCH_ALL, false, dest, dest, completionTag);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	PortalDrop(portal, false);
 
@@ -485,7 +397,7 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 		expr = coerce_to_target_type(pstate, expr, given_type_id,
 									 expected_type_id, -1,
 									 COERCION_ASSIGNMENT,
-									 COERCE_IMPLICIT_CAST);
+									 COERCE_IMPLICIT_CAST, -1);
 
 		if (expr == NULL)
 			ereport(ERROR,
@@ -566,15 +478,10 @@ StorePreparedStatement(const char *stmt_name,
 					   const char *query_string,
 					   NodeTag	   sourceTag,
 					   const char *commandTag,
-<<<<<<< HEAD
-					   List *query_list,
-					   List *argtype_list,
-=======
 					   Oid *param_types,
 					   int num_params,
 					   int cursor_options,
 					   List *stmt_list,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					   bool from_sql)
 {
 	PreparedStatement *entry;
@@ -594,26 +501,6 @@ StorePreparedStatement(const char *stmt_name,
 				 errmsg("prepared statement \"%s\" already exists",
 						stmt_name)));
 
-<<<<<<< HEAD
-	/* Make a permanent memory context for the hashtable entry */
-	entrycxt = AllocSetContextCreate(TopMemoryContext,
-									 stmt_name,
-									 ALLOCSET_SMALL_MINSIZE,
-									 ALLOCSET_SMALL_INITSIZE,
-									 ALLOCSET_SMALL_MAXSIZE);
-
-	oldcxt = MemoryContextSwitchTo(entrycxt);
-
-	/*
-	 * We need to copy the data so that it is stored in the correct memory
-	 * context.  Do this before making hashtable entry, so that an
-	 * out-of-memory failure only wastes memory and doesn't leave us with an
-	 * incomplete (ie corrupt) hashtable entry.
-	 */
-	qstring = query_string ? pstrdup(query_string) : NULL;
-	query_list = (List *)copyObject(query_list);
-	argtype_list = list_copy(argtype_list);
-=======
 	/* Create a plancache entry */
 	plansource = CreateCachedPlan(raw_parse_tree,
 								  query_string,
@@ -624,7 +511,6 @@ StorePreparedStatement(const char *stmt_name,
 								  stmt_list,
 								  true,
 								  true);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Now we can add entry to hash table */
 	entry = (PreparedStatement *) hash_search(prepared_queries,
@@ -637,19 +523,8 @@ StorePreparedStatement(const char *stmt_name,
 		elog(ERROR, "duplicate prepared statement \"%s\"",
 			 stmt_name);
 
-<<<<<<< HEAD
-	/* Fill in the hash table entry with copied data */
-	entry->query_string = qstring;
-	entry->sourceTag = sourceTag;
-	entry->commandTag = commandTag;
-	entry->query_list = query_list;
-	entry->argtype_list = argtype_list;
-	entry->context = entrycxt;
-	entry->prepare_time = GetCurrentStatementStartTimestamp();
-=======
 	/* Fill in the hash table entry */
 	entry->plansource = plansource;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	entry->from_sql = from_sql;
 	entry->prepare_time = GetCurrentStatementStartTimestamp();
 }
@@ -696,54 +571,6 @@ FetchPreparedStatement(const char *stmt_name, bool throwError)
 TupleDesc
 FetchPreparedStatementResultDesc(PreparedStatement *stmt)
 {
-<<<<<<< HEAD
-	Query	   *query;
-
-	switch (ChoosePortalStrategy(stmt->query_list))
-	{
-		case PORTAL_ONE_SELECT:
-			query = (Query *) linitial(stmt->query_list);
-			return ExecCleanTypeFromTL(query->targetList, false);
-
-		case PORTAL_ONE_RETURNING:
-			query = (Query *) PortalListGetPrimaryStmt(stmt->query_list);
-			return ExecCleanTypeFromTL(query->returningList, false);
-
-		case PORTAL_UTIL_SELECT:
-			query = (Query *) linitial(stmt->query_list);
-			return UtilityTupleDescriptor(query->utilityStmt);
-
-		case PORTAL_MULTI_QUERY:
-			/* will not return tuples */
-			break;
-	}
-	return NULL;
-}
-
-/*
- * Given a prepared statement, determine whether it will return tuples.
- *
- * Note: this is used rather than just testing the result of
- * FetchPreparedStatementResultDesc() because that routine can fail if
- * invoked in an aborted transaction.  This one is safe to use in any
- * context.  Be sure to keep the two routines in sync!
- */
-bool
-PreparedStatementReturnsTuples(PreparedStatement *stmt)
-{
-	switch (ChoosePortalStrategy(stmt->query_list))
-	{
-		case PORTAL_ONE_SELECT:
-		case PORTAL_ONE_RETURNING:
-		case PORTAL_UTIL_SELECT:
-			return true;
-
-		case PORTAL_MULTI_QUERY:
-			/* will not return tuples */
-			break;
-	}
-	return false;
-=======
 	/*
 	 * Since we don't allow prepared statements' result tupdescs to change,
 	 * there's no need for a revalidate call here.
@@ -753,7 +580,6 @@ PreparedStatementReturnsTuples(PreparedStatement *stmt)
 		return CreateTupleDescCopy(stmt->plansource->resultDesc);
 	else
 		return NULL;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
@@ -764,14 +590,6 @@ PreparedStatementReturnsTuples(PreparedStatement *stmt)
  * Note: this is pretty ugly, but since it's only used in corner cases like
  * Describe Statement on an EXECUTE command, we don't worry too much about
  * efficiency.
-<<<<<<< HEAD
-
- * Note: do not modify the result.
- *
- * XXX be careful to keep this in sync with FetchPortalTargetList,
- * and with UtilityReturnsTuples.
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 List *
 FetchPreparedStatementTargetList(PreparedStatement *stmt)
@@ -779,19 +597,9 @@ FetchPreparedStatementTargetList(PreparedStatement *stmt)
 	List	   *tlist;
 	CachedPlan *cplan;
 
-<<<<<<< HEAD
-	if (strategy == PORTAL_ONE_SELECT)
-		return ((Query *) linitial(stmt->query_list))->targetList;
-	if (strategy == PORTAL_ONE_RETURNING)
-		return ((Query *)(PortalListGetPrimaryStmt(stmt->query_list)))->returningList;
-	if (strategy == PORTAL_UTIL_SELECT)
-	{
-		Node	   *utilityStmt;
-=======
 	/* No point in looking if it doesn't return tuples */
 	if (stmt->plansource->resultDesc == NULL)
 		return NIL;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Make sure the plan is up to date */
 	cplan = RevalidateCachedPlan(stmt->plansource, true);
@@ -877,24 +685,15 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
 					ParamListInfo params, TupOutputState *tstate)
 {
 	PreparedStatement *entry;
-<<<<<<< HEAD
-	ListCell   *q,
-			   *p;
-	List	   *query_list,
-			   *stmt_list;
-=======
 	CachedPlan *cplan;
 	List	   *plan_list;
 	ListCell   *p;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ParamListInfo paramLI = NULL;
 	EState	   *estate = NULL;
 
 	/* Look it up in the hash table */
 	entry = FetchPreparedStatement(execstmt->name, true);
 
-<<<<<<< HEAD
-=======
 	/* Shouldn't have a non-fully-planned plancache entry */
 	if (!entry->plansource->fully_planned)
 		elog(ERROR, "EXPLAIN EXECUTE does not support unplanned prepared statements");
@@ -907,7 +706,6 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
 
 	plan_list = cplan->stmt_list;
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/* Evaluate parameters, if any */
 	if (entry->plansource->num_params)
 	{
@@ -921,38 +719,16 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
 								 queryString, estate);
 	}
 
-	query_list = copyObject(entry->query_list); /* planner scribbles on query tree */
-	stmt_list = pg_plan_queries(query_list, paramLI, false);
-
-	Assert(list_length(query_list) == list_length(stmt_list));
-
 	/* Explain each query */
-<<<<<<< HEAD
-	forboth(q, query_list, p, stmt_list)
-	{
-		PlannedStmt *pstmt = (PlannedStmt *) lfirst(p);
-		Query	   *query = (Query *) lfirst(q);
-=======
 	foreach(p, plan_list)
 	{
 		PlannedStmt *pstmt = (PlannedStmt *) lfirst(p);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		bool		is_last_query;
 
 		is_last_query = (lnext(p) == NULL);
 
 		if (IsA(pstmt, PlannedStmt))
 		{
-<<<<<<< HEAD
-			if (query->utilityStmt && IsA(query->utilityStmt, NotifyStmt))
-				do_text_output_oneline(tstate, "NOTIFY");
-			else
-				do_text_output_oneline(tstate, "UTILITY");
-		}
-		else
-		{
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			if (execstmt->into)
 			{
 				if (pstmt->commandType != CMD_SELECT ||
@@ -964,28 +740,15 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
 				/* Copy the stmt so we can modify it */
 				pstmt = copyObject(pstmt);
 
-<<<<<<< HEAD
-				if ( execstmt->into )
-				{
-					Assert(query->intoClause == NULL);
-					query->intoClause = makeNode(IntoClause);
-					query->intoClause->rel = execstmt->into->rel;
-				}
-			}
-
-
-			ExplainOnePlan(pstmt, stmt, "EXECUTE", paramLI, tstate);
-=======
 				pstmt->intoClause = execstmt->into;
 			}
 
-			ExplainOnePlan(pstmt, paramLI, stmt, tstate);
+			ExplainOnePlan(pstmt, paramLI, stmt, queryString, tstate);
 		}
 		else
 		{
 			ExplainOneUtility((Node *) pstmt, stmt, queryString,
 							  params, tstate);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 
 		/* No need for CommandCounterIncrement, as ExplainOnePlan did it */
@@ -1024,19 +787,11 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("materialize mode required, but it is not " \
 						"allowed in this context")));
-<<<<<<< HEAD
 
 	/* need to build tuplestore in query context */
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
-=======
-
-	/* need to build tuplestore in query context */
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/*
 	 * build tupdesc for result tuples. This must match the definition of the
 	 * pg_prepared_statements view in system_views.sql
@@ -1052,30 +807,6 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 					   REGTYPEARRAYOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "from_sql",
 					   BOOLOID, -1, 0);
-<<<<<<< HEAD
-
-	/*
-	 * We put all the tuples into a tuplestore in one scan of the hashtable.
-	 * This avoids any issue of the hashtable possibly changing between calls.
-	 */
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
-
-	/* hash table might be uninitialized */
-	if (prepared_queries)
-	{
-		HASH_SEQ_STATUS hash_seq;
-		PreparedStatement *prep_stmt;
-
-		hash_seq_init(&hash_seq, prepared_queries);
-		while ((prep_stmt = hash_seq_search(&hash_seq)) != NULL)
-		{
-			HeapTuple	tuple;
-			Datum		values[5];
-			bool		nulls[5];
-
-			/* generate junk in short-term context */
-			MemoryContextSwitchTo(oldcontext);
-=======
 
 	/*
 	 * We put all the tuples into a tuplestore in one scan of the hashtable.
@@ -1098,29 +829,12 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 			HeapTuple	tuple;
 			Datum		values[5];
 			bool		nulls[5];
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			MemSet(nulls, 0, sizeof(nulls));
 
 			values[0] = DirectFunctionCall1(textin,
 									  CStringGetDatum(prep_stmt->stmt_name));
 
-<<<<<<< HEAD
-			if (prep_stmt->query_string == NULL)
-				nulls[1] = true;
-			else
-				values[1] = DirectFunctionCall1(textin,
-								   CStringGetDatum(prep_stmt->query_string));
-
-			values[2] = TimestampTzGetDatum(prep_stmt->prepare_time);
-			values[3] = build_regtype_array(prep_stmt->argtype_list);
-			values[4] = BoolGetDatum(prep_stmt->from_sql);
-
-			tuple = heap_form_tuple(tupdesc, values, nulls);
-
-			/* switch to appropriate context while storing the tuple */
-			MemoryContextSwitchTo(per_query_ctx);
-=======
 			if (prep_stmt->plansource->query_string == NULL)
 				nulls[1] = true;
 			else
@@ -1133,7 +847,6 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 			values[4] = BoolGetDatum(prep_stmt->from_sql);
 
 			tuple = heap_form_tuple(tupdesc, values, nulls);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			tuplestore_puttuple(tupstore, tuple);
 		}
 	}
@@ -1141,11 +854,6 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 	/* clean up and return the tuplestore */
 	tuplestore_donestoring(tupstore);
 
-<<<<<<< HEAD
-	MemoryContextSwitchTo(oldcontext);
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;

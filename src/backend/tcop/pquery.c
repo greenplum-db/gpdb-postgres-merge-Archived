@@ -1193,11 +1193,7 @@ PortalSetResultFormat(Portal portal, int nFormats, int16 *formats)
  * suspended due to exhaustion of the count parameter.
  */
 bool
-<<<<<<< HEAD
 PortalRun(Portal portal, int64 count, bool isTopLevel,
-=======
-PortalRun(Portal portal, long count, bool isTopLevel,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		  DestReceiver *dest, DestReceiver *altdest,
 		  char *completionTag)
 {
@@ -1284,23 +1280,6 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 
 			case PORTAL_ONE_RETURNING:
 			case PORTAL_UTIL_SELECT:
-<<<<<<< HEAD
-			    /*
-			     * If we have not yet run the command, do so, storing its
-			     * results in the portal's tuplestore.
-			     */
-			    if (!portal->holdStore)
-				    FillPortalStore(portal, isTopLevel);
-
-			    /*
-			     * Now fetch desired portion of results.
-			     */
-			    (void) PortalRunSelect(portal, true, count, dest);
-
-			    /* we know the query is supposed to set the tag */
-			    if (completionTag && portal->commandTag)
-				    strcpy(completionTag, portal->commandTag);
-=======
 
 				/*
 				 * If we have not yet run the command, do so, storing its
@@ -1317,7 +1296,6 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 				/* we know the query is supposed to set the tag */
 				if (completionTag && portal->commandTag)
 					strcpy(completionTag, portal->commandTag);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 				/* Mark portal not active */
 				portal->status = PORTAL_READY;
@@ -1329,11 +1307,7 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 				break;
 
 			case PORTAL_MULTI_QUERY:
-<<<<<<< HEAD
-				PortalRunMulti(portal, isTopLevel, 
-=======
 				PortalRunMulti(portal, isTopLevel,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 							   dest, altdest, completionTag);
 
 				/* Prevent portal's commands from being re-executed */
@@ -1568,20 +1542,12 @@ FillPortalStore(Portal portal, bool isTopLevel)
 			 * MULTI_QUERY case, but send the primary query's output to the
 			 * tuplestore. Auxiliary query outputs are discarded.
 			 */
-<<<<<<< HEAD
-			PortalRunMulti(portal, isTopLevel, 
-=======
 			PortalRunMulti(portal, isTopLevel,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 						   treceiver, None_Receiver, completionTag);
 			break;
 
 		case PORTAL_UTIL_SELECT:
-<<<<<<< HEAD
-			PortalRunUtility(portal, linitial(portal->stmts),
-=======
 			PortalRunUtility(portal, (Node *) linitial(portal->stmts),
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 							 isTopLevel, treceiver, completionTag);
 			break;
 
@@ -1673,12 +1639,7 @@ static void
 PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
 				 DestReceiver *dest, char *completionTag)
 {
-<<<<<<< HEAD
-	ereport(DEBUG3,
-			(errmsg_internal("ProcessUtility")));
-=======
 	elog(DEBUG3, "ProcessUtility");
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Set snapshot if utility stmt needs one.	Most reliable way to do this
@@ -1725,41 +1686,16 @@ PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
 	}
 
 
-<<<<<<< HEAD
 	/* check if this utility statement need to be involved into resoure queue
 	 * mgmt */
 	ResHandleUtilityStmt(portal, utilityStmt);
 
-	if ( isTopLevel )
-	{
-		/* utility statement can override default tag string */
-		ProcessUtility(utilityStmt, 
-					   portal->sourceText ? portal->sourceText : "(Source text for portal is not available)",
-					   portal->portalParams,
-					   isTopLevel,
-					   dest, 
-					   completionTag);
-		if (completionTag && completionTag[0] == '\0' && portal->commandTag)
-			strcpy(completionTag, portal->commandTag);	/* use the default */
-	}
-	else
-	{
-		/* utility added by rewrite cannot set tag */
-		ProcessUtility(utilityStmt, 
-					   portal->sourceText ? portal->sourceText : "(Source text for portal is not available)",
-					   portal->portalParams, 
-					   isTopLevel,
-					   dest, 
-					   NULL);
-	}
-=======
 	ProcessUtility(utilityStmt,
-				   portal->sourceText,
+				   portal->sourceText ? portal->sourceText : "(Source text for portal is not available)",
 				   portal->portalParams,
 				   isTopLevel,
 				   dest,
 				   completionTag);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Some utility statements may change context on us */
 	MemoryContextSwitchTo(PortalGetHeapMemory(portal));

@@ -5521,7 +5521,7 @@ DefineStmt:
 			| CREATE TYPE_P any_name AS ENUM_P '(' enum_val_list ')'
 				{
 					CreateEnumStmt *n = makeNode(CreateEnumStmt);
-					n->typename = $3;
+					n->typeName = $3;
 					n->vals = $7;
 					$$ = (Node *)n;
 				}

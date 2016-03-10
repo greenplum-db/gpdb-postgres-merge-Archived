@@ -3,10 +3,7 @@
  * sequence.c
  *	  PostgreSQL sequences support code.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc.
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -105,19 +102,16 @@ static SeqTableData *last_used_seq = NULL;
 static int64 nextval_internal(Oid relid);
 static Relation open_share_lock(SeqTable seq);
 static void init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel);
-<<<<<<< HEAD
-static Form_pg_sequence read_info(Relation rel, Buffer *buf);
-=======
 static Form_pg_sequence read_seq_tuple(SeqTable elm, Relation rel,
 			   Buffer *buf, HeapTuple seqtuple);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static void init_params(List *options, bool isInit,
 			Form_pg_sequence new, List **owned_by);
 static void do_setval(Oid relid, int64 next, bool iscalled);
 static void process_owned_by(Relation seqrel, List *owned_by);
 
 static void
-cdb_sequence_nextval(Relation   seqrel,
+cdb_sequence_nextval(SeqTable elm,
+					 Relation   seqrel,
                      int64     *plast,
                      int64     *pcached,
                      int64     *pincrement,
@@ -683,27 +677,18 @@ AlterSequence(AlterSeqStmt *stmt)
 	save_increment = elm->increment;
 
 	/* lock page' buffer and read tuple into new sequence structure */
-<<<<<<< HEAD
 	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-	seq = read_info(seqrel, &buf);
-	elm->increment = seq->increment_by;
-	page = BufferGetPage(buf);
-=======
 	seq = read_seq_tuple(elm, seqrel, &buf, &seqtuple);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	elm->increment = seq->increment_by;
 
 	/* Copy old values of options into workspace */
 	memcpy(&new, seq, sizeof(FormData_pg_sequence));
 
 	/* Check and set new values */
 	init_params(stmt->options, false, &new, &owned_by);
-
-<<<<<<< HEAD
-	/* Now okay to update the on-disk tuple */
-	memcpy(seq, &new, sizeof(FormData_pg_sequence));
 
 	if (owned_by)
 	{
@@ -713,19 +698,13 @@ AlterSequence(AlterSeqStmt *stmt)
 	else
 	{
 		/* Clear local cache so that we don't think we have cached numbers */
-		elm->last = new.last_value; /* last returned number */
-		elm->cached = new.last_value;	/* last cached number (forget cached
-										 * values) */
+		/* Note that we do not change the currval() state */
+		elm->cached = elm->last;
 	}
 
 	// Fetch gp_persistent_relation_node information that will be added to XLOG record.
 	Assert(seqrel != NULL);
 	Sequence_FetchGpRelationNodeForXLog(seqrel);
-=======
-	/* Clear local cache so that we don't think we have cached numbers */
-	/* Note that we do not change the currval() state */
-	elm->cached = elm->last;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Now okay to update the on-disk tuple */
 	START_CRIT_SECTION();
@@ -864,9 +843,11 @@ nextval_internal(Oid relid)
 
 	if (elm->last != elm->cached)		/* some numbers were cached */
 	{
-		last_used_seq = elm;
+		Assert(elm->last_valid);
+		Assert(elm->increment != 0);
 		elm->last += elm->increment;
 		relation_close(seqrel, NoLock);
+		last_used_seq = elm;
 		return elm->last;
 	}
 
@@ -884,7 +865,8 @@ nextval_internal(Oid relid)
                                    &elm->increment,
                                    &is_overflow);
     else
-        cdb_sequence_nextval(seqrel,
+        cdb_sequence_nextval(elm,
+							 seqrel,
                              &elm->last,
                              &elm->cached,
                              &elm->increment,
@@ -907,8 +889,9 @@ nextval_internal(Oid relid)
 }
 
 
-void
-cdb_sequence_nextval(Relation   seqrel,
+static void
+cdb_sequence_nextval(SeqTable elm,
+					 Relation   seqrel,
                      int64     *plast,
                      int64     *pcached,
                      int64     *pincrement,
@@ -933,37 +916,12 @@ cdb_sequence_nextval(Relation   seqrel,
 	bool 		have_overflow = false;
 	bool		logit = false;
 
-<<<<<<< HEAD
 	/* lock page' buffer and read tuple */
 	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-	seq = read_info(seqrel, &buf);
-=======
-	/* open and AccessShareLock sequence */
-	init_sequence(relid, &elm, &seqrel);
-
-	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_USAGE) != ACLCHECK_OK &&
-		pg_class_aclcheck(elm->relid, GetUserId(), ACL_UPDATE) != ACLCHECK_OK)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied for sequence %s",
-						RelationGetRelationName(seqrel))));
-
-	if (elm->last != elm->cached)		/* some numbers were cached */
-	{
-		Assert(elm->last_valid);
-		Assert(elm->increment != 0);
-		elm->last += elm->increment;
-		relation_close(seqrel, NoLock);
-		last_used_seq = elm;
-		return elm->last;
-	}
-
-	/* lock page' buffer and read tuple */
 	seq = read_seq_tuple(elm, seqrel, &buf, &seqtuple);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	page = BufferGetPage(buf);
 
 	last = next = result = seq->last_value;
@@ -1067,18 +1025,11 @@ cdb_sequence_nextval(Relation   seqrel,
 	log -= fetch;				/* adjust for any unfetched numbers */
 	Assert(log >= 0);
 
-<<<<<<< HEAD
     /* set results for caller */
 	*poverflow = have_overflow; /* has the sequence overflown */
     *plast = result;            /* last returned number */
     *pcached = last;            /* last fetched number */
 	*pincrement = incby;
-=======
-	/* save info in local cache */
-	elm->last = result;			/* last returned number */
-	elm->cached = last;			/* last fetched number */
-	elm->last_valid = true;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	// Fetch gp_persistent_relation_node information that will be added to XLOG record.
 	Assert(seqrel != NULL);
@@ -1105,23 +1056,12 @@ cdb_sequence_nextval(Relation   seqrel,
 		XLogRecPtr	recptr;
 		XLogRecData rdata[2];
 
-<<<<<<< HEAD
-		xlrec.node = seqrel->rd_node;
-		xlrec.persistentTid = seqrel->rd_segfile0_relationnodeinfo.persistentTid;
-		xlrec.persistentSerialNum = seqrel->rd_segfile0_relationnodeinfo.persistentSerialNum;
-
-		rdata[0].data = (char *) &xlrec;
-		rdata[0].len = sizeof(xl_seq_rec);
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].next = &(rdata[1]);
-=======
 		/*
 		 * We don't log the current state of the tuple, but rather the state
 		 * as it would appear after "log" more fetches.  This lets us skip
 		 * that many future WAL records, at the cost that we lose those
 		 * sequence values if we crash.
 		 */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/* set values that will be saved in xlog */
 		seq->last_value = next;
@@ -1129,6 +1069,8 @@ cdb_sequence_nextval(Relation   seqrel,
 		seq->log_cnt = 0;
 
 		xlrec.node = seqrel->rd_node;
+		xlrec.persistentTid = seqrel->rd_segfile0_relationnodeinfo.persistentTid;
+		xlrec.persistentSerialNum = seqrel->rd_segfile0_relationnodeinfo.persistentSerialNum;
 		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = sizeof(xl_seq_rec);
 		rdata[0].buffer = InvalidBuffer;
@@ -1302,16 +1244,12 @@ do_setval(Oid relid, int64 next, bool iscalled)
 						RelationGetRelationName(seqrel))));
 
 	/* lock page' buffer and read tuple */
-<<<<<<< HEAD
 	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-	seq = read_info(seqrel, &buf);
-	elm->increment = seq->increment_by;
-=======
 	seq = read_seq_tuple(elm, seqrel, &buf, &seqtuple);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	elm->increment = seq->increment_by;
 
 	if ((next < seq->min_value) || (next > seq->max_value))
 	{
@@ -1336,17 +1274,14 @@ do_setval(Oid relid, int64 next, bool iscalled)
 		elm->last_valid = true;
 	}
 
-<<<<<<< HEAD
+	/* In any case, forget any future cached numbers */
+	elm->cached = elm->last;
+
 	// Fetch gp_persistent_relation_node information that will be added to XLOG record.
 	Assert(seqrel != NULL);
 	Sequence_FetchGpRelationNodeForXLog(seqrel);
 
-=======
-	/* In any case, forget any future cached numbers */
-	elm->cached = elm->last;
-
 	/* ready to change the on-disk (or really, in-buffer) tuple */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	START_CRIT_SECTION();
 
 	seq->last_value = next;		/* last fetched number */
@@ -1535,11 +1470,7 @@ init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel)
  * Function's return value points to the data payload of the tuple
  */
 static Form_pg_sequence
-<<<<<<< HEAD
-read_info(Relation rel, Buffer *buf)
-=======
 read_seq_tuple(SeqTable elm, Relation rel, Buffer *buf, HeapTuple seqtuple)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	PageHeader	page;
 	ItemId		lp;
@@ -1583,12 +1514,9 @@ read_seq_tuple(SeqTable elm, Relation rel, Buffer *buf, HeapTuple seqtuple)
 
 	seq = (Form_pg_sequence) GETSTRUCT(seqtuple);
 
-<<<<<<< HEAD
-=======
 	/* this is a handy place to update our copy of the increment */
 	elm->increment = seq->increment_by;
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	return seq;
 }
 
@@ -2056,7 +1984,8 @@ cdb_sequence_nextval_proxy(Relation	seqrel,
  * CDB: nextval entry point called by sequence server
  */
 void
-cdb_sequence_nextval_server(Oid    tablespaceid,
+cdb_sequence_nextval_server(SeqTable elm,
+							Oid    tablespaceid,
                             Oid    dbid,
                             Oid    relid,
                             bool   istemp,
@@ -2079,7 +2008,7 @@ cdb_sequence_nextval_server(Oid    tablespaceid,
     /* CDB TODO: Catch errors. */
 
     /* Update the sequence object. */
-    cdb_sequence_nextval(seqrel, plast, pcached, pincrement, poverflow);
+    cdb_sequence_nextval(elm, seqrel, plast, pcached, pincrement, poverflow);
 
     /* Cleanup. */
     cdb_sequence_relation_term(seqrel);

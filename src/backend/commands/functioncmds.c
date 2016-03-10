@@ -61,17 +61,10 @@
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp.h"
 
-<<<<<<< HEAD
 static void AlterFunctionOwner_internal(cqContext *pcqCtx,
-										Relation rel, HeapTuple tup, 
-										Oid newOwnerId);
-static void CheckForModifySystemFunc(Oid funcOid, List *funcName);
-=======
-
-static void AlterFunctionOwner_internal(Relation rel, HeapTuple tup,
+							Relation rel, HeapTuple tup, 
 							Oid newOwnerId);
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+static void CheckForModifySystemFunc(Oid funcOid, List *funcName);
 
 /*
  *	 Examine the RETURNS clause of the CREATE FUNCTION statement
@@ -160,11 +153,7 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
 						   get_namespace_name(namespaceId));
-<<<<<<< HEAD
 		rettype = TypeShellMakeWithOid(typname, namespaceId, GetUserId(), shelltypeOid);
-=======
-		rettype = TypeShellMake(typname, namespaceId, GetUserId());
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		Assert(OidIsValid(rettype));
 	}
 
@@ -1062,12 +1051,8 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 	compute_attributes_sql_style(stmt->options,
 								 &as_clause, &languageOid, &languageName,
 								 &volatility, &isStrict, &security,
-<<<<<<< HEAD
-								 &procost, &prorows,
+								 &proconfig, &procost, &prorows,
 								 &dataAccess);
-=======
-								 &proconfig, &procost, &prorows);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	languageTuple = caql_getfirst(NULL,
 			cql("SELECT * FROM pg_language "
@@ -1210,11 +1195,8 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 					PointerGetDatum(allParameterTypes),
 					PointerGetDatum(parameterModes),
 					PointerGetDatum(parameterNames),
-<<<<<<< HEAD
 					parameterDefaults,
-=======
 					PointerGetDatum(proconfig),
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					procost,
 					prorows,
 					dataAccess,
@@ -1705,7 +1687,40 @@ AlterFunction(AlterFunctionStmt *stmt)
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("ROWS is not applicable when function does not return a set")));
 	}
-<<<<<<< HEAD
+	if (set_items)
+	{
+		Datum		datum;
+		bool		isnull;
+		ArrayType  *a;
+		Datum		repl_val[Natts_pg_proc];
+		bool		repl_null[Natts_pg_proc];
+		bool		repl_repl[Natts_pg_proc];
+
+		/* extract existing proconfig setting */
+		datum = SysCacheGetAttr(PROCOID, tup, Anum_pg_proc_proconfig, &isnull);
+		a = isnull ? NULL : DatumGetArrayTypeP(datum);
+
+		/* update according to each SET or RESET item, left to right */
+		a = update_proconfig_value(a, set_items);
+
+		/* update the tuple */
+		memset(repl_repl, false, sizeof(repl_repl));
+		repl_repl[Anum_pg_proc_proconfig - 1] = true;
+
+		if (a == NULL)
+		{
+			repl_val[Anum_pg_proc_proconfig - 1] = (Datum) 0;
+			repl_null[Anum_pg_proc_proconfig - 1] = true;
+		}
+		else
+		{
+			repl_val[Anum_pg_proc_proconfig - 1] = PointerGetDatum(a);
+			repl_null[Anum_pg_proc_proconfig - 1] = false;
+		}
+
+		tup = heap_modify_tuple(tup, RelationGetDescr(rel),
+								repl_val, repl_null, repl_repl);
+	}
 	if (data_access_item)
 	{
 		Datum		repl_val[Natts_pg_proc];
@@ -1730,42 +1745,6 @@ AlterFunction(AlterFunctionStmt *stmt)
 	validate_sql_data_access(data_access,
 							 procForm->provolatile,
 							 procForm->prolang);
-=======
-	if (set_items)
-	{
-		Datum		datum;
-		bool		isnull;
-		ArrayType  *a;
-		Datum		repl_val[Natts_pg_proc];
-		char		repl_null[Natts_pg_proc];
-		char		repl_repl[Natts_pg_proc];
-
-		/* extract existing proconfig setting */
-		datum = SysCacheGetAttr(PROCOID, tup, Anum_pg_proc_proconfig, &isnull);
-		a = isnull ? NULL : DatumGetArrayTypeP(datum);
-
-		/* update according to each SET or RESET item, left to right */
-		a = update_proconfig_value(a, set_items);
-
-		/* update the tuple */
-		memset(repl_repl, ' ', sizeof(repl_repl));
-		repl_repl[Anum_pg_proc_proconfig - 1] = 'r';
-
-		if (a == NULL)
-		{
-			repl_val[Anum_pg_proc_proconfig - 1] = (Datum) 0;
-			repl_null[Anum_pg_proc_proconfig - 1] = 'n';
-		}
-		else
-		{
-			repl_val[Anum_pg_proc_proconfig - 1] = PointerGetDatum(a);
-			repl_null[Anum_pg_proc_proconfig - 1] = ' ';
-		}
-
-		tup = heap_modifytuple(tup, RelationGetDescr(rel),
-							   repl_val, repl_null, repl_repl);
-	}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Do the update */
 

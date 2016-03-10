@@ -3,10 +3,7 @@
  * tablecmds.c
  *	  Commands for creating and altering table structures and settings
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -51,11 +48,8 @@
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
-<<<<<<< HEAD
 #include "catalog/pg_operator.h"
-=======
 #include "catalog/pg_tablespace.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_tablespace.h"
@@ -101,12 +95,9 @@
 #include "parser/parser.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteHandler.h"
-<<<<<<< HEAD
+#include "rewrite/rewriteManip.h"
 #include "storage/backendid.h"
 #include "storage/procsignal.h"
-=======
-#include "rewrite/rewriteManip.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "storage/smgr.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
@@ -222,17 +213,10 @@ typedef struct NewColumnValue
 
 static void truncate_check_rel(Relation rel);
 static void MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel);
-<<<<<<< HEAD
 static void MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel, List *inhAttrNameList,
 										bool is_partition);
 static bool add_nonduplicate_cooked_constraint(Constraint *cdef, List *stmtConstraints);
-static bool change_varattnos_varno_walker(Node *node, const AttrMapContext *attrMapCxt);
 
-=======
-static void MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel);
-static void add_nonduplicate_constraint(Constraint *cdef,
-							ConstrCheck *check, int *ncheck);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static void StoreCatalogInheritance(Oid relationId, List *supers);
 static void StoreCatalogInheritance1(Oid relationId, Oid parentOid,
 						 int16 seqNumber, Relation inhRelation,

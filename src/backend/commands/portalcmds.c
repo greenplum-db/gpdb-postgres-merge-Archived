@@ -8,11 +8,7 @@
  * And both modules depend on utils/mmgr/portalmem.c, which controls
  * storage management for portals (but doesn't run any queries in them).
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
-=======
- *
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -30,11 +26,8 @@
 #include "commands/portalcmds.h"
 #include "executor/executor.h"
 #include "executor/tstoreReceiver.h"
-<<<<<<< HEAD
 #include "optimizer/planner.h"
 #include "rewrite/rewriteHandler.h"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "tcop/pquery.h"
 #include "utils/memutils.h"
 #include "utils/resscheduler.h"
@@ -82,8 +75,7 @@ PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 	 * user-visible effect).
 	 */
 	if (!(cstmt->options & CURSOR_OPT_HOLD))
-<<<<<<< HEAD
-		RequireTransactionChain((void *) cstmt, "DECLARE CURSOR");
+		RequireTransactionChain(isTopLevel, "DECLARE CURSOR");
 
 	/*
 	 * Allow using the SCROLL keyword even though we don't support its
@@ -106,15 +98,8 @@ PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 	Assert(!(cstmt->options & CURSOR_OPT_SCROLL && cstmt->options & CURSOR_OPT_NO_SCROLL));
 
 	/*
-	 * Create a portal and copy the plan and queryString into its memory.
-	 */
-=======
-		RequireTransactionChain(isTopLevel, "DECLARE CURSOR");
-
-	/*
 	 * Create a portal and copy the plan into its memory context.
 	 */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	portal = CreatePortal(cstmt->portalname, false, false);
 
 	oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
@@ -122,23 +107,16 @@ PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 	stmt = copyObject(stmt);
 	stmt->utilityStmt = NULL;	/* make it look like plain SELECT */
 
-<<<<<<< HEAD
-	stmt->qdContext = PortalGetHeapMemory(portal); /* Temporary! See comment in PlannedStmt. */
-
-	queryString = pstrdup(queryString);
-=======
 	if (queryString)			/* copy the source text too for safety */
 		queryString = pstrdup(queryString);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	PortalDefineQuery(portal,
 					  NULL,
 					  queryString,
-<<<<<<< HEAD
 					  T_DeclareCursorStmt,
 					  "SELECT", /* cursor's query is always a SELECT */
 					  list_make1(stmt),
-					  PortalGetHeapMemory(portal));
+					  NULL);
 
 	portal->is_extended_query = true; /* cursors run in extended query mode */
 
@@ -150,14 +128,7 @@ PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 	 */
 	portal->is_simply_updatable = cstmt->is_simply_updatable;
 
-	/*
-=======
-					  "SELECT", /* cursor's query is always a SELECT */
-					  list_make1(stmt),
-					  NULL);
-
 	/*----------
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 * Also copy the outer portal's parameter list into the inner portal's
 	 * memory context.	We want to pass down the parameter values in case we
 	 * had a command like
@@ -178,19 +149,14 @@ PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 	 *
 	 * If the user didn't specify a SCROLL type, allow or disallow scrolling
 	 * based on whether it would require any additional runtime overhead to do
-<<<<<<< HEAD
-	 * so.
+	 * so.	Also, we disallow scrolling for FOR UPDATE cursors.
 	 *
 	 * GPDB: we do not allow backward scans at the moment regardless
 	 * of any additional runtime overhead. We forced CURSOR_OPT_NO_SCROLL
 	 * above. Comment out this logic.
 	 */
-	/*
-=======
-	 * so.	Also, we disallow scrolling for FOR UPDATE cursors.
-	 */
+#if 0
 	portal->cursorOptions = cstmt->options;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (!(portal->cursorOptions & (CURSOR_OPT_SCROLL | CURSOR_OPT_NO_SCROLL)))
 	{
 		if (stmt->rowMarks == NIL &&
@@ -199,7 +165,7 @@ PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 		else
 			portal->cursorOptions |= CURSOR_OPT_NO_SCROLL;
 	}
-	*/
+#endif
 
 	/*
 	 * Start execution, inserting parameters if any.
@@ -545,7 +511,6 @@ PersistHoldablePortal(Portal portal)
 		 */
 		MemoryContextSwitchTo(portal->holdContext);
 
-<<<<<<< HEAD
 		/*
 		 * Since we don't allow backward scan in MPP we didn't do the 
 		 * ExecutorRewind() call few lines just above. Therefore we 
@@ -553,15 +518,6 @@ PersistHoldablePortal(Portal portal)
 		 * the position we need to be. Allow this only in utility mode.
 		 */
 		if(Gp_role == GP_ROLE_UTILITY)
-=======
-		if (portal->atEnd)
-		{
-			/* we can handle this case even if posOverflow */
-			while (tuplestore_advance(portal->holdStore, true))
-				 /* continue */ ;
-		}
-		else
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		{
 			if (portal->atEnd)
 			{

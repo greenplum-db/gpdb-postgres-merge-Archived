@@ -1932,9 +1932,6 @@ ProcessUtility(Node *parsetree,
 						ReindexTable(stmt);
 						break;
 					case OBJECT_DATABASE:
-<<<<<<< HEAD
-						ReindexDatabase(stmt);
-=======
 
 						/*
 						 * This cannot run inside a user transaction block; if
@@ -1942,11 +1939,11 @@ ProcessUtility(Node *parsetree,
 						 * start-transaction-command calls would not have the
 						 * intended effect!
 						 */
-						PreventTransactionChain(isTopLevel,
-												"REINDEX DATABASE");
+							if (Gp_role == GP_ROLE_DISPATCH)
+								PreventTransactionChain(isTopLevel,
+														"REINDEX DATABASE");
 						ReindexDatabase(stmt->name,
 										stmt->do_system, stmt->do_user);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 						break;
 					default:
 						elog(ERROR, "unrecognized object type: %d",

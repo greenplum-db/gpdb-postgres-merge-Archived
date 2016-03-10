@@ -49,11 +49,7 @@ typedef struct
 } PLTemplate;
 
 static void create_proc_lang(const char *languageName,
-<<<<<<< HEAD
-				 Oid handlerOid, Oid valOid, bool trusted, Oid *plangOid);
-=======
-				 Oid languageOwner, Oid handlerOid, Oid valOid, bool trusted);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+				 Oid languageOwner, Oid handlerOid, Oid valOid, bool trusted, Oid *plangOid);
 static PLTemplate *find_language_template(const char *languageName);
 static void AlterLanguageOwner_internal(HeapTuple tup, Relation rel,
 							Oid newOwnerId);
@@ -180,11 +176,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										 PointerGetDatum(NULL),
 										 PointerGetDatum(NULL),
 										 PointerGetDatum(NULL),
-<<<<<<< HEAD
 										 NIL,
-=======
 										 PointerGetDatum(NULL),
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 										 1,
 										 0,
 										 PRODATAACCESS_NONE,
@@ -221,11 +214,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										 PointerGetDatum(NULL),
 										 PointerGetDatum(NULL),
 										 PointerGetDatum(NULL),
-<<<<<<< HEAD
 										 NIL,
-=======
 										 PointerGetDatum(NULL),
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 										 1,
 										 0,
 										 PRODATAACCESS_NONE,
@@ -236,13 +226,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 			valOid = InvalidOid;
 
 		/* ok, create it */
-<<<<<<< HEAD
-		create_proc_lang(languageName, handlerOid, valOid,
-						 pltemplate->tmpltrusted, &(stmt->plangOid));
-=======
 		create_proc_lang(languageName, GetUserId(), handlerOid, valOid,
-						 pltemplate->tmpltrusted);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+						 pltemplate->tmpltrusted, &(stmt->plangOid));
 	}
 	else
 	{
@@ -306,20 +291,15 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 			valOid = InvalidOid;
 
 		/* ok, create it */
-<<<<<<< HEAD
-		create_proc_lang(languageName, handlerOid, valOid, stmt->pltrusted, &(stmt->plangOid));
+		create_proc_lang(languageName, GetUserId(), handlerOid, valOid,
+						 stmt->pltrusted, &(stmt->plangOid));
 	}
-	
-	
+
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		stmt->plhandlerOid = handlerOid;
 		stmt->plvalidatorOid = valOid;
 		CdbDispatchUtilityStatement((Node *) stmt, "CreateProceduralLanguage");
-=======
-		create_proc_lang(languageName, GetUserId(), handlerOid, valOid,
-						 stmt->pltrusted);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 }
 
@@ -328,11 +308,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
  */
 static void
 create_proc_lang(const char *languageName,
-<<<<<<< HEAD
-				 Oid handlerOid, Oid valOid, bool trusted, Oid *plangoid)
-=======
-				 Oid languageOwner, Oid handlerOid, Oid valOid, bool trusted)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+				 Oid languageOwner, Oid handlerOid, Oid valOid, bool trusted, Oid *plangoid)
 {
 	Datum		values[Natts_pg_language];
 	bool		nulls[Natts_pg_language];
@@ -481,8 +457,7 @@ void
 DropProceduralLanguage(DropPLangStmt *stmt)
 {
 	char	   *languageName;
-	int			fetchCount;
-	Oid			langOid;
+	HeapTuple	langTup;
 	ObjectAddress object;
 
 	/*
@@ -490,15 +465,10 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 	 */
 	languageName = case_translate_language_name(stmt->plname);
 
-	langOid = caql_getoid_plus(
-			NULL,
-			&fetchCount,
-			NULL,
-			cql("SELECT oid FROM pg_language "
-				" WHERE lanname = :1 ",
-				CStringGetDatum(languageName)));
-
-	if (0 == fetchCount)
+	langTup = SearchSysCache(LANGNAME,
+							 CStringGetDatum(languageName),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(langTup))
 	{
 		if (!stmt->missing_ok)
 			ereport(ERROR,
@@ -520,8 +490,10 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 					   languageName);
 
 	object.classId = LanguageRelationId;
-	object.objectId = langOid;
+	object.objectId = HeapTupleGetOid(langTup);
 	object.objectSubId = 0;
+
+	ReleaseSysCache(langTup);
 
 	/*
 	 * Do the deletion
@@ -680,8 +652,8 @@ AlterLanguageOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 	if (lanForm->lanowner != newOwnerId)
 	{
 		Datum		repl_val[Natts_pg_language];
-		char		repl_null[Natts_pg_language];
-		char		repl_repl[Natts_pg_language];
+		bool		repl_null[Natts_pg_language];
+		bool		repl_repl[Natts_pg_language];
 		Acl		   *newAcl;
 		Datum		aclDatum;
 		bool		isNull;
@@ -695,10 +667,10 @@ AlterLanguageOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 		/* Must be able to become new owner */
 		check_is_member_of_role(GetUserId(), newOwnerId);
 
-		memset(repl_null, ' ', sizeof(repl_null));
-		memset(repl_repl, ' ', sizeof(repl_repl));
+		memset(repl_null, false, sizeof(repl_null));
+		memset(repl_repl, false, sizeof(repl_repl));
 
-		repl_repl[Anum_pg_language_lanowner - 1] = 'r';
+		repl_repl[Anum_pg_language_lanowner - 1] = true;
 		repl_val[Anum_pg_language_lanowner - 1] = ObjectIdGetDatum(newOwnerId);
 
 		/*
@@ -712,12 +684,12 @@ AlterLanguageOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 		{
 			newAcl = aclnewowner(DatumGetAclP(aclDatum),
 								 lanForm->lanowner, newOwnerId);
-			repl_repl[Anum_pg_language_lanacl - 1] = 'r';
+			repl_repl[Anum_pg_language_lanacl - 1] = true;
 			repl_val[Anum_pg_language_lanacl - 1] = PointerGetDatum(newAcl);
 		}
 
-		newtuple = heap_modifytuple(tup, RelationGetDescr(rel),
-									repl_val, repl_null, repl_repl);
+		newtuple = heap_modify_tuple(tup, RelationGetDescr(rel),
+									 repl_val, repl_null, repl_repl);
 
 		simple_heap_update(rel, &newtuple->t_self, newtuple);
 		CatalogUpdateIndexes(rel, newtuple);

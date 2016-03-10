@@ -3,10 +3,7 @@
  * indexcmds.c
  *	  POSTGRES define and remove index code.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -51,20 +48,14 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parsetree.h"
-<<<<<<< HEAD
+#include "storage/proc.h"
+#include "storage/procarray.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/hsearch.h"
-=======
-#include "storage/proc.h"
-#include "storage/procarray.h"
-#include "utils/acl.h"
-#include "utils/builtins.h"
-#include "utils/fmgroids.h"
 #include "utils/inval.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/relcache.h"
@@ -169,20 +160,12 @@ DefineIndex(RangeVar *heapRelation,
 	LockRelId	heaprelid;
 	LOCKTAG		heaplocktag;
 	Snapshot	snapshot;
-<<<<<<< HEAD
-	Relation	pg_index;
-	HeapTuple	indexTuple;
-	Form_pg_index indexForm;
 	LOCKMODE	heap_lockmode;
 	bool		need_longlock = true;
 	bool		shouldDispatch = Gp_role == GP_ROLE_DISPATCH && !IsBootstrapProcessingMode();
 	char	   *altconname = stmt ? stmt->altconname : NULL;
-	cqContext	cqc;
-	cqContext  *pcqCtx;
 	cqContext  *amcqCtx;
 	cqContext  *attcqCtx;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * count attributes in index
@@ -266,8 +249,8 @@ DefineIndex(RangeVar *heapRelation,
 	}
 	else
 	{
-<<<<<<< HEAD
-		tablespaceId = GetDefaultTablespace();
+		tablespaceId = GetDefaultTablespace(rel->rd_istemp);
+		/* note InvalidOid is OK in this case */
 
 		/* Need the real tablespace id for dispatch */
 		if (!OidIsValid(tablespaceId)) 
@@ -278,10 +261,6 @@ DefineIndex(RangeVar *heapRelation,
 		 */
 		if (shouldDispatch)
 			stmt->tableSpace = get_tablespace_name(tablespaceId);
-=======
-		tablespaceId = GetDefaultTablespace(rel->rd_istemp);
-		/* note InvalidOid is OK in this case */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	/* Check permissions except when using database's default */
@@ -515,11 +494,8 @@ DefineIndex(RangeVar *heapRelation,
 	/* In a concurrent build, mark it not-ready-for-inserts */
 	indexInfo->ii_ReadyForInserts = !concurrent;
 	indexInfo->ii_Concurrent = concurrent;
-<<<<<<< HEAD
-	indexInfo->opaque = (void*)palloc0(sizeof(IndexInfoOpaque));
-=======
 	indexInfo->ii_BrokenHotChain = false;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	indexInfo->opaque = (void*)palloc0(sizeof(IndexInfoOpaque));
 
 	classObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 	coloptions = (int16 *) palloc(numberOfAttributes * sizeof(int16));
@@ -527,7 +503,6 @@ DefineIndex(RangeVar *heapRelation,
 					  relationId, accessMethodName, accessMethodId,
 					  amcanorder, isconstraint);
 
-<<<<<<< HEAD
 	if (shouldDispatch)
 	{
 		if (stmt)
@@ -590,14 +565,11 @@ DefineIndex(RangeVar *heapRelation,
 		}
 	}
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/*
 	 * Report index creation if appropriate (delay this till after most of the
 	 * error checks)
 	 */
 	if (isconstraint && !quiet)
-<<<<<<< HEAD
 		if (Gp_role != GP_ROLE_EXECUTE)
 			ereport(NOTICE,
 					(errmsg("%s %s will create implicit index \"%s\" for table \"%s\"",
@@ -724,8 +696,9 @@ DefineIndex(RangeVar *heapRelation,
 		}
 	}
 
-	/* save lockrelid for below, then close rel */
+	/* save lockrelid and locktag for below, then close rel */
 	heaprelid = rel->rd_lockInfo.lockRelId;
+	SET_LOCKTAG_RELATION(heaplocktag, heaprelid.dbId, heaprelid.relId);
 	if (need_longlock)
 		heap_close(rel, NoLock);
 	else
@@ -735,35 +708,13 @@ DefineIndex(RangeVar *heapRelation,
 	{
 		indexRelationId =
 			index_create(relationId, indexRelationName, indexRelationId,
-						 indexInfo, accessMethodId, tablespaceId, classObjectId,
-						 coloptions, reloptions, primary, isconstraint, &(stmt->constrOid),
+					  indexInfo, accessMethodId, tablespaceId, classObjectId,
+						 coloptions, reloptions, primary, isconstraint, &stmt->constrOid,
 						 allowSystemTableModsDDL, skip_build, concurrent, altconname);
 	}
 
 	if (!concurrent)
 		return;					/* We're done, in the standard case */
-=======
-		ereport(NOTICE,
-		  (errmsg("%s %s will create implicit index \"%s\" for table \"%s\"",
-				  is_alter_table ? "ALTER TABLE / ADD" : "CREATE TABLE /",
-				  primary ? "PRIMARY KEY" : "UNIQUE",
-				  indexRelationName, RelationGetRelationName(rel))));
-
-	/* save lockrelid and locktag for below, then close rel */
-	heaprelid = rel->rd_lockInfo.lockRelId;
-	SET_LOCKTAG_RELATION(heaplocktag, heaprelid.dbId, heaprelid.relId);
-	heap_close(rel, NoLock);
-
-	if (!concurrent)
-	{
-		indexRelationId =
-			index_create(relationId, indexRelationName, indexRelationId,
-					  indexInfo, accessMethodId, tablespaceId, classObjectId,
-						 coloptions, reloptions, primary, isconstraint,
-						 allowSystemTableMods, skip_build, concurrent);
-
-		return;					/* We're done, in the standard case */
-	}
 
 	/*
 	 * For a concurrent build, we next insert the catalog entry and add
@@ -777,9 +728,8 @@ DefineIndex(RangeVar *heapRelation,
 	indexRelationId =
 		index_create(relationId, indexRelationName, indexRelationId,
 					 indexInfo, accessMethodId, tablespaceId, classObjectId,
-					 coloptions, reloptions, primary, isconstraint,
-					 allowSystemTableMods, true, concurrent);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+					 coloptions, reloptions, primary, isconstraint, &stmt->constrOid,
+					 allowSystemTableModsDDL, true, concurrent, altconname);
 
 	/*
 	 * We must commit our current transaction so that the index becomes
@@ -945,28 +895,6 @@ DefineIndex(RangeVar *heapRelation,
 	old_snapshots = GetCurrentVirtualXIDs(ActiveSnapshot->xmax, false,
 										  PROC_IS_AUTOVACUUM | PROC_IN_VACUUM);
 
-<<<<<<< HEAD
-	pcqCtx = caql_addrel(cqclr(&cqc), pg_index);
-
-	indexTuple = caql_getfirst(
-			pcqCtx,
-			cql("SELECT * FROM pg_index "
-				" WHERE indexrelid = :1 "
-				" FOR UPDATE ",
-				ObjectIdGetDatum(indexRelationId)));
-
-	if (!HeapTupleIsValid(indexTuple))
-		elog(ERROR, "cache lookup failed for index %u", indexRelationId);
-	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
-
-	Assert(indexForm->indexrelid = indexRelationId);
-	Assert(!indexForm->indisvalid);
-
-	indexForm->indisvalid = true;
-
-	caql_update_current(pcqCtx, indexTuple); 
-	/* and Update indexes (implicit) */
-=======
 	while (VirtualTransactionIdIsValid(*old_snapshots))
 	{
 		VirtualXactLockTableWait(*old_snapshots);
@@ -977,7 +905,6 @@ DefineIndex(RangeVar *heapRelation,
 	 * Index can now be marked valid -- update its pg_index entry
 	 */
 	index_set_state_flags(indexRelationId, INDEX_CREATE_SET_VALID);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * The pg_index update will cause backends (including this one) to update
@@ -2001,17 +1928,6 @@ ReindexDatabase(ReindexStmt *stmt)
 					   databaseName);
 
 	/*
-<<<<<<< HEAD
-	 * We cannot run inside a user transaction block; if we were inside a
-	 * transaction, then our commit- and start-transaction-command calls would
-	 * not have the intended effect!
-	 */
-	if (Gp_role == GP_ROLE_DISPATCH)
-		PreventTransactionChain((void *) databaseName, "REINDEX DATABASE");
-
-	/*
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 * Create a memory context that will survive forced transaction commits we
 	 * do below.  Since it is a child of PortalContext, it will go away
 	 * eventually even if we suffer an error; there's no need for special
