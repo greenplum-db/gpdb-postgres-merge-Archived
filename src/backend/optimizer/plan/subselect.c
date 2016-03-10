@@ -34,8 +34,10 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-#include "cdb/cdbvars.h"
+
 #include "cdb/cdbmutate.h"
+#include "cdb/cdbsubselect.h"
+#include "cdb/cdbvars.h"
 
 
 typedef struct convert_testexpr_context
@@ -63,6 +65,8 @@ static Node *build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 
 static List *generate_subquery_params(PlannerInfo *root, List *tlist,
 						 List **paramIds);
+static List *generate_subquery_vars(PlannerInfo *root, List *tlist,
+					   Index varno);
 static Node *convert_testexpr_mutator(Node *node,
 						 convert_testexpr_context *context);
 static bool subplan_is_hashable(PlannerInfo *root, Plan *plan);
@@ -690,6 +694,37 @@ generate_subquery_params(PlannerInfo *root, List *tlist, List **paramIds)
 }
 
 /*
+ * generate_subquery_vars: build a list of Vars representing the output
+ * columns of a sublink's sub-select, given the sub-select's targetlist.
+ * The Vars have the specified varno (RTE index).
+ */
+static List *
+generate_subquery_vars(PlannerInfo *root, List *tlist, Index varno)
+{
+	List	   *result;
+	ListCell   *lc;
+
+	result = NIL;
+	foreach(lc, tlist)
+	{
+		TargetEntry *tent = (TargetEntry *) lfirst(lc);
+		Var		   *var;
+
+		if (tent->resjunk)
+			continue;
+
+		var = makeVar(varno,
+					  tent->resno,
+					  exprType((Node *) tent->expr),
+					  exprTypmod((Node *) tent->expr),
+					  0);
+		result = lappend(result, var);
+	}
+
+	return result;
+}
+
+/*
  * convert_testexpr: convert the testexpr given by the parser into
  * actually executable form.  This entails replacing PARAM_SUBLINK Params
  * with Params or Vars representing the results of the sub-select.  The
@@ -851,13 +886,18 @@ convert_IN_to_join(PlannerInfo *root, List **rtrlist_inout, SubLink *sublink)
 {
 	Query	   *parse = root->parse;
 	Query	   *subselect = (Query *) sublink->subselect;
+	bool		join_unique_possible;
 	List	   *in_operators;
+	List	   *left_exprs;
+	List	   *right_exprs;
+	Relids		left_varnos;
 	int			rtindex;
-	InClauseInfo *ininfo;
-    bool        correlated;
-	Node	   *result;
 	RangeTblEntry *rte;
 	RangeTblRef *rtr;
+	List	   *subquery_vars;
+	InClauseInfo *ininfo;
+	bool		correlated;
+	Node	   *result;
 
     Assert(IsA(subselect, Query));
 
@@ -942,22 +982,22 @@ convert_IN_to_join(PlannerInfo *root, List **rtrlist_inout, SubLink *sublink)
 	rtindex = list_length(parse->rtable);
 	rtr = makeNode(RangeTblRef);
 	rtr->rtindex = rtindex;
-
     /* Tell caller to augment the jointree with a reference to the new RTE. */
 	*rtrlist_inout = lappend(*rtrlist_inout, rtr);
 
 	/*
-	 * Now build the InClauseInfo node.
+	 * Build a list of Vars representing the subselect outputs.
 	 */
-	ininfo = makeNode(InClauseInfo);
-    ininfo->sub_targetlist = NULL;
-	ininfo->righthand = bms_make_singleton(rtindex);
+	subquery_vars = generate_subquery_vars(root,
+										   subselect->targetList,
+										   rtindex);
 
 	/*
-	 * GPDB_83MERGE_FIXME: The changes from upstream commit
-	 *  5f26db502b13e91ee1484213c0689fa19841c07a should go around here, but didn't
-	 * apply cleanly so I postponed that..
+	 * Build the result qual expression, replacing Params with these Vars.
 	 */
+	result = convert_testexpr(root,
+							  sublink->testexpr,
+							  subquery_vars);
 
     /*
      * Uncorrelated "=ANY" subqueries can use JOIN_UNIQUE dedup technique.  We
@@ -967,53 +1007,103 @@ convert_IN_to_join(PlannerInfo *root, List **rtrlist_inout, SubLink *sublink)
 	 * semantics.  In the OpExpr case we can't be sure what the operator's
 	 * semantics are like, and must check for ourselves.)
      */
-    ininfo->try_join_unique = false;
-	in_operators = NIL;
+	join_unique_possible = false;
+	in_operators = left_exprs = right_exprs = NIL;
+	left_varnos = NULL;
 	if (!correlated &&
         sublink->testexpr)
     {
-		ininfo->try_join_unique = true;
-        if (IsA(sublink->testexpr, OpExpr))
+		join_unique_possible = true;
+		if (IsA(sublink->testexpr, OpExpr))
 	    {
-			Oid			opno = ((OpExpr *) sublink->testexpr)->opno;
+			OpExpr	   *op = (OpExpr *) sublink->testexpr;
+			Oid			opno = op->opno;
 		    List	   *opfamilies;
 		    List	   *opstrats;
 
+			if (list_length(op->args) != 2)
+			{
+				join_unique_possible = false;	/* not binary operator? */
+				goto end_join_unique_tests;
+			}
 		    get_op_btree_interpretation(opno, &opfamilies, &opstrats);
 		    if (!list_member_int(opstrats, ROWCOMPARE_EQ))
-			    ininfo->try_join_unique = false;
+			{
+			    join_unique_possible = false;
+				goto end_join_unique_tests;
+			}
 			in_operators = list_make1_oid(opno);
+			left_exprs = list_make1(linitial(op->args));
+			right_exprs = list_make1(lsecond(op->args));
 	    }
 		else if (and_clause(sublink->testexpr))
 		{
 			ListCell   *lc;
 
-			/* OK, but we need to extract the per-column operator OIDs */
-			in_operators = NIL;
+			/* OK, but we need to extract the per-column info */
+			in_operators = left_exprs = right_exprs = NIL;
 			foreach(lc, ((BoolExpr *) sublink->testexpr)->args)
 			{
-				OpExpr *op = (OpExpr *) lfirst(lc);
+				OpExpr	   *op = (OpExpr *) lfirst(lc);
 
 				if (!IsA(op, OpExpr))           /* probably shouldn't happen */
-					ininfo->try_join_unique = false;
+				{
+					join_unique_possible = false;
+					goto end_join_unique_tests;
+				}
+				if (list_length(op->args) != 2)
+				{
+					join_unique_possible = false;	/* not binary operator? */
+					goto end_join_unique_tests;
+				}
 				in_operators = lappend_oid(in_operators, op->opno);
+				left_exprs = lappend(left_exprs, linitial(op->args));
+				right_exprs = lappend(right_exprs, lsecond(op->args));
 			}
         }
 		else
-			ininfo->try_join_unique = false;
-    }
+			join_unique_possible = false;
 
+		/*
+		 * The left-hand expressions must contain some Vars of the current query,
+		 * else it's not gonna be a join.
+		 */
+		left_varnos = pull_varnos((Node *) left_exprs);
+		if (bms_is_empty(left_varnos))
+		{
+			join_unique_possible = false;
+		}
+
+		/* ... and the right-hand expressions better not contain Vars at all */
+		Assert(!contain_var_clause((Node *) right_exprs));
+	}
+end_join_unique_tests:
+	if (!join_unique_possible)
+	{
+		/* reset any partially constructed lists */
+		in_operators = left_exprs = right_exprs = NIL;
+		left_varnos = NULL;
+	}
+
+	/*
+	 * Now build the InClauseInfo node.
+	 */
+	ininfo = makeNode(InClauseInfo);
+	ininfo->lefthand = left_varnos;
+	ininfo->righthand = bms_make_singleton(rtindex);
 	ininfo->in_operators = in_operators;
 
 	/*
-	 * Build the result qual expression.  As a side effect,
-	 * ininfo->sub_targetlist is filled with a list of Vars representing the
-	 * subselect outputs.
+	 * ininfo->sub_targetlist must be filled with a list of expressions that
+	 * would need to be unique-ified if we try to implement the IN using a
+	 * regular join to unique-ified subquery output.  This is most easily done
+	 * by applying convert_testexpr to just the RHS inputs of the testexpr
+	 * operators.  That handles cases like type coercions of the subquery
+	 * outputs, clauses dropped due to const-simplification, etc.
 	 */
-	result = convert_testexpr(root,
-							  sublink->testexpr,
-							  rtindex,
-							  &ininfo->sub_targetlist);
+	ininfo->sub_targetlist = (List *) convert_testexpr(root,
+													   (Node *) right_exprs,
+													   subquery_vars);
 
 	/* Add the completed node to the query's list */
 	root->in_info_list = lappend(root->in_info_list, ininfo);
