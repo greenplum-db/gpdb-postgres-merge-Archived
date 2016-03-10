@@ -25,20 +25,11 @@
 #include "utils/tqual.h"
 
 
-<<<<<<< HEAD
 /*
  * Single-item cache for results of TransactionLogFetch.  It's worth having
  * such a cache because we frequently find ourselves repeatedly checking the
  * same XID, for example when scanning a table just after a bulk insert,
  * update, or delete.
-=======
-static XidStatus TransactionLogFetch(TransactionId transactionId);
-static void TransactionLogUpdate(TransactionId transactionId,
-					 XidStatus status, XLogRecPtr lsn);
-
-/*
- * Single-item cache for results of TransactionLogFetch.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 static TransactionId cachedFetchXid = InvalidTransactionId;
 static XidStatus cachedFetchXidStatus;
