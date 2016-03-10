@@ -82,13 +82,6 @@ extern double IndexBuildScan(Relation parentRelation,
 					IndexBuildCallback callback,
 					void *callback_state);
 
-extern double IndexBuildHeapScan(Relation heapRelation,
-				   Relation indexRelation,
-				   IndexInfo *indexInfo,
-				   bool allow_sync,
-				   IndexBuildCallback callback,
-				   void *callback_state);
-
 extern void validate_index(Oid heapId, Oid indexId, Snapshot snapshot);
 
 extern void index_set_state_flags(Oid indexId, IndexStateFlagsAction action);
