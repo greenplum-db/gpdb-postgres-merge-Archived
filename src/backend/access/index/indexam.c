@@ -3,11 +3,7 @@
  * indexam.c
  *	  general index access method routines
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -70,10 +66,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-<<<<<<< HEAD
 #include "access/relscan.h"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "access/transam.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
@@ -529,6 +522,9 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 			scan->xs_hot_dead = true;
 		}
 
+		// -------- MirroredLock ----------
+		MIRROREDLOCK_BUFMGR_LOCK;
+
 		/* Obtain share-lock on the buffer so we can examine visibility */
 		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_SHARE);
 
@@ -540,24 +536,12 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 			ItemId		lp;
 			ItemPointer ctid;
 
-<<<<<<< HEAD
-		pgstat_count_index_tuples(scan->indexRelation, 1);
-
-		/*
-		 * Fetch the heap tuple and see if it matches the snapshot.
-		 */
-		if (heap_release_fetch(scan->heapRelation, scan->xs_snapshot,
-							   heapTuple, &scan->xs_cbuf, true,
-							   scan->indexRelation))
-			break;
-=======
 			/* check for bogus TID */
 			if (offnum < FirstOffsetNumber ||
 				offnum > PageGetMaxOffsetNumber(dp))
 				break;
 
 			lp = PageGetItemId(dp, offnum);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			/* check for unused, dead, or redirected items */
 			if (!ItemIdIsNormal(lp))
@@ -574,21 +558,6 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 				break;
 			}
 
-<<<<<<< HEAD
-		/*
-		 * If we can't see it, maybe no one else can either.  Check to see if
-		 * the tuple is dead to all transactions.  If so, signal the index AM
-		 * to not return it on future indexscans.
-		 *
-		 * We told heap_release_fetch to keep a pin on the buffer, so we can
-		 * re-access the tuple here.  But we must re-lock the buffer first.
-		 */
-
-		// -------- MirroredLock ----------
-		MIRROREDLOCK_BUFMGR_LOCK;
-
-		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_SHARE);
-=======
 			/*
 			 * We must initialize all of *heapTuple (ie, scan->xs_ctup) since
 			 * it is returned to the executor on success.
@@ -596,7 +565,8 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 			heapTuple->t_data = (HeapTupleHeader) PageGetItem(dp, lp);
 			heapTuple->t_len = ItemIdGetLength(lp);
 			ItemPointerSetOffsetNumber(tid, offnum);
-			heapTuple->t_tableOid = RelationGetRelid(scan->heapRelation);
+			/* GPDB_MERGE83_FIXME: Need to set the tts_tableOid in the slot here */
+			//heapTuple->t_tableOid = RelationGetRelid(scan->heapRelation);
 			ctid = &heapTuple->t_data->t_ctid;
 
 			/*
@@ -620,8 +590,8 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 				break;
 
 			/* If it's visible per the snapshot, we must return it */
-			if (HeapTupleSatisfiesVisibility(heapTuple, scan->xs_snapshot,
-											 scan->xs_cbuf))
+			if (HeapTupleSatisfiesVisibility(scan->heapRelation, heapTuple,
+											 scan->xs_snapshot, scan->xs_cbuf))
 			{
 				/*
 				 * If the snapshot is MVCC, we know that it could accept at
@@ -645,9 +615,11 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 
 				pgstat_count_heap_fetch(scan->indexRelation);
 
+				MIRROREDLOCK_BUFMGR_UNLOCK;
+				// -------- MirroredLock ----------
+
 				return heapTuple;
 			}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			/*
 			 * If we can't see it, maybe no one else can either.  Check to see
@@ -656,8 +628,8 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 			 * to not return that TID on future indexscans.
 			 */
 			if (scan->xs_hot_dead &&
-				HeapTupleSatisfiesVacuum(heapTuple->t_data, RecentGlobalXmin,
-										 scan->xs_cbuf) != HEAPTUPLE_DEAD)
+				HeapTupleSatisfiesVacuum(scan->heapRelation, heapTuple->t_data,
+										 RecentGlobalXmin, scan->xs_cbuf) != HEAPTUPLE_DEAD)
 				scan->xs_hot_dead = false;
 
 			/*
@@ -678,12 +650,9 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 		}						/* loop over a single HOT chain */
 
 		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_UNLOCK);
-<<<<<<< HEAD
-		
+
 		MIRROREDLOCK_BUFMGR_UNLOCK;
 		// -------- MirroredLock ----------
-		
-=======
 
 		/* Loop around to ask index AM for another TID */
 		scan->xs_next_hot = InvalidOffsetNumber;
@@ -694,7 +663,6 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 	{
 		ReleaseBuffer(scan->xs_cbuf);
 		scan->xs_cbuf = InvalidBuffer;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	return NULL;				/* failure exit */
@@ -733,12 +701,8 @@ index_getnext_indexitem(IndexScanDesc scan,
 									   PointerGetDatum(scan),
 									   Int32GetDatum(direction)));
 
-<<<<<<< HEAD
-	pgstat_count_index_tuples(scan->indexRelation, 1 /*ntids*/);
-=======
 	if (found)
 		pgstat_count_index_tuples(scan->indexRelation, 1);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	return found;
 }
@@ -766,13 +730,7 @@ index_getmulti(IndexScanDesc scan, Node *bitmap)
 									  PointerGetDatum(scan),
 									  PointerGetDatum(bitmap)));
 
-<<<<<<< HEAD
 	return bm;
-=======
-	pgstat_count_index_tuples(scan->indexRelation, *returned_tids);
-
-	return found;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /* ----------------
