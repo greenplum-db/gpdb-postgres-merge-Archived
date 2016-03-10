@@ -6,20 +6,13 @@
  * There is hardly anything left of Paul Brown's original implementation...
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.158 2007/03/29 00:15:37 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.169 2008/01/30 19:46:48 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -46,11 +39,8 @@
 #include "catalog/pg_tablespace.h"
 #include "commands/cluster.h"
 #include "commands/tablecmds.h"
-<<<<<<< HEAD
-=======
 #include "commands/trigger.h"
 #include "commands/vacuum.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "miscadmin.h"
 #include "storage/procarray.h"
 #include "utils/acl.h"
@@ -59,15 +49,12 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/relcache.h"
-<<<<<<< HEAD
+#include "utils/syscache.h"
+
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp.h"
 #include "cdb/cdboidsync.h"
 #include "cdb/cdbpersistentfilesysobj.h"
-=======
-#include "utils/syscache.h"
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * This struct is used to pass around the information on tables to be
@@ -81,15 +68,9 @@ typedef struct
 } RelToCluster;
 
 
-<<<<<<< HEAD
 static bool cluster_rel(RelToCluster *rv, bool recheck, ClusterStmt *stmt, bool printError);
 static void rebuild_relation(Relation OldHeap, Oid indexOid, ClusterStmt *stmt);
-static void copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
-=======
-static void cluster_rel(RelToCluster *rv, bool recheck);
-static void rebuild_relation(Relation OldHeap, Oid indexOid);
 static TransactionId copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static List *get_tables_to_cluster(MemoryContext cluster_context);
 
 
@@ -140,22 +121,13 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 						   RelationGetRelationName(rel));
 
 		/*
-<<<<<<< HEAD
-		 * Reject clustering a remote temp table ... their local buffer manager
-		 * is not going to cope.
-=======
 		 * Reject clustering a remote temp table ... their local buffer
 		 * manager is not going to cope.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 */
 		if (isOtherTempNamespace(RelationGetNamespace(rel)))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-<<<<<<< HEAD
-					 errmsg("cannot cluster temporary tables of other sessions")));
-=======
 			   errmsg("cannot cluster temporary tables of other sessions")));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (stmt->indexname == NULL)
 		{
@@ -398,21 +370,6 @@ cluster_rel(RelToCluster *rvtc, bool recheck, ClusterStmt *stmt, bool printError
 		}
 
 		/*
-		 * Silently skip a temp table for a remote session.  Only doing this
-		 * check in the "recheck" case is appropriate (which currently means
-		 * somebody is executing a database-wide CLUSTER), because there is
-		 * another check in cluster() which will stop any attempt to cluster
-		 * remote temp tables by name.	There is another check in
-		 * check_index_is_clusterable which is redundant, but we leave it for
-		 * extra safety.
-		 */
-		if (isOtherTempNamespace(RelationGetNamespace(OldHeap)))
-		{
-			relation_close(OldHeap, AccessExclusiveLock);
-			return;
-		}
-
-		/*
 		 * Check that the index still exists
 		 */
 		if (0 == caql_getcount(
@@ -546,11 +503,6 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 
 	/*
 	 * Disallow if index is left over from a failed CREATE INDEX CONCURRENTLY;
-<<<<<<< HEAD
-	 * it might well not contain entries for every heap row.
-	 */
-	if (!OldIndex->rd_index->indisvalid)
-=======
 	 * it might well not contain entries for every heap row, or might not even
 	 * be internally consistent.  (But note that we don't check indcheckxmin;
 	 * the worst consequence of following broken HOT chains would be that we
@@ -558,7 +510,6 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 	 * is little harm in that.)
 	 */
 	if (!IndexIsValid(OldIndex->rd_index))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot cluster on invalid index \"%s\"",
@@ -747,11 +698,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid, ClusterStmt *stmt)
 	CommandCounterIncrement();
 
 	/* Swap the physical files of the old and new heaps. */
-<<<<<<< HEAD
-	swap_relation_files(tableOid, OIDNewHeap, true);
-=======
-	swap_relation_files(tableOid, OIDNewHeap, frozenXid);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	swap_relation_files(tableOid, OIDNewHeap, frozenXid, true);
 
 	CommandCounterIncrement();
 
@@ -951,16 +898,10 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	bool	   *isnull;
 	IndexScanDesc scan;
 	HeapTuple	tuple;
-<<<<<<< HEAD
-	TransactionId myxid = GetCurrentTransactionId();
-	CommandId	mycid = GetCurrentCommandId();
-	bool		use_wal;
-=======
 	bool		use_wal;
 	TransactionId OldestXmin;
 	TransactionId FreezeXid;
 	RewriteState rwstate;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Open the relations we need.
@@ -979,16 +920,6 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 
 	/* Preallocate values/isnull arrays */
 	natts = newTupDesc->natts;
-<<<<<<< HEAD
-	values = (Datum *) palloc0(natts * sizeof(Datum));
-	isnull = (bool *) palloc0(natts * sizeof(bool));
-
-	/*
-	 * We need to log the copied data in WAL iff WAL archiving is enabled AND
-	 * it's not a temp rel.  (Since we know the target relation is new and
-	 * can't have any FSM data, we can always tell heap_insert to ignore FSM,
-	 * even when using WAL.)
-=======
 	values = (Datum *) palloc(natts * sizeof(Datum));
 	isnull = (bool *) palloc(natts * sizeof(bool));
 
@@ -1011,14 +942,11 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	/*
 	 * We need to log the copied data in WAL iff WAL archiving is enabled AND
 	 * it's not a temp rel.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	use_wal = XLogArchivingActive() && !NewHeap->rd_istemp;
 
 	/* use_wal off requires rd_targblock be initially invalid */
 	Assert(NewHeap->rd_targblock == InvalidBlockNumber);
-<<<<<<< HEAD
-=======
 
 	/*
 	 * compute xids used to freeze and weed out dead tuples.  We use -1
@@ -1037,7 +965,6 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 
 	/* Initialize the rewrite operation */
 	rwstate = begin_heap_rewrite(NewHeap, OldestXmin, FreezeXid, use_wal);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Scan through the OldHeap in OldIndex order and copy each tuple into the
@@ -1058,7 +985,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 
 		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_SHARE);
 
-		switch (HeapTupleSatisfiesVacuum(tuple->t_data, OldestXmin,
+		switch (HeapTupleSatisfiesVacuum(OldHeap, tuple->t_data, OldestXmin,
 										 scan->xs_cbuf))
 		{
 			case HEAPTUPLE_DEAD:
@@ -1124,12 +1051,6 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 		 *
 		 * So, we must reconstruct the tuple from component Datums.
 		 */
-<<<<<<< HEAD
-		HeapTuple	copiedTuple;
-		int			i;
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		heap_deform_tuple(tuple, oldTupDesc, values, isnull);
 
 		/* Be sure to null out any dropped columns */
@@ -1145,12 +1066,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 		if (NewHeap->rd_rel->relhasoids)
 			HeapTupleSetOid(copiedTuple, HeapTupleGetOid(tuple));
 
-<<<<<<< HEAD
-		heap_insert(NewHeap, copiedTuple, mycid, use_wal, false, myxid);
-=======
 		/* The heap rewrite module does the rest */
 		rewrite_heap_tuple(rwstate, tuple, copiedTuple);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		heap_freetuple(copiedTuple);
 	}
@@ -1162,12 +1079,6 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 
 	pfree(values);
 	pfree(isnull);
-<<<<<<< HEAD
-
-	if (!use_wal)
-		heap_sync(NewHeap);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	index_close(OldIndex, NoLock);
 	heap_close(OldHeap, NoLock);
@@ -1234,12 +1145,6 @@ changeDependencyLinks(Oid baseOid1, Oid baseOid2, Oid oid1, Oid oid2,
  * keeping the same logical identities of the two relations.
  *
  * Also swap any TOAST links, so that the toast data moves along with
-<<<<<<< HEAD
- * the main-table data. GPDB: also swap aoseg, aoblkdir links.
- */
-void
-swap_relation_files(Oid r1, Oid r2, bool swap_stats)
-=======
  * the main-table data.
  *
  * Additionally, the first relation is marked with relfrozenxid set to
@@ -1248,10 +1153,11 @@ swap_relation_files(Oid r1, Oid r2, bool swap_stats)
  * TOAST table needs no special handling, because since we swapped the links,
  * the entry for the TOAST table will now contain RecentXmin in relfrozenxid,
  * which is the correct value.
- */
+ *
+ * GPDB: also swap aoseg, aoblkdir links.
+*/
 void
-swap_relation_files(Oid r1, Oid r2, TransactionId frozenXid)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+swap_relation_files(Oid r1, Oid r2, TransactionId frozenXid, bool swap_stats)
 {
 	Relation	relRelation;
 	HeapTuple	reltup1,
@@ -1350,7 +1256,10 @@ swap_relation_files(Oid r1, Oid r2, TransactionId frozenXid)
 
 	/* we should not swap reltoastidxid */
 
-<<<<<<< HEAD
+	/* set rel1's frozen Xid */
+	Assert(TransactionIdIsNormal(frozenXid));
+	relform1->relfrozenxid = frozenXid;
+
 	/*
 	 * Swap the AO auxiliary relations and their indexes. Unlike the toast
 	 * relations, we need to swap the index oids as well.
@@ -1368,12 +1277,6 @@ swap_relation_files(Oid r1, Oid r2, TransactionId frozenXid)
 		TransferAppendonlyEntry(r2, r1);
 	}
 	
-=======
-	/* set rel1's frozen Xid */
-	Assert(TransactionIdIsNormal(frozenXid));
-	relform1->relfrozenxid = frozenXid;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-
 	/* swap size statistics too, since new rel has freshly-updated stats */
 	if (swap_stats)
 	{

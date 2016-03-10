@@ -35,11 +35,8 @@
 #include "access/heapam.h"
 #include "access/reloptions.h"
 #include "access/xact.h"
-<<<<<<< HEAD
 #include "catalog/catquery.h"
-=======
 #include "catalog/catalog.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/indexing.h"

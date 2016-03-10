@@ -110,10 +110,7 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 					 CStringGetDatum(""),
 					 CStringGetDatum(result),
 					 Int32GetDatum(0));
-<<<<<<< HEAD
-=======
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/*
 	 * All seem ok, go ahead (possible failure would be a duplicate conversion
 	 * name)

@@ -20,7 +20,6 @@
 #include "access/transam.h"
 #include "access/tuptoaster.h"
 #include "access/xact.h"
-<<<<<<< HEAD
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
@@ -30,11 +29,6 @@
 #include "cdb/cdbpartition.h"
 #include "cdb/cdbtm.h"
 #include "cdb/cdbvars.h"
-=======
-#include "catalog/index.h"
-#include "catalog/indexing.h"
-#include "catalog/namespace.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "commands/dbcommands.h"
 #include "commands/vacuum.h"
 #include "executor/executor.h"
@@ -117,7 +111,7 @@ static void analyzeEstimateReltuplesRelpages(Oid relationOid, float4 *relTuples,
 static void analyzeEstimateIndexpages(Relation onerel, Relation indrel, BlockNumber *indexPages);
 
 
-static void analyzeStmt(VacuumStmt *stmt, List *relids);
+static void analyzeStmt(VacuumStmt *stmt, List *relids, BufferAccessStrategy strat, bool isTopLevel);
 
 /**
  * This is the main entry point for analyze execution. Three possible ways of calling this method.
@@ -129,7 +123,8 @@ static void analyzeStmt(VacuumStmt *stmt, List *relids);
  * 	vacstmt - Vacuum statement.
  * 	relids  - Usually NULL except when called by autovacuum.
  */
-void analyzeStatement(VacuumStmt *stmt, List *relids)
+void
+analyzeStatement(VacuumStmt *stmt, List *relids, BufferAccessStrategy strat, bool isTopLevel)
 {
 	/* MPP-14608: Analyze may create temp tables.
 	 * Disable autostats so that analyze is not called during their creation. */
@@ -144,7 +139,7 @@ void analyzeStatement(VacuumStmt *stmt, List *relids)
 
 	PG_TRY();
 	{
-		analyzeStmt(stmt, relids);
+		analyzeStmt(stmt, relids, strat, isTopLevel);
 		gp_autostats_mode = autostatvalBackup;
 		gp_autostats_mode_in_functions = autostatInFunctionsvalBackup;
 		optimizer = optimizerBackup;
@@ -221,7 +216,7 @@ analyzableRelations(bool rootonly)
  * 	relids  - Usually NULL except when called by autovacuum.
  */
 static void
-analyzeStmt(VacuumStmt *stmt, List *relids)
+analyzeStmt(VacuumStmt *stmt, List *relids, BufferAccessStrategy strat, bool isTopLevel)
 {
 	List	   			  	*lRelOids = NIL;
 	MemoryContext			callerContext = NULL;
@@ -369,8 +364,8 @@ analyzeStmt(VacuumStmt *stmt, List *relids)
 	 * 1. We are not in a transaction block and there are multiple relations specified (some of them may be implicit)
 	 * 2. We are in autovacuum mode
 	 */
-
-	if ((!IsInTransactionChain((void *) stmt) && list_length(lRelOids) > 1)
+	
+	if ((!IsInTransactionChain(isTopLevel) && list_length(lRelOids) > 1)
 			|| IsAutoVacuumWorkerProcess())
 		bUseOwnXacts = true;
 
@@ -415,7 +410,7 @@ analyzeStmt(VacuumStmt *stmt, List *relids)
 		/* Switch to per relation context */
 		MemoryContextSwitchTo(analyzeRelationContext);
 
-		analyze_rel(candidateOid, stmt);
+		analyze_rel(candidateOid, stmt, strat);
 
 		/* Switch back to statement context and reset relation context */
 		MemoryContextSwitchTo(analyzeStatementContext);
@@ -1102,10 +1097,7 @@ examine_attribute(Relation onerel, int attnum)
 	if (!HeapTupleIsValid(typtuple))
 		elog(ERROR, "cache lookup failed for type %u", attr->atttypid);
 	stats->attrtype = (Form_pg_type) GETSTRUCT(typtuple);
-<<<<<<< HEAD
 	stats->relstorage = RelationGetForm(onerel)->relstorage;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	stats->anl_context = anl_context;
 	stats->tupattnum = attnum;
 
@@ -1341,16 +1333,11 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 
 			ItemPointerSet(&targtuple.t_self, targblock, targoffset);
 
-<<<<<<< HEAD
-			/* We use heap_release_fetch to avoid useless bufmgr traffic */
-			if (heap_release_fetch(onerel, SnapshotNow,
-								   &targtuple, &targbuffer,
-								   true, NULL))
-=======
 			targtuple.t_data = (HeapTupleHeader) PageGetItem(targpage, itemid);
 			targtuple.t_len = ItemIdGetLength(itemid);
 
-			switch (HeapTupleSatisfiesVacuum(targtuple.t_data,
+			switch (HeapTupleSatisfiesVacuum(onerel,
+											 targtuple.t_data,
 											 OldestXmin,
 											 targbuffer))
 			{
@@ -1416,7 +1403,6 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 			}
 
 			if (sample_it)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			{
 				/*
 				 * The first targrows sample rows are simply copied into the

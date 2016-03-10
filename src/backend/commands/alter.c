@@ -121,7 +121,7 @@ ExecRenameStmt(RenameStmt *stmt)
 				aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
 							   get_namespace_name(namespaceId));
 
-			renamerel(stmt->objid, stmt->newname, stmt);
+			renamerel(stmt->objid, stmt->newname, stmt->renameType, stmt);
 			break;
 		}
 
@@ -136,32 +136,6 @@ ExecRenameStmt(RenameStmt *stmt)
 
 				switch (stmt->renameType)
 				{
-<<<<<<< HEAD
-=======
-					case OBJECT_TABLE:
-					case OBJECT_SEQUENCE:
-					case OBJECT_VIEW:
-					case OBJECT_INDEX:
-						{
-							/*
-							 * RENAME TABLE requires that we (still) hold
-							 * CREATE rights on the containing namespace, as
-							 * well as ownership of the table.
-							 */
-							Oid			namespaceId = get_rel_namespace(relid);
-							AclResult	aclresult;
-
-							aclresult = pg_namespace_aclcheck(namespaceId,
-															  GetUserId(),
-															  ACL_CREATE);
-							if (aclresult != ACLCHECK_OK)
-								aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-											get_namespace_name(namespaceId));
-
-							renamerel(relid, stmt->newname, stmt->renameType);
-							break;
-						}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					case OBJECT_COLUMN:
 						renameatt(relid,
 								  stmt->subname,		/* old att name */
@@ -300,26 +274,20 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 
 		case OBJECT_TABLESPACE:
 			AlterTableSpaceOwner(strVal(linitial(stmt->object)), newowner);
-<<<<<<< HEAD
 			break;
 
 		case OBJECT_FILESPACE:
 			AlterFileSpaceOwner(stmt->object, newowner);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+			break;
+
+		case OBJECT_EXTPROTOCOL:
+			AlterExtProtocolOwner(strVal(linitial(stmt->object)), newowner);
 			break;
 
 		case OBJECT_TYPE:
 		case OBJECT_DOMAIN:		/* same as TYPE */
 			AlterTypeOwner(stmt->object, newowner);
 			break;
-<<<<<<< HEAD
-		
-		case OBJECT_EXTPROTOCOL:
-			AlterExtProtocolOwner(strVal(linitial(stmt->object)), newowner);
-			break;
-			
-=======
 
 		case OBJECT_TSDICTIONARY:
 			AlterTSDictionaryOwner(stmt->object, newowner);
@@ -329,7 +297,6 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 			AlterTSConfigurationOwner(stmt->object, newowner);
 			break;
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		default:
 			elog(ERROR, "unrecognized AlterOwnerStmt type: %d",
 				 (int) stmt->objectType);

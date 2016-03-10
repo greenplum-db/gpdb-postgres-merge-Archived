@@ -178,7 +178,7 @@ extern List *get_oids_for_bitmap(List *all_extra_oids, Relation Irel, Relation o
 /* in commands/analyze.c */
 extern void analyze_rel(Oid relid, VacuumStmt *vacstmt,
 			BufferAccessStrategy bstrategy);
-extern void analyzeStatement(VacuumStmt *vacstmt, List *relids);
+extern void analyzeStatement(VacuumStmt *vacstmt, List *relids, BufferAccessStrategy start, bool isTopLevel);
 //extern void analyzeStmt(VacuumStmt *vacstmt, List *relids);
 
 #endif   /* VACUUM_H */

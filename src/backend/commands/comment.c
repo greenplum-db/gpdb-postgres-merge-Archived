@@ -90,15 +90,12 @@ static void CommentCast(List *qualname, List *arguments, char *comment);
 static void CommentTablespace(List *qualname, char *comment);
 static void CommentFilespace(List *qualname, char *comment);
 static void CommentRole(List *qualname, char *comment);
-<<<<<<< HEAD
 static void CommentResourceQueue(List *qualname, char *comment);
-=======
 static void CommentTSParser(List *qualname, char *comment);
 static void CommentTSDictionary(List *qualname, char *comment);
 static void CommentTSTemplate(List *qualname, char *comment);
 static void CommentTSConfiguration(List *qualname, char *comment);
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * CommentObject --
@@ -171,13 +168,12 @@ CommentObject(CommentStmt *stmt)
 		case OBJECT_FILESPACE:
 			CommentFilespace(stmt->objname, stmt->comment);
 			break;
+		case OBJECT_RESQUEUE:
+			CommentResourceQueue(stmt->objname, stmt->comment);
+			break;
 		case OBJECT_ROLE:
 			CommentRole(stmt->objname, stmt->comment);
 			break;
-<<<<<<< HEAD
-		case OBJECT_RESQUEUE:
-			CommentResourceQueue(stmt->objname, stmt->comment);
-=======
 		case OBJECT_TSPARSER:
 			CommentTSParser(stmt->objname, stmt->comment);
 			break;
@@ -189,7 +185,6 @@ CommentObject(CommentStmt *stmt)
 			break;
 		case OBJECT_TSCONFIGURATION:
 			CommentTSConfiguration(stmt->objname, stmt->comment);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			break;
 		default:
 			elog(ERROR, "unrecognized object type: %d",
@@ -1531,7 +1526,6 @@ CommentCast(List *qualname, List *arguments, char *comment)
 	CreateComments(castOid, CastRelationId, 0, comment);
 }
 
-<<<<<<< HEAD
 
 /*
  * CommentResourceQueue --
@@ -1579,7 +1573,8 @@ CommentResourceQueue(List *qualname, char *comment)
 
 	/* Call CreateSharedComments() to create/drop the comments */
 	CreateSharedComments(oid, ResQueueRelationId, comment);
-=======
+}
+
 static void
 CommentTSParser(List *qualname, char *comment)
 {
@@ -1636,5 +1631,5 @@ CommentTSConfiguration(List *qualname, char *comment)
 					   NameListToString(qualname));
 
 	CreateComments(cfgId, TSConfigRelationId, 0, comment);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+
 }
