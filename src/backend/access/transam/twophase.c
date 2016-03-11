@@ -60,15 +60,11 @@
 #include "storage/procarray.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
-<<<<<<< HEAD
 #include "utils/faultinjector.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "access/distributedlog.h"
 #include "storage/backendid.h"
-=======
-#include "utils/memutils.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #include "cdb/cdbtm.h"
 #include "cdb/cdbvars.h"
@@ -122,15 +118,10 @@ extern List *expectedTLIs;
 
 typedef struct GlobalTransactionData
 {
-<<<<<<< HEAD
-	PGPROC          proc;                   /* dummy proc */
-	TimestampTz prepared_at;        /* time of preparation */
-	XLogRecPtr  prepare_begin_lsn;  /* XLOG begging offset of prepare record */
-=======
 	PGPROC		proc;			/* dummy proc */
 	BackendId	dummyBackendId;	/* similar to backend id for backends */
 	TimestampTz prepared_at;	/* time of preparation */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	XLogRecPtr  prepare_begin_lsn;  /* XLOG begging offset of prepare record */
 	XLogRecPtr	prepare_lsn;	/* XLOG offset of prepare record */
 	Oid			owner;			/* ID of user that executed the xact */
 	BackendId	locking_backend; /* backend currently working on the xact */
@@ -1300,14 +1291,18 @@ void
 EndPrepare(GlobalTransaction gxact)
 {
 	TransactionId xid = gxact->proc.xid;
-<<<<<<< HEAD
-=======
 	TwoPhaseFileHeader *hdr;
 	char		path[MAXPGPATH];
 	XLogRecData *record;
 	pg_crc32	statefile_crc;
 	pg_crc32	bogus_crc;
 	int			fd;
+
+	MIRRORED_LOCK_DECLARE;
+	CHECKPOINT_START_LOCK_DECLARE;
+
+	if (Debug_persistent_print)
+		elog(Persistent_DebugPrintLevel(), "EndPrepare: xid = %d", xid);
 
 	/* Add the end sentinel to the list of 2PC records */
 	RegisterTwoPhaseRecord(TWOPHASE_RM_END_ID, 0,
@@ -1336,16 +1331,6 @@ EndPrepare(GlobalTransaction gxact)
 	 * PANIC anyway.
 	 */
 	TwoPhaseFilePath(path, xid);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-
-	MIRRORED_LOCK_DECLARE;
-	CHECKPOINT_START_LOCK_DECLARE;
-
-	if (Debug_persistent_print)
-		elog(Persistent_DebugPrintLevel(), "EndPrepare: xid = %d", xid);
-
-	/* Add the end sentinel to the list of 2PC records */
-	RegisterTwoPhaseRecord(TWOPHASE_RM_END_ID, 0, NULL, 0);
 
 	/*
 	 * The MirroredLock will cover BOTH mirrored writes to the pg_twophase directory
@@ -1390,15 +1375,13 @@ EndPrepare(GlobalTransaction gxact)
 
 	START_CRIT_SECTION();
 
-<<<<<<< HEAD
 	gxact->prepare_lsn       = XLogInsert(RM_XACT_ID, XLOG_XACT_PREPARE, records.head);
 	gxact->prepare_begin_lsn = XLogLastInsertBeginLoc();
 
 	/* Add the prepared record to our global list */
 	add_recover_post_checkpoint_prepared_transactions_map_entry(xid, &gxact->prepare_begin_lsn, "EndPrepare");
-=======
+
 	MyProc->inCommit = true;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	XLogFlush(gxact->prepare_lsn);
 
@@ -1407,6 +1390,7 @@ EndPrepare(GlobalTransaction gxact)
 	 */
 	if (max_wal_senders > 0)
 		WalSndWakeup();
+
 	/* If we crash now, we have prepared: WAL replay will fix things */
 
 	if (Debug_persistent_print)
@@ -1450,13 +1434,11 @@ EndPrepare(GlobalTransaction gxact)
 	 * checkpoint starting after this will certainly see the gxact as a
 	 * candidate for fsyncing.
 	 */
-<<<<<<< HEAD
 	CHECKPOINT_START_UNLOCK;
-=======
-	MyProc->inCommit = false;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	MIRRORED_UNLOCK;
+
+	MyProc->inCommit = false;
 
 #ifdef FAULT_INJECTOR
 	FaultInjector_InjectFaultIfSet(
@@ -1504,75 +1486,10 @@ PrepareIntentAppendOnlyCommitWork(char *gid)
 	gxact->prepareAppendOnlyIntentCount++;
 }
 
-<<<<<<< HEAD
 void
 PrepareDecrAppendOnlyCommitWork(char *gid)
 {
 	GlobalTransaction gxact;
-=======
-	/*
-	 * Check file length.  We can determine a lower bound pretty easily. We
-	 * set an upper bound to avoid palloc() failure on a corrupt file, though
-	 * we can't guarantee that we won't get an out of memory error anyway,
-	 * even on a valid file.
-	 */
-	if (fstat(fd, &stat))
-	{
-		close(fd);
-		ereport(WARNING,
-				(errcode_for_file_access(),
-				 errmsg("could not stat two-phase state file \"%s\": %m",
-						path)));
-		return NULL;
-	}
-
-	if (stat.st_size < (MAXALIGN(sizeof(TwoPhaseFileHeader)) +
-						MAXALIGN(sizeof(TwoPhaseRecordOnDisk)) +
-						sizeof(pg_crc32)) ||
-		stat.st_size > MaxAllocSize)
-	{
-		close(fd);
-		return NULL;
-	}
-
-	crc_offset = stat.st_size - sizeof(pg_crc32);
-	if (crc_offset != MAXALIGN(crc_offset))
-	{
-		close(fd);
-		return NULL;
-	}
-
-	/*
-	 * OK, slurp in the file.
-	 */
-	buf = (char *) palloc(stat.st_size);
-
-	if (read(fd, buf, stat.st_size) != stat.st_size)
-	{
-		close(fd);
-		ereport(WARNING,
-				(errcode_for_file_access(),
-				 errmsg("could not read two-phase state file \"%s\": %m",
-						path)));
-		pfree(buf);
-		return NULL;
-	}
-
-	close(fd);
-
-	hdr = (TwoPhaseFileHeader *) buf;
-	if (hdr->magic != TWOPHASE_MAGIC || hdr->total_len != stat.st_size)
-	{
-		pfree(buf);
-		return NULL;
-	}
-
-	INIT_CRC32(calc_crc);
-	COMP_CRC32(calc_crc, buf, crc_offset);
-	FIN_CRC32(calc_crc);
-
-	file_crc = *((pg_crc32 *) (buf + crc_offset));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	gxact = FindPrepareGXact(gid);
 
@@ -1747,11 +1664,7 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 
 	prepareAppendOnlyIntentCount = gxact->prepareAppendOnlyIntentCount;
 
-<<<<<<< HEAD
-	ProcArrayRemove(&gxact->proc, /* forPrepare */ true, isCommit);
-=======
-	ProcArrayRemove(&gxact->proc, latestXid);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	ProcArrayRemove(&gxact->proc, latestXid, /* forPrepare */ true, isCommit);
 
 	/*
 	 * In case we fail while running the callbacks, mark the gxact invalid so
@@ -1787,12 +1700,9 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	else
 		ProcessRecords(bufptr, xid, twophase_postabort_callbacks);
 
-<<<<<<< HEAD
-=======
 	/* Count the prepared xact as committed or aborted */
 	AtEOXact_PgStat(isCommit);
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/*
 	 * And now we can clean up our mess.
 	 */
@@ -1847,21 +1757,8 @@ ProcessRecords(char *bufptr, TransactionId xid,
 void
 RemoveTwoPhaseFile(TransactionId xid, bool giveWarning)
 {
-<<<<<<< HEAD
 	remove_recover_post_checkpoint_prepared_transactions_map_entry(xid,
         "RemoveTwoPhaseFile: Removing from list");
-
-=======
-	char		path[MAXPGPATH];
-
-	TwoPhaseFilePath(path, xid);
-	if (unlink(path))
-		if (errno != ENOENT || giveWarning)
-			ereport(WARNING,
-					(errcode_for_file_access(),
-				   errmsg("could not remove two-phase state file \"%s\": %m",
-						  path)));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
@@ -2170,24 +2067,11 @@ RecoverPreparedTransactions(void)
 		for (int iSub = 0; iSub < hdr->nsubxacts; iSub++)
 			SubTransSetParent(subxids[iSub], xid);
 
-<<<<<<< HEAD
 		/*
 		 * Crack open the gid to get the DTM start time and distributed
 		 * transaction id.
 		 */
 		dtxCrackOpenGid(hdr->gid, &distribTimeStamp, &distribXid);
-=======
-			/* Read and validate file */
-			buf = ReadTwoPhaseFile(xid);
-			if (buf == NULL)
-			{
-				ereport(WARNING,
-					  (errmsg("removing corrupt two-phase state file \"%s\"",
-							  clde->d_name)));
-				RemoveTwoPhaseFile(xid, true);
-				continue;
-			}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/*
 		 * Recreate its GXACT and dummy PGPROC
@@ -2343,7 +2227,6 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	}
 	rdata[lastrdata].next = NULL;
 
-<<<<<<< HEAD
 #ifdef FAULT_INJECTOR
 	FaultInjector_InjectFaultIfSet(
 		TwoPhaseTransactionCommitPrepared,
@@ -2352,12 +2235,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 		"" /* tableName */);
 #endif
 
-	recptr = XLogInsert(RM_XACT_ID,
-						XLOG_XACT_COMMIT_PREPARED | XLOG_NO_TRAN,
-						rdata);
-=======
 	recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT_PREPARED, rdata);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * We don't currently try to sleep before flush here ... nor is there any
@@ -2508,7 +2386,6 @@ RecordTransactionAbortPrepared(TransactionId xid,
 	}
 	rdata[lastrdata].next = NULL;
 
-<<<<<<< HEAD
 #ifdef FAULT_INJECTOR
 	FaultInjector_InjectFaultIfSet(
 		TwoPhaseTransactionAbortPrepared,
@@ -2517,12 +2394,7 @@ RecordTransactionAbortPrepared(TransactionId xid,
 		"" /* tableName */);
 #endif
 
-	recptr = XLogInsert(RM_XACT_ID,
-						XLOG_XACT_ABORT_PREPARED | XLOG_NO_TRAN,
-						rdata);
-=======
 	recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_ABORT_PREPARED, rdata);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Always flush, since we're about to remove the 2PC state file */
 	XLogFlush(recptr);
