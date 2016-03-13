@@ -137,7 +137,7 @@ extern List *deserialize_deflist(Datum txt);
 
 extern char *case_translate_language_name(const char *input);
 
-extern char *defGetString(DefElem *def, bool *need_free);
+extern char *defGetString(DefElem *def);
 extern double defGetNumeric(DefElem *def);
 extern bool defGetBoolean(DefElem *def);
 extern int64 defGetInt64(DefElem *def);

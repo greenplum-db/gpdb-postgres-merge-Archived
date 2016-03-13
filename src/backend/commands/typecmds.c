@@ -132,13 +132,9 @@ DefineType(List *names, List *parameters, Oid newOid, Oid shadowOid)
 	ListCell   *pl;
 	Oid			typoid;
 	Oid			resulttype;
-<<<<<<< HEAD
 	Datum		typoptions = 0;
 	List	   *encoding = NIL;
-	bool        need_free_value = false;
-=======
 	Relation	pg_type;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Convert list of names to a name and namespace */
 	typeNamespace = QualifiedNameGetCreationNamespace(names, &typeName);
@@ -254,7 +250,7 @@ DefineType(List *names, List *parameters, Oid newOid, Oid shadowOid)
 			analyzeName = defGetQualifiedName(defel);
 		else if (pg_strcasecmp(defel->defname, "delimiter") == 0)
 		{
-			char	   *p = defGetString(defel, &need_free_value);
+			char	   *p = defGetString(defel);
 
 			delimiter = p[0];
 		}
@@ -269,12 +265,12 @@ DefineType(List *names, List *parameters, Oid newOid, Oid shadowOid)
 								format_type_be(elemType))));
 		}
 		else if (pg_strcasecmp(defel->defname, "default") == 0)
-			defaultValue = defGetString(defel, &need_free_value);
+			defaultValue = defGetString(defel);
 		else if (pg_strcasecmp(defel->defname, "passedbyvalue") == 0)
 			byValue = defGetBoolean(defel);
 		else if (pg_strcasecmp(defel->defname, "alignment") == 0)
 		{
-			char	   *a = defGetString(defel, &need_free_value);
+			char	   *a = defGetString(defel);
 
 			/*
 			 * Note: if argument was an unquoted identifier, parser will have
@@ -301,7 +297,7 @@ DefineType(List *names, List *parameters, Oid newOid, Oid shadowOid)
 		}
 		else if (pg_strcasecmp(defel->defname, "storage") == 0)
 		{
-			char	   *a = defGetString(defel, &need_free_value);
+			char	   *a = defGetString(defel);
 
 			if (pg_strcasecmp(a, "plain") == 0)
 				storage = 'p';
