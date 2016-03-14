@@ -25,11 +25,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
-<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/regex/regcustom.h,v 1.7 2008/02/14 17:33:37 tgl Exp $
-=======
- * $PostgreSQL: pgsql/src/include/regex/regcustom.h,v 1.6 2007/10/06 16:01:51 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 
 /* headers if any */

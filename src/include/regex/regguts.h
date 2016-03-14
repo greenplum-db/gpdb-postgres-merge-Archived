@@ -27,11 +27,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
-<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/regex/regguts.h,v 1.7 2008/02/14 17:33:37 tgl Exp $
-=======
- * $PostgreSQL: pgsql/src/include/regex/regguts.h,v 1.6 2008/01/03 20:47:55 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 
 
@@ -266,13 +262,8 @@ struct arc
 	struct state *to;			/* where it's to */
 	struct arc *outchain;		/* link in *from's outs chain or free chain */
 #define  freechain	 outchain
-<<<<<<< HEAD
-	struct arc *inchain;		/* *to's ins chain */
-	struct arc *colorchain;		/* color's arc chain */
-=======
 	struct arc *inchain;		/* link in *to's ins chain */
 	struct arc *colorchain;		/* link in color's arc chain */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	struct arc *colorchainRev;	/* back-link in color's arc chain */
 };
 
