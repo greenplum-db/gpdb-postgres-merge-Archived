@@ -3,10 +3,7 @@
  * nodeMaterial.c
  *	  Routines to handle materialization nodes.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -80,8 +77,7 @@ ExecMaterial(MaterialState *node)
 	/*
 	 * If first time through, and we need a tuplestore, initialize it.
 	 */
-<<<<<<< HEAD
-	if (ts == NULL && (ma->share_type != SHARE_NOTSHARED || node->randomAccess))
+	if (ts == NULL && (ma->share_type != SHARE_NOTSHARED || node->eflags != 0))
 	{
 		/*
 		 * For cross slice material, we only run ExecMaterial on DriverSlice
@@ -95,14 +91,6 @@ ExecMaterial(MaterialState *node)
 				elog(LOG, "Material Exec on CrossSlice, current slice %d", currentSliceId);
 				return NULL;
 			}
-=======
-	if (tuplestorestate == NULL && node->eflags != 0)
-	{
-		tuplestorestate = tuplestore_begin_heap(true, false, work_mem);
-		tuplestore_set_eflags(tuplestorestate, node->eflags);
-		node->tuplestorestate = (void *) tuplestorestate;
-	}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			shareinput_create_bufname_prefix(rwfile_prefix, sizeof(rwfile_prefix), ma->share_id);
 			elog(LOG, "Material node creates shareinput rwfile %s", rwfile_prefix);
@@ -297,22 +285,18 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	matstate->ss.ps.plan = (Plan *) node;
 	matstate->ss.ps.state = estate;
 
+	if (node->cdb_strict)
+		eflags |= EXEC_FLAG_REWIND;
+
 	/*
 	 * We must have a tuplestore buffering the subplan output to do backward
 	 * scan or mark/restore.  We also prefer to materialize the subplan output
 	 * if we might be called on to rewind and replay it many times. However,
 	 * if none of these cases apply, we can skip storing the data.
 	 */
-<<<<<<< HEAD
-	matstate->randomAccess = node->cdb_strict ||
-							(eflags & (EXEC_FLAG_REWIND |
-										EXEC_FLAG_BACKWARD |
-										EXEC_FLAG_MARK)) != 0;
-=======
 	matstate->eflags = (eflags & (EXEC_FLAG_REWIND |
 								  EXEC_FLAG_BACKWARD |
 								  EXEC_FLAG_MARK));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	matstate->eof_underlying = false;
 	matstate->ts_state = palloc0(sizeof(GenericTupStore));
@@ -634,15 +618,9 @@ ExecMaterialReScan(MaterialState *node, ExprContext *exprCtxt)
 		if (((PlanState *) node)->lefttree->chgParam != NULL ||
 			(node->eflags & EXEC_FLAG_REWIND) == 0)
 		{
-<<<<<<< HEAD
 			DestroyTupleStore(node);
-=======
-			tuplestore_end((Tuplestorestate *) node->tuplestorestate);
-			node->tuplestorestate = NULL;
 			if (((PlanState *) node)->lefttree->chgParam == NULL)
 				ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
-			node->eof_underlying = false;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 		else
 		{
