@@ -28,11 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
-<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/backend/regex/regc_color.c,v 1.9 2008/02/14 17:33:37 tgl Exp $
-=======
- * $PostgreSQL: pgsql/src/backend/regex/regc_color.c,v 1.8 2008/01/03 20:47:55 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *
  * Note that there are some incestuous relationships between this code and
@@ -645,8 +641,6 @@ uncolorchain(struct colormap * cm,
 		a->colorchain->colorchainRev = aa;
 	a->colorchain = NULL;		/* paranoia */
 	a->colorchainRev = NULL;
-<<<<<<< HEAD
-=======
 }
 
 /*
@@ -662,7 +656,6 @@ singleton(struct colormap * cm,
 	if (cm->cd[co].nchrs == 1 && cm->cd[co].sub == NOSUB)
 		return 1;
 	return 0;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
