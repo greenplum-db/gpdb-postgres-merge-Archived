@@ -654,12 +654,8 @@ thesaurus_init(PG_FUNCTION_ARGS)
 static LexemeInfo *
 findTheLexeme(DictThesaurus *d, char *lexeme)
 {
-<<<<<<< HEAD:contrib/tsearch2/dict_thesaurus.c
-	TheLexeme	key, *res;
-=======
 	TheLexeme	key,
 			   *res;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588:src/backend/tsearch/dict_thesaurus.c
 
 	if (d->nwrds == 0)
 		return NULL;
