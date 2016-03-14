@@ -53,20 +53,6 @@ initStringInfo(StringInfo str)
 }
 
 /*
- * resetStringInfo
- *
- * Reset the StringInfo: the data buffer remains valid, but its
- * previous content, if any, is cleared.
- */
-void
-resetStringInfo(StringInfo str)
-{
-	str->data[0] = '\0';
-	str->len = 0;
-	str->cursor = 0;
-}
-
-/*
  * initStringInfoOfSize
  *
  * Initialize a StringInfoData struct with data buffer of 'size' bytes 
