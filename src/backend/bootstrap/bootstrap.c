@@ -34,7 +34,6 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "postmaster/bgwriter.h"
-#include "postmaster/checkpoint.h"
 #include "postmaster/primary_mirror_mode.h"
 #include "postmaster/walwriter.h"
 #include "replication/walreceiver.h"
