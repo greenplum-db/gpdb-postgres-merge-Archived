@@ -98,7 +98,6 @@ static TupleTableSlot *NextInputSlot(ResultState *node)
 
 		node->ps.ps_OuterTupleSlot = candidateInputSlot;
 		econtext->ecxt_outertuple = candidateInputSlot;
-		econtext->ecxt_scantuple = candidateInputSlot;
 
 		/**
 		 * Extract out qual in case result node is also performing filtering.
@@ -197,9 +196,7 @@ ExecResult(ResultState *node)
 
 			node->ps.ps_OuterTupleSlot = inputSlot;
 			econtext->ecxt_outertuple = inputSlot;
-			econtext->ecxt_scantuple = inputSlot;
 
-<<<<<<< HEAD
 			ExprDoneCond isDone;
 
 			/*
@@ -213,13 +210,6 @@ ExecResult(ResultState *node)
 				node->isSRF = true;
 				node->lastSRFCond = isDone;
 			}
-=======
-			/*
-			 * prepare to compute projection expressions, which will expect to
-			 * access the input tuples as varno OUTER.
-			 */
-			econtext->ecxt_outertuple = outerTupleSlot;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 		else if (TupIsNull(candidateOutputSlot) && !outerPlanState(node) && !(node->inputFullyConsumed))
 		{

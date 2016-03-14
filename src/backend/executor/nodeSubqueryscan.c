@@ -7,10 +7,7 @@
  * we need two sets of code.  Ought to look at trying to unify the cases.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -34,11 +31,8 @@
 #include "cdb/cdbvars.h"
 #include "executor/execdebug.h"
 #include "executor/nodeSubqueryscan.h"
-<<<<<<< HEAD
 #include "optimizer/var.h"              /* CDB: contain_var_reference() */
 #include "parser/parsetree.h"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 static TupleTableSlot *SubqueryNext(SubqueryScanState *node);
 
@@ -118,26 +112,17 @@ SubqueryScanState *
 ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 {
 	SubqueryScanState *subquerystate;
-<<<<<<< HEAD
-	EState	   *sp_estate;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* check for unsupported flags */
 	Assert(!(eflags & EXEC_FLAG_MARK));
 
 	/*
-<<<<<<< HEAD
-	 * SubqueryScan should not have any "normal" children.  Also, if planner
-=======
 	 * SubqueryScan should not have any "normal" children.	Also, if planner
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 * left anything in subrtable, it's fishy.
 	 */
 	Assert(outerPlan(node) == NULL);
 	Assert(innerPlan(node) == NULL);
 	Assert(node->subrtable == NIL);
-<<<<<<< HEAD
 
 	/*
 	 * Since subquery nodes create its own executor state,
@@ -146,8 +131,6 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 	 * fields are not initialized if not necessary, see
 	 * below.
 	 */
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * create state structure
@@ -187,69 +170,18 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 
 	/*
 	 * initialize subquery
-<<<<<<< HEAD
-	 *
-	 * This should agree with ExecInitSubPlan
-	 *
-	 * The subquery needs its own EState because it has its own rangetable. It
-	 * shares our Param ID space and es_query_cxt, however.  XXX if rangetable
-	 * access were done differently, the subquery could share our EState,
-	 * which would eliminate some thrashing about in this module...
-	 */
-	sp_estate = CreateSubExecutorState(estate);
-	subquerystate->sss_SubEState = sp_estate;
-
-	sp_estate->es_range_table = estate->es_range_table;
-	sp_estate->es_param_list_info = estate->es_param_list_info;
-	sp_estate->es_param_exec_vals = estate->es_param_exec_vals;
-	sp_estate->es_tupleTable =
-		ExecCreateTupleTable(ExecCountSlotsNode(node->subplan) + 10);
-	sp_estate->es_snapshot = estate->es_snapshot;
-	sp_estate->es_crosscheck_snapshot = estate->es_crosscheck_snapshot;
-	sp_estate->es_instrument = estate->es_instrument;
-	sp_estate->es_plannedstmt = estate->es_plannedstmt;
-
-	/*
-	 * "Loan" the global slice table and map to the subplan EState.  The
-	 * global state is already set up by the code that called us.
-	 */
-	sp_estate->es_sliceTable = estate->es_sliceTable;
-	sp_estate->currentSliceIdInPlan = estate->currentSliceIdInPlan;
-	sp_estate->currentExecutingSliceId = estate->currentExecutingSliceId;
-	sp_estate->rootSliceId = estate->currentExecutingSliceId;
-	
-	/* 
-	 * also load shared nodes list 
-	 */
-	sp_estate->es_sharenode = estate->es_sharenode;
-
-	/*
-	 * also loan the motion later state and interconnect state
-	 */
-	sp_estate->motionlayer_context = estate->motionlayer_context;
-	sp_estate->interconnect_context = estate->interconnect_context;
-
-
-	/*
-	 * Start up the subplan (this is a very cut-down form of InitPlan())
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	subquerystate->subplan = ExecInitNode(node->subplan, estate, eflags);
 
 	/* return borrowed share node list */
-	estate->es_sharenode = sp_estate->es_sharenode;
+	estate->es_sharenode = estate->es_sharenode;
 	/*subquerystate->ss.ps.ps_TupFromTlist = false;*/
 
 	/*
 	 * Initialize scan tuple type (needed by ExecAssignScanProjectionInfo)
 	 */
 	ExecAssignScanType(&subquerystate->ss,
-<<<<<<< HEAD
-			CreateTupleDescCopy(ExecGetResultType(subquerystate->subplan)));
-=======
 					   ExecGetResultType(subquerystate->subplan));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Initialize result tuple type and projection info.

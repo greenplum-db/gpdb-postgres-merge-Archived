@@ -3,11 +3,7 @@
  * spi_priv.h
  *				Server Programming Interface private declarations
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/executor/spi_priv.h,v 1.31 2008/01/01 19:45:57 momjian Exp $
@@ -35,8 +31,6 @@ typedef struct
 	SubTransactionId connectSubid;		/* ID of connecting subtransaction */
 } _SPI_connection;
 
-<<<<<<< HEAD
-=======
 /*
  * SPI plans have two states: saved or unsaved.
  *
@@ -65,33 +59,15 @@ typedef struct
  * query string.  We don't care about that, but we do care about the
  * argument type array, which is why it's seemingly-redundantly stored.
  */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 typedef struct _SPI_plan
 {
 	int			magic;			/* should equal _SPI_PLAN_MAGIC */
 	bool		saved;			/* saved or unsaved plan? */
-<<<<<<< HEAD
-	/* Context containing _SPI_plan itself as well as subsidiary data */
-	MemoryContext plancxt;
-	int			cursor_options; /* Cursor options used for planning */
-	/* Original query string (used for error reporting) */
-	const char *query;
-	/* List of List of querytrees; one sublist per original parsetree */
-	List	   *qtlist;
-	/* List of PlannedStmt* --- length == # of querytrees, but flat list */
-	List	   *ptlist;
-	/* Argument types, if a prepared plan */
-	int			nargs;			/* number of plan arguments */
-	Oid		   *argtypes;		/* Argument types (NULL if nargs is 0) */
-
-	unsigned long	use_count;
-=======
 	List	   *plancache_list; /* one CachedPlanSource per parsetree */
 	MemoryContext plancxt;		/* Context containing _SPI_plan and data */
 	int			cursor_options; /* Cursor options used for planning */
 	int			nargs;			/* number of plan arguments */
 	Oid		   *argtypes;		/* Argument types (NULL if nargs is 0) */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } _SPI_plan;
 
 #endif   /* SPI_PRIV_H */

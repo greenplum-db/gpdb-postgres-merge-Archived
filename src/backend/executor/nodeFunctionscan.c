@@ -3,10 +3,7 @@
  * nodeFunctionscan.c
  *	  Support routines for scanning RangeFunctions (functions in rangetable).
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -29,11 +26,8 @@
 #include "cdb/cdbvars.h"
 #include "executor/nodeFunctionscan.h"
 #include "funcapi.h"
-<<<<<<< HEAD
-#include "optimizer/var.h"              /* CDB: contain_var_reference() */
 #include "parser/parsetree.h"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+#include "optimizer/var.h"              /* CDB: contain_var_reference() */
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "cdb/memquota.h"
@@ -74,7 +68,6 @@ FunctionNext(FunctionScanState *node)
 	 */
 	if (tuplestorestate == NULL)
 	{
-<<<<<<< HEAD
 		tuplestorestate = ExecMakeTableFunctionResult(
 				node->funcexpr,
 				node->ss.ps.ps_ExprContext,
@@ -91,35 +84,6 @@ FunctionNext(FunctionScanState *node)
 			/* Request a callback at end of query. */
 			node->ss.ps.cdbexplainfun = ExecFunctionScanExplainEnd;
 		}
-
-=======
-		ExprContext *econtext = node->ss.ps.ps_ExprContext;
-		TupleDesc	funcTupdesc;
-
-		node->tuplestorestate = tuplestorestate =
-			ExecMakeTableFunctionResult(node->funcexpr,
-										econtext,
-										node->tupdesc,
-										&funcTupdesc);
-
-		/*
-		 * If function provided a tupdesc, cross-check it.	We only really
-		 * need to do this for functions returning RECORD, but might as well
-		 * do it always.
-		 */
-		if (funcTupdesc)
-		{
-			tupledesc_match(node->tupdesc, funcTupdesc);
-
-			/*
-			 * If it is a dynamically-allocated TupleDesc, free it: it is
-			 * typically allocated in the EState's per-query context, so we
-			 * must avoid leaking it on rescan.
-			 */
-			if (funcTupdesc->tdrefcount == -1)
-				FreeTupleDesc(funcTupdesc);
-		}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	/*

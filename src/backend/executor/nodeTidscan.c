@@ -165,7 +165,6 @@ TidListCreate(TidScanState *tidstate)
 		}
 		else if (expr && IsA(expr, CurrentOfExpr))
 		{
-<<<<<<< HEAD
 			/* 
 			 * CURRENT OF must be the only expr. This allows us to avoid
 			 * a repalloc of the tidList. 
@@ -175,6 +174,14 @@ TidListCreate(TidScanState *tidstate)
 
 			if (cexpr->gp_segment_id == Gp_segment)
 			{
+				/* GPDB_83_MERGE_FIXME: the code below is a just the old GPDB code and
+				 * the new PostgreSQL code appended together. I'm pretty sure this
+				 * can't work like this. ISTM that GPDB used to evaluate CURRENT OF
+				 * at plan time, while in PostgreSQL it's evaluated at execution time.
+				 * We probably want to have the upstream implementation, but it will
+				 * need some hacking to "segmentify" it.
+				 */
+				
 				/*
 				 * If tableoid is InvalidOid, this implies that constant
 				 * folding had determined tableoid was not necessary in
@@ -190,28 +197,25 @@ TidListCreate(TidScanState *tidstate)
 				if (!OidIsValid(cexpr->tableoid) ||
 					cexpr->tableoid == RelationGetRelid(tidstate->ss.ss_currentRelation))
 					tidList[numTids++] = cexpr->ctid;
-			}
-		} 
-=======
-			CurrentOfExpr *cexpr = (CurrentOfExpr *) expr;
-			ItemPointerData cursor_tid;
 
-			if (execCurrentOf(cexpr, econtext,
+				ItemPointerData cursor_tid;
+
+				if (execCurrentOf(cexpr, econtext,
 						   RelationGetRelid(tidstate->ss.ss_currentRelation),
-							  &cursor_tid))
-			{
-				if (numTids >= numAllocTids)
+								  &cursor_tid))
 				{
-					numAllocTids *= 2;
-					tidList = (ItemPointerData *)
-						repalloc(tidList,
-								 numAllocTids * sizeof(ItemPointerData));
+					if (numTids >= numAllocTids)
+					{
+						numAllocTids *= 2;
+						tidList = (ItemPointerData *)
+							repalloc(tidList,
+									 numAllocTids * sizeof(ItemPointerData));
+					}
+					tidList[numTids++] = cursor_tid;
+					tidstate->tss_isCurrentOf = true;
 				}
-				tidList[numTids++] = cursor_tid;
-				tidstate->tss_isCurrentOf = true;
 			}
 		}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		else
 			elog(ERROR, "could not identify CTID expression");
 	}

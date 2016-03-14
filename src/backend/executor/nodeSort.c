@@ -115,7 +115,6 @@ ExecSort(SortState *node)
 		outerNode = outerPlanState(node);
 		tupDesc = ExecGetResultType(outerNode);
 
-<<<<<<< HEAD
 		if(plannode->share_type == SHARE_SORT_XSLICE)
 		{
 			char rwfile_prefix[100];
@@ -171,10 +170,14 @@ ExecSort(SortState *node)
 
 		if(gp_enable_mk_sort)
 		{
+			if (node->bounded)
+				tuplesort_set_bound_mk(tuplesortstate_mk, node->bound);
 			node->tuplesortstate->sortstore_mk = tuplesortstate_mk;
 		}
 		else
 		{
+			if (node->bounded)
+				tuplesort_set_bound(tuplesortstate, node->bound);
 			node->tuplesortstate->sortstore = tuplesortstate;
 		}
 
@@ -262,18 +265,6 @@ ExecSort(SortState *node)
 	{
 
 		Assert(outerNode != NULL);
-=======
-		tuplesortstate = tuplesort_begin_heap(tupDesc,
-											  plannode->numCols,
-											  plannode->sortColIdx,
-											  plannode->sortOperators,
-											  plannode->nullsFirst,
-											  work_mem,
-											  node->randomAccess);
-		if (node->bounded)
-			tuplesort_set_bound(tuplesortstate, node->bound);
-		node->tuplesortstate = (void *) tuplesortstate;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/*
 		 * Scan the subplan and feed all the tuples to tuplesort.
@@ -413,14 +404,11 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 										 EXEC_FLAG_BACKWARD |
 										 EXEC_FLAG_MARK)) != 0;
 
-<<<<<<< HEAD
 	/* If the sort is shared, we need random access */
 	if(node->share_type != SHARE_NOTSHARED) 
 		sortstate->randomAccess = true;
 
-=======
 	sortstate->bounded = false;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	sortstate->sort_Done = false;
 	sortstate->tuplesortstate = palloc0(sizeof(GenericTupStore));
 	sortstate->share_lk_ctxt = NULL;
@@ -640,14 +628,10 @@ ExecReScanSort(SortState *node, ExprContext *exprCtxt)
 	 * Otherwise we can just rewind and rescan the sorted output.
 	 */
 	if (((PlanState *) node)->lefttree->chgParam != NULL ||
-<<<<<<< HEAD
-		!node->randomAccess ||
-		(NULL == node->tuplesortstate->sortstore_mk && NULL == node->tuplesortstate->sortstore))
-=======
 		node->bounded != node->bounded_Done ||
 		node->bound != node->bound_Done ||
-		!node->randomAccess)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+		!node->randomAccess ||
+		(NULL == node->tuplesortstate->sortstore_mk && NULL == node->tuplesortstate->sortstore))
 	{
 		node->sort_Done = false;
 
