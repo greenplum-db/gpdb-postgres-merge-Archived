@@ -270,6 +270,7 @@ static List *gen_implied_qual(PlannerInfo *root,
 				new_qualscope, /* qualscope */
 				NULL, /* ojscope */
 				NULL, /* outerjoin_nonnullable */
+				NULL,
 				NULL /* postponed_qual_list */
 		);
 		relevant_clauses = lappend(relevant_clauses, new_clause);
