@@ -583,15 +583,10 @@ MarkAsPreparing(TransactionId xid,
 	gxact->proc.backendId = InvalidBackendId;
 	gxact->proc.databaseId = databaseid;
 	gxact->proc.roleId = owner;
-<<<<<<< HEAD
-	gxact->proc.inVacuum = false;
-	gxact->proc.isAutovacuum = false;
-	gxact->proc.serializableIsoLevel = false;
-	gxact->proc.inDropTransaction = false;
-=======
 	gxact->proc.inCommit = false;
 	gxact->proc.vacuumFlags = 0;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	gxact->proc.serializableIsoLevel = false;
+	gxact->proc.inDropTransaction = false;
 	gxact->proc.lwWaiting = false;
 	gxact->proc.lwExclusive = false;
 	gxact->proc.lwWaitLink = NULL;
@@ -1223,16 +1218,11 @@ StartPrepare(GlobalTransaction gxact)
 	hdr.prepared_at = gxact->prepared_at;
 	hdr.owner = gxact->owner;
 	hdr.nsubxacts = xactGetCommittedChildren(&children);
-<<<<<<< HEAD
 	persistentPrepareSerializeLen =
 		PersistentEndXactRec_FetchObjectsFromSmgr(
 			&persistentPrepareObjects,
 			EndXactRecKind_Prepare,
 			&hdr.persistentPrepareObjectCount);
-=======
-	hdr.ncommitrels = smgrGetPendingDeletes(true, &commitrels, NULL);
-	hdr.nabortrels = smgrGetPendingDeletes(false, &abortrels, NULL);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	StrNCpy(hdr.gid, gxact->gid, GIDSIZE);
 
 	save_state_data(&hdr, sizeof(TwoPhaseFileHeader));
@@ -1293,13 +1283,8 @@ EndPrepare(GlobalTransaction gxact)
 	TransactionId xid = gxact->proc.xid;
 	TwoPhaseFileHeader *hdr;
 	char		path[MAXPGPATH];
-	XLogRecData *record;
-	pg_crc32	statefile_crc;
-	pg_crc32	bogus_crc;
-	int			fd;
 
 	MIRRORED_LOCK_DECLARE;
-	CHECKPOINT_START_LOCK_DECLARE;
 
 	if (Debug_persistent_print)
 		elog(Persistent_DebugPrintLevel(), "EndPrepare: xid = %d", xid);
@@ -1341,39 +1326,20 @@ EndPrepare(GlobalTransaction gxact)
 	MIRRORED_LOCK;
 
 	/*
-<<<<<<< HEAD
-	 * We have to lock out checkpoint start here, too; otherwise a checkpoint
-	 * starting immediately after the WAL record is inserted could complete
-	 * without fsync'ing our state file.  (This is essentially the same kind
-	 * of race condition as the COMMIT-to-clog-write case that
-	 * RecordTransactionCommit uses CheckpointStartLock for; see notes there.)
-=======
-	 * The state file isn't valid yet, because we haven't written the correct
-	 * CRC yet.  Before we do that, insert entry in WAL and flush it to disk.
-	 *
-	 * Between the time we have written the WAL entry and the time we write
-	 * out the correct state file CRC, we have an inconsistency: the xact is
-	 * prepared according to WAL but not according to our on-disk state. We
-	 * use a critical section to force a PANIC if we are unable to complete
-	 * the write --- then, WAL replay should repair the inconsistency.	The
-	 * odds of a PANIC actually occurring should be very tiny given that we
-	 * were able to write the bogus CRC above.
-	 *
 	 * We have to set inCommit here, too; otherwise a checkpoint starting
 	 * immediately after the WAL record is inserted could complete without
 	 * fsync'ing our state file.  (This is essentially the same kind of race
 	 * condition as the COMMIT-to-clog-write case that RecordTransactionCommit
 	 * uses inCommit for; see notes there.)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 *
 	 * We save the PREPARE record's location in the gxact for later use by
 	 * CheckPointTwoPhase.
 	 *
-	 * NOTE: Critical seciton and CheckpointStartLock were moved up.
+	 * NOTE: Critical section and CheckpointStartLock were moved up.
 	 */
-	CHECKPOINT_START_LOCK;
-
 	START_CRIT_SECTION();
+
+	MyProc->inCommit = true;
 
 	gxact->prepare_lsn       = XLogInsert(RM_XACT_ID, XLOG_XACT_PREPARE, records.head);
 	gxact->prepare_begin_lsn = XLogLastInsertBeginLoc();
@@ -1434,11 +1400,9 @@ EndPrepare(GlobalTransaction gxact)
 	 * checkpoint starting after this will certainly see the gxact as a
 	 * candidate for fsyncing.
 	 */
-	CHECKPOINT_START_UNLOCK;
+	MyProc->inCommit = false;
 
 	MIRRORED_UNLOCK;
-
-	MyProc->inCommit = false;
 
 #ifdef FAULT_INJECTOR
 	FaultInjector_InjectFaultIfSet(
@@ -1505,7 +1469,6 @@ bool
 FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFound)
 {
 	MIRRORED_LOCK_DECLARE;
-	CHECKPOINT_START_LOCK_DECLARE;
 
 	GlobalTransaction gxact;
 	TransactionId xid;
@@ -1628,7 +1591,7 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	 * record and the removal the of the two phase file from the pg_twophase directory.
 	 */
 	MIRRORED_LOCK;
-
+ 
 	/*
 	 * We have to lock out checkpoint start here when updating persistent relation information
 	 * like Appendonly segment's committed EOF. Otherwise there might be a window betwwen
@@ -1636,10 +1599,8 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	 * persistent relation tables. If there is a checkpoint before updating the peristent tables
 	 * and the system crash after the checkpoint, then during crash recovery we would not resync
 	 * to the right EOFs (MPP-18261).
-	 * When we use CheckpointStartLock, we make sure we already have the MirroredLock
-	 * first.
 	 */
-	CHECKPOINT_START_LOCK;
+	MyProc->inCommit = true;
 
 	/* compute latestXid among all children */
 	latestXid = TransactionIdLatest(xid, hdr->nsubxacts, children);
@@ -1711,7 +1672,8 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	RemoveGXact(gxact);
 	MyLockedGxact = NULL;
 
-	CHECKPOINT_START_UNLOCK;
+	/* Checkpoint can proceed now */
+	MyProc->inCommit = false;
 
 	MIRRORED_UNLOCK;
 
@@ -1852,7 +1814,6 @@ PrescanPreparedTransactions(void)
 			tfXLogRecPtr = (XLogRecPtr *) &entry->xlogrecptr;
 	}
 
-<<<<<<< HEAD
 	while (tfXLogRecPtr != NULL)
 	{
         if (Debug_persistent_print)
@@ -1867,30 +1828,6 @@ PrescanPreparedTransactions(void)
 		if (TransactionIdDidCommit(xid) == false && TransactionIdDidAbort(xid) == false)
 		{
 			int			i;
-=======
-			/* Read and validate file */
-			buf = ReadTwoPhaseFile(xid);
-			if (buf == NULL)
-			{
-				ereport(WARNING,
-					  (errmsg("removing corrupt two-phase state file \"%s\"",
-							  clde->d_name)));
-				RemoveTwoPhaseFile(xid, true);
-				continue;
-			}
-
-			/* Deconstruct header */
-			hdr = (TwoPhaseFileHeader *) buf;
-			if (!TransactionIdEquals(hdr->xid, xid))
-			{
-				ereport(WARNING,
-					  (errmsg("removing corrupt two-phase state file \"%s\"",
-							  clde->d_name)));
-				RemoveTwoPhaseFile(xid, true);
-				pfree(buf);
-				continue;
-			}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			/*
 			 * Incorporate xid into the running-minimum result.
@@ -2157,24 +2094,15 @@ RecordTransactionCommitPrepared(TransactionId xid,
 			persistentPrepareObjects,
 			EndXactRecKind_Commit);
 
-<<<<<<< HEAD
 	/*
-	 * Ensure the caller already has MirroredLock then CheckpointStartLock.
+	 * Ensure the caller already has MirroredLock and has set MyProc->isCommit.
 	 */
+	Assert(MyProc->inCommit);
 
 	/* Emit the XLOG commit record */
 	xlrec.xid = xid;
 	xlrec.crec.xtime = time(NULL);
 	xlrec.crec.persistentCommitObjectCount = persistentCommitObjectCount;
-=======
-	/* See notes in RecordTransactionCommit */
-	MyProc->inCommit = true;
-
-	/* Emit the XLOG commit record */
-	xlrec.xid = xid;
-	xlrec.crec.xact_time = GetCurrentTimestamp();
-	xlrec.crec.nrels = nrels;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	xlrec.crec.nsubxacts = nchildren;
 	rdata[0].data = (char *) (&xlrec);
 	rdata[0].len = MinSizeOfXactCommitPrepared;
@@ -2271,7 +2199,6 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	/* to avoid race conditions, the parent must commit first */
 	TransactionIdCommitTree(nchildren, children);
 
-<<<<<<< HEAD
 	/*
 	 * Wait for synchronous replication, if required.
 	 *
@@ -2279,10 +2206,6 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	 * in the procarray and continue to hold locks.
 	 */
 	SyncRepWaitForLSN(recptr);
-=======
-	/* Checkpoint can proceed now */
-	MyProc->inCommit = false;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (persistentCommitBuffer != NULL)
 		pfree(persistentCommitBuffer);
@@ -2328,13 +2251,8 @@ RecordTransactionAbortPrepared(TransactionId xid,
 
 	/* Emit the XLOG abort record */
 	xlrec.xid = xid;
-<<<<<<< HEAD
-	xlrec.arec.xtime = time(NULL);
-	xlrec.arec.persistentAbortObjectCount = persistentAbortObjectCount;
-=======
 	xlrec.arec.xact_time = GetCurrentTimestamp();
-	xlrec.arec.nrels = nrels;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	xlrec.arec.persistentAbortObjectCount = persistentAbortObjectCount;
 	xlrec.arec.nsubxacts = nchildren;
 	rdata[0].data = (char *) (&xlrec);
 	rdata[0].len = MinSizeOfXactAbortPrepared;
