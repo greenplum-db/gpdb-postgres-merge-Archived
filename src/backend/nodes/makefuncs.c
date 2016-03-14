@@ -187,11 +187,7 @@ makeConst(Oid consttype,
  * storage properties.
  */
 Const *
-<<<<<<< HEAD
-makeNullConst(Oid consttype, int consttypmod)
-=======
 makeNullConst(Oid consttype, int32 consttypmod)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	int16		typLen;
 	bool		typByVal;
@@ -213,12 +209,8 @@ Node *
 makeBoolConst(bool value, bool isnull)
 {
 	/* note that pg_type.h hardwires size of bool as 1 ... duplicate it */
-<<<<<<< HEAD
-	return (Node *) makeConst(BOOLOID, -1, 1, BoolGetDatum(value), isnull, true);
-=======
 	return (Node *) makeConst(BOOLOID, -1, 1,
 							  BoolGetDatum(value), isnull, true);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*

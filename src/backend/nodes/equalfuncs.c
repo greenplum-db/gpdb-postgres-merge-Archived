@@ -17,13 +17,9 @@
  * one) are not compared.  This is because we want, for example, a variable
  * "x" to be considered equal() to another reference to "x" in the query.
  *
-<<<<<<< HEAD
  *
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -153,18 +149,6 @@ _equalIntoClause(IntoClause *a, IntoClause *b)
 	COMPARE_SCALAR_FIELD(oidInfo.relOid);
 	COMPARE_SCALAR_FIELD(oidInfo.comptypeOid);
 	
-	return true;
-}
-
-static bool
-_equalIntoClause(IntoClause *a, IntoClause *b)
-{
-	COMPARE_NODE_FIELD(rel);
-	COMPARE_NODE_FIELD(colNames);
-	COMPARE_NODE_FIELD(options);
-	COMPARE_SCALAR_FIELD(onCommit);
-	COMPARE_STRING_FIELD(tableSpaceName);
-
 	return true;
 }
 
@@ -393,10 +377,7 @@ _equalSubPlan(SubPlan *a, SubPlan *b)
 	COMPARE_NODE_FIELD(paramIds);
 	COMPARE_SCALAR_FIELD(plan_id);
 	COMPARE_SCALAR_FIELD(firstColType);
-<<<<<<< HEAD
 	COMPARE_SCALAR_FIELD(firstColTypmod);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	COMPARE_SCALAR_FIELD(useHashTable);
 	COMPARE_SCALAR_FIELD(unknownEqFalse);
 	/* CDB: Ignore value of is_initplan */
@@ -693,17 +674,12 @@ _equalSetToDefault(SetToDefault *a, SetToDefault *b)
 static bool
 _equalCurrentOfExpr(CurrentOfExpr *a, CurrentOfExpr *b)
 {
-<<<<<<< HEAD
 	COMPARE_STRING_FIELD(cursor_name);
+	COMPARE_SCALAR_FIELD(cursor_param);
 	COMPARE_SCALAR_FIELD(cvarno);
 	COMPARE_SCALAR_FIELD(target_relid);
 
 	/* some attributes omitted as they're bound only just before executor dispatch */
-=======
-	COMPARE_SCALAR_FIELD(cvarno);
-	COMPARE_STRING_FIELD(cursor_name);
-	COMPARE_SCALAR_FIELD(cursor_param);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	return true;
 }
@@ -824,11 +800,7 @@ _equalOuterJoinInfo(OuterJoinInfo *a, OuterJoinInfo *b)
 	COMPARE_BITMAPSET_FIELD(min_righthand);
 	COMPARE_BITMAPSET_FIELD(syn_lefthand);
 	COMPARE_BITMAPSET_FIELD(syn_righthand);
-<<<<<<< HEAD
 	COMPARE_SCALAR_FIELD(join_type);
-=======
-	COMPARE_SCALAR_FIELD(is_full_join);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	COMPARE_SCALAR_FIELD(lhs_strict);
 	COMPARE_SCALAR_FIELD(delay_upper_joins);
 
@@ -893,22 +865,13 @@ _equalQuery(Query *a, Query *b)
 	COMPARE_NODE_FIELD(limitCount);
 	COMPARE_NODE_FIELD(rowMarks);
 	COMPARE_NODE_FIELD(setOperations);
-<<<<<<< HEAD
-	
-	/* Prior to 3.4 these fields were compared.
-	COMPARE_NODE_FIELD(resultRelations);
-	COMPARE_NODE_FIELD(returningLists);
-	 * now they are unused.
-	 */
 	
 	/* Prior to 3.4 this test was
 	 *     COMPARE_SCALAR_FIELD(intoPolicy); 
 	 * Maybe GpPolicy should be a Node?
 	 */
-	if (! GpPolicyEqual(a->intoPolicy, b->intoPolicy) )
+	if (!GpPolicyEqual(a->intoPolicy, b->intoPolicy))
 		return false;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	return true;
 }
@@ -1336,11 +1299,7 @@ _equalIndexStmt(IndexStmt *a, IndexStmt *b)
 	COMPARE_NODE_FIELD(indexParams);
 	COMPARE_NODE_FIELD(options);
 	COMPARE_NODE_FIELD(whereClause);
-<<<<<<< HEAD
-	COMPARE_NODE_FIELD(rangetable);
 	COMPARE_SCALAR_FIELD(is_part_child);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	COMPARE_SCALAR_FIELD(unique);
 	COMPARE_SCALAR_FIELD(primary);
 	COMPARE_SCALAR_FIELD(isconstraint);
@@ -1470,7 +1429,6 @@ _equalRuleStmt(RuleStmt *a, RuleStmt *b)
 	COMPARE_SCALAR_FIELD(instead);
 	COMPARE_NODE_FIELD(actions);
 	COMPARE_SCALAR_FIELD(replace);
-	COMPARE_SCALAR_FIELD(ruleOid);
 
 	return true;
 }

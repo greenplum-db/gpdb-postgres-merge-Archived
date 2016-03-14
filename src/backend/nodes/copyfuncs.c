@@ -11,10 +11,7 @@
  * be handled easily in a simple depth-first traversal.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -26,13 +23,10 @@
 
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "access/attnum.h"
 #include "catalog/caqlparse.h"
 #include "catalog/gp_policy.h"
-=======
 #include "miscadmin.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "nodes/plannodes.h"
 #include "nodes/execnodes.h" /* CdbProcess, Slice, and SliceTable. */
 #include "nodes/relation.h"
@@ -98,27 +92,49 @@
  */
 
 /*
- * _copyPlannedStmt
+ * _copyPlannedStmt 
  */
 static PlannedStmt *
 _copyPlannedStmt(PlannedStmt *from)
 {
-	PlannedStmt *newnode = makeNode(PlannedStmt);
+	PlannedStmt   *newnode = makeNode(PlannedStmt);
 
 	COPY_SCALAR_FIELD(commandType);
+	COPY_SCALAR_FIELD(planGen);
 	COPY_SCALAR_FIELD(canSetTag);
 	COPY_SCALAR_FIELD(transientPlan);
+
 	COPY_NODE_FIELD(planTree);
 	COPY_NODE_FIELD(rtable);
-	COPY_NODE_FIELD(resultRelations);
+	
 	COPY_NODE_FIELD(utilityStmt);
 	COPY_NODE_FIELD(intoClause);
 	COPY_NODE_FIELD(subplans);
-	COPY_BITMAPSET_FIELD(rewindPlanIDs);
+	COPY_NODE_FIELD(rewindPlanIDs);
 	COPY_NODE_FIELD(returningLists);
+	
+	COPY_NODE_FIELD(result_partitions);
+	COPY_NODE_FIELD(result_aosegnos);
+	COPY_NODE_FIELD(queryPartOids);
+	COPY_NODE_FIELD(queryPartsMetadata);
+	COPY_NODE_FIELD(numSelectorsPerScanId);
 	COPY_NODE_FIELD(rowMarks);
 	COPY_NODE_FIELD(relationOids);
+	COPY_SCALAR_FIELD(invalItems);
 	COPY_SCALAR_FIELD(nParamExec);
+	COPY_SCALAR_FIELD(nCrossLevelParams);
+	COPY_SCALAR_FIELD(nMotionNodes);
+	COPY_SCALAR_FIELD(nInitPlans);
+	
+	if (from->intoPolicy)
+	{
+		COPY_POINTER_FIELD(intoPolicy,sizeof(GpPolicy) + from->intoPolicy->nattrs*sizeof(from->intoPolicy->attrs[0]));
+	}
+	else
+		newnode->intoPolicy = NULL;
+	COPY_NODE_FIELD(sliceTable);
+
+	COPY_SCALAR_FIELD(query_mem);
 
 	return newnode;
 }
@@ -147,8 +163,6 @@ CopyPlanFields(Plan *from, Plan *newnode)
 	COPY_NODE_FIELD(initPlan);
 	COPY_BITMAPSET_FIELD(extParam);
 	COPY_BITMAPSET_FIELD(allParam);
-<<<<<<< HEAD
-	COPY_SCALAR_FIELD(nParamExec);
 	COPY_NODE_FIELD(flow);
 	COPY_SCALAR_FIELD(dispatch);
 	COPY_SCALAR_FIELD(nMotionNodes);
@@ -158,7 +172,6 @@ CopyPlanFields(Plan *from, Plan *newnode)
 	COPY_SCALAR_FIELD(directDispatch.isDirectDispatch);
 	COPY_NODE_FIELD(directDispatch.contentIds);
 	COPY_SCALAR_FIELD(operatorMemKB);
-
 }
 
 /*
@@ -179,56 +192,6 @@ CopyLogicalIndexInfo(const LogicalIndexInfo *from, LogicalIndexInfo *newnode)
 	COPY_SCALAR_FIELD(indType);
 	COPY_NODE_FIELD(partCons);
 	COPY_NODE_FIELD(defaultLevels);
-}
-
-/*
- * _copyPlannedStmt 
- */
-static PlannedStmt *
-_copyPlannedStmt(PlannedStmt *from)
-{
-	PlannedStmt   *newnode = makeNode(PlannedStmt);
-
-	COPY_SCALAR_FIELD(commandType);
-	COPY_SCALAR_FIELD(planGen);
-	COPY_SCALAR_FIELD(canSetTag);
-	COPY_SCALAR_FIELD(transientPlan);
-
-	COPY_NODE_FIELD(planTree);
-	COPY_NODE_FIELD(rtable);
-	
-	COPY_NODE_FIELD(resultRelations);
-	COPY_NODE_FIELD(utilityStmt);
-	COPY_NODE_FIELD(intoClause);
-	COPY_NODE_FIELD(subplans);
-	COPY_NODE_FIELD(rewindPlanIDs);
-	COPY_NODE_FIELD(returningLists);
-	
-	COPY_NODE_FIELD(result_partitions);
-	COPY_NODE_FIELD(result_aosegnos);
-	COPY_NODE_FIELD(queryPartOids);
-	COPY_NODE_FIELD(queryPartsMetadata);
-	COPY_NODE_FIELD(numSelectorsPerScanId);
-	COPY_NODE_FIELD(rowMarks);
-	COPY_NODE_FIELD(relationOids);
-	COPY_SCALAR_FIELD(invalItems);
-	COPY_SCALAR_FIELD(nCrossLevelParams);
-	COPY_SCALAR_FIELD(nMotionNodes);
-	COPY_SCALAR_FIELD(nInitPlans);
-	
-	if (from->intoPolicy)
-	{
-		COPY_POINTER_FIELD(intoPolicy,sizeof(GpPolicy) + from->intoPolicy->nattrs*sizeof(from->intoPolicy->attrs[0]));
-	}
-	else
-		newnode->intoPolicy = NULL;
-	COPY_NODE_FIELD(sliceTable);
-
-	COPY_SCALAR_FIELD(query_mem);
-
-	return newnode;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
@@ -1288,23 +1251,6 @@ _copyIntoClause(IntoClause *from)
 }
 
 /*
- * _copyIntoClause
- */
-static IntoClause *
-_copyIntoClause(IntoClause *from)
-{
-	IntoClause *newnode = makeNode(IntoClause);
-
-	COPY_NODE_FIELD(rel);
-	COPY_NODE_FIELD(colNames);
-	COPY_NODE_FIELD(options);
-	COPY_SCALAR_FIELD(onCommit);
-	COPY_STRING_FIELD(tableSpaceName);
-
-	return newnode;
-}
-
-/*
  * We don't need a _copyExpr because Expr is an abstract supertype which
  * should never actually get instantiated.	Also, since it has no common
  * fields except NodeTag, there's no need for a helper routine to factor
@@ -1569,13 +1515,9 @@ _copySubPlan(SubPlan *from)
 	COPY_NODE_FIELD(testexpr);
 	COPY_NODE_FIELD(paramIds);
 	COPY_SCALAR_FIELD(plan_id);
-<<<<<<< HEAD
 	COPY_STRING_FIELD(plan_name);
 	COPY_SCALAR_FIELD(firstColType);
 	COPY_SCALAR_FIELD(firstColTypmod);
-=======
-	COPY_SCALAR_FIELD(firstColType);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	COPY_SCALAR_FIELD(useHashTable);
 	COPY_SCALAR_FIELD(unknownEqFalse);
 	COPY_SCALAR_FIELD(is_initplan);	/*CDB*/
@@ -1923,18 +1865,12 @@ _copyCurrentOfExpr(CurrentOfExpr *from)
 {
 	CurrentOfExpr *newnode = makeNode(CurrentOfExpr);
 
-<<<<<<< HEAD
 	COPY_STRING_FIELD(cursor_name);
 	COPY_SCALAR_FIELD(cvarno);
 	COPY_SCALAR_FIELD(target_relid);
 	COPY_SCALAR_FIELD(gp_segment_id);
 	COPY_BINARY_FIELD(ctid, sizeof(ItemPointerData));
 	COPY_SCALAR_FIELD(tableoid);
-=======
-	COPY_SCALAR_FIELD(cvarno);
-	COPY_STRING_FIELD(cursor_name);
-	COPY_SCALAR_FIELD(cursor_param);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	return newnode;
 }
@@ -2124,11 +2060,7 @@ _copyOuterJoinInfo(OuterJoinInfo *from)
 	COPY_BITMAPSET_FIELD(min_righthand);
 	COPY_BITMAPSET_FIELD(syn_lefthand);
 	COPY_BITMAPSET_FIELD(syn_righthand);
-<<<<<<< HEAD
 	COPY_SCALAR_FIELD(join_type);
-=======
-	COPY_SCALAR_FIELD(is_full_join);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	COPY_SCALAR_FIELD(lhs_strict);
 	COPY_SCALAR_FIELD(delay_upper_joins);
 
@@ -2781,17 +2713,12 @@ _copyQuery(Query *from)
 	COPY_NODE_FIELD(limitCount);
 	COPY_NODE_FIELD(rowMarks);
 	COPY_NODE_FIELD(setOperations);
-<<<<<<< HEAD
-	COPY_NODE_FIELD(resultRelations);
-	COPY_NODE_FIELD(returningLists);
 	if (from->intoPolicy)
 	{
-		COPY_POINTER_FIELD(intoPolicy,sizeof(GpPolicy) + from->intoPolicy->nattrs*sizeof(from->intoPolicy->attrs[0]));
+		COPY_POINTER_FIELD(intoPolicy, sizeof(GpPolicy) + from->intoPolicy->nattrs * sizeof(from->intoPolicy->attrs[0]));
 	}
 	else
 		newnode->intoPolicy = NULL;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	return newnode;
 }
@@ -3419,11 +3346,7 @@ _copyIndexStmt(IndexStmt *from)
 	COPY_NODE_FIELD(indexParams);
 	COPY_NODE_FIELD(options);
 	COPY_NODE_FIELD(whereClause);
-<<<<<<< HEAD
-	COPY_NODE_FIELD(rangetable);
 	COPY_SCALAR_FIELD(is_part_child);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	COPY_SCALAR_FIELD(unique);
 	COPY_SCALAR_FIELD(primary);
 	COPY_SCALAR_FIELD(isconstraint);
@@ -3576,7 +3499,6 @@ _copyRuleStmt(RuleStmt *from)
 	COPY_SCALAR_FIELD(instead);
 	COPY_NODE_FIELD(actions);
 	COPY_SCALAR_FIELD(replace);
-	COPY_SCALAR_FIELD(ruleOid);
 
 	return newnode;
 }
