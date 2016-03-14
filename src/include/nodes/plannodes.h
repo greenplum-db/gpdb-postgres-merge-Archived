@@ -139,8 +139,6 @@ typedef struct PlannedStmt
 
 	int			nParamExec;		/* number of PARAM_EXEC Params used */
 
-	int			nCrossLevelParams;		/* number of PARAM_EXEC Params used */
-
 	int			nMotionNodes;	/* number of Motion nodes in plan */
 
 	int			nInitPlans;		/* number of initPlans in plan */
