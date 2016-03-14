@@ -123,13 +123,12 @@ _bitmap_create_lov_heapandindex(Relation rel,
 		/* XLOG the metapage */
 		if (!XLog_UnconvertedCanBypassWal() && !lovIndex->rd_istemp)
 		{
-			
 			// Fetch gp_persistent_relation_node information that will be added to XLOG record.
 			RelationFetchGpRelationNodeForXLog(lovIndex);
 			
-			_bt_lognewpage(lovIndex,
-						   btree_metapage,
-						   BufferGetBlockNumber(btree_metabuf));
+			log_newpage(&lovIndex->rd_node,
+						BufferGetBlockNumber(btree_metabuf),
+						btree_metapage);
 		}
 		
 		/* This cache value is not valid anymore. */
