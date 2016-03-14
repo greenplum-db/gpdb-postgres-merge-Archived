@@ -3,10 +3,7 @@
  * nodeHashjoin.c
  *	  Routines to handle hash join nodes
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -720,7 +717,6 @@ ExecHashJoinOuterGetTuple(PlanState *outerNode,
 			 */
 			econtext = hjstate->js.ps.ps_ExprContext;
 			econtext->ecxt_outertuple = slot;
-<<<<<<< HEAD
 
 			bool hashkeys_null = false;
 			bool keep_nulls = (hjstate->js.jointype == JOIN_LEFT) ||
@@ -728,19 +724,11 @@ ExecHashJoinOuterGetTuple(PlanState *outerNode,
 					(hjstate->js.jointype == JOIN_LASJ_NOTIN) ||
 					hjstate->hj_nonequijoin;
 			if (ExecHashGetHashValue(hashState, hashtable, econtext,
-						hjstate->hj_OuterHashKeys,
-						true,
-						keep_nulls,
-						hashvalue,
-						&hashkeys_null
-						))
-=======
-			if (ExecHashGetHashValue(hashtable, econtext,
 									 hjstate->hj_OuterHashKeys,
 									 true,		/* outer tuple */
-									 (hjstate->js.jointype == JOIN_LEFT),
-									 hashvalue))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+									 keep_nulls,
+									 hashvalue,
+									 &hashkeys_null))
 			{
 				/* remember outer relation is not empty for possible rescan */
 				hjstate->hj_OuterNotEmpty = true;

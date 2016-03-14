@@ -94,12 +94,8 @@ static execution_state *init_execution_state(List *queryTree_list,
 					 bool readonly_func);
 static void init_sql_fcache(FmgrInfo *finfo);
 static void postquel_start(execution_state *es, SQLFunctionCachePtr fcache);
-<<<<<<< HEAD
-static TupleTableSlot * postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache);
-=======
 static TupleTableSlot *postquel_getnext(execution_state *es,
 				 SQLFunctionCachePtr fcache);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static void postquel_end(execution_state *es);
 static void postquel_sub_params(SQLFunctionCachePtr fcache,
 					FunctionCallInfo fcinfo);
@@ -194,11 +190,7 @@ init_execution_state(List *queryTree_list, SQLFunctionCache *fcache, bool readon
 
 	foreach(qtl_item, queryTree_list)
 	{
-<<<<<<< HEAD
-		Query	   *queryTree = (Query *) lfirst(qtl_item);
-=======
 		Query	   *queryTree = lfirst(qtl_item);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		Node	   *stmt;
 		execution_state *newes;
 
@@ -207,11 +199,7 @@ init_execution_state(List *queryTree_list, SQLFunctionCache *fcache, bool readon
 		if (queryTree->commandType == CMD_UTILITY)
 			stmt = queryTree->utilityStmt;
 		else
-<<<<<<< HEAD
-			stmt = (Node *) pg_plan_query(queryTree, NULL);
-=======
 			stmt = (Node *) pg_plan_query(queryTree, 0, NULL);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/* Precheck all commands for validity in a function */
 		if (IsA(stmt, TransactionStmt))
@@ -339,9 +327,11 @@ init_sql_fcache(FmgrInfo *finfo)
 						  &isNull);
 	if (isNull)
 		elog(ERROR, "null prosrc for function %u", foid);
-<<<<<<< HEAD
 	fcache->src = TextDatumGetCString(tmp);
 
+	/*
+	 * Parse and rewrite the queries in the function text.
+	 */
 	queryTree_list = pg_parse_and_rewrite(fcache->src, argOidVect, nargs);
 	
 
@@ -386,14 +376,6 @@ init_sql_fcache(FmgrInfo *finfo)
 				elog(ERROR,"SQL function %s cannot be executed from the segment databases",NameStr(procedureStruct->proname));		
 		}
 	}
-=======
-	fcache->src = DatumGetCString(DirectFunctionCall1(textout, tmp));
-
-	/*
-	 * Parse and rewrite the queries in the function text.
-	 */
-	queryTree_list = pg_parse_and_rewrite(fcache->src, argOidVect, nargs);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Check that the function returns the type it claims to.  Although in
@@ -450,7 +432,6 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 	}
 
 	if (IsA(es->stmt, PlannedStmt))
-<<<<<<< HEAD
 	{
 		es->qd = CreateQueryDesc((PlannedStmt *) es->stmt,
 								 fcache->src,
@@ -486,17 +467,6 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 										None_Receiver,
 										fcache->paramLI);
 	}
-=======
-		es->qd = CreateQueryDesc((PlannedStmt *) es->stmt,
-								 snapshot, InvalidSnapshot,
-								 None_Receiver,
-								 fcache->paramLI, false);
-	else
-		es->qd = CreateUtilityQueryDesc(es->stmt,
-										snapshot,
-										None_Receiver,
-										fcache->paramLI);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* We assume we don't need to set up ActiveSnapshot for ExecutorStart */
 
@@ -538,29 +508,17 @@ postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache)
 	{
 		ActiveSnapshot = es->qd->snapshot;
 
-<<<<<<< HEAD
-		if (es->qd->utilitystmt != NULL)
-=======
 		if (es->qd->utilitystmt)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		{
 			/* ProcessUtility needs the PlannedStmt for DECLARE CURSOR */
 			ProcessUtility((es->qd->plannedstmt ?
 							(Node *) es->qd->plannedstmt :
-<<<<<<< HEAD
-							es->qd->utilitystmt), 
-						   fcache->src,
-						   es->qd->params,
-						   false, /* not top level */
-						   es->qd->dest, NULL);
-=======
 							es->qd->utilitystmt),
 						   fcache->src,
 						   es->qd->params,
 						   false,		/* not top level */
 						   es->qd->dest,
 						   NULL);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			result = NULL;
 		}
 		else
@@ -573,10 +531,7 @@ postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache)
 			 */
 			if (LAST_POSTQUEL_COMMAND(es) &&
 				es->qd->operation == CMD_SELECT &&
-<<<<<<< HEAD
-=======
 				es->qd->plannedstmt->utilityStmt == NULL &&
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				es->qd->plannedstmt->intoClause == NULL)
 				count = 1L;
 			else
@@ -1155,21 +1110,12 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	/*
 	 * If the last query isn't a SELECT, the return type must be VOID.
 	 *
-<<<<<<< HEAD
-	 * Note: eventually replace this test with QueryReturnsTuples?  We'd need
-	 * a more general method of determining the output type, though.
-	 */
-	if (!(parse->commandType == CMD_SELECT && 
-		  parse->intoClause == NULL &&
-		  parse->utilityStmt == NULL))
-=======
 	 * Note: eventually replace this test with QueryReturnsTuples?	We'd need
 	 * a more general method of determining the output type, though.
 	 */
 	if (!(parse->commandType == CMD_SELECT &&
 		  parse->utilityStmt == NULL &&
 		  parse->intoClause == NULL))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		if (rettype != VOIDOID)
 			ereport(ERROR,
@@ -1183,16 +1129,9 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	/*
 	 * OK, it's a SELECT, so it must return something matching the declared
 	 * type.  (We used to insist that the declared type not be VOID in this
-<<<<<<< HEAD
-	 * case, but that makes it hard to write a void function that exits
-	 * after calling another void function.  Instead, we insist that the
-	 * SELECT return void ... so void is treated as if it were a scalar type
-	 * below.)
-=======
 	 * case, but that makes it hard to write a void function that exits after
 	 * calling another void function.  Instead, we insist that the SELECT
 	 * return void ... so void is treated as if it were a scalar type below.)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 
 	/*
@@ -1203,13 +1142,9 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 
 	fn_typtype = get_typtype(rettype);
 
-<<<<<<< HEAD
-	if (fn_typtype == 'b' || fn_typtype == 'd' ||
-=======
 	if (fn_typtype == TYPTYPE_BASE ||
 		fn_typtype == TYPTYPE_DOMAIN ||
 		fn_typtype == TYPTYPE_ENUM ||
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		rettype == VOIDOID)
 	{
 		/*

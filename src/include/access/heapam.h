@@ -30,7 +30,7 @@
 
 /* in common/heaptuple.c */
 extern Datum nocachegetattr(HeapTuple tup, int attnum, TupleDesc att);
-extern Datum heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull);
+extern Datum heap_getsysattr(HeapTuple tup, int attnum, bool *isnull);
 
 
 /* ----------------
@@ -115,7 +115,7 @@ heap_getattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
     else if (attnum > 0)
         result = fastgetattr(tup, attnum, tupleDesc, isnull);
     else
-        result = heap_getsysattr(tup, attnum, tupleDesc, isnull);
+        result = heap_getsysattr(tup, attnum, isnull);
 
     return result;
 }                               /* heap_getattr */

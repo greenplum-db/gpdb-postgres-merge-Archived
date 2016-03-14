@@ -36,10 +36,7 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-<<<<<<< HEAD
 #include "access/relscan.h"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "access/transam.h"
 #include "executor/execdebug.h"
 #include "executor/nodeBitmapHeapscan.h"
@@ -69,20 +66,12 @@ initScanDesc(BitmapHeapScanState *scanstate)
 	{
 		/*
 		 * Even though we aren't going to do a conventional seqscan, it is useful
-		 * to create a HeapScanDesc --- this checks the relation size and sets up
-		 * statistical infrastructure for us.
+		 * to create a HeapScanDesc --- most of the fields in it are usable.
 		 */
-		scanstate->ss_currentScanDesc = heap_beginscan(currentRelation,
-													   estate->es_snapshot,
-													   0,
-													   NULL);
-		
-		/*
-		 * One problem is that heap_beginscan counts a "sequential scan" start,
-		 * when we actually aren't doing any such thing.  Reverse out the added
-		 * scan count.	(Eventually we may want to count bitmap scans separately.)
-		 */
-		pgstat_discount_heap_scan(currentRelation);
+		scanstate->ss_currentScanDesc = heap_beginscan_bm(currentRelation,
+														  estate->es_snapshot,
+														  0,
+														  NULL);
 	}
 }
 
@@ -443,20 +432,14 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 			ItemId		lp;
 			HeapTupleData loctup;
 
-<<<<<<< HEAD
-		valid = HeapTupleSatisfiesVisibility(scan->rs_rd, &loctup, snapshot, buffer);
-		if (valid)
-			scan->rs_vistuples[ntup++] = targoffset;
-=======
 			lp = PageGetItemId(dp, offnum);
 			if (!ItemIdIsNormal(lp))
 				continue;
 			loctup.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 			loctup.t_len = ItemIdGetLength(lp);
-			if (HeapTupleSatisfiesVisibility(&loctup, snapshot, buffer))
+			if (HeapTupleSatisfiesVisibility(scan->rs_rd, &loctup, snapshot, buffer))
 				scan->rs_vistuples[ntup++] = offnum;
 		}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
@@ -520,19 +503,9 @@ ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt)
 	/* rescan to release any page pin */
 	heap_rescan(node->ss_currentScanDesc, NULL);
 
-<<<<<<< HEAD
-	/* undo bogus "seq scan" count (see notes in ExecInitBitmapHeapScan) */
-	pgstat_discount_heap_scan(node->ss.ss_currentRelation);
-
 	freeBitmapState(node);
 
 	tbm_reset_bitmaps(outerPlanState(node));
-=======
-	if (node->tbm)
-		tbm_free(node->tbm);
-	node->tbm = NULL;
-	node->tbmres = NULL;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Always rescan the input immediately, to ensure we can pass down any
@@ -657,18 +630,6 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 	scanstate->ss.ss_currentRelation = currentRelation;
 
 	/*
-<<<<<<< HEAD
-=======
-	 * Even though we aren't going to do a conventional seqscan, it is useful
-	 * to create a HeapScanDesc --- most of the fields in it are usable.
-	 */
-	scanstate->ss.ss_currentScanDesc = heap_beginscan_bm(currentRelation,
-														 estate->es_snapshot,
-														 0,
-														 NULL);
-
-	/*
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 * get the scan type from the relation descriptor.
 	 */
 	ExecAssignScanType(&scanstate->ss, RelationGetDescr(currentRelation));

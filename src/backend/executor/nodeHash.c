@@ -3,10 +3,7 @@
  * nodeHash.c
  *	  Routines to hash relations for hashjoin
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -28,11 +25,8 @@
 #include <math.h>
 #include <limits.h>
 
-<<<<<<< HEAD
 #include "access/hash.h"
-=======
 #include "commands/tablespace.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "executor/execdebug.h"
 #include "executor/hashjoin.h"
 #include "executor/instrument.h"
@@ -305,36 +299,31 @@ ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate, List *hashOper
 	 */
 	outerNode = outerPlan(node);
 
-<<<<<<< HEAD
-=======
 	ExecChooseHashTableSize(outerNode->plan_rows, outerNode->plan_width,
-							&nbuckets, &nbatch);
+			&nbuckets, &nbatch, operatorMemKB);
 
 #ifdef HJDEBUG
-	printf("nbatch = %d, nbuckets = %d\n", nbatch, nbuckets);
+    elog(LOG, "HJ: nbatch = %d, nbuckets = %d\n", nbatch, nbuckets);
 #endif
 
 	/* nbuckets must be a power of 2 */
 	log2_nbuckets = my_log2(nbuckets);
 	Assert(nbuckets == (1 << log2_nbuckets));
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/*
 	 * Initialize the hash table control block.
 	 *
 	 * The hashtable control block is just palloc'd from the executor's
 	 * per-query memory context.
 	 */
-<<<<<<< HEAD
 	hashtable = (HashJoinTable)palloc0(sizeof(HashJoinTableData));
-=======
-	hashtable = (HashJoinTable) palloc(sizeof(HashJoinTableData));
 	hashtable->nbuckets = nbuckets;
 	hashtable->log2_nbuckets = log2_nbuckets;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	hashtable->buckets = NULL;
 	hashtable->bloom = NULL;
 	hashtable->curbatch = 0;
+	hashtable->nbatch_original = nbatch;
+	hashtable->nbatch_outstart = nbatch;
 	hashtable->growEnabled = true;
 	hashtable->totalTuples = 0;
 	hashtable->batches = NULL;
@@ -345,51 +334,9 @@ ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate, List *hashOper
 	hashtable->eagerlyReleased = false;
 	hashtable->hjstate = hjstate;
 
-	/*
-<<<<<<< HEAD
-	 * Create temporary memory contexts in which to keep the hashtable working
-	 * storage.  See notes in executor/hashjoin.h.
-	 */
-	hashtable->hashCxt = AllocSetContextCreate(CurrentMemoryContext,
-											   "HashTableContext",
-											   ALLOCSET_DEFAULT_MINSIZE,
-											   ALLOCSET_DEFAULT_INITSIZE,
-											   ALLOCSET_DEFAULT_MAXSIZE);
-
-	hashtable->batchCxt = AllocSetContextCreate(hashtable->hashCxt,
-												"HashBatchContext",
-												ALLOCSET_DEFAULT_MINSIZE,
-												ALLOCSET_DEFAULT_INITSIZE,
-												ALLOCSET_DEFAULT_MAXSIZE);
-
-	/* CDB */ /* track temp buf file allocations in separate context */
-	hashtable->bfCxt = AllocSetContextCreate(CurrentMemoryContext,
-											 "hbbfcxt",
-											 ALLOCSET_DEFAULT_MINSIZE,
-											 ALLOCSET_DEFAULT_INITSIZE,
-											 ALLOCSET_DEFAULT_MAXSIZE);
-
-	ExecChooseHashTableSize(outerNode->plan_rows, outerNode->plan_width,
-			&hashtable->nbuckets, &hashtable->nbatch, operatorMemKB);
-
-	nbuckets = hashtable->nbuckets;
-	nbatch = hashtable->nbatch;
-	hashtable->nbatch_original = nbatch;
-	hashtable->nbatch_outstart = nbatch;
-
-
-#ifdef HJDEBUG
-    elog(LOG, "HJ: nbatch = %d, nbuckets = %d\n", nbatch, nbuckets);
-#endif
-
-
     /*
-	 * Get info about the hash functions to be used for each hash key.
-	 * Also remember whether the join operators are strict.
-=======
 	 * Get info about the hash functions to be used for each hash key. Also
 	 * remember whether the join operators are strict.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	nkeys = list_length(hashOperators);
 	hashtable->outer_hashfunctions =
@@ -414,6 +361,29 @@ ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate, List *hashOper
 	}
 
 	/*
+	 * Create temporary memory contexts in which to keep the hashtable working
+	 * storage.  See notes in executor/hashjoin.h.
+	 */
+	hashtable->hashCxt = AllocSetContextCreate(CurrentMemoryContext,
+											   "HashTableContext",
+											   ALLOCSET_DEFAULT_MINSIZE,
+											   ALLOCSET_DEFAULT_INITSIZE,
+											   ALLOCSET_DEFAULT_MAXSIZE);
+
+	hashtable->batchCxt = AllocSetContextCreate(hashtable->hashCxt,
+												"HashBatchContext",
+												ALLOCSET_DEFAULT_MINSIZE,
+												ALLOCSET_DEFAULT_INITSIZE,
+												ALLOCSET_DEFAULT_MAXSIZE);
+
+	/* CDB */ /* track temp buf file allocations in separate context */
+	hashtable->bfCxt = AllocSetContextCreate(CurrentMemoryContext,
+											 "hbbfcxt",
+											 ALLOCSET_DEFAULT_MINSIZE,
+											 ALLOCSET_DEFAULT_INITSIZE,
+											 ALLOCSET_DEFAULT_MAXSIZE);
+
+	/*
      * Allocate data that will live for the life of the hashjoin
      */
 	oldcxt = MemoryContextSwitchTo(hashtable->hashCxt);
@@ -431,7 +401,6 @@ ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate, List *hashOper
 		/* Memory needed to allocate hashtable->bloom, which consists of nbuckets int64 values */
 		int md_bloom_size = (nbuckets * sizeof(uint64)) / (1024 * 1024);
 
-<<<<<<< HEAD
 		/* Total memory needed for the hashtable metadata */
 		int md_tot = md_batch_size + md_batch_data_size + md_buckets_size + md_bloom_size;
 
@@ -442,20 +411,6 @@ ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate, List *hashOper
 		elog(LOG, "sizeof(hashtable->batches[0])=%d, sizeof(HashJoinBatchData)=%d, sizeof(HashJoinTuple)=%d, sizeof(uint64)=%d",
 				(int) sizeof(hashtable->batches[0]), (int) sizeof(HashJoinBatchData),
 				(int) sizeof(HashJoinTuple), (int) sizeof(uint64));
-=======
-	if (nbatch > 1)
-	{
-		/*
-		 * allocate and initialize the file arrays in hashCxt
-		 */
-		hashtable->innerBatchFile = (BufFile **)
-			palloc0(nbatch * sizeof(BufFile *));
-		hashtable->outerBatchFile = (BufFile **)
-			palloc0(nbatch * sizeof(BufFile *));
-		/* The files will not be opened until needed... */
-		/* ... but make sure we have temp tablespaces established for them */
-		PrepareTempTablespaces();
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 #endif
 
@@ -500,7 +455,6 @@ ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate, List *hashOper
  * #define NTUP_PER_BUCKET			10
  */
 
-<<<<<<< HEAD
 /* Prime numbers that we like to use as nbuckets values */
 static const int hprimes[] = {
 	1033, 2063, 4111, 8219, 16417, 32779, 65539, 131111,
@@ -529,8 +483,6 @@ ExecChoosePrimeNBuckets(int nbuckets)
 	return nbuckets;
 }
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 void
 ExecChooseHashTableSize(double ntuples, int tupwidth,
 						int *numbuckets,
@@ -584,7 +536,6 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 		double		dbatch;
 		int			minbatch;
 
-<<<<<<< HEAD
 		lbuckets = (hash_table_bytes / tupsize) / gp_hashjoin_tuples_per_bucket;
 		lbuckets = Min(lbuckets, INT_MAX / 32);
 
@@ -593,14 +544,6 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 
 		dbatch = ceil(inner_rel_bytes / hash_table_bytes);
 		dbatch = Min(dbatch, INT_MAX / 32);
-=======
-		lbuckets = (hash_table_bytes / tupsize) / NTUP_PER_BUCKET;
-		lbuckets = Min(lbuckets, max_pointers);
-		nbuckets = (int) lbuckets;
-
-		dbatch = ceil(inner_rel_bytes / hash_table_bytes);
-		dbatch = Min(dbatch, max_pointers);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		minbatch = (int) dbatch;
 		nbatch = 2;
 		while (nbatch < minbatch)
@@ -680,7 +623,6 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 		double		dbuckets_upper;
 		double		dbuckets;
 
-<<<<<<< HEAD
 		/* divide our tuple row-count estimate by our the number of
 		 * tuples we'd like in a bucket: this produces a small bucket
 		 * count independent of our work_mem setting */
@@ -700,30 +642,12 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 
 		dbuckets = ceil(dbuckets);
 		dbuckets = Min(dbuckets, INT_MAX);
-=======
-		dbuckets = ceil(ntuples / NTUP_PER_BUCKET);
-		dbuckets = Min(dbuckets, max_pointers);
-		nbuckets = (int) dbuckets;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/* Pick the closest prime number for the number of buckets */
 		nbuckets = ExecChoosePrimeNBuckets((int) dbuckets);
 
-<<<<<<< HEAD
 		nbatch = 1;
 	}
-=======
-	/*
-	 * Both nbuckets and nbatch must be powers of 2 to make
-	 * ExecHashGetBucketAndBatch fast.	We already fixed nbatch; now inflate
-	 * nbuckets to the next larger power of 2.	We also force nbuckets to not
-	 * be real small, by starting the search at 2^10.
-	 */
-	i = 10;
-	while ((1 << i) < nbuckets)
-		i++;
-	nbuckets = (1 << i);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	*numbuckets = nbuckets;
 	*numbatches = nbatch;
@@ -820,32 +744,9 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 #endif
 
 	{
-<<<<<<< HEAD
 		/* Print a warning for the extreme bad cases. */
 		unsigned mintup = hashtable->batches[0]->innertuples;
 		unsigned maxtup = mintup;
-=======
-		/* we had no file arrays before */
-		hashtable->innerBatchFile = (BufFile **)
-			palloc0(nbatch * sizeof(BufFile *));
-		hashtable->outerBatchFile = (BufFile **)
-			palloc0(nbatch * sizeof(BufFile *));
-		/* time to establish the temp tablespaces, too */
-		PrepareTempTablespaces();
-	}
-	else
-	{
-		/* enlarge arrays and zero out added entries */
-		hashtable->innerBatchFile = (BufFile **)
-			repalloc(hashtable->innerBatchFile, nbatch * sizeof(BufFile *));
-		hashtable->outerBatchFile = (BufFile **)
-			repalloc(hashtable->outerBatchFile, nbatch * sizeof(BufFile *));
-		MemSet(hashtable->innerBatchFile + oldnbatch, 0,
-			   (nbatch - oldnbatch) * sizeof(BufFile *));
-		MemSet(hashtable->outerBatchFile + oldnbatch, 0,
-			   (nbatch - oldnbatch) * sizeof(BufFile *));
-	}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		for(i=1; i<oldnbatch; ++i)
 		{
@@ -1186,12 +1087,7 @@ ExecHashGetHashValue(HashState *hashState, HashJoinTable hashtable,
 		{
 			if (hashtable->hashStrict[i] && !keep_nulls)
 			{
-<<<<<<< HEAD
 				result = false;
-=======
-				MemoryContextSwitchTo(oldContext);
-				return false;	/* cannot match */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			}
 			/* else, leave hashkey unmodified, equivalent to hashcode 0 */
 		}
@@ -1224,18 +1120,11 @@ ExecHashGetHashValue(HashState *hashState, HashJoinTable hashtable,
  * chains), and must only cause the batch number to remain the same or
  * increase.  Our algorithm is
  *		bucketno = hashvalue MOD nbuckets
-<<<<<<< HEAD
- *		batchno = hash_uint32(hashvalue) MOD nbatch
- * which gives reasonably independent bucket and batch numbers in the face
- * of some rather poorly-implemented hash functions in hashfunc.c.  (This
- * will change in PG 8.3.)
-=======
  *		batchno = (hashvalue DIV nbuckets) MOD nbatch
  * where nbuckets and nbatch are both expected to be powers of 2, so we can
  * do the computations by shifting and masking.  (This assumes that all hash
  * functions are good about randomizing all their output bits, else we are
  * likely to have very skewed bucket or batch occupancy.)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * nbuckets doesn't change over the course of the join.
  *
@@ -1253,15 +1142,9 @@ ExecHashGetBucketAndBatch(HashJoinTable hashtable,
 
 	if (nbatch > 1)
 	{
-<<<<<<< HEAD
-		*bucketno = hashvalue % nbuckets;
-		/* since nbatch is a power of 2, can do MOD by masking */
-		*batchno = hash_uint32(hashvalue) & (nbatch - 1);
-=======
 		/* we can do MOD by masking, DIV by shifting */
 		*bucketno = hashvalue & (nbuckets - 1);
 		*batchno = (hashvalue >> hashtable->log2_nbuckets) & (nbatch - 1);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 	else
 	{

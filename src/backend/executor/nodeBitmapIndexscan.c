@@ -3,10 +3,7 @@
  * nodeBitmapIndexscan.c
  *	  Routines to support bitmapped index scans of relations
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -187,20 +184,10 @@ ExecEndBitmapIndexScan(BitmapIndexScanState *node)
 	}
 	node->bitmap = NULL;
 
-<<<<<<< HEAD
 	MemoryContextDelete(node->partitionMemoryContext);
 	node->partitionMemoryContext = NULL;
 
 	EndPlanStateGpmonPkt(&scanState->ss.ps);
-=======
-	/*
-	 * close the index relation (no-op if we didn't open it)
-	 */
-	if (indexScanDesc)
-		index_endscan(indexScanDesc);
-	if (indexRelationDesc)
-		index_close(indexRelationDesc, NoLock);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /* ----------------------------------------------------------------
@@ -232,6 +219,14 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 	scanState->ss.ps.plan = (Plan *) node;
 	scanState->ss.ps.state = estate;
 
+	/*
+	 * If we are just doing EXPLAIN (ie, aren't going to run the plan), stop
+	 * here.  This allows an index-advisor plugin to EXPLAIN a plan containing
+	 * references to nonexistent indexes.
+	 */
+	if (eflags & EXEC_FLAG_EXPLAIN_ONLY)
+		return indexstate;
+
 	IndexScan_BeginIndexScan(scanState, indexstate->partitionMemoryContext, false, false, true);
 
 	/*
@@ -241,80 +236,7 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 	 */
 	Assert(NULL == scanState->ss.ss_currentRelation);
 
-<<<<<<< HEAD
 	initGpmonPktForBitmapIndexScan((Plan *)node, &scanState->ss.ps.gpmon_pkt, estate);
-=======
-	indexstate->ss.ss_currentRelation = NULL;
-	indexstate->ss.ss_currentScanDesc = NULL;
-
-	/*
-	 * If we are just doing EXPLAIN (ie, aren't going to run the plan), stop
-	 * here.  This allows an index-advisor plugin to EXPLAIN a plan containing
-	 * references to nonexistent indexes.
-	 */
-	if (eflags & EXEC_FLAG_EXPLAIN_ONLY)
-		return indexstate;
-
-	/*
-	 * Open the index relation.
-	 *
-	 * If the parent table is one of the target relations of the query, then
-	 * InitPlan already opened and write-locked the index, so we can avoid
-	 * taking another lock here.  Otherwise we need a normal reader's lock.
-	 */
-	relistarget = ExecRelationIsTargetRelation(estate, node->scan.scanrelid);
-	indexstate->biss_RelationDesc = index_open(node->indexid,
-									 relistarget ? NoLock : AccessShareLock);
-
-	/*
-	 * Initialize index-specific scan state
-	 */
-	indexstate->biss_RuntimeKeysReady = false;
-
-	/*
-	 * build the index scan keys from the index qualification
-	 */
-	ExecIndexBuildScanKeys((PlanState *) indexstate,
-						   indexstate->biss_RelationDesc,
-						   node->indexqual,
-						   node->indexstrategy,
-						   node->indexsubtype,
-						   &indexstate->biss_ScanKeys,
-						   &indexstate->biss_NumScanKeys,
-						   &indexstate->biss_RuntimeKeys,
-						   &indexstate->biss_NumRuntimeKeys,
-						   &indexstate->biss_ArrayKeys,
-						   &indexstate->biss_NumArrayKeys);
-
-	/*
-	 * If we have runtime keys or array keys, we need an ExprContext to
-	 * evaluate them. We could just create a "standard" plan node exprcontext,
-	 * but to keep the code looking similar to nodeIndexscan.c, it seems
-	 * better to stick with the approach of using a separate ExprContext.
-	 */
-	if (indexstate->biss_NumRuntimeKeys != 0 ||
-		indexstate->biss_NumArrayKeys != 0)
-	{
-		ExprContext *stdecontext = indexstate->ss.ps.ps_ExprContext;
-
-		ExecAssignExprContext(estate, &indexstate->ss.ps);
-		indexstate->biss_RuntimeContext = indexstate->ss.ps.ps_ExprContext;
-		indexstate->ss.ps.ps_ExprContext = stdecontext;
-	}
-	else
-	{
-		indexstate->biss_RuntimeContext = NULL;
-	}
-
-	/*
-	 * Initialize scan descriptor.
-	 */
-	indexstate->biss_ScanDesc =
-		index_beginscan_multi(indexstate->biss_RelationDesc,
-							  estate->es_snapshot,
-							  indexstate->biss_NumScanKeys,
-							  indexstate->biss_ScanKeys);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	return indexstate;
 }

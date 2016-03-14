@@ -69,10 +69,7 @@
  *	  the catalog in this release, and it may be removed and integrated to
  *	  standard Aggref itself.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -947,60 +944,6 @@ find_unaggregated_cols_walker(Node *node, Bitmapset **colnos)
  * columns that haven't been explicitly grouped by.
  */
 List *
-get_agg_hash_collist(AggState *aggstate)
-{
-	Agg		   *node = (Agg *) aggstate->ss.ps.plan;
-<<<<<<< HEAD
-	Bitmapset  *colnos;
-	List	   *collist;
-	int			i;
-
-=======
-	MemoryContext tmpmem = aggstate->tmpcontext->ecxt_per_tuple_memory;
-	Size		entrysize;
-
-	Assert(node->aggstrategy == AGG_HASHED);
-	Assert(node->numGroups > 0);
-
-	entrysize = sizeof(AggHashEntryData) +
-		(aggstate->numaggs - 1) *sizeof(AggStatePerGroupData);
-
-	aggstate->hashtable = BuildTupleHashTable(node->numCols,
-											  node->grpColIdx,
-											  aggstate->eqfunctions,
-											  aggstate->hashfunctions,
-											  node->numGroups,
-											  entrysize,
-											  aggstate->aggcontext,
-											  tmpmem);
-}
-
-/*
- * Create a list of the tuple columns that actually need to be stored in
- * hashtable entries.  The incoming tuples from the child plan node will
- * contain grouping columns, other columns referenced in our targetlist and
- * qual, columns used to compute the aggregate functions, and perhaps just
- * junk columns we don't use at all.  Only columns of the first two types
- * need to be stored in the hashtable, and getting rid of the others can
- * make the table entries significantly smaller.  To avoid messing up Var
- * numbering, we keep the same tuple descriptor for hashtable entries as the
- * incoming tuples have, but set unwanted columns to NULL in the tuples that
- * go into the table.
- *
- * To eliminate duplicates, we build a bitmapset of the needed columns, then
- * convert it to an integer list (cheaper to scan at runtime). The list is
- * in decreasing order so that the first entry is the largest;
- * lookup_hash_entry depends on this to use slot_getsomeattrs correctly.
- * Note that the list is preserved over ExecReScanAgg, so we allocate it in
- * the per-query context (unlike the hash table itself).
- *
- * Note: at present, searching the tlist/qual is not really necessary since
- * the parser should disallow any unaggregated references to ungrouped
- * columns.  However, the search will be needed when we add support for
- * SQL99 semantics that allow use of "functionally dependent" columns that
- * haven't been explicitly grouped by.
- */
-static List *
 find_hash_columns(AggState *aggstate)
 {
 	Agg		   *node = (Agg *) aggstate->ss.ps.plan;
@@ -1008,7 +951,6 @@ find_hash_columns(AggState *aggstate)
 	List	   *collist;
 	int			i;
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/* Find Vars that will be needed in tlist and qual */
 	colnos = find_unaggregated_cols(aggstate);
 	/* Add in all the grouping columns */
@@ -1018,11 +960,8 @@ find_hash_columns(AggState *aggstate)
 	collist = NIL;
 	while ((i = bms_first_member(colnos)) >= 0)
 		collist = lcons_int(i, collist);
-<<<<<<< HEAD
-=======
 	bms_free(colnos);
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	return collist;
 }
 
@@ -1319,13 +1258,8 @@ agg_retrieve_direct(AggState *aggstate)
 
 			MemoryContextResetAndDeleteChildren(aggstate->aggcontext);
 
-<<<<<<< HEAD
 			/* Clear necessary memory (pergroup & perpassthrough) when aggcontext get reset & deleted */
 			clear_agg_object(aggstate);
-=======
-			/* set up for first advance_aggregates call */
-			tmpcontext->ecxt_outertuple = firstSlot;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			/*
 			 * Initialize working state for a new input tuple group
@@ -1351,7 +1285,6 @@ agg_retrieve_direct(AggState *aggstate)
 							   true);
 				aggstate->grp_firstTuple = NULL;        /* don't keep two pointers */
 
-<<<<<<< HEAD
 				/*
 				 * Determine if this first tuple is a simple pass-thru tuple,
 				 * or need to be aggregated.
@@ -1381,17 +1314,6 @@ agg_retrieve_direct(AggState *aggstate)
 				
 				/* set up for first advance aggregates call */
 				tmpcontext->ecxt_scantuple = firstSlot;
-=======
-				outerslot = ExecProcNode(outerPlan);
-				if (TupIsNull(outerslot))
-				{
-					/* no more outer-plan tuples available */
-					aggstate->agg_done = true;
-					break;
-				}
-				/* set up for next advance_aggregates call */
-				tmpcontext->ecxt_outertuple = outerslot;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 				/*
 				 * Process each outer-plan tuple, and then fetch the next one,
@@ -1556,7 +1478,6 @@ agg_retrieve_direct(AggState *aggstate)
 		 * with an empty firstSlot ... but if not grouping, there can't be any
 		 * references to non-aggregated input columns, so no problem.)
 		 */
-<<<<<<< HEAD
 		if (passthru_ready)
 			econtext->ecxt_scantuple = outerslot;
 		else
@@ -1630,9 +1551,6 @@ agg_retrieve_direct(AggState *aggstate)
 							);
 			}
 		}
-=======
-		econtext->ecxt_outertuple = firstSlot;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/*
 		 * Check the qual (HAVING clause); if the group does not match, ignore
@@ -1657,56 +1575,7 @@ agg_retrieve_direct(AggState *aggstate)
 }
 
 /*
-<<<<<<< HEAD
  * ExecAgg for hashed case: retrieve groups from hash table
-=======
- * ExecAgg for hashed case: phase 1, read input and build hash table
- */
-static void
-agg_fill_hash_table(AggState *aggstate)
-{
-	PlanState  *outerPlan;
-	ExprContext *tmpcontext;
-	AggHashEntry entry;
-	TupleTableSlot *outerslot;
-
-	/*
-	 * get state info from node
-	 */
-	outerPlan = outerPlanState(aggstate);
-	/* tmpcontext is the per-input-tuple expression context */
-	tmpcontext = aggstate->tmpcontext;
-
-	/*
-	 * Process each outer-plan tuple, and then fetch the next one, until we
-	 * exhaust the outer plan.
-	 */
-	for (;;)
-	{
-		outerslot = ExecProcNode(outerPlan);
-		if (TupIsNull(outerslot))
-			break;
-		/* set up for advance_aggregates call */
-		tmpcontext->ecxt_outertuple = outerslot;
-
-		/* Find or build hashtable entry for this tuple's group */
-		entry = lookup_hash_entry(aggstate, outerslot);
-
-		/* Advance the aggregates */
-		advance_aggregates(aggstate, entry->pergroup);
-
-		/* Reset per-input-tuple context after each tuple */
-		ResetExprContext(tmpcontext);
-	}
-
-	aggstate->table_filled = true;
-	/* Initialize to walk the hash table */
-	ResetTupleHashIterator(aggstate->hashtable, &aggstate->hashiter);
-}
-
-/*
- * ExecAgg for hashed case: phase 2, retrieving groups from hash table
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 static TupleTableSlot *
 agg_retrieve_hash_table(AggState *aggstate)
@@ -1985,14 +1854,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 	if (node->aggstrategy == AGG_HASHED)
 	{
-<<<<<<< HEAD
-		aggstate->hash_needed = get_agg_hash_collist(aggstate);
-=======
-		build_hash_table(aggstate);
-		aggstate->table_filled = false;
-		/* Compute the columns we actually need to hash on */
 		aggstate->hash_needed = find_hash_columns(aggstate);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 	else
 	{
@@ -2067,7 +1929,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		peraggstate->numArguments = numArguments;
 
 		/*
-<<<<<<< HEAD
 		 * Use these information from ExecInitExpr for per agg info.
 		 */
 		inputTargets = aggrefstate->inputTargets;
@@ -2082,16 +1943,13 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		Assert(!(aggref->aggdistinct && aggref->aggorder));
 		Assert(numArguments == 1 || !aggref->aggdistinct);
 
-		/* Get actual datatypes of the inputs.	These could be different from
-		 * the agg's declared input types, when the agg accepts ANY, ANYARRAY
-		 * or ANYELEMENT. The result will have argument types at 0 through 
-		 * numArguments-1 and sort key types mixed in or at numArguments through 
-		 * numInputs.
-=======
+		/*
 		 * Get actual datatypes of the inputs.	These could be different from
 		 * the agg's declared input types, when the agg accepts ANY or a
 		 * polymorphic type.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+		 *
+		 * The result will have argument types at 0 through numArguments-1 and
+		 * sort key types mixed in or at numArguments through numInputs.
 		 */
 		inputTypes = (Oid*)palloc0(sizeof(Oid)*(numInputs));
 		i = 0;
@@ -2187,33 +2045,11 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			}
 		}
 
-<<<<<<< HEAD
 		/* check if the transition type is polymorphic and if so resolve it */
 		aggtranstype = resolve_polymorphic_transtype(aggform->aggtranstype, 
 													 aggref->aggfnoid,
 											   		 inputTypes);
 											   
-=======
-		/* resolve actual type of transition state, if polymorphic */
-		aggtranstype = aggform->aggtranstype;
-		if (IsPolymorphicType(aggtranstype))
-		{
-			/* have to fetch the agg's declared input types... */
-			Oid		   *declaredArgTypes;
-			int			agg_nargs;
-
-			(void) get_func_signature(aggref->aggfnoid,
-									  &declaredArgTypes, &agg_nargs);
-			Assert(agg_nargs == numArguments);
-			aggtranstype = enforce_generic_type_consistency(inputTypes,
-															declaredArgTypes,
-															agg_nargs,
-															aggtranstype,
-															false);
-			pfree(declaredArgTypes);
-		}
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		/* build expression trees using actual argument & result types */
 		build_aggregate_fnexprs(inputTypes,
 								numArguments,
@@ -2703,26 +2539,7 @@ ExecReScanAgg(AggState *node, ExprContext *exprCtxt)
 	MemSet(econtext->ecxt_aggvalues, 0, sizeof(Datum) * node->numaggs);
 	MemSet(econtext->ecxt_aggnulls, 0, sizeof(bool) * node->numaggs);
 
-<<<<<<< HEAD
 	if (!IS_HASHAGG(node))
-=======
-	/*
-	 * Release all temp storage. Note that with AGG_HASHED, the hash table is
-	 * allocated in a sub-context of the aggcontext. We're going to rebuild
-	 * the hash table from scratch, so we need to use
-	 * MemoryContextResetAndDeleteChildren() to avoid leaking the old hash
-	 * table's memory context header.
-	 */
-	MemoryContextResetAndDeleteChildren(node->aggcontext);
-
-	if (((Agg *) node->ss.ps.plan)->aggstrategy == AGG_HASHED)
-	{
-		/* Rebuild an empty hash table */
-		build_hash_table(node);
-		node->table_filled = false;
-	}
-	else
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		/*
 		 * Reset the per-group state (in particular, mark transvalues null)
@@ -2786,7 +2603,7 @@ Oid
 resolve_polymorphic_transtype(Oid aggtranstype, Oid aggfnoid,
 							  Oid *inputTypes)
 {
-	if (aggtranstype == ANYARRAYOID || aggtranstype == ANYELEMENTOID)
+	if (IsPolymorphicType(aggtranstype))
 	{
 		/* have to fetch the agg's declared input types... */
 		Oid		   *declaredArgTypes;
@@ -2796,7 +2613,8 @@ resolve_polymorphic_transtype(Oid aggtranstype, Oid aggfnoid,
 		aggtranstype = enforce_generic_type_consistency(inputTypes,
 														declaredArgTypes,
 														agg_nargs,
-														aggtranstype);
+														aggtranstype,
+														false);
 		pfree(declaredArgTypes);
 	}
 	return aggtranstype;

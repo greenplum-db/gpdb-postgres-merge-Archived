@@ -3,10 +3,7 @@
  * execUtils.c
  *	  miscellaneous executor utility routines
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -186,60 +183,6 @@ CreateExecutorState(void)
 									 ALLOCSET_DEFAULT_MINSIZE,
 									 ALLOCSET_DEFAULT_INITSIZE,
 									 ALLOCSET_DEFAULT_MAXSIZE);
-	EState *estate = InternalCreateExecutorState(qcontext, false);
-
-	/*
-	 * Initialize dynamicTableScanInfo. Since this is shared by subqueries,
-	 * this can not be put inside InternalCreateExecutorState.
-	 */
-	MemoryContext oldcontext = MemoryContextSwitchTo(qcontext);
-	
-	estate->dynamicTableScanInfo = palloc0(sizeof(DynamicTableScanInfo));
-	estate->dynamicTableScanInfo->memoryContext = qcontext;
-
-<<<<<<< HEAD
-	MemoryContextSwitchTo(oldcontext);
-
-	return estate;
-}
-
-/* ----------------
- *		CreateSubExecutorState
- *
- *		Create and initialize an EState node for a sub-query.
- *
- * Ideally, sub-queries probably shouldn't have their own EState at all,
- * but right now this is necessary because they have their own rangetables
- * and we access the rangetable via the EState.  It is critical that a
- * sub-query share the parent's es_query_cxt, else structures allocated by
- * the sub-query (especially its result tuple descriptor) may disappear
- * too soon during executor shutdown.
- * ----------------
- */
-EState *
-CreateSubExecutorState(EState *parent_estate)
-{
-    EState *es = InternalCreateExecutorState(parent_estate->es_query_cxt, true);
-
-    es->showstatctx = parent_estate->showstatctx;                   /*CDB*/
-
-	es->subplanLevel = parent_estate->subplanLevel + 1;
-	/* Subqueries share the same dynamicTableScanInfo with their parents. */
-	es->dynamicTableScanInfo = parent_estate->dynamicTableScanInfo;
-    return es;
-}
-
-/*
- * Guts of CreateExecutorState/CreateSubExecutorState
- */
-static EState *
-InternalCreateExecutorState(MemoryContext qcontext, bool is_subquery)
-{
-	EState	   *estate;
-	MemoryContext oldcontext;
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/*
 	 * Make the EState node within the per-query context.  This way, we don't
 	 * need a separate pfree() operation for it at shutdown.
@@ -247,6 +190,12 @@ InternalCreateExecutorState(MemoryContext qcontext, bool is_subquery)
 	oldcontext = MemoryContextSwitchTo(qcontext);
 
 	estate = makeNode(EState);
+
+	/*
+	 * Initialize dynamicTableScanInfo.
+	 */
+	estate->dynamicTableScanInfo = palloc0(sizeof(DynamicTableScanInfo));
+	estate->dynamicTableScanInfo->memoryContext = qcontext;
 
 	/*
 	 * Initialize all fields of the Executor State structure
@@ -387,11 +336,9 @@ FreeExecutorState(EState *estate)
 	}
 
 	/*
-	 * Free dynamicTableScanInfo. In a subquery, we don't do this, since
-	 * the subquery shares the value with its parent.
+	 * Free dynamicTableScanInfo.
 	 */
-	if (!estate->es_is_subquery &&
-		estate->dynamicTableScanInfo != NULL)
+	if (estate->dynamicTableScanInfo != NULL)
 	{
 		/*
 		 * In case of an abnormal termination such as elog(FATAL) we jump directly to
@@ -1098,7 +1045,6 @@ ExecOpenScanRelation(EState *estate, Index scanrelid)
 
 	/* OK, open the relation and acquire lock as needed */
 	reloid = getrelid(scanrelid, estate->es_range_table);
-<<<<<<< HEAD
 
 	Assert(reloid != InvalidOid);
 	
@@ -1121,9 +1067,6 @@ ExecOpenScanExternalRelation(EState *estate, Index scanrelid)
 	reloid = rtentry->relid;
 
 	return relation_open(reloid, NoLock);
-=======
-	return heap_open(reloid, lockmode);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /* ----------------------------------------------------------------
