@@ -3,10 +3,7 @@
  * view.c
  *	  use rewrite rules to construct views
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -289,60 +286,16 @@ checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc)
 	 */
 }
 
-<<<<<<< HEAD
-static RuleStmt *
-FormViewRetrieveRule(const RangeVar *view, Query *viewParse, bool replace, Oid rewriteOid)
-=======
 static void
-DefineViewRules(Oid viewOid, Query *viewParse, bool replace)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+DefineViewRules(Oid viewOid, Query *viewParse, bool replace, Oid *rewriteOid)
 {
+	/* GPDB_83_MERGE_FIXME: rewriteOid used to be set in the RuleStmt
+	 * object we constructed here. Now it's unused */
+	
 	/*
 	 * Set up the ON SELECT rule.  Since the query has already been through
 	 * parse analysis, we use DefineQueryRewrite() directly.
 	 */
-<<<<<<< HEAD
-	rule = makeNode(RuleStmt);
-	rule->relation = copyObject((RangeVar *) view);
-	rule->rulename = pstrdup(ViewSelectRuleName);
-	rule->whereClause = NULL;
-	rule->event = CMD_SELECT;
-	rule->instead = true;
-	rule->actions = list_make1(viewParse);
-	rule->replace = replace;
-	rule->ruleOid = rewriteOid;
-
-	return rule;
-}
-
-static void
-DefineViewRules(const RangeVar *view, Query *viewParse, bool replace, Oid* rewriteOid)
-{
-	RuleStmt   *retrieve_rule;
-
-#ifdef NOTYET
-	RuleStmt   *replace_rule;
-	RuleStmt   *append_rule;
-	RuleStmt   *delete_rule;
-#endif
-
-	retrieve_rule = FormViewRetrieveRule(view, viewParse, replace, *rewriteOid);
-
-#ifdef NOTYET
-	replace_rule = FormViewReplaceRule(view, viewParse);
-	append_rule = FormViewAppendRule(view, viewParse);
-	delete_rule = FormViewDeleteRule(view, viewParse);
-#endif
-
-	DefineQueryRewrite(retrieve_rule);
-	*rewriteOid = retrieve_rule->ruleOid;
-
-#ifdef NOTYET
-	DefineQueryRewrite(replace_rule);
-	DefineQueryRewrite(append_rule);
-	DefineQueryRewrite(delete_rule);
-#endif
-=======
 	DefineQueryRewrite(pstrdup(ViewSelectRuleName),
 					   viewOid,
 					   NULL,
@@ -350,7 +303,6 @@ DefineViewRules(const RangeVar *view, Query *viewParse, bool replace, Oid* rewri
 					   true,
 					   replace,
 					   list_make1(viewParse));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Someday: automatic ON INSERT, etc
@@ -428,14 +380,6 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
  *		Execute a CREATE VIEW command.
  */
 void
-<<<<<<< HEAD
-DefineView(ViewStmt *stmt)
-{
-	Oid			viewOid = stmt->relOid;
-	RangeVar   *view = stmt->view;
-	Query	   *viewParse = stmt->query;
-	bool		replace = stmt->replace;
-=======
 DefineView(ViewStmt *stmt, const char *queryString)
 {
 	Query	   *viewParse;
@@ -488,7 +432,6 @@ DefineView(ViewStmt *stmt, const char *queryString)
 					 errmsg("CREATE VIEW specifies more column "
 							"names than columns")));
 	}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (Gp_role != GP_ROLE_EXECUTE)
 		viewOid = 0;
@@ -501,20 +444,12 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	view = stmt->view;
 	if (!view->istemp && isViewOnTempTable(viewParse))
 	{
-<<<<<<< HEAD
-		view->istemp = isViewOnTempTable(viewParse);
-		if (view->istemp)
-			if (Gp_role != GP_ROLE_EXECUTE)
+		view = copyObject(view);	/* don't corrupt original command */
+		view->istemp = true;
+		if (Gp_role != GP_ROLE_EXECUTE)
 			ereport(NOTICE,
 					(errmsg("view \"%s\" will be a temporary view",
 							view->relname)));
-=======
-		view = copyObject(view);	/* don't corrupt original command */
-		view->istemp = true;
-		ereport(NOTICE,
-				(errmsg("view \"%s\" will be a temporary view",
-						view->relname)));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	/*
@@ -523,14 +458,11 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	 * NOTE: if it already exists and replace is false, the xact will be
 	 * aborted.
 	 */
-<<<<<<< HEAD
-	viewOid = DefineVirtualRelation(view, viewParse->targetList, replace, viewOid, &stmt->comptypeOid);
-
-	stmt->relOid = viewOid;
-=======
 	viewOid = DefineVirtualRelation(view, viewParse->targetList,
-									stmt->replace);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+									stmt->replace,
+									viewOid,
+									&stmt->comptypeOid);
+	stmt->relOid = viewOid;
 
 	/*
 	 * The relation we have just created is not visible to any other commands
@@ -548,17 +480,10 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	/*
 	 * Now create the rules associated with the view.
 	 */
-<<<<<<< HEAD
-	DefineViewRules(view, viewParse, replace, &stmt->rewriteOid);
+	DefineViewRules(viewOid, viewParse, stmt->replace, &stmt->rewriteOid);
 
 	if (Gp_role == GP_ROLE_DISPATCH)
-	{
 		CdbDispatchUtilityStatement((Node *) stmt, "DefineView");
-
-	}
-=======
-	DefineViewRules(viewOid, viewParse, stmt->replace);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
