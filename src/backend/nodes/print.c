@@ -25,10 +25,6 @@
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * print
  *	  print contents of Node to stdout
@@ -500,7 +496,6 @@ print_slot(TupleTableSlot *slot)
 
 	fflush(stdout);
 }
-<<<<<<< HEAD
 
 char *
 plannode_type(Plan *p)
@@ -688,5 +683,3 @@ print_plan(Plan *p, Query *parsetree)
 {
 	print_plan_recursive(p, parsetree, 0, "");
 }
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
