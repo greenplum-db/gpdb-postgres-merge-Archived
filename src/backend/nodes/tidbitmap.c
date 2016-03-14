@@ -32,50 +32,15 @@
 #include <limits.h>
 
 #include "access/htup.h"
-<<<<<<< HEAD
 #include "access/bitmap.h"	/* XXX: remove once pull_stream is generic */
 #include "executor/instrument.h"        /* Instrumentation */
-=======
 #include "nodes/bitmapset.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "nodes/tidbitmap.h"
 #include "storage/bufpage.h"
 #include "utils/hsearch.h"
 
-<<<<<<< HEAD
 #define WORDNUM(x)	((x) / TBM_BITS_PER_BITMAPWORD)
 #define BITNUM(x)	((x) % TBM_BITS_PER_BITMAPWORD)
-=======
-/*
- * The maximum number of tuples per page is not large (typically 256 with
- * 8K pages, or 1024 with 32K pages).  So there's not much point in making
- * the per-page bitmaps variable size.	We just legislate that the size
- * is this:
- */
-#define MAX_TUPLES_PER_PAGE  MaxHeapTuplesPerPage
-
-/*
- * When we have to switch over to lossy storage, we use a data structure
- * with one bit per page, where all pages having the same number DIV
- * PAGES_PER_CHUNK are aggregated into one chunk.  When a chunk is present
- * and has the bit set for a given page, there must not be a per-page entry
- * for that page in the page table.
- *
- * We actually store both exact pages and lossy chunks in the same hash
- * table, using identical data structures.	(This is because dynahash.c's
- * memory management doesn't allow space to be transferred easily from one
- * hashtable to another.)  Therefore it's best if PAGES_PER_CHUNK is the
- * same as MAX_TUPLES_PER_PAGE, or at least not too different.	But we
- * also want PAGES_PER_CHUNK to be a power of 2 to avoid expensive integer
- * remainder operations.  So, define it like this:
- */
-#define PAGES_PER_CHUNK  (BLCKSZ / 32)
-
-/* We use BITS_PER_BITMAPWORD and typedef bitmapword from nodes/bitmapset.h */
-
-#define WORDNUM(x)	((x) / BITS_PER_BITMAPWORD)
-#define BITNUM(x)	((x) % BITS_PER_BITMAPWORD)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 static bool tbm_iterate_page(PagetableEntry *page, TBMIterateResult *output);
 static bool tbm_iterate_hash(HashBitmap *tbm,TBMIterateResult *output);
@@ -1053,11 +1018,7 @@ tbm_lossify(HashBitmap *tbm)
 		/* This does the dirty work ... */
 		tbm_mark_page_lossy(tbm, page->blockno);
 
-<<<<<<< HEAD
 		if (tbm->nentries <= tbm->maxentries)
-=======
-		if (tbm->nentries <= tbm->maxentries / 2)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		{
 			/* we have done enough */
 			hash_seq_term(&status);
