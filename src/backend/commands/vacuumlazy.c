@@ -13,11 +13,7 @@
  * We are willing to use at most maintenance_work_mem memory space to keep
  * track of dead tuples.  We initially allocate an array of TIDs of that size,
  * with an upper limit that depends on table size (this limit ensures we don't
-<<<<<<< HEAD
- * allocate a huge area uselessly for vacuuming small tables).  If the array
-=======
  * allocate a huge area uselessly for vacuuming small tables).	If the array
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * threatens to overflow, we suspend the heap scan phase and perform a pass of
  * index cleanup and page compaction, then resume the heap scan with an empty
  * TID array.
@@ -37,11 +33,7 @@
  * the TID array, just enough to hold as many heap tuples as fit on one page.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -57,15 +49,12 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/transam.h"
-<<<<<<< HEAD
 #include "access/aosegfiles.h"
 #include "access/aocssegfiles.h"
 #include "access/aomd.h"
 #include "access/appendonly_compaction.h"
 #include "access/aocs_compaction.h"
-=======
 #include "commands/dbcommands.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "commands/vacuum.h"
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
@@ -99,11 +88,7 @@
  * provide an upper limit to memory allocated when vacuuming small
  * tables.
  */
-<<<<<<< HEAD
-#define LAZY_ALLOC_TUPLES		200
-=======
 #define LAZY_ALLOC_TUPLES		MaxHeapTuplesPerPage
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 typedef struct LVRelStats
 {
@@ -182,14 +167,9 @@ static int	vac_cmp_page_spaces(const void *left, const void *right);
  *		The return value indicates whether this function has held off
  *		interrupts -- caller must RESUME_INTERRUPTS() after commit if true.
  */
-<<<<<<< HEAD
-void
-lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt, List *updated_stats)
-=======
 bool
 lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
-				BufferAccessStrategy bstrategy)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+				BufferAccessStrategy bstrategy, List *updated_stats)
 {
 	LVRelStats *vacrelstats;
 	Relation   *Irel;
@@ -210,7 +190,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	else
 		elevel = DEBUG2;
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 		elevel = DEBUG2; /* vacuum and analyze messages aren't interesting from the QD */
 
@@ -238,12 +217,9 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	 * relations.  This allows setting relfrozenxid to correct value
 	 * for an appendonly (AO/CO) table.
 	 */
-	vacuum_set_xid_limits(vacstmt, onerel->rd_rel->relisshared,
-=======
 	vac_strategy = bstrategy;
 
 	vacuum_set_xid_limits(vacstmt->freeze_min_age, onerel->rd_rel->relisshared,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 						  &OldestXmin, &FreezeLimit);
 
 	/*
@@ -253,7 +229,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	if (RelationIsAoRows(onerel) || RelationIsAoCols(onerel))
 	{
 		lazy_vacuum_aorel(onerel, vacstmt, updated_stats);
-		return;
+		return false;
 	}
 
 	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
@@ -540,14 +516,10 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			vacrelstats->num_index_scans++;
 		}
 
-<<<<<<< HEAD
 		/* -------- MirroredLock ---------- */
 		MIRROREDLOCK_BUFMGR_LOCK;
 
-		buf = ReadBuffer(onerel, blkno);
-=======
 		buf = ReadBufferWithStrategy(onerel, blkno, vac_strategy);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/* We need buffer cleanup lock so that we can prune HOT chains. */
 		LockBufferForCleanup(buf);
@@ -583,15 +555,11 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 
 			LockRelationForExtension(onerel, ExclusiveLock);
 			UnlockRelationForExtension(onerel, ExclusiveLock);
-<<<<<<< HEAD
 
 			/* -------- MirroredLock ---------- */
 			MIRROREDLOCK_BUFMGR_LOCK;
 
-			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);  /* LockBufferForCleanup(buf)? */
-=======
 			LockBufferForCleanup(buf);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			if (PageIsNew(page))
 			{
 				ereport(WARNING,
@@ -687,7 +655,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 
 			tupgone = false;
 
-			switch (HeapTupleSatisfiesVacuum(tuple.t_data, OldestXmin, buf))
+			switch (HeapTupleSatisfiesVacuum(onerel, tuple.t_data, OldestXmin, buf))
 			{
 				case HEAPTUPLE_DEAD:
 
@@ -785,13 +753,6 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		if (nindexes == 0 &&
 			vacrelstats->num_dead_tuples > 0)
 		{
-<<<<<<< HEAD
-			/* Trade in buffer share lock for super-exclusive lock */
-			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-			LockBufferForCleanup(buf);
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			/* Remove tuples from heap */
 			lazy_vacuum_page(onerel, blkno, buf, 0, vacrelstats);
 			/* Forget the now-vacuumed tuples, and press on */
@@ -915,15 +876,11 @@ lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats)
 		vacuum_delay_point();
 
 		tblk = ItemPointerGetBlockNumber(&vacrelstats->dead_tuples[tupindex]);
-<<<<<<< HEAD
 
 		/* -------- MirroredLock ---------- */
 		MIRROREDLOCK_BUFMGR_LOCK;
 
-		buf = ReadBuffer(onerel, tblk);
-=======
 		buf = ReadBufferWithStrategy(onerel, tblk, vac_strategy);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		LockBufferForCleanup(buf);
 		tupindex = lazy_vacuum_page(onerel, tblk, buf, tupindex, vacrelstats);
 		/* Now that we've compacted the page, record its available space */
@@ -1027,11 +984,8 @@ lazy_vacuum_index(Relation indrel,
 	ivinfo.message_level = elevel;
 	/* We don't yet know rel_tuples, so pass -1 */
 	ivinfo.num_heap_tuples = -1;
-<<<<<<< HEAD
-	ivinfo.extra_oids = extra_oids;
-=======
 	ivinfo.strategy = vac_strategy;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	ivinfo.extra_oids = extra_oids;
 
 	/* Do bulk deletion */
 	*stats = index_bulk_delete(&ivinfo, *stats,
@@ -1062,11 +1016,8 @@ lazy_cleanup_index(Relation indrel,
 	ivinfo.vacuum_full = false;
 	ivinfo.message_level = elevel;
 	ivinfo.num_heap_tuples = vacrelstats->rel_tuples;
-<<<<<<< HEAD
-	ivinfo.extra_oids = NIL;
-=======
 	ivinfo.strategy = vac_strategy;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	ivinfo.extra_oids = NIL;
 
 	stats = index_vacuum_cleanup(&ivinfo, stats);
 
@@ -1198,15 +1149,18 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	vacrelstats->rel_pages = new_rel_pages;
 	vacrelstats->pages_removed = old_rel_pages - new_rel_pages;
 
-<<<<<<< HEAD
+/*
+ * GPDB_83_MERGE_FIXME: The PostgreSQL commit above explains why we *must*
+ * keep the lock. But in GDPB, we just drop it. Either the upstream comment
+ * is wrong (unlikely), or GPDB is playing dangerous fast-and-loose with the
+ * lock, and the deadlock needs to be fixed some other way (likely)
+ */
 	/*
 	 * We can't keep the exclusive lock until commit, since this will cause
 	 * deadlock, see MPP-5733.
 	 */
 	UnlockRelation(onerel, AccessExclusiveLock);
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ereport(elevel,
 			(errmsg("\"%s\": truncated %u to %u pages",
 					RelationGetRelationName(onerel),
@@ -1285,7 +1239,6 @@ vacuum_appendonly_fill_stats(Relation aorel, Snapshot snapshot,
 }
 
 /*
-<<<<<<< HEAD
  *	vacuum_appendonly_rel() -- vaccum an append-only relation
  *
  *		This procedure will be what gets executed both for VACUUM
@@ -1371,8 +1324,6 @@ vacuum_appendonly_rel(Relation aorel, VacuumStmt *vacstmt)
 }
 
 /*
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Rescan end pages to verify that they are (still) empty of tuples.
  *
  * Returns number of nondeletable pages (last nonempty page + 1).
@@ -1403,14 +1354,10 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 
 		blkno--;
 
-<<<<<<< HEAD
 		/* -------- MirroredLock ---------- */
 		MIRROREDLOCK_BUFMGR_LOCK;
 
-		buf = ReadBuffer(onerel, blkno);
-=======
 		buf = ReadBufferWithStrategy(onerel, blkno, vac_strategy);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/* In this phase we only need shared access to the buffer */
 		LockBuffer(buf, BUFFER_LOCK_SHARE);
