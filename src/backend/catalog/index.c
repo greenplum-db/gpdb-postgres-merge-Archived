@@ -1830,7 +1830,7 @@ IndexBuildScan(Relation parentRelation,
 	{
 		snapshot = SnapshotAny;
 		/* okay to ignore lazy VACUUMs here */
-		OldestXmin = GetOldestXmin(parentRelation->rd_rel->relisshared);
+		OldestXmin = GetOldestXmin(parentRelation->rd_rel->relisshared, true);
 	}
 
 	if (RelationIsHeap(parentRelation))
