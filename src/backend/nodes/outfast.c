@@ -293,8 +293,6 @@ _outPlanInfo(StringInfo str, Plan *node)
 	WRITE_BITMAPSET_FIELD(extParam);
 	WRITE_BITMAPSET_FIELD(allParam);
 
-	WRITE_INT_FIELD(nParamExec);
-
 	if (print_variable_fields)
 	{
 		WRITE_NODE_FIELD(flow);
@@ -921,10 +919,6 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_NODE_FIELD(limitCount);
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_NODE_FIELD(setOperations);
-	WRITE_NODE_FIELD(resultRelations);
-	WRITE_NODE_FIELD(result_partitions);
-	WRITE_NODE_FIELD(result_aosegnos);
-	WRITE_NODE_FIELD(returningLists);
 	/* Don't serialize policy */
 }
 
@@ -1889,8 +1883,8 @@ _outNode(StringInfo str, void *obj)
 			case T_SliceTable:
 				_outSliceTable(str, obj);
 				break;
-			case T_VariableResetStmt:
-				_outVariableResetStmt(str, obj);
+			case T_VariableSetStmt:
+				_outVariableSetStmt(str, obj);
 				break;
 
 			case T_DMLActionExpr:

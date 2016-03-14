@@ -316,7 +316,6 @@ _readQuery(void)
 	READ_BOOL_FIELD(canSetTag);
 	READ_NODE_FIELD(utilityStmt);
 	READ_INT_FIELD(resultRelation);
-<<<<<<< HEAD
 
 	if ( ! pg_strtok_peek_fldname("intoClause"))
 	{
@@ -365,9 +364,6 @@ _readQuery(void)
 		READ_NODE_FIELD(intoClause);
 	}
 
-=======
-	READ_NODE_FIELD(intoClause);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	READ_BOOL_FIELD(hasAggs);
 	READ_BOOL_FIELD(hasWindFuncs);
 	READ_BOOL_FIELD(hasSubLinks);
@@ -410,13 +406,6 @@ _readQuery(void)
 	READ_NODE_FIELD(limitCount);
 	READ_NODE_FIELD(rowMarks);
 	READ_NODE_FIELD(setOperations);
-<<<<<<< HEAD
-	READ_NODE_FIELD(resultRelations);
-	READ_NODE_FIELD(result_partitions);
-	READ_NODE_FIELD(result_aosegnos);
-	READ_NODE_FIELD(returningLists);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
     /* In some earlier releases (including 3.3) a TableOidInfo was held in the
      * Query node.  Maybe some values got stored in the catalog as part of a
@@ -492,6 +481,7 @@ _readCurrentOfExpr(void)
 	READ_LOCALS(CurrentOfExpr);
 
 	READ_STRING_FIELD(cursor_name);
+	READ_INT_FIELD(cursor_param);
 	READ_INT_FIELD(cvarno);
 	READ_OID_FIELD(target_relid);
 
@@ -825,20 +815,6 @@ _readIntoClause(void)
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
-static IntoClause *
-_readIntoClause(void)
-{
-	READ_LOCALS(IntoClause);
-
-	READ_NODE_FIELD(rel);
-	READ_NODE_FIELD(colNames);
-	READ_NODE_FIELD(options);
-	READ_ENUM_FIELD(onCommit, OnCommitAction);
-	READ_STRING_FIELD(tableSpaceName);
-
-	READ_DONE();
-}
-
 /*
  * _readVar
  */
@@ -949,7 +925,6 @@ _readIndexStmt(void)
 	READ_NODE_FIELD(indexParams);
 	READ_NODE_FIELD(options);
 	READ_NODE_FIELD(whereClause);
-	READ_NODE_FIELD(rangetable);
 	READ_BOOL_FIELD(is_part_child);
 	READ_BOOL_FIELD(unique);
 	READ_BOOL_FIELD(primary);
@@ -967,21 +942,11 @@ _readIndexElem(void)
 {
 	READ_LOCALS(IndexElem);
 
-<<<<<<< HEAD
 	READ_STRING_FIELD(name);
 	READ_NODE_FIELD(expr);
 	READ_NODE_FIELD(opclass);
 	READ_ENUM_FIELD(ordering, SortByDir);
 	READ_ENUM_FIELD(nulls_ordering, SortByNulls);
-=======
-	READ_OID_FIELD(refarraytype);
-	READ_OID_FIELD(refelemtype);
-	READ_INT_FIELD(reftypmod);
-	READ_NODE_FIELD(refupperindexpr);
-	READ_NODE_FIELD(reflowerindexpr);
-	READ_NODE_FIELD(refexpr);
-	READ_NODE_FIELD(refassgnexpr);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	READ_DONE();
 }
@@ -1032,7 +997,6 @@ _readRuleStmt(void)
 	READ_BOOL_FIELD(instead);
 	READ_NODE_FIELD(actions);
 	READ_BOOL_FIELD(replace);
-	READ_OID_FIELD(ruleOid);
 
 	READ_DONE();
 }
@@ -1254,8 +1218,7 @@ _readAlterRoleSetStmt(void)
 	READ_LOCALS(AlterRoleSetStmt);
 
 	READ_STRING_FIELD(role);
-	READ_STRING_FIELD(variable);
-	READ_NODE_FIELD(value);
+	READ_NODE_FIELD(setstmt);
 
 	READ_DONE();
 }
@@ -1314,12 +1277,6 @@ _readRenameStmt(void)
 
 #ifndef COMPILING_BINARY_FUNCS
 /*
-<<<<<<< HEAD
- * _readFuncCall
- *
- * This parsenode is transformed during parse_analyze.
- * It not stored in views = no upgrade implication for changes
-=======
  * _readCoerceViaIO
  */
 static CoerceViaIO *
@@ -1353,8 +1310,10 @@ _readArrayCoerceExpr(void)
 }
 
 /*
- * _readConvertRowtypeExpr
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+ * _readFuncCall
+ *
+ * This parsenode is transformed during parse_analyze.
+ * It not stored in views = no upgrade implication for changes
  */
 static FuncCall *
 _readFuncCall(void)
@@ -1625,7 +1584,6 @@ _readArrayRef(void)
 {
 	READ_LOCALS(ArrayRef);
 
-	READ_OID_FIELD(refrestype);
 	READ_OID_FIELD(refarraytype);
 	READ_OID_FIELD(refelemtype);
 	READ_NODE_FIELD(refupperindexpr);
@@ -3012,33 +2970,10 @@ _readSliceTable(void)
 	READ_DONE();
 }
 
-<<<<<<< HEAD
-static VariableResetStmt *
-_readVariableResetStmt(void)
-=======
-/*
- * _readCurrentOfExpr
- */
-static CurrentOfExpr *
-_readCurrentOfExpr(void)
+static VariableSetStmt *
+_readVariableSetStmt(void)
 {
-	READ_LOCALS(CurrentOfExpr);
-
-	READ_UINT_FIELD(cvarno);
-	READ_STRING_FIELD(cursor_name);
-	READ_INT_FIELD(cursor_param);
-
-	READ_DONE();
-}
-
-/*
- * _readTargetEntry
- */
-static TargetEntry *
-_readTargetEntry(void)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-{
-	READ_LOCALS(VariableResetStmt);
+	READ_LOCALS(VariableSetStmt);
 
 	READ_STRING_FIELD(name);
 
@@ -3256,7 +3191,7 @@ static ParseNodeInfo infoAr[] =
 	{"TYPENAME", (ReadFn)_readTypeName},
 	{"VACUUMSTMT", (ReadFn)_readVacuumStmt},
 	{"VAR", (ReadFn)_readVar},
-	{"VARIABLERESETSTMT", (ReadFn)_readVariableResetStmt},
+	{"VARIABLESETSTMT", (ReadFn)_readVariableSetStmt},
 	{"VIEWSTMT", (ReadFn)_readViewStmt},
 	{"WHEN", (ReadFn)_readCaseWhen},
 	{"WINDOWFRAME", (ReadFn)_readWindowFrame},
@@ -3301,7 +3236,6 @@ parseNodeString(void)
 
 	token = pg_strtok(&length);
 
-<<<<<<< HEAD
 	/*
 	 * Make a string with the token, for use in the binary search
 	 * of the infoAr.  In this way, we find the read function
@@ -3324,108 +3258,6 @@ parseNodeString(void)
 	pfree(pztokname);
 
 	if ( found == NULL )
-=======
-#define MATCH(tokname, namelen) \
-	(length == namelen && strncmp(token, tokname, namelen) == 0)
-
-	if (MATCH("QUERY", 5))
-		return_value = _readQuery();
-	else if (MATCH("SORTCLAUSE", 10))
-		return_value = _readSortClause();
-	else if (MATCH("GROUPCLAUSE", 11))
-		return_value = _readGroupClause();
-	else if (MATCH("ROWMARKCLAUSE", 13))
-		return_value = _readRowMarkClause();
-	else if (MATCH("SETOPERATIONSTMT", 16))
-		return_value = _readSetOperationStmt();
-	else if (MATCH("ALIAS", 5))
-		return_value = _readAlias();
-	else if (MATCH("RANGEVAR", 8))
-		return_value = _readRangeVar();
-	else if (MATCH("INTOCLAUSE", 10))
-		return_value = _readIntoClause();
-	else if (MATCH("VAR", 3))
-		return_value = _readVar();
-	else if (MATCH("CONST", 5))
-		return_value = _readConst();
-	else if (MATCH("PARAM", 5))
-		return_value = _readParam();
-	else if (MATCH("AGGREF", 6))
-		return_value = _readAggref();
-	else if (MATCH("ARRAYREF", 8))
-		return_value = _readArrayRef();
-	else if (MATCH("FUNCEXPR", 8))
-		return_value = _readFuncExpr();
-	else if (MATCH("OPEXPR", 6))
-		return_value = _readOpExpr();
-	else if (MATCH("DISTINCTEXPR", 12))
-		return_value = _readDistinctExpr();
-	else if (MATCH("SCALARARRAYOPEXPR", 17))
-		return_value = _readScalarArrayOpExpr();
-	else if (MATCH("BOOLEXPR", 8))
-		return_value = _readBoolExpr();
-	else if (MATCH("SUBLINK", 7))
-		return_value = _readSubLink();
-	else if (MATCH("FIELDSELECT", 11))
-		return_value = _readFieldSelect();
-	else if (MATCH("FIELDSTORE", 10))
-		return_value = _readFieldStore();
-	else if (MATCH("RELABELTYPE", 11))
-		return_value = _readRelabelType();
-	else if (MATCH("COERCEVIAIO", 11))
-		return_value = _readCoerceViaIO();
-	else if (MATCH("ARRAYCOERCEEXPR", 15))
-		return_value = _readArrayCoerceExpr();
-	else if (MATCH("CONVERTROWTYPEEXPR", 18))
-		return_value = _readConvertRowtypeExpr();
-	else if (MATCH("CASE", 4))
-		return_value = _readCaseExpr();
-	else if (MATCH("WHEN", 4))
-		return_value = _readCaseWhen();
-	else if (MATCH("CASETESTEXPR", 12))
-		return_value = _readCaseTestExpr();
-	else if (MATCH("ARRAY", 5))
-		return_value = _readArrayExpr();
-	else if (MATCH("ROW", 3))
-		return_value = _readRowExpr();
-	else if (MATCH("ROWCOMPARE", 10))
-		return_value = _readRowCompareExpr();
-	else if (MATCH("COALESCE", 8))
-		return_value = _readCoalesceExpr();
-	else if (MATCH("MINMAX", 6))
-		return_value = _readMinMaxExpr();
-	else if (MATCH("XMLEXPR", 7))
-		return_value = _readXmlExpr();
-	else if (MATCH("NULLIFEXPR", 10))
-		return_value = _readNullIfExpr();
-	else if (MATCH("NULLTEST", 8))
-		return_value = _readNullTest();
-	else if (MATCH("BOOLEANTEST", 11))
-		return_value = _readBooleanTest();
-	else if (MATCH("COERCETODOMAIN", 14))
-		return_value = _readCoerceToDomain();
-	else if (MATCH("COERCETODOMAINVALUE", 19))
-		return_value = _readCoerceToDomainValue();
-	else if (MATCH("SETTODEFAULT", 12))
-		return_value = _readSetToDefault();
-	else if (MATCH("CURRENTOFEXPR", 13))
-		return_value = _readCurrentOfExpr();
-	else if (MATCH("TARGETENTRY", 11))
-		return_value = _readTargetEntry();
-	else if (MATCH("RANGETBLREF", 11))
-		return_value = _readRangeTblRef();
-	else if (MATCH("JOINEXPR", 8))
-		return_value = _readJoinExpr();
-	else if (MATCH("FROMEXPR", 8))
-		return_value = _readFromExpr();
-	else if (MATCH("RTE", 3))
-		return_value = _readRangeTblEntry();
-	else if (MATCH("NOTIFY", 6))
-		return_value = _readNotifyStmt();
-	else if (MATCH("DECLARECURSOR", 13))
-		return_value = _readDeclareCursorStmt();
-	else
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
         ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                         errmsg("This operation involves an internal data item "

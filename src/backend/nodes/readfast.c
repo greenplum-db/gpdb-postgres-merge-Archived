@@ -243,10 +243,6 @@ _readQuery(void)
 	READ_NODE_FIELD(limitCount);
 	READ_NODE_FIELD(rowMarks);
 	READ_NODE_FIELD(setOperations);
-	READ_NODE_FIELD(resultRelations);
-	READ_NODE_FIELD(result_partitions);
-	READ_NODE_FIELD(result_aosegnos);
-	READ_NODE_FIELD(returningLists);
 	/* policy not serialized */
 
 	READ_DONE();
@@ -2336,7 +2332,6 @@ void readPlanInfo(Plan *local_node)
 	READ_NODE_FIELD(qual);
 	READ_BITMAPSET_FIELD(extParam);
 	READ_BITMAPSET_FIELD(allParam);
-	READ_INT_FIELD(nParamExec);
 
 	READ_NODE_FIELD(flow);
 	READ_INT_FIELD(dispatch);
@@ -3266,8 +3261,8 @@ readNodeBinary(void)
 			case T_SliceTable:
 				return_value = _readSliceTable();
 				break;
-			case T_VariableResetStmt:
-				return_value = _readVariableResetStmt();
+			case T_VariableSetStmt:
+				return_value = _readVariableSetStmt();
 				break;
 			case T_CreateTrigStmt:
 				return_value = _readCreateTrigStmt();

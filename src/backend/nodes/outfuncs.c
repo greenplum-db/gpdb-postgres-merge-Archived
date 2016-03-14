@@ -2060,7 +2060,6 @@ _outRelOptInfo(StringInfo str, RelOptInfo *node)
 	WRITE_UINT_FIELD(pages);
 	WRITE_FLOAT_FIELD(tuples, "%.0f");
 	WRITE_NODE_FIELD(subplan);
-<<<<<<< HEAD
 	WRITE_NODE_FIELD(locationlist);
 	WRITE_STRING_FIELD(execcommand);
 	WRITE_CHAR_FIELD(fmttype);
@@ -2071,9 +2070,7 @@ _outRelOptInfo(StringInfo str, RelOptInfo *node)
 	WRITE_INT_FIELD(ext_encoding);
 	WRITE_BOOL_FIELD(isrescannable);
 	WRITE_BOOL_FIELD(writable);
-=======
 	WRITE_NODE_FIELD(subrtable);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	WRITE_NODE_FIELD(baserestrictinfo);
 	WRITE_NODE_FIELD(joininfo);
 	WRITE_BOOL_FIELD(has_eclass_joins);
@@ -2648,8 +2645,7 @@ _outAlterRoleSetStmt(StringInfo str, AlterRoleSetStmt *node)
 	WRITE_NODE_TYPE("ALTERROLESETSTMT");
 
 	WRITE_STRING_FIELD(role);
-	WRITE_STRING_FIELD(variable);
-	WRITE_NODE_FIELD(value);
+	WRITE_NODE_FIELD(setstmt);
 }
 
 
@@ -3534,7 +3530,6 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_NODE_FIELD(limitCount);
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_NODE_FIELD(setOperations);
-	WRITE_NODE_FIELD(result_aosegnos);
 	/* Don't serialize policy */
 }
 #endif /* COMPILING_BINARY_FUNCS */
