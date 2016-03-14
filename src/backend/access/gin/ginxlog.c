@@ -8,11 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *			 $PostgreSQL: pgsql/src/backend/access/gin/ginxlog.c,v 1.5.2.1 2007/06/04 15:59:20 teodor Exp $
-=======
- *			 $PostgreSQL: pgsql/src/backend/access/gin/ginxlog.c,v 1.12 2008/01/01 19:45:46 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -151,8 +147,6 @@ ginRedoInsert(XLogRecPtr lsn, XLogRecord *record)
 	Buffer		buffer;
 	Page		page;
 
-<<<<<<< HEAD
-=======
 	/* first, forget any incomplete split this insertion completes */
 	if (data->isData)
 	{
@@ -180,7 +174,6 @@ ginRedoInsert(XLogRecPtr lsn, XLogRecord *record)
 		}
 	}
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/* nothing else to do if page was backed up */
 	if (record->xl_info & XLR_BKP_BLOCK_1)
 		return;
@@ -197,22 +190,7 @@ ginRedoInsert(XLogRecPtr lsn, XLogRecord *record)
 
 	if (!XLByteLE(lsn, PageGetLSN(page)))
 	{
-<<<<<<< HEAD
-		Assert(data->isDelete == FALSE);
-		Assert(GinPageIsData(page));
-
 		REDO_PRINT_LSN_APPLICATION(reln, data->blkno, page, lsn);
-		if ( ! XLByteLE(lsn, PageGetLSN(page)) )
-		{
-			if (data->isLeaf)
-			{
-				OffsetNumber i;
-				ItemPointerData *items = (ItemPointerData *) (XLogRecGetData(record) + sizeof(ginxlogInsert));
-
-				Assert(GinPageIsLeaf(page));
-				Assert(data->updateBlkno == InvalidBlockNumber);
-
-=======
 		if (data->isData)
 		{
 			Assert(GinPageIsData(page));
@@ -225,84 +203,12 @@ ginRedoInsert(XLogRecPtr lsn, XLogRecord *record)
 				Assert(GinPageIsLeaf(page));
 				Assert(data->updateBlkno == InvalidBlockNumber);
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				for (i = 0; i < data->nitem; i++)
 					GinDataPageAddItem(page, items + i, data->offset + i);
 			}
 			else
 			{
 				PostingItem *pitem;
-<<<<<<< HEAD
-
-				Assert(!GinPageIsLeaf(page));
-
-				if (data->updateBlkno != InvalidBlockNumber)
-				{
-					/* update link to right page after split */
-					pitem = (PostingItem *) GinDataPageGetItem(page, data->offset);
-					PostingItemSetBlockNumber(pitem, data->updateBlkno);
-				}
-
-				pitem = (PostingItem *) (XLogRecGetData(record) + sizeof(ginxlogInsert));
-
-				GinDataPageAddItem(page, pitem, data->offset);
-			}
-		}
-
-		if (!data->isLeaf && data->updateBlkno != InvalidBlockNumber)
-		{
-			PostingItem *pitem = (PostingItem *) (XLogRecGetData(record) + sizeof(ginxlogInsert));
-			forgetIncompleteSplit(data->node, PostingItemGetBlockNumber(pitem), data->updateBlkno);
-		}
-
-	}
-	else
-	{
-		IndexTuple	itup;
-
-		Assert(!GinPageIsData(page));
-
-		REDO_PRINT_LSN_APPLICATION(reln, data->blkno, page, lsn);
-		if ( ! XLByteLE(lsn, PageGetLSN(page)) )
-		{
-			if (data->updateBlkno != InvalidBlockNumber)
-			{
-				/* update link to right page after split */
-				Assert(!GinPageIsLeaf(page));
-				Assert(data->offset >= FirstOffsetNumber && data->offset <= PageGetMaxOffsetNumber(page));
-				itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, data->offset));
-				ItemPointerSet(&itup->t_tid, data->updateBlkno, InvalidOffsetNumber);
-			}
-
-			if (data->isDelete)
-			{
-				Assert(GinPageIsLeaf(page));
-				Assert(data->offset >= FirstOffsetNumber && data->offset <= PageGetMaxOffsetNumber(page));
-				PageIndexTupleDelete(page, data->offset);
-			}
-
-			itup = (IndexTuple) (XLogRecGetData(record) + sizeof(ginxlogInsert));
-
-			if (PageAddItem(page, (Item) itup, IndexTupleSize(itup), data->offset, LP_USED) == InvalidOffsetNumber)
-				elog(ERROR, "failed to add item to index page in %u/%u/%u",
-					 data->node.spcNode, data->node.dbNode, data->node.relNode);
-		}
-
-		if (!data->isLeaf && data->updateBlkno != InvalidBlockNumber)
-		{
-			itup = (IndexTuple) (XLogRecGetData(record) + sizeof(ginxlogInsert));
-			forgetIncompleteSplit(data->node, GinItemPointerGetBlockNumber(&itup->t_tid), data->updateBlkno);
-		}
-	}
-
-	if ( ! XLByteLE(lsn, PageGetLSN(page)) )
-	{
-		PageSetLSN(page, lsn);
-		PageSetTLI(page, ThisTimeLineID);
-
-		MarkBufferDirty(buffer);
-	}
-=======
 
 				Assert(!GinPageIsLeaf(page));
 
@@ -324,6 +230,7 @@ ginRedoInsert(XLogRecPtr lsn, XLogRecord *record)
 
 			Assert(!GinPageIsData(page));
 
+			REDO_PRINT_LSN_APPLICATION(reln, data->blkno, page, lsn);
 			if (data->updateBlkno != InvalidBlockNumber)
 			{
 				/* update link to right page after split */
@@ -353,7 +260,6 @@ ginRedoInsert(XLogRecPtr lsn, XLogRecord *record)
 		MarkBufferDirty(buffer);
 	}
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	UnlockReleaseBuffer(buffer);
 	
 	MIRROREDLOCK_BUFMGR_UNLOCK;
@@ -380,16 +286,11 @@ ginRedoSplit(XLogRecPtr lsn, XLogRecord *record)
 		flags |= GIN_LEAF;
 	if (data->isData)
 		flags |= GIN_DATA;
-<<<<<<< HEAD
 	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-	lbuffer = XLogReadBuffer(reln, data->lblkno, data->isRootSplit);
-=======
-
 	lbuffer = XLogReadBuffer(reln, data->lblkno, true);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	Assert(BufferIsValid(lbuffer));
 	lpage = (Page) BufferGetPage(lbuffer);
 	GinInitBuffer(lbuffer, flags);
