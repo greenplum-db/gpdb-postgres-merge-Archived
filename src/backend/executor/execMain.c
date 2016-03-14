@@ -21,12 +21,8 @@
  *	ExecutorRun accepts direction and count arguments that specify whether
  *	the plan is to be executed forwards, backwards, and for how many tuples.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -69,10 +65,7 @@
 #include "optimizer/clauses.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
-<<<<<<< HEAD
 #include "parser/parse_relation.h"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "parser/parsetree.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
@@ -332,11 +325,7 @@ ExecutorStart(QueryDesc *queryDesc, int eflags)
 	 * If the transaction is read-only, we need to check if any writes are
 	 * planned to non-temporary tables.  EXPLAIN is considered read-only.
 	 */
-<<<<<<< HEAD
 	if ((XactReadOnly || Gp_role == GP_ROLE_DISPATCH) && !(eflags & EXEC_FLAG_EXPLAIN_ONLY))
-=======
-	if (XactReadOnly && !(eflags & EXEC_FLAG_EXPLAIN_ONLY))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		ExecCheckXactReadOnly(queryDesc->plannedstmt);
 
 	/*
@@ -885,14 +874,9 @@ ExecutorRun(QueryDesc *queryDesc,
 	estate->es_processed = 0;
 	estate->es_lastoid = InvalidOid;
 
-<<<<<<< HEAD
 	sendTuples = (queryDesc->tupDesc != NULL &&
 				  (operation == CMD_SELECT ||
 				   queryDesc->plannedstmt->returningLists));
-=======
-	sendTuples = (operation == CMD_SELECT ||
-				  queryDesc->plannedstmt->returningLists);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (sendTuples)
 		(*dest->rStartup) (dest, operation, queryDesc->tupDesc);
@@ -2080,19 +2064,12 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 			 * junk filter.  Note this is only possible for UPDATE/DELETE, so
 			 * we can't be fooled by some needing a filter and some not.
 			 */
-<<<<<<< HEAD
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			if (list_length(plannedstmt->resultRelations) > 1)
 			{
 				List *appendplans;
 				int			as_nplans;
 				ResultRelInfo *resultRelInfo;
-<<<<<<< HEAD
 				ListCell *lc;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 				/* Top plan had better be an Append here. */
 				Assert(IsA(plannedstmt->planTree, Append));
