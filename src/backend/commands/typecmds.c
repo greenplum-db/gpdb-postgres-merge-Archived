@@ -169,7 +169,7 @@ DefineType(List *names, List *parameters, Oid newOid, Oid shadowOid)
 	 */
 	if (!OidIsValid(typoid))
 	{
-		typoid = TypeShellMake(typeName, typeNamespace, GetUserId());
+		typoid = TypeShellMake(typeName, typeNamespace, GetUserId(), InvalidOid);
 		/* Make new shell type visible for modification below */
 		CommandCounterIncrement();
 
