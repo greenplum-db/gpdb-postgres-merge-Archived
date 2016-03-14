@@ -7,10 +7,7 @@
  *	 ExecProcNode, or ExecEndNode on its subnodes and do the appropriate
  *	 processing.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -704,16 +701,11 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 		SubPlan    *subplan = (SubPlan *) lfirst(l);
 		SubPlanState *sstate;
 
-<<<<<<< HEAD
+		Assert(IsA(subplan, SubPlan));
+
 		setSubplanSliceId(subplan, estate);
 
-		sstate = ExecInitExprInitPlan(subplan, result);
-		ExecInitSubPlan(sstate, estate, eflags);
-
-=======
-		Assert(IsA(subplan, SubPlan));
 		sstate = ExecInitSubPlan(subplan, result);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		subps = lappend(subps, sstate);
 	}
 	if (result != NULL)
@@ -722,33 +714,6 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 	estate->currentSliceIdInPlan = origSliceIdInPlan;
 	estate->currentExecutingSliceId = origExecutingSliceId;
 
-<<<<<<< HEAD
-	/*
-	 * Initialize any subPlans present in this node.  These were found by
-	 * ExecInitExpr during initialization of the PlanState.  Note we must do
-	 * this after initializing initPlans, in case their arguments contain
-	 * subPlans (is that actually possible? perhaps not).
-	 */
-	if (result != NULL)
-	{
-		foreach(l, result->subPlan)
-		{
-			SubPlanState *sstate = (SubPlanState *) lfirst(l);
-			
-			Assert(IsA(sstate, SubPlanState));
-
-			/**
-			 * Check if this subplan is an initplan. If so, we shouldn't initialize it again.
-			 */
-			if (sstate->planstate == NULL)
-			{
-				ExecInitSubPlan(sstate, estate, eflags);
-			}
-		}
-	}
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/* Set up instrumentation for this node if requested */
 	if (estate->es_instrument && result != NULL)
 		result->instrument = InstrAlloc(1);
@@ -1540,24 +1505,14 @@ ExecEndNode(PlanState *node)
 	if (node == NULL)
 		return;
 
-<<<<<<< HEAD
 	EState *estate = node->state;
 	Assert(estate != NULL);
 	int origSliceIdInPlan = estate->currentSliceIdInPlan;
 	int origExecutingSliceId = estate->currentExecutingSliceId;
 
-	/* Clean up initPlans and subPlans */
-	foreach(subp, node->initPlan)
-		ExecEndSubPlan((SubPlanState *) lfirst(subp));
-
 	estate->currentSliceIdInPlan = origSliceIdInPlan;
 	estate->currentExecutingSliceId = origExecutingSliceId;
 
-	foreach(subp, node->subPlan)
-		ExecEndSubPlan((SubPlanState *) lfirst(subp));
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (node->chgParam != NULL)
 	{
 		bms_free(node->chgParam);
