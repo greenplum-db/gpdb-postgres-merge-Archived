@@ -256,7 +256,7 @@ ProcArrayRemove(PGPROC *proc, TransactionId latestXid, bool forPrepare, bool isC
  * incomplete.)
  */
 void
-ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
+ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit)
 {
 	if (TransactionIdIsValid(latestXid))
 	{
@@ -286,6 +286,70 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 								  latestXid))
 			ShmemVariableCache->latestCompletedXid = latestXid;
 
+
+		if (!LocalDistribXactRef_IsNil(&MyProc->localDistribXactRef))
+		{
+			switch (DistributedTransactionContext)
+			{
+				case DTX_CONTEXT_QD_DISTRIBUTED_CAPABLE:
+					LocalDistribXact_ChangeStateUnderLock(
+						MyProc->xid,
+						&MyProc->localDistribXactRef,
+						isCommit ? 
+							LOCALDISTRIBXACT_STATE_COMMITDELIVERY :
+							LOCALDISTRIBXACT_STATE_ABORTDELIVERY);
+					needStateChangeFromDistributed = true;
+					break;
+				
+				case DTX_CONTEXT_QE_TWO_PHASE_EXPLICIT_WRITER:
+				case DTX_CONTEXT_QE_TWO_PHASE_IMPLICIT_WRITER:
+				case DTX_CONTEXT_QE_AUTO_COMMIT_IMPLICIT:
+					LocalDistribXact_ChangeStateUnderLock(
+						MyProc->xid,
+						&MyProc->localDistribXactRef,
+						isCommit ?
+							LOCALDISTRIBXACT_STATE_COMMITTED :
+							LOCALDISTRIBXACT_STATE_ABORTED);
+					break;
+				
+				case DTX_CONTEXT_QE_READER:
+				case DTX_CONTEXT_QE_ENTRY_DB_SINGLETON:
+					// QD or QE Writer will handle it.
+					break;
+
+				case DTX_CONTEXT_QD_RETRY_PHASE_2:
+				case DTX_CONTEXT_QE_PREPARED:
+				case DTX_CONTEXT_QE_FINISH_PREPARED:
+					elog(PANIC, "Unexpected distribute transaction context: '%s'",
+						 DtxContextToString(DistributedTransactionContext));
+
+				default:
+					elog(PANIC, "Unrecognized DTX transaction context: %d",
+						 (int) DistributedTransactionContext);
+			}
+
+			/*
+			 * We need to transfer the xid and disributed ref
+			 * for processing below.
+			 */
+			localXid = MyProc->xid;
+			LocalDistribXactRef_Transfer(
+				&localDistribXactRef,
+				&MyProc->localDistribXactRef);
+		}
+
+		
+		if (!notifyCommittedDtxTransactionIsNeeded())
+		{
+			ClearTransactionFromPgProc_UnderLock();
+		}
+		else
+		{
+			needNotifyCommittedDtxTransaction = true;
+		}
+
+
+		
 		LWLockRelease(ProcArrayLock);
 	}
 	else
@@ -333,12 +397,32 @@ ProcArrayClearTransaction(PGPROC *proc)
 	/* redundant, but just in case */
 	proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
 	proc->inCommit = false;
+	proc->inDropTransaction = false;
 
 	/* Clear the subtransaction-XID cache too */
 	proc->subxids.nxids = 0;
 	proc->subxids.overflowed = false;
 }
 
+
+/*
+ * Clears the current transaction from PGPROC.
+ *
+ * Must be called while holding the ProcArrayLock.
+ */
+void
+ClearTransactionFromPgProc_UnderLock(void)
+{
+	MyProc->xid = InvalidTransactionId;
+	MyProc->xmin = InvalidTransactionId;
+	MyProc->inVacuum = false;		/* must be cleared with xid/xmin */
+	MyProc->serializableIsoLevel = false;
+	MyProc->inDropTransaction = false;
+
+	/* Clear the subtransaction-XID cache too while holding the lock */
+	MyProc->subxids.nxids = 0;
+	MyProc->subxids.overflowed = false;
+}
 
 /*
  * TransactionIdIsInProgress -- is given transaction running in some backend

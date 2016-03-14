@@ -234,7 +234,6 @@ extern void TransactionInformationQEWriter(DistributedTransactionId *QEDistribut
 extern bool IsSubTransaction(void);
 extern bool IsTransactionBlock(void);
 extern bool IsTransactionOrTransactionBlock(void);
-extern bool IsTransactionDirty(void);
 extern void ExecutorMarkTransactionUsesSequences(void);
 extern void ExecutorMarkTransactionDoesWrites(void);
 extern bool ExecutorSaysTransactionDoesWrites(void);
