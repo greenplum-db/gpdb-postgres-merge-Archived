@@ -122,6 +122,9 @@ initNextTableToScan(DynamicTableScanState *node)
 
 		AttrNumber	*attMap = NULL;
 
+/* GPDB_83_MERGE_FIXME: varattnos_map() was removed in upstream. */
+#if 0
+
 		attMap = varattnos_map(lastTupDesc, partTupDesc);
 
 		/* If attribute remapping is not necessary, then do not change the varattno */
@@ -136,7 +139,7 @@ initNextTableToScan(DynamicTableScanState *node)
 			 */
 			node->lastRelOid = *pid;
 		}
-
+#endif
 		/*
 		 * For the very first partition, the targetlist of planstate is set to null. So, we must
 		 * initialize quals and targetlist, regardless of remapping requirements. For later

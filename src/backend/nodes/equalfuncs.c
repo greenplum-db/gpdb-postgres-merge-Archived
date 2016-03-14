@@ -1479,7 +1479,7 @@ _equalCompositeTypeStmt(CompositeTypeStmt *a, CompositeTypeStmt *b)
 static bool
 _equalCreateEnumStmt(CreateEnumStmt *a, CreateEnumStmt *b)
 {
-	COMPARE_NODE_FIELD(typename);
+	COMPARE_NODE_FIELD(typeName);
 	COMPARE_NODE_FIELD(vals);
 
 	return true;

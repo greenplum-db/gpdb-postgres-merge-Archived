@@ -1481,7 +1481,7 @@ _readPlannedStmt(void)
 	READ_NODE_FIELD(rowMarks);
 	READ_NODE_FIELD(relationOids);
 	READ_NODE_FIELD(invalItems);
-	READ_INT_FIELD(nCrossLevelParams);
+	READ_INT_FIELD(nParamExec);
 	READ_INT_FIELD(nMotionNodes);
 	READ_INT_FIELD(nInitPlans);
 	/* intoPolicy not serialized in outfast.c */

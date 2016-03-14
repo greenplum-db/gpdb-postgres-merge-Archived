@@ -122,7 +122,6 @@ _copyPlannedStmt(PlannedStmt *from)
 	COPY_NODE_FIELD(relationOids);
 	COPY_SCALAR_FIELD(invalItems);
 	COPY_SCALAR_FIELD(nParamExec);
-	COPY_SCALAR_FIELD(nCrossLevelParams);
 	COPY_SCALAR_FIELD(nMotionNodes);
 	COPY_SCALAR_FIELD(nInitPlans);
 	
@@ -3563,7 +3562,7 @@ _copyCreateEnumStmt(CreateEnumStmt *from)
 {
 	CreateEnumStmt *newnode = makeNode(CreateEnumStmt);
 
-	COPY_NODE_FIELD(typename);
+	COPY_NODE_FIELD(typeName);
 	COPY_NODE_FIELD(vals);
 
 	return newnode;

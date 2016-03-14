@@ -314,7 +314,7 @@ _outPlannedStmt(StringInfo str, PlannedStmt *node)
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_NODE_FIELD(relationOids);
 	WRITE_NODE_FIELD(invalItems);
-	WRITE_INT_FIELD(nCrossLevelParams);
+	WRITE_INT_FIELD(nParamExec);
 	WRITE_INT_FIELD(nMotionNodes);
 	WRITE_INT_FIELD(nInitPlans);
 
@@ -1065,7 +1065,6 @@ _outRowTrigger(StringInfo str, RowTrigger *node)
 {
 	WRITE_NODE_TYPE("RowTrigger");
 
-<<<<<<< HEAD
 	WRITE_INT_FIELD(relid);
 	WRITE_INT_FIELD(eventFlags);
 	WRITE_NODE_FIELD(oldValuesColIdx);
@@ -1197,10 +1196,7 @@ _outConst(StringInfo str, Const *node)
 	WRITE_NODE_TYPE("CONST");
 
 	WRITE_OID_FIELD(consttype);
-=======
-	WRITE_OID_FIELD(consttype);
 	WRITE_INT_FIELD(consttypmod);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	WRITE_INT_FIELD(constlen);
 	WRITE_BOOL_FIELD(constbyval);
 	WRITE_BOOL_FIELD(constisnull);
