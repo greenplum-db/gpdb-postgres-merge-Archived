@@ -1404,6 +1404,8 @@ open_share_lock(SeqTable seq)
 /*
  * Given a relation OID, open and lock the sequence.  p_elm and p_rel are
  * output parameters.
+ *
+ * GPDB: If p_rel is NULL, the sequence relation is not opened or locked.
  */
 static void
 init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel)
@@ -1447,16 +1449,19 @@ init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel)
 	/*
 	 * Open the sequence relation.
 	 */
-	seqrel = open_share_lock(elm);
+	if (p_rel)
+	{
+		seqrel = open_share_lock(elm);
 
-	if (seqrel->rd_rel->relkind != RELKIND_SEQUENCE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a sequence",
-						RelationGetRelationName(seqrel))));
+		if (seqrel->rd_rel->relkind != RELKIND_SEQUENCE)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("\"%s\" is not a sequence",
+							RelationGetRelationName(seqrel))));
 
+		*p_rel = seqrel;
+	}
 	*p_elm = elm;
-	*p_rel = seqrel;
 }
 
 
@@ -1984,8 +1989,7 @@ cdb_sequence_nextval_proxy(Relation	seqrel,
  * CDB: nextval entry point called by sequence server
  */
 void
-cdb_sequence_nextval_server(SeqTable elm,
-							Oid    tablespaceid,
+cdb_sequence_nextval_server(Oid    tablespaceid,
                             Oid    dbid,
                             Oid    relid,
                             bool   istemp,
@@ -1995,11 +1999,18 @@ cdb_sequence_nextval_server(SeqTable elm,
                             bool  *poverflow)
 {
     RelationData    fakerel;
+	SeqTable	elm;
 	Relation	    seqrel = &fakerel;
 
     *plast = 0;
     *pcached = 0;
     *pincrement = 0;
+
+	/* Find the SeqTable entry for the sequence. Note that we don't lock the
+	 * relation, because the sequence server cannot hold heavy-weight locks.
+	 * GPDB_83_MERGE_FIXME: that's why I assume we don't hold the lock, anyway...
+	 * */
+	init_sequence(relid, &elm, NULL);
 
     /* Build a pseudo relcache entry with just enough info to call bufmgr. */
     seqrel = &fakerel;

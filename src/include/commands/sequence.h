@@ -111,14 +111,11 @@ extern void seq_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
 
 #define SEQ_MINVALUE	(-SEQ_MAXVALUE)
 
-struct SeqTableData;
-
 /*
  * CDB: nextval entry point called by sequence server
  */
 void
-cdb_sequence_nextval_server(struct SeqTableData *elm,
-							Oid    tablespaceid,
+cdb_sequence_nextval_server(Oid    tablespaceid,
                             Oid    dbid,
                             Oid    relid,
                             bool   istemp,

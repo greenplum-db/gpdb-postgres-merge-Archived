@@ -274,14 +274,6 @@ PgArchiverMain(int argc, char *argv[])
 static void
 pgarch_exit(SIGNAL_ARGS)
 {
-<<<<<<< HEAD
-	/*
-	 * For now, we just nail the doors shut and get out of town.  It might
-	 * seem cleaner to finish up any pending archive copies, but there's a
-	 * nontrivial risk that init will kill us partway through.
-	 */
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/* SIGQUIT means curl up and die ... */
 	exit(1);
 }
