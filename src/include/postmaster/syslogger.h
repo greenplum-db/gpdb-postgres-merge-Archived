@@ -93,7 +93,7 @@ typedef struct CSVChunkStr
     const char *p;
 } CSVChunkStr;
 
-extern void write_syslogger_file_binary(const char *buffer, int count);
+extern void write_syslogger_file_binary(const char *buffer, int count, int dest);
 extern void syslogger_log_chunk_list(PipeProtoChunk *chunk);
 
 typedef struct
