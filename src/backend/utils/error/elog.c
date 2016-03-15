@@ -185,7 +185,7 @@ static int	recursion_depth = 0;	/* to detect actual recursion */
 
 #define FORMATTED_TS_LEN 128
 static char formatted_start_time[FORMATTED_TS_LEN];
-//static char formatted_log_time[FORMATTED_TS_LEN];
+static char formatted_log_time[FORMATTED_TS_LEN];
 
 /* Macro for checking errordata_stack_depth is reasonable */
 #define CHECK_STACK_DEPTH() \
@@ -209,7 +209,6 @@ static bool is_log_level_output(int elevel, int log_min_level);
 static void write_pipe_chunks(char *data, int len, int dest);
 static void write_csvlog(ErrorData *edata);
 static void elog_debug_linger(ErrorData *edata);
-static void setup_formatted_start_time(void);
 
 
 /* verify string is correctly encoded, and escape it if invalid  */
@@ -868,11 +867,7 @@ errcode_for_socket_access(void)
 		StringInfoData	buf; \
 		/* Internationalize the error format string */ \
 		if (translateit && !in_error_recursion_trouble()) \
-<<<<<<< HEAD
 			fmt = dgettext(edata->domain, fmt); \
-=======
-			fmt = gettext(fmt); \
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		/* Expand %m in format string */ \
 		fmtbuf = expand_fmt_string(fmt, edata); \
 		initStringInfo(&buf); \
@@ -961,12 +956,9 @@ errmsg(const char *fmt,...)
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
 	EVALUATE_MESSAGE(message, false, true);
-<<<<<<< HEAD
 
 	/* enforce correct encoding */
 	verify_and_replace_mbstr(&(edata->message), strlen(edata->message));
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -997,7 +989,6 @@ errmsg_internal(const char *fmt,...)
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
 	EVALUATE_MESSAGE(message, false, false);
-<<<<<<< HEAD
 
 	/* enforce correct encoding */
 	verify_and_replace_mbstr(&(edata->message), strlen(edata->message));
@@ -1028,8 +1019,6 @@ errmsg_plural(const char *fmt_singular, const char *fmt_plural,
 
 	/* enforce correct encoding */
 	verify_and_replace_mbstr(&(edata->message), strlen(edata->message));
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -1052,7 +1041,6 @@ errdetail(const char *fmt,...)
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
 	EVALUATE_MESSAGE(detail, false, true);
-<<<<<<< HEAD
 
 	/* enforce correct encoding */
 	verify_and_replace_mbstr(&(edata->detail), strlen(edata->detail));
@@ -1108,8 +1096,6 @@ errdetail_plural(const char *fmt_singular, const char *fmt_plural,
 
 	/* enforce correct encoding */
 	verify_and_replace_mbstr(&(edata->detail), strlen(edata->detail));
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -1168,25 +1154,6 @@ errcontext(const char *fmt,...)
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
 	errno = edata->saved_errno; /*CDB*/
-	return 0;					/* return value does not matter */
-}
-
-
-/*
- * errhidestmt --- optionally suppress STATEMENT: field of log entry
- *
- * This should be called if the message text already includes the statement.
- */
-int
-errhidestmt(bool hide_stmt)
-{
-	ErrorData  *edata = &errordata[errordata_stack_depth];
-
-	/* we don't bother incrementing recursion_depth */
-	CHECK_STACK_DEPTH();
-
-	edata->hide_stmt = hide_stmt;
-
 	return 0;					/* return value does not matter */
 }
 
@@ -1367,7 +1334,6 @@ errOmitLocation(bool omitLocation)
 	/* we don't bother incrementing recursion_depth */
 	CHECK_STACK_DEPTH();
 
-<<<<<<< HEAD
 	edata->omit_location = omitLocation;
 
 	return 0;					/* return value does not matter */
@@ -1456,8 +1422,6 @@ elog_start(const char *filename, int lineno, const char *funcname)
 	}
 
 	edata = &errordata[errordata_stack_depth];
-=======
-	edata = &errordata[errordata_stack_depth];
 	if (filename)
 	{
 		const char *slash;
@@ -1467,7 +1431,6 @@ elog_start(const char *filename, int lineno, const char *funcname)
 		if (slash)
 			filename = slash + 1;
 	}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	edata->filename = filename;
 	edata->lineno = lineno;
 	edata->funcname = funcname;
@@ -2163,28 +2126,6 @@ write_eventlog(int level, const char *line)
 }
 #endif   /* WIN32 */
 
-/*
- * setup formatted_start_time
- */
-static void
-setup_formatted_start_time(void)
-{
-	pg_time_t	stamp_time = (pg_time_t) MyStartTime;
-	pg_tz	   *tz;
-
-	/*
-	 * Normally we print log timestamps in log_timezone, but during startup we
-	 * could get here before that's set. If so, fall back to gmt_timezone
-	 * (which guc.c ensures is set up before Log_line_prefix can become
-	 * nonempty).
-	 */
-	tz = log_timezone ? log_timezone : gmt_timezone;
-
-	pg_strftime(formatted_start_time, FORMATTED_TS_LEN,
-				"%Y-%m-%d %H:%M:%S %Z",
-				pg_localtime(&stamp_time, tz));
-}
-
 
 /*
  * CDB: Tidy up the error message
@@ -2426,33 +2367,12 @@ log_line_prefix(StringInfo buf)
 					struct timeval tv;
 					pg_time_t	stamp_time;
 					pg_tz	   *tz;
-					char		strfbuf[128],
-								msbuf[8];
+					char		msbuf[8];
 
 					gettimeofday(&tv, NULL);
-<<<<<<< HEAD
-					stamp_time = (pg_time_t)tv.tv_sec;
-
-					/*
-					 * GP: Save the time of the last log line.
-					 */
-					LastLogTimeVal = tv;
-
-					pg_strftime(strfbuf, sizeof(strfbuf),
-					/* leave room for microseconds... */
-					/* Win32 timezone names are too long so don't print them */
-#ifndef WIN32
-								"%Y-%m-%d %H:%M:%S        %Z",
-#else
-								"%Y-%m-%d %H:%M:%S        ",
-#endif
-							 pg_localtime(&stamp_time, log_timezone ? log_timezone : gmt_timezone));
-
-					/* 'paste' milliseconds into place... */
-					sprintf(msbuf, ".%06d", (int) (tv.tv_usec));
-					strncpy(strfbuf + 19, msbuf, 7);
-=======
 					stamp_time = (pg_time_t) tv.tv_sec;
+					/* GP: Save the time of the last log line. */
+					LastLogTimeVal = tv;
 
 					/*
 					 * Normally we print log timestamps in log_timezone, but
@@ -2463,14 +2383,13 @@ log_line_prefix(StringInfo buf)
 					tz = log_timezone ? log_timezone : gmt_timezone;
 
 					pg_strftime(formatted_log_time, FORMATTED_TS_LEN,
-					/* leave room for milliseconds... */
-								"%Y-%m-%d %H:%M:%S     %Z",
-								pg_localtime(&stamp_time, tz));
+					/* leave room for microseconds... */
+								"%Y-%m-%d %H:%M:%S        %Z",
+							 pg_localtime(&stamp_time, log_timezone ? log_timezone : gmt_timezone));
 
-					/* 'paste' milliseconds into place... */
-					sprintf(msbuf, ".%03d", (int) (tv.tv_usec / 1000));
+					/* 'paste' microseconds into place... */
+					sprintf(msbuf, ".%06d", (int) (tv.tv_usec));
 					strncpy(formatted_log_time + 19, msbuf, 4);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 					appendStringInfoString(buf, formatted_log_time);
 				}
@@ -2484,21 +2403,13 @@ log_line_prefix(StringInfo buf)
 					tz = log_timezone ? log_timezone : gmt_timezone;
 
 					pg_strftime(strfbuf, sizeof(strfbuf),
-					/* Win32 timezone names are too long so don't print them */
-#ifndef WIN32
-							 "%Y-%m-%d %H:%M:%S %Z",
-#else
-							 "%Y-%m-%d %H:%M:%S",
-#endif
+								"%Y-%m-%d %H:%M:%S %Z",
 								pg_localtime(&stamp_time, tz));
 					appendStringInfoString(buf, strfbuf);
 				}
 				break;
 			case 's':
 				if (formatted_start_time[0] == '\0')
-<<<<<<< HEAD
-					setup_formatted_start_time();
-=======
 				{
 					pg_time_t	stamp_time = (pg_time_t) MyStartTime;
 					pg_tz	   *tz;
@@ -2509,7 +2420,6 @@ log_line_prefix(StringInfo buf)
 								"%Y-%m-%d %H:%M:%S %Z",
 								pg_localtime(&stamp_time, tz));
 				}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				appendStringInfoString(buf, formatted_start_time);
 				break;
 			case 'i':
@@ -3255,7 +3165,7 @@ append_stacktrace(PipeProtoChunk *buffer, StringInfo append, void *const *stacka
 			else
 			{
 				if (amsyslogger)
-					write_syslogger_file_binary(symbol, symbol_len);
+					write_syslogger_file_binary(symbol, symbol_len, LOG_DESTINATION_STDERR);
 				else
 					write(fileno(stderr), symbol, symbol_len);
 			}
@@ -3274,9 +3184,9 @@ write_syslogger_file_string(const char *str, bool amsyslogger, bool append_comma
 	{
 		if (amsyslogger)
 		{
-			write_syslogger_file_binary("\"", 1);
+			write_syslogger_file_binary("\"", 1, LOG_DESTINATION_STDERR);
 			syslogger_write_str(str, strlen(str), true, true);
-			write_syslogger_file_binary("\"", 1);
+			write_syslogger_file_binary("\"", 1, LOG_DESTINATION_STDERR);
 		}
 		else
 		{
@@ -3289,7 +3199,7 @@ write_syslogger_file_string(const char *str, bool amsyslogger, bool append_comma
 	if (append_comma)
 	{
 		if (amsyslogger)
-			write_syslogger_file_binary(",", 1);
+			write_syslogger_file_binary(",", 1, LOG_DESTINATION_STDERR);
 		else
 			write(fileno(stderr), ",", 1);
 	}
@@ -3417,7 +3327,7 @@ write_syslogger_in_csv(ErrorData *edata, bool amsyslogger)
 
 	/* EOL */
 	if (amsyslogger)
-		write_syslogger_file_binary(LOG_EOL, strlen(LOG_EOL));
+		write_syslogger_file_binary(LOG_EOL, strlen(LOG_EOL), LOG_DESTINATION_STDERR);
 	else
 		write(fileno(stderr), LOG_EOL, strlen(LOG_EOL));
 }
@@ -3594,7 +3504,7 @@ send_message_to_server_log(ErrorData *edata)
 
 	if (Log_destination & LOG_DESTINATION_STDERR)
 	{
-		if (Redirect_stderr && gp_log_format == 1)
+		if (Logging_collector && gp_log_format == 1)
 		{
 			if (redirection_done)
 			{
@@ -3632,12 +3542,9 @@ send_message_to_server_log(ErrorData *edata)
 
 	/* Format message prefix. */
 	initStringInfo(&buf);
-<<<<<<< HEAD
-=======
 
 	formatted_log_time[0] = '\0';
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	log_line_prefix(&buf);
 	nc = buf.len;
 	appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel));
@@ -3848,30 +3755,21 @@ send_message_to_server_log(ErrorData *edata)
 		else if (pgwin32_is_service() && (!redirection_done || am_syslogger) )
 			write_eventlog(edata->elevel, buf.data);
 #endif
-<<<<<<< HEAD
 			/* only use the chunking protocol if we know the syslogger should
 			 * be catching stderr output, and we are not ourselves the
 			 * syslogger. Otherwise, go directly to stderr.
 			 */
 			if (redirection_done && !am_syslogger)
-				write_pipe_chunks(buf.data, buf.len);
+				write_pipe_chunks(buf.data, buf.len, LOG_DESTINATION_STDERR);
 			else
 				write(fileno(stderr), buf.data, buf.len);
-=======
-		else
-			write(fileno(stderr), buf.data, buf.len);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	/* If in the syslogger process, try to write messages direct to file */
 	if (am_syslogger)
-<<<<<<< HEAD
-		write_syslogger_file_binary(buf.data, buf.len);
+		write_syslogger_file_binary(buf.data, buf.len, LOG_DESTINATION_STDERR);
 
 	pfree(prefix.data);
-	pfree(buf.data);
-=======
-		write_syslogger_file(buf.data, buf.len, LOG_DESTINATION_STDERR);
 
 	/* Write to CSV log if enabled */
 	if (Log_destination & LOG_DESTINATION_CSVLOG)
@@ -3917,46 +3815,12 @@ write_pipe_chunks(char *data, int len, int dest)
 
 	Assert(len > 0);
 
-	p.proto.nuls[0] = p.proto.nuls[1] = '\0';
-	p.proto.pid = MyProcPid;
-
-	/* write all but the last chunk */
-	while (len > PIPE_MAX_PAYLOAD)
-	{
-		p.proto.is_last = (dest == LOG_DESTINATION_CSVLOG ? 'F' : 'f');
-		p.proto.len = PIPE_MAX_PAYLOAD;
-		memcpy(p.proto.data, data, PIPE_MAX_PAYLOAD);
-		write(fd, &p, PIPE_HEADER_SIZE + PIPE_MAX_PAYLOAD);
-		data += PIPE_MAX_PAYLOAD;
-		len -= PIPE_MAX_PAYLOAD;
-	}
-
-	/* write the last chunk */
-	p.proto.is_last = (dest == LOG_DESTINATION_CSVLOG ? 'T' : 't');
-	p.proto.len = len;
-	memcpy(p.proto.data, data, len);
-	write(fd, &p, PIPE_HEADER_SIZE + len);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-}
-
-/*
- * Send data to the syslogger using the chunked protocol
- */
-static void
-write_pipe_chunks(char *data, int len)
-{
-	PipeProtoChunk p;
-
-	int			fd = fileno(stderr);
-
-	Assert(len > 0);
-
 	p.hdr.zero = 0;
 	p.hdr.pid = MyProcPid;
 	p.hdr.thid = mythread();
 	p.hdr.main_thid = mainthread();
 	p.hdr.chunk_no = 0;
-	p.hdr.log_format = 't';
+	p.hdr.log_format = (dest == LOG_DESTINATION_CSVLOG ? 'c' : 't');
 	p.hdr.is_segv_msg = 'f';
 	p.hdr.next = -1;
 
@@ -3993,26 +3857,6 @@ write_pipe_chunks(char *data, int len)
 	write(fd, &p, PIPE_HEADER_SIZE + len);
 }
 
-
-/*
- * Append a text string to the error report being built for the client.
- *
- * This is ordinarily identical to pq_sendstring(), but if we are in
- * error recursion trouble we skip encoding conversion, because of the
- * possibility that the problem is a failure in the encoding conversion
- * subsystem itself.  Code elsewhere should ensure that the passed-in
- * strings will be plain 7-bit ASCII, and thus not in need of conversion,
- * in such cases.  (In particular, we disable localization of error messages
- * to help ensure that's true.)
- */
-static void
-err_sendstring(StringInfo buf, const char *str)
-{
-	if (in_error_recursion_trouble())
-		pq_send_ascii_string(buf, str);
-	else
-		pq_sendstring(buf, str);
-}
 
 /*
  * Append a text string to the error report being built for the client.
@@ -4375,7 +4219,7 @@ write_stderr(const char *fmt,...)
 
 	va_start(ap, fmt);
 
-	if (Redirect_stderr && gp_log_format == 1)
+	if (Logging_collector && gp_log_format == 1)
 	{
 		char		errbuf[2048];		/* Arbitrary size? */
 
