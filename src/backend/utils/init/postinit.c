@@ -601,14 +601,9 @@ BaseInit(void)
  *		Initialize POSTGRES.
  *
  * The database can be specified by name, using the in_dbname parameter, or by
-<<<<<<< HEAD
  * OID, using the dboid parameter.	In the latter case, the actual database
  * name can be returned to the caller in out_dbname.  If out_dbname isn't
  * NULL, it must point to a buffer of size NAMEDATALEN.
-=======
- * OID, using the dboid parameter.	In the latter case, the computed database
- * name is passed out to the caller as a palloc'ed string in out_dbname.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * In bootstrap mode no parameters are used.
  *
