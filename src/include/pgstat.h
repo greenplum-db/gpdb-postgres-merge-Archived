@@ -785,7 +785,7 @@ extern PgStat_StatPortalEntry *pgstat_getportalentry(uint32 portalid,
 	do {															\
 		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
 			(rel)->pgstat_info->t_counts.t_blocks_hit++;			\
-
+	} while (0)
 /* Resource queue statistics: */
 #define pgstat_count_queue_exec(p, q) 									\
 	do {																\
