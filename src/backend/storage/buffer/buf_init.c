@@ -22,7 +22,7 @@
 #include "storage/bufmgr.h"
 #include "storage/buf_internals.h"
 
-volatile BufferDesc *BufferDescriptors;
+BufferDesc *BufferDescriptors;
 char	   *BufferBlocks;
 int32	   *PrivateRefCount;
 
@@ -100,7 +100,7 @@ InitBufferPool(void)
 	bool		foundBufs,
 				foundDescs;
 
-	BufferDescriptors = (volatile BufferDesc *)
+	BufferDescriptors = (BufferDesc *)
 		ShmemInitStruct("Buffer Descriptors",
 						NBuffers * sizeof(BufferDesc), &foundDescs);
 
