@@ -1759,8 +1759,6 @@ smgrDoDeleteActions(
 {
 	MIRRORED_LOCK_DECLARE;
 
-	CHECKPOINT_START_LOCK_DECLARE;
-
 	PendingDelete *current;
 	int entryIndex;
 
