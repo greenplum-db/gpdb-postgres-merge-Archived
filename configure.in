@@ -434,7 +434,8 @@ AC_SUBST(PG_CRC32C_OBJS)
 if test "$GCC" = yes -a "$ICC" = no; then
   CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -Wpointer-arith -Winline"
   # These work in some but not all gcc versions
-  PGAC_PROG_CC_CFLAGS_OPT([-Wdeclaration-after-statement])
+  # GPDB code is full of declarations after statement.
+  #PGAC_PROG_CC_CFLAGS_OPT([-Wdeclaration-after-statement])
   PGAC_PROG_CC_CFLAGS_OPT([-Wendif-labels])
   # This was included in -Wall/-Wformat in older GCC versions
   PGAC_PROG_CC_CFLAGS_OPT([-Wformat-security])
