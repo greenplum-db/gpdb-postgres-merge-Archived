@@ -21,25 +21,17 @@
  * lookup key's hash value as a partition number --- this will work because
  * of the way calc_bucket() maps hash values to bucket numbers.
  *
-<<<<<<< HEAD
  * For hash tables in shared memory, the memory allocator function should
  * match malloc's semantics of returning NULL on failure.  For hash tables
  * in local memory, we typically use palloc() which will throw error on
  * failure.  The code in this file has to cope with both cases.
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.79 2009/01/01 17:23:51 momjian Exp $
-=======
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.78 2008/01/01 19:45:53 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -831,29 +823,19 @@ hash_search_with_hash_value(HTAB *hashp,
 #endif
 
 	/*
-<<<<<<< HEAD
-	 * If inserting, check if it's time to split the bucket.
-	 *
-	 * NOTE: failure to expand table is not a fatal error, it just means we
-	 * have to run at higher fill factor than we wanted. However, if we're
-=======
 	 * If inserting, check if it is time to split a bucket.
 	 *
 	 * NOTE: failure to expand table is not a fatal error, it just means we
 	 * have to run at higher fill factor than we wanted.  However, if we're
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 * using the palloc allocator then it will throw error anyway on
 	 * out-of-memory, so we must do this before modifying the table.
 	 */
 	if (action == HASH_ENTER || action == HASH_ENTER_NULL)
 	{
-<<<<<<< HEAD
 		/* ENTER_NULL does not work with palloc-based allocator */
 		if (action == HASH_ENTER_NULL)
 			Assert(hashp->alloc != DynaHashAlloc);
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		/*
 		 * Can't split if running in partitioned mode, nor if frozen, nor if
 		 * table is the subject of any active hash_seq_search scans.  Strange
@@ -862,11 +844,7 @@ hash_search_with_hash_value(HTAB *hashp,
 		if (!IS_PARTITIONED(hctl) && !hashp->frozen &&
 			hctl->nentries / (long) (hctl->max_bucket + 1) >= hctl->ffactor &&
 			!has_seq_scans(hashp))
-<<<<<<< HEAD
-			(void)expand_table(hashp);
-=======
 			(void) expand_table(hashp);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	/*
@@ -988,19 +966,12 @@ hash_search_with_hash_value(HTAB *hashp,
 			hashp->keycopy(ELEMENTKEY(currBucket), keyPtr, keysize);
 
 			/*
-<<<<<<< HEAD
-			 * Caller is expected to fill the data field on return. DO NOT
-=======
 			 * Caller is expected to fill the data field on return.  DO NOT
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			 * insert any code that could possibly throw error here, as doing
 			 * so would leave the table entry incomplete and hence corrupt the
 			 * caller's data structure.
 			 */
-<<<<<<< HEAD
-=======
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			return (void *) ELEMENTKEY(currBucket);
 	}
 
@@ -1096,12 +1067,8 @@ hash_seq_init(HASH_SEQ_STATUS *status, HTAB *hashp)
 	status->hashp = hashp;
 	status->curBucket = 0;
 	status->curEntry = NULL;
-<<<<<<< HEAD
 
 	if (hashp && !hashp->frozen)
-=======
-	if (!hashp->frozen)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		register_seq_scan(hashp);
 }
 
@@ -1450,11 +1417,7 @@ my_log2(long num)
 /************************* SEQ SCAN TRACKING ************************/
 
 /*
-<<<<<<< HEAD
- * We track active hash_seq_search scans here.  The need for this mechanism
-=======
  * We track active hash_seq_search scans here.	The need for this mechanism
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * comes from the fact that a scan will get confused if a bucket split occurs
  * while it's in progress: it might visit entries twice, or even miss some
  * entirely (if it's partway through the same bucket that splits).  Hence
@@ -1474,11 +1437,7 @@ my_log2(long num)
  *
  * This arrangement is reasonably robust if a transient hashtable is deleted
  * without notifying us.  The absolute worst case is we might inhibit splits
-<<<<<<< HEAD
- * in another table created later at exactly the same address.  We will give
-=======
  * in another table created later at exactly the same address.	We will give
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * a warning at transaction end for reference leaks, so any bugs leading to
  * lack of notification should be easy to catch.
  */
@@ -1506,11 +1465,7 @@ register_seq_scan(HTAB *hashp)
 static void
 deregister_seq_scan(HTAB *hashp)
 {
-<<<<<<< HEAD
-	int		i;
-=======
 	int			i;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Search backward since it's most likely at the stack top */
 	for (i = num_seq_scans - 1; i >= 0; i--)
@@ -1531,11 +1486,7 @@ deregister_seq_scan(HTAB *hashp)
 static bool
 has_seq_scans(HTAB *hashp)
 {
-<<<<<<< HEAD
-	int		i;
-=======
 	int			i;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	for (i = 0; i < num_seq_scans; i++)
 	{
@@ -1560,11 +1511,7 @@ AtEOXact_HashTables(bool isCommit)
 	 */
 	if (isCommit)
 	{
-<<<<<<< HEAD
-		int		i;
-=======
 		int			i;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		for (i = 0; i < num_seq_scans; i++)
 		{
@@ -1579,11 +1526,7 @@ AtEOXact_HashTables(bool isCommit)
 void
 AtEOSubXact_HashTables(bool isCommit, int nestDepth)
 {
-<<<<<<< HEAD
-	int		i;
-=======
 	int			i;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Search backward to make cleanup easy.  Note we must check all entries,
