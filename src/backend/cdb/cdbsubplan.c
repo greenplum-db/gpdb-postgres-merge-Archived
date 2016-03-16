@@ -72,7 +72,7 @@ preprocess_initplans(QueryDesc *queryDesc)
 	int			originalSlice,
 				rootIndex;
 
-	if (queryDesc->plannedstmt->nCrossLevelParams == 0)
+	if (queryDesc->plannedstmt->nParamExec == 0)
 		return;
 
 	originalPli = queryDesc->params;
@@ -87,7 +87,7 @@ preprocess_initplans(QueryDesc *queryDesc)
 	 * order, i.e. if a subplan x has a sublan y, then y will come before x in
 	 * the es_param_exec_vals array.
 	 */
-	for (i = 0; i < queryDesc->plannedstmt->nCrossLevelParams; i++)
+	for (i = 0; i < queryDesc->plannedstmt->nParamExec; i++)
 	{
 		ParamExecData *prm;
 		SubPlanState *sps;
@@ -115,7 +115,6 @@ preprocess_initplans(QueryDesc *queryDesc)
             Assert(IsA(subplan, SubPlan) &&
                    subplan->qDispSliceId > 0);
 
-			queryDesc->plannedstmt->nParamExec = queryDesc->plannedstmt->nCrossLevelParams;
 			sps->planstate->plan->nMotionNodes = queryDesc->plannedstmt->nMotionNodes;
 			sps->planstate->plan->dispatch = DISPATCH_PARALLEL;
 
@@ -190,7 +189,7 @@ addRemoteExecParamsToParamList(PlannedStmt *stmt, ParamListInfo extPrm, ParamExe
 	ListCell *lc;
 	Plan	   *plan = stmt->planTree;
 	List	   *rtable = stmt->rtable;
-	int			nIntPrm = stmt->nCrossLevelParams;
+	int			nIntPrm = stmt->nParamExec;
 
 	if (nIntPrm == 0)
 		return extPrm;
