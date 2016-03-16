@@ -245,16 +245,11 @@ write_database_file(Relation drel, bool startup)
 		datfrozenxid = dbform->datfrozenxid;
 
 		/*
-<<<<<<< HEAD
-		 * Identify the oldest datfrozenxid.  This must match
-		 * the logic in vac_truncate_clog() in vacuum.c.
+		 * Identify the oldest datfrozenxid.  This must match the logic in
+		 * vac_truncate_clog() in vacuum.c.
 		 *
 		 * MPP-20053: Skip databases that cannot be connected to in computing
 		 * the oldest database.
-=======
-		 * Identify the oldest datfrozenxid.  This must match the logic in
-		 * vac_truncate_clog() in vacuum.c.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 */
 		if (dbform->datallowconn && TransactionIdIsNormal(datfrozenxid))
 		{
@@ -299,18 +294,8 @@ write_database_file(Relation drel, bool startup)
 		 * elsewhere.  This is done with a similar check in
 		 * PersistentTablespace_GetPrimaryAndMirrorFilespaces().
 		 */
-<<<<<<< HEAD
 		if (gp_before_filespace_setup && !IsBuiltinTablespace(dattablespace))
 			continue;
-=======
-		if (startup)
-		{
-			char	   *dbpath = GetDatabasePath(datoid, dattablespace);
-
-			RelationCacheInitFileRemove(dbpath);
-			pfree(dbpath);
-		}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 	heap_endscan(scan);
 
@@ -348,11 +333,7 @@ write_database_file(Relation drel, bool startup)
 typedef struct
 {
 	Oid			roleid;
-<<<<<<< HEAD
-	bool		rolcanlogin;
 	bool		rolsuper;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	char	   *rolname;
 	char	   *rolpassword;
 	char	   *rolvaliduntil;
@@ -448,11 +429,7 @@ load_auth_entries(Relation rel_authid, auth_entry **auth_info_out, int *total_ro
 		}
 
 		auth_info[curr_role].roleid = HeapTupleGetOid(tuple);
-<<<<<<< HEAD
 		auth_info[curr_role].rolsuper = aform->rolsuper;
-		auth_info[curr_role].rolcanlogin = aform->rolcanlogin;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		auth_info[curr_role].rolname = pstrdup(NameStr(aform->rolname));
 		auth_info[curr_role].member_of = NIL;
 
@@ -493,11 +470,7 @@ load_auth_entries(Relation rel_authid, auth_entry **auth_info_out, int *total_ro
 				auth_info[curr_role].rolpassword = DatumGetCString(DirectFunctionCall1(textout, datum));
 
 			/* assume passwd has attlen -1 */
-<<<<<<< HEAD
-			off = att_addlength(off, -1, PointerGetDatum(tp + off));
-=======
 			off = att_addlength_pointer(off, -1, tp + off);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 
 		if (HeapTupleHasNulls(tuple) &&
@@ -512,13 +485,8 @@ load_auth_entries(Relation rel_authid, auth_entry **auth_info_out, int *total_ro
 			 * rolvaliduntil is timestamptz, which we assume is double
 			 * alignment and pass-by-value.
 			 */
-<<<<<<< HEAD
-			off = att_align(off, 'd');
-			datum = fetch_att(tp + off, true, sizeof(TimestampTz));
-=======
 			off = att_align_nominal(off, 'd');
-			datum = PointerGetDatum(tp + off);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+			datum = fetch_att(tp + off, true, sizeof(TimestampTz));
 			auth_info[curr_role].rolvaliduntil = DatumGetCString(DirectFunctionCall1(timestamptz_out, datum));
 		}
 
@@ -710,36 +678,19 @@ write_auth_file(Relation rel_authid, Relation rel_authmem)
 		auth_entry *arole = &auth_info[curr_role];
 		ListCell   *mem;
 
-		fputs_quote(arole->rolname, fp);
-		fputs(" ", fp);
-		fputs_quote(arole->rolpassword, fp);
-		fputs(" ", fp);
-		fputs_quote(arole->rolvaliduntil, fp);
+		sputs_quote(&buffer, arole->rolname);
+		appendStringInfoChar(&buffer, ' ');
+		sputs_quote(&buffer, arole->rolpassword);
+		appendStringInfoChar(&buffer, ' ');
+		sputs_quote(&buffer, arole->rolvaliduntil);
 
-<<<<<<< HEAD
-			sputs_quote(&buffer, arole->rolname);
-			appendStringInfoChar(&buffer, ' ');
-			sputs_quote(&buffer, arole->rolpassword);
-			appendStringInfoChar(&buffer, ' ');
-			sputs_quote(&buffer, arole->rolvaliduntil);
-
-			foreach(mem, arole->member_of)
-			{
-				appendStringInfoChar(&buffer, ' ');
-				sputs_quote(&buffer, (char *) lfirst(mem));
-			}
-
-			appendStringInfoChar(&buffer, '\n');
-
-=======
 		foreach(mem, arole->member_of)
 		{
-			fputs(" ", fp);
-			fputs_quote((char *) lfirst(mem), fp);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+			appendStringInfoChar(&buffer, ' ');
+			sputs_quote(&buffer, (char *) lfirst(mem));
 		}
 
-		fputs("\n", fp);
+		appendStringInfoChar(&buffer, '\n');
 	}
 
 	MirroredFlatFile_Append(&mirroredOpen, buffer.data, buffer.len,

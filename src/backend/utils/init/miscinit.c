@@ -3,11 +3,7 @@
  * miscinit.c
  *	  miscellaneous initialization support stuff
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -410,101 +406,6 @@ GetAuthenticatedUserId(void)
  * ever throw any kind of error.  This is because they are used by
  * StartTransaction and AbortTransaction to save/restore the settings,
  * and during the first transaction within a backend, the value to be saved
- * and perhaps restored is indeed invalid.	We have to be able to get
- * through AbortTransaction without asserting in case InitPostgres fails.
- */
-void
-GetUserIdAndSecContext(Oid *userid, int *sec_context)
-{
-	*userid = CurrentUserId;
-	*sec_context = SecurityRestrictionContext;
-}
-
-void
-SetUserIdAndSecContext(Oid userid, int sec_context)
-{
-	CurrentUserId = userid;
-	SecurityRestrictionContext = sec_context;
-}
-
-
-/*
- * InLocalUserIdChange - are we inside a local change of CurrentUserId?
- */
-bool
-InLocalUserIdChange(void)
-{
-	return (SecurityRestrictionContext & SECURITY_LOCAL_USERID_CHANGE) != 0;
-}
-
-/*
- * InSecurityRestrictedOperation - are we inside a security-restricted command?
- */
-bool
-InSecurityRestrictedOperation(void)
-{
-	return (SecurityRestrictionContext & SECURITY_RESTRICTED_OPERATION) != 0;
-}
-
-
-/*
- * These are obsolete versions of Get/SetUserIdAndSecContext that are
- * only provided for bug-compatibility with some rather dubious code in
- * pljava.  We allow the userid to be set, but only when not inside a
- * security restriction context.
- */
-void
-GetUserIdAndContext(Oid *userid, bool *sec_def_context)
-{
-	*userid = CurrentUserId;
-	*sec_def_context = InLocalUserIdChange();
-}
-
-void
-SetUserIdAndContext(Oid userid, bool sec_def_context)
-{
-	/* We throw the same error SET ROLE would. */
-	if (InSecurityRestrictedOperation())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("cannot set parameter \"%s\" within security-restricted operation",
-						"role")));
-	CurrentUserId = userid;
-	if (sec_def_context)
-		SecurityRestrictionContext |= SECURITY_LOCAL_USERID_CHANGE;
-	else
-		SecurityRestrictionContext &= ~SECURITY_LOCAL_USERID_CHANGE;
-}
-
-
-/*
- * GetUserIdAndSecContext/SetUserIdAndSecContext - get/set the current user ID
- * and the SecurityRestrictionContext flags.
- *
- * Currently there are two valid bits in SecurityRestrictionContext:
- *
- * SECURITY_LOCAL_USERID_CHANGE indicates that we are inside an operation
- * that is temporarily changing CurrentUserId via these functions.  This is
- * needed to indicate that the actual value of CurrentUserId is not in sync
- * with guc.c's internal state, so SET ROLE has to be disallowed.
- *
- * SECURITY_RESTRICTED_OPERATION indicates that we are inside an operation
- * that does not wish to trust called user-defined functions at all.  This
- * bit prevents not only SET ROLE, but various other changes of session state
- * that normally is unprotected but might possibly be used to subvert the
- * calling session later.  An example is replacing an existing prepared
- * statement with new code, which will then be executed with the outer
- * session's permissions when the prepared statement is next used.  Since
- * these restrictions are fairly draconian, we apply them only in contexts
- * where the called functions are really supposed to be side-effect-free
- * anyway, such as VACUUM/ANALYZE/REINDEX.
- *
- * Unlike GetUserId, GetUserIdAndSecContext does *not* Assert that the current
- * value of CurrentUserId is valid; nor does SetUserIdAndSecContext require
- * the new value to be valid.  In fact, these routines had better not
- * ever throw any kind of error.  This is because they are used by
- * StartTransaction and AbortTransaction to save/restore the settings,
- * and during the first transaction within a backend, the value to be saved
  * and perhaps restored is indeed invalid.  We have to be able to get
  * through AbortTransaction without asserting in case InitPostgres fails.
  */
@@ -581,7 +482,7 @@ InitializeSessionUserId(const char *rolename)
 	HeapTuple	roleTup;
 	Form_pg_authid rform;
 	Oid			roleid;
-	cqContext  *pcqCtx;
+
 	/*
 	 * Don't do scans if we're bootstrapping, none of the system catalogs
 	 * exist yet, and they should be owned by postgres anyway.
@@ -591,14 +492,9 @@ InitializeSessionUserId(const char *rolename)
 	/* call only once */
 	AssertState(!OidIsValid(AuthenticatedUserId));
 
-	pcqCtx = caql_beginscan(
-			NULL,
-			cql("SELECT * FROM pg_authid "
-				" WHERE rolname = :1 ",
-				CStringGetDatum((char *) rolename)));
-
-	roleTup = caql_getnext(pcqCtx);
-
+	roleTup = SearchSysCache(AUTHNAME,
+							 PointerGetDatum(rolename),
+							 0, 0, 0);
 	if (!HeapTupleIsValid(roleTup))
 		ereport(FATAL,
 				(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
@@ -675,29 +571,7 @@ InitializeSessionUserId(const char *rolename)
 					AuthenticatedUserIsSuperuser ? "on" : "off",
 					PGC_INTERNAL, PGC_S_OVERRIDE);
 
-<<<<<<< HEAD
-	caql_endscan(pcqCtx);
-=======
-	/*
-	 * Set up user-specific configuration variables.  This is a good place to
-	 * do it so we don't have to read pg_authid twice during session startup.
-	 */
-	datum = SysCacheGetAttr(AUTHNAME, roleTup,
-							Anum_pg_authid_rolconfig, &isnull);
-	if (!isnull)
-	{
-		ArrayType  *a = DatumGetArrayTypeP(datum);
-
-		/*
-		 * We process all the options at SUSET level.  We assume that the
-		 * right to insert an option into pg_authid was checked when it was
-		 * inserted.
-		 */
-		ProcessGUCArray(a, PGC_SUSET, PGC_S_USER, GUC_ACTION_SET);
-	}
-
 	ReleaseSysCache(roleTup);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 

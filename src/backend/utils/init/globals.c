@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.101 2007/04/16 18:29:54 alvherre Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.104 2008/01/01 19:45:53 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -45,11 +41,7 @@ volatile int32 InterruptHoldoffCount = 0;
 volatile int32 CritSectionCount = 0;
 
 int			MyProcPid;
-<<<<<<< HEAD
 pg_time_t	MyStartTime;
-=======
-time_t		MyStartTime;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 struct Port *MyProcPort;
 long		MyCancelKey;
 int			MyPMChildSlot = -1;
@@ -124,26 +116,16 @@ int			max_statement_mem = 2048000;
 int			gp_vmem_limit_per_query = 0;
 int			maintenance_work_mem = 65536;
 
-<<<<<<< HEAD
-/* 
-=======
 /*
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Primary determinants of sizes of shared-memory structures.  MaxBackends is
  * MaxConnections + autovacuum_max_workers (it is computed by the GUC assign
  * hook):
  */
-<<<<<<< HEAD
 int			NBuffers = 4096;
 int			MaxBackends = 200;
 int			MaxConnections = 90;
 
 int			gp_workfile_max_entries = 8192; /* Number of unique entries we can hold in the workfile directory */
-=======
-int			NBuffers = 1000;
-int			MaxBackends = 100;
-int			MaxConnections = 90;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 int			VacuumCostPageHit = 1;		/* GUC parameters for vacuum */
 int			VacuumCostPageMiss = 10;

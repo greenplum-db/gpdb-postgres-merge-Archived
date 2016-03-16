@@ -3,11 +3,7 @@
  * postinit.c
  *	  postgres initialization utilities
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -58,16 +54,11 @@
 #include "utils/portal.h"
 #include "utils/ps_status.h"
 #include "utils/relcache.h"
-<<<<<<< HEAD
 #include "utils/resscheduler.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"  		/* SharedSnapshot */
+#include "utils/tqual.h"
 #include "pgstat.h"
 #include "utils/session_state.h"
-=======
-#include "utils/tqual.h"
-#include "utils/syscache.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 static HeapTuple GetDatabaseTuple(const char *dbname);
 static HeapTuple GetDatabaseTupleByOid(Oid dboid);
@@ -318,7 +309,12 @@ ProcessRoleGUC(void)
 	{
 		ArrayType  *a = DatumGetArrayTypeP(datum);
 
-		ProcessGUCArray(a, PGC_S_USER);
+		/*
+		 * We process all the options at SUSET level.  We assume that the
+		 * right to insert an option into pg_authid was checked when it was
+		 * inserted.
+		 */
+		ProcessGUCArray(a, PGC_SUSET, PGC_S_USER, GUC_ACTION_SET);
 	}
 
 	caql_endscan(pcqCtx);
@@ -629,61 +625,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	char		dbname[NAMEDATALEN];
 
 	/*
-<<<<<<< HEAD
 	 * Add my PGPROC struct to the ProcArray.
-=======
-	 * Set up the global variables holding database id and path.  But note we
-	 * won't actually try to touch the database just yet.
-	 *
-	 * We take a shortcut in the bootstrap case, otherwise we have to look up
-	 * the db name in pg_database.
-	 */
-	if (bootstrap)
-	{
-		MyDatabaseId = TemplateDbOid;
-		MyDatabaseTableSpace = DEFAULTTABLESPACE_OID;
-	}
-	else
-	{
-		/*
-		 * Find tablespace of the database we're about to open. Since we're
-		 * not yet up and running we have to use one of the hackish
-		 * FindMyDatabase variants, which look in the flat-file copy of
-		 * pg_database.
-		 *
-		 * If the in_dbname param is NULL, lookup database by OID.
-		 */
-		if (in_dbname == NULL)
-		{
-			if (!FindMyDatabaseByOid(dboid, dbname, &MyDatabaseTableSpace))
-				ereport(FATAL,
-						(errcode(ERRCODE_UNDEFINED_DATABASE),
-						 errmsg("database %u does not exist", dboid)));
-			MyDatabaseId = dboid;
-			/* pass the database name to the caller */
-			*out_dbname = pstrdup(dbname);
-		}
-		else
-		{
-			if (!FindMyDatabase(in_dbname, &MyDatabaseId, &MyDatabaseTableSpace))
-				ereport(FATAL,
-						(errcode(ERRCODE_UNDEFINED_DATABASE),
-						 errmsg("database \"%s\" does not exist",
-								in_dbname)));
-			/* our database name is gotten from the caller */
-			strlcpy(dbname, in_dbname, NAMEDATALEN);
-		}
-	}
-
-	fullpath = GetDatabasePath(MyDatabaseId, MyDatabaseTableSpace);
-
-	SetDatabasePath(fullpath);
-
-	/*
-	 * Finish filling in the PGPROC struct, and add it to the ProcArray. (We
-	 * need to know MyDatabaseId before we can do this, since it's entered
-	 * into the PGPROC struct.)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 *
 	 * Once I have done this, I am visible to other backends!
 	 */
@@ -739,15 +681,12 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	if (!bootstrap)
 		pgstat_initialize();
 
-<<<<<<< HEAD
 	/*
 	 * Load relcache entries for the shared system catalogs.  This must create
 	 * at least entries for pg_database and catalogs used for authentication.
 	 */
 	RelationCacheInitializePhase2();
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	/*
 	 * Set up process-exit callback to do pre-shutdown cleanup.  This has to
 	 * be after we've initialized all the low-level modules like the buffer
@@ -771,7 +710,6 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		StartTransactionCommand();
 		(void) GetTransactionSnapshot();
 	}
-<<<<<<< HEAD
 
 	/*
 	 * Figure out our postgres user id, and see if we are a superuser.
@@ -851,8 +789,6 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 
 		return;
 	}
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Set up the global variables holding database id and path.  But note we
