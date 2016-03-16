@@ -66,13 +66,8 @@ init_MultiFuncCall(PG_FUNCTION_ARGS)
 		/*
 		 * First call
 		 */
-<<<<<<< HEAD
-		ReturnSetInfo *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
-		MemoryContext multi_call_ctx;
-=======
 		ReturnSetInfo  *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 		MemoryContext	multi_call_ctx;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/*
 		 * Create a suitably long-lived context to hold cross-call data
@@ -189,10 +184,6 @@ shutdown_MultiFuncCall(Datum arg)
 	 * Delete context that holds all multi-call data, including the
 	 * FuncCallContext itself
 	 */
-<<<<<<< HEAD
-	MemoryContextSwitchTo(flinfo->fn_mcxt);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	MemoryContextDelete(funcctx->multi_call_memory_ctx);
 }
 
@@ -605,13 +596,9 @@ resolve_polymorphic_argtypes(int numargs, Oid *argtypes, char *argmodes,
 		switch (argtypes[i])
 		{
 			case ANYELEMENTOID:
-<<<<<<< HEAD
-				if (argmode == PROARGMODE_OUT || argmode == PROARGMODE_TABLE)
-=======
 			case ANYNONARRAYOID:
 			case ANYENUMOID:
-				if (argmode == PROARGMODE_OUT)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+				if (argmode == PROARGMODE_OUT || argmode == PROARGMODE_TABLE)
 					have_anyelement_result = true;
 				else
 				{
