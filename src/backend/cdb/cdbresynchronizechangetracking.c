@@ -1926,7 +1926,6 @@ static void ChangeTracking_RenameLogFile(CTFType source, CTFType dest)
 
 static void ChangeTracking_DropLogFile(CTFType ftype)
 {
-	File	file;
 	char	path[MAXPGPATH];
 
 	Assert(ftype != CTF_META);
@@ -1951,19 +1950,26 @@ static void ChangeTracking_DropLogFiles(void)
 
 static void ChangeTracking_DropMetaFile(void)
 {
-	File	file;
+	char	path[MAXPGPATH];
 
-	file = ChangeTracking_OpenFile(CTF_META);
-	
 	changeTrackingResyncMeta->resync_mode_full = false;
 	setFullResync(changeTrackingResyncMeta->resync_mode_full);
 	changeTrackingResyncMeta->resync_lsn_end.xlogid = 0;
 	changeTrackingResyncMeta->resync_lsn_end.xrecoff = 0;
 	changeTrackingResyncMeta->resync_transition_completed = false;
 	changeTrackingResyncMeta->insync_transition_completed = false;
-	
+
 	/* delete the change tracking meta file*/
-	FileUnlink(file);	
+	ChangeTracking_SetPathByType(CTF_META, path);
+
+	if (unlink(path))
+	{
+		/* GPDB_83_MERGE_FIXME: is it possible that the file doesn't exist?
+		 * If I read the old code correctly, we would actually create the file,
+		 * and immediately delete it in that case.
+		 */
+		elog(WARNING, "could not unlink file \"%s\": %m", path);
+	}
 }
 
 /*
