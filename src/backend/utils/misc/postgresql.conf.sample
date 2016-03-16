@@ -68,17 +68,10 @@
 # WARNING: YOU MUST SHUT DOWN YOUR GREENPLUM SYSTEM BEFORE CHANGING 
 # THE PORT NUMBER IN THIS FILE.
 
-#max_connections = 200
-# note: increasing max_connections costs ~400 bytes of shared memory per
-# connection slot, plus lock space (see max_locks_per_transaction).  You
-# might also need to raise shared_buffers to support more connections.
-=======
-#port = 5432				# (change requires restart)
-#max_connections = 100			# (change requires restart)
+#max_connections = 200			# (change requires restart)
 # Note:  Increasing max_connections costs ~400 bytes of shared memory per 
 # connection slot, plus lock space (see max_locks_per_transaction).  You might
 # also need to raise shared_buffers to support more connections.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #superuser_reserved_connections = 3	# (change requires restart)
 #unix_socket_directory = ''		# (change requires restart)
 #unix_socket_group = ''			# (change requires restart)
