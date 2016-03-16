@@ -202,11 +202,6 @@ static inline char * att_align_zero(char *data, char alignchar)
 	return data;
 }
 
-#ifndef VARATT_COULD_SHORT
-#define VARATT_COULD_SHORT(PTR) (VARATT_IS_4B_U(PTR) && (VARSIZE(PTR)-VARHDRSZ+VARHDRSZ_SHORT <= VARATT_SHORT_MAX))
-#define VARATT_COULD_SHORT_D(D) VARATT_COULD_SHORT(DatumGetPointer(D))
-#endif
-
 /* Determine if a datum of type oid can be stored in short varlena format */
 static inline bool value_type_could_short(Datum d, Oid typid)
 {

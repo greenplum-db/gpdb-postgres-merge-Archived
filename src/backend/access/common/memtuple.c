@@ -778,7 +778,7 @@ MemTuple memtuple_form_to_align(
 					else
 					{
 						char *p = memtuple_get_attr_ptr(start, bind, null_saves, nullp);
-						Assert(VARATT_COULD_SHORT_D(values[i]));
+						Assert(VARATT_CAN_MAKE_SHORT(DatumGetPointer(values[i])));
 						attr_len = VARSIZE(DatumGetPointer(values[i])) - VARHDRSZ + VARHDRSZ_SHORT;
 						Assert(attr_len <= bind->len);
 						*p = VARSIZE_TO_SHORT_D(values[i]);
