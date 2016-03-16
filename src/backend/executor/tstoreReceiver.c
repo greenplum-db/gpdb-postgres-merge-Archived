@@ -13,11 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/executor/tstoreReceiver.c,v 1.17.2.1 2008/12/01 17:06:35 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/executor/tstoreReceiver.c,v 1.19.2.2 2009/12/29 17:41:18 heikki Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */

@@ -2044,9 +2044,6 @@ AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId)
 }
 
 /*
-<<<<<<< HEAD
- * The zeroeth parameter is the caql context, with a single valid tuple.
-=======
  * Change operator class owner, specified by OID
  */
 void
@@ -2068,7 +2065,7 @@ AlterOpClassOwner_oid(Oid opclassOid, Oid newOwnerId)
 }
 
 /*
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+ * The zeroeth parameter is the caql context, with a single valid tuple.
  * The first parameter is pg_opclass, opened and suitably locked.  The second
  * parameter is a copy of the tuple from pg_opclass we want to modify.
  */

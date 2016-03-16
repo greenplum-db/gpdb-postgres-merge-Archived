@@ -6,17 +6,10 @@
  *
  * Original coding by Todd A. Brandys
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.77 2009/01/01 17:23:42 momjian Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.74 2008/01/01 19:45:49 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */

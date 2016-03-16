@@ -10,19 +10,11 @@
  * analyze.c and related files.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
  *	  $PostgreSQL: pgsql/src/backend/parser/parser.c,v 1.78 2009/06/11 14:49:00 momjian Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parser.c,v 1.73 2008/01/01 19:45:51 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */

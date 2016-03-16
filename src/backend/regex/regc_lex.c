@@ -28,11 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
-<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/backend/regex/regc_lex.c,v 1.9 2009/06/11 14:49:01 momjian Exp $
-=======
- * $PostgreSQL: pgsql/src/backend/regex/regc_lex.c,v 1.7 2008/01/03 20:47:55 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  */
 

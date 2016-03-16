@@ -3,8 +3,6 @@
  * nodeUnique.c
  *	  Routines to handle unique'ing of queries where appropriate
  *
-<<<<<<< HEAD
-=======
  * Unique is a very simple node type that just filters out duplicate
  * tuples from a stream of sorted tuples from its subplan.  It's essentially
  * a dumbed-down form of Group: the duplicate-removal functionality is
@@ -13,7 +11,6 @@
  * (It's debatable whether the savings justifies carrying two plan node
  * types, though.)
  *
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *

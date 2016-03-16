@@ -3,10 +3,7 @@
  * parse_clause.c
  *	  handle clauses in parser
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -810,16 +807,11 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 	 * Open target rel and grab suitable lock (which we will hold till end of
 	 * transaction).
 	 *
-<<<<<<< HEAD
-	 * analyze.c will eventually do the corresponding heap_close(), but *not*
-	 * release the lock.
+	 * free_parsestate() will eventually do the corresponding heap_close(),
+	 * but *not* release the lock.
      *
 	 * CDB: Acquire ExclusiveLock if it is a distributed relation and we are
 	 * doing UPDATE or DELETE activity
-=======
-	 * free_parsestate() will eventually do the corresponding heap_close(),
-	 * but *not* release the lock.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	if (pstate->p_is_insert && !pstate->p_is_update)
 	{
