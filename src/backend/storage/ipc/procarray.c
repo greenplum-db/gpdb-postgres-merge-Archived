@@ -256,8 +256,16 @@ ProcArrayRemove(PGPROC *proc, TransactionId latestXid, bool forPrepare, bool isC
  * incomplete.)
  */
 void
-ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit)
+ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit,
+						bool *needStateChangeFromDistributed,
+						bool *needNotifyCommittedDtxTransaction,
+						LocalDistribXactRef *localDistribXactRef)
 {
+	if (needStateChangeFromDistributed)
+		*needStateChangeFromDistributed = false;
+	if (needNotifyCommittedDtxTransaction
+		*needNotifyCommittedDtxTransaction = false;
+
 	if (TransactionIdIsValid(latestXid))
 	{
 		/*
@@ -298,7 +306,8 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit)
 						isCommit ? 
 							LOCALDISTRIBXACT_STATE_COMMITDELIVERY :
 							LOCALDISTRIBXACT_STATE_ABORTDELIVERY);
-					needStateChangeFromDistributed = true;
+					if (needStateChangeFromDistributed)
+						*needStateChangeFromDistributed = true;
 					break;
 				
 				case DTX_CONTEXT_QE_TWO_PHASE_EXPLICIT_WRITER:
@@ -329,26 +338,22 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit)
 			}
 
 			/*
-			 * We need to transfer the xid and disributed ref
-			 * for processing below.
+			 * We need to transfer the disributed ref for processing in the caller.
 			 */
-			localXid = MyProc->xid;
 			LocalDistribXactRef_Transfer(
-				&localDistribXactRef,
+				localDistribXactRef,
 				&MyProc->localDistribXactRef);
 		}
 
-		
 		if (!notifyCommittedDtxTransactionIsNeeded())
 		{
 			ClearTransactionFromPgProc_UnderLock();
 		}
 		else
 		{
-			needNotifyCommittedDtxTransaction = true;
+			if (needNotifyCommittedDtxTransaction)
+				*needNotifyCommittedDtxTransaction = true;
 		}
-
-
 		
 		LWLockRelease(ProcArrayLock);
 	}
@@ -397,31 +402,12 @@ ProcArrayClearTransaction(PGPROC *proc)
 	/* redundant, but just in case */
 	proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
 	proc->inCommit = false;
+	MyProc->serializableIsoLevel = false;
 	proc->inDropTransaction = false;
 
 	/* Clear the subtransaction-XID cache too */
 	proc->subxids.nxids = 0;
 	proc->subxids.overflowed = false;
-}
-
-
-/*
- * Clears the current transaction from PGPROC.
- *
- * Must be called while holding the ProcArrayLock.
- */
-void
-ClearTransactionFromPgProc_UnderLock(void)
-{
-	MyProc->xid = InvalidTransactionId;
-	MyProc->xmin = InvalidTransactionId;
-	MyProc->inVacuum = false;		/* must be cleared with xid/xmin */
-	MyProc->serializableIsoLevel = false;
-	MyProc->inDropTransaction = false;
-
-	/* Clear the subtransaction-XID cache too while holding the lock */
-	MyProc->subxids.nxids = 0;
-	MyProc->subxids.overflowed = false;
 }
 
 /*
@@ -752,7 +738,7 @@ HasSerializableBackends(bool allDbs)
  * This is also used to determine where to truncate pg_subtrans.  allDbs
  * must be TRUE for that case, and ignoreVacuum FALSE.
  *
- * GPDB: ignoreVacuum is removed.
+ * GPDB: ignoreVacuum is ignored.
  *
  * Note: we include all currently running xids in the set of considered xids.
  * This ensures that if a just-started xact has not yet set its snapshot,
@@ -760,7 +746,7 @@ HasSerializableBackends(bool allDbs)
  * See notes in src/backend/access/transam/README.
  */
 TransactionId
-GetOldestXmin(bool allDbs)
+GetOldestXmin(bool allDbs, bool ignoreVacuum)
 {
 	ProcArrayStruct *arrayP = procArray;
 	TransactionId result;

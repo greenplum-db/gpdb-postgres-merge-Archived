@@ -3472,7 +3472,11 @@ CommitTransaction(void)
 	 * must be done _before_ releasing locks we hold and _after_
 	 * RecordTransactionCommit.
 	 */
-	ProcArrayEndTransaction(MyProc, latestXid);
+	ProcArrayEndTransaction(MyProc, latestXid,
+							true,
+							&needStateChangeFromDistributed,
+							&needNotifyCommittedDtxTransaction,
+							&localDistribXactRef);
 
 	/* GPDB_83_MERGE_FIXME: ProcArrayEndTransaction releases ProcArrayLock */
 	if (needNotifyCommittedDtxTransaction)
@@ -4030,7 +4034,10 @@ AbortTransaction(void)
 	 * must be done _before_ releasing locks we hold and _after_
 	 * RecordTransactionAbort.
 	 */
-	ProcArrayEndTransaction(MyProc, latestXid);
+	ProcArrayEndTransaction(MyProc, latestXid, false,
+							NULL,
+							NULL,
+							&localDistribXactRef);
 
 	/*
 	 * Post-abort cleanup.	See notes in CommitTransaction() concerning
