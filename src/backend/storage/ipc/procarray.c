@@ -263,7 +263,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit,
 {
 	if (needStateChangeFromDistributed)
 		*needStateChangeFromDistributed = false;
-	if (needNotifyCommittedDtxTransaction
+	if (needNotifyCommittedDtxTransaction)
 		*needNotifyCommittedDtxTransaction = false;
 
 	if (TransactionIdIsValid(latestXid))
