@@ -21,10 +21,6 @@
 # take effect.
 #
 # Any parameter can also be given as a command-line option to the server, e.g.,
-# "postgres -c log_connections=on".  Some paramters can be changed at run time
-# with the "SET" SQL command.
-#
-# Any parameter can also be given as a command-line option to the server, e.g.,
 # "postgres -c log_connections=on".  Some parameters can be changed at run time
 # with the "SET" SQL command.
 #
@@ -57,15 +53,10 @@
 
 # - Connection Settings -
 
-<<<<<<< HEAD
-#listen_addresses = '*'		# what IP address(es) to listen on;
-=======
-#listen_addresses = 'localhost'		# what IP address(es) to listen on;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+#listen_addresses = '*'			# what IP address(es) to listen on;
 					# comma-separated list of addresses;
 					# defaults to '*', '*' = all
 					# (change requires restart)
-<<<<<<< HEAD
 
 #port = 5432				# sets the database listener port for 
       					# a Greenplum instance. The master and 
@@ -107,18 +98,12 @@
 #db_user_namespace = off
 
 # Kerberos and GSSAPI
-<<<<<<< HEAD
-#krb_server_keyfile = ''
-#krb_srvname = 'postgres'		# (Kerberos only)
-#krb_caseins_users = off
-=======
 #krb_server_keyfile = ''		# (change requires restart)
 #krb_srvname = 'postgres'		# (change requires restart, Kerberos only)
 #krb_server_hostname = ''		# empty string matches any keytab entry
 					# (change requires restart, Kerberos only)
 #krb_caseins_users = off		# (change requires restart)
 #krb_realm = ''           		# (change requires restart)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 # - TCP Keepalives -
 # see "man 7 tcp" for details
@@ -168,57 +153,7 @@ max_prepared_transactions = 250		# can be 0 or more
 #vacuum_cost_page_miss = 10		# 0-10000 credits
 #vacuum_cost_page_dirty = 20		# 0-10000 credits
 #vacuum_cost_limit = 200		# 1-10000 credits
-<<<<<<< HEAD
 
-=======
-
-# - Background Writer -
-
-#bgwriter_delay = 200ms			# 10-10000ms between rounds
-#bgwriter_lru_maxpages = 100		# 0-1000 max buffers written/round
-#bgwriter_lru_multiplier = 2.0		# 0-10.0 multipler on buffers scanned/round
-
-
-#------------------------------------------------------------------------------
-# WRITE AHEAD LOG
-#------------------------------------------------------------------------------
-
-# - Settings -
-
-#fsync = on				# turns forced synchronization on or off
-#synchronous_commit = on		# immediate fsync at commit
-#wal_sync_method = fsync		# the default is the first option 
-					# supported by the operating system:
-					#   open_datasync
-					#   fdatasync (default on Linux)
-					#   fsync
-					#   fsync_writethrough
-					#   open_sync
-#full_page_writes = on			# recover from partial page writes
-#wal_buffers = 64kB			# min 32kB
-					# (change requires restart)
-#wal_writer_delay = 200ms		# 1-10000 milliseconds
-
-#commit_delay = 0			# range 0-100000, in microseconds
-#commit_siblings = 5			# range 1-1000
-
-# - Checkpoints -
-
-#checkpoint_segments = 3		# in logfile segments, min 1, 16MB each
-#checkpoint_timeout = 5min		# range 30s-1h
-#checkpoint_completion_target = 0.5	# checkpoint target duration, 0.0 - 1.0
-#checkpoint_warning = 30s		# 0 is off
-
-# - Archiving -
-
-#archive_mode = off		# allows archiving to be done
-				# (change requires restart)
-#archive_command = ''		# command to use to archive a logfile segment
-#archive_timeout = 0		# force a logfile segment switch after this
-				# time; 0 is off
-
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #------------------------------------------------------------------------------
 # QUERY TUNING
 #------------------------------------------------------------------------------
@@ -266,51 +201,24 @@ max_prepared_transactions = 250		# can be 0 or more
 # - Other Planner Options -
 
 #from_collapse_limit = 8
-<<<<<<< HEAD
 #join_collapse_limit = 8		# 1 disables collapsing of explicit
-					# JOINs
-#gp_segments_for_planner = 0     # if 0, actual number of segments is used
-=======
-#join_collapse_limit = 8		# 1 disables collapsing of explicit 
 					# JOIN clauses
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+#gp_segments_for_planner = 0     # if 0, actual number of segments is used
 
 #gp_enable_direct_dispatch = on
 
-<<<<<<< HEAD
 optimizer_analyze_root_partition = on # stats collection on root partitions
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #------------------------------------------------------------------------------
 # ERROR REPORTING AND LOGGING
 #------------------------------------------------------------------------------
 
 # - Set gp_reraise_signal to on to generate core files on SIGSEGV
 
-<<<<<<< HEAD
 #gp_reraise_signal = off
 
 # - Where to Log -
 
-=======
-#log_destination = 'stderr'		# Valid values are combinations of
-					# stderr, csvlog, syslog and eventlog,
-					# depending on platform.  csvlog
-					# requires logging_collector to be on.
-
-# This is used when logging to stderr:
-#logging_collector = off		# Enable capturing of stderr and csvlog
-					# into log files. Required to be on for
-					# csvlogs.
-					# (change requires restart)
-
-# These are only used if logging_collector is on:
-#log_directory = 'pg_log'		# directory where log files are written,
-					# can be absolute or relative to PGDATA
-#log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'	# log file name pattern,
-					# can include strftime() escapes
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #log_truncate_on_rotation = off		# If on, an existing log file of the
 					# same name as the new log file will be
 					# truncated rather than appended to.
@@ -320,22 +228,10 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 					# off, meaning append to existing files
 					# in all cases.
 #log_rotation_age = 1d			# Automatic rotation of logfiles will
-<<<<<<< HEAD
-					# happen after that time.  0 disables.
-#log_rotation_size = 10MB		# Automatic rotation of logfiles will 
-					# happen after that much log output.
-					# 0 disables.
-=======
 					# happen after that time.  0 to disable.
 #log_rotation_size = 10MB		# Automatic rotation of logfiles will 
 					# happen after that much log output.
 					# 0 to disable.
-
-# These are relevant when logging to syslog:
-#syslog_facility = 'LOCAL0'
-#syslog_ident = 'postgres'
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 # - When to Log -
 
@@ -350,11 +246,7 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 					#   warning
 					#   error
 
-<<<<<<< HEAD
 #log_min_messages = warning		# Values in order of decreasing detail:
-=======
-#log_min_messages = notice		# values in order of decreasing detail:
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					#   debug5
 					#   debug4
 					#   debug3
@@ -386,17 +278,7 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 
 #log_min_duration_statement = -1	# -1 is disabled, 0 logs all statements
 					# and their durations, > 0 logs only
-<<<<<<< HEAD
-					# statements running at least this number
-					# of milliseconds
-
-=======
 					# statements running at least this time.
-
-#silent_mode = off			# DO NOT USE without syslog or
-					# logging_collector
-					# (change requires restart)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 # - What to Log -
 
@@ -411,7 +293,6 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 #log_disconnections = off
 #log_duration = off
 #log_hostname = off
-<<<<<<< HEAD
 
 #log_statement = 'none'			# none, mod, ddl, all
 #log_temp_files = -1			# Log temporary files equal or larger
@@ -499,38 +380,6 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 #------------------------------------------------------------------------------
 
 # - ANALYZE Statistics on Database Contents -
-=======
-#log_line_prefix = ''			# special values:
-					#   %u = user name
-					#   %d = database name
-					#   %r = remote host and port
-					#   %h = remote host
-					#   %p = process ID
-					#   %t = timestamp without milliseconds
-					#   %m = timestamp with milliseconds
-					#   %i = command tag
-					#   %c = session ID
-					#   %l = session line number
-					#   %s = session start timestamp
-					#   %v = virtual transaction ID
-					#   %x = transaction ID (0 if none)
-					#   %q = stop here in non-session
-					#        processes
-					#   %% = '%'
-					# e.g. '<%u%%%d> '
-#log_lock_waits = off			# log lock waits >= deadlock_timeout
-#log_statement = 'none'			# none, ddl, mod, all
-#log_temp_files = -1			# log temporary files equal or larger
-					# than specified size;
-					# -1 disables, 0 logs all temp files
-#log_timezone = unknown			# actually, defaults to TZ environment
-					# setting
-
-
-#------------------------------------------------------------------------------
-# RUNTIME STATISTICS
-#------------------------------------------------------------------------------
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #default_statistics_target = 25		# range 1 - 1000 (target # of
 					# histogram bins)
@@ -540,17 +389,11 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 # - Query/Index Statistics Collector -
 
 #track_activities = on
-<<<<<<< HEAD
 #track_counts = off
 #update_process_title = on
 
 #stats_queue_level = off
 
-=======
-#track_counts = on
-#update_process_title = on
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 # - Statistics Monitoring -
 
@@ -560,11 +403,10 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 #log_statement_stats = off
 
 
-<<<<<<< HEAD
 gp_autostats_mode=on_no_stats		# none, on_no_stats, on_change. see documentation for semantics.
 gp_autostats_on_change_threshold=2147483647 # [0..INT_MAX]. see documentation for semantics.
 log_autostats=off	# print additional autostats information
-=======
+
 #------------------------------------------------------------------------------
 # AUTOVACUUM PARAMETERS
 #------------------------------------------------------------------------------
@@ -591,8 +433,6 @@ log_autostats=off	# print additional autostats information
 					# autovacuum, -1 means use
 					# vacuum_cost_limit
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-
 #------------------------------------------------------------------------------
 # CLIENT CONNECTION DEFAULTS
 #------------------------------------------------------------------------------
@@ -601,38 +441,21 @@ log_autostats=off	# print additional autostats information
 
 #search_path = '"$user",public'		# schema names
 #default_tablespace = ''		# a tablespace name, '' uses the default
-<<<<<<< HEAD
-#check_function_bodies = on
-#default_transaction_isolation = 'read committed'
-#default_transaction_read_only = off
-#statement_timeout = 0			# in milliseconds, 0 is disabled
-#idle_session_gang_timeout = 18s 	# in milliseconds, 0 is disabled
-=======
-#temp_tablespaces = ''			# a list of tablespace names, '' uses
-					# only default tablespace
 #check_function_bodies = on
 #default_transaction_isolation = 'read committed'
 #default_transaction_read_only = off
 #session_replication_role = 'origin'
 #statement_timeout = 0			# 0 is disabled
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+#idle_session_gang_timeout = 18s 	# in milliseconds, 0 is disabled
 #vacuum_freeze_min_age = 100000000
 
 # - Locale and Formatting -
 
 #datestyle = 'iso, mdy'
-<<<<<<< HEAD
-#intervalstyle = 'postgres'
-#timezone = unknown			# actually, defaults to TZ environment
-					# setting
-#timezone_abbreviations = 'Default'     # Select the set of available time zone
-					# abbreviations. Currently, there are
-=======
 #timezone = unknown			# actually, defaults to TZ environment
 					# setting
 #timezone_abbreviations = 'Default'     # Select the set of available time zone
 					# abbreviations.  Currently, there are
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					#   Default
 					#   Australia
 					#   India
@@ -671,7 +494,6 @@ log_autostats=off	# print additional autostats information
 # lock table slots.
 
 
-<<<<<<< HEAD
 #---------------------------------------------------------------------------
 # RESOURCE SCHEDULING
 #---------------------------------------------------------------------------
@@ -699,12 +521,6 @@ max_appendonly_tables = 10000 # Maximum number of append only tables that can
 # VERSION/PLATFORM COMPATIBILITY
 #------------------------------------------------------------------------------
 
-=======
-#------------------------------------------------------------------------------
-# VERSION/PLATFORM COMPATIBILITY
-#------------------------------------------------------------------------------
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 # - Previous PostgreSQL Versions -
 
 #add_missing_from = off
@@ -712,22 +528,14 @@ max_appendonly_tables = 10000 # Maximum number of append only tables that can
 #backslash_quote = safe_encoding	# on, off, or safe_encoding
 #escape_string_warning = on
 #regex_flavor = advanced		# advanced, extended, or basic
-<<<<<<< HEAD
-#standard_conforming_strings = off
-
-
-=======
-#sql_inheritance = on
 #standard_conforming_strings = off
 #synchronize_seqscans = on
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 # - Other Platforms and Clients -
 
 #transform_null_equals = off
 
 
-<<<<<<< HEAD
 #---------------------------------------------------------------------------
 # GREENPLUM ARRAY CONFIGURATION
 #---------------------------------------------------------------------------
@@ -735,11 +543,6 @@ max_appendonly_tables = 10000 # Maximum number of append only tables that can
 #---------------------------------------------------------------------------
 # GREENPLUM ARRAY TUNING
 #---------------------------------------------------------------------------
-=======
-#------------------------------------------------------------------------------
-# CUSTOMIZED OPTIONS
-#------------------------------------------------------------------------------
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 # - Interconnect -
 
