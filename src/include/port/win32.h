@@ -1,31 +1,19 @@
-<<<<<<< HEAD
 /* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.88 2009/06/11 14:49:12 momjian Exp $ */
-=======
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.83.2.1 2009/08/11 11:51:20 mha Exp $ */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
 #endif
 
-<<<<<<< HEAD
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0501
 #endif
 
-=======
-#define _WIN32_WINNT 0x0500
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * Always build with SSPI support. Keep it as a #define in case
  * we want a switch to disable it sometime in the future.
  */
 #ifndef __BORLANDC__
-<<<<<<< HEAD
-#undef ENABLE_SSPI
-=======
 #define ENABLE_SSPI 1
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif
 
 /* undefine and redefine after #include */
@@ -361,16 +349,12 @@ extern void pgwin32_unsetenv(const char *);
 
 /* Things that exist in MingW headers, but need to be added to MSVC & BCC */
 #ifdef WIN32_ONLY_COMPILER
-<<<<<<< HEAD
 #ifndef _WIN64
 typedef long ssize_t;
 #else
 typedef __int64 ssize_t;
 #endif
 
-=======
-typedef long ssize_t;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #ifndef __BORLANDC__
 typedef unsigned short mode_t;
 #endif
@@ -405,7 +389,6 @@ typedef unsigned short mode_t;
 
 /* Pulled from Makefile.port in mingw */
 #define DLSUFFIX ".dll"
-<<<<<<< HEAD
 
 #ifdef __BORLANDC__
 
@@ -424,7 +407,5 @@ typedef unsigned short mode_t;
 #endif /* ifndef O_RANDOM */
 
 #endif /* __BORLANDC__ */
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #endif
