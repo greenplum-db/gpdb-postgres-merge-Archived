@@ -3,11 +3,7 @@
  * socket.c
  *	  Microsoft Windows Win32 Socket Functions
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * IDENTIFICATION
  *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.20 2008/01/01 19:45:51 momjian Exp $
@@ -109,13 +105,8 @@ pgwin32_poll_signals(void)
 static int
 isDataGram(SOCKET s)
 {
-<<<<<<< HEAD
-	int type;
-	int typelen = sizeof(type);
-=======
 	int			type;
 	int			typelen = sizeof(type);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (getsockopt(s, SOL_SOCKET, SO_TYPE, (char *) &type, &typelen))
 		return 1;
@@ -167,11 +158,7 @@ pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout)
 	events[0] = pgwin32_signal_event;
 	events[1] = waitevent;
 
-<<<<<<< HEAD
-	/* 
-=======
 	/*
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 * Just a workaround of unknown locking problem with writing in UDP socket
 	 * under high load: Client's pgsql backend sleeps infinitely in
 	 * WaitForMultipleObjectsEx, pgstat process sleeps in pgwin32_select().
@@ -303,11 +290,7 @@ pgwin32_recv(SOCKET s, char *buf, int len, int f)
 	int			r;
 	DWORD		b;
 	DWORD		flags = f;
-<<<<<<< HEAD
-	int		n;
-=======
 	int			n;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (pgwin32_poll_signals())
 		return -1;
@@ -333,13 +316,8 @@ pgwin32_recv(SOCKET s, char *buf, int len, int f)
 	{
 		if (pgwin32_waitforsinglesocket(s, FD_READ | FD_CLOSE | FD_ACCEPT,
 										INFINITE) == 0)
-<<<<<<< HEAD
-			return -1; /* errno already set */
-	
-=======
 			return -1;			/* errno already set */
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		r = WSARecv(s, &wbuf, 1, &b, &flags, NULL, NULL);
 		if (r == SOCKET_ERROR)
 		{
@@ -362,11 +340,7 @@ pgwin32_recv(SOCKET s, char *buf, int len, int f)
 		return b;
 	}
 	ereport(NOTICE,
-<<<<<<< HEAD
-		(errmsg_internal("Failed to read from ready socket (after retries)")));
-=======
 	  (errmsg_internal("Failed to read from ready socket (after retries)")));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	errno = EWOULDBLOCK;
 	return -1;
 }

@@ -3,17 +3,10 @@
  * win32_shmem.c
  *	  Implement shared memory using win32 facilities
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  $PostgreSQL: pgsql/src/backend/port/win32_shmem.c,v 1.11.2.1 2009/08/11 11:51:22 mha Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- *
- * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32_shmem.c,v 1.4.2.5 2009/08/11 11:51:19 mha Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -65,19 +58,11 @@ GetSharedMemName(void)
 		elog(FATAL, "could not generate full pathname for datadir %s: %lu",
 			 DataDir, GetLastError());
 
-<<<<<<< HEAD
-	/*
-	 * XXX: Intentionally overwriting the Global\ part here. This was not the
-	 * original approach, but putting it in the actual Global\ namespace
-	 * causes permission errors in a lot of cases, so we leave it in the
-	 * default namespace for now.
-=======
 	/* 
 	 * XXX: Intentionally overwriting the Global\ part here. This was not the
 	 * original approach, but putting it in the actual Global\ namespace
 	 * causes permission errors in a lot of cases, so we leave it in
 	 * the default namespace for now.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	for (cp = retptr; *cp; cp++)
 		if (*cp == '\\')
@@ -151,24 +136,6 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 	/*
 	 * When recycling a shared memory segment, it may take a short while
 	 * before it gets dropped from the global namespace. So re-try after
-<<<<<<< HEAD
-	 * sleeping for a second, and continue retrying 10 times. (both the 1
-	 * second time and the 10 retries are completely arbitrary)
-	 */
-	for (i = 0; i < 10; i++)
-	{
-		/*
-		 * In case CreateFileMapping() doesn't set the error code to 0 on
-		 * success
-		 */
-		SetLastError(0);
-
-		hmap = CreateFileMapping((HANDLE) 0xFFFFFFFF,	/* Use the pagefile */
-								 NULL,	/* Default security attrs */
-								 PAGE_READWRITE,		/* Memory is Read/Write */
-								 0L,	/* Size Upper 32 Bits	*/
-								 (DWORD) size,	/* Size Lower 32 bits */
-=======
 	 * sleeping for a second, and continue retrying 10 times.
 	 * (both the 1 second time and the 10 retries are completely arbitrary)
 	 */
@@ -182,7 +149,6 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 								 PAGE_READWRITE,	/* Memory is Read/Write */
 								 0L,	/* Size Upper 32 Bits	*/
 								 (DWORD) size,		/* Size Lower 32 bits */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 								 szShareMem);
 
 		if (!hmap)
@@ -193,7 +159,6 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 
 		/*
 		 * If the segment already existed, CreateFileMapping() will return a
-<<<<<<< HEAD
 		 * handle to the existing one and set ERROR_ALREADY_EXISTS.
 		 */
 		if (GetLastError() == ERROR_ALREADY_EXISTS)
@@ -201,14 +166,6 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 			CloseHandle(hmap);	/* Close the handle, since we got a valid one
 								 * to the previous segment. */
 			hmap = NULL;
-=======
-		 * handle to the existing one.
-		 */
-		if (GetLastError() == ERROR_ALREADY_EXISTS)
-		{
-			CloseHandle(hmap);		/* Close the old handle, since we got a valid
-									 * one to the previous segment. */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			Sleep(1000);
 			continue;
 		}
@@ -216,7 +173,6 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 	}
 
 	/*
-<<<<<<< HEAD
 	 * If the last call in the loop still returned ERROR_ALREADY_EXISTS, this
 	 * shared memory segment exists and we assume it belongs to somebody else.
 	 */
@@ -224,15 +180,6 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 		ereport(FATAL,
 				(errmsg("pre-existing shared memory block is still in use"),
 				 errhint("Check if there are any old server processes still running, and terminate them.")));
-=======
-	 * If the last call in the loop still returned ERROR_ALREADY_EXISTS, this shared memory
-	 * segment exists and we assume it belongs to somebody else.
-	 */
-	if (GetLastError() == ERROR_ALREADY_EXISTS)
-		ereport(FATAL,
-			 (errmsg("pre-existing shared memory block is still in use"),
-			  errhint("Check if there are any old server processes still running, and terminate them.")));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	free(szShareMem);
 

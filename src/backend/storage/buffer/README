@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 $PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.17 2009/06/22 20:04:28 tgl Exp $
-=======
-$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.12 2007/05/30 20:11:58 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 Notes About Shared Buffer Access Rules
 ======================================
@@ -156,11 +152,7 @@ we could use per-backend LWLocks instead (a buffer header would then contain
 a field to show which backend is doing its I/O).
 
 
-<<<<<<< HEAD
 Normal Buffer Replacement Strategy
-=======
-Normal buffer replacement strategy
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 ----------------------------------
 
 There is a "free list" of buffers that are prime candidates for replacement.
@@ -209,11 +201,7 @@ have to give up and try another buffer.  This however is not a concern
 of the basic select-a-victim-buffer algorithm.)
 
 
-<<<<<<< HEAD
 Buffer Ring Replacement Strategy
-=======
-Buffer ring replacement strategy
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 ---------------------------------
 
 When running a query that needs to access a large number of pages just once,
@@ -247,7 +235,6 @@ buffers were sent to the freelist, which was effectively a buffer ring of 1
 buffer, resulting in excessive WAL flushing.  Allowing VACUUM to update
 256KB between WAL flushes should be more efficient.
 
-<<<<<<< HEAD
 Bulk writes work similarly to VACUUM.  Currently this applies only to
 COPY IN and CREATE TABLE AS SELECT.  (Might it be interesting to make
 seqscan UPDATE and DELETE use the bulkwrite strategy?)  For bulk writes
@@ -259,10 +246,6 @@ so we let it use up a bit more of the buffer arena.
 
 
 Background Writer's Processing
-=======
-
-Background writer's processing
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 ------------------------------
 
 The background writer is designed to write out pages that are likely to be

@@ -18,7 +18,6 @@
  * COMP_<variant>(crc, data, len)
  *		Accumulate some (more) bytes into a CRC
  *
-<<<<<<< HEAD
  * FIN_<variant>(crc)
  *		Finish a CRC calculation
  *
@@ -31,12 +30,6 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/pg_crc.h
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/include/utils/pg_crc.h,v 1.17 2008/01/01 19:45:59 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 #ifndef PG_CRC_H
 #define PG_CRC_H

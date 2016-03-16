@@ -1,12 +1,8 @@
 /*
  * PostgreSQL System Views
  *
-<<<<<<< HEAD
  * Copyright (c) 2006-2010, Greenplum inc.
  * Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
- * Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.48 2008/01/01 19:45:48 momjian Exp $
  */

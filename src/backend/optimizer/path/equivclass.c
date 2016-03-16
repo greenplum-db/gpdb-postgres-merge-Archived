@@ -350,17 +350,10 @@ add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
 	if (bms_is_empty(relids))
 	{
 		/*
-<<<<<<< HEAD
-		 * No Vars, assume it's a pseudoconstant.  This is correct for
-		 * entries generated from process_equivalence(), because a WHERE
-		 * clause can't contain aggregates or SRFs, and non-volatility was
-		 * checked before process_equivalence() ever got called.  But
-=======
 		 * No Vars, assume it's a pseudoconstant.  This is correct for entries
 		 * generated from process_equivalence(), because a WHERE clause can't
 		 * contain aggregates or SRFs, and non-volatility was checked before
 		 * process_equivalence() ever got called.  But
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 * get_eclass_for_sort_expr() has to work harder.  We put the tests
 		 * there not here to save cycles in the equivalence case.
 		 */

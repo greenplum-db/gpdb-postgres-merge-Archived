@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 $PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.24 2008/03/21 13:23:28 momjian Exp $
-=======
-$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.22 2007/10/26 20:45:10 alvherre Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 Locking Overview
 ================

@@ -7,15 +7,9 @@
  * or call FUNCAPI-callable functions or macros.
  *
  *
-<<<<<<< HEAD
  * Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
  * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.29 2009/06/11 14:49:08 momjian Exp $
-=======
- * Copyright (c) 2002-2008, PostgreSQL Global Development Group
- *
- * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.26 2008/01/01 19:45:56 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /*-------------------------------------------------------------------------
  *
  * aix.h
@@ -11,10 +10,6 @@
  * $PostgreSQL: pgsql/src/backend/port/dynloader/aix.h,v 1.14 2009/04/21 21:15:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
-=======
-/*
- * $PostgreSQL: pgsql/src/backend/port/dynloader/aix.h,v 1.13.6.1 2009/04/25 15:54:02 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 
 #ifndef PORT_PROTOS_H

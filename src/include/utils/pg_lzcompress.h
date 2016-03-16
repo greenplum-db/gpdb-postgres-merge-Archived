@@ -3,11 +3,7 @@
  *
  *	Definitions for the builtin LZ compressor
  *
-<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/utils/pg_lzcompress.h,v 1.17 2008/03/07 23:20:21 tgl Exp $
-=======
- * $PostgreSQL: pgsql/src/include/utils/pg_lzcompress.h,v 1.16 2007/11/15 21:14:45 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * ----------
  */
 
@@ -18,11 +14,7 @@
 /* ----------
  * PGLZ_Header -
  *
-<<<<<<< HEAD
  *		The information at the start of the compressed data.
-=======
- *		The information at the top of the compressed data.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * ----------
  */
 typedef struct PGLZ_Header
@@ -58,7 +50,6 @@ typedef struct PGLZ_Header
  *
  *		min_input_size		Minimum input data size to consider compression.
  *
-<<<<<<< HEAD
  *		max_input_size		Maximum input data size to consider compression.
  *
  *		min_comp_rate		Minimum compression rate (0-99%) to require.
@@ -68,15 +59,6 @@ typedef struct PGLZ_Header
  *
  *		first_success_by	Abandon compression if we find no compressible
  *							data within the first this-many bytes.
-=======
- *		force_input_size	Minimum input data size to force compression
- *							even if the compression rate drops below
- *							min_comp_rate.	But in any case the output
- *							must be smaller than the input.  If that isn't
- *							the case, the compressor will throw away its
- *							output and copy the original, uncompressed data
- *							to the output buffer.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *		min_comp_rate		Minimum compression rate (0-99%) to require for
  *							inputs smaller than force_input_size.  If not

@@ -8,17 +8,10 @@
  *	  Structs that need to be client-visible are in pqcomm.h.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.74 2010/01/15 09:19:08 heikki Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.65 2008/01/01 19:45:58 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -54,20 +47,14 @@
 
 #ifdef ENABLE_SSPI
 #define SECURITY_WIN32
-<<<<<<< HEAD
 #if defined(WIN32) && !defined(WIN32_ONLY_COMPILER)
 #include <ntsecapi.h>
 #endif
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include <security.h>
 #undef SECURITY_WIN32
 
 #ifndef ENABLE_GSS
-<<<<<<< HEAD
 #ifndef GSS_BUFFER_DESC_DEFINED
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * Define a fake structure compatible with GSSAPI on Unix.
  */
@@ -76,11 +63,8 @@ typedef struct
 	void	   *value;
 	int			length;
 }	gss_buffer_desc;
-<<<<<<< HEAD
 #define GSS_BUFFER_DESC_DEFINED
 #endif
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif
 #endif   /* ENABLE_SSPI */
 
@@ -108,11 +92,7 @@ typedef struct
 	gss_ctx_id_t ctx;			/* GSSAPI connection context */
 	gss_name_t	name;			/* GSSAPI client name */
 #endif
-<<<<<<< HEAD
-} pg_gssinfo;
-=======
 }	pg_gssinfo;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif
 
 /*
