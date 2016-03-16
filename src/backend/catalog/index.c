@@ -1589,7 +1589,6 @@ setNewRelfilenodeToOid(Relation relation, TransactionId freezeXid, Oid newrelfil
 
 
 /*
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * index_build - invoke access-method-specific index build procedure
  *
  * On entry, the index's catalog entries are valid, and its physical disk

@@ -152,13 +152,9 @@ CREATE VIEW pg_locks AS
     SELECT * 
     FROM pg_lock_status() AS L
     (locktype text, database oid, relation oid, page int4, tuple int2,
-<<<<<<< HEAD
-     transactionid xid, classid oid, objid oid, objsubid int2,
-     transaction xid, pid int4, mode text, granted boolean, mppSessionId int4, mppIsWriter boolean, gp_segment_id int4);
-=======
      virtualxid text, transactionid xid, classid oid, objid oid, objsubid int2,
-     virtualtransaction text, pid int4, mode text, granted boolean);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+     virtualtransaction text, pid int4, mode text, granted boolean,
+     mppSessionId int4, mppIsWriter boolean, gp_segment_id int4);
 
 CREATE VIEW pg_cursors AS
     SELECT C.name, C.statement, C.is_holdable, C.is_binary,
@@ -353,7 +349,6 @@ CREATE VIEW pg_statio_user_sequences AS
 
 CREATE VIEW pg_stat_activity AS 
     SELECT 
-<<<<<<< HEAD
             S.datid AS datid,
             D.datname AS datname,
             S.procpid,
@@ -393,25 +388,6 @@ CREATE VIEW pg_stat_replication AS
             pg_stat_get_wal_senders() AS W
     WHERE S.usesysid = U.oid AND
             S.procpid = W.pid;
-=======
-            D.oid AS datid, 
-            D.datname AS datname, 
-            pg_stat_get_backend_pid(S.backendid) AS procpid, 
-            pg_stat_get_backend_userid(S.backendid) AS usesysid, 
-            U.rolname AS usename, 
-            pg_stat_get_backend_activity(S.backendid) AS current_query,
-            pg_stat_get_backend_waiting(S.backendid) AS waiting,
-            pg_stat_get_backend_xact_start(S.backendid) AS xact_start,
-            pg_stat_get_backend_activity_start(S.backendid) AS query_start,
-            pg_stat_get_backend_start(S.backendid) AS backend_start,
-            pg_stat_get_backend_client_addr(S.backendid) AS client_addr,
-            pg_stat_get_backend_client_port(S.backendid) AS client_port
-    FROM pg_database D, 
-            (SELECT pg_stat_get_backend_idset() AS backendid) AS S, 
-            pg_authid U 
-    WHERE pg_stat_get_backend_dbid(S.backendid) = D.oid AND 
-            pg_stat_get_backend_userid(S.backendid) = U.oid;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 CREATE VIEW pg_stat_database AS 
     SELECT 
@@ -430,7 +406,6 @@ CREATE VIEW pg_stat_database AS
             pg_stat_get_db_tuples_deleted(D.oid) AS tup_deleted
     FROM pg_database D;
 
-<<<<<<< HEAD
 CREATE VIEW pg_stat_resqueues AS
 	SELECT
 		Q.oid AS queueid,
@@ -881,7 +856,7 @@ pg_resqueuecapability rc WHERE
 rq.oid=rc.resqueueid AND rc.restypid = rt.restypid
 ORDER BY rsqname, restypid
 ;
-=======
+
 CREATE VIEW pg_stat_bgwriter AS
     SELECT
         pg_stat_get_bgwriter_timed_checkpoints() AS checkpoints_timed,
@@ -953,4 +928,3 @@ LANGUAGE SQL STRICT STABLE;
 
 COMMENT ON FUNCTION ts_debug(text) IS
     'debug function for current text search configuration';
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
