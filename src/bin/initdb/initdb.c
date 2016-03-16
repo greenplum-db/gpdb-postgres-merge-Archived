@@ -38,11 +38,7 @@
  *
  * This code is released under the terms of the PostgreSQL License.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
@@ -221,7 +217,6 @@ static void check_ok(void);
 static char *escape_quotes(const char *src);
 static int	locale_date_order(const char *locale);
 static bool chklocale(const char *locale);
-static bool chklocaleencoding(const char *locale, int user_enc);
 static void setlocales(void);
 static void usage(const char *progname);
 
@@ -817,19 +812,12 @@ get_id(void)
 				progname);
 		exit(1);
 	}
-<<<<<<< HEAD
 
 	pw = getpwuid(geteuid());
 	if (!pw)
 	{
 		fprintf(stderr,
 			  _("%s: could not obtain information about current user: %s\n"),
-=======
-	if (!pw)
-	{
-		fprintf(stderr,
-				_("%s: could not obtain information about current user: %s\n"),
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				progname, strerror(errno));
 		exit(1);
 	}
@@ -928,17 +916,6 @@ static const struct tsearch_config_match tsearch_config_languages[] =
 	{NULL, NULL}				/* end marker */
 };
 
-<<<<<<< HEAD
-static int
-find_matching_encoding(const char *ctype)
-{
-	char	   *sys;
-	int			i;
-
-	sys = get_encoding_from_locale(ctype);
-
-	for (i = 0; encoding_match_list[i].system_enc_name; i++)
-=======
 /*
  * Look for a text search configuration matching lc_ctype, and return its
  * name; return NULL if no match.
@@ -965,7 +942,6 @@ find_matching_ts_config(const char *lc_type)
 	}
 
 	for (i = 0; tsearch_config_languages[i].tsconfname; i++)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		if (pg_strcasecmp(tsearch_config_languages[i].langname, langname) == 0)
 		{
@@ -1361,22 +1337,12 @@ setup_config(void)
 
     conflines = add_assignment(conflines, "max_connections", "%d", n_connections);
 
-<<<<<<< HEAD
-	if ((n_buffers * (BLCKSZ/1024)) % 1024 == 0)
+	if ((n_buffers * (BLCKSZ / 1024)) % 1024 == 0)
         conflines = add_assignment(conflines, "shared_buffers", "%dMB",
-                                   (n_buffers * (BLCKSZ/1024)) / 1024);
+                                   (n_buffers * (BLCKSZ / 1024)) / 1024);
 	else
         conflines = add_assignment(conflines, "shared_buffers", "%dkB",
-                                   n_buffers * (BLCKSZ/1024));
-=======
-	if ((n_buffers * (BLCKSZ / 1024)) % 1024 == 0)
-		snprintf(repltok, sizeof(repltok), "shared_buffers = %dMB",
-				 (n_buffers * (BLCKSZ / 1024)) / 1024);
-	else
-		snprintf(repltok, sizeof(repltok), "shared_buffers = %dkB",
-				 n_buffers * (BLCKSZ / 1024));
-	conflines = replace_token(conflines, "#shared_buffers = 32MB", repltok);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+                                   n_buffers * (BLCKSZ / 1024));
 
 	conflines = add_assignment(conflines, "max_fsm_pages", "%d", n_fsm_pages);
 
@@ -2637,38 +2603,6 @@ setlocales(void)
 }
 
 /*
- * check if the chosen encoding matches the encoding required by the locale
- * this should match the backend check_locale_encoding() function
- *
- */
-bool chklocaleencoding(const char *locale, int user_enc)
-{
-	int			locale_enc;
-
-	locale_enc = pg_get_encoding_from_locale(locale);
-
-	/* We allow selection of SQL_ASCII */
-	if (!(locale_enc == user_enc ||
-		  locale_enc == PG_SQL_ASCII ||
-		  user_enc == PG_SQL_ASCII
-#ifdef WIN32
-
-	/*
-	 * On win32, if the encoding chosen is UTF8, all locales are OK (assuming
-	 * the actual locale name passed the checks above). This is because UTF8
-	 * is a pseudo-codepage, that we convert to UTF16 before doing any
-	 * operations on, and UTF16 supports all locales.
-	 */
-		  || user_enc == PG_UTF8
-#endif
-		  ))
-	{
-		return false;
-	}
-	return true;
-}
-
-/*
  * Try to parse value as an integer.  The accepted formats are the
  * usual decimal, octal, or hexadecimal formats.
  */
@@ -2817,13 +2751,10 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo)
 		return 0;
 	}
 
-<<<<<<< HEAD
-=======
 #ifndef __CYGWIN__
     AddUserToTokenDacl(restrictedToken);
 #endif
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (!CreateProcessAsUser(restrictedToken,
 						NULL,
 						cmd,
@@ -2841,13 +2772,6 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo)
 		return 0;
 	}
 
-<<<<<<< HEAD
-#ifndef __CYGWIN__
-	AddUserToDacl(processInfo->hProcess);
-#endif
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	return ResumeThread(processInfo->hThread);
 }
 #endif
@@ -2946,8 +2870,6 @@ main(int argc, char *argv[])
 	char		bin_dir[MAXPGPATH];
 	char	   *pg_data_native;
 
-	int			user_enc;
-
 #ifdef WIN32
 	char	   *restrict_env;
 #endif
@@ -2997,8 +2919,7 @@ main(int argc, char *argv[])
 
 	/* process command-line options */
 
-<<<<<<< HEAD
-	while ((c = getopt_long(argc, argv, "dD:E:L:mnU:WA:sX:", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "dD:E:L:mnU:WA:sT:X:", long_options, &option_index)) != -1)
 	{
         const char *optname;
         char        shortopt[2];
@@ -3019,10 +2940,6 @@ main(int argc, char *argv[])
         else
             optname = "?!?";
 
-=======
-	while ((c = getopt_long(argc, argv, "dD:E:L:nU:WA:sT:X:", long_options, &option_index)) != -1)
-	{
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		switch (c)
 		{
 			case 'A':
@@ -3390,12 +3307,7 @@ main(int argc, char *argv[])
 			   lc_time);
 	}
 
-<<<<<<< HEAD
-#if defined(HAVE_LANGINFO_H) && defined(CODESET)
-	if (pg_strcasecmp(lc_ctype, "C") != 0 && pg_strcasecmp(lc_ctype, "POSIX") != 0)
-=======
 	if (strlen(encoding) == 0)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		int			ctype_enc;
 
@@ -3427,33 +3339,9 @@ main(int argc, char *argv[])
 		}
 		else
 		{
-<<<<<<< HEAD
-			user_enc = atoi(encodingid);
-			if (!chklocaleencoding(lc_ctype, user_enc))
-			{
-				fprintf(stderr, _("Encoding mismatch.\n"
-										"The encoding you selected (%s) and the encoding that the\n"
-										"selected locale uses (%s) do not match.  This would lead to\n"
-										"misbehavior in various character string processing functions.\n"),
-								pg_encoding_to_char(user_enc),
-								lc_ctype);
-				exit(1);
-			}
-			if(!chklocaleencoding(lc_collate, user_enc))
-			{
-				fprintf(stderr, _("Encoding mismatch.\n"
-										"The encoding you selected (%s) and the encoding that the\n"
-										"selected locale uses (%s) do not match.  This would lead to\n"
-										"misbehavior in various character string processing functions.\n"),
-								pg_encoding_to_char(user_enc),
-								lc_collate);
-				exit(1);
-			}
-=======
 			encodingid = encodingid_to_string(ctype_enc);
 			printf(_("The default database encoding has accordingly been set to %s.\n"),
 				   pg_encoding_to_char(ctype_enc));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 	}
 	else
@@ -3610,10 +3498,6 @@ main(int argc, char *argv[])
 	{
 		char	   *linkloc;
 
-<<<<<<< HEAD
-		linkloc = (char *) malloc(strlen(pg_data) + 8 + 2);
-		sprintf(linkloc, "%s/pg_xlog", pg_data);
-=======
 		/* clean up xlog directory name, check it's absolute */
 		canonicalize_path(xlog_dir);
 		if (!is_absolute_path(xlog_dir))
@@ -3621,7 +3505,6 @@ main(int argc, char *argv[])
 			fprintf(stderr, _("%s: transaction log directory location must be an absolute path\n"), progname);
 			exit_nicely();
 		}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/* check if the specified xlog directory is empty */
 		switch (check_data_dir(xlog_dir))
@@ -3748,13 +3631,9 @@ main(int argc, char *argv[])
 
 		setup_description();
 
-<<<<<<< HEAD
 		setup_conversion();
-=======
-	setup_dictionary();
 
-	setup_privileges();
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+		setup_dictionary();
 
 		setup_privileges();
 
