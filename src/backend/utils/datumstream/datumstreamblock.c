@@ -1633,7 +1633,7 @@ DatumStreamBlockWrite_PutOrig(
 			p = DatumGetPointer(d);
 			wsz = sz;
 		}
-		else if (VARATT_IS_SHORT_D(d))
+		else if (VARATT_IS_SHORT(DatumGetPointer(d)))
 		{
 			sz = VARSIZE_SHORT(DatumGetPointer(d));
 			p = DatumGetPointer(d);
@@ -1641,9 +1641,9 @@ DatumStreamBlockWrite_PutOrig(
 		}
 		else if (value_type_could_short(DatumGetPointer(d), dsw->typeInfo->typid))
 		{
-			sz = VARSIZE_D(d) - VARHDRSZ + VARHDRSZ_SHORT;
+			sz = VARATT_CONVERTED_SHORT_SIZE(DatumGetPointer(d));
 			c1 = VARSIZE_TO_SHORT_D(d);
-			p = VARDATA_D(d);
+			p = VARDATA(DatumGetPointer(d));
 			wsz = sz - 1;
 		}
 		else
@@ -3246,7 +3246,7 @@ DatumStreamBlockWrite_PutDense(
 			p = DatumGetPointer(d);
 			wsz = sz;
 		}
-		else if (VARATT_IS_SHORT_D(d))
+		else if (VARATT_IS_SHORT(DatumGetPointer(d)))
 		{
 			sz = VARSIZE_SHORT(DatumGetPointer(d));
 			p = DatumGetPointer(d);
@@ -3254,9 +3254,9 @@ DatumStreamBlockWrite_PutDense(
 		}
 		else if (value_type_could_short(DatumGetPointer(d), dsw->typeInfo->typid))
 		{
-			sz = VARSIZE_D(d) - VARHDRSZ + VARHDRSZ_SHORT;
+			sz = VARATT_CONVERTED_SHORT_SIZE(DatumGetPointer(d));
 			c1 = VARSIZE_TO_SHORT_D(d);
-			p = VARDATA_D(d);
+			p = VARDATA(DatumGetPointer(d));
 			wsz = sz - 1;
 		}
 		else
@@ -4501,7 +4501,7 @@ DatumStreamBlock_IntegrityCheckVarlena(
 			 * we will not go here if item begins with SHORT header.
 			 */
 
-			afterPadding = (uint8 *) att_align(p, typeInfo->align);
+			afterPadding = (uint8 *) att_align_nominal(p, typeInfo->align);
 			saveBeginOffset = currentOffset;
 			while (p < afterPadding)
 			{
