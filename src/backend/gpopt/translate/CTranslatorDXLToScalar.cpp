@@ -2074,7 +2074,6 @@ CTranslatorDXLToScalar::PexprArrayRef
 	ArrayRef *parrayref = MakeNode(ArrayRef);
 	parrayref->refarraytype = CMDIdGPDB::PmdidConvert(pdxlop->PmdidArray())->OidObjectId();
 	parrayref->refelemtype = CMDIdGPDB::PmdidConvert(pdxlop->PmdidElem())->OidObjectId();
-	parrayref->refrestype = CMDIdGPDB::PmdidConvert(pdxlop->PmdidReturn())->OidObjectId();
 
 	const ULONG ulArity = pdxlnArrayref->UlArity();
 	GPOS_ASSERT(3 == ulArity || 4 == ulArity);
