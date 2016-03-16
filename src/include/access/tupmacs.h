@@ -202,10 +202,13 @@ static inline char * att_align_zero(char *data, char alignchar)
 	return data;
 }
 
-/* Determine if a datum of type oid can be stored in short varlena format */
-static inline bool value_type_could_short(Datum d, Oid typid)
+/*
+ * Determine if a datum of type oid can be stored in short varlena format.
+ * The caller must've checked that it's a pass-by-reference type.
+ */
+static inline bool
+value_type_could_short(Pointer ptr, Oid typid)
 {
-	Pointer ptr = DatumGetPointer(d);
 	return !VARATT_IS_EXTERNAL(ptr) &&
 		(VARATT_IS_SHORT(ptr) ||
 		 (VARATT_CAN_MAKE_SHORT(ptr) &&

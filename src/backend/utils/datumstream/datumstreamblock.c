@@ -1639,7 +1639,7 @@ DatumStreamBlockWrite_PutOrig(
 			p = DatumGetPointer(d);
 			wsz = sz;
 		}
-		else if (value_type_could_short(d, dsw->typeInfo->typid))
+		else if (value_type_could_short(DatumGetPointer(d), dsw->typeInfo->typid))
 		{
 			sz = VARSIZE_D(d) - VARHDRSZ + VARHDRSZ_SHORT;
 			c1 = VARSIZE_TO_SHORT_D(d);
@@ -3252,7 +3252,7 @@ DatumStreamBlockWrite_PutDense(
 			p = DatumGetPointer(d);
 			wsz = sz;
 		}
-		else if (value_type_could_short(d, dsw->typeInfo->typid))
+		else if (value_type_could_short(DatumGetPointer(d), dsw->typeInfo->typid))
 		{
 			sz = VARSIZE_D(d) - VARHDRSZ + VARHDRSZ_SHORT;
 			c1 = VARSIZE_TO_SHORT_D(d);
