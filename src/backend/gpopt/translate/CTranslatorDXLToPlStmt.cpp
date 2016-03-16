@@ -370,8 +370,7 @@ CTranslatorDXLToPlStmt::SetInitPlanVariables(PlannedStmt* pplstmt)
 		pplstmt->planTree->nInitPlans = m_pctxdxltoplstmt->UlCurrentParamId();
 	}
 
-	pplstmt->planTree->nParamExec = m_pctxdxltoplstmt->UlCurrentParamId();
-	pplstmt->nCrossLevelParams = m_pctxdxltoplstmt->UlCurrentParamId();
+	pplstmt->nParamExec = m_pctxdxltoplstmt->UlCurrentParamId();
 
 	// Extract all subplans defined in the planTree
 	List *plSubPlans = gpdb::PlExtractNodesPlan(pplstmt->planTree, T_SubPlan, true);
