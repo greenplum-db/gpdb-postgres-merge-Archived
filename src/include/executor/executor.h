@@ -219,8 +219,6 @@ extern TupleTableSlot *ExecutorRun(QueryDesc *queryDesc,
 			ScanDirection direction, long count);
 extern void ExecutorEnd(QueryDesc *queryDesc);
 extern void ExecutorRewind(QueryDesc *queryDesc);
-/* GPDB_83MERGE_FIXME: Is this still needed? ExecCheckRTPerms got removed in the merge */
-extern void ExecCheckRTEPerms(RangeTblEntry *rte);
 extern void ExecEndPlan(PlanState *planstate, EState *estate);
 extern ResultRelInfo *ExecGetTriggerResultRel(EState *estate, Oid relid);
 extern bool ExecContextForcesOids(PlanState *planstate, bool *hasoids);

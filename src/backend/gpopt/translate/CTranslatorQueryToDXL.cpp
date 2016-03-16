@@ -492,6 +492,8 @@ CTranslatorQueryToDXL::PdrgpdxlnCTE() const
 CDXLNode *
 CTranslatorQueryToDXL::PdxlnFromQueryInternal()
 {
+	// GPDB_83_MERGE_FIXME: Why do we check permissions here? The executor
+	// will do it anyway...
 	CTranslatorUtils::CheckRTEPermissions(m_pquery->rtable);
 	
 	CDXLNode *pdxlnChild = NULL;

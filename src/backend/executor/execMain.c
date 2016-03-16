@@ -132,6 +132,8 @@ static void ExecSelect(TupleTableSlot *slot,
 
 static TupleTableSlot *EvalPlanQualNext(EState *estate);
 static void EndEvalPlanQual(EState *estate);
+static void ExecCheckRTPerms(List *rangeTable);
+static void ExecCheckRTEPerms(RangeTblEntry *rte);
 static void ExecCheckXactReadOnly(PlannedStmt *plannedstmt);
 static void EvalPlanQualStart(evalPlanQual *epq, EState *estate,
 				  evalPlanQual *priorepq);
@@ -1216,7 +1218,7 @@ ExecCheckRTPerms(List *rangeTable)
  * ExecCheckRTEPerms
  *		Check access permissions for a single RTE.
  */
-void
+static void
 ExecCheckRTEPerms(RangeTblEntry *rte)
 {
 	AclMode		requiredPerms;
