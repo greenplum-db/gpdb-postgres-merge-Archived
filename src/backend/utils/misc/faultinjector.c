@@ -818,7 +818,7 @@ FaultInjector_InjectFaultIfSet(
 				FaultInjector_UpdateHashEntry(entryLocal);
 			}
 
-			RequestCheckpoint(true, false);
+			RequestCheckpoint(CHECKPOINT_WAIT | CHECKPOINT_IMMEDIATE);
 			ereport(PANIC,
 					(errmsg("fault triggered, fault name:'%s' fault type:'%s' ",
 							FaultInjectorIdentifierEnumToString[entryLocal->faultInjectorIdentifier],
