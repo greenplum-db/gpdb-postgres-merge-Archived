@@ -1242,24 +1242,25 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 	return result;
 }
 
-static inline int
-text_cmp_datum(Datum d0, Datum d1)
+/* text_cmp()
+ * Internal comparison function for text strings.
+ * Returns -1, 0 or 1
+ */
+static int
+text_cmp(text *arg1, text *arg2)
 {
-	char *p0; void *tofree0; int len0;
-	char *p1; void *tofree1; int len1;
-	int result;
+	char	   *a1p,
+			   *a2p;
+	int			len1,
+				len2;
 
-	varattrib_untoast_ptr_len(d0, &p0, &len0, &tofree0);
-	varattrib_untoast_ptr_len(d1, &p1, &len1, &tofree1);
+	a1p = VARDATA_ANY(arg1);
+	a2p = VARDATA_ANY(arg2);
 
-	result = varstr_cmp(p0, len0, p1, len1);
+	len1 = VARSIZE_ANY_EXHDR(arg1);
+	len2 = VARSIZE_ANY_EXHDR(arg2);
 
-	if(tofree0)
-		pfree(tofree0);
-	if(tofree1)
-		pfree(tofree1);
-
-	return result;
+	return varstr_cmp(a1p, len1, a2p, len2);
 }
 
 /*
