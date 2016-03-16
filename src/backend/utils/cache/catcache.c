@@ -3,11 +3,7 @@
  * catcache.c
  *	  System catalog cache for tuples matching a key.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -21,12 +17,9 @@
 #include "access/genam.h"
 #include "access/hash.h"
 #include "access/heapam.h"
-<<<<<<< HEAD
 #include "access/relscan.h"
 #include "access/sysattr.h"
-=======
 #include "access/tuptoaster.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "access/valid.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
@@ -982,7 +975,6 @@ IndexScanOK(CatCache *cache, ScanKey cur_skey)
 {
 	switch (cache->id)
 	{
-<<<<<<< HEAD
 		case INDEXRELID:
 
 			/*
@@ -1004,15 +996,6 @@ IndexScanOK(CatCache *cache, ScanKey cur_skey)
 			 * initially building critical relcache entries, but we might as
 			 * well just always do it.
 			 */
-=======
-		/*
-		 * Rather than tracking exactly which indexes have to be loaded before
-		 * we can use indexscans (which changes from time to time), just force
-		 * all pg_index searches to be heap scans until we've built the
-		 * critical relcaches.
-		 */
-		if (!criticalRelcachesBuilt)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			return false;
 
 		case AUTHNAME:

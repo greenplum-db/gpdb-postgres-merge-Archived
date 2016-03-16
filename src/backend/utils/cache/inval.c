@@ -1134,8 +1134,8 @@ EndNonTransactionalInvalidation(void)
 	/* Send out the invals */
 	ProcessInvalidationMessages(&transInvalInfo->CurrentCmdInvalidMsgs,
 								LocalExecuteInvalidationMessage);
-	ProcessInvalidationMessages(&transInvalInfo->CurrentCmdInvalidMsgs,
-								SendSharedInvalidMessage);
+	ProcessInvalidationMessageMulti(&transInvalInfo->CurrentCmdInvalidMsgs,
+									SendSharedInvalidMessages);
 
 	/* Clean up and release memory */
 	for (chunk = transInvalInfo->CurrentCmdInvalidMsgs.cclist;

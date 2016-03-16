@@ -2287,35 +2287,6 @@ get_rel_relstorage(Oid relid)
 	return result;
 }
 
-/*
- * get_rel_tablespace
- *
- *		Returns the pg_tablespace OID associated with a given relation.
- *
- * Note: InvalidOid might mean either that we couldn't find the relation,
- * or that it is in the database's default tablespace.
- */
-Oid
-get_rel_tablespace(Oid relid)
-{
-	Oid			result = InvalidOid;
-	int			fetchCount;
-
-	result = caql_getoid_plus(
-			NULL,
-			&fetchCount,
-			NULL,
-			cql("SELECT reltablespace FROM pg_class "
-				" WHERE oid = :1 ",
-				ObjectIdGetDatum(relid)));
-
-	if (!fetchCount)
-		return InvalidOid;
-
-	return result;
-}
-
-
 /*				---------- TYPE CACHE ----------						 */
 
 /*
@@ -3446,8 +3417,6 @@ get_attstatsslot_desc(TupleDesc tupdesc, HeapTuple statstuple,
 		 */
 		if (ARR_NDIM(statarray) > 0)
 		{
-			cqContext  *typcqCtx;
-
 			/*
 			 * Need to get info about the array element type.  We look at the
 			 * actual element type embedded in the array, which might be only
@@ -3486,7 +3455,7 @@ get_attstatsslot_desc(TupleDesc tupdesc, HeapTuple statstuple,
 				}
 			}
 
-			caql_endscan(typcqCtx);
+			ReleaseSysCache(typeTuple);
 		}
 		/*
 		 * Free statarray if it's a detoasted copy.

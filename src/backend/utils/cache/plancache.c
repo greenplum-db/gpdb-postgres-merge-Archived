@@ -531,7 +531,7 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 				/* OK, doesn't return tuples */
 			}
 			else if (resultDesc == NULL || plansource->resultDesc == NULL ||
-					 !equalTupleDescs(resultDesc, plansource->resultDesc))
+					 !equalTupleDescs(resultDesc, plansource->resultDesc, true))
 			{
 				MemoryContext oldcxt;
 
