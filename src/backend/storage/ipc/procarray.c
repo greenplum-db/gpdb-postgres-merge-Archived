@@ -411,6 +411,21 @@ ProcArrayClearTransaction(PGPROC *proc)
 }
 
 /*
+ * Clears the current transaction from PGPROC.
+ *
+ * Must be called while holding the ProcArrayLock.
+ */
+void
+ClearTransactionFromPgProc_UnderLock(void)
+{
+	/*
+	 * ProcArrayClearTransaction() doesn't take the lock, so we can just call it
+	 * directly.
+	 */
+	ProcArrayClearTransaction();
+}
+
+/*
  * TransactionIdIsInProgress -- is given transaction running in some backend
  *
  * Aside from some shortcuts such as checking RecentXmin and our own Xid,

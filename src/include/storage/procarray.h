@@ -29,6 +29,7 @@ extern void ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool 
 						bool *needNotifyCommittedDtxTransaction,
 						LocalDistribXactRef *localDistribXactRef);
 extern void ProcArrayClearTransaction(PGPROC *proc);
+extern void ClearTransactionFromPgProc_UnderLock(void);
 
 extern bool TransactionIdIsInProgress(TransactionId xid);
 extern bool TransactionIdIsActive(TransactionId xid);
