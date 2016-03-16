@@ -176,11 +176,7 @@ than applying a sort to the cheapest other path).
 If the query contains one-sided outer joins (LEFT or RIGHT joins), or
 IN or EXISTS WHERE clauses that were converted to joins, then some of
 the possible join orders may be illegal.  These are excluded by having
-<<<<<<< HEAD
 join_is_legal consult a side list of such "special" joins to see
-=======
-join_is_legal consult side lists of outer joins and IN joins to see
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 whether a proposed join is illegal.  (The same consultation allows it
 to see which join style should be applied for a valid join, ie,
 JOIN_INNER, JOIN_LEFT, etc.)
@@ -235,11 +231,7 @@ FULL JOIN ordering is enforced by not collapsing FULL JOIN nodes when
 translating the jointree to "joinlist" representation.  Other types of
 JOIN nodes are normally collapsed so that they participate fully in the
 join order search.  To avoid generating illegal join orders, the planner
-<<<<<<< HEAD
 creates a SpecialJoinInfo node for each non-inner join, and join_is_legal
-=======
-creates an OuterJoinInfo node for each outer join, and join_is_legal
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 checks this list to decide if a proposed join is legal.
 
 What we store in SpecialJoinInfo nodes are the minimum sets of Relids
