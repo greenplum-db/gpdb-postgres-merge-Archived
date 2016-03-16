@@ -2,19 +2,11 @@
  *
  *	  WIN <--> UTF8
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
  *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win/utf8_and_win.c,v 1.14 2009/01/29 19:23:42 tgl Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win/utf8_and_win.c,v 1.12.2.1 2009/01/29 19:23:58 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
