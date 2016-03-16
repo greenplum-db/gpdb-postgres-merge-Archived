@@ -52,13 +52,9 @@
 #include "commands/vacuum.h"
 #include "commands/view.h"
 #include "miscadmin.h"
-<<<<<<< HEAD
 #include "optimizer/planmain.h"
-#include "postmaster/checkpoint.h"
-=======
 #include "parser/parse_utilcmd.h"
 #include "postmaster/bgwriter.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteRemove.h"
 #include "storage/fd.h"
@@ -355,68 +351,6 @@ CheckRelationOwnership(RangeVar *rel, bool noCatalogs)
 /*
  * CommandIsReadOnly: is an executable query read-only?
  *
- *** You should probably use CommandIsReadOnly instead.
- *** This routine retained for use by SPI
- *
- * This is a much stricter test than we apply for XactReadOnly mode; * the query must be *in truth* read-only, because the caller wishes
- * not to do CommandCounterIncrement for it.
- *
- * Note: currently no need to support Query nodes here
- */
-bool
-CommandIsReadOnly(Node *parsetree)
-{
-	if (IsA(parsetree, PlannedStmt))
-	{
-<<<<<<< HEAD
-		case CMD_SELECT:
-			if (parsetree->intoClause != NULL)
-				return false;	/* SELECT INTO */
-			else if (parsetree->rowMarks != NIL)
-				return false;	/* SELECT FOR UPDATE/SHARE */
-			else
-				return true;
-		case CMD_UPDATE:
-		case CMD_INSERT:
-		case CMD_DELETE:
-			return false;
-		case CMD_UTILITY:
-			/* For now, treat all utility commands as read/write */
-			return false;
-		default:
-			elog(WARNING, "unrecognized commandType: %d",
-				 (int) parsetree->commandType);
-			break;
-=======
-		PlannedStmt *stmt = (PlannedStmt *) parsetree;
-
-		switch (stmt->commandType)
-		{
-			case CMD_SELECT:
-				if (stmt->intoClause != NULL)
-					return false;		/* SELECT INTO */
-				else if (stmt->rowMarks != NIL)
-					return false;		/* SELECT FOR UPDATE/SHARE */
-				else
-					return true;
-			case CMD_UPDATE:
-			case CMD_INSERT:
-			case CMD_DELETE:
-				return false;
-			default:
-				elog(WARNING, "unrecognized commandType: %d",
-					 (int) stmt->commandType);
-				break;
-		}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-	}
-	/* For now, treat all utility commands as read/write */
-	return false;
-}
-
-/*
- * CommandIsReadOnly: is an executable query read-only?
- *
  * This is a much stricter test than we apply for XactReadOnly mode;
  * the query must be *in truth* read-only, because the caller wishes
  * not to do CommandCounterIncrement for it.
@@ -578,7 +512,6 @@ check_xact_readonly(Node *parsetree)
 
 
 /*
-<<<<<<< HEAD
  * Process one relation in a drop statement.
  */
 static bool
@@ -713,8 +646,6 @@ ProcessDropStatement(DropStmt *stmt)
 }
 
 /*
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * CheckRestrictedOperation: throw error for hazardous command if we're
  * inside a security restriction context.
  *
@@ -738,11 +669,7 @@ CheckRestrictedOperation(const char *cmdname)
  *		general utility function invoker
  *
  *	parsetree: the parse tree for the utility statement
-<<<<<<< HEAD
- *	queryString: original source text of command
-=======
  *	queryString: original source text of command (NULL if not available)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *	params: parameters to use during execution
  *	isTopLevel: true if executing a "top level" (interactively issued) command
  *	dest: where to send results
@@ -798,12 +725,12 @@ ProcessUtility(Node *parsetree,
 								DefElem    *item = (DefElem *) lfirst(lc);
 
 								if (strcmp(item->defname, "transaction_isolation") == 0)
-									SetPGVariable("transaction_isolation",
+									SetPGVariableOptDispatch("transaction_isolation",
 												  list_make1(item->arg),
 												  true,
 												  /* gp_dispatch */ false);
 								else if (strcmp(item->defname, "transaction_read_only") == 0)
-									SetPGVariable("transaction_read_only",
+									SetPGVariableOptDispatch("transaction_read_only",
 												  list_make1(item->arg),
 												  true,
 												  /* gp_dispatch */ false);
@@ -840,7 +767,6 @@ ProcessUtility(Node *parsetree,
 						break;
 
 					case TRANS_STMT_COMMIT_PREPARED:
-<<<<<<< HEAD
 						if (Gp_role == GP_ROLE_DISPATCH)
 						{
 							ereport(ERROR, (
@@ -849,7 +775,7 @@ ProcessUtility(Node *parsetree,
 											));
 
 						}
-						PreventTransactionChain(stmt, "COMMIT PREPARED");
+						PreventTransactionChain(isTopLevel, "COMMIT PREPARED");
 						FinishPreparedTransaction(stmt->gid, /* isCommit */ true, /* raiseErrorIfNotFound */ true);
 						break;
 
@@ -862,17 +788,8 @@ ProcessUtility(Node *parsetree,
 											));
 
 						}
-						PreventTransactionChain(stmt, "ROLLBACK PREPARED");
-						FinishPreparedTransaction(stmt->gid, /* isCommit */ false, /* raiseErrorIfNotFound */ true);
-=======
-						PreventTransactionChain(isTopLevel, "COMMIT PREPARED");
-						FinishPreparedTransaction(stmt->gid, true);
-						break;
-
-					case TRANS_STMT_ROLLBACK_PREPARED:
 						PreventTransactionChain(isTopLevel, "ROLLBACK PREPARED");
-						FinishPreparedTransaction(stmt->gid, false);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+						FinishPreparedTransaction(stmt->gid, /* isCommit */ false, /* raiseErrorIfNotFound */ true);
 						break;
 
 					case TRANS_STMT_ROLLBACK:
@@ -937,16 +854,6 @@ ProcessUtility(Node *parsetree,
 			 * DeclareCursorStmt.
 			 */
 		case T_PlannedStmt:
-<<<<<<< HEAD
-		{
-			PlannedStmt *stmt = (PlannedStmt *) parsetree;
-
-			if (stmt->utilityStmt == NULL ||
-				!IsA(stmt->utilityStmt, DeclareCursorStmt))
-				elog(ERROR, "non-DECLARE CURSOR PlannedStmt passed to ProcessUtility");
-			PerformCursorOpen(stmt, params, queryString, isTopLevel);
-		}
-=======
 			{
 				PlannedStmt *stmt = (PlannedStmt *) parsetree;
 
@@ -955,7 +862,6 @@ ProcessUtility(Node *parsetree,
 					elog(ERROR, "non-DECLARE CURSOR PlannedStmt passed to ProcessUtility");
 				PerformCursorOpen(stmt, params, queryString, isTopLevel);
 			}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			break;
 
 		case T_ClosePortalStmt:
@@ -976,18 +882,12 @@ ProcessUtility(Node *parsetree,
 			 * relation and attribute manipulation
 			 */
 		case T_CreateSchemaStmt:
-<<<<<<< HEAD
-			CreateSchemaCommand((CreateSchemaStmt *) parsetree, queryString);
-=======
 			CreateSchemaCommand((CreateSchemaStmt *) parsetree,
 								queryString);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			break;
 
 		case T_CreateStmt:
 			{
-				List	   *stmts;
-				ListCell   *l;
 				Oid			relOid;
 				char		relKind = RELKIND_RELATION;
 				char		relStorage = RELSTORAGE_HEAP;
@@ -1021,7 +921,6 @@ ProcessUtility(Node *parsetree,
 					}
 				}
 
-<<<<<<< HEAD
 				relOid = DefineRelation((CreateStmt *) parsetree,
 										relKind, relStorage);
 
@@ -1090,56 +989,6 @@ ProcessUtility(Node *parsetree,
 
 		case T_CreateTableSpaceStmt:
 			CreateTableSpace((CreateTableSpaceStmt *) parsetree);
-=======
-				/* Run parse analysis ... */
-				stmts = transformCreateStmt((CreateStmt *) parsetree,
-											queryString);
-
-				/* ... and do it */
-				foreach(l, stmts)
-				{
-					Node	   *stmt = (Node *) lfirst(l);
-
-					if (IsA(stmt, CreateStmt))
-					{
-						/* Create the table itself */
-						relOid = DefineRelation((CreateStmt *) stmt,
-												RELKIND_RELATION);
-
-						/*
-						 * Let AlterTableCreateToastTable decide if this one
-						 * needs a secondary relation too.
-						 */
-						CommandCounterIncrement();
-						AlterTableCreateToastTable(relOid);
-					}
-					else
-					{
-						/* Recurse for anything else */
-						ProcessUtility(stmt,
-									   queryString,
-									   params,
-									   false,
-									   None_Receiver,
-									   NULL);
-					}
-
-					/* Need CCI between commands */
-					if (lnext(l) != NULL)
-						CommandCounterIncrement();
-				}
-			}
-			break;
-
-		case T_CreateTableSpaceStmt:
-			PreventTransactionChain(isTopLevel, "CREATE TABLESPACE");
-			CreateTableSpace((CreateTableSpaceStmt *) parsetree);
-			break;
-
-		case T_DropTableSpaceStmt:
-			PreventTransactionChain(isTopLevel, "DROP TABLESPACE");
-			DropTableSpace((DropTableSpaceStmt *) parsetree);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			break;
 
 		case T_DropStmt:
@@ -1149,7 +998,6 @@ ProcessUtility(Node *parsetree,
 				List       *objects;
 				bool       if_exists;
 
-<<<<<<< HEAD
 				if_exists = stmt->missing_ok;
 				objects = stmt->objects;
 
@@ -1170,90 +1018,6 @@ ProcessUtility(Node *parsetree,
 						{
 							CdbDispatchUtilityStatement((Node *) stmt, "ProcessUtility");
 						}
-=======
-				foreach(arg, stmt->objects)
-				{
-					List	   *names = (List *) lfirst(arg);
-					RangeVar   *rel;
-
-					switch (stmt->removeType)
-					{
-						case OBJECT_TABLE:
-							rel = makeRangeVarFromNameList(names);
-							if (CheckDropPermissions(rel, RELKIND_RELATION,
-													 stmt->missing_ok))
-								RemoveRelation(rel, stmt->behavior);
-							break;
-
-						case OBJECT_SEQUENCE:
-							rel = makeRangeVarFromNameList(names);
-							if (CheckDropPermissions(rel, RELKIND_SEQUENCE,
-													 stmt->missing_ok))
-								RemoveRelation(rel, stmt->behavior);
-							break;
-
-						case OBJECT_VIEW:
-							rel = makeRangeVarFromNameList(names);
-							if (CheckDropPermissions(rel, RELKIND_VIEW,
-													 stmt->missing_ok))
-								RemoveView(rel, stmt->behavior);
-							break;
-
-						case OBJECT_INDEX:
-							rel = makeRangeVarFromNameList(names);
-							if (CheckDropPermissions(rel, RELKIND_INDEX,
-													 stmt->missing_ok))
-								RemoveIndex(rel, stmt->behavior);
-							break;
-
-						case OBJECT_TYPE:
-							/* RemoveType does its own permissions checks */
-							RemoveType(names, stmt->behavior,
-									   stmt->missing_ok);
-							break;
-
-						case OBJECT_DOMAIN:
-							/* RemoveDomain does its own permissions checks */
-							RemoveDomain(names, stmt->behavior,
-										 stmt->missing_ok);
-							break;
-
-						case OBJECT_CONVERSION:
-							DropConversionCommand(names, stmt->behavior,
-												  stmt->missing_ok);
-							break;
-
-						case OBJECT_SCHEMA:
-							/* RemoveSchema does its own permissions checks */
-							RemoveSchema(names, stmt->behavior,
-										 stmt->missing_ok);
-							break;
-
-						case OBJECT_TSPARSER:
-							RemoveTSParser(names, stmt->behavior,
-										   stmt->missing_ok);
-							break;
-
-						case OBJECT_TSDICTIONARY:
-							RemoveTSDictionary(names, stmt->behavior,
-											   stmt->missing_ok);
-							break;
-
-						case OBJECT_TSTEMPLATE:
-							RemoveTSTemplate(names, stmt->behavior,
-											 stmt->missing_ok);
-							break;
-
-						case OBJECT_TSCONFIGURATION:
-							RemoveTSConfiguration(names, stmt->behavior,
-												  stmt->missing_ok);
-							break;
-
-						default:
-							elog(ERROR, "unrecognized drop object type: %d",
-								 (int) stmt->removeType);
-							break;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					}
 				}
 			}
@@ -1270,11 +1034,7 @@ ProcessUtility(Node *parsetree,
 
 		case T_CopyStmt:
 			{
-<<<<<<< HEAD
-				uint64		processed = DoCopy((CopyStmt *) parsetree, debug_query_string);
-=======
 				uint64		processed;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 				processed = DoCopy((CopyStmt *) parsetree, queryString);
 				if (completionTag)
@@ -1285,19 +1045,11 @@ ProcessUtility(Node *parsetree,
 
 		case T_PrepareStmt:
 			CheckRestrictedOperation("PREPARE");
-<<<<<<< HEAD
-			PrepareQuery((PrepareStmt *) parsetree, debug_query_string);
-			break;
-
-		case T_ExecuteStmt:
-			ExecuteQuery((ExecuteStmt *) parsetree, debug_query_string, params,
-=======
 			PrepareQuery((PrepareStmt *) parsetree, queryString);
 			break;
 
 		case T_ExecuteStmt:
 			ExecuteQuery((ExecuteStmt *) parsetree, queryString, params,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 						 dest, completionTag);
 			break;
 
@@ -1438,12 +1190,10 @@ ProcessUtility(Node *parsetree,
 						Assert(stmt->args == NIL);
 						DefineType(stmt->defnames, stmt->definition, stmt->newOid, stmt->shadowOid);
 						break;
-<<<<<<< HEAD
 					case OBJECT_EXTPROTOCOL:
 						Assert(stmt->args == NIL);
 						DefineExtProtocol(stmt->defnames, stmt->definition, stmt->newOid, stmt->trusted);
 						break;						
-=======
 					case OBJECT_TSPARSER:
 						Assert(stmt->args == NIL);
 						DefineTSParser(stmt->defnames, stmt->definition);
@@ -1460,7 +1210,6 @@ ProcessUtility(Node *parsetree,
 						Assert(stmt->args == NIL);
 						DefineTSConfiguration(stmt->defnames, stmt->definition);
 						break;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					default:
 						elog(ERROR, "unrecognized define stmt type: %d",
 							 (int) stmt->kind);
@@ -1481,13 +1230,8 @@ ProcessUtility(Node *parsetree,
 			DefineEnum((CreateEnumStmt *) parsetree);
 			break;
 
-<<<<<<< HEAD
-				DefineView(stmt);
-			}
-=======
 		case T_ViewStmt:		/* CREATE VIEW */
 			DefineView((ViewStmt *) parsetree, queryString);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			break;
 
 		case T_CreateFunctionStmt:		/* CREATE FUNCTION */
@@ -1508,15 +1252,13 @@ ProcessUtility(Node *parsetree,
 
 				CheckRelationOwnership(stmt->relation, true);
 
-<<<<<<< HEAD
+				/* GPDB_MERGE83_FIXME: Do we still need this in GPDB? */
 				fix_opfuncids(stmt->whereClause);
 
-=======
 				/* Run parse analysis ... */
 				stmt = transformIndexStmt(stmt, queryString);
 
 				/* ... and do it */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				DefineIndex(stmt->relation,		/* relation */
 							stmt->idxname,		/* index name */
 							InvalidOid, /* no predefined OID */
@@ -1539,15 +1281,11 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_RuleStmt:		/* CREATE RULE */
-<<<<<<< HEAD
-			DefineQueryRewrite((RuleStmt *) parsetree);
+			DefineRule((RuleStmt *) parsetree, queryString);
 			if (Gp_role == GP_ROLE_DISPATCH)
 			{
 				CdbDispatchUtilityStatement((Node *) parsetree, "ProcessUtility");
 			}
-=======
-			DefineRule((RuleStmt *) parsetree, queryString);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			break;
 
 		case T_CreateSeqStmt:
@@ -1636,15 +1374,10 @@ ProcessUtility(Node *parsetree,
 			{
 				ListenStmt *stmt = (ListenStmt *) parsetree;
 
-<<<<<<< HEAD
 				if (Gp_role == GP_ROLE_EXECUTE)
-					ereport(ERROR, (
-								errcode(ERRCODE_GP_COMMAND_ERROR),
-						 errmsg("Listen command cannot run in a function running on a segDB.")
-								));
+					ereport(ERROR,(errcode(ERRCODE_GP_COMMAND_ERROR),
+							errmsg("Listen command cannot run in a function running on a segDB.")));
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				CheckRestrictedOperation("LISTEN");
 				Async_Listen(stmt->relation->relname);
 			}
@@ -1654,15 +1387,10 @@ ProcessUtility(Node *parsetree,
 			{
 				UnlistenStmt *stmt = (UnlistenStmt *) parsetree;
 
-<<<<<<< HEAD
 				if (Gp_role == GP_ROLE_EXECUTE)
-					ereport(ERROR, (
-								errcode(ERRCODE_GP_COMMAND_ERROR),
-						 errmsg("Unlisten command cannot run in a function running on a segDB.")
-								));
+					ereport(ERROR, (errcode(ERRCODE_GP_COMMAND_ERROR),
+							errmsg("Unlisten command cannot run in a function running on a segDB.")));
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				CheckRestrictedOperation("UNLISTEN");
 				Async_Unlisten(stmt->relation->relname);
 			}
@@ -1698,64 +1426,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_ExplainStmt:
-<<<<<<< HEAD
-			ExplainQuery((ExplainStmt *) parsetree, debug_query_string, params, dest);
-			break;
-
-		case T_VariableSetStmt:
-			{
-				VariableSetStmt *n = (VariableSetStmt *) parsetree;
-
-				/*
-				 * Special cases for special SQL syntax that effectively sets
-				 * more than one variable per statement.
-				 */
-				if (strcmp(n->name, "TRANSACTION") == 0)
-				{
-					ListCell   *head;
-
-					foreach(head, n->args)
-					{
-						DefElem    *item = (DefElem *) lfirst(head);
-
-						if (strcmp(item->defname, "transaction_isolation") == 0)
-							SetPGVariable("transaction_isolation",
-										  list_make1(item->arg), n->is_local,
-										  /* gp_dispatch */ true);
-						else if (strcmp(item->defname, "transaction_read_only") == 0)
-							SetPGVariable("transaction_read_only",
-										  list_make1(item->arg), n->is_local,
-									      /* gp_dispatch */ true);
-					}
-				}
-				else if (strcmp(n->name, "SESSION CHARACTERISTICS") == 0)
-				{
-					ListCell   *head;
-
-					foreach(head, n->args)
-					{
-						DefElem    *item = (DefElem *) lfirst(head);
-
-						if (strcmp(item->defname, "transaction_isolation") == 0)
-							SetPGVariable("default_transaction_isolation",
-										  list_make1(item->arg), n->is_local,
-									      /* gp_dispatch */ true);
-						else if (strcmp(item->defname, "transaction_read_only") == 0)
-							SetPGVariable("default_transaction_read_only",
-										  list_make1(item->arg), n->is_local,
-										  /* gp_dispatch */ true);
-					}
-				}
-				else
-					SetPGVariable(n->name, n->args, n->is_local, /* gp_dispatch */ true);
-			}
-=======
 			ExplainQuery((ExplainStmt *) parsetree, queryString, params, dest);
-			break;
-
-		case T_VariableSetStmt:
-			ExecSetVariableStmt((VariableSetStmt *) parsetree);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			break;
 
 		case T_VariableShowStmt:
@@ -1766,34 +1437,83 @@ ProcessUtility(Node *parsetree,
 			}
 			break;
 
-<<<<<<< HEAD
-		case T_VariableResetStmt:
+		case T_VariableSetStmt:
 			{
-				VariableResetStmt *n = (VariableResetStmt *) parsetree;
+				VariableSetStmt *n = (VariableSetStmt *) parsetree;
+				ExecSetVariableStmt(n);
+					
+				if (n->kind == VAR_RESET || n->kind == VAR_RESET_ALL)
+				{
+					if (Gp_role == GP_ROLE_DISPATCH)
+					{
+						/*
+						 * RESET must be dispatched different, because it can't
+						 * be in a user transaction
+						 */
+						StringInfoData buffer;
 
-				ResetPGVariable(n->name);
+						initStringInfo(&buffer);
 
-				if (Gp_role == GP_ROLE_DISPATCH)
+						if (n->kind == VAR_RESET_ALL)
+							appendStringInfo(&buffer, "RESET ALL");
+						else
+							appendStringInfo(&buffer, "RESET %s", n->name);
+
+						CdbDoCommand(buffer.data, false, /*no txn*/ false);
+					}
+				}
+				else
 				{
 					/*
-					 * RESET must be dispatched different, because it can't
-					 * be in a user transaction
+					 * Special cases for special SQL syntax that effectively sets
+					 * more than one variable per statement.
 					 */
-					StringInfoData buffer;
+					if (strcmp(n->name, "TRANSACTION") == 0)
+					{
+						ListCell   *head;
 
-					initStringInfo(&buffer);
+						foreach(head, n->args)
+						{
+							DefElem    *item = (DefElem *) lfirst(head);
 
-					appendStringInfo(&buffer, "RESET %s", n->name);
+							if (strcmp(item->defname, "transaction_isolation") == 0)
+								SetPGVariableOptDispatch("transaction_isolation",
+											  list_make1(item->arg), n->is_local,
+											  /* gp_dispatch */ true);
+							else if (strcmp(item->defname, "transaction_read_only") == 0)
+								SetPGVariableOptDispatch("transaction_read_only",
+											  list_make1(item->arg), n->is_local,
+										      /* gp_dispatch */ true);
+						}
+					}
+					else if (strcmp(n->name, "SESSION CHARACTERISTICS") == 0)
+					{
+						ListCell   *head;
 
-					CdbDoCommand(buffer.data, false, /*no txn*/ false);
+						foreach(head, n->args)
+						{
+							DefElem    *item = (DefElem *) lfirst(head);
+
+							if (strcmp(item->defname, "transaction_isolation") == 0)
+								SetPGVariableOptDispatch("default_transaction_isolation",
+											  list_make1(item->arg), n->is_local,
+										      /* gp_dispatch */ true);
+							else if (strcmp(item->defname, "transaction_read_only") == 0)
+								SetPGVariableOptDispatch("default_transaction_read_only",
+											  list_make1(item->arg), n->is_local,
+											  /* gp_dispatch */ true);
+						}
+					}
+					else
+						SetPGVariableOptDispatch(n->name, n->args, n->is_local, /* gp_dispatch */ true);
 				}
 			}
-=======
+			break;
+
 		case T_DiscardStmt:
 			/* should we allow DISCARD PLANS? */
 			CheckRestrictedOperation("DISCARD");
 			DiscardCommand((DiscardStmt *) parsetree, isTopLevel);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			break;
 
 		case T_CreateTrigStmt:
@@ -1918,15 +1638,12 @@ ProcessUtility(Node *parsetree,
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						 errmsg("must be superuser to do CHECKPOINT")));
-<<<<<<< HEAD
+
 			if (Gp_role == GP_ROLE_DISPATCH)
 			{
 				CdbDoCommand("CHECKPOINT", false, false);
 			}
-			RequestCheckpoint(true, false);
-=======
 			RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			break;
 
 		case T_ReindexStmt:
@@ -1952,8 +1669,7 @@ ProcessUtility(Node *parsetree,
 							if (Gp_role == GP_ROLE_DISPATCH)
 								PreventTransactionChain(isTopLevel,
 														"REINDEX DATABASE");
-						ReindexDatabase(stmt->name,
-										stmt->do_system, stmt->do_user);
+						ReindexDatabase(stmt);
 						break;
 					default:
 						elog(ERROR, "unrecognized object type: %d",
@@ -1995,17 +1711,16 @@ ProcessUtility(Node *parsetree,
 			RemoveOpFamily((RemoveOpFamilyStmt *) parsetree);
 			break;
 
-<<<<<<< HEAD
 		case T_AlterTypeStmt:
 			AlterType((AlterTypeStmt *) parsetree);
-=======
+			break;
+
 		case T_AlterTSDictionaryStmt:
 			AlterTSDictionary((AlterTSDictionaryStmt *) parsetree);
 			break;
 
 		case T_AlterTSConfigurationStmt:
 			AlterTSConfiguration((AlterTSConfigurationStmt *) parsetree);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			break;
 
 		default:
@@ -2140,11 +1855,7 @@ CreateCommandTag(Node *parsetree)
 
 	switch (nodeTag(parsetree))
 	{
-<<<<<<< HEAD
 		/* raw plannable queries */
-=======
-			/* raw plannable queries */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		case T_InsertStmt:
 			tag = "INSERT";
 			break;
@@ -2161,11 +1872,7 @@ CreateCommandTag(Node *parsetree)
 			tag = "SELECT";
 			break;
 
-<<<<<<< HEAD
 		/* utility statements --- same whether raw or cooked */
-=======
-			/* utility statements --- same whether raw or cooked */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		case T_TransactionStmt:
 			{
 				TransactionStmt *stmt = (TransactionStmt *) parsetree;
@@ -2293,7 +2000,6 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_SCHEMA:
 					tag = "DROP SCHEMA";
 					break;
-<<<<<<< HEAD
 				case OBJECT_FILESPACE:
 					tag = "DROP FILESPACE";
 					break;
@@ -2303,7 +2009,6 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_EXTPROTOCOL:
 					tag = "DROP PROTOCOL";
 					break;					
-=======
 				case OBJECT_TSPARSER:
 					tag = "DROP TEXT SEARCH PARSER";
 					break;
@@ -2316,7 +2021,6 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_TSCONFIGURATION:
 					tag = "DROP TEXT SEARCH CONFIGURATION";
 					break;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				default:
 					tag = "???";
 			}
@@ -2488,16 +2192,14 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_TYPE:
 					tag = "ALTER TYPE";
 					break;
-<<<<<<< HEAD
 				case OBJECT_EXTPROTOCOL:
 					tag = "ALTER PROTOCOL";
-=======
+					break;
 				case OBJECT_TSCONFIGURATION:
 					tag = "ALTER TEXT SEARCH CONFIGURATION";
 					break;
 				case OBJECT_TSDICTIONARY:
 					tag = "ALTER TEXT SEARCH DICTIONARY";
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					break;
 				default:
 					tag = "???";
@@ -2560,10 +2262,9 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_TYPE:
 					tag = "CREATE TYPE";
 					break;
-<<<<<<< HEAD
 				case OBJECT_EXTPROTOCOL:
 					tag = "CREATE PROTOCOL";
-=======
+					break;
 				case OBJECT_TSPARSER:
 					tag = "CREATE TEXT SEARCH PARSER";
 					break;
@@ -2575,7 +2276,6 @@ CreateCommandTag(Node *parsetree)
 					break;
 				case OBJECT_TSCONFIGURATION:
 					tag = "CREATE TEXT SEARCH CONFIGURATION";
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					break;
 				default:
 					tag = "???";
@@ -2844,8 +2544,14 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_DeallocateStmt:
-<<<<<<< HEAD
-			tag = "DEALLOCATE";
+			{
+				DeallocateStmt *stmt = (DeallocateStmt *) parsetree;
+
+				if (stmt->name == NULL)
+					tag = "DEALLOCATE ALL";
+				else
+					tag = "DEALLOCATE";
+			}
 			break;
 		
 		case T_Query: /* used to be function CreateQueryTag */
@@ -2865,91 +2571,6 @@ CreateCommandTag(Node *parsetree)
 						else if (query->rowMarks != NIL)
 						{
 							if (((RowMarkClause *) linitial(query->rowMarks))->forUpdate)
-=======
-			{
-				DeallocateStmt *stmt = (DeallocateStmt *) parsetree;
-
-				if (stmt->name == NULL)
-					tag = "DEALLOCATE ALL";
-				else
-					tag = "DEALLOCATE";
-			}
-			break;
-
-			/* already-planned queries */
-		case T_PlannedStmt:
-			{
-				PlannedStmt *stmt = (PlannedStmt *) parsetree;
-
-				switch (stmt->commandType)
-				{
-					case CMD_SELECT:
-
-						/*
-						 * We take a little extra care here so that the result
-						 * will be useful for complaints about read-only
-						 * statements
-						 */
-						if (stmt->utilityStmt != NULL)
-						{
-							Assert(IsA(stmt->utilityStmt, DeclareCursorStmt));
-							tag = "DECLARE CURSOR";
-						}
-						else if (stmt->intoClause != NULL)
-							tag = "SELECT INTO";
-						else if (stmt->rowMarks != NIL)
-						{
-							if (((RowMarkClause *) linitial(stmt->rowMarks))->forUpdate)
-								tag = "SELECT FOR UPDATE";
-							else
-								tag = "SELECT FOR SHARE";
-						}
-						else
-							tag = "SELECT";
-						break;
-					case CMD_UPDATE:
-						tag = "UPDATE";
-						break;
-					case CMD_INSERT:
-						tag = "INSERT";
-						break;
-					case CMD_DELETE:
-						tag = "DELETE";
-						break;
-					default:
-						elog(WARNING, "unrecognized commandType: %d",
-							 (int) stmt->commandType);
-						tag = "???";
-						break;
-				}
-			}
-			break;
-
-			/* parsed-and-rewritten-but-not-planned queries */
-		case T_Query:
-			{
-				Query	   *stmt = (Query *) parsetree;
-
-				switch (stmt->commandType)
-				{
-					case CMD_SELECT:
-
-						/*
-						 * We take a little extra care here so that the result
-						 * will be useful for complaints about read-only
-						 * statements
-						 */
-						if (stmt->utilityStmt != NULL)
-						{
-							Assert(IsA(stmt->utilityStmt, DeclareCursorStmt));
-							tag = "DECLARE CURSOR";
-						}
-						else if (stmt->intoClause != NULL)
-							tag = "SELECT INTO";
-						else if (stmt->rowMarks != NIL)
-						{
-							if (((RowMarkClause *) linitial(stmt->rowMarks))->forUpdate)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 								tag = "SELECT FOR UPDATE";
 							else
 								tag = "SELECT FOR SHARE";
@@ -2967,37 +2588,23 @@ CreateCommandTag(Node *parsetree)
 						tag = "DELETE";
 						break;
 					case CMD_UTILITY:
-<<<<<<< HEAD
 						tag = CreateCommandTag(query->utilityStmt);
 						break;
 					default:
 						elog(WARNING, "unrecognized commandType: %d",
 							 (int) query->commandType);
-=======
-						tag = CreateCommandTag(stmt->utilityStmt);
-						break;
-					default:
-						elog(WARNING, "unrecognized commandType: %d",
-							 (int) stmt->commandType);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 						tag = "???";
 						break;
 				}
 			}
-<<<<<<< HEAD
 			break;
 
 		case T_AlterTypeStmt:
 			tag = "ALTER TYPE";
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			break;
 
 		default:
-<<<<<<< HEAD
 			Assert(false);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			elog(WARNING, "unrecognized node type: %d",
 				 (int) nodeTag(parsetree));
 			tag = "???";
@@ -3023,11 +2630,7 @@ GetCommandLogLevel(Node *parsetree)
 
 	switch (nodeTag(parsetree))
 	{
-<<<<<<< HEAD
 		/* raw plannable queries */
-=======
-			/* raw plannable queries */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		case T_InsertStmt:
 		case T_DeleteStmt:
 		case T_UpdateStmt:
@@ -3041,11 +2644,7 @@ GetCommandLogLevel(Node *parsetree)
 				lev = LOGSTMT_ALL;
 			break;
 
-<<<<<<< HEAD
 		/* utility statements --- same whether raw or cooked */
-=======
-			/* utility statements --- same whether raw or cooked */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		case T_TransactionStmt:
 			lev = LOGSTMT_ALL;
 			break;
@@ -3364,44 +2963,8 @@ GetCommandLogLevel(Node *parsetree)
 			lev = LOGSTMT_ALL;
 			break;
 
-			/* already-planned queries */
-		case T_PlannedStmt:
-			{
-				PlannedStmt *stmt = (PlannedStmt *) parsetree;
-
-				switch (stmt->commandType)
-				{
-					case CMD_SELECT:
-						if (stmt->intoClause != NULL)
-							lev = LOGSTMT_DDL;	/* CREATE AS, SELECT INTO */
-						else
-							lev = LOGSTMT_ALL;	/* SELECT or DECLARE CURSOR */
-						break;
-
-<<<<<<< HEAD
 		case T_PlannedStmt:
 			lev = GetPlannedStmtLogLevel((PlannedStmt *) parsetree);
-			break;
-
-		default:
-			elog(WARNING, "unrecognized node type: %d",
-				 (int) nodeTag(parsetree));
-			lev = LOGSTMT_ALL;
-=======
-					case CMD_UPDATE:
-					case CMD_INSERT:
-					case CMD_DELETE:
-						lev = LOGSTMT_MOD;
-						break;
-
-					default:
-						elog(WARNING, "unrecognized commandType: %d",
-							 (int) stmt->commandType);
-						lev = LOGSTMT_ALL;
-						break;
-				}
-			}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			break;
 
 			/* parsed-and-rewritten-but-not-planned queries */
@@ -3424,20 +2987,9 @@ GetCommandLogLevel(Node *parsetree)
 						lev = LOGSTMT_MOD;
 						break;
 
-<<<<<<< HEAD
-	switch (parsetree->commandType)
-	{
-		case CMD_SELECT:
-			if (parsetree->intoClause != NULL)
-				lev = LOGSTMT_DDL;		/* CREATE AS, SELECT INTO */
-			else
-				lev = LOGSTMT_ALL;
-			break;
-=======
 					case CMD_UTILITY:
 						lev = GetCommandLogLevel(stmt->utilityStmt);
 						break;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 					default:
 						elog(WARNING, "unrecognized commandType: %d",
@@ -3473,12 +3025,12 @@ GetPlannedStmtLogLevel(PlannedStmt * stmt)
 	switch (stmt->commandType)
 	{
 		case CMD_SELECT:
-			if ( stmt->utilityStmt != NULL )
+			if (stmt->utilityStmt != NULL) 
 			{
-				if ( stmt->intoClause != NULL )
+				if (stmt->intoClause != NULL)
 					elog(WARNING, "into specified on utility statement type: %d",
 						 (int) stmt->utilityStmt->type);
-				if ( ! IsA(stmt->utilityStmt, DeclareCursorStmt) )
+				if (!IsA(stmt->utilityStmt, DeclareCursorStmt))
 					elog(WARNING, "unexpected utility statement type: %d",
 						 (int) stmt->utilityStmt->type);
 				lev = LOGSTMT_ALL;
