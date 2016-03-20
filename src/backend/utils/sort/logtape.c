@@ -31,8 +31,6 @@
  * the illusion of N independent tape devices to tuplesort.c.  Note that
  * logtape.c itself depends on buffile.c to provide a "logical file" of
  * larger size than the underlying OS may support.
-<<<<<<< HEAD
-=======
  *
  * For simplicity, we allocate and release space in the underlying file
  * in BLCKSZ-size blocks.  Space allocation boils down to keeping track
@@ -80,7 +78,6 @@
  *	  $PostgreSQL: pgsql/src/backend/utils/sort/logtape.c,v 1.26 2008/01/01 19:45:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 
 #include "postgres.h"
