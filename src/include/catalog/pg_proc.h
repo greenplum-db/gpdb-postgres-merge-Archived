@@ -1634,9 +1634,6 @@ DESCR("absolute value");
 DATA(insert OID = 1253 (  int2abs		   PGNSP PGUID 12 1 0 f f t f i 1 21 "21" _null_ _null_ _null_	int2abs - _null_ _null_ ));
 DESCR("absolute value");
 
-DATA(insert OID = 6117 (  interval		   PGNSP PGUID 12 1 0 f f t f s 1 1186 "25" _null_ _null_ _null_	text_interval - _null_ _null_ ));
-DESCR("convert text to interval");
-
 DATA(insert OID = 1271 (  overlaps		   PGNSP PGUID 12 1 0 f f f f i 4 16 "1266 1266 1266 1266" _null_ _null_ _null_ overlaps_timetz - _null_ _null_ ));
 DESCR("intervals overlap?");
 DATA(insert OID = 1272 (  datetime_pl	   PGNSP PGUID 12 1 0 f f t f i 2 1114 "1082 1083" _null_ _null_ _null_ datetime_timestamp - _null_ _null_ ));
