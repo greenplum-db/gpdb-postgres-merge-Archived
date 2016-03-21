@@ -199,6 +199,21 @@ get_sortgroupref_tle(Index sortref, List *targetList)
 }
 
 /*
+ * get_sortgroupclause_tle
+ *		Find the targetlist entry matching the given SortClause
+ *		(or GroupClause) by ressortgroupref, and return it.
+ *
+ * Because GroupClause is typedef'd as SortClause, either kind of
+ * node can be passed without casting.
+ */
+TargetEntry *
+get_sortgroupclause_tle(SortClause *sortClause,
+						List *targetList)
+{
+	return get_sortgroupref_tle(sortClause->tleSortGroupRef, targetList);
+}
+
+/*
  * get_sortgroupclauses_tles
  *      Find a list of unique targetlist entries matching the given list of
  *      SortClause, GroupClause, or GroupingClauses.
