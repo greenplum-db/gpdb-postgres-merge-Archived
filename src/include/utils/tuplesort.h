@@ -106,6 +106,7 @@ extern void cdb_tuplesort_init_mk(Tuplesortstate_mk *state,
 							   int64 maxdistinct);
 
 extern void tuplesort_set_bound(Tuplesortstate *state, int64 bound);
+extern void tuplesort_set_bound_mk(Tuplesortstate_mk *state, int64 bound);
 
 extern void tuplesort_puttupleslot(Tuplesortstate *state, TupleTableSlot *slot);
 extern void tuplesort_puttupleslot_mk(Tuplesortstate_mk *state, TupleTableSlot *slot);
