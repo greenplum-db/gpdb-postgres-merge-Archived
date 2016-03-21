@@ -1514,7 +1514,7 @@ DATA(insert OID = 1156 (  timestamptz_ge   PGNSP PGUID 12 1 0 f f t f i 2 16 "11
 DESCR("greater-than-or-equal");
 DATA(insert OID = 1157 (  timestamptz_gt   PGNSP PGUID 12 1 0 f f t f i 2 16 "1184 1184" _null_ _null_ _null_ timestamp_gt - _null_ _null_ ));
 DESCR("greater-than");
-DATA(insert OID = 1158 (  to_timestamp	   PGNSP PGUID 14 1 0 0 f f t f i 1 0 1184 f "701" _null_ _null_ _null_ _null_ "select (''epoch''::pg_catalog.timestamptz + $1 * ''1 second''::pg_catalog.interval)" - _null_ c _null_ ));
+DATA(insert OID = 1158 (  to_timestamp	   PGNSP PGUID 14 1 0 0 f f t f i 1 0 1184 f "701" _null_ _null_ _null_ _null_ "select (''epoch''::pg_catalog.timestamptz + $1 * ''1 second''::pg_catalog.interval)" - _null_ _null_ c ));
 DESCR("convert UNIX epoch to timestamptz");
 DATA(insert OID = 1159 (  timezone		   PGNSP PGUID 12 1 0 f f t f i 2 1114 "25 1184" _null_ _null_ _null_  timestamptz_zone - _null_ _null_ ));
 DESCR("adjust timestamp to new time zone");
@@ -1689,7 +1689,7 @@ DATA(insert OID = 1296 (  timedate_pl	   PGNSP PGUID 14 1 0 0 f f t f i 2 0 1114
 DESCR("convert time and date to timestamp");
 DATA(insert OID = 1297 (  datetimetz_pl    PGNSP PGUID 12 1 0 f f t f i 2 1184 "1082 1266" _null_ _null_ _null_ datetimetz_timestamptz - _null_ _null_ ));
 DESCR("convert date and time with time zone to timestamp with time zone");
-DATA(insert OID = 1298 (  timetzdate_pl	   PGNSP PGUID 14 1 0 0 f f t f i 2 0 1184 f "1266 1082" _null_ _null_ _null_ _null_ "select ($2 + $1)" - _null_ c _null_ ));
+DATA(insert OID = 1298 (  timetzdate_pl	   PGNSP PGUID 14 1 0 0 f f t f i 2 0 1184 f "1266 1082" _null_ _null_ _null_ _null_ "select ($2 + $1)" - _null_ _null_ c ));
 DESCR("convert time with time zone and date to timestamp with time zone");
 DATA(insert OID = 1299 (  now			   PGNSP PGUID 12 1 0 f f t f s 0 1184 "" _null_ _null_ _null_	now - _null_ _null_ ));
 DESCR("current transaction time");
