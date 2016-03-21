@@ -1,9 +1,5 @@
 # Makefile for PL/Perl
-<<<<<<< HEAD
 # PostgreSQL: pgsql/src/pl/plperl/GNUmakefile
-=======
-# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.33.2.2 2010/05/13 16:42:51 adunstan Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 subdir = src/pl/plperl
 top_builddir = ../../..
@@ -43,7 +39,6 @@ OBJS = plperl.o SPI.o Util.o
 DATA = plperl.control plperl--1.0.sql plperl--unpackaged--1.0.sql \
        plperlu.control plperlu--1.0.sql plperlu--unpackaged--1.0.sql
 
-<<<<<<< HEAD
 PERLCHUNKS = plc_perlboot.pl plc_trusted.pl
 
 SHLIB_LINK = $(perl_embed_ldflags)
@@ -56,15 +51,6 @@ STRESS = plperl_stress
 ifneq ($(PERL),)
 ifeq ($(shell $(PERL) -V:usemultiplicity), usemultiplicity='define';)
 	REGRESS += plperl_plperlu
-=======
-REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-language=plperl  --load-language=plperlu
-REGRESS = plperl plperl_trigger plperl_shared plperl_elog
-# if Perl can support two interpreters in one backend, 
-# test plperl-and-plperlu cases
-ifneq ($(PERL),)
-ifeq ($(shell $(PERL) -V:usemultiplicity), usemultiplicity='define';)
-	REGRESS += plperlu_plperl
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 endif
 endif
 # where to find psql for running the tests
@@ -93,21 +79,6 @@ plperl_opmask.h: plperl_opmask.pl
 
 SPI.c: SPI.xs
 	$(PERL) $(XSUBPPDIR)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap $< >$@
-<<<<<<< HEAD
-=======
-
-# When doing a VPATH build, copy over the .sql and .out files so that the
-# test script can find them.  See comments in src/test/regress/GNUmakefile.
-ifdef VPATH
-
-ifneq ($(PORTNAME),win32)
-abs_srcdir := $(shell cd $(srcdir) && pwd)
-abs_builddir := $(shell pwd)
-else
-abs_srcdir := $(shell cd $(srcdir) && pwd -W)
-abs_builddir := $(shell pwd -W)
-endif
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 Util.c: Util.xs
 	$(PERL) $(XSUBPPDIR)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap $< >$@
@@ -124,22 +95,13 @@ installcheck: submake
 installcheck-stress: submake
 	$(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(STRESS)
 
-<<<<<<< HEAD
-=======
-installcheck: submake
-	$(top_builddir)/src/test/regress/pg_regress --psqldir="$(PSQLDIR)" $(REGRESS_OPTS) $(REGRESS)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 .PHONY: submake
 submake:
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress$(X)
 
 clean distclean maintainer-clean: clean-lib
-<<<<<<< HEAD
 	rm -f SPI.c Util.c $(OBJS) perlchunks.h plperl_opmask.h
-=======
-	rm -f SPI.c $(OBJS) plperl_opmask.h
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	rm -rf results
 	rm -f regression.diffs regression.out
 
