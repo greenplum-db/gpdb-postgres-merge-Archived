@@ -40,17 +40,6 @@ typedef struct NewConstraint
 	List	   *qualstate;		/* Execution state for CHECK */
 } NewConstraint;
 
-/*
- * During attribute re-mapping for heterogeneous partitions, we use
- * this struct to identify which varno's attributes will be re-mapped.
- * Using this struct as a *context* during expression tree walking, we
- * can skip varattnos that do not belong to a given varno.
- */
-typedef struct AttrMapContext{
-	const AttrNumber *newattno; /* The mapping table to remap the varattno */
-	Index varno; /* Which rte's varattno to re-map */
-} AttrMapContext;
-
 extern const char *synthetic_sql;
 
 extern Oid	DefineRelation(CreateStmt *stmt, char relkind, char relstorage);
