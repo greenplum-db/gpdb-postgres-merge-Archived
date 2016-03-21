@@ -397,8 +397,8 @@ DATA(insert OID = 2967 (	pg_authid	   PGNSP PGUID -1 f c t \054 1260 0 0 record_
 DATA(insert OID = 2966 (	pg_auth_members	   PGNSP PGUID -1 f c t \054 1261 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
 #define PG_AUTH_MEMBERS_RELTYPE_OID 2966
 
-DATA(insert OID = 2970 (	pg_database	   PGNSP PGUID -1 f c t \054 1262 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
-#define PG_DATABASE_RELTYPE_OID 2970
+DATA(insert OID = 6996 (	pg_database	   PGNSP PGUID -1 f c t \054 1262 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
+#define PG_DATABASE_RELTYPE_OID 6996
 
 DATA(insert OID = 6995 (	gp_global_sequence	   PGNSP PGUID -1 f c t \054 5096 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
 #define GP_GLOBAL_SEQUENCE_RELTYPE_OID 6995
