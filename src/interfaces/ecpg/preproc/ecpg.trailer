@@ -1600,7 +1600,6 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| INDEXES			{ $$ = make_str("indexes"); }
 		| INHERIT			{ $$ = make_str("inherit"); }
 		| INHERITS			{ $$ = make_str("inherits"); }
-		| INLINE_P			{ $$ = make_str("inline"); }
 		| INSENSITIVE		{ $$ = make_str("insensitive"); }
 		| INSERT			{ $$ = make_str("insert"); }
 		| INSTEAD			{ $$ = make_str("instead"); }
