@@ -347,7 +347,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit,
 
 		if (!notifyCommittedDtxTransactionIsNeeded())
 		{
-			ClearTransactionFromPgProc_UnderLock();
+			ClearTransactionFromPgProc_UnderLock(proc);
 		}
 		else
 		{
@@ -416,13 +416,13 @@ ProcArrayClearTransaction(PGPROC *proc)
  * Must be called while holding the ProcArrayLock.
  */
 void
-ClearTransactionFromPgProc_UnderLock(void)
+ClearTransactionFromPgProc_UnderLock(PGPROC *proc)
 {
 	/*
 	 * ProcArrayClearTransaction() doesn't take the lock, so we can just call it
 	 * directly.
 	 */
-	ProcArrayClearTransaction();
+	ProcArrayClearTransaction(proc);
 }
 
 /*
