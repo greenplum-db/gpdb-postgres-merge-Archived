@@ -2,15 +2,9 @@
  *
  * pg_ctl --- start/stops/restarts the PostgreSQL server
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.92.2.6 2009/01/28 11:19:40 mha Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- *
  * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.92.2.8 2009/11/14 15:39:41 mha Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -149,17 +143,10 @@ static pid_t postmasterPID = -1;
 
 static pgpid_t get_pgpid(void);
 static char **readfile(const char *path);
-<<<<<<< HEAD
 static int start_postmaster(void);
 static void read_post_opts(void);
 
 static PGPing test_postmaster_connection(bool);
-=======
-static int	start_postmaster(void);
-static void read_post_opts(void);
-
-static bool test_postmaster_connection(bool);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static bool postmaster_is_alive(pid_t pid);
 
 static char def_postopts_file[MAXPGPATH];
@@ -473,20 +460,12 @@ start_postmaster(void)
 			snprintf(cmd, MAXPGPATH, "CMD /C " SYSTEMQUOTE "\"%s\" %s%s < \"%s\" 2>&1" SYSTEMQUOTE,
 					postgres_path, pgdata_opt, post_opts, DEVNULL);
 
-<<<<<<< HEAD
 		if (!CreateRestrictedProcess(cmd, &pi, false))
 			return GetLastError();
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
 		return 0;
 	}
-=======
-	if (!CreateRestrictedProcess(cmd, &pi, false))
-		return GetLastError();
-	CloseHandle(pi.hProcess);
-	CloseHandle(pi.hThread);
-	return 0;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif   /* WIN32 */
 }
 
@@ -497,25 +476,16 @@ start_postmaster(void)
  * Note that the checkpoint parameter enables a Windows service control
  * manager checkpoint, it's got nothing to do with database checkpoints!!
  */
-<<<<<<< HEAD
 static PGPing
 test_postmaster_connection(bool do_checkpoint __attribute__((unused)))
-=======
-static bool
-test_postmaster_connection(bool do_checkpoint)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	PGPing		ret = PQPING_NO_RESPONSE;
 	int			i;
 	char		portstr[32];
 	char	   *p;
 	char	   *q;
-<<<<<<< HEAD
 	char		connstr[MAXPGPATH * 2 + 256]; /* Should be way more than enough! */
 	static const char *backend_options = "'-c gp_session_role=utility'";
-=======
-	char		connstr[128];	/* Should be way more than enough! */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	*portstr = '\0';
 	
@@ -523,17 +493,10 @@ test_postmaster_connection(bool do_checkpoint)
 	/*
 	 * Look in post_opts for a -p switch.
 	 *
-<<<<<<< HEAD
 	 * This parsing code is not amazingly bright; it could for instance get
 	 * fooled if ' -p' occurs within a quoted argument value.  Given that few
 	 * people pass complicated settings in post_opts, it's probably good
 	 * enough.
-=======
-	 * This parsing code is not amazingly bright; it could for instance
-	 * get fooled if ' -p' occurs within a quoted argument value.  Given
-	 * that few people pass complicated settings in post_opts, it's
-	 * probably good enough.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	for (p = post_opts; *p;)
 	{
@@ -565,13 +528,8 @@ test_postmaster_connection(bool do_checkpoint)
 	/*
 	 * Search config file for a 'port' option.
 	 *
-<<<<<<< HEAD
 	 * This parsing code isn't amazingly bright either, but it should be okay
 	 * for valid port settings.
-=======
-	 * This parsing code isn't amazingly bright either, but it should be
-	 * okay for valid port settings.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	 */
 	if (!*portstr)
 	{
@@ -623,7 +581,6 @@ test_postmaster_connection(bool do_checkpoint)
 	 * probably timeout first
 	 */
 	snprintf(connstr, sizeof(connstr),
-<<<<<<< HEAD
 			"dbname=postgres port=%s connect_timeout=5 options=%s", portstr, backend_options);
 
 	for (i = 0; i < wait_seconds; i++)
@@ -637,18 +594,6 @@ test_postmaster_connection(bool do_checkpoint)
 		 */
 		if (ret == PQPING_OK || ret == PQPING_NO_ATTEMPT ||
 			ret == PQPING_MIRROR_OR_QUIESCENT)
-=======
-			 "dbname=postgres port=%s connect_timeout=5", portstr);
-
-	for (i = 0; i < wait_seconds; i++)
-	{
-		if ((conn = PQconnectdb(connstr)) != NULL &&
-			(PQstatus(conn) == CONNECTION_OK ||
-			 PQconnectionNeedsPassword(conn)))
-		{
-			PQfinish(conn);
-			success = true;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			break;
 
 #if defined(WIN32)
@@ -667,7 +612,6 @@ test_postmaster_connection(bool do_checkpoint)
 		}
 
 		else
-<<<<<<< HEAD
 #endif
 			print_msg(".");
 
@@ -689,31 +633,6 @@ test_postmaster_connection(bool do_checkpoint)
 				write_stderr(_("%s: postmaster pid %ld not running\n"), progname, pid);
 				return PQPING_NO_RESPONSE;
 			}
-=======
-		{
-			PQfinish(conn);
-
-#if defined(WIN32)
-			if (do_checkpoint)
-			{
-				/*
-				 * Increment the wait hint by 6 secs (connection timeout +
-				 * sleep) We must do this to indicate to the SCM that our
-				 * startup time is changing, otherwise it'll usually send a
-				 * stop signal after 20 seconds, despite incrementing the
-				 * checkpoint counter.
-				 */
-				status.dwWaitHint += 6000;
-				status.dwCheckPoint++;
-				SetServiceStatus(hStatus, (LPSERVICE_STATUS) & status);
-			}
-
-			else
-#endif
-				print_msg(".");
-
-			pg_usleep(1000000); /* 1 sec */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 
 		pg_usleep(1000000); /* 1 sec */
@@ -795,11 +714,7 @@ read_post_opts(void)
 					post_opts = arg1 + 1; /* point past whitespace */
 				}
 				else
-<<<<<<< HEAD
-                    post_opts = "";
-=======
 					post_opts = "";
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				if (postgres_path == NULL)
 					postgres_path = optline;
 			}
@@ -892,11 +807,7 @@ do_start(void)
 	{
 		print_msg(_("waiting for server to start..."));
 
-<<<<<<< HEAD
 		switch (test_postmaster_connection(false))
-=======
-		if (test_postmaster_connection(false) == false)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		{
 			case PQPING_OK:
 				print_msg(_(" done\n"));
@@ -1325,12 +1236,6 @@ pgwin32_CommandLine(bool registration)
 		/* concatenate */
 		sprintf(cmdLine + strlen(cmdLine), " -t %d", wait_seconds);
 
-<<<<<<< HEAD
-=======
-	if (registration && silent_mode)
-		strcat(cmdLine, " -s");
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (post_opts)
 	{
 		strcat(cmdLine, " ");
@@ -1468,11 +1373,7 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR * argv)
 
 	memset(&pi, 0, sizeof(pi));
 
-<<<<<<< HEAD
-        read_post_opts();
-=======
 	read_post_opts();
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Register the control request handler */
 	if ((hStatus = RegisterServiceCtrlHandler(register_servicename, pgwin32_ServiceHandler)) == (SERVICE_STATUS_HANDLE) 0)
@@ -1495,17 +1396,10 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR * argv)
 	if (do_wait)
 	{
 		write_eventlog(EVENTLOG_INFORMATION_TYPE, _("Waiting for server startup...\n"));
-<<<<<<< HEAD
 		if (test_postmaster_connection(true) != PQPING_OK)
 		{
-                	write_eventlog(EVENTLOG_INFORMATION_TYPE, _("Timed out waiting for server startup\n"));
- 			pgwin32_SetServiceStatus(SERVICE_STOPPED);
-=======
-		if (test_postmaster_connection(true) == false)
-		{
-			write_eventlog(EVENTLOG_ERROR_TYPE, _("Timed out waiting for server startup\n"));
+			write_eventlog(EVENTLOG_INFORMATION_TYPE, _("Timed out waiting for server startup\n"));
 			pgwin32_SetServiceStatus(SERVICE_STOPPED);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			return;
 		}
 		write_eventlog(EVENTLOG_INFORMATION_TYPE, _("Server started and accepting connections\n"));
@@ -1515,11 +1409,7 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR * argv)
 	 * Save the checkpoint value as it might have been incremented in
 	 * test_postmaster_connection
 	 */
-<<<<<<< HEAD
-        check_point_start = status.dwCheckPoint;
-=======
 	check_point_start = status.dwCheckPoint;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	pgwin32_SetServiceStatus(SERVICE_RUNNING);
 
@@ -1759,15 +1649,10 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo, bool as_se
 							(osv.dwMajorVersion == 6 && osv.dwMinorVersion == 0))
 						{
 							/*
-<<<<<<< HEAD
 							 * On Windows 7 (and presumably later),
 							 * JOB_OBJECT_UILIMIT_HANDLES prevents us from
 							 * starting as a service. So we only enable it on
 							 * Vista and earlier (version <= 6.0)
-=======
-							 * On Windows 7 (and presumably later), JOB_OBJECT_UILIMIT_HANDLES prevents us from
-							 * starting as a service. So we only enable it on Vista and earlier (version <= 6.0)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 							 */
 							uiRestrictions.UIRestrictionsClass |= JOB_OBJECT_UILIMIT_HANDLES;
 						}
