@@ -284,11 +284,7 @@ ICT     25200    # Indochina Time
                  #     (Asia/Saigon)
                  #     (Asia/Vientiane)
 IDT     10800 D  # Israel Daylight Time
-<<<<<<< HEAD
 IRKST   32400 D  # Irkutsk Summer Time (obsolete)
-=======
-IRKST   32400 D  # Irkutsk Summer Time
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
                  #     (Asia/Irkutsk)
 IRKT    32400    # Irkutsk Time (caution: this used to mean 28800)
                  #     (Asia/Irkutsk)
@@ -337,11 +333,7 @@ PETST   46800 D  # Petropavlovsk-Kamchatski Summer Time
                  #     (Asia/Kamchatka)
 PETT    43200    # Petropavlovsk-Kamchatski Time
                  #     (Asia/Kamchatka)
-<<<<<<< HEAD
 PHT     28800    # Philippine Time (not in zic)
-=======
-PHT     28800    # Phillipine Time (not in zic)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 PKT     18000    # Pakistan Time
                  #     (Asia/Karachi)
 PKST    21600 D  # Pakistan Summer Time

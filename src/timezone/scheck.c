@@ -3,11 +3,7 @@
  * 2006-07-17 by Arthur David Olson.
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/timezone/scheck.c,v 1.9 2008/02/16 21:16:04 tgl Exp $
-=======
- *	  $PostgreSQL: pgsql/src/timezone/scheck.c,v 1.8 2007/10/26 13:30:10 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 
 #include "postgres_fe.h"
