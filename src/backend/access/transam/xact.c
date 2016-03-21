@@ -1172,6 +1172,8 @@ RecordTransactionCommit(void)
 		START_CRIT_SECTION();
 		MyProc->inCommit = true;
 
+		MIRRORED_LOCK;
+
 		SetCurrentTransactionStopTimestamp();
 		xlrec.xact_time = xactStopTimestamp;
 		xlrec.persistentCommitObjectCount = persistentCommitObjectCount;

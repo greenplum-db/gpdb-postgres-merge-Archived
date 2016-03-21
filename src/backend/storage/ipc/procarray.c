@@ -274,7 +274,8 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit,
 		 * taking a snapshot.  See discussion in
 		 * src/backend/access/transam/README.
 		 */
-		Assert(TransactionIdIsValid(proc->xid));
+		Assert(TransactionIdIsValid(proc->xid) ||
+			   (IsBootstrapProcessingMode() && latestXid == BootstrapTransactionId));
 
 		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 
@@ -284,6 +285,8 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit,
 		/* must be cleared with xid/xmin: */
 		proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
 		proc->inCommit = false; /* be sure this is cleared in abort */
+		proc->serializableIsoLevel = false;
+		proc->inDropTransaction = false;
 
 		/* Clear the subtransaction-XID cache too while holding the lock */
 		proc->subxids.nxids = 0;
@@ -345,11 +348,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit,
 				&MyProc->localDistribXactRef);
 		}
 
-		if (!notifyCommittedDtxTransactionIsNeeded())
-		{
-			ClearTransactionFromPgProc_UnderLock(proc);
-		}
-		else
+		if (notifyCommittedDtxTransactionIsNeeded())
 		{
 			if (needNotifyCommittedDtxTransaction)
 				*needNotifyCommittedDtxTransaction = true;
@@ -402,7 +401,7 @@ ProcArrayClearTransaction(PGPROC *proc)
 	/* redundant, but just in case */
 	proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
 	proc->inCommit = false;
-	MyProc->serializableIsoLevel = false;
+	proc->serializableIsoLevel = false;
 	proc->inDropTransaction = false;
 
 	/* Clear the subtransaction-XID cache too */
