@@ -5,11 +5,7 @@
 /* test automatic prepare for all statements */
 EXEC SQL INCLUDE ../regression;
 
-<<<<<<< HEAD
 int main() {
-=======
-int main(int argc, char* argv[]) {
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
   EXEC SQL BEGIN DECLARE SECTION;
   	int item[4], ind[4], i = 1;
   EXEC SQL END DECLARE SECTION;

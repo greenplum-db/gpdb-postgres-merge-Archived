@@ -8,17 +8,10 @@
  *
  * This code is released under the terms of the PostgreSQL License.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress_ecpg.c,v 1.5 2009/01/01 17:24:02 momjian Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress_ecpg.c,v 1.4 2008/01/01 19:46:00 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -170,7 +163,6 @@ ecpg_init(void)
 {
 	/* no reason to set -w for ecpg checks, except for when on windows */
 	if (strstr(host_platform, "-win32") || strstr(host_platform, "-mingw32"))
-<<<<<<< HEAD
 		basic_diff_opts = "-w -I NOTICE: -I HINT: -I CONTEXT: -I GP_IGNORE:";
 	else
 		basic_diff_opts = " -I NOTICE: -I HINT: -I CONTEXT: -I GP_IGNORE:";
@@ -178,15 +170,6 @@ ecpg_init(void)
 		pretty_diff_opts = "-C3 -w -I NOTICE: -I HINT: -I CONTEXT: -I GP_IGNORE:";
 	else
 		pretty_diff_opts = "-C3 -I NOTICE: -I HINT: -I CONTEXT: -I GP_IGNORE:";
-=======
-		basic_diff_opts = "-w";
-	else
-		basic_diff_opts = "";
-	if (strstr(host_platform, "-win32") || strstr(host_platform, "-mingw32"))
-		pretty_diff_opts = "-C3 -w";
-	else
-		pretty_diff_opts = "-C3";
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 int

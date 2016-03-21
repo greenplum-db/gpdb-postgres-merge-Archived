@@ -4,16 +4,11 @@
  *	  lexical token lookup for reserved words in postgres embedded SQL
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.40 2009/06/11 14:49:13 momjian Exp $
-=======
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.37 2007/11/15 21:14:45 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
 
-<<<<<<< HEAD
 #include "postgres_fe.h"
 
 #include <ctype.h>
@@ -21,8 +16,6 @@
 #include "extern.h"
 #include "preproc.h"
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * List of (keyword-name, keyword-token-value) pairs.
  *
@@ -30,7 +23,6 @@
  *		 search is used to locate entries.
  */
 static const ScanKeyword ScanECPGKeywords[] = {
-<<<<<<< HEAD
 	/* name, value, category */
 
 	/*
@@ -159,52 +151,3 @@ ScanECPGKeywordLookup(const char *text)
 
 	return DoLookup(word, &ScanECPGKeywords[0], endof(ScanECPGKeywords) - 1);
 }
-=======
-	/* name					value			*/
-	{"allocate", SQL_ALLOCATE},
-	{"autocommit", SQL_AUTOCOMMIT},
-	{"bool", SQL_BOOL},
-	{"break", SQL_BREAK},
-	{"call", SQL_CALL},
-	{"cardinality", SQL_CARDINALITY},
-	{"connect", SQL_CONNECT},
-	{"continue", SQL_CONTINUE},
-	{"count", SQL_COUNT},
-	{"data", SQL_DATA},
-	{"datetime_interval_code", SQL_DATETIME_INTERVAL_CODE},
-	{"datetime_interval_precision", SQL_DATETIME_INTERVAL_PRECISION},
-	{"describe", SQL_DESCRIBE},
-	{"descriptor", SQL_DESCRIPTOR},
-	{"disconnect", SQL_DISCONNECT},
-	{"found", SQL_FOUND},
-	{"free", SQL_FREE},
-	{"go", SQL_GO},
-	{"goto", SQL_GOTO},
-	{"identified", SQL_IDENTIFIED},
-	{"indicator", SQL_INDICATOR},
-	{"key_member", SQL_KEY_MEMBER},
-	{"length", SQL_LENGTH},
-	{"long", SQL_LONG},
-	{"nullable", SQL_NULLABLE},
-	{"octet_length", SQL_OCTET_LENGTH},
-	{"open", SQL_OPEN},
-	{"output", SQL_OUTPUT},
-	{"reference", SQL_REFERENCE},
-	{"returned_length", SQL_RETURNED_LENGTH},
-	{"returned_octet_length", SQL_RETURNED_OCTET_LENGTH},
-	{"scale", SQL_SCALE},
-	{"section", SQL_SECTION},
-	{"short", SQL_SHORT},
-	{"signed", SQL_SIGNED},
-	{"sql", SQL_SQL},			/* strange thing, used for into sql descriptor
-								 * MYDESC; */
-	{"sqlerror", SQL_SQLERROR},
-	{"sqlprint", SQL_SQLPRINT},
-	{"sqlwarning", SQL_SQLWARNING},
-	{"stop", SQL_STOP},
-	{"struct", SQL_STRUCT},
-	{"unsigned", SQL_UNSIGNED},
-	{"var", SQL_VAR},
-	{"whenever", SQL_WHENEVER},
-};
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

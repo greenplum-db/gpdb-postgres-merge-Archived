@@ -1,11 +1,7 @@
 /*
  * this is a small part of c.h since we don't want to leak all postgres
  * definitions into ecpg programs
-<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpglib.h,v 1.79 2009/06/11 14:49:13 momjian Exp $
-=======
- * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpglib.h,v 1.74.2.2 2008/03/20 16:30:14 meskes Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 
 #ifndef _ECPGLIB_H
@@ -58,7 +54,6 @@ bool		ECPGconnect(int, int, const char *, const char *, const char *, const char
 bool		ECPGdo(const int, const int, const int, const char *, const bool, const int, const char *,...);
 bool		ECPGtrans(int, const char *, const char *);
 bool		ECPGdisconnect(int, const char *);
-<<<<<<< HEAD
 bool		ECPGprepare(int, const char *, const bool, const char *, const char *);
 bool		ECPGdeallocate(int, int, const char *, const char *);
 bool		ECPGdeallocate_all(int, int, const char *);
@@ -67,16 +62,6 @@ PGconn	   *ECPGget_PGconn(const char *);
 
 
 char	   *ECPGerrmsg(void);
-=======
-bool		ECPGprepare(int, const char *, const int, const char *, const char *);
-bool		ECPGdeallocate(int, int, const char *, const char *);
-bool		ECPGdeallocate_all(int, int, const char *);
-char	        *ECPGprepared_statement(const char *, const char *, int);
-PGconn		*ECPGget_PGconn(const char *);
-
-
-char		*ECPGerrmsg(void);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
  /* print an error message */
 void		sqlprint(void);
@@ -84,11 +69,7 @@ void		sqlprint(void);
 /* define this for simplicity as well as compatibility */
 
 #define		SQLCODE		sqlca.sqlcode
-<<<<<<< HEAD
 #define		SQLSTATE		sqlca.sqlstate
-=======
-#define		SQLSTATE        sqlca.sqlstate
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* dynamic SQL */
 
@@ -96,13 +77,13 @@ bool		ECPGdo_descriptor(int, const char *, const char *, const char *);
 bool		ECPGdeallocate_desc(int, const char *);
 bool		ECPGallocate_desc(int, const char *);
 bool		ECPGget_desc_header(int, const char *, int *);
-bool		ECPGget_desc(int, const char *, int, ...);
+bool		ECPGget_desc(int, const char *, int,...);
 bool		ECPGset_desc_header(int, const char *, int);
-bool		ECPGset_desc(int, const char *, int, ...);
+bool		ECPGset_desc(int, const char *, int,...);
 
 void		ECPGset_noind_null(enum ECPGttype, void *);
 bool		ECPGis_noind_null(enum ECPGttype, void *);
-bool		ECPGdescribe(int, bool, const char *, ...);
+bool		ECPGdescribe(int, bool, const char *,...);
 
 /* dynamic result allocation */
 void		ECPGfree_auto_mem(void);

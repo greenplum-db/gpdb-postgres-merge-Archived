@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.59 2009/06/11 14:49:13 momjian Exp $ */
-=======
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.54 2008/01/08 01:14:52 tgl Exp $ */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -766,14 +762,9 @@ rfmtlong(long lng_val, char *fmt, char *outbuf)
 	}
 
 	/* put all info about the long in a struct */
-<<<<<<< HEAD
 	if (initValue(lng_val) == -1)
 	{
 		free(temp);
-=======
-	if (!temp || initValue(lng_val) == -1)
-	{
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		errno = ENOMEM;
 		return -1;
 	}
@@ -1017,16 +1008,11 @@ ECPG_informix_set_var(int number, void *pointer, int lineno)
 	{
 		struct sqlca_t *sqlca = ECPGget_sqlca();
 
-<<<<<<< HEAD
 		/* replace constant for strncpy() below to avoid bogus warning from gcc-4.1.1 on kite12 */
 		char my_msg[6]="YE001";
 
 		sqlca->sqlcode = ECPG_OUT_OF_MEMORY;
 		strncpy(sqlca->sqlstate, my_msg, sizeof(my_msg));
-=======
-		sqlca->sqlcode = ECPG_OUT_OF_MEMORY;
-		strncpy(sqlca->sqlstate, "YE001", sizeof("YE001"));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc), "Out of memory in line %d.", lineno);
 		sqlca->sqlerrm.sqlerrml = strlen(sqlca->sqlerrm.sqlerrmc);
 		/* free all memory we have allocated for the user */

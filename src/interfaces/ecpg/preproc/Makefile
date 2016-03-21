@@ -2,15 +2,9 @@
 #
 # Makefile for src/interfaces/ecpg/preproc
 #
-<<<<<<< HEAD
 # Copyright (c) 1998-2009, PostgreSQL Global Development Group
 #
 # $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.142 2009/03/07 00:13:58 alvherre Exp $
-=======
-# Copyright (c) 1998-2008, PostgreSQL Global Development Group
-#
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.130.2.1 2008/03/20 16:04:52 meskes Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +14,6 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
 MAJOR_VERSION= 4
-<<<<<<< HEAD
 MINOR_VERSION= 5
 PATCHLEVEL=0
 
@@ -28,10 +21,6 @@ PATCHLEVEL=0
 LIBS := $(filter-out -lresolv -lbz2, $(LIBS))
 # This program isn't interactive, so doesn't need these
 LIBS := $(filter-out -lreadline -ledit -ltermcap -lncurses -lcurses -lcurl -lssl -lcrypto -lz, $(LIBS))
-=======
-MINOR_VERSION= 4
-PATCHLEVEL=1
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
 	-I$(srcdir) -DMAJOR_VERSION=$(MAJOR_VERSION) \
@@ -44,11 +33,7 @@ endif
 override CFLAGS += $(PTHREAD_CFLAGS) -DECPG_COMPILE
 
 OBJS=	preproc.o type.o ecpg.o output.o parser.o \
-<<<<<<< HEAD
 	keywords.o c_keywords.o ecpg_keywords.o kwlookup.o ../ecpglib/typename.o descriptor.o variable.o \
-=======
-	keywords.o c_keywords.o ../ecpglib/typename.o descriptor.o variable.o \
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	$(WIN32RES)
 
 all: submake-libpgport ecpg
@@ -75,7 +60,6 @@ else
 	@$(missing) flex $< $@
 endif
 
-<<<<<<< HEAD
 $(srcdir)/preproc.y: $(top_srcdir)/src/backend/parser/gram.y parse.pl ecpg.addons ecpg.header ecpg.tokens ecpg.trailer ecpg.type
 	$(PERL) $(srcdir)/parse.pl $(srcdir) < $< > $@ 
 
@@ -83,9 +67,6 @@ ecpg_keywords.o c_keywords.o keywords.o preproc.o parser.o: preproc.h
 
 kwlookup.c: % : $(top_srcdir)/src/backend/parser/%
 	rm -f $@ && $(LN_S) $< .
-=======
-c_keywords.o keywords.o preproc.o parser.o: preproc.h
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 distprep: $(srcdir)/preproc.y $(srcdir)/preproc.c $(srcdir)/preproc.h $(srcdir)/pgc.c
 

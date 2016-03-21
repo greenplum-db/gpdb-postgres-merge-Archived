@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.54 2009/06/11 14:49:13 momjian Exp $ */
-=======
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.48.2.1 2008/03/20 16:30:14 meskes Exp $ */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -148,22 +144,14 @@ ecpg_finish(struct connection * act)
 		if (actual_connection == act)
 			actual_connection = all_connections;
 
-<<<<<<< HEAD
 		ecpg_log("ecpg_finish: connection %s closed\n", act->name ? act->name : "(null)");
-=======
-		ecpg_log("ecpg_finish: Connection %s closed.\n", act->name);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		for (cache = act->cache_head; cache; ptr = cache, cache = cache->next, ecpg_free(ptr));
 		ecpg_free(act->name);
 		ecpg_free(act);
 	}
 	else
-<<<<<<< HEAD
 		ecpg_log("ecpg_finish: called an extra time\n");
-=======
-		ecpg_log("ecpg_finish: called an extra time.\n");
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 bool
@@ -175,11 +163,7 @@ ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
 	if (!ecpg_init(con, connection_name, lineno))
 		return (false);
 
-<<<<<<< HEAD
 	ecpg_log("ECPGsetcommit on line %d: action \"%s\"; connection \"%s\"\n", lineno, mode, con->name);
-=======
-	ecpg_log("ECPGsetcommit line %d action = %s connection = %s\n", lineno, mode, con->name);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (con->autocommit == true && strncmp(mode, "off", strlen("off")) == 0)
 	{
@@ -245,11 +229,7 @@ ECPGnoticeReceiver(void *arg, const PGresult *result)
 	if (strncmp(sqlstate, "00", 2) == 0)
 		return;
 
-<<<<<<< HEAD
 	ecpg_log("ECPGnoticeReceiver: %s\n", message);
-=======
-	ecpg_log("ECPGnoticeReceiver %s\n", message);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* map to SQLCODE for backward compatibility */
 	if (strcmp(sqlstate, ECPG_SQLSTATE_INVALID_CURSOR_NAME) == 0)
@@ -290,10 +270,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 	enum COMPAT_MODE compat = c;
 	struct connection *this;
-<<<<<<< HEAD
 	int			i;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	char	   *dbname = name ? ecpg_strdup(name, lineno) : NULL,
 			   *host = NULL,
 			   *tmp,
@@ -383,12 +360,8 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 				tmp = last_dir_separator(dbname + offset);
 				if (tmp != NULL)	/* database name given */
 				{
-<<<<<<< HEAD
 					if (tmp[1] != '\0') /* non-empty database name */
 						realname = ecpg_strdup(tmp + 1, lineno);
-=======
-					realname = ecpg_strdup(tmp + 1, lineno);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					*tmp = '\0';
 				}
 
@@ -404,13 +377,8 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 						host = ecpg_strdup(tmp + 1, lineno);
 						if (strncmp(dbname, "unix:", 5) != 0)
 						{
-<<<<<<< HEAD
 							ecpg_log("ECPGconnect: socketname %s given for TCP connection on line %d\n", host, lineno);
 							ecpg_raise(lineno, ECPG_CONNECT, ECPG_SQLSTATE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION, realname ? realname : ecpg_gettext("<DEFAULT>"));
-=======
-							ecpg_log("ECPGconnect: socketname %s given for TCP connection in line %d\n", host, lineno);
-							ecpg_raise(lineno, ECPG_CONNECT, ECPG_SQLSTATE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION, realname ? realname : "<DEFAULT>");
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 							if (host)
 								ecpg_free(host);
 
@@ -435,13 +403,8 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 				{
 					if (strcmp(dbname + offset, "localhost") != 0 && strcmp(dbname + offset, "127.0.0.1") != 0)
 					{
-<<<<<<< HEAD
 						ecpg_log("ECPGconnect: non-localhost access via sockets on line %d\n", lineno);
 						ecpg_raise(lineno, ECPG_CONNECT, ECPG_SQLSTATE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION, realname ? realname : ecpg_gettext("<DEFAULT>"));
-=======
-						ecpg_log("ECPGconnect: non-localhost access via sockets in line %d\n", lineno);
-						ecpg_raise(lineno, ECPG_CONNECT, ECPG_SQLSTATE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION, realname ? realname : "<DEFAULT>");
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 						if (host)
 							ecpg_free(host);
 						if (port)
@@ -507,18 +470,13 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 #endif
 	actual_connection = all_connections;
 
-<<<<<<< HEAD
 	ecpg_log("ECPGconnect: opening database %s on %s port %s %s%s %s%s\n",
-=======
-	ecpg_log("ECPGconnect: opening database %s on %s port %s %s%s%s%s\n",
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			 realname ? realname : "<DEFAULT>",
 			 host ? host : "<DEFAULT>",
 			 port ? (ecpg_internal_regression_mode ? "<REGRESSION_PORT>" : port) : "<DEFAULT>",
 			 options ? "with options " : "", options ? options : "",
 			 user ? "for user " : "", user ? user : "");
 
-<<<<<<< HEAD
 	connect_string = ecpg_alloc(strlen_or_null(host)
 								+ strlen_or_null(port)
 								+ strlen_or_null(options)
@@ -555,28 +513,13 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 		ecpg_free(options);
 	if (dbname)
 		ecpg_free(dbname);
-=======
-	this->connection = PQsetdbLogin(host, port, options, NULL, realname, user, passwd);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (PQstatus(this->connection) == CONNECTION_BAD)
 	{
 		const char *errmsg = PQerrorMessage(this->connection);
-<<<<<<< HEAD
 		const char *db = realname ? realname : ecpg_gettext("<DEFAULT>");
 
 		ecpg_log("ECPGconnect: could not open database: %s\n", errmsg);
-=======
-		const char *db = realname ? realname : "<DEFAULT>";
-
-		ecpg_log("ECPGconnect: could not open database %s on %s port %s %s%s%s%s in line %d\n\t%s\n",
-				 db,
-				 host ? host : "<DEFAULT>",
-				 port ? (ecpg_internal_regression_mode ? "<REGRESSION_PORT>" : port) : "<DEFAULT>",
-				 options ? "with options " : "", options ? options : "",
-				 user ? "for user " : "", user ? user : "",
-				 lineno, errmsg);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		ecpg_finish(this);
 #ifdef ENABLE_THREAD_SAFETY
@@ -584,22 +527,9 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 #endif
 
 		ecpg_raise(lineno, ECPG_CONNECT, ECPG_SQLSTATE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION, db);
-<<<<<<< HEAD
 		if (realname)
 			ecpg_free(realname);
 
-=======
-		if (host)
-			ecpg_free(host);
-		if (port)
-			ecpg_free(port);
-		if (options)
-			ecpg_free(options);
-		if (realname)
-			ecpg_free(realname);
-		if (dbname)
-			ecpg_free(dbname);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		return false;
 	}
 
@@ -610,20 +540,6 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 	pthread_mutex_unlock(&connections_mutex);
 #endif
 
-<<<<<<< HEAD
-=======
-	if (host)
-		ecpg_free(host);
-	if (port)
-		ecpg_free(port);
-	if (options)
-		ecpg_free(options);
-	if (realname)
-		ecpg_free(realname);
-	if (dbname)
-		ecpg_free(dbname);
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	this->committed = true;
 	this->autocommit = autocommit;
 
@@ -675,7 +591,6 @@ ECPGdisconnect(int lineno, const char *connection_name)
 	return true;
 }
 
-<<<<<<< HEAD
 PGconn *
 ECPGget_PGconn(const char *connection_name)
 {
@@ -684,14 +599,6 @@ ECPGget_PGconn(const char *connection_name)
 	con = ecpg_get_connection(connection_name);
 	if (con == NULL)
 		return NULL;
-=======
-PGconn* ECPGget_PGconn(const char *connection_name)
-{
-	struct connection * con;
-
-	con=ecpg_get_connection(connection_name);
-	if (con==NULL) return NULL;    
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	return con->connection;
 }

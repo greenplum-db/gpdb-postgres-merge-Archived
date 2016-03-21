@@ -1,10 +1,6 @@
 /* dynamic SQL support routines
  *
-<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.32 2009/06/11 14:49:13 momjian Exp $
-=======
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.29 2008/01/15 10:31:47 meskes Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 
 #define POSTGRES_ECPG_INTERNAL
@@ -103,11 +99,7 @@ ECPGget_desc_header(int lineno, const char *desc_name, int *count)
 
 	*count = PQnfields(ECPGresult);
 	sqlca->sqlerrd[2] = 1;
-<<<<<<< HEAD
 	ecpg_log("ECPGget_desc_header: found %d attributes\n", *count);
-=======
-	ecpg_log("ECPGget_desc_header: found %d attributes.\n", *count);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	return true;
 }
 
@@ -389,11 +381,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 				 */
 				if (arrsize > 0 && ntuples > arrsize)
 				{
-<<<<<<< HEAD
 					ecpg_log("ECPGget_desc on line %d: incorrect number of matches; %d don't fit into array of %d\n",
-=======
-					ecpg_log("ECPGget_desc line %d: Incorrect number of matches: %d don't fit into array of %d\n",
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 							 lineno, ntuples, arrsize);
 					ecpg_raise(lineno, ECPG_TOO_MANY_MATCHES, ECPG_SQLSTATE_CARDINALITY_VIOLATION, NULL);
 					return false;
@@ -462,11 +450,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 		 */
 		if (data_var.ind_arrsize > 0 && ntuples > data_var.ind_arrsize)
 		{
-<<<<<<< HEAD
 			ecpg_log("ECPGget_desc on line %d: incorrect number of matches (indicator); %d don't fit into array of %d\n",
-=======
-			ecpg_log("ECPGget_desc line %d: Incorrect number of matches (indicator): %d don't fit into array of %d\n",
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 					 lineno, ntuples, data_var.ind_arrsize);
 			ecpg_raise(lineno, ECPG_TOO_MANY_MATCHES, ECPG_SQLSTATE_CARDINALITY_VIOLATION, NULL);
 			return false;
@@ -545,11 +529,7 @@ ECPGset_desc(int lineno, const char *desc_name, int index,...)
 	for (;;)
 	{
 		enum ECPGdtype itemtype;
-<<<<<<< HEAD
 		char	   *tobeinserted = NULL;
-=======
-		char *tobeinserted = NULL;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		itemtype = va_arg(args, enum ECPGdtype);
 
@@ -744,10 +724,6 @@ ecpg_find_desc(int line, const char *name)
 bool
 ECPGdescribe(int line, bool input, const char *statement,...)
 {
-<<<<<<< HEAD
 	ecpg_log("ECPGdescribe called on line %d for %s: %s\n", line, input ? "input" : "output", statement);
-=======
-	ecpg_log("ECPGdescribe called on line %d for %s in %s\n", line, (input) ? "input" : "output", statement);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	return false;
 }

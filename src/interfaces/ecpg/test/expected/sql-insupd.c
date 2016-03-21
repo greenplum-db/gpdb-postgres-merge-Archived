@@ -1,9 +1,5 @@
 /* Processed by ecpg (regression mode) */
 /* These include files are added by the preprocessor */
-<<<<<<< HEAD
-=======
-#include <ecpgtype.h>
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include <ecpglib.h>
 #include <ecpgerrno.h>
 #include <sqlca.h>
@@ -26,20 +22,12 @@
 #line 5 "insupd.pgc"
 
 
-<<<<<<< HEAD
 int main() {
-=======
-int main(int argc, char* argv[]) {
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
   /* exec sql begin declare section */
   	  
   
 #line 9 "insupd.pgc"
-<<<<<<< HEAD
  int i1 [ 3 ] , i2 [ 3 ] ;
-=======
- int  i1 [ 3 ]    ,  i2 [ 3 ]    ;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* exec sql end declare section */
 #line 10 "insupd.pgc"
 
@@ -56,11 +44,7 @@ int main(int argc, char* argv[]) {
 #line 16 "insupd.pgc"
 
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table insupd_test ( a int , b int )", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table insupd_test ( a int   , b int   )    ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 18 "insupd.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -70,11 +54,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 18 "insupd.pgc"
 
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into insupd_test ( a , b ) values ( 1 , 1 )", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into insupd_test ( a  , b  ) values ( 1 , 1 ) ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 20 "insupd.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -83,11 +63,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 20 "insupd.pgc"
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into insupd_test ( a , b ) values ( 2 , 2 )", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into insupd_test ( a  , b  ) values ( 2 , 2 ) ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 21 "insupd.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -96,11 +72,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 21 "insupd.pgc"
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into insupd_test ( a , b ) values ( 3 , 3 )", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into insupd_test ( a  , b  ) values ( 3 , 3 ) ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 22 "insupd.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -110,11 +82,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 22 "insupd.pgc"
 
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "update insupd_test set a = a + 1", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "update insupd_test set a  = a + 1   ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 24 "insupd.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -123,11 +91,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 24 "insupd.pgc"
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "update insupd_test set ( a , b ) = ( 5 , 5 ) where a = 4", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "update insupd_test set ( a  , b  )= ( 5 , 5 )  where a = 4 ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 25 "insupd.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -136,11 +100,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 25 "insupd.pgc"
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "update insupd_test set a = 4 where a = 3", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "update insupd_test set a  = 4  where a = 3 ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 26 "insupd.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -150,11 +110,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 26 "insupd.pgc"
 ;
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select a , b from insupd_test order by a", ECPGt_EOIT, 
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  a , b  from insupd_test    order by a  ", ECPGt_EOIT, 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_int,(i1),(long)1,(long)3,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_int,(i2),(long)1,(long)3,sizeof(int), 

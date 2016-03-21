@@ -64,11 +64,7 @@ main(void)
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 24 "execute.pgc"
 
-<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table test ( name char ( 8 ) , amount int , letter char ( 1 ) )", ECPGt_EOIT, ECPGt_EORT);
-=======
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table test ( name char  ( 8 )    , amount int   , letter char  ( 1 )    )    ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 25 "execute.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -140,19 +136,11 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 49 "execute.pgc"
 
-<<<<<<< HEAD
 	/* declare CUR cursor for $1 */
 #line 50 "execute.pgc"
 
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare CUR cursor for $1", 
-=======
-	/* declare CUR  cursor  for $1 */
-#line 50 "execute.pgc"
-
-
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare CUR  cursor  for $1", 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_char_variable,(ECPGprepared_statement(NULL, "f", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 52 "execute.pgc"
@@ -213,19 +201,11 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 71 "execute.pgc"
 
-<<<<<<< HEAD
 	/* declare CUR2 cursor for $1 */
 #line 72 "execute.pgc"
 
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare CUR2 cursor for $1", 
-=======
-	/* declare CUR2  cursor  for $1 */
-#line 72 "execute.pgc"
-
-
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare CUR2  cursor  for $1", 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_char_variable,(ECPGprepared_statement(NULL, "f", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_const,"1",(long)1,(long)1,strlen("1"), 
@@ -255,17 +235,10 @@ if (sqlca.sqlcode < 0) sqlprint();}
 		   
 		
 #line 80 "execute.pgc"
-<<<<<<< HEAD
  char n [ 8 ] , l = letter [ i ] [ 0 ] ;
  
 #line 81 "execute.pgc"
  int a = amount [ i ] ;
-=======
- char  n [ 8 ]    ,  l   = letter [ i ] [ 0 ] ;
- 
-#line 81 "execute.pgc"
- int  a   = amount [ i ] ;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* exec sql end declare section */
 #line 82 "execute.pgc"
 
@@ -280,17 +253,12 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 88 "execute.pgc"
 
-<<<<<<< HEAD
 	{ ECPGdeallocate(__LINE__, 0, NULL, "f");
-=======
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table test ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 89 "execute.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 89 "execute.pgc"
 
-<<<<<<< HEAD
 
 	sprintf (command, "select * from test where amount = $1");
 
@@ -354,19 +322,9 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 	{ ECPGdisconnect(__LINE__, "CURRENT");
 #line 110 "execute.pgc"
-=======
-	{ ECPGtrans(__LINE__, NULL, "commit");
-#line 90 "execute.pgc"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 110 "execute.pgc"
-
-	{ ECPGdisconnect(__LINE__, "CURRENT");
-#line 91 "execute.pgc"
-
-if (sqlca.sqlcode < 0) sqlprint();}
-#line 91 "execute.pgc"
 
 
 	return (0);

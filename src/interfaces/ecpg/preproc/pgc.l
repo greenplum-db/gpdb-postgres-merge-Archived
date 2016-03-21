@@ -7,20 +7,12 @@
  * This is a modified version of src/backend/parser/scan.l
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.169 2009/01/23 12:43:32 petere Exp $
-=======
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.159.2.3 2008/02/17 18:42:23 meskes Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -457,7 +449,6 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 				BEGIN(xe);
 				startlit();
 			}
-<<<<<<< HEAD
 <SQL>{xusstart}	{
 				token_start = yytext;
 				state_before = YYSTATE;
@@ -465,8 +456,6 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 				startlit();
 				addlit(yytext, yyleng);
 			}
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 <xq,xqc>{quotestop} |
 <xq,xqc>{quotefail} {
 				yyless(1);
@@ -488,7 +477,6 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 				yylval.str = mm_strdup(literalbuf);
 				return NCONST;
 			}
-<<<<<<< HEAD
 <xus>{xusstop} {
 				addlit(yytext, yyleng);
 				BEGIN(state_before);
@@ -496,36 +484,21 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 				return UCONST;
 			}
 <xq,xe,xn,xus>{xqdouble}	{ addlitchar('\''); }
-=======
-<xq,xe,xn>{xqdouble}	{ addlitchar('\''); }
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 <xqc>{xqcquote}		{
 				addlitchar('\\');
 				addlitchar('\'');
 			}
-<<<<<<< HEAD
 <xq,xqc,xn,xus>{xqinside}	{ addlit(yytext, yyleng); }
-=======
-<xq,xqc,xn>{xqinside}	{ addlit(yytext, yyleng); }
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 <xe>{xeinside}		{ addlit(yytext, yyleng); }
 <xe>{xeescape}  	{ addlit(yytext, yyleng); }
 <xe>{xeoctesc}		{ addlit(yytext, yyleng); }
 <xe>{xehexesc}		{ addlit(yytext, yyleng); }
-<<<<<<< HEAD
 <xq,xqc,xe,xn,xus>{quotecontinue}	{ /* ignore */ }
-=======
-<xq,xqc,xe,xn>{quotecontinue}	{ /* ignore */ }
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 <xe>.                   {
 			   /* This is only needed for \ just before EOF */
 			   addlitchar(yytext[0]);
 			}
-<<<<<<< HEAD
 <xq,xqc,xe,xn,xus><<EOF>>	{ mmerror(PARSE_ERROR, ET_FATAL, "unterminated quoted string"); }
-=======
-<xq,xqc,xe,xn><<EOF>>	{ mmerror(PARSE_ERROR, ET_FATAL, "Unterminated quoted string"); }
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 <SQL>{dolqfailed}	{
 				/* throw back all but the initial "$" */
 				yyless(1);
@@ -751,11 +724,7 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 						if (!isdefine())
 						{
 							/* Is it an SQL/ECPG keyword? */
-<<<<<<< HEAD
 							keyword = ScanECPGKeywordLookup(yytext);
-=======
-							keyword = ScanKeywordLookup(yytext);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 							if (keyword != NULL)
 								return keyword->value;
 

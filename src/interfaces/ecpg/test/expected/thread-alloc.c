@@ -1,9 +1,5 @@
 /* Processed by ecpg (regression mode) */
 /* These include files are added by the preprocessor */
-<<<<<<< HEAD
-=======
-#include <ecpgtype.h>
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include <ecpglib.h>
 #include <ecpgerrno.h>
 #include <sqlca.h>
@@ -137,7 +133,6 @@ static void* fn(void* arg)
 	   
 	
 #line 39 "alloc.pgc"
-<<<<<<< HEAD
  int value ;
  
 #line 40 "alloc.pgc"
@@ -145,15 +140,6 @@ static void* fn(void* arg)
  
 #line 41 "alloc.pgc"
  char ** r = NULL ;
-=======
- int  value    ;
- 
-#line 40 "alloc.pgc"
- char  name [ 100 ]    ;
- 
-#line 41 "alloc.pgc"
- char ** r   = NULL ;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* exec sql end declare section */
 #line 42 "alloc.pgc"
 
@@ -175,11 +161,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 	for (i = 1; i <= REPEATS; ++i)
 	{
-<<<<<<< HEAD
 		{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select relname from pg_class where relname = 'pg_class'", ECPGt_EOIT, 
-=======
-		{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  relname  from pg_class where relname = 'pg_class'  ", ECPGt_EOIT, 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_char,&(r),(long)0,(long)0,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 51 "alloc.pgc"
@@ -203,11 +185,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	return 0;
 }
 
-<<<<<<< HEAD
 int main ()
-=======
-int main (int argc, char** argv)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	int i;
 #ifdef WIN32

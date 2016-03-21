@@ -119,21 +119,13 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 17 "define.pgc"
 
 
-<<<<<<< HEAD
    { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table test ( a int , b text )", ECPGt_EOIT, ECPGt_EORT);
-=======
-   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table test ( a int   , b text    )    ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 19 "define.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 19 "define.pgc"
 
-<<<<<<< HEAD
    { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test values ( 29 , 'abcdef' )", ECPGt_EOIT, ECPGt_EORT);
-=======
-   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test values ( 29 , 'abcdef' ) ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 20 "define.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
@@ -141,11 +133,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 
 
    
-<<<<<<< HEAD
    { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test values ( null , 'defined' )", ECPGt_EOIT, ECPGt_EORT);
-=======
-   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test values ( null , 'defined' ) ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 23 "define.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
@@ -158,11 +146,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
    
            
    
-<<<<<<< HEAD
    { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test values ( null , 'someothervar not defined' )", ECPGt_EOIT, ECPGt_EORT);
-=======
-   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test values ( null , 'someothervar not defined' ) ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 31 "define.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
@@ -172,11 +156,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 
    
 
-<<<<<<< HEAD
    { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select 1 , 29 :: text || '-' || 'abcdef'", ECPGt_EOIT, 
-=======
-   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  1 , 29 :: text   || '-' || 'abcdef'     ", ECPGt_EOIT, 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char,(s),(long)200,(long)1,(200)*sizeof(char), 
@@ -191,11 +171,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 
    
    
-<<<<<<< HEAD
    { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test values ( 29 , 'no string' )", ECPGt_EOIT, ECPGt_EORT);
-=======
-   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test values ( 29 , 'no string' ) ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 42 "define.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}

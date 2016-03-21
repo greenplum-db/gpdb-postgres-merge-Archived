@@ -22,17 +22,10 @@
 #line 5 "func.pgc"
 
 
-<<<<<<< HEAD
 int main() {
   
 #line 8 "func.pgc"
  char text [ 25 ] ;
-=======
-int main(int argc, char* argv[]) {
-  
-#line 8 "func.pgc"
- char  text [ 25 ]    ;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #line 8 "func.pgc"
 
@@ -52,11 +45,7 @@ int main(int argc, char* argv[]) {
 #line 15 "func.pgc"
 
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table My_Table ( Item1 int , Item2 text )", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table My_Table ( Item1 int   , Item2 text    )    ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 17 "func.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -65,11 +54,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 17 "func.pgc"
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table Log ( name text , w text )", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table Log ( name text    , w text    )    ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 18 "func.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -79,11 +64,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 18 "func.pgc"
 
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create function My_Table_Check ( ) returns trigger as $test$\
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  function My_Table_Check () returns trigger   as $test$\
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     BEGIN\
 	INSERT INTO Log VALUES(TG_NAME, TG_WHEN);\
 	RETURN NEW;\
@@ -97,11 +78,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 26 "func.pgc"
 
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create trigger My_Table_Check_Trigger before insert on My_Table for each row execute procedure My_Table_Check ( )", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create trigger My_Table_Check_Trigger before insert on My_Table for each row execute procedure My_Table_Check (  )", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 32 "func.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -111,11 +88,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 32 "func.pgc"
 
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into My_Table values ( 1234 , 'Some random text' )", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into My_Table values ( 1234 , 'Some random text' ) ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 34 "func.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -124,11 +97,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 34 "func.pgc"
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into My_Table values ( 5678 , 'The Quick Brown' )", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into My_Table values ( 5678 , 'The Quick Brown' ) ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 35 "func.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -137,11 +106,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 35 "func.pgc"
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select name from Log limit 1", ECPGt_EOIT, 
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  name  from Log     limit 1 ", ECPGt_EOIT, 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_char,(text),(long)25,(long)1,(25)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 36 "func.pgc"
@@ -154,11 +119,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
   printf("Trigger %s fired.\n", text);
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop trigger My_Table_Check_Trigger on My_Table", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop trigger My_Table_Check_Trigger on My_Table ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 39 "func.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -167,11 +128,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 39 "func.pgc"
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop function My_Table_Check ( )", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop function My_Table_Check () ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 40 "func.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -180,11 +137,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 40 "func.pgc"
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table Log", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table Log ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 41 "func.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -193,11 +146,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 41 "func.pgc"
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table My_Table", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table My_Table ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 42 "func.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();

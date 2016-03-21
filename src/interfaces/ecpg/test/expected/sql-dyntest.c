@@ -232,31 +232,19 @@ if (sqlca.sqlcode < 0) error ( );}
 #line 49 "dyntest.pgc"
 
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table dyntest ( name char ( 14 ) , d float8 , i int , bignumber int8 , b boolean , comment text , day date )", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table dyntest ( name char  ( 14 )    , d float8    , i int   , bignumber int8    , b boolean   , comment text    , day date    )    ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 53 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error ( );}
 #line 53 "dyntest.pgc"
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into dyntest values ( 'first entry' , 14.7 , 14 , 123045607890 , true , 'The world''s most advanced open source database.' , '1987-07-14' )", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into dyntest values ( 'first entry' , 14.7 , 14 , 123045607890 , true , 'The world''s most advanced open source database.' , '1987-07-14' ) ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 54 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error ( );}
 #line 54 "dyntest.pgc"
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into dyntest values ( 'second entry' , 1407.87 , 1407 , 987065403210 , false , 'The elephant never forgets.' , '1999-11-5' )", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into dyntest values ( 'second entry' , 1407.87 , 1407 , 987065403210 , false , 'The elephant never forgets.' , '1999-11-5' ) ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 55 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error ( );}
@@ -269,19 +257,11 @@ if (sqlca.sqlcode < 0) error ( );}
 if (sqlca.sqlcode < 0) error ( );}
 #line 57 "dyntest.pgc"
 
-<<<<<<< HEAD
   /* declare MYCURS cursor for $1 */
 #line 58 "dyntest.pgc"
 
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare MYCURS cursor for $1", 
-=======
-  /* declare MYCURS  cursor  for $1 */
-#line 58 "dyntest.pgc"
-
-
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare MYCURS  cursor  for $1", 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_char_variable,(ECPGprepared_statement(NULL, "myquery", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 60 "dyntest.pgc"

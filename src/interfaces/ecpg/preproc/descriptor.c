@@ -1,11 +1,7 @@
 /*
  * functions needed for descriptor handling
  *
-<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/descriptor.c,v 1.28 2009/01/23 12:43:32 petere Exp $
-=======
- * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/descriptor.c,v 1.26 2007/12/21 14:33:20 meskes Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * since descriptor might be either a string constant or a string var
  * we need to check for a constant if we expect a constant

@@ -10,19 +10,11 @@
  * analyze.c and related files.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
  *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/parser.c,v 1.5 2009/01/01 17:24:02 momjian Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/parser.c,v 1.3 2008/01/01 19:45:59 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -106,32 +98,18 @@ filtered_base_yylex(void)
 		case WITH:
 
 			/*
-<<<<<<< HEAD
 			 * WITH TIME must be reduced to one token
-=======
-			 * WITH CASCADED, LOCAL, or CHECK must be reduced to one token
-			 *
-			 * XXX an alternative way is to recognize just WITH_TIME and put
-			 * the ugliness into the datetime datatype productions instead of
-			 * WITH CHECK OPTION.  However that requires promoting WITH to a
-			 * fully reserved word.  If we ever have to do that anyway
-			 * (perhaps for SQL99 recursive queries), come back and simplify
-			 * this code.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			 */
 			cur_yylval = base_yylval;
 			cur_yylloc = base_yylloc;
 			next_token = base_yylex();
 			switch (next_token)
 			{
-<<<<<<< HEAD
 #ifdef WITH_TIME
 				case TIME:
 					cur_token = WITH_TIME;
 					break;
 #endif
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				case CASCADED:
 					cur_token = WITH_CASCADED;
 					break;

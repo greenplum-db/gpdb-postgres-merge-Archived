@@ -77,11 +77,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 34 "define.pgc"
 
 
-<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table test ( name char ( 8 ) , amount int , letter char ( 1 ) )", ECPGt_EOIT, ECPGt_EORT);
-=======
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table test ( name char  ( 8 )    , amount int   , letter char  ( 1 )    )    ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 36 "define.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -94,21 +90,13 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 37 "define.pgc"
 
 
-<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into Test ( name , amount , letter ) values ( 'false' , 1 , 'f' )", ECPGt_EOIT, ECPGt_EORT);
-=======
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into Test ( name  , amount  , letter  ) values ( 'false' , 1 , 'f' ) ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 39 "define.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 39 "define.pgc"
 
-<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test ( name , amount , letter ) values ( 'true' , 2 , 't' )", ECPGt_EOIT, ECPGt_EORT);
-=======
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test ( name  , amount  , letter  ) values ( 'true' , 2 , 't' ) ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 40 "define.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -121,11 +109,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 41 "define.pgc"
 
 
-<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select * from test", ECPGt_EOIT, 
-=======
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  *  from test   ", ECPGt_EOIT, 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_char,(name),(long)8,(long)6,(8)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_int,(amount),(long)1,(long)6,sizeof(int), 
@@ -157,11 +141,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 		printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, n, i, a, i, l);
 	}
 
-<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table test", ECPGt_EOIT, ECPGt_EORT);
-=======
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table test ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 56 "define.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

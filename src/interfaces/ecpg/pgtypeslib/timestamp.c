@@ -302,11 +302,7 @@ PGTYPEStimestamp_from_asc(char *str, char **endptr)
 		return (noresult);
 	}
 
-<<<<<<< HEAD
 	if (ParseDateTime(str, lowstr, field, ftype, &nf, ptr) != 0 ||
-=======
-	if (ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf, ptr) != 0 ||
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, 0) != 0)
 	{
 		errno = PGTYPES_TS_BAD_TIMESTAMP;

@@ -184,31 +184,19 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 35 "dynalloc.pgc"
 
 
-<<<<<<< HEAD
    { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table test ( a serial , b numeric ( 12 , 3 ) , c varchar , d varchar ( 3 ) , e char ( 4 ) , f timestamptz , g boolean , h box , i inet )", ECPGt_EOIT, ECPGt_EORT);
-=======
-   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table test ( a serial    , b numeric ( 12 , 3 )   , c varchar    , d varchar ( 3 )    , e char  ( 4 )    , f timestamptz    , g boolean   , h box    , i inet    )    ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 37 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 37 "dynalloc.pgc"
 
-<<<<<<< HEAD
    { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test ( b , c , d , e , f , g , h , i ) values ( 23.456 , 'varchar' , 'v' , 'c' , '2003-03-03 12:33:07 PDT' , true , '(1,2,3,4)' , '2001:4f8:3:ba:2e0:81ff:fe22:d1f1/128' )", ECPGt_EOIT, ECPGt_EORT);
-=======
-   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test ( b  , c  , d  , e  , f  , g  , h  , i  ) values ( 23.456 , 'varchar' , 'v' , 'c' , '2003-03-03 12:33:07 PDT' , true , '(1,2,3,4)' , '2001:4f8:3:ba:2e0:81ff:fe22:d1f1/128' ) ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 38 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 38 "dynalloc.pgc"
 
-<<<<<<< HEAD
    { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test ( b , c , d , e , f , g , h , i ) values ( 2.446456 , null , 'v' , 'c' , '2003-03-03 12:33:07 PDT' , false , null , null )", ECPGt_EOIT, ECPGt_EORT);
-=======
-   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test ( b  , c  , d  , e  , f  , g  , h  , i  ) values ( 2.446456 , null , 'v' , 'c' , '2003-03-03 12:33:07 PDT' , false , null , null ) ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 39 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
@@ -221,11 +209,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 if (sqlca.sqlcode < 0) sqlprint ( );
 #line 41 "dynalloc.pgc"
 
-<<<<<<< HEAD
    { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select a , b , c , d , e , f , g , h , i from test order by a", ECPGt_EOIT, 
-=======
-   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  a , b , c , d , e , f , g , h , i  from test    order by a  ", ECPGt_EOIT, 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_descriptor, "mydesc", 0L, 0L, 0L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 42 "dynalloc.pgc"

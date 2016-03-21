@@ -1,9 +1,5 @@
 /* Processed by ecpg (regression mode) */
 /* These include files are added by the preprocessor */
-<<<<<<< HEAD
-=======
-#include <ecpgtype.h>
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include <ecpglib.h>
 #include <ecpgerrno.h>
 #include <sqlca.h>
@@ -137,7 +133,6 @@ static void* fn(void* arg)
 	   
 	
 #line 39 "prep.pgc"
-<<<<<<< HEAD
  int value ;
  
 #line 40 "prep.pgc"
@@ -145,15 +140,6 @@ static void* fn(void* arg)
  
 #line 41 "prep.pgc"
  char query [ 256 ] = "INSERT INTO T VALUES ( ? )" ;
-=======
- int  value    ;
- 
-#line 40 "prep.pgc"
- char  name [ 100 ]    ;
- 
-#line 41 "prep.pgc"
- char  query [ 256 ]   = "INSERT INTO T VALUES ( ? )" ;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* exec sql end declare section */
 #line 42 "prep.pgc"
 
@@ -209,11 +195,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	return 0;
 }
 
-<<<<<<< HEAD
 int main ()
-=======
-int main (int argc, char** argv)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	int i;
 #ifdef WIN32
@@ -234,21 +216,13 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 70 "prep.pgc"
 
-<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table if exists T", ECPGt_EOIT, ECPGt_EORT);
-=======
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table if exists T ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 71 "prep.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 71 "prep.pgc"
 
-<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table T ( i int )", ECPGt_EOIT, ECPGt_EORT);
-=======
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table T ( i int   )    ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 72 "prep.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

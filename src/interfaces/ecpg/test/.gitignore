@@ -1,9 +1,1 @@
-<<<<<<< HEAD
 pg_regress
-=======
-/pg_regress
-# Exclude subdirectories
-/log/
-/results/
-/tmp_check/
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

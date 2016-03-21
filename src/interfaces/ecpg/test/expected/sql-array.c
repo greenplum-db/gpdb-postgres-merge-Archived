@@ -155,33 +155,21 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 31 "array.pgc"
 
 
-<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table test ( f float , i int , a int [ 10 ] , text char ( 10 ) )", ECPGt_EOIT, ECPGt_EORT);
-=======
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table test ( f float    , i int   , a int [ 10 ]   , text char  ( 10 )    )    ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 33 "array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 33 "array.pgc"
 
 
-<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test ( f , i , a , text ) values ( 404.90 , 3 , '{0,1,2,3,4,5,6,7,8,9}' , 'abcdefghij' )", ECPGt_EOIT, ECPGt_EORT);
-=======
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test ( f  , i  , a  , text  ) values ( 404.90 , 3 , '{0,1,2,3,4,5,6,7,8,9}' , 'abcdefghij' ) ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 35 "array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 35 "array.pgc"
 
 
-<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test ( f , i , a , text ) values ( 140787.0 , 2 , $1  , $2  )", 
-=======
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test ( f  , i  , a  , text  ) values ( 140787.0 , 2 ,  $1  ,  $2  ) ", 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_int,(a),(long)1,(long)10,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char,(text),(long)25,(long)1,(25)*sizeof(char), 
@@ -192,11 +180,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 37 "array.pgc"
 
 
-<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test ( f , i , a , text ) values ( 14.07 , $1  , $2  , $3  )", 
-=======
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test ( f  , i  , a  , text  ) values ( 14.07 ,  $1  ,  $2  ,  $3  ) ", 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_int,&(did),(long)1,(long)0,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_int,(a),(long)1,(long)10,sizeof(int), 
@@ -223,11 +207,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 43 "array.pgc"
  
 
-<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select f , text from test where i = 1", ECPGt_EOIT, 
-=======
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  f , text  from test where i = 1  ", ECPGt_EOIT, 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_double,&(f),(long)1,(long)1,sizeof(double), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char,(text),(long)25,(long)1,(25)*sizeof(char), 
@@ -241,11 +221,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	printf("Found f=%f text=%10.10s\n", f, text);
 
 	f=140787;
-<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select a , text from test where f = $1 ", 
-=======
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  a , text  from test where f =  $1   ", 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_double,&(f),(long)1,(long)1,sizeof(double), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, 
 	ECPGt_int,(a),(long)1,(long)10,sizeof(int), 
@@ -263,11 +239,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 	printf("Found text=%10.10s\n", t);
 
-<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select a from test where f = $1 ", 
-=======
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  a  from test where f =  $1   ", 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	ECPGt_double,&(f),(long)1,(long)1,sizeof(double), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, 
 	ECPGt_char,(text),(long)25,(long)1,(25)*sizeof(char), 
@@ -280,11 +252,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 	printf("Found text=%s\n", text);
 
-<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table test", ECPGt_EOIT, ECPGt_EORT);
-=======
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table test ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 70 "array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

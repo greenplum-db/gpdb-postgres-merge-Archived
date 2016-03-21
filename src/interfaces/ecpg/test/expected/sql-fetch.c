@@ -31,11 +31,7 @@ int main() {
  char str [ 25 ] ;
  
 #line 10 "fetch.pgc"
-<<<<<<< HEAD
  int i , count = 1 ;
-=======
- int  i    ,  count   = 1 ;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* exec sql end declare section */
 #line 11 "fetch.pgc"
 
@@ -52,11 +48,7 @@ int main() {
 #line 17 "fetch.pgc"
 
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table My_Table ( Item1 int , Item2 text )", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table My_Table ( Item1 int   , Item2 text    )    ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 19 "fetch.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -66,11 +58,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 19 "fetch.pgc"
 
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into My_Table values ( 1 , 'text1' )", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into My_Table values ( 1 , 'text1' ) ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 21 "fetch.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -79,11 +67,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 21 "fetch.pgc"
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into My_Table values ( 2 , 'text2' )", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into My_Table values ( 2 , 'text2' ) ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 22 "fetch.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -92,11 +76,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 22 "fetch.pgc"
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into My_Table values ( 3 , 'text3' )", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into My_Table values ( 3 , 'text3' ) ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 23 "fetch.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -105,11 +85,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 23 "fetch.pgc"
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into My_Table values ( 4 , 'text4' )", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into My_Table values ( 4 , 'text4' ) ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 24 "fetch.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -123,11 +99,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 26 "fetch.pgc"
 
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare C cursor for select * from My_Table", ECPGt_EOIT, ECPGt_EORT);
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare C  cursor  for select  *  from My_Table   ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 28 "fetch.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -190,11 +162,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
   printf("%d: %s\n", i, str);
 
-<<<<<<< HEAD
   /* declare D cursor for select * from My_Table where Item1 = $1 */
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "close C", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #line 42 "fetch.pgc"
 
 
@@ -210,7 +178,6 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 44 "fetch.pgc"
 
 
-<<<<<<< HEAD
   /* exec sql whenever not found  break ; */
 #line 46 "fetch.pgc"
 
@@ -224,10 +191,6 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 if (sqlca.sqlcode == ECPG_NOT_FOUND) break;
 #line 48 "fetch.pgc"
-=======
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table My_Table ", ECPGt_EOIT, ECPGt_EORT);
-#line 44 "fetch.pgc"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
 #line 48 "fetch.pgc"
