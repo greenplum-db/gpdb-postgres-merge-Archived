@@ -1989,7 +1989,8 @@ FileRepMirror_RunConsumer(void)
 											   fileRepMessageHeader->messageCount),
 							 FileRep_errcontext()));		
 					
-					FileUnlink(fd);
+					SetDeleteOnExit(fd);
+					FileClose(fd);
 					FileRepMirror_RemoveFileName(newFileName);
 				}
 				fd = 0;
@@ -2651,7 +2652,8 @@ FileRepMirror_Drop(FileName fileName)
 		FileRepMirror_RemoveFileName(fileName);
 	}
 
-	FileUnlink(fd);
+	SetDeleteOnExit(fd);
+	FileClose(fd);
 	
 	return status;
 }
