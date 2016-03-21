@@ -65,8 +65,6 @@ static Node *build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 
 static List *generate_subquery_params(PlannerInfo *root, List *tlist,
 						 List **paramIds);
-static List *generate_subquery_vars(PlannerInfo *root, List *tlist,
-					   Index varno);
 static Node *convert_testexpr_mutator(Node *node,
 						 convert_testexpr_context *context);
 static bool subplan_is_hashable(PlannerInfo *root, Plan *plan);
@@ -698,7 +696,7 @@ generate_subquery_params(PlannerInfo *root, List *tlist, List **paramIds)
  * columns of a sublink's sub-select, given the sub-select's targetlist.
  * The Vars have the specified varno (RTE index).
  */
-static List *
+List *
 generate_subquery_vars(PlannerInfo *root, List *tlist, Index varno)
 {
 	List	   *result;

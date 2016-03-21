@@ -29,4 +29,8 @@ extern Param *SS_make_initplan_from_plan(PlannerInfo *root, Plan *plan,
 
 extern bool IsSubqueryCorrelated(Query *sq);
 extern bool IsSubqueryMultiLevelCorrelated(Query *sq);
+
+extern List *generate_subquery_vars(PlannerInfo *root, List *tlist,
+					   Index varno);
+
 #endif   /* SUBSELECT_H */
