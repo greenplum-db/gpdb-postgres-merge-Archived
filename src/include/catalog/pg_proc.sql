@@ -171,8 +171,6 @@
 
  CREATE FUNCTION pg_file_length(text) RETURNS int8 LANGUAGE internal VOLATILE STRICT AS 'pg_file_length' WITH (OID=6051, DESCRIPTION="Get the length of a file (via stat)");
 
- CREATE FUNCTION text(bool) RETURNS text LANGUAGE internal IMMUTABLE STRICT AS 'booltext' WITH (OID=2971, DESCRIPTION="convert boolean to text");
-
 -- Aggregates (moved here from pg_aggregate for 7.3) 
 
  CREATE FUNCTION max(gpxlogloc) RETURNS gpxlogloc LANGUAGE internal IMMUTABLE AS 'aggregate_dummy' WITH (OID=3332, proisagg="t");
