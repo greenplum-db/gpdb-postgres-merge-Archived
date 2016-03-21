@@ -2231,22 +2231,6 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		/*
-		 * GPDB_83MERGE_FIXME: In previous GPDB versions, krb_server_keyfile was
-		 * labeled as PGC_SIGHUP. I couldn't find any explanation for why in the
-		 * git history, and there was no code comment on it, so I don't know if
-		 * that was intentional.
-		 */
-		{"krb_realm", PGC_POSTMASTER, CONN_AUTH_SECURITY,
-			gettext_noop("Sets realm to match Kerberos and GSSAPI users against."),
-			NULL,
-			GUC_SUPERUSER_ONLY
-		},
-		&pg_krb_realm,
-		NULL, NULL, NULL
-	},
-
-	{
 		{"krb_server_keyfile", PGC_POSTMASTER, CONN_AUTH_SECURITY,
 			gettext_noop("Sets the location of the Kerberos server key file."),
 			NULL,
