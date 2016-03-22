@@ -1355,39 +1355,50 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan, bool attach_initplans)
 	 */
 	if (attach_initplans)
 	{
-		SubPlan    *initsubplan = (SubPlan *) lfirst(l);
-		Plan	   *initplan = planner_subplan_get_plan(root, initsubplan);
-		ListCell   *l2;
+		Insist(!plan->initPlan);
+		plan->initPlan = root->init_plans;
+		root->init_plans = NIL;		/* make sure they're not attached twice */
 
-		initExtParam = bms_add_members(initExtParam, initplan->extParam);
-		foreach(l2, initsubplan->setParam)
+		initExtParam = initSetParam = NULL;
+		initplan_cost = 0;
+
+		foreach(l, plan->initPlan)
 		{
-			SubPlan    *initplan = (SubPlan *) lfirst(l);
-			Plan	   *subplan_plan = planner_subplan_get_plan(root, initplan);
+			SubPlan    *initsubplan = (SubPlan *) lfirst(l);
+			Plan	   *initplan = planner_subplan_get_plan(root, initsubplan);
 			ListCell   *l2;
 
-			initExtParam = bms_add_members(initExtParam, subplan_plan->extParam);
-			foreach(l2, initplan->setParam)
+			initExtParam = bms_add_members(initExtParam, initplan->extParam);
+			foreach(l2, initsubplan->setParam)
 			{
-				initSetParam = bms_add_member(initSetParam, lfirst_int(l2));
-			}
-			initplan_cost += subplan_plan->total_cost;
-		}
-		initplan_cost += get_initplan_cost(root, initsubplan);
-	}
-	/* allParam must include all these params */
-	plan->allParam = bms_add_members(plan->allParam, initExtParam);
-	plan->allParam = bms_add_members(plan->allParam, initSetParam);
-	/* extParam must include any child extParam */
-	plan->extParam = bms_add_members(plan->extParam, initExtParam);
-	/* but extParam shouldn't include any setParams */
-	plan->extParam = bms_del_members(plan->extParam, initSetParam);
-	/* ensure extParam is exactly NULL if it's empty */
-	if (bms_is_empty(plan->extParam))
-		plan->extParam = NULL;
+				SubPlan    *initplan = (SubPlan *) lfirst(l);
+				Plan	   *subplan_plan = planner_subplan_get_plan(root, initplan);
+				ListCell   *l2;
 
-	plan->startup_cost += initplan_cost;
-	plan->total_cost += initplan_cost;
+				initExtParam = bms_add_members(initExtParam, subplan_plan->extParam);
+				foreach(l2, initplan->setParam)
+				{
+					initSetParam = bms_add_member(initSetParam, lfirst_int(l2));
+				}
+				initplan_cost += subplan_plan->total_cost;
+			}
+			initplan_cost += get_initplan_cost(root, initsubplan);
+		}
+
+		/* allParam must include all these params */
+		plan->allParam = bms_add_members(plan->allParam, initExtParam);
+		plan->allParam = bms_add_members(plan->allParam, initSetParam);
+		/* extParam must include any child extParam */
+		plan->extParam = bms_add_members(plan->extParam, initExtParam);
+		/* but extParam shouldn't include any setParams */
+		plan->extParam = bms_del_members(plan->extParam, initSetParam);
+		/* ensure extParam is exactly NULL if it's empty */
+		if (bms_is_empty(plan->extParam))
+			plan->extParam = NULL;
+
+		plan->startup_cost += initplan_cost;
+		plan->total_cost += initplan_cost;
+	}
 }
 
 /*
