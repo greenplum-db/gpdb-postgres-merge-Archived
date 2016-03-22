@@ -1652,6 +1652,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	PlanState  *planstate;
 	TupleDesc	tupType;
 	ListCell   *l;
+	int			i;
 	bool		shouldDispatch = Gp_role == GP_ROLE_DISPATCH && plannedstmt->planTree->dispatch == DISPATCH_PARALLEL;
 
 	Assert(plannedstmt->intoPolicy == NULL
@@ -1864,6 +1865,36 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	estate->es_evTupleNull = NULL;
 	estate->es_evTuple = NULL;
 	estate->es_useEvalPlan = false;
+
+	/*
+	 * Initialize private state information for each SubPlan.  We must do this
+	 * before running ExecInitNode on the main query tree, since
+	 * ExecInitSubPlan expects to be able to find these entries.
+	 */
+	Assert(estate->es_subplanstates == NIL);
+	i = 1;						/* subplan indices count from 1 */
+	foreach(l, plannedstmt->subplans)
+	{
+		Plan	   *subplan = (Plan *) lfirst(l);
+		PlanState  *subplanstate;
+		int			sp_eflags;
+
+		/*
+		 * A subplan will never need to do BACKWARD scan nor MARK/RESTORE. If
+		 * it is a parameterless subplan (not initplan), we suggest that it be
+		 * prepared to handle REWIND efficiently; otherwise there is no need.
+		 */
+		sp_eflags = eflags & EXEC_FLAG_EXPLAIN_ONLY;
+		if (bms_is_member(i, plannedstmt->rewindPlanIDs))
+			sp_eflags |= EXEC_FLAG_REWIND;
+
+		subplanstate = ExecInitNode(subplan, estate, sp_eflags);
+
+		estate->es_subplanstates = lappend(estate->es_subplanstates,
+										   subplanstate);
+
+		i++;
+	}
 
 	/*
 	 * Initialize the private state information for all the nodes in the query
