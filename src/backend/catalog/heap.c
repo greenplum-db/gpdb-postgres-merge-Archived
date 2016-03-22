@@ -1418,6 +1418,15 @@ heap_create_with_catalog(const char *relname,
 	bool		appendOnlyRel;
 	StdRdOptions *stdRdOptions;
 	int			safefswritesize = gp_safefswritesize;
+	bool		rowtype_already_exists;
+
+	/*
+	 * Don't create the row type if the bootstrapper tells us it already
+	 * knows what it is.
+	 */
+	rowtype_already_exists =
+		(IsBootstrapProcessingMode() &&
+		 (PointerIsValid(comptypeOid) && OidIsValid(*comptypeOid)));
 
 	pg_class_desc = heap_open(RelationRelationId, RowExclusiveLock);
 
@@ -1495,7 +1504,7 @@ heap_create_with_catalog(const char *relname,
 								  CStringGetDatum(relname),
 								  ObjectIdGetDatum(relnamespace),
 								  0, 0);
-	if (OidIsValid(old_type_oid))
+	if (OidIsValid(old_type_oid) && !rowtype_already_exists)
 	{
 		if (!moveArrayTypeName(old_type_oid, relname, relnamespace))
 			ereport(ERROR,
@@ -1590,27 +1599,21 @@ heap_create_with_catalog(const char *relname,
 	 * NOTE: we could get a unique-index failure here, in case someone else is
 	 * creating the same type name in parallel but hadn't committed yet when
 	 * we checked for a duplicate name above.
-	 *
-	 * Don't create the shell type if the bootstrapper tells us it already
-	 * knows what it is. Importing for upgrading.
 	 */
-	if (IsBootstrapProcessingMode() &&
-		(PointerIsValid(comptypeOid) && OidIsValid(*comptypeOid)))
-	{
+	if (rowtype_already_exists)
 		new_type_oid = *comptypeOid;
-	}
 	else
-		new_type_oid = InvalidOid;
-
-	new_type_oid = AddNewRelationType(new_type_oid,
-									  relname,
-									  relnamespace,
-									  relid,
-									  relkind,
-									  ownerid,
-									  new_array_oid);
-	if (comptypeOid)
-		*comptypeOid = new_type_oid;
+	{
+		new_type_oid = AddNewRelationType(InvalidOid,
+										  relname,
+										  relnamespace,
+										  relid,
+										  relkind,
+										  ownerid,
+										  new_array_oid);
+		if (comptypeOid)
+			*comptypeOid = new_type_oid;
+	}
 
 	/*
 	 * Now make the array type if wanted.
