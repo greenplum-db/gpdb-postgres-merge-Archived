@@ -1974,9 +1974,15 @@ IndexBuildHeapScan(Relation heapRelation,
 		{
 			Page		page = BufferGetPage(scan->rs_cbuf);
 
+			// -------- MirroredLock ----------
+			MIRROREDLOCK_BUFMGR_LOCK;
+
 			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 			heap_get_root_tuples(page, root_offsets);
 			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
+
+			MIRROREDLOCK_BUFMGR_UNLOCK;
+			// -------- MirroredLock ----------
 
 			root_blkno = scan->rs_cblock;
 		}
@@ -1994,7 +2000,7 @@ IndexBuildHeapScan(Relation heapRelation,
 			 * be conservative about it.  (This remark is still correct even
 			 * with HOT-pruning: our pin on the buffer prevents pruning.)
 			 */
-			
+
 			// -------- MirroredLock ----------
 			MIRROREDLOCK_BUFMGR_LOCK;
 			
