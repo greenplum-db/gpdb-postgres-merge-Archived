@@ -469,6 +469,9 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 			offnum = scan->xs_next_hot;
 			at_chain_start = false;
 			scan->xs_next_hot = InvalidOffsetNumber;
+
+			// -------- MirroredLock ----------
+			MIRROREDLOCK_BUFMGR_LOCK;
 		}
 		else
 		{
@@ -498,6 +501,9 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 
 			pgstat_count_index_tuples(scan->indexRelation, 1);
 
+			// -------- MirroredLock ----------
+			MIRROREDLOCK_BUFMGR_LOCK;
+
 			/* Switch to correct buffer if we don't have it already */
 			prev_buf = scan->xs_cbuf;
 			scan->xs_cbuf = ReleaseAndReadBuffer(scan->xs_cbuf,
@@ -521,9 +527,6 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 			/* Initialize flag to detect if all entries are dead */
 			scan->xs_hot_dead = true;
 		}
-
-		// -------- MirroredLock ----------
-		MIRROREDLOCK_BUFMGR_LOCK;
 
 		/* Obtain share-lock on the buffer so we can examine visibility */
 		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_SHARE);
