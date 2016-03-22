@@ -685,7 +685,7 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot,
 	int			eflags;
 
 	AssertArg(PortalIsValid(portal));
-	AssertState(portal->status  == PORTAL_NEW);	/* else extra PortalStart */
+	AssertState(portal->status == PORTAL_DEFINED);
 
 	/* Set up the sequence server */
 	SetupSequenceServer(seqServerHost, seqServerPort);
