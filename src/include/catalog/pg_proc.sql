@@ -33,26 +33,12 @@
 
  CREATE FUNCTION current_query() RETURNS text LANGUAGE internal VOLATILE AS 'current_query' WITH (OID=820, DESCRIPTION="returns the currently executing query");
 
- CREATE FUNCTION lo_truncate(int4, int4) RETURNS int4 LANGUAGE internal VOLATILE STRICT AS 'lo_truncate' WITH (OID=828, DESCRIPTION="truncate large object");
-
  CREATE FUNCTION int8dec(int8) RETURNS int8 LANGUAGE internal IMMUTABLE STRICT AS 'int8dec' WITH (OID=3546);
 
 
  CREATE FUNCTION interval_interval_div("interval", "interval") RETURNS float8 LANGUAGE internal IMMUTABLE STRICT AS 'interval_interval_div' WITH (OID=6115, DESCRIPTION="divide");
 
  CREATE FUNCTION interval_interval_mod("interval", "interval") RETURNS "interval" LANGUAGE internal IMMUTABLE STRICT AS 'interval_interval_mod' WITH (OID=6116, DESCRIPTION="modulus");
-
- CREATE FUNCTION regexp_matches(text, text) RETURNS SETOF _text LANGUAGE internal IMMUTABLE STRICT AS 'regexp_matches_no_flags' WITH (OID=5018, DESCRIPTION="return all match groups for regexp");
-
- CREATE FUNCTION regexp_matches(text, text, text) RETURNS SETOF _text LANGUAGE internal IMMUTABLE STRICT AS 'regexp_matches' WITH (OID=5019, DESCRIPTION="return all match groups for regexp");
-
- CREATE FUNCTION regexp_split_to_table(text, text) RETURNS SETOF text LANGUAGE internal IMMUTABLE STRICT AS 'regexp_split_to_table_no_flags' WITH (OID=5020, DESCRIPTION="split string by pattern");
-
- CREATE FUNCTION regexp_split_to_table(text, text, text) RETURNS SETOF text LANGUAGE internal IMMUTABLE STRICT AS 'regexp_split_to_table' WITH (OID=5021, DESCRIPTION="split string by pattern");
-
- CREATE FUNCTION regexp_split_to_array(text, text) RETURNS _text LANGUAGE internal IMMUTABLE STRICT AS 'regexp_split_to_array_no_flags' WITH (OID=5022, DESCRIPTION="split string by pattern");
-
- CREATE FUNCTION regexp_split_to_array(text, text, text) RETURNS _text LANGUAGE internal IMMUTABLE STRICT AS 'regexp_split_to_array' WITH (OID=5023, DESCRIPTION="split string by pattern");
 
 -- System-view support functions 
  CREATE FUNCTION pg_get_partition_def(oid) RETURNS text LANGUAGE internal STABLE STRICT AS 'pg_get_partition_def' WITH (OID=5024);
@@ -1553,11 +1539,6 @@
  CREATE FUNCTION gp_persistent_reset_all() RETURNS int4 LANGUAGE internal VOLATILE AS 'gp_persistent_reset_all' WITH (OID=7180, DESCRIPTION="Remove the persistent tables and gp_relation_node for the whole database instance");
 
  CREATE FUNCTION gp_persistent_repair_delete(int4, tid) RETURNS int4 LANGUAGE internal VOLATILE AS 'gp_persistent_repair_delete' WITH (OID=7181, DESCRIPTION="Remove an entry specified by TID from a persistent table for the current database instance");
-
-
- CREATE FUNCTION xpath(text, xml, _text) RETURNS _xml LANGUAGE internal IMMUTABLE STRICT AS 'xpath' WITH (OID=2983, DESCRIPTION="evaluate XPath expression, with namespaces support");
-
- CREATE FUNCTION xpath(text, xml) RETURNS _xml LANGUAGE sql IMMUTABLE STRICT AS $$select pg_catalog.xpath($1, $2, '{}'::pg_catalog.text[])$$ WITH (OID=2984, DESCRIPTION="evaluate XPath expression");
 
  CREATE FUNCTION xmlexists(text, xml) RETURNS bool LANGUAGE internal IMMUTABLE STRICT AS 'xmlexists' WITH (OID=2985, DESCRIPTION="test XML value against XPath expression");
 
