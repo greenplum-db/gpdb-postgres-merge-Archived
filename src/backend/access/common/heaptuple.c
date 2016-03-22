@@ -880,7 +880,10 @@ heaptuple_form_to(TupleDesc tupleDescriptor, Datum *values, bool *isnull, HeapTu
 	td->t_hoff = hoff;
 
 	if (tupleDescriptor->tdhasoid)
+	{
 		td->t_infomask = HEAP_HASOID;
+		HeapTupleHeaderSetOid(td, InvalidOid);
+	}
 	else
 		td->t_infomask = 0;
 
