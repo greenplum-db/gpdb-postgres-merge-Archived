@@ -843,9 +843,10 @@ heaptuple_form_to(TupleDesc tupleDescriptor, Datum *values, bool *isnull, HeapTu
 	{
 		*dstlen = HEAPTUPLESIZE + len;
 		tuple = dst;
+		memset(tuple, 0, HEAPTUPLESIZE + len);
 	}
 	else
-		tuple = (HeapTuple) palloc(HEAPTUPLESIZE + len);
+		tuple = (HeapTuple) palloc0(HEAPTUPLESIZE + len);
 
 	/*
 	 * Allocate and zero the space needed.	Note that the tuple body and
@@ -860,32 +861,15 @@ heaptuple_form_to(TupleDesc tupleDescriptor, Datum *values, bool *isnull, HeapTu
 	tuple->t_len = len;
 	ItemPointerSetInvalid(&(tuple->t_self));
 
-	/* 
-	 * The following 3 calls will setup the first 12 bytes of td (tuple->t_data) 
-	 */
 	HeapTupleHeaderSetDatumLength(td, len);
 	HeapTupleHeaderSetTypeId(td, tupleDescriptor->tdtypeid);
 	HeapTupleHeaderSetTypMod(td, tupleDescriptor->tdtypmod);
 
-	/* t_ctid does not matter */
-
-	/* num of attrs are stored in t_infomask2.  Clear the other flags first */
-	td->t_infomask2 = 0;
 	HeapTupleHeaderSetNatts(td, numberOfAttributes);
-
-	/* 
-	 * Set up t_hoff.  This need to be done before set up t_infomask
-	 * because HeapTupleHeaderSetOid will use t_hoff 
-	 */
 	td->t_hoff = hoff;
 
-	if (tupleDescriptor->tdhasoid)
-	{
+	if (tupleDescriptor->tdhasoid)		/* else leave infomask = 0 */
 		td->t_infomask = HEAP_HASOID;
-		HeapTupleHeaderSetOid(td, InvalidOid);
-	}
-	else
-		td->t_infomask = 0;
 
 	actual_len = heap_fill_tuple(tupleDescriptor,
 								 values,
