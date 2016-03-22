@@ -610,6 +610,8 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 			subplan_is_hashable(root, plan) &&
 			testexpr_is_hashable(splan->testexpr))
 			splan->useHashTable = true;
+
+		result = (Node *) splan;
 	}
 
 	AssertEquivalent(splan->is_initplan, !splan->is_multirow && splan->parParam == NIL);
@@ -1311,8 +1313,6 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan, bool attach_initplans)
 	 * shouldn't be referenced here.  However, valid_params is just used as
 	 * a debugging crosscheck, so it's not worth trying to be exact.)
 	 */
-	initExtParam = initSetParam = NULL;
-	initplan_cost = 0;
 	valid_params = NULL;
 	paramid = 0;
 	foreach(l, root->glob->paramlist)
@@ -1384,7 +1384,6 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan, bool attach_initplans)
 			}
 			initplan_cost += get_initplan_cost(root, initsubplan);
 		}
-
 		/* allParam must include all these params */
 		plan->allParam = bms_add_members(plan->allParam, initExtParam);
 		plan->allParam = bms_add_members(plan->allParam, initSetParam);
