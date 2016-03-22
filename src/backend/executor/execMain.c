@@ -1717,6 +1717,11 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	}
 
 	/*
+	 * initialize the node's execution state
+	 */
+	estate->es_range_table = rangeTable;
+
+	/*
 	 * initialize result relation stuff
 	 *
 	 * CDB: Note that we need this info even if we aren't the slice that will be doing
