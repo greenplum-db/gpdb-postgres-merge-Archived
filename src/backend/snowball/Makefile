@@ -77,11 +77,7 @@ else
 VPATH = $(srcdir)/libstemmer
 endif
 
-SHLIB_LINK 	:= $(BE_DLLLIBS)
-
 NAME := dict_snowball
-SO_MAJOR_VERSION := 0
-SO_MINOR_VERSION := 0
 rpath =
 
 all: all-shared-lib $(SQLSCRIPT)
