@@ -86,7 +86,10 @@
 
 /* GUC variables */
 char	   *default_tablespace = NULL;
-char	   *temp_tablespaces = NULL;
+/* GPDB_83_MERGE_FIXME: this is NULL in upstream, but because I removed this from guc.c,
+ * the guc machinery isn't initializing it to "".
+ */
+char	   *temp_tablespaces = "";
 
 
 static bool remove_tablespace_directories(Oid tablespaceoid, bool redo, char *phys);
