@@ -52,7 +52,6 @@ ExecHashTableExplainBatches(HashJoinTable   hashtable,
                             int             ibatch_end,
                             const char     *title);
 static void ExecHashTableReallocBatchData(HashJoinTable hashtable, int new_nbatch);
-static int ExecChoosePrimeNBuckets(int nbuckets);
 
 void ExecChooseHashTableSize(double ntuples, int tupwidth,
 						int *numbuckets,
@@ -455,34 +454,6 @@ ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate, List *hashOper
  * #define NTUP_PER_BUCKET			10
  */
 
-/* Prime numbers that we like to use as nbuckets values */
-static const int hprimes[] = {
-	1033, 2063, 4111, 8219, 16417, 32779, 65539, 131111,
-	262151, 524341, 1048589, 2097211, 4194329, 8388619, 16777289, 33554473,
-	67108913, 134217773, 268435463, 536870951, 1073741831
-};
-
-/*
- * We want nbuckets to be prime so as to avoid having bucket and batch
- * numbers depend on only some bits of the hash code.  Choose the next
- * larger prime from the list in hprimes[].  (This also enforces that
- * nbuckets is not very small, by the simple expedient of not putting any
- * very small entries in hprimes[].)
- */
-static int
-ExecChoosePrimeNBuckets(int nbuckets)
-{
-	for (int i = 0; i < (int) lengthof(hprimes); i++)
-	{
-		if (hprimes[i] >= nbuckets)
-		{
-			nbuckets = hprimes[i];
-			break;
-		}
-	}
-	return nbuckets;
-}
-
 void
 ExecChooseHashTableSize(double ntuples, int tupwidth,
 						int *numbuckets,
@@ -495,6 +466,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 	long		max_pointers;
 	int			nbatch;
 	int			nbuckets;
+	int			i;
 
 	/* num tuples is a global number. We should be receiving only part of that */
 	if (Gp_role == GP_ROLE_EXECUTE)
@@ -537,13 +509,23 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 		int			minbatch;
 
 		lbuckets = (hash_table_bytes / tupsize) / gp_hashjoin_tuples_per_bucket;
-		lbuckets = Min(lbuckets, INT_MAX / 32);
+		lbuckets = Min(lbuckets, max_pointers);
 
-		/* Pick the closest prime number for the number of buckets */
-		nbuckets = ExecChoosePrimeNBuckets((int) lbuckets);
+		nbuckets = (int) lbuckets;
+
+		/*
+		 * Both nbuckets and nbatch must be powers of 2 to make
+		 * ExecHashGetBucketAndBatch fast.	We already fixed nbatch; now inflate
+		 * nbuckets to the next larger power of 2.	We also force nbuckets to not
+		 * be real small, by starting the search at 2^10.
+		 */
+		i = 10;
+		while ((1 << i) < nbuckets)
+			i++;
+		nbuckets = (1 << i);
 
 		dbatch = ceil(inner_rel_bytes / hash_table_bytes);
-		dbatch = Min(dbatch, INT_MAX / 32);
+		dbatch = Min(dbatch, max_pointers);
 		minbatch = (int) dbatch;
 		nbatch = 2;
 		while (nbatch < minbatch)
@@ -643,8 +625,18 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 		dbuckets = ceil(dbuckets);
 		dbuckets = Min(dbuckets, INT_MAX);
 
-		/* Pick the closest prime number for the number of buckets */
-		nbuckets = ExecChoosePrimeNBuckets((int) dbuckets);
+		nbuckets = (int) dbuckets;
+
+		/*
+		 * Both nbuckets and nbatch must be powers of 2 to make
+		 * ExecHashGetBucketAndBatch fast.	We already fixed nbatch; now inflate
+		 * nbuckets to the next larger power of 2.	We also force nbuckets to not
+		 * be real small, by starting the search at 2^10.
+		 */
+		i = 10;
+		while ((1 << i) < nbuckets)
+			i++;
+		nbuckets = (1 << i);
 
 		nbatch = 1;
 	}
