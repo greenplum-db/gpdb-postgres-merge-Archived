@@ -3035,6 +3035,21 @@ DATA(insert OID = 2761 (  pg_stat_get_db_tuples_updated PGNSP PGUID 12 1 0 f f t
 DESCR("statistics: tuples updated in database");
 DATA(insert OID = 2762 (  pg_stat_get_db_tuples_deleted PGNSP PGUID 12 1 0 f f t f s 1 20 "26" _null_ _null_ _null_ pg_stat_get_db_tuples_deleted - _null_ _null_ ));
 DESCR("statistics: tuples deleted in database");
+DATA(insert OID = 2769 ( pg_stat_get_bgwriter_timed_checkpoints PGNSP PGUID 12 1 0 f f t f s 0 20 "" _null_ _null_ _null_ pg_stat_get_bgwriter_timed_checkpoints - _null_ _null_ ));
+DESCR("statistics: number of timed checkpoints started by the bgwriter");
+DATA(insert OID = 2770 ( pg_stat_get_bgwriter_requested_checkpoints PGNSP PGUID 12 1 0 f f t f s 0 20 "" _null_ _null_ _null_ pg_stat_get_bgwriter_requested_checkpoints - _null_ _null_ ));
+DESCR("statistics: number of backend requested checkpoints started by the bgwriter");
+DATA(insert OID = 2771 ( pg_stat_get_bgwriter_buf_written_checkpoints PGNSP PGUID 12 1 0 f f t f s 0 20 "" _null_ _null_ _null_ pg_stat_get_bgwriter_buf_written_checkpoints - _null_ _null_ ));
+DESCR("statistics: number of buffers written by the bgwriter during checkpoints");
+DATA(insert OID = 2772 ( pg_stat_get_bgwriter_buf_written_clean PGNSP PGUID 12 1 0 f f t f s 0 20 "" _null_ _null_ _null_ pg_stat_get_bgwriter_buf_written_clean - _null_ _null_ ));
+DESCR("statistics: number of buffers written by the bgwriter for cleaning dirty buffers");
+DATA(insert OID = 2773 ( pg_stat_get_bgwriter_maxwritten_clean PGNSP PGUID 12 1 0 f f t f s 0 20 "" _null_ _null_ _null_ pg_stat_get_bgwriter_maxwritten_clean - _null_ _null_ ));
+DESCR("statistics: number of times the bgwriter stopped processing when it had written too many buffers while cleaning");
+DATA(insert OID = 2775 ( pg_stat_get_buf_written_backend PGNSP PGUID 12 1 0 f f t f s 0 20 "" _null_ _null_ _null_ pg_stat_get_buf_written_backend - _null_ _null_ ));
+DESCR("statistics: number of buffers written by backends");
+DATA(insert OID = 2859 ( pg_stat_get_buf_alloc			PGNSP PGUID 12 1 0 f f t f s 0 20 "" _null_ _null_ _null_ pg_stat_get_buf_alloc - _null_ _null_ ));
+DESCR("statistics: number of buffer allocations");
+
 DATA(insert OID = 2230 (  pg_stat_clear_snapshot		PGNSP PGUID 12 1 0 f f f f v 0 2278  "" _null_ _null_ _null_	pg_stat_clear_snapshot - _null_ _null_ ));
 DESCR("statistics: discard current transaction's statistics snapshot");
 DATA(insert OID = 2274 (  pg_stat_reset					PGNSP PGUID 12 1 0 f f f f v 0 2278  "" _null_ _null_ _null_	pg_stat_reset - _null_ _null_ ));
