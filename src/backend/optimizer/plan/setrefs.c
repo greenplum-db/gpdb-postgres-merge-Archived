@@ -798,10 +798,10 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 			}
 			break;
 		case T_Agg:
-			set_upper_references(glob, plan, rtoffset, true);
+			set_upper_references(glob, plan, rtoffset, false);
 			break;
 		case T_Window:
-			set_upper_references(glob, plan, rtoffset, true);
+			set_upper_references(glob, plan, rtoffset, false);
 			if ( plan->targetlist == NIL )
 				set_dummy_tlist_references(plan, rtoffset, true);
 			{
@@ -2152,7 +2152,12 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
  *
  * GPDB: Some of our executor nodes use the scantuple slot.  Caller may
  * indicate use of 0 (instead of OUTER) for varno by passing true in
- * use_scan_slot.  
+ * use_scan_slot.
+ *
+ * GPDB_83_MERGE_FIXME: I changed the calls to not do that anymore. So AFAICS
+ * use_scan_slot is dead code now. I didn't change anything in the executor
+ * yet, though, so most likely there's a lot of broken stuff. A simple
+ * GROUP BY query worked though.
  *
  * XXX We could do away with the need for use_scan_slot by adjusting the
  *     executor!
