@@ -617,6 +617,7 @@ void ChangeTracking_GetRelationChangeInfoFromXlog(
 					break;
 				}
 				case XLOG_HEAP2_CLEAN:
+				case XLOG_HEAP2_CLEAN_MOVE:
 				{
 					xl_heap_clean *xlrec = (xl_heap_clean *) data;
 
@@ -666,6 +667,7 @@ void ChangeTracking_GetRelationChangeInfoFromXlog(
 													   xlrec->target.persistentSerialNum);
 					break;
 				}
+				case XLOG_HEAP_HOT_UPDATE:
 				case XLOG_HEAP_UPDATE:
 				case XLOG_HEAP_MOVE:
 				{
