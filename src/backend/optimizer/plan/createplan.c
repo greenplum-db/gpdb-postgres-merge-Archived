@@ -4421,9 +4421,6 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 		}
 		else
 		{
-			if (!add_keys_to_targetlist)
-				break;
-
 			/*
 			 * Otherwise, we can sort by any non-constant expression listed in
 			 * the pathkey's EquivalenceClass.  For now, we take the first one
@@ -4473,6 +4470,9 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 			{
 				/* No matching tlist item; look for a computable expression */
 				Expr	   *sortexpr = NULL;
+
+				if (!add_keys_to_targetlist)
+					break;
 
 				foreach(j, ec->ec_members)
 				{
