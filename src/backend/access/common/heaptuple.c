@@ -1465,7 +1465,7 @@ slot_getattr(TupleTableSlot *slot, int attnum, bool *isnull)
 	HeapTupleHeader tup;
 
 	/*
-	 * system attributes are handled by heap_getsysattr
+	 * system attributes are handled by slot_getsysattr
 	 */
 	if (attnum <= 0)
 	{
@@ -1475,7 +1475,7 @@ slot_getattr(TupleTableSlot *slot, int attnum, bool *isnull)
 		if (tuple == &(slot->tts_minhdr))	/* internal error */
 			elog(ERROR, "cannot extract system attribute from minimal tuple");
 #endif
-		return heap_getsysattr(tuple, attnum, isnull);
+		return slot_getsysattr(slot, attnum, isnull);
 	}
 
 	/*
