@@ -364,11 +364,11 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 	QueryDesc  *queryDesc;
 	instr_time	starttime;
 	double		totaltime = 0;
+    ExplainState *es;
+    StringInfo  buf;
     EState     *estate = NULL;
 	int			eflags;
     int         nb;
-    ExplainState   *es;
-    StringInfo  buf;
 
 	/*
 	 * Update snapshot command ID to ensure this query sees results of any
@@ -436,9 +436,8 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
     /* CDB: Find slice table entry for the root slice. */
     es->currentSlice = getCurrentSlice(estate, LocallyExecutingSliceIndex(estate));
 
-    /*
-     * Execute the plan for statistics if asked for.  Attempt to proceed
-     * with our report even if there is an error.
+	/* Execute the plan for statistics if asked for */
+	/* In GPDB, we attempt to proceed with our report even if there is an error.
      */
 	if (stmt->analyze)
 	{
@@ -517,10 +516,9 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 			else
 				f = format_node_dump(s);
 			pfree(s);
-
-			do_text_output_multiline(es->tupOutputState, f);
+			do_text_output_multiline(tstate, f);
 			pfree(f);
-			do_text_output_oneline(es->tupOutputState, ""); /* separator line */
+			do_text_output_oneline(tstate, ""); /* separator line */
 		}
 	}
 
