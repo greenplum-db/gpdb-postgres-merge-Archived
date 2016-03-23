@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 /* $PostgreSQL: pgsql/src/port/getopt.c,v 1.14 2009/06/11 14:49:15 momjian Exp $ */
-=======
-/* $PostgreSQL: pgsql/src/port/getopt.c,v 1.11 2007/03/26 21:44:11 momjian Exp $ */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* This is used by psql under Win32 */
 

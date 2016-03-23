@@ -4,15 +4,9 @@
  *	   Win32 open() replacement
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * $PostgreSQL: pgsql/src/port/open.c,v 1.30 2010/01/02 16:58:13 momjian Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- *
- * $PostgreSQL: pgsql/src/port/open.c,v 1.26 2008/01/01 19:46:00 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -96,7 +90,6 @@ pgwin32_open(const char *fileName, int fileFlags,...)
 			  ((fileFlags & _O_SHORT_LIVED) ? FILE_ATTRIBUTE_TEMPORARY : 0) |
 				((fileFlags & O_TEMPORARY) ? FILE_FLAG_DELETE_ON_CLOSE : 0) |
 					  ((fileFlags & O_DIRECT) ? FILE_FLAG_NO_BUFFERING : 0) |
-<<<<<<< HEAD
 					   ((fileFlags & O_DSYNC) ? FILE_FLAG_WRITE_THROUGH : 0),
 						   NULL)) == INVALID_HANDLE_VALUE)
 	{
@@ -108,18 +101,6 @@ pgwin32_open(const char *fileName, int fileFlags,...)
 		DWORD		err = GetLastError();
 
 		if (err == ERROR_SHARING_VIOLATION ||
-=======
-						((fileFlags & O_DSYNC) ? FILE_FLAG_WRITE_THROUGH : 0),
-						NULL)) == INVALID_HANDLE_VALUE)
-	{
-		/*
-		 * Sharing violation or locking error can indicate antivirus, backup
-		 * or similar software that's locking the file. Try again for 30 seconds
-		 * before giving up.
-		 */
-		DWORD err = GetLastError();
-		if (err == ERROR_SHARING_VIOLATION || 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			err == ERROR_LOCK_VIOLATION)
 		{
 			pg_usleep(100000);
@@ -128,17 +109,10 @@ pgwin32_open(const char *fileName, int fileFlags,...)
 #ifndef FRONTEND
 			if (loops == 50)
 				ereport(LOG,
-<<<<<<< HEAD
 						(errmsg("could not open file \"%s\": %s", fileName,
 								(err == ERROR_SHARING_VIOLATION) ? _("sharing violation") : _("lock violation")),
 						 errdetail("Continuing to retry for 30 seconds."),
 						 errhint("You might have antivirus, backup, or similar software interfering with the database system.")));
-=======
-				    (errmsg("could not open file \"%s\": %s", fileName, 
-					  (err == ERROR_SHARING_VIOLATION)?_("sharing violation"):_("lock violation")),
-					 errdetail("Continuing to retry for 30 seconds."),
-					 errhint("You might have antivirus, backup, or similar software interfering with the database system.")));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif
 
 			if (loops < 300)

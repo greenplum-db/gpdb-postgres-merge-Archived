@@ -13,17 +13,10 @@
  * use the Windows native routines, but if not, we use our own.
  *
  *
-<<<<<<< HEAD
  * Copyright (c) 2003-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  $PostgreSQL: pgsql/src/port/getaddrinfo.c,v 1.30 2010/01/02 16:58:13 momjian Exp $
-=======
- * Copyright (c) 2003-2008, PostgreSQL Global Development Group
- *
- * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/getaddrinfo.c,v 1.28 2008/01/01 19:46:00 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */

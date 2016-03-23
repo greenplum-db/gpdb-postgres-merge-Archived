@@ -3,11 +3,7 @@
  * dirmod.c
  *	  directory handling functions
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	This includes replacement versions of functions that work on
@@ -139,13 +135,8 @@ pgrename(const char *from, const char *to)
 		_dosmaperr(err);
 
 		/*
-<<<<<<< HEAD
 		 * Modern NT-based Windows versions return ERROR_SHARING_VIOLATION if
 		 * another process has the file open without FILE_SHARE_DELETE.
-=======
-		 * Modern NT-based Windows versions return ERROR_SHARING_VIOLATION
-		 * if another process has the file open without FILE_SHARE_DELETE.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 * ERROR_LOCK_VIOLATION has also been seen with some anti-virus
 		 * software. This used to check for just ERROR_ACCESS_DENIED, so
 		 * presumably you can get that too with some OS versions. We don't
