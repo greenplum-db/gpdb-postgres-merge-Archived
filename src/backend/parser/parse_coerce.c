@@ -318,7 +318,10 @@ coerce_type(ParseState *pstate, Node *node,
 		return (Node *) param;
 	}
 
-#if 0 /* GPDB_83MERGE_FIXME: Is this hack still needed? */
+	/*
+	 * GPDB_MERGE83_FIXME: This is still required but should be on the list
+	 * for cleaning up. Can we do this more efficiently?
+	 */
 	if (pstate != NULL && inputTypeId == UNKNOWNOID && IsA(node, Var))
 	{
         /*
@@ -374,10 +377,8 @@ coerce_type(ParseState *pstate, Node *node,
 										false, true));
 			fe = makeFuncExpr(infunc, targetTypeId, args, cformat);
 			return (Node *)fe;
-
 		}
 	}
-#endif /* GPDB_83MERGE_FIXME */
 
 	pathtype = find_coercion_pathway(targetTypeId, inputTypeId, ccontext,
 									 &funcId);
