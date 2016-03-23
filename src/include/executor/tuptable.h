@@ -264,6 +264,11 @@ static inline void slot_getsomeattrs(TupleTableSlot *slot, int attnum)
 	TupSetVirtualTuple(slot);
 }
 
+static inline void
+slot_getallattrs(TupleTableSlot *slot)
+{
+	slot_getsomeattrs(slot, slot->tts_tupleDescriptor->natts);
+}
 
 extern Datum slot_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull);
 

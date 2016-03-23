@@ -72,9 +72,6 @@ typedef struct ExplainState
     Slice          *currentSlice;   /* slice whose nodes we are visiting */
     ErrorData      *deferredError;  /* caught error to be re-thrown */
     MemoryContext   explaincxt;     /* mem pool for palloc()ing buffers etc. */
-    TupOutputState *tupOutputState; /* for sending output to client */
-	StringInfoData  outbuf;         /* the output buffer */
-    StringInfoData  workbuf;        /* a scratch buffer */
 } ExplainState;
 
 extern bool Test_print_direct_dispatch_info;
@@ -206,6 +203,7 @@ ExplainDXL(Query *query, ExplainStmt *stmt, const char *queryString,
     MemoryContext   explaincxt;
 	ExplainState    explainState;
     ExplainState   *es = &explainState;
+    StringInfoData buf;
 
     /* Create EXPLAIN memory context. */
     explaincxt = AllocSetContextCreate(CurrentMemoryContext,
@@ -222,13 +220,9 @@ ExplainDXL(Query *query, ExplainStmt *stmt, const char *queryString,
     es->tupOutputState = tstate;
     es->pstmt = NULL;
 
-    /* Allocate output buffer and a scratch buffer. */
-    MemoryContextSwitchTo(explaincxt);
-    initStringInfoOfSize(&es->workbuf, 1000);
-	initStringInfoOfSize(&es->outbuf, 16000);
-    MemoryContextSwitchTo(oldcxt);
+	initStringInfo(&buf);
 
-    bool enumerate = optimizer_enumerate_plans;
+	bool enumerate = optimizer_enumerate_plans;
 
     /* Do the EXPLAIN. */
     PG_TRY();
@@ -248,8 +242,8 @@ ExplainDXL(Query *query, ExplainStmt *stmt, const char *queryString,
     	}
     	else
     	{
-    		do_text_output_multiline(es->tupOutputState, dxl);
-    		do_text_output_oneline(es->tupOutputState, ""); /* separator line */
+			do_text_output_multiline(tstate, dxl);
+			do_text_output_oneline(tstate, ""); /* separator line */
     		pfree(dxl);
     	}
 
@@ -364,8 +358,8 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 	QueryDesc  *queryDesc;
 	instr_time	starttime;
 	double		totaltime = 0;
-    ExplainState *es;
-    StringInfo  buf;
+	ExplainState *es;
+    StringInfoData buf;
     EState     *estate = NULL;
 	int			eflags;
     int         nb;
@@ -381,10 +375,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 
     /* Initialize ExplainState structure. */
 	es = (ExplainState *) palloc0(sizeof(ExplainState));
-    /* Allocate output buffer and a scratch buffer. */
-    initStringInfoOfSize(&es->workbuf, 1000);
-	initStringInfoOfSize(&es->outbuf, 16000);
-	buf = &es->outbuf;
 
 	/* Create a QueryDesc requesting no output */
 	queryDesc = CreateQueryDesc(plannedstmt,
@@ -483,8 +473,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
                                      es->showstatctx);
 	}
 
-	es = (ExplainState *) palloc0(sizeof(ExplainState));
-
 	es->printAnalyze = stmt->analyze;
 	es->pstmt = queryDesc->plannedstmt;
 	es->rtable = queryDesc->plannedstmt->rtable;
@@ -522,6 +510,8 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 		}
 	}
 
+	initStringInfo(&buf);
+
     /*
      * Produce the EXPLAIN report into buf.  (Sometimes we get internal errors
      * while doing this; try to proceed with a partial report anyway.)
@@ -556,7 +546,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 					Assert(!"Unexpected statement type");
 					break;
 			}
-			appendStringInfo(buf, "%s", cmdName);
+			appendStringInfo(&buf, "%s", cmdName);
 
 			if (IsA(childPlan, Motion))
 			{
@@ -571,12 +561,12 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 			{
 				numSegments = 1;
 			}
-			appendStringInfo(buf, " (slice%d; segments: %d)", sliceNum, numSegments);
-			appendStringInfo(buf, "  (rows=%.0f width=%d)\n", ceil(childPlan->plan_rows / numSegments), childPlan->plan_width);
-			appendStringInfo(buf, "  ->  ");
+			appendStringInfo(&buf, " (slice%d; segments: %d)", sliceNum, numSegments);
+			appendStringInfo(&buf, "  (rows=%.0f width=%d)\n", ceil(childPlan->plan_rows / numSegments), childPlan->plan_width);
+			appendStringInfo(&buf, "  ->  ");
 			indent = 3;
 		}
-	    explain_outNode(buf,
+	    explain_outNode(&buf,
 						childPlan, queryDesc->planstate,
 					    NULL, indent, es);
     }
@@ -585,7 +575,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
         es->deferredError = explain_defer_error(es);
 
         /* Keep a NUL at the end of the output buffer. */
-        buf->data[Min(buf->len, buf->maxlen-1)] = '\0';
+        buf.data[Min(buf.len, buf.maxlen-1)] = '\0';
     }
     PG_END_TRY();
 
@@ -613,12 +603,12 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 		show_relname = (numrels > 1 || targrels != NIL);
 		rInfo = queryDesc->estate->es_result_relations;
 		for (nr = 0; nr < numrels; rInfo++, nr++)
-			report_triggers(rInfo, show_relname, buf);
+			report_triggers(rInfo, show_relname, &buf);
 
 		foreach(l, targrels)
 		{
 			rInfo = (ResultRelInfo *) lfirst(l);
-			report_triggers(rInfo, show_relname, buf);
+			report_triggers(rInfo, show_relname, &buf);
 		}
 	}
 
@@ -626,17 +616,17 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
      * Display per-slice and whole-query statistics.
      */
     if (stmt->analyze)
-        cdbexplain_showExecStatsEnd(queryDesc->plannedstmt, es->showstatctx, buf, estate);
+        cdbexplain_showExecStatsEnd(queryDesc->plannedstmt, es->showstatctx, &buf, estate);
 
     /*
      * Show non-default GUC settings that might have affected the plan.
      */
-    nb = gp_guc_list_show(buf, "Settings:  ", "%s=%s; ", PGC_S_DEFAULT,
+    nb = gp_guc_list_show(&buf, "Settings:  ", "%s=%s; ", PGC_S_DEFAULT,
                            gp_guc_list_for_explain);
     if (nb > 0)
     {
-        truncateStringInfo(buf, buf->len - 2);  /* drop final "; " */
-        appendStringInfoChar(buf, '\n');
+        truncateStringInfo(&buf, buf.len - 2);  /* drop final "; " */
+        appendStringInfoChar(&buf, '\n');
     }
 
 #ifdef USE_ORCA
@@ -663,15 +653,15 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
      * Display final elapsed time.
      */
 	if (stmt->analyze)
-		appendStringInfo(buf, "Total runtime: %.3f ms\n",
+		appendStringInfo(&buf, "Total runtime: %.3f ms\n",
 						 1000.0 * totaltime);
 
     /*
      * Send EXPLAIN report to client.  Some might have been sent already
      * by explain_outNode().
      */
-    if (buf->len > 0)
-        do_text_output_multiline(es->tupOutputState, buf->data);
+    if (buf.len > 0)
+        do_text_output_multiline(tstate, buf.data);
 
     /*
 	 * Close down the query and free resources.
@@ -708,7 +698,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
         ErrorData  *edata = es->deferredError;
 
         /* Tell client the command ended successfully. */
-        EndCommand("EXPLAIN", es->tupOutputState->dest->mydest);
+        EndCommand("EXPLAIN", tstate->dest->mydest);
 
         /* Resume handling the error.  Clean up and send the NOTICE message. */
         es->deferredError = NULL;
@@ -1921,13 +1911,6 @@ explain_outNode(StringInfo str,
 							indent + 4, es);
 		}
 	}
-
-    /* CDB: Empty the output buffer if it's more than half full. */
-    if (str->len*2 > str->maxlen)
-    {
-        do_text_output_multiline(es->tupOutputState, str->data);
-        truncateStringInfo(str, 0);
-    }
 
     es->currentSlice = currentSlice;    /* restore */
 }                               /* explain_outNode */
