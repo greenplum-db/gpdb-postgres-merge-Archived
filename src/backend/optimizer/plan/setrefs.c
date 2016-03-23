@@ -408,8 +408,24 @@ set_plan_references(PlannerGlobal *glob, Plan *plan, List *rtable)
 	}
 
 	/* Now fix the Plan tree */
-	fix_projection_incapable_nodes(plan);
-	fix_projection_incapable_nodes_in_subplans(glob, plan);
+
+
+	/*
+	 * GPDB_83_MERGE_FIXME: In PostgreSQL, we have added Result nodes to mask
+	 * projection incapable nodes before we get this far. I think we should do
+	 * the same in GPDB.
+	 *
+	 * The immediate reason this is commented out is because
+	 * fix_projection_incapable_nodes() seemed to mess with target lists somehow,
+	 * leaving garbage nodes in the target list. I didn't investigate that any
+	 * further right now, because the query I was testing started to work when
+	 * I simply commented these out... Will need to check if we still need these,
+	 * and if we do, whether it would be feasible to add the Result node earlier
+	 * in the planner.
+	 */
+	//fix_projection_incapable_nodes(plan);
+
+	//fix_projection_incapable_nodes_in_subplans(glob, plan);
 
 	Plan *retPlan = set_plan_refs(glob, plan, rtoffset);
 
