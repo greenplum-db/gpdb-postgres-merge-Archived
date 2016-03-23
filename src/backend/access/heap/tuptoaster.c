@@ -255,6 +255,17 @@ heap_tuple_untoast_attr(struct varlena * attr)
 			pfree(tmp);
 		}
 	}
+	else if (VARATT_IS_COMPRESSED(attr))
+	{
+		/*
+		 * This is a compressed value inside of the main tuple
+		 */
+		PGLZ_Header *tmp = (PGLZ_Header *) attr;
+
+		attr = (struct varlena *) palloc(PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
+		SET_VARSIZE(attr, PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
+		pglz_decompress(tmp, VARDATA(attr));
+	}
 	else if (VARATT_IS_SHORT(attr))
 	{
 		/*
