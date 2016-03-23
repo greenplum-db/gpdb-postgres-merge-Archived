@@ -71,7 +71,6 @@ typedef struct ExplainState
     struct CdbExplain_ShowStatCtx  *showstatctx;    /* EXPLAIN ANALYZE info */
     Slice          *currentSlice;   /* slice whose nodes we are visiting */
     ErrorData      *deferredError;  /* caught error to be re-thrown */
-    MemoryContext   explaincxt;     /* mem pool for palloc()ing buffers etc. */
 } ExplainState;
 
 extern bool Test_print_direct_dispatch_info;
@@ -200,21 +199,12 @@ ExplainDXL(Query *query, ExplainStmt *stmt, const char *queryString,
 				ParamListInfo params, TupOutputState *tstate)
 {
     MemoryContext   oldcxt = CurrentMemoryContext;
-    MemoryContext   explaincxt;
 	ExplainState    explainState;
     ExplainState   *es = &explainState;
     StringInfoData buf;
 
-    /* Create EXPLAIN memory context. */
-    explaincxt = AllocSetContextCreate(CurrentMemoryContext,
-                                       "EXPLAIN working storage",
-                                       ALLOCSET_DEFAULT_MINSIZE,
-                                       ALLOCSET_DEFAULT_INITSIZE,
-                                       ALLOCSET_DEFAULT_MAXSIZE);
-
     /* Initialize ExplainState structure. */
     memset(es, 0, sizeof(*es));
-    es->explaincxt = explaincxt;
     es->showstatctx = NULL;
     es->deferredError = NULL;
     es->tupOutputState = tstate;
@@ -249,20 +239,11 @@ ExplainDXL(Query *query, ExplainStmt *stmt, const char *queryString,
 
     	 /* Free the memory we used. */
     	MemoryContextSwitchTo(oldcxt);
-    	MemoryContextDelete(explaincxt);
     }
     PG_CATCH();
     {
     	// restore old value of enumerate plans GUC
     	optimizer_enumerate_plans = enumerate;
-
-    	/* Free the memory we used. */
-    	if (CurrentMemoryContext == explaincxt)
-    	{
-    		MemoryContextSwitchTo(oldcxt);
-    	}
-
-    	MemoryContextDelete(explaincxt);
 
     	/* Exit to next error handler. */
     	PG_RE_THROW();
@@ -363,6 +344,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
     EState     *estate = NULL;
 	int			eflags;
     int         nb;
+	MemoryContext explaincxt = CurrentMemoryContext;
 
 	/*
 	 * Update snapshot command ID to ensure this query sees results of any
@@ -393,7 +375,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
     if (stmt->analyze)
     {
         es->showstatctx = cdbexplain_showExecStatsBegin(queryDesc,
-                                                        es->explaincxt,
                                                         starttime);
 
         /* Attach workarea to QueryDesc so ExecSetParamPlan() can find it. */
@@ -438,6 +419,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
         }
         PG_CATCH();
         {
+			MemoryContextSwitchTo(explaincxt);
             es->deferredError = explain_defer_error(es);
         }
         PG_END_TRY();
@@ -453,6 +435,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
         }
         PG_CATCH();
         {
+			MemoryContextSwitchTo(explaincxt);
             es->deferredError = explain_defer_error(es);
         }
         PG_END_TRY();
@@ -572,6 +555,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
     }
     PG_CATCH();
     {
+		MemoryContextSwitchTo(explaincxt);
         es->deferredError = explain_defer_error(es);
 
         /* Keep a NUL at the end of the output buffer. */
@@ -666,9 +650,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
     /*
 	 * Close down the query and free resources.
      *
-     * We don't have to pfree() our buffers because the caller frees them by
-     * deleting explaincxt.
-     *
      * For EXPLAIN ANALYZE, if a qExec failed or gave an error, ExecutorEnd()
      * will reissue the error locally at this point.  Intercept any such error
      * and reduce it to a NOTICE so it won't interfere with our output.
@@ -679,6 +660,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
     }
     PG_CATCH();
     {
+		MemoryContextSwitchTo(explaincxt);
         es->deferredError = explain_defer_error(es);
     }
     PG_END_TRY();
@@ -782,7 +764,7 @@ elapsed_time(instr_time *starttime)
  * handler and continue sequentially.  Otherwise we re-throw to the
  * next outer error handler.
  */
-ErrorData *
+static ErrorData *
 explain_defer_error(ExplainState *es)
 {
     ErrorData  *edata;
@@ -796,7 +778,6 @@ explain_defer_error(ExplainState *es)
         PG_RE_THROW();
 
     /* Save the error info and expunge it from the error system. */
-    MemoryContextSwitchTo(es->explaincxt);
     edata = CopyErrorData();
     FlushErrorState();
 

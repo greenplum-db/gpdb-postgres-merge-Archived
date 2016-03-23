@@ -1297,18 +1297,12 @@ cdbexplain_formatSeg(char *outbuf, int bufsize, int segindex, int nInst)
  *
  * 'querystarttime' is the timestamp of the start of the query, in a
  *      platform-dependent format.
- * 'explaincxt' is a MemoryContext from which to allocate the ShowStatCtx as
- *      well as any needed buffers and the like.  The explaincxt ptr is saved
- *      in the ShowStatCtx.  The caller is expected to reset or destroy the
- *      explaincxt not too long after calling cdbexplain_showExecStatsEnd(); so
- *      we don't bother to pfree() memory that we allocate from this context.
  *
  * Note this function is called before ExecutorStart(), so there is no EState
  * or SliceTable yet.
  */
 struct CdbExplain_ShowStatCtx *
 cdbexplain_showExecStatsBegin(struct QueryDesc *queryDesc,
-                              MemoryContext     explaincxt,
                               instr_time        querystarttime)
 {
     MemoryContext           oldcontext;
@@ -1317,13 +1311,9 @@ cdbexplain_showExecStatsBegin(struct QueryDesc *queryDesc,
 
     Assert(Gp_role != GP_ROLE_EXECUTE);
 
-    /* Switch to EXPLAIN memory context. */
-    oldcontext = MemoryContextSwitchTo(explaincxt);
-
     /* Allocate and zero the ShowStatCtx */
     ctx = (CdbExplain_ShowStatCtx *)palloc0(sizeof(*ctx));
 
-    ctx->explaincxt = explaincxt;
     ctx->querystarttime = querystarttime;
 
     /* Determine number of slices.  (SliceTable hasn't been built yet.) */
@@ -1801,9 +1791,7 @@ cdbexplain_showExecStats(struct PlanState              *planstate,
  * 'str' is the output buffer.
  *
  * This doesn't free the CdbExplain_ShowStatCtx object or buffers, because
- * shortly afterwards the caller is expected to destroy the 'explaincxt'
- * MemoryContext which was passed to cdbexplain_showExecStatsBegin(), thus
- * freeing all at once.
+ * they will be free'd shortly by the end of statement anyway.
  */
 void
 cdbexplain_showExecStatsEnd(struct PlannedStmt *stmt,
