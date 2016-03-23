@@ -1595,6 +1595,7 @@ _slot_getsomeattrs(TupleTableSlot *slot, int attnum)
 		slot->PRIVATE_tts_isnull[attno] = true;
 	}
 	slot->PRIVATE_tts_nvalid = attnum;
+	TupSetVirtualTuple(slot);
 }
 
 /*
