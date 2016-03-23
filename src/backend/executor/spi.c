@@ -2083,9 +2083,6 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, long tcount)
 			gp_enable_gpperfmon = false;
 		}
 
-		if (fire_triggers)
-			AfterTriggerBeginQuery();
-
 		ExecutorStart(queryDesc, 0);
 
 		ExecutorRun(queryDesc, ForwardScanDirection, tcount);
