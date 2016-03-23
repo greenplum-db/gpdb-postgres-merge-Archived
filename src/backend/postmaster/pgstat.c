@@ -698,8 +698,8 @@ pgstat_report_stat(bool force)
 	int			i;
 
 	/* Don't expend a clock check if nothing to do */
-	if ((pgStatTabList == NULL || pgStatTabList->tsa_used == 0)
-		&& !have_function_stats)
+	if ((pgStatTabList == NULL || pgStatTabList->tsa_used == 0) &&
+		!have_function_stats)
 		return;
 
 	/*
@@ -774,7 +774,7 @@ pgstat_report_stat(bool force)
 
 	/* Now, send function statistics */
 	pgstat_send_funcstats();
-	}
+}
 
 /*
  * Subroutine for pgstat_report_stat: finish and send a tabstat message
@@ -1119,10 +1119,10 @@ pgstat_drop_database(Oid databaseid)
  *
  *	Tell the collector that we just dropped a relation.
  *	(If the message gets lost, we will still clean the dead entry eventually
- *	via future invocations of pgstat_vacuum_tabstat().)
+ *	via future invocations of pgstat_vacuum_stat().)
  *
  *	Currently not used for lack of any good place to call it; we rely
- *	entirely on pgstat_vacuum_tabstat() to clean out stats for dead rels.
+ *	entirely on pgstat_vacuum_stat() to clean out stats for dead rels.
  * ----------
  */
 #ifdef NOT_USED
@@ -1619,10 +1619,6 @@ pgstat_count_heap_update(Relation rel, bool hot)
 		pgstat_info->trans->tuples_inserted++;
 		pgstat_info->trans->tuples_deleted++;
 	}
-	pgStatXactStack = NULL;
-
-	/* Make sure any stats snapshot is thrown away */
-	pgstat_clear_snapshot();
 }
 
 /*
@@ -1683,7 +1679,7 @@ AtEOXact_PgStat(bool isCommit)
 	 * in case the reporting message isn't sent right away.)
 	 */
 	if (isCommit)
-	pgStatXactCommit++;
+		pgStatXactCommit++;
 	else
 		pgStatXactRollback++;
 
@@ -1809,7 +1805,7 @@ AtEOSubXact_PgStat(bool isCommit, int nestDepth)
  *
  * In this phase we just generate 2PC records for all the pending
  * transaction-dependent stats work.
-	 */
+ */
 void
 AtPrepare_PgStat(void)
 {
@@ -2444,6 +2440,7 @@ pgstat_report_waiting(char waiting)
 	 */
 	beentry->st_waiting = waiting;
 }
+
 
 /* ----------
  * pgstat_read_current_status() -
@@ -3133,11 +3130,11 @@ pgstat_write_statsfile(bool permanent)
 		{
 			fputc('F', fpout);
 			fwrite(funcentry, sizeof(PgStat_StatFuncEntry), 1, fpout);
-	}
+		}
 
-	/*
+		/*
 		 * Mark the end of this DB
-	 */
+		 */
 		fputc('d', fpout);
 	}
 
