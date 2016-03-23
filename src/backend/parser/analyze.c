@@ -241,8 +241,6 @@ parse_sub_analyze(Node *parseTree, ParseState *parentParseState)
 	/* CDB: All breadcrumbs should have been popped. */
 	Assert(!pstate->p_breadcrumb.pop);
 
-	query = transformStmt(pstate, parseTree);
-
 	free_parsestate(pstate);
 
 	return query;
