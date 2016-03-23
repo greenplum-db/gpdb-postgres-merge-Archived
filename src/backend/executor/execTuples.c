@@ -170,7 +170,7 @@ MakeTupleTableSlot(void)
 {
 	TupleTableSlot *slot = makeNode(TupleTableSlot);
 
-	init_slot(slot, NULL)
+	init_slot(slot, NULL);
 
 	return slot;
 }
@@ -216,7 +216,11 @@ ExecResetTupleTable(List *tupleTable,	/* tuple table */
 		/* Always release resources and reset the slot to empty */
 		ExecClearTuple(slot);
 		if (slot->tts_tupleDescriptor)
-			cleanup_slot(&(table->array[i]));
+			cleanup_slot(slot);
+
+		/* If shouldFree, release memory occupied by the slot itself */
+		if (shouldFree)
+			pfree(slot);
 	}
 
 	/* If shouldFree, release the list structure */
