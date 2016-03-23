@@ -193,8 +193,8 @@ DECLARE_UNIQUE_INDEX(pg_statistic_relid_att_index, 2696, on pg_statistic using b
 
 DECLARE_UNIQUE_INDEX(pg_filespace_oid_index, 2858, on pg_filespace using btree(oid oid_ops));
 #define FilespaceOidIndexId  2858
-DECLARE_UNIQUE_INDEX(pg_filespace_fsname_index, 2859, on pg_filespace using btree(fsname name_ops));
-#define FilespaceNameIndexId  2859
+DECLARE_UNIQUE_INDEX(pg_filespace_fsname_index, 6998, on pg_filespace using btree(fsname name_ops));
+#define FilespaceNameIndexId  6998
 
 DECLARE_UNIQUE_INDEX(pg_tablespace_oid_index, 2697, on pg_tablespace using btree(oid oid_ops));
 #define TablespaceOidIndexId  2697
