@@ -490,7 +490,6 @@ ExecEndIndexScan(IndexScanState *node)
 	 */
 	ExecCloseScanRelation(relation);
 
-	Assert(NULL != node->iss_RuntimeContext);
 	FreeRuntimeKeysContext(node);
 	EndPlanStateGpmonPkt(&node->ss.ps);
 }
