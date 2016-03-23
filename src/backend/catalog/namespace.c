@@ -56,6 +56,7 @@
 #include "cdb/cdbvars.h"
 #include "tcop/utility.h"
 
+#include "cdb/cdbdisp.h"
 #include "cdb/cdbtm.h"
 
 /*
@@ -3065,18 +3066,24 @@ recomputeNamespacePath(void)
 	list_free(oidlist);
 }
 
+static void
+InitTempTableNamespace(void)
+{
+	InitTempTableNamespaceWithOids(InvalidOid, InvalidOid);
+}
+
 /*
  * InitTempTableNamespace
  *		Initialize temp table namespace on first use in a particular backend
  */
-static void
-InitTempTableNamespace(void)
+void
+InitTempTableNamespaceWithOids(Oid tempSchema, Oid tempToastSchema)
 {
 	char		namespaceName[NAMEDATALEN];
-	char		toastNamespaceName[NAMEDATALEN];
-	int			fetchCount;
-	char	   *rolname;
+	Oid			namespaceId;
+	Oid			toastspaceId;
 	CreateSchemaStmt *stmt;
+	int			session_suffix;
 
 	Assert(!OidIsValid(myTempNamespace));
 
@@ -3097,24 +3104,19 @@ InitTempTableNamespace(void)
 				 errmsg("permission denied to create temporary tables in database \"%s\"",
 						get_database_name(MyDatabaseId))));
 
-	/* 
+	/*
 	 * TempNamespace name creation rules are different depending on the
 	 * nature of the current connection role.
 	 */
 	switch (Gp_role)
 	{
 		case GP_ROLE_DISPATCH:
-			snprintf(namespaceName, sizeof(namespaceName), "pg_temp_%d", 
-					 gp_session_id);
-			snprintf(toastNamespaceName, sizeof(namespaceName), "pg_toast_temp_%d", 
-					 gp_session_id);
+		case GP_ROLE_EXECUTE:
+			session_suffix = gp_session_id;
 			break;
 
 		case GP_ROLE_UTILITY:
-			snprintf(namespaceName, sizeof(namespaceName), "pg_temp_%d", 
-					 MyBackendId);
-			snprintf(toastNamespaceName, sizeof(namespaceName), "pg_toast_temp_%d", 
-					 MyBackendId);
+			session_suffix = MyBackendId;
 			break;
 
 		default:
@@ -3123,50 +3125,89 @@ InitTempTableNamespace(void)
 			break;
 	}
 
+	snprintf(namespaceName, sizeof(namespaceName), "pg_temp_%d", session_suffix);
+
+	namespaceId = GetSysCacheOid(NAMESPACENAME,
+								 CStringGetDatum(namespaceName),
+								 0, 0, 0);
+	if (!OidIsValid(namespaceId))
+	{
+		/*
+		 * First use of this temp namespace in this database; create it. The
+		 * temp namespaces are always owned by the superuser.  We leave their
+		 * permissions at default --- i.e., no access except to superuser ---
+		 * to ensure that unprivileged users can't peek at other backends'
+		 * temp tables.  This works because the places that access the temp
+		 * namespace for my own backend skip permissions checks on it.
+		 */
+		namespaceId = NamespaceCreate(namespaceName, BOOTSTRAP_SUPERUSERID, tempSchema);
+		/* Advance command counter to make namespace visible */
+		CommandCounterIncrement();
+	}
+	else
+	{
+		/*
+		 * If the namespace already exists, clean it out (in case the former
+		 * owner crashed without doing so).
+		 */
+		RemoveTempRelations(namespaceId);
+	}
+
 	/*
-	 * First use of this temp namespace in this database; create it. The
-	 * temp namespaces are always owned by the superuser.  We leave their
-	 * permissions at default --- i.e., no access except to superuser ---
-	 * to ensure that unprivileged users can't peek at other backends'
-	 * temp tables.  This works because the places that access the temp
-	 * namespace for my own backend skip permissions checks on it.
+	 * If the corresponding toast-table namespace doesn't exist yet, create it.
+	 * (We assume there is no need to clean it out if it does exist, since
+	 * dropping a parent table should make its toast table go away.)
 	 */
+	snprintf(namespaceName, sizeof(namespaceName), "pg_toast_temp_%d",
+			 session_suffix);
+
+	toastspaceId = GetSysCacheOid(NAMESPACENAME,
+								  CStringGetDatum(namespaceName),
+								  0, 0, 0);
+	if (!OidIsValid(toastspaceId))
+	{
+		toastspaceId = NamespaceCreate(namespaceName, BOOTSTRAP_SUPERUSERID, tempToastSchema);
+		/* Advance command counter to make namespace visible */
+		CommandCounterIncrement();
+	}
+
+	/*
+	 * Okay, we've prepared the temp namespace ... but it's not committed yet,
+	 * so all our work could be undone by transaction rollback.  Set flag for
+	 * AtEOXact_Namespace to know what to do.
+	 */
+	myTempNamespace = namespaceId;
+	myTempToastNamespace = toastspaceId;
+
+	/* It should not be done already. */
+	AssertState(myTempNamespaceSubID == InvalidSubTransactionId);
+	myTempNamespaceSubID = GetCurrentSubTransactionId();
+
+	baseSearchPathValid = false;	/* need to rebuild list */
 
 	/* 
-	 * CDB: Dispatch CREATE SCHEMA command.
+	 * GPDB: Dispatch a special CREATE SCHEMA command, to also create the
+	 * temp schemas in all the segments.
 	 *
 	 * We need to keep the OID of temp schemas synchronized across the
 	 * cluster which means that we must go through regular dispatch
-	 * logic rather than letting every backend manage the 
+	 * logic rather than letting every backend manage it.
 	 */
-		
-	/* Lookup the name of the superuser */
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		/* Execute the internal DDL */
+		stmt = makeNode(CreateSchemaStmt);
+		stmt->istemp	 = true;
+		stmt->schemaOid = namespaceId;
+		stmt->toastSchemaOid = toastspaceId;
 
-	rolname = caql_getcstring_plus(
-					NULL,
-					&fetchCount,
-					NULL,
-					cql("SELECT rolname FROM pg_authid "
-						" WHERE oid = :1 ",
-						ObjectIdGetDatum(BOOTSTRAP_SUPERUSERID)));
-
-	Assert(fetchCount);  /* bootstrap user MUST exist */
-
-	/* Execute the internal DDL */
-	stmt = makeNode(CreateSchemaStmt);
-	stmt->schemaname = namespaceName;
-	stmt->istemp	 = true;
-	stmt->authid	 = rolname;
-	ProcessUtility((Node*) stmt, "(internal create temp schema command)",
-				   NULL, false, None_Receiver, NULL);
-
-	/* And the same for the toast temp namespace */
-	stmt = makeNode(CreateSchemaStmt);
-	stmt->schemaname = toastNamespaceName;
-	stmt->istemp	 = true;
-	stmt->authid	 = rolname;
-	ProcessUtility((Node*) stmt, "(internal create temp schema command)",
-				   NULL, false, None_Receiver, NULL);
+		/*
+		 * Dispatch the command to all primary and mirror segment dbs.
+		 * Starts a global transaction and reconfigures cluster if needed.
+		 * Waits for QEs to finish.  Exits via ereport(ERROR,...) if error.
+		 */
+		CdbDispatchUtilityStatement((Node *)stmt, "(internal create temp schema command)");
+	}
 }
 
 /*
