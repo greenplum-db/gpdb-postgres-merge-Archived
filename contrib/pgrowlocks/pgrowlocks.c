@@ -1,9 +1,5 @@
 /*
-<<<<<<< HEAD
  * $PostgreSQL: pgsql/contrib/pgrowlocks/pgrowlocks.c,v 1.12 2009/06/11 14:48:52 momjian Exp $
-=======
- * $PostgreSQL: pgsql/contrib/pgrowlocks/pgrowlocks.c,v 1.8 2007/11/30 21:22:53 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * Copyright (c) 2005-2006	Tatsuo Ishii
  *
@@ -30,18 +26,12 @@
 
 #include "access/heapam.h"
 #include "access/multixact.h"
-<<<<<<< HEAD
 #include "access/relscan.h"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "access/xact.h"
 #include "catalog/namespace.h"
 #include "funcapi.h"
 #include "miscadmin.h"
-<<<<<<< HEAD
 #include "storage/bufmgr.h"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "storage/procarray.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -130,13 +120,8 @@ pgrowlocks(PG_FUNCTION_ARGS)
 		/* must hold a buffer lock to call HeapTupleSatisfiesUpdate */
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-<<<<<<< HEAD
 		if (HeapTupleSatisfiesUpdate(rel, tuple->t_data,
-									 GetCurrentCommandId(/*false*/),
-=======
-		if (HeapTupleSatisfiesUpdate(tuple->t_data,
 									 GetCurrentCommandId(false),
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 									 scan->rs_cbuf) == HeapTupleBeingUpdated)
 		{
 
