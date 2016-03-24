@@ -174,22 +174,14 @@ typedef struct PLpgSQL_expr
 	int			dtype;
 	int			exprno;
 	char	   *query;
-<<<<<<< HEAD
-	void	   *plan;
-	bool			cachable;			/* true if plan can be cached */
+	SPIPlanPtr	plan;
+	bool		cachable;			/* true if plan can be cached */
 	Oid		   *plan_argtypes;
 	/* fields for "simple expression" fast-path execution: */
 	Expr	   *expr_simple_expr;		/* NULL means not a simple expr */
 	Oid			expr_simple_type;
 	TransactionId	transaction_id;	/* used for clearing cached plan */
-=======
-	SPIPlanPtr	plan;
-	Oid		   *plan_argtypes;
-	/* fields for "simple expression" fast-path execution: */
-	Expr	   *expr_simple_expr;		/* NULL means not a simple expr */
 	int			expr_simple_generation; /* plancache generation we checked */
-	Oid			expr_simple_type;		/* result type Oid, if simple */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * if expr is simple AND prepared in current eval_estate,

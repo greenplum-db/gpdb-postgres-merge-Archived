@@ -3,11 +3,7 @@
  * pl_exec.c		- Executor for the PL/pgSQL
  *			  procedural language
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -185,8 +181,10 @@ static bool compatible_tupdesc(TupleDesc td1, TupleDesc td2);
 static void exec_set_found(PLpgSQL_execstate *estate, bool state);
 static void plpgsql_create_econtext(PLpgSQL_execstate *estate);
 static void free_var(PLpgSQL_var *var);
+/* GPDB_MERGE83_FIXME
 static void exec_check_cache_plan(PLpgSQL_expr *expr);
 static void exec_free_plan(PLpgSQL_expr *expr);
+*/
 
 
 /* ----------
@@ -1067,11 +1065,7 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 			 */
 			SPI_restore_connection();
 
-<<<<<<< HEAD
 			/* Clean up econtext. */
-=======
-			/* Must clean up the econtext too */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			exec_eval_cleanup(estate);
 
 			/* Look for a matching exception handler */
@@ -2242,16 +2236,12 @@ exec_init_tuple_store(PLpgSQL_execstate *estate)
 	 * entered, and not in the subtransaction resource owner.
 	 */
 	oldcxt = MemoryContextSwitchTo(estate->tuple_store_cxt);
-<<<<<<< HEAD
-	estate->tuple_store = tuplestore_begin_heap(true, false, work_mem); 
-=======
 	oldowner = CurrentResourceOwner;
 	CurrentResourceOwner = estate->tuple_store_owner;
 
 	estate->tuple_store = tuplestore_begin_heap(true, false, work_mem);
 
 	CurrentResourceOwner = oldowner;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	MemoryContextSwitchTo(oldcxt);
 
 	estate->rettupdesc = rsi->expectedDesc;
@@ -2496,9 +2486,10 @@ exec_prepare_plan(PLpgSQL_execstate *estate,
 	expr->plan_argtypes = plan->argtypes;
 	exec_simple_check_plan(expr);
 
-<<<<<<< HEAD
 	SPI_freeplan(plan);
 
+#if 0
+	/* GPDB_MERGE83_FIXME : Use the new plan caching */
 	if (Gp_role != GP_ROLE_EXECUTE)
 	{
 		/* 
@@ -2506,9 +2497,8 @@ exec_prepare_plan(PLpgSQL_execstate *estate,
 		 */
 		exec_check_cache_plan(expr);
 	}
+#endif
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	pfree(argtypes);
 }
 
@@ -2533,11 +2523,13 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 	 * whether the statement is INSERT/UPDATE/DELETE
 	 */
 
- 	/* if we find a cached plan, check if we want to use it */
+	/* GPDB_MERGE83_FIXME */
+ 	/* if we find a cached plan, check if we want to use it
 	if (expr->plan != NULL)
 	{
 		exec_free_plan(expr);
 	}
+	*/
 	
 	if (expr->plan == NULL)
 	{
@@ -3159,11 +3151,13 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 		 */
 		query = stmt->query;
 
-	 	/* if we find a cached plan, check if we want to use it */
+		/* GPDB_MERGE83_FIXME */
+	 	/* if we find a cached plan, check if we want to use it
 		if (query->plan != NULL)
 		{
 			exec_free_plan(query);
 		}
+		*/
 	
 		if (query->plan == NULL)
 			exec_prepare_plan(estate, query, stmt->cursor_options);
@@ -3271,11 +3265,13 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 		}
 
 		query = curvar->cursor_explicit_expr;
-		/* if we find a cached plan, check if we want to use it */
+		/* GPDB_MERGE83_FIXME */
+		/* if we find a cached plan, check if we want to use it
 		if (query->plan != NULL)
 		{
 			exec_free_plan(query);
 		}
+		*/
 
 		if (query->plan == NULL)
 			exec_prepare_plan(estate, query, curvar->cursor_options);
@@ -3652,12 +3648,8 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				int			natts;
 				int			i;
 				Datum	   *values;
-<<<<<<< HEAD
 				bool	   *nulls;
 				void	   *mustfree;
-=======
-				char	   *nulls;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				bool		attisnull;
 				Oid			atttype;
 				int32		atttypmod;
@@ -3722,7 +3714,6 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				nulls[fno] = attisnull;
 
 				/*
-<<<<<<< HEAD
 				 * Avoid leaking the result of exec_simple_cast_value, if it
 				 * performed a conversion to a pass-by-ref type.
 				 */
@@ -3733,9 +3724,6 @@ exec_assign_value(PLpgSQL_execstate *estate,
 
 				/*
 				 * Now call heap_form_tuple() to create a new tuple that
-=======
-				 * Now call heap_formtuple() to create a new tuple that
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				 * replaces the old one in the record.
 				 */
 				newtup = heap_form_tuple(rec->tupdesc, values, nulls);
@@ -3866,15 +3854,9 @@ exec_assign_value(PLpgSQL_execstate *estate,
 					estate->eval_tuptable = NULL;
 				}
 
-<<<<<<< HEAD
 				/* Swap to the caller's tuple table. */
 				Assert(estate->eval_tuptable == NULL);
 				estate->eval_tuptable = save_tuptable;
-=======
-				/* Now we can restore caller's SPI_execute result if any. */
-				Assert(estate->eval_tuptable == NULL);
-				estate->eval_tuptable = save_eval_tuptable;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 				/* Coerce source value to match array element type. */
 				coerced_value = exec_simple_cast_value(estate,
@@ -4229,11 +4211,13 @@ exec_run_select(PLpgSQL_execstate *estate,
 	char	   *nulls;
 	int			rc;
 
-	/* if we find a cached plan, check if we want to use it */
+	/* GPDB_MERGE83_FIXME */
+	/* if we find a cached plan, check if we want to use it
 	if (expr->plan != NULL)
 	{
 		exec_free_plan(expr);
 	}
+	*/
 
 	/*
 	 * generate the plan if needed
@@ -4520,21 +4504,12 @@ exec_move_row(PLpgSQL_execstate *estate,
 		else if (tupdesc)
 		{
 			/* If we have a tupdesc but no data, form an all-nulls tuple */
-<<<<<<< HEAD
 			bool   *nulls;
 
 			nulls = (bool *) palloc(tupdesc->natts * sizeof(bool));
 			memset(nulls, true, tupdesc->natts * sizeof(bool));
 
 			tup = heap_form_tuple(tupdesc, NULL, nulls);
-=======
-			char	   *nulls;
-
-			nulls = (char *) palloc(tupdesc->natts * sizeof(char));
-			memset(nulls, 'n', tupdesc->natts * sizeof(char));
-
-			tup = heap_formtuple(tupdesc, NULL, nulls);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			pfree(nulls);
 		}
@@ -5077,12 +5052,9 @@ exec_simple_check_node(Node *node)
 static void
 exec_simple_check_plan(PLpgSQL_expr *expr)
 {
-<<<<<<< HEAD
-	_SPI_plan  *spi_plan = (_SPI_plan *) expr->plan;
-=======
+	SPIPlanPtr	spi_plan = expr->plan;
 	CachedPlanSource *plansource;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-	PlannedStmt *stmt;
+	PlannedStmt *stmt = NULL;
 	Plan	   *plan;
 	TargetEntry *tle;
 
@@ -5105,24 +5077,31 @@ exec_simple_check_plan(PLpgSQL_expr *expr)
 	if (list_length(plansource->plan->stmt_list) != 1)
 		return;
 
-<<<<<<< HEAD
 	/*
 	 * MPP-8038: Utility statements get here too, so make sure this is
 	 * planned
 	 */
-	if (IsA(linitial(spi_plan->ptlist), PlannedStmt))
+	if (list_length(spi_plan->plancache_list) != 1)
 	{
-		stmt = (PlannedStmt *) linitial(spi_plan->ptlist);
-		plan = stmt ? stmt->planTree : NULL;
+		CachedPlanSource *cached_ps;
+		
+		cached_ps = (CachedPlanSource *) linitial(spi_plan->plancache_list);
+		if (list_length(cached_ps->plan->stmt_list) != 1)
+		{
+			if (IsA(linitial(cached_ps->plan->stmt_list), PlannedStmt))
+			{
+				stmt = (PlannedStmt *) linitial(cached_ps->plan->stmt_list);
+				plan = stmt ? stmt->planTree : NULL;
+			}
+		}
 	}
-	else
+
+	if (!stmt)
 	{
 		/* This is a utility statement */
+		stmt = (PlannedStmt *) linitial(plansource->plan->stmt_list);
 		plan = NULL;
 	}
-=======
-	stmt = (PlannedStmt *) linitial(plansource->plan->stmt_list);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * 2. It must be a RESULT plan --> no scan's required
@@ -5328,6 +5307,7 @@ free_var(PLpgSQL_var *var)
 
 
 
+#if 0
 /* ----------
  * exec_check_cache_plan -		Check if a plan can be cached
  * 
@@ -5341,21 +5321,23 @@ free_var(PLpgSQL_var *var)
 static void
 exec_check_cache_plan(PLpgSQL_expr *expr)
 {
-	_SPI_plan	*spi_plan = (_SPI_plan *) expr->plan; 
-	PlannedStmt	*stmt = NULL; 
-	Plan		*plan = NULL; 
-	ListCell	*plan_list_item = NULL;
+	SPIPlanPtr			spi_plan = expr->plan; 
+	PlannedStmt		   *stmt = NULL; 
+	Plan			   *plan = NULL; 
+	ListCell		   *plan_list_item = NULL;
+	CachedPlanSource   *cached_ps;
 
 	/* 
-	 * store the current transaction id. we will only free the plan
+	 * Store the current transaction id. We will only free the plan
 	 * if the next invocation of the plan is from a different	
 	 * transaction 
 	 */
 	expr->transaction_id = GetTopTransactionId();
 
 	/* 
-	 * we can have multiple PlannedStmt. Walk all of them
+	 * We can have multiple PlannedStmt, walk all of them
 	 */
+	
 	foreach (plan_list_item, spi_plan->ptlist)
 	{
 		if (IsA((lfirst(plan_list_item)), PlannedStmt))
@@ -5411,4 +5393,5 @@ exec_free_plan(PLpgSQL_expr *expr)
 		expr->plan = NULL;
 	}
 }
+#endif
 

@@ -4,11 +4,7 @@
  * gram.y				- Parser for the PL/pgSQL
  *						  procedural language
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1971,16 +1967,12 @@ make_execsql_stmt(const char *sqlstart, int lineno)
 		if (tok == ';')
 			break;
 		if (tok == 0)
-<<<<<<< HEAD
 		{
 			plpgsql_error_lineno = plpgsql_scanner_lineno();
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("unexpected end of function definition")));
 		}
-=======
-			yyerror("unexpected end of function definition");
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (tok == K_INTO && prev_tok != K_INSERT)
 		{
