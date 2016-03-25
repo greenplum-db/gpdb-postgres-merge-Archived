@@ -1084,19 +1084,26 @@ CommandEndInvalidationMessages(void)
  * no need to worry about cleaning up if there's an elog(ERROR) before
  * reaching EndNonTransactionalInvalidation (the invals will just be thrown
  * away if that happens).
+ *
+ * GPDB: In GPDB, however, the way we use transactions during VACUUM FULL is
+ * different from PostgreSQL, and can already be pending invalidations in
+ * the queue. So we do what the above suggested, and create a new nesting level.
  */
 void
 BeginNonTransactionalInvalidation(void)
 {
+	TransInvalidationInfo *myInfo;
+
 	/* Must be at top of stack */
 	Assert(transInvalInfo != NULL && transInvalInfo->parent == NULL);
 
-	/* Must not have any previously-queued activity */
-	Assert(transInvalInfo->PriorCmdInvalidMsgs.cclist == NULL);
-	Assert(transInvalInfo->PriorCmdInvalidMsgs.rclist == NULL);
-	Assert(transInvalInfo->CurrentCmdInvalidMsgs.cclist == NULL);
-	Assert(transInvalInfo->CurrentCmdInvalidMsgs.rclist == NULL);
-	Assert(transInvalInfo->RelcacheInitFileInval == false);
+	/* GPDB: create a new nesting level, as in AtSubStart_Inval() */
+	myInfo = (TransInvalidationInfo *)
+		MemoryContextAllocZero(TopTransactionContext,
+							   sizeof(TransInvalidationInfo));
+	myInfo->parent = transInvalInfo;
+	myInfo->my_level = GetCurrentTransactionNestLevel();
+	transInvalInfo = myInfo;
 }
 
 /*
@@ -1117,8 +1124,10 @@ EndNonTransactionalInvalidation(void)
 	InvalidationChunk *chunk;
 	InvalidationChunk *next;
 
-	/* Must be at top of stack */
-	Assert(transInvalInfo != NULL && transInvalInfo->parent == NULL);
+	/* Must be at one nesting level below top of stack */
+	Assert(transInvalInfo != NULL);
+	Assert(transInvalInfo->parent != NULL);
+	Assert(transInvalInfo->parent->parent == NULL);
 
 	/* Must not have any prior-command messages */
 	Assert(transInvalInfo->PriorCmdInvalidMsgs.cclist == NULL);
@@ -1152,9 +1161,15 @@ EndNonTransactionalInvalidation(void)
 		next = chunk->next;
 		pfree(chunk);
 	}
-	transInvalInfo->CurrentCmdInvalidMsgs.cclist = NULL;
-	transInvalInfo->CurrentCmdInvalidMsgs.rclist = NULL;
-	transInvalInfo->RelcacheInitFileInval = false;
+
+	/* Pop the transaction state stack */
+	{
+		TransInvalidationInfo *myInfo = transInvalInfo;
+
+		transInvalInfo = myInfo->parent;
+
+		pfree(myInfo);
+	}
 }
 
 
