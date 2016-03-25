@@ -3333,7 +3333,7 @@ CommitTransaction(void)
 	TransactionState s = CurrentTransactionState;
 	TransactionId latestXid;
 
-	TransactionId localXid = InvalidTransactionId;
+	TransactionId localXid = GetTopTransactionIdIfAny();
 	LocalDistribXactRef localDistribXactRef;
 	bool needStateChangeFromDistributed = false;
 	bool needNotifyCommittedDtxTransaction = false;
@@ -5971,7 +5971,7 @@ IsTransactionDirty(void)
 	bool		markXidCommitted = TransactionIdIsValid(xid);
 
 	elog((Debug_print_full_dtm ? LOG : DEBUG5), "IsTransactionDirty: TopTransactionId %u, dirty = %s",
-		 GetTopTransactionId(), (markXidCommitted ? "true" : "false"));
+		 xid, (markXidCommitted ? "true" : "false"));
 	
 	return markXidCommitted;
 }

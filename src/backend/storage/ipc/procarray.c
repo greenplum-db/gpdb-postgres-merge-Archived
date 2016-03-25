@@ -279,25 +279,6 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit,
 
 		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 
-		proc->xid = InvalidTransactionId;
-		proc->lxid = InvalidLocalTransactionId;
-		proc->xmin = InvalidTransactionId;
-		/* must be cleared with xid/xmin: */
-		proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-		proc->inCommit = false; /* be sure this is cleared in abort */
-		proc->serializableIsoLevel = false;
-		proc->inDropTransaction = false;
-
-		/* Clear the subtransaction-XID cache too while holding the lock */
-		proc->subxids.nxids = 0;
-		proc->subxids.overflowed = false;
-
-		/* Also advance global latestCompletedXid while holding the lock */
-		if (TransactionIdPrecedes(ShmemVariableCache->latestCompletedXid,
-								  latestXid))
-			ShmemVariableCache->latestCompletedXid = latestXid;
-
-
 		if (!LocalDistribXactRef_IsNil(&MyProc->localDistribXactRef))
 		{
 			switch (DistributedTransactionContext)
@@ -353,6 +334,24 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit,
 			if (needNotifyCommittedDtxTransaction)
 				*needNotifyCommittedDtxTransaction = true;
 		}
+
+		proc->xid = InvalidTransactionId;
+		proc->lxid = InvalidLocalTransactionId;
+		proc->xmin = InvalidTransactionId;
+		/* must be cleared with xid/xmin: */
+		proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
+		proc->inCommit = false; /* be sure this is cleared in abort */
+		proc->serializableIsoLevel = false;
+		proc->inDropTransaction = false;
+
+		/* Clear the subtransaction-XID cache too while holding the lock */
+		proc->subxids.nxids = 0;
+		proc->subxids.overflowed = false;
+
+		/* Also advance global latestCompletedXid while holding the lock */
+		if (TransactionIdPrecedes(ShmemVariableCache->latestCompletedXid,
+								  latestXid))
+			ShmemVariableCache->latestCompletedXid = latestXid;
 		
 		LWLockRelease(ProcArrayLock);
 	}
