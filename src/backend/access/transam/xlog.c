@@ -1489,7 +1489,6 @@ XLogLastInsertBeginLoc(void)
 XLogRecPtr
 XLogLastInsertEndLoc(void)
 {
-	Assert(XRecOffIsValid(XactLastRecEnd.xrecoff));
 	return XactLastRecEnd;
 }
 
