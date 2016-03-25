@@ -1925,7 +1925,8 @@ vac_truncate_clog(TransactionId frozenXID)
  *		us to lock the entire database during one pass of the vacuum cleaner.
  */
 static void
-vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_stats, bool for_wraparound)
+vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_stats,
+		   bool for_wraparound)
 {
 	Oid			toast_relid;
 	Oid			aoseg_relid = InvalidOid;
@@ -1987,10 +1988,10 @@ vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_s
 		RESUME_INTERRUPTS();
 
 	/*
-	 * If the relation has a secondary toast rel, vacuum that too
-	 * while we still hold the session lock on the master table.  We
-	 * do this in cleanup phase when it's AO table or in prepare phase
-	 * if it's an empty AO table.
+	 * If the relation has a secondary toast rel, vacuum that too while we
+	 * still hold the session lock on the master table.  We do this in
+	 * cleanup phase when it's AO table or in prepare phase if it's an
+	 * empty AO table.
 	 */
 	if ((RelationIsHeap(onerel) && toast_relid != InvalidOid) ||
 		(!RelationIsHeap(onerel) && (
@@ -2604,6 +2605,9 @@ scan_heap_for_truncate(VRelStats *vacrelstats, Relation onerel,
 			bool			tupgone = false;
 
 			if (!ItemIdIsUsed(itemid))
+				continue;
+
+			if (ItemIdIsDead(itemid))
 				continue;
 
 			tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
