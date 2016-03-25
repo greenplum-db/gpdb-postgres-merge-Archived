@@ -504,11 +504,11 @@ vacuum(VacuumStmt *vacstmt, List *relids,
 			CommitTransactionCommand();
 	}
 
+	/* Turn vacuum cost accounting on or off */
 	PG_TRY();
 	{
 		ListCell   *cur;
 
-		/* Turn vacuum cost accounting on or off */
 		VacuumCostActive = (VacuumCostDelay > 0);
 		VacuumCostBalance = 0;
 
@@ -1016,6 +1016,35 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 		 */
 		ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
 
+		if (!vacstmt->full)
+		{
+			/*
+			 * During a lazy VACUUM we can set the PROC_IN_VACUUM flag, which lets other
+			 * concurrent VACUUMs know that they can ignore this one while
+			 * determining their OldestXmin.  (The reason we don't set it during a
+			 * full VACUUM is exactly that we may have to run user- defined
+			 * functions for functional indexes, and we want to make sure that if
+			 * they use the snapshot set above, any tuples it requires can't get
+			 * removed from other tables.  An index function that depends on the
+			 * contents of other tables is arguably broken, but we won't break it
+			 * here by violating transaction semantics.)
+			 *
+			 * We also set the VACUUM_FOR_WRAPAROUND flag, which is passed down
+			 * by autovacuum; it's used to avoid cancelling a vacuum that was
+			 * invoked in an emergency.
+			 *
+			 * Note: this flag remains set until CommitTransaction or
+			 * AbortTransaction.  We don't want to clear it until we reset
+			 * MyProc->xid/xmin, else OldestXmin might appear to go backwards,
+			 * which is probably Not Good.
+			 */
+			LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+			MyProc->vacuumFlags |= PROC_IN_VACUUM;
+			if (for_wraparound)
+				MyProc->vacuumFlags |= PROC_VACUUM_FOR_WRAPAROUND;
+			LWLockRelease(ProcArrayLock);
+		}
+
 		/*
 		 * AO only: QE can tell drop phase here with dispatched vacstmt.
 		 */
@@ -1167,7 +1196,7 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 		 * that we can clear up its freespace map entry when the
 		 * vacuum process crashes or is cancelled.
 		 *
-		 * XXX: Have to allocate the space inside ToMemoryContext,
+		 * XXX: Have to allocate the space inside TopMemoryContext,
 		 * since it is required during commit.
 		 */
 		oldctx = MemoryContextSwitchTo(TopMemoryContext);
