@@ -344,6 +344,7 @@ _readQuery(void)
 			local_node->intoClause->tableSpaceName = ts;
 			local_node->intoClause->oidInfo.relOid = InvalidOid;
 			local_node->intoClause->oidInfo.comptypeOid = InvalidOid;
+			local_node->intoClause->oidInfo.comptypeArrayOid = InvalidOid;
 			local_node->intoClause->oidInfo.toastOid = InvalidOid;
 			local_node->intoClause->oidInfo.toastIndexOid = InvalidOid;
 			local_node->intoClause->oidInfo.toastComptypeOid = InvalidOid;
@@ -768,6 +769,7 @@ _readIntoClause(void)
 	READ_STRING_FIELD(tableSpaceName);
 	READ_OID_FIELD(oidInfo.relOid);
     READ_OID_FIELD(oidInfo.comptypeOid);
+	READ_OID_FIELD(oidInfo.comptypeArrayOid);
     READ_OID_FIELD(oidInfo.toastOid);
     READ_OID_FIELD(oidInfo.toastIndexOid);
     READ_OID_FIELD(oidInfo.toastComptypeOid);
@@ -2297,6 +2299,7 @@ _readCreateStmt(void)
 	READ_NODE_FIELD(partitionBy);
 	READ_OID_FIELD(oidInfo.relOid);
 	READ_OID_FIELD(oidInfo.comptypeOid);
+	READ_OID_FIELD(oidInfo.comptypeArrayOid);
 	READ_OID_FIELD(oidInfo.toastOid);
 	READ_OID_FIELD(oidInfo.toastIndexOid);
 	READ_OID_FIELD(oidInfo.toastComptypeOid);
@@ -2550,6 +2553,7 @@ _readClusterStmt(void)
 	READ_STRING_FIELD(indexname);
 	READ_OID_FIELD(oidInfo.relOid);
 	READ_OID_FIELD(oidInfo.comptypeOid);
+	READ_OID_FIELD(oidInfo.comptypeArrayOid);
 	READ_OID_FIELD(oidInfo.toastOid);
 	READ_OID_FIELD(oidInfo.toastIndexOid);
 	READ_OID_FIELD(oidInfo.toastComptypeOid);

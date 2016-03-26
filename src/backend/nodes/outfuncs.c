@@ -1155,6 +1155,7 @@ _outIntoClause(StringInfo str, IntoClause *node)
 	WRITE_STRING_FIELD(tableSpaceName);
 	WRITE_OID_FIELD(oidInfo.relOid);
 	WRITE_OID_FIELD(oidInfo.comptypeOid);
+	WRITE_OID_FIELD(oidInfo.comptypeArrayOid);
 	WRITE_OID_FIELD(oidInfo.toastOid);
 	WRITE_OID_FIELD(oidInfo.toastIndexOid);
 	WRITE_OID_FIELD(oidInfo.toastComptypeOid);
@@ -2319,6 +2320,7 @@ _outCreateStmt(StringInfo str, CreateStmt *node)
 	WRITE_NODE_FIELD(partitionBy);
 	WRITE_OID_FIELD(oidInfo.relOid);
 	WRITE_OID_FIELD(oidInfo.comptypeOid);
+	WRITE_OID_FIELD(oidInfo.comptypeArrayOid);
 	WRITE_OID_FIELD(oidInfo.toastOid);
 	WRITE_OID_FIELD(oidInfo.toastIndexOid);
 	WRITE_OID_FIELD(oidInfo.toastComptypeOid);
@@ -2718,6 +2720,7 @@ _outClusterStmt(StringInfo str, ClusterStmt *node)
 	WRITE_STRING_FIELD(indexname);
 	WRITE_OID_FIELD(oidInfo.relOid);
 	WRITE_OID_FIELD(oidInfo.comptypeOid);
+	WRITE_OID_FIELD(oidInfo.comptypeArrayOid);
 	WRITE_OID_FIELD(oidInfo.toastOid);
 	WRITE_OID_FIELD(oidInfo.toastIndexOid);
 	WRITE_OID_FIELD(oidInfo.toastComptypeOid);

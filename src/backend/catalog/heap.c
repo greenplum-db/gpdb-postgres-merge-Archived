@@ -1406,6 +1406,7 @@ heap_create_with_catalog(const char *relname,
 						 bool allow_system_table_mods,
 						 bool valid_opts,
 						 Oid *comptypeOid,
+						 Oid *comptypeArrayOid,
 						 ItemPointer persistentTid,
 						 int64 *persistentSerialNum)
 {
@@ -1419,6 +1420,9 @@ heap_create_with_catalog(const char *relname,
 	StdRdOptions *stdRdOptions;
 	int			safefswritesize = gp_safefswritesize;
 	bool		rowtype_already_exists;
+
+	if (comptypeArrayOid)
+	    new_array_oid = *comptypeArrayOid;
 
 	/*
 	 * Don't create the row type if the bootstrapper tells us it already
@@ -1583,7 +1587,8 @@ heap_create_with_catalog(const char *relname,
 	 */
 	if (IsUnderPostmaster && (relkind == RELKIND_RELATION ||
 							  relkind == RELKIND_VIEW ||
-							  relkind == RELKIND_COMPOSITE_TYPE))
+							  relkind == RELKIND_COMPOSITE_TYPE) &&
+		!OidIsValid(new_array_oid))
 	{
 		/* OK, so pre-assign a type OID for the array type */
 		Relation	pg_type = heap_open(TypeRelationId, AccessShareLock);
@@ -1604,7 +1609,7 @@ heap_create_with_catalog(const char *relname,
 		new_type_oid = *comptypeOid;
 	else
 	{
-		new_type_oid = AddNewRelationType(InvalidOid,
+		new_type_oid = AddNewRelationType(comptypeOid ? *comptypeOid : InvalidOid,
 										  relname,
 										  relnamespace,
 										  relid,
@@ -1652,6 +1657,9 @@ heap_create_with_catalog(const char *relname,
 				   -1,			/* typmod */
 				   0,			/* array dimensions for typBaseType */
 				   false);		/* Type NOT NULL */
+
+		if (comptypeArrayOid)
+			*comptypeArrayOid = new_array_oid;
 
 		pfree(relarrayname);
 	}

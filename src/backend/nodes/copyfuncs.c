@@ -1239,6 +1239,7 @@ _copyIntoClause(IntoClause *from)
 	COPY_STRING_FIELD(tableSpaceName);
 	COPY_SCALAR_FIELD(oidInfo.relOid);
 	COPY_SCALAR_FIELD(oidInfo.comptypeOid);
+	COPY_SCALAR_FIELD(oidInfo.comptypeArrayOid);
 	COPY_SCALAR_FIELD(oidInfo.toastOid);
 	COPY_SCALAR_FIELD(oidInfo.toastIndexOid);
 	COPY_SCALAR_FIELD(oidInfo.toastComptypeOid);
@@ -2983,6 +2984,7 @@ _copyClusterStmt(ClusterStmt *from)
 	COPY_STRING_FIELD(indexname);
 	COPY_SCALAR_FIELD(oidInfo.relOid);
 	COPY_SCALAR_FIELD(oidInfo.comptypeOid);
+	COPY_SCALAR_FIELD(oidInfo.comptypeArrayOid);
 	COPY_SCALAR_FIELD(oidInfo.toastOid);
 	COPY_SCALAR_FIELD(oidInfo.toastIndexOid);
 	COPY_SCALAR_FIELD(oidInfo.toastComptypeOid);
@@ -3037,6 +3039,7 @@ _copyCreateStmt(CreateStmt *from)
 	COPY_NODE_FIELD(distributedBy);
 	COPY_SCALAR_FIELD(oidInfo.relOid);
 	COPY_SCALAR_FIELD(oidInfo.comptypeOid);
+	COPY_SCALAR_FIELD(oidInfo.comptypeArrayOid);
 	COPY_SCALAR_FIELD(oidInfo.toastOid);
 	COPY_SCALAR_FIELD(oidInfo.toastIndexOid);
 	COPY_SCALAR_FIELD(oidInfo.toastComptypeOid);

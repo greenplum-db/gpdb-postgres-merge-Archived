@@ -165,6 +165,7 @@ _bitmap_create_lov_heapandindex(Relation rel,
 								 (Datum)0, true,
 								 /* valid_opts */ true,
 								 &lovComptypeOid,
+								 /* comptypeArrayOid */ NULL,
 						 		 /* persistentTid */ NULL,
 						 		 /* persistentSerialNum */ NULL);
 	Assert(heapid == *lovHeapOid);

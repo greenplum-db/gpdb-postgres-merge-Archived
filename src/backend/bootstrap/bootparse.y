@@ -297,6 +297,7 @@ Boot_CreateStmt:
 													  true,
 													  /* valid_opts */ false,
 													  &typid,
+													  /* typarrayid */ NULL,
 						 					  		  /* persistentTid */ NULL,
 						 					  		  /* persistentSerialNum */ NULL);
 						elog(DEBUG4, "relation created with oid %u", id);

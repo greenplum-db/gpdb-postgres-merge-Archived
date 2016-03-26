@@ -236,6 +236,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 										   true,
 										   /* valid_opts */ false,
 										   comptypeOid,
+										   /* compTypeArrayOid */ NULL,
 										   /* persistentTid */ NULL,
 										   /* persistentSerialNum */ NULL);
 

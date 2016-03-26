@@ -627,6 +627,7 @@ DefineRelation_int(CreateStmt *stmt,
 		Relation	pg_class_desc;
 		Relation	pg_type_desc;
 		Oid 		comptypeOid = InvalidOid;
+		Oid         comptypeArrayOid = InvalidOid;
 		Oid			toastIndexId = InvalidOid;
 		Oid			aosegIndexId = InvalidOid;
 		Oid			aoblkdirIndexId = InvalidOid;
@@ -658,6 +659,7 @@ DefineRelation_int(CreateStmt *stmt,
 		 */
 		relationId          = GetNewRelFileNode(tablespaceId, false,  pg_class_desc);
 		comptypeOid         = GetNewRelFileNode(tablespaceId, false,  pg_type_desc);
+		comptypeArrayOid    = GetNewRelFileNode(tablespaceId, false,  pg_type_desc);
 		toastRelationId     = GetNewRelFileNode(tablespaceId, false,  pg_class_desc);
 		toastIndexId        = GetNewRelFileNode(tablespaceId, false,  pg_class_desc);
 		toastComptypeOid    = GetNewRelFileNode(tablespaceId, false,  pg_type_desc);
@@ -675,6 +677,7 @@ DefineRelation_int(CreateStmt *stmt,
 
 		stmt->oidInfo.relOid = relationId;
 		stmt->oidInfo.comptypeOid = comptypeOid;
+		stmt->oidInfo.comptypeArrayOid = comptypeArrayOid;
 		stmt->oidInfo.toastOid = toastRelationId;
 		stmt->oidInfo.toastIndexOid = toastIndexId;
 		stmt->oidInfo.toastComptypeOid = toastComptypeOid;
@@ -758,6 +761,7 @@ DefineRelation_int(CreateStmt *stmt,
 										  allowSystemTableModsDDL,
 										  valid_opts,
 										  &stmt->oidInfo.comptypeOid,
+										  &stmt->oidInfo.comptypeArrayOid,
 										  &persistentTid,
 										  &persistentSerialNum);
 

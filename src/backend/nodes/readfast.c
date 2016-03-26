@@ -376,6 +376,7 @@ _readIntoClause(void)
 	READ_STRING_FIELD(tableSpaceName);
 	READ_OID_FIELD(oidInfo.relOid);
     READ_OID_FIELD(oidInfo.comptypeOid);
+	READ_OID_FIELD(oidInfo.comptypeArrayOid);
     READ_OID_FIELD(oidInfo.toastOid);
     READ_OID_FIELD(oidInfo.toastIndexOid);
     READ_OID_FIELD(oidInfo.toastComptypeOid);
@@ -1092,6 +1093,7 @@ _readCreateStmt(void)
 	READ_NODE_FIELD(distributedBy);
 	READ_OID_FIELD(oidInfo.relOid);
 	READ_OID_FIELD(oidInfo.comptypeOid);
+	READ_OID_FIELD(oidInfo.comptypeArrayOid);
 	READ_OID_FIELD(oidInfo.toastOid);
 	READ_OID_FIELD(oidInfo.toastIndexOid);
 	READ_OID_FIELD(oidInfo.toastComptypeOid);

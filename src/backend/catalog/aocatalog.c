@@ -125,6 +125,7 @@ CreateAOAuxiliaryTable(
 											     true,
 												 /* valid_opts */ false,
 											     aoauxiliaryComptypeOid,
+												 /* compTypeArrayOid */ NULL,
 											     /* persistentTid */ NULL,
 											     /* persistentSerialNum */ NULL);
 
