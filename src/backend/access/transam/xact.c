@@ -3333,7 +3333,7 @@ CommitTransaction(void)
 	TransactionState s = CurrentTransactionState;
 	TransactionId latestXid;
 
-	TransactionId localXid = GetTopTransactionIdIfAny();
+	TransactionId localXid;
 	LocalDistribXactRef localDistribXactRef;
 	bool needStateChangeFromDistributed = false;
 	bool needNotifyCommittedDtxTransaction = false;
@@ -3461,6 +3461,8 @@ CommitTransaction(void)
 	 * commit processing
 	 */
 	s->state = TRANS_COMMIT;
+
+	localXid = GetTopTransactionIdIfAny();
 
 	/*
 	 * Here is where we really truly commit.
@@ -3912,7 +3914,7 @@ AbortTransaction(void)
 	TransactionState s = CurrentTransactionState;
 	TransactionId latestXid;
 
-	TransactionId localXid = InvalidTransactionId;
+	TransactionId localXid = GetTopTransactionIdIfAny();
 	LocalDistribXactRef localDistribXactRef;
 	bool needDistribAborted = false;
 	bool willHaveObjectsFromSmgr;
@@ -4020,6 +4022,8 @@ AbortTransaction(void)
 		MIRRORED_LOCK;
 	}
 
+	localXid = GetTopTransactionIdIfAny();
+
 	/*
 	 * Advertise the fact that we aborted in pg_clog (assuming that we got as
 	 * far as assigning an XID to advertise).
@@ -4090,7 +4094,16 @@ AbortTransaction(void)
 	/*
 	 * Do abort to all QE. NOTE: we don't process
 	 * signals to prevent recursion until we've notified the QEs.
+	 *
+	 * If something goes wrong after this, we might recurse back to
+	 * AbortTransaction(). To avoid creating another Abort WAL record
+	 * and failing assertion in ProcArrayEndTransaction because MyProc->xid
+	 * has already been cleared, clear out transactionId now. The rest
+	 * of the fields in TransactionState will be cleared later, in
+	 * CleanupTransaction().
 	 */
+	TopTransactionStateData.transactionId = InvalidTransactionId;
+
 	rollbackDtxTransaction();
 
 	if (!LocalDistribXactRef_IsNil(&localDistribXactRef))
