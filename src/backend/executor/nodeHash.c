@@ -318,6 +318,7 @@ ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate, List *hashOper
 	hashtable = (HashJoinTable)palloc0(sizeof(HashJoinTableData));
 	hashtable->nbuckets = nbuckets;
 	hashtable->log2_nbuckets = log2_nbuckets;
+	hashtable->nbatch = nbatch;
 	hashtable->buckets = NULL;
 	hashtable->bloom = NULL;
 	hashtable->curbatch = 0;
