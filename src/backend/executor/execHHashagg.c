@@ -817,7 +817,7 @@ agg_hash_initial_pass(AggState *aggstate)
 		}
 
 		/* set up for advance_aggregates call */
-		tmpcontext->ecxt_scantuple = outerslot;
+		tmpcontext->ecxt_outertuple = outerslot;
 
 		/* Find or (if there's room) build a hash table entry for the
 		 * input tuple's group. */
