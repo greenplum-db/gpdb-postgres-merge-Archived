@@ -204,7 +204,11 @@ select sillysrf(-1) order by 1;
 
 drop function sillysrf(int);
 
-<<<<<<< HEAD
+-- X = X isn't a no-op, it's effectively X IS NOT NULL assuming = is strict
+-- (see bug #5084)
+select * from (values (2),(null),(1)) v(k) where k = k order by k;
+select * from (values (2),(null),(1)) v(k) where k = k;
+
 -- Test unsupported sorting operators
 CREATE TABLE nosort (i int);
 INSERT INTO nosort VALUES(1), (2);
@@ -234,9 +238,3 @@ select x, select_f(x) from (values (0), (1), (2), (3), (4), (5), (6)) r(x);
 drop table if exists select_t cascade; --ignore
 drop function if exists select_i(int); -- ignore
 drop function if exists select_f(int); -- ignore
-=======
--- X = X isn't a no-op, it's effectively X IS NOT NULL assuming = is strict
--- (see bug #5084)
-select * from (values (2),(null),(1)) v(k) where k = k order by k;
-select * from (values (2),(null),(1)) v(k) where k = k;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

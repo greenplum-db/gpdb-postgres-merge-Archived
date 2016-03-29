@@ -2325,8 +2325,6 @@ where f2 = 53;
  53 |    |    | 
 (1 row)
 
-<<<<<<< HEAD
-=======
 --
 -- regression test for improper extraction of OR indexqual conditions
 -- (as seen in early 8.3.x releases)
@@ -2372,4 +2370,3 @@ select f1, unique2, case when unique2 is null then f1 else 0 end
   0 |       0 |    0
 (1 row)
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

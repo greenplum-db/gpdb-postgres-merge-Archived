@@ -489,8 +489,6 @@ select * from
   zt2 left join zt3 on (f2 = f3)
       left join zv1 on (f3 = f1)
 where f2 = 53;
-<<<<<<< HEAD
-=======
 
 --
 -- regression test for improper extraction of OR indexqual conditions
@@ -530,4 +528,3 @@ select q1, unique2, thousand, hundred
 select f1, unique2, case when unique2 is null then f1 else 0 end
   from int4_tbl a left join tenk1 b on f1 = unique2
   where (case when unique2 is null then f1 else 0 end) = 0;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
