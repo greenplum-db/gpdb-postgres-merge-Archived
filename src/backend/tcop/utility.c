@@ -888,94 +888,124 @@ ProcessUtility(Node *parsetree,
 
 		case T_CreateStmt:
 			{
+				List	   *stmts;
+				ListCell   *l;
 				Oid			relOid;
-				char		relKind = RELKIND_RELATION;
-				char		relStorage = RELSTORAGE_HEAP;
 
-				/*
-				 * If this T_CreateStmt was dispatched and we're a QE
-				 * receiving it, extract the relkind and relstorage from
-				 * it
-				 */
-				if (Gp_role == GP_ROLE_EXECUTE)
+				/* Run parse analysis ... */
+				stmts = transformCreateStmt((CreateStmt *) parsetree,
+											queryString);
+
+				/* ... and do it */
+				foreach(l, stmts)
 				{
-					if (((CreateStmt *) parsetree)->relKind != 0)
-						relKind = ((CreateStmt *) parsetree)->relKind;
+					Node	   *stmt = (Node *) lfirst(l);
 
-					if (((CreateStmt *) parsetree)->relStorage != 0)
-						relStorage = ((CreateStmt *) parsetree)->relStorage;
-
-					/* sanity check */
-					switch(relKind)
+					if (IsA(stmt, CreateStmt))
 					{
-						case RELKIND_VIEW:
-						case RELKIND_COMPOSITE_TYPE:
-							Assert(relStorage = RELSTORAGE_VIRTUAL);
-							break;
-						default:
-							Assert(relStorage == RELSTORAGE_HEAP ||
-								   relStorage == RELSTORAGE_AOROWS ||
-								   relStorage == RELSTORAGE_AOCOLS ||
-								   relStorage == RELSTORAGE_EXTERNAL ||
-								   relStorage == RELSTORAGE_FOREIGN);
+						CreateStmt *cstmt = (CreateStmt *) stmt;
+						char		relKind = RELKIND_RELATION;
+						char		relStorage = RELSTORAGE_HEAP;
+
+						/*
+						 * If this T_CreateStmt was dispatched and we're a QE
+						 * receiving it, extract the relkind and relstorage from
+						 * it
+						 */
+						if (Gp_role == GP_ROLE_EXECUTE)
+						{
+							if (cstmt->relKind != 0)
+								relKind = cstmt->relKind;
+
+							if (cstmt->relStorage != 0)
+								relStorage = cstmt->relStorage;
+
+							/* sanity check */
+							switch(relKind)
+							{
+								case RELKIND_VIEW:
+								case RELKIND_COMPOSITE_TYPE:
+									Assert(relStorage = RELSTORAGE_VIRTUAL);
+									break;
+								default:
+									Assert(relStorage == RELSTORAGE_HEAP ||
+										   relStorage == RELSTORAGE_AOROWS ||
+										   relStorage == RELSTORAGE_AOCOLS ||
+										   relStorage == RELSTORAGE_EXTERNAL ||
+										   relStorage == RELSTORAGE_FOREIGN);
+							}
+						}
+
+						/* Create the table itself */
+						relOid = DefineRelation((CreateStmt *) stmt,
+												relKind, relStorage);
+
+						/*
+						 * Let AlterTableCreateToastTable decide if this one
+						 * needs a secondary relation too.
+						 */
+						CommandCounterIncrement();
+
+						DefinePartitionedRelation((CreateStmt *) parsetree, relOid);
+
+						elog(DEBUG2,"CreateStmt: rel Oid %d toast Oid %d AoSeg Oid %d"
+							 "AoBlkdir Oid %d AoVisimap Oid %d",
+							 relOid,
+							 ((CreateStmt *) parsetree)->oidInfo.toastOid,
+							 ((CreateStmt *) parsetree)->oidInfo.aosegOid,
+							 ((CreateStmt *) parsetree)->oidInfo.aoblkdirOid,
+							 ((CreateStmt *) parsetree)->oidInfo.aovisimapOid);
+
+						if (relKind != RELKIND_COMPOSITE_TYPE)
+						{
+							AlterTableCreateToastTableWithOid(relOid,
+															  cstmt->oidInfo.toastOid,
+															  cstmt->oidInfo.toastIndexOid,
+															  &(cstmt->oidInfo.toastComptypeOid),
+															  cstmt->is_part_child);
+							AlterTableCreateAoSegTableWithOid(relOid,
+															  cstmt->oidInfo.aosegOid,
+															  cstmt->oidInfo.aosegIndexOid,
+															  &(cstmt->oidInfo.aosegComptypeOid),
+															  cstmt->is_part_child);
+
+							if (cstmt->buildAoBlkdir)
+								AlterTableCreateAoBlkdirTableWithOid(relOid,
+																	 cstmt->oidInfo.aoblkdirOid,
+																	 cstmt->oidInfo.aoblkdirIndexOid,
+																	 &(cstmt->oidInfo.aoblkdirComptypeOid),
+																	 cstmt->is_part_child);
+
+							AlterTableCreateAoVisimapTableWithOid(relOid,
+																  cstmt->oidInfo.aovisimapOid,
+																  cstmt->oidInfo.aovisimapIndexOid,
+																  &(cstmt->oidInfo.aovisimapComptypeOid),
+																  cstmt->is_part_child);
+						}
+						CommandCounterIncrement();
+						/*
+						 * Deferred statements should be evaluated *after* AO tables
+						 * are updated correctly.  Otherwise, they may not have
+						 * segment information yet and operations like create_index
+						 * in the deferred statements cannot see the relfile.
+						 */
+						EvaluateDeferredStatements(cstmt->deferredStmts);
 					}
+					else
+					{
+						/* Recurse for anything else */
+						ProcessUtility(stmt,
+									   queryString,
+									   params,
+									   false,
+									   None_Receiver,
+									   NULL);
+					}
+
+					/* Need CCI between commands */
+					if (lnext(l) != NULL)
+						CommandCounterIncrement();
 				}
-
-				relOid = DefineRelation((CreateStmt *) parsetree,
-										relKind, relStorage);
-
-				/*
-				 * Let AlterTableCreateToastTable decide if this one needs a
-				 * secondary relation too.
-				 */
-				CommandCounterIncrement();
-
-				DefinePartitionedRelation((CreateStmt *) parsetree, relOid);
-
-				elog(DEBUG2,"CreateStmt: rel Oid %d toast Oid %d AoSeg Oid %d"
-					 "AoBlkdir Oid %d AoVisimap Oid %d",
-					 relOid,
-					 ((CreateStmt *) parsetree)->oidInfo.toastOid,
-					 ((CreateStmt *) parsetree)->oidInfo.aosegOid,
-					 ((CreateStmt *) parsetree)->oidInfo.aoblkdirOid,
-					 ((CreateStmt *) parsetree)->oidInfo.aovisimapOid);
-
-				if (relKind != RELKIND_COMPOSITE_TYPE)
-				{
-					AlterTableCreateToastTableWithOid(relOid,
-						((CreateStmt *) parsetree)->oidInfo.toastOid,
-						((CreateStmt *) parsetree)->oidInfo.toastIndexOid,
-					    &(((CreateStmt *) parsetree)->oidInfo.toastComptypeOid),
-						((CreateStmt *)parsetree)->is_part_child);
-					AlterTableCreateAoSegTableWithOid(relOid,
-						((CreateStmt *) parsetree)->oidInfo.aosegOid,
-						((CreateStmt *) parsetree)->oidInfo.aosegIndexOid,
-						&(((CreateStmt *) parsetree)->oidInfo.aosegComptypeOid),
-						((CreateStmt *)parsetree)->is_part_child);
-
-					if (((CreateStmt *)parsetree)->buildAoBlkdir)
-						AlterTableCreateAoBlkdirTableWithOid(relOid,
-							((CreateStmt *) parsetree)->oidInfo.aoblkdirOid,
-							((CreateStmt *) parsetree)->oidInfo.aoblkdirIndexOid,
-							&(((CreateStmt *) parsetree)->oidInfo.aoblkdirComptypeOid),
-							((CreateStmt *)parsetree)->is_part_child);
-
-					AlterTableCreateAoVisimapTableWithOid(relOid,
-							((CreateStmt *) parsetree)->oidInfo.aovisimapOid,
-							((CreateStmt *) parsetree)->oidInfo.aovisimapIndexOid,
-							&(((CreateStmt *) parsetree)->oidInfo.aovisimapComptypeOid),
-							((CreateStmt *)parsetree)->is_part_child);
-
-				}
-				CommandCounterIncrement();
-				/*
-				 * Deferred statements should be evaluated *after* AO tables
-				 * are updated correctly.  Otherwise, they may not have
-				 * segment information yet and operations like create_index
-				 * in the deferred statements cannot see the relfile.
-				 */
-				EvaluateDeferredStatements(
-						((CreateStmt *) parsetree)->deferredStmts);
 			}
 			break;
 
