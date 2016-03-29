@@ -1,17 +1,10 @@
 /*-------------------------------------------------------------------------
  * pg_regress.h --- regression test driver
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/test/regress/pg_regress.h,v 1.6 2010/01/02 16:58:16 momjian Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.h,v 1.3 2008/01/01 19:46:00 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *-------------------------------------------------------------------------
  */
 
@@ -48,11 +41,8 @@ extern _stringlist *dblist;
 extern bool debug;
 extern char *inputdir;
 extern char *outputdir;
-<<<<<<< HEAD
 extern bool optimizer_enabled;
-=======
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * This should not be global but every module should be able to read command
  * line parameters.
@@ -68,7 +58,4 @@ void		add_stringlist_item(_stringlist ** listhead, const char *str);
 PID_TYPE	spawn_process(const char *cmdline);
 void		exit_nicely(int code);
 void		replace_string(char *string, char *replace, char *replacement);
-<<<<<<< HEAD
 bool		file_exists(const char *file);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

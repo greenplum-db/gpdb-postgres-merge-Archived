@@ -11,11 +11,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.36 2007/07/18 21:19:17 alvherre Exp $
-=======
  * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.41.2.4 2009/11/14 15:39:41 mha Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -73,26 +69,17 @@ static char gpdiffprog[MAXPGPATH];
 static char gpstringsubsprog[MAXPGPATH];
 
 /* currently we can use the same diff switches on all platforms */
-<<<<<<< HEAD
 /* MPP:  Add stuff to ignore all the extra NOTICE messages we give */
 const char *basic_diff_opts = "-w -I HINT: -I CONTEXT: -I GP_IGNORE:";
 const char *pretty_diff_opts = "-w -I HINT: -I CONTEXT: -I GP_IGNORE: -C3";
-=======
-const char *basic_diff_opts = "-w";
-const char *pretty_diff_opts = "-w -C3";
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* options settable from command line */
 _stringlist *dblist = NULL;
 bool		debug = false;
 char	   *inputdir = ".";
 char	   *outputdir = ".";
-<<<<<<< HEAD
 char	   *psqldir = PGBINDIR;
 bool 		optimizer_enabled = false;
-=======
-char	   *psqldir = NULL;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static _stringlist *loadlanguage = NULL;
 static int	max_connections = 0;
 static char *encoding = NULL;
@@ -108,10 +95,7 @@ static int	port = -1;
 static char *user = NULL;
 static char *srcdir = NULL;
 static _stringlist *extraroles = NULL;
-<<<<<<< HEAD
 static char *initfile = NULL;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* internal variables */
 static const char *progname;
@@ -130,15 +114,12 @@ static int	fail_ignore_count = 0;
 
 static bool directory_exists(const char *dir);
 static void make_directory(const char *dir);
-<<<<<<< HEAD
 
 static void create_database(const char *dbname);
 static void drop_database_if_exists(const char *dbname);
 
 static int
 run_diff(const char *cmd, const char *filename);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 static void
 header(const char *fmt,...)
@@ -157,11 +138,7 @@ psql_command(const char *database, const char *query,...)
 __attribute__((format(printf, 2, 3)));
 
 #ifdef WIN32
-<<<<<<< HEAD
 typedef BOOL (WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
-=======
-typedef		BOOL(WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* Windows API define missing from MingW headers */
 #define DISABLE_MAX_PRIVILEGE	0x1
@@ -180,11 +157,7 @@ unlimit_core_size(void)
 	if (lim.rlim_max == 0)
 	{
 		fprintf(stderr,
-<<<<<<< HEAD
 				_("%s: could not set core size: disallowed by hard limit\n"),
-=======
-				_("%s: cannot set core size,: disallowed by hard limit.\n"),
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				progname);
 		return;
 	}
@@ -448,19 +421,12 @@ convert_sourcefiles_in(char *source, char * dest_dir, char *dest, char *suffix)
 	char		abs_builddir[MAXPGPATH];
 	char		testtablespace[MAXPGPATH];
 	char		indir[MAXPGPATH];
-<<<<<<< HEAD
-	char		outdir[MAXPGPATH];
-	char	  **name;
-	char	  **names;
-	int			count = 0;
-=======
-	struct stat	st;
+	struct stat st;
 	int			ret;
 	char	  **name;
 	char	  **names;
 	int			count = 0;
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #ifdef WIN32
 	char	   *c;
 #endif
@@ -500,9 +466,8 @@ convert_sourcefiles_in(char *source, char * dest_dir, char *dest, char *suffix)
 		exit_nicely(2);
 
 	/* also create the output directory if not present */
-	snprintf(outdir, sizeof(outdir), "%s/%s", abs_srcdir, dest);
-	if (!directory_exists(outdir))
-		make_directory(outdir);
+	if (!directory_exists(dest_dir))
+		make_directory(dest_dir);
 
 #ifdef WIN32
 	/* in Win32, replace backslashes with forward slashes */
@@ -541,10 +506,7 @@ convert_sourcefiles_in(char *source, char * dest_dir, char *dest, char *suffix)
 		FILE	   *infile,
 				   *outfile;
 		char		line[1024];
-<<<<<<< HEAD
 		bool		has_tokens = false;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/* reject filenames not finishing in ".source" */
 		if (strlen(*name) < 8)
@@ -557,12 +519,8 @@ convert_sourcefiles_in(char *source, char * dest_dir, char *dest, char *suffix)
 		/* build the full actual paths to open */
 		snprintf(prefix, strlen(*name) - 6, "%s", *name);
 		snprintf(srcfile, MAXPGPATH, "%s/%s", indir, *name);
-<<<<<<< HEAD
-		snprintf(destfile, MAXPGPATH, "%s/%s.%s", outdir, prefix, suffix);
-=======
 		snprintf(destfile, MAXPGPATH, "%s/%s/%s.%s", dest_dir, dest, 
 				 prefix, suffix);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		infile = fopen(srcfile, "r");
 		if (!infile)
@@ -629,25 +587,10 @@ convert_sourcefiles_in(char *source, char * dest_dir, char *dest, char *suffix)
 static void
 convert_sourcefiles(void)
 {
-<<<<<<< HEAD
-	struct stat	st;
-	int		ret;
-
-	ret = stat("input", &st);
-	if (ret == 0 && S_ISDIR(st.st_mode))
-		convert_sourcefiles_in("input", "sql", "sql");
-
-	ret = stat("output", &st);
-	if (ret == 0 && S_ISDIR(st.st_mode))
-		convert_sourcefiles_in("output", "expected", "out");
-
-	ret = stat("mapred", &st);
-	if (ret == 0 && S_ISDIR(st.st_mode))
-		convert_sourcefiles_in("mapred", "yml", "yml");
-=======
 	convert_sourcefiles_in("input", inputdir, "sql", "sql");
 	convert_sourcefiles_in("output", outputdir, "expected", "out");
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+
+	convert_sourcefiles_in("mapred", inputdir, "yml", "yml");
 }
 
 /*
@@ -1117,80 +1060,10 @@ spawn_process(const char *cmdline)
 	{
 		if (Advapi32Handle != NULL)
 			FreeLibrary(Advapi32Handle);
-		fprintf(stderr, "ERROR: cannot create restricted tokens on this platform\n");
-		exit_nicely(2);
-	}
-
-	/* Open the current token to use as base for the restricted one */
-	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
-	{
-		fprintf(stderr, "could not open process token: %lu\n", GetLastError());
-		exit_nicely(2);
-	}
-
-	/* Allocate list of SIDs to remove */
-	ZeroMemory(&dropSids, sizeof(dropSids));
-	if (!AllocateAndInitializeSid(&NtAuthority, 2,
-								  SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &dropSids[0].Sid) ||
-		!AllocateAndInitializeSid(&NtAuthority, 2,
-								  SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0, 0, &dropSids[1].Sid))
-	{
-		fprintf(stderr, "could not allocate SIDs: %lu\n", GetLastError());
-		exit_nicely(2);
-	}
-
-	b = _CreateRestrictedToken(origToken,
-							   DISABLE_MAX_PRIVILEGE,
-							   sizeof(dropSids) / sizeof(dropSids[0]),
-							   dropSids,
-							   0, NULL,
-							   0, NULL,
-							   &restrictedToken);
-
-	FreeSid(dropSids[1].Sid);
-	FreeSid(dropSids[0].Sid);
-	CloseHandle(origToken);
-	FreeLibrary(Advapi32Handle);
-
-	if (!b)
-	{
-		fprintf(stderr, "could not create restricted token: %lu\n", GetLastError());
-		exit_nicely(2);
-	}
-
-	Advapi32Handle = LoadLibrary("ADVAPI32.DLL");
-	if (Advapi32Handle != NULL)
-	{
-		_CreateRestrictedToken = (__CreateRestrictedToken) GetProcAddress(Advapi32Handle, "CreateRestrictedToken");
-	}
-
-<<<<<<< HEAD
-	if (_CreateRestrictedToken == NULL)
-=======
-#ifndef __CYGWIN__
-	AddUserToTokenDacl(restrictedToken);
-#endif
-
-	if (!CreateProcessAsUser(restrictedToken,
-						NULL,
-						cmdline2,
-						NULL,
-						NULL,
-						TRUE,
-						CREATE_SUSPENDED,
-						NULL,
-						NULL,
-						&si,
-						&pi))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-	{
-		if (Advapi32Handle != NULL)
-			FreeLibrary(Advapi32Handle);
 		fprintf(stderr, _("%s: cannot create restricted tokens on this platform\n"),
 				progname);
 		exit_nicely(2);
 	}
-<<<<<<< HEAD
 
 	/* Open the current token to use as base for the restricted one */
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
@@ -1257,23 +1130,12 @@ spawn_process(const char *cmdline)
 
 	free(cmdline2);
 
-	ResumeThread(pi.hThread);
-	CloseHandle(pi.hThread);
-	return pi.hProcess;
-#endif
-}
-
-=======
-
-	free(cmdline2);
-
     ResumeThread(pi.hThread);
 	CloseHandle(pi.hThread);
 	return pi.hProcess;
 #endif
 }
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * Count bytes in file
  */
@@ -1369,15 +1231,11 @@ get_alternative_expectfile(const char *expectfile, int i)
 	strcpy(tmp, expectfile);
 	last_dot = strrchr(tmp, '.');
 	if (!last_dot)
-<<<<<<< HEAD
 	{
 		free(tmp);
 		free(s);
 		return NULL;
 	}
-=======
-		return NULL;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	*last_dot = '\0';
 	snprintf(s, ssize, "%s_%d.%s", tmp, i, last_dot + 1);
 	free(tmp);
@@ -1429,11 +1287,8 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 	char		diff[MAXPGPATH];
 	char		cmd[MAXPGPATH * 3];
 	char		best_expect_file[MAXPGPATH];
-<<<<<<< HEAD
     char        diff_opts[MAXPGPATH];
     char        m_pretty_diff_opts[MAXPGPATH];
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	FILE	   *difffile;
 	int			best_line_count;
 	int			i;
@@ -1445,7 +1300,6 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 	 * the same type (filename.type) anyway.
 	 */
 	platform_expectfile = get_expectfile(testname, resultsfile);
-<<<<<<< HEAD
 
 	strlcpy(expectfile, default_expectfile, sizeof(expectfile));
 	if (platform_expectfile)
@@ -1480,24 +1334,6 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 		snprintf(m_pretty_diff_opts, sizeof(m_pretty_diff_opts),
                  "%s", pretty_diff_opts);
 	}
-=======
-
-	strcpy(expectfile, default_expectfile);
-	if (platform_expectfile)
-	{
-		/*
-		 * Replace everything afer the last slash in expectfile with what the
-		 * platform_expectfile contains.
-		 */
-		char	   *p = strrchr(expectfile, '/');
-
-		if (p)
-			strcpy(++p, platform_expectfile);
-	}
-
-	/* Name to use for temporary diff file */
-	snprintf(diff, sizeof(diff), "%s.diff", resultsfile);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* OK, run the diff */
 	snprintf(cmd, sizeof(cmd),
@@ -1524,13 +1360,8 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 			continue;
 
 		snprintf(cmd, sizeof(cmd),
-<<<<<<< HEAD
 				 SYSTEMQUOTE "%s %s \"%s\" \"%s\" > \"%s\"" SYSTEMQUOTE,
 				 gpdiffprog, diff_opts, alt_expectfile, resultsfile, diff);
-=======
-				 SYSTEMQUOTE "diff %s \"%s\" \"%s\" > \"%s\"" SYSTEMQUOTE,
-				 basic_diff_opts, alt_expectfile, resultsfile, diff);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (run_diff(cmd, diff) == 0)
 		{
@@ -1543,11 +1374,7 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 		{
 			/* This diff was a better match than the last one */
 			best_line_count = l;
-<<<<<<< HEAD
 			strlcpy(best_expect_file, alt_expectfile, sizeof(best_expect_file));
-=======
-			strcpy(best_expect_file, alt_expectfile);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 		free(alt_expectfile);
 	}
@@ -1560,13 +1387,8 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 	if (platform_expectfile)
 	{
 		snprintf(cmd, sizeof(cmd),
-<<<<<<< HEAD
 				 SYSTEMQUOTE "%s %s \"%s\" \"%s\" > \"%s\"" SYSTEMQUOTE,
 				 gpdiffprog, diff_opts, default_expectfile, resultsfile, diff);
-=======
-				 SYSTEMQUOTE "diff %s \"%s\" \"%s\" > \"%s\"" SYSTEMQUOTE,
-				 basic_diff_opts, default_expectfile, resultsfile, diff);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (run_diff(cmd, diff) == 0)
 		{
@@ -1580,11 +1402,7 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 		{
 			/* This diff was a better match than the last one */
 			best_line_count = l;
-<<<<<<< HEAD
 			strlcpy(best_expect_file, default_expectfile, sizeof(best_expect_file));
-=======
-			strcpy(best_expect_file, default_expectfile);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 	}
 
@@ -1738,10 +1556,7 @@ run_schedule(const char *schedule, test_function tfunc)
 	memset(resultfiles, 0, sizeof(_stringlist *) * MAX_PARALLEL_TESTS);
 	memset(expectfiles, 0, sizeof(_stringlist *) * MAX_PARALLEL_TESTS);
 	memset(tags, 0, sizeof(_stringlist *) * MAX_PARALLEL_TESTS);
-<<<<<<< HEAD
 	memset(end_times, 0, sizeof(struct timeval) * MAX_PARALLEL_TESTS);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	scf = fopen(schedule, "r");
 	if (!scf)
@@ -1844,11 +1659,7 @@ run_schedule(const char *schedule, test_function tfunc)
 #endif
 			status(_("test %-20s ... "), tests[0]);
 			pids[0] = (tfunc) (tests[0], &resultfiles[0], &expectfiles[0], &tags[0]);
-<<<<<<< HEAD
 			wait_for_tests(pids, statuses, NULL, end_times, 1);
-=======
-			wait_for_tests(pids, NULL, 1);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			/* status line is finished below */
 		}
 		else if (max_connections > 0 && max_connections < num_tests)
@@ -1889,21 +1700,15 @@ run_schedule(const char *schedule, test_function tfunc)
 					   *el,
 					   *tl;
 			bool		differ = false;
-<<<<<<< HEAD
 			double		diff_secs = 0, diff_elapse = 0;
 			struct timeval diff_start_time, diff_end_time;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			if (num_tests > 1)
 				status(_("     %-20s ... "), tests[i]);
 
-<<<<<<< HEAD
 			diff_secs = end_times[i].tv_usec - start_time.tv_usec;
 			diff_secs /= 1000000;
 			diff_secs += end_times[i].tv_sec - start_time.tv_sec;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			/*
 			 * Advance over all three lists simultaneously.
 			 *
@@ -1911,11 +1716,8 @@ run_schedule(const char *schedule, test_function tfunc)
 			 * optional but if there are tags, the tag list has the same
 			 * length as the other two lists.
 			 */
-<<<<<<< HEAD
 
 			gettimeofday(&diff_start_time, NULL);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			for (rl = resultfiles[i], el = expectfiles[i], tl = tags[i];
 				 rl != NULL;	/* rl and el have the same length */
 				 rl = rl->next, el = el->next)
@@ -1923,11 +1725,7 @@ run_schedule(const char *schedule, test_function tfunc)
 				bool		newdiff;
 
 				if (tl)
-<<<<<<< HEAD
-					tl = tl->next;		/* tl has the same length as rl and el
-=======
 					tl = tl->next;		/* tl has the same lengt has rl and el
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 										 * if it exists */
 
 				newdiff = results_differ(tests[i], rl->str, el->str);
@@ -1937,14 +1735,11 @@ run_schedule(const char *schedule, test_function tfunc)
 				}
 				differ |= newdiff;
 			}
-<<<<<<< HEAD
 			gettimeofday(&diff_end_time, NULL);
 
 			diff_elapse = diff_end_time.tv_usec - diff_start_time.tv_usec;
 			diff_elapse /= 1000000;
 			diff_elapse += diff_end_time.tv_sec - diff_start_time.tv_sec;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			if (differ)
 			{
@@ -1995,10 +1790,7 @@ static void
 run_single_test(const char *test, test_function tfunc)
 {
 	PID_TYPE	pid;
-<<<<<<< HEAD
 	int			exit_status;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	_stringlist *resultfiles = NULL;
 	_stringlist *expectfiles = NULL;
 	_stringlist *tags = NULL;
@@ -2009,11 +1801,7 @@ run_single_test(const char *test, test_function tfunc)
 
 	status(_("test %-20s ... "), test);
 	pid = (tfunc) (test, &resultfiles, &expectfiles, &tags);
-<<<<<<< HEAD
 	wait_for_tests(&pid, &exit_status, NULL, NULL, 1);
-=======
-	wait_for_tests(&pid, NULL, 1);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Advance over all three lists simultaneously.
@@ -2029,11 +1817,7 @@ run_single_test(const char *test, test_function tfunc)
 		bool		newdiff;
 
 		if (tl)
-<<<<<<< HEAD
-			tl = tl->next;		/* tl has the same length as rl and el if it
-=======
 			tl = tl->next;		/* tl has the same lengt has rl and el if it
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 								 * exists */
 
 		newdiff = results_differ(test, rl->str, el->str);
@@ -2152,11 +1936,7 @@ create_database(const char *dbname)
 	 * not mess up the tests.
 	 */
 	header(_("creating database \"%s\""), dbname);
-<<<<<<< HEAD
 	if (encoding && strlen(encoding) > 0)
-=======
-	if (encoding)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		psql_command("postgres", "CREATE DATABASE \"%s\" TEMPLATE=template0 ENCODING='%s'", dbname, encoding);
 	else
 		psql_command("postgres", "CREATE DATABASE \"%s\" TEMPLATE=template0", dbname);
@@ -2197,7 +1977,6 @@ create_role(const char *rolename, const _stringlist * granted_dbs)
 	}
 }
 
-<<<<<<< HEAD
 static char *
 make_absolute_path(const char *in)
 {
@@ -2305,8 +2084,6 @@ check_optimizer_status(void)
 	fclose(statusfile);
 }
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static void
 help(void)
 {
@@ -2329,10 +2106,7 @@ help(void)
 	printf(_("                            (can be used multiple times to concatenate)\n"));
 	printf(_("  --srcdir=DIR              absolute path to source directory (for VPATH builds)\n"));
 	printf(_("  --temp-install=DIR        create a temporary installation in DIR\n"));
-<<<<<<< HEAD
     printf(_(" --init-file=GPD_INIT_FILE  init file to be used for gpdiff\n"));
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	printf(_("\n"));
 	printf(_("Options for \"temp-install\" mode:\n"));
 	printf(_("  --no-locale               use C locale\n"));
@@ -2382,11 +2156,8 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		{"psqldir", required_argument, NULL, 16},
 		{"srcdir", required_argument, NULL, 17},
 		{"create-role", required_argument, NULL, 18},
-<<<<<<< HEAD
-        {"init-file", required_argument, NULL, 19},
-=======
 		{"temp-config", required_argument, NULL, 19},
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+        {"init-file", required_argument, NULL, 20},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -2482,17 +2253,13 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 			case 18:
 				split_to_stringlist(strdup(optarg), ", ", &extraroles);
 				break;
-<<<<<<< HEAD
-            case 19:
-                initfile = strdup(optarg);
-                break;
-            default:
-=======
 			case 19:
 				temp_config = strdup(optarg);
 				break;
+            case 20:
+                initfile = strdup(optarg);
+                break;
 			default:
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				/* getopt_long already emitted a complaint */
 				fprintf(stderr, _("\nTry \"%s -h\" for more information.\n"),
 						progname);
@@ -2697,7 +2464,6 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 
 	/*
 	 * Create the test database(s) and role(s)
-<<<<<<< HEAD
 	 */
 	for (sl = dblist; sl; sl = sl->next)
 		create_database(sl->str);
@@ -2708,13 +2474,6 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 	 * Find out if optimizer is on or off
 	 */
 	check_optimizer_status();
-=======
-	 */
-	for (sl = dblist; sl; sl = sl->next)
-		create_database(sl->str);
-	for (sl = extraroles; sl; sl = sl->next)
-		create_role(sl->str, dblist);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/*
 	 * Ready to run the tests

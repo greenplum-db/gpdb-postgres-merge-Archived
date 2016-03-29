@@ -8,29 +8,19 @@
  *
  * This code is released under the terms of the PostgreSQL License.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/test/regress/pg_regress_main.c,v 1.9 2010/01/02 16:58:16 momjian Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress_main.c,v 1.3 2008/01/01 19:46:00 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
 
 #include "pg_regress.h"
 
-<<<<<<< HEAD
 #include <sys/stat.h>
 #include <sys/types.h>
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /*
  * start a psql test process for specified file (including redirection),
  * and return process ID
@@ -44,7 +34,6 @@ psql_start_test(const char *testname,
 	PID_TYPE	pid;
 	char		infile[MAXPGPATH];
 	char		outfile[MAXPGPATH];
-<<<<<<< HEAD
 	char		expectfile[MAXPGPATH] = "";
 	char		psql_cmd[MAXPGPATH * 3];
 	char		use_utility_mode = 0;
@@ -119,28 +108,13 @@ psql_start_test(const char *testname,
 					 inputdir, testname);
 		}
 	}
-=======
-	char		expectfile[MAXPGPATH];
-	char		psql_cmd[MAXPGPATH * 3];
-
-	snprintf(infile, sizeof(infile), "%s/sql/%s.sql",
-			 inputdir, testname);
-	snprintf(outfile, sizeof(outfile), "%s/results/%s.out",
-			 outputdir, testname);
-	snprintf(expectfile, sizeof(expectfile), "%s/expected/%s.out",
-			 inputdir, testname);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	add_stringlist_item(resultfiles, outfile);
 	add_stringlist_item(expectfiles, expectfile);
 
 	snprintf(psql_cmd, sizeof(psql_cmd),
-<<<<<<< HEAD
 			 "%s " SYSTEMQUOTE "\"%s%spsql\" -X -a -q -d \"%s\" < \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
 			 use_utility_mode ? "env PGOPTIONS='-c gp_session_role=utility'" : "",
-=======
-			 SYSTEMQUOTE "\"%s%spsql\" -X -a -q -d \"%s\" < \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			 psqldir ? psqldir : "",
 			 psqldir ? "/" : "",
 			 dblist->str,
