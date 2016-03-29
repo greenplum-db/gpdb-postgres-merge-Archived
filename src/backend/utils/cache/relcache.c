@@ -2719,8 +2719,9 @@ AtEOXact_RelationCache(bool isCommit)
 	 * MPP-3333: READERS need to *always* scan, otherwise they will not be able
 	 * to maintain a coherent view of the storage layer.
 	 */
-	if (!need_eoxact_work &&
-		DistributedTransactionContext != DTX_CONTEXT_QE_READER
+	if (!need_eoxact_work
+		/* GPDB_83_MERGE_FIXME: disabled this special case, see FIXME comment below */
+		//&& DistributedTransactionContext != DTX_CONTEXT_QE_READER
 #ifdef USE_ASSERT_CHECKING
 		&& !assert_enabled
 #endif
@@ -2750,7 +2751,13 @@ AtEOXact_RelationCache(bool isCommit)
 			Assert(relation->rd_refcnt == expected_refcnt);
 		}
 #endif
-
+		/*
+		 * GPDB_83_MERGE_FIXME: I don't htink we need any special handling for
+		 * QE-readers. They should be enrolled in transactions, especially now that
+		 * we don't require an Xid to be assigned for read-only transactions. If
+		 * they're not, let's enroll them.
+		 */
+#if 0
 		/*
 		 * QE-readers aren't properly enrolled in transactions, they
 		 * just get the snapshot which corresponds -- so here, where
@@ -2763,7 +2770,7 @@ AtEOXact_RelationCache(bool isCommit)
 			RelationClearRelation(relation, false);
 			continue;
 		}
-
+#endif
 		/*
 		 * Is it a relation created in the current transaction?
 		 *
