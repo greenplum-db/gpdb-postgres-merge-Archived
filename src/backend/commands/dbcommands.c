@@ -1918,7 +1918,6 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	 * connections.
 	 */
 	rel = heap_open(DatabaseRelationId, RowExclusiveLock);
-	rel = heap_open(DatabaseRelationId, RowExclusiveLock);
 	ScanKeyInit(&scankey,
 				Anum_pg_database_datname,
 				BTEqualStrategyNumber, F_NAMEEQ,
