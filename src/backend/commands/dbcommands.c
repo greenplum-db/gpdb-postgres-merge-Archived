@@ -2002,6 +2002,8 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	/* Update indexes */
 	CatalogUpdateIndexes(rel, newtuple);
 
+	systable_endscan(scan);
+
 	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH)
 		MetaTrackUpdObject(DatabaseRelationId,
