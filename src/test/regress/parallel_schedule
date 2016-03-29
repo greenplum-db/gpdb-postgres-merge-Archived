@@ -101,8 +101,7 @@ test: misc
 # ----------
 # Another group of parallel tests
 # ----------
-<<<<<<< HEAD
-test: select_views portals_p2 cluster dependency guc
+test: select_views portals_p2 cluster dependency guc tsearch tsdicts
 
 # 'rules' test is disabled in GPDB. Maintaining the list of views in it is
 # too painful, and there are also errors because of cross-segment UPDATEs
@@ -116,16 +115,12 @@ test: select_views portals_p2 cluster dependency guc
 # 'foreign_key' test is disabled, because it contains several tables with
 # multiple UNIQUE constraints, which is not supported in GPDB.
 #test: foreign_key
-=======
-test: select_views portals_p2 rules foreign_key cluster dependency guc combocid tsearch tsdicts
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 # ----------
 # Another group of parallel tests
 # ----------
-<<<<<<< HEAD
 # "plpgsql" cannot run concurrently with "rules"
-test: limit copy2 temp domain rangefuncs prepare without_oid conversion truncate alter_table sequence polymorphism rowtypes xml
+test: plancache limit copy2 temp domain rangefuncs prepare without_oid conversion truncate alter_table sequence polymorphism rowtypes xml
 
 # 83MERGE_FIXME: the largeobject test is temporarily disabled due to test errors
 # test: largeobject
@@ -136,10 +131,6 @@ test: limit copy2 temp domain rangefuncs prepare without_oid conversion truncate
 
 # INSERT RETURNING is not supported by GPDB
 #test: returning
-=======
-# "plpgsql" cannot run concurrently with "rules", nor can "plancache"
-test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid conversion truncate alter_table sequence polymorphism rowtypes returning largeobject xml
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 # run stats by itself because its delay may be insufficient under heavy load
 #
