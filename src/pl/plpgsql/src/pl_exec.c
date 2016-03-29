@@ -2035,9 +2035,7 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 				 errmsg("cannot use RETURN NEXT in a non-SETOF function")));
 
 	if (estate->tuple_store == NULL)
-	{
 		exec_init_tuple_store(estate);
-	}
 
 	/* rettupdesc will be filled by exec_init_tuple_store */
 	tupdesc = estate->rettupdesc;
@@ -2485,8 +2483,6 @@ exec_prepare_plan(PLpgSQL_execstate *estate,
 	plan = expr->plan;
 	expr->plan_argtypes = plan->argtypes;
 	exec_simple_check_plan(expr);
-
-	SPI_freeplan(plan);
 
 #if 0
 	/* GPDB_MERGE83_FIXME : Use the new plan caching */
@@ -5089,10 +5085,7 @@ exec_simple_check_plan(PLpgSQL_expr *expr)
 		if (list_length(cached_ps->plan->stmt_list) != 1)
 		{
 			if (IsA(linitial(cached_ps->plan->stmt_list), PlannedStmt))
-			{
 				stmt = (PlannedStmt *) linitial(cached_ps->plan->stmt_list);
-				plan = stmt ? stmt->planTree : NULL;
-			}
 		}
 	}
 
@@ -5100,7 +5093,6 @@ exec_simple_check_plan(PLpgSQL_expr *expr)
 	{
 		/* This is a utility statement */
 		stmt = (PlannedStmt *) linitial(plansource->plan->stmt_list);
-		plan = NULL;
 	}
 
 	/*
