@@ -529,10 +529,11 @@ AssignTransactionId(TransactionState s)
 	s->transactionId = GetNewTransactionId(isSubXact, true);
 	elog((Debug_print_full_dtm ? LOG : DEBUG5), "AssignSubTransactionId(): assigned xid %u", s->transactionId);
 
-	Assert(TransactionIdPrecedes(s->parent->transactionId, s->transactionId));
-
 	if (isSubXact)
+	{
+		Assert(TransactionIdPrecedes(s->parent->transactionId, s->transactionId));
 		SubTransSetParent(s->transactionId, s->parent->transactionId);
+	}
 
 	/*
 	 * Acquire lock on the transaction XID.  (We assume this cannot block.) We
@@ -2157,7 +2158,13 @@ SetSharedTransactionId_reader(TransactionId xid, CommandId cid)
 	Assert(DistributedTransactionContext == DTX_CONTEXT_QE_READER ||
 		   DistributedTransactionContext == DTX_CONTEXT_QE_ENTRY_DB_SINGLETON);
 
-	TopTransactionStateData.transactionId = xid;
+	/* GPDB_83_MERGE_FIXME: ProcArrayEndTransaction() trips an assertion, if
+	 * s->transactionId is set, but MyProc->xid is not. I don't understand
+	 * where this Xid comes from anyway, and why we'd need to use it. Perhaps
+	 * it was an attempt at reducing Xid consumption, before we had the upstream
+	 * patch to not assign an Xid until needed?
+	 */
+	//TopTransactionStateData.transactionId = xid;
 	currentCommandId = cid;
 }
 
@@ -3173,7 +3180,13 @@ StartTransaction(void)
 						 xactStartTimestamp,
 						 SharedLocalSnapshotSlot->startTimestamp);
 
-					s->transactionId = SharedLocalSnapshotSlot->xid;
+					/* GPDB_83_MERGE_FIXME: ProcArrayEndTransaction() trips an assertion, if
+					 * s->transactionId is set, but MyProc->xid is not. I don't understand
+					 * where this Xid comes from anyway, and why we'd need to use it. Especially
+					 * as the comment above says we might change it later. So just comment it
+					 * out for now.
+					 */
+					//s->transactionId = SharedLocalSnapshotSlot->xid;
 					xactStartTimestamp = SharedLocalSnapshotSlot->startTimestamp;
 					xactStopTimestamp = 0;
 					pgstat_report_xact_timestamp(xactStartTimestamp);
