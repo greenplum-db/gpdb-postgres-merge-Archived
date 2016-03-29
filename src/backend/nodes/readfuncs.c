@@ -1277,7 +1277,6 @@ _readRenameStmt(void)
 }
 
 
-#ifndef COMPILING_BINARY_FUNCS
 /*
  * _readCoerceViaIO
  */
@@ -1311,6 +1310,7 @@ _readArrayCoerceExpr(void)
 	READ_DONE();
 }
 
+#ifndef COMPILING_BINARY_FUNCS
 /*
  * _readFuncCall
  *
