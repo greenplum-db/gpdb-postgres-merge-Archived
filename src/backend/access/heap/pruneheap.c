@@ -71,6 +71,13 @@ heap_page_prune_opt(Relation relation, Buffer buffer, TransactionId OldestXmin)
 	Size		minfree;
 
 	/*
+	 * In GPDB we may call into here without having a local snapshot and thus
+	 * no valid OldestXmin transaction id. Exit early if so.
+	 */
+	if (!TransactionIdIsValid(OldestXmin))
+		return;
+
+	/*
 	 * Let's see if we really need pruning.
 	 *
 	 * Forget it if page is not hinted to contain something prunable that's

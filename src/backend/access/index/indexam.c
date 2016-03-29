@@ -441,8 +441,6 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(amgettuple);
 
-	Assert(TransactionIdIsValid(RecentGlobalXmin));
-
 	/*
 	 * We always reset xs_hot_dead; if we are here then either we are just
 	 * starting the scan, or we previously returned a visible tuple, and in
@@ -513,9 +511,12 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 			/*
 			 * Prune page, but only if we weren't already on this page
 			 */
-			if (prev_buf != scan->xs_cbuf)
+			if (prev_buf != scan->xs_cbuf &&
+				TransactionIdIsValid(RecentGlobalXmin))
+			{
 				heap_page_prune_opt(scan->heapRelation, scan->xs_cbuf,
 									RecentGlobalXmin);
+			}
 
 			/* Prepare to scan HOT chain starting at index-referenced offnum */
 			offnum = ItemPointerGetOffsetNumber(tid);
