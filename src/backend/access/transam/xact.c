@@ -3482,7 +3482,11 @@ CommitTransaction(void)
 							&needNotifyCommittedDtxTransaction,
 							&localDistribXactRef);
 
-	/* GPDB_83_MERGE_FIXME: ProcArrayEndTransaction releases ProcArrayLock */
+	/*
+	 * GPDB_83_MERGE_FIXME: ProcArrayEndTransaction releases ProcArrayLock, but
+	 * the comment below says that it's "very important" that this is still seen
+	 * as in-progress. AFAICS the pre-merge code had the same inconsistency, though.
+	 */
 	if (needNotifyCommittedDtxTransaction)
 	{
 		/*
@@ -3802,7 +3806,10 @@ PrepareTransaction(void)
 	 * done *after* the prepared transaction has been marked valid, else
 	 * someone may think it is unlocked and recyclable.
 	 */
-	ProcArrayClearTransaction(MyProc);
+	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+	ClearTransactionFromPgProc_UnderLock(MyProc);
+	LocalDistribXactRef_ReleaseUnderLock(&MyProc->localDistribXactRef);
+	LWLockRelease(ProcArrayLock);
 
 	/*
 	 * In normal commit-processing, this is all non-critical post-transaction
