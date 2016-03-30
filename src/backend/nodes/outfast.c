@@ -1643,6 +1643,9 @@ _outNode(StringInfo str, void *obj)
 			case T_CompositeTypeStmt:
 				_outCompositeTypeStmt(str,obj);
 				break;
+			case T_CreateEnumStmt:
+				_outCreateEnumStmt(str,obj);
+				break;
 			case T_CreateCastStmt:
 				_outCreateCastStmt(str,obj);
 				break;

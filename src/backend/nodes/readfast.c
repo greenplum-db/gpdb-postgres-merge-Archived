@@ -3018,6 +3018,9 @@ readNodeBinary(void)
 			case T_CompositeTypeStmt:
 				return_value = _readCompositeTypeStmt();
 				break;
+			case T_CreateEnumStmt:
+				return_value = _readCreateEnumStmt();
+				break;
 			case T_CreateCastStmt:
 				return_value = _readCreateCastStmt();
 				break;

@@ -3012,6 +3012,16 @@ _outCompositeTypeStmt(StringInfo str, CompositeTypeStmt *node)
 }
 
 static void
+_outCreateEnumStmt(StringInfo str, CreateEnumStmt *node)
+{
+	WRITE_NODE_TYPE("CREATEENUMSTMT");
+
+	WRITE_NODE_FIELD(typeName);
+	WRITE_NODE_FIELD(vals);
+	WRITE_OID_FIELD(enumTypeOid);
+}
+
+static void
 _outCreateCastStmt(StringInfo str, CreateCastStmt *node)
 {
 	WRITE_NODE_TYPE("CREATECAST");
@@ -4722,6 +4732,9 @@ _outNode(StringInfo str, void *obj)
 
 			case T_CompositeTypeStmt:
 				_outCompositeTypeStmt(str,obj);
+				break;
+			case T_CreateEnumStmt:
+				_outCreateEnumStmt(str,obj);
 				break;
 			case T_CreateCastStmt:
 				_outCreateCastStmt(str,obj);

@@ -1113,7 +1113,7 @@ DefineEnum(CreateEnumStmt *stmt)
 
 	/* Create the pg_type entry */
 	enumTypeOid =
-		TypeCreate(InvalidOid,	/* no predetermined type OID */
+		TypeCreate(stmt->enumTypeOid,
 				   enumName,	/* type name */
 				   enumNamespace,		/* namespace */
 				   InvalidOid,	/* relation oid (n/a here) */
@@ -1141,6 +1141,7 @@ DefineEnum(CreateEnumStmt *stmt)
 				   -1,			/* typMod (Domains only) */
 				   0,			/* Array dimensions of typbasetype */
 				   false);		/* Type NOT NULL */
+	stmt->enumTypeOid = enumTypeOid;
 
 	/* Enter the enum's values into pg_enum */
 	EnumValuesCreate(enumTypeOid, stmt->vals);
@@ -1180,6 +1181,9 @@ DefineEnum(CreateEnumStmt *stmt)
 			   false);			/* Type NOT NULL */
 
 	pfree(enumArrayName);
+
+	if (Gp_role == GP_ROLE_DISPATCH)
+		CdbDispatchUtilityStatement((Node *) stmt, "DefineEnum");
 }
 
 

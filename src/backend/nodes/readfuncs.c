@@ -2712,6 +2712,18 @@ _readCompositeTypeStmt(void)
 	READ_DONE();
 }
 
+static CreateEnumStmt *
+_readCreateEnumStmt(void)
+{
+	READ_LOCALS(CreateEnumStmt);
+
+	READ_NODE_FIELD(typeName);
+	READ_NODE_FIELD(vals);
+	READ_OID_FIELD(enumTypeOid);
+
+	READ_DONE();
+}
+
 static CreateCastStmt *
 _readCreateCastStmt(void)
 {
@@ -3113,6 +3125,7 @@ static ParseNodeInfo infoAr[] =
 	{"CREATECONVERSION", (ReadFn)_readCreateConversionStmt},
 	{"CREATEDBSTMT", (ReadFn)_readCreatedbStmt},
 	{"CREATEDOMAINSTMT", (ReadFn)_readCreateDomainStmt},
+	{"CREATEENUMSTMT", (ReadFn)_readCreateEnumStmt},
 	{"CREATEEXTERNALSTMT", (ReadFn)_readCreateExternalStmt},
 	{"CREATEFUNCSTMT", (ReadFn)_readCreateFunctionStmt},
 	{"CREATEOPCLASS", (ReadFn)_readCreateOpClassStmt},

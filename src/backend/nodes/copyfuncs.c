@@ -3567,6 +3567,7 @@ _copyCreateEnumStmt(CreateEnumStmt *from)
 
 	COPY_NODE_FIELD(typeName);
 	COPY_NODE_FIELD(vals);
+	COPY_SCALAR_FIELD(enumTypeOid);
 
 	return newnode;
 }
