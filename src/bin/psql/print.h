@@ -1,15 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
-<<<<<<< HEAD
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
  * src/bin/psql/print.h
-=======
- * Copyright (c) 2000-2008, PostgreSQL Global Development Group
- *
- * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.35 2008/01/01 19:45:56 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 #ifndef PRINT_H
 #define PRINT_H
@@ -111,7 +105,6 @@ typedef struct printTableFooter
 } printTableFooter;
 
 /*
-<<<<<<< HEAD
  * The table content struct holds all the information which will be displayed
  * by printTable().
  */
@@ -136,25 +129,6 @@ typedef struct printTableContent
 } printTableContent;
 
 typedef struct printQueryOpt
-=======
- * Use this to print just any table in the supported formats.
- * - title is just any string (NULL is fine)
- * - headers is the column headings (NULL ptr terminated). It must be given and
- *	 complete since the column count is generated from this.
- * - cells are the data cells to be printed. Now you know why the correct
- *	 column count is important
- * - footers are lines to be printed below the table
- * - align is an 'l' or an 'r' for every column, if the output format needs it.
- *	 (You must specify this long enough. Otherwise anything could happen.)
-*/
-void printTable(const char *title, const char *const * headers,
-		   const char *const * cells, const char *const * footers,
-		   const char *align,
-		   const printTableOpt *opt, FILE *fout, FILE *flog);
-
-
-typedef struct _printQueryOpt
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	printTableOpt topt;			/* the options above */
 	char	   *nullPrint;		/* how to print null entities */
@@ -162,14 +136,9 @@ typedef struct _printQueryOpt
 	char	   *title;			/* override title */
 	char	  **footers;		/* override footer (default is "(xx rows)") */
 	bool		default_footer; /* print default footer if footers==NULL */
-<<<<<<< HEAD
 	bool		translate_header;		/* do gettext on column headers */
 	const bool *translate_columns;		/* translate_columns[i-1] => do
 										 * gettext on col i */
-=======
-	bool		trans_headers;	/* do gettext on column headers */
-	const bool *trans_columns;	/* trans_columns[i-1] => do gettext on col i */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 } printQueryOpt;
 
 

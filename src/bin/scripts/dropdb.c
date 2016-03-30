@@ -2,17 +2,10 @@
  *
  * dropdb
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/bin/scripts/dropdb.c,v 1.27 2009/02/26 16:20:55 petere Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/bin/scripts/dropdb.c,v 1.22 2008/01/01 19:45:56 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -83,12 +76,6 @@ main(int argc, char *argv[])
 			case 'e':
 				echo = true;
 				break;
-<<<<<<< HEAD
-=======
-			case 'q':
-				/* obsolete; remove in 8.4 */
-				break;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			case 'i':
 				interactive = true;
 				break;
@@ -155,7 +142,6 @@ help(const char *progname)
 	printf(_("\nOptions:\n"));
 	printf(_("  -e, --echo                show the commands being sent to the server\n"));
 	printf(_("  -i, --interactive         prompt before deleting anything\n"));
-<<<<<<< HEAD
 	printf(_("  --help                    show this help, then exit\n"));
 	printf(_("  --version                 output version information, then exit\n"));
 	printf(_("\nConnection options:\n"));
@@ -165,13 +151,4 @@ help(const char *progname)
 	printf(_("  -w, --no-password         never prompt for password\n"));
 	printf(_("  -W, --password            force password prompt\n"));
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
-=======
-	printf(_("  -h, --host=HOSTNAME       database server host or socket directory\n"));
-	printf(_("  -p, --port=PORT           database server port\n"));
-	printf(_("  -U, --username=USERNAME   user name to connect as\n"));
-	printf(_("  -W, --password            force password prompt\n"));
-	printf(_("  --help                    show this help, then exit\n"));
-	printf(_("  --version                 output version information, then exit\n"));
-	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
