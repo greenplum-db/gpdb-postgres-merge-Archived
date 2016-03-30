@@ -2272,11 +2272,6 @@ pgstat_bestart(void)
 	 */
 	pgstat_init_localportalhash();
 	
-	/*
-	 * GPDB: Set up a process-exit hook to clean up.
-	 */
-	on_shmem_exit(pgstat_beshutdown_hook, 0);
-	
 	/* Update app name to current GUC setting */
 	if (application_name)
 		pgstat_report_appname(application_name);
