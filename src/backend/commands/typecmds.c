@@ -1054,6 +1054,8 @@ RemoveDomain(List *names, DropBehavior behavior, bool missing_ok)
 				 errmsg("\"%s\" is not a domain",
 						TypeNameToString(typename))));
 
+	ReleaseSysCache(tup);
+
 	/*
 	 * Do the deletion
 	 */
