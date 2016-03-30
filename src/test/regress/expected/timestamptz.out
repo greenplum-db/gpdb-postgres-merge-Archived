@@ -178,11 +178,7 @@ INSERT INTO TIMESTAMPTZ_TBL VALUES ('Feb 16 17:32:01 -0097');
 ERROR:  time zone displacement out of range: "Feb 16 17:32:01 -0097"
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('Feb 16 17:32:01 5097 BC');
 ERROR:  timestamp out of range: "Feb 16 17:32:01 5097 BC"
-<<<<<<< HEAD
--- Alternate field order that we've historically supported (sort of)
-=======
 -- Alternative field order that we've historically supported (sort of)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 -- with regular and POSIXy timezone specs
 SELECT 'Wed Jul 11 10:51:14 America/New_York 2001'::timestamptz;
          timestamptz          
@@ -785,7 +781,6 @@ SELECT '' AS "54", d1 as timestamptz,
    date_part( 'isoyear', d1) AS isoyear, date_part( 'week', d1) AS week,
    date_part( 'dow', d1) AS dow
    FROM TIMESTAMPTZ_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
-<<<<<<< HEAD
  54 |           timestamptz          | isoyear | week | dow 
 ----+--------------------------------+---------+------+-----
     | Mon Feb 10 17:32:01.5 1997 PST |    1997 |    7 |   1
@@ -844,66 +839,6 @@ SELECT '' AS "54", d1 as timestamptz,
     | Sat Jan 01 17:32:01 2000 PST   |    1999 |   52 |   6
     | Sun Dec 31 17:32:01 2000 PST   |    2000 |   52 |   0
     | Mon Jan 01 17:32:01 2001 PST   |    2001 |    1 |   1
-=======
- 54 |           timestamptz           | isoyear | week | dow 
-----+---------------------------------+---------+------+-----
-    | Wed Dec 31 16:00:00 1969 PST    |    1970 |    1 |   3
-    | Mon Feb 10 17:32:01 1997 PST    |    1997 |    7 |   1
-    | Mon Feb 10 17:32:01 1997 PST    |    1997 |    7 |   1
-    | Mon Feb 10 17:32:02 1997 PST    |    1997 |    7 |   1
-    | Mon Feb 10 17:32:01.40 1997 PST |    1997 |    7 |   1
-    | Mon Feb 10 17:32:01.50 1997 PST |    1997 |    7 |   1
-    | Mon Feb 10 17:32:01.60 1997 PST |    1997 |    7 |   1
-    | Thu Jan 02 00:00:00 1997 PST    |    1997 |    1 |   4
-    | Thu Jan 02 03:04:05 1997 PST    |    1997 |    1 |   4
-    | Mon Feb 10 17:32:01 1997 PST    |    1997 |    7 |   1
-    | Mon Feb 10 17:32:01 1997 PST    |    1997 |    7 |   1
-    | Mon Feb 10 17:32:01 1997 PST    |    1997 |    7 |   1
-    | Mon Feb 10 17:32:01 1997 PST    |    1997 |    7 |   1
-    | Tue Jun 10 17:32:01 1997 PDT    |    1997 |   24 |   2
-    | Sat Sep 22 18:19:20 2001 PDT    |    2001 |   38 |   6
-    | Wed Mar 15 08:14:01 2000 PST    |    2000 |   11 |   3
-    | Wed Mar 15 04:14:02 2000 PST    |    2000 |   11 |   3
-    | Wed Mar 15 02:14:03 2000 PST    |    2000 |   11 |   3
-    | Wed Mar 15 03:14:04 2000 PST    |    2000 |   11 |   3
-    | Wed Mar 15 01:14:05 2000 PST    |    2000 |   11 |   3
-    | Mon Feb 10 17:32:01 1997 PST    |    1997 |    7 |   1
-    | Mon Feb 10 17:32:01 1997 PST    |    1997 |    7 |   1
-    | Mon Feb 10 17:32:00 1997 PST    |    1997 |    7 |   1
-    | Mon Feb 10 17:32:01 1997 PST    |    1997 |    7 |   1
-    | Mon Feb 10 17:32:01 1997 PST    |    1997 |    7 |   1
-    | Mon Feb 10 17:32:01 1997 PST    |    1997 |    7 |   1
-    | Mon Feb 10 17:32:01 1997 PST    |    1997 |    7 |   1
-    | Mon Feb 10 17:32:01 1997 PST    |    1997 |    7 |   1
-    | Mon Feb 10 09:32:01 1997 PST    |    1997 |    7 |   1
-    | Mon Feb 10 09:32:01 1997 PST    |    1997 |    7 |   1
-    | Mon Feb 10 09:32:01 1997 PST    |    1997 |    7 |   1
-    | Mon Feb 10 14:32:01 1997 PST    |    1997 |    7 |   1
-    | Thu Jul 10 14:32:01 1997 PDT    |    1997 |   28 |   4
-    | Tue Jun 10 18:32:01 1997 PDT    |    1997 |   24 |   2
-    | Mon Feb 10 17:32:01 1997 PST    |    1997 |    7 |   1
-    | Tue Feb 11 17:32:01 1997 PST    |    1997 |    7 |   2
-    | Wed Feb 12 17:32:01 1997 PST    |    1997 |    7 |   3
-    | Thu Feb 13 17:32:01 1997 PST    |    1997 |    7 |   4
-    | Fri Feb 14 17:32:01 1997 PST    |    1997 |    7 |   5
-    | Sat Feb 15 17:32:01 1997 PST    |    1997 |    7 |   6
-    | Sun Feb 16 17:32:01 1997 PST    |    1997 |    7 |   0
-    | Sun Feb 16 17:32:01 1997 PST    |    1997 |    7 |   0
-    | Wed Feb 28 17:32:01 1996 PST    |    1996 |    9 |   3
-    | Thu Feb 29 17:32:01 1996 PST    |    1996 |    9 |   4
-    | Fri Mar 01 17:32:01 1996 PST    |    1996 |    9 |   5
-    | Mon Dec 30 17:32:01 1996 PST    |    1997 |    1 |   1
-    | Tue Dec 31 17:32:01 1996 PST    |    1997 |    1 |   2
-    | Wed Jan 01 17:32:01 1997 PST    |    1997 |    1 |   3
-    | Fri Feb 28 17:32:01 1997 PST    |    1997 |    9 |   5
-    | Sat Mar 01 17:32:01 1997 PST    |    1997 |    9 |   6
-    | Tue Dec 30 17:32:01 1997 PST    |    1998 |    1 |   2
-    | Wed Dec 31 17:32:01 1997 PST    |    1998 |    1 |   3
-    | Fri Dec 31 17:32:01 1999 PST    |    1999 |   52 |   5
-    | Sat Jan 01 17:32:01 2000 PST    |    1999 |   52 |   6
-    | Sun Dec 31 17:32:01 2000 PST    |    2000 |   52 |   0
-    | Mon Jan 01 17:32:01 2001 PST    |    2001 |    1 |   1
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 (56 rows)
 
 -- TO_CHAR()

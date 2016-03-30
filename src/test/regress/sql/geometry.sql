@@ -133,11 +133,7 @@ SELECT '' AS twenty, b.f1 / p.f1 AS rotation
 -- Paths
 --
 
-<<<<<<< HEAD
 SELECT '' AS eight, npoints(f1) AS npoints, f1 AS path FROM PATH_GEOM_TBL ORDER BY s;
-=======
-SELECT '' AS eight, npoints(f1) AS npoints, f1 AS path FROM PATH_TBL;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 SELECT '' AS four, path(f1) FROM POLYGON_GEOM_TBL ORDER BY s;
 
