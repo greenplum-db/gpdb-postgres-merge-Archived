@@ -413,6 +413,19 @@ _readConst(void)
 	READ_DONE();
 }
 
+static ResTarget *
+_readResTarget(void)
+{
+	READ_LOCALS(ResTarget);
+
+	READ_STRING_FIELD(name);
+	READ_NODE_FIELD(indirection);
+	READ_NODE_FIELD(val);
+	READ_INT_FIELD(location);
+
+	READ_DONE();
+}
+
 /*
  * _readConstraint
  */
@@ -654,6 +667,33 @@ _readAlterOwnerStmt(void)
 	READ_DONE();
 }
 
+static SelectStmt *
+_readSelectStmt(void)
+{
+	READ_LOCALS(SelectStmt);
+
+	READ_NODE_FIELD(distinctClause);
+	READ_NODE_FIELD(intoClause);
+	READ_NODE_FIELD(targetList);
+	READ_NODE_FIELD(fromClause);
+	READ_NODE_FIELD(whereClause);
+	READ_NODE_FIELD(groupClause);
+	READ_NODE_FIELD(havingClause);
+	READ_NODE_FIELD(windowClause);
+	READ_NODE_FIELD(valuesLists);
+	READ_NODE_FIELD(sortClause);
+	READ_NODE_FIELD(scatterClause);
+	READ_NODE_FIELD(withClause);
+	READ_NODE_FIELD(limitOffset);
+	READ_NODE_FIELD(limitCount);
+	READ_NODE_FIELD(lockingClause);
+	READ_ENUM_FIELD(op, SetOperation);
+	READ_BOOL_FIELD(all);
+	READ_NODE_FIELD(larg);
+	READ_NODE_FIELD(rarg);
+	READ_NODE_FIELD(distributedBy);
+	READ_DONE();
+}
 
 /*
  * _readFuncCall
@@ -3144,6 +3184,9 @@ readNodeBinary(void)
 			case T_CopyStmt:
 				return_value = _readCopyStmt();
 				break;
+			case T_SelectStmt:
+				return_value = _readSelectStmt();
+				break;
 			case T_ColumnDef:
 				return_value = _readColumnDef();
 				break;
@@ -3239,6 +3282,9 @@ readNodeBinary(void)
 				break;
 			case T_A_Indirection:
 				return_value = _readA_Indirection();
+				break;
+			case T_ResTarget:
+				return_value = _readResTarget();
 				break;
 			case T_Constraint:
 				return_value = _readConstraint();

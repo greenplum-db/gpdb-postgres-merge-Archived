@@ -1770,6 +1770,9 @@ _outNode(StringInfo str, void *obj)
 			case T_CopyStmt:
 				_outCopyStmt(str, obj);
 				break;
+			case T_SelectStmt:
+				_outSelectStmt(str, obj);
+				break;
 			case T_ColumnDef:
 				_outColumnDef(str, obj);
 				break;

@@ -435,6 +435,8 @@ DefineView(ViewStmt *stmt, const char *queryString)
 
 	if (Gp_role != GP_ROLE_EXECUTE)
 		viewOid = 0;
+	else
+		viewOid = stmt->relOid;
 	/*
 	 * If the user didn't explicitly ask for a temporary view, check whether
 	 * we need one implicitly.	We allow TEMP to be inserted automatically as

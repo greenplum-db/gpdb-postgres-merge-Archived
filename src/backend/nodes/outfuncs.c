@@ -3213,11 +3213,13 @@ _outInsertStmt(StringInfo str, InsertStmt *node)
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
-#ifndef COMPILING_BINARY_FUNCS
 /*
  * SelectStmt's are never written to the catalog, they only exist
  * between parse and parseTransform.  The only use of this function
  * is for debugging purposes.
+ *
+ * In GPDB, these are also dispatched from QD to QEs, so we need full
+ * out/read support.
  */
 static void
 _outSelectStmt(StringInfo str, SelectStmt *node)
@@ -3234,10 +3236,7 @@ _outSelectStmt(StringInfo str, SelectStmt *node)
 	WRITE_NODE_FIELD(windowClause);
 	WRITE_NODE_FIELD(valuesLists);
 	WRITE_NODE_FIELD(sortClause);
-	if (node->scatterClause != NIL)
-	{
-		WRITE_NODE_FIELD(scatterClause);
-	}
+	WRITE_NODE_FIELD(scatterClause);
 	WRITE_NODE_FIELD(withClause);
 	WRITE_NODE_FIELD(limitOffset);
 	WRITE_NODE_FIELD(limitCount);
@@ -3248,7 +3247,6 @@ _outSelectStmt(StringInfo str, SelectStmt *node)
 	WRITE_NODE_FIELD(rarg);
 	WRITE_NODE_FIELD(distributedBy);
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 static void
 _outFuncCall(StringInfo str, FuncCall *node)
