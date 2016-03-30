@@ -981,6 +981,7 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 	WRITE_OID_FIELD(checkAsUser);
 
 	WRITE_BOOL_FIELD(forceDistRandom);
+	WRITE_NODE_FIELD(pseudocols);
 }
 
 static void
