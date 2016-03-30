@@ -767,10 +767,6 @@ SELECT '' AS to_char_24, to_char('100'::numeric, 'FM999.9');
 SELECT '' AS to_char_25, to_char('100'::numeric, 'FM999.');
 SELECT '' AS to_char_26, to_char('100'::numeric, 'FM999');
 
-SELECT '' AS to_char_24, to_char('100'::numeric, 'FM999.9');
-SELECT '' AS to_char_25, to_char('100'::numeric, 'FM999.');
-SELECT '' AS to_char_26, to_char('100'::numeric, 'FM999');
-
 -- TO_NUMBER()
 --
 SELECT '' AS to_number_1,  to_number('-34,338,492', '99G999G999');
