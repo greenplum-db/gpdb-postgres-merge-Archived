@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 $PostgreSQL: pgsql/src/tools/findoidjoins/README,v 1.6 2008/10/13 12:59:57 tgl Exp $
-=======
-$PostgreSQL: pgsql/src/tools/findoidjoins/README,v 1.4 2007/05/11 17:57:14 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 findoidjoins
 ============
