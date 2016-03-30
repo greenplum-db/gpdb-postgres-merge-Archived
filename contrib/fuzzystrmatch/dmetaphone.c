@@ -1,11 +1,7 @@
 /*
  * This is a port of the Double Metaphone algorithm for use in PostgreSQL.
  *
-<<<<<<< HEAD
  * contrib/fuzzystrmatch/dmetaphone.c
-=======
- * $PostgreSQL: pgsql/contrib/fuzzystrmatch/dmetaphone.c,v 1.11 2007/02/27 23:48:05 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * Double Metaphone computes 2 "sounds like" strings - a primary and an
  * alternate. In most cases they are the same, but for foreign names
@@ -151,17 +147,8 @@ dmetaphone(PG_FUNCTION_ARGS)
 	code = codes[0];
 	if (!code)
 		code = "";
-<<<<<<< HEAD
 
 	PG_RETURN_TEXT_P(cstring_to_text(code));
-=======
-	rsize = VARHDRSZ + strlen(code);
-	result = (text *) palloc(rsize);
-	rptr = VARDATA(result);
-	memcpy(rptr, code, rsize - VARHDRSZ);
-	SET_VARSIZE(result, rsize);
-	PG_RETURN_TEXT_P(result);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /*
@@ -189,17 +176,8 @@ dmetaphone_alt(PG_FUNCTION_ARGS)
 	code = codes[1];
 	if (!code)
 		code = "";
-<<<<<<< HEAD
 
 	PG_RETURN_TEXT_P(cstring_to_text(code));
-=======
-	rsize = VARHDRSZ + strlen(code);
-	result = (text *) palloc(rsize);
-	rptr = VARDATA(result);
-	memcpy(rptr, code, rsize - VARHDRSZ);
-	SET_VARSIZE(result, rsize);
-	PG_RETURN_TEXT_P(result);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 

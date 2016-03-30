@@ -161,11 +161,7 @@ main(int argc, char *argv[])
 	print_elapse(start_t, elapse_t);
 	printf("\n");
 
-<<<<<<< HEAD
 	/* Two 8k o_sync writes */
-=======
-	/* 2*8k o_sync writes */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
@@ -198,10 +194,7 @@ main(int argc, char *argv[])
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
-<<<<<<< HEAD
 	{
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
 		if (lseek(tmpfile, 0, SEEK_SET) == -1)
@@ -222,10 +215,7 @@ main(int argc, char *argv[])
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
-<<<<<<< HEAD
 	{
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
 		if (lseek(tmpfile, 0, SEEK_SET) == -1)
