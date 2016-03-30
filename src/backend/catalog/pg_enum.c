@@ -29,9 +29,13 @@ static int	oid_cmp(const void *p1, const void *p2);
  *		Create an entry in pg_enum for each of the supplied enum values.
  *
  * vals is a list of Value strings.
+ *
+ * GPDB: valOids is a list of Oids to assign to the values. If it's an
+ * empty list on entry, new Oids are assigned, and the return Oids are
+ * returned in the list.
  */
 void
-EnumValuesCreate(Oid enumTypeOid, List *vals)
+EnumValuesCreate(Oid enumTypeOid, List *vals, List **valOids)
 {
 	Relation	pg_enum;
 	TupleDesc	tupDesc;
@@ -43,6 +47,8 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 	bool		nulls[Natts_pg_enum];
 	ListCell   *lc;
 	HeapTuple	tup;
+
+	Assert(*valOids == NIL || list_length(vals) == list_length(*valOids));
 
 	n = list_length(vals);
 
@@ -61,15 +67,32 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 	 * table before allocating the next), trouble could only occur if the oid
 	 * counter wraps all the way around before we finish. Which seems
 	 * unlikely.
+	 *
+	 * GPDB: if the caller supplied a list of Oids, use those instead of allocating
+	 * new ones.
 	 */
 	oids = (Oid *) palloc(n * sizeof(Oid));
-	for (i = 0; i < n; i++)
+	if (*valOids != NIL)
 	{
-		oids[i] = GetNewOid(pg_enum);
+		i = 0;
+		foreach(lc, *valOids)
+		{
+			oids[i++] = lfirst_oid(lc);
+		}
 	}
+	else
+	{
+		for (i = 0; i < n; i++)
+		{
+			oids[i] = GetNewOid(pg_enum);
+		}
 
-	/* sort them, just in case counter wrapped from high to low */
-	qsort(oids, n, sizeof(Oid), oid_cmp);
+		/* sort them, just in case counter wrapped from high to low */
+		qsort(oids, n, sizeof(Oid), oid_cmp);
+
+		for (i = 0; i < n; i++)
+			*valOids = lappend_oid(*valOids, oids[i]);
+	}
 
 	/* and make the entries */
 	memset(nulls, false, sizeof(nulls));
