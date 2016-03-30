@@ -893,8 +893,19 @@ ProcessUtility(Node *parsetree,
 				Oid			relOid;
 
 				/* Run parse analysis ... */
-				stmts = transformCreateStmt((CreateStmt *) parsetree,
-											queryString);
+				/*
+				 * GPDB: Only do parse analysis in the Query Dispatcher. The Executor
+				 * nodes receive an already-transformed statement from the QD. We only
+				 * want to process the main CreateStmt here, not any auxiliary IndexStmts
+				 * or other such statements that would be created from the main
+				 * CreateStmt by parse analysis. The QD will dispatch those other statements
+				 * separately.
+				 */
+				if (Gp_role == GP_ROLE_EXECUTE)
+					stmts = list_make1(parsetree);
+				else
+					stmts = transformCreateStmt((CreateStmt *) parsetree,
+												queryString);
 
 				/* ... and do it */
 				foreach(l, stmts)
