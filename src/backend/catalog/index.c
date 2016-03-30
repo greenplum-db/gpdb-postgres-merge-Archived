@@ -1447,9 +1447,11 @@ setNewRelfilenodeToOid(Relation relation, TransactionId freezeXid, Oid newrelfil
 	RelFileNode newrnode;
 	SMgrRelation srel;
 	Relation	pg_class;
+	Relation	gp_relation_node;
 	HeapTuple	tuple;
 	Form_pg_class rd_rel;
 	bool		isAppendOnly;
+	bool		is_gp_relation_node_index;
 
 	/* Can't change relfilenode for nailed tables (indexes ok though) */
 	Assert(!relation->rd_isnailed ||
@@ -1486,6 +1488,7 @@ setNewRelfilenodeToOid(Relation relation, TransactionId freezeXid, Oid newrelfil
 	 * during bootstrap, so okay to use heap_update always.
 	 */
 	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
+	gp_relation_node = heap_open(GpRelationNodeRelationId, RowExclusiveLock);
 
 	tuple = SearchSysCacheCopy(RELOID,
 							   ObjectIdGetDatum(RelationGetRelid(relation)),
@@ -1574,9 +1577,30 @@ setNewRelfilenodeToOid(Relation relation, TransactionId freezeXid, Oid newrelfil
 	simple_heap_update(pg_class, &tuple->t_self, tuple);
 	CatalogUpdateIndexes(pg_class, tuple);
 
+	/*
+	 * If the swapping relation is an index of gp_relation_node,
+	 * updating itself is bogus; if gp_relation_node has old indexlist,
+	 * CatalogUpdateIndexes updates old index file, and is crash-unsafe.
+	 * Hence, here we skip it and count on later index_build.
+	 * (Or should we add index_build() call after CCI beflow in this case?)
+	 */
+	is_gp_relation_node_index = relation->rd_index &&
+								relation->rd_index->indrelid == GpRelationNodeRelationId;
+	InsertGpRelationNodeTuple(
+						gp_relation_node,
+						relation->rd_id,
+						NameStr(relation->rd_rel->relname),
+						newrelfilenode,
+						/* segmentFileNum */ 0,
+						/* updateIndex */ !is_gp_relation_node_index,
+						&relation->rd_segfile0_relationnodeinfo.persistentTid,
+						relation->rd_segfile0_relationnodeinfo.persistentSerialNum);
+
 	heap_freetuple(tuple);
 
 	heap_close(pg_class, RowExclusiveLock);
+
+	heap_close(gp_relation_node, RowExclusiveLock);
 
 	/* Make sure the relfilenode change is visible */
 	CommandCounterIncrement();
