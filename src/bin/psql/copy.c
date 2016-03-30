@@ -1,15 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
-<<<<<<< HEAD
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
  * src/bin/psql/copy.c
-=======
- * Copyright (c) 2000-2008, PostgreSQL Global Development Group
- *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.77.2.2 2010/04/15 21:05:17 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -38,7 +32,6 @@
  * -- parses \copy command line
  *
  * The documented syntax is:
-<<<<<<< HEAD
  *	\copy tablename [(columnlist)] from|to filename [options]
  *	\copy ( select stmt ) to filename [options]
  *
@@ -46,20 +39,6 @@
  * tablename; this is a hangover from the pre-7.3 syntax.  The options
  * syntax varies across backend versions, but we avoid all that mess
  * by just transmitting the stuff after the filename literally.
-=======
- *	\copy tablename [(columnlist)] from|to filename
- *	  [ with ] [ binary ] [ oids ] [ delimiter [as] char ] [ null [as] string ]
- *	  [ csv  [ header ] [ quote [ AS ] string ]  escape [as] string
- *		[ force not null column [, ...] | force quote column [, ...] ] ]
- *
- *	\copy ( select stmt ) to filename
- *	  [ with ] [ binary ] [ delimiter [as] char ] [ null [as] string ]
- *	  [ csv  [ header ] [ quote [ AS ] string ]  escape [as] string
- *		[ force quote column [, ...] ] ]
- *
- * Force quote only applies for copy to; force not null only applies for
- * copy from.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * table name can be double-quoted and can have a schema part.
  * column names can be double-quoted.
@@ -144,11 +123,8 @@ parse_slash_copy(const char *args)
 
 		while (parens > 0)
 		{
-<<<<<<< HEAD
 			xstrcat(&result->before_tofrom, " ");
 			xstrcat(&result->before_tofrom, token);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			token = strtokx(NULL, whitespace, "()", "\"'",
 							nonstd_backslash, true, false, pset.encoding);
 			if (!token)
@@ -242,10 +218,6 @@ parse_slash_copy(const char *args)
 	/* Collect the rest of the line (COPY options) */
 	token = strtokx(NULL, "", NULL, NULL,
 					0, false, false, pset.encoding);
-<<<<<<< HEAD
-=======
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (token)
 		result->after_tofrom = pg_strdup(token);
 
@@ -379,14 +351,11 @@ do_copy(const char *args)
 		/* if still in COPY IN state, try to get out of it */
 		if (PQresultStatus(result) == PGRES_COPY_IN)
 			PQputCopyEnd(pset.db, _("trying to exit copy mode"));
-<<<<<<< HEAD
 		PQclear(result);
 	}
 
 	if (result != NULL)
 	{
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		PQclear(result);
 	}
 

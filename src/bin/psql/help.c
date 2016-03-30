@@ -1,15 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
-<<<<<<< HEAD
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
  * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.159 2010/05/26 19:29:22 rhaas Exp $
-=======
- * Copyright (c) 2000-2008, PostgreSQL Global Development Group
- *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.122.2.1 2008/03/26 15:52:36 mha Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 #include "postgres_fe.h"
 
@@ -157,7 +151,6 @@ usage(void)
 	env = getenv("PGUSER");
 	if (!env)
 		env = user;
-<<<<<<< HEAD
 	printf(_("  -U, --username=USERNAME  database user name (default: \"%s\")\n"), env);
 	printf(_("  -w, --no-password        never prompt for password\n"));
 	printf(_("  -W, --password           force password prompt (should happen automatically)\n"));
@@ -166,16 +159,6 @@ usage(void)
 			 "commands) from within psql, or consult the psql section in the PostgreSQL\n"
 			 "documentation.\n\n"));
 	printf(_("Report bugs to <bugs@greenplum.org>.\n"));
-=======
-	printf(_("  -U NAME         database user name (default: \"%s\")\n"), env);
-	puts(_("  -W              force password prompt (should happen automatically)"));
-
-	puts(_(
-		   "\nFor more information, type \"\\?\" (for internal commands) or \"\\help\"\n"
-	  "(for SQL commands) from within psql, or consult the psql section in\n"
-		   "the PostgreSQL documentation.\n\n"
-		   "Report bugs to <pgsql-bugs@postgresql.org>."));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 
@@ -189,41 +172,15 @@ slashUsage(unsigned short int pager)
 {
 	FILE	   *output;
 
-<<<<<<< HEAD
 	output = PageOutput(90, pager);
-=======
-	output = PageOutput(69, pager);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* if you add/remove a line here, change the row count above */
 
 	fprintf(output, _("General\n"));
-<<<<<<< HEAD
 	fprintf(output, _("  \\copyright             show PostgreSQL usage and distribution terms\n"));
 	fprintf(output, _("  \\g [FILE] or ;         execute query (and send results to file or |pipe)\n"));
 	fprintf(output, _("  \\h [NAME]              help on syntax of SQL commands, * for all commands\n"));
 	fprintf(output, _("  \\q                     quit psql\n"));
-=======
-	fprintf(output, _("  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
-			"                 connect to new database (currently \"%s\")\n"),
-			PQdb(pset.db));
-	fprintf(output, _("  \\cd [DIR]      change the current working directory\n"));
-	fprintf(output, _("  \\copyright     show PostgreSQL usage and distribution terms\n"));
-	fprintf(output, _("  \\encoding [ENCODING]\n"
-					  "                 show or set client encoding\n"));
-	fprintf(output, _("  \\h [NAME]      help on syntax of SQL commands, * for all commands\n"));
-	fprintf(output, _("  \\prompt [TEXT] NAME\n"
-				 "                 prompt user to set internal variable\n"));
-	fprintf(output, _("  \\password [USERNAME]\n"
-				 "                 securely change the password for a user\n"));
-	fprintf(output, _("  \\q             quit psql\n"));
-	fprintf(output, _("  \\set [NAME [VALUE]]\n"
-					  "                 set internal variable, or list all if no parameters\n"));
-	fprintf(output, _("  \\timing        toggle timing of commands (currently %s)\n"),
-			ON(pset.timing));
-	fprintf(output, _("  \\unset NAME    unset (delete) internal variable\n"));
-	fprintf(output, _("  \\! [COMMAND]   execute command in shell or start interactive shell\n"));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	fprintf(output, "\n");
 
 	fprintf(output, _("Query Buffer\n"));
@@ -246,7 +203,6 @@ slashUsage(unsigned short int pager)
 	fprintf(output, "\n");
 
 	fprintf(output, _("Informational\n"));
-<<<<<<< HEAD
 	fprintf(output, _("  (options: S = show system objects, + = additional detail)\n"));
 	fprintf(output, _("  \\d[S+]                 list tables, views, and sequences\n"));
 	fprintf(output, _("  \\d[S+]  NAME           describe table, view, sequence, or index\n"));
@@ -281,31 +237,6 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\dx     [PATTERN]      list external tables\n"));
 	fprintf(output, _("  \\l[+]                  list all databases\n"));
 	fprintf(output, _("  \\z      [PATTERN]      same as \\dp\n"));
-=======
-	fprintf(output, _("  \\d [NAME]      describe table, index, sequence, or view\n"));
-	fprintf(output, _("  \\d{t|i|s|v|S} [PATTERN] (add \"+\" for more detail)\n"
-	"                 list tables/indexes/sequences/views/system tables\n"));
-	fprintf(output, _("  \\da [PATTERN]  list aggregate functions\n"));
-	fprintf(output, _("  \\db [PATTERN]  list tablespaces (add \"+\" for more detail)\n"));
-	fprintf(output, _("  \\dc [PATTERN]  list conversions\n"));
-	fprintf(output, _("  \\dC            list casts\n"));
-	fprintf(output, _("  \\dd [PATTERN]  show comment for object\n"));
-	fprintf(output, _("  \\dD [PATTERN]  list domains\n"));
-	fprintf(output, _("  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"));
-	fprintf(output, _("  \\dF [PATTERN]  list text search configurations (add \"+\" for more detail)\n"));
-	fprintf(output, _("  \\dFd [PATTERN] list text search dictionaries (add \"+\" for more detail)\n"));
-	fprintf(output, _("  \\dFt [PATTERN] list text search templates\n"));
-	fprintf(output, _("  \\dFp [PATTERN] list text search parsers (add \"+\" for more detail)\n"));
-	fprintf(output, _("  \\dg [PATTERN]  list groups\n"));
-	fprintf(output, _("  \\dn [PATTERN]  list schemas (add \"+\" for more detail)\n"));
-	fprintf(output, _("  \\do [NAME]     list operators\n"));
-	fprintf(output, _("  \\dl            list large objects, same as \\lo_list\n"));
-	fprintf(output, _("  \\dp [PATTERN]  list table, view, and sequence access privileges\n"));
-	fprintf(output, _("  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"));
-	fprintf(output, _("  \\du [PATTERN]  list users\n"));
-	fprintf(output, _("  \\l             list all databases (add \"+\" for more detail)\n"));
-	fprintf(output, _("  \\z [PATTERN]   list table, view, and sequence access privileges (same as \\dp)\n"));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	fprintf(output, "\n");
 
 	fprintf(output, _("Formatting\n"));
@@ -405,11 +336,7 @@ helpSQL(const char *topic, unsigned short int pager)
 		for (i = 0; i < nrows; i++)
 		{
 			fprintf(output, "  ");
-<<<<<<< HEAD
 			for (j = 0; j < ncolumns - 1; j++)
-=======
-			for (j = 0; j < ncolumns-1; j++)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				fprintf(output, "%-*s",
 						QL_MAX_CMD_LEN + 1,
 						VALUE_OR_NULL(QL_HELP[i + j * nrows].cmd));
@@ -438,12 +365,6 @@ helpSQL(const char *topic, unsigned short int pager)
 		size_t		len,
 					wordlen;
 		int			nl_count = 0;
-<<<<<<< HEAD
-=======
-		const char *ch;
-
-		/* User gets two chances: exact match, then the first word */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/*
 		 * We first try exact match, then first + second words, then first
@@ -533,22 +454,12 @@ helpSQL(const char *topic, unsigned short int pager)
 void
 print_copyright(void)
 {
-<<<<<<< HEAD
 	puts("Greenplum Database version of PostgreSQL Database Management System\n"
 		 "(formerly known as Postgres, then as Postgres95)\n\n"
 		 "Portions Copyright (c) 2011 EMC\n\n"
 		 "Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group\n\n"
 		 "Portions Copyright (c) 1994, The Regents of the University of California\n\n"
 		 "Permission to use, copy, modify, and distribute this software and its\n"
-=======
-	puts(
-		 "PostgreSQL Data Base Management System\n\n"
-		 "Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group\n\n"
-		 "This software is based on Postgres95, formerly known as Postgres, which\n"
-		 "contains the following notice:\n\n"
-	"Portions Copyright(c) 1994, Regents of the University of California\n\n"
-	"Permission to use, copy, modify, and distribute this software and its\n"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		 "documentation for any purpose, without fee, and without a written agreement\n"
 		 "is hereby granted, provided that the above copyright notice and this paragraph\n"
 		 "and the following two paragraphs appear in all copies.\n\n"

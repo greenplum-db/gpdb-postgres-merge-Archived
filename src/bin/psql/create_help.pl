@@ -3,15 +3,9 @@
 #################################################################
 # create_help.pl -- converts SGML docs to internal psql help
 #
-<<<<<<< HEAD
 # Copyright (c) 2000-2010, PostgreSQL Global Development Group
 #
 # src/bin/psql/create_help.pl
-=======
-# Copyright (c) 2000-2008, PostgreSQL Global Development Group
-#
-# $PostgreSQL: pgsql/src/bin/psql/create_help.pl,v 1.17 2008/01/20 21:13:55 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #################################################################
 
 #
@@ -64,23 +58,16 @@ print HFILE
 #define $define
 
 #define N_(x) (x)				/* gettext noop */
-<<<<<<< HEAD
 
 #include \"postgres_fe.h\"
 #include \"pqexpbuffer.h\"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 struct _helpStruct
 {
 	const char	   *cmd;		/* the command name */
 	const char	   *help;		/* the help associated with it */
-<<<<<<< HEAD
 	void (*syntaxfunc)(PQExpBuffer);	/* function that prints the syntax associated with it */
 	int				nl_count;	/* number of newlines in syntax (for pager) */
-=======
-	const char	   *syntax;		/* the syntax associated with it */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 };
 
 ";
@@ -97,19 +84,11 @@ print CFILE
 
 #include \"$hfile\"
 
-<<<<<<< HEAD
 ";
 
 my $maxlen = 0;
 
 my %entries;
-=======
-static const struct _helpStruct QL_HELP[] = {
-";
-
-$count = 0;
-$maxlen = 0;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 foreach my $file (sort readdir DIR) {
     my (@cmdnames, $cmddesc, $cmdsynopsis);
@@ -152,17 +131,10 @@ foreach my $file (sort readdir DIR) {
 	$cmdsynopsis =~ s/\r?\n/\\n/g;
         $cmdsynopsis =~ s/\"/\\"/g;
 
-<<<<<<< HEAD
         foreach my $cmdname (@cmdnames) {
 	    $entries{$cmdname} = { cmddesc => $cmddesc, cmdsynopsis => $cmdsynopsis, params => \@params, nl_count => $nl_count };
 	    $maxlen = ($maxlen >= length $cmdname) ? $maxlen : length $cmdname;
 	}
-=======
-	print OUT "    { \"$cmdname\",\n      N_(\"$cmddesc\"),\n      N_(\"$cmdsynopsis\") },\n\n";
-
-	$count++;
-	$maxlen = ($maxlen >= length $cmdname) ? $maxlen : length $cmdname;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     }
     else {
 	die "$0: parsing file '$file' failed (N='@cmdnames' D='$cmddesc')\n";
@@ -208,11 +180,7 @@ print HFILE "
 };
 
 
-<<<<<<< HEAD
 #define QL_HELP_COUNT	".scalar(keys %entries)."		/* number of help items */
-=======
-#define QL_HELP_COUNT	$count		/* number of help items */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #define QL_MAX_CMD_LEN	$maxlen		/* largest strlen(cmd) */
 
 

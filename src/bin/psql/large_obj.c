@@ -1,15 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
-<<<<<<< HEAD
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
  * $PostgreSQL: pgsql/src/bin/psql/large_obj.c,v 1.56 2010/02/26 02:01:19 momjian Exp $
-=======
- * Copyright (c) 2000-2008, PostgreSQL Global Development Group
- *
- * $PostgreSQL: pgsql/src/bin/psql/large_obj.c,v 1.50 2008/01/01 19:45:56 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -284,7 +278,6 @@ do_lo_list(void)
 	char		buf[1024];
 	printQueryOpt myopt = pset.popt;
 
-<<<<<<< HEAD
 	if (pset.sversion >= 90000)
 	{
 		snprintf(buf, sizeof(buf),
@@ -307,15 +300,6 @@ do_lo_list(void)
 				 gettext_noop("ID"),
 				 gettext_noop("Description"));
 	}
-=======
-	snprintf(buf, sizeof(buf),
-			 "SELECT loid as \"%s\",\n"
-		   "  pg_catalog.obj_description(loid, 'pg_largeobject') as \"%s\"\n"
-			 "FROM (SELECT DISTINCT loid FROM pg_catalog.pg_largeobject) x\n"
-			 "ORDER BY 1",
-			 gettext_noop("ID"),
-			 gettext_noop("Description"));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	res = PSQLexec(buf, false);
 	if (!res)
@@ -324,11 +308,7 @@ do_lo_list(void)
 	myopt.topt.tuples_only = false;
 	myopt.nullPrint = NULL;
 	myopt.title = _("Large objects");
-<<<<<<< HEAD
 	myopt.translate_header = true;
-=======
-	myopt.trans_headers = true;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 

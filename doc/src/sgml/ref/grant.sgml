@@ -47,7 +47,6 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
     TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { CREATE | ALL [ PRIVILEGES ] }
-<<<<<<< HEAD
     ON TABLESPACE <replaceable>tablespacename</replaceable> [, ...]
     TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
@@ -57,12 +56,6 @@ GRANT { SELECT | INSERT | ALL [PRIVILEGES] }
     ON PROTOCOL <replaceable>protocolname</replaceable> 
     TO <replaceable class="PARAMETER">username</replaceable>
 
-=======
-    ON TABLESPACE <replaceable>tablespacename</> [, ...]
-    TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
-
-GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable class="PARAMETER">rolename</replaceable> [, ...] [ WITH ADMIN OPTION ]
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 </synopsis>
  </refsynopsisdiv>
 
@@ -177,13 +170,8 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
       <para>
        Allows <xref linkend="sql-update" endterm="sql-update-title"> of any
        column of the specified table.
-<<<<<<< HEAD
        (In practice, any nontrivial <command>UPDATE</command> command will require
        <literal>SELECT</literal> privilege as well, since it must reference table
-=======
-       (In practice, any nontrivial <command>UPDATE</> command will require
-       <literal>SELECT</> privilege as well, since it must reference table
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
        columns to determine which rows to update, and/or to compute new
        values for columns.)
        <literal>SELECT ... FOR UPDATE</literal>
@@ -202,13 +190,8 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
       <para>
        Allows <xref linkend="sql-delete" endterm="sql-delete-title"> of a row
        from the specified table.
-<<<<<<< HEAD
        (In practice, any nontrivial <command>DELETE</command> command will require
        <literal>SELECT</literal> privilege as well, since it must reference table
-=======
-       (In practice, any nontrivial <command>DELETE</> command will require
-       <literal>SELECT</> privilege as well, since it must reference table
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
        columns to determine which rows to delete.)
       </para>
      </listitem>
@@ -518,7 +501,6 @@ GRANT SELECT, UPDATE, INSERT ON mytable TO admin;
    </para>
 
    <para>
-<<<<<<< HEAD
    If the <quote>Access privileges</quote> column is empty for a given object,
 it means the object has default privileges (that is, its privileges column
 is null).  Default privileges always include all privileges for the owner,
@@ -528,17 +510,6 @@ object type, as explained above.  The first <command>GRANT</command> or
 will instantiate the default privileges (producing, for example,
 <literal>{miriam=arwdxt/miriam}</literal>) and then modify them per the
 specified request.
-=======
-    If the <quote>Access privileges</> column is empty for a given object,
-    it means the object has default privileges (that is, its privileges column
-    is null).  Default privileges always include all privileges for the owner,
-    and can include some privileges for <literal>PUBLIC</> depending on the
-    object type, as explained above.  The first <command>GRANT</> or
-    <command>REVOKE</> on an object
-    will instantiate the default privileges (producing, for example,
-    <literal>{miriam=arwdxt/miriam}</>) and then modify them per the
-    specified request.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
    </para>
 
    <para>

@@ -29,19 +29,11 @@
  * subroutine is responsible for looking back to the original string and
  * replacing FF's with the corresponding original bytes.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
  *	  src/bin/psql/psqlscan.l
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.23.2.1 2010/05/05 22:19:11 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  *-------------------------------------------------------------------------
  */
@@ -1696,25 +1688,6 @@ psql_scan_slash_command_end(PsqlScanState state)
 	/* There are no possible errors in this lex state... */
 }
 
-<<<<<<< HEAD
-=======
-/*
- * "Push back" the passed string so that it will be rescanned by subsequent
- * psql_scan_slash_option calls.  This is presently only used in the case
- * where a single-letter command has been concatenated with its argument.
- *
- * We use the same buffer stack mechanism as for variable expansion.
- */
-void
-psql_scan_slash_pushback(PsqlScanState state, const char *str)
-{
-	/* needed for push_new_buffer */
-	cur_state = state;
-
-	push_new_buffer(str, NULL);
-}
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /*
  * Push the given string onto the stack of stuff to scan.

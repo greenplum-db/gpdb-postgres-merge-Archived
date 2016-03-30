@@ -1,15 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
-<<<<<<< HEAD
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
  * src/bin/psql/common.c
-=======
- * Copyright (c) 2000-2008, PostgreSQL Global Development Group
- *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.138 2008/01/01 19:45:55 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -1106,15 +1100,7 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 
 		printQuery(results, &my_popt, pset.queryFout, pset.logfile);
 
-<<<<<<< HEAD
 		PQclear(results);
-=======
-		/*
-		 * Make sure to flush the output stream, so intermediate results are
-		 * visible to the client immediately.
-		 */
-		fflush(pset.queryFout);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		/* after the first result set, disallow header decoration */
 		my_popt.topt.start_table = false;
