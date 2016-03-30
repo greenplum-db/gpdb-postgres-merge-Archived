@@ -2072,7 +2072,8 @@ static Plan *plan_sequential_window_query(PlannerInfo *root, WindowContext *cont
 	AttrNumber resno;
 	ListCell *lc;
 	QualCost tlist_cost;
-		
+	int			i;
+
 	Assert ( pathkeys_ptr != NULL );
 	Assert ( context->original_range );
 	
@@ -2174,6 +2175,17 @@ static Plan *plan_sequential_window_query(PlannerInfo *root, WindowContext *cont
 	root->simple_rel_array_size = list_length(root->parse->rtable) + 1;
 	root->simple_rel_array = (RelOptInfo **)
 		palloc0(root->simple_rel_array_size * sizeof(RelOptInfo *));
+
+	root->simple_rte_array = (RangeTblEntry **)
+		palloc0(sizeof(RangeTblEntry *) * root->simple_rel_array_size);
+
+	i = 1;
+	foreach(lc, root->parse->rtable)
+	{
+		root->simple_rte_array[i] = lfirst(lc);
+		i++;
+	}
+
 	add_base_rels_to_query(root, (Node *)root->parse->jointree);
 
 	/* XXX I don't think the quals are used later so no need to translate. 
