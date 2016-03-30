@@ -252,19 +252,13 @@ order by thousand, tenthous;
       999 |     9999
 (25 rows)
 
-<<<<<<< HEAD
--- empty row constructor is valid
-=======
 -- Check some corner cases involving empty rowtypes
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 select ROW();
  row 
 -----
  ()
 (1 row)
 
-<<<<<<< HEAD
-=======
 select ROW() IS NULL;
  ?column? 
 ----------
@@ -275,4 +269,3 @@ select ROW() = ROW();
 ERROR:  cannot compare rows of zero length
 LINE 1: select ROW() = ROW();
                      ^
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

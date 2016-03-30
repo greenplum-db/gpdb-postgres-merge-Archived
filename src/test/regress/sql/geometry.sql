@@ -143,11 +143,7 @@ SELECT '' AS eight, p1.f1 + point '(10,10)' AS dist_add
 
 -- scaling and rotation
 SELECT '' AS eight, p1.f1 * point '(2,-1)' AS dist_mul
-<<<<<<< HEAD
    FROM PATH_GEOM_TBL p1 ORDER BY s;
-=======
-   FROM PATH_TBL p1;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 --
 -- Polygons
