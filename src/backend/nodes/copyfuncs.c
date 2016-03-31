@@ -92,12 +92,12 @@
  */
 
 /*
- * _copyPlannedStmt 
+ * _copyPlannedStmt
  */
 static PlannedStmt *
 _copyPlannedStmt(PlannedStmt *from)
 {
-	PlannedStmt   *newnode = makeNode(PlannedStmt);
+	PlannedStmt *newnode = makeNode(PlannedStmt);
 
 	COPY_SCALAR_FIELD(commandType);
 	COPY_SCALAR_FIELD(planGen);
@@ -106,11 +106,12 @@ _copyPlannedStmt(PlannedStmt *from)
 
 	COPY_NODE_FIELD(planTree);
 	COPY_NODE_FIELD(rtable);
-	
+	COPY_NODE_FIELD(resultRelations);
+
 	COPY_NODE_FIELD(utilityStmt);
 	COPY_NODE_FIELD(intoClause);
 	COPY_NODE_FIELD(subplans);
-	COPY_NODE_FIELD(rewindPlanIDs);
+	COPY_BITMAPSET_FIELD(rewindPlanIDs);
 	COPY_NODE_FIELD(returningLists);
 	
 	COPY_NODE_FIELD(result_partitions);
