@@ -604,6 +604,7 @@ dumpSharedLocalSnapshot_forCursor(void)
 	TransactionId *xids = NULL;
 	int64 sub_size;
 	int64 size_read;
+	ResourceOwner oldowner;
 
 	Assert(Gp_role == GP_ROLE_DISPATCH || (Gp_role == GP_ROLE_EXECUTE && Gp_is_writer));
 	Assert(SharedLocalSnapshotSlot != NULL);
@@ -611,8 +612,15 @@ dumpSharedLocalSnapshot_forCursor(void)
 	src = (SharedSnapshotSlot *)SharedLocalSnapshotSlot;
 	fname = sharedLocalSnapshot_filename(src->QDxid, src->QDcid, src->segmateSync);
 
-	/* Create our dump-file, this will either return a valid file, or throw an error */
+	/*
+	 * Create our dump-file. Hold the reference to it in
+	 * the transaction's resource owner, so that it lives as long
+	 * as the cursor we're declaring.
+	 */
+	oldowner = CurrentResourceOwner;
+	CurrentResourceOwner = CurTransactionResourceOwner;
 	f = BufFileCreateTemp_ReaderWriter(fname, true, false);
+	CurrentResourceOwner = oldowner;
 	/* we have our file. */
 
 #define FileWriteOK(file, ptr, size) (BufFileWrite(file, ptr, size) == size)
