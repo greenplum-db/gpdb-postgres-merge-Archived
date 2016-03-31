@@ -3383,6 +3383,18 @@ _outTypeName(StringInfo str, TypeName *node)
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
+static void
+_outSortBy(StringInfo str, SortBy *node)
+{
+	WRITE_NODE_TYPE("SORTBY");
+
+	WRITE_INT_FIELD(sortby_dir);
+	WRITE_INT_FIELD(sortby_nulls);
+	WRITE_NODE_FIELD(useOp);
+	WRITE_NODE_FIELD(node);
+	WRITE_INT_FIELD(location);
+}
+
 #ifndef COMPILING_BINARY_FUNCS
 static void
 _outTypeCast(StringInfo str, TypeCast *node)
@@ -4875,6 +4887,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_TypeName:
 				_outTypeName(str, obj);
+				break;
+			case T_SortBy:
+				_outSortBy(str, obj);
 				break;
 			case T_TypeCast:
 				_outTypeCast(str, obj);

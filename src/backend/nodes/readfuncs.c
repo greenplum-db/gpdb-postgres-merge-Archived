@@ -2190,6 +2190,20 @@ _readTypeName(void)
 	READ_DONE();
 }
 
+static SortBy *
+_readSortBy(void)
+{
+	READ_LOCALS(SortBy);
+
+	READ_INT_FIELD(sortby_dir);
+	READ_INT_FIELD(sortby_nulls);
+	READ_NODE_FIELD(useOp);
+	READ_NODE_FIELD(node);
+	READ_INT_FIELD(location);
+
+	READ_DONE();
+}
+
 static TypeCast *
 _readTypeCast(void)
 {
@@ -3205,6 +3219,7 @@ static ParseNodeInfo infoAr[] =
 	{"SINGLEROWERRORDESC",(ReadFn)_readSingleRowErrorDesc},
 	{"SLICE", (ReadFn)_readSlice},
 	{"SLICETABLE", (ReadFn)_readSliceTable},
+	{"SORTBY", (ReadFn)_readSortBy},
 	{"SORTCLAUSE", (ReadFn)_readSortClause},
 	{"SUBLINK", (ReadFn)_readSubLink},
 	{"TABLEVALUEEXPR", (ReadFn)_readTableValueExpr},

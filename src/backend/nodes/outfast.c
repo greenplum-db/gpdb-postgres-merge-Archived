@@ -1779,6 +1779,9 @@ _outNode(StringInfo str, void *obj)
 			case T_TypeName:
 				_outTypeName(str, obj);
 				break;
+			case T_SortBy:
+				_outSortBy(str, obj);
+				break;
 			case T_TypeCast:
 				_outTypeCast(str, obj);
 				break;
