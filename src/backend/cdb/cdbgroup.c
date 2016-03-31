@@ -5251,8 +5251,12 @@ rebuild_simple_rel_and_rte(PlannerInfo *root)
 	i = 1;
 	foreach (l, root->parse->rtable)
 	{
-		(void) build_simple_rel(root, i, RELOPT_BASEREL);
 		root->simple_rte_array[i] = lfirst(l);
+	}
+	i = 1;
+	foreach (l, root->parse->rtable)
+	{
+		(void) build_simple_rel(root, i, RELOPT_BASEREL);
 		i++;
 	}
 }
