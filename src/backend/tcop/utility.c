@@ -1042,6 +1042,9 @@ ProcessUtility(Node *parsetree,
 				if_exists = stmt->missing_ok;
 				objects = stmt->objects;
 
+				/* we modify the object in the loop below, so make a copy */
+				stmt = copyObject(stmt);
+
 				foreach(arg, objects)
 				{
 					List	   *names = (List *)lfirst(arg);
