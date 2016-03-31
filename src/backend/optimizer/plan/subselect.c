@@ -491,6 +491,7 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 	while ((paramid = bms_first_member(tmpset)) >= 0)
 	{
 		PlannerParamItem *pitem = list_nth(root->glob->paramlist, paramid);
+		Node   *arg;
 
 		if (pitem->abslevel == root->query_level)
 		{
@@ -500,7 +501,16 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 			 * varlevelsup or agglevelsup.	We probably don't even need to
 			 * copy it again, but be safe.
 			 */
-			splan->args = lappend(splan->args, copyObject(pitem->item));
+			arg = copyObject(pitem->item);
+
+			/*
+			 * If it's an Aggref, its arguments might contain SubLinks,
+			 * which have not yet been processed.  Do that now.
+			 */
+			if (IsA(arg, Aggref))
+				arg = SS_process_sublinks(root, arg, false);
+
+			splan->args = lappend(splan->args, arg);
 		}
 		else if (pitem->abslevel < root->query_level)
 			splan->extParam = lappend_int(splan->extParam, paramid);
