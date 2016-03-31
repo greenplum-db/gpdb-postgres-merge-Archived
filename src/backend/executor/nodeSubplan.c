@@ -947,62 +947,8 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
  * function: ParamListInfo p.  This may be NULL in the non-dispatch case.
  */
 
-/* Helper: SubplanQueryDesc derives a QueryDesc for use by the subplan. */
-static QueryDesc *
-SubplanQueryDesc(QueryDesc * qd)
-{
-	QueryDesc *subqd = NULL;
-	PlannedStmt *substmt = NULL;
-	PlannedStmt *stmt = qd->plannedstmt;
-
-	Assert(stmt != NULL);
-
-	/*
-	 * MPP-2869 and MPP-2859, single-row parameter-subquery inside
-	 * CTAS: we don't want to create the the table during the
-	 * initPlan execution. */
-
-	/* build the PlannedStmt substmt */
-	substmt = makeNode(PlannedStmt);
-
-	substmt->commandType = stmt->commandType;
-	substmt->canSetTag = stmt->canSetTag;
-	substmt->transientPlan = stmt->transientPlan;
-	substmt->planTree = stmt->planTree;
-	substmt->rtable = stmt->rtable;
-	substmt->resultRelations = stmt->resultRelations;
-	substmt->utilityStmt = stmt->utilityStmt;
-	substmt->intoClause = NULL;
-	substmt->subplans = stmt->subplans;
-	substmt->rewindPlanIDs = stmt->rewindPlanIDs;
-	substmt->returningLists = stmt->returningLists;
-	substmt->rowMarks = stmt->rowMarks;
-	substmt->relationOids = stmt->relationOids;
-	substmt->invalItems = stmt->invalItems;
-	substmt->nParamExec = stmt->nParamExec;
-	substmt->nMotionNodes = stmt->nMotionNodes;
-	substmt->nInitPlans = stmt->nInitPlans;
-
-	/*
-	 * Fake a QueryDesc stucture for CdbDispatchPlan call. It should
-	 * look like the one passed in as the argument which carries the
-	 * global query, plan, parameters, and slice table, and specifies
-	 * the initplan root of interest.
-	 */
-	subqd = CreateQueryDesc(substmt,
-							pstrdup("(internal SELECT query for initplan)"),
-							qd->snapshot,
-							qd->crosscheck_snapshot,
-							NULL,		/* Null destination for the QE */
-							qd->params,
-							qd->doInstrument);
-
-	return subqd;
-}
-
 void
-ExecSetParamPlan(SubPlanState *node, ExprContext *econtext,
-		 QueryDesc *gbl_queryDesc)
+ExecSetParamPlan(SubPlanState *node, ExprContext *econtext, QueryDesc *queryDesc)
 {
 	SubPlan    *subplan = (SubPlan *) node->xprstate.expr;
 	PlanState  *planstate = node->planstate;
@@ -1013,8 +959,6 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext,
 	bool		found = false;
 	ArrayBuildState *astate = NULL;
 	Size		savepeakspace = MemoryContextGetPeakSpace(planstate->state->es_query_cxt);
-
-	QueryDesc  *queryDesc = NULL;
 
 	bool		needDtxTwoPhase;
 	bool		shouldDispatch = false;
@@ -1032,36 +976,6 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext,
 	 * root slice's usage separately.
 	 */
 	MemoryContextSetPeakSpace(planstate->state->es_query_cxt, 0);
-
-	/*
-	 * Let's initialize 'queryDesc' before our PG_TRY, to ensure the correct
-	 * value will be seen inside the PG_CATCH block without having to declare
-	 * it 'volatile'.  (setjmp/longjmp foolishness)
-	 */
-	if (shouldDispatch)
-	{
-		/*
-		 * Fake a QueryDesc stucture for CdbDispatchPlan call. It should
-		 * look like the one passed in as the argument which carries the
-		 * global query, plan, parameters, and slice table, and specifies
-		 * the initplan root of interest.
-		 */
-		queryDesc = SubplanQueryDesc(gbl_queryDesc);
-
-        /*
-         * CDB TODO: Should this use CreateSubExecutorState()?
-         * Should FreeExecutorState() eventually be called?
-         * Why do we need this at all?    ... kh 4/2007
-         */
-		queryDesc->estate = CreateExecutorState();
-
-        queryDesc->showstatctx = gbl_queryDesc->showstatctx;
-        queryDesc->estate->showstatctx = gbl_queryDesc->showstatctx;
-		queryDesc->estate->es_sliceTable = gbl_queryDesc->estate->es_sliceTable;
-		queryDesc->estate->es_param_exec_vals = gbl_queryDesc->estate->es_param_exec_vals;
-		queryDesc->estate->motionlayer_context = gbl_queryDesc->estate->motionlayer_context;
-		queryDesc->extended_query = gbl_queryDesc->extended_query;
-	}
 
 	/*
 	 * Need a try/catch block here so that if an ereport is called from
@@ -1286,7 +1200,8 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext,
 
 	        TeardownInterconnect(queryDesc->estate->interconnect_context, 
 								 queryDesc->estate->motionlayer_context,
-								 false); /* following success on QD */	
+								 false); /* following success on QD */
+			queryDesc->estate->interconnect_context = NULL;
 		}
     }
 	PG_CATCH();
@@ -1331,9 +1246,12 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext,
          * CDB TODO: Is this needed following failure on QD?
          */
         if (shouldTeardownInterconnect)
+		{
 			TeardownInterconnect(queryDesc->estate->interconnect_context,
 								 queryDesc->estate->motionlayer_context,
 								 true);
+			queryDesc->estate->interconnect_context = NULL;
+		}
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
