@@ -232,7 +232,11 @@ CREATE TABLE array_index_op_test (
 	t			text[]
 );
 
-<<<<<<< HEAD
+CREATE TABLE test_tsvector( 
+	t text, 
+	a tsvector 
+);
+
 --MPP-22020: Dis-allow duplicate constraint names for the same table.
 create table dupconstr (
 						i int,
@@ -339,10 +343,3 @@ create table foo (a int, b int) distributed by (c,C);
 create table foo ("I" int, i int) distributed by ("I",I);
 select attrnums from gp_distribution_policy where localoid='foo'::regclass;
 drop table if exists foo;
-=======
-CREATE TABLE test_tsvector( 
-	t text, 
-	a tsvector 
-);
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
