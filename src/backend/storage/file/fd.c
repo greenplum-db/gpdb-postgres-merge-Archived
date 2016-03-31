@@ -1001,6 +1001,8 @@ OpenNamedFile(const char   *fileName,
 	File		file;
 	int			fileFlags;
 
+	ResourceOwnerEnlargeFiles(CurrentResourceOwner);
+
 	strncpy(tempfilepath, fileName, sizeof(tempfilepath));
 
 	/*
@@ -1050,6 +1052,8 @@ OpenNamedFile(const char   *fileName,
 	if (closeAtEOXact)
 	{
 		VfdCache[file].fdstate |= FD_CLOSE_AT_EOXACT;
+
+		ResourceOwnerRememberFile(CurrentResourceOwner, file);
 		VfdCache[file].resowner = CurrentResourceOwner;
 	}
 
