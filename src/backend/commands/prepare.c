@@ -193,6 +193,7 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 	ParamListInfo paramLI = NULL;
 	EState	   *estate = NULL;
 	Portal		portal;
+	char	   *query_string;
 
 	/* Look it up in the hash table */
 	entry = FetchPreparedStatement(stmt->name, true);
@@ -221,6 +222,10 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 	portal = CreateNewPortal();
 	/* Don't display the portal in pg_cursors, it is for internal use only */
 	portal->visible = false;
+
+	/* Copy the plan's saved query string into the portal's memory */
+	query_string = MemoryContextStrdup(PortalGetHeapMemory(portal),
+									   entry->plansource->query_string);
 
 	/* Plan the query.  If this is a CTAS, copy the "into" information into
 	 * the query so that we construct the plan correctly.  Else the table
@@ -299,13 +304,9 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 		plan_list = cplan->stmt_list;
 	}
 
-	/*
-	 * Note: we don't bother to copy the source query string into the portal.
-	 * Any errors it might be useful for will already have been reported.
-	 */
 	PortalDefineQuery(portal,
 					  NULL,
-					  NULL,
+					  query_string,
 					  entry->plansource->sourceTag,
 					  entry->plansource->commandTag,
 					  plan_list,
