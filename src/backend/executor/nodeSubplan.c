@@ -402,7 +402,15 @@ ExecScanSubPlan(SubPlanState *node,
 
 	MemoryContextSwitchTo(oldcontext);
 
-	if (!found)
+	if (subLinkType == ARRAY_SUBLINK)
+	{
+		/* We return the result in the caller's context */
+		if (astate != NULL)
+			result = makeArrayResult(astate, oldcontext);
+		else
+			result = PointerGetDatum(construct_empty_array(subplan->firstColType));
+	}
+	else if (!found)
 	{
 		/*
 		 * deal with empty subplan result.	result/isNull were previously
