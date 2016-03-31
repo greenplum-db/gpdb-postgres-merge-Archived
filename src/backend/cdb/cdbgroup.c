@@ -3968,6 +3968,8 @@ add_second_stage_agg(PlannerInfo *root,
 	RangeTblEntry *newrte;
 	RangeTblRef *newrtref;
 	Plan         *agg_node;
+	ListCell   *lc;
+	int			i;
 
 	/*
 	 * Add a SubqueryScan node to renumber the range of the query.
@@ -4094,7 +4096,19 @@ add_second_stage_agg(PlannerInfo *root,
 	 */
 	if (root->simple_rel_array)
 		pfree(root->simple_rel_array);
+	if (root->simple_rte_array)
+		pfree(root->simple_rte_array);
+
 	root->simple_rel_array_size = list_length(parse->rtable) + 1;
+	root->simple_rte_array = (RangeTblEntry **)
+		palloc0(sizeof(RangeTblEntry *) * root->simple_rel_array_size);
+	i = 1;
+	foreach(lc, root->parse->rtable)
+	{
+		root->simple_rte_array[i] = lfirst(lc);
+		i++;
+	}
+
 	root->simple_rel_array = (RelOptInfo **)
 		palloc0(root->simple_rel_array_size * sizeof(RelOptInfo *));
 	build_simple_rel(root, 1, RELOPT_BASEREL);
