@@ -5252,6 +5252,7 @@ rebuild_simple_rel_and_rte(PlannerInfo *root)
 	foreach (l, root->parse->rtable)
 	{
 		root->simple_rte_array[i] = lfirst(l);
+		i++;
 	}
 	i = 1;
 	foreach (l, root->parse->rtable)
