@@ -5144,7 +5144,7 @@ choose_deduplicate(PlannerInfo *root, List *sortExprs,
 			  width, -1.0);
 	dedup_cost = dummy_path.total_cost;
 
-	pfree(root->simple_rel_array);
+	pfree(root->simple_rte_array);
 
 	if (numGroups)
 		*numGroups = num_distinct;
