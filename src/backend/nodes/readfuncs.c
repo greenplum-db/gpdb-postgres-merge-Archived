@@ -316,55 +316,7 @@ _readQuery(void)
 	READ_BOOL_FIELD(canSetTag);
 	READ_NODE_FIELD(utilityStmt);
 	READ_INT_FIELD(resultRelation);
-
-	if ( ! pg_strtok_peek_fldname("intoClause"))
-	{
-		/* If the Query node was written with 3.3 or earlier, there is no intoClause,
-		 * but its content lies in several now-absent fields that we must scan over.
-		 *
-		 * Though we can't have a view defined on a SELECT ... INTO ... query,
-		 * there may be some other rule (?) that has these fields defined.
-		 */
-		RangeVar *rv = READ_NODE_VALUE(into);
-		List *op = READ_NODE_VALUE(intoOptions);
-		OnCommitAction oc = READ_ENUM_VALUE(intoOnCommit, OnCommitAction);
-		char * ts = READ_STRING_VALUE(intoTableSpaceName);
-
-		if ( rv == NULL && op == NIL && oc == ONCOMMIT_NOOP && ts == NULL )
-		{
-			/* Nothing to say. */
-			local_node->intoClause = NULL;
-		}
-		else
-		{
-			local_node->intoClause = makeNode(IntoClause);
-			local_node->intoClause->rel = rv;
-			local_node->intoClause->options = op;
-			local_node->intoClause->onCommit = oc;
-			local_node->intoClause->tableSpaceName = ts;
-			local_node->intoClause->oidInfo.relOid = InvalidOid;
-			local_node->intoClause->oidInfo.comptypeOid = InvalidOid;
-			local_node->intoClause->oidInfo.comptypeArrayOid = InvalidOid;
-			local_node->intoClause->oidInfo.toastOid = InvalidOid;
-			local_node->intoClause->oidInfo.toastIndexOid = InvalidOid;
-			local_node->intoClause->oidInfo.toastComptypeOid = InvalidOid;
-			local_node->intoClause->oidInfo.aosegOid = InvalidOid;
-			local_node->intoClause->oidInfo.aosegIndexOid = InvalidOid;
-			local_node->intoClause->oidInfo.aosegComptypeOid = InvalidOid;
-			local_node->intoClause->oidInfo.aoblkdirOid = InvalidOid;
-			local_node->intoClause->oidInfo.aoblkdirIndexOid = InvalidOid;
-			local_node->intoClause->oidInfo.aoblkdirComptypeOid = InvalidOid;
-			local_node->intoClause->oidInfo.aovisimapOid = InvalidOid;
-			local_node->intoClause->oidInfo.aovisimapIndexOid = InvalidOid;
-			local_node->intoClause->oidInfo.aovisimapComptypeOid = InvalidOid;
-		}
-	}
-	else
-	{
-		/* Post 3.3, it's easier. */
-		READ_NODE_FIELD(intoClause);
-	}
-
+	READ_NODE_FIELD(intoClause);
 	READ_BOOL_FIELD(hasAggs);
 	READ_BOOL_FIELD(hasWindFuncs);
 	READ_BOOL_FIELD(hasSubLinks);
