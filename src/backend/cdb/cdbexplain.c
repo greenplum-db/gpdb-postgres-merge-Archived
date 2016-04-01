@@ -153,7 +153,6 @@ typedef struct CdbExplain_SliceSummary
 /* State for cdbexplain_showExecStats() */
 typedef struct CdbExplain_ShowStatCtx
 {
-    MemoryContext   explaincxt;         /* alloc all our buffers from this */
     StringInfoData  extratextbuf;
     instr_time      querystarttime;
 
@@ -268,14 +267,12 @@ cdbexplain_localExecStats(struct PlanState                 *planstate,
                           struct CdbExplain_ShowStatCtx    *showstatctx)
 {
     CdbExplain_LocalStatCtx ctx;
-    MemoryContext           oldcxt;
 
     Assert(Gp_role != GP_ROLE_EXECUTE);
 
     Insist(planstate && planstate->instrument && showstatctx);
 
     /* Switch to the EXPLAIN memory context. */
-    oldcxt = MemoryContextSwitchTo(showstatctx->explaincxt);
 
     memset(&ctx, 0, sizeof(ctx));
 
@@ -307,9 +304,6 @@ cdbexplain_localExecStats(struct PlanState                 *planstate,
     /* Obtain per-slice stats and put them in SliceSummary. */
     cdbexplain_collectSliceStats(planstate, &ctx.send.hdr.worker);
     cdbexplain_depositSliceStats(&ctx.send.hdr, &ctx.recv);
-
-    /* Restore caller's memory context. */
-    MemoryContextSwitchTo(oldcxt);
 }                               /* cdbexplain_localExecStats */
 
 
@@ -473,7 +467,6 @@ cdbexplain_recvExecStats(struct PlanState              *planstate,
     CdbDispatchResult          *dispatchResultEnd;
     CdbExplain_RecvStatCtx      ctx;
     CdbExplain_DispatchSummary  ds;
-    MemoryContext   oldcxt;
     int             gpsegmentCount = getgpsegmentCount();
     int             iDispatch;
     int             nDispatch;
@@ -490,7 +483,6 @@ cdbexplain_recvExecStats(struct PlanState              *planstate,
      * must not return ptrs into the dispatch result buffers, but must copy any
      * needed information into a sufficiently long-lived memory context.
      */
-    oldcxt = MemoryContextSwitchTo(showstatctx->explaincxt);
 
     /* Initialize treewalk context. */
     memset(&ctx, 0, sizeof(ctx));
@@ -613,9 +605,6 @@ cdbexplain_recvExecStats(struct PlanState              *planstate,
     /* Transfer worker counts to SliceSummary. */
     showstatctx->slices[sliceIndex].dispatchSummary = ds;
 
-    /* Restore caller's memory context. */
-    MemoryContextSwitchTo(oldcxt);
-
     /* Clean up. */
     if (ctx.msgptrs)
         pfree(ctx.msgptrs);
@@ -727,9 +716,6 @@ cdbexplain_depositSliceStats(CdbExplain_StatHdr        *hdr,
     /* Slice's first worker? */
     if (!ss->workers)
     {
-        /* Caller already switched to EXPLAIN context. */
-        Assert(CurrentMemoryContext == showstatctx->explaincxt);
-
         /* Allocate SliceWorker array and attach it to the SliceSummary. */
         ss->segindex0 = recvstatctx->segindexMin;
         ss->nworker = recvstatctx->segindexMax + 1 - ss->segindex0;
@@ -954,9 +940,6 @@ cdbexplain_depositStatsToNode(PlanState *planstate, CdbExplain_RecvStatCtx *ctx)
 
     Insist(instr &&
            ctx->iStatInst < ctx->nStatInst);
-
-    /* Caller already switched to EXPLAIN context. */
-    Assert(CurrentMemoryContext == ctx->showstatctx->explaincxt);
 
     /* Allocate NodeSummary block. */
     nInst = ctx->segindexMax + 1 - ctx->segindexMin;
@@ -1305,7 +1288,6 @@ struct CdbExplain_ShowStatCtx *
 cdbexplain_showExecStatsBegin(struct QueryDesc *queryDesc,
                               instr_time        querystarttime)
 {
-    MemoryContext           oldcontext;
     CdbExplain_ShowStatCtx *ctx;
     int                     nslice;
 
@@ -1326,8 +1308,6 @@ cdbexplain_showExecStatsBegin(struct QueryDesc *queryDesc,
     /* Allocate a buffer in which we can collect any extra message text. */
     initStringInfoOfSize(&ctx->extratextbuf, 4000);
 
-    /* Restore caller's MemoryContext. */
-    MemoryContextSwitchTo(oldcontext);
     return ctx;
 }                               /* cdbexplain_showExecStatsBegin */
 
