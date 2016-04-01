@@ -911,7 +911,7 @@ void set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	set_cte_size_estimates(root, rel, rel->subplan);
 
 	/* Convert subquery pathkeys to outer representation */
-	pathkeys = convert_subquery_pathkeys(root, rel, subroot->query_pathkeys);
+	pathkeys = convert_subquery_pathkeys(root, rel, pathkeys);
 
 	/* Generate appropriate path */
 	add_path(root, rel, create_ctescan_path(root, rel, pathkeys));
