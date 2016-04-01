@@ -679,6 +679,8 @@ ExecutorStart(QueryDesc *queryDesc, int eflags)
 			dtmPreCommand("ExecutorStart", "(none)", queryDesc->plannedstmt,
 						  needDtxTwoPhase, true /* wantSnapshot */, queryDesc->extended_query );
 
+			queryDesc->ddesc->sliceTable = estate->es_sliceTable;
+
 			/*
 			 * First, see whether we need to pre-execute any initPlan subplans.
 			 */
@@ -696,8 +698,6 @@ ExecutorStart(QueryDesc *queryDesc, int eflags)
 			}
 
 			build_tuple_node_list(&queryDesc->ddesc->transientTypeRecords);
-
-			queryDesc->ddesc->sliceTable = estate->es_sliceTable;
 
 			/*
 			 * This call returns after launching the threads that send the
