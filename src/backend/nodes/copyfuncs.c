@@ -2841,8 +2841,32 @@ _copyAlterTableStmt(AlterTableStmt *from)
 	COPY_NODE_FIELD(relation);
 	COPY_NODE_FIELD(cmds);
 	COPY_SCALAR_FIELD(relkind);
-	
-	/* No need to copy AT workspace fields. */
+	COPY_SCALAR_FIELD(oidInfoCount);
+
+	newnode->oidInfo = NULL;
+	if (from->oidInfoCount > 0)
+	{
+		int			m;
+
+		newnode->oidInfo = palloc(sizeof(TableOidInfo) * from->oidInfoCount);
+		for (m = 0; m < from->oidInfoCount; m++)
+		{
+			COPY_SCALAR_FIELD(oidInfo[m].relOid);
+			COPY_SCALAR_FIELD(oidInfo[m].comptypeOid);
+			COPY_SCALAR_FIELD(oidInfo[m].toastOid);
+			COPY_SCALAR_FIELD(oidInfo[m].toastIndexOid);
+			COPY_SCALAR_FIELD(oidInfo[m].toastComptypeOid);
+			COPY_SCALAR_FIELD(oidInfo[m].aosegOid);
+			COPY_SCALAR_FIELD(oidInfo[m].aosegIndexOid);
+			COPY_SCALAR_FIELD(oidInfo[m].aosegComptypeOid);
+			COPY_SCALAR_FIELD(oidInfo[m].aovisimapOid);
+			COPY_SCALAR_FIELD(oidInfo[m].aovisimapIndexOid);
+			COPY_SCALAR_FIELD(oidInfo[m].aovisimapComptypeOid);
+			COPY_SCALAR_FIELD(oidInfo[m].aoblkdirOid);
+			COPY_SCALAR_FIELD(oidInfo[m].aoblkdirIndexOid);
+			COPY_SCALAR_FIELD(oidInfo[m].aoblkdirComptypeOid);
+		}
+	}
 
 	return newnode;
 }
