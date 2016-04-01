@@ -178,8 +178,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 			appendStringInfo(&buffer,
 					"SELECT * FROM  pg_lock_status() L "
 					 " (locktype text, database oid, relation oid, page int4, tuple int2,"
-					 " transactionid xid, classid oid, objid oid, objsubid int2,"
-					 " transaction xid, pid int4, mode text, granted boolean, "
+					 " virtualxid text, transactionid xid, classid oid, objid oid, objsubid int2,"
+					 " virtualtransaction text, pid int4, mode text, granted boolean, "
 					 " mppSessionId int4, mppIsWriter boolean, gp_segment_id int4) ");
 
 			initStringInfo(&errbuf);
@@ -265,9 +265,9 @@ pg_lock_status(PG_FUNCTION_ARGS)
 			 * will still exist on the subsequent calls.
 			 */
 			mystatus->segresults = results;
-
-			MemoryContextSwitchTo(oldcontext);
 		}
+
+		MemoryContextSwitchTo(oldcontext);
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
@@ -397,12 +397,12 @@ pg_lock_status(PG_FUNCTION_ARGS)
 				nulls[9] = true;
 				break;
 			case LOCKTAG_TRANSACTION:
-				values[5] = TransactionIdGetDatum(lock->tag.locktag_field1);
+				values[6] = TransactionIdGetDatum(lock->tag.locktag_field1);
 				nulls[1] = true;
 				nulls[2] = true;
 				nulls[3] = true;
 				nulls[4] = true;
-				nulls[6] = true;
+				nulls[5] = true;
 				nulls[7] = true;
 				nulls[8] = true;
 				nulls[9] = true;
@@ -467,8 +467,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		values[13] = BoolGetDatum(granted);
 		
 		values[14] = Int32GetDatum(proc->mppSessionId);
-		
-		values[15] = Int32GetDatum(proc->mppIsWriter);
+
+		values[15] = BoolGetDatum(proc->mppIsWriter);
 
 		values[16] = Int32GetDatum(Gp_segment);
 
