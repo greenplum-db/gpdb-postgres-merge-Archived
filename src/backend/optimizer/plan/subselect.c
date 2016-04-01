@@ -1499,14 +1499,8 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 			break;
 
 		case T_TableFunctionScan:
-			{
-				RangeTblEntry *rte;
-
-				rte = rt_fetch(((TableFunctionScan *) plan)->scan.scanrelid,
-							   root->parse->rtable);
-				Assert(rte->rtekind == RTE_TABLEFUNCTION);
-				finalize_primnode(rte->funcexpr, &context);
-			}
+			finalize_primnode(((TableFunctionScan *) plan)->funcexpr,
+							  &context);
 			break;
 
 		case T_FunctionScan:

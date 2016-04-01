@@ -146,11 +146,10 @@ static BitmapAppendOnlyScan *make_bitmap_appendonlyscan(List *qptlist,
 														List *bitmapqualorig,
 														Index scanrelid,
 														bool isAORow);
-static TableFunctionScan* make_tablefunction(List *tlist,
-											 List *scan_quals,
-											 Plan *subplan,
-											 List *subrtable,
-											 Index scanrelid);
+static TableFunctionScan *make_tablefunctionscan(List *tlist, List *scan_quals,
+					   Index scanrelid, Node *funcexpr, List *funccolnames,
+					   List *funccoltypes, List *funccoltypmods,
+					   Plan *subplan, List *subrtable);
 static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
 			 List *tidquals);
 static FunctionScan *make_functionscan(List *qptlist, List *qpqual,
@@ -2565,6 +2564,12 @@ create_tablefunction_plan(PlannerInfo *root,
 	Plan				*subplan    = best_path->parent->subplan;
 	List				*subrtable	= best_path->parent->subrtable;
 	Index				 scan_relid = best_path->parent->relid;
+	RangeTblEntry *rte;
+
+	/* it should be a function base rel... */
+	Assert(scan_relid > 0);
+	rte = planner_rt_fetch(scan_relid, root);
+	Assert(rte->rtekind == RTE_TABLEFUNCTION);
 
 	/* it should be a function base rel... */
 	Assert(scan_relid > 0);
@@ -2574,8 +2579,12 @@ create_tablefunction_plan(PlannerInfo *root,
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
 	/* Create the TableFunctionScan plan */
-	tablefunc = make_tablefunction(tlist, scan_clauses, subplan, subrtable, 
-								   scan_relid);
+	tablefunc = make_tablefunctionscan(tlist, scan_clauses, scan_relid,
+									   rte->funcexpr,
+									   rte->eref->colnames,
+									   rte->funccoltypes,
+									   rte->funccoltypmods,
+									   subplan, subrtable);
 
 	/* Cost is determined largely by the cost of the underlying subplan */
 	copy_plan_costsize(&tablefunc->scan.plan, subplan);
@@ -5099,11 +5108,15 @@ make_window(PlannerInfo *root, List *tlist,
 }
 
 static TableFunctionScan*
-make_tablefunction(List *tlist,
-				   List *scan_quals,
-				   Plan *subplan,
-				   List *subrtable,
-				   Index scanrelid)
+make_tablefunctionscan(List *tlist,
+					   List *scan_quals,
+					   Index scanrelid,
+					   Node *funcexpr,
+					   List *funccolnames,
+					   List *funccoltypes,
+					   List *funccoltypmods,
+					   Plan *subplan,
+					   List *subrtable)
 {
 	TableFunctionScan	*node = makeNode(TableFunctionScan);
 	Plan				*plan = &node->scan.plan;
@@ -5123,6 +5136,10 @@ make_tablefunction(List *tlist,
 	plan->lefttree		 = subplan;
 	node->subrtable		 = subrtable;
 	node->scan.scanrelid = scanrelid;
+	node->funcexpr = funcexpr;
+	node->funccolnames = funccolnames;
+	node->funccoltypes = funccoltypes;
+	node->funccoltypmods = funccoltypmods;
 
 	return node;
 }

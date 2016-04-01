@@ -2015,6 +2015,11 @@ _readTableFunctionScan(void)
 
 	readScanInfo((Scan *)local_node);
 
+	READ_NODE_FIELD(funcexpr);
+	READ_NODE_FIELD(funccolnames);
+	READ_NODE_FIELD(funccoltypes);
+	READ_NODE_FIELD(funccoltypmods);
+
 	READ_DONE();
 }
 
