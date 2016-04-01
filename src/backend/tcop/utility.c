@@ -1021,7 +1021,13 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_CreateExternalStmt:
-			DefineExternalRelation((CreateExternalStmt *) parsetree);
+			{
+				CreateExternalStmt *stmt = (CreateExternalStmt *) parsetree;
+
+				/* Run parse analysis ... */
+				stmt = transformCreateExternalStmt(stmt, queryString);
+				DefineExternalRelation(stmt);
+			}
 			break;
 
 		case T_CreateFileSpaceStmt:

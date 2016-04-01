@@ -19,7 +19,7 @@
 #include "parser/parse_node.h"
 
 extern List *transformCreateStmt(CreateStmt *stmt, const char *queryString);
-extern Query *transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString);
+extern CreateExternalStmt *transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString);
 extern List *transformAlterTableStmt(AlterTableStmt *stmt,
 						const char *queryString);
 extern IndexStmt *transformIndexStmt(IndexStmt *stmt, const char *queryString);

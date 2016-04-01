@@ -1142,12 +1142,11 @@ get_opclass(Oid opclass, Oid actual_datatype)
 	return result;
 }
 
-Query *
+CreateExternalStmt *
 transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 {
 	ParseState *pstate;
 	CreateStmtContext cxt;
-	Query	   *q;
 	ListCell   *elements;
 	List  	   *likeDistributedBy = NIL;
 	bool	    bQuiet = false;	/* shut up transformDistributedBy messages */
@@ -1285,12 +1284,8 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 	/*
 	 * Output results.
 	 */
-	q = makeNode(Query);
-	q->commandType = CMD_UTILITY;
-	q->utilityStmt = (Node *) stmt;
 	stmt->tableElts = cxt.columns;
-
-	return q;
+	return stmt;
 }
 
 
