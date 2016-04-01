@@ -480,7 +480,12 @@ ExecutorStart(QueryDesc *queryDesc, int eflags)
 			elog(DEBUG3, "ExecutorStart assigned new intoOidInfo.relOid = %d",
 				 intoClause->oidInfo.relOid);
 
+			/*
+			 * GPDB_83_MERGE_FIXME: We probably shoudln't be using GetNewrelFileNode(), but
+			 * plain GetNewOid(), for those OIDs that are not actually relfilenodes.
+			 */
 			intoClause->oidInfo.comptypeOid = GetNewRelFileNode(reltablespace, false, pg_type_desc);
+			intoClause->oidInfo.comptypeArrayOid = GetNewRelFileNode(reltablespace, false, pg_type_desc);
 			intoClause->oidInfo.toastOid = GetNewRelFileNode(reltablespace, false, pg_class_desc);
 			intoClause->oidInfo.toastIndexOid = GetNewRelFileNode(reltablespace, false, pg_class_desc);
 			intoClause->oidInfo.toastComptypeOid = GetNewRelFileNode(reltablespace, false, pg_type_desc);
