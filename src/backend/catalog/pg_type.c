@@ -80,13 +80,6 @@ Oid
 TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId,
 			  Oid shelloid)
 {
-	return TypeShellMakeWithOid(typeName,typeNamespace,ownerId, shelloid);
-}
-
-Oid
-TypeShellMakeWithOid(const char *typeName, Oid typeNamespace, Oid ownerId,
-					 Oid shelltypeOid)
-{
 	int			i;
 	HeapTuple	tup;
 	Datum		values[Natts_pg_type];
@@ -159,8 +152,8 @@ TypeShellMakeWithOid(const char *typeName, Oid typeNamespace, Oid ownerId,
 	/*
 	 * MPP: If we are on the QEs, we need to use the same Oid as the QD used
 	 */
-	if (shelltypeOid != InvalidOid)
-		HeapTupleSetOid(tup, shelltypeOid);
+	if (shelloid != InvalidOid)
+		HeapTupleSetOid(tup, shelloid);
 	/*
 	 * insert the tuple in the relation and get the tuple's oid.
 	 */
@@ -365,8 +358,9 @@ TypeCreateWithOptions(Oid newTypeOid,
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE, typeName);
 
 		/* trouble if caller wanted to force the OID */
-		if (OidIsValid(newTypeOid))
-			elog(ERROR, "cannot assign new OID to existing shell type");
+		if (OidIsValid(newTypeOid) &&
+			newTypeOid != HeapTupleHeaderGetOid((tup)->t_data))
+			elog(ERROR, "cannot assign new OID to existing shell type %u", HeapTupleHeaderGetOid((tup)->t_data));
 
 		/*
 		 * Okay to update existing shell type tuple

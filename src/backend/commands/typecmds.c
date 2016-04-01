@@ -169,7 +169,7 @@ DefineType(List *names, List *parameters, Oid newOid, Oid shadowOid)
 	 */
 	if (!OidIsValid(typoid))
 	{
-		typoid = TypeShellMake(typeName, typeNamespace, GetUserId(), InvalidOid);
+		typoid = TypeShellMake(typeName, typeNamespace, GetUserId(), newOid);
 		/* Make new shell type visible for modification below */
 		CommandCounterIncrement();
 
@@ -439,7 +439,11 @@ DefineType(List *names, List *parameters, Oid newOid, Oid shadowOid)
 
 	/* Preassign array type OID so we can insert it in pg_type.typarray */
 	pg_type = heap_open(TypeRelationId, AccessShareLock);
-	array_oid = GetNewOid(pg_type);
+	array_oid = shadowOid;
+	if (!OidIsValid(array_oid))
+	{
+		array_oid = GetNewOid(pg_type);
+	}
 	heap_close(pg_type, AccessShareLock);
 
 	/*
@@ -525,7 +529,7 @@ DefineType(List *names, List *parameters, Oid newOid, Oid shadowOid)
 		stmt->args = NIL;
 		stmt->definition = parameters;
 		stmt->newOid = typoid;
-		stmt->shadowOid = shadowOid;
+		stmt->shadowOid = array_oid;
 		CdbDispatchUtilityStatement((Node *) stmt, "DefineType");
 	}
 }

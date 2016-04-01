@@ -772,8 +772,6 @@ DATA(insert OID = 6994 (gp_relation_node PGNSP PGUID -1 f c t \054 5094 0 0 reco
  */
 extern Oid TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId,
 						 Oid shelloid);
-extern Oid TypeShellMakeWithOid(const char *typeName, Oid typeNamespace,
-								Oid ownerId, Oid shelltypeOid);
 
 extern Oid TypeCreate(Oid newTypeOid,
 		   const char *typeName,
