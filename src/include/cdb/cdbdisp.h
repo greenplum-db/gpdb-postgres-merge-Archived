@@ -47,6 +47,8 @@ typedef struct DispatchCommandQueryParms
 	int			serializedQuerytreelen;
 	char		*serializedPlantree;
 	int			serializedPlantreelen;
+	char		*serializedQueryDispatchDesc;
+	int			serializedQueryDispatchDesclen;
 	char		*serializedParams;
 	int			serializedParamslen;
 	char		*serializedSliceInfo;

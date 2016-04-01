@@ -84,6 +84,7 @@ typedef struct RangeVar
 
 typedef struct TableOidInfo
 {
+	NodeTag		type;
 	Oid         relOid;			/* If the heap is (re-)created, create  with this relOid */
 	Oid         comptypeOid;
 	Oid         comptypeArrayOid;
@@ -113,9 +114,6 @@ typedef struct IntoClause
 	List	   *options;		/* options from WITH clause */
 	OnCommitAction onCommit;	/* what do we do at COMMIT? */
 	char	   *tableSpaceName; /* table space to use, or NULL */
-
-	/* MPP */
-	TableOidInfo oidInfo;
 } IntoClause;
 
 

@@ -29,7 +29,7 @@ extern List *FetchStatementTargetList(Node *stmt);
 
 extern void PortalStart(Portal portal, ParamListInfo params,
 						Snapshot snapshot,
-						const char *seqServerHost, int seqServerPort);
+						const char *seqServerHost, int seqServerPort, QueryDispatchDesc *ddesc);
 
 extern void PortalSetResultFormat(Portal portal, int nFormats,
 					  int16 *formats);

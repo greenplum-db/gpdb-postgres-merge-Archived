@@ -350,10 +350,19 @@ _outPlannedStmt(StringInfo str, PlannedStmt *node)
 	WRITE_INT_FIELD(nInitPlans);
 
 	/* Don't serialize policy */
-	WRITE_NODE_FIELD(sliceTable);
 
 	WRITE_UINT64_FIELD(query_mem);
+}
+
+static void
+_outQueryDispatchDesc(StringInfo str, QueryDispatchDesc *node)
+{
+	WRITE_NODE_TYPE("QUERYDISPATCHDESC");
+
 	WRITE_NODE_FIELD(transientTypeRecords);
+	WRITE_NODE_FIELD(intoOidInfo);
+	WRITE_STRING_FIELD(intoTableSpaceName);
+	WRITE_NODE_FIELD(sliceTable);
 }
 
 static void
@@ -1194,6 +1203,9 @@ _outNode(StringInfo str, void *obj)
 			case T_PlannedStmt:
 				_outPlannedStmt(str,obj);
 				break;
+			case T_QueryDispatchDesc:
+				_outQueryDispatchDesc(str,obj);
+				break;
 			case T_Plan:
 				_outPlan(str, obj);
 				break;
@@ -1337,6 +1349,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_IntoClause:
 				_outIntoClause(str, obj);
+				break;
+			case T_TableOidInfo:
+				_outTableOidInfo(str, obj);
 				break;
 			case T_Var:
 				_outVar(str, obj);

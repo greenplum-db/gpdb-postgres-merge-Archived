@@ -638,7 +638,7 @@ addSegDBToDispatchThreadPool(DispatchCommandParms  *ParmsAr,
 					pParms->queryParms.serializedPlantree = pQueryParms->serializedPlantree;
 					pParms->queryParms.serializedPlantreelen = pQueryParms->serializedPlantreelen;
 				}
-				
+
 				if (pQueryParms->serializedParams == NULL || pQueryParms->serializedParamslen == 0)
 				{	
 					pParms->queryParms.serializedParams = NULL;
@@ -650,17 +650,17 @@ addSegDBToDispatchThreadPool(DispatchCommandParms  *ParmsAr,
 					pParms->queryParms.serializedParamslen = pQueryParms->serializedParamslen;
 				}
 				
-				if (pQueryParms->serializedSliceInfo == NULL || pQueryParms->serializedSliceInfolen == 0)
-				{	
-					pParms->queryParms.serializedSliceInfo = NULL;
-					pParms->queryParms.serializedSliceInfolen = 0;
+				if (pQueryParms->serializedQueryDispatchDesc == NULL || pQueryParms->serializedQueryDispatchDesclen == 0)
+				{
+					pParms->queryParms.serializedQueryDispatchDesc = NULL;
+					pParms->queryParms.serializedQueryDispatchDesclen = 0;
 				}
 				else
 				{
-					pParms->queryParms.serializedSliceInfo = pQueryParms->serializedSliceInfo;
-					pParms->queryParms.serializedSliceInfolen = pQueryParms->serializedSliceInfolen;
+					pParms->queryParms.serializedQueryDispatchDesc = pQueryParms->serializedQueryDispatchDesc;
+					pParms->queryParms.serializedQueryDispatchDesclen = pQueryParms->serializedQueryDispatchDesclen;
 				}
-				
+
 				if (pQueryParms->serializedDtxContextInfo == NULL || pQueryParms->serializedDtxContextInfolen == 0)
 				{
 					pParms->queryParms.serializedDtxContextInfo = NULL;
@@ -1553,7 +1553,7 @@ thread_DispatchOut(DispatchCommandParms *pParms)
 				pQueryParms->serializedQuerytree, pQueryParms->serializedQuerytreelen, 
 				pQueryParms->serializedPlantree, pQueryParms->serializedPlantreelen, 
 				pQueryParms->serializedParams, pQueryParms->serializedParamslen, 
-				pQueryParms->serializedSliceInfo, pQueryParms->serializedSliceInfolen, 
+				pQueryParms->serializedQueryDispatchDesc, pQueryParms->serializedQueryDispatchDesclen, 
 				pQueryParms->serializedDtxContextInfo, pQueryParms->serializedDtxContextInfolen, 
 				0 /* unused flags*/, pParms->cmdID, pParms->localSlice, pQueryParms->rootIdx,
 				pQueryParms->seqServerHost, pQueryParms->seqServerHostlen, pQueryParms->seqServerPort,
@@ -3668,12 +3668,12 @@ cdbdisp_dispatchPlan(struct QueryDesc *queryDesc,
 					 struct CdbDispatcherState *ds)
 {
 	char 	*splan,
-		*ssliceinfo,
+		*sddesc,
 		*sparams;
 
 	int 	splan_len,
 		splan_len_uncompressed,
-		ssliceinfo_len,
+		sddesc_len,
 		sparams_len;
 
 	SliceTable *sliceTbl;
@@ -3881,8 +3881,8 @@ cdbdisp_dispatchPlan(struct QueryDesc *queryDesc,
 		sparams_len = 0;
 	}
 
-	ssliceinfo = serializeNode((Node *) sliceTbl, &ssliceinfo_len, NULL /*uncompressed_size*/);
-	
+	sddesc = serializeNode((Node *) queryDesc->ddesc, &sddesc_len, NULL /*uncompressed_size*/);
+
 	MemSet(&queryParms, 0, sizeof(queryParms));
 	queryParms.strCommand = queryDesc->sourceText;
 	queryParms.serializedQuerytree = NULL;
@@ -3891,8 +3891,8 @@ cdbdisp_dispatchPlan(struct QueryDesc *queryDesc,
 	queryParms.serializedPlantreelen = splan_len;
 	queryParms.serializedParams = sparams;
 	queryParms.serializedParamslen = sparams_len;
-	queryParms.serializedSliceInfo = ssliceinfo;
-	queryParms.serializedSliceInfolen= ssliceinfo_len;
+	queryParms.serializedQueryDispatchDesc = sddesc;
+	queryParms.serializedQueryDispatchDesclen = sddesc_len;
 	queryParms.rootIdx = rootIdx;
 
 	/* sequence server info */
@@ -4424,13 +4424,6 @@ cdbdisp_destroyDispatchThreads(CdbDispatchCmdThreads *dThreads)
 					pQueryParms->serializedDtxContextInfo = NULL;
 				}
 					
-				if (pQueryParms->serializedSliceInfo)
-				{
-					if (i==0)
-						pfree(pQueryParms->serializedSliceInfo);
-					pQueryParms->serializedSliceInfo = NULL;
-				}
-					
 				if (pQueryParms->serializedQuerytree)
 				{
 					if (i==0)
@@ -4444,12 +4437,19 @@ cdbdisp_destroyDispatchThreads(CdbDispatchCmdThreads *dThreads)
 						pfree(pQueryParms->serializedPlantree);
 					pQueryParms->serializedPlantree = NULL;
 				}
-					
+
 				if (pQueryParms->serializedParams)
 				{
 					if (i==0)
 						pfree(pQueryParms->serializedParams);
 					pQueryParms->serializedParams = NULL;
+				}
+
+				if (pQueryParms->serializedQueryDispatchDesc)
+				{
+					if (i==0)
+						pfree(pQueryParms->serializedQueryDispatchDesc);
+					pQueryParms->serializedQueryDispatchDesc = NULL;
 				}
 			}
 			break;

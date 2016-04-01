@@ -316,7 +316,7 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 	 * Run the portal to completion.
 	 */
 	PortalStart(portal, paramLI, ActiveSnapshot,
-				savedSeqServerHost, savedSeqServerPort);
+				savedSeqServerHost, savedSeqServerPort, NULL);
 
 	(void) PortalRun(portal, FETCH_ALL, false, dest, dest, completionTag);
 

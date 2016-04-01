@@ -101,10 +101,12 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 	qd->tupDesc = NULL;
 	qd->estate = NULL;
 	qd->planstate = NULL;
-	
+	qd->memoryAccount = NULL;
+
 	qd->extended_query = false; /* default value */
 	qd->portal_name = NULL;
 
+	qd->ddesc = NULL;
 	qd->gpmon_pkt = NULL;
 	
     if (Gp_role != GP_ROLE_EXECUTE)
@@ -228,6 +230,7 @@ ProcessQuery(Portal portal,
 		queryDesc = CreateQueryDesc(stmt, portal->sourceText,
 									ActiveSnapshot, InvalidSnapshot,
 									dest, params, false);
+	queryDesc->ddesc = portal->ddesc;
 
 	if (gp_enable_gpperfmon && Gp_role == GP_ROLE_DISPATCH)
 	{			
@@ -350,6 +353,8 @@ ProcessQuery(Portal portal,
 		}
 	}
 
+	autostats_get_cmdtype(queryDesc, &cmdType, &relationOid);
+
 	/*
 	 * Now, we close down all the scans and free allocated resources.
 	 */
@@ -419,8 +424,6 @@ ProcessQuery(Portal portal,
 				ExecuteTruncate(truncStmt);
 			}
 		}
-	
-		autostats_get_cmdtype(stmt, &cmdType, &relationOid);
 
 		/* MPP-4407. Logging number of tuples modified. */
 		if (relationOid != InvalidOid)
@@ -674,7 +677,7 @@ FetchStatementTargetList(Node *stmt)
  */
 void
 PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot,
-			const char *seqServerHost, int seqServerPort)
+			const char *seqServerHost, int seqServerPort, QueryDispatchDesc *ddesc)
 {
 	Portal		saveActivePortal;
 	Snapshot	saveActiveSnapshot;
@@ -692,6 +695,8 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot,
 
 	portal->holdingResLock = false;
     
+	portal->ddesc = ddesc;
+
     /*
 	 * Set up global portal context pointers.  (Should we set QueryContext?)
 	 */
@@ -747,6 +752,7 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot,
 											None_Receiver,
 											params,
 											false);
+				queryDesc->ddesc = ddesc;
 				
 				if (gp_enable_gpperfmon && Gp_role == GP_ROLE_DISPATCH)
 				{			

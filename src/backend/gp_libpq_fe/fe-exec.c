@@ -1090,8 +1090,8 @@ PQbuildGpQueryString(const char  *command,
 					 int          plantree_len,
 					 const char  *params,
 					 int          params_len,
-					 const char  *sliceinfo,
-					 int          sliceinfo_len,
+					 const char  *queryDispatchDesc,
+					 int          queryDispatchDesc_len,
 					 const char  *snapshotInfo,
 					 int          snapshotInfo_len,
 					 int          flags,
@@ -1134,7 +1134,7 @@ PQbuildGpQueryString(const char  *command,
 		sizeof(querytree_len) +
 		sizeof(plantree_len) +
 		sizeof(params_len) +
-		sizeof(sliceinfo_len) +
+		sizeof(queryDispatchDesc_len) +
 		sizeof(snapshotInfo_len) +
 		snapshotInfo_len +
 		sizeof(flags) +
@@ -1144,7 +1144,7 @@ PQbuildGpQueryString(const char  *command,
 		querytree_len +
 		plantree_len +
 		params_len +
-		sliceinfo_len +
+		queryDispatchDesc_len +
 		seqServerHostlen;
 
 	shared_query = malloc(total_query_len);
@@ -1220,19 +1220,19 @@ PQbuildGpQueryString(const char  *command,
 	tmp = htonl(querytree_len);
 	memcpy(pos, &tmp, sizeof(querytree_len));
 	pos += sizeof(querytree_len);
-	
+
 	tmp = htonl(plantree_len);
 	memcpy(pos, &tmp, sizeof(plantree_len));
 	pos += sizeof(plantree_len);
-	
+
 	tmp = htonl(params_len);
 	memcpy(pos, &tmp, sizeof(params_len));
 	pos += sizeof(params_len);
-	
-	tmp = htonl(sliceinfo_len);
-	memcpy(pos, &tmp, sizeof(tmp));
-	pos += sizeof(tmp);
-	
+
+	tmp = htonl(queryDispatchDesc_len);
+	memcpy(pos, &tmp, sizeof(queryDispatchDesc_len));
+	pos += sizeof(queryDispatchDesc_len);
+
 	tmp = htonl(snapshotInfo_len);
 	memcpy(pos, &tmp, sizeof(tmp));
 	pos += sizeof(tmp);
@@ -1266,23 +1266,23 @@ PQbuildGpQueryString(const char  *command,
 		memcpy(pos, querytree, querytree_len);
 		pos += querytree_len;
 	}
-	
+
 	if (plantree_len > 0)
 	{
 		memcpy(pos, plantree, plantree_len);
 		pos += plantree_len;
 	}
-	
+
 	if (params_len > 0)
 	{
 		memcpy(pos, params, params_len);
 		pos += params_len;
 	}
-	
-	if (sliceinfo_len > 0)
+
+	if (queryDispatchDesc_len > 0)
 	{
-		memcpy(pos, sliceinfo, sliceinfo_len);
-		pos += sliceinfo_len;
+		memcpy(pos, queryDispatchDesc, queryDispatchDesc_len);
+		pos += queryDispatchDesc_len;
 	}
 
 	if (seqServerHostlen > 0)
