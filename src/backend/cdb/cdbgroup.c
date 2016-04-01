@@ -4091,6 +4091,12 @@ add_second_stage_agg(PlannerInfo *root,
 								  (*p_current_pathkeys != NIL)
 								   && aggstrategy != AGG_HASHED );
 	
+
+	/* GPDB_83_MERGE_FIXME: quick band-aid fix.. Not sure why, but pfree'ing the
+	 * arrays below break groupClause. Which is quite surprising, I don't think
+	 * anything in it should point at the arrays. For now, just make a copy.
+	 */
+	root->parse->groupClause = copyObject(root->parse->groupClause);
 	/* 
 	 * Since the rtable has changed, we had better recreate a RelOptInfo entry for it.
 	 */
