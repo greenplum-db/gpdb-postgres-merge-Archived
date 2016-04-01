@@ -1297,7 +1297,7 @@ ProcessUtility(Node *parsetree,
 				CheckRelationOwnership(stmt->relation, true);
 
 				/* GPDB_MERGE83_FIXME: Do we still need this in GPDB? */
-				fix_opfuncids(stmt->whereClause);
+				//fix_opfuncids(stmt->whereClause);
 
 				/* Run parse analysis ... */
 				stmt = transformIndexStmt(stmt, queryString);
