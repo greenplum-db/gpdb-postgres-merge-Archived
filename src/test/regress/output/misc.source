@@ -609,11 +609,7 @@ SELECT user_relns() AS user_relns
  interval_tbl
  iportaltest
  lseg_tbl
-<<<<<<< HEAD
-=======
- main_table
  money_data
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  num_data
  num_exp_add
  num_exp_div
@@ -657,12 +653,7 @@ SELECT user_relns() AS user_relns
  tinterval_tbl
  toyemp
  varchar_tbl
-<<<<<<< HEAD
-(147 rows)
-=======
- xacttest
-(101 rows)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+(149 rows)
 
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
  name 

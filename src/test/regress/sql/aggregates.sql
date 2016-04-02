@@ -229,7 +229,6 @@ select distinct max(unique2) from tenk1;
 select max(unique2) from tenk1 order by 1;
 select max(unique2) from tenk1 order by max(unique2);
 select max(unique2) from tenk1 order by max(unique2)+1;
-<<<<<<< HEAD
 
 -- MPP: This works in Postgres
 select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
@@ -462,6 +461,3 @@ reset enable_hashjoin;
 reset enable_mergejoin;
 
 drop table l, ps;
-=======
-select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

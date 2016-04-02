@@ -631,7 +631,6 @@ SELECT has_table_privilege('regressuser1', 'atest4', 'SELECT WITH GRANT OPTION')
  t
 (1 row)
 
-<<<<<<< HEAD
 -- Admin options
 SET SESSION AUTHORIZATION regressuser4;
 CREATE FUNCTION dogrant_ok() RETURNS void LANGUAGE sql SECURITY DEFINER AS
@@ -666,8 +665,6 @@ DROP FUNCTION dogrant_fails();
 SET SESSION AUTHORIZATION regressuser4;
 DROP FUNCTION dogrant_ok();
 REVOKE regressgroup2 FROM regressuser5;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 -- test that dependent privileges are revoked (or not) properly
 \c -
 set session role regressuser1;
@@ -682,46 +679,27 @@ set session role regressuser4;
 grant select on dep_priv_test to regressuser5;
 \dp dep_priv_test
                                                                                      Access privileges for database "regression"
-<<<<<<< HEAD
  Schema |     Name      | Type  |                                                                                  Access privileges                                                                                  
 --------+---------------+-------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  public | dep_priv_test | table | {regressuser1=arwdDxt/regressuser1,regressuser2=r*/regressuser1,regressuser3=r*/regressuser1,regressuser4=r*/regressuser2,regressuser4=r*/regressuser3,regressuser5=r/regressuser4}
-=======
- Schema |     Name      | Type  |                                                                                 Access privileges                                                                                  
---------+---------------+-------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- public | dep_priv_test | table | {regressuser1=arwdxt/regressuser1,regressuser2=r*/regressuser1,regressuser3=r*/regressuser1,regressuser4=r*/regressuser2,regressuser4=r*/regressuser3,regressuser5=r/regressuser4}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 (1 row)
 
 set session role regressuser2;
 revoke select on dep_priv_test from regressuser4 cascade;
 \dp dep_priv_test
-<<<<<<< HEAD
                                                          Access privileges for database "regression"
  Schema |     Name      | Type  |                                                     Access privileges                                                      
 --------+---------------+-------+----------------------------------------------------------------------------------------------------------------------------
  public | dep_priv_test | table | {regressuser1=arwdDxt/regressuser1,regressuser2=r*/regressuser1,regressuser3=r*/regressuser1,regressuser4=r*/regressuser3}
-=======
-                                                                      Access privileges for database "regression"
- Schema |     Name      | Type  |                                                                   Access privileges                                                                   
---------+---------------+-------+-------------------------------------------------------------------------------------------------------------------------------------------------------
- public | dep_priv_test | table | {regressuser1=arwdxt/regressuser1,regressuser2=r*/regressuser1,regressuser3=r*/regressuser1,regressuser4=r*/regressuser3,regressuser5=r/regressuser4}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 (1 row)
 
 set session role regressuser3;
 revoke select on dep_priv_test from regressuser4 cascade;
 \dp dep_priv_test
                                           Access privileges for database "regression"
-<<<<<<< HEAD
  Schema |     Name      | Type  |                                       Access privileges                                       
 --------+---------------+-------+-----------------------------------------------------------------------------------------------
  public | dep_priv_test | table | {regressuser1=arwdDxt/regressuser1,regressuser2=r*/regressuser1,regressuser3=r*/regressuser1}
-=======
- Schema |     Name      | Type  |                                      Access privileges                                       
---------+---------------+-------+----------------------------------------------------------------------------------------------
- public | dep_priv_test | table | {regressuser1=arwdxt/regressuser1,regressuser2=r*/regressuser1,regressuser3=r*/regressuser1}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 (1 row)
 
 set session role regressuser1;
@@ -751,7 +729,4 @@ DROP USER regressuser2;
 DROP USER regressuser3;
 DROP USER regressuser4;
 DROP USER regressuser5;
-<<<<<<< HEAD
 reset optimizer;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
