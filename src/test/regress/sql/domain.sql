@@ -375,14 +375,11 @@ insert into ddtest2 values(row(-1));
 alter domain posint add constraint c1 check(value >= 0);
 drop table ddtest2;
 
-<<<<<<< HEAD
-=======
 create table ddtest2(f1 ddtest1[]);
 insert into ddtest2 values('{(-1)}');
 alter domain posint add constraint c1 check(value >= 0);
 drop table ddtest2;
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 alter domain posint add constraint c1 check(value >= 0);
 
 create domain posint2 as posint check (value % 2 = 0);

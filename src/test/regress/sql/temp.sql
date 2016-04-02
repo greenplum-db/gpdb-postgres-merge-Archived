@@ -128,17 +128,10 @@ create temp table whereami (f1 text);
 insert into whereami values ('temp');
 
 create function public.whoami() returns text
-<<<<<<< HEAD
-  as $$select 'public'::text$$ language sql CONTAINS SQL;
-
-create function pg_temp.whoami() returns text
-  as $$select 'temp'::text$$ language sql CONTAINS SQL;
-=======
   as $$select 'public'::text$$ language sql;
 
 create function pg_temp.whoami() returns text
   as $$select 'temp'::text$$ language sql;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 -- default should have pg_temp implicitly first, but only for tables
 select * from whereami;
