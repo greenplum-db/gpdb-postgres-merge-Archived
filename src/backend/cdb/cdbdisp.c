@@ -3844,6 +3844,9 @@ cdbdisp_dispatchPlan(struct QueryDesc *queryDesc,
             pli = (ParamListInfoData *)(parambuf.data + plioff);
 			pxd = &pli->params[iparam];
 
+			if (pxd->ptype == InvalidOid)
+				continue;
+
             /* Does pxd->value contain the value itself, or a pointer? */
 			get_typlenbyval(pxd->ptype, &typlen, &typbyval);
             if (!typbyval)
