@@ -257,7 +257,7 @@ create table dupconstr (
 			j int constraint test CHECK (j > 10),
 			CONSTRAINT test UNIQUE (i,j))
 			distributed by (i);
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "dupconstr_i_key" for table "dupconstr"
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "test" for table "dupconstr"
 ERROR:  constraint "test" for relation "dupconstr" already exists
 -- MPP-2764: distributed randomly is not compatible with primary key or unique
 -- constraints
@@ -278,7 +278,7 @@ ERROR:  UNIQUE and DISTRIBUTED RANDOMLY are incompatible
 -- this should work though
 create table distrand(i int, j int, constraint "test" unique (i, j)) 
    distributed by(i, j);
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "distrand_i_key" for table "distrand"
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "test" for table "distrand"
 drop table distrand;
 create table distrand(i int, j int) distributed randomly;
 create unique index distrand_idx on distrand(i);
