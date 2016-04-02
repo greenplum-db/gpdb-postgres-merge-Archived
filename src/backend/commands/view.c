@@ -382,6 +382,7 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 void
 DefineView(ViewStmt *stmt, const char *queryString)
 {
+	Query	   *viewParse_orig;
 	Query	   *viewParse;
 	Oid			viewOid;
 	RangeVar   *view;
@@ -392,9 +393,16 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	 *
 	 * Since parse analysis scribbles on its input, copy the raw parse tree;
 	 * this ensures we don't corrupt a prepared statement, for example.
+	 *
+	 * GPDB: Parse analysis is only performed in the dispatcher, the segments
+	 * receive an already-analysed version from the dispatcher.
 	 */
-	viewParse = parse_analyze((Node *) copyObject(stmt->query),
-							  queryString, NULL, 0);
+	if (Gp_role != GP_ROLE_EXECUTE)
+		viewParse = parse_analyze((Node *) copyObject(stmt->query),
+								  queryString, NULL, 0);
+	else
+		viewParse = (Query *) stmt->query;
+	viewParse_orig = copyObject(viewParse);
 
 	/*
 	 * The grammar should ensure that the result is a single SELECT Query.
@@ -485,7 +493,10 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	DefineViewRules(viewOid, viewParse, stmt->replace, &stmt->rewriteOid);
 
 	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		stmt->query = (Node *) viewParse_orig;
 		CdbDispatchUtilityStatement((Node *) stmt, "DefineView");
+	}
 }
 
 /*
