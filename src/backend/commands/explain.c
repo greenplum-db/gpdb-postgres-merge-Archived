@@ -1996,8 +1996,8 @@ show_grouping_keys(Plan        *plan,
     appendStringInfo(str, "  %s: ", qlabel);
 
     /* Set up deparse context */
-	context = deparse_context_for_plan((Node *) outerPlan(plan),
-									   NULL,        /* GROUP BY has no innerPlan */
+	context = deparse_context_for_plan((Node *) outerPlan(subplan),
+									   (Node *) innerPlan(subplan),
 									   es->rtable);
 
 	if (IsA(plan, Agg))
