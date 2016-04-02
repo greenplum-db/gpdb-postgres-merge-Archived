@@ -97,7 +97,7 @@ static Node *fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context);
 static bool fix_scan_expr_walker(Node *node, fix_scan_expr_context *context);
 static void set_join_references(PlannerGlobal *glob, Join *join, int rtoffset);
 static void set_inner_join_references(PlannerGlobal *glob, Plan *inner_plan,
-									  indexed_tlist *outer_itlist, int rtoffset);
+									  indexed_tlist *outer_itlist);
 static void set_upper_references(PlannerGlobal *glob, Plan *plan, int rtoffset,
 					 bool use_scan_slot);
 static void set_dummy_tlist_references(Plan *plan, int rtoffset, bool use_child_targets);
@@ -251,13 +251,11 @@ static void set_plan_references_output_asserts(PlannerGlobal *glob, Plan *plan)
 	foreach (lc, allVars)
 	{
 		Var *var = (Var *) lfirst(lc);
-
 		Assert((var->varno == INNER
 				|| var->varno == OUTER
 				|| var->varno == 0		/* GPDB uses 0 for scan tuple slot. */
 				|| (var->varno > 0 && var->varno <= list_length(glob->finalrtable)))
 				&& "Plan contains var that refer outside the rtable.");
-
 		Assert(var->varattno > FirstLowInvalidHeapAttributeNumber && "Invalid attribute number in plan");
 
 		if (var->varno > 0 && var->varno <= list_length(glob->finalrtable))
@@ -1348,7 +1346,7 @@ set_join_references(PlannerGlobal *glob, Join *join, int rtoffset)
 	if (IsA(join, NestLoop))
 	{
 		/* This processing is split out to handle possible recursion */
-		set_inner_join_references(glob, inner_plan, outer_itlist, rtoffset);
+		set_inner_join_references(glob, inner_plan, outer_itlist);
 	}
 	else if (IsA(join, MergeJoin))
 	{
@@ -1399,7 +1397,7 @@ set_join_references(PlannerGlobal *glob, Join *join, int rtoffset)
  */
 static void
 set_inner_join_references(PlannerGlobal *glob, Plan *inner_plan,
-						  indexed_tlist *outer_itlist, int rtoffset)
+						  indexed_tlist *outer_itlist)
 {
 	if (IsA(inner_plan, IndexScan))
 	{
@@ -1423,13 +1421,13 @@ set_inner_join_references(PlannerGlobal *glob, Plan *inner_plan,
 													 outer_itlist,
 													 NULL,
 													 innerrel,
-													 rtoffset);
+													 0);
 			innerscan->indexqual = fix_join_expr(glob,
 												 innerscan->indexqual,
 												 outer_itlist,
 												 NULL,
 												 innerrel,
-												 rtoffset);
+												 0);
 
 			/*
 			 * We must fix the inner qpqual too, if it has join clauses (this
@@ -1442,7 +1440,7 @@ set_inner_join_references(PlannerGlobal *glob, Plan *inner_plan,
 												 outer_itlist,
 												 NULL,
 												 innerrel,
-												 rtoffset);
+												 0);
 		}
 	}
 	else if (IsA(inner_plan, BitmapIndexScan))
@@ -1464,13 +1462,13 @@ set_inner_join_references(PlannerGlobal *glob, Plan *inner_plan,
 													 outer_itlist,
 													 NULL,
 													 innerrel,
-													 rtoffset);
+													 0);
 			innerscan->indexqual = fix_join_expr(glob,
 												 innerscan->indexqual,
 												 outer_itlist,
 												 NULL,
 												 innerrel,
-												 rtoffset);
+												 0);
 			/* no need to fix inner qpqual */
 			Assert(inner_plan->qual == NIL);
 		}
@@ -1509,7 +1507,7 @@ set_inner_join_references(PlannerGlobal *glob, Plan *inner_plan,
 											  outer_itlist,
 											  NULL,
 											  innerrel,
-											  rtoffset);
+											  0);
 
 		/*
 		 * We must fix the inner qpqual too, if it has join clauses (this
@@ -1522,10 +1520,10 @@ set_inner_join_references(PlannerGlobal *glob, Plan *inner_plan,
 											 outer_itlist,
 											 NULL,
 											 innerrel,
-											 rtoffset);
+											 0);
 
 		/* Now recurse */
-		set_inner_join_references(glob, inner_plan->lefttree, outer_itlist, rtoffset);
+		set_inner_join_references(glob, inner_plan->lefttree, outer_itlist);
 	}
 	else if (IsA(inner_plan, BitmapAnd))
 	{
@@ -1535,7 +1533,7 @@ set_inner_join_references(PlannerGlobal *glob, Plan *inner_plan,
 
 		foreach(l, innerscan->bitmapplans)
 		{
-			set_inner_join_references(glob, (Plan *) lfirst(l), outer_itlist, rtoffset);
+			set_inner_join_references(glob, (Plan *) lfirst(l), outer_itlist);
 		}
 	}
 	else if (IsA(inner_plan, BitmapOr))
@@ -1546,7 +1544,7 @@ set_inner_join_references(PlannerGlobal *glob, Plan *inner_plan,
 
 		foreach(l, innerscan->bitmapplans)
 		{
-			set_inner_join_references(glob, (Plan *) lfirst(l), outer_itlist, rtoffset);
+			set_inner_join_references(glob, (Plan *) lfirst(l), outer_itlist);
 		}
 	}
 	else if (IsA(inner_plan, TidScan))
@@ -1559,7 +1557,7 @@ set_inner_join_references(PlannerGlobal *glob, Plan *inner_plan,
 											outer_itlist,
 											NULL,
 											innerrel,
-											rtoffset);
+											0);
 	}
 	else if (IsA(inner_plan, Append))
 	{
@@ -1572,7 +1570,7 @@ set_inner_join_references(PlannerGlobal *glob, Plan *inner_plan,
 
 		foreach(l, appendplan->appendplans)
 		{
-			set_inner_join_references(glob, (Plan *) lfirst(l), outer_itlist, rtoffset);
+			set_inner_join_references(glob, (Plan *) lfirst(l), outer_itlist);
 		}
 	}
 	else if (IsA(inner_plan, Result))
@@ -1581,7 +1579,7 @@ set_inner_join_references(PlannerGlobal *glob, Plan *inner_plan,
 		Result	   *result = (Result *) inner_plan;
 
 		if (result->plan.lefttree)
-			set_inner_join_references(glob, result->plan.lefttree, outer_itlist, rtoffset);
+			set_inner_join_references(glob, result->plan.lefttree, outer_itlist);
 	}
 }
 
