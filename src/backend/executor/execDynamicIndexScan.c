@@ -728,7 +728,6 @@ IndexScan_EndIndexScan(IndexScanState *indexScanState)
 	Assert(NULL == indexScanState->iss_RelationDesc);
 	Assert(NULL == indexScanState->iss_ScanDesc);
 
-	Assert(NULL != indexScanState->iss_RuntimeContext);
 	FreeRuntimeKeysContext(indexScanState);
 	Assert(NULL == indexScanState->iss_RuntimeContext);
 
