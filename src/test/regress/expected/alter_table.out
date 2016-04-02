@@ -476,11 +476,7 @@ NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc1_test_key" f
 insert into atacc1 (test) values (2);
 -- should fail
 insert into atacc1 (test) values (2);
-<<<<<<< HEAD
-ERROR:  duplicate key violates unique constraint "atacc1_test_key"  (seg0 rh55-qavm63:18506 pid=26645)
-=======
 ERROR:  duplicate key value violates unique constraint "atacc_test1"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 -- should succeed
 insert into atacc1 (test) values (4);
 -- try adding a unique oid constraint
@@ -494,15 +490,9 @@ insert into atacc1 (test) values (2);
 insert into atacc1 (test) values (2);
 -- add a unique constraint (fails)
 alter table atacc1 add constraint atacc_test1 unique (test);
-<<<<<<< HEAD
-NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc1_test_key" for table "atacc1"
-ERROR:  could not create unique index  (seg0 rh55-qavm63:18506 pid=26645)
-DETAIL:  Table contains duplicate values.
-=======
 NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc_test1" for table "atacc1"
 ERROR:  could not create unique index "atacc_test1"
 DETAIL:  Table contains duplicated values.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 insert into atacc1 (test) values (3);
 drop table atacc1;
 -- let's do one where the unique constraint fails
@@ -521,11 +511,7 @@ NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc1_test_key" f
 insert into atacc1 (test,test2) values (4,4);
 -- should fail
 insert into atacc1 (test,test2) values (4,4);
-<<<<<<< HEAD
-ERROR:  duplicate key violates unique constraint "atacc1_test_key"  (seg1 rh55-qavm63:18507 pid=26647)
-=======
 ERROR:  duplicate key value violates unique constraint "atacc_test1"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 -- should all succeed
 insert into atacc1 (test,test2) values (4,5);
 insert into atacc1 (test,test2) values (5,4);
@@ -553,11 +539,7 @@ ERROR:  UNIQUE index must contain all columns in the distribution key of relatio
 -- should fail for @@ second one @@
 insert into atacc1 (test2, test) values (3, 3);
 insert into atacc1 (test2, test) values (2, 3);
-<<<<<<< HEAD
-ERROR:  duplicate key violates unique constraint "atacc1_test_key"  (seg1 rh55-qavm63:18507 pid=26647)
-=======
 ERROR:  duplicate key value violates unique constraint "atacc1_test_key"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 drop table atacc1;
 -- test primary key constraint adding
 create table atacc1 ( test int ) with oids distributed by (test);
@@ -569,11 +551,7 @@ NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc1_pkey" 
 insert into atacc1 (test) values (2);
 -- should fail
 insert into atacc1 (test) values (2);
-<<<<<<< HEAD
-ERROR:  duplicate key violates unique constraint "atacc1_pkey"  (seg0 rh55-qavm63:18506 pid=26645)
-=======
 ERROR:  duplicate key value violates unique constraint "atacc_test1"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 -- should succeed
 insert into atacc1 (test) values (4);
 -- inserting NULL should fail
@@ -595,15 +573,9 @@ insert into atacc1 (test) values (2);
 insert into atacc1 (test) values (2);
 -- add a primary key (fails)
 alter table atacc1 add constraint atacc_test1 primary key (test);
-<<<<<<< HEAD
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc1_pkey" for table "atacc1"
-ERROR:  could not create unique index  (seg0 rh55-qavm63:18506 pid=26645)
-DETAIL:  Table contains duplicate values.
-=======
 NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc_test1" for table "atacc1"
 ERROR:  could not create unique index "atacc_test1"
 DETAIL:  Table contains duplicated values.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 insert into atacc1 (test) values (3);
 drop table atacc1;
 -- let's do another one where the primary key constraint fails when added
@@ -625,26 +597,14 @@ ERROR:  column "test1" named in key does not exist
 drop table atacc1;
 -- adding a new column as primary key to a non-empty table.
 -- should fail unless the column has a non-null default value.
-<<<<<<< HEAD
-create table atacc1 ( test int ) distributed by (test);
-insert into atacc1 (test) values (0);
--- add a primary key column without a default (fails).
-alter table atacc1 add column test2 int primary key;
-ERROR:  Cannot add column with primary key constraint (analyze.c:11374)
--- now add a primary key column with a default (succeeds).
-alter table atacc1 add column test2 int default 0 primary key;
-ERROR:  Cannot add column with primary key constraint (analyze.c:11374)
-=======
 create table atacc1 ( test int );
 insert into atacc1 (test) values (0);
 -- add a primary key column without a default (fails).
 alter table atacc1 add column test2 int primary key;
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc1_pkey" for table "atacc1"
-ERROR:  column "test2" contains null values
+ERROR:  Cannot add column with primary key constraint (analyze.c:11374)
 -- now add a primary key column with a default (succeeds).
 alter table atacc1 add column test2 int default 0 primary key;
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc1_pkey" for table "atacc1"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+ERROR:  Cannot add column with primary key constraint (analyze.c:11374)
 drop table atacc1;
 -- something a little more complicated
 create table atacc1 ( test int, test2 int) distributed by (test);
@@ -658,11 +618,7 @@ ERROR:  multiple primary keys for table "atacc1" are not allowed
 insert into atacc1 (test,test2) values (4,4);
 -- should fail
 insert into atacc1 (test,test2) values (4,4);
-<<<<<<< HEAD
-ERROR:  duplicate key violates unique constraint "atacc1_pkey"  (seg1 rh55-qavm63:18507 pid=26647)
-=======
 ERROR:  duplicate key value violates unique constraint "atacc_test1"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 insert into atacc1 (test,test2) values (NULL,3);
 ERROR:  null value in column "test" violates not-null constraint  (seg1 rh55-qavm63:18507 pid=26647)
 insert into atacc1 (test,test2) values (3, NULL);
@@ -680,11 +636,7 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "atacc1_pkey" for
 -- only first should succeed
 insert into atacc1 (test2, test) values (3, 3);
 insert into atacc1 (test2, test) values (2, 3);
-<<<<<<< HEAD
-ERROR:  duplicate key violates unique constraint "atacc1_pkey"  (seg1 rh55-qavm63:18507 pid=26647)
-=======
 ERROR:  duplicate key value violates unique constraint "atacc1_pkey"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 insert into atacc1 (test2, test) values (1, NULL);
 ERROR:  null value in column "test" violates not-null constraint  (seg1 rh55-qavm63:18507 pid=26647)
 drop table atacc1;

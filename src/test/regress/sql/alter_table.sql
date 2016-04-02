@@ -547,11 +547,7 @@ drop table atacc1;
 
 -- adding a new column as primary key to a non-empty table.
 -- should fail unless the column has a non-null default value.
-<<<<<<< HEAD
-create table atacc1 ( test int ) distributed by (test);
-=======
 create table atacc1 ( test int );
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 insert into atacc1 (test) values (0);
 -- add a primary key column without a default (fails).
 alter table atacc1 add column test2 int primary key;
