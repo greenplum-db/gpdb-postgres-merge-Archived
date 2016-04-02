@@ -254,6 +254,11 @@ ProcArrayRemove(PGPROC *proc, TransactionId latestXid, bool forPrepare, bool isC
  * the caller to pass latestXid, instead of computing it from the PGPROC's
  * contents, because the subxid information in the PGPROC might be
  * incomplete.)
+ *
+ * GPDB: If this is a global transaction, we might need to do this action
+ * later, rather than now. In that case, this function sets *needNotifyCommittedDtxTransaction,
+ * and does *not* change the state of the PGPROC entry. This can only happen
+ * for commit; when !isCommit, this always clears the PGPROC entry.
  */
 void
 ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit,
@@ -329,30 +334,39 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit,
 				&MyProc->localDistribXactRef);
 		}
 
-		if (notifyCommittedDtxTransactionIsNeeded())
+		if (isCommit && notifyCommittedDtxTransactionIsNeeded())
 		{
-			if (needNotifyCommittedDtxTransaction)
-				*needNotifyCommittedDtxTransaction = true;
+			Assert(needNotifyCommittedDtxTransaction);
+			*needNotifyCommittedDtxTransaction = true;
+		}
+		else
+		{
+			proc->xid = InvalidTransactionId;
+			proc->lxid = InvalidLocalTransactionId;
+			proc->xmin = InvalidTransactionId;
+			/* must be cleared with xid/xmin: */
+			proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
+			proc->inCommit = false; /* be sure this is cleared in abort */
+			proc->serializableIsoLevel = false;
+			proc->inDropTransaction = false;
+
+			/* Clear the subtransaction-XID cache too while holding the lock */
+			proc->subxids.nxids = 0;
+			proc->subxids.overflowed = false;
 		}
 
-		proc->xid = InvalidTransactionId;
-		proc->lxid = InvalidLocalTransactionId;
-		proc->xmin = InvalidTransactionId;
-		/* must be cleared with xid/xmin: */
-		proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-		proc->inCommit = false; /* be sure this is cleared in abort */
-		proc->serializableIsoLevel = false;
-		proc->inDropTransaction = false;
-
-		/* Clear the subtransaction-XID cache too while holding the lock */
-		proc->subxids.nxids = 0;
-		proc->subxids.overflowed = false;
-
 		/* Also advance global latestCompletedXid while holding the lock */
+		/*
+		 * Note: we do this in GPDB even if we didn't clear our XID entry
+		 * just yet. There is no harm in advancing latestCompletedXid a
+		 * little bit earlier than strictly necessary, and this way we don't
+		 * need to remember out latest XID when we later actually clear the
+		 * entry.
+		 */
 		if (TransactionIdPrecedes(ShmemVariableCache->latestCompletedXid,
 								  latestXid))
 			ShmemVariableCache->latestCompletedXid = latestXid;
-		
+
 		LWLockRelease(ProcArrayLock);
 	}
 	else

@@ -2947,15 +2947,7 @@ StartTransaction(void)
 			 * transaction without any synchronization to segmates!
 			 * (e.g. CatchupInterruptHandler)
 			 */
-
-			/*
-			 * generate a new transaction id
-			 */
-			s->transactionId = GetNewTransactionId(false, true);
-
-			XactLockTableInsert(s->transactionId);
-			
-			PG_TRACE1(transaction__start, s->transactionId);
+			PG_TRACE1(transaction__start, InvalidTransactionId);
 
 			/*
 		 	 * set transaction_timestamp() (a/k/a now()).  We want this to be the
@@ -3494,11 +3486,9 @@ CommitTransaction(void)
 							&needStateChangeFromDistributed,
 							&needNotifyCommittedDtxTransaction,
 							&localDistribXactRef);
-
 	/*
-	 * GPDB_83_MERGE_FIXME: ProcArrayEndTransaction releases ProcArrayLock, but
-	 * the comment below says that it's "very important" that this is still seen
-	 * as in-progress. AFAICS the pre-merge code had the same inconsistency, though.
+	 * Note that in GPDB, ProcArrayEndTransaction does *not* clear the PGPROC
+	 * entry, if it sets *needNotifyCommittedDtxTransaction!
 	 */
 	if (needNotifyCommittedDtxTransaction)
 	{
