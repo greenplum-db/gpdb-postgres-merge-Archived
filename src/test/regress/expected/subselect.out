@@ -366,13 +366,8 @@ create rule shipped_view_insert as on insert to shipped_view do instead
     insert into shipped values('wt', new.ordnum, new.partnum, new.value);
 insert into parts (partnum, cost) values (1, 1234.56);
 insert into shipped_view (ordnum, partnum, value)
-<<<<<<< HEAD
-    values (0, 1, (select cost from parts where partnum = 1));
-select * from shipped_view ORDER BY 1,2;
-=======
     values (0, 1, (select cost from parts where partnum = '1'));
 select * from shipped_view;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  ttype | ordnum | partnum |  value  
 -------+--------+---------+---------
  wt    |      0 | 1       | 1234.56
@@ -421,8 +416,6 @@ select * from (
    0
 (1 row)
 
-<<<<<<< HEAD
-=======
 --
 -- Test that an IN implemented using a UniquePath does unique-ification
 -- with the right semantics, as per bug #4113.  (Unfortunately we have
@@ -547,4 +540,3 @@ select '1'::text in (select '1'::name union all select '1'::name);
  t
 (1 row)
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

@@ -220,7 +220,7 @@ insert into parts (partnum, cost) values (1, 1234.56);
 insert into shipped_view (ordnum, partnum, value)
     values (0, 1, (select cost from parts where partnum = '1'));
 
-select * from shipped_view ORDER BY 1,2;
+select * from shipped_view;
 
 create rule shipped_view_update as on update to shipped_view do instead
     update shipped set partnum = new.partnum, value = new.value
@@ -246,8 +246,6 @@ select * from (
   select min(unique1) from tenk1 as a
   where not exists (select 1 from tenk1 as b where b.unique2 = 10000)
 ) ss;
-<<<<<<< HEAD
-=======
 
 --
 -- Test that an IN implemented using a UniquePath does unique-ification
@@ -346,4 +344,3 @@ select * from outer_7597 where (f1, f2) not in (select * from inner_7597);
 --
 
 select '1'::text in (select '1'::name union all select '1'::name);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
