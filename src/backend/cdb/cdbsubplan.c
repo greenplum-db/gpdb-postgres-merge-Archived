@@ -112,49 +112,51 @@ preprocess_initplans(QueryDesc *queryDesc)
 		{
             SubPlan    *subplan = (SubPlan *)sps->xprstate.expr;
 
-            Assert(IsA(subplan, SubPlan) &&
-                   subplan->qDispSliceId > 0);
+            Assert(IsA(subplan, SubPlan));
 
-			sps->planstate->plan->nMotionNodes = queryDesc->plannedstmt->nMotionNodes;
-			sps->planstate->plan->dispatch = DISPATCH_PARALLEL;
+			if (subplan->qDispSliceId > 0)
+			{
+				sps->planstate->plan->nMotionNodes = queryDesc->plannedstmt->nMotionNodes;
+				sps->planstate->plan->dispatch = DISPATCH_PARALLEL;
 
-			/*
-			 * Adjust for the slice to execute on the QD.
-			 */
-			rootIndex = subplan->qDispSliceId;
-			queryDesc->estate->es_sliceTable->localSlice = rootIndex;
+				/*
+				 * Adjust for the slice to execute on the QD.
+				 */
+				rootIndex = subplan->qDispSliceId;
+				queryDesc->estate->es_sliceTable->localSlice = rootIndex;
 
-			/* set our global sliceid variable for elog. */
-			currentSliceId = rootIndex;
+				/* set our global sliceid variable for elog. */
+				currentSliceId = rootIndex;
 
-			/*
-			 * This runs the SubPlan and puts the answer back into prm->value.
-			 */
-			queryDesc->params = augmentedPli;
+				/*
+				 * This runs the SubPlan and puts the answer back into prm->value.
+				 */
+				queryDesc->params = augmentedPli;
 
-			/*
-			 * Use ExprContext to set the param. If ExprContext is not initialized,
-			 * create a new one here. (see MPP-3511)
-			 */
-			if (sps->planstate->ps_ExprContext == NULL)
-				sps->planstate->ps_ExprContext = CreateExprContext(estate);
+				/*
+				 * Use ExprContext to set the param. If ExprContext is not initialized,
+				 * create a new one here. (see MPP-3511)
+				 */
+				if (sps->planstate->ps_ExprContext == NULL)
+					sps->planstate->ps_ExprContext = CreateExprContext(estate);
 			
-			/* MPP-12048: Set the right slice index before execution. */
-			Assert( (subplan->qDispSliceId > queryDesc->plannedstmt->nMotionNodes)  &&
-					(subplan->qDispSliceId <=
-							(queryDesc->plannedstmt->nMotionNodes
-							+ queryDesc->plannedstmt->nInitPlans) )   );
+				/* MPP-12048: Set the right slice index before execution. */
+				Assert( (subplan->qDispSliceId > queryDesc->plannedstmt->nMotionNodes)  &&
+						(subplan->qDispSliceId <=
+						 (queryDesc->plannedstmt->nMotionNodes
+						  + queryDesc->plannedstmt->nInitPlans) )   );
 
-			Assert(LocallyExecutingSliceIndex(sps->planstate->state) == subplan->qDispSliceId);
-		    //sps->planstate->state->es_cur_slice_idx = subplan->qDispSliceId;
+				Assert(LocallyExecutingSliceIndex(sps->planstate->state) == subplan->qDispSliceId);
+				//sps->planstate->state->es_cur_slice_idx = subplan->qDispSliceId;
 
-			ExecSetParamPlan(sps, sps->planstate->ps_ExprContext, queryDesc);
+				ExecSetParamPlan(sps, sps->planstate->ps_ExprContext, queryDesc);
 
-			/*
-			 * We dispatched, and have returned. We may have used the
-			 * interconnect; so let's bump the interconnect-id.
-			 */
-			queryDesc->estate->es_sliceTable->ic_instance_id = ++gp_interconnect_id;
+				/*
+				 * We dispatched, and have returned. We may have used the
+				 * interconnect; so let's bump the interconnect-id.
+				 */
+				queryDesc->estate->es_sliceTable->ic_instance_id = ++gp_interconnect_id;
+			}
 		}
 
 		queryDesc->params = originalPli;
