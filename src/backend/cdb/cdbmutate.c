@@ -2852,6 +2852,11 @@ static Bitmapset *params_in_rtable(Plan *plan, List *rtable)
  */
 void remove_unused_initplans(Plan *plan, PlannerInfo *root)
 {
+	/* GPDB_83_MERGE_FIXME: this was causing regression failures, so I just
+	 * disabled it. Do we really need this?
+	 */
+	return;
+
 	/*
 	 * RTEs may have params as well, so we need to get param IDs from them
 	 * before walking the plan to remove unused initplans
