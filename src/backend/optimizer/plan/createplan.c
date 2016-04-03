@@ -3986,12 +3986,6 @@ make_subqueryscan(PlannerInfo *root,
 	SubqueryScan *node = makeNode(SubqueryScan);
 	Plan	   *plan = &node->scan.plan;
 
-	/**
-	 * Ensure that the plan we're going to attach to the subquery scan has all the
-	 * parameter fields figured out.
-	 */
-	SS_finalize_plan(root, subplan, false);
-
 	/*
 	 * Cost is figured here for the convenience of prepunion.c.  Note this is
 	 * only correct for the case where qpqual is empty; otherwise caller
