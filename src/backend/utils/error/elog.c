@@ -3247,10 +3247,7 @@ write_syslogger_in_csv(ErrorData *edata, bool amsyslogger)
 							   amsyslogger, true);
 
 	/* transaction id */
-	if (MyProcPort != NULL && IsTransactionState())
-		syslogger_write_int32(false, "", GetTopTransactionId(), amsyslogger, true);
-	else
-		syslogger_write_int32(false, "", InvalidTransactionId, amsyslogger, true);
+	syslogger_write_int32(false, "", GetTopTransactionIdIfAny(), amsyslogger, true);
 
 	/* GPDB specific options */
 	syslogger_write_int32(true, "con", gp_session_id, amsyslogger, true);
@@ -3398,9 +3395,7 @@ write_message_to_server_log(int elevel,
 	fix_fields.error_cursor_pos = cursorpos;
 	fix_fields.internal_query_pos = internalpos;
 	fix_fields.error_fileline = lineno;
-	fix_fields.top_trans_id = InvalidTransactionId;
-	if (MyProcPort != NULL && IsTransactionState())
-		fix_fields.top_trans_id = GetTopTransactionId();
+	fix_fields.top_trans_id = GetTopTransactionIdIfAny();
 
 	GetAllTransactionXids(&(fix_fields.dist_trans_id),
 						  &(fix_fields.local_trans_id),
