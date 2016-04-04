@@ -55,6 +55,7 @@
 #include "utils/ps_status.h"
 #include "utils/relcache.h"
 #include "utils/resscheduler.h"
+#include "utils/sharedsnapshot.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 #include "pgstat.h"

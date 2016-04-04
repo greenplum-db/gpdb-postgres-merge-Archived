@@ -16,6 +16,8 @@
 
 #include "storage/lock.h"
 
+#include "cdb/cdbpublic.h"
+
 struct DtxContextInfo;         /* cdb/cdbdtxcontextinfo.h */
 struct SnapshotData;           /* utils/tqual.h */
 
