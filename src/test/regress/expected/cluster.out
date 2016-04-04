@@ -250,14 +250,8 @@ SELECT a,b,c,substring(d for 30), length(d) from clstr_tst ORDER BY 1;
 
 -- Verify that foreign key link still works
 INSERT INTO clstr_tst (b, c) VALUES (1111, 'this should fail');
-<<<<<<< HEAD
-SELECT conname FROM pg_constraint WHERE conrelid = 'clstr_tst'::regclass;
-=======
-ERROR:  insert or update on table "clstr_tst" violates foreign key constraint "clstr_tst_con"
-DETAIL:  Key (b)=(1111) is not present in table "clstr_tst_s".
 SELECT conname FROM pg_constraint WHERE conrelid = 'clstr_tst'::regclass
 ORDER BY 1;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     conname     
 ----------------
  clstr_tst_con
