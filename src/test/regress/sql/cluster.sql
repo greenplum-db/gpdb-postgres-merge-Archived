@@ -158,13 +158,14 @@ SELECT * FROM clstr_1 ORDER BY 1;
 -- Test MVCC-safety of cluster. There isn't much we can do to verify the
 -- results with a single backend...
 
-CREATE TABLE clustertest (key int PRIMARY KEY);
+CREATE TABLE clustertest (key int, distkey int) DISTRIBUTED BY (distkey);
+CREATE INDEX clustertest_pkey ON clustertest (key);
 
-INSERT INTO clustertest VALUES (10);
-INSERT INTO clustertest VALUES (20);
-INSERT INTO clustertest VALUES (30);
-INSERT INTO clustertest VALUES (40);
-INSERT INTO clustertest VALUES (50);
+INSERT INTO clustertest VALUES (10, 1);
+INSERT INTO clustertest VALUES (20, 2);
+INSERT INTO clustertest VALUES (30, 1);
+INSERT INTO clustertest VALUES (40, 2);
+INSERT INTO clustertest VALUES (50, 3);
 
 -- Use a transaction so that updates are not committed when CLUSTER sees 'em
 BEGIN;
@@ -180,13 +181,13 @@ UPDATE clustertest SET key = 60 WHERE key = 50;
 UPDATE clustertest SET key = 70 WHERE key = 60;
 UPDATE clustertest SET key = 80 WHERE key = 70;
 
-SELECT * FROM clustertest;
+SELECT key FROM clustertest;
 CLUSTER clustertest_pkey ON clustertest;
-SELECT * FROM clustertest;
+SELECT key FROM clustertest;
 
 COMMIT;
 
-SELECT * FROM clustertest;
+SELECT key FROM clustertest;
 
 -- clean up
 \c -
