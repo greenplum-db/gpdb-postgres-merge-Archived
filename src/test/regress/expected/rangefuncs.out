@@ -413,13 +413,9 @@ SELECT dup(22);
 (1 row)
 
 SELECT dup('xyz');	-- fails
-<<<<<<< HEAD
-ERROR:  could not determine anyarray/anyelement type because input has type "unknown"
+ERROR:  could not determine polymorphic type because input has type "unknown"
 LINE 1: SELECT dup('xyz');
                ^
-=======
-ERROR:  could not determine polymorphic type because input has type "unknown"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 SELECT dup('xyz'::text);
         dup        
 -------------------
