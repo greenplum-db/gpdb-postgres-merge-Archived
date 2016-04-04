@@ -38,12 +38,8 @@ EXECUTE q2('regression');
 
 PREPARE q3(text, int, float, boolean, oid, smallint) AS
 	SELECT * FROM tenk1 WHERE string4 = $1 AND (four = $2 OR
-<<<<<<< HEAD
-	ten = $3::bigint OR true = $4 OR oid = $5 OR odd = $6::int) ORDER BY 1,2,3,4;
-=======
 	ten = $3::bigint OR true = $4 OR oid = $5 OR odd = $6::int)
 	ORDER BY unique1;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 EXECUTE q3('AAAAxx', 5::smallint, 10.5::float, false, 500::oid, 4::bigint);
 
