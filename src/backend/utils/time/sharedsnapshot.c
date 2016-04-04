@@ -28,12 +28,9 @@
 #include "utils/memutils.h"
 #include "utils/sharedsnapshot.h"
 
-static SharedSnapshotSlot *SharedSnapshotAdd(int4 slotId);
-static SharedSnapshotSlot *SharedSnapshotLookup(int4 slotId);
-
-
-/* MPP Addition. Distributed Snapshot that gets sent in from the QD to processes
- * running in EXECUTE mode.
+/*
+ * Distributed Snapshot that gets sent in from the QD to processes running
+ * in EXECUTE mode.
  */
 DtxContext DistributedTransactionContext = DTX_CONTEXT_LOCAL_ONLY;
 
@@ -65,6 +62,16 @@ volatile SharedSnapshotSlot *SharedLocalSnapshotSlot = NULL;
 static Size slotSize = 0;
 static Size slotCount = 0;
 static Size xipEntryCount = 0;
+
+
+/*
+ * File references to shared snapshot files open in this transaction.
+ */
+static List *shared_snapshot_files = NIL;
+
+/* prototypes for internal functions */
+static SharedSnapshotSlot *SharedSnapshotAdd(int4 slotId);
+static SharedSnapshotSlot *SharedSnapshotLookup(int4 slotId);
 
 /*
  * Report shared-memory space needed by CreateSharedSnapshot.
@@ -155,6 +162,8 @@ CreateSharedSnapshotArray(void)
 			xip_base += xipEntryCount;
 		}
 	}
+
+	shared_snapshot_files = NIL;
 }
 
 /*
@@ -505,6 +514,7 @@ dumpSharedLocalSnapshot_forCursor(void)
 	int64 sub_size;
 	int64 size_read;
 	ResourceOwner oldowner;
+	MemoryContext oldcontext;
 
 	Assert(Gp_role == GP_ROLE_DISPATCH || (Gp_role == GP_ROLE_EXECUTE && Gp_is_writer));
 	Assert(SharedLocalSnapshotSlot != NULL);
@@ -518,9 +528,19 @@ dumpSharedLocalSnapshot_forCursor(void)
 	 * as the cursor we're declaring.
 	 */
 	oldowner = CurrentResourceOwner;
-	CurrentResourceOwner = CurTransactionResourceOwner;
+	CurrentResourceOwner = TopTransactionResourceOwner;
+	oldcontext = MemoryContextSwitchTo(TopTransactionContext);
 	f = BufFileCreateTemp_ReaderWriter(fname, true, false);
+
+	/*
+	 * Remember our file, so that we can close it at end of transaction.
+	 * The resource owner mechanism would do it for us as a backstop, but it
+	 * produces warnings at commit if some files haven't been closed.
+	 */
+	shared_snapshot_files = lappend(shared_snapshot_files, f);
+	MemoryContextSwitchTo(oldcontext);
 	CurrentResourceOwner = oldowner;
+
 	/* we have our file. */
 
 #define FileWriteOK(file, ptr, size) (BufFileWrite(file, ptr, size) == size)
@@ -813,6 +833,25 @@ readSharedLocalSnapshot_forCursor(Snapshot snapshot)
 	SetSharedTransactionId_reader(localXid, snapshot->curcid);
 
 	return;
+}
+
+/*
+ * Free any shared snapshot files.
+ */
+void
+AtEOXact_SharedSnapshot(void)
+{
+	ListCell *lc;
+	List *oldlist;
+
+	oldlist = shared_snapshot_files;
+	shared_snapshot_files = NIL;
+
+	foreach(lc, oldlist)
+	{
+		BufFileClose((BufFile * ) lfirst(lc));
+	}
+	list_free(oldlist);
 }
 
 /*
