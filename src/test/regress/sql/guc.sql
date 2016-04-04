@@ -144,81 +144,6 @@ RESET datestyle;
 SHOW datestyle;
 SELECT '2006-08-13 12:34:56'::timestamptz;
 
-<<<<<<< HEAD
-SELECT min_val, max_val FROM pg_settings WHERE name = 'gp_resqueue_priority_cpucores_per_segment';
-
---
--- Test GUC - gp_disable_catalog_access_on_segment
---
-SHOW gp_disable_catalog_access_on_segment;
-CREATE TABLE guc_test1(c1 int, c2 int);
-INSERT INTO guc_test1 values(1, 10);
-SELECT 1 FROM guc_test1;
-SELECT * FROM guc_test1;
-SELECT c1 + 1 FROM guc_test1;
-
-SET gp_disable_catalog_access_on_segment = true;
-SHOW gp_disable_catalog_access_on_segment;
-CREATE TABLE guc_test2(c1 int, c2 int);
-INSERT INTO guc_test1 values(1, 10);
-SELECT 1 FROM guc_test1;
-SELECT * FROM guc_test1;
-SELECT c1 + 1 FROM guc_test1;
-
-SET gp_disable_catalog_access_on_segment = false;
-SHOW gp_disable_catalog_access_on_segment;
-
--- start_ignore
-DROP TABLE guc_test1;
-DROP TABLE guc_test2;
--- end_ignore
-
---
--- Test GUC if cursor is opened
---
--- start_ignore
-drop table if exists test_cursor_set_table;
-drop function if exists test_set_in_loop();
-drop function if exists test_call_set_command();
--- end_ignore
-
-create table test_cursor_set_table as select * from generate_series(1, 100);
-
-CREATE FUNCTION test_set_in_loop () RETURNS numeric
-    AS $$
-DECLARE
-    rec record;
-    result numeric;
-    tmp numeric;
-BEGIN
-	result = 0;
-FOR rec IN select * from test_cursor_set_table
-LOOP
-        select test_call_set_command() into tmp;
-        result = result + 1;
-END LOOP;
-return result;
-END;
-$$
-    LANGUAGE plpgsql NO SQL;
-
-
-CREATE FUNCTION test_call_set_command() returns numeric
-AS $$
-BEGIN
-       execute 'SET gp_workfile_limit_per_query=524;';
-       return 0;
-END;
-$$
-    LANGUAGE plpgsql NO SQL;
-
-
-select * from test_set_in_loop();
-
-drop table if exists test_cursor_set_table;
-drop function if exists test_set_in_loop();
-drop function if exists test_call_set_command();
-=======
 --
 -- Test DISCARD TEMP
 --
@@ -326,4 +251,77 @@ set regex_flavor = basic;
 select myfunc(0);
 select current_setting('regex_flavor');
 select myfunc(1), current_setting('regex_flavor');
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+
+SELECT min_val, max_val FROM pg_settings WHERE name = 'gp_resqueue_priority_cpucores_per_segment';
+
+--
+-- Test GUC - gp_disable_catalog_access_on_segment
+--
+SHOW gp_disable_catalog_access_on_segment;
+CREATE TABLE guc_test1(c1 int, c2 int);
+INSERT INTO guc_test1 values(1, 10);
+SELECT 1 FROM guc_test1;
+SELECT * FROM guc_test1;
+SELECT c1 + 1 FROM guc_test1;
+
+SET gp_disable_catalog_access_on_segment = true;
+SHOW gp_disable_catalog_access_on_segment;
+CREATE TABLE guc_test2(c1 int, c2 int);
+INSERT INTO guc_test1 values(1, 10);
+SELECT 1 FROM guc_test1;
+SELECT * FROM guc_test1;
+SELECT c1 + 1 FROM guc_test1;
+
+SET gp_disable_catalog_access_on_segment = false;
+SHOW gp_disable_catalog_access_on_segment;
+
+-- start_ignore
+DROP TABLE guc_test1;
+DROP TABLE guc_test2;
+-- end_ignore
+
+--
+-- Test GUC if cursor is opened
+--
+-- start_ignore
+drop table if exists test_cursor_set_table;
+drop function if exists test_set_in_loop();
+drop function if exists test_call_set_command();
+-- end_ignore
+
+create table test_cursor_set_table as select * from generate_series(1, 100);
+
+CREATE FUNCTION test_set_in_loop () RETURNS numeric
+    AS $$
+DECLARE
+    rec record;
+    result numeric;
+    tmp numeric;
+BEGIN
+	result = 0;
+FOR rec IN select * from test_cursor_set_table
+LOOP
+        select test_call_set_command() into tmp;
+        result = result + 1;
+END LOOP;
+return result;
+END;
+$$
+    LANGUAGE plpgsql NO SQL;
+
+
+CREATE FUNCTION test_call_set_command() returns numeric
+AS $$
+BEGIN
+       execute 'SET gp_workfile_limit_per_query=524;';
+       return 0;
+END;
+$$
+    LANGUAGE plpgsql NO SQL;
+
+
+select * from test_set_in_loop();
+
+drop table if exists test_cursor_set_table;
+drop function if exists test_set_in_loop();
+drop function if exists test_call_set_command();
