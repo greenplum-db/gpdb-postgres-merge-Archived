@@ -4543,7 +4543,8 @@ heap_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 	bool		changed = false;
 	TransactionId xid;
 
-	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
+	if (buf != InvalidBuffer)
+		MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
 
 	xid = HeapTupleHeaderGetXmin(tuple);
 	if (TransactionIdIsNormal(xid) &&

@@ -983,8 +983,12 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 		HeapTuple	copiedTuple;
 		bool		isdead;
 		int			i;
+		MIRROREDLOCK_BUFMGR_DECLARE;
 
 		CHECK_FOR_INTERRUPTS();
+
+		/* -------- MirroredLock ---------- */
+		MIRROREDLOCK_BUFMGR_LOCK;
 
 		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_SHARE);
 
@@ -1032,6 +1036,9 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 		}
 
 		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_UNLOCK);
+
+		MIRROREDLOCK_BUFMGR_UNLOCK;
+		/* -------- MirroredLock ---------- */
 
 		if (isdead)
 		{
