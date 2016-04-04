@@ -48,6 +48,8 @@ extern Node *qualifiedNameToVar(ParseState *pstate,
 				   char *colname,
 				   bool implicitRTEOK,
 				   int location);
+extern Relation parserOpenTable(ParseState *pstate, const RangeVar *relation,
+				int lockmode, bool nowait, bool *lockUpgraded);
 extern RangeTblEntry *addRangeTableEntry(ParseState *pstate,
 				   RangeVar *relation,
 				   Alias *alias,
@@ -87,8 +89,7 @@ extern Index extractSimplyUpdatableRTEIndex(List *rtable);
 extern void addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
 			  bool addToJoinList,
 			  bool addToRelNameSpace, bool addToVarNameSpace);
-extern RangeTblEntry *addImplicitRTE(ParseState *pstate, RangeVar *relation,
-			   int location);
+extern RangeTblEntry *addImplicitRTE(ParseState *pstate, RangeVar *relation);
 extern void expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 		  int location, bool include_dropped,
 		  List **colnames, List **colvars);

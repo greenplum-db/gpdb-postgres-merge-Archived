@@ -123,7 +123,7 @@ LookupTypeName(ParseState *pstate, const TypeName *typename,
 		/* this construct should never have an array indicator */
 		Assert(typename->arrayBounds == NIL);
 
-		/* emit nuisance notice */
+		/* emit nuisance notice (intentionally not errposition'd) */
 		ereport(NOTICE,
 				(errmsg("type reference %s converted to %s",
 						TypeNameToString(typename),
@@ -248,6 +248,7 @@ typenameTypeMod(ParseState *pstate, const TypeName *typename, Type typ)
 	int			n;
 	ListCell   *l;
 	ArrayType  *arrtypmod;
+	ParseCallbackState pcbstate;
 
 	/* Return prespecified typmod if no typmod expressions */
 	if (typename->typmods == NIL)
@@ -325,8 +326,13 @@ typenameTypeMod(ParseState *pstate, const TypeName *typename, Type typ)
 	arrtypmod = construct_array(datums, n, CSTRINGOID,
 								-2, false, 'c');
 
+	/* arrange to report location if type's typmodin function fails */
+	setup_parser_errposition_callback(&pcbstate, pstate, typename->location);
+
 	result = DatumGetInt32(OidFunctionCall1(typmodin,
 											PointerGetDatum(arrtypmod)));
+
+	cancel_parser_errposition_callback(&pcbstate);
 
 	pfree(datums);
 	pfree(arrtypmod);

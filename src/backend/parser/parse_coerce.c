@@ -211,6 +211,7 @@ coerce_type(ParseState *pstate, Node *node,
 		Oid			baseTypeId;
 		int32		baseTypeMod;
 		Type		targetType;
+		ParseCallbackState pcbstate;
 
 		/*
 		 * If the target type is a domain, we want to call its base type's
@@ -230,6 +231,19 @@ coerce_type(ParseState *pstate, Node *node,
 		newcon->constlen = typeLen(targetType);
 		newcon->constbyval = typeByVal(targetType);
 		newcon->constisnull = con->constisnull;
+		/* Use the leftmost of the constant's and coercion's locations */
+		if (location < 0)
+			newcon->location = con->location;
+		else if (con->location >= 0 && con->location < location)
+			newcon->location = con->location;
+		else
+			newcon->location = location;
+
+		/*
+		 * Set up to point at the constant's text if the input routine
+		 * throws an error.
+		 */
+		setup_parser_errposition_callback(&pcbstate, pstate, con->location);
 
 		/*
 		 * We pass typmod -1 to the input routine, primarily because existing
@@ -246,6 +260,8 @@ coerce_type(ParseState *pstate, Node *node,
 												 -1);
 		else
 			newcon->constvalue = stringTypeDatum(targetType, NULL, -1);
+
+		cancel_parser_errposition_callback(&pcbstate);
 
 		result = (Node *) newcon;
 
@@ -281,7 +297,8 @@ coerce_type(ParseState *pstate, Node *node,
 			paramno > toppstate->p_numparams)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_PARAMETER),
-					 errmsg("there is no parameter $%d", paramno)));
+					 errmsg("there is no parameter $%d", paramno),
+					 parser_errposition(pstate, param->location)));
 
 		if (toppstate->p_paramtypes[paramno - 1] == UNKNOWNOID)
 		{
@@ -301,7 +318,8 @@ coerce_type(ParseState *pstate, Node *node,
 							paramno),
 					 errdetail("%s versus %s",
 						format_type_be(toppstate->p_paramtypes[paramno - 1]),
-							   format_type_be(targetTypeId))));
+							   format_type_be(targetTypeId)),
+					 parser_errposition(pstate, param->location)));
 		}
 
 		param->paramtype = targetTypeId;
@@ -314,6 +332,11 @@ coerce_type(ParseState *pstate, Node *node,
 		 * run-time length check/coercion will occur if needed.
 		 */
 		param->paramtypmod = -1;
+
+		/* Use the leftmost of the param's and coercion's locations */
+		if (location >= 0 &&
+			(param->location < 0 || location < param->location))
+			param->location = location;
 
 		return (Node *) param;
 	}
@@ -364,6 +387,10 @@ coerce_type(ParseState *pstate, Node *node,
 			/* do unknownout(Var) */
 			fe = makeFuncExpr(outfunc, CSTRINGOID, list_make1(node), cformat);
 
+			if (location >= 0 &&
+				(fixvar->location < 0 || location < fixvar->location))
+			fixvar->location = location;
+
 			/* 
 			 * Now pass the above as an argument to the input function of the
 			 * type we're casting to
@@ -376,6 +403,7 @@ coerce_type(ParseState *pstate, Node *node,
 										Int32GetDatum(-1),
 										false, true));
 			fe = makeFuncExpr(infunc, targetTypeId, args, cformat);
+
 			return (Node *)fe;
 		}
 	}
@@ -1165,10 +1193,11 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 	{
 		int			rtindex = ((Var *) node)->varno;
 		int			sublevels_up = ((Var *) node)->varlevelsup;
+		int			vlocation = ((Var *) node)->location;
 		RangeTblEntry *rte;
 
 		rte = GetRTEByRangeTablePosn(pstate, rtindex, sublevels_up);
-		expandRTE(rte, rtindex, sublevels_up, -1, false,
+		expandRTE(rte, rtindex, sublevels_up, vlocation, false,
 				  NULL, &args);
 	}
 	else

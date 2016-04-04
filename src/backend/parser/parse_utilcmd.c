@@ -64,6 +64,7 @@
 
 #include "cdb/cdbhash.h"
 #include "cdb/cdbpartition.h"
+#include "cdb/partitionselection.h"
 #include "cdb/cdbvars.h"
 
 /* State shared by transformCreateSchemaStmt and its subroutines */

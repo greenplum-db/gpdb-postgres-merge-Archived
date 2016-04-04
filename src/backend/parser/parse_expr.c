@@ -147,10 +147,12 @@ transformExpr(ParseState *pstate, Node *expr)
 				A_Const    *con = (A_Const *) expr;
 				Value	   *val = &con->val;
 
-				result = (Node *) make_const(pstate, val, -1);
-				if (con->typname != NULL)
+				result = (Node *) make_const(pstate, val, con->location);
+				if (con->typname != NULL) {
+					con->typname->location = con->location;
 					result = typecast_expression(pstate, result,
 												 con->typname);
+				}
 				break;
 			}
 
@@ -848,7 +850,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
  * return a pointer to it.
  */
 static Oid *
-find_param_type(ParseState *pstate, int paramno)
+find_param_type(ParseState *pstate, int paramno, int location)
 {
 	Oid		   *result;
 
@@ -862,14 +864,15 @@ find_param_type(ParseState *pstate, int paramno)
 	if (paramno <= 0)			/* probably can't happen? */
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_PARAMETER),
-				 errmsg("there is no parameter $%d", paramno)));
+				 errmsg("there is no parameter $%d", paramno),
+				 parser_errposition(pstate, location)));
 	if (paramno > pstate->p_numparams)
 	{
 		if (!pstate->p_variableparams)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_PARAMETER),
-					 errmsg("there is no parameter $%d",
-							paramno)));
+					 errmsg("there is no parameter $%d", paramno),
+					 parser_errposition(pstate, location)));
 		/* Okay to enlarge param array */
 		if (pstate->p_paramtypes)
 			pstate->p_paramtypes = (Oid *) repalloc(pstate->p_paramtypes,
@@ -899,7 +902,7 @@ static Node *
 transformParamRef(ParseState *pstate, ParamRef *pref)
 {
 	int			paramno = pref->number;
-	Oid		   *pptype = find_param_type(pstate, paramno);
+	Oid		   *pptype = find_param_type(pstate, paramno, pref->location);
 	Param	   *param;
 
 	param = makeNode(Param);
@@ -1703,7 +1706,8 @@ transformArrayExpr(ParseState *pstate, ArrayExpr *a)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("could not find array type for data type %s",
-							format_type_be(array_type))));
+							format_type_be(array_type)),
+					 parser_errposition(pstate, a->location)));
 	}
 
 	newa->array_typeid = array_type;
@@ -2017,7 +2021,8 @@ transformXmlSerialize(ParseState *pstate, XmlSerialize *xs)
 	 */
 	result = coerce_to_target_type(pstate, (Node *) xexpr,
 								   TEXTOID, targetType, targetTypmod,
-								   COERCION_IMPLICIT, COERCE_IMPLICIT_CAST, -1);
+								   COERCION_IMPLICIT, COERCE_IMPLICIT_CAST,
+								   xexpr->location);
 	if (result == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_CANNOT_COERCE),
@@ -2096,7 +2101,7 @@ transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr *cexpr)
 	/* If a parameter is used, it must be of type REFCURSOR */
 	if (cexpr->cursor_name == NULL)
 	{
-		Oid		   *pptype = find_param_type(pstate, cexpr->cursor_param);
+		Oid		   *pptype = find_param_type(pstate, cexpr->cursor_param, -1);
 
 		if (pstate->p_variableparams && *pptype == UNKNOWNOID)
 		{
@@ -2143,7 +2148,7 @@ transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname,
 							   &sublevels_up);
 
 	if (rte == NULL)
-		rte = addImplicitRTE(pstate, makeRangeVar(schemaname, relname, location), location);
+		rte = addImplicitRTE(pstate, makeRangeVar(schemaname, relname, location));
 
 	vnum = RTERangeTablePosn(pstate, rte, &sublevels_up);
 
