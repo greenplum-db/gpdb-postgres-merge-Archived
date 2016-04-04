@@ -758,8 +758,8 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 	if (!TransactionIdIsNormal(xid))
 		return false;
 
-    if ((DistributedTransactionContext == DTX_CONTEXT_QE_READER ||
-		 DistributedTransactionContext == DTX_CONTEXT_QE_ENTRY_DB_SINGLETON))
+    if (DistributedTransactionContext == DTX_CONTEXT_QE_READER ||
+		DistributedTransactionContext == DTX_CONTEXT_QE_ENTRY_DB_SINGLETON)
 	{
 		if (TransactionIdEquals(xid, TopTransactionStateData.transactionId))
 		{
@@ -813,7 +813,6 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 	}
 
 	/* we aren't a reader */
-	Assert(DistributedTransactionContext != DTX_CONTEXT_QE_READER);
 	Assert(DistributedTransactionContext != DTX_CONTEXT_QE_ENTRY_DB_SINGLETON);
 
 	bool flag = TransactionIdIsCurrentTransactionIdInternal(xid);
@@ -1042,8 +1041,8 @@ AtSubStart_ResourceOwner(void)
 TransactionId
 RecordTransactionCommit(void)
 {
-	TransactionId xid = GetTopTransactionIdIfAny();
-	bool		markXidCommitted = TransactionIdIsValid(xid);
+	TransactionId xid;
+	bool		markXidCommitted;
 	TransactionId latestXid = InvalidTransactionId;
 	MIRRORED_LOCK_DECLARE;
 
@@ -1059,6 +1058,16 @@ RecordTransactionCommit(void)
 	bool		omitCommitRecordForDirtyQEReader;
 	TMGXACT_LOG gxact_log;
 	XLogRecPtr	recptr = {0,0};
+
+	/* Like in CommitTransaction(), treat a QE reader as if there was no XID */
+	if (DistributedTransactionContext == DTX_CONTEXT_QE_ENTRY_DB_SINGLETON ||
+		DistributedTransactionContext == DTX_CONTEXT_QE_READER)
+	{
+		xid = InvalidTransactionId;
+	}
+	else
+		xid = GetTopTransactionIdIfAny();
+	markXidCommitted = TransactionIdIsValid(xid);
 
 	/* Get data needed for commit record */
 	persistentCommitSerializeLen =
@@ -1667,7 +1676,7 @@ RecordSubTransactionCommit(void)
 static TransactionId
 RecordTransactionAbort(bool isSubXact)
 {
-	TransactionId xid = GetCurrentTransactionIdIfAny();
+	TransactionId xid;
 	TransactionId latestXid;
 	int32						persistentAbortSerializeLen;
 	PersistentEndXactRecObjects persistentAbortObjects;
@@ -1679,6 +1688,15 @@ RecordTransactionAbort(bool isSubXact)
 	XLogRecData rdata[3];
 	int			lastrdata = 0;
 	xl_xact_abort xlrec;
+
+	/* Like in CommitTransaction(), treat a QE reader as if there was no XID */
+	if (DistributedTransactionContext == DTX_CONTEXT_QE_READER ||
+		DistributedTransactionContext == DTX_CONTEXT_QE_ENTRY_DB_SINGLETON)
+	{
+		xid = InvalidTransactionId;
+	}
+	else
+		xid = GetTopTransactionIdIfAny();
 
 	/* Get data needed for abort record */
 	persistentAbortSerializeLen =
@@ -2159,13 +2177,14 @@ SetSharedTransactionId_reader(TransactionId xid, CommandId cid)
 	Assert(DistributedTransactionContext == DTX_CONTEXT_QE_READER ||
 		   DistributedTransactionContext == DTX_CONTEXT_QE_ENTRY_DB_SINGLETON);
 
-	/* GPDB_83_MERGE_FIXME: ProcArrayEndTransaction() trips an assertion, if
-	 * s->transactionId is set, but MyProc->xid is not. I don't understand
-	 * where this Xid comes from anyway, and why we'd need to use it. Perhaps
-	 * it was an attempt at reducing Xid consumption, before we had the upstream
-	 * patch to not assign an Xid until needed?
+	/*
+	 * GPDB_83_MERGE_FIXME: I don't understand how the top-level XID
+	 * can ever be different here from what it was in StartTransaction().
+	 * And usually it isn't, but when I tried adding the below assertion, it was
+	 * tripped.
 	 */
-	//TopTransactionStateData.transactionId = xid;
+	//Assert(TopTransactionStateData.transactionId == xid);
+	TopTransactionStateData.transactionId = xid;
 	currentCommandId = cid;
 }
 
@@ -3173,13 +3192,14 @@ StartTransaction(void)
 						 xactStartTimestamp,
 						 SharedLocalSnapshotSlot->startTimestamp);
 
-					/* GPDB_83_MERGE_FIXME: ProcArrayEndTransaction() trips an assertion, if
-					 * s->transactionId is set, but MyProc->xid is not. I don't understand
-					 * where this Xid comes from anyway, and why we'd need to use it. Especially
-					 * as the comment above says we might change it later. So just comment it
-					 * out for now.
+					/*
+					 * We set TopTransactionStateData.transactionId to the same top-level
+					 * XID as the QE writer, so that visibility checks consider that
+					 * XID as "current transaction". But we don't advertise it in the
+					 * proc array, nor write a commit record for it, as the QE writer will
+					 * do that.
 					 */
-					//s->transactionId = SharedLocalSnapshotSlot->xid;
+					s->transactionId = SharedLocalSnapshotSlot->xid;
 					xactStartTimestamp = SharedLocalSnapshotSlot->startTimestamp;
 					xactStopTimestamp = 0;
 					pgstat_report_xact_timestamp(xactStartTimestamp);
@@ -3470,7 +3490,19 @@ CommitTransaction(void)
 	 */
 	s->state = TRANS_COMMIT;
 
-	localXid = GetTopTransactionIdIfAny();
+	/*
+	 * If we're a QE reader, we share the same top-level as the QE writer, but we
+	 * should't write a commit record because the QE writer will do that. We also
+	 * haven't advertised that XID in the proc array, so we don't need to clean
+	 * that up here either.
+	 */
+	if (DistributedTransactionContext == DTX_CONTEXT_QE_READER ||
+		DistributedTransactionContext == DTX_CONTEXT_QE_ENTRY_DB_SINGLETON)
+	{
+		localXid = InvalidTransactionId;
+	}
+	else
+		localXid = GetTopTransactionIdIfAny();
 
 	/*
 	 * Here is where we really truly commit.
@@ -4041,7 +4073,14 @@ AbortTransaction(void)
 		MIRRORED_LOCK;
 	}
 
-	localXid = GetTopTransactionIdIfAny();
+	/* Like in CommitTransaction(), treat a QE reader as if there was no XID */
+	if (DistributedTransactionContext == DTX_CONTEXT_QE_READER ||
+		DistributedTransactionContext == DTX_CONTEXT_QE_ENTRY_DB_SINGLETON)
+	{
+		localXid = InvalidTransactionId;
+	}
+	else
+		localXid = GetTopTransactionIdIfAny();
 
 	/*
 	 * Advertise the fact that we aborted in pg_clog (assuming that we got as
