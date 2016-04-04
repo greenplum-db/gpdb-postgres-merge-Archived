@@ -2939,6 +2939,9 @@ _readVariableSetStmt(void)
 	READ_LOCALS(VariableSetStmt);
 
 	READ_STRING_FIELD(name);
+	READ_ENUM_FIELD(kind, VariableSetKind);
+	READ_NODE_FIELD(args);
+	READ_BOOL_FIELD(is_local);
 
 	READ_DONE();
 }
