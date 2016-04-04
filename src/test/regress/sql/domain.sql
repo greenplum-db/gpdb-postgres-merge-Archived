@@ -375,7 +375,7 @@ insert into ddtest2 values(row(-1));
 alter domain posint add constraint c1 check(value >= 0);
 drop table ddtest2;
 
-create table ddtest2(f1 ddtest1[]);
+create table ddtest2(f1 ddtest1[], distkey int) distributed by (distkey);
 insert into ddtest2 values('{(-1)}');
 alter domain posint add constraint c1 check(value >= 0);
 drop table ddtest2;
