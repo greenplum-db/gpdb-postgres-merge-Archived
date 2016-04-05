@@ -21,6 +21,7 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "nodes/nodeFuncs.h"
 #include "nodes/plannodes.h"
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
@@ -1568,7 +1569,8 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 			if (!((TargetEntry *) lfirst(tlist_item))->resjunk)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("subquery must return only one column")));
+						 errmsg("subquery must return only one column"),
+						 parser_errposition(pstate, exprLocation((Node *) sublink))));
 		}
 
 		/*

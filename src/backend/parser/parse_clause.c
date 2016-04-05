@@ -798,6 +798,7 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 {
 	RangeTblEntry *rte;
 	int			rtindex;
+	ParseCallbackState pcbstate;
 
 	/* Close old target; this could only happen for multi-action rules */
 	if (pstate->p_target_relation != NULL)
@@ -813,6 +814,7 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 	 * CDB: Acquire ExclusiveLock if it is a distributed relation and we are
 	 * doing UPDATE or DELETE activity
 	 */
+	setup_parser_errposition_callback(&pcbstate, pstate, relation->location);
 	if (pstate->p_is_insert && !pstate->p_is_update)
 	{
 		pstate->p_target_relation = heap_openrv(relation, RowExclusiveLock);
@@ -823,6 +825,7 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 													  RowExclusiveLock, 
 													  false, NULL);
 	}
+	cancel_parser_errposition_callback(&pcbstate);
 	
 	/*
 	 * Now build an RTE.

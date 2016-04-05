@@ -772,6 +772,7 @@ addRangeTableEntry(ParseState *pstate,
 	bool                 nowait = false;
 	LockingClause		*locking;
 	Relation			 rel;
+	ParseCallbackState	 pcbstate;
 	
 	/* 
 	 * CDB: lock promotion around the locking clause is a little different
@@ -784,7 +785,9 @@ addRangeTableEntry(ParseState *pstate,
 		lockmode = locking->forUpdate ? RowExclusiveLock : RowShareLock;
 		nowait	 = locking->noWait;
 	}
+	setup_parser_errposition_callback(&pcbstate, pstate, relation->location);
 	rel = parserOpenTable(pstate, relation, lockmode, nowait, NULL);
+	cancel_parser_errposition_callback(&pcbstate);
 	
 	/*
 	 * Get the rel's OID.  This access also ensures that we have an up-to-date
@@ -797,7 +800,7 @@ addRangeTableEntry(ParseState *pstate,
 	rte->rtekind = RTE_RELATION;
 
 	/* external tables don't allow inheritance */
-	if(RelationIsExternal(rel))
+	if (RelationIsExternal(rel))
 		inh = false;
 
 	/*
