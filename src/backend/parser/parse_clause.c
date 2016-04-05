@@ -2769,10 +2769,7 @@ transformSortClause(ParseState *pstate,
 
 		sortlist = addTargetToSortList(pstate, tle,
 									   sortlist, *targetlist,
-									   sortby->sortby_dir,
-									   sortby->sortby_nulls,
-									   sortby->useOp,
-									   resolveUnknown);
+									   sortby, resolveUnknown);
 	}
 
 	return sortlist;
@@ -2806,6 +2803,13 @@ transformDistinctToGroupBy(ParseState *pstate, List **targetlist,
 		 * append remaining group clauses to the end of group clause list
 		 */
 		ListCell *lc = NULL;
+		SortBy sortby;
+
+		sortby.sortby_dir = SORTBY_DEFAULT;
+		sortby.sortby_nulls = SORTBY_NULLS_DEFAULT;
+		sortby.useOp = NIL;
+		sortby.location = -1;
+
 		foreach(lc, group_tlist_remainder)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(lc);
@@ -2813,9 +2817,7 @@ transformDistinctToGroupBy(ParseState *pstate, List **targetlist,
 			{
 				group_clause_list = addTargetToSortList(pstate, tle,
 														group_clause_list, *targetlist,
-														SORTBY_DEFAULT,
-														SORTBY_NULLS_DEFAULT,
-														NIL, true);
+														&sortby, true);
 			}
 		}
 
@@ -2931,6 +2933,12 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 		 * trouble than it's worth.
 		 */
 		ListCell   *nextsortlist = list_head(*sortClause);
+		SortBy sortby;
+
+		sortby.sortby_dir = SORTBY_DEFAULT;
+		sortby.sortby_nulls = SORTBY_NULLS_DEFAULT;
+		sortby.useOp = NIL;
+		sortby.location = -1;
 
 		foreach(dlitem, distinctlist)
 		{
@@ -2954,9 +2962,7 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 			{
 				*sortClause = addTargetToSortList(pstate, tle,
 												  *sortClause, *targetlist,
-												  SORTBY_DEFAULT,
-												  SORTBY_NULLS_DEFAULT,
-												  NIL, true);
+												  &sortby, true);
 
 				/*
 				 * Probably, the tle should always have been added at the end
@@ -3041,6 +3047,12 @@ addAllTargetsToSortList(ParseState *pstate, List *sortlist,
 						List *targetlist, bool resolveUnknown)
 {
 	ListCell   *l;
+	SortBy		sortby;
+
+	sortby.sortby_dir = SORTBY_DEFAULT;
+	sortby.sortby_nulls = SORTBY_NULLS_DEFAULT;
+	sortby.useOp = NIL;
+	sortby.location = -1;
 
 	foreach(l, targetlist)
 	{
@@ -3049,9 +3061,7 @@ addAllTargetsToSortList(ParseState *pstate, List *sortlist,
 		if (!tle->resjunk)
 			sortlist = addTargetToSortList(pstate, tle,
 										   sortlist, targetlist,
-										   SORTBY_DEFAULT,
-										   SORTBY_NULLS_DEFAULT,
-										   NIL, resolveUnknown);
+										   &sortby, resolveUnknown);
 	}
 	return sortlist;
 }
@@ -3072,8 +3082,7 @@ addAllTargetsToSortList(ParseState *pstate, List *sortlist,
 List *
 addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 					List *sortlist, List *targetlist,
-					SortByDir sortby_dir, SortByNulls sortby_nulls,
-					List *sortby_opname, bool resolveUnknown)
+					SortBy *sortby, bool resolveUnknown)
 {
 	Oid			restype = exprType((Node *) tle->expr);
 	Oid			sortop;
@@ -3087,12 +3096,12 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 										 restype, TEXTOID, -1,
 										 COERCION_IMPLICIT,
 										 COERCE_IMPLICIT_CAST,
-										 -1);
+										 exprLocation((Node *) tle->expr));
 		restype = TEXTOID;
 	}
 
 	/* determine the sortop */
-	switch (sortby_dir)
+	switch (sortby->sortby_dir)
 	{
 		case SORTBY_DEFAULT:
 		case SORTBY_ASC:
@@ -3104,8 +3113,8 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 			reverse = true;
 			break;
 		case SORTBY_USING:
-			Assert(sortby_opname != NIL);
-			sortop = compatible_oper_opid(sortby_opname,
+			Assert(sortby->useOp != NIL);
+			sortop = compatible_oper_opid(sortby->useOp,
 										  restype,
 										  restype,
 										  false);
@@ -3119,11 +3128,12 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					   errmsg("operator %s is not a valid ordering operator",
-							  strVal(llast(sortby_opname))),
+							  strVal(llast(sortby->useOp))),
+						 parser_errposition(pstate, sortby->location),
 						 errhint("Ordering operators must be \"<\" or \">\" members of btree operator families.")));
 			break;
 		default:
-			elog(ERROR, "unrecognized sortby_dir: %d", sortby_dir);
+			elog(ERROR, "unrecognized sortby_dir: %d", sortby->sortby_dir);
 			sortop = InvalidOid;	/* keep compiler quiet */
 			reverse = false;
 			break;
@@ -3138,7 +3148,7 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 
 		sortcl->sortop = sortop;
 
-		switch (sortby_nulls)
+		switch (sortby->sortby_nulls)
 		{
 			case SORTBY_NULLS_DEFAULT:
 				/* NULLS FIRST is default for DESC; other way for ASC */
@@ -3151,7 +3161,7 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 				sortcl->nulls_first = false;
 				break;
 			default:
-				elog(ERROR, "unrecognized sortby_nulls: %d", sortby_nulls);
+				elog(ERROR, "unrecognized sortby_nulls: %d", sortby->sortby_nulls);
 				break;
 		}
 
