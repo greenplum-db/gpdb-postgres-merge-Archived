@@ -3099,6 +3099,7 @@ _copyCreateStmt(CreateStmt *from)
 	COPY_SCALAR_FIELD(oncommit);
 	COPY_STRING_FIELD(tablespacename);
 	COPY_NODE_FIELD(distributedBy);
+	COPY_NODE_FIELD(partitionBy);
 	COPY_SCALAR_FIELD(oidInfo.relOid);
 	COPY_SCALAR_FIELD(oidInfo.comptypeOid);
 	COPY_SCALAR_FIELD(oidInfo.comptypeArrayOid);

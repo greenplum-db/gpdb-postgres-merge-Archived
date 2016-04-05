@@ -31,6 +31,7 @@
 #include "parser/parse_node.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_partition.h"
+#include "parser/parse_utilcmd.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
@@ -1112,7 +1113,9 @@ make_child_node(CreateStmt *stmt, CreateStmtContext *cxt, char *relname,
 		}
 	}
 
-	cxt->alist = lappend(cxt->alist, child_tab_stmt);
+	cxt->alist = list_concat(cxt->alist,
+							 transformCreateStmt(child_tab_stmt,
+												 "internal CREATE TABLE command for partition"));
 
 	/*
 	 * ALTER TABLE for inheritance after CREATE TABLE ... XXX: Think of a
