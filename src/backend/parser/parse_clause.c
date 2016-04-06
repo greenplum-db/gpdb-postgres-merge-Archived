@@ -529,7 +529,8 @@ transformWindowClause(ParseState *pstate, Query *qry)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("window \"%s\" cannot reference itself",
-								ws->name)));
+								ws->name),
+						 parser_errposition(pstate, ws->location)));
 
 			foreach(tmp, winout)
 			{
@@ -565,14 +566,14 @@ transformWindowClause(ParseState *pstate, Query *qry)
 					if (ws->partition != NIL)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("PARTITION BY not allowed when "
-										"an existing window name is specified")));
+								 errmsg("PARTITION BY not allowed when an existing window name is specified"),
+								 parser_errposition(pstate, ws->location)));
 
 					if (ws->order != NIL && ws2->order != NIL)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("conflicting ORDER BY clauses in window "
-										"specification")));
+								 errmsg("conflicting ORDER BY clauses in window specification"),
+								 parser_errposition(pstate, ws->location)));
 
 					/*
 					 * We only want to disallow the specification of a
@@ -2194,6 +2195,7 @@ findTargetlistEntrySQL92(ParseState *pstate, Node *node, List **tlist,
 	if (IsA(node, A_Const))
 	{
 		Value	   *val = &((A_Const *) node)->val;
+		int			location = ((A_Const *) node)->location;
 		int			targetlist_pos = 0;
 		int			target_pos;
 
@@ -2218,7 +2220,8 @@ findTargetlistEntrySQL92(ParseState *pstate, Node *node, List **tlist,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 		/* translator: %s is name of a SQL construct, eg ORDER BY */
 				 errmsg("%s position %d is not in select list",
-						clauseText[clause], target_pos)));
+						clauseText[clause], target_pos),
+				 parser_errposition(pstate, location)));
 	}
 
 
