@@ -6771,7 +6771,6 @@ atpxPartAddList(Relation rel,
 					if (list_length(cp))
 					{
 						GrantStmt *gs = makeNode(GrantStmt);
-						List *pt;
 
 						gs->is_grant = true;
 						gs->objtype = ACL_OBJECT_RELATION;
@@ -6779,8 +6778,7 @@ atpxPartAddList(Relation rel,
 
 						gs->objects = list_make1(copyObject(t->relation));
 
-						pt = parse_analyze((Node *)gs, NULL, NULL, 0);
-						l1 = list_concat(l1, pt);
+						l1 = lappend(l1, gs);
 					}
 				}
 
