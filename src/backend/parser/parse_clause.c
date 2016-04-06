@@ -30,6 +30,7 @@
 #include "catalog/pg_window.h"
 #include "commands/defrem.h"
 #include "nodes/makefuncs.h"
+#include "nodes/nodeFuncs.h"
 #include "nodes/print.h" /* XXX: remove after debugging !! */
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
@@ -228,7 +229,8 @@ transformWindowFrameEdge(ParseState *pstate, WindowFrameEdge *e,
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("only one ORDER BY column may be specified when"
-								" RANGE is used in a window specification")));
+								" RANGE is used in a window specification"),
+						 parser_errposition(pstate, spec->location)));
 
 			/* e->val should already be transformed */
 			typmod = exprTypmod(e->val);
@@ -741,10 +743,13 @@ transformWindowClause(ParseState *pstate, Query *qry)
 				nf->lead = e;
 			}
 
+			ParseCallbackState pcbstate;
+			setup_parser_errposition_callback(&pcbstate, pstate, newspec->location);
 			transformWindowFrameEdge(pstate, nf->trail, newspec, qry,
 									 nf->is_rows);
 			transformWindowFrameEdge(pstate, nf->lead, newspec, qry,
 									 nf->is_rows);
+			cancel_parser_errposition_callback(&pcbstate);
 			newspec->frame = nf;
 		}
 
@@ -2957,7 +2962,8 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 				if (tle->ressortgroupref != scl->tleSortGroupRef)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-							 errmsg("SELECT DISTINCT ON expressions must match initial ORDER BY expressions")));
+							 errmsg("SELECT DISTINCT ON expressions must match initial ORDER BY expressions"),
+							 parser_errposition(pstate, exprLocation((Node *) lfirst(dlitem)))));
 				result = lappend(result, copyObject(scl));
 				nextsortlist = lnext(nextsortlist);
 			}
