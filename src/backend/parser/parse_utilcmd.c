@@ -1595,7 +1595,7 @@ transformDistributedBy(ParseState *pstate, CreateStmtContext *cxt,
 				 * if we can hash on this type, or if it's an array type (which
 				 * we can always hash) this column with be our default key.
 				 */
-				if(isGreenplumDbHashable(typeOid))
+				if (isGreenplumDbHashable(typeOid))
 				{
 					policy->attrs[0] = colindex;
 					assignedDefault = true;
@@ -1609,15 +1609,14 @@ transformDistributedBy(ParseState *pstate, CreateStmtContext *cxt,
 							 		 " Make sure column(s) chosen are the optimal data distribution key to minimize skew.")));
 					break;
 				}
-
 			}
 		}
 
-		if(!assignedDefault)
+		if (!assignedDefault)
 		{
 			/*
 			 * There was no eligible distribution column to default to. This table
-			 * will be partitioned on an empty distribution key list. In other words
+			 * will be partitioned on an empty distribution key list. In other words,
 			 * tuples coming into the system will be randomly assigned a bucket.
 			 */
 			policy->nattrs = 0;
