@@ -664,7 +664,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 			%nonassoc CREATEROLE
 			%nonassoc CREATEUSER
 			%nonassoc CSV
-			%nonassoc CURRENT
+			%nonassoc CURRENT_P
 			%nonassoc CURSOR
 			%nonassoc CYCLE
 			%nonassoc DATA_P
@@ -9410,7 +9410,7 @@ window_frame_start:
 					n->val = $1;
 					$$ = (Node *)n;
 				}
-			| CURRENT ROW
+			| CURRENT_P ROW
 				{
 					WindowFrameEdge *n = makeNode(WindowFrameEdge);
 					n->kind = WINDOW_CURRENT_ROW;
@@ -9461,7 +9461,7 @@ window_frame_following: a_expr FOLLOWING
 				}
 		;
 
-window_frame_exclusion: EXCLUDE CURRENT ROW { $$ = WINDOW_EXCLUSION_CUR_ROW; }
+window_frame_exclusion: EXCLUDE CURRENT_P ROW { $$ = WINDOW_EXCLUSION_CUR_ROW; }
 			| EXCLUDE GROUP_P { $$ = WINDOW_EXCLUSION_GROUP; }
 			| EXCLUDE TIES  { $$ = WINDOW_EXCLUSION_TIES; }
 			| EXCLUDE NO OTHERS { $$ = WINDOW_EXCLUSION_NO_OTHERS; }
