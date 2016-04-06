@@ -6,6 +6,8 @@ INSERT INTO xmltest VALUES (1, '<value>one</value>');
 INSERT INTO xmltest VALUES (2, '<value>two</value>');
 INSERT INTO xmltest VALUES (3, '<wrong');
 ERROR:  invalid XML content
+LINE 1: INSERT INTO xmltest VALUES (3, '<wrong');
+                                       ^
 DETAIL:  Entity: line 1: parser error : Couldn't find end of Start Tag wrong line 1
 <wrong
       ^
@@ -54,11 +56,8 @@ SELECT xmlconcat('hello', 'you');
 
 SELECT xmlconcat(1, 2);
 ERROR:  argument of XMLCONCAT must be type xml, not type integer
-<<<<<<< HEAD
 LINE 1: SELECT xmlconcat(1, 2);
                          ^
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 SELECT xmlconcat('bad', '<syntax');
 ERROR:  invalid XML content
 LINE 1: SELECT xmlconcat('bad', '<syntax');
@@ -463,11 +462,7 @@ SELECT table_name, view_definition FROM information_schema.views
  xmlview5   | SELECT XMLPARSE(CONTENT '<abc>x</abc>'::text STRIP WHITESPACE) AS "xmlparse";
  xmlview6   | SELECT XMLPI(NAME foo, 'bar'::text) AS "xmlpi";
  xmlview7   | SELECT XMLROOT('<foo/>'::xml, VERSION NO VALUE, STANDALONE YES) AS "xmlroot";
-<<<<<<< HEAD
- xmlview8   | SELECT (XMLSERIALIZE(CONTENT 'good'::xml AS bpchar))::bpchar AS "xmlserialize";
-=======
  xmlview8   | SELECT (XMLSERIALIZE(CONTENT 'good'::xml AS character(10)))::character(10) AS "xmlserialize";
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  xmlview9   | SELECT XMLSERIALIZE(CONTENT 'good'::xml AS text) AS "xmlserialize";
 (9 rows)
 
@@ -501,7 +496,6 @@ SELECT xpath('//loc:piece/@id', '<local:data xmlns:local="http://127.0.0.1"><loc
  {1,2}
 (1 row)
 
-<<<<<<< HEAD
 SELECT xpath('//loc:piece', '<local:data xmlns:local="http://127.0.0.1"><local:piece id="1">number one</local:piece><local:piece id="2" /></local:data>', ARRAY[ARRAY['loc', 'http://127.0.0.1']]);
                                                                      xpath                                                                      
 ------------------------------------------------------------------------------------------------------------------------------------------------
@@ -517,15 +511,12 @@ SELECT xpath('//loc:piece', '<local:data xmlns:local="http://127.0.0.1" xmlns="h
  </local:piece>","<local:piece xmlns:local=\"http://127.0.0.1\" id=\"2\"/>"}
 (1 row)
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 SELECT xpath('//b', '<a>one <b>two</b> three <b>etc</b></a>');
           xpath          
 -------------------------
  {<b>two</b>,<b>etc</b>}
 (1 row)
 
-<<<<<<< HEAD
 -- Test xmlexists and xpath_exists
 SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>');
  xmlexists 
@@ -710,8 +701,6 @@ SELECT xml_is_well_formed('abc');
  t
 (1 row)
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 -- External entity references should not leak filesystem information.
 SELECT XMLPARSE(DOCUMENT '<!DOCTYPE foo [<!ENTITY c SYSTEM "/etc/passwd">]><foo>&c;</foo>');
                             xmlparse                             
