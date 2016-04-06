@@ -1133,8 +1133,14 @@ ProcessUtility(Node *parsetree,
 				ListCell   *l;
 
 				/* Run parse analysis ... */
-				stmts = transformAlterTableStmt((AlterTableStmt *) parsetree,
-												queryString);
+				/*
+				 * GPDB: Like for CREATE TABLE, only do parse analysis in the Query Dispatcher.
+				 */
+				if (Gp_role == GP_ROLE_EXECUTE)
+					stmts = list_make1(parsetree);
+				else
+					stmts = transformAlterTableStmt((AlterTableStmt *) parsetree,
+													queryString);
 
 				/* ... and do it */
 				foreach(l, stmts)
