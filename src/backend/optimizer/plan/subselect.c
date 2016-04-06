@@ -1755,14 +1755,6 @@ SS_make_initplan_from_plan(PlannerInfo *root, Plan *plan,
 								   plan);
 	root->glob->subrtables = lappend(root->glob->subrtables,
 									 root->parse->rtable);
-	
-	/*
-	 * Add the subplan and its rtable to the global lists.
-	 */
-	root->glob->subplans = lappend(root->glob->subplans,
-								   plan);
-	root->glob->subrtables = lappend(root->glob->subrtables,
-									 root->parse->rtable);
 
 	/*
 	 * Create a SubPlan node and add it to the outer list of InitPlans.
