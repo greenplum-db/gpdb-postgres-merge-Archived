@@ -6698,21 +6698,14 @@ atpxPartAddList(Relation rel,
 		bool			 bFirst_TemplateOnly = true;   /* ignore dummy entry */
 		int				 pby_templ_depth	 = 0;	   /* template partdepth */
 		Oid				 skipTableRelid		 = InvalidOid;
-		List			*attr_encodings		 = NIL;
-
-		/* this parse_analyze expands the phony create of a partitioned table
-		 * that we just build into the constituent commands we need to create
-		 * the new part.  (This will include some commands for the parent that
-		 * we don't need, since the parent already exists.)
-		 */
-
-		l1 = transformCreateStmt(ct, "ADD PARTITION");
 
 		/*
-		 * Must reference ct->attr_encodings after parse_analyze() since that
-		 * stage by change the attribute encodings via expansion.
+		 * This transformCreateStmt() expands the phony create of a partitioned
+		 * table that we just build into the constituent commands we need to create
+		 * the new part.  (This will include some commands for the parent that we
+		 * don't need, since the parent already exists.)
 		 */
-		attr_encodings = ct->attr_encodings;
+		l1 = transformCreateStmt(ct, "ADD PARTITION");
 
 		/*
 		 * Look for the first CreateStmt and generate a GrantStmt
@@ -6733,8 +6726,6 @@ atpxPartAddList(Relation rel,
 				bool isNull;
 				CreateStmt *t = (CreateStmt *) s;
 				cqContext	*classcqCtx;
-
-				t->attr_encodings = copyObject(attr_encodings);
 
 				classcqCtx = caql_beginscan(
 						NULL,
