@@ -75,7 +75,7 @@ typedef struct
 	int			location;
 }	range_partition_ctx;
 
-static void make_child_node(CreateStmt *stmt, CreateStmtContext *cxt, char *relname,
+static void make_child_node(ParseState *pstate, CreateStmt *stmt, CreateStmtContext *cxt, char *relname,
 				PartitionBy *curPby, Node *newSub,
 				Node *pRuleCatalog, Node *pPostCreate, Node *pConstraint,
 				Node *pStoreAttr, char *prtstr, bool bQuiet,
@@ -864,7 +864,7 @@ transformPartitionBy(ParseState *pstate, CreateStmtContext *cxt,
 		if (newSub)
 			newSub->parentRel = copyObject(pBy->parentRel);
 
-		make_child_node(stmt, cxt, relname, curPby, (Node *) newSub,
+		make_child_node(pstate, stmt, cxt, relname, curPby, (Node *) newSub,
 						pRuleCatalog, pPostCreate, pConstraint, pStoreAttr,
 						prtstr, bQuiet, colencs);
 
@@ -989,7 +989,7 @@ merge_part_column_encodings(CreateStmt *cs, List *stenc)
 }
 
 static void
-make_child_node(CreateStmt *stmt, CreateStmtContext *cxt, char *relname,
+make_child_node(ParseState *pstate, CreateStmt *stmt, CreateStmtContext *cxt, char *relname,
 				PartitionBy *curPby, Node *newSub,
 				Node *pRuleCatalog, Node *pPostCreate, Node *pConstraint,
 				Node *pStoreAttr, char *prtstr, bool bQuiet,
@@ -1115,8 +1115,7 @@ make_child_node(CreateStmt *stmt, CreateStmtContext *cxt, char *relname,
 		}
 	}
 
-	childstmts = transformCreateStmt(child_tab_stmt,
-									"internal CREATE TABLE command for partition");
+	childstmts = transformCreateStmt(child_tab_stmt, pstate->p_sourcetext);
 
 	/*
 	 * Attach the child partition to the parent, by creating an ALTER TABLE
