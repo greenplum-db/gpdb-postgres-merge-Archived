@@ -1147,35 +1147,33 @@ inheritance_planner(PlannerInfo *root)
 	if (list_length(subplans) == 1)
 		plan = (Plan *) linitial(subplans);
 	else
+	{
 		plan = (Plan *) make_append(subplans, true, tlist);
 
-	/* MPP dispatch needs to know the kind of locus. */
-	if ( Gp_role == GP_ROLE_DISPATCH )
-	{
-		switch ( append_locustype )
+		/* MPP dispatch needs to know the kind of locus. */
+		if ( Gp_role == GP_ROLE_DISPATCH )
 		{
-		case CdbLocusType_Entry:
-			mark_plan_entry(plan);
-			break;
-			
-		case CdbLocusType_Hashed:
-		case CdbLocusType_HashedOJ:
-		case CdbLocusType_Strewn:
-			/* Depend on caller to avoid incompatible hash keys. */
-			/* For our purpose (UPD/DEL target), strewn is good enough. */
-			mark_plan_strewn(plan);
-			break;
-			
-		default:
-			ereport(ERROR, (
-				errcode(ERRCODE_CDB_INTERNAL_ERROR),
-				errmsg("unexpected locus assigned to target inheritance set") ));
+			switch ( append_locustype )
+			{
+				case CdbLocusType_Entry:
+					mark_plan_entry(plan);
+					break;
+
+				case CdbLocusType_Hashed:
+				case CdbLocusType_HashedOJ:
+				case CdbLocusType_Strewn:
+					/* Depend on caller to avoid incompatible hash keys. */
+					/* For our purpose (UPD/DEL target), strewn is good enough. */
+					mark_plan_strewn(plan);
+					break;
+
+				default:
+					ereport(ERROR,
+							(errcode(ERRCODE_CDB_INTERNAL_ERROR),
+							 errmsg("unexpected locus assigned to target inheritance set") ));
+			}
 		}
 	}
-	
-	/* Suppress Append if there's only one surviving child rel */
-	if (list_length(subplans) == 1)
-		return (Plan *) linitial(subplans);
 
 	return plan;
 }
