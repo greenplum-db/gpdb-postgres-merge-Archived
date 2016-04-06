@@ -1688,13 +1688,13 @@ RecordTransactionAbort(bool isSubXact)
 	XLogRecData rdata[3];
 	int			lastrdata = 0;
 	xl_xact_abort xlrec;
+	bool		isQEReader;
 
 	/* Like in CommitTransaction(), treat a QE reader as if there was no XID */
-	if (DistributedTransactionContext == DTX_CONTEXT_QE_READER ||
-		DistributedTransactionContext == DTX_CONTEXT_QE_ENTRY_DB_SINGLETON)
-	{
+	isQEReader = (DistributedTransactionContext == DTX_CONTEXT_QE_READER ||
+					DistributedTransactionContext == DTX_CONTEXT_QE_ENTRY_DB_SINGLETON);
+	if (isQEReader)
 		xid = InvalidTransactionId;
-	}
 	else
 		xid = GetTopTransactionIdIfAny();
 
@@ -1818,7 +1818,7 @@ RecordTransactionAbort(bool isSubXact)
 	 * subxacts, because we already have the child XID array at hand.  For
 	 * main xacts, the equivalent happens just after this function returns.
 	 */
-	if (isSubXact)
+	if (isSubXact && isQEReader)
 		XidCacheRemoveRunningXids(xid, nchildren, children, latestXid);
 
 	/* Reset XactLastRecEnd until the next transaction writes something */
