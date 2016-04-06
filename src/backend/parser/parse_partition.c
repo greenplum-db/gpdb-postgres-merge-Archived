@@ -998,6 +998,8 @@ make_child_node(CreateStmt *stmt, CreateStmtContext *cxt, char *relname,
 	RangeVar   *parent_tab_name = makeNode(RangeVar);
 	RangeVar   *child_tab_name = makeNode(RangeVar);
 	CreateStmt *child_tab_stmt = makeNode(CreateStmt);
+	AlterTableStmt *ats;
+	List	   *childstmts;
 
 	parent_tab_name->catalogname = cxt->relation->catalogname;
 	parent_tab_name->schemaname = cxt->relation->schemaname;
@@ -1113,30 +1115,34 @@ make_child_node(CreateStmt *stmt, CreateStmtContext *cxt, char *relname,
 		}
 	}
 
-	cxt->alist = list_concat(cxt->alist,
-							 transformCreateStmt(child_tab_stmt,
-												 "internal CREATE TABLE command for partition"));
+	childstmts = transformCreateStmt(child_tab_stmt,
+									"internal CREATE TABLE command for partition");
 
 	/*
-	 * ALTER TABLE for inheritance after CREATE TABLE ... XXX: Think of a
-	 * better way.
+	 * Attach the child partition to the parent, by creating an ALTER TABLE
+	 * statement. The order of the commands is important: we want the CREATE
+	 * TABLE command for the partition to be executed first, then the ALTER
+	 * TABLE to make it inherit the parent, and any additional commands to
+	 * create subpartitions after that.
 	 */
-	if (1)
 	{
-		AlterTableCmd *atc = makeNode(AlterTableCmd);
-		AlterTableStmt *ats = makeNode(AlterTableStmt);
-		InheritPartitionCmd *ipc = makeNode(InheritPartitionCmd);
+		AlterTableCmd *atc;
+		InheritPartitionCmd *ipc;
+
+		ipc = makeNode(InheritPartitionCmd);
+		ipc->parent = parent_tab_name;
 
 		/* alter table child inherits parent */
+		atc = makeNode(AlterTableCmd);
 		atc->subtype = AT_AddInherit;
-		ipc->parent = parent_tab_name;
 		atc->def = (Node *) ipc;
+
+		ats = makeNode(AlterTableStmt);
 		ats->relation = child_tab_name;
 		ats->cmds = list_make1((Node *) atc);
 		ats->relkind = OBJECT_TABLE;
 
 		/* this is the deepest we're going, add the partition rules */
-		if (1)
 		{
 			AlterTableCmd *atc2 = makeNode(AlterTableCmd);
 
@@ -1145,8 +1151,15 @@ make_child_node(CreateStmt *stmt, CreateStmtContext *cxt, char *relname,
 			atc2->def = (Node *) curPby;
 			ats->cmds = lappend(ats->cmds, atc2);
 		}
-		cxt->alist = lappend(cxt->alist, ats);
 	}
+
+	/* CREATE TABLE command for the partition */
+	cxt->alist = lappend(cxt->alist, linitial(childstmts));
+	childstmts = list_delete_first(childstmts);
+	/* ALTER TABLE goes next */
+	cxt->alist = lappend(cxt->alist, ats);
+	/* And then any additional commands generated from the CREATE TABLE */
+	cxt->alist = list_concat(cxt->alist, childstmts);
 }
 
 static void
