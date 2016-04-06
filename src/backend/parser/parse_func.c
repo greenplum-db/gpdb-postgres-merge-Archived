@@ -563,7 +563,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 							func_signature_string(funcname, nargs, 
 												  actual_arg_types)),
 					 errhint("The filter clause is only supported over functions "
-							 "defined as STRICT.")));
+							 "defined as STRICT."),
+					 parser_errposition(pstate, location)));
 		}
 
 		if (retset)
