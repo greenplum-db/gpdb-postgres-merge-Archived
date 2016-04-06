@@ -197,7 +197,7 @@ CREATE INDEX func_index_index on func_index_heap (textcat(f1,f2));
 INSERT INTO func_index_heap VALUES('ABC','DEF');
 INSERT INTO func_index_heap VALUES('AB','CDEFG');
 INSERT INTO func_index_heap VALUES('QWE','RTY');
--- this should fail because of unique index:
+-- this should fail because of unique index: (In GPDB, the index isn't unique, so no error)
 INSERT INTO func_index_heap VALUES('ABCD', 'EF');
 -- but this shouldn't:
 INSERT INTO func_index_heap VALUES('QWERTY');
@@ -213,7 +213,7 @@ CREATE  INDEX func_index_index on func_index_heap ((f1 || f2) text_ops);
 INSERT INTO func_index_heap VALUES('ABC','DEF');
 INSERT INTO func_index_heap VALUES('AB','CDEFG');
 INSERT INTO func_index_heap VALUES('QWE','RTY');
--- this should fail because of unique index:
+-- this should fail because of unique index: (In GPDB, the index isn't unique, so no error)
 INSERT INTO func_index_heap VALUES('ABCD', 'EF');
 -- but this shouldn't:
 INSERT INTO func_index_heap VALUES('QWERTY');
