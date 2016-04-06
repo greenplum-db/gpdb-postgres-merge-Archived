@@ -58,7 +58,7 @@ SET enable_bitmapscan = off;
 --
 -- Btree index / opclass with the various operators
 --
-CREATE UNIQUE INDEX enumtest_btree ON enumtest USING btree (col);
+CREATE INDEX enumtest_btree ON enumtest USING btree (col);
 SELECT * FROM enumtest WHERE col = 'orange';
 SELECT * FROM enumtest WHERE col <> 'orange' ORDER BY col;
 SELECT * FROM enumtest WHERE col > 'yellow' ORDER BY col;
@@ -133,26 +133,8 @@ SELECT echo_me('red');
 DROP FUNCTION echo_me(rainbow);
 
 --
--- RI triggers on enum types
---
-CREATE TABLE enumtest_parent (id rainbow PRIMARY KEY);
-CREATE TABLE enumtest_child (parent rainbow REFERENCES enumtest_parent);
-INSERT INTO enumtest_parent VALUES ('red');
-INSERT INTO enumtest_child VALUES ('red');
-INSERT INTO enumtest_child VALUES ('blue');  -- fail
-DELETE FROM enumtest_parent;  -- fail
---
--- cross-type RI should fail
---
-CREATE TYPE bogus AS ENUM('good', 'bad', 'ugly');
-CREATE TABLE enumtest_bogus_child(parent bogus REFERENCES enumtest_parent);
-DROP TYPE bogus;
-
---
 -- Cleanup
 --
-DROP TABLE enumtest_child;
-DROP TABLE enumtest_parent;
 DROP TABLE enumtest;
 DROP TYPE rainbow;
 
