@@ -5,17 +5,10 @@
  *
  * This should be included _AFTER_ postgres.h and system include files
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
  * src/pl/plperl/plperl.h
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1995, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/pl/plperl/plperl.h,v 1.8 2008/01/01 19:46:00 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 
 #ifndef PL_PERL_H
@@ -81,34 +74,15 @@
 #endif /* __GNUC__ */
 #endif /*  USE_REPL_SNPRINTF */
 
-<<<<<<< HEAD
 /* perl version and platform portability */
 #define NEED_eval_pv
 #define NEED_newRV_noinc
 #define NEED_sv_2pv_flags
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* perl may have a different width of "bool", don't buy it */
 #ifdef bool
 #undef bool
 #endif
-<<<<<<< HEAD
-=======
-
-/* supply GvCV_set if it's missing - ppport.h doesn't supply it, unfortunately */
-#ifndef GvCV_set
-#define GvCV_set(gv, cv)		(GvCV(gv) = cv)
-#endif
-
-/* routines from spi_internal.c */
-int			spi_DEBUG(void);
-int			spi_LOG(void);
-int			spi_INFO(void);
-int			spi_NOTICE(void);
-int			spi_WARNING(void);
-int			spi_ERROR(void);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* supply HeUTF8 if it's missing - ppport.h doesn't supply it, unfortunately */
 #ifndef HeUTF8

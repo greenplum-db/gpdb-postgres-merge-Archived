@@ -2589,11 +2589,7 @@ else {
   eval {
     require File::Find;
     File::Find::find(sub {
-<<<<<<< HEAD
       $File$srcext)$/i
-=======
-      $File::Find::name =~ /($srcext)$/i
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
           and push @files, $File::Find::name;
     }, '.');
   };
@@ -5025,19 +5021,11 @@ DPPP_(my_sv_pvn_force_flags)(pTHX_ SV *sv, STRLEN *lp, I32 flags)
 #ifndef SvPV_force
 #  define SvPV_force(sv, lp)             SvPV_force_flags(sv, lp, SV_GMAGIC)
 #endif
-<<<<<<< HEAD
 
 #ifndef SvPV_force_nolen
 #  define SvPV_force_nolen(sv)           SvPV_force_flags_nolen(sv, SV_GMAGIC)
 #endif
 
-=======
-
-#ifndef SvPV_force_nolen
-#  define SvPV_force_nolen(sv)           SvPV_force_flags_nolen(sv, SV_GMAGIC)
-#endif
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #ifndef SvPV_force_mutable
 #  define SvPV_force_mutable(sv, lp)     SvPV_force_flags_mutable(sv, lp, SV_GMAGIC)
 #endif
@@ -5973,7 +5961,6 @@ DPPP_(my_warner)(U32 err, const char *pat, ...)
 #ifdef USE_ITHREADS
 #ifndef CopFILE
 #  define CopFILE(c)                     ((c)->cop_file)
-<<<<<<< HEAD
 #endif
 
 #ifndef CopFILEGV
@@ -6008,42 +5995,6 @@ DPPP_(my_warner)(U32 err, const char *pat, ...)
 #  define CopSTASH_set(c,hv)             CopSTASHPV_set(c, (hv) ? HvNAME(hv) : Nullch)
 #endif
 
-=======
-#endif
-
-#ifndef CopFILEGV
-#  define CopFILEGV(c)                   (CopFILE(c) ? gv_fetchfile(CopFILE(c)) : Nullgv)
-#endif
-
-#ifndef CopFILE_set
-#  define CopFILE_set(c,pv)              ((c)->cop_file = savepv(pv))
-#endif
-
-#ifndef CopFILESV
-#  define CopFILESV(c)                   (CopFILE(c) ? GvSV(gv_fetchfile(CopFILE(c))) : Nullsv)
-#endif
-
-#ifndef CopFILEAV
-#  define CopFILEAV(c)                   (CopFILE(c) ? GvAV(gv_fetchfile(CopFILE(c))) : Nullav)
-#endif
-
-#ifndef CopSTASHPV
-#  define CopSTASHPV(c)                  ((c)->cop_stashpv)
-#endif
-
-#ifndef CopSTASHPV_set
-#  define CopSTASHPV_set(c,pv)           ((c)->cop_stashpv = ((pv) ? savepv(pv) : Nullch))
-#endif
-
-#ifndef CopSTASH
-#  define CopSTASH(c)                    (CopSTASHPV(c) ? gv_stashpv(CopSTASHPV(c),GV_ADD) : Nullhv)
-#endif
-
-#ifndef CopSTASH_set
-#  define CopSTASH_set(c,hv)             CopSTASHPV_set(c, (hv) ? HvNAME(hv) : Nullch)
-#endif
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #ifndef CopSTASH_eq
 #  define CopSTASH_eq(c,hv)              ((hv) && (CopSTASHPV(c) == HvNAME(hv) \
 					|| (CopSTASHPV(c) && HvNAME(hv) \
@@ -6057,7 +6008,6 @@ DPPP_(my_warner)(U32 err, const char *pat, ...)
 
 #ifndef CopFILEGV_set
 #  define CopFILEGV_set(c,gv)            ((c)->cop_filegv = (GV*)SvREFCNT_inc(gv))
-<<<<<<< HEAD
 #endif
 
 #ifndef CopFILE_set
@@ -6142,92 +6092,6 @@ DPPP_(my_warner)(U32 err, const char *pat, ...)
 #  define PERL_SCAN_GREATER_THAN_UV_MAX  0x02
 #endif
 
-=======
-#endif
-
-#ifndef CopFILE_set
-#  define CopFILE_set(c,pv)              CopFILEGV_set((c), gv_fetchfile(pv))
-#endif
-
-#ifndef CopFILESV
-#  define CopFILESV(c)                   (CopFILEGV(c) ? GvSV(CopFILEGV(c)) : Nullsv)
-#endif
-
-#ifndef CopFILEAV
-#  define CopFILEAV(c)                   (CopFILEGV(c) ? GvAV(CopFILEGV(c)) : Nullav)
-#endif
-
-#ifndef CopFILE
-#  define CopFILE(c)                     (CopFILESV(c) ? SvPVX(CopFILESV(c)) : Nullch)
-#endif
-
-#ifndef CopSTASH
-#  define CopSTASH(c)                    ((c)->cop_stash)
-#endif
-
-#ifndef CopSTASH_set
-#  define CopSTASH_set(c,hv)             ((c)->cop_stash = (hv))
-#endif
-
-#ifndef CopSTASHPV
-#  define CopSTASHPV(c)                  (CopSTASH(c) ? HvNAME(CopSTASH(c)) : Nullch)
-#endif
-
-#ifndef CopSTASHPV_set
-#  define CopSTASHPV_set(c,pv)           CopSTASH_set((c), gv_stashpv(pv,GV_ADD))
-#endif
-
-#ifndef CopSTASH_eq
-#  define CopSTASH_eq(c,hv)              (CopSTASH(c) == (hv))
-#endif
-
-#endif /* USE_ITHREADS */
-#ifndef IN_PERL_COMPILETIME
-#  define IN_PERL_COMPILETIME            (PL_curcop == &PL_compiling)
-#endif
-
-#ifndef IN_LOCALE_RUNTIME
-#  define IN_LOCALE_RUNTIME              (PL_curcop->op_private & HINT_LOCALE)
-#endif
-
-#ifndef IN_LOCALE_COMPILETIME
-#  define IN_LOCALE_COMPILETIME          (PL_hints & HINT_LOCALE)
-#endif
-
-#ifndef IN_LOCALE
-#  define IN_LOCALE                      (IN_PERL_COMPILETIME ? IN_LOCALE_COMPILETIME : IN_LOCALE_RUNTIME)
-#endif
-#ifndef IS_NUMBER_IN_UV
-#  define IS_NUMBER_IN_UV                0x01
-#endif
-
-#ifndef IS_NUMBER_GREATER_THAN_UV_MAX
-#  define IS_NUMBER_GREATER_THAN_UV_MAX  0x02
-#endif
-
-#ifndef IS_NUMBER_NOT_INT
-#  define IS_NUMBER_NOT_INT              0x04
-#endif
-
-#ifndef IS_NUMBER_NEG
-#  define IS_NUMBER_NEG                  0x08
-#endif
-
-#ifndef IS_NUMBER_INFINITY
-#  define IS_NUMBER_INFINITY             0x10
-#endif
-
-#ifndef IS_NUMBER_NAN
-#  define IS_NUMBER_NAN                  0x20
-#endif
-#ifndef GROK_NUMERIC_RADIX
-#  define GROK_NUMERIC_RADIX(sp, send)   grok_numeric_radix(sp, send)
-#endif
-#ifndef PERL_SCAN_GREATER_THAN_UV_MAX
-#  define PERL_SCAN_GREATER_THAN_UV_MAX  0x02
-#endif
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #ifndef PERL_SCAN_SILENT_ILLDIGIT
 #  define PERL_SCAN_SILENT_ILLDIGIT      0x04
 #endif
@@ -6740,7 +6604,6 @@ DPPP_(my_grok_oct)(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *resul
     const UV max_div_8 = UV_MAX / 8;
     bool allow_underscores = *flags & PERL_SCAN_ALLOW_UNDERSCORES;
     bool overflowed = FALSE;
-<<<<<<< HEAD
 
     for (; len-- && *s; s++) {
          /* gcc 2.95 optimiser not smart enough to figure that this subtraction
@@ -6788,55 +6651,6 @@ DPPP_(my_grok_oct)(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *resul
         break;
     }
 
-=======
-
-    for (; len-- && *s; s++) {
-         /* gcc 2.95 optimiser not smart enough to figure that this subtraction
-            out front allows slicker code.  */
-        int digit = *s - '0';
-        if (digit >= 0 && digit <= 7) {
-            /* Write it in this wonky order with a goto to attempt to get the
-               compiler to make the common case integer-only loop pretty tight.
-            */
-          redo:
-            if (!overflowed) {
-                if (value <= max_div_8) {
-                    value = (value << 3) | digit;
-                    continue;
-                }
-                /* Bah. We're just overflowed.  */
-                warn("Integer overflow in octal number");
-                overflowed = TRUE;
-                value_nv = (NV) value;
-            }
-            value_nv *= 8.0;
-	    /* If an NV has not enough bits in its mantissa to
-	     * represent a UV this summing of small low-order numbers
-	     * is a waste of time (because the NV cannot preserve
-	     * the low-order bits anyway): we could just remember when
-	     * did we overflow and in the end just multiply value_nv by the
-	     * right amount of 8-tuples. */
-            value_nv += (NV)digit;
-            continue;
-        }
-        if (digit == ('_' - '0') && len && allow_underscores
-            && (digit = s[1] - '0') && (digit >= 0 && digit <= 7))
-	    {
-		--len;
-		++s;
-                goto redo;
-	    }
-        /* Allow \octal to work the DWIM way (that is, stop scanning
-         * as soon as non-octal characters are seen, complain only iff
-         * someone seems to want to use the digits eight and nine). */
-        if (digit == 8 || digit == 9) {
-            if (!(*flags & PERL_SCAN_SILENT_ILLDIGIT))
-                warn("Illegal octal digit '%c' ignored", *s);
-        }
-        break;
-    }
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     if (   ( overflowed && value_nv > 4294967295.0)
 #if UVSIZE > 4
 	|| (!overflowed && value > 0xffffffff  )
@@ -7193,7 +7007,6 @@ DPPP_(my_pv_pretty)(pTHX_ SV *dsv, char const * const str, const STRLEN count,
         sv_catpvs(dsv, "\"");
     else if (flags & PERL_PV_PRETTY_LTGT)
         sv_catpvs(dsv, "<");
-<<<<<<< HEAD
 
     if (start_color != NULL)
         sv_catpv(dsv, D_PPP_CONSTPV_ARG(start_color));
@@ -7214,28 +7027,6 @@ DPPP_(my_pv_pretty)(pTHX_ SV *dsv, char const * const str, const STRLEN count,
     return SvPVX(dsv);
 }
 
-=======
-
-    if (start_color != NULL)
-        sv_catpv(dsv, D_PPP_CONSTPV_ARG(start_color));
-
-    pv_escape(dsv, str, count, max, &escaped, flags | PERL_PV_ESCAPE_NOCLEAR);
-
-    if (end_color != NULL)
-        sv_catpv(dsv, D_PPP_CONSTPV_ARG(end_color));
-
-    if (dq == '"')
-	sv_catpvs(dsv, "\"");
-    else if (flags & PERL_PV_PRETTY_LTGT)
-        sv_catpvs(dsv, ">");
-
-    if ((flags & PERL_PV_PRETTY_ELLIPSES) && escaped < count)
-	sv_catpvs(dsv, "...");
-
-    return SvPVX(dsv);
-}
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif
 #endif
 
@@ -7252,7 +7043,6 @@ extern char * DPPP_(my_pv_display)(pTHX_ SV * dsv, const char * pv, STRLEN cur, 
 #endif
 #define pv_display(a,b,c,d,e) DPPP_(my_pv_display)(aTHX_ a,b,c,d,e)
 #define Perl_pv_display DPPP_(my_pv_display)
-<<<<<<< HEAD
 
 #if defined(NEED_pv_display) || defined(NEED_pv_display_GLOBAL)
 
@@ -7267,22 +7057,6 @@ DPPP_(my_pv_display)(pTHX_ SV *dsv, const char *pv, STRLEN cur, STRLEN len, STRL
 
 #endif
 #endif
-=======
-
-#if defined(NEED_pv_display) || defined(NEED_pv_display_GLOBAL)
-
-char *
-DPPP_(my_pv_display)(pTHX_ SV *dsv, const char *pv, STRLEN cur, STRLEN len, STRLEN pvlim)
-{
-    pv_pretty(dsv, pv, cur, pvlim, NULL, NULL, PERL_PV_PRETTY_DUMP);
-    if (len > cur && pv[cur] == '\0')
-	sv_catpvs(dsv, "\\0");
-    return SvPVX(dsv);
-}
-
-#endif
-#endif
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #endif /* _P_P_PORTABILITY_H_ */
 

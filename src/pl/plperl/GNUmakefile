@@ -71,12 +71,6 @@ perlchunks.h: $(PERLCHUNKS)
 
 all: all-lib
 
-plperl.o: plperl_opmask.h
-
-plperl_opmask.h: plperl_opmask.pl
-	$(PERL) $< $@
-
-
 SPI.c: SPI.xs
 	$(PERL) $(XSUBPPDIR)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap $< >$@
 

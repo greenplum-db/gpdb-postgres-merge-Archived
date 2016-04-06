@@ -368,7 +368,6 @@ CREATE OR REPLACE FUNCTION perl_spi_prepared_bad(double precision) RETURNS doubl
 $$ LANGUAGE plperl;
 SELECT perl_spi_prepared_bad(4.35) as "double precision";
 
-<<<<<<< HEAD
 -- Test with a row type
 CREATE OR REPLACE FUNCTION perl_spi_prepared() RETURNS INTEGER AS $$
    my $x = spi_prepare('select $1::footype AS a', 'footype');
@@ -387,7 +386,6 @@ return $q->{rows}->[0]->{a};
 $$ LANGUAGE plperl;
 SELECT * from perl_spi_prepared_row('(1, 2)');
 
-=======
 --
 -- Test detection of unsafe operations
 CREATE OR REPLACE FUNCTION perl_unsafe1() RETURNS void AS $$
@@ -403,4 +401,3 @@ $$ LANGUAGE plperl;
 
 SELECT self_modify(42);
 SELECT self_modify(42);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
