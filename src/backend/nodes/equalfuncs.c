@@ -1497,6 +1497,7 @@ _equalCreateEnumStmt(CreateEnumStmt *a, CreateEnumStmt *b)
 	COMPARE_NODE_FIELD(typeName);
 	COMPARE_NODE_FIELD(vals);
 	COMPARE_SCALAR_FIELD(enumTypeOid);
+	COMPARE_SCALAR_FIELD(enumArrayOid);
 	COMPARE_NODE_FIELD(valOids);
 
 	return true;

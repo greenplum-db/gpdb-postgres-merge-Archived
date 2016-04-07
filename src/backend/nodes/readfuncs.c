@@ -2662,6 +2662,7 @@ _readCreateEnumStmt(void)
 	READ_NODE_FIELD(typeName);
 	READ_NODE_FIELD(vals);
 	READ_OID_FIELD(enumTypeOid);
+	READ_OID_FIELD(enumArrayOid);
 	READ_NODE_FIELD(valOids);
 
 	READ_DONE();

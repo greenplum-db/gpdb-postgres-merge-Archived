@@ -2416,6 +2416,7 @@ typedef struct CreateEnumStmt
 	List	   *vals;			/* enum values (list of Value strings) */
 
 	Oid			enumTypeOid;	/* Oid to assign, when dispatching from QD to QEs */
+	Oid			enumArrayOid;	/* Oid to assign to array type, when dispatching from QD to QEs */
 	List	   *valOids;		/* Oids to assign to the values */
 } CreateEnumStmt;
 

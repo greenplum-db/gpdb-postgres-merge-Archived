@@ -1114,7 +1114,10 @@ DefineEnum(CreateEnumStmt *stmt)
 
 	/* Preassign array type OID so we can insert it in pg_type.typarray */
 	pg_type = heap_open(TypeRelationId, AccessShareLock);
-	enumArrayOid = GetNewOid(pg_type);
+	if (OidIsValid(stmt->enumArrayOid))
+		enumArrayOid = stmt->enumArrayOid;
+	else
+		enumArrayOid = GetNewOid(pg_type);
 	heap_close(pg_type, AccessShareLock);
 
 	/* Create the pg_type entry */
@@ -1148,6 +1151,7 @@ DefineEnum(CreateEnumStmt *stmt)
 				   0,			/* Array dimensions of typbasetype */
 				   false);		/* Type NOT NULL */
 	stmt->enumTypeOid = enumTypeOid;
+	stmt->enumArrayOid = enumArrayOid;
 
 	/* Enter the enum's values into pg_enum */
 	EnumValuesCreate(enumTypeOid, stmt->vals, &stmt->valOids);

@@ -3040,6 +3040,7 @@ _outCreateEnumStmt(StringInfo str, CreateEnumStmt *node)
 	WRITE_NODE_FIELD(typeName);
 	WRITE_NODE_FIELD(vals);
 	WRITE_OID_FIELD(enumTypeOid);
+	WRITE_OID_FIELD(enumArrayOid);
 	WRITE_NODE_FIELD(valOids);
 }
 
