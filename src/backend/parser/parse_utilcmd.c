@@ -127,7 +127,7 @@ static AlterTableCmd *transformAlterTable_all_PartitionStmt(ParseState *pstate,
  *	  - thomas 1997-12-02
  */
 List *
-transformCreateStmt(CreateStmt *stmt, const char *queryString)
+transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartition)
 {
 	ParseState *pstate;
 	CreateStmtContext cxt;
@@ -168,6 +168,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	cxt.inhRelations = stmt->inhRelations;
 	cxt.isalter = false;
 	cxt.isaddpart = stmt->is_add_part;
+	cxt.iscreatepart = createPartition;
 	cxt.columns = NIL;
 	cxt.ckconstraints = NIL;
 	cxt.fkconstraints = NIL;
@@ -1155,6 +1156,7 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 	cxt.inhRelations = NIL;
 	cxt.hasoids = false;
 	cxt.isalter = false;
+	cxt.iscreatepart = false;
 	cxt.columns = NIL;
 	cxt.ckconstraints = NIL;
 	cxt.fkconstraints = NIL;
@@ -2233,7 +2235,12 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 	}
 	index->isconstraint = true;
 
-	if (constraint->name != NULL)
+	/*
+	 * If we are creating an index backing a constraint in a partition, let DefineIndex
+	 * choose a name, even if we have a constraint name available. The constraint will have
+	 * the same name in all partitions, so it is not unique.
+	 */
+	if (constraint->name != NULL && !cxt->iscreatepart)
 		index->idxname = pstrdup(constraint->name);
 	else
 		index->idxname = NULL;	/* DefineIndex will choose name */
@@ -2457,143 +2464,6 @@ transformIndexStmt(IndexStmt *stmt, const char *queryString)
 	 * overkill, but easy.)
 	 */
 	stmt = (IndexStmt *) copyObject(stmt);
-
-	/*
-	 * If the table already exists (i.e., this isn't a create table time
-	 * expansion of primary key() or unique()) and we're the ultimate parent
-	 * of a partitioned table, cascade to all children. We don't do this
-	 * at create table time because transformPartitionBy() automatically
-	 * creates the indexes on the child tables for us.
-	 *
-	 * If this is a CREATE INDEX statement, idxname should already exist.
-	 */
-
-	/* GPDB_83MERGE_FIXME: This is broken. We no longer have a convenient
-	 * extras_after to put the additional Statements to.
-	 */
-#if 0
-
-	if (RangeVarGetRelid(stmt->relation, true) != InvalidOid && stmt->idxname)
-	{
-		Oid			nspOid = RangeVarGetCreationNamespace(stmt->relation);
-		Relation	rel;
-
-		rel = heap_openrv(stmt->relation, AccessShareLock);
-
-		if (RelationBuildPartitionDesc(rel, false))
-			stmt->do_part = true;
-
-		if (stmt->do_part && Gp_role != GP_ROLE_EXECUTE)
-		{
-			List		*children;
-			struct HTAB *nameCache;
-
-			/* Lookup the parser object name cache */
-			nameCache = parser_get_namecache(pstate);
-
-			/* Loop over all partition children */
-			children = find_inheritance_children(RelationGetRelid(rel));
-
-			foreach(l, children)
-			{
-				Oid relid = lfirst_oid(l);
-				Relation crel = heap_open(relid, NoLock); /* lock on master
-															 is enough */
-				if (RelationIsExternal(crel))
-				{
-					elog(NOTICE, "skip building index for external partition \"%s\"",
-						 RelationGetRelationName(crel));
-					heap_close(crel, NoLock);
-					continue;
-				}
-				IndexStmt *chidx;
-				Relation partrel;
-				HeapTuple tuple;
-				cqContext	cqc;
-				char *parname;
-				int2 position;
-				int4 depth;
-				NameData name;
-				Oid paroid;
-				char depthstr[NAMEDATALEN];
-				char prtstr[NAMEDATALEN];
-
-				chidx = (IndexStmt *)copyObject((Node *)stmt);
-
-				/* now just update the relation and index name fields */
-				chidx->relation =
-					makeRangeVar(get_namespace_name(RelationGetNamespace(crel)),
-								 pstrdup(RelationGetRelationName(crel)), -1);
-
-				elog(NOTICE, "building index for child partition \"%s\"",
-					 RelationGetRelationName(crel));
-				/*
-				 * We want the index name to resemble our partition table name
-				 * with the master index name on the front. This means, we
-				 * append to the indexname the parname, position, and depth
-				 * as we do in transformPartitionBy().
-				 *
-				 * So, firstly we must retrieve from pg_partition_rule the
-				 * partition descriptor for the current relid. This gives us
-				 * partition name and position. With paroid, we can get the
-				 * partition level descriptor from pg_partition and therefore
-				 * our depth.
-				 */
-				partrel = heap_open(PartitionRuleRelationId, AccessShareLock);
-
-				tuple = caql_getfirst(
-						caql_addrel(cqclr(&cqc), partrel), 
-						cql("SELECT * FROM pg_partition_rule "
-							" WHERE parchildrelid = :1 ",
-							ObjectIdGetDatum(relid)));
-
-				Assert(HeapTupleIsValid(tuple));
-
-				name = ((Form_pg_partition_rule)GETSTRUCT(tuple))->parname;
-				parname = pstrdup(NameStr(name));
-				position = ((Form_pg_partition_rule)GETSTRUCT(tuple))->parruleord;
-				paroid = ((Form_pg_partition_rule)GETSTRUCT(tuple))->paroid;
-
-				heap_freetuple(tuple);
-				heap_close(partrel, NoLock);
-
-				partrel = heap_open(PartitionRelationId, AccessShareLock);
-
-				tuple = caql_getfirst(
-						caql_addrel(cqclr(&cqc), partrel), 
-						cql("SELECT parlevel FROM pg_partition "
-							" WHERE oid = :1 ",
-							ObjectIdGetDatum(paroid)));
-
-				Assert(HeapTupleIsValid(tuple));
-
-				depth = ((Form_pg_partition)GETSTRUCT(tuple))->parlevel + 1;
-
-				heap_freetuple(tuple);
-				heap_close(partrel, NoLock);
-
-				heap_close(crel, NoLock);
-
-				/* now, build the piece to append */
-				snprintf(depthstr, sizeof(depthstr), "%d", depth);
-				if (strlen(parname) == 0)
-					snprintf(prtstr, sizeof(prtstr), "prt_%d", position);
-				else
-					snprintf(prtstr, sizeof(prtstr), "prt_%s", parname);
-
-				chidx->idxname = ChooseRelationNameWithCache(stmt->idxname,
-													depthstr, /* depth */
-													prtstr,   /* part spec */
-												    nspOid,
-													nameCache);
-
-				*extras_after = lappend(*extras_after, chidx);
-			}
-		}
-
-		heap_close(rel, AccessShareLock);
-	}
-#endif
 
 	/*
 	 * Open the parent table with appropriate locking.	We must do this
@@ -2989,6 +2859,7 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 	cxt.rel = rel;
 	cxt.inhRelations = NIL;
 	cxt.isalter = true;
+	cxt.iscreatepart = false;
 	cxt.hasoids = false;		/* need not be right */
 	cxt.columns = NIL;
 	cxt.ckconstraints = NIL;

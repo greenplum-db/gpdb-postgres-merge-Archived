@@ -908,7 +908,7 @@ ProcessUtility(Node *parsetree,
 					stmts = list_make1(parsetree);
 				else
 					stmts = transformCreateStmt((CreateStmt *) parsetree,
-												queryString);
+												queryString, false);
 
 				/* ... and do it */
 				foreach(l, stmts)

@@ -1115,7 +1115,7 @@ make_child_node(ParseState *pstate, CreateStmt *stmt, CreateStmtContext *cxt, ch
 		}
 	}
 
-	childstmts = transformCreateStmt(child_tab_stmt, pstate->p_sourcetext);
+	childstmts = transformCreateStmt(child_tab_stmt, pstate->p_sourcetext, true);
 
 	/*
 	 * Attach the child partition to the parent, by creating an ALTER TABLE

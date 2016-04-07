@@ -6705,7 +6705,7 @@ atpxPartAddList(Relation rel,
 		 * the new part.  (This will include some commands for the parent that we
 		 * don't need, since the parent already exists.)
 		 */
-		l1 = transformCreateStmt(ct, "ADD PARTITION");
+		l1 = transformCreateStmt(ct, "ADD PARTITION", true);
 
 		/*
 		 * Look for the first CreateStmt and generate a GrantStmt
