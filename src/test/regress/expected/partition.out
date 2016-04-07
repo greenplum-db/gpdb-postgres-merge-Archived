@@ -5430,7 +5430,7 @@ NOTICE:  CREATE TABLE will create partition "mpp10223pk_1_prt_daypart_2_prt_p201
 NOTICE:  CREATE TABLE will create partition "mpp10223pk_1_prt_daypart_2_prt_p20100625" for table "mpp10223pk_1_prt_daypart"
 NOTICE:  CREATE TABLE will create partition "mpp10223pk_1_prt_daypart_2_prt_p20100626" for table "mpp10223pk_1_prt_daypart"
 NOTICE:  CREATE TABLE will create partition "mpp10223pk_1_prt_daypart_2_prt_p_endpart" for table "mpp10223pk_1_prt_daypart"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "mpp10223pk_pkey" for table "mpp10223pk"
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "axc_vcct1_atmvcct_pk_test2" for table "mpp10223pk"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "mpp10223pk_1_prt_min15part_pkey" for table "mpp10223pk_1_prt_min15part"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "mpp10223pk_1_prt_min15part_2_prt_p_future_pkey" for table "mpp10223pk_1_prt_min15part_2_prt_p_future"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "mpp10223pk_1_prt_min15part_2_prt_p_endpart_pkey" for table "mpp10223pk_1_prt_min15part_2_prt_p_endpart"
@@ -6651,7 +6651,7 @@ CREATE TABLE dim_phone_numbers (
 ) DISTRIBUTED BY (dim_phone_number_key);
 ALTER TABLE ONLY dim_phone_numbers
     ADD CONSTRAINT dim_phone_numbers_pk1 PRIMARY KEY (dim_phone_number_key);
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "dim_phone_numbers_pkey" for table "dim_phone_numbers"
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "dim_phone_numbers_pk1" for table "dim_phone_numbers"
 INSERT INTO dim_phone_numbers VALUES (999902, 'test', '800-123-4568', '8001234568', '2012-09-25 13:34:35.037637');
 INSERT INTO dim_phone_numbers VALUES (999904, 'test', '(800) 123-4570', '8001234570', '2012-09-25 13:34:35.148104');
 INSERT INTO dim_phone_numbers VALUES (999903, 'test', '(800) 123-4569', '8001234569', '2012-09-25 13:34:35.093523');

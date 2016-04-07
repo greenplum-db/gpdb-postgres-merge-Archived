@@ -160,7 +160,7 @@ CREATE TABLE r
 ) DISTRIBUTED BY (a,b);
 ALTER TABLE r ADD CONSTRAINT PKEY PRIMARY KEY (b);
 NOTICE:  updating distribution policy to match new primary key
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "r_pkey" for table "r"
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "pkey" for table "r"
 --TEST
 SELECT MAX(a) AS m FROM r GROUP BY b ORDER BY m;
  m 
@@ -200,7 +200,7 @@ CREATE TABLE r
 ) DISTRIBUTED BY (a,b);
 ALTER TABLE r ADD CONSTRAINT PKEY PRIMARY KEY (b);
 NOTICE:  updating distribution policy to match new primary key
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "r_pkey" for table "r"
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "pkey" for table "r"
 --TEST
 SELECT MAX(a) AS m FROM R GROUP BY b ORDER BY m,b;
  m 
@@ -239,7 +239,7 @@ CREATE TABLE r
 ) DISTRIBUTED BY (a,b);
 ALTER TABLE r ADD CONSTRAINT PKEY PRIMARY KEY (b);
 NOTICE:  updating distribution policy to match new primary key
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "r_pkey" for table "r"
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "pkey" for table "r"
 --TEST
 SELECT MAX(a),d,e AS m FROM r GROUP BY b,d,e ORDER BY m,e,d;
  max | d | m 
@@ -341,7 +341,7 @@ create table t
     e date
 ) distributed by (b);
 alter table t ADD CONSTRAINT pkey primary key (b);
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "t_pkey" for table "t"
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "pkey" for table "t"
 -- TEST
 SELECT MAX(a) AS m FROM t GROUP BY b ORDER BY m;
  m 
