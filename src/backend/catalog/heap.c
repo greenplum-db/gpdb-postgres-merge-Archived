@@ -1584,10 +1584,13 @@ heap_create_with_catalog(const char *relname,
 	 * do not create any array types for system catalogs (ie, those made
 	 * during initdb).	We create array types for regular relations, views,
 	 * and composite types ... but not, eg, for toast tables or sequences.
+	 *
+	 * Also not for the auxiliary heaps created for bitmap indexes.
 	 */
 	if (IsUnderPostmaster && (relkind == RELKIND_RELATION ||
 							  relkind == RELKIND_VIEW ||
 							  relkind == RELKIND_COMPOSITE_TYPE) &&
+		relnamespace != PG_BITMAPINDEX_NAMESPACE &&
 		!OidIsValid(new_array_oid))
 	{
 		/* OK, so pre-assign a type OID for the array type */
