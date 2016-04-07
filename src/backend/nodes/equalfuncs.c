@@ -1512,6 +1512,7 @@ _equalViewStmt(ViewStmt *a, ViewStmt *b)
 	COMPARE_SCALAR_FIELD(replace);
 	COMPARE_SCALAR_FIELD(relOid);
 	COMPARE_SCALAR_FIELD(comptypeOid);
+	COMPARE_SCALAR_FIELD(comptypeArrayOid);
 	COMPARE_SCALAR_FIELD(rewriteOid);
 
 	return true;

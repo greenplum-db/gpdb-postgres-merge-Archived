@@ -2434,6 +2434,7 @@ typedef struct ViewStmt
 	bool		replace;		/* replace an existing view? */
 	Oid         relOid;			/* create view with this relOid */
 	Oid			comptypeOid;
+	Oid			comptypeArrayOid;
 	Oid			rewriteOid;		/* Oid for rewrite rule */
 } ViewStmt;
 

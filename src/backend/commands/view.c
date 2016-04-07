@@ -103,7 +103,8 @@ isViewOnTempTable_walker(Node *node, void *context)
  *---------------------------------------------------------------------
  */
 static Oid
-DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace, Oid viewOid, Oid * comptypeOid)
+DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace, Oid viewOid,
+					  Oid *comptypeOid, Oid *comptypeArrayOid)
 {
 	Oid			namespaceId;
 	CreateStmt *createStmt = makeNode(CreateStmt);
@@ -111,10 +112,8 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace, Oid v
 	ListCell   *t;
 
 	createStmt->oidInfo.relOid = viewOid;
-	if (comptypeOid)
-		createStmt->oidInfo.comptypeOid = *comptypeOid;
-	else
-		createStmt->oidInfo.comptypeOid = 0;
+	createStmt->oidInfo.comptypeOid = comptypeOid ? *comptypeOid : 0;
+	createStmt->oidInfo.comptypeArrayOid = comptypeArrayOid ? *comptypeArrayOid : 0;
 	createStmt->oidInfo.toastOid = 0;
 	createStmt->oidInfo.toastIndexOid = 0;
 	createStmt->oidInfo.aosegOid = 0;
@@ -233,6 +232,8 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace, Oid v
 		newviewOid =  DefineRelation(createStmt, RELKIND_VIEW, RELSTORAGE_VIRTUAL);
 		if(comptypeOid)
 			*comptypeOid = createStmt->oidInfo.comptypeOid;
+		if(comptypeArrayOid)
+			*comptypeArrayOid = createStmt->oidInfo.comptypeArrayOid;
 		return newviewOid;
 	}
 }
@@ -471,7 +472,8 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	viewOid = DefineVirtualRelation(view, viewParse->targetList,
 									stmt->replace,
 									viewOid,
-									&stmt->comptypeOid);
+									&stmt->comptypeOid,
+									&stmt->comptypeArrayOid);
 	stmt->relOid = viewOid;
 
 	/*
