@@ -284,6 +284,9 @@ typedef struct MKContext {
 
     /* enforce Unique, for index build */
     bool enforceUnique;
+
+	/* Name of the index we're building, if any. Used for error messages. */
+	char	   *indexname;
 } MKContext;
 
 /**
@@ -422,12 +425,13 @@ static inline int64 mkheap_cnt(MKHeap *mkheap)
 /**
  * ereport an ERROR indicating that the uniqueness constraint was violated
  */
-#define ERROR_UNIQUENESS_VIOLATED() \
+#define ERROR_UNIQUENESS_VIOLATED(indexname) \
     do \
     { \
-        ereport(ERROR, (errcode(ERRCODE_UNIQUE_VIOLATION), \
-                    errmsg("could not create unique index"), \
-                    errdetail("Table contains duplicate values."))); \
+        ereport(ERROR, \
+				(errcode(ERRCODE_UNIQUE_VIOLATION),					\
+				 errmsg("could not create unique index \"%s\"", indexname),	 \
+				 errdetail("Table contains duplicated values.")));	 \
     } while(0)
 
 #endif

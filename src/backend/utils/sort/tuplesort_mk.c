@@ -907,6 +907,7 @@ tuplesort_begin_index_mk(Relation indexRel,
             tupdesc, 0, 0);
    
     state->mkctxt.enforceUnique = enforceUnique;
+	state->mkctxt.indexname = RelationGetRelationName(indexRel);
     MemoryContextSwitchTo(oldcontext);
 
     return state;

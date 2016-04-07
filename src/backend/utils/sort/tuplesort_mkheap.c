@@ -538,7 +538,7 @@ static int mkheap_putAndGet_impl(MKHeap *mkheap, MKEntry *e)
          * See NOTE ON UNIQUENESS CHECKING in the comment at the top of the file
          * for information about why we check for duplicates here
          */
-        ERROR_UNIQUENESS_VIOLATED();
+        ERROR_UNIQUENESS_VIOLATED(mkheap->mkctxt->indexname);
     }
 
     if(mke_is_empty(e))
@@ -643,7 +643,7 @@ static int mkheap_putAndGet_impl(MKHeap *mkheap, MKEntry *e)
                 /* enforce uniqueness first */
                 if(c == 0 && mkheap->mkctxt->enforceUnique)
                 {
-                    ERROR_UNIQUENESS_VIOLATED();
+                    ERROR_UNIQUENESS_VIOLATED(mkheap->mkctxt->indexname);
                 }
 
             	return c;

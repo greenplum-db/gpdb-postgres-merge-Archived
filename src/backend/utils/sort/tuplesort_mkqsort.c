@@ -302,7 +302,7 @@ void mk_qsort_impl(MKEntry *a, int left, int right, int lv, bool lvdown, MKConte
 		{
 			if ( ctxt->enforceUnique )
 			{
-			    ERROR_UNIQUENESS_VIOLATED();
+				ERROR_UNIQUENESS_VIOLATED(ctxt->indexname);
 			}
 			else if ( ctxt->unique)
 			{

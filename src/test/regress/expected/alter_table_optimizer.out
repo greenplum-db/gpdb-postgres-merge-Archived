@@ -496,9 +496,9 @@ insert into atacc1 (test) values (2);
 insert into atacc1 (test) values (2);
 -- add a unique constraint (fails)
 alter table atacc1 add constraint atacc_test1 unique (test);
-NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc1_test_key" for table "atacc1"
-ERROR:  could not create unique index  (seg1 usxxshenem1.local:40001 pid=85314)
-DETAIL:  Table contains duplicate values.
+NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc_test1" for table "atacc1"
+ERROR:  could not create unique index "atacc_test1"  (seg1 usxxshenem1.local:40001 pid=85314)
+DETAIL:  Table contains duplicated values.
 insert into atacc1 (test) values (3);
 drop table atacc1;
 -- let's do one where the unique constraint fails
@@ -512,7 +512,7 @@ drop table atacc1;
 create table atacc1 ( test int, test2 int) distributed by (test);
 -- add a unique constraint
 alter table atacc1 add constraint atacc_test1 unique (test, test2);
-NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc1_test_key" for table "atacc1"
+NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc_test1_unique" for table "atacc1"
 -- insert initial value
 insert into atacc1 (test,test2) values (4,4);
 -- should fail
@@ -580,9 +580,9 @@ insert into atacc1 (test) values (2);
 insert into atacc1 (test) values (2);
 -- add a primary key (fails)
 alter table atacc1 add constraint atacc_test1 primary key (test);
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc1_pkey" for table "atacc1"
-ERROR:  could not create unique index  (seg1 usxxshenem1.local:40001 pid=85314)
-DETAIL:  Table contains duplicate values.
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc_test1" for table "atacc1"
+ERROR:  could not create unique index "atacc_test1"  (seg1 usxxshenem1.local:40001 pid=85314)
+DETAIL:  Table contains duplicated values.
 insert into atacc1 (test) values (3);
 drop table atacc1;
 -- let's do another one where the primary key constraint fails when added
