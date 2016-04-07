@@ -431,6 +431,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		funcexpr->funcretset = retset;
 		funcexpr->funcformat = COERCE_EXPLICIT_CALL;
 		funcexpr->args = fargs;
+		funcexpr->location = location;
 
 		retval = (Node *) funcexpr;
 	}
@@ -608,6 +609,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		aggref->args        = fargs;
 		aggref->aggstar     = agg_star;
 		aggref->aggdistinct = agg_distinct;
+		aggref->location = location;
 
 		transformAggregateCall(pstate, aggref, agg_order);
 
