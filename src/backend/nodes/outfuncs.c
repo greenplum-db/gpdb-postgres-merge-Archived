@@ -3403,18 +3403,6 @@ _outTypeName(StringInfo str, TypeName *node)
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
-static void
-_outSortBy(StringInfo str, SortBy *node)
-{
-	WRITE_NODE_TYPE("SORTBY");
-
-	WRITE_INT_FIELD(sortby_dir);
-	WRITE_INT_FIELD(sortby_nulls);
-	WRITE_NODE_FIELD(useOp);
-	WRITE_NODE_FIELD(node);
-	WRITE_INT_FIELD(location);
-}
-
 #ifndef COMPILING_BINARY_FUNCS
 static void
 _outTypeCast(StringInfo str, TypeCast *node)
@@ -3970,6 +3958,39 @@ _outResTarget(StringInfo str, ResTarget *node)
 	WRITE_NODE_FIELD(val);
 	WRITE_INT_FIELD(location);
 }
+
+static void
+_outSortBy(StringInfo str, SortBy *node)
+{
+	WRITE_NODE_TYPE("SORTBY");
+
+	WRITE_INT_FIELD(sortby_dir);
+	WRITE_INT_FIELD(sortby_nulls);
+	WRITE_NODE_FIELD(useOp);
+	WRITE_NODE_FIELD(node);
+	WRITE_INT_FIELD(location);
+}
+
+#ifndef COMPILING_BINARY_FUNCS
+static void
+_outRangeSubselect(StringInfo str, RangeSubselect *node)
+{
+	WRITE_NODE_TYPE("RANGESUBSELECT");
+
+	WRITE_NODE_FIELD(subquery);
+	WRITE_NODE_FIELD(alias);
+}
+
+static void
+_outRangeFunction(StringInfo str, RangeFunction *node)
+{
+	WRITE_NODE_TYPE("RANGEFUNCTION");
+
+	WRITE_NODE_FIELD(funccallnode);
+	WRITE_NODE_FIELD(alias);
+	WRITE_NODE_FIELD(coldeflist);
+}
+#endif
 
 #ifndef COMPILING_BINARY_FUNCS
 static void
@@ -4994,6 +5015,12 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_ResTarget:
 				_outResTarget(str, obj);
+				break;
+			case T_RangeSubselect:
+				_outRangeSubselect(str, obj);
+				break;
+			case T_RangeFunction:
+				_outRangeFunction(str, obj);
 				break;
 			case T_Constraint:
 				_outConstraint(str, obj);
