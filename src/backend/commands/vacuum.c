@@ -2358,7 +2358,7 @@ vacuum_heap_rel(Relation onerel, VacuumStmt *vacstmt,
 										onerel, reindex_count);
 
 				vacuum_index(&vacuum_pages, Irel[i],
-							 vacrelstats->rel_tuples, 0, updated_stats,
+							 vacrelstats->rel_indexed_tuples, 0, updated_stats,
 							 extra_oids, check_stats);
 				list_free(extra_oids);
 			}
@@ -2368,7 +2368,7 @@ vacuum_heap_rel(Relation onerel, VacuumStmt *vacstmt,
 		{
 			/* just scan indexes to update statistic */
 			for (i = 0; i < nindexes; i++)
-				scan_index(Irel[i], vacrelstats->rel_tuples, updated_stats, true,
+				scan_index(Irel[i], vacrelstats->rel_indexed_tuples, updated_stats, true,
 						   check_stats);
 		}
 	}
