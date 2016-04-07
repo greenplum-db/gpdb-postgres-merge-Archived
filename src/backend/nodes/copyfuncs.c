@@ -2733,6 +2733,7 @@ _copyQuery(Query *from)
 	COPY_SCALAR_FIELD(hasAggs);
 	COPY_SCALAR_FIELD(hasWindFuncs);
 	COPY_SCALAR_FIELD(hasSubLinks);
+	COPY_SCALAR_FIELD(hasDynamicFunctions);
 	COPY_NODE_FIELD(rtable);
 	COPY_NODE_FIELD(jointree);
 	COPY_NODE_FIELD(targetList);

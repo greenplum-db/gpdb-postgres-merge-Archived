@@ -413,6 +413,17 @@ DefineView(ViewStmt *stmt, const char *queryString)
 		elog(ERROR, "unexpected parse analysis result");
 
 	/*
+	 * Don't allow creating a view that contains dynamically typed functions.
+	 * We cannot guarantee that the future return type would be the same when
+	 * the view was used, as what it was now.
+	 */
+	if (viewParse->hasDynamicFunctions)
+		ereport(ERROR,
+				(errcode(ERRCODE_INDETERMINATE_DATATYPE),
+				 errmsg("CREATE VIEW statements cannot include calls to "
+						"dynamically typed function")));
+
+	/*
 	 * If a list of column names was given, run through and insert these into
 	 * the actual query tree. - thomas 2000-03-08
 	 */

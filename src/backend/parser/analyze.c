@@ -358,6 +358,9 @@ transformStmt(ParseState *pstate, Node *parseTree)
 	result->querySource = QSRC_ORIGINAL;
 	result->canSetTag = true;
 
+	if (pstate->p_hasDynamicFunction)
+		result->hasDynamicFunctions = true;
+
 	return result;
 }
 

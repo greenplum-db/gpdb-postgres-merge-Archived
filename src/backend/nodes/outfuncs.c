@@ -3536,6 +3536,7 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_BOOL_FIELD(hasAggs);
 	WRITE_BOOL_FIELD(hasWindFuncs);
 	WRITE_BOOL_FIELD(hasSubLinks);
+	WRITE_BOOL_FIELD(hasDynamicFunctions);
 	WRITE_NODE_FIELD(rtable);
 	WRITE_NODE_FIELD(jointree);
 	WRITE_NODE_FIELD(targetList);

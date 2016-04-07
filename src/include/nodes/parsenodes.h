@@ -120,6 +120,7 @@ typedef struct Query
 	bool		hasAggs;		/* has aggregates in tlist or havingQual */
 	bool		hasWindFuncs;	/* has window function(s) in target list */
 	bool		hasSubLinks;	/* has subquery SubLink */
+	bool        hasDynamicFunctions; /* has functions with unstable return types */
 
 	List	   *rtable;			/* list of range table entries */
 	FromExpr   *jointree;		/* table join tree (FROM and WHERE clauses) */

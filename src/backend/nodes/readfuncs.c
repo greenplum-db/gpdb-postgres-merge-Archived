@@ -320,6 +320,7 @@ _readQuery(void)
 	READ_BOOL_FIELD(hasAggs);
 	READ_BOOL_FIELD(hasWindFuncs);
 	READ_BOOL_FIELD(hasSubLinks);
+	READ_BOOL_FIELD(hasDynamicFunctions);
 	READ_NODE_FIELD(rtable);
 	READ_NODE_FIELD(jointree);
 	READ_NODE_FIELD(targetList);

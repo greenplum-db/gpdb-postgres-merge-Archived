@@ -863,6 +863,7 @@ _equalQuery(Query *a, Query *b)
 	COMPARE_SCALAR_FIELD(hasAggs);
 	COMPARE_SCALAR_FIELD(hasWindFuncs);
 	COMPARE_SCALAR_FIELD(hasSubLinks);
+	COMPARE_SCALAR_FIELD(hasDynamicFunctions);
 	COMPARE_NODE_FIELD(rtable);
 	COMPARE_NODE_FIELD(jointree);
 	COMPARE_NODE_FIELD(targetList);
