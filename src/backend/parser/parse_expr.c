@@ -2333,19 +2333,23 @@ transformPercentileExpr(ParseState *pstate, PercentileExpr *p)
 	if (contain_vars_of_level(arg, 0))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-				 errmsg("argument of percentile function must not contain variables")));
+				 errmsg("argument of percentile function must not contain variables"),
+				 parser_errposition(pstate, exprLocation(arg))));
 	if (checkExprHasAggs(arg))
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
-				 errmsg("argument of percentile function must not contain aggregates")));
+				 errmsg("argument of percentile function must not contain aggregates"),
+				 parser_errposition(pstate, exprLocation(arg))));
 	if (checkExprHasWindFuncs(arg))
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
-				 errmsg("argument of percentile function must not contain window functions")));
+				 errmsg("argument of percentile function must not contain window functions"),
+				 parser_errposition(pstate, exprLocation(arg))));
 	if (checkExprHasGroupExtFuncs(arg))
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
-				 errmsg("argument of percentile function must not contain grouping(), or group_id()")));
+				 errmsg("argument of percentile function must not contain grouping(), or group_id()"),
+				 parser_errposition(pstate, exprLocation(arg))));
 	/*
 	 * The argument should be stable within a group.  We don't know what is the
 	 * right behavior for the volatile argument.  Simply erroring out for now.
@@ -2353,7 +2357,8 @@ transformPercentileExpr(ParseState *pstate, PercentileExpr *p)
 	if (contain_volatile_functions(arg))
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
-				 errmsg("argument of percentile function must not contain volatile functions")));
+				 errmsg("argument of percentile function must not contain volatile functions"),
+				 parser_errposition(pstate, exprLocation(arg))));
 	/*
 	 * It might be possible to support SubLink in the argument, but the limitation
 	 * here is as LIMIT clause.  Erroring out for now.
@@ -2361,7 +2366,8 @@ transformPercentileExpr(ParseState *pstate, PercentileExpr *p)
 	if (checkExprHasSubLink(arg))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("argument of percentile function must not contain subqueries")));
+				 errmsg("argument of percentile function must not contain subqueries"),
+				 parser_errposition(pstate, exprLocation(arg))));
 	/*
 	 * Percentile functions support only one sort key.
 	 */
@@ -2457,7 +2463,8 @@ transformPercentileExpr(ParseState *pstate, PercentileExpr *p)
 						 errmsg("function \"%s\" is not unique",
 							percentileFuncString(p, &argtype, 1, sorttypes, sortlen)),
 						 errhint("Could not choose a best candidate function. "
-								 "You may need to add explicit type casts.")));
+								 "You may need to add explicit type casts."),
+						 parser_errposition(pstate, p->location)));
 		}
 		else if (ncandidates == 0)
 		{
@@ -2466,7 +2473,8 @@ transformPercentileExpr(ParseState *pstate, PercentileExpr *p)
 					 errmsg("function \"%s\" does not exist",
 						percentileFuncString(p, &argtype, 1, sorttypes, sortlen)),
 					 errhint("No function matches the given name and argument types. "
-							 "You may need to add explicit type casts.")));
+							 "You may need to add explicit type casts."),
+						 parser_errposition(pstate, p->location)));
 		}
 
 		p->perctype = candidates->args[0];
@@ -2526,20 +2534,24 @@ transformPercentileExpr(ParseState *pstate, PercentileExpr *p)
 		if (min_varlevel > 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("percentile functions cannot reference columns from outer queries")));
+					 errmsg("percentile functions cannot reference columns from outer queries"),
+					 parser_errposition(pstate, p->location)));
 
 		if (checkExprHasAggs((Node *) p->sortTargets))
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
-					 errmsg("argument of percentile function must not contain aggregates")));
+					 errmsg("argument of percentile function must not contain aggregates"),
+					 parser_errposition(pstate, p->location)));
 		if (checkExprHasWindFuncs((Node *) p->sortTargets))
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
-					 errmsg("argument of percentile function must not contain window functions")));
+					 errmsg("argument of percentile function must not contain window functions"),
+					 parser_errposition(pstate, p->location)));
 		if (checkExprHasGroupExtFuncs((Node *) p->sortTargets))
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
-					 errmsg("argument of percentile function must not contain grouping(), or group_id()")));
+					 errmsg("argument of percentile function must not contain grouping(), or group_id()"),
+					 parser_errposition(pstate, p->location)));
 	}
 
 	/* Percentiles are actually aggregates. */
