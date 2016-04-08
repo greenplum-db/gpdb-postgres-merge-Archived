@@ -333,6 +333,7 @@ _outQueryDispatchDesc(StringInfo str, QueryDispatchDesc *node)
 	WRITE_NODE_FIELD(intoOidInfo);
 	WRITE_STRING_FIELD(intoTableSpaceName);
 	WRITE_NODE_FIELD(sliceTable);
+	WRITE_NODE_FIELD(cursorPositions);
 }
 
 #ifndef COMPILING_BINARY_FUNCS
@@ -4186,6 +4187,20 @@ _outSliceTable(StringInfo str, SliceTable *node)
 }
 
 static void
+_outCursorPosInfo(StringInfo str, CursorPosInfo *node)
+{
+	WRITE_NODE_TYPE("CURSORPOSINFO");
+
+	WRITE_STRING_FIELD(cursor_name);
+	WRITE_INT_FIELD(gp_segment_id);
+	WRITE_UINT_FIELD(ctid.ip_blkid.bi_hi);
+	WRITE_UINT_FIELD(ctid.ip_blkid.bi_lo);
+	WRITE_UINT_FIELD(ctid.ip_posid);
+	WRITE_OID_FIELD(table_oid);
+}
+
+
+static void
 _outCreateTrigStmt(StringInfo str, CreateTrigStmt *node)
 {
 	WRITE_NODE_TYPE("CREATETRIGSTMT");
@@ -5093,6 +5108,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_SliceTable:
 				_outSliceTable(str, obj);
+				break;
+			case T_CursorPosInfo:
+				_outCursorPosInfo(str, obj);
 				break;
 			case T_VariableSetStmt:
 				_outVariableSetStmt(str, obj);

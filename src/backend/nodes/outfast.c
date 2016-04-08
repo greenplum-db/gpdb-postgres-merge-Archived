@@ -613,9 +613,6 @@ _outCurrentOfExpr(StringInfo str, CurrentOfExpr *node)
 	WRITE_STRING_FIELD(cursor_name);
 	WRITE_UINT_FIELD(cvarno);
 	WRITE_OID_FIELD(target_relid);
-	WRITE_INT_FIELD(gp_segment_id);
-	WRITE_BINARY_FIELD(ctid, sizeof(ItemPointerData));
-	WRITE_OID_FIELD(tableoid);
 }
 
 static void
@@ -1912,6 +1909,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_SliceTable:
 				_outSliceTable(str, obj);
+				break;
+			case T_CursorPosInfo:
+				_outCursorPosInfo(str, obj);
 				break;
 			case T_VariableSetStmt:
 				_outVariableSetStmt(str, obj);

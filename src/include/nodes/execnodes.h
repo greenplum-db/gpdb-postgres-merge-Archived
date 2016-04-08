@@ -607,6 +607,9 @@ typedef struct EState
 	/* Additions for MPP plan slicing. */
 	struct SliceTable *es_sliceTable;
 
+	/* Current positions of cursors used in CURRENT OF expressions */
+	List	   *es_cursorPositions;
+
 	/* Data structure for node sharing */
 	List	  **es_sharenode;
 

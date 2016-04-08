@@ -1153,10 +1153,6 @@ typedef struct CurrentOfExpr
 	/* for validation */
 	Oid			target_relid;	/* OID of original target relation, 
 								 * before any inheritance expansion */
-	/* for constant folding */
-	int		 	gp_segment_id;
-	ItemPointerData	ctid;
-	Oid			tableoid;
 } CurrentOfExpr;
 
 /*--------------------

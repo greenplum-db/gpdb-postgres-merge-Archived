@@ -490,7 +490,7 @@ cdbdisp_check_estate_for_cancel(struct EState *estate);
  * make a plan constant, if possible. Call must say if we're doing single row
  * inserts.
  */
-extern Node *exec_make_plan_constant(struct PlannedStmt *stmt, bool is_SRI);
+extern Node *exec_make_plan_constant(struct PlannedStmt *stmt, bool is_SRI, List **cursorPositions);
 extern Node *planner_make_plan_constant(struct PlannerInfo *root, Node *n, bool is_SRI);
 
 void cdbdisp_waitThreads(void);

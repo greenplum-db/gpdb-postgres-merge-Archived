@@ -156,6 +156,19 @@ typedef struct SliceTable
 	uint32 ic_instance_id;
 } SliceTable;
 
+/*
+ * Holds information about a cursor's current position.
+ */
+typedef struct CursorPosInfo
+{
+	NodeTag type;
+
+	char	   *cursor_name;
+	int		 	gp_segment_id;
+	ItemPointerData	ctid;
+	Oid			table_oid;
+} CursorPosInfo;
+
 /* ----------------
  *		query dispatch information:
  *
@@ -193,7 +206,9 @@ typedef struct QueryDispatchDesc
 	 * The implementation of MPPEXEC, which runs on the QEs, installs
 	 * the slice table in the plan as required there.
 	 */
-	SliceTable  *sliceTable;
+	SliceTable *sliceTable;
+
+	List	   *cursorPositions;
 } QueryDispatchDesc;
 
 /* ----------------

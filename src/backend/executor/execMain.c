@@ -525,6 +525,7 @@ ExecutorStart(QueryDesc *queryDesc, int eflags)
 			Assert(IsA(slice, Slice));
 
 			estate->es_sliceTable = sliceTable;
+			estate->es_cursorPositions = queryDesc->ddesc->cursorPositions;
 
 			estate->currentSliceIdInPlan = slice->rootIndex;
 			estate->currentExecutingSliceId = slice->rootIndex;

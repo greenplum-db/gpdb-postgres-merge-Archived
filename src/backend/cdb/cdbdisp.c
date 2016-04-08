@@ -150,13 +150,6 @@ cdbdisp_dispatchSetCommandToAllGangs(const char	*strCommand,
                         bool					needTwoPhase,
                         struct CdbDispatcherState *ds);
 
-static void
-bindCurrentOfParams(char *cursor_name, 
-					Oid target_relid, 
-					ItemPointer ctid, 
-					int *gp_segment_id, 
-					Oid *tableoid);
-
 #define GP_PARTITION_SELECTION_OID 6084
 #define GP_PARTITION_EXPANSION_OID 6085
 #define GP_PARTITION_INVERSE_OID 6086
@@ -194,6 +187,7 @@ typedef struct
 {
 	plan_tree_base_prefix base; /* Required prefix for plan_tree_walker/mutator */
 	bool		single_row_insert;
+	List	   *cursorPositions;
 }	pre_dispatch_function_evaluation_context;
 
 static Node *pre_dispatch_function_evaluation_mutator(Node *node,
@@ -3133,23 +3127,28 @@ pre_dispatch_function_evaluation_mutator(Node *node,
 	else if (IsA(node, CurrentOfExpr))
 	{
 		/*
-		 * updatable cursors 
+		 * updatable cursors
 		 *
-		 * During constant folding, the CurrentOfExpr's gp_segment_id, ctid, 
-		 * and tableoid fields are filled in with observed values from the 
-		 * referenced cursor. For more detail, see bindCurrentOfParams below.
+		 * During constant folding, we collect the current position of
+		 * each cursor mentioned in the plan into a list, and dispatch
+		 * them to the QEs.
 		 */
-		CurrentOfExpr *expr = (CurrentOfExpr *) node,
-					  *newexpr = copyObject(expr);
+		CurrentOfExpr *expr = (CurrentOfExpr *) node;
+		CursorPosInfo *cpos;
 
-		bindCurrentOfParams(newexpr->cursor_name,
-							newexpr->target_relid,
-			   		   		&newexpr->ctid,
-					  	   	&newexpr->gp_segment_id,
-					  	   	&newexpr->tableoid);
-		return (Node *) newexpr;
+		cpos = makeNode(CursorPosInfo);
+		cpos->cursor_name = expr->cursor_name;
+
+		getCurrentOf(expr,
+					 NULL /* econtext */, /* GPDB_83_MERGE_FIXME */
+					 expr->target_relid,
+					 &cpos->ctid,
+					 &cpos->gp_segment_id,
+					 &cpos->table_oid);
+
+		context->cursorPositions = lappend(context->cursorPositions, cpos);
 	}
-	
+
 	/*
 	 * For any node type not handled above, we recurse using
 	 * plan_tree_mutator, which will copy the node unchanged but try to
@@ -3159,151 +3158,6 @@ pre_dispatch_function_evaluation_mutator(Node *node,
 								  (void *) context);
 
 	return new_node;
-}
-
-/*
- * bindCurrentOfParams
- *
- * During constant folding, we evaluate STABLE functions to give QEs a consistent view
- * of the query. At this stage, we will also bind observed values of 
- * gp_segment_id/ctid/tableoid into the CurrentOfExpr.
- * This binding must happen only after planning, otherwise we disrupt prepared statements.
- * Furthermore, this binding must occur before dispatch, because a QE lacks the 
- * the information needed to discern whether it's responsible for the currently 
- * positioned tuple.
- *
- * The design of this parameter binding is very tightly bound to the parse/analyze
- * and subsequent planning of DECLARE CURSOR. We depend on the "is_simply_updatable"
- * calculation of parse/analyze to decide whether CURRENT OF makes sense for the
- * referenced cursor. Moreover, we depend on the ensuing planning of DECLARE CURSOR
- * to provide the junk metadata of gp_segment_id/ctid/tableoid (per tuple).
- *
- * This function will lookup the portal given by "cursor_name". If it's simply updatable,
- * we'll glean gp_segment_id/ctid/tableoid from the portal's most recently fetched 
- * (raw) tuple. We bind this information into the CurrentOfExpr to precisely identify
- * the currently scanned tuple, ultimately for consumption of TidScan/execQual by the QEs.
- */
-static void
-bindCurrentOfParams(char *cursor_name, Oid target_relid, ItemPointer ctid, int *gp_segment_id, Oid *tableoid)
-{
-	char 			*table_name;
-	Portal			portal;
-	QueryDesc		*queryDesc;
-	AttrNumber		gp_segment_id_attno;
-	AttrNumber		ctid_attno;
-	AttrNumber		tableoid_attno;
-	bool			isnull;
-	Datum			value;
-
-	portal = GetPortalByName(cursor_name);
-	if (!PortalIsValid(portal))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_CURSOR_STATE),
-				 errmsg("cursor \"%s\" does not exist", cursor_name)));
-
-	queryDesc = PortalGetQueryDesc(portal);
-	if (queryDesc == NULL)
-		ereport(ERROR, 
-				(errcode(ERRCODE_INVALID_CURSOR_STATE),
-				 errmsg("cursor \"%s\" is held from a previous transaction", cursor_name)));
-
-	/* obtain table_name for potential error messages */
-	table_name = get_rel_name(target_relid);
-
-	/* 
-	 * The referenced cursor must be simply updatable. This has already
-	 * been discerned by parse/analyze for the DECLARE CURSOR of the given
-	 * cursor. This flag assures us that gp_segment_id, ctid, and tableoid (if necessary)
- 	 * will be available as junk metadata, courtesy of preprocess_targetlist.
-	 */
-	if (!portal->is_simply_updatable)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_CURSOR_STATE),
-				 errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
-						cursor_name, table_name)));
-
-	/* 
-	 * The target relation must directly match the cursor's relation. This throws out
-	 * the simple case in which a cursor is declared against table X and the update is
-	 * issued against Y. Moreover, this disallows some subtler inheritance cases where
-	 * Y inherits from X. While such cases could be implemented, it seems wiser to
-	 * simply error out cleanly.
-	 */
-	Index varno = extractSimplyUpdatableRTEIndex(queryDesc->plannedstmt->rtable);
-	Oid cursor_relid = getrelid(varno, queryDesc->plannedstmt->rtable);
-	if (target_relid != cursor_relid)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_CURSOR_STATE),
-				 errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
-						cursor_name, table_name)));
-	/* 
-	 * The cursor must have a current result row: per the SQL spec, it's 
-	 * an error if not.
-	 */
-	if (portal->atStart || portal->atEnd)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_CURSOR_STATE),
-				 errmsg("cursor \"%s\" is not positioned on a row", cursor_name)));
-
-	/*
-	 * As mentioned above, if parse/analyze recognized this cursor as simply
-	 * updatable during DECLARE CURSOR, then its subsequent planning must have
-	 * made gp_segment_id, ctid, and tableoid available as junk for each tuple.
-	 *
-	 * To retrieve this junk metadeta, we leverage the EState's junkfilter against
-	 * the raw tuple yielded by the highest most node in the plan.
-	 */
-	TupleTableSlot *slot = queryDesc->planstate->ps_ResultTupleSlot;
-	Insist(!TupIsNull(slot));
-	Assert(queryDesc->estate->es_junkFilter);
-
-	/* extract gp_segment_id metadata */
-	gp_segment_id_attno = ExecFindJunkAttribute(queryDesc->estate->es_junkFilter, "gp_segment_id");
-	if (!AttributeNumberIsValid(gp_segment_id_attno))
-		elog(ERROR, "could not find junk gp_segment_id column");
-	value = ExecGetJunkAttribute(slot, gp_segment_id_attno, &isnull);
-	if (isnull)
-		elog(ERROR, "gp_segment_id is NULL");
-	*gp_segment_id = DatumGetInt32(value);
-
-	/* extract ctid metadata */
-	ctid_attno = ExecFindJunkAttribute(queryDesc->estate->es_junkFilter, "ctid");
-	if (!AttributeNumberIsValid(ctid_attno))
-		elog(ERROR, "could not find junk ctid column");
-	value = ExecGetJunkAttribute(slot, ctid_attno, &isnull);
-	if (isnull)
-		elog(ERROR, "ctid is NULL");
-	ItemPointerCopy(DatumGetItemPointer(value), ctid);
-
-	/* 
-	 * extract tableoid metadata
-	 *
-	 * DECLARE CURSOR planning only includes tableoid metadata when
-	 * scrolling a partitioned table, as this is the only case in which
-	 * gp_segment_id/ctid alone do not suffice to uniquely identify a tuple.
-	 */
-	tableoid_attno = ExecFindJunkAttribute(queryDesc->estate->es_junkFilter,
-										   "tableoid");
-	if (AttributeNumberIsValid(tableoid_attno))
-	{
-		value = ExecGetJunkAttribute(slot, tableoid_attno, &isnull);
-		if (isnull)
-			elog(ERROR, "tableoid is NULL");
-		*tableoid = DatumGetObjectId(value);
-
-		/*
-		 * This is our last opportunity to verify that the physical table given
-		 * by tableoid is, indeed, simply updatable.
-		 */
-		if (!isSimplyUpdatableRelation(*tableoid))
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("%s is not updatable",
-							get_rel_name_partition(*tableoid))));
-	} else
-		*tableoid = InvalidOid;
-
-	pfree(table_name);
 }
 
 /*
@@ -3557,17 +3411,25 @@ cdbdisp_dispatchX(DispatchCommandQueryParms *pQueryParms,
 
 /*
  * Evaluate functions to constants.
+ *
+ * Also returns a list of CursorPosInfos, with the current position of each
+ * cursor used in a CURRENT OF expression.
  */
 Node *
-exec_make_plan_constant(struct PlannedStmt *stmt, bool is_SRI)
+exec_make_plan_constant(struct PlannedStmt *stmt, bool is_SRI, List **cursorPositions)
 {
 	pre_dispatch_function_evaluation_context pcontext;
+	Node	   *result;
 
 	Assert(stmt);
 	exec_init_plan_tree_base(&pcontext.base, stmt);
 	pcontext.single_row_insert = is_SRI;
+	pcontext.cursorPositions = NIL;
 
-	return plan_tree_mutator((Node *)stmt->planTree, pre_dispatch_function_evaluation_mutator, &pcontext);
+	result = pre_dispatch_function_evaluation_mutator((Node *) stmt->planTree, &pcontext);
+
+	*cursorPositions = pcontext.cursorPositions;
+	return result;
 }
 
 Node *
@@ -3577,8 +3439,9 @@ planner_make_plan_constant(struct PlannerInfo *root, Node *n, bool is_SRI)
 
 	planner_init_plan_tree_base(&pcontext.base, root);
 	pcontext.single_row_insert = is_SRI;
+	pcontext.cursorPositions = NIL;
 
-	return plan_tree_mutator(n, pre_dispatch_function_evaluation_mutator, &pcontext);
+	return pre_dispatch_function_evaluation_mutator((Node *) n, &pcontext);
 }
 
 
@@ -3746,6 +3609,7 @@ cdbdisp_dispatchPlan(struct QueryDesc *queryDesc,
 	{
 
 		MemoryContext oldContext;
+		List	   *cursors;
 		
 		oldContext = CurrentMemoryContext;
 		if ( stmt->qdContext ) /* Temporary! See comment in PlannedStmt. */
@@ -3758,9 +3622,10 @@ cdbdisp_dispatchPlan(struct QueryDesc *queryDesc,
 			oldContext = MemoryContextSwitchTo(mc);
 		}
 
-		stmt->planTree = (Plan *) exec_make_plan_constant(stmt, is_SRI);
+		stmt->planTree = (Plan *) exec_make_plan_constant(stmt, is_SRI, &cursors);
 		
 		MemoryContextSwitchTo(oldContext);
+		queryDesc->ddesc->cursorPositions = (List *) copyObject(cursors);
 	}
 
 	/*

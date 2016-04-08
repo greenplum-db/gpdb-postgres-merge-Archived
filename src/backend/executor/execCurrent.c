@@ -18,10 +18,15 @@
 #include "utils/lsyscache.h"
 #include "utils/portal.h"
 
+#include "parser/parse_relation.h"
+#include "parser/parsetree.h"
+#include "cdb/cdbvars.h"
+
 
 static char *fetch_param_value(ExprContext *econtext, int paramId);
+#ifdef NOT_USED
 static ScanState *search_plan_tree(PlanState *node, Oid table_oid);
-
+#endif /* NOT_USED */
 
 /*
  * execCurrentOf
@@ -34,6 +39,8 @@ static ScanState *search_plan_tree(PlanState *node, Oid table_oid);
  * for the table but is not currently scanning a row of the table (this is a
  * legal situation in inheritance cases).  Raises error if cursor is not a
  * valid updatable scan of the specified table.
+ *
+ * In GPDB, we also check that the tuple came from the current segment.
  */
 bool
 execCurrentOf(CurrentOfExpr *cexpr,
@@ -41,14 +48,98 @@ execCurrentOf(CurrentOfExpr *cexpr,
 			  Oid table_oid,
 			  ItemPointer current_tid)
 {
+	int			current_gp_segment_id;
+	Oid			current_table_oid;
+
+	/*
+	 * In an executor node, the dispatcher should've included the current
+	 * position of the cursor along with the query plan. Find and return it
+	 * from there.
+	 */
+	if (Gp_role == GP_ROLE_EXECUTE)
+	{
+		ListCell   *lc;
+		char	   *cursor_name;
+		bool		found = false;
+
+		/* Get the cursor name --- may have to look up a parameter reference */
+		if (cexpr->cursor_name)
+			cursor_name = cexpr->cursor_name;
+		else
+			cursor_name = fetch_param_value(econtext, cexpr->cursor_param);
+
+		foreach (lc, econtext->ecxt_estate->es_cursorPositions)
+		{
+			CursorPosInfo *cpos = (CursorPosInfo *) lfirst(lc);
+
+			if (strcmp(cpos->cursor_name, cursor_name) == 0)
+			{
+				current_gp_segment_id = cpos->gp_segment_id;
+				current_table_oid = cpos->table_oid;
+				ItemPointerCopy(&cpos->ctid, current_tid);
+				found = true;
+				break;
+			}
+		}
+
+		/* Not found. Odd, the dispatcher should've checked for this already. */
+		if (!found)
+			elog(ERROR, "no cursor position information found for cursor \"%s\"",
+				 cursor_name);
+	}
+	else
+	{
+		getCurrentOf(cexpr, econtext, table_oid, current_tid,
+					 &current_gp_segment_id, &current_table_oid);
+	}
+
+	/*
+	 * Found the cursor. Does the table and segment match?
+	 */
+	if (current_gp_segment_id == Gp_segment &&
+		(current_table_oid == InvalidOid || current_table_oid == table_oid))
+	{
+		return true;
+	}
+	else
+		return false;
+}
+
+/*
+ * Return the current position of a cursor that a CURRENT OF expression
+ * refers to.
+ *
+ * This checks that the cursor is valid for table specified by 'table_oid',
+ * but it doesn't have to be scanning a row of that table (i.e. it can
+ * be scanning a row of a different table in the same inheritance hierarchy).
+ * The current table's oid is returned in *current_table_oid.
+ */
+void
+getCurrentOf(CurrentOfExpr *cexpr,
+			 ExprContext *econtext,
+			 Oid table_oid,
+			 ItemPointer current_tid,
+			 int *current_gp_segment_id,
+			 Oid *current_table_oid)
+{
 	char	   *cursor_name;
 	char	   *table_name;
 	Portal		portal;
 	QueryDesc  *queryDesc;
-	ScanState  *scanstate;
-	bool		lisnull;
-	Oid			tuple_tableoid;
-	ItemPointer tuple_tid;
+	TupleTableSlot *slot;
+	AttrNumber	gp_segment_id_attno;
+	AttrNumber	ctid_attno;
+	AttrNumber	tableoid_attno;
+	bool		isnull;
+	Datum		value;
+
+	/*
+	 * In an executor node, execCurrentOf() is supposed to use the cursor
+	 * position information received from the dispatcher, and we shouldn't
+	 * get here.
+	 */
+	if (Gp_role == GP_ROLE_EXECUTE)
+		elog(ERROR, "getCurrentOf called in executor node");
 
 	/* Get the cursor name --- may have to look up a parameter reference */
 	if (cexpr->cursor_name)
@@ -85,16 +176,31 @@ execCurrentOf(CurrentOfExpr *cexpr,
 						cursor_name)));
 
 	/*
-	 * Dig through the cursor's plan to find the scan node.  Fail if it's not
-	 * there or buried underneath aggregation.
+	 * The referenced cursor must be simply updatable. This has already
+	 * been discerned by parse/analyze for the DECLARE CURSOR of the given
+	 * cursor. This flag assures us that gp_segment_id, ctid, and tableoid (if necessary)
+	 * will be available as junk metadata, courtesy of preprocess_targetlist.
 	 */
-	scanstate = search_plan_tree(ExecGetActivePlanTree(queryDesc),
-								 table_oid);
-	if (!scanstate)
+	if (!portal->is_simply_updatable)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_STATE),
-		errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
-			   cursor_name, table_name)));
+				 errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
+						cursor_name, table_name)));
+
+	/*
+	 * The target relation must directly match the cursor's relation. This throws out
+	 * the simple case in which a cursor is declared against table X and the update is
+	 * issued against Y. Moreover, this disallows some subtler inheritance cases where
+	 * Y inherits from X. While such cases could be implemented, it seems wiser to
+	 * simply error out cleanly.
+	 */
+	Index varno = extractSimplyUpdatableRTEIndex(queryDesc->plannedstmt->rtable);
+	Oid cursor_relid = getrelid(varno, queryDesc->plannedstmt->rtable);
+	if (table_oid != cursor_relid)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_STATE),
+				 errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
+						cursor_name, table_name)));
 
 	/*
 	 * The cursor must have a current result row: per the SQL spec, it's an
@@ -109,26 +215,69 @@ execCurrentOf(CurrentOfExpr *cexpr,
 				 errmsg("cursor \"%s\" is not positioned on a row",
 						cursor_name)));
 
-	/* Now OK to return false if we found an inactive scan */
-	if (TupIsNull(scanstate->ss_ScanTupleSlot))
-		return false;
+	/*
+	 * In PostgreSQL, we extract the current tuple's TID from the scan node
+	 * we dug above. That doesn't work in GPDB, however, because the scan is
+	 * most likely below a Motion node, and belongs to a different slice
+	 * than the top node. The slot of the scan node is empty, and the tuple
+	 * has been received by a Motion node higher up in the tree instead. So
+	 * we use a different approach:
+	 *
+	 * The planner should've made the gp_segment_id, ctid, and tableoid
+	 * available as junk columns at the top of the plan. To retrieve this
+	 * junk metadeta, we leverage the EState's junkfilter against the raw
+	 * tuple yielded by the top node in the plan.
+	 */
 
-	/* Use slot_getattr to catch any possible mistakes */
-	tuple_tableoid = DatumGetObjectId(slot_getattr(scanstate->ss_ScanTupleSlot,
-												   TableOidAttributeNumber,
-												   &lisnull));
-	Assert(!lisnull);
-	tuple_tid = (ItemPointer)
-		DatumGetPointer(slot_getattr(scanstate->ss_ScanTupleSlot,
-									 SelfItemPointerAttributeNumber,
-									 &lisnull));
-	Assert(!lisnull);
+	slot = queryDesc->planstate->ps_ResultTupleSlot;
+	Insist(!TupIsNull(slot));
+	Assert(queryDesc->estate->es_junkFilter);
 
-	Assert(tuple_tableoid == table_oid);
+	/* extract gp_segment_id metadata */
+	gp_segment_id_attno = ExecFindJunkAttribute(queryDesc->estate->es_junkFilter, "gp_segment_id");
+	if (!AttributeNumberIsValid(gp_segment_id_attno))
+		elog(ERROR, "could not find junk gp_segment_id column");
 
-	*current_tid = *tuple_tid;
+	value = ExecGetJunkAttribute(slot, gp_segment_id_attno, &isnull);
+	if (isnull)
+		elog(ERROR, "gp_segment_id is NULL");
+	*current_gp_segment_id = DatumGetInt32(value);
 
-	return true;
+	/* extract ctid metadata */
+	ctid_attno = ExecFindJunkAttribute(queryDesc->estate->es_junkFilter, "ctid");
+	if (!AttributeNumberIsValid(ctid_attno))
+		elog(ERROR, "could not find junk ctid column");
+	value = ExecGetJunkAttribute(slot, ctid_attno, &isnull);
+	if (isnull)
+		elog(ERROR, "ctid is NULL");
+	ItemPointerCopy(DatumGetItemPointer(value), current_tid);
+
+	/*
+	 * extract tableoid metadata
+	 *
+	 * DECLARE CURSOR planning only includes tableoid metadata when
+	 * scrolling a partitioned table. Otherwise gp_segment_id and ctid alone
+	 * are sufficient to uniquely identify a tuple.
+	 */
+	tableoid_attno = ExecFindJunkAttribute(queryDesc->estate->es_junkFilter,
+										   "tableoid");
+	if (AttributeNumberIsValid(tableoid_attno))
+	{
+		value = ExecGetJunkAttribute(slot, tableoid_attno, &isnull);
+		if (isnull)
+			elog(ERROR, "tableoid is NULL");
+		*current_table_oid = DatumGetObjectId(value);
+
+		/*
+		 * This is our last opportunity to verify that the physical table given
+		 * by tableoid is, indeed, simply updatable.
+		 */
+		if (!isSimplyUpdatableRelation(*current_table_oid))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("%s is not updatable",
+							get_rel_name_partition(*current_table_oid))));
+	}
 }
 
 /*
@@ -167,6 +316,7 @@ fetch_param_value(ExprContext *econtext, int paramId)
  * Search through a PlanState tree for a scan node on the specified table.
  * Return NULL if not found or multiple candidates.
  */
+#ifdef NOT_USED
 static ScanState *
 search_plan_tree(PlanState *node, Oid table_oid)
 {
@@ -178,8 +328,14 @@ search_plan_tree(PlanState *node, Oid table_oid)
 			 * scan nodes can all be treated alike
 			 */
 		case T_SeqScanState:
+		case T_AppendOnlyScanState:
+		case T_AOCSScanState:
+		case T_TableScanState:
+		case T_DynamicTableScanState:
 		case T_IndexScanState:
 		case T_BitmapHeapScanState:
+		case T_BitmapAppendOnlyScanState:
+		case T_BitmapTableScanState:
 		case T_TidScanState:
 			{
 				ScanState  *sstate = (ScanState *) node;
@@ -219,6 +375,7 @@ search_plan_tree(PlanState *node, Oid table_oid)
 			 */
 		case T_ResultState:
 		case T_LimitState:
+		case T_MotionState:
 			return search_plan_tree(node->lefttree, table_oid);
 
 			/*
@@ -234,3 +391,4 @@ search_plan_tree(PlanState *node, Oid table_oid)
 	}
 	return NULL;
 }
+#endif /* NOT_USED */

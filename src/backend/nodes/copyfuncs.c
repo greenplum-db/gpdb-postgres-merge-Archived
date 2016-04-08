@@ -146,6 +146,7 @@ _copyQueryDispatchDesc(QueryDispatchDesc *from)
 	COPY_NODE_FIELD(intoOidInfo);
 	COPY_NODE_FIELD(intoTableSpaceName);
 	COPY_NODE_FIELD(sliceTable);
+	COPY_NODE_FIELD(cursorPositions);
 
 	return newnode;
 }
@@ -1906,9 +1907,6 @@ _copyCurrentOfExpr(CurrentOfExpr *from)
 	COPY_STRING_FIELD(cursor_name);
 	COPY_SCALAR_FIELD(cvarno);
 	COPY_SCALAR_FIELD(target_relid);
-	COPY_SCALAR_FIELD(gp_segment_id);
-	COPY_BINARY_FIELD(ctid, sizeof(ItemPointerData));
-	COPY_SCALAR_FIELD(tableoid);
 
 	return newnode;
 }
@@ -4270,6 +4268,18 @@ _copySliceTable(SliceTable *from)
 	return newnode;
 }
 
+static CursorPosInfo *
+_copyCursorPosInfo(CursorPosInfo *from)
+{
+	CursorPosInfo *newnode = makeNode(CursorPosInfo);
+
+	COPY_STRING_FIELD(cursor_name);
+	COPY_SCALAR_FIELD(gp_segment_id);
+	COPY_BINARY_FIELD(ctid, sizeof(ItemPointerData));
+	COPY_SCALAR_FIELD(table_oid);
+
+	return newnode;
+}
 
 
 static CreateQueueStmt *
@@ -5258,6 +5268,9 @@ copyObject(void *from)
 			break;
 		case T_SliceTable:
 			retval = _copySliceTable(from);
+			break;
+		case T_CursorPosInfo:
+			retval = _copyCursorPosInfo(from);
 			break;
 		case T_TableValueExpr:
 			retval = _copyTableValueExpr(from);

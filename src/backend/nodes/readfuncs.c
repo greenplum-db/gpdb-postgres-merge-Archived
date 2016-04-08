@@ -2935,6 +2935,21 @@ _readSliceTable(void)
 	READ_DONE();
 }
 
+static CursorPosInfo *
+_readCursorPosInfo(void)
+{
+	READ_LOCALS(CursorPosInfo);
+
+	READ_STRING_FIELD(cursor_name);
+	READ_INT_FIELD(gp_segment_id);
+	READ_UINT_FIELD(ctid.ip_blkid.bi_hi);
+	READ_UINT_FIELD(ctid.ip_blkid.bi_lo);
+	READ_UINT_FIELD(ctid.ip_posid);
+	READ_OID_FIELD(table_oid);
+
+	READ_DONE();
+}
+
 static VariableSetStmt *
 _readVariableSetStmt(void)
 {
@@ -3086,6 +3101,7 @@ static ParseNodeInfo infoAr[] =
 	{"CREATESTMT", (ReadFn)_readCreateStmt},
 	{"CREATETRIGSTMT", (ReadFn)_readCreateTrigStmt},
 	{"CURRENTOFEXPR", (ReadFn)_readCurrentOfExpr},
+	{"CURSORPOSINFO", (ReadFn)_readCursorPosInfo},
 	{"DECLARECURSOR", (ReadFn)_readDeclareCursorStmt},
 	{"DEFELEM", (ReadFn)_readDefElem},
 	{"DEFINESTMT", (ReadFn)_readDefineStmt},

@@ -165,55 +165,23 @@ TidListCreate(TidScanState *tidstate)
 		}
 		else if (expr && IsA(expr, CurrentOfExpr))
 		{
-			/* 
-			 * CURRENT OF must be the only expr. This allows us to avoid
-			 * a repalloc of the tidList. 
-			 */
-			Insist(list_length(evalList) == 1);	
 			CurrentOfExpr *cexpr = (CurrentOfExpr *) expr;
+			ItemPointerData cursor_tid;
 
-			if (cexpr->gp_segment_id == Gp_segment)
-			{
-				/* GPDB_83_MERGE_FIXME: the code below is a just the old GPDB code and
-				 * the new PostgreSQL code appended together. I'm pretty sure this
-				 * can't work like this. ISTM that GPDB used to evaluate CURRENT OF
-				 * at plan time, while in PostgreSQL it's evaluated at execution time.
-				 * We probably want to have the upstream implementation, but it will
-				 * need some hacking to "segmentify" it.
-				 */
-				
-				/*
-				 * If tableoid is InvalidOid, this implies that constant
-				 * folding had determined tableoid was not necessary in
-				 * uniquely identifying a tuple. Otherwise, the given tuple's
-				 * tableoid must match the CURRENT OF tableoid.
-				 * The following code is similar to CurrentOfExpr node's evalfunc
-				 * ExecEvalCurrentOfExpr. This part only peeks into CurrentOfExpr
-				 * and gets the tableoid, gp_segment_id and ctid
-				 * whereas ExecEvalCurrentOfExpr is evaluated like any other WHERE clause.
-				 * We could potentially push down CURRENT OF predicate to TID Scan
-				 * but it seems not to be worth the effort.
-				 */
-				if (!OidIsValid(cexpr->tableoid) ||
-					cexpr->tableoid == RelationGetRelid(tidstate->ss.ss_currentRelation))
-					tidList[numTids++] = cexpr->ctid;
-
-				ItemPointerData cursor_tid;
-
-				if (execCurrentOf(cexpr, econtext,
+			if (execCurrentOf(cexpr, econtext,
 						   RelationGetRelid(tidstate->ss.ss_currentRelation),
-								  &cursor_tid))
+							  &cursor_tid))
+			{
+				Assert(ItemPointerIsValid(&cursor_tid));
+				if (numTids >= numAllocTids)
 				{
-					if (numTids >= numAllocTids)
-					{
-						numAllocTids *= 2;
-						tidList = (ItemPointerData *)
-							repalloc(tidList,
-									 numAllocTids * sizeof(ItemPointerData));
-					}
-					tidList[numTids++] = cursor_tid;
-					tidstate->tss_isCurrentOf = true;
+					numAllocTids *= 2;
+					tidList = (ItemPointerData *)
+						repalloc(tidList,
+								 numAllocTids * sizeof(ItemPointerData));
 				}
+				tidList[numTids++] = cursor_tid;
+				tidstate->tss_isCurrentOf = true;
 			}
 		}
 		else

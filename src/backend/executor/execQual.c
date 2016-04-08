@@ -4826,21 +4826,14 @@ ExecEvalCurrentOfExpr(ExprState *exprstate, ExprContext *econtext,
 	 */
 	if (TupHasHeapTuple(slot))
 	{
-		if (cexpr->gp_segment_id == Gp_segment &&
-			ItemPointerEquals(&cexpr->ctid, slot_get_ctid(slot)))
+		ItemPointerData cursor_tid;
+
+		if (execCurrentOf(cexpr, econtext,
+						  slot->tts_tableOid,
+						  &cursor_tid))
 		{
-			/*
-			 * If tableoid is InvalidOid, this implies that constant folding had
-			 * had determined tableoid was not necessary in uniquely identifying a tuple.
-			 * Otherwise, the given tuple's tableoid must match the CURRENT OF tableoid.
-			 * NOTE: If you are modifying this code, please modify corresponding code in
-			 * TidListCreate also.
-			 */
-			if (!OidIsValid(cexpr->tableoid) ||
-				cexpr->tableoid == slot->tts_tableOid)
-			{
+			if (ItemPointerEquals(&cursor_tid, slot_get_ctid(slot)))
 				result = true;
-			}
 		}
 	}
 

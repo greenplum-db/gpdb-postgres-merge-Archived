@@ -2100,6 +2100,8 @@ transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr *cexpr)
 									  &sublevels_up);
 	Assert(sublevels_up == 0);
 
+	cexpr->target_relid = pstate->p_target_rangetblentry->relid;
+
 	/* If a parameter is used, it must be of type REFCURSOR */
 	if (cexpr->cursor_name == NULL)
 	{

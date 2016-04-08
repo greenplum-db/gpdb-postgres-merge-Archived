@@ -260,9 +260,6 @@ _readCurrentOfExpr(void)
 	READ_STRING_FIELD(cursor_name);
 	READ_UINT_FIELD(cvarno);
 	READ_OID_FIELD(target_relid);
-	READ_INT_FIELD(gp_segment_id);
-	READ_BINARY_FIELD(ctid, sizeof(ItemPointerData));
-	READ_OID_FIELD(tableoid);
 
 	READ_DONE();
 }
@@ -1547,6 +1544,7 @@ _readQueryDispatchDesc(void)
 	READ_NODE_FIELD(intoOidInfo);
 	READ_STRING_FIELD(intoTableSpaceName);
 	READ_NODE_FIELD(sliceTable);
+	READ_NODE_FIELD(cursorPositions);
 	READ_DONE();
 }
 
@@ -3359,6 +3357,9 @@ readNodeBinary(void)
 				break;
 			case T_SliceTable:
 				return_value = _readSliceTable();
+				break;
+			case T_CursorPosInfo:
+				return_value = _readCursorPosInfo();
 				break;
 			case T_VariableSetStmt:
 				return_value = _readVariableSetStmt();
