@@ -333,7 +333,7 @@ SELECT max(f1), min(f1), max(f2), min(f2), max(f3), min(f3) FROM arraggtest;
 
 create type comptype as (f1 int, f2 text);
 
-create table comptable (c1 comptype, c2 comptype[]);
+create table comptable (c1 comptype, c2 comptype[], distkey int4) distributed by (distkey);
 
 -- XXX would like to not have to specify row() construct types here ...
 insert into comptable
@@ -342,7 +342,7 @@ insert into comptable
 -- check that implicitly named array type _comptype isn't a problem
 create type _comptype as enum('fooey');
 
-select * from comptable;
+select c1, c2 from comptable;
 select c2[2].f2 from comptable;
 
 drop type _comptype;
@@ -351,8 +351,8 @@ drop type comptype;
 
 -- Insert/update on a column that is array of composite
 
-create temp table t1 (f1 int8_tbl[]);
+create temp table t1 (f1 int8_tbl[], distkey int4) distributed by (distkey);
 insert into t1 (f1[5].q1) values(42);
-select * from t1;
+select f1 from t1;
 update t1 set f1[5].q2 = 43;
-select * from t1;
+select f1 from t1;
