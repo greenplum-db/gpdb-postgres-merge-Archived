@@ -2323,7 +2323,7 @@ transformPercentileExpr(ParseState *pstate, PercentileExpr *p)
 					 errmsg("function \"%s\" does not exist",
 						 percentileFuncString(p, &argtype, 1, NULL, 0)),
 					 errhint("No function matches the given name and argument types. "
-							 "You may need to add explicit type casts."),
+							 "You might need to add explicit type casts."),
 					 parser_errposition(pstate, p->location)));
 	}
 	argtype = FLOAT8OID;
@@ -2466,7 +2466,7 @@ transformPercentileExpr(ParseState *pstate, PercentileExpr *p)
 						 errmsg("function \"%s\" is not unique",
 							percentileFuncString(p, &argtype, 1, sorttypes, sortlen)),
 						 errhint("Could not choose a best candidate function. "
-								 "You may need to add explicit type casts."),
+								 "You might need to add explicit type casts."),
 						 parser_errposition(pstate, p->location)));
 		}
 		else if (ncandidates == 0)
@@ -2476,7 +2476,7 @@ transformPercentileExpr(ParseState *pstate, PercentileExpr *p)
 					 errmsg("function \"%s\" does not exist",
 						percentileFuncString(p, &argtype, 1, sorttypes, sortlen)),
 					 errhint("No function matches the given name and argument types. "
-							 "You may need to add explicit type casts."),
+							 "You might need to add explicit type casts."),
 						 parser_errposition(pstate, p->location)));
 		}
 
