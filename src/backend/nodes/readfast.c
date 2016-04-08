@@ -668,6 +668,42 @@ _readSelectStmt(void)
 	READ_DONE();
 }
 
+static InsertStmt *
+_readInsertStmt(void)
+{
+	READ_LOCALS(InsertStmt);
+
+	READ_NODE_FIELD(relation);
+	READ_NODE_FIELD(cols);
+	READ_NODE_FIELD(selectStmt);
+	READ_NODE_FIELD(returningList);
+	READ_DONE();
+}
+
+static DeleteStmt *
+_readDeleteStmt(void)
+{
+	READ_LOCALS(DeleteStmt);
+
+	READ_NODE_FIELD(relation);
+	READ_NODE_FIELD(usingClause);
+	READ_NODE_FIELD(whereClause);
+	READ_NODE_FIELD(returningList);
+	READ_DONE();
+}
+
+static UpdateStmt *
+_readUpdateStmt(void)
+{
+	READ_LOCALS(UpdateStmt);
+
+	READ_NODE_FIELD(relation);
+	READ_NODE_FIELD(targetList);
+	READ_NODE_FIELD(whereClause);
+	READ_NODE_FIELD(returningList);
+	READ_DONE();
+}
+
 /*
  * _readFuncCall
  *
@@ -3179,6 +3215,15 @@ readNodeBinary(void)
 				break;
 			case T_SelectStmt:
 				return_value = _readSelectStmt();
+				break;
+			case T_InsertStmt:
+				return_value = _readInsertStmt();
+				break;
+			case T_DeleteStmt:
+				return_value = _readDeleteStmt();
+				break;
+			case T_UpdateStmt:
+				return_value = _readUpdateStmt();
 				break;
 			case T_ColumnDef:
 				return_value = _readColumnDef();

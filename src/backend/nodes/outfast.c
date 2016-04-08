@@ -1777,6 +1777,15 @@ _outNode(StringInfo str, void *obj)
 			case T_SelectStmt:
 				_outSelectStmt(str, obj);
 				break;
+			case T_InsertStmt:
+				_outInsertStmt(str, obj);
+				break;
+			case T_DeleteStmt:
+				_outDeleteStmt(str, obj);
+				break;
+			case T_UpdateStmt:
+				_outUpdateStmt(str, obj);
+				break;
 			case T_ColumnDef:
 				_outColumnDef(str, obj);
 				break;

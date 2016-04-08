@@ -3223,19 +3223,6 @@ _outConstraintsSetStmt(StringInfo str, ConstraintsSetStmt *node)
 	WRITE_BOOL_FIELD(deferred);
 }
 
-#ifndef COMPILING_BINARY_FUNCS
-static void
-_outInsertStmt(StringInfo str, InsertStmt *node)
-{
-	WRITE_NODE_TYPE("INSERT");
-
-	WRITE_NODE_FIELD(relation);
-	WRITE_NODE_FIELD(cols);
-	WRITE_NODE_FIELD(selectStmt);
-	WRITE_NODE_FIELD(returningList);
-}
-#endif /* COMPILING_BINARY_FUNCS */
-
 /*
  * SelectStmt's are never written to the catalog, they only exist
  * between parse and parseTransform.  The only use of this function
@@ -3269,6 +3256,39 @@ _outSelectStmt(StringInfo str, SelectStmt *node)
 	WRITE_NODE_FIELD(larg);
 	WRITE_NODE_FIELD(rarg);
 	WRITE_NODE_FIELD(distributedBy);
+}
+
+static void
+_outInsertStmt(StringInfo str, InsertStmt *node)
+{
+	WRITE_NODE_TYPE("INSERT");
+
+	WRITE_NODE_FIELD(relation);
+	WRITE_NODE_FIELD(cols);
+	WRITE_NODE_FIELD(selectStmt);
+	WRITE_NODE_FIELD(returningList);
+}
+
+static void
+_outDeleteStmt(StringInfo str, DeleteStmt *node)
+{
+	WRITE_NODE_TYPE("DELETE");
+
+	WRITE_NODE_FIELD(relation);
+	WRITE_NODE_FIELD(usingClause);
+	WRITE_NODE_FIELD(whereClause);
+	WRITE_NODE_FIELD(returningList);
+}
+
+static void
+_outUpdateStmt(StringInfo str, UpdateStmt *node)
+{
+	WRITE_NODE_TYPE("UPDATE");
+
+	WRITE_NODE_FIELD(relation);
+	WRITE_NODE_FIELD(targetList);
+	WRITE_NODE_FIELD(whereClause);
+	WRITE_NODE_FIELD(returningList);
 }
 
 static void
@@ -4928,6 +4948,12 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_InsertStmt:
 				_outInsertStmt(str, obj);
+				break;
+			case T_DeleteStmt:
+				_outDeleteStmt(str, obj);
+				break;
+			case T_UpdateStmt:
+				_outUpdateStmt(str, obj);
 				break;
 			case T_Null:
 				_outNull(str, obj);
