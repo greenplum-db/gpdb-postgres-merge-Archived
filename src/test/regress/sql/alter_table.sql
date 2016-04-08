@@ -177,8 +177,8 @@ DROP TABLE oldcor;
 -- typname is out of sync
 CREATE TABLE cor (a int, b float, c text);
 UPDATE pg_type SET typname='newcor' WHERE typrelid='cor'::regclass;
-ALTER TABLE cor RENAME TO newcor;
-ALTER TABLE newcor RENAME TO cor;
+ALTER TABLE cor RENAME TO newcor2;
+ALTER TABLE newcor2 RENAME TO cor;
 DROP TABLE cor;
 
 -- relname is out of sync
