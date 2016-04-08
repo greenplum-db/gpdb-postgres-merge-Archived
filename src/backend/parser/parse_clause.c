@@ -3100,6 +3100,8 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 	Oid			sortop;
 	Oid			cmpfunc;
 	bool		reverse;
+	int			location;
+	ParseCallbackState pcbstate;
 
 	/* if tlist item is an UNKNOWN literal, change it to TEXT */
 	if (restype == UNKNOWNOID && resolveUnknown)
@@ -3111,6 +3113,19 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 										 exprLocation((Node *) tle->expr));
 		restype = TEXTOID;
 	}
+
+	/*
+	 * Rather than clutter the API of get_sort_group_operators and the other
+	 * functions we're about to use, make use of error context callback to
+	 * mark any error reports with a parse position.  We point to the operator
+	 * location if present, else to the expression being sorted.  (NB: use the
+	 * original untransformed expression here; the TLE entry might well point
+	 * at a duplicate expression in the regular SELECT list.)
+	 */
+	location = sortby->location;
+	if (location < 0)
+		location = exprLocation(sortby->node);
+	setup_parser_errposition_callback(&pcbstate, pstate, location);
 
 	/* determine the sortop */
 	switch (sortby->sortby_dir)
@@ -3150,6 +3165,8 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 			reverse = false;
 			break;
 	}
+
+	cancel_parser_errposition_callback(&pcbstate);
 
 	/* avoid making duplicate sortlist entries */
 	if (!targetIsInSortGroupList(tle, sortop, sortlist))
