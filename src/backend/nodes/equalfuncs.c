@@ -1319,7 +1319,6 @@ _equalIndexStmt(IndexStmt *a, IndexStmt *b)
 	COMPARE_SCALAR_FIELD(unique);
 	COMPARE_SCALAR_FIELD(primary);
 	COMPARE_SCALAR_FIELD(isconstraint);
-	COMPARE_STRING_FIELD(altconname);
 	COMPARE_SCALAR_FIELD(constrOid);
 	COMPARE_SCALAR_FIELD(concurrent);
 	COMPARE_NODE_FIELD(idxOids);

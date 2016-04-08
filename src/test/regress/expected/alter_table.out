@@ -524,10 +524,10 @@ create table dupconstr (
 						distributed by (i);
 -- should fail because of duplicate constraint name
 alter table dupconstr add constraint test unique (i);
-NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "dupconstr_i_key" for table "dupconstr"
+NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "test" for table "dupconstr"
 ERROR:  constraint "test" for relation "dupconstr" already exists
 alter table dupconstr add constraint test primary key (i);
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "dupconstr_pkey" for table "dupconstr"
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "test" for table "dupconstr"
 ERROR:  constraint "test" for relation "dupconstr" already exists
 -- cleanup
 drop table dupconstr;
@@ -584,7 +584,7 @@ create table atacc1 ( test int ) distributed by (test);
 insert into atacc1 (test) values (NULL);
 -- add a primary key (fails)
 alter table atacc1 add constraint atacc_test1 primary key (test);
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc1_pkey" for table "atacc1"
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc_test1" for table "atacc1"
 ERROR:  column "test" contains null values  (seg1 rh55-qavm63:18507 pid=26647)
 insert into atacc1 (test) values (3);
 drop table atacc1;

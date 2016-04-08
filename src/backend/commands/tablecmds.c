@@ -3859,20 +3859,6 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 				Insist(IsA(topindexstmt, IndexStmt));
 				if ( topindexstmt->isconstraint )
 				{
-					if ( !topindexstmt->altconname )
- 					{
- 						if ( topindexstmt->primary )
-							contype = CONSTR_PRIMARY;
-						else if ( topindexstmt->unique )
-							contype = CONSTR_UNIQUE;
-							 						 						
-						/* Pick and install a constraint name. */
-						topindexstmt->altconname =
-							ChooseConstraintNameForPartitionEarly(rel, 
-																  contype,
-																  (Node*)topindexstmt->indexParams);
-					}
-
 					switch ( rel_part_status(RelationGetRelid(rel)) )
 					{
 						case PART_STATUS_ROOT:

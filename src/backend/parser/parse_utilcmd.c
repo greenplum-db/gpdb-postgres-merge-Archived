@@ -167,7 +167,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 	cxt.rel = NULL;
 	cxt.inhRelations = stmt->inhRelations;
 	cxt.isalter = false;
-	cxt.isaddpart = stmt->is_add_part;
 	cxt.iscreatepart = createPartition;
 	cxt.columns = NIL;
 	cxt.ckconstraints = NIL;
@@ -938,28 +937,6 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 	{
 		conoid = get_index_constraint(source_relid);
 		index->isconstraint = OidIsValid(conoid);
-	}
-		
-	/* If the index backs a constraint and we are adding a part to a paritioned
-	 * table, we need to use the same constraint name as the partition root uses.  
-	 * We assume that the inheritance hierarchy above is consistent, so we just 
-	 * use the parent's constraint. 
-	 */
-	if (index->isconstraint && cxt->isaddpart )
-	{
-		char *conname;
-		
-		/*  */
-		if ( ! OidIsValid(conoid) )
-			conoid = get_index_constraint(source_relid);
-			
-		conname = GetConstraintNameByOid(conoid);
-		
-		if ( ! conname )
-		{
-			elog(ERROR, "missing constraint on partitioned table");
-		}
-		index->altconname = conname;
 	}
 
 	/* Get the index expressions, if any */

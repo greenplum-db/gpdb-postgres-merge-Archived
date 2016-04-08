@@ -52,8 +52,7 @@ extern Oid index_create(Oid heapRelationId,
 			 Oid *constrOid,
 			 bool allow_system_table_mods,
 			 bool skip_build,
-			 bool concurrent,
-			 const char *altConName);
+			 bool concurrent);
 
 extern void index_drop(Oid indexId);
 

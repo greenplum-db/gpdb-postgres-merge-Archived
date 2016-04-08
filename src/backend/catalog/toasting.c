@@ -279,7 +279,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 							   BTREE_AM_OID,
 							   rel->rd_rel->reltablespace,
 							   classObjectId, coloptions, (Datum) 0,
-							   true, false, (Oid *) NULL, true, false, false, NULL);
+							   true, false, (Oid *) NULL, true, false, false);
 
 	/*
 	 * If this is a partitioned child, we can unlock since the master is

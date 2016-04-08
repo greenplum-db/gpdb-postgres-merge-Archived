@@ -2424,7 +2424,6 @@ _outIndexStmt(StringInfo str, IndexStmt *node)
 	WRITE_BOOL_FIELD(unique);
 	WRITE_BOOL_FIELD(primary);
 	WRITE_BOOL_FIELD(isconstraint);
-	WRITE_STRING_FIELD(altconname);
 	WRITE_OID_FIELD(constrOid);
 	WRITE_BOOL_FIELD(concurrent);
 	WRITE_NODE_FIELD(idxOids);

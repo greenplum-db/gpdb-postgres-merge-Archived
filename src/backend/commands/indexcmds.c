@@ -163,7 +163,6 @@ DefineIndex(RangeVar *heapRelation,
 	LOCKMODE	heap_lockmode;
 	bool		need_longlock = true;
 	bool		shouldDispatch = Gp_role == GP_ROLE_DISPATCH && !IsBootstrapProcessingMode();
-	char	   *altconname = stmt ? stmt->altconname : NULL;
 	cqContext  *amcqCtx;
 	cqContext  *attcqCtx;
 
@@ -651,7 +650,7 @@ DefineIndex(RangeVar *heapRelation,
 						 indexInfo, accessMethodId, tablespaceId, classObjectId,
 						 coloptions, reloptions, primary, isconstraint,
 						 &(stmt->constrOid),
-						 allowSystemTableModsDDL, skip_build, concurrent, altconname);
+						 allowSystemTableModsDDL, skip_build, concurrent);
 
         /*
          * Dispatch the command to all primary and mirror segment dbs.
@@ -709,7 +708,7 @@ DefineIndex(RangeVar *heapRelation,
 			index_create(relationId, indexRelationName, indexRelationId,
 					  indexInfo, accessMethodId, tablespaceId, classObjectId,
 						 coloptions, reloptions, primary, isconstraint, &stmt->constrOid,
-						 allowSystemTableModsDDL, skip_build, concurrent, altconname);
+						 allowSystemTableModsDDL, skip_build, concurrent);
 	}
 
 	if (!concurrent)
@@ -728,7 +727,7 @@ DefineIndex(RangeVar *heapRelation,
 		index_create(relationId, indexRelationName, indexRelationId,
 					 indexInfo, accessMethodId, tablespaceId, classObjectId,
 					 coloptions, reloptions, primary, isconstraint, &stmt->constrOid,
-					 allowSystemTableModsDDL, true, concurrent, altconname);
+					 allowSystemTableModsDDL, true, concurrent);
 
 	/*
 	 * We must commit our current transaction so that the index becomes
