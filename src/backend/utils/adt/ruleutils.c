@@ -4324,29 +4324,6 @@ get_rule_expr(Node *node, deparse_context *context,
 						 */
 						if (IsA(w, OpExpr))
 						{
-/* GPDB_83MERGE_FIXME: This block is to handle the GPDB-specific
- * CASE .. WHEN IS NOT DISTINCT FROM construct. This needs to be fixed.
- */
-#if 0							
-						else if (not_clause(w))
-						{
-							Expr *arg = get_notclausearg((Expr *) w);
-							if (IsA(arg, CaseTestExpr))
-								appendStringInfo(buf, "FALSE");
-							else
-							{
-								/* WHEN IS NOT DISTINCT FROM */
-								DistinctExpr 	*dexpr;
-								Node			*rhs;
-
-								Insist(IsA(arg, DistinctExpr));
-								dexpr = (DistinctExpr *) arg;
-
-								appendStringInfo(buf, "IS NOT DISTINCT FROM ");
-								rhs = (Node *) lsecond(dexpr->args);
-								get_rule_expr(rhs, context, false);
-							}
-#endif
 							List	   *args = ((OpExpr *) w)->args;
 
 							if (list_length(args) == 2 &&
@@ -4361,7 +4338,27 @@ get_rule_expr(Node *node, deparse_context *context,
 						appendStringInfoChar(buf, ' ');
 					appendContextKeyword(context, "WHEN ",
 										 0, 0, 0);
-					get_rule_expr(w, context, false);
+
+
+					/* WHEN IS NOT DISTINCT FROM */
+					if (not_clause(w))
+					{
+						Expr *arg = get_notclausearg((Expr *) w);
+
+						if (IsA(arg, DistinctExpr))
+						{
+							DistinctExpr 	*dexpr = (DistinctExpr *) arg;
+							Node			*rhs;
+
+							appendStringInfo(buf, "IS NOT DISTINCT FROM ");
+							rhs = (Node *) lsecond(dexpr->args);
+							get_rule_expr(rhs, context, false);
+						}
+						else
+							get_rule_expr(w, context, false);
+					}
+					else
+						get_rule_expr(w, context, false);
 					appendStringInfo(buf, " THEN ");
 					get_rule_expr((Node *) when->result, context, true);
 				}
