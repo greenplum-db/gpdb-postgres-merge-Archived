@@ -221,6 +221,7 @@ pcb_error_callback(void *arg)
 Var *
 make_var(ParseState *pstate, RangeTblEntry *rte, int attrno, int location)
 {
+	Var		   *result;
 	int			vnum,
 				sublevels_up;
 	Oid			vartypeid;
@@ -228,7 +229,9 @@ make_var(ParseState *pstate, RangeTblEntry *rte, int attrno, int location)
 
 	vnum = RTERangeTablePosn(pstate, rte, &sublevels_up);
 	get_rte_attribute_type(rte, attrno, &vartypeid, &type_mod);
-	return makeVar(vnum, attrno, vartypeid, type_mod, sublevels_up);
+	result = makeVar(vnum, attrno, vartypeid, type_mod, sublevels_up);
+	result->location = location;
+	return result;
 }
 
 /*

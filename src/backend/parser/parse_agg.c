@@ -83,11 +83,15 @@ check_call(ParseState *pstate, Node *call)
 	 */
 	if (min_varlevel == 0 && is_agg)
 	{
+		Aggref *agg = (Aggref *) call;
+
 		if (checkExprHasAggs((Node *)((Aggref *)call)->args))
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
-					 errmsg("aggregate function calls cannot be nested")));
-		
+					 errmsg("aggregate function calls cannot be nested"),
+					 parser_errposition(pstate,
+							   locate_agg_of_level((Node *) agg->args, 0))));
+
 		if (checkExprHasWindFuncs((Node *)((Aggref *)call)->args))
 		{
 			ereport(ERROR,

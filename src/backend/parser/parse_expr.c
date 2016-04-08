@@ -2323,7 +2323,8 @@ transformPercentileExpr(ParseState *pstate, PercentileExpr *p)
 					 errmsg("function \"%s\" does not exist",
 						 percentileFuncString(p, &argtype, 1, NULL, 0)),
 					 errhint("No function matches the given name and argument types. "
-							 "You may need to add explicit type casts.")));
+							 "You may need to add explicit type casts."),
+					 parser_errposition(pstate, p->location)));
 	}
 	argtype = FLOAT8OID;
 
@@ -2334,12 +2335,14 @@ transformPercentileExpr(ParseState *pstate, PercentileExpr *p)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 				 errmsg("argument of percentile function must not contain variables"),
-				 parser_errposition(pstate, exprLocation(arg))));
+				 parser_errposition(pstate,
+									locate_var_of_level(arg, 0))));
 	if (checkExprHasAggs(arg))
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
 				 errmsg("argument of percentile function must not contain aggregates"),
-				 parser_errposition(pstate, exprLocation(arg))));
+				 parser_errposition(pstate,
+									locate_agg_of_level(arg, 0))));
 	if (checkExprHasWindFuncs(arg))
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
@@ -2375,8 +2378,8 @@ transformPercentileExpr(ParseState *pstate, PercentileExpr *p)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("function \"%s\" cannot accept more than one expression in ORDER BY",
-					 percentileFuncString(p, &argtype, 1, NULL, 0))));
-
+						percentileFuncString(p, &argtype, 1, NULL, 0)),
+				 parser_errposition(pstate, exprLocation((Node *) p->sortClause))));
 
 	p->args = list_make1(arg);
 

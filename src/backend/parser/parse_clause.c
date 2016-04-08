@@ -1182,7 +1182,9 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	if (query->intoClause != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("subquery in FROM cannot have SELECT INTO")));
+				 errmsg("subquery in FROM cannot have SELECT INTO"),
+				 parser_errposition(pstate,
+								 exprLocation((Node *) query->intoClause))));
 
 	/*
 	 * The subquery cannot make use of any variables from FROM items created
@@ -1202,7 +1204,9 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 		if (contain_vars_of_level((Node *) query, 1))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("subquery in FROM cannot refer to other relations of same query level")));
+					 errmsg("subquery in FROM cannot refer to other relations of same query level"),
+					 parser_errposition(pstate,
+								   locate_var_of_level((Node *) query, 1))));
 	}
 
 	/*
@@ -1308,7 +1312,9 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 		if (contain_vars_of_level(funcexpr, 0))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("function expression in FROM cannot refer to other relations of same query level")));
+					 errmsg("function expression in FROM cannot refer to other relations of same query level"),
+					 parser_errposition(pstate,
+										locate_var_of_level(funcexpr, 0))));
 	}
 
 	/*
@@ -1320,7 +1326,9 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 		if (checkExprHasAggs(funcexpr))
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
-					 errmsg("cannot use aggregate function in function expression in FROM")));
+					 errmsg("cannot use aggregate function in function expression in FROM"),
+				 parser_errposition(pstate,
+									locate_agg_of_level(funcexpr, 0))));
 	}
 
 	/*
@@ -1935,7 +1943,9 @@ transformLimitClause(ParseState *pstate, Node *clause,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 		/* translator: %s is name of a SQL construct, eg LIMIT */
 				 errmsg("argument of %s must not contain variables",
-						constructName)));
+						constructName),
+				 parser_errposition(pstate,
+									locate_var_of_level(qual, 0))));
 	}
 	if (checkExprHasAggs(qual))
 	{
@@ -1943,7 +1953,9 @@ transformLimitClause(ParseState *pstate, Node *clause,
 				(errcode(ERRCODE_GROUPING_ERROR),
 		/* translator: %s is name of a SQL construct, eg LIMIT */
 				 errmsg("argument of %s must not contain aggregates",
-						constructName)));
+						constructName),
+				 parser_errposition(pstate,
+									locate_agg_of_level(qual, 0))));
 	}
 	if (contain_subplans(qual))
 	{
