@@ -1448,7 +1448,9 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error at or near \"NOT\""),
-						 errhint("Missing <operand> for \"CASE <operand> WHEN IS NOT DISTINCT FROM ...\"")));
+						 errhint("Missing <operand> for \"CASE <operand> WHEN IS NOT DISTINCT FROM ...\""),
+						 parser_errposition(pstate, exprLocation((Node *) warg))));
+
 		}
 		neww->expr = (Expr *) transformExpr(pstate, warg);
 
