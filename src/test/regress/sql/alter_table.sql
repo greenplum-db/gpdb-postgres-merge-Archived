@@ -1214,7 +1214,8 @@ select relname, relnatts from pg_class where relname = 'ao1';
 -- check col details in pg_attribute
 select  pg_class.relname, attname, typname from pg_attribute, pg_class, pg_type where attrelid = pg_class.oid and pg_class.relname = 'ao1' and atttypid = pg_type.oid and attname = 'col3';
 
--- no explicit entry in pg_attrdef for NULL default
+-- There's an explicit entry in pg_attrdef for the NULL default (although it has
+-- the same effect as no entry).
 select relname, attname, adsrc from pg_class, pg_attribute, pg_attrdef where attrelid = pg_class.oid and adrelid = pg_class.oid and adnum = pg_attribute.attnum and pg_class.relname = 'ao1';
 
 
@@ -1298,7 +1299,8 @@ select relname, relnatts from pg_class where relname = 'aoco1';
 -- check col details in pg_attribute
 select  pg_class.relname, attname, typname from pg_attribute, pg_class, pg_type where attrelid = pg_class.oid and pg_class.relname = 'aoco1' and atttypid = pg_type.oid and attname = 'col3';
 
--- no explicit entry in pg_attrdef for NULL default
+-- There's an explicit entry in pg_attrdef for the NULL default (although it has
+-- the same effect as no entry).
 select relname, attname, adsrc from pg_class, pg_attribute, pg_attrdef where attrelid = pg_class.oid and adrelid = pg_class.oid and adnum = pg_attribute.attnum and pg_class.relname = 'aoco1';
 
 --- 
