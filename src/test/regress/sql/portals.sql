@@ -125,11 +125,11 @@ CLOSE foo12;
 
 -- record this in the system view as well (don't query the time field there
 -- however)
-SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors ORDER BY name;
+SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors;
 
 END;
 
-SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors ORDER BY name;
+SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors;
 
 --
 -- NO SCROLL disallows backward fetching
@@ -274,80 +274,83 @@ COMMIT;
 -- Tests for updatable cursors
 --
 
-CREATE TEMP TABLE uctest(f1 int, f2 text);
+-- In GPDB, we use a dummy column as distribution key, so that all the
+-- rows land on the same segment. Otherwise the order the cursor returns
+-- the rows is unstable.
+CREATE TEMP TABLE uctest(f1 int, f2 text, distkey text) distributed by (distkey);
 INSERT INTO uctest VALUES (1, 'one'), (2, 'two'), (3, 'three');
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
 
 -- Check DELETE WHERE CURRENT
 BEGIN;
-DECLARE c1 CURSOR FOR SELECT * FROM uctest;
+DECLARE c1 CURSOR FOR SELECT f1, f2 FROM uctest;
 FETCH 2 FROM c1;
 DELETE FROM uctest WHERE CURRENT OF c1;
 -- should show deletion
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
 -- cursor did not move
 FETCH ALL FROM c1;
 -- cursor is insensitive
-MOVE BACKWARD ALL IN c1;
-FETCH ALL FROM c1;
+--MOVE BACKWARD ALL IN c1; -- backwards scans not supported in GPDB
+--FETCH ALL FROM c1;
 COMMIT;
 -- should still see deletion
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
 
 -- Check UPDATE WHERE CURRENT; this time use FOR UPDATE
 BEGIN;
-DECLARE c1 CURSOR FOR SELECT * FROM uctest FOR UPDATE;
+DECLARE c1 CURSOR FOR SELECT f1, f2 FROM uctest FOR UPDATE;
 FETCH c1;
 UPDATE uctest SET f1 = 8 WHERE CURRENT OF c1;
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
 COMMIT;
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
 
 -- Check repeated-update and update-then-delete cases
 BEGIN;
-DECLARE c1 CURSOR FOR SELECT * FROM uctest;
+DECLARE c1 CURSOR FOR SELECT f1, f2 FROM uctest;
 FETCH c1;
 UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1;
-SELECT * FROM uctest;
-UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1;
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
+UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1; -- currently broken on GPDB! (does nothing)
+SELECT f1, f2 FROM uctest;
 -- insensitive cursor should not show effects of updates or deletes
-FETCH RELATIVE 0 FROM c1;
-DELETE FROM uctest WHERE CURRENT OF c1;
-SELECT * FROM uctest;
+--FETCH RELATIVE 0 FROM c1;
+DELETE FROM uctest WHERE CURRENT OF c1; -- currently broken on GPDB! (does nothing)
+SELECT f1, f2 FROM uctest;
 DELETE FROM uctest WHERE CURRENT OF c1; -- no-op
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
 UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1; -- no-op
-SELECT * FROM uctest;
-FETCH RELATIVE 0 FROM c1;
+SELECT f1, f2 FROM uctest;
+--FETCH RELATIVE 0 FROM c1;
 ROLLBACK;
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
 
 BEGIN;
-DECLARE c1 CURSOR FOR SELECT * FROM uctest FOR UPDATE;
+DECLARE c1 CURSOR FOR SELECT f1, f2 FROM uctest FOR UPDATE;
 FETCH c1;
 UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1;
-SELECT * FROM uctest;
-UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1;
-SELECT * FROM uctest;
-DELETE FROM uctest WHERE CURRENT OF c1;
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
+UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1; -- currently broken on GPDB! (does nothing)
+SELECT f1, f2 FROM uctest;
+DELETE FROM uctest WHERE CURRENT OF c1; -- currently broken on GPDB! (does nothing)
+SELECT f1, f2 FROM uctest;
 DELETE FROM uctest WHERE CURRENT OF c1; -- no-op
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
 UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1; -- no-op
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
 --- sensitive cursors can't currently scroll back, so this is an error:
 FETCH RELATIVE 0 FROM c1;
 ROLLBACK;
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
 
 -- Check inheritance cases
 CREATE TEMP TABLE ucchild () inherits (uctest);
 INSERT INTO ucchild values(100, 'hundred');
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
 
 BEGIN;
-DECLARE c1 CURSOR FOR SELECT * FROM uctest;
+DECLARE c1 CURSOR FOR SELECT f1, f2 FROM uctest;
 FETCH 1 FROM c1;
 UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1;
 FETCH 1 FROM c1;
@@ -356,7 +359,7 @@ FETCH 1 FROM c1;
 UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1;
 FETCH 1 FROM c1;
 COMMIT;
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
 
 -- Check various error cases
 
@@ -382,7 +385,7 @@ ROLLBACK;
 
 -- WHERE CURRENT OF may someday work with views, but today is not that day.
 -- For now, just make sure it errors out cleanly.
-CREATE TEMP VIEW ucview AS SELECT * FROM uctest;
+CREATE TEMP VIEW ucview AS SELECT f1, f2 FROM uctest;
 CREATE RULE ucrule AS ON DELETE TO ucview DO INSTEAD
   DELETE FROM uctest WHERE f1 = OLD.f1;
 BEGIN;

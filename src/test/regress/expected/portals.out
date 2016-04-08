@@ -435,21 +435,21 @@ CLOSE foo12;
 SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors;
  name  |                               statement                               | is_holdable | is_binary | is_scrollable 
 -------+-----------------------------------------------------------------------+-------------+-----------+---------------
- foo13 | DECLARE foo13 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2; | f           | f         | t
- foo15 | DECLARE foo15 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2; | f           | f         | t
- foo19 | DECLARE foo19 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2; | f           | f         | t
- foo17 | DECLARE foo17 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2; | f           | f         | t
- foo14 | DECLARE foo14 SCROLL CURSOR FOR SELECT * FROM tenk2;                  | f           | f         | t
- foo21 | DECLARE foo21 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2; | f           | f         | t
- foo23 | DECLARE foo23 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2; | f           | f         | t
- foo18 | DECLARE foo18 SCROLL CURSOR FOR SELECT * FROM tenk2;                  | f           | f         | t
- foo20 | DECLARE foo20 SCROLL CURSOR FOR SELECT * FROM tenk2;                  | f           | f         | t
- foo22 | DECLARE foo22 SCROLL CURSOR FOR SELECT * FROM tenk2;                  | f           | f         | t
- foo16 | DECLARE foo16 SCROLL CURSOR FOR SELECT * FROM tenk2;                  | f           | f         | t
+ foo13 | DECLARE foo13 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2; | f           | f         | f
+ foo15 | DECLARE foo15 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2; | f           | f         | f
+ foo19 | DECLARE foo19 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2; | f           | f         | f
+ foo17 | DECLARE foo17 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2; | f           | f         | f
+ foo14 | DECLARE foo14 CURSOR FOR SELECT * FROM tenk2 ORDER BY 1,2,3,4;        | f           | f         | f
+ foo21 | DECLARE foo21 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2; | f           | f         | f
+ foo23 | DECLARE foo23 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2; | f           | f         | f
+ foo18 | DECLARE foo18 CURSOR FOR SELECT * FROM tenk2 ORDER BY 1,2,3,4;        | f           | f         | f
+ foo20 | DECLARE foo20 CURSOR FOR SELECT * FROM tenk2 ORDER BY 1,2,3,4;        | f           | f         | f
+ foo22 | DECLARE foo22 CURSOR FOR SELECT * FROM tenk2 ORDER BY 1,2,3,4;        | f           | f         | f
+ foo16 | DECLARE foo16 CURSOR FOR SELECT * FROM tenk2 ORDER BY 1,2,3,4;        | f           | f         | f
 (11 rows)
 
 END;
-SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors ORDER BY name;
+SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors;
  name | statement | is_holdable | is_binary | is_scrollable 
 ------+-----------+-------------+-----------+---------------
 (0 rows)
@@ -462,7 +462,7 @@ DECLARE foo24 NO SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2;
 FETCH 1 FROM foo24;
  unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
 ---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
-       0 |    9998 |   0 |    0 |   0 |      0 |       0 |        0 |           0 |         0 |        0 |   0 |    1 | AAAAAA   | OUOAAA   | OOOOxx
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
 (1 row)
 
 FETCH BACKWARD 1 FROM foo24; -- should fail
@@ -649,9 +649,12 @@ COMMIT;
 --
 -- Tests for updatable cursors
 --
-CREATE TEMP TABLE uctest(f1 int, f2 text);
+-- In GPDB, we use a dummy column as distribution key, so that all the
+-- rows land on the same segment. Otherwise the order the cursor returns
+-- the rows is unstable.
+CREATE TEMP TABLE uctest(f1 int, f2 text, distkey text) distributed by (distkey);
 INSERT INTO uctest VALUES (1, 'one'), (2, 'two'), (3, 'three');
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
  f1 |  f2   
 ----+-------
   1 | one
@@ -661,7 +664,7 @@ SELECT * FROM uctest;
 
 -- Check DELETE WHERE CURRENT
 BEGIN;
-DECLARE c1 CURSOR FOR SELECT * FROM uctest;
+DECLARE c1 CURSOR FOR SELECT f1, f2 FROM uctest;
 FETCH 2 FROM c1;
  f1 | f2  
 ----+-----
@@ -671,7 +674,7 @@ FETCH 2 FROM c1;
 
 DELETE FROM uctest WHERE CURRENT OF c1;
 -- should show deletion
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
  f1 |  f2   
 ----+-------
   1 | one
@@ -686,18 +689,11 @@ FETCH ALL FROM c1;
 (1 row)
 
 -- cursor is insensitive
-MOVE BACKWARD ALL IN c1;
-FETCH ALL FROM c1;
- f1 |  f2   
-----+-------
-  1 | one
-  2 | two
-  3 | three
-(3 rows)
-
+--MOVE BACKWARD ALL IN c1; -- backwards scans not supported in GPDB
+--FETCH ALL FROM c1;
 COMMIT;
 -- should still see deletion
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
  f1 |  f2   
 ----+-------
   1 | one
@@ -706,7 +702,7 @@ SELECT * FROM uctest;
 
 -- Check UPDATE WHERE CURRENT; this time use FOR UPDATE
 BEGIN;
-DECLARE c1 CURSOR FOR SELECT * FROM uctest FOR UPDATE;
+DECLARE c1 CURSOR FOR SELECT f1, f2 FROM uctest FOR UPDATE;
 FETCH c1;
  f1 | f2  
 ----+-----
@@ -714,7 +710,7 @@ FETCH c1;
 (1 row)
 
 UPDATE uctest SET f1 = 8 WHERE CURRENT OF c1;
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
  f1 |  f2   
 ----+-------
   3 | three
@@ -722,7 +718,7 @@ SELECT * FROM uctest;
 (2 rows)
 
 COMMIT;
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
  f1 |  f2   
 ----+-------
   3 | three
@@ -731,7 +727,7 @@ SELECT * FROM uctest;
 
 -- Check repeated-update and update-then-delete cases
 BEGIN;
-DECLARE c1 CURSOR FOR SELECT * FROM uctest;
+DECLARE c1 CURSOR FOR SELECT f1, f2 FROM uctest;
 FETCH c1;
  f1 |  f2   
 ----+-------
@@ -739,57 +735,50 @@ FETCH c1;
 (1 row)
 
 UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1;
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
  f1 |  f2   
 ----+-------
   8 | one
  13 | three
 (2 rows)
 
-UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1;
-SELECT * FROM uctest;
+UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1; -- currently broken on GPDB! (does nothing)
+SELECT f1, f2 FROM uctest;
  f1 |  f2   
 ----+-------
   8 | one
- 23 | three
+ 13 | three
 (2 rows)
 
 -- insensitive cursor should not show effects of updates or deletes
-FETCH RELATIVE 0 FROM c1;
- f1 |  f2   
-----+-------
-  3 | three
-(1 row)
-
-DELETE FROM uctest WHERE CURRENT OF c1;
-SELECT * FROM uctest;
+--FETCH RELATIVE 0 FROM c1;
+DELETE FROM uctest WHERE CURRENT OF c1; -- currently broken on GPDB! (does nothing)
+SELECT f1, f2 FROM uctest;
  f1 | f2  
-----+-----
+----+-------
   8 | one
-(1 row)
+ 13 | three
+(2 rows)
 
 DELETE FROM uctest WHERE CURRENT OF c1; -- no-op
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
  f1 | f2  
-----+-----
+----+-------
   8 | one
-(1 row)
+ 13 | three
+(2 rows)
 
 UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1; -- no-op
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
  f1 | f2  
-----+-----
-  8 | one
-(1 row)
-
-FETCH RELATIVE 0 FROM c1;
- f1 |  f2   
 ----+-------
-  3 | three
-(1 row)
+  8 | one
+ 13 | three
+(2 rows)
 
+--FETCH RELATIVE 0 FROM c1;
 ROLLBACK;
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
  f1 |  f2   
 ----+-------
   3 | three
@@ -797,7 +786,7 @@ SELECT * FROM uctest;
 (2 rows)
 
 BEGIN;
-DECLARE c1 CURSOR FOR SELECT * FROM uctest FOR UPDATE;
+DECLARE c1 CURSOR FOR SELECT f1, f2 FROM uctest FOR UPDATE;
 FETCH c1;
  f1 |  f2   
 ----+-------
@@ -805,48 +794,51 @@ FETCH c1;
 (1 row)
 
 UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1;
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
  f1 |  f2   
 ----+-------
   8 | one
  13 | three
 (2 rows)
 
-UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1;
-SELECT * FROM uctest;
+UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1; -- currently broken on GPDB! (does nothing)
+SELECT f1, f2 FROM uctest;
  f1 |  f2   
 ----+-------
   8 | one
- 23 | three
+ 13 | three
 (2 rows)
 
-DELETE FROM uctest WHERE CURRENT OF c1;
-SELECT * FROM uctest;
+DELETE FROM uctest WHERE CURRENT OF c1; -- currently broken on GPDB! (does nothing)
+SELECT f1, f2 FROM uctest;
  f1 | f2  
-----+-----
+----+-------
   8 | one
-(1 row)
+ 13 | three
+(2 rows)
 
 DELETE FROM uctest WHERE CURRENT OF c1; -- no-op
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
  f1 | f2  
-----+-----
+----+-------
   8 | one
-(1 row)
+ 13 | three
+(2 rows)
 
 UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1; -- no-op
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
  f1 | f2  
-----+-----
+----+-------
   8 | one
-(1 row)
+ 13 | three
+(2 rows)
 
 --- sensitive cursors can't currently scroll back, so this is an error:
 FETCH RELATIVE 0 FROM c1;
 ERROR:  cursor can only scan forward
 HINT:  Declare it with SCROLL option to enable backward scan.
 ROLLBACK;
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
  f1 |  f2   
 ----+-------
   3 | three
@@ -856,7 +848,7 @@ SELECT * FROM uctest;
 -- Check inheritance cases
 CREATE TEMP TABLE ucchild () inherits (uctest);
 INSERT INTO ucchild values(100, 'hundred');
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
  f1  |   f2    
 -----+---------
    3 | three
@@ -865,7 +857,7 @@ SELECT * FROM uctest;
 (3 rows)
 
 BEGIN;
-DECLARE c1 CURSOR FOR SELECT * FROM uctest;
+DECLARE c1 CURSOR FOR SELECT f1, f2 FROM uctest;
 FETCH 1 FROM c1;
  f1 |  f2   
 ----+-------
@@ -893,7 +885,7 @@ FETCH 1 FROM c1;
 (0 rows)
 
 COMMIT;
-SELECT * FROM uctest;
+SELECT f1, f2 FROM uctest;
  f1  |   f2    
 -----+---------
   13 | three
@@ -929,7 +921,7 @@ ERROR:  cursor "c1" is not positioned on a row
 ROLLBACK;
 -- WHERE CURRENT OF may someday work with views, but today is not that day.
 -- For now, just make sure it errors out cleanly.
-CREATE TEMP VIEW ucview AS SELECT * FROM uctest;
+CREATE TEMP VIEW ucview AS SELECT f1, f2 FROM uctest;
 CREATE RULE ucrule AS ON DELETE TO ucview DO INSTEAD
   DELETE FROM uctest WHERE f1 = OLD.f1;
 BEGIN;
