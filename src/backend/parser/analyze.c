@@ -2989,7 +2989,7 @@ isSimplyUpdatableQuery(Query *query)
 		list_length(query->rtable) == 1)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *)linitial(query->rtable);
-		if (isSimplyUpdatableRelation(rte->relid))
+		if (isSimplyUpdatableRelation(rte->relid, true))
 			return true;
 	}
 	return false;

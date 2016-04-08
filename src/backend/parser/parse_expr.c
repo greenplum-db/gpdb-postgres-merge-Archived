@@ -2079,19 +2079,13 @@ transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr *cexpr)
 {
 	int			sublevels_up;
 
-	{
-		/*
-		 * The target RTE must be simply updatable. If not, we error out
-		 * early here to avoid having to deal with error cases later:
-		 * rewriting/planning against views, for example.
-		 */
-		Assert(pstate->p_target_rangetblentry != NULL);
-		if (!isSimplyUpdatableRelation(pstate->p_target_rangetblentry->relid))
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("\"%s\" is not simply updatable",
-							pstate->p_target_relation->rd_rel->relname.data)));
-	}
+	/*
+	 * The target RTE must be simply updatable. If not, we error out
+	 * early here to avoid having to deal with error cases later:
+	 * rewriting/planning against views, for example.
+	 */
+	Assert(pstate->p_target_rangetblentry != NULL);
+	(void) isSimplyUpdatableRelation(pstate->p_target_rangetblentry->relid, false);
 
 	/* CURRENT OF can only appear at top level of UPDATE/DELETE */
 	Assert(pstate->p_target_rangetblentry != NULL);
