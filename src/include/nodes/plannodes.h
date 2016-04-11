@@ -813,11 +813,14 @@ extern bool isDynamicScan(const Scan *scan);
  */
 typedef struct ShareInputScan
 {
-	Plan 		plan; /* The ShareInput */
+	Scan 		scan; /* The ShareInput */
 
 	ShareType 	share_type;
 	int 		share_id;
 	int 		driver_slice;   	/* slice id that will execute the underlying material/sort */
+	List	   *colnames;	/* output column names (string Value nodes) */
+	List	   *coltypes;	/* OID list of column type OIDs */
+	List	   *coltypmods; /* integer list of column typmods */
 } ShareInputScan;
 
 /* ----------------

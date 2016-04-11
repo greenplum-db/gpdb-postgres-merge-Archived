@@ -64,11 +64,12 @@ typedef struct QualCost
 typedef struct ApplyShareInputContext
 {
 	List *sharedNodes;
+	List	   *curr_rtable;
+	int		   *share_refcounts;
 	List *sliceMarks;
 	List *motStack;
 	List *qdShares;
 	List *qdSlices;
-	List *planNodes;
 	int nextPlanId;
 } ApplyShareInputContext;
 

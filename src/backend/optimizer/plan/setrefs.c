@@ -758,7 +758,6 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 					childPlan = list_nth(glob->share.sharedNodes, sisc->share_id);
 				}
 
-#ifdef DEBUG
 				Assert(childPlan && IsA(childPlan,Material) || IsA(childPlan, Sort));
 				if (IsA(childPlan, Material))
 				{
@@ -772,7 +771,7 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 					Assert(shared->share_type != SHARE_NOTSHARED
 						   && shared->share_id == sisc->share_id);
 				}
-#endif
+
 				set_dummy_tlist_references(plan, rtoffset, false);
 			}
 			break;

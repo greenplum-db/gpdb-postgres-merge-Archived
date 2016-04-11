@@ -346,7 +346,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->share.motStack = NIL;
 	glob->share.qdShares = NIL;
 	glob->share.qdSlices = NIL;
-	glob->share.planNodes = NIL;
 	glob->share.nextPlanId = 0;
 
 	/* Determine what fraction of the plan is likely to be scanned */
@@ -405,12 +404,14 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	 *
 	 * apply_shareinput will fix shared_id, and change the DAG to a tree.
 	 */
-	foreach(lp, glob->subplans)
+	forboth(lp, glob->subplans, lr, glob->subrtables)
 	{
 		Plan	   *subplan = (Plan *) lfirst(lp);
-		lfirst(lp) = apply_shareinput_dag_to_tree(subplan, &glob->share);
+		List	   *subrtable = (List *) lfirst(lr);
+
+		lfirst(lp) = apply_shareinput_dag_to_tree(glob, subplan, subrtable);
 	}
-	top_plan = apply_shareinput_dag_to_tree(top_plan, &glob->share);
+	top_plan = apply_shareinput_dag_to_tree(glob, top_plan, root->parse->rtable);
 
 	/* final cleanup of the plan */
 	Assert(glob->finalrtable == NIL);
@@ -455,6 +456,13 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	}
 
 	top_plan = zap_trivial_result(root, top_plan);
+
+	foreach(lp, glob->subplans)
+	{
+		Plan	   *subplan = (Plan *) lfirst(lp);
+		lfirst(lp) = replace_shareinput_targetlists(glob, subplan);
+	}
+	top_plan = replace_shareinput_targetlists(glob, top_plan);
 
 	/* build the PlannedStmt result */
 	result = makeNode(PlannedStmt);
