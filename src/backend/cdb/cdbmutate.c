@@ -2722,7 +2722,9 @@ static bool find_params_walker(Node *node, find_params_context *context)
  * Remove unused initplans. This may happen if an initplan has been created, but
  * its corresponding param has been removed because of contradiction detection
  */
-static void remove_unused_initplans_helper(Plan *plan, Bitmapset **usedParams, Bitmapset *rte_params)
+static void
+remove_unused_initplans_helper(Plan *plan, Bitmapset **usedParams, Bitmapset *rte_params,
+							   PlannerInfo *root)
 {
 	if (NULL == plan || IsA(plan, ValuesScan) || IsA(plan, FunctionScan))
 	{
@@ -2739,7 +2741,7 @@ static void remove_unused_initplans_helper(Plan *plan, Bitmapset **usedParams, B
 
 		foreach(lc, l)
 		{
-			remove_unused_initplans_helper(lfirst(lc), usedParams, rte_params);
+			remove_unused_initplans_helper(lfirst(lc), usedParams, rte_params, root);
 		}
 
 		return;
@@ -2827,17 +2829,17 @@ static void remove_unused_initplans_helper(Plan *plan, Bitmapset **usedParams, B
 	if (IsA(plan, Append))
 	{
 		Append *app = (Append *) plan;
-		remove_unused_initplans_helper((Plan *) app->appendplans, &(context.paramids), rte_params);
+		remove_unused_initplans_helper((Plan *) app->appendplans, &(context.paramids), rte_params, root);
 	}
 	else if (IsA(plan, SubqueryScan))
 	{
 		SubqueryScan *subq = (SubqueryScan *) plan;
-		remove_unused_initplans_helper(subq->subplan, &(context.paramids), rte_params);
+		remove_unused_initplans_helper(subq->subplan, &(context.paramids), rte_params, root);
 	}
 	else
 	{
-		remove_unused_initplans_helper(plan->lefttree, &(context.paramids), rte_params);
-		remove_unused_initplans_helper(plan->righttree, &(context.paramids), rte_params);
+		remove_unused_initplans_helper(plan->lefttree, &(context.paramids), rte_params, root);
+		remove_unused_initplans_helper(plan->righttree, &(context.paramids), rte_params, root);
 	}
 
 	if (NIL != plan->initPlan)
@@ -2885,6 +2887,22 @@ static void remove_unused_initplans_helper(Plan *plan, Bitmapset **usedParams, B
 			}
 			else
 			{
+				/*
+				 * This init plan is unused. Leave it out of this plan node's
+				 * initPlan list, and also replace it in the global list of
+				 * subplans with a dummy. (We can't just remove it from the global
+				 * list, because that would screw up the plan_id numbering
+				 * of the subplans).
+				 */
+				ListCell *plancell = list_nth_cell(root->glob->subplans, initplan->plan_id-1);
+				ListCell *rtablecell = list_nth_cell(root->glob->subrtables, initplan->plan_id-1);
+				Plan *subplan = (Plan *) lfirst(plancell);
+
+				lfirst(plancell) = make_result(root, subplan->targetlist,
+											   (Node *) list_make1(makeBoolConst(false, false)),
+											   NULL);;
+				lfirst(rtablecell) = NIL;
+
 				pfree(initplan);
 			}
 		}
@@ -2971,11 +2989,6 @@ static Bitmapset *params_in_rtable(Plan *plan, List *rtable)
  */
 void remove_unused_initplans(Plan *plan, PlannerInfo *root)
 {
-	/* GPDB_83_MERGE_FIXME: this was causing regression failures, so I just
-	 * disabled it. Do we really need this?
-	 */
-	return;
-
 	/*
 	 * RTEs may have params as well, so we need to get param IDs from them
 	 * before walking the plan to remove unused initplans
@@ -2984,7 +2997,7 @@ void remove_unused_initplans(Plan *plan, PlannerInfo *root)
 
 	/* now do the actual cleanup */
 	Bitmapset *params = NULL;
-	remove_unused_initplans_helper(plan, &params, rte_params);
+	remove_unused_initplans_helper(plan, &params, rte_params, root);
 	bms_free(params);
 	bms_free(rte_params);
 }
