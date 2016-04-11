@@ -6174,17 +6174,12 @@ within_agg_join_plans(PlannerInfo *root,
 	const Index		Outer = 1, Inner = 2;
 	List		   *extravars;
 	Var			   *pc_var, *tc_var;
-	int				ngroups;
 
 	/*
 	 * Up to now, these should've been prepared.
 	 */
 	Assert(wag_context->pc_pos > 0);
 	Assert(wag_context->tc_pos > 0);
-
-	ngroups = list_length(root->parse->groupClause);
-	if (list_length(wag_context->current_pathkeys) < ngroups)
-		elog(ERROR, "fewer pathkeys than join clauses");
 
 	/*
 	 * Build target list for grouping columns.
@@ -6271,11 +6266,12 @@ within_agg_join_plans(PlannerInfo *root,
 	 * We choose cartesian product if there is no join clauses, meaning
 	 * no grouping happens.
 	 */
-	if (ngroups > 0)
+	if (root->parse->groupClause != NIL)
 	{
 		int				idx;
 		ListCell	   *lg;
 		ListCell	   *lpk;
+		int			ngroups = list_length(root->parse->groupClause);
 
 		/* Build merge join clauses for grouping columns */
 		mergefamilies = (Oid *) palloc(ngroups * sizeof(Oid));
@@ -6283,7 +6279,7 @@ within_agg_join_plans(PlannerInfo *root,
 		mergenullsfirst = (bool *) palloc(ngroups * sizeof(bool));
 		join_clause = NIL;
 		idx = 0;
-		forboth(lg, root->parse->groupClause, lpk, wag_context->current_pathkeys)
+		forboth(lg, root->parse->groupClause, lpk, root->group_pathkeys)
 		{
 			GroupClause	   *gc = (GroupClause *) lfirst(lg);
 			PathKey		   *pk = (PathKey *) lfirst(lpk);
