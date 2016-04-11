@@ -109,7 +109,6 @@ typedef struct
 {
 	List	   *rtable;			/* List of RangeTblEntry nodes */
 	List	   *ctes;			/* List of CommonTableExpr nodes */
-	List	   *sharedplans;	/* List of shared plan nodes */
 	Plan	   *outer_plan;		/* OUTER subplan, or NULL if none */
 	Plan	   *inner_plan;		/* INNER subplan, or NULL if none */
 } deparse_namespace;
@@ -3058,7 +3057,6 @@ push_plan(deparse_namespace *dpns, Plan *subplan)
 	 */
 	if (IsA(subplan, Append))
 		dpns->outer_plan = (Plan *) linitial(((Append *) subplan)->appendplans);
-	/* XXX */
 	else
 		dpns->outer_plan = outerPlan(subplan);
 
@@ -3182,8 +3180,7 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 	}
 	else
 	{
-		appendStringInfo(buf, "BOGUS %d", var->varno);
-		//elog(ERROR, "bogus varno: %d", var->varno);
+		elog(ERROR, "bogus varno: %d", var->varno);
 		return NULL;			/* keep compiler quiet */
 	}
 
