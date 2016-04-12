@@ -5975,8 +5975,9 @@ out_target(StringInfo buf, xl_heaptid *target)
 }
 
 void
-heap_desc(StringInfo buf, uint8 xl_info, char *rec)
+heap_desc(StringInfo buf, uint8 xl_info, XLogRecord *record)
 {
+	char	   *rec = XLogRecGetData(record);
 	uint8		info = xl_info & ~XLR_INFO_MASK;
 
 	info &= XLOG_HEAP_OPMASK;
@@ -6131,8 +6132,9 @@ bool heap_getrelfilenode(
 }
 
 void
-heap2_desc(StringInfo buf, uint8 xl_info, char *rec)
+heap2_desc(StringInfo buf, uint8 xl_info, XLogRecord *record)
 {
+	char	   *rec = XLogRecGetData(record);
 	uint8		info = xl_info & ~XLR_INFO_MASK;
 
 	info &= XLOG_HEAP_OPMASK;
