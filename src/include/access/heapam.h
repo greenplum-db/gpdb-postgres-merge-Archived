@@ -124,22 +124,34 @@ heap_getattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 extern void RelationFetchGpRelationNodeForXLog_Index(Relation relation);
 
 /*
- * Fetch the persistent TID and serial number for a relation from the gp_relation_node
- * if needed to put in the XLOG record header.
+ * Check if we have the persistent TID and serial number for a relation.
  */
-inline static void RelationFetchGpRelationNodeForXLog(
-	Relation		relation)
+static inline bool
+RelationNeedToFetchGpRelationNodeForXLog(Relation relation)
 {
 	if (!InRecovery && !relation->rd_segfile0_relationnodeinfo.isPresent &&
 		!GpPersistent_SkipXLogInfo(relation->rd_id))
 	{
-	
+		return false;
+	}
+	else
+		return true;
+}
+
+/*
+ * Fetch the persistent TID and serial number for a relation from the gp_relation_node
+ * if needed to put in the XLOG record header.
+ */
+static inline void
+RelationFetchGpRelationNodeForXLog(Relation relation)
+{
+	if (RelationNeedToFetchGpRelationNodeForXLog(relation))
+	{
 		if (relation->rd_rel->relkind == RELKIND_INDEX )
 		{
 			// UNDONE: Temporarily.
 			RelationFetchGpRelationNodeForXLog_Index(relation);
 			return;
-				 
 		}
 		RelationFetchSegFile0GpRelationNode(relation);
 	}
