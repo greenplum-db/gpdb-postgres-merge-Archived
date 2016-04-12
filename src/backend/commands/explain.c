@@ -207,7 +207,6 @@ ExplainDXL(Query *query, ExplainStmt *stmt, const char *queryString,
     memset(es, 0, sizeof(*es));
     es->showstatctx = NULL;
     es->deferredError = NULL;
-    es->tupOutputState = tstate;
     es->pstmt = NULL;
 
 	initStringInfo(&buf);
@@ -618,15 +617,15 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
     if (optimizer_explain_show_status)
     {
 
-    	appendStringInfo(buf, "Optimizer status: ");
+		appendStringInfo(&buf, "Optimizer status: ");
     	if (queryDesc->plannedstmt->planGen == PLANGEN_PLANNER)
     	{
-    		appendStringInfo(buf, "legacy query optimizer\n");
+			appendStringInfo(&buf, "legacy query optimizer\n");
     	}
     	else /* PLANGEN_OPTIMIZER */
     	{
     		StringInfo str = OptVersion();
-    		appendStringInfo(buf, "PQO version %s\n", str->data);
+			appendStringInfo(&buf, "PQO version %s\n", str->data);
 			pfree(str->data);
 			pfree(str);
     	}

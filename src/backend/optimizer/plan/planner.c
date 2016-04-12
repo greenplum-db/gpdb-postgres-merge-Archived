@@ -190,7 +190,6 @@ static void postprocess_plan(PlannedStmt *plan)
 	globNew->share.motStack = NIL;
 	globNew->share.qdShares = NIL;
 	globNew->share.qdSlices = NIL;
-	globNew->share.planNodes = NIL;
 	globNew->share.nextPlanId = 0;
 	globNew->subplans = plan->subplans;
 	(void) apply_shareinput_xslice(plan->planTree, globNew);
