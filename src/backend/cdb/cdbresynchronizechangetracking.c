@@ -600,7 +600,8 @@ void ChangeTracking_GetRelationChangeInfoFromXlog(
 		 * The following changes must be logged in the change log.
 		 */
 		case RM_HEAP2_ID:
-			switch (info)
+			op = info & XLOG_HEAP_OPMASK;
+			switch (op)
 			{
 				case XLOG_HEAP2_FREEZE:
 				{
