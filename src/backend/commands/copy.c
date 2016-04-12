@@ -1433,6 +1433,7 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 			// Increase buffer size to improve performance  (cmcdevitt)
             setvbuf(cstate->copy_file, NULL, _IOFBF, 393216); // 384 Kbytes
 
+			fstat(fileno(cstate->copy_file), &st);
 			if (S_ISDIR(st.st_mode))
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
