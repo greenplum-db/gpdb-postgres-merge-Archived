@@ -2758,6 +2758,8 @@ validate_index_heapscan(Relation heapRelation,
 						Snapshot snapshot,
 						v_i_state *state)
 {
+	MIRROREDLOCK_BUFMGR_DECLARE;
+
 	HeapScanDesc scan;
 	HeapTuple	heapTuple;
 	Datum		values[INDEX_MAX_KEYS];
@@ -2839,9 +2841,15 @@ validate_index_heapscan(Relation heapRelation,
 		{
 			Page		page = BufferGetPage(scan->rs_cbuf);
 
+			// -------- MirroredLock ----------
+			MIRROREDLOCK_BUFMGR_LOCK;
+
 			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 			heap_get_root_tuples(page, root_offsets);
 			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
+
+			MIRROREDLOCK_BUFMGR_UNLOCK;
+			// -------- MirroredLock ----------
 
 			memset(in_index, 0, sizeof(in_index));
 
