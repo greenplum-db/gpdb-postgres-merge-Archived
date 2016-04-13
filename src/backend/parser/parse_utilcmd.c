@@ -2427,14 +2427,19 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt,
  * such expressions to deal with.
  *
  * If do_part is true, build create index statements for our children.
+ *
+ * In GPDB, this returns a list, because the single statement can be
+ * expanded into multiple IndexStmts, if the table is a partitioned table.
  */
-IndexStmt *
-transformIndexStmt(IndexStmt *stmt, const char *queryString)
+List *
+transformIndexStmt(IndexStmt *stmt, const char *queryString, ParseState *masterpstate)
 {
 	Relation	rel;
 	ParseState *pstate;
 	RangeTblEntry *rte;
 	ListCell   *l;
+	Oid			tableOid;
+	List	   *result = NIL;
 
 	/*
 	 * We must not scribble on the passed-in IndexStmt, so copy it.  (This is
@@ -2455,6 +2460,142 @@ transformIndexStmt(IndexStmt *stmt, const char *queryString)
 	/* Set up pstate */
 	pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
+
+	/*
+	 * If the table already exists (i.e., this isn't a create table time
+	 * expansion of primary key() or unique()) and we're the ultimate parent
+	 * of a partitioned table, cascade to all children. We don't do this
+	 * at create table time because transformPartitionBy() automatically
+	 * creates the indexes on the child tables for us.
+	 *
+	 * If this is a CREATE INDEX statement, idxname should already exist.
+	 */
+	tableOid = RangeVarGetRelid(stmt->relation, true);
+	if (OidIsValid(tableOid) && stmt->idxname)
+	{
+		Relation	rel;
+
+		rel = heap_openrv(stmt->relation, AccessShareLock);
+
+		if (RelationBuildPartitionDesc(rel, false))
+			stmt->do_part = true;
+
+		if (stmt->do_part && Gp_role != GP_ROLE_EXECUTE)
+		{
+			List		*children;
+			struct HTAB *nameCache;
+			Oid			nspOid;
+
+			nspOid = RangeVarGetCreationNamespace(stmt->relation);
+
+			if (masterpstate == NULL)
+				masterpstate = pstate;
+
+			/* Lookup the parser object name cache */
+			nameCache = parser_get_namecache(masterpstate);
+
+			/* Loop over all partition children */
+			children = find_inheritance_children(RelationGetRelid(rel));
+
+			foreach(l, children)
+			{
+				Oid relid = lfirst_oid(l);
+				Relation crel = heap_open(relid, NoLock); /* lock on master
+															 is enough */
+				if (RelationIsExternal(crel))
+				{
+					elog(NOTICE, "skip building index for external partition \"%s\"",
+						 RelationGetRelationName(crel));
+					heap_close(crel, NoLock);
+					continue;
+				}
+				IndexStmt *chidx;
+				Relation partrel;
+				HeapTuple tuple;
+				cqContext	cqc;
+				char *parname;
+				int2 position;
+				int4 depth;
+				NameData name;
+				Oid paroid;
+				char depthstr[NAMEDATALEN];
+				char prtstr[NAMEDATALEN];
+
+				chidx = (IndexStmt *)copyObject((Node *)stmt);
+
+				/* now just update the relation and index name fields */
+				chidx->relation =
+					makeRangeVar(get_namespace_name(RelationGetNamespace(crel)),
+								 pstrdup(RelationGetRelationName(crel)), -1);
+
+				elog(NOTICE, "building index for child partition \"%s\"",
+					 RelationGetRelationName(crel));
+				/*
+				 * We want the index name to resemble our partition table name
+				 * with the master index name on the front. This means, we
+				 * append to the indexname the parname, position, and depth
+				 * as we do in transformPartitionBy().
+				 *
+				 * So, firstly we must retrieve from pg_partition_rule the
+				 * partition descriptor for the current relid. This gives us
+				 * partition name and position. With paroid, we can get the
+				 * partition level descriptor from pg_partition and therefore
+				 * our depth.
+				 */
+				partrel = heap_open(PartitionRuleRelationId, AccessShareLock);
+
+				tuple = caql_getfirst(
+						caql_addrel(cqclr(&cqc), partrel),
+						cql("SELECT * FROM pg_partition_rule "
+							" WHERE parchildrelid = :1 ",
+							ObjectIdGetDatum(relid)));
+
+				Assert(HeapTupleIsValid(tuple));
+
+				name = ((Form_pg_partition_rule)GETSTRUCT(tuple))->parname;
+				parname = pstrdup(NameStr(name));
+				position = ((Form_pg_partition_rule)GETSTRUCT(tuple))->parruleord;
+				paroid = ((Form_pg_partition_rule)GETSTRUCT(tuple))->paroid;
+
+				heap_freetuple(tuple);
+				heap_close(partrel, NoLock);
+
+				partrel = heap_open(PartitionRelationId, AccessShareLock);
+
+				tuple = caql_getfirst(
+						caql_addrel(cqclr(&cqc), partrel), 
+						cql("SELECT parlevel FROM pg_partition "
+							" WHERE oid = :1 ",
+							ObjectIdGetDatum(paroid)));
+
+				Assert(HeapTupleIsValid(tuple));
+
+				depth = ((Form_pg_partition)GETSTRUCT(tuple))->parlevel + 1;
+
+				heap_freetuple(tuple);
+				heap_close(partrel, NoLock);
+
+				heap_close(crel, NoLock);
+
+				/* now, build the piece to append */
+				snprintf(depthstr, sizeof(depthstr), "%d", depth);
+				if (strlen(parname) == 0)
+					snprintf(prtstr, sizeof(prtstr), "prt_%d", position);
+				else
+					snprintf(prtstr, sizeof(prtstr), "prt_%s", parname);
+
+				chidx->idxname = ChooseRelationNameWithCache(stmt->idxname,
+													depthstr, /* depth */
+													prtstr,   /* part spec */
+												    nspOid,
+													nameCache);
+
+				result = list_concat(result, transformIndexStmt(chidx, queryString, masterpstate));
+			}
+		}
+
+		heap_close(rel, AccessShareLock);
+	}
 
 	/*
 	 * Put the parent table into the rtable so that the expressions can refer
@@ -2505,7 +2646,9 @@ transformIndexStmt(IndexStmt *stmt, const char *queryString)
 	/* Close relation, but keep the lock */
 	heap_close(rel, NoLock);
 
-	return stmt;
+	result = lcons(stmt, result);
+
+	return result;
 }
 
 
@@ -2999,13 +3142,19 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 	foreach(l, cxt.alist)
 	{
 		Node	   *idxstmt = (Node *) lfirst(l);
+		List	   *idxstmts;
+		ListCell   *li;
 
-		Assert(IsA(idxstmt, IndexStmt));
-		newcmd = makeNode(AlterTableCmd);
-		newcmd->subtype = AT_AddIndex;
-		newcmd->def = (Node *) transformIndexStmt((IndexStmt *) idxstmt,
-												  queryString);
-		newcmds = lappend(newcmds, newcmd);
+		idxstmts = transformIndexStmt((IndexStmt *) idxstmt,
+									  queryString, pstate);
+		foreach(li, idxstmts)
+		{
+			Assert(IsA(idxstmt, IndexStmt));
+			newcmd = makeNode(AlterTableCmd);
+			newcmd->subtype = AT_AddIndex;
+			newcmd->def = lfirst(li);
+			newcmds = lappend(newcmds, newcmd);
+		}
 	}
 	cxt.alist = NIL;
 

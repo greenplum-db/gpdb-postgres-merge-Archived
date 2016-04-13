@@ -9749,9 +9749,9 @@ ATPostAlterTypeParse(char *cmd, List **wqueue, Oid constrOid)
 		Node	   *stmt = (Node *) lfirst(list_item);
 
 		if (IsA(stmt, IndexStmt))
-			querytree_list = lappend(querytree_list,
+			querytree_list = list_concat(querytree_list,
 									 transformIndexStmt((IndexStmt *) stmt,
-														cmd));
+														cmd, NULL));
 		else if (IsA(stmt, AlterTableStmt))
 			querytree_list = list_concat(querytree_list,
 							 transformAlterTableStmt((AlterTableStmt *) stmt,

@@ -1302,8 +1302,16 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_IndexStmt:		/* CREATE INDEX */
+		{
+			IndexStmt  *stmt = (IndexStmt *) parsetree;
+			ListCell   *lc;
+			List	   *stmts;
+
+			/* Run parse analysis ... */
+			stmts = transformIndexStmt(stmt, queryString, NULL);
+			foreach(lc, stmts)
 			{
-				IndexStmt  *stmt = (IndexStmt *) parsetree;
+				IndexStmt  *stmt = (IndexStmt *) lfirst(lc);
 
 				if (stmt->concurrent)
 					PreventTransactionChain(isTopLevel,
@@ -1313,9 +1321,6 @@ ProcessUtility(Node *parsetree,
 
 				/* GPDB_MERGE83_FIXME: Do we still need this in GPDB? */
 				//fix_opfuncids(stmt->whereClause);
-
-				/* Run parse analysis ... */
-				stmt = transformIndexStmt(stmt, queryString);
 
 				/* ... and do it */
 				DefineIndex(stmt->relation,		/* relation */
@@ -1338,6 +1343,7 @@ ProcessUtility(Node *parsetree,
 							stmt);
 			}
 			break;
+		}
 
 		case T_RuleStmt:		/* CREATE RULE */
 			DefineRule((RuleStmt *) parsetree, queryString);
