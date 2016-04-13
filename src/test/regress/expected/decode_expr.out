@@ -977,8 +977,8 @@ select decode('2011-01-05'::date, '2011-01-01'::date, 2011, '2010-12-30'::date, 
 
 select decode('2011-01-05'::date, '2011-01-01'::date, '2011-01-01'::date, '2010-12-30'::date, '2010-01-01'::date, '2012');
 ERROR:  invalid input syntax for type date: "2012"
-LINE 1: select decode('2011-01-05'::date, '2011-01-01'::date, '2011-...
-                      ^
+LINE 1: ...-01'::date, '2010-12-30'::date, '2010-01-01'::date, '2012');
+                                                               ^
 select decode('2011-01-05'::date, '2011-01-01'::date, '2011-01-01'::date, '2010-12-30'::date, '2010-01-01'::date, 2012);
 ERROR:  CASE types integer and date cannot be matched
 LINE 1: select decode('2011-01-05'::date, '2011-01-01'::date, '2011-...
