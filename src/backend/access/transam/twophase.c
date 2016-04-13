@@ -747,28 +747,12 @@ LockGXact(const char *gid, Oid user, bool raiseErrorIfNotFound)
 		}
 
 		/*
-		 * Note: it probably would be possible to allow committing from another
-		 * database; but at the moment NOTIFY is known not to work and there
-		 * may be some other issues as well.  Hence disallow until someone
-		 * gets motivated to make it work.
-		 */
-		if (MyDatabaseId != gxact->proc.databaseId &&  (Gp_role != GP_ROLE_EXECUTE))
-		{
-			LWLockRelease(TwoPhaseStateLock);
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("prepared transaction belongs to another database"),
-					 errhint("Connect to the database where the transaction was prepared to finish it.")));
-		}
-
-
-		/*
 		 * Note: it probably would be possible to allow committing from
 		 * another database; but at the moment NOTIFY is known not to work and
 		 * there may be some other issues as well.	Hence disallow until
 		 * someone gets motivated to make it work.
 		 */
-		if (MyDatabaseId != gxact->proc.databaseId)
+		if (MyDatabaseId != gxact->proc.databaseId &&  (Gp_role != GP_ROLE_EXECUTE))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				  errmsg("prepared transaction belongs to another database"),
