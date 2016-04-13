@@ -132,8 +132,8 @@ SELECT count(*) FROM test_tsvector WHERE a @@ '(eq|yt)&(wr|qh)';
 
 RESET enable_seqscan;
 DROP INDEX wowidx;
-CREATE INDEX wowidx ON test_tsvector USING gin (a);
-SET enable_seqscan=OFF;
+--CREATE INDEX wowidx ON test_tsvector USING gin (a);
+--SET enable_seqscan=OFF;
 SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
  count 
 -------

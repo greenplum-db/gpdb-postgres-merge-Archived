@@ -63,9 +63,9 @@ RESET enable_seqscan;
 
 DROP INDEX wowidx;
 
-CREATE INDEX wowidx ON test_tsvector USING gin (a);
+--CREATE INDEX wowidx ON test_tsvector USING gin (a);
 
-SET enable_seqscan=OFF;
+--SET enable_seqscan=OFF;
 
 SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
 SELECT count(*) FROM test_tsvector WHERE a @@ 'wr&qh';
