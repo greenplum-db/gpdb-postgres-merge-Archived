@@ -3,11 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-<<<<<<< HEAD
 # src/tools/msvc/Solution.pm
-=======
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.34.2.4 2010/03/03 03:28:35 adunstan Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #
 use Carp;
 use strict;
@@ -19,19 +15,15 @@ sub new
 {
     my $junk = shift;
     my $options = shift;
-<<<<<<< HEAD
     die "Pthreads is required by Greenplum DB.\n" unless $options->{pthread};
     die "zlib is required by Greenplum DB.\n" unless $options->{zlib};
     die "b2zlib is required by Greenplum DB.\n" unless $options->{bzlib};
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     my $self = {
         projects => {},
         options  => $options,
         numver   => '',
         strver   => '',
         vcver    => undef,
-<<<<<<< HEAD
         platform => undef,
     };
     bless $self;
@@ -45,10 +37,6 @@ sub new
         unless exists $options->{float8byval};
 
 
-=======
-    };
-    bless $self;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     if ($options->{xml})
     {
         if (!($options->{xslt} && $options->{iconv}))
@@ -56,7 +44,6 @@ sub new
             die "XML requires both XSLT and ICONV\n";
         }
     }
-<<<<<<< HEAD
     $options->{blocksize} = 32
 		unless $options->{blocksize}; # undef or 0 means default
 	die "Bad blocksize $options->{blocksize}"
@@ -76,10 +63,6 @@ sub new
 		unless grep {$_ == $options->{wal_segsize}} (1,2,4,8,16,32,64);
 
     $self->DetermineToolVersions();
-=======
-
-	$self->DetermineToolVersions();
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
     return $self;
 }
@@ -88,7 +71,6 @@ sub DetermineToolVersions
 {
     my $self = shift;
 
-<<<<<<< HEAD
     # Determine version of vcbuild command, to set proper verison of visual studio
     open(P,"vcbuild /? |") || die "vcbuild command not found";
     my $line = <P>;
@@ -96,21 +78,11 @@ sub DetermineToolVersions
     if ($line !~ /^Microsoft\s*\(R\) Visual C\+\+ Project Builder - \D+(\d+)\.00\.\d+/)
     {
         die "Unable to determine vcbuild version from first line of output!";
-=======
-	# Determine version of vcbuild command, to set proper verison of visual studio
-    open(P,"vcbuild /? |") || die "vcbuild command not found";
-    my $line = <P>;
-    close(P);
-    if ($line !~ /^Microsoft \(R\) Visual C\+\+ Project Builder - Command Line Version (\d+)\.00\.\d+/) 
-	{
-       die "Unable to determine vcbuild version from first line of output!";
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     }
     if ($1 == 8) { $self->{vcver} = '8.00' }
     elsif ($1 == 9) { $self->{vcver} = '9.00' }
     else { die "Unsupported version of Visual Studio: $1" }
     print "Detected Visual Studio version $self->{vcver}\n";
-<<<<<<< HEAD
 
     # Determine if we are in 32 or 64-bit mode. Do this by seeing if CL has
     # 64-bit only parameters.
@@ -126,8 +98,6 @@ sub DetermineToolVersions
     }
     close(P);
     print "Detected hardware platform: $self->{platform}\n";
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 
@@ -136,7 +106,6 @@ sub DetermineToolVersions
 sub IsNewer
 {
     my ($newfile, $oldfile) = @_;
-<<<<<<< HEAD
     if ($oldfile ne 'src\tools\msvc\config.pl' && $oldfile ne 'src\tools\msvc\config_default.pl')
     {
         return 1
@@ -144,11 +113,6 @@ sub IsNewer
         return 1
           if (-f 'src\tools\msvc\config_default.pl')
           && IsNewer($newfile, 'src\tools\msvc\config_default.pl');
-=======
-    if ($oldfile ne 'src\tools\msvc\config.pl')
-    {
-        return 1 if IsNewer($newfile, 'src\tools\msvc\config.pl');
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     }
     return 1 if (!(-e $newfile));
     my @nstat = stat($newfile);
@@ -174,20 +138,13 @@ sub copyFile
 sub GenerateFiles
 {
     my $self = shift;
-<<<<<<< HEAD
     my $bits = $self->{platform} eq 'Win32' ? 32 : 64;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
     # Parse configure.in to get version numbers
     open(C,"configure.in") || confess("Could not open configure.in for reading\n");
     while (<C>)
     {
-<<<<<<< HEAD
         if (/^AC_INIT\(\[Greenplum Database\], \[([^\]]+)\]/)
-=======
-        if (/^AC_INIT\(\[PostgreSQL\], \[([^\]]+)\]/)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
         {
             $self->{strver} = $1;
             if ($self->{strver} !~ /^(\d+)\.(\d+)(?:\.(\d+))?/)
@@ -217,7 +174,6 @@ sub GenerateFiles
         {
             s{PG_VERSION "[^"]+"}{PG_VERSION "$self->{strver}"};
             s{PG_VERSION_NUM \d+}{PG_VERSION_NUM $self->{numver}};
-<<<<<<< HEAD
 s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY(z)\n#define PG_VERSION_STR "PostgreSQL $self->{strver}, compiled by Visual C++ build " __STRINGIFY2(_MSC_VER) ", $bits-bit"};
             print O;
         }
@@ -228,12 +184,6 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 	    print O "#define HAVE_LIBXML2\n";
 	    print O "#define USE_LIBXML\n";
 	}
-=======
-s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY(z)\n#define PG_VERSION_STR "PostgreSQL $self->{strver}, compiled by Visual C++ build " __STRINGIFY2(_MSC_VER)};
-            print O;
-        }
-        print O "#define LOCALEDIR \"/share/locale\"\n" if ($self->{options}->{nls});
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
         print O "/* defines added by config steps */\n";
         print O "#ifndef IGNORE_CONFIGURED_SETTINGS\n";
         print O "#define USE_ASSERT_CHECKING 1\n" if ($self->{options}->{asserts});
@@ -242,7 +192,6 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
         print O "#define HAVE_LIBZ 1\n" if ($self->{options}->{zlib});
         print O "#define USE_SSL 1\n" if ($self->{options}->{openssl});
         print O "#define ENABLE_NLS 1\n" if ($self->{options}->{nls});
-<<<<<<< HEAD
 
         print O "#define BLCKSZ ",1024 * $self->{options}->{blocksize},"\n";
 	#	print O "#define RELSEG_SIZE ",
@@ -385,128 +334,6 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
         system('attrib -r preproc.y');
         system('perl parse.pl < ..\..\..\backend\parser\gram.y > preproc.y');
         chdir('..\..\..\..');
-=======
-
-        if ($self->{options}->{uuid})
-        {
-            print O "#define HAVE_UUID_H\n";
-        }
-        if ($self->{options}->{xml})
-        {
-            print O "#define HAVE_LIBXML2\n";
-            print O "#define USE_LIBXML\n";
-        }
-        if ($self->{options}->{xslt})
-        {
-            print O "#define HAVE_LIBXSLT\n";
-            print O "#define USE_LIBXSLT\n";
-        }
-        if ($self->{options}->{krb5})
-        {
-            print O "#define KRB5 1\n";
-            print O "#define HAVE_KRB5_ERROR_TEXT_DATA 1\n";
-            print O "#define HAVE_KRB5_TICKET_ENC_PART2 1\n";
-            print O "#define HAVE_KRB5_FREE_UNPARSED_NAME 1\n";
-            print O "#define ENABLE_GSS 1\n";
-        }
-        if (my $port = $self->{options}->{"--with-pgport"})
-        {
-            print O "#undef DEF_PGPORT\n";
-            print O "#undef DEF_PGPORT_STR\n";
-            print O "#define DEF_PGPORT $port\n";
-            print O "#define DEF_PGPORT_STR \"$port\"\n";
-        }
-        print O "#define VAL_CONFIGURE \"" . $self->GetFakeConfigure() . "\"\n";
-        print O "#endif /* IGNORE_CONFIGURED_SETTINGS */\n";
-        close(O);
-        close(I);
-    }
-
-    $self->GenerateDefFile("src\\interfaces\\libpq\\libpqdll.def","src\\interfaces\\libpq\\exports.txt","LIBPQ");
-    $self->GenerateDefFile("src\\interfaces\\ecpg\\ecpglib\\ecpglib.def","src\\interfaces\\ecpg\\ecpglib\\exports.txt","LIBECPG");
-    $self->GenerateDefFile("src\\interfaces\\ecpg\\compatlib\\compatlib.def","src\\interfaces\\ecpg\\compatlib\\exports.txt","LIBECPG_COMPAT");
-    $self->GenerateDefFile("src\\interfaces\\ecpg\\pgtypeslib\\pgtypeslib.def","src\\interfaces\\ecpg\\pgtypeslib\\exports.txt","LIBPGTYPES");
-
-    if (IsNewer("src\\backend\\utils\\fmgrtab.c","src\\include\\catalog\\pg_proc.h"))
-    {
-        print "Generating fmgrtab.c and fmgroids.h...\n";
-        open(I,"src\\include\\catalog\\pg_proc.h") || confess "Could not open pg_proc.h";
-        my @fmgr = ();
-        my %seenit;
-        while (<I>)
-        {
-            next unless (/^DATA/);
-            s/^.*OID[^=]*=[^0-9]*//;
-            s/\(//g;
-            s/[ \t]*\).*$//;
-            my @p = split;
-            next if ($p[4] ne "12");
-            push @fmgr,
-              {
-                oid     => $p[0],
-                proname => $p[1],
-                prosrc  => $p[$#p-3],
-                nargs   => $p[12],
-                strict  => $p[9],
-                retset  => $p[10],
-              };
-        }
-        close(I);
-
-        open(H,'>', 'src\include\utils\fmgroids.h')
-          ||confess "Could not open fmgroids.h";
-        print H
-          "/* fmgroids.h generated for Visual C++ */\n#ifndef FMGROIDS_H\n#define FMGROIDS_H\n\n";
-        open(T,">src\\backend\\utils\\fmgrtab.c") || confess "Could not open fmgrtab.c";
-        print T
-"/* fmgrtab.c generated for Visual C++ */\n#include \"postgres.h\"\n#include \"utils/fmgrtab.h\"\n\n";
-        foreach my $s (sort {$a->{oid} <=> $b->{oid}} @fmgr)
-        {
-            next if $seenit{$s->{prosrc}};
-            $seenit{$s->{prosrc}} = 1;
-            print H "#define F_" . uc $s->{prosrc} . " $s->{oid}\n";
-            print T "extern Datum $s->{prosrc} (PG_FUNCTION_ARGS);\n";
-        }
-        print H "\n#endif\n /* FMGROIDS_H */\n";
-        close(H);
-        print T "const FmgrBuiltin fmgr_builtins[] = {\n";
-        my %bmap;
-        $bmap{'t'} = 'true';
-        $bmap{'f'} = 'false';
-        foreach my $s (sort {$a->{oid} <=> $b->{oid}} @fmgr)
-        {
-            print T
-"  { $s->{oid}, \"$s->{prosrc}\", $s->{nargs}, $bmap{$s->{strict}}, $bmap{$s->{retset}}, $s->{prosrc} },\n";
-        }
-
-        print T
-" { 0, NULL, 0, false, false, NULL }\n};\n\nconst int fmgr_nbuiltins = (sizeof(fmgr_builtins) / sizeof(FmgrBuiltin)) - 1;\n";
-        close(T);
-    }
-
-    if (IsNewer('src\interfaces\libpq\libpq.rc','src\interfaces\libpq\libpq.rc.in'))
-    {
-        print "Generating libpq.rc...\n";
-        my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-        my $d = ($year - 100) . "$yday";
-        open(I,'<', 'src\interfaces\libpq\libpq.rc.in') || confess "Could not open libpq.rc.in";
-        open(O,'>', 'src\interfaces\libpq\libpq.rc') || confess "Could not open libpq.rc";
-        while (<I>)
-        {
-            s/(VERSION.*),0/$1,$d/;
-            print O;
-        }
-        close(I);
-        close(O);
-    }
-
-    if (IsNewer('src\bin\psql\sql_help.h','src\bin\psql\create_help.pl'))
-    {
-        print "Generating sql_help.h...\n";
-        chdir('src\bin\psql');
-        system("perl create_help.pl ../../../doc/src/sgml/ref sql_help.h");
-        chdir('..\..\..');
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     }
 
     if (
@@ -552,11 +379,7 @@ EOF
 
     my $mf = Project::read_file('src\backend\catalog\Makefile');
     $mf =~ s{\\s*[\r\n]+}{}mg;
-<<<<<<< HEAD
     $mf =~ /^POSTGRES_BKI_SRCS\s*:?=[^,]+,(.*)\)\s*$/gm
-=======
-    $mf =~ /^POSTGRES_BKI_SRCS\s*:?=[^,]+,(.*)\)$/gm
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
       || croak "Could not find POSTGRES_BKI_SRCS in Makefile\n";
     my @allbki = split /\s+/, $1;
     foreach my $bki (@allbki)
@@ -614,7 +437,6 @@ sub AddProject
     if ($self->{options}->{zlib})
     {
         $proj->AddIncludeDir($self->{options}->{zlib} . '\include');
-<<<<<<< HEAD
         $proj->AddLibrary($self->{options}->{zlib} . '\lib\zlib.lib');
         #$proj->AddLibrary($self->{options}->{zlib} . '\lib\zdll.lib');
         $proj->AddLibrary($self->{options}->{curl} . '\lib\libcurl.lib');
@@ -623,9 +445,6 @@ sub AddProject
     {
         $proj->AddIncludeDir($self->{options}->{bzlib} . '\include');
         $proj->AddLibrary($self->{options}->{bzlib} . '\lib\libbz2.lib');
-=======
-        $proj->AddLibrary($self->{options}->{zlib} . '\lib\zdll.lib');
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     }
     if ($self->{options}->{openssl})
     {
@@ -645,42 +464,27 @@ sub AddProject
         $proj->AddLibrary($self->{options}->{krb5} . '\lib\i386\comerr32.lib');
         $proj->AddLibrary($self->{options}->{krb5} . '\lib\i386\gssapi32.lib');
     }
-<<<<<<< HEAD
     if ($self->{options}->{xml}) {
 	$proj->AddIncludeDir($self->{options}->{xml} . '\include');
 	$proj->AddIncludeDir($self->{options}->{iconv} . '\include');
 	$proj->AddLibrary($self->{options}->{xml} . '\lib\libxml2.lib');
     }
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     if ($self->{options}->{iconv})
     {
         $proj->AddIncludeDir($self->{options}->{iconv} . '\include');
         $proj->AddLibrary($self->{options}->{iconv} . '\lib\iconv.lib');
-<<<<<<< HEAD
     }
-=======
-	}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     if ($self->{options}->{xml})
     {
         $proj->AddIncludeDir($self->{options}->{xml} . '\include');
         $proj->AddLibrary($self->{options}->{xml} . '\lib\libxml2.lib');
     }
-<<<<<<< HEAD
     if ($self->{options}->{xslt})
     {
         $proj->AddIncludeDir($self->{options}->{xslt} . '\include');
         $proj->AddLibrary($self->{options}->{xslt} . '\lib\libxslt.lib');
     }
-=======
-	if ($self->{options}->{xslt})
-	{
-		$proj->AddIncludeDir($self->{options}->{xslt} . '\include');
-		$proj->AddLibrary($self->{options}->{xslt} . '\lib\libxslt.lib');
-	}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     return $proj;
 }
 
@@ -737,17 +541,10 @@ EOF
         foreach my $proj (@{$self->{projects}->{$fld}})
         {
             print SLN <<EOF;
-<<<<<<< HEAD
 		$proj->{guid}.Debug|$self->{platform}.ActiveCfg = Debug|$self->{platform}
 		$proj->{guid}.Debug|$self->{platform}.Build.0  = Debug|$self->{platform}
 		$proj->{guid}.Release|$self->{platform}.ActiveCfg = Release|$self->{platform}
 		$proj->{guid}.Release|$self->{platform}.Build.0 = Release|$self->{platform}
-=======
-		$proj->{guid}.Debug|Win32.ActiveCfg = Debug|Win32
-		$proj->{guid}.Debug|Win32.Build.0  = Debug|Win32	
-		$proj->{guid}.Release|Win32.ActiveCfg = Release|Win32
-		$proj->{guid}.Release|Win32.Build.0 = Release|Win32
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 EOF
         }
     }

@@ -1,13 +1,6 @@
-<<<<<<< HEAD
 # -*-perl-*- hey - emacs - this is a perl file
 
 # src/tools/msvc/vcregress.pl
-=======
-
-# -*-perl-*- hey - emacs - this is a perl file
-
-# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.6.2.3 2010/06/03 11:04:12 adunstan Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 use strict;
 
@@ -20,12 +13,8 @@ my $startdir = getcwd();
 
 chdir "../../.." if (-d "../../../src/tools/msvc");
 
-<<<<<<< HEAD
 require 'src/tools/msvc/config_default.pl';
 require 'src/tools/msvc/config.pl' if (-f 'src/tools/msvc/config.pl');
-=======
-require 'src/tools/msvc/config.pl';
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 # buildenv.pl is for specifying the build environment settings
 # it should contian lines like:
@@ -49,13 +38,8 @@ else
 # use a capital C here because config.pl has $config
 my $Config = -e "release/postgres/postgres.exe" ? "Release" : "Debug";
 
-<<<<<<< HEAD
 copy("$Config/refint/refint.dll","src/test/regress");
 copy("$Config/autoinc/autoinc.dll","src/test/regress");
-=======
-copy("$Config/refint/refint.dll","contrib/spi");
-copy("$Config/autoinc/autoinc.dll","contrib/spi");
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 copy("$Config/regress/regress.dll","src/test/regress");
 
 $ENV{PATH} = "../../../$Config/libpq;../../$Config/libpq;$ENV{PATH}";
@@ -67,19 +51,6 @@ unless ($schedule)
 	$schedule = "parallel" if ($what eq 'CHECK' || $what =~ /PARALLEL/);
 }
 
-<<<<<<< HEAD
-=======
-my $temp_port;
-if (-e "src/tools/msvc/config.pl")
-{
-    eval{
-        require "src/tools/msvc/config.pl";
-        $temp_port = $config->{'--with-pgport'};
-      }
-}
-$temp_port ||= 55432;
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 my $topdir = getcwd();
 
 $ENV{PERL5LIB} = "$topdir/src/tools/msvc";
@@ -116,10 +87,7 @@ sub installcheck
 {
     my @args = (
         "../../../$Config/pg_regress/pg_regress",
-<<<<<<< HEAD
         "--dlpath=.",
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
         "--psqldir=../../../$Config/psql",
         "--schedule=${schedule}_schedule",
         "--multibyte=SQL_ASCII",
@@ -136,22 +104,14 @@ sub check
 {
     my @args = (
         "../../../$Config/pg_regress/pg_regress",
-<<<<<<< HEAD
         "--dlpath=.",
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
         "--psqldir=../../../$Config/psql",
         "--schedule=${schedule}_schedule",
         "--multibyte=SQL_ASCII",
         "--load-language=plpgsql",
         "--no-locale",
         "--temp-install=./tmp_check",
-<<<<<<< HEAD
         "--top-builddir=\"$topdir\""
-=======
-        "--top-builddir=\"$topdir\"",
-        "--temp-port=$temp_port"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     );
     push(@args,$maxconn) if $maxconn;
 	push(@args,$temp_config) if $temp_config;
@@ -178,12 +138,7 @@ sub ecpgcheck
         "--load-language=plpgsql",
         "--no-locale",
         "--temp-install=./tmp_chk",
-<<<<<<< HEAD
         "--top-builddir=\"$topdir\""
-=======
-        "--top-builddir=\"$topdir\"",
-        "--temp-port=$temp_port"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     );
     push(@args,$maxconn) if $maxconn;
     system(@args);
@@ -201,7 +156,6 @@ sub plcheck
         my $lang = $pl eq 'tcl' ? 'pltcl' : $pl;
         next unless -d "../../$Config/$lang";
         $lang = 'plpythonu' if $lang eq 'plpython';
-<<<<<<< HEAD
         chdir $pl;
 		print "============================================================\n";
         print "Checking $lang\n";
@@ -210,31 +164,6 @@ sub plcheck
             "../../../$Config/pg_regress/pg_regress",
             "--psqldir=../../../$Config/psql",
             "--dbname=pl_regression","--load-language=$lang",@tests
-=======
-		my @lang_args = ( "--load-language=$lang" );
-        chdir $pl;
-        my @tests = fetchTests();
-		if ($lang eq 'plperl')
-		{
-			# run both trusted and untrusted perl tests
-			push (@lang_args, "--load-language=plperlu");
-
-			# assume we're using this perl to built postgres
-			# test if we can run two interpreters in one backend, and if so
-			# run the trusted/untrusted interaction tests
-			use Config;
-			if ($Config{usemultiplicity} eq 'define')
-			{
-				push(@tests,'plperlu_plperl');
-			}
-		}
-		print "============================================================\n";
-        print "Checking $lang\n";
-        my @args = (
-            "../../../$Config/pg_regress/pg_regress",
-            "--psqldir=../../../$Config/psql",
-            "--dbname=pl_regression",@lang_args,@tests
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
         );
         system(@args);
         my $status = $? >> 8;
@@ -251,10 +180,7 @@ sub contribcheck
     my $mstat = 0;
     foreach my $module (glob("*"))
     {
-<<<<<<< HEAD
-=======
 		next if ($module eq 'xml2' && ! $config->{xml});
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
         next unless -d "$module/sql" && 
 			-d "$module/expected" && 
 			(-f "$module/Makefile" || -f "$module/GNUmakefile");

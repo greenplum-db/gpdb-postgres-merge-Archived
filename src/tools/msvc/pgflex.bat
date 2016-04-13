@@ -1,5 +1,4 @@
 @echo off
-<<<<<<< HEAD
 REM src/tools/msvc/pgflex.bat
 
 REM silence flex bleatings about file path style
@@ -7,12 +6,6 @@ SET CYGWIN=nodosfilewarning
 
 IF NOT EXIST src\tools\msvc\buildenv.pl goto nobuildenv
 perl -e "require 'src/tools/msvc/buildenv.pl'; while(($k,$v) = each %ENV) { print qq[\@SET $k=$v\n]; }" > bldenv.bat
-=======
-REM $PostgreSQL: pgsql/src/tools/msvc/pgflex.bat,v 1.5 2007/12/19 12:29:36 mha Exp $
-
-IF NOT EXIST src\tools\msvc\buildenv.pl goto nobuildenv
-perl -e "require 'src/tools/msvc/buildenv.pl'; while(($k,$v) = each %%ENV) { print qq[\@SET $k=$v\n]; }" > bldenv.bat
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 CALL bldenv.bat
 del bldenv.bat
 :nobuildenv 

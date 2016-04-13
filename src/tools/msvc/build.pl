@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # -*-perl-*- hey - emacs - this is a perl file
 
 # src/tools/msvc/build.pl
@@ -8,18 +7,6 @@ BEGIN
 
     chdir("../../..") if  (-d "../msvc" && -d "../../../src");
 
-=======
-
-# -*-perl-*- hey - emacs - this is a perl file
-
-# $PostgreSQL: pgsql/src/tools/msvc/build.pl,v 1.1 2007/09/23 21:52:56 adunstan Exp $
-
-BEGIN
-{
-	
-	chdir("../../..") if  (-d "../msvc" && -d "../../../src");
-	
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 use lib "src/tools/msvc";
@@ -41,17 +28,9 @@ elsif (-e "./buildenv.pl" )
     require "./buildenv.pl";
 }
 
-<<<<<<< HEAD
-# set up the project
 our $config;
 require "config_default.pl";
 require "config.pl" if (-f "src/tools/msvc/config.pl");
-=======
-
-# set up the project
-our $config;
-require "config.pl";
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 Mkvcbuild::mkvcbuild($config);
 

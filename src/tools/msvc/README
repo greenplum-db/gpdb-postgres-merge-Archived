@@ -4,15 +4,9 @@ MSVC build
 ==========
 
 This directory contains the tools required to build PostgreSQL using
-<<<<<<< HEAD
 Microsoft Visual Studio 2005 or 2008. This builds the whole backend, not just
 the libpq frontend library. For more information, see the documentation
 chapter "Installation from Source Code on Windows".
-=======
-Microsoft Visual Studio 2005. This builds the whole backend, not just
-the libpq frontend library. For more information, see the documentation
-chapter "Installation on Windows".
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 Notes about code indention
@@ -38,7 +32,6 @@ to add them to the beginning of the list.
 
 This should work for both GUI and commandline builds, but a restart
 may be necessary.
-<<<<<<< HEAD
 
 
 Build Notes  (From the PostgreSQL 9.0 Manual)
@@ -209,5 +202,3 @@ To run the tests, run one of the following commands from the src\tools\msvc dire
    To change the schedule used (default is the parallel), append it to the command line like: 
 
          vcregress check serial
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

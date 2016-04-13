@@ -1,9 +1,5 @@
 @echo off
-<<<<<<< HEAD
 REM src/tools/msvc/install.bat
-=======
-REM $PostgreSQL: pgsql/src/tools/msvc/install.bat,v 1.3 2007/12/19 12:29:36 mha Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 if NOT "%1"=="" GOTO RUN_INSTALL
 

@@ -12,11 +12,7 @@ IF EXIST ..\msvc IF EXIST ..\..\..\src cd ..\..\..
 IF NOT EXIST doc\src\sgml\version.sgml goto noversion
 
 IF NOT EXIST src\tools\msvc\buildenv.pl goto nobuildenv
-<<<<<<< HEAD
-perl -e "require 'src/tools/msvc/buildenv.pl'; while(($k,$v) = each %ENV) { print qq[\@SET $k=$v\n]; }" > bldenv.bat
-=======
 perl -e "require 'src/tools/msvc/buildenv.pl'; while(($k,$v) = each %%ENV) { print qq[\@SET $k=$v\n]; }" > bldenv.bat
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 CALL bldenv.bat
 del bldenv.bat
 :nobuildenv 

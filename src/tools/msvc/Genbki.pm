@@ -6,20 +6,12 @@
 #    files.  These .bki files are used to initialize the postgres template
 #    database.
 #
-<<<<<<< HEAD
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
-# Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-<<<<<<< HEAD
 #    $PostgreSQL: pgsql/src/tools/msvc/Genbki.pm,v 1.6 2009/01/01 17:24:05 momjian Exp $
-=======
-#    $PostgreSQL: pgsql/src/tools/msvc/Genbki.pm,v 1.3 2008/01/01 19:46:01 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #
 #-------------------------------------------------------------------------
 
@@ -41,41 +33,21 @@ sub genbki
     $version =~ /^(\d+\.\d+)/ || die "Bad format verison $version\n";
     my $majorversion = $1;
 
-<<<<<<< HEAD
-	# In PG 8.2, NAMEDATALEN is in postgres_ext.h.  it moves
-	# to pg_config_manual.h in PG 8.3
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     my $pgext = read_file("src/include/pg_config_manual.h");
     $pgext =~ /^#define\s+NAMEDATALEN\s+(\d+)$/mg
       || die "Could not read NAMEDATALEN from pg_config_manual.h\n";
     my $namedatalen = $1;
 
     my $pgauthid = read_file("src/include/catalog/pg_authid.h");
-<<<<<<< HEAD
-    $pgauthid =~ /^#define\s+BOOTSTRAP_SUPERUSERID\s+(\d+)\s*$/mg
-=======
     $pgauthid =~ /^#define\s+BOOTSTRAP_SUPERUSERID\s+(\d+)$/mg
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
       || die "Could not read BOOTSTRAUP_SUPERUSERID from pg_authid.h\n";
     my $bootstrapsuperuserid = $1;
 
     my $pgnamespace = read_file("src/include/catalog/pg_namespace.h");
-<<<<<<< HEAD
-    $pgnamespace =~ /^#define\s+PG_CATALOG_NAMESPACE\s+(\d+)\s*$/mg
-      || die "Could not read PG_CATALOG_NAMESPACE from pg_namespace.h\n";
-    my $pgcatalognamespace = $1;
-
-    $pgnamespace =~ /^#define\s+PG_TOAST_NAMESPACE\s+(\d+)\s*$/mg
-      || die "Could not read PG_TOAST_NAMESPACE from pg_namespace.h\n";
-	my $pgtoastnamespace = $1;
-
-=======
     $pgnamespace =~ /^#define\s+PG_CATALOG_NAMESPACE\s+(\d+)$/mg
       || die "Could not read PG_CATALOG_NAMESPACE from pg_namespace.h\n";
     my $pgcatalognamespace = $1;
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     my $indata = "";
 
     while (@_)
@@ -100,12 +72,6 @@ sub genbki
     $indata =~ s{PGUID}{$bootstrapsuperuserid}g;
     $indata =~ s{NAMEDATALEN}{$namedatalen}g;
     $indata =~ s{PGNSP}{$pgcatalognamespace}g;
-<<<<<<< HEAD
-    $indata =~ s{TOASTNSP}{$pgtoastnamespace}g;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-
-    #print $indata;
 
     my $bki = "";
     my $desc = "";
@@ -124,11 +90,7 @@ sub genbki
 
     foreach my $line (split /\n/, $indata)
     {
-<<<<<<< HEAD
         if ($line =~ /^DATA\((.*)\)\s*$/m)
-=======
-        if ($line =~ /^DATA\((.*)\)$/m)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
         {
             my $data = $1;
             my @fields = split /\s+/,$data;
@@ -143,33 +105,21 @@ sub genbki
             $data =~ s/\s{2,}/ /g;
             $bki .= $data . "\n";
         }
-<<<<<<< HEAD
         elsif ($line =~ /^DESCR\("(.*)"\)\s*$/m)
-=======
-        elsif ($line =~ /^DESCR\("(.*)"\)$/m)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
         {
             if ($oid != 0)
             {
                 $desc .= sprintf("%d\t%s\t0\t%s\n", $oid, $catalog, $1);
             }
         }
-<<<<<<< HEAD
         elsif ($line =~ /^SHDESCR\("(.*)"\)\s*$/m)
-=======
-        elsif ($line =~ /^SHDESCR\("(.*)"\)$/m)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
         {
             if ($oid != 0)
             {
                 $shdesc .= sprintf("%d\t%s\t%s\n", $oid, $catalog, $1);
             }
         }
-<<<<<<< HEAD
         elsif ($line =~ /^DECLARE_(UNIQUE_)?INDEX\((.*)\)\s*$/m)
-=======
-        elsif ($line =~ /^DECLARE_(UNIQUE_)?INDEX\((.*)\)$/m)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
         {
             if ($reln_open)
             {
@@ -181,11 +131,7 @@ sub genbki
             $fields[2] =~ s/\s{2,}/ /g;
             $bki .= "declare$u index $fields[0] $fields[1] $fields[2]\n";
         }
-<<<<<<< HEAD
         elsif ($line =~ /^DECLARE_TOAST\((.*)\)\s*$/m)
-=======
-        elsif ($line =~ /^DECLARE_TOAST\((.*)\)$/m)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
         {
             if ($reln_open)
             {
@@ -199,11 +145,7 @@ sub genbki
         {
             $bki .= "build indices\n";
         }
-<<<<<<< HEAD
         elsif ($line =~ /^CATALOG\((.*)\)(.*)\s*$/m)
-=======
-        elsif ($line =~ /^CATALOG\((.*)\)(.*)$/m)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
         {
             if ($reln_open)
             {

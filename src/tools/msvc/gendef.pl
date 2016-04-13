@@ -63,11 +63,7 @@ foreach my $f (sort @def)
 {
     next if ($f eq $last);
     $last = $f;
-<<<<<<< HEAD
     $f =~ s/^_// unless ($platform eq "x64"); # win64 has new format of exports
-=======
-    $f =~ s/^_//;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
     $i++;
 
     #   print DEF "  $f \@ $i\n";  # ordinaled exports?
