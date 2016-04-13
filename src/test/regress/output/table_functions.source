@@ -2170,12 +2170,12 @@ View definition:
  SELECT tf.a, tf.b
    FROM multiset_2(TABLE( SELECT example.a, example.b
            FROM example
-          SCATTER BY example.a::text || example.b, 5)) tf(a, b);
+          SCATTER BY example.a || example.b, 5)) tf(a, b);
 
 SELECT pg_get_viewdef('v2'::regclass);
-                                                               pg_get_viewdef                                                                
----------------------------------------------------------------------------------------------------------------------------------------------
- SELECT tf.a, tf.b FROM multiset_2(TABLE(SELECT example.a, example.b FROM example SCATTER BY ((example.a)::text || example.b), 5)) tf(a, b);
+                                                           pg_get_viewdef                                                            
+-------------------------------------------------------------------------------------------------------------------------------------
+ SELECT tf.a, tf.b FROM multiset_2(TABLE(SELECT example.a, example.b FROM example SCATTER BY (example.a || example.b), 5)) tf(a, b);
 (1 row)
 
 CREATE VIEW v3 AS
