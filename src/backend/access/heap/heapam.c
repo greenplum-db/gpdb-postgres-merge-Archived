@@ -4270,11 +4270,10 @@ l3:
  * over the target tuple.  Also, tuple->t_self identifies the target tuple.
  */
 static void
-heap_inplace_update_internal(Relation relation, HeapTuple tuple, TransactionId xid)
+heap_inplace_update_internal(Relation relation, HeapTuple tuple, bool freeze)
 {
 	MIRROREDLOCK_BUFMGR_DECLARE;
 
-	bool		isFrozen = (xid == FrozenTransactionId);
 	Buffer		buffer;
 	Page		page;
 	OffsetNumber offnum;
@@ -4339,7 +4338,7 @@ heap_inplace_update_internal(Relation relation, HeapTuple tuple, TransactionId x
 		rdata[1].buffer_std = true;
 		rdata[1].next = NULL;
 
-		if (!isFrozen)
+		if (!freeze)
 			recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_INPLACE, rdata);
 		else
 			recptr = XLogInsert_OverrideXid(RM_HEAP_ID, XLOG_HEAP_INPLACE, rdata, FrozenTransactionId);
@@ -4369,11 +4368,10 @@ heap_inplace_update_internal(Relation relation, HeapTuple tuple, TransactionId x
  * Modified from heap_inplace_update_internal.
  */
 static void
-heap_inplace_frozen_delete_internal(Relation relation, HeapTuple tuple, TransactionId xid)
+heap_inplace_frozen_delete_internal(Relation relation, HeapTuple tuple, bool freeze)
 {
 	MIRROREDLOCK_BUFMGR_DECLARE;
 
-	bool		isFrozen = (xid == FrozenTransactionId);
 	Buffer		buffer;
 	Page		page;
 	OffsetNumber offnum;
@@ -4443,7 +4441,7 @@ heap_inplace_frozen_delete_internal(Relation relation, HeapTuple tuple, Transact
 		rdata[1].buffer_std = true;
 		rdata[1].next = NULL;
 
-		if (!isFrozen)
+		if (!freeze)
 			recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_INPLACE, rdata);
 		else
 			recptr = XLogInsert_OverrideXid(RM_HEAP_ID, XLOG_HEAP_INPLACE, rdata, FrozenTransactionId);
@@ -4471,7 +4469,7 @@ frozen_heap_inplace_update(Relation relation, HeapTuple tuple)
 
 	MIRROREDLOCK_BUFMGR_VERIFY_NO_LOCK_LEAK_ENTER;
 
-	heap_inplace_update_internal(relation, tuple, FrozenTransactionId);
+	heap_inplace_update_internal(relation, tuple, true);
 
 	MIRROREDLOCK_BUFMGR_VERIFY_NO_LOCK_LEAK_EXIT;
 }
@@ -4483,7 +4481,7 @@ frozen_heap_inplace_delete(Relation relation, HeapTuple tuple)
 
 	MIRROREDLOCK_BUFMGR_VERIFY_NO_LOCK_LEAK_ENTER;
 
-	heap_inplace_frozen_delete_internal(relation, tuple, FrozenTransactionId);
+	heap_inplace_frozen_delete_internal(relation, tuple, true);
 
 	MIRROREDLOCK_BUFMGR_VERIFY_NO_LOCK_LEAK_EXIT;
 }
@@ -4495,7 +4493,7 @@ heap_inplace_update(Relation relation, HeapTuple tuple)
 
 	MIRROREDLOCK_BUFMGR_VERIFY_NO_LOCK_LEAK_ENTER;
 
-	heap_inplace_update_internal(relation, tuple, GetCurrentTransactionId());
+	heap_inplace_update_internal(relation, tuple, false);
 	
 	MIRROREDLOCK_BUFMGR_VERIFY_NO_LOCK_LEAK_EXIT;
 }
