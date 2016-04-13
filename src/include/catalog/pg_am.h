@@ -173,7 +173,7 @@ DESCR("GiST index access method");
 DATA(insert OID = 2742 (  gin	0 4 f f f f f f t f t gininsert ginbeginscan gingettuple gingetmulti ginrescan ginendscan ginmarkpos ginrestrpos ginbuild ginbulkdelete ginvacuumcleanup gincostestimate ginoptions ));
 DESCR("GIN index access method");
 #define GIN_AM_OID 2742
-DATA(insert OID = 3013 (  bitmap	5 1 f f t t t t f f f bminsert bmbeginscan bmgettuple bmgetmulti bmrescan bmendscan bmmarkpos bmrestrpos bmbuild bmbulkdelete bmvacuumcleanup bmcostestimate bmoptions ));
+DATA(insert OID = 3013 (  bitmap	5 1 f f t t t f f f f bminsert bmbeginscan bmgettuple bmgetmulti bmrescan bmendscan bmmarkpos bmrestrpos bmbuild bmbulkdelete bmvacuumcleanup bmcostestimate bmoptions ));
 DESCR("bitmap index access method");
 #define BITMAP_AM_OID 3013
 
