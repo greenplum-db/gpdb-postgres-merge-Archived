@@ -17,13 +17,8 @@ INSERT INTO combocidtest SELECT 1 LIMIT 0;
 INSERT INTO combocidtest SELECT 1 LIMIT 0;
 INSERT INTO combocidtest SELECT 1 LIMIT 0;
 
-<<<<<<< HEAD
 INSERT INTO combocidtest VALUES (1,1);
 INSERT INTO combocidtest VALUES (2,2);
-=======
-INSERT INTO combocidtest VALUES (1);
-INSERT INTO combocidtest VALUES (2);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 SELECT ctid,cmin,* FROM combocidtest;
 
@@ -74,11 +69,7 @@ INSERT INTO combocidtest SELECT 1 LIMIT 0;
 INSERT INTO combocidtest SELECT 1 LIMIT 0;
 INSERT INTO combocidtest SELECT 1 LIMIT 0;
 
-<<<<<<< HEAD
 INSERT INTO combocidtest VALUES (3,444);
-=======
-INSERT INTO combocidtest VALUES (444);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 SELECT ctid,cmin,* FROM combocidtest;
 

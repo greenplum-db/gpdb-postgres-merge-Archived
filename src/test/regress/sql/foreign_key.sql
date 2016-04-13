@@ -921,8 +921,6 @@ SELECT * FROM tasks;
 DELETE FROM users WHERE id = 2;
 SELECT * FROM tasks;
 COMMIT;
-<<<<<<< HEAD
-=======
 
 --
 -- Test self-referential FK with CASCADE (bug #6268)
@@ -945,4 +943,3 @@ begin;
     update selfref set a = 456 where a = 123;
     select a, b from selfref;
 commit;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

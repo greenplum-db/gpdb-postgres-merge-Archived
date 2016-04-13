@@ -1099,13 +1099,9 @@ DETAIL:  Key columns "x3" and "id1" are of incompatible types: real and integer.
 -- int4 does not promote to text
 ALTER TABLE fktable ADD CONSTRAINT fk_1_2
 FOREIGN KEY (x1) REFERENCES pktable(id2);
-<<<<<<< HEAD
-ERROR:  relation "fktable" does not exist
-=======
 ERROR:  foreign key constraint "fk_1_2" cannot be implemented
 DETAIL:  Key columns "x1" and "id2" are of incompatible types: integer and character varying.
 -- should succeed
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 -- int4 promotes to real
 ALTER TABLE fktable ADD CONSTRAINT fk_1_3
 FOREIGN KEY (x1) REFERENCES pktable(id3);
@@ -1277,8 +1273,6 @@ SELECT * FROM tasks;
 (3 rows)
 
 COMMIT;
-<<<<<<< HEAD
-=======
 --
 -- Test self-referential FK with CASCADE (bug #6268)
 --
@@ -1311,4 +1305,3 @@ begin;
 (2 rows)
 
 commit;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

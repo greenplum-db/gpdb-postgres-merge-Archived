@@ -2240,12 +2240,6 @@ begin
 end
 $$ language plpgsql;
 begin;
-<<<<<<< HEAD
---select refcursor_test1('test1');
---fetch next from test1;
---select refcursor_test1('test2');
---fetch all from test2;
-=======
 select refcursor_test1('test1');
  refcursor_test1 
 -----------------
@@ -2272,7 +2266,6 @@ fetch all from test2;
  500
 (3 rows)
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 commit;
 -- should fail
 fetch next from test1;

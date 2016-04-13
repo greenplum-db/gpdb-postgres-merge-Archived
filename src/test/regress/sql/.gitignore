@@ -1,19 +1,20 @@
-<<<<<<< HEAD
+/constraints.sql
+/copy.sql
+/create_function_1.sql
+/create_function_2.sql
+/largeobject.sql
+/misc.sql
+/tablespace.sql
+
 restore_restoredb.sql
 sreh.sql
-tablespace.sql
 upg2.sql
 gptokencheck.sql
 loadcat33.sql
 loadcat34.sql
-misc.sql
 bkuprestore_advance.sql
 bkuprestore_cleanup.sql
 caql.sql
-constraints.sql
-copy.sql
-create_function_1.sql
-create_function_2.sql
 aocs.sql
 appendonly.sql
 bkup_bkupdb.sql
@@ -30,12 +31,3 @@ tidycat2.sql
 tpch500GB.sql
 partindex_test.sql
 external_table.sql
-=======
-/constraints.sql
-/copy.sql
-/create_function_1.sql
-/create_function_2.sql
-/largeobject.sql
-/misc.sql
-/tablespace.sql
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

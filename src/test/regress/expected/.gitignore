@@ -1,17 +1,19 @@
-<<<<<<< HEAD
+/constraints.out
+/copy.out
+/create_function_1.out
+/create_function_2.out
+/largeobject.out
+/largeobject_1.out
+/misc.out
+/tablespace.out
+
 caql.out
 constraints_optimizer.out
-copy.out
-create_function_1.out
-create_function_2.out
 aocs.out
 appendonly.out
-constraints.out
 gptokencheck.out
 mapred.out
-misc.out
 sreh.out
-tablespace.out
 upg2.out
 ereport.out
 tidycat.out
@@ -24,13 +26,3 @@ table_functions.out
 tidycat2.out
 tpch500GB.out
 partindex_test.out
-=======
-/constraints.out
-/copy.out
-/create_function_1.out
-/create_function_2.out
-/largeobject.out
-/largeobject_1.out
-/misc.out
-/tablespace.out
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

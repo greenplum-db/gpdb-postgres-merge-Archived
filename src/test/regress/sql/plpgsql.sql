@@ -1917,13 +1917,8 @@ $$ language plpgsql CONTAINS SQL;
 
 begin;
 
-<<<<<<< HEAD
---select refcursor_test1('test1');
---fetch next from test1;
-=======
 select refcursor_test1('test1');
 fetch next in test1;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 --select refcursor_test1('test2');
 --fetch all from test2;

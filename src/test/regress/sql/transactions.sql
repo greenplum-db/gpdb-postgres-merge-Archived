@@ -212,11 +212,7 @@ SELECT 1;			-- this should work
 
 -- check non-transactional behavior of cursors
 BEGIN;
-<<<<<<< HEAD
-	DECLARE c CURSOR FOR SELECT unique2 FROM tenk1 ORDER BY 1;
-=======
 	DECLARE c CURSOR FOR SELECT unique2 FROM tenk1 ORDER BY unique2;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	SAVEPOINT one;
 		FETCH 10 FROM c;
 	ROLLBACK TO SAVEPOINT one;
@@ -224,11 +220,7 @@ BEGIN;
 	RELEASE SAVEPOINT one;
 	FETCH 10 FROM c;
 	CLOSE c;
-<<<<<<< HEAD
-	DECLARE c CURSOR FOR SELECT unique2/0 FROM tenk1 ORDER BY 1;
-=======
 	DECLARE c CURSOR FOR SELECT unique2/0 FROM tenk1 ORDER BY unique2;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	SAVEPOINT two;
 		FETCH 10 FROM c;
 	ROLLBACK TO SAVEPOINT two;

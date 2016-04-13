@@ -1,0 +1,41 @@
+***************
+*** 16,29 ****
+  -- errors
+  select '31:12:'::txid_snapshot;
+  ERROR:  invalid input for txid_snapshot: "31:12:" 
+  select '0:1:'::txid_snapshot;
+  ERROR:  invalid input for txid_snapshot: "0:1:" 
+  select '12:13:0'::txid_snapshot;
+  ERROR:  invalid input for txid_snapshot: "12:13:0" 
+  select '12:16:14,13'::txid_snapshot;
+  ERROR:  invalid input for txid_snapshot: "12:16:14,13" 
+  select '12:16:14,14'::txid_snapshot;
+  ERROR:  invalid input for txid_snapshot: "12:16:14,14" 
+  create temp table snapshot_test (
+  	nr	integer,
+  	snap	txid_snapshot
+--- 16,39 ----
+  -- errors
+  select '31:12:'::txid_snapshot;
+  ERROR:  invalid input for txid_snapshot: "31:12:" 
++ LINE 1: select '31:12:'::txid_snapshot;
++                ^
+  select '0:1:'::txid_snapshot;
+  ERROR:  invalid input for txid_snapshot: "0:1:" 
++ LINE 1: select '0:1:'::txid_snapshot;
++                ^
+  select '12:13:0'::txid_snapshot;
+  ERROR:  invalid input for txid_snapshot: "12:13:0" 
++ LINE 1: select '12:13:0'::txid_snapshot;
++                ^
+  select '12:16:14,13'::txid_snapshot;
+  ERROR:  invalid input for txid_snapshot: "12:16:14,13" 
++ LINE 1: select '12:16:14,13'::txid_snapshot;
++                ^
+  select '12:16:14,14'::txid_snapshot;
+  ERROR:  invalid input for txid_snapshot: "12:16:14,14" 
++ LINE 1: select '12:16:14,14'::txid_snapshot;
++                ^
+  create temp table snapshot_test (
+  	nr	integer,
+  	snap	txid_snapshot
