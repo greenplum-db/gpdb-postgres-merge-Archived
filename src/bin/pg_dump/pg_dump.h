@@ -3,10 +3,7 @@
  * pg_dump.h
  *	  Common header file for the pg_dump utility
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -302,11 +299,8 @@ typedef struct _tableInfo
 	bool	   *attislocal;		/* true if attr has local definition */
 	bool	   *notnull;		/* NOT NULL constraints on attributes */
 	bool	   *inhNotNull;		/* true if NOT NULL is inherited */
-<<<<<<< HEAD
-	char    **attencoding;  /* the attribute encoding values */
-=======
+	char	  **attencoding;	/* the attribute encoding values */
 	struct _attrDefInfo **attrdefs;		/* DEFAULT expressions */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	struct _constraintInfo *checkexprs; /* CHECK constraints */
 
 	/*

@@ -26,18 +26,9 @@ static const char *modulename = gettext_noop("archiver (db)");
 
 static void _check_database_version(ArchiveHandle *AH);
 static PGconn *_connectDB(ArchiveHandle *AH, const char *newdbname, const char *newUser);
-<<<<<<< HEAD
 static void notice_processor(void *arg __attribute__((unused)), const char *message);
-static char *_sendSQLLine(ArchiveHandle *AH, char *qry, char *eos);
-static char *_sendCopyLine(ArchiveHandle *AH, char *qry, char *eos);
-
-static bool _isIdentChar(unsigned char c);
-static bool _isDQChar(unsigned char c, bool atStart);
 
 #define DB_MAX_ERR_STMT 128
-=======
-static void notice_processor(void *arg, const char *message);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 static int
 _parse_version(ArchiveHandle *AH, const char *versionString)
@@ -133,15 +124,9 @@ static PGconn *
 _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 {
 	PGconn	   *newConn;
-<<<<<<< HEAD
 	const char *newdb;
 	const char *newuser;
 	char	   *password = AH->savedPassword;
-=======
-	char	   *newdb;
-	char	   *newuser;
-	char	   *password = NULL;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	bool		new_pass;
 
 	if (!reqdb)
@@ -166,7 +151,6 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 
 	do
 	{
-<<<<<<< HEAD
 #define PARAMS_ARRAY_SIZE	7
 		const char **keywords = malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
 		const char **values = malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
@@ -195,12 +179,6 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 		free(keywords);
 		free(values);
 
-=======
-		new_pass = false;
-		newConn = PQsetdbLogin(PQhost(AH->connection), PQport(AH->connection),
-							   NULL, NULL, newdb,
-							   newuser, password);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		if (!newConn)
 			die_horribly(AH, modulename, "failed to reconnect to database\n");
 
@@ -219,7 +197,6 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 
 			if (password)
 				free(password);
-<<<<<<< HEAD
 
 			if (AH->promptPassword != TRI_NO)
 				password = simple_prompt("Password: ", 100, false);
@@ -228,9 +205,6 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 
 			if (password == NULL)
 				die_horribly(AH, modulename, "out of memory\n");
-=======
-			password = simple_prompt("Password: ", 100, false);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			new_pass = true;
 		}
 	} while (new_pass);
@@ -264,11 +238,7 @@ ConnectDatabase(Archive *AHX,
 				enum trivalue prompt_password)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
-<<<<<<< HEAD
 	char	   *password = AH->savedPassword;
-=======
-	char	   *password = NULL;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	bool		new_pass;
 
 	if (AH->connection)
@@ -288,7 +258,6 @@ ConnectDatabase(Archive *AHX,
 	 */
 	do
 	{
-<<<<<<< HEAD
 #define PARAMS_ARRAY_SIZE	7
 		const char **keywords = malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
 		const char **values = malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
@@ -316,11 +285,6 @@ ConnectDatabase(Archive *AHX,
 
 		free(keywords);
 		free(values);
-=======
-		new_pass = false;
-		AH->connection = PQsetdbLogin(pghost, pgport, NULL, NULL,
-									  dbname, username, password);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (!AH->connection)
 			die_horribly(AH, modulename, "failed to connect to database\n");
@@ -328,19 +292,12 @@ ConnectDatabase(Archive *AHX,
 		if (PQstatus(AH->connection) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(AH->connection) &&
 			password == NULL &&
-<<<<<<< HEAD
 			prompt_password != TRI_NO)
 		{
 			PQfinish(AH->connection);
 			password = simple_prompt("Password: ", 100, false);
 			if (password == NULL)
 				die_horribly(AH, modulename, "out of memory\n");
-=======
-			!feof(stdin))
-		{
-			PQfinish(AH->connection);
-			password = simple_prompt("Password: ", 100, false);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			new_pass = true;
 		}
 	} while (new_pass);
@@ -368,15 +325,10 @@ notice_processor(void *arg __attribute__((unused)), const char *message)
 }
 
 
-<<<<<<< HEAD
-/* Public interface */
-/* Convenience function to send a query. Monitors result to handle COPY statements */
-=======
 /*
  * Convenience function to send a query.
  * Monitors result to detect COPY statements
  */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static void
 ExecuteSqlCommand(ArchiveHandle *AH, const char *qry, const char *desc)
 {
@@ -385,11 +337,7 @@ ExecuteSqlCommand(ArchiveHandle *AH, const char *qry, const char *desc)
 	char		errStmt[DB_MAX_ERR_STMT];
 
 #ifdef NOT_USED
-<<<<<<< HEAD
 	fprintf(stderr, "Executing: '%s'\n\n", qry);
-=======
-	 fprintf(stderr, "Executing: '%s'\n\n", qry);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #endif
 	res = PQexec(conn, qry);
 
@@ -397,10 +345,7 @@ ExecuteSqlCommand(ArchiveHandle *AH, const char *qry, const char *desc)
 	{
 		case PGRES_COMMAND_OK:
 		case PGRES_TUPLES_OK:
-<<<<<<< HEAD
-=======
 		case PGRES_EMPTY_QUERY:
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			/* A-OK */
 			break;
 		case PGRES_COPY_IN:
@@ -467,12 +412,7 @@ ExecuteInsertCommands(ArchiveHandle *AH, const char *buf, size_t bufLen)
 					 * We've found the end of a statement. Send it and reset
 					 * the buffer.
 					 */
-<<<<<<< HEAD
-					appendPQExpBufferChar(AH->sqlBuf, ';');		/* inessential */
-					ExecuteSqlCommand(AH, AH->sqlBuf->data,
-=======
 					ExecuteSqlCommand(AH, AH->sqlparse.curCmd->data,
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 									  "could not execute query");
 					resetPQExpBuffer(AH->sqlparse.curCmd);
 				}
@@ -567,19 +507,6 @@ ExecuteSqlCommandBuf(ArchiveHandle *AH, const char *buf, size_t bufLen)
 void
 EndDBCopyMode(ArchiveHandle *AH, TocEntry *te)
 {
-<<<<<<< HEAD
-	ExecuteSqlCommand(AH, "BEGIN", "could not start database transaction");
-}
-
-void
-CommitTransaction(ArchiveHandle *AH)
-{
-	ExecuteSqlCommand(AH, "COMMIT", "could not commit database transaction");
-}
-
-static bool
-_isIdentChar(unsigned char c)
-=======
 	if (AH->pgCopyIn)
 	{
 		PGresult   *res;
@@ -601,7 +528,6 @@ _isIdentChar(unsigned char c)
 
 void
 StartTransaction(ArchiveHandle *AH)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	ExecuteSqlCommand(AH, "BEGIN", "could not start database transaction");
 }

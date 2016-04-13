@@ -81,14 +81,7 @@ static const int newObjectTypePriority[] =
 	24,							/* DO_FK_CONSTRAINT */
 	2,							/* DO_PROCLANG */
 	8,							/* DO_CAST */
-<<<<<<< HEAD
-	13,							/* DO_TABLE_DATA */
-	11,							/* DO_TABLE_TYPE */
-	14,							/* DO_BLOBS */
-	15,							/* DO_BLOB_COMMENTS */
 	8,							/* DO_EXTPROTOCOL */
-	15,							/* DO_TYPE_STORAGE_OPTIONS */
-=======
 	17,							/* DO_TABLE_DATA */
 	15,							/* DO_DUMMY_TYPE */
 	10,							/* DO_TSPARSER */
@@ -96,8 +89,8 @@ static const int newObjectTypePriority[] =
 	11,							/* DO_TSTEMPLATE */
 	13,							/* DO_TSCONFIG */
 	18,							/* DO_BLOBS */
-	19							/* DO_BLOB_COMMENTS */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	19,							/* DO_BLOB_COMMENTS */
+	19							/* DO_TYPE_STORAGE_OPTIONS */
 };
 
 

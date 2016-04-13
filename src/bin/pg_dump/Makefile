@@ -14,10 +14,6 @@ subdir = src/bin/pg_dump
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-ifneq ($(PORTNAME), win32)
-override CFLAGS += $(PTHREAD_CFLAGS) -pthread -Wno-error
-endif
-
 # The frontend doesn't need everything that's in LIBS, some are backend only
 LIBS := $(filter-out -lresolv, $(LIBS))
 # This program isn't interactive, so doesn't need these

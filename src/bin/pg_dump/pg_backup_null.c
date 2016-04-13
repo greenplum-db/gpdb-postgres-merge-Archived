@@ -106,11 +106,7 @@ _WriteBlobData(ArchiveHandle *AH, const void *data, size_t dLen)
 							  dLen,
 							  AH);
 
-<<<<<<< HEAD
-		ahprintf(AH, "SELECT pg_catalog.lowrite(0, '%s');\n", str);
-=======
 		ahprintf(AH, "SELECT pg_catalog.lowrite(0, %s);\n", buf->data);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		destroyPQExpBuffer(buf);
 	}

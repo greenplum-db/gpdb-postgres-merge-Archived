@@ -158,7 +158,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	 * -1 is not compatible with -C, because we can't create a database
 	 *  inside a transaction block.
 	 */
-	if (ropt->create && ropt->single_txn)
+	if (ropt->createDB && ropt->single_txn)
 		die_horribly(AH, modulename, "-C and -1 are incompatible options\n");
 
 	/*
@@ -291,11 +291,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		 */
 		if (AH->currSchema)
 			free(AH->currSchema);
-<<<<<<< HEAD
-		AH->currSchema = NULL;
-=======
 		AH->currSchema = strdup("");
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	/*
@@ -2514,15 +2510,11 @@ _getObjectDescription(PQExpBuffer buf, TocEntry *te, ArchiveHandle *AH)
 	if (strcmp(type, "CONVERSION") == 0 ||
 		strcmp(type, "DOMAIN") == 0 ||
 		strcmp(type, "TABLE") == 0 ||
-<<<<<<< HEAD
 		strcmp(type, "EXTERNAL TABLE") == 0 ||
 		strcmp(type, "FOREIGN TABLE") == 0 ||
-		strcmp(type, "TYPE") == 0)
-=======
 		strcmp(type, "TYPE") == 0 ||
 		strcmp(type, "TEXT SEARCH DICTIONARY") == 0 ||
 		strcmp(type, "TEXT SEARCH CONFIGURATION") == 0)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		appendPQExpBuffer(buf, "%s ", type);
 		if (te->namespace && te->namespace[0])	/* is null pre-7.3 */
@@ -2545,15 +2537,11 @@ _getObjectDescription(PQExpBuffer buf, TocEntry *te, ArchiveHandle *AH)
 
 	/* objects named by just a name */
 	if (strcmp(type, "DATABASE") == 0 ||
-<<<<<<< HEAD
-		strcmp(type, "SCHEMA") == 0 ||
 		strcmp(type, "FOREIGN DATA WRAPPER") == 0 ||
 		strcmp(type, "SERVER") == 0 ||
-		strcmp(type, "USER MAPPING") == 0)
-=======
+		strcmp(type, "USER MAPPING") == 0 ||
 		strcmp(type, "PROCEDURAL LANGUAGE") == 0 ||
 		strcmp(type, "SCHEMA") == 0)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		appendPQExpBuffer(buf, "%s %s", type, fmtId(te->tag));
 		return;
@@ -2784,14 +2772,11 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 			strcmp(te->desc, "TYPE") == 0 ||
 			strcmp(te->desc, "VIEW") == 0 ||
 			strcmp(te->desc, "SEQUENCE") == 0 ||
-<<<<<<< HEAD
 			strcmp(te->desc, "FOREIGN DATA WRAPPER") == 0 ||
 			strcmp(te->desc, "SERVER") == 0 ||
-			strcmp(te->desc, "PROTOCOL") == 0)
-=======
+			strcmp(te->desc, "PROTOCOL") == 0 ||
 			strcmp(te->desc, "TEXT SEARCH DICTIONARY") == 0 ||
 			strcmp(te->desc, "TEXT SEARCH CONFIGURATION") == 0)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		{
 			PQExpBuffer temp = createPQExpBuffer();
 

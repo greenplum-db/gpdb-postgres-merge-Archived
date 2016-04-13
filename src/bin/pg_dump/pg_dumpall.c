@@ -2,12 +2,8 @@
  *
  * pg_dumpall.c
  *
-<<<<<<< HEAD
  * Copyright (c) 2006-2010, Greenplum inc.
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -32,10 +28,7 @@ int			optreset;
 #endif
 
 #include "dumputils.h"
-<<<<<<< HEAD
 #include "pg_backup.h"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 /* version string we expect back from pg_dump */
@@ -91,22 +84,14 @@ main(int argc, char *argv[])
 	char	   *pgport = NULL;
 	char	   *pguser = NULL;
 	char	   *pgdb = NULL;
-<<<<<<< HEAD
-
 	enum trivalue prompt_password = TRI_DEFAULT;
-=======
-	bool		force_password = false;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	bool		data_only = false;
 	bool		globals_only = false;
 	bool		tablespaces_only = false;
 	bool		schema_only = false;
-<<<<<<< HEAD
 	static int	gp_migrator = 0;
 	bool		gp_syntax = false;
 	bool		no_gp_syntax = false;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	PGconn	   *conn;
 	int			encoding;
 	const char *std_strings;
@@ -269,14 +254,11 @@ main(int argc, char *argv[])
 #endif
 				break;
 
-<<<<<<< HEAD
 			/*
 			 * Both Greenplum and PostgreSQL have used -r but for different
 			 * options, disallow the short option entirely to avoid confusion
 			 * and require the use of long options for the conflicting pair.
 			 */
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			case 'r':
 				fprintf(stderr, _("-r option is not supported. Did you mean --roles-only or --resource-queues?\n"));
 				exit(1);
@@ -438,11 +420,7 @@ main(int argc, char *argv[])
 	if (pgdb)
 	{
 		conn = connectDatabase(pgdb, pghost, pgport, pguser,
-<<<<<<< HEAD
 							   prompt_password, false);
-=======
-							   force_password, false);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (!conn)
 		{
@@ -454,17 +432,10 @@ main(int argc, char *argv[])
 	else
 	{
 		conn = connectDatabase("postgres", pghost, pgport, pguser,
-<<<<<<< HEAD
 							   prompt_password, false);
 		if (!conn)
 			conn = connectDatabase("template1", pghost, pgport, pguser,
 								   prompt_password, true);
-=======
-							   force_password, false);
-		if (!conn)
-			conn = connectDatabase("template1", pghost, pgport, pguser,
-								   force_password, true);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (!conn)
 		{
@@ -607,11 +578,7 @@ help(void)
 
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));
-<<<<<<< HEAD
 	printf(_("  -l, --database=DBNAME    alternative default database\n"));
-=======
-	printf(_("  -l, --database=DBNAME    specify an alternative default database\n"));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	printf(_("  -p, --port=PORT          database server port number\n"));
 	printf(_("  -U, --username=NAME      connect as specified database user\n"));
 	printf(_("  -w, --no-password        never prompt for password\n"));
@@ -1606,14 +1573,9 @@ runPgDump(const char *dbname)
 #else
 		appendPQExpBuffer(cmd, "%s\"%s\" %s -Fp \"", SYSTEMQUOTE, pg_dump_bin,
 #endif
-<<<<<<< HEAD
-					  pgdumpopts->data);
-	}
-=======
 						  pgdumpopts->data);
 	}
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Shell quoting is not quite like SQL quoting, so can't use fmtId */
 	for (p = dbname; *p; p++)
@@ -1678,7 +1640,6 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	 */
 	do
 	{
-<<<<<<< HEAD
 #define PARAMS_ARRAY_SIZE	8
 		const char **keywords = malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
 		const char **values = malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
@@ -1711,10 +1672,6 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 
 		free(keywords);
 		free(values);
-=======
-		new_pass = false;
-		conn = PQsetdbLogin(pghost, pgport, NULL, NULL, dbname, pguser, password);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 		if (!conn)
 		{
@@ -1726,11 +1683,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		if (PQstatus(conn) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(conn) &&
 			password == NULL &&
-<<<<<<< HEAD
 			prompt_password != TRI_NO)
-=======
-			!feof(stdin))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		{
 			PQfinish(conn);
 			password = simple_prompt("Password: ", 100, false);

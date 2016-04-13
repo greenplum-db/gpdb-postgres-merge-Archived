@@ -121,12 +121,9 @@ InitArchiveFmt_Files(ArchiveHandle *AH)
 		if (AH->fSpec && strcmp(AH->fSpec, "") != 0)
 		{
 			AH->FH = fopen(AH->fSpec, PG_BINARY_W);
-<<<<<<< HEAD
-=======
 			if (AH->FH == NULL)
 				die_horribly(NULL, modulename, "could not open output file \"%s\": %s\n",
 							 AH->fSpec, strerror(errno));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 		else
 		{
@@ -302,14 +299,9 @@ _PrintFileData(ArchiveHandle *AH, char *filename, RestoreOptions *ropt)
 	FILE *FH = fopen(filename, PG_BINARY_R);
 #endif
 
-<<<<<<< HEAD
-	if (FH == NULL)
-		die_horribly(AH, modulename, "could not open input file: %s\n", strerror(errno));
-=======
 	if (AH->FH == NULL)
 		die_horribly(AH, modulename, "could not open input file \"%s\": %s\n",
 					 filename, strerror(errno));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	while ((cnt = GZREAD(buf, 1, 4095, FH)) > 0)
 	{

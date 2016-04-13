@@ -97,15 +97,12 @@ getSchemaData(int *numTablesPtr, int g_role)
 	OpclassInfo *opcinfo;
 	OpfamilyInfo *opfinfo;
 	ConvInfo   *convinfo;
-<<<<<<< HEAD
 	ExtProtInfo *ptcinfo;
-	int			numNamespaces;
-=======
 	TSParserInfo *prsinfo;
 	TSTemplateInfo *tmplinfo;
 	TSDictInfo *dictinfo;
 	TSConfigInfo *cfginfo;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+	int			numNamespaces;
 	int			numAggregates;
 	int			numInherits;
 	int			numRules;
@@ -114,58 +111,15 @@ getSchemaData(int *numTablesPtr, int g_role)
 	int			numOpclasses;
 	int			numOpfamilies;
 	int			numConversions;
-<<<<<<< HEAD
 	int			numExtProtocols;
-	const char *LOGGER_INFO = "INFO";
-
-	//write_msg(NULL, "reading schemas\n");
-	if(is_gpdump || g_verbose)
-		status_log_msg(LOGGER_INFO, progname, "reading schemas\n");
-	nsinfo = getNamespaces(&numNamespaces);
-
-	if(g_role == 1) // ROLE_MASTER
-	{
-		if(is_gpdump || g_verbose)
-			status_log_msg(LOGGER_INFO, progname, "reading user-defined functions\n");
-		funinfo = getFuncs(&numFuncs);
-
-		/* this must be after getFuncs */
-		if(is_gpdump || g_verbose)
-			status_log_msg(LOGGER_INFO, progname, "reading user-defined types\n");
-		typinfo = getTypes(&numTypes);
-
-		/* this must be after getFuncs */
-		if(is_gpdump || g_verbose)
-			status_log_msg(LOGGER_INFO, progname, "reading type storage options\n");
-		typestorageoptions = getTypeStorageOptions(&numTypeStorageOptions);
-
-		/* this must be after getFuncs, too */
-		if(is_gpdump || g_verbose)
-			status_log_msg(LOGGER_INFO, progname, "reading procedural languages\n");
-		proclanginfo = getProcLangs(&numProcLangs);
-
-		if(is_gpdump || g_verbose)
-			status_log_msg(LOGGER_INFO, progname, "reading user-defined aggregate functions\n");
-		agginfo = getAggregates(&numAggregates);
-
-		if(is_gpdump || g_verbose)
-			status_log_msg(LOGGER_INFO, progname, "reading user-defined operators\n");
-		oprinfo = getOperators(&numOperators);
-
-		if (testExtProtocolSupport())
-		{
-			if(is_gpdump || g_verbose)
-				status_log_msg(LOGGER_INFO, progname, "reading user-defined external protocols\n");
-			ptcinfo = getExtProtocols(&numExtProtocols);
-		}
-=======
 	int			numTSParsers;
 	int			numTSTemplates;
 	int			numTSDicts;
 	int			numTSConfigs;
+	const char *LOGGER_INFO = "INFO";
 
-	if (g_verbose)
-		write_msg(NULL, "reading schemas\n");
+	if (is_gpdump || g_verbose)
+		status_log_msg(LOGGER_INFO, progname, "reading schemas\n");
 	nspinfo = getNamespaces(&numNamespaces);
 	nspinfoindex = buildIndexArray(nspinfo, numNamespaces, sizeof(NamespaceInfo));
 
@@ -180,115 +134,113 @@ getSchemaData(int *numTablesPtr, int g_role)
 	tblinfo = getTables(&numTables);
 	tblinfoindex = buildIndexArray(tblinfo, numTables, sizeof(TableInfo));
 
-	/* Do this after we've built tblinfoindex */
-	getOwnedSeqs(tblinfo, numTables);
+	/*
+	 * ROLE_MASTER
+	 */
+	if (g_role == 1)
+	{
+		if (is_gpdump || g_verbose)
+			status_log_msg(LOGGER_INFO, progname, "reading user-defined functions\n");
+		funinfo = getFuncs(&numFuncs);
 
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined functions\n");
-	funinfo = getFuncs(&numFuncs);
-	funinfoindex = buildIndexArray(funinfo, numFuncs, sizeof(FuncInfo));
+		/* this must be after getFuncs */
+		if (is_gpdump || g_verbose)
+			status_log_msg(LOGGER_INFO, progname, "reading user-defined types\n");
+		typinfo = getTypes(&numTypes);
 
-	/* this must be after getTables and getFuncs */
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined types\n");
-	typinfo = getTypes(&numTypes);
-	typinfoindex = buildIndexArray(typinfo, numTypes, sizeof(TypeInfo));
+		/* this must be after getFuncs */
+		if (is_gpdump || g_verbose)
+			status_log_msg(LOGGER_INFO, progname, "reading type storage options\n");
+		typestorageoptions = getTypeStorageOptions(&numTypeStorageOptions);
 
-	/* this must be after getFuncs, too */
-	if (g_verbose)
-		write_msg(NULL, "reading procedural languages\n");
-	proclanginfo = getProcLangs(&numProcLangs);
+		/* this must be after getFuncs, too */
+		if (is_gpdump || g_verbose)
+			status_log_msg(LOGGER_INFO, progname, "reading procedural languages\n");
+		proclanginfo = getProcLangs(&numProcLangs);
 
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined aggregate functions\n");
-	agginfo = getAggregates(&numAggregates);
+		if (is_gpdump || g_verbose)
+			status_log_msg(LOGGER_INFO, progname, "reading user-defined aggregate functions\n");
+		agginfo = getAggregates(&numAggregates);
 
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined operators\n");
-	oprinfo = getOperators(&numOperators);
-	oprinfoindex = buildIndexArray(oprinfo, numOperators, sizeof(OprInfo));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
+		if (is_gpdump || g_verbose)
+			status_log_msg(LOGGER_INFO, progname, "reading user-defined operators\n");
+		oprinfo = getOperators(&numOperators);
 
-		if(is_gpdump || g_verbose)
+		if (testExtProtocolSupport())
+		{
+			if (is_gpdump || g_verbose)
+				status_log_msg(LOGGER_INFO, progname, "reading user-defined external protocols\n");
+			ptcinfo = getExtProtocols(&numExtProtocols);
+		}
+
+		if (is_gpdump || g_verbose)
 			status_log_msg(LOGGER_INFO, progname, "reading user-defined operator classes\n");
 		opcinfo = getOpclasses(&numOpclasses);
 
-<<<<<<< HEAD
+		if (is_gpdump || g_verbose)
+			write_msg(NULL, "reading user-defined text search parsers\n");
+		prsinfo = getTSParsers(&numTSParsers);
+
+		if (is_gpdump || g_verbose)
+			write_msg(NULL, "reading user-defined text search templates\n");
+		tmplinfo = getTSTemplates(&numTSTemplates);
+
+		if (is_gpdump || g_verbose)
+			write_msg(NULL, "reading user-defined text search dictionaries\n");
+		dictinfo = getTSDictionaries(&numTSDicts);
+
+		if (is_gpdump || g_verbose)
+			write_msg(NULL, "reading user-defined text search configurations\n");
+		cfginfo = getTSConfigurations(&numTSConfigs);
+
 		if (is_gpdump || g_verbose)
 			status_log_msg(LOGGER_INFO, progname, "reading user-defined operator families\n");
 		opfinfo = getOpfamilies(&numOpfamilies);
-=======
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined text search parsers\n");
-	prsinfo = getTSParsers(&numTSParsers);
 
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined text search templates\n");
-	tmplinfo = getTSTemplates(&numTSTemplates);
-
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined text search dictionaries\n");
-	dictinfo = getTSDictionaries(&numTSDicts);
-
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined text search configurations\n");
-	cfginfo = getTSConfigurations(&numTSConfigs);
-
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined operator families\n");
-	opfinfo = getOpfamilies(&numOpfamilies);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-
-		if(is_gpdump || g_verbose)
+		if (is_gpdump || g_verbose)
 			status_log_msg(LOGGER_INFO, progname, "reading user-defined conversions\n");
 		convinfo = getConversions(&numConversions);
 	}
 
-<<<<<<< HEAD
-	if(is_gpdump || g_verbose)
-		status_log_msg(LOGGER_INFO, progname, "reading user-defined tables\n");
-	tblinfo = getTables(&numTables);
-
-	if(is_gpdump || g_verbose)
+	if (is_gpdump || g_verbose)
 		status_log_msg(LOGGER_INFO, progname, "reading table inheritance information\n");
-=======
-	if (g_verbose)
-		write_msg(NULL, "reading table inheritance information\n");
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	inhinfo = getInherits(&numInherits);
 
-	if(is_gpdump || g_verbose)
+	if (is_gpdump || g_verbose)
 		status_log_msg(LOGGER_INFO, progname, "reading rewrite rules\n");
 	ruleinfo = getRules(&numRules);
 
-	if(is_gpdump || g_verbose)
+	if (is_gpdump || g_verbose)
 		status_log_msg(LOGGER_INFO, progname, "reading type casts\n");
 	castinfo = getCasts(&numCasts);
 
 	/* Link tables to parents, mark parents of target tables interesting */
-	if(is_gpdump || g_verbose)
+	if (is_gpdump || g_verbose)
 		status_log_msg(LOGGER_INFO, progname, "finding inheritance relationships\n");
 	flagInhTables(tblinfo, numTables, inhinfo, numInherits);
 
-	if(is_gpdump || g_verbose)
+	if (is_gpdump || g_verbose)
 		status_log_msg(LOGGER_INFO, progname, "reading column info for interesting tables\n");
 	getTableAttrs(tblinfo, numTables);
 
-	if(is_gpdump || g_verbose)
+	if (is_gpdump || g_verbose)
 		status_log_msg(LOGGER_INFO, progname, "flagging inherited columns in subtables\n");
 	flagInhAttrs(tblinfo, numTables, inhinfo, numInherits);
 
-	if(g_role == 1) // ROLE_MASTER
+	/*
+	 * ROLE_MASTER
+	 */
+	if (g_role == 1)
 	{
-		if(is_gpdump || g_verbose)
+		if (is_gpdump || g_verbose)
 			status_log_msg(LOGGER_INFO, progname, "reading indexes\n");
 		getIndexes(tblinfo, numTables);
 
-		if(is_gpdump || g_verbose)
+		if (is_gpdump || g_verbose)
 			status_log_msg(LOGGER_INFO, progname, "reading constraints\n");
 		getConstraints(tblinfo, numTables);
 
-		if(is_gpdump || g_verbose)
+		if (is_gpdump || g_verbose)
 			status_log_msg(LOGGER_INFO, progname, "reading triggers\n");
 		getTriggers(tblinfo, numTables);
 	}
@@ -405,62 +357,8 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 										parent->numatts);
 				if (inhAttrInd >= 0)
 				{
-<<<<<<< HEAD
-					AttrDefInfo *inhDef = parent->attrdefs[inhAttrInd];
-
-					foundAttr = true;
-					foundNotNull |= parent->notnull[inhAttrInd];
-					if (inhDef != NULL)
-					{
-						defaultsFound = true;
-
-						/*
-						 * If any parent has a default and the child doesn't,
-						 * we have to emit an explicit DEFAULT NULL clause for
-						 * the child, else the parent's default will win.
-						 */
-						if (attrDef == NULL)
-						{
-							attrDef = (AttrDefInfo *) malloc(sizeof(AttrDefInfo));
-							attrDef->dobj.objType = DO_ATTRDEF;
-							attrDef->dobj.catId.tableoid = 0;
-							attrDef->dobj.catId.oid = 0;
-							AssignDumpId(&attrDef->dobj);
-							attrDef->adtable = tbinfo;
-							attrDef->adnum = j + 1;
-							attrDef->adef_expr = strdup("NULL");
-
-							attrDef->dobj.name = strdup(tbinfo->dobj.name);
-							attrDef->dobj.namespace = tbinfo->dobj.namespace;
-
-							attrDef->dobj.dump = tbinfo->dobj.dump;
-
-							attrDef->separate = false;
-							addObjectDependency(&tbinfo->dobj,
-												attrDef->dobj.dumpId);
-
-							tbinfo->attrdefs[j] = attrDef;
-						}
-						if (strcmp(attrDef->adef_expr, inhDef->adef_expr) != 0)
-						{
-							defaultsMatch = false;
-
-							/*
-							 * Whenever there is a non-matching parent
-							 * default, add a dependency to force the parent
-							 * default to be dumped first, in case the
-							 * defaults end up being dumped as separate
-							 * commands.  Otherwise the parent default will
-							 * override the child's when it is applied.
-							 */
-							addObjectDependency(&attrDef->dobj,
-												inhDef->dobj.dumpId);
-						}
-					}
-=======
 					foundNotNull |= parent->notnull[inhAttrInd];
 					foundDefault |= (parent->attrdefs[inhAttrInd] != NULL);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				}
 			}
 
