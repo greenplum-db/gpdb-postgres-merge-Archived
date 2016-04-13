@@ -185,16 +185,10 @@ static Datum pltcl_func_handler(PG_FUNCTION_ARGS, bool pltrusted);
 
 static HeapTuple pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted);
 
-<<<<<<< HEAD
-static void throw_tcl_error(Tcl_Interp *interp);
-
-static pltcl_proc_desc *compile_pltcl_function(Oid fn_oid, Oid tgreloid);
-=======
 static void throw_tcl_error(Tcl_Interp *interp, const char *proname);
 
 static pltcl_proc_desc *compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 											   bool pltrusted);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 static int pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 		   int argc, CONST84 char *argv[]);
@@ -783,11 +777,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS, bool pltrusted)
 	 * Check for errors reported by Tcl.
 	 ************************************************************/
 	if (tcl_rc != TCL_OK)
-<<<<<<< HEAD
-		throw_tcl_error(interp);
-=======
 		throw_tcl_error(interp, prodesc->user_proname);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/************************************************************
 	 * Disconnect from SPI manager and then create the return
@@ -1007,11 +997,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 	 * Check for errors reported by Tcl.
 	 ************************************************************/
 	if (tcl_rc != TCL_OK)
-<<<<<<< HEAD
-		throw_tcl_error(interp);
-=======
 		throw_tcl_error(interp, prodesc->user_proname);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/************************************************************
 	 * The return value from the procedure might be one of
@@ -1143,11 +1129,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
  * throw_tcl_error	- ereport an error returned from the Tcl interpreter
  **********************************************************************/
 static void
-<<<<<<< HEAD
-throw_tcl_error(Tcl_Interp *interp)
-=======
 throw_tcl_error(Tcl_Interp *interp, const char *proname)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	/*
 	 * Caution is needed here because Tcl_GetVar could overwrite the
@@ -1167,12 +1149,8 @@ throw_tcl_error(Tcl_Interp *interp, const char *proname)
 										   TCL_GLOBAL_ONLY));
 	ereport(ERROR,
 			(errmsg("%s", emsg),
-<<<<<<< HEAD
-			 errcontext("%s", econtext)));
-=======
 			 errcontext("%s\nin PL/Tcl function \"%s\"",
 						econtext, proname)));
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	UTF_END;
 }
 
