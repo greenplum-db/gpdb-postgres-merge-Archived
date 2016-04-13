@@ -109,3 +109,5 @@ set enable_indexscan=off;
 set enable_bitmapscan=on;
 
 select * from bm_test where a in (1,3,5);
+
+drop table if exists bm_test;
