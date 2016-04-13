@@ -1383,23 +1383,9 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 		   !TransactionIdIsValid(MyProc->xmin) :
 		   TransactionIdIsValid(MyProc->xmin));
 
-	globalxmin = xmin = GetTopTransactionId();
-
-	elog((Debug_print_full_dtm ? LOG : DEBUG5),
-		 "GetSnapshotData setting globalxmin and xmin to %u", 
-	 	 xmin);
-
 	/*
-	 * It is sufficient to get shared lock on ProcArrayLock, even if
-	 * we are computing a serializable snapshot and therefore will be
-	 * setting MyProc->xmin.  This is because any two backends that
-	 * have overlapping shared holds on ProcArrayLock will certainly
-	 * compute the same xmin (since no xact, in particular not the
-	 * oldest, can exit the set of running transactions while we hold
-	 * ProcArrayLock --- see further discussion just below). So it
-	 * doesn't matter whether another backend concurrently doing
-	 * GetSnapshotData or GetOldestXmin sees our xmin as set or not;
-	 * he'd compute the same xmin for himself either way.
+	 * It is sufficient to get shared lock on ProcArrayLock, even if we are
+	 * going to set MyProc->xmin.
 	 */
 	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
@@ -1410,6 +1396,10 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 
 	/* initialize xmin calculation with xmax */
 	globalxmin = xmin = xmax;
+
+	elog((Debug_print_full_dtm ? LOG : DEBUG5),
+		 "GetSnapshotData setting globalxmin and xmin to %u", 
+	 	 xmin);
 
 	/*
 	 * Get the distributed snapshot if needed and copy it into the field 
@@ -1450,7 +1440,9 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 	FillInDistributedSnapshot(snapshot);
 
 	/*
-	 * Scan the PGPROC array to fill in the local snapshot.
+	 * Spin over procArray checking xid, xmin, and subxids.  The goal is to
+	 * gather all active xids, find the lowest xmin, and try to record
+	 * subxids.
 	 */
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
