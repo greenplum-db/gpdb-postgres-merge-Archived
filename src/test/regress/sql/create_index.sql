@@ -232,20 +232,22 @@ create index hash_f8_index_3 on hash_f8_heap(random) where seqno > 1000;
 -- Unfortunately this only tests about half the code paths because there are
 -- no concurrent updates happening to the table at the same time.
 
-CREATE TABLE concur_heap (f1 text, f2 text) distributed by (f1);
+CREATE TABLE concur_heap (f1 text, f2 text, dk text) distributed by (dk);
 -- empty table
 CREATE INDEX CONCURRENTLY concur_index1 ON concur_heap(f2,f1);
 -- MPP-9772, MPP-9773: re-enable CREATE INDEX CONCURRENTLY (off by default)
 set gp_create_index_concurrently=true;
 CREATE INDEX CONCURRENTLY concur_index1 ON concur_heap(f2,f1);
-INSERT INTO concur_heap VALUES  ('a','b');
-INSERT INTO concur_heap VALUES  ('b','b');
+INSERT INTO concur_heap VALUES  ('a','b', '1');
+INSERT INTO concur_heap VALUES  ('b','b', '1');
+INSERT INTO concur_heap VALUES  ('c','c', '2');
+INSERT INTO concur_heap VALUES  ('d','d', '3');
 -- unique index
-CREATE UNIQUE INDEX CONCURRENTLY concur_index2 ON concur_heap(f1);
+CREATE UNIQUE INDEX CONCURRENTLY concur_index2 ON concur_heap(dk, f1);
 -- check if constraint is set up properly to be enforced
-INSERT INTO concur_heap VALUES ('b','x');
+INSERT INTO concur_heap VALUES ('b','x', '1');
 -- check if constraint is enforced properly at build time
---CREATE UNIQUE INDEX CONCURRENTLY concur_index3 ON concur_heap(f2);
+CREATE UNIQUE INDEX CONCURRENTLY concur_index3 ON concur_heap(dk, f2);
 -- test that expression indexes and partial indexes work concurrently
 CREATE INDEX CONCURRENTLY concur_index4 on concur_heap(f2) WHERE f1='a';
 CREATE INDEX CONCURRENTLY concur_index5 on concur_heap(f2) WHERE f1='x';
