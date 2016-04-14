@@ -28,13 +28,15 @@ static RestrictInfo *make_restrictinfo_internal(Expr *clause,
 						   bool outerjoin_delayed,
 						   bool pseudoconstant,
 						   Relids required_relids,
-						   Relids nullable_relids);
+						   Relids nullable_relids,
+						   Relids ojscope_relids);
 static Expr *make_sub_restrictinfos(Expr *clause,
 					   bool is_pushed_down,
 					   bool outerjoin_delayed,
 					   bool pseudoconstant,
 					   Relids required_relids,
-					   Relids nullable_relids);
+					   Relids nullable_relids,
+					   Relids ojscope_relids);
 static bool join_clause_is_redundant(PlannerInfo *root,
 						 RestrictInfo *rinfo,
 						 List *reference_list);
@@ -59,7 +61,8 @@ make_restrictinfo(Expr *clause,
 				  bool outerjoin_delayed,
 				  bool pseudoconstant,
 				  Relids required_relids,
-				  Relids nullable_relids)
+				  Relids nullable_relids,
+				  Relids ojscope_relids)
 {
 	/*
 	 * If it's an OR clause, build a modified copy with RestrictInfos inserted
@@ -71,7 +74,8 @@ make_restrictinfo(Expr *clause,
 													   outerjoin_delayed,
 													   pseudoconstant,
 													   required_relids,
-													   nullable_relids);
+													   nullable_relids,
+													   ojscope_relids);
 
 	/* Shouldn't be an AND clause, else AND/OR flattening messed up */
 	Assert(!and_clause((Node *) clause));
@@ -82,7 +86,8 @@ make_restrictinfo(Expr *clause,
 									  outerjoin_delayed,
 									  pseudoconstant,
 									  required_relids,
-									  nullable_relids);
+									  nullable_relids,
+									  ojscope_relids);
 }
 
 /*
@@ -229,6 +234,7 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 													  false,
 													  false,
 													  NULL,
+													  NULL,
 													  NULL));
 		}
 	}
@@ -256,6 +262,7 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 													   false,
 													   false,
 													   NULL,
+													   NULL,
 													   NULL));
 			}
 		}
@@ -281,7 +288,8 @@ make_restrictinfo_internal(Expr *clause,
 						   bool outerjoin_delayed,
 						   bool pseudoconstant,
 						   Relids required_relids,
-						   Relids nullable_relids)
+						   Relids nullable_relids,
+						   Relids ojscope_relids)
 {
 	RestrictInfo *restrictinfo = makeNode(RestrictInfo);
 
@@ -292,6 +300,7 @@ make_restrictinfo_internal(Expr *clause,
 	restrictinfo->pseudoconstant = pseudoconstant;
 	restrictinfo->can_join = false;		/* may get set below */
 	restrictinfo->nullable_relids = nullable_relids;
+	restrictinfo->ojscope_relids = ojscope_relids;
 
 	/**
 	 * If this is a IS NOT FALSE boolean test, we can peek underneath.
@@ -402,7 +411,8 @@ make_sub_restrictinfos(Expr *clause,
 					   bool outerjoin_delayed,
 					   bool pseudoconstant,
 					   Relids required_relids,
-					   Relids nullable_relids)
+					   Relids nullable_relids,
+					   Relids ojscope_relids)
 {
 	if (or_clause((Node *) clause))
 	{
@@ -416,14 +426,16 @@ make_sub_restrictinfos(Expr *clause,
 													outerjoin_delayed,
 													pseudoconstant,
 													NULL,
-													nullable_relids));
+													nullable_relids,
+													ojscope_relids));
 		return (Expr *) make_restrictinfo_internal(clause,
 												   make_orclause(orlist),
 												   is_pushed_down,
 												   outerjoin_delayed,
 												   pseudoconstant,
 												   required_relids,
-												   nullable_relids);
+												   nullable_relids,
+												   ojscope_relids);
 	}
 	else if (and_clause((Node *) clause))
 	{
@@ -437,7 +449,8 @@ make_sub_restrictinfos(Expr *clause,
 													 outerjoin_delayed,
 													 pseudoconstant,
 													 required_relids,
-													 nullable_relids));
+													 nullable_relids,
+													 ojscope_relids));
 		return make_andclause(andlist);
 	}
 	else
@@ -447,7 +460,8 @@ make_sub_restrictinfos(Expr *clause,
 												   outerjoin_delayed,
 												   pseudoconstant,
 												   required_relids,
-												   nullable_relids);
+												   nullable_relids,
+												   ojscope_relids);
 }
 
 /*

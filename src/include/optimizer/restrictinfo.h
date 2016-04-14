@@ -19,14 +19,15 @@
 
 /* Convenience macro for the common case of a valid-everywhere qual */
 #define make_simple_restrictinfo(clause)  \
-	make_restrictinfo(clause, true, false, false, NULL, NULL)
+	make_restrictinfo(clause, true, false, false, NULL, NULL, NULL)
 
 extern RestrictInfo *make_restrictinfo(Expr *clause,
 				  bool is_pushed_down,
 				  bool outerjoin_delayed,
 				  bool pseudoconstant,
 				  Relids required_relids,
-				  Relids nullable_relids);
+				  Relids nullable_relids,
+				  Relids ojscope_relids);
 extern List *make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 								  bool is_pushed_down,
 								  bool include_predicates);

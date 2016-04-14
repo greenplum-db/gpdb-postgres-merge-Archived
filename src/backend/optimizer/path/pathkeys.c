@@ -109,240 +109,141 @@ replace_expression_mutator(Node *node, void *context)
 }
 
 /**
- * Do relations in qualscope fall on the nullable side of an outer join?
- */
-static bool
-isBelowNullableSideOfOuterJoin( PlannerInfo *root, Relids qualscope)
-{
-    ListCell *curOuterJoinInfo;
-
-    foreach(curOuterJoinInfo, root->oj_info_list)
-    {
-        OuterJoinInfo * oj = (OuterJoinInfo *) lfirst(curOuterJoinInfo);
-        if (bms_overlap(qualscope, oj->syn_righthand))
-            return true;
-
-        if (oj->join_type == JOIN_FULL &&
-            bms_overlap(qualscope, oj->syn_lefthand))
-            return true;
-    }
-
-    return false;
-}
-
-/**
- * Iterate on the given list of restrict infos, and build a new list that contains
- * only the elements that have outerjoin_delayed= false
- */
-static List *remove_outer_join_restrict_infos(List *restrictinfolist)
-{
-	List *newlist = NIL;
-
-	ListCell *lc = NULL;
-	foreach (lc, restrictinfolist)
-	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
-		if (!rinfo->outerjoin_delayed)
-		{
-			newlist = lappend(newlist, rinfo);
-		}
-	}
-
-	return newlist;
-}
-
-/**
- * Given an equivalence class, extract out all the relevant known clauses.
- * This is done by finding all relations represented in the equivalence class.
- * Then, we extract out all the restrictinfos from these relations and find
- * the additional relations mentioned in these clauses. These restrictinfo
- * clauses are appended into one big list
- * Input:
- * 	root - planner information
- * 	eclass - equivalence class
- */
-static List *relevant_known_clauses(PlannerInfo *root, EquivalenceClass *eclass)
-{
-	/**
-	 * Find all the relevant relids from pathkey list and corresponding restrict
-	 * infos.
-	 */
-	Relids relevant_relids;
-
-	/**
-	 * Find the restrictinfos for every relation that has an equivalence member
-	 * and then extract out these relids as well
-	 */
-	int relid;
-	Relids iter;
-
-	relevant_relids = bms_copy(eclass->ec_relids);
-
-	iter = bms_copy(eclass->ec_relids);
-	while ((relid = bms_first_member(iter)) >= 0)
-	{
-		RelOptInfo *rel1 = find_base_rel(root, relid);
-
-		List *restrictinfolist = list_union(rel1->baserestrictinfo, remove_outer_join_restrict_infos(rel1->joininfo));
-		List *restrictlistclauses = list_union(
-				extract_actual_clauses(restrictinfolist, true),
-				extract_actual_clauses(restrictinfolist, false)
-		);
-
-		relevant_relids = bms_union(relevant_relids, pull_varnos((Node *) restrictlistclauses));
-	}
-	bms_free(iter);
-
-	/**
-	 * Build a list of clauses by iterating over all relevant relations
-	 */
-	List *relevant_clauses = NIL;
-	while ((relid = bms_first_member(relevant_relids)) >= 0)
-	{
-		RelOptInfo *rel1 = find_base_rel(root, relid);
-
-		List *restrictinfolist = list_union(rel1->baserestrictinfo, remove_outer_join_restrict_infos(rel1->joininfo));
-		List *restrictlistclauses = list_union(
-				extract_actual_clauses(restrictinfolist, true),
-				extract_actual_clauses(restrictinfolist, false)
-		);
-		relevant_clauses = list_concat(relevant_clauses, restrictlistclauses);
-	}
-	bms_free(relevant_relids);
-
-	return relevant_clauses;
-}
-
-/**
  * Generate implied qual
  * Input:
  * 	root - planner information
- * 	relevant_clauses - all previously known clauses
- * 	old_clause - old clause to infer from
- * 	old_pk - the pathkey item to be replaced
- * 	new_pk - new pathkey item replacing it
- * Output:
- *  New list of relevant clauses
+ * 	old_rinfo - old clause to infer from
+ * 	old_expr - the expression to be replaced
+ * 	new_expr - new expression replacing it
  */
-static List *gen_implied_qual(PlannerInfo *root,
-		List *relevant_clauses, /* This list may be modified */
-		Node *old_clause,
-		Node *old_pk,
-		Node *new_pk
-		)
+static void
+gen_implied_qual(PlannerInfo *root,
+				 RestrictInfo *old_rinfo,
+				 Node *old_expr,
+				 Node *new_expr)
 {
+	Node	   *new_clause;
+	ReplaceExpressionMutatorReplacement ctx;
+	Relids		new_qualscope;
+	ListCell   *lc;
 
 	/* Expression types must match */
-	Assert(exprType(old_pk) == exprType(new_pk)
-			&& exprTypmod(old_pk) == exprTypmod(new_pk));
+	Assert(exprType(old_expr) == exprType(new_expr)
+			&& exprTypmod(old_expr) == exprTypmod(new_expr));
 
-	/* clone the clause, replacing first node with
-	 *    clone of second
+	/*
+	 * Clone the clause, replacing first node with the second.
 	 */
-	ReplaceExpressionMutatorReplacement ctx;
-	ctx.replaceThis = old_pk;
-	ctx.withThis = new_pk;
+	ctx.replaceThis = old_expr;
+	ctx.withThis = new_expr;
 	ctx.numReplacementsDone = 0;
-	Node *new_clause = (Node*) replace_expression_mutator(
-			(Node*)old_clause, &ctx);
+	new_clause = (Node *) replace_expression_mutator((Node*) old_rinfo->clause, &ctx);
 
-	Relids old_qualscope = pull_varnos(old_clause);
-	Relids new_qualscope = pull_varnos(new_clause);
+	if (ctx.numReplacementsDone == 0)
+		return;
 
-	bool inferrable = new_qualscope != NULL /* distribute_qual_to_rels doesn't accept pseudoconstants */
-			&& (ctx.numReplacementsDone > 0)
-			&& !list_member(relevant_clauses, new_clause)
-			&& !subexpression_match((Expr *) new_pk, (Expr *) old_clause);
+	new_qualscope = pull_varnos(new_clause);
 
-	/**
-	 * No inferences may be performed across an outer join
+	/* distribute_qual_to_rels doesn't accept pseudoconstants? XXX: doesn't it? */
+	if (new_qualscope == NULL)
+		return;
+
+	if (subexpression_match((Expr *) new_expr, old_rinfo->clause))
+		return;
+
+	/* No inferences may be performed across an outer join */
+	if (old_rinfo->ojscope_relids && !bms_is_subset(new_qualscope, old_rinfo->ojscope_relids))
+		return;
+
+	/*
+	 * Have we seen this clause before? This is needed to avoid infinite recursion.
 	 */
-	inferrable = inferrable
-			&& !isBelowNullableSideOfOuterJoin(root, old_qualscope)
-			&& !isBelowNullableSideOfOuterJoin(root, new_qualscope);
-
-	if (inferrable)
+	foreach (lc, root->non_eq_clauses)
 	{
-		distribute_qual_to_rels(root, new_clause,
-				true, /* is_deduced */
-				true, /* is_deduced_but_not_equijoin */
-				false,
-				new_qualscope, /* qualscope */
-				NULL, /* ojscope */
-				NULL, /* outerjoin_nonnullable */
-				NULL,
-				NULL /* postponed_qual_list */
-		);
-		relevant_clauses = lappend(relevant_clauses, new_clause);
+		RestrictInfo *oldrinfo = (RestrictInfo *) lfirst(lc);
+
+		if (equal(oldrinfo->clause, new_clause))
+			return;
 	}
 
-	return relevant_clauses;
+	distribute_qual_to_rels(root, new_clause,
+							true, /* is_deduced */
+							false,
+							new_qualscope, /* qualscope */
+							old_rinfo->ojscope_relids, /* ojscope */
+							NULL, /* outerjoin_nonnullable */
+							NULL,
+							NULL /* postponed_qual_list */
+		);
 }
 
 /**
- * Generate all qualifications that are implied by the equivalence specified
- *   by the given pathkey list
+ * Generate all qualifications that are implied by the given RestrictInfo and
+ * the equivalence classes.
+
  * Input:
  * - root: planner info structure
- * - lpkitems: list of equivalent pathkey items
+ * - rinfo: clause to derive more quals from.
  */
 static void
-gen_implied_quals_for_eclass(PlannerInfo *root, EquivalenceClass *eclass)
+gen_implied_quals(PlannerInfo *root, RestrictInfo *rinfo)
 {
-	List *relevant_clauses = relevant_known_clauses(root, eclass);
+	ListCell	*lcec;
 
 	/*
-	 * For every triple (em1, clause, em2), we try to replace em1 in clause
-	 * with em2 and add it as an inferred clause since em1 = em2
+	 * Is it safe to infer from this clause?
 	 */
-    ListCell     *lcem1;
-    foreach(lcem1, eclass->ec_members)
-    {
-		EquivalenceMember *em1 = (EquivalenceMember *) lfirst(lcem1);
+	if (contain_volatile_functions((Node *) rinfo->clause) ||
+		contain_subplans((Node *) rinfo->clause))
+	{
+		return;
+	}
 
-		/*
-		 * Only look at equivalence members that correspond to a single relation
-		 */
-		if (bms_membership(em1->em_relids) == BMS_SINGLETON)
-    	{
-			/*
-			 * Iterate over all clauses
-			 */
-			ListCell   *lcclause;
-			foreach(lcclause, relevant_clauses)
-    		{
-    			Node *old_clause = (Node *) lfirst(lcclause);
+	/*
+	 * Find every equivalence class that's relevant for this RestrictInfo.
+	 *
+	 * Relevant means that some member of the equivalence class appears
+	 * in the clause, that we can replace it with another member.
+	 */
+	foreach(lcec, root->eq_classes)
+	{
+		EquivalenceClass *eclass = (EquivalenceClass *) lfirst(lcec);
+		ListCell   *lcem1;
 
-				/*
-				 * Is it safe to infer from old_clause?
-				 */
-				bool safe_to_infer =
-					!contain_volatile_functions(old_clause)
-					&& !contain_subplans(old_clause);
+		/* Single-member ECs won't generate any deductions */
+		if (list_length(eclass->ec_members) <= 1)
+			continue;
 
-				if (safe_to_infer)
+		if (!bms_overlap(eclass->ec_relids, rinfo->clause_relids))
+			continue; /* none of the members can appear in the clause */
+
+		foreach(lcem1, eclass->ec_members)
+		{
+			EquivalenceMember *em1 = (EquivalenceMember *) lfirst(lcem1);
+			ListCell *lcem2;
+
+			if (!bms_overlap(em1->em_relids, rinfo->clause_relids))
+				continue; /* this member cannot appear in the clause */
+
+			/* now try to apply to others in the equivalence class */
+			foreach(lcem2, eclass->ec_members)
+			{
+				EquivalenceMember *em2 = (EquivalenceMember *) lfirst(lcem2);
+
+				if (em2 == em1)
+					continue;
+
+				if (exprType((Node *) em1->em_expr) == exprType((Node *) em2->em_expr)
+					&& exprTypmod((Node *)em1->em_expr) == exprTypmod((Node *)em2->em_expr))
 				{
-					ListCell *lcem2;
-
-					/* now try to apply to others in the equivalence class */
-					foreach(lcem2, eclass->ec_members)
-    				{
-						EquivalenceMember *em2 = (EquivalenceMember *) lfirst(lcem2);
-
-						if (exprType((Node *) em1->em_expr) == exprType((Node *) em2->em_expr)
-							&& exprTypmod((Node *)em1->em_expr) == exprTypmod((Node *)em2->em_expr))
-						{
-							relevant_clauses = gen_implied_qual(root,
-																relevant_clauses,
-																old_clause,
-																(Node *)em1->em_expr,
-																(Node *)em2->em_expr);
-						}
-					} /* foreach lcem2 */
-				} /* safe_to_infer */
-			} /* foreach lcclause */
-		} /* BMS_SINGLETON */
-	} /* foreach lcem1 */
+					gen_implied_qual(root,
+									 rinfo,
+									 (Node *) em1->em_expr,
+									 (Node *) em2->em_expr);
+				}
+			}
+		}
+	}
 }
 
 /* TODO:
@@ -361,19 +262,16 @@ generate_implied_quals(PlannerInfo *root)
     if (!root->config->gp_enable_predicate_propagation)
         return;
 
-    /* generate using the query-global equivalence classes */
-	foreach(lc, root->eq_classes)
+	foreach (lc, root->non_eq_clauses)
 	{
-		EquivalenceClass *ec = (EquivalenceClass *) lfirst(lc);
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 
-		Assert(ec->ec_merged == NULL);		/* else shouldn't be in list */
-		Assert(!ec->ec_broken);				/* not yet anyway... */
+		gen_implied_quals(root, rinfo);
 
-		/* Single-member ECs won't generate any deductions */
-		if (list_length(ec->ec_members) <= 1)
-			continue;
-
-        gen_implied_quals_for_eclass(root, ec);
+		/*
+		 * NOTE: gen_implied_quals() can append more quals to the list!
+		 * We will process those as well, as we iterate.
+		 */
 	}
 }
 

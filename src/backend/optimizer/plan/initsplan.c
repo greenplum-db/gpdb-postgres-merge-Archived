@@ -55,7 +55,7 @@ static OuterJoinInfo *make_outerjoininfo(PlannerInfo *root,
 				   Relids inner_join_rels,
 				   JoinType join_type, Node *clause);
 void distribute_qual_to_rels(PlannerInfo *root, Node *clause,
-						bool is_deduced, bool is_deduced_but_not_equijoin,
+						bool is_deduced,
 						bool below_outer_join,
 						Relids qualscope,
 						Relids ojscope,
@@ -398,7 +398,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 			if (bms_is_subset(pq->relids, *qualscope))
 			{
 				distribute_qual_to_rels(root, pq->qual,
-										false, false, below_outer_join,
+										false, below_outer_join,
 										*qualscope, NULL, NULL,
 										NULL, NULL);
 				pfree(pq);
@@ -418,7 +418,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 		 */
 		foreach(l, (List *) f->quals)
 			distribute_qual_to_rels(root, (Node *) lfirst(l),
-									false, false, below_outer_join,
+									false, below_outer_join,
 									*qualscope, NULL, NULL, NULL,
 									postponed_qual_list);
 	}
@@ -586,7 +586,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 			if (bms_is_subset(pq->relids, *qualscope))
 			{
 				distribute_qual_to_rels(root, pq->qual,
-										false, false, below_outer_join,
+										false, below_outer_join,
 										*qualscope, ojscope, nonnullable_rels,
 										NULL, NULL);
 				pfree(pq);
@@ -604,7 +604,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 		/* Process the qual clauses */
 		foreach(qual, (List *) j->quals)
 			distribute_qual_to_rels(root, (Node *) lfirst(qual),
-									false, false, below_outer_join,
+									false, below_outer_join,
 									*qualscope, ojscope, nonnullable_rels, NULL,
 									postponed_qual_list);
 
@@ -872,13 +872,10 @@ make_outerjoininfo(PlannerInfo *root,
  * 'qualscope' identifies what level of JOIN the qual came from syntactically.
  * 'ojscope' is needed if we decide to force the qual up to the outer-join
  * level, which will be ojscope not necessarily qualscope.
- *
- * 'ptrToLocalEquiKeyList': the equiKeyList at *ptrToLocalEquiKeyList may have
- *      its equi key list expanded.  ptrToLocalEquiKeyList may be null
  */
 void
 distribute_qual_to_rels(PlannerInfo *root, Node *clause,
-						bool is_deduced, bool is_deduced_but_not_equijoin,
+						bool is_deduced,
 						bool below_outer_join,
 						Relids qualscope,
 						Relids ojscope,
@@ -1115,7 +1112,8 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 									 outerjoin_delayed,
 									 pseudoconstant,
 									 relids,
-									 nullable_relids);
+									 nullable_relids,
+									 ojscope);
 
 	/*
 	 * If it's a join clause (either naturally, or because delayed by
@@ -1212,6 +1210,14 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 
 	/* No EC special case applies, so push it into the clause lists */
 	distribute_restrictinfo_to_rels(root, restrictinfo);
+
+	/*
+	 * The predicate propagation code (gen_implied_quals())  might be able to
+	 * derive other clauses from this, though, so remember this qual for later.
+	 * (We cannot do predicate propagation yet, because we haven't built all
+	 * the equivalence classes yet.)
+	 */
+	root->non_eq_clauses = lappend(root->non_eq_clauses, restrictinfo);
 }
 
 /*
@@ -1504,7 +1510,7 @@ process_implied_equality(PlannerInfo *root,
 	 * Push the new clause into all the appropriate restrictinfo lists.
 	 */
 	distribute_qual_to_rels(root, (Node *) clause,
-							true, true, below_outer_join,
+							true, below_outer_join,
 							qualscope, NULL, NULL, nullable_relids,
 							NULL);
 }
@@ -1547,7 +1553,8 @@ build_implied_join_equality(Oid opno,
 									 false,		/* outerjoin_delayed */
 									 false,		/* pseudoconstant */
 									 qualscope,	/* required_relids */
-									 nullable_relids);	/* nullable_relids */
+									 nullable_relids,	/* nullable_relids */
+									 qualscope); /* ojscope_relids */
 
 	/* Set mergejoinability info always, and hashjoinability if enabled */
 	check_mergejoinable(restrictinfo);

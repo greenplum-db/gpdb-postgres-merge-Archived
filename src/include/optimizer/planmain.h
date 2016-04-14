@@ -230,7 +230,7 @@ extern void process_implied_equality(PlannerInfo *root,
 						 bool below_outer_join,
 						 bool both_const);
 extern void distribute_qual_to_rels(PlannerInfo *root, Node *clause,
-						bool is_deduced, bool is_deduced_but_not_equijoin,
+						bool is_deduced,
 						bool below_outer_join,
 						Relids qualscope,
 						Relids ojscope,

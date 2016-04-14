@@ -1300,7 +1300,7 @@ make_mergeclause(Node *outer, Node *inner)
 
 	xpr = make_notclause((Expr *) opxpr);
 
-	rinfo = make_restrictinfo(xpr, false, false, false, NULL, NULL);
+	rinfo = make_restrictinfo(xpr, false, false, false, NULL, NULL, NULL);
 	rinfo->mergeopfamilies = get_mergejoin_opfamilies(opxpr->opno);
 
 	return rinfo;
