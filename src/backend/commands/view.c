@@ -507,8 +507,9 @@ DefineView(ViewStmt *stmt, const char *queryString)
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
-		stmt->query = (Node *) viewParse_orig;
-		CdbDispatchUtilityStatement((Node *) stmt, "DefineView");
+		ViewStmt *dispatchStmt = (ViewStmt *) copyObject(stmt);
+		dispatchStmt->query = (Node *) viewParse_orig;
+		CdbDispatchUtilityStatement((Node *) dispatchStmt, "DefineView");
 	}
 }
 
