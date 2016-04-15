@@ -59,7 +59,7 @@ EXECUTE vprep;
 create function cache_test(int) returns int as $$
 declare total int;
 begin
-	create temp table t1(f1 int);
+	create temp table t1(f1 int) distributed by (f1);
 	insert into t1 values($1);
 	insert into t1 values(11);
 	insert into t1 values(12);
@@ -149,7 +149,7 @@ begin
   drop table if exists temptable cascade;
   create temp table temptable as select * from generate_series(1,3) as f1;
   create temp view vv as select * from temptable;
-  for r in select * from vv loop
+  for r in select * from vv order by f1 loop
     raise notice '%', r;
   end loop;
 end$$ language plpgsql;
