@@ -282,6 +282,7 @@ ExecInitTableFunction(TableFunctionScan *node, EState *estate, int eflags)
 {
 	TableFunctionState	*scanstate;
 	PlanState           *subplan;
+	RangeTblEntry		*rte;
 	Oid					 funcrettype;
 	TypeFuncClass		 functypclass;
 	FuncExpr            *func;
@@ -323,6 +324,10 @@ ExecInitTableFunction(TableFunctionScan *node, EState *estate, int eflags)
 	outerPlanState(scanstate) = ExecInitNode(outerPlan(node), estate, eflags);
 	subplan   = outerPlanState(scanstate);
 	inputdesc = CreateTupleDescCopy(ExecGetResultType(subplan));
+
+	/* get info about the function */
+	rte	 = rt_fetch(node->scan.scanrelid, estate->es_range_table);
+	Insist(rte->rtekind == RTE_TABLEFUNCTION);
 
 	/* 
 	 * The funcexpr must be a function call.  This check is to verify that
@@ -404,6 +409,7 @@ ExecInitTableFunction(TableFunctionScan *node, EState *estate, int eflags)
 	scanstate->rsinfo.setResult    = NULL;
 	scanstate->rsinfo.setDesc	   = NULL;
 
+	scanstate->userdata = rte->funcuserdata;
 	/* Initialize a function cache for the function expression */
 	init_fcache(func->funcid, scanstate->fcache, 
 				econtext->ecxt_per_query_memory, 
