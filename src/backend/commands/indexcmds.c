@@ -578,9 +578,11 @@ DefineIndex(RangeVar *heapRelation,
 
 	if (rel_needs_long_lock(RelationGetRelid(rel)))
 		need_longlock = true;
+	/* if this is a concurrent build, we must lock you long time */
+	else if (concurrent)
+		need_longlock = true;
 	else
-		/* if this is a concurrent build, we must lock you long time */
-		need_longlock = (false || concurrent);
+		need_longlock = false;
 
    	if (shouldDispatch)
 	{
