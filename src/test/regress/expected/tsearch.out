@@ -606,7 +606,7 @@ to_tsquery('english', 'sea&foo'), 'HighlightAll=true');
  <body>
  <b>Sea</b> view wow <u><b>foo</b> bar</u> <i>qq</i>
  <a href="http://www.google.com/foo.bar.html" target="_blank">YES &nbsp;</a>
-  ff-bg
+ ff-bg
  <script>
         document.write(15);
  </script>
@@ -651,7 +651,7 @@ SELECT COUNT(*) FROM test_tsquery WHERE keyword >  'new & york';
      2
 (1 row)
 
-CREATE UNIQUE INDEX bt_tsq ON test_tsquery (keyword);
+CREATE INDEX bt_tsq ON test_tsquery (keyword);
 SET enable_seqscan=OFF;
 SELECT COUNT(*) FROM test_tsquery WHERE keyword <  'new & york';
  count 
@@ -887,6 +887,10 @@ SELECT to_tsquery('SKIES & My | booKs');
 (1 row)
 
 --trigger
+-- GPDB doesn't allow updating the distribution key, so create a synthetic
+-- distribution key column.
+alter table test_tsvector add column distkey int4;
+alter table test_tsvector set distributed by (distkey);
 CREATE TRIGGER tsvectorupdate
 BEFORE UPDATE OR INSERT ON test_tsvector
 FOR EACH ROW EXECUTE PROCEDURE tsvector_update_trigger(a, 'pg_catalog.english', t);
