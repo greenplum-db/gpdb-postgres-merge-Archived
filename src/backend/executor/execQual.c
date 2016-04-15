@@ -50,6 +50,7 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "parser/parse_coerce.h"
@@ -6291,7 +6292,9 @@ ExecEvalFunctionArgToConst(FuncExpr *fexpr, int argno, bool *isnull)
 	 * Check if the expression can be evaluated in the Const fasion.
 	 */
 	if (ExecIsExprUnsafeToConst((Node *) aexpr))
-		elog(ERROR, "unable to resolve function argument");
+		ereport(ERROR,
+				(errmsg("unable to resolve function argument"),
+				 errposition(exprLocation((Node *) aexpr))));
 
 	argtype = exprType((Node *) aexpr);
 	if (!OidIsValid(argtype))

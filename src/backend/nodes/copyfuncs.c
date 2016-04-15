@@ -4323,6 +4323,7 @@ _copyTableValueExpr(TableValueExpr *from)
 	TableValueExpr *newnode = makeNode(TableValueExpr);
 
 	COPY_NODE_FIELD(subquery);
+	COPY_LOCATION_FIELD(location);
 
 	return newnode;
 }

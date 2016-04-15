@@ -911,6 +911,7 @@ transformParamRef(ParseState *pstate, ParamRef *pref)
 	param->paramid = paramno;
 	param->paramtype = *pptype;
 	param->paramtypmod = -1;
+	param->location = pref->location;
 
 	return (Node *) param;
 }
