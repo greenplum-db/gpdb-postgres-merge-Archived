@@ -1501,6 +1501,9 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 		case T_TableFunctionScan:
 			finalize_primnode(((TableFunctionScan *) plan)->funcexpr,
 							  &context);
+			/* TableFunctionScan's lefttree is like SubqueryScan's subplan. */
+			context.paramids = bms_add_members(context.paramids,
+								 plan->lefttree->extParam);
 			break;
 
 		case T_FunctionScan:
@@ -1614,10 +1617,16 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 	}
 
 	/* Process left and right child plans, if any */
-	context.paramids = bms_add_members(context.paramids,
-									   finalize_plan(root,
-													 plan->lefttree,
-													 valid_params));
+	/*
+	 * In a TableFunctionScan, the 'lefttree' is more like a SubQueryScan's
+	 * subplan, and contains a plan that's already been finalized by the
+	 * inner invocation of subquery_planner(). So skip that.
+	 */
+	if (!IsA(plan, TableFunctionScan))
+		context.paramids = bms_add_members(context.paramids,
+										   finalize_plan(root,
+														 plan->lefttree,
+														 valid_params));
 
 	context.paramids = bms_add_members(context.paramids,
 									   finalize_plan(root,
