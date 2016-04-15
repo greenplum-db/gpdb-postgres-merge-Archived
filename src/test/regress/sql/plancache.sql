@@ -22,7 +22,7 @@ EXECUTE prepstmt2(123);
 
 -- recreate the temp table (this demonstrates that the raw plan is
 -- purely textual and doesn't depend on OIDs, for instance)
-CREATE TEMP TABLE pcachetest AS SELECT * FROM int8_tbl ORDER BY 2;
+CREATE TEMP TABLE pcachetest AS SELECT * FROM int8_tbl;
 
 EXECUTE prepstmt;
 EXECUTE prepstmt2(123);

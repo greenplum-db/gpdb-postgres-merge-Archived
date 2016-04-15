@@ -31,7 +31,7 @@ EXECUTE prepstmt2(123);
 ERROR:  relation "pcachetest" does not exist
 -- recreate the temp table (this demonstrates that the raw plan is
 -- purely textual and doesn't depend on OIDs, for instance)
-CREATE TEMP TABLE pcachetest AS SELECT * FROM int8_tbl ORDER BY 2;
+CREATE TEMP TABLE pcachetest AS SELECT * FROM int8_tbl;
 EXECUTE prepstmt;
         q1        |        q2         
 ------------------+-------------------
