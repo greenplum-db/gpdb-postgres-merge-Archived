@@ -236,12 +236,6 @@ initNextIndexToScan(DynamicIndexScanState *node)
 		/*
 		 * Initialize result tuple type and projection info.
 		 */
-		TupleDesc td = indexState->ss.ps.ps_ResultTupleSlot->tts_tupleDescriptor;
-		if (td)
-		{
-			pfree(td);
-			td = NULL;
-		}
 		ExecAssignResultTypeFromTL(&indexState->ss.ps);
 		ExecAssignScanProjectionInfo(&indexState->ss);
 
