@@ -907,22 +907,6 @@ select count(*) from gp_toolkit.__gp_aocsseg_name('tenk_aocs1') where modcount >
     16
 (1 row)
 
--------------------- 
--- unsupported sql 
---------------------
--- ALTER
-ALTER TABLE tenk_aocs1 RENAME TO tenk_renamed;
-ALTER TABLE tenk_renamed ADD COLUMN newcol int default 10;
-ALTER TABLE tenk_renamed ALTER COLUMN twothousand SET NOT NULL;
-ALTER TABLE tenk_renamed ADD COLUMN newcol2 int NOT NULL; -- should fail
-ERROR:  column "newcol2" contains null values
-SELECT count(*) FROM tenk_renamed;
- count 
--------
- 9999
-(1 row)
-
-ALTER TABLE tenk_renamed RENAME TO tenk_aocs1;
 --------------------
 -- system columns
 --------------------
