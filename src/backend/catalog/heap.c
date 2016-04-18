@@ -551,7 +551,30 @@ CheckAttributeType(const char *attname, Oid atttypid,
 		return;
 	}
 
-	if (att_typtype == TYPTYPE_COMPOSITE)
+	if (atttypid == UNKNOWNOID)
+	{
+		/*
+		 * Warn user, but don't fail, if column to be created has UNKNOWN type
+		 * (usually as a result of a 'retrieve into' - jolly)
+		 */
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("column \"%s\" has type \"unknown\"", attname),
+				 errdetail("Proceeding with relation creation anyway.")));
+	}
+	else if (att_typtype == TYPTYPE_PSEUDO)
+	{
+		/*
+		 * Refuse any attempt to create a pseudo-type column, except for a
+		 * special hack for pg_statistic: allow ANYARRAY during initdb
+		 */
+		if (atttypid != ANYARRAYOID || IsUnderPostmaster)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("column \"%s\" has pseudo-type %s",
+							attname, format_type_be(atttypid))));
+	}
+	else if (att_typtype == TYPTYPE_COMPOSITE)
 	{
 		/*
 		 * For a composite type, recurse into its attributes.  You might think
