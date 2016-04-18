@@ -199,10 +199,15 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	transTypeId = typenameTypeId(NULL, transType, NULL);
 	if (get_typtype(transTypeId) == TYPTYPE_PSEUDO &&
 		!IsPolymorphicType(transTypeId))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("aggregate transition data type cannot be %s",
-						format_type_be(transTypeId))));
+	{
+		if (transTypeId == INTERNALOID && superuser())
+			/* okay */ ;
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("aggregate transition data type cannot be %s",
+							format_type_be(transTypeId))));
+	}
 
 	/*
 	 * Most of the argument-checking is done inside of AggregateCreate
