@@ -1,15 +1,15 @@
 #include "S3Common.h"
 #include "utils.h"
 
-#include <sstream>
-#include <cstring>
-#include <cstdlib>
 #include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <sstream>
 
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <string>
-#include <map>
 
 #include "gps3conf.h"
 
@@ -18,8 +18,8 @@ using std::stringstream;
 
 bool SignGETv2(HeaderContent *h, string path_with_query,
                const S3Credential &cred) {
-    char timestr[64];
-    char tmpbuf[20];  // SHA_DIGEST_LENGTH is 20
+    char timestr[65];
+    unsigned char tmpbuf[20];  // SHA_DIGEST_LENGTH is 20
 
     // CONTENT_LENGTH is not a part of StringToSign
     h->Add(CONTENTLENGTH, "0");
@@ -28,11 +28,13 @@ bool SignGETv2(HeaderContent *h, string path_with_query,
     h->Add(DATE, timestr);
     stringstream sstr;
     sstr << "GET\n\n\n" << timestr << "\n" << path_with_query;
-    if (!sha1hmac(sstr.str().c_str(), tmpbuf, cred.secret.c_str())) {
+    if (!sha1hmac(sstr.str().c_str(), tmpbuf, cred.secret.c_str(),
+                  strlen(cred.secret.c_str()))) {
         return false;
     }
     // S3DEBUG("%s", sstr.str().c_str());
-    char *signature = Base64Encode(tmpbuf, 20);  // SHA_DIGEST_LENGTH is 20
+    char *signature =
+        Base64Encode((char *)tmpbuf, 20);  // SHA_DIGEST_LENGTH is 20
     // S3DEBUG("%s", signature);
     sstr.clear();
     sstr.str("");
@@ -44,11 +46,10 @@ bool SignGETv2(HeaderContent *h, string path_with_query,
     return true;
 }
 
-#if 0
 bool SignPUTv2(HeaderContent *h, string path_with_query,
                const S3Credential &cred) {
-    char timestr[64];
-    char tmpbuf[20];  // SHA_DIGEST_LENGTH is 20
+    char timestr[65];
+    unsigned char tmpbuf[20];  // SHA_DIGEST_LENGTH is 20
     string typestr;
 
     gethttpnow(timestr);
@@ -58,23 +59,25 @@ bool SignPUTv2(HeaderContent *h, string path_with_query,
     typestr = h->Get(CONTENTTYPE);
 
     sstr << "PUT\n\n" << typestr << "\n" << timestr << "\n" << path_with_query;
-    if (!sha1hmac(sstr.str().c_str(), tmpbuf, cred.secret.c_str())) {
+    if (!sha1hmac(sstr.str().c_str(), tmpbuf, cred.secret.c_str(),
+                  strlen(cred.secret.c_str()))) {
         return false;
     }
-    char *signature = Base64Encode(tmpbuf, 20);  // SHA_DIGEST_LENGTH is 20
+    char *signature =
+        Base64Encode((char *)tmpbuf, 20);  // SHA_DIGEST_LENGTH is 20
     sstr.clear();
     sstr.str("");
     sstr << "AWS " << cred.keyid << ":" << signature;
     free(signature);
-    h->Add(AUTHORIZATION, sstr.str().c_str());
+    h->Add(AUTHORIZATION, sstr.str());
 
     return true;
 }
 
-bool SignPOSTv2(HeaderContent *h, const char *path_with_query,
+bool SignPOSTv2(HeaderContent *h, string path_with_query,
                 const S3Credential &cred) {
-    char timestr[64];
-    char tmpbuf[20];  // SHA_DIGEST_LENGTH is 20
+    char timestr[65];
+    unsigned char tmpbuf[20];  // SHA_DIGEST_LENGTH is 20
     // string md5str;
 
     gethttpnow(timestr);
@@ -85,26 +88,112 @@ bool SignPOSTv2(HeaderContent *h, const char *path_with_query,
 
     if (typestr != NULL) {
         sstr << "POST\n"
-             << "\n" << typestr << "\n" << timestr << "\n" << path_with_query;
+             << "\n"
+             << typestr << "\n"
+             << timestr << "\n"
+             << path_with_query;
     } else {
         sstr << "POST\n"
              << "\n"
-             << "\n" << timestr << "\n" << path_with_query;
+             << "\n"
+             << timestr << "\n"
+             << path_with_query;
     }
     // printf("%s\n", sstr.str().c_str());
-    if (!sha1hmac(sstr.str().c_str(), tmpbuf, cred.secret.c_str())) {
+    if (!sha1hmac(sstr.str().c_str(), tmpbuf, cred.secret.c_str(),
+                  strlen(cred.secret.c_str()))) {
         return false;
     }
-    char *signature = Base64Encode(tmpbuf, 20);  // SHA_DIGEST_LENGTH is 20
+    char *signature =
+        Base64Encode((char *)tmpbuf, 20);  // SHA_DIGEST_LENGTH is 20
     sstr.clear();
     sstr.str("");
     sstr << "AWS " << cred.keyid << ":" << signature;
     free(signature);
-    h->Add(AUTHORIZATION, sstr.str().c_str());
+    h->Add(AUTHORIZATION, sstr.str());
 
     return true;
 }
-#endif
+
+bool SignRequestV4(string method, HeaderContent *h, string region, string path,
+                   string query, const S3Credential &cred) {
+    time_t t;
+    struct tm tm_info;
+    char date_str[17];
+    char timestamp_str[17];
+
+    char canonical_hex[65];
+    char signature_hex[65];
+
+    string signed_headers;
+
+    unsigned char kDate[SHA256_DIGEST_LENGTH];
+    unsigned char kRegion[SHA256_DIGEST_LENGTH];
+    unsigned char kService[SHA256_DIGEST_LENGTH];
+    unsigned char signingkey[SHA256_DIGEST_LENGTH];
+
+    /* YYYYMMDD'T'HHMMSS'Z' */
+    t = time(NULL);
+    gmtime_r(&t, &tm_info);
+    strftime(timestamp_str, 17, "%Y%m%dT%H%M%SZ", &tm_info);
+
+    h->Add(X_AMZ_DATE, timestamp_str);
+    memcpy(date_str, timestamp_str, 8);
+    date_str[8] = '\0';
+
+    // XXX sort queries automatically
+    // http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-query-string-auth.html
+    string query_encoded = uri_encode(query);
+    find_replace(query_encoded, "%26", "&");
+    find_replace(query_encoded, "%3D", "=");
+
+    stringstream canonical_str;
+
+    canonical_str << method << "\n"
+                  << path << "\n"
+                  << query_encoded << "\nhost:" << h->Get(HOST)
+                  << "\nx-amz-content-sha256:" << h->Get(X_AMZ_CONTENT_SHA256)
+                  << "\nx-amz-date:" << h->Get(X_AMZ_DATE) << "\n\n"
+                  << "host;x-amz-content-sha256;x-amz-date\n"
+                  << h->Get(X_AMZ_CONTENT_SHA256);
+    signed_headers = "host;x-amz-content-sha256;x-amz-date";
+
+    // printf("\n%s\n\n", canonical_str.str().c_str());
+    sha256_hex(canonical_str.str().c_str(), canonical_hex);
+
+    // http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
+    find_replace(region, "external-1", "us-east-1");
+
+    stringstream string2sign_str;
+    string2sign_str << "AWS4-HMAC-SHA256\n"
+                    << timestamp_str << "\n"
+                    << date_str << "/" << region << "/s3/aws4_request\n"
+                    << canonical_hex;
+
+    // printf("\n%s\n\n", string2sign_str.str().c_str());
+    stringstream kSecret;
+    kSecret << "AWS4" << cred.secret;
+
+    sha256hmac(date_str, kDate, kSecret.str().c_str(),
+               strlen(kSecret.str().c_str()));
+    sha256hmac(region.c_str(), kRegion, (char *)kDate, SHA256_DIGEST_LENGTH);
+    sha256hmac("s3", kService, (char *)kRegion, SHA256_DIGEST_LENGTH);
+    sha256hmac("aws4_request", signingkey, (char *)kService,
+               SHA256_DIGEST_LENGTH);
+    sha256hmac_hex(string2sign_str.str().c_str(), signature_hex,
+                   (char *)signingkey, SHA256_DIGEST_LENGTH);
+
+    stringstream signature_header;
+    signature_header << "AWS4-HMAC-SHA256 Credential=" << cred.keyid << "/"
+                     << date_str << "/" << region << "/"
+                     << "s3"
+                     << "/aws4_request,SignedHeaders=" << signed_headers
+                     << ",Signature=" << signature_hex;
+
+    h->Add(AUTHORIZATION, signature_header.str());
+
+    return true;
+}
 
 const char *GetFieldString(HeaderField f) {
     switch (f) {
@@ -126,6 +215,10 @@ const char *GetFieldString(HeaderField f) {
             return "Authorization";
         case ETAG:
             return "ETag";
+        case X_AMZ_DATE:
+            return "x-amz-date";
+        case X_AMZ_CONTENT_SHA256:
+            return "x-amz-content-sha256";
         default:
             return "unknown";
     }
@@ -139,7 +232,7 @@ bool HeaderContent::Add(HeaderField f, const std::string &v) {
         return false;
     }
 }
-/*
+
 const char *HeaderContent::Get(HeaderField f) {
     const char *ret = NULL;
     if (!this->fields[f].empty()) {
@@ -147,7 +240,7 @@ const char *HeaderContent::Get(HeaderField f) {
     }
     return ret;
 }
-*/
+
 struct curl_slist *HeaderContent::GetList() {
     struct curl_slist *chunk = NULL;
     std::map<HeaderField, std::string>::iterator it;
@@ -219,22 +312,25 @@ char *UrlParser::extract_field(const struct http_parser_url *u,
     return ret;
 }
 
+// return the number of items
 uint64_t ParserCallback(void *contents, uint64_t size, uint64_t nmemb,
                         void *userp) {
     uint64_t realsize = size * nmemb;
-    int res;
-    // printf("%.*s",realsize, (char*)contents);
     struct XMLInfo *pxml = (struct XMLInfo *)userp;
+
+    // printf("%.*s",realsize, (char*)contents);
+
     if (!pxml->ctxt) {
         pxml->ctxt = xmlCreatePushParserCtxt(NULL, NULL, (const char *)contents,
                                              realsize, "resp.xml");
-        return realsize;
     } else {
-        res = xmlParseChunk(pxml->ctxt, (const char *)contents, realsize, 0);
+        xmlParseChunk(pxml->ctxt, (const char *)contents, realsize, 0);
     }
-    return realsize;
+
+    return nmemb;
 }
 
+// invoked by s3_import(), need to be exception safe
 char *get_opt_s3(const char *url, const char *key) {
     const char *key_f = NULL;
     const char *key_tailing = NULL;
@@ -303,6 +399,7 @@ FAIL:
 }
 
 // returned memory needs to be freed
+// invoked by s3_import(), need to be exception safe
 char *truncate_options(const char *url_with_options) {
     const char *delimiter = " ";
     char *options = strstr((char *)url_with_options, delimiter);
@@ -313,8 +410,10 @@ char *truncate_options(const char *url_with_options) {
     }
 
     char *url = (char *)malloc(url_len + 1);
-    memcpy(url, url_with_options, url_len);
-    url[url_len] = 0;
+    if (url) {
+        memcpy(url, url_with_options, url_len);
+        url[url_len] = 0;
+    }
 
     return url;
 }

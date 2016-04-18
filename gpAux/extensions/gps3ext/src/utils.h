@@ -5,7 +5,15 @@
 #include <cstdlib>
 // #include <cstdint>
 #include <cstring>
+#include <string>
+#include <openssl/sha.h>
+#include <openssl/md5.h>
+
 #include "ini.h"
+#include "S3Log.h"
+
+using std::string;
+
 bool gethttpnow(char datebuf[65]);
 
 bool lowercase(char* out, const char* in);
@@ -16,24 +24,21 @@ bool trim(char* out, const char* in, const char* trimed = " \t\r\n");
 //! return value is malloced
 char* Base64Encode(const char* buffer, size_t length);
 
-bool sha256(char* string, char outputBuffer[65]);
+bool sha1hmac(const char* str, unsigned char out_hash[20], const char* secret,
+              int secret_len);
 
-bool sha1hmac(const char* str, char out[20], const char* secret);
+bool sha1hmac_hex(const char* str, char out_hash_hex[41], const char* secret,
+                  int secret_len);
 
-bool sha256hmac(char* str, char out[65], char* secret);
+bool sha256(const char* string, unsigned char out_hash[32]);
 
-// return malloced because Base64Encode
-char* SignatureV2(const char* date, const char* path, const char* key);
-char* SignatureV4(const char* date, const char* path, const char* key);
+bool sha256_hex(const char* string, char out_hash_hex[65]);
 
-#ifdef DEBUGS3
-void InitLog();
-#endif
+bool sha256hmac(const char* str, unsigned char out_hash[32], const char* secret,
+                int secret_len);
 
-#include <string>
-using std::string;
-
-#include <openssl/md5.h>
+bool sha256hmac_hex(const char* str, char out_hash_hex[65], const char* secret,
+                    int secret_len);
 
 size_t find_Nth(const string& str,  // where to work
                 unsigned N,         // N'th ocurrence
@@ -123,5 +128,11 @@ class Config {
 };
 
 bool to_bool(std::string str);
+
+std::string uri_encode(const std::string& src);
+
+std::string uri_decode(const std::string& src);
+
+void find_replace(string& str, const string& find, const string& replace);
 
 #endif  // _UTILFUNCTIONS_

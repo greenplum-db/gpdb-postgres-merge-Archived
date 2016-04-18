@@ -110,6 +110,10 @@
 	(appendStringInfo(str, " :" CppAsString(fldname) " "), \
 	 _outToken(str, node->fldname))
 
+/* Write a parse location field (actually same as INT case) */
+#define WRITE_LOCATION_FIELD(fldname) \
+	appendStringInfo(str, " :" CppAsString(fldname) " %d", node->fldname)
+
 /* Write a Node field */
 #define WRITE_NODE_FIELD(fldname) \
 	(appendStringInfo(str, " :" CppAsString(fldname) " "), \
@@ -1544,6 +1548,7 @@ _outArrayExpr(StringInfo str, ArrayExpr *node)
 	WRITE_OID_FIELD(element_typeid);
 	WRITE_NODE_FIELD(elements);
 	WRITE_BOOL_FIELD(multidims);
+/*	WRITE_LOCATION_FIELD(location); */
 }
 
 static void
@@ -2376,7 +2381,7 @@ _outColumnReferenceStorageDirective(StringInfo str, ColumnReferenceStorageDirect
 {
 	WRITE_NODE_TYPE("COLUMNREFERENCESTORAGEDIRECTIVE");
 	
-	WRITE_NODE_FIELD(column);
+	WRITE_STRING_FIELD(column);
 	WRITE_BOOL_FIELD(deflt);
 	WRITE_NODE_FIELD(encoding);
 }
@@ -2876,7 +2881,7 @@ static void
 _outPartitionElem(StringInfo str, PartitionElem *node)
 {
 	WRITE_NODE_TYPE("PARTITIONELEM");
-	WRITE_NODE_FIELD(partName);
+	WRITE_STRING_FIELD(partName);
 	WRITE_NODE_FIELD(boundSpec);
 	WRITE_NODE_FIELD(subSpec);
 	WRITE_BOOL_FIELD(isDefault);
@@ -3974,6 +3979,15 @@ _outA_Indirection(StringInfo str, A_Indirection *node)
 }
 
 static void
+_outA_ArrayExpr(StringInfo str, A_ArrayExpr *node)
+{
+	WRITE_NODE_TYPE("A_ARRAYEXPR");
+
+	WRITE_NODE_FIELD(elements);
+/*	WRITE_LOCATION_FIELD(location); */
+}
+
+static void
 _outResTarget(StringInfo str, ResTarget *node)
 {
 	WRITE_NODE_TYPE("RESTARGET");
@@ -4107,10 +4121,12 @@ _outCreatePLangStmt(StringInfo str, CreatePLangStmt *node)
 
 	WRITE_STRING_FIELD(plname);
 	WRITE_NODE_FIELD(plhandler);
+	WRITE_NODE_FIELD(plinline);
 	WRITE_NODE_FIELD(plvalidator);
 	WRITE_BOOL_FIELD(pltrusted);
 	WRITE_OID_FIELD(plangOid);
 	WRITE_OID_FIELD(plhandlerOid);
+	WRITE_OID_FIELD(plinlineOid);
 	WRITE_OID_FIELD(plvalidatorOid);
 }
 
@@ -5057,6 +5073,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_A_Indirection:
 				_outA_Indirection(str, obj);
+				break;
+			case T_A_ArrayExpr:
+				_outA_ArrayExpr(str, obj);
 				break;
 			case T_ResTarget:
 				_outResTarget(str, obj);

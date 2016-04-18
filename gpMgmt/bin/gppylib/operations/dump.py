@@ -314,7 +314,10 @@ def create_partition_dict(partition_list):
         fields = partition.split(',')
         if len(fields) != 3:
             raise Exception('Invalid state file format %s' % partition)
-        # retain the space in schema name: filed[0] and table name: filed[1]
+        # new version 4.3.8.0 retains and supports spaces in schema name: field[0] and table name: field[1]
+        # below to determine if previous state file was from an old version which uses comma and space separated "schema, table, modcount"
+        if fields[2].startswith(' '):
+            fields = [x.strip() for x in fields]
         key = '%s.%s' % (fields[0], fields[1])
         table_dict[key] = fields[2].strip()
 
@@ -877,6 +880,7 @@ class DumpDatabase(Operation):
         These options get passed-through gp_dump to gp_dump_agent.
         Commented out lines use escaping that would be reasonable, if gp_dump escaped properly.
         """
+        should_dump_schema = self.include_schema_file is not None
         if self.dump_schema:
             logger.info("Adding schema name %s" % self.dump_schema)
             dump_line += " -n \"\\\"%s\\\"\"" % self.dump_schema
@@ -893,11 +897,11 @@ class DumpDatabase(Operation):
             schema, table = split_fqn(dump_table)
             dump_line += " --exclude-table=\"\\\"%s\\\"\".\"\\\"%s\\\"\"" % (schema, table)
             #dump_line += " --exclude-table=\"%s\".\"%s\"" % (schema, table)
-        if self.include_dump_tables_file is not None:
+        if self.include_dump_tables_file is not None and not should_dump_schema:
             dump_line += " --table-file=%s" % self.include_dump_tables_file
         if self.exclude_dump_tables_file is not None:
             dump_line += " --exclude-table-file=%s" % self.exclude_dump_tables_file
-        if self.include_schema_file is not None and not self.dump_prefix:
+        if should_dump_schema:
             dump_line += " --schema-file=%s" % self.include_schema_file
 
         for opt in self.output_options:

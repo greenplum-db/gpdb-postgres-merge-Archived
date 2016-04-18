@@ -2,9 +2,9 @@
 #define __S3_COMMON_H__
 
 #include <curl/curl.h>
-#include "http_parser.h"
 #include <map>
 #include <string>
+#include "http_parser.h"
 using std::string;
 
 #include <libxml/parser.h>
@@ -27,6 +27,8 @@ enum HeaderField {
     EXPECT,
     AUTHORIZATION,
     ETAG,
+    X_AMZ_DATE,
+    X_AMZ_CONTENT_SHA256,
 };
 
 enum Method { GET, PUT, POST, DELETE, HEAD };
@@ -36,7 +38,7 @@ class HeaderContent {
     HeaderContent(){};
     ~HeaderContent(){};
     bool Add(HeaderField f, const string& value);
-    // const char* Get(HeaderField f);
+    const char* Get(HeaderField f);
     struct curl_slist* GetList();
 
    private:
@@ -45,13 +47,16 @@ class HeaderContent {
 
 bool SignGETv2(HeaderContent* h, string path_with_query,
                const S3Credential& cred);
-/*
-bool SignPUTv2(HeaderContent* h, const char* path_with_query,
+
+bool SignPUTv2(HeaderContent* h, string path_with_query,
                const S3Credential& cred);
 
-bool SignPOSTv2(HeaderContent* h, const char* path_with_query,
+bool SignPOSTv2(HeaderContent* h, string path_with_query,
                 const S3Credential& cred);
-*/
+
+bool SignRequestV4(string method, HeaderContent* h, string region, string path,
+                   string query, const S3Credential& cred);
+
 class UrlParser {
    public:
     UrlParser(const char* url);

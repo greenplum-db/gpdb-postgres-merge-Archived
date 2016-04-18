@@ -401,3 +401,12 @@ $$ LANGUAGE plperl;
 
 SELECT self_modify(42);
 SELECT self_modify(42);
+
+-- simple test of a DO block
+DO $$
+  $a = 'This is a test';
+  elog(NOTICE, $a);
+$$ LANGUAGE plperl;
+
+-- check that restricted operations are rejected in a plperl DO block
+DO $$ use Config; $$ LANGUAGE plperl;

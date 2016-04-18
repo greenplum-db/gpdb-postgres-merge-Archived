@@ -8,10 +8,10 @@
 
 #include <time.h>
 #include <string.h>
-#include <openssl/sha.h>
 #include <stdio.h>
-#include <openssl/des.h>
 #include <stdbool.h>
+#include <openssl/sha.h>
+#include <openssl/des.h>
 #include <openssl/hmac.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
@@ -43,7 +43,7 @@ bool gethttpnow(char datebuf[65]) {  //('D, d M Y H:i:s T')
     }
     time(&t);
     localtime_r(&t, &tm_info);
-    strftime(datebuf, 64, "%a, %d %b %Y %H:%M:%S %z", &tm_info);
+    strftime(datebuf, 65, "%a, %d %b %Y %H:%M:%S %z", &tm_info);
     return true;
 }
 
@@ -102,88 +102,109 @@ char *Base64Encode(const char *buffer,
     BIO_get_mem_ptr(bio, &bufferPtr);
 
     ret = (char *)malloc(bufferPtr->length + 1);
-    memcpy(ret, bufferPtr->data, bufferPtr->length);
-    ret[bufferPtr->length] = 0;
+    if (ret) {
+        memcpy(ret, bufferPtr->data, bufferPtr->length);
+        ret[bufferPtr->length] = 0;
+    }
 
     BIO_set_close(bio, BIO_NOCLOSE);
     BIO_free_all(bio);
     return ret;  // s
 }
 
-bool sha256(const char *string, char outputBuffer[65]) {
+// not returning the normal hex result, might have '\0'
+bool sha1hmac(const char *str, unsigned char out_hash[20], const char *secret,
+              int secret_len) {
+    if (!str) return false;
+
+    unsigned int len = 32;
+
+    HMAC_CTX hmac;
+    HMAC_CTX_init(&hmac);
+    HMAC_Init_ex(&hmac, secret, secret_len, EVP_sha1(), NULL);
+    HMAC_Update(&hmac, (unsigned char *)str, strlen(str));
+    HMAC_Final(&hmac, out_hash, &len);
+
+    HMAC_CTX_cleanup(&hmac);
+
+    return true;
+}
+
+bool sha1hmac_hex(const char *str, char out_hash_hex[41], const char *secret,
+                  int secret_len) {
+    if (!str) return false;
+
+    unsigned char hash[20];
+
+    sha1hmac(str, hash, secret, secret_len);
+
+    for (int i = 0; i < 20; i++) {
+        sprintf(out_hash_hex + (i * 2), "%02x", hash[i]);
+    }
+    out_hash_hex[40] = 0;
+
+    return true;
+}
+
+// SHA256_DIGEST_LENGTH == 32
+bool sha256(const char *string, unsigned char out_hash[32]) {
     if (!string) return false;
 
-    unsigned char hash[SHA256_DIGEST_LENGTH];  // 32
     SHA256_CTX sha256;
     SHA256_Init(&sha256);
     SHA256_Update(&sha256, string, strlen(string));
-    SHA256_Final(hash, &sha256);
+    SHA256_Final(out_hash, &sha256);
+
+    return true;
+}
+
+// SHA256_DIGEST_LENGTH * 2 + 1 == 65
+bool sha256_hex(const char *string, char out_hash_hex[65]) {
+    if (!string) return false;
+
+    unsigned char hash[SHA256_DIGEST_LENGTH];  // 32
+
+    sha256(string, hash);
 
     for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
-        sprintf(outputBuffer + (i * 2), "%02x", hash[i]);
+        sprintf(out_hash_hex + (i * 2), "%02x", hash[i]);
     }
-    outputBuffer[64] = 0;
+    out_hash_hex[64] = 0;
 
     return true;
 }
 
-// not returning the normal hex result, might have '\0'
-bool sha1hmac(const char *str, char hash[20], const char *secret) {
+bool sha256hmac(const char *str, unsigned char out_hash[32], const char *secret,
+                int secret_len) {
     if (!str) return false;
 
-    unsigned int len = SHA_DIGEST_LENGTH;  // 20
-    HMAC_CTX hmac;
-    HMAC_CTX_init(&hmac);
-    HMAC_Init_ex(&hmac, secret, strlen(secret), EVP_sha1(), NULL);
-    HMAC_Update(&hmac, (unsigned char *)str, strlen(str));
-    HMAC_Final(&hmac, (unsigned char *)hash, &len);
-
-    HMAC_CTX_cleanup(&hmac);
-
-    return true;
-}
-
-bool sha256hmac(const char *str, char out[65], const char *secret) {
-    if (!str) return false;
-
-    unsigned char hash[32];  // must be unsigned here
     unsigned int len = 32;
+
     HMAC_CTX hmac;
     HMAC_CTX_init(&hmac);
-    HMAC_Init_ex(&hmac, secret, strlen(secret), EVP_sha256(), NULL);
+    HMAC_Init_ex(&hmac, secret, secret_len, EVP_sha256(), NULL);
     HMAC_Update(&hmac, (unsigned char *)str, strlen(str));
+    HMAC_Final(&hmac, out_hash, &len);
 
-    HMAC_Final(&hmac, hash, &len);
-    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
-        sprintf(out + (i * 2), "%02x", hash[i]);
-    }
     HMAC_CTX_cleanup(&hmac);
-    out[64] = 0;
 
     return true;
 }
 
-// return malloced memory because Base64Encode() does so
-char *SignatureV2(const char *date, const char *path, const char *key) {
-    int maxlen, len;
-    char *tmpbuf;
-    char outbuf[20];  // SHA_DIGEST_LENGTH is 20
+bool sha256hmac_hex(const char *str, char out_hash_hex[65], const char *secret,
+                    int secret_len) {
+    if (!str) return false;
 
-    if (!date || !path || !key) {
-        return NULL;
-    }
-    maxlen = strlen(date) + strlen(path) + 20;
-    tmpbuf = (char *)alloca(maxlen);
-    sprintf(tmpbuf, "GET\n\n\n%s\n%s", date, path);
-    // printf("%s\n",tmpbuf);
-    if (!sha1hmac(tmpbuf, outbuf, key)) {
-        return NULL;
-    }
-    return Base64Encode(outbuf, 20);
-}
+    unsigned char hash[SHA256_DIGEST_LENGTH];  // 32
 
-char *SignatureV4(const char *date, const char *path, const char *key) {
-    return NULL;
+    sha256hmac(str, hash, secret, secret_len);
+
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+        sprintf(out_hash_hex + (i * 2), "%02x", hash[i]);
+    }
+    out_hash_hex[64] = 0;
+
+    return true;
 }
 
 CURL *CreateCurlHandler(const char *path) {
@@ -263,9 +284,13 @@ DataBuffer::~DataBuffer() {
 
 uint64_t DataBuffer::append(const char *buf, uint64_t len) {
     uint64_t copylen = std::min(len, maxsize - length);
-    memcpy(this->data + length, buf, copylen);
-    this->length += copylen;
-    return copylen;
+    if (this->data) {
+        memcpy(this->data + length, buf, copylen);
+        this->length += copylen;
+        return copylen;
+    } else {
+        return 0;
+    }
 }
 
 Config::Config(string filename) : _conf(NULL) {
@@ -308,5 +333,139 @@ bool to_bool(std::string str) {
         return true;
     } else {
         return false;
+    }
+}
+
+const char uri_mapping[256] = {
+    /*       0   1   2   3   4   5   6   7
+     *       8   9   A   B   C   D   E   F */
+    /* 0 */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /*   */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /* 1 */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /*   */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /* 2 */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /*   */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /* 3 */ 0,  1,  2,  3,  4,  5,  6,  7,
+    /*   */ 8,  9,  -1, -1, -1, -1, -1, -1,
+
+    /* 4 */ -1, 10, 11, 12, 13, 14, 15, -1,
+    /*   */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /* 5 */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /*   */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /* 6 */ -1, 10, 11, 12, 13, 14, 15, -1,
+    /*   */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /* 7 */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /*   */ -1, -1, -1, -1, -1, -1, -1, -1,
+
+    /* 8 */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /*   */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /* 9 */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /*   */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /* A */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /*   */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /* B */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /*   */ -1, -1, -1, -1, -1, -1, -1, -1,
+
+    /* C */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /*   */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /* D */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /*   */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /* E */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /*   */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /* F */ -1, -1, -1, -1, -1, -1, -1, -1,
+    /*   */ -1, -1, -1, -1, -1, -1, -1, -1};
+
+// alpha, num and - _ . ~ are reserved(RFC 3986).
+const char uri_reserved[256] = {
+    /*      0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
+    /* 0 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    /* 1 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    /* 2 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0,
+    /* 3 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
+
+    /* 4 */ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    /* 5 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1,
+    /* 6 */ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    /* 7 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0,
+
+    /* 8 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    /* 9 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    /* A */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    /* B */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+    /* C */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    /* D */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    /* E */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    /* F */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+std::string uri_encode(const std::string &src) {
+    const unsigned char *src_str = (const unsigned char *)src.c_str();
+    const int src_len = src.length();
+
+    unsigned char *const sub_start = new unsigned char[src_len * 3];
+    unsigned char *sub_end = sub_start;
+    const unsigned char *const src_end = src_str + src_len;
+
+    const char uri_rmapping[16 + 1] = "0123456789ABCDEF";
+
+    while (src_str < src_end) {
+        if (uri_reserved[*src_str]) {
+            *sub_end++ = *src_str;
+        } else {
+            *sub_end++ = '%';
+            *sub_end++ = uri_rmapping[*src_str >> 4];
+            *sub_end++ = uri_rmapping[*src_str & 0x0F];
+        }
+
+        src_str++;
+    }
+
+    std::string ret_str((char *)sub_start, (char *)sub_end);
+    delete[] sub_start;
+    return ret_str;
+}
+
+std::string uri_decode(const std::string &src) {
+    const unsigned char *src_str = (const unsigned char *)src.c_str();
+    const int src_len = src.length();
+
+    const unsigned char *const src_end = src_str + src_len;
+    const unsigned char *const src_last_dec = src_end - 2;
+
+    char *const sub_start = new char[src_len];
+    char *sub_end = sub_start;
+
+    char dec1, dec2;
+
+    while (src_str < src_last_dec) {
+        if (*src_str == '%') {
+            dec1 = uri_mapping[*(src_str + 1)];
+            dec2 = uri_mapping[*(src_str + 2)];
+
+            if ((dec1 != -1) && (dec2 != -1)) {
+                *sub_end++ = (dec1 << 4) + dec2;
+                src_str += 3;
+                continue;
+            }
+        }
+
+        *sub_end++ = *src_str++;
+    }
+
+    while (src_str < src_end) *sub_end++ = *src_str++;
+
+    std::string ret_str(sub_start, sub_end);
+    delete[] sub_start;
+    return ret_str;
+}
+
+void find_replace(string &str, const string &find, const string &replace) {
+    if (find.empty()) return;
+
+    size_t pos = 0;
+
+    while ((pos = str.find(find, pos)) != string::npos) {
+        str.replace(pos, find.length(), replace);
+        pos += replace.length();
     }
 }

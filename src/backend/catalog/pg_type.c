@@ -294,7 +294,7 @@ TypeCreateWithOptions(Oid newTypeOid,
 	values[i++] = CharGetDatum(typDelim);		/* typdelim */
 	values[i++] = ObjectIdGetDatum(relationOid);		/* typrelid */
 	values[i++] = ObjectIdGetDatum(elementType);		/* typelem */
-	values[i++] = ObjectIdGetDatum(arrayType);	/* typarray */
+	values[i++] = ObjectIdGetDatum(arrayType);			/* typarray */
 	values[i++] = ObjectIdGetDatum(inputProcedure);		/* typinput */
 	values[i++] = ObjectIdGetDatum(outputProcedure);	/* typoutput */
 	values[i++] = ObjectIdGetDatum(receiveProcedure);	/* typreceive */

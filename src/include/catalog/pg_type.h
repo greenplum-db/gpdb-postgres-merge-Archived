@@ -59,6 +59,7 @@
    typdelim       "char"   ,
    typrelid       oid      ,
    typelem        oid      ,
+   typarray       oid      ,
    typinput       regproc  ,
    typoutput      regproc  ,
    typreceive     regproc  ,
@@ -853,11 +854,10 @@ extern void GenerateTypeDependencies(Oid typeNamespace,
 extern void TypeRename(Oid typeOid, const char *newTypeName,
 		   Oid typeNamespace);
 
-extern char *makeArrayTypeName(const char *typeName, Oid typeNamespace);
-
 extern bool moveArrayTypeName(Oid typeOid, const char *typeName,
 				  Oid typeNamespace);
 
+extern char *makeArrayTypeName(const char *typeName, Oid typeNamespace);
 extern void add_type_encoding(Oid typid, Datum typoptions);
 
 #endif /* !FRONTEND */

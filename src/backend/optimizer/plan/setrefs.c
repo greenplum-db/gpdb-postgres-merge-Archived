@@ -16,17 +16,15 @@
  */
 #include "postgres.h"
 
-#include "access/transam.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
-#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
-#include "parser/parsetree.h"
+#include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
-#include "parser/parse_expr.h" /* exprType, exprTypmod */
+#include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "cdb/cdbhash.h"
@@ -43,7 +41,7 @@ typedef struct
 {
 	List	   *tlist;			/* underlying target list */
 	int			num_vars;		/* number of plain Var tlist entries */
-	bool		has_non_vars;	/* are there other entries? */
+	bool		has_non_vars;	/* are there non-plain-Var entries? */
 	/* array of num_vars entries: */
 	tlist_vinfo vars[1];		/* VARIABLE LENGTH ARRAY */
 } indexed_tlist;				/* VARIABLE LENGTH STRUCT */
@@ -59,7 +57,7 @@ typedef struct
 	PlannerGlobal *glob;
 	indexed_tlist *outer_itlist;
 	indexed_tlist *inner_itlist;
-	Index		skip_rel;
+	Index		acceptable_rel;
 	int			rtoffset;
 	bool        use_outer_tlist_for_matching_nonvars;
 	bool        use_inner_tlist_for_matching_nonvars;
@@ -100,7 +98,7 @@ static void set_inner_join_references(PlannerGlobal *glob, Plan *inner_plan,
 									  indexed_tlist *outer_itlist);
 static void set_upper_references(PlannerGlobal *glob, Plan *plan, int rtoffset,
 					 bool use_scan_slot);
-static void set_dummy_tlist_references(Plan *plan, int rtoffset, bool use_child_targets);
+static void set_dummy_tlist_references(Plan *plan, int rtoffset);
 static indexed_tlist *build_tlist_index(List *tlist);
 static Var *search_indexed_tlist_for_var(Var *var,
 							 indexed_tlist *itlist,
@@ -113,19 +111,19 @@ static List *fix_join_expr(PlannerGlobal *glob,
 			  List *clauses,
 			  indexed_tlist *outer_itlist,
 			  indexed_tlist *inner_itlist,
-			  Index skip_rel, int rtoffset);
+			  Index acceptable_rel, int rtoffset);
 static Node *fix_join_expr_mutator(Node *node,
 					  fix_join_expr_context *context);
 static List *fix_hashclauses(PlannerGlobal *glob,
 				List *clauses,
 				indexed_tlist *outer_itlist,
 				indexed_tlist *inner_itlist,
-				Index skip_rel, int rtoffset);
+				Index acceptable_rel, int rtoffset);
 static List *fix_child_hashclauses(PlannerGlobal *glob,
 					  List *clauses,
 					  indexed_tlist *outer_itlist,
 					  indexed_tlist *inner_itlist,
-					  Index skip_rel, int rtoffset,
+					  Index acceptable_rel, int rtoffset,
 					  Index child);
 static Node *fix_upper_expr(PlannerGlobal *glob,
 			   Node *node,
@@ -715,7 +713,7 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 			{
 				Sort	   *splan = (Sort *) plan;
 
-				set_dummy_tlist_references(plan, rtoffset, false);
+				set_dummy_tlist_references(plan, rtoffset);
 				Assert(splan->plan.qual == NIL);
 
 				splan->limitOffset =
@@ -736,7 +734,7 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 			 * executor, we fix it up for possible use by EXPLAIN (not to
 			 * mention ease of debugging --- wrong varnos are very confusing).
 			 */
-			set_dummy_tlist_references(plan, rtoffset, false);
+			set_dummy_tlist_references(plan, rtoffset);
 
 			/*
 			 * Since these plan types don't check quals either, we should not
@@ -758,6 +756,7 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 					childPlan = list_nth(glob->share.sharedNodes, sisc->share_id);
 				}
 
+#ifdef DEBUG
 				Assert(childPlan && IsA(childPlan,Material) || IsA(childPlan, Sort));
 				if (IsA(childPlan, Material))
 				{
@@ -771,8 +770,8 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 					Assert(shared->share_type != SHARE_NOTSHARED
 						   && shared->share_id == sisc->share_id);
 				}
-
-				set_dummy_tlist_references(plan, rtoffset, false);
+#endif
+				set_dummy_tlist_references(plan, rtoffset);
 			}
 			break;
 		case T_Limit:
@@ -785,7 +784,7 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 				 * however; and those cannot contain subplan variable refs, so
 				 * fix_scan_expr works for them.
 				 */
-				set_dummy_tlist_references(plan, rtoffset, false);
+				set_dummy_tlist_references(plan, rtoffset);
 				Assert(splan->plan.qual == NIL);
 
 				splan->limitOffset =
@@ -800,7 +799,7 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 		case T_Window:
 			set_upper_references(glob, plan, rtoffset, false);
 			if ( plan->targetlist == NIL )
-				set_dummy_tlist_references(plan, rtoffset, true);
+				set_dummy_tlist_references(plan, rtoffset);
 			{
 				indexed_tlist  *subplan_itlist =
 					build_tlist_index(plan->lefttree->targetlist);
@@ -868,7 +867,7 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 				 * Append, like Sort et al, doesn't actually evaluate its
 				 * targetlist or check quals.
 				 */
-				set_dummy_tlist_references(plan, rtoffset, false);
+				set_dummy_tlist_references(plan, rtoffset);
 				Assert(splan->plan.qual == NIL);
 				foreach(l, splan->appendplans)
 				{
@@ -940,7 +939,7 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 
 				/* no need to fix targetlist and qual */
 				Assert(plan->qual == NIL);
-				set_dummy_tlist_references(plan, rtoffset, true);
+				set_dummy_tlist_references(plan, rtoffset);
 				pfree(childplan_itlist);
 			}
 			break;
@@ -1654,33 +1653,15 @@ set_upper_references(PlannerGlobal *glob, Plan *plan, int rtoffset,
  * Note: we could almost use set_upper_references() here, but it fails for
  * Append for lack of a lefttree subplan.  Single-purpose code is faster
  * anyway.
- *
- * Note that old function cdb_build_identity_tlist looked into the child
- * plan target list for type information, etc.  The PG approach, instead,
- * uses the plan's own target list, which is cleaner.  The flag argument,
- * use_child_targets, gives the old GPDB behavior.
  */
 static void
-set_dummy_tlist_references(Plan *plan, int rtoffset, bool use_child_targets)
+set_dummy_tlist_references(Plan *plan, int rtoffset)
 {
 	List	   *output_targetlist;
-	List	   *input_targetlist;
 	ListCell   *l;
 
 	output_targetlist = NIL;
-	if (use_child_targets)
-	{
-		/* Note targetlist be NIL as in case of a function of no arguments */
-		Assert(plan->lefttree);
-		input_targetlist = plan->lefttree->targetlist;
-	}
-	else
-	{
-		//Assert(plan && plan->targetlist);t
-		input_targetlist = plan->targetlist;
-	}
-
-	foreach(l, input_targetlist)
+	foreach(l, plan->targetlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 		Var		   *oldvar = (Var *) tle->expr;
@@ -1910,18 +1891,18 @@ search_indexed_tlist_for_non_var(Node *node,
  * (those will later be adjusted in fix_scan_list).
  * (We also implement RETURNING clause fixup using this second scenario.)
  *
- * For a normal join, skip_rel should be zero so that any failure to
+ * For a normal join, acceptable_rel should be zero so that any failure to
  * match a Var will be reported as an error.  For the indexscan case,
- * pass inner_itlist = NULL and skip_rel = the (not-offseted-yet) ID
+ * pass inner_itlist = NULL and acceptable_rel = the (not-offseted-yet) ID
  * of the inner relation.
  *
  * 'clauses' is the targetlist or list of join clauses
  * 'outer_itlist' is the indexed target list of the outer join relation
  * 'inner_itlist' is the indexed target list of the inner join relation,
  *		or NULL
- * 'skip_rel' is either zero or the rangetable index of a relation
+ * 'acceptable_rel' is either zero or the rangetable index of a relation
  *		whose Vars may appear in the clause without provoking an error.
- * 'rtoffset' is what to add to varno for Vars of relations other than skip_rel.
+ * 'rtoffset' is what to add to varno for Vars of relations other than acceptable_rel.
  *
  * Returns the new expression tree.  The original clause structure is
  * not modified.
@@ -1931,7 +1912,7 @@ fix_join_expr(PlannerGlobal *glob,
 			  List *clauses,
 			  indexed_tlist *outer_itlist,
 			  indexed_tlist *inner_itlist,
-			  Index skip_rel,
+			  Index acceptable_rel,
 			  int rtoffset)
 {
 	fix_join_expr_context context;
@@ -1939,7 +1920,7 @@ fix_join_expr(PlannerGlobal *glob,
 	context.glob = glob;
 	context.outer_itlist = outer_itlist;
 	context.inner_itlist = inner_itlist;
-	context.skip_rel = skip_rel;
+	context.acceptable_rel = acceptable_rel;
 	context.rtoffset = rtoffset;
 	context.use_outer_tlist_for_matching_nonvars = true;
 	context.use_inner_tlist_for_matching_nonvars = true;
@@ -1958,7 +1939,7 @@ static List *fix_hashclauses(PlannerGlobal *glob,
                            List *clauses,
                            indexed_tlist *outer_itlist,
                            indexed_tlist *inner_itlist,
-                           Index skip_rel, int rtoffset)
+                           Index acceptable_rel, int rtoffset)
 {
     Assert(clauses);
     ListCell *lc = NULL;
@@ -2027,7 +2008,7 @@ fix_child_hashclauses(PlannerGlobal *glob,
               List *clauses,
               indexed_tlist *outer_itlist,
               indexed_tlist *inner_itlist,
-              Index skip_rel,
+              Index acceptable_rel,
               int rtoffset,
               Index child)
 {
@@ -2035,7 +2016,7 @@ fix_child_hashclauses(PlannerGlobal *glob,
     context.glob = glob;
     context.outer_itlist = outer_itlist;
     context.inner_itlist = inner_itlist;
-    context.skip_rel = skip_rel;
+    context.acceptable_rel = acceptable_rel;
     context.rtoffset = rtoffset;
     if (INNER == child)
     {
@@ -2081,8 +2062,8 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 				return (Node *) newvar;
 		}
 
-		/* If it's for an skip_rel (the inner relation in an index nested loop join), return it */
-		if (var->varno == context->skip_rel)
+		/* If it's for an acceptable_rel (the inner relation in an index nested loop join), return it */
+		if (var->varno == context->acceptable_rel)
 		{
 			var = copyVar(var);
 			var->varno += context->rtoffset;

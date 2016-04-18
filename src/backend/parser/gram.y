@@ -114,6 +114,7 @@ static Node *makeIntConst(int val, int location);
 static Node *makeFloatConst(char *str, int location);
 static Node *makeNullAConst(int location);
 static Node *makeAConst(Value *v, int location);
+static Node *makeAArrayExpr(List *elements, int location);
 static A_Const *makeBoolAConst(bool state, int location);
 static FuncCall *makeOverlaps(List *largs, List *rargs, int location);
 static void check_qualified_name(List *names);
@@ -189,7 +190,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 		CreateTableSpaceStmt
 		CreateAssertStmt CreateTrigStmt 
 		CreateUserStmt CreateRoleStmt
-		CreatedbStmt DeclareCursorStmt DefineStmt DeleteStmt DiscardStmt
+		CreatedbStmt DeclareCursorStmt DefineStmt DeleteStmt DiscardStmt DoStmt
 		DropGroupStmt DropOpClassStmt DropOpFamilyStmt DropPLangStmt DropQueueStmt DropStmt
 		DropAssertStmt DropTrigStmt DropRuleStmt DropCastStmt DropRoleStmt
 		DropUserStmt DropdbStmt
@@ -252,7 +253,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <list>	OptSchemaEltList
 
 %type <boolean> TriggerActionTime TriggerForSpec opt_trusted
-%type <str>		opt_lancompiler
 
 %type <str>		TriggerEvents
 %type <value>	TriggerFuncArg
@@ -262,7 +262,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 				index_name name file_name cluster_index_specification
 
 %type <list>	func_name handler_name qual_Op qual_all_Op subquery_Op
-				opt_class opt_validator validator_clause
+				opt_class opt_inline_handler opt_validator validator_clause
 
 %type <range>	qualified_name OptConstrFromTable
 
@@ -303,14 +303,14 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 				prep_type_clause
 				execute_param_clause using_clause returning_clause
 				enum_val_list
-				table_func_column_list scatter_clause
+				table_func_column_list scatter_clause dostmt_opt_list
 
 %type <node>    table_value_select_clause
 
 %type <range>	OptTempTableName
 %type <into>	into_clause create_as_target
 
-%type <defelt>	createfunc_opt_item common_func_opt_item
+%type <defelt>	createfunc_opt_item common_func_opt_item dostmt_opt_item
 %type <fun_param> func_arg func_arg_with_default table_func_column
 %type <fun_param_mode> arg_class
 %type <typnam>	func_return func_type
@@ -448,9 +448,9 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <node> 	TabPartitionBoundarySpecStart TabPartitionBoundarySpecEnd
 				OptTabPartitionBoundarySpecEnd        /* PartitionRangeItem */
 %type <node> 	OptTabPartitionBoundarySpecEvery      /* PartitionRangeItem */
-%type <node> 	TabPartitionNameDecl TabSubPartitionNameDecl      /* string */
+%type <str> 	TabPartitionNameDecl TabSubPartitionNameDecl
 				TabPartitionDefaultNameDecl TabSubPartitionDefaultNameDecl 
-				opt_table_partition_merge_into 
+%type <node>	opt_table_partition_merge_into
 				table_partition_modify
 				opt_table_partition_split_into
 %type <boolean>	opt_comma
@@ -515,7 +515,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 	IDENTITY_P IF_P  IGNORE_P ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCLUDING
 	INCLUSIVE
 	INCREMENT
-	INDEX INDEXES INHERIT INHERITS INITIALLY INNER_P INOUT INPUT_P
+	INDEX INDEXES INHERIT INHERITS INITIALLY INLINE_P INNER_P INOUT INPUT_P
 	INSENSITIVE INSERT INSTEAD INT_P INTEGER INTERSECT
 	INTERVAL INTO INVOKER IS ISNULL ISOLATION
 
@@ -523,7 +523,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 	KEY
 
-	LANCOMPILER LANGUAGE LARGE_P LAST_P LEADING LEAST LEFT LEVEL
+	LANGUAGE LARGE_P LAST_P LEADING LEAST LEFT LEVEL
 	LIKE LIMIT LIST LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
 	LOCK_P LOG_P LOGIN_P
 
@@ -731,7 +731,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 			%nonassoc INVOKER
 			%nonassoc ISOLATION
 			%nonassoc KEY
-			%nonassoc LANCOMPILER
 			%nonassoc LANGUAGE
 			%nonassoc LARGE_P
 			%nonassoc LAST_P
@@ -1037,6 +1036,7 @@ stmt :
 			| DefineStmt
 			| DeleteStmt
 			| DiscardStmt
+			| DoStmt
 			| DropAssertStmt
 			| DropCastStmt
 			| DropGroupStmt
@@ -3440,12 +3440,12 @@ TableElement:
 		;
 
 column_reference_storage_directive:
-			COLUMN columnElem ENCODING definition
+			COLUMN ColId ENCODING definition
 				{
 					ColumnReferenceStorageDirective *n =
 						makeNode(ColumnReferenceStorageDirective);
 
-					n->column = (Value *)$2;
+					n->column = $2;
 					n->encoding = $4;
 					$$ = (Node *)n;
 				}
@@ -4294,24 +4294,24 @@ TabSubPartitionElem:
 
 TabPartitionNameDecl: PARTITION PartitionColId
 				{
-					$$ = (Node *) makeString($2);
+					$$ = $2;
 				}
 		;
 TabPartitionDefaultNameDecl: DEFAULT PARTITION PartitionColId
 				{
-					$$ = (Node *) makeString($3);
+					$$ = $3;
 				}
 		;
 
 TabSubPartitionNameDecl: SUBPARTITION PartitionColId
 				{
-					$$ = (Node *) makeString($2);
+					$$ = $2;
 				}
 		;
 
 TabSubPartitionDefaultNameDecl: DEFAULT SUBPARTITION PartitionColId
 				{
-					$$ = (Node *) makeString($3);
+					$$ = $3;
 				}
 		;
 
@@ -4986,19 +4986,20 @@ CreatePLangStmt:
 				n->plname = $5;
 				/* parameters are all to be supplied by system */
 				n->plhandler = NIL;
+				n->plinline = NIL;
 				n->plvalidator = NIL;
 				n->pltrusted = false;
 				$$ = (Node *)n;
 			}
 			| CREATE opt_trusted opt_procedural LANGUAGE ColId_or_Sconst
-			  HANDLER handler_name opt_validator opt_lancompiler
+			  HANDLER handler_name opt_inline_handler opt_validator
 			{
 				CreatePLangStmt *n = makeNode(CreatePLangStmt);
 				n->plname = $5;
 				n->plhandler = $7;
-				n->plvalidator = $8;
+				n->plinline = $8;
+				n->plvalidator = $9;
 				n->pltrusted = $2;
-				/* LANCOMPILER is now ignored entirely */
 				$$ = (Node *)n;
 			}
 		;
@@ -5017,6 +5018,11 @@ handler_name:
 			| name attrs				{ $$ = lcons(makeString($1), $2); }
 		;
 
+opt_inline_handler:
+			INLINE_P handler_name					{ $$ = $2; }
+			| /*EMPTY*/								{ $$ = NIL; }
+		;
+
 validator_clause:
 			VALIDATOR handler_name					{ $$ = $2; }
 			| NO VALIDATOR							{ $$ = NIL; }
@@ -5025,11 +5031,6 @@ validator_clause:
 opt_validator:
 			validator_clause						{ $$ = $1; }
 			| /*EMPTY*/								{ $$ = NIL; }
-		;
-
-opt_lancompiler:
-			LANCOMPILER Sconst						{ $$ = $2; }
-			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
 DropPLangStmt:
@@ -7086,6 +7087,40 @@ any_operator:
 					{ $$ = list_make1(makeString($1)); }
 			| ColId '.' any_operator
 					{ $$ = lcons(makeString($1), $3); }
+		;
+
+
+/*****************************************************************************
+ *
+ *		DO <anonymous code block> [ LANGUAGE language ]
+ *
+ * We use a DefElem list for future extensibility, and to allow flexibility
+ * in the clause order.
+ *
+ *****************************************************************************/
+
+DoStmt: DO dostmt_opt_list
+				{
+					DoStmt *n = makeNode(DoStmt);
+					n->args = $2;
+					$$ = (Node *)n;
+				}
+		;
+
+dostmt_opt_list:
+			dostmt_opt_item						{ $$ = list_make1($1); }
+			| dostmt_opt_list dostmt_opt_item	{ $$ = lappend($1, $2); }
+		;
+
+dostmt_opt_item:
+			Sconst
+				{
+					$$ = makeDefElem("as", (Node *)makeString($1));
+				}
+			| LANGUAGE ColId_or_Sconst 
+				{
+					$$ = makeDefElem("language", (Node *)makeString($2));
+				}
 		;
 
 
@@ -11852,39 +11887,39 @@ expr_list:	a_expr
 				}
 		;
 
+type_list:	Typename								{ $$ = list_make1($1); }
+			| type_list ',' Typename				{ $$ = lappend($1, $3); }
+		;
+
+array_expr: '[' expr_list ']'
+				{
+					$$ = makeAArrayExpr($2, @1);
+				}
+			| '[' array_expr_list ']'
+				{
+					$$ = makeAArrayExpr($2, @1);
+				}
+			| '[' ']'
+				{
+					$$ = makeAArrayExpr(NIL, @1);
+				}
+		;
+
+array_expr_list: array_expr							{ $$ = list_make1($1); }
+			| array_expr_list ',' array_expr		{ $$ = lappend($1, $3); }
+		;
+
 extract_list:
 			extract_arg FROM a_expr
 				{
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
 					n->val.val.str = $1;
+					n->location = @1;
+
 					$$ = list_make2((Node *) n, $3);
 				}
 			| /*EMPTY*/								{ $$ = NIL; }
-		;
-
-type_list:	Typename								{ $$ = list_make1($1); }
-			| type_list ',' Typename				{ $$ = lappend($1, $3); }
-		;
-
-array_expr_list: array_expr
-				{	$$ = list_make1($1);		}
-			| array_expr_list ',' array_expr
-				{	$$ = lappend($1, $3);	}
-		;
-
-array_expr: '[' expr_list ']'
-				{
-					ArrayExpr *n = makeNode(ArrayExpr);
-					n->elements = $2;
-					$$ = (Node *)n;
-				}
-			| '[' array_expr_list ']'
-				{
-					ArrayExpr *n = makeNode(ArrayExpr);
-					n->elements = $2;
-					$$ = (Node *)n;
-				}
 		;
 
 /* Allow delimited string SCONST in extract_arg as an SQL extension.
@@ -12639,6 +12674,7 @@ unreserved_keyword:
 			| INDEXES
 			| INHERIT
 			| INHERITS
+			| INLINE_P
 			| INPUT_P
 			| INSENSITIVE
 			| INSERT
@@ -12646,7 +12682,6 @@ unreserved_keyword:
 			| INVOKER
 			| ISOLATION
 			| KEY
-			| LANCOMPILER
 			| LANGUAGE
 			| LARGE_P
 			| LAST_P
@@ -12943,7 +12978,6 @@ PartitionIdentKeyword: ABORT_P
 			| INVOKER
 			| ISOLATION
 			| KEY
-			| LANCOMPILER
 			| LANGUAGE
 			| LARGE_P
 			| LAST_P
@@ -13398,13 +13432,6 @@ makeColumnRef(char *colname, List *indirection, int location)
 static Node *
 makeTypeCast(Node *arg, TypeName *typename, int location)
 {
-	/*
-	 * Simply generate a TypeCast node.
-	 *
-	 * Earlier we would determine whether an A_Const would
-	 * be acceptable, however Domains require coerce_type()
-	 * to process them -- applying constraints as required.
-	 */
 	TypeCast *n = makeNode(TypeCast);
 	n->arg = arg;
 	n->typname = typename;
@@ -13493,7 +13520,7 @@ makeBoolAConst(bool state, int location)
 {
 	A_Const *n = makeNode(A_Const);
 	n->val.type = T_String;
-	n->val.val.str = (state? "t": "f");
+	n->val.val.str = (state ? "t" : "f");
 	n->typname = SystemTypeName("bool");
 	n->location = location;
 	return n;
@@ -13698,13 +13725,21 @@ SystemTypeName(char *name)
 											   makeString(name)));
 }
 
-/* parser_init()
- * Initialize to parse one query string
+/* exprIsNullConstant()
+ * Test whether an a_expr is a plain NULL constant or not.
  */
-void
-parser_init(void)
+bool
+exprIsNullConstant(Node *arg)
 {
-	QueryIsRule = FALSE;
+	if (arg && IsA(arg, A_Const))
+	{
+		A_Const *con = (A_Const *) arg;
+
+		if (con->val.type == T_Null &&
+			con->typname == NULL)
+			return TRUE;
+	}
+	return FALSE;
 }
 
 /* doNegate()
@@ -13765,6 +13800,16 @@ doNegateFloat(Value *v)
 	}
 }
 
+static Node*
+makeAArrayExpr(List *elements, int location)
+{
+	A_ArrayExpr *n = makeNode(A_ArrayExpr);
+
+	n->elements = elements;
+	n->location = location;
+	return (Node *) n;
+}
+
 static Node *
 makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args,
 			int location)
@@ -13785,6 +13830,15 @@ makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args,
 	x->type = InvalidOid;			/* marks the node as not analyzed */
 	x->location = location;
 	return (Node *) x;
+}
+
+/* parser_init()
+ * Initialize to parse one query string
+ */
+void
+parser_init(void)
+{
+	QueryIsRule = FALSE;
 }
 
 /*

@@ -4394,6 +4394,15 @@ get_rule_expr(Node *node, deparse_context *context,
 				appendStringInfo(buf, "ARRAY[");
 				get_rule_expr((Node *) arrayexpr->elements, context, true);
 				appendStringInfoChar(buf, ']');
+
+				/*
+				 * If the array isn't empty, we assume its elements are
+				 * coerced to the desired type.  If it's empty, though, we
+				 * need an explicit coercion to the array type.
+				 */
+				if (arrayexpr->elements == NIL)
+					appendStringInfo(buf, "::%s",
+						format_type_with_typemod(arrayexpr->array_typeid, -1));
 			}
 			break;
 
@@ -5384,44 +5393,44 @@ get_windowref_expr(WindowRef *wref, deparse_context *context)
 	}
 }
 
-/* ----------
+/*
  * get_coercion_expr
  *
- *	Make a string representation of a value coerced to a specific type
+ *  Make a string representation of a value coerced to a specific type
  * ----------
  */
 static void
 get_coercion_expr(Node *arg, deparse_context *context,
-				  Oid resulttype, int32 resulttypmod,
-				  Node *parentNode)
+		  Oid resulttype, int32 resulttypmod,
+		  Node *parentNode)
 {
-	StringInfo	buf = context->buf;
+    StringInfo  buf = context->buf;
 
-	/*
-	 * Since parse_coerce.c doesn't immediately collapse application of
-	 * length-coercion functions to constants, what we'll typically see in
-	 * such cases is a Const with typmod -1 and a length-coercion function
-	 * right above it.	Avoid generating redundant output. However, beware of
-	 * suppressing casts when the user actually wrote something like
-	 * 'foo'::text::char(3).
-	 */
-	if (arg && IsA(arg, Const) &&
-		((Const *) arg)->consttype == resulttype &&
-		((Const *) arg)->consttypmod == -1)
-	{
-		/* Show the constant without normal ::typename decoration */
-		get_const_expr((Const *) arg, context, -1);
-	}
-	else
-	{
-		if (!PRETTY_PAREN(context))
-			appendStringInfoChar(buf, '(');
-		get_rule_expr_paren(arg, context, false, parentNode);
-		if (!PRETTY_PAREN(context))
-			appendStringInfoChar(buf, ')');
-	}
-	appendStringInfo(buf, "::%s",
-					 format_type_with_typemod(resulttype, resulttypmod));
+    /*
+     * Since parse_coerce.c doesn't immediately collapse application of
+     * length-coercion functions to constants, what we'll typically see
+     * in such cases is a Const with typmod -1 and a length-coercion
+     * function right above it.  Avoid generating redundant output.
+     * However, beware of suppressing casts when the user actually wrote
+     * something like 'foo'::text::char(3).
+     */
+    if (arg && IsA(arg, Const) &&
+	((Const *) arg)->consttype == resulttype &&
+	((Const *) arg)->consttypmod == -1)
+    {
+	/* Show the constant without normal ::typename decoration */
+	get_const_expr((Const *) arg, context, false);
+    }
+    else
+    {
+	if (!PRETTY_PAREN(context))
+	    appendStringInfoChar(buf, '(');
+	get_rule_expr_paren(arg, context, false, parentNode);
+	if (!PRETTY_PAREN(context))
+	    appendStringInfoChar(buf, ')');
+    }
+    appendStringInfo(buf, "::%s",
+		     format_type_with_typemod(resulttype, resulttypmod));
 }
 
 /* ----------

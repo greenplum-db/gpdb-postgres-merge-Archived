@@ -135,6 +135,9 @@ inline static char extended_char(char* token, size_t length)
 /* Read a character-string field */
 #define READ_STRING_FIELD(fldname)  READ_SCALAR_FIELD(fldname, nullable_string(token, length))
 
+/* Read a parse location field (and throw away the value, per notes above) */
+#define READ_LOCATION_FIELD(fldname) READ_SCALAR_FIELD(fldname, -1)
+
 /* Read a Node field */
 #define READ_NODE_FIELD(fldname) \
     do { \
@@ -1808,6 +1811,21 @@ _readArrayExpr(void)
 	READ_OID_FIELD(element_typeid);
 	READ_NODE_FIELD(elements);
 	READ_BOOL_FIELD(multidims);
+	/*READ_LOCATION_FIELD(location);*/
+
+	READ_DONE();
+}
+
+/*
+ * _readA_ArrayExpr
+ */
+static A_ArrayExpr *
+_readA_ArrayExpr(void)
+{
+	READ_LOCALS(A_ArrayExpr);
+
+	READ_NODE_FIELD(elements);
+/*	READ_LOCATION_FIELD(location); */
 
 	READ_DONE();
 }
@@ -2441,10 +2459,12 @@ _readCreatePLangStmt(void)
 
 	READ_STRING_FIELD(plname);
 	READ_NODE_FIELD(plhandler);
+	READ_NODE_FIELD(plinline);
 	READ_NODE_FIELD(plvalidator);
 	READ_BOOL_FIELD(pltrusted);
 	READ_OID_FIELD(plangOid);
 	READ_OID_FIELD(plhandlerOid);
+	READ_OID_FIELD(plinlineOid);
 	READ_OID_FIELD(plvalidatorOid);
 
 	READ_DONE();
@@ -2622,7 +2642,6 @@ _readAlterFunctionStmt(void)
 
 	READ_DONE();
 }
-
 
 #ifndef COMPILING_BINARY_FUNCS
 static DefineStmt *
@@ -3046,6 +3065,7 @@ typedef struct ParseNodeInfo
  */
 static ParseNodeInfo infoAr[] =
 {
+	{"A_ARRAYEXPR", (ReadFn)_readA_ArrayExpr},
 	{"AEXPR", (ReadFn)_readAExpr},
 	{"AGGORDER", (ReadFn)_readAggOrder},
 	{"AGGREF", (ReadFn)_readAggref},

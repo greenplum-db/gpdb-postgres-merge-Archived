@@ -542,38 +542,58 @@ CheckAttributeType(const char *attname, Oid atttypid,
 	char		att_typtype = get_typtype(atttypid);
 	Oid			att_typelem;
 
-	/*
-	 * Warn user, but don't fail, if column to be created has UNKNOWN type
-	 * (usually as a result of a 'retrieve into' - jolly)
-	 *
-	 * Refuse any attempt to create a pseudo-type column.
-	 */
-	/* GPDB: The QD should've checked these already. In QE, just accept it. */
-	if (Gp_role == GP_ROLE_EXECUTE)
-		return;
-
-	if (atttypid == UNKNOWNOID)
+	if (Gp_role != GP_ROLE_EXECUTE)
 	{
-		/*
-		 * Warn user, but don't fail, if column to be created has UNKNOWN type
-		 * (usually as a result of a 'retrieve into' - jolly)
-		 */
-		ereport(WARNING,
-				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("column \"%s\" has type \"unknown\"", attname),
-				 errdetail("Proceeding with relation creation anyway.")));
-	}
-	else if (att_typtype == TYPTYPE_PSEUDO)
-	{
-		/*
-		 * Refuse any attempt to create a pseudo-type column, except for a
-		 * special hack for pg_statistic: allow ANYARRAY during initdb
-		 */
-		if (atttypid != ANYARRAYOID || IsUnderPostmaster)
-			ereport(ERROR,
+		if (atttypid == UNKNOWNOID)
+		{
+			/*
+			 * Warn user, but don't fail, if column to be created has UNKNOWN type
+			 * (usually as a result of a 'retrieve into' - jolly)
+			 */
+			ereport(WARNING,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("column \"%s\" has pseudo-type %s",
-							attname, format_type_be(atttypid))));
+					 errmsg("column \"%s\" has type \"unknown\"", attname),
+					 errdetail("Proceeding with relation creation anyway.")));
+		}
+		else if (att_typtype == TYPTYPE_PSEUDO)
+		{
+			/*
+			 * Refuse any attempt to create a pseudo-type column, except for
+			 * a special hack for pg_statistic: allow ANYARRAY during initdb
+			 */
+			if (atttypid != ANYARRAYOID || IsUnderPostmaster)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+						 errmsg("column \"%s\" has pseudo-type %s",
+								attname, format_type_be(atttypid))));
+		}
+		else if (att_typtype == TYPTYPE_COMPOSITE)
+		{
+			/*
+			 * For a composite type, recurse into its attributes.  You might
+			 * think this isn't necessary, but since we allow system catalogs
+			 * to break the rule, we have to guard against the case.
+			 */
+			Relation relation;
+			TupleDesc tupdesc;
+			int i;
+
+			relation = relation_open(get_typ_typrelid(atttypid), AccessShareLock);
+
+			tupdesc = RelationGetDescr(relation);
+
+			for (i = 0; i < tupdesc->natts; i++)
+			{
+				Form_pg_attribute attr = tupdesc->attrs[i];
+
+				if (attr->attisdropped)
+					continue;
+				CheckAttributeType(NameStr(attr->attname), attr->atttypid,
+								   containing_rowtypes);
+			}
+
+			relation_close(relation, AccessShareLock);
+		}
 	}
 	else if (att_typtype == TYPTYPE_COMPOSITE)
 	{
@@ -1196,34 +1216,34 @@ AddNewRelationType(Oid new_type_oid,
 				   Oid new_array_type)
 {
 	return
-		TypeCreate(new_type_oid, /* can have a predetermined OID in bootstrap */
-				   typeName,	/* type name */
-				   typeNamespace,		/* type namespace */
-				   new_rel_oid, /* relation oid */
+		TypeCreate(new_type_oid,	/* can have a predetermined OID in bootstrap */
+				   typeName,		/* type name */
+				   typeNamespace,	/* type namespace */
+				   new_rel_oid, 	/* relation oid */
 				   new_rel_kind,	/* relation kind */
-				   ownerid,		/* owner's ID */
-				   -1,			/* internal size (varlena) */
-				   TYPTYPE_COMPOSITE,	/* type-type (composite) */
-				   DEFAULT_TYPDELIM,	/* default array delimiter */
-				   F_RECORD_IN, /* input procedure */
+				   ownerid,			/* owner's ID */
+				   -1,				/* internal size (varlena) */
+				   'c',				/* type-type (complex) */
+				   DEFAULT_TYPDELIM,/* default array delimiter */
+				   F_RECORD_IN,		/* input procedure */
 				   F_RECORD_OUT,	/* output procedure */
-				   F_RECORD_RECV,		/* receive procedure */
-				   F_RECORD_SEND,		/* send procedure */
-				   InvalidOid,	/* typmodin procedure - none */
-				   InvalidOid,	/* typmodout procedure - none */
-				   InvalidOid,	/* analyze procedure - default */
-				   InvalidOid,	/* array element type - irrelevant */
-				   false,		/* this is not an array type */
-				   new_array_type,		/* array type if any */
-				   InvalidOid,	/* domain base type - irrelevant */
-				   NULL,		/* default value - none */
-				   NULL,		/* default binary representation */
-				   false,		/* passed by reference */
-				   'd',			/* alignment - must be the largest! */
-				   'x',			/* fully TOASTable */
-				   -1,			/* typmod */
-				   0,			/* array dimensions for typBaseType */
-				   false);		/* Type NOT NULL */
+				   F_RECORD_RECV,	/* receive procedure */
+				   F_RECORD_SEND,	/* send procedure */
+				   InvalidOid,		/* typmodin procedure - none */
+				   InvalidOid,		/* typmodout procedure - none */
+				   InvalidOid,		/* analyze procedure - default */
+				   InvalidOid,		/* array element type - irrelevant */
+				   false,			/* this is not an array type */
+				   new_array_type,	/* array type if any */
+				   InvalidOid,		/* domain base type - irrelevant */
+				   NULL,			/* default value - none */
+				   NULL,			/* default binary representation */
+				   false,			/* passed by reference */
+				   'd',				/* alignment - must be the largest! */
+				   'x',				/* fully TOASTable */
+				   -1,				/* typmod */
+				   0,				/* array dimensions for typBaseType */
+				   false);			/* Type NOT NULL */
 }
 
 void
@@ -1240,8 +1260,6 @@ InsertGpRelationNodeTuple(
 	Datum		values[Natts_gp_relation_node];
 	bool		nulls[Natts_gp_relation_node];
 	HeapTuple	tuple;
-//	cqContext	cqc;
-//	cqContext  *pcqCtx;
 
 	if (Debug_check_for_invalid_persistent_tid &&
 		!Persistent_BeforePersistenceWork() &&
@@ -1269,11 +1287,6 @@ InsertGpRelationNodeTuple(
 			 persistentSerialNum,
 			 ItemPointerToString(persistentTid));
 
-//	pcqCtx = caql_beginscan(
-//			caql_addrel(cqclr(&cqc), pg_class_desc),
-//			cqlXXX("INSERT INTO gp_relation_node ",
-//				NULL));
-
 	GpRelationNode_SetDatumValues(
 								values,
 								relfilenode,
@@ -1282,7 +1295,6 @@ InsertGpRelationNodeTuple(
 								persistentTid,
 								persistentSerialNum);
 
-//	tuple = caql_form_tuple(pcqCtx, values, nulls);
 	/* XXX XXX: note optional index update */
 	tuple = heap_form_tuple(RelationGetDescr(gp_relation_node), values, nulls);
 
@@ -1293,8 +1305,6 @@ InsertGpRelationNodeTuple(
 	{
 		CatalogUpdateIndexes(gp_relation_node, tuple);
 	}
-
-//	caql_endscan(pcqCtx);
 
 	heap_freetuple(tuple);
 }
@@ -1431,6 +1441,11 @@ heap_create_with_catalog(const char *relname,
 	rowtype_already_exists =
 		(IsBootstrapProcessingMode() &&
 		 (PointerIsValid(comptypeOid) && OidIsValid(*comptypeOid)));
+
+	if (PointerIsValid(comptypeArrayOid))
+	{
+	    new_array_oid = *comptypeArrayOid;
+	}
 
 	pg_class_desc = heap_open(RelationRelationId, RowExclusiveLock);
 
@@ -1580,10 +1595,27 @@ heap_create_with_catalog(const char *relname,
 	}
 
 	/*
-	 * Decide whether to create an array type over the relation's rowtype. We
-	 * do not create any array types for system catalogs (ie, those made
-	 * during initdb).	We create array types for regular relations, views,
-	 * and composite types ... but not, eg, for toast tables or sequences.
+	 * Decide whether to create an array type over the relation's rowtype.
+	 * We do not create any array types for system catalogs (ie, those made
+	 * during initdb).  We create array types for regular composite types ...
+	 * but not, eg, for toast tables or sequences.
+	 */
+	if (IsUnderPostmaster &&
+		relkind == RELKIND_COMPOSITE_TYPE &&
+		!OidIsValid(new_array_oid))
+	{
+		/* OK, so pre-assign a type OID for the array type */
+		Relation pg_type = heap_open(TypeRelationId, AccessShareLock);
+		new_array_oid = GetNewOid(pg_type);
+		heap_close(pg_type, AccessShareLock);
+	}
+
+	/*
+	 * Since defining a relation also defines a complex type, we add a new
+	 * system type corresponding to the new relation.
+	 *
+	 * NOTE: we could get a unique-index failure here, in case the same name
+	 * has already been used for a type.
 	 *
 	 * Also not for the auxiliary heaps created for bitmap indexes.
 	 */
@@ -1628,7 +1660,7 @@ heap_create_with_catalog(const char *relname,
 	 */
 	if (OidIsValid(new_array_oid))
 	{
-		char	   *relarrayname;
+		char	*relarrayname;
 
 		relarrayname = makeArrayTypeName(relname, relnamespace);
 

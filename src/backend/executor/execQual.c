@@ -648,9 +648,9 @@ ExecEvalGroupId(ExprState *gstate, ExprContext *econtext,
  *		function with respect to the given context.
  *
  * XXX	Note that this routine is essentially the same as
- *      ExecEvalAggref since we use the same buffers. However,
- *      since the state structures for WindowRef and Aggref 
- *      are different, we separate the execution routines, too.
+ *		ExecEvalAggref since we use the same buffers. However,
+ *		since the state structures for WindowRef and Aggref 
+ *		are different, we separate the execution routines, too.
  * ----------------------------------------------------------------
  */
 static Datum
@@ -2241,7 +2241,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 			 */
 			if (returnsTuple)
 			{
-			    const int staticBufferLimit = 200;
+				const int staticBufferLimit = 200;
 				HeapTupleHeader td;
 				Datum staticPd[staticBufferLimit];
 				bool staticNull[staticBufferLimit];

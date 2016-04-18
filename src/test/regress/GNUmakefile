@@ -25,6 +25,9 @@ ifdef TEMP_CONFIG
 TEMP_CONF += --temp-config=$(TEMP_CONFIG)
 endif
 
+# Greenplum regression tests use $PGPORT
+PGPORT?=15432
+
 # where to find psql for testing an existing installation
 PSQLDIR = $(bindir)
 

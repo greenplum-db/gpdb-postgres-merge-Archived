@@ -287,9 +287,9 @@ typedef struct A_Const
  * TypeCast - a CAST expression
  *
  * NOTE: for mostly historical reasons, A_Const parsenodes contain
- * room for a TypeName; we only generate a separate TypeCast node if the
- * argument to be casted is not a constant.  In theory either representation
- * would work, but the combined representation saves a bit of code in many
+ * room for a TypeName, allowing a constant to be marked as being of a given
+ * type without a separate TypeCast node.  Either representation will work,
+ * but the combined representation saves a bit of code in many
  * productions in gram.y.
  */
 typedef struct TypeCast
@@ -501,7 +501,7 @@ typedef struct IndexElem
 typedef struct ColumnReferenceStorageDirective
 {
 	NodeTag		type;
-	Value	   *column;
+	char	   *column;	  /* column name, or NULL for DEFAULTs (deflt==true) */
 	bool		deflt;
 	List	   *encoding;
 } ColumnReferenceStorageDirective;
@@ -1678,7 +1678,7 @@ typedef struct PartitionBy			/* the Partition By clause */
 typedef struct PartitionElem
 {
 	NodeTag				type;
-	Node			   *partName;	/* partition name (optional) */
+	char			   *partName;	/* partition name (optional) */
 	Node			   *boundSpec;	/* boundary specification */
 	Node			   *subSpec;	/* subpartition spec */
 	bool                isDefault;	/* TRUE if default partition declaration */
@@ -1812,10 +1812,12 @@ typedef struct CreatePLangStmt
 	NodeTag		type;
 	char	   *plname;			/* PL name */
 	List	   *plhandler;		/* PL call handler function (qual. name) */
+	List	   *plinline;		/* optional inline function (qual. name) */
 	List	   *plvalidator;	/* optional validator function (qual. name) */
 	bool		pltrusted;		/* PL is trusted */
 	Oid	   		plangOid;		/* oid for PL */
 	Oid			plhandlerOid;	/* oid for PL call handler function */
+	Oid			plinlineOid;	/* oid for inline function */
 	Oid			plvalidatorOid;	/* oid for validator function */
 } CreatePLangStmt;
 
@@ -2219,6 +2221,26 @@ typedef struct AlterFunctionStmt
 	FuncWithArgs *func;			/* name and args of function */
 	List	   *actions;		/* list of DefElem */
 } AlterFunctionStmt;
+
+/* ----------------------
+ *		DO Statement
+ *
+ * DoStmt is the raw parser output, InlineCodeBlock is the execution-time API
+ * ----------------------
+ */
+typedef struct DoStmt
+{
+	NodeTag		type;
+	List	   *args;			/* List of DefElem nodes */
+} DoStmt;
+
+typedef struct InlineCodeBlock
+{
+	NodeTag		type;
+	char	   *source_text;	/* source text of anonymous code block */
+	Oid			langOid;		/* OID of selected language */
+	bool		langIsTrusted;  /* trusted property of the language */
+} InlineCodeBlock;
 
 /* ----------------------
  *		Drop {Function|Aggregate|Operator} Statement

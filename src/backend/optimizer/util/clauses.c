@@ -546,7 +546,19 @@ count_agg_clauses_walker(Node *node, AggClauseCounts *counts)
 
 			counts->transitionSpace += avgwidth + 2 * sizeof(void *);
 		}
-		
+		else if (aggtranstype == INTERNALOID)
+		{
+			/*
+			 * INTERNAL transition type is a special case: although INTERNAL
+			 * is pass-by-value, it's almost certainly being used as a pointer
+			 * to some large data structure.  We assume usage of
+			 * ALLOCSET_DEFAULT_INITSIZE, which is a good guess if the data is
+			 * being kept in a private memory context, as is done by
+			 * array_agg() for instance.
+			 */
+			counts->transitionSpace += ALLOCSET_DEFAULT_INITSIZE;
+		}
+
 		if ( inputTypes != NULL )
 			pfree(inputTypes);
 
@@ -827,6 +839,36 @@ contain_mutable_functions_walker(Node *node, void *context)
 		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
 		if (func_volatile(expr->opfuncid) != PROVOLATILE_IMMUTABLE)
 			return true;
+		/* else fall through to check args */
+	}
+	else if (IsA(node, CoerceViaIO))
+	{
+		CoerceViaIO *expr = (CoerceViaIO *) node;
+		Oid             iofunc;
+		Oid             typioparam;
+		bool    typisvarlena;
+
+		/* check the result type's input function */
+		getTypeInputInfo(expr->resulttype,
+					&iofunc, &typioparam);
+		if (func_volatile(iofunc) != PROVOLATILE_IMMUTABLE)
+			return true;
+		/* check the input type's output function */
+		getTypeOutputInfo(exprType((Node *) expr->arg),
+					&iofunc, &typisvarlena);
+		if (func_volatile(iofunc) != PROVOLATILE_IMMUTABLE)
+			return true;
+		/* else fall through to check args */
+	}
+	else if (IsA(node, ArrayCoerceExpr))
+	{
+		ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
+
+		if (OidIsValid(expr->elemfuncid) &&
+			func_volatile(expr->elemfuncid) != PROVOLATILE_IMMUTABLE)
+		{
+			return true;
+		}
 		/* else fall through to check args */
 	}
 	else if (IsA(node, RowCompareExpr))

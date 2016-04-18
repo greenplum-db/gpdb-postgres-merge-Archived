@@ -539,6 +539,7 @@ _equalArrayExpr(ArrayExpr *a, ArrayExpr *b)
 	COMPARE_SCALAR_FIELD(element_typeid);
 	COMPARE_NODE_FIELD(elements);
 	COMPARE_SCALAR_FIELD(multidims);
+	/* COMPARE_LOCATION_FIELD(location); */
 
 	return true;
 }
@@ -1189,7 +1190,7 @@ static bool
 _equalColumnReferenceStorageDirective(ColumnReferenceStorageDirective *a,
 									   ColumnReferenceStorageDirective *b)
 {
-	COMPARE_NODE_FIELD(column);
+	COMPARE_STRING_FIELD(column);
 	COMPARE_SCALAR_FIELD(deflt);
 	COMPARE_NODE_FIELD(encoding);
 
@@ -1379,6 +1380,14 @@ _equalRemoveOpClassStmt(RemoveOpClassStmt *a, RemoveOpClassStmt *b)
 	COMPARE_STRING_FIELD(amname);
 	COMPARE_SCALAR_FIELD(behavior);
 	COMPARE_SCALAR_FIELD(missing_ok);
+
+	return true;
+}
+
+static bool
+_equalDoStmt(DoStmt *a, DoStmt *b)
+{
+	COMPARE_NODE_FIELD(args);
 
 	return true;
 }
@@ -1759,10 +1768,12 @@ _equalCreatePLangStmt(CreatePLangStmt *a, CreatePLangStmt *b)
 {
 	COMPARE_STRING_FIELD(plname);
 	COMPARE_NODE_FIELD(plhandler);
+	COMPARE_NODE_FIELD(plinline);
 	COMPARE_NODE_FIELD(plvalidator);
 	COMPARE_SCALAR_FIELD(pltrusted);
 	COMPARE_SCALAR_FIELD(plangOid);
 	COMPARE_SCALAR_FIELD(plhandlerOid);
+	COMPARE_SCALAR_FIELD(plinlineOid);
 	COMPARE_SCALAR_FIELD(plvalidatorOid);
 
 	return true;
@@ -2083,6 +2094,15 @@ _equalA_Indirection(A_Indirection *a, A_Indirection *b)
 {
 	COMPARE_NODE_FIELD(arg);
 	COMPARE_NODE_FIELD(indirection);
+
+	return true;
+}
+
+static bool
+_equalA_ArrayExpr(A_ArrayExpr *a, A_ArrayExpr *b)
+{
+	COMPARE_NODE_FIELD(elements);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -2826,6 +2846,9 @@ equal(void *a, void *b)
 		case T_RemoveFuncStmt:
 			retval = _equalRemoveFuncStmt(a, b);
 			break;
+		case T_DoStmt:
+			retval = _equalDoStmt(a, b);
+			break;
 		case T_RemoveOpClassStmt:
 			retval = _equalRemoveOpClassStmt(a, b);
 			break;
@@ -3024,6 +3047,9 @@ equal(void *a, void *b)
 			break;
 		case T_A_Indirection:
 			retval = _equalA_Indirection(a, b);
+			break;
+		case T_A_ArrayExpr:
+			retval = _equalA_ArrayExpr(a, b);
 			break;
 		case T_ResTarget:
 			retval = _equalResTarget(a, b);

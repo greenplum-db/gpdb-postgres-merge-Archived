@@ -1018,7 +1018,12 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 	r = RelationIdGetRelation(relationId);
 
 	if (!RelationIsValid(r))
-		elog(ERROR, "could not open relation with OID %u", relationId);
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				 errmsg("relation not found (OID %u)", relationId),
+				 errdetail("This can be validly caused by a concurrent delete operation on this object.")));
+	}
 
 	/* Make note that we've accessed a temporary relation */
 	if (r->rd_istemp)
@@ -1099,7 +1104,12 @@ try_relation_open(Oid relationId, LOCKMODE lockmode, bool noWait)
 	r = RelationIdGetRelation(relationId);
 
 	if (!RelationIsValid(r))
-		elog(ERROR, "could not open relation with OID %u", relationId);
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				 errmsg("relation not found (OID %u)", relationId),
+				 errdetail("This can be validly caused by a concurrent delete operation on this object.")));
+	}
 
 	/* Make note that we've accessed a temporary relation */
 	if (r->rd_istemp)
@@ -1196,7 +1206,12 @@ CdbOpenRelation(Oid relid, LOCKMODE reqmode, bool noWait, bool *lockUpgraded)
 	rel = CdbTryOpenRelation(relid, reqmode, noWait, lockUpgraded);
 
 	if (!RelationIsValid(rel))
-		elog(ERROR, "could not open relation with OID %u", relid);
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				 errmsg("relation not found (OID %u)", relid),
+				 errdetail("This can be validly caused by a concurrent delete operation on this object.")));
+	}
 
 	return rel;
 
@@ -1282,7 +1297,12 @@ relation_open_nowait(Oid relationId, LOCKMODE lockmode)
 	r = RelationIdGetRelation(relationId);
 
 	if (!RelationIsValid(r))
-		elog(ERROR, "could not open relation with OID %u", relationId);
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				 errmsg("relation not found (OID %u)", relationId),
+				 errdetail("This can be validly caused by a concurrent delete operation on this object.")));
+	}
 
 	/* Make note that we've accessed a temporary relation */
 	if (r->rd_istemp)

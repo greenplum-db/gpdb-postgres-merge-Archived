@@ -9,19 +9,26 @@ endif
 override CPPFLAGS := -I. $(CPPFLAGS)
 
 OBJS = gpfdist.o gpfdist_helper.o fstream.o gfile.o
+# configure should have been run by this point.
+# we are adding the gpfdist libraries here instead
+# of the top level, so that the backend does not
+# need to link with unnecessary libraries.
+GPFDIST_LIBS =-levent
 
 ifeq ($(have_yaml),yes)
+  GPFDIST_LIBS += -lyaml
   OBJS += transform.o
+  ifneq ($(PORTNAME),win32)
+    override CPPFLAGS := -DGPFXDIST $(CPPFLAGS)
+  endif
 endif
 
-ifneq ($(PORTNAME),win32)
-  CPPFLAGS += -DGPFXDIST
-else
+ifeq ($(PORTNAME),win32)
   override CPPFLAGS := -I$(top_builddir)/src/port $(CPPFLAGS)
   OBJS += $(top_builddir)/src/port/glob.o
 endif
 
-LDLIBS += $(LIBS)
+LDLIBS += $(LIBS) $(GPFDIST_LIBS) $(shell $(APR_1_CONFIG) --link-ld --libs)
 
 all: gpfdist$(EXE_EXT)
 

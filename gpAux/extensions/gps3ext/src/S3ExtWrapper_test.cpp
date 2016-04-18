@@ -7,10 +7,10 @@ class S3Reader_fake : public S3Reader {
     virtual ~S3Reader_fake();
     virtual bool Init(int segid, int segnum, int chunksize);
     virtual bool Destroy();
+    virtual bool ValidateURL();
 
    protected:
     virtual string getKeyURL(const string key);
-    virtual bool ValidateURL();
 };
 
 S3Reader_fake::S3Reader_fake(string url) : S3Reader(url) {}
@@ -117,7 +117,98 @@ void ExtWrapperTest(const char *url, uint64_t buffer_size, const char *md5_str,
     free(buf);
 }
 
+TEST(ExtWrapper, ValidateURL_normal) {
+    S3ExtBase *myData;
+    myData = new S3Reader(
+        "s3://s3-us-west-2.amazonaws.com/s3test.pivotal.io/dataset1/normal");
+
+    ASSERT_TRUE(myData->ValidateURL());
+    EXPECT_STREQ("us-west-2", myData->get_region().c_str());
+
+    delete myData;
+}
+
+TEST(ExtWrapper, ValidateURL_default) {
+    S3ExtBase *myData;
+    myData =
+        new S3Reader("s3://s3.amazonaws.com/s3test.pivotal.io/dataset1/normal");
+
+    ASSERT_TRUE(myData->ValidateURL());
+    EXPECT_STREQ("external-1", myData->get_region().c_str());
+
+    delete myData;
+}
+
+TEST(ExtWrapper, ValidateURL_useast1) {
+    S3ExtBase *myData;
+    myData = new S3Reader(
+        "s3://s3-us-east-1.amazonaws.com/s3test.pivotal.io/dataset1/normal");
+
+    ASSERT_TRUE(myData->ValidateURL());
+    EXPECT_STREQ("external-1", myData->get_region().c_str());
+
+    delete myData;
+}
+
+TEST(ExtWrapper, ValidateURL_eucentral1) {
+    S3ExtBase *myData;
+    myData = new S3Reader(
+        "s3://s3.eu-central-1.amazonaws.com/s3test.pivotal.io/dataset1/normal");
+
+    ASSERT_TRUE(myData->ValidateURL());
+    EXPECT_STREQ("eu-central-1", myData->get_region().c_str());
+
+    delete myData;
+}
+
+TEST(ExtWrapper, ValidateURL_eucentral11) {
+    S3ExtBase *myData;
+    myData = new S3Reader(
+        "s3://s3-eu-central-1.amazonaws.com/s3test.pivotal.io/dataset1/normal");
+
+    ASSERT_TRUE(myData->ValidateURL());
+    EXPECT_STREQ("eu-central-1", myData->get_region().c_str());
+
+    delete myData;
+}
+
+TEST(ExtWrapper, ValidateURL_apnortheast2) {
+    S3ExtBase *myData;
+    myData = new S3Reader(
+        "s3://s3.ap-northeast-2.amazonaws.com/s3test.pivotal.io/dataset1/"
+        "normal");
+
+    ASSERT_TRUE(myData->ValidateURL());
+    EXPECT_STREQ("ap-northeast-2", myData->get_region().c_str());
+
+    delete myData;
+}
+
+TEST(ExtWrapper, ValidateURL_apnortheast21) {
+    S3ExtBase *myData;
+    myData = new S3Reader(
+        "s3://s3-ap-northeast-2.amazonaws.com/s3test.pivotal.io/dataset1/"
+        "normal");
+
+    ASSERT_TRUE(myData->ValidateURL());
+    EXPECT_STREQ("ap-northeast-2", myData->get_region().c_str());
+
+    delete myData;
+}
+
 #ifdef AWSTEST
+
+TEST(ExtWrapper, normal_region_default) {
+    ExtWrapperTest(
+        "https://s3.amazonaws.com/useast1.s3test.pivotal.io/small17/",
+        64 * 1024, "138fc555074671912125ba692c678246", 0, 1, 64 * 1024 * 1024);
+}
+
+TEST(ExtWrapper, normal_region_useast1) {
+    ExtWrapperTest(
+        "https://s3-us-east-1.amazonaws.com/useast1.s3test.pivotal.io/small17/",
+        64 * 1024, "138fc555074671912125ba692c678246", 0, 1, 64 * 1024 * 1024);
+}
 
 TEST(ExtWrapper, normal) {
     ExtWrapperTest(
@@ -175,22 +266,24 @@ TEST(ExtWrapper, huge_1seg) {
     ExtWrapperTest(
         "https://s3-us-west-2.amazonaws.com/s3test.pivotal.io/dataset2/"
         "hugefile/",
-        64 * 1024, "b87b5d79e2bcb8dc1d0fd289fbfa5829", 0, 1, 64 * 1024 * 1024);
+        64 * 1024, "75baaa39f2b1544ed8af437c2cad86b7", 0, 1, 64 * 1024 * 1024);
 }
 
 TEST(ExtWrapper, normal2_3segs) {
     ExtWrapperTest(
         "https://s3-us-west-2.amazonaws.com/s3test.pivotal.io/dataset2/normal/",
-        64 * 1024, "b87b5d79e2bcb8dc1d0fd289fbfa5829", 0, 3, 64 * 1024 * 1024);
+        64 * 1024, "1c1b198b246160733f7a3491bff5cd52", 0, 3, 64 * 1024 * 1024);
     ExtWrapperTest(
         "https://s3-us-west-2.amazonaws.com/s3test.pivotal.io/dataset2/normal/",
-        64 * 1024, "b87b5d79e2bcb8dc1d0fd289fbfa5829", 1, 3, 64 * 1024 * 1024);
+        64 * 1024, "296856eb9739d3022b3e9d8bf3b1ea2e", 1, 3, 64 * 1024 * 1024);
     ExtWrapperTest(
         "https://s3-us-west-2.amazonaws.com/s3test.pivotal.io/dataset2/normal/",
-        64 * 1024, "b87b5d79e2bcb8dc1d0fd289fbfa5829", 2, 3, 64 * 1024 * 1024);
+        64 * 1024, "00675684b6d6697571f22baaf407c6df", 2, 3, 64 * 1024 * 1024);
 }
 
 #endif  // AWSTEST
+
+#ifdef FAKETEST
 
 TEST(FakeExtWrapper, simple) {
     ExtWrapperTest("http://localhost/metro.pivotal.io/", 64 * 1024,
@@ -228,3 +321,5 @@ TEST(FakeExtWrapper, bigfile) {
     ExtWrapperTest("http://localhost/bigfile/", 64 * 1024,
                    "83c7ab787e3f1d1e7880dcae954ab4a4", 0, 1, 64 * 1024 * 1024);
 }
+
+#endif  // FAKETEST

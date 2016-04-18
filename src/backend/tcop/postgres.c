@@ -4653,6 +4653,10 @@ PostgresMain(int argc, char *argv[],
 		/* Need not flush since ReadyForQuery will do it. */
 	}
 
+	/* Also send GPDB QE-backend startup info (motion listener, version). */
+	if (Gp_role == GP_ROLE_EXECUTE)
+		sendQEDetails();
+
 	/* Welcome banner for standalone case */
 	if (whereToSendOutput == DestDebug)
 		printf("\nPostgreSQL stand-alone backend %s\n", PG_VERSION);
@@ -5247,12 +5251,6 @@ PostgresMain(int argc, char *argv[],
 					
 					exec_parse_message(query_string, stmt_name,
 									   paramTypes, numParams);
-				}
-				break;
-			case 'W':    /* GPDB QE-backend startup info (motion listener, version). */
-				{
-					sendQEDetails();
-					pq_flush();
 				}
 				break;
 

@@ -1116,6 +1116,20 @@ order by 1;
 drop table if exists initplan_x;
 drop table if exists initplan_y;
 --
+-- Test Initplans that return multiple params.
+--
+create table initplan_test(i int, j int, m int);
+NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
+HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
+insert into initplan_test values (1,1,1);
+select * from initplan_test where row(j, m) = (select j, m from initplan_test where i = 1);
+ i | j | m 
+---+---+---
+ 1 | 1 | 1
+(1 row)
+
+drop table initplan_test;
+--
 -- apply parallelization for subplan MPP-24563
 --
 create table t1_mpp_24563 (id int, value int) distributed by (id);
@@ -1240,3 +1254,36 @@ SELECT p.id
   1
 (1 row)
 
+--
+-- Verify another bug in the IN-clause pull-up code. This returned some
+-- rows from xsupplier twice, because of a bug in detecting whether a
+-- Redistribute node was needed.
+--
+CREATE TABLE xlineitem (l_orderkey int4, l_suppkey int4) distributed by (l_orderkey);
+insert into xlineitem select g+3, g from generate_series(10,100) g;
+insert into xlineitem select g+1, g from generate_series(10,100) g;
+insert into xlineitem select g, g from generate_series(10,100) g;
+CREATE TABLE xsupplier (s_suppkey int4, s_name text) distributed by (s_suppkey);
+insert into xsupplier select g, 'foo' || g from generate_series(1,10) g;
+select s_name from xsupplier
+where s_suppkey in (
+  select g.l_suppkey from xlineitem g
+) ;
+ s_name 
+--------
+ foo10
+(1 row)
+
+--
+-- Another case that failed at one point. (A planner bug in pulling up a
+-- subquery with constant distribution key, 1, in the outer queries.)
+--
+create table nested_in_tbl(tc1 int, tc2 int) distributed by (tc1);
+select * from nested_in_tbl t1  where tc1 in
+  (select 1 from nested_in_tbl t2 where tc1 in
+    (select 1 from nested_in_tbl t3 where t3.tc2 = t2.tc2));
+ tc1 | tc2 
+-----+-----
+(0 rows)
+
+drop table nested_in_tbl;

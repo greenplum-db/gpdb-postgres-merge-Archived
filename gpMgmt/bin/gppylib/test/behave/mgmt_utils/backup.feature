@@ -291,13 +291,13 @@ Feature: Validate command line arguments
         And gpdbrestore should print Table public.heap_table to stdout
         And gpdbrestore should print Table public.part_mixed_1 to stdout
         And database "bkdb" is dropped and recreated
-        And the user runs gp_restore with the the stored timestamp and subdir in "bkdb"
-        And gp_restore should return a return code of 0
+        When the user runs gpdbrestore with the stored timestamp
+        Then gpdbrestore should return a return code of 0
         And verify that partitioned tables "ao_part_table, co_part_table, heap_part_table" in "bkdb" have 6 partitions
         And verify that partitioned tables "ao_part_table_comp, co_part_table_comp" in "bkdb" have 6 partitions
         And verify that partitioned tables "part_external" in "bkdb" have 5 partitions in partition level "0"
-        And verify that partitioned tables "ao_part_table, co_part_table_comp" in "bkdb" has 5 empty partitions
-        And verify that partitioned tables "co_part_table, ao_part_table_comp" in "bkdb" has 6 empty partitions
+        And verify that partitioned tables "ao_part_table, co_part_table_comp" in "bkdb" has 0 empty partitions
+        And verify that partitioned tables "co_part_table, ao_part_table_comp" in "bkdb" has 0 empty partitions
         And verify that partitioned tables "heap_part_table" in "bkdb" has 0 empty partitions
         And verify that there is a "heap" table "public.heap_table" in "bkdb"
         And verify that there is a "heap" table "public.heap_index_table" in "bkdb"
@@ -308,8 +308,6 @@ Feature: Validate command line arguments
         And verify that there is partition "3" of "heap" partition table "heap_part_table" in "bkdb" in "public"
         And verify that there is partition "1" of mixed partition table "part_mixed_1" with storage_type "c"  in "bkdb" in "public"
         And verify that there is partition "2" in partition level "0" of mixed partition table "part_external" with storage_type "x"  in "bkdb" in "public"
-        And verify that tables "public.ao_table, public.co_table, public.ao_table_comp, public.co_table_comp" in "bkdb" has no rows
-        And verify that tables "public.co_index_table, public.ao_index_table_comp, public.co_index_table_comp" in "bkdb" has no rows
         And verify that the data of the dirty tables under " " in "bkdb" is validated after restore
         And verify that the distribution policy of all the tables in "bkdb" are validated after restore
         And verify that the incremental file has the stored timestamp
@@ -1123,7 +1121,7 @@ Feature: Validate command line arguments
     @backupfire
     Scenario: Test gpcrondump dump deletion (-c option)
         Given the test is initialized
-        And there is a "heap" table "public.heap_table" with compression "None" in "bkdb" with data 
+        And there is a "heap" table "public.heap_table" with compression "None" in "bkdb" with data
         And the user runs "gpcrondump -a -x bkdb"
         And the full backup timestamp from gpcrondump is stored
         And gpcrondump should return a return code of 0
@@ -1462,9 +1460,9 @@ Feature: Validate command line arguments
         And gpcrondump should return a return code of 0
         And the timestamp from gpcrondump is stored
         And all the data from "bkdb" is saved for verification
-        And the user runs gpdbrestore with the stored timestamp and options "-T public.heap_table -T public.invalid"
+        And the user runs gpdbrestore with the stored timestamp and options "-T public.heap_table -T public.invalid -q"
         Then gpdbrestore should return a return code of 2
-        And gpdbrestore should print Invalid tables for -T option: The following tables were not found in plan file to stdout
+        And gpdbrestore should print Tables \[\'public.invalid\'\] not found in backup to stdout
 
     @backupfire
     Scenario: gpdbrestore -L with -u option
@@ -1825,9 +1823,11 @@ Feature: Validate command line arguments
         And the timestamp from gpcrondump is stored in a list
         And the named pipe script for the "restore" is run for the files under " "
         And all the data from "bkdb" is saved for verification
-        And the user runs gpdbrestore with the stored timestamp
         And gpdbrestore should return a return code of 0
         And verify that the data of "10" tables in "bkdb" is validated after restore
+        When the named pipe script for the "restore" is run for the files under " "
+        And the user runs gpdbrestore with the stored timestamp and options "-T public.ao_part_table"
+        Then gpdbrestore should print \[WARNING\]:-Skipping validation of tables in dump file due to the use of named pipes to stdout
         And close all opened pipes
 
     Scenario: Incremental Backup and Restore with -t filter for Full
@@ -2984,8 +2984,6 @@ Feature: Validate command line arguments
         And verify that the table "public.heap_index_table" in database "bkdb" is not analyzed
         And verify that the restored table "public.heap_table" in database "bkdb" is analyzed
 
-    @spl_char
-    @spl_char_1
     Scenario: Simple full backup and restore with special character
         Given the test is initialized
         And the user runs "psql -f gppylib/test/behave/mgmt_utils/steps/data/special_chars/create_special_database.sql template1"
@@ -3003,8 +3001,6 @@ Feature: Validate command line arguments
         And the directory "/tmp/special_table_data.out" is removed or does not exist
         And the user runs command "dropdb " DB\`~@#\$%^&*()_-+[{]}|\\;: \\'/?><;1 ""
 
-    @spl_char
-    @spl_char_2
     Scenario: Funny characters in the table name or schema name for gpcrondump
         Given the test is initialized
         And the database "testdb" does not exist
@@ -3038,11 +3034,10 @@ Feature: Validate command line arguments
         Then gpcrondump should return a return code of 2
         And gpcrondump should print Name has an invalid character "\\t" "\\n" "!" "," "." to stdout
 
-    @spl_char
-    @spl_char_3
     Scenario: Funny characters in the table name or schema name for gpdbrestore
         Given the test is initialized
         And database "testdb" exists
+        And there is a "heap" table "public.table1" in "testdb" with data
         When the user runs command "gpcrondump -a -x testdb"
         And the timestamp from gpcrondump is stored
         When the user runs gpdbrestore with the stored timestamp and options "--table-file gppylib/test/behave/mgmt_utils/steps/data/special_chars/funny_char_table.txt"
@@ -3057,15 +3052,13 @@ Feature: Validate command line arguments
         When the user runs command "gpdbrestore -s "A\\t\\n.,!1""
         Then gpdbrestore should return a return code of 2
         And gpdbrestore should print Name has an invalid character to stdout
-        When the user runs gpdbrestore with the stored timestamp and options "-T public.table --change-schema A\\t\\n.,!1"
+        When the user runs gpdbrestore with the stored timestamp and options "-T public.table1 --change-schema A\\t\\n.,!1"
         Then gpdbrestore should return a return code of 2
         And gpdbrestore should print Name has an invalid character to stdout
         When the user runs gpdbrestore with the stored timestamp and options "-S A\\t\\n.,!1"
         Then gpdbrestore should return a return code of 2
         And gpdbrestore should print Name has an invalid character to stdout
 
-    @spl_char
-    @spl_char_4
     Scenario: gpcrondump with -T option where table name, schema name and database name contains special character
         Given the test is initialized
         And the user runs "psql -f gppylib/test/behave/mgmt_utils/steps/data/special_chars/create_special_database.sql template1"
@@ -3085,8 +3078,6 @@ Feature: Validate command line arguments
         And verify that there is no table " co_T`~@#$%^&*()-+[{]}|\;: \'"/?><1 " in " DB`~@#$%^&*()_-+[{]}|\;: \'/?><;1 "
         And the user runs command "dropdb " DB\`~@#\$%^&*()_-+[{]}|\\;: \\'/?><;1 ""
 
-    @spl_char
-    @spl_char_5
     Scenario: gpcrondump with --exclude-table-file option where table name, schema name and database name contains special character
         Given the test is initialized
         And the user runs "psql -f gppylib/test/behave/mgmt_utils/steps/data/special_chars/create_special_database.sql template1"
@@ -3104,8 +3095,6 @@ Feature: Validate command line arguments
         And verify that there is no table " co_T`~@#$%^&*()-+[{]}|\;: \'"/?><1 " in " DB`~@#$%^&*()_-+[{]}|\;: \'/?><;1 "
         And the user runs command "dropdb " DB\`~@#\$%^&*()_-+[{]}|\\;: \\'/?><;1 ""
 
-    @spl_char
-    @spl_char_6
     Scenario: gpcrondump with --table-file option where table name, schema name and database name contains special character
         Given the test is initialized
         And the user runs "psql -f gppylib/test/behave/mgmt_utils/steps/data/special_chars/create_special_database.sql template1"
@@ -3125,8 +3114,6 @@ Feature: Validate command line arguments
         And verify that there is no table " co_T`~@#$%^&*()-+[{]}|\;: \'"/?><1 " in " DB`~@#$%^&*()_-+[{]}|\;: \'/?><;1 "
         And the user runs command "dropdb " DB\`~@#\$%^&*()_-+[{]}|\\;: \\'/?><;1 ""
 
-    @spl_char
-    @spl_char_7
     Scenario: gpcrondump with -t option where table name, schema name and database name contains special character
         Given the test is initialized
         And the user runs "psql -f gppylib/test/behave/mgmt_utils/steps/data/special_chars/create_special_database.sql template1"
@@ -3145,9 +3132,6 @@ Feature: Validate command line arguments
         And verify that there is no table " co_T`~@#$%^&*()-+[{]}|\;: \'"/?><1 " in " DB`~@#$%^&*()_-+[{]}|\;: \'/?><;1 "
         And the user runs command "dropdb " DB\`~@#\$%^&*()_-+[{]}|\\;: \\'/?><;1 ""
 
-
-    @spl_char
-    @spl_char_8
     Scenario: gpcrondump with --schema-file, --exclude-schema-file, -s and -S option when schema name and database name contains special character
         Given the test is initialized
         And the user runs "psql -f gppylib/test/behave/mgmt_utils/steps/data/special_chars/create_special_database.sql template1"
@@ -3197,8 +3181,6 @@ Feature: Validate command line arguments
         And the directory "/tmp/specail_schema_data.out" is removed or does not exist
         And the directory "/tmp/specail_schema_data.ans" is removed or does not exist
 
-    @spl_char
-    @spl_char_9
     Scenario: Gpcrondump, --table-file, --exclude-table-file, --schema-file and --exclude-schema-file if file contains double quoted table and schema name then gpcrondump should error out finding table does not exists
         Given the test is initialized
         And the user runs "psql -f gppylib/test/behave/mgmt_utils/steps/data/special_chars/create_special_database.sql template1"
@@ -3222,8 +3204,6 @@ Feature: Validate command line arguments
         Then gpcrondump should return a return code of 0
         And the user runs "psql -f gppylib/test/behave/mgmt_utils/steps/data/special_chars/drop_special_database.sql template1"
 
-    @spl_char
-    @spl_char_10
     Scenario: Gpdbrestore, --change-schema option does not work with -S schema level restore option
         Given the test is initialized
         And the user runs "psql -f gppylib/test/behave/mgmt_utils/steps/data/special_chars/create_special_database.sql template1"
@@ -3237,8 +3217,6 @@ Feature: Validate command line arguments
         And gpcrondump should print -S schema level restore does not work with --change-schema option to stdout
 
 
-    @spl_char
-    @spl_char_11
     Scenario: Gpdbrestore with --table-file, -T, --truncate and --change-schema options when table name, schema name and database name contains special character
         Given the test is initialized
         And the user runs "psql -f gppylib/test/behave/mgmt_utils/steps/data/special_chars/create_special_database.sql template1"
@@ -3278,8 +3256,6 @@ Feature: Validate command line arguments
         And the directory "/tmp/table_data.out" is removed or does not exist
         And the user runs command "dropdb " DB\`~@#\$%^&*()_-+[{]}|\\;: \\'/?><;1 ""
 
-    @spl_char
-    @spl_char_12
     Scenario: gpcrondump with --incremental option when table name, schema name and database name contains special character
         Given the test is initialized
         And the user runs "psql -f gppylib/test/behave/mgmt_utils/steps/data/special_chars/create_special_database.sql template1"
@@ -3305,8 +3281,6 @@ Feature: Validate command line arguments
         And the directory "/tmp/special_table_data.ans" is removed or does not exist
 
 
-    @spl_char
-    @spl_char_13
     Scenario: gpdbrestore, --redirect option with special db name, and all table name, schema name and database name contain special character
         Given the test is initialized
         And the user runs "psql -f gppylib/test/behave/mgmt_utils/steps/data/special_chars/create_special_database.sql template1"
@@ -3328,15 +3302,11 @@ Feature: Validate command line arguments
         And the user runs command "dropdb " DB\`~@#\$%^&*()_-+[{]}|\\;: \\'/?><;1 ""
         And the user runs command "dropdb " DB\`~@#\$%^&*()_-+[{]}|\\;: \\'/?><;2 ""
 
-    @spl_char
-    @spl_char_14
     Scenario: gpdbrestore, -s option with special chars
         Given the test is initialized
         When the user runs command "gpdbrestore -s " DB\`~@#\$%^&*()_-+[{]}|\\;:.;\n\t \\'/?><;2 ""
         Then gpdbrestore should print Name has an invalid character to stdout
 
-    @spl_char
-    @spl_char_15
     Scenario: gpdbrestore, -S option, schema level restore with special chars in schema name
         Given the test is initialized
         And the user runs "psql -f gppylib/test/behave/mgmt_utils/steps/data/special_chars/create_special_database.sql template1"
@@ -3357,8 +3327,6 @@ Feature: Validate command line arguments
         And the directory "/tmp/special_table_data.ans" is removed or does not exist
         And the user runs command "dropdb " DB\`~@#\$%^&*()_-+[{]}|\\;: \\'/?><;1 ""
 
-    @spl_char
-    @spl_char_16
     Scenario: gpdbrestore, --noplan option with special chars in database name, schema name, and table name
         Given the test is initialized
         And the user runs "psql -f gppylib/test/behave/mgmt_utils/steps/data/special_chars/create_special_database.sql template1"
@@ -3382,6 +3350,105 @@ Feature: Validate command line arguments
         And the directory "/tmp/special_ao_table_data.out" is removed or does not exist
         And the directory "/tmp/special_ao_table_data.ans" is removed or does not exist
         And the user runs command "dropdb " DB\`~@#\$%^&*()_-+[{]}|\\;: \\'/?><;1 ""
+
+	Scenario: Restoring a nonexistent table should fail with clear error message
+        Given the test is initialized
+        And there is a "heap" table "heap_table" in "bkdb" with data
+        When the user runs "gpcrondump -a -x bkdb"
+        Then gpcrondump should return a return code of 0
+        And the timestamp from gpcrondump is stored
+        When the user runs gpdbrestore with the stored timestamp and options "-T public.heap_table2 -q"
+        Then gpdbrestore should return a return code of 2
+        Then gpdbrestore should print Tables \[\'public.heap_table2\'\] to stdout
+        Then gpdbrestore should not print Issue with 'ANALYZE' of restored table 'public.heap_table2' in 'bkdb' database to stdout
+
+    Scenario: Absolute path should be provided with -u option for gpcrondump
+        Given the test is initialized
+        And there is a "heap" table "heap_table" in "bkdb" with data
+        When the user runs "gpcrondump -a -x bkdb -u foo/db"
+        Then gpcrondump should return a return code of 2
+        And gpcrondump should print is not an absolute path to stdout
+
+    @backupfire
+    Scenario: Full Backup with option --schema-file with prefix option and Restore
+        Given the test is initialized
+        And the prefix "foo" is stored
+        And there is schema "schema_heap, schema_ao, testschema" exists in "bkdb"
+        And there is a "heap" table "schema_heap.heap_table" in "bkdb" with data
+        And there is a "heap" table "testschema.heap_table" in "bkdb" with data
+        And there is a "ao" partition table "schema_ao.ao_part_table" in "bkdb" with data
+        And there is a backupfile of tables "schema_heap.heap_table, schema_ao.ao_part_table, testschema.heap_table" in "bkdb" exists for validation
+        And there is a file "include_file" with tables "schema_heap|schema_ao"
+        When the user runs "gpcrondump -a -x bkdb --schema-file include_file --prefix=foo"
+        Then gpcrondump should return a return code of 0
+        And the timestamp from gpcrondump is stored
+        And verify that the "report" file in " " dir contains "Backup Type: Full"
+        When the user runs gpdbrestore with the stored timestamp and options "--prefix=foo"
+        Then gpdbrestore should return a return code of 0
+        And verify that there is a "heap" table "schema_heap.heap_table" in "bkdb" with data
+        And verify that there is a "ao" table "schema_ao.ao_part_table" in "bkdb" with data
+        And verify that there is no table "testschema.heap_table" in "bkdb"
+
+    @aoco_stat_update
+    Scenario: Simple Full Backup with AO/CO statistics w/ filter
+        Given the test is initialized
+        And there is a "ao" table "public.ao_table" in "bkdb" with data
+        And there is a "ao" table "public.ao_index_table" in "bkdb" with data
+        When the user runs "gpcrondump -a -x bkdb"
+        Then gpcrondump should return a return code of 0
+        And the timestamp from gpcrondump is stored
+        When the user runs gpdbrestore with the stored timestamp and options "--noaostats"
+        Then gpdbrestore should return a return code of 0
+        And verify that there are "0" tuples in "bkdb" for table "public.ao_index_table"
+        And verify that there are "0" tuples in "bkdb" for table "public.ao_table"
+        When the user runs gpdbrestore with the stored timestamp and options "-T public.ao_table" without -e option
+        Then gpdbrestore should return a return code of 0
+        And verify that there are "0" tuples in "bkdb" for table "public.ao_index_table"
+        And verify that there are "4380" tuples in "bkdb" for table "public.ao_table"
+
+    @aoco_stat_update
+    Scenario: Simple Full Backup with AO/CO statistics w/ filter schema
+        Given the test is initialized
+        And there is schema "schema_ao, testschema" exists in "bkdb"
+        And there is a "ao" table "public.ao_table" in "bkdb" with data
+        And there is a "ao" table "public.ao_index_table" in "bkdb" with data
+        And there is a "ao" table "schema_ao.ao_index_table" in "bkdb" with data
+        And there is a "ao" partition table "schema_ao.ao_part_table" in "bkdb" with data
+        And there is a "ao" partition table "testschema.ao_foo" in "bkdb" with data
+        When the user runs "gpcrondump -a -x bkdb"
+        Then gpcrondump should return a return code of 0
+        And the timestamp from gpcrondump is stored
+        When the user runs gpdbrestore with the stored timestamp and options "--noaostats"
+        Then gpdbrestore should return a return code of 0
+        And verify that there are "0" tuples in "bkdb" for table "public.ao_index_table"
+        And verify that there are "0" tuples in "bkdb" for table "public.ao_table"
+        And verify that there are "0" tuples in "bkdb" for table "schema_ao.ao_index_table"
+        And verify that there are "0" tuples in "bkdb" for table "schema_ao.ao_part_table"
+        And verify that there are "0" tuples in "bkdb" for table "testschema.ao_foo"
+        When the user runs gpdbrestore with the stored timestamp and options "-S schema_ao -S testschema" without -e option
+        Then gpdbrestore should return a return code of 0
+        And verify that there are "0" tuples in "bkdb" for table "public.ao_index_table"
+        And verify that there are "0" tuples in "bkdb" for table "public.ao_table"
+        And verify that there are "730" tuples in "bkdb" for table "testschema.ao_foo_1_prt_p1_2_prt_1"
+        And verify that there are "730" tuples in "bkdb" for table "testschema.ao_foo_1_prt_p1_2_prt_2"
+        And verify that there are "730" tuples in "bkdb" for table "testschema.ao_foo_1_prt_p1_2_prt_3"
+        And verify that there are "730" tuples in "bkdb" for table "testschema.ao_foo_1_prt_p2_2_prt_1"
+        And verify that there are "730" tuples in "bkdb" for table "testschema.ao_foo_1_prt_p2_2_prt_2"
+        And verify that there are "730" tuples in "bkdb" for table "testschema.ao_foo_1_prt_p2_2_prt_3"
+        And verify that there are "4380" tuples in "bkdb" for table "schema_ao.ao_index_table"
+        And verify that there are "0" tuples in "bkdb" for table "schema_ao.ao_part_table"
+
+
+    @redirect
+    Scenario: Restore with --redirect option should not rely on existance of dumped database
+        Given the test is initialized
+        When the user runs "gpcrondump -a -x bkdb"
+        And the timestamp from gpcrondump is stored
+        And the database "bkdb" does not exist
+        And database "bkdb1" is dropped and recreated
+        When the user runs gpdbrestore with the stored timestamp and options "--redirect=bkdb1"
+        Then gpdbrestore should return a return code of 0
+        And the database "bkdb1" does not exist
 
     # THIS SHOULD BE THE LAST TEST
     @backupfire

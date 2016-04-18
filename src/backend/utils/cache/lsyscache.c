@@ -4050,6 +4050,7 @@ get_check_constraint_expr_tree(Oid oidCheckconstraint)
 bool
 get_cast_func(Oid oidSrc, Oid oidDest, bool *is_binary_coercible, Oid *oidCastFunc)
 {
+	CoercionPathType	pathtype;
 	if (IsBinaryCoercible(oidSrc, oidDest))
 	{
 		*is_binary_coercible = true;
@@ -4058,8 +4059,11 @@ get_cast_func(Oid oidSrc, Oid oidDest, bool *is_binary_coercible, Oid *oidCastFu
 	}
 	
 	*is_binary_coercible = false;
-	
-	return find_coercion_pathway(oidDest, oidSrc, COERCION_IMPLICIT, oidCastFunc);
+
+	pathtype = find_coercion_pathway(oidDest, oidSrc, COERCION_IMPLICIT, oidCastFunc);
+	if (pathtype != COERCION_PATH_NONE)
+		return true;
+	return false;
 }
 
 /*

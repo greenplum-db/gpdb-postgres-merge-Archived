@@ -1101,6 +1101,39 @@ _copyMotion(Motion *from)
 }
 
 /*
+* _copyCoerceViaIO
+*/
+static CoerceViaIO *
+_copyCoerceViaIO(CoerceViaIO *from)
+{
+	CoerceViaIO   *newnode = makeNode(CoerceViaIO);
+
+	COPY_NODE_FIELD(arg);
+	COPY_SCALAR_FIELD(resulttype);
+	COPY_SCALAR_FIELD(coerceformat);
+
+	return newnode;
+}
+
+/*
+ * _copyArrayCoerceExpr
+ */
+static ArrayCoerceExpr *
+_copyArrayCoerceExpr(ArrayCoerceExpr *from)
+{
+	ArrayCoerceExpr   *newnode = makeNode(ArrayCoerceExpr);
+
+	COPY_NODE_FIELD(arg);
+	COPY_SCALAR_FIELD(elemfuncid);
+	COPY_SCALAR_FIELD(resulttype);
+	COPY_SCALAR_FIELD(resulttypmod);
+	COPY_SCALAR_FIELD(isExplicit);
+	COPY_SCALAR_FIELD(coerceformat);
+
+	return newnode;
+}
+
+/*
  * _copyDML
  */
 static DML *
@@ -1725,6 +1758,7 @@ _copyArrayExpr(ArrayExpr *from)
 	COPY_SCALAR_FIELD(element_typeid);
 	COPY_NODE_FIELD(elements);
 	COPY_SCALAR_FIELD(multidims);
+	COPY_LOCATION_FIELD(location);
 
 	return newnode;
 }
@@ -2485,6 +2519,16 @@ _copyA_Indirection(A_Indirection *from)
 	return newnode;
 }
 
+static A_ArrayExpr *
+_copyA_ArrayExpr(A_ArrayExpr *from)
+{
+	A_ArrayExpr *newnode = makeNode(A_ArrayExpr);
+	COPY_NODE_FIELD(elements);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
 static ResTarget *
 _copyResTarget(ResTarget *from)
 {
@@ -2603,7 +2647,7 @@ _copyColumnReferenceStorageDirective(ColumnReferenceStorageDirective *from)
 	ColumnReferenceStorageDirective *newnode =
 		makeNode(ColumnReferenceStorageDirective);
 
-	COPY_NODE_FIELD(column);
+	COPY_STRING_FIELD(column);
 	COPY_SCALAR_FIELD(deflt);
 	COPY_NODE_FIELD(encoding);
 
@@ -3176,7 +3220,7 @@ _copyPartitionElem(PartitionElem *from)
 {
 	PartitionElem *newnode = makeNode(PartitionElem);
 
-	COPY_NODE_FIELD(partName);
+	COPY_STRING_FIELD(partName);
 	COPY_NODE_FIELD(boundSpec);
 	COPY_NODE_FIELD(subSpec);
 	COPY_SCALAR_FIELD(isDefault);
@@ -3476,6 +3520,16 @@ _copyRemoveFuncStmt(RemoveFuncStmt *from)
 	COPY_NODE_FIELD(args);
 	COPY_SCALAR_FIELD(behavior);
 	COPY_SCALAR_FIELD(missing_ok);
+
+	return newnode;
+}
+
+static DoStmt *
+_copyDoStmt(DoStmt *from)
+{
+	DoStmt	   *newnode = makeNode(DoStmt);
+
+	COPY_NODE_FIELD(args);
 
 	return newnode;
 }
@@ -3953,10 +4007,12 @@ _copyCreatePLangStmt(CreatePLangStmt *from)
 
 	COPY_STRING_FIELD(plname);
 	COPY_NODE_FIELD(plhandler);
+	COPY_NODE_FIELD(plinline);
 	COPY_NODE_FIELD(plvalidator);
 	COPY_SCALAR_FIELD(pltrusted);
 	COPY_SCALAR_FIELD(plangOid);
 	COPY_SCALAR_FIELD(plhandlerOid);
+	COPY_SCALAR_FIELD(plinlineOid);
 	COPY_SCALAR_FIELD(plvalidatorOid);
 
 	return newnode;
@@ -4953,6 +5009,9 @@ copyObject(void *from)
 		case T_RemoveFuncStmt:
 			retval = _copyRemoveFuncStmt(from);
 			break;
+		case T_DoStmt:
+			retval = _copyDoStmt(from);
+			break;
 		case T_RemoveOpClassStmt:
 			retval = _copyRemoveOpClassStmt(from);
 			break;
@@ -5151,6 +5210,9 @@ copyObject(void *from)
 			break;
 		case T_A_Indirection:
 			retval = _copyA_Indirection(from);
+			break;
+		case T_A_ArrayExpr:
+			retval = _copyA_ArrayExpr(from);
 			break;
 		case T_ResTarget:
 			retval = _copyResTarget(from);

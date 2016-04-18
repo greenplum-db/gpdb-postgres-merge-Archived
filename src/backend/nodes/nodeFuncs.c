@@ -151,6 +151,24 @@ exprLocation(Node *expr)
 								  exprLocation((Node *) rexpr->arg));
 			}
 			break;
+		case T_CoerceViaIO:
+			{
+				CoerceViaIO *cexpr = (CoerceViaIO *) expr;
+
+				/* Much as above */
+				loc = leftmostLoc(cexpr->location,
+								  exprLocation((Node *) cexpr->arg));
+			}
+			break;
+		case T_ArrayCoerceExpr:
+			{
+				ArrayCoerceExpr *cexpr = (ArrayCoerceExpr *) expr;
+
+				/* Much as above */
+				loc = leftmostLoc(cexpr->location,
+								  exprLocation((Node *) cexpr->arg));
+			}
+			break;
 		case T_ConvertRowtypeExpr:
 			{
 				ConvertRowtypeExpr *cexpr = (ConvertRowtypeExpr *) expr;
@@ -269,6 +287,10 @@ exprLocation(Node *expr)
 				loc = leftmostLoc(fc->location,
 								  exprLocation((Node *) fc->args));
 			}
+			break;
+		case T_A_ArrayExpr:
+			/* the location points at ARRAY or [, which must be leftmost */
+			loc = ((A_ArrayExpr *) expr)->location;
 			break;
 		case T_ResTarget:
 			/* we need not examine the contained expression (if any) */

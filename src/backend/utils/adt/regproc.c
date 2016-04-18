@@ -1053,7 +1053,6 @@ regtypesend(PG_FUNCTION_ARGS)
 	return oidsend(fcinfo);
 }
 
-
 /*
  * regconfigin		- converts "tsconfigname" to tsconfig OID
  *

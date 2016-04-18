@@ -266,6 +266,7 @@ bool		filerep_inject_listener_fault = false;
 bool		filerep_inject_db_startup_fault = false;
 bool		filerep_inject_change_tracking_recovery_fault = false;
 bool		filerep_mirrorvalidation_during_resync = false;
+bool		log_filerep_to_syslogger = false;
 
 /* WAL based replication debug GUCs */
 bool		debug_walrepl_snd = false;
@@ -2332,6 +2333,16 @@ struct config_bool ConfigureNamesBool_gp[] =
 	},
 
 	{
+		{"log_filerep_to_syslogger", PGC_SUSET, DEVELOPER_OPTIONS,
+			gettext_noop("log all filerep related log messages to the server log files"),
+			NULL,
+			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
+		},
+		&log_filerep_to_syslogger,
+		true, NULL, NULL
+	},
+
+	{
 		{"debug_filerep_gcov", PGC_SUSET, DEVELOPER_OPTIONS,
 			gettext_noop("workaround for filerep gcov issue"),
 			NULL,
@@ -2348,7 +2359,7 @@ struct config_bool ConfigureNamesBool_gp[] =
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&Debug_filerep_config_print,
-		false, NULL, NULL
+		true, NULL, NULL
 	},
 
 	{
@@ -5168,10 +5179,10 @@ struct config_string ConfigureNamesString_gp[] =
 	},
 
 	{
-		{"gp_interconnect_type", PGC_BACKEND, GP_ARRAY_TUNING,
+		{"gp_interconnect_type", PGC_USERSET, GP_ARRAY_TUNING,
 			gettext_noop("Sets the protocol used for inter-node communication."),
-			gettext_noop("Valid values are \"tcp\", \"udp\" and \"udpifc\"."),
-			GUC_GPDB_ADDOPT
+			gettext_noop("Only support \"udpifc\" for now."),
+			GUC_GPDB_ADDOPT | GUC_NO_SHOW_ALL | GUC_DISALLOW_IN_FILE
 		},
 		&gp_interconnect_type_str,
 		"udpifc", gpvars_assign_gp_interconnect_type, gpvars_show_gp_interconnect_type
@@ -5502,7 +5513,7 @@ struct config_string ConfigureNamesString_gp[] =
 		{"gp_default_storage_options", PGC_USERSET, APPENDONLY_TABLES,
 			gettext_noop("Default options for appendonly storage."),
 			NULL,
-			GUC_NOT_IN_SAMPLE
+			GUC_NOT_IN_SAMPLE | GUC_GPDB_ADDOPT
 		},
 		&gp_default_storage_options, "", assign_gp_default_storage_options, NULL
 	},

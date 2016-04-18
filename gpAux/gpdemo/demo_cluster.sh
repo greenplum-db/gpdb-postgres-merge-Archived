@@ -4,7 +4,7 @@
 # Data Directories
 # ======================================================================
 
-DATADIRS=`pwd`/datadirs
+DATADIRS=${DATADIRS:-`pwd`/datadirs}
 QDDIR=$DATADIRS/qddir
 
 SEG_PREFIX=demoDataDir
@@ -401,4 +401,10 @@ cat > gpdemo-env.sh <<-EOF
 	export MASTER_DATA_DIRECTORY=$QDDIR/${SEG_PREFIX}-1
 EOF
 
-exit ${RETURN}
+if [ "${RETURN}" -gt 1 ];
+then
+    # gpinitsystem will return warnings as exit code 1
+    exit ${RETURN}
+else
+    exit 0
+fi

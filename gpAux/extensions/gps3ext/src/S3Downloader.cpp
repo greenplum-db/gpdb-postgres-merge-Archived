@@ -1,19 +1,21 @@
 #include "S3Downloader.h"
 
 #include <algorithm>  // std::min
-#include <sstream>
 #include <iostream>
+#include <sstream>
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 
-#include "utils.h"
-#include "S3Log.h"
 #include <curl/curl.h>
+#include "S3Log.h"
+#include "gps3ext.h"
+#include "utils.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
 #include <unistd.h>
+using std::stringstream;
 
 OffsetMgr::OffsetMgr(uint64_t m, uint64_t c)
     : maxsize(m), chunksize(c), curpos(0) {
@@ -165,13 +167,14 @@ uint64_t BlockingBuffer::Fill() {
     return (readlen == -1) ? -1 : this->realsize;
 }
 
-BlockingBuffer *BlockingBuffer::CreateBuffer(string url, OffsetMgr *o,
+BlockingBuffer *BlockingBuffer::CreateBuffer(string url, string region,
+                                             OffsetMgr *o,
                                              S3Credential *pcred) {
     BlockingBuffer *ret = NULL;
     if (url == "") return NULL;
 
     if (pcred) {
-        ret = new S3Fetcher(url, o, *pcred);
+        ret = new S3Fetcher(url, region, o, *pcred);
     } else {
         ret = new HTTPFetcher(url, o);
     }
@@ -184,6 +187,11 @@ void *DownloadThreadfunc(void *data) {
     uint64_t filled_size = 0;
     S3INFO("Downloading thread starts");
     do {
+        if (QueryCancelPending) {
+            S3INFO("Downloading thread is interrupted by GPDB");
+            return NULL;
+        }
+
         filled_size = buffer->Fill();
         // XXX fix the returning type
         if (filled_size == -1) {
@@ -222,8 +230,8 @@ Downloader::Downloader(uint8_t part_num)
     }
 }
 
-bool Downloader::init(string url, uint64_t size, uint64_t chunksize,
-                      S3Credential *pcred) {
+bool Downloader::init(string url, string region, uint64_t size,
+                      uint64_t chunksize, S3Credential *pcred) {
     if (!this->threads || !this->buffers) {
         return false;
     }
@@ -236,7 +244,7 @@ bool Downloader::init(string url, uint64_t size, uint64_t chunksize,
 
     for (int i = 0; i < this->num; i++) {
         this->buffers[i] = BlockingBuffer::CreateBuffer(
-            url, o, pcred);  // decide buffer according to url
+            url, region, o, pcred);  // decide buffer according to url
         if (!this->buffers[i]->Init()) {
             S3ERROR("Failed to init blocking buffer");
             return false;
@@ -298,14 +306,20 @@ Downloader::~Downloader() {
     if (this->buffers) free(this->buffers);
 }
 
+// return the number of items
 static uint64_t WriterCallback(void *contents, uint64_t size, uint64_t nmemb,
                                void *userp) {
     uint64_t realsize = size * nmemb;
     Bufinfo *p = reinterpret_cast<Bufinfo *>(userp);
 
+    if (QueryCancelPending) {
+        return -1;
+    }
+
     memcpy(p->buf + p->len, contents, realsize);
     p->len += realsize;
-    return realsize;
+
+    return nmemb;
 }
 
 HTTPFetcher::HTTPFetcher(string url, OffsetMgr *o)
@@ -381,6 +395,7 @@ uint64_t HTTPFetcher::fetchdata(uint64_t offset, char *data, uint64_t len) {
         snprintf(rangebuf, 128, "bytes=%" PRIu64 "-%" PRIu64, offset,
                  offset + len - 1);
         this->AddHeaderField(RANGE, rangebuf);
+        this->AddHeaderField(X_AMZ_CONTENT_SHA256, "UNSIGNED-PAYLOAD");
         if (!this->processheader()) {
             S3ERROR("Failed to sign while fetching data, retry");
             continue;
@@ -390,6 +405,12 @@ uint64_t HTTPFetcher::fetchdata(uint64_t offset, char *data, uint64_t len) {
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
 
         CURLcode res = curl_easy_perform(curl_handle);
+
+        if (res == CURLE_WRITE_ERROR) {
+            S3INFO("Curl downloading is interrupted by GPDB");
+            bi.len = -1;
+            break;
+        }
 
         if (res == CURLE_OPERATION_TIMEDOUT) {
             S3WARN("Net speed is too slow, retry");
@@ -424,13 +445,16 @@ uint64_t HTTPFetcher::fetchdata(uint64_t offset, char *data, uint64_t len) {
     return bi.len;
 }
 
-S3Fetcher::S3Fetcher(string url, OffsetMgr *o, const S3Credential &cred)
+S3Fetcher::S3Fetcher(string url, string region, OffsetMgr *o,
+                     const S3Credential &cred)
     : HTTPFetcher(url, o) {
     this->cred = cred;
+    this->region = region;
 }
 
 bool S3Fetcher::processheader() {
-    return SignGETv2(&this->headers, this->urlparser.Path(), this->cred);
+    return SignRequestV4("GET", &this->headers, this->region,
+                         this->urlparser.Path(), "", this->cred);
 }
 
 // CreateBucketContentItem
@@ -452,8 +476,13 @@ BucketContent *CreateBucketContentItem(string key, uint64_t size) {
 }
 
 // require curl 7.17 higher
-xmlParserCtxtPtr DoGetXML(string host, string bucket, string url,
-                          const S3Credential &cred) {
+// http://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGET.html
+xmlParserCtxtPtr DoGetXML(string region, string bucket, string url,
+                          string prefix, const S3Credential &cred,
+                          string marker) {
+    stringstream host;
+    host << "s3-" << region << ".amazonaws.com";
+
     CURL *curl = curl_easy_init();
 
     if (curl) {
@@ -477,10 +506,18 @@ xmlParserCtxtPtr DoGetXML(string host, string bucket, string url,
         return NULL;
     }
 
-    header->Add(HOST, host);
+    header->Add(HOST, host.str());
     UrlParser p(url.c_str());
-    if (!SignGETv2(header, p.Path(), cred)) {
-        S3ERROR("failed to sign in DoGetXML()");
+    header->Add(X_AMZ_CONTENT_SHA256, "UNSIGNED-PAYLOAD");
+
+    std::stringstream query;
+    if (marker != "") {
+        query << "marker=" << marker << "&";
+    }
+    query << "prefix=" << prefix;
+
+    if (!SignRequestV4("GET", header, region, p.Path(), query.str(), cred)) {
+        S3ERROR("Failed to sign in DoGetXML()");
         delete header;
         return NULL;
     }
@@ -497,7 +534,6 @@ xmlParserCtxtPtr DoGetXML(string host, string bucket, string url,
             xmlFreeParserCtxt(xml.ctxt);
             xml.ctxt = NULL;
         }
-
     } else {
         if (xml.ctxt) {
             xmlParseChunk(xml.ctxt, "", 0, 1);
@@ -511,18 +547,24 @@ xmlParserCtxtPtr DoGetXML(string host, string bucket, string url,
     return xml.ctxt;
 }
 
-bool BucketContentComp(BucketContent *a, BucketContent *b) {
-    return strcmp(a->Key().c_str(), b->Key().c_str()) < 0;
-}
-
-static bool extractContent(ListBucketResult *result, xmlNode *root_element) {
+static bool extractContent(ListBucketResult *result, xmlNode *root_element,
+                           string &marker) {
     if (!result || !root_element) {
         return false;
     }
 
     xmlNodePtr cur;
+    const char *key = NULL;
+    bool is_truncated = false;
+
     cur = root_element->xmlChildrenNode;
     while (cur != NULL) {
+        if (!xmlStrcmp(cur->name, (const xmlChar *)"IsTruncated")) {
+            if (!strncmp((const char *)xmlNodeGetContent(cur), "true", 4)) {
+                is_truncated = true;
+            }
+        }
+
         if (!xmlStrcmp(cur->name, (const xmlChar *)"Name")) {
             result->Name = (const char *)xmlNodeGetContent(cur);
         }
@@ -533,7 +575,6 @@ static bool extractContent(ListBucketResult *result, xmlNode *root_element) {
 
         if (!xmlStrcmp(cur->name, (const xmlChar *)"Contents")) {
             xmlNodePtr contNode = cur->xmlChildrenNode;
-            const char *key = NULL;
             uint64_t size = 0;
             while (contNode != NULL) {
                 if (!xmlStrcmp(contNode->name, (const xmlChar *)"Key")) {
@@ -558,49 +599,79 @@ static bool extractContent(ListBucketResult *result, xmlNode *root_element) {
         }
         cur = cur->next;
     }
-    sort(result->contents.begin(), result->contents.end(), BucketContentComp);
+
+    marker = is_truncated ? key : "";
+
     return true;
 }
 
-ListBucketResult *ListBucket(string schema, string host, string bucket,
+ListBucketResult *ListBucket(string schema, string region, string bucket,
                              string prefix, const S3Credential &cred) {
-    std::stringstream sstr;
-    if (prefix != "") {
-        sstr << schema << "://" << host << "/" << bucket
-             << "?prefix=" << prefix;
-        // sstr<<"http://"<<bucket<<"."<<host<<"?prefix="<<prefix;
-    } else {
-        sstr << schema << "://" << bucket << "." << host;
-    }
+    string marker = "";
 
-    xmlParserCtxtPtr xmlcontext = DoGetXML(host, bucket, sstr.str(), cred);
+    stringstream host;
+    host << "s3-" << region << ".amazonaws.com";
 
-    if (!xmlcontext) {
-        S3ERROR("Failed to list bucket for %s", sstr.str().c_str());
-        return NULL;
-    }
+    S3DEBUG("Host url is %s", host.str().c_str());
 
-    xmlNode *root_element = xmlDocGetRootElement(xmlcontext->myDoc);
-    if (!root_element) {
-        S3ERROR("Failed to parse returned xml of bucket list");
-        xmlFreeParserCtxt(xmlcontext);
-        return NULL;
-    }
-
+    xmlParserCtxtPtr xmlcontext = NULL;
     ListBucketResult *result = new ListBucketResult();
 
-    if (!result) {
-        // allocate fail
-        S3ERROR("Failed to allocate bucket list result");
-        xmlFreeParserCtxt(xmlcontext);
-        return NULL;
-    }
-    if (!extractContent(result, root_element)) {
-        S3ERROR("Failed to extract key from bucket list");
-        delete result;
-        xmlFreeParserCtxt(xmlcontext);
-        return NULL;
-    }
+    do {
+        std::stringstream url;
+
+        if (prefix != "") {
+            url << schema << "://" << host.str() << "/" << bucket << "?";
+
+            if (marker != "") {
+                url << "marker=" << marker << "&";
+            }
+
+            url << "prefix=" << prefix;
+        } else {
+            url << schema << "://" << bucket << "." << host.str() << "?";
+
+            if (marker != "") {
+                url << "marker=" << marker;
+            }
+        }
+
+        xmlcontext = DoGetXML(region, bucket, url.str(), prefix, cred, marker);
+
+        if (!xmlcontext) {
+            S3ERROR("Failed to list bucket for %s", url.str().c_str());
+            return NULL;
+        }
+
+        xmlNode *root_element = xmlDocGetRootElement(xmlcontext->myDoc);
+        if (!root_element) {
+            S3ERROR("Failed to parse returned xml of bucket list");
+            xmlFreeParserCtxt(xmlcontext);
+            return NULL;
+        }
+
+        xmlNodePtr cur = root_element->xmlChildrenNode;
+        while (cur != NULL) {
+            if (!xmlStrcmp(cur->name, (const xmlChar *)"Code")) {
+                S3ERROR("Server returns error \"%s\"", xmlNodeGetContent(cur));
+                break;
+            }
+
+            cur = cur->next;
+        }
+
+        if (!result) {
+            S3ERROR("Failed to allocate bucket list result");
+            xmlFreeParserCtxt(xmlcontext);
+            return NULL;
+        }
+        if (!extractContent(result, root_element, marker)) {
+            S3ERROR("Failed to extract key from bucket list");
+            delete result;
+            xmlFreeParserCtxt(xmlcontext);
+            return NULL;
+        }
+    } while (marker != "");
 
     /* always cleanup */
     xmlFreeParserCtxt(xmlcontext);
@@ -652,7 +723,9 @@ ListBucketResult *ListBucket_FakeHTTP(string host, string bucket) {
         xmlFreeParserCtxt(xml.ctxt);
         return NULL;
     }
-    if (!extractContent(result, root_element)) {
+
+    string marker = "";
+    if (!extractContent(result, root_element, marker)) {
         delete result;
         xmlFreeParserCtxt(xml.ctxt);
         return NULL;

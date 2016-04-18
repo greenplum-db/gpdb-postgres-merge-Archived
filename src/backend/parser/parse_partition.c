@@ -595,9 +595,7 @@ transformPartitionBy(ParseState *pstate, CreateStmtContext *cxt,
 				/*
 				 * Use the partition name as part of the child table name
 				 */
-				char	   *pName = strVal(pElem->partName);
-
-				snprintf(prtstr, sizeof(prtstr), "prt_%s", pName);
+				snprintf(prtstr, sizeof(prtstr), "prt_%s", pElem->partName);
 			}
 			else
 			{
@@ -811,11 +809,7 @@ transformPartitionBy(ParseState *pstate, CreateStmtContext *cxt,
 					pL1 = lappend(pL1, pInt2);	/* every position */
 
 					if (pElem && pElem->partName)
-					{
-						char	   *pName = strVal(pElem->partName);
-
-						pL1 = lappend(pL1, pName);
-					}
+						pL1 = lappend(pL1, pElem->partName);
 					else
 						pL1 = lappend(pL1, NULL);
 
@@ -945,7 +939,7 @@ merge_part_column_encodings(CreateStmt *cs, List *stenc)
 			if (f->deflt)
 				continue;
 
-			if (equal(f->column, p->column))
+			if (strcmp(f->column, p->column) == 0)
 			{
 				found = true;
 				break;
@@ -975,7 +969,7 @@ merge_part_column_encodings(CreateStmt *cs, List *stenc)
 				if (r->deflt)
 					continue;
 
-				if (strcmp(strVal(r->column), c->colname) == 0)
+				if (strcmp(r->column, c->colname) == 0)
 				{
 					c->encoding = NIL;
 					break;
@@ -2772,7 +2766,7 @@ validate_partition_spec(ParseState *pstate, CreateStmtContext *cxt,
 				Assert(pElem->partName);		/* default partn must have a
 												 * name */
 				snprintf(namBuf, sizeof(namBuf), " \"%s\"",
-						 strVal(pElem->partName));
+						 pElem->partName);
 
 				if (pDefaultElem)
 				{
@@ -2817,7 +2811,7 @@ validate_partition_spec(ParseState *pstate, CreateStmtContext *cxt,
 				bool		doit = true;
 
 				snprintf(namBuf, sizeof(namBuf), " \"%s\"",
-						 strVal(pElem->partName));
+						 pElem->partName);
 
 				/*
 				 * We might have expanded an EVERY clause here. If so, just
@@ -2825,16 +2819,17 @@ validate_partition_spec(ParseState *pstate, CreateStmtContext *cxt,
 				 */
 				if (doit)
 				{
-					if (allPartNames &&
-						list_member(allPartNames, pElem->partName))
+					ListCell *alc;
+
+					foreach(alc, allPartNames)
 					{
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-								 errmsg("duplicate partition name "
-										"for partition%s%s",
-										namBuf,
-										at_depth),
-							   parser_errposition(pstate, pElem->location)));
+						if (strcmp((char *) lfirst(alc), pElem->partName) == 0)
+							ereport(ERROR,
+									(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+									 errmsg("duplicate partition name for partition%s%s",
+											namBuf,
+											at_depth),
+									 parser_errposition(pstate, pElem->location)));
 					}
 					allPartNames = lappend(allPartNames, pElem->partName);
 				}
@@ -3377,20 +3372,20 @@ preprocess_range_spec(partValidationState *vstate)
 
 					if (list_length(everyelts) > 1)
 						snprintf(newname, sizeof(newname),
-								 "%s_%u", strVal(el->partName),
+								 "%s_%u", el->partName,
 								 ++i);
 					else
 						snprintf(newname, sizeof(newname),
-								 "%s", strVal(el->partName));
+								 "%s", el->partName);
 
 					if (strlen(newname) > NAMEDATALEN)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 								 errmsg("partition name \"%s\" too long",
-										strVal(el->partName)),
+										el->partName),
 						  parser_errposition(vstate->pstate, el->location)));
 
-					el2->partName = (Node *) makeString(pstrdup(newname));
+					el2->partName = pstrdup(newname);
 				}
 			}
 
@@ -3525,7 +3520,7 @@ partition_range_every(ParseState *pstate, PartitionBy *pBy, List *coltypes,
 			if (pElem->partName)
 			{
 				snprintf(namBuf, sizeof(namBuf), " \"%s\"",
-						 strVal(pElem->partName));
+						 pElem->partName);
 			}
 			else
 			{
@@ -4859,13 +4854,14 @@ transformPartitionStorageEncodingClauses(List *enc)
 			if (lc == in)
 				continue;
 
-			if (equal(a->column, b->column))
+			if ((a->deflt && b->deflt) ||
+				(!a->deflt && !b->deflt && strcmp(a->column, b->column) == 0))
 			{
 				if (!equal(a->encoding, b->encoding))
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 							 errmsg("conflicting ENCODING clauses for column "
-									"\"%s\"", strVal(a->column))));
+									"\"%s\"", a->column ? a->column : "DEFAULT")));
 
 				/*
 				 * We found an identical directive on the same column. You'd
@@ -4987,7 +4983,8 @@ merge_partition_encoding(ParseState *pstate, PartitionElem *elem, List *penc)
 		{
 			ColumnReferenceStorageDirective *ed = lfirst(lc2);
 
-			if (equal(pd->column, ed->column))
+			if ((pd->deflt && ed->deflt) ||
+				(!pd->deflt && !ed->deflt && strcmp(pd->column, ed->column) == 0))
 			{
 				found = true;
 				break;

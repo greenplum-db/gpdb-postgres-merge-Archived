@@ -35,6 +35,7 @@
 #include "access/heapam.h"
 #include "access/reloptions.h"
 #include "access/xact.h"
+#include "catalog/catalog.h"
 #include "catalog/catquery.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
@@ -2525,6 +2526,16 @@ AlterTypeOwner(List *names, Oid newOwnerId)
 				 errmsg("%s is a table's row type",
 						format_type_be(typeOid)),
 				 errhint("Use ALTER TABLE instead.")));
+
+	/* don't allow direct alteration of array types, either */
+	if (OidIsValid(typTup->typelem) &&
+		get_array_type(typTup->typelem) == typeOid)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot alter array type %s",
+						format_type_be(typeOid)),
+				 errhint("You can alter type %s, which will alter the array type as well.",
+						 format_type_be(typTup->typelem))));
 
 	/* don't allow direct alteration of array types, either */
 	if (OidIsValid(typTup->typelem) &&

@@ -368,6 +368,7 @@ typedef enum NodeTag
 	T_CreateFunctionStmt,
 	T_AlterFunctionStmt,
 	T_RemoveFuncStmt,
+	T_DoStmt,
 	T_RenameStmt,
 	T_RuleStmt,
 	T_NotifyStmt,
@@ -455,6 +456,7 @@ typedef enum NodeTag
 	T_FuncCall,
 	T_A_Indices,
 	T_A_Indirection,
+	T_A_ArrayExpr,
 	T_ResTarget,
 	T_TypeCast,
 	T_SortBy,
@@ -501,6 +503,7 @@ typedef enum NodeTag
 	 */
 	T_TriggerData = 950,		/* in commands/trigger.h */
 	T_ReturnSetInfo,			/* in nodes/execnodes.h */
+	T_InlineCodeBlock,			/* in nodes/parsenodes.h */
     T_HashBitmap,               /* in nodes/tidbitmap.h */
     T_StreamBitmap,             /* in nodes/tidbitmap.h */
 	T_FormatterData,            /* in access/formatter.h */

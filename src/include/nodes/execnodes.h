@@ -1786,6 +1786,7 @@ typedef struct BitmapAppendOnlyScanState
 
 	struct AppendOnlyFetchDescData	*baos_currentAOFetchDesc;
 	struct AOCSFetchDescData *baos_currentAOCSFetchDesc;
+	struct AOCSFetchDescData *baos_currentAOCSLossyFetchDesc;
 	List	   *baos_bitmapqualorig;
 	Node  		*baos_tbm;
 	TBMIterateResult *baos_tbmres;

@@ -3456,8 +3456,6 @@ CommitTransaction(void)
 	if (Debug_abort_after_distributed_prepared &&
 		isPreparedDtxTransaction())
 	{
-//		int *ptr = NULL;
-//		*ptr = 1;
 		elog(ERROR,"Raise an error as directed by Debug_abort_after_distributed_prepared");
 	}
 

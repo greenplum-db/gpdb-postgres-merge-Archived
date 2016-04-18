@@ -243,6 +243,7 @@ static File AllocateVfd(void);
 static void FreeVfd(File file);
 
 static int	FileAccess(File file);
+static char *make_database_relative(const char *filename);
 static void AtProcExit_Files(int code, Datum arg);
 static void CleanupTempFiles(bool isProcExit);
 static void RemovePgTempFilesInDir(const char *tmpdirname);
@@ -1236,23 +1237,6 @@ FileWrite(File file, char *buffer, int amount)
 			   file, VfdCache[file].fileName,
 			   VfdCache[file].seekPos, amount, buffer));
 
-	/* Added temporary for troubleshooting */
-	if (Debug_filerep_print)
-		elog(LOG, "FileWrite: %d (%s) " INT64_FORMAT " %d %p",
-		 file, VfdCache[file].fileName,
-		 VfdCache[file].seekPos, amount, buffer);
-	else
-		FileRep_InsertLogEntry(
-							   "FileWrite",
-							   FileRep_GetFlatFileIdentifier(VfdCache[file].fileName, ""),
-							   FileRepRelationTypeFlatFile,
-							   FileRepOperationWrite,
-							   FILEREP_UNDEFINED,
-							   FILEREP_UNDEFINED,
-							   FileRepAckStateNotInitialized,
-							   VfdCache[file].seekPos,
-							   amount);
-
 	returnCode = FileAccess(file);
 	if (returnCode < 0)
 		return returnCode;
@@ -1379,28 +1363,6 @@ FileSync(File file)
 	return returnCode;
 }
 
-/*
- * Get the size of a physical file by using fstat()
- *
- * Returns size in bytes if successful, < 0 otherwise
- */
-int64
-FileDiskSize(File file)
-{
-	int returnCode = 0;
-
-	returnCode = FileAccess(file);
-	if (returnCode < 0)
-		return returnCode;
-
-	struct stat buf;
-	returnCode = fstat(VfdCache[file].fd, &buf);
-	if (returnCode < 0)
-		return returnCode;
-
-	return (int64) buf.st_size;
-}
-
 int64
 FileSeek(File file, int64 offset, int whence)
 {
@@ -1462,6 +1424,28 @@ FileSeek(File file, int64 offset, int whence)
 		}
 	}
 	return VfdCache[file].seekPos;
+}
+
+/*
+ * Get the size of a physical file by using fstat()
+ *
+ * Returns size in bytes if successful, < 0 otherwise
+ */
+int64
+FileDiskSize(File file)
+{
+	int			returnCode = 0;
+	struct stat buf;
+
+	returnCode = FileAccess(file);
+	if (returnCode < 0)
+		return returnCode;
+
+	returnCode = fstat(VfdCache[file].fd, &buf);
+	if (returnCode < 0)
+		return returnCode;
+
+	return (int64) buf.st_size;
 }
 
 int64
@@ -1585,6 +1569,20 @@ TryAgain:
 			goto TryAgain;
 		errno = save_errno;
 	}
+
+	/*
+	 * TEMPORARY hack to log the Windows error code on fopen failures, in
+	 * hopes of diagnosing some hard-to-reproduce problems.
+	 */
+#ifdef WIN32
+	{
+		int			save_errno = errno;
+
+		elog(LOG, "Windows fopen(\"%s\",\"%s\") failed: code %lu, errno %d",
+			 name, mode, GetLastError(), save_errno);
+		errno = save_errno;
+	}
+#endif
 
 	return NULL;
 }

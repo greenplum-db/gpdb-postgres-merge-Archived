@@ -393,7 +393,6 @@ extern TupleTableSlot *ExecStoreVirtualTuple(TupleTableSlot *slot);
 extern TupleTableSlot *ExecStoreAllNullTuple(TupleTableSlot *slot);
 
 extern HeapTuple ExecCopySlotHeapTuple(TupleTableSlot *slot);
-extern HeapTuple ExecCopySlotHeapTupleTo(TupleTableSlot *slot, MemoryContext pctxt, char *dest, unsigned int *len);
 extern MemTuple ExecCopySlotMemTuple(TupleTableSlot *slot);
 extern MemTuple ExecCopySlotMemTupleTo(TupleTableSlot *slot, MemoryContext pctxt, char *dest, unsigned int *len);
 

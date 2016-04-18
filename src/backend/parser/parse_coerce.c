@@ -2431,7 +2431,6 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 				result = COERCION_PATH_COERCEVIAIO;
 		}
 	}
-
 	caql_endscan(pcqCtx);
 	return result;
 }

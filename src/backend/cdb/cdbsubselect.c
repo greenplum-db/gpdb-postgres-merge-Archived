@@ -16,6 +16,7 @@
 #include "optimizer/subselect.h"        /* convert_testexpr() */
 #include "optimizer/tlist.h"
 #include "optimizer/prep.h"              /* canonicalize_qual() */
+#include "optimizer/subselect.h"
 #include "optimizer/var.h"              /* contain_vars_of_level_or_above() */
 #include "parser/parse_oper.h"          /* make_op() */
 #include "parser/parse_expr.h"
@@ -848,10 +849,10 @@ convert_EXISTS_to_join(PlannerInfo *root, List** rtrlist_inout, SubLink *sublink
     Node           *lnode;
     Node           *rnode;
     Node           *node;
-	InClauseInfo *ininfo;
-	RangeTblEntry *rte;
-    RangeTblRef *rtr;
-	int			rtindex;
+	InClauseInfo   *ininfo;
+	RangeTblEntry  *rte;
+    RangeTblRef    *rtr;
+	int			    rtindex;
 
     Assert(IsA(subselect, Query));
 

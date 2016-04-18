@@ -756,6 +756,7 @@ typedef struct CoerceViaIO
 	Oid			resulttype;		/* output type of coercion */
 	/* output typmod is not stored, but is presumed -1 */
 	CoercionForm coerceformat;	/* how to display this node */
+	int			location;		/* token location, or -1 if unknown */
 } CoerceViaIO;
 
 /* ----------------
@@ -779,6 +780,7 @@ typedef struct ArrayCoerceExpr
 	int32		resulttypmod;	/* output typmod (also element typmod) */
 	bool		isExplicit;		/* conversion semantics flag to pass to func */
 	CoercionForm coerceformat;	/* how to display this node */
+	int			location;		/* token location, or -1 if unknown */
 } ArrayCoerceExpr;
 
 /* ----------------

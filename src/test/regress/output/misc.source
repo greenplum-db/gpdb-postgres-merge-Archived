@@ -652,6 +652,7 @@ SELECT user_relns() AS user_relns
  timetz_tbl
  tinterval_tbl
  toyemp
+ usr_define_type
  varchar_tbl
 (149 rows)
 

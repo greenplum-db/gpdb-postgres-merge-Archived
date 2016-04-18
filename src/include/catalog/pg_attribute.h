@@ -324,7 +324,7 @@ DATA(insert ( 1247 cmin				29 0  4  -4 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1247 xmax				28 0  4  -5 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1247 cmax				29 0  4  -6 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1247 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1247 gp_segment_id   23 0  4  -8 0 -1 -1 t p i t f f t 0));
+DATA(insert ( 1247 gp_segment_id	23 0  4  -8 0 -1 -1 t p i t f f t 0));
 
 /* ----------------
  *		pg_proc

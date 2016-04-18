@@ -16,7 +16,7 @@
 #
 
 ignore: leastsquares
-test: opr_sanity_gp decode_expr bitmapscan case_gp limit_gp notin percentile naivebayes join_gp union_gp gpcopy
+test: opr_sanity_gp decode_expr bitmapscan bitmapscan_ao case_gp limit_gp notin percentile naivebayes join_gp union_gp gpcopy
 test: filter gpctas gpdist matrix toast sublink sirv_functions table_functions olap_setup bitmap_index
 
 test: dispatch
@@ -56,11 +56,9 @@ test: vacuum_gp
 # FIXME: These tests no longer work, because they try to set
 # gp_interconnect_type, which doesn't work:
 # ERROR:  parameter "gp_interconnect_type" cannot be set after connection start
-#test: gpic
-#test: gpic_bigtup
 
 ignore: gp_portal_error
-test: partition_indexing column_compression eagerfree mapred gpparams tidycat aocs co_nestloop_idxscan  gpdtm_plpgsql alter_table_aocs alter_distribution_policy ic
+test: partition_indexing column_compression eagerfree mapred gpparams tidycat aocs co_nestloop_idxscan  gpdtm_plpgsql alter_table_aocs alter_distribution_policy ic aoco_privileges
 ignore: icudp_full
 ignore: gp_delete_as_trunc
 
@@ -75,15 +73,35 @@ test: filespace trig auth_constraint role rle portals_updatable plpgsql_cache ti
 # direct dispatch tests
 test: bfv_dd bfv_dd_multicolumn bfv_dd_types
 
-test: catalog bfv_catalog bfv_index bfv_olap bfv_aggregate bfv_partition
+test: catalog bfv_catalog bfv_index bfv_olap bfv_aggregate bfv_partition DML_over_joins
  
 test: aggregate_with_groupingsets gp_optimizer 
 
 test: nested_case_null
 
+test: qp_olap_mdqa 
+
+test: qp_with_clause 
+
+test: qp_misc 
+
+test: qp_misc_jiras
+
 test: bfv_cte bfv_joins bfv_statistic bfv_subquery bfv_planner bfv_legacy
 
-test: qp_executor qp_olap_windowerr qp_olap_window
+test: qp_executor qp_olap_windowerr qp_olap_window qp_derived_table qp_bitmapscan
+test: qp_functions qp_misc_rio_join_small qp_misc_rio
+
+test: qp_correlated_query qp_targeted_dispatch
+
+test: qp_dpe qp_subquery qp_functions_idf qp_regexp qp_resource_queue
+
+test: qp_gist_indexes2 qp_gist_indexes3 qp_gist_indexes4
+
+test: olap_setup
+test: qp_olap_group
+
+test: qp_query_execution
 
 ignore: tpch500GB_orca
 
