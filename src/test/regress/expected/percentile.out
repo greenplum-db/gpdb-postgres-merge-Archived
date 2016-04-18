@@ -1001,8 +1001,6 @@ ERROR:  column "perct.b" must appear in the GROUP BY clause or be used in an agg
 -- nested aggregate
 select percentile_cont(count(*)) within group (order by a) from perct;
 ERROR:  argument of percentile function must not contain variables
-LINE 1: select percentile_cont(count(*)) within group (order by a) f...
-                               ^
 select sum(percentile_cont(0.22) within group (order by a)) from perct;
 ERROR:  aggregate function calls cannot be nested
 LINE 1: select sum(percentile_cont(0.22) within group (order by a)) ...
@@ -1030,11 +1028,11 @@ LINE 1: select count(median(a)) from perct;
 select median(count(*)) from perct;
 ERROR:  argument of percentile function must not contain aggregates
 LINE 1: select median(count(*)) from perct;
-                      ^
+               ^
 select percentile_cont(0.2) within group (order by count(*) over()) from perct;
 ERROR:  argument of percentile function must not contain window functions
-LINE 1: ...elect percentile_cont(0.2) within group (order by count(*) o...
-                                                             ^
+LINE 1: select percentile_cont(0.2) within group (order by count(*) ...
+               ^
 select percentile_disc(0.1) within group (order by group_id()) from perct;
 ERROR:  argument of percentile function must not contain grouping(), or group_id()
 LINE 1: select percentile_disc(0.1) within group (order by group_id(...

@@ -169,8 +169,6 @@ CONTEXT:  PL/Perl function "foor"
 --    Fails: record type not registered
 select (foor(1)).*;
 ERROR:  record type has not been registered
-LINE 1: select (foor(1)).*;
-                ^
 -- function in from clause 
 --    Fails: column definition list needed for "record"
 select * from foor(1);
@@ -798,8 +796,6 @@ SELECT dup(22);
 
 SELECT dup('xyz');	-- fails
 ERROR:  could not determine polymorphic type because input has type "unknown"
-LINE 1: SELECT dup('xyz');
-               ^
 SELECT dup('xyz'::text);
         dup        
 -------------------

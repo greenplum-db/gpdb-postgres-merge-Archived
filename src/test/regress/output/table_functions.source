@@ -2897,28 +2897,16 @@ LINE 1: SELECT "time" FROM project( TABLE( SELECT * FROM history ), ...
 /* Invalid projection position */
 SELECT * FROM project( TABLE( SELECT * FROM pg_am ), NULL);
 ERROR:  unable to resolve type for function (regress.c:2172)
-LINE 2: SELECT * FROM project( TABLE( SELECT * FROM pg_am ), NULL);
-                      ^
 SELECT * FROM project( TABLE( SELECT * FROM pg_am ), -1);
 ERROR:  invalid column position -1 (regress.c:2175)
-LINE 1: SELECT * FROM project( TABLE( SELECT * FROM pg_am ), -1);
-                      ^
 SELECT * FROM project( TABLE( SELECT * FROM pg_am ), 0);
 ERROR:  invalid column position 0 (regress.c:2175)
-LINE 1: SELECT * FROM project( TABLE( SELECT * FROM pg_am ), 0);
-                      ^
 SELECT * FROM project( TABLE( SELECT * FROM pg_am ), 100);
 ERROR:  invalid column position 100 (regress.c:2175)
-LINE 1: SELECT * FROM project( TABLE( SELECT * FROM pg_am ), 100);
-                      ^
 SELECT * FROM project( TABLE( SELECT * FROM pg_am ), (ARRAY[2,3])[1]);
 ERROR:  unable to resolve function argument (execQual.c:5348)
-LINE 1: SELECT * FROM project( TABLE( SELECT * FROM pg_am ), (ARRAY[...
-                      ^
 SELECT * FROM project( TABLE( SELECT * FROM pg_am ), (ROW(1, '')::example_r).a);
 ERROR:  unable to resolve function argument (execQual.c:5348)
-LINE 1: SELECT * FROM project( TABLE( SELECT * FROM pg_am ), (ROW(1,...
-                      ^
 -- ========================
 -- User data exmaple
 -- ========================
@@ -3082,12 +3070,12 @@ PREPARE p3(anytable) AS SELECT * FROM multiset_5( $1 );
 -- FAIL: $1 is not a constant
 PREPARE p4 AS SELECT * FROM project( TABLE( SELECT * FROM pg_am ), $1);
 ERROR:  unable to resolve function argument (execQual.c:5348)
-LINE 1: PREPARE p4 AS SELECT * FROM project( TABLE( SELECT * FROM pg...
-                                    ^
+LINE 1: ...AS SELECT * FROM project( TABLE( SELECT * FROM pg_am ), $1);
+                                                                  ^
 PREPARE p5(integer) AS SELECT * FROM project( TABLE( SELECT * FROM pg_am ), $1);
 ERROR:  unable to resolve function argument (execQual.c:5348)
-LINE 1: PREPARE p5(integer) AS SELECT * FROM project( TABLE( SELECT ...
-                                             ^
+LINE 1: ...AS SELECT * FROM project( TABLE( SELECT * FROM pg_am ), $1);
+                                                                  ^
 -- PASS: We allow table functions with describe to be prepared.  This can
 -- theoretically require need for reparse/replan, but that requires more
 -- general support of prepared statements in conjunction with a plan cache.
