@@ -532,8 +532,6 @@ SPI_execute_with_args(const char *src,
 	 *		 from upstream, e.g. plan.query is to be assigned
 	 *		 in _SPI_prepare_plan
 	 */
-	plan.query = src;
-	plan.use_count = 0;
 	plan.plancxt = NULL;
 
 	paramLI = _SPI_convert_params(nargs, argtypes,
@@ -1053,8 +1051,6 @@ SPI_cursor_open_with_args(const char *name,
 	 *		 from upstream, e.g. plan.query is to be assigned
 	 *		 in _SPI_prepare_plan
 	 */
-	plan.query = src; 
-	plan.use_count = 0;
 	plan.plancxt = NULL;
 
 	paramLI = _SPI_convert_params(nargs, argtypes,

@@ -1101,39 +1101,6 @@ _copyMotion(Motion *from)
 }
 
 /*
-* _copyCoerceViaIO
-*/
-static CoerceViaIO *
-_copyCoerceViaIO(CoerceViaIO *from)
-{
-	CoerceViaIO   *newnode = makeNode(CoerceViaIO);
-
-	COPY_NODE_FIELD(arg);
-	COPY_SCALAR_FIELD(resulttype);
-	COPY_SCALAR_FIELD(coerceformat);
-
-	return newnode;
-}
-
-/*
- * _copyArrayCoerceExpr
- */
-static ArrayCoerceExpr *
-_copyArrayCoerceExpr(ArrayCoerceExpr *from)
-{
-	ArrayCoerceExpr   *newnode = makeNode(ArrayCoerceExpr);
-
-	COPY_NODE_FIELD(arg);
-	COPY_SCALAR_FIELD(elemfuncid);
-	COPY_SCALAR_FIELD(resulttype);
-	COPY_SCALAR_FIELD(resulttypmod);
-	COPY_SCALAR_FIELD(isExplicit);
-	COPY_SCALAR_FIELD(coerceformat);
-
-	return newnode;
-}
-
-/*
  * _copyDML
  */
 static DML *
@@ -1758,7 +1725,7 @@ _copyArrayExpr(ArrayExpr *from)
 	COPY_SCALAR_FIELD(element_typeid);
 	COPY_NODE_FIELD(elements);
 	COPY_SCALAR_FIELD(multidims);
-	COPY_LOCATION_FIELD(location);
+	/* COPY_LOCATION_FIELD(location); */
 
 	return newnode;
 }

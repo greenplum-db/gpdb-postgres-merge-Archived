@@ -674,7 +674,7 @@ free_fori(PLpgSQL_stmt_fori *stmt)
 {
 	free_expr(stmt->lower);
 	free_expr(stmt->upper);
-	free_expr(stmt->by);
+	free_expr(stmt->step);
 	free_stmts(stmt->body);
 }
 

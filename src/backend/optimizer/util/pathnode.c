@@ -514,7 +514,13 @@ cdb_set_cheapest_dedup(PlannerInfo *root, RelOptInfo *rel)
      * CDB TODO: Avoid sorting when the subpath is ordered on the
      * sub_targetlist columns.
      */
-    if (dedup->join_unique_ininfo)
+	/*
+	 * GPDB_MERGE83_FIXME: The check for sub_targetlist is clearly bogus since
+	 * it's originally Asserted inside. Avoiding this clears a coredump without
+	 * deteriorated plans observed but it must be revisited before release of
+	 * course.
+	 */
+    if (dedup->join_unique_ininfo && dedup->join_unique_ininfo->sub_targetlist)
     {
     	Assert(dedup->join_unique_ininfo->sub_targetlist);
     	/* Top off the subpath with DISTINCT ON the result columns. */
