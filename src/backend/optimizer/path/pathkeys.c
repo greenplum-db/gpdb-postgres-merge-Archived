@@ -126,6 +126,8 @@ gen_implied_qual(PlannerInfo *root,
 	ReplaceExpressionMutatorReplacement ctx;
 	Relids		new_qualscope;
 	ListCell   *lc;
+	RestrictInfo *new_rinfo;
+	Relids		required_relids;
 
 	/* Expression types must match */
 	Assert(exprType(old_expr) == exprType(new_expr)
@@ -160,21 +162,43 @@ gen_implied_qual(PlannerInfo *root,
 	 */
 	foreach (lc, root->non_eq_clauses)
 	{
-		RestrictInfo *oldrinfo = (RestrictInfo *) lfirst(lc);
+		RestrictInfo *r = (RestrictInfo *) lfirst(lc);
 
-		if (equal(oldrinfo->clause, new_clause))
+		if (equal(r->clause, new_clause))
 			return;
 	}
 
-	distribute_qual_to_rels(root, new_clause,
-							true, /* is_deduced */
-							false,
-							new_qualscope, /* qualscope */
-							old_rinfo->ojscope_relids, /* ojscope */
-							NULL, /* outerjoin_nonnullable */
-							NULL,
-							NULL /* postponed_qual_list */
-		);
+	/*
+	 * Ok, we're good to go. Construct a new RestrictInfo, and pass it to
+	 * distribute_to_rels(). This is a cut-down version of distribute_qual_to_rels():
+	 * We know the qual is not useful for the equivalence class machinery,
+	 * because it's derived from a clause that wasn't either.
+	 */
+	required_relids = bms_union(new_qualscope, old_rinfo->ojscope_relids);
+
+	new_rinfo = make_restrictinfo((Expr *) new_clause,
+								  old_rinfo->is_pushed_down,
+								  old_rinfo->outerjoin_delayed,
+								  old_rinfo->pseudoconstant,
+								  required_relids,
+								  old_rinfo->nullable_relids,
+								  old_rinfo->ojscope_relids);
+
+	/*
+	 * If it's a join clause (either naturally, or because delayed by
+	 * outer-join rules), add vars used in the clause to targetlists of their
+	 * relations, so that they will be emitted by the plan nodes that scan
+	 * those relations (else they won't be available at the join node!).
+	 */
+	if (bms_membership(new_qualscope) == BMS_MULTIPLE)
+	{
+		List	   *vars = pull_var_clause(new_clause, false);
+
+		add_vars_to_targetlist(root, vars, required_relids);
+		list_free(vars);
+	}
+
+	distribute_restrictinfo_to_rels(root, new_rinfo);
 }
 
 /**
