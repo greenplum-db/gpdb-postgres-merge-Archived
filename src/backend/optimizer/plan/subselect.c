@@ -281,7 +281,8 @@ typedef struct CorrelatedVarWalkerContext
  *  Walker finds the deepest correlation nesting i.e. maximum levelsup among all
  *  vars in subquery.
  */
-static bool CorrelatedVarWalker(Node *node, CorrelatedVarWalkerContext *ctx)
+static bool
+CorrelatedVarWalker(Node *node, CorrelatedVarWalkerContext *ctx)
 {
 	Assert(ctx);
 
@@ -309,7 +310,8 @@ static bool CorrelatedVarWalker(Node *node, CorrelatedVarWalkerContext *ctx)
 /**
  * Returns true if subquery is correlated
  */
-bool IsSubqueryCorrelated(Query *sq)
+bool
+IsSubqueryCorrelated(Query *sq)
 {
 	Assert(sq);
 	CorrelatedVarWalkerContext ctx;
@@ -321,7 +323,8 @@ bool IsSubqueryCorrelated(Query *sq)
 /**
  * Returns true if subquery contains references to more than its immediate outer query.
  */
-bool IsSubqueryMultiLevelCorrelated(Query *sq)
+bool
+IsSubqueryMultiLevelCorrelated(Query *sq)
 {
 	Assert(sq);
 	CorrelatedVarWalkerContext ctx;
