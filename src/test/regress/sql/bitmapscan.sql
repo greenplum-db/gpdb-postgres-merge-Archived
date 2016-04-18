@@ -110,9 +110,6 @@ set enable_bitmapscan=on;
 
 select * from bm_test where a in (1,3,5);
 
-<<<<<<< HEAD
-drop table if exists bm_test;
-=======
 -- Create a heap table.
 CREATE TABLE card_heap_table_w_bitmap (id INTEGER, v VARCHAR) DISTRIBUTED BY (id);
 
@@ -280,4 +277,5 @@ INSERT INTO card_heap_table_w_bitmap (id, v, highCardinalityHighDomain)
  SELECT i, CAST(i AS VARCHAR), i % 50000 FROM generate_series(1000001, 1050000) i;
 
 SELECT COUNT(DISTINCT(highCardinalityHighDomain)) AS distinct_hchd FROM card_heap_table_w_bitmap ORDER BY distinct_hchd;
->>>>>>> 9aa236efe9e42da40327dd3e2c134dad77114263
+
+drop table if exists bm_test;
