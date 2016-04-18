@@ -28,6 +28,32 @@
  * ----------------
  */
 
+/* TIDYCAT_BEGINFAKEDEF
+
+   CREATE TABLE pg_ts_parser
+   with (relid=3601)
+   (
+   prsname         name,
+   prsnamespace    oid,
+   prsstart        regproc,
+   prstoken        regproc,
+   prsend          regproc,
+   prsheadline     regproc,
+   prslextype      regproc
+  );
+
+   create unique index on pg_ts_parser(prsname, prsnamespace) with (indexid=3606, CamelCase=TSParserNameNsp);
+   create unique index on pg_ts_parser(oid) with (indexid=3607, CamelCase=TSParserOid);
+
+   alter table pg_ts_parser add fk prsnamespace on pg_namespace(oid);
+   alter table pg_ts_parser add fk prsstart on pg_proc(oid);
+   alter table pg_ts_parser add fk prsend on pg_proc(oid);
+   alter table pg_ts_parser add fk prsheadline on pg_proc(oid);
+   alter table pg_ts_parser add fk prslextype on pg_proc(oid);
+
+   TIDYCAT_ENDFAKEDEF
+*/
+
 /* ----------------
  *		pg_ts_parser definition.  cpp turns this into
  *		typedef struct FormData_pg_ts_parser

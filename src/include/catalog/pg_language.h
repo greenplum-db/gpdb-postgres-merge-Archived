@@ -27,6 +27,7 @@
    with (relid=2612)
    ( 
    lanname        name, 
+   lanowner       oid, 
    lanispl        boolean, -- Is a procedural language
    lanpltrusted   boolean, -- PL is trusted
    lanplcallfoid  oid,     -- Call handler for PL
@@ -40,6 +41,7 @@
 
    alter table pg_language add fk lanplcallfoid on pg_proc(oid);
    alter table pg_language add fk lanvalidator on pg_proc(oid);
+   alter table pg_language add fk lanowner on pg_authid(oid);
 
    TIDYCAT_ENDDEF
 */

@@ -33,6 +33,7 @@
    ev_class    oid, 
    ev_attr     smallint, 
    ev_type     "char", 
+   ev_enabled  "char", 
    is_instead  boolean, 
    ev_qual     text, 
    ev_action   text

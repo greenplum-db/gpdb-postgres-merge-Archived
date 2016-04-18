@@ -28,6 +28,25 @@
  * ----------------
  */
 
+/* TIDYCAT_BEGINFAKEDEF
+
+   CREATE TABLE pg_ts_config_map
+   with (relid=3603)
+   (
+   mapcfg          oid,
+   maptokentype    integer,
+   mapseqno        integer,
+   mapdict         oid
+   );
+
+   create unique index on pg_ts_config_map(mapcfg, maptokentype, mapseqno) with (indexid=3608, CamelCase=TSConfigMap);
+
+   alter table pg_ts_config_map add fk mapcfg on pg_ts_config(oid);
+   alter table pg_ts_config_map add fk mapdict on pg_ts_dict(oid);
+
+   TIDYCAT_ENDFAKEDEF
+*/
+
 /* ----------------
  *		pg_ts_config_map definition.  cpp turns this into
  *		typedef struct FormData_pg_ts_config_map

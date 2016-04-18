@@ -33,6 +33,8 @@
    indisprimary    boolean    ,
    indisclustered  boolean    ,
    indisvalid      boolean    ,
+   indcheckxmin    boolean    ,
+   indisready      boolean    ,
    indkey          int2vector ,
    indclass        oidvector  ,
    indoption       int2vector ,

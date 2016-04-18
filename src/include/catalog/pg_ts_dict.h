@@ -28,6 +28,28 @@
  * ----------------
  */
 
+/* TIDYCAT_BEGINFAKEDEF
+
+   CREATE TABLE pg_ts_dict
+   with (relid=3600, toast=true)
+   (
+   dictname        name,
+   dictnamespace   oid,
+   dictowner       oid,
+   dicttemplate    oid,
+   dictinitoption  text
+   );
+
+   create unique index on pg_ts_dict(dictname, dictnamespace) with (indexid=3604, CamelCase=TSDictionaryNameNsp);
+   create unique index on pg_ts_dict(oid) with (indexid=3605, CamelCase=TSDictionaryOid);
+
+   alter table pg_ts_dict add fk dictnamespace on pg_namespace(oid);
+   alter table pg_ts_dict add fk dictowner on pg_authid(oid);
+   alter table pg_ts_dict add fk dicttemplate on pg_ts_template(oid);
+
+   TIDYCAT_ENDFAKEDEF
+*/
+
 /* ----------------
  *		pg_ts_dict definition.	cpp turns this into
  *		typedef struct FormData_pg_ts_dict

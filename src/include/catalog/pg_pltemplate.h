@@ -33,6 +33,7 @@
    (
    tmplname       name, 
    tmpltrusted    boolean, 
+   tmpldbacreate  boolean, 
    tmplhandler    text, 
    tmplinline     text,
    tmplvalidator  text, 

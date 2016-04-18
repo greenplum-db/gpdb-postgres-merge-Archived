@@ -28,6 +28,27 @@
  * ----------------
  */
 
+/* TIDYCAT_BEGINFAKEDEF
+
+   CREATE TABLE pg_ts_template
+   with (relid=3600)
+   (
+   tmplname        name,
+   tmplnamespace   oid,
+   tmplinit        regproc,
+   tmpllexize      regproc
+   );
+
+   create unique index on pg_ts_template(tmplname, tmplnamespace) with (indexid=3766, CamelCase=TSTemplateNameNsp);
+   create unique index on pg_ts_template(oid) with (indexid=3767, CamelCase=TSTemplateOid);
+
+   alter table pg_ts_template add fk tmplnamespace on pg_namespace(oid);
+   alter table pg_ts_template add fk tmplinit on pg_proc(oid);
+   alter table pg_ts_template add fk tmpllexize on pg_proc(oid);
+
+   TIDYCAT_ENDFAKEDEF
+*/
+
 /* ----------------
  *		pg_ts_template definition.	cpp turns this into
  *		typedef struct FormData_pg_ts_template

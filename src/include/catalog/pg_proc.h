@@ -55,6 +55,7 @@
    proargdefaults  text,
    prosrc          text, 
    probin          bytea, 
+   proconfig       text[], 
    proacl          aclitem[],
    prodataaccess   "char"
    );

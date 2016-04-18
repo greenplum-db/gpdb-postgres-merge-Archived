@@ -30,7 +30,7 @@
    tgname          name, 
    tgfoid          oid, 
    tgtype          smallint, 
-   tgenabled       boolean, 
+   tgenabled       "char", 
    tgisconstraint  boolean, 
    tgconstrname    name, 
    tgconstrrelid   oid, 

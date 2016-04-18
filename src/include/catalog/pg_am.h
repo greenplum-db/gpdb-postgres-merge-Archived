@@ -37,6 +37,7 @@
    amcanmulticol    boolean, 
    amoptionalkey    boolean, 
    amindexnulls     boolean, 
+   amsearchnulls    boolean, 
    amstorage        boolean, 
    amclusterable    boolean, 
    amcanshrink      boolean, 

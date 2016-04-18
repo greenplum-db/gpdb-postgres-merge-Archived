@@ -31,6 +31,24 @@
  * ----------------
  */
 
+/* TIDYCAT_BEGINFAKEDEF
+
+   CREATE TABLE pg_enum
+   with (relid=3501)
+   (
+   enumtypid       oid,
+   enumlabel       name
+   );
+
+   create index on pg_enum(oid) with (indexid=3502, CamelCase=EnumOidIndexId);
+   create unique index on pg_enum(enumtypid, enumlabel) with (indexid=3503, CamelCase=EnumTypIdLabel);
+
+   alter table pg_enum add fk enumtypid on pg_type(oid);
+
+   TIDYCAT_ENDFAKEDEF
+*/
+
+
 /* ----------------
  *		pg_enum definition.  cpp turns this into
  *		typedef struct FormData_pg_enum

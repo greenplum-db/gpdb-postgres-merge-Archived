@@ -1124,6 +1124,8 @@ sub parsetab
 			{
 				last # table has a toast table - ok!
 					if (exists($alltabs->{$tname}->{with}->{toast_oid}));
+				last # table has a toast table - ok!
+					if (exists($alltabs->{$tname}->{with}->{toast}));
 
 				$badmsg .= "table $tname needs toast table (toast_oid) for column $cname of type $ctype\n";
 			}
