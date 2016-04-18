@@ -1008,7 +1008,8 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		 * belongs.  For the same reason, we must rely on caller to supply the
 		 * correct nullable_relids set.
 		 */
-		Assert(!ojscope);
+		/* In GPDB, we also deduce non-equality quals as outer join conditions */
+		//Assert(!ojscope);
 		is_pushed_down = true;
 		outerjoin_delayed = false;
 		nullable_relids = deduced_nullable_relids;
