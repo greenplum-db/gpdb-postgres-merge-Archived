@@ -5,16 +5,18 @@
 -- Testing various scenarios where plans will not be cached. 
 -- MPP-16204
 
+set client_min_messages = 'warning';
+drop table if exists cache_tab cascade;
+drop function if exists cache_test();
+drop function if exists cache_test(int);
+reset client_min_messages;
+
 --
 -- ************************************************************
 -- * Repro with drop table inside a function
 -- *    - Multiple executions should not raise an error 
 -- ************************************************************
 --
-drop table if exists cache_tab cascade;
-
-drop function if exists cache_test();
-
 create function cache_test() returns void as
 $$
 begin
@@ -56,17 +58,20 @@ create function cache_test(id int) returns int as $$
 declare 
 	v_int int;
 begin 
-	select c1 from cache_tab where c2 = id INTO v_int; 
+	select c1 from cache_tab where c2 = id::text INTO v_int;
 	return v_int;
 end;
 $$ language plpgsql READS SQL DATA;
 
 select * from cache_test(1);
 
+-- ALTER TABLE prints a NOTICE with unpredictable temp table's name
+set client_min_messages='warning';
 alter table cache_tab split default partition 
 start (11) inclusive
 end (20) exclusive 
 into (partition part2, partition def);
+reset client_min_messages;
 
 -- following should not fail. 
 select * from cache_test(2);
@@ -96,7 +101,7 @@ create function cache_test(var int) returns varchar as $$
 declare 
 	v_name varchar(20) DEFAULT 'zzzz';
 begin 
-	select name from cache_tab into v_name where id = var; 
+	select name from cache_tab into v_name where id = var;
 	return v_name;
 end;
 $$ language plpgsql READS SQL DATA;
@@ -299,10 +304,13 @@ $$ language plpgsql READS SQL DATA;
 
 select cache_test(100); 
 
+-- ALTER TABLE prints a NOTICE with unpredictable temp table's name
+set client_min_messages='warning';
 alter table cache_tab split default partition 
 start (11) inclusive
 end (20) exclusive 
 into (partition part2, partition def);
+reset client_min_messages;
 
 select cache_test(100); 
 
