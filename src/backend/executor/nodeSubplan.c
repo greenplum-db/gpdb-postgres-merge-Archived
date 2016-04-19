@@ -64,6 +64,7 @@ ExecSubPlan(SubPlanState *node,
 			ExprDoneCond *isDone)
 {
 	SubPlan    *subplan = (SubPlan *) node->xprstate.expr;
+	Datum		result;
 
 	/* Set default values for result flags: non-null, not a set result */
 	*isNull = false;
@@ -72,10 +73,17 @@ ExecSubPlan(SubPlanState *node,
 
 	insist_log(subplan->setParam == NIL, "cannot set parent parameters from subquery");
 
+	/* Remember that we're recursing into a sub-plan */
+	node->planstate->state->currentSubplanLevel++;
+
 	if (subplan->useHashTable)
-		return ExecHashSubPlan(node, econtext, isNull);
+		result = ExecHashSubPlan(node, econtext, isNull);
 	else
-		return ExecScanSubPlan(node, econtext, isNull);
+		result = ExecScanSubPlan(node, econtext, isNull);
+
+	node->planstate->state->currentSubplanLevel--;
+
+	return result;
 }
 
 /*
@@ -974,6 +982,8 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext, QueryDesc *queryDesc
 		planstate->plan->dispatch == DISPATCH_PARALLEL)
 		shouldDispatch = true;
 
+	planstate->state->currentSubplanLevel++;
+
 	/*
 	 * Reset memory high-water mark so EXPLAIN ANALYZE can report each
 	 * root slice's usage separately.
@@ -1258,6 +1268,8 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext, QueryDesc *queryDesc
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+
+	planstate->state->currentSubplanLevel--;
 
 	/* If EXPLAIN ANALYZE, collect local execution stats. */
 	if (planstate->instrument)

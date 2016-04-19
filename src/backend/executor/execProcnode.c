@@ -1184,7 +1184,7 @@ Exec_Jmp_Done:
 			Assert(subplanState != NULL &&
 				   subplanState->planstate != NULL);
 
-			bool subplanAtTopNestLevel = (node->state->subplanLevel == 0);
+			bool subplanAtTopNestLevel = (node->state->currentSubplanLevel == 0);
 
 			if (subplanAtTopNestLevel)
 			{
