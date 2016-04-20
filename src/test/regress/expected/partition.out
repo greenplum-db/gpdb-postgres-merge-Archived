@@ -3541,10 +3541,10 @@ HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sur
 NOTICE:  CREATE TABLE will create partition "mpp5878_1_prt_1" for table "mpp5878"
 NOTICE:  CREATE TABLE will create partition "mpp5878_1_prt_2" for table "mpp5878"
 select partitionlistvalues from pg_partitions where tablename like 'mpp5878%';
-                partitionlistvalues                 
-----------------------------------------------------
- 'a'::bpchar, 'b'::bpchar, 'c'::bpchar, 'd'::bpchar
- 'e'::bpchar, 'f'::bpchar, 'g'::bpchar, 'h'::bpchar
+                            partitionlistvalues                             
+----------------------------------------------------------------------------
+ 'a'::character(1), 'b'::character(1), 'c'::character(1), 'd'::character(1)
+ 'e'::character(1), 'f'::character(1), 'g'::character(1), 'h'::character(1)
 (2 rows)
 
 select partitionboundary from pg_partitions where tablename like 'mpp5878%';
@@ -4642,15 +4642,15 @@ set subpartition template (subpartition l1 values (1,2,3),
 subpartition l2 values (4,5,6), subpartition l3 values (7,8,9,10));
 NOTICE:  replacing level 1 subpartition template specification for relation "mpp5992"
 select * from pg_partition_templates where tablename='mpp5992';
- schemaname | tablename | partitionname | partitiontype | partitionlevel | partitionrank | partitionposition |       partitionlistvalues        | partitionrangestart | partitionstartinclusive | partitionrangeend | partitionendinclusive | partitioneveryclause | partitionisdefault |           partitionboundary            
-------------+-----------+---------------+---------------+----------------+---------------+-------------------+----------------------------------+---------------------+-------------------------+-------------------+-----------------------+----------------------+--------------------+----------------------------------------
- public     | mpp5992   | lll1          | list          |              3 |               |                 1 | 'M'::bpchar                      |                     |                         |                   |                       |                      | f                  | SUBPARTITION lll1 VALUES('M')
- public     | mpp5992   | lll2          | list          |              3 |               |                 2 | 'F'::bpchar                      |                     |                         |                   |                       |                      | f                  | SUBPARTITION lll2 VALUES('F')
- public     | mpp5992   | ll1           | list          |              2 |               |                 1 | 'Engineering'::character varying |                     |                         |                   |                       |                      | f                  | SUBPARTITION ll1 VALUES('Engineering')
- public     | mpp5992   | ll2           | list          |              2 |               |                 2 | 'QA'::character varying          |                     |                         |                   |                       |                      | f                  | SUBPARTITION ll2 VALUES('QA')
- public     | mpp5992   | l1            | list          |              1 |               |                 1 | 1, 2, 3                          |                     |                         |                   |                       |                      | f                  | SUBPARTITION l1 VALUES(1, 2, 3)
- public     | mpp5992   | l2            | list          |              1 |               |                 2 | 4, 5, 6                          |                     |                         |                   |                       |                      | f                  | SUBPARTITION l2 VALUES(4, 5, 6)
- public     | mpp5992   | l3            | list          |              1 |               |                 3 | 7, 8, 9, 10                      |                     |                         |                   |                       |                      | f                  | SUBPARTITION l3 VALUES(7, 8, 9, 10)
+ schemaname | tablename | partitionname | partitiontype | partitionlevel | partitionrank | partitionposition |         partitionlistvalues          | partitionrangestart | partitionstartinclusive | partitionrangeend | partitionendinclusive | partitioneveryclause | partitionisdefault |           partitionboundary            
+------------+-----------+---------------+---------------+----------------+---------------+-------------------+--------------------------------------+---------------------+-------------------------+-------------------+-----------------------+----------------------+--------------------+----------------------------------------
+ public     | mpp5992   | lll1          | list          |              3 |               |                 1 | 'M'::character(1)                    |                     |                         |                   |                       |                      | f                  | SUBPARTITION lll1 VALUES('M')
+ public     | mpp5992   | lll2          | list          |              3 |               |                 2 | 'F'::character(1)                    |                     |                         |                   |                       |                      | f                  | SUBPARTITION lll2 VALUES('F')
+ public     | mpp5992   | ll1           | list          |              2 |               |                 1 | 'Engineering'::character varying(20) |                     |                         |                   |                       |                      | f                  | SUBPARTITION ll1 VALUES('Engineering')
+ public     | mpp5992   | ll2           | list          |              2 |               |                 2 | 'QA'::character varying(20)          |                     |                         |                   |                       |                      | f                  | SUBPARTITION ll2 VALUES('QA')
+ public     | mpp5992   | l1            | list          |              1 |               |                 1 | 1, 2, 3                              |                     |                         |                   |                       |                      | f                  | SUBPARTITION l1 VALUES(1, 2, 3)
+ public     | mpp5992   | l2            | list          |              1 |               |                 2 | 4, 5, 6                              |                     |                         |                   |                       |                      | f                  | SUBPARTITION l2 VALUES(4, 5, 6)
+ public     | mpp5992   | l3            | list          |              1 |               |                 3 | 7, 8, 9, 10                          |                     |                         |                   |                       |                      | f                  | SUBPARTITION l3 VALUES(7, 8, 9, 10)
 (7 rows)
 
 -- Now we can add a new partition
@@ -5778,7 +5778,7 @@ NOTICE:  CREATE TABLE will create partition "mpp10321a_1_prt_min15part_2_prt_p_f
 NOTICE:  CREATE TABLE will create partition "mpp10321a_1_prt_min15part_2_prt_p_endpart" for table "mpp10321a_1_prt_min15part"
 NOTICE:  CREATE TABLE will create partition "mpp10321a_1_prt_hourpart_2_prt_p20100622" for table "mpp10321a_1_prt_hourpart"
 NOTICE:  CREATE TABLE will create partition "mpp10321a_1_prt_hourpart_2_prt_p_endpart" for table "mpp10321a_1_prt_hourpart"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "mpp10321a_pkey" for table "mpp10321a"
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "mpp10321a_pk" for table "mpp10321a"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "mpp10321a_1_prt_min15part_pkey" for table "mpp10321a_1_prt_min15part"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "mpp10321a_1_prt_min15part_2_prt_p_future_pkey" for table "mpp10321a_1_prt_min15part_2_prt_p_future"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "mpp10321a_1_prt_min15part_2_prt_p_endpart_pkey" for table "mpp10321a_1_prt_min15part_2_prt_p_endpart"
