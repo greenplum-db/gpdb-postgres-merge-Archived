@@ -547,6 +547,7 @@ _readAlterTableStmt(void)
 		{
 			READ_OID_FIELD(oidInfo[m].relOid);
 			READ_OID_FIELD(oidInfo[m].comptypeOid);
+			READ_OID_FIELD(oidInfo[m].comptypeArrayOid);
 			READ_OID_FIELD(oidInfo[m].toastOid);
 			READ_OID_FIELD(oidInfo[m].toastIndexOid);
 			READ_OID_FIELD(oidInfo[m].toastComptypeOid);
@@ -1407,10 +1408,12 @@ _readDefineStmt(void)
 	READ_NODE_FIELD(defnames);
 	READ_NODE_FIELD(args);
 	READ_NODE_FIELD(definition);
-	READ_OID_FIELD(newOid);
-	READ_OID_FIELD(shadowOid);
 	READ_BOOL_FIELD(ordered);   /* CDB */
 	READ_BOOL_FIELD(trusted);   /* CDB */
+	READ_OID_FIELD(newOid);
+	READ_OID_FIELD(arrayOid);
+	READ_OID_FIELD(commutatorOid);
+	READ_OID_FIELD(negatorOid);
 
 	READ_DONE();
 

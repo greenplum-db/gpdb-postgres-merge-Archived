@@ -101,7 +101,7 @@ static void remove_type_encoding(Oid typid);
  *		Registers a new type.
  */
 void
-DefineType(List *names, List *parameters, Oid newOid, Oid shadowOid)
+DefineType(List *names, List *parameters, Oid newOid, Oid newArrayOid)
 {
 	char	   *typeName;
 	Oid			typeNamespace;
@@ -190,7 +190,8 @@ DefineType(List *names, List *parameters, Oid newOid, Oid shadowOid)
 				stmt->args = NIL;
 				stmt->definition = NIL;
 				stmt->newOid = typoid;
-				stmt->shadowOid = shadowOid;
+				stmt->arrayOid = newArrayOid;
+				stmt->commutatorOid = stmt->negatorOid = InvalidOid;
 				CdbDispatchUtilityStatement((Node *) stmt, "DefineType");
 			}
 			return;
@@ -440,7 +441,7 @@ DefineType(List *names, List *parameters, Oid newOid, Oid shadowOid)
 
 	/* Preassign array type OID so we can insert it in pg_type.typarray */
 	pg_type = heap_open(TypeRelationId, AccessShareLock);
-	array_oid = shadowOid;
+	array_oid = newArrayOid;
 	if (!OidIsValid(array_oid))
 	{
 		array_oid = GetNewOid(pg_type);
@@ -530,7 +531,8 @@ DefineType(List *names, List *parameters, Oid newOid, Oid shadowOid)
 		stmt->args = NIL;
 		stmt->definition = parameters;
 		stmt->newOid = typoid;
-		stmt->shadowOid = array_oid;
+		stmt->arrayOid = array_oid;
+		stmt->commutatorOid = stmt->negatorOid = InvalidOid;
 		CdbDispatchUtilityStatement((Node *) stmt, "DefineType");
 	}
 }
