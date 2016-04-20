@@ -1309,7 +1309,7 @@ ProcessUtility(Node *parsetree,
 			List	   *stmts;
 
 			/* Run parse analysis ... */
-			stmts = transformIndexStmt(stmt, queryString, NULL);
+			stmts = transformIndexStmt(stmt, queryString);
 			foreach(lc, stmts)
 			{
 				IndexStmt  *stmt = (IndexStmt *) lfirst(lc);

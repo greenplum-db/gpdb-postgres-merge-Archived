@@ -113,6 +113,8 @@ static AlterTableCmd *transformAlterTable_all_PartitionStmt(ParseState *pstate,
 									  AlterTableStmt *stmt,
 									  CreateStmtContext *pCxt,
 									  AlterTableCmd *cmd);
+static List *transformIndexStmt_recurse(IndexStmt *stmt, const char *queryString,
+						   ParseState *masterpstate, bool recurseToPartitions);
 
 /*
  * transformCreateStmt -
@@ -2451,7 +2453,35 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt,
  * expanded into multiple IndexStmts, if the table is a partitioned table.
  */
 List *
-transformIndexStmt(IndexStmt *stmt, const char *queryString, ParseState *masterpstate)
+transformIndexStmt(IndexStmt *stmt, const char *queryString)
+{
+	bool		recurseToPartitions = false;
+
+	/*
+	 * If the table already exists (i.e., this isn't a create table time
+	 * expansion of primary key() or unique()) and we're the ultimate parent
+	 * of a partitioned table, cascade to all children. We don't do this
+	 * at create table time because transformPartitionBy() automatically
+	 * creates the indexes on the child tables for us.
+	 *
+	 * If this is a CREATE INDEX statement, idxname should already exist.
+	 */
+	if (Gp_role != GP_ROLE_EXECUTE && stmt->idxname != NULL)
+	{
+		Oid			relId;
+
+		relId = RangeVarGetRelid(stmt->relation, true);
+
+		if (relId != InvalidOid && rel_is_partitioned(relId))
+			recurseToPartitions = true;
+	}
+
+	return transformIndexStmt_recurse(stmt, queryString, NULL, recurseToPartitions);
+
+}
+static List *
+transformIndexStmt_recurse(IndexStmt *stmt, const char *queryString,
+						   ParseState *masterpstate, bool recurseToPartitions)
 {
 	Relation	rel;
 	ParseState *pstate;
@@ -2480,19 +2510,8 @@ transformIndexStmt(IndexStmt *stmt, const char *queryString, ParseState *masterp
 	pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
 
-	/*
-	 * If the table already exists (i.e., this isn't a create table time
-	 * expansion of primary key() or unique()) and we're the ultimate parent
-	 * of a partitioned table, cascade to all children. We don't do this
-	 * at create table time because transformPartitionBy() automatically
-	 * creates the indexes on the child tables for us.
-	 *
-	 * If this is a CREATE INDEX statement, idxname should already exist.
-	 */
-	if (Gp_role != GP_ROLE_EXECUTE &&
-		stmt->idxname &&
-		RangeVarGetRelid(stmt->relation, true) != InvalidOid &&
-		RelationBuildPartitionDesc(rel, false))
+	/* Recurse into (sub)partitions if this is a partitioned table */
+	if (recurseToPartitions)
 	{
 		List		*children;
 		struct HTAB *nameCache;
@@ -2605,7 +2624,8 @@ transformIndexStmt(IndexStmt *stmt, const char *queryString, ParseState *masterp
 														 nameCache);
 
 			result = list_concat(result,
-								 transformIndexStmt(chidx, queryString, masterpstate));
+								 transformIndexStmt_recurse(chidx, queryString,
+															masterpstate, true));
 		}
 	}
 
@@ -3176,7 +3196,7 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 		ListCell   *li;
 
 		idxstmts = transformIndexStmt((IndexStmt *) idxstmt,
-									  queryString, pstate);
+									  queryString);
 		foreach(li, idxstmts)
 		{
 			Assert(IsA(idxstmt, IndexStmt));
