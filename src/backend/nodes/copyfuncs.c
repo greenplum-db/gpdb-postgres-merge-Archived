@@ -2877,6 +2877,7 @@ _copyAlterTableStmt(AlterTableStmt *from)
 		{
 			COPY_SCALAR_FIELD(oidInfo[m].relOid);
 			COPY_SCALAR_FIELD(oidInfo[m].comptypeOid);
+			COPY_SCALAR_FIELD(oidInfo[m].comptypeArrayOid);
 			COPY_SCALAR_FIELD(oidInfo[m].toastOid);
 			COPY_SCALAR_FIELD(oidInfo[m].toastIndexOid);
 			COPY_SCALAR_FIELD(oidInfo[m].toastComptypeOid);
