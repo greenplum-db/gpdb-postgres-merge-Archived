@@ -102,7 +102,6 @@ getSchemaData(int *numTablesPtr, int g_role)
 	TSTemplateInfo *tmplinfo;
 	TSDictInfo *dictinfo;
 	TSConfigInfo *cfginfo;
-	int			numNamespaces;
 	int			numAggregates;
 	int			numInherits;
 	int			numRules;
@@ -142,11 +141,13 @@ getSchemaData(int *numTablesPtr, int g_role)
 		if (is_gpdump || g_verbose)
 			status_log_msg(LOGGER_INFO, progname, "reading user-defined functions\n");
 		funinfo = getFuncs(&numFuncs);
+		funinfoindex = buildIndexArray(funinfo, numFuncs, sizeof(FuncInfo));
 
 		/* this must be after getFuncs */
 		if (is_gpdump || g_verbose)
 			status_log_msg(LOGGER_INFO, progname, "reading user-defined types\n");
 		typinfo = getTypes(&numTypes);
+		typinfoindex = buildIndexArray(typinfo, numTypes, sizeof(TypeInfo));
 
 		/* this must be after getFuncs */
 		if (is_gpdump || g_verbose)
@@ -165,6 +166,7 @@ getSchemaData(int *numTablesPtr, int g_role)
 		if (is_gpdump || g_verbose)
 			status_log_msg(LOGGER_INFO, progname, "reading user-defined operators\n");
 		oprinfo = getOperators(&numOperators);
+		oprinfoindex = buildIndexArray(oprinfo, numOperators, sizeof(OprInfo));
 
 		if (testExtProtocolSupport())
 		{

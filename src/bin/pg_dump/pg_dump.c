@@ -136,10 +136,6 @@ char		g_comment_end[10];
 
 static const CatalogId nilCatalogId = {0, 0};
 
-/* these are to avoid passing around info for findNamespace() */
-static NamespaceInfo *g_namespaces;
-static int	g_numNamespaces;
-
 const char *EXT_PARTITION_NAME_POSTFIX = "_external_partition__";
 /* flag to turn on/off dollar quoting */
 static int	disable_dollar_quoting = 0;
@@ -2073,20 +2069,17 @@ getNamespaces(int *numNamespaces)
 static NamespaceInfo *
 findNamespace(Oid nsoid, Oid objoid)
 {
-	int i;
+	NamespaceInfo *nsinfo;
 
-	for (i = 0; i < g_numNamespaces; i++)
+	nsinfo = findNamespaceByOid(nsoid);
+
+	if (nsinfo == NULL)
 	{
-		NamespaceInfo *nsinfo = &g_namespaces[i];
-
-		if (nsoid == nsinfo->dobj.catId.oid)
-			return nsinfo;
+		write_msg(NULL, "schema with OID %u does not exist\n", nsoid);
+		exit_nicely();
 	}
 
-	write_msg(NULL, "schema with OID %u does not exist\n", nsoid);
-	exit_nicely();
-
-	return NULL;				/* keep compiler quiet */
+	return nsinfo;
 }
 
 /*
