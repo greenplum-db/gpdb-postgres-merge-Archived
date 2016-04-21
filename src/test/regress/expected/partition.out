@@ -6756,8 +6756,9 @@ set optimizer_nestloop_factor = 1.0;
 explain select foo_p.b, foo_p.t from foo_p left outer join bar on foo_p.a = bar.k  where foo_p.t is not null and foo_p.a = (array[1])[1];
                                               QUERY PLAN                                              
 ------------------------------------------------------------------------------------------------------
- Gather Motion 2:1  (slice2; segments: 2)  (cost=360.72..920.22 rows=13400 width=36)
-   ->  Nested Loop Left Join  (cost=360.72..920.22 rows=6700 width=36)
+ Gather Motion 2:1  (slice2; segments: 2)  (cost=412.08..636.60 rows=13400 width=36)
+   ->  Hash Left Join  (cost=412.08..636.60 rows=6700 width=36)
+         Hash Cond: public.foo_p.a = bar.k
          ->  Append  (cost=0.00..23.50 rows=3 width=35)
                ->  Seq Scan on foo_p_1_prt_other foo_p  (cost=0.00..1.00 rows=1 width=40)
                      Filter: t IS NOT NULL AND a = ('{1}'::integer[])[1]
@@ -6771,12 +6772,12 @@ explain select foo_p.b, foo_p.t from foo_p left outer join bar on foo_p.a = bar.
                      Filter: t IS NOT NULL AND a = ('{1}'::integer[])[1]
                ->  Seq Scan on foo_p_1_prt_6 foo_p  (cost=0.00..4.50 rows=1 width=34)
                      Filter: t IS NOT NULL AND a = ('{1}'::integer[])[1]
-         ->  Materialize  (cost=360.72..405.38 rows=2234 width=4)
+         ->  Hash  (cost=356.25..356.25 rows=2234 width=4)
                ->  Broadcast Motion 2:2  (slice1; segments: 2)  (cost=0.00..356.25 rows=2234 width=4)
                      ->  Seq Scan on bar  (cost=0.00..289.25 rows=1117 width=4)
                            Filter: k = ('{1}'::integer[])[1]
  Settings:  optimizer_segments=3
-(20 rows)
+(21 rows)
 
 reset optimizer_segments;
 drop table if exists foo_p;
