@@ -471,12 +471,12 @@ create table atacc1 ( test int ) with oids distributed by (test);
 NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
 -- add a unique constraint
 alter table atacc1 add constraint atacc_test1 unique (test);
-NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc_test1" for table "atacc1"
+NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc1_test_key" for table "atacc1"
 -- insert first value
 insert into atacc1 (test) values (2);
 -- should fail
 insert into atacc1 (test) values (2);
-ERROR:  duplicate key value violates unique constraint "atacc_test1"
+ERROR:  duplicate key value violates unique constraint "atacc1_test_key"
 -- should succeed
 insert into atacc1 (test) values (4);
 -- try adding a unique oid constraint
@@ -490,8 +490,8 @@ insert into atacc1 (test) values (2);
 insert into atacc1 (test) values (2);
 -- add a unique constraint (fails)
 alter table atacc1 add constraint atacc_test1 unique (test);
-NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc_test1" for table "atacc1"
-ERROR:  could not create unique index "atacc_test1"
+NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc1_test_key" for table "atacc1"
+ERROR:  could not create unique index "atacc1_test_key"
 DETAIL:  Table contains duplicated values.
 insert into atacc1 (test) values (3);
 drop table atacc1;
@@ -506,12 +506,12 @@ drop table atacc1;
 create table atacc1 ( test int, test2 int) distributed by (test);
 -- add a unique constraint
 alter table atacc1 add constraint atacc_test1 unique (test, test2);
-NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc_test1" for table "atacc1"
+NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc1_test_key" for table "atacc1"
 -- insert initial value
 insert into atacc1 (test,test2) values (4,4);
 -- should fail
 insert into atacc1 (test,test2) values (4,4);
-ERROR:  duplicate key value violates unique constraint "atacc_test1"
+ERROR:  duplicate key value violates unique constraint "atacc1_test_key"
 -- should all succeed
 insert into atacc1 (test,test2) values (4,5);
 insert into atacc1 (test,test2) values (5,4);
@@ -524,10 +524,10 @@ create table dupconstr (
 						distributed by (i);
 -- should fail because of duplicate constraint name
 alter table dupconstr add constraint test unique (i);
-NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "test" for table "dupconstr"
+NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "dupconstr_i_key" for table "dupconstr"
 ERROR:  constraint "test" for relation "dupconstr" already exists
 alter table dupconstr add constraint test primary key (i);
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "test" for table "dupconstr"
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "dupconstr_pkey" for table "dupconstr"
 ERROR:  constraint "test" for relation "dupconstr" already exists
 -- cleanup
 drop table dupconstr;
@@ -546,12 +546,12 @@ create table atacc1 ( test int ) with oids distributed by (test);
 NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
 -- add a primary key constraint
 alter table atacc1 add constraint atacc_test1 primary key (test);
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc_test1" for table "atacc1"
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc1_pkey" for table "atacc1"
 -- insert first value
 insert into atacc1 (test) values (2);
 -- should fail
 insert into atacc1 (test) values (2);
-ERROR:  duplicate key value violates unique constraint "atacc_test1"
+ERROR:  duplicate key value violates unique constraint "atacc1_pkey"
 -- should succeed
 insert into atacc1 (test) values (4);
 -- inserting NULL should fail
@@ -573,8 +573,8 @@ insert into atacc1 (test) values (2);
 insert into atacc1 (test) values (2);
 -- add a primary key (fails)
 alter table atacc1 add constraint atacc_test1 primary key (test);
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc_test1" for table "atacc1"
-ERROR:  could not create unique index "atacc_test1"
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc1_pkey" for table "atacc1"
+ERROR:  could not create unique index "atacc1_pkey"
 DETAIL:  Table contains duplicated values.
 insert into atacc1 (test) values (3);
 drop table atacc1;
@@ -584,7 +584,7 @@ create table atacc1 ( test int ) distributed by (test);
 insert into atacc1 (test) values (NULL);
 -- add a primary key (fails)
 alter table atacc1 add constraint atacc_test1 primary key (test);
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc_test1" for table "atacc1"
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc1_pkey" for table "atacc1"
 ERROR:  column "test" contains null values  (seg1 rh55-qavm63:18507 pid=26647)
 insert into atacc1 (test) values (3);
 drop table atacc1;
@@ -610,7 +610,7 @@ drop table atacc1;
 create table atacc1 ( test int, test2 int) distributed by (test);
 -- add a primary key constraint
 alter table atacc1 add constraint atacc_test1 primary key (test, test2);
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc_test1" for table "atacc1"
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc1_pkey" for table "atacc1"
 -- try adding a second primary key - should fail
 alter table atacc1 add constraint atacc_test2 primary key (test);
 ERROR:  multiple primary keys for table "atacc1" are not allowed
@@ -618,7 +618,7 @@ ERROR:  multiple primary keys for table "atacc1" are not allowed
 insert into atacc1 (test,test2) values (4,4);
 -- should fail
 insert into atacc1 (test,test2) values (4,4);
-ERROR:  duplicate key value violates unique constraint "atacc_test1"
+ERROR:  duplicate key value violates unique constraint "atacc1_pkey"
 insert into atacc1 (test,test2) values (NULL,3);
 ERROR:  null value in column "test" violates not-null constraint  (seg1 rh55-qavm63:18507 pid=26647)
 insert into atacc1 (test,test2) values (3, NULL);

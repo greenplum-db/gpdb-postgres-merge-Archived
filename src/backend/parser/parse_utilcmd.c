@@ -962,6 +962,27 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 		index->isconstraint = OidIsValid(conoid);
 	}
 
+	/*
+	 * If the index backs a constraint, use the same name for the constraint
+	 * as the source uses. This is particularly important for partitioned
+	 * tables, as some places assume that when a partitioned table has
+	 * a constraint, the constraint has the same name in all the partitions.
+	 */
+	if (index->isconstraint)
+	{
+		char	   *conname;
+
+		if (!OidIsValid(conoid))
+			conoid = get_index_constraint(source_relid);
+
+		conname = GetConstraintNameByOid(conoid);
+		if (!conname)
+			elog(ERROR, "could not find constraint that index \"%s\" backs in source table",
+				 RelationGetRelationName(source_idx));
+
+		index->altconname = conname;
+	}
+
 	/* Get the index expressions, if any */
 	datum = SysCacheGetAttr(INDEXRELID, ht_idx,
 							Anum_pg_index_indexprs, &isnull);
@@ -2236,14 +2257,13 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 	index->isconstraint = true;
 
 	/*
-	 * If we are creating an index backing a constraint in a partition, let DefineIndex
-	 * choose a name, even if we have a constraint name available. The constraint will have
-	 * the same name in all partitions, so it is not unique.
+	 * We used to force the index name to be the constraint name, but they
+	 * are in different namespaces and so have different  requirements for
+	 * uniqueness. Here we leave the index name alone and put the constraint
+	 * name in the IndexStmt, for use in DefineIndex.
 	 */
-	if (constraint->name != NULL && !cxt->iscreatepart)
-		index->idxname = pstrdup(constraint->name);
-	else
-		index->idxname = NULL;	/* DefineIndex will choose name */
+	index->idxname = NULL;	/* DefineIndex will choose name */
+	index->altconname = constraint->name; /* User may have picked the name. */
 
 	index->relation = cxt->relation;
 	index->accessMethod = DEFAULT_INDEX_TYPE;

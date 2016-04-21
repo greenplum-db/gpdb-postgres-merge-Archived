@@ -864,6 +864,7 @@ _readIndexStmt(void)
 	READ_BOOL_FIELD(unique);
 	READ_BOOL_FIELD(primary);
 	READ_BOOL_FIELD(isconstraint);
+	READ_STRING_FIELD(altconname);
 	READ_OID_FIELD(constrOid);
 	READ_BOOL_FIELD(concurrent);
 	READ_NODE_FIELD(idxOids);

@@ -141,7 +141,7 @@ CreateAOAuxiliaryTable(
 									 rel->rd_rel->reltablespace,
 									 classObjectId, coloptions, (Datum) 0,
 									 true, false, (Oid *) NULL, true, false,
-									 false);
+									 false, NULL);
 
 	/* Unlock target table -- no one can see it */
 	UnlockRelationOid(aoauxiliaryOid, ShareLock);

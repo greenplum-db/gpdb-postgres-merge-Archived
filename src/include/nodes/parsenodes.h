@@ -2180,6 +2180,8 @@ typedef struct IndexStmt
 	bool		unique;			/* is index unique? */
 	bool		primary;		/* is index on primary key? */
 	bool		isconstraint;	/* is it from a CONSTRAINT clause? */
+	char	   *altconname;		/* constraint name, if desired name differs
+								 * from idxname and isconstraint, else NULL. */
 	Oid			constrOid;		/* constraint oid */
 	bool		concurrent;		/* should this be a concurrent index build? */
 	List		*idxOids;		/* For MPP. We use List here because the

@@ -537,7 +537,8 @@ index_create(Oid heapRelationId,
 			 Oid *constrOid,
 			 bool allow_system_table_mods,
 			 bool skip_build,
-			 bool concurrent)
+			 bool concurrent,
+			 const char *altConName)
 {
 	Relation	pg_class;
 	Relation	gp_relation_node;
@@ -801,7 +802,11 @@ index_create(Oid heapRelationId,
 		{
 			char		constraintType;
 			const char *constraintName = indexRelationName;
-			
+
+			if ( altConName )
+			{
+				constraintName = altConName;
+			}
 
 			/*
 			 * Let's make sure that the constraint name is unique
