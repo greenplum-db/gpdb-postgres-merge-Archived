@@ -3132,6 +3132,7 @@ _copyCreateStmt(CreateStmt *from)
 	COPY_NODE_FIELD(deferredStmts);
 	COPY_SCALAR_FIELD(is_part_child);
 	COPY_SCALAR_FIELD(is_add_part);
+	COPY_SCALAR_FIELD(is_split_part);
 	COPY_SCALAR_FIELD(ownerid);
 	COPY_SCALAR_FIELD(buildAoBlkdir);
 	COPY_NODE_FIELD(attr_encodings);
@@ -3435,7 +3436,7 @@ _copyIndexStmt(IndexStmt *from)
 	COPY_SCALAR_FIELD(constrOid);
 	COPY_SCALAR_FIELD(concurrent);
 	COPY_NODE_FIELD(idxOids);
-	COPY_SCALAR_FIELD(do_part);
+	COPY_SCALAR_FIELD(is_split_part);
 
 	return newnode;
 }

@@ -1323,7 +1323,7 @@ _equalIndexStmt(IndexStmt *a, IndexStmt *b)
 	COMPARE_SCALAR_FIELD(constrOid);
 	COMPARE_SCALAR_FIELD(concurrent);
 	COMPARE_NODE_FIELD(idxOids);
-	COMPARE_SCALAR_FIELD(do_part);
+	COMPARE_SCALAR_FIELD(is_split_part);
 
 	return true;
 }

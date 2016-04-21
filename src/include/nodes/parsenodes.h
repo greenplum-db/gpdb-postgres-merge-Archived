@@ -2186,7 +2186,7 @@ typedef struct IndexStmt
 	bool		concurrent;		/* should this be a concurrent index build? */
 	List		*idxOids;		/* For MPP. We use List here because the
 								 * bitmap index needs 3 additional oids. */
-	bool		do_part;		/* build indexes for child partitions */
+	bool		is_split_part;	/* Is this for SPLIT PARTITION command? */
 } IndexStmt;
 
 /* ----------------------

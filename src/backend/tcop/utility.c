@@ -1338,7 +1338,7 @@ ProcessUtility(Node *parsetree,
 							false,		/* is_alter_table */
 							true,		/* check_rights */
 							false,		/* skip_build */
-							false,		/* quiet */
+							stmt->is_split_part,		/* quiet */
 							stmt->concurrent,	/* concurrent */
 							false, /* expanded from partitioning? */
 							stmt);

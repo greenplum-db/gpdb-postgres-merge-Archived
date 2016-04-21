@@ -43,6 +43,7 @@ typedef struct
 	bool		hasoids;		/* does relation have an OID column? */
 	bool		isalter;		/* true if altering existing table */
 	bool		iscreatepart;	/* true if create in service of creating a part */
+	bool		issplitpart;
 	List	   *columns;		/* ColumnDef items */
 	List	   *ckconstraints;	/* CHECK constraints */
 	List	   *fkconstraints;	/* FOREIGN KEY constraints */

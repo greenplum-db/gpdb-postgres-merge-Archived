@@ -189,6 +189,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 	cxt.inhRelations = stmt->inhRelations;
 	cxt.isalter = false;
 	cxt.iscreatepart = createPartition;
+	cxt.issplitpart = stmt->is_split_part;
 	cxt.columns = NIL;
 	cxt.ckconstraints = NIL;
 	cxt.fkconstraints = NIL;
@@ -862,7 +863,7 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 			/* Build CREATE INDEX statement to recreate the parent_index */
 			index_stmt = generateClonedIndexStmt(cxt, parent_index,
 												 attmap, tupleDesc->natts);
-
+			
 			/* Save it in the inh_indexes list for the time being */
 			cxt->inh_indexes = lappend(cxt->inh_indexes, index_stmt);
 
@@ -940,6 +941,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 	index->unique = idxrec->indisunique;
 	index->primary = idxrec->indisprimary;
 	index->concurrent = false;
+	index->is_split_part = cxt->issplitpart;
 
 	/*
 	 * We don't try to preserve the name of the source index; instead, just
