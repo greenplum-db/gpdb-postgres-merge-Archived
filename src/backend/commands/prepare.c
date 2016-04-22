@@ -280,8 +280,8 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("prepared statement is not a SELECT")));
 		pstmt->intoClause = copyObject(stmt->into);
-		Assert(pstmt->intoPolicy != NULL);
-		pstmt->intoPolicy = GpPolicyCopy(CurrentMemoryContext, pstmt->intoPolicy);	
+		if (pstmt->intoPolicy == NULL)
+			pstmt->intoPolicy = GpPolicyCopy(CurrentMemoryContext, pstmt->intoPolicy);
 		MemoryContextSwitchTo(oldContext);
 
 		/* We no longer need the cached plan refcount ... */
