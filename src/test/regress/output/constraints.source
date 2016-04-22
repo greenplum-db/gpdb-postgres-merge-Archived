@@ -281,6 +281,7 @@ INSERT INTO PRIMARY_TBL VALUES (1, 'one');
 INSERT INTO PRIMARY_TBL VALUES (2, 'two');
 INSERT INTO PRIMARY_TBL VALUES (1, 'three');
 ERROR:  duplicate key value violates unique constraint "primary_tbl_pkey"
+DETAIL:  Key (i)=(1) already exists.
 INSERT INTO PRIMARY_TBL VALUES (4, 'three');
 INSERT INTO PRIMARY_TBL VALUES (5, 'one');
 INSERT INTO PRIMARY_TBL (t) VALUES ('six');
@@ -325,6 +326,7 @@ INSERT INTO UNIQUE_TBL VALUES (1, 'one');
 INSERT INTO UNIQUE_TBL VALUES (2, 'two');
 INSERT INTO UNIQUE_TBL VALUES (1, 'three');
 ERROR:  duplicate key value violates unique constraint "unique_tbl_i_key"
+DETAIL:  Key (i)=(1) already exists.
 INSERT INTO UNIQUE_TBL VALUES (4, 'four');
 INSERT INTO UNIQUE_TBL VALUES (5, 'one');
 INSERT INTO UNIQUE_TBL (t) VALUES ('six');
@@ -349,6 +351,7 @@ INSERT INTO UNIQUE_TBL VALUES (2, 'two');
 INSERT INTO UNIQUE_TBL VALUES (1, 'three');
 INSERT INTO UNIQUE_TBL VALUES (1, 'one');
 ERROR:  duplicate key value violates unique constraint "unique_tbl_i_key"
+DETAIL:  Key (i, t)=(1, one) already exists.
 INSERT INTO UNIQUE_TBL VALUES (5, 'one');
 INSERT INTO UNIQUE_TBL (t) VALUES ('six');
 SELECT '' AS five, * FROM UNIQUE_TBL;

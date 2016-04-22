@@ -107,7 +107,7 @@ static int exec_stmt_return(PLpgSQL_execstate *estate,
 static int exec_stmt_return_next(PLpgSQL_execstate *estate,
 					  PLpgSQL_stmt_return_next *stmt);
 static int exec_stmt_return_query(PLpgSQL_execstate *estate,
-					   PLpgSQL_stmt_return_query *stmt);
+					  PLpgSQL_stmt_return_query *stmt);
 static int exec_stmt_raise(PLpgSQL_execstate *estate,
 				PLpgSQL_stmt_raise *stmt);
 static int exec_stmt_execsql(PLpgSQL_execstate *estate,
@@ -2168,7 +2168,7 @@ static int
 exec_stmt_return_query(PLpgSQL_execstate *estate,
 					   PLpgSQL_stmt_return_query *stmt)
 {
-	Portal		portal;
+	Portal	portal;
 
 	if (!estate->retisset)
 		ereport(ERROR,
@@ -2183,22 +2183,24 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 	if (!compatible_tupdesc(estate->rettupdesc, portal->tupDesc))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-		  errmsg("structure of query does not match function result type")));
+				 errmsg("structure of query does not match function result type")));
 
 	while (true)
 	{
-		int			i;
+		MemoryContext	old_cxt;
+		int				i;
 
 		SPI_cursor_fetch(portal, true, 50);
 		if (SPI_processed == 0)
 			break;
 
+		old_cxt = MemoryContextSwitchTo(estate->tuple_store_cxt);
 		for (i = 0; i < SPI_processed; i++)
 		{
-			HeapTuple	tuple = SPI_tuptable->vals[i];
-
+			HeapTuple tuple = SPI_tuptable->vals[i];
 			tuplestore_puttuple(estate->tuple_store, tuple);
 		}
+		MemoryContextSwitchTo(old_cxt);
 
 		SPI_freetuptable(SPI_tuptable);
 	}

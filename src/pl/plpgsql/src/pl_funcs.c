@@ -534,6 +534,7 @@ static void free_fors(PLpgSQL_stmt_fors *stmt);
 static void free_exit(PLpgSQL_stmt_exit *stmt);
 static void free_return(PLpgSQL_stmt_return *stmt);
 static void free_return_next(PLpgSQL_stmt_return_next *stmt);
+static void free_return_query(PLpgSQL_stmt_return_query *stmt);
 static void free_raise(PLpgSQL_stmt_raise *stmt);
 static void free_execsql(PLpgSQL_stmt_execsql *stmt);
 static void free_dynexecute(PLpgSQL_stmt_dynexecute *stmt);
@@ -580,6 +581,9 @@ free_stmt(PLpgSQL_stmt *stmt)
 			break;
 		case PLPGSQL_STMT_RETURN_NEXT:
 			free_return_next((PLpgSQL_stmt_return_next *) stmt);
+			break;
+		case PLPGSQL_STMT_RETURN_QUERY:
+			free_return_query((PLpgSQL_stmt_return_query *) stmt);
 			break;
 		case PLPGSQL_STMT_RAISE:
 			free_raise((PLpgSQL_stmt_raise *) stmt);
@@ -725,6 +729,14 @@ static void
 free_return_next(PLpgSQL_stmt_return_next *stmt)
 {
 	free_expr(stmt->expr);
+}
+
+static void
+free_return_query(PLpgSQL_stmt_return_query *stmt)
+{
+	ListCell   *lc;
+
+	free_expr(stmt->query);
 }
 
 static void

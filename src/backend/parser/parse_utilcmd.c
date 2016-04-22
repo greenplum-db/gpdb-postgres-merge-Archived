@@ -1282,7 +1282,7 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 			 * defaults to DISTRIBUTED RANDOMLY irrespective of the
 			 * gp_create_table_random_default_distribution guc.
 			 */
-			stmt->policy = createRandomDistribution(MaxPolicyAttributeNumber);
+			stmt->policy = createRandomDistribution();
 		}
 		else
 		{
@@ -1513,7 +1513,7 @@ transformDistributedBy(ParseState *pstate, CreateStmtContext *cxt,
 	if (gp_create_table_random_default_distribution && NIL == distributedBy)
 	{
 		Assert(NIL == likeDistributedBy);
-		policy = createRandomDistribution(maxattrs);
+		policy = createRandomDistribution();
 		
 		if (!bQuiet)
 		{

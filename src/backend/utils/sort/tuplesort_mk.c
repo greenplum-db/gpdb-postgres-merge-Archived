@@ -199,7 +199,6 @@ typedef struct TupsortMergeReadCtxt
     int mem_used;
 } TupsortMergeReadCtxt;
 
-
 /*
  * Private state of a Tuplesort operation.
  */
@@ -908,6 +907,7 @@ tuplesort_begin_index_mk(Relation indexRel,
    
     state->mkctxt.enforceUnique = enforceUnique;
 	state->mkctxt.indexname = RelationGetRelationName(indexRel);
+    state->mkctxt.indexRel = indexRel;
     MemoryContextSwitchTo(oldcontext);
 
     return state;

@@ -3283,7 +3283,6 @@ setQryDistributionPolicy(SelectStmt *stmt, Query *qry)
 
 	GpPolicy  *policy = NULL;
 	int			colindex = 0;
-	int			maxattrs = MaxPolicyAttributeNumber;
 
 	if (Gp_role != GP_ROLE_DISPATCH)
 		return;
@@ -3296,11 +3295,16 @@ setQryDistributionPolicy(SelectStmt *stmt, Query *qry)
 		 * We have a DISTRIBUTED BY column list specified by the user
 		 * Process it now and set the distribution policy.
 		 */
+		if (list_length(stmt->distributedBy) > MaxPolicyAttributeNumber)
+			ereport(ERROR,
+					(errcode(ERRCODE_TOO_MANY_COLUMNS),
+					 errmsg("number of distributed by columns exceeds limit (%d)",
+							MaxPolicyAttributeNumber)));
 
-		policy = (GpPolicy *) palloc(sizeof(GpPolicy) + maxattrs * sizeof(policy->attrs[0]));
+		policy = (GpPolicy *) palloc0(sizeof(GpPolicy) - sizeof(policy->attrs)
+								+ list_length(stmt->distributedBy) * sizeof(policy->attrs[0]));
 		policy->ptype = POLICYTYPE_PARTITIONED;
 		policy->nattrs = 0;
-		policy->attrs[0] = 1;
 
 		if (stmt->distributedBy->length == 1 && (list_head(stmt->distributedBy) == NULL || linitial(stmt->distributedBy) == NULL))
 		{
@@ -3308,41 +3312,36 @@ setQryDistributionPolicy(SelectStmt *stmt, Query *qry)
 			qry->intoPolicy = policy;
 		}
 		else
-		foreach(keys, stmt->distributedBy)
 		{
-			char	   *key = strVal(lfirst(keys));
-			bool		found = false;
-
-			AttrNumber	n;
-
-			for(n=1;n<=list_length(qry->targetList);n++)
+			foreach(keys, stmt->distributedBy)
 			{
+				char	   *key = strVal(lfirst(keys));
+				bool		found = false;
+				AttrNumber	n;
 
-				TargetEntry *target = get_tle_by_resno(qry->targetList, n);
-				colindex = n;
-
-				if (target->resname && strcmp(target->resname, key) == 0)
+				for (n=1; n <= list_length(qry->targetList); n++)
 				{
-					found = true;
+					TargetEntry *target = get_tle_by_resno(qry->targetList, n);
+					colindex = n;
 
-				} /*if*/
+					if (target->resname && strcmp(target->resname, key) == 0)
+					{
+						found = true;
+						break;
+					}
+				}
 
-				if (found)
-					break;
-
-			} /*for*/
-
-			if (!found)
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("column \"%s\" named in DISTRIBUTED BY "
-								"clause does not exist",
-								key)));
-
-			policy->attrs[policy->nattrs++] = colindex;
-
-		} /*foreach */
-		if (policy->nattrs > 0)
+				if (!found)
+					ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_COLUMN),
+							 errmsg("column \"%s\" named in DISTRIBUTED BY "
+									"clause does not exist",
+									key)));
+	
+				policy->attrs[policy->nattrs++] = colindex;
+	
+			}
 			qry->intoPolicy = policy;
+		}
 	}
 }

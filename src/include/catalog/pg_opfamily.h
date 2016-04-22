@@ -166,6 +166,9 @@ DATA(insert OID = 3659 (	2742	tsvector_ops	PGNSP PGUID ));
 DATA(insert OID = 3683 (	403		tsquery_ops		PGNSP PGUID ));
 DATA(insert OID = 3702 (	783		tsquery_ops		PGNSP PGUID ));
 
+/* Complex Number type */
+DATA(insert OID = 3221 (	403		complex_ops		PGNSP PGUID ));
+
 DATA(insert OID = 7080 (	403		xlogloc_ops		PGNSP PGUID ));
 
 /*

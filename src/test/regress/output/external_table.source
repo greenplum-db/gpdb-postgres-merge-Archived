@@ -911,9 +911,7 @@ SELECT gp_truncate_error_log('exttab_cursor_2');
 -- DECLARE CURSOR implicitly initiates a FETCH on the segments. If one of
 -- the segments reaches the reject limit and reports the error back to the QD
 -- before the others, the transaction gets aborted. The timing of fetching the
--- results will  influence the order of the ERROR in the output.  We set the ECHO
--- level of psql to info so that the COMMIT message will be masked and will not
--- cause the test to fail when the order differs from expected output.
+-- results will  influence the order of the ERROR in the output.
 BEGIN;
 DECLARE exttab_cur1 no scroll cursor FOR
 SELECT e1.i, e2.j from exttab_cursor_2 e1 INNER JOIN exttab_cursor_2 e2 ON e1.i = e2.i
@@ -924,9 +922,10 @@ SELECT e1.i, e2.j from exttab_cursor_2 e1 INNER JOIN exttab_cursor_2 e2 ON e1.i 
 -- Should not fail as we would not have reached segment reject limit yet. This fails currently though
 -- because how cursors scan the rows internally is implementation dependant. 
 -- The test is here to track the issue.
-\set ECHO info
-ERROR:  Segment reject limit reached. Aborting operation. Last error was: missing data for column "j"  (seg0 slice4 @hostname@:40000 pid=95923)
-DETAIL:  External table exttab_cursor_2, line 7 of file://@hostname@@abs_srcdir@/data/exttab_more_errors.data: "error_1"
+FETCH exttab_cur1;
+ERROR:  Segment reject limit reached. Aborting operation. Last error was: missing data for column "j"  (seg0 slice1 subraa4-mac:40000 pid=70279)
+DETAIL:  External table exttab_cursor_2, line 7 of file://subraa4-mac/Users/abhijits/gitdev/oss_build/gpdb/src/test/regress/data/exttab_more_errors.data: "error_1"
+COMMIT;
 -- This should have errors populated already
 SELECT count(*) > 0 FROM gp_read_error_log('exttab_cursor_2');
  ?column? 

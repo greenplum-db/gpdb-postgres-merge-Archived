@@ -360,6 +360,22 @@ DATA(insert ( 1560 1560 1685 i ));
 DATA(insert ( 1562 1562 1687 i ));
 DATA(insert ( 1700 1700 1703 i ));
 
+/* casts to and from uuid */ 
+DATA(insert (   25 2950 2964 a ));
+DATA(insert ( 2950   25 2965 a ));
+DATA(insert ( 1043 2950 2964 a ));
+DATA(insert ( 2950 1043 2965 a ));
+
+/* complex type */
+DATA(insert OID=9069 (701  195 3584 i));
+DATA(insert OID=9070 (700  195 3585 i));
+DATA(insert OID=9088 (20   195 3586 i));
+DATA(insert OID=9089 (23   195 3587 i));
+DATA(insert OID=9090 (21   195 3588 i));
+DATA(insert OID=9091 (600  195 0 e));
+DATA(insert OID=9092 (195  600 0 e));
+DATA(insert OID=9093 (1700 195 3592 i));
+
 /*
  * CDB: Allow explicit cast from tid to int8
  */

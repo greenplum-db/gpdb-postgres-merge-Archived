@@ -439,6 +439,7 @@ extern double optimizer_damping_factor_filter;
 extern double optimizer_damping_factor_join;
 extern double optimizer_damping_factor_groupby;
 extern int optimizer_segments;
+extern int optimizer_join_arity_for_associativity_commutativity;
 extern bool optimizer_analyze_root_partition;
 extern bool optimizer_analyze_midlevel_partition;
 extern bool optimizer_enable_constant_expression_evaluation;
@@ -459,6 +460,11 @@ extern bool optimizer_multilevel_partitioning;
 extern bool optimizer_enable_derive_stats_all_groups;
 extern bool optimizer_explain_show_status;
 extern bool optimizer_prefer_scalar_dqa_multistage_agg;
+
+/**
+ * GUCs related to code generation.
+ **/
+extern bool codegen;
 
 /**
  * Enable logging of DPE match in optimizer.

@@ -552,6 +552,7 @@ double		optimizer_damping_factor_filter;
 double		optimizer_damping_factor_join;
 double		optimizer_damping_factor_groupby;
 int			optimizer_segments;
+int			optimizer_join_arity_for_associativity_commutativity;
 bool		optimizer_analyze_root_partition;
 bool		optimizer_analyze_midlevel_partition;
 bool		optimizer_enable_constant_expression_evaluation;
@@ -570,6 +571,11 @@ bool		optimizer_multilevel_partitioning;
 bool		optimizer_enable_derive_stats_all_groups;
 bool		optimizer_explain_show_status;
 bool		optimizer_prefer_scalar_dqa_multistage_agg;
+
+/**
+ * GUCs related to code generation.
+ **/
+bool		codegen;
 
 /* Security */
 bool		gp_reject_internal_tcp_conn = true;
@@ -3399,6 +3405,16 @@ struct config_bool ConfigureNamesBool_gp[] =
 		true, NULL, NULL
 	},
 
+	{
+		{"codegen", PGC_POSTMASTER, DEVELOPER_OPTIONS,
+			gettext_noop("Enable just-in-time code generation."),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&codegen,
+		false, NULL, NULL
+	},
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, false, NULL, NULL
@@ -4702,6 +4718,16 @@ struct config_int ConfigureNamesInt_gp[] =
 		},
 		&optimizer_segments,
 		0, 0, INT_MAX, NULL, NULL
+	},
+
+	{
+		{"optimizer_join_arity_for_associativity_commutativity", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Maximum number of children n-ary-join have without disabling commutativity and associativity transform"),
+			NULL,
+			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
+		},
+		&optimizer_join_arity_for_associativity_commutativity,
+		INT_MAX, 0, INT_MAX, NULL, NULL
 	},
 
 	{

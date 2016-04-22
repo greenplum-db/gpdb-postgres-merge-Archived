@@ -88,11 +88,11 @@
  *
  *
  * Portions Copyright (c) 2007-2008, Greenplum inc
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.81 2008/01/01 19:45:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.92 2009/08/01 20:59:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3354,11 +3354,19 @@ comparetup_index(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 	 * error in that case.
 	 */
 	if (state->enforceUnique && !equal_hasnull && tuple1 != tuple2)
+	{
+		Datum	values[INDEX_MAX_KEYS];
+		bool	isnull[INDEX_MAX_KEYS];
+
+		index_deform_tuple(tuple1, tupDes, values, isnull);
 		ereport(ERROR,
 				(errcode(ERRCODE_UNIQUE_VIOLATION),
 				 errmsg("could not create unique index \"%s\"",
 						RelationGetRelationName(state->indexRel)),
-				 errdetail("Table contains duplicated values.")));
+				 errdetail("Key %s is duplicated.",
+						   BuildIndexValueDescription(state->indexRel,
+													  values, isnull))));
+	}
 
 	/*
 	 * If key values are equal, we sort on ItemPointer.  This does not affect

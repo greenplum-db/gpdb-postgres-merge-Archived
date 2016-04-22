@@ -408,10 +408,11 @@ CREATE UNIQUE INDEX CONCURRENTLY concur_index2 ON concur_heap(dk, f1);
 -- check if constraint is set up properly to be enforced
 INSERT INTO concur_heap VALUES ('b','x', '1');
 ERROR:  duplicate key value violates unique constraint "concur_index2"
+DETAIL:  Key (dk, f1)=(1, b) already exists.
 -- check if constraint is enforced properly at build time
 CREATE UNIQUE INDEX CONCURRENTLY concur_index3 ON concur_heap(dk, f2);
 ERROR:  could not create unique index "concur_index3"
-DETAIL:  Table contains duplicated values.
+DETAIL:  Key (dk, f2)=(1, b) is duplicated.
 -- test that expression indexes and partial indexes work concurrently
 CREATE INDEX CONCURRENTLY concur_index4 on concur_heap(f2) WHERE f1='a';
 CREATE INDEX CONCURRENTLY concur_index5 on concur_heap(f2) WHERE f1='x';

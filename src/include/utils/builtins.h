@@ -5,10 +5,10 @@
  *
  *
  * Portions Copyright (c) 2005-2010, Greenplum inc
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.308 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.336 2009/08/01 19:59:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -592,6 +592,7 @@ extern Datum pg_get_viewdef_name_ext(PG_FUNCTION_ARGS);
 extern Datum pg_get_indexdef(PG_FUNCTION_ARGS);
 extern Datum pg_get_indexdef_ext(PG_FUNCTION_ARGS);
 extern char *pg_get_indexdef_string(Oid indexrelid);
+extern char *pg_get_indexdef_columns(Oid indexrelid, bool pretty);
 extern Datum pg_get_triggerdef(PG_FUNCTION_ARGS);
 extern Datum pg_get_constraintdef(PG_FUNCTION_ARGS);
 extern Datum pg_get_constraintdef_ext(PG_FUNCTION_ARGS);
@@ -1004,6 +1005,11 @@ extern Datum numeric_demalg(PG_FUNCTION_ARGS); /* MPP */
 extern Datum int8_avg_demalg(PG_FUNCTION_ARGS); /* MPP */
 extern Datum float8_avg_demalg(PG_FUNCTION_ARGS); /* MPP */
 extern Datum numeric_avg_demalg(PG_FUNCTION_ARGS); /* MPP */
+extern Datum complex_cmp(PG_FUNCTION_ARGS);
+extern Datum complex_lt(PG_FUNCTION_ARGS);
+extern Datum complex_gt(PG_FUNCTION_ARGS);
+extern Datum complex_gte(PG_FUNCTION_ARGS);
+extern Datum complex_lte(PG_FUNCTION_ARGS);
 
 /* ri_triggers.c */
 extern Datum RI_FKey_check_ins(PG_FUNCTION_ARGS);
@@ -1076,6 +1082,15 @@ extern Datum txid_snapshot_xmin(PG_FUNCTION_ARGS);
 extern Datum txid_snapshot_xmax(PG_FUNCTION_ARGS);
 extern Datum txid_snapshot_xip(PG_FUNCTION_ARGS);
 extern Datum txid_visible_in_snapshot(PG_FUNCTION_ARGS);
+
+/* access/transam/twophase.c */
+extern Datum pg_prepared_xact(PG_FUNCTION_ARGS);
+
+/* commands/prepare.c */
+extern Datum pg_prepared_statement(PG_FUNCTION_ARGS);
+
+/* utils/mmgr/portalmem.c */
+extern Datum pg_cursor(PG_FUNCTION_ARGS);
 
 /* uuid.c */
 extern Datum uuid_in(PG_FUNCTION_ARGS);

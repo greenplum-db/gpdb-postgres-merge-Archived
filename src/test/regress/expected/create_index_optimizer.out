@@ -393,7 +393,8 @@ INSERT INTO concur_heap VALUES  ('b','b');
 CREATE UNIQUE INDEX CONCURRENTLY concur_index2 ON concur_heap(f1);
 -- check if constraint is set up properly to be enforced
 INSERT INTO concur_heap VALUES ('b','x');
-ERROR:  duplicate key violates unique constraint "concur_index2"  (seg1 jeffsmac:11002 pid=62533)
+ERROR:  duplicate key value violates unique constraint "concur_index2"
+DETAIL:  Key (f1)=(b) already exists.
 -- check if constraint is enforced properly at build time
 --CREATE UNIQUE INDEX CONCURRENTLY concur_index3 ON concur_heap(f2);
 -- test that expression indexes and partial indexes work concurrently
@@ -496,3 +497,111 @@ RESET enable_indexscan;
 RESET enable_bitmapscan;
  
 DROP TABLE onek_with_null;
+drop table bm_test;
+drop table bm_test2;
+drop table bm_test3;
+create table bm_test (i int, j int);
+NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
+HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
+insert into bm_test values (0, 0), (0, 0), (0, 1), (1,0), (1,0), (1,1);
+create index bm_test_j on bm_test using bitmap(j);
+delete from bm_test where j =1;
+vacuum bm_test;
+insert into bm_test values (0, 0), (1,0);
+set enable_seqscan=off;
+set enable_bitmapscan=off;
+set optimizer_enable_bitmapscan=off;
+-- start_ignore
+-- Known_opt_diff: MPP-19808
+-- end_ignore
+explain select * from bm_test where j = 1;
+                                   QUERY PLAN                                    
+-----------------------------------------------------------------------------------------
+ Gather Motion 2:1  (slice1; segments: 2)  (cost=0.00..2.03 rows=1 width=8)
+   ->  Table Scan on bm_test  (cost=0.00..1.03 rows=1 width=8)
+         Filter: j = 1
+ Settings:  enable_bitmapscan=off; enable_indexscan=on; enable_seqscan=off; optimizer=on
+(4 rows)
+
+select * from bm_test where j = 1;
+ i | j 
+---+---
+(0 rows)
+
+drop table bm_test;
+-- MPP-3232
+create table bm_test (i int,j int);
+NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
+HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
+insert into bm_test values (1, 1), (1, 2);
+create index bm_test_j on bm_test using bitmap(j);
+update bm_test set j=20 where j=1;
+vacuum bm_test;
+drop table bm_test;
+-- unique index with null value tests
+drop table if exists ijk;
+NOTICE:  table "ijk" does not exist, skipping
+create table ijk(i int, j int, k int) distributed by (i);
+insert into ijk values (1, 1, 3);
+insert into ijk values (1, 2, 4);
+insert into ijk values (1, 3, NULL);
+insert into ijk values (1, 3, NULL);
+insert into ijk values (1, NULL, NULL);
+insert into ijk values (1, NULL, NULL);
+-- should fail.
+create unique index ijk_i on ijk(i);
+ERROR:  could not create unique index "ijk_i"
+DETAIL:  Key (i)=(1) is duplicated.
+create unique index ijk_ij on ijk(i,j);
+ERROR:  could not create unique index "ijk_ij"
+DETAIL:  Key (i, j)=(1, 3) is duplicated.
+-- should OK.
+create unique index ijk_ijk on ijk(i,j,k);
+set gp_enable_mk_sort=on;
+drop table if exists ijk;
+create table ijk(i int, j int, k int) distributed by (i);
+insert into ijk values (1, 1, 3);
+insert into ijk values (1, 2, 4);
+insert into ijk values (1, 3, NULL);
+insert into ijk values (1, 3, NULL);
+insert into ijk values (1, NULL, NULL);
+insert into ijk values (1, NULL, NULL);
+-- should fail.
+create unique index ijk_i on ijk(i);
+ERROR:  could not create unique index "ijk_i"
+DETAIL:  Key (i)=(1) is duplicated.
+create unique index ijk_ij on ijk(i,j);
+ERROR:  could not create unique index "ijk_ij"
+DETAIL:  Key (i, j)=(1, 3) is duplicated.
+-- should OK.
+create unique index ijk_ijk on ijk(i,j,k);
+set gp_enable_mk_sort=off;
+drop table ijk;
+---------
+-- test bitmaps with NULL and non-NULL values (MPP-8461)
+--
+create table bmap_test (x int, y int, z int);
+NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'x' as the Greenplum Database data distribution key for this table.
+HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
+insert into bmap_test values (1,NULL,NULL);
+insert into bmap_test values (NULL,1,NULL);
+insert into bmap_test values (NULL,NULL,1);
+insert into bmap_test values (1,NULL,NULL);
+insert into bmap_test values (NULL,1,NULL);
+insert into bmap_test values (NULL,NULL,1);
+insert into bmap_test values (1,NULL,5);
+insert into bmap_test values (NULL,1,NULL);
+insert into bmap_test values (NULL,NULL,1);
+insert into bmap_test select a from generate_series(1,10*1000) as s(a);
+create index bmap_test_idx_1 on bmap_test using bitmap (x,y,z);
+analyze bmap_test;
+select * from bmap_test where x = 1 order by x,y,z;
+ x | y | z 
+---+---+---
+ 1 |   | 5
+ 1 |   |  
+ 1 |   |  
+ 1 |   |  
+(4 rows)
+
+drop table bmap_test;

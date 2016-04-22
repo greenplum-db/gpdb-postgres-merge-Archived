@@ -3,12 +3,12 @@
  * nbtinsert.c
  *	  Item insertion in Lehman and Yao btrees for Postgres.
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.164.2.2 2010/08/29 19:33:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.173 2009/08/01 20:59:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -403,10 +403,32 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 							break;
 						}
 
-						ereport(ERROR,
-								(errcode(ERRCODE_UNIQUE_VIOLATION),
-								 errmsg("duplicate key value violates unique constraint \"%s\"",
-										RelationGetRelationName(rel))));
+						/*
+						 * This is a definite conflict.  Break the tuple down
+						 * into datums and report the error.  But first, make
+						 * sure we release the buffer locks we're holding ---
+						 * BuildIndexValueDescription could make catalog accesses,
+						 * which in the worst case might touch this same index
+						 * and cause deadlocks.
+						 */
+						if (nbuf != InvalidBuffer)
+							_bt_relbuf(rel, nbuf);
+						_bt_relbuf(rel, buf);
+	
+						{
+							Datum	values[INDEX_MAX_KEYS];
+							bool	isnull[INDEX_MAX_KEYS];
+	
+							index_deform_tuple(itup, RelationGetDescr(rel),
+											   values, isnull);
+							ereport(ERROR,
+									(errcode(ERRCODE_UNIQUE_VIOLATION),
+									 errmsg("duplicate key value violates unique constraint \"%s\"",
+											RelationGetRelationName(rel)),
+									 errdetail("Key %s already exists.",
+											   BuildIndexValueDescription(rel,
+																values, isnull))));						
+						}
 					}
 					else if (all_dead)
 					{
