@@ -1048,6 +1048,9 @@ mark_dummy_join(PlannerInfo *root, RelOptInfo *rel)
 	/* Set up the dummy path */
 	add_path(root, rel, (Path *) create_append_path(root, rel, NIL));
 
+	/* The dummy path doesn't need deduplication */
+	rel->dedup_info = NULL;
+
 	/*
 	 * Although set_cheapest will be done again later, we do it immediately
 	 * in order to keep is_dummy_rel as cheap as possible (ie, not have
