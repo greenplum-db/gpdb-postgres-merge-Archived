@@ -580,7 +580,7 @@ create view t_s_view as
 insert into t_p (c_p, c_c) values (1, 1234.56);
 
 insert into t_s (c_o, c_p, c_v)
-    values (0, 1, (select c_c from t_p where c_p = 1));
+    values (0, 1, (select c_c from t_p where c_p = '1'));
 
 select * from t_s_view ORDER BY 1,2;
 
