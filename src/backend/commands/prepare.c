@@ -227,46 +227,48 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 	query_string = MemoryContextStrdup(PortalGetHeapMemory(portal),
 									   entry->plansource->query_string);
 
-	/* Plan the query.  If this is a CTAS, copy the "into" information into
-	 * the query so that we construct the plan correctly.  Else the table
-	 * might not be created on the segments.  (MPP-8135) */
-
-	/* GPDB_83_MERGE_FIXME: I don't know what to do with this. The query was already
-	 * planned in PrepareQuery, do we really need to plan it again here?
-	 */
-#if 0
-	{
-		List *query_list = copyObject(entry->query_list); /* planner scribbles on query tree :( */
-		
-		if ( stmt->into )
-		{
-			Query *query = (Query*)linitial(query_list);
-			Assert(IsA(query, Query) && query->intoClause == NULL);
-			query->intoClause = copyObject(stmt->into);
-		}
-		
-		stmt_list = pg_plan_queries(query_list, paramLI, false);
-	}
-#endif
-	
 	/*
 	 * For CREATE TABLE / AS EXECUTE, we must make a copy of the stored query
 	 * so that we can modify its destination (yech, but this has always been
 	 * ugly).  For regular EXECUTE we can just use the cached query, since the
 	 * executor is read-only.
+	 *
+	 * In GPDB, the plan depends on the DISTRIBUTED BY of the target table.
+	 * For example, if the table is distributed by 'column1', then the rows to
+	 * insert must be moved to the correct nodes, determined by 'column1'.
+	 * That's a very different plan than what you get if you run the plain
+	 * SELECT from the master; in that case all the output rows will be
+	 * fetched into the master. Therefore, we cannot reuse the plan that was
+	 * previously prepared for the prepared statement; it would deliver the
+	 * rows to a wrong place. Make a copy of the raw parse tree, set its
+	 * intoClause, and plan the query with that. Setting intoClause/intoPolicy
+	 * is also needed to ensure that the created table has its
+	 * gp_distribution_policy row created correctly. (MPP-8135)
 	 */
 	if (stmt->into)
 	{
 		MemoryContext oldContext;
 		PlannedStmt *pstmt;
+		SelectStmt *select;
+		List	   *query_list;
 
-		/* Replan if needed, and increment plan refcount transiently */
-		cplan = RevalidateCachedPlan(entry->plansource, true);
+		if (!IsA(entry->plansource->raw_parse_tree, SelectStmt))
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("prepared statement is not a SELECT")));
+		select = (SelectStmt *) copyObject(entry->plansource->raw_parse_tree);
 
-		/* Copy plan into portal's context, and modify */
+		select->intoClause = copyObject(stmt->into);
+
+		query_list = pg_analyze_and_rewrite((Node *) select,
+											entry->plansource->query_string,
+											entry->plansource->param_types,
+											entry->plansource->num_params);
+
+		/* Create the plan in portal's context */
 		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
-		plan_list = copyObject(cplan->stmt_list);
+		plan_list = pg_plan_queries(query_list, 0, NULL, false);
 
 		if (list_length(plan_list) != 1)
 			ereport(ERROR,
@@ -284,9 +286,7 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 			pstmt->intoPolicy = GpPolicyCopy(CurrentMemoryContext, pstmt->intoPolicy);
 		MemoryContextSwitchTo(oldContext);
 
-		/* We no longer need the cached plan refcount ... */
-		ReleaseCachedPlan(cplan, true);
-		/* ... and we don't want the portal to depend on it, either */
+		/* we don't want the portal to depend on the original prepared statement */
 		cplan = NULL;
 	}
 	else
