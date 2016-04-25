@@ -873,7 +873,13 @@ RelationNeedsSynchronizedOIDs(Relation relation)
 			case LargeObjectRelationId:
 				return false;
 
-			/* We don't currently synchronize the OIDs of these catalogs. */
+			/*
+			 * We don't currently synchronize the OIDs of these catalogs.
+			 * It's a bit sketchy that we don't, but we get away with it
+			 * because these OIDs don't appear in any of the Node structs
+			 * that are dispatched from master to segments. (Except for the
+			 * OIDs, the contents of these tables should be in sync.)
+			 */
 			case RewriteRelationId:
 			case TriggerRelationId:
 			case AccessMethodOperatorRelationId:
