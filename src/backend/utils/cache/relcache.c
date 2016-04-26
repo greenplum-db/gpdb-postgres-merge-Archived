@@ -2758,13 +2758,7 @@ AtEOXact_RelationCache(bool isCommit)
 			Assert(relation->rd_refcnt == expected_refcnt);
 		}
 #endif
-		/*
-		 * GPDB_83_MERGE_FIXME: I don't htink we need any special handling for
-		 * QE-readers. They should be enrolled in transactions, especially now that
-		 * we don't require an Xid to be assigned for read-only transactions. If
-		 * they're not, let's enroll them.
-		 */
-#if 0
+
 		/*
 		 * QE-readers aren't properly enrolled in transactions, they
 		 * just get the snapshot which corresponds -- so here, where
@@ -2774,10 +2768,10 @@ AtEOXact_RelationCache(bool isCommit)
 		if (DistributedTransactionContext == DTX_CONTEXT_QE_ENTRY_DB_SINGLETON ||
 			DistributedTransactionContext == DTX_CONTEXT_QE_READER)
 		{
-			RelationClearRelation(relation, false);
+			RelationClearRelation(relation, relation->rd_isnailed ? true : false);
 			continue;
 		}
-#endif
+
 		/*
 		 * Is it a relation created in the current transaction?
 		 *
