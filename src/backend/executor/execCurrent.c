@@ -225,7 +225,7 @@ getCurrentOf(CurrentOfExpr *cexpr,
 	 *
 	 * The planner should've made the gp_segment_id, ctid, and tableoid
 	 * available as junk columns at the top of the plan. To retrieve this
-	 * junk metadeta, we leverage the EState's junkfilter against the raw
+	 * junk metadata, we leverage the EState's junkfilter against the raw
 	 * tuple yielded by the top node in the plan.
 	 */
 
