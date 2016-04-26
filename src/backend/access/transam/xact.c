@@ -1696,7 +1696,7 @@ RecordTransactionAbort(bool isSubXact)
 	if (isQEReader)
 		xid = InvalidTransactionId;
 	else
-		xid = GetTopTransactionIdIfAny();
+		xid = GetCurrentTransactionIdIfAny();
 
 	/* Get data needed for abort record */
 	persistentAbortSerializeLen =
