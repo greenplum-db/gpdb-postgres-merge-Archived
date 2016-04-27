@@ -11,13 +11,10 @@
 #include "fmgr.h"
 #include "funcapi.h"
 #include "miscadmin.h"
-<<<<<<< HEAD
 #include "utils/builtins.h"
-=======
 #include "utils/xml.h"
 
 #ifdef USE_LIBXSLT
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* libxml includes */
 
@@ -35,13 +32,6 @@
 
 #endif /* USE_LIBXSLT */
 
-<<<<<<< HEAD
-/* declarations to come from xpath.c */
-extern void elog_error(int level, char *explain, int force);
-extern void pgxml_parser_init();
-extern xmlChar *pgxml_texttoxmlchar(text *textstring);
-
-=======
 
 /* externally accessible functions */
 
@@ -52,7 +42,6 @@ Datum		xslt_process(PG_FUNCTION_ARGS);
 /* declarations to come from xpath.c */
 extern void pgxml_parser_init(void);
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 /* local defs */
 static void parse_params(const char **params, text *paramstr);
 
@@ -62,25 +51,14 @@ static void parse_params(const char **params, text *paramstr);
 
 #endif /* USE_LIBXSLT */
 
-<<<<<<< HEAD
-#define MAXPARAMS 20			/* must be even, see parse_params() */
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 PG_FUNCTION_INFO_V1(xslt_process);
 
 Datum
 xslt_process(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	text	   *doct = PG_GETARG_TEXT_P(0);
-	text	   *ssheet = PG_GETARG_TEXT_P(1);
-	text	   *paramstr;
-=======
 #ifdef USE_LIBXSLT
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	const char *params[MAXPARAMS + 1];	/* +1 for the terminator */
 	xsltStylesheetPtr stylesheet = NULL;
 	xmlDocPtr	doctree;
@@ -93,14 +71,11 @@ xslt_process(PG_FUNCTION_ARGS)
 	int			resstat;
 	int			reslen;
 
-<<<<<<< HEAD
-=======
 	text	   *doct = PG_GETARG_TEXT_P(0);
 	text	   *ssheet = PG_GETARG_TEXT_P(1);
 	text	   *paramstr;
 	text	   *tres;
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (fcinfo->nargs == 3)
 	{
 		paramstr = PG_GETARG_TEXT_P(2);
@@ -113,18 +88,9 @@ xslt_process(PG_FUNCTION_ARGS)
 	/* Setup parser */
 	pgxml_parser_init();
 
-<<<<<<< HEAD
-	/* Check to see if document is a file or a literal */
-
-	if (VARDATA(doct)[0] == '<')
-		doctree = xmlParseMemory((char *) VARDATA(doct), VARSIZE(doct) - VARHDRSZ);
-	else
-		doctree = xmlParseFile(text_to_cstring(doct));
-=======
 	/* Parse document */
 	doctree = xmlParseMemory((char *) VARDATA(doct),
 							 VARSIZE(doct) - VARHDRSZ);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	if (doctree == NULL)
 		xml_ereport(ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
@@ -186,11 +152,6 @@ xslt_process(PG_FUNCTION_ARGS)
 		xml_ereport(ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
 					"could not set libxslt security preferences");
 	}
-<<<<<<< HEAD
-	else
-		stylesheet = xsltParseStylesheetFile((xmlChar *) text_to_cstring(ssheet));
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	restree = xsltApplyStylesheetUser(stylesheet, doctree, params,
 									  NULL, NULL, xslt_ctxt);
@@ -220,9 +181,6 @@ xslt_process(PG_FUNCTION_ARGS)
 	if (resstat < 0)
 		PG_RETURN_NULL();
 
-<<<<<<< HEAD
-	PG_RETURN_TEXT_P(cstring_to_text_with_len((char *) resstr, reslen));
-=======
 	tres = palloc(reslen + VARHDRSZ);
 	memcpy(VARDATA(tres), resstr, reslen);
 	SET_VARSIZE(tres, reslen + VARHDRSZ);
@@ -240,7 +198,6 @@ xslt_process(PG_FUNCTION_ARGS)
 	PG_RETURN_NULL();
 
 #endif /* USE_LIBXSLT */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 #ifdef USE_LIBXSLT

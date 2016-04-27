@@ -10,12 +10,9 @@
 #include "fmgr.h"
 #include "funcapi.h"
 #include "lib/stringinfo.h"
-<<<<<<< HEAD
 #include "miscadmin.h"
 #include "utils/builtins.h"
-=======
 #include "utils/xml.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* libxml includes */
 
@@ -28,32 +25,7 @@
 
 PG_MODULE_MAGIC;
 
-<<<<<<< HEAD
-/* declarations */
-
-static void *pgxml_palloc(size_t size);
-static void *pgxml_repalloc(void *ptr, size_t size);
-static void pgxml_pfree(void *ptr);
-static char *pgxml_pstrdup(const char *string);
-static void pgxml_errorHandler(void *ctxt, const char *msg,...);
-
-void		elog_error(int level, char *explain, int force);
-void		pgxml_parser_init(void);
-
-static xmlChar *pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
-				   xmlChar *toptagname, xmlChar *septagname,
-				   xmlChar *plainsep);
-
-text *pgxml_result_to_text(xmlXPathObjectPtr res, xmlChar *toptag,
-					 xmlChar *septag, xmlChar *plainsep);
-
-xmlChar    *pgxml_texttoxmlchar(text *textstring);
-
-static xmlXPathObjectPtr pgxml_xpath(text *document, xmlChar *xpath);
-
-=======
 /* externally accessible functions */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 Datum		xml_is_well_formed(PG_FUNCTION_ARGS);
 Datum		xml_encode_special_chars(PG_FUNCTION_ARGS);
@@ -64,17 +36,9 @@ Datum		xpath_bool(PG_FUNCTION_ARGS);
 Datum		xpath_list(PG_FUNCTION_ARGS);
 Datum		xpath_table(PG_FUNCTION_ARGS);
 
-<<<<<<< HEAD
-/* Global variables */
-char	   *errbuf;				/* per line error buffer */
-char	   *pgxml_errorMsg = NULL;		/* overall error message */
-
-#define ERRBUF_SIZE 200
-=======
 /* exported for use by xslt_proc.c */
 
 void		pgxml_parser_init(void);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* workspace for pgxml_xpath() */
 
@@ -160,24 +124,13 @@ xml_encode_special_chars(PG_FUNCTION_ARGS)
 
 	pfree(ts);
 
-<<<<<<< HEAD
 	tout = cstring_to_text((char *) tt);
-=======
-	ressize = strlen((char *) tt);
-	tout = (text *) palloc(ressize + VARHDRSZ);
-	memcpy(VARDATA(tout), tt, ressize);
-	SET_VARSIZE(tout, ressize + VARHDRSZ);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	xmlFree(tt);
 
 	PG_RETURN_TEXT_P(tout);
 }
 
-<<<<<<< HEAD
-static xmlChar
-		   *
-=======
 /*
  * Function translates a nodeset into a text representation
  *
@@ -190,7 +143,6 @@ static xmlChar
  * cast to string as output method
  */
 static xmlChar *
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
 				   xmlChar *toptagname,
 				   xmlChar *septagname,
@@ -438,13 +390,8 @@ xpath_bool(PG_FUNCTION_ARGS)
 
 /* Core function to evaluate XPath query */
 
-<<<<<<< HEAD
-xmlXPathObjectPtr
-pgxml_xpath(text *document, xmlChar *xpath)
-=======
 static xmlXPathObjectPtr
 pgxml_xpath(text *document, xmlChar *xpath, xpath_workspace *workspace)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 {
 	int32		docsize = VARSIZE(document) - VARHDRSZ;
 	xmlXPathObjectPtr res;
@@ -529,14 +476,7 @@ pgxml_result_to_text(xmlXPathObjectPtr res,
 	}
 
 	/* Now convert this result back to text */
-<<<<<<< HEAD
 	xpres = cstring_to_text((char *) xpresstr);
-=======
-	ressize = strlen((char *) xpresstr);
-	xpres = (text *) palloc(ressize + VARHDRSZ);
-	memcpy(VARDATA(xpres), xpresstr, ressize);
-	SET_VARSIZE(xpres, ressize + VARHDRSZ);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* Free various storage */
 	xmlFree(xpresstr);
@@ -575,16 +515,6 @@ xpath_table(PG_FUNCTION_ARGS)
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
 
-<<<<<<< HEAD
-/* Function parameters */
-	char	   *pkeyfield = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	char	   *xmlfield = text_to_cstring(PG_GETARG_TEXT_PP(1));
-	char	   *relname = text_to_cstring(PG_GETARG_TEXT_PP(2));
-	char	   *xpathset = text_to_cstring(PG_GETARG_TEXT_PP(3));
-	char	   *condition = text_to_cstring(PG_GETARG_TEXT_PP(4));
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	char	  **values;
 	xmlChar   **xpaths;
 	char	   *pos;
@@ -631,9 +561,7 @@ xpath_table(PG_FUNCTION_ARGS)
 	 * Create the tuplestore - work_mem is the max in-memory size before a
 	 * file is created on disk to hold it.
 	 */
-	tupstore =
-		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
-							  false, work_mem);
+	tupstore = tuplestore_begin_heap(true, false, work_mem);
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -672,11 +600,7 @@ xpath_table(PG_FUNCTION_ARGS)
 	pos = xpathset;
 	while (numpaths < (ret_tupdesc->natts - 1))
 	{
-<<<<<<< HEAD
-		xpaths[numpaths] = (xmlChar *) pos;
-=======
 		xpaths[numpaths++] = (xmlChar *) pos;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		pos = strstr(pos, pathsep);
 		if (pos != NULL)
 		{
@@ -760,11 +684,7 @@ xpath_table(PG_FUNCTION_ARGS)
 		/* Parse the document */
 		if (xmldoc)
 			doctree = xmlParseMemory(xmldoc, strlen(xmldoc));
-<<<<<<< HEAD
 		else	/* treat NULL as not well-formed */
-=======
-		else					/* treat NULL as not well-formed */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			doctree = NULL;
 
 		if (doctree == NULL)
