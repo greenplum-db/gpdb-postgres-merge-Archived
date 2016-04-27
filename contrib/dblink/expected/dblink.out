@@ -804,8 +804,6 @@ SELECT dblink_disconnect('dtest1');
  OK
 (1 row)
 
-<<<<<<< HEAD
-=======
 -- test dropped columns in dblink_build_sql_insert, dblink_build_sql_update
 CREATE TEMP TABLE test_dropped
 (
@@ -843,4 +841,3 @@ SELECT dblink_build_sql_delete('test_dropped', '2', 1,
  DELETE FROM test_dropped WHERE id = '2'
 (1 row)
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

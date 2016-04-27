@@ -8,11 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.69.2.2 2009/01/03 19:57:54 joe Exp $
-=======
  * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.69.2.8 2010/06/15 19:04:28 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  * Copyright (c) 2001-2008, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -41,10 +37,7 @@
 #include "libpq-fe.h"
 #include "fmgr.h"
 #include "funcapi.h"
-<<<<<<< HEAD
-=======
 #include "miscadmin.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/tupdesc.h"
@@ -55,7 +48,6 @@
 #include "executor/executor.h"
 #include "executor/spi.h"
 #include "lib/stringinfo.h"
-#include "miscadmin.h"
 #include "nodes/execnodes.h"
 #include "nodes/nodes.h"
 #include "nodes/pg_list.h"
@@ -98,24 +90,17 @@ static char *get_sql_delete(Relation rel, int *pkattnums, int pknumatts, char **
 static char *get_sql_update(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals, char **tgt_pkattvals);
 static char *quote_literal_cstr(char *rawstr);
 static char *quote_ident_cstr(char *rawstr);
-<<<<<<< HEAD
-static int16 get_attnum_pk_pos(int2vector *pkattnums, int16 pknumatts, int16 key);
-static HeapTuple get_tuple_of_interest(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pkattvals);
-static Oid	get_relid_from_relname(text *relname_text);
-static char *generate_relation_name(Oid relid);
-static void dblink_connstr_check(const char *connstr);
-static void dblink_security_check(PGconn *conn, remoteConn *rconn);
-static void dblink_res_error(const char *conname, PGresult *res, const char *dblink_context_msg, bool fail);
-=======
 static int	get_attnum_pk_pos(int *pkattnums, int pknumatts, int key);
 static HeapTuple get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals);
 static Relation get_rel_from_relname(text *relname_text, LOCKMODE lockmode, AclMode aclmode);
 static char *generate_relation_name(Relation rel);
+static void dblink_connstr_check(const char *connstr);
+static void dblink_security_check(PGconn *conn, remoteConn *rconn);
+static void dblink_res_error(const char *conname, PGresult *res, const char *dblink_context_msg, bool fail);
 static void dblink_security_check(PGconn *conn, remoteConn *rconn);
 static void validate_pkattnums(Relation rel,
 				   int2vector *pkattnums_arg, int32 pknumatts_arg,
 				   int **pkattnums, int *pknumatts);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /* Global */
 static remoteConn *pconn = NULL;
@@ -148,6 +133,14 @@ typedef struct remoteConnHashEnt
 			var_ = NULL; \
 		} \
 	} while (0)
+
+#define xpstrdup(tgtvar_, srcvar_) \
+    do { \
+        if (srcvar_) \
+            tgtvar_ = pstrdup(srcvar_); \
+        else \
+            tgtvar_ = NULL; \
+    } while (0)
 
 #define DBLINK_RES_INTERNALERROR(p2) \
 	do { \
@@ -883,7 +876,6 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async, bool do_get)
 						PQfinish(conn);
 					MemoryContextSwitchTo(oldcontext);
 					SRF_RETURN_DONE(funcctx);
-				}
 			}
 
 			if (PQresultStatus(res) == PGRES_COMMAND_OK)
@@ -1666,26 +1658,10 @@ get_pkey_attnames(Relation rel, int16 *numatts)
 	int			i;
 	char	  **result = NULL;
 	TupleDesc	tupdesc;
-<<<<<<< HEAD
-	AclResult	aclresult;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 	/* initialize numatts to 0 in case no primary key exists */
 	*numatts = 0;
 
-<<<<<<< HEAD
-	/* open relation using relid, check permissions, get tupdesc */
-	rel = relation_open(relid, AccessShareLock);
-
-	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
-								  ACL_SELECT);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_CLASS,
-					   RelationGetRelationName(rel));
-
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	tupdesc = rel->rd_att;
 
 	/* Prepare to scan pg_index for entries having indrelid = this rel. */
@@ -1693,19 +1669,11 @@ get_pkey_attnames(Relation rel, int16 *numatts)
 	ScanKeyInit(&skey,
 				Anum_pg_index_indrelid,
 				BTEqualStrategyNumber, F_OIDEQ,
-<<<<<<< HEAD
-				ObjectIdGetDatum(relid));
-
-	scan = systable_beginscan(indexRelation, IndexIndrelidIndexId, true,
-							  SnapshotNow, 1, &skey);
-
-=======
 				ObjectIdGetDatum(RelationGetRelid(rel)));
 
 	scan = systable_beginscan(indexRelation, IndexIndrelidIndexId, true,
 							  SnapshotNow, 1, &skey);
 
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	while (HeapTupleIsValid(indexTuple = systable_getnext(scan)))
 	{
 		Form_pg_index index = (Form_pg_index) GETSTRUCT(indexTuple);
@@ -2295,7 +2263,7 @@ dblink_security_check(PGconn *conn, remoteConn *rconn)
 		}
 	}
 }
-<<<<<<< HEAD
+
 /*
  * For non-superusers, insist that the connstr specify a password.  This
  * prevents a password from being picked up from .pgpass, a service file,
@@ -2386,7 +2354,6 @@ dblink_res_error(const char *conname, PGresult *res, const char *dblink_context_
 		 errcontext("Error occurred on dblink connection named \"%s\": %s.",
 					dblink_context_conname, dblink_context_msg)));
 }
-=======
 
 /*
  * Validate the PK-attnums argument for dblink_build_sql_insert() and related
@@ -2436,5 +2403,3 @@ validate_pkattnums(Relation rel,
 		(*pkattnums)[i] = pkattnum - 1;
 	}
 }
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 /* $PostgreSQL: pgsql/contrib/dblink/dblink.sql.in,v 1.17 2008/04/05 02:44:42 momjian Exp $ */
-=======
-/* $PostgreSQL: pgsql/contrib/dblink/dblink.sql.in,v 1.14 2007/11/13 04:24:27 momjian Exp $ */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

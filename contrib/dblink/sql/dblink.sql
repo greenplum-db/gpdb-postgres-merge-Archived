@@ -346,7 +346,6 @@ UNION
 (SELECT * from dblink_get_result('dtest3') as t3(f1 int, f2 text, f3 text[]))
 ORDER by f1;
 
-<<<<<<< HEAD
 -- dblink_get_connections returns an array with elements in a machine-dependent
 -- ordering, so we must resort to unnesting and sorting for a stable result
 create function unnest(anyarray) returns setof anyelement
@@ -356,9 +355,6 @@ $$;
 
 SELECT * FROM unnest(dblink_get_connections()) ORDER BY 1;
 
-=======
-SELECT dblink_get_connections();
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 SELECT dblink_is_busy('dtest1');
 
 SELECT dblink_disconnect('dtest1');
@@ -374,8 +370,6 @@ SELECT * from
 SELECT dblink_cancel_query('dtest1');
 SELECT dblink_error_message('dtest1');
 SELECT dblink_disconnect('dtest1');
-<<<<<<< HEAD
-=======
 
 -- test dropped columns in dblink_build_sql_insert, dblink_build_sql_update
 CREATE TEMP TABLE test_dropped
@@ -402,4 +396,3 @@ SELECT dblink_build_sql_update('test_dropped', '2', 1,
 
 SELECT dblink_build_sql_delete('test_dropped', '2', 1,
                                ARRAY['2'::TEXT]);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
