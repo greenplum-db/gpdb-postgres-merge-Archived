@@ -1,9 +1,5 @@
 /*
-<<<<<<< HEAD
  * pgbench.c
-=======
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.75.2.1 2009/07/30 09:28:03 mha Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  *
  * A simple benchmark program for PostgreSQL
  * Originally written by Tatsuo Ishii and enhanced by many contributors.
@@ -71,7 +67,6 @@
  * Multi-platform pthread implementations
  */
 
-<<<<<<< HEAD
 #ifdef WIN32
 /* Use native win32 threads on Windows */
 typedef struct win32_pthread   *pthread_t;
@@ -105,8 +100,6 @@ static int pthread_join(pthread_t th, void **thread_return);
 extern char *optarg;
 extern int	optind;
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 /********************************************************************
  * some configurable parameters */
@@ -117,11 +110,8 @@ extern int	optind;
 #else
 #define MAXCLIENTS	1024
 #endif
-<<<<<<< HEAD
 
 #define DEFAULT_NXACTS	10		/* default nxacts */
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 int			nxacts = 0;			/* number of transactions per client */
 int			duration = 0;		/* duration in seconds */
@@ -155,10 +145,7 @@ int			use_unique_key=1;	/* indexes will be primary key if set, otherwise non-uni
 
 char	   *pghost = "";
 char	   *pgport = "";
-<<<<<<< HEAD
 char	   *storage_clause = "appendonly=false";
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 char	   *pgoptions = NULL;
 char	   *pgtty = NULL;
 char	   *login = NULL;
@@ -190,11 +177,7 @@ typedef struct
 	int			listen;			/* 0 indicates that an async query has been
 								 * sent */
 	int			sleeping;		/* 1 indicates that the client is napping */
-<<<<<<< HEAD
 	int64		until;			/* napping until (usec) */
-=======
-	struct timeval until;		/* napping until */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	Variable   *variables;		/* array of variable definitions */
 	int			nvariables;
 	instr_time	txn_begin;		/* used for measuring latencies */
@@ -298,7 +281,6 @@ static void* threadRun(void *arg);
 static void
 usage(const char *progname)
 {
-<<<<<<< HEAD
 	printf("%s is a benchmarking tool for PostgreSQL.\n\n"
 		   "Usage:\n"
 		   "  %s [OPTIONS]... [DBNAME]\n"
@@ -335,10 +317,6 @@ usage(const char *progname)
 		   "\n"
 		   "Report bugs to <bugs@greenplum.org>.\n",
 		   progname, progname);
-=======
-	fprintf(stderr, "usage: pgbench [-h hostname][-p port][-c nclients][-t ntransactions][-s scaling_factor][-D varname=value][-n][-C][-v][-S][-N][-f filename][-l][-U login][-d][dbname]\n");
-	fprintf(stderr, "(initialize mode): pgbench -i [-h hostname][-p port][-s scaling_factor] [-F fillfactor] [-U login][-d][dbname]\n");
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 /* random number generator: uniform distribution from min to max inclusive */
@@ -394,12 +372,7 @@ doConnect(void)
 
 		if (PQstatus(conn) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(conn) &&
-<<<<<<< HEAD
 			password == NULL)
-=======
-			password == NULL &&
-			!feof(stdin))
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		{
 			PQfinish(conn);
 			password = simple_prompt("Password: ", 100, false);
@@ -416,11 +389,6 @@ doConnect(void)
 		return NULL;
 	}
 
-<<<<<<< HEAD
-=======
-	executeStatement(conn, "SET search_path = public");
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	return conn;
 }
 
@@ -438,32 +406,6 @@ discard_response(CState *state)
 	} while (res);
 }
 
-<<<<<<< HEAD
-=======
-/* check to see if the SQL result was good */
-static int
-check(CState * state, PGresult *res, int n)
-{
-	CState	   *st = &state[n];
-
-	switch (PQresultStatus(res))
-	{
-		case PGRES_COMMAND_OK:
-		case PGRES_TUPLES_OK:
-			/* OK */
-			break;
-		default:
-			fprintf(stderr, "Client %d aborted in state %d: %s",
-					n, st->state, PQerrorMessage(st->con));
-			remains--;			/* I've aborted */
-			PQfinish(st->con);
-			st->con = NULL;
-			return (-1);
-	}
-	return (0);					/* OK */
-}
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 static int
 compareVariables(const void *v1, const void *v2)
 {
@@ -793,7 +735,6 @@ top:
 
 	if (st->sleeping)
 	{							/* are we sleeping? */
-<<<<<<< HEAD
 		instr_time	now;
 
 		INSTR_TIME_SET_CURRENT(now);
@@ -801,18 +742,6 @@ top:
 			st->sleeping = 0;	/* Done sleeping, go ahead with next command */
 		else
 			return true;		/* Still sleeping, nothing to do here */
-=======
-		int			usec;
-		struct timeval now;
-
-		gettimeofday(&now, NULL);
-		usec = (st->until.tv_sec - now.tv_sec) * 1000000 +
-			st->until.tv_usec - now.tv_usec;
-		if (usec <= 0)
-			st->sleeping = 0;	/* Done sleeping, go ahead with next command */
-		else
-			return;				/* Still sleeping, nothing to do here */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	if (st->listen)
@@ -835,7 +764,6 @@ top:
 		 */
 		if (use_log && commands[st->state + 1] == NULL)
 		{
-<<<<<<< HEAD
 			instr_time	now;
 			instr_time	diff;
 			double		usec;
@@ -855,18 +783,6 @@ top:
 			fprintf(LOGFILE, "%d %d %.0f %d 0 0\n",
 					st->id, st->cnt, usec, st->use_file);
 #endif
-=======
-			double		diff;
-			struct timeval now;
-
-			gettimeofday(&now, NULL);
-			diff = (int) (now.tv_sec - st->txn_begin.tv_sec) * 1000000.0 +
-				(int) (now.tv_usec - st->txn_begin.tv_usec);
-
-			fprintf(LOGFILE, "%d %d %.0f %d %ld %ld\n",
-					st->id, st->cnt, diff, st->use_file,
-					(long) now.tv_sec, (long) now.tv_usec);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		}
 
 		if (commands[st->state]->type == SQL_COMMAND)
@@ -1158,42 +1074,7 @@ top:
 		{
 			char	   *var;
 			int			usec;
-<<<<<<< HEAD
 			instr_time now;
-=======
-			struct timeval now;
-
-			if (*argv[1] == ':')
-			{
-				if ((var = getVariable(st, argv[1] + 1)) == NULL)
-				{
-					fprintf(stderr, "%s: undefined variable %s\n", argv[0], argv[1]);
-					st->ecnt++;
-					return;
-				}
-				usec = atoi(var);
-			}
-			else
-				usec = atoi(argv[1]);
-
-			if (argc > 2)
-			{
-				if (pg_strcasecmp(argv[2], "ms") == 0)
-					usec *= 1000;
-				else if (pg_strcasecmp(argv[2], "s") == 0)
-					usec *= 1000000;
-			}
-			else
-				usec *= 1000000;
-
-			gettimeofday(&now, NULL);
-			st->until.tv_sec = now.tv_sec + (now.tv_usec + usec) / 1000000;
-			st->until.tv_usec = (now.tv_usec + usec) % 1000000;
-			st->sleeping = 1;
-
-			st->listen = 1;
-		}
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 			if (*argv[1] == ':')
 			{
@@ -1288,7 +1169,6 @@ init(void)
 	 * compliant anyway, we stick with the historical behavior.
 	 */
 	static char *DDLs[] = {
-<<<<<<< HEAD
 		"drop table if exists pgbench_branches",
 		"create table pgbench_branches(bid int not null,bbalance int,filler char(88)) with (fillfactor=%d, %s) DISTRIBUTED BY (bid)",
 		"drop table if exists pgbench_tellers",
@@ -1298,16 +1178,6 @@ init(void)
 		"drop table if exists pgbench_history",
 		"create table pgbench_history(tid int,bid int,aid int,delta int,mtime timestamp,filler char(22)) with (%s) DISTRIBUTED BY (tid)"
 	};
-=======
-		"drop table if exists branches",
-		"create table branches(bid int not null,bbalance int,filler char(88)) with (fillfactor=%d)",
-		"drop table if exists tellers",
-		"create table tellers(tid int not null,bid int,tbalance int,filler char(84)) with (fillfactor=%d)",
-		"drop table if exists accounts",
-		"create table accounts(aid int not null,bid int,abalance int,filler char(84)) with (fillfactor=%d)",
-		"drop table if exists history",
-	"create table history(tid int,bid int,aid int,delta int,mtime timestamp,filler char(22))"};
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	static char *DDLAFTERs[] = {
 		"alter table pgbench_branches add primary key (bid)",
 		"alter table pgbench_tellers add primary key (tid)",
@@ -1327,17 +1197,13 @@ init(void)
 	if ((con = doConnect()) == NULL)
 		exit(1);
 
-<<<<<<< HEAD
 	fprintf(stderr, "creating tables...\n");
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	for (i = 0; i < lengthof(DDLs); i++)
 	{
 		/*
 		 * set fillfactor for branches, tellers and accounts tables
 		 */
-<<<<<<< HEAD
 		if ((strstr(DDLs[i], "create table pgbench_branches") == DDLs[i]) ||
 			(strstr(DDLs[i], "create table pgbench_tellers") == DDLs[i]) ||
 			(strstr(DDLs[i], "create table pgbench_accounts") == DDLs[i]))
@@ -1358,50 +1224,26 @@ init(void)
 		{
 			executeStatement(con, DDLs[i]);
 		}
-=======
-		if ((strstr(DDLs[i], "create table branches") == DDLs[i]) ||
-			(strstr(DDLs[i], "create table tellers") == DDLs[i]) ||
-			(strstr(DDLs[i], "create table accounts") == DDLs[i]))
-		{
-			char		ddl_stmt[128];
-
-			snprintf(ddl_stmt, 128, DDLs[i], fillfactor);
-			executeStatement(con, ddl_stmt);
-			continue;
-		}
-		else
-			executeStatement(con, DDLs[i]);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	}
 
 	executeStatement(con, "begin");
 
 	for (i = 0; i < nbranches * scale; i++)
 	{
-<<<<<<< HEAD
 		snprintf(sql, 256, "insert into pgbench_branches(bid,bbalance) values(%d,0)", i + 1);
-=======
-		snprintf(sql, 256, "insert into branches(bid,bbalance) values(%d,0)", i + 1);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		executeStatement(con, sql);
 	}
 
 	for (i = 0; i < ntellers * scale; i++)
 	{
-<<<<<<< HEAD
 		snprintf(sql, 256, "insert into pgbench_tellers(tid,bid,tbalance) values (%d,%d,0)",
 				 i + 1, i / ntellers + 1);
-=======
-		snprintf(sql, 256, "insert into tellers(tid,bid,tbalance) values (%d,%d,0)"
-				 ,i + 1, i / ntellers + 1);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		executeStatement(con, sql);
 	}
 
 	executeStatement(con, "commit");
 
 	/*
-<<<<<<< HEAD
 	 * fill the pgbench_accounts table with some data
 	 */
 
@@ -1409,16 +1251,6 @@ init(void)
 	executeStatement(con, "truncate pgbench_accounts");
 
 	res = PQexec(con, "copy pgbench_accounts from stdin");
-=======
-	 * fill the accounts table with some data
-	 */
-	fprintf(stderr, "creating tables...\n");
-
-	executeStatement(con, "begin");
-	executeStatement(con, "truncate accounts");
-
-	res = PQexec(con, "copy accounts from stdin");
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	if (PQresultStatus(res) != PGRES_COPY_IN)
 	{
 		fprintf(stderr, "%s", PQerrorMessage(con));
@@ -1439,7 +1271,6 @@ init(void)
 
 		if (j % 10000 == 0)
 			fprintf(stderr, "%d tuples done.\n", j);
-<<<<<<< HEAD
 	}
 	if (PQputline(con, "\\.\n"))
 	{
@@ -1532,34 +1363,6 @@ parseQuery(Command *cmd, const char *raw_sql)
 
 	cmd->argv[0] = sql;
 	return true;
-=======
-	}
-	if (PQputline(con, "\\.\n"))
-	{
-		fprintf(stderr, "very last PQputline failed\n");
-		exit(1);
-	}
-	if (PQendcopy(con))
-	{
-		fprintf(stderr, "PQendcopy failed\n");
-		exit(1);
-	}
-	executeStatement(con, "commit");
-
-	/*
-	 * create indexes
-	 */
-	fprintf(stderr, "set primary key...\n");
-	for (i = 0; i < lengthof(DDLAFTERs); i++)
-		executeStatement(con, DDLAFTERs[i]);
-
-	/* vacuum */
-	fprintf(stderr, "vacuum...");
-	executeStatement(con, "vacuum analyze");
-
-	fprintf(stderr, "done.\n");
-	PQfinish(con);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 }
 
 static Command *
@@ -1642,7 +1445,6 @@ process_commands(char *buf)
 				return NULL;
 			}
 
-<<<<<<< HEAD
 			/*
 			 * Split argument into number and unit to allow "sleep 1ms" etc.
 			 * We don't have to terminate the number argument with null
@@ -1663,8 +1465,6 @@ process_commands(char *buf)
 				}
 			}
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			if (my_commands->argc >= 3)
 			{
 				if (pg_strcasecmp(my_commands->argv[2], "us") != 0 &&
@@ -1681,7 +1481,6 @@ process_commands(char *buf)
 				fprintf(stderr, "%s: extra argument \"%s\" ignored\n",
 						my_commands->argv[0], my_commands->argv[j]);
 		}
-<<<<<<< HEAD
 		else if (pg_strcasecmp(my_commands->argv[0], "setshell") == 0)
 		{
 			if (my_commands->argc < 3)
@@ -1698,8 +1497,6 @@ process_commands(char *buf)
 				return NULL;
 			}
 		}
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		else
 		{
 			fprintf(stderr, "Invalid command %s\n", my_commands->argv[0]);
@@ -1923,10 +1720,6 @@ main(int argc, char **argv)
 	int			is_init_mode = 0;		/* initialize mode? */
 	int			is_no_vacuum = 0;		/* no vacuum at all before testing? */
 	int			do_vacuum_accounts = 0; /* do vacuum accounts before testing? */
-<<<<<<< HEAD
-=======
-	int			debug = 0;		/* debug flag */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	int			ttype = 0;		/* transaction type. 0: TPC-B, 1: SELECT only,
 								 * 2: skip update of branches and tellers */
 	char	   *filename = NULL;
@@ -1942,16 +1735,6 @@ main(int argc, char **argv)
 
 	int			i;
 
-<<<<<<< HEAD
-=======
-	fd_set		input_mask;
-	int			nsocks;			/* return from select(2) */
-	int			maxsock;		/* max socket number to be waited */
-	struct timeval now;
-	struct timeval timeout;
-	int			min_usec;
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #ifdef HAVE_GETRLIMIT
 	struct rlimit rlim;
 #endif
@@ -1962,7 +1745,6 @@ main(int argc, char **argv)
 
 	char		val[64];
 
-<<<<<<< HEAD
 	const char *progname;
 
 	progname = get_progname(argv[0]);
@@ -1981,8 +1763,6 @@ main(int argc, char **argv)
 		}
 	}
 
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #ifdef WIN32
 	/* stderr is buffered on Win32. */
 	setvbuf(stderr, NULL, _IONBF, 0);
@@ -2004,11 +1784,7 @@ main(int argc, char **argv)
 
 	memset(state, 0, sizeof(*state));
 
-<<<<<<< HEAD
 	while ((c = getopt(argc, argv, "ih:nvp:dSNc:Cs:t:T:U:lf:D:F:M:j:x:q")) != -1)
-=======
-	while ((c = getopt(argc, argv, "ih:nvp:dc:t:s:U:CNSlf:D:F:")) != -1)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	{
 		switch (c)
 		{
@@ -2066,7 +1842,6 @@ main(int argc, char **argv)
 					exit(1);
 				}
 #endif   /* HAVE_GETRLIMIT */
-<<<<<<< HEAD
 				break;
 			case 'j':	/* jobs */
 				nthreads = atoi(optarg);
@@ -2075,8 +1850,6 @@ main(int argc, char **argv)
 					fprintf(stderr, "invalid number of threads: %d\n", nthreads);
 					exit(1);
 				}
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 				break;
 			case 'C':
 				is_connect = 1;
@@ -2154,7 +1927,6 @@ main(int argc, char **argv)
 					exit(1);
 				}
 				break;
-<<<<<<< HEAD
 			case 'M':
 				if (num_files > 0)
 				{
@@ -2170,8 +1942,6 @@ main(int argc, char **argv)
 					exit(1);
 				}
 				break;
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -2318,27 +2088,15 @@ main(int argc, char **argv)
 	if (!is_no_vacuum)
 	{
 		fprintf(stderr, "starting vacuum...");
-<<<<<<< HEAD
 		executeStatement(con, "vacuum pgbench_branches");
 		executeStatement(con, "vacuum pgbench_tellers");
 		executeStatement(con, "truncate pgbench_history");
-=======
-		executeStatement(con, "vacuum branches");
-		executeStatement(con, "vacuum tellers");
-		executeStatement(con, "delete from history");
-		executeStatement(con, "vacuum history");
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		fprintf(stderr, "end.\n");
 
 		if (do_vacuum_accounts)
 		{
-<<<<<<< HEAD
 			fprintf(stderr, "starting vacuum pgbench_accounts...");
 			executeStatement(con, "vacuum analyze pgbench_accounts");
-=======
-			fprintf(stderr, "starting vacuum accounts...");
-			executeStatement(con, "vacuum analyze accounts");
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			fprintf(stderr, "end.\n");
 		}
 	}
@@ -2491,44 +2249,14 @@ threadRun(void *arg)
 		FD_ZERO(&input_mask);
 
 		maxsock = -1;
-<<<<<<< HEAD
 		min_usec = INT64_MAX;
 		for (i = 0; i < nstate; i++)
-=======
-		min_usec = -1;
-		for (i = 0; i < nclients; i++)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		{
 			CState	   *st = &state[i];
 			Command   **commands = sql_files[st->use_file];
 			int			sock;
 
-<<<<<<< HEAD
 			if (st->sleeping)
-=======
-			if (state[i].sleeping)
-			{
-				int			this_usec;
-				int			sock = PQsocket(state[i].con);
-
-				if (min_usec < 0)
-				{
-					gettimeofday(&now, NULL);
-					min_usec = 0;
-				}
-
-				this_usec = (state[i].until.tv_sec - now.tv_sec) * 1000000 +
-					state[i].until.tv_usec - now.tv_usec;
-
-				if (this_usec > 0 && (min_usec == 0 || this_usec < min_usec))
-					min_usec = this_usec;
-
-				FD_SET(sock, &input_mask);
-				if (maxsock < sock)
-					maxsock = sock;
-			}
-			else if (state[i].con && commands[state[i].state]->type != META_COMMAND)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			{
 				int			this_usec;
 
@@ -2567,7 +2295,6 @@ threadRun(void *arg)
 
 		if (min_usec > 0 && maxsock != -1)
 		{
-<<<<<<< HEAD
 			int		nsocks;			/* return from select(2) */
 
 			if (min_usec != INT64_MAX)
@@ -2579,43 +2306,14 @@ threadRun(void *arg)
 			}
 			else
 				nsocks = select(maxsock + 1, &input_mask, NULL, NULL, NULL);
-=======
-			if (min_usec >= 0)
-			{
-				timeout.tv_sec = min_usec / 1000000;
-				timeout.tv_usec = min_usec % 1000000;
-
-				nsocks = select(maxsock + 1, &input_mask, (fd_set *) NULL,
-								(fd_set *) NULL, &timeout);
-			}
-			else
-				nsocks = select(maxsock + 1, &input_mask, (fd_set *) NULL,
-								(fd_set *) NULL, (struct timeval *) NULL);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 			if (nsocks < 0)
 			{
 				if (errno == EINTR)
 					continue;
 				/* must be something wrong */
 				fprintf(stderr, "select failed: %s\n", strerror(errno));
-<<<<<<< HEAD
 				goto done;
-=======
-				exit(1);
 			}
-#ifdef NOT_USED
-			else if (nsocks == 0)
-			{					/* timeout */
-				fprintf(stderr, "select timeout\n");
-				for (i = 0; i < nclients; i++)
-				{
-					fprintf(stderr, "client %d:state %d cnt %d ecnt %d listen %d\n",
-							i, state[i].state, state[i].cnt, state[i].ecnt, state[i].listen);
-				}
-				exit(0);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
-			}
-#endif
 		}
 
 		/* ok, backend returns reply */
