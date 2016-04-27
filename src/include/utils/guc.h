@@ -299,7 +299,6 @@ extern int gp_max_partition_level;
 
 extern bool gp_temporary_files_filespace_repair;
 extern bool gp_perfmon_print_packet_info;
-extern bool gp_plpgsql_clear_cache_always;
 extern bool fts_diskio_check;
 
 /* Debug DTM Action */
