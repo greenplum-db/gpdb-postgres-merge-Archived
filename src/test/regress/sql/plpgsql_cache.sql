@@ -515,3 +515,176 @@ select * from cache_tab;
 drop table if exists cache_tab;
 
 drop function cache_test(count int) cascade;
+
+-- ************************************************************
+-- * A function that queries a table that's dropped and recreated
+-- ************************************************************
+--
+-- This used to fail on GPDB 4.3, but works after the PostgreSQL 8.3 merge,
+-- thanks to upstream plan cache invalidation. (The old GPDB code didn't
+-- force plans to be recomputed in the same transaction, only across
+-- transactions. There was a GUC called gp_plpgsql_clear_cache_always that
+-- you could set, and made this work, though. But that's no longer needed).
+
+create table cache_tab (t text);
+insert into cache_tab values ('b');
+
+create function cache_test(p text) returns integer as
+$$
+begin
+  return (select count(*) from cache_tab where t = p);
+end;
+$$ language plpgsql;
+
+BEGIN;
+
+-- Run the function. This caches the plan for the select inside the
+-- function.
+select cache_test('b');
+
+-- Drop and re-create the table
+drop table cache_tab;
+create table cache_tab (t text);
+insert into cache_tab values ('b');
+
+-- Re-run the function.
+select cache_test('b');
+
+COMMIT;
+
+drop table cache_tab;
+drop function cache_test(text);
+
+-- ************************************************************
+-- * A function that calls another function, and the other function is
+-- * dropped and recreated.
+-- ************************************************************
+--
+-- This depends on plan cache invalidation support added in PostgreSQL 8.4.
+
+-- Create a function, and another function that calls the first one.
+create or replace function get_dummy_string(t text) returns text as $$
+begin
+  return 'foo ' || t;
+end;
+$$ language plpgsql;
+
+create or replace function cache_test(t text) returns text as
+$$
+begin
+  return get_dummy_string(t);
+end;
+$$ language plpgsql;
+
+-- Run the function, to warm the plan cache with the function
+-- call to get_dummy_string().
+select cache_test('');
+
+-- Drop and re-create get_dummy_string() function.
+drop function get_dummy_string(text);
+create or replace function get_dummy_string(t text) returns text as $$
+begin
+  return 'bar ' || t;
+end;
+$$ language plpgsql;
+
+-- Re-run the function
+select cache_test('');
+
+drop function get_dummy_string(text);
+drop function cache_test(text);
+
+-- ************************************************************
+-- * A function that calls another function, and the other function is
+-- * dropped and recreated.
+-- ************************************************************
+
+-- Create a function, and another function that calls the first one.
+create or replace function get_dummy_string(t text) returns text as $$
+begin
+  return 'foo ' || t;
+end;
+$$ language plpgsql;
+
+create or replace function cache_test(t text) returns text as
+$$
+begin
+  return get_dummy_string(t);
+end;
+$$ language plpgsql;
+
+
+-- Run the function, to warm the plan cache with the function
+-- call to get_dummy_string().
+select cache_test('');
+
+-- Also run the function as part of a query so that the function
+-- is executed in segments rather than the master. (Without ORCA.
+-- With ORCA, the query is planned differently and runs on the
+-- master anyway).
+create temporary table cache_tab (t text);
+insert into cache_tab values ('b');
+
+select cache_test(t) from cache_tab;
+
+-- Drop and re-create get_dummy_string() function.
+drop function get_dummy_string(text);
+create or replace function get_dummy_string(t text) returns text as $$
+begin
+  return 'bar' || t;
+end;
+$$ language plpgsql;
+
+-- Re-run the function
+select cache_test('');
+select cache_test(t) from cache_tab;
+
+drop function get_dummy_string(text);
+drop function cache_test(text);
+drop table cache_tab;
+
+-- ************************************************************
+-- * A function that calls another function, and the other function
+-- * is dropped and recreated. Same as previous tests, but the
+-- * function is executed IMMUTABLE, to test that plan cache
+-- * invalidation also works when the function is inlined.
+-- ************************************************************
+--
+-- To make sure that plan invalidation works also when the function
+-- is inlined.
+
+-- Create a function, and another function that calls the first one.
+create or replace function get_dummy_string(t text) returns text as $$
+begin
+  return 'foo ' || t;
+end;
+$$ language plpgsql IMMUTABLE;
+
+create or replace function cache_test(t text) returns text as
+$$
+begin
+  return get_dummy_string(t);
+end;
+$$ language plpgsql IMMUTABLE;
+
+create temporary table cache_tab (t text);
+insert into cache_tab values ('b');
+
+-- Run the function, to warm the plan cache.
+select cache_test('');
+select cache_test(t) from cache_tab;
+
+-- Drop and re-create get_dummy_string() function.
+drop function get_dummy_string(text);
+create or replace function get_dummy_string(t text) returns text as $$
+begin
+  return 'bar' || t;
+end;
+$$ language plpgsql;
+
+-- Re-run the function
+select cache_test('');
+select cache_test(t) from cache_tab;
+
+drop function get_dummy_string(text);
+drop function cache_test(text);
