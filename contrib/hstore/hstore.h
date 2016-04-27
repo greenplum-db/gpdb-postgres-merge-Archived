@@ -4,9 +4,7 @@
 #ifndef __HSTORE_H__
 #define __HSTORE_H__
 
-<<<<<<< HEAD
 #include "fmgr.h"
-=======
 #include "postgres.h"
 
 #include "funcapi.h"
@@ -16,7 +14,6 @@
 #include "utils/palloc.h"
 #include "utils/builtins.h"
 #include "storage/bufpage.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 
 typedef struct
@@ -73,14 +70,4 @@ size_t		hstoreCheckValLen(size_t len);
 #define HStoreContainsStrategyNumber	7
 #define HStoreExistsStrategyNumber		9
 
-<<<<<<< HEAD
 #endif   /* __HSTORE_H__ */
-=======
-size_t      hstoreCheckKeyLen(size_t len);
-size_t      hstoreCheckValLen(size_t len);
-
-#define HStoreContainsStrategyNumber	7
-#define HStoreExistsStrategyNumber		9
-
-#endif
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /*
  * $PostgreSQL: pgsql/contrib/hstore/hstore_gin.c,v 1.6 2009/06/11 14:48:51 momjian Exp $
  */
@@ -8,11 +7,6 @@
 
 #include "hstore.h"
 
-=======
-#include "hstore.h"
-
-#include "access/gin.h"
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #define KEYFLAG		'K'
 #define VALFLAG		'V'
@@ -125,7 +119,6 @@ Datum		gin_consistent_hstore(PG_FUNCTION_ARGS);
 Datum
 gin_consistent_hstore(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
 	HStore	   *query = PG_GETARG_HS(2);
@@ -133,14 +126,10 @@ gin_consistent_hstore(PG_FUNCTION_ARGS)
 	/* int32	nkeys = PG_GETARG_INT32(3); */
 	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(5);
-=======
-	StrategyNumber strategy = PG_GETARG_UINT16(1);
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	bool		res = true;
 
 	if (strategy == HStoreContainsStrategyNumber)
 	{
-<<<<<<< HEAD
 		int			i;
 
 		/*
@@ -148,26 +137,16 @@ gin_consistent_hstore(PG_FUNCTION_ARGS)
 		 * we need recheck
 		 */
 		*recheck = true;
-=======
-		bool	   *check = (bool *) PG_GETARG_POINTER(0);
-		HStore	   *query = PG_GETARG_HS(2);
-		int			i;
-
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 		for (i = 0; res && i < 2 * query->size; i++)
 			if (check[i] == false)
 				res = false;
 	}
 	else if (strategy == HStoreExistsStrategyNumber)
-<<<<<<< HEAD
 	{
 		/* Existence of key is guaranteed */
 		*recheck = false;
 		res = true;
 	}
-=======
-		res = true;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	else
 		elog(ERROR, "Unsupported strategy number: %d", strategy);
 

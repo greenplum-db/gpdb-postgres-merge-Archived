@@ -5,10 +5,6 @@
 
 #include "access/gist.h"
 #include "access/itup.h"
-<<<<<<< HEAD
-#include "access/skey.h"
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 #include "crc32.h"
 
 #include "hstore.h"
@@ -517,12 +513,9 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 {
 	GISTTYPE   *entry = (GISTTYPE *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(0))->key);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
-<<<<<<< HEAD
 
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
-=======
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 	bool		res = true;
 	BITVECP		sign;
 
