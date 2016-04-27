@@ -964,6 +964,15 @@ _outUnique(StringInfo str, Unique *node)
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
+static void
+_outHash(StringInfo str, Hash *node)
+{
+	WRITE_NODE_TYPE("HASH");
+
+	_outPlanInfo(str, (Plan *) node);
+	WRITE_BOOL_FIELD(rescannable);          /*CDB*/
+}
+
 #ifndef COMPILING_BINARY_FUNCS
 static void
 _outSetOp(StringInfo str, SetOp *node)
@@ -1000,14 +1009,18 @@ _outLimit(StringInfo str, Limit *node)
 	WRITE_NODE_FIELD(limitCount);
 }
 
+#ifndef COMPILING_BINARY_FUNCS
 static void
-_outHash(StringInfo str, Hash *node)
+_outPlanInvalItem(StringInfo str, PlanInvalItem *node)
 {
-	WRITE_NODE_TYPE("HASH");
+	WRITE_NODE_TYPE("PLANINVALITEM");
 
-	_outPlanInfo(str, (Plan *) node);
-    WRITE_BOOL_FIELD(rescannable);          /*CDB*/
+	WRITE_INT_FIELD(cacheId);
+	appendStringInfo(str, " :tupleId (%u,%u)",
+					 ItemPointerGetBlockNumber(&node->tupleId),
+					 ItemPointerGetOffsetNumber(&node->tupleId));
 }
+#endif /* COMPILING_BINARY_FUNCS */
 
 #ifndef COMPILING_BINARY_FUNCS
 static void
@@ -4497,14 +4510,17 @@ _outNode(StringInfo str, void *obj)
 			case T_Unique:
 				_outUnique(str, obj);
 				break;
+			case T_Hash:
+				_outHash(str, obj);
+				break;
 			case T_SetOp:
 				_outSetOp(str, obj);
 				break;
 			case T_Limit:
 				_outLimit(str, obj);
 				break;
-			case T_Hash:
-				_outHash(str, obj);
+			case T_PlanInvalItem:
+				_outPlanInvalItem(str, obj);
 				break;
 			case T_Motion:
 				_outMotion(str, obj);

@@ -16,6 +16,7 @@
  */
 #include "postgres.h"
 
+#include "access/transam.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
@@ -137,8 +138,6 @@ static  bool cdb_expr_requires_full_eval(Node *node);
 static Plan *cdb_insert_result_node(PlannerGlobal *glob, 
 									Plan *plan, 
 									int rtoffset);
-static void record_plan_function_dependency(PlannerGlobal *glob, 
-											Oid funcid);
 
 static bool extract_query_dependencies_walker(Node *node,
 								  PlannerGlobal *context);
@@ -311,10 +310,6 @@ static void set_plan_references_output_asserts(PlannerGlobal *glob, Plan *plan)
  * that implements each op).
  *
  * 5. We create lists of specific objects that the plan depends on.
- *
- * NB In GPDB we only build the relation list, though the apparatus is in
- *    place to collect PlanInvalItems when that becomes interesting.
- *
  * This will be used by plancache.c to drive invalidation of cached plans.
  * Relation dependencies are represented by OIDs, and everything else by
  * PlanInvalItems (this distinction is motivated by the shared-inval APIs).
@@ -1168,6 +1163,12 @@ fix_expr_common(PlannerGlobal *glob, Node *node)
 		record_plan_function_dependency(glob,
 										((ScalarArrayOpExpr *) node)->opfuncid);
 	}
+	else if (IsA(node, ArrayCoerceExpr))
+	{
+		if (OidIsValid(((ArrayCoerceExpr *) node)->elemfuncid))
+			record_plan_function_dependency(glob,
+											((ArrayCoerceExpr *) node)->elemfuncid);
+	}
 	else if (IsA(node, Const))
 	{
 		Const	   *con = (Const *) node;
@@ -1280,9 +1281,7 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 			return (Node *) var;
 		}
 	}
-
 	fix_expr_common(context->glob, node);
-
 	return expression_tree_mutator(node, fix_scan_expr_mutator,
 								   (void *) context);
 }
@@ -2328,29 +2327,23 @@ set_sa_opfuncid(ScalarArrayOpExpr *opexpr)
  *					QUERY DEPENDENCY MANAGEMENT
  *****************************************************************************/
 
-/* GPDB doesn't take advantage of dependency tracking at the moment
- * so its contruction it is disabled.  However the infrastructure is
- * intact (and compiled) to make it easy to switch on in the future.
- */
-static bool disable_dependency_tracking = true;
-
 /*
  * record_plan_function_dependency
  *		Mark the current plan as depending on a particular function.
+ *
+ * This is exported so that the function-inlining code can record a
+ * dependency on a function that it's removed from the plan tree.
  */
 void
 record_plan_function_dependency(PlannerGlobal *glob, Oid funcid)
 {
-	Assert(funcid != InvalidOid && "Plan cannot depend on invalid function oid");
-
-	if ( disable_dependency_tracking ) return;
 	/*
 	 * For performance reasons, we don't bother to track built-in functions;
 	 * we just assume they'll never change (or at least not in ways that'd
 	 * invalidate plans using them).  For this purpose we can consider a
 	 * built-in function to be one with OID less than FirstBootstrapObjectId.
-	 * Note that the OID generator guarantees never to generate such an OID
-	 * after startup, even at OID wraparound.
+	 * Note that the OID generator guarantees never to generate such an
+	 * OID after startup, even at OID wraparound.
 	 */
 	if (funcid >= (Oid) FirstBootstrapObjectId)
 	{
@@ -2382,6 +2375,9 @@ record_plan_function_dependency(PlannerGlobal *glob, Oid funcid)
  * extract_query_dependencies
  *		Given a list of not-yet-planned queries (i.e. Query nodes),
  *		extract their dependencies just as set_plan_references would do.
+ *
+ * This is needed by plancache.c to handle invalidation of cached unplanned
+ * queries.
  */
 void
 extract_query_dependencies(List *queries,
@@ -2389,8 +2385,6 @@ extract_query_dependencies(List *queries,
 						   List **invalItems)
 {
 	PlannerGlobal glob;
-
-	if ( disable_dependency_tracking ) return;
 
 	/* Make up a dummy PlannerGlobal so we can use this module's machinery */
 	MemSet(&glob, 0, sizeof(glob));

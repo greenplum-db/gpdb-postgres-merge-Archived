@@ -481,8 +481,8 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->result_aosegnos = root->result_aosegnos;
 	result->rowMarks = parse->rowMarks;
 	result->relationOids = glob->relationOids;
-	result->nParamExec = list_length(glob->paramlist);
 	result->invalItems = glob->invalItems;
+	result->nParamExec = list_length(glob->paramlist);
 	result->nMotionNodes = top_plan->nMotionNodes;
 	result->nInitPlans = top_plan->nInitPlans;
 	result->intoPolicy = GpPolicyCopy(CurrentMemoryContext, parse->intoPolicy);

@@ -260,6 +260,10 @@ extern void extract_query_dependencies(List *queries,
 extern void fix_opfuncids(Node *node);
 extern void set_opfuncid(OpExpr *opexpr);
 extern void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);
+extern void record_plan_function_dependency(PlannerGlobal *glob, Oid funcid);
+extern void extract_query_dependencies(List *queries,
+									   List **relationOids,
+									   List **invalItems);
 
 extern int num_distcols_in_grouplist(List *gc);
 

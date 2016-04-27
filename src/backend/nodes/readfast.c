@@ -1528,7 +1528,7 @@ _readPlannedStmt(void)
 	READ_NODE_FIELD(numSelectorsPerScanId);
 	READ_NODE_FIELD(rowMarks);
 	READ_NODE_FIELD(relationOids);
-	READ_NODE_FIELD(invalItems);
+	/* invalItems not serialized in outfast.c */
 	READ_INT_FIELD(nParamExec);
 	READ_INT_FIELD(nMotionNodes);
 	READ_INT_FIELD(nInitPlans);
@@ -2185,7 +2185,6 @@ _readLimit(void)
 
 	READ_DONE();
 }
-
 
 /*
  * _readHash

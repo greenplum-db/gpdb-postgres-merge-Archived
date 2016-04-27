@@ -1164,8 +1164,9 @@ typedef struct RowTrigger
  *
  * We track the objects on which a PlannedStmt depends in two ways:
  * relations are recorded as a simple list of OIDs, and everything else
- * is represented as a list of PlanInvalItems.  A PlanInvalItem identifies
- * a system catalog entry by cache ID and tuple TID.
+ * is represented as a list of PlanInvalItems.  A PlanInvalItem is designed
+ * to be used with the syscache invalidation mechanism, so it identifies a
+ * system catalog entry by cache ID and tuple TID.
  */
 typedef struct PlanInvalItem
 {

@@ -466,14 +466,6 @@ drop table cache_temp;
 -- ************************************************************
 --
 
--- start_matchsubs
---
--- m|ERROR:\s+relation with OID \d+ does not exist|
--- s|ERROR:\s+relation with OID \d+ does not exist|ERROR: relation with OID DUMMY does not exist|
---
--- end_matchsubs
-
-
 create table cache_tab(c1 int, c2 int) distributed randomly; 
 
 drop function if exists cache_test(count int); 
@@ -489,12 +481,16 @@ end;
 $$ language plpgsql MODIFIES SQL DATA;
 
 select cache_test(5);
+-- should return 5 rows
+select * from cache_tab;
 
 drop table if exists cache_tab;
 
 create table cache_tab(c1 int, c2 int) distributed randomly; 
 
 select cache_test(5);
+-- should return 5 rows
+select * from cache_tab;
 
 drop function cache_test(count int); 
 
@@ -512,8 +508,9 @@ begin
 end; 
 $$ language plpgsql MODIFIES SQL DATA;
 
--- this will fail
 select cache_test(5);
+-- should return 1 row
+select * from cache_tab;
 
 drop table if exists cache_tab;
 

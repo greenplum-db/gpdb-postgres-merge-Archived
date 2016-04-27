@@ -195,7 +195,7 @@ static void recomputeNamespacePath(void);
 static void InitTempTableNamespace(void);
 static void RemoveTempRelations(Oid tempNamespaceId);
 static void RemoveTempRelationsCallback(int code, Datum arg);
-static void NamespaceCallback(Datum arg __attribute__((unused)) , Oid relid __attribute__((unused)) );
+static void NamespaceCallback(Datum arg, int cacheid, ItemPointer tuplePtr);
 static bool TempNamespaceValid(bool error_if_removed);
 
 /* These don't really need to appear in any header file */
@@ -3588,7 +3588,7 @@ InitializeSearchPath(void)
  *		Syscache inval callback function
  */
 static void
-NamespaceCallback(Datum arg, Oid relid)
+NamespaceCallback(Datum arg, int cacheid, ItemPointer tuplePtr)
 {
 	/* Force search path to be recomputed on next use */
 	baseSearchPathValid = false;

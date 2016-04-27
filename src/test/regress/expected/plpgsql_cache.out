@@ -510,12 +510,6 @@ drop table cache_temp;
 -- * recursive functions
 -- ************************************************************
 --
--- start_matchsubs
---
--- m|ERROR:\s+relation with OID \d+ does not exist|
--- s|ERROR:\s+relation with OID \d+ does not exist|ERROR: relation with OID DUMMY does not exist|
---
--- end_matchsubs
 create table cache_tab(c1 int, c2 int) distributed randomly; 
 drop function if exists cache_test(count int); 
 NOTICE:  function cache_test(pg_catalog.int4) does not exist, skipping
@@ -535,6 +529,17 @@ select cache_test(5);
           0
 (1 row)
 
+-- should return 5 rows
+select * from cache_tab;
+ c1 | c2 
+----+----
+  1 |  1
+  2 |  2
+  3 |  3
+  4 |  4
+  5 |  5
+(5 rows)
+
 drop table if exists cache_tab;
 create table cache_tab(c1 int, c2 int) distributed randomly; 
 select cache_test(5);
@@ -542,6 +547,17 @@ select cache_test(5);
 ------------
           0
 (1 row)
+
+-- should return 5 rows
+select * from cache_tab;
+ c1 | c2 
+----+----
+  1 |  1
+  2 |  2
+  3 |  3
+  4 |  4
+  5 |  5
+(5 rows)
 
 drop function cache_test(count int); 
 --- another example with recursive functions 
@@ -557,13 +573,18 @@ begin
   	return cache_test($1-1);
 end; 
 $$ language plpgsql MODIFIES SQL DATA;
--- this will fail
 select cache_test(5);
-ERROR:  relation with OID 1234913 does not exist
-CONTEXT:  SQL statement "insert into cache_tab values( $1 ,  $1 )"
-PL/pgSQL function "cache_test" line 7 at SQL statement
-SQL statement "SELECT  cache_test( $1 -1)"
-PL/pgSQL function "cache_test" line 9 at return
+ cache_test 
+------------
+          0
+(1 row)
+
+-- should return 1 row
+select * from cache_tab;
+ c1 | c2 
+----+----
+  1 |  1
+(1 row)
 
 drop table if exists cache_tab;
 drop function cache_test(count int) cascade;

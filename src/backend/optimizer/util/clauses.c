@@ -54,6 +54,7 @@
 typedef struct
 {
 	ParamListInfo boundParams;
+	PlannerGlobal *glob;
 	List	   *active_fns;
 	Node	   *case_val;
 	bool		transform_stable_funcs;
@@ -1892,9 +1893,15 @@ eval_const_expressions(PlannerInfo *root, Node *node)
 	eval_const_expressions_context context;
 
 	if (root)
+	{
 		context.boundParams = root->glob->boundParams;	/* bound Params */
+		context.glob = root->glob; /* for inlined-function dependencies */
+	}
 	else
+	{
 		context.boundParams = NULL;
+		context.glob = NULL;
+	}
 	context.active_fns = NIL;	/* nothing being recursively simplified */
 	context.case_val = NULL;	/* no CASE being examined */
 	context.transform_stable_funcs = true;	/* safe transformations only */
@@ -1929,6 +1936,8 @@ estimate_expression_value(PlannerInfo *root, Node *node)
 	eval_const_expressions_context context;
 
 	context.boundParams = root->glob->boundParams;		/* bound Params */
+	/* we do not need to mark the plan as depending on inlined functions */
+	context.glob = NULL;
 	context.active_fns = NIL;	/* nothing being recursively simplified */
 	context.case_val = NULL;	/* no CASE being examined */
 	context.transform_stable_funcs = true;	/* unsafe transformations OK */
@@ -3689,6 +3698,13 @@ inline_function(Oid funcid, Oid result_type, List *args,
 										   -1,
 										   COERCE_IMPLICIT_CAST);
 	}
+
+	/*
+	 * Since there is now no trace of the function in the plan tree, we
+	 * must explicitly record the plan's dependency on the function.
+	 */
+	if (context->glob)
+		record_plan_function_dependency(context->glob, funcid);
 
 	/*
 	 * Recursively try to simplify the modified expression.  Here we must add
