@@ -26,11 +26,7 @@
   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
  */
-<<<<<<< HEAD
 /* $PostgreSQL: pgsql/contrib/pgcrypto/imath.h,v 1.7 2009/06/11 14:48:52 momjian Exp $ */
-=======
-/* $PostgreSQL: pgsql/contrib/pgcrypto/imath.h,v 1.6 2007/11/15 21:14:31 momjian Exp $ */
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
 #ifndef IMATH_H_
 #define IMATH_H_

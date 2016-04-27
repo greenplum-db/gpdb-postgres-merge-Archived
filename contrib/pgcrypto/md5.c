@@ -28,11 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
-<<<<<<< HEAD
  * $PostgreSQL: pgsql/contrib/pgcrypto/md5.c,v 1.15 2009/06/11 14:48:52 momjian Exp $
-=======
- * $PostgreSQL: pgsql/contrib/pgcrypto/md5.c,v 1.14 2007/04/06 05:36:50 tgl Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 
 #include "postgres.h"

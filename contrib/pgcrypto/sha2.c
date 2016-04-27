@@ -33,11 +33,7 @@
  *
  * $From: sha2.c,v 1.1 2001/11/08 00:01:51 adg Exp adg $
  *
-<<<<<<< HEAD
  * $PostgreSQL: pgsql/contrib/pgcrypto/sha2.c,v 1.11 2009/06/11 14:48:52 momjian Exp $
-=======
- * $PostgreSQL: pgsql/contrib/pgcrypto/sha2.c,v 1.10 2007/11/15 21:14:31 momjian Exp $
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
  */
 
 #include "postgres.h"
