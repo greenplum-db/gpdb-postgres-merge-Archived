@@ -669,7 +669,7 @@ GetCurrentTransactionNestLevel(void)
  * is no longer "current", even though it may still have an entry on the
  * state stack.
  *
- * The parent list and childXIDs list within it are in sorted decreasing order.
+ * The XID of a child is always greater than that of its parent.
  * Taking advantage of this fact simple optimizations are added instead of linear traversal to fasten the search
  *  1] Added fastLink/skipLink pointers to skip nodes in list and scan fast across, instead of visiting all nodes in list
  *  2] Break-out as soon as XID to search is greater than the current node in (parent / child) list
@@ -2511,8 +2511,8 @@ GetLastSubTransactionIdFromTree(TransactionState s)
 		/*
 		 * subcommitted child XIDs
 		 */
-		if (s->childXids && s->nChildXids)
-			return s->childXids[0];
+		if (s->childXids && s->nChildXids > 0)
+			return s->childXids[s->nChildXids - 1];
 		else if (s->nestingLevel >= 2)
 			return s->transactionId;
 	}
