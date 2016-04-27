@@ -2,13 +2,9 @@
  * xlogviewer.h
  *
  *
-<<<<<<< HEAD:contrib/xlogviewer/xlogviewer.h
  *
  * Diogo Biazus <diogob@gmail.com>
  * Based on the original dblink code by Joe Conway and xlogdump code by Tom Lane
-=======
- * Copyright (c) 2002-2008, PostgreSQL Global Development Group
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588:contrib/tablefunc/tablefunc.h
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose, without fee, and without a written agreement
