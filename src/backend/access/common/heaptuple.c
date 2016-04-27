@@ -208,10 +208,7 @@ heap_fill_tuple(TupleDesc tupleDesc,
 	int			i;
 	int			numberOfAttributes = tupleDesc->natts;
 	Form_pg_attribute *att = tupleDesc->attrs;
-
-#ifdef USE_ASSERT_CHECKING
 	char	   *start = data;
-#endif
 
 	if (bit != NULL)
 	{
