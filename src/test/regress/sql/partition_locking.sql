@@ -1,6 +1,11 @@
 -- Test locking behaviour. When creating, dropping, querying or adding indexes
 -- partitioned tables, we want to lock only the master, not the children.
 
+-- Show locks in master and in segments. Because the number of segments
+-- in the cluster depends on configuration, we print only summary information
+-- of the locks in segments. If a relation is locked only on one segment,
+-- we print that as a special case, but otherwise we just print "n segments",
+-- meaning the relation is locked on more than one segment.
 create or replace view locktest as
 select coalesce(
   case when relname like 'pg_toast%index' then 'toast index'
@@ -10,19 +15,17 @@ select coalesce(
        else relname end, 'dropped table'),
   mode,
   locktype,
-  l.gp_segment_id
+  case when l.gp_segment_id = -1 then 'master'
+       when COUNT(*) = 1 then '1 segment'
+       else 'n segments' end AS node
 from pg_locks l
 left outer join pg_class c on (l.relation = c.oid),
 pg_database d
 where relation is not null
 and l.database = d.oid
--- Show locks from master and one segment. We assume that all segments
--- will acquire the same locks, so we only need to check one of them.
--- Listing all of them would make the output differ depending on the
--- number of segments.
-and l.gp_segment_id IN (-1, 0)
 and (relname <> 'gp_fault_strategy' or relname IS NULL)
 and d.datname = current_database()
+group by l.gp_segment_id = -1, relation, relname, locktype, mode
 order by 1, 3, 2;
 
 -- Partitioned table with toast table
