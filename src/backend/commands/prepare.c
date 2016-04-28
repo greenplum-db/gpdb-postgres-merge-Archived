@@ -233,42 +233,33 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 	 * ugly).  For regular EXECUTE we can just use the cached query, since the
 	 * executor is read-only.
 	 *
-	 * In GPDB, the plan depends on the DISTRIBUTED BY of the target table.
-	 * For example, if the table is distributed by 'column1', then the rows to
-	 * insert must be moved to the correct nodes, determined by 'column1'.
-	 * That's a very different plan than what you get if you run the plain
-	 * SELECT from the master; in that case all the output rows will be
-	 * fetched into the master. Therefore, we cannot reuse the plan that was
-	 * previously prepared for the prepared statement; it would deliver the
-	 * rows to a wrong place. Make a copy of the raw parse tree, set its
-	 * intoClause, and plan the query with that. Setting intoClause/intoPolicy
-	 * is also needed to ensure that the created table has its
-	 * gp_distribution_policy row created correctly. (MPP-8135)
+	 * In GPDB, we use the current parameter values in the planning, because
+	 * that potentially gives a better plan. It also means that we have to
+	 * re-plan the query on every EXECUTE, but for long-running OLAP queries
+	 * that GPDB is typically used for, that seems like a good tradeoff.
+	 *
+	 * In GPDB the plan for CREATE TABLE / AS EXECUTE also depends on the
+	 * DISTRIBUTED BY clause of the target table. For example, if the table is
+	 * distributed by 'column1', then the rows to insert must be moved to the
+	 * correct nodes, determined by 'column1'. That's a very different plan
+	 * than what you get if you run the plain SELECT from the master; in that
+	 * case all the output rows will be fetched into the master. Because of
+	 * that, we also have to pass the into-clause to
+	 * RevalidateCachedPlanWithParams. (MPP-8135)
 	 */
 	if (stmt->into)
 	{
 		MemoryContext oldContext;
 		PlannedStmt *pstmt;
-		SelectStmt *select;
-		List	   *query_list;
 
-		if (!IsA(entry->plansource->raw_parse_tree, SelectStmt))
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("prepared statement is not a SELECT")));
-		select = (SelectStmt *) copyObject(entry->plansource->raw_parse_tree);
+		/* Replan if needed, and increment plan refcount transiently */
+		cplan = RevalidateCachedPlanWithParams(entry->plansource, true,
+											   paramLI, stmt->into);
 
-		select->intoClause = copyObject(stmt->into);
-
-		query_list = pg_analyze_and_rewrite((Node *) select,
-											entry->plansource->query_string,
-											entry->plansource->param_types,
-											entry->plansource->num_params);
-
-		/* Create the plan in portal's context */
+		/* Copy plan into portal's context, and modify */
 		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
-		plan_list = pg_plan_queries(query_list, 0, NULL, false);
+		plan_list = copyObject(cplan->stmt_list);
 
 		if (list_length(plan_list) != 1)
 			ereport(ERROR,
@@ -284,15 +275,18 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 		pstmt->intoClause = copyObject(stmt->into);
 		if (pstmt->intoPolicy == NULL)
 			pstmt->intoPolicy = GpPolicyCopy(CurrentMemoryContext, pstmt->intoPolicy);
+
 		MemoryContextSwitchTo(oldContext);
 
-		/* we don't want the portal to depend on the original prepared statement */
+		/* We no longer need the cached plan refcount ... */
+		ReleaseCachedPlan(cplan, true);
+		/* ... and we don't want the portal to depend on it, either */
 		cplan = NULL;
 	}
 	else
 	{
 		/* Replan if needed, and increment plan refcount for portal */
-		cplan = RevalidateCachedPlan(entry->plansource, false);
+		cplan = RevalidateCachedPlanWithParams(entry->plansource, false, paramLI, NULL);
 		plan_list = cplan->stmt_list;
 	}
 
@@ -694,11 +688,6 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
 	if (!entry->plansource->fixed_result)
 		elog(ERROR, "EXPLAIN EXECUTE does not support variable-result cached plans");
 
-	/* Replan if needed, and acquire a transient refcount */
-	cplan = RevalidateCachedPlan(entry->plansource, true);
-
-	plan_list = cplan->stmt_list;
-
 	/* Evaluate parameters, if any */
 	if (entry->plansource->num_params)
 	{
@@ -711,6 +700,12 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
 		paramLI = EvaluateParams(entry, execstmt->params,
 								 queryString, estate);
 	}
+
+	/* Replan if needed, and acquire a transient refcount */
+	cplan = RevalidateCachedPlanWithParams(entry->plansource, true,
+										   paramLI, execstmt->into);
+
+	plan_list = cplan->stmt_list;
 
 	/* Explain each query */
 	foreach(p, plan_list)
@@ -734,6 +729,8 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
 				pstmt = copyObject(pstmt);
 
 				pstmt->intoClause = execstmt->into;
+				if (pstmt->intoPolicy == NULL)
+					pstmt->intoPolicy = GpPolicyCopy(CurrentMemoryContext, pstmt->intoPolicy);
 			}
 
 			ExplainOnePlan(pstmt, paramLI, stmt, queryString, tstate);

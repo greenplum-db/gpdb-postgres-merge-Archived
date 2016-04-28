@@ -16,6 +16,8 @@
 #define PLANCACHE_H
 
 #include "access/tupdesc.h"
+#include "nodes/params.h"
+#include "nodes/parsenodes.h"
 
 /*
  * CachedPlanSource represents the portion of a cached plan that persists
@@ -110,6 +112,8 @@ extern CachedPlanSource *FastCreateCachedPlan(Node *raw_parse_tree,
 extern void DropCachedPlan(CachedPlanSource *plansource);
 extern CachedPlan *RevalidateCachedPlan(CachedPlanSource *plansource,
 					 bool useResOwner);
+extern CachedPlan *RevalidateCachedPlanWithParams(CachedPlanSource *plansource,
+							   bool useResOwner, ParamListInfo boundParams, IntoClause *intoClause);
 extern void ReleaseCachedPlan(CachedPlan *plan, bool useResOwner);
 extern bool CachedPlanIsValid(CachedPlanSource *plansource);
 extern TupleDesc PlanCacheComputeResultDesc(List *stmt_list);

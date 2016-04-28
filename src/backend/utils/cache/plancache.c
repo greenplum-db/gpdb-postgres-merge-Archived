@@ -395,9 +395,22 @@ DropCachedPlan(CachedPlanSource *plansource)
  *
  * Note: if any replanning activity is required, the caller's memory context
  * is used for that work.
+ *
+ * In GPDB, this function has two extra parameters: boundParams and intoClause.
+ * If boundParams is set, the parameter values are used to generate the plan.
+ * That makes the plan specific to the given values, and cannot be reused when
+ * the query is executed with different params (RevalidateCachedPlanWithParams
+ * will mark the plan so that it will be automatically re-planned on next
+ * call). If 'intoClause' is given, the plan is to be used as part of a
+ * CREATE TABLE AS statement. That affects the distribution of the output rows:
+ * we cannot reuse a generic plan that fetches all the output rows into master.
+ * They should be distributed to the correct segments according to the
+ * distribution policy of the target table, instead. A non-NULL intoClause
+ * therefore also forces the plan to be re-planned on next call.
  */
 CachedPlan *
-RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
+RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
+							   ParamListInfo boundParams, IntoClause *intoClause)
 {
 	CachedPlan *plan;
 
@@ -410,6 +423,14 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 	 * condition that an invalidation message arrives before we get the lock.
 	 */
 	plan = plansource->plan;
+
+	/*
+	 * If we are to use the parameter values in the plan, or this is a
+	 * CREATE TABLE AS, we cannot re-use a generic plan.
+	 */
+	if (plan && (boundParams || intoClause))
+		plan->dead = true;
+
 	if (plan && !plan->dead)
 	{
 		/*
@@ -486,6 +507,7 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 		{
 			Snapshot	mySnapshot = NULL;
 			TupleDesc	resultDesc;
+			Node	   *raw_parse_tree;
 
 			if (ActiveSnapshot == NULL)
 			{
@@ -494,13 +516,35 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 			}
 
 			/*
+			 * If this is a CREATE TABLE AS, pass information about the
+			 * target table's distribution key to the planner.
+			 */
+			if (intoClause)
+			{
+				SelectStmt *select;
+
+				if (!IsA(plansource->raw_parse_tree, SelectStmt))
+					ereport(ERROR,
+							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							 errmsg("prepared statement is not a SELECT")));
+
+				select = (SelectStmt *) copyObject(plansource->raw_parse_tree);
+
+				select->intoClause = copyObject(intoClause);
+
+				raw_parse_tree = (Node *) select;
+			}
+			else
+				raw_parse_tree = copyObject(plansource->raw_parse_tree);
+
+			/*
 			 * Run parse analysis and rule rewriting.  The parser tends to
 			 * scribble on its input, so we must copy the raw parse tree to
 			 * prevent corruption of the cache.  Note that we do not use
 			 * parse_analyze_varparams(), assuming that the caller never wants
 			 * the parameter types to change from the original values.
 			 */
-			slist = pg_analyze_and_rewrite(copyObject(plansource->raw_parse_tree),
+			slist = pg_analyze_and_rewrite(raw_parse_tree,
 										   plansource->query_string,
 										   plansource->param_types,
 										   plansource->num_params);
@@ -520,7 +564,7 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 				pushed = SPI_push_conditional();
 
 				slist = pg_plan_queries(slist, plansource->cursor_options,
-										NULL, false);
+										boundParams, false);
 
 				SPI_pop_conditional(pushed);
 			}
@@ -533,6 +577,10 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 			if (resultDesc == NULL && plansource->resultDesc == NULL)
 			{
 				/* OK, doesn't return tuples */
+			}
+			else if (intoClause)
+			{
+				/* OK */
 			}
 			else if (resultDesc == NULL || plansource->resultDesc == NULL ||
 					 !equalTupleDescs(resultDesc, plansource->resultDesc, true))
@@ -577,6 +625,13 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 		StoreCachedPlan(plansource, slist, NULL);
 
 		plan = plansource->plan;
+
+		/*
+		 * If we used the parameter values to create the plan, or this is a
+		 * CREATE TABLE AS, we cannot re-use this plan on subsequent calls.
+		 */
+		if (boundParams || intoClause)
+			plan->saved_xmin = BootstrapTransactionId;
 	}
 
 	/*
@@ -589,6 +644,16 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 		ResourceOwnerRememberPlanCacheRef(CurrentResourceOwner, plan);
 
 	return plan;
+}
+
+/*
+ * Compatibility version of RevalidateCachedPlanWithParams, for the simple
+ * case of no params and no CREATE TABLE AS.
+ */
+CachedPlan *
+RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
+{
+	return RevalidateCachedPlanWithParams(plansource, useResOwner, NULL, NULL);
 }
 
 /*
