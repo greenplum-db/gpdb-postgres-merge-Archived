@@ -2026,7 +2026,7 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 
 		appendStringInfo(&buffer, "ALTER DATABASE \"%s\" ", stmt->dbname);
 		
-		if (strcmp(stmt->setstmt->name, "all") == 0 && valuestr == NULL)
+		if (stmt->setstmt->kind ==  VAR_RESET_ALL)
 		{
 			appendStringInfo(&buffer, "RESET ALL");
 		}
