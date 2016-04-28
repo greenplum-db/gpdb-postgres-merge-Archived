@@ -2379,12 +2379,6 @@ timestamptz_cmp_timestamp(PG_FUNCTION_ARGS)
  *
  *		collate invalid interval at the end
  */
-#ifdef HAVE_INT64_TIMESTAMP
-typedef int64 TimeOffset;
-#else
-typedef double TimeOffset;
-#endif
-
 static inline TimeOffset
 interval_cmp_value(const Interval *interval)
 {
