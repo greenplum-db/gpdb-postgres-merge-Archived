@@ -848,11 +848,22 @@ void set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 		config->gp_cte_sharing = false;
 
 		/*
+		 * Adjust the subquery so that 'root', i.e. this subquery, is the
+		 * parent of the CTE subquery, even though the CTE might've been
+		 * higher up syntactically. This is because some of the quals that
+		 * we push down might refer to relations between the current level
+		 * and the CTE's syntactical level. Such relations are not visible
+		 * at the CTE's syntactical level, and SS_finalize_plan() would
+		 * throw an error on them.
+		 */
+		IncrementVarSublevelsUp((Node *) subquery, rte->ctelevelsup, 1);
+
+		/*
 		 * Push down quals, like we do in set_subquery_pathlist()
 		 */
 		subquery = push_down_restrict(root, rel, rte, rel->relid, subquery);
 
-		subplan = subquery_planner(cteroot->glob, subquery, cteroot,
+		subplan = subquery_planner(cteroot->glob, subquery, root,
 								   tuple_fraction, &subroot, config);
 
 		subrtable = subroot->parse->rtable;
