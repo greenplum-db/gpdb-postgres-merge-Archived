@@ -16,7 +16,6 @@
 #define ALLOW_isnan
 #include "postgres.h"
 #include "gpopt/translate/CTranslatorScalarToDXL.h"
-#include "gpopt/translate/CTranslatorPlStmtToDXL.h"
 #include "gpopt/translate/CTranslatorQueryToDXL.h"
 #include "gpopt/translate/CTranslatorUtils.h"
 #include "gpopt/translate/CCTEListEntry.h"
@@ -315,11 +314,14 @@ CTranslatorScalarToDXL::PdxlnSubPlanFromSubPlan
 	Plan *pplanChild = (Plan *) gpdb::PvListNth(m_pplstmt->subplans, psubplan->plan_id - 1);
 
 	// Since a sub plan has relational children, we create a new translator to handle its translation
-	CTranslatorPlStmtToDXL trplstmttodxl(m_pmp, m_pmda, m_pidgtorCol, m_pplstmt, m_pparammapping);
+	// GPDB_MERGE83_FIXME: This needs to be handled in a different way with the
+	// CTranslatorPlStmtToDXL code removed
 
-	CDXLNode *pdxlnSubPlan = trplstmttodxl.PdxlnFromPlan(pplanChild);
+	//CTranslatorPlStmtToDXL trplstmttodxl(m_pmp, m_pmda, m_pidgtorCol, m_pplstmt, m_pparammapping);
 
-	pdxln->AddChild(pdxlnSubPlan);
+	//CDXLNode *pdxlnSubPlan = trplstmttodxl.PdxlnFromPlan(pplanChild);
+
+	//pdxln->AddChild(pdxlnSubPlan);
 
 	return pdxln;
 }
@@ -2178,10 +2180,14 @@ CTranslatorScalarToDXL::PdxlnInitPlanFromParam
 	GPOS_ASSERT(NULL != ppl);
 
 	// Since an init plan is not a scalar node, we create a new PlStmt translator to handle its translation
-	CTranslatorPlStmtToDXL trplstmttodxl(m_pmp, m_pmda, m_pidgtorCol, m_pplstmt, m_pparammapping);
-	CDXLNode *pdxlnSubPlan = trplstmttodxl.PdxlnFromPlan(ppl);
-	GPOS_ASSERT(NULL != pdxlnSubPlan);
-	pdxlnInitPlan->AddChild(pdxlnSubPlan);
+
+	// GPDB_MERGE83_FIXME: This needs to be handled in a different way with the
+	// CTranslatorPlStmtToDXL code removed
+
+	//CTranslatorPlStmtToDXL trplstmttodxl(m_pmp, m_pmda, m_pidgtorCol, m_pplstmt, m_pparammapping);
+	//CDXLNode *pdxlnSubPlan = trplstmttodxl.PdxlnFromPlan(ppl);
+	//GPOS_ASSERT(NULL != pdxlnSubPlan);
+	//pdxlnInitPlan->AddChild(pdxlnSubPlan);
 
 	return pdxlnInitPlan;
 }

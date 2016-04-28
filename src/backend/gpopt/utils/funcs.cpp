@@ -367,37 +367,6 @@ DumpQueryToFile(PG_FUNCTION_ARGS)
 
 //---------------------------------------------------------------------------
 //	@function:
-//		DumpPlanDXL
-//
-//	@doc:
-//		Plan a query and dump out plan as xml text.
-// 		Input: sql query text
-// 		Output: plan in dxl
-//
-//---------------------------------------------------------------------------
-
-extern "C" {
-Datum
-DumpPlanDXL(PG_FUNCTION_ARGS)
-{
-	char *szSqlText = textToString(PG_GETARG_TEXT_P(0));
-
-	PlannedStmt *pplstmt = planQuery(szSqlText);
-
-	Assert(pplstmt);
-
-	char *szXmlString = COptTasks::SzDXL(pplstmt);
-	if (NULL == szXmlString)
-	{
-		elog(ERROR, "Error translating plan to DXL");
-	}
-
-	PG_RETURN_TEXT_P(stringToText(szXmlString));
-}
-}
-
-//---------------------------------------------------------------------------
-//	@function:
 //		DumpQueryDXL
 //
 //	@doc:
@@ -741,39 +710,6 @@ RestorePlanFromDXLFile(PG_FUNCTION_ARGS)
 	text *ptResult = stringToText(str.data);
 
 	PG_RETURN_TEXT_P(ptResult);
-}
-}
-
-//---------------------------------------------------------------------------
-//	@function:
-//		DumpPlanToDXLFile
-//
-//	@doc:
-//
-//
-//---------------------------------------------------------------------------
-
-extern "C" {
-Datum
-DumpPlanToDXLFile(PG_FUNCTION_ARGS)
-{
-	char *szSql = textToString(PG_GETARG_TEXT_P(0));
-	char *szFilename = textToString(PG_GETARG_TEXT_P(1));
-
-	PlannedStmt *pplstmt = planQuery(szSql);
-	Assert(pplstmt);
-
-	char *szXmlString = COptTasks::SzDXL(pplstmt);
-
-	int iLen = (int) gpos::clib::UlStrLen(szXmlString);
-
-	CFileWriter fw;
-	fw.Open(szFilename, S_IRUSR | S_IWUSR);
-	fw.Write(reinterpret_cast<const BYTE*>(szXmlString), iLen + 1);
-	fw.Close();
-
-	PG_RETURN_INT32(iLen);
-
 }
 }
 
