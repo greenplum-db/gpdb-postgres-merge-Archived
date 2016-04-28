@@ -25,7 +25,7 @@
 [submodule "gpAux/extensions/gp_filedump"]
 	path = gpAux/extensions/gp_filedump
 	url = git@github.com:greenplum-db/gp_filedump.git
-	branch = master
+	branch = gpdb_merge_8_3_22
 [submodule "gpMgmt/bin/pythonSrc/ext"]
 	path = gpMgmt/bin/pythonSrc/ext
 	url = git@github.com:greenplum-db/pythonsrc-ext.git
