@@ -99,8 +99,8 @@ text *cstring_to_text_with_len(const char *c, int n);
 	)) \
 )
 
-List *
-stringToQualifiedNameList(const char *string, const char *caller);
+extern List *
+stringToQualifiedNameList(const char *string);
 
 #else
 #if PG_VERSION_NUM < 80300
@@ -115,8 +115,6 @@ stringToQualifiedNameList(const char *string, const char *caller);
 	att_align((cur_offset), (attalign))
 #define att_addlength_pointer(cur_offset, attlen, attptr) \
 	att_addlength((cur_offset), (attlen), (attptr))
-#define stringToQualifiedNameList(string) \
-	stringToQualifiedNameList((string), "")
 typedef void *SPIPlanPtr;
 #endif
 #endif
