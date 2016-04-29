@@ -27,11 +27,7 @@ RESET SESSION AUTHORIZATION
 
   <para>
    This command sets the session user identifier and the current user
-<<<<<<< HEAD
    identifier of the current SQL session context to be <replaceable
-=======
-   identifier of the current SQL session to be <replaceable
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
    class="parameter">username</replaceable>.  The user name can be
    written as either an identifier or a string literal.  Using this
    command, it is possible, for example, to temporarily become an

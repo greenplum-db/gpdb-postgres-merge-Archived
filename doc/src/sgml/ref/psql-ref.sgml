@@ -440,11 +440,7 @@ PostgreSQL documentation
       <listitem>
       <para>
        Force <application>psql</application> to prompt for a
-<<<<<<< HEAD
        password before connecting to a database.
-=======
-       password before connecting to a database.  
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
       </para>
 
       <para>
@@ -926,11 +922,7 @@ testdb=&gt;
 
         <listitem>
         <para>
-<<<<<<< HEAD
-        Lists aggregate functions, together with their
-=======
         Lists all available aggregate functions, together with their
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
         return type and the data types they operate on. If <replaceable
         class="parameter">pattern</replaceable>
         is specified, only aggregates whose names match the pattern are shown.
@@ -1076,21 +1068,12 @@ testdb=&gt;
         <term><literal>\deu[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
-<<<<<<< HEAD
         Lists user mappings (mnemonic: <quote>external
         users</quote>).
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only those mappings whose user names match the
         pattern are listed.  If the form <literal>\deu+</literal> is
         used, additional information about each mapping is shown.
-=======
-        Lists available functions, together with their argument and
-        return types. If <replaceable
-        class="parameter">pattern</replaceable>
-        is specified, only functions whose names match the pattern are shown.
-        If the form <literal>\df+</literal> is used, additional information about
-        each function, including volatility, language, source code and description, is shown.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
         </para>
 
         <caution>
@@ -1167,71 +1150,7 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
-<<<<<<< HEAD
         <term><literal>\dFd[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-=======
-        <term><literal>\dF [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <term><literal>\dF+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <listitem>
-        <para>
-         Lists available text search configurations.
-         If <replaceable class="parameter">pattern</replaceable> is specified,
-         only configurations whose names match the pattern are shown.
-         If the form <literal>\dF+</literal> is used, a full description of
-         each configuration is shown, including the underlying text search
-         parser and the dictionary list for each parser token type.
-        </para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term><literal>\dFd [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <term><literal>\dFd+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <listitem>
-        <para>
-         Lists available text search dictionaries.
-         If <replaceable class="parameter">pattern</replaceable> is specified,
-         only dictionaries whose names match the pattern are shown.
-         If the form <literal>\dFd+</literal> is used, additional information
-         is shown about each selected dictionary, including the underlying
-         text search template and the option values.
-        </para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term><literal>\dFp [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <term><literal>\dFp+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <listitem>
-        <para>
-         Lists available text search parsers.
-         If <replaceable class="parameter">pattern</replaceable> is specified,
-         only parsers whose names match the pattern are shown.
-         If the form <literal>\dFp+</literal> is used, a full description of
-         each parser is shown, including the underlying functions and the
-         list of recognized token types.
-        </para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term><literal>\dFt [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <term><literal>\dFt+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <listitem>
-        <para>
-         Lists available text search templates.
-         If <replaceable class="parameter">pattern</replaceable> is specified,
-         only templates whose names match the pattern are shown.
-         If the form <literal>\dFt+</literal> is used, additional information
-         is shown about each template, including the underlying function names.
-        </para>
-        </listitem>
-      </varlistentry>
-
-
-      <varlistentry>
-        <term><literal>\dg [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
         <listitem>
         <para>
          Lists text search dictionaries.
@@ -1806,13 +1725,8 @@ lo_import 152801
         <para>
          Prompts the user to set variable <replaceable
          class="parameter">name</>.  An optional prompt, <replaceable
-<<<<<<< HEAD
          class="parameter">text</>, can be specified.  (For multiword
          prompts, use single quotes.)
-=======
-         class="parameter">text</>, can be specified.  (For multi-word
-         prompts, use single-quotes.)
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
         </para>
 
         <para>
@@ -1824,11 +1738,7 @@ lo_import 152801
       </varlistentry>
 
       <varlistentry>
-<<<<<<< HEAD
         <term><literal>\pset <replaceable class="parameter">option</replaceable> [ <replaceable class="parameter">value</replaceable> ]</literal></term>
-=======
-        <term><literal>\pset <replaceable class="parameter">parameter</replaceable> [ <replaceable class="parameter">value</replaceable> ]</literal></term>
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 
         <listitem>
         <para>
@@ -1931,7 +1841,6 @@ lo_import 152801
           <term><literal>linestyle</literal></term>
           <listitem>
           <para>
-<<<<<<< HEAD
           Sets the border line drawing style to one
           of <literal>ascii</literal>, <literal>old-ascii</literal>
           or <literal>unicode</literal>.
@@ -1978,16 +1887,6 @@ lo_import 152801
           with which the border lines are drawn.
           Plain <acronym>ASCII</acronym> characters work everywhere, but
           Unicode characters look nicer on displays that recognize them.
-=======
-          You can specify an optional second argument, if it is provided it
-          may be either <literal>on</literal> or <literal>off</literal>
-          which will enable or disable expanded mode.  If the second
-          argument is not provided then we will toggle between regular and
-          expanded format. When expanded format is enabled, query results
-          are displayed in two columns, with the column name on the left and
-          the data on the right. This mode is useful if the data wouldn't fit
-          on the screen in the normal <quote>horizontal</quote> mode.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
           </para>
           </listitem>
           </varlistentry>
@@ -2039,20 +1938,12 @@ lo_import 152801
           <term><literal>footer</literal></term>
           <listitem>
           <para>
-<<<<<<< HEAD
           If <replaceable class="parameter">value</replaceable> is specified
           it must be either <literal>on</literal> or <literal>off</literal>
           which will enable or disable display of the table footer
           (the <literal>(<replaceable>n</> rows)</literal> count).
           If <replaceable class="parameter">value</replaceable> is omitted the
           command toggles footer display on or off.
-=======
-          You can specify an optional second argument, if it is provided it
-          may be either <literal>on</literal> or <literal>off</literal>
-          which will enable or disable display of the default footer
-          <literal>(x rows)</literal>.  If the second argument is not
-          provided then we will toggle between on and off.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
           </para>
           </listitem>
           </varlistentry>
@@ -2061,21 +1952,12 @@ lo_import 152801
           <term><literal>numericlocale</literal></term>
           <listitem>
           <para>
-<<<<<<< HEAD
           If <replaceable class="parameter">value</replaceable> is specified
           it must be either <literal>on</literal> or <literal>off</literal>
           which will enable or disable display of a locale-specific character
           to separate groups of digits to the left of the decimal marker.
           If <replaceable class="parameter">value</replaceable> is omitted the
           command toggles between regular and locale-specific numeric output.
-=======
-          You can specify an optional second argument, if it is provided it
-          may be either <literal>on</literal> or <literal>off</literal>
-          which will enable or disable display of a locale-aware character
-          to seperate groups of digits to the left of the decimal marker.  If
-          the second argument is not provided then we will toggle between
-          on and off.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
           </para>
           </listitem>
           </varlistentry>
@@ -2094,7 +1976,6 @@ lo_import 152801
           <term><literal>tuples_only</literal> (or <literal>t</literal>)</term>
           <listitem>
           <para>
-<<<<<<< HEAD
           If <replaceable class="parameter">value</replaceable> is specified
           it must be either <literal>on</literal> or <literal>off</literal>
           which will enable or disable tuples-only mode.
@@ -2102,14 +1983,6 @@ lo_import 152801
           command toggles between regular and tuples-only output.
           Regular output includes extra information such
           as column headers, titles, and various footers. In tuples-only
-=======
-          You can specify an optional second argument, if it is provided it
-          may be either <literal>on</literal> or <literal>off</literal>
-          which will enable or disable the tuples only mode.  If the
-          second argument is not provided then we will toggle between tuples
-          only and full display. Full display shows extra information such
-          as column headers, titles, and various footers. In tuples only
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
           mode, only actual table data is shown.
           </para>
           </listitem>
@@ -2161,21 +2034,11 @@ lo_import 152801
           program is not used. When the <literal>pager</> option is
           <literal>on</>, the pager is used when appropriate, i.e., when the
           output is to a terminal and will not fit on the screen.
-<<<<<<< HEAD
           The <literal>pager</> option can also be set to <literal>always</>,
           which causes the pager to be used for all terminal output regardless
           of whether it fits on the screen.  <literal>\pset pager</>
           without a <replaceable class="parameter">value</replaceable>
           toggles pager use on and off.
-=======
-          (<application>psql</> does not do a perfect job of estimating
-          when to use the pager.) <literal>\pset pager</> turns the
-          pager on and off. Pager can also be set to <literal>always</>,
-          which causes the pager to be always used, or you can set the pager
-          to <literal>on</> which will enable the usage of the pager when
-          appropriate, or you can set the pager to <literal>off</> which
-          will disable the pager.
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
           </para>
           </listitem>
           </varlistentry>

@@ -586,7 +586,6 @@ SELECT * FROM dup(42);
 CREATE FUNCTION check_password(uname TEXT, pass TEXT)
 RETURNS BOOLEAN AS $$
 DECLARE passed BOOLEAN;
-<<<<<<< HEAD
         old_path TEXT;
 BEGIN
         -- Save old search_path; notice we must qualify current_setting
@@ -599,27 +598,16 @@ BEGIN
         PERFORM pg_catalog.set_config('search_path', 'admin, pg_temp', true);
 
         -- Do whatever secure work we came for.
-=======
-BEGIN
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
         SELECT  (pwd = $2) INTO passed
         FROM    pwds
         WHERE   username = $1;
 
-<<<<<<< HEAD
         -- Restore caller's search_path
         PERFORM pg_catalog.set_config('search_path', old_path, true);
 
         RETURN passed;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-=======
-        RETURN passed;
-END;
-$$  LANGUAGE plpgsql
-    SECURITY DEFINER
-    -- Set a secure search_path: trusted schema(s), then 'pg_temp'.
-    SET search_path = admin, pg_temp;
 </programlisting>
 
    <para>
@@ -648,7 +636,6 @@ CREATE FUNCTION check_password(uname TEXT, pass TEXT) ... SECURITY DEFINER;
 REVOKE ALL ON FUNCTION check_password(uname TEXT, pass TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION check_password(uname TEXT, pass TEXT) TO admins;
 COMMIT;
->>>>>>> 632e7b6353a99dd139b999efce4cb78db9a1e588
 </programlisting>
 
  </refsect1>
