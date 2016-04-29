@@ -487,7 +487,7 @@ TypeCreate(Oid newTypeOid,
 		   typeMod,
 		   typNDims,
 		   typeNotNull,
-		   NULL);
+		   (Datum) 0);
 }
 
 /*
