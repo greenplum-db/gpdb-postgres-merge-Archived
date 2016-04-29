@@ -580,7 +580,7 @@ plannode_type(Plan *p)
 /*
  * Recursively prints a simple text description of the plan tree
  */
-void
+static void
 print_plan_recursive(Plan *p, Query *parsetree, int indentLevel, char *label)
 {
 	int			i;
