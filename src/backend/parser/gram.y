@@ -13724,23 +13724,6 @@ SystemTypeName(char *name)
 											   makeString(name)));
 }
 
-/* exprIsNullConstant()
- * Test whether an a_expr is a plain NULL constant or not.
- */
-bool
-exprIsNullConstant(Node *arg)
-{
-	if (arg && IsA(arg, A_Const))
-	{
-		A_Const *con = (A_Const *) arg;
-
-		if (con->val.type == T_Null &&
-			con->typname == NULL)
-			return TRUE;
-	}
-	return FALSE;
-}
-
 /* doNegate()
  * Handle negation of a numeric constant.
  *
