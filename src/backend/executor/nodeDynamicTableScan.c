@@ -113,7 +113,6 @@ initNextTableToScan(DynamicTableScanState *node)
 
 		scanState->ss_currentRelation = OpenScanRelationByOid(*pid);
 		Relation lastScannedRel = OpenScanRelationByOid(node->lastRelOid);
-		TupleDesc lastTupDesc = RelationGetDescr(lastScannedRel);
 		CloseScanRelation(lastScannedRel);
 
 		TupleDesc partTupDesc = RelationGetDescr(scanState->ss_currentRelation);

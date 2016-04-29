@@ -899,11 +899,7 @@ convert_IN_to_join(PlannerInfo *root, List **rtrlist_inout, SubLink *sublink)
 {
 	Query	   *parse = root->parse;
 	Query	   *subselect = (Query *) sublink->subselect;
-	bool		join_unique_possible;
 	List	   *in_operators;
-	List	   *left_exprs;
-	List	   *right_exprs;
-	Relids		left_varnos;
 	int			rtindex;
 	RangeTblEntry *rte;
 	RangeTblRef *rtr;
