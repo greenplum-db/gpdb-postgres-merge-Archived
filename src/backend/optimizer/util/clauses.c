@@ -1801,6 +1801,13 @@ Query *fold_constants(Query *q, ParamListInfo boundParams, Size max_size)
 {
 	eval_const_expressions_context context;
 
+	/*
+	 * GPDB_83_MERGE_FIXME: Passing glob = NULL means that we won't track
+	 * dependencies on functions. I believe that's OK, as this is only used
+	 * for ORCA, and ORCA has its own mechanism for doing plan invalidation.
+	 * But verify that.
+	 */
+	context.glob = NULL;
 	context.boundParams = boundParams;
 	context.active_fns = NIL;	/* nothing being recursively simplified */
 	context.case_val = NULL;	/* no CASE being examined */
