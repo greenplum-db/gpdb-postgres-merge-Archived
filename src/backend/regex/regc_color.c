@@ -644,21 +644,6 @@ uncolorchain(struct colormap * cm,
 }
 
 /*
- * singleton - is this character in its own color?
- */
-static int						/* predicate */
-singleton(struct colormap * cm,
-		  chr c)
-{
-	color		co;				/* color of c */
-
-	co = GETCOLOR(cm, c);
-	if (cm->cd[co].nchrs == 1 && cm->cd[co].sub == NOSUB)
-		return 1;
-	return 0;
-}
-
-/*
  * rainbow - add arcs of all full colors (but one) between specified states
  */
 static void
