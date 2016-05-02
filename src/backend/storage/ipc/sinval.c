@@ -309,9 +309,13 @@ ProcessCatchupEvent(void)
 	bool		notify_enabled;
 	DtxContext  saveDistributedTransactionContext;
 
-/* funny indentation to keep the code inside identical to upstream */
-PG_TRY();
-{
+	/*
+	 * Funny indentation to keep the code inside identical to upstream
+	 * while at the same time supporting CMockery which has problems with
+	 * multiple bracing on column 1.
+	 */
+	PG_TRY();
+	{
 	in_process_catchup_event = 1;
 
 	/* Must prevent notify interrupt while I am running */
@@ -355,11 +359,12 @@ PG_TRY();
 		EnableNotifyInterrupt();
 
 	in_process_catchup_event = 0;
-}
-PG_CATCH();
-{
-	in_process_catchup_event = 0;
-	PG_RE_THROW();
-}
-PG_END_TRY();
+
+	}
+	PG_CATCH();
+	{
+		in_process_catchup_event = 0;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 }
