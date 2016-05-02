@@ -23,11 +23,10 @@ OBJS = ts_locale.o ts_parse.o wparser.o wparser_def.o dict.o \
 
 all: SUBSYS.o 
 
-SUBSYS.o: $(OBJS)
-	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $^
-
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
+
+include $(top_srcdir)/src/backend/common.mk
 
 .PHONY: install-data
 install-data: $(DICTFILES) installdirs
