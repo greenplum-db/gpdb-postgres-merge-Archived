@@ -141,11 +141,6 @@ static Plan *cdb_insert_result_node(PlannerGlobal *glob,
 
 static bool extract_query_dependencies_walker(Node *node,
 								  PlannerGlobal *context);
-/* fix the target lists of projection-incapable nodes to use the target list of the child node */
-static void fix_projection_incapable_nodes(Plan *plan);
-
-/* fix the target lists of  projection-incapable nodes in subplans to use the target list of the child node */
-static void fix_projection_incapable_nodes_in_subplans(PlannerGlobal *context, Plan *plan);
 
 #ifdef USE_ASSERT_CHECKING
 #include "cdb/cdbplan.h"
@@ -399,25 +394,6 @@ set_plan_references(PlannerGlobal *glob, Plan *plan, List *rtable)
 	}
 
 	/* Now fix the Plan tree */
-
-
-	/*
-	 * GPDB_83_MERGE_FIXME: In PostgreSQL, we have added Result nodes to mask
-	 * projection incapable nodes before we get this far. I think we should do
-	 * the same in GPDB.
-	 *
-	 * The immediate reason this is commented out is because
-	 * fix_projection_incapable_nodes() seemed to mess with target lists somehow,
-	 * leaving garbage nodes in the target list. I didn't investigate that any
-	 * further right now, because the query I was testing started to work when
-	 * I simply commented these out... Will need to check if we still need these,
-	 * and if we do, whether it would be feasible to add the Result node earlier
-	 * in the planner.
-	 */
-	//fix_projection_incapable_nodes(plan);
-
-	//fix_projection_incapable_nodes_in_subplans(glob, plan);
-
 	Plan *retPlan = set_plan_refs(glob, plan, rtoffset);
 
 #ifdef USE_ASSERT_CHECKING
@@ -2426,74 +2402,6 @@ extract_query_dependencies_walker(Node *node, PlannerGlobal *context)
 	}
 	return expression_tree_walker(node, extract_query_dependencies_walker,
 								  (void *) context);
-}
-
-/*
- * fix_projection_incapable_nodes
- * 		Fix the project list of projection incapable nodes by copying the project list
- * 		of the child node
- */
-static void 
-fix_projection_incapable_nodes(Plan *plan) 
-{
-	if (plan == NULL)
-	{
-		return;
-	}
-
-	fix_projection_incapable_nodes(plan->lefttree);
-	fix_projection_incapable_nodes(plan->righttree);
-
-	if (IsA(plan, ShareInputScan) || IsA(plan, SetOp)) 
-	{
-		if (NULL != plan->lefttree)
-		{
-			insist_target_lists_aligned(plan->targetlist, plan->lefttree->targetlist);
-		}
-
-		if (NULL != plan->righttree)
-		{
-			insist_target_lists_aligned(plan->targetlist, plan->righttree->targetlist);
-		}
-	}
-	else if (!is_projection_capable_plan(plan) && !IsA(plan, Append) && NULL != plan->lefttree)
-	{
-		/*
-		 * while Append does not evaluate projections, we cannot always copy the child's target list,
-		 * as Append nodes are used for updating partitioned and inherited tables, in which
-		 * cases the target lists may be legally different, e.g. in the presence of dropped columns
-		 */
-		List *oldTargetList = plan->targetlist;
-		plan->targetlist = copyObject(plan->lefttree->targetlist);
-		if (NIL != oldTargetList)
-		{
-			list_free(oldTargetList);
-		}
-	}
-}
-
-/*
- * fix_projection_incapable_nodes_in_subplans
- * 		Fix the project list of projection incapable nodes in subplans by copying the project list
- * 		of the child node
- */
-static void 
-fix_projection_incapable_nodes_in_subplans(PlannerGlobal *context, Plan *plan) 
-{
-	if (plan == NULL)
-	{
-		return;
-	}
-
-	List *subplans = extract_nodes(context, (Node*) plan, T_SubPlan);
-
-	ListCell *lcSubPlan = NULL;
-	foreach (lcSubPlan, subplans)
-	{
-		SubPlan *sp = lfirst(lcSubPlan);
-		Plan *spPlan = list_nth(context->subplans, sp->plan_id - 1);
-		fix_projection_incapable_nodes(spPlan);
-	}
 }
 
 /*
