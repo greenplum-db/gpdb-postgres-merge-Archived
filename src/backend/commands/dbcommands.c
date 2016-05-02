@@ -1827,7 +1827,7 @@ AlterDatabase(AlterDatabaseStmt *stmt)
 	ScanKeyInit(&scankey,
 				Anum_pg_database_datname,
 				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(stmt->dbname));
+				CStringGetDatum(stmt->dbname));
 	scan = systable_beginscan(rel, DatabaseNameIndexId, true,
 							  SnapshotNow, 1, &scankey);
 	tuple = systable_getnext(scan);
@@ -1923,7 +1923,7 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	ScanKeyInit(&scankey,
 				Anum_pg_database_datname,
 				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(stmt->dbname));
+				CStringGetDatum(stmt->dbname));
 	scan = systable_beginscan(rel, DatabaseNameIndexId, true,
 							  SnapshotNow, 1, &scankey);
 	tuple = systable_getnext(scan);
