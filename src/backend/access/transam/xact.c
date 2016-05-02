@@ -528,7 +528,7 @@ AssignTransactionId(TransactionState s)
 	 * the Xid as "running".  See GetNewTransactionId.
 	 */
 	s->transactionId = GetNewTransactionId(isSubXact, true);
-	elog((Debug_print_full_dtm ? LOG : DEBUG5), "AssignSubTransactionId(): assigned xid %u", s->transactionId);
+	elog((Debug_print_full_dtm ? LOG : DEBUG5), "AssignTransactionId(): assigned xid %u", s->transactionId);
 
 	if (isSubXact)
 	{
