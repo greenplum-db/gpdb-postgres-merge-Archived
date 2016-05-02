@@ -255,6 +255,8 @@ PL/pgSQL function "cachebug" line 3 at SQL statement
 NOTICE:  drop cascades to view vv
 CONTEXT:  SQL statement "drop table if exists temptable cascade"
 PL/pgSQL function "cachebug" line 3 at SQL statement
+CONTEXT:  SQL statement "create temp table temptable as select * from generate_series(1,3) as f1"
+PL/pgSQL function "cachebug" line 4 at SQL statement
 NOTICE:  1
 NOTICE:  2
 NOTICE:  3
