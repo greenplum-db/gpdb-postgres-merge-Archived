@@ -161,8 +161,11 @@ static TransInvalidationInfo *transInvalInfo = NULL;
  * Dynamically-registered callback functions.  Current implementation
  * assumes there won't be very many of these at once; could improve if needed.
  */
-
-#define MAX_SYSCACHE_CALLBACKS 20
+/*
+ * MAX_SYSCACHE_CALLBACKS has been bumped up in GPDB, because ORCA registers
+ * a lot of callbacks.
+ */
+#define MAX_SYSCACHE_CALLBACKS 40
 #define MAX_RELCACHE_CALLBACKS 5
 
 static struct SYSCACHECALLBACK
