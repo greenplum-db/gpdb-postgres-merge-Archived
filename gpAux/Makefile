@@ -272,7 +272,7 @@ $(GPPGDIR)/GNUmakefile : $(GPPGDIR)/configure  env.sh
 	$(MAKE) -C $(GPPGDIR)/src/bin/gpfdist/ext BLD_TOP=$(BLD_TOP)
 	cd $(GPPGDIR) && CC="$(strip $(BLD_CC) $(BLD_CFLAGS))"    \
                      CFLAGS=$(INSTCFLAGS) $(BLD_CONFIG_SHELL) \
-                     ./configure $(CONFIGFLAGS)               \
+                     ./configure --enable-debug --enable-cassert $(CONFIGFLAGS)               \
                          --prefix=$(INSTLOC)                  \
                          --with-docdir=$(INSTLOC)/doc         \
                          --mandir=$(INSTLOC)/man
@@ -282,7 +282,7 @@ Debug/GNUmakefile : $(GPPGDIR)/configure  env.sh
 	mkdir -p Debug 
 	cd Debug && CC="$(strip $(BLD_CC) $(BLD_CFLAGS))"        \
                 CFLAGS=$(INSTCFLAGS) $(BLD_CONFIG_SHELL)     \
-                ./configure $(CONFIGFLAGS)                   \
+                ./configure --enable-debug --enable-cassert $(CONFIGFLAGS)                   \
                     --prefix=$(INSTLOC)                      \
                     --with-docdir=$(INSTLOC)/doc             \
                     --mandir=$(INSTLOC)/man
@@ -292,7 +292,7 @@ Release/GNUmakefile : $(GPPGDIR)/configure  env.sh
 	mkdir -p Release 
 	cd Release && CC="$(strip $(BLD_CC) $(BLD_CFLAGS))"     \
                   CFLAGS=$(INSTCFLAGS) $(BLD_CONFIG_SHELL)  \
-                  ./configure $(CONFIGFLAGS)                \
+                  ./configure --enable-debug --enable-cassert $(CONFIGFLAGS)                \
                       --prefix=$(INSTLOC)                   \
                       --with-docdir=$(INSTLOC)/doc          \
                       --mandir=$(INSTLOC)/man
