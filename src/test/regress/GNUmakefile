@@ -173,6 +173,7 @@ installcheck: all upg2-setup ugpart-setup
 	$(pg_regress_call)  --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule --srcdir=$(abs_srcdir)
 
 installcheck-good: all
+	mkdir -p yml; \
 	if [ -z "$(INSTALLCHECK_GOOD_KERBEROS)" ]; then \
 	$(pg_regress_call)  --psqldir=$(PSQLDIR) --schedule=$(srcdir)/parallel_schedule --schedule=$(srcdir)/greenplum_schedule --srcdir=$(abs_srcdir); \
 	else \
