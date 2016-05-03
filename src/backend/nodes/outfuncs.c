@@ -4253,6 +4253,7 @@ _outCreateTrigStmt(StringInfo str, CreateTrigStmt *node)
 	WRITE_OID_FIELD(trigOid);
 }
 
+#ifndef COMPILING_BINARY_FUNCS
 static void
 _outCreateFileSpaceStmt(StringInfo str, CreateFileSpaceStmt *node)
 {
@@ -4274,6 +4275,7 @@ _outFileSpaceEntry(StringInfo str, FileSpaceEntry *node)
 	WRITE_STRING_FIELD(location);
 	WRITE_STRING_FIELD(hostname);
 }
+#endif
 
 static void
 _outCreateTableSpaceStmt(StringInfo str, CreateTableSpaceStmt *node)

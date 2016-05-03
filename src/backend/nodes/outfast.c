@@ -1120,6 +1120,28 @@ _outConstraint(StringInfo str, Constraint *node)
 }
 
 static void
+_outCreateFileSpaceStmt(StringInfo str, CreateFileSpaceStmt *node)
+{
+	WRITE_NODE_TYPE("CREATEFILESPACESTMT");
+
+	WRITE_STRING_FIELD(filespacename);
+	WRITE_STRING_FIELD(owner);
+	WRITE_NODE_FIELD(locations);
+	WRITE_OID_FIELD(fsoid);
+}
+
+static void
+_outFileSpaceEntry(StringInfo str, FileSpaceEntry *node)
+{
+	WRITE_NODE_TYPE("FILESPACEENTRY");
+
+	WRITE_INT_FIELD(dbid);
+	WRITE_INT_FIELD(contentid);
+	WRITE_STRING_FIELD(location);
+	WRITE_STRING_FIELD(hostname);
+}
+
+static void
 _outCreateQueueStmt(StringInfo str, CreateQueueStmt *node)
 {
 	WRITE_NODE_TYPE("CREATEQUEUESTMT");
