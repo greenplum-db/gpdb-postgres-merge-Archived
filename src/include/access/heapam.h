@@ -292,12 +292,12 @@ extern void heap_restrpos(HeapScanDesc scan);
 extern void heap_sync(Relation relation);
 
 extern void heap_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *rptr);
-extern void heap_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *rptr);
+extern void heap_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
 extern bool heap_getrelfilenode(
 	XLogRecord 		*record,
 	RelFileNode		*relFileNode);
 extern void heap2_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *rptr);
-extern void heap2_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *rptr);
+extern void heap2_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
 
 extern void log_heap_newpage(Relation rel, 
 							 Page page,
