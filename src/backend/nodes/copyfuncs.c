@@ -3731,6 +3731,9 @@ _copyCreateOpClassStmt(CreateOpClassStmt *from)
 	COPY_NODE_FIELD(items);
 	COPY_SCALAR_FIELD(isDefault);
 
+	COPY_SCALAR_FIELD(opclassOid);
+	COPY_SCALAR_FIELD(opfamilyOid);
+
 	return newnode;
 }
 
@@ -3757,6 +3760,7 @@ _copyCreateOpFamilyStmt(CreateOpFamilyStmt *from)
 
 	COPY_NODE_FIELD(opfamilyname);
 	COPY_STRING_FIELD(amname);
+	COPY_SCALAR_FIELD(newOid);
 
 	return newnode;
 }

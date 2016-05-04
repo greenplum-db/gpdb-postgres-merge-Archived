@@ -1583,7 +1583,7 @@ agg_hash_reload(AggState *aggstate)
 		has_tuples = true;
 
 		/* set up for advance_aggregates call */
-		tmpcontext->ecxt_scantuple = aggstate->hashslot;
+		tmpcontext->ecxt_outertuple = aggstate->hashslot;
 
 		entry = lookup_agg_hash_entry(aggstate, input, INPUT_RECORD_GROUP_AND_AGGS, input_size,
 									  hashkey, reloaded_hash_bit, &isNew);

@@ -2307,7 +2307,8 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"lc_numeric", PGC_USERSET, CLIENT_CONN_LOCALE,
 			gettext_noop("Sets the locale for formatting numbers."),
-			NULL
+			NULL,
+			GUC_GPDB_ADDOPT
 		},
 		&locale_numeric,
 		"C", locale_numeric_assign, NULL

@@ -1554,6 +1554,8 @@ _equalCreateOpClassStmt(CreateOpClassStmt *a, CreateOpClassStmt *b)
 	COMPARE_NODE_FIELD(datatype);
 	COMPARE_NODE_FIELD(items);
 	COMPARE_SCALAR_FIELD(isDefault);
+	COMPARE_SCALAR_FIELD(opclassOid);
+	COMPARE_SCALAR_FIELD(opfamilyOid);
 
 	return true;
 }
@@ -1577,6 +1579,8 @@ _equalCreateOpFamilyStmt(CreateOpFamilyStmt *a, CreateOpFamilyStmt *b)
 {
 	COMPARE_NODE_FIELD(opfamilyname);
 	COMPARE_STRING_FIELD(amname);
+
+	COMPARE_SCALAR_FIELD(newOid);
 
 	return true;
 }

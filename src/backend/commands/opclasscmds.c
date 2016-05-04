@@ -170,7 +170,7 @@ OpClassCacheLookup(Oid amID, List *opclassname)
  * Caller must have done permissions checks etc. already.
  */
 static Oid
-CreateOpFamily(char *amname, char *opfname, Oid namespaceoid, Oid amoid)
+CreateOpFamily(char *amname, char *opfname, Oid namespaceoid, Oid amoid, Oid newOid)
 {
 	Oid			opfamilyoid;
 	Relation	rel;
@@ -212,6 +212,9 @@ CreateOpFamily(char *amname, char *opfname, Oid namespaceoid, Oid amoid)
 	values[Anum_pg_opfamily_opfowner - 1] = ObjectIdGetDatum(GetUserId());
 
 	tup = heap_form_tuple(rel->rd_att, values, nulls);
+
+	if (newOid != InvalidOid)
+		HeapTupleSetOid(tup, newOid);
 
 	opfamilyoid = simple_heap_insert(rel, tup);
 
@@ -394,9 +397,14 @@ DefineOpClass(CreateOpClassStmt *stmt)
 			 * Create it ... again no need for more permissions ...
 			 */
 			opfamilyoid = CreateOpFamily(stmt->amname, opcname,
-										 namespaceoid, amoid);
+										 namespaceoid, amoid, stmt->opfamilyOid);
 		}
 	}
+
+	/* cross-check that the QD had the same OID for this op family */
+	if (Gp_role == GP_ROLE_EXECUTE && stmt->opfamilyOid != opfamilyoid)
+		elog(ERROR, "operator family \"%s\" has different OID in segment (%u) and in master (%u)",
+			 NameListToString(stmt->opfamilyname), opfamilyoid, stmt->opfamilyOid);
 
 	operators = NIL;
 	procedures = NIL;
@@ -609,8 +617,6 @@ DefineOpClass(CreateOpClassStmt *stmt)
 
 	CatalogUpdateIndexes(rel, tup);
 
-	stmt->opclassOid = opclassoid;
-
 	heap_freetuple(tup);
 
 	/*
@@ -666,6 +672,8 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
+		stmt->opclassOid = opclassoid;
+		stmt->opfamilyOid = opfamilyoid;
 		CdbDispatchUtilityStatement((Node *) stmt, "DefineOpClass");
 	}
 }
@@ -760,6 +768,9 @@ DefineOpFamily(CreateOpFamilyStmt *stmt)
 
 	tup = heap_form_tuple(rel->rd_att, values, nulls);
 
+	if (stmt->newOid != InvalidOid)
+		HeapTupleSetOid(tup, stmt->newOid);
+
 	opfamilyoid = simple_heap_insert(rel, tup);
 
 	CatalogUpdateIndexes(rel, tup);
@@ -785,6 +796,12 @@ DefineOpFamily(CreateOpFamilyStmt *stmt)
 	recordDependencyOnOwner(OperatorFamilyRelationId, opfamilyoid, GetUserId());
 
 	heap_close(rel, RowExclusiveLock);
+
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		stmt->newOid = opfamilyoid;
+		CdbDispatchUtilityStatement((Node *) stmt, "DefineOpFamily");
+	}
 }
 
 
@@ -859,6 +876,9 @@ AlterOpFamily(AlterOpFamilyStmt *stmt)
 		AlterOpFamilyAdd(stmt->opfamilyname, amoid, opfamilyoid,
 						 maxOpNumber, maxProcNumber,
 						 stmt->items);
+
+	if (Gp_role == GP_ROLE_DISPATCH)
+		CdbDispatchUtilityStatement((Node *) stmt, "AlterOpFamilyStmt");
 }
 
 /*
@@ -1662,6 +1682,9 @@ RemoveOpFamily(RemoveOpFamilyStmt *stmt)
 	object.objectSubId = 0;
 
 	performDeletion(&object, stmt->behavior);
+
+	if (Gp_role == GP_ROLE_DISPATCH)
+		CdbDispatchUtilityStatement((Node *) stmt, "RemoveOpFamily");
 }
 
 

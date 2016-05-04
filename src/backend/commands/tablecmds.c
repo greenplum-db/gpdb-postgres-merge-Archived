@@ -13927,7 +13927,6 @@ ATPExecPartAdd(AlteredTableInfo *tab,
 							lrelname,
 							bSetTemplate,
 							rel->rd_rel->relowner);
-
 		}
 		else if ('l' == pNode->part->parkind)
 		{

@@ -274,7 +274,6 @@ apply_motion(PlannerInfo *root, Plan *plan, Query *query)
 			{
 				List   *hashExpr;
 				ListCell *exp1;
-				int			maxattrs = MaxPolicyAttributeNumber;
 				
 				if (query->intoPolicy != NULL)
 				{

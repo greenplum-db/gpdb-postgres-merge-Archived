@@ -33,6 +33,7 @@ try:
     from gppylib.gplog import *
     from gppylib.gpcatalog import *
     from gppylib.commands.unix import *
+    from gppylib.system.info import *
     from pygresql.pgdb import DatabaseError
     from pygresql import pg
     from gpcheckcat_modules.unique_index_violation_check import UniqueIndexViolationCheck
@@ -40,7 +41,6 @@ try:
 except ImportError, e:
     sys.exit('Error: unable to import module: ' + str(e))
 
-parallelism = 8
 # cache OID -> object name cache
 oidmap = {}
 
@@ -50,8 +50,10 @@ setup_tool_logging(EXECNAME, getLocalHostname(), getUserName())
 very_quiet_stdout_logging()
 logger = get_default_logger()
 
+sysinfo = SystemInfo(logger)
 
-# -------------------------------------------------------------------------------
+parallelism = get_max_available_thread_count()
+#-------------------------------------------------------------------------------
 
 ################
 def parse_int(val):
@@ -170,6 +172,7 @@ class Global():
         self.checkStatus = True
         self.failedChecks = []
         self.missing_attr_tables = []
+        self.extra_attr_tables = []
 
 
 GV = Global()
@@ -3545,7 +3548,7 @@ all_checks = {
         },
     "namespace":
         {
-            "description": "Check for leaked temporary schema and missing schema definition",
+            "description": "Check for schemas with a missing schema definition",
             "fn": lambda: checkPGNamespace(),
             "version": 'main',
             "order": 9,
@@ -4516,12 +4519,17 @@ class GPObject:
                         if 'relid' in key or key in ['ev_class', 'reloid', 'fmterrtbl']:
                             table_list = db.query(oid_query % issue.pkeys[key]).getresult()
                             if table_list:
-                                GV.missing_attr_tables.append( (table_list[0][0], issue.segids) )
+                                if issue.type == 'missing':
+                                    GV.missing_attr_tables.append( (table_list[0][0], issue.segids) )
+                                else:
+                                    GV.extra_attr_tables.append( (table_list[0][0], issue.segids) )
                         elif key == 'oid':
                             table_list = db.query(type_query % issue.pkeys[key]).getresult()
                             if table_list:
-                                GV.missing_attr_tables.append( (table_list[0][0], issue.segids) )
-
+                                if issue.type == 'missing':
+                                    GV.missing_attr_tables.append( (table_list[0][0], issue.segids) )
+                                else:
+                                    GV.extra_attr_tables.append( (table_list[0][0], issue.segids) )
 
 
     def __cmp__(self, other):
@@ -4747,7 +4755,7 @@ def checkcatReport():
         myprint('')
 
         # Report tables with missing attributes in a more usable format
-        if len(GV.missing_attr_tables):
+        if len(GV.missing_attr_tables) or len(GV.extra_attr_tables):
             # Expand partition tables
             db = connect2(GV.cfg[1], utilityMode=False)
             parent_tables = [t[0] for t in db.query("SELECT DISTINCT (schemaname || '.' || tablename) FROM pg_partitions").getresult()]
@@ -4766,17 +4774,32 @@ def checkcatReport():
             """ % ("'" + "', '".join([pg.escape_string(t) for t in parent_tables]) + "'")
 
             GV.missing_attr_tables = list(set(GV.missing_attr_tables))
-            myprint('----------------------------------------------------')
-            myprint("    Tables with missing issues:")
-            myprint("        Format [database name].[schema name].[table name].[segment id]:")
-            for table, segids in GV.missing_attr_tables:
-                if table in parent_tables:
-                    for part_table in db.query(partition_leaves_sql).getresult():
-                        GV.missing_attr_tables.append( (part_table[0], segids) )
-            for table, segids in sorted(GV.missing_attr_tables):
-                for id in segids[1:-1].split(','):
-                    myprint("        Table %s.%s.%s" % (GV.dbname, table, id))
-            myprint('')
+            if len(GV.missing_attr_tables) > 0:
+                myprint('----------------------------------------------------')
+                myprint("    Tables with missing issues:")
+                myprint("        Format [database name].[schema name].[table name].[segment id]:")
+                for table, segids in GV.missing_attr_tables:
+                    if table in parent_tables:
+                        for part_table in db.query(partition_leaves_sql).getresult():
+                            GV.missing_attr_tables.append( (part_table[0], segids) )
+                for table, segids in sorted(GV.missing_attr_tables):
+                    for id in segids[1:-1].split(','):
+                        myprint("        Table %s.%s.%s" % (GV.dbname, table, id))
+                myprint('')
+
+            GV.extra_attr_tables = list(set(GV.extra_attr_tables))
+            if len(GV.extra_attr_tables) > 0:
+                myprint('----------------------------------------------------')
+                myprint("    Tables with extra issues:")
+                myprint("        Format [database name].[schema name].[table name].[segment id]:")
+                for table, segids in GV.extra_attr_tables:
+                    if table in parent_tables:
+                        for part_table in db.query(partition_leaves_sql).getresult():
+                            GV.extra_attr_tables.append( (part_table[0], segids) )
+                for table, segids in sorted(GV.extra_attr_tables):
+                    for id in segids[1:-1].split(','):
+                        myprint("        Table %s.%s.%s" % (GV.dbname, table, id))
+                myprint('')
             myprint('')
 
     notReported = set(GV.failedChecks).difference(reportedCheck)
@@ -4809,9 +4832,13 @@ def generateVerifyFile(catname, fields, results, checkname):
     except Exception as e:
         logger.warning('Unable to generate verify file for %s (%s)' % (catname, str(e)))
 
-#############
-if __name__ == '__main__':
+def truncate_batch_size(primaries):
+    if GV.opt['-B'] > primaries:
+        GV.opt['-B'] = primaries
+        myprint("Truncated batch size to number of primaries: %d" % primaries)
 
+
+def main():
     parseCommandLine()
     if GV.opt['-l']:
         listAllChecks()
@@ -4823,6 +4850,8 @@ if __name__ == '__main__':
         sys.exit(GV.retcode)
 
     GV.cfg = getGPConfiguration()
+    truncate_batch_size(len(GV.cfg.keys()))
+
     GV.report_cfg = getReportConfiguration()
     GV.max_content = max([GV.cfg[dbid]['content'] for dbid in GV.cfg])
     GV.catalog = getCatalog()
@@ -4839,6 +4868,7 @@ if __name__ == '__main__':
         myprint("Connected as user \'%s\' to database '%s', port '%d', gpdb version '%s'" \
                 % (GV.opt['-U'], GV.dbname, GV.report_cfg[-1]['port'], GV.version))
         myprint('-------------------------------------------------------------------')
+        myprint('Batch size: %s' % GV.opt['-B'])
 
         drop_leaked_schemas(leaked_schema_dropper, dbname)
 
@@ -4868,3 +4898,7 @@ if __name__ == '__main__':
             GV.opt['-S'] = "none"
 
     sys.exit(GV.retcode)
+
+#############
+if __name__ == '__main__':
+    main()

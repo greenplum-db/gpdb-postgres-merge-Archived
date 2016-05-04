@@ -119,21 +119,23 @@ Feature: gpcheckcat tests
           | fmterrtbl  | pg_exttable   |
           | conrelid   | pg_constraint |
 
-    Scenario: gpcheckcat should print out tables with missing attributes in a readable format
+    Scenario: gpcheckcat should print out tables with missing and extraneous attributes in a readable format
         Given database "miss_attr" is dropped and recreated
         And there is a "heap" table "public.heap_table" in "miss_attr" with data
         And there is a "ao" table "public.ao_table" in "miss_attr" with data
         When the user runs "gpcheckcat miss_attr"
         And gpcheckcat should return a return code of 0
         Then gpcheckcat should not print Missing to stdout
-        And the user runs "psql miss_attr -c "SET allow_system_table_mods='dml'; DELETE FROM pg_attribute where attrelid='heap_table'::regclass::oid;""
-        Then psql should return a return code of 0
-        And an attribute of table "ao_table" in database "miss_attr" is deleted on segment with content id "0"
+        And an attribute of table "heap_table" in database "miss_attr" is deleted on segment with content id "0"
         And psql should return a return code of 0
         When the user runs "gpcheckcat miss_attr"
         Then gpcheckcat should print Missing to stdout
-        And gpcheckcat should print Table miss_attr.public.heap_table.-1 to stdout
-        And gpcheckcat should print Table miss_attr.public.ao_table.0 to stdout
+        And gpcheckcat should print Table miss_attr.public.heap_table.0 to stdout
+        And the user runs "psql miss_attr -c "SET allow_system_table_mods='dml'; DELETE FROM pg_attribute where attrelid='heap_table'::regclass::oid;""
+        Then psql should return a return code of 0
+        When the user runs "gpcheckcat miss_attr"
+        Then gpcheckcat should print Extra to stdout
+        And gpcheckcat should print Table miss_attr.public.heap_table.1 to stdout
 
     Scenario: gpcheckcat should find owner error and produce timestamped repair scripts from -A (all databases) option
         Given database "db1" is dropped and recreated
@@ -155,3 +157,17 @@ Feature: gpcheckcat tests
         And the user runs "dropdb db1"
         And the user runs "dropdb db2"
         And the path "gpcheckcat.repair.*" is removed from current working directory
+
+    @persistent
+    Scenario: gpcheckcat should find persistence errors
+        Given database "db1" is dropped and recreated
+        And there is a "heap" table "myheaptable1" in "db1" with data
+        And there is a "heap" table "myheaptable2" in "db1" with data
+        And there is a "heap" table "myheaptable3" in "db1" with data
+        And there is a "heap" table "myheaptable4" in "db1" with data
+        And there is a "heap" table "myheaptable5" in "db1" with data
+        And the user runs "psql db1 -c "select gp_delete_persistent_relation_node_entry(ctid) from (select ctid from gp_persistent_relation_node where relfilenode_oid=(select relfilenode from pg_class where relname = 'myheaptable2')) as unwanted;""
+        And the user runs "psql db1 -c "select gp_delete_persistent_relation_node_entry(ctid) from (select ctid from gp_persistent_relation_node where relfilenode_oid=(select relfilenode from pg_class where relname = 'myheaptable3')) as unwanted;""
+        When the user runs "gpcheckcat -R persistent db1"
+        Then gpcheckcat should print Failed test\(s\) that are not reported here: persistent to stdout
+

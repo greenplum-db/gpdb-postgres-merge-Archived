@@ -5379,7 +5379,7 @@ atpxPartAddList(Relation rel,
 	} NewPosition;
 	NewPosition newPos = MIDDLE;
 	bool				 bOpenGap  = false;
-	PartitionBy			*pBy	   = makeNode(PartitionBy);
+	PartitionBy			*pBy;
 	CreateStmtContext    cxt;
 	Node				*pSubSpec  = NULL;	/* return the subpartition spec */
 	Relation			 par_rel   = rel;
@@ -5395,13 +5395,6 @@ atpxPartAddList(Relation rel,
 	MemSet(&cxt, 0, sizeof(cxt));
 
 	Assert( (PARTTYP_LIST == part_type) || (PARTTYP_RANGE == part_type) );
-
-	if (bSetTemplate)
-	/* if creating a template, silence partition name messages */
-		pBy->partQuiet = PART_VERBO_NOPARTNAME;
-	else
-	/* just silence distribution policy messages */
-		pBy->partQuiet = PART_VERBO_NODISTRO;
 
 	/* XXX XXX: handle case of missing boundary spec for range with EVERY */
 
@@ -6472,16 +6465,25 @@ atpxPartAddList(Relation rel,
 	else
 		ct->tablespacename = NULL;
 
+	pBy = makeNode(PartitionBy);
 	if (pelem->subSpec) /* treat subspec as partition by... */
 	{
-		pBy = makeNode(PartitionBy);
-
 		pBy->partSpec = pelem->subSpec;
 		pBy->partDepth = 0;
 		pBy->partQuiet = PART_VERBO_NODISTRO;
 		pBy->location  = -1;
 		pBy->partDefault = NULL;
 		pBy->parentRel = copyObject(ct->relation);
+	}
+	else if (bSetTemplate)
+	{
+		/* if creating a template, silence partition name messages */
+		pBy->partQuiet = PART_VERBO_NOPARTNAME;
+	}
+	else
+	{
+		/* just silence distribution policy messages */
+		pBy->partQuiet = PART_VERBO_NODISTRO;
 	}
 
 	ct->distributedBy = NULL;

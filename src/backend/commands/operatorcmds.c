@@ -188,7 +188,7 @@ DefineOperator(List *names, List *parameters,
 		stmt->newOid = opOid;
 		stmt->commutatorOid = newCommutatorOid;
 		stmt->negatorOid = newNegatorOid;
-		stmt->arrayOid = 0;
+		stmt->arrayOid = InvalidOid;
 		CdbDispatchUtilityStatement((Node *) stmt, "DefineOperator");
 	}
 }
