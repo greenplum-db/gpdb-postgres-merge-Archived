@@ -22,6 +22,7 @@
 #include "utils/memutils.h"
 #include "cdb/cdbpartition.h"
 #include "cdb/cdbvars.h"
+#include "cdb/partitionselection.h"
 
 #define DYNAMIC_TABLE_SCAN_NSLOTS 2
 
@@ -113,16 +114,14 @@ initNextTableToScan(DynamicTableScanState *node)
 
 		scanState->ss_currentRelation = OpenScanRelationByOid(*pid);
 		Relation lastScannedRel = OpenScanRelationByOid(node->lastRelOid);
+		TupleDesc lastTupDesc = RelationGetDescr(lastScannedRel);
 		CloseScanRelation(lastScannedRel);
 
 		TupleDesc partTupDesc = RelationGetDescr(scanState->ss_currentRelation);
 
 		ExecAssignScanType(scanState, partTupDesc);
 
-		AttrNumber	*attMap = NULL;
-
-/* GPDB_83_MERGE_FIXME: varattnos_map() was removed in upstream. */
-#if 0
+		AttrNumber	*attMap;
 
 		attMap = varattnos_map(lastTupDesc, partTupDesc);
 
@@ -138,7 +137,7 @@ initNextTableToScan(DynamicTableScanState *node)
 			 */
 			node->lastRelOid = *pid;
 		}
-#endif
+
 		/*
 		 * For the very first partition, the targetlist of planstate is set to null. So, we must
 		 * initialize quals and targetlist, regardless of remapping requirements. For later
