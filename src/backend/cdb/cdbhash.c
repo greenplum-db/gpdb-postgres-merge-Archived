@@ -62,8 +62,8 @@
 #define FASTMOD(x,y)		((x) & ((y)-1))
 
 /* local function declarations */
-uint32		fnv1_32_buf(void *buf, size_t len, uint32 hashval);
-uint32		fnv1a_32_buf(void *buf, size_t len, uint32 hashval);
+static uint32 fnv1_32_buf(void *buf, size_t len, uint32 hashval);
+static uint32 fnv1a_32_buf(void *buf, size_t len, uint32 hashval);
 static int	inet_getkey(inet *addr, unsigned char *inet_key, int key_size);
 static int	ignoreblanks(char *data, int len);
 static int	ispowof2(int numsegs);
@@ -807,7 +807,7 @@ bool isGreenplumDbHashable(Oid typid)
  * returns:
  *	32 bit hash as a static hash type
  */
-uint32
+static uint32
 fnv1_32_buf(void *buf, size_t len, uint32 hval)
 {
 	unsigned char *bp = (unsigned char *) buf;	/* start of buffer */
@@ -845,7 +845,7 @@ fnv1_32_buf(void *buf, size_t len, uint32 hval)
  * returns:
  *	32 bit hash as a static hash type
  */
-uint32
+static uint32
 fnv1a_32_buf(void *buf, size_t len, uint32 hval)
 {
 	unsigned char *bp = (unsigned char *) buf;	/* start of buffer */

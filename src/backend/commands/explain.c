@@ -201,7 +201,7 @@ ExplainDXL(Query *query, ExplainStmt *stmt, const char *queryString,
     MemoryContext   oldcxt = CurrentMemoryContext;
 	ExplainState    explainState;
     ExplainState   *es = &explainState;
-    StringInfoData buf;
+	StringInfoData buf;
 
     /* Initialize ExplainState structure. */
     memset(es, 0, sizeof(*es));
@@ -233,7 +233,7 @@ ExplainDXL(Query *query, ExplainStmt *stmt, const char *queryString,
     	{
 			do_text_output_multiline(tstate, dxl);
 			do_text_output_oneline(tstate, ""); /* separator line */
-    		pfree(dxl);
+			pfree(dxl);
     	}
 
     	 /* Free the memory we used. */
@@ -354,9 +354,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 	 */
 	ActiveSnapshot->curcid = GetCurrentCommandId(false);
 
-    /* Initialize ExplainState structure. */
-	es = (ExplainState *) palloc0(sizeof(ExplainState));
-
 	/* Create a QueryDesc requesting no output */
 	queryDesc = CreateQueryDesc(plannedstmt,
 								queryString,
@@ -364,7 +361,14 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 								None_Receiver, params,
 								stmt->analyze);
 
-	INSTR_TIME_SET_CURRENT(starttime);
+	/* Initialize ExplainState structure. */
+	es = (ExplainState *) palloc0(sizeof(ExplainState));
+	es->pstmt = queryDesc->plannedstmt;
+
+    /*
+     * Start timing.
+     */
+    INSTR_TIME_SET_CURRENT(starttime);
 
 	/* If analyzing, we need to cope with queued triggers */
 	if (stmt->analyze)
@@ -419,7 +423,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
         PG_CATCH();
         {
 			MemoryContextSwitchTo(explaincxt);
-            es->deferredError = explain_defer_error(es);
+			es->deferredError = explain_defer_error(es);
         }
         PG_END_TRY();
 
@@ -486,6 +490,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 			else
 				f = format_node_dump(s);
 			pfree(s);
+
 			do_text_output_multiline(tstate, f);
 			pfree(f);
 			do_text_output_oneline(tstate, ""); /* separator line */
@@ -548,8 +553,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 			appendStringInfo(&buf, "  ->  ");
 			indent = 3;
 		}
-	    explain_outNode(&buf,
-						childPlan, queryDesc->planstate,
+	    explain_outNode(&buf, childPlan, queryDesc->planstate,
 					    NULL, indent, es);
     }
     PG_CATCH();
@@ -616,7 +620,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
     /* Display optimizer status: either 'legacy query optimizer' or Orca version number */
     if (optimizer_explain_show_status)
     {
-
 		appendStringInfo(&buf, "Optimizer status: ");
     	if (queryDesc->plannedstmt->planGen == PLANGEN_PLANNER)
     	{

@@ -3686,8 +3686,9 @@ CheckConstraintFetch(Relation relation)
 			continue;
 
 		if (found >= ncheck)
-			elog(ERROR, "unexpected constraint record found for rel %s",
-				 RelationGetRelationName(relation));
+			elog(ERROR,
+			     "pg_class reports %d constraint record(s) for rel %s, but found extra in pg_constraint",
+			     ncheck, RelationGetRelationName(relation));
 
 		check[found].ccname = MemoryContextStrdup(CacheMemoryContext,
 												  NameStr(conform->conname));
@@ -3709,8 +3710,9 @@ CheckConstraintFetch(Relation relation)
 	heap_close(conrel, AccessShareLock);
 
 	if (found != ncheck)
-		elog(ERROR, "%d constraint record(s) missing for rel %s",
-			 ncheck - found, RelationGetRelationName(relation));
+		elog(ERROR,
+		     "found %d in pg_constraint, but pg_class reports %d constraint record(s) for rel %s",
+		     found, ncheck, RelationGetRelationName(relation));
 }
 
 

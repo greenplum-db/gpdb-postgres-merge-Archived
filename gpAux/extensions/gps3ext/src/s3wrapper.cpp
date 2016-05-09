@@ -21,7 +21,7 @@ S3ExtBase *CreateExtWrapper(const char *url) {
     }
 }
 
-S3ExtBase::S3ExtBase(string url) {
+S3ExtBase::S3ExtBase(const string &url) {
     this->url = url;
 
     // get following from config
@@ -42,7 +42,7 @@ S3ExtBase::~S3ExtBase() {}
 
 S3Reader::~S3Reader() {}
 
-S3Reader::S3Reader(string url) : S3ExtBase(url) {
+S3Reader::S3Reader(const string &url) : S3ExtBase(url) {
     this->contentindex = -1;
     this->filedownloader = NULL;
     this->keylist = NULL;
@@ -144,7 +144,7 @@ void S3Reader::getNextDownloader() {
     return;
 }
 
-string S3Reader::getKeyURL(const string key) {
+string S3Reader::getKeyURL(const string &key) {
     stringstream sstr;
     sstr << this->schema << "://"
          << "s3-" << this->region << ".amazonaws.com/";
@@ -211,10 +211,9 @@ bool S3ExtBase::ValidateURL() {
     // http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
 
     const char *awsdomain = ".amazonaws.com";
-    int ibegin = 0;
-    int iend = url.find("://");
-    if (iend == string::npos) {  // -1
-        // error
+    unsigned int ibegin = 0;
+    unsigned int iend = url.find("://");
+    if (iend == string::npos) {  // Error
         return false;
     }
 
@@ -250,11 +249,6 @@ bool S3ExtBase::ValidateURL() {
 
     this->prefix = url.substr(iend + 1, url.length() - iend - 1);
 
-    /*
-    if (url.back() != '/') {
-        return false;
-    }
-    */
     return true;
 }
 

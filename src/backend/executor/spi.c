@@ -1774,7 +1774,6 @@ _SPI_execute_plan(_SPI_plan * plan, ParamListInfo paramLI,
 	SPITupleTable *volatile my_tuptable = NULL;
 	volatile int res = 0;
 	Snapshot	saveActiveSnapshot;
-	const char *saved_query_string;
 
 	/* Be sure to restore ActiveSnapshot on error exit */
 	saveActiveSnapshot = ActiveSnapshot;

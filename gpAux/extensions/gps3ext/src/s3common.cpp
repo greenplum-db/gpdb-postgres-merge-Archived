@@ -15,8 +15,9 @@
 using std::string;
 using std::stringstream;
 
-bool SignRequestV4(string method, HeaderContent *h, string region, string path,
-                   string query, const S3Credential &cred) {
+bool SignRequestV4(const string &method, HeaderContent *h,
+                   const string &orig_region, const string &path,
+                   const string &query, const S3Credential &cred) {
     time_t t;
     struct tm tm_info;
     char date_str[17];
@@ -62,6 +63,7 @@ bool SignRequestV4(string method, HeaderContent *h, string region, string path,
     sha256_hex(canonical_str.str().c_str(), canonical_hex);
 
     // http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
+    string region = orig_region;
     find_replace(region, "external-1", "us-east-1");
 
     stringstream string2sign_str;
@@ -232,55 +234,48 @@ uint64_t ParserCallback(void *contents, uint64_t size, uint64_t nmemb,
 
 // invoked by s3_import(), need to be exception safe
 char *get_opt_s3(const char *url, const char *key) {
-    const char *key_start = NULL;
-    const char *key_tailing = NULL;
+    char *key_start = NULL;
+    char *value_start = NULL;
     char *value = NULL;
+    char *ptr = NULL;
     int value_len = 0;
 
     if (!url || !key) {
         return NULL;
     }
 
+    int key_len = strlen(key);
+
     // construct the key to search " key="
-    char *key2search = (char *)malloc(strlen(key) + 3);
+    char *key2search = (char *)malloc(key_len + 3);
     if (!key2search) {
         S3ERROR("Can't allocate memory for string");
         return NULL;
     }
-
-    int key_len = strlen(key);
 
     key2search[0] = ' ';
     memcpy(key2search + 1, key, key_len);
     key2search[key_len + 1] = '=';
     key2search[key_len + 2] = 0;
 
-    // get the whole options string (strip "url ")
-    const char *delimiter = " ";
-    const char *options = strstr(url, delimiter);
-    if (!options) {
-        goto FAIL;
-    }
-
-    // get the string " key=blah1 key2=blah2 ..."
-    key_start = strstr(options, key2search);
+    // get the pointer " key1=blah1 key2=blah2 ..."
+    key_start = (char *)strstr(url, key2search);
     if (key_start == NULL) {
         goto FAIL;
     }
 
-    // get the string "blah1 key2=blah2 ..."
-    key_start += strlen(key2search);
-    if (*key_start == ' ') {
-        goto FAIL;
+    // get the pointer "blah1 key2=blah2 ..."
+    value_start = key_start + key_len + 2;
+
+    // get the length of string "blah1"
+    ptr = value_start;
+    while ((*ptr != 0) && (*ptr != ' ')) {
+        value_len++;
+        ptr++;
     }
 
-    // get the string "key2=blah2 ..."
-    key_tailing = strstr(key_start, delimiter);
-    // get the length of "blah1"
-    if (key_tailing) {
-        value_len = strlen(key_start) - strlen(key_tailing);
-    } else {
-        value_len = strlen(key_start);
+    if (!value_len) {
+        goto FAIL;
     }
 
     // get the string "blah1"
@@ -289,12 +284,13 @@ char *get_opt_s3(const char *url, const char *key) {
         goto FAIL;
     }
 
-    memcpy(value, key_start, value_len);
+    memcpy(value, value_start, value_len);
     value[value_len] = 0;
 
     free(key2search);
 
     return value;
+
 FAIL:
     if (key2search) {
         free(key2search);
@@ -305,19 +301,24 @@ FAIL:
 // returned memory needs to be freed
 // invoked by s3_import(), need to be exception safe
 char *truncate_options(const char *url_with_options) {
-    const char *delimiter = " ";
-    char *options = strstr((char *)url_with_options, delimiter);
-    int url_len = strlen(url_with_options);
+    char *url = NULL;
+    int url_len = 0;
 
-    if (options) {
-        url_len = strlen(url_with_options) - strlen(options);
+    // get the length of url
+    char *ptr = (char *)url_with_options;
+    while ((*ptr != 0) && (*ptr != ' ')) {
+        url_len++;
+        ptr++;
     }
 
-    char *url = (char *)malloc(url_len + 1);
-    if (url) {
-        memcpy(url, url_with_options, url_len);
-        url[url_len] = 0;
+    // get the string of string
+    url = (char *)malloc(url_len + 1);
+    if (!url) {
+        return NULL;
     }
+
+    memcpy(url, url_with_options, url_len);
+    url[url_len] = 0;
 
     return url;
 }
