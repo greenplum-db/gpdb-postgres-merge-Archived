@@ -2433,8 +2433,11 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 	{
 		if ((r = ldap_initialize(ldap, port->hba->ldapserver)) != LDAP_SUCCESS)
 		{
-			ereport(LOG, (errmsg("could not initialize LDAP: code: %d, msg: %s", r, ldap_err2string(r))));
+			ereport(LOG,
+					(errmsg("could not initialize LDAP: code: %d, msg: %s",
+							r, ldap_err2string(r))));
 			*ldap = NULL;
+			return STATUS_ERROR;
 		}
 	}
 	else
@@ -2446,8 +2449,7 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 	{
 #ifndef WIN32
 		ereport(LOG,
-				(errmsg("could not initialize LDAP: error code %d",
-						errno)));
+				(errmsg("could not initialize LDAP: %m")));
 #else
 		ereport(LOG,
 				(errmsg("could not initialize LDAP: error code %d",
@@ -2460,7 +2462,7 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 	{
 		ldap_unbind(*ldap);
 		ereport(LOG,
-		  (errmsg("could not set LDAP protocol version: error code %d", r)));
+		  (errmsg("could not set LDAP protocol version: %s", ldap_err2string(r))));
 		return STATUS_ERROR;
 	}
 
@@ -2513,7 +2515,7 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 		{
 			ldap_unbind(*ldap);
 			ereport(LOG,
-			 (errmsg("could not start LDAP TLS session: error code '%d', error message: %s, server: %s, port: %d", r, 
+			 (errmsg("could not start LDAP TLS session: %s, server: %s, port: %d",
 					 ldap_err2string(r), port->hba->ldapserver, port->hba->ldapport)));
 			return STATUS_ERROR;
 		}
@@ -2603,8 +2605,8 @@ CheckLDAPAuth(Port *port)
 		if (r != LDAP_SUCCESS)
 		{
 			ereport(LOG,
-					(errmsg("could not perform initial LDAP bind for ldapbinddn \"%s\" on server \"%s\": error code %d",
-						  port->hba->ldapbinddn, port->hba->ldapserver, r)));
+					(errmsg("could not perform initial LDAP bind for ldapbinddn \"%s\" on server \"%s\": %s",
+						  port->hba->ldapbinddn, port->hba->ldapserver, ldap_err2string(r))));
 			return STATUS_ERROR;
 		}
 
@@ -2628,8 +2630,8 @@ CheckLDAPAuth(Port *port)
 		if (r != LDAP_SUCCESS)
 		{
 			ereport(LOG,
-					(errmsg("could not search LDAP for filter \"%s\" on server \"%s\": error code %d",
-							filter, port->hba->ldapserver, r)));
+					(errmsg("could not search LDAP for filter \"%s\" on server \"%s\": %s",
+							filter, port->hba->ldapserver, ldap_err2string(r))));
 			pfree(filter);
 			return STATUS_ERROR;
 		}
@@ -2716,8 +2718,8 @@ CheckLDAPAuth(Port *port)
 	if (r != LDAP_SUCCESS)
 	{
 		ereport(LOG,
-				(errmsg("LDAP login failed for user \"%s\" on server \"%s\": error code %d",
-						fulluser, port->hba->ldapserver, r)));
+				(errmsg("LDAP login failed for user \"%s\" on server \"%s\": %s",
+						fulluser, port->hba->ldapserver, ldap_err2string(r))));
 		pfree(fulluser);
 		return STATUS_ERROR;
 	}
