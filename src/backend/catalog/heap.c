@@ -2227,7 +2227,7 @@ RemoveAttrDefaultById(Oid attrdefId)
 }
 
 void
-remove_gp_relation_node_and_schedule_drop(Relation	rel)
+remove_gp_relation_node_and_schedule_drop(Relation rel)
 {
 	PersistentFileSysRelStorageMgr relStorageMgr;
 	

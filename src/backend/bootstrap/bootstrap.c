@@ -122,8 +122,6 @@ struct typinfo
 static const struct typinfo TypInfo[] = {
 	{"bool", BOOLOID, 0, 1, true, 'c', 'p',
 	F_BOOLIN, F_BOOLOUT},
-	{"bigint", INT8OID, 0, 8, true, 'd', 'p',
-	F_INT8IN, F_INT8OUT},
 	{"bytea", BYTEAOID, 0, -1, false, 'i', 'x',
 	F_BYTEAIN, F_BYTEAOUT},
 	{"char", CHAROID, 0, 1, true, 'c', 'p',

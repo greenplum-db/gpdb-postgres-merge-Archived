@@ -45,9 +45,7 @@ DistributedSnapshotWithLocalMapping_CommittedTest(
 	for (i = 0; i < count; i++)
 	{
 		if (localXid == inProgressEntryArray[i].localXid)
-		{
 			return DISTRIBUTEDSNAPSHOT_COMMITTED_INPROGRESS;
-		}
 	}
 
 	/*
@@ -65,9 +63,7 @@ DistributedSnapshotWithLocalMapping_CommittedTest(
 		 * performance, too.
 		 */
 		if (distribXid == InvalidDistributedTransactionId)
-		{
 			return DISTRIBUTEDSNAPSHOT_COMMITTED_IGNORE;
-		}
 
 		// Fall below and evaluate the committed distributed transaction against
 		// the distributed snapshot.

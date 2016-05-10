@@ -51,5 +51,4 @@ extern void readSharedLocalSnapshot_forCursor(Snapshot snapshot);
 
 extern void AtEOXact_SharedSnapshot(void);
 
-
 #endif   /* SHAREDSNAPSHOT_H */

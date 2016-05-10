@@ -150,6 +150,6 @@ extern void MetaTrackDropObject(Oid		classid,
 		|| ((relkind) == RELKIND_SEQUENCE) \
 		|| ((relkind) == RELKIND_VIEW)) 
 
-extern void remove_gp_relation_node_and_schedule_drop(Relation	rel);
+extern void remove_gp_relation_node_and_schedule_drop(Relation rel);
 
 #endif   /* HEAP_H */

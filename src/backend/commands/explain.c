@@ -1792,9 +1792,7 @@ explain_outNode(StringInfo str,
 			Plan *subnode = (Plan *) lfirst(lc);
 
 			for (i = 0; i < indent; i++)
-			{
 				appendStringInfo(str, "  ");
-			}
 			
 			appendStringInfo(str, "  ->  ");
 

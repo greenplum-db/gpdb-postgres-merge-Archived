@@ -661,7 +661,6 @@ GetCurrentTransactionNestLevel(void)
 	return s->nestingLevel;
 }
 
-
 /*
  * We will return true for the Xid of the current subtransaction, any of
  * its subcommitted children, any of its parents, or any of their
@@ -688,6 +687,7 @@ TransactionIdIsCurrentTransactionIdInternal(TransactionId xid)
 
 			if (TransactionIdEquals(xid, s->transactionId))
 				return true;
+
 			/* As the childXids array is ordered, we can use binary search */
 			low = 0;
 			high = s->nChildXids - 1;
@@ -778,6 +778,7 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 		 * into the shared snapshot which in turn is copied into subxbuf.
 		 */
 		isCurrentTransactionId = false;		/* Assume. */
+
 		/*
 		 * Cursor readers cannot directly access the writer shared
 		 * snapshot -- since it may have been modified by the writer
@@ -802,9 +803,6 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 			isCurrentTransactionId = FindXidInXidBuffer(&subxbuf, xid, &cnt, &index);
 		}
 
-		if (!isCurrentTransactionId)
-		{
-		}
 		elog((Debug_print_full_dtm ? LOG : DEBUG5),
 		     "qExec Reader CheckSharedSnapshotForSubtransaction(xid = %u) = %s -- Subtransaction",
 		     xid, (isCurrentTransactionId ? "true" : "false"));
@@ -815,8 +813,7 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 	/* we aren't a reader */
 	Assert(DistributedTransactionContext != DTX_CONTEXT_QE_ENTRY_DB_SINGLETON);
 
-	bool flag = TransactionIdIsCurrentTransactionIdInternal(xid);
-	return flag;
+	return TransactionIdIsCurrentTransactionIdInternal(xid);
 }
 
 

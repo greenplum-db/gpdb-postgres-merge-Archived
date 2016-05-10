@@ -66,12 +66,12 @@
 #include "utils/tuplesort.h"
 #include "utils/faultinjector.h"
 
-#include "cdb/cdbvars.h"
-#include "cdb/cdboidsync.h"
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbaocsam.h"
-
+#include "cdb/cdbvars.h"
+#include "cdb/cdboidsync.h"
 #include "cdb/cdbmirroredfilesysobj.h"
+#include "cdb/cdbpersistentfilesysobj.h"
 
 /* state info for validate_index bulkdelete callback */
 typedef struct
@@ -1433,6 +1433,10 @@ index_update_stats(Relation rel, bool hasindex, bool isprimary,
  * The relation is marked with relfrozenxid=freezeXid (InvalidTransactionId
  * must be passed for indexes)
  *
+ * Replaces relfilenode and updates pg_class / gp_relation_node.
+ * If the updating relation is gp_relation_node's index, the caller
+ * should rebuild the index by index_build().
+ *
  * GPDB: you can pass newrelfilenode to assign a particular relfilenode. If
  * InvalidOid, an unused one is allocated.
  */
@@ -1549,8 +1553,8 @@ setNewRelfilenodeToOid(Relation relation, TransactionId freezeXid, Oid newrelfil
 	if (Debug_check_for_invalid_persistent_tid &&
 		!Persistent_BeforePersistenceWork() &&
 		PersistentStore_IsZeroTid(&relation->rd_segfile0_relationnodeinfo.persistentTid))
-	{	
-		elog(ERROR, 
+	{
+		elog(ERROR,
 			 "setNewRelfilenodeCommon has invalid TID (0,0) for relation %u/%u/%u '%s', serial number " INT64_FORMAT,
 			 newrnode.spcNode,
 			 newrnode.dbNode,
@@ -1562,7 +1566,7 @@ setNewRelfilenodeToOid(Relation relation, TransactionId freezeXid, Oid newrelfil
 	relation->rd_segfile0_relationnodeinfo.isPresent = true;
 
 	if (Debug_persistent_print)
-		elog(Persistent_DebugPrintLevel(), 
+		elog(Persistent_DebugPrintLevel(),
 			 "setNewRelfilenodeCommon: NEW '%s', Append-Only '%s', persistent TID %s and serial number " INT64_FORMAT,
 			 relpath(newrnode),
 			 (isAppendOnly ? "true" : "false"),

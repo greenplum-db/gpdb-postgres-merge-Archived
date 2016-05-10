@@ -1247,7 +1247,6 @@ COptTasks::PvOptimizeMinidumpTask
 	return NULL;
 }
 
-
 //---------------------------------------------------------------------------
 //	@function:
 //		COptTasks::PvPlstmtFromDXLTask
