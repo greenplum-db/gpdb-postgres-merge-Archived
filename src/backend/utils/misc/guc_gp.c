@@ -506,7 +506,6 @@ bool		optimizer_print_expression_properties;
 bool		optimizer_print_group_properties;
 bool		optimizer_print_optimization_context;
 bool		optimizer_print_optimization_stats;
-bool		optimizer_parallel;
 bool		optimizer_local;
 int			optimizer_retries;
 /* array of xforms disable flags */
@@ -575,6 +574,7 @@ bool		optimizer_prefer_scalar_dqa_multistage_agg;
 /**
  * GUCs related to code generation.
  **/
+bool		init_codegen;
 bool		codegen;
 
 /* Security */
@@ -2885,15 +2885,6 @@ struct config_bool ConfigureNamesBool_gp[] =
 	},
 
 	{
-		{"optimizer_parallel", PGC_USERSET, LOGGING_WHAT,
-			gettext_noop("Enable using threads in optimization engine."),
-			NULL,
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-		},
-		&optimizer_parallel,
-		false, NULL, NULL
-	},
-	{
 		{"optimizer_extract_dxl_stats", PGC_USERSET, LOGGING_WHAT,
 			gettext_noop("Extract plan stats in dxl."),
 			NULL,
@@ -3393,10 +3384,20 @@ struct config_bool ConfigureNamesBool_gp[] =
 	},
 
 	{
-		{"codegen", PGC_POSTMASTER, DEVELOPER_OPTIONS,
+		{"init_codegen", PGC_POSTMASTER, DEVELOPER_OPTIONS,
 			gettext_noop("Enable just-in-time code generation."),
 			NULL,
 			GUC_NOT_IN_SAMPLE
+		},
+		&init_codegen,
+		false, NULL, NULL
+	},
+
+	{
+		{"codegen", PGC_USERSET, DEVELOPER_OPTIONS,
+			gettext_noop("Perform just-in-time code generation."),
+			NULL,
+			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&codegen,
 		false, NULL, NULL

@@ -394,7 +394,6 @@ extern bool	optimizer_print_expression_properties;
 extern bool	optimizer_print_group_properties;
 extern bool	optimizer_print_optimization_context;
 extern bool optimizer_print_optimization_stats;
-extern bool	optimizer_parallel;
 extern bool	optimizer_local;
 extern int  optimizer_retries;
 extern bool  optimizer_xforms[OPTIMIZER_XFORMS_COUNT];
@@ -463,6 +462,7 @@ extern bool optimizer_prefer_scalar_dqa_multistage_agg;
 /**
  * GUCs related to code generation.
  **/
+extern bool init_codegen;
 extern bool codegen;
 
 /**
