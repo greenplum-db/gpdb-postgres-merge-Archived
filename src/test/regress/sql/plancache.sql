@@ -147,7 +147,13 @@ create function cachebug() returns void as $$
 declare r int;
 begin
   drop table if exists temptable cascade;
+  -- Ignore NOTICE about missing DISTRIBUTED BY. It was annoying here, as
+  -- usually you would only see it on the first invocation, but sometimes
+  -- you'd also get it on the second invocation, if the plan cache
+  -- got invalidated in between the invocations.
+  set client_min_messages=warning;
   create temp table temptable as select * from generate_series(1,3) as f1;
+  reset client_min_messages;
   create temp view vv as select * from temptable;
   for r in select * from vv order by f1 loop
     raise notice '%', r;
