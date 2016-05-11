@@ -426,7 +426,7 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 
 	/*
 	 * If we are to use the parameter values in the plan, or this is a
-	 * CREATE TABLE AS, we cannot re-use a generic plan.
+	 * CREATE TABLE AS EXECUTE, we cannot re-use a generic plan.
 	 */
 	if (plan && (boundParams || intoClause))
 		plan->dead = true;
