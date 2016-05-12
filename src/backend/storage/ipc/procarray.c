@@ -384,6 +384,8 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit,
 		/* must be cleared with xid/xmin: */
 		proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
 		proc->inCommit = false; /* be sure this is cleared in abort */
+		proc->serializableIsoLevel = false;
+		proc->inDropTransaction = false;
 
 		Assert(proc->subxids.nxids == 0);
 		Assert(proc->subxids.overflowed == false);
