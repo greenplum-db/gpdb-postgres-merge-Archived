@@ -1690,7 +1690,13 @@ RecordTransactionAbort(bool isSubXact)
 	/* Like in CommitTransaction(), treat a QE reader as if there was no XID */
 	isQEReader = (DistributedTransactionContext == DTX_CONTEXT_QE_READER ||
 					DistributedTransactionContext == DTX_CONTEXT_QE_ENTRY_DB_SINGLETON);
-	if (isQEReader)
+	/*
+	 * Also, if an error occurred during distributed COMMIT processing, and
+	 * we had already decided that we are going to commit this transaction and
+	 * wrote a commit record for it, there's no turning back. The Distributed
+	 * Transaction Manager will take care of completing the transaction for us.
+	 */
+	if (isQEReader || getCurrentDtxState() == DTX_STATE_NOTIFYING_COMMIT_PREPARED)
 		xid = InvalidTransactionId;
 	else
 		xid = GetCurrentTransactionIdIfAny();
