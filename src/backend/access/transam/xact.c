@@ -1153,7 +1153,7 @@ RecordTransactionCommit(void)
 		/*
 		 * Begin commit critical section and insert the commit XLOG record.
 		 */
-		XLogRecData rdata[3];
+		XLogRecData rdata[4];
 		int			lastrdata = 0;
 		xl_xact_commit xlrec;
 
