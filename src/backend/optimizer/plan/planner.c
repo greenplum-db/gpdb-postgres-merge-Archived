@@ -173,8 +173,7 @@ static void log_optimizer(PlannedStmt *plan, bool fUnexpectedFailure)
  */
 static void postprocess_plan(PlannedStmt *plan)
 {
-	Assert(plan);
-
+	ListCell *lp;
 	PlannerGlobal *globNew =  makeNode(PlannerGlobal);
 
 	/* initialize */
@@ -193,6 +192,14 @@ static void postprocess_plan(PlannedStmt *plan)
 	globNew->share.nextPlanId = 0;
 	globNew->subplans = plan->subplans;
 	(void) apply_shareinput_xslice(plan->planTree, globNew);
+
+	/* fix ShareInputScans for EXPLAIN, like in standard_planner(). */
+	foreach(lp, globNew->subplans)
+	{
+		Plan	   *subplan = (Plan *) lfirst(lp);
+		lfirst(lp) = replace_shareinput_targetlists(globNew, subplan);
+	}
+	plan->planTree = replace_shareinput_targetlists(globNew, plan->planTree);
 }
 #endif
 
@@ -456,6 +463,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 
 	top_plan = zap_trivial_result(root, top_plan);
 
+	/* fix ShareInputScans for EXPLAIN */
 	foreach(lp, glob->subplans)
 	{
 		Plan	   *subplan = (Plan *) lfirst(lp);
