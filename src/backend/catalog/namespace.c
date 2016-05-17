@@ -3123,6 +3123,7 @@ InitTempTableNamespaceWithOids(Oid tempSchema, Oid tempToastSchema)
 		default:
 			/* Should never hit this */
 			elog(ERROR, "invalid backend temp schema creation");
+			session_suffix = 0; /* keep compiler quiet */
 			break;
 	}
 
