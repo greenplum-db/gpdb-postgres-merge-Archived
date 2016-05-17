@@ -123,6 +123,14 @@ static PendingDelete *PendingDelete_AddEntry(
 {
 	PendingDelete *pending;
 
+	/*
+	 * GPDB_83_MERGE_FIXME: PANIC so that we get a stack trace and can
+	 * debug the issue more easily. ERROR would possibly be more appropriate
+	 * in production.
+	 */
+	if (!ItemPointerIsValid(persistentTid))
+		elog(PANIC, "tried to delete a relation with invalid persistent TID");
+
 	/* Add the filespace to the list of stuff to delete at abort */
 	pending = (PendingDelete *)
 		MemoryContextAllocZero(TopMemoryContext, sizeof(PendingDelete));
