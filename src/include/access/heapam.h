@@ -132,10 +132,10 @@ RelationNeedToFetchGpRelationNodeForXLog(Relation relation)
 	if (!InRecovery && !relation->rd_segfile0_relationnodeinfo.isPresent &&
 		!GpPersistent_SkipXLogInfo(relation->rd_id))
 	{
-		return false;
+		return true;
 	}
 	else
-		return true;
+		return false;
 }
 
 /*
