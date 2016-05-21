@@ -673,6 +673,28 @@ index_create(Oid heapRelationId,
 	Assert(indexRelationId == RelationGetRelid(indexRelation));
 
 	/*
+	 * Create gp_relation_node entry for this. NOTE: This needs to be done
+	 * before LockRelation() is called, because LockRelation can cause a cache
+	 * invalidation message to be received, and the relcache to be invalidated.
+	 * Relcache invalidation might blow away the persistentTid and SerialNum
+	 * information of the relcache entry that we just built.
+	 */
+	if (gp_relation_node != NULL)
+	{
+		InsertGpRelationNodeTuple(
+							gp_relation_node,
+							indexRelation->rd_id,
+							indexRelation->rd_rel->relname.data,
+							indexRelation->rd_rel->relfilenode,
+							/* segmentFileNum */ 0,
+							/* updateIndex */ true,
+							&indexRelation->rd_segfile0_relationnodeinfo.persistentTid,
+							indexRelation->rd_segfile0_relationnodeinfo.persistentSerialNum);
+
+		heap_close(gp_relation_node, RowExclusiveLock);
+	}
+
+	/*
 	 * Obtain exclusive lock on it.  Although no other backends can see it
 	 * until we commit, this prevents deadlock-risk complaints from lock
 	 * manager in cases such as CLUSTER.
@@ -734,21 +756,6 @@ index_create(Oid heapRelationId,
 							   GetUserId(), /* not ownerid */
 							   "CREATE", subtyp
 					);
-	}
-
-	if (gp_relation_node != NULL)
-	{
-		InsertGpRelationNodeTuple(
-							gp_relation_node,
-							indexRelation->rd_id,
-							indexRelation->rd_rel->relname.data,
-							indexRelation->rd_rel->relfilenode,
-							/* segmentFileNum */ 0,
-							/* updateIndex */ true,
-							&indexRelation->rd_segfile0_relationnodeinfo.persistentTid,
-							indexRelation->rd_segfile0_relationnodeinfo.persistentSerialNum);
-	
-		heap_close(gp_relation_node, RowExclusiveLock);
 	}
 
 	/*
