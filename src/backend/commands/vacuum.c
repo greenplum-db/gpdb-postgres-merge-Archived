@@ -500,8 +500,8 @@ vacuum(VacuumStmt *vacstmt, List *relids,
 	if (use_own_xacts)
 	{
 		/* matches the StartTransaction in PostgresMain() */
-		if (Gp_role != GP_ROLE_EXECUTE)
-			CommitTransactionCommand();
+		//if (Gp_role != GP_ROLE_EXECUTE)
+		CommitTransactionCommand();
 	}
 
 	/* Turn vacuum cost accounting on or off */
@@ -591,7 +591,7 @@ vacuum(VacuumStmt *vacstmt, List *relids,
 		if (Gp_role == GP_ROLE_DISPATCH)
 		{
 			/* Set up the distributed transaction context. */
-			setupRegularDtxContext();
+			//setupRegularDtxContext();
 		}
 		StartTransactionCommand();
 
@@ -999,8 +999,8 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 		}
 
 		/* Set up the distributed transaction context. */
-		if (Gp_role == GP_ROLE_DISPATCH)
-			setupRegularDtxContext();
+		//if (Gp_role == GP_ROLE_DISPATCH)
+		//	setupRegularDtxContext();
 
 		/*
 		 * For each iteration we start/commit our own transactions,
@@ -1336,8 +1336,8 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 		/*
 		 * Transaction commit is always executed on QD.
 		 */
-		if (Gp_role != GP_ROLE_EXECUTE)
-			CommitTransactionCommand();
+		//if (Gp_role != GP_ROLE_EXECUTE)
+		CommitTransactionCommand();
 
 		if (relationRound == 0)
 		{
@@ -5314,10 +5314,10 @@ dispatchVacuum(VacuumStmt *vacstmt, VacuumStatsContext *ctx)
 	{
 		/* mark the dtx as dirty */
 		dtmPreCommand("cdbdisp_dispatchCommand", "(none)", NULL,
-				true /* needs two-phase */, true /* withSnapshot */, false /* inCursor */);
+				false /* needs two-phase */, true /* withSnapshot */, false /* inCursor */);
 
 		cdbdisp_dispatchCommand( "vacuum" , pszVacuum, pszVacuum_len,
-								 true /* cancelOnError */, true /* needTwoPhase */,
+								 true /* cancelOnError */, false /* needTwoPhase */,
 								 true /* withSnapshot */,
 								 (struct CdbDispatcherState *)&ds);
 
