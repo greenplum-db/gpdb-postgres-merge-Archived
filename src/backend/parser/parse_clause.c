@@ -3083,9 +3083,12 @@ addAllTargetsToSortList(ParseState *pstate, List *sortlist,
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 
 		if (!tle->resjunk)
+		{
+			sortby.node = (Node *) tle->expr;
 			sortlist = addTargetToSortList(pstate, tle,
 										   sortlist, targetlist,
 										   &sortby, resolveUnknown);
+		}
 	}
 	return sortlist;
 }
