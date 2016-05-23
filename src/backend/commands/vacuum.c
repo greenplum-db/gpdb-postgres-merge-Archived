@@ -2324,16 +2324,38 @@ vacuum_heap_rel(Relation onerel, VacuumStmt *vacstmt,
 	bool		heldoff = false;
 	int			reindex_count = 1;
 	bool		check_stats;
+	bool		save_disable_tuple_hints;
 
 	Assert(RelationIsHeap(onerel));
 
-	/* scan the heap */
+	/*
+	 * scan the heap
+	 *
+	 * repair_frag() assumes that scan_heap() has set all hint bits on the
+	 * tuples, so temporarily turn off 'gp_disable_tuple_hints', i.e. allow
+	 * hint bits to be set, if we're running in FULL mode.
+	 */
 	vacuum_pages.num_pages = fraged_pages.num_pages = 0;
 
-	if (vacstmt->heap_truncate)
-		scan_heap_for_truncate(vacrelstats, onerel, &vacuum_pages);
-	else
-		scan_heap(vacrelstats, onerel, &vacuum_pages, &fraged_pages);
+	save_disable_tuple_hints = gp_disable_tuple_hints;
+	PG_TRY();
+	{
+		if (vacstmt->full)
+			gp_disable_tuple_hints = false;
+
+		if (vacstmt->heap_truncate)
+			scan_heap_for_truncate(vacrelstats, onerel, &vacuum_pages);
+		else
+			scan_heap(vacrelstats, onerel, &vacuum_pages, &fraged_pages);
+
+		gp_disable_tuple_hints = save_disable_tuple_hints;
+	}
+	PG_CATCH();
+	{
+		gp_disable_tuple_hints = save_disable_tuple_hints;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 
 	/* Now open all indexes of the relation */
 	vac_open_indexes(onerel, AccessExclusiveLock, &nindexes, &Irel);
