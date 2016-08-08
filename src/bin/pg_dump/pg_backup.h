@@ -123,7 +123,7 @@ typedef struct _restoreOptions
 
 typedef struct _dumpOptions
 {
-	const char *dbname;
+	const char *dbname;			/* subject to expand_dbname */
 	const char *pghost;
 	const char *pgport;
 	const char *username;

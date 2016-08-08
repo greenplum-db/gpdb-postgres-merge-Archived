@@ -4729,7 +4729,6 @@ CloneArchive(ArchiveHandle *AH)
 	else
 	{
 		PQExpBufferData connstr;
-		char	   *dbname;
 		char	   *pghost;
 		char	   *pgport;
 		char	   *username;
@@ -4745,13 +4744,13 @@ CloneArchive(ArchiveHandle *AH)
 		initPQExpBuffer(&connstr);
 		appendPQExpBuffer(&connstr, "dbname=");
 		appendConnStrVal(&connstr, PQdb(AH->connection));
-		dbname = PQdb(AH->connection);
 		pghost = PQhost(AH->connection);
 		pgport = PQport(AH->connection);
 		username = PQuser(AH->connection);
 
 		/* this also sets clone->connection */
-		ConnectDatabase((Archive *) clone, dbname, pghost, pgport, username, TRI_NO, false);
+		ConnectDatabase((Archive *) clone, connstr.data,
+						pghost, pgport, username, TRI_NO, false);
 
 		termPQExpBuffer(&connstr);
 		/* setupDumpWorker will fix up connection state */

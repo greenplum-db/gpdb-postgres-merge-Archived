@@ -153,7 +153,7 @@ export EXTRA_REGRESS_OPTS
 set -x
 
 standard_initdb "$oldbindir"/initdb
-$oldbindir/pg_ctl start -l "$logdir/postmaster1.log" -o "$POSTMASTER_OPTS" -w
+"$oldbindir"/pg_ctl start -l "$logdir/postmaster1.log" -o "$POSTMASTER_OPTS" -w
 
 # Create databases with names covering the ASCII bytes other than NUL, BEL,
 # LF, or CR.  BEL would ring the terminal bell in the course of this test, and
@@ -192,7 +192,7 @@ if "$MAKE" -C "$oldsrc" installcheck; then
 else
 	make_installcheck_status=$?
 fi
-$oldbindir/pg_ctl -m fast stop
+"$oldbindir"/pg_ctl -m fast stop
 if [ -n "$createdb_status" ]; then
 	exit 1
 fi
