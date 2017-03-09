@@ -259,7 +259,7 @@ SELECT * FROM TIMESTAMPTZ_TST ORDER BY a;
 DROP TABLE TIMESTAMPTZ_TST;
 
 -- test timestamptz constructors
-set TimeZone to 'America/Santiago';
+set TimeZone to 'America/New_York';
 
 -- numeric timezone
 SELECT make_timestamptz(1973, 07, 15, 08, 15, 55.33);
@@ -288,8 +288,8 @@ SELECT make_timestamptz(1881, 12, 10, 0, 0, 0, 'Europe/Paris') AT TIME ZONE 'UTC
 SELECT make_timestamptz(1910, 12, 24, 0, 0, 0, 'Nehwon/Lankhmar');
 
 -- abbreviations
-SELECT make_timestamptz(2008, 12, 10, 10, 10, 10, 'CLST');
-SELECT make_timestamptz(2008, 12, 10, 10, 10, 10, 'CLT');
+SELECT make_timestamptz(2008, 12, 10, 10, 10, 10, 'EST');
+SELECT make_timestamptz(2008, 12, 10, 10, 10, 10, 'EDT');
 SELECT make_timestamptz(2014, 12, 10, 10, 10, 10, 'PST8PDT');
 
 RESET TimeZone;
