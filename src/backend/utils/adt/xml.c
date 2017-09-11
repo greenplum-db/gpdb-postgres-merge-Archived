@@ -7,11 +7,7 @@
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
  * src/backend/utils/adt/xml.c
-=======
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.69 2008/03/01 02:46:49 tgl Exp $
->>>>>>> 0f855d621b
  *
  *-------------------------------------------------------------------------
  */
