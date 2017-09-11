@@ -70,11 +70,7 @@
  */
 
 #ifdef MATCH_LOWER
-<<<<<<< HEAD
 #define GETCHAR(t) ((char) tolower((unsigned char) (t)))
-=======
-#define TCHAR(t) ((char) tolower((unsigned char) (t)))
->>>>>>> 0f855d621b
 #else
 #define GETCHAR(t) (t)
 #endif
