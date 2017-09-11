@@ -26,12 +26,8 @@
 #include "pgtime.h"				/* for pg_time_t */
 
 
-<<<<<<< HEAD
 #define PG_VERSIONSTR "postgres (Greenplum Database) " PG_VERSION "\n"
 #define PG_BACKEND_VERSIONSTR "postgres (Greenplum Database) " PG_VERSION "\n"
-=======
-#define PG_BACKEND_VERSIONSTR "postgres (PostgreSQL) " PG_VERSION "\n"
->>>>>>> 0f855d621b
 
 
 /*****************************************************************************
