@@ -652,7 +652,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %nonassoc	BETWEEN
 %nonassoc	IN_P
 %left		POSTFIXOP		/* dummy for postfix Op rules */
-<<<<<<< HEAD
 /*
  * To support target_el without AS, we must give IDENT an explicit priority
  * between POSTFIXOP and Op.  We can safely assign the same priority to
@@ -986,9 +985,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 			
 
 
-=======
-%nonassoc	IDENT			/* to support target_el without AS */
->>>>>>> 0f855d621b
 %left		Op OPERATOR		/* multi-character ops and user-defined operators */
 %nonassoc	NOTNULL
 %nonassoc	ISNULL
@@ -12674,25 +12670,18 @@ target_el:	a_expr AS ColLabel
 					$$->location = @1;
 				}
 			/*
-<<<<<<< HEAD
 			 * Postgres supports omitting AS only for column labels that aren't
-=======
-			 * We support omitting AS only for column labels that aren't
->>>>>>> 0f855d621b
 			 * any known keyword.  There is an ambiguity against postfix
 			 * operators: is "a ! b" an infix expression, or a postfix
 			 * expression and a column label?  We prefer to resolve this
 			 * as an infix expression, which we accomplish by assigning
 			 * IDENT a precedence higher than POSTFIXOP.
-<<<<<<< HEAD
 			 *
 			 * In GPDB, we extend this to allow most unreserved_keywords by
 			 * also assigning them a precedence.  There are certain keywords
 			 * that can't work without the as: reserved_keywords, the date
 			 * modifier suffixes (DAY, MONTH, YEAR, etc) and a few other
 			 * obscure cases.
-=======
->>>>>>> 0f855d621b
 			 */
 			| a_expr IDENT
 				{
@@ -12702,7 +12691,6 @@ target_el:	a_expr AS ColLabel
 					$$->val = (Node *)$1;
 					$$->location = @1;
 				}
-<<<<<<< HEAD
 			| a_expr ColLabelNoAs
 				{
 					$$ = makeNode(ResTarget);
@@ -12711,8 +12699,6 @@ target_el:	a_expr AS ColLabel
 					$$->val = (Node *)$1;
 					$$->location = @1;
 				}
-=======
->>>>>>> 0f855d621b
 			| a_expr
 				{
 					$$ = makeNode(ResTarget);
