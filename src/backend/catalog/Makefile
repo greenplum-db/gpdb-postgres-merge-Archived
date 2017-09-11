@@ -2,11 +2,7 @@
 #
 # Makefile for backend/catalog
 #
-<<<<<<< HEAD
 # src/backend/catalog/Makefile
-=======
-# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.66 2008/02/19 10:30:07 petere Exp $
->>>>>>> 0f855d621b
 #
 #-------------------------------------------------------------------------
 
@@ -116,11 +112,7 @@ uninstall-data:
 
 # postgres_bki_srcs is in the distribution tarball, so it is not cleaned here.
 clean:
-<<<<<<< HEAD
-	rm -f SUBSYS.o $(OBJS) $(BKIFILES)
+	rm -f $(BKIFILES)
 
 maintainer-clean: clean
 	rm -f postgres_bki_srcs
-=======
-	rm -f $(BKIFILES)
->>>>>>> 0f855d621b

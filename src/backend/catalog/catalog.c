@@ -964,19 +964,11 @@ GetNewRelFileNode(Oid reltablespace, bool relisshared)
 	{
 		CHECK_FOR_INTERRUPTS();
 
-<<<<<<< HEAD
 		/* Generate the Relfilenode */
 		rnode.relNode = GetNewSegRelfilenode();
 
 		if (!IsOidAcceptable(rnode.relNode))
 			continue;
-=======
-		/* Generate the OID */
-		if (pg_class)
-			rnode.relNode = GetNewOid(pg_class);
-		else
-			rnode.relNode = GetNewObjectId();
->>>>>>> 0f855d621b
 
 		/* Check for existing file of same name */
 		rpath = relpath(rnode);
