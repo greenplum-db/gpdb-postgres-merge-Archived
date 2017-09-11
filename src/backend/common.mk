@@ -8,11 +8,6 @@
 # this directory and SUBDIRS to subdirectories containing more things
 # to build.
 
-<<<<<<< HEAD
-PARTIAL_LINKING=yes
-
-=======
->>>>>>> 0f855d621b
 ifdef PARTIAL_LINKING
 # old style: linking using SUBSYS.o
 subsysfilename = SUBSYS.o
@@ -29,19 +24,11 @@ all: $(subsysfilename)
 endif
 
 SUBSYS.o: $(SUBDIROBJS) $(OBJS)
-<<<<<<< HEAD
 	$(LD) $(LDREL) $(LDOUT) $@ $^ $(LDOPTS)
 
 objfiles.txt: Makefile $(SUBDIROBJS) $(OBJS)
 # Don't rebuild the list if only the OBJS have changed.
 	$(if $(filter-out $(OBJS),$?),( $(if $(SUBDIROBJS),cat $(SUBDIROBJS); )echo $(addprefix $(subdir)/,$(OBJS)) ) >$@,touch $@)
-=======
-	$(LD) $(LDREL) $(LDOUT) $@ $^
-
-objfiles.txt: Makefile $(SUBDIROBJS) $(OBJS)
-# Only rebuild the list if it does not exist or the Makefile has changed.
-	$(if $(filter $<,$?),( $(if $(SUBDIROBJS),cat $(SUBDIROBJS); )echo $(addprefix $(subdir)/,$(OBJS)) ) >$@,touch $@)
->>>>>>> 0f855d621b
 
 # make function to expand objfiles.txt contents
 expand_subsys = $(foreach file,$(1),$(if $(filter %/objfiles.txt,$(file)),$(patsubst ../../src/backend/%,%,$(addprefix $(top_builddir)/,$(shell cat $(file)))),$(file)))
@@ -58,8 +45,7 @@ clean-local:
 ifdef SUBDIRS
 	for dir in $(SUBDIRS); do $(MAKE) -C $$dir clean || exit; done
 endif
-<<<<<<< HEAD
-	rm -f objfiles.txt SUBSYS.o $(OBJS)
+	rm -f $(subsysfilename) $(OBJS)
 	@if [ -d $(CURDIR)/test ]; then $(MAKE) -C $(CURDIR)/test clean; fi
 
 
@@ -74,6 +60,3 @@ unittest-check:
 ifdef SUBDIRS
 	for dir in $(SUBDIRS); do $(MAKE) -C $$dir unittest-check || exit; done
 endif
-=======
-	rm -f $(subsysfilename) $(OBJS)
->>>>>>> 0f855d621b
