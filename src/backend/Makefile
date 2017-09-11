@@ -14,19 +14,11 @@ subdir = src/backend
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-<<<<<<< HEAD
 BLD_TOP = $(top_builddir)/gpAux
 
 ifdef ADDON_DIR
 include $(BLD_TOP)/$(ADDON_DIR)/src/Makefile
 endif
-=======
-SUBDIRS = access bootstrap catalog parser commands executor lib libpq \
-	main nodes optimizer port postmaster regex rewrite \
-	storage tcop tsearch utils $(top_builddir)/src/timezone
-
-include $(srcdir)/common.mk
->>>>>>> 0f855d621b
 
 SUBDIRS = access bootstrap catalog parser commands executor \
 	fts lib libpq gp_libpq_fe main nodes optimizer port postmaster regex \
@@ -56,13 +48,10 @@ endif
 endif
 
 OBJS = $(SUBDIROBJS) $(LOCALOBJS) $(top_builddir)/src/port/libpgport_srv.a
-<<<<<<< HEAD
 
 ifeq ($(PORTNAME), darwin)
 LDOPTS = -Z
 endif
-=======
->>>>>>> 0f855d621b
 
 # We put libpgport into OBJS, so remove it from LIBS; also add libldap
 LIBS := $(filter-out -lpgport, $(LIBS)) $(LDAP_LIBS_BE)
@@ -87,11 +76,7 @@ ifneq ($(PORTNAME), win32)
 ifneq ($(PORTNAME), aix)
 
 postgres: $(OBJS)
-<<<<<<< HEAD
 	$(CXX) $(CFLAGS) $(LDFLAGS) $(export_dynamic) $(call expand_subsys,$^) $(LIBS) -o $@
-=======
-	$(CC) $(CFLAGS) $(LDFLAGS) $(export_dynamic) $(call expand_subsys,$^) $(LIBS) -o $@
->>>>>>> 0f855d621b
 
 endif
 endif
@@ -101,15 +86,9 @@ ifeq ($(PORTNAME), cygwin)
 
 postgres: $(OBJS) postgres.def libpostgres.a
 	$(DLLTOOL) --dllname $@$(X) --output-exp $@.exp --def postgres.def
-<<<<<<< HEAD
 	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@$(X) -Wl,--base-file,$@.base $@.exp $(call expand_subsys,$(OBJS)) $(LIBS)
 	$(DLLTOOL) --dllname $@$(X) --base-file $@.base --output-exp $@.exp --def postgres.def
 	$(CXX) $(CFLAGS) $(LDFLAGS) -Wl,--stack,$(WIN32_STACK_RLIMIT) -o $@$(X) $@.exp $(call expand_subsys,$(OBJS)) $(LIBS)
-=======
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@$(X) -Wl,--base-file,$@.base $@.exp $(call expand_subsys,$(OBJS)) $(LIBS)
-	$(DLLTOOL) --dllname $@$(X) --base-file $@.base --output-exp $@.exp --def postgres.def
-	$(CC) $(CFLAGS) $(LDFLAGS) -Wl,--stack,$(WIN32_STACK_RLIMIT) -o $@$(X) $@.exp $(call expand_subsys,$(OBJS)) $(LIBS)
->>>>>>> 0f855d621b
 	rm -f $@.exp $@.base
 
 postgres.def: $(OBJS)
@@ -125,15 +104,9 @@ LIBS += -lsecur32
 
 postgres: $(OBJS) postgres.def libpostgres.a $(WIN32RES)
 	$(DLLTOOL) --dllname $@$(X) --output-exp $@.exp --def postgres.def
-<<<<<<< HEAD
 	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@$(X) -Wl,--base-file,$@.base $@.exp $(call expand_subsys,$(OBJS)) $(WIN32RES) $(LIBS)
 	$(DLLTOOL) --dllname $@$(X) --base-file $@.base --output-exp $@.exp --def postgres.def
 	$(CXX) $(CFLAGS) $(LDFLAGS) -Wl,--stack=$(WIN32_STACK_RLIMIT) -o $@$(X) $@.exp $(call expand_subsys,$(OBJS)) $(WIN32RES) $(LIBS)
-=======
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@$(X) -Wl,--base-file,$@.base $@.exp $(call expand_subsys,$(OBJS)) $(WIN32RES) $(LIBS)
-	$(DLLTOOL) --dllname $@$(X) --base-file $@.base --output-exp $@.exp --def postgres.def
-	$(CC) $(CFLAGS) $(LDFLAGS) -Wl,--stack=$(WIN32_STACK_RLIMIT) -o $@$(X) $@.exp $(call expand_subsys,$(OBJS)) $(WIN32RES) $(LIBS)
->>>>>>> 0f855d621b
 	rm -f $@.exp $@.base
 
 postgres.def: $(OBJS)
@@ -147,11 +120,7 @@ endif # win32
 ifeq ($(PORTNAME), aix)
 
 postgres: $(POSTGRES_IMP)
-<<<<<<< HEAD
 	$(CXX) $(CFLAGS) $(LDFLAGS) $(call expand_subsys,$(OBJS)) -Wl,-bE:$(top_builddir)/src/backend/$(POSTGRES_IMP) $(LIBS) -o $@
-=======
-	$(CC) $(CFLAGS) $(LDFLAGS) $(call expand_subsys,$(OBJS)) -Wl,-bE:$(top_builddir)/src/backend/$(POSTGRES_IMP) $(LIBS) -o $@
->>>>>>> 0f855d621b
 
 $(POSTGRES_IMP): $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(call expand_subsys,$^)
@@ -169,21 +138,13 @@ endif
 endif # aix
 
 # Update the commonly used headers before building the subdirectories
-<<<<<<< HEAD
 $(SUBDIRS:%=%-recursive): $(top_builddir)/src/include/parser/gram.h $(top_builddir)/src/include/utils/fmgroids.h $(top_builddir)/src/include/utils/probes.h
-=======
-$(SUBDIRS:%=%-recursive): $(top_builddir)/src/include/parser/parse.h $(top_builddir)/src/include/utils/fmgroids.h
->>>>>>> 0f855d621b
 
 
 # The postgres.o target is needed by the rule in Makefile.global that
 # creates the exports file when MAKE_EXPORTS = true.
 postgres.o: $(OBJS)
-<<<<<<< HEAD
 	$(CXX) $(LDREL) $(LDFLAGS) $(call expand_subsys,$^) $(LIBS) -o $@
-=======
-	$(CC) $(LDREL) $(LDFLAGS) $(call expand_subsys,$^) $(LIBS) -o $@
->>>>>>> 0f855d621b
 
 
 # The following targets are specified in make commands that appear in
@@ -216,14 +177,9 @@ $(top_builddir)/src/include/utils/probes.h: utils/probes.h
 	cd $(dir $@) && rm -f $(notdir $@) && \
 	    $(LN_S) ../../../$(subdir)/utils/probes.h .
 
-<<<<<<< HEAD
 
 utils/probes.o: utils/probes.d $(SUBDIROBJS)
 	$(DTRACE) $(DTRACEFLAGS) -C -G -s $(call expand_subsys,$^) -o $@
-=======
-utils/probes.o: utils/probes.d $(SUBDIROBJS)
-	$(DTRACE) $(DTRACEFLAGS) -G -s $(call expand_subsys,$^) -o $@
->>>>>>> 0f855d621b
 
 
 ##########################################################################
@@ -355,8 +311,4 @@ maintainer-clean: distclean
 # are up to date.  It saves the time of doing all the submakes.
 .PHONY: quick
 quick: $(OBJS)
-<<<<<<< HEAD
 	$(CXX) $(CFLAGS) $(LDFLAGS) $(export_dynamic) $(call expand_subsys,$^) $(LIBS) -o postgres
-=======
-	$(CC) $(CFLAGS) $(LDFLAGS) $(export_dynamic) $(call expand_subsys,$^) $(LIBS) -o postgres
->>>>>>> 0f855d621b
