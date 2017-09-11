@@ -1,9 +1,5 @@
 # Macros to detect C compiler features
-<<<<<<< HEAD
-# config/c-compiler.m4
-=======
 # $PostgreSQL: pgsql/config/c-compiler.m4,v 1.15 2008/02/17 16:36:42 petere Exp $
->>>>>>> 0f855d621b
 
 
 # PGAC_C_SIGNED
@@ -136,7 +132,6 @@ fi])# PGAC_C_FUNCNAME_SUPPORT
 
 
 
-<<<<<<< HEAD
 # PGAC_C_STATIC_ASSERT
 # --------------------
 # Check if the C compiler understands _Static_assert(),
@@ -234,8 +229,6 @@ fi])# PGAC_C_VA_ARGS
 
 
 
-=======
->>>>>>> 0f855d621b
 # PGAC_PROG_CC_CFLAGS_OPT
 # -----------------------
 # Given a string, check if the compiler supports the string as a
@@ -252,7 +245,6 @@ _AC_COMPILE_IFELSE([AC_LANG_PROGRAM()],
                     AC_MSG_RESULT(no)])
 ac_c_werror_flag=$ac_save_c_werror_flag
 ])# PGAC_PROG_CC_CFLAGS_OPT
-<<<<<<< HEAD
 
 
 
@@ -434,5 +426,3 @@ AC_DEFUN([PGAC_HAVE_GCC__ATOMIC_INT64_CAS],
 if test x"$pgac_cv_gcc_atomic_int64_cas" = x"yes"; then
   AC_DEFINE(HAVE_GCC__ATOMIC_INT64_CAS, 1, [Define to 1 if you have __atomic_compare_exchange_n(int64 *, int *, int64).])
 fi])# PGAC_HAVE_GCC__ATOMIC_INT64_CAS
-=======
->>>>>>> 0f855d621b

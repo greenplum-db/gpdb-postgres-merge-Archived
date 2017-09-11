@@ -39,10 +39,6 @@ EXPSUFF=.exp
 	$(MKLDEXPORT) $^ >$@
 
 %$(DLSUFFIX): %.o %.exp
-<<<<<<< HEAD
 	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_SL) -o $@ $*.o -Wl,-bE:$*.exp $(SHLIB_LINK)
-=======
-	$(CC) $(LDFLAGS) $(LDFLAGS_SL) -o $@ $*.o -Wl,-bE:$*.exp $(SHLIB_LINK)
 
 sqlmansect = 7
->>>>>>> 0f855d621b

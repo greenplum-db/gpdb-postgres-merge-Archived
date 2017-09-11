@@ -1,9 +1,5 @@
 # Macros that test various C library quirks
-<<<<<<< HEAD
-# config/c-library.m4
-=======
 # $PostgreSQL: pgsql/config/c-library.m4,v 1.32 2008/02/19 18:02:30 petere Exp $
->>>>>>> 0f855d621b
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -303,35 +299,6 @@ AC_MSG_RESULT([$pgac_cv_printf_arg_control])
 ])# PGAC_FUNC_PRINTF_ARG_CONTROL
 
 
-<<<<<<< HEAD
-# PGAC_TYPE_LOCALE_T
-# ------------------
-# Check for the locale_t type and find the right header file.  Mac OS
-# X needs xlocale.h; standard is locale.h, but glibc also has an
-# xlocale.h file that we should not use.
-#
-AC_DEFUN([PGAC_TYPE_LOCALE_T],
-[AC_CACHE_CHECK([for locale_t], pgac_cv_type_locale_t,
-[AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-[#include <locale.h>
-locale_t x;],
-[])],
-[pgac_cv_type_locale_t=yes],
-[AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-[#include <xlocale.h>
-locale_t x;],
-[])],
-[pgac_cv_type_locale_t='yes (in xlocale.h)'],
-[pgac_cv_type_locale_t=no])])])
-if test "$pgac_cv_type_locale_t" != no; then
-  AC_DEFINE(HAVE_LOCALE_T, 1,
-            [Define to 1 if the system has the type `locale_t'.])
-fi
-if test "$pgac_cv_type_locale_t" = 'yes (in xlocale.h)'; then
-  AC_DEFINE(LOCALE_T_IN_XLOCALE, 1,
-            [Define to 1 if `locale_t' requires <xlocale.h>.])
-fi])])# PGAC_HEADER_XLOCALE
-=======
 # backport from Autoconf 2.61a
 # http://git.savannah.gnu.org/gitweb/?p=autoconf.git;a=commitdiff;h=f0c325537a22105536ac8c4e88656e50f9946486
 
@@ -356,4 +323,3 @@ if test $ac_cv_sys_largefile_source != unknown; then
     [Define to 1 if fseeko (and presumably ftello) exists and is declared.])
 fi
 ])# AC_FUNC_FSEEKO
->>>>>>> 0f855d621b
