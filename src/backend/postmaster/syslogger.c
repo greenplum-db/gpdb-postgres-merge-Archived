@@ -396,17 +396,10 @@ SysLoggerMain(int argc, char *argv[])
 			}
         }
 
-<<<<<<< HEAD
         if (!rotation_requested && Log_RotationAge > 0 && !rotation_disabled)
         {
             /* Do a logfile rotation if it's time */
             pg_time_t	now = (pg_time_t) time(NULL);
-=======
-		if (!rotation_requested && Log_RotationAge > 0)
-		{
-			/* Do a logfile rotation if it's time */
-			pg_time_t	now = (pg_time_t) time(NULL);
->>>>>>> 0f855d621b
 
             if (now >= next_rotation_time)
             {

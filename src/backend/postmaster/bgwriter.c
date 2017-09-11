@@ -73,24 +73,6 @@ int			BgWriterDelay = 200;
 static volatile sig_atomic_t got_SIGHUP = false;
 static volatile sig_atomic_t shutdown_requested = false;
 
-<<<<<<< HEAD
-=======
-/*
- * Private state
- */
-static bool am_bg_writer = false;
-
-static bool ckpt_active = false;
-
-/* these values are valid when ckpt_active is true: */
-static pg_time_t ckpt_start_time;
-static XLogRecPtr ckpt_start_recptr;
-static double ckpt_cached_elapsed;
-
-static pg_time_t last_checkpoint_time;
-static pg_time_t last_xlog_switch_time;
-
->>>>>>> 0f855d621b
 /* Prototypes for private functions */
 
 static void BgWriterNap(void);
@@ -160,14 +142,6 @@ BackgroundWriterMain(void)
 #endif
 
 	/*
-<<<<<<< HEAD
-=======
-	 * Initialize so that first time-driven event happens at the correct time.
-	 */
-	last_checkpoint_time = last_xlog_switch_time = (pg_time_t) time(NULL);
-
-	/*
->>>>>>> 0f855d621b
 	 * Create a resource owner to keep track of our resources (currently only
 	 * buffer pins).
 	 */
@@ -260,14 +234,6 @@ BackgroundWriterMain(void)
 	 */
 	for (;;)
 	{
-<<<<<<< HEAD
-=======
-		bool		do_checkpoint = false;
-		int			flags = 0;
-		pg_time_t	now;
-		int			elapsed_secs;
-
->>>>>>> 0f855d621b
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the
 		 * necessity for manual cleanup of all postmaster children.
@@ -296,26 +262,8 @@ BackgroundWriterMain(void)
 			proc_exit(0);		/* done */
 		}
 
-<<<<<<< HEAD
 		/* Perform a cycle of dirty buffer writing. */
 		BgBufferSync();
-=======
-		/*
-		 * Force a checkpoint if too much time has elapsed since the last one.
-		 * Note that we count a timed checkpoint in stats only when this
-		 * occurs without an external request, but we set the CAUSE_TIME flag
-		 * bit even if there is also an external request.
-		 */
-		now = (pg_time_t) time(NULL);
-		elapsed_secs = now - last_checkpoint_time;
-		if (elapsed_secs >= CheckPointTimeout)
-		{
-			if (!do_checkpoint)
-				BgWriterStats.m_timed_checkpoints++;
-			do_checkpoint = true;
-			flags |= CHECKPOINT_CAUSE_TIME;
-		}
->>>>>>> 0f855d621b
 
 		/*
 		 * Send off activity statistics to the stats collector
@@ -337,61 +285,6 @@ BackgroundWriterMain(void)
 }
 
 /*
-<<<<<<< HEAD
-=======
- * CheckArchiveTimeout -- check for archive_timeout and switch xlog files
- *		if needed
- */
-static void
-CheckArchiveTimeout(void)
-{
-	pg_time_t	now;
-	pg_time_t	last_time;
-
-	if (XLogArchiveTimeout <= 0)
-		return;
-
-	now = (pg_time_t) time(NULL);
-
-	/* First we do a quick check using possibly-stale local state. */
-	if ((int) (now - last_xlog_switch_time) < XLogArchiveTimeout)
-		return;
-
-	/*
-	 * Update local state ... note that last_xlog_switch_time is the last time
-	 * a switch was performed *or requested*.
-	 */
-	last_time = GetLastSegSwitchTime();
-
-	last_xlog_switch_time = Max(last_xlog_switch_time, last_time);
-
-	/* Now we can do the real check */
-	if ((int) (now - last_xlog_switch_time) >= XLogArchiveTimeout)
-	{
-		XLogRecPtr	switchpoint;
-
-		/* OK, it's time to switch */
-		switchpoint = RequestXLogSwitch();
-
-		/*
-		 * If the returned pointer points exactly to a segment boundary,
-		 * assume nothing happened.
-		 */
-		if ((switchpoint.xrecoff % XLogSegSize) != 0)
-			ereport(DEBUG1,
-				(errmsg("transaction log switch forced (archive_timeout=%d)",
-						XLogArchiveTimeout)));
-
-		/*
-		 * Update state in any case, so we don't retry constantly when the
-		 * system is idle.
-		 */
-		last_xlog_switch_time = now;
-	}
-}
-
-/*
->>>>>>> 0f855d621b
  * BgWriterNap -- Nap for the configured time or until a signal is received.
  */
 static void
@@ -425,158 +318,6 @@ BgWriterNap(void)
 		pg_usleep(udelay);
 }
 
-<<<<<<< HEAD
-=======
-/*
- * Returns true if an immediate checkpoint request is pending.	(Note that
- * this does not check the *current* checkpoint's IMMEDIATE flag, but whether
- * there is one pending behind it.)
- */
-static bool
-ImmediateCheckpointRequested(void)
-{
-	if (checkpoint_requested)
-	{
-		volatile BgWriterShmemStruct *bgs = BgWriterShmem;
-
-		/*
-		 * We don't need to acquire the ckpt_lck in this case because we're
-		 * only looking at a single flag bit.
-		 */
-		if (bgs->ckpt_flags & CHECKPOINT_IMMEDIATE)
-			return true;
-	}
-	return false;
-}
-
-/*
- * CheckpointWriteDelay -- yield control to bgwriter during a checkpoint
- *
- * This function is called after each page write performed by BufferSync().
- * It is responsible for keeping the bgwriter's normal activities in
- * progress during a long checkpoint, and for throttling BufferSync()'s
- * write rate to hit checkpoint_completion_target.
- *
- * The checkpoint request flags should be passed in; currently the only one
- * examined is CHECKPOINT_IMMEDIATE, which disables delays between writes.
- *
- * 'progress' is an estimate of how much of the work has been done, as a
- * fraction between 0.0 meaning none, and 1.0 meaning all done.
- */
-void
-CheckpointWriteDelay(int flags, double progress)
-{
-	static int	absorb_counter = WRITES_PER_ABSORB;
-
-	/* Do nothing if checkpoint is being executed by non-bgwriter process */
-	if (!am_bg_writer)
-		return;
-
-	/*
-	 * Perform the usual bgwriter duties and take a nap, unless we're behind
-	 * schedule, in which case we just try to catch up as quickly as possible.
-	 */
-	if (!(flags & CHECKPOINT_IMMEDIATE) &&
-		!shutdown_requested &&
-		!ImmediateCheckpointRequested() &&
-		IsCheckpointOnSchedule(progress))
-	{
-		if (got_SIGHUP)
-		{
-			got_SIGHUP = false;
-			ProcessConfigFile(PGC_SIGHUP);
-		}
-
-		AbsorbFsyncRequests();
-		absorb_counter = WRITES_PER_ABSORB;
-
-		BgBufferSync();
-		CheckArchiveTimeout();
-		BgWriterNap();
-	}
-	else if (--absorb_counter <= 0)
-	{
-		/*
-		 * Absorb pending fsync requests after each WRITES_PER_ABSORB write
-		 * operations even when we don't sleep, to prevent overflow of the
-		 * fsync request queue.
-		 */
-		AbsorbFsyncRequests();
-		absorb_counter = WRITES_PER_ABSORB;
-	}
-}
-
-/*
- * IsCheckpointOnSchedule -- are we on schedule to finish this checkpoint
- *		 in time?
- *
- * Compares the current progress against the time/segments elapsed since last
- * checkpoint, and returns true if the progress we've made this far is greater
- * than the elapsed time/segments.
- */
-static bool
-IsCheckpointOnSchedule(double progress)
-{
-	XLogRecPtr	recptr;
-	struct timeval now;
-	double		elapsed_xlogs,
-				elapsed_time;
-
-	Assert(ckpt_active);
-
-	/* Scale progress according to checkpoint_completion_target. */
-	progress *= CheckPointCompletionTarget;
-
-	/*
-	 * Check against the cached value first. Only do the more expensive
-	 * calculations once we reach the target previously calculated. Since
-	 * neither time or WAL insert pointer moves backwards, a freshly
-	 * calculated value can only be greater than or equal to the cached value.
-	 */
-	if (progress < ckpt_cached_elapsed)
-		return false;
-
-	/*
-	 * Check progress against WAL segments written and checkpoint_segments.
-	 *
-	 * We compare the current WAL insert location against the location
-	 * computed before calling CreateCheckPoint. The code in XLogInsert that
-	 * actually triggers a checkpoint when checkpoint_segments is exceeded
-	 * compares against RedoRecptr, so this is not completely accurate.
-	 * However, it's good enough for our purposes, we're only calculating an
-	 * estimate anyway.
-	 */
-	recptr = GetInsertRecPtr();
-	elapsed_xlogs =
-		(((double) (int32) (recptr.xlogid - ckpt_start_recptr.xlogid)) * XLogSegsPerFile +
-		 ((double) recptr.xrecoff - (double) ckpt_start_recptr.xrecoff) / XLogSegSize) /
-		CheckPointSegments;
-
-	if (progress < elapsed_xlogs)
-	{
-		ckpt_cached_elapsed = elapsed_xlogs;
-		return false;
-	}
-
-	/*
-	 * Check progress against time elapsed and checkpoint_timeout.
-	 */
-	gettimeofday(&now, NULL);
-	elapsed_time = ((double) ((pg_time_t) now.tv_sec - ckpt_start_time) +
-					now.tv_usec / 1000000.0) / CheckPointTimeout;
-
-	if (progress < elapsed_time)
-	{
-		ckpt_cached_elapsed = elapsed_time;
-		return false;
-	}
-
-	/* It looks like we're on schedule. */
-	return true;
-}
-
-
->>>>>>> 0f855d621b
 /* --------------------------------
  *		signal handler routines
  * --------------------------------
