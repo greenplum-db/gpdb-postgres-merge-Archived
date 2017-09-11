@@ -93,11 +93,7 @@ extern int find_other_exec(const char *argv0, const char *target,
 
 /* Windows security token manipulation (in exec.c) */
 #ifdef WIN32
-<<<<<<< HEAD
 extern BOOL AddUserToTokenDacl(HANDLE hToken);
-=======
-extern BOOL AddUserToDacl(HANDLE hProcess);
->>>>>>> 0f855d621b
 #endif
 
 
