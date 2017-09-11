@@ -104,7 +104,6 @@
 #define NUM_USER_DEFINED_LWLOCKS	4
 
 /*
-<<<<<<< HEAD
  * When we have neither spinlocks nor atomic operations support we're
  * implementing atomic operations on top of spinlock on top of semaphores. To
  * be safe against atomic operations while holding a spinlock separate
@@ -113,18 +112,6 @@
 #define NUM_ATOMICS_SEMAPHORES      64
 
 /*
- * Define this to make libpgtcl's "pg_result -assign" command process
- * C-style backslash sequences in returned tuple data and convert
- * PostgreSQL array values into Tcl lists.	CAUTION: This conversion
- * is *wrong* unless you install the routines in
- * contrib/string/string_io to make the server produce C-style
- * backslash sequences in the first place.
- */
-/* #define TCL_ARRAYS */
-
-/*
-=======
->>>>>>> 0f855d621b
  * Define this if you want psql to _always_ ask for a username and a
  * password for password authentication.
  */
