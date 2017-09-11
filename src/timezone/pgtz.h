@@ -9,11 +9,7 @@
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/timezone/pgtz.h
-=======
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.h,v 1.22 2008/02/16 21:16:04 tgl Exp $
->>>>>>> 0f855d621b
  *
  *-------------------------------------------------------------------------
  */
@@ -70,13 +66,8 @@ struct pg_tz
 extern int	pg_open_tzfile(const char *name, char *canonname);
 
 /* in localtime.c */
-<<<<<<< HEAD
 extern int tzload(const char *name, char *canonname, struct state * sp,
 	   int doextend);
-=======
-extern int	tzload(const char *name, char *canonname, struct state * sp, 
-				   int doextend);
->>>>>>> 0f855d621b
 extern int	tzparse(const char *name, struct state * sp, int lastditch);
 
 #endif   /* _PGTZ_H */

@@ -15,7 +15,7 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/strftime.c,v 1.13 2008/02/19 12:06:35 mha Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/strftime.c,v 1.14 2009/06/11 14:49:15 momjian Exp $
  */
 
 #include "postgres.h"
@@ -517,12 +517,8 @@ _yconv(const int a, const int b, const int convert_top,
 	{
 		if (lead == 0 && trail < 0)
 			pt = _add("-0", pt, ptlim);
-<<<<<<< HEAD
 		else
 			pt = _conv(lead, "%02d", pt, ptlim);
-=======
-		else    pt = _conv(lead, "%02d", pt, ptlim);
->>>>>>> 0f855d621b
 	}
 	if (convert_yy)
 		pt = _conv(((trail < 0) ? -trail : trail), "%02d", pt, ptlim);

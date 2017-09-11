@@ -4,7 +4,7 @@
 #    Makefile for the timezone library
 
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.29 2008/02/19 15:29:58 petere Exp $
+#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.31 2009/01/06 02:25:29 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -41,7 +41,6 @@ ifeq (,$(with_system_tzdata))
 all: submake-libpgport zic
 endif
 
-<<<<<<< HEAD
 # We could do this test in the action section:
 #	$(if $(ZIC),$(ZIC),./zic)
 # but gmake versions <= 3.78.1 or perhaps later have a bug
@@ -50,8 +49,6 @@ ifeq (,$(ZIC))
 ZIC= ./zic
 endif
 
-=======
->>>>>>> 0f855d621b
 zic: $(ZICOBJS)
 	$(CC) $(CFLAGS) $(ZICOBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
@@ -71,8 +68,4 @@ endif
 	$(MAKE) -C tznames $@
 
 clean distclean maintainer-clean:
-<<<<<<< HEAD
 	rm -f zic$(X) $(ZICOBJS) gmon.out
-=======
-	rm -f zic$(X) $(ZICOBJS)
->>>>>>> 0f855d621b
