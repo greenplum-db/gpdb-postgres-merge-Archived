@@ -15,6 +15,9 @@ include $(top_builddir)/src/Makefile.global
 OBJS = catcache.o inval.o plancache.o relcache.o \
 	syscache.o lsyscache.o typcache.o ts_cache.o
 
+<<<<<<< HEAD
 OBJS +=	syncrefhashtable.o sharedcache.o
 
+=======
+>>>>>>> 0f855d621b
 include $(top_srcdir)/src/backend/common.mk

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.85 2009/06/11 14:49:13 momjian Exp $ */
+=======
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.77 2008/03/01 03:26:34 tgl Exp $ */
+>>>>>>> 0f855d621b
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -128,9 +132,15 @@ next_insert(char *text, int pos, bool questionmarks)
 				int			i;
 
 				for (i = p + 1; isdigit((unsigned char) text[i]); i++)
+<<<<<<< HEAD
 					 /* empty loop body */ ;
 				if (!isalpha((unsigned char) text[i]) &&
 					isascii((unsigned char) text[i]) &&text[i] != '_')
+=======
+					/* empty loop body */ ;
+				if (!isalpha((unsigned char) text[i]) &&
+					isascii((unsigned char) text[i]) && text[i] != '_')
+>>>>>>> 0f855d621b
 					/* not dollar delimited quote */
 					return p;
 			}

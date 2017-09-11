@@ -3,7 +3,11 @@ package Project;
 #
 # Package that encapsulates a Visual C++ project file generation
 #
+<<<<<<< HEAD
 # src/tools/msvc/Project.pm
+=======
+# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.18 2008/02/19 16:15:14 mha Exp $
+>>>>>>> 0f855d621b
 #
 use Carp;
 use strict;
@@ -508,7 +512,11 @@ sub WriteConfiguration
   <Configuration Name="$cfgname|$self->{platform}" OutputDirectory=".\\$cfgname\\$self->{name}" IntermediateDirectory=".\\$cfgname\\$self->{name}"
 	ConfigurationType="$cfgtype" UseOfMFC="0" ATLMinimizesCRunTimeLibraryUsage="FALSE" CharacterSet="2" WholeProgramOptimization="$p->{wholeopt}">
 	<Tool Name="VCCLCompilerTool" Optimization="$p->{opt}"
+<<<<<<< HEAD
 		AdditionalIncludeDirectories="$self->{prefixincludes}src/include;src/include/port/win32;src/include/port/win32_msvc;$self->{solution}->{options}->{pthread};$self->{includes};src/include"
+=======
+		AdditionalIncludeDirectories="$self->{prefixincludes}src/include;src/include/port/win32;src/include/port/win32_msvc;$self->{includes}"
+>>>>>>> 0f855d621b
 		PreprocessorDefinitions="WIN32;_WINDOWS;__WINDOWS__;__WIN32__;EXEC_BACKEND;WIN32_STACK_RLIMIT=4194304;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE$self->{defines}$p->{defs}"
 		StringPooling="$p->{strpool}"
 		RuntimeLibrary="$p->{runtime}" DisableSpecificWarnings="$self->{disablewarnings}"

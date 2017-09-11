@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/port/path.c,v 1.79 2009/06/11 14:49:15 momjian Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.75 2008/02/18 14:51:48 petere Exp $
+>>>>>>> 0f855d621b
  *
  *-------------------------------------------------------------------------
  */

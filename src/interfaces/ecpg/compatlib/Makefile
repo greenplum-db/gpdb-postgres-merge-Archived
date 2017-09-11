@@ -5,7 +5,11 @@
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
+<<<<<<< HEAD
 # $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.42 2009/01/01 17:24:02 momjian Exp $
+=======
+# $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.39 2008/02/26 06:41:23 petere Exp $
+>>>>>>> 0f855d621b
 #
 #-------------------------------------------------------------------------
 
@@ -21,6 +25,10 @@ LIBS := $(filter-out -lreadline -ledit -ltermcap -lncurses -lcurses -lcurl -lssl
 NAME= ecpg_compat
 SO_MAJOR_VERSION= 3
 SO_MINOR_VERSION= 1
+<<<<<<< HEAD
+=======
+DLTYPE= library
+>>>>>>> 0f855d621b
 
 override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
 	-I$(libpq_srcdir) -I$(top_srcdir)/src/include/utils $(CPPFLAGS)
@@ -33,6 +41,8 @@ SHLIB_LINK = -L../ecpglib -lecpg -L../pgtypeslib -lpgtypes $(libpq) \
 ifeq ($(GCC), yes)
  CFLAGS += -Wno-error
 endif # GCC
+
+SHLIB_EXPORTS = exports.txt
 
 SHLIB_EXPORTS = exports.txt
 

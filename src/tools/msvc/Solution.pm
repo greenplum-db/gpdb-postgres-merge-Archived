@@ -3,7 +3,11 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
+<<<<<<< HEAD
 # src/tools/msvc/Solution.pm
+=======
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.36 2008/02/28 12:17:59 mha Exp $
+>>>>>>> 0f855d621b
 #
 use Carp;
 use strict;
@@ -193,6 +197,7 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
         print O "#define USE_SSL 1\n" if ($self->{options}->{openssl});
         print O "#define ENABLE_NLS 1\n" if ($self->{options}->{nls});
 
+<<<<<<< HEAD
         print O "#define BLCKSZ ",1024 * $self->{options}->{blocksize},"\n";
 	#	print O "#define RELSEG_SIZE ",
 	#		(1024 / $self->{options}->{blocksize}) * 
@@ -221,6 +226,8 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
             print O "#define FLOAT8PASSBYVAL false\n";
         }
 
+=======
+>>>>>>> 0f855d621b
         if ($self->{options}->{uuid})
         {
             print O "#define HAVE_UUID_H\n";

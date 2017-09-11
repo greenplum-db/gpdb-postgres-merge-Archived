@@ -4,7 +4,11 @@
 #    Makefile for backend/commands
 #
 # IDENTIFICATION
+<<<<<<< HEAD
 #    $PostgreSQL: pgsql/src/backend/commands/Makefile,v 1.39 2008/12/19 16:25:17 petere Exp $
+=======
+#    $PostgreSQL: pgsql/src/backend/commands/Makefile,v 1.38 2008/02/19 10:30:07 petere Exp $
+>>>>>>> 0f855d621b
 #
 #-------------------------------------------------------------------------
 
@@ -22,7 +26,10 @@ OBJS = aggregatecmds.o alter.o analyze.o async.o cluster.o comment.o  \
 	tsearchcmds.o typecmds.o user.o vacuum.o vacuumlazy.o \
 	variable.o view.o
 
+<<<<<<< HEAD
 OBJS += analyzefuncs.o extprotocolcmds.o exttablecmds.o filespace.o queue.o
 OBJS += resgroupcmds.o
 
+=======
+>>>>>>> 0f855d621b
 include $(top_srcdir)/src/backend/common.mk

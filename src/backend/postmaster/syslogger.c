@@ -18,7 +18,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.44.2.4 2010/04/16 09:52:01 heikki Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.45 2008/02/17 02:09:27 tgl Exp $
+>>>>>>> 0f855d621b
  *
  *-------------------------------------------------------------------------
  */
@@ -396,10 +400,17 @@ SysLoggerMain(int argc, char *argv[])
 			}
         }
 
+<<<<<<< HEAD
         if (!rotation_requested && Log_RotationAge > 0 && !rotation_disabled)
         {
             /* Do a logfile rotation if it's time */
             pg_time_t	now = (pg_time_t) time(NULL);
+=======
+		if (!rotation_requested && Log_RotationAge > 0)
+		{
+			/* Do a logfile rotation if it's time */
+			pg_time_t	now = (pg_time_t) time(NULL);
+>>>>>>> 0f855d621b
 
             if (now >= next_rotation_time)
             {

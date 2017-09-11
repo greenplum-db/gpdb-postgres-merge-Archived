@@ -3,7 +3,11 @@
  * 1996-06-05 by Arthur David Olson.
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/timezone/localtime.c
+=======
+ *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.20 2008/02/16 21:16:04 tgl Exp $
+>>>>>>> 0f855d621b
  */
 
 /*
@@ -272,10 +276,17 @@ tzload(const char *name, char *canonname, struct state * sp, int doextend)
 					return -1;
 			}
 		}
+<<<<<<< HEAD
 
 		/*
 		 * Out-of-sort ats should mean we're running on a signed time_t system
 		 * but using a data file with unsigned values (or vice versa).
+=======
+		/*
+		 * Out-of-sort ats should mean we're running on a
+		 * signed time_t system but using a data file with
+		 * unsigned values (or vice versa).
+>>>>>>> 0f855d621b
 		 */
 		for (i = 0; i < sp->timecnt - 2; ++i)
 			if (sp->ats[i] > sp->ats[i + 1])
@@ -304,7 +315,10 @@ tzload(const char *name, char *canonname, struct state * sp, int doextend)
 				}
 				break;
 			}
+<<<<<<< HEAD
 
+=======
+>>>>>>> 0f855d621b
 		/*
 		 * If this is an old file, we're done.
 		 */
@@ -313,12 +327,16 @@ tzload(const char *name, char *canonname, struct state * sp, int doextend)
 		nread -= p - u.buf;
 		for (i = 0; i < nread; ++i)
 			u.buf[i] = p[i];
+<<<<<<< HEAD
 
+=======
+>>>>>>> 0f855d621b
 		/*
 		 * If this is a narrow integer time_t system, we're done.
 		 */
 		if (stored >= (int) sizeof(pg_time_t) && TYPE_INTEGRAL(pg_time_t))
 			break;
+<<<<<<< HEAD
 	}
 	if (doextend && nread > 2 &&
 		u.buf[0] == '\n' && u.buf[nread - 1] == '\n' &&
@@ -376,7 +394,57 @@ tzload(const char *name, char *canonname, struct state * sp, int doextend)
 				sp->goahead = TRUE;
 				break;
 			}
+=======
+>>>>>>> 0f855d621b
 	}
+	if (doextend && nread > 2 &&
+		u.buf[0] == '\n' && u.buf[nread - 1] == '\n' &&
+		sp->typecnt + 2 <= TZ_MAX_TYPES)
+	{
+		struct state    ts;
+		int    result;
+ 
+		u.buf[nread - 1] = '\0';
+		result = tzparse(&u.buf[1], &ts, FALSE);
+		if (result == 0 && ts.typecnt == 2 &&
+			sp->charcnt + ts.charcnt <= TZ_MAX_CHARS)
+		{
+			for (i = 0; i < 2; ++i)
+				ts.ttis[i].tt_abbrind +=
+					sp->charcnt;
+			for (i = 0; i < ts.charcnt; ++i)
+				sp->chars[sp->charcnt++] =
+					ts.chars[i];
+			i = 0;
+			while (i < ts.timecnt &&
+				   ts.ats[i] <=
+				   sp->ats[sp->timecnt - 1])
+				++i;
+			while (i < ts.timecnt &&
+				   sp->timecnt < TZ_MAX_TIMES)
+			{
+				sp->ats[sp->timecnt] =
+					ts.ats[i];
+				sp->types[sp->timecnt] =
+					sp->typecnt +
+					ts.types[i];
+				++sp->timecnt;
+				++i;
+			}
+			sp->ttis[sp->typecnt++] = ts.ttis[0];
+			sp->ttis[sp->typecnt++] = ts.ttis[1];
+		}
+	}
+	i = 2 * YEARSPERREPEAT;
+	sp->goback = sp->goahead = sp->timecnt > i;
+	sp->goback = sp->goback &&
+		typesequiv(sp, sp->types[i], sp->types[0]) &&
+		differ_by_repeat(sp->ats[i], sp->ats[0]);
+	sp->goahead = sp->goahead &&
+		typesequiv(sp, sp->types[sp->timecnt - 1],
+				   sp->types[sp->timecnt - 1 - i]) &&
+		differ_by_repeat(sp->ats[sp->timecnt - 1],
+						 sp->ats[sp->timecnt - 1 - i]);
 	return 0;
 }
 
@@ -1030,8 +1098,12 @@ localsub(const pg_time_t *timep, long offset,
  
 		if (t < sp->ats[0])
 			seconds = sp->ats[0] - t;
+<<<<<<< HEAD
 		else
 			seconds = t - sp->ats[sp->timecnt - 1];
+=======
+		else    seconds = t - sp->ats[sp->timecnt - 1];
+>>>>>>> 0f855d621b
 		--seconds;
 		tcycles = seconds / YEARSPERREPEAT / AVGSECSPERYEAR;
 		++tcycles;
@@ -1043,8 +1115,12 @@ localsub(const pg_time_t *timep, long offset,
 		seconds *= AVGSECSPERYEAR;
 		if (t < sp->ats[0])
 			newt += seconds;
+<<<<<<< HEAD
 		else
 			newt -= seconds;
+=======
+		else    newt -= seconds;
+>>>>>>> 0f855d621b
 		if (newt < sp->ats[0] ||
 			newt > sp->ats[sp->timecnt - 1])
 			return NULL;    /* "cannot happen" */
@@ -1056,8 +1132,12 @@ localsub(const pg_time_t *timep, long offset,
 			newy = tmp->tm_year;
 			if (t < sp->ats[0])
 				newy -= icycles * YEARSPERREPEAT;
+<<<<<<< HEAD
 			else
 				newy += icycles * YEARSPERREPEAT;
+=======
+			else    newy += icycles * YEARSPERREPEAT;
+>>>>>>> 0f855d621b
 			tmp->tm_year = newy;
 			if (tmp->tm_year != newy)
 				return NULL;
@@ -1085,8 +1165,12 @@ localsub(const pg_time_t *timep, long offset,
  
 			if (t < sp->ats[mid])
 				hi = mid;
+<<<<<<< HEAD
 			else
 				lo = mid + 1;
+=======
+			else    lo = mid + 1;
+>>>>>>> 0f855d621b
 		}
 		i = (int) sp->types[lo - 1];
 	}
@@ -1225,7 +1309,10 @@ timesub(const pg_time_t *timep, long offset,
 		tdays = seconds / SECSPERDAY;
 		rem += seconds - tdays * SECSPERDAY;
 	}
+<<<<<<< HEAD
 
+=======
+>>>>>>> 0f855d621b
 	/*
 	 * Given the range, we can now fearlessly cast...
 	 */
@@ -1257,7 +1344,10 @@ timesub(const pg_time_t *timep, long offset,
 	if (increment_overflow(&tmp->tm_year, -TM_YEAR_BASE))
 		return NULL;
 	tmp->tm_yday = idays;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 0f855d621b
 	/*
 	 * The "extra" mods below avoid overflow problems.
 	 */
@@ -1286,6 +1376,23 @@ timesub(const pg_time_t *timep, long offset,
 	tmp->tm_isdst = 0;
 	tmp->tm_gmtoff = offset;
 	return tmp;
+<<<<<<< HEAD
+=======
+}
+
+/*
+ * Simplified normalize logic courtesy Paul Eggert.
+ */
+
+static int
+increment_overflow(int *number, int delta)
+{
+	int	number0;
+
+	number0 = *number;
+	*number += delta;
+	return (*number < number0) != (delta < 0);
+>>>>>>> 0f855d621b
 }
 
 /*
@@ -1355,6 +1462,50 @@ pg_next_dst_boundary(const pg_time_t *timep,
 	}
 	if ((sp->goback && t < sp->ats[0]) ||
 		(sp->goahead && t > sp->ats[sp->timecnt - 1]))
+<<<<<<< HEAD
+=======
+	{
+		/* For values outside the transition table, extrapolate */
+		pg_time_t	newt = t;
+		pg_time_t	seconds;
+		pg_time_t	tcycles;
+		int64		icycles;
+		int			result;
+		
+		if (t < sp->ats[0])
+			seconds = sp->ats[0] - t;
+		else    seconds = t - sp->ats[sp->timecnt - 1];
+		--seconds;
+		tcycles = seconds / YEARSPERREPEAT / AVGSECSPERYEAR;
+		++tcycles;
+		icycles = tcycles;
+		if (tcycles - icycles >= 1 || icycles - tcycles >= 1)
+			return -1;
+		seconds = icycles;
+		seconds *= YEARSPERREPEAT;
+		seconds *= AVGSECSPERYEAR;
+		if (t < sp->ats[0])
+			newt += seconds;
+		else    newt -= seconds;
+		if (newt < sp->ats[0] ||
+			newt > sp->ats[sp->timecnt - 1])
+			return -1;    /* "cannot happen" */
+
+		result = pg_next_dst_boundary(&newt, before_gmtoff,
+									  before_isdst,
+									  boundary,
+									  after_gmtoff,
+									  after_isdst,
+									  tz);
+		if (t < sp->ats[0])
+			*boundary -= seconds;
+		else
+			*boundary += seconds;
+		return result;
+	}
+
+	if (t > sp->ats[sp->timecnt - 1])
+>>>>>>> 0f855d621b
 	{
 		/* For values outside the transition table, extrapolate */
 		pg_time_t	newt = t;
@@ -1427,19 +1578,31 @@ pg_next_dst_boundary(const pg_time_t *timep,
 		*after_isdst = ttisp->tt_isdst;
 		return 1;
 	}
+<<<<<<< HEAD
 	/* Else search to find the boundary following t */
 	{
 		int			lo = 1;
 		int			hi = sp->timecnt - 1;
 
+=======
+	/* Else search to find the containing segment */
+	{
+		int    lo = 1;
+		int    hi = sp->timecnt;
+ 
+>>>>>>> 0f855d621b
 		while (lo < hi)
 		{
 			int    mid = (lo + hi) >> 1;
  
 			if (t < sp->ats[mid])
 				hi = mid;
+<<<<<<< HEAD
 			else
 				lo = mid + 1;
+=======
+			else    lo = mid + 1;
+>>>>>>> 0f855d621b
 		}
 		i = lo;
 	}

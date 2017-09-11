@@ -26,7 +26,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.29 2009/06/11 14:48:52 momjian Exp $
+=======
+ * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.28 2008/02/17 02:09:26 tgl Exp $
+>>>>>>> 0f855d621b
  */
 
 #include "postgres.h"

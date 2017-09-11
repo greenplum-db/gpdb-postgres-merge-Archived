@@ -13,7 +13,11 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
+<<<<<<< HEAD
 #    $PostgreSQL: pgsql/src/backend/port/Makefile,v 1.27 2008/10/29 16:06:46 petere Exp $
+=======
+#    $PostgreSQL: pgsql/src/backend/port/Makefile,v 1.26 2008/02/19 15:29:58 petere Exp $
+>>>>>>> 0f855d621b
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +25,11 @@ subdir = src/backend/port
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
+<<<<<<< HEAD
 OBJS = atomics.o dynloader.o pg_sema.o pg_shmem.o pg_latch.o $(TAS)
+=======
+OBJS = dynloader.o pg_sema.o pg_shmem.o $(TAS)
+>>>>>>> 0f855d621b
 
 ifeq ($(PORTNAME), darwin)
 SUBDIRS += darwin

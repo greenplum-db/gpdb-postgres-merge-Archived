@@ -627,6 +627,7 @@
 #define PACKAGE_NAME "Greenplum Database"
 
 /* Define to the full name and version of this package. */
+<<<<<<< HEAD
 #define PACKAGE_STRING "Greenplum Database 8.3devel"
 
 /* Define to the version of this package. */
@@ -637,6 +638,18 @@
 
 /* PostgreSQL version as a number */
 #define PG_VERSION_NUM 80323
+=======
+#define PACKAGE_STRING "PostgreSQL 8.4devel"
+
+/* Define to the version of this package. */
+#define PACKAGE_VERSION "8.4devel"
+
+/* PostgreSQL version as a string */
+#define PG_VERSION "8.4devel"
+
+/* PostgreSQL version as a number */
+#define PG_VERSION_NUM 80400
+>>>>>>> 0f855d621b
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "greenplum"

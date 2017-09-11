@@ -3,7 +3,11 @@
  * 2006-07-17 by Arthur David Olson.
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/timezone/ialloc.c
+=======
+ *	  $PostgreSQL: pgsql/src/timezone/ialloc.c,v 1.10 2008/02/16 21:16:04 tgl Exp $
+>>>>>>> 0f855d621b
  */
 
 #include "postgres_fe.h"

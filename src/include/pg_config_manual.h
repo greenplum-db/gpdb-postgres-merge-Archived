@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.27 2007/06/08 18:23:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.28 2008/02/29 20:58:33 alvherre Exp $
  *------------------------------------------------------------------------
  */
 
@@ -104,6 +104,7 @@
 #define NUM_USER_DEFINED_LWLOCKS	4
 
 /*
+<<<<<<< HEAD
  * When we have neither spinlocks nor atomic operations support we're
  * implementing atomic operations on top of spinlock on top of semaphores. To
  * be safe against atomic operations while holding a spinlock separate
@@ -122,6 +123,8 @@
 /* #define TCL_ARRAYS */
 
 /*
+=======
+>>>>>>> 0f855d621b
  * Define this if you want psql to _always_ ask for a username and a
  * password for password authentication.
  */

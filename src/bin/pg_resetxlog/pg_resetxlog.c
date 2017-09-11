@@ -23,7 +23,11 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.63.2.2 2009/05/03 23:13:44 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.64 2008/02/17 02:09:30 tgl Exp $
+>>>>>>> 0f855d621b
  *
  *-------------------------------------------------------------------------
  */
@@ -720,7 +724,7 @@ RewriteControlFile(void)
 	ControlFile.checkPointCopy.redo.xlogid = newXlogId;
 	ControlFile.checkPointCopy.redo.xrecoff =
 		newXlogSeg * XLogSegSize + SizeOfXLogLongPHD;
-	ControlFile.checkPointCopy.time = time(NULL);
+	ControlFile.checkPointCopy.time = (pg_time_t) time(NULL);
 
 	ControlFile.state = DB_SHUTDOWNED;
 	ControlFile.time = (pg_time_t) time(NULL);

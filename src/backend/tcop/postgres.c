@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.542.2.5 2009/06/18 10:09:34 heikki Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.543 2008/02/17 04:21:05 tgl Exp $
+>>>>>>> 0f855d621b
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and

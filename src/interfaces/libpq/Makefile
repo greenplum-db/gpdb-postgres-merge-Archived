@@ -5,7 +5,11 @@
 # Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
+<<<<<<< HEAD
 # $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.159.2.3 2008/10/01 15:35:34 mha Exp $
+=======
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.163 2008/02/26 14:26:16 petere Exp $
+>>>>>>> 0f855d621b
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +21,12 @@ include $(top_builddir)/src/Makefile.global
 # shared library parameters
 NAME= pq
 SO_MAJOR_VERSION= 5
+<<<<<<< HEAD
 SO_MINOR_VERSION= 3
+=======
+SO_MINOR_VERSION= 2
+DLTYPE= library
+>>>>>>> 0f855d621b
 
 override CPPFLAGS :=  -DFRONTEND -DUNSAFE_STAT_OK -I$(srcdir) $(CPPFLAGS) -I$(top_builddir)/src/port -I$(top_srcdir)/src/port
 ifneq ($(PORTNAME), win32)
@@ -48,7 +57,11 @@ ifeq ($(PORTNAME), win32)
 OBJS += win32.o pgsleep.o libpqrc.o
 
 libpqrc.o: libpq.rc
+<<<<<<< HEAD
 	$(WINDRES) -i $< -o $@
+=======
+	windres -i $< -o $@
+>>>>>>> 0f855d621b
 
 ifeq ($(enable_thread_safety), yes)
 OBJS += pthread-win32.o
@@ -94,9 +107,15 @@ encnames.c wchar.c : % : $(backend_src)/utils/mb/%
 	rm -f $@ && $(LN_S) $< .
 
 
+<<<<<<< HEAD
 distprep: libpq-dist.rc
 
 libpq.rc libpq-dist.rc: libpq.rc.in
+=======
+distprep: $(srcdir)/libpq-dist.rc
+
+libpq.rc $(srcdir)/libpq-dist.rc: libpq.rc.in
+>>>>>>> 0f855d621b
 	sed -e 's/\(VERSION.*\),0 *$$/\1,'`date '+%y%j' | sed 's/^0*//'`'/' $< >$@
 
 # Depend on Makefile.global to force rebuild on re-run of configure.
@@ -127,9 +146,17 @@ uninstall: uninstall-lib
 	rm -f '$(DESTDIR)$(datadir)/pg_service.conf.sample'
 
 clean distclean: clean-lib
+<<<<<<< HEAD
 	rm -f $(OBJS) pg_config_paths.h crypt.c getaddrinfo.c getpeereid.c inet_aton.c inet_net_ntop.c noblock.c open.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c thread.c md5.c ip.c encnames.c wchar.c win32error.c pgsleep.c pthread.h libpq.rc exports.list
+=======
+	rm -f $(OBJS) pg_config_paths.h crypt.c getaddrinfo.c inet_aton.c noblock.c open.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c thread.c md5.c ip.c encnames.c wchar.c win32error.c pgsleep.c pthread.h libpq.rc
+>>>>>>> 0f855d621b
 # Might be left over from a Win32 client-only build
 	rm -f pg_config_paths.h
 
 maintainer-clean: distclean maintainer-clean-lib
+<<<<<<< HEAD
 	rm -f libpq-dist.rc
+=======
+	rm -f $(srcdir)/libpq-dist.rc
+>>>>>>> 0f855d621b

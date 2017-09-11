@@ -15,7 +15,11 @@
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.114 2009/08/01 19:59:41 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.104 2008/02/18 23:00:32 tgl Exp $
+>>>>>>> 0f855d621b
  *
  * ----------
  */

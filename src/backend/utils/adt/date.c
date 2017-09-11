@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.138.2.1 2008/07/07 18:09:53 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.139 2008/02/17 02:09:28 tgl Exp $
+>>>>>>> 0f855d621b
  *
  *-------------------------------------------------------------------------
  */
@@ -2567,6 +2571,7 @@ timetz_zone(PG_FUNCTION_ARGS)
 	 * important because the timezone database unwisely uses a few zone names
 	 * that are identical to offset abbreviations.)
 	 */
+<<<<<<< HEAD
 	lowzone = downcase_truncate_identifier(VARDATA(zone),
 										   VARSIZE(zone) - VARHDRSZ,
 										   false);
@@ -2574,6 +2579,21 @@ timetz_zone(PG_FUNCTION_ARGS)
 
 	if (type == TZ || type == DTZ)
 		tz = val * 60;
+=======
+	len = Min(VARSIZE(zone) - VARHDRSZ, TZ_STRLEN_MAX);
+	memcpy(tzname, VARDATA(zone), len);
+	tzname[len] = '\0';
+	tzp = pg_tzset(tzname);
+	if (tzp)
+	{
+		/* Get the offset-from-GMT that is valid today for the selected zone */
+		pg_time_t	now = (pg_time_t) time(NULL);
+		struct pg_tm *tm;
+
+		tm = pg_localtime(&now, tzp);
+		tz = -tm->tm_gmtoff;
+	}
+>>>>>>> 0f855d621b
 	else
 	{
 		len = Min(VARSIZE(zone) - VARHDRSZ, TZ_STRLEN_MAX);

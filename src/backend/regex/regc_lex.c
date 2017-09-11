@@ -28,7 +28,11 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/backend/regex/regc_lex.c,v 1.9 2009/06/11 14:49:01 momjian Exp $
+=======
+ * $PostgreSQL: pgsql/src/backend/regex/regc_lex.c,v 1.8 2008/02/14 17:33:37 tgl Exp $
+>>>>>>> 0f855d621b
  *
  */
 
@@ -214,47 +218,83 @@ lexnest(struct vars * v,
 /*
  * string constants to interpolate as expansions of things like \d
  */
+<<<<<<< HEAD
 static const chr backd[] = {	/* \d */
+=======
+static const chr backd[] = {			/* \d */
+>>>>>>> 0f855d621b
 	CHR('['), CHR('['), CHR(':'),
 	CHR('d'), CHR('i'), CHR('g'), CHR('i'), CHR('t'),
 	CHR(':'), CHR(']'), CHR(']')
 };
+<<<<<<< HEAD
 static const chr backD[] = {	/* \D */
+=======
+static const chr backD[] = {			/* \D */
+>>>>>>> 0f855d621b
 	CHR('['), CHR('^'), CHR('['), CHR(':'),
 	CHR('d'), CHR('i'), CHR('g'), CHR('i'), CHR('t'),
 	CHR(':'), CHR(']'), CHR(']')
 };
+<<<<<<< HEAD
 static const chr brbackd[] = {	/* \d within brackets */
+=======
+static const chr brbackd[] = {			/* \d within brackets */
+>>>>>>> 0f855d621b
 	CHR('['), CHR(':'),
 	CHR('d'), CHR('i'), CHR('g'), CHR('i'), CHR('t'),
 	CHR(':'), CHR(']')
 };
+<<<<<<< HEAD
 static const chr backs[] = {	/* \s */
+=======
+static const chr backs[] = {			/* \s */
+>>>>>>> 0f855d621b
 	CHR('['), CHR('['), CHR(':'),
 	CHR('s'), CHR('p'), CHR('a'), CHR('c'), CHR('e'),
 	CHR(':'), CHR(']'), CHR(']')
 };
+<<<<<<< HEAD
 static const chr backS[] = {	/* \S */
+=======
+static const chr backS[] = {			/* \S */
+>>>>>>> 0f855d621b
 	CHR('['), CHR('^'), CHR('['), CHR(':'),
 	CHR('s'), CHR('p'), CHR('a'), CHR('c'), CHR('e'),
 	CHR(':'), CHR(']'), CHR(']')
 };
+<<<<<<< HEAD
 static const chr brbacks[] = {	/* \s within brackets */
+=======
+static const chr brbacks[] = {			/* \s within brackets */
+>>>>>>> 0f855d621b
 	CHR('['), CHR(':'),
 	CHR('s'), CHR('p'), CHR('a'), CHR('c'), CHR('e'),
 	CHR(':'), CHR(']')
 };
+<<<<<<< HEAD
 static const chr backw[] = {	/* \w */
+=======
+static const chr backw[] = {			/* \w */
+>>>>>>> 0f855d621b
 	CHR('['), CHR('['), CHR(':'),
 	CHR('a'), CHR('l'), CHR('n'), CHR('u'), CHR('m'),
 	CHR(':'), CHR(']'), CHR('_'), CHR(']')
 };
+<<<<<<< HEAD
 static const chr backW[] = {	/* \W */
+=======
+static const chr backW[] = {			/* \W */
+>>>>>>> 0f855d621b
 	CHR('['), CHR('^'), CHR('['), CHR(':'),
 	CHR('a'), CHR('l'), CHR('n'), CHR('u'), CHR('m'),
 	CHR(':'), CHR(']'), CHR('_'), CHR(']')
 };
+<<<<<<< HEAD
 static const chr brbackw[] = {	/* \w within brackets */
+=======
+static const chr brbackw[] = {			/* \w within brackets */
+>>>>>>> 0f855d621b
 	CHR('['), CHR(':'),
 	CHR('a'), CHR('l'), CHR('n'), CHR('u'), CHR('m'),
 	CHR(':'), CHR(']'), CHR('_')

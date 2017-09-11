@@ -6,7 +6,11 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.63 2009/06/11 14:49:15 momjian Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.59 2008/02/16 21:16:04 tgl Exp $
+>>>>>>> 0f855d621b
  *
  *-------------------------------------------------------------------------
  */
@@ -1563,7 +1567,11 @@ pg_tzenumerate_next(pg_tzenum *dir)
 		 * Load this timezone using tzload() not pg_tzset(), so we don't fill
 		 * the cache
 		 */
+<<<<<<< HEAD
 		if (tzload(fullname + dir->baselen, dir->tz.TZname, &dir->tz.state,
+=======
+		if (tzload(fullname + dir->baselen, dir->tz.TZname, &dir->tz.state, 
+>>>>>>> 0f855d621b
 				   TRUE) != 0)
 		{
 			/* Zone could not be loaded, ignore it */

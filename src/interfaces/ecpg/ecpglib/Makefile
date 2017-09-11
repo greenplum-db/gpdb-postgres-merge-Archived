@@ -5,7 +5,11 @@
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
+<<<<<<< HEAD
 # $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.63 2009/02/07 17:17:34 momjian Exp $
+=======
+# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.56 2008/02/26 06:41:24 petere Exp $
+>>>>>>> 0f855d621b
 #
 #-------------------------------------------------------------------------
 
@@ -16,6 +20,10 @@ include $(top_builddir)/src/Makefile.global
 NAME= ecpg
 SO_MAJOR_VERSION= 6
 SO_MINOR_VERSION= 1
+<<<<<<< HEAD
+=======
+DLTYPE= library
+>>>>>>> 0f855d621b
 
 
 # The frontend doesn't need everything that's in LIBS, some are backend only
@@ -51,11 +59,14 @@ SHLIB_LINK = -L../pgtypeslib -lpgtypes $(libpq) $(filter -lintl -lm, $(LIBS)) $(
 
 SHLIB_EXPORTS = exports.txt
 
+SHLIB_EXPORTS = exports.txt
+
 ifeq ($(PORTNAME), win32)
 # Link to shfolder.dll instead of shell32.dll
 SHLIB_LINK += -lshfolder
 endif
 
+<<<<<<< HEAD
 all: libpq pgtypeslib all-lib
 
 libpq:
@@ -63,6 +74,9 @@ libpq:
 
 pgtypeslib:
 	$(MAKE) -C $(top_builddir)/src/interfaces/ecpg/pgtypeslib all
+=======
+all: all-lib
+>>>>>>> 0f855d621b
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib

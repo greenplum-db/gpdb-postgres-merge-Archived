@@ -1,13 +1,14 @@
 #
 # Makefile for utils
 #
-# $PostgreSQL: pgsql/src/backend/utils/Makefile,v 1.25 2007/02/09 15:55:58 petere Exp $
+# $PostgreSQL: pgsql/src/backend/utils/Makefile,v 1.26 2008/02/19 10:30:08 petere Exp $
 #
 
 subdir = src/backend/utils
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
+<<<<<<< HEAD
 OBJS        = fmgrtab.o session_state.o
 SUBDIRS     = adt cache datumstream error fmgr hash init mb misc mmgr resowner \
 			   resgroup resscheduler sort time gpmon gp workfile_manager resource_manager
@@ -17,6 +18,15 @@ include $(top_srcdir)/src/backend/common.mk
 all: fmgroids.h probes.h
 
 
+=======
+OBJS        = fmgrtab.o
+SUBDIRS     = adt cache error fmgr hash init mb misc mmgr resowner sort time
+
+include $(top_srcdir)/src/backend/common.mk
+
+all: fmgroids.h
+
+>>>>>>> 0f855d621b
 $(SUBDIRS:%=%-recursive): fmgroids.h
 
 
@@ -39,7 +49,10 @@ else
 	sed -f $(srcdir)/Gen_dummy_probes.sed $< >$@
 endif
 
-
 clean:
+<<<<<<< HEAD
 	for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit; done
 	rm -f SUBSYS.o fmgrtab.o fmgroids.h fmgrtab.c probes.h
+=======
+	rm -f fmgroids.h fmgrtab.c
+>>>>>>> 0f855d621b

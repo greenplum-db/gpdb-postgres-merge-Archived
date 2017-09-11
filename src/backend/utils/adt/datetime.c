@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.213 2010/08/02 01:24:53 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.187 2008/02/25 23:36:28 tgl Exp $
+>>>>>>> 0f855d621b
  *
  *-------------------------------------------------------------------------
  */
@@ -847,7 +851,11 @@ ParseDateTime(const char *timestr, char *workbuf, size_t buflen,
  *				"20011225T040506.789-07"
  *
  * Use the system-provided functions to get the current time zone
+<<<<<<< HEAD
  *	if not specified in the input string.
+=======
+ * if not specified in the input string.
+>>>>>>> 0f855d621b
  *
  * If the date is outside the range of pg_time_t (in practice that could only
  * happen if pg_time_t is just 32 bits), then assume UTC time zone - thomas
@@ -2231,6 +2239,8 @@ DecodeDate(char *str, int fmask, int *tmask, bool *is2digits,
 
 	*tmask = 0;
 
+	*tmask = 0;
+
 	/* parse this string... */
 	while (*str != '\0' && nf < MAXDATEFIELDS)
 	{
@@ -2340,8 +2350,13 @@ ValidateDate(int fmask, bool is2digits, bool bc, struct pg_tm * tm)
 		}
 		else if (is2digits)
 		{
+<<<<<<< HEAD
 			/* process 1 or 2-digit input as 1970-2069 AD, allow '0' and '00' */
 			if (tm->tm_year < 0)	/* just paranoia */
+=======
+			/* allow 2-digit input for 1970-2069 AD; 00 is allowed */
+			if (tm->tm_year < 0)				/* just paranoia */
+>>>>>>> 0f855d621b
 				return DTERR_FIELD_OVERFLOW;
 			if (tm->tm_year < 70)
 				tm->tm_year += 2000;

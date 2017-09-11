@@ -15,6 +15,9 @@ include $(top_builddir)/src/Makefile.global
 OBJS = genam.o indexam.o
 
 include $(top_srcdir)/src/backend/common.mk
+<<<<<<< HEAD
 
 clean:
 	rm -f SUBSYS.o $(OBJS)
+=======
+>>>>>>> 0f855d621b
