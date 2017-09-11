@@ -10,7 +10,6 @@ our $config = {
     # blocksize => 32,        # --with-blocksize, 8kB by default
     # ldap=>1,				# --with-ldap
     nls=>undef,				# --enable-nls=<path>
-<<<<<<< HEAD
     tcl=>undef,				# --with-tls=<path>
     perl=>undef, 			# --with-perl
     python=>undef,			# --with-python=<path>
@@ -25,19 +24,6 @@ our $config = {
     curl=>'c:\zlib', 			# gpdb needs libcurl
     bzlib=>'c:\pgbuild\bzlib'
     #readline=>'c:\progra~1\GnuWin32' 	# readline for windows?
-=======
-    tcl=>'c:\tcl',		# --with-tls=<path>
-    perl=>'c:\perl', 			# --with-perl
-    python=>'c:\python24', # --with-python=<path>
-    krb5=>'c:\prog\pgsql\depend\krb5', # --with-krb5=<path>
-    ldap=>1,			# --with-ldap
-    openssl=>'c:\openssl', # --with-ssl=<path>
-    uuid=>'c:\prog\pgsql\depend\ossp-uuid', #--with-ossp-uuid
-    xml=>'c:\prog\pgsql\depend\libxml2',
-    xslt=>'c:\prog\pgsql\depend\libxslt',
-    iconv=>'c:\prog\pgsql\depend\iconv',
-    zlib=>'c:\prog\pgsql\depend\zlib'# --with-zlib=<path>
->>>>>>> 0f855d621b
 };
 
 1;
