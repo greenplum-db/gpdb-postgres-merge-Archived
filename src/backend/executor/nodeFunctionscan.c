@@ -77,7 +77,6 @@ FunctionNext(FunctionScanState *node)
 										node->tupdesc,
 										PlanStateOperatorMemKB( (PlanState *) node));
 
-<<<<<<< HEAD
 		/* CDB: Offer extra info for EXPLAIN ANALYZE. */
 		if (node->ss.ps.instrument)
 		{
@@ -86,24 +85,6 @@ FunctionNext(FunctionScanState *node)
 
 			/* Request a callback at end of query. */
 			node->ss.ps.cdbexplainfun = ExecFunctionScanExplainEnd;
-=======
-		/*
-		 * If function provided a tupdesc, cross-check it.	We only really
-		 * need to do this for functions returning RECORD, but might as well
-		 * do it always.
-		 */
-		if (funcTupdesc)
-		{
-			tupledesc_match(node->tupdesc, funcTupdesc);
-
-			/*
-			 * If it is a dynamically-allocated TupleDesc, free it: it is
-			 * typically allocated in the EState's per-query context, so we
-			 * must avoid leaking it on rescan.
-			 */
-			if (funcTupdesc->tdrefcount == -1)
-				FreeTupleDesc(funcTupdesc);
->>>>>>> 0f855d621b
 		}
 	}
 
