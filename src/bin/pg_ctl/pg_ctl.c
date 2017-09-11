@@ -51,13 +51,10 @@ int			optreset;
 typedef long pgpid_t;
 
 
-<<<<<<< HEAD
 /* postgres version ident string */
 #define PM_VERSIONSTR "postgres (Greenplum Database) " PG_VERSION "\n"
 
 
-=======
->>>>>>> 0f855d621b
 typedef enum
 {
 	SMART_MODE,
@@ -502,29 +499,18 @@ test_postmaster_connection(bool do_checkpoint __attribute__((unused)))
 	char		portstr[32];
 	char	   *p;
 	char	   *q;
-<<<<<<< HEAD
 	char		connstr[MAXPGPATH * 2 + 256]; /* Should be way more than enough! */
 	static const char *backend_options = "'-c gp_session_role=utility'";
-=======
-	char		connstr[128];	/* Should be way more than enough! */
->>>>>>> 0f855d621b
 
 	*portstr = '\0';
 
 	/*
 	 * Look in post_opts for a -p switch.
 	 *
-<<<<<<< HEAD
-	 * This parsing code is not amazingly bright; it could for instance get
-	 * fooled if ' -p' occurs within a quoted argument value.  Given that few
-	 * people pass complicated settings in post_opts, it's probably good
-	 * enough.
-=======
 	 * This parsing code is not amazingly bright; it could for instance
 	 * get fooled if ' -p' occurs within a quoted argument value.  Given
 	 * that few people pass complicated settings in post_opts, it's
 	 * probably good enough.
->>>>>>> 0f855d621b
 	 */
 	for (p = post_opts; *p;)
 	{
@@ -556,13 +542,8 @@ test_postmaster_connection(bool do_checkpoint __attribute__((unused)))
 	/*
 	 * Search config file for a 'port' option.
 	 *
-<<<<<<< HEAD
-	 * This parsing code isn't amazingly bright either, but it should be okay
-	 * for valid port settings.
-=======
 	 * This parsing code isn't amazingly bright either, but it should be
 	 * okay for valid port settings.
->>>>>>> 0f855d621b
 	 */
 	if (!*portstr)
 	{
@@ -1693,15 +1674,9 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo, bool as_se
 	}
 
 #ifndef __CYGWIN__
-<<<<<<< HEAD
-	AddUserToDacl(processInfo->hProcess);
-#endif
-
-=======
     AddUserToDacl(processInfo->hProcess);
 #endif
-    
->>>>>>> 0f855d621b
+
 	CloseHandle(restrictedToken);
 
 	ResumeThread(processInfo->hThread);
