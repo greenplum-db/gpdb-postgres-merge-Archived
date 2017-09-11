@@ -128,15 +128,9 @@ next_insert(char *text, int pos, bool questionmarks)
 				int			i;
 
 				for (i = p + 1; isdigit((unsigned char) text[i]); i++)
-<<<<<<< HEAD
 					 /* empty loop body */ ;
 				if (!isalpha((unsigned char) text[i]) &&
 					isascii((unsigned char) text[i]) &&text[i] != '_')
-=======
-					/* empty loop body */ ;
-				if (!isalpha((unsigned char) text[i]) &&
-					isascii((unsigned char) text[i]) && text[i] != '_')
->>>>>>> 0f855d621b
 					/* not dollar delimited quote */
 					return p;
 			}

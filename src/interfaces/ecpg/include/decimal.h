@@ -5,15 +5,9 @@
 
 #include <ecpg_informix.h>
 
-<<<<<<< HEAD
 #ifndef _ECPGLIB_H				/* source created by ecpg which defines this
 								 * symbol */
 typedef decimal dec_t;
 #endif   /* ndef _ECPGLIB_H */
-=======
-#ifndef _ECPGLIB_H /* source created by ecpg which defines this symbol */
-typedef decimal dec_t; 
-#endif /* ndef _ECPGLIB_H */
->>>>>>> 0f855d621b
 
 #endif   /* ndef _ECPG_DECIMAL_H */

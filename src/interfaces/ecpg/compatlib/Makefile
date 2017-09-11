@@ -21,10 +21,6 @@ LIBS := $(filter-out -lreadline -ledit -ltermcap -lncurses -lcurses -lcurl -lssl
 NAME= ecpg_compat
 SO_MAJOR_VERSION= 3
 SO_MINOR_VERSION= 1
-<<<<<<< HEAD
-=======
-DLTYPE= library
->>>>>>> 0f855d621b
 
 override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
 	-I$(libpq_srcdir) -I$(top_srcdir)/src/include/utils $(CPPFLAGS)

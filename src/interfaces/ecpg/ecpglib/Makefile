@@ -16,10 +16,6 @@ include $(top_builddir)/src/Makefile.global
 NAME= ecpg
 SO_MAJOR_VERSION= 6
 SO_MINOR_VERSION= 1
-<<<<<<< HEAD
-=======
-DLTYPE= library
->>>>>>> 0f855d621b
 
 
 # The frontend doesn't need everything that's in LIBS, some are backend only
@@ -62,7 +58,6 @@ ifeq ($(PORTNAME), win32)
 SHLIB_LINK += -lshfolder
 endif
 
-<<<<<<< HEAD
 all: libpq pgtypeslib all-lib
 
 libpq:
@@ -70,9 +65,6 @@ libpq:
 
 pgtypeslib:
 	$(MAKE) -C $(top_builddir)/src/interfaces/ecpg/pgtypeslib all
-=======
-all: all-lib
->>>>>>> 0f855d621b
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib

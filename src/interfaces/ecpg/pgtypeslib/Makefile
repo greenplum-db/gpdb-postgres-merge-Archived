@@ -16,10 +16,6 @@ include $(top_builddir)/src/Makefile.global
 NAME= pgtypes
 SO_MAJOR_VERSION= 3
 SO_MINOR_VERSION= 1
-<<<<<<< HEAD
-=======
-DLTYPE= library
->>>>>>> 0f855d621b
 
 # The frontend doesn't need everything that's in LIBS, some are backend only
 LIBS := $(filter-out -lresolv -lbz2, $(LIBS))
