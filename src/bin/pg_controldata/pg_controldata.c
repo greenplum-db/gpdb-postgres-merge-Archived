@@ -73,12 +73,8 @@ main(int argc, char *argv[])
 	int			fd;
 	char		ControlFilePath[MAXPGPATH];
 	char	   *DataDir;
-<<<<<<< HEAD
 	pg_crc32c	crc;
-=======
-	pg_crc32	crc;
 	time_t		time_tmp;
->>>>>>> 0f855d621b
 	char		pgctime_str[128];
 	char		ckpttime_str[128];
 	char		sysident_str[32];

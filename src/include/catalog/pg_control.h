@@ -16,7 +16,7 @@
 #define PG_CONTROL_H
 
 #include "access/xlogdefs.h"
-<<<<<<< HEAD
+#include "pgtime.h"				/* for pg_time_t */
 #include "port/pg_crc32c.h"
 
 
@@ -26,15 +26,7 @@
  * The first three digits is the PostgreSQL version number. The last
  * four digits indicates the GPDB version.
  */
-#define PG_CONTROL_VERSION	8330500
-=======
-#include "pgtime.h"				/* for pg_time_t */
-#include "utils/pg_crc.h"
-
-
-/* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	841
->>>>>>> 0f855d621b
+#define PG_CONTROL_VERSION	8410600
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -51,14 +43,10 @@ typedef struct CheckPoint
 	Oid			nextRelfilenode;	/* next free Relfilenode */
 	MultiXactId nextMulti;		/* next free MultiXactId */
 	MultiXactOffset nextMultiOffset;	/* next free MultiXact offset */
-<<<<<<< HEAD
-	time_t		time;			/* time stamp of checkpoint */
+	pg_time_t	time;			/* time stamp of checkpoint */
 
 	/* IN XLOG RECORD, MORE DATA FOLLOWS AT END OF STRUCT FOR DTM CHECKPOINT */
 
-=======
-	pg_time_t	time;			/* time stamp of checkpoint */
->>>>>>> 0f855d621b
 } CheckPoint;
 
 /* XLOG info values for XLOG rmgr */
