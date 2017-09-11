@@ -89,11 +89,7 @@ extern const char *scheck(const char *string, const char *format);
 
 #ifndef TYPE_INTEGRAL
 #define TYPE_INTEGRAL(type) (((type) 0.5) != 0.5)
-<<<<<<< HEAD
-#endif   /* !defined TYPE_INTEGRAL */
-=======
 #endif /* !defined TYPE_INTEGRAL */
->>>>>>> 0f855d621b
 
 #ifndef INT_STRLEN_MAXIMUM
 /*
@@ -110,31 +106,14 @@ extern const char *scheck(const char *string, const char *format);
 #define _(msgid) (msgid)
 
 #ifndef YEARSPERREPEAT
-<<<<<<< HEAD
-#define YEARSPERREPEAT			400		/* years before a Gregorian repeat */
-#endif   /* !defined YEARSPERREPEAT */
-=======
 #define YEARSPERREPEAT          400     /* years before a Gregorian repeat */
 #endif /* !defined YEARSPERREPEAT */
->>>>>>> 0f855d621b
 
 /*
 ** The Gregorian year averages 365.2425 days, which is 31556952 seconds.
 */
 
 #ifndef AVGSECSPERYEAR
-<<<<<<< HEAD
-#define AVGSECSPERYEAR			31556952L
-#endif   /* !defined AVGSECSPERYEAR */
-
-#ifndef SECSPERREPEAT
-#define SECSPERREPEAT			((int64) YEARSPERREPEAT * (int64) AVGSECSPERYEAR)
-#endif   /* !defined SECSPERREPEAT */
-
-#ifndef SECSPERREPEAT_BITS
-#define SECSPERREPEAT_BITS		34		/* ceil(log2(SECSPERREPEAT)) */
-#endif   /* !defined SECSPERREPEAT_BITS */
-=======
 #define AVGSECSPERYEAR          31556952L
 #endif /* !defined AVGSECSPERYEAR */
 
@@ -145,7 +124,6 @@ extern const char *scheck(const char *string, const char *format);
 #ifndef SECSPERREPEAT_BITS
 #define SECSPERREPEAT_BITS      34      /* ceil(log2(SECSPERREPEAT)) */
 #endif /* !defined SECSPERREPEAT_BITS */
->>>>>>> 0f855d621b
 
 /*
  * UNIX was a registered trademark of The Open Group in 2003.

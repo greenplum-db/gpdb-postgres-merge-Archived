@@ -1,11 +1,7 @@
 #
 # Common make rules for backend
 #
-<<<<<<< HEAD
-# $PostgreSQL: pgsql/src/backend/common.mk,v 1.8 2008/09/05 12:11:18 petere Exp $
-=======
 # $PostgreSQL: pgsql/src/backend/common.mk,v 1.6 2008/02/29 10:34:51 petere Exp $
->>>>>>> 0f855d621b
 #
 
 # When including this file, set OBJS to the object files created in

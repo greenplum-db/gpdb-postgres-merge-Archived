@@ -4,11 +4,7 @@
 #    Makefile for the timezone library
 
 # IDENTIFICATION
-<<<<<<< HEAD
-#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.31 2009/01/06 02:25:29 momjian Exp $
-=======
 #    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.29 2008/02/19 15:29:58 petere Exp $
->>>>>>> 0f855d621b
 #
 #-------------------------------------------------------------------------
 

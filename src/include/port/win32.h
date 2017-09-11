@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.88 2009/06/11 14:49:12 momjian Exp $ */
-=======
 /* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.84 2008/02/17 02:09:31 tgl Exp $ */
->>>>>>> 0f855d621b
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER

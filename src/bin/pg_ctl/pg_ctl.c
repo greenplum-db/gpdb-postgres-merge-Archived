@@ -4,11 +4,7 @@
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.92.2.8 2009/11/14 15:39:41 mha Exp $
-=======
  * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.96 2008/02/29 23:31:20 adunstan Exp $
->>>>>>> 0f855d621b
  *
  *-------------------------------------------------------------------------
  */

@@ -1,11 +1,7 @@
 /*
  * this is a small part of c.h since we don't want to leak all postgres
  * definitions into ecpg programs
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpglib.h,v 1.79 2009/06/11 14:49:13 momjian Exp $
-=======
  * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpglib.h,v 1.75 2008/02/14 12:22:36 meskes Exp $
->>>>>>> 0f855d621b
  */
 
 #ifndef _ECPGLIB_H
@@ -73,11 +69,7 @@ void		sqlprint(void);
 /* define this for simplicity as well as compatibility */
 
 #define		SQLCODE		sqlca.sqlcode
-<<<<<<< HEAD
-#define		SQLSTATE		sqlca.sqlstate
-=======
 #define		SQLSTATE        sqlca.sqlstate
->>>>>>> 0f855d621b
 
 /* dynamic SQL */
 

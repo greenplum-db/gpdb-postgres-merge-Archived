@@ -9,11 +9,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.67 2010/01/14 00:14:06 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.58 2008/02/29 15:31:33 mha Exp $
->>>>>>> 0f855d621b
  *
  *-------------------------------------------------------------------------
  */

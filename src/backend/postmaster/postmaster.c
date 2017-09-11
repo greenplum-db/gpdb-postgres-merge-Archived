@@ -39,11 +39,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.612 2010/06/16 00:54:16 petere Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.552 2008/02/20 22:46:24 tgl Exp $
->>>>>>> 0f855d621b
  *
  * NOTES
  *

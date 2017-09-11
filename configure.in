@@ -1,9 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-<<<<<<< HEAD
-dnl $PostgreSQL: pgsql/configure.in,v 1.546.2.16 2010/05/14 03:27:07 scrappy Exp $
-=======
 dnl $PostgreSQL: pgsql/configure.in,v 1.552 2008/02/24 05:21:54 tgl Exp $
->>>>>>> 0f855d621b
 dnl
 dnl Developers, please strive to achieve this order:
 dnl

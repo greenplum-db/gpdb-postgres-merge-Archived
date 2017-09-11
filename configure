@@ -5391,11 +5391,7 @@ do
 	# certainly right.
 	break;;
     *.* )
-<<<<<<< HEAD
-	if test "${ac_cv_exeext+set}" = set && test "$ac_cv_exeext" != no;
-=======
         if test "${ac_cv_exeext+set}" = set && test "$ac_cv_exeext" != no;
->>>>>>> 0f855d621b
 	then :; else
 	   ac_cv_exeext=`expr "$ac_file" : '[^.]*\(\..*\)'`
 	fi
@@ -22537,11 +22533,7 @@ main ()
 {
 struct tm tm;
 				     int *p = &tm.tm_sec;
-<<<<<<< HEAD
-				     return !p;
-=======
  				     return !p;
->>>>>>> 0f855d621b
   ;
   return 0;
 }
@@ -38709,11 +38701,7 @@ cat >>$CONFIG_STATUS <<_ACEOF
   s&@infodir@&$infodir&g
   s&@localedir@&$localedir&g
   s&@mandir@&$mandir&g
-<<<<<<< HEAD
-  s&\\\${datarootdir}&$datarootdir&g' ;;
-=======
     s&\\\${datarootdir}&$datarootdir&g' ;;
->>>>>>> 0f855d621b
 esac
 _ACEOF
 

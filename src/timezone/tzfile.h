@@ -6,11 +6,7 @@
  * 1996-06-05 by Arthur David Olson.
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/timezone/tzfile.h,v 1.8 2009/06/11 14:49:15 momjian Exp $
-=======
  *	  $PostgreSQL: pgsql/src/timezone/tzfile.h,v 1.7 2008/02/16 21:16:04 tgl Exp $
->>>>>>> 0f855d621b
  */
 
 /*

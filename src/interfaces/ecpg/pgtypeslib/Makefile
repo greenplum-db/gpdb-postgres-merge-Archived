@@ -5,11 +5,7 @@
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-<<<<<<< HEAD
-# $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.43 2009/01/01 17:24:02 momjian Exp $
-=======
 # $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.41 2008/02/26 06:41:24 petere Exp $
->>>>>>> 0f855d621b
 #
 #-------------------------------------------------------------------------
 

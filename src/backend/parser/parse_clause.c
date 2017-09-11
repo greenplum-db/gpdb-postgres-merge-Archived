@@ -10,11 +10,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.180 2008/10/04 21:56:54 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.169 2008/02/15 17:19:46 tgl Exp $
->>>>>>> 0f855d621b
  *
  *-------------------------------------------------------------------------
  */

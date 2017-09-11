@@ -42,11 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.152.2.6 2009/11/14 15:39:41 mha Exp $
-=======
  * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.155 2008/02/29 23:31:20 adunstan Exp $
->>>>>>> 0f855d621b
  *
  *-------------------------------------------------------------------------
  */

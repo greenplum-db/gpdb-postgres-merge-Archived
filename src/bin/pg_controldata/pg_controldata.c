@@ -6,11 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.36.2.1 2008/09/24 08:59:46 mha Exp $
-=======
  * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.37 2008/02/17 02:09:29 tgl Exp $
->>>>>>> 0f855d621b
  */
 #include "postgres_fe.h"
 

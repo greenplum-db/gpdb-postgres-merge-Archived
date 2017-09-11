@@ -1,9 +1,5 @@
 <!--
-<<<<<<< HEAD
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.102.2.1 2009/01/22 22:56:54 momjian Exp $
-=======
 $PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.103 2008/02/15 22:17:06 tgl Exp $
->>>>>>> 0f855d621b
 PostgreSQL documentation
 -->
 

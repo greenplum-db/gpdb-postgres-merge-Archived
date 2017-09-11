@@ -3,11 +3,7 @@
  * 2006-07-17 by Arthur David Olson.
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.24 2009/06/11 14:49:15 momjian Exp $
-=======
  *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.23 2008/02/16 21:16:04 tgl Exp $
->>>>>>> 0f855d621b
  */
 
 #include "postgres_fe.h"
@@ -25,15 +21,6 @@ extern char *optarg;
 #include "pgtz.h"
 #include "tzfile.h"
 
-<<<<<<< HEAD
-#define		  ZIC_VERSION	  '2'
-
-typedef int64 zic_t;
-
-#ifndef ZIC_MAX_ABBR_LEN_WO_WARN
-#define ZIC_MAX_ABBR_LEN_WO_WARN	  6
-#endif   /* !defined ZIC_MAX_ABBR_LEN_WO_WARN */
-=======
 #define       ZIC_VERSION     '2'
 
 typedef int64  zic_t;
@@ -41,7 +28,6 @@ typedef int64  zic_t;
 #ifndef ZIC_MAX_ABBR_LEN_WO_WARN
 #define ZIC_MAX_ABBR_LEN_WO_WARN      6
 #endif /* !defined ZIC_MAX_ABBR_LEN_WO_WARN */
->>>>>>> 0f855d621b
 
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -71,15 +57,9 @@ static char elsieid[] = "@(#)zic.c  8.17";
 #endif
 
 #define OFFSET_STRLEN_MAXIMUM (7 + INT_STRLEN_MAXIMUM(long))
-<<<<<<< HEAD
-#define RULE_STRLEN_MAXIMUM   8 /* "Mdd.dd.d" */
-
-#define end(cp)		  (strchr((cp), '\0'))
-=======
 #define RULE_STRLEN_MAXIMUM   8       /* "Mdd.dd.d" */
 
 #define end(cp)       (strchr((cp), '\0'))
->>>>>>> 0f855d621b
 
 struct rule
 {
@@ -135,11 +115,7 @@ struct zone
 	int			z_nrules;
 
 	struct rule z_untilrule;
-<<<<<<< HEAD
-	zic_t		z_untiltime;
-=======
 	zic_t	z_untiltime;
->>>>>>> 0f855d621b
 };
 
 extern int	link(const char *fromname, const char *toname);
@@ -394,11 +370,7 @@ static const int len_years[2] = {
 
 static struct attype
 {
-<<<<<<< HEAD
-	zic_t		at;
-=======
 	zic_t	at;
->>>>>>> 0f855d621b
 	unsigned char type;
 }	attypes[TZ_MAX_TIMES];
 static long gmtoffs[TZ_MAX_TYPES];
@@ -2151,11 +2123,7 @@ stringrule(char *result, const struct rule *rp, long dstoff, long gmtoff)
 	}
 	else
 	{
-<<<<<<< HEAD
-		int			week;
-=======
 		int	week;
->>>>>>> 0f855d621b
 
 		if (rp->r_dycode == DC_DOWGEQ)
 		{
@@ -2179,11 +2147,7 @@ stringrule(char *result, const struct rule *rp, long dstoff, long gmtoff)
 			}
 		}
 		else
-<<<<<<< HEAD
-			return -1;			/* "cannot happen" */
-=======
 			return -1;	/* "cannot happen" */
->>>>>>> 0f855d621b
 		(void) sprintf(result, "M%d.%d.%d",
 					   rp->r_month + 1, week, rp->r_wday);
 	}
@@ -2956,11 +2920,7 @@ oadd(long t1, long t2)
 static zic_t
 tadd(const zic_t t1, long t2)
 {
-<<<<<<< HEAD
-	zic_t		t;
-=======
 	zic_t	t;
->>>>>>> 0f855d621b
 
 	if (t1 == max_time && t2 > 0)
 		return max_time;
@@ -2987,11 +2947,7 @@ rpytime(const struct rule * rp, int wantedy)
 				m,
 				i;
 	long		dayoff;			/* with a nod to Margaret O. */
-<<<<<<< HEAD
-	zic_t		t;
-=======
 	zic_t	t;
->>>>>>> 0f855d621b
 
 	if (wantedy == INT_MIN)
 		return min_time;

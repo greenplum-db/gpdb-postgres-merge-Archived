@@ -15,11 +15,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.364.2.4 2009/12/09 21:58:16 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.365 2008/02/20 14:31:35 alvherre Exp $
->>>>>>> 0f855d621b
  *
  *-------------------------------------------------------------------------
  */
