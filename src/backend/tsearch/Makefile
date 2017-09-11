@@ -21,15 +21,6 @@ OBJS = ts_locale.o ts_parse.o wparser.o wparser_def.o dict.o \
 	dict_ispell.o regis.o spell.o \
 	to_tsany.o ts_utils.o
 
-<<<<<<< HEAD
-all: SUBSYS.o 
-
-depend dep:
-	$(CC) -MM $(CFLAGS) *.c >depend
-=======
-include $(top_srcdir)/src/backend/common.mk
->>>>>>> 0f855d621b
-
 include $(top_srcdir)/src/backend/common.mk
 
 .PHONY: install-data

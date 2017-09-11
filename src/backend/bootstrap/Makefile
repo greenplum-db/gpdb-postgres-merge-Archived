@@ -35,14 +35,5 @@ else
 endif
 
 
-<<<<<<< HEAD
 # bootparse.c and bootscanner.c are in the distribution tarball, so
 # they are not cleaned here.
-=======
-
-# bootparse.c, bootstrap_tokens.h, and bootscanner.c are in the distribution
-# tarball, so they are not cleaned here.
-clean:
-# And the garbage that might have been left behind by partial build:
-	@rm -f y.tab.h y.tab.c y.output lex.yy.c
->>>>>>> 0f855d621b
