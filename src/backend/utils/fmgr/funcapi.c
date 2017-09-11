@@ -183,10 +183,6 @@ shutdown_MultiFuncCall(Datum arg)
 	 * Delete context that holds all multi-call data, including the
 	 * FuncCallContext itself
 	 */
-<<<<<<< HEAD
-=======
-	MemoryContextSwitchTo(flinfo->fn_mcxt);
->>>>>>> 0f855d621b
 	MemoryContextDelete(funcctx->multi_call_memory_ctx);
 }
 
@@ -197,7 +193,7 @@ shutdown_MultiFuncCall(Datum arg)
  *		it is supposed to return.  If resultTypeId isn't NULL, *resultTypeId
  *		receives the actual datatype OID (this is mainly useful for scalar
  *		result types).	If resultTupleDesc isn't NULL, *resultTupleDesc
- *		receives a pointer to a TupleDesc when the result is of a composite
+ *		receives a pointer to a TupleDesc when the result is of a composit//
  *		type, or NULL when it's a scalar result.
  *
  * One hard case that this handles is resolution of actual rowtypes for

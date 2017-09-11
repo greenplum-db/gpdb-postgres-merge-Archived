@@ -3436,31 +3436,7 @@ RelationCacheInitializePhase3(void)
 		load_critical_index(TriggerRelidNameIndexId,
 							TriggerRelationId);
 
-<<<<<<< HEAD
 #define NUM_CRITICAL_LOCAL_INDEXES	9	/* fix if you change list above */
-=======
-#define LOAD_CRIT_INDEX(indexoid) \
-		do { \
-			ird = RelationBuildDesc(indexoid, NULL); \
-			if (ird == NULL) \
-				elog(PANIC, "could not open critical system index %u", \
-					 indexoid); \
-			ird->rd_isnailed = true; \
-			ird->rd_refcnt = 1; \
-		} while (0)
-
-		LOAD_CRIT_INDEX(ClassOidIndexId);
-		LOAD_CRIT_INDEX(AttributeRelidNumIndexId);
-		LOAD_CRIT_INDEX(IndexRelidIndexId);
-		LOAD_CRIT_INDEX(OpclassOidIndexId);
-		LOAD_CRIT_INDEX(AccessMethodStrategyIndexId);
-		LOAD_CRIT_INDEX(AccessMethodProcedureIndexId);
-		LOAD_CRIT_INDEX(OperatorOidIndexId);
-		LOAD_CRIT_INDEX(RewriteRelRulenameIndexId);
-		LOAD_CRIT_INDEX(TriggerRelidNameIndexId);
-
-#define NUM_CRITICAL_INDEXES	9		/* fix if you change list above */
->>>>>>> 0f855d621b
 
 		criticalRelcachesBuilt = true;
 	}
