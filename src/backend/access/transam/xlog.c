@@ -6315,14 +6315,14 @@ StartupXLOG_InProduction(void)
 		|| ControlFile->state == DB_IN_STANDBY_NEW_TLI_SET)
 	{
 		ControlFile->state = DB_IN_STANDBY_NEW_TLI_SET;
-		ControlFile->time = time(NULL);
+		ControlFile->time = (pg_time_t) time(NULL);
 		UpdateControlFile();
 		ereport(LOG, (errmsg("database system is almost ready")));
 	}
 	else
 	{
 		ControlFile->state = DB_IN_PRODUCTION;
-		ControlFile->time = time(NULL);
+		ControlFile->time = (pg_time_t) time(NULL);
 		UpdateControlFile();
 		ereport(LOG, (errmsg("database system is ready")));
 	}
@@ -6916,7 +6916,6 @@ StartupXLOG(void)
 		ControlFile->prevCheckPoint = ControlFile->checkPoint;
 		ControlFile->checkPoint = checkPointLoc;
 		ControlFile->checkPointCopy = checkPoint;
-<<<<<<< HEAD
 
 		if (StandbyMode)
 		{
@@ -6933,12 +6932,7 @@ StartupXLOG(void)
 			ControlFile->backupEndRequired = backupEndRequired;
 		}
 
-		ControlFile->time = time(NULL);
-=======
-		if (minRecoveryLoc.xlogid != 0 || minRecoveryLoc.xrecoff != 0)
-			ControlFile->minRecoveryPoint = minRecoveryLoc;
 		ControlFile->time = (pg_time_t) time(NULL);
->>>>>>> 0f855d621b
 		UpdateControlFile();
 
 		pgstat_reset_all();
@@ -7172,7 +7166,7 @@ StartupXLOG(void)
 
 		/* Transition to promoted mode */
 		ControlFile->state = DB_IN_STANDBY_PROMOTED;
-		ControlFile->time = time(NULL);
+		ControlFile->time = (pg_time_t) time(NULL);
 		UpdateControlFile();
 	}
 
@@ -7361,13 +7355,6 @@ StartupXLOG(void)
 	 */
 	InRecovery = false;
 
-<<<<<<< HEAD
-=======
-	ControlFile->state = DB_IN_PRODUCTION;
-	ControlFile->time = (pg_time_t) time(NULL);
-	UpdateControlFile();
-
->>>>>>> 0f855d621b
 	/* start the archive_timeout timer running */
 	XLogCtl->Write.lastSegSwitchTime = ControlFile->time;
 
@@ -7926,7 +7913,7 @@ StartupXLOG_Pass4(void)
 			ereport(LOG, (errmsg("Updated catalog to support standby promotion")));
 
 			ControlFile->state = DB_IN_PRODUCTION;
-			ControlFile->time = time(NULL);
+			ControlFile->time = (pg_time_t) time(NULL);
 			UpdateControlFile();
 			ereport(LOG, (errmsg("database system is ready")));
 		}
@@ -8919,7 +8906,6 @@ CreateCheckPoint(int flags)
 
 	if (shutdown)
 	{
-<<<<<<< HEAD
 		/*
 		 * This is an ugly fix to dis-allow changing the pg_control
 		 * state for standby promotion continuity.
@@ -8930,14 +8916,9 @@ CreateCheckPoint(int flags)
 			&& ControlFile->state != DB_IN_STANDBY_NEW_TLI_SET)
 		{
 			ControlFile->state = DB_SHUTDOWNING;
-			ControlFile->time = time(NULL);
+			ControlFile->time = (pg_time_t) time(NULL);
 			UpdateControlFile();
 		}
-=======
-		ControlFile->state = DB_SHUTDOWNING;
-		ControlFile->time = (pg_time_t) time(NULL);
-		UpdateControlFile();
->>>>>>> 0f855d621b
 	}
 
 	/*
@@ -9333,10 +9314,9 @@ CreateCheckPoint(int flags)
 	ControlFile->prevCheckPoint = ControlFile->checkPoint;
 	ControlFile->checkPoint = ProcLastRecPtr;
 	ControlFile->checkPointCopy = checkPoint;
-<<<<<<< HEAD
 	/* crash recovery should always recover to the end of WAL */
 	MemSet(&ControlFile->minRecoveryPoint, 0, sizeof(XLogRecPtr));
-	ControlFile->time = time(NULL);
+	ControlFile->time = (pg_time_t) time(NULL);
 
 	/*
 	 * Save the last checkpoint position.
@@ -9345,9 +9325,6 @@ CreateCheckPoint(int flags)
 	XLogCtl->lastCheckpointLoc = ProcLastRecPtr;
 	XLogCtl->lastCheckpointEndLoc = XactLastRecEnd;
 
-=======
-	ControlFile->time = (pg_time_t) time(NULL);
->>>>>>> 0f855d621b
 	UpdateControlFile();
 	LWLockRelease(ControlFileLock);
 
@@ -9492,17 +9469,11 @@ RecoveryRestartPoint(const CheckPoint *checkPoint)
 	 * Checking true elapsed time keeps us from doing restartpoints too often
 	 * while rapidly scanning large amounts of WAL.
 	 */
-<<<<<<< HEAD
 
 	// UNDONE: For now, turn this off!
-//	elapsed_secs = time(NULL) - ControlFile->time;
+//	elapsed_secs = (pg_time_t) time(NULL) - ControlFile->time;
 //	if (elapsed_secs < CheckPointTimeout / 2)
 //		return;
-=======
-	elapsed_secs = (pg_time_t) time(NULL) - ControlFile->time;
-	if (elapsed_secs < CheckPointTimeout / 2)
-		return;
->>>>>>> 0f855d621b
 
 	/*
 	 * Is it safe to checkpoint?  We must ask each of the resource managers
@@ -9550,8 +9521,7 @@ RecoveryRestartPoint(const CheckPoint *checkPoint)
 	ControlFile->prevCheckPoint = ControlFile->checkPoint;
 	ControlFile->checkPoint = ReadRecPtr;
 	ControlFile->checkPointCopy = *checkPoint;
-<<<<<<< HEAD
-	ControlFile->time = time(NULL);
+	ControlFile->time = (pg_time_t) time(NULL);
 
 	/*
 	 * Save the last checkpoint position.
@@ -9560,9 +9530,6 @@ RecoveryRestartPoint(const CheckPoint *checkPoint)
 	XLogCtl->lastCheckpointLoc = ReadRecPtr;
 	XLogCtl->lastCheckpointEndLoc = EndRecPtr;
 
-=======
-	ControlFile->time = (pg_time_t) time(NULL);
->>>>>>> 0f855d621b
 	UpdateControlFile();
 
 	ereport((recoveryLogRestartpoints ? LOG : DEBUG2),
