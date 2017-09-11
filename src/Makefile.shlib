@@ -247,27 +247,8 @@ ifeq ($(PORTNAME), irix)
 endif
 
 ifeq ($(PORTNAME), linux)
-<<<<<<< HEAD
   LINK.shared		= $(COMPILER) -shared
   ifdef soname
-=======
-  LINK.shared		= $(COMPILER) -shared -Wl,-soname,$(soname)
-  BUILD.exports		= ( echo '{ global:'; $(AWK) '/^[^\#]/ {printf "%s;\n",$$1}' $<; echo ' local: *; };' ) >$@
-  exports_file		= $(SHLIB_EXPORTS:%.txt=%.list)
-  ifneq (,$(exports_file))
-    LINK.shared		+= -Wl,--version-script=$(exports_file)
-  endif
-endif
-
-ifeq ($(PORTNAME), solaris)
-  ifeq ($(GCC), yes)
-    LINK.shared		= $(COMPILER) -shared # $(COMPILER) needed for -m64
-  else
-# CFLAGS added for X86_64
-    LINK.shared		= $(CC) -G $(CFLAGS)
-  endif
-  ifeq ($(with_gnu_ld), yes)
->>>>>>> 0f855d621b
     LINK.shared		+= -Wl,-soname,$(soname)
   endif
   BUILD.exports		= ( echo '{ global:'; $(AWK) '/^[^\#]/ {printf "%s;\n",$$1}' $<; echo ' local: *; };' ) >$@
@@ -394,19 +375,6 @@ ifneq ($(shlib), $(shlib_bare))
 	$(LN_S) $(shlib) $(shlib_bare)
 endif
 endif # shlib_major
-
-# Where possible, restrict the symbols exported by the library to just the
-# official list, so as to avoid unintentional ABI changes.  On recent Darwin
-# this also quiets multiply-defined-symbol warnings in programs that use
-# libpgport along with libpq.
-ifneq (,$(SHLIB_EXPORTS))
-ifdef BUILD.exports
-$(shlib): $(SHLIB_EXPORTS:%.txt=%.list)
-
-$(SHLIB_EXPORTS:%.txt=%.list): %.list: %.txt
-	$(BUILD.exports)
-endif
-endif
 
 # Where possible, restrict the symbols exported by the library to just the
 # official list, so as to avoid unintentional ABI changes.  On recent Darwin
