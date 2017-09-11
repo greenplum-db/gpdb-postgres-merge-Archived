@@ -17,12 +17,7 @@ include $(top_builddir)/src/Makefile.global
 # shared library parameters
 NAME= pq
 SO_MAJOR_VERSION= 5
-<<<<<<< HEAD
 SO_MINOR_VERSION= 3
-=======
-SO_MINOR_VERSION= 2
-DLTYPE= library
->>>>>>> 0f855d621b
 
 override CPPFLAGS :=  -DFRONTEND -DUNSAFE_STAT_OK -I$(srcdir) $(CPPFLAGS) -I$(top_builddir)/src/port -I$(top_srcdir)/src/port
 ifneq ($(PORTNAME), win32)
@@ -53,11 +48,7 @@ ifeq ($(PORTNAME), win32)
 OBJS += win32.o pgsleep.o libpqrc.o
 
 libpqrc.o: libpq.rc
-<<<<<<< HEAD
 	$(WINDRES) -i $< -o $@
-=======
-	windres -i $< -o $@
->>>>>>> 0f855d621b
 
 ifeq ($(enable_thread_safety), yes)
 OBJS += pthread-win32.o

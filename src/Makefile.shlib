@@ -23,7 +23,6 @@
 # SHLIB_LINK            If shared library relies on other libraries,
 #                       additional stuff to put in its link command
 # SHLIB_EXPORTS         (optional) Name of file containing list of symbols to
-<<<<<<< HEAD
 #                       export, in the format "function_name  number"
 #
 # When building a shared library, the following version information
@@ -32,9 +31,6 @@
 #
 # SO_MAJOR_VERSION      Major version number to use for shared library
 # SO_MINOR_VERSION      Minor version number to use for shared library
-=======
-#                       export
->>>>>>> 0f855d621b
 # (If you want a patchlevel, include it in SO_MINOR_VERSION, e.g., "6.2".)
 #
 # Optional flags when building DLL's (only applicable to win32 and cygwin
@@ -147,11 +143,6 @@ ifeq ($(PORTNAME), darwin)
     DLSUFFIX		= .so
     LINK.shared		= $(COMPILER) -bundle -multiply_defined suppress
   endif
-<<<<<<< HEAD
-=======
-  shlib			= lib$(NAME).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)$(DLSUFFIX)
-  shlib_major		= lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX)
->>>>>>> 0f855d621b
   BUILD.exports		= $(AWK) '/^[^\#]/ {printf "_%s\n",$$1}' $< >$@
   exports_file		= $(SHLIB_EXPORTS:%.txt=%.list)
   ifneq (,$(exports_file))
@@ -433,7 +424,6 @@ endif
 else # PORTNAME == aix
 
 # AIX case
-<<<<<<< HEAD
 $(shlib) $(stlib): $(OBJS)
 	$(LINK.static) $(stlib) $^
 	$(RANLIB) $(stlib)
@@ -441,53 +431,29 @@ $(shlib) $(stlib): $(OBJS)
 	$(COMPILER) $(LDFLAGS_NO_L) $(LDFLAGS_SL) -o $(shlib) $(stlib) -Wl,-bE:$(exports_file) $(SHLIB_LINK)
 	rm -f $(stlib)
 	$(AR) $(AROPT) $(stlib) $(shlib)
-=======
-$(shlib) lib$(NAME).a: $(OBJS)
-	$(LINK.static) lib$(NAME).a $^
-	$(RANLIB) lib$(NAME).a
-	$(MKLDEXPORT) lib$(NAME).a >$(exports_file)
-	$(COMPILER) $(LDFLAGS_NO_L) $(LDFLAGS_SL) -o $(shlib) lib$(NAME).a -Wl,-bE:$(exports_file) $(SHLIB_LINK)
-	rm -f lib$(NAME).a
-	$(AR) $(AROPT) lib$(NAME).a $(shlib)
->>>>>>> 0f855d621b
 
 endif # PORTNAME == aix
 
 else # PORTNAME == cygwin || PORTNAME == win32
 
 # Cygwin or Win32 case
-<<<<<<< HEAD
-=======
-
-DLL_DEFFILE = lib$(NAME)dll.def
->>>>>>> 0f855d621b
 
 # If SHLIB_EXPORTS is set, the rules below will build a .def file from
 # that.  Else we build a temporary one here.
 ifeq (,$(SHLIB_EXPORTS))
-<<<<<<< HEAD
 DLL_DEFFILE = lib$(NAME)dll.def
-=======
->>>>>>> 0f855d621b
 exports_file = $(DLL_DEFFILE)
 
 $(exports_file): $(OBJS)
 	$(DLLTOOL) --export-all $(DLLTOOL_DEFFLAGS) --output-def $@ $^
-<<<<<<< HEAD
 else
 DLL_DEFFILE = $(srcdir)/lib$(NAME)dll.def
-=======
->>>>>>> 0f855d621b
 endif
 
 $(shlib): $(OBJS) $(DLL_DEFFILE)
 	$(DLLWRAP) $(LDFLAGS_SL) -o $@ --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(DLL_DEFFILE) $(OBJS) $(SHLIB_LINK)
 
-<<<<<<< HEAD
 $(stlib): $(shlib) $(DLL_DEFFILE)
-=======
-lib$(NAME).a: $(shlib) $(DLL_DEFFILE)
->>>>>>> 0f855d621b
 	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(DLL_DEFFILE) --output-lib $@
 
 endif # PORTNAME == cygwin || PORTNAME == win32
@@ -613,14 +579,7 @@ endif # no soname
 
 .PHONY: clean-lib
 clean-lib:
-<<<<<<< HEAD
 	rm -f $(shlib) $(shlib_bare) $(shlib_major) $(stlib) $(exports_file)
-=======
-	rm -f lib$(NAME).a
-ifeq ($(enable_shared), yes)
-	rm -f $(shlib_bare) $(shlib_major) $(shlib) $(exports_file)
-endif
->>>>>>> 0f855d621b
 
 ifneq (,$(SHLIB_EXPORTS))
 maintainer-clean-lib:
