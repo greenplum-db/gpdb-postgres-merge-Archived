@@ -67,12 +67,9 @@ int			optreset;
 #endif
 
 
-<<<<<<< HEAD
 /* version string we expect back from postgres */
 #define PG_VERSIONSTR "postgres (Greenplum Database) " PG_VERSION "\n"
 
-=======
->>>>>>> 0f855d621b
 /*
  * these values are passed in by makefile defines
  */
@@ -2748,13 +2745,10 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo)
 		return 0;
 	}
 
-<<<<<<< HEAD
 #ifndef __CYGWIN__
     AddUserToTokenDacl(restrictedToken);
 #endif
 
-=======
->>>>>>> 0f855d621b
 	if (!CreateProcessAsUser(restrictedToken,
 						NULL,
 						cmd,
@@ -2772,13 +2766,6 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo)
 		return 0;
 	}
 
-<<<<<<< HEAD
-=======
-#ifndef __CYGWIN__
-	AddUserToDacl(processInfo->hProcess);
-#endif
-
->>>>>>> 0f855d621b
 	return ResumeThread(processInfo->hThread);
 }
 #endif
