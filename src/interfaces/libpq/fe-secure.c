@@ -11,11 +11,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-secure.c
-=======
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.103 2008/02/16 21:03:30 momjian Exp $
->>>>>>> 0f855d621b
  *
  * NOTES
  *
@@ -83,19 +79,7 @@
 #define ROOT_CRL_FILE		"root.crl"
 #endif
 
-<<<<<<< HEAD
 static bool verify_peer_name_matches_certificate(PGconn *);
-=======
-#ifndef HAVE_ERR_SET_MARK
-/* These don't exist in OpenSSL before 0.9.8 */
-#define ERR_set_mark()		((void) 0)
-#define ERR_pop_to_mark()	((void) 0)
-#endif
-
-#ifdef NOT_USED
-static int	verify_peer_name_matches_certificate(PGconn *);
-#endif
->>>>>>> 0f855d621b
 static int	verify_cb(int ok, X509_STORE_CTX *ctx);
 static int	init_ssl_system(PGconn *conn);
 static void destroy_ssl_system(void);
@@ -703,80 +687,6 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
 	return ok;
 }
 
-<<<<<<< HEAD
-=======
-#ifdef NOT_USED
-/*
- *	Verify that common name resolves to peer.
- */
-static int
-verify_peer_name_matches_certificate(PGconn *conn)
-{
-	struct hostent *cn_hostentry = NULL;
-	struct sockaddr server_addr;
-	struct sockaddr_in *sin (struct sockaddr_in *) &server_addr;
-	ACCEPT_TYPE_ARG3 len;
-	char	  **s;
-	unsigned long l;
-
-	/* Get the address on the other side of the socket. */
-	len = sizeof(server_addr);
-	if (getpeername(conn->sock, &server_addr, &len) == -1)
-	{
-		char		sebuf[256];
-
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("error querying socket: %s\n"),
-						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
-		return -1;
-	}
-
-	if (server_addr.sa_family != AF_INET)
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("unsupported protocol\n"));
-		return -1;
-	}
-
-	/* Get the IP addresses of the certificate's common name (CN) */
-	{
-		struct hostent hpstr;
-		char		buf[BUFSIZ];
-		int			herrno = 0;
-
-		/*
-		 * Currently, pqGethostbyname() is used only on platforms that don't
-		 * have getaddrinfo().	If you enable this function, you should
-		 * convert the pqGethostbyname() function call to use getaddrinfo().
-		 */
-		pqGethostbyname(conn->peer_cn, &hpstr, buf, sizeof(buf),
-						&cn_hostentry, &herrno);
-	}
-
-	/* Did we get an IP address? */
-	if (cn_hostentry == NULL)
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-		  libpq_gettext("could not get information about host \"%s\": %s\n"),
-						  conn->peer_cn, hstrerror(h_errno));
-		return -1;
-	}
-
-	/* Does one of the CN's IP addresses match the server's IP address? */
-	for (s = cn_hostentry->h_addr_list; *s != NULL; s++)
-		if (!memcmp(&sin->sin_addr.s_addr, *s, cn_hostentry->h_length))
-			return 0;
-
-	l = ntohl(sin->sin_addr.s_addr);
-	printfPQExpBuffer(&conn->errorMessage,
-					  libpq_gettext(
-					    "server common name \"%s\" does not resolve to %ld.%ld.%ld.%ld\n"),
-					  conn->peer_cn, (l >> 24) % 0x100, (l >> 16) % 0x100,
-					  (l >> 8) % 0x100, l % 0x100);
-	return -1;
-}
-#endif   /* NOT_USED */
->>>>>>> 0f855d621b
 
 /*
  * Check if a wildcard certificate matches the server hostname.
@@ -1525,13 +1435,8 @@ open_client_SSL(PGconn *conn)
 	}
 
 	/*
-<<<<<<< HEAD
 	 * We already checked the server certificate in initialize_SSL() using
 	 * SSL_CTX_set_verify(), if root.crt exists.
-=======
-	 * We already checked the server certificate in initialize_SSL()
-	 * using SSL_CTX_set_verify() if root.crt exists.
->>>>>>> 0f855d621b
 	 */
 
 	/* get server certificate */
@@ -1548,20 +1453,7 @@ open_client_SSL(PGconn *conn)
 		return PGRES_POLLING_FAILED;
 	}
 
-<<<<<<< HEAD
 	if (!verify_peer_name_matches_certificate(conn))
-=======
-	X509_NAME_oneline(X509_get_subject_name(conn->peer),
-					  conn->peer_dn, sizeof(conn->peer_dn));
-	conn->peer_dn[sizeof(conn->peer_dn) - 1] = '\0';
-
-	X509_NAME_get_text_by_NID(X509_get_subject_name(conn->peer),
-							  NID_commonName, conn->peer_cn, SM_USER);
-	conn->peer_cn[SM_USER] = '\0';
-
-#ifdef NOT_USED
-	if (verify_peer_name_matches_certificate(conn) == -1)
->>>>>>> 0f855d621b
 	{
 		close_SSL(conn);
 		return PGRES_POLLING_FAILED;
