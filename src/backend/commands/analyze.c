@@ -25,12 +25,9 @@
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_namespace.h"
-<<<<<<< HEAD
 #include "cdb/cdbpartition.h"
 #include "cdb/cdbtm.h"
 #include "cdb/cdbvars.h"
-=======
->>>>>>> 0f855d621b
 #include "commands/dbcommands.h"
 #include "commands/vacuum.h"
 #include "executor/executor.h"

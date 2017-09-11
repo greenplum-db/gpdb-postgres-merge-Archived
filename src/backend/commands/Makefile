@@ -22,10 +22,7 @@ OBJS = aggregatecmds.o alter.o analyze.o async.o cluster.o comment.o  \
 	tsearchcmds.o typecmds.o user.o vacuum.o vacuumlazy.o \
 	variable.o view.o
 
-<<<<<<< HEAD
 OBJS += analyzefuncs.o extprotocolcmds.o exttablecmds.o filespace.o queue.o
 OBJS += resgroupcmds.o
 
-=======
->>>>>>> 0f855d621b
 include $(top_srcdir)/src/backend/common.mk
