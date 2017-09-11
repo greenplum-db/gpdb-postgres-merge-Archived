@@ -22,11 +22,8 @@ OBJS = createplan.o initsplan.o planagg.o planmain.o planner.o \
 	planpartition.o \
 	transform.o
 
-<<<<<<< HEAD
 ifeq ($(enable_orca),yes)
 OBJS += orca.o
 endif
 
-=======
->>>>>>> 0f855d621b
 include $(top_srcdir)/src/backend/common.mk
