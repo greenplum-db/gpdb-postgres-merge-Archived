@@ -42,9 +42,4 @@ endif
 # Note: guc-file.c is not deleted by 'make clean',
 # since we want to ship it in distribution tarballs.
 clean: 
-<<<<<<< HEAD
-	for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit; done
-	rm -f SUBSYS.o $(OBJS)
-=======
->>>>>>> 0f855d621b
 	@rm -f lex.yy.c

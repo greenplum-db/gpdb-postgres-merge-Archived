@@ -14,9 +14,6 @@ include $(top_builddir)/src/Makefile.global
 
 OBJS = combocid.o tqual.o
 
-<<<<<<< HEAD
 OBJS += sharedsnapshot.o
 
-=======
->>>>>>> 0f855d621b
 include $(top_srcdir)/src/backend/common.mk
