@@ -16,15 +16,17 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres_fe.h"
-<<<<<<< HEAD
 
+/*
+ * GPDB_84_MERGE_FIXME: need to clean up these header includes. Some are
+ * gpdb-specific, others appear to have been taken from older postgres versions,
+ * some are duplicated.
+ */
 #include <ctype.h>
 #include <time.h>
 #include "dumputils.h"
 #include "postgres.h"
 #include "catalog/pg_class.h"
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 #include "pg_backup_archiver.h"
 

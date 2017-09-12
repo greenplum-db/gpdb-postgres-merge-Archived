@@ -132,12 +132,9 @@ main(int argc, char *argv[])
 		 */
 		{"disable-dollar-quoting", no_argument, &disable_dollar_quoting, 1},
 		{"disable-triggers", no_argument, &disable_triggers, 1},
-<<<<<<< HEAD
 		{"resource-queues", no_argument, &resource_queues, 1},
 		{"roles-only", no_argument, &roles_only, 1},
-=======
 		{"no-tablespaces", no_argument, &no_tablespaces, 1},
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 
 		/* START MPP ADDITION */
@@ -578,12 +575,9 @@ help(void)
 	printf(_("  --disable-dollar-quoting\n"
 			 "                           disable dollar quoting, use SQL standard quoting\n"));
 	printf(_("  --disable-triggers       disable triggers during data-only restore\n"));
-<<<<<<< HEAD
 	printf(_("  --resource-queues        dump resource queue data\n"));
 	printf(_("  --roles-only             dump only roles, no databases or tablespaces\n"));
-=======
 	printf(_("  --no-tablespaces         do not dump tablespace assignments\n"));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	printf(_("  --use-set-session-authorization\n"
 			 "                           use SESSION AUTHORIZATION commands instead of\n"
 			 "                           OWNER TO commands\n"));

@@ -32,16 +32,6 @@
  *-------------------------------------------------------------------------
  */
 
-<<<<<<< HEAD
-/*
- * Although this is not a backend module, we must include postgres.h anyway
- * so that we can include a bunch of backend include files.  pg_dump has
- * never pretended to be very independent of the backend anyhow ...
- * Is this still true?  PG 9 doesn't include this.
- */
-#include "postgres.h"
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "postgres_fe.h"
 
 #include <unistd.h>
@@ -452,11 +442,8 @@ main(int argc, char **argv)
 		{"column-inserts", no_argument, &column_inserts, 1},
 		{"disable-dollar-quoting", no_argument, &disable_dollar_quoting, 1},
 		{"disable-triggers", no_argument, &disable_triggers, 1},
-<<<<<<< HEAD
 		{"inserts", no_argument, &dump_inserts, 1},
-=======
 		{"no-tablespaces", no_argument, &outputNoTablespaces, 1},
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 
 		/* START MPP ADDITION */

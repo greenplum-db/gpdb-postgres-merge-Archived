@@ -2713,7 +2713,6 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 			sanitized_owner = strdup("-");
 
 		ahprintf(AH, "-- %sName: %s; Type: %s; Schema: %s; Owner: %s",
-<<<<<<< HEAD
 				 pfx, sanitized_name, te->desc, sanitized_schema,
 				 sanitized_owner);
 
@@ -2729,13 +2728,6 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 			ahprintf(AH, "; Tablespace: %s", sanitized_tablespace);
 			free(sanitized_tablespace);
 		}
-=======
-				 pfx, te->tag, te->desc,
-				 te->namespace ? te->namespace : "-",
-				 ropt->noOwner ? "-" : te->owner);
-		if (te->tablespace && !ropt->noTablespace)
-			ahprintf(AH, "; Tablespace: %s", te->tablespace);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		ahprintf(AH, "\n");
 
 		if (AH->PrintExtraTocPtr !=NULL)
