@@ -20,7 +20,6 @@
 #define PG_TABLESPACE_H
 
 #include "catalog/genbki.h"
-<<<<<<< HEAD
 
 /*
  * pg_tablespace
@@ -32,8 +31,6 @@
  * If an upgrade strategy is developed that will allow dropping of
  * columns then this table should be restructured.
  */
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /* ----------------
  *		pg_tablespace definition.  cpp turns this into

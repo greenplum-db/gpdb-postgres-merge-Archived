@@ -23,12 +23,8 @@
 /*
  * prototypes for prepjointree.c
  */
-<<<<<<< HEAD
 extern Node *pull_up_IN_clauses(PlannerInfo *root, List **rtrlist_inout, Node *node);
-=======
-extern Node *pull_up_IN_clauses(PlannerInfo *root, Node *node);
 extern void inline_set_returning_functions(PlannerInfo *root);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 extern Node *pull_up_subqueries(PlannerInfo *root, Node *jtnode,
 				   bool below_outer_join, bool append_rel_member);
 extern void reduce_outer_joins(PlannerInfo *root);

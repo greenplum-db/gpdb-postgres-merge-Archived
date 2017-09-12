@@ -1104,18 +1104,14 @@ CommandEndInvalidationMessages(void)
  * no need to worry about cleaning up if there's an elog(ERROR) before
  * reaching EndNonTransactionalInvalidation (the invals will just be thrown
  * away if that happens).
-<<<<<<< HEAD
  *
  * GPDB: In GPDB, however, the way we use transactions during VACUUM FULL is
  * different from PostgreSQL, and can already be pending invalidations in
  * the queue. So we do what the above suggested, and create a new nesting level.
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  */
 void
 BeginNonTransactionalInvalidation(void)
 {
-<<<<<<< HEAD
 	TransInvalidationInfo *myInfo;
 
 	/* Must be at top of stack */
@@ -1128,17 +1124,6 @@ BeginNonTransactionalInvalidation(void)
 	myInfo->parent = transInvalInfo;
 	myInfo->my_level = GetCurrentTransactionNestLevel();
 	transInvalInfo = myInfo;
-=======
-	/* Must be at top of stack */
-	Assert(transInvalInfo != NULL && transInvalInfo->parent == NULL);
-
-	/* Must not have any previously-queued activity */
-	Assert(transInvalInfo->PriorCmdInvalidMsgs.cclist == NULL);
-	Assert(transInvalInfo->PriorCmdInvalidMsgs.rclist == NULL);
-	Assert(transInvalInfo->CurrentCmdInvalidMsgs.cclist == NULL);
-	Assert(transInvalInfo->CurrentCmdInvalidMsgs.rclist == NULL);
-	Assert(transInvalInfo->RelcacheInitFileInval == false);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 /*
@@ -1159,15 +1144,10 @@ EndNonTransactionalInvalidation(void)
 	InvalidationChunk *chunk;
 	InvalidationChunk *next;
 
-<<<<<<< HEAD
 	/* Must be at one nesting level below top of stack */
 	Assert(transInvalInfo != NULL);
 	Assert(transInvalInfo->parent != NULL);
 	Assert(transInvalInfo->parent->parent == NULL);
-=======
-	/* Must be at top of stack */
-	Assert(transInvalInfo != NULL && transInvalInfo->parent == NULL);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/* Must not have any prior-command messages */
 	Assert(transInvalInfo->PriorCmdInvalidMsgs.cclist == NULL);
@@ -1183,13 +1163,8 @@ EndNonTransactionalInvalidation(void)
 	/* Send out the invals */
 	ProcessInvalidationMessages(&transInvalInfo->CurrentCmdInvalidMsgs,
 								LocalExecuteInvalidationMessage);
-<<<<<<< HEAD
 	ProcessInvalidationMessageMulti(&transInvalInfo->CurrentCmdInvalidMsgs,
 									SendSharedInvalidMessages);
-=======
-	ProcessInvalidationMessages(&transInvalInfo->CurrentCmdInvalidMsgs,
-								SendSharedInvalidMessage);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/* Clean up and release memory */
 	for (chunk = transInvalInfo->CurrentCmdInvalidMsgs.cclist;
@@ -1206,7 +1181,6 @@ EndNonTransactionalInvalidation(void)
 		next = chunk->next;
 		pfree(chunk);
 	}
-<<<<<<< HEAD
 
 	/* Pop the transaction state stack */
 	{
@@ -1216,11 +1190,6 @@ EndNonTransactionalInvalidation(void)
 
 		pfree(myInfo);
 	}
-=======
-	transInvalInfo->CurrentCmdInvalidMsgs.cclist = NULL;
-	transInvalInfo->CurrentCmdInvalidMsgs.rclist = NULL;
-	transInvalInfo->RelcacheInitFileInval = false;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 

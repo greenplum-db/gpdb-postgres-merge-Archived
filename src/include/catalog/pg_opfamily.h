@@ -20,16 +20,6 @@
 #define PG_OPFAMILY_H
 
 #include "catalog/genbki.h"
-<<<<<<< HEAD
-
-/* ----------------
- *		postgres.h contains the system type definitions and the
- *		CATALOG(), BKI_BOOTSTRAP and DATA() sugar words so this file
- *		can be read by both genbki.sh and the C compiler.
- * ----------------
- */
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /* ----------------
  *		pg_opfamily definition. cpp turns this into

@@ -73,7 +73,7 @@
 #include "utils/relationnode.h"
 #include "utils/resowner.h"
 #include "utils/syscache.h"
-<<<<<<< HEAD
+#include "utils/tqual.h"
 
 #include "catalog/gp_policy.h"         /* GpPolicy */
 #include "cdb/cdbtm.h"
@@ -82,10 +82,6 @@
 #include "cdb/cdbpersistentfilesysobj.h"
 #include "cdb/cdbsreh.h"
 #include "utils/visibility_summary.h"
-=======
-#include "utils/tqual.h"
-#include "utils/typcache.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 /*

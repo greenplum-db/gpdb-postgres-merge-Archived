@@ -56,24 +56,8 @@
 #include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/resowner.h"
-<<<<<<< HEAD
-#include "utils/syscache.h"
-=======
 #include "utils/snapmgr.h"
-
-
-typedef struct
-{
-	void		(*callback) ();
-	void	   *arg;
-} ScanQueryWalkerContext;
-
-typedef struct
-{
-	Oid			inval_relid;
-	CachedPlan *plan;
-} InvalRelidContext;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+#include "utils/syscache.h"
 
 
 static List *cached_plans_list = NIL;

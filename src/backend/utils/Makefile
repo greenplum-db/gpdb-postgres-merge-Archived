@@ -15,10 +15,6 @@ SUBDIRS     = adt cache datumstream error fmgr hash init mb misc mmgr resowner \
 include $(top_srcdir)/src/backend/common.mk
 
 all: fmgroids.h probes.h
-<<<<<<< HEAD
-
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 $(SUBDIRS:%=%-recursive): fmgroids.h
 
