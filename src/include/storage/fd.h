@@ -81,15 +81,10 @@ extern void FileClose(File file);
 extern int	FileRead(File file, char *buffer, int amount);
 extern int	FileWrite(File file, char *buffer, int amount);
 extern int	FileSync(File file);
-<<<<<<< HEAD
 extern int64 FileSeek(File file, int64 offset, int whence);
 extern int64 FileNonVirtualCurSeek(File file);
 extern int	FileTruncate(File file, int64 offset);
 extern int64 FileDiskSize(File file);
-=======
-extern off_t FileSeek(File file, off_t offset, int whence);
-extern int	FileTruncate(File file, off_t offset);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /* Operations that allow use of regular stdio --- USE WITH CAUTION */
 extern FILE *AllocateFile(const char *name, const char *mode);
