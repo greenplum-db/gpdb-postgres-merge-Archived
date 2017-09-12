@@ -51,17 +51,6 @@ typedef struct PGLZ_Header
  *		min_input_size		Minimum input data size to consider compression.
  *
  *		max_input_size		Maximum input data size to consider compression.
-<<<<<<< HEAD
- *
- *		min_comp_rate		Minimum compression rate (0-99%) to require.
- *							Regardless of min_comp_rate, the output must be
- *							smaller than the input, else we don't store
- *							compressed.
- *
- *		first_success_by	Abandon compression if we find no compressible
- *							data within the first this-many bytes.
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *		min_comp_rate		Minimum compression rate (0-99%) to require.
  *							Regardless of min_comp_rate, the output must be
