@@ -31,10 +31,7 @@
 #include "parser/parsetree.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
-<<<<<<< HEAD
 #include "utils/rel.h"
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "utils/tqual.h"
 
 #define PG_GETARG_ITEMPOINTER(n) DatumGetItemPointer(PG_GETARG_DATUM(n))

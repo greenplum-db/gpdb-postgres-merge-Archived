@@ -47,7 +47,6 @@ TimestampTz PgStartTime;
 /* Set at configuration reload */
 TimestampTz PgReloadTime;
 
-<<<<<<< HEAD
 typedef struct
 {
 	Timestamp	current;
@@ -67,10 +66,6 @@ typedef struct
 
 static TimeOffset time2t(const int hour, const int min, const int sec, const fsec_t fsec);
 static void EncodeSpecialTimestamp(Timestamp dt, char *str);
-=======
-static TimeOffset time2t(const int hour, const int min, const int sec, const fsec_t fsec);
-static int	EncodeSpecialTimestamp(Timestamp dt, char *str);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 static Timestamp dt2local(Timestamp dt, int timezone);
 static void AdjustTimestampForTypmod(Timestamp *time, int32 typmod);
 static void AdjustIntervalForTypmod(Interval *interval, int32 typmod);
@@ -1379,18 +1374,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		}
 		else if (range == INTERVAL_MASK(MINUTE))
 		{
-<<<<<<< HEAD
 #ifdef HAVE_INT64_TIMESTAMP
-=======
-			TimeOffset	hour;
-
-			interval->month = 0;
-			interval->day = 0;
-
-#ifdef HAVE_INT64_TIMESTAMP
-			hour = interval->time / USECS_PER_HOUR;
-			interval->time -= hour * USECS_PER_HOUR;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 			interval->time = (interval->time / USECS_PER_MINUTE) *
 				USECS_PER_MINUTE;
 #else
@@ -1399,22 +1383,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		}
 		else if (range == INTERVAL_MASK(SECOND))
 		{
-<<<<<<< HEAD
 			/* fractional-second rounding will be dealt with below */
-=======
-			TimeOffset	minute;
-
-			interval->month = 0;
-			interval->day = 0;
-
-#ifdef HAVE_INT64_TIMESTAMP
-			minute = interval->time / USECS_PER_MINUTE;
-			interval->time -= minute * USECS_PER_MINUTE;
-#else
-			TMODULO(interval->time, minute, (double) SECS_PER_MINUTE);
-			/* return subseconds too */
-#endif
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		}
 		/* DAY TO HOUR */
 		else if (range == (INTERVAL_MASK(DAY) |
@@ -1469,21 +1438,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		else if (range == (INTERVAL_MASK(MINUTE) |
 						   INTERVAL_MASK(SECOND)))
 		{
-<<<<<<< HEAD
 			/* fractional-second rounding will be dealt with below */
-=======
-			TimeOffset	hour;
-
-			interval->month = 0;
-			interval->day = 0;
-
-#ifdef HAVE_INT64_TIMESTAMP
-			hour = interval->time / USECS_PER_HOUR;
-			interval->time -= hour * USECS_PER_HOUR;
-#else
-			TMODULO(interval->time, hour, (double) SECS_PER_HOUR);
-#endif
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		}
 		else
 			elog(ERROR, "unrecognized interval typmod: %d", typmod);
@@ -2426,12 +2381,7 @@ timestamptz_cmp_timestamp(PG_FUNCTION_ARGS)
 static inline TimeOffset
 interval_cmp_value(const Interval *interval)
 {
-<<<<<<< HEAD
 	TimeOffset	span;
-=======
-	TimeOffset	span1,
-				span2;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	span = interval->time;
 
@@ -5152,13 +5102,10 @@ timestamp_zone(PG_FUNCTION_ARGS)
 	TimestampTz result;
 	int			tz;
 	char		tzname[TZ_STRLEN_MAX + 1];
-<<<<<<< HEAD
 	char	   *lowzone;
 	int			type,
 				val;
 	pg_tz	   *tzp;
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMPTZ(timestamp);
@@ -5172,7 +5119,6 @@ timestamp_zone(PG_FUNCTION_ARGS)
 	 * that are identical to offset abbreviations.)
 	 */
 	text_to_cstring_buffer(zone, tzname, sizeof(tzname));
-<<<<<<< HEAD
 	lowzone = downcase_truncate_identifier(tzname,
 										   strlen(tzname),
 										   false);
@@ -5180,10 +5126,6 @@ timestamp_zone(PG_FUNCTION_ARGS)
 	type = DecodeSpecial(0, lowzone, &val);
 
 	if (type == TZ || type == DTZ)
-=======
-	tzp = pg_tzset(tzname);
-	if (tzp)
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	{
 		tz = -(val * 60);
 		result = dt2local(timestamp, tz);
@@ -5197,7 +5139,6 @@ timestamp_zone(PG_FUNCTION_ARGS)
 			struct pg_tm tm;
  			fsec_t		fsec = 0;
 
-<<<<<<< HEAD
 			if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, tzp) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
@@ -5209,15 +5150,6 @@ timestamp_zone(PG_FUNCTION_ARGS)
 						 errmsg("could not convert to time zone \"%s\"",
 								tzname)));
 		}
-=======
-		lowzone = downcase_truncate_identifier(tzname,
-											   strlen(tzname),
-											   false);
-		type = DecodeSpecial(0, lowzone, &val);
-
-		if (type == TZ || type == DTZ)
-			tz = -(val * 60);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		else
 		{
 			ereport(ERROR,
@@ -5344,13 +5276,10 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	Timestamp	result;
 	int			tz;
 	char		tzname[TZ_STRLEN_MAX + 1];
-<<<<<<< HEAD
 	char	   *lowzone;
 	int			type,
 				val;
 	pg_tz	   *tzp;
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMP(timestamp);
@@ -5364,7 +5293,6 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	 * that are identical to offset abbreviations.)
 	 */
 	text_to_cstring_buffer(zone, tzname, sizeof(tzname));
-<<<<<<< HEAD
 	lowzone = downcase_truncate_identifier(tzname,
 										   strlen(tzname),
 										   false);
@@ -5372,10 +5300,6 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	type = DecodeSpecial(0, lowzone, &val);
 
 	if (type == TZ || type == DTZ)
-=======
-	tzp = pg_tzset(tzname);
-	if (tzp)
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	{
 		tz = val * 60;
 		result = dt2local(timestamp, tz);
@@ -5389,7 +5313,6 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 			struct pg_tm tm;
  			fsec_t		fsec = 0;
 
-<<<<<<< HEAD
 			if (timestamp2tm(timestamp, &tz, &tm, &fsec, NULL, tzp) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
@@ -5400,15 +5323,6 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 						 errmsg("could not convert to time zone \"%s\"",
 								tzname)));
 		}
-=======
-		lowzone = downcase_truncate_identifier(tzname,
-											   strlen(tzname),
-											   false);
-		type = DecodeSpecial(0, lowzone, &val);
-
-		if (type == TZ || type == DTZ)
-			tz = val * 60;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		else
 		{
 			ereport(ERROR,

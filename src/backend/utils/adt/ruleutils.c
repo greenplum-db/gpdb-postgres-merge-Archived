@@ -6819,24 +6819,7 @@ flatten_reloptions(Oid relid)
 	reloptions = SysCacheGetAttr(RELOID, tuple,
 								 Anum_pg_class_reloptions, &isnull);
 	if (!isnull)
-<<<<<<< HEAD
 		result = reloptions_to_string(reloptions);
-=======
-	{
-		Datum		sep,
-					txt;
-
-		/*
-		 * We want to use array_to_text(reloptions, ', ') --- but
-		 * DirectFunctionCall2(array_to_text) does not work, because
-		 * array_to_text() relies on flinfo to be valid.  So use
-		 * OidFunctionCall2.
-		 */
-		sep = CStringGetTextDatum(", ");
-		txt = OidFunctionCall2(F_ARRAY_TO_TEXT, reloptions, sep);
-		result = TextDatumGetCString(txt);
-	}
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	ReleaseSysCache(tuple);
 

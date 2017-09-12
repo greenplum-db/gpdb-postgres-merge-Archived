@@ -167,17 +167,8 @@ eqsel(PG_FUNCTION_ARGS)
 	List	   *args = (List *) PG_GETARG_POINTER(2);
 	int			varRelid = PG_GETARG_INT32(3);
 	VariableStatData vardata;
-<<<<<<< HEAD
-	Node	   *other = NULL;
-	bool		varonleft = false;
-	Datum	   *values;
-	int			nvalues;
-	float4	   *numbers;
-	int			nnumbers;
-=======
 	Node	   *other;
 	bool		varonleft;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	double		selec;
 
 	/*
@@ -226,26 +217,12 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 	if (constisnull)
 		return 0.0;
 
-<<<<<<< HEAD
 	if (HeapTupleIsValid(getStatsTuple(&vardata)))
 	{
 		Form_pg_statistic stats;
 		HeapTuple tp = getStatsTuple(&vardata);
 
 		stats = (Form_pg_statistic) GETSTRUCT(tp);
-=======
-	if (HeapTupleIsValid(vardata->statsTuple))
-	{
-		Form_pg_statistic stats;
-		Datum	   *values;
-		int			nvalues;
-		float4	   *numbers;
-		int			nnumbers;
-		bool		match = false;
-		int			i;
-
-		stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		/*
 		 * Is the constant "=" to any of the column's most common values?
@@ -262,49 +239,7 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 		{
 			FmgrInfo	eqproc;
 
-<<<<<<< HEAD
-			/*
-			 * Is the constant "=" to any of the column's most common values?
-			 * (Although the given operator may not really be "=", we will
-			 * assume that seeing whether it returns TRUE is an appropriate
-			 * test.  If you don't like this, maybe you shouldn't be using
-			 * eqsel for your operator...)
-			 */
-			if (get_attstatsslot(tp,
-								 vardata.atttype, vardata.atttypmod,
-								 STATISTIC_KIND_MCV, InvalidOid,
-								 &values, &nvalues,
-								 &numbers, &nnumbers))
-			{
-				FmgrInfo	eqproc;
-
-				fmgr_info(get_opcode(operator), &eqproc);
-
-				for (i = 0; i < nvalues; i++)
-				{
-					/* be careful to apply operator right way 'round */
-					if (varonleft)
-						match = DatumGetBool(FunctionCall2(&eqproc,
-														   values[i],
-														   constval));
-					else
-						match = DatumGetBool(FunctionCall2(&eqproc,
-														   constval,
-														   values[i]));
-					if (match)
-						break;
-				}
-			}
-			else
-			{
-				/* no most-common-value info available */
-				values = NULL;
-				numbers = NULL;
-				i = nvalues = nnumbers = 0;
-			}
-=======
 			fmgr_info(get_opcode(operator), &eqproc);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 			for (i = 0; i < nvalues; i++)
 			{
@@ -367,21 +302,8 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 			 * Another cross-check: selectivity shouldn't be estimated as
 			 * more than the least common "most common value".
 			 */
-<<<<<<< HEAD
-			if (get_attstatsslot(tp,
-								 vardata.atttype, vardata.atttypmod,
-								 STATISTIC_KIND_MCV, InvalidOid,
-								 NULL, NULL,
-								 &numbers, &nnumbers))
-			{
-				if (nnumbers > 0 && selec > numbers[0])
-					selec = numbers[0];
-				free_attstatsslot(vardata.atttype, NULL, 0, numbers, nnumbers);
-			}
-=======
 			if (nnumbers > 0 && selec > numbers[nnumbers - 1])
 				selec = numbers[nnumbers - 1];
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		}
 
 		free_attstatsslot(vardata->atttype, values, nvalues,
@@ -1236,17 +1158,14 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 		 * them by applying the pattern operator, so there's no reason to
 		 * approximate.  (If the MCVs cover a significant part of the total
 		 * population, this gives us a big leg up in accuracy.)
+		 *
+		 * GPDB_84_MERGE_FIXME: this entire function is a massive conflict
+		 * because of the confusing backports and merges throughout its history.
+		 * At Venky's suggestion we have replaced this section with the 8.4
+		 * logic and removed CDB-specific pieces. Revisit.
 		 */
 		Selectivity selec;
-<<<<<<< HEAD
-        Selectivity eqsel;
-        Selectivity fewsel;
-        double      fewvalues = 2.0;
-        double      ncommon;
-        double      ndistinct;
-=======
 		int			hist_size;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		FmgrInfo	opproc;
 		double		nullfrac,
 					mcv_selec,
@@ -1254,19 +1173,6 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 
 		/* Try to use the histogram entries to get selectivity */
 		fmgr_info(get_opcode(operator), &opproc);
-
-		/*
-		 * If we have most-common-values info, add up the fractions of the MCV
-		 * entries that satisfy MCV OP PATTERN.  These fractions contribute
-		 * directly to the result selectivity.	Also add up the total fraction
-		 * represented by MCV entries.
-		 */
-		mcv_selec = mcv_selectivity_cdb(&vardata, &opproc, constval, true,
-									    &sumcommon, &ncommon);
-
-        /* CDB: LIKE cannot select fewer rows than "=". */
-        ndistinct = get_variable_numdistinct(&vardata) - ncommon;
-        eqsel = 1.0 / Max(1.0, ndistinct);
 
 		selec = histogram_selectivity(&vardata, &opproc, constval, true,
 									  10, 1, &hist_size);
@@ -1278,38 +1184,12 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 			Selectivity prefixsel;
 
 			if (pstatus == Pattern_Prefix_Partial)
-            {
 				prefixsel = prefix_selectivity(&vardata, vartype,
 											   opfamily, prefix);
-
-                /* CDB: Assume prefix matches at least a few distinct values. */
-                fewsel = (DEFAULT_RANGE_INEQ_SEL / DEFAULT_EQ_SEL) * eqsel;
-                prefixsel = Min(Max(prefixsel, fewsel), 1.0);
-
-                selec *= prefixsel;
-            }
 			else
-			{
 				prefixsel = 1.0;
-<<<<<<< HEAD
-				selec = prefixsel * rest_selec;
-			}
-		}
-		else
-		{
-			/* Yes, but don't believe extremely small or large estimates. */
-			if (selec < 0.0001)
-				selec = 0.0001;
-			else if (selec > 0.9999)
-				selec = 0.9999;
-		}
 
-        /* CDB: Assume whole pattern matches at least a few distinct values. */
-        fewsel = fewvalues * eqsel;
-        selec = Min(Max(selec, fewsel), 1.0);
-=======
-			restsel = pattern_selectivity(rest, ptype);
-			heursel = prefixsel * restsel;
+			heursel = prefixsel * rest_selec;
 
 			if (selec < 0)			/* fewer than 10 histogram entries? */
 				selec = heursel;
@@ -1340,7 +1220,6 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 		 */
 		mcv_selec = mcv_selectivity(&vardata, &opproc, constval, true,
 									&sumcommon);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		if (HeapTupleIsValid(getStatsTuple(&vardata)))
 		{
@@ -3373,242 +3252,6 @@ convert_numeric_to_scalar(Datum value, Oid typid)
 }
 
 /*
-<<<<<<< HEAD
-=======
- * Do convert_to_scalar()'s work for any character-string data type.
- *
- * String datatypes are converted to a scale that ranges from 0 to 1,
- * where we visualize the bytes of the string as fractional digits.
- *
- * We do not want the base to be 256, however, since that tends to
- * generate inflated selectivity estimates; few databases will have
- * occurrences of all 256 possible byte values at each position.
- * Instead, use the smallest and largest byte values seen in the bounds
- * as the estimated range for each byte, after some fudging to deal with
- * the fact that we probably aren't going to see the full range that way.
- *
- * An additional refinement is that we discard any common prefix of the
- * three strings before computing the scaled values.  This allows us to
- * "zoom in" when we encounter a narrow data range.  An example is a phone
- * number database where all the values begin with the same area code.
- * (Actually, the bounds will be adjacent histogram-bin-boundary values,
- * so this is more likely to happen than you might think.)
- */
-static void
-convert_string_to_scalar(char *value,
-						 double *scaledvalue,
-						 char *lobound,
-						 double *scaledlobound,
-						 char *hibound,
-						 double *scaledhibound)
-{
-	int			rangelo,
-				rangehi;
-	char	   *sptr;
-
-	rangelo = rangehi = (unsigned char) hibound[0];
-	for (sptr = lobound; *sptr; sptr++)
-	{
-		if (rangelo > (unsigned char) *sptr)
-			rangelo = (unsigned char) *sptr;
-		if (rangehi < (unsigned char) *sptr)
-			rangehi = (unsigned char) *sptr;
-	}
-	for (sptr = hibound; *sptr; sptr++)
-	{
-		if (rangelo > (unsigned char) *sptr)
-			rangelo = (unsigned char) *sptr;
-		if (rangehi < (unsigned char) *sptr)
-			rangehi = (unsigned char) *sptr;
-	}
-	/* If range includes any upper-case ASCII chars, make it include all */
-	if (rangelo <= 'Z' && rangehi >= 'A')
-	{
-		if (rangelo > 'A')
-			rangelo = 'A';
-		if (rangehi < 'Z')
-			rangehi = 'Z';
-	}
-	/* Ditto lower-case */
-	if (rangelo <= 'z' && rangehi >= 'a')
-	{
-		if (rangelo > 'a')
-			rangelo = 'a';
-		if (rangehi < 'z')
-			rangehi = 'z';
-	}
-	/* Ditto digits */
-	if (rangelo <= '9' && rangehi >= '0')
-	{
-		if (rangelo > '0')
-			rangelo = '0';
-		if (rangehi < '9')
-			rangehi = '9';
-	}
-
-	/*
-	 * If range includes less than 10 chars, assume we have not got enough
-	 * data, and make it include regular ASCII set.
-	 */
-	if (rangehi - rangelo < 9)
-	{
-		rangelo = ' ';
-		rangehi = 127;
-	}
-
-	/*
-	 * Now strip any common prefix of the three strings.
-	 */
-	while (*lobound)
-	{
-		if (*lobound != *hibound || *lobound != *value)
-			break;
-		lobound++, hibound++, value++;
-	}
-
-	/*
-	 * Now we can do the conversions.
-	 */
-	*scaledvalue = convert_one_string_to_scalar(value, rangelo, rangehi);
-	*scaledlobound = convert_one_string_to_scalar(lobound, rangelo, rangehi);
-	*scaledhibound = convert_one_string_to_scalar(hibound, rangelo, rangehi);
-}
-
-static double
-convert_one_string_to_scalar(char *value, int rangelo, int rangehi)
-{
-	int			slen = strlen(value);
-	double		num,
-				denom,
-				base;
-
-	if (slen <= 0)
-		return 0.0;				/* empty string has scalar value 0 */
-
-	/*
-	 * Since base is at least 10, need not consider more than about 20 chars
-	 */
-	if (slen > 20)
-		slen = 20;
-
-	/* Convert initial characters to fraction */
-	base = rangehi - rangelo + 1;
-	num = 0.0;
-	denom = base;
-	while (slen-- > 0)
-	{
-		int			ch = (unsigned char) *value++;
-
-		if (ch < rangelo)
-			ch = rangelo - 1;
-		else if (ch > rangehi)
-			ch = rangehi + 1;
-		num += ((double) (ch - rangelo)) / denom;
-		denom *= base;
-	}
-
-	return num;
-}
-
-/*
- * Convert a string-type Datum into a palloc'd, null-terminated string.
- *
- * When using a non-C locale, we must pass the string through strxfrm()
- * before continuing, so as to generate correct locale-specific results.
- */
-static char *
-convert_string_datum(Datum value, Oid typid)
-{
-	char	   *val;
-
-	switch (typid)
-	{
-		case CHAROID:
-			val = (char *) palloc(2);
-			val[0] = DatumGetChar(value);
-			val[1] = '\0';
-			break;
-		case BPCHAROID:
-		case VARCHAROID:
-		case TEXTOID:
-			val = TextDatumGetCString(value);
-			break;
-		case NAMEOID:
-			{
-				NameData   *nm = (NameData *) DatumGetPointer(value);
-
-				val = pstrdup(NameStr(*nm));
-				break;
-			}
-		default:
-
-			/*
-			 * Can't get here unless someone tries to use scalarltsel on an
-			 * operator with one string and one non-string operand.
-			 */
-			elog(ERROR, "unsupported type: %u", typid);
-			return NULL;
-	}
-
-	if (!lc_collate_is_c())
-	{
-		char	   *xfrmstr;
-		size_t		xfrmlen;
-		size_t		xfrmlen2;
-
-		/*
-		 * Note: originally we guessed at a suitable output buffer size, and
-		 * only needed to call strxfrm twice if our guess was too small.
-		 * However, it seems that some versions of Solaris have buggy strxfrm
-		 * that can write past the specified buffer length in that scenario.
-		 * So, do it the dumb way for portability.
-		 *
-		 * Yet other systems (e.g., glibc) sometimes return a smaller value
-		 * from the second call than the first; thus the Assert must be <= not
-		 * == as you'd expect.  Can't any of these people program their way
-		 * out of a paper bag?
-		 *
-		 * XXX: strxfrm doesn't support UTF-8 encoding on Win32, it can return
-		 * bogus data or set an error. This is not really a problem unless it
-		 * crashes since it will only give an estimation error and nothing
-		 * fatal.
-		 */
-#if _MSC_VER == 1400			/* VS.Net 2005 */
-
-		/*
-		 *
-		 * http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx
-		 * ?FeedbackID=99694 */
-		{
-			char		x[1];
-
-			xfrmlen = strxfrm(x, val, 0);
-		}
-#else
-		xfrmlen = strxfrm(NULL, val, 0);
-#endif
-#ifdef WIN32
-
-		/*
-		 * On Windows, strxfrm returns INT_MAX when an error occurs. Instead
-		 * of trying to allocate this much memory (and fail), just return the
-		 * original string unmodified as if we were in the C locale.
-		 */
-		if (xfrmlen == INT_MAX)
-			return val;
-#endif
-		xfrmstr = (char *) palloc(xfrmlen + 1);
-		xfrmlen2 = strxfrm(xfrmstr, val, xfrmlen + 1);
-		Assert(xfrmlen2 <= xfrmlen);
-		pfree(val);
-		val = xfrmstr;
-	}
-
-	return val;
-}
-
-/*
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  * Do convert_to_scalar()'s work for any bytea data type.
  *
  * Very similar to the old convert_string_to_scalar except we can't assume
@@ -4623,15 +4266,10 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		 errmsg("regular-expression matching not supported on type bytea")));
 
-<<<<<<< HEAD
 	/* Use the regexp machinery to extract the prefix, if any */
 	prefix = regexp_fixed_prefix(DatumGetTextPP(patt_const->constvalue),
 								 case_insensitive,
 								 &exact);
-=======
-	/* the right-hand const is type text for all of these */
-	patt = TextDatumGetCString(patt_const->constvalue);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	if (prefix == NULL)
 	{
@@ -4836,35 +4474,7 @@ like_selectivity(const char *patt, int pattlen, bool case_insensitive)
     Selectivity fixed_char_sel = FIXED_CHAR_SEL;
 	int			pos;
 
-<<<<<<< HEAD
-	/* Skip any leading %; it's already factored into initial sel */
-=======
-	/* the right-hand const is type text or bytea */
-	Assert(typeid == BYTEAOID || typeid == TEXTOID);
-
-	if (typeid == BYTEAOID && case_insensitive)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		   errmsg("case insensitive matching not supported on type bytea")));
-
-	if (typeid != BYTEAOID)
-	{
-		patt = TextDatumGetCString(patt_const->constvalue);
-		pattlen = strlen(patt);
-	}
-	else
-	{
-		bytea	   *bstr = DatumGetByteaP(patt_const->constvalue);
-
-		pattlen = VARSIZE(bstr) - VARHDRSZ;
-		patt = (char *) palloc(pattlen);
-		memcpy(patt, VARDATA(bstr), pattlen);
-		if ((Pointer) bstr != DatumGetPointer(patt_const->constvalue))
-			pfree(bstr);
-	}
-
 	/* Skip any leading wildcard; it's already factored into initial sel */
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	for (pos = 0; pos < pattlen; pos++)
 	{
 		if (patt[pos] != '%' && patt[pos] != '_')
@@ -5000,26 +4610,6 @@ regex_selectivity(const char *patt, int pattlen, bool case_insensitive,
 				  int fixed_prefix_len)
 {
 	Selectivity sel;
-<<<<<<< HEAD
-=======
-	char	   *patt;
-	int			pattlen;
-	Oid			typeid = patt_const->consttype;
-
-	/*
-	 * Should be unnecessary, there are no bytea regex operators defined. As
-	 * such, it should be noted that the rest of this function has *not* been
-	 * made safe for binary (possibly NULL containing) strings.
-	 */
-	if (typeid == BYTEAOID)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		 errmsg("regular-expression matching not supported on type bytea")));
-
-	/* the right-hand const is type text for all of these */
-	patt = TextDatumGetCString(patt_const->constvalue);
-	pattlen = strlen(patt);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/* If patt doesn't end with $, consider it to have a trailing wildcard */
 	if (pattlen > 0 && patt[pattlen - 1] == '$' &&
@@ -5227,11 +4817,7 @@ string_to_datum(const char *str, Oid datatype)
 	else if (datatype == BYTEAOID)
 		return DirectFunctionCall1(byteain, CStringGetDatum((char *) str));
 	else
-<<<<<<< HEAD
-		return DirectFunctionCall1(textin, CStringGetDatum((char *) str));
-=======
 		return CStringGetTextDatum(str);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 /*

@@ -20,7 +20,6 @@
 Datum
 pgsql_version(PG_FUNCTION_ARGS __attribute__((unused)) )
 {
-<<<<<<< HEAD
 	char version[512];
 
 	strcpy(version, PG_VERSION_STR " compiled on " __DATE__ " " __TIME__);
@@ -30,7 +29,4 @@ pgsql_version(PG_FUNCTION_ARGS __attribute__((unused)) )
 #endif 
 
 	PG_RETURN_TEXT_P(cstring_to_text(version));
-=======
-	PG_RETURN_TEXT_P(cstring_to_text(PG_VERSION_STR));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }

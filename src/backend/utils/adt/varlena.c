@@ -53,14 +53,6 @@ typedef struct
 #define PG_GETARG_UNKNOWN_P_COPY(n) DatumGetUnknownPCopy(PG_GETARG_DATUM(n))
 #define PG_RETURN_UNKNOWN_P(x)		PG_RETURN_POINTER(x)
 
-<<<<<<< HEAD
-#define PG_TEXTARG_GET_STR(arg_) \
-	DatumGetCString(DirectFunctionCall1(textout, PG_GETARG_DATUM(arg_)))
-#define PG_TEXT_GET_STR(textp_) \
-	DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(textp_)))
-#define PG_STR_GET_TEXT(str_) \
-	DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(str_)))
-
 /*
  * Max considered sub-string size is set to MaxAllocSize - 4MB).
  * The 4MB is saved aside for memory allocation overhead such
@@ -68,15 +60,17 @@ typedef struct
  */
 #define MAX_STRING_BYTES	((Size) (MaxAllocSize - 0x400000))
 
+/*
+ * GPDB_84_MERGE_FIXME: these functions are forked from the upstream's
+ * text_position() and text_position_setup(), which are no longer used. Might be
+ * good to have some extra eyes here to ensure this file was fully merged
+ * correctly.
+ */
 static int	text_position_ptr_len(char* p1, int len1, char *p2, int len2); 
 static void text_position_setup_ptr_len(char* p1, int len1, char* p2, int len2, TextPositionState *state);
 
-=======
 static int	text_cmp(text *arg1, text *arg2);
 static int32 text_length(Datum str);
-static int	text_position(text *t1, text *t2);
-static void text_position_setup(text *t1, text *t2, TextPositionState *state);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 static int	text_position_next(int start_pos, TextPositionState *state);
 static void text_position_cleanup(TextPositionState *state);
 static text *text_substring(Datum str,
@@ -144,11 +138,7 @@ text_to_cstring(const text *t)
 
 	if (tunpacked != t)
 		pfree(tunpacked);
-<<<<<<< HEAD
 
-=======
-	
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	return result;
 }
 
@@ -2766,17 +2756,13 @@ split_text(PG_FUNCTION_ARGS)
 	/* return empty string for empty input string */
 	if (inputstring_len < 1)
 	{
-<<<<<<< HEAD
 		if(tofree0)
 			pfree(tofree0);
 		if(tofree1)
 			pfree(tofree1);
 
-		PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
-=======
 		text_position_cleanup(&state);
 		PG_RETURN_TEXT_P(cstring_to_text(""));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	}
 
 	/* empty field separator */
@@ -2917,11 +2903,7 @@ static char* text_to_array_impl(char *string, int stringByteLen, char *delimiter
 		}
 
 		/* must build a temp text datum to pass to accumArrayResult */
-<<<<<<< HEAD
 		result_text = cstring_to_text_with_len(cur_ptr, chunk_len);
-=======
-		result_text = cstring_to_text_with_len(start_ptr, chunk_len);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		/* stash away this field */
 		*arrayState = accumArrayResult(*arrayState,
