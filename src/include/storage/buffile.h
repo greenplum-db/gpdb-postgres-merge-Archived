@@ -42,23 +42,14 @@ extern BufFile *BufFileCreateTemp(const char *filePrefix, bool interXact);
 extern BufFile *BufFileCreateTemp_ReaderWriter(const char *fileName, bool isWriter,
 							   bool interXact);
 extern void BufFileClose(BufFile *file);
-<<<<<<< HEAD
-
 extern Size BufFileRead(BufFile *file, void *ptr, Size size);
 extern Size BufFileWrite(BufFile *file, const void *ptr, Size size);
 
-extern int BufFileSeek(BufFile *file, int fileno, off_t offset, int whence);
+extern int	BufFileSeek(BufFile *file, int fileno, off_t offset, int whence);
 extern void BufFileTell(BufFile *file, int *fileno, off_t *offset);
 extern int	BufFileSeekBlock(BufFile *file, int64 blknum);
 extern void BufFileFlush(BufFile *file);
 extern int64 BufFileGetSize(BufFile *buffile);
 extern void BufFileSetWorkfile(BufFile *buffile);
-=======
-extern size_t BufFileRead(BufFile *file, void *ptr, size_t size);
-extern size_t BufFileWrite(BufFile *file, void *ptr, size_t size);
-extern int	BufFileSeek(BufFile *file, int fileno, off_t offset, int whence);
-extern void BufFileTell(BufFile *file, int *fileno, off_t *offset);
-extern int	BufFileSeekBlock(BufFile *file, long blknum);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 #endif   /* BUFFILE_H */

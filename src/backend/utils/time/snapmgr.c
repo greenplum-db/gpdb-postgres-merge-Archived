@@ -18,6 +18,9 @@
 #include "utils/snapmgr.h"
 #include "utils/tqual.h"
 
+#include "cdb/cdbtm.h"
+#include "utils/guc.h"
+
 
 /*
  * These SnapshotData structs are static to simplify memory allocation
@@ -41,10 +44,14 @@ Snapshot	ActiveSnapshot = NULL;
  * These are updated by GetSnapshotData.  We initialize them this way
  * for the convenience of TransactionIdIsInProgress: even in bootstrap
  * mode, we don't want it to say that BootstrapTransactionId is in progress.
+ *
+ * RecentGlobalXmin is initialized to InvalidTransactionId, to ensure that no
+ * one tries to use a stale value.  Readers should ensure that it has been set
+ * to something else before using it.
  */
 TransactionId TransactionXmin = FirstNormalTransactionId;
 TransactionId RecentXmin = FirstNormalTransactionId;
-TransactionId RecentGlobalXmin = FirstNormalTransactionId;
+TransactionId RecentGlobalXmin = InvalidTransactionId;
 
 
 /*
@@ -70,7 +77,21 @@ GetTransactionSnapshot(void)
 	}
 
 	if (IsXactIsoLevelSerializable)
+	{
+		elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),"[Distributed Snapshot #%u] *Serializable Skip* (gxid = %u, '%s')",
+			 (SerializableSnapshot == NULL ? 0 : SerializableSnapshot->distribSnapshotWithLocalMapping.ds.distribSnapshotId),
+			 getDistributedTransactionId(),
+			 DtxContextToString(DistributedTransactionContext));
+
+		UpdateSerializableCommandId();
+
 		return SerializableSnapshot;
+	}
+
+	elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),"[Distributed Snapshot #%u] (gxid = %u, '%s')",
+		 (LatestSnapshot == NULL ? 0 : LatestSnapshot->distribSnapshotWithLocalMapping.ds.distribSnapshotId),
+		 getDistributedTransactionId(),
+		 DtxContextToString(DistributedTransactionContext));
 
 	LatestSnapshot = GetSnapshotData(&LatestSnapshotData, false);
 
@@ -105,13 +126,27 @@ CopySnapshot(Snapshot snapshot)
 {
 	Snapshot	newsnap;
 	Size		subxipoff;
+	Size		dsoff = 0;
 	Size		size;
+
+	if (!IsMVCCSnapshot(snapshot))
+		return snapshot;
 
 	/* We allocate any XID arrays needed in the same palloc block. */
 	size = subxipoff = sizeof(SnapshotData) +
 		snapshot->xcnt * sizeof(TransactionId);
 	if (snapshot->subxcnt > 0)
 		size += snapshot->subxcnt * sizeof(TransactionId);
+
+	if (snapshot->haveDistribSnapshot &&
+		snapshot->distribSnapshotWithLocalMapping.ds.count > 0)
+	{
+		dsoff = size;
+		size += snapshot->distribSnapshotWithLocalMapping.ds.count *
+			sizeof(DistributedTransactionId);
+		size += snapshot->distribSnapshotWithLocalMapping.currentLocalXidsCount *
+			sizeof(TransactionId);
+	}
 
 	newsnap = (Snapshot) palloc(size);
 	memcpy(newsnap, snapshot, sizeof(SnapshotData));
@@ -136,6 +171,43 @@ CopySnapshot(Snapshot snapshot)
 	else
 		newsnap->subxip = NULL;
 
+	if (snapshot->haveDistribSnapshot &&
+		snapshot->distribSnapshotWithLocalMapping.ds.count > 0)
+	{
+		newsnap->distribSnapshotWithLocalMapping.ds.inProgressXidArray =
+			(DistributedTransactionId*) ((char *) newsnap + dsoff);
+		memcpy(newsnap->distribSnapshotWithLocalMapping.ds.inProgressXidArray,
+			   snapshot->distribSnapshotWithLocalMapping.ds.inProgressXidArray,
+			   snapshot->distribSnapshotWithLocalMapping.ds.count *
+			   sizeof(DistributedTransactionId));
+
+		/* Update the maxCount as memory was only allocated equal to count */
+		newsnap->distribSnapshotWithLocalMapping.ds.maxCount =
+			snapshot->distribSnapshotWithLocalMapping.ds.count;
+
+		/*
+		 * Increment offset to point to next chunk of memory allocated for
+		 * cache.
+		 */
+		dsoff +=snapshot->distribSnapshotWithLocalMapping.ds.count *
+			sizeof(DistributedTransactionId);
+
+		/* Copy the local xid cache */
+		newsnap->distribSnapshotWithLocalMapping.inProgressMappedLocalXids =
+			(TransactionId*) ((char *) newsnap + dsoff);
+		memcpy(newsnap->distribSnapshotWithLocalMapping.inProgressMappedLocalXids,
+			   snapshot->distribSnapshotWithLocalMapping.inProgressMappedLocalXids,
+			   snapshot->distribSnapshotWithLocalMapping.currentLocalXidsCount *
+			   sizeof(TransactionId));
+
+		newsnap->distribSnapshotWithLocalMapping.maxLocalXidsCount =
+			snapshot->distribSnapshotWithLocalMapping.currentLocalXidsCount;
+	}
+	else
+	{
+		newsnap->distribSnapshotWithLocalMapping.ds.inProgressXidArray = NULL;
+	}
+
 	return newsnap;
 }
 
@@ -151,6 +223,9 @@ CopySnapshot(Snapshot snapshot)
 void
 FreeSnapshot(Snapshot snapshot)
 {
+	if (!IsMVCCSnapshot(snapshot))
+		return;
+
 	pfree(snapshot);
 }
 
