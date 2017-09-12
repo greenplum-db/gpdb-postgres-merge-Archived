@@ -207,12 +207,8 @@ typedef struct TypeName
 {
 	NodeTag		type;
 	List	   *names;			/* qualified name (list of Value strings) */
-<<<<<<< HEAD
 	Oid			typid;		    /* type identified by OID */
 	bool		timezone;		/* timezone specified? */
-=======
-	Oid			typeid;			/* type identified by OID */
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	bool		setof;			/* is a set? */
 	bool		pct_type;		/* %TYPE specified? */
 	List	   *typmods;		/* type modifier expression(s) */
@@ -368,10 +364,7 @@ typedef struct A_ArrayExpr
 {
 	NodeTag		type;
 	List	   *elements;		/* array element expressions */
-<<<<<<< HEAD
 	int			location;		/* token location, or -1 if unknown */
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 } A_ArrayExpr;
 
 /*
