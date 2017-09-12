@@ -3,11 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
  * src/bin/psql/mainloop.c
-=======
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.90 2008/04/05 03:40:15 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -191,18 +187,12 @@ MainLoop(FILE *source)
 		{
 			free(line);
 			puts(_("You are using psql, the command-line interface to PostgreSQL."));
-<<<<<<< HEAD
 			printf(_("Type:  \\copyright for distribution terms\n"
 					 "       \\h for help with SQL commands\n"
 					 "       \\? for help with psql commands\n"
 				  "       \\g or terminate with semicolon to execute query\n"
 					 "       \\q to quit\n"));
 
-=======
-			puts(_("Enter SQL commands, or type \\? for a list of backslash options."));
-			puts(_("Use \\h for SQL command help."));
-			puts(_("Use \\q to quit."));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 			fflush(stdout);
 			continue;
 		}

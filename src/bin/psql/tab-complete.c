@@ -2662,7 +2662,6 @@ complete_from_schema_query(const char *text, int state)
 }
 
 
-<<<<<<< HEAD
 /*
  * This creates a list of matching things, according to a query pointed to
  * by completion_charp.
@@ -2683,26 +2682,6 @@ complete_from_schema_query(const char *text, int state)
  * (that is, what is in the query is actually ... '%s' ...)
  *
  * See top of file for examples of both kinds of query.
-=======
-/* This creates a list of matching things, according to a query pointed to
-   by completion_charp.
-   The query can be one of two kinds:
-   - A simple query which must contain a %d and a %s, which will be replaced
-   by the string length of the text and the text itself. The query may also
-   have up to four more %s in it; the first two such will be replaced by the
-   value of completion_info_charp, the next two by the value of
-   completion_info_charp2.
-	 or:
-   - A schema query used for completion of both schema and relation names;
-   these are more complex and must contain in the following order:
-	 %d %s %d %s %d %s %s %d %s
-   where %d is the string length of the text and %s the text itself.
-
-   It is assumed that strings should be escaped to become SQL literals
-   (that is, what is in the query is actually ... '%s' ...)
-
-   See top of file for examples of both kinds of query.
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 */
 
 static char *
