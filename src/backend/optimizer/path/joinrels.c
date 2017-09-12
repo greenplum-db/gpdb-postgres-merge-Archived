@@ -39,11 +39,7 @@ cdb_add_subquery_join_paths(PlannerInfo    *root,
 static bool has_join_restriction(PlannerInfo *root, RelOptInfo *rel);
 static bool has_legal_joinclause(PlannerInfo *root, RelOptInfo *rel);
 static bool is_dummy_rel(RelOptInfo *rel);
-<<<<<<< HEAD
 static void mark_dummy_join(PlannerInfo *root, RelOptInfo *rel);
-=======
-static void mark_dummy_join(RelOptInfo *rel);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 /*
@@ -536,7 +532,6 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		return joinrel;
 	}
 
-<<<<<<< HEAD
     /*
      * CDB: Consider plans in which an upstream subquery's duplicate
      * suppression is either postponed yet further downstream, or subsumed
@@ -561,8 +556,6 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		return joinrel;
 	}
 
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	/*
 	 * Consider paths using each rel as both outer and inner.  Depending
 	 * on the join type, a provably empty outer or inner rel might mean
@@ -590,11 +583,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		case JOIN_INNER:
 			if (is_dummy_rel(rel1) || is_dummy_rel(rel2))
 			{
-<<<<<<< HEAD
 				mark_dummy_join(root, joinrel);
-=======
-				mark_dummy_join(joinrel);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 				break;
 			}
 			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_INNER,
@@ -605,11 +594,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		case JOIN_LEFT:
 			if (is_dummy_rel(rel1))
 			{
-<<<<<<< HEAD
 				mark_dummy_join(root, joinrel);
-=======
-				mark_dummy_join(joinrel);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 				break;
 			}
 			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_LEFT,
@@ -620,11 +605,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		case JOIN_FULL:
 			if (is_dummy_rel(rel1) && is_dummy_rel(rel2))
 			{
-<<<<<<< HEAD
 				mark_dummy_join(root, joinrel);
-=======
-				mark_dummy_join(joinrel);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 				break;
 			}
 			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_FULL,
@@ -635,11 +616,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		case JOIN_RIGHT:
 			if (is_dummy_rel(rel2))
 			{
-<<<<<<< HEAD
 				mark_dummy_join(root, joinrel);
-=======
-				mark_dummy_join(joinrel);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 				break;
 			}
 			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_RIGHT,
@@ -650,11 +627,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		case JOIN_IN:
 			if (is_dummy_rel(rel1) || is_dummy_rel(rel2))
 			{
-<<<<<<< HEAD
 				mark_dummy_join(root, joinrel);
-=======
-				mark_dummy_join(joinrel);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 				break;
 			}
 			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_IN,
@@ -668,11 +641,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		case JOIN_REVERSE_IN:
 			if (is_dummy_rel(rel1) || is_dummy_rel(rel2))
 			{
-<<<<<<< HEAD
 				mark_dummy_join(root, joinrel);
-=======
-				mark_dummy_join(joinrel);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 				break;
 			}
 			/* REVERSE_IN isn't supported by joinpath.c */
@@ -686,11 +655,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		case JOIN_UNIQUE_OUTER:
 			if (is_dummy_rel(rel1) || is_dummy_rel(rel2))
 			{
-<<<<<<< HEAD
 				mark_dummy_join(root, joinrel);
-=======
-				mark_dummy_join(joinrel);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 				break;
 			}
 			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_UNIQUE_OUTER,
@@ -701,11 +666,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		case JOIN_UNIQUE_INNER:
 			if (is_dummy_rel(rel1) || is_dummy_rel(rel2))
 			{
-<<<<<<< HEAD
 				mark_dummy_join(root, joinrel);
-=======
-				mark_dummy_join(joinrel);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 				break;
 			}
 			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_UNIQUE_INNER,
@@ -1081,11 +1042,7 @@ is_dummy_rel(RelOptInfo *rel)
  * Mark a joinrel as proven empty.
  */
 static void
-<<<<<<< HEAD
 mark_dummy_join(PlannerInfo *root, RelOptInfo *rel)
-=======
-mark_dummy_join(RelOptInfo *rel)
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 {
 	/* Set dummy size estimate */
 	rel->rows = 0;
@@ -1094,23 +1051,15 @@ mark_dummy_join(RelOptInfo *rel)
 	rel->pathlist = NIL;
 
 	/* Set up the dummy path */
-<<<<<<< HEAD
 	add_path(root, rel, (Path *) create_append_path(root, rel, NIL));
 
 	/* The dummy path doesn't need deduplication */
 	rel->dedup_info = NULL;
-=======
-	add_path(rel, (Path *) create_append_path(rel, NIL));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * Although set_cheapest will be done again later, we do it immediately
 	 * in order to keep is_dummy_rel as cheap as possible (ie, not have
 	 * to examine the pathlist).
 	 */
-<<<<<<< HEAD
 	set_cheapest(root, rel);
-=======
-	set_cheapest(rel);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
