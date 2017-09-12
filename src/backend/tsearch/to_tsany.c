@@ -352,25 +352,19 @@ to_tsquery_byid(PG_FUNCTION_ARGS)
 	}
 	memcpy((void *) GETQUERY(query), (void *) res, len * sizeof(QueryItem));
 
-<<<<<<< HEAD
 	/*
 	 * Removing the stopword placeholders might've resulted in fewer
 	 * QueryItems. If so, move the operands up accordingly.
 	 */
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
-	if ( len != query->size ) {
+	if ( len != query->size )
+	{
 		char 		*oldoperand = GETOPERAND(query);
 		int4 lenoperand = VARSIZE(query) - (oldoperand - (char*)query);
 
 		Assert( len < query->size );
 
 		query->size = len;
-<<<<<<< HEAD
-		memmove((void *) GETOPERAND(query), oldoperand, VARSIZE(query) - (oldoperand - (char*)query) );
-=======
-		memcpy((void *) GETOPERAND(query), oldoperand, VARSIZE(query) - (oldoperand - (char*)query) );
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+		memmove((void *) GETOPERAND(query), oldoperand, VARSIZE(query) - (oldoperand - (char *) query));
 		SET_VARSIZE(query, COMPUTESIZE( len, lenoperand )); 
 	}
 

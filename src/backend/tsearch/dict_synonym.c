@@ -77,12 +77,8 @@ dsynonym_init(PG_FUNCTION_ARGS)
 	DictSyn    *d;
 	ListCell   *l;
 	char	   *filename = NULL;
-<<<<<<< HEAD
-	tsearch_readline_state trst;
-=======
 	bool		case_sensitive = false;
-	FILE	   *fin;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+	tsearch_readline_state trst;
 	char	   *starti,
 			   *starto,
 			   *end = NULL;
