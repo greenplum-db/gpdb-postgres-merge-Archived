@@ -17,11 +17,8 @@
 #define PLANCAT_H
 
 #include "nodes/relation.h"
-<<<<<<< HEAD
 #include "utils/relcache.h"
-=======
 #include "utils/rel.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /* Hook for plugins to get control in get_relation_info() */
 typedef void (*get_relation_info_hook_type) (PlannerInfo *root,

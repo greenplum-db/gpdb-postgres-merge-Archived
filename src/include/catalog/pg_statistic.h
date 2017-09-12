@@ -130,17 +130,15 @@ CATALOG(pg_statistic,2619) BKI_WITHOUT_OIDS
 
 #define STATISTIC_NUM_SLOTS  4
 
-<<<<<<< HEAD
 /* GPDB added foreign key definitions for gpcheckcat. */
 FOREIGN_KEY(starelid REFERENCES pg_attribute(attrelid));
 FOREIGN_KEY(staop1 REFERENCES pg_operator(oid));
 FOREIGN_KEY(staop2 REFERENCES pg_operator(oid));
 FOREIGN_KEY(staop3 REFERENCES pg_operator(oid));
 FOREIGN_KEY(staop4 REFERENCES pg_operator(oid));
-=======
+
 #undef anyarray
 
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /* ----------------
  *		Form_pg_statistic corresponds to a pointer to a tuple with

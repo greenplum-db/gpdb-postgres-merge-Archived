@@ -494,15 +494,12 @@ _hash_metapinit(Relation rel, double num_tuples)
 
 	/* all done */
 	_hash_wrtbuf(rel, metabuf);
-<<<<<<< HEAD
 	
 	MIRROREDLOCK_BUFMGR_UNLOCK;
 	// -------- MirroredLock ----------
 	
-=======
 
 	return num_buckets;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 /*
