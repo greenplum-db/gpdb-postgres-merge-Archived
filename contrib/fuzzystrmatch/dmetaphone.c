@@ -1,11 +1,7 @@
 /*
  * This is a port of the Double Metaphone algorithm for use in PostgreSQL.
  *
-<<<<<<< HEAD
  * contrib/fuzzystrmatch/dmetaphone.c
-=======
- * $PostgreSQL: pgsql/contrib/fuzzystrmatch/dmetaphone.c,v 1.12 2008/03/25 22:42:41 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  * Double Metaphone computes 2 "sounds like" strings - a primary and an
  * alternate. In most cases they are the same, but for foreign names
