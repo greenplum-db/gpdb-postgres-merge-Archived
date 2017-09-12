@@ -70,11 +70,7 @@ check_oids:
 	(cd $(abs_top_srcdir)/src/include/catalog/ && ./duplicate_oids) 
 
 clean:
-<<<<<<< HEAD
 	rm -f utils/fmgroids.h parser/parse.h parser/gram.h utils/probes.h
-=======
-	rm -f utils/fmgroids.h parser/parse.h utils/probes.h
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 distclean maintainer-clean: clean
 	rm -f pg_config.h dynloader.h pg_config_os.h stamp-h

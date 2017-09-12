@@ -482,12 +482,9 @@ extern int ExceptionalCondition(const char *conditionName,
 					 const char *errorType,
 					 const char *fileName, int lineNumber);
 
-<<<<<<< HEAD
 
 #ifdef __cplusplus
 }   /* extern "C" */
 #endif
 
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #endif   /* POSTGRES_H */
