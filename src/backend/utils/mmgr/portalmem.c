@@ -289,17 +289,12 @@ CreateNewPortal(void)
  * PortalDefineQuery
  *		A simple subroutine to establish a portal's query.
  *
-<<<<<<< HEAD
  * Notes: as of PG 8.4 (this part backported to GPDB already), caller MUST supply a sourceText string; it is not
  * allowed anymore to pass NULL.  (If you really don't have source text,
  * you can pass a constant string, perhaps "(query not available)".)
  *
  * commandTag shall be NULL if and only if the original query string
  * (before rewriting) was an empty string.  Also, the passed commandTag must
-=======
- * Notes: commandTag shall be NULL if and only if the original query string
- * (before rewriting) was an empty string.	Also, the passed commandTag must
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  * be a pointer to a constant string, since it is not copied.
  *
  * If cplan is provided, then it is a cached plan containing the stmts,
@@ -335,10 +330,7 @@ PortalDefineQuery(Portal portal,
 
 	portal->prepStmtName = prepStmtName;
 	portal->sourceText = sourceText;
-<<<<<<< HEAD
 	portal->sourceTag = sourceTag;
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	portal->commandTag = commandTag;
 	portal->stmts = stmts;
 	portal->cplan = cplan;
@@ -1108,16 +1100,6 @@ pg_cursor(PG_FUNCTION_ARGS)
 		if (!portal->visible)
 			continue;
 
-		MemSet(nulls, false, sizeof(nulls));
-
-<<<<<<< HEAD
-		values[0] = DirectFunctionCall1(textin, CStringGetDatum((char *) portal->name));
-		if (!portal->sourceText)
-			nulls[1] = true;
-		else
-			values[1] = DirectFunctionCall1(textin,
-										CStringGetDatum((char *) portal->sourceText));
-=======
 		MemSet(nulls, 0, sizeof(nulls));
 
 		values[0] = CStringGetTextDatum(portal->name);
@@ -1125,21 +1107,12 @@ pg_cursor(PG_FUNCTION_ARGS)
 			nulls[1] = true;
 		else
 			values[1] = CStringGetTextDatum(portal->sourceText);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		values[2] = BoolGetDatum(portal->cursorOptions & CURSOR_OPT_HOLD);
 		values[3] = BoolGetDatum(portal->cursorOptions & CURSOR_OPT_BINARY);
 		values[4] = BoolGetDatum(portal->cursorOptions & CURSOR_OPT_SCROLL);
 		values[5] = TimestampTzGetDatum(portal->creation_time);
 
-<<<<<<< HEAD
-		tuple = heap_form_tuple(tupdesc, values, nulls);
-
-		tuplestore_puttuple(tupstore, tuple);
-=======
-		/* switch to appropriate context while storing the tuple */
-		MemoryContextSwitchTo(per_query_ctx);
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	}
 
 	/* clean up and return the tuplestore */
