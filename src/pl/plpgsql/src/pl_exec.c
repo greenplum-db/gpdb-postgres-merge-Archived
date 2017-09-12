@@ -1740,23 +1740,7 @@ exec_stmt_fors(PLpgSQL_execstate *estate, PLpgSQL_stmt_fors *stmt)
 	int			rc;
 
 	/*
-<<<<<<< HEAD
-	 * Determine if we assign to a record or a row
-	 */
-	if (stmt->rec != NULL)
-		rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
-	else if (stmt->row != NULL)
-		row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
-	else
-		elog(ERROR, "unsupported target");
-
-	/*
-	 * Open the implicit cursor for the statement and fetch the initial 10
-	 * rows. Pin the portal to make sure it doesn't get closed by the user
-	 * statements we execute.
-=======
 	 * Open the implicit cursor for the statement using exec_run_select
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	 */
 	exec_run_select(estate, stmt->query, 0, &portal);
 	PinPortal(portal);
@@ -1764,108 +1748,7 @@ exec_stmt_fors(PLpgSQL_execstate *estate, PLpgSQL_stmt_fors *stmt)
 	/*
 	 * Execute the loop
 	 */
-<<<<<<< HEAD
-	if (n == 0)
-	{
-		exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
-		exec_eval_cleanup(estate);
-	}
-	else
-		found = true;			/* processed at least one tuple */
-
-	/*
-	 * Now do the loop
-	 */
-	while (n > 0)
-	{
-		for (i = 0; i < n; i++)
-		{
-			/*
-			 * Assign the tuple to the target
-			 */
-			exec_move_row(estate, rec, row, tuptab->vals[i], tuptab->tupdesc);
-			exec_eval_cleanup(estate);
-
-			/*
-			 * Execute the statements
-			 */
-			rc = exec_stmts(estate, stmt->body);
-			if (rc != PLPGSQL_RC_OK)
-			{
-				if (rc == PLPGSQL_RC_EXIT)
-				{
-					if (estate->exitlabel == NULL)
-						/* unlabelled exit, finish the current loop */
-						rc = PLPGSQL_RC_OK;
-					else if (stmt->label != NULL &&
-							 strcmp(stmt->label, estate->exitlabel) == 0)
-					{
-						/* labelled exit, matches the current stmt's label */
-						estate->exitlabel = NULL;
-						rc = PLPGSQL_RC_OK;
-					}
-
-					/*
-					 * otherwise, we processed a labelled exit that does not
-					 * match the current statement's label, if any: return
-					 * RC_EXIT so that the EXIT continues to recurse upward.
-					 */
-				}
-				else if (rc == PLPGSQL_RC_CONTINUE)
-				{
-					if (estate->exitlabel == NULL)
-					{
-						/* anonymous continue, so re-run the current loop */
-						rc = PLPGSQL_RC_OK;
-						continue;
-					}
-					else if (stmt->label != NULL &&
-							 strcmp(stmt->label, estate->exitlabel) == 0)
-					{
-						/* label matches named continue, so re-run loop */
-						rc = PLPGSQL_RC_OK;
-						estate->exitlabel = NULL;
-						continue;
-					}
-
-					/*
-					 * otherwise, we processed a named continue that does not
-					 * match the current statement's label, if any: return
-					 * RC_CONTINUE so that the CONTINUE will propagate up the
-					 * stack.
-					 */
-				}
-
-				/*
-				 * We're aborting the loop, so cleanup and set FOUND. (This
-				 * code should match the code after the loop.)
-				 */
-				SPI_freetuptable(tuptab);
-				UnpinPortal(portal);
-				SPI_cursor_close(portal);
-				exec_set_found(estate, found);
-
-				return rc;
-			}
-		}
-
-		SPI_freetuptable(tuptab);
-
-		/*
-		 * Fetch the next 50 tuples
-		 */
-		SPI_cursor_fetch(portal, true, 50);
-		n = SPI_processed;
-		tuptab = SPI_tuptable;
-	}
-
-	/*
-	 * Release last group of tuples
-	 */
-	SPI_freetuptable(tuptab);
-=======
 	rc = exec_for_query(estate, (PLpgSQL_stmt_forq *) stmt, portal, true);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * Close the implicit cursor
@@ -2264,18 +2147,8 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 										tupdesc->attrs[0]->atttypmod,
 										isNull);
 
-<<<<<<< HEAD
-		tuple = heap_form_tuple(tupdesc, &retval, &isNull);
-
-		free_tuple = true;
-=======
-		oldcxt = MemoryContextSwitchTo(estate->tuple_store_cxt);
 		tuplestore_putvalues(estate->tuple_store, tupdesc,
 							 &retval, &isNull);
-		MemoryContextSwitchTo(oldcxt);
-
-		exec_eval_cleanup(estate);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	}
 	else
 	{
@@ -2286,10 +2159,6 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 
 	if (HeapTupleIsValid(tuple))
 	{
-<<<<<<< HEAD
-=======
-		oldcxt = MemoryContextSwitchTo(estate->tuple_store_cxt);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		tuplestore_puttuple(estate->tuple_store, tuple);
 
 		if (free_tuple)
@@ -3090,131 +2959,13 @@ exec_stmt_dynfors(PLpgSQL_execstate *estate, PLpgSQL_stmt_dynfors *stmt)
 	pfree(querystr);
 
 	/*
-<<<<<<< HEAD
-	 * Make sure the portal doesn't get closed by the user statements
-	 * we execute.
-	 */
-	PinPortal(portal);
-
-	/*
-	 * Fetch the initial 10 tuples
-	 */
-	SPI_cursor_fetch(portal, true, 10);
-	tuptab = SPI_tuptable;
-	n = SPI_processed;
-
-	/*
-	 * If the query didn't return any rows, set the target to NULL and return
-	 * with FOUND = false.
-	 */
-	if (n == 0)
-	{
-		exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
-		exec_eval_cleanup(estate);
-	}
-	else
-		found = true;			/* processed at least one tuple */
-
-	/*
-	 * Now do the loop
-	 */
-	while (n > 0)
-	{
-		int			i;
-
-		for (i = 0; i < n; i++)
-		{
-			int			rc;
-
-			/*
-			 * Assign the tuple to the target
-			 */
-			exec_move_row(estate, rec, row, tuptab->vals[i], tuptab->tupdesc);
-			exec_eval_cleanup(estate);
-
-			/*
-			 * Execute the statements
-			 */
-			rc = exec_stmts(estate, stmt->body);
-
-			if (rc != PLPGSQL_RC_OK)
-			{
-				if (rc == PLPGSQL_RC_EXIT)
-				{
-					if (estate->exitlabel == NULL)
-						/* unlabelled exit, finish the current loop */
-						rc = PLPGSQL_RC_OK;
-					else if (stmt->label != NULL &&
-							 strcmp(stmt->label, estate->exitlabel) == 0)
-					{
-						/* labelled exit, matches the current stmt's label */
-						estate->exitlabel = NULL;
-						rc = PLPGSQL_RC_OK;
-					}
-
-					/*
-					 * otherwise, we processed a labelled exit that does not
-					 * match the current statement's label, if any: return
-					 * RC_EXIT so that the EXIT continues to recurse upward.
-					 */
-				}
-				else if (rc == PLPGSQL_RC_CONTINUE)
-				{
-					if (estate->exitlabel == NULL)
-						/* unlabelled continue, continue the current loop */
-						continue;
-					else if (stmt->label != NULL &&
-							 strcmp(stmt->label, estate->exitlabel) == 0)
-					{
-						/* labelled continue, matches the current stmt's label */
-						estate->exitlabel = NULL;
-						continue;
-					}
-
-					/*
-					 * otherwise, we process a labelled continue that does not
-					 * match the current statement's label, so propagate
-					 * RC_CONTINUE upward in the stack.
-					 */
-				}
-
-				/*
-				 * We're aborting the loop, so cleanup and set FOUND. (This
-				 * code should match the code after the loop.)
-				 */
-				SPI_freetuptable(tuptab);
-				UnpinPortal(portal);
-				SPI_cursor_close(portal);
-				exec_set_found(estate, found);
-
-				return rc;
-			}
-		}
-
-		SPI_freetuptable(tuptab);
-
-		/*
-		 * Fetch the next 50 tuples
-		 */
-		SPI_cursor_fetch(portal, true, 50);
-		n = SPI_processed;
-		tuptab = SPI_tuptable;
-	}
-
-	/*
-	 * Release last group of tuples
-	 */
-	SPI_freetuptable(tuptab);
-=======
 	 * Execute the loop
 	 */
 	rc = exec_for_query(estate, (PLpgSQL_stmt_forq *) stmt, portal, true);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * Close the implicit cursor
 	 */
-	UnpinPortal(portal);
 	SPI_cursor_close(portal);
 
 	return rc;
@@ -3318,15 +3069,8 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 		/*
 		 * If cursor variable was NULL, store the generated portal name in it
 		 */
-<<<<<<< HEAD
-		free_var(curvar);
-		curvar->value = DirectFunctionCall1(textin, CStringGetDatum((char *) portal->name));
-		curvar->isnull = false;
-		curvar->freeval = true;
-=======
 		if (curname == NULL)
 			assign_text_var(curvar, portal->name);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		return PLPGSQL_RC_OK;
 	}
@@ -3404,18 +3148,6 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 	if (curname)
 		pfree(curname);
 
-<<<<<<< HEAD
-	/* ----------
-	 * Store the eventually assigned portal name in the cursor variable
-	 * ----------
-	 */
-	free_var(curvar);
-	curvar->value = DirectFunctionCall1(textin, CStringGetDatum((char *) portal->name));
-	curvar->isnull = false;
-	curvar->freeval = true;
-
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	return PLPGSQL_RC_OK;
 }
 
