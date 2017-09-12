@@ -73,10 +73,7 @@ distclean maintainer-clean:
 	$(MAKE) -C test $@
 	$(MAKE) -C tutorial NO_PGXS=1 $@
 	$(MAKE) -C test/thread $@
-<<<<<<< HEAD
 	$(MAKE) -C tools/fsync $@
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	rm -f Makefile.port Makefile.global
 
 
