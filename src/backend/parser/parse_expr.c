@@ -167,23 +167,13 @@ transformExpr(ParseState *pstate, Node *expr)
 		case T_TypeCast:
 			{
 				TypeCast   *tc = (TypeCast *) expr;
-<<<<<<< HEAD
-				Node	   *arg = NULL;
+				Node	   *arg;
 
 				/*
 				 * If the subject of the typecast is an ARRAY[] construct and
 				 * the target type is an array type, we invoke
 				 * transformArrayExpr() directly so that we can pass down the
 				 * type information.  This avoids some cases where
-=======
-				Node	   *arg;
-
-				/*
-				 * If the subject of the typecast is an ARRAY[] construct
-				 * and the target type is an array type, we invoke
-				 * transformArrayExpr() directly so that we can pass down
-				 * the type information.  This avoids some cases where
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 				 * transformArrayExpr() might not infer the correct type.
 				 */
 				if (IsA(tc->arg, A_ArrayExpr))
@@ -192,7 +182,6 @@ transformExpr(ParseState *pstate, Node *expr)
 					Oid			elementType;
 					int32		targetTypmod;
 
-<<<<<<< HEAD
 					targetType = typenameTypeId(pstate, tc->typeName,
 												&targetTypmod);
 
@@ -219,29 +208,6 @@ transformExpr(ParseState *pstate, Node *expr)
 
 				arg = transformExpr(pstate, tc->arg);
 				result = typecast_expression(pstate, arg, tc->typeName);
-=======
-					targetType = typenameTypeId(pstate, tc->typename,
-												&targetTypmod);
-					elementType = get_element_type(targetType);
-					if (OidIsValid(elementType))
-					{
-						result = transformArrayExpr(pstate,
-													(A_ArrayExpr *) tc->arg,
-													targetType,
-													elementType,
-													targetTypmod);
-						break;
-					}
-
-					/*
-					 * Corner case: ARRAY[] cast to a non-array type.
-					 * Fall through to do it the standard way.
-					 */
-				}
-
-				arg = transformExpr(pstate, tc->arg);
-				result = typecast_expression(pstate, arg, tc->typename);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 				break;
 			}
 
@@ -1524,21 +1490,12 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 	Oid			coerce_type;
 	bool		coerce_hard;
 
-<<<<<<< HEAD
 	/*
 	 * Transform the element expressions
 	 *
 	 * Assume that the array is one-dimensional unless we find an array-type
 	 * element expression.
 	 */
-=======
-	/* 
-	 * Transform the element expressions 
-	 *
-	 * Assume that the array is one-dimensional unless we find an
-	 * array-type element expression.
-	 */ 
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	newa->multidims = false;
 	foreach(element, a->elements)
 	{
@@ -1547,11 +1504,7 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 		Oid			newe_type;
 
 		/*
-<<<<<<< HEAD
-		 * If an element is itself an A_ArrayExpr, resurse directly so that
-=======
 		 * If an element is itself an A_ArrayExpr, recurse directly so that
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		 * we can pass down any target type we were given.
 		 */
 		if (IsA(e, A_ArrayExpr))
@@ -1582,11 +1535,7 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 		typeids = lappend_oid(typeids, newe_type);
 	}
 
-<<<<<<< HEAD
 	/*
-=======
-	/* 
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	 * Select a target type for the elements.
 	 *
 	 * If we haven't been given a target array type, we must try to deduce a
@@ -1630,22 +1579,14 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
 						 errmsg("could not find array type for data type %s",
-<<<<<<< HEAD
 								format_type_be(element_type)),
 						 parser_errposition(pstate, a->location)));
-=======
-								format_type_be(element_type))));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		}
 		coerce_hard = false;
 	}
 
 	/*
-<<<<<<< HEAD
 	 * Coerce elements to target type
-=======
-	 * Coerce elements to target type 
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	 *
 	 * If the array has been explicitly cast, then the elements are in turn
 	 * explicitly coerced.
@@ -1653,11 +1594,7 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 	 * If the array's type was merely derived from the common type of its
 	 * elements, then the elements are implicitly coerced to the common type.
 	 * This is consistent with other uses of select_common_type().
-<<<<<<< HEAD
 	 */
-=======
-	 */ 
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	foreach(element, newelems)
 	{
 		Node	   *e = (Node *) lfirst(element);
@@ -1665,7 +1602,6 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 
 		if (coerce_hard)
 		{
-<<<<<<< HEAD
 			newe = coerce_to_target_type(pstate, e,
 										 exprType(e),
 										 coerce_type,
@@ -1673,25 +1609,13 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 										 COERCION_EXPLICIT,
 										 COERCE_EXPLICIT_CAST,
 										 -1);
-=======
-			newe = coerce_to_target_type(pstate, e, 
-										 exprType(e),
-										 coerce_type, 
-										 typmod,
-										 COERCION_EXPLICIT,
-										 COERCE_EXPLICIT_CAST);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 			if (newe == NULL)
 				ereport(ERROR,
 						(errcode(ERRCODE_CANNOT_COERCE),
 						 errmsg("cannot cast type %s to %s",
 								format_type_be(exprType(e)),
-<<<<<<< HEAD
 								format_type_be(coerce_type)),
 						 parser_errposition(pstate, exprLocation(e))));
-=======
-								format_type_be(coerce_type))));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		}
 		else
 			newe = coerce_to_common_type(pstate, e,

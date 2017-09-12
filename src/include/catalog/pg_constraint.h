@@ -20,13 +20,9 @@
 #define PG_CONSTRAINT_H
 
 #include "catalog/genbki.h"
-<<<<<<< HEAD
 #include "catalog/dependency.h"
 #include "nodes/pg_list.h"
 #include "access/attnum.h"
-=======
-#include "nodes/pg_list.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /* ----------------
  *		pg_constraint definition.  cpp turns this into
