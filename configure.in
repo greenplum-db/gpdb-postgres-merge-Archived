@@ -140,11 +140,7 @@ PGAC_ARG_REQ(with, libs,      [  --with-libs=DIRS        alternative spelling of
 # 64-bit integer date/time storage: enabled by default.
 #
 AC_MSG_CHECKING([whether to build with 64-bit integer date/time support])
-<<<<<<< HEAD
 PGAC_ARG_BOOL(enable, integer-datetimes, yes, [  --disable-integer-datetimes disable 64-bit integer date/time support],
-=======
-PGAC_ARG_BOOL(enable, integer-datetimes, yes, [  --disable-integer-datetimes  disable 64-bit integer date/time support],
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
               [AC_DEFINE([USE_INTEGER_DATETIMES], 1,
                          [Define to 1 if you want 64-bit integer timestamp and interval support. (--enable-integer-datetimes)])])
 AC_MSG_RESULT([$enable_integer_datetimes])
@@ -285,18 +281,11 @@ AC_SUBST(DTRACEFLAGS)])
 AC_SUBST(enable_dtrace)
 
 #
-<<<<<<< HEAD
 # TAP tests
 #
 PGAC_ARG_BOOL(enable, tap-tests, no,
               [  --enable-tap-tests      enable TAP tests (requires Perl and IPC::Run)])
 AC_SUBST(enable_tap_tests)
-=======
-# Data file segmentation
-#
-PGAC_ARG_BOOL(enable, segmented-files, yes,
-              [  --disable-segmented-files disable data file segmentation (requires largefile support)])
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 #
 # C compiler
@@ -486,7 +475,6 @@ if test "$GCC" = yes -a "$ICC" = no; then
   PGAC_PROG_CC_CFLAGS_OPT([-fno-strict-aliasing])
   # Disable optimizations that assume no overflow; needed for gcc 4.3+
   PGAC_PROG_CC_CFLAGS_OPT([-fwrapv])
-<<<<<<< HEAD
   # Disable FP optimizations that cause various errors on gcc 4.5+ or maybe 4.6+
   PGAC_PROG_CC_CFLAGS_OPT([-fexcess-precision=standard])
   # Disable loop optimizations that get confused by variable-length struct
@@ -505,8 +493,6 @@ if test "$GCC" = yes -a "$ICC" = no; then
   # Optimization flags for specific files that benefit from vectorization
   PGAC_PROG_CC_VAR_OPT(CFLAGS_VECTOR, [-funroll-loops])
   PGAC_PROG_CC_VAR_OPT(CFLAGS_VECTOR, [-ftree-vectorize])
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 elif test "$ICC" = yes; then
   # Intel's compiler has a bug/misoptimization in checking for
   # division by NAN (NaN == 0), -mp1 fixes it, so add it to the CFLAGS.
@@ -2134,20 +2120,6 @@ of datetime values.])
 fi
 
 
-# If the user did not disable integer datetimes, check that
-# there is a working 64-bit integral type to use.
-if test x"$USE_INTEGER_DATETIMES" = x"yes" &&
-   test x"$HAVE_LONG_INT_64" = x"no" &&
-   test x"$HAVE_LONG_LONG_INT_64" = x"no" &&
-   test x"$HAVE_INT64" = x"no" ; then
-  AC_MSG_ERROR([
-Integer-based datetime support requires a 64-bit integer type,
-but no such type could be found. The --disable-integer-datetimes
-configure option can be used to disable integer-based storage
-of datetime values.])
-fi
-
-
 if test "$PORTNAME" != "win32"
 then
 PGAC_FUNC_POSIX_SIGNALS
@@ -2174,13 +2146,6 @@ if test "$PORTNAME" != "win32"; then
 if test "$ac_cv_sizeof_off_t" -lt 8 -a "$segsize" != "1"; then
    AC_MSG_ERROR([Large file support is not enabled. Segment size cannot be larger than 1GB.])
 fi
-fi
-
-# Check for largefile support (must be after AC_SYS_LARGEFILE)
-AC_CHECK_SIZEOF([off_t])
-
-if test "$ac_cv_sizeof_off_t" -lt 8 -o "$enable_segmented_files" = "yes"; then 
-  AC_DEFINE([USE_SEGMENTED_FILES], 1, [Define to split data files into 1GB segments.]) 
 fi
 
 # SunOS doesn't handle negative byte comparisons properly with +/- return
