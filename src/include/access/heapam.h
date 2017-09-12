@@ -24,13 +24,10 @@
 #include "storage/block.h"
 #include "storage/lmgr.h"
 #include "utils/rel.h"
-<<<<<<< HEAD
 #include "utils/relcache.h"
 #include "utils/relationnode.h"
-#include "utils/tqual.h"
-=======
 #include "utils/snapshot.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+#include "utils/tqual.h"
 
 /* in common/heaptuple.c */
 extern Datum nocachegetattr(HeapTuple tup, int attnum, TupleDesc att);
@@ -248,14 +245,7 @@ extern void heap_getnextx(HeapScanDesc scan, ScanDirection direction,
 extern bool heap_fetch(Relation relation, Snapshot snapshot,
 		   HeapTuple tuple, Buffer *userbuf, bool keep_buf,
 		   Relation stats_relation);
-<<<<<<< HEAD
-extern bool heap_release_fetch(Relation relation, Snapshot snapshot,
-				   HeapTuple tuple, Buffer *userbuf, bool keep_buf,
-				   Relation stats_relation);
 extern bool heap_hot_search_buffer(Relation rel, ItemPointer tid, Buffer buffer,
-=======
-extern bool heap_hot_search_buffer(ItemPointer tid, Buffer buffer,
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 					   Snapshot snapshot, bool *all_dead);
 extern bool heap_hot_search(ItemPointer tid, Relation relation,
 				Snapshot snapshot, bool *all_dead);

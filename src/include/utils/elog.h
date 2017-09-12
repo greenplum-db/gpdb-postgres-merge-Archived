@@ -255,7 +255,6 @@ errdetail_log(const char *fmt,...)
 __attribute__((format(printf, 1, 2)));
 
 extern int
-<<<<<<< HEAD
 errdetail_plural(const char *fmt_singular, const char *fmt_plural,
 				 unsigned long n, ...)
 /* This extension allows gcc to check the format string for consistency with
@@ -264,8 +263,6 @@ __attribute__((format(printf, 1, 4)))
 __attribute__((format(printf, 2, 4)));
 
 extern int
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 errhint(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
