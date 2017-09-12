@@ -291,20 +291,6 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
         );
         }
 
-<<<<<<< HEAD
-=======
-        print T
-" { 0, NULL, 0, false, false, NULL }\n};\n\nconst int fmgr_nbuiltins = (sizeof(fmgr_builtins) / sizeof(FmgrBuiltin)) - 1;\n";
-        close(T);
-    }
-
-    if (IsNewer('src\include\utils\probes.h','src\backend\utils\pg_trace.d'))
-    {
-		print "Generating probes.h...\n";
-		system('psed -f src\backend\utils\Gen_dummy_probes.sed src\backend\utils\probes.d > src\include\utils\probes.h'); 
-	}
-
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
     if (IsNewer('src\interfaces\libpq\libpq.rc','src\interfaces\libpq\libpq.rc.in'))
     {
         print "Generating libpq.rc...\n";

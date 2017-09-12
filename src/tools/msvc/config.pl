@@ -3,17 +3,12 @@ use strict;
 use warnings;
 
 our $config = {
-<<<<<<< HEAD
     asserts=>1,			# --enable-cassert
     # integer_datetimes=>1,   # --enable-integer-datetimes - on is now default
     # float4byval=>1,         # --disable-float4-byval, on by default
     # float8byval=>1,         # --disable-float8-byval, on by default
     # blocksize => 32,        # --with-blocksize, 8kB by default
     # ldap=>1,				# --with-ldap
-=======
-    asserts=>0,			# --enable-cassert
-    integer_datetimes=>1,   # --enable-integer-datetimes
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
     nls=>undef,				# --enable-nls=<path>
     tcl=>undef,				# --with-tls=<path>
     perl=>undef, 			# --with-perl
