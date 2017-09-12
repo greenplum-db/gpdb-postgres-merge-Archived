@@ -100,7 +100,6 @@ extern Node *strip_implicit_coercions(Node *node);
 extern void set_coercionform_dontcare(Node *node);
 
 extern Node *eval_const_expressions(PlannerInfo *root, Node *node);
-<<<<<<< HEAD
 
 extern Query *fold_constants(PlannerGlobal *glob, Query *q, ParamListInfo boundParams, Size max_size);
 
@@ -108,17 +107,10 @@ extern Expr *transform_array_Const_to_ArrayExpr(Const *c);
 
 extern Node *estimate_expression_value(PlannerInfo *root, Node *node);
 
-extern Expr *evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod);
-
-=======
-
-extern Node *estimate_expression_value(PlannerInfo *root, Node *node);
-
 extern Query *inline_set_returning_function(PlannerInfo *root, Node *node);
 
-extern bool expression_tree_walker(Node *node, bool (*walker) (),
-											   void *context);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+extern Expr *evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod);
+
 extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (),
 												 void *context);
 
