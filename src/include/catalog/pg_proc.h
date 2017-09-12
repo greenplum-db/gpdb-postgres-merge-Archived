@@ -26,10 +26,6 @@
 #define PG_PROC_H
 
 #include "catalog/genbki.h"
-<<<<<<< HEAD
-#include "nodes/pg_list.h"
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /* ----------------
  *		pg_proc definition.  cpp turns this into
@@ -4647,7 +4643,6 @@ DESCR("truncate the error log for the specified external table");
 #define PROARGMODE_VARIADIC 'v'
 #define PROARGMODE_TABLE	't'
 
-<<<<<<< HEAD
 /*
  * Symbolic values for prodataaccess column: these provide a hint regarding
  * what kind of statements are included in the function.
@@ -4659,36 +4654,4 @@ DESCR("truncate the error log for the specified external table");
 /* This is an internal-only data access property. */
 #define PRODATAACCESS_SEGMENT	's'
 
-/*
- * prototypes for functions in pg_proc.c
- */
-extern Oid ProcedureCreate(const char *procedureName,
-				Oid procNamespace,
-				bool replace,
-				bool returnsSet,
-				Oid returnType,
-				Oid languageObjectId,
-				Oid languageValidator,
-				Oid describeFuncOid,
-				const char *prosrc,
-				const char *probin,
-				bool isAgg,
-				bool isWin,
-				bool security_definer,
-				bool isStrict,
-				char volatility,
-				const oidvector *parameterTypes,
-				Datum allParameterTypes,
-				Datum parameterModes,
-				Datum parameterNames,
-				List *parameterDefaults,
-				Datum proconfig,
-				float4 procost,
-				float4 prorows,
-				char prodataaccess);
-
-extern bool function_parse_error_transpose(const char *prosrc);
-
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #endif   /* PG_PROC_H */

@@ -21,19 +21,23 @@ extern Oid ProcedureCreate(const char *procedureName,
 				Oid returnType,
 				Oid languageObjectId,
 				Oid languageValidator,
+				Oid describeFuncOid,
 				const char *prosrc,
 				const char *probin,
 				bool isAgg,
+				bool isWin,
 				bool security_definer,
 				bool isStrict,
 				char volatility,
-				oidvector *parameterTypes,
+				const oidvector *parameterTypes,
 				Datum allParameterTypes,
 				Datum parameterModes,
 				Datum parameterNames,
+				List *parameterDefaults,
 				Datum proconfig,
 				float4 procost,
-				float4 prorows);
+				float4 prorows,
+				char prodataaccess);
 
 extern bool function_parse_error_transpose(const char *prosrc);
 
