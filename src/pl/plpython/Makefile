@@ -63,11 +63,7 @@ python${pytverstr}.def: $(WD)/system32/python${pytverstr}.dll
 endif
 
 
-<<<<<<< HEAD
 SHLIB_LINK = $(python_libspec) $(python_additional_libs) $(filter -lintl,$(LIBS))
-=======
-SHLIB_LINK = $(python_libspec) $(python_additional_libs)
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-language=plpythonu --init-file=$(srcdir)/init_file
 REGRESS = plpython_schema plpython_populate plpython_function plpython_test \
@@ -85,22 +81,6 @@ install: all installdirs install-lib
 
 installdirs: installdirs-lib
 
-<<<<<<< HEAD
-=======
-test_files_src := $(wildcard $(srcdir)/sql/*.sql) $(wildcard $(srcdir)/expected/*.out)
-test_files_build := $(patsubst $(srcdir)/%, $(abs_builddir)/%, $(test_files_src))
-
-all: $(test_files_build)
-$(test_files_build): $(abs_builddir)/%: $(srcdir)/%
-	ln -s $< $@
-
-endif
-
-install: all installdirs install-lib
-
-installdirs: installdirs-lib
-
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 uninstall: uninstall-lib
 
 installcheck: submake

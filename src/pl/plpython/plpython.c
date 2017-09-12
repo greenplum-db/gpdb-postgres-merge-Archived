@@ -1,11 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
-<<<<<<< HEAD
  *	src/pl/plpython/plpython.c
-=======
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.108 2008/03/28 00:21:56 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *********************************************************************
  */
@@ -1791,7 +1787,6 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 				HeapTuple	argTypeTup;
 				Form_pg_type argTypeStruct;
 
-<<<<<<< HEAD
 				if (modes &&
 					(modes[i] == PROARGMODE_OUT ||
 					 modes[i] == PROARGMODE_TABLE))
@@ -1833,11 +1828,6 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 
 				pos++;
 			}
-=======
-			/* Fetch argument name */
-			if (proc->argnames)
-				proc->argnames[i] = PLy_strdup(TextDatumGetCString(elems[i]));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		}
 
 		/*
