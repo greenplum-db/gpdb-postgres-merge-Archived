@@ -14,7 +14,6 @@ top_builddir = ../..
 nbu_libdir = $(shell cd $(top_builddir)/gpAux/ext/$(BLD_ARCH)/Netbackup/nbu77/lib; pwd)
 include $(top_builddir)/src/Makefile.global
 
-<<<<<<< HEAD
 ifneq ($(enable_coverage), yes)
 unittest-check:
 	$(MAKE) -e LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(nbu_libdir) -C pg_dump/cdb/test check
@@ -28,20 +27,13 @@ DIRS = initdb ipcclean pg_basebackup pg_ctl pg_dump \
 	psql scripts pg_config pg_controldata pg_resetxlog \
 	gpmirrortransition
 
-=======
-DIRS = initdb pg_ctl pg_dump \
-	psql scripts pg_config pg_controldata pg_resetxlog
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 ifeq ($(PORTNAME), win32)
 DIRS+=pgevent
 endif
 
-<<<<<<< HEAD
 ifeq ($(enable_gpfdist), yes)
 DIRS+=gpfdist
 endif
 
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 all install installdirs uninstall distprep clean distclean maintainer-clean:
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit; done
