@@ -9,7 +9,6 @@
  * bootstrap file from these header files.)
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -18,16 +17,6 @@
  *-------------------------------------------------------------------------
  */
 #ifndef GENBKI_H
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/include/catalog/genbki.h,v 1.1 2008/03/27 03:57:34 tgl Exp $
- *
- *-------------------------------------------------------------------------
- */
-#ifndef GENBKI_H 
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #define GENBKI_H
 
 /* Introduces a catalog's structure definition */
@@ -44,7 +33,6 @@
 #define DESCR(x)  extern int no_such_variable
 #define SHDESCR(x) extern int no_such_variable
 
-<<<<<<< HEAD
 /* for process_col_defaults.pl */
 #define GPDB_COLUMN_DEFAULT(col, default) extern int no_such_variable
 #define GPDB_EXTRA_COL(x) extern int no_such_variable
@@ -52,8 +40,6 @@
 /* for process_foreign_keys.pl */
 #define FOREIGN_KEY(x) extern int no_such_variable
 
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 /* PHONY type definition for use in catalog structure definitions only */
 typedef int aclitem;
 
