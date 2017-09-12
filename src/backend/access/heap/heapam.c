@@ -63,6 +63,7 @@
 
 #include "cdb/cdbpersistentstore.h"
 #include "cdb/cdbvars.h"
+#include "utils/visibility_summary.h"
 
 
 /* GUC variable */

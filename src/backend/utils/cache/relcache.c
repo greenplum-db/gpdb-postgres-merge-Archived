@@ -81,6 +81,7 @@
 #include "cdb/cdbmirroredflatfile.h"
 #include "cdb/cdbpersistentfilesysobj.h"
 #include "cdb/cdbsreh.h"
+#include "utils/visibility_summary.h"
 =======
 #include "utils/tqual.h"
 #include "utils/typcache.h"

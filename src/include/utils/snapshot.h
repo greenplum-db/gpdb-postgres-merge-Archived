@@ -16,6 +16,8 @@
 #include "access/htup.h"
 #include "storage/buf.h"
 
+#include "cdb/cdbdistributedsnapshot.h"  /* DistributedSnapshotWithLocalMapping */
+
 
 typedef struct SnapshotData *Snapshot;
 
@@ -27,7 +29,7 @@ typedef struct SnapshotData *Snapshot;
  * The specific semantics of a snapshot are encoded by the "satisfies"
  * function.
  */
-typedef bool (*SnapshotSatisfiesFunc) (HeapTupleHeader tuple,
+typedef bool (*SnapshotSatisfiesFunc) (Relation relation, HeapTupleHeader tuple,
 									   Snapshot snapshot, Buffer buffer);
 
 typedef struct SnapshotData
@@ -57,6 +59,14 @@ typedef struct SnapshotData
 	 * out any that are >= xmax
 	 */
 	CommandId	curcid;			/* in my xact, CID < curcid are visible */
+
+	bool		haveDistribSnapshot; /* True if this snapshot is distributed. */
+
+	/*
+	 * GP: Global information about which transactions are visible for a
+	 * distributed transaction, with cached local xids
+	 */
+	DistributedSnapshotWithLocalMapping	distribSnapshotWithLocalMapping;
 } SnapshotData;
 
 /*
