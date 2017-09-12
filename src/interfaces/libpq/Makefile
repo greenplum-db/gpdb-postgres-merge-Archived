@@ -117,11 +117,7 @@ install: all installdirs install-lib
 	$(INSTALL_DATA) $(srcdir)/pg_service.conf.sample '$(DESTDIR)$(datadir)/pg_service.conf.sample'
 
 installdirs: installdirs-lib
-<<<<<<< HEAD
 	$(MKDIR_P) '$(DESTDIR)$(includedir)' '$(DESTDIR)$(includedir_internal)'
-=======
-	$(mkinstalldirs) '$(DESTDIR)$(includedir)' '$(DESTDIR)$(includedir_internal)'
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 uninstall: uninstall-lib
 	rm -f '$(DESTDIR)$(includedir)/libpq-fe.h'
