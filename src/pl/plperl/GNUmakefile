@@ -1,9 +1,5 @@
 # Makefile for PL/Perl
-<<<<<<< HEAD
 # src/pl/plperl/GNUmakefile
-=======
-# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.34 2008/04/07 14:15:58 petere Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 subdir = src/pl/plperl
 top_builddir = ../../..
@@ -40,12 +36,8 @@ NAME = plperl
 
 OBJS = plperl.o SPI.o Util.o
 
-<<<<<<< HEAD
 DATA = plperl.control plperl--1.0.sql plperl--unpackaged--1.0.sql \
        plperlu.control plperlu--1.0.sql plperlu--unpackaged--1.0.sql
-=======
-SHLIB_LINK = $(perl_embed_ldflags)
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 PERLCHUNKS = plc_perlboot.pl plc_trusted.pl
 
@@ -82,7 +74,6 @@ perlchunks.h: $(PERLCHUNKS)
 
 all: all-lib
 
-<<<<<<< HEAD
 SPI.c: SPI.xs plperl_helpers.h
 	@if [ x"$(perl_privlibexp)" = x"" ]; then echo "configure switch --with-perl was not specified."; exit 1; fi
 	$(PERL) $(XSUBPPDIR)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap $< >$@
@@ -110,37 +101,6 @@ uninstall-data:
 
 check: submake
 	$(top_builddir)/src/test/regress/pg_regress --init-file=init_file $(REGRESS_OPTS) $(REGRESS)
-=======
-SPI.c: SPI.xs
-	$(PERL) $(perl_privlibexp)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap $< >$@
-
-# When doing a VPATH build, copy over the .sql and .out files so that the
-# test script can find them.  See comments in src/test/regress/GNUmakefile.
-ifdef VPATH
-
-ifneq ($(PORTNAME),win32)
-abs_srcdir := $(shell cd $(srcdir) && pwd)
-abs_builddir := $(shell pwd)
-else
-abs_srcdir := $(shell cd $(srcdir) && pwd -W)
-abs_builddir := $(shell pwd -W)
-endif
-
-test_files_src := $(wildcard $(srcdir)/sql/*.sql) $(wildcard $(srcdir)/expected/*.out)
-test_files_build := $(patsubst $(srcdir)/%, $(abs_builddir)/%, $(test_files_src))
-
-all: $(test_files_build)
-$(test_files_build): $(abs_builddir)/%: $(srcdir)/%
-	ln -s $< $@
-
-endif
-
-install: all installdirs install-lib
-
-installdirs: installdirs-lib
-
-uninstall: uninstall-lib
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 installcheck: submake
 	$(top_builddir)/src/test/regress/pg_regress --init-file=init_file $(REGRESS_OPTS) $(REGRESS)

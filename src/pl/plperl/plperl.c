@@ -1,11 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
-<<<<<<< HEAD
  *	  src/pl/plperl/plperl.c
-=======
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.139 2008/03/28 00:21:56 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  **********************************************************************/
 
@@ -909,7 +905,6 @@ plperl_destroy_interp(PerlInterpreter **interp)
 		/* Run END blocks - based on perl's perl_destruct() */
 		if (PL_exit_flags & PERL_EXIT_DESTRUCT_END)
 		{
-<<<<<<< HEAD
 			dJMPENV;
 			int			x = 0;
 
@@ -918,39 +913,6 @@ plperl_destroy_interp(PerlInterpreter **interp)
 			if (PL_endav && !PL_minus_c)
 				call_list(PL_scopestack_ix, PL_endav);
 			JMPENV_POP;
-=======
-			/* 
-			 * Fill in just enough information to set up this perl
-			 * function in the safe container and call it.
-			 * For some reason not entirely clear, it prevents errors that
-			 * can arise from the regex code later trying to load
-			 * utf8 modules.
-			 */
-			plperl_proc_desc desc;			
-			FunctionCallInfoData fcinfo;
-			SV *ret;
-			SV *func;
-
-			/* make sure we don't call ourselves recursively */
-			plperl_safe_init_done = true;
-
-			/* compile the function */
-			func = plperl_create_sub("utf8fix",
-							 "return shift =~ /\\xa9/i ? 'true' : 'false' ;",
-									 true);
-
-			/* set up to call the function with a single text argument 'a' */
-			desc.reference = func;
-			desc.nargs = 1;
-			desc.arg_is_rowtype[0] = false;
-			fmgr_info(F_TEXTOUT, &(desc.arg_out_func[0]));
-
-			fcinfo.arg[0] = CStringGetTextDatum("a");
-			fcinfo.argnull[0] = false;
-			
-			/* and make the call */
-			ret = plperl_call_perl_func(&desc, &fcinfo);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		}
 		LEAVE;
 		FREETMPS;
@@ -1612,15 +1574,8 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
 												   tupdesc));
 		}
 	}
-<<<<<<< HEAD
-#if 0 /* GPDB_84_MERGE_FIXME: re-enable this when we merge with 8.4 */
 	else if (TRIGGER_FIRED_BY_TRUNCATE(tdata->tg_event))
 		event = "TRUNCATE";
-#endif
-=======
-	else if (TRIGGER_FIRED_BY_TRUNCATE(tdata->tg_event))
-		event = "TRUNCATE";
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	else
 		event = "UNKNOWN";
 
@@ -2395,15 +2350,8 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 			retval = (Datum) trigdata->tg_newtuple;
 		else if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
 			retval = (Datum) trigdata->tg_trigtuple;
-<<<<<<< HEAD
-#if 0 /* GPDB_84_MERGE_FIXME: re-enable when we merge with 8.4 */
 		else if (TRIGGER_FIRED_BY_TRUNCATE(trigdata->tg_event))
 			retval = (Datum) trigdata->tg_trigtuple;
-#endif
-=======
-		else if (TRIGGER_FIRED_BY_TRUNCATE(trigdata->tg_event))
-			retval = (Datum) trigdata->tg_trigtuple;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		else
 			retval = (Datum) 0; /* can this happen? */
 	}
@@ -3062,7 +3010,6 @@ plperl_return_next(SV *sv)
 
 	if (prodesc->fn_retistuple)
 	{
-<<<<<<< HEAD
 		HeapTuple	tuple;
 
 		if (!(SvOK(sv) && SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVHV))
@@ -3074,17 +3021,6 @@ plperl_return_next(SV *sv)
 		tuple = plperl_build_tuple_result((HV *) SvRV(sv),
 										  current_call_data->ret_tdesc);
 		tuplestore_puttuple(current_call_data->tuple_store, tuple);
-=======
-		HeapTuple tuple;
-
-		tuple = plperl_build_tuple_result((HV *) SvRV(sv),
-										  current_call_data->attinmeta);
-
-		/* Make sure to store the tuple in a long-lived memory context */
-		MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
-		tuplestore_puttuple(current_call_data->tuple_store, tuple);
-		MemoryContextSwitchTo(old_cxt);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	}
 	else
 	{
@@ -3099,34 +3035,12 @@ plperl_return_next(SV *sv)
 								 prodesc->result_typioparam,
 								 &isNull);
 
-<<<<<<< HEAD
 		tuplestore_putvalues(current_call_data->tuple_store,
 							 current_call_data->ret_tdesc,
 							 &ret, &isNull);
 	}
 
 	MemoryContextSwitchTo(old_cxt);
-=======
-			ret = InputFunctionCall(&prodesc->result_in_func, val,
-									prodesc->result_typioparam, -1);
-			isNull = false;
-		}
-		else
-		{
-			ret = InputFunctionCall(&prodesc->result_in_func, NULL,
-									prodesc->result_typioparam, -1);
-			isNull = true;
-		}
-
-		/* Make sure to store the tuple in a long-lived memory context */
-		MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
-		tuplestore_putvalues(current_call_data->tuple_store,
-							 current_call_data->ret_tdesc,
-							 &ret, &isNull);
-		MemoryContextSwitchTo(old_cxt);
-	}
-
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	MemoryContextReset(current_call_data->tmp_cxt);
 }
 
