@@ -291,7 +291,11 @@ extern int get_num_guc_variables(void);
 
 extern void build_guc_variables(void);
 
-<<<<<<< HEAD
+/* search in enum options */
+extern const char *config_enum_lookup_by_value(struct config_enum *record, int val);
+extern bool config_enum_lookup_by_name(struct config_enum *record,
+									  const char *value, int *retval);
+
 extern bool parse_int(const char *value, int *result, int flags, const char **hintmsg);
 
 /* guc_gp.c needs this from guc.c */
@@ -302,12 +306,5 @@ extern struct config_bool ConfigureNamesBool_gp[];
 extern struct config_int ConfigureNamesInt_gp[];
 extern struct config_real ConfigureNamesReal_gp[];
 extern struct config_string ConfigureNamesString_gp[];
-=======
-/* search in enum options */
-extern const char *config_enum_lookup_by_value(struct config_enum *record, int val);
-extern bool config_enum_lookup_by_name(struct config_enum *record,
-									  const char *value, int *retval);
-
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 #endif   /* GUC_TABLES_H */

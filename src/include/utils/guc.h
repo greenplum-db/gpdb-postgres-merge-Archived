@@ -105,7 +105,15 @@ typedef enum
 	PGC_S_SESSION				/* SET command */
 } GucSource;
 
-<<<<<<< HEAD
+/*
+ * Enum values are made up of an array of name-value pairs
+ */
+struct config_enum_entry
+{
+	const char *name;
+	int         val;
+};
+
 typedef struct name_value_pair
 {
 	char       *name;
@@ -118,17 +126,6 @@ extern bool ParseConfigFile(const char *config_file, const char *calling_file,
 							struct name_value_pair **head_p,
 							struct name_value_pair **tail_p);
 extern void free_name_value_list(struct name_value_pair * list);
-=======
-/*
- * Enum values are made up of an array of name-value pairs
- */
-struct config_enum_entry
-{
-	const char *name;
-	int         val;
-};
-
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 typedef const char *(*GucStringAssignHook) (const char *newval, bool doit, GucSource source);
 typedef bool (*GucBoolAssignHook) (bool newval, bool doit, GucSource source);
