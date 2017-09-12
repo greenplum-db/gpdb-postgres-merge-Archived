@@ -93,11 +93,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.92 2009/08/01 20:59:17 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.83 2008/03/17 03:45:36 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

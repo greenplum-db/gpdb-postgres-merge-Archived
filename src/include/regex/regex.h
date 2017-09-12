@@ -29,11 +29,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/regex/regex.h,v 1.31 2009/06/11 14:49:12 momjian Exp $
-=======
  * $PostgreSQL: pgsql/src/include/regex/regex.h,v 1.30 2008/04/02 14:42:56 mha Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  */
 
 /*

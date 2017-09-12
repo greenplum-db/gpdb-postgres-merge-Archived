@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.226.2.5 2010/07/30 17:57:07 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.227 2008/03/20 21:42:48 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -1611,11 +1607,7 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 					(errcode(ERRCODE_INDETERMINATE_DATATYPE),
 					 errmsg("cannot determine type of empty array"),
 					 errhint("Explicitly cast to the desired type, "
-<<<<<<< HEAD
-							"for example ARRAY[]::integer[].")));
-=======
 							 "for example ARRAY[]::integer[].")));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		/* Select a common type for the elements */
 		coerce_type = select_common_type(typeids, "ARRAY");

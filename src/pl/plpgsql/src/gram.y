@@ -9,11 +9,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.108.2.1 2009/02/02 20:25:43 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.110 2008/04/06 23:43:29 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

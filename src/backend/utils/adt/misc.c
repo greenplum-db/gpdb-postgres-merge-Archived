@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.71 2009/06/11 14:49:03 momjian Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.59 2008/04/04 16:57:21 momjian Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

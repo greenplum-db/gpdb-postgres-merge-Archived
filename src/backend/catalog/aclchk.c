@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.143.2.1 2008/03/24 19:12:58 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.145 2008/03/26 21:10:37 alvherre Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  * NOTES
  *	  See acl.h.

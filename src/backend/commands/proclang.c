@@ -7,11 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.74.2.1 2008/04/29 19:37:13 alvherre Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.77 2008/03/27 03:57:33 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

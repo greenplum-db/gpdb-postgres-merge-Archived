@@ -8,11 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.178.2.1 2010/03/25 14:45:06 alvherre Exp $
-=======
  * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.181 2008/03/26 21:10:38 alvherre Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

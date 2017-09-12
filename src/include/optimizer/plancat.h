@@ -9,11 +9,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/optimizer/plancat.h,v 1.47.2.1 2008/04/01 00:48:44 tgl Exp $
-=======
  * $PostgreSQL: pgsql/src/include/optimizer/plancat.h,v 1.49 2008/04/01 00:48:33 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -39,11 +35,7 @@ extern void get_relation_info(PlannerInfo *root, Oid relationObjectId,
 				  bool inhparent, RelOptInfo *rel);
 
 extern void estimate_rel_size(Relation rel, int32 *attr_widths,
-<<<<<<< HEAD
-				  BlockNumber *pages, double *tuples);
-=======
 							  BlockNumber *pages, double *tuples);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 extern bool relation_excluded_by_constraints(PlannerInfo *root,
 								 RelOptInfo *rel, RangeTblEntry *rte);

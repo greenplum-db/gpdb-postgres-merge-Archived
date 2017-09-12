@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.226.2.4 2010/08/26 18:54:59 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.228 2008/03/25 22:42:43 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

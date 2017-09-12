@@ -2,11 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.117.2.3 2010/05/13 18:29:25 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.119 2008/03/28 00:21:56 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  **********************************************************************/
 

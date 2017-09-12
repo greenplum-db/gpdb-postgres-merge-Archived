@@ -6,11 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.66.2.1 2008/09/19 14:43:47 mha Exp $
-=======
  * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.67 2008/03/28 00:21:56 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

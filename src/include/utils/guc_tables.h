@@ -9,11 +9,7 @@
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.38.2.2 2009/12/09 21:58:17 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.41 2008/03/17 17:45:09 mha Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

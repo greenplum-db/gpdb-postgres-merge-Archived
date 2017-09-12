@@ -11,11 +11,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.227.2.2 2009/04/16 20:42:28 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.228 2008/03/25 22:42:43 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

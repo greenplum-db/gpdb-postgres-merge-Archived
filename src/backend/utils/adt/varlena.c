@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.162.2.1 2008/03/13 18:32:02 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.164 2008/03/25 22:42:44 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -181,11 +177,7 @@ text_to_cstring_buffer(const text *src, char *dst, size_t dst_len)
 		dst_len--;
 		if (dst_len >= src_len)
 			dst_len = src_len;
-<<<<<<< HEAD
-		else	/* ensure truncation is encoding-safe */
-=======
 		else					/* ensure truncation is encoding-safe */
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 			dst_len = pg_mbcliplen(VARDATA_ANY(srcunpacked), src_len, dst_len);
 		memcpy(dst, VARDATA_ANY(srcunpacked), dst_len);
 		dst[dst_len] = '\0';

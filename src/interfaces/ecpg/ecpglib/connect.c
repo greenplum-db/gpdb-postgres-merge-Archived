@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.54 2009/06/11 14:49:13 momjian Exp $ */
-=======
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.50 2008/03/27 07:56:00 meskes Exp $ */
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -274,11 +270,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 	enum COMPAT_MODE compat = c;
 	struct connection *this;
-<<<<<<< HEAD
-	int			i;
-=======
 	int i;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	char	   *dbname = name ? ecpg_strdup(name, lineno) : NULL,
 			   *host = NULL,
 			   *tmp,

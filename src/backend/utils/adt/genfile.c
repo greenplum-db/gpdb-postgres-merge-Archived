@@ -9,11 +9,7 @@
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.17.2.1 2008/03/31 01:32:01 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.19 2008/03/31 01:31:43 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

@@ -569,13 +569,8 @@ putVariable(CState *st, char *name, char *value)
 static char *
 parseVariable(const char *sql, int *eaten)
 {
-<<<<<<< HEAD
-	int			i = 0;
-	char	   *name;
-=======
 	int		i = 0;
 	char   *name;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	do
 	{
@@ -597,21 +592,12 @@ parseVariable(const char *sql, int *eaten)
 static char *
 replaceVariable(char **sql, char *param, int len, char *value)
 {
-<<<<<<< HEAD
-	int			valueln = strlen(value);
-
-	if (valueln > len)
-	{
-		char	   *tmp;
-		size_t		offset = param - *sql;
-=======
 	int	valueln = strlen(value);
 
 	if (valueln > len)
 	{
 		char   *tmp;
 		size_t	offset = param - *sql;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		tmp = realloc(*sql, strlen(*sql) - len + valueln + 1);
 		if (tmp == NULL)
@@ -644,11 +630,7 @@ assignVariables(CState * st, char *sql)
 	p = sql;
 	while ((p = strchr(p, ':')) != NULL)
 	{
-<<<<<<< HEAD
-		int			eaten;
-=======
 		int		eaten;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		name = parseVariable(p, &eaten);
 		if (name == NULL)
@@ -962,13 +944,8 @@ top:
 
 	if (commands[st->state]->type == SQL_COMMAND)
 	{
-<<<<<<< HEAD
-		const Command *command = commands[st->state];
-		int			r;
-=======
 		const Command  *command = commands[st->state];
 		int				r;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		if (querymode == QUERY_SIMPLE)
 		{
@@ -997,13 +974,8 @@ top:
 		}
 		else if (querymode == QUERY_EXTENDED)
 		{
-<<<<<<< HEAD
-			const char *sql = command->argv[0];
-			const char *params[MAX_ARGS];
-=======
 			const char		 *sql = command->argv[0];
 			const char		 *params[MAX_ARGS];
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 			getQueryParams(st, command, params);
 
@@ -1025,11 +997,7 @@ top:
 
 			if (!st->prepared[st->use_file])
 			{
-<<<<<<< HEAD
-				int			j;
-=======
 				int		j;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 				for (j = 0; commands[j] != NULL; j++)
 				{
@@ -1040,11 +1008,7 @@ top:
 						continue;
 					preparedStatementName(name, st->use_file, j);
 					res = PQprepare(st->con, name,
-<<<<<<< HEAD
-						  commands[j]->argv[0], commands[j]->argc - 1, NULL);
-=======
 						commands[j]->argv[0], commands[j]->argc - 1, NULL);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 					if (PQresultStatus(res) != PGRES_COMMAND_OK)
 						fprintf(stderr, "%s", PQerrorMessage(st->con));
 					PQclear(res);
@@ -1508,15 +1472,9 @@ parseQuery(Command *cmd, const char *raw_sql)
 	p = sql;
 	while ((p = strchr(p, ':')) != NULL)
 	{
-<<<<<<< HEAD
-		char		var[12];
-		char	   *name;
-		int			eaten;
-=======
 		char	var[12];
 		char   *name;
 		int		eaten;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		name = parseVariable(p, &eaten);
 		if (name == NULL)

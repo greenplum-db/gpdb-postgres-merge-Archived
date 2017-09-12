@@ -71,11 +71,7 @@ typedef int16 NumericDigit;
 
 
 /* ----------
-<<<<<<< HEAD
- * NumericVar is the format we use for arithmetic.	The digit-array part
-=======
  * NumericVar is the format we use for arithmetic.  The digit-array part
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  * is the same as the NumericData storage format, but the header is more
  * complex.
  *

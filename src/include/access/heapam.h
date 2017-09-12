@@ -7,11 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.130.2.1 2008/03/08 21:58:07 tgl Exp $
-=======
  * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.133 2008/04/03 17:12:27 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

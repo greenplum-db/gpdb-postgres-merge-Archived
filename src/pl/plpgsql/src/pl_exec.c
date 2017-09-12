@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.202.2.10 2010/08/19 18:11:07 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.209 2008/04/06 23:43:29 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

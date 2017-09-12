@@ -2,11 +2,7 @@
 #
 # Makefile for the pltcl shared object
 #
-<<<<<<< HEAD
-# $PostgreSQL: pgsql/src/pl/tcl/Makefile,v 1.53 2008/10/02 08:11:11 petere Exp $
-=======
 # $PostgreSQL: pgsql/src/pl/tcl/Makefile,v 1.51 2008/04/07 14:15:58 petere Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #
 #-------------------------------------------------------------------------
 

@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.32.2.1 2009/02/27 16:35:31 heikki Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.33 2008/03/27 03:57:33 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

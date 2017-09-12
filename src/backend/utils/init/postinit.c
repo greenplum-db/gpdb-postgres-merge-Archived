@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.180.2.1 2008/09/11 14:01:35 alvherre Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.182 2008/03/26 21:10:39 alvherre Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *
  *-------------------------------------------------------------------------

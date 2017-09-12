@@ -24,11 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.332 2008/10/04 21:56:53 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.320 2008/03/21 22:41:48 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

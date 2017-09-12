@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.113.2.1 2009/02/24 01:38:49 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.117 2008/03/27 03:57:33 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the

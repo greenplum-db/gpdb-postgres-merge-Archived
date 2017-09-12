@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-$PostgreSQL: pgsql/src/backend/nodes/README,v 1.4 2008/08/25 22:42:32 tgl Exp $
-=======
 $PostgreSQL: pgsql/src/backend/nodes/README,v 1.3 2008/03/20 17:55:14 momjian Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 Node Structures
 ===============

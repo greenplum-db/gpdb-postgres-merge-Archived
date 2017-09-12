@@ -44,11 +44,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.201.2.5 2010/05/08 16:40:14 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.203 2008/03/24 18:08:47 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

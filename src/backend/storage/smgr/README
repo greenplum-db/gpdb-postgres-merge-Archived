@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-$PostgreSQL: pgsql/src/backend/storage/smgr/README,v 1.6 2008/08/11 11:05:11 heikki Exp $
-=======
 $PostgreSQL: pgsql/src/backend/storage/smgr/README,v 1.5 2008/03/21 13:23:28 momjian Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 Storage Manager
 ===============

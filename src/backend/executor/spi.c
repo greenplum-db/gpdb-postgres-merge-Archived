@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.188.2.4 2009/01/07 20:39:05 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.193 2008/04/02 18:31:50 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -2110,11 +2106,7 @@ _SPI_convert_params(int nargs, Oid *argtypes,
 
 		/* sizeof(ParamListInfoData) includes the first array element */
 		paramLI = (ParamListInfo) palloc(sizeof(ParamListInfoData) +
-<<<<<<< HEAD
-									   (nargs - 1) *sizeof(ParamExternData));
-=======
 										 (nargs - 1) *sizeof(ParamExternData));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		paramLI->numParams = nargs;
 
 		for (i = 0; i < nargs; i++)

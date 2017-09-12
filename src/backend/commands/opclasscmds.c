@@ -9,11 +9,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.58.2.1 2010/07/03 13:53:38 rhaas Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.59 2008/03/26 21:10:37 alvherre Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

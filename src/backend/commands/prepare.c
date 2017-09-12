@@ -10,11 +10,7 @@
  * Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.80.2.2 2009/12/29 17:41:18 heikki Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.85 2008/04/02 18:31:50 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

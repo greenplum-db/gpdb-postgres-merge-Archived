@@ -8,11 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.191.2.1 2009/02/24 01:38:49 tgl Exp $
-=======
  * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.193 2008/03/27 03:57:34 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

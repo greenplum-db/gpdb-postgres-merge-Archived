@@ -38,11 +38,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.103.2.3 2009/11/10 18:00:44 alvherre Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.106 2008/03/26 21:10:38 alvherre Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

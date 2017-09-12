@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.135.2.1 2008/04/18 06:48:50 heikki Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.136 2008/03/10 20:06:27 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

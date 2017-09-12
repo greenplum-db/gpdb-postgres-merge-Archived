@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/output.c,v 1.25 2009/06/11 14:49:13 momjian Exp $ */
-=======
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/output.c,v 1.24 2008/03/20 15:56:59 meskes Exp $ */
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 #include "postgres_fe.h"
 

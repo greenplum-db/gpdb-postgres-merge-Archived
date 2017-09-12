@@ -7,11 +7,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_synonym.c,v 1.7.2.1 2008/06/18 20:55:49 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_synonym.c,v 1.8 2008/03/10 03:01:28 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

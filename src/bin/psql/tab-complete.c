@@ -5,11 +5,7 @@
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.173 2008/10/04 21:56:54 tgl Exp $
-=======
  * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.170 2008/03/29 19:19:14 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  */
 
 /*----------------------------------------------------------------------

@@ -8,11 +8,7 @@
  * Copyright (c) 2007-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/contrib/pageinspect/rawpage.c,v 1.4.2.1 2009/03/31 22:54:52 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/contrib/pageinspect/rawpage.c,v 1.5 2008/03/25 22:42:41 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

@@ -69,13 +69,8 @@ quote_literal(PG_FUNCTION_ARGS)
 
 /*
  * quote_nullable -
-<<<<<<< HEAD
- *	  Returns a properly quoted literal, with null values returned
- *	  as the text string 'NULL'.
-=======
  *    Returns a properly quoted literal, with null values returned
  *    as the text string 'NULL'.
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  */
 Datum
 quote_nullable(PG_FUNCTION_ARGS)

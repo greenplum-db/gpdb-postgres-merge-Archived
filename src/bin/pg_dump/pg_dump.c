@@ -27,11 +27,7 @@
  *	http://archives.postgresql.org/pgsql-bugs/2010-02/msg00187.php
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.546 2009/08/04 19:46:51 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.486 2008/03/28 00:21:56 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

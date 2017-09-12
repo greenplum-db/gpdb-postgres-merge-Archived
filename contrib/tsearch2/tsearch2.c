@@ -7,11 +7,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.c,v 1.5.2.1 2009/01/28 18:32:55 teodor Exp $
-=======
  *	  $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.c,v 1.6 2008/03/25 22:42:42 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

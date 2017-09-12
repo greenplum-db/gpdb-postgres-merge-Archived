@@ -7,11 +7,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.8.2.1 2008/03/07 15:29:27 teodor Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.11 2008/03/25 22:42:43 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

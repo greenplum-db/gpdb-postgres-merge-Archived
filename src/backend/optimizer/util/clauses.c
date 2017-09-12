@@ -10,11 +10,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.268 2008/10/04 21:56:53 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.257 2008/04/01 00:48:33 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT

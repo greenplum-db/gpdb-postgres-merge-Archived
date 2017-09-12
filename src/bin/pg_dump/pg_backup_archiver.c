@@ -15,11 +15,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.152.2.1 2009/01/13 11:45:03 mha Exp $
-=======
  *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.153 2008/03/20 17:36:57 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

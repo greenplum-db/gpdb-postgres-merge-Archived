@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-$PostgreSQL: pgsql/src/backend/executor/README,v 1.8 2009/01/09 15:46:10 tgl Exp $
-=======
 $PostgreSQL: pgsql/src/backend/executor/README,v 1.7 2008/03/21 13:23:28 momjian Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 The Postgres Executor
 =====================

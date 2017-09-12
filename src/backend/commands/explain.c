@@ -9,11 +9,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.180 2008/10/06 20:29:38 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.171 2008/03/26 18:48:59 alvherre Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

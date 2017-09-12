@@ -21,11 +21,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.22.2.1 2008/09/11 14:01:35 alvherre Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.25 2008/03/26 21:10:38 alvherre Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

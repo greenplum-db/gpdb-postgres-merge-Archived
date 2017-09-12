@@ -6,11 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.72 2009/06/11 14:49:11 momjian Exp $
-=======
  * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.66 2008/04/01 03:09:30 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -114,17 +110,10 @@ extern int SPI_execute_snapshot(SPIPlanPtr plan,
 					 Snapshot snapshot,
 					 Snapshot crosscheck_snapshot,
 					 bool read_only, bool fire_triggers, long tcount);
-<<<<<<< HEAD
-extern int SPI_execute_with_args(const char *src,
-					  int nargs, Oid *argtypes,
-					  Datum *Values, const char *Nulls,
-					  bool read_only, long tcount);
-=======
 extern int	SPI_execute_with_args(const char *src,
 								  int nargs, Oid *argtypes,
 								  Datum *Values, const char *Nulls,
 								  bool read_only, long tcount);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 extern SPIPlanPtr SPI_prepare(const char *src, int nargs, Oid *argtypes);
 extern SPIPlanPtr SPI_prepare_cursor(const char *src, int nargs, Oid *argtypes,
 				   int cursorOptions);
@@ -158,17 +147,10 @@ extern void SPI_freetuptable(SPITupleTable *tuptable);
 extern Portal SPI_cursor_open(const char *name, SPIPlanPtr plan,
 				Datum *Values, const char *Nulls, bool read_only);
 extern Portal SPI_cursor_open_with_args(const char *name,
-<<<<<<< HEAD
-						  const char *src,
-						  int nargs, Oid *argtypes,
-						  Datum *Values, const char *Nulls,
-						  bool read_only, int cursorOptions);
-=======
 										const char *src,
 										int nargs, Oid *argtypes,
 										Datum *Values, const char *Nulls,
 										bool read_only, int cursorOptions);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 extern Portal SPI_cursor_find(const char *name);
 extern void SPI_cursor_fetch(Portal portal, bool forward, long count);
 extern void SPI_cursor_move(Portal portal, bool forward, long count);

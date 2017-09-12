@@ -10,11 +10,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.96.2.1 2008/03/04 19:54:13 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.97 2008/03/04 19:54:06 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

@@ -23,11 +23,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.40.2.2 2009/07/29 15:57:23 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.43 2008/03/26 18:48:59 alvherre Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

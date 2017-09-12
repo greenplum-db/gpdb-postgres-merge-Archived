@@ -10,11 +10,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.130 2008/10/04 21:56:54 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.126 2008/03/26 21:10:38 alvherre Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

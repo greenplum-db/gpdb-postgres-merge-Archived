@@ -8,11 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.81 2008/10/04 21:56:52 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.71 2008/03/27 03:57:33 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

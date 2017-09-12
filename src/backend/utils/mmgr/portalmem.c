@@ -13,11 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.106.2.5 2010/07/13 09:02:46 heikki Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.109 2008/04/02 18:31:50 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

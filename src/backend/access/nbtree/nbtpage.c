@@ -9,11 +9,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.106.2.1 2010/08/29 19:33:36 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.108 2008/03/26 18:48:59 alvherre Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque

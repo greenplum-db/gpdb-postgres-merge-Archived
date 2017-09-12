@@ -8,11 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.69.2.8 2010/06/15 19:04:28 tgl Exp $
-=======
  * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.73 2008/04/04 17:02:56 momjian Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  * Copyright (c) 2001-2008, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *

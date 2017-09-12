@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.148.2.2 2010/05/11 04:57:51 itagaki Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.151 2008/03/27 03:57:33 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

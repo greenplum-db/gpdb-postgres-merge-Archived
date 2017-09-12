@@ -10,11 +10,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.257.2.8 2010/07/23 00:43:26 rhaas Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.262 2008/03/26 18:48:59 alvherre Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

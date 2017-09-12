@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.249.2.6 2010/07/29 16:15:05 rhaas Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.255 2008/04/03 17:12:27 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *
  * INTERFACE ROUTINES

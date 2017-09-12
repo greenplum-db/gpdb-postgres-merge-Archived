@@ -10,11 +10,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.273 2008/12/13 19:13:44 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.250 2008/03/31 03:34:27 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

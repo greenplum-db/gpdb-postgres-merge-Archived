@@ -1,11 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.137.2.2 2009/07/06 19:11:53 heikki Exp $
-=======
  * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.139 2008/03/25 22:42:44 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *
  *	 Portions Copyright (c) 1999-2008, PostgreSQL Global Development Group
@@ -939,44 +935,6 @@ static const KeyWord DCH_keywords[] = {
  */
 static const KeyWord NUM_keywords[] = {
 /*	name, len, id			is in Index */
-<<<<<<< HEAD
-	{",", 1, NUM_COMMA},		/* , */
-	{".", 1, NUM_DEC},			/* . */
-	{"0", 1, NUM_0},			/* 0 */
-	{"9", 1, NUM_9},			/* 9 */
-	{"B", 1, NUM_B},			/* B */
-	{"C", 1, NUM_C},			/* C */
-	{"D", 1, NUM_D},			/* D */
-	{"E", 1, NUM_E},			/* E */
-	{"FM", 2, NUM_FM},			/* F */
-	{"G", 1, NUM_G},			/* G */
-	{"L", 1, NUM_L},			/* L */
-	{"MI", 2, NUM_MI},			/* M */
-	{"PL", 2, NUM_PL},			/* P */
-	{"PR", 2, NUM_PR},
-	{"RN", 2, NUM_RN},			/* R */
-	{"SG", 2, NUM_SG},			/* S */
-	{"SP", 2, NUM_SP},
-	{"S", 1, NUM_S},
-	{"TH", 2, NUM_TH},			/* T */
-	{"V", 1, NUM_V},			/* V */
-	{"b", 1, NUM_B},			/* b */
-	{"c", 1, NUM_C},			/* c */
-	{"d", 1, NUM_D},			/* d */
-	{"e", 1, NUM_E},			/* e */
-	{"fm", 2, NUM_FM},			/* f */
-	{"g", 1, NUM_G},			/* g */
-	{"l", 1, NUM_L},			/* l */
-	{"mi", 2, NUM_MI},			/* m */
-	{"pl", 2, NUM_PL},			/* p */
-	{"pr", 2, NUM_PR},
-	{"rn", 2, NUM_rn},			/* r */
-	{"sg", 2, NUM_SG},			/* s */
-	{"sp", 2, NUM_SP},
-	{"s", 1, NUM_S},
-	{"th", 2, NUM_th},			/* t */
-	{"v", 1, NUM_V},			/* v */
-=======
 	{",", 1, NUM_COMMA},	/* , */
 	{".", 1, NUM_DEC},		/* . */
 	{"0", 1, NUM_0},		/* 0 */
@@ -1013,7 +971,6 @@ static const KeyWord NUM_keywords[] = {
 	{"s", 1, NUM_S},
 	{"th", 2, NUM_th},		/* t */
 	{"v", 1, NUM_V},		/* v */
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/* last */
 	{NULL, 0, 0}
@@ -2439,11 +2396,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 					str_numth(s, s, S_TH_TYPE(n->suffix));
 				s += strlen(s);
 				break;
-<<<<<<< HEAD
-			case DCH_MS:		/* millisecond */
-=======
 			case DCH_MS:			/* millisecond */
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #ifdef HAVE_INT64_TIMESTAMP
 				sprintf(s, "%03d", (int) (in->fsec / INT64CONST(1000)));
 #else
@@ -2454,11 +2407,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 					str_numth(s, s, S_TH_TYPE(n->suffix));
 				s += strlen(s);
 				break;
-<<<<<<< HEAD
-			case DCH_US:		/* microsecond */
-=======
 			case DCH_US:			/* microsecond */
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #ifdef HAVE_INT64_TIMESTAMP
 				sprintf(s, "%06d", (int) in->fsec);
 #else
@@ -2952,11 +2901,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : 3,
 						(n->key->id == DCH_DDD) ?
 						tm->tm_yday :
-<<<<<<< HEAD
-					  date2isoyearday(tm->tm_year, tm->tm_mon, tm->tm_mday));
-=======
 						date2isoyearday(tm->tm_year, tm->tm_mon, tm->tm_mday));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 				if (S_THth(n->suffix))
 					str_numth(s, s, S_TH_TYPE(n->suffix));
 				s += strlen(s);
@@ -3004,11 +2949,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				s += strlen(s);
 				break;
 			case DCH_CC:
-<<<<<<< HEAD
-				if (is_interval)	/* straight calculation */
-=======
 				if (is_interval)			/* straight calculation */
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 					i = tm->tm_year / 100;
 				else						/* century 21 starts in 2001 */
 					i = (tm->tm_year - 1) / 100 + 1;
@@ -5571,11 +5512,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
  */
 #define NUM_TOCHAR_prepare \
 do { \
-<<<<<<< HEAD
-	len = VARSIZE_ANY_EXHDR(fmt);					\
-=======
 	len = VARSIZE_ANY_EXHDR(fmt); \
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	if (len <= 0 || len >= (INT_MAX-VARHDRSZ)/NUM_MAX_ITEM_SIZ)		\
 		PG_RETURN_TEXT_P(cstring_to_text("")); \
 	result	= (text *) palloc0((len * NUM_MAX_ITEM_SIZ) + 1 + VARHDRSZ);	\

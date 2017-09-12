@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.98.2.1 2008/11/13 17:42:18 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.100 2008/03/16 23:15:08 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  * NOTES
  *	  This file contains only the public interface routines.

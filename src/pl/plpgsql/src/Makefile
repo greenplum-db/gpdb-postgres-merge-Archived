@@ -2,11 +2,7 @@
 #
 # Makefile for the pl/pgsql procedural language
 #
-<<<<<<< HEAD
-# $PostgreSQL: pgsql/src/pl/plpgsql/src/Makefile,v 1.33 2008/08/29 13:02:33 petere Exp $
-=======
 # $PostgreSQL: pgsql/src/pl/plpgsql/src/Makefile,v 1.32 2008/04/07 14:15:58 petere Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #
 #-------------------------------------------------------------------------
 

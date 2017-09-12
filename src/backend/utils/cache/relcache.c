@@ -3756,11 +3756,7 @@ AttrDefaultFetch(Relation relation)
 					 RelationGetRelationName(relation));
 			else
 				attrdef[i].adbin = MemoryContextStrdup(CacheMemoryContext,
-<<<<<<< HEAD
-												   TextDatumGetCString(val));
-=======
 													TextDatumGetCString(val));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 			break;
 		}
 

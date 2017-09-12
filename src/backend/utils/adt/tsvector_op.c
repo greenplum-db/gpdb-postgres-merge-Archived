@@ -7,11 +7,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.12.2.1 2008/04/08 18:20:34 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.15 2008/04/08 18:20:29 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

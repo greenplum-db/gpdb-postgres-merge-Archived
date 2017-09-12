@@ -9,11 +9,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.160 2008/10/04 21:56:55 tgl Exp $
-=======
  * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.155 2008/03/24 21:53:04 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

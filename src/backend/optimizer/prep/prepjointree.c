@@ -23,11 +23,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.55 2008/10/04 21:56:53 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.50 2008/03/18 22:04:14 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

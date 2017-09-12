@@ -519,15 +519,9 @@ Lookahead(char *word, int how_far)
 
 
 static int
-<<<<<<< HEAD
-_metaphone(char *word,			/* IN */
-		   int max_phonemes,
-		   char **phoned_word)	/* OUT */
-=======
 _metaphone(char *word,				/* IN */
 		   int max_phonemes,
 		   char **phoned_word)		/* OUT */
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 {
 	int			w_idx = 0;		/* point in the phonization we're at. */
 	int			p_idx = 0;		/* end of the phoned phrase */

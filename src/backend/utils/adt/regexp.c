@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.78.2.1 2008/03/19 02:40:43 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.80 2008/04/02 14:42:56 mha Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance

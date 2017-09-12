@@ -16,11 +16,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.69.2.2 2008/12/01 17:06:27 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.73 2008/04/02 18:31:50 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

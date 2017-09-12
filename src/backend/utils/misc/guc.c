@@ -12,11 +12,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.563 2010/07/20 00:34:44 rhaas Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.446 2008/04/04 17:25:23 tgl Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *--------------------------------------------------------------------
  */

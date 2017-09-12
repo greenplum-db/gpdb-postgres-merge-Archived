@@ -1,9 +1,5 @@
 /*
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/contrib/pgrowlocks/pgrowlocks.c,v 1.12 2009/06/11 14:48:52 momjian Exp $
-=======
  * $PostgreSQL: pgsql/contrib/pgrowlocks/pgrowlocks.c,v 1.9 2008/03/26 21:10:36 alvherre Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  * Copyright (c) 2005-2006	Tatsuo Ishii
  *
