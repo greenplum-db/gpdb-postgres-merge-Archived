@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/Makefile,v 1.42 2007/08/21 01:11:12 tgl Exp $
+# $PostgreSQL: pgsql/src/Makefile,v 1.43 2008/03/18 16:24:50 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -73,7 +73,10 @@ distclean maintainer-clean:
 	$(MAKE) -C test $@
 	$(MAKE) -C tutorial NO_PGXS=1 $@
 	$(MAKE) -C test/thread $@
+<<<<<<< HEAD
 	$(MAKE) -C tools/fsync $@
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	rm -f Makefile.port Makefile.global
 
 

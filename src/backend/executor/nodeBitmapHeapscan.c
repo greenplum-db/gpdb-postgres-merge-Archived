@@ -21,7 +21,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.22.2.1 2008/09/11 14:01:35 alvherre Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.25 2008/03/26 21:10:38 alvherre Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -43,11 +47,16 @@
 #include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "utils/memutils.h"
+<<<<<<< HEAD
 #include "miscadmin.h"
 #include "parser/parsetree.h"
 #include "cdb/cdbvars.h" /* gp_select_invisible */
 #include "cdb/cdbfilerepprimary.h"
 #include "nodes/tidbitmap.h"
+=======
+#include "utils/snapmgr.h"
+#include "utils/tqual.h"
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 static TupleTableSlot *BitmapHeapNext(BitmapHeapScanState *node);

@@ -6,7 +6,11 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/cyrillic_and_mic/cyrillic_and_mic.c,v 1.21 2009/06/11 14:49:06 momjian Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/cyrillic_and_mic/cyrillic_and_mic.c,v 1.17 2008/03/20 10:30:04 heikki Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -281,7 +285,11 @@ win866_to_win1251(PG_FUNCTION_ARGS)
 	 * not in KOI8R. As we use MULE_INTERNAL/KOI8R as an intermediary, we
 	 * will fail to convert those characters.
 	 */
+<<<<<<< HEAD
 	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
+=======
+	buf = palloc(len * ENCODING_GROWTH_RATE);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	win8662mic(src, buf, len);
 	mic2win1251(buf, dest, strlen((char *) buf));
 	pfree(buf);
@@ -300,7 +308,11 @@ win1251_to_win866(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN1251, PG_WIN866);
 
 	/* Use mic/KOI8R as intermediary, see comment in win866_to_win1251() */
+<<<<<<< HEAD
 	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
+=======
+	buf = palloc(len * ENCODING_GROWTH_RATE);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	win12512mic(src, buf, len);
 	mic2win866(buf, dest, strlen((char *) buf));
 	pfree(buf);
@@ -355,7 +367,11 @@ iso_to_win1251(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_ISO_8859_5, PG_WIN1251);
 
 	/* Use mic/KOI8R as intermediary, see comment in win866_to_win1251() */
+<<<<<<< HEAD
 	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
+=======
+	buf = palloc(len * ENCODING_GROWTH_RATE);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	iso2mic(src, buf, len);
 	mic2win1251(buf, dest, strlen((char *) buf));
 	pfree(buf);
@@ -374,7 +390,11 @@ win1251_to_iso(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN1251, PG_ISO_8859_5);
 
 	/* Use mic/KOI8R as intermediary, see comment in win866_to_win1251() */
+<<<<<<< HEAD
 	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
+=======
+	buf = palloc(len * ENCODING_GROWTH_RATE);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	win12512mic(src, buf, len);
 	mic2iso(buf, dest, strlen((char *) buf));
 	pfree(buf);
@@ -393,7 +413,11 @@ iso_to_win866(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_ISO_8859_5, PG_WIN866);
 
 	/* Use mic/KOI8R as intermediary, see comment in win866_to_win1251() */
+<<<<<<< HEAD
 	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
+=======
+	buf = palloc(len * ENCODING_GROWTH_RATE);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	iso2mic(src, buf, len);
 	mic2win866(buf, dest, strlen((char *) buf));
 	pfree(buf);
@@ -412,7 +436,11 @@ win866_to_iso(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN866, PG_ISO_8859_5);
 
 	/* Use mic/KOI8R as intermediary, see comment in win866_to_win1251() */
+<<<<<<< HEAD
 	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
+=======
+	buf = palloc(len * ENCODING_GROWTH_RATE);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	win8662mic(src, buf, len);
 	mic2iso(buf, dest, strlen((char *) buf));
 	pfree(buf);

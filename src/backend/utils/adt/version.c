@@ -7,7 +7,11 @@
  *
  * IDENTIFICATION
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/backend/utils/adt/version.c,v 1.18 2009/01/01 17:23:50 momjian Exp $
+=======
+ * $PostgreSQL: pgsql/src/backend/utils/adt/version.c,v 1.17 2008/03/25 22:42:44 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +24,7 @@
 Datum
 pgsql_version(PG_FUNCTION_ARGS __attribute__((unused)) )
 {
+<<<<<<< HEAD
 	char version[512];
 
 	strcpy(version, PG_VERSION_STR " compiled on " __DATE__ " " __TIME__);
@@ -29,4 +34,7 @@ pgsql_version(PG_FUNCTION_ARGS __attribute__((unused)) )
 #endif 
 
 	PG_RETURN_TEXT_P(cstring_to_text(version));
+=======
+	PG_RETURN_TEXT_P(cstring_to_text(PG_VERSION_STR));
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }

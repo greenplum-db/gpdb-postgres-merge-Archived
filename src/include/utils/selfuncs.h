@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.43 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.44 2008/03/09 00:32:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,8 +115,13 @@ extern double mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 				double *sumcommonp);
 extern double histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 					  Datum constval, bool varonleft,
+<<<<<<< HEAD
 					  int min_hist_size, int n_skip);
 extern double convert_timevalue_to_scalar(Datum value, Oid typid);
+=======
+					  int min_hist_size, int n_skip,
+					  int *hist_size);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 extern Pattern_Prefix_Status pattern_fixed_prefix(Const *patt,
 					 Pattern_Type ptype,

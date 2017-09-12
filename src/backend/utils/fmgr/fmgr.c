@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.113.2.2 2009/12/09 21:58:17 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.114 2008/03/25 22:42:45 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -327,13 +331,21 @@ fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 		prosrcattr = SysCacheGetAttr(PROCOID, procedureTuple,
 									 Anum_pg_proc_prosrc, &isnull);
 		if (isnull)
+<<<<<<< HEAD
 			elog(ERROR, "null prosrc for C function %u", functionId);
+=======
+			elog(ERROR, "null prosrc for function %u", functionId);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		prosrcstring = TextDatumGetCString(prosrcattr);
 
 		probinattr = SysCacheGetAttr(PROCOID, procedureTuple,
 									 Anum_pg_proc_probin, &isnull);
 		if (isnull)
+<<<<<<< HEAD
 			elog(ERROR, "null probin for C function %u", functionId);
+=======
+			elog(ERROR, "null probin for function %u", functionId);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		probinstring = TextDatumGetCString(probinattr);
 
 		/* Look up the function itself */

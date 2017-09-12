@@ -18,28 +18,69 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection main closed
 [NO_PID]: sqlca: code: 0, state: 00000
+<<<<<<< HEAD
 [NO_PID]: ECPGconnect: opening database connectdb on localhost port <DEFAULT>  for user connectuser
+=======
+[NO_PID]: ECPGconnect: opening database connectdb on localhost port <REGRESSION_PORT>  
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection connectdb closed
 [NO_PID]: sqlca: code: 0, state: 00000
+<<<<<<< HEAD
 [NO_PID]: ECPGconnect: opening database <DEFAULT> on localhost port <DEFAULT>  for user connectdb
+=======
+[NO_PID]: ECPGconnect: opening database <DEFAULT> on localhost port <REGRESSION_PORT>  for user connectdb
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection (null) closed
 [NO_PID]: sqlca: code: 0, state: 00000
+<<<<<<< HEAD
 [NO_PID]: ECPGconnect: opening database connectdb on localhost port <DEFAULT>  for user connectuser
+=======
+[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <REGRESSION_PORT>  
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection connectdb closed
 [NO_PID]: sqlca: code: 0, state: 00000
+<<<<<<< HEAD
 [NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT>  for user connectuser
+=======
+[NO_PID]: ECPGconnect: opening database <DEFAULT> on <DEFAULT> port <REGRESSION_PORT>  for user connectdb
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection connectdb closed
 [NO_PID]: sqlca: code: 0, state: 00000
+<<<<<<< HEAD
 [NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT> with options connect_timeout=14 for user connectuser
+=======
+[NO_PID]: ECPGconnect: opening database connectdb on localhost port <REGRESSION_PORT>  for user connectuser
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection connectdb closed
 [NO_PID]: sqlca: code: 0, state: 00000
+<<<<<<< HEAD
 [NO_PID]: ECPGconnect: opening database nonexistant on localhost port <DEFAULT>  for user connectuser
 [NO_PID]: sqlca: code: 0, state: 00000
+=======
+[NO_PID]: ECPGconnect: opening database <DEFAULT> on localhost port <REGRESSION_PORT>  for user connectdb
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_finish: Connection (null) closed.
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: opening database connectdb on localhost port <REGRESSION_PORT>  for user connectuser
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_finish: Connection connectdb closed.
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <REGRESSION_PORT>  for user connectuser
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_finish: Connection connectdb closed.
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <REGRESSION_PORT> with options connect_timeout=14 for user connectuser
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_finish: Connection connectdb closed.
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: opening database nonexistant on localhost port <REGRESSION_PORT>  for user connectuser
+[NO_PID]: sqlca: code: 0, state: 00000
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 [NO_PID]: ECPGconnect: could not open database: FATAL:  database "nonexistant" does not exist
 
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -60,5 +101,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlcode -402 on line 57: could not connect to database "connectdb" on line 57
 [NO_PID]: sqlca: code: -402, state: 08001
+<<<<<<< HEAD
 [NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT>  for user connectuser
+=======
+[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <REGRESSION_PORT>  for user connectuser
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 [NO_PID]: sqlca: code: 0, state: 00000

@@ -11,7 +11,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-secure.c
+=======
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.104 2008/03/31 02:43:14 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  * NOTES
  *
@@ -816,6 +820,7 @@ verify_peer_name_matches_certificate(PGconn *conn)
 	}
 	else
 	{
+<<<<<<< HEAD
 		if (pg_strcasecmp(peer_cn, conn->pghost) == 0)
 			/* Exact name match */
 			result = true;
@@ -823,12 +828,66 @@ verify_peer_name_matches_certificate(PGconn *conn)
 			/* Matched wildcard certificate */
 			result = true;
 		else
+=======
+		/* read the user key from file */
+		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USER_KEY_FILE);
+		if (stat(fnbuf, &buf) != 0)
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		{
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("server common name \"%s\" does not match host name \"%s\"\n"),
 							  peer_cn, conn->pghost);
 			result = false;
 		}
+<<<<<<< HEAD
+=======
+#ifndef WIN32
+		if (!S_ISREG(buf.st_mode) || buf.st_mode & (S_IRWXG | S_IRWXO))
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+			libpq_gettext("private key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"),
+							  fnbuf);
+			ERR_pop_to_mark();
+			return 0;
+		}
+#endif
+
+		if ((bio = BIO_new_file(fnbuf, "r")) == NULL)
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+			   libpq_gettext("could not open private key file \"%s\": %s\n"),
+							  fnbuf, pqStrerror(errno, sebuf, sizeof(sebuf)));
+			ERR_pop_to_mark();
+			return 0;
+		}
+#ifndef WIN32
+		BIO_get_fp(bio, &fp);
+		if (fstat(fileno(fp), &buf2) == -1 ||
+			buf.st_dev != buf2.st_dev || buf.st_ino != buf2.st_ino)
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("private key file \"%s\" changed during execution\n"), fnbuf);
+			ERR_pop_to_mark();
+			return 0;
+		}
+#endif
+
+		if (PEM_read_bio_PrivateKey(bio, pkey, NULL, NULL) == NULL)
+		{
+			char	   *err = SSLerrmessage();
+
+			printfPQExpBuffer(&conn->errorMessage,
+			   libpq_gettext("could not read private key file \"%s\": %s\n"),
+							  fnbuf, err);
+			SSLerrfree(err);
+
+			BIO_free(bio);
+			ERR_pop_to_mark();
+			return 0;
+		}
+
+		BIO_free(bio);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	}
 
 	free(peer_cn);

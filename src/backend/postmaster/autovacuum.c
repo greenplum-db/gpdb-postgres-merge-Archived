@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.72 2008/02/20 14:01:45 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.76 2008/03/26 21:10:38 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,11 @@
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/syscache.h"
+<<<<<<< HEAD
 #include "cdb/cdbvars.h"
+=======
+#include "utils/tqual.h"
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 /*
@@ -1874,9 +1878,6 @@ do_autovacuum(void)
 	/* Start a transaction so our commands have one to play into. */
 	StartTransactionCommand();
 
-	/* functions in indexes may want a snapshot set */
-	ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
-
 	/*
 	 * Clean up any dead statistics collector entries for this DB. We always
 	 * want to do this exactly once per DB-processing cycle, even if we find
@@ -2679,7 +2680,11 @@ autovacuum_do_vac_analyze(Oid relid, bool dovacuum, bool doanalyze,
 	MemoryContextSwitchTo(old_cxt);
 
 	/* Let pgstat know what we're doing */
+<<<<<<< HEAD
 	autovac_report_activity(&vacstmt, relid, for_wraparound);
+=======
+	autovac_report_activity(&vacstmt, relid);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	vacuum(&vacstmt, relids, bstrategy, for_wraparound, true);
 }

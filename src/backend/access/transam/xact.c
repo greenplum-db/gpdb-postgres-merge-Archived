@@ -10,7 +10,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.257.2.8 2010/07/23 00:43:26 rhaas Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.262 2008/03/26 18:48:59 alvherre Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -56,11 +60,17 @@
 #include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/relcache.h"
+<<<<<<< HEAD
 #include "utils/resource_manager.h"
 #include "utils/sharedsnapshot.h"
 #include "access/distributedlog.h"
 #include "access/clog.h"
 #include "utils/vmem_tracker.h"
+=======
+#include "utils/snapmgr.h"
+#include "utils/xml.h"
+#include "pg_trace.h"
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 #include "cdb/cdbgang.h"
 #include "cdb/cdbvars.h" /* Gp_role, Gp_is_writer, interconnect_setup_timeout */
@@ -90,6 +100,7 @@ bool		MyXactAccessedTempRel = false;
 #endif
 int32 gp_subtrans_warn_limit = 16777216; /* 16 million */
 
+<<<<<<< HEAD
 /* gp-specific
  * routine for marking when a sequence makes a mark in the xlog.  we need
  * to keep track of this because sequences are the only reason a reader should
@@ -97,6 +108,15 @@ int32 gp_subtrans_warn_limit = 16777216; /* 16 million */
  * and will complain loudly if its violated.
  */
 bool		seqXlogWrite;
+=======
+/*
+ * MyXactAccessedTempRel is set when a temporary relation is accessed.
+ * We don't allow PREPARE TRANSACTION in that case.  (This is global
+ * so that it can be set from heapam.c.)
+ */
+bool		MyXactAccessedTempRel = false;
+
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /*
  *	transaction states - transaction state from server perspective
@@ -843,6 +863,7 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
     if (DistributedTransactionContext == DTX_CONTEXT_QE_READER ||
 		DistributedTransactionContext == DTX_CONTEXT_QE_ENTRY_DB_SINGLETON)
 	{
+<<<<<<< HEAD
 		isCurrentTransactionId = IsCurrentTransactionIdForReader(xid);
 
 		ereport((Debug_print_full_dtm ? LOG : DEBUG5),
@@ -850,6 +871,33 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 						xid, (isCurrentTransactionId ? "true" : "false"))));
 
 		return isCurrentTransactionId;
+=======
+		int low, high;
+
+		if (s->state == TRANS_ABORT)
+			continue;
+		if (!TransactionIdIsValid(s->transactionId))
+			continue;			/* it can't have any child XIDs either */
+		if (TransactionIdEquals(xid, s->transactionId))
+			return true;
+		/* As the childXids array is ordered, we can use binary search */
+		low = 0;
+		high = s->nChildXids - 1;
+		while (low <= high)
+		{
+			int				middle;
+			TransactionId	probe;
+
+			middle = low + (high - low) / 2;
+			probe = s->childXids[middle];
+			if (TransactionIdEquals(probe, xid))
+				return true;
+			else if (TransactionIdPrecedes(probe, xid))
+				low = middle + 1;
+			else
+				high = middle - 1;
+		}
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	}
 
 	/* we aren't a reader */
@@ -1460,6 +1508,7 @@ RecordTransactionCommit(void)
 	XactLastRecEnd.xrecoff = 0;
 
 cleanup:
+<<<<<<< HEAD
 	/* And clean up local data */
 
 	// UNDONE: Free storage in persistentCommitObjects...
@@ -1468,6 +1517,11 @@ cleanup:
 		pfree(persistentCommitBuffer);
 	if (children)
 		pfree(children);
+=======
+	/* Clean up local data */
+	if (rels)
+		pfree(rels);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	return latestXid;
 }
@@ -1879,8 +1933,13 @@ RecordTransactionAbort(bool isSubXact)
 		WalSndWakeup();
 
 	/* And clean up local data */
+<<<<<<< HEAD
 	if (persistentAbortBuffer != 0)
 		pfree(persistentAbortBuffer);
+=======
+	if (rels)
+		pfree(rels);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	return latestXid;
 }
@@ -2270,6 +2329,7 @@ StartTransaction(void)
 	XactIsoLevel = DefaultXactIsoLevel;
 	XactReadOnly = DefaultXactReadOnly;
 	forceSyncCommit = false;
+<<<<<<< HEAD
 #if 0 /* Upstream code not applicable to GPDB */
 	MyXactAccessedTempRel = false;
 #endif
@@ -2277,6 +2337,9 @@ StartTransaction(void)
 
 	/* set read only by fts, if any fts action is read only */
 	FtsCondSetTxnReadOnly(&XactReadOnly);
+=======
+	MyXactAccessedTempRel = false;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * reinitialize within-transaction counters
@@ -2472,7 +2535,7 @@ StartTransaction(void)
 	Assert(MyProc->backendId == vxid.backendId);
 	MyProc->lxid = vxid.localTransactionId;
 
-	PG_TRACE1(transaction__start, vxid.localTransactionId);
+	TRACE_POSTGRESQL_TRANSACTION_START(vxid.localTransactionId);
 
 	/*
 	 * set transaction_timestamp() (a/k/a now()).  We want this to be the same
@@ -2494,9 +2557,15 @@ StartTransaction(void)
 	s->childXids = NULL;
 	s->nChildXids = 0;
 	s->maxChildXids = 0;
+<<<<<<< HEAD
 	GetUserIdAndSecContext(&s->prevUser, &s->prevSecContext);
 	/* SecurityRestrictionContext should never be set outside a transaction */
 	Assert(s->prevSecContext == 0);
+=======
+	GetUserIdAndContext(&s->prevUser, &s->prevSecDefCxt);
+	/* SecurityDefinerContext should never be set outside a transaction */
+	Assert(!s->prevSecDefCxt);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * initialize other subsystems for new transaction
@@ -2683,7 +2752,7 @@ CommitTransaction(void)
 	 */
 	latestXid = RecordTransactionCommit();
 
-	PG_TRACE1(transaction__commit, MyProc->lxid);
+	TRACE_POSTGRESQL_TRANSACTION_COMMIT(MyProc->lxid);
 
 	/*
 	 * Let others know about no transaction in progress by me. Note that this
@@ -2828,7 +2897,10 @@ CommitTransaction(void)
 	s->childXids = NULL;
 	s->nChildXids = 0;
 	s->maxChildXids = 0;
+<<<<<<< HEAD
 	s->executorSaysXactDoesWrites = false;
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * done with commit processing, set current transaction state back to
@@ -2916,6 +2988,7 @@ PrepareTransaction(void)
 	/* NOTIFY and flatfiles will be handled below */
 
 	/*
+<<<<<<< HEAD
 	 * In Postgres, MyXactAccessedTempRel is used to error out if PREPARE TRANSACTION
 	 * operated on temp table.
 	 *
@@ -2932,6 +3005,8 @@ PrepareTransaction(void)
 	 */
 #if 0 /* Upstream code not applicable to GPDB */
 	/*
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	 * Don't allow PREPARE TRANSACTION if we've accessed a temporary table
 	 * in this transaction.  Having the prepared xact hold locks on another
 	 * backend's temp table seems a bad idea --- for instance it would prevent
@@ -2950,7 +3025,10 @@ PrepareTransaction(void)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot PREPARE a transaction that has operated on temporary tables")));
+<<<<<<< HEAD
 #endif
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();
@@ -3119,7 +3197,10 @@ PrepareTransaction(void)
 	s->childXids = NULL;
 	s->nChildXids = 0;
 	s->maxChildXids = 0;
+<<<<<<< HEAD
 	s->executorSaysXactDoesWrites = false;
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * done with 1st phase commit processing, set current transaction state
@@ -3253,7 +3334,7 @@ AbortTransaction(void)
 	 */
 	latestXid = RecordTransactionAbort(false);
 
-	PG_TRACE1(transaction__abort, MyProc->lxid);
+	TRACE_POSTGRESQL_TRANSACTION_ABORT(MyProc->lxid);
 
 	/*
 	 * Let others know about no transaction in progress by me. Note that this
@@ -3384,7 +3465,10 @@ CleanupTransaction(void)
 	s->childXids = NULL;
 	s->nChildXids = 0;
 	s->maxChildXids = 0;
+<<<<<<< HEAD
 	s->executorSaysXactDoesWrites = false;
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * done with abort processing, set current transaction state back to

@@ -1,7 +1,11 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
+<<<<<<< HEAD
  *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.74 2009/06/11 14:49:03 momjian Exp $
+=======
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.73 2008/03/25 22:42:44 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -600,7 +604,11 @@ network_supeq(PG_FUNCTION_ARGS)
 Datum
 network_host(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	inet	   *ip = PG_GETARG_INET_PP(0);
+=======
+	inet	   *ip = PG_GETARG_INET_P(0);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	char	   *ptr;
 	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
@@ -626,7 +634,11 @@ network_host(PG_FUNCTION_ARGS)
 Datum
 network_show(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	inet	   *ip = PG_GETARG_INET_PP(0);
+=======
+	inet	   *ip = PG_GETARG_INET_P(0);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	int			len;
 	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
@@ -667,7 +679,11 @@ inet_abbrev(PG_FUNCTION_ARGS)
 Datum
 cidr_abbrev(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	inet	   *ip = PG_GETARG_INET_PP(0);
+=======
+	inet	   *ip = PG_GETARG_INET_P(0);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	char	   *dst;
 	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 

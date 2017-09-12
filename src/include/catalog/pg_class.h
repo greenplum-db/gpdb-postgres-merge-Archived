@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.104 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.105 2008/03/27 03:57:34 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -19,6 +19,7 @@
 #ifndef PG_CLASS_H
 #define PG_CLASS_H
 
+<<<<<<< HEAD
 
 #include "catalog/genbki.h"
 
@@ -28,6 +29,9 @@
  *		can be read by both genbki.sh and the C compiler.
  * ----------------
  */
+=======
+#include "catalog/genbki.h"
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /* ----------------
  *		pg_class definition.  cpp turns this into

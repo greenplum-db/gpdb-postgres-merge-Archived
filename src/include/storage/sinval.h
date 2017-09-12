@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/sinval.h,v 1.46 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/sinval.h,v 1.47 2008/03/16 19:47:34 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,12 +83,16 @@ typedef union
 } SharedInvalidationMessage;
 
 
+<<<<<<< HEAD
 /* Counter of messages processed; don't worry about overflow. */
 extern uint64 SharedInvalidMessageCounter;
 
 
 extern void SendSharedInvalidMessages(const SharedInvalidationMessage *msgs,
 						  int n);
+=======
+extern void SendSharedInvalidMessage(SharedInvalidationMessage *msg);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 extern void ReceiveSharedInvalidMessages(
 					  void (*invalFunction) (SharedInvalidationMessage *msg),
 							 void (*resetFunction) (void));

@@ -10,7 +10,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.244 2008/10/04 21:56:53 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.231 2008/04/01 00:48:33 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -557,11 +561,18 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	/*
 	 * Look for IN clauses at the top level of WHERE, and transform them into
 	 * joins.  Note that this step only handles IN clauses originally at top
-	 * level of WHERE; if we pull up any subqueries in the next step, their
-	 * INs are processed just before pulling them up.
+	 * level of WHERE; if we pull up any subqueries below, their INs are
+	 * processed just before pulling them up.
 	 */
 	if (parse->hasSubLinks)
 		cdbsubselect_flatten_sublinks(root, (Node *) parse);
+
+	/*
+	 * Scan the rangetable for set-returning functions, and inline them
+	 * if possible (producing subqueries that might get pulled up next).
+	 * Recursion issues here are handled in the same way as for IN clauses.
+	 */
+	inline_set_returning_functions(root);
 
 	/*
 	 * Check to see if any subqueries in the rangetable can be merged into
@@ -857,7 +868,15 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	 * careful to maintain AND/OR flatness --- that is, do not generate a tree
 	 * with AND directly under AND, nor OR directly under OR.
 	 */
+<<<<<<< HEAD
 	expr = eval_const_expressions(root, expr);
+=======
+	if (kind != EXPRKIND_VALUES &&
+		(root->parse->jointree->fromlist != NIL ||
+		 kind == EXPRKIND_QUAL ||
+		 root->query_level > 1))
+		expr = eval_const_expressions(root, expr);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * If it's a qual or havingQual, canonicalize it.

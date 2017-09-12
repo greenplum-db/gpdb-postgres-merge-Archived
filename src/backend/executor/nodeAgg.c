@@ -75,7 +75,11 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.156.2.1 2008/10/16 19:25:58 neilc Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.157 2008/03/25 22:42:43 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -2429,7 +2433,7 @@ GetAggInitVal(Datum textInitVal, Oid transtype)
 	Datum		initVal;
 
 	getTypeInputInfo(transtype, &typinput, &typioparam);
-	strInitVal = DatumGetCString(DirectFunctionCall1(textout, textInitVal));
+	strInitVal = TextDatumGetCString(textInitVal);
 	initVal = OidInputFunctionCall(typinput, strInitVal,
 								   typioparam, -1);
 	pfree(strInitVal);

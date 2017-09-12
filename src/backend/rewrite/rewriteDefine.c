@@ -10,7 +10,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.130 2008/10/04 21:56:54 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.126 2008/03/26 21:10:38 alvherre Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -35,11 +39,15 @@
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
+<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbmirroredfilesysobj.h"
 #include "catalog/heap.h"
 #include "cdb/cdbpersistentfilesysobj.h"
+=======
+#include "utils/tqual.h"
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 static void checkRuleResultList(List *targetList, TupleDesc resultDesc,

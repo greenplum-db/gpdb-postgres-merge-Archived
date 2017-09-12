@@ -1,10 +1,17 @@
+<<<<<<< HEAD
 /* contrib/fuzzystrmatch/fuzzystrmatch--1.0.sql */
+=======
+/* $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.sql.in,v 1.10 2008/04/03 21:13:07 tgl Exp $ */
+
+-- Adjust this setting to control where the objects get created.
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 SET search_path = public;
 
 CREATE OR REPLACE FUNCTION levenshtein (text,text) RETURNS int
 AS 'MODULE_PATHNAME','levenshtein'
 LANGUAGE C IMMUTABLE STRICT;
 
+<<<<<<< HEAD
 CREATE FUNCTION levenshtein (text,text,int,int,int) RETURNS int
 AS 'MODULE_PATHNAME','levenshtein_with_costs'
 LANGUAGE C IMMUTABLE STRICT;
@@ -17,6 +24,12 @@ CREATE FUNCTION levenshtein_less_equal (text,text,int,int,int,int) RETURNS int
 AS 'MODULE_PATHNAME','levenshtein_less_equal_with_costs'
 LANGUAGE C IMMUTABLE STRICT;
 
+=======
+CREATE OR REPLACE FUNCTION levenshtein (text,text,int,int,int) RETURNS int
+AS 'MODULE_PATHNAME','levenshtein_with_costs'
+LANGUAGE C IMMUTABLE STRICT;
+
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 CREATE OR REPLACE FUNCTION metaphone (text,int) RETURNS text
 AS 'MODULE_PATHNAME','metaphone'
 LANGUAGE C IMMUTABLE STRICT;

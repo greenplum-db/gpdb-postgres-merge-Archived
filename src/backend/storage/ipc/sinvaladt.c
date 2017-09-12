@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/backend/storage/ipc/sinvaladt.c
+=======
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.69 2008/03/18 12:36:43 alvherre Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -32,23 +36,32 @@
 /*
  * Conceptually, the shared cache invalidation messages are stored in an
  * infinite array, where maxMsgNum is the next array subscript to store a
+<<<<<<< HEAD
  * submitted message in, minMsgNum is the smallest array subscript containing
  * a message not yet read by all backends, and we always have maxMsgNum >=
+=======
+ * submitted message in, minMsgNum is the smallest array subscript containing a
+ * message not yet read by all backends, and we always have maxMsgNum >=
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  * minMsgNum.  (They are equal when there are no messages pending.)  For each
  * active backend, there is a nextMsgNum pointer indicating the next message it
  * needs to read; we have maxMsgNum >= nextMsgNum >= minMsgNum for every
  * backend.
  *
+<<<<<<< HEAD
  * (In the current implementation, minMsgNum is a lower bound for the
  * per-process nextMsgNum values, but it isn't rigorously kept equal to the
  * smallest nextMsgNum --- it may lag behind.  We only update it when
  * SICleanupQueue is called, and we try not to do that often.)
  *
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  * In reality, the messages are stored in a circular buffer of MAXNUMMESSAGES
  * entries.  We translate MsgNum values into circular-buffer indexes by
  * computing MsgNum % MAXNUMMESSAGES (this should be fast as long as
  * MAXNUMMESSAGES is a constant and a power of 2).	As long as maxMsgNum
  * doesn't exceed minMsgNum by more than MAXNUMMESSAGES, we have enough space
+<<<<<<< HEAD
  * in the buffer.  If the buffer does overflow, we recover by setting the
  * "reset" flag for each backend that has fallen too far behind.  A backend
  * that is in "reset" state is ignored while determining minMsgNum.  When
@@ -70,6 +83,10 @@
  * are far behind and haven't gotten one yet.  As long as there aren't a lot
  * of "stuck" backends, we won't need a lot of extra interrupts, since ones
  * that aren't stuck will propagate their interrupts to the next guy.
+=======
+ * in the buffer.  If the buffer does overflow, we reset it to empty and
+ * force each backend to "reset", ie, discard all its invalidatable state.
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  * We would have problems if the MsgNum values overflow an integer, so
  * whenever minMsgNum exceeds MSGNUMWRAPAROUND, we subtract MSGNUMWRAPAROUND
@@ -77,6 +94,7 @@
  * large so that we don't need to do this often.  It must be a multiple of
  * MAXNUMMESSAGES so that the existing circular-buffer entries don't need
  * to be moved when we do it.
+<<<<<<< HEAD
  *
  * Access to the shared sinval array is protected by two locks, SInvalReadLock
  * and SInvalWriteLock.  Readers take SInvalReadLock in shared mode; this
@@ -102,6 +120,8 @@
  * readers will see that data after fetching maxMsgNum.  Multiprocessors
  * that have weak memory-ordering guarantees can fail without the memory
  * barrier instructions that are included in the spinlock sequences.
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  */
 
 
@@ -113,6 +133,7 @@
  *
  * MSGNUMWRAPAROUND: how often to reduce MsgNum variables to avoid overflow.
  * Must be a multiple of MAXNUMMESSAGES.  Should be large.
+<<<<<<< HEAD
  *
  * CLEANUP_MIN: the minimum number of messages that must be in the buffer
  * before we bother to call SICleanupQueue.
@@ -135,10 +156,17 @@
 #define CLEANUP_QUANTUM (MAXNUMMESSAGES / 16)
 #define SIG_THRESHOLD (MAXNUMMESSAGES / 2)
 #define WRITE_QUANTUM 64
+=======
+ */
+
+#define MAXNUMMESSAGES 4096
+#define MSGNUMWRAPAROUND (MAXNUMMESSAGES * 4096)
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /* Per-backend state in shared invalidation structure */
 typedef struct ProcState
 {
+<<<<<<< HEAD
 	/* procPid is zero in an inactive ProcState array entry. */
 	pid_t		procPid;		/* PID of backend, for signaling */
 	/* nextMsgNum is meaningless if procPid == 0 or resetState is true. */
@@ -162,6 +190,11 @@ typedef struct ProcState
 	 * meaningless in an active ProcState entry.
 	 */
 	LocalTransactionId nextLXID;
+=======
+	/* nextMsgNum is -1 in an inactive ProcState array entry. */
+	int			nextMsgNum;		/* next message number to read, or -1 */
+	bool		resetState;		/* true, if backend has to reset its state */
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 } ProcState;
 
 /* Shared cache invalidation memory segment */
@@ -172,11 +205,24 @@ typedef struct SISeg
 	 */
 	int			minMsgNum;		/* oldest message still needed */
 	int			maxMsgNum;		/* next message number to be assigned */
+<<<<<<< HEAD
 	int			nextThreshold;	/* # of messages to call SICleanupQueue */
 	int			lastBackend;	/* index of last active procState entry, +1 */
 	int			maxBackends;	/* size of procState array */
 
 	slock_t		msgnumLock;		/* spinlock protecting maxMsgNum */
+=======
+	int			lastBackend;	/* index of last active procState entry, +1 */
+	int			maxBackends;	/* size of procState array */
+	int			freeBackends;	/* number of empty procState slots */
+
+	/*
+	 * Next LocalTransactionId to use for each idle backend slot.  We keep
+	 * this here because it is indexed by BackendId and it is convenient to
+	 * copy the value to and from local memory when MyBackendId is set.
+	 */
+	LocalTransactionId *nextLXID;		/* array of maxBackends entries */
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * Circular buffer holding shared-inval messages
@@ -215,7 +261,11 @@ SInvalShmemSize(void)
 }
 
 /*
+<<<<<<< HEAD
  * CreateSharedInvalidationState
+=======
+ * SharedInvalBufferInit
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *		Create and initialize the SI message buffer
  */
 void
@@ -234,6 +284,7 @@ CreateSharedInvalidationState(void)
 	if (found)
 		return;
 
+<<<<<<< HEAD
 	/* Clear message counters, save size of procState array, init spinlock */
 	shmInvalBuffer->minMsgNum = 0;
 	shmInvalBuffer->maxMsgNum = 0;
@@ -241,18 +292,34 @@ CreateSharedInvalidationState(void)
 	shmInvalBuffer->lastBackend = 0;
 	shmInvalBuffer->maxBackends = MaxBackends;
 	SpinLockInit(&shmInvalBuffer->msgnumLock);
+=======
+	shmInvalBuffer->nextLXID = ShmemAlloc(sizeof(LocalTransactionId) * MaxBackends);
+
+	/* Clear message counters, save size of procState array */
+	shmInvalBuffer->minMsgNum = 0;
+	shmInvalBuffer->maxMsgNum = 0;
+	shmInvalBuffer->lastBackend = 0;
+	shmInvalBuffer->maxBackends = MaxBackends;
+	shmInvalBuffer->freeBackends = MaxBackends;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/* The buffer[] array is initially all unused, so we need not fill it */
 
 	/* Mark all backends inactive, and initialize nextLXID */
 	for (i = 0; i < shmInvalBuffer->maxBackends; i++)
 	{
+<<<<<<< HEAD
 		shmInvalBuffer->procState[i].procPid = 0;		/* inactive */
 		shmInvalBuffer->procState[i].nextMsgNum = 0;	/* meaningless */
 		shmInvalBuffer->procState[i].resetState = false;
 		shmInvalBuffer->procState[i].signaled = false;
 		shmInvalBuffer->procState[i].hasMessages = false;
 		shmInvalBuffer->procState[i].nextLXID = InvalidLocalTransactionId;
+=======
+		shmInvalBuffer->procState[i].nextMsgNum = -1;		/* inactive */
+		shmInvalBuffer->procState[i].resetState = false;
+		shmInvalBuffer->nextLXID[i] = InvalidLocalTransactionId;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	}
 }
 
@@ -261,18 +328,26 @@ CreateSharedInvalidationState(void)
  *		Initialize a new backend to operate on the sinval buffer
  */
 void
+<<<<<<< HEAD
 SharedInvalBackendInit(bool sendOnly)
+=======
+SharedInvalBackendInit(void)
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 {
 	int			index;
 	ProcState  *stateP = NULL;
 	SISeg	   *segP = shmInvalBuffer;
 
+<<<<<<< HEAD
 	/*
 	 * This can run in parallel with read operations, but not with write
 	 * operations, since SIInsertDataEntries relies on lastBackend to set
 	 * hasMessages appropriately.
 	 */
 	LWLockAcquire(SInvalWriteLock, LW_EXCLUSIVE);
+=======
+	LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/* Look for a free entry in the procState array */
 	for (index = 0; index < segP->lastBackend; index++)
@@ -298,7 +373,11 @@ SharedInvalBackendInit(bool sendOnly)
 			 * out of procState slots: MaxBackends exceeded -- report normally
 			 */
 			MyBackendId = InvalidBackendId;
+<<<<<<< HEAD
 			LWLockRelease(SInvalWriteLock);
+=======
+			LWLockRelease(SInvalLock);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 			ereport(FATAL,
 					(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
 					 errmsg("sorry, too many clients already")));
@@ -323,10 +402,15 @@ SharedInvalBackendInit(bool sendOnly)
 
 	LWLockRelease(SInvalWriteLock);
 
+	LWLockRelease(SInvalLock);
+
 	/* register exit routine to mark my entry inactive at exit */
 	on_shmem_exit(CleanupInvalidationState, PointerGetDatum(segP));
+<<<<<<< HEAD
 
 	elog(DEBUG4, "my backend ID is %d", MyBackendId);
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 /*
@@ -374,10 +458,24 @@ CleanupInvalidationState(int status, Datum arg)
  * SIInsertDataEntries
  *		Add new invalidation message(s) to the buffer.
  */
+<<<<<<< HEAD
 void
 SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
 {
 	SISeg	   *segP = shmInvalBuffer;
+=======
+bool
+SIInsertDataEntry(SharedInvalidationMessage *data)
+{
+	int			numMsgs;
+	bool		signal_postmaster = false;
+	SISeg	   *segP;
+
+	LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
+
+	segP = shmInvalBuffer;
+	numMsgs = segP->maxMsgNum - segP->minMsgNum;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * N can be arbitrarily large.	We divide the work into groups of no more
@@ -406,6 +504,7 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
 		 * fullness threshold.	We have to loop and recheck the buffer state
 		 * after any call of SICleanupQueue.
 		 */
+<<<<<<< HEAD
 		for (;;)
 		{
 			numMsgs = segP->maxMsgNum - segP->minMsgNum;
@@ -425,6 +524,48 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
 			segP->buffer[max % MAXNUMMESSAGES] = *data++;
 			max++;
 		}
+=======
+		SIDelExpiredDataEntries(true);
+		numMsgs = segP->maxMsgNum - segP->minMsgNum;
+		if (numMsgs >= MAXNUMMESSAGES)
+		{
+			/* Yup, it's definitely full, no choice but to reset */
+			SISetProcStateInvalid(segP);
+			LWLockRelease(SInvalLock);
+			return false;
+		}
+	}
+
+	/*
+	 * Try to prevent table overflow.  When the table is 70% full send a
+	 * WAKEN_CHILDREN request to the postmaster.  The postmaster will send a
+	 * SIGUSR1 signal to all the backends, which will cause sinval.c to read
+	 * any pending SI entries.
+	 *
+	 * This should never happen if all the backends are actively executing
+	 * queries, but if a backend is sitting idle then it won't be starting
+	 * transactions and so won't be reading SI entries.
+	 */
+	if (numMsgs == (MAXNUMMESSAGES * 70 / 100) && IsUnderPostmaster)
+		signal_postmaster = true;
+
+	/*
+	 * Insert new message into proper slot of circular buffer
+	 */
+	segP->buffer[segP->maxMsgNum % MAXNUMMESSAGES] = *data;
+	segP->maxMsgNum++;
+
+	LWLockRelease(SInvalLock);
+
+	if (signal_postmaster)
+	{
+		elog(DEBUG4, "SI table is 70%% full, signaling postmaster");
+		SendPostmasterSignal(PMSIGNAL_WAKEN_CHILDREN);
+	}
+
+	return true;
+}
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		/* Update current value of maxMsgNum using spinlock */
 		{
@@ -459,6 +600,7 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
  *		get next SI message(s) for current backend, if there are any
  *
  * Possible return values:
+<<<<<<< HEAD
  *	0:	 no SI message available
  *	n>0: next n SI messages have been extracted into data[]
  * -1:	 SI reset message extracted
@@ -529,6 +671,31 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
 		max = vsegP->maxMsgNum;
 		SpinLockRelease(&vsegP->msgnumLock);
 	}
+=======
+ *	0: no SI message available
+ *	1: next SI message has been extracted into *data
+ *		(there may be more messages available after this one!)
+ * -1: SI reset message extracted
+ *
+ * NB: this can run in parallel with other instances of SIGetDataEntry
+ * executing on behalf of other backends, since each instance will modify only
+ * fields of its own backend's ProcState, and no instance will look at fields
+ * of other backends' ProcStates.  We express this by grabbing SInvalLock in
+ * shared mode.  Note that this is not exactly the normal (read-only)
+ * interpretation of a shared lock! Look closely at the interactions before
+ * allowing SInvalLock to be grabbed in shared mode for any other reason!
+ */
+int
+SIGetDataEntry(int backendId, SharedInvalidationMessage *data)
+{
+	ProcState  *stateP;
+	SISeg	   *segP;
+	
+	LWLockAcquire(SInvalLock, LW_SHARED);
+
+	segP = shmInvalBuffer;
+	stateP = &segP->procState[backendId - 1];
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	if (stateP->resetState)
 	{
@@ -539,11 +706,25 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
 		 */
 		stateP->nextMsgNum = max;
 		stateP->resetState = false;
+<<<<<<< HEAD
 		stateP->signaled = false;
 		LWLockRelease(SInvalReadLock);
 		return -1;
 	}
 
+=======
+		stateP->nextMsgNum = segP->maxMsgNum;
+		LWLockRelease(SInvalLock);
+		return -1;
+	}
+
+	if (stateP->nextMsgNum >= segP->maxMsgNum)
+	{
+		LWLockRelease(SInvalLock);
+		return 0;				/* nothing to read */
+	}
+
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	/*
 	 * Retrieve messages and advance backend's counter, until data array is
 	 * full or there are no more messages.
@@ -566,6 +747,7 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
 	 * If we haven't caught up completely, reset the hasMessages flag so that
 	 * we see the remaining messages next time.
 	 */
+<<<<<<< HEAD
 	if (stateP->nextMsgNum >= max)
 		stateP->signaled = false;
 	else
@@ -573,6 +755,11 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
 
 	LWLockRelease(SInvalReadLock);
 	return n;
+=======
+
+	LWLockRelease(SInvalLock);
+	return 1;					/* got a message */
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 /*
@@ -592,7 +779,11 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
  * free message slots at exit.	Caller must recheck and perhaps retry.
  */
 void
+<<<<<<< HEAD
 SICleanupQueue(bool callerHasWriteLock, int minFree)
+=======
+SIDelExpiredDataEntries(bool locked)
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 {
 	SISeg	   *segP = shmInvalBuffer;
 	int			min,
@@ -602,6 +793,7 @@ SICleanupQueue(bool callerHasWriteLock, int minFree)
 				i;
 	ProcState  *needSig = NULL;
 
+<<<<<<< HEAD
 	/* Lock out all writers and readers */
 	if (!callerHasWriteLock)
 		LWLockAcquire(SInvalWriteLock, LW_EXCLUSIVE);
@@ -617,6 +809,20 @@ SICleanupQueue(bool callerHasWriteLock, int minFree)
 	min = segP->maxMsgNum;
 	minsig = min - SIG_THRESHOLD;
 	lowbound = min - MAXNUMMESSAGES + minFree;
+=======
+	if (!locked)
+		LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
+
+	min = segP->maxMsgNum;
+	if (min == segP->minMsgNum)
+	{
+		if (!locked)
+			LWLockRelease(SInvalLock);
+		return;					/* fast path if no messages exist */
+	}
+
+	/* Recompute minMsgNum = minimum of all backends' nextMsgNum */
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	for (i = 0; i < segP->lastBackend; i++)
 	{
@@ -667,6 +873,7 @@ SICleanupQueue(bool callerHasWriteLock, int minFree)
 		}
 	}
 
+<<<<<<< HEAD
 	/*
 	 * Determine how many messages are still in the queue, and set the
 	 * threshold at which we should repeat SICleanupQueue().
@@ -701,6 +908,10 @@ SICleanupQueue(bool callerHasWriteLock, int minFree)
 		if (!callerHasWriteLock)
 			LWLockRelease(SInvalWriteLock);
 	}
+=======
+	if (!locked)
+		LWLockRelease(SInvalLock);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 

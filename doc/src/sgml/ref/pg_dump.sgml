@@ -1,5 +1,9 @@
 <!--
+<<<<<<< HEAD
 $PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.98.2.2 2008/08/26 00:03:24 tgl Exp $
+=======
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.101 2008/03/26 16:34:47 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 PostgreSQL documentation
 -->
 
@@ -299,6 +303,20 @@ PostgreSQL documentation
         This option has been deprecated.
        </para>
 
+<<<<<<< HEAD
+=======
+       <para>
+        By default, <application>pg_dump</> will refuse to attempt
+        to dump from a server that is of a newer <productname>PostgreSQL</>
+        version than <application>pg_dump</application> is.  It will also
+        refuse to attempt to dump from a server that is older than the oldest
+        supported version (currently, 7.0).  The <option>-i</> option
+        overrides this check and forces a dump to be attempted anyway.
+        This option is <emphasis>deprecated</> because the dump is very
+        likely to fail &mdash; or worse, seem to succeed but be wrong or
+        incomplete.
+       </para>
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
       </listitem>
      </varlistentry>
 
@@ -412,6 +430,23 @@ PostgreSQL documentation
        <para>
         This option is obsolete but still accepted for backwards
         compatibility.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--no-tablespaces</option></term>
+      <listitem>
+       <para>
+        Do not output commands to select tablespaces.
+        With this option, all objects will be created in whichever
+        tablespace is the default during restore.
+       </para>
+
+       <para>
+        This option is only meaningful for the plain-text format.  For
+        the archive formats, you can specify the option when you
+        call <command>pg_restore</command>.
        </para>
       </listitem>
      </varlistentry>

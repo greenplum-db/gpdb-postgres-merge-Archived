@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.163 2008/02/26 14:26:16 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.165 2008/04/07 14:15:58 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,11 @@ include $(top_builddir)/src/Makefile.global
 # shared library parameters
 NAME= pq
 SO_MAJOR_VERSION= 5
+<<<<<<< HEAD
 SO_MINOR_VERSION= 3
+=======
+SO_MINOR_VERSION= 2
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 override CPPFLAGS :=  -DFRONTEND -DUNSAFE_STAT_OK -I$(srcdir) $(CPPFLAGS) -I$(top_builddir)/src/port -I$(top_srcdir)/src/port
 ifneq ($(PORTNAME), win32)
@@ -60,7 +64,11 @@ endif
 # shared library link.  (The order in which you list them here doesn't
 # matter.)
 ifneq ($(PORTNAME), win32)
+<<<<<<< HEAD
 SHLIB_LINK += $(filter -lcrypt -ldes -lcom_err -lcrypto -lk5crypto -lkrb5 -lgssapi_krb5 -lgss -lgssapi -lssl -lsocket -lnsl -lresolv -lintl, $(LIBS)) $(LDAP_LIBS_FE) $(PTHREAD_LIBS)
+=======
+SHLIB_LINK += $(filter -lcrypt -ldes -lcom_err -lcrypto -lk5crypto -lkrb5 -lgssapi_krb5 -lgss -lssl -lsocket -lnsl -lresolv -lintl, $(LIBS)) $(LDAP_LIBS_FE) $(PTHREAD_LIBS)
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 else
 SHLIB_LINK += $(filter -lcrypt -ldes -lcom_err -lcrypto -lk5crypto -lkrb5 -lgssapi32 -lssl -lsocket -lnsl -lresolv -lintl $(PTHREAD_LIBS), $(LIBS)) $(LDAP_LIBS_FE)
 endif
@@ -117,7 +125,11 @@ install: all installdirs install-lib
 	$(INSTALL_DATA) $(srcdir)/pg_service.conf.sample '$(DESTDIR)$(datadir)/pg_service.conf.sample'
 
 installdirs: installdirs-lib
+<<<<<<< HEAD
 	$(MKDIR_P) '$(DESTDIR)$(includedir)' '$(DESTDIR)$(includedir_internal)'
+=======
+	$(mkinstalldirs) '$(DESTDIR)$(includedir)' '$(DESTDIR)$(includedir_internal)'
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 uninstall: uninstall-lib
 	rm -f '$(DESTDIR)$(includedir)/libpq-fe.h'

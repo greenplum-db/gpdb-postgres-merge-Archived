@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.120 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.122 2008/03/26 18:48:59 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "utils/memutils.h"
+<<<<<<< HEAD
 #include "utils/resscheduler.h"
 #include "commands/vacuum.h"
 #include "commands/tablecmds.h"
@@ -40,6 +41,9 @@
 #include "cdb/ml_ipc.h"
 #include "cdb/memquota.h"
 #include "executor/spi.h"
+=======
+#include "utils/snapmgr.h"
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 /*

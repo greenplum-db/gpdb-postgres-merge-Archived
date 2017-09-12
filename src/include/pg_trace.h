@@ -5,13 +5,14 @@
  *
  *	Copyright (c) 2006-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pg_trace.h,v 1.3 2008/01/02 02:42:06 momjian Exp $
+ *	$PostgreSQL: pgsql/src/include/pg_trace.h,v 1.4 2008/03/17 19:44:41 petere Exp $
  * ----------
  */
 
 #ifndef PG_TRACE_H
 #define PG_TRACE_H
 
+<<<<<<< HEAD
 #ifdef ENABLE_DTRACE
 #define PGTRACE_ENABLED
 
@@ -124,4 +125,8 @@ static inline void LTRACE_PROBE(long family,
 
 #endif   /* not ENABLE_LTRACE */
 #endif   /* not ENABLE_DTRACE */
+=======
+#include "utils/probes.h"
+
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #endif   /* PG_TRACE_H */

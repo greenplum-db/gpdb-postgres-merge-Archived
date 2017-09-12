@@ -16,7 +16,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.69.2.2 2008/12/01 17:06:27 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.73 2008/04/02 18:31:50 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -31,11 +35,15 @@
 #include "executor/tstoreReceiver.h"
 #include "tcop/pquery.h"
 #include "utils/memutils.h"
+<<<<<<< HEAD
 #include "utils/resscheduler.h"
 
 #include "cdb/cdbgang.h"
 #include "cdb/cdbvars.h"
 #include "postmaster/backoff.h"
+=======
+#include "utils/snapmgr.h"
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 /*
@@ -318,6 +326,7 @@ PortalCleanup(Portal portal)
 
 				/* we do not need AfterTriggerEndQuery() here */
 				ExecutorEnd(queryDesc);
+				FreeQueryDesc(queryDesc);
 			}
 			PG_CATCH();
 			{
@@ -467,6 +476,7 @@ PersistHoldablePortal(Portal portal)
 		portal->queryDesc = NULL;		/* prevent double shutdown */
 		/* we do not need AfterTriggerEndQuery() here */
 		ExecutorEnd(queryDesc);
+		FreeQueryDesc(queryDesc);
 
 		/*
 		 * Set the position in the result set: ideally, this could be

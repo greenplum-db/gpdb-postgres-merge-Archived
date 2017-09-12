@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.94 2010/02/26 02:00:42 momjian Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.89 2008/03/25 22:42:43 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -47,7 +51,10 @@
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "storage/large_object.h"
+<<<<<<< HEAD
 #include "utils/acl.h"
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 
@@ -85,7 +92,11 @@ static MemoryContext fscxt = NULL;
 
 static int	newLOfd(LargeObjectDesc *lobjCookie);
 static void deleteLOfd(int fd);
+<<<<<<< HEAD
 static Oid	lo_import_internal(text *filename, Oid lobjOid);
+=======
+static Oid lo_import_internal(text *filename, Oid lobjOid);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 /*****************************************************************************
@@ -374,7 +385,11 @@ Datum
 lo_import_with_oid(PG_FUNCTION_ARGS)
 {
 	text	   *filename = PG_GETARG_TEXT_PP(0);
+<<<<<<< HEAD
 	Oid			oid = PG_GETARG_OID(1);
+=======
+	Oid		   oid = PG_GETARG_OID(1);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	PG_RETURN_OID(lo_import_internal(filename, oid));
 }
@@ -388,8 +403,13 @@ lo_import_internal(text *filename, Oid lobjOid)
 	char		buf[BUFSIZE];
 	char		fnamebuf[MAXPGPATH];
 	LargeObjectDesc *lobj;
+<<<<<<< HEAD
 	Oid			oid;
 
+=======
+	Oid	oid;
+	
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #ifndef ALLOW_DANGEROUS_LO_FUNCTIONS
 	if (!superuser())
 		ereport(ERROR,

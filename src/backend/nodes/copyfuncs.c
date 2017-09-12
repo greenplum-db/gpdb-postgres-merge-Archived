@@ -17,7 +17,11 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.406 2008/10/04 21:56:53 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.390 2008/03/21 22:41:48 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -2554,9 +2558,15 @@ _copyA_Indirection(A_Indirection *from)
 static A_ArrayExpr *
 _copyA_ArrayExpr(A_ArrayExpr *from)
 {
+<<<<<<< HEAD
 	A_ArrayExpr *newnode = makeNode(A_ArrayExpr);
 	COPY_NODE_FIELD(elements);
 	COPY_LOCATION_FIELD(location);
+=======
+	A_ArrayExpr  *newnode = makeNode(A_ArrayExpr);
+
+	COPY_NODE_FIELD(elements);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	return newnode;
 }
@@ -2580,8 +2590,12 @@ _copyTypeName(TypeName *from)
 	TypeName   *newnode = makeNode(TypeName);
 
 	COPY_NODE_FIELD(names);
+<<<<<<< HEAD
 	COPY_SCALAR_FIELD(typid);
 	COPY_SCALAR_FIELD(timezone);
+=======
+	COPY_SCALAR_FIELD(typeid);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	COPY_SCALAR_FIELD(setof);
 	COPY_SCALAR_FIELD(pct_type);
 	COPY_NODE_FIELD(typmods);

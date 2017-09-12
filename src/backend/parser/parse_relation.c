@@ -10,7 +10,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.136 2008/10/04 21:56:54 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.131 2008/04/05 01:58:20 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

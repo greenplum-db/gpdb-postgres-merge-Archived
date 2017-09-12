@@ -5,7 +5,11 @@
  *
  *	Copyright (c) 2001-2009, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.71.2.1 2008/04/03 16:27:32 tgl Exp $
+=======
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.74 2008/04/03 16:27:25 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  * ----------
  */
 #ifndef PGSTAT_H
@@ -726,10 +730,15 @@ extern void pgstat_report_waiting(char reason);
 
 extern void pgstat_report_appname(const char *appname);
 extern void pgstat_report_xact_timestamp(TimestampTz tstamp);
+<<<<<<< HEAD
 extern const char *pgstat_get_backend_current_activity(int pid, bool checkUser);
 
 extern void pgstat_report_resgroup(TimestampTz queueStart, Oid groupid);
 extern TimestampTz pgstat_fetch_resgroup_queue_timestamp(void);
+=======
+extern void pgstat_report_waiting(bool waiting);
+extern const char *pgstat_get_backend_current_activity(int pid, bool checkUser);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 extern void pgstat_initstats(Relation rel);
 

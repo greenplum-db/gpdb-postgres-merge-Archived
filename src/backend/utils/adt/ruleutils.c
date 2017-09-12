@@ -9,7 +9,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.287 2008/10/06 20:29:38 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.272 2008/03/28 00:21:56 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -52,6 +56,7 @@
 #include "rewrite/rewriteSupport.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
+#include "utils/tqual.h"
 #include "utils/typcache.h"
 #include "utils/xml.h"
 
@@ -536,6 +541,13 @@ pg_get_triggerdef(PG_FUNCTION_ARGS)
 			appendStringInfo(&buf, " OR UPDATE");
 		else
 			appendStringInfo(&buf, " UPDATE");
+	}
+	if (TRIGGER_FOR_TRUNCATE(trigrec->tgtype))
+	{
+		if (findx > 0)
+			appendStringInfo(&buf, " OR TRUNCATE");
+		else
+			appendStringInfo(&buf, " TRUNCATE");
 	}
 	appendStringInfo(&buf, " ON %s ",
 					 generate_relation_name(trigrec->tgrelid, NIL));
@@ -1154,7 +1166,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 					elog(ERROR, "null conbin for constraint %u",
 						 constraintId);
 
-				conbin = DatumGetCString(DirectFunctionCall1(textout, val));
+				conbin = TextDatumGetCString(val);
 				expr = stringToNode(conbin);
 
 				/* Set up deparsing context for Var nodes in constraint */
@@ -1301,6 +1313,8 @@ pg_get_expr_worker(text *expr, Oid relid, char *relname, int prettyFlags)
 	str = deparse_expression_pretty(node, context, false, false,
 									prettyFlags, 0);
 
+	pfree(exprstr);
+
 	return str;
 }
 
@@ -1354,7 +1368,7 @@ Datum
 pg_get_serial_sequence(PG_FUNCTION_ARGS)
 {
 	text	   *tablename = PG_GETARG_TEXT_P(0);
-	text	   *columnname = PG_GETARG_TEXT_P(1);
+	text	   *columnname = PG_GETARG_TEXT_PP(1);
 	RangeVar   *tablerv;
 	Oid			tableOid;
 	char	   *column;
@@ -6763,16 +6777,9 @@ static text *
 string_to_text(char *str)
 {
 	text	   *result;
-	int			slen = strlen(str);
-	int			tlen;
 
-	tlen = slen + VARHDRSZ;
-	result = (text *) palloc(tlen);
-	SET_VARSIZE(result, tlen);
-	memcpy(VARDATA(result), str, slen);
-
+	result = cstring_to_text(str);
 	pfree(str);
-
 	return result;
 }
 
@@ -6816,7 +6823,24 @@ flatten_reloptions(Oid relid)
 	reloptions = SysCacheGetAttr(RELOID, tuple,
 								 Anum_pg_class_reloptions, &isnull);
 	if (!isnull)
+<<<<<<< HEAD
 		result = reloptions_to_string(reloptions);
+=======
+	{
+		Datum		sep,
+					txt;
+
+		/*
+		 * We want to use array_to_text(reloptions, ', ') --- but
+		 * DirectFunctionCall2(array_to_text) does not work, because
+		 * array_to_text() relies on flinfo to be valid.  So use
+		 * OidFunctionCall2.
+		 */
+		sep = CStringGetTextDatum(", ");
+		txt = OidFunctionCall2(F_ARRAY_TO_TEXT, reloptions, sep);
+		result = TextDatumGetCString(txt);
+	}
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	ReleaseSysCache(tuple);
 

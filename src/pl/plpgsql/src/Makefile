@@ -2,7 +2,11 @@
 #
 # Makefile for the pl/pgsql procedural language
 #
+<<<<<<< HEAD
 # $PostgreSQL: pgsql/src/pl/plpgsql/src/Makefile,v 1.33 2008/08/29 13:02:33 petere Exp $
+=======
+# $PostgreSQL: pgsql/src/pl/plpgsql/src/Makefile,v 1.32 2008/04/07 14:15:58 petere Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +17,11 @@ include $(top_builddir)/src/Makefile.global
 # Shared library parameters
 NAME= plpgsql
 
+<<<<<<< HEAD
 override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS)
+=======
+override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 SHLIB_LINK = $(filter -lintl, $(LIBS))
 rpath =
 
@@ -27,6 +35,7 @@ all: all-lib
 include $(top_srcdir)/src/Makefile.shlib
 
 
+<<<<<<< HEAD
 install: all install-lib install-data
 
 installdirs: installdirs-lib
@@ -41,6 +50,13 @@ uninstall-data:
 	rm -f $(addprefix '$(DESTDIR)$(datadir)/extension'/, $(notdir $(DATA)))
 
 .PHONY: install-data uninstall-data
+=======
+install: installdirs all install-lib
+
+installdirs: installdirs-lib
+
+uninstall: uninstall-lib
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 # Force these dependencies to be known even without dependency info built:

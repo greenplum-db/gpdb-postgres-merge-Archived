@@ -10,7 +10,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.268 2008/10/04 21:56:53 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.257 2008/04/01 00:48:33 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -71,6 +75,13 @@ typedef struct
 	int		   *usecounts;
 } substitute_actual_parameters_context;
 
+typedef struct
+{
+	int			nargs;
+	List	   *args;
+	int			sublevels_up;
+} substitute_actual_srf_parameters_context;
+
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool count_agg_clauses_walker(Node *node, AggClauseCounts *counts);
 static bool expression_returns_set_walker(Node *node, void *context);
@@ -110,7 +121,16 @@ static Node *substitute_actual_parameters(Node *expr, int nargs, List *args,
 static Node *substitute_actual_parameters_mutator(Node *node,
 							  substitute_actual_parameters_context *context);
 static void sql_inline_error_callback(void *arg);
+<<<<<<< HEAD
 static bool contain_grouping_clause_walker(Node *node, void *context);
+=======
+static Expr *evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod);
+static Query *substitute_actual_srf_parameters(Query *expr,
+											   int nargs, List *args);
+static Node *substitute_actual_srf_parameters_mutator(Node *node,
+							substitute_actual_srf_parameters_context *context);
+
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /*****************************************************************************
  *		OPERATOR clause functions
@@ -1864,6 +1884,7 @@ eval_const_expressions(PlannerInfo *root, Node *node)
 	eval_const_expressions_context context;
 
 	if (root)
+<<<<<<< HEAD
 	{
 		context.boundParams = root->glob->boundParams;	/* bound Params */
 		context.glob = root->glob; /* for inlined-function dependencies */
@@ -1873,6 +1894,11 @@ eval_const_expressions(PlannerInfo *root, Node *node)
 		context.boundParams = NULL;
 		context.glob = NULL;
 	}
+=======
+		context.boundParams = root->glob->boundParams;	/* bound Params */
+	else
+		context.boundParams = NULL;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	context.active_fns = NIL;	/* nothing being recursively simplified */
 	context.case_val = NULL;	/* no CASE being examined */
 	context.estimate = false;	/* safe transformations only */
@@ -3522,7 +3548,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 						  &isNull);
 	if (isNull)
 		elog(ERROR, "null prosrc for function %u", funcid);
-	src = DatumGetCString(DirectFunctionCall1(textout, tmp));
+	src = TextDatumGetCString(tmp);
 
 	/*
 	 * We just do parsing and parse analysis, not rewriting, because rewriting
@@ -3560,17 +3586,25 @@ inline_function(Oid funcid, Oid result_type, List *args,
 		list_length(querytree->targetList) != 1)
 		goto fail;
 
-	newexpr = (Node *) ((TargetEntry *) linitial(querytree->targetList))->expr;
-
 	/*
 	 * Make sure the function (still) returns what it's declared to.  This
 	 * will raise an error if wrong, but that's okay since the function would
-	 * fail at runtime anyway.	Note we do not try this until we have verified
-	 * that no rewriting was needed; that's probably not important, but let's
-	 * be careful.
+	 * fail at runtime anyway.  Note that check_sql_fn_retval will also insert
+	 * a RelabelType if needed to make the tlist expression match the declared
+	 * type of the function.
+	 *
+	 * Note: we do not try this until we have verified that no rewriting was
+	 * needed; that's probably not important, but let's be careful.
 	 */
-	if (check_sql_fn_retval(funcid, result_type, list_make1(querytree), NULL))
+	if (check_sql_fn_retval(funcid, result_type, list_make1(querytree),
+							true, NULL))
 		goto fail;				/* reject whole-tuple-result cases */
+
+	/* Now we can grab the tlist expression */
+	newexpr = (Node *) ((TargetEntry *) linitial(querytree->targetList))->expr;
+
+	/* Assert that check_sql_fn_retval did the right thing */
+	Assert(exprType(newexpr) == result_type);
 
 	/*
 	 * Additional validity checks on the expression.  It mustn't return a set,
@@ -3656,6 +3690,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	MemoryContextDelete(mycxt);
 
 	/*
+<<<<<<< HEAD
 	 * Since check_sql_fn_retval allows binary-compatibility cases, the
 	 * expression we now have might return some type that's only binary
 	 * compatible with the original expression result type.  To avoid
@@ -3678,6 +3713,8 @@ inline_function(Oid funcid, Oid result_type, List *args,
 		record_plan_function_dependency(context->glob, funcid);
 
 	/*
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	 * Recursively try to simplify the modified expression.  Here we must add
 	 * the current function to the context list of active functions.
 	 */
@@ -3762,7 +3799,7 @@ sql_inline_error_callback(void *arg)
 							  &isnull);
 		if (isnull)
 			elog(ERROR, "null prosrc");
-		prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
+		prosrc = TextDatumGetCString(tmp);
 		errposition(0);
 		internalerrposition(syntaxerrposition);
 		internalerrquery(prosrc);
@@ -3847,6 +3884,756 @@ evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod)
 }
 
 
+<<<<<<< HEAD
+=======
+/*
+ * inline_set_returning_function
+ *		Attempt to "inline" a set-returning function in the FROM clause.
+ *
+ * "node" is the expression from an RTE_FUNCTION rangetable entry.  If it
+ * represents a call of a set-returning SQL function that can safely be
+ * inlined, expand the function and return the substitute Query structure.
+ * Otherwise, return NULL.
+ *
+ * This has a good deal of similarity to inline_function(), but that's
+ * for the non-set-returning case, and there are enough differences to
+ * justify separate functions.
+ */
+Query *
+inline_set_returning_function(PlannerInfo *root, Node *node)
+{
+	FuncExpr   *fexpr;
+	HeapTuple	func_tuple;
+	Form_pg_proc funcform;
+	Oid		   *argtypes;
+	char	   *src;
+	Datum		tmp;
+	bool		isNull;
+	MemoryContext oldcxt;
+	MemoryContext mycxt;
+	ErrorContextCallback sqlerrcontext;
+	List	   *raw_parsetree_list;
+	List	   *querytree_list;
+	Query	   *querytree;
+	int			i;
+
+	/*
+	 * It doesn't make a lot of sense for a SQL SRF to refer to itself
+	 * in its own FROM clause, since that must cause infinite recursion
+	 * at runtime.  It will cause this code to recurse too, so check
+	 * for stack overflow.  (There's no need to do more.)
+	 */
+	check_stack_depth();
+
+	/* Fail if FROM item isn't a simple FuncExpr */
+	if (node == NULL || !IsA(node, FuncExpr))
+		return NULL;
+	fexpr = (FuncExpr *) node;
+
+	/*
+	 * The function must be declared to return a set, else inlining would
+	 * change the results if the contained SELECT didn't return exactly
+	 * one row.
+	 */
+	if (!fexpr->funcretset)
+		return NULL;
+
+	/* Fail if function returns RECORD ... we don't have enough context */
+	if (fexpr->funcresulttype == RECORDOID)
+		return NULL;
+
+	/*
+	 * Refuse to inline if the arguments contain any volatile functions or
+	 * sub-selects.  Volatile functions are rejected because inlining may
+	 * result in the arguments being evaluated multiple times, risking a
+	 * change in behavior.  Sub-selects are rejected partly for implementation
+	 * reasons (pushing them down another level might change their behavior)
+	 * and partly because they're likely to be expensive and so multiple
+	 * evaluation would be bad.
+	 */
+	if (contain_volatile_functions((Node *) fexpr->args) ||
+		contain_subplans((Node *) fexpr->args))
+		return NULL;
+
+	/* Check permission to call function (fail later, if not) */
+	if (pg_proc_aclcheck(fexpr->funcid, GetUserId(), ACL_EXECUTE) != ACLCHECK_OK)
+		return NULL;
+
+	/*
+	 * OK, let's take a look at the function's pg_proc entry.
+	 */
+	func_tuple = SearchSysCache(PROCOID,
+								ObjectIdGetDatum(fexpr->funcid),
+								0, 0, 0);
+	if (!HeapTupleIsValid(func_tuple))
+		elog(ERROR, "cache lookup failed for function %u", fexpr->funcid);
+	funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
+
+	/*
+	 * Forget it if the function is not SQL-language or has other showstopper
+	 * properties.  In particular it mustn't be declared STRICT, since we
+	 * couldn't enforce that.  It also mustn't be VOLATILE, because that is
+	 * supposed to cause it to be executed with its own snapshot, rather than
+	 * sharing the snapshot of the calling query.  (The nargs check is just
+	 * paranoia, ditto rechecking proretset.)
+	 */
+	if (funcform->prolang != SQLlanguageId ||
+		funcform->proisstrict ||
+		funcform->provolatile == PROVOLATILE_VOLATILE ||
+		funcform->prosecdef ||
+		!funcform->proretset ||
+		!heap_attisnull(func_tuple, Anum_pg_proc_proconfig) ||
+		funcform->pronargs != list_length(fexpr->args))
+	{
+		ReleaseSysCache(func_tuple);
+		return NULL;
+	}
+
+	/*
+	 * Setup error traceback support for ereport().  This is so that we can
+	 * finger the function that bad information came from.
+	 */
+	sqlerrcontext.callback = sql_inline_error_callback;
+	sqlerrcontext.arg = func_tuple;
+	sqlerrcontext.previous = error_context_stack;
+	error_context_stack = &sqlerrcontext;
+
+	/*
+	 * Make a temporary memory context, so that we don't leak all the stuff
+	 * that parsing might create.
+	 */
+	mycxt = AllocSetContextCreate(CurrentMemoryContext,
+								  "inline_set_returning_function",
+								  ALLOCSET_DEFAULT_MINSIZE,
+								  ALLOCSET_DEFAULT_INITSIZE,
+								  ALLOCSET_DEFAULT_MAXSIZE);
+	oldcxt = MemoryContextSwitchTo(mycxt);
+
+	/* Check for polymorphic arguments, and substitute actual arg types */
+	argtypes = (Oid *) palloc(funcform->pronargs * sizeof(Oid));
+	memcpy(argtypes, funcform->proargtypes.values,
+		   funcform->pronargs * sizeof(Oid));
+	for (i = 0; i < funcform->pronargs; i++)
+	{
+		if (IsPolymorphicType(argtypes[i]))
+		{
+			argtypes[i] = exprType((Node *) list_nth(fexpr->args, i));
+		}
+	}
+
+	/* Fetch and parse the function body */
+	tmp = SysCacheGetAttr(PROCOID,
+						  func_tuple,
+						  Anum_pg_proc_prosrc,
+						  &isNull);
+	if (isNull)
+		elog(ERROR, "null prosrc for function %u", fexpr->funcid);
+	src = TextDatumGetCString(tmp);
+
+	/*
+	 * Parse, analyze, and rewrite (unlike inline_function(), we can't
+	 * skip rewriting here).  We can fail as soon as we find more than
+	 * one query, though.
+	 */
+	raw_parsetree_list = pg_parse_query(src);
+	if (list_length(raw_parsetree_list) != 1)
+		goto fail;
+
+	querytree_list = pg_analyze_and_rewrite(linitial(raw_parsetree_list), src,
+							  argtypes, funcform->pronargs);
+	if (list_length(querytree_list) != 1)
+		goto fail;
+	querytree = linitial(querytree_list);
+
+	/*
+	 * The single command must be a regular results-returning SELECT.
+	 */
+	if (!IsA(querytree, Query) ||
+		querytree->commandType != CMD_SELECT ||
+		querytree->utilityStmt ||
+		querytree->intoClause)
+		goto fail;
+
+	/*
+	 * Make sure the function (still) returns what it's declared to.  This
+	 * will raise an error if wrong, but that's okay since the function would
+	 * fail at runtime anyway.  Note that check_sql_fn_retval will also insert
+	 * RelabelType(s) if needed to make the tlist expression(s) match the
+	 * declared type of the function.
+	 *
+	 * If the function returns a composite type, don't inline unless the
+	 * check shows it's returning a whole tuple result; otherwise what
+	 * it's returning is a single composite column which is not what we need.
+	 */
+	if (!check_sql_fn_retval(fexpr->funcid, fexpr->funcresulttype,
+							 querytree_list,
+							 true, NULL) &&
+		get_typtype(fexpr->funcresulttype) == TYPTYPE_COMPOSITE)
+		goto fail;				/* reject not-whole-tuple-result cases */
+
+	/*
+	 * Looks good --- substitute parameters into the query.
+	 */
+	querytree = substitute_actual_srf_parameters(querytree,
+												 funcform->pronargs,
+												 fexpr->args);
+
+	/*
+	 * Copy the modified query out of the temporary memory context,
+	 * and clean up.
+	 */
+	MemoryContextSwitchTo(oldcxt);
+
+	querytree = copyObject(querytree);
+
+	MemoryContextDelete(mycxt);
+	error_context_stack = sqlerrcontext.previous;
+	ReleaseSysCache(func_tuple);
+
+	return querytree;
+
+	/* Here if func is not inlinable: release temp memory and return NULL */
+fail:
+	MemoryContextSwitchTo(oldcxt);
+	MemoryContextDelete(mycxt);
+	error_context_stack = sqlerrcontext.previous;
+	ReleaseSysCache(func_tuple);
+
+	return NULL;
+}
+
+/*
+ * Replace Param nodes by appropriate actual parameters
+ *
+ * This is just enough different from substitute_actual_parameters()
+ * that it needs its own code.
+ */
+static Query *
+substitute_actual_srf_parameters(Query *expr, int nargs, List *args)
+{
+	substitute_actual_srf_parameters_context context;
+
+	context.nargs = nargs;
+	context.args = args;
+	context.sublevels_up = 1;
+
+	return query_tree_mutator(expr,
+							  substitute_actual_srf_parameters_mutator,
+							  &context,
+							  0);
+}
+
+static Node *
+substitute_actual_srf_parameters_mutator(Node *node,
+							substitute_actual_srf_parameters_context *context)
+{
+	Node   *result;
+
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, Query))
+	{
+		context->sublevels_up++;
+		result = (Node *) query_tree_mutator((Query *) node,
+									  substitute_actual_srf_parameters_mutator,
+											 (void *) context,
+											 0);
+		context->sublevels_up--;
+		return result;
+	}
+	if (IsA(node, Param))
+	{
+		Param	   *param = (Param *) node;
+
+		if (param->paramkind == PARAM_EXTERN)
+		{
+			if (param->paramid <= 0 || param->paramid > context->nargs)
+				elog(ERROR, "invalid paramid: %d", param->paramid);
+
+			/*
+			 * Since the parameter is being inserted into a subquery,
+			 * we must adjust levels.
+			 */
+			result = copyObject(list_nth(context->args, param->paramid - 1));
+			IncrementVarSublevelsUp(result, context->sublevels_up, 0);
+			return result;
+		}
+	}
+	return expression_tree_mutator(node,
+								   substitute_actual_srf_parameters_mutator,
+								   (void *) context);
+}
+
+
+/*
+ * Standard expression-tree walking support
+ *
+ * We used to have near-duplicate code in many different routines that
+ * understood how to recurse through an expression node tree.  That was
+ * a pain to maintain, and we frequently had bugs due to some particular
+ * routine neglecting to support a particular node type.  In most cases,
+ * these routines only actually care about certain node types, and don't
+ * care about other types except insofar as they have to recurse through
+ * non-primitive node types.  Therefore, we now provide generic tree-walking
+ * logic to consolidate the redundant "boilerplate" code.  There are
+ * two versions: expression_tree_walker() and expression_tree_mutator().
+ */
+
+/*--------------------
+ * expression_tree_walker() is designed to support routines that traverse
+ * a tree in a read-only fashion (although it will also work for routines
+ * that modify nodes in-place but never add/delete/replace nodes).
+ * A walker routine should look like this:
+ *
+ * bool my_walker (Node *node, my_struct *context)
+ * {
+ *		if (node == NULL)
+ *			return false;
+ *		// check for nodes that special work is required for, eg:
+ *		if (IsA(node, Var))
+ *		{
+ *			... do special actions for Var nodes
+ *		}
+ *		else if (IsA(node, ...))
+ *		{
+ *			... do special actions for other node types
+ *		}
+ *		// for any node type not specially processed, do:
+ *		return expression_tree_walker(node, my_walker, (void *) context);
+ * }
+ *
+ * The "context" argument points to a struct that holds whatever context
+ * information the walker routine needs --- it can be used to return data
+ * gathered by the walker, too.  This argument is not touched by
+ * expression_tree_walker, but it is passed down to recursive sub-invocations
+ * of my_walker.  The tree walk is started from a setup routine that
+ * fills in the appropriate context struct, calls my_walker with the top-level
+ * node of the tree, and then examines the results.
+ *
+ * The walker routine should return "false" to continue the tree walk, or
+ * "true" to abort the walk and immediately return "true" to the top-level
+ * caller.	This can be used to short-circuit the traversal if the walker
+ * has found what it came for.	"false" is returned to the top-level caller
+ * iff no invocation of the walker returned "true".
+ *
+ * The node types handled by expression_tree_walker include all those
+ * normally found in target lists and qualifier clauses during the planning
+ * stage.  In particular, it handles List nodes since a cnf-ified qual clause
+ * will have List structure at the top level, and it handles TargetEntry nodes
+ * so that a scan of a target list can be handled without additional code.
+ * Also, RangeTblRef, FromExpr, JoinExpr, and SetOperationStmt nodes are
+ * handled, so that query jointrees and setOperation trees can be processed
+ * without additional code.
+ *
+ * expression_tree_walker will handle SubLink nodes by recursing normally
+ * into the "testexpr" subtree (which is an expression belonging to the outer
+ * plan).  It will also call the walker on the sub-Query node; however, when
+ * expression_tree_walker itself is called on a Query node, it does nothing
+ * and returns "false".  The net effect is that unless the walker does
+ * something special at a Query node, sub-selects will not be visited during
+ * an expression tree walk. This is exactly the behavior wanted in many cases
+ * --- and for those walkers that do want to recurse into sub-selects, special
+ * behavior is typically needed anyway at the entry to a sub-select (such as
+ * incrementing a depth counter). A walker that wants to examine sub-selects
+ * should include code along the lines of:
+ *
+ *		if (IsA(node, Query))
+ *		{
+ *			adjust context for subquery;
+ *			result = query_tree_walker((Query *) node, my_walker, context,
+ *									   0); // adjust flags as needed
+ *			restore context if needed;
+ *			return result;
+ *		}
+ *
+ * query_tree_walker is a convenience routine (see below) that calls the
+ * walker on all the expression subtrees of the given Query node.
+ *
+ * expression_tree_walker will handle SubPlan nodes by recursing normally
+ * into the "testexpr" and the "args" list (which are expressions belonging to
+ * the outer plan).  It will not touch the completed subplan, however.	Since
+ * there is no link to the original Query, it is not possible to recurse into
+ * subselects of an already-planned expression tree.  This is OK for current
+ * uses, but may need to be revisited in future.
+ *--------------------
+ */
+
+bool
+expression_tree_walker(Node *node,
+					   bool (*walker) (),
+					   void *context)
+{
+	ListCell   *temp;
+
+	/*
+	 * The walker has already visited the current node, and so we need only
+	 * recurse into any sub-nodes it has.
+	 *
+	 * We assume that the walker is not interested in List nodes per se, so
+	 * when we expect a List we just recurse directly to self without
+	 * bothering to call the walker.
+	 */
+	if (node == NULL)
+		return false;
+
+	/* Guard against stack overflow due to overly complex expressions */
+	check_stack_depth();
+
+	switch (nodeTag(node))
+	{
+		case T_Var:
+		case T_Const:
+		case T_Param:
+		case T_CoerceToDomainValue:
+		case T_CaseTestExpr:
+		case T_SetToDefault:
+		case T_CurrentOfExpr:
+		case T_RangeTblRef:
+		case T_OuterJoinInfo:
+			/* primitive node types with no expression subnodes */
+			break;
+		case T_Aggref:
+			{
+				Aggref	   *expr = (Aggref *) node;
+
+				/* recurse directly on List */
+				if (expression_tree_walker((Node *) expr->args,
+										   walker, context))
+					return true;
+			}
+			break;
+		case T_ArrayRef:
+			{
+				ArrayRef   *aref = (ArrayRef *) node;
+
+				/* recurse directly for upper/lower array index lists */
+				if (expression_tree_walker((Node *) aref->refupperindexpr,
+										   walker, context))
+					return true;
+				if (expression_tree_walker((Node *) aref->reflowerindexpr,
+										   walker, context))
+					return true;
+				/* walker must see the refexpr and refassgnexpr, however */
+				if (walker(aref->refexpr, context))
+					return true;
+				if (walker(aref->refassgnexpr, context))
+					return true;
+			}
+			break;
+		case T_FuncExpr:
+			{
+				FuncExpr   *expr = (FuncExpr *) node;
+
+				if (expression_tree_walker((Node *) expr->args,
+										   walker, context))
+					return true;
+			}
+			break;
+		case T_OpExpr:
+			{
+				OpExpr	   *expr = (OpExpr *) node;
+
+				if (expression_tree_walker((Node *) expr->args,
+										   walker, context))
+					return true;
+			}
+			break;
+		case T_DistinctExpr:
+			{
+				DistinctExpr *expr = (DistinctExpr *) node;
+
+				if (expression_tree_walker((Node *) expr->args,
+										   walker, context))
+					return true;
+			}
+			break;
+		case T_ScalarArrayOpExpr:
+			{
+				ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
+
+				if (expression_tree_walker((Node *) expr->args,
+										   walker, context))
+					return true;
+			}
+			break;
+		case T_BoolExpr:
+			{
+				BoolExpr   *expr = (BoolExpr *) node;
+
+				if (expression_tree_walker((Node *) expr->args,
+										   walker, context))
+					return true;
+			}
+			break;
+		case T_SubLink:
+			{
+				SubLink    *sublink = (SubLink *) node;
+
+				if (walker(sublink->testexpr, context))
+					return true;
+
+				/*
+				 * Also invoke the walker on the sublink's Query node, so it
+				 * can recurse into the sub-query if it wants to.
+				 */
+				return walker(sublink->subselect, context);
+			}
+			break;
+		case T_SubPlan:
+			{
+				SubPlan    *subplan = (SubPlan *) node;
+
+				/* recurse into the testexpr, but not into the Plan */
+				if (walker(subplan->testexpr, context))
+					return true;
+				/* also examine args list */
+				if (expression_tree_walker((Node *) subplan->args,
+										   walker, context))
+					return true;
+			}
+			break;
+		case T_FieldSelect:
+			return walker(((FieldSelect *) node)->arg, context);
+		case T_FieldStore:
+			{
+				FieldStore *fstore = (FieldStore *) node;
+
+				if (walker(fstore->arg, context))
+					return true;
+				if (walker(fstore->newvals, context))
+					return true;
+			}
+			break;
+		case T_RelabelType:
+			return walker(((RelabelType *) node)->arg, context);
+		case T_CoerceViaIO:
+			return walker(((CoerceViaIO *) node)->arg, context);
+		case T_ArrayCoerceExpr:
+			return walker(((ArrayCoerceExpr *) node)->arg, context);
+		case T_ConvertRowtypeExpr:
+			return walker(((ConvertRowtypeExpr *) node)->arg, context);
+		case T_CaseExpr:
+			{
+				CaseExpr   *caseexpr = (CaseExpr *) node;
+
+				if (walker(caseexpr->arg, context))
+					return true;
+				/* we assume walker doesn't care about CaseWhens, either */
+				foreach(temp, caseexpr->args)
+				{
+					CaseWhen   *when = (CaseWhen *) lfirst(temp);
+
+					Assert(IsA(when, CaseWhen));
+					if (walker(when->expr, context))
+						return true;
+					if (walker(when->result, context))
+						return true;
+				}
+				if (walker(caseexpr->defresult, context))
+					return true;
+			}
+			break;
+		case T_ArrayExpr:
+			return walker(((ArrayExpr *) node)->elements, context);
+		case T_RowExpr:
+			return walker(((RowExpr *) node)->args, context);
+		case T_RowCompareExpr:
+			{
+				RowCompareExpr *rcexpr = (RowCompareExpr *) node;
+
+				if (walker(rcexpr->largs, context))
+					return true;
+				if (walker(rcexpr->rargs, context))
+					return true;
+			}
+			break;
+		case T_CoalesceExpr:
+			return walker(((CoalesceExpr *) node)->args, context);
+		case T_MinMaxExpr:
+			return walker(((MinMaxExpr *) node)->args, context);
+		case T_XmlExpr:
+			{
+				XmlExpr    *xexpr = (XmlExpr *) node;
+
+				if (walker(xexpr->named_args, context))
+					return true;
+				/* we assume walker doesn't care about arg_names */
+				if (walker(xexpr->args, context))
+					return true;
+			}
+			break;
+		case T_NullIfExpr:
+			return walker(((NullIfExpr *) node)->args, context);
+		case T_NullTest:
+			return walker(((NullTest *) node)->arg, context);
+		case T_BooleanTest:
+			return walker(((BooleanTest *) node)->arg, context);
+		case T_CoerceToDomain:
+			return walker(((CoerceToDomain *) node)->arg, context);
+		case T_TargetEntry:
+			return walker(((TargetEntry *) node)->expr, context);
+		case T_Query:
+			/* Do nothing with a sub-Query, per discussion above */
+			break;
+		case T_List:
+			foreach(temp, (List *) node)
+			{
+				if (walker((Node *) lfirst(temp), context))
+					return true;
+			}
+			break;
+		case T_FromExpr:
+			{
+				FromExpr   *from = (FromExpr *) node;
+
+				if (walker(from->fromlist, context))
+					return true;
+				if (walker(from->quals, context))
+					return true;
+			}
+			break;
+		case T_JoinExpr:
+			{
+				JoinExpr   *join = (JoinExpr *) node;
+
+				if (walker(join->larg, context))
+					return true;
+				if (walker(join->rarg, context))
+					return true;
+				if (walker(join->quals, context))
+					return true;
+
+				/*
+				 * alias clause, using list are deemed uninteresting.
+				 */
+			}
+			break;
+		case T_SetOperationStmt:
+			{
+				SetOperationStmt *setop = (SetOperationStmt *) node;
+
+				if (walker(setop->larg, context))
+					return true;
+				if (walker(setop->rarg, context))
+					return true;
+			}
+			break;
+		case T_InClauseInfo:
+			{
+				InClauseInfo *ininfo = (InClauseInfo *) node;
+
+				if (expression_tree_walker((Node *) ininfo->sub_targetlist,
+										   walker, context))
+					return true;
+			}
+			break;
+		case T_AppendRelInfo:
+			{
+				AppendRelInfo *appinfo = (AppendRelInfo *) node;
+
+				if (expression_tree_walker((Node *) appinfo->translated_vars,
+										   walker, context))
+					return true;
+			}
+			break;
+		default:
+			elog(ERROR, "unrecognized node type: %d",
+				 (int) nodeTag(node));
+			break;
+	}
+	return false;
+}
+
+/*
+ * query_tree_walker --- initiate a walk of a Query's expressions
+ *
+ * This routine exists just to reduce the number of places that need to know
+ * where all the expression subtrees of a Query are.  Note it can be used
+ * for starting a walk at top level of a Query regardless of whether the
+ * walker intends to descend into subqueries.  It is also useful for
+ * descending into subqueries within a walker.
+ *
+ * Some callers want to suppress visitation of certain items in the sub-Query,
+ * typically because they need to process them specially, or don't actually
+ * want to recurse into subqueries.  This is supported by the flags argument,
+ * which is the bitwise OR of flag values to suppress visitation of
+ * indicated items.  (More flag bits may be added as needed.)
+ */
+bool
+query_tree_walker(Query *query,
+				  bool (*walker) (),
+				  void *context,
+				  int flags)
+{
+	Assert(query != NULL && IsA(query, Query));
+
+	if (walker((Node *) query->targetList, context))
+		return true;
+	if (walker((Node *) query->returningList, context))
+		return true;
+	if (walker((Node *) query->jointree, context))
+		return true;
+	if (walker(query->setOperations, context))
+		return true;
+	if (walker(query->havingQual, context))
+		return true;
+	if (walker(query->limitOffset, context))
+		return true;
+	if (walker(query->limitCount, context))
+		return true;
+	if (range_table_walker(query->rtable, walker, context, flags))
+		return true;
+	return false;
+}
+
+/*
+ * range_table_walker is just the part of query_tree_walker that scans
+ * a query's rangetable.  This is split out since it can be useful on
+ * its own.
+ */
+bool
+range_table_walker(List *rtable,
+				   bool (*walker) (),
+				   void *context,
+				   int flags)
+{
+	ListCell   *rt;
+
+	foreach(rt, rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
+
+		switch (rte->rtekind)
+		{
+			case RTE_RELATION:
+			case RTE_SPECIAL:
+				/* nothing to do */
+				break;
+			case RTE_SUBQUERY:
+				if (!(flags & QTW_IGNORE_RT_SUBQUERIES))
+					if (walker(rte->subquery, context))
+						return true;
+				break;
+			case RTE_JOIN:
+				if (!(flags & QTW_IGNORE_JOINALIASES))
+					if (walker(rte->joinaliasvars, context))
+						return true;
+				break;
+			case RTE_FUNCTION:
+				if (walker(rte->funcexpr, context))
+					return true;
+				break;
+			case RTE_VALUES:
+				if (walker(rte->values_lists, context))
+					return true;
+				break;
+		}
+	}
+	return false;
+}
+
+
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 /*--------------------
  * expression_tree_mutator() is designed to support routines that make a
  * modified copy of an expression tree, with some nodes being added,

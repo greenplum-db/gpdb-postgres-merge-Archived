@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.173 2009/08/01 20:59:17 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.165 2008/03/26 21:10:37 alvherre Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +26,7 @@
 #include "cdb/cdbaocsam.h"
 #include "miscadmin.h"
 #include "utils/inval.h"
+#include "utils/tqual.h"
 
 
 typedef struct

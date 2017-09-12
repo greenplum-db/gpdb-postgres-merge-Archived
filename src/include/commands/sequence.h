@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/sequence.h,v 1.39 2008/01/01 19:45:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/sequence.h,v 1.40 2008/03/27 03:57:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,6 +100,7 @@ extern void AlterSequence(AlterSeqStmt *stmt);
 extern void seq_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *rptr);
 extern void seq_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
 
+<<<<<<< HEAD
 /* Set the upper and lower bounds of a sequence */
 #ifndef INT64_IS_BUSTED
 #define SEQ_MAXVALUE	INT64CONST(0x7FFFFFFFFFFFFFFF)
@@ -124,4 +125,6 @@ cdb_sequence_nextval_server(Oid    tablespaceid,
 
 extern void seq_mask(char *pagedata, BlockNumber blkno);
 
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #endif   /* SEQUENCE_H */

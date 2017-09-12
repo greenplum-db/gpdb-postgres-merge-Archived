@@ -125,7 +125,7 @@ CLOSE foo12;
 
 -- record this in the system view as well (don't query the time field there
 -- however)
-SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors;
+SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors ORDER BY 1;
 
 END;
 
@@ -249,7 +249,11 @@ drop function count_tt1_s();
 BEGIN;
 SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors ORDER BY name;
 DECLARE bc BINARY CURSOR FOR SELECT * FROM tenk1;
+<<<<<<< HEAD
 SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors ORDER BY name;
+=======
+SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors ORDER BY 1;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 ROLLBACK;
 
 -- We should not see the portal that is created internally to

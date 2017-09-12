@@ -1,5 +1,9 @@
 <!--
+<<<<<<< HEAD
 $PostgreSQL: pgsql/doc/src/sgml/ref/prepare_transaction.sgml,v 1.6.2.1 2008/03/12 20:11:54 tgl Exp $
+=======
+$PostgreSQL: pgsql/doc/src/sgml/ref/prepare_transaction.sgml,v 1.7 2008/03/12 20:11:45 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 PostgreSQL documentation
 -->
 

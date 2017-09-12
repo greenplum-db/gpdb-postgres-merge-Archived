@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.180.2.1 2008/09/11 14:01:35 alvherre Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.182 2008/03/26 21:10:39 alvherre Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *
  *-------------------------------------------------------------------------
@@ -42,7 +46,10 @@
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
+<<<<<<< HEAD
 #include "storage/procsignal.h"
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "storage/sinvaladt.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
@@ -57,9 +64,13 @@
 #include "utils/resscheduler.h"
 #include "utils/sharedsnapshot.h"
 #include "utils/syscache.h"
+<<<<<<< HEAD
 #include "pgstat.h"
 #include "utils/session_state.h"
 #include "codegen/codegen_wrapper.h"
+=======
+#include "utils/tqual.h"
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 static HeapTuple GetDatabaseTuple(const char *dbname);
 static HeapTuple GetDatabaseTupleByOid(Oid dboid);
@@ -609,7 +620,11 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 */
 	MyBackendId = InvalidBackendId;
 
+<<<<<<< HEAD
 	SharedInvalBackendInit(false);
+=======
+	SharedInvalBackendInit();
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	if (MyBackendId > MaxBackends || MyBackendId <= 0)
 		elog(FATAL, "bad backend id: %d", MyBackendId);

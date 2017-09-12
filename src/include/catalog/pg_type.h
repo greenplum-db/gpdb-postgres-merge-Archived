@@ -8,7 +8,11 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.191.2.1 2009/02/24 01:38:49 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.193 2008/03/27 03:57:34 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -20,7 +24,10 @@
 #define PG_TYPE_H
 
 #include "catalog/genbki.h"
+<<<<<<< HEAD
 #include "nodes/nodes.h"
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /* ----------------
  *		pg_type definition.  cpp turns this into
@@ -724,6 +731,7 @@ DATA(insert OID = 6994 (gp_relation_node PGNSP PGUID -1 f c t \054 5094 0 0 reco
 	 (typid) == ANYNONARRAYOID || \
 	 (typid) == ANYENUMOID)
 
+<<<<<<< HEAD
 /* Is a type OID suitable for describe callback functions? */
 #define TypeSupportsDescribe(typid)  \
 	((typid) == RECORDOID)
@@ -826,4 +834,6 @@ extern void add_type_encoding(Oid typid, Datum typoptions);
 
 #endif /* !FRONTEND */
 
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #endif   /* PG_TYPE_H */

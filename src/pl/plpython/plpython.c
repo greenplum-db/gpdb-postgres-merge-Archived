@@ -1,7 +1,11 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
+<<<<<<< HEAD
  *	src/pl/plpython/plpython.c
+=======
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.108 2008/03/28 00:21:56 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *********************************************************************
  */
@@ -1033,6 +1037,8 @@ PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc, HeapTuple *r
 				pltevent = PyString_FromString("DELETE");
 			else if (TRIGGER_FIRED_BY_UPDATE(tdata->tg_event))
 				pltevent = PyString_FromString("UPDATE");
+			else if (TRIGGER_FIRED_BY_TRUNCATE(tdata->tg_event))
+				pltevent = PyString_FromString("TRUNCATE");
 			else
 			{
 				elog(ERROR, "unrecognized OP tg_event: %u", tdata->tg_event);
@@ -1785,6 +1791,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 				HeapTuple	argTypeTup;
 				Form_pg_type argTypeStruct;
 
+<<<<<<< HEAD
 				if (modes &&
 					(modes[i] == PROARGMODE_OUT ||
 					 modes[i] == PROARGMODE_TABLE))
@@ -1826,6 +1833,11 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 
 				pos++;
 			}
+=======
+			/* Fetch argument name */
+			if (proc->argnames)
+				proc->argnames[i] = PLy_strdup(TextDatumGetCString(elems[i]));
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		}
 
 		/*

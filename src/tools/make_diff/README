@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 src/tools/make_diff/README
+=======
+$PostgreSQL: pgsql/src/tools/make_diff/README,v 1.4 2008/03/21 13:23:29 momjian Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 scripts
 =======
@@ -37,3 +41,7 @@ the files I used with cporig.
 Finally, I remove my old copies with 'rmorig'.
 
 Bruce Momjian
+<<<<<<< HEAD
+=======
+
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238

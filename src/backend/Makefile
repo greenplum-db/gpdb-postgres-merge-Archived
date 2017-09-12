@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.127 2008/02/26 14:42:27 petere Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.128 2008/03/17 19:44:40 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -35,12 +35,15 @@ endif
 
 include $(srcdir)/common.mk
 
+<<<<<<< HEAD
 # As of 9/2009:
 # * The probes.o file is necessary for dtrace support on Solaris.
 # * OS X's dtrace doesn't use it and doesn't even recognize the -G option.
 # * Systemtap's dtrace will take -G, but it produces a useless empty file.
 # So, build probes.o only on Solaris.
 # This will likely need adjustment as other platforms add dtrace support.
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 ifeq ($(PORTNAME), solaris)
 ifeq ($(enable_dtrace), yes)
 LOCALOBJS += utils/probes.o
@@ -138,7 +141,11 @@ endif
 endif # aix
 
 # Update the commonly used headers before building the subdirectories
+<<<<<<< HEAD
 $(SUBDIRS:%=%-recursive): $(top_builddir)/src/include/parser/gram.h $(top_builddir)/src/include/utils/fmgroids.h $(top_builddir)/src/include/utils/probes.h
+=======
+$(SUBDIRS:%=%-recursive): $(top_builddir)/src/include/parser/parse.h $(top_builddir)/src/include/utils/fmgroids.h $(top_builddir)/src/include/utils/probes.h
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 # The postgres.o target is needed by the rule in Makefile.global that
@@ -176,10 +183,20 @@ $(top_builddir)/src/include/utils/fmgroids.h: utils/fmgroids.h
 $(top_builddir)/src/include/utils/probes.h: utils/probes.h
 	cd $(dir $@) && rm -f $(notdir $@) && \
 	    $(LN_S) ../../../$(subdir)/utils/probes.h .
+<<<<<<< HEAD
+
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
+ifeq ($(PORTNAME), solaris)
 utils/probes.o: utils/probes.d $(SUBDIROBJS)
+<<<<<<< HEAD
 	$(DTRACE) $(DTRACEFLAGS) -C -G -s $(call expand_subsys,$^) -o $@
+=======
+	$(DTRACE) $(DTRACEFLAGS) -G -s $(call expand_subsys,$^) -o $@
+endif
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 ##########################################################################

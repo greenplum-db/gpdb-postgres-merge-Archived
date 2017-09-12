@@ -6,9 +6,13 @@
  * with servers of versions 7.4 and up.  It's okay to omit irrelevant
  * information for an old server, but not to fail outright.
  *
+<<<<<<< HEAD
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
  * src/bin/psql/describe.c
+=======
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.166 2008/03/30 18:10:20 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  */
 #include "postgres_fe.h"
 
@@ -769,6 +773,7 @@ listAllDbs(bool verbose)
 
 	printfPQExpBuffer(&buf,
 					  "SELECT d.datname as \"%s\",\n"
+<<<<<<< HEAD
 				   "       pg_catalog.pg_get_userbyid(d.datdba) as \"%s\",\n"
 			"       pg_catalog.pg_encoding_to_char(d.encoding) as \"%s\",\n",
 					  gettext_noop("Name"),
@@ -790,6 +795,23 @@ listAllDbs(bool verbose)
 						  "       END as \"%s\"",
 						  gettext_noop("Size"));
 	if (verbose && pset.sversion >= 80000)
+=======
+					  "       r.rolname as \"%s\",\n"
+					  "       pg_catalog.pg_encoding_to_char(d.encoding) as \"%s\",\n"
+					  "       d.datacl as \"%s\"",
+					  gettext_noop("Name"),
+					  gettext_noop("Owner"),
+					  gettext_noop("Encoding"),
+					  gettext_noop("Access Privileges"));
+	if (verbose)
+	{
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+		appendPQExpBuffer(&buf,
+						  ",\n       CASE WHEN pg_catalog.has_database_privilege(d.datname, 'CONNECT')\n"
+						  "            THEN pg_catalog.pg_size_pretty(pg_catalog.pg_database_size(d.datname))\n"
+						  "            ELSE 'No Access'\n"
+						  "       END as \"%s\"",
+						  gettext_noop("Size"));
 		appendPQExpBuffer(&buf,
 						  ",\n       t.spcname as \"%s\"",
 						  gettext_noop("Tablespace"));
@@ -2104,8 +2126,26 @@ describeOneTableDetails(const char *schemaname,
 	else if (tableinfo.relkind == 'r')
 	{
 		/* Footer information about a table */
+<<<<<<< HEAD
 		PGresult   *result = NULL;
 		int			tuples = 0;
+=======
+		PGresult   *result1 = NULL,
+				   *result2 = NULL,
+				   *result3 = NULL,
+				   *result4 = NULL,
+				   *result5 = NULL,
+				   *result6 = NULL,
+				   *result7 = NULL;
+		int			check_count = 0,
+					index_count = 0,
+					foreignkey_count = 0,
+					rule_count = 0,
+					trigger_count = 0,
+					referencedby_count = 0,
+					inherits_count = 0;
+		int			count_footers = 0;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		/* print append only table information */
 		if (tableinfo.relstorage == 'a' || tableinfo.relstorage == 'c')
@@ -2523,24 +2563,328 @@ describeOneTableDetails(const char *schemaname,
 			PQclear(result);
 		}
 
+<<<<<<< HEAD
 		/* print inherited tables */
 		printfPQExpBuffer(&buf, "SELECT c.oid::pg_catalog.regclass FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i WHERE c.oid=i.inhparent AND i.inhrelid = '%s' ORDER BY inhseqno", oid);
 
 		result = PSQLexec(buf.data, false);
 		if (!result)
+=======
+		/* count incoming foreign-key references (none if no triggers) */
+		if (tableinfo.triggers)
+		{
+			printfPQExpBuffer(&buf,
+							  "SELECT conname, conrelid::pg_catalog.regclass,\n"
+							  "  pg_catalog.pg_get_constraintdef(oid, true) as condef\n"
+							  "FROM pg_catalog.pg_constraint c\n"
+							  "WHERE c.confrelid = '%s' AND c.contype = 'f' ORDER BY 1",
+							  oid);
+			result6 = PSQLexec(buf.data, false);
+			if (!result6)
+			{
+				PQclear(result1);
+				PQclear(result2);
+				PQclear(result3);
+				PQclear(result4);
+				PQclear(result5);
+				goto error_return;
+			}
+			else
+				referencedby_count = PQntuples(result6);
+		}
+
+		/* count inherited tables */
+		printfPQExpBuffer(&buf, "SELECT c.oid::pg_catalog.regclass FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i WHERE c.oid=i.inhparent AND i.inhrelid = '%s' ORDER BY inhseqno", oid);
+
+		result7 = PSQLexec(buf.data, false);
+		if (!result7)
+		{        
+			PQclear(result1);
+			PQclear(result2);
+			PQclear(result3);
+			PQclear(result4);
+			PQclear(result5);
+			PQclear(result6);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 			goto error_return;
 		else
+<<<<<<< HEAD
 			tuples = PQntuples(result);
 
 		for (i = 0; i < tuples; i++)
+=======
+			inherits_count = PQntuples(result7);
+
+		footers = pg_malloc_zero((index_count + check_count + rule_count + trigger_count + foreignkey_count + referencedby_count + inherits_count + 8 + 1) * sizeof(*footers));
+
+		/* print indexes */
+		if (index_count > 0)
+		{
+			printfPQExpBuffer(&buf, _("Indexes:"));
+			footers[count_footers++] = pg_strdup(buf.data);
+			for (i = 0; i < index_count; i++)
+			{
+				const char *indexdef;
+				const char *usingpos;
+				PQExpBufferData tmpbuf;
+
+				/* Output index name */
+				printfPQExpBuffer(&buf, _("    \"%s\""),
+								  PQgetvalue(result1, i, 0));
+
+				/* Label as primary key or unique (but not both) */
+				appendPQExpBuffer(&buf,
+								  strcmp(PQgetvalue(result1, i, 1), "t") == 0
+								  ? " PRIMARY KEY," :
+								  (strcmp(PQgetvalue(result1, i, 2), "t") == 0
+								   ? " UNIQUE,"
+								   : ""));
+				/* Everything after "USING" is echoed verbatim */
+				indexdef = PQgetvalue(result1, i, 5);
+				usingpos = strstr(indexdef, " USING ");
+				if (usingpos)
+					indexdef = usingpos + 7;
+
+				appendPQExpBuffer(&buf, " %s", indexdef);
+
+				if (strcmp(PQgetvalue(result1, i, 3), "t") == 0)
+					appendPQExpBuffer(&buf, " CLUSTER");
+
+				if (strcmp(PQgetvalue(result1, i, 4), "t") != 0)
+					appendPQExpBuffer(&buf, " INVALID");
+
+				/* Print tablespace of the index on the same line */
+				count_footers += 1;
+				initPQExpBuffer(&tmpbuf);
+				if (add_tablespace_footer('i',
+										  atooid(PQgetvalue(result1, i, 6)),
+									 footers, &count_footers, tmpbuf, false))
+				{
+					appendPQExpBuffer(&buf, ", ");
+					appendPQExpBuffer(&buf, tmpbuf.data);
+
+					count_footers -= 2;
+				}
+				else
+					count_footers -= 1;
+				termPQExpBuffer(&tmpbuf);
+
+				footers[count_footers++] = pg_strdup(buf.data);
+			}
+		}
+
+		/* print check constraints */
+		if (check_count > 0)
+		{
+			printfPQExpBuffer(&buf, _("Check constraints:"));
+			footers[count_footers++] = pg_strdup(buf.data);
+			for (i = 0; i < check_count; i++)
+			{
+				printfPQExpBuffer(&buf, _("    \"%s\" %s"),
+								  PQgetvalue(result2, i, 0),
+								  PQgetvalue(result2, i, 1));
+
+				footers[count_footers++] = pg_strdup(buf.data);
+			}
+		}
+
+		/* print foreign key constraints */
+		if (foreignkey_count > 0)
+		{
+			printfPQExpBuffer(&buf, _("Foreign-key constraints:"));
+			footers[count_footers++] = pg_strdup(buf.data);
+			for (i = 0; i < foreignkey_count; i++)
+			{
+				printfPQExpBuffer(&buf, _("    \"%s\" %s"),
+								  PQgetvalue(result5, i, 0),
+								  PQgetvalue(result5, i, 1));
+
+				footers[count_footers++] = pg_strdup(buf.data);
+			}
+		}
+
+		/* print incoming foreign-key constraints */
+		if (referencedby_count > 0)
+		{
+			printfPQExpBuffer(&buf, _("Referenced by:"));
+			footers[count_footers++] = pg_strdup(buf.data);
+			for (i = 0; i < referencedby_count; i++)
+			{
+				printfPQExpBuffer(&buf, _("  \"%s\" IN %s %s"),
+								  PQgetvalue(result6, i, 0),
+								  PQgetvalue(result6, i, 1),
+								  PQgetvalue(result6, i, 2));
+
+				footers[count_footers++] = pg_strdup(buf.data);
+			}
+		}
+
+		/* print rules */
+		if (rule_count > 0)
+		{
+			bool		have_heading;
+			int			category;
+
+			for (category = 0; category < 4; category++)
+			{
+				have_heading = false;
+
+				for (i = 0; i < rule_count; i++)
+				{
+					const char *ruledef;
+					bool		list_rule = false;
+
+					switch (category)
+					{
+						case 0:
+							if (*PQgetvalue(result3, i, 2) == 'O')
+								list_rule = true;
+							break;
+						case 1:
+							if (*PQgetvalue(result3, i, 2) == 'D')
+								list_rule = true;
+							break;
+						case 2:
+							if (*PQgetvalue(result3, i, 2) == 'A')
+								list_rule = true;
+							break;
+						case 3:
+							if (*PQgetvalue(result3, i, 2) == 'R')
+								list_rule = true;
+							break;
+					}
+					if (!list_rule)
+						continue;
+
+					if (!have_heading)
+					{
+						switch (category)
+						{
+							case 0:
+								printfPQExpBuffer(&buf, _("Rules:"));
+								break;
+							case 1:
+								printfPQExpBuffer(&buf, _("Disabled rules:"));
+								break;
+							case 2:
+								printfPQExpBuffer(&buf, _("Rules firing always:"));
+								break;
+							case 3:
+								printfPQExpBuffer(&buf, _("Rules firing on replica only:"));
+								break;
+						}
+						footers[count_footers++] = pg_strdup(buf.data);
+						have_heading = true;
+					}
+
+					/* Everything after "CREATE RULE" is echoed verbatim */
+					ruledef = PQgetvalue(result3, i, 1);
+					ruledef += 12;
+					printfPQExpBuffer(&buf, "    %s", ruledef);
+					footers[count_footers++] = pg_strdup(buf.data);
+				}
+			}
+		}
+
+		/* print triggers */
+		if (trigger_count > 0)
+		{
+			bool		have_heading;
+			int			category;
+
+			/*
+			 * split the output into 4 different categories. Enabled triggers,
+			 * disabled triggers and the two special ALWAYS and REPLICA
+			 * configurations.
+			 */
+			for (category = 0; category < 4; category++)
+			{
+				have_heading = false;
+				for (i = 0; i < trigger_count; i++)
+				{
+					bool		list_trigger;
+					const char *tgdef;
+					const char *usingpos;
+					const char *tgenabled;
+
+					/* Check if this trigger falls into the current category */
+					tgenabled = PQgetvalue(result4, i, 2);
+					list_trigger = false;
+					switch (category)
+					{
+						case 0:
+							if (*tgenabled == 'O' || *tgenabled == 't')
+								list_trigger = true;
+							break;
+						case 1:
+							if (*tgenabled == 'D' || *tgenabled == 'f')
+								list_trigger = true;
+							break;
+						case 2:
+							if (*tgenabled == 'A')
+								list_trigger = true;
+							break;
+						case 3:
+							if (*tgenabled == 'R')
+								list_trigger = true;
+							break;
+					}
+					if (list_trigger == false)
+						continue;
+
+					/* Print the category heading once */
+					if (have_heading == false)
+					{
+						switch (category)
+						{
+							case 0:
+								printfPQExpBuffer(&buf, _("Triggers:"));
+								break;
+							case 1:
+								printfPQExpBuffer(&buf, _("Disabled triggers:"));
+								break;
+							case 2:
+								printfPQExpBuffer(&buf, _("Triggers firing always:"));
+								break;
+							case 3:
+								printfPQExpBuffer(&buf, _("Triggers firing on replica only:"));
+								break;
+
+						}
+						footers[count_footers++] = pg_strdup(buf.data);
+						have_heading = true;
+					}
+
+					/* Everything after "TRIGGER" is echoed verbatim */
+					tgdef = PQgetvalue(result4, i, 1);
+					usingpos = strstr(tgdef, " TRIGGER ");
+					if (usingpos)
+						tgdef = usingpos + 9;
+
+					printfPQExpBuffer(&buf, "    %s", tgdef);
+					footers[count_footers++] = pg_strdup(buf.data);
+				}
+			}
+		}
+
+		/* print inherits */
+		for (i = 0; i < inherits_count; i++)
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		{
 			const char *s = _("Inherits");
 
 			if (i == 0)
+<<<<<<< HEAD
 				printfPQExpBuffer(&buf, "%s: %s", s, PQgetvalue(result, i, 0));
 			else
 				printfPQExpBuffer(&buf, "%*s  %s", (int) strlen(s), "", PQgetvalue(result, i, 0));
 			if (i < tuples - 1)
+=======
+				printfPQExpBuffer(&buf, "%s: %s", s, PQgetvalue(result7, i, 0));
+			else
+				printfPQExpBuffer(&buf, "%*s  %s", (int) strlen(s), "", PQgetvalue(result7, i, 0));
+			if (i < inherits_count - 1)
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 				appendPQExpBuffer(&buf, ",");
 
 			printTableAddFooter(&cont, buf.data);
@@ -2633,8 +2977,23 @@ describeOneTableDetails(const char *schemaname,
 			printTableAddFooter(&cont, tmpbuf.data);
 		}
 
+<<<<<<< HEAD
 		add_tablespace_footer(&cont, tableinfo.relkind, tableinfo.tablespace,
 							  true);
+=======
+		add_tablespace_footer(tableinfo.relkind, tableinfo.tablespace,
+							  footers, &count_footers, buf, true);
+		/* end of list marker */
+		footers[count_footers] = NULL;
+
+		PQclear(result1);
+		PQclear(result2);
+		PQclear(result3);
+		PQclear(result4);
+		PQclear(result5);
+		PQclear(result6);
+		PQclear(result7);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	}
 
 	printTable(&cont, pset.queryFout, pset.logfile);

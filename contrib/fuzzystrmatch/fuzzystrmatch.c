@@ -5,10 +5,26 @@
  *
  * Joe Conway <mail@joeconway.com>
  *
+<<<<<<< HEAD
  * contrib/fuzzystrmatch/fuzzystrmatch.c
  * Copyright (c) 2001-2011, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
+=======
+ * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.c,v 1.27 2008/04/03 21:13:07 tgl Exp $
+ * Copyright (c) 2001-2008, PostgreSQL Global Development Group
+ * ALL RIGHTS RESERVED;
+ *
+ * levenshtein()
+ * -------------
+ * Written based on a description of the algorithm by Michael Gilleland
+ * found at http://www.merriampark.com/ld.htm
+ * Also looked at levenshtein.c in the PHP 4.0.6 distribution for
+ * inspiration.
+ * Configurable penalty costs extension is introduced by Volkan
+ * YAZICI <volkan.yazici@gmail.com>.
+ *
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  * metaphone()
  * -----------
  * Modified for PostgreSQL by Joe Conway.
@@ -41,7 +57,10 @@
 #include <ctype.h>
 
 #include "fmgr.h"
+<<<<<<< HEAD
 #include "mb/pg_wchar.h"
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "utils/builtins.h"
 
 PG_MODULE_MAGIC;
@@ -52,8 +71,11 @@ PG_MODULE_MAGIC;
  */
 extern Datum levenshtein_with_costs(PG_FUNCTION_ARGS);
 extern Datum levenshtein(PG_FUNCTION_ARGS);
+<<<<<<< HEAD
 extern Datum levenshtein_less_equal_with_costs(PG_FUNCTION_ARGS);
 extern Datum levenshtein_less_equal(PG_FUNCTION_ARGS);
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 extern Datum metaphone(PG_FUNCTION_ARGS);
 extern Datum soundex(PG_FUNCTION_ARGS);
 extern Datum difference(PG_FUNCTION_ARGS);
@@ -68,6 +90,7 @@ static void _soundex(const char *instr, char *outstr);
 /*									ABCDEFGHIJKLMNOPQRSTUVWXYZ */
 static const char *soundex_table = "01230120022455012623010202";
 
+<<<<<<< HEAD
 static char
 soundex_code(char letter)
 {
@@ -77,6 +100,19 @@ soundex_code(char letter)
 		return soundex_table[letter - 'A'];
 	return letter;
 }
+=======
+#define soundex_code(letter) soundex_table[toupper((unsigned char) (letter)) - 'A']
+
+
+/*
+ * Levenshtein
+ */
+#define MAX_LEVENSHTEIN_STRLEN		255
+
+static int	levenshtein_internal(const char *s, const char *t,
+								 int ins_c, int del_c, int sub_c);
+
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /*
  * Metaphone
@@ -135,11 +171,16 @@ static int	_metaphone(char *word, int max_phonemes, char **phoned_word);
 
 /*-- Character encoding array & accessing macros --*/
 /* Stolen directly out of the book... */
+<<<<<<< HEAD
 static const char _codes[26] = {
+=======
+char		_codes[26] = {
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	1, 16, 4, 16, 9, 2, 4, 16, 9, 2, 0, 2, 2, 2, 1, 4, 0, 2, 4, 4, 1, 0, 0, 0, 8, 0
 /*	a  b c	d e f g  h i j k l m n o p q r s t u v w x y z */
 };
 
+<<<<<<< HEAD
 static int
 getcode(char c)
 {
@@ -183,16 +224,142 @@ rest_of_char_same(const char *s1, const char *s2, int len)
 #include "levenshtein.c"
 #define LEVENSHTEIN_LESS_EQUAL
 #include "levenshtein.c"
+=======
+
+#define ENCODE(c) (isalpha((unsigned char) (c)) ? _codes[((toupper((unsigned char) (c))) - 'A')] : 0)
+
+#define isvowel(c)	(ENCODE(c) & 1)		/* AEIOU */
+
+/* These letters are passed through unchanged */
+#define NOCHANGE(c) (ENCODE(c) & 2)		/* FJMNR */
+
+/* These form dipthongs when preceding H */
+#define AFFECTH(c)	(ENCODE(c) & 4)		/* CGPST */
+
+/* These make C and G soft */
+#define MAKESOFT(c) (ENCODE(c) & 8)		/* EIY */
+
+/* These prevent GH from becoming F */
+#define NOGHTOF(c)	(ENCODE(c) & 16)	/* BDH */
+
+
+/*
+ * levenshtein_internal - Calculates Levenshtein distance metric
+ *                        between supplied strings. Generally
+ *                        (1, 1, 1) penalty costs suffices common
+ *                        cases, but your mileage may vary.
+ */
+static int
+levenshtein_internal(const char *s, const char *t,
+					 int ins_c, int del_c, int sub_c)
+{
+	int		 m, n;
+	int		*prev;
+	int		*curr;
+	int		 i, j;
+	const char *x;
+	const char *y;
+
+	m = strlen(s);
+	n = strlen(t);
+
+	/*
+	 * If either m or n is 0, the answer is the other value. This makes
+	 * sense since it would take that many insertions to build a matching
+	 * string
+	 */
+	if (!m)
+		return n;
+	if (!n)
+		return m;
+
+	/*
+	 * For security concerns, restrict excessive CPU+RAM usage. (This
+	 * implementation uses O(m) memory and has O(mn) complexity.)
+	 */
+	if (m > MAX_LEVENSHTEIN_STRLEN ||
+		n > MAX_LEVENSHTEIN_STRLEN)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("argument exceeds the maximum length of %d bytes",
+						MAX_LEVENSHTEIN_STRLEN)));
+
+	/* One more cell for initialization column and row. */
+	++m;
+	++n;
+
+	/*
+	 * Instead of building an (m+1)x(n+1) array, we'll use two
+	 * different arrays of size m+1 for storing accumulated values.
+	 * At each step one represents the "previous" row and one is the
+	 * "current" row of the notional large array.
+	 */
+	prev = (int *) palloc(2 * m * sizeof(int));
+	curr = prev + m;
+
+	/* Initialize the "previous" row to 0..cols */
+	for (i = 0; i < m; i++)
+		prev[i] = i;
+
+	/* Loop through rows of the notional array */
+	for (y = t, j = 1; j < n; y++, j++)
+	{
+		int *temp;
+
+		/*
+		 * First cell must increment sequentially, as we're on the
+		 * j'th row of the (m+1)x(n+1) array.
+		 */
+		curr[0] = j;
+		
+		for (x = s, i = 1; i < m; x++, i++)
+		{
+			int	ins;
+			int	del;
+			int	sub;
+
+			/* Calculate costs for probable operations. */
+			ins = prev[i] + ins_c;						/* Insertion    */
+			del = curr[i-1] + del_c;					/* Deletion     */
+			sub = prev[i-1] + ((*x == *y) ? 0 : sub_c);	/* Substitution */
+
+			/* Take the one with minimum cost. */
+			curr[i] = Min(ins, del);
+			curr[i] = Min(curr[i], sub);
+		}
+
+		/* Swap current row with previous row. */
+		temp = curr;
+		curr = prev;
+		prev = temp;
+	}
+
+	/*
+	 * Because the final value was swapped from the previous row to
+	 * the current row, that's where we'll find it.
+	 */
+	return prev[m-1];
+}
+
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 PG_FUNCTION_INFO_V1(levenshtein_with_costs);
 Datum
 levenshtein_with_costs(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	text	   *src = PG_GETARG_TEXT_PP(0);
 	text	   *dst = PG_GETARG_TEXT_PP(1);
 	int			ins_c = PG_GETARG_INT32(2);
 	int			del_c = PG_GETARG_INT32(3);
 	int			sub_c = PG_GETARG_INT32(4);
+=======
+	char	*src = TextDatumGetCString(PG_GETARG_DATUM(0));
+	char	*dst = TextDatumGetCString(PG_GETARG_DATUM(1));
+	int		 ins_c = PG_GETARG_INT32(2);
+	int		 del_c = PG_GETARG_INT32(3);
+	int		 sub_c = PG_GETARG_INT32(4);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	PG_RETURN_INT32(levenshtein_internal(src, dst, ins_c, del_c, sub_c));
 }
@@ -202,6 +369,7 @@ PG_FUNCTION_INFO_V1(levenshtein);
 Datum
 levenshtein(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	text	   *src = PG_GETARG_TEXT_PP(0);
 	text	   *dst = PG_GETARG_TEXT_PP(1);
 
@@ -233,6 +401,12 @@ levenshtein_less_equal(PG_FUNCTION_ARGS)
 	int			max_d = PG_GETARG_INT32(2);
 
 	PG_RETURN_INT32(levenshtein_less_equal_internal(src, dst, 1, 1, 1, max_d));
+=======
+	char	*src = TextDatumGetCString(PG_GETARG_DATUM(0));
+	char	*dst = TextDatumGetCString(PG_GETARG_DATUM(1));
+
+	PG_RETURN_INT32(levenshtein_internal(src, dst, 1, 1, 1));
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 
@@ -345,9 +519,15 @@ Lookahead(char *word, int how_far)
 
 
 static int
+<<<<<<< HEAD
 _metaphone(char *word,			/* IN */
 		   int max_phonemes,
 		   char **phoned_word)	/* OUT */
+=======
+_metaphone(char *word,				/* IN */
+		   int max_phonemes,
+		   char **phoned_word)		/* OUT */
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 {
 	int			w_idx = 0;		/* point in the phonization we're at. */
 	int			p_idx = 0;		/* end of the phoned phrase */

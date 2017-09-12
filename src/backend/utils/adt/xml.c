@@ -7,7 +7,11 @@
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * src/backend/utils/adt/xml.c
+=======
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.72 2008/04/04 08:33:15 mha Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -81,8 +85,13 @@
 
 
 /* GUC variables */
+<<<<<<< HEAD
 int			xmlbinary;
 int			xmloption;
+=======
+int xmlbinary;
+int xmloption;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 #ifdef USE_LIBXML
 
@@ -141,7 +150,11 @@ static void SPI_sql_row_to_xmlelement(int rownum, StringInfo result,
 			 errhint("You need to rebuild PostgreSQL using --with-libxml.")))
 
 
+<<<<<<< HEAD
 /* from SQL/XML:2008 section 4.9 */
+=======
+/* from SQL/XML:2003 section 4.7 */
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #define NAMESPACE_XSD "http://www.w3.org/2001/XMLSchema"
 #define NAMESPACE_XSI "http://www.w3.org/2001/XMLSchema-instance"
 #define NAMESPACE_SQLXML "http://standards.iso.org/iso/9075/2003/sqlxml"
@@ -217,6 +230,13 @@ xml_out_internal(xmltype *x, pg_enc target_encoding)
 	int			standalone;
 	int			res_code;
 
+<<<<<<< HEAD
+=======
+	str = text_to_cstring((text *) x);
+	len = strlen(str);
+
+#ifdef USE_LIBXML
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	if ((res_code = parse_xml_decl((xmlChar *) str,
 								   &len, &version, NULL, &standalone)) == 0)
 	{
@@ -3321,6 +3341,7 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
 		xmlChar    *str;
 
 		str = xmlXPathCastNodeToString(cur);
+<<<<<<< HEAD
 		PG_TRY();
 		{
 			result = (xmltype *) cstring_to_text((char *) str);
@@ -3332,6 +3353,12 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
 		}
 		PG_END_TRY();
 		xmlFree(str);
+=======
+		len = strlen((char *) str);
+		result = (xmltype *) palloc(len + VARHDRSZ);
+		SET_VARSIZE(result, len + VARHDRSZ);
+		memcpy(VARDATA(result), str, len);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	}
 
 	return result;
@@ -3458,6 +3485,7 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 				char	   *ns_name;
 				char	   *ns_uri;
 
+<<<<<<< HEAD
 				if (ns_names_uris_nulls[i * 2] ||
 					ns_names_uris_nulls[i * 2 + 1])
 					ereport(ERROR,
@@ -3472,6 +3500,21 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 							(errmsg("could not register XML namespace with name \"%s\" and URI \"%s\"",
 									ns_name, ns_uri)));
 			}
+=======
+			if (ns_names_uris_nulls[i * 2] ||
+				ns_names_uris_nulls[i * 2 + 1])
+				ereport(ERROR,
+						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+						 errmsg("neither namespace name nor URI may be null")));
+			ns_name = TextDatumGetCString(ns_names_uris[i * 2]);
+			ns_uri = TextDatumGetCString(ns_names_uris[i * 2 + 1]);
+			if (xmlXPathRegisterNs(xpathctx,
+								   (xmlChar *) ns_name,
+								   (xmlChar *) ns_uri) != 0)
+				ereport(ERROR,		/* is this an internal error??? */
+						(errmsg("could not register XML namespace with name \"%s\" and URI \"%s\"",
+								ns_name, ns_uri)));
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		}
 
 		xpathcomp = xmlXPathCompile(xpath_expr);

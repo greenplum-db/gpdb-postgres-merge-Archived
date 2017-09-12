@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 $PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.17 2009/06/22 20:04:28 tgl Exp $
+=======
+$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.14 2008/03/21 13:23:28 momjian Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 Notes About Shared Buffer Access Rules
 ======================================
@@ -244,7 +248,10 @@ for WAL flushes.  While it's okay for a background vacuum to be slowed by
 doing its own WAL flushing, we'd prefer that COPY not be subject to that,
 so we let it use up a bit more of the buffer arena.
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 Background Writer's Processing
 ------------------------------
 

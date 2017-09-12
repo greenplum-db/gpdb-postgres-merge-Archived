@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.171 2008/02/07 17:09:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.174 2008/03/26 21:10:37 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,8 +51,13 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/relcache.h"
+#include "utils/snapmgr.h"
 #include "utils/syscache.h"
+<<<<<<< HEAD
 #include "utils/faultinjector.h"
+=======
+#include "utils/tqual.h"
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 #include "cdb/cdbcat.h"
 #include "cdb/cdbdisp_query.h"

@@ -11,16 +11,23 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.102 2008/01/01 19:45:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.103 2008/03/27 03:57:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres_fe.h"
+<<<<<<< HEAD
 
 #include <ctype.h>
 #include <time.h>
 #include "dumputils.h"
 #include "postgres.h"
+#include "catalog/pg_class.h"
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+
+#include "pg_backup_archiver.h"
+
 #include "catalog/pg_class.h"
 
 #include "pg_backup_archiver.h"

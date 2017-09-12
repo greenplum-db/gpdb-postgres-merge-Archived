@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.61 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.62 2008/03/23 00:54:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,18 +234,31 @@ ExecMaterial(MaterialState *node)
 			return NULL;
 		}
 
+<<<<<<< HEAD
 		Gpmon_Incr_Rows_In(GpmonPktFromMaterialState(node));
 
 		if (tsa)
 			ntuplestore_acc_put_tupleslot(tsa, outerslot);
+=======
+		/*
+		 * Append a copy of the returned tuple to tuplestore.  NOTE: because
+		 * the tuplestore is certainly in EOF state, its read position will
+		 * move forward over the added tuple.  This is what we want.
+		 */
+		if (tuplestorestate)
+			tuplestore_puttupleslot(tuplestorestate, outerslot);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		/*
-		 * And return a copy of the tuple.	(XXX couldn't we just return the
-		 * outerslot?)
+		 * We can just return the subplan's returned tuple, without copying.
 		 */
+<<<<<<< HEAD
 		Gpmon_Incr_Rows_Out(GpmonPktFromMaterialState(node));
 		CheckSendPlanStateGpmonPkt(&node->ss.ps);
 		return ExecCopySlot(slot, outerslot);
+=======
+		return outerslot;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	}
 
 

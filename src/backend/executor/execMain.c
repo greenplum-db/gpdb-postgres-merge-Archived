@@ -28,7 +28,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.303.2.3 2009/12/09 21:58:16 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.305 2008/03/28 00:21:55 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -74,6 +78,7 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+<<<<<<< HEAD
 #include "utils/ps_status.h"
 #include "utils/typcache.h"
 #include "utils/workfile_mgr.h"
@@ -105,6 +110,9 @@
 #include "cdb/cdbtargeteddispatch.h"
 
 extern bool cdbpathlocus_querysegmentcatalogs;
+=======
+#include "utils/tqual.h"
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 typedef struct evalPlanQual
@@ -118,12 +126,16 @@ typedef struct evalPlanQual
 
 /* decls for local routines only used within this module */
 static void InitPlan(QueryDesc *queryDesc, int eflags);
+<<<<<<< HEAD
 static void initResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Relation resultRelationDesc,
 				  Index resultRelationIndex,
 				  CmdType operation,
 				  bool doInstrument);
 static void ExecCheckPlanOutput(Relation resultRel, List *targetList);
+=======
+static void ExecEndPlan(PlanState *planstate, EState *estate);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 static TupleTableSlot *ExecutePlan(EState *estate, PlanState *planstate,
 			CmdType operation,
 			long numberTuples,
@@ -1429,6 +1441,7 @@ InitializeResultRelations(PlannedStmt *plannedstmt, EState *estate, CmdType oper
 			Relation	resultRelation;
 
 			resultRelationOid = getrelid(resultRelationIndex, rangeTable);
+<<<<<<< HEAD
 			if (operation == CMD_UPDATE || operation == CMD_DELETE)
 			{
 				resultRelation = CdbOpenRelation(resultRelationOid,
@@ -1441,6 +1454,10 @@ InitializeResultRelations(PlannedStmt *plannedstmt, EState *estate, CmdType oper
 				resultRelation = heap_open(resultRelationOid, lockmode);
 			}
 			initResultRelInfo(resultRelInfo,
+=======
+			resultRelation = heap_open(resultRelationOid, RowExclusiveLock);
+			InitResultRelInfo(resultRelInfo,
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 							  resultRelation,
 							  resultRelationIndex,
 							  operation,
@@ -2169,8 +2186,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 /*
  * Initialize ResultRelInfo data for one result relation
  */
-static void
-initResultRelInfo(ResultRelInfo *resultRelInfo,
+void
+InitResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Relation resultRelationDesc,
 				  Index resultRelationIndex,
 				  CmdType operation,
@@ -2387,11 +2404,11 @@ ExecGetTriggerResultRel(EState *estate, Oid relid)
 	/*
 	 * Make the new entry in the right context.  Currently, we don't need any
 	 * index information in ResultRelInfos used only for triggers, so tell
-	 * initResultRelInfo it's a DELETE.
+	 * InitResultRelInfo it's a DELETE.
 	 */
 	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
 	rInfo = makeNode(ResultRelInfo);
-	initResultRelInfo(rInfo,
+	InitResultRelInfo(rInfo,
 					  rel,
 					  0,		/* dummy rangetable index */
 					  CMD_DELETE,

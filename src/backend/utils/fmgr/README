@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 $PostgreSQL: pgsql/src/backend/utils/fmgr/README,v 1.16 2008/10/31 19:37:56 tgl Exp $
+=======
+$PostgreSQL: pgsql/src/backend/utils/fmgr/README,v 1.10 2008/03/20 17:55:15 momjian Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 Function Manager
 ================

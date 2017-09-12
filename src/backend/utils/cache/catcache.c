@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.140.2.1 2008/03/05 17:01:33 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.142 2008/03/26 21:10:39 alvherre Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +40,7 @@
 #include "utils/rel.h"
 #include "utils/resowner.h"
 #include "utils/syscache.h"
+#include "utils/tqual.h"
 
 
  /* #define CACHEDEBUG */	/* turns DEBUG elogs on */

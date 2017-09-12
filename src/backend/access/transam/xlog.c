@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.293 2008/02/17 02:09:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.296 2008/04/05 01:34:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -403,7 +403,6 @@ typedef struct XLogCtlData
 	 */
 	char	   *pages;			/* buffers for unwritten XLOG pages */
 	XLogRecPtr *xlblocks;		/* 1st byte ptr-s + XLOG_BLCKSZ */
-	Size		XLogCacheByte;	/* # bytes in xlog buffers */
 	int			XLogCacheBlck;	/* highest allocated xlog buffer index */
 	TimeLineID	ThisTimeLineID;
 
@@ -615,7 +614,7 @@ static volatile sig_atomic_t in_restore_command = false;
 
 static void XLogArchiveNotify(const char *xlog);
 static void XLogArchiveNotifySeg(uint32 log, uint32 seg);
-static bool XLogArchiveCheckDone(const char *xlog);
+static bool XLogArchiveCheckDone(const char *xlog, bool create_if_missing);
 static void XLogArchiveCleanup(const char *xlog);
 static void exitArchiveRecovery(TimeLineID endTLI,
 					uint32 endLogId, uint32 endLogSeg);
@@ -1696,7 +1695,7 @@ XLogArchiveNotifySeg(uint32 log, uint32 seg)
  * create <XLOG>.ready fails, we'll retry during subsequent checkpoints.
  */
 static bool
-XLogArchiveCheckDone(const char *xlog)
+XLogArchiveCheckDone(const char *xlog, bool create_if_missing)
 {
 	char		archiveStatusPath[MAXPGPATH];
 	struct stat stat_buf;
@@ -1721,7 +1720,9 @@ XLogArchiveCheckDone(const char *xlog)
 		return true;
 
 	/* Retry creation of the .ready file */
-	XLogArchiveNotify(xlog);
+	if (create_if_missing)
+		XLogArchiveNotify(xlog);
+
 	return false;
 }
 
@@ -3219,7 +3220,7 @@ RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr)
 			strspn(xlde->d_name, "0123456789ABCDEF") == 24 &&
 			strcmp(xlde->d_name + 8, lastoff + 8) <= 0)
 		{
-			if (XLogArchiveCheckDone(xlde->d_name))
+			if (XLogArchiveCheckDone(xlde->d_name, true))
 			{
 				if (snprintf(path, MAXPGPATH, "%s/%s", xlogDir, xlde->d_name) > MAXPGPATH)
 				{
@@ -3382,7 +3383,7 @@ CleanupBackupHistory(void)
 			strcmp(xlde->d_name + strlen(xlde->d_name) - strlen(".backup"),
 				   ".backup") == 0)
 		{
-			if (XLogArchiveCheckDone(xlde->d_name))
+			if (XLogArchiveCheckDone(xlde->d_name, true))
 			{
 				ereport(DEBUG2,
 				(errmsg("removing transaction log backup history file \"%s\"",
@@ -5615,8 +5616,6 @@ XLOGShmemInit(void)
 	 * Do basic initialization of XLogCtl shared data. (StartupXLOG will fill
 	 * in additional info.)
 	 */
-	XLogCtl->XLogCacheByte = (Size) XLOG_BLCKSZ *XLOGbuffers;
-
 	XLogCtl->XLogCacheBlck = XLOGbuffers - 1;
 	XLogCtl->SharedRecoveryInProgress = true;
 	XLogCtl->Insert.currpage = (XLogPageHeader) (XLogCtl->pages);
@@ -10176,8 +10175,13 @@ issue_xlog_fsync(int fd, uint32 log, uint32 seg)
 XLogRecPtr
 do_pg_start_backup(const char *backupidstr, bool fast, char **labelfile)
 {
+<<<<<<< HEAD
 	bool		exclusive = (labelfile == NULL);
 	bool		backup_started_in_recovery = false;
+=======
+	text	   *backupid = PG_GETARG_TEXT_P(0);
+	char	   *backupidstr;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	XLogRecPtr	checkpointloc;
 	XLogRecPtr	startpoint;
 	pg_time_t	stamp_time;
@@ -10199,9 +10203,24 @@ do_pg_start_backup(const char *backupidstr, bool fast, char **labelfile)
 
 	if (strlen(backupidstr) > MAXPGPATH)
 		ereport(ERROR,
+<<<<<<< HEAD
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("backup label too long (max %d bytes)",
 						MAXPGPATH)));
+=======
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("WAL archiving is not active"),
+				 errhint("archive_mode must be enabled at server start.")));
+
+	if (!XLogArchiveCommandSet())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("WAL archiving is not active"),
+				 errhint("archive_command must be defined before "
+						 "online backups can be made safely.")));
+
+	backupidstr = text_to_cstring(backupid);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * Mark backup active in shared memory.  We must do full-page WAL writes
@@ -10401,6 +10420,7 @@ do_pg_start_backup(const char *backupidstr, bool fast, char **labelfile)
 	/*
 	 * We're done.  As a convenience, return the starting WAL location.
 	 */
+<<<<<<< HEAD
 	return startpoint;
 }
 
@@ -10429,6 +10449,11 @@ pg_start_backup_callback(int code, Datum arg)
 		XLogCtl->Insert.forcePageWrites = false;
 	}
 	LWLockRelease(WALInsertLock);
+=======
+	snprintf(xlogfilename, sizeof(xlogfilename), "%X/%X",
+			 startpoint.xlogid, startpoint.xrecoff);
+	PG_RETURN_TEXT_P(cstring_to_text(xlogfilename));
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 /*
@@ -10441,8 +10466,11 @@ pg_start_backup_callback(int code, Datum arg)
 XLogRecPtr
 do_pg_stop_backup(char *labelfile)
 {
+<<<<<<< HEAD
 	bool		exclusive = (labelfile == NULL);
 	bool		backup_started_in_recovery = false;
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	XLogRecPtr	startpoint;
 	XLogRecPtr	stoppoint;
 	XLogRecData rdata;
@@ -10457,11 +10485,17 @@ do_pg_stop_backup(char *labelfile)
 	FILE	   *lfp;
 	FILE	   *fp;
 	char		ch;
+<<<<<<< HEAD
 	char	   *remaining;
 	char	   *ptr;
 
 	/* Currently backup during recovery not supported */
 	backup_started_in_recovery = false;
+=======
+	int			ich;
+	int			seconds_before_warning;
+	int			waits = 0;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	if (!superuser())
 		ereport(ERROR,
@@ -10630,9 +10664,48 @@ do_pg_stop_backup(char *labelfile)
 	CleanupBackupHistory();
 
 	/*
+	 * Wait until the history file has been archived. We assume that the 
+	 * alphabetic sorting property of the WAL files ensures the last WAL
+	 * file is guaranteed archived by the time the history file is archived.
+	 *
+	 * We wait forever, since archive_command is supposed to work and
+	 * we assume the admin wanted his backup to work completely. If you 
+	 * don't wish to wait, you can SET statement_timeout = xx;
+	 *
+	 * If the status file is missing, we assume that is because it was
+	 * set to .ready before we slept, then while asleep it has been set
+	 * to .done and then removed by a concurrent checkpoint.
+	 */
+	BackupHistoryFileName(histfilepath, ThisTimeLineID, _logId, _logSeg,
+						  startpoint.xrecoff % XLogSegSize);
+
+	seconds_before_warning = 60;
+	waits = 0;
+
+	while (!XLogArchiveCheckDone(histfilepath, false))
+	{
+		CHECK_FOR_INTERRUPTS();
+
+		pg_usleep(1000000L);
+
+		if (++waits >= seconds_before_warning)
+		{
+			seconds_before_warning *= 2;     /* This wraps in >10 years... */
+			elog(WARNING, "pg_stop_backup() waiting for archive to complete " 
+							"(%d seconds delay)", waits);
+		}
+	}
+
+	/*
 	 * We're done.  As a convenience, return the ending WAL location.
 	 */
+<<<<<<< HEAD
 	return stoppoint;
+=======
+	snprintf(stopxlogfilename, sizeof(stopxlogfilename), "%X/%X",
+			 stoppoint.xlogid, stoppoint.xrecoff);
+	PG_RETURN_TEXT_P(cstring_to_text(stopxlogfilename));
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 /*
@@ -10668,7 +10741,6 @@ do_pg_abort_backup(void)
 Datum
 pg_switch_xlog(PG_FUNCTION_ARGS)
 {
-	text	   *result;
 	XLogRecPtr	switchpoint;
 	char		location[MAXFNAMELEN];
 
@@ -10684,9 +10756,7 @@ pg_switch_xlog(PG_FUNCTION_ARGS)
 	 */
 	snprintf(location, sizeof(location), "%X/%X",
 			 switchpoint.xlogid, switchpoint.xrecoff);
-	result = DatumGetTextP(DirectFunctionCall1(textin,
-											   CStringGetDatum(location)));
-	PG_RETURN_TEXT_P(result);
+	PG_RETURN_TEXT_P(cstring_to_text(location));
 }
 
 /*
@@ -10699,7 +10769,6 @@ pg_switch_xlog(PG_FUNCTION_ARGS)
 Datum
 pg_current_xlog_location(PG_FUNCTION_ARGS __attribute__((unused)) )
 {
-	text	   *result;
 	char		location[MAXFNAMELEN];
 
 	/* Make sure we have an up-to-date local LogwrtResult */
@@ -10714,10 +10783,7 @@ pg_current_xlog_location(PG_FUNCTION_ARGS __attribute__((unused)) )
 
 	snprintf(location, sizeof(location), "%X/%X",
 			 LogwrtResult.Write.xlogid, LogwrtResult.Write.xrecoff);
-
-	result = DatumGetTextP(DirectFunctionCall1(textin,
-											   CStringGetDatum(location)));
-	PG_RETURN_TEXT_P(result);
+	PG_RETURN_TEXT_P(cstring_to_text(location));
 }
 
 /*
@@ -10728,7 +10794,6 @@ pg_current_xlog_location(PG_FUNCTION_ARGS __attribute__((unused)) )
 Datum
 pg_current_xlog_insert_location(PG_FUNCTION_ARGS __attribute__((unused)) )
 {
-	text	   *result;
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
 	XLogRecPtr	current_recptr;
 	char		location[MAXFNAMELEN];
@@ -10742,10 +10807,7 @@ pg_current_xlog_insert_location(PG_FUNCTION_ARGS __attribute__((unused)) )
 
 	snprintf(location, sizeof(location), "%X/%X",
 			 current_recptr.xlogid, current_recptr.xrecoff);
-
-	result = DatumGetTextP(DirectFunctionCall1(textin,
-											   CStringGetDatum(location)));
-	PG_RETURN_TEXT_P(result);
+	PG_RETURN_TEXT_P(cstring_to_text(location));
 }
 
 /*
@@ -10777,8 +10839,7 @@ pg_xlogfile_name_offset(PG_FUNCTION_ARGS)
 	/*
 	 * Read input and parse
 	 */
-	locationstr = DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(location)));
+	locationstr = text_to_cstring(location);
 
 	if (sscanf(locationstr, "%X/%X", &uxlogid, &uxrecoff) != 2)
 		ereport(ERROR,
@@ -10807,8 +10868,7 @@ pg_xlogfile_name_offset(PG_FUNCTION_ARGS)
 	XLByteToPrevSeg(locationpoint, xlogid, xlogseg);
 	XLogFileName(xlogfilename, ThisTimeLineID, xlogid, xlogseg);
 
-	values[0] = DirectFunctionCall1(textin,
-									CStringGetDatum(xlogfilename));
+	values[0] = CStringGetTextDatum(xlogfilename);
 	isnull[0] = false;
 
 	/*
@@ -10837,7 +10897,6 @@ Datum
 pg_xlogfile_name(PG_FUNCTION_ARGS)
 {
 	text	   *location = PG_GETARG_TEXT_P(0);
-	text	   *result;
 	char	   *locationstr;
 	unsigned int uxlogid;
 	unsigned int uxrecoff;
@@ -10846,8 +10905,7 @@ pg_xlogfile_name(PG_FUNCTION_ARGS)
 	XLogRecPtr	locationpoint;
 	char		xlogfilename[MAXFNAMELEN];
 
-	locationstr = DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(location)));
+	locationstr = text_to_cstring(location);
 
 	if (sscanf(locationstr, "%X/%X", &uxlogid, &uxrecoff) != 2)
 		ereport(ERROR,
@@ -10861,9 +10919,7 @@ pg_xlogfile_name(PG_FUNCTION_ARGS)
 	XLByteToPrevSeg(locationpoint, xlogid, xlogseg);
 	XLogFileName(xlogfilename, ThisTimeLineID, xlogid, xlogseg);
 
-	result = DatumGetTextP(DirectFunctionCall1(textin,
-											 CStringGetDatum(xlogfilename)));
-	PG_RETURN_TEXT_P(result);
+	PG_RETURN_TEXT_P(cstring_to_text(xlogfilename));
 }
 
 /*

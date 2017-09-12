@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/catalog/pg_largeobject.c,v 1.32 2009/01/01 17:23:37 momjian Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_largeobject.c,v 1.29 2008/03/26 21:10:37 alvherre Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +24,10 @@
 #include "catalog/pg_largeobject.h"
 #include "utils/bytea.h"
 #include "utils/fmgroids.h"
+<<<<<<< HEAD
 #include "utils/rel.h"
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "utils/tqual.h"
 
 

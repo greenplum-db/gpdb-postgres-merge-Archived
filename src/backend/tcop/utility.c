@@ -10,7 +10,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.289.2.3 2009/12/09 21:58:16 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.291 2008/03/19 18:38:30 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -2203,6 +2207,9 @@ CreateCommandTag(Node *parsetree)
 					break;
 				case OBJECT_TSCONFIGURATION:
 					tag = "ALTER TEXT SEARCH CONFIGURATION";
+					break;
+				case OBJECT_TYPE:
+					tag = "ALTER TYPE";
 					break;
 				default:
 					tag = "???";

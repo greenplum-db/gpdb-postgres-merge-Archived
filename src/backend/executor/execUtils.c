@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.154 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.155 2008/03/26 21:10:38 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,11 @@
 #include "parser/parsetree.h"
 #include "utils/memutils.h"
 #include "utils/relcache.h"
+<<<<<<< HEAD
 #include "utils/workfile_mgr.h"
+=======
+#include "utils/tqual.h"
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 #include "cdb/cdbvars.h"
 #include "nodes/primnodes.h"

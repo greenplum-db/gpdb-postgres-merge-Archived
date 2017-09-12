@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 <!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.72.2.1 2010/05/15 18:11:19 tgl Exp $ -->
+=======
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.74 2008/03/26 16:34:47 tgl Exp $ -->
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -195,7 +199,12 @@
       <term><option>--ignore-version</option></term>
       <listitem>
        <para>
+<<<<<<< HEAD
         This option has been deprecated.
+=======
+        Ignore version mismatch between
+        <application>pg_restore</application> and the database server.
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
        </para>
       </listitem>
      </varlistentry>
@@ -272,6 +281,17 @@
         (or the same user that owns all of the objects in the script).
         With <option>-O</option>, any user name can be used for the
         initial connection, and this user will own all the created objects.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--no-tablespaces</option></term>
+      <listitem>
+       <para>
+        Do not output commands to select tablespaces.
+        With this option, all objects will be created in whichever
+        tablespace is the default during restore.
        </para>
       </listitem>
      </varlistentry>

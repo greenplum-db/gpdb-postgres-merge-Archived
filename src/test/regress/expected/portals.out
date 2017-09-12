@@ -432,9 +432,10 @@ CLOSE foo12;
 -- leave some cursors open, to test that auto-close works.
 -- record this in the system view as well (don't query the time field there
 -- however)
-SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors;
+SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors ORDER BY 1;
  name  |                               statement                               | is_holdable | is_binary | is_scrollable 
 -------+-----------------------------------------------------------------------+-------------+-----------+---------------
+<<<<<<< HEAD
  foo13 | DECLARE foo13 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2; | f           | f         | f
  foo15 | DECLARE foo15 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2; | f           | f         | f
  foo19 | DECLARE foo19 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2; | f           | f         | f
@@ -446,6 +447,19 @@ SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors;
  foo20 | DECLARE foo20 CURSOR FOR SELECT * FROM tenk2 ORDER BY 1,2,3,4;        | f           | f         | f
  foo22 | DECLARE foo22 CURSOR FOR SELECT * FROM tenk2 ORDER BY 1,2,3,4;        | f           | f         | f
  foo16 | DECLARE foo16 CURSOR FOR SELECT * FROM tenk2 ORDER BY 1,2,3,4;        | f           | f         | f
+=======
+ foo13 | DECLARE foo13 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2; | f           | f         | t
+ foo14 | DECLARE foo14 SCROLL CURSOR FOR SELECT * FROM tenk2;                  | f           | f         | t
+ foo15 | DECLARE foo15 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2; | f           | f         | t
+ foo16 | DECLARE foo16 SCROLL CURSOR FOR SELECT * FROM tenk2;                  | f           | f         | t
+ foo17 | DECLARE foo17 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2; | f           | f         | t
+ foo18 | DECLARE foo18 SCROLL CURSOR FOR SELECT * FROM tenk2;                  | f           | f         | t
+ foo19 | DECLARE foo19 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2; | f           | f         | t
+ foo20 | DECLARE foo20 SCROLL CURSOR FOR SELECT * FROM tenk2;                  | f           | f         | t
+ foo21 | DECLARE foo21 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2; | f           | f         | t
+ foo22 | DECLARE foo22 SCROLL CURSOR FOR SELECT * FROM tenk2;                  | f           | f         | t
+ foo23 | DECLARE foo23 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2; | f           | f         | t
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 (11 rows)
 
 END;
@@ -598,10 +612,17 @@ SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors OR
 (1 row)
 
 DECLARE bc BINARY CURSOR FOR SELECT * FROM tenk1;
+<<<<<<< HEAD
 SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors ORDER BY name;
  name |                              statement                               | is_holdable | is_binary | is_scrollable 
 ------+----------------------------------------------------------------------+-------------+-----------+---------------
  bc   | DECLARE bc BINARY CURSOR FOR SELECT * FROM tenk1;                    | f           | t         | f
+=======
+SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors ORDER BY 1;
+ name |                              statement                               | is_holdable | is_binary | is_scrollable 
+------+----------------------------------------------------------------------+-------------+-----------+---------------
+ bc   | DECLARE bc BINARY CURSOR FOR SELECT * FROM tenk1;                    | f           | t         | t
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  c2   | declare c2 cursor with hold for select count_tt1_v(), count_tt1_s(); | t           | f         | f
 (2 rows)
 

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.42 2008/02/20 22:44:16 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.44 2008/03/31 01:31:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1366,6 +1366,7 @@ spawn_process(const char *cmdline)
 	cmdline2 = malloc(strlen(cmdline) + 8);
 	sprintf(cmdline2, "cmd /c %s", cmdline);
 
+<<<<<<< HEAD
 #ifndef __CYGWIN__
 	AddUserToTokenDacl(restrictedToken);
 #endif
@@ -1381,12 +1382,32 @@ spawn_process(const char *cmdline)
 							 NULL,
 							 &si,
 							 &pi))
+=======
+	if (!CreateProcessAsUser(restrictedToken,
+						NULL,
+						cmdline2,
+						NULL,
+						NULL,
+						TRUE,
+						CREATE_SUSPENDED,
+						NULL,
+						NULL,
+						&si,
+						&pi))
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	{
 		fprintf(stderr, _("could not start process for \"%s\": %lu\n"),
 				cmdline2, GetLastError());
 		exit_nicely(2);
 	}
 
+<<<<<<< HEAD
+=======
+#ifndef __CYGWIN__
+	AddUserToDacl(pi.hProcess);
+#endif
+
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	free(cmdline2);
 
     ResumeThread(pi.hThread);

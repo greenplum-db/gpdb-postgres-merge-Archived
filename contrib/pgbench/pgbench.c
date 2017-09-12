@@ -4,8 +4,13 @@
  * A simple benchmark program for PostgreSQL
  * Originally written by Tatsuo Ishii and enhanced by many contributors.
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.93 2009/12/15 07:17:57 itagaki Exp $
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
+=======
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.79 2008/03/19 03:33:21 ishii Exp $
+ * Copyright (c) 2000-2008, PostgreSQL Global Development Group
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  * ALL RIGHTS RESERVED;
  *
  * Permission to use, copy, modify, and distribute this software and its
@@ -163,6 +168,8 @@ typedef struct
 #define MAX_FILES		128		/* max number of SQL script files allowed */
 #define SHELL_COMMAND_SIZE	256	/* maximum size allowed for shell command */
 
+#define MAX_FILES		128		/* max number of SQL script files allowed */
+
 /*
  * structures used in custom query mode
  */
@@ -183,6 +190,7 @@ typedef struct
 	instr_time	txn_begin;		/* used for measuring latencies */
 	int			use_file;		/* index in sql_files for this client */
 	bool		prepared[MAX_FILES];
+<<<<<<< HEAD
 } CState;
 
 /*
@@ -203,6 +211,9 @@ typedef struct
 	instr_time		conn_time;
 	int				xacts;
 } TResult;
+=======
+}	CState;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /*
  * queries read from files
@@ -213,6 +224,7 @@ typedef struct
 
 typedef enum QueryMode
 {
+<<<<<<< HEAD
 	QUERY_SIMPLE,				/* simple query */
 	QUERY_EXTENDED,				/* extended query */
 	QUERY_PREPARED,				/* extended query with prepared statements */
@@ -221,6 +233,16 @@ typedef enum QueryMode
 
 static QueryMode querymode = QUERY_SIMPLE;
 static const char *QUERYMODE[] = {"simple", "extended", "prepared"};
+=======
+	QUERY_SIMPLE,	/* simple query */
+	QUERY_EXTENDED,	/* extended query */
+	QUERY_PREPARED,	/* extended query with prepared statements */
+	NUM_QUERYMODE
+} QueryMode;
+
+static QueryMode	querymode = QUERY_SIMPLE;
+static const char *QUERYMODE[] = { "simple", "extended", "prepared" };
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 typedef struct
 {
@@ -229,9 +251,14 @@ typedef struct
 	char	   *argv[MAX_ARGS]; /* command list */
 } Command;
 
+<<<<<<< HEAD
 static Command	  **sql_files[MAX_FILES];	/* SQL script files */
 static int			num_files;				/* number of script files */
 static int			debug = 0;				/* debug flag */
+=======
+Command   **sql_files[MAX_FILES];		/* SQL script files */
+int			num_files;			/* its number */
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /* default scenario */
 static char *tpc_b = {
@@ -274,13 +301,49 @@ static char *select_only = {
 	"SELECT abalance FROM pgbench_accounts WHERE aid = :aid;\n"
 };
 
+<<<<<<< HEAD
 /* Function prototypes */
 static void setalarm(int seconds);
 static void* threadRun(void *arg);
+=======
+/* Connection overhead time */
+static struct timeval conn_total_time = {0, 0};
+
+/* Calculate total time */
+static void
+addTime(struct timeval *t1, struct timeval *t2, struct timeval *result)
+{
+	int sec = t1->tv_sec + t2->tv_sec;
+	int usec = t1->tv_usec + t2->tv_usec;
+	if (usec >= 1000000)
+	{
+		usec -= 1000000;
+		sec++;
+	}
+	result->tv_sec = sec;
+	result->tv_usec = usec;
+}
+
+/* Calculate time difference */
+static void
+diffTime(struct timeval *t1, struct timeval *t2, struct timeval *result)
+{
+	int sec = t1->tv_sec - t2->tv_sec;
+	int usec = t1->tv_usec - t2->tv_usec;
+	if (usec < 0)
+	{
+		usec += 1000000;
+		sec--;
+	}
+	result->tv_sec = sec;
+	result->tv_usec = usec;
+}
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 static void
 usage(const char *progname)
 {
+<<<<<<< HEAD
 	printf("%s is a benchmarking tool for PostgreSQL.\n\n"
 		   "Usage:\n"
 		   "  %s [OPTIONS]... [DBNAME]\n"
@@ -317,6 +380,10 @@ usage(const char *progname)
 		   "\n"
 		   "Report bugs to <bugs@greenplum.org>.\n",
 		   progname, progname);
+=======
+	fprintf(stderr, "usage: pgbench [-h hostname][-p port][-c nclients][-t ntransactions][-s scaling_factor][-D varname=value][-n][-C][-v][-S][-N][-M querymode][-f filename][-l][-U login][-d][dbname]\n");
+	fprintf(stderr, "(initialize mode): pgbench -i [-h hostname][-p port][-s scaling_factor] [-F fillfactor] [-U login][-d][dbname]\n");
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 /* random number generator: uniform distribution from min to max inclusive */
@@ -502,8 +569,13 @@ putVariable(CState *st, char *name, char *value)
 static char *
 parseVariable(const char *sql, int *eaten)
 {
+<<<<<<< HEAD
 	int			i = 0;
 	char	   *name;
+=======
+	int		i = 0;
+	char   *name;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	do
 	{
@@ -525,12 +597,21 @@ parseVariable(const char *sql, int *eaten)
 static char *
 replaceVariable(char **sql, char *param, int len, char *value)
 {
+<<<<<<< HEAD
 	int			valueln = strlen(value);
 
 	if (valueln > len)
 	{
 		char	   *tmp;
 		size_t		offset = param - *sql;
+=======
+	int	valueln = strlen(value);
+
+	if (valueln > len)
+	{
+		char   *tmp;
+		size_t	offset = param - *sql;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		tmp = realloc(*sql, strlen(*sql) - len + valueln + 1);
 		if (tmp == NULL)
@@ -550,7 +631,11 @@ replaceVariable(char **sql, char *param, int len, char *value)
 }
 
 static char *
+<<<<<<< HEAD
 assignVariables(CState *st, char *sql)
+=======
+assignVariables(CState * st, char *sql)
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 {
 	char	   *p,
 			   *name,
@@ -559,15 +644,23 @@ assignVariables(CState *st, char *sql)
 	p = sql;
 	while ((p = strchr(p, ':')) != NULL)
 	{
+<<<<<<< HEAD
 		int			eaten;
+=======
+		int		eaten;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		name = parseVariable(p, &eaten);
 		if (name == NULL)
 		{
+<<<<<<< HEAD
 			while (*p == ':')
 			{
 				p++;
 			}
+=======
+			while (*p == ':') { p++; }
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 			continue;
 		}
 
@@ -589,6 +682,7 @@ assignVariables(CState *st, char *sql)
 static void
 getQueryParams(CState *st, const Command *command, const char **params)
 {
+<<<<<<< HEAD
 	int			i;
 
 	for (i = 0; i < command->argc - 1; i++)
@@ -701,6 +795,12 @@ runShellCommand(CState *st, char *variable, char **argv, int argc)
 	printf("shell parameter name: %s, value: %s\n", argv[1], res);
 #endif
 	return true;
+=======
+	int		i;
+
+	for (i = 0; i < command->argc - 1; i++)
+		params[i] = getVariable(st, command->argv[i+1]);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 #define MAX_PREPARE_NAME		32
@@ -710,6 +810,7 @@ preparedStatementName(char *buffer, int file, int state)
 	sprintf(buffer, "P%d_%d", file, state);
 }
 
+<<<<<<< HEAD
 static bool
 clientDone(CState *st, bool ok)
 {
@@ -726,6 +827,10 @@ clientDone(CState *st, bool ok)
 /* return false iff client should be disconnected */
 static bool
 doCustom(CState *st, instr_time *conn_time)
+=======
+static void
+doCustom(CState * state, int n, int debug)
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 {
 	PGresult   *res;
 	Command   **commands;
@@ -828,16 +933,28 @@ top:
 
 	if (st->con == NULL)
 	{
+<<<<<<< HEAD
 		instr_time	start, end;
 
 		INSTR_TIME_SET_CURRENT(start);
+=======
+		struct timeval t1, t2, t3;
+
+		gettimeofday(&t1, NULL);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		if ((st->con = doConnect()) == NULL)
 		{
 			fprintf(stderr, "Client %d aborted in establishing connection.\n", st->id);
 			return clientDone(st, false);
 		}
+<<<<<<< HEAD
 		INSTR_TIME_SET_CURRENT(end);
 		INSTR_TIME_ACCUM_DIFF(*conn_time, end, start);
+=======
+		gettimeofday(&t2, NULL);
+		diffTime(&t2, &t1, &t3);
+		addTime(&conn_total_time, &t3, &conn_total_time);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	}
 
 	if (use_log && st->state == 0)
@@ -845,8 +962,13 @@ top:
 
 	if (commands[st->state]->type == SQL_COMMAND)
 	{
+<<<<<<< HEAD
 		const Command *command = commands[st->state];
 		int			r;
+=======
+		const Command  *command = commands[st->state];
+		int				r;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		if (querymode == QUERY_SIMPLE)
 		{
@@ -857,25 +979,44 @@ top:
 			{
 				fprintf(stderr, "out of memory\n");
 				st->ecnt++;
+<<<<<<< HEAD
 				return true;
 			}
 
 			if (debug)
 				fprintf(stderr, "client %d sending %s\n", st->id, sql);
+=======
+				return;
+			}
+
+			if (debug)
+				fprintf(stderr, "client %d sending %s\n", n, sql);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 			r = PQsendQuery(st->con, sql);
 			free(sql);
 		}
 		else if (querymode == QUERY_EXTENDED)
 		{
+<<<<<<< HEAD
 			const char *sql = command->argv[0];
 			const char *params[MAX_ARGS];
+=======
+			const char		 *sql = command->argv[0];
+			const char		 *params[MAX_ARGS];
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 			getQueryParams(st, command, params);
 
 			if (debug)
+<<<<<<< HEAD
 				fprintf(stderr, "client %d sending %s\n", st->id, sql);
 			r = PQsendQueryParams(st->con, sql, command->argc - 1,
 								  NULL, params, NULL, NULL, 0);
+=======
+				fprintf(stderr, "client %d sending %s\n", n, sql);
+			r = PQsendQueryParams(st->con, sql, command->argc - 1,
+				NULL, params, NULL, NULL, 0);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		}
 		else if (querymode == QUERY_PREPARED)
 		{
@@ -884,7 +1025,11 @@ top:
 
 			if (!st->prepared[st->use_file])
 			{
+<<<<<<< HEAD
 				int			j;
+=======
+				int		j;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 				for (j = 0; commands[j] != NULL; j++)
 				{
@@ -895,7 +1040,11 @@ top:
 						continue;
 					preparedStatementName(name, st->use_file, j);
 					res = PQprepare(st->con, name,
+<<<<<<< HEAD
 						  commands[j]->argv[0], commands[j]->argc - 1, NULL);
+=======
+						commands[j]->argv[0], commands[j]->argc - 1, NULL);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 					if (PQresultStatus(res) != PGRES_COMMAND_OK)
 						fprintf(stderr, "%s", PQerrorMessage(st->con));
 					PQclear(res);
@@ -907,17 +1056,29 @@ top:
 			preparedStatementName(name, st->use_file, st->state);
 
 			if (debug)
+<<<<<<< HEAD
 				fprintf(stderr, "client %d sending %s\n", st->id, name);
 			r = PQsendQueryPrepared(st->con, name, command->argc - 1,
 									params, NULL, NULL, 0);
 		}
 		else	/* unknown sql mode */
+=======
+				fprintf(stderr, "client %d sending %s\n", n, name);
+			r = PQsendQueryPrepared(st->con, name, command->argc - 1,
+				params, NULL, NULL, 0);
+		}
+		else /* unknown sql mode */
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 			r = 0;
 
 		if (r == 0)
 		{
 			if (debug)
+<<<<<<< HEAD
 				fprintf(stderr, "client %d cannot send %s\n", st->id, command->argv[0]);
+=======
+				fprintf(stderr, "client %d cannot send %s\n", n, command->argv[0]);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 			st->ecnt++;
 		}
 		else
@@ -1159,6 +1320,7 @@ disconnect_all(CState *state, int length)
 static void
 init(void)
 {
+<<<<<<< HEAD
 	/*
 	 * Note: TPC-B requires at least 100 bytes per row, and the "filler"
 	 * fields in these table declarations were intended to comply with that.
@@ -1167,6 +1329,19 @@ init(void)
 	 * would completely break comparability of pgbench results with prior
 	 * versions.  Since pgbench has never pretended to be fully TPC-B
 	 * compliant anyway, we stick with the historical behavior.
+=======
+	PGconn	   *con;
+	PGresult   *res;
+	/*
+	 * Note: TPC-B requires at least 100 bytes per row, and the "filler"
+	 * fields in these table declarations were intended to comply with that.
+	 * But because they default to NULLs, they don't actually take any
+	 * space.  We could fix that by giving them non-null default values.
+	 * However, that would completely break comparability of pgbench
+	 * results with prior versions.  Since pgbench has never pretended
+	 * to be fully TPC-B compliant anyway, we stick with the historical
+	 * behavior.
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	 */
 	static char *DDLs[] = {
 		"drop table if exists pgbench_branches",
@@ -1333,17 +1508,27 @@ parseQuery(Command *cmd, const char *raw_sql)
 	p = sql;
 	while ((p = strchr(p, ':')) != NULL)
 	{
+<<<<<<< HEAD
 		char		var[12];
 		char	   *name;
 		int			eaten;
+=======
+		char	var[12];
+		char   *name;
+		int		eaten;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		name = parseVariable(p, &eaten);
 		if (name == NULL)
 		{
+<<<<<<< HEAD
 			while (*p == ':')
 			{
 				p++;
 			}
+=======
+			while (*p == ':') { p++; }
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 			continue;
 		}
 
@@ -1667,18 +1852,36 @@ process_builtin(char *tb)
 
 /* print out results */
 static void
+<<<<<<< HEAD
 printResults(int ttype, int normal_xacts, int nclients, int nthreads,
 			 instr_time total_time, instr_time conn_total_time)
+=======
+printResults(
+			 int ttype, CState * state,
+			 struct timeval * start_time, struct timeval * end_time)
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 {
 	double		time_include,
 				tps_include,
 				tps_exclude;
 	char	   *s;
 
+<<<<<<< HEAD
 	time_include = INSTR_TIME_GET_DOUBLE(total_time);
 	tps_include = normal_xacts / time_include;
 	tps_exclude = normal_xacts / (time_include -
 		(INSTR_TIME_GET_DOUBLE(conn_total_time) / nthreads));
+=======
+	for (i = 0; i < nclients; i++)
+		normal_xacts += state[i].cnt;
+
+	t1 = (end_time->tv_sec - start_time->tv_sec) * 1000000.0 + (end_time->tv_usec - start_time->tv_usec);
+	t1 = normal_xacts * 1000000.0 / t1;
+
+	t2 = (end_time->tv_sec - start_time->tv_sec - conn_total_time.tv_sec) * 1000000.0 +
+		(end_time->tv_usec - start_time->tv_usec - conn_total_time.tv_usec);
+	t2 = normal_xacts * 1000000.0 / t2;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	if (ttype == 0)
 		s = "TPC-B (sort of)";
@@ -1728,10 +1931,15 @@ main(int argc, char **argv)
 	CState	   *state;			/* status of clients */
 	TState	   *threads;		/* array of thread */
 
+<<<<<<< HEAD
 	instr_time	start_time;		/* start up time */
 	instr_time	total_time;
 	instr_time	conn_total_time;
 	int			total_xacts;
+=======
+	struct timeval start_time;			/* start up time */
+	struct timeval end_time;			/* end time */
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	int			i;
 
@@ -1784,7 +1992,11 @@ main(int argc, char **argv)
 
 	memset(state, 0, sizeof(*state));
 
+<<<<<<< HEAD
 	while ((c = getopt(argc, argv, "ih:nvp:dSNc:Cs:t:T:U:lf:D:F:M:j:x:q")) != -1)
+=======
+	while ((c = getopt(argc, argv, "ih:nvp:dc:t:s:U:CNSlf:D:F:M:")) != -1)
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	{
 		switch (c)
 		{
@@ -1930,7 +2142,11 @@ main(int argc, char **argv)
 			case 'M':
 				if (num_files > 0)
 				{
+<<<<<<< HEAD
 					fprintf(stderr, "query mode (-M) should be specifiled before transaction scripts (-f)\n");
+=======
+					fprintf(stderr, "querymode(-M) should be specifiled before transaction scripts(-f)\n");
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 					exit(1);
 				}
 				for (querymode = 0; querymode < NUM_QUERYMODE; querymode++)
@@ -1938,7 +2154,11 @@ main(int argc, char **argv)
 						break;
 				if (querymode >= NUM_QUERYMODE)
 				{
+<<<<<<< HEAD
 					fprintf(stderr, "invalid query mode (-M): %s\n", optarg);
+=======
+					fprintf(stderr, "invalid querymode(-M): %s\n", optarg);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 					exit(1);
 				}
 				break;
@@ -2103,10 +2323,37 @@ main(int argc, char **argv)
 	PQfinish(con);
 
 	/* set random seed */
+<<<<<<< HEAD
 	INSTR_TIME_SET_CURRENT(start_time);
 	srandom((unsigned int) INSTR_TIME_GET_MICROSEC(start_time));
 
 	/* process builtin SQL scripts */
+=======
+	gettimeofday(&start_time, NULL);
+	srandom((unsigned int) start_time.tv_usec);
+
+	/* get start up time */
+	gettimeofday(&start_time, NULL);
+
+	if (is_connect == 0)
+	{
+		struct timeval t, now;
+
+		/* make connections to the database */
+		for (i = 0; i < nclients; i++)
+		{
+			state[i].id = i;
+			if ((state[i].con = doConnect()) == NULL)
+				exit(1);
+		}
+		/* time after connections set up */
+		gettimeofday(&now, NULL);
+		diffTime(&now, &start_time, &t);
+		addTime(&conn_total_time, &t, &conn_total_time);
+	}
+
+	/* process bultin SQL scripts */
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	switch (ttype)
 	{
 		case 0:
@@ -2241,10 +2488,23 @@ threadRun(void *arg)
 
 	while (remains > 0)
 	{
+<<<<<<< HEAD
 		fd_set			input_mask;
 		int				maxsock;		/* max socket number to be waited */
 		int64			now_usec = 0;
 		int64			min_usec;
+=======
+		if (remains <= 0)
+		{						/* all done ? */
+			disconnect_all(state);
+			/* get end time */
+			gettimeofday(&end_time, NULL);
+			printResults(ttype, state, &start_time, &end_time);
+			if (LOGFILE)
+				fclose(LOGFILE);
+			exit(0);
+		}
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		FD_ZERO(&input_mask);
 
@@ -2332,7 +2592,11 @@ threadRun(void *arg)
 
 			if (st->ecnt > prev_ecnt && commands[st->state]->type == META_COMMAND)
 			{
+<<<<<<< HEAD
 				fprintf(stderr, "Client %d aborted in state %d. Execution of meta-command failed.\n", i, st->state);
+=======
+				fprintf(stderr, "Client %d aborted in state %d. Execution of meta-command failed.\n", i, state[i].state);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 				remains--;		/* I've aborted */
 				PQfinish(st->con);
 				st->con = NULL;

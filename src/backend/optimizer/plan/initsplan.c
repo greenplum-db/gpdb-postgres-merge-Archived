@@ -10,7 +10,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.138.2.3 2009/04/16 20:42:28 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.139 2008/04/01 00:48:33 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

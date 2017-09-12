@@ -300,7 +300,10 @@ select '{
            @ 1 hour @ 42 minutes @ 20 seconds
          }'::interval[];
 select array[]::text[];
+<<<<<<< HEAD
 select '[0:1]={1.1,2.2}'::float8[];
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 -- all of the above should be accepted
 
 -- tests for array aggregates

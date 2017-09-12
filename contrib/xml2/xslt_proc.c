@@ -40,7 +40,13 @@ Datum		xslt_process(PG_FUNCTION_ARGS);
 #ifdef USE_LIBXSLT
 
 /* declarations to come from xpath.c */
+<<<<<<< HEAD
 extern void pgxml_parser_init(void);
+=======
+extern void elog_error(int level, char *explain, int force);
+extern void pgxml_parser_init();
+extern xmlChar *pgxml_texttoxmlchar(text *textstring);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /* local defs */
 static void parse_params(const char **params, text *paramstr);
@@ -88,9 +94,18 @@ xslt_process(PG_FUNCTION_ARGS)
 	/* Setup parser */
 	pgxml_parser_init();
 
+<<<<<<< HEAD
 	/* Parse document */
 	doctree = xmlParseMemory((char *) VARDATA(doct),
 							 VARSIZE(doct) - VARHDRSZ);
+=======
+	/* Check to see if document is a file or a literal */
+
+	if (VARDATA(doct)[0] == '<')
+		doctree = xmlParseMemory((char *) VARDATA(doct), VARSIZE(doct) - VARHDRSZ);
+	else
+		doctree = xmlParseFile(text_to_cstring(doct));
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	if (doctree == NULL)
 		xml_ereport(ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
@@ -106,6 +121,11 @@ xslt_process(PG_FUNCTION_ARGS)
 		xml_ereport(ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
 					"error parsing stylesheet as XML document");
 	}
+<<<<<<< HEAD
+=======
+	else
+		stylesheet = xsltParseStylesheetFile((xmlChar *) text_to_cstring(ssheet));
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/* After this call we need not free ssdoc separately */
 	stylesheet = xsltParseStylesheetDoc(ssdoc);

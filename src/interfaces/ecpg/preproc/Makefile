@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2009, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.131 2008/02/13 18:14:46 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.132 2008/03/18 17:46:23 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -27,10 +27,14 @@ override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
 	-DMINOR_VERSION=$(MINOR_VERSION) -DPATCHLEVEL=$(PATCHLEVEL) \
 	 $(CPPFLAGS)
 
+<<<<<<< HEAD
 ifeq ($(GCC), yes)
 override CFLAGS +=  $(PTHREAD_CFLAGS) -DECPG_COMPILE -Wno-unused-label -Wno-error
 endif
 override CFLAGS += $(PTHREAD_CFLAGS) -DECPG_COMPILE
+=======
+override CFLAGS += $(PTHREAD_CFLAGS)
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 OBJS=	preproc.o type.o ecpg.o output.o parser.o \
 	keywords.o c_keywords.o ecpg_keywords.o kwlookup.o ../ecpglib/typename.o descriptor.o variable.o \

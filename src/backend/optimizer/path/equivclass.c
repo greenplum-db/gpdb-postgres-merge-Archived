@@ -10,7 +10,11 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.9.2.3 2009/09/29 01:21:02 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.10 2008/03/31 16:59:26 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

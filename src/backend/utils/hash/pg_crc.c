@@ -12,11 +12,19 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/backend/utils/hash/pg_crc.c
+=======
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/pg_crc.c,v 1.19 2008/03/27 03:57:33 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
 
+<<<<<<< HEAD
+=======
+/* Use c.h so that this file can be built in either frontend or backend */
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "c.h"
 
 #include "utils/pg_crc.h"

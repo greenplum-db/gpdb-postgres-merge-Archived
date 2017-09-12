@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.6.2.2 2008/03/13 18:00:39 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.9 2008/03/26 21:10:37 alvherre Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +23,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "utils/inval.h"
+#include "utils/tqual.h"
 
 
 /* Working data for heap_page_prune and subroutines */
@@ -271,6 +276,7 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 									redirect_move);
 
 			PageSetLSN(BufferGetPage(buffer), recptr);
+			PageSetTLI(BufferGetPage(buffer), ThisTimeLineID);
 		}
 	}
 	else
@@ -289,7 +295,11 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 		{
 			((PageHeader) page)->pd_prune_xid = prstate.new_prune_xid;
 			PageClearFull(page);
+<<<<<<< HEAD
 			MarkBufferDirtyHint(buffer, relation);
+=======
+			SetBufferCommitInfoNeedsSave(buffer);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		}
 	}
 
@@ -637,6 +647,10 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 		ItemPointerSet(&firsttup.t_self,
 					   BufferGetBlockNumber(buffer),
 					   redirect_target);
+<<<<<<< HEAD
+=======
+		firsttup.t_tableOid = RelationGetRelid(relation);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		CacheInvalidateHeapTuple(relation, &firsttup);
 	}
 

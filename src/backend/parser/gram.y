@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.607 2008/02/15 22:17:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.611 2008/03/28 00:21:55 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -128,6 +128,7 @@ static void insertSelectOptions(SelectStmt *stmt,
 static Node *makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg);
 static Node *doNegate(Node *n, int location);
 static void doNegateFloat(Value *v);
+<<<<<<< HEAD
 static Node *makeAArrayExpr(List *elements, int location);
 static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args,
 						 List *args, int location);
@@ -135,6 +136,10 @@ static List *mergeTableFuncParameters(List *func_args, List *columns);
 static TypeName *TableFuncTypeName(List *columns);
 static void checkWindowExclude(void);
 static Node *makeIsNotDistinctFromNode(Node *expr, int position);
+=======
+static Node *makeAArrayExpr(List *elements);
+static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 %}
 
@@ -5607,6 +5612,7 @@ TriggerOneEvent:
 			INSERT									{ $$ = 'i'; }
 			| DELETE_P								{ $$ = 'd'; }
 			| UPDATE								{ $$ = 'u'; }
+			| TRUNCATE								{ $$ = 't'; }
 		;
 
 TriggerForSpec:
@@ -7837,11 +7843,19 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 					n->newname = $8;
 					$$ = (Node *)n;
 				}
+<<<<<<< HEAD
 			| ALTER PROTOCOL name RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_EXTPROTOCOL;
 					n->subname = $3;
+=======
+			| ALTER TYPE_P any_name RENAME TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_TYPE;
+					n->object = $3;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 					n->newname = $6;
 					$$ = (Node *)n;
 				}
@@ -10556,11 +10570,15 @@ ConstDatetime:
 						$$ = SystemTypeName("timestamptz");
 					else
 						$$ = SystemTypeName("timestamp");
+<<<<<<< HEAD
 					/* XXX the timezone field seems to be unused
 					 * - thomas 2001-09-06
 					 */
 					$$->timezone = $5;
 					$$->typmods = list_make1(makeIntConst($3, @3));
+=======
+					$$->typmods = list_make1(makeIntConst($3));
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 					$$->location = @1;
 				}
 			| TIMESTAMP opt_timezone
@@ -10569,10 +10587,6 @@ ConstDatetime:
 						$$ = SystemTypeName("timestamptz");
 					else
 						$$ = SystemTypeName("timestamp");
-					/* XXX the timezone field seems to be unused
-					 * - thomas 2001-09-06
-					 */
-					$$->timezone = $2;
 					$$->location = @1;
 				}
 			| TIME '(' Iconst ')' opt_timezone
@@ -12378,6 +12392,7 @@ type_list:	Typename								{ $$ = list_make1($1); }
 
 array_expr: '[' expr_list ']'
 				{
+<<<<<<< HEAD
 					$$ = makeAArrayExpr($2, @1);
 				}
 			| '[' array_expr_list ']'
@@ -12387,6 +12402,17 @@ array_expr: '[' expr_list ']'
 			| '[' ']'
 				{
 					$$ = makeAArrayExpr(NIL, @1);
+=======
+					$$ = makeAArrayExpr($2);
+				}
+			| '[' array_expr_list ']'
+				{
+					$$ = makeAArrayExpr($2);
+				}
+			| '[' ']'
+				{
+					$$ = makeAArrayExpr(NIL);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 				}
 		;
 
@@ -12401,8 +12427,11 @@ extract_list:
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
 					n->val.val.str = $1;
+<<<<<<< HEAD
 					n->location = @1;
 
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 					$$ = list_make2((Node *) n, $3);
 				}
 			| /*EMPTY*/								{ $$ = NIL; }
@@ -12411,7 +12440,6 @@ extract_list:
 /* Allow delimited string SCONST in extract_arg as an SQL extension.
  * - thomas 2001-04-12
  */
-
 extract_arg:
 			IDENT									{ $$ = $1; }
 			| YEAR_P								{ $$ = "year"; }
@@ -14018,8 +14046,12 @@ makeBoolAConst(bool state, int location)
 	A_Const *n = makeNode(A_Const);
 	n->val.type = T_String;
 	n->val.val.str = (state ? "t" : "f");
+<<<<<<< HEAD
 	n->typeName = SystemTypeName("bool");
 	n->location = location;
+=======
+	n->typename = SystemTypeName("bool");
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	return n;
 }
 
@@ -14279,18 +14311,29 @@ doNegateFloat(Value *v)
 }
 
 static Node *
+<<<<<<< HEAD
 makeAArrayExpr(List *elements, int location)
+=======
+makeAArrayExpr(List *elements)
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 {
 	A_ArrayExpr *n = makeNode(A_ArrayExpr);
 
 	n->elements = elements;
+<<<<<<< HEAD
 	n->location = location;
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	return (Node *) n;
 }
 
 static Node *
+<<<<<<< HEAD
 makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args,
 			int location)
+=======
+makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 {
 	XmlExpr    *x = makeNode(XmlExpr);
 
@@ -14319,6 +14362,7 @@ parser_init(void)
 	QueryIsRule = FALSE;
 }
 
+<<<<<<< HEAD
 /*
  * Merge the input and output parameters of a table function.
  */
@@ -14412,6 +14456,8 @@ makeIsNotDistinctFromNode(Node *expr, int position)
 	return n;
 }
 
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 /*
  * Must undefine base_yylex before including scan.c, since we want it
  * to create the function base_yylex not filtered_base_yylex.

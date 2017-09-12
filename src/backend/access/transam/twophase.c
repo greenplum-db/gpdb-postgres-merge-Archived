@@ -7,7 +7,11 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.39.2.3 2009/11/23 09:59:00 heikki Exp $
+=======
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.41 2008/03/25 22:42:42 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -990,7 +994,7 @@ pg_prepared_xact(PG_FUNCTION_ARGS)
 		MemSet(nulls, 0, sizeof(nulls));
 
 		values[0] = TransactionIdGetDatum(gxact->proc.xid);
-		values[1] = DirectFunctionCall1(textin, CStringGetDatum(gxact->gid));
+		values[1] = CStringGetTextDatum(gxact->gid);
 		values[2] = TimestampTzGetDatum(gxact->prepared_at);
 		values[3] = ObjectIdGetDatum(gxact->owner);
 		values[4] = ObjectIdGetDatum(gxact->proc.databaseId);

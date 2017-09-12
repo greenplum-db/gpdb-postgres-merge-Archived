@@ -7,7 +7,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.8.2.1 2008/03/07 15:29:27 teodor Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.11 2008/03/25 22:42:43 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -163,7 +167,7 @@ make_tsvector(ParsedText *prs)
 	if (lenstr > MAXSTRPOS)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("string is too long for tsvector")));
+				 	errmsg("string is too long for tsvector (%d bytes, max %d bytes)", lenstr, MAXSTRPOS)));
 
 	totallen = CALCDATASIZE(prs->curwords, lenstr);
 	in = (TSVector) palloc0(totallen);
@@ -337,7 +341,7 @@ to_tsquery_byid(PG_FUNCTION_ARGS)
 	QueryItem  *res;
 	int4		len;
 
-	query = parse_tsquery(TextPGetCString(in), pushval_morph, ObjectIdGetDatum(cfgid), false);
+	query = parse_tsquery(text_to_cstring(in), pushval_morph, ObjectIdGetDatum(cfgid), false);
 
 	if (query->size == 0)
 		PG_RETURN_TSQUERY(query);
@@ -352,10 +356,13 @@ to_tsquery_byid(PG_FUNCTION_ARGS)
 	}
 	memcpy((void *) GETQUERY(query), (void *) res, len * sizeof(QueryItem));
 
+<<<<<<< HEAD
 	/*
 	 * Removing the stopword placeholders might've resulted in fewer
 	 * QueryItems. If so, move the operands up accordingly.
 	 */
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	if ( len != query->size ) {
 		char 		*oldoperand = GETOPERAND(query);
 		int4 lenoperand = VARSIZE(query) - (oldoperand - (char*)query);
@@ -363,7 +370,11 @@ to_tsquery_byid(PG_FUNCTION_ARGS)
 		Assert( len < query->size );
 
 		query->size = len;
+<<<<<<< HEAD
 		memmove((void *) GETOPERAND(query), oldoperand, VARSIZE(query) - (oldoperand - (char*)query) );
+=======
+		memcpy((void *) GETOPERAND(query), oldoperand, VARSIZE(query) - (oldoperand - (char*)query) );
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		SET_VARSIZE(query, COMPUTESIZE( len, lenoperand )); 
 	}
 
@@ -392,7 +403,7 @@ plainto_tsquery_byid(PG_FUNCTION_ARGS)
 	QueryItem  *res;
 	int4		len;
 
-	query = parse_tsquery(TextPGetCString(in), pushval_morph, ObjectIdGetDatum(cfgid), true);
+	query = parse_tsquery(text_to_cstring(in), pushval_morph, ObjectIdGetDatum(cfgid), true);
 
 	if (query->size == 0)
 		PG_RETURN_TSQUERY(query);

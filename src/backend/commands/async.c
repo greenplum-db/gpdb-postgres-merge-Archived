@@ -7,7 +7,11 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.147 2009/06/11 14:48:55 momjian Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.140 2008/03/26 21:10:37 alvherre Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -210,9 +214,16 @@ Async_Notify(const char *relname)
 		oldcontext = MemoryContextSwitchTo(CurTransactionContext);
 
 		/*
+<<<<<<< HEAD
 		 * Ordering of the list isn't important.  We choose to put new entries
 		 * on the front, as this might make duplicate-elimination a tad faster
 		 * when the same condition is signaled many times in a row.
+=======
+		 * Ordering of the list isn't important.  We choose to put new
+		 * entries on the front, as this might make duplicate-elimination
+		 * a tad faster when the same condition is signaled many times in
+		 * a row.
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		 */
 		pendingNotifies = lcons(pstrdup(relname), pendingNotifies);
 
@@ -235,10 +246,17 @@ queue_listen(ListenActionKind action, const char *condname)
 	ListenAction *actrec;
 
 	/*
+<<<<<<< HEAD
 	 * Unlike Async_Notify, we don't try to collapse out duplicates. It would
 	 * be too complicated to ensure we get the right interactions of
 	 * conflicting LISTEN/UNLISTEN/UNLISTEN_ALL, and it's unlikely that there
 	 * would be any performance benefit anyway in sane applications.
+=======
+	 * Unlike Async_Notify, we don't try to collapse out duplicates.
+	 * It would be too complicated to ensure we get the right interactions
+	 * of conflicting LISTEN/UNLISTEN/UNLISTEN_ALL, and it's unlikely that
+	 * there would be any performance benefit anyway in sane applications.
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	 */
 	oldcontext = MemoryContextSwitchTo(CurTransactionContext);
 
@@ -274,6 +292,7 @@ Async_Listen(const char *relname)
 void
 Async_Unlisten(const char *relname)
 {
+<<<<<<< HEAD
 	if (Trace_notify)
 		elog(DEBUG1, "Async_Unlisten(%s,%d)", relname, MyProcPid);
 
@@ -282,12 +301,30 @@ Async_Unlisten(const char *relname)
 		return;
 
 	queue_listen(LISTEN_UNLISTEN, relname);
+=======
+	/* Handle specially the `unlisten "*"' command */
+	if ((!relname) || (*relname == '\0') || (strcmp(relname, "*") == 0))
+	{
+		Async_UnlistenAll();
+	}
+	else
+	{
+		if (Trace_notify)
+			elog(DEBUG1, "Async_Unlisten(%s,%d)", relname, MyProcPid);
+
+		queue_listen(LISTEN_UNLISTEN, relname);
+	}
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 /*
  * Async_UnlistenAll
  *
+<<<<<<< HEAD
  *		This is invoked by UNLISTEN * command, and also at backend exit.
+=======
+ *		This is invoked by UNLISTEN "*" command, and also at backend exit.
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  */
 void
 Async_UnlistenAll(void)
@@ -295,10 +332,13 @@ Async_UnlistenAll(void)
 	if (Trace_notify)
 		elog(DEBUG1, "Async_UnlistenAll(%d)", MyProcPid);
 
+<<<<<<< HEAD
 	/* If we couldn't possibly be listening, no need to queue anything */
 	if (pendingActions == NIL && !unlistenExitRegistered)
 		return;
 
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	queue_listen(LISTEN_UNLISTEN_ALL, "");
 }
 
@@ -454,7 +494,11 @@ Exec_Listen(Relation lRel, const char *relname)
 	HeapScanDesc scan;
 	HeapTuple	tuple;
 	Datum		values[Natts_pg_listener];
+<<<<<<< HEAD
 	bool		nulls[Natts_pg_listener];
+=======
+	char		nulls[Natts_pg_listener];
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	NameData	condname;
 	bool		alreadyListener = false;
 
@@ -483,6 +527,7 @@ Exec_Listen(Relation lRel, const char *relname)
 	/*
 	 * OK to insert a new tuple
 	 */
+<<<<<<< HEAD
 	memset(nulls, false, sizeof(nulls));
 
 	namestrcpy(&condname, relname);
@@ -491,6 +536,16 @@ Exec_Listen(Relation lRel, const char *relname)
 	values[Anum_pg_listener_notification - 1] = Int32GetDatum(0);		/* no notifies pending */
 
 	tuple = heap_form_tuple(RelationGetDescr(lRel), values, nulls);
+=======
+	memset(nulls, ' ', sizeof(nulls));
+
+	namestrcpy(&condname, relname);
+	values[Anum_pg_listener_relname - 1] = NameGetDatum(&condname);
+	values[Anum_pg_listener_pid - 1] = Int32GetDatum(MyProcPid);
+	values[Anum_pg_listener_notify - 1] = Int32GetDatum(0);	/* no notifies pending */
+
+	tuple = heap_formtuple(RelationGetDescr(lRel), values, nulls);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	simple_heap_insert(lRel, tuple);
 
@@ -568,7 +623,11 @@ Exec_UnlistenAll(Relation lRel)
 
 	/* Find and delete all entries with my listenerPID */
 	ScanKeyInit(&key[0],
+<<<<<<< HEAD
 				Anum_pg_listener_listenerpid,
+=======
+				Anum_pg_listener_pid,
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 				BTEqualStrategyNumber, F_INT4EQ,
 				Int32GetDatum(MyProcPid));
 	scan = heap_beginscan(lRel, SnapshotNow, 1, key);
@@ -593,7 +652,11 @@ Send_Notify(Relation lRel)
 	HeapTuple	lTuple,
 				rTuple;
 	Datum		value[Natts_pg_listener];
+<<<<<<< HEAD
 	bool		repl[Natts_pg_listener],
+=======
+	char		repl[Natts_pg_listener],
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 				nulls[Natts_pg_listener];
 
 	/* preset data to update notify column to MyProcPid */
@@ -655,7 +718,11 @@ Send_Notify(Relation lRel)
 			else if (listener->notification == 0)
 			{
 				/* Rewrite the tuple with my PID in notification column */
+<<<<<<< HEAD
 				rTuple = heap_modify_tuple(lTuple, tdesc, value, nulls, repl);
+=======
+				rTuple = heap_modifytuple(lTuple, tdesc, value, nulls, repl);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 				simple_heap_update(lRel, &lTuple->t_self, rTuple);
 
 #ifdef NOT_USED					/* currently there are no indexes */
@@ -755,9 +822,15 @@ AtSubAbort_Notify(void)
 	int			my_level = GetCurrentTransactionNestLevel();
 
 	/*
+<<<<<<< HEAD
 	 * All we have to do is pop the stack --- the actions/notifies made in
 	 * this subxact are no longer interesting, and the space will be freed
 	 * when CurTransactionContext is recycled.
+=======
+	 * All we have to do is pop the stack --- the actions/notifies made in this
+	 * subxact are no longer interesting, and the space will be freed when
+	 * CurTransactionContext is recycled.
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	 *
 	 * This routine could be called more than once at a given nesting level if
 	 * there is trouble during subxact abort.  Avoid dumping core by using

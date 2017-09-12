@@ -9,7 +9,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.125.2.1 2009/09/03 22:08:22 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.127 2008/03/26 18:48:59 alvherre Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +29,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
+#include "utils/snapmgr.h"
 #include "mb/pg_wchar.h"
 
 /*

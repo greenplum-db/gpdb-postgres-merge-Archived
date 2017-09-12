@@ -21,7 +21,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/port/ipc_test.c,v 1.26 2009/01/01 17:23:46 momjian Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/port/ipc_test.c,v 1.24 2008/03/24 18:08:47 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

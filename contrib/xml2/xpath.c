@@ -38,6 +38,7 @@ Datum		xpath_table(PG_FUNCTION_ARGS);
 
 /* exported for use by xslt_proc.c */
 
+<<<<<<< HEAD
 void		pgxml_parser_init(void);
 
 /* workspace for pgxml_xpath() */
@@ -67,6 +68,9 @@ static void cleanup_workspace(xpath_workspace *workspace);
 
 #define GET_STR(textp) DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(textp)))
 
+=======
+#define ERRBUF_SIZE 200
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /*
  * Initialize for xml parsing.
@@ -515,6 +519,16 @@ xpath_table(PG_FUNCTION_ARGS)
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
 
+<<<<<<< HEAD
+=======
+/* Function parameters */
+	char	   *pkeyfield = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *xmlfield = text_to_cstring(PG_GETARG_TEXT_PP(1));
+	char	   *relname = text_to_cstring(PG_GETARG_TEXT_PP(2));
+	char	   *xpathset = text_to_cstring(PG_GETARG_TEXT_PP(3));
+	char	   *condition = text_to_cstring(PG_GETARG_TEXT_PP(4));
+
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	char	  **values;
 	xmlChar   **xpaths;
 	char	   *pos;
@@ -684,7 +698,11 @@ xpath_table(PG_FUNCTION_ARGS)
 		/* Parse the document */
 		if (xmldoc)
 			doctree = xmlParseMemory(xmldoc, strlen(xmldoc));
+<<<<<<< HEAD
 		else	/* treat NULL as not well-formed */
+=======
+		else					/* treat NULL as not well-formed */
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 			doctree = NULL;
 
 		if (doctree == NULL)

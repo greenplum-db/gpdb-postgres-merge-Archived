@@ -10,7 +10,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.88.2.1 2009/02/24 01:38:49 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.91 2008/03/27 03:57:33 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -42,8 +46,13 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
+<<<<<<< HEAD
 #include "catalog/pg_proc_callback.h"
+=======
+#include "catalog/pg_proc_fn.h"
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "catalog/pg_type.h"
+#include "catalog/pg_type_fn.h"
 #include "commands/defrem.h"
 #include "commands/proclang.h"
 #include "miscadmin.h"
@@ -58,8 +67,12 @@
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
+=======
+#include "utils/tqual.h"
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 static void AlterFunctionOwner_internal(Relation rel, HeapTuple tup,

@@ -8,13 +8,14 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.71 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.73 2008/03/26 21:10:39 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef TQUAL_H
 #define TQUAL_H
 
+<<<<<<< HEAD
 #include "access/htup.h"
 #include "storage/buf.h"
 #include "utils/timestamp.h"  /* TimestampTz */
@@ -80,6 +81,11 @@ typedef struct SnapshotData
 
 #define InvalidSnapshot		((Snapshot) NULL)
 
+=======
+#include "utils/snapshot.h"
+
+
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 /* Static variables representing various special snapshot semantics */
 extern PGDLLIMPORT SnapshotData SnapshotNowData;
 extern PGDLLIMPORT SnapshotData SnapshotSelfData;
@@ -103,15 +109,6 @@ extern PGDLLIMPORT SnapshotData SnapshotToastData;
 #define IsMVCCSnapshot(snapshot)  \
 	((snapshot)->satisfies == HeapTupleSatisfiesMVCC)
 
-
-extern PGDLLIMPORT Snapshot SerializableSnapshot;
-extern PGDLLIMPORT Snapshot LatestSnapshot;
-extern PGDLLIMPORT Snapshot ActiveSnapshot;
-
-extern TransactionId TransactionXmin;
-extern TransactionId RecentXmin;
-extern TransactionId RecentGlobalXmin;
-
 /*
  * HeapTupleSatisfiesVisibility
  *		True iff heap tuple satisfies a time qual.
@@ -127,16 +124,6 @@ extern TransactionId RecentGlobalXmin;
  */
 #define HeapTupleSatisfiesVisibility(rel, tuple, snapshot, buffer)	\
 	((*(snapshot)->satisfies) (rel, (tuple)->t_data, snapshot, buffer))
-
-/* Result codes for HeapTupleSatisfiesUpdate */
-typedef enum
-{
-	HeapTupleMayBeUpdated,
-	HeapTupleInvisible,
-	HeapTupleSelfUpdated,
-	HeapTupleUpdated,
-	HeapTupleBeingUpdated
-} HTSU_Result;
 
 /* Result codes for HeapTupleSatisfiesVacuum */
 typedef enum
@@ -209,6 +196,7 @@ extern HTSV_Result HeapTupleSatisfiesVacuum(Relation relation, HeapTupleHeader t
 extern void HeapTupleSetHintBits(HeapTupleHeader tuple, Buffer buffer, Relation rel,
 					 uint16 infomask, TransactionId xid);
 
+<<<<<<< HEAD
 extern Snapshot GetTransactionSnapshot(void);
 extern Snapshot GetLatestSnapshot(void);
 extern Snapshot CopySnapshot(Snapshot snapshot);
@@ -240,4 +228,6 @@ extern void GetTupleVisibilitySummaryDatums(
 extern char *GetTupleVisibilitySummaryString(
 	TupleVisibilitySummary	*tupleVisibilitySummary);
 
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #endif   /* TQUAL_H */

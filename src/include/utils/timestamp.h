@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.75 2008/02/17 02:09:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.76 2008/03/21 01:31:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,8 +39,11 @@
  * TimeOffset and fsec_t are convenience typedefs for temporary variables
  * that are of different types in the two cases.  Do not use fsec_t in values
  * stored on-disk, since it is not the same size in both implementations.
+<<<<<<< HEAD
  * Also, fsec_t is only meant for *fractional* seconds; beware of overflow
  * if the value you need to store could be many seconds.
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  */
 
 #ifdef HAVE_INT64_TIMESTAMP
@@ -49,12 +52,20 @@ typedef int64 Timestamp;
 typedef int64 TimestampTz;
 typedef int64 TimeOffset;
 typedef int32 fsec_t;			/* fractional seconds (in microseconds) */
+<<<<<<< HEAD
+=======
+
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #else
 
 typedef double Timestamp;
 typedef double TimestampTz;
 typedef double TimeOffset;
 typedef double fsec_t;			/* fractional seconds (in seconds) */
+<<<<<<< HEAD
+=======
+
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #endif
 
 typedef struct
@@ -137,7 +148,12 @@ typedef struct
 
 #define DT_NOBEGIN		(-INT64CONST(0x7fffffffffffffff) - 1)
 #define DT_NOEND		(INT64CONST(0x7fffffffffffffff))
+<<<<<<< HEAD
 #else							/* !HAVE_INT64_TIMESTAMP */
+=======
+
+#else  /* !HAVE_INT64_TIMESTAMP */
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 #define DatumGetTimestamp(X)  ((Timestamp) DatumGetFloat8(X))
 #define DatumGetTimestampTz(X)	((TimestampTz) DatumGetFloat8(X))
@@ -162,6 +178,7 @@ typedef struct
 #define DT_NOBEGIN		(-DBL_MAX)
 #define DT_NOEND		(DBL_MAX)
 #endif
+
 #endif   /* HAVE_INT64_TIMESTAMP */
 
 

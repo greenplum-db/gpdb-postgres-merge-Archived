@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.118 2008/02/29 15:31:33 mha Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.119 2008/04/10 16:58:51 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -335,6 +335,26 @@ extern FILE *pgwin32_fopen(const char *, const char *);
 #define popen(a,b) _popen(a,b)
 #define pclose(a) _pclose(a)
 
+<<<<<<< HEAD
+=======
+/* 
+ * stat() is not guaranteed to set the st_size field on win32, so we
+ * redefine it to our own implementation that is.
+ *
+ * We must pull in sys/stat.h here so the system header definition
+ * goes in first, and we redefine that, and not the other way around.
+ */
+extern int pgwin32_safestat(const char *path, struct stat *buf);
+#if !defined(FRONTEND) && !defined(_DIRMOD_C)
+#include <sys/stat.h>
+#define stat(a,b) pgwin32_safestat(a,b)
+#endif
+
+/* Missing rand functions */
+extern long lrand48(void);
+extern void srand48(long seed);
+
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 /* New versions of MingW have gettimeofday, old mingw and msvc don't */
 #ifndef HAVE_GETTIMEOFDAY
 /* Last parameter not used */

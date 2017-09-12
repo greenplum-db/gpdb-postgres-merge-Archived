@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.181.2.2 2009/03/11 00:08:06 alvherre Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.183 2008/03/17 19:44:41 petere Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  * NOTES
  *	  A lock table is a shared memory hash table.  When
@@ -41,10 +45,14 @@
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/resowner.h"
+<<<<<<< HEAD
 #include "utils/testutils.h"
 #include "executor/execdesc.h"
 #include "utils/resscheduler.h"
 #include "storage/procarray.h"
+=======
+#include "pg_trace.h"
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 #include "cdb/cdbvars.h"
 
@@ -965,11 +973,11 @@ LockAcquire(const LOCKTAG *locktag,
 		 * Sleep till someone wakes me up.
 		 */
 
-		PG_TRACE2(lock__startwait, locktag->locktag_field2, lockmode);
+		TRACE_POSTGRESQL_LOCK_STARTWAIT(locktag->locktag_field2, lockmode);
 
 		WaitOnLock(locallock, owner);
 
-		PG_TRACE2(lock__endwait, locktag->locktag_field2, lockmode);
+		TRACE_POSTGRESQL_LOCK_ENDWAIT(locktag->locktag_field2, lockmode);
 
 		/*
 		 * NOTE: do not do any material change of state between here and
@@ -2169,6 +2177,7 @@ AtPrepare_Locks(void)
 				elog(ERROR, "cannot PREPARE when session locks exist");
 		}
 
+<<<<<<< HEAD
 		/* gp-change 
 		 *
 		 * We allow 2PC commit transactions to include temp objects.  
@@ -2185,6 +2194,8 @@ AtPrepare_Locks(void)
 		if (LockTagIsTemp(&locallock->tag.lock))
 			continue;
 
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		/*
 		 * Create a 2PC record.
 		 */

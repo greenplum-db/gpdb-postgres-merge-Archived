@@ -7,7 +7,11 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/utils/inval.h,v 1.41.2.1 2008/03/13 18:00:39 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/utils/inval.h,v 1.42 2008/03/13 18:00:32 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.267 2008/02/27 17:44:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.270 2008/04/01 00:48:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,7 @@
 #include "utils/relationnode.h"
 #include "utils/resowner.h"
 #include "utils/syscache.h"
+<<<<<<< HEAD
 
 #include "catalog/gp_policy.h"         /* GpPolicy */
 #include "cdb/cdbtm.h"
@@ -80,6 +81,10 @@
 #include "cdb/cdbmirroredflatfile.h"
 #include "cdb/cdbpersistentfilesysobj.h"
 #include "cdb/cdbsreh.h"
+=======
+#include "utils/tqual.h"
+#include "utils/typcache.h"
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 /*
@@ -3751,7 +3756,11 @@ AttrDefaultFetch(Relation relation)
 					 RelationGetRelationName(relation));
 			else
 				attrdef[i].adbin = MemoryContextStrdup(CacheMemoryContext,
+<<<<<<< HEAD
 												   TextDatumGetCString(val));
+=======
+													TextDatumGetCString(val));
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 			break;
 		}
 

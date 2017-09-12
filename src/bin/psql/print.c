@@ -3,9 +3,18 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * src/bin/psql/print.c
  */
 #include "postgres_fe.h"
+=======
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.97 2008/03/27 03:57:34 tgl Exp $
+ */
+#include "postgres_fe.h"
+
+#include "print.h"
+#include "catalog/pg_type.h"
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 #include <limits.h>
 #include <math.h>

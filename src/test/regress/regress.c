@@ -1,5 +1,9 @@
 /*
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/test/regress/regress.c,v 1.72 2009/01/07 13:44:37 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/test/regress/regress.c,v 1.71 2008/03/25 22:42:46 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  */
 
 #include "postgres.h"

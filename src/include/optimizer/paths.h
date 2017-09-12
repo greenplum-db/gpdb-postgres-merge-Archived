@@ -9,7 +9,11 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.103.2.1 2008/03/31 16:59:33 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.104 2008/03/31 16:59:26 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */

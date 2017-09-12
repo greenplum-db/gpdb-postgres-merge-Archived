@@ -24,7 +24,11 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/utils/tuplestore.h,v 1.30 2009/06/11 14:49:13 momjian Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/utils/tuplestore.h,v 1.23 2008/03/25 19:26:53 neilc Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +59,11 @@ extern void tuplestore_puttupleslot(Tuplestorestate *state,
 						TupleTableSlot *slot);
 extern void tuplestore_puttuple(Tuplestorestate *state, HeapTuple tuple);
 extern void tuplestore_putvalues(Tuplestorestate *state, TupleDesc tdesc,
+<<<<<<< HEAD
 					 Datum *values, bool *isnull);
+=======
+								 Datum *values, bool *isnull);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /* tuplestore_donestoring() used to be required, but is no longer used */
 #define tuplestore_donestoring(state)	((void) 0)

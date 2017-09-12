@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.249.2.6 2010/07/29 16:15:05 rhaas Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.255 2008/04/03 17:12:27 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *
  * INTERFACE ROUTINES
@@ -57,7 +61,9 @@
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
+#include "utils/snapmgr.h"
 #include "utils/syscache.h"
+#include "utils/tqual.h"
 
 #include "cdb/cdbpersistentstore.h"
 #include "cdb/cdbvars.h"
@@ -941,6 +947,7 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 	r = RelationIdGetRelation(relationId);
 
 	if (!RelationIsValid(r))
+<<<<<<< HEAD
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
@@ -952,6 +959,14 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 	if (r->rd_istemp)
 		MyXactAccessedTempRel = true;
 #endif
+=======
+		elog(ERROR, "could not open relation with OID %u", relationId);
+
+	/* Make note that we've accessed a temporary relation */
+	if (r->rd_istemp)
+		MyXactAccessedTempRel = true;
+
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	pgstat_initstats(r);
 
 	return r;
@@ -1009,6 +1024,7 @@ try_relation_open(Oid relationId, LOCKMODE lockmode, bool noWait)
 	r = RelationIdGetRelation(relationId);
 
 	if (!RelationIsValid(r))
+<<<<<<< HEAD
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
@@ -1020,6 +1036,14 @@ try_relation_open(Oid relationId, LOCKMODE lockmode, bool noWait)
 	if (r->rd_istemp)
 		MyXactAccessedTempRel = true;
 #endif
+=======
+		elog(ERROR, "could not open relation with OID %u", relationId);
+
+	/* Make note that we've accessed a temporary relation */
+	if (r->rd_istemp)
+		MyXactAccessedTempRel = true;
+
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	pgstat_initstats(r);
 
 	return r;
@@ -1202,6 +1226,7 @@ relation_open_nowait(Oid relationId, LOCKMODE lockmode)
 	r = RelationIdGetRelation(relationId);
 
 	if (!RelationIsValid(r))
+<<<<<<< HEAD
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
@@ -1213,6 +1238,14 @@ relation_open_nowait(Oid relationId, LOCKMODE lockmode)
 	if (r->rd_istemp)
 		MyXactAccessedTempRel = true;
 #endif
+=======
+		elog(ERROR, "could not open relation with OID %u", relationId);
+
+	/* Make note that we've accessed a temporary relation */
+	if (r->rd_istemp)
+		MyXactAccessedTempRel = true;
+
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	pgstat_initstats(r);
 
 	return r;
@@ -1780,6 +1813,7 @@ heap_fetch(Relation relation,
 		   bool keep_buf,
 		   Relation stats_relation)
 {
+<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_VERIFY_NO_LOCK_LEAK_DECLARE;
 
 	bool result;
@@ -1817,6 +1851,8 @@ heap_release_fetch(Relation relation,
 {
 	MIRROREDLOCK_BUFMGR_DECLARE;
 
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	ItemPointer tid = &(tuple->t_self);
 	ItemId		lp;
 	Buffer		buffer;
@@ -1825,15 +1861,18 @@ heap_release_fetch(Relation relation,
 	bool		valid;
 
 	/*
-	 * get the buffer from the relation descriptor. Note that this does a
-	 * buffer pin, and releases the old *userbuf if not InvalidBuffer.
+	 * Fetch and pin the appropriate page of the relation.
 	 */
+<<<<<<< HEAD
 	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
 	buffer = ReleaseAndReadBuffer(*userbuf, relation,
 								  ItemPointerGetBlockNumber(tid));
+=======
+	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * Need share lock on buffer to examine tuple commit status.

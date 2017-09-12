@@ -3,7 +3,11 @@
  * Portions Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/backend/port/dynloader/netbsd.c,v 1.22.2.1 2008/03/05 21:20:47 alvherre Exp $
+=======
+ * $PostgreSQL: pgsql/src/backend/port/dynloader/netbsd.c,v 1.24 2008/03/05 21:14:10 alvherre Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

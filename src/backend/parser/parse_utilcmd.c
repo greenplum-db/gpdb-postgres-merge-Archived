@@ -19,7 +19,11 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.20 2009/01/01 17:23:46 momjian Exp $
+=======
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.11 2008/03/25 22:42:43 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -401,7 +405,12 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 
 	/* Check for SERIAL pseudo-types */
 	is_serial = false;
+<<<<<<< HEAD
 	if (list_length(column->typeName->names) == 1)
+=======
+	if (list_length(column->typename->names) == 1 &&
+		!column->typename->pct_type)
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	{
 		char	   *typname = strVal(linitial(column->typeName->names));
 
@@ -419,6 +428,16 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 			column->typeName->names = NIL;
 			column->typeName->typid = INT8OID;
 		}
+
+		/*
+		 * We have to reject "serial[]" explicitly, because once we've
+		 * set typeid, LookupTypeName won't notice arrayBounds.  We don't
+		 * need any special coding for serial(typmod) though.
+		 */
+		if (is_serial && column->typename->arrayBounds != NIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("array of serial is not implemented")));
 	}
 
 	/* Do necessary work on the column type declaration */
@@ -1106,6 +1125,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 
 		/* Convert text string to node tree */
 		pred_str = TextDatumGetCString(datum);
+<<<<<<< HEAD
 		pred_tree = (Node *) stringToNode(pred_str);
 
 		/* Adjust Vars to match new table's column numbering */
@@ -1123,6 +1143,9 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 							   RelationGetRelationName(source_idx))));
 
 		index->whereClause = pred_tree;
+=======
+		index->whereClause = (Node *) stringToNode(pred_str);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		/* Adjust attribute numbers */
 		change_varattnos_of_a_node(index->whereClause, attmap);
 	}

@@ -2,7 +2,11 @@
 #
 # Makefile for the pltcl shared object
 #
+<<<<<<< HEAD
 # $PostgreSQL: pgsql/src/pl/tcl/Makefile,v 1.53 2008/10/02 08:11:11 petere Exp $
+=======
+# $PostgreSQL: pgsql/src/pl/tcl/Makefile,v 1.51 2008/04/07 14:15:58 petere Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #
 #-------------------------------------------------------------------------
 
@@ -49,6 +53,30 @@ ifeq ($(TCL_SHARED_BUILD), 1)
 all: all-lib
 	$(MAKE) -C modules $@
 
+<<<<<<< HEAD
+=======
+# When doing a VPATH build, copy over the .sql and .out files so that the
+# test script can find them.  See comments in src/test/regress/GNUmakefile.
+ifdef VPATH
+
+ifneq ($(PORTNAME),win32)
+abs_srcdir := $(shell cd $(srcdir) && pwd)
+abs_builddir := $(shell pwd)
+else
+abs_srcdir := $(shell cd $(srcdir) && pwd -W)
+abs_builddir := $(shell pwd -W)
+endif
+
+test_files_src := $(wildcard $(srcdir)/sql/*.sql) $(wildcard $(srcdir)/expected/*.out)
+test_files_build := $(patsubst $(srcdir)/%, $(abs_builddir)/%, $(test_files_src))
+
+all: $(test_files_build)
+$(test_files_build): $(abs_builddir)/%: $(srcdir)/%
+	ln -s $< $@
+
+endif
+
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 install: all installdirs install-lib
 	$(MAKE) -C modules $@
 

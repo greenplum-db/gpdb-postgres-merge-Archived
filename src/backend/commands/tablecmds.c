@@ -10,7 +10,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.273 2008/12/13 19:13:44 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.250 2008/03/31 03:34:27 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -41,9 +45,13 @@
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
+<<<<<<< HEAD
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_partition.h"
 #include "catalog/pg_partition_rule.h"
+=======
+#include "catalog/pg_type_fn.h"
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "catalog/toasting.h"
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbaocsam.h"
@@ -88,7 +96,9 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/relcache.h"
+#include "utils/snapmgr.h"
 #include "utils/syscache.h"
+#include "utils/tqual.h"
 
 #include "cdb/cdbdisp.h"
 #include "cdb/cdbdisp_query.h"
@@ -1078,7 +1088,13 @@ ExecuteTruncate(TruncateStmt *stmt)
 {
 	List	   *rels = NIL;
 	List	   *relids = NIL;
+<<<<<<< HEAD
 	List	   *meta_relids = NIL;
+=======
+	EState	   *estate;
+	ResultRelInfo *resultRelInfos;
+	ResultRelInfo *resultRelInfo;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	ListCell   *cell;
     int partcheck = 2;
 	List *partList = NIL;
@@ -1219,6 +1235,45 @@ ExecuteTruncate(TruncateStmt *stmt)
 		heap_truncate_check_FKs(rels, false);
 #endif
 
+	/* Prepare to catch AFTER triggers. */
+	AfterTriggerBeginQuery();
+
+	/*
+	 * To fire triggers, we'll need an EState as well as a ResultRelInfo
+	 * for each relation.
+	 */
+	estate = CreateExecutorState();
+	resultRelInfos = (ResultRelInfo *)
+		palloc(list_length(rels) * sizeof(ResultRelInfo));
+	resultRelInfo = resultRelInfos;
+	foreach(cell, rels)
+	{
+		Relation	rel = (Relation) lfirst(cell);
+
+		InitResultRelInfo(resultRelInfo,
+						  rel,
+						  0,			/* dummy rangetable index */
+						  CMD_DELETE,	/* don't need any index info */
+						  false);
+		resultRelInfo++;
+	}
+	estate->es_result_relations = resultRelInfos;
+	estate->es_num_result_relations = list_length(rels);
+
+	/*
+	 * Process all BEFORE STATEMENT TRUNCATE triggers before we begin
+	 * truncating (this is because one of them might throw an error).
+	 * Also, if we were to allow them to prevent statement execution,
+	 * that would need to be handled here.
+	 */
+	resultRelInfo = resultRelInfos;
+	foreach(cell, rels)
+	{
+		estate->es_result_relation_info = resultRelInfo;
+		ExecBSTruncateTriggers(estate, resultRelInfo);
+		resultRelInfo++;
+	}
+
 	/*
 	 * OK, truncate each table.
 	 */
@@ -1228,7 +1283,33 @@ ExecuteTruncate(TruncateStmt *stmt)
 	foreach(cell, rels)
 	{
 		Relation	rel = (Relation) lfirst(cell);
+<<<<<<< HEAD
 		TruncateRelfiles(rel);
+=======
+		Oid			heap_relid;
+		Oid			toast_relid;
+
+		/*
+		 * Create a new empty storage file for the relation, and assign it as
+		 * the relfilenode value.	The old storage file is scheduled for
+		 * deletion at commit.
+		 */
+		setNewRelfilenode(rel, RecentXmin);
+
+		heap_relid = RelationGetRelid(rel);
+		toast_relid = rel->rd_rel->reltoastrelid;
+
+		/*
+		 * The same for the toast table, if any.
+		 */
+		if (OidIsValid(toast_relid))
+		{
+			rel = relation_open(toast_relid, AccessExclusiveLock);
+			setNewRelfilenode(rel, RecentXmin);
+			heap_close(rel, NoLock);
+		}
+
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		/*
 		 * Reconstruct the indexes to match, and we're done.
 		 */
@@ -1263,6 +1344,31 @@ ExecuteTruncate(TruncateStmt *stmt)
 							   "TRUNCATE", "");
 		}
 
+	}
+
+	/*
+	 * Process all AFTER STATEMENT TRUNCATE triggers.
+	 */
+	resultRelInfo = resultRelInfos;
+	foreach(cell, rels)
+	{
+		estate->es_result_relation_info = resultRelInfo;
+		ExecASTruncateTriggers(estate, resultRelInfo);
+		resultRelInfo++;
+	}
+
+	/* Handle queued AFTER triggers */
+	AfterTriggerEndQuery(estate);
+
+	/* We can clean up the EState now */
+	FreeExecutorState(estate);
+
+	/* And close the rels (can't do this while EState still holds refs) */
+	foreach(cell, rels)
+	{
+		Relation	rel = (Relation) lfirst(cell);
+
+		heap_close(rel, NoLock);
 	}
 }
 
@@ -2216,16 +2322,14 @@ renameatt(Oid myrelid,
 	relation_close(targetrelation, NoLock);		/* close rel but keep lock */
 }
 
+
 /*
- *		renamerel		- change the name of a relation
+ * Execute ALTER TABLE/INDEX/SEQUENCE/VIEW RENAME
  *
- *		XXX - When renaming sequences, we don't bother to modify the
- *			  sequence name that is stored within the sequence itself
- *			  (this would cause problems with MVCC). In the future,
- *			  the sequence name should probably be removed from the
- *			  sequence, AFAIK there's no need for it to be there.
+ * Caller has already done permissions checks.
  */
 void
+<<<<<<< HEAD
 renamerel(Oid myrelid, const char *newrelname, ObjectType reltype, RenameStmt *stmt)
 {
 	Relation	targetrelation;
@@ -2233,11 +2337,18 @@ renamerel(Oid myrelid, const char *newrelname, ObjectType reltype, RenameStmt *s
 	HeapTuple	reltup;
 	Form_pg_class relform;
 	Oid			typeId;
+=======
+RenameRelation(Oid myrelid, const char *newrelname, ObjectType reltype)
+{
+	Relation	targetrelation;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	Oid			namespaceId;
-	char	   *oldrelname;
 	char		relkind;
+<<<<<<< HEAD
 	bool		relhastriggers;
 	bool		isSystemRelation;
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * In Postgres, grab an exclusive lock on the target table, index, sequence
@@ -2251,6 +2362,7 @@ renamerel(Oid myrelid, const char *newrelname, ObjectType reltype, RenameStmt *s
 	if (!gp_allow_rename_relation_without_lock)
 		targetrelation = relation_open(myrelid, AccessExclusiveLock);
 
+<<<<<<< HEAD
 	/* if this is a child table of a partitioning configuration, complain */
 	if (stmt && rel_is_child_partition(myrelid) && !stmt->bAllowPartn)
 	{
@@ -2285,6 +2397,10 @@ renamerel(Oid myrelid, const char *newrelname, ObjectType reltype, RenameStmt *s
 	relhastriggers = relform->reltriggers;
 	typeId = relform->reltype;
 	oldrelname = pstrdup(NameStr(relform->relname));
+=======
+	namespaceId = RelationGetNamespace(targetrelation);
+	relkind = targetrelation->rd_rel->relkind;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * For compatibility with prior releases, we don't complain if ALTER TABLE
@@ -2302,11 +2418,56 @@ renamerel(Oid myrelid, const char *newrelname, ObjectType reltype, RenameStmt *s
 				 errmsg("\"%s\" is not a view",
 						oldrelname)));
 
+<<<<<<< HEAD
 	if (get_relname_relid(newrelname, namespaceId) != InvalidOid)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_TABLE),
 				 errmsg("relation \"%s\" already exists",
 						newrelname)));
+=======
+	/*
+	 * Don't allow ALTER TABLE on composite types.
+	 * We want people to use ALTER TYPE for that.
+	 */
+	if (relkind == RELKIND_COMPOSITE_TYPE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is a composite type",
+						RelationGetRelationName(targetrelation)),
+				 errhint("Use ALTER TYPE instead.")));
+
+	/* Do the work */
+	RenameRelationInternal(myrelid, newrelname, namespaceId);
+
+	/*
+	 * Close rel, but keep exclusive lock!
+	 */
+	relation_close(targetrelation, NoLock);
+}
+
+/*
+ *		RenameRelationInternal - change the name of a relation
+ *
+ *		XXX - When renaming sequences, we don't bother to modify the
+ *			  sequence name that is stored within the sequence itself
+ *			  (this would cause problems with MVCC). In the future,
+ *			  the sequence name should probably be removed from the
+ *			  sequence, AFAIK there's no need for it to be there.
+ */
+void
+RenameRelationInternal(Oid myrelid, const char *newrelname, Oid namespaceId)
+{
+	Relation	targetrelation;
+	Relation	relrelation;	/* for RELATION relation */
+	HeapTuple	reltup;
+	Form_pg_class relform;
+
+	/*
+	 * Grab an exclusive lock on the target table, index, sequence or
+	 * view, which we will NOT release until end of transaction.
+	 */
+	targetrelation = relation_open(myrelid, AccessExclusiveLock);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 	isSystemRelation = IsSystemNamespace(namespaceId) ||
@@ -2338,6 +2499,7 @@ renamerel(Oid myrelid, const char *newrelname, ObjectType reltype, RenameStmt *s
 	/*
 	 * Also rename the associated type, if any.
 	 */
+<<<<<<< HEAD
 	if (OidIsValid(typeId))
 	{
 		if (!TypeTupleExists(typeId))
@@ -2347,11 +2509,16 @@ renamerel(Oid myrelid, const char *newrelname, ObjectType reltype, RenameStmt *s
 		else
 			TypeRename(typeId, newrelname, namespaceId);
 	}
+=======
+	if (OidIsValid(targetrelation->rd_rel->reltype))
+		RenameTypeInternal(targetrelation->rd_rel->reltype,
+						   newrelname, namespaceId);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * Also rename the associated constraint, if any.
 	 */
-	if (relkind == RELKIND_INDEX)
+	if (targetrelation->rd_rel->relkind == RELKIND_INDEX)
 	{
 		Oid			constraintId = get_index_constraint(myrelid);
 
@@ -10630,7 +10797,7 @@ decompile_conbin(HeapTuple contup, TupleDesc tupdesc)
 
 	expr = DirectFunctionCall2(pg_get_expr, attr,
 							   ObjectIdGetDatum(con->conrelid));
-	return DatumGetCString(DirectFunctionCall1(textout, expr));
+	return TextDatumGetCString(expr);
 }
 
 /*

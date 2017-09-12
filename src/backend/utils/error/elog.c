@@ -44,7 +44,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.201.2.5 2010/05/08 16:40:14 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.203 2008/03/24 18:08:47 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -1129,6 +1133,27 @@ errdetail_plural(const char *fmt_singular, const char *fmt_plural,
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
 	errno = edata->saved_errno; /*CDB*/
+	return 0;					/* return value does not matter */
+}
+
+
+/*
+ * errdetail_log --- add a detail_log error message text to the current error
+ */
+int
+errdetail_log(const char *fmt,...)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+	MemoryContext oldcontext;
+
+	recursion_depth++;
+	CHECK_STACK_DEPTH();
+	oldcontext = MemoryContextSwitchTo(ErrorContext);
+
+	EVALUATE_MESSAGE(detail_log, false);
+
+	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
 	return 0;					/* return value does not matter */
 }
 
@@ -2731,8 +2756,11 @@ write_csvlog(ErrorData *edata)
 	appendCSVLiteral(&buf, edata->message);
 	appendStringInfoCharMacro(&buf, ',');
 
-	/* errdetail */
-	appendCSVLiteral(&buf, edata->detail);
+	/* errdetail or errdetail_log */
+	if (edata->detail_log)
+		appendCSVLiteral(&buf, edata->detail_log);
+	else
+		appendCSVLiteral(&buf, edata->detail);
 	appendStringInfoCharMacro(&buf, ',');
 
 	/* errhint */
@@ -3581,7 +3609,14 @@ send_message_to_server_log(ErrorData *edata)
 
 	if (Log_error_verbosity >= PGERROR_DEFAULT)
 	{
-		if (edata->detail)
+		if (edata->detail_log)
+		{
+			log_line_prefix(&buf);
+			appendStringInfoString(&buf, _("DETAIL:  "));
+			append_with_tabs(&buf, edata->detail_log);
+			appendStringInfoChar(&buf, '\n');
+		}
+		else if (edata->detail)
 		{
 			appendBinaryStringInfo(&buf, prefix.data, prefix.len);
 			appendStringInfoString(&buf, _("DETAIL:  "));

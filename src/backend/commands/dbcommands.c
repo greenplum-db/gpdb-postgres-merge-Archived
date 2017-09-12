@@ -15,7 +15,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.204.2.5 2010/03/25 14:45:06 alvherre Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.205 2008/03/26 21:10:37 alvherre Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +63,7 @@
 #include "utils/lsyscache.h"
 #include "utils/pg_locale.h"
 #include "utils/syscache.h"
+#include "utils/tqual.h"
 
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbdispatchresult.h"

@@ -6,7 +6,11 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.66.2.1 2008/09/19 14:43:47 mha Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.67 2008/03/28 00:21:56 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -41,11 +45,18 @@ typedef struct TriggerData
 	Buffer		tg_newtuplebuf;
 } TriggerData;
 
-/* TriggerEvent bit flags */
-
+/*
+ * TriggerEvent bit flags 
+ *
+ * Note that we assume different event types (INSERT/DELETE/UPDATE/TRUNCATE)
+ * can't be OR'd together in a single TriggerEvent.  This is unlike the
+ * situation for pg_trigger rows, so pg_trigger.tgtype uses a different
+ * representation!
+ */
 #define TRIGGER_EVENT_INSERT			0x00000000
 #define TRIGGER_EVENT_DELETE			0x00000001
 #define TRIGGER_EVENT_UPDATE			0x00000002
+#define TRIGGER_EVENT_TRUNCATE			0x00000003
 #define TRIGGER_EVENT_OPMASK			0x00000003
 #define TRIGGER_EVENT_ROW				0x00000004
 #define TRIGGER_EVENT_BEFORE			0x00000008
@@ -68,6 +79,10 @@ typedef struct TriggerData
 #define TRIGGER_FIRED_BY_UPDATE(event)	\
 		(((TriggerEvent) (event) & TRIGGER_EVENT_OPMASK) == \
 												TRIGGER_EVENT_UPDATE)
+
+#define TRIGGER_FIRED_BY_TRUNCATE(event) \
+		(((TriggerEvent) (event) & TRIGGER_EVENT_OPMASK) == \
+												TRIGGER_EVENT_TRUNCATE)
 
 #define TRIGGER_FIRED_FOR_ROW(event)			\
 		((TriggerEvent) (event) & TRIGGER_EVENT_ROW)
@@ -144,6 +159,10 @@ extern void ExecARUpdateTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 ItemPointer tupleid,
 					 HeapTuple newtuple);
+extern void ExecBSTruncateTriggers(EState *estate,
+					 ResultRelInfo *relinfo);
+extern void ExecASTruncateTriggers(EState *estate,
+					 ResultRelInfo *relinfo);
 
 extern void AfterTriggerBeginXact(void);
 extern void AfterTriggerBeginQuery(void);

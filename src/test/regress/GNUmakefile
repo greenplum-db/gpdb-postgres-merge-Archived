@@ -6,7 +6,7 @@
 # Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.71 2008/01/01 19:46:00 momjian Exp $
+# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.73 2008/04/07 14:15:58 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -104,8 +104,11 @@ uninstall:
 
 NAME = regress
 OBJS = regress.o
+<<<<<<< HEAD
 
 OBJS += regress_gp.o partindex.o workfile_mgr_test.o
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 include $(top_srcdir)/src/Makefile.shlib
 
@@ -154,7 +157,7 @@ all-spi:
 # Tablespace setup
 .PHONY: tablespace-setup
 tablespace-setup:
-	-rm -rf ./testtablespace
+	rm -rf ./testtablespace
 	mkdir ./testtablespace
 
 # Check for include files that are not being shipped
@@ -219,7 +222,7 @@ bkuprestore: all
 
 clean distclean maintainer-clean: clean-lib
 # things built by `all' target
-	rm -f $(NAME)$(DLSUFFIX) $(OBJS)
+	rm -f $(OBJS)
 	$(MAKE) -C $(contribdir)/spi clean
 	$(MAKE) -C hooktest/ clean
 	rm -f $(output_files) $(input_files) pg_regress_main.o pg_regress.o pg_regress$(X) twophase_pqexecparams

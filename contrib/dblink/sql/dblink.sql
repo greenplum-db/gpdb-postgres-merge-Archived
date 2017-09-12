@@ -359,9 +359,37 @@ UNION
 UNION
 (SELECT * from dblink('dbname=contrib_regression','select * from foo where f1 > 2 and f1 < 7') as t3(f1 int, f2 text, f3 text[]))
 ORDER by f1;
+<<<<<<< HEAD
 SELECT * FROM result; 
 DROP TABLE result;
 CREATE TEMPORARY TABLE result (f1 int, f2 text, f3 text[]);
 INSERT INTO result SELECT * FROM dblink ('dbname=contrib_regression','select * from foo') AS t(f1 int, f2 text, f3 text[]);
 SELECT * FROM result;
 SELECT * FROM (SELECT * FROM dblink('dbname=contrib_regression','select * from foo') AS t(f1 int, f2 text, f3 text[])) AS t1;
+=======
+
+-- dblink_get_connections returns an array with elements in a machine-dependent
+-- ordering, so we must resort to unnesting and sorting for a stable result
+create function unnest(anyarray) returns setof anyelement
+language sql strict immutable as $$
+select $1[i] from generate_series(array_lower($1,1), array_upper($1,1)) as i
+$$;
+
+SELECT * FROM unnest(dblink_get_connections()) ORDER BY 1;
+
+SELECT dblink_is_busy('dtest1');
+
+SELECT dblink_disconnect('dtest1');
+SELECT dblink_disconnect('dtest2');
+SELECT dblink_disconnect('dtest3');
+
+SELECT * from result;
+
+SELECT dblink_connect('dtest1', 'dbname=contrib_regression');
+SELECT * from 
+ dblink_send_query('dtest1', 'select * from foo where f1 < 3') as t1;
+
+SELECT dblink_cancel_query('dtest1');
+SELECT dblink_error_message('dtest1');
+SELECT dblink_disconnect('dtest1');
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.543 2008/02/17 04:21:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.548 2008/04/02 18:31:50 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -78,9 +78,13 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
+<<<<<<< HEAD
 #include "utils/datum.h"
 #include "utils/debugbreak.h"
 #include "utils/session_state.h"
+=======
+#include "utils/snapmgr.h"
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "mb/pg_wchar.h"
 #include "cdb/cdbvars.h"
 #include "cdb/cdbsrlz.h"
@@ -116,7 +120,7 @@ CommandDest whereToSendOutput = DestDebug;
 /* flag for logging end of session */
 bool		Log_disconnections = false;
 
-LogStmtLevel log_statement = LOGSTMT_NONE;
+int			log_statement = LOGSTMT_NONE;
 
 /* GUC variable for maximum stack depth (measured in kilobytes) */
 int			max_stack_depth = 100;
@@ -1754,7 +1758,11 @@ exec_simple_query(const char *query_string, const char *seqServerHost, int seqSe
 
 		/*
 		 * We don't have to copy anything into the portal, because everything
+<<<<<<< HEAD
 		 * we are passing here is in MessageContext, which will outlive the
+=======
+		 * we are passsing here is in MessageContext, which will outlive the
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		 * portal anyway.
 		 */
 		PortalDefineQuery(portal,
@@ -2361,6 +2369,25 @@ exec_bind_message(StringInfo input_message)
 	}
 
 	/*
+	 * Prepare to copy stuff into the portal's memory context.  We do all this
+	 * copying first, because it could possibly fail (out-of-memory) and we
+	 * don't want a failure to occur between RevalidateCachedPlan and
+	 * PortalDefineQuery; that would result in leaking our plancache refcount.
+	 */
+	oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
+
+	/* Copy the plan's query string, if available, into the portal */
+	query_string = psrc->query_string;
+	if (query_string)
+		query_string = pstrdup(query_string);
+
+	/* Likewise make a copy of the statement name, unless it's unnamed */
+	if (stmt_name[0])
+		saved_stmt_name = pstrdup(stmt_name);
+	else
+		saved_stmt_name = NULL;
+
+	/*
 	 * Fetch parameters, if any, and store in the portal's memory context.
 	 */
 	if (numParams > 0)
@@ -2566,7 +2593,10 @@ exec_bind_message(StringInfo input_message)
 	PortalDefineQuery(portal,
 					  saved_stmt_name,
 					  query_string,
+<<<<<<< HEAD
 					  psrc->sourceTag,
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 					  psrc->commandTag,
 					  plan_list,
 					  cplan);

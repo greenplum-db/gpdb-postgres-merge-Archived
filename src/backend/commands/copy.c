@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.295 2008/01/01 19:45:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.298 2008/03/26 18:48:59 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,11 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+<<<<<<< HEAD
 #include "utils/resscheduler.h"
+=======
+#include "utils/snapmgr.h"
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 #include "cdb/cdbvars.h"
 #include "cdb/cdbcopy.h"
@@ -6084,13 +6088,41 @@ CopyReadAttributesCSV(CopyState cstate, bool *nulls, int *attr_offsets,
 
 	for (;;)
 	{
+<<<<<<< HEAD
 		end_cursor = cstate->line_buf.cursor;
 
 		/* finished processing attributes in line */
 		if (cstate->line_buf.cursor >= cstate->line_buf.len - 1)
+=======
+		bool		found_delim = false;
+		bool		saw_quote = false;
+		char	   *start_ptr;
+		char	   *end_ptr;
+		int			input_len;
+
+		/* Make sure space remains in fieldvals[] */
+		if (fieldno >= maxfields)
+			ereport(ERROR,
+					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+					 errmsg("extra data after last expected column")));
+
+		/* Remember start of field on both input and output sides */
+		start_ptr = cur_ptr;
+		fieldvals[fieldno] = output_ptr;
+
+		/* Scan data for field,
+		 *
+		 * The loop starts in "not quote" mode and then toggles between 
+		 * that and "in quote" mode. 
+		 * The loop exits normally if it is in "not quote" mode and a
+		 * delimiter or line end is seen.
+		 */
+		for (;;)
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		{
 			input_len = end_cursor - start_cursor;
 
+<<<<<<< HEAD
 			if (cstate->eol_type == EOL_CRLF)
 			{
 				/* ignore the leftover CR */
@@ -6243,9 +6275,76 @@ CopyReadAttributesCSV(CopyState cstate, bool *nulls, int *attr_offsets,
 					cstate->attribute_buf.cursor++;
 					continue;
 				}
+=======
+			/* Not in quote */
+			for (;;)
+			{
+				end_ptr = cur_ptr;
+				if (cur_ptr >= line_end_ptr)
+					goto endfield;
+				c = *cur_ptr++;
+				/* unquoted field delimiter */
+				if (c == delimc)
+				{
+					found_delim = true;
+					goto endfield;
+				}
+				/* start of quoted field (or part of field) */
+				if (c == quotec)
+				{
+					saw_quote = true;
+					break;
+				}
+				/* Add c to output string */
+				*output_ptr++ = c;
+			}
+
+			/* In quote */
+			for (;;)
+			{
+				end_ptr = cur_ptr;
+				if (cur_ptr >= line_end_ptr)
+					ereport(ERROR,
+							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+							 errmsg("unterminated CSV quoted field")));
+
+				c = *cur_ptr++;
+
+				/* escape within a quoted field */
+				if (c == escapec)
+				{
+					/*
+					 * peek at the next char if available, and escape it if it is
+					 * an escape char or a quote char
+					 */
+					if (cur_ptr < line_end_ptr)
+					{
+						char		nextc = *cur_ptr;
+
+						if (nextc == escapec || nextc == quotec)
+						{
+							*output_ptr++ = nextc;
+							cur_ptr++;
+							continue;
+						}
+					}
+				}
+				/*
+				 * end of quoted field. Must do this test after testing for escape
+				 * in case quote char and escape char are the same (which is the
+				 * common case).
+				 */
+				if (c == quotec)
+					break;
+
+				/* Add c to output string */
+				*output_ptr++ = c;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 			}
 		}
+	endfield:
 
+<<<<<<< HEAD
 		/*
 		 * end of quoted field. Must do this test after testing for escape
 		 * in case quote char and escape char are the same (which is the
@@ -6258,6 +6357,21 @@ CopyReadAttributesCSV(CopyState cstate, bool *nulls, int *attr_offsets,
 		}
 		appendStringInfoCharMacro(&cstate->attribute_buf, c);
 		cstate->attribute_buf.cursor++;
+=======
+		/* Terminate attribute value in output area */
+		*output_ptr++ = '\0';
+
+		/* Check whether raw input matched null marker */
+		input_len = end_ptr - start_ptr;
+		if (!saw_quote && input_len == cstate->null_print_len &&
+			strncmp(start_ptr, cstate->null_print, input_len) == 0)
+			fieldvals[fieldno] = NULL;
+
+		fieldno++;
+		/* Done if we hit EOL instead of a delim */
+		if (!found_delim)
+			break;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	}
 
 }

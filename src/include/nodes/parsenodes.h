@@ -14,7 +14,11 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.376 2008/10/04 21:56:55 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.361 2008/03/21 22:41:48 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -207,8 +211,12 @@ typedef struct TypeName
 {
 	NodeTag		type;
 	List	   *names;			/* qualified name (list of Value strings) */
+<<<<<<< HEAD
 	Oid			typid;		    /* type identified by OID */
 	bool		timezone;		/* timezone specified? */
+=======
+	Oid			typeid;			/* type identified by OID */
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	bool		setof;			/* is a set? */
 	bool		pct_type;		/* %TYPE specified? */
 	List	   *typmods;		/* type modifier expression(s) */
@@ -364,7 +372,10 @@ typedef struct A_ArrayExpr
 {
 	NodeTag		type;
 	List	   *elements;		/* array element expressions */
+<<<<<<< HEAD
 	int			location;		/* token location, or -1 if unknown */
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 } A_ArrayExpr;
 
 /*

@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.100 2009/05/05 19:59:00 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.95 2008/03/16 19:47:33 alvherre Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +55,10 @@
 #include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
 #include "storage/procarray.h"
+<<<<<<< HEAD
 #include "storage/procsignal.h"
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "storage/sinvaladt.h"
 #include "storage/spin.h"
 #include "utils/backend_cancel.h"

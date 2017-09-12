@@ -7,7 +7,11 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/parser/gramparse.h,v 1.44 2009/06/11 14:49:11 momjian Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/parser/gramparse.h,v 1.41 2008/04/04 11:47:19 mha Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +39,11 @@ typedef enum
 } BackslashQuoteType;
 
 /* GUC variables in scan.l (every one of these is a bad idea :-() */
+<<<<<<< HEAD
 extern int	backslash_quote;
+=======
+extern int backslash_quote;
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 extern bool escape_string_warning;
 extern bool standard_conforming_strings;
 

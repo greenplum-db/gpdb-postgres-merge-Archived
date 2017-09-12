@@ -15,7 +15,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.152.2.1 2009/01/13 11:45:03 mha Exp $
+=======
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.153 2008/03/20 17:36:57 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -2443,6 +2447,10 @@ _selectTablespace(ArchiveHandle *AH, const char *tablespace)
 	const char *want,
 			   *have;
 
+	/* do nothing in --no-tablespaces mode */
+	if (AH->ropt->noTablespace)
+		return;
+
 	have = AH->currTablespace;
 	want = tablespace;
 
@@ -2709,6 +2717,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 			sanitized_owner = strdup("-");
 
 		ahprintf(AH, "-- %sName: %s; Type: %s; Schema: %s; Owner: %s",
+<<<<<<< HEAD
 				 pfx, sanitized_name, te->desc, sanitized_schema,
 				 sanitized_owner);
 
@@ -2724,6 +2733,13 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 			ahprintf(AH, "; Tablespace: %s", sanitized_tablespace);
 			free(sanitized_tablespace);
 		}
+=======
+				 pfx, te->tag, te->desc,
+				 te->namespace ? te->namespace : "-",
+				 ropt->noOwner ? "-" : te->owner);
+		if (te->tablespace && !ropt->noTablespace)
+			ahprintf(AH, "; Tablespace: %s", te->tablespace);
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		ahprintf(AH, "\n");
 
 		if (AH->PrintExtraTocPtr !=NULL)

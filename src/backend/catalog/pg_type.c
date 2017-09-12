@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.115.2.2 2009/08/16 18:14:46 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.118 2008/03/27 03:57:33 tgl Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +26,11 @@
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+<<<<<<< HEAD
 #include "catalog/pg_type_encoding.h"
+=======
+#include "catalog/pg_type_fn.h"
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "commands/typecmds.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
@@ -655,15 +663,16 @@ GenerateTypeDependencies(Oid typeNamespace,
 }
 
 /*
- * TypeRename
+ * RenameTypeInternal
  *		This renames a type, as well as any associated array type.
  *
- * Note: this isn't intended to be a user-exposed function; it doesn't check
- * permissions etc.  (Perhaps TypeRenameInternal would be a better name.)
- * Currently this is only used for renaming table rowtypes.
+ * Caller must have already checked privileges.
+ *
+ * Currently this is used for renaming table rowtypes and for
+ * ALTER TYPE RENAME TO command.
  */
 void
-TypeRename(Oid typeOid, const char *newTypeName, Oid typeNamespace)
+RenameTypeInternal(Oid typeOid, const char *newTypeName, Oid typeNamespace)
 {
 	Relation	pg_type_desc;
 	HeapTuple	tuple;
@@ -709,7 +718,7 @@ TypeRename(Oid typeOid, const char *newTypeName, Oid typeNamespace)
 	{
 		char	   *arrname = makeArrayTypeName(newTypeName, typeNamespace);
 
-		TypeRename(arrayOid, arrname, typeNamespace);
+		RenameTypeInternal(arrayOid, arrname, typeNamespace);
 		pfree(arrname);
 	}
 }
@@ -813,7 +822,7 @@ moveArrayTypeName(Oid typeOid, const char *typeName, Oid typeNamespace)
 	newname = makeArrayTypeName(typeName, typeNamespace);
 
 	/* Apply the rename */
-	TypeRename(typeOid, newname, typeNamespace);
+	RenameTypeInternal(typeOid, newname, typeNamespace);
 
 	/*
 	 * We must bump the command counter so that any subsequent use of

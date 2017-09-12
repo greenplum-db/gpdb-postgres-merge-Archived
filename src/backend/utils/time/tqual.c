@@ -50,7 +50,11 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.109.2.1 2008/09/11 14:01:35 alvherre Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.110 2008/03/26 16:20:47 alvherre Exp $
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *
  *-------------------------------------------------------------------------
  */
@@ -76,6 +80,7 @@ SnapshotData SnapshotSelfData = {HeapTupleSatisfiesSelf};
 SnapshotData SnapshotAnyData = {HeapTupleSatisfiesAny};
 SnapshotData SnapshotToastData = {HeapTupleSatisfiesToast};
 
+<<<<<<< HEAD
 /*
  * These SnapshotData structs are static to simplify memory allocation
  * (see the hack in GetSnapshotData to avoid repeated malloc/free).
@@ -107,6 +112,8 @@ TransactionId TransactionXmin = FirstNormalTransactionId;
 TransactionId RecentXmin = FirstNormalTransactionId;
 TransactionId RecentGlobalXmin = InvalidTransactionId;
 
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 /* local functions */
 static bool XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot,
 			  bool distributedSnapshotIgnore, bool *setDistributedSnapshotIgnore);
@@ -1360,6 +1367,7 @@ HeapTupleSatisfiesVacuum(Relation relation, HeapTupleHeader tuple, TransactionId
 
 
 /*
+<<<<<<< HEAD
  * GetTransactionSnapshot
  *		Get the appropriate snapshot for a new query in a transaction.
  *
@@ -1552,6 +1560,8 @@ FreeXactSnapshot(void)
 }
 
 /*
+=======
+>>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  * XidInMVCCSnapshot
  *		Is the given XID still-in-progress according to the distributed
  *      and local snapshots?
