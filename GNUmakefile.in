@@ -127,22 +127,14 @@ clean:
 # Important: distclean `src' last, otherwise Makefile.global
 # will be gone too soon.
 distclean maintainer-clean:
-<<<<<<< HEAD
-#	-$(MAKE) -C doc $@
-	-$(MAKE) -C gpAux/extensions $@
-	-$(MAKE) -C gpAux/gpperfmon $@
-	-$(MAKE) -C gpAux/platform $@
-	-$(MAKE) -C contrib $@
-	-$(MAKE) -C config $@
-	-$(MAKE) -C src $@
-	-rm -f config.cache config.log config.status GNUmakefile
-=======
-	$(MAKE) -C doc $@
+#	$(MAKE) -C doc $@
+	$(MAKE) -C gpAux/extensions $@
+	$(MAKE) -C gpAux/gpperfmon $@
+	$(MAKE) -C gpAux/platform $@
 	$(MAKE) -C contrib $@
 	$(MAKE) -C config $@
 	$(MAKE) -C src $@
 	rm -f config.cache config.log config.status GNUmakefile
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 # Garbage from autoconf:
 	@rm -rf autom4te.cache/
 
@@ -249,13 +241,8 @@ postgresql-test-$(VERSION).tar: distdir
 	$(TAR) cf $@ $(distdir)/src/test
 
 distdir:
-<<<<<<< HEAD
-	-rm -rf $(distdir)* $(dummy)
-	for x in `cd $(top_srcdir) && find . \( -name CVS -prune \) -o \( -name .git -prune \) -o -print`; do \
-=======
 	rm -rf $(distdir)* $(dummy)
-	for x in `cd $(top_srcdir) && find . -name CVS -prune -o -print`; do \
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+	for x in `cd $(top_srcdir) && find . \( -name CVS -prune \) -o \( -name .git -prune \) -o -print`; do \
 	  file=`expr X$$x : 'X\./\(.*\)'`; \
 	  if test -d "$(top_srcdir)/$$file" ; then \
 	    mkdir "$(distdir)/$$file" && chmod 777 "$(distdir)/$$file";	\
@@ -272,13 +259,8 @@ distdir:
 	$(MAKE) -C $(distdir) distclean
 	#rm -f $(distdir)/README.git
 
-<<<<<<< HEAD
 distcheck: dist
-	-rm -rf $(dummy)
-=======
-distcheck: $(distdir).tar.gz
 	rm -rf $(dummy)
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	mkdir $(dummy)
 	$(GZIP) -d -c $(distdir).tar.gz | $(TAR) xf -
 	install_prefix=`cd $(dummy) && pwd`; \
