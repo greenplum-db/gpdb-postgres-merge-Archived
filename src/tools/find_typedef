@@ -1,10 +1,6 @@
 #!/bin/sh
 
-<<<<<<< HEAD
 # src/tools/find_typedef
-=======
-# $PostgreSQL: pgsql/src/tools/find_typedef,v 1.11 2008/03/18 23:23:08 momjian Exp $
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 # This script attempts to find all typedef's in the postgres binaries
 # by using 'nm' to report all typedef debugging symbols.
@@ -13,11 +9,7 @@
 # debugging symbols.
 #
 # This is run on BSD/OS 4.0 or Linux, so you may need to make changes.
-<<<<<<< HEAD
 #
-=======
-# 
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 # Ignore the nm errors about a file not being a binary file.
 #
 # It gets typedefs by reading "STABS":
@@ -53,7 +45,6 @@ do	# if objdump -W is recognized, only one line of error should appear
 		# the typedef references, not the definitions, so I think it might
 		# be fine
 		objdump -W "$DIR"/* |
-<<<<<<< HEAD
 		egrep -A3 '\(DW_TAG_typedef\)' |
 		awk ' $2 == "DW_AT_name" {print $NF}'
 	elif [ `readelf -w 2>&1 | wc -l` -gt 1 ]
@@ -66,13 +57,6 @@ do	# if objdump -W is recognized, only one line of error should appear
 		# include files but never referenced in the PG code.
 		objdump --stabs "$DIR"/* |
 		awk ' $2 == "LSYM" && $7 ~ /:t/ {sub(":.*", "", $7); print $7}'
-=======
-		egrep -A3 '(DW_TAG_typedef|DW_TAG_structure_type|DW_TAG_union_type)' |
-		awk ' $2 == "DW_AT_name" {print $NF}'
-	else	# BSD/OS
-		objdump --stabs "$DIR"/* |
-		awk ' $2 == "LSYM" && $7 ~ /:[tT]/ {sub(":.*", "", $7); print $7}'
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	fi
 done |
 grep -v ' ' | # some typedefs have spaces, remove them

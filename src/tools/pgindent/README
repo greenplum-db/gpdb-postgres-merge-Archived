@@ -1,14 +1,4 @@
-<<<<<<< HEAD
 src/tools/pgindent/README
-=======
-$PostgreSQL: pgsql/src/tools/pgindent/README,v 1.29 2008/03/21 13:23:29 momjian Exp $
-
-pgindent
-========
-
-This can format all PostgreSQL *.c and *.h files, but excludes *.y, and *.l
-files.
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 pgindent
 ========
