@@ -20,10 +20,6 @@
 #define PG_TYPE_H
 
 #include "catalog/genbki.h"
-<<<<<<< HEAD
-#include "nodes/nodes.h"
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /* ----------------
  *		pg_type definition.  cpp turns this into
@@ -727,109 +723,8 @@ DATA(insert OID = 6994 (gp_relation_node PGNSP PGUID -1 f c t \054 5094 0 0 reco
 	 (typid) == ANYNONARRAYOID || \
 	 (typid) == ANYENUMOID)
 
-<<<<<<< HEAD
 /* Is a type OID suitable for describe callback functions? */
 #define TypeSupportsDescribe(typid)  \
 	((typid) == RECORDOID)
 
-#ifndef FRONTEND /* don't export these to the front end */
-
-/*
- * prototypes for functions in pg_type.c
- */
-extern Oid	TypeShellMake(const char *typeName,
-						  Oid typeNamespace,
-						  Oid ownerId);
-
-extern Oid TypeCreate(Oid newTypeOid,
-		   const char *typeName,
-		   Oid typeNamespace,
-		   Oid relationOid,
-		   char relationKind,
-		   Oid ownerId,
-		   int16 internalSize,
-		   char typeType,
-		   char typDelim,
-		   Oid inputProcedure,
-		   Oid outputProcedure,
-		   Oid receiveProcedure,
-		   Oid sendProcedure,
-		   Oid typmodinProcedure,
-		   Oid typmodoutProcedure,
-		   Oid analyzeProcedure,
-		   Oid elementType,
-		   bool isImplicitArray,
-		   Oid arrayType,
-		   Oid baseType,
-		   const char *defaultTypeValue,
-		   char *defaultTypeBin,
-		   bool passedByValue,
-		   char alignment,
-		   char storage,
-		   int32 typeMod,
-		   int32 typNDims,
-		   bool typeNotNull);
-
-extern Oid TypeCreateWithOptions(Oid newtypeOid,
-		   const char *typeName,
-		   Oid typeNamespace,
-		   Oid relationOid,
-		   char relationKind,
-		   Oid ownerId,
-		   int16 internalSize,
-		   char typeType,
-		   char typDelim,
-		   Oid inputProcedure,
-		   Oid outputProcedure,
-		   Oid receiveProcedure,
-		   Oid sendProcedure,
-		   Oid typmodinProcedure,
-		   Oid typmodoutProcedure,
-		   Oid analyzeProcedure,
-		   Oid elementType,
-		   bool isImplicitArray,
-		   Oid arrayType,
-		   Oid baseType,
-		   const char *defaultTypeValue,
-		   char *defaultTypeBin,
-		   bool passedByValue,
-		   char alignment,
-		   char storage,
-		   int32 typeMod,
-		   int32 typNDims,
-		   bool typeNotNull,
-		   Datum typoptions);
-
-extern void GenerateTypeDependencies(Oid typeNamespace,
-						 Oid typeObjectId,
-						 Oid relationOid,
-						 char relationKind,
-						 Oid owner,
-						 Oid inputProcedure,
-						 Oid outputProcedure,
-						 Oid receiveProcedure,
-						 Oid sendProcedure,
-						 Oid typmodinProcedure,
-						 Oid typmodoutProcedure,
-						 Oid analyzeProcedure,
-						 Oid elementType,
-						 bool isImplicitArray,
-						 Oid baseType,
-						 Node *defaultExpr,
-						 bool rebuild);
-
-extern void TypeRename(Oid typeOid, const char *newTypeName,
-		   Oid typeNamespace);
-
-extern char *makeArrayTypeName(const char *typeName, Oid typeNamespace);
-
-extern bool moveArrayTypeName(Oid typeOid, const char *typeName,
-				  Oid typeNamespace);
-
-extern void add_type_encoding(Oid typid, Datum typoptions);
-
-#endif /* !FRONTEND */
-
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #endif   /* PG_TYPE_H */

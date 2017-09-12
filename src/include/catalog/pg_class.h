@@ -19,23 +19,12 @@
 #ifndef PG_CLASS_H
 #define PG_CLASS_H
 
-<<<<<<< HEAD
-
 #include "catalog/genbki.h"
 
 /* ----------------
  *		postgres.h contains the system type definitions and the
  *		CATALOG(), BKI_BOOTSTRAP and DATA() sugar words so this file
  *		can be read by both genbki.sh and the C compiler.
- * ----------------
- */
-=======
-#include "catalog/genbki.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
-
-/* ----------------
- *		pg_class definition.  cpp turns this into
- *		typedef struct FormData_pg_class
  * ----------------
  */
 #define RelationRelationId	1259

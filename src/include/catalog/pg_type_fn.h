@@ -17,13 +17,16 @@
 #include "nodes/nodes.h"
 
 
-extern Oid	TypeShellMake(const char *typeName, Oid typeNamespace);
+extern Oid TypeShellMake(const char *typeName,
+			  Oid typeNamespace,
+			  Oid ownerId);
 
 extern Oid TypeCreate(Oid newTypeOid,
 		   const char *typeName,
 		   Oid typeNamespace,
 		   Oid relationOid,
 		   char relationKind,
+		   Oid ownerId,
 		   int16 internalSize,
 		   char typeType,
 		   char typDelim,
@@ -47,6 +50,36 @@ extern Oid TypeCreate(Oid newTypeOid,
 		   int32 typNDims,
 		   bool typeNotNull);
 
+extern Oid TypeCreateWithOptions(Oid newtypeOid,
+		   const char *typeName,
+		   Oid typeNamespace,
+		   Oid relationOid,
+		   char relationKind,
+		   Oid ownerId,
+		   int16 internalSize,
+		   char typeType,
+		   char typDelim,
+		   Oid inputProcedure,
+		   Oid outputProcedure,
+		   Oid receiveProcedure,
+		   Oid sendProcedure,
+		   Oid typmodinProcedure,
+		   Oid typmodoutProcedure,
+		   Oid analyzeProcedure,
+		   Oid elementType,
+		   bool isImplicitArray,
+		   Oid arrayType,
+		   Oid baseType,
+		   const char *defaultTypeValue,
+		   char *defaultTypeBin,
+		   bool passedByValue,
+		   char alignment,
+		   char storage,
+		   int32 typeMod,
+		   int32 typNDims,
+		   bool typeNotNull,
+		   Datum typoptions);
+
 extern void GenerateTypeDependencies(Oid typeNamespace,
 						 Oid typeObjectId,
 						 Oid relationOid,
@@ -65,12 +98,14 @@ extern void GenerateTypeDependencies(Oid typeNamespace,
 						 Node *defaultExpr,
 						 bool rebuild);
 
-extern void RenameTypeInternal(Oid typeOid, const char *newTypeName,
+extern void TypeRename(Oid typeOid, const char *newTypeName,
 		   Oid typeNamespace);
 
 extern char *makeArrayTypeName(const char *typeName, Oid typeNamespace);
 
 extern bool moveArrayTypeName(Oid typeOid, const char *typeName,
 				  Oid typeNamespace);
+
+extern void add_type_encoding(Oid typid, Datum typoptions);
 
 #endif   /* PG_TYPE_FN_H */
