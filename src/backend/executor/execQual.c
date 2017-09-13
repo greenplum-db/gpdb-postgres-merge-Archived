@@ -2143,10 +2143,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 	for (;;)
 	{
 		Datum		result;
-<<<<<<< HEAD
 		MemTuple	tuple;
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		CHECK_FOR_INTERRUPTS();
 
