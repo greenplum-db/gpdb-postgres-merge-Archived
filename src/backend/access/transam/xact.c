@@ -86,17 +86,18 @@ bool		XactSyncCommit = true;
 
 int			CommitDelay = 0;	/* precommit delay in microseconds */
 int			CommitSiblings = 5; /* # concurrent xacts needed to sleep */
-#if 0 /* Upstream code not applicable to GPDB */
+
 /*
  * MyXactAccessedTempRel is set when a temporary relation is accessed.
  * We don't allow PREPARE TRANSACTION in that case.  (This is global
  * so that it can be set from heapam.c.)
+ *
+ * Not used in GPDB, see comments in PrepareTransaction()
  */
 bool		MyXactAccessedTempRel = false;
-#endif
+
 int32 gp_subtrans_warn_limit = 16777216; /* 16 million */
 
-<<<<<<< HEAD
 /* gp-specific
  * routine for marking when a sequence makes a mark in the xlog.  we need
  * to keep track of this because sequences are the only reason a reader should
@@ -104,15 +105,6 @@ int32 gp_subtrans_warn_limit = 16777216; /* 16 million */
  * and will complain loudly if its violated.
  */
 bool		seqXlogWrite;
-=======
-/*
- * MyXactAccessedTempRel is set when a temporary relation is accessed.
- * We don't allow PREPARE TRANSACTION in that case.  (This is global
- * so that it can be set from heapam.c.)
- */
-bool		MyXactAccessedTempRel = false;
-
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /*
  *	transaction states - transaction state from server perspective
@@ -2325,17 +2317,11 @@ StartTransaction(void)
 	XactIsoLevel = DefaultXactIsoLevel;
 	XactReadOnly = DefaultXactReadOnly;
 	forceSyncCommit = false;
-<<<<<<< HEAD
-#if 0 /* Upstream code not applicable to GPDB */
 	MyXactAccessedTempRel = false;
-#endif
 	seqXlogWrite = false;
 
 	/* set read only by fts, if any fts action is read only */
 	FtsCondSetTxnReadOnly(&XactReadOnly);
-=======
-	MyXactAccessedTempRel = false;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * reinitialize within-transaction counters
@@ -2984,7 +2970,6 @@ PrepareTransaction(void)
 	/* NOTIFY and flatfiles will be handled below */
 
 	/*
-<<<<<<< HEAD
 	 * In Postgres, MyXactAccessedTempRel is used to error out if PREPARE TRANSACTION
 	 * operated on temp table.
 	 *
@@ -3001,8 +2986,6 @@ PrepareTransaction(void)
 	 */
 #if 0 /* Upstream code not applicable to GPDB */
 	/*
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	 * Don't allow PREPARE TRANSACTION if we've accessed a temporary table
 	 * in this transaction.  Having the prepared xact hold locks on another
 	 * backend's temp table seems a bad idea --- for instance it would prevent
@@ -3021,10 +3004,7 @@ PrepareTransaction(void)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot PREPARE a transaction that has operated on temporary tables")));
-<<<<<<< HEAD
 #endif
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();

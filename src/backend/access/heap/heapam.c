@@ -944,26 +944,17 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 	r = RelationIdGetRelation(relationId);
 
 	if (!RelationIsValid(r))
-<<<<<<< HEAD
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
 				 errmsg("relation not found (OID %u)", relationId),
 				 errdetail("This can be validly caused by a concurrent delete operation on this object.")));
 	}
-#if 0 /* Upstream code not applicable to GPDB */
-	/* Make note that we've accessed a temporary relation */
-	if (r->rd_istemp)
-		MyXactAccessedTempRel = true;
-#endif
-=======
-		elog(ERROR, "could not open relation with OID %u", relationId);
 
 	/* Make note that we've accessed a temporary relation */
 	if (r->rd_istemp)
 		MyXactAccessedTempRel = true;
 
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	pgstat_initstats(r);
 
 	return r;
@@ -1021,26 +1012,17 @@ try_relation_open(Oid relationId, LOCKMODE lockmode, bool noWait)
 	r = RelationIdGetRelation(relationId);
 
 	if (!RelationIsValid(r))
-<<<<<<< HEAD
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
 				 errmsg("relation not found (OID %u)", relationId),
 				 errdetail("This can be validly caused by a concurrent delete operation on this object.")));
 	}
-#if 0 /* Upstream code not applicable to GPDB */
-	/* Make note that we've accessed a temporary relation */
-	if (r->rd_istemp)
-		MyXactAccessedTempRel = true;
-#endif
-=======
-		elog(ERROR, "could not open relation with OID %u", relationId);
 
 	/* Make note that we've accessed a temporary relation */
 	if (r->rd_istemp)
 		MyXactAccessedTempRel = true;
 
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	pgstat_initstats(r);
 
 	return r;
@@ -1223,26 +1205,17 @@ relation_open_nowait(Oid relationId, LOCKMODE lockmode)
 	r = RelationIdGetRelation(relationId);
 
 	if (!RelationIsValid(r))
-<<<<<<< HEAD
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
 				 errmsg("relation not found (OID %u)", relationId),
 				 errdetail("This can be validly caused by a concurrent delete operation on this object.")));
 	}
-#if 0 /* Upstream code not applicable to GPDB */
-	/* Make note that we've accessed a temporary relation */
-	if (r->rd_istemp)
-		MyXactAccessedTempRel = true;
-#endif
-=======
-		elog(ERROR, "could not open relation with OID %u", relationId);
 
 	/* Make note that we've accessed a temporary relation */
 	if (r->rd_istemp)
 		MyXactAccessedTempRel = true;
 
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	pgstat_initstats(r);
 
 	return r;

@@ -291,11 +291,7 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 		{
 			((PageHeader) page)->pd_prune_xid = prstate.new_prune_xid;
 			PageClearFull(page);
-<<<<<<< HEAD
 			MarkBufferDirtyHint(buffer, relation);
-=======
-			SetBufferCommitInfoNeedsSave(buffer);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		}
 	}
 
@@ -643,10 +639,6 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 		ItemPointerSet(&firsttup.t_self,
 					   BufferGetBlockNumber(buffer),
 					   redirect_target);
-<<<<<<< HEAD
-=======
-		firsttup.t_tableOid = RelationGetRelid(relation);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		CacheInvalidateHeapTuple(relation, &firsttup);
 	}
 
