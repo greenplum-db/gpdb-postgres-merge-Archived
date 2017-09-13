@@ -194,7 +194,6 @@ output_escaped_str(char *str, bool quoted)
 			fputs("\\\n", yyout);
 		else if (str[i] == '\\')
 		{
-<<<<<<< HEAD
 			int			j = i;
 
 			/*
@@ -210,17 +209,6 @@ output_escaped_str(char *str, bool quoted)
 
 			if ((str[j] != '\n') && (str[j] != '\r' || str[j + 1] != '\n'))		/* not followed by a
 																				 * newline */
-=======
-			int j = i;
-			
-			/* check whether this is a continuation line 
-			 * if it is, do not output anything because newlines are escaped anyway */
-
-			/* accept blanks after the '\' as some other compilers do too */
-			do { j++; } while (str[j] == ' ' || str[j] == '\t');
-
-			if ((str[j] != '\n') && (str[j] != '\r' || str[j + 1] != '\n')) /* not followed by a newline */
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 				fputs("\\\\", yyout);
 		}
 		else if (str[i] == '\r' && str[i + 1] == '\n')

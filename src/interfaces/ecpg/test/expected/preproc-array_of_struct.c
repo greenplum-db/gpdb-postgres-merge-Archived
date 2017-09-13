@@ -131,25 +131,8 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 50 "array_of_struct.pgc"
 
 
-<<<<<<< HEAD
     { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table customers ( c varchar ( 50 ) , p int )", ECPGt_EOIT, ECPGt_EORT);
 #line 52 "array_of_struct.pgc"
-=======
-    { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table customers ( c varchar ( 50 )    , p int   )    ", ECPGt_EOIT, ECPGt_EORT);
-#line 52 "array_of_struct.pgc"
-
-if (sqlca.sqlwarn[0] == 'W') sqlprint();
-#line 52 "array_of_struct.pgc"
-
-if (sqlca.sqlcode < 0) sqlprint();}
-#line 52 "array_of_struct.pgc"
-
-    { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into customers values ( 'John Doe' , '12345' ) ", ECPGt_EOIT, ECPGt_EORT);
-#line 53 "array_of_struct.pgc"
-
-if (sqlca.sqlcode == ECPG_NOT_FOUND) sqlprint();
-#line 53 "array_of_struct.pgc"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
 #line 53 "array_of_struct.pgc"
@@ -157,13 +140,8 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 53 "array_of_struct.pgc"
 
-<<<<<<< HEAD
     { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into customers values ( 'John Doe' , '12345' )", ECPGt_EOIT, ECPGt_EORT);
 #line 53 "array_of_struct.pgc"
-=======
-    { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into customers values ( 'Jane Doe' , '67890' ) ", ECPGt_EOIT, ECPGt_EORT);
-#line 54 "array_of_struct.pgc"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 if (sqlca.sqlcode == ECPG_NOT_FOUND) sqlprint();
 #line 54 "array_of_struct.pgc"
@@ -276,11 +254,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
     printf( "name  - %s\n", custs4.name.arr );
     printf( "phone - %d\n", custs4.phone );
 
-<<<<<<< HEAD
     { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select c from customers limit 2", ECPGt_EOIT, 
-=======
-    { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  c  from customers     limit 2 ", ECPGt_EOIT, 
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	ECPGt_varchar,(onlyname),(long)50,(long)2,sizeof(struct varchar_onlyname_45), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 85 "array_of_struct.pgc"

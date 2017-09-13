@@ -54,20 +54,11 @@ bool		ECPGconnect(int, int, const char *, const char *, const char *, const char
 bool		ECPGdo(const int, const int, const int, const char *, const bool, const int, const char *,...);
 bool		ECPGtrans(int, const char *, const char *);
 bool		ECPGdisconnect(int, const char *);
-<<<<<<< HEAD
 bool		ECPGprepare(int, const char *, const bool, const char *, const char *);
 bool		ECPGdeallocate(int, int, const char *, const char *);
 bool		ECPGdeallocate_all(int, int, const char *);
 char	   *ECPGprepared_statement(const char *, const char *, int);
 PGconn	   *ECPGget_PGconn(const char *);
-
-=======
-bool		ECPGprepare(int, const char *, const int, const char *, const char *);
-bool		ECPGdeallocate(int, int, const char *, const char *);
-bool		ECPGdeallocate_all(int, int, const char *);
-char	        *ECPGprepared_statement(const char *, const char *, int);
-PGconn		*ECPGget_PGconn(const char *);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 char		*ECPGerrmsg(void);

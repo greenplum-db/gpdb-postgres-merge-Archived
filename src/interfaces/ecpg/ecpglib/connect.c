@@ -477,7 +477,6 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 			 options ? "with options " : "", options ? options : "",
 			 user ? "for user " : "", user ? user : "");
 
-<<<<<<< HEAD
 	connect_string = ecpg_alloc(strlen_or_null(host)
 								+ strlen_or_null(port)
 								+ strlen_or_null(options)
@@ -485,49 +484,12 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 								+ strlen_or_null(user)
 								+ strlen_or_null(passwd)
 			  + sizeof(" host = port = dbname = user = password ="), lineno);
-=======
-	connect_string = ecpg_alloc(	  strlen_or_null(host)
-					+ strlen_or_null(port)
-					+ strlen_or_null(options)
-					+ strlen_or_null(realname)
-					+ strlen_or_null(user)
-					+ strlen_or_null(passwd)
-					+ sizeof(" host = port = dbname = user = password ="), lineno);
-
-	if (options) /* replace '&' if tehre are any */
-		for (i = 0; options[i]; i++)
-			if (options[i] == '&')
-				options[i] = ' ';
-
-	sprintf(connect_string,"%s%s %s%s %s%s %s%s %s%s %s",
-			 realname ? "dbname=" : "", realname ? realname : "",
-			 host ? "host=" : "", host ? host : "",
-			 port ? "port=" : "", port ? port : "",
-			 user ? "user=" : "", user ? user : "",
-			 passwd ? "password=" : "", passwd ? passwd : "",
-			 options ? options : "");
-	
-	/* this is deprecated
-	 * this->connection = PQsetdbLogin(host, port, options, NULL, realname, user, passwd);*/
-	this->connection = PQconnectdb(connect_string);
-
-	ecpg_free(connect_string);
-	if (host)
-		ecpg_free(host);
-	if (port)
-		ecpg_free(port);
-	if (options)
-		ecpg_free(options);
-	if (dbname)
-		ecpg_free(dbname);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	if (options)				/* replace '&' if tehre are any */
 		for (i = 0; options[i]; i++)
 			if (options[i] == '&')
 				options[i] = ' ';
 
-<<<<<<< HEAD
 	sprintf(connect_string, "%s%s %s%s %s%s %s%s %s%s %s",
 			realname ? "dbname=" : "", realname ? realname : "",
 			host ? "host=" : "", host ? host : "",
@@ -571,22 +533,6 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 		return false;
 	}
 
-=======
-		ecpg_log("ECPGconnect: could not open database: %s\n", errmsg);
-
-		ecpg_finish(this);
-#ifdef ENABLE_THREAD_SAFETY
-		pthread_mutex_unlock(&connections_mutex);
-#endif
-
-		ecpg_raise(lineno, ECPG_CONNECT, ECPG_SQLSTATE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION, db);
-		if (realname)
-			ecpg_free(realname);
-
-		return false;
-	}
-
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	if (realname)
 		ecpg_free(realname);
 
@@ -645,7 +591,6 @@ ECPGdisconnect(int lineno, const char *connection_name)
 	return true;
 }
 
-<<<<<<< HEAD
 PGconn *
 ECPGget_PGconn(const char *connection_name)
 {
@@ -654,14 +599,6 @@ ECPGget_PGconn(const char *connection_name)
 	con = ecpg_get_connection(connection_name);
 	if (con == NULL)
 		return NULL;
-=======
-PGconn* ECPGget_PGconn(const char *connection_name)
-{
-	struct connection * con;
-
-	con=ecpg_get_connection(connection_name);
-	if (con==NULL) return NULL;    
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	return con->connection;
 }
