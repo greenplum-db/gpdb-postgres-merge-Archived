@@ -102,45 +102,26 @@ ExecRenameStmt(RenameStmt *stmt)
 		case OBJECT_SEQUENCE:
 		case OBJECT_VIEW:
 		case OBJECT_INDEX:
-		{
-			if (Gp_role == GP_ROLE_DISPATCH)
-			{
-				CheckRelationOwnership(stmt->relation, true);
-				stmt->objid = RangeVarGetRelid(stmt->relation, false);
-			}
-
-			/*
-			 * RENAME TABLE requires that we (still) hold
-			 * CREATE rights on the containing namespace, as
-			 * well as ownership of the table.
-			 */
-			Oid			namespaceId = get_rel_namespace(stmt->objid);
-			AclResult	aclresult;
-
-			aclresult = pg_namespace_aclcheck(namespaceId,
-											  GetUserId(),
-											  ACL_CREATE);
-			if (aclresult != ACLCHECK_OK)
-				aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-							   get_namespace_name(namespaceId));
-
-			renamerel(stmt->objid, stmt->newname, stmt->renameType, stmt);
-			break;
-		}
-
 		case OBJECT_COLUMN:
 		case OBJECT_TRIGGER:
 			{
 				Oid			relid;
 
-				CheckRelationOwnership(stmt->relation, true);
+				/*
+				 * In the dispatcher, resolve the name to OID, and update the
+				 * stmt struct with the OID. In the QE, use the OID from the
+				 * struct (which was filled in by the dispatcher).
+				 */
+				if (Gp_role == GP_ROLE_DISPATCH)
+				{
+					CheckRelationOwnership(stmt->relation, true);
 
-				relid = RangeVarGetRelid(stmt->relation, false);
+					stmt->objid = RangeVarGetRelid(stmt->relation, false);
+				}
+				relid = stmt->objid;
 
 				switch (stmt->renameType)
 				{
-<<<<<<< HEAD
-=======
 					case OBJECT_TABLE:
 					case OBJECT_SEQUENCE:
 					case OBJECT_VIEW:
@@ -161,10 +142,9 @@ ExecRenameStmt(RenameStmt *stmt)
 								aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
 											get_namespace_name(namespaceId));
 
-							RenameRelation(relid, stmt->newname, stmt->renameType);
+							RenameRelation(relid, stmt->newname, stmt->renameType, stmt);
 							break;
 						}
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 					case OBJECT_COLUMN:
 						renameatt(relid,
 								  stmt->subname,		/* old att name */
