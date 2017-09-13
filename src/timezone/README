@@ -1,13 +1,4 @@
-<<<<<<< HEAD
 src/timezone/README
-=======
-$PostgreSQL: pgsql/src/timezone/README,v 1.7 2008/03/21 13:23:29 momjian Exp $
-
-Timezone
-========
-
-This is a PostgreSQL adapted version of the timezone library from:
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 Timezone
 ========
