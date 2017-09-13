@@ -212,17 +212,11 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->tablespacename));
 	values[Anum_pg_tablespace_spcowner - 1] =
 		ObjectIdGetDatum(ownerId);
-<<<<<<< HEAD
 	values[Anum_pg_tablespace_spcfsoid - 1] =
 		ObjectIdGetDatum(filespaceoid);
 	nulls[Anum_pg_tablespace_spcname - 1] = false;
 	nulls[Anum_pg_tablespace_spcowner - 1] = false;
 	nulls[Anum_pg_tablespace_spcfsoid - 1] = false;
-=======
-	values[Anum_pg_tablespace_spclocation - 1] =
-		CStringGetTextDatum(location);
-	nulls[Anum_pg_tablespace_spcacl - 1] = 'n';
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	tuple = heap_form_tuple(rel->rd_att, values, nulls);
 

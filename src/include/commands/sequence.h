@@ -100,16 +100,6 @@ extern void AlterSequence(AlterSeqStmt *stmt);
 extern void seq_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *rptr);
 extern void seq_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
 
-<<<<<<< HEAD
-/* Set the upper and lower bounds of a sequence */
-#ifndef INT64_IS_BUSTED
-#define SEQ_MAXVALUE	INT64CONST(0x7FFFFFFFFFFFFFFF)
-#else							/* INT64_IS_BUSTED */
-#define SEQ_MAXVALUE	((int64) 0x7FFFFFFF)
-#endif   /* INT64_IS_BUSTED */
-
-#define SEQ_MINVALUE	(-SEQ_MAXVALUE)
-
 /*
  * CDB: nextval entry point called by sequence server
  */
@@ -125,6 +115,4 @@ cdb_sequence_nextval_server(Oid    tablespaceid,
 
 extern void seq_mask(char *pagedata, BlockNumber blkno);
 
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #endif   /* SEQUENCE_H */
