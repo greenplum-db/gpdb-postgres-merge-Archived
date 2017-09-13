@@ -100,13 +100,10 @@
 
 #include "postgres.h"
 
-<<<<<<< HEAD
-=======
 #include <limits.h>
 
 #include "access/genam.h"
 #include "access/hash.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "access/heapam.h"
 #include "access/nbtree.h"
 #include "catalog/pg_amop.h"
@@ -517,19 +514,11 @@ static int comparetup_index_btree(const SortTuple *a, const SortTuple *b,
 static int comparetup_index_hash(const SortTuple *a, const SortTuple *b,
 				 Tuplesortstate *state);
 static void copytup_index(Tuplesortstate *state, SortTuple *stup, void *tup);
-<<<<<<< HEAD
 static void writetup_index(Tuplesortstate *state, LogicalTape *lt, SortTuple *stup);
 static void readtup_index(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 			  LogicalTape *lt, unsigned int len);
-static void reversedirection_index(Tuplesortstate *state);
-=======
-static void writetup_index(Tuplesortstate *state, int tapenum,
-			   SortTuple *stup);
-static void readtup_index(Tuplesortstate *state, SortTuple *stup,
-			  int tapenum, unsigned int len);
 static void reversedirection_index_btree(Tuplesortstate *state);
 static void reversedirection_index_hash(Tuplesortstate *state);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 static int comparetup_datum(const SortTuple *a, const SortTuple *b,
 				 Tuplesortstate *state);
 static void copytup_datum(Tuplesortstate *state, SortTuple *stup, void *tup);
@@ -748,7 +737,7 @@ tuplesort_begin_index_hash(Relation indexRel,
 						   uint32 hash_mask,
 						   int workMem, bool randomAccess)
 {
-	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess);
+	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess, true);
 	MemoryContext oldcontext;
 
 	oldcontext = MemoryContextSwitchTo(state->sortcontext);

@@ -169,14 +169,13 @@ struct Tuplestorestate
 	 * (The write position is the same as EOF, but since BufFileSeek doesn't
 	 * currently implement SEEK_END, we have to remember it explicitly.)
 	 */
-<<<<<<< HEAD
 	TSReadPointer *readptrs;	/* array of read pointers */
 	int			activeptr;		/* index of the active read pointer */
 	int			readptrcount;	/* number of pointers currently valid */
 	int			readptrsize;	/* allocated length of readptrs array */
 
 	int			writepos_file;	/* file# (valid if READFILE state) */
-	off_t		writepos_offset;	/* offset (valid if READFILE state) */
+	off_t		writepos_offset; /* offset (valid if READFILE) */
 
     /*
      * CDB: EXPLAIN ANALYZE reporting interface and statistics.
@@ -185,19 +184,6 @@ struct Tuplestorestate
 	long		allowedMem;		/* total memory allowed, in bytes */
 	long        availMemMin;    /* availMem low water mark (bytes) */
 	int64       spilledBytes;   /* memory used for spilled tuples */
-=======
-	bool		eof_reached;	/* read reached EOF (always valid) */
-	int			current;		/* next array index (valid if INMEM) */
-	int			readpos_file;	/* file# (valid if WRITEFILE and not eof) */
-	off_t		readpos_offset; /* offset (valid if WRITEFILE and not eof) */
-	int			writepos_file;	/* file# (valid if READFILE) */
-	off_t		writepos_offset; /* offset (valid if READFILE) */
-
-	/* markpos_xxx holds marked position for mark and restore */
-	int			markpos_current;	/* saved "current" */
-	int			markpos_file;	/* saved "readpos_file" */
-	off_t		markpos_offset; /* saved "readpos_offset" */
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 };
 
 #define COPYTUP(state,tup)	((*(state)->copytup) (state, tup))
@@ -658,22 +644,6 @@ tuplestore_putvalues(Tuplestorestate *state, TupleDesc tdesc,
 	tuplestore_puttuple_common(state, (void *) tuple);
 
 	MemoryContextSwitchTo(oldcxt);
-}
-
-/*
- * Similar to tuplestore_puttuple(), but start from the values + nulls
- * array. This avoids requiring that the caller construct a HeapTuple,
- * saving a copy.
- */
-void
-tuplestore_putvalues(Tuplestorestate *state, TupleDesc tdesc,
-					 Datum *values, bool *isnull)
-{
-	MinimalTuple tuple;
-
-	tuple = heap_form_minimal_tuple(tdesc, values, isnull);
-
-	tuplestore_puttuple_common(state, (void *) tuple);
 }
 
 static void
