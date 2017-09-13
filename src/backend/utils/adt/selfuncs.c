@@ -217,12 +217,17 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 	if (constisnull)
 		return 0.0;
 
-	if (HeapTupleIsValid(getStatsTuple(&vardata)))
+	if (HeapTupleIsValid(vardata->statsTuple))
 	{
 		Form_pg_statistic stats;
-		HeapTuple tp = getStatsTuple(&vardata);
+		Datum	   *values;
+		int			nvalues;
+		float4	   *numbers;
+		int			nnumbers;
+		bool		match = false;
+		int			i;
 
-		stats = (Form_pg_statistic) GETSTRUCT(tp);
+		stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
 
 		/*
 		 * Is the constant "=" to any of the column's most common values?
