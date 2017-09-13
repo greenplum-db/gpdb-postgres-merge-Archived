@@ -104,11 +104,8 @@ uninstall:
 
 NAME = regress
 OBJS = regress.o
-<<<<<<< HEAD
 
 OBJS += regress_gp.o partindex.o workfile_mgr_test.o
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 include $(top_srcdir)/src/Makefile.shlib
 
