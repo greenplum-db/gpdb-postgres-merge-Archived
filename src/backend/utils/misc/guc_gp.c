@@ -5549,6 +5549,14 @@ struct config_string ConfigureNamesString_gp[] =
 	}
 };
 
+struct config_enum ConfigureNamesEnum_gp[] =
+{
+	/* End-of-list marker */
+	{
+		{NULL, 0, 0, NULL, NULL}, NULL, 0, NULL, NULL, NULL
+	}
+};
+
 static const char *
 assign_gp_log_format(const char *value, bool doit, GucSource source)
 {

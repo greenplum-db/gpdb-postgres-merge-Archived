@@ -306,5 +306,6 @@ extern struct config_bool ConfigureNamesBool_gp[];
 extern struct config_int ConfigureNamesInt_gp[];
 extern struct config_real ConfigureNamesReal_gp[];
 extern struct config_string ConfigureNamesString_gp[];
+extern struct config_enum ConfigureNamesEnum_gp[];
 
 #endif   /* GUC_TABLES_H */
