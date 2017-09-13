@@ -1082,31 +1082,6 @@ errdetail(const char *fmt,...)
 
 
 /*
- * errdetail_log --- add a detail_log error message text to the current error
- */
-int
-errdetail_log(const char *fmt,...)
-{
-	ErrorData  *edata = &errordata[errordata_stack_depth];
-	MemoryContext oldcontext;
-
-	recursion_depth++;
-	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(ErrorContext);
-
-	EVALUATE_MESSAGE(detail_log, false, true);
-
-	/* enforce correct encoding */
-	verify_and_replace_mbstr(&(edata->detail_log), strlen(edata->detail_log));
-
-	MemoryContextSwitchTo(oldcontext);
-	recursion_depth--;
-	errno = edata->saved_errno; /*CDB*/
-	return 0;					/* return value does not matter */
-}
-
-
-/*
  * errdetail_plural --- add a detail error message text to the current error,
  * with support for pluralization of the message text
  */
@@ -1146,10 +1121,14 @@ errdetail_log(const char *fmt,...)
 	CHECK_STACK_DEPTH();
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
-	EVALUATE_MESSAGE(detail_log, false);
+	EVALUATE_MESSAGE(detail_log, false, true);
+
+	/* enforce correct encoding */
+	verify_and_replace_mbstr(&(edata->detail_log), strlen(edata->detail_log));
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
+	errno = edata->saved_errno; /*CDB*/
 	return 0;					/* return value does not matter */
 }
 
