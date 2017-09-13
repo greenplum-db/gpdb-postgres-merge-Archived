@@ -460,10 +460,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	subroot->parent_root = root->parent_root;
 	subroot->planner_cxt = CurrentMemoryContext;
 	subroot->init_plans = NIL;
-<<<<<<< HEAD
 	subroot->cte_plan_ids = NIL;
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	subroot->eq_classes = NIL;
 	subroot->in_info_list = NIL;
 	subroot->append_rel_list = NIL;

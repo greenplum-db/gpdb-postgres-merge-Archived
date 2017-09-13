@@ -864,15 +864,7 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	 * careful to maintain AND/OR flatness --- that is, do not generate a tree
 	 * with AND directly under AND, nor OR directly under OR.
 	 */
-<<<<<<< HEAD
 	expr = eval_const_expressions(root, expr);
-=======
-	if (kind != EXPRKIND_VALUES &&
-		(root->parse->jointree->fromlist != NIL ||
-		 kind == EXPRKIND_QUAL ||
-		 root->query_level > 1))
-		expr = eval_const_expressions(root, expr);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * If it's a qual or havingQual, canonicalize it.
