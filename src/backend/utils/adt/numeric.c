@@ -5507,11 +5507,6 @@ mod_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	sub_var(var1, &tmp, result);
 
 	free_var(&tmp);
-<<<<<<< HEAD
-
-	round_var(result, Max(var1->dscale, var2->dscale));
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 

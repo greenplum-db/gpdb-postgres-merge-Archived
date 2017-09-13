@@ -210,7 +210,6 @@ typedef struct PGLZ_HistEntry
  * ----------
  */
 static const PGLZ_Strategy strategy_default_data = {
-<<<<<<< HEAD
 	32,							/* Data chunks less than 32 bytes are not
 								 * compressed */
 	INT_MAX,					/* No upper limit on what we'll try to
@@ -222,20 +221,11 @@ static const PGLZ_Strategy strategy_default_data = {
 								 * is found */
 	10							/* Lower good match size by 10% at every loop
 								 * iteration */
-=======
-	32,				/* Data chunks less than 32 bytes are not compressed */
-	1024 * 1024,	/* Data chunks over 1MB are not compressed either */
-	25,				/* Require 25% compression rate, or not worth it */
-	1024,			/* Give up if no compression in the first 1KB */
-	128,			/* Stop history lookup if a match of 128 bytes is found */
-	10				/* Lower good match size by 10% at every loop iteration */
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 };
 const PGLZ_Strategy *const PGLZ_strategy_default = &strategy_default_data;
 
 
 static const PGLZ_Strategy strategy_always_data = {
-<<<<<<< HEAD
 	0,							/* Chunks of any size are compressed */
 	INT_MAX,
 	0,							/* It's enough to save one single byte */
@@ -243,14 +233,6 @@ static const PGLZ_Strategy strategy_always_data = {
 	128,						/* Stop history lookup if a match of 128 bytes
 								 * is found */
 	6							/* Look harder for a good match */
-=======
-	0,				/* Chunks of any size are compressed */
-	INT_MAX,
-	0,				/* It's enough to save one single byte */
-	INT_MAX,		/* Never give up early */
-	128,			/* Stop history lookup if a match of 128 bytes is found */
-	6				/* Look harder for a good match */
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 };
 const PGLZ_Strategy *const PGLZ_strategy_always = &strategy_always_data;
 
@@ -526,13 +508,8 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 		strategy = PGLZ_strategy_default;
 
 	/*
-<<<<<<< HEAD
 	 * If the strategy forbids compression (at all or if source chunk size out
 	 * of range), fail.
-=======
-	 * If the strategy forbids compression (at all or if source chunk size
-	 * out of range), fail.
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	 */
 	if (strategy->match_size_good <= 0 ||
 		slen < strategy->min_input_size ||
@@ -566,19 +543,11 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 		need_rate = 99;
 
 	/*
-<<<<<<< HEAD
 	 * Compute the maximum result size allowed by the strategy, namely the
 	 * input size minus the minimum wanted compression rate.  This had better
 	 * be <= slen, else we might overrun the provided output buffer.
 	 */
 	if (slen > (INT_MAX / 100))
-=======
-	 * Compute the maximum result size allowed by the strategy, namely
-	 * the input size minus the minimum wanted compression rate.  This had
-	 * better be <= slen, else we might overrun the provided output buffer.
-	 */
-	if (slen > (INT_MAX/100))
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	{
 		/* Approximate to avoid overflow */
 		result_max = (slen / 100) * (100 - need_rate);
@@ -691,19 +660,11 @@ pglz_decompress(const PGLZ_Header *source, char *dest)
 	while (sp < srcend && dp < destend)
 	{
 		/*
-<<<<<<< HEAD
 		 * Read one control byte and process the next 8 items (or as many as
 		 * remain in the compressed input).
 		 */
 		unsigned char ctrl = *sp++;
 		int			ctrlc;
-=======
-		 * Read one control byte and process the next 8 items (or as many
-		 * as remain in the compressed input).
-		 */
-		unsigned char ctrl = *sp++;
-		int		ctrlc;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		for (ctrlc = 0; ctrlc < 8 && sp < srcend; ctrlc++)
 		{
@@ -726,19 +687,11 @@ pglz_decompress(const PGLZ_Header *source, char *dest)
 					len += *sp++;
 
 				/*
-<<<<<<< HEAD
 				 * Check for output buffer overrun, to ensure we don't clobber
 				 * memory in case of corrupt input.  Note: we must advance dp
 				 * here to ensure the error is detected below the loop.  We
 				 * don't simply put the elog inside the loop since that will
 				 * probably interfere with optimization.
-=======
-				 * Check for output buffer overrun, to ensure we don't
-				 * clobber memory in case of corrupt input.  Note: we must
-				 * advance dp here to ensure the error is detected below
-				 * the loop.  We don't simply put the elog inside the loop
-				 * since that will probably interfere with optimization.
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 				 */
 				if (dp + len > destend)
 				{

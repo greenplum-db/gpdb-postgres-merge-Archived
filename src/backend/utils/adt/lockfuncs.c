@@ -449,15 +449,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		if (proc->pid != 0)
 			values[11] = Int32GetDatum(proc->pid);
 		else
-<<<<<<< HEAD
 			nulls[11] = true;
-		values[12] = DirectFunctionCall1(textin,
-					  CStringGetDatum((char *) GetLockmodeName(LOCK_LOCKMETHOD(*lock),
-													  mode)));
-=======
-			nulls[11] = 'n';
 		values[12] = CStringGetTextDatum(GetLockmodeName(LOCK_LOCKMETHOD(*lock), mode));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		values[13] = BoolGetDatum(granted);
 		
 		values[14] = Int32GetDatum(proc->mppSessionId);

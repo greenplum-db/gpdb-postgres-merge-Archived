@@ -55,20 +55,13 @@ current_database(PG_FUNCTION_ARGS)
 
 /*
  * current_query()
-<<<<<<< HEAD
  *	Expose the current query to the user (useful in stored procedures)
  *	We might want to use ActivePortal->sourceText someday.
-=======
- *  Expose the current query to the user (useful in stored procedures)
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  */
 Datum
 current_query(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
 	/* there is no easy way to access the more concise 'query_string' */
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	if (debug_query_string)
 		PG_RETURN_TEXT_P(cstring_to_text(debug_query_string));
 	else

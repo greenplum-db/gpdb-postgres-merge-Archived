@@ -2545,12 +2545,9 @@ timetz_zone(PG_FUNCTION_ARGS)
 	TimeTzADT  *result;
 	int			tz;
 	char		tzname[TZ_STRLEN_MAX + 1];
-<<<<<<< HEAD
 	char	   *lowzone;
 	int			type,
 				val;
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	pg_tz	   *tzp;
 
 	/*
@@ -2562,18 +2559,9 @@ timetz_zone(PG_FUNCTION_ARGS)
 	 * that are identical to offset abbreviations.)
 	 */
 	text_to_cstring_buffer(zone, tzname, sizeof(tzname));
-<<<<<<< HEAD
 	lowzone = downcase_truncate_identifier(tzname,
 										   strlen(tzname),
 										   false);
-=======
-	tzp = pg_tzset(tzname);
-	if (tzp)
-	{
-		/* Get the offset-from-GMT that is valid today for the selected zone */
-		pg_time_t	now = (pg_time_t) time(NULL);
-		struct pg_tm *tm;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	type = DecodeSpecial(0, lowzone, &val);
 
@@ -2588,19 +2576,9 @@ timetz_zone(PG_FUNCTION_ARGS)
 			pg_time_t	now = (pg_time_t) time(NULL);
 			struct pg_tm *tm;
 
-<<<<<<< HEAD
 			tm = pg_localtime(&now, tzp);
 			tz = -tm->tm_gmtoff;
 		}
-=======
-		lowzone = downcase_truncate_identifier(tzname,
-											   strlen(tzname),
-											   false);
-		type = DecodeSpecial(0, lowzone, &val);
-
-		if (type == TZ || type == DTZ)
-			tz = val * 60;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		else
 		{
 			ereport(ERROR,

@@ -754,7 +754,6 @@ pg_size_pretty(PG_FUNCTION_ARGS)
 	int64		limit = 10 * 1024;
 	int64		limit2 = limit * 2 - 1;
 
-<<<<<<< HEAD
 	if (size < limit)
 		snprintf(VARDATA(result), 50, INT64_FORMAT " bytes", size);
 	else
@@ -780,33 +779,6 @@ pg_size_pretty(PG_FUNCTION_ARGS)
 					size >>= 10;
 					snprintf(VARDATA(result), 50, INT64_FORMAT " TB",
 							 (size + 1) / 2);
-=======
-	if (size < limit * mult)
-		snprintf(buf, sizeof(buf), INT64_FORMAT " bytes", size);
-	else
-	{
-		mult *= 1024;
-		if (size < limit * mult)
-			snprintf(buf, sizeof(buf), INT64_FORMAT " kB",
-					 (size + mult / 2) / mult);
-		else
-		{
-			mult *= 1024;
-			if (size < limit * mult)
-				snprintf(buf, sizeof(buf), INT64_FORMAT " MB",
-						 (size + mult / 2) / mult);
-			else
-			{
-				mult *= 1024;
-				if (size < limit * mult)
-					snprintf(buf, sizeof(buf), INT64_FORMAT " GB",
-							 (size + mult / 2) / mult);
-				else
-				{
-					mult *= 1024;
-					snprintf(buf, sizeof(buf), INT64_FORMAT " TB",
-							 (size + mult / 2) / mult);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 				}
 			}
 		}

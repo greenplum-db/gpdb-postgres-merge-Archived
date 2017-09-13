@@ -414,36 +414,6 @@ parse_re_flags(pg_re_flags *flags, text *opts)
 
 
 /*
-<<<<<<< HEAD
- * assign_regex_flavor - GUC hook to validate and set REGEX_FLAVOR
- */
-const char *
-assign_regex_flavor(const char *value, bool doit, GucSource source)
-{
-	if (pg_strcasecmp(value, "advanced") == 0)
-	{
-		if (doit)
-			regex_flavor = REG_ADVANCED;
-	}
-	else if (pg_strcasecmp(value, "extended") == 0)
-	{
-		if (doit)
-			regex_flavor = REG_EXTENDED;
-	}
-	else if (pg_strcasecmp(value, "basic") == 0)
-	{
-		if (doit)
-			regex_flavor = REG_BASIC;
-	}
-	else
-		return NULL;			/* fail */
-	return value;			   /* OK */
-}
-
-
-/*
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  * report whether regex_flavor is currently BASIC
  */
 bool
