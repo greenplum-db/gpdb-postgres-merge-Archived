@@ -1452,12 +1452,10 @@ numeric_div_trunc(PG_FUNCTION_ARGS)
 	/*
 	 * Unpack the arguments
 	 */
-	init_var(&arg1);
-	init_var(&arg2);
 	init_var(&result);
 
-	set_var_from_num(num1, &arg1);
-	set_var_from_num(num2, &arg2);
+	init_var_from_num(num1, &arg1);
+	init_var_from_num(num2, &arg2);
 
 	/*
 	 * Do the divide and return the result
