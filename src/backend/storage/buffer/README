@@ -244,10 +244,7 @@ for WAL flushes.  While it's okay for a background vacuum to be slowed by
 doing its own WAL flushing, we'd prefer that COPY not be subject to that,
 so we let it use up a bit more of the buffer arena.
 
-<<<<<<< HEAD
 
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 Background Writer's Processing
 ------------------------------
 

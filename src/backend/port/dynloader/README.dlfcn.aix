@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 $PostgreSQL: pgsql/src/backend/port/dynloader/README.dlfcn.aix,v 1.3 2008/03/21 13:23:28 momjian Exp $
 
 dynaloader
@@ -14,7 +12,6 @@ the author is not construed to be liable for any results of using the
 software, alterations are clearly marked as such, and this notice is
 not modified.
 
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 libdl.a
 -------
 
