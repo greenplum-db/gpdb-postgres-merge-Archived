@@ -63,15 +63,7 @@ static void ProcessCatchupEvent(void);
 void
 SendSharedInvalidMessages(const SharedInvalidationMessage *msgs, int n)
 {
-<<<<<<< HEAD
 	SIInsertDataEntries(msgs, n);
-=======
-	bool		insertOK;
-
-	insertOK = SIInsertDataEntry(msg);
-	if (!insertOK)
-		elog(DEBUG4, "SI buffer overflow");
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 /*
@@ -120,12 +112,8 @@ ReceiveSharedInvalidMessages(
 
 		nextmsg = nummsgs = 0;
 
-<<<<<<< HEAD
 		/* Try to get some more messages */
 		getResult = SIGetDataEntries(messages, MAXINVALMSGS);
-=======
-		getResult = SIGetDataEntry(MyBackendId, &data);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		if (getResult < 0)
 		{
@@ -148,7 +136,6 @@ ReceiveSharedInvalidMessages(
 			invalFunction(msg);
 		}
 
-<<<<<<< HEAD
 		/*
 		 * We only need to loop if the last SIGetDataEntries call (which might
 		 * have been within a recursive call) returned a full buffer.
@@ -169,11 +156,6 @@ ReceiveSharedInvalidMessages(
 		elog(DEBUG4, "sinval catchup complete, cleaning queue");
 		SICleanupQueue(false, 0);
 	}
-=======
-	/* If we got any messages, try to release dead messages */
-	if (gotMessage)
-		SIDelExpiredDataEntries(false);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 
