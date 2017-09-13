@@ -32,12 +32,9 @@
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/spin.h"
-<<<<<<< HEAD
 #include "utils/sharedsnapshot.h"
-=======
 #include "pg_trace.h"
 
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /* We use the ShmemLock spinlock to protect LWLockAssign */
 extern slock_t *ShmemLock;
@@ -560,17 +557,13 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 		block_counts[lockid]++;
 #endif
 
-<<<<<<< HEAD
 		for (c = 0; c < num_held_lwlocks; c++)
 		{
 			if (held_lwlocks[c] == lockid)
 				elog(PANIC, "Waiting on lock already held!");
 		}
 
-		PG_TRACE2(lwlock__startwait, lockid, mode);
-=======
 		TRACE_POSTGRESQL_LWLOCK_STARTWAIT(lockid, mode);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		for (;;)
 		{

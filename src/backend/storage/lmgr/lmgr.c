@@ -21,20 +21,15 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
-<<<<<<< HEAD
-#include "catalog/gp_policy.h"     /* CDB: POLICYTYPE_PARTiITIONED */
 #include "catalog/namespace.h"
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 #include "storage/procarray.h"
 #include "utils/inval.h"
-<<<<<<< HEAD
 #include "utils/lsyscache.h"        /* CDB: get_rel_name() */
+
+#include "catalog/gp_policy.h"     /* CDB: POLICYTYPE_PARTiITIONED */
 #include "cdb/cdbvars.h"
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 /*

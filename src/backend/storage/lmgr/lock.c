@@ -41,16 +41,10 @@
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/resowner.h"
-<<<<<<< HEAD
-#include "utils/testutils.h"
-#include "executor/execdesc.h"
-#include "utils/resscheduler.h"
-#include "storage/procarray.h"
-=======
-#include "pg_trace.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 #include "cdb/cdbvars.h"
+#include "storage/procarray.h"
+#include "utils/resscheduler.h"
 
 /* This configuration variable is used to set the lock table size */
 int			max_locks_per_xact; /* set by guc.c */
@@ -2173,7 +2167,6 @@ AtPrepare_Locks(void)
 				elog(ERROR, "cannot PREPARE when session locks exist");
 		}
 
-<<<<<<< HEAD
 		/* gp-change 
 		 *
 		 * We allow 2PC commit transactions to include temp objects.  
@@ -2190,8 +2183,6 @@ AtPrepare_Locks(void)
 		if (LockTagIsTemp(&locallock->tag.lock))
 			continue;
 
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		/*
 		 * Create a 2PC record.
 		 */
