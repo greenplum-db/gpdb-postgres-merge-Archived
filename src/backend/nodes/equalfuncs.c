@@ -2098,10 +2098,7 @@ static bool
 _equalA_ArrayExpr(A_ArrayExpr *a, A_ArrayExpr *b)
 {
 	COMPARE_NODE_FIELD(elements);
-<<<<<<< HEAD
 	COMPARE_LOCATION_FIELD(location);
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	return true;
 }
@@ -2121,12 +2118,7 @@ static bool
 _equalTypeName(TypeName *a, TypeName *b)
 {
 	COMPARE_NODE_FIELD(names);
-<<<<<<< HEAD
 	COMPARE_SCALAR_FIELD(typid);
-	COMPARE_SCALAR_FIELD(timezone);
-=======
-	COMPARE_SCALAR_FIELD(typeid);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	COMPARE_SCALAR_FIELD(setof);
 	COMPARE_SCALAR_FIELD(pct_type);
 	COMPARE_NODE_FIELD(typmods);

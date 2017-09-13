@@ -2554,15 +2554,10 @@ _copyA_Indirection(A_Indirection *from)
 static A_ArrayExpr *
 _copyA_ArrayExpr(A_ArrayExpr *from)
 {
-<<<<<<< HEAD
 	A_ArrayExpr *newnode = makeNode(A_ArrayExpr);
-	COPY_NODE_FIELD(elements);
-	COPY_LOCATION_FIELD(location);
-=======
-	A_ArrayExpr  *newnode = makeNode(A_ArrayExpr);
 
 	COPY_NODE_FIELD(elements);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+	COPY_LOCATION_FIELD(location);
 
 	return newnode;
 }
@@ -2586,12 +2581,7 @@ _copyTypeName(TypeName *from)
 	TypeName   *newnode = makeNode(TypeName);
 
 	COPY_NODE_FIELD(names);
-<<<<<<< HEAD
 	COPY_SCALAR_FIELD(typid);
-	COPY_SCALAR_FIELD(timezone);
-=======
-	COPY_SCALAR_FIELD(typeid);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	COPY_SCALAR_FIELD(setof);
 	COPY_SCALAR_FIELD(pct_type);
 	COPY_NODE_FIELD(typmods);
