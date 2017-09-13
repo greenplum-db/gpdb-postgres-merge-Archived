@@ -1141,7 +1141,6 @@ PostmasterMain(int argc, char *argv[])
      * for sorting, hashing, etc); so again the number of buffers need not be
      * in proportion to the number of connections.
 	 */
-<<<<<<< HEAD
 	if (NBuffers < 16)
 	{
 		/*
@@ -1155,10 +1154,7 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * Check for invalid combinations of GUC settings.
 	 */
-	if (ReservedBackends > MaxBackends)
-=======
 	if (ReservedBackends >= MaxBackends)
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	{
 		write_stderr("%s: superuser_reserved_connections must be less than max_connections\n", progname);
 		ExitPostmaster(1);

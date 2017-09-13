@@ -98,11 +98,9 @@
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/syscache.h"
-<<<<<<< HEAD
-#include "cdb/cdbvars.h"
-=======
 #include "utils/tqual.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+
+#include "cdb/cdbvars.h"
 
 
 /*
@@ -2680,11 +2678,7 @@ autovacuum_do_vac_analyze(Oid relid, bool dovacuum, bool doanalyze,
 	MemoryContextSwitchTo(old_cxt);
 
 	/* Let pgstat know what we're doing */
-<<<<<<< HEAD
 	autovac_report_activity(&vacstmt, relid, for_wraparound);
-=======
-	autovac_report_activity(&vacstmt, relid);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	vacuum(&vacstmt, relids, bstrategy, for_wraparound, true);
 }

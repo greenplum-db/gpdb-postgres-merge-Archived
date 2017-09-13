@@ -61,13 +61,9 @@
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
-<<<<<<< HEAD
 #include "utils/rel.h"
 #include "utils/tqual.h"
 #include "cdb/cdbvars.h"
-=======
-#include "utils/tqual.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 // for mkdir
 #include "sys/stat.h"
@@ -2610,19 +2606,11 @@ pgstat_get_backend_current_activity(int pid, bool checkUser)
 		 * must follow the protocol of retrying if st_changecount changes
 		 * while we examine the entry, or if it's odd.  (This might be
 		 * unnecessary, since fetching or storing an int is almost certainly
-<<<<<<< HEAD
 		 * atomic, but let's play it safe.)  We use a volatile pointer here to
 		 * ensure the compiler doesn't try to get cute.
 		 */
 		volatile PgBackendStatus *vbeentry = beentry;
 		bool		found;
-=======
-		 * atomic, but let's play it safe.)  We use a volatile pointer here
-		 * to ensure the compiler doesn't try to get cute.
-		 */
-		volatile PgBackendStatus *vbeentry = beentry;
-		bool	found;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		for (;;)
 		{
