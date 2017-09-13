@@ -24,6 +24,7 @@
 #include "storage/ipc.h"
 #include "utils/memutils.h"
 
+#include "access/xact.h"
 #include "catalog/namespace.h"
 #include "commands/variable.h"
 #include "nodes/execnodes.h"	/* CdbProcess, Slice, SliceTable */
