@@ -20,18 +20,11 @@
 
 #include "catalog/genbki.h"
 
-<<<<<<< HEAD
-/* ----------------
- *		pg_listener definition.  cpp turns this into
- *		typedef struct FormData_pg_listener
- * ----------------
-=======
 /* ----------------------------------------------------------------
  *		pg_listener definition.
  *
  *		cpp turns this into typedef struct FormData_pg_listener
  * ----------------------------------------------------------------
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  */
 #define ListenerRelationId	2614
 

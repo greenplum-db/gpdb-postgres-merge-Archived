@@ -46,11 +46,8 @@
 #include "catalog/pg_enum.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
 #include "catalog/pg_type_encoding.h"
-=======
 #include "catalog/pg_type_fn.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
 #include "commands/typecmds.h"
@@ -70,12 +67,10 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
-<<<<<<< HEAD
+#include "utils/tqual.h"
+
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
-=======
-#include "utils/tqual.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 /* result structure for get_rels_with_domain() */
@@ -1642,16 +1637,9 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 			 */
 			new_record[Anum_pg_type_typdefaultbin - 1] = CStringGetTextDatum(nodeToString(defaultExpr));
 
-<<<<<<< HEAD
 			new_record_repl[Anum_pg_type_typdefaultbin - 1] = true;
-			new_record[Anum_pg_type_typdefault - 1] = DirectFunctionCall1(textin,
-											  CStringGetDatum(defaultValue));
-			new_record_repl[Anum_pg_type_typdefault - 1] = true;
-=======
-			new_record_repl[Anum_pg_type_typdefaultbin - 1] = 'r';
 			new_record[Anum_pg_type_typdefault - 1] = CStringGetTextDatum(defaultValue);
-			new_record_repl[Anum_pg_type_typdefault - 1] = 'r';
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+			new_record_repl[Anum_pg_type_typdefault - 1] = true;
 		}
 	}
 	else
