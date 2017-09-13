@@ -61,12 +61,6 @@ validate_exec(const char *path)
 
 #ifdef WIN32
 	char		path_exe[MAXPGPATH + sizeof(".exe") - 1];
-<<<<<<< HEAD
-=======
-#endif
-	int			is_r;
-	int			is_x;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/* Win32 requires a .exe suffix for stat() */
 	if (strlen(path) >= strlen(".exe") &&
