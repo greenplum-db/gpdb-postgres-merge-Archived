@@ -39,55 +39,20 @@
 #include "utils/workfile_mgr.h"
 
 /*
-<<<<<<< HEAD
  * This data structure represents a buffered file that consists of one
  * physical file (accessed through a virtual file descriptor
-=======
- * We break BufFiles into gigabyte-sized segments, whether or not
- * USE_SEGMENTED_FILES is defined.  The reason is that we'd like large
- * temporary BufFiles to be spread across multiple tablespaces when available.
- */
-#define MAX_PHYSICAL_FILESIZE	0x40000000
-#define BUFFILE_SEG_SIZE		(MAX_PHYSICAL_FILESIZE / BLCKSZ)
-
-/*
- * This data structure represents a buffered file that consists of one or
- * more physical files (each accessed through a virtual file descriptor
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  * managed by fd.c).
  */
 struct BufFile
 {
-<<<<<<< HEAD
 	File		file;			/* palloc'd file */
-=======
-	int			numFiles;		/* number of physical files in set */
-	/* all files except the last have length exactly MAX_PHYSICAL_FILESIZE */
-	File	   *files;			/* palloc'd array with numFiles entries */
-	off_t	   *offsets;		/* palloc'd array with numFiles entries */
-
-	/*
-	 * offsets[i] is the current seek position of files[i].  We use this to
-	 * avoid making redundant FileSeek calls.
-	 */
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	bool		isTemp;			/* can only add files if this is TRUE */
 	bool		isWorkfile;		/* true is file is managed by the workfile manager */
 	bool		dirty;			/* does buffer need to be written? */
 
-<<<<<<< HEAD
 	int64		offset;			/* offset part of current pos */
 	int64		pos;			/* next read/write position in buffer */
-=======
-	/*
-	 * "current pos" is position of start of buffer within the logical file.
-	 * Position as seen by user of BufFile is (curFile, curOffset + pos).
-	 */
-	int			curFile;		/* file index (0..n) part of current pos */
-	off_t		curOffset;		/* offset part of current pos */
-	int			pos;			/* next read/write position in buffer */
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	int			nbytes;			/* total # of valid bytes in buffer */
 	int64		maxoffset;		/* maximum offset that this file has reached, for disk usage */
 
@@ -109,14 +74,6 @@ makeBufFile(File firstfile)
 
 	file->file = firstfile;
 
-<<<<<<< HEAD
-=======
-	file->numFiles = 1;
-	file->files = (File *) palloc(sizeof(File));
-	file->files[0] = firstfile;
-	file->offsets = (off_t *) palloc(sizeof(off_t));
-	file->offsets[0] = 0L;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	file->isTemp = false;
 	file->isWorkfile = false;
 	file->dirty = false;
@@ -156,20 +113,10 @@ BufFileCreateTemp(const char *filePrefix, bool interXact)
 							  closeAtEOXact); /* closeAtEOXact */
 	Assert(pfile >= 0);
 
-<<<<<<< HEAD
 	file = makeBufFile(pfile);
 	file->isTemp = true;
 
 	return file;
-=======
-	file->files = (File *) repalloc(file->files,
-									(file->numFiles + 1) * sizeof(File));
-	file->offsets = (off_t *) repalloc(file->offsets,
-									  (file->numFiles + 1) * sizeof(off_t));
-	file->files[file->numFiles] = pfile;
-	file->offsets[file->numFiles] = 0L;
-	file->numFiles++;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 /*
@@ -345,24 +292,9 @@ BufFileDumpBuffer(BufFile *file, const void* buffer, Size nbytes)
 	{
 		bytestowrite = nbytes - wpos;
 
-<<<<<<< HEAD
-
 		if (FileSeek(file->file, file->offset, SEEK_SET) != file->offset)
 		{
 			elog(ERROR, "could not seek in temporary file: %m");
-=======
-		/*
-		 * Enforce per-file size limit only for temp files, else just try to
-		 * write as much as asked...
-		 */
-		bytestowrite = file->nbytes - wpos;
-		if (file->isTemp)
-		{
-			off_t		availbytes = MAX_PHYSICAL_FILESIZE - file->curOffset;
-
-			if ((off_t) bytestowrite > availbytes)
-				bytestowrite = (int) availbytes;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		}
 
 		wrote = FileWrite(file->file, (char *)buffer + wpos, (int)bytestowrite);
@@ -576,15 +508,10 @@ BufFileFlush(BufFile *file)
 int
 BufFileSeek(BufFile *file, int fileno, off_t offset, int whence)
 {
-<<<<<<< HEAD
 	int64 newOffset;
 
 	/* GPDB doesn't support multiple files */
 	Assert(fileno == 0);
-=======
-	int			newFile;
-	off_t		newOffset;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	switch (whence)
 	{
@@ -596,25 +523,13 @@ BufFileSeek(BufFile *file, int fileno, off_t offset, int whence)
 			newOffset = (file->offset + file->pos) + offset;
 			break;
 
-<<<<<<< HEAD
-=======
-			/*
-			 * Relative seek considers only the signed offset, ignoring
-			 * fileno. Note that large offsets (> 1 gig) risk overflow in this
-			 * add, unless we have 64-bit off_t.
-			 */
-			newFile = file->curFile;
-			newOffset = (file->curOffset + file->pos) + offset;
-			break;
 #ifdef NOT_USED
 		case SEEK_END:
 			/* could be implemented, not needed currently */
 			break;
 #endif
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		default:
-			elog(LOG, "invalid whence: %d", whence);
-			Assert(false);
+			elog(ERROR, "invalid whence: %d", whence);
 			return EOF;
 	}
 
@@ -672,14 +587,7 @@ BufFileTell(BufFile *file, int *fileno, off_t *offset)
 int
 BufFileSeekBlock(BufFile *file, int64 blknum)
 {
-<<<<<<< HEAD
 	return BufFileSeek(file, 0 /* fileno */, blknum * BLCKSZ, SEEK_SET);
-=======
-	return BufFileSeek(file,
-					   (int) (blknum / BUFFILE_SEG_SIZE),
-					   (off_t) (blknum % BUFFILE_SEG_SIZE) * BLCKSZ,
-					   SEEK_SET);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 /*
@@ -695,16 +603,10 @@ BufFileUpdateSize(BufFile *buffile)
 {
 	Assert(NULL != buffile);
 
-<<<<<<< HEAD
 	if (buffile->offset + buffile->pos > buffile->maxoffset)
 	{
 		buffile->maxoffset = buffile->offset + buffile->pos;
 	}
-=======
-	blknum = (file->curOffset + file->pos) / BLCKSZ;
-	blknum += file->curFile * BUFFILE_SEG_SIZE;
-	return blknum;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 /*
