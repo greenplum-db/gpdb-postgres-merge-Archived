@@ -292,12 +292,8 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 	 */
 	PortalDefineQuery(portal,
 					  NULL,
-<<<<<<< HEAD
 					  query_string,
 					  entry->plansource->sourceTag,
-=======
-					  NULL,
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 					  entry->plansource->commandTag,
 					  plan_list,
 					  cplan);
@@ -835,14 +831,7 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 										  prep_stmt->plansource->num_params);
 			values[4] = BoolGetDatum(prep_stmt->from_sql);
 
-<<<<<<< HEAD
-			tuple = heap_form_tuple(tupdesc, values, nulls);
-			tuplestore_puttuple(tupstore, tuple);
-=======
-			/* switch to appropriate context while storing the tuple */
-			MemoryContextSwitchTo(per_query_ctx);
 			tuplestore_putvalues(tupstore, tupdesc, values, nulls);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		}
 	}
 

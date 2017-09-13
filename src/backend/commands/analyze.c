@@ -20,10 +20,7 @@
 #include "access/transam.h"
 #include "access/tuptoaster.h"
 #include "access/xact.h"
-<<<<<<< HEAD
 #include "catalog/heap.h"
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -52,11 +49,8 @@
 #include "utils/pg_rusage.h"
 #include "utils/syscache.h"
 #include "utils/tuplesort.h"
-<<<<<<< HEAD
 #include "utils/tuplesort_mk.h"
-=======
 #include "utils/tqual.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /*
  * To avoid consuming too much memory during analysis and/or too much space
@@ -435,19 +429,7 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 	/*
 	 * Quit if no analyzable columns and no pg_class update needed.
 	 */
-<<<<<<< HEAD
 	if (attr_cnt <= 0 && !analyzableindex && vacstmt->vacuum)
-=======
-	if (attr_cnt <= 0 && !analyzableindex)
-	{
-		/*
-		 * We report that the table is empty; this is just so that the
-		 * autovacuum code doesn't go nuts trying to get stats about a
-		 * zero-column table.
-		 */
-		if (!vacstmt->vacuum)
-			pgstat_report_analyze(onerel, 0, 0);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		goto cleanup;
 
 	/*
@@ -621,7 +603,6 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 
 		/* report results to the stats collector, too */
 		pgstat_report_analyze(onerel, totalrows, totaldeadrows);
-<<<<<<< HEAD
 	}
 
 	/* MPP-6929: metadata tracking */
@@ -638,8 +619,6 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 						   "ANALYZE",
 						   asubtype
 			);
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	}
 
 	/* We skip to here if there were no analyzable columns */
@@ -1102,36 +1081,14 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 					deadrows += 1;
 				continue;
 			}
-<<<<<<< HEAD
-
-			itemid = PageGetItemId(targpage, targoffset);
-
-			/*
-			 * We ignore unused and redirect line pointers.  DEAD line
-			 * pointers should be counted as dead, because we need vacuum
-			 * to run to get rid of them.  Note that this rule agrees with
-			 * the way that heap_page_prune() counts things.
-			 */
-			if (!ItemIdIsNormal(itemid))
-			{
-				if (ItemIdIsDead(itemid))
-					deadrows += 1;
-				continue;
-			}
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 			ItemPointerSet(&targtuple.t_self, targblock, targoffset);
 
 			targtuple.t_data = (HeapTupleHeader) PageGetItem(targpage, itemid);
 			targtuple.t_len = ItemIdGetLength(itemid);
 
-<<<<<<< HEAD
 			switch (HeapTupleSatisfiesVacuum(onerel,
 											 targtuple.t_data,
-=======
-			switch (HeapTupleSatisfiesVacuum(targtuple.t_data,
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 											 OldestXmin,
 											 targbuffer))
 			{
