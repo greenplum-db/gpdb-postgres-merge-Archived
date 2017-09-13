@@ -58,6 +58,7 @@
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/pg_locale.h"
+#include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
