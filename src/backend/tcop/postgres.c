@@ -40,6 +40,8 @@
 #include "rusagestub.h"
 #endif
 
+#include <pthread.h>
+
 #include "access/distributedlog.h"
 #include "access/printtup.h"
 #include "access/xact.h"
@@ -78,13 +80,8 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
-<<<<<<< HEAD
 #include "utils/datum.h"
-#include "utils/debugbreak.h"
-#include "utils/session_state.h"
-=======
 #include "utils/snapmgr.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "mb/pg_wchar.h"
 #include "cdb/cdbvars.h"
 #include "cdb/cdbsrlz.h"
@@ -97,12 +94,14 @@
 #include "utils/guc.h"
 #include "access/twophase.h"
 #include "postmaster/backoff.h"
-#include <pthread.h>
 #include "utils/resource_manager.h"
 #include "pgstat.h"
 #include "executor/nodeFunctionscan.h"
+
 #include "cdb/cdbfilerep.h"
 #include "postmaster/primary_mirror_mode.h"
+#include "utils/debugbreak.h"
+#include "utils/session_state.h"
 #include "utils/vmem_tracker.h"
 
 extern int	optind;
@@ -2593,10 +2592,7 @@ exec_bind_message(StringInfo input_message)
 	PortalDefineQuery(portal,
 					  saved_stmt_name,
 					  query_string,
-<<<<<<< HEAD
 					  psrc->sourceTag,
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 					  psrc->commandTag,
 					  plan_list,
 					  cplan);

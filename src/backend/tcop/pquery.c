@@ -20,30 +20,19 @@
 #include "access/xact.h"
 #include "commands/prepare.h"
 #include "commands/trigger.h"
-#include "cdb/cdbvars.h"
-#include "executor/executor.h"          /* ExecutorStart, ExecutorRun, etc */
 #include "miscadmin.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "utils/memutils.h"
-<<<<<<< HEAD
-#include "utils/resscheduler.h"
-#include "commands/vacuum.h"
-#include "commands/tablecmds.h"
+#include "utils/snapmgr.h"
+
+#include "cdb/ml_ipc.h"
 #include "commands/queue.h"
-#include "utils/lsyscache.h"
-#include "nodes/makefuncs.h"
-#include "utils/acl.h"
-#include "catalog/catalog.h"
+#include "executor/spi.h"
 #include "postmaster/autostats.h"
 #include "postmaster/backoff.h"
-#include "cdb/ml_ipc.h"
-#include "cdb/memquota.h"
-#include "executor/spi.h"
-=======
-#include "utils/snapmgr.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+#include "utils/resscheduler.h"
 
 
 /*
