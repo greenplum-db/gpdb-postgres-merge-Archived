@@ -755,29 +755,29 @@ pg_size_pretty(PG_FUNCTION_ARGS)
 	int64		limit2 = limit * 2 - 1;
 
 	if (size < limit)
-		snprintf(VARDATA(result), 50, INT64_FORMAT " bytes", size);
+		snprintf(buf, sizeof(buf), INT64_FORMAT " bytes", size);
 	else
 	{
 		size >>= 9;				/* keep one extra bit for rounding */
 		if (size < limit2)
-			snprintf(VARDATA(result), 50, INT64_FORMAT " kB",
+			snprintf(buf, sizeof(buf), INT64_FORMAT " kB",
 					 (size + 1) / 2);
 		else
 		{
 			size >>= 10;
 			if (size < limit2)
-				snprintf(VARDATA(result), 50, INT64_FORMAT " MB",
+				snprintf(buf, sizeof(buf), INT64_FORMAT " MB",
 						 (size + 1) / 2);
 			else
 			{
 				size >>= 10;
 				if (size < limit2)
-					snprintf(VARDATA(result), 50, INT64_FORMAT " GB",
+					snprintf(buf, sizeof(buf), INT64_FORMAT " GB",
 							 (size + 1) / 2);
 				else
 				{
 					size >>= 10;
-					snprintf(VARDATA(result), 50, INT64_FORMAT " TB",
+					snprintf(buf, sizeof(buf), INT64_FORMAT " TB",
 							 (size + 1) / 2);
 				}
 			}
