@@ -38,21 +38,18 @@
 #include "access/twophase.h"
 #include "miscadmin.h"
 #include "storage/procarray.h"
-<<<<<<< HEAD
 #include "utils/combocid.h"
+#include "utils/snapmgr.h"
 #include "utils/tqual.h"
-#include "cdb/cdbtm.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
-#include "utils/faultinjector.h"
-#include "utils/sharedsnapshot.h"
-=======
-#include "utils/snapmgr.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 #include "access/xact.h"		/* setting the shared xid */
 
+#include "cdb/cdbtm.h"
 #include "cdb/cdbvars.h"
+#include "utils/faultinjector.h"
+#include "utils/sharedsnapshot.h"
 
 /* Our shared memory area */
 typedef struct ProcArrayStruct

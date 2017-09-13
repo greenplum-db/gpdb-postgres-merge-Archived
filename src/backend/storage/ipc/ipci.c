@@ -51,10 +51,7 @@
 #include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
 #include "storage/procarray.h"
-<<<<<<< HEAD
 #include "storage/procsignal.h"
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "storage/sinvaladt.h"
 #include "storage/spin.h"
 #include "utils/backend_cancel.h"

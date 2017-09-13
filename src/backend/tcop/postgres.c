@@ -1757,11 +1757,7 @@ exec_simple_query(const char *query_string, const char *seqServerHost, int seqSe
 
 		/*
 		 * We don't have to copy anything into the portal, because everything
-<<<<<<< HEAD
 		 * we are passing here is in MessageContext, which will outlive the
-=======
-		 * we are passsing here is in MessageContext, which will outlive the
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		 * portal anyway.
 		 */
 		PortalDefineQuery(portal,
