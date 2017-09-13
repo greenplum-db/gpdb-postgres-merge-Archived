@@ -54,7 +54,6 @@ static int	_SPI_stack_depth = 0;		/* allocated size of _SPI_stack */
 static int	_SPI_connected = -1;
 static int	_SPI_curid = -1;
 
-<<<<<<< HEAD
 static Portal SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 						 Datum *Values, const char *Nulls,
 						 bool read_only, int pflags);
@@ -62,11 +61,6 @@ static Portal SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 static void _SPI_prepare_plan(const char *src, SPIPlanPtr plan,
 				  ParamListInfo boundParams);
 
-=======
-static void _SPI_prepare_plan(const char *src, SPIPlanPtr plan,
-							  ParamListInfo boundParams);
-
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 static int _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				  Snapshot snapshot, Snapshot crosscheck_snapshot,
 				  bool read_only, bool fire_triggers, long tcount);
@@ -75,11 +69,8 @@ static ParamListInfo _SPI_convert_params(int nargs, Oid *argtypes,
 					Datum *Values, const char *Nulls,
 					int pflags);
 
-<<<<<<< HEAD
 static void _SPI_assign_query_mem(QueryDesc *queryDesc);
 
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 static int	_SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, long tcount);
 
 static void _SPI_error_callback(void *arg);
@@ -514,7 +505,6 @@ SPI_execute_with_args(const char *src,
 	plan.nargs = nargs;
 	plan.argtypes = argtypes;
 
-<<<<<<< HEAD
 	/*
 	 * Add this to be compatible with current version of GPDB
 	 *
@@ -524,8 +514,6 @@ SPI_execute_with_args(const char *src,
 	 */
 	plan.plancxt = NULL;
 
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	paramLI = _SPI_convert_params(nargs, argtypes,
 								  Values, Nulls,
 								  PARAM_FLAG_CONST);
@@ -1001,74 +989,6 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 
 
 /*
- * SPI_cursor_open_with_args()
- *
- * Parse and plan a query and open it as a portal.  Like SPI_execute_with_args,
- * we can tell the planner to rely on the parameter values as constants,
- * because the plan will only be used once.
- */
-Portal
-SPI_cursor_open_with_args(const char *name,
-						  const char *src,
-						  int nargs, Oid *argtypes,
-						  Datum *Values, const char *Nulls,
-						  bool read_only, int cursorOptions)
-{
-	Portal		result;
-	_SPI_plan	plan;
-	ParamListInfo paramLI;
-
-	if (src == NULL || nargs < 0)
-		elog(ERROR, "SPI_cursor_open_with_args called with invalid arguments");
-
-	if (nargs > 0 && (argtypes == NULL || Values == NULL))
-		elog(ERROR, "SPI_cursor_open_with_args called with missing parameters");
-
-	SPI_result = _SPI_begin_call(true);
-	if (SPI_result < 0)
-		elog(ERROR, "SPI_cursor_open_with_args called while not connected");
-
-	memset(&plan, 0, sizeof(_SPI_plan));
-	plan.magic = _SPI_PLAN_MAGIC;
-	plan.cursor_options = cursorOptions;
-	plan.nargs = nargs;
-	plan.argtypes = argtypes;
-
-	/*
-	 * Add this to be compatible with current version of GPDB
-	 *
-	 * TODO: Remove it after the related codes are backported
-	 *		 from upstream, e.g. plan.query is to be assigned
-	 *		 in _SPI_prepare_plan
-	 */
-	plan.plancxt = NULL;
-
-	paramLI = _SPI_convert_params(nargs, argtypes,
-								  Values, Nulls,
-								  PARAM_FLAG_CONST);
-
-	_SPI_prepare_plan(src, &plan, paramLI);
-
-	/* We needn't copy the plan; SPI_cursor_open_internal will do so */
-
-	/* Adjust stack so that SPI_cursor_open_internal doesn't complain */
-	_SPI_curid--;
-
-	/* SPI_cursor_open_internal must be called in procedure memory context */
-	_SPI_procmem();
-
-	result = SPI_cursor_open_internal(name, &plan, Values, Nulls,
-									  read_only, PARAM_FLAG_CONST);
-
-	/* And clean up */
-	_SPI_curid++;
-	_SPI_end_call(true);
-
-	return result;
-}
-
-
-/*
  * SPI_cursor_open_internal()
  *
  *	Common code for SPI_cursor_open and SPI_cursor_open_with_args
@@ -1204,10 +1124,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	PortalDefineQuery(portal,
 					  NULL,		/* no statement name */
 					  query_string,
-<<<<<<< HEAD
 					  T_SelectStmt,
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 					  plansource->commandTag,
 					  stmt_list,
 					  cplan);
@@ -1334,21 +1251,28 @@ SPI_cursor_open_with_args(const char *name,
 	plan.nargs = nargs;
 	plan.argtypes = argtypes;
 
+	/*
+	 * Add this to be compatible with current version of GPDB
+	 *
+	 * TODO: Remove it after the related codes are backported
+	 *		 from upstream, e.g. plan.query is to be assigned
+	 *		 in _SPI_prepare_plan
+	 */
+	plan.plancxt = NULL;
+
 	paramLI = _SPI_convert_params(nargs, argtypes,
 								  Values, Nulls,
 								  PARAM_FLAG_CONST);
 
 	_SPI_prepare_plan(src, &plan, paramLI);
 
-	/* We needn't copy the plan; SPI_cursor_open will do so */
+	/* We needn't copy the plan; SPI_cursor_open_internal will do so */
 
-	/* Adjust stack so that SPI_cursor_open doesn't complain */
+	/* Adjust stack so that SPI_cursor_open_internal doesn't complain */
 	_SPI_curid--;
 
-	/* SPI_cursor_open expects to be called in procedure memory context */
+	/* SPI_cursor_open_internal must be called in procedure memory context */
 	_SPI_procmem();
-
-	result = SPI_cursor_open(name, &plan, Values, Nulls, read_only);
 
 	/* And clean up */
 	_SPI_curid++;
@@ -1766,7 +1690,7 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan, ParamListInfo boundParams)
 		/* Need a copyObject here to keep parser from modifying raw tree */
 		stmt_list = pg_analyze_and_rewrite(copyObject(parsetree),
 										   src, argtypes, nargs);
-<<<<<<< HEAD
+
 		{
 			ListCell *lc;
 
@@ -1784,11 +1708,9 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan, ParamListInfo boundParams)
 				}
 			}
 		}
-		stmt_list = pg_plan_queries(stmt_list, cursor_options, NULL, false);
-=======
+
 		stmt_list = pg_plan_queries(stmt_list, cursor_options,
 									boundParams, false);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		plansource = (CachedPlanSource *) palloc0(sizeof(CachedPlanSource));
 		cplan = (CachedPlan *) palloc0(sizeof(CachedPlan));
@@ -1848,10 +1770,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 	{
 		ErrorContextCallback spierrcontext;
 		CachedPlan *cplan = NULL;
-<<<<<<< HEAD
-=======
 		ListCell   *lc1;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		/*
 		 * Setup error traceback support for ereport()
@@ -2124,7 +2043,6 @@ _SPI_convert_params(int nargs, Oid *argtypes,
 	return paramLI;
 }
 
-<<<<<<< HEAD
 /*
  * Assign memory for a query before executing through SPI.
  * There are two possibilities:
@@ -2154,8 +2072,6 @@ _SPI_assign_query_mem(QueryDesc * queryDesc)
 	}
 }
 
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 static int
 _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, long tcount)
 {
@@ -2280,14 +2196,17 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, long tcount)
 		}
 		
 		if (!cdbpathlocus_querysegmentcatalogs)
+		{
 			/* Take care of any queued AFTER triggers */
 			if (fire_triggers)
 				AfterTriggerEndQuery(queryDesc->estate);
+		}
 
 		if (Gp_role == GP_ROLE_DISPATCH)
 			autostats_get_cmdtype(queryDesc, &cmdType, &relationOid);
 
 		ExecutorEnd(queryDesc);
+		/* FreeQueryDesc is done by the caller */
 
 		gp_enable_gpperfmon = orig_gp_enable_gpperfmon;
 
@@ -2302,19 +2221,10 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, long tcount)
 	}
 	PG_END_TRY();
 
-<<<<<<< HEAD
 	_SPI_current->processed = queryDesc->es_processed;	/* Mpp: Dispatched
 														 * queries fill in this
 														 * at Executor End */
 	_SPI_current->lastoid = queryDesc->es_lastoid;
-=======
-	/* Take care of any queued AFTER triggers */
-	if (fire_triggers)
-		AfterTriggerEndQuery(queryDesc->estate);
-
-	ExecutorEnd(queryDesc);
-	/* FreeQueryDesc is done by the caller */
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 #ifdef SPI_EXECUTOR_STATS
 	if (ShowExecutorStats)
