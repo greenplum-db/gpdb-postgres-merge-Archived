@@ -63,6 +63,7 @@
 #include "catalog/pg_type.h"
 #include "access/tuptoaster.h"
 #include "port/atomics.h"
+#include "pg_trace.h"
 
 extern bool gp_debug_resqueue_priority;
 

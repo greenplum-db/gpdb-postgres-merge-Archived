@@ -110,6 +110,7 @@
 #include "lib/stringinfo.h"		/* StringInfo */
 #include "executor/nodeSort.h"	/* gpmon */
 #include "miscadmin.h"
+#include "pg_trace.h"
 #include "utils/datum.h"
 #include "executor/execWorkfile.h"
 #include "utils/logtape.h"
