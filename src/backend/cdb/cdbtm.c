@@ -1484,12 +1484,15 @@ initTM(void)
 				MemoryContextSwitchTo(oldcontext);
 				edata = CopyErrorData();
 
-				elog(LOG, "DTM initialization, caught exception: "
-						  "looking for failed segments.");
-				ereport(LOG,
-						(edata->message ? errmsg("%s", edata->message) : 0,
-						 edata->detail ? errdetail("%s", edata->detail) : 0,
-						 edata->hint ? errhint("%s", edata->hint) : 0));
+				elog(LOG, "DTM initialization, caught exception: looking for failed segments.");
+
+				errstart(LOG, edata->filename, edata->lineno, edata->funcname, edata->domain);
+				errmsg("%s", edata->message);
+				if (edata->detail)
+					errdetail("%s", edata->detail);
+				if (edata->hint)
+					errhint("%s", edata->hint);
+				errfinish(0);
 				FreeErrorData(edata);
 				FlushErrorState();
 
