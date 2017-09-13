@@ -69,7 +69,7 @@
  *	system's file size limit (often 2GBytes).  In order to do that,
  *	we break relations up into "segment" files that are each shorter than
  *	the OS file size limit.  The segment size is set by the RELSEG_SIZE
- *	configuration constant in pg_config_manual.h.
+ *	configuration constant in pg_config.h.
  *
  *	On disk, a relation must consist of consecutively numbered segment
  *	files in the pattern
@@ -101,27 +101,14 @@
  *	segment, we assume that any subsequent segments are inactive.
  *
  *	All MdfdVec objects are palloc'd in the MdCxt memory context.
- *
- *	On platforms that support large files, USE_SEGMENTED_FILES can be
- *	#undef'd to disable the segmentation logic.  In that case each
- *	relation is a single operating-system file.
  */
 
 typedef struct _MdMirVec
 {
-<<<<<<< HEAD
 	MirroredBufferPoolOpen		mdmir_open;
 
 	BlockNumber mdmir_segno;		/* segment number, from 0 */
-#ifndef LET_OS_MANAGE_FILESIZE	/* for large relations */
 	struct _MdMirVec *mdmir_chain;	/* next segment, or NULL */
-=======
-	File		mdfd_vfd;		/* fd number in fd.c's pool */
-	BlockNumber mdfd_segno;		/* segment number, from 0 */
-#ifdef USE_SEGMENTED_FILES
-	struct _MdfdVec *mdfd_chain;	/* next segment, or NULL */
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
-#endif
 } MdMirVec;
 
 static MemoryContext MdCxt;		/* context for all md.c allocations */
@@ -182,16 +169,8 @@ static void register_dirty_segment(SMgrRelation reln, MdMirVec *seg);
 static void register_unlink(RelFileNode rnode);
 static MdMirVec *_mirvec_alloc(void);
 
-<<<<<<< HEAD
-#ifndef LET_OS_MANAGE_FILESIZE
 static MdMirVec *_mdmir_openseg(SMgrRelation reln, BlockNumber segno,
 			  bool createIfDoesntExist);
-=======
-#ifdef USE_SEGMENTED_FILES
-static MdfdVec *_mdfd_openseg(SMgrRelation reln, BlockNumber segno,
-			  int oflags);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
-#endif
 static MdMirVec *_mdmir_getseg(SMgrRelation reln, BlockNumber blkno,
 			  bool isTemp, ExtensionBehavior behavior);
 static BlockNumber _mdnblocks(SMgrRelation reln, MdMirVec *seg);
@@ -804,20 +783,9 @@ mdcreate(
 
 	reln->md_mirvec = _mirvec_alloc();
 
-<<<<<<< HEAD
 	reln->md_mirvec->mdmir_open = mirroredOpen;
 	reln->md_mirvec->mdmir_segno = 0;
-#ifndef LET_OS_MANAGE_FILESIZE
 	reln->md_mirvec->mdmir_chain = NULL;
-=======
-	reln->md_fd = _fdvec_alloc();
-
-	reln->md_fd->mdfd_vfd = fd;
-	reln->md_fd->mdfd_segno = 0;
-#ifdef USE_SEGMENTED_FILES
-	reln->md_fd->mdfd_chain = NULL;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
-#endif
 }
 
 /*
@@ -958,14 +926,8 @@ mdunlink(
 		}
 	}
 
-<<<<<<< HEAD
 	/* second pass perform the drops in reverse order: important for REDO */
 	for(segmentFileNum--; segmentFileNum >= 0; segmentFileNum--)
-=======
-#ifdef USE_SEGMENTED_FILES
-	/* Delete the additional segments, if any */
-	else
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	{
 		MirroredBufferPool_Drop(&rnode, segmentFileNum, relationName, 
 								primaryOnly, isRedo, &primaryError,
@@ -1334,12 +1296,8 @@ mdrmdbdir(
 void
 mdextend(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 {
-<<<<<<< HEAD
-	long		seekpos;
-#ifdef suppress
-=======
 	off_t		seekpos;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+#ifdef suppress
 	int			nbytes;
 #endif
 	MdMirVec    *v;
@@ -1365,12 +1323,9 @@ mdextend(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 
 	v = _mdmir_getseg(reln, blocknum, isTemp, EXTENSION_CREATE);
 
-#ifdef USE_SEGMENTED_FILES
 	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
+
 	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
-#else
-	seekpos = (off_t) BLCKSZ * blocknum;
-#endif
 
 	/*
 	 * Note: because caller usually obtained blocknum by calling mdnblocks,
@@ -1431,9 +1386,7 @@ mdextend(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 	if (!isTemp)
 		register_dirty_segment(reln, v);
 
-#ifdef USE_SEGMENTED_FILES
 	Assert(_mdnblocks(reln, v) <= ((BlockNumber) RELSEG_SIZE));
-#endif
 }
 
 /*
@@ -1513,22 +1466,10 @@ mdopen(SMgrRelation reln, ExtensionBehavior behavior)
 
 	reln->md_mirvec = v = _mirvec_alloc();
 
-<<<<<<< HEAD
 	v->mdmir_open = mirroredOpen;
 	v->mdmir_segno = 0;
-#ifndef LET_OS_MANAGE_FILESIZE
 	v->mdmir_chain = NULL;
 	Assert(_mdnblocks(reln, v) <= ((BlockNumber) RELSEG_SIZE));
-=======
-	reln->md_fd = mdfd = _fdvec_alloc();
-
-	mdfd->mdfd_vfd = fd;
-	mdfd->mdfd_segno = 0;
-#ifdef USE_SEGMENTED_FILES
-	mdfd->mdfd_chain = NULL;
-	Assert(_mdnblocks(reln, mdfd) <= ((BlockNumber) RELSEG_SIZE));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
-#endif
 
 	return v;
 }
@@ -1547,7 +1488,6 @@ mdclose(SMgrRelation reln)
 
 	reln->md_mirvec = NULL;			/* prevent dangling pointer after error */
 
-#ifdef USE_SEGMENTED_FILES
 	while (v != NULL)
 	{
 		MdMirVec    *ov = v;
@@ -1559,11 +1499,6 @@ mdclose(SMgrRelation reln)
 		v = v->mdmir_chain;
 		pfree(ov);
 	}
-#else
-	if (MirroredBufferPool_IsActive(&v->mdmir_open))
-		MirroredBufferPool_Close(&v->mdmir_open);
-	pfree(v);
-#endif
 }
 
 /*
@@ -1578,12 +1513,8 @@ mdread(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 
 	v = _mdmir_getseg(reln, blocknum, false, EXTENSION_FAIL);
 
-#ifdef USE_SEGMENTED_FILES
 	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
 	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
-#else
-	seekpos = (off_t) BLCKSZ * blocknum;
-#endif
 
 	if (MirroredBufferPool_SeekSet(&v->mdmir_open, seekpos) != seekpos)
 		ereport(ERROR,
@@ -1641,14 +1572,8 @@ mdread(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 void
 mdwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 {
-<<<<<<< HEAD
-	long		seekpos;
-	MdMirVec    *v;
-=======
 	off_t		seekpos;
-	int			nbytes;
-	MdfdVec    *v;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+	MdMirVec    *v;
 
 	/* This assert is too expensive to have on normally ... */
 #ifdef CHECK_WRITE_VS_EXTEND
@@ -1657,12 +1582,9 @@ mdwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 
 	v = _mdmir_getseg(reln, blocknum, isTemp, EXTENSION_FAIL);
 
-#ifdef USE_SEGMENTED_FILES
 	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
+
 	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
-#else
-	seekpos = (off_t) BLCKSZ * blocknum;
-#endif
 
 	if (!MirroredBufferPool_Write(
 							&v->mdmir_open,
@@ -1693,8 +1615,6 @@ BlockNumber
 mdnblocks(SMgrRelation reln)
 {
 	MdMirVec    *v = mdopen(reln, EXTENSION_FAIL);
-
-#ifdef USE_SEGMENTED_FILES
 	BlockNumber nblocks;
 	BlockNumber segno = 0;
 
@@ -1752,9 +1672,6 @@ mdnblocks(SMgrRelation reln)
 
 		v = v->mdmir_chain;
 	}
-#else
-	return _mdnblocks(reln, v);
-#endif
 }
 
 /*
@@ -1765,10 +1682,7 @@ mdtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp, bool allowNotFou
 {
 	MdMirVec    *v;
 	BlockNumber curnblk;
-
-#ifdef USE_SEGMENTED_FILES
 	BlockNumber priorblocks;
-#endif
 
 	if (allowNotFound)
 	{
@@ -1803,7 +1717,6 @@ mdtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp, bool allowNotFou
 
 	v = mdopen(reln, EXTENSION_FAIL);
 
-#ifdef USE_SEGMENTED_FILES
 	priorblocks = 0;
 	
 	while (v != NULL)
@@ -1843,11 +1756,7 @@ mdtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp, bool allowNotFou
 			 */
 			BlockNumber lastsegblocks = nblocks - priorblocks;
 
-<<<<<<< HEAD
-			if (!MirroredBufferPool_Truncate(&v->mdmir_open, lastsegblocks * BLCKSZ))
-=======
-			if (FileTruncate(v->mdfd_vfd, (off_t) lastsegblocks * BLCKSZ) < 0)
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+			if (!MirroredBufferPool_Truncate(&v->mdmir_open, (off_t) lastsegblocks * BLCKSZ))
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not truncate relation %u/%u/%u to %u blocks: %m",
@@ -1870,23 +1779,6 @@ mdtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp, bool allowNotFou
 		}
 		priorblocks += RELSEG_SIZE;
 	}
-#else
-<<<<<<< HEAD
-	if (!MirroredBufferPool_Truncate(&v->mdmir_open, nblocks * BLCKSZ))
-=======
-	/* For unsegmented files, it's a lot easier */
-	if (FileTruncate(v->mdfd_vfd, (off_t) nblocks * BLCKSZ) < 0)
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not truncate relation %u/%u/%u to %u blocks: %m",
-						reln->smgr_rnode.spcNode,
-						reln->smgr_rnode.dbNode,
-						reln->smgr_rnode.relNode,
-						nblocks)));
-	if (!isTemp)
-		register_dirty_segment(reln, v);
-#endif
 }
 
 /*
@@ -1908,7 +1800,6 @@ mdimmedsync(SMgrRelation reln)
 	curnblk = mdnblocks(reln);
 	v = mdopen(reln, EXTENSION_FAIL);
 
-#ifdef USE_SEGMENTED_FILES
 	while (v != NULL)
 	{
 		if (!MirroredBufferPool_Flush(&v->mdmir_open))
@@ -1921,15 +1812,6 @@ mdimmedsync(SMgrRelation reln)
 					   reln->smgr_rnode.relNode)));
 		v = v->mdmir_chain;
 	}
-#else
-	if (!MirroredBufferPool_Flush(&v->mdmir_open) < 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not fsync relation %u/%u/%u: %m",
-						reln->smgr_rnode.spcNode,
-						reln->smgr_rnode.dbNode,
-						reln->smgr_rnode.relNode)));
-#endif
 }
 
 /*
@@ -2501,8 +2383,6 @@ _mirvec_alloc(void)
 	return (MdMirVec *) MemoryContextAllocZero(MdCxt, sizeof(MdMirVec));
 }
 
-#ifdef USE_SEGMENTED_FILES
-
 /*
  * Open the specified segment of the relation,
  * and make a MdfdVec object for it.  Returns NULL on failure.
@@ -2568,7 +2448,6 @@ _mdmir_openseg(SMgrRelation reln, BlockNumber segno, bool createIfDoesntExist)
 	/* all done */
 	return v;
 }
-#endif   /* USE_SEGMENTED_FILES */
 
 /*
  *	_mdfd_getseg() -- Find the segment of the relation holding the
@@ -2583,8 +2462,6 @@ _mdmir_getseg(SMgrRelation reln, BlockNumber blkno, bool isTemp,
 			  ExtensionBehavior behavior)
 {
 	MdMirVec    *v = mdopen(reln, behavior);
-
-#ifdef USE_SEGMENTED_FILES
 	BlockNumber targetseg;
 	BlockNumber nextsegno;
 
@@ -2653,7 +2530,6 @@ _mdmir_getseg(SMgrRelation reln, BlockNumber blkno, bool isTemp,
 		}
 		v = v->mdmir_chain;
 	}
-#endif
 
 	return v;
 }
