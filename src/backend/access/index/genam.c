@@ -24,12 +24,9 @@
 #include "access/transam.h"
 #include "miscadmin.h"
 #include "pgstat.h"
-<<<<<<< HEAD
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
-=======
 #include "utils/tqual.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 /* ----------------------------------------------------------------

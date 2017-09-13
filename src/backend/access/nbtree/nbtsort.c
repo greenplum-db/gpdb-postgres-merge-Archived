@@ -161,15 +161,11 @@ _bt_spoolinit(Relation index, bool isunique, bool isdead)
 	 * work_mem.
 	 */
 	btKbytes = isdead ? work_mem : maintenance_work_mem;
-<<<<<<< HEAD
 	if(gp_enable_mk_sort)
 		btspool->sortstate = tuplesort_begin_index_mk(index, isunique, btKbytes, false);
 	else
-		btspool->sortstate = tuplesort_begin_index(index, isunique, btKbytes, false);
-=======
-	btspool->sortstate = tuplesort_begin_index_btree(index, isunique,
+		btspool->sortstate = tuplesort_begin_index_btree(index, isunique,
 													 btKbytes, false);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	return btspool;
 }

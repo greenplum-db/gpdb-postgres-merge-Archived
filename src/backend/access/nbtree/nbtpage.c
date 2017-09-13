@@ -22,18 +22,15 @@
  */
 #include "postgres.h"
 
+#include "access/heapam.h"	/* For RelationFetchGpRelationNodeForXLog. */
 #include "access/nbtree.h"
 #include "access/transam.h"
 #include "miscadmin.h"
 #include "storage/freespace.h"
 #include "storage/lmgr.h"
 #include "utils/inval.h"
-<<<<<<< HEAD
-#include "access/heapam.h"	/* For RelationFetchGpRelationNodeForXLog. */
-=======
 #include "utils/snapmgr.h"
 
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /*
  *	_bt_initmetapage() -- Fill a page buffer with a correct metapage image
