@@ -298,16 +298,9 @@ X509_NAME_to_text(X509_NAME *name)
 											size - 1,
 											PG_UTF8,
 											GetDatabaseEncoding());
-<<<<<<< HEAD
-	outlen = strlen(dp);
-	result = palloc(VARHDRSZ + outlen);
-	memcpy(VARDATA(result), dp, outlen);
-	SET_VARSIZE(result, VARHDRSZ + outlen);
-=======
 	BIO_free(membuf);
 
 	result = cstring_to_text(dp);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	if (dp != sp)
 		pfree(dp);

@@ -163,13 +163,8 @@ page_header(PG_FUNCTION_ARGS)
 	lsn = PageGetLSN(page);
 	snprintf(lsnchar, sizeof(lsnchar), "%X/%X", lsn.xlogid, lsn.xrecoff);
 
-<<<<<<< HEAD
-	values[0] = DirectFunctionCall1(textin, CStringGetDatum(lsnchar));
-	values[1] = UInt16GetDatum(page->pd_checksum);
-=======
 	values[0] = CStringGetTextDatum(lsnchar);
-	values[1] = UInt16GetDatum(PageGetTLI(page));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+	values[1] = UInt16GetDatum(page->pd_checksum);
 	values[2] = UInt16GetDatum(page->pd_flags);
 	values[3] = UInt16GetDatum(page->pd_lower);
 	values[4] = UInt16GetDatum(page->pd_upper);

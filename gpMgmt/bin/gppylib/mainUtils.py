@@ -17,6 +17,7 @@ and try to avoid placing logic for a specific utility here.
 """
 
 import os, sys, signal, errno, yaml
+import traceback
 
 gProgramName = os.path.split(sys.argv[0])[-1]
 if sys.version_info < (2, 5, 0):
@@ -295,7 +296,8 @@ def simple_main_locked(createOptionParserFn, createCommandFn, mainOptions):
             if options.ensure_value("verbose", False):
                 logger.exception("%s failed.  exiting...", gProgramName)
             else:
-                logger.fatal("%s failed. (Reason='%s') exiting..." % (gProgramName, e))
+                stack = traceback.format_exc()
+                logger.fatal("%s failed. (Reason='%s') exiting... \n%s" % (gProgramName, repr(e), stack))
         exit_status = 2
     except KeyboardInterrupt:
         exit_status = 2
