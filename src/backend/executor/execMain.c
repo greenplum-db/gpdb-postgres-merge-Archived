@@ -74,8 +74,10 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
-<<<<<<< HEAD
+#include "utils/tqual.h"
+
 #include "utils/ps_status.h"
+#include "utils/snapmgr.h"
 #include "utils/typcache.h"
 #include "utils/workfile_mgr.h"
 #include "utils/faultinjector.h"
@@ -106,9 +108,6 @@
 #include "cdb/cdbtargeteddispatch.h"
 
 extern bool cdbpathlocus_querysegmentcatalogs;
-=======
-#include "utils/tqual.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 typedef struct evalPlanQual
@@ -122,16 +121,8 @@ typedef struct evalPlanQual
 
 /* decls for local routines only used within this module */
 static void InitPlan(QueryDesc *queryDesc, int eflags);
-<<<<<<< HEAD
-static void initResultRelInfo(ResultRelInfo *resultRelInfo,
-				  Relation resultRelationDesc,
-				  Index resultRelationIndex,
-				  CmdType operation,
-				  bool doInstrument);
 static void ExecCheckPlanOutput(Relation resultRel, List *targetList);
-=======
 static void ExecEndPlan(PlanState *planstate, EState *estate);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 static TupleTableSlot *ExecutePlan(EState *estate, PlanState *planstate,
 			CmdType operation,
 			long numberTuples,
@@ -1437,7 +1428,6 @@ InitializeResultRelations(PlannedStmt *plannedstmt, EState *estate, CmdType oper
 			Relation	resultRelation;
 
 			resultRelationOid = getrelid(resultRelationIndex, rangeTable);
-<<<<<<< HEAD
 			if (operation == CMD_UPDATE || operation == CMD_DELETE)
 			{
 				resultRelation = CdbOpenRelation(resultRelationOid,
@@ -1449,11 +1439,7 @@ InitializeResultRelations(PlannedStmt *plannedstmt, EState *estate, CmdType oper
 			{
 				resultRelation = heap_open(resultRelationOid, lockmode);
 			}
-			initResultRelInfo(resultRelInfo,
-=======
-			resultRelation = heap_open(resultRelationOid, RowExclusiveLock);
 			InitResultRelInfo(resultRelInfo,
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 							  resultRelation,
 							  resultRelationIndex,
 							  operation,
@@ -5243,7 +5229,7 @@ get_part(EState *estate, Datum *values, bool *isnull, TupleDesc tupdesc)
 		estate->es_num_result_relations++;
 
 		resultRelation = heap_open(targetid, RowExclusiveLock);
-		initResultRelInfo(resultRelInfo,
+		InitResultRelInfo(resultRelInfo,
 						  resultRelation,
 						  1,
 						  CMD_INSERT,

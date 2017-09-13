@@ -234,31 +234,17 @@ ExecMaterial(MaterialState *node)
 			return NULL;
 		}
 
-<<<<<<< HEAD
 		Gpmon_Incr_Rows_In(GpmonPktFromMaterialState(node));
 
 		if (tsa)
 			ntuplestore_acc_put_tupleslot(tsa, outerslot);
-=======
-		/*
-		 * Append a copy of the returned tuple to tuplestore.  NOTE: because
-		 * the tuplestore is certainly in EOF state, its read position will
-		 * move forward over the added tuple.  This is what we want.
-		 */
-		if (tuplestorestate)
-			tuplestore_puttupleslot(tuplestorestate, outerslot);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		/*
 		 * We can just return the subplan's returned tuple, without copying.
 		 */
-<<<<<<< HEAD
 		Gpmon_Incr_Rows_Out(GpmonPktFromMaterialState(node));
 		CheckSendPlanStateGpmonPkt(&node->ss.ps);
-		return ExecCopySlot(slot, outerslot);
-=======
 		return outerslot;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	}
 
 

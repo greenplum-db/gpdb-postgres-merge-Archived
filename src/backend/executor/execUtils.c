@@ -53,13 +53,8 @@
 #include "parser/parsetree.h"
 #include "utils/memutils.h"
 #include "utils/relcache.h"
-<<<<<<< HEAD
-#include "utils/workfile_mgr.h"
-=======
 #include "utils/tqual.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
-#include "cdb/cdbvars.h"
 #include "nodes/primnodes.h"
 #include "nodes/execnodes.h"
 
@@ -77,6 +72,7 @@
 #include "nodes/makefuncs.h"
 #include "storage/ipc.h"
 #include "cdb/cdbllize.h"
+#include "utils/workfile_mgr.h"
 
 static void ShutdownExprContext(ExprContext *econtext);
 

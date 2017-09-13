@@ -1197,18 +1197,13 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		 * If the target list is of length 1, and the type of the varnode in
 		 * the target list matches the declared return type, this is okay.
 		 * This can happen, for example, where the body of the function is
-<<<<<<< HEAD
-		 * 'SELECT func2()', where func2 has the same return type as the
-		 * function that's calling it.
+		 * 'SELECT func2()', where func2 has the same composite return type
+		 * as the function that's calling it.
 		 *
 		 * XXX Note that if rettype is RECORD, the IsBinaryCoercible check
 		 * will succeed for any composite restype.  For the moment we rely on
 		 * runtime type checking to catch any discrepancy, but it'd be nice to
 		 * do better at parse time.
-=======
-		 * 'SELECT func2()', where func2 has the same composite return type
-		 * as the function that's calling it.
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		 */
 		if (tlistlen == 1)
 		{
