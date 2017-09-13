@@ -22,16 +22,10 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/transam.h"
-<<<<<<< HEAD
-#include "catalog/pg_appendonly_fn.h"
-#include "catalog/pg_inherits.h"
-#include "catalog/pg_exttable.h"
-#include "commands/tablecmds.h"
-=======
 #include "catalog/catalog.h"
 #include "catalog/pg_inherits.h"
 #include "miscadmin.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+#include "commands/tablecmds.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/plancat.h"
@@ -46,14 +40,12 @@
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
-<<<<<<< HEAD
-#include "catalog/catalog.h"
-#include "miscadmin.h"
+#include "utils/tqual.h"
+
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbrelsize.h"
-=======
-#include "utils/tqual.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+#include "catalog/pg_appendonly_fn.h"
+#include "catalog/pg_exttable.h"
 
 
 /* GUC parameter */
