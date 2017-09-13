@@ -838,7 +838,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		{
 			old_value = toast_values[i];
 			toast_action[i] = 'p';
-			toast_values[i] = toast_save_datum(rel, toast_values[i],
+			toast_values[i] = toast_save_datum(rel, toast_values[i], isFrozen,
 											   use_wal, use_fsm);
 			if (toast_free[i])
 				pfree(DatumGetPointer(old_value));
