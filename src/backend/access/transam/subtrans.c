@@ -31,12 +31,9 @@
 #include "access/slru.h"
 #include "access/subtrans.h"
 #include "access/transam.h"
-<<<<<<< HEAD
+#include "utils/snapmgr.h"
 #include "utils/tqual.h"
 #include "cdb/cdbpersistentstore.h"
-=======
-#include "utils/snapmgr.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 /*

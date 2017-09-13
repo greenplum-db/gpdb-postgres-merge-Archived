@@ -25,9 +25,6 @@
 #include "access/subtrans.h"
 #include "access/transam.h"
 #include "access/twophase.h"
-#include "cdb/cdblocaldistribxact.h"
-#include "cdb/cdbdistributedsnapshot.h"
-#include "cdb/cdbtm.h"
 #include "access/xlogutils.h"
 #include "access/fileam.h"
 #include "catalog/namespace.h"
@@ -56,22 +53,20 @@
 #include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/relcache.h"
-<<<<<<< HEAD
 #include "utils/resource_manager.h"
 #include "utils/sharedsnapshot.h"
-#include "access/distributedlog.h"
 #include "access/clog.h"
-#include "utils/vmem_tracker.h"
-=======
 #include "utils/snapmgr.h"
-#include "utils/xml.h"
 #include "pg_trace.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
+#include "access/distributedlog.h"
+#include "cdb/cdbdistributedsnapshot.h"
 #include "cdb/cdbgang.h"
-#include "cdb/cdbvars.h" /* Gp_role, Gp_is_writer, interconnect_setup_timeout */
-
+#include "cdb/cdblocaldistribxact.h"
 #include "cdb/cdbpersistentstore.h"
+#include "cdb/cdbtm.h"
+#include "cdb/cdbvars.h" /* Gp_role, Gp_is_writer, interconnect_setup_timeout */
+#include "utils/vmem_tracker.h"
 
 /*
  *	User-tweakable parameters
@@ -851,7 +846,6 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
     if (DistributedTransactionContext == DTX_CONTEXT_QE_READER ||
 		DistributedTransactionContext == DTX_CONTEXT_QE_ENTRY_DB_SINGLETON)
 	{
-<<<<<<< HEAD
 		isCurrentTransactionId = IsCurrentTransactionIdForReader(xid);
 
 		ereport((Debug_print_full_dtm ? LOG : DEBUG5),
@@ -859,33 +853,6 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 						xid, (isCurrentTransactionId ? "true" : "false"))));
 
 		return isCurrentTransactionId;
-=======
-		int low, high;
-
-		if (s->state == TRANS_ABORT)
-			continue;
-		if (!TransactionIdIsValid(s->transactionId))
-			continue;			/* it can't have any child XIDs either */
-		if (TransactionIdEquals(xid, s->transactionId))
-			return true;
-		/* As the childXids array is ordered, we can use binary search */
-		low = 0;
-		high = s->nChildXids - 1;
-		while (low <= high)
-		{
-			int				middle;
-			TransactionId	probe;
-
-			middle = low + (high - low) / 2;
-			probe = s->childXids[middle];
-			if (TransactionIdEquals(probe, xid))
-				return true;
-			else if (TransactionIdPrecedes(probe, xid))
-				low = middle + 1;
-			else
-				high = middle - 1;
-		}
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	}
 
 	/* we aren't a reader */
@@ -1496,20 +1463,12 @@ RecordTransactionCommit(void)
 	XactLastRecEnd.xrecoff = 0;
 
 cleanup:
-<<<<<<< HEAD
 	/* And clean up local data */
 
 	// UNDONE: Free storage in persistentCommitObjects...
 
 	if (persistentCommitBuffer != NULL)
 		pfree(persistentCommitBuffer);
-	if (children)
-		pfree(children);
-=======
-	/* Clean up local data */
-	if (rels)
-		pfree(rels);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	return latestXid;
 }
@@ -1921,13 +1880,8 @@ RecordTransactionAbort(bool isSubXact)
 		WalSndWakeup();
 
 	/* And clean up local data */
-<<<<<<< HEAD
 	if (persistentAbortBuffer != 0)
 		pfree(persistentAbortBuffer);
-=======
-	if (rels)
-		pfree(rels);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	return latestXid;
 }
@@ -2539,15 +2493,9 @@ StartTransaction(void)
 	s->childXids = NULL;
 	s->nChildXids = 0;
 	s->maxChildXids = 0;
-<<<<<<< HEAD
 	GetUserIdAndSecContext(&s->prevUser, &s->prevSecContext);
 	/* SecurityRestrictionContext should never be set outside a transaction */
 	Assert(s->prevSecContext == 0);
-=======
-	GetUserIdAndContext(&s->prevUser, &s->prevSecDefCxt);
-	/* SecurityDefinerContext should never be set outside a transaction */
-	Assert(!s->prevSecDefCxt);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * initialize other subsystems for new transaction
@@ -2879,10 +2827,7 @@ CommitTransaction(void)
 	s->childXids = NULL;
 	s->nChildXids = 0;
 	s->maxChildXids = 0;
-<<<<<<< HEAD
 	s->executorSaysXactDoesWrites = false;
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * done with commit processing, set current transaction state back to
@@ -3173,10 +3118,7 @@ PrepareTransaction(void)
 	s->childXids = NULL;
 	s->nChildXids = 0;
 	s->maxChildXids = 0;
-<<<<<<< HEAD
 	s->executorSaysXactDoesWrites = false;
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * done with 1st phase commit processing, set current transaction state
@@ -3441,10 +3383,7 @@ CleanupTransaction(void)
 	s->childXids = NULL;
 	s->nChildXids = 0;
 	s->maxChildXids = 0;
-<<<<<<< HEAD
 	s->executorSaysXactDoesWrites = false;
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * done with abort processing, set current transaction state back to

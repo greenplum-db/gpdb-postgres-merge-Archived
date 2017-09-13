@@ -88,6 +88,7 @@
 #include "cdb/cdbresynchronizechangetracking.h"
 #include "cdb/cdbpersistentfilesysobj.h"
 #include "cdb/cdbpersistentcheck.h"
+#include "utils/snapmgr.h"
 
 extern uint32 bootstrap_data_checksum_version;
 
@@ -10175,13 +10176,8 @@ issue_xlog_fsync(int fd, uint32 log, uint32 seg)
 XLogRecPtr
 do_pg_start_backup(const char *backupidstr, bool fast, char **labelfile)
 {
-<<<<<<< HEAD
 	bool		exclusive = (labelfile == NULL);
 	bool		backup_started_in_recovery = false;
-=======
-	text	   *backupid = PG_GETARG_TEXT_P(0);
-	char	   *backupidstr;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	XLogRecPtr	checkpointloc;
 	XLogRecPtr	startpoint;
 	pg_time_t	stamp_time;
@@ -10203,24 +10199,9 @@ do_pg_start_backup(const char *backupidstr, bool fast, char **labelfile)
 
 	if (strlen(backupidstr) > MAXPGPATH)
 		ereport(ERROR,
-<<<<<<< HEAD
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("backup label too long (max %d bytes)",
 						MAXPGPATH)));
-=======
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("WAL archiving is not active"),
-				 errhint("archive_mode must be enabled at server start.")));
-
-	if (!XLogArchiveCommandSet())
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("WAL archiving is not active"),
-				 errhint("archive_command must be defined before "
-						 "online backups can be made safely.")));
-
-	backupidstr = text_to_cstring(backupid);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * Mark backup active in shared memory.  We must do full-page WAL writes
@@ -10420,7 +10401,6 @@ do_pg_start_backup(const char *backupidstr, bool fast, char **labelfile)
 	/*
 	 * We're done.  As a convenience, return the starting WAL location.
 	 */
-<<<<<<< HEAD
 	return startpoint;
 }
 
@@ -10449,11 +10429,6 @@ pg_start_backup_callback(int code, Datum arg)
 		XLogCtl->Insert.forcePageWrites = false;
 	}
 	LWLockRelease(WALInsertLock);
-=======
-	snprintf(xlogfilename, sizeof(xlogfilename), "%X/%X",
-			 startpoint.xlogid, startpoint.xrecoff);
-	PG_RETURN_TEXT_P(cstring_to_text(xlogfilename));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 /*
@@ -10466,11 +10441,8 @@ pg_start_backup_callback(int code, Datum arg)
 XLogRecPtr
 do_pg_stop_backup(char *labelfile)
 {
-<<<<<<< HEAD
 	bool		exclusive = (labelfile == NULL);
 	bool		backup_started_in_recovery = false;
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	XLogRecPtr	startpoint;
 	XLogRecPtr	stoppoint;
 	XLogRecData rdata;
@@ -10485,17 +10457,13 @@ do_pg_stop_backup(char *labelfile)
 	FILE	   *lfp;
 	FILE	   *fp;
 	char		ch;
-<<<<<<< HEAD
+	int			seconds_before_warning;
+	int			waits = 0;
 	char	   *remaining;
 	char	   *ptr;
 
 	/* Currently backup during recovery not supported */
 	backup_started_in_recovery = false;
-=======
-	int			ich;
-	int			seconds_before_warning;
-	int			waits = 0;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	if (!superuser())
 		ereport(ERROR,
@@ -10699,13 +10667,7 @@ do_pg_stop_backup(char *labelfile)
 	/*
 	 * We're done.  As a convenience, return the ending WAL location.
 	 */
-<<<<<<< HEAD
 	return stoppoint;
-=======
-	snprintf(stopxlogfilename, sizeof(stopxlogfilename), "%X/%X",
-			 stoppoint.xlogid, stoppoint.xrecoff);
-	PG_RETURN_TEXT_P(cstring_to_text(stopxlogfilename));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 /*

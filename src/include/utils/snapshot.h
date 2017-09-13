@@ -15,6 +15,7 @@
 
 #include "access/htup.h"
 #include "storage/buf.h"
+#include "utils/rel.h"
 
 #include "cdb/cdbdistributedsnapshot.h"  /* DistributedSnapshotWithLocalMapping */
 
