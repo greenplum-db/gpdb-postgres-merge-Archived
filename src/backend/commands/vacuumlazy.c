@@ -76,6 +76,7 @@
 #include "cdb/cdbpersistentfilesysobj.h"
 #include "storage/smgr.h"
 #include "utils/faultinjector.h"
+#include "utils/snapmgr.h"
 
 
 /*

@@ -263,17 +263,11 @@ static BufferAccessStrategy vac_strategy;
 /* non-export function prototypes */
 static List *get_rel_oids(List *relids, VacuumStmt *vacstmt, bool isVacuum);
 static void vac_truncate_clog(TransactionId frozenXID);
-<<<<<<< HEAD
 static void vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_stats,
 		   bool for_wraparound);
 static bool full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt, List *updated_stats);
 static void scan_heap_for_truncate(VRelStats *vacrelstats, Relation onerel,
 		  VacPageList vacuum_pages);
-=======
-static void vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
-					   bool for_wraparound);
-static void full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 static void scan_heap(VRelStats *vacrelstats, Relation onerel,
 		  VacPageList vacuum_pages, VacPageList fraged_pages);
 static bool repair_frag(VRelStats *vacrelstats, Relation onerel,
@@ -522,7 +516,6 @@ vacuum(VacuumStmt *vacstmt, List *relids,
 			vacstmt->appendonly_relation_empty = false;
 		}
 
-<<<<<<< HEAD
 		if (vacstmt->vacuum)
 		{
 			/*
@@ -546,10 +539,6 @@ vacuum(VacuumStmt *vacstmt, List *relids,
 				ereport(NOTICE,
 						(errmsg("there are no partitioned tables in database to ANALYZE ROOTPARTITION")));
 			}
-=======
-			if (vacstmt->vacuum)
-				vacuum_rel(relid, vacstmt, RELKIND_RELATION, for_wraparound);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 			/*
 			 * Loop to process each selected relation which needs to be analyzed.
@@ -2082,11 +2071,7 @@ vac_truncate_clog(TransactionId frozenXID)
  *		us to lock the entire database during one pass of the vacuum cleaner.
  */
 static void
-<<<<<<< HEAD
 vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_stats,
-=======
-vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		   bool for_wraparound)
 {
 	Oid			toast_relid;
@@ -2094,53 +2079,9 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
 	Oid         aoblkdir_relid = InvalidOid;
 	Oid         aovisimap_relid = InvalidOid;
 	Oid			save_userid;
-<<<<<<< HEAD
 	int			save_sec_context;
 	int			save_nestlevel;
 	bool		heldoff;
-=======
-	bool		save_secdefcxt;
-
-	/* Begin a transaction for vacuuming this relation */
-	StartTransactionCommand();
-
-	if (vacstmt->full)
-	{
-		/* functions in indexes may want a snapshot set */
-		ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
-	}
-	else
-	{
-		/*
-		 * During a lazy VACUUM we do not run any user-supplied functions, and
-		 * so it should be safe to not create a transaction snapshot.
-		 *
-		 * We can furthermore set the PROC_IN_VACUUM flag, which lets other
-		 * concurrent VACUUMs know that they can ignore this one while
-		 * determining their OldestXmin.  (The reason we don't set it during a
-		 * full VACUUM is exactly that we may have to run user- defined
-		 * functions for functional indexes, and we want to make sure that if
-		 * they use the snapshot set above, any tuples it requires can't get
-		 * removed from other tables.  An index function that depends on the
-		 * contents of other tables is arguably broken, but we won't break it
-		 * here by violating transaction semantics.)
-		 *
-		 * We also set the VACUUM_FOR_WRAPAROUND flag, which is passed down
-		 * by autovacuum; it's used to avoid cancelling a vacuum that was
-		 * invoked in an emergency.
-		 *
-		 * Note: this flag remains set until CommitTransaction or
-		 * AbortTransaction.  We don't want to clear it until we reset
-		 * MyProc->xid/xmin, else OldestXmin might appear to go backwards,
-		 * which is probably Not Good.
-		 */
-		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
-		MyProc->vacuumFlags |= PROC_IN_VACUUM;
-		if (for_wraparound)
-			MyProc->vacuumFlags |= PROC_VACUUM_FOR_WRAPAROUND;
-		LWLockRelease(ProcArrayLock);
-	}
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * Check for user-requested abort.	Note we want this to be inside a
@@ -2198,7 +2139,6 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
 	 * cleanup phase when it's AO table or in prepare phase if it's an
 	 * empty AO table.
 	 */
-<<<<<<< HEAD
 	if ((RelationIsHeap(onerel) && toast_relid != InvalidOid) ||
 		(!RelationIsHeap(onerel) && (
 				vacstmt->appendonly_compaction_vacuum_cleanup ||
@@ -2214,10 +2154,6 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
 			relation_close(toast_rel, NoLock);
 		}
 	}
-=======
-	if (toast_relid != InvalidOid)
-		vacuum_rel(toast_relid, vacstmt, RELKIND_TOASTVALUE, for_wraparound);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * If an AO/CO table is empty on a segment,
