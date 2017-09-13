@@ -600,6 +600,29 @@ static void addOneOption(StringInfo string, struct config_generic * guc)
 		}
 		break;
 	}
+	case PGC_ENUM:
+	{
+		struct config_enum *eguc = (struct config_enum *) guc;
+		int			value = *eguc->variable;
+		const char *str = config_enum_lookup_by_value(eguc, value);
+		int			i;
+
+		appendStringInfo(string, " -c %s=", guc->name);
+
+		/*
+		 * All whitespace characters must be escaped. See pg_split_opts() in
+		 * the backend. (Not sure if an enum value can have whitespace, but
+		 * let's be prepared.)
+		 */
+		for (i = 0; str[i] != '\0'; i++)
+		{
+			if (isspace((unsigned char) str[i]))
+				appendStringInfoChar(string, '\\');
+
+			appendStringInfoChar(string, str[i]);
+		}
+		break;
+	}
 	default:
 		Insist(false);
 	}
