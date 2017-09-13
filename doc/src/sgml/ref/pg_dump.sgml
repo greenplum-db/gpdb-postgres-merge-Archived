@@ -298,21 +298,6 @@ PostgreSQL documentation
        <para>
         This option has been deprecated.
        </para>
-
-<<<<<<< HEAD
-=======
-       <para>
-        By default, <application>pg_dump</> will refuse to attempt
-        to dump from a server that is of a newer <productname>PostgreSQL</>
-        version than <application>pg_dump</application> is.  It will also
-        refuse to attempt to dump from a server that is older than the oldest
-        supported version (currently, 7.0).  The <option>-i</> option
-        overrides this check and forces a dump to be attempted anyway.
-        This option is <emphasis>deprecated</> because the dump is very
-        likely to fail &mdash; or worse, seem to succeed but be wrong or
-        incomplete.
-       </para>
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
       </listitem>
      </varlistentry>
 

@@ -195,12 +195,7 @@
       <term><option>--ignore-version</option></term>
       <listitem>
        <para>
-<<<<<<< HEAD
         This option has been deprecated.
-=======
-        Ignore version mismatch between
-        <application>pg_restore</application> and the database server.
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
        </para>
       </listitem>
      </varlistentry>

@@ -156,24 +156,7 @@ PostgreSQL documentation
       <term><option>--ignore-version</></term>
       <listitem>
        <para>
-<<<<<<< HEAD
 	    This option has been deprecated.
-=======
-        Ignore version mismatch between
-        <application>pg_dumpall</application> and the database server.
-       </para>
-
-       <para>
-        By default, <application>pg_dumpall</> will refuse to attempt
-        to dump from a server that is of a newer <productname>PostgreSQL</>
-        version than <application>pg_dumpall</application> is.  It will also
-        refuse to attempt to dump from a server that is older than the oldest
-        supported version (currently, 7.0).  The <option>-i</> option
-        overrides this check and forces a dump to be attempted anyway.
-        This option is <emphasis>deprecated</> because the dump is very
-        likely to fail &mdash; or worse, seem to succeed but be wrong or
-        incomplete.
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
        </para>
       </listitem>
      </varlistentry>
@@ -213,13 +196,16 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-<<<<<<< HEAD
       <term><option>--resource-queues</option></term>
       <listitem>
        <para>
         Dump <literal>resource queues</literal> and <literal>role</literal>
         to <literal>resource queue</literal> associations. 
-=======
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--no-tablespaces</option></term>
       <listitem>
        <para>
@@ -227,16 +213,11 @@ PostgreSQL documentation
         for objects.
         With this option, all objects will be created in whichever
         tablespace is the default during restore.
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-<<<<<<< HEAD
-=======
-      <term><option>-r</option></term>
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
       <term><option>--roles-only</option></term>
       <listitem>
        <para>
