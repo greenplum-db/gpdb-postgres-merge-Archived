@@ -499,38 +499,25 @@ rmtree(const char *path, bool rmtopdir)
 }
 
 
-<<<<<<< HEAD
 #if defined(WIN32) && !defined(__CYGWIN__)
 
 #undef stat
 
-=======
-#ifdef WIN32
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 /*
  * The stat() function in win32 is not guaranteed to update the st_size
  * field when run. So we define our own version that uses the Win32 API
  * to update this field.
  */
-<<<<<<< HEAD
 int
 pgwin32_safestat(const char *path, struct stat *buf)
 {
 	int			r;
-=======
-#undef stat
-int 
-pgwin32_safestat(const char *path, struct stat *buf)
-{
-	int r;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	WIN32_FILE_ATTRIBUTE_DATA attr;
 
 	r = stat(path, buf);
 	if (r < 0)
 		return r;
 
-<<<<<<< HEAD
 	// MPP-24774: just return if path refer to a windows named pipe file.
 	// no need to get size of a windows named pipe file
 	if (strlen(path) >2)
@@ -541,8 +528,6 @@ pgwin32_safestat(const char *path, struct stat *buf)
 		}
 	}
 
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	if (!GetFileAttributesEx(path, GetFileExInfoStandard, &attr))
 	{
 		_dosmaperr(GetLastError());
@@ -557,8 +542,5 @@ pgwin32_safestat(const char *path, struct stat *buf)
 
 	return 0;
 }
-<<<<<<< HEAD
 
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #endif
