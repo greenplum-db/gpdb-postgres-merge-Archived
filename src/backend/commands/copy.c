@@ -51,16 +51,13 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
-<<<<<<< HEAD
-#include "utils/resscheduler.h"
-=======
 #include "utils/snapmgr.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 #include "cdb/cdbvars.h"
 #include "cdb/cdbcopy.h"
 #include "cdb/cdbsreh.h"
 #include "postmaster/autostats.h"
+#include "utils/resscheduler.h"
 
 /* DestReceiver for COPY (SELECT) TO */
 typedef struct

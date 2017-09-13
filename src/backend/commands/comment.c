@@ -58,12 +58,10 @@
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
-<<<<<<< HEAD
+#include "utils/tqual.h"
+
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
-=======
-#include "utils/tqual.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 /*

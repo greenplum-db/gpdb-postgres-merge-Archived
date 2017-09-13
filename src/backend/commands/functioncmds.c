@@ -42,11 +42,8 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
-<<<<<<< HEAD
 #include "catalog/pg_proc_callback.h"
-=======
 #include "catalog/pg_proc_fn.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "catalog/pg_type.h"
 #include "catalog/pg_type_fn.h"
 #include "commands/defrem.h"
@@ -63,12 +60,10 @@
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-<<<<<<< HEAD
+#include "utils/tqual.h"
+
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
-=======
-#include "utils/tqual.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 static void AlterFunctionOwner_internal(Relation rel, HeapTuple tup,

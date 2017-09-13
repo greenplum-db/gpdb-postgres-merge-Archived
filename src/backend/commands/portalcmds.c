@@ -31,15 +31,12 @@
 #include "executor/tstoreReceiver.h"
 #include "tcop/pquery.h"
 #include "utils/memutils.h"
-<<<<<<< HEAD
-#include "utils/resscheduler.h"
+#include "utils/snapmgr.h"
 
 #include "cdb/cdbgang.h"
 #include "cdb/cdbvars.h"
 #include "postmaster/backoff.h"
-=======
-#include "utils/snapmgr.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+#include "utils/resscheduler.h"
 
 
 /*

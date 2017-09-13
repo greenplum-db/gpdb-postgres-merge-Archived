@@ -70,15 +70,12 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/pg_rusage.h"
-<<<<<<< HEAD
-#include "utils/faultinjector.h"
-#include "storage/smgr.h"
+#include "utils/tqual.h"
 
 #include "cdb/cdbvars.h"
 #include "cdb/cdbpersistentfilesysobj.h"
-=======
-#include "utils/tqual.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+#include "storage/smgr.h"
+#include "utils/faultinjector.h"
 
 
 /*

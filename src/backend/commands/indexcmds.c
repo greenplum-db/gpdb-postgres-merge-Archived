@@ -53,11 +53,7 @@
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
-<<<<<<< HEAD
-#include "utils/faultinjector.h"
-=======
 #include "utils/tqual.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 #include "cdb/cdbcat.h"
 #include "cdb/cdbdisp_query.h"
@@ -67,6 +63,7 @@
 #include "cdb/cdbsrlz.h"
 #include "cdb/cdbvars.h"
 #include "gp-libpq-fe.h"
+#include "utils/faultinjector.h"
 
 /* non-export function prototypes */
 static void CheckPredicate(Expr *predicate);

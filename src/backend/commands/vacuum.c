@@ -76,15 +76,13 @@
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
-<<<<<<< HEAD
-#include "pgstat.h"
+#include "utils/tqual.h"
+
 #include "access/distributedlog.h"
-#include "nodes/makefuncs.h"     /* makeRangeVar */
 #include "gp-libpq-fe.h"
 #include "gp-libpq-int.h"
-=======
-#include "utils/tqual.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+#include "nodes/makefuncs.h"     /* makeRangeVar */
+#include "pgstat.h"
 
 
 /*
