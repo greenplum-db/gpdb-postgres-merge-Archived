@@ -37,10 +37,10 @@
 #include "utils/json.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"             /* AllocSetContextCreate() */
-#include "utils/resscheduler.h"
+#include "utils/snapmgr.h"
 #include "utils/tuplesort.h"
-<<<<<<< HEAD
 #include "utils/tuplesort_mk.h"
+
 #include "cdb/cdbdisp.h"                /* CheckDispatchResult() */
 #include "cdb/cdbexplain.h"             /* cdbexplain_recvExecStats */
 #include "cdb/cdbpartition.h"
@@ -50,14 +50,12 @@
 #include "cdb/cdbpathlocus.h"
 #include "cdb/memquota.h"
 #include "miscadmin.h"
+#include "utils/resscheduler.h"
 
 #ifdef USE_ORCA
 extern char *SzDXLPlan(Query *parse);
 extern const char *OptVersion();
 #endif
-=======
-#include "utils/snapmgr.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 /* Hook for plugins to get control in ExplainOneQuery() */

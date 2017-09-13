@@ -40,14 +40,11 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_trigger.h"
-#include "catalog/pg_type.h"
-<<<<<<< HEAD
 #include "catalog/pg_tablespace.h"
+#include "catalog/pg_type.h"
+#include "catalog/pg_type_fn.h"
 #include "catalog/pg_partition.h"
 #include "catalog/pg_partition_rule.h"
-=======
-#include "catalog/pg_type_fn.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "catalog/toasting.h"
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbaocsam.h"
