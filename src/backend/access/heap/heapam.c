@@ -1783,46 +1783,8 @@ heap_fetch(Relation relation,
 		   bool keep_buf,
 		   Relation stats_relation)
 {
-<<<<<<< HEAD
-	MIRROREDLOCK_BUFMGR_VERIFY_NO_LOCK_LEAK_DECLARE;
-
-	bool result;
-
-	MIRROREDLOCK_BUFMGR_VERIFY_NO_LOCK_LEAK_ENTER;
-
-	/* Assume *userbuf is undefined on entry */
-	*userbuf = InvalidBuffer;
-	result = heap_release_fetch(relation, snapshot, tuple,
-							  userbuf, keep_buf, stats_relation);
-
-
-	MIRROREDLOCK_BUFMGR_VERIFY_NO_LOCK_LEAK_EXIT;
-
-	return result;
-}
-
-/*
- *	heap_release_fetch		- retrieve tuple with given tid
- *
- * This has the same API as heap_fetch except that if *userbuf is not
- * InvalidBuffer on entry, that buffer will be released before reading
- * the new page.  This saves a separate ReleaseBuffer step and hence
- * one entry into the bufmgr when looping through multiple fetches.
- * Also, if *userbuf is the same buffer that holds the target tuple,
- * we avoid bufmgr manipulation altogether.
- */
-bool
-heap_release_fetch(Relation relation,
-				   Snapshot snapshot,
-				   HeapTuple tuple,
-				   Buffer *userbuf,
-				   bool keep_buf,
-				   Relation stats_relation)
-{
 	MIRROREDLOCK_BUFMGR_DECLARE;
 
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	ItemPointer tid = &(tuple->t_self);
 	ItemId		lp;
 	Buffer		buffer;
@@ -1833,16 +1795,11 @@ heap_release_fetch(Relation relation,
 	/*
 	 * Fetch and pin the appropriate page of the relation.
 	 */
-<<<<<<< HEAD
 	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-	buffer = ReleaseAndReadBuffer(*userbuf, relation,
-								  ItemPointerGetBlockNumber(tid));
-=======
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * Need share lock on buffer to examine tuple commit status.
