@@ -22,11 +22,8 @@
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
 #include "catalog/pg_type_encoding.h"
-=======
 #include "catalog/pg_type_fn.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "commands/typecmds.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"

@@ -58,12 +58,7 @@
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
-#include "cdb/cdbpartition.h"
-#include "cdb/cdbsreh.h"
-=======
 #include "catalog/pg_type_fn.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "commands/tablecmds.h"
 #include "commands/typecmds.h"
 #include "miscadmin.h"
@@ -83,11 +78,12 @@
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
-#include "cdb/cdbvars.h"
-
+#include "catalog/gp_persistent.h"
 #include "cdb/cdbmirroredfilesysobj.h"
 #include "cdb/cdbpersistentfilesysobj.h"
-#include "catalog/gp_persistent.h"
+#include "cdb/cdbpartition.h"
+#include "cdb/cdbsreh.h"
+#include "cdb/cdbvars.h"
 
 #include "utils/guc.h"
 

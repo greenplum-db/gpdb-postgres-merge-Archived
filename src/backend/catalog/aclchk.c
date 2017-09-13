@@ -49,13 +49,11 @@
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-<<<<<<< HEAD
+#include "utils/tqual.h"
+
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbpartition.h"
 #include "cdb/cdbvars.h"
-=======
-#include "utils/tqual.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 
 static void ExecGrant_Relation(InternalGrant *grantStmt);
@@ -299,7 +297,6 @@ ExecuteGrantStmt(GrantStmt *stmt)
 				{
 					PartitionNode *pn = RelationBuildPartitionDesc(rel, false);
 
-<<<<<<< HEAD
 					a = all_partition_relids(pn);
 					if (a)
 						added_objs = true;
@@ -326,52 +323,6 @@ ExecuteGrantStmt(GrantStmt *stmt)
 				objs = lappend_oid(objs, relid);
 		}
 		istmt.objects = objs;
-=======
-	/*
-	 * Convert stmt->privileges, a textual list, into an AclMode bitmask.
-	 */
-	switch (stmt->objtype)
-	{
-			/*
-			 * Because this might be a sequence, we test both relation and
-			 * sequence bits, and later do a more limited test when we know
-			 * the object type.
-			 */
-		case ACL_OBJECT_RELATION:
-			all_privileges = ACL_ALL_RIGHTS_RELATION | ACL_ALL_RIGHTS_SEQUENCE;
-			errormsg = gettext_noop("invalid privilege type %s for relation");
-			break;
-		case ACL_OBJECT_SEQUENCE:
-			all_privileges = ACL_ALL_RIGHTS_SEQUENCE;
-			errormsg = gettext_noop("invalid privilege type %s for sequence");
-			break;
-		case ACL_OBJECT_DATABASE:
-			all_privileges = ACL_ALL_RIGHTS_DATABASE;
-			errormsg = gettext_noop("invalid privilege type %s for database");
-			break;
-		case ACL_OBJECT_FUNCTION:
-			all_privileges = ACL_ALL_RIGHTS_FUNCTION;
-			errormsg = gettext_noop("invalid privilege type %s for function");
-			break;
-		case ACL_OBJECT_LANGUAGE:
-			all_privileges = ACL_ALL_RIGHTS_LANGUAGE;
-			errormsg = gettext_noop("invalid privilege type %s for language");
-			break;
-		case ACL_OBJECT_NAMESPACE:
-			all_privileges = ACL_ALL_RIGHTS_NAMESPACE;
-			errormsg = gettext_noop("invalid privilege type %s for schema");
-			break;
-		case ACL_OBJECT_TABLESPACE:
-			all_privileges = ACL_ALL_RIGHTS_TABLESPACE;
-			errormsg = gettext_noop("invalid privilege type %s for tablespace");
-			break;
-		default:
-			/* keep compiler quiet */
-			all_privileges = ACL_NO_RIGHTS;
-			errormsg = NULL;
-			elog(ERROR, "unrecognized GrantStmt.objtype: %d",
-				 (int) stmt->objtype);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	}
 
 	/* If we're dispatching, put the objects back in into the parse tree */
@@ -396,7 +347,6 @@ ExecuteGrantStmt(GrantStmt *stmt)
 	if (stmt->cooked_privs)
 	{
 		istmt.all_privs = false;
-<<<<<<< HEAD
 		istmt.privileges = 0;
 		istmt.grantees = NIL;
 		istmt.grant_option = stmt->grant_option;
@@ -505,25 +455,11 @@ ExecuteGrantStmt(GrantStmt *stmt)
 				if (priv & ~((AclMode) all_privileges))
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_GRANT_OPERATION),
-							 errmsg(errormsg, privilege_to_string(priv))));
+							 errmsg(errormsg,
+									privilege_to_string(priv))));
 	
 				istmt.privileges |= priv;
 			}
-=======
-		istmt.privileges = ACL_NO_RIGHTS;
-
-		foreach(cell, stmt->privileges)
-		{
-			char	   *privname = strVal(lfirst(cell));
-			AclMode		priv = string_to_privilege(privname);
-
-			if (priv & ~((AclMode) all_privileges))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_GRANT_OPERATION),
-						 errmsg(errormsg, privilege_to_string(priv))));
-
-			istmt.privileges |= priv;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		}
 	
 		istmt.cooked_privs = NIL;

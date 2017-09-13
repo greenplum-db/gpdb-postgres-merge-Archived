@@ -647,28 +647,9 @@ checkSharedDependencies(Oid classId, Oid objectId,
 								   "(see server log for list)"),
 						 numNotReportedDbs);
 
-<<<<<<< HEAD
-	if (numNotReportedDeps > 0 || numNotReportedDbs > 0)
-	{
-		ObjectAddress obj;
-
-		obj.classId = classId;
-		obj.objectId = objectId;
-		obj.objectSubId = 0;
-		ereport(LOG,
-				(errmsg("there are objects dependent on %s",
-						getObjectDescription(&obj)),
-				 errdetail("%s", alldescs.data)));
-	}
-
-	pfree(alldescs.data);
-
-	return descs.data;
-=======
 	*detail_msg = descs.data;
 	*detail_log_msg = alldescs.data;
 	return true;
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 }
 
 /*

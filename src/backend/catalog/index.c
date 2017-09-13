@@ -61,13 +61,9 @@
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "utils/tuplesort.h"
-<<<<<<< HEAD
 #include "utils/tuplesort_mk.h"
-#include "utils/faultinjector.h"
-=======
 #include "utils/snapmgr.h"
 #include "utils/tqual.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbaocsam.h"
@@ -75,6 +71,7 @@
 #include "cdb/cdboidsync.h"
 #include "cdb/cdbmirroredfilesysobj.h"
 #include "cdb/cdbpersistentfilesysobj.h"
+#include "utils/faultinjector.h"
 
 /* state info for validate_index bulkdelete callback */
 typedef struct

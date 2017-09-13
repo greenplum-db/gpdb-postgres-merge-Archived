@@ -47,10 +47,6 @@
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "storage/large_object.h"
-<<<<<<< HEAD
-#include "utils/acl.h"
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 
@@ -391,13 +387,8 @@ lo_import_internal(text *filename, Oid lobjOid)
 	char		buf[BUFSIZE];
 	char		fnamebuf[MAXPGPATH];
 	LargeObjectDesc *lobj;
-<<<<<<< HEAD
 	Oid			oid;
 
-=======
-	Oid	oid;
-	
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #ifndef ALLOW_DANGEROUS_LO_FUNCTIONS
 	if (!superuser())
 		ereport(ERROR,

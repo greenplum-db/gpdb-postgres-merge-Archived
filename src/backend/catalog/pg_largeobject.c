@@ -20,10 +20,7 @@
 #include "catalog/pg_largeobject.h"
 #include "utils/bytea.h"
 #include "utils/fmgroids.h"
-<<<<<<< HEAD
 #include "utils/rel.h"
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "utils/tqual.h"
 
 

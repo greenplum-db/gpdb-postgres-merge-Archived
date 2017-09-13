@@ -24,11 +24,8 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
-<<<<<<< HEAD
 #include "catalog/pg_proc_callback.h"
-=======
 #include "catalog/pg_proc_fn.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "catalog/pg_type.h"
 #include "catalog/pg_rewrite.h"
 #include "executor/functions.h"
@@ -330,18 +327,12 @@ ProcedureCreate(const char *procedureName,
 	if (parameterNames != PointerGetDatum(NULL))
 		values[Anum_pg_proc_proargnames - 1] = parameterNames;
 	else
-<<<<<<< HEAD
 		nulls[Anum_pg_proc_proargnames - 1] = true;
 	values[Anum_pg_proc_prosrc - 1] = CStringGetTextDatum(prosrc);
 	if (probin)
 		values[Anum_pg_proc_probin - 1] = CStringGetTextDatum(probin);
 	else
 		nulls[Anum_pg_proc_probin - 1] = true;
-=======
-		nulls[Anum_pg_proc_proargnames - 1] = 'n';
-	values[Anum_pg_proc_prosrc - 1] = CStringGetTextDatum(prosrc);
-	values[Anum_pg_proc_probin - 1] = CStringGetTextDatum(probin);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	if (proconfig != PointerGetDatum(NULL))
 		values[Anum_pg_proc_proconfig - 1] = proconfig;
 	else
