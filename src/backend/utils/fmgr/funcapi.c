@@ -1031,20 +1031,7 @@ build_function_result_tupdesc_d(Datum proallargtypes,
 	{
 		char	   *pname;
 
-<<<<<<< HEAD
 		switch (argmodes[i])
-=======
-		if (argmodes[i] == PROARGMODE_IN)
-			continue;
-		Assert(argmodes[i] == PROARGMODE_OUT ||
-			   argmodes[i] == PROARGMODE_INOUT);
-		outargtypes[numoutargs] = argtypes[i];
-		if (argnames)
-			pname = TextDatumGetCString(argnames[i]);
-		else
-			pname = NULL;
-		if (pname == NULL || pname[0] == '\0')
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		{
 			/* input modes */
 			case PROARGMODE_IN:
@@ -1060,7 +1047,7 @@ build_function_result_tupdesc_d(Datum proallargtypes,
 			case PROARGMODE_TABLE:
 				outargtypes[numoutargs] = argtypes[i];
 				if (argnames)
-					pname = DatumGetCString(DirectFunctionCall1(textout, argnames[i]));
+					pname = TextDatumGetCString(argnames[i]);
 				else
 					pname = NULL;
 				if (pname == NULL || pname[0] == '\0')

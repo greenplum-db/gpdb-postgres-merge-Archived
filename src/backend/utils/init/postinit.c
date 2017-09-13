@@ -42,10 +42,7 @@
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
-<<<<<<< HEAD
 #include "storage/procsignal.h"
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "storage/sinvaladt.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
@@ -59,14 +56,13 @@
 #include "utils/relcache.h"
 #include "utils/resscheduler.h"
 #include "utils/sharedsnapshot.h"
+#include "utils/snapmgr.h"
 #include "utils/syscache.h"
-<<<<<<< HEAD
-#include "pgstat.h"
+#include "utils/tqual.h"
+
 #include "utils/session_state.h"
 #include "codegen/codegen_wrapper.h"
-=======
-#include "utils/tqual.h"
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
+
 
 static HeapTuple GetDatabaseTuple(const char *dbname);
 static HeapTuple GetDatabaseTupleByOid(Oid dboid);
@@ -616,11 +612,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 */
 	MyBackendId = InvalidBackendId;
 
-<<<<<<< HEAD
 	SharedInvalBackendInit(false);
-=======
-	SharedInvalBackendInit();
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	if (MyBackendId > MaxBackends || MyBackendId <= 0)
 		elog(FATAL, "bad backend id: %d", MyBackendId);
