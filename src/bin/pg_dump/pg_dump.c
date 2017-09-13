@@ -400,10 +400,6 @@ main(int argc, char **argv)
 
 	RestoreOptions *ropt;
 
-	static int	disable_triggers = 0;
-	/* static int	outputNoTablespaces = 0; */
-	static int	use_setsessauth = 0;
-
 	struct option long_options[] = {
 		{"binary-upgrade", no_argument, &binary_upgrade, 1},	/* not documented */
 		{"data-only", no_argument, NULL, 'a'},
