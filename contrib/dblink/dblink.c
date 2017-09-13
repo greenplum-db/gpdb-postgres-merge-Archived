@@ -52,11 +52,7 @@
 #include "nodes/nodes.h"
 #include "nodes/pg_list.h"
 #include "parser/parse_type.h"
-<<<<<<< HEAD
 #include "parser/scansup.h"
-#include "tcop/tcopprot.h"
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #include "utils/acl.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -127,11 +123,6 @@ typedef struct remoteConnHashEnt
 #define NUMCONN 16
 
 /* general utility */
-<<<<<<< HEAD
-#define GET_TEXT(cstrp) DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum((char*)cstrp)))
-#define GET_STR(textp) DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(textp)))
-=======
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 #define xpfree(var_) \
 	do { \
 		if (var_ != NULL) \
@@ -259,13 +250,8 @@ dblink_connect(PG_FUNCTION_ARGS)
 		connstr = text_to_cstring(PG_GETARG_TEXT_PP(1));
 		connname = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	}
-<<<<<<< HEAD
-	else
-		connstr = GET_STR(PG_GETARG_TEXT_P(0));
-=======
 	else if (PG_NARGS() == 1)
 		connstr = text_to_cstring(PG_GETARG_TEXT_PP(0));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	if (connname)
 		rconn = (remoteConn *) MemoryContextAlloc(TopMemoryContext,
@@ -1308,7 +1294,6 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 		 */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-<<<<<<< HEAD
 		/* open target relation */
 		rel = get_rel_from_relname(PG_GETARG_TEXT_P(0), AccessShareLock, ACL_SELECT);
 
@@ -1316,15 +1301,6 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 		results = get_pkey_attnames(rel, &numatts);
 
 		relation_close(rel, AccessShareLock);
-=======
-		/* convert relname to rel Oid */
-		relid = get_relid_from_relname(PG_GETARG_TEXT_P(0));
-		if (!OidIsValid(relid))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_TABLE),
-					 errmsg("relation \"%s\" does not exist",
-							text_to_cstring(PG_GETARG_TEXT_PP(0)))));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 		/*
 		 * need a tuple descriptor representing one INT and one TEXT column
@@ -1440,16 +1416,7 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	/*
 	 * Open target relation.
 	 */
-<<<<<<< HEAD
 	rel = get_rel_from_relname(relname_text, AccessShareLock, ACL_SELECT);
-=======
-	relid = get_relid_from_relname(relname_text);
-	if (!OidIsValid(relid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_TABLE),
-				 errmsg("relation \"%s\" does not exist",
-						text_to_cstring(relname_text))));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * Process pkattnums argument.
@@ -1537,16 +1504,7 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 	/*
 	 * Open target relation.
 	 */
-<<<<<<< HEAD
 	rel = get_rel_from_relname(relname_text, AccessShareLock, ACL_SELECT);
-=======
-	relid = get_relid_from_relname(relname_text);
-	if (!OidIsValid(relid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_TABLE),
-				 errmsg("relation \"%s\" does not exist",
-						text_to_cstring(relname_text))));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * Process pkattnums argument.
@@ -1626,16 +1584,7 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	/*
 	 * Open target relation.
 	 */
-<<<<<<< HEAD
 	rel = get_rel_from_relname(relname_text, AccessShareLock, ACL_SELECT);
-=======
-	relid = get_relid_from_relname(relname_text);
-	if (!OidIsValid(relid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_TABLE),
-				 errmsg("relation \"%s\" does not exist",
-						text_to_cstring(relname_text))));
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/*
 	 * Process pkattnums argument.
