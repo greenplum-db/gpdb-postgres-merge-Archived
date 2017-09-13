@@ -143,11 +143,7 @@ static int	max_safe_fds = 32;	/* default if not changed */
 
 #define FileIsNotOpen(file) (VfdCache[file].fd == VFD_CLOSED)
 
-<<<<<<< HEAD
 #define FileUnknownPos INT64CONST(-1)
-=======
-#define FileUnknownPos ((off_t) -1)
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 /* these are the assigned bits in fdstate below: */
 #define FD_TEMPORARY		(1 << 0)	/* T = delete when closed */
@@ -155,23 +151,13 @@ static int	max_safe_fds = 32;	/* default if not changed */
 
 typedef struct vfd
 {
-<<<<<<< HEAD
-	int fd;			/* current FD, or VFD_CLOSED if none */
+	int			fd;				/* current FD, or VFD_CLOSED if none */
 	unsigned short fdstate;		/* bitflags for VFD's state */
 	ResourceOwner resowner;		/* owner, for automatic cleanup */
 	File		nextFree;		/* link to next free VFD, if in freelist */
 	File		lruMoreRecently;	/* doubly linked recency-of-use list */
 	File		lruLessRecently;
 	int64		seekPos;		/* current logical file position */
-=======
-	int			fd;				/* current FD, or VFD_CLOSED if none */
-	unsigned short fdstate;		/* bitflags for VFD's state */
-	SubTransactionId create_subid;	/* for TEMPORARY fds, creating subxact */
-	File		nextFree;		/* link to next free VFD, if in freelist */
-	File		lruMoreRecently;	/* doubly linked recency-of-use list */
-	File		lruLessRecently;
-	off_t		seekPos;		/* current logical file position */
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	char	   *fileName;		/* name of file, or NULL for unused VFD */
 	/* NB: fileName is malloc'd, and must be free'd when closing the VFD */
 	int			fileFlags;		/* open(2) flags for (re)opening the file */
@@ -606,13 +592,8 @@ LruDelete(File file)
 	Delete(file);
 
 	/* save the seek position */
-<<<<<<< HEAD
 	vfdP->seekPos = pg_lseek64(vfdP->fd, INT64CONST(0), SEEK_CUR);
 	Assert(vfdP->seekPos != INT64CONST(-1));
-=======
-	vfdP->seekPos = lseek(vfdP->fd, (off_t) 0, SEEK_CUR);
-	Assert(vfdP->seekPos != (off_t) -1);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 	/* close the file */
 	if (close(vfdP->fd))
@@ -683,21 +664,12 @@ LruInsert(File file)
 		}
 
 		/* seek to the right position */
-<<<<<<< HEAD
 		if (vfdP->seekPos != INT64CONST(0))
 		{
 			int64		returnValue;
 
 			returnValue = pg_lseek64(vfdP->fd, vfdP->seekPos, SEEK_SET);
 			Assert(returnValue != INT64CONST(-1));
-=======
-		if (vfdP->seekPos != (off_t) 0)
-		{
-			off_t		returnValue;
-
-			returnValue = lseek(vfdP->fd, vfdP->seekPos, SEEK_SET);
-			Assert(returnValue != (off_t) -1);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		}
 	}
 
@@ -1366,13 +1338,8 @@ FileSync(File file)
 	return returnCode;
 }
 
-<<<<<<< HEAD
 int64
 FileSeek(File file, int64 offset, int whence)
-=======
-off_t
-FileSeek(File file, off_t offset, int whence)
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 {
 	int			returnCode;
 
@@ -1414,12 +1381,7 @@ FileSeek(File file, off_t offset, int whence)
 		{
 			case SEEK_SET:
 				if (offset < 0)
-<<<<<<< HEAD
 					elog(ERROR, "invalid seek offset: " INT64_FORMAT, offset);
-=======
-					elog(ERROR, "invalid seek offset: " INT64_FORMAT,
-						 (int64) offset);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 				if (VfdCache[file].seekPos != offset)
 					VfdCache[file].seekPos = pg_lseek64(VfdCache[file].fd,
 												   offset, whence);
@@ -1485,11 +1447,7 @@ FileNonVirtualCurSeek(File file)
  * XXX not actually used but here for completeness
  */
 #ifdef NOT_USED
-<<<<<<< HEAD
 int64
-=======
-off_t
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 FileTell(File file)
 {
 	Assert(FileIsValid(file));
@@ -1500,11 +1458,7 @@ FileTell(File file)
 #endif
 
 int
-<<<<<<< HEAD
 FileTruncate(File file, int64 offset)
-=======
-FileTruncate(File file, off_t offset)
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 {
 	int			returnCode;
 
@@ -1517,7 +1471,6 @@ FileTruncate(File file, off_t offset)
 	if (returnCode < 0)
 		return returnCode;
 
-<<<<<<< HEAD
 	/*
 	 * Call ftruncate with a int64 value.
 	 *
@@ -1530,9 +1483,6 @@ FileTruncate(File file, off_t offset)
 	/* Assume we don't know the file position anymore */
 	VfdCache[file].seekPos = FileUnknownPos;
 
-=======
-	returnCode = ftruncate(VfdCache[file].fd, offset);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 	return returnCode;
 }
 
