@@ -1309,8 +1309,6 @@ pg_get_expr_worker(text *expr, Oid relid, char *relname, int prettyFlags)
 	str = deparse_expression_pretty(node, context, false, false,
 									prettyFlags, 0);
 
-	pfree(exprstr);
-
 	return str;
 }
 
