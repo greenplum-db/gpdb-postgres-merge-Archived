@@ -2282,27 +2282,16 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 				tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
 				tmptup.t_data = td;
 
-<<<<<<< HEAD
 				heap_deform_tuple(&tmptup, tupdesc, pd, pn);
 				tuple = memtuple_form_to(mt_bind, pd, pn, NULL, NULL, false);
-			}
-			else
-			{
-				tuple = memtuple_form_to(mt_bind, &result, &fcinfo.isnull, NULL, NULL, false);
-			}
 
-			tuplestore_puttuple(tupstore, (HeapTuple) tuple);
-=======
-				oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-				tuplestore_puttuple(tupstore, &tmptup);
+				tuplestore_puttuple(tupstore, (HeapTuple) tuple);
 			}
 			else
 			{
-				oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 				tuplestore_putvalues(tupstore, tupdesc, &result, &fcinfo.isnull);
 			}
 			MemoryContextSwitchTo(oldcontext);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 
 			/*
 			 * Are we done?
@@ -2350,17 +2339,9 @@ no_function_result:
 			MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 			nulldatums = (Datum *) palloc0(natts * sizeof(Datum));
 			nullflags = (bool *) palloc(natts * sizeof(bool));
-<<<<<<< HEAD
 			MemSetAligned(nullflags, true, natts * sizeof(bool));
-			tuple = heap_form_tuple(expectedDesc, nulldatums, nullflags);
-			MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-
-			tuplestore_puttuple(tupstore, tuple);
-=======
-			memset(nullflags, true, natts * sizeof(bool));
 			MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 			tuplestore_putvalues(tupstore, expectedDesc, nulldatums, nullflags);
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
 		}
 	}
 
@@ -3888,218 +3869,6 @@ ExecEvalMinMax(MinMaxExprState *minmaxExpr, ExprContext *econtext,
 }
 
 /* ----------------------------------------------------------------
-<<<<<<< HEAD
-=======
- *		ExecEvalXml
- * ----------------------------------------------------------------
- */
-static Datum
-ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
-			bool *isNull, ExprDoneCond *isDone)
-{
-	XmlExpr    *xexpr = (XmlExpr *) xmlExpr->xprstate.expr;
-	text	   *result;
-	StringInfoData buf;
-	Datum		value;
-	bool		isnull;
-	ListCell   *arg;
-	ListCell   *narg;
-	int			i;
-
-	if (isDone)
-		*isDone = ExprSingleResult;
-	*isNull = true;				/* until we get a result */
-
-	switch (xexpr->op)
-	{
-		case IS_XMLCONCAT:
-			{
-				List	   *values = NIL;
-
-				foreach(arg, xmlExpr->args)
-				{
-					ExprState  *e = (ExprState *) lfirst(arg);
-
-					value = ExecEvalExpr(e, econtext, &isnull, NULL);
-					if (!isnull)
-						values = lappend(values, DatumGetPointer(value));
-				}
-
-				if (list_length(values) > 0)
-				{
-					*isNull = false;
-					return PointerGetDatum(xmlconcat(values));
-				}
-			}
-			break;
-
-		case IS_XMLFOREST:
-			initStringInfo(&buf);
-			i = 0;
-			forboth(arg, xmlExpr->named_args, narg, xexpr->arg_names)
-			{
-				ExprState  *e = (ExprState *) lfirst(arg);
-				char	   *argname = strVal(lfirst(narg));
-
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (!isnull)
-				{
-					appendStringInfo(&buf, "<%s>%s</%s>",
-									 argname,
-									 map_sql_value_to_xml_value(value, exprType((Node *) e->expr)),
-									 argname);
-					*isNull = false;
-				}
-				i++;
-			}
-			break;
-
-			/* The remaining cases don't need to set up buf */
-		case IS_XMLELEMENT:
-			*isNull = false;
-			return PointerGetDatum(xmlelement(xmlExpr, econtext));
-			break;
-
-		case IS_XMLPARSE:
-			{
-				ExprState  *e;
-				text	   *data;
-				bool		preserve_whitespace;
-
-				/* arguments are known to be text, bool */
-				Assert(list_length(xmlExpr->args) == 2);
-
-				e = (ExprState *) linitial(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (isnull)
-					return (Datum) 0;
-				data = DatumGetTextP(value);
-
-				e = (ExprState *) lsecond(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (isnull)		/* probably can't happen */
-					return (Datum) 0;
-				preserve_whitespace = DatumGetBool(value);
-
-				*isNull = false;
-
-				return PointerGetDatum(xmlparse(data,
-												xexpr->xmloption,
-												preserve_whitespace));
-			}
-			break;
-
-		case IS_XMLPI:
-			{
-				ExprState  *e;
-				text	   *arg;
-
-				/* optional argument is known to be text */
-				Assert(list_length(xmlExpr->args) <= 1);
-
-				if (xmlExpr->args)
-				{
-					e = (ExprState *) linitial(xmlExpr->args);
-					value = ExecEvalExpr(e, econtext, &isnull, NULL);
-					if (isnull)
-						arg = NULL;
-					else
-						arg = DatumGetTextP(value);
-				}
-				else
-				{
-					arg = NULL;
-					isnull = false;
-				}
-
-				return PointerGetDatum(xmlpi(xexpr->name, arg, isnull, isNull));
-			}
-			break;
-
-		case IS_XMLROOT:
-			{
-				ExprState  *e;
-				xmltype    *data;
-				text	   *version;
-				int			standalone;
-
-				/* arguments are known to be xml, text, int */
-				Assert(list_length(xmlExpr->args) == 3);
-
-				e = (ExprState *) linitial(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (isnull)
-					return (Datum) 0;
-				data = DatumGetXmlP(value);
-
-				e = (ExprState *) lsecond(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (isnull)
-					version = NULL;
-				else
-					version = DatumGetTextP(value);
-
-				e = (ExprState *) lthird(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				standalone = DatumGetInt32(value);
-
-				*isNull = false;
-
-				return PointerGetDatum(xmlroot(data,
-											   version,
-											   standalone));
-			}
-			break;
-
-		case IS_XMLSERIALIZE:
-			{
-				ExprState  *e;
-
-				/* argument type is known to be xml */
-				Assert(list_length(xmlExpr->args) == 1);
-
-				e = (ExprState *) linitial(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (isnull)
-					return (Datum) 0;
-
-				*isNull = false;
-
-				return PointerGetDatum(xmltotext_with_xmloption(DatumGetXmlP(value), xexpr->xmloption));
-			}
-			break;
-
-		case IS_DOCUMENT:
-			{
-				ExprState  *e;
-
-				/* optional argument is known to be xml */
-				Assert(list_length(xmlExpr->args) == 1);
-
-				e = (ExprState *) linitial(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (isnull)
-					return (Datum) 0;
-				else
-				{
-					*isNull = false;
-					return BoolGetDatum(xml_is_document(DatumGetXmlP(value)));
-				}
-			}
-			break;
-	}
-
-	if (*isNull)
-		result = NULL;
-	else
-		result = cstring_to_text_with_len(buf.data, buf.len);
-
-	pfree(buf.data);
-	return PointerGetDatum(result);
-}
-
-/* ----------------------------------------------------------------
->>>>>>> f260edb144c1e3f33d5ecc3d00d5359ab675d238
  *		ExecEvalNullIf
  *
  * Note that this is *always* derived from the equals operator,
