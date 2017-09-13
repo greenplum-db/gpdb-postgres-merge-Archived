@@ -199,7 +199,7 @@ static const struct config_enum_entry bytea_output_options[] = {
 	{NULL, 0}
 };
 
-static const struct config_enum_entry message_level_options[] = {
+const struct config_enum_entry message_level_options[] = {
 	{"debug", DEBUG2},
 	{"debug5", DEBUG5},
 	{"debug4", DEBUG4},
@@ -2695,6 +2695,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	},
 
 	{
+
 		{"client_min_messages", PGC_USERSET, LOGGING_WHEN,
 			gettext_noop("Sets the message levels that are sent to the client."),
 			gettext_noop("Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, "

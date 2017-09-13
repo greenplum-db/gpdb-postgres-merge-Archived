@@ -299,7 +299,7 @@ extern bool config_enum_lookup_by_name(struct config_enum *record,
 extern bool parse_int(const char *value, int *result, int flags, const char **hintmsg);
 
 /* guc_gp.c needs this from guc.c */
-const char *assign_msglvl(int *var, const char *newval, bool doit, GucSource source);
+extern const struct config_enum_entry message_level_options[];
 
 /* guc_gp.c exports these for guc.c */
 extern struct config_bool ConfigureNamesBool_gp[];
