@@ -90,7 +90,7 @@ extern void ExecEagerFreeChildNodes(PlanState *node, bool subplanDone);
  * prototypes from functions in execCurrent.c
  */
 extern void getCurrentOf(CurrentOfExpr *cexpr,
-			  ExprContext *econtext,
+			  ParamListInfo paramLI,
 			  Oid table_oid,
 			  ItemPointer current_tid,
 			  int *current_gp_segment_id,

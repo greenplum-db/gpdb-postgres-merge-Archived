@@ -23,7 +23,7 @@
 #include "cdb/cdbvars.h"
 
 
-static char *fetch_param_value(ExprContext *econtext, int paramId);
+static char *fetch_param_value(ParamListInfo paramInfo, int paramId);
 #ifdef NOT_USED
 static ScanState *search_plan_tree(PlanState *node, Oid table_oid);
 #endif /* NOT_USED */
@@ -66,7 +66,7 @@ execCurrentOf(CurrentOfExpr *cexpr,
 		if (cexpr->cursor_name)
 			cursor_name = cexpr->cursor_name;
 		else
-			cursor_name = fetch_param_value(econtext, cexpr->cursor_param);
+			cursor_name = fetch_param_value(econtext->ecxt_param_list_info, cexpr->cursor_param);
 
 		foreach (lc, econtext->ecxt_estate->es_cursorPositions)
 		{
@@ -89,7 +89,7 @@ execCurrentOf(CurrentOfExpr *cexpr,
 	}
 	else
 	{
-		getCurrentOf(cexpr, econtext, table_oid, current_tid,
+		getCurrentOf(cexpr, econtext->ecxt_param_list_info, table_oid, current_tid,
 					 &current_gp_segment_id, &current_table_oid);
 	}
 
@@ -116,7 +116,7 @@ execCurrentOf(CurrentOfExpr *cexpr,
  */
 void
 getCurrentOf(CurrentOfExpr *cexpr,
-			 ExprContext *econtext,
+			 ParamListInfo paramLI,
 			 Oid table_oid,
 			 ItemPointer current_tid,
 			 int *current_gp_segment_id,
@@ -146,10 +146,10 @@ getCurrentOf(CurrentOfExpr *cexpr,
 		cursor_name = cexpr->cursor_name;
 	else
 	{
-		if (!econtext)
+		if (!paramLI)
 			elog(ERROR, "no cursor name information found");
 
-		cursor_name = fetch_param_value(econtext, cexpr->cursor_param);
+		cursor_name = fetch_param_value(paramLI, cexpr->cursor_param);
 	}
 
 	/* Fetch table name for possible use in error messages */
@@ -291,10 +291,8 @@ getCurrentOf(CurrentOfExpr *cexpr,
  * Fetch the string value of a param, verifying it is of type REFCURSOR.
  */
 static char *
-fetch_param_value(ExprContext *econtext, int paramId)
+fetch_param_value(ParamListInfo paramInfo, int paramId)
 {
-	ParamListInfo paramInfo = econtext->ecxt_param_list_info;
-
 	if (paramInfo &&
 		paramId > 0 && paramId <= paramInfo->numParams)
 	{

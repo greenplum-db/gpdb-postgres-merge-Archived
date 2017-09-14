@@ -74,7 +74,8 @@ typedef struct ApplyMotionState
 typedef struct
 {
 	plan_tree_base_prefix base; /* Required prefix for plan_tree_walker/mutator */
-	bool single_row_insert;
+	EState	   *estate;
+	bool		single_row_insert;
 	List	   *cursorPositions;
 } pre_dispatch_function_evaluation_context;
 
@@ -3072,6 +3073,8 @@ planner_make_plan_constant(struct PlannerInfo *root, Node *n, bool is_SRI)
 
 	planner_init_plan_tree_base(&pcontext.base, root);
 	pcontext.single_row_insert = is_SRI;
+	pcontext.cursorPositions = NIL;
+	pcontext.estate = NULL;
 
 	return plan_tree_mutator(n, pre_dispatch_function_evaluation_mutator, &pcontext);
 }
@@ -3080,7 +3083,8 @@ planner_make_plan_constant(struct PlannerInfo *root, Node *n, bool is_SRI)
  * Evaluate functions to constants.
  */
 Node *
-exec_make_plan_constant(struct PlannedStmt *stmt, bool is_SRI, List **cursorPositions)
+exec_make_plan_constant(struct PlannedStmt *stmt, EState *estate, bool is_SRI,
+						List **cursorPositions)
 {
 	pre_dispatch_function_evaluation_context pcontext;
 	Node	   *result;
@@ -3089,6 +3093,7 @@ exec_make_plan_constant(struct PlannedStmt *stmt, bool is_SRI, List **cursorPosi
 	exec_init_plan_tree_base(&pcontext.base, stmt);
 	pcontext.single_row_insert = is_SRI;
 	pcontext.cursorPositions = NIL;
+	pcontext.estate = estate;
 
 	result = pre_dispatch_function_evaluation_mutator((Node *) stmt->planTree, &pcontext);
 
@@ -3376,12 +3381,8 @@ pre_dispatch_function_evaluation_mutator(Node *node,
 		cpos = makeNode(CursorPosInfo);
 		cpos->cursor_name = expr->cursor_name;
 
-		/*
-		 * Passing a NULL econtext is Ok in this instance since getCurrentOf()
-		 * will pull out the cursor name from the CurrentOfExpr node.
-		 */
 		getCurrentOf(expr,
-					 NULL /* econtext */,
+					 context->estate->es_param_list_info,
 					 expr->target_relid,
 					 &cpos->ctid,
 					 &cpos->gp_segment_id,
