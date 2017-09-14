@@ -260,8 +260,9 @@ _readCurrentOfExpr(void)
 {
 	READ_LOCALS(CurrentOfExpr);
 
-	READ_STRING_FIELD(cursor_name);
 	READ_UINT_FIELD(cvarno);
+	READ_STRING_FIELD(cursor_name);
+	READ_INT_FIELD(cursor_param);
 	READ_OID_FIELD(target_relid);
 
 	READ_DONE();

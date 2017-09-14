@@ -618,8 +618,9 @@ _outCurrentOfExpr(StringInfo str, CurrentOfExpr *node)
 {
 	WRITE_NODE_TYPE("CURRENTOFEXPR");
 
-	WRITE_STRING_FIELD(cursor_name);
 	WRITE_UINT_FIELD(cvarno);
+	WRITE_STRING_FIELD(cursor_name);
+	WRITE_INT_FIELD(cursor_param);
 	WRITE_OID_FIELD(target_relid);
 }
 

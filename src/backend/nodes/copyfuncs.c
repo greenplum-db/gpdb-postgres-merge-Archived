@@ -1980,8 +1980,9 @@ _copyCurrentOfExpr(CurrentOfExpr *from)
 {
 	CurrentOfExpr *newnode = makeNode(CurrentOfExpr);
 
-	COPY_STRING_FIELD(cursor_name);
 	COPY_SCALAR_FIELD(cvarno);
+	COPY_STRING_FIELD(cursor_name);
+	COPY_SCALAR_FIELD(cursor_param);
 	COPY_SCALAR_FIELD(target_relid);
 
 	return newnode;

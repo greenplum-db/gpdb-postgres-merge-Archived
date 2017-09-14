@@ -671,9 +671,9 @@ _equalSetToDefault(SetToDefault *a, SetToDefault *b)
 static bool
 _equalCurrentOfExpr(CurrentOfExpr *a, CurrentOfExpr *b)
 {
+	COMPARE_SCALAR_FIELD(cvarno);
 	COMPARE_STRING_FIELD(cursor_name);
 	COMPARE_SCALAR_FIELD(cursor_param);
-	COMPARE_SCALAR_FIELD(cvarno);
 	COMPARE_SCALAR_FIELD(target_relid);
 
 	/* some attributes omitted as they're bound only just before executor dispatch */
