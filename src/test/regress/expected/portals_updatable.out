@@ -175,6 +175,45 @@ SELECT * FROM uctest ORDER BY 1, 2, 3;
 (3 rows)
 
 RESET enable_tidscan; RESET enable_seqscan; RESET enable_indexscan;
+-- Simple scan with ORDER BY.
+BEGIN;
+DECLARE c1 CURSOR FOR SELECT * FROM uctest ORDER BY f1;
+FETCH 1 FROM c1;
+ f1 | f2 | f3  
+----+----+-----
+  1 |  1 | one
+(1 row)
+
+UPDATE uctest SET f2 = -1 * f2 WHERE CURRENT OF c1;
+COMMIT;
+SELECT * FROM uctest ORDER BY 1, 2, 3;
+ f1 | f2 |  f3   
+----+----+-------
+  1 | -1 | one
+  2 |  8 | two
+  3 | 12 | three
+(3 rows)
+
+-- Same with index
+set enable_seqscan=off; set enable_bitmapscan=off;
+BEGIN;
+DECLARE c1 CURSOR FOR SELECT * FROM uctest ORDER BY f1;
+FETCH 1 FROM c1;
+ f1 | f2 | f3  
+----+----+-----
+  1 | -1 | one
+(1 row)
+
+UPDATE uctest SET f2 = -1 * f2 WHERE CURRENT OF c1;
+COMMIT;
+SELECT * FROM uctest ORDER BY 1, 2, 3;
+ f1 | f2 |  f3   
+----+----+-------
+  1 |  1 | one
+  2 |  8 | two
+  3 | 12 | three
+(3 rows)
+
 --
 -- System attributes already residing in targetlist
 --
@@ -660,12 +699,6 @@ FETCH 1 from c;
 
 DELETE FROM uctest2 WHERE CURRENT OF c; 
 ERROR:  cursor "c" is not a simply updatable scan of table "uctest2"
-ROLLBACK;
--- Negative: cursor is ordered
-BEGIN;
-DECLARE c CURSOR FOR SELECT * FROM uctest ORDER BY f1;
-DELETE FROM uctest WHERE CURRENT OF c;
-ERROR:  cursor "c" is not a simply updatable scan of table "uctest"
 ROLLBACK;
 -- Negative: cursor is on a join
 BEGIN;

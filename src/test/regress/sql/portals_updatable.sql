@@ -79,6 +79,25 @@ SELECT * FROM uctest ORDER BY 1, 2, 3;
 
 RESET enable_tidscan; RESET enable_seqscan; RESET enable_indexscan;
 
+-- Simple scan with ORDER BY.
+BEGIN;
+DECLARE c1 CURSOR FOR SELECT * FROM uctest ORDER BY f1;
+FETCH 1 FROM c1;
+UPDATE uctest SET f2 = -1 * f2 WHERE CURRENT OF c1;
+COMMIT;
+SELECT * FROM uctest ORDER BY 1, 2, 3;
+
+-- Same with index
+set enable_seqscan=off; set enable_bitmapscan=off;
+BEGIN;
+DECLARE c1 CURSOR FOR SELECT * FROM uctest ORDER BY f1;
+FETCH 1 FROM c1;
+UPDATE uctest SET f2 = -1 * f2 WHERE CURRENT OF c1;
+COMMIT;
+SELECT * FROM uctest ORDER BY 1, 2, 3;
+
+
+
 --
 -- System attributes already residing in targetlist
 --
@@ -302,6 +321,7 @@ EXECUTE ucplan;
 COMMIT;
 SELECT * FROM uctest ORDER BY 1, 2, 3;
 
+
 --
 -- Negative
 --
@@ -321,12 +341,6 @@ BEGIN;
 DECLARE c CURSOR FOR SELECT * FROM uctest where f1 = 3;
 FETCH 1 from c;
 DELETE FROM uctest2 WHERE CURRENT OF c; 
-ROLLBACK;
-
--- Negative: cursor is ordered
-BEGIN;
-DECLARE c CURSOR FOR SELECT * FROM uctest ORDER BY f1;
-DELETE FROM uctest WHERE CURRENT OF c;
 ROLLBACK;
 
 -- Negative: cursor is on a join
