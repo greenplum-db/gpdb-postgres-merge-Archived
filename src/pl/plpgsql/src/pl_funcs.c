@@ -533,6 +533,7 @@ static void free_loop(PLpgSQL_stmt_loop *stmt);
 static void free_while(PLpgSQL_stmt_while *stmt);
 static void free_fori(PLpgSQL_stmt_fori *stmt);
 static void free_fors(PLpgSQL_stmt_fors *stmt);
+static void free_forc(PLpgSQL_stmt_forc *stmt);
 static void free_exit(PLpgSQL_stmt_exit *stmt);
 static void free_return(PLpgSQL_stmt_return *stmt);
 static void free_return_next(PLpgSQL_stmt_return_next *stmt);
@@ -574,6 +575,9 @@ free_stmt(PLpgSQL_stmt *stmt)
 			break;
 		case PLPGSQL_STMT_FORS:
 			free_fors((PLpgSQL_stmt_fors *) stmt);
+			break;
+		case PLPGSQL_STMT_FORC:
+			free_forc((PLpgSQL_stmt_forc *) stmt);
 			break;
 		case PLPGSQL_STMT_EXIT:
 			free_exit((PLpgSQL_stmt_exit *) stmt);
@@ -689,6 +693,13 @@ free_fors(PLpgSQL_stmt_fors *stmt)
 {
 	free_stmts(stmt->body);
 	free_expr(stmt->query);
+}
+
+static void
+free_forc(PLpgSQL_stmt_forc *stmt)
+{
+	free_stmts(stmt->body);
+	free_expr(stmt->argquery);
 }
 
 static void
