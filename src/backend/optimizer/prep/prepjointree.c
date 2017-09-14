@@ -40,6 +40,7 @@
 #include "rewrite/rewriteManip.h"
 
 #include "cdb/cdbsubselect.h"           /* cdbsubselect_flatten_sublinks() */
+#include "optimizer/transform.h"
 
 
 typedef struct reduce_outer_joins_state
@@ -238,6 +239,13 @@ inline_set_returning_functions(PlannerInfo *root)
 			funcquery = inline_set_returning_function(root, rte->funcexpr);
 			if (funcquery)
 			{
+
+				/*
+				 * GPDB: Normalize the resulting query, like standard_planner()
+				 * does for the main query.
+				 */
+				funcquery = normalize_query(funcquery);
+
 				/* Successful expansion, replace the rtable entry */
 				rte->rtekind = RTE_SUBQUERY;
 				rte->subquery = funcquery;
