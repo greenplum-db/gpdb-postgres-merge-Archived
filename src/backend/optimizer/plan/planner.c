@@ -3698,7 +3698,6 @@ pushdown_preliminary_limit(Plan *plan, Node *limitCount, int64 count_est, Node *
  *
  * A query is simply updatable if, and only if, it...
  * - has no window clauses
- * - has no sort clauses
  * - has no grouping, having, distinct clauses, or simple aggregates
  * - has no subqueries
  * - has no LIMIT/OFFSET
@@ -3710,7 +3709,6 @@ isSimplyUpdatableQuery(Query *query)
 {
 	if (query->commandType == CMD_SELECT &&
 		query->windowClause == NIL &&
-		query->sortClause == NIL &&
 		query->groupClause == NIL &&
 		query->havingQual == NULL &&
 		query->distinctClause == NIL &&

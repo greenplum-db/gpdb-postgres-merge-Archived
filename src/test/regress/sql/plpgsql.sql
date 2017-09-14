@@ -2643,7 +2643,7 @@ create temp table forc_test as
 
 create or replace function forc01() returns void as $$
 declare
-  c cursor for select * from forc_test;
+  c cursor for select * from forc_test order by i;
 begin
   for r in c loop
     raise notice '%, %', r.i, r.j;
