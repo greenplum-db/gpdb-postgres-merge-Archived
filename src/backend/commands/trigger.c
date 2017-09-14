@@ -1713,6 +1713,12 @@ ExecBSInsertTriggers(EState *estate, ResultRelInfo *relinfo)
 	int			i;
 	TriggerData LocTriggerData;
 
+	if (Gp_role == GP_ROLE_EXECUTE)
+	{
+		/* Don't fire statement-triggers in executor nodes. */
+		return;
+	}
+
 	trigdesc = relinfo->ri_TrigDesc;
 
 	if (trigdesc == NULL)
@@ -1848,6 +1854,12 @@ ExecBSDeleteTriggers(EState *estate, ResultRelInfo *relinfo)
 	int		   *tgindx;
 	int			i;
 	TriggerData LocTriggerData;
+
+	if (Gp_role == GP_ROLE_EXECUTE)
+	{
+		/* Don't fire statement-triggers in executor nodes. */
+		return;
+	}
 
 	trigdesc = relinfo->ri_TrigDesc;
 
@@ -1996,6 +2008,12 @@ ExecBSUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 	int		   *tgindx;
 	int			i;
 	TriggerData LocTriggerData;
+
+	if (Gp_role == GP_ROLE_EXECUTE)
+	{
+		/* Don't fire statement-triggers in executor nodes. */
+		return;
+	}
 
 	trigdesc = relinfo->ri_TrigDesc;
 
@@ -2179,6 +2197,12 @@ ExecBSTruncateTriggers(EState *estate, ResultRelInfo *relinfo)
 	int		   *tgindx;
 	int			i;
 	TriggerData LocTriggerData;
+
+	if (Gp_role == GP_ROLE_EXECUTE)
+	{
+		/* Don't fire statement-triggers in executor nodes. */
+		return;
+	}
 
 	trigdesc = relinfo->ri_TrigDesc;
 
@@ -3863,6 +3887,12 @@ AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 		elog(ERROR, "AfterTriggerSaveEvent() called outside of transaction");
 	if (afterTriggers->query_depth < 0)
 		elog(ERROR, "AfterTriggerSaveEvent() called outside of query");
+
+	if (!row_trigger && Gp_role == GP_ROLE_EXECUTE)
+	{
+		/* Don't fire statement-triggers in executor nodes. */
+		return;
+	}
 
 	/*
 	 * event is used both as a bitmask and an array offset,
