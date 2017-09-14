@@ -7628,11 +7628,11 @@ opt_force:	FORCE									{  $$ = TRUE; }
  *
  * Used to set storage parameter defaults for types.
  */
-AlterTypeStmt: ALTER TYPE_P any_name SET DEFAULT ENCODING definition
+AlterTypeStmt: ALTER TYPE_P SimpleTypename SET DEFAULT ENCODING definition
 				{
 					AlterTypeStmt *n = makeNode(AlterTypeStmt);
 
-					n->typeName = makeTypeNameFromNameList($3);
+					n->typeName = $3;
 					n->encoding = $7;
 					$$ = (Node *)n;
 				}
@@ -7838,11 +7838,11 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 					n->newname = $8;
 					$$ = (Node *)n;
 				}
-			| ALTER TYPE_P any_name RENAME TO name
+			| ALTER TYPE_P SimpleTypename RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TYPE;
-					n->object = $3;
+					n->object = $3->names;
 					n->newname = $6;
 					$$ = (Node *)n;
 				}
@@ -7917,11 +7917,11 @@ AlterObjectSchemaStmt:
 					n->newschema = $6;
 					$$ = (Node *)n;
 				}
-			| ALTER TYPE_P any_name SET SCHEMA name
+			| ALTER TYPE_P SimpleTypename SET SCHEMA name
 				{
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_TYPE;
-					n->object = $3;
+					n->object = $3->names;
 					n->newschema = $6;
 					$$ = (Node *)n;
 				}
@@ -8026,11 +8026,11 @@ AlterOwnerStmt: ALTER AGGREGATE func_name aggr_args OWNER TO RoleId
 					n->newowner = $6;
 					$$ = (Node *)n;
 				}
-			| ALTER TYPE_P any_name OWNER TO RoleId
+			| ALTER TYPE_P SimpleTypename OWNER TO RoleId
 				{
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_TYPE;
-					n->object = $3;
+					n->object = $3->names;
 					n->newowner = $6;
 					$$ = (Node *)n;
 				}
