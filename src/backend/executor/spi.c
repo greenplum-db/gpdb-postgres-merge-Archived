@@ -1274,6 +1274,9 @@ SPI_cursor_open_with_args(const char *name,
 	/* SPI_cursor_open_internal must be called in procedure memory context */
 	_SPI_procmem();
 
+	result = SPI_cursor_open_internal(name, &plan, Values, Nulls,
+									  read_only, PARAM_FLAG_CONST);
+
 	/* And clean up */
 	_SPI_curid++;
 	_SPI_end_call(true);
