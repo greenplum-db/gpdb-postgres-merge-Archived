@@ -1107,7 +1107,6 @@ _equalDeclareCursorStmt(DeclareCursorStmt *a, DeclareCursorStmt *b)
 	COMPARE_STRING_FIELD(portalname);
 	COMPARE_SCALAR_FIELD(options);
 	COMPARE_NODE_FIELD(query);
-	COMPARE_SCALAR_FIELD(is_simply_updatable);
 
 	return true;
 }

@@ -3379,14 +3379,14 @@ pre_dispatch_function_evaluation_mutator(Node *node,
 		CursorPosInfo *cpos;
 
 		cpos = makeNode(CursorPosInfo);
-		cpos->cursor_name = expr->cursor_name;
 
 		getCurrentOf(expr,
 					 context->estate->es_param_list_info,
 					 expr->target_relid,
 					 &cpos->ctid,
 					 &cpos->gp_segment_id,
-					 &cpos->table_oid);
+					 &cpos->table_oid,
+					 &cpos->cursor_name);
 
 		context->cursorPositions = lappend(context->cursorPositions, cpos);
 	}

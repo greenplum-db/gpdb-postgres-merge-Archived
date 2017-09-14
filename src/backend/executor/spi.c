@@ -31,6 +31,7 @@
 #include "catalog/pg_namespace.h"
 #include "executor/functions.h"
 #include "cdb/memquota.h"
+#include "parser/analyze.h"
 
 /*
  * Update the legacy 32-bit processed counter, but handle overflow.

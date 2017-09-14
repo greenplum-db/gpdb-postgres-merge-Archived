@@ -372,7 +372,6 @@ _readDeclareCursorStmt(void)
 	READ_STRING_FIELD(portalname);
 	READ_INT_FIELD(options);
 	READ_NODE_FIELD(query);
-	READ_BOOL_FIELD(is_simply_updatable);
 
 	READ_DONE();
 }
