@@ -2639,7 +2639,7 @@ select forc01();
 -- try updating the cursor's current row
 
 create temp table forc_test as
-  select n as i, n as j from generate_series(1,10) n;
+  select n as i, n as j from generate_series(1,10) n distributed randomly;
 
 create or replace function forc01() returns void as $$
 declare
