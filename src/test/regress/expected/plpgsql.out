@@ -3589,7 +3589,6 @@ end;
 $$ language plpgsql;
 ERROR:  cursor FOR loop must use a bound cursor variable
 CONTEXT:  compile of PL/pgSQL function "forc_bad" near line 4
-
 -- Test for appropriate cleanup of non-simple expression evaluations
 -- (bug in all versions prior to August 2010)
 CREATE FUNCTION nonsimple_expr_test() RETURNS text[] AS $$
