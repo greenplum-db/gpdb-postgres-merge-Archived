@@ -353,7 +353,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <boolean> codegen
 %type <defelt>	opt_binary opt_oids copy_delimiter
 
-%type <boolean> copy_from skip_external_partition
+%type <boolean> copy_from opt_program skip_external_partition
 
 %type <ival>	opt_column event cursor_options opt_hold
 %type <objtype>	reindex_type drop_type comment_type
@@ -478,7 +478,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <list>	cte_list
 
 %type <list>	window_clause window_definition_list opt_partition_clause
-%type <windef>	window_definition window_specification
+%type <windef>	window_definition over_clause window_specification
 %type <list>	opt_window_order_clause
 %type <str>		opt_existing_window_name
 %type <windef>	opt_frame_clause frame_extent frame_bound
@@ -547,7 +547,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 	PARSER PARTIAL PASSWORD PLACING PLANS POSITION
 	PRECISION PRESERVE PREPARE PREPARED PRIMARY
-	PRIOR PRIVILEGES PROCEDURAL PROCEDURE
+	PRIOR PRIVILEGES PROCEDURAL PROCEDURE PROGRAM
 
 	QUOTE
 
@@ -3309,13 +3309,17 @@ ClosePortalStmt:
  *				for backward compatibility.  2002-06-18
  *
  *				COPY ( SELECT ... ) TO file [WITH options]
+ *
+ *				where 'file' can be one of:
+ *				{ PROGRAM 'command' | STDIN | STDOUT | 'filename' }
+ *
  *				This form doesn't have the backwards-compatible option
  *				syntax.
  *
  *****************************************************************************/
 
 CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
-			copy_from copy_file_name copy_delimiter opt_with copy_opt_list
+			copy_from opt_program copy_file_name copy_delimiter opt_with copy_opt_list
 			OptSingleRowErrorHandling skip_external_partition
 				{
 					CopyStmt *n = makeNode(CopyStmt);
@@ -3323,26 +3327,28 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
 					n->query = NULL;
 					n->attlist = $4;
 					n->is_from = $6;
-					n->filename = $7;
-					n->sreh = $11;
+					n->is_program = $7;
+					n->filename = $8;
+					n->sreh = $12;
 					n->partitions = NULL;
 					n->ao_segnos = NIL;
 
 					n->options = NIL;
-					n->skip_ext_partition = $12;
+					n->skip_ext_partition = $13;
 
 					/* Concatenate user-supplied flags */
 					if ($2)
 						n->options = lappend(n->options, $2);
 					if ($5)
 						n->options = lappend(n->options, $5);
-					if ($8)
-						n->options = lappend(n->options, $8);
-					if ($10)
-						n->options = list_concat(n->options, $10);
+					if ($9)
+						n->options = lappend(n->options, $9);
+					if ($11)
+						n->options = list_concat(n->options, $11);
+
 					$$ = (Node *)n;
 				}
-			| COPY select_with_parens TO copy_file_name opt_with
+			| COPY select_with_parens TO opt_program copy_file_name opt_with
 			  copy_opt_list
 				{
 					CopyStmt *n = makeNode(CopyStmt);
@@ -3350,11 +3356,13 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
 					n->query = $2;
 					n->attlist = NIL;
 					n->is_from = false;
-					n->filename = $4;
-					n->options = $6;
+					n->is_program = $4;
+					n->filename = $5;
+					n->options = $7;
 					n->partitions = NULL;
 					n->ao_segnos = NIL;
 					n->skip_ext_partition = false;
+
 					$$ = (Node *)n;
 				}
 		;
@@ -3362,6 +3370,11 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
 copy_from:
 			FROM									{ $$ = TRUE; }
 			| TO									{ $$ = FALSE; }
+		;
+
+opt_program:
+			PROGRAM									{ $$ = TRUE; }
+			| /* EMPTY */							{ $$ = FALSE; }
 		;
 
 skip_external_partition:
@@ -7628,7 +7641,7 @@ opt_force:	FORCE									{  $$ = TRUE; }
  *
  * Used to set storage parameter defaults for types.
  */
-AlterTypeStmt: ALTER TYPE_P SimpleTypename SET DEFAULT ENCODING definition
+AlterTypeStmt: ALTER TYPE_P any_name SET DEFAULT ENCODING definition
 				{
 					AlterTypeStmt *n = makeNode(AlterTypeStmt);
 
@@ -7838,11 +7851,11 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 					n->newname = $8;
 					$$ = (Node *)n;
 				}
-			| ALTER TYPE_P SimpleTypename RENAME TO name
+			| ALTER TYPE_P any_name RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TYPE;
-					n->object = $3->names;
+					n->object = $3;
 					n->newname = $6;
 					$$ = (Node *)n;
 				}
@@ -7917,11 +7930,11 @@ AlterObjectSchemaStmt:
 					n->newschema = $6;
 					$$ = (Node *)n;
 				}
-			| ALTER TYPE_P SimpleTypename SET SCHEMA name
+			| ALTER TYPE_P any_name SET SCHEMA name
 				{
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_TYPE;
-					n->object = $3->names;
+					n->object = $3;
 					n->newschema = $6;
 					$$ = (Node *)n;
 				}
@@ -8026,11 +8039,11 @@ AlterOwnerStmt: ALTER AGGREGATE func_name aggr_args OWNER TO RoleId
 					n->newowner = $6;
 					$$ = (Node *)n;
 				}
-			| ALTER TYPE_P SimpleTypename OWNER TO RoleId
+			| ALTER TYPE_P any_name OWNER TO RoleId
 				{
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_TYPE;
-					n->object = $3->names;
+					n->object = $3;
 					n->newowner = $6;
 					$$ = (Node *)n;
 				}
@@ -11155,19 +11168,22 @@ b_expr:		c_expr
  * ambiguity to the b_expr syntax.
  */
 c_expr:		columnref								{ $$ = $1; }
-			| func_expr OVER window_specification
+			| func_expr over_clause
 				{
 					/*
 					 * We break out the window function from func_expr
 					 * to avoid shift/reduce errors.
 					 */
-					if (IsA($1, FuncCall))
-						((FuncCall *) $1)->over = $3;
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("window OVER clause can only be used "
-										"with an aggregate")));
+					if ($2)
+					{
+						if (IsA($1, FuncCall))
+							((FuncCall *) $1)->over = $2;
+						else
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("window OVER clause can only be used "
+											"with an aggregate")));
+					}
 
 					$$ = (Node *)$1;
 				}
@@ -11202,8 +11218,6 @@ c_expr:		columnref								{ $$ = $1; }
 			| case_expr
 				{ $$ = $1; }
 			| decode_expr
-				{ $$ = $1; }
-			| func_expr
 				{ $$ = $1; }
 			| select_with_parens			%prec UMINUS
 				{
@@ -12103,6 +12117,25 @@ window_definition:
 					n->name = $1;
 					$$ = n;
 				}
+		;
+
+over_clause: OVER window_specification
+				{ $$ = $2; }
+			| OVER ColId
+				{
+					WindowDef *n = makeNode(WindowDef);
+					n->name = $2;
+					n->refname = NULL;
+					n->partitionClause = NIL;
+					n->orderClause = NIL;
+					n->frameOptions = FRAMEOPTION_DEFAULTS;
+					n->startOffset = NULL;
+					n->endOffset = NULL;
+					n->location = @2;
+					$$ = n;
+				}
+			| /*EMPTY*/
+				{ $$ = NULL; }
 		;
 
 window_specification: '(' opt_existing_window_name opt_partition_clause
@@ -13242,6 +13275,7 @@ unreserved_keyword:
 			| PRIVILEGES
 			| PROCEDURAL
 			| PROCEDURE
+			| PROGRAM
 			| PROTOCOL
 			| QUEUE
 			| QUOTE

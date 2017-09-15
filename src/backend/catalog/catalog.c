@@ -49,7 +49,6 @@
 #include "catalog/gp_configuration.h"
 #include "catalog/gp_configuration.h"
 #include "catalog/gp_segment_config.h"
-#include "catalog/gp_fault_strategy.h"
 
 #include "catalog/gp_persistent.h"
 #include "catalog/gp_global_sequence.h"
@@ -591,7 +590,6 @@ IsSharedRelation(Oid relationId)
 		relationId == ResQueueCapabilityRelationId ||
 		relationId == ResGroupRelationId ||
 		relationId == ResGroupCapabilityRelationId ||
-		relationId == GpFaultStrategyRelationId ||
 		relationId == GpConfigurationRelationId ||
 		relationId == GpConfigHistoryRelationId ||
 		relationId == GpDbInterfacesRelationId ||

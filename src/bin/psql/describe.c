@@ -774,12 +774,15 @@ listAllDbs(bool verbose)
 					  gettext_noop("Name"),
 					  gettext_noop("Owner"),
 					  gettext_noop("Encoding"));
+/* GPDB_84_MERGE_FIXME: datcollate and datctype have not been added yet */
+#if 0
 	if (pset.sversion >= 80400)
 		appendPQExpBuffer(&buf,
 						  "       d.datcollate as \"%s\",\n"
 						  "       d.datctype as \"%s\",\n",
 						  gettext_noop("Collation"),
 						  gettext_noop("Ctype"));
+#endif
 	appendPQExpBuffer(&buf, "       ");
 	printACLColumn(&buf, "d.datacl");
 	if (verbose && pset.sversion >= 80200)
@@ -3163,7 +3166,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	bool		showIndexes = strchr(tabtypes, 'i') != NULL;
 	bool		showViews = strchr(tabtypes, 'v') != NULL;
 	bool		showSeq = strchr(tabtypes, 's') != NULL;
-	bool		showExternal = strchr(tabtypes, 'x') != NULL;
+	bool		showExternal = strchr(tabtypes, 'E') != NULL;
 
 	PQExpBufferData buf;
 	PGresult   *res;
