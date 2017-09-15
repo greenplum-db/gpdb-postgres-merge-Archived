@@ -3567,33 +3567,22 @@ end;
 $$ language plpgsql;
 select forc01();
 NOTICE:  1, 1
-NOTICE:  2, 2
-NOTICE:  3, 3
-NOTICE:  4, 4
-NOTICE:  5, 5
-NOTICE:  6, 6
-NOTICE:  7, 7
-NOTICE:  8, 8
-NOTICE:  9, 9
-NOTICE:  10, 10
- forc01 
---------
- 
-(1 row)
-
+ERROR:  cursor "c" is not a simply updatable scan of table "forc_test"
+CONTEXT:  SQL statement "update forc_test set i = i * 100, j =  $1  * 2 where current of  $2 "
+PL/pgSQL function "forc01" line 6 at SQL statement
 select * from forc_test;
-  i   | j  
-------+----
-  100 |  2
-  200 |  4
-  300 |  6
-  400 |  8
-  500 | 10
-  600 | 12
-  700 | 14
-  800 | 16
-  900 | 18
- 1000 | 20
+ i  | j  
+----+----
+  1 |  1
+  2 |  2
+  5 |  5
+  8 |  8
+  9 |  9
+ 10 | 10
+  6 |  6
+  3 |  3
+  4 |  4
+  7 |  7
 (10 rows)
 
 drop function forc01();
