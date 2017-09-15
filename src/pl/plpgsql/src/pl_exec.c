@@ -3636,13 +3636,6 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				arraytyplen = get_typlen(arraytypeid);
 
 				/*
-				 * Allow exec_eval_integer to evaluate non-single
-				 * Result (simple expression) queries.
-				 */
-				SPITupleTable * save_tuptable = estate->eval_tuptable;
-				estate->eval_tuptable = NULL;
-
-				/*
 				 * Evaluate the subscripts, switch into left-to-right order.
 				 * Like ExecEvalArrayRef(), complain if any subscript is null.
 				 */
@@ -3678,9 +3671,9 @@ exec_assign_value(PLpgSQL_execstate *estate,
 					estate->eval_tuptable = NULL;
 				}
 
-				/* Swap to the caller's tuple table. */
+				/* Now we can restore caller's SPI_execute result if any. */
 				Assert(estate->eval_tuptable == NULL);
-				estate->eval_tuptable = save_tuptable;
+				estate->eval_tuptable = save_eval_tuptable;
 
 				/* Coerce source value to match array element type. */
 				coerced_value = exec_simple_cast_value(estate,
@@ -4451,6 +4444,16 @@ eval_expr_params(PLpgSQL_execstate *estate,
 			nulls[i] = 'n';
 		else
 			nulls[i] = ' ';
+
+		/*
+		 * This is not needed on PostgreSQL. I'm not sure why, but I asw
+		 * assertion failures with ORCA without this. Perhaps because
+		 * some expressions used in the regression suite were "simple"
+		 * with the PostgreSQL planner, but not with ORCA? In any case,
+		 * this code is heavily refactored in PostgreSQL 9.0, so let's
+		 * revisit this then.
+		 */
+		exec_eval_cleanup(estate);
 	}
 }
 
