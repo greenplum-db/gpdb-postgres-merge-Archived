@@ -2287,6 +2287,40 @@ renameatt(Oid myrelid,
 	relation_close(targetrelation, NoLock);		/* close rel but keep lock */
 }
 
+/*
+ * A helper function for RenameRelation, to createa a very minimal, fake,
+ * RelationData struct for a relation. This is used in
+ * gp_allow_rename_relation_without_lock mode, in place of opening the
+ * relcache entry for real.
+ *
+ * RenameRelation only needs the rd_rel field to be filled in, so that's
+ * all we fetch.
+ */
+static Relation
+fake_relation_open(Oid myrelid)
+{
+	Relation	relrelation;	/* for RELATION relation */
+	Relation	fakerel;
+	HeapTuple	reltup;
+
+	fakerel = palloc0(sizeof(RelationData));
+
+	/*
+	 * Find relation's pg_class tuple, and make sure newrelname isn't in use.
+	 */
+	relrelation = heap_open(RelationRelationId, RowExclusiveLock);
+
+	reltup = SearchSysCacheCopy(RELOID,
+								ObjectIdGetDatum(myrelid),
+								0, 0, 0);
+	if (!HeapTupleIsValid(reltup))		/* shouldn't happen */
+		elog(ERROR, "cache lookup failed for relation %u", myrelid);
+	fakerel->rd_rel = (Form_pg_class) GETSTRUCT(reltup);
+
+	heap_close(relrelation, RowExclusiveLock);
+
+	return fakerel;
+}
 
 /*
  * Execute ALTER TABLE/INDEX/SEQUENCE/VIEW RENAME
@@ -2311,7 +2345,7 @@ RenameRelation(Oid myrelid, const char *newrelname, ObjectType reltype, RenameSt
 	 * won't cause any data corruption.
 	 */
 	if (gp_allow_rename_relation_without_lock)
-		targetrelation = relation_open(myrelid, NoLock);
+		targetrelation = fake_relation_open(myrelid);
 	else
 		targetrelation = relation_open(myrelid, AccessExclusiveLock);
 
@@ -2436,7 +2470,8 @@ RenameRelation(Oid myrelid, const char *newrelname, ObjectType reltype, RenameSt
 	/*
 	 * Close rel, but keep exclusive lock!
 	 */
-	relation_close(targetrelation, NoLock);
+	if (!gp_allow_rename_relation_without_lock)
+		relation_close(targetrelation, NoLock);
 }
 
 /*
@@ -2468,7 +2503,7 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, Oid namespaceId)
 	 * won't cause any data corruption.
 	 */
 	if (gp_allow_rename_relation_without_lock)
-		targetrelation = relation_open(myrelid, NoLock);
+		targetrelation = fake_relation_open(myrelid);
 	else
 		targetrelation = relation_open(myrelid, AccessExclusiveLock);
 
@@ -2556,7 +2591,8 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, Oid namespaceId)
 	/*
 	 * Close rel, but keep exclusive lock!
 	 */
-	relation_close(targetrelation, NoLock);
+	if (!gp_allow_rename_relation_without_lock)
+		relation_close(targetrelation, NoLock);
 }
 
 static bool
