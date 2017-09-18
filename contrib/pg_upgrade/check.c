@@ -993,7 +993,7 @@ check_covering_aoindex(migratorContext *ctx)
 /*
  *	check_hash_partition_usage()
  *	8.3 -> 8.4
- *	The hash algorithm was changed in 8.4, so updgrading is impossible. This
+ *	The hash algorithm was changed in 8.4, so upgrading is impossible. This
  *	is basically the same problem as with hash indexes in PostgreSQL. Hash
  *	partitioning was not officially supported in GPDB5, but better check just
  *	in case someone has found the hidden GUC and used them anyway.

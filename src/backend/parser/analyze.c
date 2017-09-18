@@ -1779,9 +1779,6 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to VALUES")));
 
-	if (stmt->distributedBy && Gp_role == GP_ROLE_DISPATCH)
-		setQryDistributionPolicy(stmt, qry);
-
 	/* handle any CREATE TABLE AS spec */
 	qry->intoClause = NULL;
 	if (stmt->intoClause)
@@ -1790,6 +1787,9 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 		if (stmt->intoClause->colNames)
 			applyColumnNames(qry->targetList, stmt->intoClause->colNames);
 	}
+
+	if (stmt->distributedBy && Gp_role == GP_ROLE_DISPATCH)
+		setQryDistributionPolicy(stmt, qry);
 
 	/*
 	 * There mustn't have been any table references in the expressions, else

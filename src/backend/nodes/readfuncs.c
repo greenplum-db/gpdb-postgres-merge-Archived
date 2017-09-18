@@ -482,30 +482,6 @@ _readGroupId(void)
 	READ_DONE();
 }
 
-static WindowFrame *
-_readWindowFrame(void)
-{
-	READ_LOCALS(WindowFrame);
-
-	READ_BOOL_FIELD(is_rows);
-	READ_BOOL_FIELD(is_between);
-	READ_NODE_FIELD(trail);
-	READ_NODE_FIELD(lead);
-
-	READ_DONE();
-}
-
-static WindowFrameEdge *
-_readWindowFrameEdge(void)
-{
-	READ_LOCALS(WindowFrameEdge);
-
-	READ_ENUM_FIELD(kind, WindowBoundingKind);
-	READ_NODE_FIELD(val);
-
-	READ_DONE();
-}
-
 static PercentileExpr *
 _readPercentileExpr(void)
 {
@@ -533,8 +509,9 @@ _readWindowClause(void)
 	READ_NODE_FIELD(partitionClause);
 	READ_NODE_FIELD(orderClause);
 	READ_INT_FIELD(frameOptions);
+	READ_NODE_FIELD(startOffset);
+	READ_NODE_FIELD(endOffset);
 	READ_UINT_FIELD(winref);
-	READ_NODE_FIELD(frame);
 	READ_BOOL_FIELD(copiedOrder);
 
 	READ_DONE();
@@ -2686,7 +2663,9 @@ _readWindowKey(void)
 	READ_INT_FIELD(numSortCols);
 	READ_INT_ARRAY_OR_NULL(sortColIdx, numSortCols, AttrNumber);
 	READ_OID_ARRAY(sortOperators, numSortCols);
-	READ_NODE_FIELD(frame);
+	READ_INT_FIELD(frameOptions);
+	READ_NODE_FIELD(startOffset);
+	READ_NODE_FIELD(endOffset);
 
 	READ_DONE();
 }
@@ -3159,10 +3138,6 @@ parseNodeString(void)
 		return_value = _readVariableSetStmt();
 	else if (MATCHX("VIEWSTMT"))
 		return_value = _readViewStmt();
-	else if (MATCHX("WINDOWFRAME"))
-		return_value = _readWindowFrame();
-	else if (MATCHX("WINDOWFRAMEEDGE"))
-		return_value = _readWindowFrameEdge();
 	else if (MATCHX("WINDOWKEY"))
 		return_value = _readWindowKey();
 	else if (MATCHX("WINDOWREF"))

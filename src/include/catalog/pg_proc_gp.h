@@ -2791,9 +2791,6 @@ DESCR("linear interpolation: x, x0,y0, x1,y1");
 DATA(insert OID = 6082 ( linear_interpolate  PGNSP PGUID 12 1 0 0 f f f t f i 5 0 1700 "2283 2283 1700 2283 1700" _null_ _null_ _null_ _null_ linterp_Numeric _null_ _null_ _null_ n ));
 DESCR("linear interpolation: x, x0,y0, x1,y1");
 
-/* lead_lag_frame_maker(internal) => internal */ 
-DATA(insert OID = 5081 ( lead_lag_frame_maker  PGNSP PGUID 12 1 0 0 f f f t f v 1 0 2281 "2281" _null_ _null_ _null_ _null_ lead_lag_frame_maker _null_ _null_ _null_ n ));
-
 /* gp_dump_query_oids(text) => text */ 
 DATA(insert OID = 6086 ( gp_dump_query_oids  PGNSP PGUID 12 1 0 0 f f f t f v 1 0 25 "25" _null_ _null_ _null_ _null_ gp_dump_query_oids _null_ _null_ _null_ n ));
 DESCR("List function and relation OIDs that a query depends on, as a JSON object");
