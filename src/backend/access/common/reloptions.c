@@ -8,13 +8,16 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.9 2008/03/25 22:42:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.17 2009/01/08 19:34:41 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "access/gist_private.h"
+#include "access/hash.h"
+#include "access/nbtree.h"
 #include "access/reloptions.h"
 #include "catalog/pg_type.h"
 #include "cdb/cdbappendonlyam.h"
@@ -24,6 +27,8 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/formatting.h"
+#include "utils/guc.h"
+#include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/guc.h"
 #include "utils/guc_tables.h"
@@ -32,6 +37,409 @@
  * This is set whenever the GUC gp_default_storage_options is set.
  */
 static StdRdOptions ao_storage_opts;
+
+/*
+ * Contents of pg_class.reloptions
+ *
+ * To add an option:
+ *
+ * (i) decide on a class (integer, real, bool, string), name, default value,
+ * upper and lower bounds (if applicable).
+ * (ii) add a record below.
+ * (iii) add it to StdRdOptions if appropriate
+ * (iv) add a block to the appropriate handling routine (probably
+ * default_reloptions)
+ * (v) don't forget to document the option
+ *
+ * Note that we don't handle "oids" in relOpts because it is handled by
+ * interpretOidsOption().
+ */
+
+static relopt_bool boolRelOpts[] =
+{
+	{
+		{
+			SOPT_APPENDONLY,
+			"GPDB_84_MERGE_FIXME",
+			RELOPT_KIND_HEAP
+		},
+		AO_DEFAULT_APPEND_ONLY
+	},
+	{
+		{
+			SOPT_CHECKSUM,
+			"GPDB_84_MERGE_FIXME",
+			RELOPT_KIND_HEAP
+		},
+		AO_DEFAULT_CHECKSUM
+	},
+	/* list terminator */
+	{ { NULL } }
+};
+
+static relopt_int intRelOpts[] =
+{
+	{
+		{
+			"fillfactor",
+			"Packs table pages only to this percentage",
+			RELOPT_KIND_HEAP
+		},
+		HEAP_DEFAULT_FILLFACTOR, HEAP_MIN_FILLFACTOR, 100
+	},
+	{
+		{
+			"fillfactor",
+			"Packs btree index pages only to this percentage",
+			RELOPT_KIND_BTREE
+		},
+		BTREE_DEFAULT_FILLFACTOR, BTREE_MIN_FILLFACTOR, 100
+	},
+	{
+		{
+			"fillfactor",
+			"Packs hash index pages only to this percentage",
+			RELOPT_KIND_HASH
+		},
+		HASH_DEFAULT_FILLFACTOR, HASH_MIN_FILLFACTOR, 100
+	},
+	{
+		{
+			"fillfactor",
+			"Packs gist index pages only to this percentage",
+			RELOPT_KIND_GIST
+		},
+		GIST_DEFAULT_FILLFACTOR, GIST_MIN_FILLFACTOR, 100
+	},
+	{
+		{
+			SOPT_BLOCKSIZE,
+			"GPDB_84_MERGE_FIXME",
+			RELOPT_KIND_HEAP
+		},
+		/* GPDB_84_MERGE_FIXME: need to validate that this is a multiple of 8K */
+		AO_DEFAULT_BLOCKSIZE, MIN_APPENDONLY_BLOCK_SIZE, MAX_APPENDONLY_BLOCK_SIZE
+	},
+	{
+		{
+			SOPT_COMPLEVEL,
+			"GPDB_84_MERGE_FIXME",
+			RELOPT_KIND_HEAP
+		},
+		/* GPDB_84_MERGE_FIXME: need to validate this based on the compression type */
+		AO_DEFAULT_COMPRESSLEVEL, 0, 9
+	},
+	/* list terminator */
+	{ { NULL } }
+};
+
+static relopt_real realRelOpts[] =
+{
+	/* list terminator */
+	{ { NULL } }
+};
+
+static relopt_string stringRelOpts[] =
+{
+	{
+		{
+			SOPT_COMPTYPE,
+			"GPDB_84_MERGE_FIXME",
+			RELOPT_KIND_HEAP
+		},
+		/* GPDB_84_MERGE_FIXME: define a validation function for this */
+		AO_DEFAULT_COMPRESSTYPE
+	},
+	/* list terminator */
+	{ { NULL } }
+};
+
+static relopt_gen **relOpts = NULL;
+static int last_assigned_kind = RELOPT_KIND_LAST_DEFAULT + 1;
+
+static int		num_custom_options = 0;
+static relopt_gen **custom_options = NULL;
+static bool		need_initialization = true;
+
+static void initialize_reloptions(void);
+static void parse_one_reloption(relopt_value *option, char *text_str,
+					int text_len, bool validate);
+
+/*
+ * initialize_reloptions
+ * 		initialization routine, must be called before parsing
+ *
+ * Initialize the relOpts array and fill each variable's type and name length.
+ */
+static void
+initialize_reloptions(void)
+{
+	int		i;
+	int		j = 0;
+
+	for (i = 0; boolRelOpts[i].gen.name; i++)
+		j++;
+	for (i = 0; intRelOpts[i].gen.name; i++)
+		j++;
+	for (i = 0; realRelOpts[i].gen.name; i++)
+		j++;
+	for (i = 0; stringRelOpts[i].gen.name; i++)
+		j++;
+	j += num_custom_options;
+
+	if (relOpts)
+		pfree(relOpts);
+	relOpts = MemoryContextAlloc(TopMemoryContext,
+								 (j + 1) * sizeof(relopt_gen *));
+
+	j = 0;
+	for (i = 0; boolRelOpts[i].gen.name; i++)
+	{
+		relOpts[j] = &boolRelOpts[i].gen;
+		relOpts[j]->type = RELOPT_TYPE_BOOL;
+		relOpts[j]->namelen = strlen(relOpts[j]->name);
+		j++;
+	}
+
+	for (i = 0; intRelOpts[i].gen.name; i++)
+	{
+		relOpts[j] = &intRelOpts[i].gen;
+		relOpts[j]->type = RELOPT_TYPE_INT;
+		relOpts[j]->namelen = strlen(relOpts[j]->name);
+		j++;
+	}
+
+	for (i = 0; realRelOpts[i].gen.name; i++)
+	{
+		relOpts[j] = &realRelOpts[i].gen;
+		relOpts[j]->type = RELOPT_TYPE_REAL;
+		relOpts[j]->namelen = strlen(relOpts[j]->name);
+		j++;
+	}
+
+	for (i = 0; stringRelOpts[i].gen.name; i++)
+	{
+		relOpts[j] = &stringRelOpts[i].gen;
+		relOpts[j]->type = RELOPT_TYPE_STRING;
+		relOpts[j]->namelen = strlen(relOpts[j]->name);
+		j++;
+	}
+
+	for (i = 0; i < num_custom_options; i++)
+	{
+		relOpts[j] = custom_options[i];
+		j++;
+	}
+
+	/* add a list terminator */
+	relOpts[j] = NULL;
+}
+
+/*
+ * add_reloption_kind
+ * 		Create a new relopt_kind value, to be used in custom reloptions by
+ * 		user-defined AMs.
+ */
+int
+add_reloption_kind(void)
+{
+	if (last_assigned_kind >= RELOPT_KIND_MAX)
+		ereport(ERROR,
+				(errmsg("user-defined relation parameter types limit exceeded")));
+
+	return last_assigned_kind++;
+}
+
+/*
+ * add_reloption
+ * 		Add an already-created custom reloption to the list, and recompute the
+ * 		main parser table.
+ */
+static void
+add_reloption(relopt_gen *newoption)
+{
+	static int		max_custom_options = 0;
+
+	if (num_custom_options >= max_custom_options)
+	{
+		MemoryContext	oldcxt;
+
+		oldcxt = MemoryContextSwitchTo(TopMemoryContext);
+
+		if (max_custom_options == 0)
+		{
+			max_custom_options = 8;
+			custom_options = palloc(max_custom_options * sizeof(relopt_gen *));
+		}
+		else
+		{
+			max_custom_options *= 2;
+			custom_options = repalloc(custom_options,
+									  max_custom_options * sizeof(relopt_gen *));
+		}
+		MemoryContextSwitchTo(oldcxt);
+	}
+	custom_options[num_custom_options++] = newoption;
+
+	need_initialization = true;
+}
+
+/*
+ * allocate_reloption
+ * 		Allocate a new reloption and initialize the type-agnostic fields
+ * 		(for types other than string)
+ */
+static relopt_gen *
+allocate_reloption(int kind, int type, char *name, char *desc)
+{
+	MemoryContext	oldcxt;
+	size_t			size;
+	relopt_gen	   *newoption;
+
+	Assert(type != RELOPT_TYPE_STRING);
+
+	oldcxt = MemoryContextSwitchTo(TopMemoryContext);
+
+	switch (type)
+	{
+		case RELOPT_TYPE_BOOL:
+			size = sizeof(relopt_bool);
+			break;
+		case RELOPT_TYPE_INT:
+			size = sizeof(relopt_int);
+			break;
+		case RELOPT_TYPE_REAL:
+			size = sizeof(relopt_real);
+			break;
+		default:
+			elog(ERROR, "unsupported option type");
+			return NULL;	/* keep compiler quiet */
+	}
+
+	newoption = palloc(size);
+
+	newoption->name = pstrdup(name);
+	if (desc)
+		newoption->desc = pstrdup(desc);
+	else
+		newoption->desc = NULL;
+	newoption->kind = kind;
+	newoption->namelen = strlen(name);
+	newoption->type = type;
+
+	MemoryContextSwitchTo(oldcxt);
+
+	return newoption;
+}
+
+/*
+ * add_bool_reloption
+ * 		Add a new boolean reloption
+ */
+void
+add_bool_reloption(int kind, char *name, char *desc, bool default_val)
+{
+	relopt_bool	   *newoption;
+
+	newoption = (relopt_bool *) allocate_reloption(kind, RELOPT_TYPE_BOOL,
+												   name, desc);
+	newoption->default_val = default_val;
+
+	add_reloption((relopt_gen *) newoption);
+}
+
+/*
+ * add_int_reloption
+ * 		Add a new integer reloption
+ */
+void
+add_int_reloption(int kind, char *name, char *desc, int default_val,
+				  int min_val, int max_val)
+{
+	relopt_int	   *newoption;
+
+	newoption = (relopt_int *) allocate_reloption(kind, RELOPT_TYPE_INT,
+												  name, desc);
+	newoption->default_val = default_val;
+	newoption->min = min_val;
+	newoption->max = max_val;
+
+	add_reloption((relopt_gen *) newoption);
+}
+
+/*
+ * add_real_reloption
+ * 		Add a new float reloption
+ */
+void
+add_real_reloption(int kind, char *name, char *desc, double default_val,
+				  double min_val, double max_val)
+{
+	relopt_real	   *newoption;
+
+	newoption = (relopt_real *) allocate_reloption(kind, RELOPT_TYPE_REAL,
+												   name, desc);
+	newoption->default_val = default_val;
+	newoption->min = min_val;
+	newoption->max = max_val;
+
+	add_reloption((relopt_gen *) newoption);
+}
+
+/*
+ * add_string_reloption
+ *		Add a new string reloption
+ *
+ * "validator" is an optional function pointer that can be used to test the
+ * validity of the values.  It must elog(ERROR) when the argument string is
+ * not acceptable for the variable.  Note that the default value must pass
+ * the validation.
+ */
+void
+add_string_reloption(int kind, char *name, char *desc, char *default_val,
+					 validate_string_relopt validator)
+{
+	MemoryContext	oldcxt;
+	relopt_string  *newoption;
+	int				default_len = 0;
+
+	oldcxt = MemoryContextSwitchTo(TopMemoryContext);
+
+	if (default_val)
+		default_len = strlen(default_val);
+
+	newoption = palloc0(sizeof(relopt_string) + default_len);
+
+	newoption->gen.name = pstrdup(name);
+	if (desc)
+		newoption->gen.desc = pstrdup(desc);
+	else
+		newoption->gen.desc = NULL;
+	newoption->gen.kind = kind;
+	newoption->gen.namelen = strlen(name);
+	newoption->gen.type = RELOPT_TYPE_STRING;
+	newoption->validate_cb = validator;
+	if (default_val)
+	{
+		strcpy(newoption->default_val, default_val);
+		newoption->default_len = default_len;
+		newoption->default_isnull = false;
+	}
+	else
+	{
+		newoption->default_val[0] = '\0';
+		newoption->default_len = 0;
+		newoption->default_isnull = true;
+	}
+
+	/* make sure the validator/default combination is sane */
+	if (newoption->validate_cb)
+		(newoption->validate_cb) (newoption->default_val, true);
+
+	MemoryContextSwitchTo(oldcxt);
+
+	add_reloption((relopt_gen *) newoption);
+}
 
 inline bool
 isDefaultAOCS(void)
@@ -242,7 +650,7 @@ transformRelOptions(Datum oldOptions, List *defList,
 	astate = NULL;
 
 	/* Copy any oldOptions that aren't to be replaced */
-	if (DatumGetPointer(oldOptions) != 0)
+	if (PointerIsValid(DatumGetPointer(oldOptions)))
 	{
 		ArrayType  *array = DatumGetArrayTypeP(oldOptions);
 		Datum	   *oldoptions;
@@ -812,7 +1220,7 @@ untransformRelOptions(Datum options)
 	int			i;
 
 	/* Nothing to do if no options */
-	if (options == (Datum) 0)
+	if (!PointerIsValid(DatumGetPointer(options)))
 		return result;
 
 	array = DatumGetArrayTypeP(options);
@@ -845,93 +1253,127 @@ untransformRelOptions(Datum options)
 /*
  * Interpret reloptions that are given in text-array format.
  *
- *	options: array of "keyword=value" strings, as built by transformRelOptions
- *	numkeywords: number of legal keywords
- *	keywords: the allowed keywords
- *	values: output area
- *	validate: if true, throw error for unrecognized keywords.
+ * options is a reloption text array as constructed by transformRelOptions.
+ * kind specifies the family of options to be processed.
  *
- * The keywords and values arrays must both be of length numkeywords.
- * The values entry corresponding to a keyword is set to a palloc'd string
- * containing the corresponding value, or NULL if the keyword does not appear.
+ * The return value is a relopt_value * array on which the options actually
+ * set in the options array are marked with isset=true.  The length of this
+ * array is returned in *numrelopts.  Options not set are also present in the
+ * array; this is so that the caller can easily locate the default values.
+ *
+ * If there are no options of the given kind, numrelopts is set to 0 and NULL
+ * is returned.
+ *
+ * Note: values of type int, bool and real are allocated as part of the
+ * returned array.  Values of type string are allocated separately and must
+ * be freed by the caller.
  */
-void
-parseRelOptions(Datum options, int numkeywords, const char *const * keywords,
-				char **values, bool validate)
+relopt_value *
+parseRelOptions(Datum options, bool validate, relopt_kind kind,
+				int *numrelopts)
 {
-	ArrayType  *array;
-	Datum	   *optiondatums;
-	int			noptions;
+	relopt_value *reloptions;
+	int			numoptions = 0;
 	int			i;
-	bool	isArrayToBeFreed = false;
+	int			j;
 
-	/* Initialize to "all defaulted" */
-	MemSet(values, 0, numkeywords * sizeof(char *));
+	if (need_initialization)
+		initialize_reloptions();
+
+	/* Build a list of expected options, based on kind */
+
+	for (i = 0; relOpts[i]; i++)
+		if (relOpts[i]->kind == kind)
+			numoptions++;
+
+	if (numoptions == 0)
+	{
+		*numrelopts = 0;
+		return NULL;
+	}
+
+	reloptions = palloc(numoptions * sizeof(relopt_value));
+
+	for (i = 0, j = 0; relOpts[i]; i++)
+	{
+		if (relOpts[i]->kind == kind)
+		{
+			reloptions[j].gen = relOpts[i];
+			reloptions[j].isset = false;
+			j++;
+		}
+	}
 
 	/* Done if no options */
-	if (DatumGetPointer(options) == 0)
-		return;
-
-	array = DatumGetArrayTypeP(options);
-	isArrayToBeFreed = (array != (ArrayType *)DatumGetPointer(options));
-
-	Assert(ARR_ELEMTYPE(array) == TEXTOID);
-
-	deconstruct_array(array, TEXTOID, -1, false, 'i',
-					  &optiondatums, NULL, &noptions);
-
-	for (i = 0; i < noptions; i++)
+	if (PointerIsValid(DatumGetPointer(options)))
 	{
-		text	   *optiontext = DatumGetTextP(optiondatums[i]);
-		char	   *text_str = VARDATA(optiontext);
-		int			text_len = VARSIZE(optiontext) - VARHDRSZ;
-		int			j;
+		ArrayType  *array;
+		Datum	   *optiondatums;
+		int			noptions;
+		bool		isArrayToBeFreed = false;
 
-		/* Search for a match in keywords */
-		for (j = 0; j < numkeywords; j++)
+		array = DatumGetArrayTypeP(options);
+		isArrayToBeFreed = (array != (ArrayType *)DatumGetPointer(options));
+
+		Assert(ARR_ELEMTYPE(array) == TEXTOID);
+
+		deconstruct_array(array, TEXTOID, -1, false, 'i',
+						  &optiondatums, NULL, &noptions);
+
+		for (i = 0; i < noptions; i++)
 		{
-			int			kw_len = strlen(keywords[j]);
+			text	   *optiontext = DatumGetTextP(optiondatums[i]);
+			char	   *text_str = VARDATA(optiontext);
+			int			text_len = VARSIZE(optiontext) - VARHDRSZ;
+			int			j;
 
-			if (text_len > kw_len && text_str[kw_len] == '=' &&
-				pg_strncasecmp(text_str, keywords[j], kw_len) == 0)
+			/* Search for a match in reloptions */
+			for (j = 0; j < numoptions; j++)
 			{
-				char	   *value;
-				int			value_len;
+				int			kw_len = reloptions[j].gen->namelen;
 
-				if (values[j] && validate)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						  errmsg("parameter \"%s\" specified more than once",
-								 keywords[j])));
-				value_len = text_len - kw_len - 1;
-				value = (char *) palloc(value_len + 1);
-				memcpy(value, text_str + kw_len + 1, value_len);
-				value[value_len] = '\0';
-				values[j] = value;
-				break;
+				if (text_len > kw_len && text_str[kw_len] == '=' &&
+					pg_strncasecmp(text_str, reloptions[j].gen->name,
+								   kw_len) == 0)
+				{
+					parse_one_reloption(&reloptions[j], text_str, text_len,
+										validate);
+					break;
+				}
+			}
+
+			if (j >= numoptions && validate)
+			{
+				char	   *s;
+				char	   *p;
+
+				s = TextDatumGetCString(optiondatums[i]);
+				p = strchr(s, '=');
+				if (p)
+					*p = '\0';
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("unrecognized parameter \"%s\"", s)));
 			}
 		}
-		if (j >= numkeywords && validate)
-		{
-			char	   *s;
-			char	   *p;
 
-			s = TextDatumGetCString(optiondatums[i]);
-			p = strchr(s, '=');
-			if (p)
-				*p = '\0';
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("unrecognized parameter \"%s\"", s)));
+		if (isArrayToBeFreed)
+		{
+			pfree(array);
 		}
 	}
-	pfree(optiondatums);
 
-	if (isArrayToBeFreed)
-	{
-		pfree(array);
-	}
+	*numrelopts = numoptions;
+	return reloptions;
 }
+
+#if 0
+
+/*
+ * This is the code from the gpdb side. All the option types need to be
+ * moved from here and put into the structs (intRelOpts, stringRelOpts,
+ * etc) at the top of this file.
+ */
 
 /*
  * Merge user-specified reloptions with pre-configured default storage
@@ -939,306 +1381,439 @@ parseRelOptions(Datum options, int numkeywords, const char *const * keywords,
  */
 bytea *
 default_reloptions(Datum reloptions, bool validate, char relkind,
-				   int minFillfactor, int defaultFillfactor)
+                   int minFillfactor, int defaultFillfactor)
 {
-	StdRdOptions *result = (StdRdOptions *) palloc0(sizeof(StdRdOptions));
-	SET_VARSIZE(result, sizeof(StdRdOptions));
-	if (validate && (relkind == RELKIND_RELATION))
-	{
-		/*
-		 * Relation creation is in progress.  reloptions are specified
-		 * by user.  We should merge currently configured default
-		 * storage options along with user-specified ones.  It is
-		 * assumed that auxiliary relations (relkind != 'r') such as
-		 * toast, aoseg, etc are heap relations.
-		 */
-		result->appendonly = ao_storage_opts.appendonly;
-		result->blocksize = ao_storage_opts.blocksize;
-		result->checksum = ao_storage_opts.checksum;
-		result->columnstore = ao_storage_opts.columnstore;
-		result->compresslevel = ao_storage_opts.compresslevel;
-		if (ao_storage_opts.compresstype)
-		{
-			result->compresstype = pstrdup(ao_storage_opts.compresstype);
-		}
-	}
-	else
-	{
-		/*
-		 * We are called for either creating an auxiliary relation or
-		 * through heap_open().  If we are doing heap_open(),
-		 * reloptions argument contains pg_class.reloptions for the
-		 * relation being opened.
-		 */
-		resetAOStorageOpts(result);
-	}
-	result->fillfactor = defaultFillfactor;
+    StdRdOptions *result = (StdRdOptions *) palloc0(sizeof(StdRdOptions));
+    SET_VARSIZE(result, sizeof(StdRdOptions));
+    if (validate && (relkind == RELKIND_RELATION))
+    {
+        /*
+         * Relation creation is in progress.  reloptions are specified
+         * by user.  We should merge currently configured default
+         * storage options along with user-specified ones.  It is
+         * assumed that auxiliary relations (relkind != 'r') such as
+         * toast, aoseg, etc are heap relations.
+         */
+        result->appendonly = ao_storage_opts.appendonly;
+        result->blocksize = ao_storage_opts.blocksize;
+        result->checksum = ao_storage_opts.checksum;
+        result->columnstore = ao_storage_opts.columnstore;
+        result->compresslevel = ao_storage_opts.compresslevel;
+        if (ao_storage_opts.compresstype)
+        {
+            result->compresstype = pstrdup(ao_storage_opts.compresstype);
+        }
+    }
+    else
+    {
+        /*
+         * We are called for either creating an auxiliary relation or
+         * through heap_open().  If we are doing heap_open(),
+         * reloptions argument contains pg_class.reloptions for the
+         * relation being opened.
+         */
+        resetAOStorageOpts(result);
+    }
+    result->fillfactor = defaultFillfactor;
 
-	parse_validate_reloptions(result, reloptions, validate, relkind);
-	if (result->appendonly == false &&
-		(result->fillfactor < minFillfactor || result->fillfactor > 100))
-	{
-		if (validate)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("fillfactor=%d is out of range (should "
-							"be between %d and 100)",
-							result->fillfactor, minFillfactor)));
+    parse_validate_reloptions(result, reloptions, validate, relkind);
+    if (result->appendonly == false &&
+        (result->fillfactor < minFillfactor || result->fillfactor > 100))
+    {
+        if (validate)
+            ereport(ERROR,
+                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                            errmsg("fillfactor=%d is out of range (should "
+                                           "be between %d and 100)",
+                                   result->fillfactor, minFillfactor)));
 
-		result->fillfactor = defaultFillfactor;
-	}
-	return (bytea *) result;
+        result->fillfactor = defaultFillfactor;
+    }
+    return (bytea *) result;
 }
 
 void
 parse_validate_reloptions(StdRdOptions *result, Datum reloptions,
-						  bool validate, char relkind)
+                          bool validate, char relkind)
 {
-	static const char *const default_keywords[] = {
-			SOPT_FILLFACTOR,
-			SOPT_APPENDONLY,
-			SOPT_BLOCKSIZE,
-			SOPT_COMPTYPE,
-			SOPT_COMPLEVEL,
-			SOPT_CHECKSUM,
-			SOPT_ORIENTATION
-	};
-	char	   *values[ARRAY_SIZE(default_keywords)];
-	int			j = 0;
+    static const char *const default_keywords[] = {
+            SOPT_FILLFACTOR,
+            SOPT_APPENDONLY,
+            SOPT_BLOCKSIZE,
+            SOPT_COMPTYPE,
+            SOPT_COMPLEVEL,
+            SOPT_CHECKSUM,
+            SOPT_ORIENTATION
+    };
+    char	   *values[ARRAY_SIZE(default_keywords)];
+    int			j = 0;
 
-	parseRelOptions(reloptions, ARRAY_SIZE(default_keywords),
-					default_keywords, values, validate);
+    parseRelOptions(reloptions, ARRAY_SIZE(default_keywords),
+                    default_keywords, values, validate);
 
-	/* fillfactor */
-	if (values[0] != NULL)
+    /* fillfactor */
+    if (values[0] != NULL)
+    {
+        result->fillfactor = pg_atoi(values[0], sizeof(int32), 0);
+    }
+
+    /* appendonly */
+    if (values[1] != NULL)
+    {
+        if (relkind != RELKIND_RELATION)
+            ereport(ERROR,
+                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                            errmsg("usage of parameter \"appendonly\" in a non relation object is not supported")));
+
+        if (!parse_bool(values[1], &result->appendonly))
+        {
+            ereport(ERROR,
+                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                            errmsg("invalid parameter value for \"appendonly\": "
+                                           "\"%s\"", values[1])));
+        }
+    }
+
+    /* blocksize */
+    if (values[2] != NULL)
+    {
+        if (relkind != RELKIND_RELATION && validate)
+            ereport(ERROR,
+                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                            errmsg("usage of parameter \"blocksize\" in a non relation object is not supported")));
+
+        if (!result->appendonly && validate)
+            ereport(ERROR,
+                    (errcode(ERRCODE_GP_FEATURE_NOT_SUPPORTED),
+                            errmsg("invalid option 'blocksize' for base relation. "
+                                           "Only valid for Append Only relations")));
+
+        result->blocksize = pg_atoi(values[2], sizeof(int32), 0);
+
+        if (result->blocksize < MIN_APPENDONLY_BLOCK_SIZE ||
+                                result->blocksize > MAX_APPENDONLY_BLOCK_SIZE ||
+            result->blocksize % MIN_APPENDONLY_BLOCK_SIZE != 0)
+        {
+            if (validate)
+                ereport(ERROR,
+                        (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                                errmsg("block size must be between 8KB and 2MB and be"
+                                               " an 8KB multiple. Got %d", result->blocksize)));
+
+            result->blocksize = DEFAULT_APPENDONLY_BLOCK_SIZE;
+        }
+
+    }
+
+    /* compression type */
+    if (values[3] != NULL)
+    {
+        if (relkind != RELKIND_RELATION && validate)
+            ereport(ERROR,
+                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                            errmsg("usage of parameter \"compresstype\" in a non relation object is not supported")));
+
+        if (!result->appendonly && validate)
+            ereport(ERROR,
+                    (errcode(ERRCODE_GP_FEATURE_NOT_SUPPORTED),
+                            errmsg("invalid option \"compresstype\" for base relation."
+                                           " Only valid for Append Only relations")));
+
+        result->compresstype = pstrdup(values[3]);
+        if (!compresstype_is_valid(result->compresstype))
+            ereport(ERROR,
+                    (errcode(ERRCODE_UNDEFINED_OBJECT),
+                            errmsg("unknown compresstype \"%s\"",
+                                   result->compresstype)));
+        for (j = 0; j < strlen(result->compresstype); j++)
+            result->compresstype[j] = pg_tolower(result->compresstype[j]);
+    }
+
+    /* compression level */
+    if (values[4] != NULL)
+    {
+        if (relkind != RELKIND_RELATION && validate)
+            ereport(ERROR,
+                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                            errmsg("usage of parameter \"compresslevel\" in a non relation object is not supported")));
+
+        if (!result->appendonly && validate)
+            ereport(ERROR,
+                    (errcode(ERRCODE_GP_FEATURE_NOT_SUPPORTED),
+                            errmsg("invalid option 'compresslevel' for base "
+                                           "relation. Only valid for Append Only relations")));
+
+        result->compresslevel = pg_atoi(values[4], sizeof(int32), 0);
+
+        if (result->compresstype &&
+            pg_strcasecmp(result->compresstype, "none") != 0 &&
+            result->compresslevel == 0 && validate)
+            ereport(ERROR,
+                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                            errmsg("compresstype can\'t be used with compresslevel 0")));
+        if (result->compresslevel < 0 || result->compresslevel > 9)
+        {
+            if (validate)
+                ereport(ERROR,
+                        (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                                errmsg("compresslevel=%d is out of range (should be "
+                                               "between 0 and 9)",
+                                       result->compresslevel)));
+
+            result->compresslevel = setDefaultCompressionLevel(
+                    result->compresstype);
+        }
+
+        /*
+         * use the default compressor if compresslevel was indicated but not
+         * compresstype. must make a copy otherwise str_tolower below will
+         * crash.
+         */
+        if (result->compresslevel > 0 && !result->compresstype)
+            result->compresstype = pstrdup(AO_DEFAULT_COMPRESSTYPE);
+
+        if (result->compresstype &&
+            (pg_strcasecmp(result->compresstype, "quicklz") == 0) &&
+            (result->compresslevel != 1))
+        {
+            if (validate)
+                ereport(ERROR,
+                        (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                                errmsg("compresslevel=%d is out of range for "
+                                               "quicklz (should be 1)",
+                                       result->compresslevel)));
+
+            result->compresslevel = setDefaultCompressionLevel(
+                    result->compresstype);
+        }
+
+        if (result->compresstype &&
+            (pg_strcasecmp(result->compresstype, "rle_type") == 0) &&
+            (result->compresslevel > 4))
+        {
+            if (validate)
+                ereport(ERROR,
+                        (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                                errmsg("compresslevel=%d is out of range for rle_type"
+                                               " (should be in the range 1 to 4)",
+                                       result->compresslevel)));
+
+            result->compresslevel = setDefaultCompressionLevel(
+                    result->compresstype);
+        }
+    }
+
+    /* checksum */
+    if (values[5] != NULL)
+    {
+        if (relkind != RELKIND_RELATION && validate)
+            ereport(ERROR,
+                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                            errmsg("usage of parameter \"checksum\" in a non relation "
+                                           "object is not supported")));
+
+        if (!result->appendonly && validate)
+            ereport(ERROR,
+                    (errcode(ERRCODE_GP_FEATURE_NOT_SUPPORTED),
+                            errmsg("invalid option \"checksum\" for base relation. "
+                                           "Only valid for Append Only relations")));
+
+        if (!parse_bool(values[5], &result->checksum) && validate)
+        {
+            ereport(ERROR,
+                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                            errmsg("invalid parameter value for \"checksum\": \"%s\"",
+                                   values[5])));
+        }
+    }
+        /* Disable checksum for heap relations. */
+    else if (result->appendonly == false)
+        result->checksum = false;
+
+    /* columnstore */
+    if (values[6] != NULL)
+    {
+        if (relkind != RELKIND_RELATION && validate)
+            ereport(ERROR,
+                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                            errmsg("usage of parameter \"orientation\" in a non "
+                                           "relation object is not supported")));
+
+        if (!result->appendonly && validate)
+            ereport(ERROR,
+                    (errcode(ERRCODE_GP_FEATURE_NOT_SUPPORTED),
+                            errmsg("invalid option \"orientation\" for base relation. "
+                                           "Only valid for Append Only relations")));
+
+        if (!(pg_strcasecmp(values[6], "column") == 0 ||
+              pg_strcasecmp(values[6], "row") == 0) &&
+            validate)
+        {
+            ereport(ERROR,
+                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                            errmsg("invalid parameter value for \"orientation\": "
+                                           "\"%s\"", values[6])));
+        }
+
+        result->columnstore = (pg_strcasecmp(values[6], "column") == 0 ?
+                               true : false);
+
+        if (result->compresstype &&
+            (pg_strcasecmp(result->compresstype, "rle_type") == 0) &&
+            ! result->columnstore)
+        {
+            if (validate)
+                ereport(ERROR,
+                        (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                                errmsg("%s cannot be used with Append Only relations "
+                                               "row orientation", result->compresstype)));
+        }
+    }
+
+    if (result->appendonly && result->compresstype != NULL)
+        if (result->compresslevel == AO_DEFAULT_COMPRESSLEVEL)
+            result->compresslevel = setDefaultCompressionLevel(
+                    result->compresstype);
+    for (int i = 0; i < ARRAY_SIZE(default_keywords); i++)
+    {
+        if (values[i])
+        {
+            pfree(values[i]);
+        }
+    }
+}
+
+#endif
+
+/*
+ * Subroutine for parseRelOptions, to parse and validate a single option's
+ * value
+ */
+static void
+parse_one_reloption(relopt_value *option, char *text_str, int text_len,
+					bool validate)
+{
+	char	   *value;
+	int			value_len;
+	bool		parsed;
+	bool		nofree = false;
+
+	if (option->isset && validate)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("parameter \"%s\" specified more than once",
+						option->gen->name)));
+
+	value_len = text_len - option->gen->namelen - 1;
+	value = (char *) palloc(value_len + 1);
+	memcpy(value, text_str + option->gen->namelen + 1, value_len);
+	value[value_len] = '\0';
+
+	switch (option->gen->type)
 	{
-		result->fillfactor = pg_atoi(values[0], sizeof(int32), 0);
+		case RELOPT_TYPE_BOOL:
+			{
+				parsed = parse_bool(value, &option->values.bool_val);
+				if (validate && !parsed)
+					ereport(ERROR,
+							(errmsg("invalid value for boolean option \"%s\": %s",
+									option->gen->name, value)));
+			}
+			break;
+		case RELOPT_TYPE_INT:
+			{
+				relopt_int	*optint = (relopt_int *) option->gen;
+
+				parsed = parse_int(value, &option->values.int_val, 0, NULL);
+				if (validate && !parsed)
+					ereport(ERROR,
+							(errmsg("invalid value for integer option \"%s\": %s",
+									option->gen->name, value)));
+				if (validate && (option->values.int_val < optint->min ||
+								 option->values.int_val > optint->max))
+					ereport(ERROR,
+							(errmsg("value %s out of bounds for option \"%s\"",
+									value, option->gen->name),
+							 errdetail("Valid values are between \"%d\" and \"%d\".",
+									   optint->min, optint->max)));
+			}
+			break;
+		case RELOPT_TYPE_REAL:
+			{
+				relopt_real	*optreal = (relopt_real *) option->gen;
+
+				parsed = parse_real(value, &option->values.real_val);
+				if (validate && !parsed)
+					ereport(ERROR,
+							(errmsg("invalid value for floating point option \"%s\": %s",
+									option->gen->name, value)));
+				if (validate && (option->values.real_val < optreal->min ||
+								 option->values.real_val > optreal->max))
+					ereport(ERROR,
+							(errmsg("value %s out of bounds for option \"%s\"",
+									value, option->gen->name),
+							 errdetail("Valid values are between \"%f\" and \"%f\".",
+									   optreal->min, optreal->max)));
+			}
+			break;
+		case RELOPT_TYPE_STRING:
+			{
+				relopt_string   *optstring = (relopt_string *) option->gen;
+
+				option->values.string_val = value;
+				nofree = true;
+				if (optstring->validate_cb)
+					(optstring->validate_cb) (value, validate);
+				parsed = true;
+			}
+			break;
+		default:
+			elog(ERROR, "unsupported reloption type %d", option->gen->type);
+			parsed = true; /* quiet compiler */
+			break;
 	}
 
-	/* appendonly */
-	if (values[1] != NULL)
-	{
-		if (relkind != RELKIND_RELATION)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("usage of parameter \"appendonly\" in a non relation object is not supported")));
+	if (parsed)
+		option->isset = true;
+	if (!nofree)
+		pfree(value);
+}
 
-		if (!parse_bool(values[1], &result->appendonly))
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("invalid parameter value for \"appendonly\": "
-							"\"%s\"", values[1])));
-		}
+/*
+ * Option parser for anything that uses StdRdOptions (i.e. fillfactor only)
+ */
+bytea *
+default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
+{
+	relopt_value   *options;
+	StdRdOptions   *rdopts;
+	StdRdOptions	lopts;
+	int				numoptions;
+	int				len;
+	int				i;
+
+	options = parseRelOptions(reloptions, validate, kind, &numoptions);
+
+	/* if none set, we're done */
+	if (numoptions == 0)
+		return NULL;
+
+	MemSet(&lopts, 0, sizeof(StdRdOptions));
+
+	for (i = 0; i < numoptions; i++)
+	{
+		HANDLE_INT_RELOPTION("fillfactor", lopts.fillfactor, options[i],
+							 (char *) NULL);
 	}
 
-	/* blocksize */
-	if (values[2] != NULL)
-	{
-		if (relkind != RELKIND_RELATION && validate)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("usage of parameter \"blocksize\" in a non relation object is not supported")));
+	pfree(options);
 
-		if (!result->appendonly && validate)
-			ereport(ERROR,
-					(errcode(ERRCODE_GP_FEATURE_NOT_SUPPORTED),
-					 errmsg("invalid option 'blocksize' for base relation. "
-							"Only valid for Append Only relations")));
+	len = sizeof(StdRdOptions);
+	rdopts = palloc(len);
+	memcpy(rdopts, &lopts, len);
+	SET_VARSIZE(rdopts, len);
 
-		result->blocksize = pg_atoi(values[2], sizeof(int32), 0);
-
-		if (result->blocksize < MIN_APPENDONLY_BLOCK_SIZE ||
-			result->blocksize > MAX_APPENDONLY_BLOCK_SIZE ||
-			result->blocksize % MIN_APPENDONLY_BLOCK_SIZE != 0)
-		{
-			if (validate)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("block size must be between 8KB and 2MB and be"
-								" an 8KB multiple. Got %d", result->blocksize)));
-
-			result->blocksize = DEFAULT_APPENDONLY_BLOCK_SIZE;
-		}
-
-	}
-
-	/* compression type */
-	if (values[3] != NULL)
-	{
-		if (relkind != RELKIND_RELATION && validate)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("usage of parameter \"compresstype\" in a non relation object is not supported")));
-
-		if (!result->appendonly && validate)
-			ereport(ERROR,
-					(errcode(ERRCODE_GP_FEATURE_NOT_SUPPORTED),
-					 errmsg("invalid option \"compresstype\" for base relation."
-							" Only valid for Append Only relations")));
-
-		result->compresstype = pstrdup(values[3]);
-		if (!compresstype_is_valid(result->compresstype))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("unknown compresstype \"%s\"",
-							result->compresstype)));
-		for (j = 0; j < strlen(result->compresstype); j++)
-			result->compresstype[j] = pg_tolower(result->compresstype[j]);
-	}
-
-	/* compression level */
-	if (values[4] != NULL)
-	{
-		if (relkind != RELKIND_RELATION && validate)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("usage of parameter \"compresslevel\" in a non relation object is not supported")));
-
-		if (!result->appendonly && validate)
-			ereport(ERROR,
-					(errcode(ERRCODE_GP_FEATURE_NOT_SUPPORTED),
-					 errmsg("invalid option 'compresslevel' for base "
-							"relation. Only valid for Append Only relations")));
-
-		result->compresslevel = pg_atoi(values[4], sizeof(int32), 0);
-
-		if (result->compresstype &&
-			pg_strcasecmp(result->compresstype, "none") != 0 &&
-			result->compresslevel == 0 && validate)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("compresstype can\'t be used with compresslevel 0")));
-		if (result->compresslevel < 0 || result->compresslevel > 9)
-		{
-			if (validate)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("compresslevel=%d is out of range (should be "
-								"between 0 and 9)",
-								result->compresslevel)));
-
-			result->compresslevel = setDefaultCompressionLevel(
-					result->compresstype);
-		}
-
-		/*
-		 * use the default compressor if compresslevel was indicated but not
-		 * compresstype. must make a copy otherwise str_tolower below will
-		 * crash.
-		 */
-		if (result->compresslevel > 0 && !result->compresstype)
-			result->compresstype = pstrdup(AO_DEFAULT_COMPRESSTYPE);
-
-		if (result->compresstype &&
-			(pg_strcasecmp(result->compresstype, "quicklz") == 0) &&
-			(result->compresslevel != 1))
-		{
-			if (validate)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("compresslevel=%d is out of range for "
-								"quicklz (should be 1)",
-								result->compresslevel)));
-
-			result->compresslevel = setDefaultCompressionLevel(
-					result->compresstype);
-		}
-
-		if (result->compresstype &&
-			(pg_strcasecmp(result->compresstype, "rle_type") == 0) &&
-			(result->compresslevel > 4))
-		{
-			if (validate)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("compresslevel=%d is out of range for rle_type"
-								" (should be in the range 1 to 4)",
-								result->compresslevel)));
-
-			result->compresslevel = setDefaultCompressionLevel(
-					result->compresstype);
-		}
-	}
-
-	/* checksum */
-	if (values[5] != NULL)
-	{
-		if (relkind != RELKIND_RELATION && validate)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("usage of parameter \"checksum\" in a non relation "
-							"object is not supported")));
-
-		if (!result->appendonly && validate)
-			ereport(ERROR,
-					(errcode(ERRCODE_GP_FEATURE_NOT_SUPPORTED),
-					 errmsg("invalid option \"checksum\" for base relation. "
-							"Only valid for Append Only relations")));
-
-		if (!parse_bool(values[5], &result->checksum) && validate)
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("invalid parameter value for \"checksum\": \"%s\"",
-							values[5])));
-		}
-	}
-	/* Disable checksum for heap relations. */
-	else if (result->appendonly == false)
-		result->checksum = false;
-
-	/* columnstore */
-	if (values[6] != NULL)
-	{
-		if (relkind != RELKIND_RELATION && validate)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("usage of parameter \"orientation\" in a non "
-							"relation object is not supported")));
-
-		if (!result->appendonly && validate)
-			ereport(ERROR,
-					(errcode(ERRCODE_GP_FEATURE_NOT_SUPPORTED),
-					 errmsg("invalid option \"orientation\" for base relation. "
-							"Only valid for Append Only relations")));
-
-		if (!(pg_strcasecmp(values[6], "column") == 0 ||
-			  pg_strcasecmp(values[6], "row") == 0) &&
-			validate)
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("invalid parameter value for \"orientation\": "
-							"\"%s\"", values[6])));
-		}
-
-		result->columnstore = (pg_strcasecmp(values[6], "column") == 0 ?
-							   true : false);
-
-		if (result->compresstype &&
-			(pg_strcasecmp(result->compresstype, "rle_type") == 0) &&
-			! result->columnstore)
-		{
-			if (validate)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("%s cannot be used with Append Only relations "
-								"row orientation", result->compresstype)));
-		}
-	}
-
-	if (result->appendonly && result->compresstype != NULL)
-		if (result->compresslevel == AO_DEFAULT_COMPRESSLEVEL)
-			result->compresslevel = setDefaultCompressionLevel(
-					result->compresstype);
-	for (int i = 0; i < ARRAY_SIZE(default_keywords); i++)
-	{
-		if (values[i])
-		{
-			pfree(values[i]);
-		}
-	}
+	return (bytea *) rdopts;
 }
 
 /*
@@ -1247,10 +1822,7 @@ parse_validate_reloptions(StdRdOptions *result, Datum reloptions,
 bytea *
 heap_reloptions(char relkind, Datum reloptions, bool validate)
 {
-	return default_reloptions(reloptions, validate,
-							  relkind,
-							  HEAP_MIN_FILLFACTOR,
-							  HEAP_DEFAULT_FILLFACTOR);
+	return default_reloptions(reloptions, validate, RELOPT_KIND_HEAP);
 }
 
 
@@ -1271,7 +1843,7 @@ index_reloptions(RegProcedure amoptions, Datum reloptions, bool validate)
 	Assert(RegProcedureIsValid(amoptions));
 
 	/* Assume function is strict */
-	if (DatumGetPointer(reloptions) == 0)
+	if (!PointerIsValid(DatumGetPointer(reloptions)))
 		return NULL;
 
 	/* Can't use OidFunctionCallN because we might get a NULL result */
