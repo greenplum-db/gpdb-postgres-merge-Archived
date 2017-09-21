@@ -79,6 +79,8 @@ typedef struct
 	List	   *cursorPositions;
 } pre_dispatch_function_evaluation_context;
 
+static Node *planner_make_plan_constant(struct PlannerInfo *root, Node *n, bool is_SRI);
+
 static Node *
 pre_dispatch_function_evaluation_mutator(Node *node,
 										 pre_dispatch_function_evaluation_context * context);
@@ -3066,7 +3068,7 @@ remove_unused_subplans(PlannerInfo *root, SubPlanWalkerContext *context)
 	}
 }
 
-Node *
+static Node *
 planner_make_plan_constant(struct PlannerInfo *root, Node *n, bool is_SRI)
 {
 	pre_dispatch_function_evaluation_context pcontext;
@@ -3374,21 +3376,28 @@ pre_dispatch_function_evaluation_mutator(Node *node,
 		 * During constant folding, we collect the current position of
 		 * each cursor mentioned in the plan into a list, and dispatch
 		 * them to the QEs.
+		 *
+		 * We should not get here if called from planner_make_plan_constant().
+		 * That is only used for simple Result plans, which should not contain
+		 * CURRENT OF expressions.
 		 */
-		CurrentOfExpr *expr = (CurrentOfExpr *) node;
-		CursorPosInfo *cpos;
+		if (context->estate)
+		{
+			CurrentOfExpr *expr = (CurrentOfExpr *) node;
+			CursorPosInfo *cpos;
 
-		cpos = makeNode(CursorPosInfo);
+			cpos = makeNode(CursorPosInfo);
 
-		getCurrentOf(expr,
-					 context->estate->es_param_list_info,
-					 expr->target_relid,
-					 &cpos->ctid,
-					 &cpos->gp_segment_id,
-					 &cpos->table_oid,
-					 &cpos->cursor_name);
+			getCurrentOf(expr,
+						 GetPerTupleExprContext(context->estate),
+						 expr->target_relid,
+						 &cpos->ctid,
+						 &cpos->gp_segment_id,
+						 &cpos->table_oid,
+						 &cpos->cursor_name);
 
-		context->cursorPositions = lappend(context->cursorPositions, cpos);
+			context->cursorPositions = lappend(context->cursorPositions, cpos);
+		}
 	}
 
 	/*

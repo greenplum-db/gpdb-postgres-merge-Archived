@@ -184,7 +184,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										 PointerGetDatum(NULL),
 										 1,
 										 0,
-										 PRODATAACCESS_NONE);
+										 PRODATAACCESS_NONE,
+										 PROEXECLOCATION_ANY);
 		}
 
 		/*
@@ -221,7 +222,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										 PointerGetDatum(NULL),
 										 1,
 										 0,
-										 PRODATAACCESS_NONE);
+										 PRODATAACCESS_NONE,
+										 PROEXECLOCATION_ANY);
 
 			}
 		}
@@ -262,7 +264,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										 PointerGetDatum(NULL),
 										 1,
 										 0,
-										 PRODATAACCESS_NONE);
+										 PRODATAACCESS_NONE,
+										 PROEXECLOCATION_ANY);
 			}
 		}
 		else

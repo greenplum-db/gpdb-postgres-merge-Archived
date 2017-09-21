@@ -61,7 +61,6 @@ extern int32 cdbhash_const_list(List *plConsts, int iSegments);
 
 extern Node *exec_make_plan_constant(struct PlannedStmt *stmt, EState *estate,
 						bool is_SRI, List **cursorPositions);
-extern Node *planner_make_plan_constant(struct PlannerInfo *root, Node *n, bool is_SRI);
 extern void remove_subquery_in_RTEs(Node *node);
 extern void fixup_subplans(Plan *plan, PlannerInfo *root, SubPlanWalkerContext *context);
 #endif   /* CDBMUTATE_H */

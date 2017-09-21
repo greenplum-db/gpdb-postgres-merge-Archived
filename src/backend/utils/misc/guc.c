@@ -3757,6 +3757,12 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	SetConfigOption("config_file", fname, PGC_POSTMASTER, PGC_S_OVERRIDE);
 	free(fname);
 
+#ifdef USE_SEGWALREP
+	/* Perform similar processes for Greenplum-specific configuration files. */
+	if (!select_gp_replication_config_files(configdir, progname))
+		return false;
+#endif
+
 	/*
 	 * Now read the config file for the first time.
 	 */
@@ -4631,7 +4637,7 @@ parse_int(const char *value, int *result, int flags, const char **hintmsg)
  * If the string parses okay, return true, else false.
  * If okay and result is not NULL, return the value in *result.
  */
-static bool
+bool
 parse_real(const char *value, double *result)
 {
 	double		val;

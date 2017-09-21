@@ -2831,6 +2831,7 @@ _copyQuery(Query *from)
 	COPY_SCALAR_FIELD(hasWindowFuncs);
 	COPY_SCALAR_FIELD(hasSubLinks);
 	COPY_SCALAR_FIELD(hasDynamicFunctions);
+	COPY_SCALAR_FIELD(hasFuncsWithExecRestrictions);
 	COPY_NODE_FIELD(rtable);
 	COPY_NODE_FIELD(jointree);
 	COPY_NODE_FIELD(targetList);
