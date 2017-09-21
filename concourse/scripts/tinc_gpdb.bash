@@ -27,7 +27,7 @@ function gen_env(){
 		export PGDATABASE="${PGDATABASE}"
 		cd ../src/test/tinc
 		source tinc_env.sh
-		make -k ${MAKE_TEST_COMMAND}
+		make ${MAKE_TEST_COMMAND}
 	EOF
 
 	chmod a+x /opt/run_test.sh
