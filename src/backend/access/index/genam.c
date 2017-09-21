@@ -89,7 +89,6 @@ RelationGetIndexScan(Relation indexRelation,
 	else
 		scan->keyData = NULL;
 
-	scan->is_multiscan = false; /* caller may change this */
 	scan->kill_prior_tuple = false;
 	scan->ignore_killed_tuples = true;	/* default setting */
 
