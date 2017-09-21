@@ -2639,11 +2639,11 @@ select forc01();
 -- try updating the cursor's current row
 
 create temp table forc_test as
-  select n as i, n as j from generate_series(1,10) n distributed randomly;
+  select 1 as distkey, n as i, n as j from generate_series(1,10) n distributed by (distkey);
 
 create or replace function forc01() returns void as $$
 declare
-  c cursor for select * from forc_test order by i;
+  c cursor for select * from forc_test;
 begin
   for r in c loop
     raise notice '%, %', r.i, r.j;
@@ -2654,7 +2654,7 @@ $$ language plpgsql;
 
 select forc01();
 
-select * from forc_test;
+select i, j from forc_test;
 
 drop function forc01();
 
