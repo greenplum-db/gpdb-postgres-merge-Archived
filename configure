@@ -851,6 +851,8 @@ enable_dtrace
 enable_tap_tests
 with_blocksize
 with_segsize
+with_wal_blocksize
+with_wal_segsize
 with_CC
 enable_depend
 enable_cassert
@@ -892,6 +894,8 @@ with_libcurl
 with_apr_config
 with_apu_config
 with_gnu_ld
+enable_float4_byval
+enable_float8_byval
 enable_largefile
 '
       ac_precious_vars='build_alias
@@ -1536,10 +1540,7 @@ Optional Features:
   --enable-profiling      build with profiling enabled
   --enable-coverage       build with coverage testing instrumentation
   --enable-dtrace         build with DTrace support
-<<<<<<< HEAD
   --enable-tap-tests      enable TAP tests (requires Perl and IPC::Run)
-=======
->>>>>>> 49f001d81e
   --enable-depend         turn on automatic dependency tracking
   --enable-cassert        enable assertion checks (for debugging)
   --enable-debugbreak     enable debug_break and debug_break_n (for debugging)
@@ -1567,16 +1568,11 @@ Optional Packages:
   --with-libraries=DIRS   look for additional libraries in DIRS
   --with-libs=DIRS        alternative spelling of --with-libraries
   --with-pgport=PORTNUM   set default port number [5432]
-<<<<<<< HEAD
-  --with-blocksize=BLOCKSIZE  set block size in kB [32]
-  --with-segsize=SEGSIZE  set segment size in GB [1]
-  --with-codegen-prefix="PATH;PATH"  semicolon separated prefix search path for LLVM and Clang
-=======
   --with-blocksize=BLOCKSIZE  set table block size in kB [8]
   --with-segsize=SEGSIZE  set table segment size in GB [1]
   --with-wal-blocksize=BLOCKSIZE  set WAL block size in kB [8]
   --with-wal-segsize=SEGSIZE  set WAL segment size in MB [16]
->>>>>>> 49f001d81e
+  --with-codegen-prefix="PATH;PATH"  semicolon separated prefix search path for LLVM and Clang
   --with-tcl              build Tcl modules (PL/Tcl)
   --with-tclconfig=DIR    tclConfig.sh is in DIR
   --with-perl             build Perl modules (PL/Perl)
@@ -3903,231 +3899,31 @@ fi
 
 
 #
-<<<<<<< HEAD
 # TAP tests
-=======
-# Block size
->>>>>>> 49f001d81e
 #
-{ echo "$as_me:$LINENO: checking for block size" >&5
-echo $ECHO_N "checking for block size... $ECHO_C" >&6; }
 
-<<<<<<< HEAD
 pgac_args="$pgac_args enable_tap_tests"
 
 # Check whether --enable-tap-tests was given.
 if test "${enable_tap_tests+set}" = set; then :
   enableval=$enable_tap_tests;
   case $enableval in
-=======
-pgac_args="$pgac_args with_blocksize"
-
-
-# Check whether --with-blocksize was given.
-if test "${with_blocksize+set}" = set; then
-  withval=$with_blocksize;
-  case $withval in
     yes)
-      { { echo "$as_me:$LINENO: error: argument required for --with-blocksize option" >&5
-echo "$as_me: error: argument required for --with-blocksize option" >&2;}
-   { (exit 1); exit 1; }; }
+      :
       ;;
     no)
-      { { echo "$as_me:$LINENO: error: argument required for --with-blocksize option" >&5
-echo "$as_me: error: argument required for --with-blocksize option" >&2;}
-   { (exit 1); exit 1; }; }
+      :
       ;;
     *)
-      blocksize=$withval
-      ;;
-  esac
-
-else
-  blocksize=8
-fi
-
-
-case ${blocksize} in
-  1) BLCKSZ=1024;;
-  2) BLCKSZ=2048;;
-  4) BLCKSZ=4096;;
-  8) BLCKSZ=8192;;
- 16) BLCKSZ=16384;;
- 32) BLCKSZ=32768;;
-  *) { { echo "$as_me:$LINENO: error: Invalid block size. Allowed values are 1,2,4,8,16,32." >&5
-echo "$as_me: error: Invalid block size. Allowed values are 1,2,4,8,16,32." >&2;}
-   { (exit 1); exit 1; }; }
-esac
-{ echo "$as_me:$LINENO: result: ${blocksize}kB" >&5
-echo "${ECHO_T}${blocksize}kB" >&6; }
-
-
-cat >>confdefs.h <<_ACEOF
-#define BLCKSZ ${BLCKSZ}
-_ACEOF
-
-
-#
-# Relation segment size
-#
-{ echo "$as_me:$LINENO: checking for segment size" >&5
-echo $ECHO_N "checking for segment size... $ECHO_C" >&6; }
-
-pgac_args="$pgac_args with_segsize"
-
-
-# Check whether --with-segsize was given.
-if test "${with_segsize+set}" = set; then
-  withval=$with_segsize;
-  case $withval in
->>>>>>> 49f001d81e
-    yes)
-      { { echo "$as_me:$LINENO: error: argument required for --with-segsize option" >&5
-echo "$as_me: error: argument required for --with-segsize option" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-    no)
-      { { echo "$as_me:$LINENO: error: argument required for --with-segsize option" >&5
-echo "$as_me: error: argument required for --with-segsize option" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-    *)
-<<<<<<< HEAD
       as_fn_error $? "no argument expected for --enable-tap-tests option" "$LINENO" 5
-=======
-      segsize=$withval
       ;;
   esac
 
 else
-  segsize=1
-fi
-
-
-# this expression is set up to avoid unnecessary integer overflow
-# blocksize is already guaranteed to be a factor of 1024
-RELSEG_SIZE=`expr '(' 1024 / ${blocksize} ')' '*' ${segsize} '*' 1024`
-test $? -eq 0 || exit 1
-{ echo "$as_me:$LINENO: result: ${segsize}GB" >&5
-echo "${ECHO_T}${segsize}GB" >&6; }
-
-
-cat >>confdefs.h <<_ACEOF
-#define RELSEG_SIZE ${RELSEG_SIZE}
-_ACEOF
-
-
-#
-# WAL block size
-#
-{ echo "$as_me:$LINENO: checking for WAL block size" >&5
-echo $ECHO_N "checking for WAL block size... $ECHO_C" >&6; }
-
-pgac_args="$pgac_args with_wal_blocksize"
-
-
-# Check whether --with-wal-blocksize was given.
-if test "${with_wal_blocksize+set}" = set; then
-  withval=$with_wal_blocksize;
-  case $withval in
-    yes)
-      { { echo "$as_me:$LINENO: error: argument required for --with-wal-blocksize option" >&5
-echo "$as_me: error: argument required for --with-wal-blocksize option" >&2;}
-   { (exit 1); exit 1; }; }
->>>>>>> 49f001d81e
-      ;;
-    no)
-      { { echo "$as_me:$LINENO: error: argument required for --with-wal-blocksize option" >&5
-echo "$as_me: error: argument required for --with-wal-blocksize option" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-    *)
-      wal_blocksize=$withval
-      ;;
-  esac
-
-else
-<<<<<<< HEAD
   enable_tap_tests=no
-=======
-  wal_blocksize=8
+
 fi
 
-
-case ${wal_blocksize} in
-  1) XLOG_BLCKSZ=1024;;
-  2) XLOG_BLCKSZ=2048;;
-  4) XLOG_BLCKSZ=4096;;
-  8) XLOG_BLCKSZ=8192;;
- 16) XLOG_BLCKSZ=16384;;
- 32) XLOG_BLCKSZ=32768;;
- 64) XLOG_BLCKSZ=65536;;
-  *) { { echo "$as_me:$LINENO: error: Invalid WAL block size. Allowed values are 1,2,4,8,16,32,64." >&5
-echo "$as_me: error: Invalid WAL block size. Allowed values are 1,2,4,8,16,32,64." >&2;}
-   { (exit 1); exit 1; }; }
-esac
-{ echo "$as_me:$LINENO: result: ${wal_blocksize}kB" >&5
-echo "${ECHO_T}${wal_blocksize}kB" >&6; }
-
-
-cat >>confdefs.h <<_ACEOF
-#define XLOG_BLCKSZ ${XLOG_BLCKSZ}
-_ACEOF
-
-
-#
-# WAL segment size
-#
-{ echo "$as_me:$LINENO: checking for WAL segment size" >&5
-echo $ECHO_N "checking for WAL segment size... $ECHO_C" >&6; }
-
-pgac_args="$pgac_args with_wal_segsize"
->>>>>>> 49f001d81e
-
-
-# Check whether --with-wal-segsize was given.
-if test "${with_wal_segsize+set}" = set; then
-  withval=$with_wal_segsize;
-  case $withval in
-    yes)
-      { { echo "$as_me:$LINENO: error: argument required for --with-wal-segsize option" >&5
-echo "$as_me: error: argument required for --with-wal-segsize option" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-    no)
-      { { echo "$as_me:$LINENO: error: argument required for --with-wal-segsize option" >&5
-echo "$as_me: error: argument required for --with-wal-segsize option" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-    *)
-      wal_segsize=$withval
-      ;;
-  esac
-
-else
-  wal_segsize=16
-fi
-
-
-case ${wal_segsize} in
-  1) ;;
-  2) ;;
-  4) ;;
-  8) ;;
- 16) ;;
- 32) ;;
- 64) ;;
-  *) { { echo "$as_me:$LINENO: error: Invalid WAL segment size. Allowed values are 1,2,4,8,16,32,64." >&5
-echo "$as_me: error: Invalid WAL segment size. Allowed values are 1,2,4,8,16,32,64." >&2;}
-   { (exit 1); exit 1; }; }
-esac
-{ echo "$as_me:$LINENO: result: ${wal_segsize}MB" >&5
-echo "${ECHO_T}${wal_segsize}MB" >&6; }
-
-
-cat >>confdefs.h <<_ACEOF
-#define XLOG_SEG_SIZE (${wal_segsize} * 1024 * 1024)
-_ACEOF
 
 
 
@@ -4156,7 +3952,7 @@ if test "${with_blocksize+set}" = set; then :
   esac
 
 else
-  blocksize=32
+  blocksize=8
 fi
 
 
@@ -4179,7 +3975,7 @@ _ACEOF
 
 
 #
-# File segment size
+# Relation segment size
 #
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for segment size" >&5
 $as_echo_n "checking for segment size... " >&6; }
@@ -4208,7 +4004,8 @@ fi
 
 
 # this expression is set up to avoid unnecessary integer overflow
-RELSEG_SIZE=`expr '(' 1024 '*' ${segsize} / ${blocksize} ')' '*' 1024`
+# blocksize is already guaranteed to be a factor of 1024
+RELSEG_SIZE=`expr '(' 1024 / ${blocksize} ')' '*' ${segsize} '*' 1024`
 test $? -eq 0 || exit 1
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${segsize}GB" >&5
 $as_echo "${segsize}GB" >&6; }
@@ -4216,6 +4013,102 @@ $as_echo "${segsize}GB" >&6; }
 
 cat >>confdefs.h <<_ACEOF
 #define RELSEG_SIZE ${RELSEG_SIZE}
+_ACEOF
+
+
+#
+# WAL block size
+#
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for WAL block size" >&5
+$as_echo_n "checking for WAL block size... " >&6; }
+
+pgac_args="$pgac_args with_wal_blocksize"
+
+
+# Check whether --with-wal-blocksize was given.
+if test "${with_wal_blocksize+set}" = set; then :
+  withval=$with_wal_blocksize;
+  case $withval in
+    yes)
+      as_fn_error $? "argument required for --with-wal-blocksize option" "$LINENO" 5
+      ;;
+    no)
+      as_fn_error $? "argument required for --with-wal-blocksize option" "$LINENO" 5
+      ;;
+    *)
+      wal_blocksize=$withval
+      ;;
+  esac
+
+else
+  wal_blocksize=8
+fi
+
+
+case ${wal_blocksize} in
+  1) XLOG_BLCKSZ=1024;;
+  2) XLOG_BLCKSZ=2048;;
+  4) XLOG_BLCKSZ=4096;;
+  8) XLOG_BLCKSZ=8192;;
+ 16) XLOG_BLCKSZ=16384;;
+ 32) XLOG_BLCKSZ=32768;;
+ 64) XLOG_BLCKSZ=65536;;
+  *) as_fn_error $? "Invalid WAL block size. Allowed values are 1,2,4,8,16,32,64." "$LINENO" 5
+esac
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${wal_blocksize}kB" >&5
+$as_echo "${wal_blocksize}kB" >&6; }
+
+
+cat >>confdefs.h <<_ACEOF
+#define XLOG_BLCKSZ ${XLOG_BLCKSZ}
+_ACEOF
+
+
+#
+# WAL segment size
+#
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for WAL segment size" >&5
+$as_echo_n "checking for WAL segment size... " >&6; }
+
+pgac_args="$pgac_args with_wal_segsize"
+
+
+# Check whether --with-wal-segsize was given.
+if test "${with_wal_segsize+set}" = set; then :
+  withval=$with_wal_segsize;
+  case $withval in
+    yes)
+      as_fn_error $? "argument required for --with-wal-segsize option" "$LINENO" 5
+      ;;
+    no)
+      as_fn_error $? "argument required for --with-wal-segsize option" "$LINENO" 5
+      ;;
+    *)
+      wal_segsize=$withval
+      ;;
+  esac
+
+else
+  wal_segsize=16
+fi
+
+
+case ${wal_segsize} in
+  1) ;;
+  2) ;;
+  4) ;;
+  8) ;;
+ 16) ;;
+ 32) ;;
+ 64) ;;
+  *) as_fn_error $? "Invalid WAL segment size. Allowed values are 1,2,4,8,16,32,64." "$LINENO" 5
+esac
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${wal_segsize}MB" >&5
+$as_echo "${wal_segsize}MB" >&6; }
+
+
+cat >>confdefs.h <<_ACEOF
+#define XLOG_SEG_SIZE (${wal_segsize} * 1024 * 1024)
 _ACEOF
 
 
@@ -8484,7 +8377,6 @@ rm -f conftest*
 CPPFLAGS="$CPPFLAGS $INCLUDES"
 LDFLAGS="$LDFLAGS $LIBDIRS"
 
-<<<<<<< HEAD
 
 
 
@@ -8492,10 +8384,6 @@ LDFLAGS="$LDFLAGS $LIBDIRS"
 $as_echo "$as_me: using CPPFLAGS=$CPPFLAGS" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: using LDFLAGS=$LDFLAGS" >&5
 $as_echo "$as_me: using LDFLAGS=$LDFLAGS" >&6;}
-
-=======
->>>>>>> 49f001d81e
-
 
 
 # Check whether --with-gnu-ld was given.
@@ -12044,18 +11932,10 @@ fi
 fi
 
 if test "$with_libxslt" = yes ; then
-<<<<<<< HEAD
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xsltCleanupGlobals in -lxslt" >&5
 $as_echo_n "checking for xsltCleanupGlobals in -lxslt... " >&6; }
 if ${ac_cv_lib_xslt_xsltCleanupGlobals+:} false; then :
   $as_echo_n "(cached) " >&6
-=======
-
-{ echo "$as_me:$LINENO: checking for xsltCleanupGlobals in -lxslt" >&5
-echo $ECHO_N "checking for xsltCleanupGlobals in -lxslt... $ECHO_C" >&6; }
-if test "${ac_cv_lib_xslt_xsltCleanupGlobals+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
->>>>>>> 49f001d81e
 else
   ac_check_lib_save_LIBS=$LIBS
 LIBS="-lxslt  $LIBS"
@@ -12077,51 +11957,18 @@ return xsltCleanupGlobals ();
   return 0;
 }
 _ACEOF
-<<<<<<< HEAD
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_xslt_xsltCleanupGlobals=yes
 else
   ac_cv_lib_xslt_xsltCleanupGlobals=no
-=======
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext &&
-       $as_test_x conftest$ac_exeext; then
-  ac_cv_lib_xslt_xsltCleanupGlobals=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_xslt_xsltCleanupGlobals=no
->>>>>>> 49f001d81e
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-<<<<<<< HEAD
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_xslt_xsltCleanupGlobals" >&5
 $as_echo "$ac_cv_lib_xslt_xsltCleanupGlobals" >&6; }
 if test "x$ac_cv_lib_xslt_xsltCleanupGlobals" = xyes; then :
-=======
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_xslt_xsltCleanupGlobals" >&5
-echo "${ECHO_T}$ac_cv_lib_xslt_xsltCleanupGlobals" >&6; }
-if test $ac_cv_lib_xslt_xsltCleanupGlobals = yes; then
->>>>>>> 49f001d81e
   cat >>confdefs.h <<_ACEOF
 #define HAVE_LIBXSLT 1
 _ACEOF
@@ -16846,13 +16693,7 @@ $as_echo "$pgac_cv_type_long_int_64" >&6; }
 HAVE_LONG_INT_64=$pgac_cv_type_long_int_64
 if test x"$pgac_cv_type_long_int_64" = xyes ; then
 
-<<<<<<< HEAD
 $as_echo "#define HAVE_LONG_INT_64 1" >>confdefs.h
-=======
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_LONG_INT_64 1
-_ACEOF
->>>>>>> 49f001d81e
 
 fi
 
@@ -16934,7 +16775,6 @@ $as_echo "$pgac_cv_type_long_long_int_64" >&6; }
 HAVE_LONG_LONG_INT_64=$pgac_cv_type_long_long_int_64
 if test x"$pgac_cv_type_long_long_int_64" = xyes ; then
 
-<<<<<<< HEAD
 $as_echo "#define HAVE_LONG_LONG_INT_64 1" >>confdefs.h
 
 fi
@@ -16949,10 +16789,6 @@ fi
 
 cat >>confdefs.h <<_ACEOF
 #define PG_INT64_TYPE $pg_int64_type
-=======
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_LONG_LONG_INT_64 1
->>>>>>> 49f001d81e
 _ACEOF
 
 
@@ -17193,20 +17029,18 @@ _ACEOF
 
 
 # Decide whether float4 is passed by value: user-selectable, enabled by default
-{ echo "$as_me:$LINENO: checking whether to build with float4 passed by value" >&5
-echo $ECHO_N "checking whether to build with float4 passed by value... $ECHO_C" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build with float4 passed by value" >&5
+$as_echo_n "checking whether to build with float4 passed by value... " >&6; }
 
 pgac_args="$pgac_args enable_float4_byval"
 
 # Check whether --enable-float4-byval was given.
-if test "${enable_float4_byval+set}" = set; then
+if test "${enable_float4_byval+set}" = set; then :
   enableval=$enable_float4_byval;
   case $enableval in
     yes)
 
-cat >>confdefs.h <<\_ACEOF
-#define USE_FLOAT4_BYVAL 1
-_ACEOF
+$as_echo "#define USE_FLOAT4_BYVAL 1" >>confdefs.h
 
                float4passbyval=true
       ;;
@@ -17214,25 +17048,21 @@ _ACEOF
       float4passbyval=false
       ;;
     *)
-      { { echo "$as_me:$LINENO: error: no argument expected for --enable-float4-byval option" >&5
-echo "$as_me: error: no argument expected for --enable-float4-byval option" >&2;}
-   { (exit 1); exit 1; }; }
+      as_fn_error $? "no argument expected for --enable-float4-byval option" "$LINENO" 5
       ;;
   esac
 
 else
   enable_float4_byval=yes
 
-cat >>confdefs.h <<\_ACEOF
-#define USE_FLOAT4_BYVAL 1
-_ACEOF
+$as_echo "#define USE_FLOAT4_BYVAL 1" >>confdefs.h
 
                float4passbyval=true
 fi
 
 
-{ echo "$as_me:$LINENO: result: $enable_float4_byval" >&5
-echo "${ECHO_T}$enable_float4_byval" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_float4_byval" >&5
+$as_echo "$enable_float4_byval" >&6; }
 
 cat >>confdefs.h <<_ACEOF
 #define FLOAT4PASSBYVAL $float4passbyval
@@ -17243,14 +17073,14 @@ _ACEOF
 # Note: this setting also controls int8 and related types such as timestamp.
 # If sizeof(Datum) >= 8, this is user-selectable, enabled by default.
 # If not, trying to select it is an error.
-{ echo "$as_me:$LINENO: checking whether to build with float8 passed by value" >&5
-echo $ECHO_N "checking whether to build with float8 passed by value... $ECHO_C" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build with float8 passed by value" >&5
+$as_echo_n "checking whether to build with float8 passed by value... " >&6; }
 if test $ac_cv_sizeof_unsigned_long -ge 8 ; then
 
 pgac_args="$pgac_args enable_float8_byval"
 
 # Check whether --enable-float8-byval was given.
-if test "${enable_float8_byval+set}" = set; then
+if test "${enable_float8_byval+set}" = set; then :
   enableval=$enable_float8_byval;
   case $enableval in
     yes)
@@ -17260,9 +17090,7 @@ if test "${enable_float8_byval+set}" = set; then
       :
       ;;
     *)
-      { { echo "$as_me:$LINENO: error: no argument expected for --enable-float8-byval option" >&5
-echo "$as_me: error: no argument expected for --enable-float8-byval option" >&2;}
-   { (exit 1); exit 1; }; }
+      as_fn_error $? "no argument expected for --enable-float8-byval option" "$LINENO" 5
       ;;
   esac
 
@@ -17277,7 +17105,7 @@ else
 pgac_args="$pgac_args enable_float8_byval"
 
 # Check whether --enable-float8-byval was given.
-if test "${enable_float8_byval+set}" = set; then
+if test "${enable_float8_byval+set}" = set; then :
   enableval=$enable_float8_byval;
   case $enableval in
     yes)
@@ -17287,9 +17115,7 @@ if test "${enable_float8_byval+set}" = set; then
       :
       ;;
     *)
-      { { echo "$as_me:$LINENO: error: no argument expected for --enable-float8-byval option" >&5
-echo "$as_me: error: no argument expected for --enable-float8-byval option" >&2;}
-   { (exit 1); exit 1; }; }
+      as_fn_error $? "no argument expected for --enable-float8-byval option" "$LINENO" 5
       ;;
   esac
 
@@ -17300,23 +17126,19 @@ fi
 
 
   if test "$enable_float8_byval" = yes ; then
-    { { echo "$as_me:$LINENO: error: --enable-float8-byval is not supported on 32-bit platforms." >&5
-echo "$as_me: error: --enable-float8-byval is not supported on 32-bit platforms." >&2;}
-   { (exit 1); exit 1; }; }
+    as_fn_error $? "--enable-float8-byval is not supported on 32-bit platforms." "$LINENO" 5
   fi
 fi
 if test "$enable_float8_byval" = yes ; then
 
-cat >>confdefs.h <<\_ACEOF
-#define USE_FLOAT8_BYVAL 1
-_ACEOF
+$as_echo "#define USE_FLOAT8_BYVAL 1" >>confdefs.h
 
   float8passbyval=true
 else
   float8passbyval=false
 fi
-{ echo "$as_me:$LINENO: result: $enable_float8_byval" >&5
-echo "${ECHO_T}$enable_float8_byval" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_float8_byval" >&5
+$as_echo "$enable_float8_byval" >&6; }
 
 cat >>confdefs.h <<_ACEOF
 #define FLOAT8PASSBYVAL $float8passbyval
@@ -18093,19 +17915,11 @@ _ACEOF
 
 
 
-<<<<<<< HEAD
 if test "$PORTNAME" != "win32"; then
 # If we don't have largefile support, can't handle segsize >= 2GB.
 if test "$ac_cv_sizeof_off_t" -lt 8 -a "$segsize" != "1"; then
    as_fn_error $? "Large file support is not enabled. Segment size cannot be larger than 1GB." "$LINENO" 5
 fi
-=======
-# If we don't have largefile support, can't handle segsize >= 2GB.
-if test "$ac_cv_sizeof_off_t" -lt 8 -a "$segsize" != "1"; then
-   { { echo "$as_me:$LINENO: error: Large file support is not enabled. Segment size cannot be larger than 1GB." >&5
-echo "$as_me: error: Large file support is not enabled. Segment size cannot be larger than 1GB." >&2;}
-   { (exit 1); exit 1; }; }
->>>>>>> 49f001d81e
 fi
 
 # SunOS doesn't handle negative byte comparisons properly with +/- return
@@ -18235,17 +18049,10 @@ _ACEOF
 
 if test "$enable_nls" = yes ; then
 
-<<<<<<< HEAD
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing bind_textdomain_codeset" >&5
 $as_echo_n "checking for library containing bind_textdomain_codeset... " >&6; }
 if ${ac_cv_search_bind_textdomain_codeset+:} false; then :
   $as_echo_n "(cached) " >&6
-=======
-  { echo "$as_me:$LINENO: checking for library containing bind_textdomain_codeset" >&5
-echo $ECHO_N "checking for library containing bind_textdomain_codeset... $ECHO_C" >&6; }
-if test "${ac_cv_search_bind_textdomain_codeset+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
->>>>>>> 49f001d81e
 else
   ac_func_search_save_LIBS=$LIBS
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -18273,7 +18080,6 @@ for ac_lib in '' intl; do
     ac_res=-l$ac_lib
     LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
   fi
-<<<<<<< HEAD
   if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_search_bind_textdomain_codeset=$ac_res
 fi
@@ -18285,59 +18091,16 @@ fi
 done
 if ${ac_cv_search_bind_textdomain_codeset+:} false; then :
 
-=======
-  rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext &&
-       $as_test_x conftest$ac_exeext; then
-  ac_cv_search_bind_textdomain_codeset=$ac_res
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext
-  if test "${ac_cv_search_bind_textdomain_codeset+set}" = set; then
-  break
-fi
-done
-if test "${ac_cv_search_bind_textdomain_codeset+set}" = set; then
-  :
->>>>>>> 49f001d81e
 else
   ac_cv_search_bind_textdomain_codeset=no
 fi
 rm conftest.$ac_ext
 LIBS=$ac_func_search_save_LIBS
 fi
-<<<<<<< HEAD
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_bind_textdomain_codeset" >&5
 $as_echo "$ac_cv_search_bind_textdomain_codeset" >&6; }
 ac_res=$ac_cv_search_bind_textdomain_codeset
 if test "$ac_res" != no; then :
-=======
-{ echo "$as_me:$LINENO: result: $ac_cv_search_bind_textdomain_codeset" >&5
-echo "${ECHO_T}$ac_cv_search_bind_textdomain_codeset" >&6; }
-ac_res=$ac_cv_search_bind_textdomain_codeset
-if test "$ac_res" != no; then
->>>>>>> 49f001d81e
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 else
@@ -18486,11 +18249,7 @@ fi
 
 # Check for Tcl configuration script tclConfig.sh
 if test "$with_tcl" = yes; then
-<<<<<<< HEAD
     for ac_prog in tclsh tcl tclsh8.5 tclsh85 tclsh8.4 tclsh84 tclsh8.3 tclsh83
-=======
-    for ac_prog in tclsh tcl tclsh8.5 tclsh8.4 tclsh8.3
->>>>>>> 49f001d81e
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -18536,21 +18295,11 @@ fi
 done
 
 if test x"$TCLSH" = x""; then
-<<<<<<< HEAD
   as_fn_error $? "Tcl shell not found" "$LINENO" 5
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for tclConfig.sh" >&5
 $as_echo_n "checking for tclConfig.sh... " >&6; }
-=======
-  { { echo "$as_me:$LINENO: error: Tcl shell not found" >&5
-echo "$as_me: error: Tcl shell not found" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-{ echo "$as_me:$LINENO: checking for tclConfig.sh" >&5
-echo $ECHO_N "checking for tclConfig.sh... $ECHO_C" >&6; }
->>>>>>> 49f001d81e
 # Let user override test
 if test -z "$TCL_CONFIG_SH"; then
     pgac_test_dirs="$with_tclconfig"
@@ -19107,16 +18856,10 @@ $as_echo "$as_me: WARNING: *** skipping thread test on Win32" >&2;}
 fi
 fi
 
-<<<<<<< HEAD
 # If compiler will take -Wl,--as-needed (or various platform-specific
 # spellings thereof) then add that to LDFLAGS.  This is much easier than
 # trying to filter LIBS to the minimum for each executable.
 # (Note that shared library links won't use this switch, though.)
-=======
-# If compiler will take -Wl,--as-needed then add that to LDFLAGS.
-# This is much easier than trying to filter LIBS to the minimum for each
-# executable.  (Note that shared library links won't use this switch, though.)
->>>>>>> 49f001d81e
 # On (at least) some Red-Hat-derived systems, this switch breaks linking to
 # libreadline; therefore we postpone testing it until we know what library
 # dependencies readline has.  The test code will try to link with $LIBS.
@@ -19125,9 +18868,42 @@ if test "$with_readline" = yes; then
 else
   link_test_func=exit
 fi
-<<<<<<< HEAD
 
-if test "$PORTNAME" = "openbsd"; then
+if test "$PORTNAME" = "darwin"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking if $CC supports -Wl,-dead_strip_dylibs" >&5
+$as_echo_n "checking if $CC supports -Wl,-dead_strip_dylibs... " >&6; }
+pgac_save_LDFLAGS=$LDFLAGS
+LDFLAGS="$pgac_save_LDFLAGS -Wl,-dead_strip_dylibs"
+if test "$cross_compiling" = yes; then :
+  LDFLAGS="$pgac_save_LDFLAGS"
+               { $as_echo "$as_me:${as_lineno-$LINENO}: result: assuming no" >&5
+$as_echo "assuming no" >&6; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+extern void $link_test_func (); void (*fptr) () = $link_test_func;
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  LDFLAGS="$pgac_save_LDFLAGS"
+               { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+elif test "$PORTNAME" = "openbsd"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking if $CC supports -Wl,-Bdynamic" >&5
 $as_echo_n "checking if $CC supports -Wl,-Bdynamic... " >&6; }
 pgac_save_LDFLAGS=$LDFLAGS
@@ -19172,23 +18948,6 @@ if test "$cross_compiling" = yes; then :
 $as_echo "assuming no" >&6; }
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-=======
-if test "$PORTNAME" != "darwin"; then
-  { echo "$as_me:$LINENO: checking if $CC supports -Wl,--as-needed" >&5
-echo $ECHO_N "checking if $CC supports -Wl,--as-needed... $ECHO_C" >&6; }
-pgac_save_LDFLAGS=$LDFLAGS
-LDFLAGS="$pgac_save_LDFLAGS -Wl,--as-needed"
-if test "$cross_compiling" = yes; then
-  LDFLAGS="$pgac_save_LDFLAGS"
-               { echo "$as_me:$LINENO: result: assuming no" >&5
-echo "${ECHO_T}assuming no" >&6; }
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
->>>>>>> 49f001d81e
 /* end confdefs.h.  */
 extern void $link_test_func (); void (*fptr) () = $link_test_func;
 int
@@ -19199,7 +18958,6 @@ main ()
   return 0;
 }
 _ACEOF
-<<<<<<< HEAD
 if ac_fn_c_try_run "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
@@ -19225,120 +18983,6 @@ $as_echo "$as_me: using CPPFLAGS=$CPPFLAGS" >&6;}
 $as_echo "$as_me: using LDFLAGS=$LDFLAGS" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: using LIBS=$LIBS" >&5
 $as_echo "$as_me: using LIBS=$LIBS" >&6;}
-
-=======
-rm -f conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_try") 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  { echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6; }
-else
-  echo "$as_me: program exited with status $ac_status" >&5
-echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-( exit $ac_status )
-LDFLAGS="$pgac_save_LDFLAGS"
-               { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
-fi
-
-
-
-else
-  # On Darwin it's spelled -Wl,-dead_strip_dylibs, but don't try that elsewhere
-  { echo "$as_me:$LINENO: checking if $CC supports -Wl,-dead_strip_dylibs" >&5
-echo $ECHO_N "checking if $CC supports -Wl,-dead_strip_dylibs... $ECHO_C" >&6; }
-pgac_save_LDFLAGS=$LDFLAGS
-LDFLAGS="$pgac_save_LDFLAGS -Wl,-dead_strip_dylibs"
-if test "$cross_compiling" = yes; then
-  LDFLAGS="$pgac_save_LDFLAGS"
-               { echo "$as_me:$LINENO: result: assuming no" >&5
-echo "${ECHO_T}assuming no" >&6; }
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-extern void $link_test_func (); void (*fptr) () = $link_test_func;
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_try") 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  { echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6; }
-else
-  echo "$as_me: program exited with status $ac_status" >&5
-echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-( exit $ac_status )
-LDFLAGS="$pgac_save_LDFLAGS"
-               { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
-fi
-
-
-
-fi
-
-
-# Begin output steps
-
-{ echo "$as_me:$LINENO: using CFLAGS=$CFLAGS" >&5
-echo "$as_me: using CFLAGS=$CFLAGS" >&6;}
-{ echo "$as_me:$LINENO: using CPPFLAGS=$CPPFLAGS" >&5
-echo "$as_me: using CPPFLAGS=$CPPFLAGS" >&6;}
-{ echo "$as_me:$LINENO: using LDFLAGS=$LDFLAGS" >&5
-echo "$as_me: using LDFLAGS=$LDFLAGS" >&6;}
->>>>>>> 49f001d81e
 
 # prepare build tree if outside source tree
 # Note 1: test -ef might not exist, but it's more reliable than `pwd`.

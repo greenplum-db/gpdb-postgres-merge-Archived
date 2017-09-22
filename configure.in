@@ -281,7 +281,6 @@ AC_SUBST(DTRACEFLAGS)])
 AC_SUBST(enable_dtrace)
 
 #
-<<<<<<< HEAD
 # TAP tests
 #
 PGAC_ARG_BOOL(enable, tap-tests, no,
@@ -292,17 +291,9 @@ AC_SUBST(enable_tap_tests)
 # Block size
 #
 AC_MSG_CHECKING([for block size])
-PGAC_ARG_REQ(with, blocksize, [  --with-blocksize=BLOCKSIZE  set block size in kB [[32]]],
-             [blocksize=$withval],
-             [blocksize=32])
-=======
-# Block size
-#
-AC_MSG_CHECKING([for block size])
 PGAC_ARG_REQ(with, blocksize, [  --with-blocksize=BLOCKSIZE  set table block size in kB [[8]]],
              [blocksize=$withval],
              [blocksize=8])
->>>>>>> 49f001d81e
 case ${blocksize} in
   1) BLCKSZ=1024;;
   2) BLCKSZ=2048;;
@@ -329,16 +320,6 @@ AC_DEFINE_UNQUOTED([BLCKSZ], ${BLCKSZ}, [
 ]) 
 
 #
-<<<<<<< HEAD
-# File segment size
-#
-AC_MSG_CHECKING([for segment size])
-PGAC_ARG_REQ(with, segsize, [  --with-segsize=SEGSIZE  set segment size in GB [[1]]],
-             [segsize=$withval],
-             [segsize=1])
-# this expression is set up to avoid unnecessary integer overflow
-RELSEG_SIZE=`expr '(' 1024 '*' ${segsize} / ${blocksize} ')' '*' 1024`
-=======
 # Relation segment size
 #
 AC_MSG_CHECKING([for segment size])
@@ -348,7 +329,6 @@ PGAC_ARG_REQ(with, segsize, [  --with-segsize=SEGSIZE  set table segment size in
 # this expression is set up to avoid unnecessary integer overflow
 # blocksize is already guaranteed to be a factor of 1024
 RELSEG_SIZE=`expr '(' 1024 / ${blocksize} ')' '*' ${segsize} '*' 1024`
->>>>>>> 49f001d81e
 test $? -eq 0 || exit 1
 AC_MSG_RESULT([${segsize}GB])
 
@@ -370,8 +350,6 @@ AC_DEFINE_UNQUOTED([RELSEG_SIZE], ${RELSEG_SIZE}, [
 
  Changing RELSEG_SIZE requires an initdb.
 ])
-<<<<<<< HEAD
-=======
 
 #
 # WAL block size
@@ -427,7 +405,6 @@ AC_DEFINE_UNQUOTED([XLOG_SEG_SIZE], [(${wal_segsize} * 1024 * 1024)], [
 
  Changing XLOG_SEG_SIZE requires an initdb.
 ])
->>>>>>> 49f001d81e
 
 #
 # C compiler
@@ -1223,16 +1200,11 @@ AC_SUBST(ELF_SYS)
 CPPFLAGS="$CPPFLAGS $INCLUDES"
 LDFLAGS="$LDFLAGS $LIBDIRS"
 
-<<<<<<< HEAD
 AC_ARG_VAR(LDFLAGS_EX, [extra linker flags for linking executables only])
 AC_ARG_VAR(LDFLAGS_SL, [extra linker flags for linking shared libraries only])
 
 AC_MSG_NOTICE([using CPPFLAGS=$CPPFLAGS])
 AC_MSG_NOTICE([using LDFLAGS=$LDFLAGS])
-
-=======
->>>>>>> 49f001d81e
-AC_ARG_VAR(LDFLAGS_SL)
 
 PGAC_PROG_LD
 AC_SUBST(LD)
@@ -2320,17 +2292,11 @@ AC_SUBST(enable_largefile)
 # Check for largefile support (must be after AC_SYS_LARGEFILE)
 AC_CHECK_SIZEOF([off_t])
 
-<<<<<<< HEAD
 if test "$PORTNAME" != "win32"; then
 # If we don't have largefile support, can't handle segsize >= 2GB.
 if test "$ac_cv_sizeof_off_t" -lt 8 -a "$segsize" != "1"; then
    AC_MSG_ERROR([Large file support is not enabled. Segment size cannot be larger than 1GB.])
 fi
-=======
-# If we don't have largefile support, can't handle segsize >= 2GB.
-if test "$ac_cv_sizeof_off_t" -lt 8 -a "$segsize" != "1"; then 
-   AC_MSG_ERROR([Large file support is not enabled. Segment size cannot be larger than 1GB.]) 
->>>>>>> 49f001d81e
 fi
 
 # SunOS doesn't handle negative byte comparisons properly with +/- return
@@ -2471,16 +2437,10 @@ AC_MSG_WARN([*** skipping thread test on Win32])
 fi
 fi
 
-<<<<<<< HEAD
 # If compiler will take -Wl,--as-needed (or various platform-specific
 # spellings thereof) then add that to LDFLAGS.  This is much easier than
 # trying to filter LIBS to the minimum for each executable.
 # (Note that shared library links won't use this switch, though.)
-=======
-# If compiler will take -Wl,--as-needed then add that to LDFLAGS.
-# This is much easier than trying to filter LIBS to the minimum for each
-# executable.  (Note that shared library links won't use this switch, though.)
->>>>>>> 49f001d81e
 # On (at least) some Red-Hat-derived systems, this switch breaks linking to
 # libreadline; therefore we postpone testing it until we know what library
 # dependencies readline has.  The test code will try to link with $LIBS.
@@ -2489,34 +2449,21 @@ if test "$with_readline" = yes; then
 else
   link_test_func=exit
 fi
-<<<<<<< HEAD
 
-if test "$PORTNAME" = "openbsd"; then
+if test "$PORTNAME" = "darwin"; then
+  PGAC_PROG_CC_LDFLAGS_OPT([-Wl,-dead_strip_dylibs], $link_test_func)
+elif test "$PORTNAME" = "openbsd"; then
   PGAC_PROG_CC_LDFLAGS_OPT([-Wl,-Bdynamic], $link_test_func)
 else
   PGAC_PROG_CC_LDFLAGS_OPT([-Wl,--as-needed], $link_test_func)
 fi
 
-=======
-if test "$PORTNAME" != "darwin"; then
-  PGAC_PROG_CC_LDFLAGS_OPT([-Wl,--as-needed], $link_test_func)
-else
-  # On Darwin it's spelled -Wl,-dead_strip_dylibs, but don't try that elsewhere
-  PGAC_PROG_CC_LDFLAGS_OPT([-Wl,-dead_strip_dylibs], $link_test_func)
-fi
-
-
->>>>>>> 49f001d81e
 # Begin output steps
 
 AC_MSG_NOTICE([using CFLAGS=$CFLAGS])
 AC_MSG_NOTICE([using CPPFLAGS=$CPPFLAGS])
 AC_MSG_NOTICE([using LDFLAGS=$LDFLAGS])
-<<<<<<< HEAD
 AC_MSG_NOTICE([using LIBS=$LIBS])
-
-=======
->>>>>>> 49f001d81e
 
 # prepare build tree if outside source tree
 # Note 1: test -ef might not exist, but it's more reliable than `pwd`.
