@@ -300,11 +300,7 @@ extern void copydir(char *fromdir, char *todir, bool recurse);
 
 extern bool rmtree(const char *path, bool rmtopdir);
 
-<<<<<<< HEAD
 /*
-=======
-/* 
->>>>>>> 49f001d81e
  * stat() is not guaranteed to set the st_size field on win32, so we
  * redefine it to our own implementation that is.
  *
@@ -316,12 +312,7 @@ extern bool rmtree(const char *path, bool rmtopdir);
  */
 #if defined(WIN32) && !defined(__CYGWIN__) && !defined(UNSAFE_STAT_OK)
 #include <sys/stat.h>
-<<<<<<< HEAD
-extern int	pgwin32_safestat(const char *path, struct stat * buf);
-
-=======
 extern int	pgwin32_safestat(const char *path, struct stat *buf);
->>>>>>> 49f001d81e
 #define stat(a,b) pgwin32_safestat(a,b)
 #endif
 
@@ -343,13 +334,6 @@ extern FILE *pgwin32_fopen(const char *, const char *);
 #define popen(a,b) _popen(a,b)
 #define pclose(a) _pclose(a)
 
-<<<<<<< HEAD
-=======
-/* Missing rand functions */
-extern long lrand48(void);
-extern void srand48(long seed);
-
->>>>>>> 49f001d81e
 /* New versions of MingW have gettimeofday, old mingw and msvc don't */
 #ifndef HAVE_GETTIMEOFDAY
 /* Last parameter not used */
