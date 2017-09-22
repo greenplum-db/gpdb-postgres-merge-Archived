@@ -10,12 +10,20 @@
 # require people to have perl to build from a tarball, but on the other
 # hand Windows can't deal with shell scripts.
 #
+<<<<<<< HEAD
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+# Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 49f001d81e
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
+<<<<<<< HEAD
 #    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.pl,v 1.2 2009/01/01 17:23:48 momjian Exp $
+=======
+#    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.pl,v 1.1 2008/06/23 17:54:29 tgl Exp $
+>>>>>>> 49f001d81e
 #
 #-------------------------------------------------------------------------
 
@@ -90,7 +98,11 @@ qq|/*-------------------------------------------------------------------------
  * These macros can be used to avoid a catalog lookup when a specific
  * fmgr-callable function needs to be referenced.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 49f001d81e
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * NOTES
@@ -126,7 +138,11 @@ qq|/*-------------------------------------------------------------------------
  * fmgrtab.c
  *    The function manager's table of internal functions.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 49f001d81e
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * NOTES

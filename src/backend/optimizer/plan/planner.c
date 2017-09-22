@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.231 2008/04/01 00:48:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.235 2008/07/31 22:47:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,9 @@
 #include "cdb/cdbsubselect.h"	/* cdbsubselect_flatten_sublinks() */
 #include "cdb/cdbvars.h"
 
+
+/* GUC parameter */
+double cursor_tuple_fraction = DEFAULT_CURSOR_TUPLE_FRACTION;
 
 /* GUC parameter */
 double cursor_tuple_fraction = DEFAULT_CURSOR_TUPLE_FRACTION;
@@ -271,7 +274,11 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	{
 		/*
 		 * We have no real idea how many tuples the user will ultimately FETCH
+<<<<<<< HEAD
 		 * from a cursor, but it is sometimes the case that he doesn't want 'em
+=======
+		 * from a cursor, but it is often the case that he doesn't want 'em
+>>>>>>> 49f001d81e
 		 * all, or would prefer a fast-start plan anyway so that he can
 		 * process some of the tuples sooner.  Use a GUC parameter to decide
 		 * what fraction to optimize for.
@@ -823,10 +830,14 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	 */
 	if (list_length(glob->subplans) != num_old_subplans ||
 		root->query_level > 1)
+<<<<<<< HEAD
 	{
 		Assert(root->parse == parse); /* GPDB isn't always careful about this. */
 		SS_finalize_plan(root, plan, true);
 	}
+=======
+		SS_finalize_plan(root, plan, true);
+>>>>>>> 49f001d81e
 
 	/* Return internal info if caller wants it */
 	if (subroot)
@@ -1395,6 +1406,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		/*
 		 * Calculate pathkeys that represent result ordering requirements
 		 */
+		Assert(parse->distinctClause == NIL);
 		sort_pathkeys = make_pathkeys_for_sortclauses(root,
 													  parse->sortClause,
 													  tlist,
@@ -1482,16 +1494,38 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 * Calculate pathkeys that represent grouping/ordering requirements.
 		 * Stash them in PlannerInfo so that query_planner can canonicalize
 		 * them after EquivalenceClasses have been formed.
+		 *
+		 * Note: for the moment, DISTINCT is always implemented via sort/uniq,
+		 * and we set the sort_pathkeys to be the more rigorous of the
+		 * DISTINCT and ORDER BY requirements.  This should be changed
+		 * someday, but DISTINCT ON is a bit of a problem ...
 		 */
 		root->group_pathkeys =
 			make_pathkeys_for_groupclause(root,
 										  parse->groupClause,
+<<<<<<< HEAD
 										  tlist);
 		root->sort_pathkeys =
 			make_pathkeys_for_sortclauses(root,
 										  parse->sortClause,
 										  tlist,
 										  false);
+=======
+										  tlist,
+										  false);
+		if (list_length(parse->distinctClause) > list_length(parse->sortClause))
+			root->sort_pathkeys =
+				make_pathkeys_for_sortclauses(root,
+											  parse->distinctClause,
+											  tlist,
+											  false);
+		else
+			root->sort_pathkeys =
+				make_pathkeys_for_sortclauses(root,
+											  parse->sortClause,
+											  tlist,
+											  false);
+>>>>>>> 49f001d81e
 
 		/*
 		 * Will need actual number of aggregates for estimating costs.
@@ -1540,9 +1574,9 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 * by ORDER BY --- but that might just leave us failing to exploit an
 		 * available sort order at all. Needs more thought...)
 		 */
-		if (parse->groupClause)
+		if (root->group_pathkeys)
 			root->query_pathkeys = root->group_pathkeys;
-		else if (parse->sortClause)
+		else if (root->sort_pathkeys)
 			root->query_pathkeys = root->sort_pathkeys;
 		else
 			root->query_pathkeys = NIL;
@@ -1706,7 +1740,11 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			 * Normal case --- create a plan according to query_planner's
 			 * results.
 			 */
+<<<<<<< HEAD
 			bool		need_sort_for_grouping = false;
+=======
+			bool	need_sort_for_grouping = false;
+>>>>>>> 49f001d81e
 
 			result_plan = create_plan(root, best_path);
 			current_pathkeys = best_path->pathkeys;
@@ -1718,6 +1756,18 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			{
 				need_sort_for_grouping = true;
 
+				/*
+				 * Always override query_planner's tlist, so that we don't
+				 * sort useless data from a "physical" tlist.
+				 */
+				need_tlist_eval = true;
+			}
+
+			/* Detect if we'll need an explicit sort for grouping */
+			if (parse->groupClause && !use_hashed_grouping &&
+				!pathkeys_contained_in(group_pathkeys, current_pathkeys))
+			{
+				need_sort_for_grouping = true;
 				/*
 				 * Always override query_planner's tlist, so that we don't
 				 * sort useless data from a "physical" tlist.
@@ -1895,10 +1945,14 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				/*
 				 * Make a copy of tlist. Really need to?
 				 */
+<<<<<<< HEAD
 				List	   *new_tlist = copyObject(tlist);
 
 				/* Make EXPLAIN output look nice */
 				foreach(lc, result_plan->targetlist)
+=======
+				if (need_sort_for_grouping)
+>>>>>>> 49f001d81e
 				{
 					TargetEntry *tle = (TargetEntry *) lfirst(lc);
 
@@ -2090,7 +2144,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	 * an explicit sort step.  Note that, if we going to add a Unique node,
 	 * the sort_pathkeys will have the distinct keys as a prefix.
 	 */
-	if (parse->sortClause)
+	if (sort_pathkeys)
 	{
 		if (!pathkeys_contained_in(sort_pathkeys, current_pathkeys))
 		{

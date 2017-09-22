@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2009, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.74 2008/04/03 16:27:25 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.77 2008/06/30 10:58:47 heikki Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -14,7 +14,10 @@
 #include "libpq/pqcomm.h"
 #include "portability/instr_time.h"
 #include "utils/hsearch.h"
+<<<<<<< HEAD
 #include "utils/rel.h"
+=======
+>>>>>>> 49f001d81e
 #include "utils/relcache.h"
 #include "utils/timestamp.h"
 
@@ -42,7 +45,10 @@ typedef enum StatMsgType
 	PGSTAT_MTYPE_AUTOVAC_START,
 	PGSTAT_MTYPE_VACUUM,
 	PGSTAT_MTYPE_ANALYZE,
+<<<<<<< HEAD
 	PGSTAT_MTYPE_QUEUESTAT, /* GPDB */
+=======
+>>>>>>> 49f001d81e
 	PGSTAT_MTYPE_BGWRITER,
 	PGSTAT_MTYPE_FUNCSTAT,
 	PGSTAT_MTYPE_FUNCPURGE
@@ -387,7 +393,11 @@ typedef struct PgStat_FunctionEntry
  *								usage statistics.
  * ----------
  */
+<<<<<<< HEAD
 #define PGSTAT_NUM_FUNCENTRIES	\
+=======
+#define PGSTAT_NUM_FUNCENTRIES  \
+>>>>>>> 49f001d81e
 	((PGSTAT_MSG_PAYLOAD - sizeof(Oid) - sizeof(int))  \
 	 / sizeof(PgStat_FunctionEntry))
 
@@ -469,8 +479,13 @@ typedef struct PgStat_StatDBEntry
 	TimestampTz last_autovac_time;
 
 	/*
+<<<<<<< HEAD
 	 * tables and functions must be last in the struct, because we don't write
 	 * the pointers out to the stats file.
+=======
+	 * tables and functions must be last in the struct, because we don't
+	 * write the pointers out to the stats file.
+>>>>>>> 49f001d81e
 	 */
 	HTAB	   *tables;
 	HTAB	   *functions;
@@ -510,6 +525,7 @@ typedef struct PgStat_StatTabEntry
 
 
 /* ----------
+<<<<<<< HEAD
  * PgStat_StatQueueEntry		The collector's data per resource queue
  * ----------
  *  --- cdb extension ---
@@ -524,6 +540,8 @@ typedef struct PgStat_StatQueueEntry
 } PgStat_StatQueueEntry;
 
 /* ----------
+=======
+>>>>>>> 49f001d81e
  * PgStat_StatFuncEntry			The collector's data per function
  * ----------
  */
@@ -538,6 +556,7 @@ typedef struct PgStat_StatFuncEntry
 } PgStat_StatFuncEntry;
 
 
+<<<<<<< HEAD
 
 /* ----------
  * PgStat_StatPortalEntry
@@ -566,6 +585,8 @@ typedef struct PgStat_StatPortalEntry
 } PgStat_StatPortalEntry;
 
 
+=======
+>>>>>>> 49f001d81e
 /*
  * Global statistics kept in the stats collector
  */
@@ -587,12 +608,15 @@ typedef struct PgStat_GlobalStats
  * ----------
  */
 
+<<<<<<< HEAD
 /* Definitions of waiting reason */
 #define PGBE_WAITING_LOCK			'l'
 #define PGBE_WAITING_REPLICATION	'r'
 #define PGBE_WAITING_RESGROUP		'g'
 #define PGBE_WAITING_NONE			'\0'
 
+=======
+>>>>>>> 49f001d81e
 /* ----------
  * PgBackendStatus
  *
@@ -638,9 +662,13 @@ typedef struct PgBackendStatus
 	char	   *st_appname;
 
 	/* current command string; MUST be null-terminated */
+<<<<<<< HEAD
 	char		*st_activity;
 
 	Oid			st_rsgid;
+=======
+	char	   *st_activity;
+>>>>>>> 49f001d81e
 } PgBackendStatus;
 
 /*
@@ -652,11 +680,19 @@ typedef struct PgStat_FunctionCallUsage
 	/* NULL means we are not tracking the current function call */
 	PgStat_FunctionCounts *fs;
 	/* Total time previously charged to function, as of function start */
+<<<<<<< HEAD
 	instr_time	save_f_time;
 	/* Backend-wide total time as of function start */
 	instr_time	save_total;
 	/* system clock as of function start */
 	instr_time	f_start;
+=======
+	instr_time		save_f_time;
+	/* Backend-wide total time as of function start */
+	instr_time		save_total;
+	/* system clock as of function start */
+	instr_time		f_start;
+>>>>>>> 49f001d81e
 } PgStat_FunctionCallUsage;
 
 
@@ -666,6 +702,8 @@ typedef struct PgStat_FunctionCallUsage
  */
 extern bool pgstat_track_activities;
 extern bool pgstat_track_counts;
+extern int	pgstat_track_functions;
+extern int	pgstat_track_activity_query_size;
 
 extern bool pgstat_collect_queuelevel;
 
@@ -704,7 +742,10 @@ extern void pgstat_ping(void);
 
 extern void pgstat_report_stat(bool force);
 extern void pgstat_vacuum_stat(void);
+<<<<<<< HEAD
 extern void pgstat_report_queuestat(void); /* GPDB */
+=======
+>>>>>>> 49f001d81e
 extern void pgstat_drop_database(Oid databaseid);
 
 extern void pgstat_clear_snapshot(void);
@@ -884,6 +925,11 @@ extern void pgstat_count_heap_insert(Relation rel);
 extern void pgstat_count_heap_update(Relation rel, bool hot);
 extern void pgstat_count_heap_delete(Relation rel);
 extern void pgstat_update_heap_dead_tuples(Relation rel, int delta);
+
+extern void pgstat_init_function_usage(FunctionCallInfoData *fcinfo,
+									   PgStat_FunctionCallUsage *fcu);
+extern void pgstat_end_function_usage(PgStat_FunctionCallUsage *fcu,
+									  bool finalize);
 
 extern void AtEOXact_PgStat(bool isCommit);
 extern void AtEOSubXact_PgStat(bool isCommit, int nestDepth);

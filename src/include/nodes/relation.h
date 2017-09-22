@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.155 2008/03/24 21:53:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.156 2008/04/21 20:54:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1513,12 +1513,15 @@ typedef struct InClauseInfo
 	Relids		righthand;		/* base relids coming from the subselect */
 	List	   *sub_targetlist; /* RHS expressions of the IN's comparisons */
 	List	   *in_operators;	/* OIDs of the IN's equality operators */
+<<<<<<< HEAD
 
     bool        try_join_unique;
                                 /* CDB: true => comparison is equality op and
                                  *  subquery is not correlated.  Ok to consider
                                  *  JOIN_UNIQUE method of duplicate suppression.
                                  */
+=======
+>>>>>>> 49f001d81e
 } InClauseInfo;
 
 /*

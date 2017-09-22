@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.104 2008/03/26 21:10:37 alvherre Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.109 2008/06/19 00:46:03 alvherre Exp $
+>>>>>>> 49f001d81e
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -62,10 +66,11 @@
 
 #include "postgres.h"
 
-#include "access/genam.h"
-#include "access/heapam.h"
+#include "access/relscan.h"
 #include "access/transam.h"
 #include "pgstat.h"
+#include "storage/bufmgr.h"
+#include "storage/lmgr.h"
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
 #include "utils/tqual.h"
@@ -398,6 +403,10 @@ index_restrpos(IndexScanDesc scan)
  * snapshot, or NULL if no more matching tuples exist.	On success,
  * the buffer containing the heap tuple is pinned (the pin will be dropped
  * at the next index_getnext or index_endscan).
+ *
+ * Note: caller must check scan->xs_recheck, and perform rechecking of the
+ * scan keys if required.  We do not do that here because we don't have
+ * enough information to do it efficiently in the general case.
  * ----------------
  */
 HeapTuple
@@ -456,6 +465,8 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 			/*
 			 * The AM's gettuple proc finds the next index entry matching the
 			 * scan keys, and puts the TID in xs_ctup.t_self (ie, *tid).
+			 * It should also set scan->xs_recheck, though we pay no
+			 * attention to that here.
 			 */
 			found = DatumGetBool(FunctionCall2(procedure,
 											   PointerGetDatum(scan),
@@ -642,6 +653,7 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 }
 
 /* ----------------
+<<<<<<< HEAD
  *		index_getnext_indexitem - get the next index tuple from a scan
  *
  * Finds the next index tuple satisfying the scan keys.  Note that the
@@ -682,6 +694,9 @@ index_getnext_indexitem(IndexScanDesc scan,
 
 /* ----------------
  *		index_getbitmap - get the next bitmap from an index scan.
+=======
+ *		index_getbitmap - get all tuples at once from an index scan
+>>>>>>> 49f001d81e
  *
  *		it invokes am's getmulti function to get a bitmap. If am is an on-disk
  *		bitmap index access method (see bitmap.h), then a StreamBitmap is

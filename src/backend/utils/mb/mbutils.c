@@ -4,7 +4,11 @@
  *
  * Tatsuo Ishii
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.69.2.1 2008/05/27 12:24:46 mha Exp $
+=======
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.73 2008/06/18 23:08:47 tgl Exp $
+>>>>>>> 49f001d81e
  */
 #include "postgres.h"
 
@@ -633,22 +637,38 @@ perform_default_encoding_conversion(const char *src, int len, bool is_client_to_
 size_t
 wchar2char(char *to, const wchar_t *from, size_t tolen)
 {
+<<<<<<< HEAD
 	size_t		result;
 
+=======
+	size_t result;
+	
+>>>>>>> 49f001d81e
 	if (tolen == 0)
 		return 0;
 
 #ifdef WIN32
+<<<<<<< HEAD
 
 	/*
 	 * On Windows, the "Unicode" locales assume UTF16 not UTF8 encoding, and
 	 * for some reason mbstowcs and wcstombs won't do this for us, so we use
 	 * MultiByteToWideChar().
+=======
+	/*
+	 * On Windows, the "Unicode" locales assume UTF16 not UTF8 encoding,
+	 * and for some reason mbstowcs and wcstombs won't do this for us,
+	 * so we use MultiByteToWideChar().
+>>>>>>> 49f001d81e
 	 */
 	if (GetDatabaseEncoding() == PG_UTF8)
 	{
 		result = WideCharToMultiByte(CP_UTF8, 0, from, -1, to, tolen,
+<<<<<<< HEAD
 									 NULL, NULL);
+=======
+								NULL, NULL);
+>>>>>>> 49f001d81e
 		/* A zero return is failure */
 		if (result <= 0)
 			result = -1;
@@ -661,10 +681,14 @@ wchar2char(char *to, const wchar_t *from, size_t tolen)
 	}
 	else
 #endif   /* WIN32 */
+<<<<<<< HEAD
 	{
 		Assert(!lc_ctype_is_c());
 		result = wcstombs(to, from, tolen);
 	}
+=======
+		result = wcstombs(to, from, tolen);
+>>>>>>> 49f001d81e
 	return result;
 }
 
@@ -710,12 +734,31 @@ char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen)
 	else
 #endif   /* WIN32 */
 	{
+<<<<<<< HEAD
 		/* mbstowcs requires ending '\0' */
 		char	   *str = pnstrdup(from, fromlen);
 
 		Assert(!lc_ctype_is_c());
 		result = mbstowcs(to, str, tolen);
 		pfree(str);
+=======
+		if (lc_ctype_is_c())
+		{
+			/*
+			 * pg_mb2wchar_with_len always adds trailing '\0', so 'to' should be
+			 * allocated with sufficient space
+			 */
+			result = pg_mb2wchar_with_len(from, (pg_wchar *) to, fromlen);
+		}
+		else
+		{
+			/* mbstowcs requires ending '\0' */
+			char	   *str = pnstrdup(from, fromlen);
+
+			result = mbstowcs(to, str, tolen);
+			pfree(str);
+		}
+>>>>>>> 49f001d81e
 	}
 
 	if (result == -1)
@@ -734,6 +777,7 @@ char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen)
 				(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
 				 errmsg("invalid multibyte character for locale"),
 				 errhint("The server's LC_CTYPE locale is probably incompatible with the database encoding.")));
+<<<<<<< HEAD
 	}
 
 	return result;
@@ -837,6 +881,15 @@ pg_server_to_custom(const char *s, int len, int dest_encoding, void *cep)
 	return perform_default_encoding_conversion(s, len, false, dest_encoding, custom_encoding_proc);
 }
 
+=======
+	}	
+
+	return result;
+}
+
+#endif
+
+>>>>>>> 49f001d81e
 /* convert a multibyte string to a wchar */
 int
 pg_mb2wchar(const char *from, pg_wchar *to)
@@ -1087,6 +1140,7 @@ SetDatabaseEncoding(int encoding)
 		if (bind_textdomain_codeset("postgres", "UTF-8") == NULL)
 			elog(LOG, "bind_textdomain_codeset failed");
 #endif
+<<<<<<< HEAD
 }
 
 /*
@@ -1127,6 +1181,8 @@ pg_bind_textdomain_codeset(const char *domainname)
 		}
 	}
 #endif
+=======
+>>>>>>> 49f001d81e
 }
 
 void

@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.390 2008/03/21 22:41:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.395 2008/07/16 01:30:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -550,6 +550,7 @@ _copyIndexScan(IndexScan *from)
 
 	copyIndexScanFields(from, newnode);
 
+<<<<<<< HEAD
 	return newnode;
 }
 
@@ -563,6 +564,15 @@ _copyDynamicIndexScan(const DynamicIndexScan *from)
 
 	/* DynamicIndexScan has some content from IndexScan */
 	copyIndexScanFields((IndexScan *)from, (IndexScan *)newnode);
+=======
+	/*
+	 * copy remainder of node
+	 */
+	COPY_SCALAR_FIELD(indexid);
+	COPY_NODE_FIELD(indexqual);
+	COPY_NODE_FIELD(indexqualorig);
+	COPY_SCALAR_FIELD(indexorderdir);
+>>>>>>> 49f001d81e
 
 	return newnode;
 }
@@ -575,8 +585,22 @@ _copyBitmapIndexScan(BitmapIndexScan *from)
 {
 	BitmapIndexScan *newnode = makeNode(BitmapIndexScan);
 
+<<<<<<< HEAD
 	/* DynamicIndexScan has some content from IndexScan */
 	copyIndexScanFields((IndexScan *)from, (IndexScan *)newnode);
+=======
+	/*
+	 * copy node superclass fields
+	 */
+	CopyScanFields((Scan *) from, (Scan *) newnode);
+
+	/*
+	 * copy remainder of node
+	 */
+	COPY_SCALAR_FIELD(indexid);
+	COPY_NODE_FIELD(indexqual);
+	COPY_NODE_FIELD(indexqualorig);
+>>>>>>> 49f001d81e
 
 	return newnode;
 }
@@ -2486,9 +2510,12 @@ _copyAConst(A_Const *from)
 			break;
 	}
 
+<<<<<<< HEAD
 	COPY_NODE_FIELD(typeName);
 	COPY_LOCATION_FIELD(location);
 
+=======
+>>>>>>> 49f001d81e
 	return newnode;
 }
 
@@ -2504,7 +2531,10 @@ _copyFuncCall(FuncCall *from)
 	COPY_SCALAR_FIELD(agg_star);
 	COPY_SCALAR_FIELD(agg_distinct);
 	COPY_SCALAR_FIELD(func_variadic);
+<<<<<<< HEAD
 	COPY_NODE_FIELD(over);
+=======
+>>>>>>> 49f001d81e
 	COPY_SCALAR_FIELD(location);
 
 	return newnode;
@@ -3428,6 +3458,7 @@ _copyTruncateStmt(TruncateStmt *from)
 	TruncateStmt *newnode = makeNode(TruncateStmt);
 
 	COPY_NODE_FIELD(relations);
+	COPY_SCALAR_FIELD(restart_seqs);
 	COPY_SCALAR_FIELD(behavior);
 
 	return newnode;
@@ -3757,7 +3788,6 @@ _copyCreateOpClassItem(CreateOpClassItem *from)
 	COPY_NODE_FIELD(name);
 	COPY_NODE_FIELD(args);
 	COPY_SCALAR_FIELD(number);
-	COPY_SCALAR_FIELD(recheck);
 	COPY_NODE_FIELD(class_args);
 	COPY_NODE_FIELD(storedtype);
 

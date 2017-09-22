@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/variable.c,v 1.49 2009/06/11 14:49:13 momjian Exp $ */
+=======
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/variable.c,v 1.45 2008/05/16 15:20:04 petere Exp $ */
+>>>>>>> 49f001d81e
 
 #include "postgres_fe.h"
 
@@ -226,7 +230,11 @@ find_variable(char *name)
 				*next = '\0';
 				p = find_simple(name);
 				if (p == NULL)
+<<<<<<< HEAD
 					mmerror(PARSE_ERROR, ET_FATAL, "variable \"%s\" is not declared", name);
+=======
+					mmerror(PARSE_ERROR, ET_FATAL, "variable %s is not declared", name);
+>>>>>>> 49f001d81e
 
 				*next = c;
 				switch (p->type->u.element->type)
@@ -248,7 +256,11 @@ find_variable(char *name)
 		p = find_simple(name);
 
 	if (p == NULL)
+<<<<<<< HEAD
 		mmerror(PARSE_ERROR, ET_FATAL, "variable \"%s\" is not declared", name);
+=======
+		mmerror(PARSE_ERROR, ET_FATAL, "variable %s is not declared", name);
+>>>>>>> 49f001d81e
 
 	return (p);
 }
@@ -468,7 +480,11 @@ get_typedef(char *name)
 
 	for (this = types; this && strcmp(this->name, name); this = this->next);
 	if (!this)
+<<<<<<< HEAD
 		mmerror(PARSE_ERROR, ET_FATAL, "unrecognized data type name \"%s\"", name);
+=======
+		mmerror(PARSE_ERROR, ET_FATAL, "invalid datatype \"%s\"", name);
+>>>>>>> 49f001d81e
 
 	return (this);
 }
@@ -479,7 +495,11 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 	if (atoi(type_index) >= 0)
 	{
 		if (atoi(*length) >= 0)
+<<<<<<< HEAD
 			mmerror(PARSE_ERROR, ET_FATAL, "multidimensional arrays are not supported");
+=======
+			mmerror(PARSE_ERROR, ET_FATAL, "no multidimensional array support");
+>>>>>>> 49f001d81e
 
 		*length = type_index;
 	}
@@ -487,7 +507,11 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 	if (atoi(type_dimension) >= 0)
 	{
 		if (atoi(*dimension) >= 0 && atoi(*length) >= 0)
+<<<<<<< HEAD
 			mmerror(PARSE_ERROR, ET_FATAL, "multidimensional arrays are not supported");
+=======
+			mmerror(PARSE_ERROR, ET_FATAL, "no multidimensional array support");
+>>>>>>> 49f001d81e
 
 		if (atoi(*dimension) >= 0)
 			*length = *dimension;
@@ -496,6 +520,7 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 	}
 
 	if (pointer_len > 2)
+<<<<<<< HEAD
 		mmerror(PARSE_ERROR, ET_FATAL, ngettext("multilevel pointers (more than 2 levels) are not supported; found %d level",
 												"multilevel pointers (more than 2 levels) are not supported; found %d levels", pointer_len),
 				pointer_len);
@@ -508,6 +533,18 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 
 	if (atoi(*length) >= 0 && atoi(*dimension) >= 0 && pointer_len)
 		mmerror(PARSE_ERROR, ET_FATAL, "multidimensional arrays are not supported");
+=======
+		mmerror(PARSE_ERROR, ET_FATAL, "no multilevel (more than 2) pointer supported %d", pointer_len);
+
+	if (pointer_len > 1 && type_enum != ECPGt_char && type_enum != ECPGt_unsigned_char)
+		mmerror(PARSE_ERROR, ET_FATAL, "no pointer to pointer supported for this type");
+
+	if (pointer_len > 1 && (atoi(*length) >= 0 || atoi(*dimension) >= 0))
+		mmerror(PARSE_ERROR, ET_FATAL, "no multidimensional array support");
+
+	if (atoi(*length) >= 0 && atoi(*dimension) >= 0 && pointer_len)
+		mmerror(PARSE_ERROR, ET_FATAL, "no multidimensional array support");
+>>>>>>> 49f001d81e
 
 	switch (type_enum)
 	{
@@ -521,7 +558,11 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 			}
 
 			if (atoi(*length) >= 0)
+<<<<<<< HEAD
 				mmerror(PARSE_ERROR, ET_FATAL, "multidimensional arrays for structures are not supported");
+=======
+				mmerror(PARSE_ERROR, ET_FATAL, "no multidimensional array support for structures");
+>>>>>>> 49f001d81e
 
 			break;
 		case ECPGt_varchar:
@@ -581,7 +622,11 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 			}
 
 			if (atoi(*length) >= 0)
+<<<<<<< HEAD
 				mmerror(PARSE_ERROR, ET_FATAL, "multidimensional arrays for simple data types are not supported");
+=======
+				mmerror(PARSE_ERROR, ET_FATAL, "no multidimensional array support for simple data types");
+>>>>>>> 49f001d81e
 
 			break;
 	}

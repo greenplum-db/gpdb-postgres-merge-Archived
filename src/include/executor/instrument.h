@@ -8,7 +8,7 @@
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Copyright (c) 2001-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/executor/instrument.h,v 1.18 2008/01/01 19:45:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/instrument.h,v 1.19 2008/05/14 19:10:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,8 +16,11 @@
 #define INSTRUMENT_H
 
 #include "portability/instr_time.h"
+<<<<<<< HEAD
 
 struct CdbExplain_NodeSummary;          /* private def in cdb/cdbexplain.c */
+=======
+>>>>>>> 49f001d81e
 
 
 typedef struct Instrumentation

@@ -10,7 +10,11 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.104 2008/10/04 21:56:55 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.100 2008/04/13 20:51:21 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -492,10 +496,6 @@ typedef struct LogicalIndexInfo
  * table).	This is a bit hokey ... would be cleaner to use a special-purpose
  * node type that could not be mistaken for a regular Var.	But it will do
  * for now.
- *
- * indexstrategy and indexsubtype are lists corresponding one-to-one with
- * indexqual; they give information about the indexable operators that appear
- * at the top of each indexqual.
  * ----------------
  */
 typedef struct IndexScan
@@ -504,8 +504,6 @@ typedef struct IndexScan
 	Oid			indexid;		/* OID of index to scan */
 	List	   *indexqual;		/* list of index quals (OpExprs) */
 	List	   *indexqualorig;	/* the same in original form */
-	List	   *indexstrategy;	/* integer list of strategy numbers */
-	List	   *indexsubtype;	/* OID list of strategy subtypes */
 	ScanDirection indexorderdir;	/* forward or backward or don't care */
 
 	/* logical index to use */
@@ -539,7 +537,17 @@ typedef IndexScan DynamicIndexScan;
  * (such as for targeted dispatch)
  * ----------------
  */
+<<<<<<< HEAD
 typedef IndexScan BitmapIndexScan;
+=======
+typedef struct BitmapIndexScan
+{
+	Scan		scan;
+	Oid			indexid;		/* OID of index to scan */
+	List	   *indexqual;		/* list of index quals (OpExprs) */
+	List	   *indexqualorig;	/* the same in original form */
+} BitmapIndexScan;
+>>>>>>> 49f001d81e
 
 /* ----------------
  *		bitmap sequential scan node

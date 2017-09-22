@@ -6,7 +6,11 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/port/win32_shmem.c,v 1.11.2.1 2009/08/11 11:51:22 mha Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/port/win32_shmem.c,v 1.5 2008/07/04 10:50:18 mha Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +62,7 @@ GetSharedMemName(void)
 		elog(FATAL, "could not generate full pathname for datadir %s: %lu",
 			 DataDir, GetLastError());
 
+<<<<<<< HEAD
 	/* 
 	 * XXX: Intentionally overwriting the Global\ part here. This was not the
 	 * original approach, but putting it in the actual Global\ namespace
@@ -65,6 +70,9 @@ GetSharedMemName(void)
 	 * the default namespace for now.
 	 */
 	for (cp = retptr; *cp; cp++)
+=======
+	for (cp = retptr + 18; *cp; cp++)
+>>>>>>> 49f001d81e
 		if (*cp == '\\')
 			*cp = '/';
 

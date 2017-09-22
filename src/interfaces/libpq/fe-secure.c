@@ -11,7 +11,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-secure.c
+=======
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.105 2008/05/16 18:30:53 mha Exp $
+>>>>>>> 49f001d81e
  *
  * NOTES
  *
@@ -870,6 +874,7 @@ pq_lockingcallback(int mode, int n, const char *file, int line)
 #endif   /* ENABLE_THREAD_SAFETY */
 
 /*
+<<<<<<< HEAD
  * Initialize SSL system, in particular creating the SSL_context object
  * that will be shared by all SSL-using connections in this process.
  *
@@ -884,6 +889,9 @@ pq_lockingcallback(int mode, int n, const char *file, int line)
  * message - no connection-local setup is made here.
  *
  * Returns 0 if OK, -1 on failure (with a message in conn->errorMessage).
+=======
+ * Also see similar code in fe-connect.c, default_threadlock()
+>>>>>>> 49f001d81e
  */
 static int
 init_ssl_system(PGconn *conn)
@@ -895,6 +903,7 @@ init_ssl_system(PGconn *conn)
 	{
 		while (InterlockedExchange(&win32_ssl_create_mutex, 1) == 1)
 			 /* loop, another thread own the lock */ ;
+<<<<<<< HEAD
 		if (ssl_config_mutex == NULL)
 		{
 			if (pthread_mutex_init(&ssl_config_mutex, NULL))
@@ -904,6 +913,17 @@ init_ssl_system(PGconn *conn)
 	}
 #endif
 	if (pthread_mutex_lock(&ssl_config_mutex))
+=======
+		if (init_mutex == NULL)
+		{
+			if (pthread_mutex_init(&init_mutex, NULL))
+				return -1;
+		}
+		InterlockedExchange(&mutex_initlock, 0);
+	}
+#endif
+	if (pthread_mutex_lock(&init_mutex))
+>>>>>>> 49f001d81e
 		return -1;
 
 	if (pq_init_crypto_lib)
@@ -940,6 +960,16 @@ init_ssl_system(PGconn *conn)
 			CRYPTO_set_id_callback(pq_threadidcallback);
 			CRYPTO_set_locking_callback(pq_lockingcallback);
 		}
+<<<<<<< HEAD
+=======
+		for (i = 0; i < CRYPTO_num_locks(); i++)
+		{
+			if (pthread_mutex_init(&pq_lockarray[i], NULL))
+				return -1;
+		}
+
+		CRYPTO_set_locking_callback(pq_lockingcallback);
+>>>>>>> 49f001d81e
 	}
 #endif   /* ENABLE_THREAD_SAFETY */
 

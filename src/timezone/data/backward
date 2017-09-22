@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
+=======
+# @(#)backward	8.6
+>>>>>>> 49f001d81e
 
 # This file provides links between current names for time zones
 # and their old names.  Many names changed in late 1993.
@@ -31,12 +35,17 @@ Link	Asia/Kolkata		Asia/Calcutta
 Link	Asia/Shanghai		Asia/Chongqing
 Link	Asia/Shanghai		Asia/Chungking
 Link	Asia/Dhaka		Asia/Dacca
+<<<<<<< HEAD
 Link	Asia/Shanghai		Asia/Harbin
 Link	Asia/Urumqi		Asia/Kashgar
 Link	Asia/Kathmandu		Asia/Katmandu
+=======
+Link	Asia/Kolkata		Asia/Calcutta
+>>>>>>> 49f001d81e
 Link	Asia/Macau		Asia/Macao
 Link	Asia/Ho_Chi_Minh	Asia/Saigon
 Link	Asia/Jerusalem		Asia/Tel_Aviv
+Link	Asia/Ho_Chi_Minh	Asia/Saigon
 Link	Asia/Thimphu		Asia/Thimbu
 Link	Asia/Makassar		Asia/Ujung_Pandang
 Link	Asia/Ulaanbaatar	Asia/Ulan_Bator

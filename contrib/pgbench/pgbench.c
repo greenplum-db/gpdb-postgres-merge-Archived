@@ -4,8 +4,13 @@
  * A simple benchmark program for PostgreSQL
  * Originally written by Tatsuo Ishii and enhanced by many contributors.
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.93 2009/12/15 07:17:57 itagaki Exp $
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
+=======
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.80 2008/05/09 15:53:07 tgl Exp $
+ * Copyright (c) 2000-2008, PostgreSQL Global Development Group
+>>>>>>> 49f001d81e
  * ALL RIGHTS RESERVED;
  *
  * Permission to use, copy, modify, and distribute this software and its
@@ -1973,12 +1978,15 @@ main(int argc, char **argv)
 	if (nxacts <= 0 && duration <= 0)
 		nxacts = DEFAULT_NXACTS;
 
+<<<<<<< HEAD
 	if (nclients % nthreads != 0)
 	{
 		fprintf(stderr, "number of clients (%d) must be a multiple of number of threads (%d)\n", nclients, nthreads);
 		exit(1);
 	}
 
+=======
+>>>>>>> 49f001d81e
 	if (nclients > 1)
 	{
 		state = (CState *) realloc(state, sizeof(CState) * nclients);
@@ -2066,7 +2074,11 @@ main(int argc, char **argv)
 		/* warn if we override user-given -s switch */
 		if (scale_given)
 			fprintf(stderr,
+<<<<<<< HEAD
 			"Scale option ignored, using pgbench_branches table count = %d\n",
+=======
+					"Scale option ignored, using branches table count = %d\n",
+>>>>>>> 49f001d81e
 					scale);
 	}
 

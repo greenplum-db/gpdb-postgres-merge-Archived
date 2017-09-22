@@ -4,7 +4,11 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
+<<<<<<< HEAD
 [NO_PID]: ecpg_execute on line 27: query: select current_database ( ); with 0 parameter(s) on connection second
+=======
+[NO_PID]: ecpg_execute on line 27: query: select  current_database ()     ; with 0 parameter(s) on connection second
+>>>>>>> 49f001d81e
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 27: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -14,7 +18,11 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection second closed
 [NO_PID]: sqlca: code: 0, state: 00000
+<<<<<<< HEAD
 [NO_PID]: ecpg_execute on line 31: query: select current_database ( ); with 0 parameter(s) on connection first
+=======
+[NO_PID]: ecpg_execute on line 31: query: select  current_database ()     ; with 0 parameter(s) on connection first
+>>>>>>> 49f001d81e
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 31: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -24,7 +32,11 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
+<<<<<<< HEAD
 [NO_PID]: raising sqlcode -220 on line 35: connection "DEFAULT" does not exist on line 35
+=======
+[NO_PID]: raising sqlcode -220 on line 35: no such connection DEFAULT on line 35
+>>>>>>> 49f001d81e
 [NO_PID]: sqlca: code: -220, state: 08003
 [NO_PID]: ECPGconnect: connection identifier second is already in use
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -32,7 +44,13 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection first closed
 [NO_PID]: sqlca: code: 0, state: 00000
+<<<<<<< HEAD
 [NO_PID]: raising sqlcode -220 on line 40: connection "CURRENT" does not exist on line 40
 [NO_PID]: sqlca: code: -220, state: 08003
 [NO_PID]: raising sqlcode -220 on line 41: connection "DEFAULT" does not exist on line 41
+=======
+[NO_PID]: raising sqlcode -220 on line 40: no such connection CURRENT on line 40
+[NO_PID]: sqlca: code: -220, state: 08003
+[NO_PID]: raising sqlcode -220 on line 41: no such connection DEFAULT on line 41
+>>>>>>> 49f001d81e
 [NO_PID]: sqlca: code: -220, state: 08003

@@ -12,7 +12,11 @@
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * src/interfaces/libpq/libpq-int.h
+=======
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.131 2008/05/29 22:02:44 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -510,7 +514,11 @@ extern pgthreadlock_t pg_g_threadlock;
 #define PGTHREAD_ERROR(msg) \
 	do { \
 		fprintf(stderr, "%s\n", msg); \
+<<<<<<< HEAD
 		abort(); \
+=======
+		exit(1); \
+>>>>>>> 49f001d81e
 	} while (0)
 
 

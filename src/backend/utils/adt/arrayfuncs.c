@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.142 2008/03/25 22:42:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.147 2008/07/21 04:47:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,10 @@
 #include <ctype.h>
 
 #include "funcapi.h"
+<<<<<<< HEAD
 #include "access/tupmacs.h"
+=======
+>>>>>>> 49f001d81e
 #include "libpq/pqformat.h"
 #include "parser/parse_coerce.h"
 #include "utils/array.h"
@@ -98,10 +101,17 @@ static void array_insert_slice(ArrayType *destArray, ArrayType *origArray,
 				   int typlen, bool typbyval, char typalign);
 static int	array_cmp(FunctionCallInfo fcinfo);
 static ArrayType *create_array_envelope(int ndims, int *dimv, int *lbv, int nbytes,
+<<<<<<< HEAD
 					  Oid elmtype, int dataoffset);
 static ArrayType *array_fill_internal(ArrayType *dims, ArrayType *lbs,
 					Datum value, bool isnull, Oid elmtype,
 					FunctionCallInfo fcinfo);
+=======
+			    Oid elmtype, int dataoffset);
+static ArrayType *array_fill_internal(ArrayType *dims, ArrayType *lbs,
+									  Datum value, bool isnull, Oid elmtype,
+									  FunctionCallInfo fcinfo);
+>>>>>>> 49f001d81e
 
 
 /*
@@ -4395,9 +4405,15 @@ array_smaller(PG_FUNCTION_ARGS)
 
 typedef struct generate_subscripts_fctx
 {
+<<<<<<< HEAD
 	int4		lower;
 	int4		upper;
 	bool		reverse;
+=======
+        int4    lower;
+        int4    upper;
+        bool    reverse;
+>>>>>>> 49f001d81e
 } generate_subscripts_fctx;
 
 /*
@@ -4414,10 +4430,17 @@ generate_subscripts(PG_FUNCTION_ARGS)
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
+<<<<<<< HEAD
 		ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
 		int			reqdim = PG_GETARG_INT32(1);
 		int		   *lb,
 				   *dimv;
+=======
+		ArrayType *v = PG_GETARG_ARRAYTYPE_P(0);
+		int		reqdim = PG_GETARG_INT32(1);
+		int    *lb,
+			   *dimv;
+>>>>>>> 49f001d81e
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -4482,6 +4505,7 @@ generate_subscripts_nodir(PG_FUNCTION_ARGS)
 Datum
 array_fill_with_lower_bounds(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	ArrayType  *dims;
 	ArrayType  *lbs;
 	ArrayType  *result;
@@ -4496,6 +4520,22 @@ array_fill_with_lower_bounds(PG_FUNCTION_ARGS)
 
 	dims = PG_GETARG_ARRAYTYPE_P(1);
 	lbs = PG_GETARG_ARRAYTYPE_P(2);
+=======
+	ArrayType	*dims;
+	ArrayType	*lbs;
+	ArrayType		*result;
+	Oid			elmtype;
+	Datum 	value;
+	bool	isnull;
+
+	if (PG_ARGISNULL(1) || PG_ARGISNULL(2))
+		ereport(ERROR,
+			    (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+			     errmsg("dimension array or low bound array cannot be NULL")));
+
+	dims = PG_GETARG_ARRAYTYPE_P(1);
+	lbs  = PG_GETARG_ARRAYTYPE_P(2);
+>>>>>>> 49f001d81e
 
 	if (!PG_ARGISNULL(0))
 	{
@@ -4523,6 +4563,7 @@ array_fill_with_lower_bounds(PG_FUNCTION_ARGS)
 Datum
 array_fill(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	ArrayType  *dims;
 	ArrayType  *result;
 	Oid			elmtype;
@@ -4533,6 +4574,18 @@ array_fill(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 			   errmsg("dimension array or low bound array cannot be NULL")));
+=======
+	ArrayType	*dims;
+	ArrayType		*result;
+	Oid			elmtype;
+	Datum 	value;
+	bool	isnull;
+
+	if (PG_ARGISNULL(1))
+		ereport(ERROR,
+			    (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+			     errmsg("dimension array or low bound array cannot be NULL")));
+>>>>>>> 49f001d81e
 
 	dims = PG_GETARG_ARRAYTYPE_P(1);
 
@@ -4559,7 +4612,11 @@ static ArrayType *
 create_array_envelope(int ndims, int *dimv, int *lbsv, int nbytes,
 					  Oid elmtype, int dataoffset)
 {
+<<<<<<< HEAD
 	ArrayType  *result;
+=======
+	ArrayType *result;
+>>>>>>> 49f001d81e
 
 	result = (ArrayType *) palloc0(nbytes);
 	SET_VARSIZE(result, nbytes);
@@ -4577,6 +4634,7 @@ array_fill_internal(ArrayType *dims, ArrayType *lbs,
 					Datum value, bool isnull, Oid elmtype,
 					FunctionCallInfo fcinfo)
 {
+<<<<<<< HEAD
 	ArrayType  *result;
 	int		   *dimv;
 	int		   *lbsv;
@@ -4587,12 +4645,25 @@ array_fill_internal(ArrayType *dims, ArrayType *lbs,
 	bool		elmbyval;
 	char		elmalign;
 	ArrayMetaState *my_extra;
+=======
+	ArrayType	*result;
+	int	*dimv;
+	int	*lbsv;
+	int	ndims;
+	int	nitems;
+	int 		deflbs[MAXDIM];
+	int16 elmlen;
+	bool elmbyval;
+	char elmalign;
+	ArrayMetaState 		*my_extra;
+>>>>>>> 49f001d81e
 
 	/*
 	 * Params checks
 	 */
 	if (ARR_NDIM(dims) != 1)
 		ereport(ERROR,
+<<<<<<< HEAD
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("wrong number of array subscripts"),
 				 errdetail("Dimension array must be one dimensional.")));
@@ -4607,6 +4678,22 @@ array_fill_internal(ArrayType *dims, ArrayType *lbs,
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				 errmsg("dimension values cannot be null")));
+=======
+			    (errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+			     errmsg("wrong number of array subscripts"),
+			     errdetail("Dimension array must be one dimensional.")));
+
+	if (ARR_LBOUND(dims)[0] != 1)
+		ereport(ERROR,
+			    (errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+			     errmsg("wrong range of array_subscripts"),
+			     errdetail("Lower bound of dimension array must be one.")));
+
+	if (ARR_HASNULL(dims))
+		ereport(ERROR,
+			    (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+			     errmsg("dimension values cannot be null")));
+>>>>>>> 49f001d81e
 
 	dimv = (int *) ARR_DATA_PTR(dims);
 	ndims = ARR_DIMS(dims)[0];
@@ -4625,6 +4712,7 @@ array_fill_internal(ArrayType *dims, ArrayType *lbs,
 	{
 		if (ARR_NDIM(lbs) != 1)
 			ereport(ERROR,
+<<<<<<< HEAD
 					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 					 errmsg("wrong number of array subscripts"),
 					 errdetail("Dimension array must be one dimensional.")));
@@ -4645,12 +4733,38 @@ array_fill_internal(ArrayType *dims, ArrayType *lbs,
 					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 					 errmsg("wrong number of array subscripts"),
 					 errdetail("Low bound array has different size than dimensions array.")));
+=======
+				    (errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+			    	     errmsg("wrong number of array subscripts"),
+			    	     errdetail("Dimension array must be one dimensional.")));
+
+		if (ARR_LBOUND(lbs)[0] != 1)
+			ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+			         errmsg("wrong range of array_subscripts"),
+			    	 errdetail("Lower bound of dimension array must be one.")));
+
+		if (ARR_HASNULL(lbs))
+			ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("dimension values cannot be null")));
+
+		if (ARR_DIMS(lbs)[0] != ndims)
+			ereport(ERROR,
+				    (errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				     errmsg("wrong number of array_subscripts"),
+				     errdetail("Low bound array has different size than dimensions array.")));
+>>>>>>> 49f001d81e
 
 		lbsv = (int *) ARR_DATA_PTR(lbs);
 	}
 	else
 	{
+<<<<<<< HEAD
 		int			i;
+=======
+		int	i;
+>>>>>>> 49f001d81e
 
 		for (i = 0; i < MAXDIM; i++)
 			deflbs[i] = 1;
@@ -4694,8 +4808,13 @@ array_fill_internal(ArrayType *dims, ArrayType *lbs,
 	/* compute required space */
 	if (!isnull)
 	{
+<<<<<<< HEAD
 		int			i;
 		char	   *p;
+=======
+		int 	i;
+		char		*p;
+>>>>>>> 49f001d81e
 		int			nbytes;
 		int			totbytes;
 
@@ -4732,8 +4851,13 @@ array_fill_internal(ArrayType *dims, ArrayType *lbs,
 	}
 	else
 	{
+<<<<<<< HEAD
 		int			nbytes;
 		int			dataoffset;
+=======
+		int	nbytes;
+		int	dataoffset;
+>>>>>>> 49f001d81e
 
 		dataoffset = ARR_OVERHEAD_WITHNULLS(ndims, nitems);
 		nbytes = dataoffset;
@@ -4746,6 +4870,7 @@ array_fill_internal(ArrayType *dims, ArrayType *lbs,
 
 	return result;
 }
+<<<<<<< HEAD
 
 
 /*
@@ -4858,3 +4983,5 @@ unnest(PG_FUNCTION_ARGS)
 		SRF_RETURN_DONE(funcctx);
 	}
 }
+=======
+>>>>>>> 49f001d81e

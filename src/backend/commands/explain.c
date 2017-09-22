@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.171 2008/03/26 18:48:59 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.175 2008/05/14 19:10:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,11 @@
 #include "commands/queue.h"
 #include "executor/execUtils.h"
 #include "executor/instrument.h"
+<<<<<<< HEAD
 #include "nodes/pg_list.h"
 #include "nodes/print.h"
+=======
+>>>>>>> 49f001d81e
 #include "optimizer/clauses.h"
 #include "optimizer/planner.h"
 #include "optimizer/var.h"
@@ -68,6 +71,10 @@ explain_get_index_name_hook_type explain_get_index_name_hook = NULL;
 typedef struct ExplainState
 {
 	/* options */
+<<<<<<< HEAD
+=======
+	bool		printTList;		/* print plan targetlists */
+>>>>>>> 49f001d81e
 	bool		printAnalyze;	/* print actual times */
 	/* other states */
 	PlannedStmt *pstmt;			/* top of plan */
@@ -101,6 +108,8 @@ static void explain_outNode(StringInfo str,
 				Plan *plan, PlanState *planstate,
 				Plan *outer_plan, Plan *parentPlan,
 				int indent, ExplainState *es);
+static void show_plan_tlist(Plan *plan,
+							StringInfo str, int indent, ExplainState *es);
 static void show_scan_qual(List *qual, const char *qlabel,
 			   int scanrelid, Plan *scan_plan, Plan *outer_plan,
 			   StringInfo str, int indent, ExplainState *es);
@@ -379,18 +388,19 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 	MemoryContext explaincxt = CurrentMemoryContext;
 
 	/*
-	 * Update snapshot command ID to ensure this query sees results of any
-	 * previously executed queries.  (It's a bit cheesy to modify
-	 * ActiveSnapshot without making a copy, but for the limited ways in which
-	 * EXPLAIN can be invoked, I think it's OK, because the active snapshot
-	 * shouldn't be shared with anything else anyway.)
+	 * Use a snapshot with an updated command ID to ensure this query sees
+	 * results of any previously executed queries.
 	 */
-	ActiveSnapshot->curcid = GetCurrentCommandId(false);
+	PushUpdatedSnapshot(GetActiveSnapshot());
 
 	/* Create a QueryDesc requesting no output */
 	queryDesc = CreateQueryDesc(plannedstmt,
+<<<<<<< HEAD
 								queryString,
 								ActiveSnapshot, InvalidSnapshot,
+=======
+								GetActiveSnapshot(), InvalidSnapshot,
+>>>>>>> 49f001d81e
 								None_Receiver, params,
 								stmt->analyze);
 
@@ -505,10 +515,17 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
                                      es->showstatctx);
 	}
 
+<<<<<<< HEAD
+=======
+	es = (ExplainState *) palloc0(sizeof(ExplainState));
+
+	es->printTList = stmt->verbose;
+>>>>>>> 49f001d81e
 	es->printAnalyze = stmt->analyze;
 	es->pstmt = queryDesc->plannedstmt;
 	es->rtable = queryDesc->plannedstmt->rtable;
 
+<<<<<<< HEAD
     if (stmt->verbose)
 	{
 		char	   *s;
@@ -542,6 +559,8 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 		}
 	}
 
+=======
+>>>>>>> 49f001d81e
 	initStringInfo(&buf);
 
     /*
@@ -658,6 +677,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 		appendStringInfo(&buf, "Settings:  %s\n", settings);
 	pfree(settings);
 
+<<<<<<< HEAD
     /* Display optimizer status: either 'legacy query optimizer' or Orca version number */
 	appendStringInfo(&buf, "Optimizer status: ");
 	if (queryDesc->plannedstmt->planGen == PLANGEN_PLANNER)
@@ -670,6 +690,17 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 		appendStringInfo(&buf, "PQO version %s\n", OptVersion());
 	}
 #endif
+=======
+	FreeQueryDesc(queryDesc);
+
+	PopActiveSnapshot();
+
+	/* We need a CCI just in case query expanded to multiple plans */
+	if (stmt->analyze)
+		CommandCounterIncrement();
+
+	totaltime += elapsed_time(&starttime);
+>>>>>>> 49f001d81e
 
     /*
      * Display final elapsed time.
@@ -879,8 +910,12 @@ explain_outNode(StringInfo str,
 				Plan *outer_plan, Plan *parentPlan,
 				int indent, ExplainState *es)
 {
+<<<<<<< HEAD
 	const char	   *pname = NULL;
     Slice      *currentSlice = es->currentSlice;    /* save */
+=======
+	const char *pname;
+>>>>>>> 49f001d81e
 	int			i;
 	bool		skip_outer=false;
 	char       *skip_outer_msg = NULL;
@@ -1445,9 +1480,15 @@ explain_outNode(StringInfo str,
 
 	appendStringInfoChar(str, '\n');
 
+<<<<<<< HEAD
 #ifdef DEBUG_EXPLAIN
 	appendStringInfo(str, "plan->targetlist=%s\n", nodeToString(plan->targetlist));
 #endif
+=======
+	/* target list */
+	if (es->printTList)
+		show_plan_tlist(plan, str, indent, es);
+>>>>>>> 49f001d81e
 
 	/* quals, sort keys, etc */
 	switch (nodeTag(plan))
@@ -1966,6 +2007,54 @@ explain_outNode(StringInfo str,
 		}
 	}
 	es->currentSlice = currentSlice;    /* restore */
+}
+
+/*
+ * Show the targetlist of a plan node
+ */
+static void
+show_plan_tlist(Plan *plan,
+				StringInfo str, int indent, ExplainState *es)
+{
+	List	   *context;
+	bool		useprefix;
+	ListCell   *lc;
+	int			i;
+
+	/* No work if empty tlist (this occurs eg in bitmap indexscans) */
+	if (plan->targetlist == NIL)
+		return;
+	/* The tlist of an Append isn't real helpful, so suppress it */
+	if (IsA(plan, Append))
+		return;
+
+	/* Set up deparsing context */
+	context = deparse_context_for_plan((Node *) outerPlan(plan),
+									   (Node *) innerPlan(plan),
+									   es->rtable);
+	useprefix = list_length(es->rtable) > 1;
+
+	/* Emit line prefix */
+	for (i = 0; i < indent; i++)
+		appendStringInfo(str, "  ");
+	appendStringInfo(str, "  Output: ");
+
+	/* Deparse each non-junk result column */
+	i = 0;
+	foreach(lc, plan->targetlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+
+		if (tle->resjunk)
+			continue;
+		if (i++ > 0)
+			appendStringInfo(str, ", ");
+		appendStringInfoString(str,
+							   deparse_expression((Node *) tle->expr, context,
+												  useprefix, false));
+	}
+
+	appendStringInfoChar(str, '\n');
 }
 
 /*

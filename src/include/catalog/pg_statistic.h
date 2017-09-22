@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_statistic.h,v 1.35 2008/03/27 03:57:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_statistic.h,v 1.36 2008/07/14 00:51:45 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -246,6 +246,7 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  */
 #define STATISTIC_KIND_CORRELATION	3
 
+<<<<<<< HEAD
 /* quoting pg_authid and gp_configuration: */
 
 /*
@@ -352,5 +353,21 @@ typedef FormData_pg_statlastshop *Form_pg_statlastshop;
 #define Anum_pg_statlastshop_stausename		5
 #define Anum_pg_statlastshop_stasubtype		6
 #define Anum_pg_statlastshop_statime		7
+=======
+/*
+ * A "most common elements" slot is similar to a "most common values" slot,
+ * except that it stores the most common non-null *elements* of the column
+ * values.  This is useful when the column datatype is an array or some other
+ * type with identifiable elements (for instance, tsvector).  staop contains
+ * the equality operator appropriate to the element type.  stavalues contains
+ * the most common element values, and stanumbers their frequencies, with the
+ * same rules as for MCV slots.
+ *
+ * Note: in current usage for tsvector columns, the stavalues elements are of
+ * type text, even though their representation within tsvector is not
+ * exactly text.
+ */
+#define STATISTIC_KIND_MCELEM  4
+>>>>>>> 49f001d81e
 
 #endif   /* PG_STATISTIC_H */

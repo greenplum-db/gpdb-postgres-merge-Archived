@@ -35,7 +35,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.17 2008/03/26 18:48:59 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.19 2008/07/18 20:26:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,8 +98,7 @@ InitPlanCache(void)
  * about all that we do here is copy it into permanent storage.
  *
  * raw_parse_tree: output of raw_parser()
- * query_string: original query text (can be NULL if not available, but
- *		that is discouraged because it degrades error message quality)
+ * query_string: original query text (as of PG 8.4, must not be NULL)
  * commandTag: compile-time-constant tag for query, or NULL if empty query
  * param_types: array of parameter type OIDs, or NULL if none
  * num_params: number of parameters
@@ -125,6 +124,8 @@ CreateCachedPlan(Node *raw_parse_tree,
 	MemoryContext source_context;
 	MemoryContext oldcxt;
 
+	Assert(query_string != NULL);				/* required as of 8.4 */
+
 	/*
 	 * Make a dedicated memory context for the CachedPlanSource and its
 	 * subsidiary data.  We expect it can be pretty small.
@@ -147,8 +148,12 @@ CreateCachedPlan(Node *raw_parse_tree,
 	oldcxt = MemoryContextSwitchTo(source_context);
 	plansource = (CachedPlanSource *) palloc(sizeof(CachedPlanSource));
 	plansource->raw_parse_tree = copyObject(raw_parse_tree);
+<<<<<<< HEAD
 	plansource->query_string = query_string ? pstrdup(query_string) : NULL;
 	plansource->sourceTag = sourceTag;
+=======
+	plansource->query_string = pstrdup(query_string);
+>>>>>>> 49f001d81e
 	plansource->commandTag = commandTag;		/* no copying needed */
 	if (num_params > 0)
 	{
@@ -224,6 +229,8 @@ FastCreateCachedPlan(Node *raw_parse_tree,
 	CachedPlanSource *plansource;
 	OverrideSearchPath *search_path;
 	MemoryContext oldcxt;
+
+	Assert(query_string != NULL);				/* required as of 8.4 */
 
 	/*
 	 * Fetch current search_path into given context, but do any recalculation
@@ -515,9 +522,22 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 		 */
 		PG_TRY();
 		{
+<<<<<<< HEAD
 			Snapshot	mySnapshot = NULL;
 			TupleDesc	resultDesc;
 			Node	   *raw_parse_tree;
+=======
+			/*
+			 * Generate plans for queries.
+			 *
+			 * If a snapshot is already set (the normal case), we can just use
+			 * that for planning.  But if it isn't, we have to tell
+			 * pg_plan_queries to make a snap if it needs one.
+			 */
+			slist = pg_plan_queries(slist, plansource->cursor_options,
+									NULL, !ActiveSnapshotSet());
+		}
+>>>>>>> 49f001d81e
 
 			if (ActiveSnapshot == NULL)
 			{
@@ -657,6 +677,7 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 }
 
 /*
+<<<<<<< HEAD
  * Compatibility version of RevalidateCachedPlanWithParams, for the simple
  * case of no params and no CREATE TABLE AS.
  */
@@ -667,6 +688,8 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 }
 
 /*
+=======
+>>>>>>> 49f001d81e
  * ReleaseCachedPlan: release active use of a cached plan.
  *
  * This decrements the reference count, and frees the plan if the count

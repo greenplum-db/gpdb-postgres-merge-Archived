@@ -308,6 +308,7 @@ select
   ( select min(tb.id) from tb
     where tb.aval = (select ta.val from ta where ta.id = tc.aid) ) as min_tb_id
 from tc;
+<<<<<<< HEAD
 
 --
 -- Test case for 8.3 "failed to locate grouping columns" bug
@@ -362,3 +363,5 @@ select * from outer_7597 where (f1, f2) not in (select * from inner_7597);
 --
 
 select '1'::text in (select '1'::name union all select '1'::name);
+=======
+>>>>>>> 49f001d81e

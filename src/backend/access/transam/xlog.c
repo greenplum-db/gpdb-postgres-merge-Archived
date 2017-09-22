@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.296 2008/04/05 01:34:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.316 2008/07/13 20:45:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 #include "postgres.h"
 
 #include <ctype.h>
-#include <fcntl.h>
 #include <signal.h>
 #include <time.h>
 #include <sys/stat.h>
@@ -24,7 +23,6 @@
 #include <unistd.h>
 
 #include "access/clog.h"
-#include "access/heapam.h"
 #include "access/multixact.h"
 #include "access/distributedlog.h"
 #include "access/subtrans.h"
@@ -33,8 +31,11 @@
 #include "access/twophase.h"
 #include "access/xact.h"
 #include "access/xlog_internal.h"
+<<<<<<< HEAD
 #include "access/xlogmm.h"
 #include "access/xlogdefs.h"
+=======
+>>>>>>> 49f001d81e
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
 #include "catalog/catversion.h"
@@ -50,8 +51,12 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
+<<<<<<< HEAD
 #include "postmaster/postmaster.h"
 #include "storage/bufpage.h"
+=======
+#include "storage/bufmgr.h"
+>>>>>>> 49f001d81e
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/pmsignal.h"
@@ -104,12 +109,11 @@ int			XLOGbuffers = 8;
 int			XLogArchiveTimeout = 0;
 bool		XLogArchiveMode = false;
 char	   *XLogArchiveCommand = NULL;
-char	   *XLOG_sync_method = NULL;
-const char	XLOG_sync_method_default[] = DEFAULT_SYNC_METHOD_STR;
 bool		fullPageWrites = true;
 char   *wal_consistency_checking_string = NULL;
 bool   *wal_consistency_checking = NULL;
 bool		log_checkpoints = false;
+int 		sync_method = DEFAULT_SYNC_METHOD;
 
 #ifdef WAL_DEBUG
 bool		XLOG_DEBUG = false;
@@ -128,6 +132,7 @@ bool		XLOG_DEBUG = false;
  */
 #define XLOGfileslop	(2*CheckPointSegments + 1)
 
+<<<<<<< HEAD
 
 /* these are derived from XLOG_sync_method by assign_xlog_sync_method */
 int			sync_method = DEFAULT_SYNC_METHOD;
@@ -145,6 +150,27 @@ static int	open_sync_bit = DEFAULT_SYNC_FLAGBIT;
 						open_sync_bit : 0)
 
 bool am_startup = false;
+=======
+/*
+ * GUC support
+ */
+const struct config_enum_entry sync_method_options[] = {
+	{"fsync", SYNC_METHOD_FSYNC, false},
+#ifdef HAVE_FSYNC_WRITETHROUGH
+	{"fsync_writethrough", SYNC_METHOD_FSYNC_WRITETHROUGH, false},
+#endif
+#ifdef HAVE_FDATASYNC
+	{"fdatasync", SYNC_METHOD_FDATASYNC, false},
+#endif
+#ifdef OPEN_SYNC_FLAG
+	{"open_sync", SYNC_METHOD_OPEN, false},
+#endif
+#ifdef OPEN_DATASYNC_FLAG
+	{"open_datasync", SYNC_METHOD_OPEN_DSYNC, false},
+#endif
+	{NULL, 0, false}
+};
+>>>>>>> 49f001d81e
 
 /*
  * Statistics for current checkpoint are collected in this global struct.
@@ -682,6 +708,7 @@ static void WriteControlFile(void);
 static void ReadControlFile(void);
 
 static char *str_time(pg_time_t tnow);
+<<<<<<< HEAD
 
 static void xlog_outrec(StringInfo buf, XLogRecord *record);
 static void pg_start_backup_callback(int code, Datum arg);
@@ -700,7 +727,17 @@ typedef struct RedoErrorCallBack
 	XLogRecord 	*record;
 } RedoErrorCallBack;
 
+=======
+#ifdef WAL_DEBUG
+static void xlog_outrec(StringInfo buf, XLogRecord *record);
+#endif
+static void issue_xlog_fsync(void);
+static void pg_start_backup_callback(int code, Datum arg);
+static bool read_backup_label(XLogRecPtr *checkPointLoc,
+				  XLogRecPtr *minRecoveryLoc);
+>>>>>>> 49f001d81e
 static void rm_redo_error_callback(void *arg);
+static int get_sync_bit(int method);
 
 static int XLogGetEof(XLogRecPtr *eofRecPtr);
 
@@ -1558,10 +1595,14 @@ XLogCheckBuffer(XLogRecData *rdata, bool holdsExclusiveLock,
 				bool wal_check_consistency_enabled,
 				XLogRecPtr *lsn, BkpBlock *bkpb)
 {
+<<<<<<< HEAD
 	PageHeader	page;
 	bool needs_backup;
+=======
+	Page		page;
+>>>>>>> 49f001d81e
 
-	page = (PageHeader) BufferGetBlock(rdata->buffer);
+	page = BufferGetPage(rdata->buffer);
 
 	/*
 	 * We assume page LSN is first data on *every* page that can be passed
@@ -1569,6 +1610,7 @@ XLogCheckBuffer(XLogRecData *rdata, bool holdsExclusiveLock,
 	 * don't need to take the buffer header lock for PageGetLSN if we hold
 	 * an exclusive lock on the page and/or the relation.
 	 */
+<<<<<<< HEAD
 	if (holdsExclusiveLock)
 		*lsn = PageGetLSN((Page) page);
 	else
@@ -1577,6 +1619,12 @@ XLogCheckBuffer(XLogRecData *rdata, bool holdsExclusiveLock,
 	needs_backup = XLByteLE(page->pd_lsn, RedoRecPtr);
 
 	if (needs_backup || wal_check_consistency_enabled)
+=======
+	*lsn = PageGetLSN(page);
+
+	if (doPageWrites &&
+		XLByteLE(PageGetLSN(page), RedoRecPtr))
+>>>>>>> 49f001d81e
 	{
 		/*
 		 * The page needs to be backed up, so set up *bkpb
@@ -1598,8 +1646,8 @@ XLogCheckBuffer(XLogRecData *rdata, bool holdsExclusiveLock,
 		if (rdata->buffer_std)
 		{
 			/* Assume we can omit data between pd_lower and pd_upper */
-			uint16		lower = page->pd_lower;
-			uint16		upper = page->pd_upper;
+			uint16		lower = ((PageHeader) page)->pd_lower;
+			uint16		upper = ((PageHeader) page)->pd_upper;
 
 			if (lower >= SizeOfPageHeaderData &&
 				upper > lower &&
@@ -2201,7 +2249,8 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 		 * have no open file or the wrong one.	However, we do not need to
 		 * fsync more than one file.
 		 */
-		if (sync_method != SYNC_METHOD_OPEN)
+		if (sync_method != SYNC_METHOD_OPEN &&
+			sync_method != SYNC_METHOD_OPEN_DSYNC)
 		{
 			if (MirroredFlatFile_IsActive(&mirroredLogFileOpen) &&
 				!XLByteInPrevSeg(LogwrtResult.Write, openLogId, openLogSeg))
@@ -2593,6 +2642,7 @@ XLogFileInit(
 	 */
 	if (*use_existent)
 	{
+<<<<<<< HEAD
 		if (MirroredFlatFile_Open(
 							mirroredOpen,
 							XLOGDIR,
@@ -2602,6 +2652,11 @@ XLogFileInit(
 						    /* suppressError */ true,
 							/* atomic operation */ false,
 							/*isMirrorRecovery */ false))
+=======
+		fd = BasicOpenFile(path, O_RDWR | PG_BINARY | get_sync_bit(sync_method),
+						   S_IRUSR | S_IWUSR);
+		if (fd < 0)
+>>>>>>> 49f001d81e
 		{
 			char		path[MAXPGPATH];
 
@@ -2645,6 +2700,7 @@ XLogFileInit(
 						  /* suppressError */ true,
 						  /*isMirrorRecovery */ false);
 
+<<<<<<< HEAD
 	/* do not use XLOG_SYNC_BIT here --- want to fsync only at end of fill */
 	MirroredFlatFile_Open(
 						&tmpMirroredOpen,
@@ -2655,6 +2711,15 @@ XLogFileInit(
 					    /* suppressError */ false,
 						/* atomic operation */ false,
 						/*isMirrorRecovery */ false);
+=======
+	/* do not use get_sync_bit() here --- want to fsync only at end of fill */
+	fd = BasicOpenFile(tmppath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
+					   S_IRUSR | S_IWUSR);
+	if (fd < 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not create file \"%s\": %m", tmppath)));
+>>>>>>> 49f001d81e
 
 	/*
 	 * Zero-fill the file.	We have to do this the hard way to ensure that all
@@ -2737,6 +2802,7 @@ XLogFileInit(
 	*use_existent = false;
 
 	/* Now open original target segment (might not be file I just made) */
+<<<<<<< HEAD
 	MirroredFlatFile_Open(
 						mirroredOpen,
 						XLOGDIR,
@@ -2746,6 +2812,15 @@ XLogFileInit(
 					    /* suppressError */ false,
 						/* atomic operation */ false,
 						/*isMirrorRecovery */ false);
+=======
+	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | get_sync_bit(sync_method),
+					   S_IRUSR | S_IWUSR);
+	if (fd < 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+		   errmsg("could not open file \"%s\" (log file %u, segment %u): %m",
+				  path, log, seg)));
+>>>>>>> 49f001d81e
 
 	pfree(xlogDir);
 
@@ -2798,10 +2873,14 @@ XLogFileCopy(uint32 log, uint32 seg,
 	pfree(xlogDir);	
 	unlink(tmppath);
 
+<<<<<<< HEAD
 	elog((Debug_print_qd_mirroring ? LOG : DEBUG5), "Master Mirroring: copying xlog file '%s' to '%s'",
 		 path, tmppath);
 
 	/* do not use XLOG_SYNC_BIT here --- want to fsync only at end of fill */
+=======
+	/* do not use get_sync_bit() here --- want to fsync only at end of fill */
+>>>>>>> 49f001d81e
 	fd = BasicOpenFile(tmppath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
 					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
@@ -3044,6 +3123,12 @@ XLogFileOpen(
 
 		XLogFileName(path, ThisTimeLineID, log, seg);
 
+<<<<<<< HEAD
+=======
+	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | get_sync_bit(sync_method),
+					   S_IRUSR | S_IWUSR);
+	if (fd < 0)
+>>>>>>> 49f001d81e
 		ereport(PANIC,
 				(errcode_for_file_access(),
 		   errmsg("could not open file \"%s\" (log file %u, segment %u): %m",
@@ -3084,7 +3169,258 @@ XLogFileClose(void)
 #endif
 #endif   /* NOT_USED */
 
+<<<<<<< HEAD
 	MirroredFlatFile_Close(&mirroredLogFileOpen);
+=======
+	if (close(openLogFile))
+		ereport(PANIC,
+				(errcode_for_file_access(),
+				 errmsg("could not close log file %u, segment %u: %m",
+						openLogId, openLogSeg)));
+	openLogFile = -1;
+}
+
+/*
+ * Attempt to retrieve the specified file from off-line archival storage.
+ * If successful, fill "path" with its complete path (note that this will be
+ * a temp file name that doesn't follow the normal naming convention), and
+ * return TRUE.
+ *
+ * If not successful, fill "path" with the name of the normal on-line file
+ * (which may or may not actually exist, but we'll try to use it), and return
+ * FALSE.
+ *
+ * For fixed-size files, the caller may pass the expected size as an
+ * additional crosscheck on successful recovery.  If the file size is not
+ * known, set expectedSize = 0.
+ */
+static bool
+RestoreArchivedFile(char *path, const char *xlogfname,
+					const char *recovername, off_t expectedSize)
+{
+	char		xlogpath[MAXPGPATH];
+	char		xlogRestoreCmd[MAXPGPATH];
+	char		lastRestartPointFname[MAXPGPATH];
+	char	   *dp;
+	char	   *endp;
+	const char *sp;
+	int			rc;
+	bool		signaled;
+	struct stat stat_buf;
+	uint32		restartLog;
+	uint32		restartSeg;
+
+	/*
+	 * When doing archive recovery, we always prefer an archived log file even
+	 * if a file of the same name exists in XLOGDIR.  The reason is that the
+	 * file in XLOGDIR could be an old, un-filled or partly-filled version
+	 * that was copied and restored as part of backing up $PGDATA.
+	 *
+	 * We could try to optimize this slightly by checking the local copy
+	 * lastchange timestamp against the archived copy, but we have no API to
+	 * do this, nor can we guarantee that the lastchange timestamp was
+	 * preserved correctly when we copied to archive. Our aim is robustness,
+	 * so we elect not to do this.
+	 *
+	 * If we cannot obtain the log file from the archive, however, we will try
+	 * to use the XLOGDIR file if it exists.  This is so that we can make use
+	 * of log segments that weren't yet transferred to the archive.
+	 *
+	 * Notice that we don't actually overwrite any files when we copy back
+	 * from archive because the recoveryRestoreCommand may inadvertently
+	 * restore inappropriate xlogs, or they may be corrupt, so we may wish to
+	 * fallback to the segments remaining in current XLOGDIR later. The
+	 * copy-from-archive filename is always the same, ensuring that we don't
+	 * run out of disk space on long recoveries.
+	 */
+	snprintf(xlogpath, MAXPGPATH, XLOGDIR "/%s", recovername);
+
+	/*
+	 * Make sure there is no existing file named recovername.
+	 */
+	if (stat(xlogpath, &stat_buf) != 0)
+	{
+		if (errno != ENOENT)
+			ereport(FATAL,
+					(errcode_for_file_access(),
+					 errmsg("could not stat file \"%s\": %m",
+							xlogpath)));
+	}
+	else
+	{
+		if (unlink(xlogpath) != 0)
+			ereport(FATAL,
+					(errcode_for_file_access(),
+					 errmsg("could not remove file \"%s\": %m",
+							xlogpath)));
+	}
+
+	/*
+	 * Calculate the archive file cutoff point for use during log shipping
+	 * replication. All files earlier than this point can be deleted
+	 * from the archive, though there is no requirement to do so.
+	 *
+	 * We initialise this with the filename of an InvalidXLogRecPtr, which
+	 * will prevent the deletion of any WAL files from the archive
+	 * because of the alphabetic sorting property of WAL filenames. 
+	 *
+	 * Once we have successfully located the redo pointer of the checkpoint
+	 * from which we start recovery we never request a file prior to the redo
+	 * pointer of the last restartpoint. When redo begins we know that we
+	 * have successfully located it, so there is no need for additional
+	 * status flags to signify the point when we can begin deleting WAL files
+	 * from the archive. 
+	 */
+	if (InRedo)
+	{
+		XLByteToSeg(ControlFile->checkPointCopy.redo,
+					restartLog, restartSeg);
+		XLogFileName(lastRestartPointFname,
+					 ControlFile->checkPointCopy.ThisTimeLineID,
+					 restartLog, restartSeg);
+		/* we shouldn't need anything earlier than last restart point */
+		Assert(strcmp(lastRestartPointFname, xlogfname) <= 0);
+	}
+	else
+		XLogFileName(lastRestartPointFname, 0, 0, 0);
+
+	/*
+	 * construct the command to be executed
+	 */
+	dp = xlogRestoreCmd;
+	endp = xlogRestoreCmd + MAXPGPATH - 1;
+	*endp = '\0';
+
+	for (sp = recoveryRestoreCommand; *sp; sp++)
+	{
+		if (*sp == '%')
+		{
+			switch (sp[1])
+			{
+				case 'p':
+					/* %p: relative path of target file */
+					sp++;
+					StrNCpy(dp, xlogpath, endp - dp);
+					make_native_path(dp);
+					dp += strlen(dp);
+					break;
+				case 'f':
+					/* %f: filename of desired file */
+					sp++;
+					StrNCpy(dp, xlogfname, endp - dp);
+					dp += strlen(dp);
+					break;
+				case 'r':
+					/* %r: filename of last restartpoint */
+					sp++;
+					StrNCpy(dp, lastRestartPointFname, endp - dp);
+					dp += strlen(dp);
+					break;
+				case '%':
+					/* convert %% to a single % */
+					sp++;
+					if (dp < endp)
+						*dp++ = *sp;
+					break;
+				default:
+					/* otherwise treat the % as not special */
+					if (dp < endp)
+						*dp++ = *sp;
+					break;
+			}
+		}
+		else
+		{
+			if (dp < endp)
+				*dp++ = *sp;
+		}
+	}
+	*dp = '\0';
+
+	ereport(DEBUG3,
+			(errmsg_internal("executing restore command \"%s\"",
+							 xlogRestoreCmd)));
+
+	/*
+	 * Copy xlog from archival storage to XLOGDIR
+	 */
+	rc = system(xlogRestoreCmd);
+	if (rc == 0)
+	{
+		/*
+		 * command apparently succeeded, but let's make sure the file is
+		 * really there now and has the correct size.
+		 *
+		 * XXX I made wrong-size a fatal error to ensure the DBA would notice
+		 * it, but is that too strong?	We could try to plow ahead with a
+		 * local copy of the file ... but the problem is that there probably
+		 * isn't one, and we'd incorrectly conclude we've reached the end of
+		 * WAL and we're done recovering ...
+		 */
+		if (stat(xlogpath, &stat_buf) == 0)
+		{
+			if (expectedSize > 0 && stat_buf.st_size != expectedSize)
+				ereport(FATAL,
+						(errmsg("archive file \"%s\" has wrong size: %lu instead of %lu",
+								xlogfname,
+								(unsigned long) stat_buf.st_size,
+								(unsigned long) expectedSize)));
+			else
+			{
+				ereport(LOG,
+						(errmsg("restored log file \"%s\" from archive",
+								xlogfname)));
+				strcpy(path, xlogpath);
+				return true;
+			}
+		}
+		else
+		{
+			/* stat failed */
+			if (errno != ENOENT)
+				ereport(FATAL,
+						(errcode_for_file_access(),
+						 errmsg("could not stat file \"%s\": %m",
+								xlogpath)));
+		}
+	}
+
+	/*
+	 * Remember, we rollforward UNTIL the restore fails so failure here is
+	 * just part of the process... that makes it difficult to determine
+	 * whether the restore failed because there isn't an archive to restore,
+	 * or because the administrator has specified the restore program
+	 * incorrectly.  We have to assume the former.
+	 *
+	 * However, if the failure was due to any sort of signal, it's best to
+	 * punt and abort recovery.  (If we "return false" here, upper levels will
+	 * assume that recovery is complete and start up the database!) It's
+	 * essential to abort on child SIGINT and SIGQUIT, because per spec
+	 * system() ignores SIGINT and SIGQUIT while waiting; if we see one of
+	 * those it's a good bet we should have gotten it too.  Aborting on other
+	 * signals such as SIGTERM seems a good idea as well.
+	 *
+	 * Per the Single Unix Spec, shells report exit status > 128 when a called
+	 * command died on a signal.  Also, 126 and 127 are used to report
+	 * problems such as an unfindable command; treat those as fatal errors
+	 * too.
+	 */
+	signaled = WIFSIGNALED(rc) || WEXITSTATUS(rc) > 125;
+
+	ereport(signaled ? FATAL : DEBUG2,
+		(errmsg("could not restore file \"%s\" from archive: return code %d",
+				xlogfname, rc)));
+
+	/*
+	 * if an archived file is not available, there might still be a version of
+	 * this file in XLOGDIR, so return that as the filename to open.
+	 *
+	 * In many recovery scenarios we expect this to fail also, but if so that
+	 * just means we've reached the end of WAL.
+	 */
+	snprintf(path, MAXPGPATH, XLOGDIR "/%s", xlogfname);
+	return false;
+>>>>>>> 49f001d81e
 }
 
 /*
@@ -3420,6 +3756,7 @@ CleanupBackupHistory(void)
 static void
 RestoreBkpBlocks(XLogRecord *record, XLogRecPtr lsn)
 {
+<<<<<<< HEAD
 	BkpBlock	bkpb;
 	char	   *blk;
 	int			i;
@@ -3449,6 +3786,8 @@ static void
 RestoreBackupBlockContents(XLogRecPtr lsn, BkpBlock bkpb, char *blk,
 						   bool get_cleanup_lock, bool keep_buffer)
 {
+=======
+>>>>>>> 49f001d81e
 	Buffer		buffer;
 	Page		page;
 	Relation	reln;
@@ -3475,6 +3814,7 @@ RestoreBackupBlockContents(XLogRecPtr lsn, BkpBlock bkpb, char *blk,
 
 	if (bkpb.hole_length == 0)
 	{
+<<<<<<< HEAD
 		memcpy((char *) page, blk, BLCKSZ);
 	}
 	else
@@ -3496,6 +3836,35 @@ RestoreBackupBlockContents(XLogRecPtr lsn, BkpBlock bkpb, char *blk,
 	MarkBufferDirty(buffer);
 
 	if (!keep_buffer)
+=======
+		if (!(record->xl_info & XLR_SET_BKP_BLOCK(i)))
+			continue;
+
+		memcpy(&bkpb, blk, sizeof(BkpBlock));
+		blk += sizeof(BkpBlock);
+
+		buffer = XLogReadBuffer(bkpb.node, bkpb.block, true);
+		Assert(BufferIsValid(buffer));
+		page = (Page) BufferGetPage(buffer);
+
+		if (bkpb.hole_length == 0)
+		{
+			memcpy((char *) page, blk, BLCKSZ);
+		}
+		else
+		{
+			/* must zero-fill the hole */
+			MemSet((char *) page, 0, BLCKSZ);
+			memcpy((char *) page, blk, bkpb.hole_offset);
+			memcpy((char *) page + (bkpb.hole_offset + bkpb.hole_length),
+				   blk + bkpb.hole_offset,
+				   BLCKSZ - (bkpb.hole_offset + bkpb.hole_length));
+		}
+
+		PageSetLSN(page, lsn);
+		PageSetTLI(page, ThisTimeLineID);
+		MarkBufferDirty(buffer);
+>>>>>>> 49f001d81e
 		UnlockReleaseBuffer(buffer);
 
 	MIRROREDLOCK_BUFMGR_UNLOCK;
@@ -4528,6 +4897,7 @@ retry:
 
 	return (XLogRecord *) buffer;
 
+<<<<<<< HEAD
 next_record_is_invalid:
 
 	elogif(debug_xlog_record_read, LOG,
@@ -4535,12 +4905,18 @@ next_record_is_invalid:
 
 	failedSources |= readSource;
 
+=======
+next_record_is_invalid:;
+>>>>>>> 49f001d81e
 	if (readFile >= 0)
 	{
 		close(readFile);
 		readFile = -1;
 	}
+<<<<<<< HEAD
 
+=======
+>>>>>>> 49f001d81e
 	nextRecord = NULL;
 
 	/* In standby-mode, keep trying */
@@ -4907,7 +5283,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 	pfree(xlogDir);
 	unlink(tmppath);
 
-	/* do not use XLOG_SYNC_BIT here --- want to fsync only at end of fill */
+	/* do not use get_sync_bit() here --- want to fsync only at end of fill */
 	fd = BasicOpenFile(tmppath, O_RDWR | O_CREAT | O_EXCL,
 					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
@@ -5138,10 +5514,12 @@ WriteControlFile(void)
 	ControlFile->toast_max_chunk_size = TOAST_MAX_CHUNK_SIZE;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	ControlFile->enableIntTimes = TRUE;
+	ControlFile->enableIntTimes = true;
 #else
-	ControlFile->enableIntTimes = FALSE;
+	ControlFile->enableIntTimes = false;
 #endif
+	ControlFile->float4ByVal = FLOAT4PASSBYVAL;
+	ControlFile->float8ByVal = FLOAT8PASSBYVAL;
 
 	ControlFile->localeBuflen = LOCALE_NAME_BUFLEN;
 	localeptr = setlocale(LC_COLLATE, NULL);
@@ -5343,18 +5721,50 @@ ReadControlFile(void)
 				 errhint("It looks like you need to recompile or initdb.")));
 
 #ifdef HAVE_INT64_TIMESTAMP
-	if (ControlFile->enableIntTimes != TRUE)
+	if (ControlFile->enableIntTimes != true)
 		ereport(FATAL,
 				(errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized without HAVE_INT64_TIMESTAMP"
 				  " but the server was compiled with HAVE_INT64_TIMESTAMP."),
 				 errhint("It looks like you need to recompile or initdb.")));
 #else
-	if (ControlFile->enableIntTimes != FALSE)
+	if (ControlFile->enableIntTimes != false)
 		ereport(FATAL,
 				(errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with HAVE_INT64_TIMESTAMP"
 			   " but the server was compiled without HAVE_INT64_TIMESTAMP."),
+				 errhint("It looks like you need to recompile or initdb.")));
+#endif
+
+#ifdef USE_FLOAT4_BYVAL
+	if (ControlFile->float4ByVal != true)
+		ereport(FATAL,
+				(errmsg("database files are incompatible with server"),
+				 errdetail("The database cluster was initialized without USE_FLOAT4_BYVAL"
+						   " but the server was compiled with USE_FLOAT4_BYVAL."),
+				 errhint("It looks like you need to recompile or initdb.")));
+#else
+	if (ControlFile->float4ByVal != false)
+		ereport(FATAL,
+				(errmsg("database files are incompatible with server"),
+				 errdetail("The database cluster was initialized with USE_FLOAT4_BYVAL"
+						   " but the server was compiled without USE_FLOAT4_BYVAL."),
+				 errhint("It looks like you need to recompile or initdb.")));
+#endif
+
+#ifdef USE_FLOAT8_BYVAL
+	if (ControlFile->float8ByVal != true)
+		ereport(FATAL,
+				(errmsg("database files are incompatible with server"),
+				 errdetail("The database cluster was initialized without USE_FLOAT8_BYVAL"
+						   " but the server was compiled with USE_FLOAT8_BYVAL."),
+				 errhint("It looks like you need to recompile or initdb.")));
+#else
+	if (ControlFile->float8ByVal != false)
+		ereport(FATAL,
+				(errmsg("database files are incompatible with server"),
+				 errdetail("The database cluster was initialized with USE_FLOAT8_BYVAL"
+						   " but the server was compiled without USE_FLOAT8_BYVAL."),
 				 errhint("It looks like you need to recompile or initdb.")));
 #endif
 
@@ -5908,6 +6318,7 @@ XLogReadRecoveryCommandFile(int emode)
 			/*
 			 * does nothing if a recovery_target is not also set
 			 */
+<<<<<<< HEAD
 			if (strcmp(tok2, "on") == 0)
 				StandbyModeRequested = true;
 			else
@@ -5917,19 +6328,24 @@ XLogReadRecoveryCommandFile(int emode)
 			}
 			ereport(emode,
 					(errmsg("StandbyModeRequested = %s", tok2)));
+=======
+			if (!parse_bool(tok2, &recoveryTargetInclusive))
+				  ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					  errmsg("parameter \"recovery_target_inclusive\" requires a Boolean value")));
+			ereport(LOG,
+					(errmsg("recovery_target_inclusive = %s", tok2)));
+>>>>>>> 49f001d81e
 		}
 		else if (strcmp(tok1, "log_restartpoints") == 0)
 		{
 			/*
 			 * does nothing if a recovery_target is not also set
 			 */
-			if (strcmp(tok2, "true") == 0)
-				recoveryLogRestartpoints = true;
-			else
-			{
-				recoveryLogRestartpoints = false;
-				tok2 = "false";
-			}
+			if (!parse_bool(tok2, &recoveryLogRestartpoints))
+				  ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					  errmsg("parameter \"log_restartpoints\" requires a Boolean value")));
 			ereport(LOG,
 					(errmsg("log_restartpoints = %s", tok2)));
 		}
@@ -6955,11 +7371,15 @@ StartupXLOG(void)
 								BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
 		}
 
+<<<<<<< HEAD
 		/* Start up the recovery environment */
 		XLogInitRelationCache();
 
 		UtilityModeFindOrCreateDtmRedoFile();
 
+=======
+		/* Initialize resource managers */
+>>>>>>> 49f001d81e
 		for (rmid = 0; rmid <= RM_MAX_ID; rmid++)
 		{
 			if (RmgrTable[rmid].rm_startup != NULL)
@@ -7335,6 +7755,7 @@ StartupXLOG(void)
 		 *
 		 * We only flush out the Resource Managers.
 		 */
+<<<<<<< HEAD
 		Checkpoint_RecoveryPass(XLogCtl->pass1LastLoc);
 
 		/*
@@ -7343,6 +7764,9 @@ StartupXLOG(void)
 		XLogCloseRelationCache();
 
 		UtilityModeCloseDtmRedoFile();
+=======
+		CreateCheckPoint(CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_IMMEDIATE);
+>>>>>>> 49f001d81e
 	}
 
 	/*
@@ -10032,54 +10456,58 @@ xlog_outrec(StringInfo buf, XLogRecord *record)
 
 
 /*
- * GUC support
+ * Return the (possible) sync flag used for opening a file, depending on the
+ * value of the GUC wal_sync_method.
  */
+<<<<<<< HEAD
 const char *
 assign_xlog_sync_method(const char *method, bool doit, GucSource source __attribute__((unused)) )
+=======
+static int
+get_sync_bit(int method)
+>>>>>>> 49f001d81e
 {
-	int			new_sync_method;
-	int			new_sync_bit;
+	/* If fsync is disabled, never open in sync mode */
+	if (!enableFsync)
+		return 0;
 
-	if (pg_strcasecmp(method, "fsync") == 0)
+	switch (method)
 	{
-		new_sync_method = SYNC_METHOD_FSYNC;
-		new_sync_bit = 0;
-	}
-#ifdef HAVE_FSYNC_WRITETHROUGH
-	else if (pg_strcasecmp(method, "fsync_writethrough") == 0)
-	{
-		new_sync_method = SYNC_METHOD_FSYNC_WRITETHROUGH;
-		new_sync_bit = 0;
-	}
-#endif
-#ifdef HAVE_FDATASYNC
-	else if (pg_strcasecmp(method, "fdatasync") == 0)
-	{
-		new_sync_method = SYNC_METHOD_FDATASYNC;
-		new_sync_bit = 0;
-	}
-#endif
+		/*
+		 * enum values for all sync options are defined even if they are not
+		 * supported on the current platform.  But if not, they are not
+		 * included in the enum option array, and therefore will never be seen
+		 * here.
+		 */
+		case SYNC_METHOD_FSYNC:
+		case SYNC_METHOD_FSYNC_WRITETHROUGH:
+		case SYNC_METHOD_FDATASYNC:
+			return 0;
 #ifdef OPEN_SYNC_FLAG
-	else if (pg_strcasecmp(method, "open_sync") == 0)
-	{
-		new_sync_method = SYNC_METHOD_OPEN;
-		new_sync_bit = OPEN_SYNC_FLAG;
-	}
+		case SYNC_METHOD_OPEN:
+			return OPEN_SYNC_FLAG;
 #endif
 #ifdef OPEN_DATASYNC_FLAG
-	else if (pg_strcasecmp(method, "open_datasync") == 0)
-	{
-		new_sync_method = SYNC_METHOD_OPEN;
-		new_sync_bit = OPEN_DATASYNC_FLAG;
-	}
+		case SYNC_METHOD_OPEN_DSYNC:
+			return OPEN_DATASYNC_FLAG;
 #endif
-	else
-		return NULL;
+		default:
+			/* can't happen (unless we are out of sync with option array) */
+			elog(ERROR, "unrecognized wal_sync_method: %d", method);
+			return 0; /* silence warning */
+	}
+}
 
+/*
+ * GUC support
+ */
+bool
+assign_xlog_sync_method(int new_sync_method, bool doit, GucSource source)
+{
 	if (!doit)
-		return method;
+		return true;
 
-	if (sync_method != new_sync_method || open_sync_bit != new_sync_bit)
+	if (sync_method != new_sync_method)
 	{
 		/*
 		 * To ensure that no blocks escape unsynced, force an fsync on the
@@ -10096,14 +10524,12 @@ assign_xlog_sync_method(const char *method, bool doit, GucSource source __attrib
 						(errcode_for_file_access(),
 						 errmsg("could not fsync log file %u, segment %u: %m",
 								openLogId, openLogSeg)));
-			if (open_sync_bit != new_sync_bit)
+			if (get_sync_bit(sync_method) != get_sync_bit(new_sync_method))
 				XLogFileClose();
 		}
-		sync_method = new_sync_method;
-		open_sync_bit = new_sync_bit;
 	}
 
-	return method;
+	return true;
 }
 
 /*
@@ -10143,7 +10569,11 @@ issue_xlog_fsync(int fd, uint32 log, uint32 seg)
 			break;
 #endif
 		case SYNC_METHOD_OPEN:
+<<<<<<< HEAD
 //		case SYNC_METHOD_OPEN_DSYNC:
+=======
+		case SYNC_METHOD_OPEN_DSYNC:
+>>>>>>> 49f001d81e
 			/* write synced it already */
 			break;
 		default:
@@ -10242,7 +10672,11 @@ do_pg_start_backup(const char *backupidstr, bool fast, char **labelfile)
 	LWLockRelease(WALInsertLock);
 
 	/* Ensure we release forcePageWrites if fail below */
+<<<<<<< HEAD
 	PG_ENSURE_ERROR_CLEANUP(pg_start_backup_callback, (Datum) BoolGetDatum(exclusive));
+=======
+	PG_ENSURE_ERROR_CLEANUP(pg_start_backup_callback, (Datum) 0);
+>>>>>>> 49f001d81e
 	{
 		bool		gotUniqueStartpoint = false;
 
@@ -10396,7 +10830,11 @@ do_pg_start_backup(const char *backupidstr, bool fast, char **labelfile)
 		else
 			*labelfile = labelfbuf.data;
 	}
+<<<<<<< HEAD
 	PG_END_ENSURE_ERROR_CLEANUP(pg_start_backup_callback, (Datum) BoolGetDatum(exclusive));
+=======
+	PG_END_ENSURE_ERROR_CLEANUP(pg_start_backup_callback, (Datum) 0);
+>>>>>>> 49f001d81e
 
 	/*
 	 * We're done.  As a convenience, return the starting WAL location.
@@ -10431,12 +10869,32 @@ pg_start_backup_callback(int code, Datum arg)
 	LWLockRelease(WALInsertLock);
 }
 
+/* Error cleanup callback for pg_start_backup */
+static void
+pg_start_backup_callback(int code, Datum arg)
+{
+	/* Turn off forcePageWrites on failure */
+	LWLockAcquire(WALInsertLock, LW_EXCLUSIVE);
+	XLogCtl->Insert.forcePageWrites = false;
+	LWLockRelease(WALInsertLock);
+}
+
 /*
+<<<<<<< HEAD
  * do_pg_stop_backup is the workhorse of the user-visible pg_stop_backup()
  * function.
 
  * If labelfile is NULL, this stops an exclusive backup. Otherwise this stops
  * the non-exclusive backup specified by 'labelfile'.
+=======
+ * pg_stop_backup: finish taking an on-line backup dump
+ *
+ * We remove the backup label file created by pg_start_backup, and instead
+ * create a backup history file in pg_xlog (whence it will immediately be
+ * archived).  The backup history file contains the same info found in
+ * the label file, plus the backup-end time and WAL location.
+ * Note: different from CancelBackup which just cancels online backup mode.
+>>>>>>> 49f001d81e
  */
 XLogRecPtr
 do_pg_stop_backup(char *labelfile)
@@ -11059,6 +11517,7 @@ rm_redo_error_callback(void *arg)
 	pfree(buf.data);
 }
 
+<<<<<<< HEAD
 static char *
 XLogLocationToBuffer(char *buffer, XLogRecPtr *loc, bool longFormat)
 {
@@ -12408,3 +12867,54 @@ checkXLogConsistency(XLogRecord *record, XLogRecPtr EndRecPtr)
 		}
 	}
 }
+=======
+/*
+ * BackupInProgress: check if online backup mode is active
+ *
+ * This is done by checking for existence of the "backup_label" file.
+ */
+bool
+BackupInProgress(void)
+{
+	struct stat stat_buf;
+
+	return (stat(BACKUP_LABEL_FILE, &stat_buf) == 0);
+}
+
+/*
+ * CancelBackup: rename the "backup_label" file to cancel backup mode
+ *
+ * If the "backup_label" file exists, it will be renamed to "backup_label.old".
+ * Note that this will render an online backup in progress useless.
+ * To correctly finish an online backup, pg_stop_backup must be called.
+ */
+void
+CancelBackup(void)
+{
+	struct stat stat_buf;
+
+	/* if the file is not there, return */
+	if (stat(BACKUP_LABEL_FILE, &stat_buf) < 0)
+		return;
+
+	/* remove leftover file from previously cancelled backup if it exists */
+	unlink(BACKUP_LABEL_OLD);
+
+	if (rename(BACKUP_LABEL_FILE, BACKUP_LABEL_OLD) == 0)
+	{
+		ereport(LOG,
+				(errmsg("online backup mode cancelled"),
+				 errdetail("\"%s\" was renamed to \"%s\".",
+						BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
+	}
+	else
+	{
+		ereport(WARNING,
+				(errcode_for_file_access(),
+				 errmsg("online backup mode was not cancelled"),
+				 errdetail("Could not rename \"%s\" to \"%s\": %m.",
+						BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
+	}
+}
+
+>>>>>>> 49f001d81e

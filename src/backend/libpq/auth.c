@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.164.2.5 2009/10/16 22:08:48 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.167 2008/08/01 11:41:12 mha Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +51,7 @@
 /*#include "replication/walsender.h"*/
 #include "storage/ipc.h"
 
+<<<<<<< HEAD
 extern bool gp_reject_internal_tcp_conn;
 
 #if defined(_AIX)
@@ -55,6 +60,10 @@ int     getpeereid(int, uid_t *__restrict__, gid_t *__restrict__);
 
 /*----------------------------------------------------------------
  * Global authentication functions
+=======
+/*----------------------------------------------------------------
+ * Global authentication functions 
+>>>>>>> 49f001d81e
  *----------------------------------------------------------------
  */
 static void sendAuthRequest(Port *port, AuthRequest areq);
@@ -73,8 +82,12 @@ static int	recv_and_check_password_packet(Port *port);
 /* Standard TCP port number for Ident service.	Assigned by IANA */
 #define IDENT_PORT 113
 
+<<<<<<< HEAD
 static int	authident(hbaPort *port);
 static bool ident_unix(int sock, char *ident_user);
+=======
+static int  authident(hbaPort *port);
+>>>>>>> 49f001d81e
 
 
 /*----------------------------------------------------------------
@@ -130,6 +143,7 @@ ULONG(*__ldap_start_tls_sA) (
 #endif
 
 static int	CheckLDAPAuth(Port *port);
+<<<<<<< HEAD
 #endif   /* USE_LDAP */
 
 /*----------------------------------------------------------------
@@ -150,12 +164,34 @@ char	   *pg_krb_srvnam;
 bool		pg_krb_caseins_users;
 
 
+=======
+#endif /* USE_LDAP */
+
+
+/*----------------------------------------------------------------
+ * Kerberos and GSSAPI GUCs
+ *----------------------------------------------------------------
+ */
+char	   *pg_krb_server_keyfile;
+char	   *pg_krb_srvnam;
+bool		pg_krb_caseins_users;
+char	   *pg_krb_server_hostname = NULL;
+char	   *pg_krb_realm = NULL;
+
+
+>>>>>>> 49f001d81e
 /*----------------------------------------------------------------
  * MIT Kerberos authentication system - protocol version 5
  *----------------------------------------------------------------
  */
+<<<<<<< HEAD
 #ifdef KRB5
 static int	pg_krb5_recvauth(Port *port);
+=======
+static int pg_krb5_recvauth(Port *port);
+
+#ifdef KRB5
+>>>>>>> 49f001d81e
 
 #include <krb5.h>
 /* Some old versions of Kerberos do not include <com_err.h> in <krb5.h> */
@@ -170,33 +206,52 @@ static int	pg_krb5_initialised;
 static krb5_context pg_krb5_context;
 static krb5_keytab pg_krb5_keytab;
 static krb5_principal pg_krb5_server;
+<<<<<<< HEAD
 #endif   /* KRB5 */
+=======
+#endif /* KRB5 */
+>>>>>>> 49f001d81e
 
 
 /*----------------------------------------------------------------
  * GSSAPI Authentication
  *----------------------------------------------------------------
  */
+<<<<<<< HEAD
+=======
+static int pg_GSS_recvauth(Port *port);
+
+>>>>>>> 49f001d81e
 #ifdef ENABLE_GSS
 #if defined(HAVE_GSSAPI_H)
 #include <gssapi.h>
 #else
 #include <gssapi/gssapi.h>
 #endif
+<<<<<<< HEAD
 
 static int	pg_GSS_recvauth(Port *port);
 static int check_valid_until_for_gssapi(Port *port);
 #endif   /* ENABLE_GSS */
+=======
+#endif /* ENABLE_GSS */
+>>>>>>> 49f001d81e
 
 
 /*----------------------------------------------------------------
  * SSPI Authentication
  *----------------------------------------------------------------
  */
+<<<<<<< HEAD
+=======
+static int pg_SSPI_recvauth(Port *port);
+
+>>>>>>> 49f001d81e
 #ifdef ENABLE_SSPI
 typedef		SECURITY_STATUS
 			(WINAPI * QUERY_SECURITY_CONTEXT_TOKEN_FN) (
 													   PCtxtHandle, void **);
+<<<<<<< HEAD
 static int pg_SSPI_recvauth(Port *port);
 #endif
 
@@ -224,6 +279,10 @@ static int	CheckRADIUSAuth(Port *port);
  * 65535 bytes, so that seems like a reasonable limit for us as well.
  */
 #define PG_MAX_AUTH_TOKEN_LENGTH	65535
+=======
+#endif
+
+>>>>>>> 49f001d81e
 
 
 /*----------------------------------------------------------------
@@ -231,6 +290,10 @@ static int	CheckRADIUSAuth(Port *port);
  *----------------------------------------------------------------
  */
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 49f001d81e
 /*
  * Tell the user the authentication failed, but not (much about) why.
  *
@@ -247,7 +310,10 @@ static void
 auth_failed(Port *port, int status)
 {
 	const char *errstr;
+<<<<<<< HEAD
 	int			errcode_return = ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION;
+=======
+>>>>>>> 49f001d81e
 
 	/*
 	 * If we failed due to EOF from client, just quit; there's no point in
@@ -262,6 +328,7 @@ auth_failed(Port *port, int status)
 	if (status == STATUS_EOF)
 		proc_exit(0);
 
+<<<<<<< HEAD
 	/* internal communication failure */
 	if (!port->hba)
 	{
@@ -317,10 +384,55 @@ auth_failed(Port *port, int status)
 
 	ereport(FATAL,
 			(errcode(errcode_return),
+=======
+	switch (port->auth_method)
+	{
+		case uaReject:
+			errstr = gettext_noop("authentication failed for user \"%s\": host rejected");
+			break;
+		case uaKrb5:
+			errstr = gettext_noop("Kerberos 5 authentication failed for user \"%s\"");
+			break;
+		case uaGSS:
+			errstr = gettext_noop("GSSAPI authentication failed for user \"%s\"");
+			break;
+		case uaSSPI:
+			errstr = gettext_noop("SSPI authentication failed for user \"%s\"");
+			break;
+		case uaTrust:
+			errstr = gettext_noop("\"trust\" authentication failed for user \"%s\"");
+			break;
+		case uaIdent:
+			errstr = gettext_noop("Ident authentication failed for user \"%s\"");
+			break;
+		case uaMD5:
+		case uaCrypt:
+		case uaPassword:
+			errstr = gettext_noop("password authentication failed for user \"%s\"");
+			break;
+#ifdef USE_PAM
+		case uaPAM:
+			errstr = gettext_noop("PAM authentication failed for user \"%s\"");
+			break;
+#endif   /* USE_PAM */
+#ifdef USE_LDAP
+		case uaLDAP:
+			errstr = gettext_noop("LDAP authentication failed for user \"%s\"");
+			break;
+#endif   /* USE_LDAP */
+		default:
+			errstr = gettext_noop("authentication failed for user \"%s\": invalid authentication method");
+			break;
+	}
+
+	ereport(FATAL,
+			(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+>>>>>>> 49f001d81e
 			 errmsg(errstr, port->user_name)));
 	/* doesn't return */
 }
 
+<<<<<<< HEAD
 /*
  * Special client authentication for QD to QE connections. This is run at the
  * QE. This is non-trivial because a QE some times runs at the master (i.e., an
@@ -422,6 +534,8 @@ is_internal_gpdb_conn(Port *port)
 		return false;
 }
 
+=======
+>>>>>>> 49f001d81e
 
 /*
  * Client authentication starts here.  If there is an error, this
@@ -433,6 +547,7 @@ ClientAuthentication(Port *port)
 	int			status = STATUS_ERROR;
 
 	/*
+<<<<<<< HEAD
 	 * If this is a QD to QE connection, we might be able to short circuit
 	 * client authentication.
 	 */
@@ -445,6 +560,8 @@ ClientAuthentication(Port *port)
 	}
 
 	/*
+=======
+>>>>>>> 49f001d81e
 	 * Get the authentication method to use for this frontend/database
 	 * combination.  Note: a failure return indicates a problem with the hba
 	 * config file, not with the request.  hba.c should have dropped an error
@@ -456,6 +573,7 @@ ClientAuthentication(Port *port)
 				 errmsg("missing or erroneous pg_hba.conf file"),
 				 errhint("See server log for details.")));
 
+<<<<<<< HEAD
 	/*
 	 * Enable immediate response to SIGTERM/SIGINT/timeout interrupts. (We
 	 * don't want this during hba_getauthmethod() because it might have to do
@@ -500,10 +618,14 @@ ClientAuthentication(Port *port)
 	 * Now proceed to do the actual authentication check
 	 */
 	switch (port->hba->auth_method)
+=======
+	switch (port->auth_method)
+>>>>>>> 49f001d81e
 	{
 		case uaReject:
 
 			/*
+<<<<<<< HEAD
 			 * An explicit "reject" entry in pg_hba.conf.  This report exposes
 			 * the fact that there's an explicit reject entry, which is
 			 * perhaps not so desirable from a security standpoint; but the
@@ -512,6 +634,15 @@ ClientAuthentication(Port *port)
 			 * don't want to change the message for an implicit reject.  As
 			 * noted below, the additional information shown here doesn't
 			 * expose anything not known to an attacker.
+=======
+			 * This could have come from an explicit "reject" entry in
+			 * pg_hba.conf, but more likely it means there was no matching
+			 * entry.  Take pity on the poor user and issue a helpful error
+			 * message.  NOTE: this is not a security breach, because all the
+			 * info reported here is known at the frontend and must be assumed
+			 * known to bad guys. We're merely helping out the less clueful
+			 * good guys.
+>>>>>>> 49f001d81e
 			 */
 			{
 				char		hostinfo[NI_MAXHOST];
@@ -521,6 +652,7 @@ ClientAuthentication(Port *port)
 								   NULL, 0,
 								   NI_NUMERICHOST);
 
+<<<<<<< HEAD
 				if (am_walsender)
 				{
 #ifdef USE_SSL
@@ -608,10 +740,25 @@ ClientAuthentication(Port *port)
 							   port->database_name)));
 #endif
 				}
+=======
+#ifdef USE_SSL
+				ereport(FATAL,
+						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						 errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
+							  hostinfo, port->user_name, port->database_name,
+								port->ssl ? _("SSL on") : _("SSL off"))));
+#else
+				ereport(FATAL,
+						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						 errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\"",
+						   hostinfo, port->user_name, port->database_name)));
+#endif
+>>>>>>> 49f001d81e
 				break;
 			}
 
 		case uaKrb5:
+<<<<<<< HEAD
 #ifdef KRB5
 			sendAuthRequest(port, AUTH_REQ_KRB5);
 			status = pg_krb5_recvauth(port);
@@ -642,6 +789,20 @@ ClientAuthentication(Port *port)
 #else
 			Assert(false);
 #endif
+=======
+			sendAuthRequest(port, AUTH_REQ_KRB5);
+			status = pg_krb5_recvauth(port);
+			break;
+
+		case uaGSS:
+			sendAuthRequest(port, AUTH_REQ_GSS);
+			status = pg_GSS_recvauth(port);
+			break;
+
+		case uaSSPI:
+			sendAuthRequest(port, AUTH_REQ_SSPI);
+			status = pg_SSPI_recvauth(port);
+>>>>>>> 49f001d81e
 			break;
 
 		case uaIdent:
@@ -677,19 +838,31 @@ ClientAuthentication(Port *port)
 			break;
 
 		case uaMD5:
+<<<<<<< HEAD
 			if (Db_user_namespace)
 				ereport(FATAL,
 						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 						 errmsg("MD5 authentication is not supported when \"db_user_namespace\" is enabled")));
+=======
+>>>>>>> 49f001d81e
 			sendAuthRequest(port, AUTH_REQ_MD5);
 			status = recv_and_check_password_packet(port);
 			break;
 
+<<<<<<< HEAD
+=======
+		case uaCrypt:
+			sendAuthRequest(port, AUTH_REQ_CRYPT);
+			status = recv_and_check_password_packet(port);
+			break;
+
+>>>>>>> 49f001d81e
 		case uaPassword:
 			sendAuthRequest(port, AUTH_REQ_PASSWORD);
 			status = recv_and_check_password_packet(port);
 			break;
 
+<<<<<<< HEAD
 		case uaPAM:
 #ifdef USE_PAM
 			status = CheckPAMAuth(port, port->user_name, "");
@@ -716,12 +889,28 @@ ClientAuthentication(Port *port)
 		case uaRADIUS:
 			status = CheckRADIUSAuth(port);
 			break;
+=======
+#ifdef USE_PAM
+		case uaPAM:
+			pam_port_cludge = port;
+			status = CheckPAMAuth(port, port->user_name, "");
+			break;
+#endif   /* USE_PAM */
+
+#ifdef USE_LDAP
+		case uaLDAP:
+			status = CheckLDAPAuth(port);
+			break;
+#endif
+
+>>>>>>> 49f001d81e
 		case uaTrust:
 			status = STATUS_OK;
 			break;
 	}
 
 	if (status == STATUS_OK)
+<<<<<<< HEAD
 		if (!CheckAuthTimeConstraints(port->user_name))
 			ereport(FATAL,
 					 (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
@@ -741,6 +930,13 @@ FakeClientAuthentication(Port *port)
 {
 	sendAuthRequest(port, AUTH_REQ_OK);
 }
+=======
+		sendAuthRequest(port, AUTH_REQ_OK);
+	else
+		auth_failed(port, status);
+}
+
+>>>>>>> 49f001d81e
 
 /*
  * Send an authentication request packet to the frontend.
@@ -756,6 +952,11 @@ sendAuthRequest(Port *port, AuthRequest areq)
 	/* Add the salt for encrypted passwords. */
 	if (areq == AUTH_REQ_MD5)
 		pq_sendbytes(&buf, port->md5Salt, 4);
+<<<<<<< HEAD
+=======
+	else if (areq == AUTH_REQ_CRYPT)
+		pq_sendbytes(&buf, port->cryptSalt, 2);
+>>>>>>> 49f001d81e
 
 #if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 
@@ -856,7 +1057,11 @@ recv_password_packet(Port *port)
 
 
 /*----------------------------------------------------------------
+<<<<<<< HEAD
  * hashed password (MD5, SHA-256) authentication
+=======
+ * MD5 and crypt authentication
+>>>>>>> 49f001d81e
  *----------------------------------------------------------------
  */
 
@@ -875,7 +1080,11 @@ recv_and_check_password_packet(Port *port)
 	if (passwd == NULL)
 		return STATUS_EOF;		/* client wouldn't send password */
 
+<<<<<<< HEAD
 	result = hashed_passwd_verify(port, port->user_name, passwd);
+=======
+	result = md5_crypt_verify(port, port->user_name, passwd);
+>>>>>>> 49f001d81e
 
 	pfree(passwd);
 
@@ -1706,6 +1915,7 @@ pg_SSPI_recvauth(Port *port)
 #endif   /* ENABLE_SSPI */
 
 
+<<<<<<< HEAD
 
 /*----------------------------------------------------------------
  * Ident authentication system
@@ -2188,12 +2398,470 @@ authident(hbaPort *port)
 
 	return check_usermap(port->hba->usermap, port->user_name, ident_user, false);
 }
+=======
+>>>>>>> 49f001d81e
+
+/*----------------------------------------------------------------
+ * Ident authentication system
+ *----------------------------------------------------------------
+ */
+
+<<<<<<< HEAD
+/*----------------------------------------------------------------
+ * PAM authentication system
+ *----------------------------------------------------------------
+ */
+=======
+/*
+ *	Parse the string "*ident_response" as a response from a query to an Ident
+ *	server.  If it's a normal response indicating a user name, return true
+ *	and store the user name at *ident_user. If it's anything else,
+ *	return false.
+ */
+static bool
+interpret_ident_response(const char *ident_response,
+						 char *ident_user)
+{
+	const char *cursor = ident_response;		/* Cursor into *ident_response */
+
+	/*
+	 * Ident's response, in the telnet tradition, should end in crlf (\r\n).
+	 */
+	if (strlen(ident_response) < 2)
+		return false;
+	else if (ident_response[strlen(ident_response) - 2] != '\r')
+		return false;
+	else
+	{
+		while (*cursor != ':' && *cursor != '\r')
+			cursor++;			/* skip port field */
+
+		if (*cursor != ':')
+			return false;
+		else
+		{
+			/* We're positioned to colon before response type field */
+			char		response_type[80];
+			int			i;		/* Index into *response_type */
+
+			cursor++;			/* Go over colon */
+			while (pg_isblank(*cursor))
+				cursor++;		/* skip blanks */
+			i = 0;
+			while (*cursor != ':' && *cursor != '\r' && !pg_isblank(*cursor) &&
+				   i < (int) (sizeof(response_type) - 1))
+				response_type[i++] = *cursor++;
+			response_type[i] = '\0';
+			while (pg_isblank(*cursor))
+				cursor++;		/* skip blanks */
+			if (strcmp(response_type, "USERID") != 0)
+				return false;
+			else
+			{
+				/*
+				 * It's a USERID response.  Good.  "cursor" should be pointing
+				 * to the colon that precedes the operating system type.
+				 */
+				if (*cursor != ':')
+					return false;
+				else
+				{
+					cursor++;	/* Go over colon */
+					/* Skip over operating system field. */
+					while (*cursor != ':' && *cursor != '\r')
+						cursor++;
+					if (*cursor != ':')
+						return false;
+					else
+					{
+						int			i;	/* Index into *ident_user */
+
+						cursor++;		/* Go over colon */
+						while (pg_isblank(*cursor))
+							cursor++;	/* skip blanks */
+						/* Rest of line is user name.  Copy it over. */
+						i = 0;
+						while (*cursor != '\r' && i < IDENT_USERNAME_MAX)
+							ident_user[i++] = *cursor++;
+						ident_user[i] = '\0';
+						return true;
+					}
+				}
+			}
+		}
+	}
+}
+
+
+/*
+ *	Talk to the ident server on host "remote_ip_addr" and find out who
+ *	owns the tcp connection from his port "remote_port" to port
+ *	"local_port_addr" on host "local_ip_addr".	Return the user name the
+ *	ident server gives as "*ident_user".
+ *
+ *	IP addresses and port numbers are in network byte order.
+ *
+ *	But iff we're unable to get the information from ident, return false.
+ */
+static bool
+ident_inet(const SockAddr remote_addr,
+		   const SockAddr local_addr,
+		   char *ident_user)
+{
+	int			sock_fd,		/* File descriptor for socket on which we talk
+								 * to Ident */
+				rc;				/* Return code from a locally called function */
+	bool		ident_return;
+	char		remote_addr_s[NI_MAXHOST];
+	char		remote_port[NI_MAXSERV];
+	char		local_addr_s[NI_MAXHOST];
+	char		local_port[NI_MAXSERV];
+	char		ident_port[NI_MAXSERV];
+	char		ident_query[80];
+	char		ident_response[80 + IDENT_USERNAME_MAX];
+	struct addrinfo *ident_serv = NULL,
+			   *la = NULL,
+				hints;
+
+	/*
+	 * Might look a little weird to first convert it to text and then back to
+	 * sockaddr, but it's protocol independent.
+	 */
+	pg_getnameinfo_all(&remote_addr.addr, remote_addr.salen,
+					   remote_addr_s, sizeof(remote_addr_s),
+					   remote_port, sizeof(remote_port),
+					   NI_NUMERICHOST | NI_NUMERICSERV);
+	pg_getnameinfo_all(&local_addr.addr, local_addr.salen,
+					   local_addr_s, sizeof(local_addr_s),
+					   local_port, sizeof(local_port),
+					   NI_NUMERICHOST | NI_NUMERICSERV);
+
+	snprintf(ident_port, sizeof(ident_port), "%d", IDENT_PORT);
+	hints.ai_flags = AI_NUMERICHOST;
+	hints.ai_family = remote_addr.addr.ss_family;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = 0;
+	hints.ai_addrlen = 0;
+	hints.ai_canonname = NULL;
+	hints.ai_addr = NULL;
+	hints.ai_next = NULL;
+	rc = pg_getaddrinfo_all(remote_addr_s, ident_port, &hints, &ident_serv);
+	if (rc || !ident_serv)
+	{
+		if (ident_serv)
+			pg_freeaddrinfo_all(hints.ai_family, ident_serv);
+		return false;			/* we don't expect this to happen */
+	}
+
+	hints.ai_flags = AI_NUMERICHOST;
+	hints.ai_family = local_addr.addr.ss_family;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = 0;
+	hints.ai_addrlen = 0;
+	hints.ai_canonname = NULL;
+	hints.ai_addr = NULL;
+	hints.ai_next = NULL;
+	rc = pg_getaddrinfo_all(local_addr_s, NULL, &hints, &la);
+	if (rc || !la)
+	{
+		if (la)
+			pg_freeaddrinfo_all(hints.ai_family, la);
+		return false;			/* we don't expect this to happen */
+	}
+
+	sock_fd = socket(ident_serv->ai_family, ident_serv->ai_socktype,
+					 ident_serv->ai_protocol);
+	if (sock_fd < 0)
+	{
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not create socket for Ident connection: %m")));
+		ident_return = false;
+		goto ident_inet_done;
+	}
+
+	/*
+	 * Bind to the address which the client originally contacted, otherwise
+	 * the ident server won't be able to match up the right connection. This
+	 * is necessary if the PostgreSQL server is running on an IP alias.
+	 */
+	rc = bind(sock_fd, la->ai_addr, la->ai_addrlen);
+	if (rc != 0)
+	{
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not bind to local address \"%s\": %m",
+						local_addr_s)));
+		ident_return = false;
+		goto ident_inet_done;
+	}
+
+	rc = connect(sock_fd, ident_serv->ai_addr,
+				 ident_serv->ai_addrlen);
+	if (rc != 0)
+	{
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not connect to Ident server at address \"%s\", port %s: %m",
+						remote_addr_s, ident_port)));
+		ident_return = false;
+		goto ident_inet_done;
+	}
+
+	/* The query we send to the Ident server */
+	snprintf(ident_query, sizeof(ident_query), "%s,%s\r\n",
+			 remote_port, local_port);
+
+	/* loop in case send is interrupted */
+	do
+	{
+		rc = send(sock_fd, ident_query, strlen(ident_query), 0);
+	} while (rc < 0 && errno == EINTR);
+
+	if (rc < 0)
+	{
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not send query to Ident server at address \"%s\", port %s: %m",
+						remote_addr_s, ident_port)));
+		ident_return = false;
+		goto ident_inet_done;
+	}
+
+	do
+	{
+		rc = recv(sock_fd, ident_response, sizeof(ident_response) - 1, 0);
+	} while (rc < 0 && errno == EINTR);
+
+	if (rc < 0)
+	{
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not receive response from Ident server at address \"%s\", port %s: %m",
+						remote_addr_s, ident_port)));
+		ident_return = false;
+		goto ident_inet_done;
+	}
+
+	ident_response[rc] = '\0';
+	ident_return = interpret_ident_response(ident_response, ident_user);
+	if (!ident_return)
+		ereport(LOG,
+			(errmsg("invalidly formatted response from Ident server: \"%s\"",
+					ident_response)));
+
+ident_inet_done:
+	if (sock_fd >= 0)
+		closesocket(sock_fd);
+	pg_freeaddrinfo_all(remote_addr.addr.ss_family, ident_serv);
+	pg_freeaddrinfo_all(local_addr.addr.ss_family, la);
+	return ident_return;
+}
+
+/*
+ *	Ask kernel about the credentials of the connecting process and
+ *	determine the symbolic name of the corresponding user.
+ *
+ *	Returns either true and the username put into "ident_user",
+ *	or false if we were unable to determine the username.
+ */
+#ifdef HAVE_UNIX_SOCKETS
+
+static bool
+ident_unix(int sock, char *ident_user)
+{
+#if defined(HAVE_GETPEEREID)
+	/* OpenBSD style:  */
+	uid_t		uid;
+	gid_t		gid;
+	struct passwd *pass;
+
+	errno = 0;
+	if (getpeereid(sock, &uid, &gid) != 0)
+	{
+		/* We didn't get a valid credentials struct. */
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not get peer credentials: %m")));
+		return false;
+	}
+
+	pass = getpwuid(uid);
+
+	if (pass == NULL)
+	{
+		ereport(LOG,
+				(errmsg("local user with ID %d does not exist",
+						(int) uid)));
+		return false;
+	}
+
+	strlcpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
+
+	return true;
+#elif defined(SO_PEERCRED)
+	/* Linux style: use getsockopt(SO_PEERCRED) */
+	struct ucred peercred;
+	ACCEPT_TYPE_ARG3 so_len = sizeof(peercred);
+	struct passwd *pass;
+
+	errno = 0;
+	if (getsockopt(sock, SOL_SOCKET, SO_PEERCRED, &peercred, &so_len) != 0 ||
+		so_len != sizeof(peercred))
+	{
+		/* We didn't get a valid credentials struct. */
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not get peer credentials: %m")));
+		return false;
+	}
+
+	pass = getpwuid(peercred.uid);
+
+	if (pass == NULL)
+	{
+		ereport(LOG,
+				(errmsg("local user with ID %d does not exist",
+						(int) peercred.uid)));
+		return false;
+	}
+
+	strlcpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
+
+	return true;
+#elif defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || (defined(HAVE_STRUCT_SOCKCRED) && defined(LOCAL_CREDS))
+	struct msghdr msg;
+
+/* Credentials structure */
+#if defined(HAVE_STRUCT_CMSGCRED)
+	typedef struct cmsgcred Cred;
+
+#define cruid cmcred_uid
+#elif defined(HAVE_STRUCT_FCRED)
+	typedef struct fcred Cred;
+
+#define cruid fc_uid
+#elif defined(HAVE_STRUCT_SOCKCRED)
+	typedef struct sockcred Cred;
+
+#define cruid sc_uid
+#endif
+	Cred	   *cred;
+
+	/* Compute size without padding */
+	char		cmsgmem[ALIGN(sizeof(struct cmsghdr)) + ALIGN(sizeof(Cred))];	/* for NetBSD */
+
+	/* Point to start of first structure */
+	struct cmsghdr *cmsg = (struct cmsghdr *) cmsgmem;
+
+	struct iovec iov;
+	char		buf;
+	struct passwd *pw;
+
+	memset(&msg, 0, sizeof(msg));
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	msg.msg_control = (char *) cmsg;
+	msg.msg_controllen = sizeof(cmsgmem);
+	memset(cmsg, 0, sizeof(cmsgmem));
+
+	/*
+	 * The one character which is received here is not meaningful; its
+	 * purposes is only to make sure that recvmsg() blocks long enough for the
+	 * other side to send its credentials.
+	 */
+	iov.iov_base = &buf;
+	iov.iov_len = 1;
+
+	if (recvmsg(sock, &msg, 0) < 0 ||
+		cmsg->cmsg_len < sizeof(cmsgmem) ||
+		cmsg->cmsg_type != SCM_CREDS)
+	{
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not get peer credentials: %m")));
+		return false;
+	}
+
+	cred = (Cred *) CMSG_DATA(cmsg);
+
+	pw = getpwuid(cred->cruid);
+
+	if (pw == NULL)
+	{
+		ereport(LOG,
+				(errmsg("local user with ID %d does not exist",
+						(int) cred->cruid)));
+		return false;
+	}
+
+	strlcpy(ident_user, pw->pw_name, IDENT_USERNAME_MAX + 1);
+
+	return true;
+#else
+	ereport(LOG,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("Ident authentication is not supported on local connections on this platform")));
+
+	return false;
+#endif
+}
+#endif   /* HAVE_UNIX_SOCKETS */
+
+
+/*
+ *	Determine the username of the initiator of the connection described
+ *	by "port".	Then look in the usermap file under the usermap
+ *	port->auth_arg and see if that user is equivalent to Postgres user
+ *	port->user.
+ *
+ *	Return STATUS_OK if yes, STATUS_ERROR if no match (or couldn't get info).
+ */
+static int
+authident(hbaPort *port)
+{
+	char		ident_user[IDENT_USERNAME_MAX + 1];
+
+	if (get_role_line(port->user_name) == NULL)
+		return STATUS_ERROR;
+
+	switch (port->raddr.addr.ss_family)
+	{
+		case AF_INET:
+#ifdef	HAVE_IPV6
+		case AF_INET6:
+#endif
+			if (!ident_inet(port->raddr, port->laddr, ident_user))
+				return STATUS_ERROR;
+			break;
+
+#ifdef HAVE_UNIX_SOCKETS
+		case AF_UNIX:
+			if (!ident_unix(port->sock, ident_user))
+				return STATUS_ERROR;
+			break;
+#endif
+
+		default:
+			return STATUS_ERROR;
+	}
+
+	ereport(DEBUG2,
+			(errmsg("Ident protocol identifies remote user as \"%s\"",
+					ident_user)));
+
+	if (check_ident_usermap(port->auth_arg, port->user_name, ident_user))
+		return STATUS_OK;
+	else
+		return STATUS_ERROR;
+}
 
 
 /*----------------------------------------------------------------
  * PAM authentication system
  *----------------------------------------------------------------
  */
+>>>>>>> 49f001d81e
 #ifdef USE_PAM
 
 /*
@@ -2442,10 +3110,72 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 			return STATUS_ERROR;
 		}
 	}
+<<<<<<< HEAD
 	else
 	{
 		*ldap = ldap_init(port->hba->ldapserver, port->hba->ldapport);
 	}
+=======
+
+	/*
+	 * Crack the LDAP url. We do a very trivial parse:
+	 *
+	 * ldap[s]://<server>[:<port>]/<basedn>[;prefix[;suffix]]
+	 *
+	 * This code originally used "%127s" for the suffix, but that doesn't
+	 * work for embedded whitespace.  We know that tokens formed by
+	 * hba.c won't include newlines, so we can use a "not newline" scanset
+	 * instead.
+	 */
+
+	server[0] = '\0';
+	basedn[0] = '\0';
+	prefix[0] = '\0';
+	suffix[0] = '\0';
+
+	/* ldap, including port number */
+	r = sscanf(port->auth_arg,
+			   "ldap://%127[^:]:%d/%127[^;];%127[^;];%127[^\n]",
+			   server, &ldapport, basedn, prefix, suffix);
+	if (r < 3)
+	{
+		/* ldaps, including port number */
+		r = sscanf(port->auth_arg,
+				   "ldaps://%127[^:]:%d/%127[^;];%127[^;];%127[^\n]",
+				   server, &ldapport, basedn, prefix, suffix);
+		if (r >= 3)
+			ssl = true;
+	}
+	if (r < 3)
+	{
+		/* ldap, no port number */
+		r = sscanf(port->auth_arg,
+				   "ldap://%127[^/]/%127[^;];%127[^;];%127[^\n]",
+				   server, basedn, prefix, suffix);
+	}
+	if (r < 2)
+	{
+		/* ldaps, no port number */
+		r = sscanf(port->auth_arg,
+				   "ldaps://%127[^/]/%127[^;];%127[^;];%127[^\n]",
+				   server, basedn, prefix, suffix);
+		if (r >= 2)
+			ssl = true;
+	}
+	if (r < 2)
+	{
+		ereport(LOG,
+				(errmsg("invalid LDAP URL: \"%s\"",
+						port->auth_arg)));
+		return STATUS_ERROR;
+	}
+
+	sendAuthRequest(port, AUTH_REQ_PASSWORD);
+
+	passwd = recv_password_packet(port);
+	if (passwd == NULL)
+		return STATUS_EOF;		/* client wouldn't send password */
+>>>>>>> 49f001d81e
 
 	if (!*ldap)
 	{
@@ -2732,6 +3462,7 @@ CheckLDAPAuth(Port *port)
 }
 #endif   /* USE_LDAP */
 
+<<<<<<< HEAD
 
 /*----------------------------------------------------------------
  * SSL client certificate authentication
@@ -3293,3 +4024,5 @@ check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp)
 	list_free(role_intervals);
 	return true;
 }
+=======
+>>>>>>> 49f001d81e

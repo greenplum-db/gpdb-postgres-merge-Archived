@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.257 2008/04/01 00:48:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.259 2008/05/15 17:37:49 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -21,7 +21,6 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_operator.h"
@@ -2373,7 +2372,10 @@ eval_const_expressions_mutator(Node *node,
 	{
 		CoerceViaIO *expr = (CoerceViaIO *) node;
 		Expr	   *arg;
+<<<<<<< HEAD
 		List	   *args;
+=======
+>>>>>>> 49f001d81e
 		Oid			outfunc;
 		bool		outtypisvarlena;
 		Oid			infunc;
@@ -2386,7 +2388,10 @@ eval_const_expressions_mutator(Node *node,
 		 */
 		arg = (Expr *) eval_const_expressions_mutator((Node *) expr->arg,
 													  context);
+<<<<<<< HEAD
 		args = list_make1(arg);
+=======
+>>>>>>> 49f001d81e
 
 		/*
 		 * CoerceViaIO represents calling the source type's output function
@@ -2399,7 +2404,11 @@ eval_const_expressions_mutator(Node *node,
 
 		simple = simplify_function(outfunc,
 								   CSTRINGOID, -1,
+<<<<<<< HEAD
 								   &args,
+=======
+								   list_make1(arg),
+>>>>>>> 49f001d81e
 								   true, context);
 		if (simple)				/* successfully simplified output fn */
 		{
@@ -2419,7 +2428,11 @@ eval_const_expressions_mutator(Node *node,
 
 			simple = simplify_function(infunc,
 									   expr->resulttype, -1,
+<<<<<<< HEAD
 									   &args,
+=======
+									   args,
+>>>>>>> 49f001d81e
 									   true, context);
 			if (simple)			/* successfully simplified input fn */
 				return (Node *) simple;
@@ -2436,6 +2449,7 @@ eval_const_expressions_mutator(Node *node,
 		newexpr->coerceformat = expr->coerceformat;
 		return (Node *) newexpr;
 	}
+<<<<<<< HEAD
 	if (IsA(node, ArrayCoerceExpr))
 	{
 		ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
@@ -2471,6 +2485,8 @@ eval_const_expressions_mutator(Node *node,
 		/* Else we must return the partially-simplified node */
 		return (Node *) newexpr;
 	}
+=======
+>>>>>>> 49f001d81e
 	if (IsA(node, CaseExpr))
 	{
 		/*----------

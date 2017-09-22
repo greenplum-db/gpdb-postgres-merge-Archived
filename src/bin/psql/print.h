@@ -3,7 +3,11 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * src/bin/psql/print.h
+=======
+ * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.38 2008/07/14 22:00:04 momjian Exp $
+>>>>>>> 49f001d81e
  */
 #ifndef PRINT_H
 #define PRINT_H
@@ -100,7 +104,11 @@ typedef struct printTableOpt
  */
 typedef struct printTableFooter
 {
+<<<<<<< HEAD
 	char	   *data;
+=======
+	char *data;
+>>>>>>> 49f001d81e
 	struct printTableFooter *next;
 } printTableFooter;
 
@@ -111,6 +119,7 @@ typedef struct printTableFooter
 typedef struct printTableContent
 {
 	const printTableOpt *opt;
+<<<<<<< HEAD
 	const char *title;			/* May be NULL */
 	int			ncolumns;		/* Specified in Init() */
 	int			nrows;			/* Specified in Init() */
@@ -126,6 +135,21 @@ typedef struct printTableContent
 	char	   *aligns;			/* Array of alignment specifiers; 'l' or 'r',
 								 * one per column */
 	char	   *align;			/* Pointer to the last added alignment */
+=======
+	const char  *title;			/* May be NULL */
+	int			 ncolumns;		/* Specified in Init() */
+	int			 nrows;			/* Specified in Init() */
+	const char **headers;		/* NULL-terminated array of header strings */
+	const char **header;		/* Pointer to the last added header */
+	const char **cells;			/* NULL-terminated array of cell content
+								   strings */
+	const char **cell;			/* Pointer to the last added cell */
+	printTableFooter *footers;  /* Pointer to the first footer */
+	printTableFooter *footer;	/* Pointer to the last added footer */
+	char        *aligns;		/* Array of alignment specifiers; 'l' or 'r',
+								   one per column */
+	char        *align;			/* Pointer to the last added alignment */
+>>>>>>> 49f001d81e
 } printTableContent;
 
 typedef struct printQueryOpt
@@ -136,6 +160,7 @@ typedef struct printQueryOpt
 	char	   *title;			/* override title */
 	char	  **footers;		/* override footer (default is "(xx rows)") */
 	bool		default_footer; /* print default footer if footers==NULL */
+<<<<<<< HEAD
 	bool		translate_header;		/* do gettext on column headers */
 	const bool *translate_columns;		/* translate_columns[i-1] => do
 										 * gettext on col i */
@@ -147,12 +172,20 @@ extern const printTextFormat pg_asciiformat_old;
 extern const printTextFormat pg_utf8format;
 
 
+=======
+	bool		translate_header;	/* do gettext on column headers */
+	const bool *translate_columns;	/* translate_columns[i-1] => do gettext on col i */
+} printQueryOpt;
+
+
+>>>>>>> 49f001d81e
 extern FILE *PageOutput(int lines, unsigned short int pager);
 extern void ClosePager(FILE *pagerpipe);
 
 extern void html_escaped_print(const char *in, FILE *fout);
 
 extern void printTableInit(printTableContent *const content,
+<<<<<<< HEAD
 			   const printTableOpt *opt, const char *title,
 			   const int ncolumns, const int nrows);
 extern void printTableAddHeader(printTableContent *const content,
@@ -170,6 +203,24 @@ extern void printQuery(const PGresult *result, const printQueryOpt *opt,
 
 extern void setDecimalLocale(void);
 extern const printTextFormat *get_line_style(const printTableOpt *opt);
+=======
+				const printTableOpt *opt, const char *title,
+				const int ncolumns, const int nrows);
+extern void printTableAddHeader(printTableContent *const content, 
+				const char *header, const bool translate, const char align);
+extern void printTableAddCell(printTableContent *const content, 
+				const char *cell, const bool translate);
+extern void printTableAddFooter(printTableContent *const content, 
+				const char *footer);
+extern void printTableSetFooter(printTableContent *const content, 
+				const char *footer);
+extern void printTableCleanup(printTableContent *const content);
+extern void printTable(const printTableContent *cont, FILE *fout, FILE *flog);
+extern void printQuery(const PGresult *result, const printQueryOpt *opt,
+		FILE *fout, FILE *flog);
+
+extern void	setDecimalLocale(void);
+>>>>>>> 49f001d81e
 
 #ifndef __CYGWIN__
 #define DEFAULT_PAGER "more"

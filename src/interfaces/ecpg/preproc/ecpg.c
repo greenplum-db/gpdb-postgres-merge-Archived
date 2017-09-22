@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.104 2008/02/17 18:14:29 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.105 2008/05/16 15:20:04 petere Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -36,6 +36,7 @@ help(const char *progname)
 	printf(_("%s is the PostgreSQL embedded SQL preprocessor for C programs.\n\n"),
 		   progname);
 	printf(_("Usage:\n"
+<<<<<<< HEAD
 			 "  %s [OPTION]... FILE...\n\n"),
 		   progname);
 	printf(_("Options:\n"));
@@ -43,6 +44,15 @@ help(const char *progname)
 			 "                 this affects EXEC SQL TYPE\n"));
 	printf(_("  -C MODE        set compatibility mode; MODE can be one of\n"
 			 "                 \"INFORMIX\", \"INFORMIX_SE\"\n"));
+=======
+		   "  %s [OPTION]... FILE...\n\n"),
+		   progname);
+	printf(_("Options:\n"));
+	printf(_("  -c             automatically generate C code from embedded SQL code;\n"
+		   "                 currently this works for EXEC SQL TYPE\n"));
+	printf(_("  -C MODE        set compatibility mode;\n"
+	  "                 MODE can be one of \"INFORMIX\", \"INFORMIX_SE\"\n"));
+>>>>>>> 49f001d81e
 #ifdef YYDEBUG
 	printf(_("  -d             generate parser debug output\n"));
 #endif
@@ -51,6 +61,7 @@ help(const char *progname)
 	printf(_("  -i             parse system include files as well\n"));
 	printf(_("  -I DIRECTORY   search DIRECTORY for include files\n"));
 	printf(_("  -o OUTFILE     write result to OUTFILE\n"));
+<<<<<<< HEAD
 	printf(_("  -r OPTION      specify run-time behavior; OPTION can be:\n"
 	 "                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"));
 	printf(_("  --regression   run in regression testing mode\n"));
@@ -60,6 +71,20 @@ help(const char *progname)
 	printf(_("\nIf no output file is specified, the name is formed by adding .c to the\n"
 			 "input file name, after stripping off .pgc if present.\n"));
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
+=======
+	printf(_("  -r OPTION      specify runtime behaviour;\n"
+		   "                 OPTION can be:\n"
+		   "                  \"no_indicator\"\n"
+		   "                  \"prepare\"\n"
+		   "                  \"questionmarks\"\n"));
+	printf(_("  -t             turn on autocommit of transactions\n"));
+	printf(_("  --help         show this help, then exit\n"));
+	printf(_("  --regression   run in regression testing mode\n"));
+	printf(_("  --version      output version information, then exit\n"));
+	printf(_("\nIf no output file is specified, the name is formed by adding .c to the\n"
+		   "input file name, after stripping off .pgc if present.\n"));
+	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
+>>>>>>> 49f001d81e
 }
 
 static void
@@ -135,7 +160,11 @@ main(int argc, char *const argv[])
 	char		my_exec_path[MAXPGPATH];
 	char		include_path[MAXPGPATH];
 
+<<<<<<< HEAD
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("ecpg"));
+=======
+	set_pglocale_pgservice(argv[0], "ecpg");
+>>>>>>> 49f001d81e
 
 	progname = get_progname(argv[0]);
 
@@ -263,7 +292,11 @@ main(int argc, char *const argv[])
 	{
 		fprintf(stderr, _("%s, the PostgreSQL embedded C preprocessor, version %d.%d.%d\n"),
 				progname, MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
+<<<<<<< HEAD
 		fprintf(stderr, _("EXEC SQL INCLUDE ... search starts here:\n"));
+=======
+		fprintf(stderr, _("exec sql include ... search starts here:\n"));
+>>>>>>> 49f001d81e
 		for (ip = include_paths; ip != NULL; ip = ip->next)
 			fprintf(stderr, " %s\n", ip->path);
 		fprintf(stderr, _("end of search list\n"));
@@ -461,7 +494,20 @@ main(int argc, char *const argv[])
 				 */
 				for (ptr = cur; ptr != NULL; ptr = ptr->next)
 					if (!(ptr->opened))
+<<<<<<< HEAD
 						mmerror(PARSE_ERROR, ET_WARNING, "cursor \"%s\" has been declared but not opened", ptr->name);
+=======
+					{
+						/*
+						 * Does not really make sense to declare a cursor but
+						 * not open it
+						 */
+						snprintf(errortext, sizeof(errortext), _("cursor \"%s\" has been declared but not opened\n"), ptr->name);
+						mmerror(PARSE_ERROR, ET_WARNING, errortext);
+					}
+					ptr = ptr->next;
+				}
+>>>>>>> 49f001d81e
 
 				if (yyin != NULL && yyin != stdin)
 					fclose(yyin);

@@ -1,5 +1,9 @@
 /*
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/backend/port/darwin/system.c,v 1.8 2009/06/11 14:49:00 momjian Exp $
+=======
+ * $PostgreSQL: pgsql/src/backend/port/darwin/system.c,v 1.7 2008/05/17 01:28:22 adunstan Exp $ 
+>>>>>>> 49f001d81e
  *
  * only needed in OS X 10.1 and possibly early 10.2 releases */
 #include <AvailabilityMacros.h>

@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2009, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.173 2008/04/03 16:27:25 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.177 2008/08/01 13:16:08 alvherre Exp $
  * ----------
  */
 #include "postgres.h"
@@ -48,7 +48,10 @@
 #include "libpq/pqsignal.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+<<<<<<< HEAD
 #include "executor/instrument.h"
+=======
+>>>>>>> 49f001d81e
 #include "pg_trace.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/fork_process.h"
@@ -104,7 +107,10 @@
  */
 #define PGSTAT_DB_HASH_SIZE		16
 #define PGSTAT_TAB_HASH_SIZE	512
+<<<<<<< HEAD
 #define PGSTAT_QUEUE_HASH_SIZE	8
+=======
+>>>>>>> 49f001d81e
 #define PGSTAT_FUNCTION_HASH_SIZE	512
 
 
@@ -114,6 +120,8 @@
  */
 bool		pgstat_track_activities = false;
 bool		pgstat_track_counts = false;
+int			pgstat_track_functions = TRACK_FUNC_OFF;
+int			pgstat_track_activity_query_size = 1024;
 
 bool		pgstat_collect_queuelevel = false;
 
@@ -174,12 +182,15 @@ static TabStatusArray *pgStatTabList = NULL;
 static HTAB *pgStatFunctions = NULL;
 
 /*
+<<<<<<< HEAD
  * Indicates if backend has some function stats that it hasn't yet
  * sent to the collector.
  */
 static bool have_function_stats = false;
 
 /*
+=======
+>>>>>>> 49f001d81e
  * Tuple insertion/deletion counts for an open transaction can't be propagated
  * into PgStat_TableStatus counters until we know if it is going to commit
  * or abort.  Hence, we keep these counts in per-subxact structs that live
@@ -234,6 +245,13 @@ static TimestampTz last_statrequest;
 
 static volatile bool need_exit = false;
 static volatile bool got_SIGHUP = false;
+
+/*
+ * Total time charged to functions so far in the current backend.
+ * We use this to help separate "self" and "other" time charges.
+ * (We assume this initializes to zero.)
+ */
+static instr_time total_func_time;
 
 /*
  * Total time charged to functions so far in the current backend.
@@ -698,8 +716,14 @@ pgstat_report_stat(bool force)
 	int			i;
 
 	/* Don't expend a clock check if nothing to do */
+<<<<<<< HEAD
 	if ((pgStatTabList == NULL || pgStatTabList->tsa_used == 0) &&
 		!have_function_stats)
+=======
+	/* Note: we ignore pending function stats in this test ... OK? */
+	if (pgStatTabList == NULL ||
+		pgStatTabList->tsa_used == 0)
+>>>>>>> 49f001d81e
 		return;
 
 	/*
@@ -865,8 +889,11 @@ pgstat_send_funcstats(void)
 	if (msg.m_nentries > 0)
 		pgstat_send(&msg, offsetof(PgStat_MsgFuncstat, m_entry[0]) +
 					msg.m_nentries * sizeof(PgStat_FunctionEntry));
+<<<<<<< HEAD
 
 	have_function_stats = false;
+=======
+>>>>>>> 49f001d81e
 }
 
 
@@ -992,6 +1019,7 @@ pgstat_vacuum_stat(void)
 	hash_destroy(htab);
 
 	/*
+<<<<<<< HEAD
 	 * Now repeat the above steps for functions.  However, we needn't bother
 	 * in the common case where no function stats are being collected.
 	 */
@@ -1037,15 +1065,64 @@ pgstat_vacuum_stat(void)
 		 * Send the rest
 		 */
 		if (f_msg.m_nentries > 0)
+=======
+	 * Now repeat the above steps for functions.
+	 */
+	htab = pgstat_collect_oids(ProcedureRelationId);
+
+	pgstat_setheader(&f_msg.m_hdr, PGSTAT_MTYPE_FUNCPURGE);
+	f_msg.m_databaseid = MyDatabaseId;
+	f_msg.m_nentries = 0;
+
+	hash_seq_init(&hstat, dbentry->functions);
+	while ((funcentry = (PgStat_StatFuncEntry *) hash_seq_search(&hstat)) != NULL)
+	{
+		Oid			funcid = funcentry->functionid;
+
+		CHECK_FOR_INTERRUPTS();
+
+		if (hash_search(htab, (void *) &funcid, HASH_FIND, NULL) != NULL)
+			continue;
+
+		/*
+		 * Not there, so add this function's Oid to the message
+		 */
+		f_msg.m_functionid[f_msg.m_nentries++] = funcid;
+
+		/*
+		 * If the message is full, send it out and reinitialize to empty
+		 */
+		if (f_msg.m_nentries >= PGSTAT_NUM_FUNCPURGE)
+>>>>>>> 49f001d81e
 		{
 			len = offsetof(PgStat_MsgFuncpurge, m_functionid[0])
 				+f_msg.m_nentries * sizeof(Oid);
 
 			pgstat_send(&f_msg, len);
+<<<<<<< HEAD
 		}
 
 		hash_destroy(htab);
 	}
+=======
+
+			f_msg.m_nentries = 0;
+		}
+	}
+
+	/*
+	 * Send the rest
+	 */
+	if (f_msg.m_nentries > 0)
+	{
+		len = offsetof(PgStat_MsgFuncpurge, m_functionid[0])
+			+f_msg.m_nentries * sizeof(Oid);
+
+		pgstat_send(&f_msg, len);
+	}
+
+	hash_destroy(htab);
+>>>>>>> 49f001d81e
 }
 
 
@@ -1292,6 +1369,7 @@ pgstat_ping(void)
 	pgstat_send(&msg, sizeof(msg));
 }
 
+<<<<<<< HEAD
 /* ----------
  * pgstat_send_inquiry() -
  *
@@ -1310,6 +1388,8 @@ pgstat_send_inquiry(TimestampTz ts)
 }
 
 
+=======
+>>>>>>> 49f001d81e
 /*
  * Initialize function call usage data.
  * Called by the executor before invoking a function.
@@ -1319,7 +1399,11 @@ pgstat_init_function_usage(FunctionCallInfoData *fcinfo,
 						   PgStat_FunctionCallUsage *fcu)
 {
 	PgStat_BackendFunctionEntry *htabent;
+<<<<<<< HEAD
 	bool		found;
+=======
+	bool 		found;
+>>>>>>> 49f001d81e
 
 	if (pgstat_track_functions <= fcinfo->flinfo->fn_stats)
 	{
@@ -1399,8 +1483,13 @@ pgstat_end_function_usage(PgStat_FunctionCallUsage *fcu, bool finalize)
 	 * Compute the new total f_time as the total elapsed time added to the
 	 * pre-call value of f_time.  This is necessary to avoid double-counting
 	 * any time taken by recursive calls of myself.  (We do not need any
+<<<<<<< HEAD
 	 * similar kluge for self time, since that already excludes any recursive
 	 * calls.)
+=======
+	 * similar kluge for self time, since that already excludes any
+	 * recursive calls.)
+>>>>>>> 49f001d81e
 	 */
 	INSTR_TIME_ADD(f_total, fcu->save_f_time);
 
@@ -1409,9 +1498,12 @@ pgstat_end_function_usage(PgStat_FunctionCallUsage *fcu, bool finalize)
 		fs->f_numcalls++;
 	fs->f_time = f_total;
 	INSTR_TIME_ADD(fs->f_time_self, f_self);
+<<<<<<< HEAD
 
 	/* indicate that we have something to send */
 	have_function_stats = true;
+=======
+>>>>>>> 49f001d81e
 }
 
 
@@ -2097,8 +2189,12 @@ pgstat_fetch_global(void)
 
 static PgBackendStatus *BackendStatusArray = NULL;
 static PgBackendStatus *MyBEEntry = NULL;
+<<<<<<< HEAD
 static char *BackendAppnameBuffer = NULL;
 static char *BackendActivityBuffer = NULL;
+=======
+static char			   *BackendActivityBuffer = NULL;
+>>>>>>> 49f001d81e
 
 
 /*
@@ -2109,17 +2205,26 @@ BackendStatusShmemSize(void)
 {
 	Size		size;
 
+<<<<<<< HEAD
 	size = mul_size(sizeof(PgBackendStatus), MaxBackends);
 	size = add_size(size,
 					mul_size(NAMEDATALEN, MaxBackends));
 	size = add_size(size,
+=======
+	size = add_size(mul_size(sizeof(PgBackendStatus), MaxBackends),
+>>>>>>> 49f001d81e
 					mul_size(pgstat_track_activity_query_size, MaxBackends));
 	return size;
 }
 
 /*
+<<<<<<< HEAD
  * Initialize the shared status array and activity/appname string buffers
  * during postmaster startup.
+=======
+ * Initialize the shared status array and activity string buffer during
+ * postmaster startup.
+>>>>>>> 49f001d81e
  */
 void
 CreateSharedBackendStatus(void)
@@ -2142,6 +2247,7 @@ CreateSharedBackendStatus(void)
 		MemSet(BackendStatusArray, 0, size);
 	}
 
+<<<<<<< HEAD
 	/* Create or attach to the shared appname buffer */
 	size = mul_size(NAMEDATALEN, MaxBackends);
 	BackendAppnameBuffer = (char *)
@@ -2163,6 +2269,11 @@ CreateSharedBackendStatus(void)
 	/* Create or attach to the shared activity buffer */
 	size = mul_size(pgstat_track_activity_query_size, MaxBackends);
 	BackendActivityBuffer = (char *)
+=======
+	/* Create or attach to the shared activity buffer */
+	size = mul_size(pgstat_track_activity_query_size, MaxBackends);
+	BackendActivityBuffer = (char*)
+>>>>>>> 49f001d81e
 		ShmemInitStruct("Backend Activity Buffer", size, &found);
 
 	if (!found)
@@ -2171,8 +2282,12 @@ CreateSharedBackendStatus(void)
 
 		/* Initialize st_activity pointers. */
 		buffer = BackendActivityBuffer;
+<<<<<<< HEAD
 		for (i = 0; i < MaxBackends; i++)
 		{
+=======
+		for (i = 0; i < MaxBackends; i++) {
+>>>>>>> 49f001d81e
 			BackendStatusArray[i].st_activity = buffer;
 			buffer += pgstat_track_activity_query_size;
 		}
@@ -2264,10 +2379,15 @@ pgstat_bestart(void)
 	beentry->st_waiting = PGBE_WAITING_NONE;
 	beentry->st_appname[0] = '\0';
 	beentry->st_activity[0] = '\0';
+<<<<<<< HEAD
 	/* Also make sure the last byte in each string area is always 0 */
 	beentry->st_appname[NAMEDATALEN - 1] = '\0';
 	beentry->st_activity[pgstat_track_activity_query_size - 1] = '\0';
 	beentry->st_rsgid = InvalidOid;
+=======
+	/* Also make sure the last byte in the string area is always 0 */
+	beentry->st_activity[pgstat_track_activity_query_size - 1] = '\0';
+>>>>>>> 49f001d81e
 
 	beentry->st_changecount++;
 	Assert((beentry->st_changecount & 1) == 0);
@@ -2296,6 +2416,7 @@ pgstat_beshutdown_hook(int code, Datum arg)
 {
 	volatile PgBackendStatus *beentry = MyBEEntry;
 
+<<<<<<< HEAD
 	/*
 	 * If we got as far as discovering our own database ID, we can report what
 	 * we did to the collector.  Otherwise, we'd be sending an invalid
@@ -2304,6 +2425,9 @@ pgstat_beshutdown_hook(int code, Datum arg)
 	 */
 	if (OidIsValid(MyDatabaseId))
 		pgstat_report_stat(true);
+=======
+	pgstat_report_stat(true);
+>>>>>>> 49f001d81e
 
 	/*
 	 * Clear my status entry, following the protocol of bumping st_changecount
@@ -2333,6 +2457,8 @@ pgstat_report_activity(const char *cmd_str)
 	volatile PgBackendStatus *beentry = MyBEEntry;
 	TimestampTz start_timestamp;
 	int			len;
+
+	TRACE_POSTGRESQL_STATEMENT_STATUS(cmd_str);
 
 	if (!pgstat_track_activities || !beentry)
 		return;
@@ -2496,8 +2622,12 @@ pgstat_read_current_status(void)
 	volatile PgBackendStatus *beentry;
 	PgBackendStatus *localtable;
 	PgBackendStatus *localentry;
+<<<<<<< HEAD
 	char	   *localappname;
 	char	   *localactivity;
+=======
+	char			*localactivity;
+>>>>>>> 49f001d81e
 	int			i;
 
 	Assert(!pgStatRunningInCollector);
@@ -2509,9 +2639,12 @@ pgstat_read_current_status(void)
 	localtable = (PgBackendStatus *)
 		MemoryContextAlloc(pgStatLocalContext,
 						   sizeof(PgBackendStatus) * MaxBackends);
+<<<<<<< HEAD
 	localappname = (char *)
 		MemoryContextAlloc(pgStatLocalContext,
 						   NAMEDATALEN * MaxBackends);
+=======
+>>>>>>> 49f001d81e
 	localactivity = (char *)
 		MemoryContextAlloc(pgStatLocalContext,
 						   pgstat_track_activity_query_size * MaxBackends);
@@ -2536,13 +2669,19 @@ pgstat_read_current_status(void)
 			if (localentry->st_procpid > 0)
 			{
 				memcpy(localentry, (char *) beentry, sizeof(PgBackendStatus));
+<<<<<<< HEAD
 
+=======
+>>>>>>> 49f001d81e
 				/*
 				 * strcpy is safe even if the string is modified concurrently,
 				 * because there's always a \0 at the end of the buffer.
 				 */
+<<<<<<< HEAD
 				strcpy(localappname, (char *) beentry->st_appname);
 				localentry->st_appname = localappname;
+=======
+>>>>>>> 49f001d81e
 				strcpy(localactivity, (char *) beentry->st_activity);
 				localentry->st_activity = localactivity;
 			}
@@ -2560,7 +2699,10 @@ pgstat_read_current_status(void)
 		if (localentry->st_procpid > 0)
 		{
 			localentry++;
+<<<<<<< HEAD
 			localappname += NAMEDATALEN;
+=======
+>>>>>>> 49f001d81e
 			localactivity += pgstat_track_activity_query_size;
 			localNumBackends++;
 		}
@@ -2987,6 +3129,14 @@ PgstatCollectorMain(int argc, char *argv[])
 					pgstat_recv_funcpurge((PgStat_MsgFuncpurge *) &msg, len);
 					break;
 
+ 				case PGSTAT_MTYPE_FUNCSTAT:
+ 					pgstat_recv_funcstat((PgStat_MsgFuncstat *) &msg, len);
+ 					break;
+
+				case PGSTAT_MTYPE_FUNCPURGE:
+					pgstat_recv_funcpurge((PgStat_MsgFuncpurge *) &msg, len);
+					break;
+
 				default:
 					break;
 			}
@@ -3105,7 +3255,10 @@ pgstat_write_statsfile(bool permanent)
 	PgStat_StatDBEntry *dbentry;
 	PgStat_StatTabEntry *tabentry;
 	PgStat_StatFuncEntry *funcentry;
+<<<<<<< HEAD
 	PgStat_StatQueueEntry *queueentry;
+=======
+>>>>>>> 49f001d81e
 	FILE	   *fpout;
 	int32		format_id;
 	const char *tmpfile = permanent ? PGSTAT_STAT_PERMANENT_TMPFILE : pgstat_stat_tmpname;
@@ -3148,8 +3301,13 @@ pgstat_write_statsfile(bool permanent)
 	{
 		/*
 		 * Write out the DB entry including the number of live backends. We
+<<<<<<< HEAD
 		 * don't write the tables or functions pointers, since they're of no
 		 * use to any other process.
+=======
+		 * don't write the tables or functions pointers, since they're of
+		 * no use to any other process.
+>>>>>>> 49f001d81e
 		 */
 		fputc('D', fpout);
 		fwrite(dbentry, offsetof(PgStat_StatDBEntry, tables), 1, fpout);
@@ -3260,13 +3418,19 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 	PgStat_StatTabEntry tabbuf;
 	PgStat_StatFuncEntry funcbuf;
 	PgStat_StatFuncEntry *funcentry;
+<<<<<<< HEAD
 	PgStat_StatQueueEntry queuebuf;	/* GPDB */
 	PgStat_StatQueueEntry *queueentry; /* GPDB */
+=======
+>>>>>>> 49f001d81e
 	HASHCTL		hash_ctl;
 	HTAB	   *dbhash;
 	HTAB	   *tabhash = NULL;
 	HTAB	   *funchash = NULL;
+<<<<<<< HEAD
 	HTAB      *queuehash = NULL;  /* GPDB */	
+=======
+>>>>>>> 49f001d81e
 	FILE	   *fpin;
 	int32		format_id;
 	bool		found;
@@ -3410,7 +3574,10 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 											  &hash_ctl,
 								   HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
 
+<<<<<<< HEAD
 				memset(&hash_ctl, 0, sizeof(hash_ctl));
+=======
+>>>>>>> 49f001d81e
 				hash_ctl.keysize = sizeof(Oid);
 				hash_ctl.entrysize = sizeof(PgStat_StatFuncEntry);
 				hash_ctl.hash = oid_hash;
@@ -3419,7 +3586,10 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 												 PGSTAT_FUNCTION_HASH_SIZE,
 												 &hash_ctl,
 								   HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+<<<<<<< HEAD
 
+=======
+>>>>>>> 49f001d81e
 				/*
 				 * Arrange that following records add entries to this
 				 * database's hash tables.
@@ -3471,7 +3641,11 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 				/*
 				 * 'F'	A PgStat_StatFuncEntry follows.
 				 */
+<<<<<<< HEAD
             case 'F':
+=======
+			case 'F':
+>>>>>>> 49f001d81e
 				if (fread(&funcbuf, 1, sizeof(PgStat_StatFuncEntry),
 						  fpin) != sizeof(PgStat_StatFuncEntry))
 				{
@@ -3487,7 +3661,11 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 					break;
 
 				funcentry = (PgStat_StatFuncEntry *) hash_search(funchash,
+<<<<<<< HEAD
 												(void *) &funcbuf.functionid,
+=======
+													(void *) &funcbuf.functionid,
+>>>>>>> 49f001d81e
 														 HASH_ENTER, &found);
 
 				if (found)
@@ -3499,6 +3677,7 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 
 				memcpy(funcentry, &funcbuf, sizeof(funcbuf));
 				break;
+<<<<<<< HEAD
 				/*
 				 * 'Q'	A PgStat_StatQueueEntry follows.  (GPDB)
 				 */
@@ -3530,6 +3709,8 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 
 				memcpy(queueentry, &queuebuf, sizeof(PgStat_StatQueueEntry));
 				break;
+=======
+>>>>>>> 49f001d81e
 
 				/*
 				 * 'E'	The EOF marker of a complete stats file.
@@ -4079,6 +4260,7 @@ pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len)
 	globalStats.buf_alloc += msg->m_buf_alloc;
 }
 
+<<<<<<< HEAD
 
 /*
  * GPDB: Lookup the hash table entry for the specified resource queue. If no hash
@@ -4278,6 +4460,8 @@ pgstat_fetch_stat_queueentry(Oid queueid)
 }
 
 
+=======
+>>>>>>> 49f001d81e
 /* ----------
  * pgstat_recv_funcstat() -
  *
@@ -4301,8 +4485,13 @@ pgstat_recv_funcstat(PgStat_MsgFuncstat *msg, int len)
 	for (i = 0; i < msg->m_nentries; i++, funcmsg++)
 	{
 		funcentry = (PgStat_StatFuncEntry *) hash_search(dbentry->functions,
+<<<<<<< HEAD
 												   (void *) &(funcmsg->f_id),
 														 HASH_ENTER, &found);
+=======
+												  (void *) &(funcmsg->f_id),
+													   HASH_ENTER, &found);
+>>>>>>> 49f001d81e
 
 		if (!found)
 		{

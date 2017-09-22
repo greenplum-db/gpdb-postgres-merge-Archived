@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.73 2008/04/04 17:02:56 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.74 2008/07/03 03:56:57 joe Exp $
  * Copyright (c) 2001-2008, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -97,10 +97,13 @@ static char *generate_relation_name(Relation rel);
 static void dblink_connstr_check(const char *connstr);
 static void dblink_security_check(PGconn *conn, remoteConn *rconn);
 static void dblink_res_error(const char *conname, PGresult *res, const char *dblink_context_msg, bool fail);
+<<<<<<< HEAD
 static void dblink_security_check(PGconn *conn, remoteConn *rconn);
 static void validate_pkattnums(Relation rel,
 				   int2vector *pkattnums_arg, int32 pknumatts_arg,
 				   int **pkattnums, int *pknumatts);
+=======
+>>>>>>> 49f001d81e
 
 /* Global */
 static remoteConn *pconn = NULL;
@@ -132,6 +135,7 @@ typedef struct remoteConnHashEnt
 		} \
 	} while (0)
 
+<<<<<<< HEAD
 #define xpstrdup(tgtvar_, srcvar_) \
     do { \
         if (srcvar_) \
@@ -139,6 +143,15 @@ typedef struct remoteConnHashEnt
         else \
             tgtvar_ = NULL; \
     } while (0)
+=======
+#define xpstrdup(var_c, var_) \
+	do { \
+		if (var_ != NULL) \
+			var_c = pstrdup(var_); \
+		else \
+			var_c = NULL; \
+	} while (0)
+>>>>>>> 49f001d81e
 
 #define DBLINK_RES_INTERNALERROR(p2) \
 	do { \
@@ -146,28 +159,6 @@ typedef struct remoteConnHashEnt
 			if (res) \
 				PQclear(res); \
 			elog(ERROR, "%s: %s", p2, msg); \
-	} while (0)
-
-#define DBLINK_RES_ERROR(p2) \
-	do { \
-			msg = pstrdup(PQerrorMessage(conn)); \
-			if (res) \
-				PQclear(res); \
-			ereport(ERROR, \
-					(errcode(ERRCODE_SYNTAX_ERROR), \
-					 errmsg("%s", p2), \
-					 errdetail("%s", msg))); \
-	} while (0)
-
-#define DBLINK_RES_ERROR_AS_NOTICE(p2) \
-	do { \
-			msg = pstrdup(PQerrorMessage(conn)); \
-			if (res) \
-				PQclear(res); \
-			ereport(NOTICE, \
-					(errcode(ERRCODE_SYNTAX_ERROR), \
-					 errmsg("%s", p2), \
-					 errdetail("%s", msg))); \
 	} while (0)
 
 #define DBLINK_CONN_NOT_AVAIL \
@@ -411,13 +402,8 @@ dblink_open(PG_FUNCTION_ARGS)
 	res = PQexec(conn, buf.data);
 	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		if (fail)
-			DBLINK_RES_ERROR("sql error");
-		else
-		{
-			DBLINK_RES_ERROR_AS_NOTICE("sql error");
-			PG_RETURN_TEXT_P(cstring_to_text("ERROR"));
-		}
+		dblink_res_error(conname, res, "could not open cursor", fail);
+		PG_RETURN_TEXT_P(cstring_to_text("ERROR"));
 	}
 
 	PQclear(res);
@@ -485,13 +471,8 @@ dblink_close(PG_FUNCTION_ARGS)
 	res = PQexec(conn, buf.data);
 	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		if (fail)
-			DBLINK_RES_ERROR("sql error");
-		else
-		{
-			DBLINK_RES_ERROR_AS_NOTICE("sql error");
-			PG_RETURN_TEXT_P(cstring_to_text("ERROR"));
-		}
+		dblink_res_error(conname, res, "could not close cursor", fail);
+		PG_RETURN_TEXT_P(cstring_to_text("ERROR"));
 	}
 
 	PQclear(res);
@@ -528,7 +509,6 @@ dblink_fetch(PG_FUNCTION_ARGS)
 	int			call_cntr;
 	int			max_calls;
 	AttInMetadata *attinmeta;
-	char	   *msg;
 	PGresult   *res = NULL;
 	MemoryContext oldcontext;
 	char	   *conname = NULL;
@@ -605,13 +585,8 @@ dblink_fetch(PG_FUNCTION_ARGS)
 			(PQresultStatus(res) != PGRES_COMMAND_OK &&
 			 PQresultStatus(res) != PGRES_TUPLES_OK))
 		{
-			if (fail)
-				DBLINK_RES_ERROR("sql error");
-			else
-			{
-				DBLINK_RES_ERROR_AS_NOTICE("sql error");
-				SRF_RETURN_DONE(funcctx);
-			}
+			dblink_res_error(conname, res, "could not fetch from cursor", fail);
+			SRF_RETURN_DONE(funcctx);
 		}
 		else if (PQresultStatus(res) == PGRES_COMMAND_OK)
 		{
@@ -873,10 +848,16 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async, bool do_get)
 				 PQresultStatus(res) != PGRES_TUPLES_OK))
 			{
 				dblink_res_error(conname, res, "could not execute query", fail);
+<<<<<<< HEAD
 					if (freeconn)
 						PQfinish(conn);
 					MemoryContextSwitchTo(oldcontext);
 					SRF_RETURN_DONE(funcctx);
+=======
+				if (freeconn)
+					PQfinish(conn);
+				SRF_RETURN_DONE(funcctx);
+>>>>>>> 49f001d81e
 			}
 
 			if (PQresultStatus(res) == PGRES_COMMAND_OK)
@@ -1206,10 +1187,7 @@ dblink_exec(PG_FUNCTION_ARGS)
 		(PQresultStatus(res) != PGRES_COMMAND_OK &&
 		 PQresultStatus(res) != PGRES_TUPLES_OK))
 	{
-		if (fail)
-			DBLINK_RES_ERROR("sql error");
-		else
-			DBLINK_RES_ERROR_AS_NOTICE("sql error");
+		dblink_res_error(conname, res, "could not execute command", fail);
 
 		/* need a tuple descriptor representing one TEXT column */
 		tupdesc = CreateTemplateTupleDesc(1, false);
@@ -1221,7 +1199,6 @@ dblink_exec(PG_FUNCTION_ARGS)
 		 * result tuple
 		 */
 		sql_cmd_status = cstring_to_text("ERROR");
-
 	}
 	else if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
@@ -2266,6 +2243,7 @@ dblink_security_check(PGconn *conn, remoteConn *rconn)
 	}
 }
 
+<<<<<<< HEAD
 /*
  * For non-superusers, insist that the connstr specify a password.  This
  * prevents a password from being picked up from .pgpass, a service file,
@@ -2306,6 +2284,8 @@ dblink_connstr_check(const char *connstr)
 	}
 }
 
+=======
+>>>>>>> 49f001d81e
 static void
 dblink_res_error(const char *conname, PGresult *res, const char *dblink_context_msg, bool fail)
 {
@@ -2356,6 +2336,7 @@ dblink_res_error(const char *conname, PGresult *res, const char *dblink_context_
 		 errcontext("Error occurred on dblink connection named \"%s\": %s.",
 					dblink_context_conname, dblink_context_msg)));
 }
+<<<<<<< HEAD
 
 /*
  * Validate the PK-attnums argument for dblink_build_sql_insert() and related
@@ -2405,3 +2386,5 @@ validate_pkattnums(Relation rel,
 		(*pkattnums)[i] = pkattnum - 1;
 	}
 }
+=======
+>>>>>>> 49f001d81e

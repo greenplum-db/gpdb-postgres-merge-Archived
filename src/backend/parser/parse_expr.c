@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.227 2008/03/20 21:42:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.229 2008/07/16 01:30:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,12 +140,16 @@ transformExpr(ParseState *pstate, Node *expr)
 				A_Const    *con = (A_Const *) expr;
 				Value	   *val = &con->val;
 
+<<<<<<< HEAD
 				result = (Node *) make_const(pstate, val, con->location);
 				if (con->typeName != NULL) {
 					con->typeName->location = con->location;
 					result = typecast_expression(pstate, result,
 												 con->typeName);
 				}
+=======
+				result = (Node *) make_const(val);
+>>>>>>> 49f001d81e
 				break;
 			}
 
@@ -462,8 +466,13 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 			result = ParseFuncOrColumn(pstate,
 									   list_make1(n),
 									   list_make1(result),
+<<<<<<< HEAD
                                        NIL, false, false, false, true,
                                        NULL, -1, NULL);
+=======
+									   false, false, false,
+									   true, -1);
+>>>>>>> 49f001d81e
 		}
 	}
 	/* process trailing subscripts, if any */
@@ -585,8 +594,13 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(name2)),
 											 list_make1(node),
+<<<<<<< HEAD
 											 NIL, false, false, false, true, NULL,
 											 cref->location, NULL);
+=======
+											 false, false, false,
+											 true, cref->location);
+>>>>>>> 49f001d81e
 				}
 				break;
 			}
@@ -615,8 +629,13 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(name3)),
 											 list_make1(node),
+<<<<<<< HEAD
 											 NIL, false, false, false, true, NULL,
 											 cref->location, NULL);
+=======
+											 false, false, false,
+											 true, cref->location);
+>>>>>>> 49f001d81e
 				}
 				break;
 			}
@@ -656,8 +675,13 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(name4)),
 											 list_make1(node),
+<<<<<<< HEAD
 											 NIL, false, false, false, true, NULL,
 											 cref->location, NULL);
+=======
+											 false, false, false,
+											 true, cref->location);
+>>>>>>> 49f001d81e
 				}
 				break;
 			}
@@ -752,8 +776,12 @@ exprIsNullConstant(Node *arg)
 	{
 		A_Const    *con = (A_Const *) arg;
 
+<<<<<<< HEAD
 		if (con->val.type == T_Null &&
 			con->typeName == NULL)
+=======
+		if (con->val.type == T_Null)
+>>>>>>> 49f001d81e
 			return true;
 	}
 	return false;
@@ -1146,9 +1174,13 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 	List	   *targs;
 	ListCell   *args;
 
+<<<<<<< HEAD
 	/*
 	 * Transform the list of arguments.
 	 */
+=======
+	/* Transform the list of arguments ... */
+>>>>>>> 49f001d81e
 	targs = NIL;
 	foreach(args, fn->args)
 	{
@@ -1156,6 +1188,7 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 											 (Node *) lfirst(args)));
 	}
 
+	/* ... and hand off to ParseFuncOrColumn */
 	return ParseFuncOrColumn(pstate,
 							 fn->funcname,
 							 targs,

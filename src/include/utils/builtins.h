@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.312 2008/04/04 18:45:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.319 2008/07/18 03:32:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,8 +209,6 @@ extern Datum int42mul(PG_FUNCTION_ARGS);
 extern Datum int42div(PG_FUNCTION_ARGS);
 extern Datum int4mod(PG_FUNCTION_ARGS);
 extern Datum int2mod(PG_FUNCTION_ARGS);
-extern Datum int24mod(PG_FUNCTION_ARGS);
-extern Datum int42mod(PG_FUNCTION_ARGS);
 extern Datum int2larger(PG_FUNCTION_ARGS);
 extern Datum int2smaller(PG_FUNCTION_ARGS);
 extern Datum int4larger(PG_FUNCTION_ARGS);
@@ -243,12 +241,6 @@ extern Datum namelt(PG_FUNCTION_ARGS);
 extern Datum namele(PG_FUNCTION_ARGS);
 extern Datum namegt(PG_FUNCTION_ARGS);
 extern Datum namege(PG_FUNCTION_ARGS);
-extern Datum name_pattern_eq(PG_FUNCTION_ARGS);
-extern Datum name_pattern_ne(PG_FUNCTION_ARGS);
-extern Datum name_pattern_lt(PG_FUNCTION_ARGS);
-extern Datum name_pattern_le(PG_FUNCTION_ARGS);
-extern Datum name_pattern_gt(PG_FUNCTION_ARGS);
-extern Datum name_pattern_ge(PG_FUNCTION_ARGS);
 extern int	namecpy(Name n1, Name n2);
 extern int	namestrcpy(Name name, const char *str);
 extern int	namestrcmp(Name name, const char *str);
@@ -288,8 +280,6 @@ extern Datum bttintervalcmp(PG_FUNCTION_ARGS);
 extern Datum btcharcmp(PG_FUNCTION_ARGS);
 extern Datum btnamecmp(PG_FUNCTION_ARGS);
 extern Datum bttextcmp(PG_FUNCTION_ARGS);
-extern Datum btname_pattern_cmp(PG_FUNCTION_ARGS);
-extern Datum bttext_pattern_cmp(PG_FUNCTION_ARGS);
 
 /* float.c */
 extern PGDLLIMPORT int extra_float_digits;
@@ -453,15 +443,21 @@ extern Datum current_database(PG_FUNCTION_ARGS);
 extern Datum current_query(PG_FUNCTION_ARGS);
 extern Datum pg_cancel_backend(PG_FUNCTION_ARGS);
 extern Datum pg_terminate_backend(PG_FUNCTION_ARGS);
+<<<<<<< HEAD
 extern Datum pg_cancel_backend_msg(PG_FUNCTION_ARGS);
 extern Datum pg_terminate_backend_msg(PG_FUNCTION_ARGS);
 extern Datum gp_cancel_query(PG_FUNCTION_ARGS);
+=======
+>>>>>>> 49f001d81e
 extern Datum pg_reload_conf(PG_FUNCTION_ARGS);
 extern Datum pg_tablespace_databases(PG_FUNCTION_ARGS);
 extern Datum pg_rotate_logfile(PG_FUNCTION_ARGS);
 extern Datum pg_sleep(PG_FUNCTION_ARGS);
 extern Datum pg_get_keywords(PG_FUNCTION_ARGS);
+<<<<<<< HEAD
 extern Datum pg_typeof(PG_FUNCTION_ARGS);
+=======
+>>>>>>> 49f001d81e
 
 /* oid.c */
 extern Datum oidin(PG_FUNCTION_ARGS);
@@ -608,7 +604,10 @@ extern Datum pg_get_expr_ext(PG_FUNCTION_ARGS);
 extern Datum pg_get_userbyid(PG_FUNCTION_ARGS);
 extern Datum pg_get_serial_sequence(PG_FUNCTION_ARGS);
 extern Datum pg_get_function_arguments(PG_FUNCTION_ARGS);
+<<<<<<< HEAD
 extern Datum pg_get_function_identity_arguments(PG_FUNCTION_ARGS);
+=======
+>>>>>>> 49f001d81e
 extern Datum pg_get_function_result(PG_FUNCTION_ARGS);
 extern char *deparse_expression(Node *expr, List *dpcontext,
 				   bool forceprefix, bool showimplicit);
@@ -726,8 +725,6 @@ extern Datum text_gt(PG_FUNCTION_ARGS);
 extern Datum text_ge(PG_FUNCTION_ARGS);
 extern Datum text_larger(PG_FUNCTION_ARGS);
 extern Datum text_smaller(PG_FUNCTION_ARGS);
-extern Datum text_pattern_eq(PG_FUNCTION_ARGS);
-extern Datum text_pattern_ne(PG_FUNCTION_ARGS);
 extern Datum text_pattern_lt(PG_FUNCTION_ARGS);
 extern Datum text_pattern_le(PG_FUNCTION_ARGS);
 extern Datum text_pattern_gt(PG_FUNCTION_ARGS);

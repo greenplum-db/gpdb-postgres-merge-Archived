@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/backend/storage/ipc/sinval.c
+=======
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.86 2008/06/19 21:32:56 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +22,6 @@
 #include "commands/async.h"
 #include "miscadmin.h"
 #include "storage/ipc.h"
-#include "storage/proc.h"
 #include "storage/sinvaladt.h"
 #include "utils/inval.h"
 
@@ -31,8 +34,13 @@ uint64		SharedInvalidMessageCounter;
  * Because backends sitting idle will not be reading sinval events, we
  * need a way to give an idle backend a swift kick in the rear and make
  * it catch up before the sinval queue overflows and forces it to go
+<<<<<<< HEAD
  * through a cache reset exercise.	This is done by sending
  * PROCSIG_CATCHUP_INTERRUPT to any backend that gets too far behind.
+=======
+ * through a cache reset exercise.	This is done by sending SIGUSR1
+ * to any backend that gets too far behind.
+>>>>>>> 49f001d81e
  *
  * State for catchup events consists of two flags: one saying whether
  * the signal handler is currently allowed to call ProcessCatchupEvent
@@ -73,7 +81,11 @@ SendSharedInvalidMessages(const SharedInvalidationMessage *msgs, int n)
  * NOTE: it is entirely possible for this routine to be invoked recursively
  * as a consequence of processing inside the invalFunction or resetFunction.
  * Furthermore, such a recursive call must guarantee that all outstanding
+<<<<<<< HEAD
  * inval messages have been processed before it exits.	This is the reason
+=======
+ * inval messages have been processed before it exits.  This is the reason
+>>>>>>> 49f001d81e
  * for the strange-looking choice to use a statically allocated buffer array
  * and counters; it's so that a recursive call can process messages already
  * sucked out of sinvaladt.c.
@@ -85,6 +97,7 @@ ReceiveSharedInvalidMessages(
 {
 #define MAXINVALMSGS 32
 	static SharedInvalidationMessage messages[MAXINVALMSGS];
+<<<<<<< HEAD
 
 	/*
 	 * We use volatile here to prevent bugs if a compiler doesn't realize that
@@ -93,10 +106,20 @@ ReceiveSharedInvalidMessages(
 	static volatile int nextmsg = 0;
 	static volatile int nummsgs = 0;
 
+=======
+	/*
+	 * We use volatile here to prevent bugs if a compiler doesn't realize
+	 * that recursion is a possibility ...
+	 */
+	static volatile int nextmsg = 0;
+	static volatile int nummsgs = 0;
+
+>>>>>>> 49f001d81e
 	/* Deal with any messages still pending from an outer recursion */
 	while (nextmsg < nummsgs)
 	{
 		SharedInvalidationMessage *msg = &messages[nextmsg++];
+<<<<<<< HEAD
 
 		SharedInvalidMessageCounter++;
 		invalFunction(msg);
@@ -108,6 +131,18 @@ ReceiveSharedInvalidMessages(
 
 		nextmsg = nummsgs = 0;
 
+=======
+
+		invalFunction(msg);
+	}
+
+	do
+	{
+		int			getResult;
+
+		nextmsg = nummsgs = 0;
+
+>>>>>>> 49f001d81e
 		/* Try to get some more messages */
 		getResult = SIGetDataEntries(messages, MAXINVALMSGS);
 
@@ -128,23 +163,39 @@ ReceiveSharedInvalidMessages(
 		{
 			SharedInvalidationMessage *msg = &messages[nextmsg++];
 
+<<<<<<< HEAD
 			SharedInvalidMessageCounter++;
+=======
+>>>>>>> 49f001d81e
 			invalFunction(msg);
 		}
 
 		/*
+<<<<<<< HEAD
 		 * We only need to loop if the last SIGetDataEntries call (which might
 		 * have been within a recursive call) returned a full buffer.
+=======
+		 * We only need to loop if the last SIGetDataEntries call (which
+		 * might have been within a recursive call) returned a full buffer.
+>>>>>>> 49f001d81e
 		 */
 	} while (nummsgs == MAXINVALMSGS);
 
 	/*
 	 * We are now caught up.  If we received a catchup signal, reset that
+<<<<<<< HEAD
 	 * flag, and call SICleanupQueue().  This is not so much because we need
 	 * to flush dead messages right now, as that we want to pass on the
 	 * catchup signal to the next slowest backend.	"Daisy chaining" the
 	 * catchup signal this way avoids creating spikes in system load for what
 	 * should be just a background maintenance activity.
+=======
+	 * flag, and call SICleanupQueue().  This is not so much because we
+	 * need to flush dead messages right now, as that we want to pass on
+	 * the catchup signal to the next slowest backend.  "Daisy chaining" the
+	 * catchup signal this way avoids creating spikes in system load for
+	 * what should be just a background maintenance activity.
+>>>>>>> 49f001d81e
 	 */
 	if (catchupInterruptOccurred)
 	{

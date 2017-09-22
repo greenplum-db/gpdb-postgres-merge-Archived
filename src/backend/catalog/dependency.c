@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.71 2008/03/27 03:57:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.76 2008/06/14 18:04:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,8 +70,10 @@
 #include "optimizer/clauses.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteRemove.h"
+#include "storage/lmgr.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
@@ -79,15 +81,42 @@
 #include "cdb/cdbvars.h"
 
 
+/*
+ * Deletion processing requires additional state for each ObjectAddress that
+ * it's planning to delete.  For simplicity and code-sharing we make the
+ * ObjectAddresses code support arrays with or without this extra state.
+ */
+typedef struct
+{
+	int			flags;			/* bitmask, see bit definitions below */
+	ObjectAddress dependee;		/* object whose deletion forced this one */
+} ObjectAddressExtra;
+
+/* ObjectAddressExtra flag bits */
+#define DEPFLAG_ORIGINAL	0x0001		/* an original deletion target */
+#define DEPFLAG_NORMAL		0x0002		/* reached via normal dependency */
+#define DEPFLAG_AUTO		0x0004		/* reached via auto dependency */
+#define DEPFLAG_INTERNAL	0x0008		/* reached via internal dependency */
+
+
 /* expansible list of ObjectAddresses */
 struct ObjectAddresses
 {
 	ObjectAddress *refs;		/* => palloc'd array */
+	ObjectAddressExtra *extras;	/* => palloc'd array, or NULL if not used */
 	int			numrefs;		/* current number of references */
-	int			maxrefs;		/* current size of palloc'd array */
+	int			maxrefs;		/* current size of palloc'd array(s) */
 };
 
 /* typedef ObjectAddresses appears in dependency.h */
+
+/* threaded list of ObjectAddresses, for recursion detection */
+typedef struct ObjectAddressStack
+{
+	const ObjectAddress *object; /* object being visited */
+	int			flags;			/* its current flag bits */
+	struct ObjectAddressStack *next; /* next outer stack level */
+} ObjectAddressStack;
 
 /* for find_expr_references_walker */
 typedef struct
@@ -131,34 +160,38 @@ static const Oid object_classes[MAX_OCLASS] = {
 };
 
 
-static void performDeletionWithList(const ObjectAddress *object,
-						ObjectAddresses *oktodelete,
-						DropBehavior behavior,
-						ObjectAddresses *alreadyDeleted);
-static void findAutoDeletableObjects(const ObjectAddress *object,
-						 ObjectAddresses *oktodelete,
-						 Relation depRel, bool addself);
-static bool recursiveDeletion(const ObjectAddress *object,
-				  DropBehavior behavior,
-				  int msglevel,
-				  const ObjectAddress *callingObject,
-				  ObjectAddresses *oktodelete,
-				  Relation depRel,
-				  ObjectAddresses *alreadyDeleted);
-static bool deleteDependentObjects(const ObjectAddress *object,
-					   const char *objDescription,
+static void findDependentObjects(const ObjectAddress *object,
+					 int flags,
+					 ObjectAddressStack *stack,
+					 ObjectAddresses *targetObjects,
+					 const ObjectAddresses *pendingObjects,
+					 Relation depRel);
+static void reportDependentObjects(const ObjectAddresses *targetObjects,
 					   DropBehavior behavior,
 					   int msglevel,
+<<<<<<< HEAD
 					   ObjectAddresses *oktodelete,
 					   Relation depRel,
 					   ObjectAddresses *alreadyDeleted);
+=======
+					   const ObjectAddress *origObject);
+static void deleteOneObject(const ObjectAddress *object, Relation depRel);
+>>>>>>> 49f001d81e
 static void doDeletion(const ObjectAddress *object);
+static void AcquireDeletionLock(const ObjectAddress *object);
+static void ReleaseDeletionLock(const ObjectAddress *object);
 static bool find_expr_references_walker(Node *node,
 							find_expr_references_context *context);
 static void eliminate_duplicate_dependencies(ObjectAddresses *addrs);
 static int	object_address_comparator(const void *a, const void *b);
 static void add_object_address(ObjectClass oclass, Oid objectId, int32 subId,
 				   ObjectAddresses *addrs);
+static void add_exact_object_address_extra(const ObjectAddress *object,
+							   const ObjectAddressExtra *extra,
+							   ObjectAddresses *addrs);
+static bool object_address_present_add_flags(const ObjectAddress *object,
+											 int flags,
+											 ObjectAddresses *addrs);
 static void getRelationDescription(StringInfo buffer, Oid relid);
 static void getOpFamilyDescription(StringInfo buffer, Oid opfid);
 
@@ -171,21 +204,17 @@ static void getOpFamilyDescription(StringInfo buffer, Oid opfid);
  * according to the dependency type.
  *
  * This is the outer control routine for all forms of DROP that drop objects
- * that can participate in dependencies.
+ * that can participate in dependencies.  Note that the next two routines
+ * are variants on the same theme; if you change anything here you'll likely
+ * need to fix them too.
  */
 void
 performDeletion(const ObjectAddress *object,
 				DropBehavior behavior)
 {
-	char	   *objDescription;
 	Relation	depRel;
-	ObjectAddresses *oktodelete;
-
-	/*
-	 * Get object description for possible use in failure message. Must do
-	 * this before deleting it ...
-	 */
-	objDescription = getObjectDescription(object);
+	ObjectAddresses *targetObjects;
+	int			i;
 
 	/*
 	 * We save some cycles by opening pg_depend just once and passing the
@@ -194,83 +223,50 @@ performDeletion(const ObjectAddress *object,
 	depRel = heap_open(DependRelationId, RowExclusiveLock);
 
 	/*
-	 * Construct a list of objects that are reachable by AUTO or INTERNAL
-	 * dependencies from the target object.  These should be deleted silently,
-	 * even if the actual deletion pass first reaches one of them via a
-	 * non-auto dependency.
+	 * Acquire deletion lock on the target object.  (Ideally the caller has
+	 * done this already, but many places are sloppy about it.)
 	 */
-	oktodelete = new_object_addresses();
+	AcquireDeletionLock(object);
 
-	findAutoDeletableObjects(object, oktodelete, depRel, true);
+	/*
+	 * Construct a list of objects to delete (ie, the given object plus
+	 * everything directly or indirectly dependent on it).
+	 */
+	targetObjects = new_object_addresses();
 
-	if (!recursiveDeletion(object, behavior, NOTICE,
-						   NULL, oktodelete, depRel, NULL))
-		ereport(ERROR,
-				(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
-				 errmsg("cannot drop %s because other objects depend on it",
-						objDescription),
-		errhint("Use DROP ... CASCADE to drop the dependent objects too.")));
+	findDependentObjects(object,
+						 DEPFLAG_ORIGINAL,
+						 NULL,	/* empty stack */
+						 targetObjects,
+						 NULL,	/* no pendingObjects */
+						 depRel);
 
-	free_object_addresses(oktodelete);
+	/*
+	 * Check if deletion is allowed, and report about cascaded deletes.
+	 */
+	reportDependentObjects(targetObjects,
+						   behavior,
+						   NOTICE,
+						   object);
+
+	/*
+	 * Delete all the objects in the proper order.
+	 */
+	for (i = 0; i < targetObjects->numrefs; i++)
+	{
+		ObjectAddress *thisobj = targetObjects->refs + i;
+
+		deleteOneObject(thisobj, depRel);
+	}
+
+	/* And clean up */
+	free_object_addresses(targetObjects);
 
 	heap_close(depRel, RowExclusiveLock);
-
-	pfree(objDescription);
-}
-
-
-/*
- * performDeletionWithList: As above, but the oktodelete list may have already
- * filled with some objects.  Also, the deleted objects are saved in the
- * alreadyDeleted list.
- *
- * XXX performDeletion could be refactored to be a thin wrapper around this
- * function.
- */
-static void
-performDeletionWithList(const ObjectAddress *object,
-						ObjectAddresses *oktodelete,
-						DropBehavior behavior,
-						ObjectAddresses *alreadyDeleted)
-{
-	char	   *objDescription;
-	Relation	depRel;
-
-	/*
-	 * Get object description for possible use in failure message. Must do
-	 * this before deleting it ...
-	 */
-	objDescription = getObjectDescription(object);
-
-	/*
-	 * We save some cycles by opening pg_depend just once and passing the
-	 * Relation pointer down to all the recursive deletion steps.
-	 */
-	depRel = heap_open(DependRelationId, RowExclusiveLock);
-
-	/*
-	 * Construct a list of objects that are reachable by AUTO or INTERNAL
-	 * dependencies from the target object.  These should be deleted silently,
-	 * even if the actual deletion pass first reaches one of them via a
-	 * non-auto dependency.
-	 */
-	findAutoDeletableObjects(object, oktodelete, depRel, true);
-
-	if (!recursiveDeletion(object, behavior, NOTICE,
-						   NULL, oktodelete, depRel, alreadyDeleted))
-		ereport(ERROR,
-				(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
-				 errmsg("cannot drop %s because other objects depend on it",
-						objDescription),
-		errhint("Use DROP ... CASCADE to drop the dependent objects too.")));
-
-	heap_close(depRel, RowExclusiveLock);
-
-	pfree(objDescription);
 }
 
 /*
- * performMultipleDeletion: Similar to performDeletion, but act on multiple
+ * performMultipleDeletions: Similar to performDeletion, but act on multiple
  * objects at once.
  *
  * The main difference from issuing multiple performDeletion calls is that the
@@ -282,67 +278,73 @@ void
 performMultipleDeletions(const ObjectAddresses *objects,
 						 DropBehavior behavior)
 {
-	ObjectAddresses *implicit;
-	ObjectAddresses *alreadyDeleted;
 	Relation	depRel;
+	ObjectAddresses *targetObjects;
 	int			i;
 
-	implicit = new_object_addresses();
-	alreadyDeleted = new_object_addresses();
+	/* No work if no objects... */
+	if (objects->numrefs <= 0)
+		return;
 
+	/*
+	 * We save some cycles by opening pg_depend just once and passing the
+	 * Relation pointer down to all the recursive deletion steps.
+	 */
 	depRel = heap_open(DependRelationId, RowExclusiveLock);
 
 	/*
-	 * Get the list of all objects that would be deleted after deleting the
-	 * whole "objects" list.  We do this by creating a list of all implicit
-	 * (INTERNAL and AUTO) dependencies for each object we collected above.
-	 * Note that we must exclude the objects themselves from this list!
+	 * Construct a list of objects to delete (ie, the given objects plus
+	 * everything directly or indirectly dependent on them).  Note that
+	 * because we pass the whole objects list as pendingObjects context,
+	 * we won't get a failure from trying to delete an object that is
+	 * internally dependent on another one in the list; we'll just skip
+	 * that object and delete it when we reach its owner.
 	 */
+	targetObjects = new_object_addresses();
+
 	for (i = 0; i < objects->numrefs; i++)
 	{
-		ObjectAddress obj = objects->refs[i];
+		const ObjectAddress *thisobj = objects->refs + i;
 
 		/*
-		 * If it's in the implicit list, we don't need to delete it explicitly
-		 * nor follow the dependencies, because that was already done in a
-		 * previous iteration.
+		 * Acquire deletion lock on each target object.  (Ideally the caller
+		 * has done this already, but many places are sloppy about it.)
 		 */
-		if (object_address_present(&obj, implicit))
-			continue;
+		AcquireDeletionLock(thisobj);
 
-		/*
-		 * Add the objects dependent on this one to the global list of
-		 * implicit objects.
-		 */
-		findAutoDeletableObjects(&obj, implicit, depRel, false);
+		findDependentObjects(thisobj,
+							 DEPFLAG_ORIGINAL,
+							 NULL,	/* empty stack */
+							 targetObjects,
+							 objects,
+							 depRel);
 	}
 
-	/* Do the deletion. */
-	for (i = 0; i < objects->numrefs; i++)
+	/*
+	 * Check if deletion is allowed, and report about cascaded deletes.
+	 *
+	 * If there's exactly one object being deleted, report it the same
+	 * way as in performDeletion(), else we have to be vaguer.
+	 */
+	reportDependentObjects(targetObjects,
+						   behavior,
+						   NOTICE,
+						   (objects->numrefs == 1 ? objects->refs : NULL));
+
+	/*
+	 * Delete all the objects in the proper order.
+	 */
+	for (i = 0; i < targetObjects->numrefs; i++)
 	{
-		ObjectAddress obj = objects->refs[i];
+		ObjectAddress *thisobj = targetObjects->refs + i;
 
-		/*
-		 * Skip this object if it was already deleted in a previous iteration.
-		 */
-		if (object_address_present(&obj, alreadyDeleted))
-			continue;
-
-		/*
-		 * Skip this object if it's also present in the list of implicit
-		 * objects --- it will be deleted later.
-		 */
-		if (object_address_present(&obj, implicit))
-			continue;
-
-		/* delete it */
-		performDeletionWithList(&obj, implicit, behavior, alreadyDeleted);
+		deleteOneObject(thisobj, depRel);
 	}
+
+	/* And clean up */
+	free_object_addresses(targetObjects);
 
 	heap_close(depRel, RowExclusiveLock);
-
-	free_object_addresses(implicit);
-	free_object_addresses(alreadyDeleted);
 }
 
 /*
@@ -358,14 +360,9 @@ void
 deleteWhatDependsOn(const ObjectAddress *object,
 					bool showNotices)
 {
-	char	   *objDescription;
 	Relation	depRel;
-	ObjectAddresses *oktodelete;
-
-	/*
-	 * Get object description for possible use in failure messages
-	 */
-	objDescription = getObjectDescription(object);
+	ObjectAddresses *targetObjects;
+	int			i;
 
 	/*
 	 * We save some cycles by opening pg_depend just once and passing the
@@ -374,19 +371,28 @@ deleteWhatDependsOn(const ObjectAddress *object,
 	depRel = heap_open(DependRelationId, RowExclusiveLock);
 
 	/*
-	 * Construct a list of objects that are reachable by AUTO or INTERNAL
-	 * dependencies from the target object.  These should be deleted silently,
-	 * even if the actual deletion pass first reaches one of them via a
-	 * non-auto dependency.
+	 * Acquire deletion lock on the target object.  (Ideally the caller has
+	 * done this already, but many places are sloppy about it.)
 	 */
-	oktodelete = new_object_addresses();
-
-	findAutoDeletableObjects(object, oktodelete, depRel, true);
+	AcquireDeletionLock(object);
 
 	/*
-	 * Now invoke only step 2 of recursiveDeletion: just recurse to the stuff
-	 * dependent on the given object.
+	 * Construct a list of objects to delete (ie, the given object plus
+	 * everything directly or indirectly dependent on it).
 	 */
+	targetObjects = new_object_addresses();
+
+	findDependentObjects(object,
+						 DEPFLAG_ORIGINAL,
+						 NULL,	/* empty stack */
+						 targetObjects,
+						 NULL,	/* no pendingObjects */
+						 depRel);
+
+	/*
+	 * Check if deletion is allowed, and report about cascaded deletes.
+	 */
+<<<<<<< HEAD
 	if (!deleteDependentObjects(object, objDescription,
 								DROP_CASCADE,
 								showNotices ? NOTICE : DEBUG2,
@@ -395,85 +401,101 @@ deleteWhatDependsOn(const ObjectAddress *object,
 				(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
 				 errmsg("failed to drop all objects depending on %s",
 						objDescription)));
+=======
+	reportDependentObjects(targetObjects,
+						   DROP_CASCADE,
+						   showNotices ? NOTICE : DEBUG2,
+						   object);
+>>>>>>> 49f001d81e
 
 	/*
-	 * We do not need CommandCounterIncrement here, since if step 2 did
-	 * anything then each recursive call will have ended with one.
+	 * Delete all the objects in the proper order, except we skip the original
+	 * object.
 	 */
+	for (i = 0; i < targetObjects->numrefs; i++)
+	{
+		ObjectAddress *thisobj = targetObjects->refs + i;
+		ObjectAddressExtra *thisextra = targetObjects->extras + i;
 
-	free_object_addresses(oktodelete);
+		if (thisextra->flags & DEPFLAG_ORIGINAL)
+			continue;
+
+		deleteOneObject(thisobj, depRel);
+	}
+
+	/* And clean up */
+	free_object_addresses(targetObjects);
 
 	heap_close(depRel, RowExclusiveLock);
-
-	pfree(objDescription);
 }
 
-
 /*
- * findAutoDeletableObjects: find all objects that are reachable by AUTO or
- * INTERNAL dependency paths from the given object.  Add them all to the
- * oktodelete list.  If addself is true, the originally given object will also
- * be added to the list.
+ * findDependentObjects - find all objects that depend on 'object'
  *
- * depRel is the already-open pg_depend relation.
+ * For every object that depends on the starting object, acquire a deletion
+ * lock on the object, add it to targetObjects (if not already there),
+ * and recursively find objects that depend on it.  An object's dependencies
+ * will be placed into targetObjects before the object itself; this means
+ * that the finished list's order represents a safe deletion order.
+ *
+ * The caller must already have a deletion lock on 'object' itself,
+ * but must not have added it to targetObjects.  (Note: there are corner
+ * cases where we won't add the object either, and will also release the
+ * caller-taken lock.  This is a bit ugly, but the API is set up this way
+ * to allow easy rechecking of an object's liveness after we lock it.  See
+ * notes within the function.)
+ *
+ * When dropping a whole object (subId = 0), we find dependencies for
+ * its sub-objects too.
+ *
+ *	object: the object to add to targetObjects and find dependencies on
+ *	flags: flags to be ORed into the object's targetObjects entry
+ *	stack: list of objects being visited in current recursion; topmost item
+ *			is the object that we recursed from (NULL for external callers)
+ *	targetObjects: list of objects that are scheduled to be deleted
+ *	pendingObjects: list of other objects slated for destruction, but
+ *			not necessarily in targetObjects yet (can be NULL if none)
+ *	depRel: already opened pg_depend relation
  */
 static void
-findAutoDeletableObjects(const ObjectAddress *object,
-						 ObjectAddresses *oktodelete,
-						 Relation depRel, bool addself)
+findDependentObjects(const ObjectAddress *object,
+					 int flags,
+					 ObjectAddressStack *stack,
+					 ObjectAddresses *targetObjects,
+					 const ObjectAddresses *pendingObjects,
+					 Relation depRel)
 {
 	ScanKeyData key[3];
 	int			nkeys;
 	SysScanDesc scan;
 	HeapTuple	tup;
 	ObjectAddress otherObject;
+	ObjectAddressStack mystack;
+	ObjectAddressExtra extra;
+	ObjectAddressStack *stackptr;
 
 	/*
-	 * If this object is already in oktodelete, then we already visited it;
-	 * don't do so again (this prevents infinite recursion if there's a loop
-	 * in pg_depend).  Otherwise, add it.
-	 */
-	if (object_address_present(object, oktodelete))
-		return;
-	if (addself)
-		add_exact_object_address(object, oktodelete);
-
-	/*
-	 * Scan pg_depend records that link to this object, showing the things
-	 * that depend on it.  For each one that is AUTO or INTERNAL, visit the
-	 * referencing object.
+	 * If the target object is already being visited in an outer recursion
+	 * level, just report the current flags back to that level and exit.
+	 * This is needed to avoid infinite recursion in the face of circular
+	 * dependencies.
 	 *
-	 * When dropping a whole object (subId = 0), find pg_depend records for
-	 * its sub-objects too.
+	 * The stack check alone would result in dependency loops being broken at
+	 * an arbitrary point, ie, the first member object of the loop to be
+	 * visited is the last one to be deleted.  This is obviously unworkable.
+	 * However, the check for internal dependency below guarantees that we
+	 * will not break a loop at an internal dependency: if we enter the loop
+	 * at an "owned" object we will switch and start at the "owning" object
+	 * instead.  We could probably hack something up to avoid breaking at an
+	 * auto dependency, too, if we had to.  However there are no known cases
+	 * where that would be necessary.
 	 */
-	ScanKeyInit(&key[0],
-				Anum_pg_depend_refclassid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(object->classId));
-	ScanKeyInit(&key[1],
-				Anum_pg_depend_refobjid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(object->objectId));
-	if (object->objectSubId != 0)
+	for (stackptr = stack; stackptr; stackptr = stackptr->next)
 	{
-		ScanKeyInit(&key[2],
-					Anum_pg_depend_refobjsubid,
-					BTEqualStrategyNumber, F_INT4EQ,
-					Int32GetDatum(object->objectSubId));
-		nkeys = 3;
-	}
-	else
-		nkeys = 2;
-
-	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
-							  SnapshotNow, nkeys, key);
-
-	while (HeapTupleIsValid(tup = systable_getnext(scan)))
-	{
-		Form_pg_depend foundDep = (Form_pg_depend) GETSTRUCT(tup);
-
-		switch (foundDep->deptype)
+		if (object->classId == stackptr->object->classId &&
+			object->objectId == stackptr->object->objectId)
 		{
+<<<<<<< HEAD
 			case DEPENDENCY_NORMAL:
 				/* ignore */
 				break;
@@ -571,20 +593,44 @@ recursiveDeletion(const ObjectAddress *object,
 	ObjectAddress owningObject;
 	bool		amOwned = false;
 
+=======
+			if (object->objectSubId == stackptr->object->objectSubId)
+			{
+				stackptr->flags |= flags;
+				return;
+			}
+			/*
+			 * Could visit column with whole table already on stack; this is
+			 * the same case noted in object_address_present_add_flags().
+			 * (It's not clear this can really happen, but we might as well
+			 * check.)
+			 */
+			if (stackptr->object->objectSubId == 0)
+				return;
+		}
+	}
+
+>>>>>>> 49f001d81e
 	/*
-	 * Get object description for possible use in messages.  Must do this
-	 * before deleting it ...
+	 * It's also possible that the target object has already been completely
+	 * processed and put into targetObjects.  If so, again we just add the
+	 * specified flags to its entry and return.
+	 *
+	 * (Note: in these early-exit cases we could release the caller-taken
+	 * lock, since the object is presumably now locked multiple times;
+	 * but it seems not worth the cycles.)
 	 */
-	objDescription = getObjectDescription(object);
+	if (object_address_present_add_flags(object, flags, targetObjects))
+		return;
 
 	/*
-	 * Step 1: find and remove pg_depend records that link from this object to
-	 * others.	We have to do this anyway, and doing it first ensures that we
-	 * avoid infinite recursion in the case of cycles. Also, some dependency
-	 * types require extra processing here.
-	 *
-	 * When dropping a whole object (subId = 0), remove all pg_depend records
-	 * for its sub-objects too.
+	 * The target object might be internally dependent on some other object
+	 * (its "owner").  If so, and if we aren't recursing from the owning
+	 * object, we have to transform this deletion request into a deletion
+	 * request of the owning object.  (We'll eventually recurse back to this
+	 * object, but the owning object has to be visited first so it will be
+	 * deleted after.)  The way to find out about this is to scan the
+	 * pg_depend entries that show what this object depends on.
 	 */
 
 	/*
@@ -641,16 +687,28 @@ recursiveDeletion(const ObjectAddress *object,
 				 *
 				 * 1. At the outermost recursion level, disallow the DROP. (We
 				 * just ereport here, rather than proceeding, since no other
-				 * dependencies are likely to be interesting.)
+				 * dependencies are likely to be interesting.)  However, if
+				 * the other object is listed in pendingObjects, just release
+				 * the caller's lock and return; we'll eventually complete
+				 * the DROP when we reach that entry in the pending list.
 				 */
-				if (callingObject == NULL)
+				if (stack == NULL)
 				{
-					char	   *otherObjDesc = getObjectDescription(&otherObject);
+					char	   *otherObjDesc;
 
+					if (object_address_present(&otherObject, pendingObjects))
+					{
+						systable_endscan(scan);
+						/* need to release caller's lock; see notes below */
+						ReleaseDeletionLock(object);
+						return;
+					}
+					otherObjDesc = getObjectDescription(&otherObject);
 					ereport(ERROR,
 							(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
 							 errmsg("cannot drop %s because %s requires it",
-									objDescription, otherObjDesc),
+									getObjectDescription(object),
+									otherObjDesc),
 							 errhint("You can drop %s instead.",
 									 otherObjDesc)));
 				}
@@ -661,27 +719,52 @@ recursiveDeletion(const ObjectAddress *object,
 				 * recursing from a whole object that includes the nominal
 				 * other end as a component, too.
 				 */
-				if (callingObject->classId == otherObject.classId &&
-					callingObject->objectId == otherObject.objectId &&
-					(callingObject->objectSubId == otherObject.objectSubId ||
-					 callingObject->objectSubId == 0))
+				if (stack->object->classId == otherObject.classId &&
+					stack->object->objectId == otherObject.objectId &&
+					(stack->object->objectSubId == otherObject.objectSubId ||
+					 stack->object->objectSubId == 0))
 					break;
 
 				/*
 				 * 3. When recursing from anyplace else, transform this
-				 * deletion request into a delete of the other object. (This
-				 * will be an error condition iff RESTRICT mode.) In this case
-				 * we finish deleting my dependencies except for the INTERNAL
-				 * link, which will be needed to cause the owning object to
-				 * recurse back to me.
+				 * deletion request into a delete of the other object.
+				 *
+				 * First, release caller's lock on this object and get
+				 * deletion lock on the other object.  (We must release
+				 * caller's lock to avoid deadlock against a concurrent
+				 * deletion of the other object.)
 				 */
-				if (amOwned)	/* shouldn't happen */
-					elog(ERROR, "multiple INTERNAL dependencies for %s",
-						 objDescription);
-				owningObject = otherObject;
-				amOwned = true;
-				/* "continue" bypasses the simple_heap_delete call below */
-				continue;
+				ReleaseDeletionLock(object);
+				AcquireDeletionLock(&otherObject);
+
+				/*
+				 * The other object might have been deleted while we waited
+				 * to lock it; if so, neither it nor the current object are
+				 * interesting anymore.  We test this by checking the
+				 * pg_depend entry (see notes below).
+				 */
+				if (!systable_recheck_tuple(scan, tup))
+				{
+					systable_endscan(scan);
+					ReleaseDeletionLock(&otherObject);
+					return;
+				}
+
+				/*
+				 * Okay, recurse to the other object instead of proceeding.
+				 * We treat this exactly as if the original reference had
+				 * linked to that object instead of this one; hence, pass
+				 * through the same flags and stack.
+				 */
+				findDependentObjects(&otherObject,
+									 flags,
+									 stack,
+									 targetObjects,
+									 pendingObjects,
+									 depRel);
+				/* And we're done here. */
+				systable_endscan(scan);
+				return;
 			case DEPENDENCY_PIN:
 
 				/*
@@ -689,41 +772,216 @@ recursiveDeletion(const ObjectAddress *object,
 				 * the depender fields...
 				 */
 				elog(ERROR, "incorrect use of PIN dependency with %s",
-					 objDescription);
+					 getObjectDescription(object));
 				break;
 			default:
 				elog(ERROR, "unrecognized dependency type '%c' for %s",
-					 foundDep->deptype, objDescription);
+					 foundDep->deptype, getObjectDescription(object));
 				break;
 		}
-
-		/* delete the pg_depend tuple */
-		simple_heap_delete(depRel, &tup->t_self);
 	}
 
 	systable_endscan(scan);
 
 	/*
-	 * CommandCounterIncrement here to ensure that preceding changes are all
-	 * visible; in particular, that the above deletions of pg_depend entries
-	 * are visible.  That prevents infinite recursion in case of a dependency
-	 * loop (which is perfectly legal).
+	 * Now recurse to any dependent objects.  We must visit them first
+	 * since they have to be deleted before the current object.
 	 */
-	CommandCounterIncrement();
+	mystack.object = object;	/* set up a new stack level */
+	mystack.flags = flags;
+	mystack.next = stack;
+
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_refclassid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object->classId));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_refobjid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object->objectId));
+	if (object->objectSubId != 0)
+	{
+		ScanKeyInit(&key[2],
+					Anum_pg_depend_refobjsubid,
+					BTEqualStrategyNumber, F_INT4EQ,
+					Int32GetDatum(object->objectSubId));
+		nkeys = 3;
+	}
+	else
+		nkeys = 2;
+
+	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
+							  SnapshotNow, nkeys, key);
+
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
+	{
+		Form_pg_depend foundDep = (Form_pg_depend) GETSTRUCT(tup);
+		int		subflags;
+
+		otherObject.classId = foundDep->classid;
+		otherObject.objectId = foundDep->objid;
+		otherObject.objectSubId = foundDep->objsubid;
+
+		/*
+		 * Must lock the dependent object before recursing to it.
+		 */
+		AcquireDeletionLock(&otherObject);
+
+		/*
+		 * The dependent object might have been deleted while we waited
+		 * to lock it; if so, we don't need to do anything more with it.
+		 * We can test this cheaply and independently of the object's type
+		 * by seeing if the pg_depend tuple we are looking at is still live.
+		 * (If the object got deleted, the tuple would have been deleted too.)
+		 */
+		if (!systable_recheck_tuple(scan, tup))
+		{
+			/* release the now-useless lock */
+			ReleaseDeletionLock(&otherObject);
+			/* and continue scanning for dependencies */
+			continue;
+		}
+
+		/* Recurse, passing flags indicating the dependency type */
+		switch (foundDep->deptype)
+		{
+			case DEPENDENCY_NORMAL:
+				subflags = DEPFLAG_NORMAL;
+				break;
+			case DEPENDENCY_AUTO:
+				subflags = DEPFLAG_AUTO;
+				break;
+			case DEPENDENCY_INTERNAL:
+				subflags = DEPFLAG_INTERNAL;
+				break;
+			case DEPENDENCY_PIN:
+
+				/*
+				 * For a PIN dependency we just ereport immediately; there
+				 * won't be any others to report.
+				 */
+				ereport(ERROR,
+						(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+						 errmsg("cannot drop %s because it is required by the database system",
+								getObjectDescription(object))));
+				subflags = 0;	/* keep compiler quiet */
+				break;
+			default:
+				elog(ERROR, "unrecognized dependency type '%c' for %s",
+					 foundDep->deptype, getObjectDescription(object));
+				subflags = 0;	/* keep compiler quiet */
+				break;
+		}
+
+		findDependentObjects(&otherObject,
+							 subflags,
+							 &mystack,
+							 targetObjects,
+							 pendingObjects,
+							 depRel);
+	}
+
+	systable_endscan(scan);
 
 	/*
-	 * If we found we are owned by another object, ask it to delete itself
-	 * instead of proceeding.  Complain if RESTRICT mode, unless the other
-	 * object is in oktodelete.
+	 * Finally, we can add the target object to targetObjects.  Be careful
+	 * to include any flags that were passed back down to us from inner
+	 * recursion levels.
 	 */
-	if (amOwned)
+	extra.flags = mystack.flags;
+	if (stack)
+		extra.dependee = *stack->object;
+	else
+		memset(&extra.dependee, 0, sizeof(extra.dependee));
+	add_exact_object_address_extra(object, &extra, targetObjects);
+}
+
+/*
+ * reportDependentObjects - report about dependencies, and fail if RESTRICT
+ *
+ * Tell the user about dependent objects that we are going to delete
+ * (or would need to delete, but are prevented by RESTRICT mode);
+ * then error out if there are any and it's not CASCADE mode.
+ *
+ *	targetObjects: list of objects that are scheduled to be deleted
+ *	behavior: RESTRICT or CASCADE
+ *	msglevel: elog level for non-error report messages
+ *	origObject: base object of deletion, or NULL if not available
+ *		(the latter case occurs in DROP OWNED)
+ */
+static void
+reportDependentObjects(const ObjectAddresses *targetObjects,
+					   DropBehavior behavior,
+					   int msglevel,
+					   const ObjectAddress *origObject)
+{
+	bool		ok = true;
+	StringInfoData clientdetail;
+	StringInfoData logdetail;
+	int			numReportedClient = 0;
+	int			numNotReportedClient = 0;
+	int			i;
+
+	/*
+	 * If no error is to be thrown, and the msglevel is too low to be shown
+	 * to either client or server log, there's no need to do any of the work.
+	 *
+	 * Note: this code doesn't know all there is to be known about elog
+	 * levels, but it works for NOTICE and DEBUG2, which are the only values
+	 * msglevel can currently have.  We also assume we are running in a normal
+	 * operating environment.
+	 */
+	if (behavior == DROP_CASCADE &&
+		msglevel < client_min_messages &&
+		(msglevel < log_min_messages || log_min_messages == LOG))
+		return;
+
+	/*
+	 * We limit the number of dependencies reported to the client to
+	 * MAX_REPORTED_DEPS, since client software may not deal well with
+	 * enormous error strings.	The server log always gets a full report.
+	 */
+#define MAX_REPORTED_DEPS 100
+
+	initStringInfo(&clientdetail);
+	initStringInfo(&logdetail);
+
+	/*
+	 * We process the list back to front (ie, in dependency order not deletion
+	 * order), since this makes for a more understandable display.
+	 */
+	for (i = targetObjects->numrefs - 1; i >= 0; i--)
 	{
-		if (object_address_present(&owningObject, oktodelete))
+		const ObjectAddress *obj = &targetObjects->refs[i];
+		const ObjectAddressExtra *extra = &targetObjects->extras[i];
+		char	   *objDesc;
+
+		/* Ignore the original deletion target(s) */
+		if (extra->flags & DEPFLAG_ORIGINAL)
+			continue;
+
+		objDesc = getObjectDescription(obj);
+
+		/*
+		 * If, at any stage of the recursive search, we reached the object
+		 * via an AUTO or INTERNAL dependency, then it's okay to delete it
+		 * even in RESTRICT mode.
+		 */
+		if (extra->flags & (DEPFLAG_AUTO | DEPFLAG_INTERNAL))
+		{
+			/*
+			 * auto-cascades are reported at DEBUG2, not msglevel.  We
+			 * don't try to combine them with the regular message because
+			 * the results are too confusing when client_min_messages and
+			 * log_min_messages are different.
+			 */
 			ereport(DEBUG2,
 					(errmsg("drop auto-cascades to %s",
-							getObjectDescription(&owningObject))));
+							objDesc)));
+		}
 		else if (behavior == DROP_RESTRICT)
 		{
+<<<<<<< HEAD
 			if (msglevel == NOTICE && Gp_role == GP_ROLE_EXECUTE)
 			ereport(DEBUG1,
 					(errmsg("%s depends on %s",
@@ -734,10 +992,32 @@ recursiveDeletion(const ObjectAddress *object,
 					(errmsg("%s depends on %s",
 							getObjectDescription(&owningObject),
 							objDescription)));
+=======
+			char   *otherDesc = getObjectDescription(&extra->dependee);
+
+			if (numReportedClient < MAX_REPORTED_DEPS)
+			{
+				/* separate entries with a newline */
+				if (clientdetail.len != 0)
+					appendStringInfoChar(&clientdetail, '\n');
+				appendStringInfo(&clientdetail, _("%s depends on %s"),
+								 objDesc, otherDesc);
+				numReportedClient++;
+			}
+			else
+				numNotReportedClient++;
+			/* separate entries with a newline */
+			if (logdetail.len != 0)
+				appendStringInfoChar(&logdetail, '\n');
+			appendStringInfo(&logdetail, _("%s depends on %s"),
+							 objDesc, otherDesc);
+			pfree(otherDesc);
+>>>>>>> 49f001d81e
 			ok = false;
 		}
 		else
 		{
+<<<<<<< HEAD
 			if (Gp_role == GP_ROLE_EXECUTE)
 			ereport(DEBUG1,
 					(errmsg("drop cascades to %s",
@@ -746,17 +1026,69 @@ recursiveDeletion(const ObjectAddress *object,
 			ereport(msglevel,
 					(errmsg("drop cascades to %s",
 							getObjectDescription(&owningObject))));
+=======
+			if (numReportedClient < MAX_REPORTED_DEPS)
+			{
+				/* separate entries with a newline */
+				if (clientdetail.len != 0)
+					appendStringInfoChar(&clientdetail, '\n');
+				appendStringInfo(&clientdetail, _("drop cascades to %s"),
+								 objDesc);
+				numReportedClient++;
+			}
+			else
+				numNotReportedClient++;
+			/* separate entries with a newline */
+			if (logdetail.len != 0)
+				appendStringInfoChar(&logdetail, '\n');
+			appendStringInfo(&logdetail, _("drop cascades to %s"),
+							 objDesc);
+>>>>>>> 49f001d81e
 		}
 
-		if (!recursiveDeletion(&owningObject, behavior, msglevel,
-							   object, oktodelete, depRel, alreadyDeleted))
-			ok = false;
-
-		pfree(objDescription);
-
-		return ok;
+		pfree(objDesc);
 	}
 
+	if (numNotReportedClient > 0)
+		appendStringInfo(&clientdetail, _("\nand %d other objects "
+										  "(see server log for list)"),
+						 numNotReportedClient);
+
+	if (!ok)
+	{
+		if (origObject)
+			ereport(ERROR,
+					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+					 errmsg("cannot drop %s because other objects depend on it",
+							getObjectDescription(origObject)),
+					 errdetail("%s", clientdetail.data),
+					 errdetail_log("%s", logdetail.data),
+					 errhint("Use DROP ... CASCADE to drop the dependent objects too.")));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+					 errmsg("cannot drop desired object(s) because other objects depend on them"),
+					 errdetail("%s", clientdetail.data),
+					 errdetail_log("%s", logdetail.data),
+					 errhint("Use DROP ... CASCADE to drop the dependent objects too.")));
+	}
+	else if (numReportedClient > 1)
+	{
+		ereport(msglevel,
+				/* translator: %d always has a value larger than 1 */
+				(errmsg("drop cascades to %d other objects",
+						numReportedClient + numNotReportedClient),
+				 errdetail("%s", clientdetail.data),
+				 errdetail_log("%s", logdetail.data)));
+	}
+	else if (numReportedClient == 1)
+	{
+		/* we just use the single item as-is */
+		ereport(msglevel,
+				(errmsg_internal("%s", clientdetail.data)));
+	}
+
+<<<<<<< HEAD
 	/*
 	 * Step 2: scan pg_depend records that link to this object, showing the
 	 * things that depend on it.  Recursively delete those things. Note it's
@@ -768,22 +1100,65 @@ recursiveDeletion(const ObjectAddress *object,
 								behavior, msglevel,
 								oktodelete, depRel, alreadyDeleted))
 		ok = false;
+=======
+	pfree(clientdetail.data);
+	pfree(logdetail.data);
+}
+
+/*
+ * deleteOneObject: delete a single object for performDeletion.
+ *
+ * depRel is the already-open pg_depend relation.
+ */
+static void
+deleteOneObject(const ObjectAddress *object, Relation depRel)
+{
+	ScanKeyData key[3];
+	int			nkeys;
+	SysScanDesc scan;
+	HeapTuple	tup;
+>>>>>>> 49f001d81e
 
 	/*
-	 * We do not need CommandCounterIncrement here, since if step 2 did
-	 * anything then each recursive call will have ended with one.
+	 * First remove any pg_depend records that link from this object to
+	 * others.  (Any records linking to this object should be gone already.)
+	 *
+	 * When dropping a whole object (subId = 0), remove all pg_depend records
+	 * for its sub-objects too.
 	 */
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_classid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object->classId));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_objid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object->objectId));
+	if (object->objectSubId != 0)
+	{
+		ScanKeyInit(&key[2],
+					Anum_pg_depend_objsubid,
+					BTEqualStrategyNumber, F_INT4EQ,
+					Int32GetDatum(object->objectSubId));
+		nkeys = 3;
+	}
+	else
+		nkeys = 2;
+
+	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+							  SnapshotNow, nkeys, key);
+
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
+	{
+		simple_heap_delete(depRel, &tup->t_self);
+	}
+
+	systable_endscan(scan);
 
 	/*
-	 * Step 3: delete the object itself, and save it to the list of deleted
-	 * objects if appropiate.
+	 * Now delete the object itself, in an object-type-dependent way.
 	 */
 	doDeletion(object);
-	if (alreadyDeleted != NULL)
-	{
-		if (!object_address_present(object, alreadyDeleted))
-			add_exact_object_address(object, alreadyDeleted);
-	}
 
 	/*
 	 * Delete any comments associated with this object.  (This is a convenient
@@ -800,18 +1175,16 @@ recursiveDeletion(const ObjectAddress *object,
 
 	/*
 	 * CommandCounterIncrement here to ensure that preceding changes are all
-	 * visible.
+	 * visible to the next deletion step.
 	 */
 	CommandCounterIncrement();
 
 	/*
 	 * And we're done!
 	 */
-	pfree(objDescription);
-
-	return ok;
 }
 
+<<<<<<< HEAD
 
 /*
  * deleteDependentObjects - find and delete objects that depend on 'object'
@@ -975,6 +1348,8 @@ deleteDependentObjects(const ObjectAddress *object,
 }
 
 
+=======
+>>>>>>> 49f001d81e
 /*
  * doDeletion: actually delete a single object
  */
@@ -1107,6 +1482,38 @@ doDeletion(const ObjectAddress *object)
 }
 
 /*
+ * AcquireDeletionLock - acquire a suitable lock for deleting an object
+ *
+ * We use LockRelation for relations, LockDatabaseObject for everything
+ * else.  Note that dependency.c is not concerned with deleting any kind of
+ * shared-across-databases object, so we have no need for LockSharedObject.
+ */
+static void
+AcquireDeletionLock(const ObjectAddress *object)
+{
+	if (object->classId == RelationRelationId)
+		LockRelationOid(object->objectId, AccessExclusiveLock);
+	else
+		/* assume we should lock the whole object not a sub-object */
+		LockDatabaseObject(object->classId, object->objectId, 0,
+						   AccessExclusiveLock);
+}
+
+/*
+ * ReleaseDeletionLock - release an object deletion lock
+ */
+static void
+ReleaseDeletionLock(const ObjectAddress *object)
+{
+	if (object->classId == RelationRelationId)
+		UnlockRelationOid(object->objectId, AccessExclusiveLock);
+	else
+		/* assume we should lock the whole object not a sub-object */
+		UnlockDatabaseObject(object->classId, object->objectId, 0,
+							 AccessExclusiveLock);
+}
+
+/*
  * recordDependencyOnExpr - find expression dependencies
  *
  * This is used to find the dependencies of rules, constraint expressions,
@@ -1206,15 +1613,12 @@ recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
 				thisobj->objectId == relId)
 			{
 				/* Move this ref into self_addrs */
-				add_object_address(OCLASS_CLASS, relId, thisobj->objectSubId,
-								   self_addrs);
+				add_exact_object_address(thisobj, self_addrs);
 			}
 			else
 			{
 				/* Keep it in context.addrs */
-				outobj->classId = thisobj->classId;
-				outobj->objectId = thisobj->objectId;
-				outobj->objectSubId = thisobj->objectSubId;
+				*outobj = *thisobj;
 				outobj++;
 				outrefs++;
 			}
@@ -1581,6 +1985,13 @@ eliminate_duplicate_dependencies(ObjectAddresses *addrs)
 	int			oldref,
 				newrefs;
 
+	/*
+	 * We can't sort if the array has "extra" data, because there's no way
+	 * to keep it in sync.  Fortunately that combination of features is
+	 * not needed.
+	 */
+	Assert(!addrs->extras);
+
 	if (addrs->numrefs <= 1)
 		return;					/* nothing to do */
 
@@ -1617,9 +2028,7 @@ eliminate_duplicate_dependencies(ObjectAddresses *addrs)
 		}
 		/* Not identical, so add thisobj to output set */
 		priorobj++;
-		priorobj->classId = thisobj->classId;
-		priorobj->objectId = thisobj->objectId;
-		priorobj->objectSubId = thisobj->objectSubId;
+		*priorobj = *thisobj;
 		newrefs++;
 	}
 
@@ -1671,6 +2080,7 @@ new_object_addresses(void)
 	addrs->maxrefs = 32;
 	addrs->refs = (ObjectAddress *)
 		palloc(addrs->maxrefs * sizeof(ObjectAddress));
+	addrs->extras = NULL;		/* until/unless needed */
 
 	return addrs;
 }
@@ -1693,6 +2103,7 @@ add_object_address(ObjectClass oclass, Oid objectId, int32 subId,
 		addrs->maxrefs *= 2;
 		addrs->refs = (ObjectAddress *)
 			repalloc(addrs->refs, addrs->maxrefs * sizeof(ObjectAddress));
+		Assert(!addrs->extras);
 	}
 	/* record this item */
 	item = addrs->refs + addrs->numrefs;
@@ -1719,10 +2130,46 @@ add_exact_object_address(const ObjectAddress *object,
 		addrs->maxrefs *= 2;
 		addrs->refs = (ObjectAddress *)
 			repalloc(addrs->refs, addrs->maxrefs * sizeof(ObjectAddress));
+		Assert(!addrs->extras);
 	}
 	/* record this item */
 	item = addrs->refs + addrs->numrefs;
 	*item = *object;
+	addrs->numrefs++;
+}
+
+/*
+ * Add an entry to an ObjectAddresses array.
+ *
+ * As above, but specify entry exactly and provide some "extra" data too.
+ */
+static void
+add_exact_object_address_extra(const ObjectAddress *object,
+							   const ObjectAddressExtra *extra,
+							   ObjectAddresses *addrs)
+{
+	ObjectAddress *item;
+	ObjectAddressExtra *itemextra;
+
+	/* allocate extra space if first time */
+	if (!addrs->extras)
+		addrs->extras = (ObjectAddressExtra *)
+			palloc(addrs->maxrefs * sizeof(ObjectAddressExtra));
+
+	/* enlarge array if needed */
+	if (addrs->numrefs >= addrs->maxrefs)
+	{
+		addrs->maxrefs *= 2;
+		addrs->refs = (ObjectAddress *)
+			repalloc(addrs->refs, addrs->maxrefs * sizeof(ObjectAddress));
+		addrs->extras = (ObjectAddressExtra *)
+		  repalloc(addrs->extras, addrs->maxrefs * sizeof(ObjectAddressExtra));
+	}
+	/* record this item */
+	item = addrs->refs + addrs->numrefs;
+	*item = *object;
+	itemextra = addrs->extras + addrs->numrefs;
+	*itemextra = *extra;
 	addrs->numrefs++;
 }
 
@@ -1739,7 +2186,7 @@ object_address_present(const ObjectAddress *object,
 
 	for (i = addrs->numrefs - 1; i >= 0; i--)
 	{
-		ObjectAddress *thisobj = addrs->refs + i;
+		const ObjectAddress *thisobj = addrs->refs + i;
 
 		if (object->classId == thisobj->classId &&
 			object->objectId == thisobj->objectId)
@@ -1747,6 +2194,47 @@ object_address_present(const ObjectAddress *object,
 			if (object->objectSubId == thisobj->objectSubId ||
 				thisobj->objectSubId == 0)
 				return true;
+		}
+	}
+
+	return false;
+}
+
+/*
+ * As above, except that if the object is present then also OR the given
+ * flags into its associated extra data (which must exist).
+ */
+static bool
+object_address_present_add_flags(const ObjectAddress *object,
+								 int flags,
+								 ObjectAddresses *addrs)
+{
+	int			i;
+
+	for (i = addrs->numrefs - 1; i >= 0; i--)
+	{
+		ObjectAddress *thisobj = addrs->refs + i;
+
+		if (object->classId == thisobj->classId &&
+			object->objectId == thisobj->objectId)
+		{
+			if (object->objectSubId == thisobj->objectSubId)
+			{
+				ObjectAddressExtra *thisextra = addrs->extras + i;
+
+				thisextra->flags |= flags;
+				return true;
+			}
+			if (thisobj->objectSubId == 0)
+			{
+				/*
+				 * We get here if we find a need to delete a column after
+				 * having already decided to drop its whole table.  Obviously
+				 * we no longer need to drop the column.  But don't plaster
+				 * its flags on the table.
+				 */
+				return true;
+			}
 		}
 	}
 
@@ -1775,6 +2263,8 @@ void
 free_object_addresses(ObjectAddresses *addrs)
 {
 	pfree(addrs->refs);
+	if (addrs->extras)
+		pfree(addrs->extras);
 	pfree(addrs);
 }
 
@@ -2126,6 +2616,7 @@ getObjectDescription(const ObjectAddress *object)
 				SysScanDesc amscan;
 				HeapTuple	tup;
 				Form_pg_amop amopForm;
+				StringInfoData opfam;
 
 				amopDesc = heap_open(AccessMethodOperatorRelationId,
 									 AccessShareLock);
@@ -2146,10 +2637,18 @@ getObjectDescription(const ObjectAddress *object)
 
 				amopForm = (Form_pg_amop) GETSTRUCT(tup);
 
-				appendStringInfo(&buffer, _("operator %d %s of "),
+				initStringInfo(&opfam);
+				getOpFamilyDescription(&opfam, amopForm->amopfamily);
+				/*
+				 * translator: %d is the operator strategy (a number), the
+				 * first %s is the textual form of the operator, and the second
+				 * %s is the description of the operator family.
+				 */
+				appendStringInfo(&buffer, _("operator %d %s of %s"),
 								 amopForm->amopstrategy,
-								 format_operator(amopForm->amopopr));
-				getOpFamilyDescription(&buffer, amopForm->amopfamily);
+								 format_operator(amopForm->amopopr),
+								 opfam.data);
+				pfree(opfam.data);
 
 				systable_endscan(amscan);
 				heap_close(amopDesc, AccessShareLock);
@@ -2163,6 +2662,7 @@ getObjectDescription(const ObjectAddress *object)
 				SysScanDesc amscan;
 				HeapTuple	tup;
 				Form_pg_amproc amprocForm;
+				StringInfoData opfam;
 
 				amprocDesc = heap_open(AccessMethodProcedureRelationId,
 									   AccessShareLock);
@@ -2183,10 +2683,18 @@ getObjectDescription(const ObjectAddress *object)
 
 				amprocForm = (Form_pg_amproc) GETSTRUCT(tup);
 
-				appendStringInfo(&buffer, _("function %d %s of "),
+				initStringInfo(&opfam);
+				getOpFamilyDescription(&opfam, amprocForm->amprocfamily);
+				/*
+				 * translator: %d is the function number, the first %s is the
+				 * textual form of the function with arguments, and the second
+				 * %s is the description of the operator family.
+				 */
+				appendStringInfo(&buffer, _("function %d %s of %s"),
 								 amprocForm->amprocnum,
-								 format_procedure(amprocForm->amproc));
-				getOpFamilyDescription(&buffer, amprocForm->amprocfamily);
+								 format_procedure(amprocForm->amproc),
+								 opfam.data);
+				pfree(opfam.data);
 
 				systable_endscan(amscan);
 				heap_close(amprocDesc, AccessShareLock);

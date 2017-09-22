@@ -11,7 +11,11 @@
 #
 #
 # IDENTIFICATION
+<<<<<<< HEAD
 #    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.46 2009/01/01 17:23:36 momjian Exp $
+=======
+#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.45 2008/07/19 04:01:29 tgl Exp $
+>>>>>>> 49f001d81e
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -111,6 +115,7 @@ trap "rm -f $TMPFILE ${OUTPUT_PREFIX}.bki.$$ ${OUTPUT_PREFIX}.description.$$ ${O
 # within a given Postgres release, such as fixed OIDs.  Do not substitute
 # anything that could depend on platform or configuration.  (The right place
 # to handle those sorts of things is in initdb.c's bootstrap_template1().)
+<<<<<<< HEAD
 
 # Get NAMEDATALEN from pg_config_manual.h
 for dir in $INCLUDE_DIRS; do
@@ -119,6 +124,8 @@ for dir in $INCLUDE_DIRS; do
         break
     fi
 done
+=======
+>>>>>>> 49f001d81e
 
 # Get BOOTSTRAP_SUPERUSERID from catalog/pg_authid.h
 for dir in $INCLUDE_DIRS; do
@@ -170,7 +177,6 @@ sed -e "s/;[ 	]*$//g" \
     -e "s/^TransactionId/xid/g" \
     -e "s/(TransactionId/(xid/g" \
     -e "s/PGUID/$BOOTSTRAP_SUPERUSERID/g" \
-    -e "s/NAMEDATALEN/$NAMEDATALEN/g" \
     -e "s/PGNSP/$PG_CATALOG_NAMESPACE/g" \
     -e "s/TOASTNSP/$PG_TOAST_NAMESPACE/g" \
 | $AWK '

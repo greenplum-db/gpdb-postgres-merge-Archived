@@ -9,7 +9,11 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.141 2008/10/04 21:56:53 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.132 2008/07/10 02:14:03 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -611,11 +615,22 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 	}
 	else
 	{
+<<<<<<< HEAD
 		/* Adjust the Params in the testexpr */
 		if (testexpr)
 		{
 			List	   *params;
 
+=======
+		List	   *args;
+		ListCell   *l;
+
+		if (testexpr)
+		{
+			List	   *params;
+
+			/* Adjust the Params in the testexpr */
+>>>>>>> 49f001d81e
 			params = generate_subquery_params(root,
 											  plan->targetlist,
 											  &splan->paramIds);
@@ -623,10 +638,13 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 											   testexpr,
 											   params);
 		}
+<<<<<<< HEAD
 		else
 			splan->testexpr = testexpr;
 
 		splan->is_multirow = true; /* CDB: take note. */
+=======
+>>>>>>> 49f001d81e
 
 		/*
 		 * We can't convert subplans of ALL_SUBLINK or ANY_SUBLINK types to
@@ -1050,8 +1068,13 @@ convert_IN_to_join(PlannerInfo *root, List **rtrlist_inout, SubLink *sublink)
 	Query	   *parse = root->parse;
 	Query	   *subselect = (Query *) sublink->subselect;
 	List	   *in_operators;
+<<<<<<< HEAD
 	List	   *left_exprs = NIL;
 	List	   *right_exprs = NIL;
+=======
+	List	   *left_exprs;
+	List	   *right_exprs;
+>>>>>>> 49f001d81e
 	Relids		left_varnos;
 	int			rtindex;
 	RangeTblEntry *rte;
@@ -1061,10 +1084,78 @@ convert_IN_to_join(PlannerInfo *root, List **rtrlist_inout, SubLink *sublink)
 	bool		correlated;
 	Node	   *result;
 
+<<<<<<< HEAD
 	Assert(IsA(subselect, Query));
 
 	cdbsubselect_drop_orderby(subselect);
 	cdbsubselect_drop_distinct(subselect);
+=======
+	/*
+	 * The sublink type must be "= ANY" --- that is, an IN operator.  We
+	 * expect that the test expression will be either a single OpExpr, or an
+	 * AND-clause containing OpExprs.  (If it's anything else then the parser
+	 * must have determined that the operators have non-equality-like
+	 * semantics.  In the OpExpr case we can't be sure what the operator's
+	 * semantics are like, and must check for ourselves.)
+	 */
+	if (sublink->subLinkType != ANY_SUBLINK)
+		return NULL;
+	if (sublink->testexpr && IsA(sublink->testexpr, OpExpr))
+	{
+		OpExpr	   *op = (OpExpr *) sublink->testexpr;
+		Oid			opno = op->opno;
+		List	   *opfamilies;
+		List	   *opstrats;
+
+		if (list_length(op->args) != 2)
+			return NULL;				/* not binary operator? */
+		get_op_btree_interpretation(opno, &opfamilies, &opstrats);
+		if (!list_member_int(opstrats, ROWCOMPARE_EQ))
+			return NULL;
+		in_operators = list_make1_oid(opno);
+		left_exprs = list_make1(linitial(op->args));
+		right_exprs = list_make1(lsecond(op->args));
+	}
+	else if (and_clause(sublink->testexpr))
+	{
+		ListCell   *lc;
+
+		/* OK, but we need to extract the per-column info */
+		in_operators = left_exprs = right_exprs = NIL;
+		foreach(lc, ((BoolExpr *) sublink->testexpr)->args)
+		{
+			OpExpr	   *op = (OpExpr *) lfirst(lc);
+
+			if (!IsA(op, OpExpr))		/* probably shouldn't happen */
+				return NULL;
+			if (list_length(op->args) != 2)
+				return NULL;			/* not binary operator? */
+			in_operators = lappend_oid(in_operators, op->opno);
+			left_exprs = lappend(left_exprs, linitial(op->args));
+			right_exprs = lappend(right_exprs, lsecond(op->args));
+		}
+	}
+	else
+		return NULL;
+
+	/*
+	 * The sub-select must not refer to any Vars of the parent query. (Vars of
+	 * higher levels should be okay, though.)
+	 */
+	if (contain_vars_of_level((Node *) subselect, 1))
+		return NULL;
+
+	/*
+	 * The left-hand expressions must contain some Vars of the current query,
+	 * else it's not gonna be a join.
+	 */
+	left_varnos = pull_varnos((Node *) left_exprs);
+	if (bms_is_empty(left_varnos))
+		return NULL;
+>>>>>>> 49f001d81e
+
+	/* ... and the right-hand expressions better not contain Vars at all */
+	Assert(!contain_var_clause((Node *) right_exprs));
 
 	/*
 	 * The combining operators and left-hand expressions mustn't be volatile.
@@ -1155,6 +1246,20 @@ convert_IN_to_join(PlannerInfo *root, List **rtrlist_inout, SubLink *sublink)
 							  subquery_vars);
 
 	/*
+	 * Build a list of Vars representing the subselect outputs.
+	 */
+	subquery_vars = generate_subquery_vars(root,
+										   subselect->targetList,
+										   rtindex);
+
+	/*
+	 * Build the result qual expression, replacing Params with these Vars.
+	 */
+	result = convert_testexpr(root,
+							  sublink->testexpr,
+							  subquery_vars);
+
+	/*
 	 * Now build the InClauseInfo node.
 	 */
 	ininfo = makeNode(InClauseInfo);
@@ -1222,6 +1327,7 @@ convert_IN_to_join(PlannerInfo *root, List **rtrlist_inout, SubLink *sublink)
 	ininfo->in_operators = in_operators;
 
 	/*
+<<<<<<< HEAD
 	 * The left-hand expressions must contain some Vars of the current query,
 	 * else it's not gonna be a join.
 	 */
@@ -1236,6 +1342,15 @@ convert_IN_to_join(PlannerInfo *root, List **rtrlist_inout, SubLink *sublink)
 	 * operators.  That handles cases like type coercions of the subquery
 	 * outputs, clauses dropped due to const-simplification, etc.
 	 */
+=======
+	 * ininfo->sub_targetlist must be filled with a list of expressions that
+	 * would need to be unique-ified if we try to implement the IN using a
+	 * regular join to unique-ified subquery output.  This is most easily done
+	 * by applying convert_testexpr to just the RHS inputs of the testexpr
+	 * operators.  That handles cases like type coercions of the subquery
+	 * outputs, clauses dropped due to const-simplification, etc.
+	 */
+>>>>>>> 49f001d81e
 	ininfo->sub_targetlist = (List *) convert_testexpr(root,
 													   (Node *) right_exprs,
 													   subquery_vars);
@@ -1428,6 +1543,7 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
  * node in the given plan tree.  It also optionally attaches any previously
  * generated InitPlans to the top plan node.  (Any InitPlans should already
  * have been put through SS_finalize_plan.)
+<<<<<<< HEAD
  *
  * Input:
  * 	root - PlannerInfo structure that is necessary for walking the tree
@@ -1435,6 +1551,8 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
  * 	attach_initplans - attach all initplans to the top plan node from root
  * Output:
  * 	plan->extParam and plan->allParam - attach params to top of the plan
+=======
+>>>>>>> 49f001d81e
  */
 void
 SS_finalize_plan(PlannerInfo *root, Plan *plan, bool attach_initplans)
@@ -1524,11 +1642,17 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan, bool attach_initplans)
 	 */
 	if (attach_initplans)
 	{
+<<<<<<< HEAD
 
 		Insist(!plan->initPlan);
 		plan->initPlan = root->init_plans;
 		root->init_plans = NIL;		/* make sure they're not attached twice */
 
+=======
+		plan->initPlan = root->init_plans;
+		root->init_plans = NIL;		/* make sure they're not attached twice */
+
+>>>>>>> 49f001d81e
 		/* allParam must include all these params */
 		plan->allParam = bms_add_members(plan->allParam, initExtParam);
 		plan->allParam = bms_add_members(plan->allParam, initSetParam);
@@ -1812,6 +1936,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 	}
 
 	/* Process left and right child plans, if any */
+<<<<<<< HEAD
 	/*
 	 * In a TableFunctionScan, the 'lefttree' is more like a SubQueryScan's
 	 * subplan, and contains a plan that's already been finalized by the
@@ -1822,6 +1947,12 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 										   finalize_plan(root,
 														 plan->lefttree,
 														 valid_params));
+=======
+	context.paramids = bms_add_members(context.paramids,
+									   finalize_plan(root,
+													 plan->lefttree,
+													 valid_params));
+>>>>>>> 49f001d81e
 
 	context.paramids = bms_add_members(context.paramids,
 									   finalize_plan(root,

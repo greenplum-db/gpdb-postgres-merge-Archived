@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.44 2008/03/31 01:31:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.45 2008/05/17 20:02:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1696,7 +1696,11 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
  * Note: it's OK to scribble on the pids array, but not on the names array
  */
 static void
+<<<<<<< HEAD
 wait_for_tests(PID_TYPE *pids, int *statuses, char **names, struct timeval *end_times, int num_tests)
+=======
+wait_for_tests(PID_TYPE *pids, int *statuses, char **names, int num_tests)
+>>>>>>> 49f001d81e
 {
 	int			tests_left;
 	int			i;
@@ -1711,10 +1715,14 @@ wait_for_tests(PID_TYPE *pids, int *statuses, char **names, struct timeval *end_
 	while (tests_left > 0)
 	{
 		PID_TYPE	p;
-
-#ifndef WIN32
 		int			exit_status;
 
+#ifndef WIN32
+<<<<<<< HEAD
+		int			exit_status;
+
+=======
+>>>>>>> 49f001d81e
 		p = wait(&exit_status);
 
 		if (p == INVALID_PID)
@@ -1748,7 +1756,11 @@ wait_for_tests(PID_TYPE *pids, int *statuses, char **names, struct timeval *end_
 				CloseHandle(pids[i]);
 #endif
 				pids[i] = INVALID_PID;
+<<<<<<< HEAD
 				statuses[i] = (int) exit_status;
+=======
+				statuses[i] = exit_status;
+>>>>>>> 49f001d81e
 				if (names)
 					status(" %s", names[i]);
 				if (end_times)
@@ -1806,7 +1818,10 @@ run_schedule(const char *schedule, test_function tfunc)
 	_stringlist *tags[MAX_PARALLEL_TESTS];
 	PID_TYPE	pids[MAX_PARALLEL_TESTS];
 	int			statuses[MAX_PARALLEL_TESTS];
+<<<<<<< HEAD
 	struct timeval end_times[MAX_PARALLEL_TESTS];
+=======
+>>>>>>> 49f001d81e
 	_stringlist *ignorelist = NULL;
 	char		scbuf[1024];
 	FILE	   *scf;
@@ -1932,7 +1947,11 @@ run_schedule(const char *schedule, test_function tfunc)
 #endif
 			status(_("test %-20s ... "), tests[0]);
 			pids[0] = (tfunc) (tests[0], &resultfiles[0], &expectfiles[0], &tags[0]);
+<<<<<<< HEAD
 			wait_for_tests(pids, statuses, NULL, end_times, 1);
+=======
+			wait_for_tests(pids, statuses, NULL, 1);
+>>>>>>> 49f001d81e
 			/* status line is finished below */
 		}
 		else if (max_connections > 0 && max_connections < num_tests)
@@ -1946,13 +1965,21 @@ run_schedule(const char *schedule, test_function tfunc)
 				if (i - oldest >= max_connections)
 				{
 					wait_for_tests(pids + oldest, statuses + oldest,
+<<<<<<< HEAD
 								   tests + oldest, end_times + oldest, i - oldest);
+=======
+								   tests + oldest, i - oldest);
+>>>>>>> 49f001d81e
 					oldest = i;
 				}
 				pids[i] = (tfunc) (tests[i], &resultfiles[i], &expectfiles[i], &tags[i]);
 			}
 			wait_for_tests(pids + oldest, statuses + oldest,
+<<<<<<< HEAD
 						   tests + oldest, end_times + oldest, i - oldest);
+=======
+						   tests + oldest, i - oldest);
+>>>>>>> 49f001d81e
 			status_end();
 		}
 		else
@@ -1962,7 +1989,11 @@ run_schedule(const char *schedule, test_function tfunc)
 			{
 				pids[i] = (tfunc) (tests[i], &resultfiles[i], &expectfiles[i], &tags[i]);
 			}
+<<<<<<< HEAD
 			wait_for_tests(pids, statuses, tests, end_times, num_tests);
+=======
+			wait_for_tests(pids, statuses, tests, num_tests);
+>>>>>>> 49f001d81e
 			status_end();
 		}
 
@@ -1998,7 +2029,7 @@ run_schedule(const char *schedule, test_function tfunc)
 				bool		newdiff;
 
 				if (tl)
-					tl = tl->next;		/* tl has the same lengt has rl and el
+					tl = tl->next;		/* tl has the same length as rl and el
 										 * if it exists */
 
 				newdiff = results_differ(tests[i], rl->str, el->str);
@@ -2074,7 +2105,11 @@ run_single_test(const char *test, test_function tfunc)
 
 	status(_("test %-20s ... "), test);
 	pid = (tfunc) (test, &resultfiles, &expectfiles, &tags);
+<<<<<<< HEAD
 	wait_for_tests(&pid, &exit_status, NULL, NULL, 1);
+=======
+	wait_for_tests(&pid, &exit_status, NULL, 1);
+>>>>>>> 49f001d81e
 
 	/*
 	 * Advance over all three lists simultaneously.
@@ -2090,7 +2125,7 @@ run_single_test(const char *test, test_function tfunc)
 		bool		newdiff;
 
 		if (tl)
-			tl = tl->next;		/* tl has the same lengt has rl and el if it
+			tl = tl->next;		/* tl has the same length as rl and el if it
 								 * exists */
 
 		newdiff = results_differ(test, rl->str, el->str);

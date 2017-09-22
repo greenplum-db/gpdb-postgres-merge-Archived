@@ -3,9 +3,15 @@
 #################################################################
 # version_stamp.pl -- update version stamps throughout the source tree
 #
+<<<<<<< HEAD
 # Copyright (c) 2008-2009, PostgreSQL Global Development Group
 #
 # src/tools/version_stamp.pl
+=======
+# Copyright (c) 2008, PostgreSQL Global Development Group
+#
+# $PostgreSQL: pgsql/src/tools/version_stamp.pl,v 1.1 2008/06/10 18:08:48 tgl Exp $
+>>>>>>> 49f001d81e
 #################################################################
 
 #
@@ -17,13 +23,21 @@
 # Usage: cd to top of source tree and issue
 #	src/tools/version_stamp.pl MINORVERSION
 # where MINORVERSION can be a minor release number (0, 1, etc), or
+<<<<<<< HEAD
 # "devel", "alphaN", "betaN", "rcN".
+=======
+# "devel", "betaN", "rcN".
+>>>>>>> 49f001d81e
 #
 
 # Major version is hard-wired into the script.  We update it when we branch
 # a new development version.
 $major1 = 8;
+<<<<<<< HEAD
 $major2 = 3;
+=======
+$major2 = 4;
+>>>>>>> 49f001d81e
 
 # Validate argument and compute derived variables
 $minor = shift;
@@ -35,9 +49,12 @@ if ($minor =~ m/^\d+$/) {
 } elsif ($minor eq "devel") {
     $dotneeded = 0;
     $numericminor = 0;
+<<<<<<< HEAD
 } elsif ($minor =~ m/^alpha\d+$/) {
     $dotneeded = 0;
     $numericminor = 0;
+=======
+>>>>>>> 49f001d81e
 } elsif ($minor =~ m/^beta\d+$/) {
     $dotneeded = 0;
     $numericminor = 0;
@@ -45,7 +62,11 @@ if ($minor =~ m/^\d+$/) {
     $dotneeded = 0;
     $numericminor = 0;
 } else {
+<<<<<<< HEAD
     die "$0: minor-version must be N, devel, alphaN, betaN, or rcN\n";
+=======
+    die "$0: minor-version must be N, devel, betaN, or rcN\n";
+>>>>>>> 49f001d81e
 }
 
 # Create various required forms of the version number

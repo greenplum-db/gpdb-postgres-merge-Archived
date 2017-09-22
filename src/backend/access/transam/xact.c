@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.262 2008/03/26 18:48:59 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.264 2008/05/12 20:01:58 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,8 +38,12 @@
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "pgstat.h"
+<<<<<<< HEAD
 #include "replication/walsender.h"
 #include "replication/syncrep.h"
+=======
+#include "storage/bufmgr.h"
+>>>>>>> 49f001d81e
 #include "storage/fd.h"
 #include "storage/lmgr.h"
 #include "storage/procarray.h"
@@ -887,12 +891,9 @@ CommandCounterIncrement(void)
 		}
 		currentCommandIdUsed = false;
 
-		/* Propagate new command ID into static snapshots, if set */
-		if (SerializableSnapshot)
-			SerializableSnapshot->curcid = currentCommandId;
-		if (LatestSnapshot)
-			LatestSnapshot->curcid = currentCommandId;
-
+		/* Propagate new command ID into static snapshots */
+		SnapshotSetCommandId(currentCommandId);
+		
 		/*
 		 * Make any catalog changes done by the just-completed command
 		 * visible in the local syscache.  We obviously don't need to do
@@ -2265,9 +2266,8 @@ StartTransaction(void)
 	s->transactionId = InvalidTransactionId;	/* until assigned */
 
 	/*
-	 * Make sure we've freed any old snapshot, and reset xact state variables
+	 * Make sure we've reset xact state variables
 	 */
-	FreeXactSnapshot();
 	XactIsoLevel = DefaultXactIsoLevel;
 	XactReadOnly = DefaultXactReadOnly;
 	forceSyncCommit = false;
@@ -2802,6 +2802,7 @@ CommitTransaction(void)
 	AtEOXact_ComboCid();
 	AtEOXact_HashTables(true);
 	AtEOXact_PgStat(true);
+	AtEOXact_Snapshot(true);
 	pgstat_report_xact_timestamp(0);
 
 	CurrentResourceOwner = NULL;
@@ -3096,6 +3097,7 @@ PrepareTransaction(void)
 	AtEOXact_ComboCid();
 	AtEOXact_HashTables(true);
 	/* don't call AtEOXact_PgStat here */
+	AtEOXact_Snapshot(true);
 
 	CurrentResourceOwner = NULL;
 	ResourceOwnerDelete(TopTransactionResourceOwner);
@@ -3308,6 +3310,7 @@ AbortTransaction(void)
 		pgstat_report_xact_timestamp(0);
 	}
 
+<<<<<<< HEAD
 	/*
 	 * Do abort to all QE. NOTE: we don't process
 	 * signals to prevent recursion until we've notified the QEs.
@@ -3324,6 +3327,20 @@ AbortTransaction(void)
 	rollbackDtxTransaction();
 
 	MyProc->localDistribXactData.state = LOCALDISTRIBXACT_STATE_NONE;
+=======
+	AtEOXact_GUC(false, 1);
+	AtEOXact_SPI(false);
+	AtEOXact_xml();
+	AtEOXact_on_commit_actions(false);
+	AtEOXact_Namespace(false);
+	smgrabort();
+	AtEOXact_Files();
+	AtEOXact_ComboCid();
+	AtEOXact_HashTables(false);
+	AtEOXact_PgStat(false);
+	AtEOXact_Snapshot(false);
+	pgstat_report_xact_timestamp(0);
+>>>>>>> 49f001d81e
 
 	/*
 	 * State remains TRANS_ABORT until CleanupTransaction().
@@ -5341,6 +5358,7 @@ CommitSubTransaction(void)
 					  s->parent->subTransactionId);
 	AtEOSubXact_HashTables(true, s->nestingLevel);
 	AtEOSubXact_PgStat(true, s->nestingLevel);
+	AtSubCommit_Snapshot(s->nestingLevel);
 
 	/*
 	 * We need to restore the upper transaction's read-only state, in case the
@@ -5460,6 +5478,7 @@ AbortSubTransaction(void)
 						  s->parent->subTransactionId);
 		AtEOSubXact_HashTables(false, s->nestingLevel);
 		AtEOSubXact_PgStat(false, s->nestingLevel);
+		AtSubAbort_Snapshot(s->nestingLevel);
 	}
 
 	/*

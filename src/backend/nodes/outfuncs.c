@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.324 2008/03/21 22:41:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.328 2008/07/17 16:02:12 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -607,12 +607,19 @@ _outIndexScan(StringInfo str, IndexScan *node)
 	outIndexScanFields(str, node);
 }
 
+<<<<<<< HEAD
 static void
 _outDynamicIndexScan(StringInfo str, DynamicIndexScan *node)
 {
 	WRITE_NODE_TYPE("DYNAMICINDEXSCAN");
 
 	outIndexScanFields(str, (IndexScan *)node);
+=======
+	WRITE_OID_FIELD(indexid);
+	WRITE_NODE_FIELD(indexqual);
+	WRITE_NODE_FIELD(indexqualorig);
+	WRITE_ENUM_FIELD(indexorderdir, ScanDirection);
+>>>>>>> 49f001d81e
 }
 
 static void
@@ -620,7 +627,15 @@ _outBitmapIndexScan(StringInfo str, BitmapIndexScan *node)
 {
 	WRITE_NODE_TYPE("BITMAPINDEXSCAN");
 
+<<<<<<< HEAD
 	outIndexScanFields(str, (IndexScan *)node);
+=======
+	_outScanInfo(str, (Scan *) node);
+
+	WRITE_OID_FIELD(indexid);
+	WRITE_NODE_FIELD(indexqual);
+	WRITE_NODE_FIELD(indexqualorig);
+>>>>>>> 49f001d81e
 }
 
 static void
@@ -3223,7 +3238,10 @@ _outFuncCall(StringInfo str, FuncCall *node)
 	WRITE_BOOL_FIELD(agg_star);
 	WRITE_BOOL_FIELD(agg_distinct);
 	WRITE_BOOL_FIELD(func_variadic);
+<<<<<<< HEAD
 	WRITE_NODE_FIELD(over);
+=======
+>>>>>>> 49f001d81e
 	WRITE_INT_FIELD(location);
 }
 
@@ -3847,6 +3865,7 @@ _outAConst(StringInfo str, A_Const *node)
 	appendStringInfoChar(str, ' ');
 
 	_outValue(str, &(node->val));
+<<<<<<< HEAD
 	WRITE_NODE_FIELD_AS(typeName, typename);
     /*
      * CDB: For now we don't serialize the 'location' field, for compatibility
@@ -3854,6 +3873,8 @@ _outAConst(StringInfo str, A_Const *node)
      * meaningful with the original source string, which isn't kept when a
      * view or rule definition is stored in the catalog.
      */
+=======
+>>>>>>> 49f001d81e
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
@@ -3900,6 +3921,7 @@ _outSortBy(StringInfo str, SortBy *node)
 {
 	WRITE_NODE_TYPE("SORTBY");
 
+<<<<<<< HEAD
 	WRITE_INT_FIELD(sortby_dir);
 	WRITE_INT_FIELD(sortby_nulls);
 	WRITE_NODE_FIELD(useOp);
@@ -3944,6 +3966,14 @@ _outRangeFunction(StringInfo str, RangeFunction *node)
 #endif
 
 #ifndef COMPILING_BINARY_FUNCS
+=======
+	WRITE_ENUM_FIELD(sortby_dir, SortByDir);
+	WRITE_ENUM_FIELD(sortby_nulls, SortByNulls);
+	WRITE_NODE_FIELD(useOp);
+	WRITE_NODE_FIELD(node);
+}
+
+>>>>>>> 49f001d81e
 static void
 _outConstraint(StringInfo str, Constraint *node)
 {
@@ -5066,11 +5096,16 @@ _outNode(StringInfo str, void *obj)
 			case T_ResTarget:
 				_outResTarget(str, obj);
 				break;
+<<<<<<< HEAD
 			case T_RangeSubselect:
 				_outRangeSubselect(str, obj);
 				break;
 			case T_RangeFunction:
 				_outRangeFunction(str, obj);
+=======
+			case T_SortBy:
+				_outSortBy(str, obj);
+>>>>>>> 49f001d81e
 				break;
 			case T_Constraint:
 				_outConstraint(str, obj);

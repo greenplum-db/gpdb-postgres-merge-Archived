@@ -6,7 +6,11 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.91 2009/06/11 14:49:11 momjian Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.79 2008/06/18 18:42:54 momjian Exp $
+>>>>>>> 49f001d81e
  *
  *	NOTES
  *		This is used both by the backend and by libpq, but should not be
@@ -416,7 +420,11 @@ extern size_t wchar2char(char *to, const wchar_t *from, size_t tolen);
 extern size_t char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen);
 #endif
 
+<<<<<<< HEAD
 extern void SetDefaultClientEncoding(void); /* Obsolete? */
+=======
+extern void SetDefaultClientEncoding(void);
+>>>>>>> 49f001d81e
 extern int	SetClientEncoding(int encoding, bool doit);
 extern void InitializeClientEncoding(void);
 extern int	pg_get_client_encoding(void);

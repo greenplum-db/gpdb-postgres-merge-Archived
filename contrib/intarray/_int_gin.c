@@ -1,5 +1,9 @@
 /*
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/contrib/intarray/_int_gin.c,v 1.10 2009/06/11 14:48:51 momjian Exp $
+=======
+ * $PostgreSQL: pgsql/contrib/intarray/_int_gin.c,v 1.8 2008/05/17 01:28:19 adunstan Exp $ 
+>>>>>>> 49f001d81e
  */
 #include "postgres.h"
 
@@ -90,10 +94,14 @@ ginint4_consistent(PG_FUNCTION_ARGS)
 {
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
+<<<<<<< HEAD
 
 	/* int32	nkeys = PG_GETARG_INT32(3); */
 	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(5);
+=======
+	bool	   *recheck = (bool *) PG_GETARG_POINTER(3);
+>>>>>>> 49f001d81e
 	bool		res = FALSE;
 
 	/*
@@ -157,7 +165,11 @@ ginint4_consistent(PG_FUNCTION_ARGS)
 
 				/* result is not lossy */
 				*recheck = false;
+<<<<<<< HEAD
 				res = gin_bool_consistent(query, check);
+=======
+				res = ginconsistent(query, check);
+>>>>>>> 49f001d81e
 			}
 			break;
 		default:

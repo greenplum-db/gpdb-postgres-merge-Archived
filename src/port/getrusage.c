@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/port/getrusage.c,v 1.17 2009/06/11 14:49:15 momjian Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/port/getrusage.c,v 1.15 2008/05/14 07:28:13 mha Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +51,11 @@ getrusage(int who, struct rusage * rusage)
 		errno = EINVAL;
 		return -1;
 	}
+<<<<<<< HEAD
 
+=======
+	
+>>>>>>> 49f001d81e
 	if (rusage == (struct rusage *) NULL)
 	{
 		errno = EFAULT;

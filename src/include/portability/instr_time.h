@@ -43,9 +43,15 @@
  * Beware of multiple evaluations of the macro arguments.
  *
  *
+<<<<<<< HEAD
  * Copyright (c) 2001-2010, PostgreSQL Global Development Group
  *
  * $PostgreSQL: pgsql/src/include/portability/instr_time.h,v 1.6 2010/02/13 02:34:15 tgl Exp $
+=======
+ * Copyright (c) 2001-2008, PostgreSQL Global Development Group
+ *
+ * $PostgreSQL: pgsql/src/include/portability/instr_time.h,v 1.2 2008/05/15 00:17:41 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -64,8 +70,11 @@ typedef struct timeval instr_time;
 
 #define INSTR_TIME_SET_CURRENT(t)	gettimeofday(&(t), NULL)
 
+<<<<<<< HEAD
 #define INSTR_TIME_ASSIGN(x,y) ((x).tv_sec = (y).tv_sec, (x).tv_usec = (y).tv_usec)
 
+=======
+>>>>>>> 49f001d81e
 #define INSTR_TIME_ADD(x,y) \
 	do { \
 		(x).tv_sec += (y).tv_sec; \
@@ -115,7 +124,12 @@ typedef struct timeval instr_time;
 
 #define INSTR_TIME_GET_MICROSEC(t) \
 	(((uint64) (t).tv_sec * (uint64) 1000000) + (uint64) (t).tv_usec)
+<<<<<<< HEAD
 #else							/* WIN32 */
+=======
+
+#else	/* WIN32 */
+>>>>>>> 49f001d81e
 
 typedef LARGE_INTEGER instr_time;
 
@@ -125,8 +139,11 @@ typedef LARGE_INTEGER instr_time;
 
 #define INSTR_TIME_SET_CURRENT(t)	QueryPerformanceCounter(&(t))
 
+<<<<<<< HEAD
 #define INSTR_TIME_ASSIGN(x,y) ((x).QuadPart = (y).QuadPart)
 
+=======
+>>>>>>> 49f001d81e
 #define INSTR_TIME_ADD(x,y) \
 	((x).QuadPart += (y).QuadPart)
 
@@ -145,7 +162,11 @@ typedef LARGE_INTEGER instr_time;
 #define INSTR_TIME_GET_MICROSEC(t) \
 	((uint64) (((double) (t).QuadPart * 1000000.0) / GetTimerFrequency()))
 
+<<<<<<< HEAD
 static inline double
+=======
+static __inline__ double
+>>>>>>> 49f001d81e
 GetTimerFrequency(void)
 {
 	LARGE_INTEGER f;
@@ -153,6 +174,10 @@ GetTimerFrequency(void)
 	QueryPerformanceFrequency(&f);
 	return (double) f.QuadPart;
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 49f001d81e
 #endif   /* WIN32 */
 
 #endif   /* INSTR_TIME_H */

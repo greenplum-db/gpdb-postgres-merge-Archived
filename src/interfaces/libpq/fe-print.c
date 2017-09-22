@@ -10,7 +10,11 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-print.c
+=======
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.76 2008/05/17 23:34:44 momjian Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.270 2008/04/01 00:48:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.272 2008/05/12 00:00:52 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,6 +64,7 @@
 #include "optimizer/var.h"
 #include "rewrite/rewriteDefine.h"
 #include "storage/fd.h"
+#include "storage/lmgr.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -1282,10 +1283,18 @@ equalRuleLocks(RuleLock *rlock1, RuleLock *rlock2)
 /*
  *		RelationBuildDesc
  *
+<<<<<<< HEAD
  *		Build a relation descriptor.  The caller must hold at least
  *		AccessShareLock on the target relid.
  *
  *		The new descriptor is inserted into the hash table if insertIt is true.
+=======
+ *		Build a relation descriptor --- either a new one, or by
+ *		recycling the given old relation object.  The latter case
+ *		supports rebuilding a relcache entry without invalidating
+ *		pointers to it.  The caller must hold at least
+ *		AccessShareLock on the target relid.
+>>>>>>> 49f001d81e
  *
  *		Returns NULL if no pg_class row could be found for the given relid
  *		(suggesting we are trying to access a just-deleted relation).
@@ -2228,12 +2237,15 @@ RelationClose(Relation relation)
  *	We assume that at the time we are called, we have at least AccessShareLock
  *	on the target index.  (Note: in the calls from RelationClearRelation,
  *	this is legitimate because we know the rel has positive refcount.)
+<<<<<<< HEAD
  *
  *	If the target index is an index on pg_class or pg_index, we'd better have
  *	previously gotten at least AccessShareLock on its underlying catalog,
  *	else we are at risk of deadlock against someone trying to exclusive-lock
  *	the heap and index in that order.  This is ensured in current usage by
  *	only applying this to indexes being opened or having positive refcount.
+=======
+>>>>>>> 49f001d81e
  */
 static void
 RelationReloadIndexInfo(Relation relation)
@@ -2392,6 +2404,7 @@ RelationDestroyRelation(Relation relation)
  *
  *	 Physically blow away a relation cache entry, or reset it and rebuild
  *	 it from scratch (that is, from catalog entries).  The latter path is
+<<<<<<< HEAD
  *	 used when we are notified of a change to an open relation (one with
  *	 refcount > 0).
  *
@@ -2405,6 +2418,14 @@ RelationDestroyRelation(Relation relation)
  *	 The "rebuild" parameter is redundant in current usage because it has
  *	 to match the relation's refcnt status, but we keep it as a crosscheck
  *	 that we're doing what the caller expects.
+=======
+ *	 usually used when we are notified of a change to an open relation
+ *	 (one with refcount > 0).  However, this routine just does whichever
+ *	 it's told to do; callers must determine which they want.
+ *
+ *	 NB: when rebuilding, we'd better hold some lock on the relation.
+ *	 In current usages this is presumed true because it has refcnt > 0.
+>>>>>>> 49f001d81e
  */
 static void
 RelationClearRelation(Relation relation, bool rebuild)
@@ -3438,7 +3459,33 @@ RelationCacheInitializePhase3(void)
 		load_critical_index(TriggerRelidNameIndexId,
 							TriggerRelationId);
 
+<<<<<<< HEAD
 #define NUM_CRITICAL_LOCAL_INDEXES	9	/* fix if you change list above */
+=======
+#define LOAD_CRIT_INDEX(indexoid) \
+		do { \
+			LockRelationOid(indexoid, AccessShareLock); \
+			ird = RelationBuildDesc(indexoid, NULL); \
+			if (ird == NULL) \
+				elog(PANIC, "could not open critical system index %u", \
+					 indexoid); \
+			ird->rd_isnailed = true; \
+			ird->rd_refcnt = 1; \
+			UnlockRelationOid(indexoid, AccessShareLock); \
+		} while (0)
+
+		LOAD_CRIT_INDEX(ClassOidIndexId);
+		LOAD_CRIT_INDEX(AttributeRelidNumIndexId);
+		LOAD_CRIT_INDEX(IndexRelidIndexId);
+		LOAD_CRIT_INDEX(OpclassOidIndexId);
+		LOAD_CRIT_INDEX(AccessMethodStrategyIndexId);
+		LOAD_CRIT_INDEX(AccessMethodProcedureIndexId);
+		LOAD_CRIT_INDEX(OperatorOidIndexId);
+		LOAD_CRIT_INDEX(RewriteRelRulenameIndexId);
+		LOAD_CRIT_INDEX(TriggerRelidNameIndexId);
+
+#define NUM_CRITICAL_INDEXES	9		/* fix if you change list above */
+>>>>>>> 49f001d81e
 
 		criticalRelcachesBuilt = true;
 	}

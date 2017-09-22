@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.124 2008/04/06 23:43:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.128 2008/07/18 03:32:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 
 #include "pl_gram.h"
 
-#include "access/heapam.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_attribute.h"
@@ -439,6 +438,7 @@ do_compile(FunctionCallInfo fcinfo,
 				}
 
 				/* Remember arguments in appropriate arrays */
+<<<<<<< HEAD
 				switch (argmode)
 				{
 					/* input modes */
@@ -466,6 +466,16 @@ do_compile(FunctionCallInfo fcinfo,
 										argmode)));
 						break;								 
 				}
+=======
+				if (argmode == PROARGMODE_IN ||
+					argmode == PROARGMODE_INOUT ||
+					argmode == PROARGMODE_VARIADIC)
+					in_arg_varnos[num_in_args++] = argvariable->dno;
+				if (argmode == PROARGMODE_OUT ||
+					argmode == PROARGMODE_INOUT ||
+					argmode == PROARGMODE_TABLE)
+					out_arg_variables[num_out_args++] = argvariable;
+>>>>>>> 49f001d81e
 
 				/* Add to namespace under the $n name */
 				plpgsql_ns_additem(argitemtype, argvariable->dno, buf);
@@ -1922,6 +1932,42 @@ build_datatype(HeapTuple typeTup, int32 typmod)
 	typ->atttypmod = typmod;
 
 	return typ;
+}
+
+/*
+ *  plpgsql_recognize_err_condition
+ * 		Check condition name and translate it to SQLSTATE.
+ *
+ * Note: there are some cases where the same condition name has multiple
+ * entries in the table.  We arbitrarily return the first match.
+ */
+int
+plpgsql_recognize_err_condition(const char *condname, bool allow_sqlstate)
+{
+	int			i;
+
+	if (allow_sqlstate)
+	{
+		if (strlen(condname) == 5 &&
+			strspn(condname, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ") == 5)
+			return MAKE_SQLSTATE(condname[0],
+								 condname[1],
+								 condname[2],
+								 condname[3],
+								 condname[4]);
+	}
+
+	for (i = 0; exception_label_map[i].label != NULL; i++)
+	{
+		if (strcmp(condname, exception_label_map[i].label) == 0)
+			return exception_label_map[i].sqlerrstate;
+	}
+
+	ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_OBJECT),
+			 errmsg("unrecognized exception condition \"%s\"",
+					condname)));
+	return 0;					/* keep compiler quiet */
 }
 
 /*

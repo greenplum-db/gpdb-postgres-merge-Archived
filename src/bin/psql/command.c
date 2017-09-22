@@ -3,7 +3,11 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * src/bin/psql/command.c
+=======
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.192 2008/07/01 00:08:18 momjian Exp $
+>>>>>>> 49f001d81e
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -65,6 +69,15 @@ static bool get_create_function_cmd(PGconn *conn, Oid oid, PQExpBuffer buf);
 static void minimal_error_message(PGresult *res);
 
 static void printSSLInfo(void);
+
+#ifdef WIN32
+static void checkWin32Codepage(void);
+#endif
+
+
+#ifdef USE_SSL
+static void printSSLInfo(void);
+#endif
 
 #ifdef WIN32
 static void checkWin32Codepage(void);
@@ -1050,8 +1063,12 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "timing") == 0)
 	{
 		char	   *opt = psql_scan_slash_option(scan_state,
+<<<<<<< HEAD
 												 OT_NORMAL, NULL, false);
 
+=======
+											     OT_NORMAL, NULL, false);
+>>>>>>> 49f001d81e
 		if (opt)
 			pset.timing = ParseVariableBool(opt);
 		else
@@ -1372,6 +1389,7 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	 * Replace the old connection with the new one, and update
 	 * connection-dependent variables.
 	 */
+	connection_warnings();
 	PQsetNoticeProcessor(n_conn, NoticeProcessor, NULL);
 	pset.db = n_conn;
 	SyncVariables();
@@ -1407,7 +1425,11 @@ do_connect(char *dbname, char *user, char *host, char *port)
 
 
 void
+<<<<<<< HEAD
 connection_warnings(bool in_startup)
+=======
+connection_warnings(void)
+>>>>>>> 49f001d81e
 {
 	if (!pset.quiet && !pset.notty)
 	{
@@ -1430,23 +1452,42 @@ connection_warnings(bool in_startup)
 				server_version = server_ver_str;
 			}
 
+<<<<<<< HEAD
 			printf(_("%s (%s, server %s)\n"),
 				   pset.progname, PG_VERSION, server_version);
 		}
 		/* For version match, only print psql banner on startup. */
 		else if (in_startup)
+=======
+			printf(_("%s (%s, server %s)\n"), 
+			pset.progname, PG_VERSION, server_version);
+		}
+		else
+>>>>>>> 49f001d81e
 			printf("%s (%s)\n", pset.progname, PG_VERSION);
 
 		if (pset.sversion / 100 != client_ver / 100)
 			printf(_("WARNING: %s version %d.%d, server version %d.%d.\n"
+<<<<<<< HEAD
 					 "         Some psql features might not work.\n"),
 				 pset.progname, client_ver / 10000, (client_ver / 100) % 100,
 				   pset.sversion / 10000, (pset.sversion / 100) % 100);
+=======
+				 "         Some psql features might not work.\n"),
+				pset.progname, client_ver / 10000, (client_ver / 100) % 100,
+				pset.sversion / 10000, (pset.sversion / 100) % 100);
+>>>>>>> 49f001d81e
 
 #ifdef WIN32
 		checkWin32Codepage();
 #endif
+<<<<<<< HEAD
 		printSSLInfo();
+=======
+#ifdef USE_SSL
+		printSSLInfo();
+#endif
+>>>>>>> 49f001d81e
 	}
 }
 
@@ -1456,10 +1497,17 @@ connection_warnings(bool in_startup)
  *
  * Prints information about the current SSL connection, if SSL is in use
  */
+<<<<<<< HEAD
 static void
 printSSLInfo(void)
 {
 #ifdef USE_SSL
+=======
+#ifdef USE_SSL
+static void
+printSSLInfo(void)
+{
+>>>>>>> 49f001d81e
 	int			sslbits = -1;
 	SSL		   *ssl;
 
@@ -1470,6 +1518,7 @@ printSSLInfo(void)
 	SSL_get_cipher_bits(ssl, &sslbits);
 	printf(_("SSL connection (cipher: %s, bits: %i)\n"),
 		   SSL_get_cipher(ssl), sslbits);
+<<<<<<< HEAD
 #else
 
 	/*
@@ -1481,6 +1530,10 @@ printSSLInfo(void)
 		printf(_("SSL connection (unknown cipher)\n"));
 #endif
 }
+=======
+}
+#endif
+>>>>>>> 49f001d81e
 
 
 /*
@@ -1501,7 +1554,11 @@ checkWin32Codepage(void)
 	{
 		printf(_("WARNING: Console code page (%u) differs from Windows code page (%u)\n"
 				 "         8-bit characters might not work correctly. See psql reference\n"
+<<<<<<< HEAD
 				 "         page \"Notes for Windows users\" for details.\n"),
+=======
+			     "         page \"Notes for Windows users\" for details.\n"),
+>>>>>>> 49f001d81e
 			   concp, wincp);
 	}
 }

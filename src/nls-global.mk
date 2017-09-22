@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # $PostgreSQL: pgsql/src/nls-global.mk,v 1.20 2009/01/20 09:58:50 petere Exp $
+=======
+# $PostgreSQL: pgsql/src/nls-global.mk,v 1.14 2008/05/17 21:27:12 momjian Exp $
+>>>>>>> 49f001d81e
 
 # Common rules for Native Language Support (NLS)
 #
@@ -80,7 +84,11 @@ uninstall-po:
 
 clean-po:
 	$(if $(MO_FILES),rm -f $(MO_FILES))
+<<<<<<< HEAD
 	@$(if $(wildcard po/*.po.new),rm -f po/*.po.new)
+=======
+	@$(if $(PO_FILES),rm -f $(addsuffix .old, $(PO_FILES)))
+>>>>>>> 49f001d81e
 	rm -f po/$(CATALOG_NAME).pot
 
 

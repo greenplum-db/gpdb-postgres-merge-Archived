@@ -591,15 +591,20 @@ SELECT * FROM test_in_out_params('test_in');
 
 -- this doesn't work yet :-(
 SELECT * FROM test_in_out_params_multi('test_in');
+<<<<<<< HEAD
 ERROR:  length of returned sequence did not match number of columns in row
 CONTEXT:  while creating return value
 PL/Python function "test_in_out_params_multi"
+=======
+ERROR:  plpython functions cannot return type record
+>>>>>>> 49f001d81e
 SELECT * FROM test_inout_params('test_in');
      first     
 ---------------
  test_in_inout
 (1 row)
 
+<<<<<<< HEAD
 SELECT (split(10)).*; 
  a  | b  
 ----+----
@@ -654,3 +659,5 @@ select multiline3()
    # This is not a comment so the quotes at the end of the line do end the string 
 (5 rows)
 
+=======
+>>>>>>> 49f001d81e

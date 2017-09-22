@@ -11,7 +11,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.145 2008/10/04 21:56:53 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.142 2008/06/17 14:51:32 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -72,6 +76,7 @@ typedef struct
 	int			rtoffset;
 } fix_upper_expr_context;
 
+<<<<<<< HEAD
 typedef struct
 {
 	plan_tree_base_prefix base;
@@ -80,6 +85,8 @@ typedef struct
 
 } cdb_extract_plan_dependencies_context;
 
+=======
+>>>>>>> 49f001d81e
 /*
  * Check if a Const node is a regclass value.  We accept plain OID too,
  * since a regclass Const will get folded to that type if it's an argument
@@ -1263,6 +1270,7 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
             /* Fill in OpExpr operator ids. */
             fix_scan_expr_walker(exprCopy, context);
 
+<<<<<<< HEAD
             /* Replace the Var node with a copy of the defining expr. */
 			return (Node *) exprCopy;
 		}
@@ -1270,6 +1278,14 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 		{
 			return (Node *) var;
 		}
+=======
+		/* Check for regclass reference */
+		if (ISREGCLASSCONST(con))
+			context->glob->relationOids =
+				lappend_oid(context->glob->relationOids,
+							DatumGetObjectId(con->constvalue));
+		/* Fall through to let expression_tree_mutator copy it */
+>>>>>>> 49f001d81e
 	}
 	fix_expr_common(context->glob, node);
 	return expression_tree_mutator(node, fix_scan_expr_mutator,
@@ -1282,12 +1298,22 @@ fix_scan_expr_walker(Node *node, fix_scan_expr_context *context)
 	if (node == NULL)
 		return false;
 
+<<<<<<< HEAD
 	/*
 	 * fix_expr_common will look up and set operator opcodes in the
 	 * nodes. That's not needed, as ORCA has set those already, but
 	 * shouldn't do any harm either.
 	 */
 	fix_expr_common(context->glob, node);
+=======
+		/* Check for regclass reference */
+		if (ISREGCLASSCONST(con))
+			context->glob->relationOids =
+				lappend_oid(context->glob->relationOids,
+							DatumGetObjectId(con->constvalue));
+		return false;
+	}
+>>>>>>> 49f001d81e
 	return expression_tree_walker(node, fix_scan_expr_walker,
 								  (void *) context);
 }
@@ -2087,7 +2113,34 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 		if (newvar)
 			return (Node *) newvar;
 	}
+<<<<<<< HEAD
 	fix_expr_common(context->glob, node);
+=======
+
+	/*
+	 * Since we update opcode info in-place, this part could possibly scribble
+	 * on the planner's input data structures, but it's OK.
+	 */
+	if (IsA(node, OpExpr))
+		set_opfuncid((OpExpr *) node);
+	else if (IsA(node, DistinctExpr))
+		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
+	else if (IsA(node, NullIfExpr))
+		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
+	else if (IsA(node, ScalarArrayOpExpr))
+		set_sa_opfuncid((ScalarArrayOpExpr *) node);
+	else if (IsA(node, Const))
+	{
+		Const	   *con = (Const *) node;
+
+		/* Check for regclass reference */
+		if (ISREGCLASSCONST(con))
+			context->glob->relationOids =
+				lappend_oid(context->glob->relationOids,
+							DatumGetObjectId(con->constvalue));
+		/* Fall through to let expression_tree_mutator copy it */
+	}
+>>>>>>> 49f001d81e
 	return expression_tree_mutator(node,
 								   fix_join_expr_mutator,
 								   (void *) context);
@@ -2162,7 +2215,34 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
 		if (newvar)
 			return (Node *) newvar;
 	}
+<<<<<<< HEAD
 	fix_expr_common(context->glob, node);
+=======
+
+	/*
+	 * Since we update opcode info in-place, this part could possibly scribble
+	 * on the planner's input data structures, but it's OK.
+	 */
+	if (IsA(node, OpExpr))
+		set_opfuncid((OpExpr *) node);
+	else if (IsA(node, DistinctExpr))
+		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
+	else if (IsA(node, NullIfExpr))
+		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
+	else if (IsA(node, ScalarArrayOpExpr))
+		set_sa_opfuncid((ScalarArrayOpExpr *) node);
+	else if (IsA(node, Const))
+	{
+		Const	   *con = (Const *) node;
+
+		/* Check for regclass reference */
+		if (ISREGCLASSCONST(con))
+			context->glob->relationOids =
+				lappend_oid(context->glob->relationOids,
+							DatumGetObjectId(con->constvalue));
+		/* Fall through to let expression_tree_mutator copy it */
+	}
+>>>>>>> 49f001d81e
 	return expression_tree_mutator(node,
 								   fix_upper_expr_mutator,
 								   (void *) context);

@@ -1,5 +1,9 @@
 /*
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/contrib/hstore/hstore_io.c,v 1.11 2009/06/11 14:48:51 momjian Exp $
+=======
+ * $PostgreSQL: pgsql/contrib/hstore/hstore_io.c,v 1.8 2008/05/12 00:00:42 alvherre Exp $
+>>>>>>> 49f001d81e
  */
 #include "postgres.h"
 

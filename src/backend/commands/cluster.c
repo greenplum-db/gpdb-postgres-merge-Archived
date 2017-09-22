@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.172 2008/03/26 21:10:37 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.177 2008/06/19 00:46:04 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/relscan.h"
 #include "access/rewriteheap.h"
 #include "access/transam.h"
 #include "access/xact.h"
@@ -43,6 +44,7 @@
 #include "commands/trigger.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
+#include "storage/bufmgr.h"
 #include "storage/procarray.h"
 #include "utils/acl.h"
 #include "utils/fmgroids.h"
@@ -234,6 +236,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		rvs = get_tables_to_cluster(cluster_context);
 
 		/* Commit to get out of starting transaction */
+		PopActiveSnapshot();
 		CommitTransactionCommand();
 
 		/* Ok, now that we've got them all, cluster them one by one */
@@ -244,6 +247,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 			/* Start a new transaction for each relation. */
 			StartTransactionCommand();
 			/* functions in indexes may want a snapshot set */
+<<<<<<< HEAD
 			ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
 
 			bool dispatch = cluster_rel(rvtc, true, stmt, false);
@@ -259,6 +263,11 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 											GetAssignedOidsForDispatch(),
 											NULL);
 			}
+=======
+			PushActiveSnapshot(GetTransactionSnapshot());
+			cluster_rel(rvtc, true);
+			PopActiveSnapshot();
+>>>>>>> 49f001d81e
 			CommitTransactionCommand();
 		}
 
@@ -720,9 +729,12 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace,
 
 	/*
 	 * Need to make a copy of the tuple descriptor, since
-	 * heap_create_with_catalog modifies it.
+	 * heap_create_with_catalog modifies it.  Note that the NewHeap will
+	 * not receive any of the defaults or constraints associated with the
+	 * OldHeap; we don't need 'em, and there's no reason to spend cycles
+	 * inserting them into the catalogs only to delete them.
 	 */
-	tupdesc = CreateTupleDescCopyConstr(OldHeapDesc);
+	tupdesc = CreateTupleDescCopy(OldHeapDesc);
 
 	/*
 	 * Use options of the old heap for new heap.
@@ -743,7 +755,11 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace,
 										  InvalidOid,
 										  OldHeap->rd_rel->relowner,
 										  tupdesc,
+<<<<<<< HEAD
 										  OldHeap->rd_rel->relam,
+=======
+										  NIL,
+>>>>>>> 49f001d81e
 										  OldHeap->rd_rel->relkind,
 										  OldHeap->rd_rel->relstorage,
 										  OldHeap->rd_rel->relisshared,
@@ -893,8 +909,14 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 
 		CHECK_FOR_INTERRUPTS();
 
+<<<<<<< HEAD
 		/* -------- MirroredLock ---------- */
 		MIRROREDLOCK_BUFMGR_LOCK;
+=======
+		/* Since we used no scan keys, should never need to recheck */
+		if (scan->xs_recheck)
+			elog(ERROR, "CLUSTER does not support lossy index conditions");
+>>>>>>> 49f001d81e
 
 		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_SHARE);
 

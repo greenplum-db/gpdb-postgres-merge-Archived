@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.555 2008/03/30 04:08:14 neilc Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.563 2008/06/27 00:36:16 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -281,6 +281,7 @@ AC_SUBST(DTRACEFLAGS)])
 AC_SUBST(enable_dtrace)
 
 #
+<<<<<<< HEAD
 # TAP tests
 #
 PGAC_ARG_BOOL(enable, tap-tests, no,
@@ -294,6 +295,14 @@ AC_MSG_CHECKING([for block size])
 PGAC_ARG_REQ(with, blocksize, [  --with-blocksize=BLOCKSIZE  set block size in kB [[32]]],
              [blocksize=$withval],
              [blocksize=32])
+=======
+# Block size
+#
+AC_MSG_CHECKING([for block size])
+PGAC_ARG_REQ(with, blocksize, [  --with-blocksize=BLOCKSIZE  set table block size in kB [[8]]],
+             [blocksize=$withval],
+             [blocksize=8])
+>>>>>>> 49f001d81e
 case ${blocksize} in
   1) BLCKSZ=1024;;
   2) BLCKSZ=2048;;
@@ -320,6 +329,7 @@ AC_DEFINE_UNQUOTED([BLCKSZ], ${BLCKSZ}, [
 ]) 
 
 #
+<<<<<<< HEAD
 # File segment size
 #
 AC_MSG_CHECKING([for segment size])
@@ -328,6 +338,17 @@ PGAC_ARG_REQ(with, segsize, [  --with-segsize=SEGSIZE  set segment size in GB [[
              [segsize=1])
 # this expression is set up to avoid unnecessary integer overflow
 RELSEG_SIZE=`expr '(' 1024 '*' ${segsize} / ${blocksize} ')' '*' 1024`
+=======
+# Relation segment size
+#
+AC_MSG_CHECKING([for segment size])
+PGAC_ARG_REQ(with, segsize, [  --with-segsize=SEGSIZE  set table segment size in GB [[1]]],
+             [segsize=$withval],
+             [segsize=1])
+# this expression is set up to avoid unnecessary integer overflow
+# blocksize is already guaranteed to be a factor of 1024
+RELSEG_SIZE=`expr '(' 1024 / ${blocksize} ')' '*' ${segsize} '*' 1024`
+>>>>>>> 49f001d81e
 test $? -eq 0 || exit 1
 AC_MSG_RESULT([${segsize}GB])
 
@@ -349,6 +370,64 @@ AC_DEFINE_UNQUOTED([RELSEG_SIZE], ${RELSEG_SIZE}, [
 
  Changing RELSEG_SIZE requires an initdb.
 ])
+<<<<<<< HEAD
+=======
+
+#
+# WAL block size
+#
+AC_MSG_CHECKING([for WAL block size])
+PGAC_ARG_REQ(with, wal-blocksize, [  --with-wal-blocksize=BLOCKSIZE  set WAL block size in kB [[8]]],
+             [wal_blocksize=$withval],
+             [wal_blocksize=8])
+case ${wal_blocksize} in
+  1) XLOG_BLCKSZ=1024;;
+  2) XLOG_BLCKSZ=2048;;
+  4) XLOG_BLCKSZ=4096;;
+  8) XLOG_BLCKSZ=8192;;
+ 16) XLOG_BLCKSZ=16384;;
+ 32) XLOG_BLCKSZ=32768;;
+ 64) XLOG_BLCKSZ=65536;;
+  *) AC_MSG_ERROR([Invalid WAL block size. Allowed values are 1,2,4,8,16,32,64.])
+esac
+AC_MSG_RESULT([${wal_blocksize}kB])
+
+AC_DEFINE_UNQUOTED([XLOG_BLCKSZ], ${XLOG_BLCKSZ}, [
+ Size of a WAL file block.  This need have no particular relation to BLCKSZ.
+ XLOG_BLCKSZ must be a power of 2, and if your system supports O_DIRECT I/O,
+ XLOG_BLCKSZ must be a multiple of the alignment requirement for direct-I/O
+ buffers, else direct I/O may fail.
+
+ Changing XLOG_BLCKSZ requires an initdb.
+]) 
+
+#
+# WAL segment size
+#
+AC_MSG_CHECKING([for WAL segment size])
+PGAC_ARG_REQ(with, wal-segsize, [  --with-wal-segsize=SEGSIZE  set WAL segment size in MB [[16]]],
+             [wal_segsize=$withval],
+             [wal_segsize=16])
+case ${wal_segsize} in
+  1) ;;
+  2) ;;
+  4) ;;
+  8) ;;
+ 16) ;;
+ 32) ;;
+ 64) ;;
+  *) AC_MSG_ERROR([Invalid WAL segment size. Allowed values are 1,2,4,8,16,32,64.])
+esac
+AC_MSG_RESULT([${wal_segsize}MB])
+
+AC_DEFINE_UNQUOTED([XLOG_SEG_SIZE], [(${wal_segsize} * 1024 * 1024)], [
+ XLOG_SEG_SIZE is the size of a single WAL file.  This must be a power of 2
+ and larger than XLOG_BLCKSZ (preferably, a great deal larger than
+ XLOG_BLCKSZ).
+
+ Changing XLOG_SEG_SIZE requires an initdb.
+])
+>>>>>>> 49f001d81e
 
 #
 # C compiler
@@ -1144,12 +1223,15 @@ AC_SUBST(ELF_SYS)
 CPPFLAGS="$CPPFLAGS $INCLUDES"
 LDFLAGS="$LDFLAGS $LIBDIRS"
 
+<<<<<<< HEAD
 AC_ARG_VAR(LDFLAGS_EX, [extra linker flags for linking executables only])
 AC_ARG_VAR(LDFLAGS_SL, [extra linker flags for linking shared libraries only])
 
 AC_MSG_NOTICE([using CPPFLAGS=$CPPFLAGS])
 AC_MSG_NOTICE([using LDFLAGS=$LDFLAGS])
 
+=======
+>>>>>>> 49f001d81e
 AC_ARG_VAR(LDFLAGS_SL)
 
 PGAC_PROG_LD
@@ -2124,6 +2206,39 @@ AC_CHECK_SIZEOF([unsigned long])
 AC_CHECK_SIZEOF([void *])
 AC_CHECK_SIZEOF([size_t])
 
+# Decide whether float4 is passed by value: user-selectable, enabled by default
+AC_MSG_CHECKING([whether to build with float4 passed by value])   
+PGAC_ARG_BOOL(enable, float4-byval, yes, [  --disable-float4-byval  disable float4 passed by value],
+              [AC_DEFINE([USE_FLOAT4_BYVAL], 1,
+                         [Define to 1 if you want float4 values to be passed by value. (--enable-float4-byval)])
+               float4passbyval=true],
+              [float4passbyval=false])
+AC_MSG_RESULT([$enable_float4_byval])
+AC_DEFINE_UNQUOTED([FLOAT4PASSBYVAL], [$float4passbyval], [float4 values are passed by value if 'true', by reference if 'false'])
+
+# Decide whether float8 is passed by value.
+# Note: this setting also controls int8 and related types such as timestamp.
+# If sizeof(Datum) >= 8, this is user-selectable, enabled by default.
+# If not, trying to select it is an error.
+AC_MSG_CHECKING([whether to build with float8 passed by value])   
+if test $ac_cv_sizeof_unsigned_long -ge 8 ; then
+  PGAC_ARG_BOOL(enable, float8-byval, yes, [  --disable-float8-byval  disable float8 passed by value])
+else
+  PGAC_ARG_BOOL(enable, float8-byval, no, [  --disable-float8-byval  disable float8 passed by value])
+  if test "$enable_float8_byval" = yes ; then
+    AC_MSG_ERROR([--enable-float8-byval is not supported on 32-bit platforms.])
+  fi
+fi
+if test "$enable_float8_byval" = yes ; then
+  AC_DEFINE([USE_FLOAT8_BYVAL], 1,
+            [Define to 1 if you want float8, int8, etc values to be passed by value. (--enable-float8-byval)])
+  float8passbyval=true
+else
+  float8passbyval=false
+fi
+AC_MSG_RESULT([$enable_float8_byval])
+AC_DEFINE_UNQUOTED([FLOAT8PASSBYVAL], [$float8passbyval], [float8, int8, and related values are passed by value if 'true', by reference if 'false'])
+
 # Determine memory alignment requirements for the basic C data types.
 
 AC_CHECK_ALIGNOF(short)
@@ -2205,11 +2320,17 @@ AC_SUBST(enable_largefile)
 # Check for largefile support (must be after AC_SYS_LARGEFILE)
 AC_CHECK_SIZEOF([off_t])
 
+<<<<<<< HEAD
 if test "$PORTNAME" != "win32"; then
 # If we don't have largefile support, can't handle segsize >= 2GB.
 if test "$ac_cv_sizeof_off_t" -lt 8 -a "$segsize" != "1"; then
    AC_MSG_ERROR([Large file support is not enabled. Segment size cannot be larger than 1GB.])
 fi
+=======
+# If we don't have largefile support, can't handle segsize >= 2GB.
+if test "$ac_cv_sizeof_off_t" -lt 8 -a "$segsize" != "1"; then 
+   AC_MSG_ERROR([Large file support is not enabled. Segment size cannot be larger than 1GB.]) 
+>>>>>>> 49f001d81e
 fi
 
 # SunOS doesn't handle negative byte comparisons properly with +/- return
@@ -2350,10 +2471,16 @@ AC_MSG_WARN([*** skipping thread test on Win32])
 fi
 fi
 
+<<<<<<< HEAD
 # If compiler will take -Wl,--as-needed (or various platform-specific
 # spellings thereof) then add that to LDFLAGS.  This is much easier than
 # trying to filter LIBS to the minimum for each executable.
 # (Note that shared library links won't use this switch, though.)
+=======
+# If compiler will take -Wl,--as-needed then add that to LDFLAGS.
+# This is much easier than trying to filter LIBS to the minimum for each
+# executable.  (Note that shared library links won't use this switch, though.)
+>>>>>>> 49f001d81e
 # On (at least) some Red-Hat-derived systems, this switch breaks linking to
 # libreadline; therefore we postpone testing it until we know what library
 # dependencies readline has.  The test code will try to link with $LIBS.
@@ -2362,6 +2489,7 @@ if test "$with_readline" = yes; then
 else
   link_test_func=exit
 fi
+<<<<<<< HEAD
 
 if test "$PORTNAME" = "openbsd"; then
   PGAC_PROG_CC_LDFLAGS_OPT([-Wl,-Bdynamic], $link_test_func)
@@ -2369,13 +2497,26 @@ else
   PGAC_PROG_CC_LDFLAGS_OPT([-Wl,--as-needed], $link_test_func)
 fi
 
+=======
+if test "$PORTNAME" != "darwin"; then
+  PGAC_PROG_CC_LDFLAGS_OPT([-Wl,--as-needed], $link_test_func)
+else
+  # On Darwin it's spelled -Wl,-dead_strip_dylibs, but don't try that elsewhere
+  PGAC_PROG_CC_LDFLAGS_OPT([-Wl,-dead_strip_dylibs], $link_test_func)
+fi
+
+
+>>>>>>> 49f001d81e
 # Begin output steps
 
 AC_MSG_NOTICE([using CFLAGS=$CFLAGS])
 AC_MSG_NOTICE([using CPPFLAGS=$CPPFLAGS])
 AC_MSG_NOTICE([using LDFLAGS=$LDFLAGS])
+<<<<<<< HEAD
 AC_MSG_NOTICE([using LIBS=$LIBS])
 
+=======
+>>>>>>> 49f001d81e
 
 # prepare build tree if outside source tree
 # Note 1: test -ef might not exist, but it's more reliable than `pwd`.

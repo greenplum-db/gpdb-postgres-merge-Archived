@@ -222,12 +222,20 @@ if (sqlca.sqlcode < 0) goto error;}
 
 	/* This cannot fail, thus we don't get an exit value not equal 0. */
 	/* However, it still test the precompiler output. */
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select 1", ECPGt_EOIT, 
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  1     ", ECPGt_EOIT, 
+>>>>>>> 49f001d81e
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 64 "whenever.pgc"
 
+<<<<<<< HEAD
 if (sqlca.sqlwarn[0] == 'W') warn ( );
+=======
+if (sqlca.sqlwarn[0] == 'W') warn (  );
+>>>>>>> 49f001d81e
 #line 64 "whenever.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
@@ -236,7 +244,11 @@ if (sqlca.sqlcode < 0) exit (1);}
 	{ ECPGtrans(__LINE__, NULL, "rollback");
 #line 65 "whenever.pgc"
 
+<<<<<<< HEAD
 if (sqlca.sqlwarn[0] == 'W') warn ( );
+=======
+if (sqlca.sqlwarn[0] == 'W') warn (  );
+>>>>>>> 49f001d81e
 #line 65 "whenever.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}

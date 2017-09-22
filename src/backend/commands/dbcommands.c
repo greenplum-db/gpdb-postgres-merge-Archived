@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.205 2008/03/26 21:10:37 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.209 2008/05/12 00:00:47 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,11 @@
 #include "access/heapam.h"
 #include "catalog/heap.h"
 #include "access/xact.h"
+<<<<<<< HEAD
 #include "access/transam.h"				/* InvalidTransactionId */
+=======
+#include "access/xlogutils.h"
+>>>>>>> 49f001d81e
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
@@ -47,6 +51,8 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
+#include "storage/bufmgr.h"
+#include "storage/lmgr.h"
 #include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/procarray.h"
@@ -78,6 +84,12 @@
 #include "cdb/cdbpersistentfilesysobj.h"
 
 #include "utils/pg_rusage.h"
+
+typedef struct
+{
+	Oid			src_dboid;		/* source (template) DB */
+	Oid			dest_dboid;		/* DB we are trying to create */
+} createdb_failure_params;
 
 typedef struct
 {
@@ -625,12 +637,15 @@ createdb(CreatedbStmt *stmt)
 	int			dbconnlimit = -1;
 	int			ctype_encoding;
 	createdb_failure_params fparms;
+<<<<<<< HEAD
 	bool		shouldDispatch = (Gp_role == GP_ROLE_DISPATCH);
 	Snapshot	snapshot;
 
 	if (shouldDispatch)
 		if (Persistent_BeforePersistenceWork())
 			elog(NOTICE, " Create database dispatch before persistence work!");
+=======
+>>>>>>> 49f001d81e
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
@@ -1314,6 +1329,26 @@ createdb(CreatedbStmt *stmt)
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(createdb_failure_callback,
 								PointerGetDatum(&fparms));
+<<<<<<< HEAD
+=======
+}
+
+/* Error cleanup callback for createdb */
+static void
+createdb_failure_callback(int code, Datum arg)
+{
+	createdb_failure_params *fparms = (createdb_failure_params *) DatumGetPointer(arg);
+
+	/*
+	 * Release lock on source database before doing recursive remove.
+	 * This is not essential but it seems desirable to release the lock
+	 * as soon as possible.
+	 */
+	UnlockSharedObject(DatabaseRelationId, fparms->src_dboid, 0, ShareLock);
+
+	/* Throw away any successfully copied subdirectories */
+	remove_dbtablespaces(fparms->dest_dboid);
+>>>>>>> 49f001d81e
 }
 
 /* Error cleanup callback for createdb */
@@ -2593,6 +2628,34 @@ dbase_redo(XLogRecPtr beginLoc  __attribute__((unused)), XLogRecPtr lsn  __attri
 		 */
 		copydir(src_path, dst_path, false);
 	}
+<<<<<<< HEAD
+=======
+	else if (info == XLOG_DBASE_DROP)
+	{
+		xl_dbase_drop_rec *xlrec = (xl_dbase_drop_rec *) XLogRecGetData(record);
+		char	   *dst_path;
+
+		dst_path = GetDatabasePath(xlrec->db_id, xlrec->tablespace_id);
+
+		/* Drop pages for this database that are in the shared buffer cache */
+		DropDatabaseBuffers(xlrec->db_id);
+
+		/* Also, clean out any entries in the shared free space map */
+		FreeSpaceMapForgetDatabase(xlrec->db_id);
+
+		/* Also, clean out any fsync requests that might be pending in md.c */
+		ForgetDatabaseFsyncRequests(xlrec->db_id);
+
+		/* Clean out the xlog relcache too */
+		XLogDropDatabase(xlrec->db_id);
+
+		/* And remove the physical files */
+		if (!rmtree(dst_path, true))
+			ereport(WARNING,
+					(errmsg("some useless files may be left behind in old database directory \"%s\"",
+							dst_path)));
+	}
+>>>>>>> 49f001d81e
 	else
 		elog(PANIC, "dbase_redo: unknown op code %u", info);
 }

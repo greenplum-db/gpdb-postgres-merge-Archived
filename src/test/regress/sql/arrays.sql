@@ -348,6 +348,7 @@ drop type _comptype;
 drop table comptable;
 drop type comptype;
 
+<<<<<<< HEAD
 -- Insert/update on a column that is array of composite
 
 create temp table t1 (f1 int8_tbl[], distkey int4) distributed by (distkey);
@@ -357,11 +358,18 @@ update t1 set f1[5].q2 = 43;
 select f1 from t1;
 
 create or replace function unnest1(anyarray)
+=======
+create or replace function unnest1(anyarray) 
+>>>>>>> 49f001d81e
 returns setof anyelement as $$
 select $1[s] from generate_subscripts($1,1) g(s);
 $$ language sql immutable;
 
+<<<<<<< HEAD
 create or replace function unnest2(anyarray)
+=======
+create or replace function unnest2(anyarray) 
+>>>>>>> 49f001d81e
 returns setof anyelement as $$
 select $1[s1][s2] from generate_subscripts($1,1) g1(s1),
                    generate_subscripts($1,2) g2(s2);
@@ -386,6 +394,7 @@ select array_fill(1, null, array[2,2]);
 select array_fill(1, array[2,2], null);
 select array_fill(1, array[3,3], array[1,1,1]);
 select array_fill(1, array[1,2,null]);
+<<<<<<< HEAD
 
 select string_to_array('1|2|3', '|');
 select string_to_array('1|2|3|', '|');
@@ -506,3 +515,5 @@ DROP FUNCTION int_agg_state (internal, int4);
 RESET SESSION AUTHORIZATION;
 DROP USER IF EXISTS user_internal_stype;
 -- end_ignore
+=======
+>>>>>>> 49f001d81e

@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.65 2008/03/26 21:10:37 alvherre Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.71 2008/06/19 00:46:03 alvherre Exp $
+>>>>>>> 49f001d81e
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -19,13 +23,17 @@
 
 #include "postgres.h"
 
-#include "access/genam.h"
-#include "access/heapam.h"
+#include "access/relscan.h"
 #include "access/transam.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+<<<<<<< HEAD
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+=======
+#include "storage/bufmgr.h"
+#include "utils/rel.h"
+>>>>>>> 49f001d81e
 #include "utils/tqual.h"
 
 
@@ -98,9 +106,9 @@ RelationGetIndexScan(Relation indexRelation,
 	ItemPointerSetInvalid(&scan->xs_ctup.t_self);
 	scan->xs_ctup.t_data = NULL;
 	scan->xs_cbuf = InvalidBuffer;
-	scan->xs_prev_xmax = InvalidTransactionId;
-	scan->xs_next_hot = InvalidOffsetNumber;
 	scan->xs_hot_dead = false;
+	scan->xs_next_hot = InvalidOffsetNumber;
+	scan->xs_prev_xmax = InvalidTransactionId;
 
 	/*
 	 * Let the AM fill in the key and any opaque data it wants.
@@ -297,11 +305,63 @@ systable_getnext(SysScanDesc sysscan)
 	HeapTuple	htup;
 
 	if (sysscan->irel)
+	{
 		htup = index_getnext(sysscan->iscan, ForwardScanDirection);
+		/*
+		 * We currently don't need to support lossy index operators for
+		 * any system catalog scan.  It could be done here, using the
+		 * scan keys to drive the operator calls, if we arranged to save
+		 * the heap attnums during systable_beginscan(); this is practical
+		 * because we still wouldn't need to support indexes on expressions.
+		 */
+		if (htup && sysscan->iscan->xs_recheck)
+			elog(ERROR, "system catalog scans with lossy index conditions are not implemented");
+	}
 	else
 		htup = heap_getnext(sysscan->scan, ForwardScanDirection);
 
 	return htup;
+}
+
+/*
+ * systable_recheck_tuple --- recheck visibility of most-recently-fetched tuple
+ *
+ * This is useful to test whether an object was deleted while we waited to
+ * acquire lock on it.
+ *
+ * Note: we don't actually *need* the tuple to be passed in, but it's a
+ * good crosscheck that the caller is interested in the right tuple.
+ */
+bool
+systable_recheck_tuple(SysScanDesc sysscan, HeapTuple tup)
+{
+	bool		result;
+
+	if (sysscan->irel)
+	{
+		IndexScanDesc scan = sysscan->iscan;
+
+		Assert(tup == &scan->xs_ctup);
+		Assert(BufferIsValid(scan->xs_cbuf));
+		/* must hold a buffer lock to call HeapTupleSatisfiesVisibility */
+		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_SHARE);
+		result = HeapTupleSatisfiesVisibility(tup, scan->xs_snapshot,
+											  scan->xs_cbuf);
+		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_UNLOCK);
+	}
+	else
+	{
+		HeapScanDesc scan = sysscan->scan;
+
+		Assert(tup == &scan->rs_ctup);
+		Assert(BufferIsValid(scan->rs_cbuf));
+		/* must hold a buffer lock to call HeapTupleSatisfiesVisibility */
+		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
+		result = HeapTupleSatisfiesVisibility(tup, scan->rs_snapshot,
+											  scan->rs_cbuf);
+		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
+	}
+	return result;
 }
 
 /*
@@ -320,5 +380,92 @@ systable_endscan(SysScanDesc sysscan)
 	else
 		heap_endscan(sysscan->scan);
 
+	pfree(sysscan);
+}
+
+
+/*
+ * systable_beginscan_ordered --- set up for ordered catalog scan
+ *
+ * These routines have essentially the same API as systable_beginscan etc,
+ * except that they guarantee to return multiple matching tuples in
+ * index order.  Also, for largely historical reasons, the index to use
+ * is opened and locked by the caller, not here.
+ *
+ * Currently we do not support non-index-based scans here.  (In principle
+ * we could do a heapscan and sort, but the uses are in places that
+ * probably don't need to still work with corrupted catalog indexes.)
+ * For the moment, therefore, these functions are merely the thinnest of
+ * wrappers around index_beginscan/index_getnext.  The main reason for their
+ * existence is to centralize possible future support of lossy operators
+ * in catalog scans.
+ */
+SysScanDesc
+systable_beginscan_ordered(Relation heapRelation,
+						   Relation indexRelation,
+						   Snapshot snapshot,
+						   int nkeys, ScanKey key)
+{
+	SysScanDesc sysscan;
+	int			i;
+
+	/* REINDEX can probably be a hard error here ... */
+	if (ReindexIsProcessingIndex(RelationGetRelid(indexRelation)))
+		elog(ERROR, "cannot do ordered scan on index \"%s\", because it is the current REINDEX target",
+			 RelationGetRelationName(indexRelation));
+	/* ... but we only throw a warning about violating IgnoreSystemIndexes */
+	if (IgnoreSystemIndexes)
+		elog(WARNING, "using index \"%s\" despite IgnoreSystemIndexes",
+			 RelationGetRelationName(indexRelation));
+
+	sysscan = (SysScanDesc) palloc(sizeof(SysScanDescData));
+
+	sysscan->heap_rel = heapRelation;
+	sysscan->irel = indexRelation;
+
+	/*
+	 * Change attribute numbers to be index column numbers.
+	 *
+	 * This code could be generalized to search for the index key numbers
+	 * to substitute, but for now there's no need.
+	 */
+	for (i = 0; i < nkeys; i++)
+	{
+		Assert(key[i].sk_attno == indexRelation->rd_index->indkey.values[i]);
+		key[i].sk_attno = i + 1;
+	}
+
+	sysscan->iscan = index_beginscan(heapRelation, indexRelation,
+									 snapshot, nkeys, key);
+	sysscan->scan = NULL;
+
+	return sysscan;
+}
+
+/*
+ * systable_getnext_ordered --- get next tuple in an ordered catalog scan
+ */
+HeapTuple
+systable_getnext_ordered(SysScanDesc sysscan, ScanDirection direction)
+{
+	HeapTuple	htup;
+
+	Assert(sysscan->irel);
+	htup = index_getnext(sysscan->iscan, direction);
+	/* See notes in systable_getnext */
+	if (htup && sysscan->iscan->xs_recheck)
+		elog(ERROR, "system catalog scans with lossy index conditions are not implemented");
+
+	return htup;
+}
+
+/*
+ * systable_endscan_ordered --- close scan, release resources
+ */
+void
+systable_endscan_ordered(SysScanDesc sysscan)
+{
+	Assert(sysscan->irel);
+	index_endscan(sysscan->iscan);
 	pfree(sysscan);
 }

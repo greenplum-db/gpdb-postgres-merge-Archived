@@ -7,7 +7,7 @@
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.39 2008/03/25 22:42:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.41 2008/07/18 03:32:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1031,7 +1031,22 @@ build_function_result_tupdesc_d(Datum proallargtypes,
 	{
 		char	   *pname;
 
+<<<<<<< HEAD
 		switch (argmodes[i])
+=======
+		if (argmodes[i] == PROARGMODE_IN ||
+			argmodes[i] == PROARGMODE_VARIADIC)
+			continue;
+		Assert(argmodes[i] == PROARGMODE_OUT ||
+			   argmodes[i] == PROARGMODE_INOUT ||
+			   argmodes[i] == PROARGMODE_TABLE);
+		outargtypes[numoutargs] = argtypes[i];
+		if (argnames)
+			pname = TextDatumGetCString(argnames[i]);
+		else
+			pname = NULL;
+		if (pname == NULL || pname[0] == '\0')
+>>>>>>> 49f001d81e
 		{
 			/* input modes */
 			case PROARGMODE_IN:

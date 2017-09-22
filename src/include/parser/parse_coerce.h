@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_coerce.h,v 1.75 2008/01/11 18:39:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_coerce.h,v 1.76 2008/07/30 17:05:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "parser/parse_node.h"
 
 
+<<<<<<< HEAD
 /* Type categories (kluge ... ought to be extensible) */
 /* Type categories (see TYPCATEGORY_xxx symbols in catalog/pg_type.h) */
 typedef char TYPCATEGORY;
@@ -36,6 +37,10 @@ typedef enum CATEGORY
 	NETWORK_TYPE,
 	USER_TYPE
 } CATEGORY;
+=======
+/* Type categories (see TYPCATEGORY_xxx symbols in catalog/pg_type.h) */
+typedef char TYPCATEGORY;
+>>>>>>> 49f001d81e
 
 /* Result codes for find_coercion_pathway */
 typedef enum CoercionPathType
@@ -49,8 +54,8 @@ typedef enum CoercionPathType
 
 
 extern bool IsBinaryCoercible(Oid srctype, Oid targettype);
-extern bool IsPreferredType(CATEGORY category, Oid type);
-extern CATEGORY TypeCategory(Oid type);
+extern bool IsPreferredType(TYPCATEGORY category, Oid type);
+extern TYPCATEGORY TypeCategory(Oid type);
 
 extern Node* coerce_to_specific_type(ParseState *pstate,
 									 Node *node,

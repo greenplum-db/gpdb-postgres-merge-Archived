@@ -395,7 +395,6 @@ SELECT * FROM orders_view ORDER BY 1,2,5;
 (11 rows)
 
 DROP TABLE orderstest cascade;
-NOTICE:  drop cascades to rule _RETURN on view orders_view
 NOTICE:  drop cascades to view orders_view
 --
 -- Test cases to catch situations where rule rewriter fails to propagate
@@ -523,6 +522,7 @@ select
   ( select min(tb.id) from tb
     where tb.aval = (select ta.val from ta where ta.id = tc.aid) ) as min_tb_id
 from tc;
+<<<<<<< HEAD
 ERROR:  correlated subquery with skip-level correlations is not supported
 --
 -- Test case for 8.3 "failed to locate grouping columns" bug
@@ -599,3 +599,11 @@ select '1'::text in (select '1'::name union all select '1'::name);
  t
 (1 row)
 
+=======
+ min_tb_id 
+-----------
+         1
+         3
+(2 rows)
+
+>>>>>>> 49f001d81e

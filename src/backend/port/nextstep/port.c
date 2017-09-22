@@ -1,5 +1,9 @@
 /*
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/backend/port/nextstep/port.c,v 1.12 2009/06/11 14:49:00 momjian Exp $
+=======
+ * $PostgreSQL: pgsql/src/backend/port/nextstep/port.c,v 1.11 2008/05/17 01:28:23 adunstan Exp $ 
+>>>>>>> 49f001d81e
  */
 #include "postgres.h"
 

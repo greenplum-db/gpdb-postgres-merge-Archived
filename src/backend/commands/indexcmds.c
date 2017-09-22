@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.174 2008/03/26 21:10:37 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.178 2008/07/30 17:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
-#include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
@@ -40,7 +39,11 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parsetree.h"
+<<<<<<< HEAD
 #include "rewrite/rewriteManip.h"
+=======
+#include "storage/lmgr.h"
+>>>>>>> 49f001d81e
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/acl.h"
@@ -692,6 +695,7 @@ DefineIndex(RangeVar *heapRelation,
 	 */
 	LockRelationIdForSession(&heaprelid, ShareUpdateExclusiveLock);
 
+<<<<<<< HEAD
 	/*
 	 * CommitTransactionCommand will throw an error, if we haven't dispatched
 	 * the assigned oids to the segments, so pick them up first. We will
@@ -708,6 +712,9 @@ DefineIndex(RangeVar *heapRelation,
 		MemoryContextSwitchTo(old_context);
 	}
 
+=======
+	PopActiveSnapshot();
+>>>>>>> 49f001d81e
 	CommitTransactionCommand();
 
 	/*
@@ -786,7 +793,7 @@ DefineIndex(RangeVar *heapRelation,
 	indexRelation = index_open(indexRelationId, RowExclusiveLock);
 
 	/* Set ActiveSnapshot since functions in the indexes may need it */
-	ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
+	PushActiveSnapshot(GetTransactionSnapshot());
 
 	/* We have to re-build the IndexInfo struct, since it was lost in commit */
 	indexInfo = BuildIndexInfo(indexRelation);
@@ -807,6 +814,9 @@ DefineIndex(RangeVar *heapRelation,
 	 * insert new entries into the index for insertions and non-HOT updates.
 	 */
 	index_set_state_flags(indexRelationId, INDEX_CREATE_SET_READY);
+
+	/* we can do away with our snapshot */
+	PopActiveSnapshot();
 
 	/*
 	 * Commit this transaction to make the indisready update visible.
@@ -843,8 +853,8 @@ DefineIndex(RangeVar *heapRelation,
 	 * We also set ActiveSnapshot to this snap, since functions in indexes may
 	 * need a snapshot.
 	 */
-	snapshot = CopySnapshot(GetTransactionSnapshot());
-	ActiveSnapshot = snapshot;
+	snapshot = RegisterSnapshot(GetTransactionSnapshot());
+	PushActiveSnapshot(snapshot);
 
 	/*
 	 * Scan the index and the heap, insert any missing index entries.
@@ -872,8 +882,12 @@ DefineIndex(RangeVar *heapRelation,
 	 * Also, GetCurrentVirtualXIDs never reports our own vxid, so we need not
 	 * check for that.
 	 */
+<<<<<<< HEAD
 #if 0  /* Upstream code not applicable to GPDB */
 	old_snapshots = GetCurrentVirtualXIDs(ActiveSnapshot->xmax, false,
+=======
+	old_snapshots = GetCurrentVirtualXIDs(snapshot->xmax, false,
+>>>>>>> 49f001d81e
 										  PROC_IS_AUTOVACUUM | PROC_IN_VACUUM);
 #else
 	old_snapshots = GetCurrentVirtualXIDs(ActiveSnapshot->xmax, false,
@@ -899,6 +913,12 @@ DefineIndex(RangeVar *heapRelation,
 	 * to replan; so relcache flush on the index itself was sufficient.)
 	 */
 	CacheInvalidateRelcacheByRelid(heaprelid.relId);
+
+	/* we can now do away with our active snapshot */
+	PopActiveSnapshot();
+
+	/* And we can remove the validating snapshot too */
+	UnregisterSnapshot(snapshot);
 
 	/*
 	 * Last thing to do is release the session-level lock on the parent table.
@@ -1227,7 +1247,7 @@ GetDefaultOpClass(Oid type_id, Oid am_id)
 	ScanKeyData skey[1];
 	SysScanDesc scan;
 	HeapTuple	tup;
-	CATEGORY	tcategory;
+	TYPCATEGORY	tcategory;
 
 	/* If it's a domain, look at the base type instead */
 	type_id = getBaseType(type_id);
@@ -1492,6 +1512,7 @@ relationHasPrimaryKey(Relation rel)
 	return result;
 }
 
+<<<<<<< HEAD
 
 /*
  * relationHasPrimaryKey -
@@ -1587,6 +1608,8 @@ RemoveIndex(RangeVar *relation, DropBehavior behavior)
 	}
 }
 
+=======
+>>>>>>> 49f001d81e
 /*
  * ReindexIndex
  *		Recreate a specific index.
@@ -1907,7 +1930,28 @@ ReindexDatabase(ReindexStmt *stmt)
 	heap_endscan(scan);
 	heap_close(relationRelation, AccessShareLock);
 
+<<<<<<< HEAD
 	ReindexRelationList(relids);
+=======
+	/* Now reindex each rel in a separate transaction */
+	PopActiveSnapshot();
+	CommitTransactionCommand();
+	foreach(l, relids)
+	{
+		Oid			relid = lfirst_oid(l);
+
+		StartTransactionCommand();
+		/* functions in indexes may want a snapshot set */
+		PushActiveSnapshot(GetTransactionSnapshot());
+		if (reindex_relation(relid, true))
+			ereport(NOTICE,
+					(errmsg("table \"%s\" was reindexed",
+							get_rel_name(relid))));
+		PopActiveSnapshot();
+		CommitTransactionCommand();
+	}
+	StartTransactionCommand();
+>>>>>>> 49f001d81e
 
 	MemoryContextDelete(private_context);
 }

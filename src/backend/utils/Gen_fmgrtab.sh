@@ -6,12 +6,20 @@
 #
 # NOTE: if you change this, you need to fix Gen_fmgrtab.pl too!
 #
+<<<<<<< HEAD
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+# Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+>>>>>>> 49f001d81e
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
+<<<<<<< HEAD
 #    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.sh,v 1.41 2009/01/01 17:23:48 momjian Exp $
+=======
+#    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.sh,v 1.40 2008/06/23 17:54:29 tgl Exp $
+>>>>>>> 49f001d81e
 #
 #-------------------------------------------------------------------------
 

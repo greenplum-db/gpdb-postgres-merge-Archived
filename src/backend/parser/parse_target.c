@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.159 2008/03/20 21:42:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.160 2008/04/29 14:59:17 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1348,6 +1348,7 @@ FigureColnameInternal(Node *node, char **name)
 				return 2;
 			}
 			break;
+<<<<<<< HEAD
 		case T_A_Const:
 			if (((A_Const *) node)->typeName != NULL)
 			{
@@ -1355,6 +1356,8 @@ FigureColnameInternal(Node *node, char **name)
 				return 1;
 			}
 			break;
+=======
+>>>>>>> 49f001d81e
 		case T_TypeCast:
 			strength = FigureColnameInternal(((TypeCast *) node)->arg,
 											 name);

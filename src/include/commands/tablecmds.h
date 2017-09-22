@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/tablecmds.h,v 1.38 2008/03/19 18:38:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/tablecmds.h,v 1.41 2008/06/19 00:46:06 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,8 +21,12 @@
 #include "executor/tuptable.h"
 #include "nodes/execnodes.h"
 #include "nodes/parsenodes.h"
+<<<<<<< HEAD
 #include "nodes/relation.h"
 #include "parser/parse_node.h"
+=======
+#include "utils/relcache.h"
+>>>>>>> 49f001d81e
 
 /* Struct describing one new constraint to check in ALTER Phase 3 scan.
  *
@@ -43,6 +47,7 @@ typedef struct NewConstraint
 
 extern const char *synthetic_sql;
 
+<<<<<<< HEAD
 extern Oid	DefineRelation(CreateStmt *stmt, char relkind, char relstorage, bool dispatch);
 
 extern void	DefineExternalRelation(CreateExternalStmt *stmt);
@@ -57,6 +62,9 @@ extern bool RemoveRelation(const RangeVar *relation, DropBehavior behavior,
 						   DropStmt *stmt /* MPP */, char relkind);
 
 extern bool RelationToRemoveIsTemp(const RangeVar *relation, DropBehavior behavior);
+=======
+extern void RemoveRelations(DropStmt *drop);
+>>>>>>> 49f001d81e
 
 extern void AlterTable(AlterTableStmt *stmt);
 
@@ -64,7 +72,8 @@ extern void ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing);
 
 extern void AlterTableInternal(Oid relid, List *cmds, bool recurse);
 
-extern void AlterTableNamespace(RangeVar *relation, const char *newschema);
+extern void AlterTableNamespace(RangeVar *relation, const char *newschema,
+								ObjectType stmttype);
 
 extern void AlterTableNamespaceInternal(Relation rel, Oid oldNspOid,
 							Oid nspOid, ObjectAddresses *objsMoved);

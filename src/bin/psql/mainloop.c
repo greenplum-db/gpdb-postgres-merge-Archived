@@ -3,7 +3,11 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * src/bin/psql/mainloop.c
+=======
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.92 2008/06/10 20:58:19 neilc Exp $
+>>>>>>> 49f001d81e
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -190,7 +194,11 @@ MainLoop(FILE *source)
 			printf(_("Type:  \\copyright for distribution terms\n"
 					 "       \\h for help with SQL commands\n"
 					 "       \\? for help with psql commands\n"
+<<<<<<< HEAD
 				  "       \\g or terminate with semicolon to execute query\n"
+=======
+					 "       \\g or terminate with semicolon to execute query\n"
+>>>>>>> 49f001d81e
 					 "       \\q to quit\n"));
 
 			fflush(stdout);

@@ -3,7 +3,11 @@
  * keywords.c
  *	  lexical token lookup for reserved words in postgres embedded SQL
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/c_keywords.c,v 1.23 2009/06/11 14:49:13 momjian Exp $
+=======
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/c_keywords.c,v 1.22 2008/05/20 23:17:32 meskes Exp $
+>>>>>>> 49f001d81e
  * §
  *-------------------------------------------------------------------------
  */
@@ -22,11 +26,16 @@
  */
 static const ScanKeyword ScanCKeywords[] = {
 	/* name, value, category */
+<<<<<<< HEAD
 
 	/*
 	 * category is not needed in ecpg, it is only here so we can share the
 	 * data structure with the backend
 	 */
+=======
+	/* category is not needed in ecpg, it is only here so we can share
+         * the data structure with the backend */
+>>>>>>> 49f001d81e
 	{"VARCHAR", VARCHAR, 0},
 	{"auto", S_AUTO, 0},
 	{"bool", SQL_BOOL, 0},

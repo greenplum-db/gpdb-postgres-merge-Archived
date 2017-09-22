@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.104 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.106 2008/06/19 00:46:04 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 
 #include "access/heapam.h"
 #include "access/xact.h"
-#include "catalog/dependency.h"
 #include "catalog/namespace.h"
 #include "catalog/oid_dispatch.h"
 #include "catalog/pg_depend.h"
@@ -36,6 +35,7 @@
 #include "rewrite/rewriteSupport.h"
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
+#include "utils/rel.h"
 
 
 #include "cdb/cdbdisp_query.h"
@@ -491,6 +491,7 @@ DefineView(ViewStmt *stmt, const char *queryString)
 									NULL);
 	}
 }
+<<<<<<< HEAD
 
 /*
  * RemoveView
@@ -521,3 +522,5 @@ RemoveView(const RangeVar *view, DropBehavior behavior)
 
 	performDeletion(&object, behavior);
 }
+=======
+>>>>>>> 49f001d81e

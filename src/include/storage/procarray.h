@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/procarray.h,v 1.21 2008/03/26 16:20:48 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/storage/procarray.h,v 1.22 2008/05/12 20:02:02 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@ extern bool ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool 
 extern void ProcArrayClearTransaction(PGPROC *proc, bool commit);
 extern void ClearTransactionFromPgProc_UnderLock(PGPROC *proc, bool commit);
 
-extern Snapshot GetSnapshotData(Snapshot snapshot, bool serializable);
+extern Snapshot GetSnapshotData(Snapshot snapshot);
 
 extern bool TransactionIdIsInProgress(TransactionId xid);
 extern bool TransactionIdIsActive(TransactionId xid);

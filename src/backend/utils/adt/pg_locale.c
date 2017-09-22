@@ -4,7 +4,11 @@
  *
  * Portions Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.49 2009/04/01 09:17:32 heikki Exp $
+=======
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.41 2008/05/19 18:08:16 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-----------------------------------------------------------------------
  */
@@ -51,7 +55,10 @@
 #include <time.h>
 
 #include "catalog/pg_control.h"
+<<<<<<< HEAD
 #include "mb/pg_wchar.h"
+=======
+>>>>>>> 49f001d81e
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
 #include "utils/string_wrapper.h"
@@ -70,6 +77,12 @@ char	   *locale_monetary;
 char	   *locale_numeric;
 char	   *locale_time;
 char       *locale_collate;
+
+/* lc_time localization cache */
+char	   *localized_abbrev_days[7];
+char	   *localized_full_days[7];
+char	   *localized_abbrev_months[12];
+char	   *localized_full_months[12];
 
 /* lc_time localization cache */
 char	   *localized_abbrev_days[7];
@@ -565,6 +578,7 @@ PGLC_localeconv(void)
 	return &CurrentLocaleConv;
 }
 
+<<<<<<< HEAD
 #ifdef WIN32
 /*
  * On win32, strftime() returns the encoding in CP_ACP, which is likely
@@ -616,6 +630,8 @@ strftime_win32(char *dst, size_t dstlen, const wchar_t *format, const struct tm 
 
 #endif /* WIN32 */
 
+=======
+>>>>>>> 49f001d81e
 
 /*
  * Update the lc_time localization cache variables if needed.
@@ -629,9 +645,12 @@ cache_locale_time(void)
 	char		buf[MAX_L10N_DATA];
 	char	   *ptr;
 	int			i;
+<<<<<<< HEAD
 #ifdef WIN32
 	char	   *save_lc_ctype;
 #endif
+=======
+>>>>>>> 49f001d81e
 
 	/* did we do this already? */
 	if (CurrentLCTimeValid)
@@ -639,6 +658,7 @@ cache_locale_time(void)
 
 	elog(DEBUG3, "cache_locale_time() executed; locale: \"%s\"", locale_time);
 
+<<<<<<< HEAD
 #ifdef WIN32
 	/* set user's value of ctype locale */
 	save_lc_ctype = setlocale(LC_CTYPE, NULL);
@@ -648,6 +668,8 @@ cache_locale_time(void)
 	setlocale(LC_CTYPE, locale_time);
 #endif
 
+=======
+>>>>>>> 49f001d81e
 	/* set user's value of time locale */
 	save_lc_time = setlocale(LC_TIME, NULL);
 	if (save_lc_time)
@@ -700,6 +722,7 @@ cache_locale_time(void)
 		pfree(save_lc_time);
 	}
 
+<<<<<<< HEAD
 #ifdef WIN32
 	/* try to restore internal ctype settings */
 	if (save_lc_ctype)
@@ -761,3 +784,7 @@ char *IsoLocaleName(const char *winlocname)
 }
 #endif /* WIN32 && LC_MESSAGES */
 
+=======
+	CurrentLCTimeValid = true;
+}
+>>>>>>> 49f001d81e

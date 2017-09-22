@@ -9,20 +9,34 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.189 2008/10/04 21:56:55 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.185 2008/07/26 19:15:35 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
 #ifndef EXECNODES_H
 #define EXECNODES_H
 
-#include "access/relscan.h"
+#include "access/genam.h"
+#include "access/heapam.h"
+#include "access/skey.h"
 #include "nodes/params.h"
+<<<<<<< HEAD
 #include "nodes/plannodes.h"
 #include "nodes/relation.h"
 #include "nodes/tidbitmap.h"
 #include "utils/hsearch.h"
 #include "gpmon/gpmon.h"                /* gpmon_packet_t */
+=======
+#include "nodes/plannodes.h"    
+#include "nodes/tidbitmap.h"    
+#include "utils/hsearch.h"
+#include "utils/rel.h"
+#include "utils/snapshot.h"
+>>>>>>> 49f001d81e
 #include "utils/tuplestore.h"
 
 /*
@@ -540,6 +554,7 @@ typedef struct EState
 
 	TupleTableSlot *es_trig_tuple_slot; /* for trigger output tuples */
 
+<<<<<<< HEAD
 	/* Stuff used for SELECT INTO: */
 	Relation	es_into_relation_descriptor;
 	bool		es_into_relation_use_wal;
@@ -549,6 +564,8 @@ typedef struct EState
 
 	struct MirroredBufferPoolBulkLoadInfo *es_into_relation_bulkloadinfo;
 
+=======
+>>>>>>> 49f001d81e
 	/* Parameter info: */
 	ParamListInfo es_param_list_info;	/* values of external params */
 	ParamExecData *es_param_exec_vals;	/* values of internal params */

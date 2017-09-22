@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-connect.c
+=======
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.359 2008/05/29 22:02:44 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

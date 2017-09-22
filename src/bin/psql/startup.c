@@ -3,7 +3,11 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * src/bin/psql/startup.c
+=======
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.151 2008/07/20 06:08:38 momjian Exp $
+>>>>>>> 49f001d81e
  */
 #include "postgres_fe.h"
 
@@ -294,7 +298,11 @@ main(int argc, char *argv[])
 		if (!options.no_psqlrc)
 			process_psqlrc(argv[0]);
 
+<<<<<<< HEAD
 		connection_warnings(true);
+=======
+		connection_warnings();
+>>>>>>> 49f001d81e
 		if (!pset.quiet && !pset.notty)
 			printf(_("Type \"help\" for help.\n\n"));
 		if (!pset.notty)

@@ -11,7 +11,11 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/storage/ipc.h,v 1.74.2.1 2008/04/16 23:59:51 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/storage/ipc.h,v 1.75 2008/04/16 23:59:40 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +23,10 @@
 #define IPC_H
 
 typedef void (*pg_on_exit_callback) (int code, Datum arg);
+<<<<<<< HEAD
 typedef void (*shmem_startup_hook_type) (void);
+=======
+>>>>>>> 49f001d81e
 
 /*----------
  * API for handling cleanup that must occur during either ereport(ERROR)

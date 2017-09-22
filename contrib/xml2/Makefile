@@ -2,13 +2,20 @@
 
 MODULE_big = pgxml
 
+<<<<<<< HEAD
 OBJS = xpath.o xslt_proc.o
+=======
+OBJS = $(if $(filter -lxslt, $(LIBS)), xpath.o xslt_proc.o, xpath.o)
+>>>>>>> 49f001d81e
 
 SHLIB_LINK += $(filter -lxslt, $(LIBS)) $(filter -lxml2, $(LIBS))
 
 DATA_built = pgxml.sql
 DATA = uninstall_pgxml.sql
+<<<<<<< HEAD
 REGRESS = xml2
+=======
+>>>>>>> 49f001d81e
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

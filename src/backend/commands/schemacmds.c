@@ -9,7 +9,11 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.49.2.1 2009/12/09 21:58:16 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.50 2008/06/14 18:04:33 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -211,30 +215,32 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 
 
 /*
- *	RemoveSchema
- *		Removes a schema.
+ *	RemoveSchemas
+ *		Implements DROP SCHEMA.
  */
 void
-RemoveSchema(List *names, DropBehavior behavior, bool missing_ok)
+RemoveSchemas(DropStmt *drop)
 {
-	char	   *namespaceName;
-	Oid			namespaceId;
-	ObjectAddress object;
+	ObjectAddresses *objects;
+	ListCell		*cell;
 
-	if (list_length(names) != 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("schema name cannot be qualified")));
-	namespaceName = strVal(linitial(names));
+	/*
+	 * First we identify all the schemas, then we delete them in a single
+	 * performMultipleDeletions() call.  This is to avoid unwanted
+	 * DROP RESTRICT errors if one of the schemas depends on another.
+	 */
+	objects = new_object_addresses();
 
-	namespaceId = GetSysCacheOid(NAMESPACENAME,
-								 CStringGetDatum(namespaceName),
-								 0, 0, 0);
-	if (!OidIsValid(namespaceId))
+	foreach(cell, drop->objects)
 	{
-		if (!missing_ok)
-		{
+		List	   *names = (List *) lfirst(cell);
+		char	   *namespaceName;
+		Oid			namespaceId;
+		ObjectAddress object;
+
+		if (list_length(names) != 1)
 			ereport(ERROR,
+<<<<<<< HEAD
 					(errcode(ERRCODE_UNDEFINED_SCHEMA),
 					 errmsg("schema \"%s\" does not exist", namespaceName)));
 		}
@@ -244,11 +250,47 @@ RemoveSchema(List *names, DropBehavior behavior, bool missing_ok)
 					(errcode(ERRCODE_UNDEFINED_SCHEMA),
 					 errmsg("schema \"%s\" does not exist, skipping",
 							namespaceName)));
+=======
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("schema name cannot be qualified")));
+		namespaceName = strVal(linitial(names));
+
+		namespaceId = GetSysCacheOid(NAMESPACENAME,
+									 CStringGetDatum(namespaceName),
+									 0, 0, 0);
+
+		if (!OidIsValid(namespaceId))
+		{
+			if (!drop->missing_ok)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_SCHEMA),
+						 errmsg("schema \"%s\" does not exist",
+								namespaceName)));
+			}
+			else
+			{
+				ereport(NOTICE,
+						(errmsg("schema \"%s\" does not exist, skipping",
+								namespaceName)));
+			}
+			continue;
+>>>>>>> 49f001d81e
 		}
 
-		return;
+		/* Permission check */
+		if (!pg_namespace_ownercheck(namespaceId, GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_NAMESPACE,
+						   namespaceName);
+
+		object.classId = NamespaceRelationId;
+		object.objectId = namespaceId;
+		object.objectSubId = 0;
+
+		add_exact_object_address(&object, objects);
 	}
 
+<<<<<<< HEAD
 	/* Permission check */
 	if (!pg_namespace_ownercheck(namespaceId, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_NAMESPACE,
@@ -264,19 +306,23 @@ RemoveSchema(List *names, DropBehavior behavior, bool missing_ok)
 						namespaceName)));
 	}
 
+=======
+>>>>>>> 49f001d81e
 	/*
-	 * Do the deletion.  Objects contained in the schema are removed by means
-	 * of their dependency links to the schema.
+	 * Do the deletions.  Objects contained in the schema(s) are removed by
+	 * means of their dependency links to the schema.
 	 */
-	object.classId = NamespaceRelationId;
-	object.objectId = namespaceId;
-	object.objectSubId = 0;
+	performMultipleDeletions(objects, drop->behavior);
 
+<<<<<<< HEAD
 	performDeletion(&object, behavior);
 
 	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH)
 		MetaTrackDropObject(NamespaceRelationId, namespaceId);
+=======
+	free_object_addresses(objects);
+>>>>>>> 49f001d81e
 }
 
 

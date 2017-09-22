@@ -7,7 +7,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.11.2.2 2009/11/30 16:38:46 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.12 2008/06/18 20:55:42 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

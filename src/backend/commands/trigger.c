@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.231 2008/03/28 00:21:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.236 2008/07/18 20:26:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/sysattr.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
@@ -32,6 +33,8 @@
 #include "nodes/execnodes.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_func.h"
+#include "pgstat.h"
+#include "storage/bufmgr.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -755,7 +758,8 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 
 		/* ... and execute it */
 		ProcessUtility((Node *) atstmt,
-					   NULL, NULL, false, None_Receiver, NULL);
+					   "(generated ALTER TABLE ADD FOREIGN KEY command)",
+					   NULL, false, None_Receiver, NULL);
 
 		/* Remove the matched item from the list */
 		info_list = list_delete_ptr(info_list, info);
@@ -1647,6 +1651,7 @@ ExecCallTriggerFunc(TriggerData *trigdata,
 					MemoryContext per_tuple_context)
 {
 	FunctionCallInfoData fcinfo;
+	PgStat_FunctionCallUsage fcusage;
 	Datum		result;
 	MemoryContext oldContext;
 
@@ -1680,7 +1685,11 @@ ExecCallTriggerFunc(TriggerData *trigdata,
 	 */
 	InitFunctionCallInfoData(fcinfo, finfo, 0, (Node *) trigdata, NULL);
 
+	pgstat_init_function_usage(&fcinfo, &fcusage);
+
 	result = FunctionCallInvoke(&fcinfo);
+
+	pgstat_end_function_usage(&fcusage, true);
 
 	MemoryContextSwitchTo(oldContext);
 
@@ -2341,7 +2350,7 @@ ltrmark:;
 	}
 	else
 	{
-		PageHeader	dp;
+		Page		page;
 		ItemId		lp;
 		
 		// -------- MirroredLock ----------
@@ -2349,6 +2358,7 @@ ltrmark:;
 		
 		buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 
+<<<<<<< HEAD
 		/*
 		 * Although we already know this tuple is valid, we must lock the
 		 * buffer to ensure that no one has a buffer cleanup lock; otherwise
@@ -2361,10 +2371,14 @@ ltrmark:;
 
 		dp = (PageHeader) BufferGetPage(buffer);
 		lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(tid));
+=======
+		page = BufferGetPage(buffer);
+		lp = PageGetItemId(page, ItemPointerGetOffsetNumber(tid));
+>>>>>>> 49f001d81e
 
 		Assert(ItemIdIsNormal(lp));
 
-		tuple.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
+		tuple.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 		tuple.t_len = ItemIdGetLength(lp);
 		tuple.t_self = *tid;
 
@@ -3145,6 +3159,7 @@ void
 AfterTriggerFireDeferred(void)
 {
 	AfterTriggerEventList *events;
+	bool		snap_pushed = false;
 
 	/* Must be inside a transaction */
 	Assert(afterTriggers != NULL);
@@ -3159,7 +3174,10 @@ AfterTriggerFireDeferred(void)
 	 */
 	events = &afterTriggers->events;
 	if (events->head != NULL)
-		ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
+	{
+		PushActiveSnapshot(GetTransactionSnapshot());
+		snap_pushed = true;
+	}
 
 	/*
 	 * Run all the remaining triggers.	Loop until they are all gone, in case
@@ -3171,6 +3189,9 @@ AfterTriggerFireDeferred(void)
 
 		afterTriggerInvokeEvents(-1, firing_id, NULL, true);
 	}
+
+	if (snap_pushed)
+		PopActiveSnapshot();
 
 	Assert(events->head == NULL);
 }

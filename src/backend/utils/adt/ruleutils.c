@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.272 2008/03/28 00:21:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.278 2008/07/18 03:32:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,7 +151,11 @@ static char *pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 static char *pg_get_expr_worker(text *expr, Oid relid, char *relname,
 				   int prettyFlags);
 static int print_function_arguments(StringInfo buf, HeapTuple proctup,
+<<<<<<< HEAD
 						 bool print_table_args, bool print_defaults);
+=======
+						 bool print_table_args);
+>>>>>>> 49f001d81e
 static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 			 int prettyFlags);
 static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
@@ -222,10 +226,16 @@ static void get_opclass_name(Oid opclass, Oid actual_datatype,
 static Node *processIndirection(Node *node, deparse_context *context,
 				   bool printit);
 static void printSubscripts(ArrayRef *aref, deparse_context *context);
+<<<<<<< HEAD
 static char *get_relation_name(Oid relid);
 static char *generate_relation_name(Oid relid, List *namespaces);
 static char *generate_function_name(Oid funcid, int nargs, Oid *argtypes,
 					   bool *is_variadic);
+=======
+static char *generate_relation_name(Oid relid);
+static char *generate_function_name(Oid funcid, int nargs, Oid *argtypes,
+									bool *is_variadic);
+>>>>>>> 49f001d81e
 static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
 static text *string_to_text(char *str);
 static char *flatten_reloptions(Oid relid);
@@ -1681,6 +1691,147 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 
 
 /*
+ * pg_get_function_arguments
+ *		Get a nicely-formatted list of arguments for a function.
+ *		This is everything that would go between the parentheses in
+ *		CREATE FUNCTION.
+ */
+Datum
+pg_get_function_arguments(PG_FUNCTION_ARGS)
+{
+	Oid			funcid = PG_GETARG_OID(0);
+	StringInfoData buf;
+	HeapTuple	proctup;
+
+	initStringInfo(&buf);
+
+	proctup = SearchSysCache(PROCOID,
+							 ObjectIdGetDatum(funcid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(proctup))
+		elog(ERROR, "cache lookup failed for function %u", funcid);
+
+	(void) print_function_arguments(&buf, proctup, false);
+
+	ReleaseSysCache(proctup);
+
+	PG_RETURN_TEXT_P(string_to_text(buf.data));
+}
+
+/*
+ * pg_get_function_result
+ *		Get a nicely-formatted version of the result type of a function.
+ *		This is what would appear after RETURNS in CREATE FUNCTION.
+ */
+Datum
+pg_get_function_result(PG_FUNCTION_ARGS)
+{
+	Oid			funcid = PG_GETARG_OID(0);
+	StringInfoData buf;
+	HeapTuple	proctup;
+	Form_pg_proc procform;
+	int			ntabargs = 0;
+
+	initStringInfo(&buf);
+
+	proctup = SearchSysCache(PROCOID,
+							 ObjectIdGetDatum(funcid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(proctup))
+		elog(ERROR, "cache lookup failed for function %u", funcid);
+	procform = (Form_pg_proc) GETSTRUCT(proctup);
+
+	if (procform->proretset)
+	{
+		/* It might be a table function; try to print the arguments */
+		appendStringInfoString(&buf, "TABLE(");
+		ntabargs = print_function_arguments(&buf, proctup, true);
+		if (ntabargs > 0)
+			appendStringInfoString(&buf, ")");
+		else
+			resetStringInfo(&buf);
+	}
+
+	if (ntabargs == 0)
+	{
+		/* Not a table function, so do the normal thing */
+		if (procform->proretset)
+			appendStringInfoString(&buf, "SETOF ");
+		appendStringInfoString(&buf, format_type_be(procform->prorettype));
+	}
+
+	ReleaseSysCache(proctup);
+
+	PG_RETURN_TEXT_P(string_to_text(buf.data));
+}
+
+/*
+ * Common code for pg_get_function_arguments and pg_get_function_result:
+ * append the desired subset of arguments to buf.  We print only TABLE
+ * arguments when print_table_args is true, and all the others when it's false.
+ * Function return value is the number of arguments printed.
+ */
+static int
+print_function_arguments(StringInfo buf, HeapTuple proctup,
+						 bool print_table_args)
+{
+	int			numargs;
+	Oid		   *argtypes;
+	char	  **argnames;
+	char	   *argmodes;
+	int			argsprinted;
+	int			i;
+
+	numargs = get_func_arg_info(proctup,
+								&argtypes, &argnames, &argmodes);
+
+	argsprinted = 0;
+	for (i = 0; i < numargs; i++)
+	{
+		Oid		argtype = argtypes[i];
+		char   *argname = argnames ? argnames[i] : NULL;
+		char	argmode = argmodes ? argmodes[i] : PROARGMODE_IN;
+		const char *modename;
+
+		if (print_table_args != (argmode == PROARGMODE_TABLE))
+			continue;
+
+		switch (argmode)
+		{
+			case PROARGMODE_IN:
+				modename = "";
+				break;
+			case PROARGMODE_INOUT:
+				modename = "INOUT ";
+				break;
+			case PROARGMODE_OUT:
+				modename = "OUT ";
+				break;
+			case PROARGMODE_VARIADIC:
+				modename = "VARIADIC ";
+				break;
+			case PROARGMODE_TABLE:
+				modename = "";
+				break;
+			default:
+				elog(ERROR, "invalid parameter mode '%c'", argmode);
+				modename = NULL; /* keep compiler quiet */
+				break;
+		}
+		if (argsprinted)
+			appendStringInfoString(buf, ", ");
+		appendStringInfoString(buf, modename);
+		if (argname && argname[0])
+			appendStringInfo(buf, "%s ", argname);
+		appendStringInfoString(buf, format_type_be(argtype));
+		argsprinted++;
+	}
+
+	return argsprinted;
+}
+
+
+/*
  * deparse_expression			- General utility for deparsing expressions
  *
  * calls deparse_expression_pretty with all prettyPrinting disabled
@@ -3104,7 +3255,11 @@ get_update_query_def(Query *query, deparse_context *context)
 	}
 	appendStringInfo(buf, "UPDATE %s%s",
 					 only_marker(rte),
+<<<<<<< HEAD
 					 generate_relation_name(rte->relid, NIL));
+=======
+					 generate_relation_name(rte->relid));
+>>>>>>> 49f001d81e
 	if (rte->alias != NULL)
 		appendStringInfo(buf, " %s",
 						 quote_identifier(rte->alias->aliasname));
@@ -3185,7 +3340,11 @@ get_delete_query_def(Query *query, deparse_context *context)
 	}
 	appendStringInfo(buf, "DELETE FROM %s%s",
 					 only_marker(rte),
+<<<<<<< HEAD
 					 generate_relation_name(rte->relid, NIL));
+=======
+					 generate_relation_name(rte->relid));
+>>>>>>> 49f001d81e
 	if (rte->alias != NULL)
 		appendStringInfo(buf, " %s",
 						 quote_identifier(rte->alias->aliasname));
@@ -5404,7 +5563,12 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 	}
 
 	appendStringInfo(buf, "%s(%s",
+<<<<<<< HEAD
 					 generate_function_name(fnoid, nargs, argtypes, NULL),
+=======
+					 generate_function_name(aggref->aggfnoid,
+											nargs, argtypes, NULL),
+>>>>>>> 49f001d81e
 					 aggref->aggdistinct ? "DISTINCT " : "");
 	/* aggstar can be set only in zero-argument aggregates */
 	if (aggref->aggstar)
@@ -6593,7 +6757,8 @@ generate_relation_name(Oid relid, List *namespaces)
  *		given that it is being called with the specified actual arg types.
  *		(Arg types matter because of ambiguous-function resolution rules.)
  *
- * The result includes all necessary quoting and schema-prefixing.
+ * The result includes all necessary quoting and schema-prefixing.  We can
+ * also pass back an indication of whether the function is variadic.
  */
 static char *
 generate_function_name(Oid funcid, int nargs, Oid *argtypes,
@@ -6618,6 +6783,10 @@ generate_function_name(Oid funcid, int nargs, Oid *argtypes,
 		elog(ERROR, "cache lookup failed for function %u", funcid);
 	procform = (Form_pg_proc) GETSTRUCT(proctup);
 	proname = NameStr(procform->proname);
+<<<<<<< HEAD
+=======
+	Assert(nargs >= procform->pronargs);
+>>>>>>> 49f001d81e
 
 	/*
 	 * The idea here is to schema-qualify only if the parser would fail to
@@ -6625,10 +6794,16 @@ generate_function_name(Oid funcid, int nargs, Oid *argtypes,
 	 * specified argtypes.
 	 */
 	p_result = func_get_detail(list_make1(makeString(proname)),
+<<<<<<< HEAD
 							   NIL, nargs, argtypes, false, false,
 							   &p_funcid, &p_rettype,
 							   &p_retset,
 							   &p_nvargs, &p_true_typeids, NULL);
+=======
+							   NIL, nargs, argtypes, false,
+							   &p_funcid, &p_rettype,
+							   &p_retset, &p_nvargs, &p_true_typeids);
+>>>>>>> 49f001d81e
 	if ((p_result == FUNCDETAIL_NORMAL || p_result == FUNCDETAIL_AGGREGATE) &&
 		p_funcid == funcid)
 		nspname = NULL;
@@ -6649,6 +6824,17 @@ generate_function_name(Oid funcid, int nargs, Oid *argtypes,
 
 		/* "any" variadics are not treated as variadics for listing */
 		if (OidIsValid(varOid) && varOid != ANYOID)
+			*is_variadic = true;
+		else
+			*is_variadic = false;
+	}
+
+	/* Check variadic-ness if caller cares */
+	if (is_variadic)
+	{
+		/* "any" variadics are not treated as variadics for listing */
+		if (OidIsValid(procform->provariadic) &&
+			procform->provariadic != ANYOID)
 			*is_variadic = true;
 		else
 			*is_variadic = false;

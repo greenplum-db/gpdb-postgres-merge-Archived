@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/palloc.h,v 1.38 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/palloc.h,v 1.40 2008/06/28 16:45:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,10 +154,13 @@ extern void MemoryContextStats(MemoryContext context);
 
 extern char *pnstrdup(const char *in, Size len);
 
+<<<<<<< HEAD
 /* sprintf into a palloc'd buffer --- these are in psprintf.c */
 extern char *psprintf(const char *fmt,...) __attribute__((format(printf, 1, 2)));
 extern size_t pvsnprintf(char *buf, size_t len, const char *fmt, va_list args)  __attribute__((format(printf, 3, 0)));
 
+=======
+>>>>>>> 49f001d81e
 #if defined(WIN32) || defined(__CYGWIN__)
 extern void *pgport_palloc(Size sz);
 extern char *pgport_pstrdup(const char *str);

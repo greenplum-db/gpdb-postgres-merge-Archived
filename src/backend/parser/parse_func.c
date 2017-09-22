@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.202 2008/03/26 21:10:38 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.204 2008/07/30 17:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,16 +132,21 @@ agg_is_ordered(Oid funcid)
  *	intended to be used only to deliver an appropriate error message,
  *	not to affect the semantics.  When is_column is true, we should have
  *	a single argument (the putative table), unqualified function name
- *	equal to the column name, and no aggregate decoration.
+ *	equal to the column name, and no aggregate or variadic decoration.
  *
  *	The argument expressions (in fargs) must have been transformed already.
  */
 Node *
 ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
+<<<<<<< HEAD
 				  List *agg_order, bool agg_star, bool agg_distinct,
 				  bool func_variadic, bool is_column,
 				  WindowDef *over,
 				  int location, Node *agg_filter)
+=======
+				  bool agg_star, bool agg_distinct, bool func_variadic,
+				  bool is_column, int location)
+>>>>>>> 49f001d81e
 {
 	Oid			rettype;
 	Oid			funcid;
@@ -277,8 +282,13 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * the "function call" could be a projection.  We also check that there
 	 * wasn't any aggregate or variadic decoration.
 	 */
+<<<<<<< HEAD
 	if (nargs == 1 && agg_order == NIL && !agg_star && !agg_distinct &&
 		!func_variadic && !agg_filter && list_length(funcname) == 1)
+=======
+	if (nargs == 1 && !agg_star && !agg_distinct && !func_variadic &&
+		list_length(funcname) == 1)
+>>>>>>> 49f001d81e
 	{
 		Oid			argtype = actual_arg_types[0];
 
@@ -304,6 +314,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * disambiguation for polymorphic functions, handles inheritance, and
 	 * returns the funcid and type and set or singleton status of the
 	 * function's return value.  It also returns the true argument types to
+<<<<<<< HEAD
 	 * the function.  In the case of a variadic function call, the reported
 	 * "true" types aren't really what is in pg_proc: the variadic argument is
 	 * replaced by a suitable number of copies of its element type.  We'll fix
@@ -313,6 +324,17 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 							   !func_variadic, true,
 							   &funcid, &rettype, &retset, &nvargs,
 							   &declared_arg_types, &argdefaults);
+=======
+	 * the function.  (In the case of a variadic function call, the reported
+	 * "true" types aren't really what is in pg_proc: the variadic argument is
+	 * replaced by a suitable number of copies of its element type.  We'll fix
+	 * it up below.)
+	 */
+	fdresult = func_get_detail(funcname, fargs, nargs, actual_arg_types,
+							   !func_variadic,
+							   &funcid, &rettype, &retset, &nvargs,
+							   &declared_arg_types);
+>>>>>>> 49f001d81e
 	if (fdresult == FUNCDETAIL_COERCION)
 	{
 		/*
@@ -456,6 +478,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 	/*
 	 * If it's a variadic function call, transform the last nvargs arguments
+<<<<<<< HEAD
 	 * into an array -- unless it's an "any" variadic.
 	 */
 	if (nvargs > 0 && declared_arg_types[nargs - 1] != ANYOID)
@@ -463,6 +486,15 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		ArrayExpr	*newa = makeNode(ArrayExpr);
 		int     	non_var_args = nargs - nvargs;
 		List    	*vargs;
+=======
+	 * into an array --- unless it's an "any" variadic.
+	 */
+	if (nvargs > 0 && declared_arg_types[nargs - 1] != ANYOID)
+	{
+		ArrayExpr *newa = makeNode(ArrayExpr);
+		int 	non_var_args = nargs - nvargs;
+		List	*vargs;
+>>>>>>> 49f001d81e
 
 		Assert(non_var_args >= 0);
 		vargs = list_copy_tail(fargs, non_var_args);
@@ -472,6 +504,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		/* assume all the variadic arguments were coerced to the same type */
 		newa->element_typeid = exprType((Node *) linitial(vargs));
 		newa->array_typeid = get_array_type(newa->element_typeid);
+<<<<<<< HEAD
 
 		if (!OidIsValid(newa->array_typeid))
 			ereport(ERROR,
@@ -479,6 +512,13 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					errmsg("could not find array type for data type %s",
 						   format_type_be(newa->element_typeid)),
 					parser_errposition(pstate, exprLocation((Node *) vargs))));
+=======
+		if (!OidIsValid(newa->array_typeid))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("could not find array type for data type %s",
+							format_type_be(newa->element_typeid))));
+>>>>>>> 49f001d81e
 		newa->multidims = false;
 
 		fargs = lappend(fargs, newa);
@@ -795,8 +835,9 @@ func_select_candidate(int nargs,
 	int			nbestMatch,
 				nmatch;
 	Oid			input_base_typeids[FUNC_MAX_ARGS];
-	CATEGORY	slot_category[FUNC_MAX_ARGS],
+	TYPCATEGORY	slot_category[FUNC_MAX_ARGS],
 				current_category;
+	bool		current_is_preferred;
 	bool		slot_has_preferred_type[FUNC_MAX_ARGS];
 	bool		resolved_unknowns;
 
@@ -947,7 +988,7 @@ func_select_candidate(int nargs,
 		if (input_base_typeids[i] != UNKNOWNOID)
 			continue;
 		resolved_unknowns = true;		/* assume we can do it */
-		slot_category[i] = INVALID_TYPE;
+		slot_category[i] = TYPCATEGORY_INVALID;
 		slot_has_preferred_type[i] = false;
 		have_conflict = false;
 		for (current_candidate = candidates;
@@ -956,29 +997,28 @@ func_select_candidate(int nargs,
 		{
 			current_typeids = current_candidate->args;
 			current_type = current_typeids[i];
-			current_category = TypeCategory(current_type);
-			if (slot_category[i] == INVALID_TYPE)
+			get_type_category_preferred(current_type,
+										&current_category,
+										&current_is_preferred);
+			if (slot_category[i] == TYPCATEGORY_INVALID)
 			{
 				/* first candidate */
 				slot_category[i] = current_category;
-				slot_has_preferred_type[i] =
-					IsPreferredType(current_category, current_type);
+				slot_has_preferred_type[i] = current_is_preferred;
 			}
 			else if (current_category == slot_category[i])
 			{
 				/* more candidates in same category */
-				slot_has_preferred_type[i] |=
-					IsPreferredType(current_category, current_type);
+				slot_has_preferred_type[i] |= current_is_preferred;
 			}
 			else
 			{
 				/* category conflict! */
-				if (current_category == STRING_TYPE)
+				if (current_category == TYPCATEGORY_STRING)
 				{
 					/* STRING always wins if available */
 					slot_category[i] = current_category;
-					slot_has_preferred_type[i] =
-						IsPreferredType(current_category, current_type);
+					slot_has_preferred_type[i] = current_is_preferred;
 				}
 				else
 				{
@@ -989,7 +1029,7 @@ func_select_candidate(int nargs,
 				}
 			}
 		}
-		if (have_conflict && slot_category[i] != STRING_TYPE)
+		if (have_conflict && slot_category[i] != TYPCATEGORY_STRING)
 		{
 			/* Failed to resolve category conflict at this position */
 			resolved_unknowns = false;
@@ -1014,14 +1054,15 @@ func_select_candidate(int nargs,
 				if (input_base_typeids[i] != UNKNOWNOID)
 					continue;
 				current_type = current_typeids[i];
-				current_category = TypeCategory(current_type);
+				get_type_category_preferred(current_type,
+											&current_category,
+											&current_is_preferred);
 				if (current_category != slot_category[i])
 				{
 					keepit = false;
 					break;
 				}
-				if (slot_has_preferred_type[i] &&
-					!IsPreferredType(current_category, current_type))
+				if (slot_has_preferred_type[i] && !current_is_preferred)
 				{
 					keepit = false;
 					break;
@@ -1063,16 +1104,7 @@ func_select_candidate(int nargs,
  *
  * If an exact match isn't found:
  *	1) check for possible interpretation as a type coercion request
- *	2) get a vector of all possible input arg type arrays constructed
- *	   from the superclasses of the original input arg types
- *	3) get a list of all possible argument type arrays to the function
- *	   with given name and number of arguments
- *	4) for each input arg type array from vector #1:
- *	 a) find how many of the function arg type arrays from list #2
- *		it can be coerced to
- *	 b) if the answer is one, we have our function
- *	 c) if the answer is more than one, attempt to resolve the conflict
- *	 d) if the answer is zero, try the next array from vector #1
+ *	2) apply the ambiguous-function resolution rules
  *
  * Note: we rely primarily on nargs/argtypes as the argument description.
  * The actual expression node list is passed in fargs so that we can check
@@ -1085,13 +1117,20 @@ func_get_detail(List *funcname,
 				int nargs,
 				Oid *argtypes,
 				bool expand_variadic,
+<<<<<<< HEAD
 				bool expand_defaults,
+=======
+>>>>>>> 49f001d81e
 				Oid *funcid,	/* return value */
 				Oid *rettype,	/* return value */
 				bool *retset,	/* return value */
 				int *nvargs,	/* return value */
+<<<<<<< HEAD
 				Oid **true_typeids,		/* return value */
 				List **argdefaults)		/* optional return value */
+=======
+				Oid **true_typeids)		/* return value */
+>>>>>>> 49f001d81e
 {
 	FuncCandidateList raw_candidates;
 	FuncCandidateList best_candidate;
@@ -1106,8 +1145,12 @@ func_get_detail(List *funcname,
 		*argdefaults = NIL;
 
 	/* Get list of possible candidates from namespace search */
+<<<<<<< HEAD
 	raw_candidates = FuncnameGetCandidates(funcname, nargs,
 										   expand_variadic, expand_defaults);
+=======
+	raw_candidates = FuncnameGetCandidates(funcname, nargs, expand_variadic);
+>>>>>>> 49f001d81e
 
 	/*
 	 * Quickly check if there is an exact match to the input datatypes (there
@@ -1641,7 +1684,11 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool noError)
 {
 	FuncCandidateList clist;
 
+<<<<<<< HEAD
 	clist = FuncnameGetCandidates(funcname, nargs, false, false);
+=======
+	clist = FuncnameGetCandidates(funcname, nargs, false);
+>>>>>>> 49f001d81e
 
 	while (clist)
 	{
