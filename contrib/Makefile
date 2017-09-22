@@ -5,7 +5,26 @@ top_builddir = ..
 include $(top_builddir)/src/Makefile.global
 
 WANTED_DIRS = \
-<<<<<<< HEAD
+		adminpack	\
+		btree_gist	\
+		chkpass		\
+		citext		\
+		cube		\
+		dblink		\
+		dict_int	\
+		dict_xsyn	\
+		earthdistance	\
+		fuzzystrmatch	\
+		hstore		\
+		intarray \
+		pageinspect \
+		pg_upgrade \
+		pg_upgrade_support \
+		test_parser \
+		pgcrypto
+
+# Greenplum-specific additions (to ease merge pain).
+WANTED_DIRS += \
 		xlogdump \
 		pgbench \
 		changetrackingdump \
@@ -17,27 +36,6 @@ WANTED_DIRS = \
 		gp_inject_fault \
 		gp_cancel_query \
 		indexscan \
-		dict_int \
-		dict_xsyn \
-=======
-		adminpack	\
-		btree_gist	\
-		chkpass		\
-		citext		\
-		cube		\
-		dblink		\
-		dict_int	\
-		dict_xsyn	\
-		earthdistance	\
-		fuzzystrmatch	\
->>>>>>> 49f001d81e
-		hstore		\
-		intarray \
-		pageinspect \
-		pg_upgrade \
-		pg_upgrade_support \
-		test_parser \
-		pgcrypto
 
 ifeq ($(with_openssl),yes)
 WANTED_DIRS += sslinfo
@@ -50,13 +48,10 @@ endif
 ifeq ($(with_libxml),yes)
 WANTED_DIRS += xml2
 endif
-<<<<<<< HEAD
 
 ifeq ($(enable_orca),yes)
 WANTED_DIRS += orca_debug
 endif
-=======
->>>>>>> 49f001d81e
 
 
 # Missing:

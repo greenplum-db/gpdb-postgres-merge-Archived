@@ -48,11 +48,6 @@ PTHREAD_LIBS=-lpthread
 endif
 
 SHLIB_LINK = -L../pgtypeslib -lpgtypes $(libpq) $(filter -lintl -lm, $(LIBS)) $(PTHREAD_LIBS)
-<<<<<<< HEAD
-
-SHLIB_EXPORTS = exports.txt
-=======
->>>>>>> 49f001d81e
 
 SHLIB_EXPORTS = exports.txt
 

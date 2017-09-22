@@ -28,16 +28,11 @@ override CFLAGS += $(PTHREAD_CFLAGS)
 
 SHLIB_LINK = -L../ecpglib -lecpg -L../pgtypeslib -lpgtypes $(libpq) \
 	$(filter -lintl -lm, $(LIBS)) $(PTHREAD_LIBS)
-<<<<<<< HEAD
 
 # For a bug in gcc on centos 32-bit
 ifeq ($(GCC), yes)
  CFLAGS += -Wno-error
 endif # GCC
-
-SHLIB_EXPORTS = exports.txt
-=======
->>>>>>> 49f001d81e
 
 SHLIB_EXPORTS = exports.txt
 
