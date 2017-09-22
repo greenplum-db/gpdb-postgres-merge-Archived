@@ -19,11 +19,7 @@ NAME= pq
 SO_MAJOR_VERSION= 5
 SO_MINOR_VERSION= 3
 
-<<<<<<< HEAD
 override CPPFLAGS :=  -DFRONTEND -DUNSAFE_STAT_OK -I$(srcdir) $(CPPFLAGS) -I$(top_builddir)/src/port -I$(top_srcdir)/src/port
-=======
-override CPPFLAGS :=  -DFRONTEND -DUNSAFE_STAT_OK -I$(srcdir) $(CPPFLAGS) -I$(top_builddir)/src/port
->>>>>>> 49f001d81e
 ifneq ($(PORTNAME), win32)
 override CFLAGS += $(PTHREAD_CFLAGS)
 endif

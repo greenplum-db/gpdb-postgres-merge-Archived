@@ -27,7 +27,7 @@ override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
 	-DMINOR_VERSION=$(MINOR_VERSION) -DPATCHLEVEL=$(PATCHLEVEL) \
 	 $(CPPFLAGS)
 
-<<<<<<< HEAD
+# GPDB_84_MERGE_FIXME: this is a merge conflict *and* it doesn't make sense.
 ifeq ($(GCC), yes)
 override CFLAGS +=  $(PTHREAD_CFLAGS) -DECPG_COMPILE -Wno-unused-label -Wno-error
 endif
@@ -35,12 +35,6 @@ override CFLAGS += $(PTHREAD_CFLAGS) -DECPG_COMPILE
 
 OBJS=	preproc.o type.o ecpg.o output.o parser.o \
 	keywords.o c_keywords.o ecpg_keywords.o kwlookup.o ../ecpglib/typename.o descriptor.o variable.o \
-=======
-override CFLAGS += $(PTHREAD_CFLAGS) -DECPG_COMPILE
-
-OBJS=	preproc.o type.o ecpg.o output.o parser.o \
-	keywords.o c_keywords.o ecpg_keywords.o ../ecpglib/typename.o descriptor.o variable.o \
->>>>>>> 49f001d81e
 	$(WIN32RES)
 
 all: submake-libpgport ecpg
@@ -67,17 +61,8 @@ else
 	@$(missing) flex $< $@
 endif
 
-<<<<<<< HEAD
 $(srcdir)/preproc.y: $(top_srcdir)/src/backend/parser/gram.y parse.pl ecpg.addons ecpg.header ecpg.tokens ecpg.trailer ecpg.type
 	$(PERL) $(srcdir)/parse.pl $(srcdir) < $< > $@ 
-=======
-ecpg_keywords.o c_keywords.o keywords.o preproc.o parser.o: preproc.h
-
-# instead of maintaining our own list, take the one from the backend
-# we cannot just link it in, but must copy and make some minor changes
-keywords.c: % : $(top_srcdir)/src/backend/parser/%
-	rm -f $@ && $(LN_S) $< .
->>>>>>> 49f001d81e
 
 ecpg_keywords.o c_keywords.o keywords.o preproc.o parser.o: preproc.h
 
@@ -96,11 +81,7 @@ uninstall:
 	rm -f '$(DESTDIR)$(bindir)/ecpg$(X)'
 
 clean distclean:
-<<<<<<< HEAD
 	rm -f kwlookup.c *.o ecpg$(X)
-=======
-	rm -f keywords.c *.o ecpg$(X)
->>>>>>> 49f001d81e
 # garbage from partial builds
 	@rm -f y.tab.c y.tab.h preproc.tab.c preproc.tab.y preproc.tab.h
 # garbage from development

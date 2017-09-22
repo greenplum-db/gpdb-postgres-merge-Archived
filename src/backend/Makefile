@@ -180,10 +180,6 @@ $(top_builddir)/src/include/utils/probes.h: utils/probes.h
 
 utils/probes.o: utils/probes.d $(SUBDIROBJS)
 	$(DTRACE) $(DTRACEFLAGS) -C -G -s $(call expand_subsys,$^) -o $@
-<<<<<<< HEAD
-=======
-endif
->>>>>>> 49f001d81e
 
 
 ##########################################################################
