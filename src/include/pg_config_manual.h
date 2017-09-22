@@ -11,28 +11,6 @@
  */
 
 /*
-<<<<<<< HEAD
- * Size of a WAL file block.  This need have no particular relation to BLCKSZ.
- * XLOG_BLCKSZ must be a power of 2, and if your system supports O_DIRECT I/O,
- * XLOG_BLCKSZ must be a multiple of the alignment requirement for direct-I/O
- * buffers, else direct I/O may fail.
- *
- * Changing XLOG_BLCKSZ requires an initdb.
- */
-#define XLOG_BLCKSZ		32768
-
-/*
- * XLOG_SEG_SIZE is the size of a single WAL file.	This must be a power of 2
- * and larger than XLOG_BLCKSZ (preferably, a great deal larger than
- * XLOG_BLCKSZ).
- *
- * Changing XLOG_SEG_SIZE requires an initdb.
- */
-#define XLOG_SEG_SIZE	(64*1024*1024)
-
-/*
-=======
->>>>>>> 49f001d81e
  * Maximum length for identifiers (e.g. table names, column names,
  * function names).  Names actually are limited to one less byte than this,
  * because the length must include a trailing zero byte.

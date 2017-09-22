@@ -361,12 +361,9 @@ extern int no_such_variable
  *
  * Note: we compare magic blocks with memcmp(), so there had better not be
  * any alignment pad bytes in them.
-<<<<<<< HEAD
  *
  * Note: when changing the contents of magic blocks, be sure to adjust the
  * incompatible_module_error() function in dfmgr.c.
-=======
->>>>>>> 49f001d81e
  *-------------------------------------------------------------------------
  */
 
@@ -380,11 +377,8 @@ typedef struct
 	int			namedatalen;	/* NAMEDATALEN */
 	int			float4byval;	/* FLOAT4PASSBYVAL */
 	int			float8byval;	/* FLOAT8PASSBYVAL */
-<<<<<<< HEAD
 	int         product;        /* magic product code */
 	int         headerversion;/* header version number to force recompilation of libraries */
-=======
->>>>>>> 49f001d81e
 } Pg_magic_struct;
 
 /*
@@ -413,13 +407,9 @@ typedef enum {
 	INDEX_MAX_KEYS, \
 	NAMEDATALEN, \
 	FLOAT4PASSBYVAL, \
-<<<<<<< HEAD
 	FLOAT8PASSBYVAL, \
 	PgMagicProductGreenplum, \
 	GP_HEADER_VERSION_NUM, \
-=======
-	FLOAT8PASSBYVAL \
->>>>>>> 49f001d81e
 }
 
 #ifndef FLOAT4PASSBYVAL

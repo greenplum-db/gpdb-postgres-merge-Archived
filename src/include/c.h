@@ -1009,11 +1009,7 @@ extern int	fdatasync(int fildes);
 #if defined(HAVE_WCSTOMBS) && defined(HAVE_TOWLOWER)
 #define USE_WIDE_UPPER_LOWER
 #endif
-<<<<<<< HEAD
 
-=======
-   
->>>>>>> 49f001d81e
 /* EXEC_BACKEND defines */
 #ifdef EXEC_BACKEND
 #define NON_EXEC_STATIC
