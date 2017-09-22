@@ -136,11 +136,7 @@ int			Log_destination = LOG_DESTINATION_STDERR;
 /*
  * Max string length to send to syslog().  Note that this doesn't count the
  * sequence-number prefix we add, and of course it doesn't count the prefix
-<<<<<<< HEAD
- * added by syslog itself.	On many implementations it seems that the hard
-=======
  * added by syslog itself.  On many implementations it seems that the hard
->>>>>>> 49f001d81e
  * limit is approximately 2K bytes including both those prefixes.
  */
 #ifndef PG_SYSLOG_LIMIT

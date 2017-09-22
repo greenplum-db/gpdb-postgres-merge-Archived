@@ -5,11 +5,7 @@
  *
  * Copyright (c) 1998-2008, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/tsearch/ts_locale.h,v 1.5.2.1 2008/06/18 20:55:49 tgl Exp $
-=======
  * $PostgreSQL: pgsql/src/include/tsearch/ts_locale.h,v 1.8 2008/06/18 20:55:42 tgl Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

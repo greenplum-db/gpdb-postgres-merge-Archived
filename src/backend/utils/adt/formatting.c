@@ -1490,11 +1490,7 @@ str_numth(char *dest, char *num, int type)
 char *
 str_tolower(const char *buff, size_t nbytes)
 {
-<<<<<<< HEAD
-	char	   *result;
-=======
 	char		*result;
->>>>>>> 49f001d81e
 
 	if (!buff)
 		return NULL;

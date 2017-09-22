@@ -297,11 +297,7 @@ CreateNewPortal(void)
  * you can pass a constant string, perhaps "(query not available)".)
  *
  * commandTag shall be NULL if and only if the original query string
-<<<<<<< HEAD
- * (before rewriting) was an empty string.  Also, the passed commandTag must
-=======
  * (before rewriting) was an empty string.	Also, the passed commandTag must
->>>>>>> 49f001d81e
  * be a pointer to a constant string, since it is not copied.
  *
  * If cplan is provided, then it is a cached plan containing the stmts,

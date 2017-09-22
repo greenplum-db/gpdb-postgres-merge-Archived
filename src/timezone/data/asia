@@ -879,11 +879,7 @@ Zone	Asia/Dili	8:22:20 -	LMT	1912 Jan  1
 
 # India
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
-<<<<<<< HEAD
-Zone	Asia/Kolkata	5:53:28 -	LMT	1880        # Kolkata
-=======
 Zone	Asia/Kolkata	5:53:28 -	LMT	1880	# Kolkata
->>>>>>> 49f001d81e
 			5:53:20	-	HMT	1941 Oct    # Howrah Mean Time?
 			6:30	-	BURT	1942 May 15 # Burma Time
 			5:30	-	IST	1942 Sep

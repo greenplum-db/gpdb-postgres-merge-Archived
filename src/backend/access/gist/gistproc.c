@@ -10,11 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.13.2.2 2009/09/18 14:03:12 teodor Exp $
-=======
  *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.14 2008/04/14 17:05:33 tgl Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

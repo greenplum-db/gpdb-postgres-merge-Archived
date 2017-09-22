@@ -10,11 +10,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.90.2.1 2010/05/28 01:14:16 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.91 2008/04/13 20:51:20 tgl Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

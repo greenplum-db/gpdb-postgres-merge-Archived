@@ -1,9 +1,5 @@
 <!--
-<<<<<<< HEAD
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.102 2008/12/13 19:13:44 tgl Exp $
-=======
 $PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.99 2008/05/09 23:32:03 tgl Exp $
->>>>>>> 49f001d81e
 PostgreSQL documentation
 -->
 

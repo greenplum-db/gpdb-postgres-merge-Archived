@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.84.2.1 2009/09/03 18:48:21 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.82 2008/06/17 19:10:56 tgl Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

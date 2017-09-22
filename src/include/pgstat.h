@@ -393,11 +393,7 @@ typedef struct PgStat_FunctionEntry
  *								usage statistics.
  * ----------
  */
-<<<<<<< HEAD
-#define PGSTAT_NUM_FUNCENTRIES	\
-=======
 #define PGSTAT_NUM_FUNCENTRIES  \
->>>>>>> 49f001d81e
 	((PGSTAT_MSG_PAYLOAD - sizeof(Oid) - sizeof(int))  \
 	 / sizeof(PgStat_FunctionEntry))
 
@@ -680,19 +676,11 @@ typedef struct PgStat_FunctionCallUsage
 	/* NULL means we are not tracking the current function call */
 	PgStat_FunctionCounts *fs;
 	/* Total time previously charged to function, as of function start */
-<<<<<<< HEAD
-	instr_time	save_f_time;
-	/* Backend-wide total time as of function start */
-	instr_time	save_total;
-	/* system clock as of function start */
-	instr_time	f_start;
-=======
 	instr_time		save_f_time;
 	/* Backend-wide total time as of function start */
 	instr_time		save_total;
 	/* system clock as of function start */
 	instr_time		f_start;
->>>>>>> 49f001d81e
 } PgStat_FunctionCallUsage;
 
 

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/extern.h,v 1.73.2.1 2009/09/08 04:25:14 tgl Exp $ */
-=======
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/extern.h,v 1.71 2008/05/20 23:17:32 meskes Exp $ */
->>>>>>> 49f001d81e
 
 #ifndef _ECPG_PREPROC_EXTERN_H
 #define _ECPG_PREPROC_EXTERN_H

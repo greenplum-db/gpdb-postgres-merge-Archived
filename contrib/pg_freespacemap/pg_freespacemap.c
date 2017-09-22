@@ -3,11 +3,7 @@
  * pg_freespacemap.c
  *	  display contents of a free space map
  *
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/contrib/pg_freespacemap/pg_freespacemap.c,v 1.9.4.1 2009/04/07 18:10:56 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/contrib/pg_freespacemap/pg_freespacemap.c,v 1.10 2008/05/12 00:00:43 alvherre Exp $
->>>>>>> 49f001d81e
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"

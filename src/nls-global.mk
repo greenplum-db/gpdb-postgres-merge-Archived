@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-# $PostgreSQL: pgsql/src/nls-global.mk,v 1.20 2009/01/20 09:58:50 petere Exp $
-=======
 # $PostgreSQL: pgsql/src/nls-global.mk,v 1.14 2008/05/17 21:27:12 momjian Exp $
->>>>>>> 49f001d81e
 
 # Common rules for Native Language Support (NLS)
 #

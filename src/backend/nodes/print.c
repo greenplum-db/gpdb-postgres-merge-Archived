@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.90 2008/10/04 21:56:53 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.89 2008/06/19 00:46:04 alvherre Exp $
->>>>>>> 49f001d81e
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT

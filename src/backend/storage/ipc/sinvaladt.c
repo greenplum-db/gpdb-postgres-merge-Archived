@@ -67,11 +67,7 @@
  * normal behavior is that at most one such interrupt is in flight at a time;
  * when a backend completes processing a catchup interrupt, it executes
  * SICleanupQueue, which will signal the next-furthest-behind backend if
-<<<<<<< HEAD
- * needed.	This avoids undue contention from multiple backends all trying
-=======
  * needed.  This avoids undue contention from multiple backends all trying
->>>>>>> 49f001d81e
  * to catch up at once.  However, the furthest-back backend might be stuck
  * in a state where it can't catch up.  Eventually it will get reset, so it
  * won't cause any more problems for anyone but itself.  But we don't want
@@ -102,11 +98,7 @@
  * the writer wants to change maxMsgNum while readers need to read it.
  * We deal with that by having a spinlock that readers must take for just
  * long enough to read maxMsgNum, while writers take it for just long enough
-<<<<<<< HEAD
- * to write maxMsgNum.	(The exact rule is that you need the spinlock to
-=======
  * to write maxMsgNum.  (The exact rule is that you need the spinlock to
->>>>>>> 49f001d81e
  * read maxMsgNum if you are not holding SInvalWriteLock, and you need the
  * spinlock to write maxMsgNum unless you are holding both locks.)
  *
@@ -606,15 +598,9 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
  *		get next SI message(s) for current backend, if there are any
  *
  * Possible return values:
-<<<<<<< HEAD
- *	0:	 no SI message available
- *	n>0: next n SI messages have been extracted into data[]
- * -1:	 SI reset message extracted
-=======
  *	0:   no SI message available
  *	n>0: next n SI messages have been extracted into data[]
  * -1:   SI reset message extracted
->>>>>>> 49f001d81e
  *
  * If the return value is less than the array size "datasize", the caller
  * can assume that there are no more SI messages after the one(s) returned.
@@ -624,19 +610,11 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
  * executing on behalf of other backends, since each instance will modify only
  * fields of its own backend's ProcState, and no instance will look at fields
  * of other backends' ProcStates.  We express this by grabbing SInvalReadLock
-<<<<<<< HEAD
- * in shared mode.	Note that this is not exactly the normal (read-only)
- * interpretation of a shared lock! Look closely at the interactions before
- * allowing SInvalReadLock to be grabbed in shared mode for any other reason!
- *
- * NB: this can also run in parallel with SIInsertDataEntries.	It is not
-=======
  * in shared mode.  Note that this is not exactly the normal (read-only)
  * interpretation of a shared lock! Look closely at the interactions before
  * allowing SInvalReadLock to be grabbed in shared mode for any other reason!
  *
  * NB: this can also run in parallel with SIInsertDataEntries.  It is not
->>>>>>> 49f001d81e
  * guaranteed that we will return any messages added after the routine is
  * entered.
  *
@@ -769,11 +747,7 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
  *
  * Caution: because we transiently release write lock when we have to signal
  * some other backend, it is NOT guaranteed that there are still minFree
-<<<<<<< HEAD
- * free message slots at exit.	Caller must recheck and perhaps retry.
-=======
  * free message slots at exit.  Caller must recheck and perhaps retry.
->>>>>>> 49f001d81e
  */
 void
 SICleanupQueue(bool callerHasWriteLock, int minFree)

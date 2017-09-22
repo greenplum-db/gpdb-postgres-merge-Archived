@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.65 2008/03/26 21:10:37 alvherre Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.71 2008/06/19 00:46:03 alvherre Exp $
->>>>>>> 49f001d81e
  *
  * NOTES
  *	  many of the old access method routines have been turned into

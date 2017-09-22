@@ -15,11 +15,7 @@
 #
 #
 # IDENTIFICATION
-<<<<<<< HEAD
-#    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.sh,v 1.41 2009/01/01 17:23:48 momjian Exp $
-=======
 #    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.sh,v 1.40 2008/06/23 17:54:29 tgl Exp $
->>>>>>> 49f001d81e
 #
 #-------------------------------------------------------------------------
 

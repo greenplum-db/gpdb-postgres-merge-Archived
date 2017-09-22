@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.164.2.5 2009/10/16 22:08:48 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.167 2008/08/01 11:41:12 mha Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -206,11 +202,7 @@ static int	pg_krb5_initialised;
 static krb5_context pg_krb5_context;
 static krb5_keytab pg_krb5_keytab;
 static krb5_principal pg_krb5_server;
-<<<<<<< HEAD
-#endif   /* KRB5 */
-=======
 #endif /* KRB5 */
->>>>>>> 49f001d81e
 
 
 /*----------------------------------------------------------------

@@ -11,11 +11,7 @@
 #
 #
 # IDENTIFICATION
-<<<<<<< HEAD
-#    $PostgreSQL: pgsql/src/tools/msvc/Genbki.pm,v 1.6 2009/01/01 17:24:05 momjian Exp $
-=======
 #    $PostgreSQL: pgsql/src/tools/msvc/Genbki.pm,v 1.5 2008/07/19 04:01:29 tgl Exp $
->>>>>>> 49f001d81e
 #
 #-------------------------------------------------------------------------
 

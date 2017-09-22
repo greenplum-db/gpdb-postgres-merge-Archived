@@ -7,11 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.112.2.1 2008/09/16 01:56:35 tgl Exp $
-=======
  * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.113 2008/05/12 00:00:54 alvherre Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

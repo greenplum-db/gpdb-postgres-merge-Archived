@@ -4,11 +4,7 @@
  *
  * Portions Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.49 2009/04/01 09:17:32 heikki Exp $
-=======
  * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.41 2008/05/19 18:08:16 tgl Exp $
->>>>>>> 49f001d81e
  *
  *-----------------------------------------------------------------------
  */

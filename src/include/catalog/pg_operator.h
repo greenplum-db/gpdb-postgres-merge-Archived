@@ -122,11 +122,7 @@ DATA(insert OID =  96 ( "="		   PGNSP PGUID b t t	23	23	16	96 518 int4eq eqsel e
 #define Int4EqualOperator 96
 DATA(insert OID =  97 ( "<"		   PGNSP PGUID b f f	23	23	16 521 525 int4lt scalarltsel scalarltjoinsel ));
 DATA(insert OID =  98 ( "="		   PGNSP PGUID b t t	25	25	16	98 531 texteq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define TextEqualOperator 98
-=======
 #define TextEqualOperator   98
->>>>>>> 49f001d81e
 
 DATA(insert OID = 349 (  "||"	   PGNSP PGUID b f f 2277 2283 2277 0 0 array_append   -	   -	 ));
 DATA(insert OID = 374 (  "||"	   PGNSP PGUID b f f 2283 2277 2277 0 0 array_prepend  -	   -	 ));

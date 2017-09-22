@@ -239,13 +239,8 @@ ProcedureCreate(const char *procedureName,
 		 * need to use deconstruct_array() since the array data is just going
 		 * to look like a C array of char values.
 		 */
-<<<<<<< HEAD
-		ArrayType 	*modesArray = (ArrayType *) DatumGetPointer(parameterModes);
-		char		*modes;
-=======
 		ArrayType  *modesArray = (ArrayType *) DatumGetPointer(parameterModes);
 		char	   *modes;
->>>>>>> 49f001d81e
 
 		if (ARR_NDIM(modesArray) != 1 ||
 			ARR_DIMS(modesArray)[0] != allParamCount ||

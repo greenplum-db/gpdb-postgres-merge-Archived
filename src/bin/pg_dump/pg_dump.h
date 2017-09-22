@@ -8,11 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.139.2.1 2009/01/18 20:44:53 tgl Exp $
-=======
  * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.140 2008/05/09 23:32:04 tgl Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

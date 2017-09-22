@@ -10,11 +10,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.104 2008/10/04 21:56:55 tgl Exp $
-=======
  * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.100 2008/04/13 20:51:21 tgl Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

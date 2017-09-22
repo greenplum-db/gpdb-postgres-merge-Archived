@@ -9,11 +9,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/access/common/indextuple.c,v 1.89 2009/08/01 19:59:41 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/access/common/indextuple.c,v 1.86 2008/04/17 21:37:28 alvherre Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

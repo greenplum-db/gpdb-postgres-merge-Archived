@@ -1468,15 +1468,9 @@ connection_warnings(void)
 
 		if (pset.sversion / 100 != client_ver / 100)
 			printf(_("WARNING: %s version %d.%d, server version %d.%d.\n"
-<<<<<<< HEAD
-					 "         Some psql features might not work.\n"),
-				 pset.progname, client_ver / 10000, (client_ver / 100) % 100,
-				   pset.sversion / 10000, (pset.sversion / 100) % 100);
-=======
 				 "         Some psql features might not work.\n"),
 				pset.progname, client_ver / 10000, (client_ver / 100) % 100,
 				pset.sversion / 10000, (pset.sversion / 100) % 100);
->>>>>>> 49f001d81e
 
 #ifdef WIN32
 		checkWin32Codepage();
@@ -1554,11 +1548,7 @@ checkWin32Codepage(void)
 	{
 		printf(_("WARNING: Console code page (%u) differs from Windows code page (%u)\n"
 				 "         8-bit characters might not work correctly. See psql reference\n"
-<<<<<<< HEAD
-				 "         page \"Notes for Windows users\" for details.\n"),
-=======
 			     "         page \"Notes for Windows users\" for details.\n"),
->>>>>>> 49f001d81e
 			   concp, wincp);
 	}
 }

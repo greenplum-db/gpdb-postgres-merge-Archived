@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/* $PostgreSQL: pgsql/contrib/hstore/uninstall_hstore.sql,v 1.6.2.1 2010/06/22 11:36:36 rhaas Exp $ */
-=======
 /* $PostgreSQL: pgsql/contrib/hstore/uninstall_hstore.sql,v 1.7 2008/04/14 17:05:32 tgl Exp $ */
->>>>>>> 49f001d81e
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;

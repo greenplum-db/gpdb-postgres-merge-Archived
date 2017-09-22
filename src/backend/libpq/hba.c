@@ -10,11 +10,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.209 2010/07/06 19:18:56 momjian Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.166 2008/08/01 09:09:49 mha Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

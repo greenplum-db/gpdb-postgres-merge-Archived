@@ -8,11 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.10.2.1 2008/04/22 17:54:19 teodor Exp $
-=======
  *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.18 2008/07/11 21:06:29 tgl Exp $
->>>>>>> 49f001d81e
  *-------------------------------------------------------------------------
  */
 

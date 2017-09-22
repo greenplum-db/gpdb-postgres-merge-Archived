@@ -7,11 +7,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.14.2.6 2009/11/15 13:54:22 petere Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.15 2008/06/17 16:09:06 momjian Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
