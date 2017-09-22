@@ -80,11 +80,7 @@ uninstall-po:
 
 clean-po:
 	$(if $(MO_FILES),rm -f $(MO_FILES))
-<<<<<<< HEAD
 	@$(if $(wildcard po/*.po.new),rm -f po/*.po.new)
-=======
-	@$(if $(PO_FILES),rm -f $(addsuffix .old, $(PO_FILES)))
->>>>>>> 49f001d81e
 	rm -f po/$(CATALOG_NAME).pot
 
 
