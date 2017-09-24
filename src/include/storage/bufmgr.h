@@ -14,23 +14,15 @@
 #ifndef BUFMGR_H
 #define BUFMGR_H
 
-<<<<<<< HEAD
 #include "cdb/cdbfilerepprimary.h"
 #include "miscadmin.h"
+#include "storage/block.h"
 #include "storage/buf.h"
 #include "storage/buf_internals.h"
 #include "storage/bufpage.h"
 #include "storage/relfilenode.h"
 #include "storage/smgr.h"
 #include "utils/relcache.h"
-#include "utils/rel.h"
-=======
-#include "storage/block.h"
-#include "storage/buf.h"
-#include "storage/bufpage.h"
-#include "storage/relfilenode.h"
-#include "utils/relcache.h"
->>>>>>> 49f001d81e
 
 typedef void *Block;
 
@@ -327,13 +319,9 @@ extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
 extern Buffer ReadBufferWithStrategy(Relation reln, BlockNumber blockNum,
 					   BufferAccessStrategy strategy);
 extern Buffer ReadOrZeroBuffer(Relation reln, BlockNumber blockNum);
-<<<<<<< HEAD
 extern Buffer ReadBuffer_Resync(SMgrRelation reln, BlockNumber blockNum);
-
-=======
 extern Buffer ReadBufferWithoutRelcache(RelFileNode rnode, bool isTemp,
 							 BlockNumber blockNum, bool zeroPage);
->>>>>>> 49f001d81e
 extern void ReleaseBuffer(Buffer buffer);
 extern void UnlockReleaseBuffer(Buffer buffer);
 extern void MarkBufferDirty(Buffer buffer);
