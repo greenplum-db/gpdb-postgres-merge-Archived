@@ -16,19 +16,12 @@
 #ifndef RELCACHE_H
 #define RELCACHE_H
 
-<<<<<<< HEAD
 #include "access/htup.h"
 #include "access/skey.h"
 #include "access/tupdesc.h"
 #include "nodes/bitmapset.h"
 #include "nodes/pg_list.h"
 #include "catalog/pg_class.h"
-=======
-#include "access/tupdesc.h"
-#include "nodes/bitmapset.h"
-#include "nodes/pg_list.h"
-
->>>>>>> 49f001d81e
 
 typedef struct RelationData *Relation;
 
@@ -39,11 +32,6 @@ typedef struct RelationData *Relation;
  * ----------------
  */
 typedef Relation *RelationPtr;
-<<<<<<< HEAD
-
-struct SysScanDescData; /* defined in access/genam.h */
-=======
->>>>>>> 49f001d81e
 
 /*
  * Routines to open (lookup) and close a relcache entry

@@ -405,10 +405,6 @@ do { \
  */
 #define MaxAttrSize		(10 * 1024 * 1024)
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 49f001d81e
 /*
  * MinimalTuple is an alternative representation that is used for transient
  * tuples inside the executor, in places where transaction status information
@@ -777,41 +773,53 @@ extern void HeapTupleHeaderAdjustCmax(HeapTupleHeader tup,
  * ----------------
  */
 
-#if !defined(DISABLE_COMPLEX_MACRO)
+/* ----------------
+ *		fastgetattr
+ *
+ *		Fetch a user attribute's value as a Datum (might be either a
+ *		value, or a pointer into the data area of the tuple).
+ *
+ *		This must not be used when a system attribute might be requested.
+ *		Furthermore, the passed attnum MUST be valid.  Use heap_getattr()
+ *		instead, if in doubt.
+ *
+ *		This gets called many times, so we macro the cacheable and NULL
+ *		lookups, and call nocachegetattr() for the rest.
+ *
+ *      CDB:  Implemented as inline function instead of macro.
+ * ----------------
+ */
+static inline Datum
+fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
+{
+    Datum               result;
+    Form_pg_attribute   att = tupleDesc->attrs[attnum-1];
 
-#define fastgetattr(tup, attnum, tupleDesc, isnull)					\
-(																	\
-	AssertMacro((attnum) > 0),										\
-	(((isnull) != NULL) ? (*(isnull) = false) : (dummyret)NULL),	\
-	HeapTupleNoNulls(tup) ?											\
-	(																\
-		(tupleDesc)->attrs[(attnum)-1]->attcacheoff >= 0 ?			\
-		(															\
-			fetchatt((tupleDesc)->attrs[(attnum)-1],				\
-				(char *) (tup)->t_data + (tup)->t_data->t_hoff +	\
-					(tupleDesc)->attrs[(attnum)-1]->attcacheoff)	\
-		)															\
-		:															\
-			nocachegetattr((tup), (attnum), (tupleDesc), (isnull))	\
-	)																\
-	:																\
-	(																\
-		att_isnull((attnum)-1, (tup)->t_data->t_bits) ?				\
-		(															\
-			(((isnull) != NULL) ? (*(isnull) = true) : (dummyret)NULL),		\
-			(Datum)NULL												\
-		)															\
-		:															\
-		(															\
-			nocachegetattr((tup), (attnum), (tupleDesc), (isnull))	\
-		)															\
-	)																\
-)
-#else							/* defined(DISABLE_COMPLEX_MACRO) */
+    Assert(attnum > 0);
 
-extern Datum fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
-			bool *isnull);
-#endif   /* defined(DISABLE_COMPLEX_MACRO) */
+    if (isnull)
+        *isnull = false;
+
+    if (HeapTupleNoNulls(tup))
+    {
+        if (att->attcacheoff >= 0)
+			result = fetchatt(att,
+				              (char *)tup->t_data + tup->t_data->t_hoff +
+					            att->attcacheoff);
+        else
+            result = nocachegetattr(tup, attnum, tupleDesc);
+    }
+    else if (att_isnull(attnum-1, tup->t_data->t_bits))
+    {
+        result = Int32GetDatum(0);
+        if (isnull)
+            *isnull = true;
+    }
+    else
+        result = nocachegetattr(tup, attnum, tupleDesc);
+
+    return result;
+}                               /* fastgetattr */
 
 
 /* ----------------
@@ -827,45 +835,57 @@ extern Datum fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
  *		<tup> is the pointer to the heap tuple.  <attnum> is the attribute
  *		number of the column (field) caller wants.	<tupleDesc> is a
  *		pointer to the structure describing the row and all its fields.
+ *
+ *      CDB:  Implemented as inline function instead of macro.
  * ----------------
  */
-#define heap_getattr(tup, attnum, tupleDesc, isnull) \
-( \
-	AssertMacro((tup) != NULL), \
-	( \
-		((attnum) > 0) ? \
-		( \
-			((attnum) > (int) HeapTupleHeaderGetNatts((tup)->t_data)) ? \
-			( \
-				(((isnull) != NULL) ? (*(isnull) = true) : (dummyret)NULL), \
-				(Datum)NULL \
-			) \
-			: \
-				fastgetattr((tup), (attnum), (tupleDesc), (isnull)) \
-		) \
-		: \
-			heap_getsysattr((tup), (attnum), (tupleDesc), (isnull)) \
-	) \
-)
+static inline Datum
+heap_getattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
+{
+    Datum       result;
+
+    Assert(tup != NULL);
+
+    if (attnum > (int)HeapTupleHeaderGetNatts(tup->t_data))
+    {
+        result = DatumGetInt32(0);
+        if (isnull)
+            *isnull = true;
+    }
+    else if (attnum > 0)
+        result = fastgetattr(tup, attnum, tupleDesc, isnull);
+    else
+        result = heap_getsysattr(tup, attnum, isnull);
+
+    return result;
+}                               /* heap_getattr */
 
 /* prototypes for functions in common/heaptuple.c */
 extern Size heap_compute_data_size(TupleDesc tupleDesc,
 					   Datum *values, bool *isnull);
-extern void heap_fill_tuple(TupleDesc tupleDesc,
+extern Size heap_fill_tuple(TupleDesc tupleDesc,
 				Datum *values, bool *isnull,
 				char *data, Size data_size,
 				uint16 *infomask, bits8 *bit);
 extern bool heap_attisnull(HeapTuple tup, int attnum);
-extern Datum nocachegetattr(HeapTuple tup, int attnum,
-			   TupleDesc att, bool *isnull);
-extern Datum heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
-				bool *isnull);
-extern HeapTuple heap_copytuple(HeapTuple tuple);
+extern bool heap_attisnull_normalattr(HeapTuple tup, int attnum);
+
+extern HeapTuple heaptuple_copy_to(HeapTuple tup, HeapTuple result, uint32 *len);
+
+static inline HeapTuple heap_copytuple(HeapTuple tuple)
+{
+	return heaptuple_copy_to(tuple, NULL, NULL);
+}
+
 extern void heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest);
-extern HeapTuple heap_form_tuple(TupleDesc tupleDescriptor,
-				Datum *values, bool *isnull);
-extern HeapTuple heap_formtuple(TupleDesc tupleDescriptor,
-			   Datum *values, char *nulls);
+
+extern HeapTuple heaptuple_form_to(TupleDesc tupdesc, Datum* values, bool *isnull, HeapTuple tup, uint32 *len);
+static inline HeapTuple heap_form_tuple(TupleDesc tupleDescriptor, Datum *values, bool *isnull)
+{
+	return heaptuple_form_to(tupleDescriptor, values, isnull, NULL, NULL);
+}
+extern HeapTuple heap_formtuple(TupleDesc tupleDescriptor, Datum *values, char *nulls) __attribute__ ((deprecated));
+
 extern HeapTuple heap_modify_tuple(HeapTuple tuple,
 				  TupleDesc tupleDesc,
 				  Datum *replValues,
@@ -875,11 +895,11 @@ extern HeapTuple heap_modifytuple(HeapTuple tuple,
 				 TupleDesc tupleDesc,
 				 Datum *replValues,
 				 char *replNulls,
-				 char *replActions);
+				 char *replActions) __attribute__ ((deprecated));
 extern void heap_deform_tuple(HeapTuple tuple, TupleDesc tupleDesc,
 				  Datum *values, bool *isnull);
 extern void heap_deformtuple(HeapTuple tuple, TupleDesc tupleDesc,
-				 Datum *values, char *nulls);
+				 Datum *values, char *nulls) __attribute__ ((deprecated));
 extern void heap_freetuple(HeapTuple htup);
 extern MinimalTuple heap_form_minimal_tuple(TupleDesc tupleDescriptor,
 						Datum *values, bool *isnull);
