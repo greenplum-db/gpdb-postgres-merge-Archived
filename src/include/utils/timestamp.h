@@ -357,12 +357,6 @@ extern Datum pg_conf_load_time(PG_FUNCTION_ARGS);
 
 extern Datum generate_series_timestamp(PG_FUNCTION_ARGS);
 extern Datum generate_series_timestamptz(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
-
-/* Old name */
-extern Datum pgsql_postmaster_start_time(PG_FUNCTION_ARGS);
-=======
->>>>>>> 49f001d81e
 
 /* Internal routines (not fmgr-callable) */
 
