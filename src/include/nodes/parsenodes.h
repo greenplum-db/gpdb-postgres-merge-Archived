@@ -282,11 +282,7 @@ typedef struct A_Const
 {
 	NodeTag		type;
 	Value		val;			/* value (includes type info, see value.h) */
-<<<<<<< HEAD
-	TypeName   *typeName;		/* typecast, or NULL if none */
 	int			location;		/* token location, or -1 if unknown */
-=======
->>>>>>> 49f001d81e
 } A_Const;
 
 /*
@@ -319,10 +315,7 @@ typedef struct FuncCall
 	bool		agg_star;		/* argument was really '*' */
 	bool		agg_distinct;	/* arguments were labeled DISTINCT */
 	bool		func_variadic;	/* last argument was labeled VARIADIC */
-<<<<<<< HEAD
 	struct WindowDef *over;		/* OVER clause, if any */
-=======
->>>>>>> 49f001d81e
 	int			location;		/* token location, or -1 if unknown */
 } FuncCall;
 
@@ -2299,13 +2292,8 @@ typedef enum FunctionParameterMode
 	FUNC_PARAM_IN = 'i',		/* input only */
 	FUNC_PARAM_OUT = 'o',		/* output only */
 	FUNC_PARAM_INOUT = 'b',		/* both */
-<<<<<<< HEAD
 	FUNC_PARAM_VARIADIC = 'v',	/* variadic (always input) */
-	FUNC_PARAM_TABLE = 't'		/* table (always output) */
-=======
-	FUNC_PARAM_VARIADIC = 'v',	/* variadic */
 	FUNC_PARAM_TABLE = 't'		/* table function output column */
->>>>>>> 49f001d81e
 } FunctionParameterMode;
 
 typedef struct FunctionParameter

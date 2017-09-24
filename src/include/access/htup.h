@@ -758,20 +758,8 @@ extern void HeapTupleHeaderAdjustCmax(HeapTupleHeader tup,
 						  CommandId *cmax,
 						  bool *iscombo);
 
-/* ----------------
- *		fastgetattr
- *
- *		Fetch a user attribute's value as a Datum (might be either a
- *		value, or a pointer into the data area of the tuple).
- *
- *		This must not be used when a system attribute might be requested.
- *		Furthermore, the passed attnum MUST be valid.  Use heap_getattr()
- *		instead, if in doubt.
- *
- *		This gets called many times, so we macro the cacheable and NULL
- *		lookups, and call nocachegetattr() for the rest.
- * ----------------
- */
+extern Datum nocachegetattr(HeapTuple tup, int attnum, TupleDesc att);
+extern Datum heap_getsysattr(HeapTuple tup, int attnum, bool *isnull);
 
 /* ----------------
  *		fastgetattr
@@ -867,6 +855,8 @@ extern Size heap_fill_tuple(TupleDesc tupleDesc,
 				Datum *values, bool *isnull,
 				char *data, Size data_size,
 				uint16 *infomask, bits8 *bit);
+extern Datum nocachegetattr(HeapTuple tup, int attnum, TupleDesc att);
+extern Datum heap_getsysattr(HeapTuple tup, int attnum, bool *isnull);
 extern bool heap_attisnull(HeapTuple tup, int attnum);
 extern bool heap_attisnull_normalattr(HeapTuple tup, int attnum);
 

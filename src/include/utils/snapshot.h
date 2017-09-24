@@ -60,7 +60,9 @@ typedef struct SnapshotData
 	 * out any that are >= xmax
 	 */
 	CommandId	curcid;			/* in my xact, CID < curcid are visible */
-<<<<<<< HEAD
+	uint32		active_count;	/* refcount on ActiveSnapshot stack */
+	uint32		regd_count;		/* refcount on RegisteredSnapshotList */
+	bool		copied;			/* false if it's a static snapshot */
 
 	bool		haveDistribSnapshot; /* True if this snapshot is distributed. */
 
@@ -69,11 +71,7 @@ typedef struct SnapshotData
 	 * distributed transaction, with cached local xids
 	 */
 	DistributedSnapshotWithLocalMapping	distribSnapshotWithLocalMapping;
-=======
-	uint32		active_count;	/* refcount on ActiveSnapshot stack */
-	uint32		regd_count;		/* refcount on RegisteredSnapshotList */
-	bool		copied;			/* false if it's a static snapshot */
->>>>>>> 49f001d81e
+
 } SnapshotData;
 
 /*

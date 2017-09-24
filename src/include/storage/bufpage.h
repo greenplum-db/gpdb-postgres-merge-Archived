@@ -14,12 +14,9 @@
 #ifndef BUFPAGE_H
 #define BUFPAGE_H
 
-<<<<<<< HEAD
-#include "storage/bufmgr.h"
-#include "storage/block.h"
-=======
 #include "access/xlogdefs.h"
->>>>>>> 49f001d81e
+#include "storage/block.h"
+#include "storage/bufmgr.h"
 #include "storage/item.h"
 #include "storage/off.h"
 
