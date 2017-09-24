@@ -27,10 +27,8 @@
 #include "storage/block.h"
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
-<<<<<<< HEAD
+
 #include "catalog/gp_persistent.h"
-=======
->>>>>>> 49f001d81e
 
 
 /*

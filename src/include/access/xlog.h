@@ -175,17 +175,12 @@ extern int	XLOGbuffers;
 extern bool XLogArchiveMode;
 extern char *XLogArchiveCommand;
 extern int	XLogArchiveTimeout;
-<<<<<<< HEAD
-extern char *XLOG_sync_method;
-extern const char XLOG_sync_method_default[];
 extern bool gp_keep_all_xlog;
 extern int keep_wal_segments;
 
 extern bool *wal_consistency_checking;
 extern char *wal_consistency_checking_string;
 
-=======
->>>>>>> 49f001d81e
 extern bool log_checkpoints;
 
 #define XLogArchivingActive()	(XLogArchiveMode)

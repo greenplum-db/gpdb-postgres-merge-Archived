@@ -21,10 +21,6 @@
 #include "storage/smgr.h"
 #include "storage/spin.h"
 #include "utils/relcache.h"
-<<<<<<< HEAD
-#include "utils/rel.h"
-=======
->>>>>>> 49f001d81e
 
 
 /*
@@ -206,11 +202,6 @@ extern int	BufTableInsert(BufferTag *tagPtr, uint32 hashcode, int buf_id);
 extern void BufTableDelete(BufferTag *tagPtr, uint32 hashcode);
 
 /* localbuf.c */
-<<<<<<< HEAD
-/*extern BufferDesc *LocalBufferAlloc(Relation reln, BlockNumber blockNum,
-  bool *foundPtr);*/
-=======
->>>>>>> 49f001d81e
 extern BufferDesc *LocalBufferAlloc(SMgrRelation reln, BlockNumber blockNum,
 				 bool *foundPtr);
 extern void MarkLocalBufferDirty(Buffer buffer);

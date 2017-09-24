@@ -26,11 +26,6 @@
 #include "utils/snapshot.h"
 #include "utils/tqual.h"
 
-/* in common/heaptuple.c */
-extern Datum nocachegetattr(HeapTuple tup, int attnum, TupleDesc att);
-extern Datum heap_getsysattr(HeapTuple tup, int attnum, bool *isnull);
-
-
 
 // UNDONE: Temporarily.
 extern void RelationFetchGpRelationNodeForXLog_Index(Relation relation);

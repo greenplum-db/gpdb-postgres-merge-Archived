@@ -61,10 +61,6 @@
 
 #include "access/heapam.h"
 #include "access/sysattr.h"
-<<<<<<< HEAD
-#include "access/transam.h"
-=======
->>>>>>> 49f001d81e
 #include "access/tuptoaster.h"
 #include "executor/tuptable.h"
 
@@ -859,23 +855,7 @@ heap_formtuple(TupleDesc tupleDescriptor,
 	int			i;
 
 	for (i = 0; i < numberOfAttributes; i++)
-<<<<<<< HEAD
 		boolNulls[i] = (nulls[i] == 'n');
-=======
-	{
-		if (nulls[i] != ' ')
-			hasnull = true;
-		else if (att[i]->attlen == -1 &&
-				 att[i]->attalign == 'd' &&
-				 att[i]->attndims == 0 &&
-				 !VARATT_IS_EXTENDED(DatumGetPointer(values[i])))
-		{
-			values[i] = toast_flatten_tuple_attribute(values[i],
-													  att[i]->atttypid,
-													  att[i]->atttypmod);
-		}
-	}
->>>>>>> 49f001d81e
 
 	tuple = heap_form_tuple(tupleDescriptor, values, boolNulls);
 

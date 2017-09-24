@@ -87,11 +87,7 @@ typedef FormData_pg_proc *Form_pg_proc;
  *		compiler constants for pg_proc
  * ----------------
  */
-<<<<<<< HEAD
 #define Natts_pg_proc					27
-=======
-#define Natts_pg_proc					22
->>>>>>> 49f001d81e
 #define Anum_pg_proc_proname			1
 #define Anum_pg_proc_pronamespace		2
 #define Anum_pg_proc_proowner			3
@@ -99,8 +95,6 @@ typedef FormData_pg_proc *Form_pg_proc;
 #define Anum_pg_proc_procost			5
 #define Anum_pg_proc_prorows			6
 #define Anum_pg_proc_provariadic		7
-<<<<<<< HEAD
-GPDB_COLUMN_DEFAULT(pg_proc_provariadic, 0);
 #define Anum_pg_proc_proisagg			8
 #define Anum_pg_proc_proiswindow		9
 GPDB_COLUMN_DEFAULT(pg_proc_proiswindow, f);
@@ -131,23 +125,6 @@ GPDB_COLUMN_DEFAULT(pg_proc_proexeclocation, a);
  * SQL-language functions. But the process_col_defaults.pl script isn't
  * currently smart enough for that.
  */
-=======
-#define Anum_pg_proc_proisagg			8
-#define Anum_pg_proc_prosecdef			9
-#define Anum_pg_proc_proisstrict		10
-#define Anum_pg_proc_proretset			11
-#define Anum_pg_proc_provolatile		12
-#define Anum_pg_proc_pronargs			13
-#define Anum_pg_proc_prorettype			14
-#define Anum_pg_proc_proargtypes		15
-#define Anum_pg_proc_proallargtypes		16
-#define Anum_pg_proc_proargmodes		17
-#define Anum_pg_proc_proargnames		18
-#define Anum_pg_proc_prosrc				19
-#define Anum_pg_proc_probin				20
-#define Anum_pg_proc_proconfig			21
-#define Anum_pg_proc_proacl				22
->>>>>>> 49f001d81e
 
 /* ----------------
  *		initial contents of pg_proc

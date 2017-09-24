@@ -156,8 +156,7 @@ extern bool Debug_print_plan;
 extern bool Debug_print_parse;
 extern bool Debug_print_rewritten;
 extern bool Debug_pretty_print;
-<<<<<<< HEAD
-extern bool Explain_pretty_print;
+
 extern bool	Debug_print_full_dtm;
 extern bool	Debug_print_snapshot_dtm;
 extern bool	Debug_print_qd_mirroring;
@@ -198,8 +197,6 @@ extern bool gp_appendonly_verify_block_checksums;
 extern bool gp_appendonly_verify_write_block;
 extern bool gp_appendonly_verify_eof;
 extern bool gp_appendonly_compaction;
-=======
->>>>>>> 49f001d81e
 
 /*
  * Threshold of the ratio of dirty data in a segment file
