@@ -16,11 +16,8 @@
 #define INSTRUMENT_H
 
 #include "portability/instr_time.h"
-<<<<<<< HEAD
 
 struct CdbExplain_NodeSummary;          /* private def in cdb/cdbexplain.c */
-=======
->>>>>>> 49f001d81e
 
 
 typedef struct Instrumentation

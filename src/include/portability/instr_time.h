@@ -145,11 +145,7 @@ typedef LARGE_INTEGER instr_time;
 #define INSTR_TIME_GET_MICROSEC(t) \
 	((uint64) (((double) (t).QuadPart * 1000000.0) / GetTimerFrequency()))
 
-<<<<<<< HEAD
 static inline double
-=======
-static __inline__ double
->>>>>>> 49f001d81e
 GetTimerFrequency(void)
 {
 	LARGE_INTEGER f;
@@ -157,10 +153,7 @@ GetTimerFrequency(void)
 	QueryPerformanceFrequency(&f);
 	return (double) f.QuadPart;
 }
-<<<<<<< HEAD
-=======
 
->>>>>>> 49f001d81e
 #endif   /* WIN32 */
 
 #endif   /* INSTR_TIME_H */

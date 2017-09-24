@@ -47,11 +47,8 @@ extern Oid heap_create_with_catalog(const char *relname,
 						 Oid relid,
 						 Oid ownerid,
 						 TupleDesc tupdesc,
-<<<<<<< HEAD
 						 Oid relam,
-=======
 						 List *cooked_constraints,
->>>>>>> 49f001d81e
 						 char relkind,
 						 char relstorage,
 						 bool shared_relation,
@@ -79,7 +76,6 @@ extern void InsertPgClassTuple(Relation pg_class_desc,
 				   Oid new_rel_oid,
 				   Datum reloptions);
 
-<<<<<<< HEAD
 extern void InsertGpRelationNodeTuple(
 	Relation 		gp_relation_node,
 	Oid				relationId,
@@ -99,19 +95,14 @@ extern void UpdateGpRelationNodeTuple(
 		ItemPointer persistentTid,
 		int64		persistentSerialNum);
 
-extern List *AddRelationRawConstraints(Relation rel,
-						  List *rawColDefaults,
-						  List *rawConstraints);
-extern List *AddRelationConstraints(Relation rel,
-						  List *rawColDefaults,
-						  List *constraints);
-=======
 extern List *AddRelationNewConstraints(Relation rel,
 						  List *newColDefaults,
 						  List *newConstraints,
 						  bool allow_merge,
 						  bool is_local);
->>>>>>> 49f001d81e
+extern List *AddRelationConstraints(Relation rel,
+						  List *rawColDefaults,
+						  List *constraints);
 
 extern void StoreAttrDefault(Relation rel, AttrNumber attnum, Node *expr);
 
