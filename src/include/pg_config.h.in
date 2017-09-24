@@ -893,11 +893,6 @@
 /* Define to 1 to build with debug_ntuplestore. (--enable-ntuplestore) */
 #undef USE_DEBUG_NTUPLESTORE
 
-/* Define to 1 to build with gpcloud (--enable-gpcloud) */
-#undef USE_GPCLOUD
-
-<<<<<<< HEAD
-=======
 /* Define to 1 if you want float4 values to be passed by value.
    (--enable-float4-byval) */
 #undef USE_FLOAT4_BYVAL
@@ -905,7 +900,9 @@
 /* Define to 1 if you want float8, int8, etc values to be passed by value.
    (--enable-float8-byval) */
 #undef USE_FLOAT8_BYVAL
->>>>>>> 49f001d81e
+
+/* Define to 1 to build with gpcloud (--enable-gpcloud) */
+#undef USE_GPCLOUD
 
 /* Define to 1 if you want 64-bit integer timestamp and interval support.
    (--enable-integer-datetimes) */
@@ -987,11 +984,6 @@
 # endif
 #endif
 
-/* Enable large inode numbers on Mac OS X 10.5.  */
-#ifndef _DARWIN_USE_64_BIT_INODE
-# define _DARWIN_USE_64_BIT_INODE 1
-#endif
-
 /* Size of a WAL file block. This need have no particular relation to BLCKSZ.
    XLOG_BLCKSZ must be a power of 2, and if your system supports O_DIRECT I/O,
    XLOG_BLCKSZ must be a multiple of the alignment requirement for direct-I/O
@@ -1003,6 +995,11 @@
    and larger than XLOG_BLCKSZ (preferably, a great deal larger than
    XLOG_BLCKSZ). Changing XLOG_SEG_SIZE requires an initdb. */
 #undef XLOG_SEG_SIZE
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
