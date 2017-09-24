@@ -16,10 +16,6 @@
 
 #include "nodes/parsenodes.h"
 #include "utils/relcache.h"
-<<<<<<< HEAD
-#include "utils/rel.h"
-=======
->>>>>>> 49f001d81e
 
 struct HTAB;  /* utils/hsearch.h */
 

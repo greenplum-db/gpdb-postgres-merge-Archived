@@ -14,15 +14,11 @@
 #ifndef CATALOG_H
 #define CATALOG_H
 
-<<<<<<< HEAD
-#include "catalog/oid_dispatch.h"
-#include "utils/relcache.h"
-#include "utils/rel.h"
-=======
 #include "catalog/pg_class.h"
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
->>>>>>> 49f001d81e
+
+#include "catalog/oid_dispatch.h"
 
 
 extern char *relpath(RelFileNode rnode);
@@ -47,15 +43,9 @@ extern char* GetReservedPrefix(const char *name);
 extern bool IsSharedRelation(Oid relationId);
 
 extern Oid	GetNewOid(Relation relation);
-<<<<<<< HEAD
-extern Oid	GetNewOidWithIndex(Relation relation, Relation indexrel);
-extern Oid	GetNewSequenceRelationOid(Relation relation);
-extern Oid GetNewRelFileNode(Oid reltablespace, bool relisshared);
-=======
 extern Oid	GetNewOidWithIndex(Relation relation, Oid indexId,
 							   AttrNumber oidcolumn);
-extern Oid GetNewRelFileNode(Oid reltablespace, bool relisshared,
-				  Relation pg_class);
->>>>>>> 49f001d81e
+extern Oid	GetNewSequenceRelationOid(Relation relation);
+extern Oid GetNewRelFileNode(Oid reltablespace, bool relisshared);
 
 #endif   /* CATALOG_H */

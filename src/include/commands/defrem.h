@@ -34,20 +34,11 @@ extern void DefineIndex(RangeVar *heapRelation,
 			bool check_rights,
 			bool skip_build,
 			bool quiet,
-<<<<<<< HEAD
 			bool concurrent,
 			IndexStmt *stmt /* MPP */);
-extern void RemoveIndex(RangeVar *relation, DropBehavior behavior);
 extern void ReindexIndex(ReindexStmt *stmt);
 extern void ReindexTable(ReindexStmt *stmt);
 extern void ReindexDatabase(ReindexStmt *stmt);
-=======
-			bool concurrent);
-extern void ReindexIndex(RangeVar *indexRelation);
-extern void ReindexTable(RangeVar *relation);
-extern void ReindexDatabase(const char *databaseName,
-				bool do_system, bool do_user);
->>>>>>> 49f001d81e
 extern char *makeObjectName(const char *name1, const char *name2,
 			   const char *label);
 extern char *ChooseRelationName(const char *name1, const char *name2,

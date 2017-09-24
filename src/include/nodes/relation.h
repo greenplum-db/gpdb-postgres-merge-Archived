@@ -1513,15 +1513,12 @@ typedef struct InClauseInfo
 	Relids		righthand;		/* base relids coming from the subselect */
 	List	   *sub_targetlist; /* RHS expressions of the IN's comparisons */
 	List	   *in_operators;	/* OIDs of the IN's equality operators */
-<<<<<<< HEAD
 
     bool        try_join_unique;
                                 /* CDB: true => comparison is equality op and
                                  *  subquery is not correlated.  Ok to consider
                                  *  JOIN_UNIQUE method of duplicate suppression.
                                  */
-=======
->>>>>>> 49f001d81e
 } InClauseInfo;
 
 /*

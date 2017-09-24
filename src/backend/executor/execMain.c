@@ -4699,13 +4699,18 @@ typedef struct
 {
 	DestReceiver pub;			/* publicly-known function pointers */
 	EState	   *estate;			/* EState we are working with */
-<<<<<<< HEAD
-	AppendOnlyInsertDescData *ao_insertDesc; /* descriptor to AO tables */
-        AOCSInsertDescData *aocs_ins;           /* descriptor for aocs */
-=======
 	Relation	rel;			/* Relation to write to */
 	bool		use_wal;		/* do we need to WAL-log our writes? */
->>>>>>> 49f001d81e
+
+	AppendOnlyInsertDescData *ao_insertDesc; /* descriptor to AO tables */
+	AOCSInsertDescData *aocs_ins;           /* descriptor for aocs */
+
+	bool		is_bulkload;
+
+	ItemPointerData last_heap_tid;
+
+	struct MirroredBufferPoolBulkLoadInfo *bulkloadinfo;
+
 } DR_intorel;
 
 /*
