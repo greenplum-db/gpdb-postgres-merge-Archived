@@ -24,12 +24,10 @@
 
 #include "access/itup.h"
 #include "executor/tuptable.h"
-<<<<<<< HEAD
-#include "utils/tuplesort_gp.h"
-=======
 #include "fmgr.h"
 #include "utils/relcache.h"
->>>>>>> 49f001d81e
+
+#include "utils/tuplesort_gp.h"
 
 
 /* Tuplesortstate is an opaque type whose details are not known outside

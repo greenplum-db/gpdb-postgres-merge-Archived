@@ -21,12 +21,8 @@
 #include "executor/tuptable.h"
 #include "nodes/execnodes.h"
 #include "nodes/parsenodes.h"
-<<<<<<< HEAD
 #include "nodes/relation.h"
 #include "parser/parse_node.h"
-=======
-#include "utils/relcache.h"
->>>>>>> 49f001d81e
 
 /* Struct describing one new constraint to check in ALTER Phase 3 scan.
  *
@@ -47,7 +43,6 @@ typedef struct NewConstraint
 
 extern const char *synthetic_sql;
 
-<<<<<<< HEAD
 extern Oid	DefineRelation(CreateStmt *stmt, char relkind, char relstorage, bool dispatch);
 
 extern void	DefineExternalRelation(CreateExternalStmt *stmt);
@@ -58,13 +53,9 @@ extern void	DefinePartitionedRelation(CreateStmt *stmt, Oid reloid);
 
 extern void EvaluateDeferredStatements(List *deferredStmts);
 
-extern bool RemoveRelation(const RangeVar *relation, DropBehavior behavior,
-						   DropStmt *stmt /* MPP */, char relkind);
+extern void RemoveRelations(DropStmt *drop);
 
 extern bool RelationToRemoveIsTemp(const RangeVar *relation, DropBehavior behavior);
-=======
-extern void RemoveRelations(DropStmt *drop);
->>>>>>> 49f001d81e
 
 extern void AlterTable(AlterTableStmt *stmt);
 

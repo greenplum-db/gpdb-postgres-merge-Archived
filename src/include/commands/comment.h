@@ -1,9 +1,5 @@
 /*
-<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/commands/comment.h,v 1.24 2009/06/11 14:49:11 momjian Exp $
-=======
- * $PostgreSQL: pgsql/src/include/commands/comment.h,v 1.22 2008/05/17 01:28:24 adunstan Exp $ 
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  *
