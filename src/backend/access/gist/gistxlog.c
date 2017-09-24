@@ -19,12 +19,9 @@
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "utils/memutils.h"
-<<<<<<< HEAD
-#include "utils/guc.h"
-=======
 #include "utils/rel.h"
 
->>>>>>> 49f001d81e
+#include "utils/guc.h"
 
 typedef struct
 {
@@ -215,17 +212,11 @@ gistRedoPageUpdateRecord(XLogRecPtr lsn, XLogRecord *record, bool isnewroot)
 
 	decodePageUpdateRecord(&xlrec, record);
 
-<<<<<<< HEAD
-	reln = XLogOpenRelation(xlrec.data->node);
-	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-	buffer = XLogReadBuffer(reln, xlrec.data->blkno, false);
-	REDO_PRINT_READ_BUFFER_NOT_FOUND(reln, xlrec.data->blkno, buffer, lsn);
-=======
 	buffer = XLogReadBuffer(xlrec.data->node, xlrec.data->blkno, false);
->>>>>>> 49f001d81e
+	REDO_PRINT_READ_BUFFER_NOT_FOUND(&xlrec.data->node, xlrec.data->blkno, buffer, lsn);
 	if (!BufferIsValid(buffer))
 	{
 		
@@ -300,17 +291,11 @@ gistRedoPageDeleteRecord(XLogRecPtr lsn, XLogRecord *record)
 	if (IsBkpBlockApplied(record, 0))
 		return;
 
-<<<<<<< HEAD
-	reln = XLogOpenRelation(xldata->node);
-	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-	buffer = XLogReadBuffer(reln, xldata->blkno, false);
-	REDO_PRINT_READ_BUFFER_NOT_FOUND(reln, xldata->blkno, buffer, lsn);
-=======
 	buffer = XLogReadBuffer(xldata->node, xldata->blkno, false);
->>>>>>> 49f001d81e
+	REDO_PRINT_READ_BUFFER_NOT_FOUND(&xldata->node, xldata->blkno, buffer, lsn);
 	if (!BufferIsValid(buffer))
 		return;
 
@@ -376,14 +361,10 @@ gistRedoPageSplitRecord(XLogRecPtr lsn, XLogRecord *record)
 	{
 		NewPage    *newpage = xlrec.page + i;
 
-<<<<<<< HEAD
 		// -------- MirroredLock ----------
 		MIRROREDLOCK_BUFMGR_LOCK;
 
-		buffer = XLogReadBuffer(reln, newpage->header->blkno, true);
-=======
 		buffer = XLogReadBuffer(xlrec.data->node, newpage->header->blkno, true);
->>>>>>> 49f001d81e
 		Assert(BufferIsValid(buffer));
 		page = (Page) BufferGetPage(buffer);
 
@@ -412,29 +393,18 @@ gistRedoPageSplitRecord(XLogRecPtr lsn, XLogRecord *record)
 static void
 gistRedoCreateIndex(XLogRecPtr lsn, XLogRecord *record)
 {
-<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_DECLARE;
 
 	gistxlogCreateIndex *xldata = (gistxlogCreateIndex *) XLogRecGetData(record);
 	
 	RelFileNode *node = &(xldata->node);
-	Relation	reln;
 	Buffer		buffer;
 	Page		page;
 
-	reln = XLogOpenRelation(*node);
-	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-	buffer = XLogReadBuffer(reln, GIST_ROOT_BLKNO, true);
-=======
-	RelFileNode *node = (RelFileNode *) XLogRecGetData(record);
-	Buffer		buffer;
-	Page		page;
-
 	buffer = XLogReadBuffer(*node, GIST_ROOT_BLKNO, true);
->>>>>>> 49f001d81e
 	Assert(BufferIsValid(buffer));
 	page = (Page) BufferGetPage(buffer);
 
@@ -921,12 +891,10 @@ gistContinueInsert(gistIncompleteInsert *insert)
 		}
 	}
 
-<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_UNLOCK;
 	// -------- MirroredLock ----------
-=======
+
 	FreeFakeRelcacheEntry(index);
->>>>>>> 49f001d81e
 
 	ereport(LOG,
 			(errmsg("index %u/%u/%u needs VACUUM FULL or REINDEX to finish crash recovery",

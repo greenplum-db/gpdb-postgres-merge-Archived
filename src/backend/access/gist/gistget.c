@@ -26,13 +26,7 @@
 
 static OffsetNumber gistfindnext(IndexScanDesc scan, OffsetNumber n,
 			 ScanDirection dir);
-<<<<<<< HEAD
-static int64 gistnext(IndexScanDesc scan, ScanDirection dir,
-					  ItemPointer tids, HashBitmap *tbm,
-					  bool ignore_killed_tuples);
-=======
-static int64 gistnext(IndexScanDesc scan, ScanDirection dir, TIDBitmap *tbm);
->>>>>>> 49f001d81e
+static int64 gistnext(IndexScanDesc scan, ScanDirection dir, HashBitmap *tbm);
 static bool gistindex_keytest(IndexTuple tuple, IndexScanDesc scan,
 				  OffsetNumber offset);
 
@@ -132,16 +126,6 @@ gistgetbitmap(PG_FUNCTION_ARGS)
 }
 
 /*
-<<<<<<< HEAD
- * Fetch a tuples that matchs the search key; this can be invoked
- * either to fetch the first such tuple or subsequent matching
- * tuples. Returns true iff a matching tuple was found.
- */
-static int64
-gistnext(IndexScanDesc scan, ScanDirection dir,
-		 ItemPointer tid, HashBitmap *tbm,
-		 bool ignore_killed_tuples)
-=======
  * Fetch tuple(s) that match the search key; this can be invoked
  * either to fetch the first such tuple or subsequent matching tuples.
  *
@@ -156,8 +140,7 @@ gistnext(IndexScanDesc scan, ScanDirection dir,
  * non-killed tuple that matches the search key.
  */
 static int64
-gistnext(IndexScanDesc scan, ScanDirection dir, TIDBitmap *tbm)
->>>>>>> 49f001d81e
+gistnext(IndexScanDesc scan, ScanDirection dir, HashBitmap *tbm)
 {
 	MIRROREDLOCK_BUFMGR_DECLARE;
 

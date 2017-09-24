@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/genam.h"
+#include "access/heapam.h"
 #include "access/gist_private.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
