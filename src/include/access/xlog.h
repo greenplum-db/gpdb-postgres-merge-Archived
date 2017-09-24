@@ -25,19 +25,19 @@
 /*
  * REDO Tracking DEFINEs.
  */
-#define REDO_PRINT_READ_BUFFER_NOT_FOUND(reln,blkno,buffer,lsn) \
+#define REDO_PRINT_READ_BUFFER_NOT_FOUND(rnode,blkno,buffer,lsn) \
 { \
 	if (Debug_persistent_recovery_print && !BufferIsValid(buffer)) \
 	{ \
-		xlog_print_redo_read_buffer_not_found(reln, blkno, lsn, PG_FUNCNAME_MACRO); \
+		xlog_print_redo_read_buffer_not_found(rnode, blkno, lsn, PG_FUNCNAME_MACRO); \
 	} \
 }
 
-#define REDO_PRINT_LSN_APPLICATION(reln,blkno,page,lsn) \
+#define REDO_PRINT_LSN_APPLICATION(rnode,blkno,page,lsn) \
 { \
 	if (Debug_persistent_recovery_print) \
 	{ \
-		xlog_print_redo_lsn_application(reln, blkno, (void*)page, lsn, PG_FUNCNAME_MACRO); \
+		xlog_print_redo_lsn_application(rnode, blkno, (void*)page, lsn, PG_FUNCNAME_MACRO); \
 	} \
 }
 
@@ -325,12 +325,12 @@ extern int XLogAddRecordsToChangeTracking(
 extern void XLogInChangeTrackingTransition(void);
 
 extern void xlog_print_redo_read_buffer_not_found(
-		Relation		reln,
+		RelFileNode		*reln,
 		BlockNumber 	blkno,
 		XLogRecPtr 		lsn,
 		const char		*funcName);
 extern void xlog_print_redo_lsn_application(
-		Relation		reln,
+		RelFileNode		*rnode,
 		BlockNumber 	blkno,
 		void			*page,
 		XLogRecPtr		lsn,
