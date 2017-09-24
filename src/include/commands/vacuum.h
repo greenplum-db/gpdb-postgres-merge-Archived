@@ -20,12 +20,8 @@
 #include "nodes/parsenodes.h"
 #include "storage/buf.h"
 #include "storage/lock.h"
-<<<<<<< HEAD
-#include "utils/rel.h"
-#include "utils/tqual.h"
-=======
 #include "utils/relcache.h"
->>>>>>> 49f001d81e
+#include "utils/tqual.h"
 
 
 /*----------
