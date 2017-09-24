@@ -92,15 +92,10 @@ extern void force_load_role(void);
 extern int	hba_getauthmethod(hbaPort *port);
 extern bool read_pg_database_line(FILE *fp, char *dbname, Oid *dboid,
 					  Oid *dbtablespace, TransactionId *dbfrozenxid);
-<<<<<<< HEAD
 extern int check_usermap(const char *usermap_name,
 			  const char *pg_role, const char *auth_user,
 			  bool case_sensitive);
 extern bool check_same_host_or_net(SockAddr *raddr, IPCompareMethod method);
-=======
-extern bool check_ident_usermap(const char *usermap_name,
-					  const char *pg_role, const char *ident_user);
->>>>>>> 49f001d81e
 extern bool pg_isblank(const char c);
 
 #endif   /* HBA_H */

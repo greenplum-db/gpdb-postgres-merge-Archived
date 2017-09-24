@@ -14,19 +14,12 @@
 #ifndef RELSCAN_H
 #define RELSCAN_H
 
-<<<<<<< HEAD
-#include "access/formatter.h"
-#include "access/htup.h"
-#include "access/skey.h"
-#include "access/memtup.h"
-#include "access/aosegfiles.h"
-#include "storage/bufpage.h"
-#include "utils/snapshot.h"
-=======
 #include "access/genam.h"
 #include "access/heapam.h"
->>>>>>> 49f001d81e
 
+#include "access/formatter.h"
+#include "access/memtup.h"
+#include "access/aosegfiles.h"
 
 typedef struct HeapScanDescData
 {
@@ -94,9 +87,6 @@ typedef struct IndexScanDescData
 	TransactionId xs_prev_xmax; /* previous HOT chain member's XMAX, if any */
 } IndexScanDescData;
 
-<<<<<<< HEAD
-typedef IndexScanDescData *IndexScanDesc;
-
 /*
  * used for scan of external relations with the file protocol
  */
@@ -136,29 +126,6 @@ typedef struct FileScanDescData
 	List		**fs_constraintExprs;	
 }	FileScanDescData;
 
-typedef FileScanDescData *FileScanDesc;
-
-/*
- * used for scan of append only relations using BufferedRead and VarBlocks
- * Defined in cdb/cdbappendonlyam.h
- */
-
-/*
-  typedef AppendOnlyScanDescData *AppendOnlyScanDesc;
- */
-
-/*
- * HeapScanIsValid
- *		True iff the heap scan is valid.
- */
-#define HeapScanIsValid(scan) PointerIsValid(scan)
-
-/*
- * IndexScanIsValid
- *		True iff the index scan is valid.
- */
-#define IndexScanIsValid(scan) PointerIsValid(scan)
-=======
 /* Struct for heap-or-index scans of system tables */
 typedef struct SysScanDescData
 {
@@ -167,6 +134,5 @@ typedef struct SysScanDescData
 	HeapScanDesc scan;			/* only valid in heap-scan case */
 	IndexScanDesc iscan;		/* only valid in index-scan case */
 } SysScanDescData;
->>>>>>> 49f001d81e
 
 #endif   /* RELSCAN_H */

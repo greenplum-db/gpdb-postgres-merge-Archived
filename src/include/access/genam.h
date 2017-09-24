@@ -15,18 +15,12 @@
 #define GENAM_H
 
 #include "access/sdir.h"
-<<<<<<< HEAD
-#include "nodes/primnodes.h"
-#include "storage/lock.h"
-#include "utils/relcache.h"
-=======
 #include "access/skey.h"
 #include "nodes/tidbitmap.h"
 #include "storage/buf.h"
 #include "storage/lock.h"
 #include "utils/relcache.h"
 #include "utils/snapshot.h"
->>>>>>> 49f001d81e
 
 /*
  * Struct for statistics returned by ambuild
@@ -114,14 +108,7 @@ extern void index_endscan(IndexScanDesc scan);
 extern void index_markpos(IndexScanDesc scan);
 extern void index_restrpos(IndexScanDesc scan);
 extern HeapTuple index_getnext(IndexScanDesc scan, ScanDirection direction);
-<<<<<<< HEAD
-extern bool index_getnext_indexitem(IndexScanDesc scan,
-						ScanDirection direction);
-
 extern Node *index_getbitmap(IndexScanDesc scan, Node *bitmap);
-=======
-extern int64 index_getbitmap(IndexScanDesc scan, TIDBitmap *bitmap);
->>>>>>> 49f001d81e
 
 extern IndexBulkDeleteResult *index_bulk_delete(IndexVacuumInfo *info,
 				  IndexBulkDeleteResult *stats,

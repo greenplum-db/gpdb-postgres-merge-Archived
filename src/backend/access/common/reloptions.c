@@ -23,15 +23,13 @@
 #include "nodes/makefuncs.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
-<<<<<<< HEAD
 #include "utils/formatting.h"
-=======
-#include "utils/guc.h"
->>>>>>> 49f001d81e
-#include "utils/rel.h"
 #include "utils/guc.h"
 #include "utils/guc_tables.h"
+#include "utils/rel.h"
 #include "miscadmin.h"
+
+
 /*
  * This is set whenever the GUC gp_default_storage_options is set.
  */
@@ -246,11 +244,7 @@ transformRelOptions(Datum oldOptions, List *defList,
 	astate = NULL;
 
 	/* Copy any oldOptions that aren't to be replaced */
-<<<<<<< HEAD
-	if (DatumGetPointer(oldOptions) != 0)
-=======
 	if (PointerIsValid(DatumGetPointer(oldOptions)))
->>>>>>> 49f001d81e
 	{
 		ArrayType  *array = DatumGetArrayTypeP(oldOptions);
 		Datum	   *oldoptions;
@@ -877,11 +871,7 @@ parseRelOptions(Datum options, int numkeywords, const char *const * keywords,
 	MemSet(values, 0, numkeywords * sizeof(char *));
 
 	/* Done if no options */
-<<<<<<< HEAD
-	if (DatumGetPointer(options) == 0)
-=======
 	if (!PointerIsValid(DatumGetPointer(options)))
->>>>>>> 49f001d81e
 		return;
 
 	array = DatumGetArrayTypeP(options);
@@ -953,46 +943,7 @@ bytea *
 default_reloptions(Datum reloptions, bool validate, char relkind,
 				   int minFillfactor, int defaultFillfactor)
 {
-<<<<<<< HEAD
 	StdRdOptions *result = (StdRdOptions *) palloc0(sizeof(StdRdOptions));
-=======
-	static const char *const default_keywords[1] = {"fillfactor"};
-	char	   *values[1];
-	int			fillfactor;
-	StdRdOptions *result;
-
-	parseRelOptions(reloptions, 1, default_keywords, values, validate);
-
-	/*
-	 * If no options, we can just return NULL rather than doing anything.
-	 * (defaultFillfactor is thus not used, but we require callers to pass it
-	 * anyway since we would need it if more options were added.)
-	 */
-	if (values[0] == NULL)
-		return NULL;
-
-	if (!parse_int(values[0], &fillfactor, 0, NULL))
-	{
-		if (validate)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("fillfactor must be an integer: \"%s\"",
-							values[0])));
-		return NULL;
-	}
-
-	if (fillfactor < minFillfactor || fillfactor > 100)
-	{
-		if (validate)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("fillfactor=%d is out of range (should be between %d and 100)",
-							fillfactor, minFillfactor)));
-		return NULL;
-	}
-
-	result = (StdRdOptions *) palloc(sizeof(StdRdOptions));
->>>>>>> 49f001d81e
 	SET_VARSIZE(result, sizeof(StdRdOptions));
 	if (validate && (relkind == RELKIND_RELATION))
 	{
@@ -1063,7 +1014,14 @@ parse_validate_reloptions(StdRdOptions *result, Datum reloptions,
 	/* fillfactor */
 	if (values[0] != NULL)
 	{
-		result->fillfactor = pg_atoi(values[0], sizeof(int32), 0);
+		if (!parse_int(values[0], &result->fillfactor, 0, NULL))
+		{
+			if (validate)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("fillfactor must be an integer: \"%s\"",
+								values[0])));
+		}
 	}
 
 	/* appendonly */
@@ -1322,11 +1280,7 @@ index_reloptions(RegProcedure amoptions, Datum reloptions, bool validate)
 	Assert(RegProcedureIsValid(amoptions));
 
 	/* Assume function is strict */
-<<<<<<< HEAD
-	if (DatumGetPointer(reloptions) == 0)
-=======
 	if (!PointerIsValid(DatumGetPointer(reloptions)))
->>>>>>> 49f001d81e
 		return NULL;
 
 	/* Can't use OidFunctionCallN because we might get a NULL result */

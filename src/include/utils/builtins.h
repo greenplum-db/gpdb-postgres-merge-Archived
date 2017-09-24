@@ -443,21 +443,15 @@ extern Datum current_database(PG_FUNCTION_ARGS);
 extern Datum current_query(PG_FUNCTION_ARGS);
 extern Datum pg_cancel_backend(PG_FUNCTION_ARGS);
 extern Datum pg_terminate_backend(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
 extern Datum pg_cancel_backend_msg(PG_FUNCTION_ARGS);
 extern Datum pg_terminate_backend_msg(PG_FUNCTION_ARGS);
 extern Datum gp_cancel_query(PG_FUNCTION_ARGS);
-=======
->>>>>>> 49f001d81e
 extern Datum pg_reload_conf(PG_FUNCTION_ARGS);
 extern Datum pg_tablespace_databases(PG_FUNCTION_ARGS);
 extern Datum pg_rotate_logfile(PG_FUNCTION_ARGS);
 extern Datum pg_sleep(PG_FUNCTION_ARGS);
 extern Datum pg_get_keywords(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
 extern Datum pg_typeof(PG_FUNCTION_ARGS);
-=======
->>>>>>> 49f001d81e
 
 /* oid.c */
 extern Datum oidin(PG_FUNCTION_ARGS);
@@ -604,10 +598,7 @@ extern Datum pg_get_expr_ext(PG_FUNCTION_ARGS);
 extern Datum pg_get_userbyid(PG_FUNCTION_ARGS);
 extern Datum pg_get_serial_sequence(PG_FUNCTION_ARGS);
 extern Datum pg_get_function_arguments(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
 extern Datum pg_get_function_identity_arguments(PG_FUNCTION_ARGS);
-=======
->>>>>>> 49f001d81e
 extern Datum pg_get_function_result(PG_FUNCTION_ARGS);
 extern char *deparse_expression(Node *expr, List *dpcontext,
 				   bool forceprefix, bool showimplicit);

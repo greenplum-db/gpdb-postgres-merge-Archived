@@ -89,12 +89,8 @@ extern void ExecMarkPos(PlanState *node);
 extern void ExecRestrPos(PlanState *node);
 extern bool ExecSupportsMarkRestore(NodeTag plantype);
 extern bool ExecSupportsBackwardScan(Plan *node);
-<<<<<<< HEAD
-extern bool ExecMayReturnRawTuples(PlanState *node);
 extern void ExecEagerFree(PlanState *node);
 extern void ExecEagerFreeChildNodes(PlanState *node, bool subplanDone);
-=======
->>>>>>> 49f001d81e
 
 /*
  * prototypes from functions in execCurrent.c

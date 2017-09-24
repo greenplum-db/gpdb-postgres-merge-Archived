@@ -17,30 +17,8 @@
 #include "parser/parse_node.h"
 
 
-<<<<<<< HEAD
-/* Type categories (kluge ... ought to be extensible) */
 /* Type categories (see TYPCATEGORY_xxx symbols in catalog/pg_type.h) */
 typedef char TYPCATEGORY;
-
-typedef enum CATEGORY
-{
-	INVALID_TYPE,
-	UNKNOWN_TYPE,
-	GENERIC_TYPE,
-	BOOLEAN_TYPE,
-	STRING_TYPE,
-	BITSTRING_TYPE,
-	NUMERIC_TYPE,
-	DATETIME_TYPE,
-	TIMESPAN_TYPE,
-	GEOMETRIC_TYPE,
-	NETWORK_TYPE,
-	USER_TYPE
-} CATEGORY;
-=======
-/* Type categories (see TYPCATEGORY_xxx symbols in catalog/pg_type.h) */
-typedef char TYPCATEGORY;
->>>>>>> 49f001d81e
 
 /* Result codes for find_coercion_pathway */
 typedef enum CoercionPathType

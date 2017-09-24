@@ -60,11 +60,8 @@ enum SysCacheIdentifier
 	OPEROID,
 	OPFAMILYAMNAMENSP,
 	OPFAMILYOID,
-<<<<<<< HEAD
 	PARTOID,
 	PARTRULEOID,
-=======
->>>>>>> 49f001d81e
 	PROCNAMEARGSNSP,
 	PROCOID,
 	RELNAMENSP,
@@ -81,12 +78,8 @@ enum SysCacheIdentifier
 	TSTEMPLATENAMENSP,
 	TSTEMPLATEOID,
 	TYPENAMENSP,
-<<<<<<< HEAD
 	TYPEOID,
 	WINFNOID
-=======
-	TYPEOID
->>>>>>> 49f001d81e
 };
 
 extern void InitCatalogCache(void);
