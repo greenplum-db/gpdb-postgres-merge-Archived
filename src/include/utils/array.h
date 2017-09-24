@@ -206,10 +206,7 @@ extern Datum generate_subscripts(PG_FUNCTION_ARGS);
 extern Datum generate_subscripts_nodir(PG_FUNCTION_ARGS);
 extern Datum array_fill(PG_FUNCTION_ARGS);
 extern Datum array_fill_with_lower_bounds(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
 extern Datum unnest(PG_FUNCTION_ARGS);
-=======
->>>>>>> 49f001d81e
 
 extern Datum array_ref(ArrayType *array, int nSubscripts, int *indx,
 		  int arraytyplen, int elmlen, bool elmbyval, char elmalign,
