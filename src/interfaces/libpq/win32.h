@@ -1,9 +1,5 @@
 /*
-<<<<<<< HEAD
  * src/interfaces/libpq/win32.h
-=======
- * $PostgreSQL: pgsql/src/interfaces/libpq/win32.h,v 1.29 2008/05/17 01:28:25 adunstan Exp $ 
->>>>>>> 49f001d81e
  */
 #ifndef __win32_h_included
 #define __win32_h_included
