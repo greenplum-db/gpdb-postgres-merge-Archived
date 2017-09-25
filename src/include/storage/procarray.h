@@ -30,7 +30,7 @@ extern bool ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool 
 extern void ProcArrayClearTransaction(PGPROC *proc, bool commit);
 extern void ClearTransactionFromPgProc_UnderLock(PGPROC *proc, bool commit);
 
-extern Snapshot GetSnapshotData(Snapshot snapshot);
+extern Snapshot GetSnapshotData(Snapshot snapshot, bool serializable);
 
 extern bool TransactionIdIsInProgress(TransactionId xid);
 extern bool TransactionIdIsActive(TransactionId xid);
@@ -59,7 +59,6 @@ extern void XidCacheRemoveRunningXids(TransactionId xid,
 extern PGPROC *FindProcByGpSessionId(long gp_session_id);
 extern void UpdateSerializableCommandId(void);
 
-extern struct SnapshotData* GetSnapshotData(struct SnapshotData *snapshot, bool serializable);
 extern void updateSharedLocalSnapshot(struct DtxContextInfo *dtxContextInfo, struct SnapshotData *snapshot, char* debugCaller);
 
 extern void GetSlotTableDebugInfo(void **snapshotArray, int *maxSlots);
