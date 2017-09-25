@@ -5,11 +5,7 @@
 *
 * Copyright (c) 2004-2012, PostgreSQL Global Development Group
 * IDENTIFICATION
-<<<<<<< HEAD
 *	src/interfaces/libpq/pthread-win32.c
-=======
-*	$PostgreSQL: pgsql/src/interfaces/libpq/pthread-win32.c,v 1.17 2008/05/21 14:20:48 mha Exp $
->>>>>>> 49f001d81e
 *
 *-------------------------------------------------------------------------
 */
@@ -39,11 +35,7 @@ pthread_getspecific(pthread_key_t key)
 int
 pthread_mutex_init(pthread_mutex_t *mp, void *attr)
 {
-<<<<<<< HEAD
 	*mp = (CRITICAL_SECTION *) malloc(sizeof(CRITICAL_SECTION));
-=======
-	*mp = (CRITICAL_SECTION *)malloc(sizeof(CRITICAL_SECTION));
->>>>>>> 49f001d81e
 	if (!*mp)
 		return 1;
 	InitializeCriticalSection(*mp);

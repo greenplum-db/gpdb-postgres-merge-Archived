@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-exec.c
-=======
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.196 2008/06/23 21:10:49 momjian Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
