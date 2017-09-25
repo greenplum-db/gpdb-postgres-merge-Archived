@@ -42,11 +42,8 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parsetree.h"
-<<<<<<< HEAD
 #include "rewrite/rewriteManip.h"
-=======
 #include "utils/rel.h"
->>>>>>> 49f001d81e
 
 #include "cdb/cdbvars.h"
 #include "catalog/gp_policy.h"
@@ -1565,12 +1562,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->distinctClause = transformDistinctClause(pstate,
 												  stmt->distinctClause,
 												  &qry->targetList,
-<<<<<<< HEAD
-												  &qry->sortClause,
-												  &qry->groupClause);
-=======
-												  qry->sortClause);
->>>>>>> 49f001d81e
+												  qry->sortClause,
+												  qry->groupClause);
 
 	/* transform LIMIT */
 	qry->limitOffset = transformLimitClause(pstate, stmt->limitOffset,
@@ -2200,7 +2193,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 			 * This might be removed when we are ready to change view definition.
 			 */
 			if (ntype != UNKNOWNOID &&
-				STRING_TYPE != TypeCategory(getBaseType(ntype)))
+				TYPCATEGORY_STRING != TypeCategory(getBaseType(ntype)))
 				hasnontext = true;
 		}
 
