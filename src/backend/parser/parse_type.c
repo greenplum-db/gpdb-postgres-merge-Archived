@@ -297,12 +297,8 @@ typenameTypeMod(ParseState *pstate, const TypeName *typename, Type typ)
 				cstr = (char *) palloc(32);
 				snprintf(cstr, 32, "%ld", (long) ac->val.val.ival);
 			}
-<<<<<<< HEAD
-			else if (ac->typeName == NULL)		/* no casts allowed */
-=======
 			else if (IsA(&ac->val, Float) ||
 					 IsA(&ac->val, String))
->>>>>>> 49f001d81e
 			{
 				/* we can just use the str field directly. */
 				cstr = ac->val.val.str;

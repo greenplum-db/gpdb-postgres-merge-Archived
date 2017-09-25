@@ -137,16 +137,7 @@ transformExpr(ParseState *pstate, Node *expr)
 				A_Const    *con = (A_Const *) expr;
 				Value	   *val = &con->val;
 
-<<<<<<< HEAD
 				result = (Node *) make_const(pstate, val, con->location);
-				if (con->typeName != NULL) {
-					con->typeName->location = con->location;
-					result = typecast_expression(pstate, result,
-												 con->typeName);
-				}
-=======
-				result = (Node *) make_const(val);
->>>>>>> 49f001d81e
 				break;
 			}
 
@@ -463,13 +454,8 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 			result = ParseFuncOrColumn(pstate,
 									   list_make1(n),
 									   list_make1(result),
-<<<<<<< HEAD
                                        NIL, NULL, false, false, false, true,
                                        NULL, -1);
-=======
-									   false, false, false,
-									   true, -1);
->>>>>>> 49f001d81e
 		}
 	}
 	/* process trailing subscripts, if any */
@@ -591,13 +577,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(name2)),
 											 list_make1(node),
-<<<<<<< HEAD
 											 NIL, NULL, false, false, false, true, NULL,
 											 cref->location);
-=======
-											 false, false, false,
-											 true, cref->location);
->>>>>>> 49f001d81e
 				}
 				break;
 			}
@@ -626,13 +607,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(name3)),
 											 list_make1(node),
-<<<<<<< HEAD
 											 NIL, NULL, false, false, false, true, NULL,
 											 cref->location);
-=======
-											 false, false, false,
-											 true, cref->location);
->>>>>>> 49f001d81e
 				}
 				break;
 			}
@@ -672,13 +648,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(name4)),
 											 list_make1(node),
-<<<<<<< HEAD
 											 NIL, NULL, false, false, false, true, NULL,
 											 cref->location);
-=======
-											 false, false, false,
-											 true, cref->location);
->>>>>>> 49f001d81e
 				}
 				break;
 			}
@@ -773,12 +744,7 @@ exprIsNullConstant(Node *arg)
 	{
 		A_Const    *con = (A_Const *) arg;
 
-<<<<<<< HEAD
-		if (con->val.type == T_Null &&
-			con->typeName == NULL)
-=======
 		if (con->val.type == T_Null)
->>>>>>> 49f001d81e
 			return true;
 	}
 	return false;
@@ -1171,13 +1137,7 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 	List	   *targs;
 	ListCell   *args;
 
-<<<<<<< HEAD
-	/*
-	 * Transform the list of arguments.
-	 */
-=======
 	/* Transform the list of arguments ... */
->>>>>>> 49f001d81e
 	targs = NIL;
 	foreach(args, fn->args)
 	{

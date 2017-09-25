@@ -971,10 +971,6 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 				 parser_errposition(pstate, location)));
 
 	/* Do typecasting and build the expression tree */
-<<<<<<< HEAD
-	result = make_op_expr(pstate, tup, ltree, rtree, ltypeId, rtypeId);
-	((OpExpr *) result)->location = location;
-=======
 	if (rtree == NULL)
 	{
 		/* right operator */
@@ -1023,7 +1019,7 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 	result->opresulttype = rettype;
 	result->opretset = get_func_retset(opform->oprcode);
 	result->args = args;
->>>>>>> 49f001d81e
+	result->location = location;
 
 	ReleaseSysCache(tup);
 
@@ -1160,84 +1156,6 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	return (Expr *) result;
 }
 
-<<<<<<< HEAD
-/*
- * make_op_expr()
- *		Build operator expression using an already-looked-up operator.
- *
- * As with coerce_type, pstate may be NULL if no special unknown-Param
- * processing is wanted.
- */
-static Expr *
-make_op_expr(ParseState *pstate, Operator op,
-			 Node *ltree, Node *rtree,
-			 Oid ltypeId, Oid rtypeId)
-{
-	Form_pg_operator opform = (Form_pg_operator) GETSTRUCT(op);
-	Oid			actual_arg_types[2];
-	Oid			declared_arg_types[2];
-	int			nargs;
-	List	   *args;
-	Oid			rettype;
-	OpExpr	   *result;
-
-	if (rtree == NULL)
-	{
-		/* right operator */
-		args = list_make1(ltree);
-		actual_arg_types[0] = ltypeId;
-		declared_arg_types[0] = opform->oprleft;
-		nargs = 1;
-	}
-	else if (ltree == NULL)
-	{
-		/* left operator */
-		args = list_make1(rtree);
-		actual_arg_types[0] = rtypeId;
-		declared_arg_types[0] = opform->oprright;
-		nargs = 1;
-	}
-	else
-	{
-		/* otherwise, binary operator */
-		args = list_make2(ltree, rtree);
-		actual_arg_types[0] = ltypeId;
-		actual_arg_types[1] = rtypeId;
-		declared_arg_types[0] = opform->oprleft;
-		declared_arg_types[1] = opform->oprright;
-		nargs = 2;
-	}
-
-	/*
-	 * enforce consistency with polymorphic argument and return types,
-	 * possibly adjusting return type or declared_arg_types (which will be
-	 * used as the cast destination by make_fn_arguments)
-	 */
-	rettype = enforce_generic_type_consistency(actual_arg_types,
-											   declared_arg_types,
-											   nargs,
-											   opform->oprresult,
-											   false);
-
-	/* perform the necessary typecasting of arguments */
-	make_fn_arguments(pstate, args, actual_arg_types, declared_arg_types);
-
-	/* and build the expression node */
-	result = makeNode(OpExpr);
-	result->opno = oprid(op);
-	result->opfuncid = opform->oprcode;
-	result->opresulttype = rettype;
-	result->opretset = get_func_retset(opform->oprcode);
-	result->args = args;
-
-	/* Hack to protect pg_get_expr() against misuse */
-	check_pg_get_expr_args(pstate, result->opfuncid, args);
-
-	return (Expr *) result;
-}
-
-=======
->>>>>>> 49f001d81e
 
 /*
  * Lookaside cache to speed operator lookup.  Possibly this should be in

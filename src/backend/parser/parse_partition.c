@@ -1931,22 +1931,7 @@ deparse_partition_rule(Node *pNode, ParseState *pstate, Node *parent)
 
 				if (acs->val.type == T_String)
 				{
-					if (acs->typeName)	/* deal with explicit types */
-					{
-						/*
-						 * XXX XXX: simple types only -- need to handle
-						 * Interval, etc
-						 */
-
-						return psprintf("\'%s\'::%s",
-										acs->val.val.str,
-										TypeNameToString(acs->typeName));
-					}
-					else
-					{
-						return psprintf("\'%s\'",
-										acs->val.val.str);
-					}
+					return psprintf("\'%s\'", acs->val.val.str);
 				}
 				return deparse_partition_rule((Node *) &(acs->val), pstate, parent);
 			}
@@ -2074,7 +2059,6 @@ make_prule_catalog(ParseState *pstate,
 
 		acs->val.type = T_String;
 		acs->val.val.str = pstrdup(parent_tab_name->relname);
-		acs->typeName = SystemTypeName("text");
 		acs->location = -1;
 
 		vl1 = list_make1(acs);
@@ -2082,7 +2066,6 @@ make_prule_catalog(ParseState *pstate,
 		acs = makeNode(A_Const);
 		acs->val.type = T_String;
 		acs->val.val.str = pstrdup(child_name_str);
-		acs->typeName = SystemTypeName("text");
 		acs->location = -1;
 
 		vl1 = lappend(vl1, acs);
@@ -2090,7 +2073,6 @@ make_prule_catalog(ParseState *pstate,
 		acs = makeNode(A_Const);
 		acs->val.type = T_String;
 		acs->val.val.str = pstrdup(whereExpr);
-		acs->typeName = SystemTypeName("text");
 		acs->location = -1;
 
 		vl1 = lappend(vl1, acs);
@@ -2098,7 +2080,6 @@ make_prule_catalog(ParseState *pstate,
 		acs = makeNode(A_Const);
 		acs->val.type = T_String;
 		acs->val.val.str = ruleStr;
-		acs->typeName = SystemTypeName("text");
 		acs->location = -1;
 
 		vl1 = lappend(vl1, acs);

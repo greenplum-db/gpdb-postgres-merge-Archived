@@ -515,14 +515,11 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		snamenode = makeNode(A_Const);
 		snamenode->val.type = T_String;
 		snamenode->val.val.str = qstring;
-<<<<<<< HEAD
-		snamenode->typeName = SystemTypeName("regclass");
-		snamenode->location = -1;					/* CDB */
-=======
+		snamenode->location = -1;
 		castnode = makeNode(TypeCast);
-		castnode->typename = SystemTypeName("regclass");
+		castnode->typeName = SystemTypeName("regclass");
 		castnode->arg = (Node *) snamenode;
->>>>>>> 49f001d81e
+		castnode->location = -1;
 		funccallnode = makeNode(FuncCall);
 		funccallnode->funcname = SystemFuncName("nextval");
 		funccallnode->args = list_make1(castnode);
@@ -3083,8 +3080,7 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 				{
 					ColumnDef  *def = (ColumnDef *) cmd->def;
 
-<<<<<<< HEAD
-					Assert(IsA(cmd->def, ColumnDef));
+					Assert(IsA(def, ColumnDef));
 
 					/*
 					 * Adding a column with a primary key or unique constraint
@@ -3106,12 +3102,7 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 										 errmsg("cannot add column with unique constraint")));
 						}
 					}
-					transformColumnDefinition(pstate, &cxt,
-											  (ColumnDef *) cmd->def);
-=======
-					Assert(IsA(def, ColumnDef));
 					transformColumnDefinition(pstate, &cxt, def);
->>>>>>> 49f001d81e
 
 					/*
 					 * If the column has a non-null default, we can't skip

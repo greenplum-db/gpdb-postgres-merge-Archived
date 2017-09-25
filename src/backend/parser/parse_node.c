@@ -481,11 +481,7 @@ make_const(ParseState *pstate, Value *value, int location)
 
 					typeid = INT8OID;
 					typelen = sizeof(int64);
-<<<<<<< HEAD
-					typebyval = true;	/* XXX might change someday */
-=======
 					typebyval = FLOAT8PASSBYVAL;	/* int8 and float8 alike */
->>>>>>> 49f001d81e
 				}
 			}
 			else
