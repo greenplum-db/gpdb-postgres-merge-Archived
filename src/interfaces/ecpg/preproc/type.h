@@ -1,9 +1,5 @@
 /*
-<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.h,v 1.51 2009/06/11 14:49:13 momjian Exp $
-=======
- * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.h,v 1.50 2008/05/20 23:17:32 meskes Exp $ 
->>>>>>> 49f001d81e
  */
 #ifndef _ECPG_PREPROC_TYPE_H
 #define _ECPG_PREPROC_TYPE_H
