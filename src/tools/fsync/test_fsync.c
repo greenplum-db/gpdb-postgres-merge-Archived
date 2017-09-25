@@ -1,9 +1,5 @@
 /*
-<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/tools/fsync/test_fsync.c,v 1.23.2.2 2009/09/21 20:21:02 momjian Exp $
-=======
- * $PostgreSQL: pgsql/src/tools/fsync/test_fsync.c,v 1.21 2008/05/17 01:28:26 adunstan Exp $ 
->>>>>>> 49f001d81e
  *
  *
  *	test_fsync.c

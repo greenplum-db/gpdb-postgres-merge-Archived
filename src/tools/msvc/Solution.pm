@@ -27,23 +27,16 @@ sub new
         platform => undef,
     };
     bless $self;
-<<<<<<< HEAD
 
-    # integer_datetimes is now the default
-=======
 	# integer_datetimes is now the default
->>>>>>> 49f001d81e
 	$options->{integer_datetimes} = 1 
 		unless exists $options->{integer_datetimes};
     $options->{float4byval} = 1
         unless exists $options->{float4byval};
-<<<<<<< HEAD
     $options->{float8byval} = 1
         unless exists $options->{float8byval};
 
 
-=======
->>>>>>> 49f001d81e
     if ($options->{xml})
     {
         if (!($options->{xslt} && $options->{iconv}))
@@ -51,11 +44,7 @@ sub new
             die "XML requires both XSLT and ICONV\n";
         }
     }
-<<<<<<< HEAD
-    $options->{blocksize} = 32
-=======
 	$options->{blocksize} = 8
->>>>>>> 49f001d81e
 		unless $options->{blocksize}; # undef or 0 means default
 	die "Bad blocksize $options->{blocksize}"
 		unless grep {$_ == $options->{blocksize}} (1,2,4,8,16,32);
@@ -72,12 +61,9 @@ sub new
 		unless $options->{wal_segsize}; # undef or 0 means default
 	die "Bad wal_segsize $options->{wal_segsize}"
 		unless grep {$_ == $options->{wal_segsize}} (1,2,4,8,16,32,64);
-<<<<<<< HEAD
 
     $self->DetermineToolVersions();
 
-=======
->>>>>>> 49f001d81e
     return $self;
 }
 
@@ -321,7 +307,6 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
     {
         print "Generating fmgrtab.c and fmgroids.h...\n";
         chdir('src\backend\utils');
-<<<<<<< HEAD
         system("perl -I ../catalog Gen_fmgrtab.pl ../../../src/include/catalog/pg_proc.h");
         chdir('..\..\..');
         copyFile('src\backend\utils\fmgroids.h','src\include\utils\fmgroids.h');
@@ -329,15 +314,6 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 
     if (IsNewer('src\include\utils\probes.h','src\backend\utils\probes.d'))
         {
-=======
-        system("perl Gen_fmgrtab.pl ../../../src/include/catalog/pg_proc.h");
-        chdir('..\..\..');
-        copyFile('src\backend\utils\fmgroids.h','src\include\utils\fmgroids.h');
-    }
-
-    if (IsNewer('src\include\utils\probes.h','src\backend\utils\pg_trace.d'))
-    {
->>>>>>> 49f001d81e
 		print "Generating probes.h...\n";
         system(
 'psed -f src\backend\utils\Gen_dummy_probes.sed src\backend\utils\probes.d > src\include\utils\probes.h'
