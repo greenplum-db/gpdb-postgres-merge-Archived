@@ -38,21 +38,12 @@ extern List *transformWindowDefinitions(ParseState *pstate,
 						   List **targetlist);
 
 extern List *transformDistinctClause(ParseState *pstate, List *distinctlist,
-<<<<<<< HEAD
-						List **targetlist, List **sortClause, List **groupClause);
+						List **targetlist, List *sortClause, List *groupClause);
 extern List *transformScatterClause(ParseState *pstate, List *scatterlist,
 									List **targetlist);
 extern void processExtendedGrouping(ParseState *pstate, Node *havingQual,
 									List *windowClause, List *targetlist);
 
-extern List *addAllTargetsToSortList(ParseState *pstate,
-						List *sortlist, List *targetlist,
-						bool resolveUnknown);
-
-=======
-						List **targetlist, List *sortClause);
-
->>>>>>> 49f001d81e
 extern List *addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 					List *sortlist, List *targetlist,
 					SortBy *sortby, bool resolveUnknown);

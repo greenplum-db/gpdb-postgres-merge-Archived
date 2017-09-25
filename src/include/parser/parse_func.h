@@ -42,7 +42,6 @@ typedef enum
 } FuncDetailCode;
 
 
-<<<<<<< HEAD
 extern Node *ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 				  List *agg_order, Expr *agg_filter,
 				  bool agg_star, bool agg_distinct, bool func_variadic,
@@ -57,17 +56,6 @@ extern FuncDetailCode func_get_detail(List *funcname, List *fargs,
 				int *nvargs,
 				Oid **true_typeids,
 				List **argdefaults);
-=======
-extern Node *ParseFuncOrColumn(ParseState *pstate,
-				  List *funcname, List *fargs,
-				  bool agg_star, bool agg_distinct, bool func_variadic,
-				  bool is_column, int location);
-
-extern FuncDetailCode func_get_detail(List *funcname, List *fargs,
-				int nargs, Oid *argtypes, bool expand_variadic,
-				Oid *funcid, Oid *rettype,
-				bool *retset, int *nvargs, Oid **true_typeids);
->>>>>>> 49f001d81e
 
 extern int func_match_argtypes(int nargs,
 					Oid *input_typeids,
