@@ -24,12 +24,6 @@ extern TransactionId RecentGlobalXmin;
 
 extern Snapshot GetTransactionSnapshot(void);
 extern Snapshot GetLatestSnapshot(void);
-<<<<<<< HEAD
-extern Snapshot CopySnapshot(Snapshot snapshot);
-extern void FreeSnapshot(Snapshot snapshot);
-extern void FreeXactSnapshot(void);
-extern void LogDistributedSnapshotInfo(Snapshot snapshot, const char *prefix);
-=======
 extern void SnapshotSetCommandId(CommandId curcid);
 
 extern void PushActiveSnapshot(Snapshot snapshot);
@@ -44,6 +38,7 @@ extern void UnregisterSnapshot(Snapshot snapshot);
 extern void AtSubCommit_Snapshot(int level);
 extern void AtSubAbort_Snapshot(int level);
 extern void AtEOXact_Snapshot(bool isCommit);
->>>>>>> 49f001d81e
+
+extern void LogDistributedSnapshotInfo(Snapshot snapshot, const char *prefix);
 
 #endif /* SNAPMGR_H */
