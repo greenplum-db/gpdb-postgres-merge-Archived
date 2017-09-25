@@ -29,24 +29,6 @@ provider postgresql {
 	probe transaction__commit(LocalTransactionId);
 	probe transaction__abort(LocalTransactionId);
 
-<<<<<<< HEAD
-probe memctxt__alloc(int, int, int, int, int);
-probe memctxt__free(int, int, int, int, int);
-probe memctxt__realloc(int, int, int, int, int);
-
-probe execprocnode__enter(int, int, int, int);
-probe execprocnode__exit(int, int, int, int);
-
-probe tuplesort__begin(int, int, int);
-probe tuplesort__end(int, int);
-probe tuplesort__perform__sort();
-probe tuplesort__mergeonerun(int);
-probe tuplesort__dumptuples(int, int, int);
-probe tuplesort__switch__external(int);
-
-probe backoff__localcheck(int);
-probe backoff__globalcheck();
-=======
 	probe lwlock__acquire(LWLockId, LWLockMode);
 	probe lwlock__release(LWLockId);
 	probe lwlock__wait__start(LWLockId, LWLockMode);
@@ -106,5 +88,4 @@ probe backoff__globalcheck();
 	probe multixact__checkpoint__done(bool);
 	probe twophase__checkpoint__start();
 	probe twophase__checkpoint__done();
->>>>>>> 49f001d81e
 };
