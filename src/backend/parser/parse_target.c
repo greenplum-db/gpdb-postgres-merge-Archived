@@ -1348,16 +1348,6 @@ FigureColnameInternal(Node *node, char **name)
 				return 2;
 			}
 			break;
-<<<<<<< HEAD
-		case T_A_Const:
-			if (((A_Const *) node)->typeName != NULL)
-			{
-				*name = strVal(llast(((A_Const *) node)->typeName->names));
-				return 1;
-			}
-			break;
-=======
->>>>>>> 49f001d81e
 		case T_TypeCast:
 			strength = FigureColnameInternal(((TypeCast *) node)->arg,
 											 name);

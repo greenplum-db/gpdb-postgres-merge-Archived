@@ -1563,7 +1563,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 												  stmt->distinctClause,
 												  &qry->targetList,
 												  qry->sortClause,
-												  qry->groupClause);
+												  &qry->groupClause);
 
 	/* transform LIMIT */
 	qry->limitOffset = transformLimitClause(pstate, stmt->limitOffset,

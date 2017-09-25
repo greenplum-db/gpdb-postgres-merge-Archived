@@ -18,10 +18,6 @@
 
 #include "nodes/relation.h"
 #include "utils/relcache.h"
-<<<<<<< HEAD
-#include "utils/rel.h"
-=======
->>>>>>> 49f001d81e
 
 /* Hook for plugins to get control in get_relation_info() */
 typedef void (*get_relation_info_hook_type) (PlannerInfo *root,

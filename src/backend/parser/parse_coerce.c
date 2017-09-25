@@ -2038,108 +2038,10 @@ TypeCategory(Oid type)
 	char		typcategory;
 	bool		typispreferred;
 
-<<<<<<< HEAD
-	switch (inType)
-	{
-		case (BOOLOID):
-			result = BOOLEAN_TYPE;
-			break;
-
-		case (CHAROID):
-		case (NAMEOID):
-		case (BPCHAROID):
-		case (VARCHAROID):
-		case (TEXTOID):
-			result = STRING_TYPE;
-			break;
-
-		case (BITOID):
-		case (VARBITOID):
-			result = BITSTRING_TYPE;
-			break;
-
-		case (OIDOID):
-		case (REGPROCOID):
-		case (REGPROCEDUREOID):
-		case (REGOPEROID):
-		case (REGOPERATOROID):
-		case (REGCLASSOID):
-		case (REGTYPEOID):
-		case (REGCONFIGOID):
-		case (REGDICTIONARYOID):
-		case (INT2OID):
-		case (INT4OID):
-		case (INT8OID):
-		case (FLOAT4OID):
-		case (FLOAT8OID):
-		case (NUMERICOID):
-		case (CASHOID):
-		case (COMPLEXOID):
-			result = NUMERIC_TYPE;
-			break;
-
-		case (DATEOID):
-		case (TIMEOID):
-		case (TIMETZOID):
-		case (ABSTIMEOID):
-		case (TIMESTAMPOID):
-		case (TIMESTAMPTZOID):
-			result = DATETIME_TYPE;
-			break;
-
-		case (RELTIMEOID):
-		case (TINTERVALOID):
-		case (INTERVALOID):
-			result = TIMESPAN_TYPE;
-			break;
-
-		case (POINTOID):
-		case (LSEGOID):
-		case (PATHOID):
-		case (BOXOID):
-		case (POLYGONOID):
-		case (LINEOID):
-		case (CIRCLEOID):
-			result = GEOMETRIC_TYPE;
-			break;
-
-		case (INETOID):
-		case (CIDROID):
-			result = NETWORK_TYPE;
-			break;
-
-		case (UNKNOWNOID):
-		case (InvalidOid):
-			result = UNKNOWN_TYPE;
-			break;
-
-		case (RECORDOID):
-		case (CSTRINGOID):
-		case (ANYOID):
-		case (ANYARRAYOID):
-		case (VOIDOID):
-		case (TRIGGEROID):
-		case (LANGUAGE_HANDLEROID):
-		case (INTERNALOID):
-		case (OPAQUEOID):
-		case (ANYELEMENTOID):
-		case (ANYNONARRAYOID):
-		case (ANYENUMOID):
-			result = GENERIC_TYPE;
-			break;
-
-		default:
-			result = USER_TYPE;
-			break;
-	}
-	return result;
-}	/* TypeCategory() */
-=======
 	get_type_category_preferred(type, &typcategory, &typispreferred);
 	Assert(typcategory != TYPCATEGORY_INVALID);
 	return (TYPCATEGORY) typcategory;
 }
->>>>>>> 49f001d81e
 
 
 /* IsPreferredType()

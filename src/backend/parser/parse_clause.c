@@ -42,11 +42,8 @@
 #include "rewrite/rewriteManip.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
-<<<<<<< HEAD
 #include "utils/syscache.h"
-=======
 #include "utils/rel.h"
->>>>>>> 49f001d81e
 
 #include "cdb/cdbvars.h"
 #include "cdb/cdbpartition.h"
@@ -2541,7 +2538,7 @@ transformWindowDefinitions(ParseState *pstate,
  */
 static List *
 transformDistinctToGroupBy(ParseState *pstate, List **targetlist,
-							List **sortClause, List **groupClause)
+							List *sortClause, List **groupClause)
 {
 	List *group_tlist = list_copy(*targetlist);
 
@@ -2551,7 +2548,7 @@ transformDistinctToGroupBy(ParseState *pstate, List **targetlist,
 	List *group_tlist_remainder = NIL;
 	List *group_clause_list = create_group_clause(group_tlist,
 												*targetlist,
-												*sortClause,
+												sortClause,
 												&group_tlist_remainder);
 
 	if (list_length(group_tlist_remainder) > 0)
@@ -2621,11 +2618,7 @@ transformDistinctToGroupBy(ParseState *pstate, List **targetlist,
  */
 List *
 transformDistinctClause(ParseState *pstate, List *distinctlist,
-<<<<<<< HEAD
-						List **targetlist, List **sortClause, List **groupClause)
-=======
-						List **targetlist, List *sortClause)
->>>>>>> 49f001d81e
+						List **targetlist, List *sortClause, List **groupClause)
 {
 	List	   *result = NIL;
 	ListCell   *slitem;
@@ -2691,13 +2684,21 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 
 			if (tle->resjunk)
 				continue;		/* ignore junk */
-			if (targetIsInSortList(tle, InvalidOid, result))
+			if (targetIsInSortGroupList(tle, InvalidOid, result))
 				continue;		/* already in list (with some semantics) */
+
+			SortBy sortby;
+
+			sortby.type = T_SortBy;
+			sortby.sortby_dir = SORTBY_DEFAULT;
+			sortby.sortby_nulls = SORTBY_NULLS_DEFAULT;
+			sortby.useOp = NIL;
+			sortby.location = -1;
+			sortby.node = (Node *) tle->expr;
+
 			result = addTargetToSortList(pstate, tle,
 										 result, *targetlist,
-										 SORTBY_DEFAULT,
-										 SORTBY_NULLS_DEFAULT,
-										 NIL, true);
+										 &sortby, true);
 		}
 	}
 	else
@@ -2719,16 +2720,11 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 			Node   *dexpr = (Node *) lfirst(dlitem);
 			TargetEntry *tle;
 
-<<<<<<< HEAD
-			tle = findTargetlistEntrySQL92(pstate, lfirst(dlitem),
+			tle = findTargetlistEntrySQL92(pstate, dexpr,
                                            targetlist, DISTINCT_ON_CLAUSE);
-=======
-			tle = findTargetlistEntry(pstate, dexpr,
-									  targetlist, DISTINCT_ON_CLAUSE);
 			sortgroupref = assignSortGroupRef(tle, *targetlist);
 			refnos = bms_add_member(refnos, sortgroupref);
 		}
->>>>>>> 49f001d81e
 
 		/*
 		 * If the user writes both DISTINCT ON and ORDER BY, adopt the
@@ -2748,51 +2744,14 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 				if (skipped_sortitem)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-<<<<<<< HEAD
 							 errmsg("SELECT DISTINCT ON expressions must match initial ORDER BY expressions"),
 							 parser_errposition(pstate, exprLocation((Node *) lfirst(dlitem)))));
-				result = lappend(result, copyObject(scl));
-				nextsortlist = lnext(nextsortlist);
-			}
-			else
-			{
-				SortBy sortby;
-
-				sortby.type = T_SortBy;
-				sortby.sortby_dir = SORTBY_DEFAULT;
-				sortby.sortby_nulls = SORTBY_NULLS_DEFAULT;
-				sortby.useOp = NIL;
-				sortby.location = -1;
-				sortby.node = (Node *) tle->expr;
-				*sortClause = addTargetToSortList(pstate, tle,
-												  *sortClause, *targetlist,
-												  &sortby, true);
-
-				/*
-				 * Probably, the tle should always have been added at the end
-				 * of the sort list ... but search to be safe.
-				 */
-				foreach(slitem, *sortClause)
-				{
-					SortClause *scl = (SortClause *) lfirst(slitem);
-
-					if (tle->ressortgroupref == scl->tleSortGroupRef)
-					{
-						result = lappend(result, copyObject(scl));
-						break;
-					}
-				}
-				if (slitem == NULL)		/* should not happen */
-					elog(ERROR, "failed to add DISTINCT ON clause to target list");
-=======
-							 errmsg("SELECT DISTINCT ON expressions must match initial ORDER BY expressions")));
 				else
 					result = lappend(result, copyObject(scl));
 			}
 			else
 			{
 				skipped_sortitem = true;
->>>>>>> 49f001d81e
 			}
 		}
 
@@ -2809,17 +2768,25 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 		{
 			TargetEntry *tle = get_sortgroupref_tle(sortgroupref, *targetlist);
 
-			if (targetIsInSortList(tle, InvalidOid, result))
+			if (targetIsInSortGroupList(tle, InvalidOid, result))
 				continue;		/* already in list (with some semantics) */
 			if (skipped_sortitem)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 						 errmsg("SELECT DISTINCT ON expressions must match initial ORDER BY expressions")));
+
+			SortBy sortby;
+
+			sortby.type = T_SortBy;
+			sortby.sortby_dir = SORTBY_DEFAULT;
+			sortby.sortby_nulls = SORTBY_NULLS_DEFAULT;
+			sortby.useOp = NIL;
+			sortby.location = -1;
+			sortby.node = (Node *) tle->expr;
+
 			result = addTargetToSortList(pstate, tle,
 										 result, *targetlist,
-										 SORTBY_DEFAULT,
-										 SORTBY_NULLS_DEFAULT,
-										 NIL, true);
+										 &sortby, true);
 		}
 	}
 
@@ -2827,7 +2794,6 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 }
 
 /*
-<<<<<<< HEAD
  * transformScatterClause -
  *	  transform a SCATTER BY clause
  *
@@ -2870,68 +2836,18 @@ transformScatterClause(ParseState *pstate,
 	return outlist;
 }
 
-
 /*
- * addAllTargetsToSortList
- *		Make sure all non-resjunk targets in the targetlist are in the
- *		ORDER BY list, adding the not-yet-sorted ones to the end of the list.
- *		This is typically used to help implement SELECT DISTINCT.
- *
- * See addTargetToSortList for info about pstate and resolveUnknown inputs.
- *
- * Returns the updated ORDER BY list.
- * May modify targetlist in place even when resolveUnknown is FALSE.
- */
-List *
-addAllTargetsToSortList(ParseState *pstate, List *sortlist,
-						List *targetlist, bool resolveUnknown)
-{
-	ListCell   *l;
-
-	foreach(l, targetlist)
-	{
-		TargetEntry *tle = (TargetEntry *) lfirst(l);
-
-		if (!tle->resjunk)
-		{
-			SortBy		sortby;
-
-			sortby.type = T_SortBy;
-			sortby.sortby_dir = SORTBY_DEFAULT;
-			sortby.sortby_nulls = SORTBY_NULLS_DEFAULT;
-			sortby.useOp = NIL;
-			sortby.location = -1;
-			sortby.node = (Node *) tle->expr;
-			sortlist = addTargetToSortList(pstate, tle,
-										   sortlist, targetlist,
-										   &sortby, resolveUnknown);
-		}
-	}
-	return sortlist;
-}
-
-/*
- * addTargetToSortList
- *		If the given targetlist entry isn't already in the SortGroupClause
- *		list, add it to the end of the list, using the given sort ordering
- *		info.
-=======
  * addTargetToSortList
  *		If the given targetlist entry isn't already in the SortClause list,
  *		add it to the end of the list, using the given sort ordering info.
->>>>>>> 49f001d81e
  *
  * If resolveUnknown is TRUE, convert TLEs of type UNKNOWN to TEXT.  If not,
  * do nothing (which implies the search for a sort operator will fail).
  * pstate should be provided if resolveUnknown is TRUE, but can be NULL
  * otherwise.
  *
-<<<<<<< HEAD
  * Returns the updated ORDER BY list.
  * May modify targetlist entry in place even when resolveUnknown is FALSE.
-=======
- * Returns the updated SortClause list.
->>>>>>> 49f001d81e
  */
 List *
 addTargetToSortList(ParseState *pstate, TargetEntry *tle,
