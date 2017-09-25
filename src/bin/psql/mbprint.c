@@ -370,21 +370,12 @@ pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
 		len -= chlen;
 	}
 	lines->width = linewidth;
-<<<<<<< HEAD
 	*ptr++ = '\0';				/* Terminate formatted string */
 
 	if (count <= 0)
 		exit(1);				/* Screwup */
 
 	(lines + 1)->ptr = NULL;	/* terminate line array */
-=======
-	*ptr++ = '\0';			/* Terminate formatted string */
-
-	if (count <= 0)
-		exit(1);	/* Screwup */
-
-	(lines+1)->ptr = NULL;	/* terminate line array */
->>>>>>> 49f001d81e
 }
 
 unsigned char *
