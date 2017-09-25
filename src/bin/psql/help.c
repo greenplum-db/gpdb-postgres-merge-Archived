@@ -173,20 +173,15 @@ slashUsage(unsigned short int pager)
 	FILE	   *output;
 	char	   *currdb;
 
-<<<<<<< HEAD
 	currdb = PQdb(pset.db);
 	if (currdb == NULL)
 		currdb = "";
 
 	output = PageOutput(90, pager);
-=======
-	output = PageOutput(78, pager);
->>>>>>> 49f001d81e
 
 	/* if you add/remove a line here, change the row count above */
 
 	fprintf(output, _("General\n"));
-<<<<<<< HEAD
 	fprintf(output, _("  \\copyright             show PostgreSQL usage and distribution terms\n"));
 	fprintf(output, _("  \\g [FILE] or ;         execute query (and send results to file or |pipe)\n"));
 	fprintf(output, _("  \\h [NAME]              help on syntax of SQL commands, * for all commands\n"));
@@ -198,18 +193,6 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\ef [FUNCNAME]         edit function definition with external editor\n"));
 	fprintf(output, _("  \\p                     show the contents of the query buffer\n"));
 	fprintf(output, _("  \\r                     reset (clear) the query buffer\n"));
-=======
-	fprintf(output, _("  \\copyright     show PostgreSQL usage and distribution terms\n"));
-	fprintf(output, _("  \\g [FILE] or ; execute query (and send results to file or |pipe)\n"));
-	fprintf(output, _("  \\h [NAME]      help on syntax of SQL commands, * for all commands\n"));
-	fprintf(output, _("  \\q             quit psql\n"));
-	fprintf(output, "\n");
-
-	fprintf(output, _("Query Buffer\n"));
-	fprintf(output, _("  \\e [FILE]      edit the query buffer (or file) with external editor\n"));
-	fprintf(output, _("  \\p             show the contents of the query buffer\n"));
-	fprintf(output, _("  \\r             reset (clear) the query buffer\n"));
->>>>>>> 49f001d81e
 #ifdef USE_READLINE
 	fprintf(output, _("  \\s [FILE]              display history or save it to file\n"));
 #endif
@@ -268,17 +251,10 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\f [STRING]            show or set field separator for unaligned query output\n"));
 	fprintf(output, _("  \\H                     toggle HTML output mode (currently %s)\n"),
 			ON(pset.popt.topt.format == PRINT_HTML));
-<<<<<<< HEAD
 	fprintf(output, _("  \\pset NAME [VALUE]     set table output option\n"
 					  "                         (NAME := {format|border|expanded|fieldsep|footer|null|\n"
 					  "                         numericlocale|recordsep|tuples_only|title|tableattr|pager})\n"));
 	fprintf(output, _("  \\t [on|off]            show only rows (currently %s)\n"),
-=======
-	fprintf(output, _("  \\pset NAME [VALUE]  set table output option\n"
-					  "                 (NAME := {format|border|expanded|fieldsep|footer|null|\n"
-					  "                 numericlocale|recordsep|tuples_only|title|tableattr|pager})\n"));
-	fprintf(output, _("  \\t             show only rows (currently %s)\n"),
->>>>>>> 49f001d81e
 			ON(pset.popt.topt.tuples_only));
 	fprintf(output, _("  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"));
 	fprintf(output, _("  \\x [on|off]            toggle expanded output (currently %s)\n"),
@@ -287,7 +263,6 @@ slashUsage(unsigned short int pager)
 
 	fprintf(output, _("Connection\n"));
 	fprintf(output, _("  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
-<<<<<<< HEAD
 	"                         connect to new database (currently \"%s\")\n"),
 			PQdb(pset.db));
 	fprintf(output, _("  \\encoding [ENCODING]   show or set client encoding\n"));
@@ -309,28 +284,6 @@ slashUsage(unsigned short int pager)
 	fprintf(output, "\n");
 
 	fprintf(output, _("Large Objects\n"));
-=======
-			"                 connect to new database (currently \"%s\")\n"),
-			PQdb(pset.db));
-	fprintf(output, _("  \\encoding [ENCODING]  show or set client encoding\n"));
-	fprintf(output, _("  \\password [USERNAME]  securely change the password for a user\n"));
-	fprintf(output, "\n");
-
-	fprintf(output, _("External\n"));
-	fprintf(output, _("  \\cd [DIR]         change the current working directory\n"));
-	fprintf(output, _("  \\timing [on|off]  toggle timing of commands (currently %s)\n"),
-			ON(pset.timing));
-	fprintf(output, _("  \\! [COMMAND]      execute command in shell or start interactive shell\n"));
-	fprintf(output, "\n");
-
-	fprintf(output, _("Variable\n"));
-	fprintf(output, _("  \\prompt [TEXT] NAME  prompt user to set internal variable\n"));
-	fprintf(output, _("  \\set [NAME [VALUE]]  set internal variable, or list all if no parameters\n"));
-	fprintf(output, _("  \\unset NAME          unset (delete) internal variable\n"));
-	fprintf(output, "\n");
-
-	fprintf(output, _("Large Object\n"));
->>>>>>> 49f001d81e
 	fprintf(output, _("  \\lo_export LOBOID FILE\n"
 					  "  \\lo_import FILE [COMMENT]\n"
 					  "  \\lo_list\n"

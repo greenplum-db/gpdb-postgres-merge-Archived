@@ -3,11 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
  * src/bin/psql/command.h
-=======
- * $PostgreSQL: pgsql/src/bin/psql/command.h,v 1.31 2008/07/01 00:08:18 momjian Exp $
->>>>>>> 49f001d81e
  */
 #ifndef COMMAND_H
 #define COMMAND_H
@@ -38,11 +34,7 @@ extern bool do_pset(const char *param,
 		printQueryOpt *popt,
 		bool quiet);
 
-<<<<<<< HEAD
 extern void connection_warnings(bool in_startup);
-=======
-extern void connection_warnings(void);
->>>>>>> 49f001d81e
 
 extern void SyncVariables(void);
 
