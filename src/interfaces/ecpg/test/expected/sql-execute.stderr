@@ -2,11 +2,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-<<<<<<< HEAD
 [NO_PID]: ecpg_execute on line 25: query: create table test ( name char ( 8 ) , amount int , letter char ( 1 ) ); with 0 parameter(s) on connection main
-=======
-[NO_PID]: ecpg_execute on line 25: query: create  table test ( name char  ( 8 )    , amount int   , letter char  ( 1 )    )    ; with 0 parameter(s) on connection main
->>>>>>> 49f001d81e
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 25: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -46,7 +42,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGprepare on line 49: name f; query: "select * from test"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 52: query: declare CUR  cursor  for select * from test; with 0 parameter(s) on connection main
+[NO_PID]: ecpg_execute on line 52: query: declare CUR cursor for select * from test; with 0 parameter(s) on connection main
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 52: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -116,7 +112,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGprepare on line 71: name f; query: "select * from test where amount = $1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 74: query: declare CUR2  cursor  for select * from test where amount = $1; with 1 parameter(s) on connection main
+[NO_PID]: ecpg_execute on line 74: query: declare CUR2 cursor for select * from test where amount = $1; with 1 parameter(s) on connection main
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 74: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -162,11 +158,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGdeallocate on line 107: name f
 [NO_PID]: sqlca: code: 0, state: 00000
-<<<<<<< HEAD
 [NO_PID]: ecpg_execute on line 108: query: drop table test; with 0 parameter(s) on connection main
-=======
-[NO_PID]: ecpg_execute on line 108: query: drop table test ; with 0 parameter(s) on connection main
->>>>>>> 49f001d81e
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 108: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000

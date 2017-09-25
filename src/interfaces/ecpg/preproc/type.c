@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.79 2008/05/16 15:20:04 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.78 2008/03/02 10:54:11 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -15,11 +15,7 @@ mm_alloc(size_t size)
 	void	   *ptr = malloc(size);
 
 	if (ptr == NULL)
-<<<<<<< HEAD
 		mmerror(OUT_OF_MEMORY, ET_FATAL, "out of memory");
-=======
-		mmerror(OUT_OF_MEMORY, ET_FATAL, "out of memory\n");
->>>>>>> 49f001d81e
 
 	return ptr;
 }
@@ -31,11 +27,7 @@ mm_strdup(const char *string)
 	char	   *new = strdup(string);
 
 	if (new == NULL)
-<<<<<<< HEAD
 		mmerror(OUT_OF_MEMORY, ET_FATAL, "out of memory");
-=======
-		mmerror(OUT_OF_MEMORY, ET_FATAL, "out of memory\n");
->>>>>>> 49f001d81e
 
 	return new;
 }
@@ -246,19 +238,11 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 	{
 		case ECPGt_array:
 			if (indicator_set && ind_type->type != ECPGt_array)
-<<<<<<< HEAD
 				mmerror(INDICATOR_NOT_ARRAY, ET_FATAL, "indicator for array/pointer has to be array/pointer");
 			switch (type->u.element->type)
 			{
 				case ECPGt_array:
 					mmerror(PARSE_ERROR, ET_ERROR, "nested arrays are not supported (except strings)"); /* array of array */
-=======
-				mmerror(INDICATOR_NOT_ARRAY, ET_FATAL, "indicator for array/pointer has to be array/pointer\n");
-			switch (type->u.element->type)
-			{
-				case ECPGt_array:
-					mmerror(PARSE_ERROR, ET_ERROR, "no nested arrays allowed (except strings)");		/* array of array */
->>>>>>> 49f001d81e
 					break;
 				case ECPGt_struct:
 				case ECPGt_union:
@@ -271,11 +255,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 					break;
 				default:
 					if (!IS_SIMPLE_TYPE(type->u.element->type))
-<<<<<<< HEAD
 						base_yyerror("internal error: unknown datatype, please report this to <bugs@greenplum.org>");
-=======
-						base_yyerror("internal error: unknown datatype, please report this to <pgsql-bugs@postgresql.org>");
->>>>>>> 49f001d81e
 
 					ECPGdump_a_simple(o, name,
 									  type->u.element->type,
@@ -295,11 +275,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 			break;
 		case ECPGt_struct:
 			if (indicator_set && ind_type->type != ECPGt_struct)
-<<<<<<< HEAD
 				mmerror(INDICATOR_NOT_STRUCT, ET_FATAL, "indicator for struct has to be a struct");
-=======
-				mmerror(INDICATOR_NOT_STRUCT, ET_FATAL, "indicator for struct has to be struct\n");
->>>>>>> 49f001d81e
 
 			ECPGdump_a_struct(o, name, ind_name, make_str("1"), type, ind_type, NULL, prefix, ind_prefix);
 			break;
@@ -308,11 +284,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 			break;
 		case ECPGt_char_variable:
 			if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
-<<<<<<< HEAD
 				mmerror(INDICATOR_NOT_SIMPLE, ET_FATAL, "indicator for simple data type has to be simple");
-=======
-				mmerror(INDICATOR_NOT_SIMPLE, ET_FATAL, "indicator for simple datatype has to be simple\n");
->>>>>>> 49f001d81e
 
 			ECPGdump_a_simple(o, name, type->type, make_str("1"), (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : make_str("1"), struct_sizeof, prefix, 0);
 			if (ind_type != NULL)
@@ -320,11 +292,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 			break;
 		case ECPGt_descriptor:
 			if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
-<<<<<<< HEAD
 				mmerror(INDICATOR_NOT_SIMPLE, ET_FATAL, "indicator for simple data type has to be simple");
-=======
-				mmerror(INDICATOR_NOT_SIMPLE, ET_FATAL, "indicator for simple datatype has to be simple\n");
->>>>>>> 49f001d81e
 
 			ECPGdump_a_simple(o, name, type->type, NULL, make_str("-1"), NULL, prefix, 0);
 			if (ind_type != NULL)
@@ -332,11 +300,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 			break;
 		default:
 			if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
-<<<<<<< HEAD
 				mmerror(INDICATOR_NOT_SIMPLE, ET_FATAL, "indicator for simple data type has to be simple");
-=======
-				mmerror(INDICATOR_NOT_SIMPLE, ET_FATAL, "indicator for simple datatype has to be simple\n");
->>>>>>> 49f001d81e
 
 			ECPGdump_a_simple(o, name, type->type, type->size, (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : make_str("-1"), struct_sizeof, prefix, type->lineno);
 			if (ind_type != NULL)
@@ -579,11 +543,7 @@ ECPGfree_type(struct ECPGtype * type)
 						break;
 					default:
 						if (!IS_SIMPLE_TYPE(type->u.element->type))
-<<<<<<< HEAD
 							base_yyerror("internal error: unknown datatype, please report this to <bugs@greenplum.org>");
-=======
-							base_yyerror("internal error: unknown datatype, please report this to <pgsql-bugs@postgresql.org>");
->>>>>>> 49f001d81e
 
 						free(type->u.element);
 				}

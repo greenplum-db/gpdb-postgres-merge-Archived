@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.42 2008/05/16 15:20:03 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.49 2009/06/11 14:49:13 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -110,11 +110,7 @@ ecpg_init(const struct connection * con, const char *connection_name, const int 
 	if (con == NULL)
 	{
 		ecpg_raise(lineno, ECPG_NO_CONN, ECPG_SQLSTATE_CONNECTION_DOES_NOT_EXIST,
-<<<<<<< HEAD
 				   connection_name ? connection_name : ecpg_gettext("NULL"));
-=======
-				   connection_name ? connection_name : _("NULL"));
->>>>>>> 49f001d81e
 		return (false);
 	}
 
@@ -183,11 +179,7 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 	if (!ecpg_init(con, connection_name, lineno))
 		return (false);
 
-<<<<<<< HEAD
 	ecpg_log("ECPGtrans on line %d: action \"%s\"; connection \"%s\"\n", lineno, transaction, con ? con->name : "null");
-=======
-	ecpg_log("ECPGtrans on line %d: action \"%s\"; connection \"%s\"\n", lineno, transaction, con ? con->name : _("null"));
->>>>>>> 49f001d81e
 
 	/* if we have no connection we just simulate the command */
 	if (con && con->connection)
@@ -250,7 +242,6 @@ ecpg_log(const char *format,...)
 {
 	va_list		ap;
 	struct sqlca_t *sqlca = ECPGget_sqlca();
-<<<<<<< HEAD
 	const char *intl_format;
 	int			bufsize;
 	char	   *fmt;
@@ -274,28 +265,6 @@ ecpg_log(const char *format,...)
 		snprintf(fmt, bufsize, "[NO_PID]: %s", intl_format);
 	else
 		snprintf(fmt, bufsize, "[%d]: %s", (int) getpid(), intl_format);
-=======
-
-	/* internationalize the error message string */
-	format = ecpg_gettext(format);
-
-	if (simple_debug)
-	{
-		int			bufsize = strlen(format) + 100;
-		char	   *f = (char *) malloc(bufsize);
-
-		if (f == NULL)
-			return;
-
-		/*
-		 * regression tests set this environment variable to get the same
-		 * output for every run.
-		 */
-		if (ecpg_internal_regression_mode)
-			snprintf(f, bufsize, "[NO_PID]: %s", format);
-		else
-			snprintf(f, bufsize, "[%d]: %s", (int) getpid(), format);
->>>>>>> 49f001d81e
 
 #ifdef ENABLE_THREAD_SAFETY
 	pthread_mutex_lock(&debug_mutex);
@@ -506,11 +475,7 @@ ecpg_gettext(const char *msgid)
 		ldir = getenv("PGLOCALEDIR");
 		if (!ldir)
 			ldir = LOCALEDIR;
-<<<<<<< HEAD
 		bindtextdomain(PG_TEXTDOMAIN("ecpglib"), ldir);
-=======
-		bindtextdomain("ecpg", ldir);
->>>>>>> 49f001d81e
 #ifdef WIN32
 		SetLastError(save_errno);
 #else
@@ -518,11 +483,7 @@ ecpg_gettext(const char *msgid)
 #endif
 	}
 
-<<<<<<< HEAD
 	return dgettext(PG_TEXTDOMAIN("ecpg"), msgid);
-=======
-	return dgettext("ecpg", msgid);
->>>>>>> 49f001d81e
 }
 
 #endif   /* ENABLE_NLS */

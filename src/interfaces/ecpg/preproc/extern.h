@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/extern.h,v 1.71 2008/05/20 23:17:32 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/extern.h,v 1.73.2.1 2009/09/08 04:25:14 tgl Exp $ */
 
 #ifndef _ECPG_PREPROC_EXTERN_H
 #define _ECPG_PREPROC_EXTERN_H
@@ -73,14 +73,10 @@ extern int	base_yylex(void);
 extern void base_yyerror(const char *);
 extern void *mm_alloc(size_t), *mm_realloc(void *, size_t);
 extern char *mm_strdup(const char *);
-<<<<<<< HEAD
 extern void
 mmerror(int, enum errortype, const char *,...)
 /* This extension allows gcc to check the format string */
 __attribute__((format(printf, 3, 4)));
-=======
-extern void mmerror(int, enum errortype, char *,...);
->>>>>>> 49f001d81e
 extern void output_get_descr_header(char *);
 extern void output_get_descr(char *, char *);
 extern void output_set_descr_header(char *);

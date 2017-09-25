@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.55 2008/05/16 15:20:03 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.59 2009/06/11 14:49:13 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -1012,13 +1012,8 @@ ECPG_informix_set_var(int number, void *pointer, int lineno)
 		char my_msg[6]="YE001";
 
 		sqlca->sqlcode = ECPG_OUT_OF_MEMORY;
-<<<<<<< HEAD
 		strncpy(sqlca->sqlstate, my_msg, sizeof(my_msg));
 		snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc), "Out of memory in line %d.", lineno);
-=======
-		strncpy(sqlca->sqlstate, "YE001", sizeof("YE001"));
-		snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc), _("out of memory on line %d"), lineno);
->>>>>>> 49f001d81e
 		sqlca->sqlerrm.sqlerrml = strlen(sqlca->sqlerrm.sqlerrmc);
 		/* free all memory we have allocated for the user */
 		ECPGfree_auto_mem();

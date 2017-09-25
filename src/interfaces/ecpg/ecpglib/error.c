@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.20 2008/05/16 15:20:03 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.23 2009/06/11 14:49:13 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -21,115 +21,76 @@ ecpg_raise(int line, int code, const char *sqlstate, const char *str)
 	{
 		case ECPG_NOT_FOUND:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
->>>>>>> 49f001d81e
 					 ecpg_gettext("no data found on line %d"), line);
 			break;
 
 		case ECPG_OUT_OF_MEMORY:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
->>>>>>> 49f001d81e
 					 ecpg_gettext("out of memory on line %d"), line);
 			break;
 
 		case ECPG_UNSUPPORTED:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
 			  ecpg_gettext("unsupported type \"%s\" on line %d"), str, line);
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
-					 ecpg_gettext("unsupported type %s on line %d"), str, line);
->>>>>>> 49f001d81e
 			break;
 
 		case ECPG_TOO_MANY_ARGUMENTS:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
->>>>>>> 49f001d81e
 					 ecpg_gettext("too many arguments on line %d"), line);
 			break;
 
 		case ECPG_TOO_FEW_ARGUMENTS:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
->>>>>>> 49f001d81e
 					 ecpg_gettext("too few arguments on line %d"), line);
 			break;
 
 		case ECPG_INT_FORMAT:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
 					 ecpg_gettext("invalid input syntax for type int: \"%s\", on line %d"), str, line);
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
-					 ecpg_gettext("not correctly formatted int type \"%s\" on line %d"), str, line);
->>>>>>> 49f001d81e
 			break;
 
 		case ECPG_UINT_FORMAT:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
 					 ecpg_gettext("invalid input syntax for type unsigned int: \"%s\", on line %d"), str, line);
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
-					 ecpg_gettext("not correctly formatted unsigned type \"%s\" on line %d"), str, line);
->>>>>>> 49f001d81e
 			break;
 
 		case ECPG_FLOAT_FORMAT:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
@@ -155,273 +116,166 @@ ecpg_raise(int line, int code, const char *sqlstate, const char *str)
 				 * expanded.
 				 */
 						 ecpg_gettext("could not convert boolean value: size mismatch, on line %d"), line);
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
-					 ecpg_gettext("not correctly formatted floating-point type \"%s\" on line %d"), str, line);
-			break;
-
-		case ECPG_CONVERT_BOOL:
-			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
-					 ecpg_gettext("could not convert %s to bool on line %d"), str, line);
->>>>>>> 49f001d81e
 			break;
 
 		case ECPG_EMPTY:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
->>>>>>> 49f001d81e
 					 ecpg_gettext("empty query on line %d"), line);
 			break;
 
 		case ECPG_MISSING_INDICATOR:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
 			  ecpg_gettext("null value without indicator on line %d"), line);
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
-					 ecpg_gettext("NULL value without indicator on line %d"), line);
->>>>>>> 49f001d81e
 			break;
 
 		case ECPG_NO_ARRAY:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
 					 ecpg_gettext("variable does not have an array type on line %d"), line);
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
-					 ecpg_gettext("variable is not an array on line %d"), line);
->>>>>>> 49f001d81e
 			break;
 
 		case ECPG_DATA_NOT_ARRAY:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
 					 ecpg_gettext("data read from server is not an array on line %d"), line);
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
-					 ecpg_gettext("data read from backend is not an array on line %d"), line);
->>>>>>> 49f001d81e
 			break;
 
 		case ECPG_ARRAY_INSERT:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
 					 ecpg_gettext("inserting an array of variables is not supported on line %d"), line);
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
-				 ecpg_gettext("trying to insert an array of variables on line %d"), line);
->>>>>>> 49f001d81e
 			break;
 
 		case ECPG_NO_CONN:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
 					 ecpg_gettext("connection \"%s\" does not exist on line %d"), str, line);
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
-				 ecpg_gettext("no such connection %s on line %d"), str, line);
->>>>>>> 49f001d81e
 			break;
 
 		case ECPG_NOT_CONN:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
 					 ecpg_gettext("not connected to connection \"%s\" on line %d"), str, line);
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
-				 ecpg_gettext("not connected to \"%s\" on line %d"), str, line);
->>>>>>> 49f001d81e
 			break;
 
 		case ECPG_INVALID_STMT:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
 					 ecpg_gettext("invalid statement name \"%s\" on line %d"), str, line);
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
-				 ecpg_gettext("invalid statement name %s on line %d"), str, line);
->>>>>>> 49f001d81e
 			break;
 
 		case ECPG_UNKNOWN_DESCRIPTOR:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
 					 ecpg_gettext("descriptor \"%s\" not found on line %d"), str, line);
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
-				 ecpg_gettext("descriptor %s not found on line %d"), str, line);
->>>>>>> 49f001d81e
 			break;
 
 		case ECPG_INVALID_DESCRIPTOR_INDEX:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
 			 ecpg_gettext("descriptor index out of range on line %d"), line);
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
-				 ecpg_gettext("descriptor index out of range on line %d"), line);
->>>>>>> 49f001d81e
 			break;
 
 		case ECPG_UNKNOWN_DESCRIPTOR_ITEM:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
 					 ecpg_gettext("unrecognized descriptor item \"%s\" on line %d"), str, line);
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
-				 ecpg_gettext("unknown descriptor item %s on line %d"), str, line);
->>>>>>> 49f001d81e
 			break;
 
 		case ECPG_VAR_NOT_NUMERIC:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
 					 ecpg_gettext("variable does not have a numeric type on line %d"), line);
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
-				 ecpg_gettext("variable is not a numeric type on line %d"), line);
->>>>>>> 49f001d81e
 			break;
 
 		case ECPG_VAR_NOT_CHAR:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
 					 ecpg_gettext("variable does not have a character type on line %d"), line);
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
-				 ecpg_gettext("variable is not a character type on line %d"), line);
->>>>>>> 49f001d81e
 			break;
 
 		case ECPG_TRANS:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
 			ecpg_gettext("error in transaction processing on line %d"), line);
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
-				 ecpg_gettext("error in transaction processing on line %d"), line);
->>>>>>> 49f001d81e
 			break;
 
 		case ECPG_CONNECT:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
 					 ecpg_gettext("could not connect to database \"%s\" on line %d"), str, line);
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
-				  ecpg_gettext("could not connect to database \"%s\" on line %d"), str, line);
->>>>>>> 49f001d81e
 			break;
 
 		default:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-<<<<<<< HEAD
 
 			/*
 			 * translator: this string will be truncated at 149 characters
 			 * expanded.
 			 */
 					 ecpg_gettext("SQL error %d on line %d"), code, line);
-=======
-				/* translator: this string will be truncated at 149 
-				   characters expanded.  */
-				 ecpg_gettext("SQL error %d on line %d"), code, line);
->>>>>>> 49f001d81e
 			break;
 	}
 
@@ -534,9 +388,5 @@ sqlprint(void)
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 
 	sqlca->sqlerrm.sqlerrmc[sqlca->sqlerrm.sqlerrml] = '\0';
-<<<<<<< HEAD
 	fprintf(stderr, ecpg_gettext("SQL error: %s\n"), sqlca->sqlerrm.sqlerrmc);
-=======
-	fprintf(stderr, _("sql error: %s\n"), sqlca->sqlerrm.sqlerrmc);
->>>>>>> 49f001d81e
 }

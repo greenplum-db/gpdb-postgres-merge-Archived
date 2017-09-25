@@ -1,9 +1,5 @@
 /*
-<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/timestamp.c,v 1.45 2009/06/11 14:49:13 momjian Exp $
-=======
- * $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/timestamp.c,v 1.42 2008/05/17 01:28:25 adunstan Exp $ 
->>>>>>> 49f001d81e
  */
 #include "postgres_fe.h"
 

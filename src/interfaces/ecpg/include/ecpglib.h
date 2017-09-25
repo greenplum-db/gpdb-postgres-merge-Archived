@@ -1,7 +1,7 @@
 /*
  * this is a small part of c.h since we don't want to leak all postgres
  * definitions into ecpg programs
- * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpglib.h,v 1.77 2008/05/16 15:20:04 petere Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpglib.h,v 1.76 2008/03/20 16:29:45 meskes Exp $
  */
 
 #ifndef _ECPGLIB_H
@@ -17,7 +17,7 @@ extern char *
 ecpg_gettext(const char *msgid)
 __attribute__((format_arg(1)));
 #else
-#define	ecpg_gettext(x)	(x)
+#define ecpg_gettext(x) (x)
 #endif
 
 #ifndef __cplusplus
