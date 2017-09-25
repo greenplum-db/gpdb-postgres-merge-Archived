@@ -508,11 +508,7 @@ rmtree(const char *path, bool rmtopdir)
  * field when run. So we define our own version that uses the Win32 API
  * to update this field.
  */
-<<<<<<< HEAD
 int
-=======
-int 
->>>>>>> 49f001d81e
 pgwin32_safestat(const char *path, struct stat *buf)
 {
 	int			r;
