@@ -6,11 +6,7 @@
 #
 # NOTE: if you change this, you need to fix Gen_fmgrtab.pl too!
 #
-<<<<<<< HEAD
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
-# Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
->>>>>>> 49f001d81e
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 #
