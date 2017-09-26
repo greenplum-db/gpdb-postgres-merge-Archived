@@ -681,15 +681,30 @@ int8mod(PG_FUNCTION_ARGS)
 	PG_RETURN_INT64(arg1 % arg2);
 }
 
+/* GPDB_84_MERGE_FIXME: ensure that USE_FLOAT8_BYVAL is hardcoded to true, then
+ * remove the following block (since int8inc already handles it). */
+#if 0
+Datum
+int8inc(PG_FUNCTION_ARGS)
+{
+	/* Assume int8 is byval */
+	int64		arg = PG_GETARG_INT64(0);
+	int64		result;
+
+	result = arg + 1;
+	/* Overflow check */
+	if (result < 0 && arg > 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("bigint out of range")));
+
+	PG_RETURN_INT64(result);
+}
+#endif
 
 Datum
 int8inc(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	/* Assume int8 is byval */
-	int64		arg = PG_GETARG_INT64(0);
-	int64		result;
-=======
 	/*
 	 * When int8 is pass-by-reference, we provide this special case to avoid
 	 * palloc overhead for COUNT(): when called from nodeAgg, we know that the
@@ -702,19 +717,14 @@ int8inc(PG_FUNCTION_ARGS)
 	{
 		int64	   *arg = (int64 *) PG_GETARG_POINTER(0);
 		int64		result;
->>>>>>> 49f001d81e
 
-	result = arg + 1;
-	/* Overflow check */
-	if (result < 0 && arg > 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("bigint out of range")));
+		result = arg + 1;
+		/* Overflow check */
+		if (result < 0 && arg > 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("bigint out of range")));
 
-<<<<<<< HEAD
-	PG_RETURN_INT64(result);
-}
-=======
 		*arg = result;
 		PG_RETURN_POINTER(arg);
 	}
@@ -724,7 +734,17 @@ int8inc(PG_FUNCTION_ARGS)
 		/* Not called by nodeAgg, so just do it the dumb way */
 		int64		arg = PG_GETARG_INT64(0);
 		int64		result;
->>>>>>> 49f001d81e
+
+		result = arg + 1;
+		/* Overflow check */
+		if (result < 0 && arg > 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("bigint out of range")));
+
+		PG_RETURN_INT64(result);
+	}
+}
 
 Datum
 int8dec(PG_FUNCTION_ARGS)

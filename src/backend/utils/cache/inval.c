@@ -96,12 +96,9 @@
 #include "storage/smgr.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
-<<<<<<< HEAD
+#include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/simex.h"
-=======
-#include "utils/rel.h"
->>>>>>> 49f001d81e
 #include "utils/syscache.h"
 
 
@@ -412,13 +409,8 @@ ProcessInvalidationMessages(InvalidationListHeader *hdr,
  * rather than just one at a time.
  */
 static void
-<<<<<<< HEAD
 ProcessInvalidationMessageMulti(InvalidationListHeader *hdr,
 				 void (*func) (const SharedInvalidationMessage *msgs, int n))
-=======
-ProcessInvalidationMessagesMulti(InvalidationListHeader *hdr,
-								 void (*func) (const SharedInvalidationMessage *msgs, int n))
->>>>>>> 49f001d81e
 {
 	ProcessMessageListMulti(hdr->cclist, func(msgs, n));
 	ProcessMessageListMulti(hdr->rclist, func(msgs, n));
@@ -980,13 +972,8 @@ AtEOXact_Inval(bool isCommit)
 		AppendInvalidationMessages(&transInvalInfo->PriorCmdInvalidMsgs,
 								   &transInvalInfo->CurrentCmdInvalidMsgs);
 
-<<<<<<< HEAD
 		ProcessInvalidationMessageMulti(&transInvalInfo->PriorCmdInvalidMsgs,
 										SendSharedInvalidMessages);
-=======
-		ProcessInvalidationMessagesMulti(&transInvalInfo->PriorCmdInvalidMsgs,
-										 SendSharedInvalidMessages);
->>>>>>> 49f001d81e
 
 		if (transInvalInfo->RelcacheInitFileInval)
 			RelationCacheInitFilePostInvalidate();
@@ -1177,13 +1164,8 @@ EndNonTransactionalInvalidation(void)
 	/* Send out the invals */
 	ProcessInvalidationMessages(&transInvalInfo->CurrentCmdInvalidMsgs,
 								LocalExecuteInvalidationMessage);
-<<<<<<< HEAD
 	ProcessInvalidationMessageMulti(&transInvalInfo->CurrentCmdInvalidMsgs,
 									SendSharedInvalidMessages);
-=======
-	ProcessInvalidationMessagesMulti(&transInvalInfo->CurrentCmdInvalidMsgs,
-									 SendSharedInvalidMessages);
->>>>>>> 49f001d81e
 
 	/* Clean up and release memory */
 	for (chunk = transInvalInfo->CurrentCmdInvalidMsgs.cclist;

@@ -288,11 +288,7 @@ CreateNewPortal(void)
  * PortalDefineQuery
  *		A simple subroutine to establish a portal's query.
  *
-<<<<<<< HEAD
  * Notes: as of PG 8.4 (this part backported to GPDB already), caller MUST supply a sourceText string; it is not
-=======
- * Notes: as of PG 8.4, caller MUST supply a sourceText string; it is not
->>>>>>> 49f001d81e
  * allowed anymore to pass NULL.  (If you really don't have source text,
  * you can pass a constant string, perhaps "(query not available)".)
  *

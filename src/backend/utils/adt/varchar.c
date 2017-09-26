@@ -589,11 +589,7 @@ varchar(PG_FUNCTION_ARGS)
 							 maxlen)));
 	}
 
-<<<<<<< HEAD
 	PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text_with_len(s_data,
-=======
-	PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text_with_len(s_data, 
->>>>>>> 49f001d81e
 															 maxmblen));
 }
 
@@ -899,16 +895,9 @@ internal_bpchar_pattern_compare(BpChar *arg1, BpChar *arg2)
 	int			len1,
 				len2;
 
-<<<<<<< HEAD
+	/* GPDB_84_MERGE_FIXME: why have we changed these from bcTruelen()? */
 	len1 = VARSIZE_ANY_EXHDR(arg1);
 	len2 = VARSIZE_ANY_EXHDR(arg2);
-
-	//len1 = bcTruelen(arg1);
-	//len2 = bcTruelen(arg2);
-=======
-	len1 = bcTruelen(arg1);
-	len2 = bcTruelen(arg2);
->>>>>>> 49f001d81e
 
 	result = strncmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
 	if (result != 0)

@@ -1477,15 +1477,10 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 #ifdef RANDOMIZE_ALLOCATED_MEMORY
 		/* We can only fill the extra space if we know the prior request */
 		if (size > chunk->requested_size)
-<<<<<<< HEAD
 		{
 			randomize_mem((char *) AllocChunkGetPointer(chunk) + chunk->requested_size,
 						  size - chunk->requested_size);
 		}
-=======
-			randomize_mem((char *) AllocChunkGetPointer(chunk) + chunk->requested_size,
-						  size - chunk->requested_size);
->>>>>>> 49f001d81e
 #endif
 
 		chunk->requested_size = size;

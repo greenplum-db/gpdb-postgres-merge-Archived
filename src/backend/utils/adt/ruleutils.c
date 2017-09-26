@@ -151,11 +151,7 @@ static char *pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 static char *pg_get_expr_worker(text *expr, Oid relid, char *relname,
 				   int prettyFlags);
 static int print_function_arguments(StringInfo buf, HeapTuple proctup,
-<<<<<<< HEAD
 						 bool print_table_args, bool print_defaults);
-=======
-						 bool print_table_args);
->>>>>>> 49f001d81e
 static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 			 int prettyFlags);
 static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
@@ -226,16 +222,10 @@ static void get_opclass_name(Oid opclass, Oid actual_datatype,
 static Node *processIndirection(Node *node, deparse_context *context,
 				   bool printit);
 static void printSubscripts(ArrayRef *aref, deparse_context *context);
-<<<<<<< HEAD
 static char *get_relation_name(Oid relid);
 static char *generate_relation_name(Oid relid, List *namespaces);
 static char *generate_function_name(Oid funcid, int nargs, Oid *argtypes,
 					   bool *is_variadic);
-=======
-static char *generate_relation_name(Oid relid);
-static char *generate_function_name(Oid funcid, int nargs, Oid *argtypes,
-									bool *is_variadic);
->>>>>>> 49f001d81e
 static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
 static text *string_to_text(char *str);
 static char *flatten_reloptions(Oid relid);
@@ -3255,11 +3245,7 @@ get_update_query_def(Query *query, deparse_context *context)
 	}
 	appendStringInfo(buf, "UPDATE %s%s",
 					 only_marker(rte),
-<<<<<<< HEAD
 					 generate_relation_name(rte->relid, NIL));
-=======
-					 generate_relation_name(rte->relid));
->>>>>>> 49f001d81e
 	if (rte->alias != NULL)
 		appendStringInfo(buf, " %s",
 						 quote_identifier(rte->alias->aliasname));
@@ -3340,11 +3326,7 @@ get_delete_query_def(Query *query, deparse_context *context)
 	}
 	appendStringInfo(buf, "DELETE FROM %s%s",
 					 only_marker(rte),
-<<<<<<< HEAD
 					 generate_relation_name(rte->relid, NIL));
-=======
-					 generate_relation_name(rte->relid));
->>>>>>> 49f001d81e
 	if (rte->alias != NULL)
 		appendStringInfo(buf, " %s",
 						 quote_identifier(rte->alias->aliasname));
@@ -5563,12 +5545,7 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 	}
 
 	appendStringInfo(buf, "%s(%s",
-<<<<<<< HEAD
 					 generate_function_name(fnoid, nargs, argtypes, NULL),
-=======
-					 generate_function_name(aggref->aggfnoid,
-											nargs, argtypes, NULL),
->>>>>>> 49f001d81e
 					 aggref->aggdistinct ? "DISTINCT " : "");
 	/* aggstar can be set only in zero-argument aggregates */
 	if (aggref->aggstar)
@@ -6783,10 +6760,6 @@ generate_function_name(Oid funcid, int nargs, Oid *argtypes,
 		elog(ERROR, "cache lookup failed for function %u", funcid);
 	procform = (Form_pg_proc) GETSTRUCT(proctup);
 	proname = NameStr(procform->proname);
-<<<<<<< HEAD
-=======
-	Assert(nargs >= procform->pronargs);
->>>>>>> 49f001d81e
 
 	/*
 	 * The idea here is to schema-qualify only if the parser would fail to
@@ -6794,16 +6767,10 @@ generate_function_name(Oid funcid, int nargs, Oid *argtypes,
 	 * specified argtypes.
 	 */
 	p_result = func_get_detail(list_make1(makeString(proname)),
-<<<<<<< HEAD
 							   NIL, nargs, argtypes, false, false,
 							   &p_funcid, &p_rettype,
 							   &p_retset,
 							   &p_nvargs, &p_true_typeids, NULL);
-=======
-							   NIL, nargs, argtypes, false,
-							   &p_funcid, &p_rettype,
-							   &p_retset, &p_nvargs, &p_true_typeids);
->>>>>>> 49f001d81e
 	if ((p_result == FUNCDETAIL_NORMAL || p_result == FUNCDETAIL_AGGREGATE) &&
 		p_funcid == funcid)
 		nspname = NULL;

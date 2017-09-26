@@ -283,17 +283,10 @@ pushValue(TSQueryParserState state, char *strval, int lenval, int2 weight, bool 
 				 errmsg("word is too long in tsquery: \"%s\"",
 						state->buffer)));
 
-<<<<<<< HEAD
 	INIT_LEGACY_CRC32(valcrc);
 	COMP_LEGACY_CRC32(valcrc, strval, lenval);
 	FIN_LEGACY_CRC32(valcrc);
-	pushValue_internal(state, valcrc, state->curop - state->op, lenval, weight);
-=======
-	INIT_CRC32(valcrc);
-	COMP_CRC32(valcrc, strval, lenval);
-	FIN_CRC32(valcrc);
 	pushValue_internal(state, valcrc, state->curop - state->op, lenval, weight, prefix);
->>>>>>> 49f001d81e
 
 	/* append the value string to state.op, enlarging buffer if needed first */
 	while (state->curop - state->op + lenval + 1 >= state->lenop)

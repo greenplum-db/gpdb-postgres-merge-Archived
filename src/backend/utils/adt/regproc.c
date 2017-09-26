@@ -131,11 +131,7 @@ regprocin(PG_FUNCTION_ARGS)
 	 * pg_proc entries in the current search path.
 	 */
 	names = stringToQualifiedNameList(pro_name_or_oid);
-<<<<<<< HEAD
 	clist = FuncnameGetCandidates(names, -1, false, false);
-=======
-	clist = FuncnameGetCandidates(names, -1, false);
->>>>>>> 49f001d81e
 
 	if (clist == NULL)
 		ereport(ERROR,
@@ -193,12 +189,7 @@ regprocout(PG_FUNCTION_ARGS)
 			 * Would this proc be found (uniquely!) by regprocin? If not,
 			 * qualify it.
 			 */
-<<<<<<< HEAD
 			clist = FuncnameGetCandidates(list_make1(makeString(proname)), -1, false, false);
-=======
-			clist = FuncnameGetCandidates(list_make1(makeString(proname)),
-										  -1, false);
->>>>>>> 49f001d81e
 			if (clist != NULL && clist->next == NULL &&
 				clist->oid == proid)
 				nspname = NULL;
@@ -285,11 +276,7 @@ regprocedurein(PG_FUNCTION_ARGS)
 	 */
 	parseNameAndArgTypes(pro_name_or_oid, false, &names, &nargs, argtypes);
 
-<<<<<<< HEAD
 	clist = FuncnameGetCandidates(names, nargs, false, false);
-=======
-	clist = FuncnameGetCandidates(names, nargs, false);
->>>>>>> 49f001d81e
 
 	for (; clist; clist = clist->next)
 	{

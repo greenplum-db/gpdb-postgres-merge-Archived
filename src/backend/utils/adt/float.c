@@ -1349,13 +1349,8 @@ dpow(PG_FUNCTION_ARGS)
 
 	/*
 	 * The SQL spec requires that we emit a particular SQLSTATE error code for
-<<<<<<< HEAD
 	 * certain error conditions.  Specifically, we don't return a
 	 * divide-by-zero error code for 0 ^ -1.
-=======
-	 * certain error conditions.  Specifically, we don't return a divide-by-zero
-	 * error code for 0 ^ -1.
->>>>>>> 49f001d81e
 	 */
 	if (arg1 == 0 && arg2 < 0)
 		ereport(ERROR,
@@ -2186,11 +2181,9 @@ float8_regr_accum(PG_FUNCTION_ARGS)
 
 		result = construct_array(transdatums, 6,
 								 FLOAT8OID,
-<<<<<<< HEAD
-								 sizeof(float8), true /* float8 byval */, 'd');
-=======
+								 /* GPDB_84_MERGE_FIXME: make sure
+								  * FLOAT8PASSBYVAL is hardcoded to true */
 								 sizeof(float8), FLOAT8PASSBYVAL, 'd');
->>>>>>> 49f001d81e
 
 		PG_RETURN_ARRAYTYPE_P(result);
 	}

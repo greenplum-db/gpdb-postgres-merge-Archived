@@ -486,7 +486,10 @@ load_auth_entries(Relation rel_authid, auth_entry **auth_info_out, int *total_ro
 		}
 		else
 		{
-<<<<<<< HEAD
+			/* GPDB_84_MERGE_FIXME: ensure that the following block is
+			 * equivalent to the upstream code that follows it, then remove the
+			 * block */
+#if 0
 			/*
 			 * rolvaliduntil is timestamptz, which we assume is double
 			 * alignment and pass-by-value.
@@ -494,7 +497,7 @@ load_auth_entries(Relation rel_authid, auth_entry **auth_info_out, int *total_ro
 			off = att_align_nominal(off, 'd');
 			datum = fetch_att(tp + off, true, sizeof(TimestampTz));
 			auth_info[curr_role].rolvaliduntil = DatumGetCString(DirectFunctionCall1(timestamptz_out, datum));
-=======
+#endif
 			TimestampTz *rvup;
 
 			/* Assume timestamptz has double alignment */
@@ -503,7 +506,6 @@ load_auth_entries(Relation rel_authid, auth_entry **auth_info_out, int *total_ro
 			auth_info[curr_role].rolvaliduntil =
 				DatumGetCString(DirectFunctionCall1(timestamptz_out,
 												TimestampTzGetDatum(*rvup)));
->>>>>>> 49f001d81e
 		}
 
 		/*
@@ -984,19 +986,18 @@ BuildFlatFiles(bool database_only)
 		rel_authmem = CreateFakeRelcacheEntry(rnode);
 
 		write_auth_file(rel_authid, rel_authmem);
-<<<<<<< HEAD
 
 		/* hard-wired path to pg_auth_time_constraint */
 		rnode.spcNode = GLOBALTABLESPACE_OID;
 		rnode.dbNode = 0;
 		rnode.relNode = AuthTimeConstraintRelationId;
-		rel_authtime = XLogOpenRelation(rnode);
+		rel_authtime = CreateFakeRelcacheEntry(rnode);
 
 		write_auth_time_file(rel_authid, rel_authtime);
-=======
+
 		FreeFakeRelcacheEntry(rel_authid);
 		FreeFakeRelcacheEntry(rel_authmem);
->>>>>>> 49f001d81e
+		FreeFakeRelcacheEntry(rel_authtime);
 	}
 
 	CurrentResourceOwner = NULL;

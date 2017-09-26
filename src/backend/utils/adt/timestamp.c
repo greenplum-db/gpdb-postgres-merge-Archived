@@ -1536,16 +1536,6 @@ clock_timestamp(PG_FUNCTION_ARGS)
 
 Datum
 pg_postmaster_start_time(PG_FUNCTION_ARGS)
-<<<<<<< HEAD
-{
-	PG_RETURN_TIMESTAMPTZ(PgStartTime);
-}
-
-/* Old version */
-Datum
-pgsql_postmaster_start_time(PG_FUNCTION_ARGS)
-=======
->>>>>>> 49f001d81e
 {
 	PG_RETURN_TIMESTAMPTZ(PgStartTime);
 }
@@ -5158,11 +5148,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 		{
 			/* Apply the timezone change */
 			struct pg_tm tm;
-<<<<<<< HEAD
  			fsec_t		fsec = 0;
-=======
-			fsec_t		fsec;
->>>>>>> 49f001d81e
 
 			if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, tzp) != 0)
 				ereport(ERROR,
@@ -5336,11 +5322,7 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 		{
 			/* Apply the timezone change */
 			struct pg_tm tm;
-<<<<<<< HEAD
  			fsec_t		fsec = 0;
-=======
-			fsec_t		fsec;
->>>>>>> 49f001d81e
 
 			if (timestamp2tm(timestamp, &tz, &tm, &fsec, NULL, tzp) != 0)
 				ereport(ERROR,
@@ -5558,7 +5540,6 @@ generate_series_timestamptz(PG_FUNCTION_ARGS)
 		SRF_RETURN_DONE(funcctx);
 	}
 }
-<<<<<<< HEAD
 
 /* ----------------------------------------------------------------------
  *
@@ -5655,5 +5636,3 @@ interval_amalg_demalg(ArrayType  *aTransArray,
     return result;
 }
 
-=======
->>>>>>> 49f001d81e
