@@ -161,11 +161,8 @@ static BitmapOr *make_bitmap_or(List *bitmapplans);
 static Sort *make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
 		  AttrNumber *sortColIdx, Oid *sortOperators, bool *nullsFirst,
 		  double limit_tuples);
-<<<<<<< HEAD
 static List *flatten_grouping_list(List *groupcls);
-=======
 static Material *make_material(Plan *lefttree);
->>>>>>> 49f001d81e
 
 
 /*
@@ -2070,12 +2067,8 @@ create_bitmap_scan_plan(PlannerInfo *root,
 {
 	Index		baserelid = best_path->path.parent->relid;
 	Plan	   *bitmapqualplan;
-<<<<<<< HEAD
 	List	   *bitmapqualorig = NULL;
 	List	   *indexquals = NULL;
-=======
-	List	   *bitmapqualorig;
->>>>>>> 49f001d81e
 	List	   *qpqual;
 	ListCell   *l;
 	BitmapHeapScan *scan_plan;
