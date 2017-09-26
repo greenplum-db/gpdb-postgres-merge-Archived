@@ -52,6 +52,7 @@ int			optreset;
 #include "access/attnum.h"
 #include "access/sysattr.h"
 #include "catalog/pg_class.h"
+#include "catalog/pg_magic_oid.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
@@ -209,10 +210,7 @@ static void getDependencies(void);
 static void setExtPartDependency(TableInfo *tblinfo, int numTables);
 static void getDomainConstraints(TypeInfo *tinfo);
 static void getTableData(TableInfo *tblinfo, int numTables, bool oids);
-<<<<<<< HEAD
 static void makeTableDataInfo(TableInfo *tbinfo, bool oids);
-=======
->>>>>>> 49f001d81e
 static char *format_function_arguments(FuncInfo *finfo, char *funcargs);
 static char *format_function_arguments_old(FuncInfo *finfo, int nallargs,
 						  char **allargtypes,
@@ -253,6 +251,7 @@ static bool isGPDB4300OrLater(void);
 static bool isGPDB(void);
 static bool isGPDB5000OrLater(void);
 static bool isGPDB6000OrLater(void);
+static void error_unsupported_server_version(void) pg_attribute_noreturn();
 
 /* END MPP ADDITION */
 
@@ -410,7 +409,6 @@ main(int argc, char **argv)
 	static int  outputNoTablespaces = 0;
 	static int	use_setsessauth = 0;
 
-<<<<<<< HEAD
 	/*
 	 * The default value for gp_syntax_option depends upon whether or not the
 	 * backend is a GP or non-GP backend -- a GP backend defaults to ENABLED.
@@ -420,13 +418,8 @@ main(int argc, char **argv)
 		GPS_NOT_SPECIFIED, GPS_DISABLED, GPS_ENABLED
 	}			gp_syntax_option = GPS_NOT_SPECIFIED;
 
-	RestoreOptions *ropt;
-
 	struct option long_options[] = {
 		{"binary-upgrade", no_argument, &binary_upgrade, 1},	/* not documented */
-=======
-	static struct option long_options[] = {
->>>>>>> 49f001d81e
 		{"data-only", no_argument, NULL, 'a'},
 		{"blobs", no_argument, NULL, 'b'},
 		{"clean", no_argument, NULL, 'c'},
@@ -463,11 +456,8 @@ main(int argc, char **argv)
 		{"column-inserts", no_argument, &column_inserts, 1},
 		{"disable-dollar-quoting", no_argument, &disable_dollar_quoting, 1},
 		{"disable-triggers", no_argument, &disable_triggers, 1},
-<<<<<<< HEAD
 		{"inserts", no_argument, &dump_inserts, 1},
-=======
 		{"lock-wait-timeout", required_argument, NULL, 2},
->>>>>>> 49f001d81e
 		{"no-tablespaces", no_argument, &outputNoTablespaces, 1},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 
@@ -477,12 +467,12 @@ main(int argc, char **argv)
 		 * the following are mpp specific, and don't have an equivalent short
 		 * option
 		 */
-		{"gp-syntax", no_argument, NULL, 1},
-		{"no-gp-syntax", no_argument, NULL, 2},
+		{"gp-syntax", no_argument, NULL, 1000},
+		{"no-gp-syntax", no_argument, NULL, 1001},
 		{"pre-data-schema-only", no_argument, &preDataSchemaOnly, 1},
 		{"post-data-schema-only", no_argument, &postDataSchemaOnly, 1},
-		{"function-oids", required_argument, NULL, 3},
-		{"relation-oids", required_argument, NULL, 4},
+		{"function-oids", required_argument, NULL, 1002},
+		{"relation-oids", required_argument, NULL, 1003},
 		/* END MPP ADDITION */
 		{NULL, 0, NULL, 0}
 	};
@@ -495,13 +485,9 @@ main(int argc, char **argv)
 	g_comment_end[0] = '\0';
 	strcpy(g_opaque_type, "opaque");
 
-<<<<<<< HEAD
 	dataOnly = schemaOnly = dump_inserts = column_inserts = false;
 	preDataSchemaOnly = postDataSchemaOnly = false;
-=======
-	dataOnly = schemaOnly = dumpInserts = attrNames = false;
 	lockWaitTimeout = NULL;
->>>>>>> 49f001d81e
 
 	progname = get_progname(argv[0]);
 
@@ -671,8 +657,12 @@ main(int argc, char **argv)
 				/* This covers the long options equivalent to -X xxx. */
 				break;
 
-<<<<<<< HEAD
-			case 1:				/* gp-syntax */
+			case 2:
+				/* lock-wait-timeout */
+				lockWaitTimeout = optarg;
+				break;
+
+			case 1000:				/* gp-syntax */
 				if (gp_syntax_option != GPS_NOT_SPECIFIED)
 				{
 					write_msg(NULL, "options \"--gp-syntax\" and \"--no-gp-syntax\" cannot be used together\n");
@@ -681,7 +671,7 @@ main(int argc, char **argv)
 				gp_syntax_option = GPS_ENABLED;
 				break;
 
-			case 2:				/* no-gp-syntax */
+			case 1001:				/* no-gp-syntax */
 				if (gp_syntax_option != GPS_NOT_SPECIFIED)
 				{
 					write_msg(NULL, "options \"--gp-syntax\" and \"--no-gp-syntax\" cannot be used together\n");
@@ -690,19 +680,14 @@ main(int argc, char **argv)
 				gp_syntax_option = GPS_DISABLED;
 				break;
 
-			case 3:
+			case 1002:
 				simple_string_list_append(&funcid_string_list, optarg);
 				include_everything = false;
 				break;
 
-			case 4:
+			case 1003:
 				simple_string_list_append(&relid_string_list, optarg);
 				include_everything = false;
-=======
-			case 2:
-				/* lock-wait-timeout */
-				lockWaitTimeout = optarg;
->>>>>>> 49f001d81e
 				break;
 
 			default:
@@ -790,15 +775,9 @@ main(int argc, char **argv)
 
 	/* Let the archiver know how noisy to be */
 	g_fout->verbose = g_verbose;
-<<<<<<< HEAD
-	g_fout->minRemoteVersion = 80200;	/* we can handle back to 8.2 */
-	g_fout->maxRemoteVersion = parse_version(PG_VERSION);
-	if (g_fout->maxRemoteVersion < 0)
-=======
 
 	my_version = parse_version(PG_VERSION);
 	if (my_version < 0)
->>>>>>> 49f001d81e
 	{
 		write_msg(NULL, "could not parse version string \"%s\"\n", PG_VERSION);
 		exit(1);
@@ -808,7 +787,7 @@ main(int argc, char **argv)
 	 * We allow the server to be back to 7.0, and up to any minor release
 	 * of our own major version.  (See also version check in pg_dumpall.c.)
 	 */
-	g_fout->minRemoteVersion = 70000;
+	g_fout->minRemoteVersion = 80200;	/* we can handle back to 8.2 */
 	g_fout->maxRemoteVersion = (my_version / 100) * 100 + 99;
 
 	/*
@@ -816,11 +795,7 @@ main(int argc, char **argv)
 	 * death.
 	 */
 	g_conn = ConnectDatabase(g_fout, dbname, pghost, pgport,
-<<<<<<< HEAD
 							 username, prompt_password, binary_upgrade);
-=======
-							 username, force_password);
->>>>>>> 49f001d81e
 
 	/* Set the client encoding if requested */
 	if (dumpencoding)
@@ -886,19 +861,17 @@ main(int argc, char **argv)
 		do_sql_command(g_conn, "SET synchronize_seqscans TO off");
 
 	/*
-<<<<<<< HEAD
 	 * The default for enable_nestloop is off in GPDB. However, many of the queries
 	 * that we issue best run with nested loop joins, so enable it.
 	 */
 	do_sql_command(g_conn, "SET enable_nestloop TO on");
 
-=======
+	/*
 	 * Disable timeouts if supported.
 	 */
 	if (g_fout->remoteVersion >= 70300)
 		do_sql_command(g_conn, "SET statement_timeout = 0");
          
->>>>>>> 49f001d81e
 	/*
 	 * Start serializable transaction to dump consistent data.
 	 */
@@ -3810,8 +3783,6 @@ getTables(int *numTables)
 	PQclear(res);
 
 	destroyPQExpBuffer(query);
-	destroyPQExpBuffer(delqry);
-	destroyPQExpBuffer(lockquery);
 
 	return tblinfo;
 }
@@ -3848,13 +3819,6 @@ getOwnedSeqs(TableInfo tblinfo[], int numTables)
 			seqinfo->dobj.dump = true;
 		}
 	}
-<<<<<<< HEAD
-=======
-
-	destroyPQExpBuffer(query);
-
-	return tblinfo;
->>>>>>> 49f001d81e
 }
 
 /*
@@ -5100,59 +5064,9 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 								  "ORDER BY conname",
 								  tbinfo->dobj.catId.oid);
 			}
-<<<<<<< HEAD
 			else
 			{
 				error_unsupported_server_version();
-=======
-			else if (g_fout->remoteVersion >= 70300)
-			{
-				/* no pg_get_constraintdef, must use consrc */
-				appendPQExpBuffer(q, "SELECT tableoid, oid, conname, "
-								  "'CHECK (' || consrc || ')' AS consrc, "
-								  "true as conislocal "
-								  "FROM pg_catalog.pg_constraint "
-								  "WHERE conrelid = '%u'::pg_catalog.oid "
-								  "   AND contype = 'c' "
-								  "ORDER BY conname",
-								  tbinfo->dobj.catId.oid);
-			}
-			else if (g_fout->remoteVersion >= 70200)
-			{
-				/* 7.2 did not have OIDs in pg_relcheck */
-				appendPQExpBuffer(q, "SELECT tableoid, 0 as oid, "
-								  "rcname AS conname, "
-								  "'CHECK (' || rcsrc || ')' AS consrc, "
-								  "true as conislocal "
-								  "FROM pg_relcheck "
-								  "WHERE rcrelid = '%u'::oid "
-								  "ORDER BY rcname",
-								  tbinfo->dobj.catId.oid);
-			}
-			else if (g_fout->remoteVersion >= 70100)
-			{
-				appendPQExpBuffer(q, "SELECT tableoid, oid, "
-								  "rcname AS conname, "
-								  "'CHECK (' || rcsrc || ')' AS consrc, "
-								  "true as conislocal "
-								  "FROM pg_relcheck "
-								  "WHERE rcrelid = '%u'::oid "
-								  "ORDER BY rcname",
-								  tbinfo->dobj.catId.oid);
-			}
-			else
-			{
-				/* no tableoid in 7.0 */
-				appendPQExpBuffer(q, "SELECT "
-								  "(SELECT oid FROM pg_class WHERE relname = 'pg_relcheck') AS tableoid, "
-								  "oid, rcname AS conname, "
-								  "'CHECK (' || rcsrc || ')' AS consrc, "
-								  "true as conislocal "
-								  "FROM pg_relcheck "
-								  "WHERE rcrelid = '%u'::oid "
-								  "ORDER BY rcname",
-								  tbinfo->dobj.catId.oid);
->>>>>>> 49f001d81e
 			}
 
 			res = PQexec(g_conn, q->data);
@@ -7282,12 +7196,8 @@ dumpPlTemplateFunc(Oid funcOid, const char *templateField, PQExpBuffer buffer)
  * This is used when we can rely on pg_get_function_arguments to format
  * the argument list.
  */
-<<<<<<< HEAD
 static char *
 format_function_arguments(FuncInfo *finfo, char *funcargs)
-=======
-static char *format_function_arguments(FuncInfo *finfo, char *funcargs)
->>>>>>> 49f001d81e
 {
 	PQExpBufferData fn;
 
@@ -7302,13 +7212,8 @@ static char *format_function_arguments(FuncInfo *finfo, char *funcargs)
  * The argument type names are qualified if needed.  The function name
  * is never qualified.
  *
-<<<<<<< HEAD
  * This is used only with pre-GPDB 5.0 servers, so we aren't expecting to see
  * DEFAULT arguments.
-=======
- * This is used only with pre-8.4 servers, so we aren't expecting to see
- * VARIADIC or TABLE arguments.
->>>>>>> 49f001d81e
  *
  * Any or all of allargtypes, argmodes, argnames may be NULL.
  */
@@ -7501,14 +7406,9 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	char	   *proretset;
 	char	   *prosrc;
 	char	   *probin;
-<<<<<<< HEAD
-	char       *funcargs;
-	char	   *funciargs;
-	char       *funcresult;
-=======
 	char	   *funcargs;
+	char	   *funciargs;
 	char	   *funcresult;
->>>>>>> 49f001d81e
 	char	   *proallargtypes;
 	char	   *proargmodes;
 	char	   *proargnames;
@@ -7547,29 +7447,8 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	selectSourceSchema(finfo->dobj.namespace->dobj.name);
 
 	/* Fetch function-specific details */
-<<<<<<< HEAD
 
 	if (isGE60)
-=======
-	if (g_fout->remoteVersion >= 80400)
-	{
-		/*
-		 * In 8.4 and up we rely on pg_get_function_arguments and
-		 * pg_get_function_result instead of examining proallargtypes etc.
-		 */
-		appendPQExpBuffer(query,
-						  "SELECT proretset, prosrc, probin, "
-						  "pg_catalog.pg_get_function_arguments(oid) as funcargs, "
-						  "pg_catalog.pg_get_function_result(oid) as funcresult, "
-						  "provolatile, proisstrict, prosecdef, "
-						  "proconfig, procost, prorows, "
-						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname "
-						  "FROM pg_catalog.pg_proc "
-						  "WHERE oid = '%u'::pg_catalog.oid",
-						  finfo->dobj.catId.oid);
-	}
-	else if (g_fout->remoteVersion >= 80300)
->>>>>>> 49f001d81e
 	{
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
@@ -7633,16 +7512,10 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	proretset = PQgetvalue(res, 0, PQfnumber(res, "proretset"));
 	prosrc = PQgetvalue(res, 0, PQfnumber(res, "prosrc"));
 	probin = PQgetvalue(res, 0, PQfnumber(res, "probin"));
-<<<<<<< HEAD
 	if (isGE50)
 	{
 		funcargs = PQgetvalue(res, 0, PQfnumber(res, "funcargs"));
 		funciargs = PQgetvalue(res, 0, PQfnumber(res, "funciargs"));
-=======
-	if (g_fout->remoteVersion >= 80400)
-	{
-		funcargs = PQgetvalue(res, 0, PQfnumber(res, "funcargs"));
->>>>>>> 49f001d81e
 		funcresult = PQgetvalue(res, 0, PQfnumber(res, "funcresult"));
 		proallargtypes = proargmodes = proargnames = NULL;
 	}
@@ -7651,11 +7524,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		proallargtypes = PQgetvalue(res, 0, PQfnumber(res, "proallargtypes"));
 		proargmodes = PQgetvalue(res, 0, PQfnumber(res, "proargmodes"));
 		proargnames = PQgetvalue(res, 0, PQfnumber(res, "proargnames"));
-<<<<<<< HEAD
 		funcargs = funciargs = funcresult = NULL;
-=======
-		funcargs = funcresult = NULL;
->>>>>>> 49f001d81e
 	}
 	provolatile = PQgetvalue(res, 0, PQfnumber(res, "provolatile"));
 	proisstrict = PQgetvalue(res, 0, PQfnumber(res, "proisstrict"));
@@ -7668,13 +7537,8 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	proexeclocation = PQgetvalue(res, 0, PQfnumber(res, "proexeclocation"));
 
 	/*
-<<<<<<< HEAD
 	 * See backend/commands/define.c for details of how the 'AS' clause is
 	 * used. In GPDB Paris and up, an unused probin is NULL (here ""); previous
-=======
-	 * See backend/commands/functioncmds.c for details of how the 'AS' clause
-	 * is used.  In 8.4 and up, an unused probin is NULL (here ""); previous
->>>>>>> 49f001d81e
 	 * versions would set it to "-".  There are no known cases in which prosrc
 	 * is unused, so the tests below for "-" are probably useless.
 	 */
@@ -7783,15 +7647,6 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		}
 	}
 
-<<<<<<< HEAD
-=======
-	if (funcargs)
-		funcsig = format_function_arguments(finfo, funcargs);
-	else
-		funcsig = format_function_arguments_old(finfo, nallargs, allargtypes,
-												argmodes, argnames);
-	funcsig_tag = format_function_signature(finfo, false);
->>>>>>> 49f001d81e
 
 	/*
 	 * DROP must be fully qualified in case same name appears in pg_catalog
@@ -7800,17 +7655,12 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 					  fmtId(finfo->dobj.namespace->dobj.name),
 					  funcsig);
 
-<<<<<<< HEAD
 	appendPQExpBuffer(q, "CREATE FUNCTION %s ", funcfullsig);
 
-=======
-	appendPQExpBuffer(q, "CREATE FUNCTION %s ", funcsig);
->>>>>>> 49f001d81e
 	if (funcresult)
 		appendPQExpBuffer(q, "RETURNS %s", funcresult);
 	else
 	{
-<<<<<<< HEAD
 		/* switch between RETURNS SETOF RECORD and RETURNS TABLE functions */
 		if (!is_returns_table_function(nallargs, argmodes))
 		{
@@ -7832,16 +7682,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 
 	appendPQExpBuffer(q, "\n    %s", asPart->data);
 	appendPQExpBuffer(q, "\n    LANGUAGE %s", fmtId(lanname));
-=======
-		rettypename = getFormattedTypeName(finfo->prorettype, zeroAsOpaque);
-		appendPQExpBuffer(q, "RETURNS %s%s",
-						  (proretset[0] == 't') ? "SETOF " : "",
-						  rettypename);
-		free(rettypename);
-	}
->>>>>>> 49f001d81e
 
-	appendPQExpBuffer(q, "\n    LANGUAGE %s", fmtId(lanname));
 	if (provolatile[0] != PROVOLATILE_VOLATILE)
 	{
 		if (provolatile[0] == PROVOLATILE_IMMUTABLE)
@@ -10845,7 +10686,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				ConstraintInfo *constr = &(tbinfo->checkexprs[k]);
 
 				/* GPDB_84_MERGE_FIXME: related to the below */
-				if (!constr->coninherited || constr->separate)
+				if (constr->separate || constr->conislocal)
 					continue;
 
 				/*
@@ -10861,10 +10702,8 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 								  fmtId(constr->dobj.name));
 				appendPQExpBuffer(q, "%s;\n", constr->condef);
 				/*
-				 * GPDB_84_MERGE_FIXME - When we in 8.4 get conislocal, reactivate this code
-				 * for handling constraints. Left if 0'd out to minimize merge conflicts.
+				 * GPDB_84_MERGE_FIXME - Double check that our usage of conislocal is correct.
 				 */
-#if 0
 				appendPQExpBuffer(q, "UPDATE pg_catalog.pg_constraint\n"
 								  "SET conislocal = false\n"
 								  "WHERE contype = 'c' AND conname = ");
@@ -10872,7 +10711,6 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				appendPQExpBuffer(q, "\n  AND conrelid = ");
 				appendStringLiteralAH(q, fmtId(tbinfo->dobj.name), fout);
 				appendPQExpBuffer(q, "::pg_catalog.regclass;\n");
-#endif
 			}
 
 			if (numParents > 0)

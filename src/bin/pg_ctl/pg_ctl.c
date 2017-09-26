@@ -446,7 +446,6 @@ start_postmaster(void)
 	 * everything to a shell to process them.
 	 */
 	if (log_file != NULL)
-<<<<<<< HEAD
 	{
 		snprintf(formatstr, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &" SYSTEMQUOTE,
 				 postgres_path, pgdata_opt, post_opts,
@@ -459,14 +458,6 @@ start_postmaster(void)
 	}
 
 	strncat(cmd, formatstr, MAXPGPATH - strlen(cmd) - 1);
-=======
-		snprintf(cmd, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &" SYSTEMQUOTE,
-				 postgres_path, pgdata_opt, post_opts,
-				 DEVNULL, log_file);
-	else
-		snprintf(cmd, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s < \"%s\" 2>&1 &" SYSTEMQUOTE,
-				 postgres_path, pgdata_opt, post_opts, DEVNULL);
->>>>>>> 49f001d81e
 
 	return system(cmd);
 #else							/* WIN32 */
@@ -694,34 +685,15 @@ read_post_opts(void)
 				char	   *optline;
 				char	   *arg1;
 
-<<<<<<< HEAD
-=======
 				optline = optlines[0];
 				/* trim off line endings */
 				len = strcspn(optline, "\r\n");
 				optline[len] = '\0';
 
->>>>>>> 49f001d81e
 				/*
 				 * Are we at the first option, as defined by space and
 				 * double-quote?
 				 */
-<<<<<<< HEAD
-				if ((arg1 = strstr(optline, " \"")) != NULL ||
-					/* check in case this is an older server */
-				    (arg1 = strstr(optline, " -")) != NULL)
-				{
-					*arg1 = '\0';	/* terminate so we get only program name */
-					post_opts = strdup(arg1 + 1); /* point past whitespace */
-				}
-				else
-					post_opts = "";
-				if (postgres_path == NULL)
-					postgres_path = strdup(optline);
-			}
-			else
-				post_opts = strdup(optline);
-=======
 				if ((arg1 = strstr(optline, " \"")) != NULL)
 				{
 					*arg1 = '\0';	/* terminate so we get only program name */
@@ -730,11 +702,10 @@ read_post_opts(void)
 				if (postgres_path == NULL)
 					postgres_path = optline;
 			}
->>>>>>> 49f001d81e
-		}
 
-		/* Free the results of readfile. */
-		free_readfile(optlines);
+			/* Free the results of readfile. */
+			free_readfile(optlines);
+		}
 	}
 }
 
@@ -2134,11 +2105,8 @@ main(int argc, char **argv)
 		snprintf(pid_file, MAXPGPATH, "%s/postmaster.pid", pg_data);
 		snprintf(conf_file, MAXPGPATH, "%s/postgresql.conf", pg_data);
 		snprintf(backup_file, MAXPGPATH, "%s/backup_label", pg_data);
-<<<<<<< HEAD
 		snprintf(recovery_file, MAXPGPATH, "%s/recovery.conf", pg_data);
 		snprintf(promote_file, MAXPGPATH, "%s/promote", pg_data);
-=======
->>>>>>> 49f001d81e
 	}
 
 	switch (ctl_command)

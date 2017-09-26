@@ -547,7 +547,7 @@ extern void *pg_realloc(void *ptr, size_t size);
 extern void check_sql_result(PGresult *res, PGconn *conn, const char *query,
 				 ExecStatusType expected);
 extern void check_conn_and_db(void);
-extern void exit_nicely(void);
+extern void exit_nicely(void) pg_attribute_noreturn();
 
 extern void parseOidArray(const char *str, Oid *array, int arraysize);
 

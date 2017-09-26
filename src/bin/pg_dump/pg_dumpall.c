@@ -65,11 +65,7 @@ static PQExpBuffer pgdumpopts;
 static bool output_clean = false;
 static bool skip_acls = false;
 static bool verbose = false;
-<<<<<<< HEAD
-static bool ignoreVersion = false;
 static bool filespaces = false;
-=======
->>>>>>> 49f001d81e
 
 static int	resource_queues = 0;
 static int	roles_only = 0;
@@ -1758,13 +1754,8 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	 * of our own major version.  (See also version check in pg_dump.c.)
 	 */
 	if (my_version != server_version
-<<<<<<< HEAD
-		&& (server_version < 80200		/* we can handle back to 8.2 */
-			|| server_version > my_version))
-=======
-		&& (server_version < 70000 ||
+		&& (server_version < 80200 ||		/* we can handle back to 8.2 */
 			(server_version / 100) > (my_version / 100)))
->>>>>>> 49f001d81e
 	{
 		fprintf(stderr, _("server version: %s; %s version: %s\n"),
 				remoteversion_str, progname, PG_VERSION);

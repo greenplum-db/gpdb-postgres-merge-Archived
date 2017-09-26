@@ -79,14 +79,9 @@ bool is_gpdump = false; /* determines whether to print extra logging messages in
 
 static void flagInhTables(TableInfo *tbinfo, int numTables,
 			  InhInfo *inhinfo, int numInherits);
-<<<<<<< HEAD
-static void flagInhAttrs(TableInfo *tbinfo, int numTables,
-			 InhInfo *inhinfo, int numInherits);
-=======
 static void flagInhAttrs(TableInfo *tblinfo, int numTables);
-static DumpableObject **buildIndexArray(void *objArray, int numObjs,
+DumpableObject **buildIndexArray(void *objArray, int numObjs,
 				Size objSize);
->>>>>>> 49f001d81e
 static int	DOCatalogIdCompare(const void *p1, const void *p2);
 static int	ExtensionMemberIdCompare(const void *p1, const void *p2);
 static void findParentsByOid(TableInfo *self,
@@ -252,15 +247,9 @@ getSchemaData(int *numTablesPtr, int g_role)
 		status_log_msg(LOGGER_INFO, progname, "reading column info for interesting tables\n");
 	getTableAttrs(tblinfo, numTables);
 
-<<<<<<< HEAD
 	if (is_gpdump || g_verbose)
 		status_log_msg(LOGGER_INFO, progname, "flagging inherited columns in subtables\n");
-	flagInhAttrs(tblinfo, numTables, inhinfo, numInherits);
-=======
-	if (g_verbose)
-		write_msg(NULL, "flagging inherited columns in subtables\n");
 	flagInhAttrs(tblinfo, numTables);
->>>>>>> 49f001d81e
 
 	/*
 	 * ROLE_MASTER
@@ -435,46 +424,6 @@ flagInhAttrs(TableInfo *tblinfo, int numTables)
 				tbinfo->attrdefs[j] = attrDef;
 			}
 		}
-<<<<<<< HEAD
-
-		/*
-		 * Check for inherited CHECK constraints.  We assume a constraint is
-		 * inherited if its name matches the name of any constraint in the
-		 * parent.	Originally this code tried to compare the expression
-		 * texts, but that can fail if the parent and child tables are in
-		 * different schemas, because reverse-listing of function calls may
-		 * produce different text (schema-qualified or not) depending on
-		 * search path.  We really need a more bulletproof way of detecting
-		 * inherited constraints --- pg_constraint should record this
-		 * explicitly!
-		 */
-		for (j = 0; j < tbinfo->ncheck; j++)
-		{
-			ConstraintInfo *constr;
-
-			constr = &(tbinfo->checkexprs[j]);
-
-			for (k = 0; k < numParents; k++)
-			{
-				TableInfo  *parent = parents[k];
-				int			l;
-
-				for (l = 0; l < parent->ncheck; l++)
-				{
-					ConstraintInfo *pconstr = &(parent->checkexprs[l]);
-
-					if (strcmp(pconstr->dobj.name, constr->dobj.name) == 0)
-					{
-						constr->coninherited = true;
-						break;
-					}
-				}
-				if (constr->coninherited)
-					break;
-			}
-		}
-=======
->>>>>>> 49f001d81e
 	}
 }
 
