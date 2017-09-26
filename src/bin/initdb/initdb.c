@@ -1250,11 +1250,7 @@ test_config_settings(void)
 				 "< \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
 				 backend_exec, boot_options,
 				 test_conns, test_buffs, test_max_fsm,
-<<<<<<< HEAD
-				 DEVNULL, backend_output, SYSTEMQUOTE);
-=======
-				 DEVNULL, DEVNULL);
->>>>>>> 49f001d81e
+				 DEVNULL, backend_output);
 		status = system(cmd);
 		if (status == 0)
 		{
@@ -1296,11 +1292,7 @@ test_config_settings(void)
 				 "< \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
 				 backend_exec, boot_options,
 				 n_connections, test_buffs, test_max_fsm,
-<<<<<<< HEAD
-				 DEVNULL, backend_output, SYSTEMQUOTE);
-=======
-				 DEVNULL, DEVNULL);
->>>>>>> 49f001d81e
+				 DEVNULL, backend_output);
 		status = system(cmd);
 		if (status == 0)
 		{
@@ -3554,11 +3546,7 @@ main(int argc, char *argv[])
 		canonicalize_path(xlog_dir);
 		if (!is_absolute_path(xlog_dir))
 		{
-<<<<<<< HEAD
 			fprintf(stderr, _("%s: transaction log directory location must be an absolute path\n"), progname);
-=======
-			fprintf(stderr, _("%s: xlog directory location must be an absolute path\n"), progname);
->>>>>>> 49f001d81e
 			exit_nicely();
 		}
 

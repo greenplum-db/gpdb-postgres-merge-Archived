@@ -826,7 +826,7 @@ getDomainConstraints(TypeInfo *tinfo)
 		constrinfo[i].contype = 'c';
 		constrinfo[i].condef = strdup(PQgetvalue(res, i, i_consrc));
 		constrinfo[i].conindex = 0;
-		constrinfo[i].coninherited = false;
+		constrinfo[i].conislocal = true;
 		constrinfo[i].separate = false;
 
 		/*
@@ -2494,7 +2494,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 				constrinfo[j].contype = contype;
 				constrinfo[j].condef = NULL;
 				constrinfo[j].conindex = indxinfo[j].dobj.dumpId;
-				constrinfo[j].coninherited = false;
+				constrinfo[j].conislocal = true;
 				constrinfo[j].separate = true;
 
 				indxinfo[j].indexconstraint = constrinfo[j].dobj.dumpId;
@@ -2593,7 +2593,7 @@ getConstraints(TableInfo tblinfo[], int numTables)
 			constrinfo[j].contype = 'f';
 			constrinfo[j].condef = strdup(PQgetvalue(res, j, i_condef));
 			constrinfo[j].conindex = 0;
-			constrinfo[j].coninherited = false;
+			constrinfo[j].conislocal = true;
 			constrinfo[j].separate = true;
 		}
 
@@ -3379,7 +3379,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 				constrs[j].contype = 'c';
 				constrs[j].condef = strdup(PQgetvalue(res, j, 3));
 				constrs[j].conindex = 0;
-				constrs[j].coninherited = false;
+				constrs[j].conislocal = (PQgetvalue(res, j, 4)[0] == 't');
 				constrs[j].separate = false;
 
 				constrs[j].dobj.dump = tbinfo->dobj.dump;
