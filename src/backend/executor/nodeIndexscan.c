@@ -26,11 +26,8 @@
 
 #include "access/genam.h"
 #include "access/nbtree.h"
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
-=======
 #include "access/relscan.h"
->>>>>>> 49f001d81e
 #include "executor/execdebug.h"
 #include "executor/nodeIndexscan.h"
 #include "executor/execIndexscan.h"
@@ -175,10 +172,9 @@ IndexNext(IndexScanState *node)
 					   scandesc->xs_cbuf,		/* buffer containing tuple */
 					   false);	/* don't pfree */
 
-<<<<<<< HEAD
 		Gpmon_Incr_Rows_Out(GpmonPktFromIndexScanState(node));
                 CheckSendPlanStateGpmonPkt(&node->ss.ps);
-=======
+
 		/*
 		 * If the index was lossy, we have to recheck the index quals using
 		 * the real tuple.
@@ -191,7 +187,6 @@ IndexNext(IndexScanState *node)
 				continue;		/* nope, so ask index for another one */
 		}
 
->>>>>>> 49f001d81e
 		return slot;
 	}
 

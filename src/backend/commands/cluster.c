@@ -909,14 +909,11 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 
 		CHECK_FOR_INTERRUPTS();
 
-<<<<<<< HEAD
 		/* -------- MirroredLock ---------- */
 		MIRROREDLOCK_BUFMGR_LOCK;
-=======
 		/* Since we used no scan keys, should never need to recheck */
 		if (scan->xs_recheck)
 			elog(ERROR, "CLUSTER does not support lossy index conditions");
->>>>>>> 49f001d81e
 
 		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_SHARE);
 
