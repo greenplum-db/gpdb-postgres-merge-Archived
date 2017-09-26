@@ -1130,57 +1130,6 @@ int2mod(PG_FUNCTION_ARGS)
 	PG_RETURN_INT16(arg1 % arg2);
 }
 
-<<<<<<< HEAD
-Datum
-int24mod(PG_FUNCTION_ARGS)
-{
-	int16		arg1 = PG_GETARG_INT16(0);
-	int32		arg2 = PG_GETARG_INT32(1);
-
-	if (arg2 == 0)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_DIVISION_BY_ZERO),
-				 errmsg("division by zero")));
-		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
-		PG_RETURN_NULL();
-	}
-
-	/* No overflow is possible */
-
-	PG_RETURN_INT32(arg1 % arg2);
-}
-
-Datum
-int42mod(PG_FUNCTION_ARGS)
-{
-	int32		arg1 = PG_GETARG_INT32(0);
-	int16		arg2 = PG_GETARG_INT16(1);
-
-	if (arg2 == 0)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_DIVISION_BY_ZERO),
-				 errmsg("division by zero")));
-		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
-		PG_RETURN_NULL();
-	}
-
-	/*
-	 * Some machines throw a floating-point exception for INT_MIN % -1, which
-	 * is a bit silly since the correct answer is perfectly well-defined,
-	 * namely zero.
-	 */
-	if (arg2 == -1)
-		PG_RETURN_INT32(0);
-
-	/* No overflow is possible */
-
-	PG_RETURN_INT32(arg1 % arg2);
-}
-
-=======
->>>>>>> 49f001d81e
 
 /* int[24]abs()
  * Absolute value

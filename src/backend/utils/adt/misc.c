@@ -453,7 +453,6 @@ pg_get_keywords(PG_FUNCTION_ARGS)
 		{
 			case UNRESERVED_KEYWORD:
 				values[1] = "U";
-<<<<<<< HEAD
 				values[2] = _("unreserved");
 				break;
 			case COL_NAME_KEYWORD:
@@ -467,21 +466,6 @@ pg_get_keywords(PG_FUNCTION_ARGS)
 			case RESERVED_KEYWORD:
 				values[1] = "R";
 				values[2] = _("reserved");
-=======
-				values[2] = _("Unreserved");
-				break;
-			case COL_NAME_KEYWORD:
-				values[1] = "C";
-				values[2] = _("Column name");
-				break;
-			case TYPE_FUNC_NAME_KEYWORD:
-				values[1] = "T";
-				values[2] = _("Type or function name");
-				break;
-			case RESERVED_KEYWORD:
-				values[1] = "R";
-				values[2] = _("Reserved");
->>>>>>> 49f001d81e
 				break;
 			default:			/* shouldn't be possible */
 				values[1] = NULL;
@@ -496,7 +480,6 @@ pg_get_keywords(PG_FUNCTION_ARGS)
 
 	SRF_RETURN_DONE(funcctx);
 }
-<<<<<<< HEAD
 
 
 /*
@@ -507,5 +490,3 @@ pg_typeof(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_OID(get_fn_expr_argtype(fcinfo->flinfo, 0));
 }
-=======
->>>>>>> 49f001d81e

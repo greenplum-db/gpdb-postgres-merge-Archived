@@ -31,14 +31,11 @@
 #include "storage/fd.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
-<<<<<<< HEAD
 #include "utils/int8.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
-#include "utils/relcache.h"
-=======
 #include "utils/rel.h"
->>>>>>> 49f001d81e
+#include "utils/relcache.h"
 #include "utils/syscache.h"
 
 #include "cdb/cdbvars.h"

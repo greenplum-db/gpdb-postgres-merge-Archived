@@ -1031,22 +1031,7 @@ build_function_result_tupdesc_d(Datum proallargtypes,
 	{
 		char	   *pname;
 
-<<<<<<< HEAD
 		switch (argmodes[i])
-=======
-		if (argmodes[i] == PROARGMODE_IN ||
-			argmodes[i] == PROARGMODE_VARIADIC)
-			continue;
-		Assert(argmodes[i] == PROARGMODE_OUT ||
-			   argmodes[i] == PROARGMODE_INOUT ||
-			   argmodes[i] == PROARGMODE_TABLE);
-		outargtypes[numoutargs] = argtypes[i];
-		if (argnames)
-			pname = TextDatumGetCString(argnames[i]);
-		else
-			pname = NULL;
-		if (pname == NULL || pname[0] == '\0')
->>>>>>> 49f001d81e
 		{
 			/* input modes */
 			case PROARGMODE_IN:

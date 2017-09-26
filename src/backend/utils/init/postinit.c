@@ -29,11 +29,8 @@
 #include "libpq/auth.h"
 #include "libpq/hba.h"
 #include "libpq/libpq-be.h"
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 #include "cdb/cdbutil.h"
-=======
->>>>>>> 49f001d81e
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -731,6 +728,16 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	}
 
 	/*
+	 * If we're trying to shut down, only superusers can connect.
+	 */
+	if (!am_superuser &&
+		MyProcPort != NULL &&
+		MyProcPort->canAcceptConnections == CAC_WAITBACKUP)
+		ereport(FATAL,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to connect during database shutdown")));
+
+	/*
 	 * Check a normal user hasn't connected to a superuser reserved slot.
 	 */
 	if (!am_superuser &&
@@ -927,23 +934,9 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		CheckMyDatabase(dbname, am_superuser);
 
 	/*
-<<<<<<< HEAD
 	 * Now process any command-line switches and any additional GUC variable
 	 * settings passed in the startup packet.	We couldn't do this before
 	 * because we didn't know if client is a superuser.
-=======
-	 * If we're trying to shut down, only superusers can connect.
-	 */
-	if (!am_superuser &&
-		MyProcPort != NULL &&
-		MyProcPort->canAcceptConnections == CAC_WAITBACKUP)
-		ereport(FATAL,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to connect during database shutdown")));
-
-	/*
-	 * Check a normal user hasn't connected to a superuser reserved slot.
->>>>>>> 49f001d81e
 	 */
 	if (MyProcPort != NULL)
 		process_startup_options(MyProcPort, am_superuser);

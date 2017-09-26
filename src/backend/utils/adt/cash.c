@@ -28,21 +28,11 @@
 #include "utils/cash.h"
 #include "utils/pg_locale.h"
 
-<<<<<<< HEAD
-/*
- * Cash is a pass-by-ref SQL type, so we must pass and return pointers.
- * These macros and support routine hide the pass-by-refness.
- */
-#define PG_GETARG_CASH(n)  (* ((Cash *) PG_GETARG_POINTER(n)))
-#define PG_RETURN_CASH(x)  return CashGetDatum(x)
-
-=======
 #define CASH_BUFSZ		36
 
 #define TERMINATOR		(CASH_BUFSZ - 1)
 #define LAST_PAREN		(TERMINATOR - 1)
 #define LAST_DIGIT		(LAST_PAREN - 1)
->>>>>>> 49f001d81e
 
 
 /*************************************************************************

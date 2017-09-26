@@ -275,7 +275,6 @@ static const datetkn *deltacache[MAXDATEFIELDS] = {NULL};
 /*
  * strtoi --- just like strtol, but returns int not long
  */
-<<<<<<< HEAD
 static inline int strtoi(const char *nptr, char **endptr, __attribute__((unused)) int base)
 {
 	/* Assume base = 10 */
@@ -331,22 +330,6 @@ static inline int strtoi(const char *nptr, char **endptr, __attribute__((unused)
 	return acc;
 }
 
-=======
-static int
-strtoi(const char *nptr, char **endptr, int base)
-{
-	long	val;
-
-	val = strtol(nptr, endptr, base);
-#ifdef HAVE_LONG_INT_64
-	if (val != (long) ((int32) val))
-		errno = ERANGE;
-#endif
-	return (int) val;
-}
-
-
->>>>>>> 49f001d81e
 /*
  * Calendar time to Julian date conversions.
  * Julian date is commonly used in astronomical applications,
@@ -2433,11 +2416,7 @@ DecodeTime(char *str, int fmask, int range,
 	if (*cp != ':')
 		return DTERR_BAD_FORMAT;
 	errno = 0;
-<<<<<<< HEAD
 	tm->tm_min = strtoi(cp + 1, &cp, 10);
-=======
-	tm->tm_min = strtoi(str, &cp, 10);
->>>>>>> 49f001d81e
 	if (errno == ERANGE)
 		return DTERR_FIELD_OVERFLOW;
 	if (*cp == '\0')
@@ -2465,11 +2444,7 @@ DecodeTime(char *str, int fmask, int range,
 	else if (*cp == ':')
 	{
 		errno = 0;
-<<<<<<< HEAD
 		tm->tm_sec = strtoi(cp + 1, &cp, 10);
-=======
-		tm->tm_sec = strtoi(str, &cp, 10);
->>>>>>> 49f001d81e
 		if (errno == ERANGE)
 			return DTERR_FIELD_OVERFLOW;
 		if (*cp == '\0')
@@ -2481,10 +2456,10 @@ DecodeTime(char *str, int fmask, int range,
 				return dterr;
 		}
 		else
-				return DTERR_BAD_FORMAT;
-		}
-		else
 			return DTERR_BAD_FORMAT;
+	}
+	else
+		return DTERR_BAD_FORMAT;
 
 	/* do a sanity check */
 #ifdef HAVE_INT64_TIMESTAMP

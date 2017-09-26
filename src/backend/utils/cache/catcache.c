@@ -19,10 +19,7 @@
 #include "access/heapam.h"
 #include "access/relscan.h"
 #include "access/sysattr.h"
-<<<<<<< HEAD
 #include "access/tuptoaster.h"
-=======
->>>>>>> 49f001d81e
 #include "access/valid.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
@@ -35,10 +32,7 @@
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
-<<<<<<< HEAD
 #include "utils/relcache.h"
-=======
->>>>>>> 49f001d81e
 #include "utils/rel.h"
 #include "utils/resowner.h"
 #include "utils/syscache.h"

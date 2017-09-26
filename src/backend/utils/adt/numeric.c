@@ -2793,7 +2793,6 @@ Datum
 int2_sum(PG_FUNCTION_ARGS)
 {
 	int64		newval;
-	int64 		oldsum;
 
 	if (PG_ARGISNULL(0))
 	{
@@ -2805,59 +2804,19 @@ int2_sum(PG_FUNCTION_ARGS)
 		PG_RETURN_INT64(newval);
 	}
 
-<<<<<<< HEAD
+	/* GPDB_84_MERGE_FIXME: ensure that the following block is equivalent to the
+	 * code that follows it, and then get rid of it */
+#if 0
 	oldsum = PG_GETARG_INT64(0);
-=======
-	/*
-	 * If we're invoked by nodeAgg, we can cheat and modify our first
-	 * parameter in-place to avoid palloc overhead. If not, we need to return
-	 * the new value of the transition variable.
-	 * (If int8 is pass-by-value, then of course this is useless as well
-	 * as incorrect, so just ifdef it out.)
-	 */
-#ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
-	if (fcinfo->context && IsA(fcinfo->context, AggState))
-	{
-		int64	   *oldsum = (int64 *) PG_GETARG_POINTER(0);
->>>>>>> 49f001d81e
 
 	/* Leave sum unchanged if new input is null. */
 	if (PG_ARGISNULL(1))
 		PG_RETURN_INT64(oldsum);
 
-<<<<<<< HEAD
 	/* OK to do the addition. */
 	newval = oldsum + (int64) PG_GETARG_INT16(1);
-=======
-		PG_RETURN_POINTER(oldsum);
-	}
-	else
 #endif
-	{
-		int64		oldsum = PG_GETARG_INT64(0);
->>>>>>> 49f001d81e
 
-	PG_RETURN_INT64(newval);
-}
-
-Datum
-int4_sum(PG_FUNCTION_ARGS)
-{
-	int64		val;
-
-	if (PG_ARGISNULL(0))
-	{
-		/* No non-null input seen so far... */
-		if (PG_ARGISNULL(1))
-			PG_RETURN_NULL();	/* still no non-null */
-		/* This is the first non-null input. */
-		val = (int64) PG_GETARG_INT32(1);
-		PG_RETURN_INT64(val);
-	}
-
-<<<<<<< HEAD
-	val = PG_GETARG_INT64(0);
-=======
 	/*
 	 * If we're invoked by nodeAgg, we can cheat and modify our first
 	 * parameter in-place to avoid palloc overhead. If not, we need to return
@@ -2869,16 +2828,11 @@ int4_sum(PG_FUNCTION_ARGS)
 	if (fcinfo->context && IsA(fcinfo->context, AggState))
 	{
 		int64	   *oldsum = (int64 *) PG_GETARG_POINTER(0);
->>>>>>> 49f001d81e
 
-	/* Leave sum unchanged if new input is null. */
-	if (PG_ARGISNULL(1))
-		PG_RETURN_INT64(val); 
+		/* Leave the running sum unchanged in the new input is null */
+		if (!PG_ARGISNULL(1))
+			*oldsum = *oldsum + (int64) PG_GETARG_INT16(1);
 
-<<<<<<< HEAD
-	/* OK to do the addition. */
-	val = val + (int64) PG_GETARG_INT32(1);
-=======
 		PG_RETURN_POINTER(oldsum);
 	}
 	else
@@ -2889,9 +2843,74 @@ int4_sum(PG_FUNCTION_ARGS)
 		/* Leave sum unchanged if new input is null. */
 		if (PG_ARGISNULL(1))
 			PG_RETURN_INT64(oldsum);
->>>>>>> 49f001d81e
 
-	PG_RETURN_INT64(val);
+		/* OK to do the addition. */
+		newval = oldsum + (int64) PG_GETARG_INT16(1);
+
+		PG_RETURN_INT64(newval);
+	}
+}
+
+Datum
+int4_sum(PG_FUNCTION_ARGS)
+{
+	int64		newval;
+
+	if (PG_ARGISNULL(0))
+	{
+		/* No non-null input seen so far... */
+		if (PG_ARGISNULL(1))
+			PG_RETURN_NULL();	/* still no non-null */
+		/* This is the first non-null input. */
+		newval = (int64) PG_GETARG_INT32(1);
+		PG_RETURN_INT64(newval);
+	}
+
+	/* GPDB_84_MERGE_FIXME: ensure that the following block is equivalent to the
+	 * code that follows it, and then get rid of it */
+#if 0
+	val = PG_GETARG_INT64(0);
+
+	/* Leave sum unchanged if new input is null. */
+	if (PG_ARGISNULL(1))
+		PG_RETURN_INT64(val); 
+
+	/* OK to do the addition. */
+	val = val + (int64) PG_GETARG_INT32(1);
+#endif
+
+	/*
+	 * If we're invoked by nodeAgg, we can cheat and modify our first
+	 * parameter in-place to avoid palloc overhead. If not, we need to return
+	 * the new value of the transition variable.
+	 * (If int8 is pass-by-value, then of course this is useless as well
+	 * as incorrect, so just ifdef it out.)
+	 */
+#ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
+	if (fcinfo->context && IsA(fcinfo->context, AggState))
+	{
+		int64	   *oldsum = (int64 *) PG_GETARG_POINTER(0);
+
+		/* Leave the running sum unchanged in the new input is null */
+		if (!PG_ARGISNULL(1))
+			*oldsum = *oldsum + (int64) PG_GETARG_INT32(1);
+
+		PG_RETURN_POINTER(oldsum);
+	}
+	else
+#endif
+	{
+		int64		oldsum = PG_GETARG_INT64(0);
+
+		/* Leave sum unchanged if new input is null. */
+		if (PG_ARGISNULL(1))
+			PG_RETURN_INT64(oldsum);
+
+		/* OK to do the addition. */
+		newval = oldsum + (int64) PG_GETARG_INT32(1);
+
+		PG_RETURN_INT64(newval);
+	}
 }
 
 Datum
@@ -6024,10 +6043,6 @@ power_var(NumericVar *base, NumericVar *exp, NumericVar *result)
 		}
 	}
 
-<<<<<<< HEAD
-	quick_init_var(&ln_base);
-	quick_init_var(&ln_num);
-=======
 	/*
 	 *	This avoids log(0) for cases of 0 raised to a non-integer.
 	 *	0 ^ 0 handled by power_var_int().
@@ -6039,9 +6054,8 @@ power_var(NumericVar *base, NumericVar *exp, NumericVar *result)
 		return;
 	}
 	
-	init_var(&ln_base);
-	init_var(&ln_num);
->>>>>>> 49f001d81e
+	quick_init_var(&ln_base);
+	quick_init_var(&ln_num);
 
 	/* Set scale for ln() calculation --- need extra accuracy here */
 

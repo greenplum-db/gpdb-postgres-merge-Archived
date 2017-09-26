@@ -19,19 +19,13 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "executor/functions.h"
-<<<<<<< HEAD
 #include "executor/spi.h"
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
-#include "pgstat.h"
-#include "utils/acl.h"
-=======
-#include "lib/stringinfo.h"
-#include "miscadmin.h"
 #include "parser/parse_expr.h"
 #include "pgstat.h"
->>>>>>> 49f001d81e
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgrtab.h"
 #include "utils/guc.h"
@@ -177,11 +171,7 @@ fmgr_info_cxt(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt)
 
 /*
  * This one does the actual work.  ignore_security is ordinarily false
-<<<<<<< HEAD
  * but is set to true when we need to avoid recursion.
-=======
- * but is set to true by fmgr_security_definer to avoid recursion.
->>>>>>> 49f001d81e
  */
 static void
 fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
@@ -232,21 +222,8 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 
 	/*
 	 * If it has prosecdef set, or non-null proconfig, use
-<<<<<<< HEAD
 	 * fmgr_security_definer call handler --- unless we are being called again
 	 * by fmgr_security_definer or fmgr_info_other_lang.
-=======
-	 * fmgr_security_definer call handler --- unless we are being called
-	 * again by fmgr_security_definer.
-	 *
-	 * When using fmgr_security_definer, function stats tracking is always
-	 * disabled at the outer level, and instead we set the flag properly
-	 * in fmgr_security_definer's private flinfo and implement the tracking
-	 * inside fmgr_security_definer.  This loses the ability to charge the
-	 * overhead of fmgr_security_definer to the function, but gains the
-	 * ability to set the track_functions GUC as a local GUC parameter of
-	 * an interesting function and have the right things happen.
->>>>>>> 49f001d81e
 	 */
 	if (!ignore_security &&
 		(procedureStruct->prosecdef ||
@@ -889,10 +866,7 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 	}
 
 	return PointerGetDatum(returnValue);
-<<<<<<< HEAD
 #endif
-=======
->>>>>>> 49f001d81e
 }
 
 
@@ -2083,61 +2057,10 @@ OidSendFunctionCall(Oid functionId, Datum val)
 	return SendFunctionCall(&flinfo, val);
 }
 
-<<<<<<< HEAD
-=======
 
-/*
- * !!! OLD INTERFACE !!!
- *
- * fmgr() is the only remaining vestige of the old-style caller support
- * functions.  It's no longer used anywhere in the Postgres distribution,
- * but we should leave it around for a release or two to ease the transition
- * for user-supplied C functions.  OidFunctionCallN() replaces it for new
- * code.
- *
- * DEPRECATED, DO NOT USE IN NEW CODE
- */
-char *
-fmgr(Oid procedureId,...)
-{
-	FmgrInfo	flinfo;
-	FunctionCallInfoData fcinfo;
-	int			n_arguments;
-	Datum		result;
-
-	fmgr_info(procedureId, &flinfo);
-
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = &flinfo;
-	fcinfo.nargs = flinfo.fn_nargs;
-	n_arguments = fcinfo.nargs;
-
-	if (n_arguments > 0)
-	{
-		va_list		pvar;
-		int			i;
-
-		if (n_arguments > FUNC_MAX_ARGS)
-			ereport(ERROR,
-					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-			 errmsg("function %u has too many arguments (%d, maximum is %d)",
-					flinfo.fn_oid, n_arguments, FUNC_MAX_ARGS)));
-		va_start(pvar, procedureId);
-		for (i = 0; i < n_arguments; i++)
-			fcinfo.arg[i] = PointerGetDatum(va_arg(pvar, char *));
-		va_end(pvar);
-	}
-
-	result = FunctionCallInvoke(&fcinfo);
-
-	/* Check for null result, since caller is clearly not expecting one */
-	if (fcinfo.isnull)
-		elog(ERROR, "function %u returned NULL", flinfo.fn_oid);
-
-	return DatumGetPointer(result);
-}
-
-
+/* GPDB_84_MERGE_FIXME: reenable the following code, perhaps? With USE_*_BYVAL
+ * hardcoded to true, of course. */
+#if 0
 /*-------------------------------------------------------------------------
  *		Support routines for standard maybe-pass-by-reference datatypes
  *
@@ -2250,9 +2173,9 @@ DatumGetFloat8(Datum X)
 }
 
 #endif /* USE_FLOAT8_BYVAL */
+#endif
 
 
->>>>>>> 49f001d81e
 /*-------------------------------------------------------------------------
  *		Support routines for toastable datatypes
  *-------------------------------------------------------------------------

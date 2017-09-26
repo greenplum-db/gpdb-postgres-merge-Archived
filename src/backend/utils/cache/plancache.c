@@ -147,12 +147,8 @@ CreateCachedPlan(Node *raw_parse_tree,
 	oldcxt = MemoryContextSwitchTo(source_context);
 	plansource = (CachedPlanSource *) palloc(sizeof(CachedPlanSource));
 	plansource->raw_parse_tree = copyObject(raw_parse_tree);
-<<<<<<< HEAD
-	plansource->query_string = query_string ? pstrdup(query_string) : NULL;
-	plansource->sourceTag = sourceTag;
-=======
 	plansource->query_string = pstrdup(query_string);
->>>>>>> 49f001d81e
+	plansource->sourceTag = sourceTag;
 	plansource->commandTag = commandTag;		/* no copying needed */
 	if (num_params > 0)
 	{
@@ -521,22 +517,9 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 		 */
 		PG_TRY();
 		{
-<<<<<<< HEAD
 			Snapshot	mySnapshot = NULL;
 			TupleDesc	resultDesc;
 			Node	   *raw_parse_tree;
-=======
-			/*
-			 * Generate plans for queries.
-			 *
-			 * If a snapshot is already set (the normal case), we can just use
-			 * that for planning.  But if it isn't, we have to tell
-			 * pg_plan_queries to make a snap if it needs one.
-			 */
-			slist = pg_plan_queries(slist, plansource->cursor_options,
-									NULL, !ActiveSnapshotSet());
-		}
->>>>>>> 49f001d81e
 
 			if (ActiveSnapshot == NULL)
 			{
@@ -676,7 +659,6 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 }
 
 /*
-<<<<<<< HEAD
  * Compatibility version of RevalidateCachedPlanWithParams, for the simple
  * case of no params and no CREATE TABLE AS.
  */
@@ -687,8 +669,6 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 }
 
 /*
-=======
->>>>>>> 49f001d81e
  * ReleaseCachedPlan: release active use of a cached plan.
  *
  * This decrements the reference count, and frees the plan if the count

@@ -17,10 +17,7 @@
 #include <ctype.h>
 
 #include "funcapi.h"
-<<<<<<< HEAD
 #include "access/tupmacs.h"
-=======
->>>>>>> 49f001d81e
 #include "libpq/pqformat.h"
 #include "parser/parse_coerce.h"
 #include "utils/array.h"
@@ -4596,7 +4593,6 @@ array_fill_internal(ArrayType *dims, ArrayType *lbs,
 	 */
 	if (ARR_NDIM(dims) != 1)
 		ereport(ERROR,
-<<<<<<< HEAD
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("wrong number of array subscripts"),
 				 errdetail("Dimension array must be one dimensional.")));
@@ -4611,22 +4607,6 @@ array_fill_internal(ArrayType *dims, ArrayType *lbs,
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				 errmsg("dimension values cannot be null")));
-=======
-			    (errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-			     errmsg("wrong number of array subscripts"),
-			     errdetail("Dimension array must be one dimensional.")));
-
-	if (ARR_LBOUND(dims)[0] != 1)
-		ereport(ERROR,
-			    (errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-			     errmsg("wrong range of array_subscripts"),
-			     errdetail("Lower bound of dimension array must be one.")));
-
-	if (ARR_HASNULL(dims))
-		ereport(ERROR,
-			    (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-			     errmsg("dimension values cannot be null")));
->>>>>>> 49f001d81e
 
 	dimv = (int *) ARR_DATA_PTR(dims);
 	ndims = ARR_DIMS(dims)[0];
@@ -4645,7 +4625,6 @@ array_fill_internal(ArrayType *dims, ArrayType *lbs,
 	{
 		if (ARR_NDIM(lbs) != 1)
 			ereport(ERROR,
-<<<<<<< HEAD
 					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 					 errmsg("wrong number of array subscripts"),
 					 errdetail("Dimension array must be one dimensional.")));
@@ -4666,28 +4645,6 @@ array_fill_internal(ArrayType *dims, ArrayType *lbs,
 					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 					 errmsg("wrong number of array subscripts"),
 					 errdetail("Low bound array has different size than dimensions array.")));
-=======
-				    (errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-			    	     errmsg("wrong number of array subscripts"),
-			    	     errdetail("Dimension array must be one dimensional.")));
-
-		if (ARR_LBOUND(lbs)[0] != 1)
-			ereport(ERROR,
-				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-			         errmsg("wrong range of array_subscripts"),
-			    	 errdetail("Lower bound of dimension array must be one.")));
-
-		if (ARR_HASNULL(lbs))
-			ereport(ERROR,
-				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				 errmsg("dimension values cannot be null")));
-
-		if (ARR_DIMS(lbs)[0] != ndims)
-			ereport(ERROR,
-				    (errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-				     errmsg("wrong number of array_subscripts"),
-				     errdetail("Low bound array has different size than dimensions array.")));
->>>>>>> 49f001d81e
 
 		lbsv = (int *) ARR_DATA_PTR(lbs);
 	}
@@ -4789,7 +4746,6 @@ array_fill_internal(ArrayType *dims, ArrayType *lbs,
 
 	return result;
 }
-<<<<<<< HEAD
 
 
 /*
@@ -4902,5 +4858,3 @@ unnest(PG_FUNCTION_ARGS)
 		SRF_RETURN_DONE(funcctx);
 	}
 }
-=======
->>>>>>> 49f001d81e

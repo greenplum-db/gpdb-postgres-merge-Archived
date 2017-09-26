@@ -166,7 +166,6 @@ GetTransactionSnapshot(void)
 	}
 
 	if (IsXactIsoLevelSerializable)
-<<<<<<< HEAD
 	{
 		elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),"[Distributed Snapshot #%u] *Serializable Skip* (gxid = %u, '%s')",
 			 (SerializableSnapshot == NULL ? 0 : SerializableSnapshot->distribSnapshotWithLocalMapping.ds.distribSnapshotId),
@@ -182,9 +181,6 @@ GetTransactionSnapshot(void)
 		 (LatestSnapshot == NULL ? 0 : LatestSnapshot->distribSnapshotWithLocalMapping.ds.distribSnapshotId),
 		 getDistributedTransactionId(),
 		 DtxContextToString(DistributedTransactionContext));
-=======
-		return CurrentSnapshot;
->>>>>>> 49f001d81e
 
 	CurrentSnapshot = GetSnapshotData(&CurrentSnapshotData);
 
@@ -239,12 +235,10 @@ CopySnapshot(Snapshot snapshot)
 	Size		dsoff = 0;
 	Size		size;
 
-<<<<<<< HEAD
+	Assert(snapshot != InvalidSnapshot);
+
 	if (!IsMVCCSnapshot(snapshot))
 		return snapshot;
-=======
-	Assert(snapshot != InvalidSnapshot);
->>>>>>> 49f001d81e
 
 	/* We allocate any XID arrays needed in the same palloc block. */
 	size = subxipoff = sizeof(SnapshotData) +
@@ -252,7 +246,6 @@ CopySnapshot(Snapshot snapshot)
 	if (snapshot->subxcnt > 0)
 		size += snapshot->subxcnt * sizeof(TransactionId);
 
-<<<<<<< HEAD
 	if (snapshot->haveDistribSnapshot &&
 		snapshot->distribSnapshotWithLocalMapping.ds.count > 0)
 	{
@@ -263,10 +256,7 @@ CopySnapshot(Snapshot snapshot)
 			sizeof(TransactionId);
 	}
 
-	newsnap = (Snapshot) palloc(size);
-=======
 	newsnap = (Snapshot) MemoryContextAlloc(TopTransactionContext, size);
->>>>>>> 49f001d81e
 	memcpy(newsnap, snapshot, sizeof(SnapshotData));
 
 	newsnap->regd_count = 0;
@@ -340,14 +330,12 @@ CopySnapshot(Snapshot snapshot)
 static void
 FreeSnapshot(Snapshot snapshot)
 {
-<<<<<<< HEAD
 	if (!IsMVCCSnapshot(snapshot))
 		return;
-=======
+
 	Assert(snapshot->regd_count == 0);
 	Assert(snapshot->active_count == 0);
 	Assert(snapshot->copied);
->>>>>>> 49f001d81e
 
 	pfree(snapshot);
 }

@@ -1,9 +1,5 @@
 /*
-<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/backend/utils/mb/wstrcmp.c,v 1.10 2009/06/11 14:49:06 momjian Exp $
-=======
- * $PostgreSQL: pgsql/src/backend/utils/mb/wstrcmp.c,v 1.9 2008/05/17 01:28:24 adunstan Exp $ 
->>>>>>> 49f001d81e
  *
  *-
  * Copyright (c) 1990, 1993

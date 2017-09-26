@@ -22,12 +22,9 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "miscadmin.h"
 
 #include "access/heapam.h"
-=======
->>>>>>> 49f001d81e
 #include "access/sysattr.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_aggregate.h"
@@ -56,11 +53,8 @@
 #include "catalog/pg_ts_parser.h"
 #include "catalog/pg_ts_template.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
 #include "catalog/pg_window.h"
-=======
 #include "utils/rel.h"
->>>>>>> 49f001d81e
 #include "utils/syscache.h"
 
 
@@ -298,10 +292,6 @@ static const struct cachedesc cacheinfo[] = {
 	},
 	{ConstraintRelationId,		/* CONSTROID */
 		ConstraintOidIndexId,
-<<<<<<< HEAD
-=======
-		Anum_pg_constraint_conrelid,
->>>>>>> 49f001d81e
 		1,
 		{
 			ObjectIdAttributeNumber,

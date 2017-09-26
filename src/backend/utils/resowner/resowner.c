@@ -21,21 +21,15 @@
 #include "postgres.h"
 
 #include "access/hash.h"
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
-=======
 #include "storage/bufmgr.h"
->>>>>>> 49f001d81e
 #include "storage/proc.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/resowner.h"
-<<<<<<< HEAD
 #include "utils/relcache.h"
 #include "executor/execdesc.h"
 #include "utils/resource_manager.h"
-=======
->>>>>>> 49f001d81e
 
 /*
  * To speed up bulk releasing or reassigning locks from a resource owner to
