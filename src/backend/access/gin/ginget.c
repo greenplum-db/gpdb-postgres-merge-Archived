@@ -16,12 +16,9 @@
 #include "access/gin.h"
 #include "access/relscan.h"
 #include "catalog/index.h"
-<<<<<<< HEAD
-=======
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "utils/datum.h"
->>>>>>> 49f001d81e
 #include "utils/memutils.h"
 #include "nodes/tidbitmap.h"
 
@@ -266,11 +263,8 @@ computePartialMatchList( GinBtreeData *btree, GinBtreeStack *stack, GinScanEntry
 static void
 startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 {
-<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_DECLARE;
 
-=======
->>>>>>> 49f001d81e
 	GinBtreeData 	btreeEntry;
 	GinBtreeStack  *stackEntry;
 	Page			page;
@@ -401,11 +395,7 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 			 */
 			entry->list = (ItemPointerData *) palloc( BLCKSZ );
 			entry->nlist = GinPageGetOpaque(page)->maxoff;
-<<<<<<< HEAD
-			memcpy( entry->list, GinDataPageGetItem(page, FirstOffsetNumber), 
-=======
 			memcpy( entry->list, GinDataPageGetItem(page, FirstOffsetNumber),
->>>>>>> 49f001d81e
 						GinPageGetOpaque(page)->maxoff * sizeof(ItemPointerData) );
 
 			LockBuffer(entry->buffer, GIN_UNLOCK);
@@ -423,15 +413,11 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 	}
 
 	if (needUnlock)
-<<<<<<< HEAD
 		LockBuffer(stackEntry->buffer, GIN_UNLOCK);
 	
 	MIRROREDLOCK_BUFMGR_UNLOCK;
 	// -------- MirroredLock ----------
 	
-=======
-			LockBuffer(stackEntry->buffer, GIN_UNLOCK);
->>>>>>> 49f001d81e
 	freeGinBtreeStack(stackEntry);
 }
 
@@ -530,17 +516,11 @@ startScan(IndexScanDesc scan)
 static void
 entryGetNextItem(Relation index, GinScanEntry entry)
 {
-<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_DECLARE;
 
 	Page		page;
 	BlockNumber blkno;
 
-=======
-	Page		page;
-	BlockNumber blkno;
-
->>>>>>> 49f001d81e
 	for(;;)
 	{
 		entry->offset++;
@@ -550,14 +530,10 @@ entryGetNextItem(Relation index, GinScanEntry entry)
 			entry->curItem = entry->list[entry->offset - 1];
 			return;
 		}
-<<<<<<< HEAD
-		
+
 		// -------- MirroredLock ----------
 		MIRROREDLOCK_BUFMGR_LOCK;
-		
-=======
 
->>>>>>> 49f001d81e
 		LockBuffer(entry->buffer, GIN_SHARE);
 		page = BufferGetPage(entry->buffer);
 		for(;;)
@@ -570,13 +546,10 @@ entryGetNextItem(Relation index, GinScanEntry entry)
 			blkno = GinPageGetOpaque(page)->rightlink;
 
 			LockBuffer(entry->buffer, GIN_UNLOCK);
-<<<<<<< HEAD
 
 			MIRROREDLOCK_BUFMGR_UNLOCK;
 			// -------- MirroredLock ----------
 
-=======
->>>>>>> 49f001d81e
 			if (blkno == InvalidBlockNumber)
 			{
 				ReleaseBuffer(entry->buffer);
@@ -585,14 +558,10 @@ entryGetNextItem(Relation index, GinScanEntry entry)
 				entry->isFinished = TRUE;
 				return;
 			}
-<<<<<<< HEAD
-			
+
 			// -------- MirroredLock ----------
 			MIRROREDLOCK_BUFMGR_LOCK;
-			
-=======
 
->>>>>>> 49f001d81e
 			entry->buffer = ReleaseAndReadBuffer(entry->buffer, index, blkno);
 			LockBuffer(entry->buffer, GIN_SHARE);
 			page = BufferGetPage(entry->buffer);
@@ -604,24 +573,15 @@ entryGetNextItem(Relation index, GinScanEntry entry)
 				 * Found position equal to or greater than stored
 				 */
 				entry->nlist = GinPageGetOpaque(page)->maxoff;
-<<<<<<< HEAD
-				memcpy( entry->list, GinDataPageGetItem(page, FirstOffsetNumber), 
-							GinPageGetOpaque(page)->maxoff * sizeof(ItemPointerData) );
-
-				LockBuffer(entry->buffer, GIN_UNLOCK);
-				
-				MIRROREDLOCK_BUFMGR_UNLOCK;
-				// -------- MirroredLock ----------
-				
-				if ( !ItemPointerIsValid(&entry->curItem) || 
-=======
 				memcpy( entry->list, GinDataPageGetItem(page, FirstOffsetNumber),
 							GinPageGetOpaque(page)->maxoff * sizeof(ItemPointerData) );
 
 				LockBuffer(entry->buffer, GIN_UNLOCK);
 
+				MIRROREDLOCK_BUFMGR_UNLOCK;
+				// -------- MirroredLock ----------
+
 				if ( !ItemPointerIsValid(&entry->curItem) ||
->>>>>>> 49f001d81e
 					 compareItemPointers( &entry->curItem, entry->list + entry->offset - 1 ) == 0 )
 				{
 					/*
@@ -631,11 +591,7 @@ entryGetNextItem(Relation index, GinScanEntry entry)
 
 					 break;
 				}
-<<<<<<< HEAD
-			
-=======
 
->>>>>>> 49f001d81e
 				/*
 				 * Find greater than entry->curItem position, store it.
 				 */
@@ -947,12 +903,8 @@ gingetbitmap(PG_FUNCTION_ARGS)
 	ntids = 0;
 	for (;;)
 	{
-<<<<<<< HEAD
-		ItemPointerData	iptr;
-=======
 		ItemPointerData iptr;
 		bool		recheck;
->>>>>>> 49f001d81e
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -963,11 +915,7 @@ gingetbitmap(PG_FUNCTION_ARGS)
 		ntids++;
 	}	
 
-<<<<<<< HEAD
 	PG_RETURN_POINTER(tbm);
-=======
-	PG_RETURN_INT64(ntids);
->>>>>>> 49f001d81e
 }
 
 Datum
@@ -987,11 +935,7 @@ gingettuple(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 
 	startScan(scan);
-<<<<<<< HEAD
-	res = scanGetItem(scan, &scan->xs_ctup.t_self);
-=======
 	res = scanGetItem(scan, &scan->xs_ctup.t_self, &scan->xs_recheck);
->>>>>>> 49f001d81e
 
 	PG_RETURN_BOOL(res);
 }

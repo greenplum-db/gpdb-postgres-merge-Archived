@@ -23,13 +23,10 @@
 #include "access/transam.h"
 #include "miscadmin.h"
 #include "pgstat.h"
-<<<<<<< HEAD
+#include "storage/bufmgr.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
-=======
-#include "storage/bufmgr.h"
 #include "utils/rel.h"
->>>>>>> 49f001d81e
 #include "utils/tqual.h"
 
 
