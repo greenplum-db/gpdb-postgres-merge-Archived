@@ -24,11 +24,8 @@
 #include "catalog/index.h"
 #include "catalog/pg_namespace.h"
 #include "commands/vacuum.h"
-<<<<<<< HEAD
-=======
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
->>>>>>> 49f001d81e
 #include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
@@ -525,12 +522,9 @@ btgettuple(PG_FUNCTION_ARGS)
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	bool		res;
 
-<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_VERIFY_NO_LOCK_LEAK_ENTER;
-=======
 	/* btree indexes are never lossy */
 	scan->xs_recheck = false;
->>>>>>> 49f001d81e
 
 	/*
 	 * If we've already initialized this scan, we can just advance it in the
@@ -896,11 +890,8 @@ btbulkdelete(PG_FUNCTION_ARGS)
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(_bt_end_vacuum_callback, PointerGetDatum(rel));
 	_bt_end_vacuum(rel);
-<<<<<<< HEAD
 
 	MIRROREDLOCK_BUFMGR_VERIFY_NO_LOCK_LEAK_EXIT;
-=======
->>>>>>> 49f001d81e
 
 	PG_RETURN_POINTER(stats);
 }

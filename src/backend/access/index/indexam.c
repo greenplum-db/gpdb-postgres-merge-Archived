@@ -649,7 +649,6 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 }
 
 /* ----------------
-<<<<<<< HEAD
  *		index_getnext_indexitem - get the next index tuple from a scan
  *
  * Finds the next index tuple satisfying the scan keys.  Note that the
@@ -689,10 +688,7 @@ index_getnext_indexitem(IndexScanDesc scan,
 }
 
 /* ----------------
- *		index_getbitmap - get the next bitmap from an index scan.
-=======
  *		index_getbitmap - get all tuples at once from an index scan
->>>>>>> 49f001d81e
  *
  *		it invokes am's getmulti function to get a bitmap. If am is an on-disk
  *		bitmap index access method (see bitmap.h), then a StreamBitmap is
