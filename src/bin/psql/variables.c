@@ -3,7 +3,11 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * src/bin/psql/variables.c
+=======
+ * $PostgreSQL: pgsql/src/bin/psql/variables.c,v 1.29 2008/05/07 02:33:52 momjian Exp $
+>>>>>>> 49f001d81e
  */
 #include "postgres_fe.h"
 #include "common.h"

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.103 2008/03/27 03:57:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.104 2008/05/09 23:32:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,8 +79,14 @@ bool is_gpdump = false; /* determines whether to print extra logging messages in
 
 static void flagInhTables(TableInfo *tbinfo, int numTables,
 			  InhInfo *inhinfo, int numInherits);
+<<<<<<< HEAD
 static void flagInhAttrs(TableInfo *tbinfo, int numTables,
 			 InhInfo *inhinfo, int numInherits);
+=======
+static void flagInhAttrs(TableInfo *tblinfo, int numTables);
+static DumpableObject **buildIndexArray(void *objArray, int numObjs,
+				Size objSize);
+>>>>>>> 49f001d81e
 static int	DOCatalogIdCompare(const void *p1, const void *p2);
 static int	ExtensionMemberIdCompare(const void *p1, const void *p2);
 static void findParentsByOid(TableInfo *self,
@@ -246,9 +252,15 @@ getSchemaData(int *numTablesPtr, int g_role)
 		status_log_msg(LOGGER_INFO, progname, "reading column info for interesting tables\n");
 	getTableAttrs(tblinfo, numTables);
 
+<<<<<<< HEAD
 	if (is_gpdump || g_verbose)
 		status_log_msg(LOGGER_INFO, progname, "flagging inherited columns in subtables\n");
 	flagInhAttrs(tblinfo, numTables, inhinfo, numInherits);
+=======
+	if (g_verbose)
+		write_msg(NULL, "flagging inherited columns in subtables\n");
+	flagInhAttrs(tblinfo, numTables);
+>>>>>>> 49f001d81e
 
 	/*
 	 * ROLE_MASTER
@@ -328,8 +340,7 @@ flagInhTables(TableInfo *tblinfo, int numTables,
  * modifies tblinfo
  */
 static void
-flagInhAttrs(TableInfo *tblinfo, int numTables,
-			 InhInfo *inhinfo, int numInherits)
+flagInhAttrs(TableInfo *tblinfo, int numTables)
 {
 	int			i,
 				j,
@@ -424,6 +435,7 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 				tbinfo->attrdefs[j] = attrDef;
 			}
 		}
+<<<<<<< HEAD
 
 		/*
 		 * Check for inherited CHECK constraints.  We assume a constraint is
@@ -461,6 +473,8 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 					break;
 			}
 		}
+=======
+>>>>>>> 49f001d81e
 	}
 }
 

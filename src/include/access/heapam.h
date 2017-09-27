@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.133 2008/04/03 17:12:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.137 2008/06/19 00:46:06 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,9 +15,9 @@
 #define HEAPAM_H
 
 #include "access/htup.h"
-#include "access/relscan.h"
 #include "access/sdir.h"
 #include "access/skey.h"
+<<<<<<< HEAD
 #include "access/tupmacs.h"
 #include "access/xlogutils.h"
 #include "nodes/primnodes.h"
@@ -26,6 +26,13 @@
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/relationnode.h"
+=======
+#include "access/xlog.h"
+#include "nodes/primnodes.h"
+#include "storage/bufpage.h"
+#include "storage/lock.h"
+#include "utils/relcache.h"
+>>>>>>> 49f001d81e
 #include "utils/snapshot.h"
 #include "utils/tqual.h"
 
@@ -34,6 +41,7 @@ extern Datum nocachegetattr(HeapTuple tup, int attnum, TupleDesc att);
 extern Datum heap_getsysattr(HeapTuple tup, int attnum, bool *isnull);
 
 
+<<<<<<< HEAD
 /* ----------------
  *		fastgetattr
  *
@@ -159,6 +167,8 @@ RelationFetchGpRelationNodeForXLog(Relation relation)
 
 extern bool
 RelationAllowedToGenerateXLogRecord(Relation relation);
+=======
+>>>>>>> 49f001d81e
 
 typedef enum
 {
@@ -219,6 +229,7 @@ extern Relation try_heap_open(Oid relationId, LOCKMODE lockmode, bool noWait);
 
 #define heap_close(r,l)  relation_close(r,l)
 
+<<<<<<< HEAD
 /* CDB */
 extern Relation CdbOpenRelation(Oid relid, LOCKMODE reqmode, bool noWait, 
 								bool *lockUpgraded);
@@ -227,6 +238,16 @@ extern Relation CdbTryOpenRelation(Oid relid, LOCKMODE reqmode, bool noWait,
 extern Relation CdbOpenRelationRv(const RangeVar *relation, LOCKMODE reqmode, 
 								  bool noWait, bool *lockUpgraded);
 
+=======
+/* struct definition appears in relscan.h */
+typedef struct HeapScanDescData *HeapScanDesc;
+
+/*
+ * HeapScanIsValid
+ *		True iff the heap scan is valid.
+ */
+#define HeapScanIsValid(scan) PointerIsValid(scan)
+>>>>>>> 49f001d81e
 
 extern HeapScanDesc heap_beginscan(Relation relation, Snapshot snapshot,
 			   int nkeys, ScanKey key);
@@ -318,6 +339,7 @@ extern XLogRecPtr log_newpage_relFileNode(RelFileNode *relFileNode,
 										  ItemPointer persistentTid,
 										  int64 persistentSerialNum);
 
+<<<<<<< HEAD
 /* in common/heaptuple.c */
 extern Size heap_compute_data_size(TupleDesc tupleDesc,
 					   Datum *values, bool *isnull);
@@ -368,13 +390,15 @@ extern MinimalTuple minimal_tuple_from_heap_tuple(HeapTuple htup);
 extern HeapTuple heap_addheader(int natts, bool withoid,
 			   Size structlen, void *structure);
 
+=======
+>>>>>>> 49f001d81e
 /* in heap/pruneheap.c */
 extern void heap_page_prune_opt(Relation relation, Buffer buffer,
 					TransactionId OldestXmin);
 extern int heap_page_prune(Relation relation, Buffer buffer,
 				TransactionId OldestXmin,
 				bool redirect_move, bool report_stats);
-extern void heap_page_prune_execute(Relation reln, Buffer buffer,
+extern void heap_page_prune_execute(Buffer buffer,
 						OffsetNumber *redirected, int nredirected,
 						OffsetNumber *nowdead, int ndead,
 						OffsetNumber *nowunused, int nunused,

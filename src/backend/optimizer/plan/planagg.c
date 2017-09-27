@@ -10,13 +10,18 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.43 2008/08/25 22:42:33 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.41 2008/07/10 02:14:03 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "catalog/pg_aggregate.h"
+#include "catalog/pg_am.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -525,8 +530,13 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 	/* set up LIMIT 1 */
 	subparse->limitOffset = NULL;
 	subparse->limitCount = (Node *) makeConst(INT8OID, -1, sizeof(int64),
+<<<<<<< HEAD
 											  Int64GetDatum(1),
 											  false, true /* not by val */ );
+=======
+											  Int64GetDatum(1), false,
+											  FLOAT8PASSBYVAL);
+>>>>>>> 49f001d81e
 
 	/*
 	 * Generate the plan for the subquery.	We already have a Path for the

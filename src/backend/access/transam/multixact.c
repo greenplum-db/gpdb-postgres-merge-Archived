@@ -42,7 +42,11 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.27.2.1 2009/11/23 09:59:00 heikki Exp $
+=======
+ * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.28 2008/08/01 13:16:08 alvherre Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -55,11 +59,15 @@
 #include "access/twophase_rmgr.h"
 #include "access/xact.h"
 #include "miscadmin.h"
+#include "pg_trace.h"
 #include "storage/backendid.h"
 #include "storage/lmgr.h"
-#include "utils/memutils.h"
 #include "storage/procarray.h"
+<<<<<<< HEAD
 #include "cdb/cdbpersistentstore.h"
+=======
+#include "utils/memutils.h"
+>>>>>>> 49f001d81e
 
 
 /*
@@ -1674,10 +1682,15 @@ ShutdownMultiXact(void)
 	MIRRORED_LOCK;
 
 	/* Flush dirty MultiXact pages to disk */
+	TRACE_POSTGRESQL_MULTIXACT_CHECKPOINT_START(false);
 	SimpleLruFlush(MultiXactOffsetCtl, false);
 	SimpleLruFlush(MultiXactMemberCtl, false);
+<<<<<<< HEAD
 
 	MIRRORED_UNLOCK;
+=======
+	TRACE_POSTGRESQL_MULTIXACT_CHECKPOINT_DONE(false);
+>>>>>>> 49f001d81e
 }
 
 /*
@@ -1711,9 +1724,13 @@ MultiXactGetCheckptMulti(bool is_shutdown __attribute__((unused)) ,
 void
 CheckPointMultiXact(void)
 {
+<<<<<<< HEAD
 	MIRRORED_LOCK_DECLARE;
 
 	MIRRORED_LOCK;
+=======
+	TRACE_POSTGRESQL_MULTIXACT_CHECKPOINT_START(true);
+>>>>>>> 49f001d81e
 
 	/* Flush dirty MultiXact pages to disk */
 	SimpleLruFlush(MultiXactOffsetCtl, true);
@@ -1730,7 +1747,11 @@ CheckPointMultiXact(void)
 	if (!InRecovery)
 		TruncateMultiXact();
 
+<<<<<<< HEAD
 	MIRRORED_UNLOCK;
+=======
+	TRACE_POSTGRESQL_MULTIXACT_CHECKPOINT_DONE(true);
+>>>>>>> 49f001d81e
 }
 
 /*

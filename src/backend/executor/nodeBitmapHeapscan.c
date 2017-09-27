@@ -21,7 +21,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.25 2008/03/26 21:10:38 alvherre Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.29 2008/06/19 00:46:04 alvherre Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +41,10 @@
 
 #include "access/heapam.h"
 #include "access/relscan.h"
+<<<<<<< HEAD
 #include "access/transam.h"
+=======
+>>>>>>> 49f001d81e
 #include "executor/execdebug.h"
 #include "executor/nodeBitmapHeapscan.h"
 #include "pgstat.h"
@@ -413,7 +420,7 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 		OffsetNumber maxoff = PageGetMaxOffsetNumber(dp);
 		OffsetNumber offnum;
 
-		for (offnum = FirstOffsetNumber; offnum <= maxoff; offnum++)
+		for (offnum = FirstOffsetNumber; offnum <= maxoff; offnum = OffsetNumberNext(offnum))
 		{
 			ItemId		lp;
 			HeapTupleData loctup;

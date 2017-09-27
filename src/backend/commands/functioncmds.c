@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.91 2008/03/27 03:57:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.98 2008/07/18 03:32:52 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -34,6 +34,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/sysattr.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/oid_dispatch.h"
@@ -49,9 +50,13 @@
 #include "commands/defrem.h"
 #include "commands/proclang.h"
 #include "miscadmin.h"
+<<<<<<< HEAD
 #include "optimizer/var.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
+=======
+#include "parser/parse_coerce.h"
+>>>>>>> 49f001d81e
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
 #include "utils/acl.h"
@@ -59,6 +64,7 @@
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
@@ -191,8 +197,12 @@ examine_parameter_list(List *parameters, Oid languageOid,
 	Datum	   *paramModes;
 	Datum	   *paramNames;
 	int			outCount = 0;
+<<<<<<< HEAD
 	int         varCount = 0;
 	int         multisetCount = 0;
+=======
+	int			varCount = 0;
+>>>>>>> 49f001d81e
 	bool		have_names = false;
 	bool		have_defaults = false;
 	ListCell   *x;
@@ -262,6 +272,7 @@ examine_parameter_list(List *parameters, Oid languageOid,
 					 errmsg("functions cannot accept set arguments")));
 		}
 
+<<<<<<< HEAD
 		/* track input vs output parameters */
 		switch (fp->mode)
 		{
@@ -330,6 +341,44 @@ examine_parameter_list(List *parameters, Oid languageOid,
 			default:
 				elog(ERROR, "unrecognized function parameter mode: %c", fp->mode);
 				break;
+=======
+		/* handle input parameters */
+		if (fp->mode != FUNC_PARAM_OUT && fp->mode != FUNC_PARAM_TABLE)
+		{
+			/* other input parameters can't follow a VARIADIC parameter */
+			if (varCount > 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+						 errmsg("VARIADIC parameter must be the last input parameter")));
+			inTypes[inCount++] = toid;
+		}
+
+		/* handle output parameters */
+		if (fp->mode != FUNC_PARAM_IN && fp->mode != FUNC_PARAM_VARIADIC)
+		{
+			if (outCount == 0)	/* save first output param's type */
+				*requiredResultType = toid;
+			outCount++;
+>>>>>>> 49f001d81e
+		}
+
+		if (fp->mode == FUNC_PARAM_VARIADIC)
+		{
+			varCount++;
+			/* validate variadic parameter type */
+			switch (toid)
+			{
+				case ANYARRAYOID:
+				case ANYOID:
+					/* okay */
+					break;
+				default:
+					if (!OidIsValid(get_element_type(toid)))
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+								 errmsg("VARIADIC parameter must be an array")));
+					break;
+			}
 		}
 
 		allTypes[i] = ObjectIdGetDatum(toid);
@@ -872,11 +921,19 @@ interpret_AS_clause(Oid languageOid, const char *languageName,
 	{
 		/*
 		 * For "C" language, store the file name in probin and, when given,
+<<<<<<< HEAD
 		 * the link symbol name in prosrc. If link symbol is omitted,
 		 * substitute procedure name.  We also allow link symbol to be
 		 * specified as "-", since that was the habit in GPDB versions before
 		 * Paris, and there might be dump files out there that don't translate
 		 * that back to "omitted". 
+=======
+		 * the link symbol name in prosrc.  If link symbol is omitted,
+		 * substitute procedure name.  We also allow link symbol to be
+		 * specified as "-", since that was the habit in PG versions before
+		 * 8.4, and there might be dump files out there that don't translate
+		 * that back to "omitted".
+>>>>>>> 49f001d81e
 		 */
 		*probin_str_p = strVal(linitial(as));
 		if (list_length(as) == 1)
@@ -899,6 +956,20 @@ interpret_AS_clause(Oid languageOid, const char *languageName,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("only one AS item needed for language \"%s\"",
 							languageName)));
+
+		if (languageOid == INTERNALlanguageId)
+		{
+			/*
+			 * In PostgreSQL versions before 6.5, the SQL name of the created
+			 * function could not be different from the internal name, and
+			 * "prosrc" wasn't used.  So there is code out there that does
+			 * CREATE FUNCTION xyz AS '' LANGUAGE internal. To preserve some
+			 * modicum of backwards compatibility, accept an empty "prosrc"
+			 * value as meaning the supplied SQL function name.
+			 */
+			if (strlen(*prosrc_str_p) == 0)
+				*prosrc_str_p = funcname;
+		}
 	}
 
 	if (languageOid == INTERNALlanguageId)
@@ -1201,12 +1272,15 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 	if (prosrc_str == NULL)
 		prosrc_str = strdup("");
 
+<<<<<<< HEAD
 	/* Handle the describe callback, if any */
 	if (describeQualName != NIL)
 		describeFuncOid = validate_describe_callback(describeQualName,
 													 prorettype,
 													 parameterModes);
 
+=======
+>>>>>>> 49f001d81e
 	/*
 	 * Set default values for COST and ROWS depending on other parameters;
 	 * reject ROWS if it's not returnsSet.  NB: pg_dump knows these default
@@ -1956,10 +2030,10 @@ CreateCast(CreateCastStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				  errmsg("cast function must take one to three arguments")));
-		if (procstruct->proargtypes.values[0] != sourcetypeid)
+		if (!IsBinaryCoercible(sourcetypeid, procstruct->proargtypes.values[0]))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			errmsg("argument of cast function must match source data type")));
+			errmsg("argument of cast function must match or be binary-coercible from source data type")));
 		if (nargs > 1 && procstruct->proargtypes.values[1] != INT4OID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -1968,10 +2042,10 @@ CreateCast(CreateCastStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 			errmsg("third argument of cast function must be type boolean")));
-		if (procstruct->prorettype != targettypeid)
+		if (!IsBinaryCoercible(procstruct->prorettype, targettypeid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("return data type of cast function must match target data type")));
+					 errmsg("return data type of cast function must match or be binary-coercible to target data type")));
 
 		/*
 		 * Restricting the volatility of a cast function may or may not be a

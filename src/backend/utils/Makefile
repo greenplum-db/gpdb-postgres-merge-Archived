@@ -1,7 +1,7 @@
 #
 # Makefile for utils
 #
-# $PostgreSQL: pgsql/src/backend/utils/Makefile,v 1.27 2008/03/17 19:44:41 petere Exp $
+# $PostgreSQL: pgsql/src/backend/utils/Makefile,v 1.28 2008/08/01 13:16:09 alvherre Exp $
 #
 
 subdir = src/backend/utils
@@ -29,9 +29,18 @@ ifneq ($(enable_dtrace), yes)
 probes.h: Gen_dummy_probes.sed
 endif
 
+ifneq ($(enable_dtrace), yes)
+probes.h: Gen_dummy_probes.sed
+endif
+
 probes.h: probes.d
+<<<<<<< HEAD
 ifeq ($(enable_dtrace), xxxyes)
 	$(DTRACE) -C -s $< -o $@.tmp
+=======
+ifeq ($(enable_dtrace), yes)
+	$(DTRACE) -C -h -s $< -o $@.tmp
+>>>>>>> 49f001d81e
 	sed -e 's/POSTGRESQL_/TRACE_POSTGRESQL_/g' $@.tmp >$@
 	rm $@.tmp
 else

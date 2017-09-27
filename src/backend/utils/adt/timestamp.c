@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.187 2008/03/25 22:42:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.190 2008/07/07 18:09:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,24 @@
 
 /* Set at postmaster start */
 TimestampTz PgStartTime;
+/* Set at configuration reload */
+TimestampTz PgReloadTime;
+
+typedef struct
+{
+	Timestamp	current;
+	Timestamp	finish;
+	Interval	step;
+	int			step_sign;
+} generate_series_timestamp_fctx;
+
+typedef struct
+{
+	TimestampTz	current;
+	TimestampTz	finish;
+	Interval	step;
+	int			step_sign;
+} generate_series_timestamptz_fctx;
 
 /* Set at configuration reload */
 TimestampTz PgReloadTime;
@@ -1518,6 +1536,7 @@ clock_timestamp(PG_FUNCTION_ARGS)
 
 Datum
 pg_postmaster_start_time(PG_FUNCTION_ARGS)
+<<<<<<< HEAD
 {
 	PG_RETURN_TIMESTAMPTZ(PgStartTime);
 }
@@ -1525,6 +1544,8 @@ pg_postmaster_start_time(PG_FUNCTION_ARGS)
 /* Old version */
 Datum
 pgsql_postmaster_start_time(PG_FUNCTION_ARGS)
+=======
+>>>>>>> 49f001d81e
 {
 	PG_RETURN_TIMESTAMPTZ(PgStartTime);
 }
@@ -5137,7 +5158,11 @@ timestamp_zone(PG_FUNCTION_ARGS)
 		{
 			/* Apply the timezone change */
 			struct pg_tm tm;
+<<<<<<< HEAD
  			fsec_t		fsec = 0;
+=======
+			fsec_t		fsec;
+>>>>>>> 49f001d81e
 
 			if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, tzp) != 0)
 				ereport(ERROR,
@@ -5311,7 +5336,11 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 		{
 			/* Apply the timezone change */
 			struct pg_tm tm;
+<<<<<<< HEAD
  			fsec_t		fsec = 0;
+=======
+			fsec_t		fsec;
+>>>>>>> 49f001d81e
 
 			if (timestamp2tm(timestamp, &tz, &tm, &fsec, NULL, tzp) != 0)
 				ereport(ERROR,
@@ -5529,6 +5558,7 @@ generate_series_timestamptz(PG_FUNCTION_ARGS)
 		SRF_RETURN_DONE(funcctx);
 	}
 }
+<<<<<<< HEAD
 
 /* ----------------------------------------------------------------------
  *
@@ -5625,3 +5655,5 @@ interval_amalg_demalg(ArrayType  *aTransArray,
     return result;
 }
 
+=======
+>>>>>>> 49f001d81e

@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.43 2008/03/26 18:48:59 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.45 2008/07/11 02:10:13 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1057,16 +1057,18 @@ QEwriterSnapshotUpToDate(void)
  *
  * We also update the following backend-global variables:
  *		TransactionXmin: the oldest xmin of any snapshot in use in the
- *			current transaction (this is the same as MyProc->xmin).  This
- *			is just the xmin computed for the first, serializable snapshot.
+ *			current transaction (this is the same as MyProc->xmin).
  *		RecentXmin: the xmin computed for the most recent snapshot.  XIDs
  *			older than this are known not running any more.
  *		RecentGlobalXmin: the global xmin (oldest TransactionXmin across all
  *			running transactions, except those running LAZY VACUUM).  This is
  *			the same computation done by GetOldestXmin(true, true).
+ *
+ * Note: this function should probably not be called with an argument that's
+ * not statically allocated (see xip allocation below).
  */
 Snapshot
-GetSnapshotData(Snapshot snapshot, bool serializable)
+GetSnapshotData(Snapshot snapshot)
 {
 	ProcArrayStruct *arrayP = procArray;
 	TransactionId xmin;
@@ -1492,10 +1494,14 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 		}
 	}
 
+<<<<<<< HEAD
 	if (serializable)
 	{
 		/* Not that these values are not set atomically. However,
 		 * each of these assignments is itself assumed to be atomic. */
+=======
+	if (!TransactionIdIsValid(MyProc->xmin))
+>>>>>>> 49f001d81e
 		MyProc->xmin = TransactionXmin = xmin;
 	}
 	if (IsXactIsoLevelSerializable)
@@ -1529,6 +1535,7 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 	snapshot->curcid = GetCurrentCommandId(false);
 
 	/*
+<<<<<<< HEAD
 	 * MPP Addition. If we are the chief then we'll save our local snapshot
 	 * into the shared snapshot. Note: we need to use the shared local
 	 * snapshot for the "Local Implicit using Distributed Snapshot" case, too.
@@ -1545,6 +1552,14 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 	ereport((Debug_print_snapshot_dtm ? LOG : DEBUG5),
 			(errmsg("GetSnapshotData(): WRITER currentcommandid %d curcid %d segmatesync %d",
 					GetCurrentCommandId(false), snapshot->curcid, QEDtxContextInfo.segmateSync)));
+=======
+	 * This is a new snapshot, so set both refcounts are zero, and mark it
+	 * as not copied in persistent memory.
+	 */
+	snapshot->active_count = 0;
+	snapshot->regd_count = 0;
+	snapshot->copied = false;
+>>>>>>> 49f001d81e
 
 	return snapshot;
 }

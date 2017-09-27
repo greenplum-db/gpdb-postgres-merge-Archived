@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.88.2.1 2008/04/16 23:59:51 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.91 2008/06/19 00:46:03 alvherre Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +24,10 @@
 #include "access/genam.h"
 #include "access/nbtree.h"
 #include "access/reloptions.h"
+#include "access/relscan.h"
 #include "executor/execdebug.h"
 #include "miscadmin.h"
+#include "storage/bufmgr.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
 #include "utils/lsyscache.h"
@@ -1358,7 +1364,11 @@ _bt_end_vacuum(Relation rel)
  * _bt_end_vacuum wrapped as an on_shmem_exit callback function
  */
 void
+<<<<<<< HEAD
 _bt_end_vacuum_callback(int code __attribute__((unused)), Datum arg)
+=======
+_bt_end_vacuum_callback(int code, Datum arg)
+>>>>>>> 49f001d81e
 {
 	_bt_end_vacuum((Relation) DatumGetPointer(arg));
 }

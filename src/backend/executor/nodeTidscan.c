@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.58.2.1 2008/04/30 23:28:37 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.60 2008/05/12 00:00:49 alvherre Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -25,11 +29,13 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/sysattr.h"
 #include "catalog/pg_type.h"
 #include "cdb/cdbvars.h"
 #include "executor/execdebug.h"
 #include "executor/nodeTidscan.h"
 #include "optimizer/clauses.h"
+#include "storage/bufmgr.h"
 #include "utils/array.h"
 #include "parser/parsetree.h"
 

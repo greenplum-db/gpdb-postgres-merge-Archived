@@ -75,14 +75,17 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.160 2008/08/25 22:42:32 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.158 2008/05/12 00:00:49 alvherre Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"

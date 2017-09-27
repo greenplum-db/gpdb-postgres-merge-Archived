@@ -16,15 +16,24 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.84 2009/02/25 03:30:37 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.74 2008/05/12 00:00:49 alvherre Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+<<<<<<< HEAD
 #include "access/htup.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/walkers.h"
+=======
+#include "access/sysattr.h"
+#include "optimizer/clauses.h"
+>>>>>>> 49f001d81e
 #include "optimizer/prep.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"

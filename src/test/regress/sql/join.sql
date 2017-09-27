@@ -499,6 +499,7 @@ select a.unique2, a.ten, b.tenthous, b.unique2, b.hundred
 from tenk1 a left join tenk1 b on a.unique2 = b.tenthous
 where a.unique1 = 42 and
       ((b.unique2 is null and a.ten = 2) or b.hundred = 3);
+<<<<<<< HEAD
 
 --
 -- test for sane behavior with noncanonical merge clauses, per bug #4926
@@ -571,3 +572,5 @@ select * from
 where
   1 = (select 1 from int8_tbl t3 where ss.y is not null limit 1)
 order by 1,2;
+=======
+>>>>>>> 49f001d81e

@@ -8,25 +8,35 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.69.2.3 2008/10/22 12:54:25 teodor Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.74 2008/06/19 00:46:03 alvherre Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/gist_private.h"
+#include "access/relscan.h"
 #include "executor/execdebug.h"
 #include "miscadmin.h"    /* work_mem */
 #include "nodes/tidbitmap.h"
 #include "pgstat.h"
+#include "storage/bufmgr.h"
 #include "utils/memutils.h"
 
 
 static OffsetNumber gistfindnext(IndexScanDesc scan, OffsetNumber n,
 			 ScanDirection dir);
+<<<<<<< HEAD
 static int64 gistnext(IndexScanDesc scan, ScanDirection dir,
 					  ItemPointer tids, HashBitmap *tbm,
 					  bool ignore_killed_tuples);
+=======
+static int64 gistnext(IndexScanDesc scan, ScanDirection dir, TIDBitmap *tbm);
+>>>>>>> 49f001d81e
 static bool gistindex_keytest(IndexTuple tuple, IndexScanDesc scan,
 				  OffsetNumber offset);
 
@@ -86,7 +96,6 @@ gistgettuple(PG_FUNCTION_ARGS)
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanDirection dir = (ScanDirection) PG_GETARG_INT32(1);
 	GISTScanOpaque so;
-	ItemPointerData tid;
 	bool		res;
 
 	so = (GISTScanOpaque) scan->opaque;
@@ -99,11 +108,9 @@ gistgettuple(PG_FUNCTION_ARGS)
 		killtuple(scan->indexRelation, so, &(so->curpos));
 
 	/*
-	 * Get the next tuple that matches the search key. If asked to skip killed
-	 * tuples, continue looping until we find a non-killed tuple that matches
-	 * the search key.
+	 * Get the next tuple that matches the search key.
 	 */
-	res = (gistnext(scan, dir, &tid, NULL, scan->ignore_killed_tuples) > 0) ? true : false;
+	res = (gistnext(scan, dir, NULL) > 0);
 
 	PG_RETURN_BOOL(res);
 }
@@ -123,12 +130,13 @@ gistgetbitmap(PG_FUNCTION_ARGS)
 	else
 		tbm = (HashBitmap *) n;
 
-	ntids = gistnext(scan, ForwardScanDirection, NULL, tbm, false);
+	ntids = gistnext(scan, ForwardScanDirection, tbm);
 
 	PG_RETURN_POINTER(tbm);
 }
 
 /*
+<<<<<<< HEAD
  * Fetch a tuples that matchs the search key; this can be invoked
  * either to fetch the first such tuple or subsequent matching
  * tuples. Returns true iff a matching tuple was found.
@@ -137,6 +145,23 @@ static int64
 gistnext(IndexScanDesc scan, ScanDirection dir,
 		 ItemPointer tid, HashBitmap *tbm,
 		 bool ignore_killed_tuples)
+=======
+ * Fetch tuple(s) that match the search key; this can be invoked
+ * either to fetch the first such tuple or subsequent matching tuples.
+ *
+ * This function is used by both gistgettuple and gistgetbitmap. When
+ * invoked from gistgettuple, tbm is null and the next matching tuple
+ * is returned in scan->xs_ctup.t_self.  When invoked from getbitmap,
+ * tbm is non-null and all matching tuples are added to tbm before
+ * returning.  In both cases, the function result is the number of
+ * returned tuples.
+ *
+ * If scan specifies to skip killed tuples, continue looping until we find a
+ * non-killed tuple that matches the search key.
+ */
+static int64
+gistnext(IndexScanDesc scan, ScanDirection dir, TIDBitmap *tbm)
+>>>>>>> 49f001d81e
 {
 	MIRROREDLOCK_BUFMGR_DECLARE;
 
@@ -252,8 +277,16 @@ gistnext(IndexScanDesc scan, ScanDirection dir,
 		p = BufferGetPage(so->curbuf);
 		opaque = GistPageGetOpaque(p);
 
+<<<<<<< HEAD
 		/* remember lsn to identify page changed for tuple's killing */
 		so->stack->lsn = BufferGetLSNAtomic(so->curbuf);
+=======
+		if (XLogRecPtrIsInvalid(so->stack->lsn) || !XLByteEQ(so->stack->lsn, PageGetLSN(p)))
+		{
+			/* first visit or page changed from last visit, reset offset */
+			so->stack->lsn = PageGetLSN(p);
+			resetoffset = true;
+>>>>>>> 49f001d81e
 
 		/* check page split, occured from last visit or visit to parent */
 		if (!XLogRecPtrIsInvalid(so->stack->parentlsn) &&
@@ -368,17 +401,29 @@ gistnext(IndexScanDesc scan, ScanDirection dir,
 				 * we can efficiently resume the index scan later.
 				 */
 
-				if (!(ignore_killed_tuples && ItemIdIsDead(PageGetItemId(p, n))))
+				if (!(scan->ignore_killed_tuples &&
+					  ItemIdIsDead(PageGetItemId(p, n))))
 				{
 					it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
 					ntids++;
 					if (tbm != NULL)
+<<<<<<< HEAD
 						tbm_add_tuples(tbm, &it->t_tid, 1, false);
 					else
 					{
 						so->pageData[ so->nPageData ].heapPtr = it->t_tid;
 						so->pageData[ so->nPageData ].pageOffset = n;
 						so->nPageData ++;
+=======
+						tbm_add_tuples(tbm, &it->t_tid, 1, scan->xs_recheck);
+					else 
+					{
+						scan->xs_ctup.t_self = it->t_tid;
+						/* scan->xs_recheck is already set */
+
+						LockBuffer(so->curbuf, GIST_UNLOCK);
+						return ntids; /* always 1 */
+>>>>>>> 49f001d81e
 					}
 				}
 			}
@@ -415,6 +460,10 @@ gistnext(IndexScanDesc scan, ScanDirection dir,
 /*
  * gistindex_keytest() -- does this index tuple satisfy the scan key(s)?
  *
+ * On success return for a leaf tuple, scan->xs_recheck is set to indicate
+ * whether recheck is needed.  We recheck if any of the consistent() functions
+ * request it.
+ *
  * We must decompress the key in the IndexTuple before passing it to the
  * sk_func (and we have previously overwritten the sk_func to use the
  * user-defined Consistent method, so we actually are invoking that).
@@ -439,6 +488,13 @@ gistindex_keytest(IndexTuple tuple,
 	giststate = so->giststate;
 	p = BufferGetPage(so->curbuf);
 
+<<<<<<< HEAD
+=======
+	IncrIndexProcessed();
+
+	scan->xs_recheck = false;
+
+>>>>>>> 49f001d81e
 	/*
 	 * Tuple doesn't restore after crash recovery because of incomplete insert
 	 */
@@ -450,6 +506,7 @@ gistindex_keytest(IndexTuple tuple,
 		Datum		datum;
 		bool		isNull;
 		Datum		test;
+		bool		recheck;
 		GISTENTRY	de;
 
 		datum = index_getattr(tuple,
@@ -476,7 +533,6 @@ gistindex_keytest(IndexTuple tuple,
 		}
 		else
 		{
-
 			gistdentryinit(giststate, key->sk_attno - 1, &de,
 						   datum, r, p, offset,
 						   FALSE, isNull);
@@ -484,21 +540,28 @@ gistindex_keytest(IndexTuple tuple,
 			/*
 			 * Call the Consistent function to evaluate the test.  The
 			 * arguments are the index datum (as a GISTENTRY*), the comparison
-			 * datum, and the comparison operator's strategy number and
-			 * subtype from pg_amop.
+			 * datum, the comparison operator's strategy number and
+			 * subtype from pg_amop, and the recheck flag.
 			 *
 			 * (Presently there's no need to pass the subtype since it'll
 			 * always be zero, but might as well pass it for possible future
 			 * use.)
+			 *
+			 * We initialize the recheck flag to true (the safest assumption)
+			 * in case the Consistent function forgets to set it.
 			 */
-			test = FunctionCall4(&key->sk_func,
+			recheck = true;
+
+			test = FunctionCall5(&key->sk_func,
 								 PointerGetDatum(&de),
 								 key->sk_argument,
 								 Int32GetDatum(key->sk_strategy),
-								 ObjectIdGetDatum(key->sk_subtype));
+								 ObjectIdGetDatum(key->sk_subtype),
+								 PointerGetDatum(&recheck));
 
 			if (!DatumGetBool(test))
 				return false;
+			scan->xs_recheck |= recheck;
 		}
 
 		keySize--;
@@ -512,6 +575,7 @@ gistindex_keytest(IndexTuple tuple,
  * Return the offset of the first index entry that is consistent with
  * the search key after offset 'n' in the current page. If there are
  * no more consistent entries, return InvalidOffsetNumber.
+ * On success, scan->xs_recheck is set correctly, too.
  * Page should be locked....
  */
 static OffsetNumber

@@ -10,7 +10,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.303 2008/08/25 22:42:32 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.300 2008/06/19 00:46:04 alvherre Exp $
+>>>>>>> 49f001d81e
  *
  *
  * INTERFACE ROUTINES
@@ -27,6 +31,8 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/relscan.h"
+#include "access/sysattr.h"
 #include "access/transam.h"
 #include "access/xact.h"
 #include "bootstrap/bootstrap.h"
@@ -51,6 +57,12 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
+<<<<<<< HEAD
+=======
+#include "parser/parse_expr.h"
+#include "storage/bufmgr.h"
+#include "storage/lmgr.h"
+>>>>>>> 49f001d81e
 #include "storage/procarray.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
@@ -847,7 +859,9 @@ index_create(Oid heapRelationId,
 										   InvalidOid,	/* no associated index */
 										   NULL,		/* no check constraint */
 										   NULL,
-										   NULL);
+										   NULL,
+										   true, /* islocal */
+										   0); /* inhcount */
 
 			referenced.classId = ConstraintRelationId;
 			referenced.objectId = conOid;
@@ -1794,7 +1808,7 @@ IndexBuildScan(Relation parentRelation,
 			 RelationIsAoRows(parentRelation) ||
 			 RelationIsAoCols(parentRelation))
 	{
-		snapshot = CopySnapshot(GetTransactionSnapshot());
+		snapshot = RegisterSnapshot(GetTransactionSnapshot());
 		OldestXmin = InvalidTransactionId;		/* not used */
 	}
 	else
@@ -1804,6 +1818,7 @@ IndexBuildScan(Relation parentRelation,
 		OldestXmin = GetOldestXmin(parentRelation->rd_rel->relisshared, true);
 	}
 
+<<<<<<< HEAD
 	if (RelationIsHeap(parentRelation))
 		reltuples = IndexBuildHeapScan(parentRelation,
 									   indexRelation,
@@ -1905,6 +1920,9 @@ IndexBuildHeapScan(Relation heapRelation,
 								NULL,			/* scan key */
 								true,			/* buffer access strategy OK */
 								allow_sync);	/* syncscan OK? */
+=======
+	scan = heap_beginscan(heapRelation, snapshot, 0, NULL);
+>>>>>>> 49f001d81e
 
 	reltuples = 0;
 
@@ -2194,6 +2212,7 @@ IndexBuildHeapScan(Relation heapRelation,
 
 	heap_endscan(scan);
 
+<<<<<<< HEAD
 	return reltuples;
 }
 
@@ -2255,6 +2274,13 @@ IndexBuildAppendOnlyRowScan(Relation parentRelation,
 	while (appendonly_getnext(aoscan, ForwardScanDirection, slot) != NULL)
 	{
 		CHECK_FOR_INTERRUPTS();
+=======
+	/* we can now forget our snapshot, if set */
+	if (indexInfo->ii_Concurrent)
+		UnregisterSnapshot(snapshot);
+
+	ExecDropSingleTupleTableSlot(slot);
+>>>>>>> 49f001d81e
 
 		reltuples++;
 

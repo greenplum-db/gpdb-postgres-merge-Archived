@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.127 2008/03/25 22:42:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.129 2008/05/27 00:13:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -589,7 +589,11 @@ varchar(PG_FUNCTION_ARGS)
 							 maxlen)));
 	}
 
+<<<<<<< HEAD
 	PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text_with_len(s_data,
+=======
+	PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text_with_len(s_data, 
+>>>>>>> 49f001d81e
 															 maxmblen));
 }
 
@@ -895,11 +899,16 @@ internal_bpchar_pattern_compare(BpChar *arg1, BpChar *arg2)
 	int			len1,
 				len2;
 
+<<<<<<< HEAD
 	len1 = VARSIZE_ANY_EXHDR(arg1);
 	len2 = VARSIZE_ANY_EXHDR(arg2);
 
 	//len1 = bcTruelen(arg1);
 	//len2 = bcTruelen(arg2);
+=======
+	len1 = bcTruelen(arg1);
+	len2 = bcTruelen(arg2);
+>>>>>>> 49f001d81e
 
 	result = strncmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
 	if (result != 0)

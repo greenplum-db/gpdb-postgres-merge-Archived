@@ -1,5 +1,12 @@
 /*
+<<<<<<< HEAD:contrib/xlogviewer/xlogviewer.h
  * xlogviewer.h
+=======
+ * $PostgreSQL: pgsql/contrib/tablefunc/tablefunc.h,v 1.14 2008/05/17 01:28:22 adunstan Exp $ 
+ *
+ *
+ * tablefunc
+>>>>>>> 49f001d81e:contrib/tablefunc/tablefunc.h
  *
  *
  *

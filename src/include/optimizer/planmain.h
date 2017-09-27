@@ -9,7 +9,11 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.113 2008/10/04 21:56:55 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.108 2008/05/02 21:26:10 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +71,10 @@ typedef struct GroupContext
 	List **pcurrent_pathkeys;
 	bool *querynode_changed;
 } GroupContext;
+
+/* GUC parameters */
+#define DEFAULT_CURSOR_TUPLE_FRACTION 0.1
+extern double cursor_tuple_fraction;
 
 /*
  * prototypes for plan/planmain.c
@@ -152,6 +160,7 @@ extern List *reconstruct_group_clause(List *orig_groupClause, List *tlist,
 extern Motion *make_motion(PlannerInfo *root, Plan *lefttree, List *sortPathKeys, bool useExecutorVarFormat);
 
 extern Agg *make_agg(PlannerInfo *root, List *tlist, List *qual,
+<<<<<<< HEAD
 					 AggStrategy aggstrategy, bool streaming,
 					 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
 					 long numGroups, int numNullCols,
@@ -184,6 +193,17 @@ extern WindowAgg *make_windowagg(PlannerInfo *root, List *tlist,
 			   Plan *lefttree);
 extern Material *make_material(Plan *lefttree);
 extern Plan *materialize_finished_plan(PlannerInfo *root, Plan *subplan);
+=======
+		 AggStrategy aggstrategy,
+		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
+		 long numGroups, int numAggs,
+		 Plan *lefttree);
+extern Group *make_group(PlannerInfo *root, List *tlist, List *qual,
+		   int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
+		   double numGroups,
+		   Plan *lefttree);
+extern Plan *materialize_finished_plan(Plan *subplan);
+>>>>>>> 49f001d81e
 extern Unique *make_unique(Plan *lefttree, List *distinctList);
 extern Limit *make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount,
 		   int64 offset_est, int64 count_est);

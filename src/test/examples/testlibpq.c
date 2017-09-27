@@ -1,5 +1,9 @@
 /*
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/test/examples/testlibpq.c,v 1.18 2009/06/11 14:49:15 momjian Exp $
+=======
+ * $PostgreSQL: pgsql/src/test/examples/testlibpq.c,v 1.17 2008/05/17 01:28:25 adunstan Exp $ 
+>>>>>>> 49f001d81e
  *
  *
  * testlibpq.c

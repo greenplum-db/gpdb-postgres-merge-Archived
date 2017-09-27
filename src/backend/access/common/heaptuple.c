@@ -52,7 +52,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.120.2.1 2009/03/30 04:09:09 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.122 2008/05/12 00:00:43 alvherre Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +65,10 @@
 
 #include "access/heapam.h"
 #include "access/sysattr.h"
+<<<<<<< HEAD
 #include "access/transam.h"
+=======
+>>>>>>> 49f001d81e
 #include "access/tuptoaster.h"
 #include "executor/tuptable.h"
 
@@ -856,7 +863,23 @@ heap_formtuple(TupleDesc tupleDescriptor,
 	int			i;
 
 	for (i = 0; i < numberOfAttributes; i++)
+<<<<<<< HEAD
 		boolNulls[i] = (nulls[i] == 'n');
+=======
+	{
+		if (nulls[i] != ' ')
+			hasnull = true;
+		else if (att[i]->attlen == -1 &&
+				 att[i]->attalign == 'd' &&
+				 att[i]->attndims == 0 &&
+				 !VARATT_IS_EXTENDED(DatumGetPointer(values[i])))
+		{
+			values[i] = toast_flatten_tuple_attribute(values[i],
+													  att[i]->atttypid,
+													  att[i]->atttypmod);
+		}
+	}
+>>>>>>> 49f001d81e
 
 	tuple = heap_form_tuple(tupleDescriptor, values, boolNulls);
 

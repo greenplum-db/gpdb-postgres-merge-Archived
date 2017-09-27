@@ -14,20 +14,32 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.27.2.1 2009/12/03 11:03:44 heikki Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.29 2008/06/19 00:46:05 alvherre Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/hash.h"
+<<<<<<< HEAD
 #include "cdb/cdbvars.h"
+=======
+#include "storage/bufmgr.h"
+>>>>>>> 49f001d81e
 #include "storage/proc.h"
 #include "utils/memutils.h"
+#include "utils/rel.h"
 #include "utils/resowner.h"
+<<<<<<< HEAD
 #include "utils/relcache.h"
 #include "executor/execdesc.h"
 #include "utils/resource_manager.h"
+=======
+>>>>>>> 49f001d81e
 
 /*
  * To speed up bulk releasing or reassigning locks from a resource owner to

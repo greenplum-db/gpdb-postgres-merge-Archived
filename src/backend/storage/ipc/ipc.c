@@ -13,7 +13,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.105 2009/06/11 14:49:01 momjian Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.101 2008/04/16 23:59:40 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -353,6 +357,24 @@ on_shmem_exit(pg_on_exit_callback function, Datum arg)
 #endif
 		atexit_callback_setup = true;
 	}
+}
+
+/* ----------------------------------------------------------------
+ *		cancel_shmem_exit
+ *
+ *		this function removes an entry, if present, from the list of
+ *		functions to be invoked by shmem_exit().  For simplicity,
+ *		only the latest entry can be removed.  (We could work harder
+ *		but there is no need for current uses.)
+ * ----------------------------------------------------------------
+ */
+void
+cancel_shmem_exit(pg_on_exit_callback function, Datum arg)
+{
+	if (on_shmem_exit_index > 0 &&
+		on_shmem_exit_list[on_shmem_exit_index - 1].function == function &&
+		on_shmem_exit_list[on_shmem_exit_index - 1].arg == arg)
+		--on_shmem_exit_index;
 }
 
 /* ----------------------------------------------------------------

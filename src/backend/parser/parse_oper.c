@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.104 2008/08/25 22:42:33 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.102 2008/04/22 01:34:34 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -75,9 +79,6 @@ static const char *op_signature_string(List *op, char oprkind,
 static void op_error(ParseState *pstate, List *op, char oprkind,
 		 Oid arg1, Oid arg2,
 		 FuncDetailCode fdresult, int location);
-static Expr *make_op_expr(ParseState *pstate, Operator op,
-			 Node *ltree, Node *rtree,
-			 Oid ltypeId, Oid rtypeId);
 static bool make_oper_cache_key(OprCacheKey *key, List *opname,
 								Oid ltypeId, Oid rtypeId);
 static Oid	find_oper_cache_entry(OprCacheKey *key);
@@ -929,7 +930,13 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 	Oid			ltypeId,
 				rtypeId;
 	Operator	tup;
-	Expr	   *result;
+	Form_pg_operator opform;
+	Oid			actual_arg_types[2];
+	Oid			declared_arg_types[2];
+	int			nargs;
+	List	   *args;
+	Oid			rettype;
+	OpExpr	   *result;
 
 	/* Select the operator */
 	if (rtree == NULL)
@@ -954,13 +961,77 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 		tup = oper(pstate, opname, ltypeId, rtypeId, false, location);
 	}
 
+	opform = (Form_pg_operator) GETSTRUCT(tup);
+
+	/* Check it's not a shell */
+	if (!RegProcedureIsValid(opform->oprcode))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("operator is only a shell: %s",
+						op_signature_string(opname,
+											opform->oprkind,
+											opform->oprleft,
+											opform->oprright)),
+				 parser_errposition(pstate, location)));
+
 	/* Do typecasting and build the expression tree */
+<<<<<<< HEAD
 	result = make_op_expr(pstate, tup, ltree, rtree, ltypeId, rtypeId);
 	((OpExpr *) result)->location = location;
+=======
+	if (rtree == NULL)
+	{
+		/* right operator */
+		args = list_make1(ltree);
+		actual_arg_types[0] = ltypeId;
+		declared_arg_types[0] = opform->oprleft;
+		nargs = 1;
+	}
+	else if (ltree == NULL)
+	{
+		/* left operator */
+		args = list_make1(rtree);
+		actual_arg_types[0] = rtypeId;
+		declared_arg_types[0] = opform->oprright;
+		nargs = 1;
+	}
+	else
+	{
+		/* otherwise, binary operator */
+		args = list_make2(ltree, rtree);
+		actual_arg_types[0] = ltypeId;
+		actual_arg_types[1] = rtypeId;
+		declared_arg_types[0] = opform->oprleft;
+		declared_arg_types[1] = opform->oprright;
+		nargs = 2;
+	}
+
+	/*
+	 * enforce consistency with polymorphic argument and return types,
+	 * possibly adjusting return type or declared_arg_types (which will be
+	 * used as the cast destination by make_fn_arguments)
+	 */
+	rettype = enforce_generic_type_consistency(actual_arg_types,
+											   declared_arg_types,
+											   nargs,
+											   opform->oprresult,
+											   false);
+
+	/* perform the necessary typecasting of arguments */
+	make_fn_arguments(pstate, args, actual_arg_types, declared_arg_types);
+
+	/* and build the expression node */
+	result = makeNode(OpExpr);
+	result->opno = oprid(tup);
+	result->opfuncid = opform->oprcode;
+	result->opresulttype = rettype;
+	result->opretset = get_func_retset(opform->oprcode);
+	result->args = args;
+>>>>>>> 49f001d81e
 
 	ReleaseSysCache(tup);
 
-	return result;
+	return (Expr *) result;
 }
 
 /*
@@ -1008,6 +1079,17 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	/* Now resolve the operator */
 	tup = oper(pstate, opname, ltypeId, rtypeId, false, location);
 	opform = (Form_pg_operator) GETSTRUCT(tup);
+
+	/* Check it's not a shell */
+	if (!RegProcedureIsValid(opform->oprcode))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("operator is only a shell: %s",
+						op_signature_string(opname,
+											opform->oprkind,
+											opform->oprleft,
+											opform->oprright)),
+				 parser_errposition(pstate, location)));
 
 	args = list_make2(ltree, rtree);
 	actual_arg_types[0] = ltypeId;
@@ -1082,6 +1164,7 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	return (Expr *) result;
 }
 
+<<<<<<< HEAD
 /*
  * make_op_expr()
  *		Build operator expression using an already-looked-up operator.
@@ -1157,6 +1240,8 @@ make_op_expr(ParseState *pstate, Operator op,
 	return (Expr *) result;
 }
 
+=======
+>>>>>>> 49f001d81e
 
 /*
  * Lookaside cache to speed operator lookup.  Possibly this should be in

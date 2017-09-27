@@ -39,7 +39,11 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.78.2.1 2010/07/05 09:27:31 heikki Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.79 2008/07/18 20:26:06 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -134,7 +138,11 @@ typedef struct PortalData
 	Oid			queueId;		/* Oid of queue locking this portal */
 
 	/* The query or queries the portal will execute */
+<<<<<<< HEAD
 	const char *sourceText;		/* text of query (as of PlannedStmt, never NULL) */
+=======
+	const char *sourceText;		/* text of query (as of 8.4, never NULL) */
+>>>>>>> 49f001d81e
 	const char *commandTag;		/* command tag for original query */
 	List	   *stmts;			/* PlannedStmts and/or utility statements */
 	CachedPlan *cplan;			/* CachedPlan, if stmts are from one */

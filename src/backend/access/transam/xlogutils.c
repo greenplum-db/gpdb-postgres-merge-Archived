@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.51 2008/01/01 19:45:48 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.57 2008/07/13 20:45:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,9 +24,10 @@
 #include <unistd.h>
 
 #include "access/xlogutils.h"
-#include "storage/bufpage.h"
+#include "storage/bufmgr.h"
 #include "storage/smgr.h"
 #include "utils/hsearch.h"
+#include "utils/rel.h"
 
 #include "cdb/cdbpersistentrecovery.h"
 #include "cdb/cdbpersistenttablespace.h"
@@ -264,6 +265,9 @@ XLogCheckInvalidPages(void)
 
 	if (foundone)
 		elog(PANIC, "WAL contains references to invalid pages");
+
+	hash_destroy(invalid_page_tab);
+	invalid_page_tab = NULL;
 }
 
 
@@ -292,29 +296,42 @@ XLogCheckInvalidPages(void)
  * at the end of WAL replay.)
  */
 Buffer
-XLogReadBuffer(Relation reln, BlockNumber blkno, bool init)
+XLogReadBuffer(RelFileNode rnode, BlockNumber blkno, bool init)
 {
-	BlockNumber lastblock = RelationGetNumberOfBlocks(reln);
+	BlockNumber lastblock;
 	Buffer		buffer;
+	SMgrRelation smgr;
 
 	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
 
 	Assert(blkno != P_NEW);
 
+	/* Open the relation at smgr level */
+	smgr = smgropen(rnode);
+
+	/*
+	 * Create the target file if it doesn't already exist.  This lets us cope
+	 * if the replay sequence contains writes to a relation that is later
+	 * deleted.  (The original coding of this routine would instead suppress
+	 * the writes, but that seems like it risks losing valuable data if the
+	 * filesystem loses an inode during a crash.  Better to write the data
+	 * until we are actually told to delete the file.)
+	 */
+	smgrcreate(smgr, false, true);
+
+	lastblock = smgrnblocks(smgr);
+
 	if (blkno < lastblock)
 	{
 		/* page exists in file */
-		if (init)
-			buffer = ReadOrZeroBuffer(reln, blkno);
-		else
-			buffer = ReadBuffer(reln, blkno);
+		buffer = ReadBufferWithoutRelcache(rnode, false, blkno, init);
 	}
 	else
 	{
 		/* hm, page doesn't exist in file */
 		if (!init)
 		{
-			log_invalid_page(reln->rd_node, blkno, false);
+			log_invalid_page(rnode, blkno, false);
 			return InvalidBuffer;
 		}
 		/* OK to extend the file */
@@ -325,7 +342,7 @@ XLogReadBuffer(Relation reln, BlockNumber blkno, bool init)
 		{
 			if (buffer != InvalidBuffer)
 				ReleaseBuffer(buffer);
-			buffer = ReadBuffer(reln, P_NEW);
+			buffer = ReadBufferWithoutRelcache(rnode, false, P_NEW, false);
 			lastblock++;
 		}
 		Assert(BufferGetBlockNumber(buffer) == blkno);
@@ -338,10 +355,10 @@ XLogReadBuffer(Relation reln, BlockNumber blkno, bool init)
 		/* check that page has been initialized */
 		Page		page = (Page) BufferGetPage(buffer);
 
-		if (PageIsNew((PageHeader) page))
+		if (PageIsNew(page))
 		{
 			UnlockReleaseBuffer(buffer);
-			log_invalid_page(reln->rd_node, blkno, true);
+			log_invalid_page(rnode, blkno, true);
 			return InvalidBuffer;
 		}
 	}
@@ -365,19 +382,12 @@ XLogAOSegmentFile(RelFileNode rnode, int32 segmentFileNum)
 #endif
 
 /*
- * Lightweight "Relation" cache --- this substitutes for the normal relcache
- * during XLOG replay.
+ * Struct actually returned by XLogFakeRelcacheEntry, though the declared
+ * return type is Relation.
  */
-
-typedef struct XLogRelDesc
+typedef struct
 {
-	RelationData reldata;
-	struct XLogRelDesc *lessRecently;
-	struct XLogRelDesc *moreRecently;
-} XLogRelDesc;
-
-typedef struct XLogRelCacheEntry
-{
+<<<<<<< HEAD
 	RelFileNode rnode;
 	XLogRelDesc *rdesc;
 } XLogRelCacheEntry;
@@ -486,19 +496,30 @@ XLogCloseRelationCache(void)
 
 	free(_xlrelarr);
 	free(_xlpgcarr);
+=======
+	RelationData		reldata;	/* Note: this must be first */
+	FormData_pg_class	pgc;
+} FakeRelCacheEntryData;
+>>>>>>> 49f001d81e
 
-	_xlrelarr = NULL;
-}
+typedef FakeRelCacheEntryData *FakeRelCacheEntry;
 
 /*
- * Open a relation during XLOG replay
+ * Create a fake relation cache entry for a physical relation
  *
- * Note: this once had an API that allowed NULL return on failure, but it
- * no longer does; any failure results in elog().
+ * It's often convenient to use the same functions in XLOG replay as in the
+ * main codepath, but those functions typically work with a relcache entry. 
+ * We don't have a working relation cache during XLOG replay, but this 
+ * function can be used to create a fake relcache entry instead. Only the 
+ * fields related to physical storage, like rd_rel, are initialized, so the 
+ * fake entry is only usable in low-level operations like ReadBuffer().
+ *
+ * Caller must free the returned entry with FreeFakeRelcacheEntry().
  */
 Relation
-XLogOpenRelation(RelFileNode rnode)
+CreateFakeRelcacheEntry(RelFileNode rnode)
 {
+<<<<<<< HEAD
 	XLogRelDesc *res;
 	XLogRelCacheEntry *hentry;
 	bool		found;
@@ -673,34 +694,57 @@ XLogOpenRelation(RelFileNode rnode)
 	Assert(&(res->reldata) != NULL);	// Assert what it says in the interface -- we don't return NULL anymore.
 
 	return &(res->reldata);
+=======
+	FakeRelCacheEntry fakeentry;
+	Relation rel;
+
+	/* Allocate the Relation struct and all related space in one block. */
+	fakeentry = palloc0(sizeof(FakeRelCacheEntryData));
+	rel = (Relation) fakeentry;
+
+	rel->rd_rel = &fakeentry->pgc;
+	rel->rd_node = rnode;
+
+	/* We don't know the name of the relation; use relfilenode instead */
+	sprintf(RelationGetRelationName(rel), "%u", rnode.relNode);
+
+	/*
+	 * We set up the lockRelId in case anything tries to lock the dummy
+	 * relation.  Note that this is fairly bogus since relNode may be
+	 * different from the relation's OID.  It shouldn't really matter
+	 * though, since we are presumably running by ourselves and can't have
+	 * any lock conflicts ...
+	 */
+	rel->rd_lockInfo.lockRelId.dbId = rnode.dbNode;
+	rel->rd_lockInfo.lockRelId.relId = rnode.relNode;
+
+	rel->rd_targblock = InvalidBlockNumber;
+	rel->rd_smgr = NULL;
+
+	return rel;
+}
+
+/*
+ * Free a fake relation cache entry.
+ */
+void
+FreeFakeRelcacheEntry(Relation fakerel)
+{
+	pfree(fakerel);
+>>>>>>> 49f001d81e
 }
 
 /*
  * Drop a relation during XLOG replay
  *
- * This is called when the relation is about to be deleted; we need to ensure
- * that there is no dangling smgr reference in the xlog relation cache.
- *
- * Currently, we don't bother to physically remove the relation from the
- * cache, we just let it age out normally.
- *
- * This also takes care of removing any open "invalid-page" records for
- * the relation.
+ * This is called when the relation is about to be deleted; we need to remove
+ * any open "invalid-page" records for the relation.
  */
 void
 XLogDropRelation(RelFileNode rnode)
 {
-	XLogRelCacheEntry *hentry;
-
-	hentry = (XLogRelCacheEntry *)
-		hash_search(_xlrelcache, (void *) &rnode, HASH_FIND, NULL);
-
-	if (hentry)
-	{
-		XLogRelDesc *rdesc = hentry->rdesc;
-
-		RelationCloseSmgr(&(rdesc->reldata));
-	}
+	/* Tell smgr to forget about this relation as well */
+	smgrclosenode(rnode);
 
 	forget_invalid_pages(rnode, 0);
 }
@@ -722,6 +766,7 @@ XLogAODropSegmentFile(RelFileNode rnode, int32 segmentFileNum)
 void
 XLogDropDatabase(Oid tblspc, Oid dbid)
 {
+<<<<<<< HEAD
 	HASH_SEQ_STATUS status;
 	XLogRelCacheEntry *hentry;
 
@@ -737,6 +782,16 @@ XLogDropDatabase(Oid tblspc, Oid dbid)
 				RelationCloseSmgr(&(rdesc->reldata));
 		}
 	}
+=======
+	/*
+	 * This is unnecessarily heavy-handed, as it will close SMgrRelation
+	 * objects for other databases as well. DROP DATABASE occurs seldom
+	 * enough that it's not worth introducing a variant of smgrclose for
+	 * just this purpose. XXX: Or should we rather leave the smgr entries
+	 * dangling?
+	 */
+	smgrcloseall();
+>>>>>>> 49f001d81e
 
 	forget_invalid_pages_db(tblspc, dbid);
 }
@@ -744,8 +799,7 @@ XLogDropDatabase(Oid tblspc, Oid dbid)
 /*
  * Truncate a relation during XLOG replay
  *
- * We don't need to do anything to the fake relcache, but we do need to
- * clean up any open "invalid-page" records for the dropped pages.
+ * We need to clean up any open "invalid-page" records for the dropped pages.
  */
 void
 XLogTruncateRelation(RelFileNode rnode, BlockNumber nblocks)

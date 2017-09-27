@@ -13,13 +13,12 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.109 2008/04/02 18:31:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.111 2008/07/18 20:26:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/xact.h"
 #include "catalog/pg_type.h"
 #include "commands/portalcmds.h"
@@ -289,12 +288,20 @@ CreateNewPortal(void)
  * PortalDefineQuery
  *		A simple subroutine to establish a portal's query.
  *
+<<<<<<< HEAD
  * Notes: as of PG 8.4 (this part backported to GPDB already), caller MUST supply a sourceText string; it is not
+=======
+ * Notes: as of PG 8.4, caller MUST supply a sourceText string; it is not
+>>>>>>> 49f001d81e
  * allowed anymore to pass NULL.  (If you really don't have source text,
  * you can pass a constant string, perhaps "(query not available)".)
  *
  * commandTag shall be NULL if and only if the original query string
+<<<<<<< HEAD
  * (before rewriting) was an empty string.  Also, the passed commandTag must
+=======
+ * (before rewriting) was an empty string.	Also, the passed commandTag must
+>>>>>>> 49f001d81e
  * be a pointer to a constant string, since it is not copied.
  *
  * If cplan is provided, then it is a cached plan containing the stmts,
@@ -306,7 +313,7 @@ CreateNewPortal(void)
  * copying them into the portal's heap context.
  *
  * The caller is also responsible for ensuring that the passed prepStmtName
- * and sourceText (if not NULL) have adequate lifetime.
+ * (if not NULL) and sourceText have adequate lifetime.
  *
  * NB: this function mustn't do much beyond storing the passed values; in
  * particular don't do anything that risks elog(ERROR).  If that were to
@@ -1103,10 +1110,7 @@ pg_cursor(PG_FUNCTION_ARGS)
 		MemSet(nulls, 0, sizeof(nulls));
 
 		values[0] = CStringGetTextDatum(portal->name);
-		if (!portal->sourceText)
-			nulls[1] = true;
-		else
-			values[1] = CStringGetTextDatum(portal->sourceText);
+		values[1] = CStringGetTextDatum(portal->sourceText);
 		values[2] = BoolGetDatum(portal->cursorOptions & CURSOR_OPT_HOLD);
 		values[3] = BoolGetDatum(portal->cursorOptions & CURSOR_OPT_BINARY);
 		values[4] = BoolGetDatum(portal->cursorOptions & CURSOR_OPT_SCROLL);

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.76 2008/01/01 19:45:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.77 2008/04/11 22:54:23 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -1043,6 +1043,10 @@ AllocSetAllocImpl(MemoryContext context, Size size, bool isHeader)
 		/* fill the allocated space with junk */
 		randomize_mem((char *) AllocChunkGetPointer(chunk), size);
 #endif
+#ifdef RANDOMIZE_ALLOCATED_MEMORY
+		/* fill the allocated space with junk */
+		randomize_mem((char *) AllocChunkGetPointer(chunk), size);
+#endif
 
 		/*
 		 * Stick the new block underneath the active allocation block, so that
@@ -1095,6 +1099,10 @@ AllocSetAllocImpl(MemoryContext context, Size size, bool isHeader)
 		{
 			((char *) AllocChunkGetPointer(chunk))[size] = 0x7E;
 		}
+#endif
+#ifdef RANDOMIZE_ALLOCATED_MEMORY
+		/* fill the allocated space with junk */
+		randomize_mem((char *) AllocChunkGetPointer(chunk), size);
 #endif
 #ifdef RANDOMIZE_ALLOCATED_MEMORY
 		/* fill the allocated space with junk */
@@ -1253,6 +1261,10 @@ AllocSetAllocImpl(MemoryContext context, Size size, bool isHeader)
 	{
 		((char *) AllocChunkGetPointer(chunk))[size] = 0x7E;
 	}
+#endif
+#ifdef RANDOMIZE_ALLOCATED_MEMORY
+	/* fill the allocated space with junk */
+	randomize_mem((char *) AllocChunkGetPointer(chunk), size);
 #endif
 #ifdef RANDOMIZE_ALLOCATED_MEMORY
 	/* fill the allocated space with junk */
@@ -1465,10 +1477,15 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 #ifdef RANDOMIZE_ALLOCATED_MEMORY
 		/* We can only fill the extra space if we know the prior request */
 		if (size > chunk->requested_size)
+<<<<<<< HEAD
 		{
 			randomize_mem((char *) AllocChunkGetPointer(chunk) + chunk->requested_size,
 						  size - chunk->requested_size);
 		}
+=======
+			randomize_mem((char *) AllocChunkGetPointer(chunk) + chunk->requested_size,
+						  size - chunk->requested_size);
+>>>>>>> 49f001d81e
 #endif
 
 		chunk->requested_size = size;

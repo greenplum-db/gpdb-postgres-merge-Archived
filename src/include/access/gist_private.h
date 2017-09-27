@@ -7,7 +7,11 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.28.2.3 2008/10/22 12:54:25 teodor Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.31 2008/06/19 00:46:05 alvherre Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -16,9 +20,7 @@
 
 #include "access/gist.h"
 #include "access/itup.h"
-#include "access/xlog.h"
-#include "access/xlogdefs.h"
-#include "fmgr.h"
+#include "storage/bufmgr.h"
 
 #define GIST_UNLOCK BUFFER_LOCK_UNLOCK
 #define GIST_SHARE	BUFFER_LOCK_SHARE
@@ -315,8 +317,8 @@ extern bool gistfitpage(IndexTuple *itvec, int len);
 extern bool gistnospace(Page page, IndexTuple *itvec, int len, OffsetNumber todelete, Size freespace);
 extern void gistcheckpage(Relation rel, Buffer buf);
 extern Buffer gistNewBuffer(Relation r);
-extern OffsetNumber gistfillbuffer(Relation r, Page page, IndexTuple *itup,
-			   int len, OffsetNumber off);
+extern void gistfillbuffer(Page page, IndexTuple *itup, int len,
+						   OffsetNumber off);
 extern IndexTuple *gistextractpage(Page page, int *len /* out */ );
 extern IndexTuple *gistjoinvector(
 			   IndexTuple *itvec, int *len,

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.59 2008/03/31 01:31:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.60 2008/04/16 22:16:00 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -625,7 +625,11 @@ AddUserToTokenDacl(HANDLE hToken)
 	DWORD		dwNewAclSize;
 	DWORD		dwSize = 0;
 	DWORD		dwTokenInfoLength = 0;
+<<<<<<< HEAD
 	DWORD		dwResult = 0;
+=======
+	HANDLE		hToken = NULL;
+>>>>>>> 49f001d81e
 	PACL		pacl = NULL;
 	PSID		psidUser = NULL;
 	TOKEN_DEFAULT_DACL tddNew;
@@ -633,6 +637,16 @@ AddUserToTokenDacl(HANDLE hToken)
 	TOKEN_INFORMATION_CLASS tic = TokenDefaultDacl;
 	BOOL		ret = FALSE;
 
+<<<<<<< HEAD
+=======
+	/* Get the token for the process */
+	if (!OpenProcessToken(hProcess, TOKEN_QUERY | TOKEN_ADJUST_DEFAULT, &hToken))
+	{
+		log_error("could not open process token: %lu", GetLastError());
+		goto cleanup;
+	}
+
+>>>>>>> 49f001d81e
 	/* Figure out the buffer size for the DACL info */
 	if (!GetTokenInformation(hToken, tic, (LPVOID) NULL, dwTokenInfoLength, &dwSize))
 	{

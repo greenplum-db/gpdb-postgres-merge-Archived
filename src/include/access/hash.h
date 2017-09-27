@@ -7,7 +7,11 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.86 2008/03/16 23:15:08 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.89 2008/07/13 20:45:47 tgl Exp $
+>>>>>>> 49f001d81e
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -17,12 +21,13 @@
 #ifndef HASH_H
 #define HASH_H
 
+#include "access/genam.h"
 #include "access/itup.h"
-#include "access/relscan.h"
 #include "access/sdir.h"
 #include "access/xlog.h"
 #include "fmgr.h"
 #include "storage/lock.h"
+#include "utils/relcache.h"
 
 /*
  * Mapping from hash bucket number to physical block number of bucket's
@@ -165,10 +170,10 @@ typedef HashMetaPageData *HashMetaPage;
  * Maximum size of a hash index item (it's okay to have only one per page)
  */
 #define HashMaxItemSize(page) \
-	(PageGetPageSize(page) - \
-	 sizeof(PageHeaderData) - \
-	 MAXALIGN(sizeof(HashPageOpaqueData)) - \
-	 sizeof(ItemIdData))
+	MAXALIGN_DOWN(PageGetPageSize(page) - \
+				  SizeOfPageHeaderData - \
+				  sizeof(ItemIdData) - \
+				  MAXALIGN(sizeof(HashPageOpaqueData)))
 
 #define HASH_MIN_FILLFACTOR			10
 #define HASH_DEFAULT_FILLFACTOR		75

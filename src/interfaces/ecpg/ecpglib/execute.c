@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.77 2008/03/01 03:26:34 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.78 2008/05/16 15:20:03 petere Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -301,7 +301,11 @@ ecpg_is_type_an_array(int type, const struct statement * stmt, const struct vari
 		return (ECPG_ARRAY_ERROR);
 
 	ecpg_type_infocache_push(&(stmt->connection->cache_head), type, isarray, stmt->lineno);
+<<<<<<< HEAD
 	ecpg_log("ecpg_is_type_an_array on line %d: type (%d); C (%d); array (%s)\n", stmt->lineno, type, var->type, isarray ? "yes" : "no");
+=======
+	ecpg_log("ecpg_is_type_an_array on line %d: type (%d); C (%d); array (%s)\n", stmt->lineno, type, var->type, isarray ? _("yes") : _("no"));
+>>>>>>> 49f001d81e
 	return isarray;
 }
 
@@ -390,12 +394,15 @@ ecpg_store_result(const PGresult *results, int act_field,
 					break;
 			}
 		}
+<<<<<<< HEAD
 		else
 		{
 			for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
 				len += PQgetlength(results, act_tuple, act_field);
 		}
 
+=======
+>>>>>>> 49f001d81e
 		ecpg_log("ecpg_store_result on line %d: allocating memory for %d tuples\n", stmt->lineno, ntuples);
 		var->value = (char *) ecpg_alloc(len, stmt->lineno);
 		if (!var->value)
@@ -738,7 +745,11 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 						for (element = 0; element < var->arrsize; element++)
 							sprintf(mallocedval + strlen(mallocedval), "%c,", (((int *) var->value)[element]) ? 't' : 'f');
 					else
+<<<<<<< HEAD
 						ecpg_raise(lineno, ECPG_CONVERT_BOOL, ECPG_SQLSTATE_DATATYPE_MISMATCH, NULL);
+=======
+						ecpg_raise(lineno, ECPG_CONVERT_BOOL, ECPG_SQLSTATE_DATATYPE_MISMATCH, _("different size"));
+>>>>>>> 49f001d81e
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 				}
@@ -749,7 +760,11 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 					else if (var->offset == sizeof(int))
 						sprintf(mallocedval, "%c", (*((int *) var->value)) ? 't' : 'f');
 					else
+<<<<<<< HEAD
 						ecpg_raise(lineno, ECPG_CONVERT_BOOL, ECPG_SQLSTATE_DATATYPE_MISMATCH, NULL);
+=======
+						ecpg_raise(lineno, ECPG_CONVERT_BOOL, ECPG_SQLSTATE_DATATYPE_MISMATCH, _("different size"));
+>>>>>>> 49f001d81e
 				}
 
 				*tobeinserted_p = mallocedval;
@@ -1051,7 +1066,11 @@ free_params(const char **paramValues, int nParams, bool print, int lineno)
 	for (n = 0; n < nParams; n++)
 	{
 		if (print)
+<<<<<<< HEAD
 			ecpg_log("free_params on line %d: parameter %d = %s\n", lineno, n + 1, paramValues[n] ? paramValues[n] : "null");
+=======
+			ecpg_log("free_params on line %d: parameter %d = %s\n", lineno, n + 1, paramValues[n] ? paramValues[n] : _("null"));
+>>>>>>> 49f001d81e
 		ecpg_free((void *) (paramValues[n]));
 	}
 	ecpg_free(paramValues);
@@ -1347,7 +1366,11 @@ ecpg_execute(struct statement * stmt)
 					desc->result = results;
 					clear_result = false;
 					ecpg_log("ecpg_execute on line %d: putting result (%d tuples) into descriptor %s\n",
+<<<<<<< HEAD
 							 stmt->lineno, PQntuples(results), (const char *) var->pointer);
+=======
+							stmt->lineno, PQntuples(results), (const char *) var->pointer);
+>>>>>>> 49f001d81e
 				}
 				var = var->next;
 			}
@@ -1636,7 +1659,11 @@ ECPGdo(const int lineno, const int compat, const int force_indicator, const char
 	if (con == NULL || con->connection == NULL)
 	{
 		free_statement(stmt);
+<<<<<<< HEAD
 		ecpg_raise(lineno, ECPG_NOT_CONN, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, (con) ? con->name : ecpg_gettext("<empty>"));
+=======
+		ecpg_raise(lineno, ECPG_NOT_CONN, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, (con) ? con->name : _("<empty>"));
+>>>>>>> 49f001d81e
 		setlocale(LC_NUMERIC, oldlocale);
 		ecpg_free(oldlocale);
 		return false;

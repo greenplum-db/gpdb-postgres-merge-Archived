@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/heap.h,v 1.87 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/heap.h,v 1.88 2008/05/09 23:32:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,8 @@ typedef struct CookedConstraint
 	char	   *name;			/* name, or NULL if none */
 	AttrNumber	attnum;			/* which attr (only for DEFAULT) */
 	Node	   *expr;			/* transformed default or check expr */
+	bool		is_local;		/* constraint has local (non-inherited) def */
+	int			inhcount;		/* number of times constraint is inherited */
 } CookedConstraint;
 
 extern Relation heap_create(const char *relname,
@@ -45,7 +47,11 @@ extern Oid heap_create_with_catalog(const char *relname,
 						 Oid relid,
 						 Oid ownerid,
 						 TupleDesc tupdesc,
+<<<<<<< HEAD
 						 Oid relam,
+=======
+						 List *cooked_constraints,
+>>>>>>> 49f001d81e
 						 char relkind,
 						 char relstorage,
 						 bool shared_relation,
@@ -73,6 +79,7 @@ extern void InsertPgClassTuple(Relation pg_class_desc,
 				   Oid new_rel_oid,
 				   Datum reloptions);
 
+<<<<<<< HEAD
 extern void InsertGpRelationNodeTuple(
 	Relation 		gp_relation_node,
 	Oid				relationId,
@@ -98,6 +105,13 @@ extern List *AddRelationRawConstraints(Relation rel,
 extern List *AddRelationConstraints(Relation rel,
 						  List *rawColDefaults,
 						  List *constraints);
+=======
+extern List *AddRelationNewConstraints(Relation rel,
+						  List *newColDefaults,
+						  List *newConstraints,
+						  bool allow_merge,
+						  bool is_local);
+>>>>>>> 49f001d81e
 
 extern void StoreAttrDefault(Relation rel, AttrNumber attnum, Node *expr);
 
@@ -106,9 +120,6 @@ extern Node *cookDefault(ParseState *pstate,
 			Oid atttypid,
 			int32 atttypmod,
 			char *attname);
-
-extern int RemoveRelConstraints(Relation rel, const char *constrName,
-					 DropBehavior behavior);
 
 extern void DeleteRelationTuple(Oid relid);
 extern void DeleteAttributeTuples(Oid relid);

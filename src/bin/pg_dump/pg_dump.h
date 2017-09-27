@@ -8,7 +8,11 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.139.2.1 2009/01/18 20:44:53 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.140 2008/05/09 23:32:04 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -411,7 +415,7 @@ typedef struct _constraintInfo
 	char		contype;
 	char	   *condef;			/* definition, if CHECK or FOREIGN KEY */
 	DumpId		conindex;		/* identifies associated index if any */
-	bool		coninherited;	/* TRUE if appears to be inherited */
+	bool		conislocal;		/* TRUE if constraint has local definition */
 	bool		separate;		/* TRUE if must dump as separate item */
 } ConstraintInfo;
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.87 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.88 2008/05/12 08:35:05 mha Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -121,8 +121,9 @@ typedef struct XLogRecord
 /* Sync methods */
 #define SYNC_METHOD_FSYNC		0
 #define SYNC_METHOD_FDATASYNC	1
-#define SYNC_METHOD_OPEN		2		/* for O_SYNC and O_DSYNC */
+#define SYNC_METHOD_OPEN		2		/* for O_SYNC */
 #define SYNC_METHOD_FSYNC_WRITETHROUGH	3
+#define SYNC_METHOD_OPEN_DSYNC	4		/* for O_DSYNC */
 extern int	sync_method;
 
 /*
@@ -174,6 +175,7 @@ extern int	XLOGbuffers;
 extern bool XLogArchiveMode;
 extern char *XLogArchiveCommand;
 extern int	XLogArchiveTimeout;
+<<<<<<< HEAD
 extern char *XLOG_sync_method;
 extern const char XLOG_sync_method_default[];
 extern bool gp_keep_all_xlog;
@@ -182,6 +184,8 @@ extern int keep_wal_segments;
 extern bool *wal_consistency_checking;
 extern char *wal_consistency_checking_string;
 
+=======
+>>>>>>> 49f001d81e
 extern bool log_checkpoints;
 
 #define XLogArchivingActive()	(XLogArchiveMode)

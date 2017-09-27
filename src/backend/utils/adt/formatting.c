@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.139 2008/03/25 22:42:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.145 2008/07/12 00:44:37 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2008, PostgreSQL Global Development Group
@@ -91,10 +91,13 @@
 #include "utils/pg_locale.h"
 #include "mb/pg_wchar.h"
 
+<<<<<<< HEAD
 #ifndef _
 #define _(x)	gettext(x)
 #endif
 
+=======
+>>>>>>> 49f001d81e
 /* ----------
  * Routines type
  * ----------
@@ -970,10 +973,14 @@ static char *get_th(char *num, int type);
 static char *str_numth(char *dest, char *num, int type);
 static int	strspace_len(char *str);
 static int	strdigits_len(char *str);
+<<<<<<< HEAD
 static void from_char_set_mode(TmFromChar *tmfc, const FromCharDateMode mode);
 static void from_char_set_int(int *dest, const int value, const FormatNode *node);
 static int	from_char_parse_int_len(int *dest, char **src, const int len, FormatNode *node);
 static int	from_char_parse_int(int *dest, char **src, FormatNode *node);
+=======
+
+>>>>>>> 49f001d81e
 static int	seq_search(char *name, char **array, int type, int max, int *len);
 static int	from_char_seq_search(int *dest, char **src, char **array, int type, int max, FormatNode *node);
 static void do_to_timestamp(text *date_txt, text *fmt,
@@ -1483,7 +1490,11 @@ str_numth(char *dest, char *num, int type)
 char *
 str_tolower(const char *buff, size_t nbytes)
 {
+<<<<<<< HEAD
 	char	   *result;
+=======
+	char		*result;
+>>>>>>> 49f001d81e
 
 	if (!buff)
 		return NULL;
@@ -1491,6 +1502,7 @@ str_tolower(const char *buff, size_t nbytes)
 #ifdef USE_WIDE_UPPER_LOWER
 	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c())
 	{
+<<<<<<< HEAD
 		wchar_t    *workspace;
 		size_t		curr_char;
 		size_t		result_size;
@@ -1540,10 +1552,20 @@ char *
 str_toupper(const char *buff, size_t nbytes)
 {
 	char	   *result;
+=======
+		wchar_t		*workspace;
+		int			curr_char = 0;
 
-	if (!buff)
-		return NULL;
+		/* Output workspace cannot have more codes than input bytes */
+		workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
 
+		char2wchar(workspace, nbytes + 1, buff, nbytes);
+>>>>>>> 49f001d81e
+
+		for (curr_char = 0; workspace[curr_char] != 0; curr_char++)
+			workspace[curr_char] = towlower(workspace[curr_char]);
+
+<<<<<<< HEAD
 #ifdef USE_WIDE_UPPER_LOWER
 	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c())
 	{
@@ -1576,27 +1598,53 @@ str_toupper(const char *buff, size_t nbytes)
 #endif   /* USE_WIDE_UPPER_LOWER */
 	{
 		char	   *p;
+=======
+		/* Make result large enough; case change might change number of bytes */
+		result = palloc(curr_char * MB_CUR_MAX + 1);
+
+		wchar2char(result, workspace, curr_char * MB_CUR_MAX + 1);
+		pfree(workspace);
+	}
+	else
+#endif		/* USE_WIDE_UPPER_LOWER */
+	{
+		char *p;
+>>>>>>> 49f001d81e
 
 		result = pnstrdup(buff, nbytes);
 
 		for (p = result; *p; p++)
+<<<<<<< HEAD
 			*p = pg_toupper((unsigned char) *p);
+=======
+			*p = pg_tolower((unsigned char) *p);
+>>>>>>> 49f001d81e
 	}
 
 	return result;
 }
 
 /*
+<<<<<<< HEAD
  * wide-character-aware initcap function
+=======
+ * wide-character-aware upper function
+>>>>>>> 49f001d81e
  *
  * We pass the number of bytes so we can pass varlena and char*
  * to this function.  The result is a palloc'd, null-terminated string.
  */
 char *
+<<<<<<< HEAD
 str_initcap(const char *buff, size_t nbytes)
 {
 	char	   *result;
 	int			wasalnum = false;
+=======
+str_toupper(const char *buff, size_t nbytes)
+{
+	char		*result;
+>>>>>>> 49f001d81e
 
 	if (!buff)
 		return NULL;
@@ -1604,6 +1652,7 @@ str_initcap(const char *buff, size_t nbytes)
 #ifdef USE_WIDE_UPPER_LOWER
 	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c())
 	{
+<<<<<<< HEAD
 		wchar_t    *workspace;
 		size_t		curr_char;
 		size_t		result_size;
@@ -1613,6 +1662,10 @@ str_initcap(const char *buff, size_t nbytes)
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory")));
+=======
+		wchar_t		*workspace;
+		int			curr_char = 0;
+>>>>>>> 49f001d81e
 
 		/* Output workspace cannot have more codes than input bytes */
 		workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
@@ -1620,6 +1673,7 @@ str_initcap(const char *buff, size_t nbytes)
 		char2wchar(workspace, nbytes + 1, buff, nbytes);
 
 		for (curr_char = 0; workspace[curr_char] != 0; curr_char++)
+<<<<<<< HEAD
 		{
 			if (wasalnum)
 				workspace[curr_char] = towlower(workspace[curr_char]);
@@ -1650,26 +1704,57 @@ str_initcap(const char *buff, size_t nbytes)
 				*p = pg_toupper((unsigned char) *p);
 			wasalnum = isalnum((unsigned char) *p);
 		}
+=======
+			workspace[curr_char] = towupper(workspace[curr_char]);
+
+		/* Make result large enough; case change might change number of bytes */
+		result = palloc(curr_char * MB_CUR_MAX + 1);
+
+		wchar2char(result, workspace, curr_char * MB_CUR_MAX + 1);
+		pfree(workspace);
+	}
+	else
+#endif		/* USE_WIDE_UPPER_LOWER */
+	{
+		char *p;
+
+		result = pnstrdup(buff, nbytes);
+
+		for (p = result; *p; p++)
+			*p = pg_toupper((unsigned char) *p);
+>>>>>>> 49f001d81e
 	}
 
 	return result;
 }
 
 /*
+<<<<<<< HEAD
  * ASCII-only lower function
+=======
+ * wide-character-aware initcap function
+>>>>>>> 49f001d81e
  *
  * We pass the number of bytes so we can pass varlena and char*
  * to this function.  The result is a palloc'd, null-terminated string.
  */
 char *
+<<<<<<< HEAD
 asc_tolower(const char *buff, size_t nbytes)
 {
 	char	   *result;
 	char	   *p;
+=======
+str_initcap(const char *buff, size_t nbytes)
+{
+	char		*result;
+	bool		wasalnum = false;
+>>>>>>> 49f001d81e
 
 	if (!buff)
 		return NULL;
 
+<<<<<<< HEAD
 	result = pnstrdup(buff, nbytes);
 
 	for (p = result; *p; p++)
@@ -1677,6 +1762,74 @@ asc_tolower(const char *buff, size_t nbytes)
 
 	return result;
 }
+=======
+#ifdef USE_WIDE_UPPER_LOWER
+	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c())
+	{
+		wchar_t		*workspace;
+		int			curr_char = 0;
+
+		/* Output workspace cannot have more codes than input bytes */
+		workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
+
+		char2wchar(workspace, nbytes + 1, buff, nbytes);
+
+		for (curr_char = 0; workspace[curr_char] != 0; curr_char++)
+		{
+			if (wasalnum)
+				workspace[curr_char] = towlower(workspace[curr_char]);
+			else
+				workspace[curr_char] = towupper(workspace[curr_char]);
+			wasalnum = iswalnum(workspace[curr_char]);
+		}
+
+		/* Make result large enough; case change might change number of bytes */
+		result = palloc(curr_char * MB_CUR_MAX + 1);
+
+		wchar2char(result, workspace, curr_char * MB_CUR_MAX + 1);
+		pfree(workspace);
+	}
+	else
+#endif		/* USE_WIDE_UPPER_LOWER */
+	{
+		char *p;
+
+		result = pnstrdup(buff, nbytes);
+
+		for (p = result; *p; p++)
+		{
+			if (wasalnum)
+				*p = pg_tolower((unsigned char) *p);
+			else
+				*p = pg_toupper((unsigned char) *p);
+			wasalnum = isalnum((unsigned char) *p);
+		}
+	}
+
+	return result;
+}
+
+/* convenience routines for when the input is null-terminated */
+
+static char *
+str_tolower_z(const char *buff)
+{
+	return str_tolower(buff, strlen(buff));
+}
+
+static char *
+str_toupper_z(const char *buff)
+{
+	return str_toupper(buff, strlen(buff));
+}
+
+static char *
+str_initcap_z(const char *buff)
+{
+	return str_initcap(buff, strlen(buff));
+}
+
+>>>>>>> 49f001d81e
 
 /*
  * ASCII-only upper function
@@ -2253,8 +2406,12 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				INVALID_FOR_INTERVAL;
 				if (tmtcTzn(in))
 				{
+<<<<<<< HEAD
 					/* We assume here that timezone names aren't localized */
 					char	   *p = asc_tolower_z(tmtcTzn(in));
+=======
+					char	   *p = str_tolower_z(tmtcTzn(in));
+>>>>>>> 49f001d81e
 
 					strcpy(s, p);
 					pfree(p);
@@ -2298,6 +2455,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
+<<<<<<< HEAD
 				{
 					char *str = str_toupper_z(localized_full_months[tm->tm_mon - 1]);
 
@@ -2311,6 +2469,12 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
 							asc_toupper_z(months_full[tm->tm_mon - 1]));
+=======
+					strcpy(s, str_toupper_z(localized_full_months[tm->tm_mon - 1]));
+				else
+					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
+							str_toupper_z(months_full[tm->tm_mon - 1]));
+>>>>>>> 49f001d81e
 				s += strlen(s);
 				break;
 			case DCH_Month:
@@ -2318,6 +2482,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
+<<<<<<< HEAD
 				{
 					char *str = str_initcap_z(localized_full_months[tm->tm_mon - 1]);
 
@@ -2328,6 +2493,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 								 errmsg("localized string format value too long")));
 				}
+=======
+					strcpy(s, str_initcap_z(localized_full_months[tm->tm_mon - 1]));
+>>>>>>> 49f001d81e
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
 							months_full[tm->tm_mon - 1]);
@@ -2338,6 +2506,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
+<<<<<<< HEAD
 				{
 					char *str = str_tolower_z(localized_full_months[tm->tm_mon - 1]);
 
@@ -2348,6 +2517,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 								 errmsg("localized string format value too long")));
 				}
+=======
+					strcpy(s, str_tolower_z(localized_full_months[tm->tm_mon - 1]));
+>>>>>>> 49f001d81e
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
 							asc_tolower_z(months_full[tm->tm_mon - 1]));
@@ -2358,6 +2530,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
+<<<<<<< HEAD
 				{
 					char *str = str_toupper_z(localized_abbrev_months[tm->tm_mon - 1]);
 
@@ -2370,6 +2543,11 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				}
 				else
 					strcpy(s, asc_toupper_z(months[tm->tm_mon - 1]));
+=======
+					strcpy(s, str_toupper_z(localized_abbrev_months[tm->tm_mon - 1]));
+				else
+					strcpy(s, str_toupper_z(months[tm->tm_mon - 1]));
+>>>>>>> 49f001d81e
 				s += strlen(s);
 				break;
 			case DCH_Mon:
@@ -2377,6 +2555,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
+<<<<<<< HEAD
 				{
 					char *str = str_initcap_z(localized_abbrev_months[tm->tm_mon - 1]);
 
@@ -2387,6 +2566,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 								 errmsg("localized string format value too long")));
 				}
+=======
+					strcpy(s, str_initcap_z(localized_abbrev_months[tm->tm_mon - 1]));
+>>>>>>> 49f001d81e
 				else
 					strcpy(s, months[tm->tm_mon - 1]);
 				s += strlen(s);
@@ -2396,6 +2578,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
+<<<<<<< HEAD
 				{
 					char *str = str_tolower_z(localized_abbrev_months[tm->tm_mon - 1]);
 
@@ -2406,6 +2589,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 								 errmsg("localized string format value too long")));
 				}
+=======
+					strcpy(s, str_tolower_z(localized_abbrev_months[tm->tm_mon - 1]));
+>>>>>>> 49f001d81e
 				else
 					strcpy(s, asc_tolower_z(months[tm->tm_mon - 1]));
 				s += strlen(s);
@@ -2419,6 +2605,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 			case DCH_DAY:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
+<<<<<<< HEAD
 				{
 					char *str = str_toupper_z(localized_full_days[tm->tm_wday]);
 
@@ -2432,11 +2619,18 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
 							asc_toupper_z(days[tm->tm_wday]));
+=======
+					strcpy(s, str_toupper_z(localized_full_days[tm->tm_wday]));
+				else
+					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
+								str_toupper_z(days[tm->tm_wday]));
+>>>>>>> 49f001d81e
 				s += strlen(s);
 				break;
 			case DCH_Day:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
+<<<<<<< HEAD
 				{
 					char *str = str_initcap_z(localized_full_days[tm->tm_wday]);
 
@@ -2447,6 +2641,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 								 errmsg("localized string format value too long")));
 				}
+=======
+					strcpy(s, str_initcap_z(localized_full_days[tm->tm_wday]));
+>>>>>>> 49f001d81e
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
 							days[tm->tm_wday]);
@@ -2455,6 +2652,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 			case DCH_day:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
+<<<<<<< HEAD
 				{
 					char *str = str_tolower_z(localized_full_days[tm->tm_wday]);
 
@@ -2465,6 +2663,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 								 errmsg("localized string format value too long")));
 				}
+=======
+					strcpy(s, str_tolower_z(localized_full_days[tm->tm_wday]));
+>>>>>>> 49f001d81e
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
 							asc_tolower_z(days[tm->tm_wday]));
@@ -2473,6 +2674,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 			case DCH_DY:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
+<<<<<<< HEAD
 				{
 					char *str = str_toupper_z(localized_abbrev_days[tm->tm_wday]);
 
@@ -2485,11 +2687,17 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				}
 				else
 					strcpy(s, asc_toupper_z(days_short[tm->tm_wday]));
+=======
+					strcpy(s, str_toupper_z(localized_abbrev_days[tm->tm_wday]));
+				else
+					strcpy(s, str_toupper_z(days_short[tm->tm_wday]));
+>>>>>>> 49f001d81e
 				s += strlen(s);
 				break;
 			case DCH_Dy:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
+<<<<<<< HEAD
 				{
 					char *str = str_initcap_z(localized_abbrev_days[tm->tm_wday]);
 
@@ -2500,6 +2708,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 								 errmsg("localized string format value too long")));
 				}
+=======
+					strcpy(s, str_initcap_z(localized_abbrev_days[tm->tm_wday]));
+>>>>>>> 49f001d81e
 				else
 					strcpy(s, days_short[tm->tm_wday]);
 				s += strlen(s);
@@ -2507,6 +2718,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 			case DCH_dy:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
+<<<<<<< HEAD
 				{
 					char *str = str_tolower_z(localized_abbrev_days[tm->tm_wday]);
 
@@ -2517,6 +2729,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 								 errmsg("localized string format value too long")));
 				}
+=======
+					strcpy(s, str_tolower_z(localized_abbrev_days[tm->tm_wday]));
+>>>>>>> 49f001d81e
 				else
 					strcpy(s, asc_tolower_z(days_short[tm->tm_wday]));
 				s += strlen(s);
@@ -4639,12 +4854,20 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 				case NUM_rn:
 					if (IS_FILLMODE(Np->Num))
 					{
+<<<<<<< HEAD
 						strcpy(Np->inout_p, asc_tolower_z(Np->number_p));
+=======
+						strcpy(Np->inout_p, str_tolower_z(Np->number_p));
+>>>>>>> 49f001d81e
 						Np->inout_p += strlen(Np->inout_p) - 1;
 					}
 					else
 					{
+<<<<<<< HEAD
 						sprintf(Np->inout_p, "%15s", asc_tolower_z(Np->number_p));
+=======
+						sprintf(Np->inout_p, "%15s", str_tolower_z(Np->number_p));
+>>>>>>> 49f001d81e
 						Np->inout_p += strlen(Np->inout_p) - 1;
 					}
 					break;

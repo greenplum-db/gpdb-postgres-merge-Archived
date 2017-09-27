@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.127 2008/03/26 18:48:59 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.128 2008/05/12 20:02:00 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -550,7 +550,28 @@ show_log_timezone(void)
 const char *
 assign_XactIsoLevel(const char *value, bool doit, GucSource source)
 {
+<<<<<<< HEAD
 	int			newXactIsoLevel;
+=======
+	if (FirstSnapshotSet)
+	{
+		ereport(GUC_complaint_elevel(source),
+				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
+				 errmsg("SET TRANSACTION ISOLATION LEVEL must be called before any query")));
+		/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
+		if (source != PGC_S_OVERRIDE)
+			return NULL;
+	}
+	else if (IsSubTransaction())
+	{
+		ereport(GUC_complaint_elevel(source),
+				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
+				 errmsg("SET TRANSACTION ISOLATION LEVEL must not be called in a subtransaction")));
+		/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
+		if (source != PGC_S_OVERRIDE)
+			return NULL;
+	}
+>>>>>>> 49f001d81e
 
 	if (strcmp(value, "serializable") == 0)
 	{

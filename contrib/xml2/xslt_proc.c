@@ -1,10 +1,18 @@
 /*
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/contrib/xml2/xslt_proc.c,v 1.15.2.1 2009/07/10 00:32:06 tgl Exp $
  *
  * XSLT processing functions (requiring libxslt)
  *
  * John Gray, for Torchbox 2003-04-01
  */
+=======
+ * $PostgreSQL: pgsql/contrib/xml2/xslt_proc.c,v 1.13 2008/05/17 01:28:22 adunstan Exp $ 
+ *
+ * XSLT processing functions (requiring libxslt) */
+/* John Gray, for Torchbox 2003-04-01 */
+
+>>>>>>> 49f001d81e
 #include "postgres.h"
 
 #include "executor/spi.h"
@@ -59,8 +67,14 @@ PG_FUNCTION_INFO_V1(xslt_process);
 Datum
 xslt_process(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 #ifdef USE_LIBXSLT
 
+=======
+	text	   *doct = PG_GETARG_TEXT_P(0);
+	text	   *ssheet = PG_GETARG_TEXT_P(1);
+	text	   *paramstr;
+>>>>>>> 49f001d81e
 	const char *params[MAXPARAMS + 1];	/* +1 for the terminator */
 	xsltStylesheetPtr stylesheet = NULL;
 	xmlDocPtr	doctree;
@@ -73,11 +87,14 @@ xslt_process(PG_FUNCTION_ARGS)
 	int			resstat;
 	int			reslen;
 
+<<<<<<< HEAD
 	text	   *doct = PG_GETARG_TEXT_P(0);
 	text	   *ssheet = PG_GETARG_TEXT_P(1);
 	text	   *paramstr;
 	text	   *tres;
 
+=======
+>>>>>>> 49f001d81e
 	if (fcinfo->nargs == 3)
 	{
 		paramstr = PG_GETARG_TEXT_P(2);
@@ -183,6 +200,7 @@ xslt_process(PG_FUNCTION_ARGS)
 	if (resstat < 0)
 		PG_RETURN_NULL();
 
+<<<<<<< HEAD
 	tres = palloc(reslen + VARHDRSZ);
 	memcpy(VARDATA(tres), resstr, reslen);
 	SET_VARSIZE(tres, reslen + VARHDRSZ);
@@ -200,6 +218,9 @@ xslt_process(PG_FUNCTION_ARGS)
 	PG_RETURN_NULL();
 
 #endif /* USE_LIBXSLT */
+=======
+	PG_RETURN_TEXT_P(cstring_to_text_with_len((char *) resstr, reslen));
+>>>>>>> 49f001d81e
 }
 
 #ifdef USE_LIBXSLT

@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.37 2008/03/21 02:50:02 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.43 2008/06/24 01:15:36 tgl Exp $
 #
 use Carp;
 use strict;
@@ -27,16 +27,23 @@ sub new
         platform => undef,
     };
     bless $self;
+<<<<<<< HEAD
 
     # integer_datetimes is now the default
+=======
+	# integer_datetimes is now the default
+>>>>>>> 49f001d81e
 	$options->{integer_datetimes} = 1 
 		unless exists $options->{integer_datetimes};
     $options->{float4byval} = 1
         unless exists $options->{float4byval};
+<<<<<<< HEAD
     $options->{float8byval} = 1
         unless exists $options->{float8byval};
 
 
+=======
+>>>>>>> 49f001d81e
     if ($options->{xml})
     {
         if (!($options->{xslt} && $options->{iconv}))
@@ -44,7 +51,11 @@ sub new
             die "XML requires both XSLT and ICONV\n";
         }
     }
+<<<<<<< HEAD
     $options->{blocksize} = 32
+=======
+	$options->{blocksize} = 8
+>>>>>>> 49f001d81e
 		unless $options->{blocksize}; # undef or 0 means default
 	die "Bad blocksize $options->{blocksize}"
 		unless grep {$_ == $options->{blocksize}} (1,2,4,8,16,32);
@@ -61,9 +72,12 @@ sub new
 		unless $options->{wal_segsize}; # undef or 0 means default
 	die "Bad wal_segsize $options->{wal_segsize}"
 		unless grep {$_ == $options->{wal_segsize}} (1,2,4,8,16,32,64);
+<<<<<<< HEAD
 
     $self->DetermineToolVersions();
 
+=======
+>>>>>>> 49f001d81e
     return $self;
 }
 
@@ -192,7 +206,35 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
         print O "#define HAVE_LIBZ 1\n" if ($self->{options}->{zlib});
         print O "#define HAVE_LIBBZ2 1\n" if ($self->{options}->{bz2});
         print O "#define USE_SSL 1\n" if ($self->{options}->{openssl});
-        print O "#define ENABLE_NLS 1\n" if ($self->{options}->{nls});
+		print O "#define ENABLE_NLS 1\n" if ($self->{options}->{nls});
+
+		print O "#define BLCKSZ ",1024 * $self->{options}->{blocksize},"\n";
+		print O "#define RELSEG_SIZE ",
+			(1024 / $self->{options}->{blocksize}) * 
+				$self->{options}->{segsize} * 1024, "\n";
+		print O "#define XLOG_BLCKSZ ",
+			1024 * $self->{options}->{wal_blocksize},"\n";
+		print O "#define XLOG_SEG_SIZE (",
+			$self->{options}->{wal_segsize}," * 1024 * 1024)\n";
+        
+        if ($self->{options}->{float4byval}) 
+        {
+            print O "#define USE_FLOAT4_BYVAL 1\n";
+            print O "#define FLOAT4PASSBYVAL true\n";
+        }
+        else
+        {
+            print O "#define FLOAT4PASSBYVAL false\n";
+        }
+        if ($self->{options}->{float8byval})
+        {
+            print O "#define USE_FLOAT8_BYVAL 1\n";
+            print O "#define FLOAT8PASSBYVAL true\n";
+        }
+        else
+        {
+            print O "#define FLOAT8PASSBYVAL false\n";
+        }
 
         print O "#define BLCKSZ ",1024 * $self->{options}->{blocksize},"\n";
 	#	print O "#define RELSEG_SIZE ",
@@ -279,6 +321,7 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
     {
         print "Generating fmgrtab.c and fmgroids.h...\n";
         chdir('src\backend\utils');
+<<<<<<< HEAD
         system("perl -I ../catalog Gen_fmgrtab.pl ../../../src/include/catalog/pg_proc.h");
         chdir('..\..\..');
         copyFile('src\backend\utils\fmgroids.h','src\include\utils\fmgroids.h');
@@ -286,6 +329,15 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 
     if (IsNewer('src\include\utils\probes.h','src\backend\utils\probes.d'))
         {
+=======
+        system("perl Gen_fmgrtab.pl ../../../src/include/catalog/pg_proc.h");
+        chdir('..\..\..');
+        copyFile('src\backend\utils\fmgroids.h','src\include\utils\fmgroids.h');
+    }
+
+    if (IsNewer('src\include\utils\probes.h','src\backend\utils\pg_trace.d'))
+    {
+>>>>>>> 49f001d81e
 		print "Generating probes.h...\n";
         system(
 'psed -f src\backend\utils\Gen_dummy_probes.sed src\backend\utils\probes.d > src\include\utils\probes.h'

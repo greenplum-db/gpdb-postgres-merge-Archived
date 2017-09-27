@@ -308,6 +308,7 @@ select
   ( select min(tb.id) from tb
     where tb.aval = (select ta.val from ta where ta.id = tc.aid) ) as min_tb_id
 from tc;
+<<<<<<< HEAD
 
 --
 -- Test case for 8.3 "failed to locate grouping columns" bug
@@ -393,3 +394,5 @@ explain select * from int4_tbl o where (f1, f1) in
 select * from int4_tbl o where (f1, f1) in
   (select f1, generate_series(1,2) / 10 g from int4_tbl i group by f1);
 reset enable_hashjoin;
+=======
+>>>>>>> 49f001d81e

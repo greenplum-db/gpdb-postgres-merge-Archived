@@ -17,7 +17,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.102 2008/08/25 22:42:32 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.101 2008/05/12 00:00:49 alvherre Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -88,6 +92,7 @@
  */
 #include "postgres.h"
 
+<<<<<<< HEAD
 #include "access/heapam.h"
 #include "access/htup.h"
 #include "access/tuptoaster.h"
@@ -96,6 +101,12 @@
 #include "executor/executor.h"
 #include "parser/parsetree.h"               /* rt_fetch() */
 #include "nodes/nodeFuncs.h"
+=======
+#include "funcapi.h"
+#include "catalog/pg_type.h"
+#include "parser/parse_expr.h"
+#include "storage/bufmgr.h"
+>>>>>>> 49f001d81e
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 

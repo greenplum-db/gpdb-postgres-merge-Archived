@@ -6,7 +6,11 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.99 2008/10/04 21:56:53 tgl Exp $
+=======
+ *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.96 2008/07/26 19:15:35 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -533,6 +537,7 @@ ExecSupportsBackwardScan(Plan *node)
 			return false;
 	}
 }
+<<<<<<< HEAD
 
 /*
  * ExecMayReturnRawTuples
@@ -868,3 +873,5 @@ ExecEagerFreeChildNodes(PlanState *node, bool subplanDone)
 		}
 	}
 }
+=======
+>>>>>>> 49f001d81e

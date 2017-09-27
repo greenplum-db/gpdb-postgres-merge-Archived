@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.298 2008/03/26 18:48:59 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.299 2008/05/12 20:01:59 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1565,21 +1565,23 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 		plan = planner(query, 0, NULL);
 
 		/*
-		 * Update snapshot command ID to ensure this query sees results of any
-		 * previously executed queries.  (It's a bit cheesy to modify
-		 * ActiveSnapshot without making a copy, but for the limited ways in
-		 * which COPY can be invoked, I think it's OK, because the active
-		 * snapshot shouldn't be shared with anything else anyway.)
+		 * Use a snapshot with an updated command ID to ensure this query sees
+		 * results of any previously executed queries.
 		 */
-		ActiveSnapshot->curcid = GetCurrentCommandId(false);
+		PushUpdatedSnapshot(GetActiveSnapshot());
 
 		/* Create dest receiver for COPY OUT */
 		dest = CreateDestReceiver(DestCopyOut, NULL);
 		((DR_copy *) dest)->cstate = cstate;
 
 		/* Create a QueryDesc requesting no output */
+<<<<<<< HEAD
 		cstate->queryDesc = CreateQueryDesc(plan, queryString,
 											ActiveSnapshot, InvalidSnapshot,
+=======
+		cstate->queryDesc = CreateQueryDesc(plan, GetActiveSnapshot(),
+											InvalidSnapshot,
+>>>>>>> 49f001d81e
 											dest, NULL, false);
 
 		if (gp_enable_gpperfmon && Gp_role == GP_ROLE_DISPATCH)
@@ -1897,7 +1899,11 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 		/* Close down the query and free resources. */
 		ExecutorEnd(cstate->queryDesc);
 		FreeQueryDesc(cstate->queryDesc);
+<<<<<<< HEAD
 		cstate->queryDesc = NULL;
+=======
+		PopActiveSnapshot();
+>>>>>>> 49f001d81e
 	}
 
 	/* Clean up single row error handling related memory */
@@ -2625,9 +2631,13 @@ CopyTo(CopyState cstate)
 					values = slot_get_values(slot);
 					nulls = slot_get_isnull(slot);
 
+<<<<<<< HEAD
 					/* Format and send the data */
 					CopyOneRowTo(cstate, MemTupleGetOid(tuple, mt_bind), values, nulls);
 				}
+=======
+		scandesc = heap_beginscan(cstate->rel, GetActiveSnapshot(), 0, NULL);
+>>>>>>> 49f001d81e
 
 				ExecDropSingleTupleTableSlot(slot);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.142 2008/03/26 21:10:39 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.144 2008/06/19 00:46:05 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,10 @@
 #include "access/heapam.h"
 #include "access/relscan.h"
 #include "access/sysattr.h"
+<<<<<<< HEAD
 #include "access/tuptoaster.h"
+=======
+>>>>>>> 49f001d81e
 #include "access/valid.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
@@ -32,7 +35,10 @@
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
+<<<<<<< HEAD
 #include "utils/relcache.h"
+=======
+>>>>>>> 49f001d81e
 #include "utils/rel.h"
 #include "utils/resowner.h"
 #include "utils/syscache.h"

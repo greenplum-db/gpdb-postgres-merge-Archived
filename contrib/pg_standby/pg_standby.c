@@ -1,4 +1,7 @@
 /*
+ * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.13 2008/07/08 15:11:58 heikki Exp $ 
+ *
+ *
  * pg_standby.c
  *
  * Production-ready example of how to create a Warm Standby
@@ -308,7 +311,11 @@ SetWALFileNameForCleanup(void)
 		if (strcmp(restartWALFileName, nextWALFileName) > 0)
 			return false;
 
+<<<<<<< HEAD
 		strlcpy(exclusiveCleanupFileName, restartWALFileName, sizeof(exclusiveCleanupFileName));
+=======
+		strcpy(exclusiveCleanupFileName, restartWALFileName);
+>>>>>>> 49f001d81e
 		return true;
 	}
 

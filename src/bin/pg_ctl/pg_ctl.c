@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.96 2008/02/29 23:31:20 adunstan Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.103 2008/06/26 18:25:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,13 +150,13 @@ static void read_post_opts(void);
 static PGPing test_postmaster_connection(bool);
 static bool postmaster_is_alive(pid_t pid);
 
-static char def_postopts_file[MAXPGPATH];
 static char postopts_file[MAXPGPATH];
 static char backup_file[MAXPGPATH];
 static char recovery_file[MAXPGPATH];
 static char promote_file[MAXPGPATH];
 static char pid_file[MAXPGPATH];
 static char conf_file[MAXPGPATH];
+static char backup_file[MAXPGPATH];
 
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
 static void unlimit_core_size(void);
@@ -446,6 +446,7 @@ start_postmaster(void)
 	 * everything to a shell to process them.
 	 */
 	if (log_file != NULL)
+<<<<<<< HEAD
 	{
 		snprintf(formatstr, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &" SYSTEMQUOTE,
 				 postgres_path, pgdata_opt, post_opts,
@@ -458,6 +459,14 @@ start_postmaster(void)
 	}
 
 	strncat(cmd, formatstr, MAXPGPATH - strlen(cmd) - 1);
+=======
+		snprintf(cmd, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &" SYSTEMQUOTE,
+				 postgres_path, pgdata_opt, post_opts,
+				 DEVNULL, log_file);
+	else
+		snprintf(cmd, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s < \"%s\" 2>&1 &" SYSTEMQUOTE,
+				 postgres_path, pgdata_opt, post_opts, DEVNULL);
+>>>>>>> 49f001d81e
 
 	return system(cmd);
 #else							/* WIN32 */
@@ -660,46 +669,44 @@ unlimit_core_size(void)
 static void
 read_post_opts(void)
 {
-	char	   *optline = NULL;
-
 	if (post_opts == NULL)
 	{
-		char	  **optlines;
-		int			len;
-
-		optlines = readfile(ctl_command == RESTART_COMMAND ?
-							postopts_file : def_postopts_file);
-		if (optlines == NULL)
+		post_opts = "";		/* defatult */
+		if (ctl_command == RESTART_COMMAND)
 		{
-			if (ctl_command == START_COMMAND || ctl_command == RUN_AS_SERVICE_COMMAND)
-				post_opts = "";
-			else
+			char	  **optlines;
+
+			optlines = readfile(postopts_file);
+			if (optlines == NULL)
 			{
 				write_stderr(_("%s: could not read file \"%s\"\n"), progname, postopts_file);
 				exit(1);
 			}
-		}
-		else if (optlines[0] == NULL || optlines[1] != NULL)
-		{
-			write_stderr(_("%s: option file \"%s\" must have exactly one line\n"),
-						 progname, ctl_command == RESTART_COMMAND ?
-						 postopts_file : def_postopts_file);
-			exit(1);
-		}
-		else
-		{
-			optline = optlines[0];
-			len = strcspn(optline, "\r\n");
-			optline[len] = '\0';
-
-			if (ctl_command == RESTART_COMMAND)
+			else if (optlines[0] == NULL || optlines[1] != NULL)
 			{
+				write_stderr(_("%s: option file \"%s\" must have exactly one line\n"),
+							 progname, postopts_file);
+				exit(1);
+			}
+			else
+			{
+				int			len;
+				char	   *optline;
 				char	   *arg1;
 
+<<<<<<< HEAD
+=======
+				optline = optlines[0];
+				/* trim off line endings */
+				len = strcspn(optline, "\r\n");
+				optline[len] = '\0';
+
+>>>>>>> 49f001d81e
 				/*
 				 * Are we at the first option, as defined by space and
 				 * double-quote?
 				 */
+<<<<<<< HEAD
 				if ((arg1 = strstr(optline, " \"")) != NULL ||
 					/* check in case this is an older server */
 				    (arg1 = strstr(optline, " -")) != NULL)
@@ -714,6 +721,16 @@ read_post_opts(void)
 			}
 			else
 				post_opts = strdup(optline);
+=======
+				if ((arg1 = strstr(optline, " \"")) != NULL)
+				{
+					*arg1 = '\0';	/* terminate so we get only program name */
+					post_opts = arg1 + 1; /* point past whitespace */
+				}
+				if (postgres_path == NULL)
+					postgres_path = optline;
+			}
+>>>>>>> 49f001d81e
 		}
 
 		/* Free the results of readfile. */
@@ -842,6 +859,7 @@ do_stop(void)
 {
 	int			cnt;
 	pgpid_t		pid;
+	struct stat	statbuf;
 
 	pid = get_pgpid();
 
@@ -874,6 +892,12 @@ do_stop(void)
 	}
 	else
 	{
+		if ((shutdown_mode == SMART_MODE) && (stat(backup_file, &statbuf) == 0))
+		{
+			print_msg(_("WARNING: online backup mode is active.\n"
+						"Shutdown will not complete until pg_stop_backup() is called.\n\n"));
+		}
+
 		print_msg(_("waiting for server to shut down..."));
 
 		for (cnt = 0; cnt < wait_seconds; cnt++)
@@ -910,6 +934,7 @@ do_restart(void)
 {
 	int			cnt;
 	pgpid_t		pid;
+	struct stat	statbuf;
 
 	pid = get_pgpid();
 
@@ -942,6 +967,12 @@ do_restart(void)
 			write_stderr(_("%s: could not send stop signal (PID: %ld): %s\n"), progname, pid,
 						 strerror(errno));
 			exit(1);
+		}
+
+		if ((shutdown_mode == SMART_MODE) && (stat(backup_file, &statbuf) == 0))
+		{
+			print_msg(_("WARNING: online backup mode is active.\n"
+						"Shutdown will not complete until pg_stop_backup() is called.\n\n"));
 		}
 
 		print_msg(_("waiting for server to shut down..."));
@@ -2099,13 +2130,15 @@ main(int argc, char **argv)
 
 	if (pg_data)
 	{
-		snprintf(def_postopts_file, MAXPGPATH, "%s/postmaster.opts.default", pg_data);
 		snprintf(postopts_file, MAXPGPATH, "%s/postmaster.opts", pg_data);
 		snprintf(pid_file, MAXPGPATH, "%s/postmaster.pid", pg_data);
 		snprintf(conf_file, MAXPGPATH, "%s/postgresql.conf", pg_data);
 		snprintf(backup_file, MAXPGPATH, "%s/backup_label", pg_data);
+<<<<<<< HEAD
 		snprintf(recovery_file, MAXPGPATH, "%s/recovery.conf", pg_data);
 		snprintf(promote_file, MAXPGPATH, "%s/promote", pg_data);
+=======
+>>>>>>> 49f001d81e
 	}
 
 	switch (ctl_command)

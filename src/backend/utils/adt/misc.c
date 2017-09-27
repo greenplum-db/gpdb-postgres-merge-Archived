@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.59 2008/04/04 16:57:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.63 2008/07/03 20:58:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,6 +218,12 @@ gp_cancel_query(PG_FUNCTION_ARGS)
 }
 
 Datum
+pg_terminate_backend(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(pg_signal_backend(PG_GETARG_INT32(0), SIGTERM));
+}
+
+Datum
 pg_reload_conf(PG_FUNCTION_ARGS)
 {
 	if (!superuser())
@@ -423,7 +429,11 @@ pg_get_keywords(PG_FUNCTION_ARGS)
 		tupdesc = CreateTemplateTupleDesc(3, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "word",
 						   TEXTOID, -1, 0);
+<<<<<<< HEAD
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "catcode",
+=======
+  		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "catcode",
+>>>>>>> 49f001d81e
 						   CHAROID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "catdesc",
 						   TEXTOID, -1, 0);
@@ -447,6 +457,7 @@ pg_get_keywords(PG_FUNCTION_ARGS)
 		{
 			case UNRESERVED_KEYWORD:
 				values[1] = "U";
+<<<<<<< HEAD
 				values[2] = _("unreserved");
 				break;
 			case COL_NAME_KEYWORD:
@@ -460,6 +471,21 @@ pg_get_keywords(PG_FUNCTION_ARGS)
 			case RESERVED_KEYWORD:
 				values[1] = "R";
 				values[2] = _("reserved");
+=======
+				values[2] = _("Unreserved");
+				break;
+			case COL_NAME_KEYWORD:
+				values[1] = "C";
+				values[2] = _("Column name");
+				break;
+			case TYPE_FUNC_NAME_KEYWORD:
+				values[1] = "T";
+				values[2] = _("Type or function name");
+				break;
+			case RESERVED_KEYWORD:
+				values[1] = "R";
+				values[2] = _("Reserved");
+>>>>>>> 49f001d81e
 				break;
 			default:			/* shouldn't be possible */
 				values[1] = NULL;
@@ -474,6 +500,7 @@ pg_get_keywords(PG_FUNCTION_ARGS)
 
 	SRF_RETURN_DONE(funcctx);
 }
+<<<<<<< HEAD
 
 
 /*
@@ -484,3 +511,5 @@ pg_typeof(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_OID(get_fn_expr_argtype(fcinfo->flinfo, 0));
 }
+=======
+>>>>>>> 49f001d81e

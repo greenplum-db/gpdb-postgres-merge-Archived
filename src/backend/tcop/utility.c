@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.291 2008/03/19 18:38:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.295 2008/07/18 20:26:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,6 +69,7 @@
 #include "cdb/cdbvars.h"
 
 /*
+<<<<<<< HEAD
  * Error-checking support for DROP commands
  */
 
@@ -290,6 +291,8 @@ CheckDropRelStorage(RangeVar *rel, ObjectType removeType)
 }
 
 /*
+=======
+>>>>>>> 49f001d81e
  * Verify user has ownership of specified relation, else ereport.
  *
  * If noCatalogs is true then we also deny access to system catalogs,
@@ -684,7 +687,7 @@ CheckRestrictedOperation(const char *cmdname)
  *		general utility function invoker
  *
  *	parsetree: the parse tree for the utility statement
- *	queryString: original source text of command (NULL if not available)
+ *	queryString: original source text of command
  *	params: parameters to use during execution
  *	isTopLevel: true if executing a "top level" (interactively issued) command
  *	dest: where to send results
@@ -707,7 +710,11 @@ ProcessUtility(Node *parsetree,
 			   DestReceiver *dest,
 			   char *completionTag)
 {
+<<<<<<< HEAD
 	Assert(queryString != NULL);	/* required as of 8.4 */
+=======
+	Assert(queryString != NULL);				/* required as of 8.4 */
+>>>>>>> 49f001d81e
 
 	check_xact_readonly(parsetree);
 
@@ -1080,6 +1087,7 @@ ProcessUtility(Node *parsetree,
 		case T_DropStmt:
 			{
 				DropStmt   *stmt = (DropStmt *) parsetree;
+<<<<<<< HEAD
 				ListCell   *arg;
 				List       *objects;
 				bool       if_exists;
@@ -1113,6 +1121,51 @@ ProcessUtility(Node *parsetree,
 														NULL);
 						}
 					}
+=======
+
+				switch (stmt->removeType)
+				{
+					case OBJECT_TABLE:
+					case OBJECT_SEQUENCE:
+					case OBJECT_VIEW:
+					case OBJECT_INDEX:
+						RemoveRelations(stmt);
+						break;
+
+					case OBJECT_TYPE:
+					case OBJECT_DOMAIN:
+						RemoveTypes(stmt);
+						break;
+
+					case OBJECT_CONVERSION:
+						DropConversionsCommand(stmt);
+						break;
+
+					case OBJECT_SCHEMA:
+						RemoveSchemas(stmt);
+						break;
+
+					case OBJECT_TSPARSER:
+						RemoveTSParsers(stmt);
+						break;
+
+					case OBJECT_TSDICTIONARY:
+						RemoveTSDictionaries(stmt);
+						break;
+
+					case OBJECT_TSTEMPLATE:
+						RemoveTSTemplates(stmt);
+						break;
+
+					case OBJECT_TSCONFIGURATION:
+						RemoveTSConfigurations(stmt);
+						break;
+
+					default:
+						elog(ERROR, "unrecognized drop object type: %d",
+							 (int) stmt->removeType);
+						break;
+>>>>>>> 49f001d81e
 				}
 			}
 			break;
@@ -1553,7 +1606,8 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_VacuumStmt:
-			vacuum((VacuumStmt *) parsetree, NIL, NULL, false, isTopLevel);
+			vacuum((VacuumStmt *) parsetree, InvalidOid, NULL, false,
+				   isTopLevel);
 			break;
 
 		case T_ExplainStmt:
@@ -2249,6 +2303,9 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_TSCONFIGURATION:
 					tag = "ALTER TEXT SEARCH CONFIGURATION";
 					break;
+				case OBJECT_VIEW:
+					tag = "ALTER VIEW";
+					break;
 				default:
 					tag = "???";
 					break;
@@ -2316,7 +2373,9 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_AlterTableStmt:
+			switch (((AlterTableStmt *) parsetree)->relkind)
 			{
+<<<<<<< HEAD
 				AlterTableStmt *stmt = (AlterTableStmt *) parsetree;
 
 				/*
@@ -2330,7 +2389,23 @@ CreateCommandTag(Node *parsetree)
 				else if (stmt->relkind == OBJECT_EXTTABLE)
 					tag = "ALTER EXTERNAL TABLE";
 				else
+=======
+				case OBJECT_TABLE:
+>>>>>>> 49f001d81e
 					tag = "ALTER TABLE";
+					break;
+				case OBJECT_INDEX:
+					tag = "ALTER INDEX";
+					break;
+				case OBJECT_SEQUENCE:
+					tag = "ALTER SEQUENCE";
+					break;
+				case OBJECT_VIEW:
+					tag = "ALTER VIEW";
+					break;
+				default:
+					tag = "???";
+					break;
 			}
 			break;
 

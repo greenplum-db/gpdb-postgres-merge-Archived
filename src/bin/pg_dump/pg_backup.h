@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.46 2008/03/20 17:36:57 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.47 2008/04/13 03:49:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,8 +151,12 @@ PGconn *ConnectDatabase(Archive *AH,
 				const char *pghost,
 				const char *pgport,
 				const char *username,
+<<<<<<< HEAD
 				enum trivalue prompt_password,
 			   	bool binary_upgrade);
+=======
+				int reqPwd);
+>>>>>>> 49f001d81e
 
 /* Called to add a TOC entry */
 extern void ArchiveEntry(Archive *AHX,

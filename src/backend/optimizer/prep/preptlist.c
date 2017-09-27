@@ -18,7 +18,11 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.92 2008/10/21 20:42:53 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.90 2008/06/19 00:46:04 alvherre Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +30,11 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+<<<<<<< HEAD
 #include "catalog/gp_policy.h"     /* CDB: POLICYTYPE_PARTITIONED */
+=======
+#include "access/sysattr.h"
+>>>>>>> 49f001d81e
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/plancat.h"
@@ -37,8 +45,12 @@
 #include "parser/analyze.h"
 #include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
+<<<<<<< HEAD
 #include "parser/parse_relation.h"
 #include "utils/lsyscache.h"
+=======
+#include "utils/rel.h"
+>>>>>>> 49f001d81e
 
 
 static List *expand_targetlist(List *tlist, int command_type,

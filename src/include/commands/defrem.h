@@ -7,7 +7,11 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.88.2.1 2010/07/03 13:53:38 rhaas Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.89 2008/06/14 18:04:34 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -34,12 +38,20 @@ extern void DefineIndex(RangeVar *heapRelation,
 			bool check_rights,
 			bool skip_build,
 			bool quiet,
+<<<<<<< HEAD
 			bool concurrent,
 			IndexStmt *stmt /* MPP */);
 extern void RemoveIndex(RangeVar *relation, DropBehavior behavior);
 extern void ReindexIndex(ReindexStmt *stmt);
 extern void ReindexTable(ReindexStmt *stmt);
 extern void ReindexDatabase(ReindexStmt *stmt);
+=======
+			bool concurrent);
+extern void ReindexIndex(RangeVar *indexRelation);
+extern void ReindexTable(RangeVar *relation);
+extern void ReindexDatabase(const char *databaseName,
+				bool do_system, bool do_user);
+>>>>>>> 49f001d81e
 extern char *makeObjectName(const char *name1, const char *name2,
 			   const char *label);
 extern char *ChooseRelationName(const char *name1, const char *name2,
@@ -111,28 +123,24 @@ extern Oid  get_opfamily_oid(Oid amID, List *opfamilyname, bool missing_ok);
 /* commands/tsearchcmds.c */
 extern void DefineTSParser(List *names, List *parameters);
 extern void RenameTSParser(List *oldname, const char *newname);
-extern void RemoveTSParser(List *names, DropBehavior behavior,
-			   bool missing_ok);
+extern void RemoveTSParsers(DropStmt *drop);
 extern void RemoveTSParserById(Oid prsId);
 
 extern void DefineTSDictionary(List *names, List *parameters);
 extern void RenameTSDictionary(List *oldname, const char *newname);
-extern void RemoveTSDictionary(List *names, DropBehavior behavior,
-				   bool missing_ok);
+extern void RemoveTSDictionaries(DropStmt *drop);
 extern void RemoveTSDictionaryById(Oid dictId);
 extern void AlterTSDictionary(AlterTSDictionaryStmt *stmt);
 extern void AlterTSDictionaryOwner(List *name, Oid newOwnerId);
 
 extern void DefineTSTemplate(List *names, List *parameters);
 extern void RenameTSTemplate(List *oldname, const char *newname);
-extern void RemoveTSTemplate(List *names, DropBehavior behavior,
-				 bool missing_ok);
+extern void RemoveTSTemplates(DropStmt *stmt);
 extern void RemoveTSTemplateById(Oid tmplId);
 
 extern void DefineTSConfiguration(List *names, List *parameters);
 extern void RenameTSConfiguration(List *oldname, const char *newname);
-extern void RemoveTSConfiguration(List *names, DropBehavior behavior,
-					  bool missing_ok);
+extern void RemoveTSConfigurations(DropStmt *stmt);
 extern void RemoveTSConfigurationById(Oid cfgId);
 extern void AlterTSConfiguration(AlterTSConfigurationStmt *stmt);
 extern void AlterTSConfigurationOwner(List *name, Oid newOwnerId);

@@ -7,7 +7,11 @@
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.76 2008/08/25 22:42:34 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.75 2008/07/03 00:04:24 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +79,10 @@
 #include "utils/datetime.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+<<<<<<< HEAD
 #include "utils/syscache.h"
+=======
+>>>>>>> 49f001d81e
 #include "utils/xml.h"
 
 
@@ -3281,6 +3288,10 @@ static text *
 xml_xmlnodetoxmltype(xmlNodePtr cur)
 {
 	xmltype    *result;
+<<<<<<< HEAD
+=======
+	xmlBufferPtr buf;
+>>>>>>> 49f001d81e
 
 	if (cur->type == XML_ELEMENT_NODE)
 	{
@@ -3320,6 +3331,7 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
 		xmlChar    *str;
 
 		str = xmlXPathCastNodeToString(cur);
+<<<<<<< HEAD
 		PG_TRY();
 		{
 			result = (xmltype *) cstring_to_text((char *) str);
@@ -3330,6 +3342,9 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
+=======
+		result = (xmltype *) cstring_to_text((char *) str);
+>>>>>>> 49f001d81e
 		xmlFree(str);
 	}
 

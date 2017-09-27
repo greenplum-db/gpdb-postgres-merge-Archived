@@ -9,7 +9,11 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.162 2008/10/21 20:42:53 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.156 2008/04/21 20:54:15 tgl Exp $
+>>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -1541,6 +1545,7 @@ typedef struct SpecialJoinInfo
 	JoinType	jointype;		/* always INNER, LEFT, FULL, SEMI, or ANTI */
 	bool		lhs_strict;		/* joinclause is strict for some LHS rel */
 	bool		delay_upper_joins;		/* can't commute with upper RHS */
+<<<<<<< HEAD
 	List	   *join_quals;		/* join quals, in implicit-AND list format */
 	bool		try_join_unique;
 								/* CDB: true => comparison is equality op and
@@ -1556,6 +1561,32 @@ typedef struct SpecialJoinInfo
 	List		*semi_operators; /* OIDs of equality join operators */
 	List		*semi_rhs_exprs; /* righthand-side expressions of these ops */
 } SpecialJoinInfo;
+=======
+} OuterJoinInfo;
+
+/*
+ * IN clause info.
+ *
+ * When we convert top-level IN quals into join operations, we must restrict
+ * the order of joining and use special join methods at some join points.
+ * We record information about each such IN clause in an InClauseInfo struct.
+ * These structs are kept in the PlannerInfo node's in_info_list.
+ *
+ * Note: sub_targetlist is a bit misnamed; it is a list of the expressions
+ * on the RHS of the IN's join clauses.  (This normally starts out as a list
+ * of Vars referencing the subquery outputs, but can get mutated if the
+ * subquery is flattened into the main query.)
+ */
+
+typedef struct InClauseInfo
+{
+	NodeTag		type;
+	Relids		lefthand;		/* base relids in lefthand expressions */
+	Relids		righthand;		/* base relids coming from the subselect */
+	List	   *sub_targetlist; /* RHS expressions of the IN's comparisons */
+	List	   *in_operators;	/* OIDs of the IN's equality operators */
+} InClauseInfo;
+>>>>>>> 49f001d81e
 
 /*
  * Append-relation info.

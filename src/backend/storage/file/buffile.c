@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/buffile.c,v 1.30 2008/03/10 20:06:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/buffile.c,v 1.31 2008/05/02 01:08:27 tgl Exp $
  *
  * NOTES:
  *
@@ -39,8 +39,21 @@
 #include "utils/workfile_mgr.h"
 
 /*
+<<<<<<< HEAD
  * This data structure represents a buffered file that consists of one
  * physical file (accessed through a virtual file descriptor
+=======
+ * We break BufFiles into gigabyte-sized segments, regardless of RELSEG_SIZE.
+ * The reason is that we'd like large temporary BufFiles to be spread across
+ * multiple tablespaces when available.
+ */
+#define MAX_PHYSICAL_FILESIZE	0x40000000
+#define BUFFILE_SEG_SIZE		(MAX_PHYSICAL_FILESIZE / BLCKSZ)
+
+/*
+ * This data structure represents a buffered file that consists of one or
+ * more physical files (each accessed through a virtual file descriptor
+>>>>>>> 49f001d81e
  * managed by fd.c).
  */
 struct BufFile

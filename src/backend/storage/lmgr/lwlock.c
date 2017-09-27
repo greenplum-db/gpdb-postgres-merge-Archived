@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.51 2008/03/17 19:44:41 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.52 2008/08/01 13:16:09 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,12 +28,18 @@
 #include "access/twophase.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
+<<<<<<< HEAD
 #include "storage/barrier.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/spin.h"
 #include "utils/sharedsnapshot.h"
 #include "pg_trace.h"
+=======
+#include "storage/ipc.h"
+#include "storage/proc.h"
+#include "storage/spin.h"
+>>>>>>> 49f001d81e
 
 
 /* We use the ShmemLock spinlock to protect LWLockAssign */
@@ -557,6 +563,7 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 		block_counts[lockid]++;
 #endif
 
+<<<<<<< HEAD
 		for (c = 0; c < num_held_lwlocks; c++)
 		{
 			if (held_lwlocks[c] == lockid)
@@ -564,6 +571,9 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 		}
 
 		TRACE_POSTGRESQL_LWLOCK_STARTWAIT(lockid, mode);
+=======
+		TRACE_POSTGRESQL_LWLOCK_WAIT_START(lockid, mode);
+>>>>>>> 49f001d81e
 
 		for (;;)
 		{
@@ -578,7 +588,7 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 			extraWaits++;
 		}
 
-		TRACE_POSTGRESQL_LWLOCK_ENDWAIT(lockid, mode);
+		TRACE_POSTGRESQL_LWLOCK_WAIT_DONE(lockid, mode);
 
 		LOG_LWDEBUG("LWLockAcquire", lockid, "awakened");
 
