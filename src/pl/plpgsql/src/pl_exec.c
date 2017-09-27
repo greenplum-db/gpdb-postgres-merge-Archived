@@ -420,11 +420,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 			 * sure it is labeled with the caller-supplied tuple type.
 			 */
 			estate.retval =
-<<<<<<< HEAD
 				PointerGetDatum(SPI_returntuple((HeapTuple) DatumGetPointer(estate.retval),
-=======
-				PointerGetDatum(SPI_returntuple((HeapTuple)DatumGetPointer(estate.retval),
->>>>>>> 49f001d81e
 												tupdesc));
 		}
 		else
@@ -2084,16 +2080,10 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 					PLpgSQL_row *row = (PLpgSQL_row *) retvar;
 
 					Assert(row->rowtupdesc);
-<<<<<<< HEAD
-					estate->retval = PointerGetDatum(make_tuple_from_row(estate, row,
-															row->rowtupdesc));
-					if (estate->retval == 0) /* should not happen */
-=======
 					estate->retval =
 						PointerGetDatum(make_tuple_from_row(estate, row,
 															row->rowtupdesc));
 					if (DatumGetPointer(estate->retval) == NULL) /* should not happen */
->>>>>>> 49f001d81e
 						elog(ERROR, "row not compatible with its own tupdesc");
 					estate->rettupdesc = row->rowtupdesc;
 					estate->retisnull = false;
@@ -2457,23 +2447,15 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 				if (paramisnull)
 					extval = "<NULL>";
 				else
-					extval = convert_value_to_string(paramvalue, paramtypeid);
+					extval = convert_value_to_string(estate,
+													 paramvalue,
+													 paramtypeid);
 				plpgsql_dstring_append(&ds, extval);
 				current_param = lnext(current_param);
 				exec_eval_cleanup(estate);
 			}
 			else
-<<<<<<< HEAD
-				extval = convert_value_to_string(estate,
-												 paramvalue,
-												 paramtypeid);
-			plpgsql_dstring_append(&ds, extval);
-			current_param = lnext(current_param);
-			exec_eval_cleanup(estate);
-			continue;
-=======
 				plpgsql_dstring_append_char(&ds, cp[0]);
->>>>>>> 49f001d81e
 		}
 
 		/*
@@ -2505,7 +2487,7 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					 errmsg("RAISE statement option cannot be NULL")));
 
-		extval = convert_value_to_string(optionvalue, optiontypeid);
+		extval = convert_value_to_string(estate, optionvalue, optiontypeid);
 
 		switch (opt->opt_type)
 		{
@@ -3151,58 +3133,7 @@ exec_stmt_dynfors(PLpgSQL_execstate *estate, PLpgSQL_stmt_dynfors *stmt)
 	Portal		portal;
 	int			rc;
 
-<<<<<<< HEAD
-	/*
-	 * Evaluate the string expression after the EXECUTE keyword. It's result
-	 * is the querystring we have to execute.
-	 */
-	query = exec_eval_expr(estate, stmt->query, &isnull, &restype);
-	if (isnull)
-		ereport(ERROR,
-				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				 errmsg("cannot EXECUTE a null querystring")));
-
-	/* Get the C-String representation */
-	querystr = convert_value_to_string(estate, query, restype);
-
-	/* copy it out of the temporary context before we clean up */
-	querystr = pstrdup(querystr);
-
-	exec_eval_cleanup(estate);
-
-	/*
-	 * Open an implicit cursor for the query.  We use SPI_cursor_open_with_args
-	 * even when there are no params, because this avoids making and freeing
-	 * one copy of the plan.
-	 */
-	if (stmt->params)
-	{
-		PreparedParamsData *ppd;
-
-		ppd = exec_eval_using_params(estate, stmt->params);
-		portal = SPI_cursor_open_with_args(NULL,
-										   querystr,
-										   ppd->nargs, ppd->types,
-										   ppd->values, ppd->nulls,
-										   estate->readonly_func, 0);
-		free_params_data(ppd);
-	}
-	else
-	{
-		portal = SPI_cursor_open_with_args(NULL,
-										   querystr,
-										   0, NULL,
-										   NULL, NULL,
-										   estate->readonly_func, 0);
-	}
-
-	if (portal == NULL)
-		elog(ERROR, "could not open implicit cursor for query \"%s\": %s",
-			 querystr, SPI_result_code_string(SPI_result));
-	pfree(querystr);
-=======
 	portal = exec_dynquery_with_params(estate, stmt->query, stmt->params);
->>>>>>> 49f001d81e
 
 	/*
 	 * Execute the loop
@@ -4619,44 +4550,25 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	}
 
 	/*
+	 * Mark expression as busy for the duration of the ExecEvalExpr call.
+	 */
+	expr->expr_simple_in_use = true;
+
+	/*
 	 * Finally we can call the executor to evaluate the expression
 	 */
 	*result = ExecEvalExpr(expr->expr_simple_state,
 						   econtext,
 						   isNull,
 						   NULL);
+
+	/* Assorted cleanup */
+	expr->expr_simple_in_use = false;
+
 	MemoryContextSwitchTo(oldcontext);
 
-<<<<<<< HEAD
-		/*
-		 * Mark expression as busy for the duration of the ExecEvalExpr call.
-		 */
-		expr->expr_simple_in_use = true;
-
-		/*
-		 * Finally we can call the executor to evaluate the expression
-		 */
-		*result = ExecEvalExpr(expr->expr_simple_state,
-							   econtext,
-							   isNull,
-							   NULL);
-
-		/* Assorted cleanup */
-		expr->expr_simple_in_use = false;
-		MemoryContextSwitchTo(oldcontext);
-	}
-	PG_CATCH();
-	{
-		/* Restore global vars and propagate error */
-		/* note we intentionally don't reset expr_simple_in_use here */
-		ActiveSnapshot = saveActiveSnapshot;
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-=======
 	if (!estate->readonly_func)
 		PopActiveSnapshot();
->>>>>>> 49f001d81e
 
 	SPI_pop();
 
@@ -5648,7 +5560,10 @@ exec_dynquery_with_params(PLpgSQL_execstate *estate, PLpgSQL_expr *dynquery,
 				 errmsg("cannot EXECUTE a null querystring")));
 
 	/* Get the C-String representation */
-	querystr = convert_value_to_string(query, restype);
+	querystr = convert_value_to_string(estate, query, restype);
+
+	/* copy it out of the temporary context before we clean up */
+	querystr = pstrdup(querystr);
 
 	exec_eval_cleanup(estate);
 

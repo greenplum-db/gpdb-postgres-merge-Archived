@@ -18,12 +18,9 @@
 #define CONST84
 #endif
 
-<<<<<<< HEAD
 #include "access/heapam.h"
 #include "catalog/namespace.h"
-=======
 #include "catalog/pg_language.h"
->>>>>>> 49f001d81e
 #include "catalog/pg_proc.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
@@ -187,18 +184,12 @@ static Datum pltcl_handler(PG_FUNCTION_ARGS, bool pltrusted);
 
 static Datum pltcl_func_handler(PG_FUNCTION_ARGS, bool pltrusted);
 
-<<<<<<< HEAD
 static HeapTuple pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted);
 
 static void throw_tcl_error(Tcl_Interp *interp, const char *proname);
 
 static pltcl_proc_desc *compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 											   bool pltrusted);
-=======
-static void throw_tcl_error(Tcl_Interp *interp, const char *proname);
-
-static pltcl_proc_desc *compile_pltcl_function(Oid fn_oid, Oid tgreloid);
->>>>>>> 49f001d81e
 
 static int pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 		   int argc, CONST84 char *argv[]);

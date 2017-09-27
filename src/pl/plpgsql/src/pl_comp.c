@@ -438,7 +438,6 @@ do_compile(FunctionCallInfo fcinfo,
 				}
 
 				/* Remember arguments in appropriate arrays */
-<<<<<<< HEAD
 				switch (argmode)
 				{
 					/* input modes */
@@ -466,16 +465,6 @@ do_compile(FunctionCallInfo fcinfo,
 										argmode)));
 						break;								 
 				}
-=======
-				if (argmode == PROARGMODE_IN ||
-					argmode == PROARGMODE_INOUT ||
-					argmode == PROARGMODE_VARIADIC)
-					in_arg_varnos[num_in_args++] = argvariable->dno;
-				if (argmode == PROARGMODE_OUT ||
-					argmode == PROARGMODE_INOUT ||
-					argmode == PROARGMODE_TABLE)
-					out_arg_variables[num_out_args++] = argvariable;
->>>>>>> 49f001d81e
 
 				/* Add to namespace under the $n name */
 				plpgsql_ns_additem(argitemtype, argvariable->dno, buf);

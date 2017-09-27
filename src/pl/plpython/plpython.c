@@ -1,11 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
-<<<<<<< HEAD
  *	src/pl/plpython/plpython.c
-=======
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.112 2008/07/18 03:32:53 tgl Exp $
->>>>>>> 49f001d81e
  *
  *********************************************************************
  */
@@ -1757,18 +1753,6 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 
 		/*
 		 * Now get information required for input conversion of the
-<<<<<<< HEAD
-		 * procedure's arguments.  Note that we ignore pure output arguments here. 
-		 */
-		if (procStruct->pronargs)
-		{
-			Oid		   *types;
-			char	  **names,
-					   *modes;
-			int			i,
-						pos,
-						total;
-=======
 		 * procedure's arguments.  Note that we ignore output arguments
 		 * here --- since we don't support returning record, and that was
 		 * already checked above, there's no need to worry about multiple
@@ -1782,7 +1766,6 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 			int		 i,
 					 pos,
 					 total;
->>>>>>> 49f001d81e
 
 			/* extract argument type info from the pg_proc tuple */
 			total = get_func_arg_info(procTup, &types, &names, &modes);
@@ -1801,11 +1784,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 				}
 			}
 
-<<<<<<< HEAD
 			proc->argnames = (char **) PLy_malloc0(sizeof(char *) * proc->nargs);
-=======
-			proc->argnames = (char **) PLy_malloc(sizeof(char *) * proc->nargs);
->>>>>>> 49f001d81e
 			for (i = pos = 0; i < total; i++)
 			{
 				HeapTuple	argTypeTup;
@@ -1818,14 +1797,8 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 
 				Assert(types[i] == procStruct->proargtypes.values[pos]);
 
-<<<<<<< HEAD
 				argTypeTup = SearchSysCache1(TYPEOID,
 											 ObjectIdGetDatum(types[i]));
-=======
-				argTypeTup = SearchSysCache(TYPEOID,
-											ObjectIdGetDatum(types[i]),
-											0, 0, 0);
->>>>>>> 49f001d81e
 				if (!HeapTupleIsValid(argTypeTup))
 					elog(ERROR, "cache lookup failed for type %u", types[i]);
 				argTypeStruct = (Form_pg_type) GETSTRUCT(argTypeTup);
@@ -1837,11 +1810,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 						/* Disallow pseudotype argument */
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-<<<<<<< HEAD
 						  errmsg("PL/Python functions cannot accept type %s",
-=======
-								 errmsg("plpython functions cannot take type %s",
->>>>>>> 49f001d81e
 								 format_type_be(types[i]))));
 						break;
 					case TYPTYPE_COMPOSITE:
