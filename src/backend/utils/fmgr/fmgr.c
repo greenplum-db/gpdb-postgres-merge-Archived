@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.122 2008/08/25 22:42:34 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.121 2008/07/16 16:55:23 tgl Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -216,11 +212,7 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 		finfo->fn_nargs = fbp->nargs;
 		finfo->fn_strict = fbp->strict;
 		finfo->fn_retset = fbp->retset;
-<<<<<<< HEAD
-		finfo->fn_stats = TRACK_FUNC_ALL;		/* ie, never track */
-=======
 		finfo->fn_stats = TRACK_FUNC_ALL;	/* ie, never track */
->>>>>>> 49f001d81e
 		finfo->fn_addr = fbp->func;
 		finfo->fn_oid = functionId;
 		return;
@@ -261,11 +253,7 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 		 !heap_attisnull(procedureTuple, Anum_pg_proc_proconfig)))
 	{
 		finfo->fn_addr = fmgr_security_definer;
-<<<<<<< HEAD
-		finfo->fn_stats = TRACK_FUNC_ALL;		/* ie, never track */
-=======
 		finfo->fn_stats = TRACK_FUNC_ALL;	/* ie, never track */
->>>>>>> 49f001d81e
 		finfo->fn_oid = functionId;
 		ReleaseSysCache(procedureTuple);
 		return;

@@ -1,9 +1,5 @@
 <!--
-<<<<<<< HEAD
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.78.2.2 2009/10/02 18:13:19 tgl Exp $
-=======
 $PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.80 2008/07/18 03:32:52 tgl Exp $
->>>>>>> 49f001d81e
 -->
 
 <refentry id="SQL-CREATEFUNCTION">

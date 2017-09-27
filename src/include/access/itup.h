@@ -7,11 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/access/itup.h,v 1.52 2009/08/01 19:59:41 tgl Exp $
-=======
  * $PostgreSQL: pgsql/src/include/access/itup.h,v 1.50 2008/07/13 20:45:47 tgl Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

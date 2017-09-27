@@ -718,15 +718,9 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 #ifdef HAVE_IPV6
 					|| beentry->st_clientaddr.addr.ss_family == AF_INET6
 #endif
-<<<<<<< HEAD
-					)
-				{
-					char		remote_host[NI_MAXHOST];
-=======
 				   )
 				{
 					char        remote_host[NI_MAXHOST];
->>>>>>> 49f001d81e
 					char		remote_port[NI_MAXSERV];
 					int			ret;
 

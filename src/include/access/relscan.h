@@ -7,11 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.61 2008/03/26 16:20:48 alvherre Exp $
-=======
  * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.66 2008/06/19 00:46:06 alvherre Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

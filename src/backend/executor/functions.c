@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.126 2008/08/25 22:42:32 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.125 2008/05/12 20:02:00 alvherre Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

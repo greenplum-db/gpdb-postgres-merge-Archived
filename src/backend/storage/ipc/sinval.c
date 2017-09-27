@@ -81,11 +81,7 @@ SendSharedInvalidMessages(const SharedInvalidationMessage *msgs, int n)
  * NOTE: it is entirely possible for this routine to be invoked recursively
  * as a consequence of processing inside the invalFunction or resetFunction.
  * Furthermore, such a recursive call must guarantee that all outstanding
-<<<<<<< HEAD
- * inval messages have been processed before it exits.	This is the reason
-=======
  * inval messages have been processed before it exits.  This is the reason
->>>>>>> 49f001d81e
  * for the strange-looking choice to use a statically allocated buffer array
  * and counters; it's so that a recursive call can process messages already
  * sucked out of sinvaladt.c.

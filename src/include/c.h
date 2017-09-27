@@ -112,11 +112,7 @@ extern "C" {
 
 /*
  *	Use this to mark string constants as needing translation at some later
-<<<<<<< HEAD
- *	time, rather than immediately.	This is useful for cases where you need
-=======
  *	time, rather than immediately.  This is useful for cases where you need
->>>>>>> 49f001d81e
  *	access to the original string and translated string, and for cases where
  *	immediate translation is not possible, like when initializing global
  *	variables.

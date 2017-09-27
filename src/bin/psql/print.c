@@ -554,15 +554,9 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 			   *max_width,
 			   *width_wrap,
 			   *width_average;
-<<<<<<< HEAD
-	unsigned int *max_nl_lines, /* value split by newlines */
-			   *curr_nl_line,
-			   *max_bytes;
-=======
 	unsigned int *max_nl_lines,	/* value split by newlines */
 				*curr_nl_line,
 				*max_bytes;
->>>>>>> 49f001d81e
 	unsigned char **format_buf;
 	unsigned int width_total;
 	unsigned int total_header_width;
@@ -755,11 +749,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 	{
 		/* Add entry for ptr == NULL array termination */
 		col_lineptrs[i] = pg_local_calloc(max_nl_lines[i] + 1,
-<<<<<<< HEAD
-										  sizeof(**col_lineptrs));
-=======
 											sizeof(**col_lineptrs));
->>>>>>> 49f001d81e
 
 		format_buf[i] = pg_local_malloc(max_bytes[i] + 1);
 
@@ -796,11 +786,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 		 * Optional optimized word wrap. Shrink columns with a high max/avg
 		 * ratio.  Slighly bias against wider columns. (Increases chance a
 		 * narrow column will fit in its cell.)  If available columns is
-<<<<<<< HEAD
-		 * positive...	and greater than the width of the unshrinkable column
-=======
 		 * positive...  and greater than the width of the unshrinkable column
->>>>>>> 49f001d81e
 		 * headers
 		 */
 		if (output_columns > 0 && output_columns >= total_header_width)
@@ -829,11 +815,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 					if (width_average[i] && width_wrap[i] > width_header[i])
 					{
 						/* Penalize wide columns by 1% of their width */
-<<<<<<< HEAD
-						double		ratio;
-=======
 						double ratio;
->>>>>>> 49f001d81e
 
 						ratio = (double) width_wrap[i] / width_average[i] +
 							max_width[i] * 0.01;
@@ -2753,11 +2735,7 @@ printTableAddCell(printTableContent *const content, const char *cell,
  * strdup'd, so there is no need to keep the original footer string around.
  *
  * Footers are never translated by the function.  If you want the footer
-<<<<<<< HEAD
- * translated you must do so yourself, before calling printTableAddFooter.	The
-=======
  * translated you must do so yourself, before calling printTableAddFooter.  The
->>>>>>> 49f001d81e
  * reason this works differently to headers and cells is that footers tend to
  * be made of up individually translated components, rather than being
  * translated as a whole.
@@ -2914,11 +2892,7 @@ printTable(const printTableContent *cont, FILE *fout, FILE *flog)
 	/* print_aligned_text() handles the pager itself */
 	if ((cont->opt->format != PRINT_ALIGNED &&
 		 cont->opt->format != PRINT_WRAPPED) ||
-<<<<<<< HEAD
-		cont->opt->expanded)
-=======
 		 cont->opt->expanded)
->>>>>>> 49f001d81e
 		IsPagerNeeded(cont, 0, &fout, &is_pager);
 
 	/* print the stuff */
@@ -3061,11 +3035,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 	/* set footers */
 	if (opt->footers)
 	{
-<<<<<<< HEAD
-		char	  **footer;
-=======
 		char		**footer;
->>>>>>> 49f001d81e
 
 		for (footer = opt->footers; *footer; footer++)
 			printTableAddFooter(&cont, *footer);

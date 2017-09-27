@@ -17,11 +17,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.102 2008/08/25 22:42:32 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.101 2008/05/12 00:00:49 alvherre Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

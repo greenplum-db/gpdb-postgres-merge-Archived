@@ -199,34 +199,12 @@ describeAggregates(const char *pattern, bool verbose, bool showSystem)
 	printfPQExpBuffer(&buf,
 					  "SELECT n.nspname as \"%s\",\n"
 					  "  p.proname AS \"%s\",\n"
-<<<<<<< HEAD
-				 "  pg_catalog.format_type(p.prorettype, NULL) AS \"%s\",\n",
-=======
 					  "  pg_catalog.format_type(p.prorettype, NULL) AS \"%s\",\n",
->>>>>>> 49f001d81e
 					  gettext_noop("Schema"),
 					  gettext_noop("Name"),
 					  gettext_noop("Result data type"));
 
 	if (pset.sversion >= 80200)
-<<<<<<< HEAD
-		appendPQExpBuffer(&buf,
-						  "  CASE WHEN p.pronargs = 0\n"
-						  "    THEN CAST('*' AS pg_catalog.text)\n"
-						  "    ELSE\n"
-						  "    pg_catalog.array_to_string(ARRAY(\n"
-						  "      SELECT\n"
-				 "        pg_catalog.format_type(p.proargtypes[s.i], NULL)\n"
-						  "      FROM\n"
-						  "        pg_catalog.generate_series(0, pg_catalog.array_upper(p.proargtypes, 1)) AS s(i)\n"
-						  "    ), ', ')\n"
-						  "  END AS \"%s\",\n",
-						  gettext_noop("Argument data types"));
-	else
-		appendPQExpBuffer(&buf,
-			 "  pg_catalog.format_type(p.proargtypes[0], NULL) AS \"%s\",\n",
-						  gettext_noop("Argument data types"));
-=======
 	    appendPQExpBuffer(&buf,
 					  "  CASE WHEN p.pronargs = 0\n"
 					  "    THEN CAST('*' AS pg_catalog.text)\n"
@@ -243,7 +221,6 @@ describeAggregates(const char *pattern, bool verbose, bool showSystem)
 	    appendPQExpBuffer(&buf,
 					  "  pg_catalog.format_type(p.proargtypes[0], NULL) AS \"%s\",\n",
 					  gettext_noop("Argument data types"));
->>>>>>> 49f001d81e
 
 	appendPQExpBuffer(&buf,
 				 "  pg_catalog.obj_description(p.oid, 'pg_proc') as \"%s\"\n"
@@ -596,11 +573,7 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 						  "  WHEN p.provolatile = 's' THEN '%s'\n"
 						  "  WHEN p.provolatile = 'v' THEN '%s'\n"
 						  "END as \"%s\""
-<<<<<<< HEAD
-				   ",\n  pg_catalog.pg_get_userbyid(p.proowner) as \"%s\",\n"
-=======
 						  ",\n  pg_catalog.pg_get_userbyid(p.proowner) as \"%s\",\n"
->>>>>>> 49f001d81e
 						  "  l.lanname as \"%s\",\n"
 						  "  p.prosrc as \"%s\",\n"
 				  "  pg_catalog.obj_description(p.oid, 'pg_proc') as \"%s\"",
@@ -966,11 +939,7 @@ listAllDbs(bool verbose)
 						  ",\n       t.spcname as \"%s\"",
 						  gettext_noop("Tablespace"));
 	if (verbose && pset.sversion >= 80200)
-<<<<<<< HEAD
-		appendPQExpBuffer(&buf,
-=======
 		    appendPQExpBuffer(&buf,
->>>>>>> 49f001d81e
 						  ",\n       pg_catalog.shobj_description(d.oid, 'pg_database') as \"%s\"",
 						  gettext_noop("Description"));
 	appendPQExpBuffer(&buf,
@@ -1873,11 +1842,7 @@ describeOneTableDetails(const char *schemaname,
 		PGresult   *result;
 
 		printfPQExpBuffer(&buf,
-<<<<<<< HEAD
-			  "SELECT pg_catalog.pg_get_viewdef('%s'::pg_catalog.oid, true)",
-=======
 						  "SELECT pg_catalog.pg_get_viewdef('%s'::pg_catalog.oid, true)",
->>>>>>> 49f001d81e
 						  oid);
 		result = PSQLexec(buf.data, false);
 		if (!result)
@@ -2609,11 +2574,7 @@ describeOneTableDetails(const char *schemaname,
 							  "SELECT r.conname, "
 							  "pg_catalog.pg_get_constraintdef(r.oid, true)\n"
 							  "FROM pg_catalog.pg_constraint r\n"
-<<<<<<< HEAD
-				   "WHERE r.conrelid = '%s' AND r.contype = 'c'\nORDER BY 1",
-=======
 					"WHERE r.conrelid = '%s' AND r.contype = 'c'\nORDER BY 1",
->>>>>>> 49f001d81e
 							  oid);
 			result = PSQLexec(buf.data, false);
 			if (!result)
@@ -4237,11 +4198,7 @@ listCasts(const char *pattern)
 	printfPQExpBuffer(&buf,
 			   "SELECT pg_catalog.format_type(castsource, NULL) AS \"%s\",\n"
 			   "       pg_catalog.format_type(casttarget, NULL) AS \"%s\",\n"
-<<<<<<< HEAD
-				  "       CASE WHEN castfunc = 0 THEN '(binary coercible)'\n"
-=======
 					  "       CASE WHEN castfunc = 0 THEN '(binary coercible)'\n"
->>>>>>> 49f001d81e
 					  "            ELSE p.proname\n"
 					  "       END as \"%s\",\n"
 					  "       CASE WHEN c.castcontext = 'e' THEN '%s'\n"
@@ -4328,11 +4285,7 @@ listSchemas(const char *pattern, bool verbose)
 	}
 
 	appendPQExpBuffer(&buf,
-<<<<<<< HEAD
-					  "\nFROM pg_catalog.pg_namespace n\n"
-=======
 			  "\nFROM pg_catalog.pg_namespace n\n"
->>>>>>> 49f001d81e
 					  "WHERE	(n.nspname !~ '^pg_temp_' OR\n"
 		   "		 n.nspname = (pg_catalog.current_schemas(true))[1])\n");		/* temp schema is first */
 

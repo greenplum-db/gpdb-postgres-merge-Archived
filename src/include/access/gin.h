@@ -4,11 +4,7 @@
  *
  *	Copyright (c) 2006-2008, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.16.2.3 2009/06/05 18:50:52 tgl Exp $
-=======
  *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.24 2008/07/13 21:50:04 tgl Exp $
->>>>>>> 49f001d81e
  *--------------------------------------------------------------------------
  */
 

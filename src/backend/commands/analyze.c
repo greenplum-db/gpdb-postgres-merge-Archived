@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *      $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.125 2008/08/25 22:42:32 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.123 2008/07/01 10:33:09 heikki Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

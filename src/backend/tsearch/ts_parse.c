@@ -7,11 +7,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_parse.c,v 1.7.2.2 2009/08/30 16:53:45 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_parse.c,v 1.8 2008/05/16 16:31:01 tgl Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

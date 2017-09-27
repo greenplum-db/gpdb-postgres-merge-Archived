@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-# $PostgreSQL: pgsql/contrib/Makefile,v 1.82.2.1 2008/05/08 16:49:47 tgl Exp $
-=======
 # $PostgreSQL: pgsql/contrib/Makefile,v 1.84 2008/07/29 18:31:20 tgl Exp $
->>>>>>> 49f001d81e
 
 subdir = contrib
 top_builddir = ..

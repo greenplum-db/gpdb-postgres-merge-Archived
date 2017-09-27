@@ -1399,11 +1399,7 @@ pgstat_init_function_usage(FunctionCallInfoData *fcinfo,
 						   PgStat_FunctionCallUsage *fcu)
 {
 	PgStat_BackendFunctionEntry *htabent;
-<<<<<<< HEAD
-	bool		found;
-=======
 	bool 		found;
->>>>>>> 49f001d81e
 
 	if (pgstat_track_functions <= fcinfo->flinfo->fn_stats)
 	{
@@ -3641,11 +3637,7 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 				/*
 				 * 'F'	A PgStat_StatFuncEntry follows.
 				 */
-<<<<<<< HEAD
-            case 'F':
-=======
 			case 'F':
->>>>>>> 49f001d81e
 				if (fread(&funcbuf, 1, sizeof(PgStat_StatFuncEntry),
 						  fpin) != sizeof(PgStat_StatFuncEntry))
 				{
@@ -3661,11 +3653,7 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 					break;
 
 				funcentry = (PgStat_StatFuncEntry *) hash_search(funchash,
-<<<<<<< HEAD
-												(void *) &funcbuf.functionid,
-=======
 													(void *) &funcbuf.functionid,
->>>>>>> 49f001d81e
 														 HASH_ENTER, &found);
 
 				if (found)
@@ -4485,13 +4473,8 @@ pgstat_recv_funcstat(PgStat_MsgFuncstat *msg, int len)
 	for (i = 0; i < msg->m_nentries; i++, funcmsg++)
 	{
 		funcentry = (PgStat_StatFuncEntry *) hash_search(dbentry->functions,
-<<<<<<< HEAD
-												   (void *) &(funcmsg->f_id),
-														 HASH_ENTER, &found);
-=======
 												  (void *) &(funcmsg->f_id),
 													   HASH_ENTER, &found);
->>>>>>> 49f001d81e
 
 		if (!found)
 		{

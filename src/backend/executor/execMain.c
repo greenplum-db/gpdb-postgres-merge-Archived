@@ -28,11 +28,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.313 2008/08/25 22:42:32 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.311 2008/07/26 19:15:35 tgl Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

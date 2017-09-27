@@ -9,11 +9,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.297 2009/04/05 19:59:40 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.278 2008/07/18 03:32:52 tgl Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

@@ -7314,15 +7314,9 @@ static char *format_function_arguments(FuncInfo *finfo, char *funcargs)
  */
 static char *
 format_function_arguments_old(FuncInfo *finfo, int nallargs,
-<<<<<<< HEAD
-						  char **allargtypes,
-						  char **argmodes,
-						  char **argnames)
-=======
 							  char **allargtypes,
 							  char **argmodes,
 							  char **argnames)
->>>>>>> 49f001d81e
 {
 	PQExpBufferData fn;
 	int			j;

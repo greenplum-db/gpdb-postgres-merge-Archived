@@ -14,11 +14,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.27.2.1 2009/12/03 11:03:44 heikki Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.29 2008/06/19 00:46:05 alvherre Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

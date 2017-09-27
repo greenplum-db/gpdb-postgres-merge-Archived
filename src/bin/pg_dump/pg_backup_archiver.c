@@ -2199,11 +2199,7 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls)
 static void
 _doSetFixedOutputState(ArchiveHandle *AH)
 {
-<<<<<<< HEAD
-	/* Disable statement_timeout in archive for pg_restore/psql  */
-=======
 	/* Disable statement_timeout in archive for pg_restore/psql	 */
->>>>>>> 49f001d81e
 	ahprintf(AH, "SET statement_timeout = 0;\n");
 
 	/* Select the correct character set encoding */

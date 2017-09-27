@@ -7,11 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.57 2008/10/04 21:56:55 tgl Exp $
-=======
  * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.54 2008/06/19 00:46:06 alvherre Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

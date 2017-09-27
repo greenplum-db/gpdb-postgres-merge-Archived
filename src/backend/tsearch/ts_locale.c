@@ -7,11 +7,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_locale.c,v 1.7.2.2 2009/03/02 15:11:25 teodor Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_locale.c,v 1.10 2008/06/18 20:55:42 tgl Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

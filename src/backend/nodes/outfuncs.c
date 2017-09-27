@@ -10,11 +10,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.358 2009/04/05 19:59:40 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.328 2008/07/17 16:02:12 tgl Exp $
->>>>>>> 49f001d81e
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*

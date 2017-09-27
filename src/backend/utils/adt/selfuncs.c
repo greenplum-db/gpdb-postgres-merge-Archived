@@ -17,11 +17,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.256 2008/10/21 20:42:53 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.250 2008/07/07 20:24:55 tgl Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

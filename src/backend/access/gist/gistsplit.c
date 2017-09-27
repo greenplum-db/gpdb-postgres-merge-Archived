@@ -8,11 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistsplit.c,v 1.5.2.3 2009/07/24 19:54:36 petere Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/access/gist/gistsplit.c,v 1.6 2008/06/19 00:46:03 alvherre Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

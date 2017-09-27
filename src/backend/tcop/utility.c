@@ -710,11 +710,7 @@ ProcessUtility(Node *parsetree,
 			   DestReceiver *dest,
 			   char *completionTag)
 {
-<<<<<<< HEAD
-	Assert(queryString != NULL);	/* required as of 8.4 */
-=======
 	Assert(queryString != NULL);				/* required as of 8.4 */
->>>>>>> 49f001d81e
 
 	check_xact_readonly(parsetree);
 

@@ -6,11 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.91 2009/06/11 14:49:11 momjian Exp $
-=======
  * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.79 2008/06/18 18:42:54 momjian Exp $
->>>>>>> 49f001d81e
  *
  *	NOTES
  *		This is used both by the backend and by libpq, but should not be

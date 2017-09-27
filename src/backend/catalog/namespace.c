@@ -973,11 +973,7 @@ FuncnameGetCandidates(List *names, int nargs, bool expand_variadic)
 			   pronargs * sizeof(Oid));
 		if (variadic)
 		{
-<<<<<<< HEAD
-			int			i;
-=======
 			int		i;
->>>>>>> 49f001d81e
 
 			newResult->nvargs = effective_nargs - pronargs + 1;
 			/* Expand variadic argument into N copies of element type */

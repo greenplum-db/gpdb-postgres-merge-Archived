@@ -1366,11 +1366,7 @@ ecpg_execute(struct statement * stmt)
 					desc->result = results;
 					clear_result = false;
 					ecpg_log("ecpg_execute on line %d: putting result (%d tuples) into descriptor %s\n",
-<<<<<<< HEAD
-							 stmt->lineno, PQntuples(results), (const char *) var->pointer);
-=======
 							stmt->lineno, PQntuples(results), (const char *) var->pointer);
->>>>>>> 49f001d81e
 				}
 				var = var->next;
 			}

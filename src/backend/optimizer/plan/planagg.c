@@ -10,11 +10,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.43 2008/08/25 22:42:33 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.41 2008/07/10 02:14:03 tgl Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

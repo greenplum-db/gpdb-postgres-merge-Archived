@@ -7340,19 +7340,11 @@ func_arg_with_default:
 		;
 
 /* INOUT is SQL99 standard, IN OUT is for Oracle compatibility */
-<<<<<<< HEAD
-arg_class:	IN_P									{ $$ = FUNC_PARAM_IN; }
-			| OUT_P									{ $$ = FUNC_PARAM_OUT; }
-			| INOUT									{ $$ = FUNC_PARAM_INOUT; }
-			| IN_P OUT_P							{ $$ = FUNC_PARAM_INOUT; }
-			| VARIADIC								{ $$ = FUNC_PARAM_VARIADIC; }
-=======
 arg_class:	IN_P								{ $$ = FUNC_PARAM_IN; }
 			| OUT_P								{ $$ = FUNC_PARAM_OUT; }
 			| INOUT								{ $$ = FUNC_PARAM_INOUT; }
 			| IN_P OUT_P						{ $$ = FUNC_PARAM_INOUT; }
 			| VARIADIC							{ $$ = FUNC_PARAM_VARIADIC; }
->>>>>>> 49f001d81e
 		;
 
 /*

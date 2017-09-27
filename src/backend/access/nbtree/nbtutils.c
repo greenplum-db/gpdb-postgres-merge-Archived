@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.88.2.1 2008/04/16 23:59:51 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.91 2008/06/19 00:46:03 alvherre Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

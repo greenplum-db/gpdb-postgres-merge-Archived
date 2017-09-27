@@ -11,11 +11,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.74 2010/01/15 09:19:08 heikki Exp $
-=======
  * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.66 2008/04/26 22:47:40 tgl Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

@@ -10,11 +10,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.245 2008/10/21 20:42:53 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.235 2008/07/31 22:47:56 tgl Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */
@@ -1688,11 +1684,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			 * Normal case --- create a plan according to query_planner's
 			 * results.
 			 */
-<<<<<<< HEAD
-			bool		need_sort_for_grouping = false;
-=======
 			bool	need_sort_for_grouping = false;
->>>>>>> 49f001d81e
 
 			result_plan = create_plan(root, best_path);
 			current_pathkeys = best_path->pathkeys;

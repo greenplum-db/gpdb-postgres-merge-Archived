@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.231 2008/08/25 22:42:33 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.229 2008/07/16 01:30:22 tgl Exp $
->>>>>>> 49f001d81e
  *
  *-------------------------------------------------------------------------
  */

@@ -17,11 +17,7 @@ extern char *
 ecpg_gettext(const char *msgid)
 __attribute__((format_arg(1)));
 #else
-<<<<<<< HEAD
-#define ecpg_gettext(x) (x)
-=======
 #define	ecpg_gettext(x)	(x)
->>>>>>> 49f001d81e
 #endif
 
 #ifndef __cplusplus

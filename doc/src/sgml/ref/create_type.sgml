@@ -1,9 +1,5 @@
 <!--
-<<<<<<< HEAD
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.80 2009/12/26 16:55:21 momjian Exp $
-=======
 $PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.77 2008/07/31 16:27:16 tgl Exp $
->>>>>>> 49f001d81e
 PostgreSQL documentation
 -->
 

@@ -57,13 +57,8 @@ static int	_SPI_connected = -1;
 static int	_SPI_curid = -1;
 
 static Portal SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
-<<<<<<< HEAD
-						 Datum *Values, const char *Nulls,
-						 bool read_only, int pflags);
-=======
 									   Datum *Values, const char *Nulls,
 									   bool read_only, int pflags);
->>>>>>> 49f001d81e
 
 static void _SPI_prepare_plan(const char *src, SPIPlanPtr plan,
 				  ParamListInfo boundParams);

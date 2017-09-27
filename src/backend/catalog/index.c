@@ -10,11 +10,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.303 2008/08/25 22:42:32 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.300 2008/06/19 00:46:04 alvherre Exp $
->>>>>>> 49f001d81e
  *
  *
  * INTERFACE ROUTINES

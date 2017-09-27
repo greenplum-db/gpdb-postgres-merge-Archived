@@ -104,11 +104,7 @@ typedef struct printTableOpt
  */
 typedef struct printTableFooter
 {
-<<<<<<< HEAD
-	char	   *data;
-=======
 	char *data;
->>>>>>> 49f001d81e
 	struct printTableFooter *next;
 } printTableFooter;
 
