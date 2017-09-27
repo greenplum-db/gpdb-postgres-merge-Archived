@@ -152,7 +152,6 @@ extern List *reconstruct_group_clause(List *orig_groupClause, List *tlist,
 extern Motion *make_motion(PlannerInfo *root, Plan *lefttree, List *sortPathKeys, bool useExecutorVarFormat);
 
 extern Agg *make_agg(PlannerInfo *root, List *tlist, List *qual,
-<<<<<<< HEAD
 					 AggStrategy aggstrategy, bool streaming,
 					 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
 					 long numGroups, int numNullCols,
@@ -185,17 +184,6 @@ extern WindowAgg *make_windowagg(PlannerInfo *root, List *tlist,
 			   Plan *lefttree);
 extern Material *make_material(Plan *lefttree);
 extern Plan *materialize_finished_plan(PlannerInfo *root, Plan *subplan);
-=======
-		 AggStrategy aggstrategy,
-		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
-		 long numGroups, int numAggs,
-		 Plan *lefttree);
-extern Group *make_group(PlannerInfo *root, List *tlist, List *qual,
-		   int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
-		   double numGroups,
-		   Plan *lefttree);
-extern Plan *materialize_finished_plan(Plan *subplan);
->>>>>>> 49f001d81e
 extern Unique *make_unique(Plan *lefttree, List *distinctList);
 extern Limit *make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount,
 		   int64 offset_est, int64 count_est);
