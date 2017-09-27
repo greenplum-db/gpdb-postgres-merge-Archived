@@ -193,29 +193,12 @@ static char *config_enum_get_options(struct config_enum *record,
  * Options for enum values defined in this module.
  */
 
-<<<<<<< HEAD
 static const struct config_enum_entry bytea_output_options[] = {
-	{"escape", BYTEA_OUTPUT_ESCAPE},
-	{"hex", BYTEA_OUTPUT_HEX},
-	{NULL, 0}
+	{"escape", BYTEA_OUTPUT_ESCAPE, false},
+	{"hex", BYTEA_OUTPUT_HEX, false},
+	{NULL, 0, false}
 };
 
-const struct config_enum_entry message_level_options[] = {
-	{"debug", DEBUG2},
-	{"debug5", DEBUG5},
-	{"debug4", DEBUG4},
-	{"debug3", DEBUG3},
-	{"debug2", DEBUG2},
-	{"debug1", DEBUG1},
-	{"log", LOG},
-	{"info", INFO},
-	{"notice", NOTICE},
-	{"warning", WARNING},
-	{"error", ERROR},
-	{"fatal", FATAL},
-	{"panic", PANIC},
-	{NULL, 0}
-=======
 /*
  * We have different sets for client and server message level options because
  * they sort slightly different (see "log" level)
@@ -252,7 +235,6 @@ static const struct config_enum_entry server_message_level_options[] = {
 	{"fatal", FATAL, false},
 	{"panic", PANIC, false},
 	{NULL, 0, false}
->>>>>>> 49f001d81e
 };
 
 static const struct config_enum_entry intervalstyle_options[] = {
@@ -431,13 +413,10 @@ static int	max_function_args;
 static int	max_index_keys;
 static int	max_identifier_length;
 static int	block_size;
-<<<<<<< HEAD
-static bool	data_checksums;
-=======
 static int	segment_size;
 static int	wal_block_size;
 static int	wal_segment_size;
->>>>>>> 49f001d81e
+static bool	data_checksums;
 static bool integer_datetimes;
 //static bool standard_conforming_strings;
 static char *allow_system_table_mods_str;
@@ -1521,11 +1500,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_KB | GUC_GPDB_ADDOPT
 		},
 		&work_mem,
-<<<<<<< HEAD
         32768, 64, MAX_KILOBYTES, NULL, NULL
-=======
-		1024, 64, MAX_KILOBYTES, NULL, NULL
->>>>>>> 49f001d81e
 	},
 
 	{
@@ -1919,9 +1894,6 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-<<<<<<< HEAD
-		{"autovacuum_naptime", PGC_SIGHUP, DEFUNCT_OPTIONS,
-=======
 		{"segment_size", PGC_INTERNAL, PRESET_OPTIONS,
 		    gettext_noop("Shows the number of pages per disk file."),
 		    NULL,
@@ -1955,8 +1927,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"autovacuum_naptime", PGC_SIGHUP, AUTOVACUUM,
->>>>>>> 49f001d81e
+		{"autovacuum_naptime", PGC_SIGHUP, DEFUNCT_OPTIONS,
 			gettext_noop("Time to sleep between autovacuum runs."),
 			NULL,
 			GUC_UNIT_S | GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
@@ -2087,15 +2058,18 @@ static struct config_int ConfigureNamesInt[] =
 		-1, -1, INT_MAX, NULL, NULL
 	},
 
+	/* GPDB_84_MERGE_FIXME: we have merged the track_activity_query_size GUC
+	 * from 8.4 into GPDB's pgstat_track_activity_query_size. Besides the name
+	 * change, the two differ in min/max settings, GUC group, flags, and
+	 * description. Make sure we did this right. */
 	{
-<<<<<<< HEAD
-		{"pgstat_track_activity_query_size", PGC_POSTMASTER, UNGROUPED,
-		gettext_noop("Maximum length of the query to be displayed in pg_stat_activity"),
-		NULL,
-		GUC_NOT_IN_SAMPLE
+		{"track_activity_query_size", PGC_POSTMASTER, RESOURCES_MEM,
+			gettext_noop("Sets the size reserved for pg_stat_activity.current_query, in bytes."),
+			NULL,
+			GUC_NOT_IN_SAMPLE
 		},
 		&pgstat_track_activity_query_size,
-		1024, 1024, INT_MAX,
+		1024, 100, INT_MAX,
 		NULL, NULL
 	},
 
@@ -2128,14 +2102,6 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&replication_timeout,
 		60 * 1000, 0, INT_MAX, NULL, NULL
-=======
-		{"track_activity_query_size", PGC_POSTMASTER, RESOURCES_MEM,
-			gettext_noop("Sets the size reserved for pg_stat_activity.current_query, in bytes."),
-			NULL,
-		},
-		&pgstat_track_activity_query_size,
-		1024, 100, 102400, NULL, NULL
->>>>>>> 49f001d81e
 	},
 
 	/* End-of-list marker */
@@ -2194,12 +2160,6 @@ static struct config_real ConfigureNamesReal[] =
 	},
 
 	{
-<<<<<<< HEAD
-		{"geqo_selection_bias", PGC_USERSET, DEFUNCT_OPTIONS,
-			gettext_noop("Unused. Syntax check only for PostgreSQL compatibility."),
-			NULL,
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-=======
 		{"cursor_tuple_fraction", PGC_USERSET, QUERY_TUNING_OTHER,
 			gettext_noop("Sets the planner's estimate of the fraction of "
 						 "a cursor's rows that will be retrieved."),
@@ -2210,10 +2170,10 @@ static struct config_real ConfigureNamesReal[] =
 	},
 
 	{
-		{"geqo_selection_bias", PGC_USERSET, QUERY_TUNING_GEQO,
-			gettext_noop("GEQO: selective pressure within the population."),
-			NULL
->>>>>>> 49f001d81e
+		{"geqo_selection_bias", PGC_USERSET, DEFUNCT_OPTIONS,
+			gettext_noop("Unused. Syntax check only for PostgreSQL compatibility."),
+			NULL,
+			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&defunct_double,
 		1.0, 0.0, 100.0, NULL, NULL
@@ -2639,19 +2599,6 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-<<<<<<< HEAD
-		{"wal_sync_method", PGC_SIGHUP, WAL_SETTINGS,
-			gettext_noop("Selects the method used for forcing WAL updates to disk."),
-			NULL,
-			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL | GUC_DISALLOW_USER_SET
-		},
-		&XLOG_sync_method,
-		XLOG_sync_method_default, assign_xlog_sync_method, NULL
-	},
-
-	{
-=======
->>>>>>> 49f001d81e
 		{"custom_variable_classes", PGC_SIGHUP, CUSTOM_OPTIONS,
 			gettext_noop("Sets the list of known custom variable classes."),
 			NULL,
@@ -2815,16 +2762,9 @@ static struct config_enum ConfigureNamesEnum[] =
 
 		{"client_min_messages", PGC_USERSET, LOGGING_WHEN,
 			gettext_noop("Sets the message levels that are sent to the client."),
-<<<<<<< HEAD
-			gettext_noop("Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, "
-						 "DEBUG1, LOG, NOTICE, WARNING, and ERROR. Each level includes all the "
-						 "levels that follow it. The later the level, the fewer messages are "
-						 "sent."),
-			GUC_GPDB_ADDOPT
-=======
 			gettext_noop("Each level includes all the levels that follow it. The later"
-						 " the level, the fewer messages are sent.")
->>>>>>> 49f001d81e
+						 " the level, the fewer messages are sent."),
+			GUC_GPDB_ADDOPT
 		},
 		&client_min_messages,
 		NOTICE, client_message_level_options, NULL, NULL
@@ -2852,12 +2792,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"log_error_verbosity", PGC_SUSET, LOGGING_WHEN,
 			gettext_noop("Sets the verbosity of logged messages."),
-<<<<<<< HEAD
-			gettext_noop("Valid values are \"terse\", \"default\", and \"verbose\"."),
 			GUC_GPDB_ADDOPT
-=======
-			NULL
->>>>>>> 49f001d81e
 		},
 		&Log_error_verbosity,
 		PGERROR_DEFAULT, log_error_verbosity_options, NULL, NULL
@@ -2866,15 +2801,9 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"log_min_messages", PGC_SUSET, LOGGING_WHEN,
 			gettext_noop("Sets the message levels that are logged."),
-<<<<<<< HEAD
-			gettext_noop("Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, "
-			"INFO, NOTICE, WARNING, ERROR, LOG, FATAL, and PANIC. Each level "
-						 "includes all the levels that follow it."),
-			GUC_GPDB_ADDOPT
-=======
 			gettext_noop("Each level includes all the levels that follow it. The later"
-						 " the level, the fewer messages are sent.")
->>>>>>> 49f001d81e
+						 " the level, the fewer messages are sent."),
+			GUC_GPDB_ADDOPT
 		},
 		&log_min_messages,
 		WARNING, server_message_level_options, NULL, NULL
@@ -2883,14 +2812,9 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"log_min_error_statement", PGC_SUSET, LOGGING_WHEN,
 			gettext_noop("Causes all statements generating error at or above this level to be logged."),
-<<<<<<< HEAD
-			gettext_noop("All SQL statements that cause an error of the "
-						 "specified level or a higher level are logged."),
-			GUC_GPDB_ADDOPT
-=======
 			gettext_noop("Each level includes all the levels that follow it. The later"
-						 " the level, the fewer messages are sent.")
->>>>>>> 49f001d81e
+						 " the level, the fewer messages are sent."),
+			GUC_GPDB_ADDOPT
 		},
 		&log_min_error_statement,
 		ERROR, server_message_level_options, NULL, NULL
@@ -2909,13 +2833,9 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"syslog_facility", PGC_SIGHUP, DEFUNCT_OPTIONS,
 			gettext_noop("Sets the syslog \"facility\" to be used when syslog enabled."),
-<<<<<<< HEAD
 			gettext_noop("Valid values are LOCAL0, LOCAL1, LOCAL2, LOCAL3, "
 						 "LOCAL4, LOCAL5, LOCAL6, LOCAL7."),
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-=======
-			NULL
->>>>>>> 49f001d81e
 		},
 		&syslog_facility,
 		LOG_LOCAL0, syslog_facility_options, assign_syslog_facility, NULL
@@ -2953,7 +2873,8 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"wal_sync_method", PGC_SIGHUP, WAL_SETTINGS,
 			gettext_noop("Selects the method used for forcing WAL updates to disk."),
-			NULL
+			NULL,
+			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL | GUC_DISALLOW_USER_SET
 		},
 		&sync_method,
 		DEFAULT_SYNC_METHOD, sync_method_options, 
@@ -4578,76 +4499,6 @@ ReportGUCOption(struct config_generic * record)
 
 
 /*
-<<<<<<< HEAD
-=======
- * Try to interpret value as boolean value.  Valid values are: true,
- * false, yes, no, on, off, 1, 0; as well as unique prefixes thereof.
- * If the string parses okay, return true, else false.
- * If okay and result is not NULL, return the value in *result.
- */
-bool
-parse_bool(const char *value, bool *result)
-{
-	size_t		len = strlen(value);
-
-	if (pg_strncasecmp(value, "true", len) == 0)
-	{
-		if (result)
-			*result = true;
-	}
-	else if (pg_strncasecmp(value, "false", len) == 0)
-	{
-		if (result)
-			*result = false;
-	}
-
-	else if (pg_strncasecmp(value, "yes", len) == 0)
-	{
-		if (result)
-			*result = true;
-	}
-	else if (pg_strncasecmp(value, "no", len) == 0)
-	{
-		if (result)
-			*result = false;
-	}
-
-	/* 'o' is not unique enough */
-	else if (pg_strncasecmp(value, "on", (len > 2 ? len : 2)) == 0)
-	{
-		if (result)
-			*result = true;
-	}
-	else if (pg_strncasecmp(value, "off", (len > 2 ? len : 2)) == 0)
-	{
-		if (result)
-			*result = false;
-	}
-
-	else if (pg_strcasecmp(value, "1") == 0)
-	{
-		if (result)
-			*result = true;
-	}
-	else if (pg_strcasecmp(value, "0") == 0)
-	{
-		if (result)
-			*result = false;
-	}
-
-	else
-	{
-		if (result)
-			*result = false;	/* suppress compiler warning */
-		return false;
-	}
-	return true;
-}
-
-
-
-/*
->>>>>>> 49f001d81e
  * Try to parse value as an integer.  The accepted formats are the
  * usual decimal, octal, or hexadecimal formats, optionally followed by
  * a unit name if "flags" indicates a unit is allowed.
@@ -6003,13 +5854,8 @@ flatten_set_variable_args(const char *name, List *args)
 				appendStringInfoString(&buf, strVal(&con->val));
 				break;
 			case T_String:
-<<<<<<< HEAD
-				val = strVal(&arg->val);
-				if (arg->typeName != NULL)
-=======
 				val = strVal(&con->val);
 				if (typename != NULL)
->>>>>>> 49f001d81e
 				{
 					/*
 					 * Must be a ConstInterval argument for TIME ZONE. Coerce
@@ -6021,11 +5867,7 @@ flatten_set_variable_args(const char *name, List *args)
 					Datum		interval;
 					char	   *intervalout;
 
-<<<<<<< HEAD
-					typoid = typenameTypeId(NULL, arg->typeName, &typmod);
-=======
 					typoid = typenameTypeId(NULL, typename, &typmod);
->>>>>>> 49f001d81e
 					Assert(typoid == INTERVALOID);
 
 					interval =
@@ -7166,7 +7008,6 @@ _ShowOption(struct config_generic * record, bool use_units)
 					}
 					else
 						unit = "";
-<<<<<<< HEAD
 
 					snprintf(buffer, sizeof(buffer), INT64_FORMAT "%s",
 							 result, unit);
@@ -7223,26 +7064,6 @@ _ShowOption(struct config_generic * record, bool use_units)
 						strcpy(unit, "");
 
 					snprintf(buffer, sizeof(buffer), "%g%s", result, unit);
-=======
-
-					snprintf(buffer, sizeof(buffer), INT64_FORMAT "%s",
-							 result, unit);
-					val = buffer;
-				}
-			}
-			break;
-
-		case PGC_REAL:
-			{
-				struct config_real *conf = (struct config_real *) record;
-
-				if (conf->show_hook)
-					val = (*conf->show_hook) ();
-				else
-				{
-					snprintf(buffer, sizeof(buffer), "%g",
-							 *conf->variable);
->>>>>>> 49f001d81e
 					val = buffer;
 				}
 			}
