@@ -12,17 +12,13 @@
 #ifndef GIN_H
 #define GIN_H
 
-<<<<<<< HEAD
 #include "access/relscan.h"
 #include "access/sdir.h"
-#include "access/xlog.h"
 #include "access/xlogdefs.h"
 #include "storage/bufpage.h"
 #include "storage/off.h"
 #include "utils/rel.h"
-=======
 #include "access/genam.h"
->>>>>>> 49f001d81e
 #include "access/itup.h"
 #include "access/xlog.h"
 #include "fmgr.h"
@@ -31,7 +27,6 @@
 #include "storage/buf.h"
 #include "storage/off.h"
 #include "storage/relfilenode.h"
-
 
 /*
  * amproc indexes for inverted indexes.
@@ -393,15 +388,12 @@ typedef struct GinScanEntryData
 	/* current ItemPointer to heap */
 	ItemPointerData curItem;
 
-<<<<<<< HEAD
-=======
 	/* partial match support */
 	bool		isPartialMatch;
-	TIDBitmap  *partialMatch;
+	Node 	   *partialMatch;
 	TBMIterateResult *partialMatchResult;
 	StrategyNumber strategy;
 
->>>>>>> 49f001d81e
 	/* used for Posting list and one page in Posting tree */
 	ItemPointerData *list;
 	uint32			 nlist;

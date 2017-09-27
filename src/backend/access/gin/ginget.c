@@ -107,7 +107,7 @@ scanForItems( Relation index, GinScanEntry scanEntry, BlockNumber rootPostingTre
 
 		if ((GinPageGetOpaque(page)->flags & GIN_DELETED) == 0 && GinPageGetOpaque(page)->maxoff >= FirstOffsetNumber )
 		{
-			tbm_add_tuples( scanEntry->partialMatch,
+			tbm_add_tuples( (HashBitmap *) scanEntry->partialMatch,
 							(ItemPointer)GinDataPageGetItem(page, FirstOffsetNumber),
 						 	GinPageGetOpaque(page)->maxoff, false);
 			scanEntry->predictNumberResult += GinPageGetOpaque(page)->maxoff;
@@ -140,7 +140,7 @@ computePartialMatchList( GinBtreeData *btree, GinBtreeStack *stack, GinScanEntry
 	Datum		idatum;
 	int32		cmp;
 
-	scanEntry->partialMatch = tbm_create( work_mem * 1024L );
+	scanEntry->partialMatch = (Node *) tbm_create( work_mem * 1024L );
 
 	for(;;)
 	{
@@ -244,7 +244,7 @@ computePartialMatchList( GinBtreeData *btree, GinBtreeStack *stack, GinScanEntry
 		}
 		else
 		{
-			tbm_add_tuples( scanEntry->partialMatch, GinGetPosting(itup),  GinGetNPosting(itup), false);
+			tbm_add_tuples( (HashBitmap *) scanEntry->partialMatch, GinGetPosting(itup),  GinGetNPosting(itup), false);
 			scanEntry->predictNumberResult +=  GinGetNPosting(itup);
 		}
 
@@ -281,17 +281,12 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 	 * or just store posting list in memory
 	 */
 
-<<<<<<< HEAD
-	prepareEntryScan(&btreeEntry, index, entry->entry, ginstate);
+	prepareEntryScan(&btreeEntry, index, entry->attnum, entry->entry, ginstate);
 	btreeEntry.searchMode = TRUE;
 	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-=======
-	prepareEntryScan(&btreeEntry, index, entry->attnum, entry->entry, ginstate);
-	btreeEntry.searchMode = TRUE;
->>>>>>> 49f001d81e
 	stackEntry = ginFindLeafPage(&btreeEntry, NULL);
 	page = BufferGetPage(stackEntry->buffer);
 
@@ -300,25 +295,6 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 	entry->offset = InvalidOffsetNumber;
 	entry->list = NULL;
 	entry->nlist = 0;
-<<<<<<< HEAD
-	entry->reduceResult = FALSE;
-	entry->predictNumberResult = 0;
-
-	if (btreeEntry.findItem(&btreeEntry, stackEntry))
-	{
-		IndexTuple	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, stackEntry->off));
-
-		if (GinIsPostingTree(itup))
-		{
-			BlockNumber rootPostingTree = GinGetPostingTree(itup);
-			GinPostingTreeScan *gdi;
-			Page		page;
-
-			LockBuffer(stackEntry->buffer, GIN_UNLOCK);
-			needUnlock = FALSE;
-			gdi = prepareScanPostingTree(index, rootPostingTree, TRUE);
-
-=======
 	entry->partialMatch = NULL;
 	entry->partialMatchResult = NULL;
 	entry->reduceResult = FALSE;
@@ -341,7 +317,7 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 			 */
 			if ( entry->partialMatch )
 			{
-				tbm_free( entry->partialMatch );
+				tbm_free( (HashBitmap *) entry->partialMatch );
 				entry->partialMatch = NULL;
 			}
 			LockBuffer(stackEntry->buffer, GIN_UNLOCK);
@@ -351,9 +327,9 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 			return;
 		}
 
-		if ( entry->partialMatch && !tbm_is_empty(entry->partialMatch) )
+		if ( (HashBitmap *) entry->partialMatch && !tbm_is_empty((HashBitmap *) entry->partialMatch) )
 		{
-			tbm_begin_iterate(entry->partialMatch);
+			tbm_begin_iterate((HashBitmap *) entry->partialMatch);
 			entry->isFinished = FALSE;
 		}
 	}
@@ -378,7 +354,6 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 			needUnlock = FALSE;
 			gdi = prepareScanPostingTree(index, rootPostingTree, TRUE);
 
->>>>>>> 49f001d81e
 			entry->buffer = scanBeginPostingTree(gdi);
 			/*
 			 * We keep buffer pinned because we need to prevent deletition
@@ -428,38 +403,6 @@ startScanKey(Relation index, GinState *ginstate, GinScanKey key)
 
 	if (!key->firstCall)
 		return;
-<<<<<<< HEAD
-
-	for (i = 0; i < key->nentries; i++)
-		startScanEntry(index, ginstate, key->scanEntry + i);
-
-	memset(key->entryRes, TRUE, sizeof(bool) * key->nentries);
-	key->isFinished = FALSE;
-	key->firstCall = FALSE;
-
-	if (GinFuzzySearchLimit > 0)
-	{
-		/*
-		 * If all of keys more than threshold we will try to reduce
-		 * result, we hope (and only hope, for intersection operation of
-		 * array our supposition isn't true), that total result will not
-		 * more than minimal predictNumberResult.
-		 */
-
-		for (i = 0; i < key->nentries; i++)
-			if (key->scanEntry[i].predictNumberResult <= key->nentries * GinFuzzySearchLimit)
-				return;
-
-		for (i = 0; i < key->nentries; i++)
-			if (key->scanEntry[i].predictNumberResult > key->nentries * GinFuzzySearchLimit)
-			{
-				key->scanEntry[i].predictNumberResult /= key->nentries;
-				key->scanEntry[i].reduceResult = TRUE;
-			}
-	}
-}
-
-=======
 
 	for (i = 0; i < key->nentries; i++)
 	{
@@ -497,7 +440,6 @@ startScanKey(Relation index, GinState *ginstate, GinScanKey key)
 	}
 }
 
->>>>>>> 49f001d81e
 static void
 startScan(IndexScanDesc scan)
 {
@@ -618,15 +560,13 @@ entryGetItem(Relation index, GinScanEntry entry)
 		entry->isFinished = entry->master->isFinished;
 		entry->curItem = entry->master->curItem;
 	}
-<<<<<<< HEAD
-=======
 	else if ( entry->partialMatch )
 	{
 		do
 		{
 			if ( entry->partialMatchResult == NULL || entry->offset >= entry->partialMatchResult->ntuples )
 			{
-				entry->partialMatchResult = tbm_iterate( entry->partialMatch );
+				tbm_iterate( (Node *) entry->partialMatch, entry->partialMatchResult );
 
 				if ( entry->partialMatchResult == NULL )
 				{
@@ -652,7 +592,6 @@ entryGetItem(Relation index, GinScanEntry entry)
 
 		} while (entry->isFinished == FALSE && entry->reduceResult == TRUE && dropItem(entry));
 	}
->>>>>>> 49f001d81e
 	else if (!BufferIsValid(entry->buffer))
 	{
 		entry->offset++;
@@ -697,7 +636,7 @@ ginrestartentry(GinScanEntry entry)
 	/*
 	 * Reset iterator
 	 */
-	tbm_begin_iterate( entry->partialMatch );
+	tbm_begin_iterate( (HashBitmap *) entry->partialMatch );
 	entry->partialMatchResult = NULL;
 	entry->offset = 0;
 
