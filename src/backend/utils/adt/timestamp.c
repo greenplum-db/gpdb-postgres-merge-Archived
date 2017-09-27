@@ -62,25 +62,6 @@ typedef struct
 	int			step_sign;
 } generate_series_timestamptz_fctx;
 
-/* Set at configuration reload */
-TimestampTz PgReloadTime;
-
-typedef struct
-{
-	Timestamp	current;
-	Timestamp	finish;
-	Interval	step;
-	int			step_sign;
-} generate_series_timestamp_fctx;
-
-typedef struct
-{
-	TimestampTz	current;
-	TimestampTz	finish;
-	Interval	step;
-	int			step_sign;
-} generate_series_timestamptz_fctx;
-
 
 static TimeOffset time2t(const int hour, const int min, const int sec, const fsec_t fsec);
 static void EncodeSpecialTimestamp(Timestamp dt, char *str);

@@ -218,12 +218,6 @@ gp_cancel_query(PG_FUNCTION_ARGS)
 }
 
 Datum
-pg_terminate_backend(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_BOOL(pg_signal_backend(PG_GETARG_INT32(0), SIGTERM));
-}
-
-Datum
 pg_reload_conf(PG_FUNCTION_ARGS)
 {
 	if (!superuser())

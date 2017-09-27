@@ -1516,54 +1516,6 @@ pg_get_function_identity_arguments(PG_FUNCTION_ARGS)
 }
 
 /*
- * pg_get_function_result
- *		Get a nicely-formatted version of the result type of a function.
- *		This is what would appear after RETURNS in CREATE FUNCTION.
- */
-Datum
-pg_get_function_result(PG_FUNCTION_ARGS)
-{
-	Oid			funcid = PG_GETARG_OID(0);
-	StringInfoData buf;
-	StringInfoData argbuf;
-	HeapTuple	proctup;
-	Form_pg_proc procform;
-	int			ntabargs = 0;
-
-	initStringInfo(&buf);
-	initStringInfo(&argbuf);
-
-	proctup = SearchSysCache(PROCOID,
-							 ObjectIdGetDatum(funcid),
-							 0, 0, 0);
-
-	if (!HeapTupleIsValid(proctup))
-		elog(ERROR, "cache lookup failed for function %u", funcid);
-	procform = (Form_pg_proc) GETSTRUCT(proctup);
-
-	ntabargs = print_function_arguments(&argbuf, proctup, true, true);
-
-	/* We have 3 cases: table function, setof function and others */
-	if (ntabargs > 0)
-	{
-		appendStringInfoString(&buf, "TABLE(");
-		appendStringInfoString(&buf, argbuf.data);
-		appendStringInfoString(&buf, ")");
-	}
-	else if (procform->proretset)
-	{
-		appendStringInfoString(&buf, "SETOF ");
-		appendStringInfoString(&buf, format_type_be(procform->prorettype));
-	}
-	else
-		appendStringInfoString(&buf, format_type_be(procform->prorettype));
-
-	ReleaseSysCache(proctup);
-
-	PG_RETURN_TEXT_P(string_to_text(buf.data));
-}
-
-/*
  * Common code for pg_get_function_arguments and pg_get_function_result:
  * append the desired subset of arguments to buf.  We print only TABLE
  * arguments when print_table_args is true, and all the others when it's false.
@@ -1679,35 +1631,9 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 	return argsprinted;
 }
 
-
-/*
- * pg_get_function_arguments
- *		Get a nicely-formatted list of arguments for a function.
- *		This is everything that would go between the parentheses in
- *		CREATE FUNCTION.
- */
-Datum
-pg_get_function_arguments(PG_FUNCTION_ARGS)
-{
-	Oid			funcid = PG_GETARG_OID(0);
-	StringInfoData buf;
-	HeapTuple	proctup;
-
-	initStringInfo(&buf);
-
-	proctup = SearchSysCache(PROCOID,
-							 ObjectIdGetDatum(funcid),
-							 0, 0, 0);
-	if (!HeapTupleIsValid(proctup))
-		elog(ERROR, "cache lookup failed for function %u", funcid);
-
-	(void) print_function_arguments(&buf, proctup, false);
-
-	ReleaseSysCache(proctup);
-
-	PG_RETURN_TEXT_P(string_to_text(buf.data));
-}
-
+/* GPDB_84_MERGE_FIXME: this function was duplicated during the 8.4 merge; we
+ * replaced our version entirely with the one that was in 8.4, since it appeared
+ * to be more modern. Check this. */
 /*
  * pg_get_function_result
  *		Get a nicely-formatted version of the result type of a function.
@@ -1735,7 +1661,7 @@ pg_get_function_result(PG_FUNCTION_ARGS)
 	{
 		/* It might be a table function; try to print the arguments */
 		appendStringInfoString(&buf, "TABLE(");
-		ntabargs = print_function_arguments(&buf, proctup, true);
+		ntabargs = print_function_arguments(&buf, proctup, true, false);
 		if (ntabargs > 0)
 			appendStringInfoString(&buf, ")");
 		else
@@ -1753,71 +1679,6 @@ pg_get_function_result(PG_FUNCTION_ARGS)
 	ReleaseSysCache(proctup);
 
 	PG_RETURN_TEXT_P(string_to_text(buf.data));
-}
-
-/*
- * Common code for pg_get_function_arguments and pg_get_function_result:
- * append the desired subset of arguments to buf.  We print only TABLE
- * arguments when print_table_args is true, and all the others when it's false.
- * Function return value is the number of arguments printed.
- */
-static int
-print_function_arguments(StringInfo buf, HeapTuple proctup,
-						 bool print_table_args)
-{
-	int			numargs;
-	Oid		   *argtypes;
-	char	  **argnames;
-	char	   *argmodes;
-	int			argsprinted;
-	int			i;
-
-	numargs = get_func_arg_info(proctup,
-								&argtypes, &argnames, &argmodes);
-
-	argsprinted = 0;
-	for (i = 0; i < numargs; i++)
-	{
-		Oid		argtype = argtypes[i];
-		char   *argname = argnames ? argnames[i] : NULL;
-		char	argmode = argmodes ? argmodes[i] : PROARGMODE_IN;
-		const char *modename;
-
-		if (print_table_args != (argmode == PROARGMODE_TABLE))
-			continue;
-
-		switch (argmode)
-		{
-			case PROARGMODE_IN:
-				modename = "";
-				break;
-			case PROARGMODE_INOUT:
-				modename = "INOUT ";
-				break;
-			case PROARGMODE_OUT:
-				modename = "OUT ";
-				break;
-			case PROARGMODE_VARIADIC:
-				modename = "VARIADIC ";
-				break;
-			case PROARGMODE_TABLE:
-				modename = "";
-				break;
-			default:
-				elog(ERROR, "invalid parameter mode '%c'", argmode);
-				modename = NULL; /* keep compiler quiet */
-				break;
-		}
-		if (argsprinted)
-			appendStringInfoString(buf, ", ");
-		appendStringInfoString(buf, modename);
-		if (argname && argname[0])
-			appendStringInfo(buf, "%s ", argname);
-		appendStringInfoString(buf, format_type_be(argtype));
-		argsprinted++;
-	}
-
-	return argsprinted;
 }
 
 

@@ -39,16 +39,6 @@ typedef struct
 	ErrorContextCallback cb;
 } tsearch_readline_state;
 
-/* working state for tsearch_readline (should be a local var in caller) */
-typedef struct
-{
-	FILE	   *fp;
-	const char *filename;
-	int			lineno;
-	char	   *curline;
-	ErrorContextCallback cb;
-} tsearch_readline_state;
-
 #define TOUCHAR(x)	(*((const unsigned char *) (x)))
 
 #ifdef USE_WIDE_UPPER_LOWER
