@@ -2792,6 +2792,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"log_error_verbosity", PGC_SUSET, LOGGING_WHEN,
 			gettext_noop("Sets the verbosity of logged messages."),
+			NULL,
 			GUC_GPDB_ADDOPT
 		},
 		&Log_error_verbosity,
@@ -5837,7 +5838,7 @@ flatten_set_variable_args(const char *name, List *args)
 			TypeCast *tc = (TypeCast *) arg;
 
 			arg = tc->arg;
-			typename = tc->typename;
+			typename = tc->typeName;
 		}
 
 		if (!IsA(arg, A_Const))
