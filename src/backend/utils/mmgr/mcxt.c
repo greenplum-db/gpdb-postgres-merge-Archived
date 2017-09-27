@@ -1316,21 +1316,6 @@ int ceil_log2_Size(Size sz)
     return ceil_log2_Size_inline(sz);
 }
 
-/*
- * pnstrdup
- *		Like pstrdup(), but append null byte to a
- *		not-necessarily-null-terminated input string.
- */
-char *
-pnstrdup(const char *in, Size len)
-{
-	char	   *out = palloc(len + 1);
-
-	memcpy(out, in, len);
-	out[len] = '\0';
-	return out;
-}
-
 
 #if defined(WIN32) || defined(__CYGWIN__)
 /*

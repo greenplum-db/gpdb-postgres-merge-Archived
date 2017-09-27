@@ -21,10 +21,6 @@
 #include "optimizer/clauses.h" /* AggClauseCounts */
 #include "utils/uri.h"
 
-/* GUC parameters */
-#define DEFAULT_CURSOR_TUPLE_FRACTION 1.0 /* assume all rows will be fetched */
-extern double cursor_tuple_fraction;
-
 /*
  * A structure that contains information for planning GROUP BY 
  * queries.
@@ -69,7 +65,7 @@ typedef struct GroupContext
 } GroupContext;
 
 /* GUC parameters */
-#define DEFAULT_CURSOR_TUPLE_FRACTION 0.1
+#define DEFAULT_CURSOR_TUPLE_FRACTION 1.0 /* assume all rows will be fetched */
 extern double cursor_tuple_fraction;
 
 /*
