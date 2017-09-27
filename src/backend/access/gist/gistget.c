@@ -256,16 +256,8 @@ gistnext(IndexScanDesc scan, ScanDirection dir, HashBitmap *tbm)
 		p = BufferGetPage(so->curbuf);
 		opaque = GistPageGetOpaque(p);
 
-<<<<<<< HEAD
 		/* remember lsn to identify page changed for tuple's killing */
 		so->stack->lsn = BufferGetLSNAtomic(so->curbuf);
-=======
-		if (XLogRecPtrIsInvalid(so->stack->lsn) || !XLByteEQ(so->stack->lsn, PageGetLSN(p)))
-		{
-			/* first visit or page changed from last visit, reset offset */
-			so->stack->lsn = PageGetLSN(p);
-			resetoffset = true;
->>>>>>> 49f001d81e
 
 		/* check page split, occured from last visit or visit to parent */
 		if (!XLogRecPtrIsInvalid(so->stack->parentlsn) &&
@@ -327,7 +319,7 @@ gistnext(IndexScanDesc scan, ScanDirection dir, HashBitmap *tbm)
 					LockBuffer(so->curbuf, GIST_UNLOCK);
 					MIRROREDLOCK_BUFMGR_UNLOCK;
 
-					return gistnext(scan, dir, tid, NULL, ignore_killed_tuples);
+					return gistnext(scan, dir, NULL);
 				}
 
 #if 0
@@ -386,23 +378,12 @@ gistnext(IndexScanDesc scan, ScanDirection dir, HashBitmap *tbm)
 					it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
 					ntids++;
 					if (tbm != NULL)
-<<<<<<< HEAD
-						tbm_add_tuples(tbm, &it->t_tid, 1, false);
+						tbm_add_tuples(tbm, &it->t_tid, 1, scan->xs_recheck);
 					else
 					{
 						so->pageData[ so->nPageData ].heapPtr = it->t_tid;
 						so->pageData[ so->nPageData ].pageOffset = n;
 						so->nPageData ++;
-=======
-						tbm_add_tuples(tbm, &it->t_tid, 1, scan->xs_recheck);
-					else 
-					{
-						scan->xs_ctup.t_self = it->t_tid;
-						/* scan->xs_recheck is already set */
-
-						LockBuffer(so->curbuf, GIST_UNLOCK);
-						return ntids; /* always 1 */
->>>>>>> 49f001d81e
 					}
 				}
 			}
@@ -466,8 +447,6 @@ gistindex_keytest(IndexTuple tuple,
 	so = (GISTScanOpaque) scan->opaque;
 	giststate = so->giststate;
 	p = BufferGetPage(so->curbuf);
-
-	IncrIndexProcessed();
 
 	scan->xs_recheck = false;
 

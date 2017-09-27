@@ -237,15 +237,11 @@ ginBuildCallback(Relation index, ItemPointer tupleId, Datum *values,
 
 	oldCtx = MemoryContextSwitchTo(buildstate->tmpCtx);
 
-<<<<<<< HEAD
-	buildstate->indtuples += ginHeapTupleBulkInsert(buildstate, *values, tupleId);
-=======
 	for(i=0; i<buildstate->ginstate.origTupdesc->natts;i++)
 		if ( !isnull[i] )
 			buildstate->indtuples += ginHeapTupleBulkInsert(buildstate, 
 														(OffsetNumber)(i+1), values[i], 
-														&htup->t_self);
->>>>>>> 49f001d81e
+														tupleId);
 
 	/* If we've maxed out our available memory, dump everything to the index */
 	/* Also dump if the tree seems to be getting too unbalanced */

@@ -132,7 +132,7 @@ freeScanKeys(GinScanKey keys, uint32 nkeys, bool removeRes)
 			if (removeRes && key->scanEntry[j].list)
 				pfree(key->scanEntry[j].list);
 			if (removeRes && key->scanEntry[j].partialMatch)
-				tbm_free(key->scanEntry[j].partialMatch);
+				tbm_free((HashBitmap *) key->scanEntry[j].partialMatch);
 		}
 
 		if (removeRes)
@@ -163,12 +163,8 @@ newScanKey(IndexScanDesc scan)
 	for (i = 0; i < scan->numberOfKeys; i++)
 	{
 		Datum	   *entryValues;
-<<<<<<< HEAD
 		int32		nEntryValues = 0;
-=======
-		int32		nEntryValues;
-		bool		*partial_matches = NULL;
->>>>>>> 49f001d81e
+		bool	   *partial_matches = NULL;
 
 		/* XXX can't we treat nulls by just setting isVoidRes? */
 		/* This would amount to assuming that all GIN operators are strict */
