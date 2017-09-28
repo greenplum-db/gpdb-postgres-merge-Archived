@@ -24,11 +24,8 @@
 #include "commands/queue.h"
 #include "executor/execUtils.h"
 #include "executor/instrument.h"
-<<<<<<< HEAD
 #include "nodes/pg_list.h"
 #include "nodes/print.h"
-=======
->>>>>>> 49f001d81e
 #include "optimizer/clauses.h"
 #include "optimizer/planner.h"
 #include "optimizer/var.h"
@@ -71,10 +68,7 @@ explain_get_index_name_hook_type explain_get_index_name_hook = NULL;
 typedef struct ExplainState
 {
 	/* options */
-<<<<<<< HEAD
-=======
 	bool		printTList;		/* print plan targetlists */
->>>>>>> 49f001d81e
 	bool		printAnalyze;	/* print actual times */
 	/* other states */
 	PlannedStmt *pstmt;			/* top of plan */
@@ -447,7 +441,8 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 	queryDesc->plannedstmt->query_mem = ResourceManagerGetQueryMemoryLimit(queryDesc->plannedstmt);
 
 #ifdef USE_CODEGEN
-	if (stmt->codegen && codegen && Gp_segment == -1) {
+	if (stmt->codegen && codegen && Gp_segment == -1)
+	{
 		eflags |= EXEC_FLAG_EXPLAIN_CODEGEN;
 	}
 #endif
@@ -456,7 +451,8 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 	ExecutorStart(queryDesc, eflags);
 
 #ifdef USE_CODEGEN
-	if (stmt->codegen && codegen && Gp_segment == -1) {
+	if (stmt->codegen && codegen && Gp_segment == -1)
+	{
 		ExplainCodegen(queryDesc->planstate, tstate);
 	}
 #endif
@@ -515,17 +511,11 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
                                      es->showstatctx);
 	}
 
-<<<<<<< HEAD
-=======
-	es = (ExplainState *) palloc0(sizeof(ExplainState));
-
 	es->printTList = stmt->verbose;
->>>>>>> 49f001d81e
 	es->printAnalyze = stmt->analyze;
 	es->pstmt = queryDesc->plannedstmt;
 	es->rtable = queryDesc->plannedstmt->rtable;
 
-<<<<<<< HEAD
     if (stmt->verbose)
 	{
 		char	   *s;
@@ -559,8 +549,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 		}
 	}
 
-=======
->>>>>>> 49f001d81e
 	initStringInfo(&buf);
 
     /*
@@ -677,7 +665,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 		appendStringInfo(&buf, "Settings:  %s\n", settings);
 	pfree(settings);
 
-<<<<<<< HEAD
     /* Display optimizer status: either 'legacy query optimizer' or Orca version number */
 	appendStringInfo(&buf, "Optimizer status: ");
 	if (queryDesc->plannedstmt->planGen == PLANGEN_PLANNER)
@@ -690,17 +677,8 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 		appendStringInfo(&buf, "PQO version %s\n", OptVersion());
 	}
 #endif
-=======
-	FreeQueryDesc(queryDesc);
-
-	PopActiveSnapshot();
-
-	/* We need a CCI just in case query expanded to multiple plans */
-	if (stmt->analyze)
-		CommandCounterIncrement();
 
 	totaltime += elapsed_time(&starttime);
->>>>>>> 49f001d81e
 
     /*
      * Display final elapsed time.
@@ -715,6 +693,8 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
      */
     if (buf.len > 0)
         do_text_output_multiline(tstate, buf.data);
+
+	pfree(buf.data);
 
     /*
 	 * Close down the query and free resources.
@@ -757,6 +737,8 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
     }
 
     FreeQueryDesc(queryDesc);
+
+	PopActiveSnapshot();
 
 	/* We need a CCI just in case query expanded to multiple plans */
 	if (stmt->analyze)
@@ -910,12 +892,8 @@ explain_outNode(StringInfo str,
 				Plan *outer_plan, Plan *parentPlan,
 				int indent, ExplainState *es)
 {
-<<<<<<< HEAD
-	const char	   *pname = NULL;
     Slice      *currentSlice = es->currentSlice;    /* save */
-=======
 	const char *pname;
->>>>>>> 49f001d81e
 	int			i;
 	bool		skip_outer=false;
 	char       *skip_outer_msg = NULL;
@@ -1480,15 +1458,13 @@ explain_outNode(StringInfo str,
 
 	appendStringInfoChar(str, '\n');
 
-<<<<<<< HEAD
 #ifdef DEBUG_EXPLAIN
 	appendStringInfo(str, "plan->targetlist=%s\n", nodeToString(plan->targetlist));
 #endif
-=======
+
 	/* target list */
 	if (es->printTList)
 		show_plan_tlist(plan, str, indent, es);
->>>>>>> 49f001d81e
 
 	/* quals, sort keys, etc */
 	switch (nodeTag(plan))

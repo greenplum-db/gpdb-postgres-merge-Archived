@@ -28,15 +28,12 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "catalog/heap.h"
-#include "access/xact.h"
-<<<<<<< HEAD
 #include "access/transam.h"				/* InvalidTransactionId */
-=======
+#include "access/xact.h"
 #include "access/xlogutils.h"
->>>>>>> 49f001d81e
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
+#include "catalog/heap.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_authid.h"
@@ -84,12 +81,6 @@
 #include "cdb/cdbpersistentfilesysobj.h"
 
 #include "utils/pg_rusage.h"
-
-typedef struct
-{
-	Oid			src_dboid;		/* source (template) DB */
-	Oid			dest_dboid;		/* DB we are trying to create */
-} createdb_failure_params;
 
 typedef struct
 {
@@ -637,15 +628,14 @@ createdb(CreatedbStmt *stmt)
 	int			dbconnlimit = -1;
 	int			ctype_encoding;
 	createdb_failure_params fparms;
-<<<<<<< HEAD
 	bool		shouldDispatch = (Gp_role == GP_ROLE_DISPATCH);
 	Snapshot	snapshot;
 
 	if (shouldDispatch)
+	{
 		if (Persistent_BeforePersistenceWork())
 			elog(NOTICE, " Create database dispatch before persistence work!");
-=======
->>>>>>> 49f001d81e
+	}
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
@@ -1329,27 +1319,8 @@ createdb(CreatedbStmt *stmt)
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(createdb_failure_callback,
 								PointerGetDatum(&fparms));
-<<<<<<< HEAD
-=======
 }
 
-/* Error cleanup callback for createdb */
-static void
-createdb_failure_callback(int code, Datum arg)
-{
-	createdb_failure_params *fparms = (createdb_failure_params *) DatumGetPointer(arg);
-
-	/*
-	 * Release lock on source database before doing recursive remove.
-	 * This is not essential but it seems desirable to release the lock
-	 * as soon as possible.
-	 */
-	UnlockSharedObject(DatabaseRelationId, fparms->src_dboid, 0, ShareLock);
-
-	/* Throw away any successfully copied subdirectories */
-	remove_dbtablespaces(fparms->dest_dboid);
->>>>>>> 49f001d81e
-}
 
 /* Error cleanup callback for createdb */
 static void
@@ -1368,7 +1339,6 @@ createdb_failure_callback(int code, Datum arg)
 	/* Throw away any successfully copied subdirectories */
 	remove_dbtablespaces(fparms->dest_dboid);
 #endif
-
 }
 
 /*
