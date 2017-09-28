@@ -5,7 +5,6 @@
 #define __HSTORE_H__
 
 #include "fmgr.h"
-<<<<<<< HEAD
 #include "postgres.h"
 
 #include "funcapi.h"
@@ -15,8 +14,6 @@
 #include "utils/palloc.h"
 #include "utils/builtins.h"
 #include "storage/bufpage.h"
-=======
->>>>>>> 49f001d81e
 
 
 typedef struct

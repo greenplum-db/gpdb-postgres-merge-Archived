@@ -122,14 +122,10 @@ gin_consistent_hstore(PG_FUNCTION_ARGS)
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
 	HStore	   *query = PG_GETARG_HS(2);
-<<<<<<< HEAD
 
 	/* int32	nkeys = PG_GETARG_INT32(3); */
 	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(5);
-=======
-	bool	   *recheck = (bool *) PG_GETARG_POINTER(3);
->>>>>>> 49f001d81e
 	bool		res = true;
 
 	if (strategy == HStoreContainsStrategyNumber)
@@ -137,13 +133,8 @@ gin_consistent_hstore(PG_FUNCTION_ARGS)
 		int			i;
 
 		/*
-<<<<<<< HEAD
 		 * Index lost information about correspondence of keys and values, so
 		 * we need recheck
-=======
-		 * Index lost information about correspondence of keys
-		 * and values, so we need recheck
->>>>>>> 49f001d81e
 		 */
 		*recheck = true;
 		for (i = 0; res && i < 2 * query->size; i++)

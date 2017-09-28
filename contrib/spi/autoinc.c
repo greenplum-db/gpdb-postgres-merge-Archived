@@ -1,12 +1,7 @@
 /*
-<<<<<<< HEAD
  * $PostgreSQL: pgsql/contrib/spi/autoinc.c,v 1.17 2009/06/11 14:48:52 momjian Exp $
  */
 #include "postgres.h"
-=======
- * $PostgreSQL: pgsql/contrib/spi/autoinc.c,v 1.15 2008/05/17 01:28:22 adunstan Exp $ 
- */
->>>>>>> 49f001d81e
 
 #include "catalog/pg_type.h"
 #include "commands/sequence.h"

@@ -1,9 +1,5 @@
 /*
-<<<<<<< HEAD
  * $PostgreSQL: pgsql/contrib/hstore/crc32.h,v 1.3 2009/06/11 14:48:51 momjian Exp $
-=======
- * $PostgreSQL: pgsql/contrib/hstore/crc32.h,v 1.2 2008/05/17 01:28:19 adunstan Exp $ 
->>>>>>> 49f001d81e
  */
 #ifndef _CRC32_H
 #define _CRC32_H
