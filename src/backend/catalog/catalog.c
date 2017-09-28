@@ -738,6 +738,7 @@ RelationNeedsSynchronizedOIDs(Relation relation)
 Oid
 GetNewOid(Relation relation)
 {
+	Oid			newOid;
 	Oid			oidIndex;
 
 	/* If relation doesn't have OIDs at all, caller is confused */
@@ -766,12 +767,9 @@ GetNewOid(Relation relation)
 	}
 
 	/* Otherwise, use the index to find a nonconflicting OID */
-<<<<<<< HEAD
-	indexrel = index_open(oidIndex, AccessShareLock);
 	do {
-		newOid = GetNewOidWithIndex(relation, indexrel);
+		newOid = GetNewOidWithIndex(relation, oidIndex, ObjectIdAttributeNumber);
 	} while(!IsOidAcceptable(newOid));
-	index_close(indexrel, AccessShareLock);
 
 	/*
 	 * Most catalog objects need to have the same OID in the master and all
@@ -786,9 +784,6 @@ GetNewOid(Relation relation)
 			 newOid, RelationGetRelationName(relation));
 
 	return newOid;
-=======
-	return GetNewOidWithIndex(relation, oidIndex, ObjectIdAttributeNumber);
->>>>>>> 49f001d81e
 }
 
 /*

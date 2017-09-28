@@ -198,11 +198,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 										   toastOid,
 										   rel->rd_rel->relowner,
 										   tupdesc,
-<<<<<<< HEAD
 										   /* relam */ InvalidOid,
-=======
-										   NIL,
->>>>>>> 49f001d81e
 										   RELKIND_TOASTVALUE,
 										   RELSTORAGE_HEAP,
 										   shared_relation,

@@ -53,12 +53,9 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
-<<<<<<< HEAD
-=======
 #include "parser/parse_expr.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
->>>>>>> 49f001d81e
 #include "storage/procarray.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
@@ -1814,7 +1811,6 @@ IndexBuildScan(Relation parentRelation,
 		OldestXmin = GetOldestXmin(parentRelation->rd_rel->relisshared, true);
 	}
 
-<<<<<<< HEAD
 	if (RelationIsHeap(parentRelation))
 		reltuples = IndexBuildHeapScan(parentRelation,
 									   indexRelation,
@@ -1848,7 +1844,16 @@ IndexBuildScan(Relation parentRelation,
 			 parentRelation->rd_rel->relstorage);
 	}
 
+	/*
+	 * GPDB_84_MERGE_FIXME: Does this call to UnregisterSnapshot() need to be
+	 * here, or just in IndexBuildHeapScan() ?
+	 */
+	/* we can now forget our snapshot, if set */
+	if (indexInfo->ii_Concurrent)
+		UnregisterSnapshot(snapshot);
+
 	ExecDropSingleTupleTableSlot(slot);
+
 	FreeExecutorState(estate);
 
 	/* These may have been pointing to the now-gone estate */
@@ -1916,9 +1921,6 @@ IndexBuildHeapScan(Relation heapRelation,
 								NULL,			/* scan key */
 								true,			/* buffer access strategy OK */
 								allow_sync);	/* syncscan OK? */
-=======
-	scan = heap_beginscan(heapRelation, snapshot, 0, NULL);
->>>>>>> 49f001d81e
 
 	reltuples = 0;
 
@@ -2208,7 +2210,6 @@ IndexBuildHeapScan(Relation heapRelation,
 
 	heap_endscan(scan);
 
-<<<<<<< HEAD
 	return reltuples;
 }
 
@@ -2270,13 +2271,6 @@ IndexBuildAppendOnlyRowScan(Relation parentRelation,
 	while (appendonly_getnext(aoscan, ForwardScanDirection, slot) != NULL)
 	{
 		CHECK_FOR_INTERRUPTS();
-=======
-	/* we can now forget our snapshot, if set */
-	if (indexInfo->ii_Concurrent)
-		UnregisterSnapshot(snapshot);
-
-	ExecDropSingleTupleTableSlot(slot);
->>>>>>> 49f001d81e
 
 		reltuples++;
 

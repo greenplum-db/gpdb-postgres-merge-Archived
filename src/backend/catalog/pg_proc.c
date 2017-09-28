@@ -100,10 +100,7 @@ ProcedureCreate(const char *procedureName,
 	bool		internalInParam = false;
 	bool		internalOutParam = false;
 	Oid			variadicType = InvalidOid;
-<<<<<<< HEAD
 	Oid			proowner = GetUserId();
-=======
->>>>>>> 49f001d81e
 	Relation	rel;
 	HeapTuple	tup;
 	HeapTuple	oldtup;
@@ -248,16 +245,9 @@ ProcedureCreate(const char *procedureName,
 			ARR_ELEMTYPE(modesArray) != CHAROID)
 			elog(ERROR, "parameterModes is not a 1-D char array");
 		modes = (char *) ARR_DATA_PTR(modesArray);
-<<<<<<< HEAD
-
-		/*
-		 * Only the last input parameter can be variadic; if it is, save
-		 * its element type. Errors here are just elog since caller should
-=======
 		/*
 		 * Only the last input parameter can be variadic; if it is, save
 		 * its element type.  Errors here are just elog since caller should
->>>>>>> 49f001d81e
 		 * have checked this already.
 		 */
 		for (i = 0; i < allParamCount; i++)
@@ -342,15 +332,11 @@ ProcedureCreate(const char *procedureName,
 	if (probin)
 		values[Anum_pg_proc_probin - 1] = CStringGetTextDatum(probin);
 	else
-<<<<<<< HEAD
 		nulls[Anum_pg_proc_probin - 1] = true;
-=======
-		nulls[Anum_pg_proc_probin - 1] = 'n';
->>>>>>> 49f001d81e
 	if (proconfig != PointerGetDatum(NULL))
 		values[Anum_pg_proc_proconfig - 1] = proconfig;
 	else
-		nulls[Anum_pg_proc_proconfig - 1] = 'n';
+		nulls[Anum_pg_proc_proconfig - 1] = true;
 	/* start out with empty permissions */
 	nulls[Anum_pg_proc_proacl - 1] = true;
 	values[Anum_pg_proc_prodataaccess - 1] = CharGetDatum(prodataaccess);

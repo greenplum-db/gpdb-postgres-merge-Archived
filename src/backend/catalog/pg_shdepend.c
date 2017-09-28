@@ -1328,7 +1328,6 @@ shdepReassignOwned(List *roleids, Oid newrole)
 					AlterLanguageOwner_oid(sdepForm->objid, newrole);
 					break;
 
-<<<<<<< HEAD
 				case OperatorClassRelationId:
 					AlterOpClassOwner_oid(sdepForm->objid, newrole);
 					break;
@@ -1337,8 +1336,6 @@ shdepReassignOwned(List *roleids, Oid newrole)
 					AlterOpFamilyOwner_oid(sdepForm->objid, newrole);
 					break;
 
-=======
->>>>>>> 49f001d81e
 				default:
 					elog(ERROR, "unexpected classid %d", sdepForm->classid);
 					break;

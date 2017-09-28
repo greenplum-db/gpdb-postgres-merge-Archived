@@ -111,17 +111,6 @@ trap "rm -f $TMPFILE ${OUTPUT_PREFIX}.bki.$$ ${OUTPUT_PREFIX}.description.$$ ${O
 # within a given Postgres release, such as fixed OIDs.  Do not substitute
 # anything that could depend on platform or configuration.  (The right place
 # to handle those sorts of things is in initdb.c's bootstrap_template1().)
-<<<<<<< HEAD
-
-# Get NAMEDATALEN from pg_config_manual.h
-for dir in $INCLUDE_DIRS; do
-    if [ -f "$dir/pg_config_manual.h" ]; then
-        NAMEDATALEN=`grep '^#define[ 	]*NAMEDATALEN' $dir/pg_config_manual.h | $AWK '{ print $3 }'`
-        break
-    fi
-done
-=======
->>>>>>> 49f001d81e
 
 # Get BOOTSTRAP_SUPERUSERID from catalog/pg_authid.h
 for dir in $INCLUDE_DIRS; do

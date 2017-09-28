@@ -169,14 +169,8 @@ static void findDependentObjects(const ObjectAddress *object,
 static void reportDependentObjects(const ObjectAddresses *targetObjects,
 					   DropBehavior behavior,
 					   int msglevel,
-<<<<<<< HEAD
-					   ObjectAddresses *oktodelete,
-					   Relation depRel,
-					   ObjectAddresses *alreadyDeleted);
-=======
 					   const ObjectAddress *origObject);
 static void deleteOneObject(const ObjectAddress *object, Relation depRel);
->>>>>>> 49f001d81e
 static void doDeletion(const ObjectAddress *object);
 static void AcquireDeletionLock(const ObjectAddress *object);
 static void ReleaseDeletionLock(const ObjectAddress *object);
@@ -392,21 +386,10 @@ deleteWhatDependsOn(const ObjectAddress *object,
 	/*
 	 * Check if deletion is allowed, and report about cascaded deletes.
 	 */
-<<<<<<< HEAD
-	if (!deleteDependentObjects(object, objDescription,
-								DROP_CASCADE,
-								showNotices ? NOTICE : DEBUG2,
-								oktodelete, depRel, NULL))
-		ereport(ERROR,
-				(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
-				 errmsg("failed to drop all objects depending on %s",
-						objDescription)));
-=======
 	reportDependentObjects(targetObjects,
 						   DROP_CASCADE,
 						   showNotices ? NOTICE : DEBUG2,
 						   object);
->>>>>>> 49f001d81e
 
 	/*
 	 * Delete all the objects in the proper order, except we skip the original
@@ -495,105 +478,6 @@ findDependentObjects(const ObjectAddress *object,
 		if (object->classId == stackptr->object->classId &&
 			object->objectId == stackptr->object->objectId)
 		{
-<<<<<<< HEAD
-			case DEPENDENCY_NORMAL:
-				/* ignore */
-				break;
-			case DEPENDENCY_AUTO:
-			case DEPENDENCY_INTERNAL:
-			case DEPENDENCY_EXTENSION:
-				/* recurse */
-				otherObject.classId = foundDep->classid;
-				otherObject.objectId = foundDep->objid;
-				otherObject.objectSubId = foundDep->objsubid;
-				findAutoDeletableObjects(&otherObject, oktodelete, depRel, true);
-				break;
-			case DEPENDENCY_PIN:
-
-				/*
-				 * For a PIN dependency we just ereport immediately; there
-				 * won't be any others to examine, and we aren't ever going to
-				 * let the user delete it.
-				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
-						 errmsg("cannot drop %s because it is required by the database system",
-								getObjectDescription(object))));
-				break;
-			default:
-				elog(ERROR, "unrecognized dependency type '%c' for %s",
-					 foundDep->deptype, getObjectDescription(object));
-				break;
-		}
-	}
-
-	systable_endscan(scan);
-}
-
-
-/*
- * recursiveDeletion: delete a single object for performDeletion, plus
- * (recursively) anything that depends on it.
- *
- * Returns TRUE if successful, FALSE if not.
- *
- * callingObject is NULL at the outer level, else identifies the object that
- * we recursed from (the reference object that someone else needs to delete).
- *
- * oktodelete is a list of objects verified deletable (ie, reachable by one
- * or more AUTO or INTERNAL dependencies from the original target).
- *
- * depRel is the already-open pg_depend relation.
- *
- * alreadyDeleted is a list to add objects to as they are deleted, or NULL
- * if the caller doesn't need to have such a list.
- *
- *
- * In RESTRICT mode, we perform all the deletions anyway, but ereport a message
- * and return FALSE if we find a restriction violation.  performDeletion
- * will then abort the transaction to nullify the deletions.  We have to
- * do it this way to (a) report all the direct and indirect dependencies
- * while (b) not going into infinite recursion if there's a cycle.
- *
- * This is even more complex than one could wish, because it is possible for
- * the same pair of objects to be related by both NORMAL and AUTO/INTERNAL
- * dependencies.  Also, we might have a situation where we've been asked to
- * delete object A, and objects B and C both have AUTO dependencies on A,
- * but B also has a NORMAL dependency on C.  (Since any of these paths might
- * be indirect, we can't prevent these scenarios, but must cope instead.)
- * If we visit C before B then we would mistakenly decide that the B->C link
- * should prevent the restricted drop from occurring.  To handle this, we make
- * a pre-scan to find all the objects that are auto-deletable from A.  If we
- * visit C first, but B is present in the oktodelete list, then we make no
- * complaint but recurse to delete B anyway.  (Note that in general we must
- * delete B before deleting C; the drop routine for B may try to access C.)
- *
- * Note: in the case where the path to B is traversed first, we will not
- * see the NORMAL dependency when we reach C, because of the pg_depend
- * removals done in step 1.  The oktodelete list is necessary just
- * to make the behavior independent of the order in which pg_depend
- * entries are visited.
- */
-static bool
-recursiveDeletion(const ObjectAddress *object,
-				  DropBehavior behavior,
-				  int msglevel,
-				  const ObjectAddress *callingObject,
-				  ObjectAddresses *oktodelete,
-				  Relation depRel,
-				  ObjectAddresses *alreadyDeleted)
-{
-	bool		ok = true;
-	char	   *objDescription;
-	ScanKeyData key[3];
-	int			nkeys;
-	SysScanDesc scan;
-	HeapTuple	tup;
-	ObjectAddress otherObject;
-	ObjectAddress owningObject;
-	bool		amOwned = false;
-
-=======
 			if (object->objectSubId == stackptr->object->objectSubId)
 			{
 				stackptr->flags |= flags;
@@ -610,7 +494,6 @@ recursiveDeletion(const ObjectAddress *object,
 		}
 	}
 
->>>>>>> 49f001d81e
 	/*
 	 * It's also possible that the target object has already been completely
 	 * processed and put into targetObjects.  If so, again we just add the
@@ -854,6 +737,9 @@ recursiveDeletion(const ObjectAddress *object,
 			case DEPENDENCY_INTERNAL:
 				subflags = DEPFLAG_INTERNAL;
 				break;
+			case DEPENDENCY_EXTENSION:
+				subflags = DEPFLAG_EXTENSION;
+				break;
 			case DEPENDENCY_PIN:
 
 				/*
@@ -981,69 +867,63 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 		}
 		else if (behavior == DROP_RESTRICT)
 		{
-<<<<<<< HEAD
-			if (msglevel == NOTICE && Gp_role == GP_ROLE_EXECUTE)
-			ereport(DEBUG1,
-					(errmsg("%s depends on %s",
-							getObjectDescription(&owningObject),
-							objDescription)));
-			else
-			ereport(msglevel,
-					(errmsg("%s depends on %s",
-							getObjectDescription(&owningObject),
-							objDescription)));
-=======
 			char   *otherDesc = getObjectDescription(&extra->dependee);
 
-			if (numReportedClient < MAX_REPORTED_DEPS)
+			if (msglevel == NOTICE && Gp_role == GP_ROLE_EXECUTE)
 			{
-				/* separate entries with a newline */
-				if (clientdetail.len != 0)
-					appendStringInfoChar(&clientdetail, '\n');
-				appendStringInfo(&clientdetail, _("%s depends on %s"),
-								 objDesc, otherDesc);
-				numReportedClient++;
+				ereport(DEBUG1,
+						(errmsg("%s depends on %s",
+								objDesc, otherDesc)));
 			}
 			else
-				numNotReportedClient++;
-			/* separate entries with a newline */
-			if (logdetail.len != 0)
-				appendStringInfoChar(&logdetail, '\n');
-			appendStringInfo(&logdetail, _("%s depends on %s"),
-							 objDesc, otherDesc);
-			pfree(otherDesc);
->>>>>>> 49f001d81e
+			{
+				if (numReportedClient < MAX_REPORTED_DEPS)
+				{
+					/* separate entries with a newline */
+					if (clientdetail.len != 0)
+						appendStringInfoChar(&clientdetail, '\n');
+					appendStringInfo(&clientdetail, _("%s depends on %s"),
+									 objDesc, otherDesc);
+					numReportedClient++;
+				}
+				else
+					numNotReportedClient++;
+				/* separate entries with a newline */
+				if (logdetail.len != 0)
+					appendStringInfoChar(&logdetail, '\n');
+				appendStringInfo(&logdetail, _("%s depends on %s"),
+								 objDesc, otherDesc);
+				pfree(otherDesc);
+			}
 			ok = false;
 		}
 		else
 		{
-<<<<<<< HEAD
 			if (Gp_role == GP_ROLE_EXECUTE)
-			ereport(DEBUG1,
-					(errmsg("drop cascades to %s",
-							getObjectDescription(&owningObject))));
-			else
-			ereport(msglevel,
-					(errmsg("drop cascades to %s",
-							getObjectDescription(&owningObject))));
-=======
-			if (numReportedClient < MAX_REPORTED_DEPS)
 			{
-				/* separate entries with a newline */
-				if (clientdetail.len != 0)
-					appendStringInfoChar(&clientdetail, '\n');
-				appendStringInfo(&clientdetail, _("drop cascades to %s"),
-								 objDesc);
-				numReportedClient++;
+				ereport(DEBUG1,
+						(errmsg("drop cascades to %s",
+								objDesc)));
 			}
 			else
-				numNotReportedClient++;
-			/* separate entries with a newline */
-			if (logdetail.len != 0)
-				appendStringInfoChar(&logdetail, '\n');
-			appendStringInfo(&logdetail, _("drop cascades to %s"),
-							 objDesc);
->>>>>>> 49f001d81e
+			{
+				if (numReportedClient < MAX_REPORTED_DEPS)
+				{
+					/* separate entries with a newline */
+					if (clientdetail.len != 0)
+						appendStringInfoChar(&clientdetail, '\n');
+					appendStringInfo(&clientdetail, _("drop cascades to %s"),
+									 objDesc);
+					numReportedClient++;
+				}
+				else
+					numNotReportedClient++;
+				/* separate entries with a newline */
+				if (logdetail.len != 0)
+					appendStringInfoChar(&logdetail, '\n');
+				appendStringInfo(&logdetail, _("drop cascades to %s"),
+								 objDesc);
+			}
 		}
 
 		pfree(objDesc);
@@ -1088,19 +968,6 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 				(errmsg_internal("%s", clientdetail.data)));
 	}
 
-<<<<<<< HEAD
-	/*
-	 * Step 2: scan pg_depend records that link to this object, showing the
-	 * things that depend on it.  Recursively delete those things. Note it's
-	 * important to delete the dependent objects before the referenced one,
-	 * since the deletion routines might do things like try to update the
-	 * pg_class record when deleting a check constraint.
-	 */
-	if (!deleteDependentObjects(object, objDescription,
-								behavior, msglevel,
-								oktodelete, depRel, alreadyDeleted))
-		ok = false;
-=======
 	pfree(clientdetail.data);
 	pfree(logdetail.data);
 }
@@ -1117,7 +984,6 @@ deleteOneObject(const ObjectAddress *object, Relation depRel)
 	int			nkeys;
 	SysScanDesc scan;
 	HeapTuple	tup;
->>>>>>> 49f001d81e
 
 	/*
 	 * First remove any pg_depend records that link from this object to
@@ -1184,172 +1050,6 @@ deleteOneObject(const ObjectAddress *object, Relation depRel)
 	 */
 }
 
-<<<<<<< HEAD
-
-/*
- * deleteDependentObjects - find and delete objects that depend on 'object'
- *
- * Scan pg_depend records that link to the given object, showing
- * the things that depend on it.  Recursively delete those things. (We
- * don't delete the pg_depend records here, as the recursive call will
- * do that.)  Note it's important to delete the dependent objects
- * before the referenced one, since the deletion routines might do
- * things like try to update the pg_class record when deleting a check
- * constraint.
- *
- * When dropping a whole object (subId = 0), find pg_depend records for
- * its sub-objects too.
- *
- *	object: the object to find dependencies on
- *	objDescription: description of object (only used for error messages)
- *	behavior: desired drop behavior
- *	oktodelete: stuff that's AUTO-deletable
- *	depRel: already opened pg_depend relation
- *	alreadyDeleted: optional list to add deleted objects to
- *
- * Returns TRUE if all is well, false if any problem found.
- *
- * NOTE: because we are using SnapshotNow, if a recursive call deletes
- * any pg_depend tuples that our scan hasn't yet visited, we will not
- * see them as good when we do visit them.	This is essential for
- * correct behavior if there are multiple dependency paths between two
- * objects --- else we might try to delete an already-deleted object.
- */
-static bool
-deleteDependentObjects(const ObjectAddress *object,
-					   const char *objDescription,
-					   DropBehavior behavior,
-					   int msglevel,
-					   ObjectAddresses *oktodelete,
-					   Relation depRel,
-					   ObjectAddresses *alreadyDeleted)
-{
-	bool		ok = true;
-	ScanKeyData key[3];
-	int			nkeys;
-	SysScanDesc scan;
-	HeapTuple	tup;
-	ObjectAddress otherObject;
-
-	ScanKeyInit(&key[0],
-				Anum_pg_depend_refclassid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(object->classId));
-	ScanKeyInit(&key[1],
-				Anum_pg_depend_refobjid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(object->objectId));
-	if (object->objectSubId != 0)
-	{
-		ScanKeyInit(&key[2],
-					Anum_pg_depend_refobjsubid,
-					BTEqualStrategyNumber, F_INT4EQ,
-					Int32GetDatum(object->objectSubId));
-		nkeys = 3;
-	}
-	else
-		nkeys = 2;
-
-	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
-							  SnapshotNow, nkeys, key);
-
-	while (HeapTupleIsValid(tup = systable_getnext(scan)))
-	{
-		Form_pg_depend foundDep = (Form_pg_depend) GETSTRUCT(tup);
-
-		otherObject.classId = foundDep->classid;
-		otherObject.objectId = foundDep->objid;
-		otherObject.objectSubId = foundDep->objsubid;
-
-		switch (foundDep->deptype)
-		{
-			case DEPENDENCY_NORMAL:
-
-				/*
-				 * Perhaps there was another dependency path that would have
-				 * allowed silent deletion of the otherObject, had we only
-				 * taken that path first. In that case, act like this link is
-				 * AUTO, too.
-				 */
-				if (object_address_present(&otherObject, oktodelete))
-					ereport(DEBUG2,
-							(errmsg("drop auto-cascades to %s",
-									getObjectDescription(&otherObject))));
-				else if (behavior == DROP_RESTRICT)
-				{
-					if (msglevel == NOTICE && Gp_role == GP_ROLE_EXECUTE)
-					ereport(DEBUG1,
-							(errmsg("%s depends on %s",
-									getObjectDescription(&otherObject),
-									objDescription)));
-					else
-					ereport(msglevel,
-							(errmsg("%s depends on %s",
-									getObjectDescription(&otherObject),
-									objDescription)));
-					ok = false;
-				}
-				else
-				{
-					if (Gp_role == GP_ROLE_EXECUTE)
-					ereport(DEBUG1,
-							(errmsg("drop cascades to %s",
-									getObjectDescription(&otherObject))));
-					else
-					ereport(msglevel,
-							(errmsg("drop cascades to %s",
-									getObjectDescription(&otherObject))));
-				}
-
-				if (!recursiveDeletion(&otherObject, behavior, msglevel,
-									   object, oktodelete, depRel,
-									   alreadyDeleted))
-					ok = false;
-				break;
-			case DEPENDENCY_AUTO:
-			case DEPENDENCY_INTERNAL:
-			case DEPENDENCY_EXTENSION:
-
-				/*
-				 * We propagate the DROP without complaint even in the
-				 * RESTRICT case.  (However, normal dependencies on the
-				 * component object could still cause failure.)
-				 */
-				ereport(DEBUG2,
-						(errmsg("drop auto-cascades to %s",
-								getObjectDescription(&otherObject))));
-
-				if (!recursiveDeletion(&otherObject, behavior, msglevel,
-									   object, oktodelete, depRel,
-									   alreadyDeleted))
-					ok = false;
-				break;
-			case DEPENDENCY_PIN:
-
-				/*
-				 * For a PIN dependency we just ereport immediately; there
-				 * won't be any others to report.
-				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
-						 errmsg("cannot drop %s because it is required by the database system",
-								objDescription)));
-				break;
-			default:
-				elog(ERROR, "unrecognized dependency type '%c' for %s",
-					 foundDep->deptype, objDescription);
-				break;
-		}
-	}
-
-	systable_endscan(scan);
-
-	return ok;
-}
-
-
-=======
->>>>>>> 49f001d81e
 /*
  * doDeletion: actually delete a single object
  */

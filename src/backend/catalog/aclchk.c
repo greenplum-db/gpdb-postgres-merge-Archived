@@ -19,14 +19,11 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-<<<<<<< HEAD
-#include "catalog/heap.h"
-=======
 #include "access/sysattr.h"
->>>>>>> 49f001d81e
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
+#include "catalog/heap.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_conversion.h"
