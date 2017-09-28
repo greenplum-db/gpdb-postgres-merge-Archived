@@ -547,13 +547,9 @@ DefineType(List *names, List *parameters)
 			   GetUserId(),		/* owner's ID */
 			   -1,				/* internal size (always varlena) */
 			   TYPTYPE_BASE,	/* type-type (base type) */
-<<<<<<< HEAD
-			   delimiter,		/* array element delimiter */
-=======
 			   TYPCATEGORY_ARRAY, /* type-category (array) */
 			   false,			/* array types are never preferred */
-			   DEFAULT_TYPDELIM,	/* array element delimiter */
->>>>>>> 49f001d81e
+			   delimiter,		/* array element delimiter */
 			   F_ARRAY_IN,		/* input procedure */
 			   F_ARRAY_OUT,		/* output procedure */
 			   F_ARRAY_RECV,	/* receive procedure */
@@ -641,9 +637,10 @@ RemoveTypes(DropStmt *drop)
 			}
 			else
 			{
-				ereport(NOTICE,
-						(errmsg("type \"%s\" does not exist, skipping",
-								TypeNameToString(typename))));
+				if (Gp_role != GP_ROLE_EXECUTE)
+					ereport(NOTICE,
+							(errmsg("type \"%s\" does not exist, skipping",
+									TypeNameToString(typename))));
 			}
 			continue;
 		}
@@ -659,20 +656,12 @@ RemoveTypes(DropStmt *drop)
 
 		if (drop->removeType == OBJECT_DOMAIN)
 		{
-<<<<<<< HEAD
-			if (Gp_role != GP_ROLE_EXECUTE)
-			ereport(NOTICE,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("type \"%s\" does not exist, skipping",
-							TypeNameToString(typename))));
-=======
 			/* Check that this is actually a domain */
 			if (typ->typtype != TYPTYPE_DOMAIN)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("\"%s\" is not a domain",
 								TypeNameToString(typename))));
->>>>>>> 49f001d81e
 		}
 
 		/*

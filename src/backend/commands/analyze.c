@@ -1899,11 +1899,7 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 				/* XXX knows more than it should about type float4: */
 				arry = construct_array(numdatums, nnum,
 									   FLOAT4OID,
-<<<<<<< HEAD
-									   sizeof(float4), true, 'i');
-=======
 									   sizeof(float4), FLOAT4PASSBYVAL, 'i');
->>>>>>> 49f001d81e
 				values[i++] = PointerGetDatum(arry);	/* stanumbersN */
 			}
 			else

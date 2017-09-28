@@ -504,13 +504,9 @@ DefineSequence(CreateSeqStmt *seq)
 
 	page = BufferGetPage(buf);
 
-<<<<<<< HEAD
 	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
-	PageInit((Page) page, BufferGetPageSize(buf), sizeof(sequence_magic));
-=======
 	PageInit(page, BufferGetPageSize(buf), sizeof(sequence_magic));
->>>>>>> 49f001d81e
 	sm = (sequence_magic *) PageGetSpecialPointer(page);
 	sm->magic = SEQ_MAGIC;
 
@@ -1511,10 +1507,6 @@ read_seq_tuple(SeqTable elm, Relation rel, Buffer *buf, HeapTuple seqtuple)
 
 	lp = PageGetItemId(page, FirstOffsetNumber);
 	Assert(ItemIdIsNormal(lp));
-<<<<<<< HEAD
-=======
-	tuple.t_data = (HeapTupleHeader) PageGetItem(page, lp);
->>>>>>> 49f001d81e
 
 	/* Note we currently only bother to set these two fields of *seqtuple */
 	seqtuple->t_data = (HeapTupleHeader) PageGetItem((Page) page, lp);

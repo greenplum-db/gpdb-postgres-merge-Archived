@@ -50,13 +50,9 @@
 #include "commands/defrem.h"
 #include "commands/proclang.h"
 #include "miscadmin.h"
-<<<<<<< HEAD
 #include "optimizer/var.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
-=======
-#include "parser/parse_coerce.h"
->>>>>>> 49f001d81e
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
 #include "utils/acl.h"
@@ -197,12 +193,8 @@ examine_parameter_list(List *parameters, Oid languageOid,
 	Datum	   *paramModes;
 	Datum	   *paramNames;
 	int			outCount = 0;
-<<<<<<< HEAD
 	int         varCount = 0;
 	int         multisetCount = 0;
-=======
-	int			varCount = 0;
->>>>>>> 49f001d81e
 	bool		have_names = false;
 	bool		have_defaults = false;
 	ListCell   *x;
@@ -272,76 +264,6 @@ examine_parameter_list(List *parameters, Oid languageOid,
 					 errmsg("functions cannot accept set arguments")));
 		}
 
-<<<<<<< HEAD
-		/* track input vs output parameters */
-		switch (fp->mode)
-		{
-			/* input only modes */
-			case FUNC_PARAM_VARIADIC:	/* GPDB: not yet supported */
-			case FUNC_PARAM_IN:
-				inTypes[inCount++] = toid;
-				isinput = true;
-
-				/* Keep track of the number of anytable arguments */
-				if (toid == ANYTABLEOID)
-					multisetCount++;
-
-				/* Other input parameters cannot follow VARIADIC parameter */
-				if (fp->mode == FUNC_PARAM_VARIADIC)
-				{
-					varCount++;
-					switch (toid)
-					{
-						case ANYARRAYOID:
-						case ANYOID:
-							break;
-						default:
-							if (!OidIsValid(get_element_type(toid)))
-								ereport(ERROR,
-										(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-										 errmsg("VARIADIC parameter must be an array")));
-							break;
-					}
-				}
-				else if (varCount > 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-							 errmsg("VARIADIC parameter must be the last input parameter")));
-				break;
-
-			/* output only modes */
-			case FUNC_PARAM_OUT:
-			case FUNC_PARAM_TABLE:
-				if (toid == ANYTABLEOID)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-							 errmsg("functions cannot return \"anytable\" arguments")));
-
-				if (outCount == 0)	/* save first OUT param's type */
-					*requiredResultType = toid;
-				outCount++;
-				break;
-
-			/* input and output */
-			case FUNC_PARAM_INOUT:
-				if (toid == ANYTABLEOID)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-							 errmsg("functions cannot return \"anytable\" arguments")));
-
-				inTypes[inCount++] = toid;
-				isinput = true;
-
-				if (outCount == 0)	/* save first OUT param's type */
-					*requiredResultType = toid;
-				outCount++;
-				break;
-
-			/* above list must be exhaustive */
-			default:
-				elog(ERROR, "unrecognized function parameter mode: %c", fp->mode);
-				break;
-=======
 		/* handle input parameters */
 		if (fp->mode != FUNC_PARAM_OUT && fp->mode != FUNC_PARAM_TABLE)
 		{
@@ -351,6 +273,11 @@ examine_parameter_list(List *parameters, Oid languageOid,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("VARIADIC parameter must be the last input parameter")));
 			inTypes[inCount++] = toid;
+			isinput = true;
+
+			/* Keep track of the number of anytable arguments */
+			if (toid == ANYTABLEOID)
+				multisetCount++;
 		}
 
 		/* handle output parameters */
@@ -359,7 +286,6 @@ examine_parameter_list(List *parameters, Oid languageOid,
 			if (outCount == 0)	/* save first output param's type */
 				*requiredResultType = toid;
 			outCount++;
->>>>>>> 49f001d81e
 		}
 
 		if (fp->mode == FUNC_PARAM_VARIADIC)
@@ -378,6 +304,28 @@ examine_parameter_list(List *parameters, Oid languageOid,
 								(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 								 errmsg("VARIADIC parameter must be an array")));
 					break;
+			}
+
+			isinput = true;
+		}
+
+		/* input and output */
+		if (fp->mode == FUNC_PARAM_INOUT || fp->mode == FUNC_PARAM_OUT ||
+			fp->mode == FUNC_PARAM_TABLE)
+		{
+			if (toid == ANYTABLEOID)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+						 errmsg("functions cannot return \"anytable\" arguments")));
+
+			if (fp->mode == FUNC_PARAM_INOUT)
+			{
+				inTypes[inCount++] = toid;
+				isinput = true;
+
+				if (outCount == 0)	/* save first OUT param's type */
+					*requiredResultType = toid;
+				outCount++;
 			}
 		}
 
@@ -921,19 +869,11 @@ interpret_AS_clause(Oid languageOid, const char *languageName,
 	{
 		/*
 		 * For "C" language, store the file name in probin and, when given,
-<<<<<<< HEAD
-		 * the link symbol name in prosrc. If link symbol is omitted,
-		 * substitute procedure name.  We also allow link symbol to be
-		 * specified as "-", since that was the habit in GPDB versions before
-		 * Paris, and there might be dump files out there that don't translate
-		 * that back to "omitted". 
-=======
 		 * the link symbol name in prosrc.  If link symbol is omitted,
 		 * substitute procedure name.  We also allow link symbol to be
 		 * specified as "-", since that was the habit in PG versions before
 		 * 8.4, and there might be dump files out there that don't translate
 		 * that back to "omitted".
->>>>>>> 49f001d81e
 		 */
 		*probin_str_p = strVal(linitial(as));
 		if (list_length(as) == 1)
@@ -1272,15 +1212,12 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 	if (prosrc_str == NULL)
 		prosrc_str = strdup("");
 
-<<<<<<< HEAD
 	/* Handle the describe callback, if any */
 	if (describeQualName != NIL)
 		describeFuncOid = validate_describe_callback(describeQualName,
 													 prorettype,
 													 parameterModes);
 
-=======
->>>>>>> 49f001d81e
 	/*
 	 * Set default values for COST and ROWS depending on other parameters;
 	 * reject ROWS if it's not returnsSet.  NB: pg_dump knows these default

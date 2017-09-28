@@ -263,12 +263,8 @@ static int VacFullInitialStatsSize = 0;
 static BufferAccessStrategy vac_strategy;
 
 /* non-export function prototypes */
-<<<<<<< HEAD
-static List *get_rel_oids(List *relids, VacuumStmt *vacstmt, bool isVacuum);
-=======
-static List *get_rel_oids(Oid relid, const RangeVar *vacrel,
+static List *get_rel_oids(Oid relid, VacuumStmt *vacstmt,
 			 const char *stmttype);
->>>>>>> 49f001d81e
 static void vac_truncate_clog(TransactionId frozenXID);
 static void vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_stats,
 		   bool for_wraparound);
@@ -440,21 +436,20 @@ vacuum(VacuumStmt *vacstmt, Oid relid,
 	/*
 	 * Build list of relations to process, unless caller gave us one. (If we
 	 * build one, we put it in vac_context for safekeeping.)
-	 * Analyze on midlevel partition is not allowed directly so vacuum_relations
-	 * and analyze_relations may be different.
-	 * In case of partitioned tables, vacuum_relation will contain all OIDs of the
-	 * partitions of a partitioned table. However, analyze_relation will contain all the OIDs
-	 * of partition of a partitioned table except midlevel partition unless
-	 * GUC optimizer_analyze_midlevel_partition is set to on.
 	 */
-<<<<<<< HEAD
+
+	/*
+	 * Analyze on midlevel partition is not allowed directly so
+	 * vacuum_relations and analyze_relations may be different.  In case of
+	 * partitioned tables, vacuum_relation will contain all OIDs of the
+	 * partitions of a partitioned table. However, analyze_relation will
+	 * contain all the OIDs of partition of a partitioned table except midlevel
+	 * partition unless GUC optimizer_analyze_midlevel_partition is set to on.
+	 */
 	if (vacstmt->vacuum)
-		vacuum_relations = get_rel_oids(relids, vacstmt, true /* Requesting relations for VACUUM */);
+		vacuum_relations = get_rel_oids(relid, vacstmt, stmttype);
 	if (vacstmt->analyze)
-		analyze_relations = get_rel_oids(relids, vacstmt, false /* Requesting relations for ANALYZE */);
-=======
-	relations = get_rel_oids(relid, vacstmt->relation, stmttype);
->>>>>>> 49f001d81e
+		analyze_relations = get_rel_oids(relid, vacstmt, stmttype);
 
 	/*
 	 * Decide whether we need to start/commit our own transactions.
@@ -534,7 +529,8 @@ vacuum(VacuumStmt *vacstmt, Oid relid,
 		if (vacstmt->vacuum)
 		{
 			/*
-			 * Loop to process each selected relation which needs to be vacuumed.
+			 * Loop to process each selected relation which needs to be
+			 * vacuumed.
 			 */
 			foreach(cur, vacuum_relations)
 			{
@@ -546,8 +542,9 @@ vacuum(VacuumStmt *vacstmt, Oid relid,
 		if (vacstmt->analyze)
 		{
 			/*
-			 * If there are no partition tables in the database and ANALYZE ROOTPARTITION ALL
-			 * is executed report a WARNING as no root partitions are there to be analyzed
+			 * If there are no partition tables in the database and ANALYZE
+			 * ROOTPARTITION ALL is executed, report a WARNING as no root
+			 * partitions are there to be analyzed
 			 */
 			if (vacstmt->rootonly && NIL == analyze_relations && !vacstmt->relation)
 			{
@@ -1463,22 +1460,11 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
  * per-relation transactions.
  */
 static List *
-<<<<<<< HEAD
-get_rel_oids(List *relids, VacuumStmt *vacstmt, bool isVacuum)
-=======
-get_rel_oids(Oid relid, const RangeVar *vacrel, const char *stmttype)
->>>>>>> 49f001d81e
+get_rel_oids(Oid relid, VacuumStmt *vacstmt, const char *stmttype)
 {
 	List	   *oid_list = NIL;
 	MemoryContext oldcontext;
 
-<<<<<<< HEAD
-	/* List supplied by VACUUM's caller? */
-	if (relids)
-		return relids;
-
-	if (vacstmt->relation)
-=======
 	/* OID supplied by VACUUM's caller? */
 	if (OidIsValid(relid))
 	{
@@ -1486,10 +1472,9 @@ get_rel_oids(Oid relid, const RangeVar *vacrel, const char *stmttype)
 		oid_list = lappend_oid(oid_list, relid);
 		MemoryContextSwitchTo(oldcontext);
 	}
-	else if (vacrel)
->>>>>>> 49f001d81e
+	else if (vacstmt->relation)
 	{
-		if (isVacuum)
+		if (strcmp(stmttype, "VACUUM") == 0)
 		{
 			/* Process a specific relation */
 			Oid			relid;
@@ -2310,18 +2295,16 @@ vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_s
 	/* Restore userid and security context */
 	SetUserIdAndSecContext(save_userid, save_sec_context);
 
-<<<<<<< HEAD
-	/* now we can allow interrupts again, if disabled */
-	if (heldoff)
-		RESUME_INTERRUPTS();
-=======
 	/*
 	 * Complete the transaction and free all temporary memory used.
 	 */
 	if (vacstmt->full)
 		PopActiveSnapshot();
 	CommitTransactionCommand();
->>>>>>> 49f001d81e
+
+	/* now we can allow interrupts again, if disabled */
+	if (heldoff)
+		RESUME_INTERRUPTS();
 
 	/*
 	 * If the relation has a secondary toast rel, vacuum that too while we

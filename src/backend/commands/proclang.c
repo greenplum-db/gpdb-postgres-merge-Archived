@@ -679,15 +679,9 @@ AlterLanguageOwner(const char *name, Oid newOwnerId)
 				 errmsg("language \"%s\" does not exist", name)));
 
 	AlterLanguageOwner_internal(tup, rel, newOwnerId);
-<<<<<<< HEAD
 
 	ReleaseSysCache(tup);
 
-=======
-	
-	ReleaseSysCache(tup);
-	
->>>>>>> 49f001d81e
 	heap_close(rel, RowExclusiveLock);
 
 }
@@ -781,7 +775,6 @@ AlterLanguageOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 		changeDependencyOnOwner(LanguageRelationId, HeapTupleGetOid(tup),
 								newOwnerId);
 	}
-<<<<<<< HEAD
 }
 
 /*
@@ -801,6 +794,4 @@ get_language_oid(const char *langname, bool missing_ok)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("language \"%s\" does not exist", langname)));
 	return oid;
-=======
->>>>>>> 49f001d81e
 }

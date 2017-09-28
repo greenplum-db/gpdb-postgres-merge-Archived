@@ -40,11 +40,8 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
 #include "parser/parsetree.h"
-<<<<<<< HEAD
 #include "rewrite/rewriteManip.h"
-=======
 #include "storage/lmgr.h"
->>>>>>> 49f001d81e
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/acl.h"
@@ -883,12 +880,8 @@ DefineIndex(RangeVar *heapRelation,
 	 * Also, GetCurrentVirtualXIDs never reports our own vxid, so we need not
 	 * check for that.
 	 */
-<<<<<<< HEAD
 #if 0  /* Upstream code not applicable to GPDB */
-	old_snapshots = GetCurrentVirtualXIDs(ActiveSnapshot->xmax, false,
-=======
 	old_snapshots = GetCurrentVirtualXIDs(snapshot->xmax, false,
->>>>>>> 49f001d81e
 										  PROC_IS_AUTOVACUUM | PROC_IN_VACUUM);
 #else
 	old_snapshots = GetCurrentVirtualXIDs(ActiveSnapshot->xmax, false,
@@ -1513,12 +1506,10 @@ relationHasPrimaryKey(Relation rel)
 	return result;
 }
 
-<<<<<<< HEAD
-
 /*
- * relationHasPrimaryKey -
+ * relationHasUniqueIndex -
  *
- *	See whether an existing relation has a primary key.
+ *	See whether an existing relation has a unique index.
  */
 static bool
 relationHasUniqueIndex(Relation rel)
@@ -1553,6 +1544,8 @@ relationHasUniqueIndex(Relation rel)
 
 	return result;
 }
+
+<<<<<<< HEAD
 
 /*
  * RemoveIndex

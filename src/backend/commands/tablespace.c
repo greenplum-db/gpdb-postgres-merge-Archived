@@ -52,10 +52,6 @@
 #include <sys/stat.h>
 
 #include "access/heapam.h"
-<<<<<<< HEAD
-#include "catalog/heap.h"
-=======
->>>>>>> 49f001d81e
 #include "access/sysattr.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
@@ -80,11 +76,12 @@
 #include "utils/rel.h"
 #include "utils/tqual.h"
 
+#include "access/persistentfilesysobjname.h"
+#include "catalog/heap.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbsrlz.h"
 #include "cdb/cdbvars.h"
 #include "cdb/cdbutil.h"
-#include "access/persistentfilesysobjname.h"
 #include "cdb/cdbpersistentdatabase.h"
 #include "cdb/cdbpersistentrelation.h"
 #include "cdb/cdbmirroredfilesysobj.h"

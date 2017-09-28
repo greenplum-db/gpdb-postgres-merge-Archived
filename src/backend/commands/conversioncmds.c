@@ -141,10 +141,6 @@ DropConversionsCommand(DropStmt *drop)
 	ObjectAddresses *objects;
 	ListCell *cell;
 
-<<<<<<< HEAD
-	conversionOid = get_conversion_oid(name, missing_ok);
-	if (!OidIsValid(conversionOid))
-=======
 	/*
 	 * First we identify all the conversions, then we delete them in a single
 	 * performMultipleDeletions() call.  This is to avoid unwanted
@@ -154,7 +150,6 @@ DropConversionsCommand(DropStmt *drop)
 	objects = new_object_addresses();
 
 	foreach(cell, drop->objects)
->>>>>>> 49f001d81e
 	{
 		List		*name = (List *) lfirst(cell);
 		Oid			conversionOid;
@@ -162,17 +157,10 @@ DropConversionsCommand(DropStmt *drop)
 		Form_pg_conversion con;
 		ObjectAddress object;
 
-		conversionOid = FindConversionByName(name);
+		conversionOid = get_conversion_oid(name, drop->missing_ok);
 
 		if (!OidIsValid(conversionOid))
 		{
-<<<<<<< HEAD
-			if (Gp_role != GP_ROLE_EXECUTE)
-			ereport(NOTICE,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("conversion \"%s\" does not exist, skipping",
-							NameListToString(name))));
-=======
 			if (!drop->missing_ok)
 			{
 				ereport(ERROR,
@@ -182,12 +170,12 @@ DropConversionsCommand(DropStmt *drop)
 			}
 			else
 			{
-				ereport(NOTICE,
-						(errmsg("conversion \"%s\" does not exist, skipping",
-								NameListToString(name))));
+				if (Gp_role != GP_ROLE_EXECUTE)
+					ereport(NOTICE,
+							(errmsg("conversion \"%s\" does not exist, skipping",
+									NameListToString(name))));
 			}
 			continue;
->>>>>>> 49f001d81e
 		}
 
 		tuple = SearchSysCache(CONVOID,

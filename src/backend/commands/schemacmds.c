@@ -236,17 +236,6 @@ RemoveSchemas(DropStmt *drop)
 
 		if (list_length(names) != 1)
 			ereport(ERROR,
-<<<<<<< HEAD
-					(errcode(ERRCODE_UNDEFINED_SCHEMA),
-					 errmsg("schema \"%s\" does not exist", namespaceName)));
-		}
-		if (Gp_role != GP_ROLE_EXECUTE)
-		{
-			ereport(NOTICE,
-					(errcode(ERRCODE_UNDEFINED_SCHEMA),
-					 errmsg("schema \"%s\" does not exist, skipping",
-							namespaceName)));
-=======
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("schema name cannot be qualified")));
 		namespaceName = strVal(linitial(names));
@@ -266,18 +255,30 @@ RemoveSchemas(DropStmt *drop)
 			}
 			else
 			{
-				ereport(NOTICE,
-						(errmsg("schema \"%s\" does not exist, skipping",
+				if (Gp_role != GP_ROLE_EXECUTE)
+					ereport(NOTICE,
+							(errmsg("schema \"%s\" does not exist, skipping",
 								namespaceName)));
 			}
 			continue;
->>>>>>> 49f001d81e
 		}
 
 		/* Permission check */
 		if (!pg_namespace_ownercheck(namespaceId, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_NAMESPACE,
 						   namespaceName);
+
+		/*
+		 * Additional check to protect reserved schema names, exclude temp
+		 * schema
+		 */
+		if (!allowSystemTableModsDDL &&	IsReservedName(namespaceName) &&
+			(strlen(namespaceName) >= 7 &&
+			 strncmp(namespaceName, "pg_temp", 7) != 0))
+			ereport(ERROR,
+					(errcode(ERRCODE_RESERVED_NAME),
+					 errmsg("cannot drop schema %s because it is required by the database system",
+							namespaceName)));
 
 		object.classId = NamespaceRelationId;
 		object.objectId = namespaceId;
@@ -286,24 +287,6 @@ RemoveSchemas(DropStmt *drop)
 		add_exact_object_address(&object, objects);
 	}
 
-<<<<<<< HEAD
-	/* Permission check */
-	if (!pg_namespace_ownercheck(namespaceId, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_NAMESPACE,
-					   namespaceName);
-
-	/* Additional check to protect reserved schema names, exclude temp schema */
-	if (!allowSystemTableModsDDL &&	IsReservedName(namespaceName) &&
-        (strlen(namespaceName)>=7 && strncmp(namespaceName, "pg_temp", 7)!=0))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_RESERVED_NAME),
-				 errmsg("cannot drop schema %s because it is required by the database system",
-						namespaceName)));
-	}
-
-=======
->>>>>>> 49f001d81e
 	/*
 	 * Do the deletions.  Objects contained in the schema(s) are removed by
 	 * means of their dependency links to the schema.

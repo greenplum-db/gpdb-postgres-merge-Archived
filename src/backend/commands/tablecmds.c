@@ -81,14 +81,10 @@
 #include "parser/parser.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteHandler.h"
-<<<<<<< HEAD
 #include "rewrite/rewriteManip.h"
-#include "storage/sinval.h"
-=======
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
->>>>>>> 49f001d81e
-#include "storage/smgr.h"
+#include "storage/sinval.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -288,12 +284,10 @@ static void ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 static void ATRewriteCatalogs(List **wqueue);
 <<<<<<< HEAD
 static void ATAddToastIfNeeded(List **wqueue);
-static void ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation *rel,
-		  AlterTableCmd *cmd);
 =======
+>>>>>>> 49f001d81e
 static void ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 					  AlterTableCmd *cmd);
->>>>>>> 49f001d81e
 static void ATRewriteTables(List **wqueue);
 static void ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap);
 static void ATAocsWriteNewColumns(
@@ -762,12 +756,9 @@ DefineRelation(CreateStmt *stmt, char relkind, char relstorage, bool dispatch)
 										  InvalidOid,
 										  stmt->ownerid,
 										  descriptor,
-<<<<<<< HEAD
 										  /* relam */ InvalidOid,
-=======
 										  list_concat(cookedDefaults,
 													  old_constraints),
->>>>>>> 49f001d81e
 										  relkind,
 										  relstorage,
 										  tablespaceId==GLOBALTABLESPACE_OID,
@@ -4736,14 +4727,8 @@ ATRewriteCatalogs(List **wqueue)
 			rel = relation_open(tab->relid, NoLock);
 
 			foreach(lcmd, subcmds)
-<<<<<<< HEAD
 			{
-				AlterTableCmd *atc = lfirst(lcmd);
-=======
 				ATExecCmd(wqueue, tab, rel, (AlterTableCmd *) lfirst(lcmd));
->>>>>>> 49f001d81e
-
-				ATExecCmd(wqueue, tab, &rel, atc);
 
 				/*
 				 * SET DISTRIBUTED BY() calls RelationForgetRelation(),
@@ -4752,6 +4737,7 @@ ATRewriteCatalogs(List **wqueue)
 				if (atc->subtype == AT_SetDistributedBy)
 					rel = relation_open(tab->relid, NoLock);
 			}
+
 			/*
 			 * After the ALTER TYPE pass, do cleanup work (this is not done in
 			 * ATExecAlterColumnType since it should be done only once if
@@ -4795,11 +4781,7 @@ ATAddToastIfNeeded(List **wqueue)
  * ATExecCmd: dispatch a subcommand to appropriate execution routine
  */
 static void
-<<<<<<< HEAD
-ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation *rel_p,
-=======
 ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
->>>>>>> 49f001d81e
 		  AlterTableCmd *cmd)
 {
 	Relation rel = *rel_p;

@@ -20,12 +20,9 @@
 #include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
-<<<<<<< HEAD
+#include "utils/rel.h"
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
-=======
-#include "utils/rel.h"
->>>>>>> 49f001d81e
 
 
 /*

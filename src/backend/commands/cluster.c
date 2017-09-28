@@ -755,11 +755,8 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace,
 										  InvalidOid,
 										  OldHeap->rd_rel->relowner,
 										  tupdesc,
-<<<<<<< HEAD
 										  OldHeap->rd_rel->relam,
-=======
 										  NIL,
->>>>>>> 49f001d81e
 										  OldHeap->rd_rel->relkind,
 										  OldHeap->rd_rel->relstorage,
 										  OldHeap->rd_rel->relisshared,

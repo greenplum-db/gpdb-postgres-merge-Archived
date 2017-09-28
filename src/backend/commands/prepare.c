@@ -289,10 +289,7 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 	PortalDefineQuery(portal,
 					  NULL,
 					  query_string,
-<<<<<<< HEAD
 					  entry->plansource->sourceTag,
-=======
->>>>>>> 49f001d81e
 					  entry->plansource->commandTag,
 					  plan_list,
 					  cplan);
