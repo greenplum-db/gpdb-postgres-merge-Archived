@@ -58,7 +58,6 @@ GetSharedMemName(void)
 		elog(FATAL, "could not generate full pathname for datadir %s: %lu",
 			 DataDir, GetLastError());
 
-<<<<<<< HEAD
 	/* 
 	 * XXX: Intentionally overwriting the Global\ part here. This was not the
 	 * original approach, but putting it in the actual Global\ namespace
@@ -66,9 +65,6 @@ GetSharedMemName(void)
 	 * the default namespace for now.
 	 */
 	for (cp = retptr; *cp; cp++)
-=======
-	for (cp = retptr + 18; *cp; cp++)
->>>>>>> 49f001d81e
 		if (*cp == '\\')
 			*cp = '/';
 

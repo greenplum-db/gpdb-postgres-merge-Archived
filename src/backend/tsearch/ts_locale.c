@@ -18,15 +18,9 @@
 #include "tsearch/ts_public.h"
 
 static void tsearch_readline_callback(void *arg);
-<<<<<<< HEAD
-
-
-#ifdef TS_USE_WIDE
-=======
 
 
 #ifdef USE_WIDE_UPPER_LOWER
->>>>>>> 49f001d81e
 
 int
 t_isdigit(const char *ptr)

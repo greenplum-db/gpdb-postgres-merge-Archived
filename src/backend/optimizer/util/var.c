@@ -22,19 +22,15 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "access/htup.h"
-#include "nodes/nodeFuncs.h"
-#include "optimizer/walkers.h"
-=======
 #include "access/sysattr.h"
+#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
->>>>>>> 49f001d81e
 #include "optimizer/prep.h"
 #include "optimizer/var.h"
+#include "optimizer/walkers.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
-#include "access/sysattr.h"
 
 
 typedef struct

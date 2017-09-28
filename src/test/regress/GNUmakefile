@@ -143,10 +143,7 @@ endif
 
 # Get some extra C modules from contrib/spi...
 
-<<<<<<< HEAD
-all: all-spi tablespace-setup includecheck hooktest
-=======
-all: refint$(DLSUFFIX) autoinc$(DLSUFFIX)
+all: refint$(DLSUFFIX) autoinc$(DLSUFFIX) all-spi tablespace-setup includecheck hooktest
 
 refint$(DLSUFFIX): $(top_builddir)/contrib/spi/refint$(DLSUFFIX)
 	cp $< $@
@@ -159,7 +156,6 @@ $(top_builddir)/contrib/spi/refint$(DLSUFFIX): $(top_srcdir)/contrib/spi/refint.
 
 $(top_builddir)/contrib/spi/autoinc$(DLSUFFIX): $(top_srcdir)/contrib/spi/autoinc.c
 	$(MAKE) -C $(top_builddir)/contrib/spi autoinc$(DLSUFFIX)
->>>>>>> 49f001d81e
 
 
 # Tablespace setup
@@ -171,7 +167,6 @@ tablespace-setup:
 	rm -rf ./testtablespace
 	mkdir ./testtablespace
 
-<<<<<<< HEAD
 # Check for include files that are not being shipped
 .PHONY: includecheck
 includecheck:
@@ -180,8 +175,6 @@ includecheck:
 .PHONY: hooktest
 hooktest:
 	$(MAKE) -C $< $@
-=======
->>>>>>> 49f001d81e
 
 ##
 ## Run tests
@@ -236,18 +229,13 @@ bkuprestore: all
 
 clean distclean maintainer-clean: clean-lib
 # things built by `all' target
-<<<<<<< HEAD
-	rm -f $(OBJS)
+	rm -f $(OBJS) refint$(DLSUFFIX) autoinc$(DLSUFFIX)
 	$(MAKE) -C $(contribdir)/spi clean
 	$(MAKE) -C hooktest/ clean
 	rm -f $(output_files) $(input_files) pg_regress_main.o pg_regress.o pg_regress$(X) twophase_pqexecparams
 # things created by dynamic configs
 	find sql -type l | xargs rm -f
 	find expected -type l | xargs rm -f
-=======
-	rm -f $(OBJS) refint$(DLSUFFIX) autoinc$(DLSUFFIX)
-	rm -f $(output_files) $(input_files) pg_regress_main.o pg_regress.o pg_regress$(X)
->>>>>>> 49f001d81e
 # things created by various check targets
 	rm -rf testtablespace
 	rm -rf results tmp_check log

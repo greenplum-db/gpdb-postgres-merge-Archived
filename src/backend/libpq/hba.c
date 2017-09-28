@@ -2058,13 +2058,8 @@ ident_syntax:
  *
  *	Iff authorized, return STATUS_OK, otherwise return STATUS_ERROR.
  */
-<<<<<<< HEAD
 int
 check_usermap(const char *usermap_name,
-=======
-bool
-check_ident_usermap(const char *usermap_name,
->>>>>>> 49f001d81e
 					const char *pg_role,
 					const char *auth_user,
 					bool case_insensitive)
@@ -2141,10 +2136,7 @@ load_ident(void)
 }
 
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 49f001d81e
 /*
  *	Determine what authentication method should be used when accessing database
  *	"database" from frontend "raddr", user "user".	Return the method and
