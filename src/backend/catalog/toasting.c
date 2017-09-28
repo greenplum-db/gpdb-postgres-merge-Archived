@@ -28,6 +28,7 @@
 #include "catalog/toasting.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "storage/lmgr.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 

@@ -97,6 +97,7 @@ typedef struct
 #define DEPFLAG_NORMAL		0x0002		/* reached via normal dependency */
 #define DEPFLAG_AUTO		0x0004		/* reached via auto dependency */
 #define DEPFLAG_INTERNAL	0x0008		/* reached via internal dependency */
+#define DEPFLAG_EXTENSION	0x0010		/* reached via extension dependency */
 
 
 /* expansible list of ObjectAddresses */
@@ -849,11 +850,13 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 		objDesc = getObjectDescription(obj);
 
 		/*
-		 * If, at any stage of the recursive search, we reached the object
-		 * via an AUTO or INTERNAL dependency, then it's okay to delete it
-		 * even in RESTRICT mode.
+		 * If, at any stage of the recursive search, we reached the object via
+		 * an AUTO, INTERNAL, or EXTENSION dependency, then it's okay to
+		 * delete it even in RESTRICT mode.
 		 */
-		if (extra->flags & (DEPFLAG_AUTO | DEPFLAG_INTERNAL))
+		if (extra->flags & (DEPFLAG_AUTO |
+							DEPFLAG_INTERNAL |
+							DEPFLAG_EXTENSION))
 		{
 			/*
 			 * auto-cascades are reported at DEBUG2, not msglevel.  We

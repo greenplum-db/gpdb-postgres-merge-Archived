@@ -45,6 +45,7 @@
 #include "parser/parse_func.h"
 #include "storage/backendid.h"
 #include "storage/ipc.h"
+#include "storage/lmgr.h"
 #include "storage/sinval.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
