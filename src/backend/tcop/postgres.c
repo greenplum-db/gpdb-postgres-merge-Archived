@@ -84,7 +84,7 @@
 #include "utils/datum.h"
 #include "utils/snapmgr.h"
 #include "mb/pg_wchar.h"
-<<<<<<< HEAD
+
 #include "cdb/cdbvars.h"
 #include "cdb/cdbsrlz.h"
 #include "cdb/cdbtm.h"
@@ -105,9 +105,6 @@
 #include "utils/debugbreak.h"
 #include "utils/session_state.h"
 #include "utils/vmem_tracker.h"
-=======
-
->>>>>>> 49f001d81e
 
 extern int	optind;
 extern char *optarg;
@@ -1570,7 +1567,6 @@ exec_simple_query(const char *query_string, const char *seqServerHost, int seqSe
 	bool		isTopLevel;
 	char		msec_str[32];
 
-<<<<<<< HEAD
 	if (Gp_role != GP_ROLE_EXECUTE)
 	{
 		increment_command_count();
@@ -1582,8 +1578,6 @@ exec_simple_query(const char *query_string, const char *seqServerHost, int seqSe
 				 MyProc->mppSessionId, gp_command_count);
 		}
 	}
-=======
->>>>>>> 49f001d81e
 
 	/*
 	 * Report query to various monitoring facilities.
@@ -4927,10 +4921,7 @@ PostgresMain(int argc, char *argv[],
 			else
 			{
 				pgstat_report_stat(false);
-<<<<<<< HEAD
 				pgstat_report_queuestat();
-=======
->>>>>>> 49f001d81e
 
 				set_ps_display("idle", false);
 				pgstat_report_activity("<IDLE>");
