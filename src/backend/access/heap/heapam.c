@@ -2808,12 +2808,7 @@ l1:
 
 		recptr = XLogInsert_OverrideXid(RM_HEAP_ID, XLOG_HEAP_DELETE, rdata, xid);
 
-<<<<<<< HEAD
-		PageSetLSN(dp, recptr);
-=======
 		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
->>>>>>> 49f001d81e
 	}
 
 	END_CRIT_SECTION();
@@ -4144,12 +4139,7 @@ l3:
 
 		recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_LOCK, rdata);
 
-<<<<<<< HEAD
-		PageSetLSN(dp, recptr);
-=======
 		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
->>>>>>> 49f001d81e
 	}
 
 	END_CRIT_SECTION();
@@ -5008,20 +4998,13 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record, bool clean_move)
 	if (IsBkpBlockApplied(record, 0))
 		return;
 
-<<<<<<< HEAD
-	reln = XLogOpenRelation(xlrec->heapnode.node);
-	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-	buffer = XLogReadBuffer(reln, xlrec->block, false);
-	REDO_PRINT_READ_BUFFER_NOT_FOUND(reln, xlrec->block, buffer, lsn);
-=======
-	buffer = XLogReadBuffer(xlrec->node, xlrec->block, false);
->>>>>>> 49f001d81e
+	buffer = XLogReadBuffer(xlrec->heapnode.node, xlrec->block, false);
+	REDO_PRINT_READ_BUFFER_NOT_FOUND(&xlrec->heapnode.node, xlrec->block, buffer, lsn);
 	if (!BufferIsValid(buffer))
 	{
-		
 		MIRROREDLOCK_BUFMGR_UNLOCK;
 		// -------- MirroredLock ----------
 		
@@ -5029,7 +5012,7 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record, bool clean_move)
 	}
 	page = (Page) BufferGetPage(buffer);
 
-	REDO_PRINT_LSN_APPLICATION(reln, xlrec->block, page, lsn);
+	REDO_PRINT_LSN_APPLICATION(&xlrec->heapnode.node, xlrec->block, page, lsn);
 	if (XLByteLE(lsn, PageGetLSN(page)))
 	{
 		UnlockReleaseBuffer(buffer);
@@ -5083,17 +5066,11 @@ heap_xlog_freeze(XLogRecPtr lsn, XLogRecord *record)
 	if (IsBkpBlockApplied(record, 0))
 		return;
 
-<<<<<<< HEAD
-	reln = XLogOpenRelation(xlrec->heapnode.node);
-	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-	buffer = XLogReadBuffer(reln, xlrec->block, false);
-	REDO_PRINT_READ_BUFFER_NOT_FOUND(reln, xlrec->block, buffer, lsn);
-=======
-	buffer = XLogReadBuffer(xlrec->node, xlrec->block, false);
->>>>>>> 49f001d81e
+	buffer = XLogReadBuffer(xlrec->heapnode.node, xlrec->block, false);
+	REDO_PRINT_READ_BUFFER_NOT_FOUND(&xlrec->heapnode.node, xlrec->block, buffer, lsn);
 	if (!BufferIsValid(buffer))
 	{
 		
@@ -5104,7 +5081,7 @@ heap_xlog_freeze(XLogRecPtr lsn, XLogRecord *record)
 	}
 	page = (Page) BufferGetPage(buffer);
 
-	REDO_PRINT_LSN_APPLICATION(reln, xlrec->block, page, lsn);
+	REDO_PRINT_LSN_APPLICATION(&xlrec->heapnode.node, xlrec->block, page, lsn);
 	if (XLByteLE(lsn, PageGetLSN(page)))
 	{
 		UnlockReleaseBuffer(buffer);
@@ -5156,16 +5133,11 @@ heap_xlog_newpage(XLogRecPtr lsn, XLogRecord *record)
 	 * Note: the NEWPAGE log record is used for both heaps and indexes, so do
 	 * not do anything that assumes we are touching a heap.
 	 */
-<<<<<<< HEAD
-	reln = XLogOpenRelation(xlrec->heapnode.node);
 	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-	buffer = XLogReadBuffer(reln, xlrec->blkno, true);
-=======
-	buffer = XLogReadBuffer(xlrec->node, xlrec->blkno, true);
->>>>>>> 49f001d81e
+	buffer = XLogReadBuffer(xlrec->heapnode.node, xlrec->blkno, true);
 	Assert(BufferIsValid(buffer));
 	page = (Page) BufferGetPage(buffer);
 
@@ -5204,19 +5176,13 @@ heap_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 	if (IsBkpBlockApplied(record, 0))
 		return;
 
-<<<<<<< HEAD
-	reln = XLogOpenRelation(xlrec->target.node);
-	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-	buffer = XLogReadBuffer(reln,
-=======
 	buffer = XLogReadBuffer(xlrec->target.node,
->>>>>>> 49f001d81e
 							ItemPointerGetBlockNumber(&(xlrec->target.tid)),
 							false);
-	REDO_PRINT_READ_BUFFER_NOT_FOUND(reln, ItemPointerGetBlockNumber(&(xlrec->target.tid)), buffer, lsn);
+	REDO_PRINT_READ_BUFFER_NOT_FOUND(&xlrec->target.node, ItemPointerGetBlockNumber(&(xlrec->target.tid)), buffer, lsn);
 	if (!BufferIsValid(buffer))
 	{
 		
@@ -5227,7 +5193,7 @@ heap_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 	}
 	page = (Page) BufferGetPage(buffer);
 
-	REDO_PRINT_LSN_APPLICATION(reln, ItemPointerGetBlockNumber(&(xlrec->target.tid)), page, lsn);
+	REDO_PRINT_LSN_APPLICATION(&xlrec->target.node, ItemPointerGetBlockNumber(&(xlrec->target.tid)), page, lsn);
 
 	if (Debug_print_qd_mirroring)
 		elog(LOG, "heap_xlog_delete: page lsn = (%X,%X)",
@@ -5305,14 +5271,9 @@ heap_xlog_insert(XLogRecPtr lsn, XLogRecord *record)
 	if (IsBkpBlockApplied(record, 0))
 		return;
 
-<<<<<<< HEAD
-	reln = XLogOpenRelation(xlrec->target.node);
-	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-=======
->>>>>>> 49f001d81e
 	if (record->xl_info & XLOG_HEAP_INIT_PAGE)
 	{
 		buffer = XLogReadBuffer(xlrec->target.node,
@@ -5328,10 +5289,9 @@ heap_xlog_insert(XLogRecPtr lsn, XLogRecord *record)
 		buffer = XLogReadBuffer(xlrec->target.node,
 							 ItemPointerGetBlockNumber(&(xlrec->target.tid)),
 								false);
-		REDO_PRINT_READ_BUFFER_NOT_FOUND(reln, ItemPointerGetBlockNumber(&(xlrec->target.tid)), buffer, lsn);
+		REDO_PRINT_READ_BUFFER_NOT_FOUND(&xlrec->target.node, ItemPointerGetBlockNumber(&(xlrec->target.tid)), buffer, lsn);
 		if (!BufferIsValid(buffer))
 		{
-
 			MIRROREDLOCK_BUFMGR_UNLOCK;
 			// -------- MirroredLock ----------
 
@@ -5340,7 +5300,7 @@ heap_xlog_insert(XLogRecPtr lsn, XLogRecord *record)
 
 		page = (Page) BufferGetPage(buffer);
 
-		REDO_PRINT_LSN_APPLICATION(reln,
+		REDO_PRINT_LSN_APPLICATION(&xlrec->target.node,
 					ItemPointerGetBlockNumber(&(xlrec->target.tid)), page, lsn);
 
 		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
@@ -5394,7 +5354,6 @@ heap_xlog_insert(XLogRecPtr lsn, XLogRecord *record)
 	
 	MIRROREDLOCK_BUFMGR_UNLOCK;
 	// -------- MirroredLock ----------
-	
 }
 
 /*
@@ -5435,28 +5394,23 @@ heap_xlog_update(XLogRecPtr lsn, XLogRecord *record, bool move, bool hot_update)
 
 	/* Deal with old tuple version */
 
-<<<<<<< HEAD
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-	buffer = XLogReadBuffer(reln,
-=======
 	buffer = XLogReadBuffer(xlrec->target.node,
->>>>>>> 49f001d81e
 							ItemPointerGetBlockNumber(&(xlrec->target.tid)),
 							false);
-	REDO_PRINT_READ_BUFFER_NOT_FOUND(reln, ItemPointerGetBlockNumber(&(xlrec->target.tid)), buffer, lsn);
+	REDO_PRINT_READ_BUFFER_NOT_FOUND(&xlrec->target.node, ItemPointerGetBlockNumber(&(xlrec->target.tid)), buffer, lsn);
 	if (!BufferIsValid(buffer))
 		goto newt;
 	page = (Page) BufferGetPage(buffer);
 
-	REDO_PRINT_LSN_APPLICATION(reln, ItemPointerGetBlockNumber(&(xlrec->target.tid)), page, lsn);
+	REDO_PRINT_LSN_APPLICATION(&xlrec->target.node, ItemPointerGetBlockNumber(&(xlrec->target.tid)), page, lsn);
 	if (XLByteLE(lsn, PageGetLSN(page)))		/* changes are applied */
 	{
 		UnlockReleaseBuffer(buffer);
 		if (samepage)
 		{
-
 			MIRROREDLOCK_BUFMGR_UNLOCK;
 			// -------- MirroredLock ----------
 
@@ -5542,7 +5496,7 @@ newt:;
 		buffer = XLogReadBuffer(xlrec->target.node,
 								ItemPointerGetBlockNumber(&(xlrec->newtid)),
 								false);
-		REDO_PRINT_READ_BUFFER_NOT_FOUND(reln, ItemPointerGetBlockNumber(&(xlrec->newtid)), buffer, lsn);
+		REDO_PRINT_READ_BUFFER_NOT_FOUND(&xlrec->target.node, ItemPointerGetBlockNumber(&(xlrec->newtid)), buffer, lsn);
 		if (!BufferIsValid(buffer))
 		{
 			MIRROREDLOCK_BUFMGR_UNLOCK;
@@ -5552,7 +5506,7 @@ newt:;
 		}
 		page = (Page) BufferGetPage(buffer);
 
-		REDO_PRINT_LSN_APPLICATION(reln, ItemPointerGetBlockNumber(&(xlrec->newtid)), page, lsn);
+		REDO_PRINT_LSN_APPLICATION(&xlrec->target.node, ItemPointerGetBlockNumber(&(xlrec->newtid)), page, lsn);
 		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
 		{
 			UnlockReleaseBuffer(buffer);
@@ -5636,22 +5590,15 @@ heap_xlog_lock(XLogRecPtr lsn, XLogRecord *record)
 	if (IsBkpBlockApplied(record, 0))
 		return;
 
-<<<<<<< HEAD
-	reln = XLogOpenRelation(xlrec->target.node);
-	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-	buffer = XLogReadBuffer(reln,
-=======
 	buffer = XLogReadBuffer(xlrec->target.node,
->>>>>>> 49f001d81e
 							ItemPointerGetBlockNumber(&(xlrec->target.tid)),
 							false);
-	REDO_PRINT_READ_BUFFER_NOT_FOUND(reln, ItemPointerGetBlockNumber(&(xlrec->target.tid)), buffer, lsn);
+	REDO_PRINT_READ_BUFFER_NOT_FOUND(&xlrec->target.node, ItemPointerGetBlockNumber(&(xlrec->target.tid)), buffer, lsn);
 	if (!BufferIsValid(buffer))
 	{
-		
 		MIRROREDLOCK_BUFMGR_UNLOCK;
 		// -------- MirroredLock ----------
 		
@@ -5659,7 +5606,7 @@ heap_xlog_lock(XLogRecPtr lsn, XLogRecord *record)
 	}
 	page = (Page) BufferGetPage(buffer);
 
-	REDO_PRINT_LSN_APPLICATION(reln, ItemPointerGetBlockNumber(&(xlrec->target.tid)), page, lsn);
+	REDO_PRINT_LSN_APPLICATION(&xlrec->target.node, ItemPointerGetBlockNumber(&(xlrec->target.tid)), page, lsn);
 	if (XLByteLE(lsn, PageGetLSN(page)))		/* changes are applied */
 	{
 		UnlockReleaseBuffer(buffer);
@@ -5721,20 +5668,15 @@ heap_xlog_inplace(XLogRecPtr lsn, XLogRecord *record)
 	if (IsBkpBlockApplied(record, 0))
 		return;
 
-<<<<<<< HEAD
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-	buffer = XLogReadBuffer(reln,
-=======
 	buffer = XLogReadBuffer(xlrec->target.node,
->>>>>>> 49f001d81e
 							ItemPointerGetBlockNumber(&(xlrec->target.tid)),
 							false);
-	REDO_PRINT_READ_BUFFER_NOT_FOUND(reln, ItemPointerGetBlockNumber(&(xlrec->target.tid)), buffer, lsn);
+	REDO_PRINT_READ_BUFFER_NOT_FOUND(&xlrec->target.node, ItemPointerGetBlockNumber(&(xlrec->target.tid)), buffer, lsn);
 	if (!BufferIsValid(buffer))
 	{
-		
 		MIRROREDLOCK_BUFMGR_UNLOCK;
 		// -------- MirroredLock ----------
 		
@@ -5742,7 +5684,7 @@ heap_xlog_inplace(XLogRecPtr lsn, XLogRecord *record)
 	}
 	page = (Page) BufferGetPage(buffer);
 
-	REDO_PRINT_LSN_APPLICATION(reln, ItemPointerGetBlockNumber(&(xlrec->target.tid)), page, lsn);
+	REDO_PRINT_LSN_APPLICATION(&xlrec->target.node, ItemPointerGetBlockNumber(&(xlrec->target.tid)), page, lsn);
 	if (XLByteLE(lsn, PageGetLSN(page)))		/* changes are applied */
 	{
 		UnlockReleaseBuffer(buffer);
@@ -5777,7 +5719,6 @@ heap_xlog_inplace(XLogRecPtr lsn, XLogRecord *record)
 	
 	MIRROREDLOCK_BUFMGR_UNLOCK;
 	// -------- MirroredLock ----------
-	
 }
 
 void

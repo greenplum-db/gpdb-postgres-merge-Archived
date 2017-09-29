@@ -1507,11 +1507,6 @@ toast_save_datum(Relation rel, Datum value, bool isFrozen,
 		SET_VARSIZE(&chunk_data, chunk_size + VARHDRSZ);
 		memcpy(VARDATA(&chunk_data), data_p, chunk_size);
 		toasttup = heap_form_tuple(toasttupDesc, t_values, t_isnull);
-<<<<<<< HEAD
-=======
-
-		heap_insert(toastrel, toasttup, mycid, use_wal, use_fsm);
->>>>>>> 49f001d81e
 
 		if (!isFrozen)
 		{
@@ -1604,13 +1599,8 @@ toast_delete_datum(Relation rel __attribute__((unused)), Datum value)
 
 	/*
 	 * Find all the chunks.  (We don't actually care whether we see them in
-<<<<<<< HEAD
 	 * sequence or not, but since we've already locked the index we might as
 	 * well use systable_beginscan_ordered.)
-=======
-	 * sequence or not, but since we've already locked the index we might
-	 * as well use systable_beginscan_ordered.)
->>>>>>> 49f001d81e
 	 */
 	toastscan = systable_beginscan_ordered(toastrel, toastidx,
 										   SnapshotToast, 1, &toastkey);
