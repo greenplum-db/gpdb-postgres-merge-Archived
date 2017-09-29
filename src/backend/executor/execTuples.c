@@ -88,21 +88,16 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "access/heapam.h"
 #include "access/htup.h"
 #include "access/tuptoaster.h"
 #include "funcapi.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
+#include "parser/parse_expr.h"
 #include "parser/parsetree.h"               /* rt_fetch() */
 #include "nodes/nodeFuncs.h"
-=======
-#include "funcapi.h"
-#include "catalog/pg_type.h"
-#include "parser/parse_expr.h"
 #include "storage/bufmgr.h"
->>>>>>> 49f001d81e
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 

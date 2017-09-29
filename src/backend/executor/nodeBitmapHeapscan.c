@@ -37,10 +37,7 @@
 
 #include "access/heapam.h"
 #include "access/relscan.h"
-<<<<<<< HEAD
 #include "access/transam.h"
-=======
->>>>>>> 49f001d81e
 #include "executor/execdebug.h"
 #include "executor/nodeBitmapHeapscan.h"
 #include "pgstat.h"

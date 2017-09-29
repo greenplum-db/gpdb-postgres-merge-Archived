@@ -557,14 +557,11 @@ postquel_end(execution_state *es)
 	if (es->qd->utilitystmt == NULL)
 	{
 		/* Make our snapshot the active one for any called functions */
-<<<<<<< HEAD
-		saveActiveSnapshot = ActiveSnapshot;
-		PG_TRY();
+		PushActiveSnapshot(es->qd->snapshot);
+
 		{
 			Oid			relationOid = InvalidOid; 	/* relation that is modified */
 			AutoStatsCmdType cmdType = AUTOSTATS_CMDTYPE_SENTINEL; 	/* command type */
-
-			ActiveSnapshot = es->qd->snapshot;
 
 			if (es->qd->operation != CMD_SELECT)
 				AfterTriggerEndQuery(es->qd->estate);
@@ -578,23 +575,8 @@ postquel_end(execution_state *es)
 			if (Gp_role == GP_ROLE_DISPATCH)
 				auto_stats(cmdType, relationOid, es->qd->es_processed, true /* inFunction */);
 		}
-		PG_CATCH();
-		{
-			/* Restore global vars and propagate error */
-			ActiveSnapshot = saveActiveSnapshot;
-			PG_RE_THROW();
-		}
-		PG_END_TRY();
-		ActiveSnapshot = saveActiveSnapshot;
-=======
-		PushActiveSnapshot(es->qd->snapshot);
-
-		if (es->qd->operation != CMD_SELECT)
-			AfterTriggerEndQuery(es->qd->estate);
-		ExecutorEnd(es->qd);
 
 		PopActiveSnapshot();
->>>>>>> 49f001d81e
 	}
 
 	FreeQueryDesc(es->qd);

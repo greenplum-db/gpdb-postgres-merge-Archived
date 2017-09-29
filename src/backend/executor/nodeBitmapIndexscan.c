@@ -224,33 +224,7 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 	 */
 	Assert(NULL == scanState->ss.ss_currentRelation);
 
-<<<<<<< HEAD
 	initGpmonPktForBitmapIndexScan((Plan *)node, &scanState->ss.ps.gpmon_pkt, estate);
-=======
-	/*
-	 * build the index scan keys from the index qualification
-	 */
-	ExecIndexBuildScanKeys((PlanState *) indexstate,
-						   indexstate->biss_RelationDesc,
-						   node->indexqual,
-						   &indexstate->biss_ScanKeys,
-						   &indexstate->biss_NumScanKeys,
-						   &indexstate->biss_RuntimeKeys,
-						   &indexstate->biss_NumRuntimeKeys,
-						   &indexstate->biss_ArrayKeys,
-						   &indexstate->biss_NumArrayKeys);
-
-	/*
-	 * If we have runtime keys or array keys, we need an ExprContext to
-	 * evaluate them. We could just create a "standard" plan node exprcontext,
-	 * but to keep the code looking similar to nodeIndexscan.c, it seems
-	 * better to stick with the approach of using a separate ExprContext.
-	 */
-	if (indexstate->biss_NumRuntimeKeys != 0 ||
-		indexstate->biss_NumArrayKeys != 0)
-	{
-		ExprContext *stdecontext = indexstate->ss.ps.ps_ExprContext;
->>>>>>> 49f001d81e
 
 	return indexstate;
 }

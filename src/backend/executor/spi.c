@@ -991,8 +991,6 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 
 
 /*
-<<<<<<< HEAD
-=======
  * SPI_cursor_open_with_args()
  *
  * Parse and plan a query and open it as a portal.  Like SPI_execute_with_args,
@@ -1026,6 +1024,15 @@ SPI_cursor_open_with_args(const char *name,
 	plan.nargs = nargs;
 	plan.argtypes = argtypes;
 
+	/*
+	 * Add this to be compatible with current version of GPDB
+	 *
+	 * TODO: Remove it after the related codes are backported
+	 *		 from upstream, e.g. plan.query is to be assigned
+	 *		 in _SPI_prepare_plan
+	 */
+	plan.plancxt = NULL;
+
 	paramLI = _SPI_convert_params(nargs, argtypes,
 								  Values, Nulls,
 								  PARAM_FLAG_CONST);
@@ -1052,7 +1059,6 @@ SPI_cursor_open_with_args(const char *name,
 
 
 /*
->>>>>>> 49f001d81e
  * SPI_cursor_open_internal()
  *
  *	Common code for SPI_cursor_open and SPI_cursor_open_with_args
@@ -1280,77 +1286,6 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 
 
 /*
-<<<<<<< HEAD
- * SPI_cursor_open_with_args()
- *
- * Parse and plan a query and open it as a portal.  Like SPI_execute_with_args,
- * we can tell the planner to rely on the parameter values as constants,
- * because the plan will only be used once.
- */
-Portal
-SPI_cursor_open_with_args(const char *name,
-						  const char *src,
-						  int nargs, Oid *argtypes,
-						  Datum *Values, const char *Nulls,
-						  bool read_only, int cursorOptions)
-{
-	Portal		result;
-	_SPI_plan	plan;
-	ParamListInfo paramLI;
-
-	if (src == NULL || nargs < 0)
-		elog(ERROR, "SPI_cursor_open_with_args called with invalid arguments");
-
-	if (nargs > 0 && (argtypes == NULL || Values == NULL))
-		elog(ERROR, "SPI_cursor_open_with_args called with missing parameters");
-
-	SPI_result = _SPI_begin_call(true);
-	if (SPI_result < 0)
-		elog(ERROR, "SPI_cursor_open_with_args called while not connected");
-
-	memset(&plan, 0, sizeof(_SPI_plan));
-	plan.magic = _SPI_PLAN_MAGIC;
-	plan.cursor_options = cursorOptions;
-	plan.nargs = nargs;
-	plan.argtypes = argtypes;
-
-	/*
-	 * Add this to be compatible with current version of GPDB
-	 *
-	 * TODO: Remove it after the related codes are backported
-	 *		 from upstream, e.g. plan.query is to be assigned
-	 *		 in _SPI_prepare_plan
-	 */
-	plan.plancxt = NULL;
-
-	paramLI = _SPI_convert_params(nargs, argtypes,
-								  Values, Nulls,
-								  PARAM_FLAG_CONST);
-
-	_SPI_prepare_plan(src, &plan, paramLI);
-
-	/* We needn't copy the plan; SPI_cursor_open_internal will do so */
-
-	/* Adjust stack so that SPI_cursor_open_internal doesn't complain */
-	_SPI_curid--;
-
-	/* SPI_cursor_open_internal must be called in procedure memory context */
-	_SPI_procmem();
-
-	result = SPI_cursor_open_internal(name, &plan, Values, Nulls,
-									  read_only, PARAM_FLAG_CONST);
-
-	/* And clean up */
-	_SPI_curid++;
-	_SPI_end_call(true);
-
-	return result;
-}
-
-
-/*
-=======
->>>>>>> 49f001d81e
  * SPI_cursor_find()
  *
  *	Find the portal of an existing open cursor
@@ -1825,16 +1760,8 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				  Snapshot snapshot, Snapshot crosscheck_snapshot,
 				  bool read_only, bool fire_triggers, long tcount)
 {
-<<<<<<< HEAD
-	volatile int my_res = 0;
-	volatile uint64 my_processed = 0;
-	volatile Oid my_lastoid = InvalidOid;
-	SPITupleTable *volatile my_tuptable = NULL;
-	volatile int res = 0;
-	Snapshot	saveActiveSnapshot;
-=======
 	int			my_res = 0;
-	uint32		my_processed = 0;
+	uint64		my_processed = 0;
 	Oid			my_lastoid = InvalidOid;
 	SPITupleTable *my_tuptable = NULL;
 	int			res = 0;
@@ -1842,7 +1769,6 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 	ErrorContextCallback spierrcontext;
 	CachedPlan *cplan = NULL;
 	ListCell   *lc1;
->>>>>>> 49f001d81e
 
 	/*
 	 * Setup error traceback support for ereport()
@@ -1905,104 +1831,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				}
 				else if (IsA(stmt, TransactionStmt))
 				{
-<<<<<<< HEAD
-					/*
-					 * Default read_only behavior is to use the entry-time
-					 * ActiveSnapshot; if read-write, grab a full new snap.
-					 */
-					if (read_only)
-						ActiveSnapshot = CopySnapshot(saveActiveSnapshot);
-					else
-						ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
-				}
-				else
-				{
-					/*
-					 * We interpret read_only with a specified snapshot to be
-					 * exactly that snapshot, but read-write means use the
-					 * snap with advancing of command ID.
-					 */
-					ActiveSnapshot = CopySnapshot(snapshot);
-					if (!read_only)
-						ActiveSnapshot->curcid = GetCurrentCommandId(false);
-				}
-
-				if (IsA(stmt, PlannedStmt) &&
-					((PlannedStmt *) stmt)->utilityStmt == NULL)
-				{
-					QueryDesc  *qdesc;
-
-					qdesc = CreateQueryDesc((PlannedStmt *) stmt,
-											plansource->query_string,
-											ActiveSnapshot,
-											crosscheck_snapshot,
-											dest,
-											paramLI, false);
-
-                    if (gp_enable_gpperfmon 
-                    		&& Gp_role == GP_ROLE_DISPATCH 
-                    		&& log_min_messages < DEBUG4)
-                    {
-                    	/* For log level of DEBUG4, gpmon is sent information about SPI internal queries as well */
-						Assert(plansource->query_string);
-						gpmon_qlog_query_submit(qdesc->gpmon_pkt);
-						gpmon_qlog_query_text(qdesc->gpmon_pkt,
-											  plansource->query_string,
-											  application_name,
-											  NULL /* resqueue name */,
-											  NULL /* priority */);
-                    }
-                    else
-                    {
-                    	/* Otherwise, we do not record information about internal queries */
-                    	qdesc->gpmon_pkt = NULL;
-                    }
-
-					res = _SPI_pquery(qdesc, fire_triggers,
-									  canSetTag ? tcount : 0);
-					FreeQueryDesc(qdesc);
-				}
-				else
-				{
-					ProcessUtility(stmt,
-								   plansource->query_string,
-								   paramLI,
-								   false,		/* not top level */
-								   dest,
-								   NULL);
-					/* Update "processed" if stmt returned tuples */
-					if (_SPI_current->tuptable)
-						_SPI_current->processed = _SPI_current->tuptable->alloced - _SPI_current->tuptable->free;
-					res = SPI_OK_UTILITY;
-				}
-				FreeSnapshot(ActiveSnapshot);
-				ActiveSnapshot = NULL;
-
-				/*
-				 * The last canSetTag query sets the status values returned to
-				 * the caller.	Be careful to free any tuptables not returned,
-				 * to avoid intratransaction memory leak.
-				 */
-				if (canSetTag)
-				{
-					my_processed = _SPI_current->processed;
-					my_lastoid = _SPI_current->lastoid;
-					SPI_freetuptable(my_tuptable);
-					my_tuptable = _SPI_current->tuptable;
-					my_res = res;
-				}
-				else
-				{
-					SPI_freetuptable(_SPI_current->tuptable);
-					_SPI_current->tuptable = NULL;
-				}
-				/* we know that the receiver doesn't need a destroy call */
-				if (res < 0)
-				{
-					my_res = res;
-=======
 					my_res = SPI_ERROR_TRANSACTION;
->>>>>>> 49f001d81e
 					goto fail;
 				}
 			}
@@ -2070,9 +1899,30 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 					snap = InvalidSnapshot;
 
 				qdesc = CreateQueryDesc((PlannedStmt *) stmt,
+										plansource->query_string,
 										snap, crosscheck_snapshot,
 										dest,
 										paramLI, false);
+
+				if (gp_enable_gpperfmon 
+						&& Gp_role == GP_ROLE_DISPATCH 
+						&& log_min_messages < DEBUG4)
+				{
+					/* For log level of DEBUG4, gpmon is sent information about SPI internal queries as well */
+					Assert(plansource->query_string);
+					gpmon_qlog_query_submit(qdesc->gpmon_pkt);
+					gpmon_qlog_query_text(qdesc->gpmon_pkt,
+										  plansource->query_string,
+										  application_name,
+										  NULL /* resqueue name */,
+										  NULL /* priority */);
+				}
+				else
+				{
+					/* Otherwise, we do not record information about internal queries */
+					qdesc->gpmon_pkt = NULL;
+				}
+
 				res = _SPI_pquery(qdesc, fire_triggers,
 								  canSetTag ? tcount : 0);
 				FreeQueryDesc(qdesc);

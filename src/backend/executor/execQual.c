@@ -50,11 +50,8 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/planmain.h"
-<<<<<<< HEAD
-=======
 #include "parser/parse_expr.h"
 #include "pgstat.h"
->>>>>>> 49f001d81e
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"

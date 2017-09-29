@@ -533,81 +533,6 @@ ExecSupportsBackwardScan(Plan *node)
 			return false;
 	}
 }
-<<<<<<< HEAD
-
-/*
- * ExecMayReturnRawTuples
- *		Check whether a plan tree may return "raw" disk tuples (that is,
- *		pointers to original data in disk buffers, as opposed to temporary
- *		tuples constructed by projection steps).  In the case of Append,
- *		some subplans may return raw tuples and others projected tuples;
- *		we return "true" if any of the returned tuples could be raw.
- *
- * This must be passed an already-initialized planstate tree, because we
- * need to look at the results of ExecAssignScanProjectionInfo().
- */
-bool
-ExecMayReturnRawTuples(PlanState *node)
-{
-	/*
-	 * At a table scan node, we check whether ExecAssignScanProjectionInfo
-	 * decided to do projection or not.  Most non-scan nodes always project
-	 * and so we can return "false" immediately.  For nodes that don't project
-	 * but just pass up input tuples, we have to recursively examine the input
-	 * plan node.
-	 *
-	 * Note: Hash and Material are listed here because they sometimes return
-	 * an original input tuple, not a copy.  But Sort and SetOp never return
-	 * an original tuple, so they can be treated like projecting nodes.
-	 */
-	switch (nodeTag(node))
-	{
-			/* Table scan nodes */
-		case T_TableScanState:
-		case T_DynamicTableScanState:
-		case T_DynamicIndexScanState:
-		case T_IndexScanState:
-		case T_BitmapHeapScanState:
-		case T_TidScanState:
-			if (node->ps_ProjInfo == NULL)
-				return true;
-			break;
-
-		case T_SeqScanState:
-			insist_log(false, "SeqScan/AppendOnlyScan/AOCSScan are defunct");
-			break;
-
-		case T_SubqueryScanState:
-			/* If not projecting, look at input plan */
-			if (node->ps_ProjInfo == NULL)
-				return ExecMayReturnRawTuples(((SubqueryScanState *) node)->subplan);
-			break;
-
-			/* Non-projecting nodes */
-		case T_MotionState:
-			if (node->lefttree == NULL)
-				return false;
-		case T_HashState:
-		case T_MaterialState:
-		case T_UniqueState:
-		case T_LimitState:
-			return ExecMayReturnRawTuples(node->lefttree);
-
-		case T_AppendState:
-			{
-				/*
-				 * Always return true since we don't initialize the subplan
-				 * nodes, so we don't know.
-				 */
-				return true;
-			}
-
-			/* All projecting node types come here */
-		default:
-			break;
-	}
-	return false;
-}
 
 /*
  * ExecEagerFree
@@ -869,5 +794,3 @@ ExecEagerFreeChildNodes(PlanState *node, bool subplanDone)
 		}
 	}
 }
-=======
->>>>>>> 49f001d81e
