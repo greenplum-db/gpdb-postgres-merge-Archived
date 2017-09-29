@@ -323,12 +323,9 @@ ShutdownSUBTRANS(void)
 	 */
 	TRACE_POSTGRESQL_SUBTRANS_CHECKPOINT_START(false);
 	SimpleLruFlush(SubTransCtl, false);
-<<<<<<< HEAD
 
 	MIRRORED_UNLOCK;
-=======
 	TRACE_POSTGRESQL_SUBTRANS_CHECKPOINT_DONE(false);
->>>>>>> 49f001d81e
 }
 
 /*
@@ -350,12 +347,9 @@ CheckPointSUBTRANS(void)
 	 */
 	TRACE_POSTGRESQL_SUBTRANS_CHECKPOINT_START(true);
 	SimpleLruFlush(SubTransCtl, true);
-<<<<<<< HEAD
 
 	MIRRORED_UNLOCK;
-=======
 	TRACE_POSTGRESQL_SUBTRANS_CHECKPOINT_DONE(true);
->>>>>>> 49f001d81e
 }
 
 

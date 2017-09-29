@@ -552,12 +552,10 @@ ShutdownCLOG(void)
 	/* Flush dirty CLOG pages to disk */
 	TRACE_POSTGRESQL_CLOG_CHECKPOINT_START(false);
 	SimpleLruFlush(ClogCtl, false);
-<<<<<<< HEAD
 
 	MIRRORED_UNLOCK;
-=======
+
 	TRACE_POSTGRESQL_CLOG_CHECKPOINT_DONE(false);
->>>>>>> 49f001d81e
 }
 
 /*
@@ -573,12 +571,10 @@ CheckPointCLOG(void)
 	/* Flush dirty CLOG pages to disk */
 	TRACE_POSTGRESQL_CLOG_CHECKPOINT_START(true);
 	SimpleLruFlush(ClogCtl, true);
-<<<<<<< HEAD
 
 	MIRRORED_UNLOCK;
-=======
+
 	TRACE_POSTGRESQL_CLOG_CHECKPOINT_DONE(true);
->>>>>>> 49f001d81e
 }
 
 

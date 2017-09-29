@@ -42,17 +42,15 @@
 #include <time.h>
 #include <unistd.h>
 
-<<<<<<< HEAD
+#include "access/distributedlog.h"
 #include "access/heapam.h"
-#include "access/xlogmm.h"
-=======
 #include "access/htup.h"
->>>>>>> 49f001d81e
 #include "access/subtrans.h"
 #include "access/transam.h"
 #include "access/twophase.h"
 #include "access/twophase_rmgr.h"
 #include "access/xact.h"
+#include "access/xlogmm.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "miscadmin.h"
@@ -60,20 +58,15 @@
 #include "pgstat.h"
 #include "replication/walsender.h"
 #include "replication/syncrep.h"
+#include "storage/backendid.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
-<<<<<<< HEAD
 #include "utils/faultinjector.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
-#include "access/distributedlog.h"
-#include "storage/backendid.h"
-=======
-#include "utils/memutils.h"
->>>>>>> 49f001d81e
 
 #include "cdb/cdbtm.h"
 #include "cdb/cdbvars.h"

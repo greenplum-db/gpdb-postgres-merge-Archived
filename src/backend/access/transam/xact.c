@@ -38,12 +38,9 @@
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "pgstat.h"
-<<<<<<< HEAD
 #include "replication/walsender.h"
 #include "replication/syncrep.h"
-=======
 #include "storage/bufmgr.h"
->>>>>>> 49f001d81e
 #include "storage/fd.h"
 #include "storage/lmgr.h"
 #include "storage/procarray.h"
@@ -3310,7 +3307,6 @@ AbortTransaction(void)
 		pgstat_report_xact_timestamp(0);
 	}
 
-<<<<<<< HEAD
 	/*
 	 * Do abort to all QE. NOTE: we don't process
 	 * signals to prevent recursion until we've notified the QEs.
@@ -3327,20 +3323,6 @@ AbortTransaction(void)
 	rollbackDtxTransaction();
 
 	MyProc->localDistribXactData.state = LOCALDISTRIBXACT_STATE_NONE;
-=======
-	AtEOXact_GUC(false, 1);
-	AtEOXact_SPI(false);
-	AtEOXact_xml();
-	AtEOXact_on_commit_actions(false);
-	AtEOXact_Namespace(false);
-	smgrabort();
-	AtEOXact_Files();
-	AtEOXact_ComboCid();
-	AtEOXact_HashTables(false);
-	AtEOXact_PgStat(false);
-	AtEOXact_Snapshot(false);
-	pgstat_report_xact_timestamp(0);
->>>>>>> 49f001d81e
 
 	/*
 	 * State remains TRANS_ABORT until CleanupTransaction().
@@ -3356,10 +3338,11 @@ AbortTransaction(void)
 		disconnectAndDestroyIdleReaderGangs();
 	}
 
-	/* If memprot decides to kill process, make sure we destroy all processes
+	/*
+	 * If memprot decides to kill process, make sure we destroy all processes
 	 * so that all mem/resource will be freed
 	 */
-	if(elog_geterrcode() == ERRCODE_GP_MEMPROT_KILL)
+	if (elog_geterrcode() == ERRCODE_GP_MEMPROT_KILL)
 		DisconnectAndDestroyAllGangs(true);
 }
 

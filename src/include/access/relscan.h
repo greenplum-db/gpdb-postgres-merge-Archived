@@ -126,6 +126,8 @@ typedef struct FileScanDescData
 	List		**fs_constraintExprs;	
 }	FileScanDescData;
 
+typedef FileScanDescData *FileScanDesc;
+
 /* Struct for heap-or-index scans of system tables */
 typedef struct SysScanDescData
 {

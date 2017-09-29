@@ -31,11 +31,8 @@
 #include "access/twophase.h"
 #include "access/xact.h"
 #include "access/xlog_internal.h"
-<<<<<<< HEAD
 #include "access/xlogmm.h"
 #include "access/xlogdefs.h"
-=======
->>>>>>> 49f001d81e
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
 #include "catalog/catversion.h"
@@ -51,12 +48,9 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
-<<<<<<< HEAD
 #include "postmaster/postmaster.h"
 #include "storage/bufpage.h"
-=======
 #include "storage/bufmgr.h"
->>>>>>> 49f001d81e
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/pmsignal.h"
@@ -2642,21 +2636,15 @@ XLogFileInit(
 	 */
 	if (*use_existent)
 	{
-<<<<<<< HEAD
 		if (MirroredFlatFile_Open(
 							mirroredOpen,
 							XLOGDIR,
 							simpleFileName,
-							O_RDWR | PG_BINARY | XLOG_SYNC_BIT,
+							O_RDWR | PG_BINARY | get_sync_bit(sync_method),
 						    S_IRUSR | S_IWUSR,
 						    /* suppressError */ true,
 							/* atomic operation */ false,
-							/*isMirrorRecovery */ false))
-=======
-		fd = BasicOpenFile(path, O_RDWR | PG_BINARY | get_sync_bit(sync_method),
-						   S_IRUSR | S_IWUSR);
-		if (fd < 0)
->>>>>>> 49f001d81e
+							/* isMirrorRecovery */ false))
 		{
 			char		path[MAXPGPATH];
 
@@ -2698,10 +2686,9 @@ XLogFileInit(
 						  XLOGDIR,
 						  tmpsimple,
 						  /* suppressError */ true,
-						  /*isMirrorRecovery */ false);
+						  /* isMirrorRecovery */ false);
 
-<<<<<<< HEAD
-	/* do not use XLOG_SYNC_BIT here --- want to fsync only at end of fill */
+	/* do not use get_sync_bit here --- want to fsync only at end of fill */
 	MirroredFlatFile_Open(
 						&tmpMirroredOpen,
 						XLOGDIR,
@@ -2710,16 +2697,7 @@ XLogFileInit(
 					    S_IRUSR | S_IWUSR,
 					    /* suppressError */ false,
 						/* atomic operation */ false,
-						/*isMirrorRecovery */ false);
-=======
-	/* do not use get_sync_bit() here --- want to fsync only at end of fill */
-	fd = BasicOpenFile(tmppath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
-					   S_IRUSR | S_IWUSR);
-	if (fd < 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not create file \"%s\": %m", tmppath)));
->>>>>>> 49f001d81e
+						/* isMirrorRecovery */ false);
 
 	/*
 	 * Zero-fill the file.	We have to do this the hard way to ensure that all
@@ -2753,7 +2731,7 @@ XLogFileInit(
 							XLOGDIR,
 							tmpsimple,
 							/* suppressError */ false,
-							/*isMirrorRecovery */ false);
+							/* isMirrorRecovery */ false);
 
 			/* if write didn't set errno, assume problem is no disk space */
 			errno = save_errno ? save_errno : ENOSPC;
@@ -2795,7 +2773,7 @@ XLogFileInit(
 						XLOGDIR,
 						tmpsimple,
 						/* suppressError */ false,
-						/*isMirrorRecovery */ false);
+						/* isMirrorRecovery */ false);
 	}
 
 	/* Set flag to tell caller there was no existent file */
@@ -2811,7 +2789,7 @@ XLogFileInit(
 					    S_IRUSR | S_IWUSR,
 					    /* suppressError */ false,
 						/* atomic operation */ false,
-						/*isMirrorRecovery */ false);
+						/* isMirrorRecovery */ false);
 =======
 	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | get_sync_bit(sync_method),
 					   S_IRUSR | S_IWUSR);
@@ -2873,14 +2851,10 @@ XLogFileCopy(uint32 log, uint32 seg,
 	pfree(xlogDir);	
 	unlink(tmppath);
 
-<<<<<<< HEAD
 	elog((Debug_print_qd_mirroring ? LOG : DEBUG5), "Master Mirroring: copying xlog file '%s' to '%s'",
 		 path, tmppath);
 
-	/* do not use XLOG_SYNC_BIT here --- want to fsync only at end of fill */
-=======
 	/* do not use get_sync_bit() here --- want to fsync only at end of fill */
->>>>>>> 49f001d81e
 	fd = BasicOpenFile(tmppath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
 					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
@@ -3001,7 +2975,7 @@ InstallXLogFileSegment(uint32 *log, uint32 *seg, char *tmppath,
 								  XLOGDIR,
 								  simpleFileName,
 								  /* suppressError */ true,
-								  /*isMirrorRecovery */ false);
+								  /* isMirrorRecovery */ false);
 		} else {
 			unlink(path);
 		}
@@ -3061,7 +3035,7 @@ InstallXLogFileSegment(uint32 *log, uint32 *seg, char *tmppath,
 						  XLOGDIR,
 						  tmpsimpleFileName,
 						  /* suppressError */ true,
-						  /*isMirrorRecovery */ false);
+						  /* isMirrorRecovery */ false);
 	} else {
 		unlink(tmppath);
 	}
@@ -3073,7 +3047,7 @@ InstallXLogFileSegment(uint32 *log, uint32 *seg, char *tmppath,
 						  /* old name */ tmpsimpleFileName,
 						  /* new name */ simpleFileName,
 						  /* can exist */ false,
-							/* isMirrorRecovery */ false);
+						  /* isMirrorRecovery */ false);
 	} else {
 		retval = rename(tmppath, path);
 	}
@@ -3113,22 +3087,16 @@ XLogFileOpen(
 					mirroredOpen,
 					XLOGDIR,
 					simpleFileName,
-					O_RDWR | PG_BINARY | XLOG_SYNC_BIT,
+					O_RDWR | PG_BINARY | get_sync_bit(sync_method),
 					S_IRUSR | S_IWUSR,
 					/* suppressError */ false,
 					/* atomic operation */ false,
-					/*isMirrorRecovery */ false))
+					/* isMirrorRecovery */ false))
 	{
 		char		path[MAXPGPATH];
 
 		XLogFileName(path, ThisTimeLineID, log, seg);
 
-<<<<<<< HEAD
-=======
-	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | get_sync_bit(sync_method),
-					   S_IRUSR | S_IWUSR);
-	if (fd < 0)
->>>>>>> 49f001d81e
 		ereport(PANIC,
 				(errcode_for_file_access(),
 		   errmsg("could not open file \"%s\" (log file %u, segment %u): %m",
@@ -3625,13 +3593,13 @@ RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr)
 										  XLOGDIR,
 										  newfilename,
 										  /* suppressError */ true,
-										  /*isMirrorRecovery */ false);
+										  /* isMirrorRecovery */ false);
 #else
 					rc = MirroredFlatFile_Drop(
 										  XLOGDIR,
 										  xlde->d_name,
 										  /* suppressError */ true,
-										  /*isMirrorRecovery */ false);
+										  /* isMirrorRecovery */ false);
 #endif
 
 					if (rc != 0)
@@ -5561,7 +5529,7 @@ WriteControlFile(void)
 					S_IRUSR | S_IWUSR,
 					/* suppressError */ false,
 					/* atomic operation */ false,
-					/*isMirrorRecovery */ false);
+					/* isMirrorRecovery */ false);
 
 	MirroredFlatFile_Write(
 					&mirroredOpen,
@@ -5920,7 +5888,7 @@ UpdateControlFile(void)
 					S_IRUSR | S_IWUSR,
 					/* suppressError */ false,
 					/* atomic operation */ false,
-					/*isMirrorRecovery */ false);
+					/* isMirrorRecovery */ false);
 
 	MirroredFlatFile_Write(
 					&mirroredOpen,
@@ -12350,7 +12318,7 @@ XLogRecoverMirrorControlFile(void)
 							  S_IRUSR | S_IWUSR,
 							  /* suppressError */ false,
 							  /* atomic operation */ false,
-							  /*isMirrorRecovery */ TRUE);
+							  /* isMirrorRecovery */ TRUE);
 		if (retval != 0)
 			break;
 

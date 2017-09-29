@@ -59,12 +59,9 @@
 #include "storage/backendid.h"
 #include "storage/lmgr.h"
 #include "storage/procarray.h"
-<<<<<<< HEAD
-#include "cdb/cdbpersistentstore.h"
-=======
 #include "utils/memutils.h"
->>>>>>> 49f001d81e
 
+#include "cdb/cdbpersistentstore.h"
 
 /*
  * Defines for MultiXactOffset page sizes.	A page is the same BLCKSZ as is
@@ -1681,12 +1678,9 @@ ShutdownMultiXact(void)
 	TRACE_POSTGRESQL_MULTIXACT_CHECKPOINT_START(false);
 	SimpleLruFlush(MultiXactOffsetCtl, false);
 	SimpleLruFlush(MultiXactMemberCtl, false);
-<<<<<<< HEAD
 
 	MIRRORED_UNLOCK;
-=======
 	TRACE_POSTGRESQL_MULTIXACT_CHECKPOINT_DONE(false);
->>>>>>> 49f001d81e
 }
 
 /*
@@ -1720,13 +1714,11 @@ MultiXactGetCheckptMulti(bool is_shutdown __attribute__((unused)) ,
 void
 CheckPointMultiXact(void)
 {
-<<<<<<< HEAD
 	MIRRORED_LOCK_DECLARE;
 
 	MIRRORED_LOCK;
-=======
+
 	TRACE_POSTGRESQL_MULTIXACT_CHECKPOINT_START(true);
->>>>>>> 49f001d81e
 
 	/* Flush dirty MultiXact pages to disk */
 	SimpleLruFlush(MultiXactOffsetCtl, true);
@@ -1743,11 +1735,9 @@ CheckPointMultiXact(void)
 	if (!InRecovery)
 		TruncateMultiXact();
 
-<<<<<<< HEAD
 	MIRRORED_UNLOCK;
-=======
+
 	TRACE_POSTGRESQL_MULTIXACT_CHECKPOINT_DONE(true);
->>>>>>> 49f001d81e
 }
 
 /*
