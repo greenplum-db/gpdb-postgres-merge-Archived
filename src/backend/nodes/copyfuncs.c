@@ -517,8 +517,6 @@ copyIndexScanFields(const IndexScan *from, IndexScan *newnode)
 	COPY_SCALAR_FIELD(indexid);
 	COPY_NODE_FIELD(indexqual);
 	COPY_NODE_FIELD(indexqualorig);
-	COPY_NODE_FIELD(indexstrategy);
-	COPY_NODE_FIELD(indexsubtype);
 	COPY_SCALAR_FIELD(indexorderdir);
 
 	/*
@@ -550,7 +548,6 @@ _copyIndexScan(IndexScan *from)
 
 	copyIndexScanFields(from, newnode);
 
-<<<<<<< HEAD
 	return newnode;
 }
 
@@ -564,15 +561,6 @@ _copyDynamicIndexScan(const DynamicIndexScan *from)
 
 	/* DynamicIndexScan has some content from IndexScan */
 	copyIndexScanFields((IndexScan *)from, (IndexScan *)newnode);
-=======
-	/*
-	 * copy remainder of node
-	 */
-	COPY_SCALAR_FIELD(indexid);
-	COPY_NODE_FIELD(indexqual);
-	COPY_NODE_FIELD(indexqualorig);
-	COPY_SCALAR_FIELD(indexorderdir);
->>>>>>> 49f001d81e
 
 	return newnode;
 }
@@ -585,22 +573,8 @@ _copyBitmapIndexScan(BitmapIndexScan *from)
 {
 	BitmapIndexScan *newnode = makeNode(BitmapIndexScan);
 
-<<<<<<< HEAD
 	/* DynamicIndexScan has some content from IndexScan */
 	copyIndexScanFields((IndexScan *)from, (IndexScan *)newnode);
-=======
-	/*
-	 * copy node superclass fields
-	 */
-	CopyScanFields((Scan *) from, (Scan *) newnode);
-
-	/*
-	 * copy remainder of node
-	 */
-	COPY_SCALAR_FIELD(indexid);
-	COPY_NODE_FIELD(indexqual);
-	COPY_NODE_FIELD(indexqualorig);
->>>>>>> 49f001d81e
 
 	return newnode;
 }
@@ -2474,7 +2448,7 @@ _copyAExpr(A_Expr *from)
 	COPY_NODE_FIELD(name);
 	COPY_NODE_FIELD(lexpr);
 	COPY_NODE_FIELD(rexpr);
-	COPY_SCALAR_FIELD(location);
+	COPY_LOCATION_FIELD(location);
 
 	return newnode;
 }
@@ -2485,7 +2459,7 @@ _copyColumnRef(ColumnRef *from)
 	ColumnRef  *newnode = makeNode(ColumnRef);
 
 	COPY_NODE_FIELD(fields);
-	COPY_SCALAR_FIELD(location);
+	COPY_LOCATION_FIELD(location);
 
 	return newnode;
 }
@@ -2527,12 +2501,8 @@ _copyAConst(A_Const *from)
 			break;
 	}
 
-<<<<<<< HEAD
-	COPY_NODE_FIELD(typeName);
 	COPY_LOCATION_FIELD(location);
 
-=======
->>>>>>> 49f001d81e
 	return newnode;
 }
 
@@ -2548,11 +2518,8 @@ _copyFuncCall(FuncCall *from)
 	COPY_SCALAR_FIELD(agg_star);
 	COPY_SCALAR_FIELD(agg_distinct);
 	COPY_SCALAR_FIELD(func_variadic);
-<<<<<<< HEAD
 	COPY_NODE_FIELD(over);
-=======
->>>>>>> 49f001d81e
-	COPY_SCALAR_FIELD(location);
+	COPY_LOCATION_FIELD(location);
 
 	return newnode;
 }
@@ -2598,7 +2565,7 @@ _copyResTarget(ResTarget *from)
 	COPY_STRING_FIELD(name);
 	COPY_NODE_FIELD(indirection);
 	COPY_NODE_FIELD(val);
-	COPY_SCALAR_FIELD(location);
+	COPY_LOCATION_FIELD(location);
 
 	return newnode;
 }
@@ -2615,7 +2582,7 @@ _copyTypeName(TypeName *from)
 	COPY_NODE_FIELD(typmods);
 	COPY_SCALAR_FIELD(typemod);
 	COPY_NODE_FIELD(arrayBounds);
-	COPY_SCALAR_FIELD(location);
+	COPY_LOCATION_FIELD(location);
 
 	return newnode;
 }

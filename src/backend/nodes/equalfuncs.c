@@ -2093,11 +2093,7 @@ _equalAConst(A_Const *a, A_Const *b)
 {
 	if (!equal(&a->val, &b->val))		/* hack for in-line Value field */
 		return false;
-<<<<<<< HEAD
-	COMPARE_NODE_FIELD(typeName);
 	/* do not compare 'location' field */;
-=======
->>>>>>> 49f001d81e
 
 	return true;
 }
@@ -2112,12 +2108,8 @@ _equalFuncCall(FuncCall *a, FuncCall *b)
 	COMPARE_SCALAR_FIELD(agg_star);
 	COMPARE_SCALAR_FIELD(agg_distinct);
 	COMPARE_SCALAR_FIELD(func_variadic);
-<<<<<<< HEAD
 	COMPARE_NODE_FIELD(over);
 	COMPARE_LOCATION_FIELD(location);
-=======
-	COMPARE_SCALAR_FIELD(location);
->>>>>>> 49f001d81e
 
 	return true;
 }

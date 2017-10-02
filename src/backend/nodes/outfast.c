@@ -606,7 +606,7 @@ _outSubLink(StringInfo str, SubLink *node)
 	WRITE_ENUM_FIELD(subLinkType, SubLinkType);
 	WRITE_NODE_FIELD(testexpr);
 	WRITE_NODE_FIELD(operName);
-	WRITE_INT_FIELD(location);      /*CDB*/
+	WRITE_LOCATION_FIELD(location);      /*CDB*/
 	WRITE_NODE_FIELD(subselect);
 }
 
@@ -720,7 +720,7 @@ _outPartitionSpec(StringInfo str, PartitionSpec *node)
 	WRITE_NODE_FIELD(partElem);
 	WRITE_NODE_FIELD(subSpec);
 	WRITE_BOOL_FIELD(istemplate);
-	WRITE_INT_FIELD(location);
+	WRITE_LOCATION_FIELD(location);
 	WRITE_NODE_FIELD(enc_clauses);
 }
 
@@ -731,7 +731,7 @@ _outPartitionBoundSpec(StringInfo str, PartitionBoundSpec *node)
 	WRITE_NODE_FIELD(partStart);
 	WRITE_NODE_FIELD(partEnd);
 	WRITE_NODE_FIELD(partEvery);
-	WRITE_INT_FIELD(location);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -831,7 +831,7 @@ _outTypeName(StringInfo str, TypeName *node)
 	WRITE_NODE_FIELD(typmods);
 	WRITE_INT_FIELD(typemod);
 	WRITE_NODE_FIELD(arrayBounds);
-	WRITE_INT_FIELD(location);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -998,7 +998,7 @@ _outAExpr(StringInfo str, A_Expr *node)
 
 	WRITE_NODE_FIELD(lexpr);
 	WRITE_NODE_FIELD(rexpr);
-	WRITE_INT_FIELD(location);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -1037,8 +1037,7 @@ _outAConst(StringInfo str, A_Const *node)
 	WRITE_NODE_TYPE("A_CONST");
 
 	_outValue(str, &(node->val));
-	WRITE_NODE_FIELD(typeName);
-	WRITE_INT_FIELD(location);  /*CDB*/
+	WRITE_LOCATION_FIELD(location);  /*CDB*/
 
 }
 

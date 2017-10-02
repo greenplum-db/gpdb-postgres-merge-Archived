@@ -408,7 +408,7 @@ _readResTarget(void)
 	READ_STRING_FIELD(name);
 	READ_NODE_FIELD(indirection);
 	READ_NODE_FIELD(val);
-	READ_INT_FIELD(location);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -700,9 +700,7 @@ _readAConst(void)
 	 		break;
 	}
 
-	local_node->typeName = NULL;
-	READ_NODE_FIELD(typeName);
-    READ_INT_FIELD(location);   /*CDB*/
+    READ_LOCATION_FIELD(location);   /*CDB*/
 	READ_DONE();
 }
 
@@ -783,7 +781,7 @@ _readAExpr(void)
 
 	READ_NODE_FIELD(lexpr);
 	READ_NODE_FIELD(rexpr);
-	READ_INT_FIELD(location);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -916,7 +914,7 @@ _readSubLink(void)
 	READ_ENUM_FIELD(subLinkType, SubLinkType);
 	READ_NODE_FIELD(testexpr);
 	READ_NODE_FIELD(operName);
-	READ_INT_FIELD(location);   /*CDB*/
+	READ_LOCATION_FIELD(location);   /*CDB*/
 	READ_NODE_FIELD(subselect);
 
 	READ_DONE();
@@ -1729,8 +1727,6 @@ readIndexScanFields(IndexScan *local_node)
 	READ_OID_FIELD(indexid);
 	READ_NODE_FIELD(indexqual);
 	READ_NODE_FIELD(indexqualorig);
-	READ_NODE_FIELD(indexstrategy);
-	READ_NODE_FIELD(indexsubtype);
 	READ_ENUM_FIELD(indexorderdir, ScanDirection);
 
 	if (isDynamicScan(&local_node->scan))
