@@ -38,10 +38,7 @@
 
 #include "miscadmin.h"
 #include "pg_trace.h"
-<<<<<<< HEAD
-=======
 #include "pgstat.h"
->>>>>>> 49f001d81e
 #include "postmaster/bgwriter.h"
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
@@ -50,7 +47,6 @@
 #include "storage/smgr.h"
 #include "utils/rel.h"
 #include "utils/resowner.h"
-<<<<<<< HEAD
 #include "utils/faultinjector.h"
 #include "pgstat.h"
 #include "access/heapam.h"
@@ -60,8 +56,6 @@
 #include "access/aosegfiles.h"
 #include "access/aocssegfiles.h"
 #include "cdb/cdbappendonlyam.h"
-=======
->>>>>>> 49f001d81e
 
 
 /* Note: these two macros only work on shared buffers, not local ones! */
@@ -97,16 +91,11 @@ static volatile BufferDesc *PinCountWaitBuf = NULL;
 
 static XLogRecPtr InvalidXLogRecPtr = {0, 0};
 
-<<<<<<< HEAD
+static Buffer ReadBuffer_relcache(Relation reln, BlockNumber blockNum,
+				  bool zeroPage, BufferAccessStrategy strategy);
 static Buffer ReadBuffer_common(SMgrRelation reln, bool isLocalBuf,
 				  bool isTemp, BlockNumber blockNum, bool zeroPage,
 				  BufferAccessStrategy strategy, bool *pHit);
-=======
-static Buffer ReadBuffer_relcache(Relation reln, BlockNumber blockNum,
-				  bool zeroPage, BufferAccessStrategy strategy);
-static Buffer ReadBuffer_common(SMgrRelation reln, bool isLocalBuf, BlockNumber blockNum,
-				  bool zeroPage, BufferAccessStrategy strategy, bool *hit);
->>>>>>> 49f001d81e
 static bool PinBuffer(volatile BufferDesc *buf, BufferAccessStrategy strategy);
 static void PinBuffer_Locked(volatile BufferDesc *buf);
 static void UnpinBuffer(volatile BufferDesc *buf, bool fixOwner);
@@ -117,11 +106,7 @@ static bool StartBufferIO(volatile BufferDesc *buf, bool forInput);
 static void TerminateBufferIO(volatile BufferDesc *buf, bool clear_dirty,
 				  int set_flag_bits);
 static void buffer_write_error_callback(void *arg);
-<<<<<<< HEAD
-static volatile BufferDesc *BufferAlloc(SMgrRelation reln, BlockNumber blockNum,
-=======
 static volatile BufferDesc *BufferAlloc(SMgrRelation smgr, BlockNumber blockNum,
->>>>>>> 49f001d81e
 			BufferAccessStrategy strategy,
 			bool *foundPtr);
 static void FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln);
@@ -193,54 +178,7 @@ static inline bool ConditionalAcquireContentLock( volatile BufferDesc *buf, LWLo
 }
 
 /*
- * ReadBuffer -- a shorthand for ReadBuffer_Ex 
- */
-
-Buffer
-ReadBuffer(Relation reln, BlockNumber blockNum)
-{
-	bool		isHit;
-	Buffer		returnBuffer;
-
-	/* Open it at the smgr level if not already done */
-	RelationOpenSmgr(reln);
-	Assert(RelFileNodeEquals(reln->rd_node, reln->rd_smgr->smgr_rnode));
-
-	pgstat_count_buffer_read(reln);
-
-	returnBuffer = ReadBuffer_common(reln->rd_smgr,
-									 reln->rd_isLocalBuf,
-									 reln->rd_istemp,
-									 blockNum,
-									 false, /* zeroPage */
-									 NULL, /* strategy */
-									 &isHit);
-
-	if (isHit)
-		pgstat_count_buffer_hit(reln);
-
-	return returnBuffer;
-}
-
-/*
- * Read Buffer for pages to be Resynced
- */
-Buffer
-ReadBuffer_Resync(SMgrRelation reln, BlockNumber blockNum)
-{
-	bool		isHit;
-
-	return ReadBuffer_common(reln,
-							 false, /* isLocalBuf */
-							 false, /* isTemp */
-							 blockNum,
-							 false, /* zeroPage */
-							 NULL,	/* strategy */
-							 &isHit);
-}
-
-/*
- * ReadBuffer_common -- returns a buffer containing the requested
+ * ReadBuffer -- returns a buffer containing the requested
  *		block of the requested relation.  If the blknum
  *		requested is P_NEW, extend the relation file and
  *		allocate a new block.  (Caller is responsible for
@@ -251,19 +189,6 @@ ReadBuffer_Resync(SMgrRelation reln, BlockNumber blockNum)
  *		the block read.  The returned buffer has been pinned.
  *		Does not return on error --- elog's instead.
  *
-<<<<<<< HEAD
- * Assume when this function is called, that  has been opened already.
- * 
- */
-static Buffer
-ReadBuffer_common(SMgrRelation reln,
-				  bool isLocalBuf,
-				  bool isTemp,
-				  BlockNumber blockNum,
-				  bool zeroPage,
-				  BufferAccessStrategy strategy,
-				  bool *pHit)
-=======
  * Assume when this function is called, that reln has been
  *		opened already.
  */
@@ -307,13 +232,32 @@ ReadOrZeroBuffer(Relation reln, BlockNumber blockNum)
  *		like ReadOrZeroBuffer rather than ReadBuffer.
  */
 Buffer
-ReadBufferWithoutRelcache(RelFileNode rnode, bool isTemp, 
+ReadBufferWithoutRelcache(RelFileNode rnode, bool isLocalBuf, bool isTemp,
 						  BlockNumber blockNum, bool zeroPage)
 {
 	bool hit;
 
 	SMgrRelation smgr = smgropen(rnode);
-	return ReadBuffer_common(smgr, isTemp, blockNum, zeroPage, NULL, &hit);
+	return ReadBuffer_common(smgr, isLocalBuf, isTemp, blockNum, zeroPage, NULL,
+							 &hit);
+}
+
+
+/*
+ * Read Buffer for pages to be Resynced
+ */
+Buffer
+ReadBuffer_Resync(SMgrRelation reln, BlockNumber blockNum)
+{
+	bool		isHit;
+
+	return ReadBuffer_common(reln,
+							 false, /* isLocalBuf */
+							 false, /* isTemp */
+							 blockNum,
+							 false, /* zeroPage */
+							 NULL,	/* strategy */
+							 &isHit);
 }
 
 /*
@@ -329,14 +273,15 @@ ReadBuffer_relcache(Relation reln, BlockNumber blockNum,
 
 	/* Open it at the smgr level if not already done */
 	RelationOpenSmgr(reln);
+	Assert(RelFileNodeEquals(reln->rd_node, reln->rd_smgr->smgr_rnode));
 
 	/*
 	 * Read the buffer, and update pgstat counters to reflect a cache
 	 * hit or miss.
 	 */
 	pgstat_count_buffer_read(reln);
-	buf = ReadBuffer_common(reln->rd_smgr, reln->rd_istemp, blockNum, 
-							zeroPage, strategy, &hit);
+	buf = ReadBuffer_common(reln->rd_smgr, reln->rd_isLocalBuf, reln->rd_istemp,
+							blockNum, zeroPage, strategy, &hit);
 	if (hit)
 		pgstat_count_buffer_hit(reln);
 	return buf;
@@ -348,9 +293,13 @@ ReadBuffer_relcache(Relation reln, BlockNumber blockNum,
  * *hit is set to true if the request was satisfied from shared buffer cache.
  */
 static Buffer
-ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, BlockNumber blockNum, 
-				  bool zeroPage, BufferAccessStrategy strategy, bool *hit)
->>>>>>> 49f001d81e
+ReadBuffer_common(SMgrRelation smgr,
+				  bool isLocalBuf,
+				  bool isTemp,
+				  BlockNumber blockNum,
+				  bool zeroPage,
+				  BufferAccessStrategy strategy,
+				  bool *pHit)
 {
 		//MIRROREDLOCK_BUFMGR_DECLARE;
 
@@ -358,15 +307,10 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, BlockNumber blockNum,
 	Block		bufBlock;
 	bool		found;
 	bool		isExtend;
-<<<<<<< HEAD
-=======
-
-	*hit = false;
->>>>>>> 49f001d81e
 
 	*pHit = false;
 
-	Assert(reln != NULL);
+	Assert(smgr != NULL);
 
 	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
 	/* Make sure we will have room to remember the buffer pin */
@@ -376,16 +320,12 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, BlockNumber blockNum,
 
 	/* Substitute proper block number if caller asked for P_NEW */
 	if (isExtend)
-<<<<<<< HEAD
-		blockNum = smgrnblocks(reln);
-=======
 		blockNum = smgrnblocks(smgr);
 
 	TRACE_POSTGRESQL_BUFFER_READ_START(blockNum, smgr->smgr_rnode.spcNode,
 		smgr->smgr_rnode.dbNode, smgr->smgr_rnode.relNode, isLocalBuf);
->>>>>>> 49f001d81e
 
-//	pgstat_count_buffer_read(reln);
+//	pgstat_count_buffer_read(smgr);
 	
 	// -------- MirroredLock ----------
 	// UNDONE: Unfortunately, I think we write temp relations to the mirror...
@@ -433,23 +373,9 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, BlockNumber blockNum,
 		if (!isExtend)
 		{
 			/* Just need to update stats before we exit */
-<<<<<<< HEAD
-//			pgstat_count_buffer_hit(reln);
+//			pgstat_count_buffer_hit(smgr);
 			*pHit = true;
 			goto done;
-=======
-			*hit = true;
-
-			if (VacuumCostActive)
-				VacuumCostBalance += VacuumCostPageHit;
-
-			TRACE_POSTGRESQL_BUFFER_READ_DONE(blockNum,
-				smgr->smgr_rnode.spcNode,
-				smgr->smgr_rnode.dbNode,
-				smgr->smgr_rnode.relNode, isLocalBuf, found);
-
-			return BufferDescriptorGetBuffer(bufHdr);
->>>>>>> 49f001d81e
 		}
 
 		/*
@@ -468,13 +394,8 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, BlockNumber blockNum,
 		bufBlock = isLocalBuf ? LocalBufHdrGetBlock(bufHdr) : BufHdrGetBlock(bufHdr);
 		if (!PageIsNew((Page) bufBlock))
 			ereport(ERROR,
-<<<<<<< HEAD
 					(errmsg("unexpected data beyond EOF in block %u of relation %s",
-							blockNum, relpath(reln->smgr_rnode)),
-=======
-					(errmsg("unexpected data beyond EOF in block %u of relation %u/%u/%u",
-							blockNum, smgr->smgr_rnode.spcNode, smgr->smgr_rnode.dbNode, smgr->smgr_rnode.relNode),
->>>>>>> 49f001d81e
+							blockNum, relpath(smgr->smgr_rnode)),
 					 errhint("This has been seen to occur with buggy kernels; consider updating your system.")));
 
 		/*
@@ -528,13 +449,8 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, BlockNumber blockNum,
 	{
 		/* new buffers are zero-filled */
 		MemSet((char *) bufBlock, 0, BLCKSZ);
-<<<<<<< HEAD
 		/* don't set checksum for all-zero page */
-		smgrextend(reln, blockNum, (char *) bufBlock,
-				   isTemp);
-=======
-		smgrextend(smgr, blockNum, (char *) bufBlock, isLocalBuf);
->>>>>>> 49f001d81e
+		smgrextend(smgr, blockNum, (char *) bufBlock, isTemp);
 	}
 	else
 	{
@@ -545,11 +461,7 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, BlockNumber blockNum,
 		if (zeroPage)
 			MemSet((char *) bufBlock, 0, BLCKSZ);
 		else
-<<<<<<< HEAD
-			smgrread(reln, blockNum, (char *) bufBlock);
-=======
 			smgrread(smgr, blockNum, (char *) bufBlock);
->>>>>>> 49f001d81e
 		/* check for garbage data */
 		if (!PageIsVerified((Page) bufBlock, blockNum))
 		{
@@ -557,31 +469,16 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, BlockNumber blockNum,
 			{
 				ereport(WARNING,
 						(errcode(ERRCODE_DATA_CORRUPTED),
-<<<<<<< HEAD
 						 errmsg("invalid page in block %u of relation %s; zeroing out page",
-								blockNum, relpath(reln->smgr_rnode))));
-=======
-						 errmsg("invalid page header in block %u of relation %u/%u/%u; zeroing out page",
-								blockNum, 
-								smgr->smgr_rnode.spcNode,
-								smgr->smgr_rnode.dbNode,
-								smgr->smgr_rnode.relNode)));
->>>>>>> 49f001d81e
+								blockNum, relpath(smgr->smgr_rnode))));
 				MemSet((char *) bufBlock, 0, BLCKSZ);
 			}
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_DATA_CORRUPTED),
-<<<<<<< HEAD
 				 errmsg("invalid page in block %u of relation %s",
-						blockNum, relpath(reln->smgr_rnode)),
+						blockNum, relpath(smgr->smgr_rnode)),
 				 errSendAlert(true)));
-=======
-				 errmsg("invalid page header in block %u of relation %u/%u/%u",
-						blockNum, smgr->smgr_rnode.spcNode,
-						smgr->smgr_rnode.dbNode,
-						smgr->smgr_rnode.relNode)));
->>>>>>> 49f001d81e
 		}
 	}
 
@@ -602,14 +499,12 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, BlockNumber blockNum,
 	if (VacuumCostActive)
 		VacuumCostBalance += VacuumCostPageMiss;
 
-<<<<<<< HEAD
 	//MIRROREDLOCK_BUFMGR_UNLOCK;
 	// -------- MirroredLock ----------
-=======
+
 	TRACE_POSTGRESQL_BUFFER_READ_DONE(blockNum, smgr->smgr_rnode.spcNode,
 			smgr->smgr_rnode.dbNode, smgr->smgr_rnode.relNode,
 			isLocalBuf, found);
->>>>>>> 49f001d81e
 
 	return BufferDescriptorGetBuffer(bufHdr);
 }
@@ -651,13 +546,7 @@ BufferAlloc(SMgrRelation smgr,
 	bool		valid;
 
 	/* create a tag so we can lookup the buffer */
-<<<<<<< HEAD
-	//INIT_BUFFERTAG(newTag, reln, blockNum);
-	newTag.rnode = smgr->smgr_rnode;
-	newTag.blockNum = blockNum;
-=======
 	INIT_BUFFERTAG(newTag, smgr->smgr_rnode, blockNum);
->>>>>>> 49f001d81e
 
 	/* determine its hash code and partition lock ID */
 	newHash = BufTableHashCode(&newTag);
@@ -1112,74 +1001,6 @@ MarkBufferDirty(Buffer buffer)
 	bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
 
 	UnlockBufHdr(bufHdr);
-}
-
-/*
- * ReadBufferWithStrategy -- same as ReadBuffer, except caller can specify
- *		a nondefault buffer access strategy.  See buffer/README for details.
- */
-Buffer
-ReadBufferWithStrategy(Relation reln, BlockNumber blockNum,
-					   BufferAccessStrategy strategy)
-{
-	bool		isHit;
-	Buffer		returnBuffer;
-
-	/* Open it at the smgr level if not already done */
-	RelationOpenSmgr(reln);
-	Assert(RelFileNodeEquals(reln->rd_node, reln->rd_smgr->smgr_rnode));
-
-	pgstat_count_buffer_read(reln);
-
-	returnBuffer = ReadBuffer_common(reln->rd_smgr,
-									 reln->rd_isLocalBuf,
-									 reln->rd_istemp,
-									 blockNum,
-									 false, /* zeroPage */
-									 strategy,
-									 &isHit);
-
-	if (isHit)
-		pgstat_count_buffer_hit(reln);
-
-	return returnBuffer;
-}
-
-/*
- * ReadOrZeroBuffer -- like ReadBuffer, but if the page isn't in buffer
- *		cache already, it's filled with zeros instead of reading it from
- *		disk.  Useful when the caller intends to fill the page from scratch,
- *		since this saves I/O and avoids unnecessary failure if the
- *		page-on-disk has corrupt page headers.
- *
- *		Caution: do not use this to read a page that is beyond the relation's
- *		current physical EOF; that is likely to cause problems in md.c when
- *		the page is modified and written out.  P_NEW is OK, though.
- */
-Buffer
-ReadOrZeroBuffer(Relation reln, BlockNumber blockNum)
-{
-	bool		isHit;
-	Buffer		returnBuffer;
-
-	/* Open it at the smgr level if not already done */
-	RelationOpenSmgr(reln);
-	Assert(RelFileNodeEquals(reln->rd_node, reln->rd_smgr->smgr_rnode));
-
-	pgstat_count_buffer_read(reln);
-
-	returnBuffer = ReadBuffer_common(reln->rd_smgr,
-									 reln->rd_isLocalBuf,
-									 reln->rd_istemp,
-									 blockNum,
-									 true, /* zeroPage */
-									 NULL, /* strategy */
-									 &isHit);
-
-	if (isHit)
-		pgstat_count_buffer_hit(reln);
-
-	return returnBuffer;
 }
 
 /*
@@ -2150,7 +1971,10 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 	if (reln == NULL)
 		reln = smgropen(buf->tag.rnode);
 
-<<<<<<< HEAD
+	TRACE_POSTGRESQL_BUFFER_FLUSH_START(reln->smgr_rnode.spcNode,
+		 reln->smgr_rnode.dbNode,
+		 reln->smgr_rnode.relNode);
+
 	LockBufHdr(buf);
 
 	/*
@@ -2162,11 +1986,6 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 	/* To check if block content changes while flushing. - vadim 01/17/97 */
 	buf->flags &= ~BM_JUST_DIRTIED;
 	UnlockBufHdr(buf);
-=======
-	TRACE_POSTGRESQL_BUFFER_FLUSH_START(reln->smgr_rnode.spcNode,
-		 reln->smgr_rnode.dbNode,
-		 reln->smgr_rnode.relNode);
->>>>>>> 49f001d81e
 
 	/*
 	 * Force XLOG flush up to buffer's LSN.  This implements the basic WAL

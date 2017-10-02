@@ -38,6 +38,7 @@
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "pgstat.h"
+#include "storage/lmgr.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/resowner.h"

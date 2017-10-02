@@ -202,7 +202,7 @@ inv_create(Oid lobjId)
 	{
 		open_lo_relation();
 
-		lobjId = GetNewOidWithIndex(lo_heap_r, LargeObjectLOidPNIndexId,
+		lobjId = GetNewOidWithIndex(lo_heap_r, LargeObjectLoidPagenoIndexId,
 									Anum_pg_largeobject_loid);
 	}
 

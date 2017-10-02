@@ -70,13 +70,7 @@ LocalBufferAlloc(SMgrRelation smgr, BlockNumber blockNum, bool *foundPtr)
 	int			trycounter;
 	bool		found;
 
-<<<<<<< HEAD
-	//INIT_BUFFERTAG(newTag, reln, blockNum);
-	newTag.rnode = smgr->smgr_rnode;
-	newTag.blockNum = blockNum;
-=======
 	INIT_BUFFERTAG(newTag, smgr->smgr_rnode, blockNum);
->>>>>>> 49f001d81e
 
 	/* Initialize local buffers if first request in this session */
 	if (LocalBufHash == NULL)

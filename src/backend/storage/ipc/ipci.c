@@ -42,14 +42,11 @@
 #include "postmaster/autovacuum.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/postmaster.h"
-<<<<<<< HEAD
 #include "postmaster/primary_mirror_mode.h"
 #include "postmaster/seqserver.h"
 #include "replication/walsender.h"
 #include "replication/walreceiver.h"
-=======
 #include "storage/bufmgr.h"
->>>>>>> 49f001d81e
 #include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"

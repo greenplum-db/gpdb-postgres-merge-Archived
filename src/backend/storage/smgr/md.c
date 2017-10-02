@@ -105,18 +105,11 @@
 
 typedef struct _MdMirVec
 {
-<<<<<<< HEAD
 	MirroredBufferPoolOpen		mdmir_open;
 
 	BlockNumber mdmir_segno;		/* segment number, from 0 */
 	struct _MdMirVec *mdmir_chain;	/* next segment, or NULL */
 } MdMirVec;
-=======
-	File		mdfd_vfd;		/* fd number in fd.c's pool */
-	BlockNumber mdfd_segno;		/* segment number, from 0 */
-	struct _MdfdVec *mdfd_chain;	/* next segment, or NULL */
-} MdfdVec;
->>>>>>> 49f001d81e
 
 static MemoryContext MdCxt;		/* context for all md.c allocations */
 
@@ -174,7 +167,6 @@ typedef enum					/* behavior for mdopen & _mdfd_getseg */
 static MdMirVec *mdopen(SMgrRelation reln, ExtensionBehavior behavior);
 static void register_dirty_segment(SMgrRelation reln, MdMirVec *seg);
 static void register_unlink(RelFileNode rnode);
-<<<<<<< HEAD
 static MdMirVec *_mirvec_alloc(void);
 
 static MdMirVec *_mdmir_openseg(SMgrRelation reln, BlockNumber segno,
@@ -182,14 +174,6 @@ static MdMirVec *_mdmir_openseg(SMgrRelation reln, BlockNumber segno,
 static MdMirVec *_mdmir_getseg(SMgrRelation reln, BlockNumber blkno,
 			  bool isTemp, ExtensionBehavior behavior);
 static BlockNumber _mdnblocks(SMgrRelation reln, MdMirVec *seg);
-=======
-static MdfdVec *_fdvec_alloc(void);
-static MdfdVec *_mdfd_openseg(SMgrRelation reln, BlockNumber segno,
-			  int oflags);
-static MdfdVec *_mdfd_getseg(SMgrRelation reln, BlockNumber blkno,
-			 bool isTemp, ExtensionBehavior behavior);
-static BlockNumber _mdnblocks(SMgrRelation reln, MdfdVec *seg);
->>>>>>> 49f001d81e
 
 
 /*
@@ -799,17 +783,9 @@ mdcreate(
 
 	reln->md_mirvec = _mirvec_alloc();
 
-<<<<<<< HEAD
 	reln->md_mirvec->mdmir_open = mirroredOpen;
 	reln->md_mirvec->mdmir_segno = 0;
 	reln->md_mirvec->mdmir_chain = NULL;
-=======
-	reln->md_fd = _fdvec_alloc();
-
-	reln->md_fd->mdfd_vfd = fd;
-	reln->md_fd->mdfd_segno = 0;
-	reln->md_fd->mdfd_chain = NULL;
->>>>>>> 49f001d81e
 }
 
 /*
@@ -910,17 +886,7 @@ mdunlink(
 	 * to know what files actually exist.
 	 */
 	path = relpath(rnode);
-<<<<<<< HEAD
 	for (segmentFileNum = 0; /* break in code */ ; segmentFileNum++)
-=======
-
-	/*
-	 * Delete or truncate the first segment.
-	 */
-	if (isRedo)
-		ret = unlink(path);
-	else
->>>>>>> 49f001d81e
 	{
 		struct stat sbuf;
 		
@@ -960,15 +926,8 @@ mdunlink(
 		}
 	}
 
-<<<<<<< HEAD
 	/* second pass perform the drops in reverse order: important for REDO */
 	for(segmentFileNum--; segmentFileNum >= 0; segmentFileNum--)
-=======
-	/*
-	 * Delete any additional segments.
-	 */
-	else
->>>>>>> 49f001d81e
 	{
 		MirroredBufferPool_Drop(&rnode, segmentFileNum, relationName, 
 								primaryOnly, isRedo, &primaryError,
@@ -993,11 +952,6 @@ mdunlink(
 			break;
 		}
 	}
-<<<<<<< HEAD
-=======
-
-	pfree(path);
->>>>>>> 49f001d81e
 
 	/*
 	 * In PostgreSQL, register_unlink is called to let the checkpoint process to clean up the files.
@@ -1517,16 +1471,7 @@ mdopen(SMgrRelation reln, ExtensionBehavior behavior)
 	v->mdmir_chain = NULL;
 	Assert(_mdnblocks(reln, v) <= ((BlockNumber) RELSEG_SIZE));
 
-<<<<<<< HEAD
 	return v;
-=======
-	mdfd->mdfd_vfd = fd;
-	mdfd->mdfd_segno = 0;
-	mdfd->mdfd_chain = NULL;
-	Assert(_mdnblocks(reln, mdfd) <= ((BlockNumber) RELSEG_SIZE));
-
-	return mdfd;
->>>>>>> 49f001d81e
 }
 
 /*
@@ -1669,11 +1614,7 @@ mdwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 BlockNumber
 mdnblocks(SMgrRelation reln)
 {
-<<<<<<< HEAD
 	MdMirVec    *v = mdopen(reln, EXTENSION_FAIL);
-=======
-	MdfdVec    *v = mdopen(reln, EXTENSION_FAIL);
->>>>>>> 49f001d81e
 	BlockNumber nblocks;
 	BlockNumber segno = 0;
 
@@ -1742,15 +1683,12 @@ mdtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp, bool allowNotFou
 	MdMirVec    *v;
 	BlockNumber curnblk;
 	BlockNumber priorblocks;
-<<<<<<< HEAD
 
 	if (allowNotFound)
 	{
 		if (mdopen(reln, EXTENSION_RETURN_NULL) == NULL)
 			return;
 	}
-=======
->>>>>>> 49f001d81e
 
 	/*
 	 * NOTE: mdnblocks makes sure we have opened all active segments, so that
@@ -2523,11 +2461,7 @@ static MdMirVec *
 _mdmir_getseg(SMgrRelation reln, BlockNumber blkno, bool isTemp,
 			  ExtensionBehavior behavior)
 {
-<<<<<<< HEAD
 	MdMirVec    *v = mdopen(reln, behavior);
-=======
-	MdfdVec    *v = mdopen(reln, behavior);
->>>>>>> 49f001d81e
 	BlockNumber targetseg;
 	BlockNumber nextsegno;
 
@@ -2596,10 +2530,7 @@ _mdmir_getseg(SMgrRelation reln, BlockNumber blkno, bool isTemp,
 		}
 		v = v->mdmir_chain;
 	}
-<<<<<<< HEAD
 
-=======
->>>>>>> 49f001d81e
 	return v;
 }
 

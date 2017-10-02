@@ -1352,15 +1352,6 @@ GetSnapshotData(Snapshot snapshot)
 	Assert(DistributedTransactionContext != DTX_CONTEXT_QE_READER);
 	Assert(DistributedTransactionContext != DTX_CONTEXT_QE_ENTRY_DB_SINGLETON);
 
-	/* Serializable snapshot must be computed before any other... */
-	ereport((Debug_print_full_dtm ? LOG : DEBUG5),
-			(errmsg("GetSnapshotData serializable %s, xmin %u",
-					(serializable ? "true" : "false"),
-					MyProc->xmin)));
-	Assert(serializable ?
-		   !TransactionIdIsValid(MyProc->xmin) :
-		   TransactionIdIsValid(MyProc->xmin));
-
 	/*
 	 * It is sufficient to get shared lock on ProcArrayLock, even if we are
 	 * going to set MyProc->xmin.
@@ -1494,14 +1485,10 @@ GetSnapshotData(Snapshot snapshot)
 		}
 	}
 
-<<<<<<< HEAD
-	if (serializable)
+	if (!TransactionIdIsValid(MyProc->xmin))
 	{
 		/* Not that these values are not set atomically. However,
 		 * each of these assignments is itself assumed to be atomic. */
-=======
-	if (!TransactionIdIsValid(MyProc->xmin))
->>>>>>> 49f001d81e
 		MyProc->xmin = TransactionXmin = xmin;
 	}
 	if (IsXactIsoLevelSerializable)
@@ -1535,7 +1522,14 @@ GetSnapshotData(Snapshot snapshot)
 	snapshot->curcid = GetCurrentCommandId(false);
 
 	/*
-<<<<<<< HEAD
+	 * This is a new snapshot, so set both refcounts are zero, and mark it
+	 * as not copied in persistent memory.
+	 */
+	snapshot->active_count = 0;
+	snapshot->regd_count = 0;
+	snapshot->copied = false;
+
+	/*
 	 * MPP Addition. If we are the chief then we'll save our local snapshot
 	 * into the shared snapshot. Note: we need to use the shared local
 	 * snapshot for the "Local Implicit using Distributed Snapshot" case, too.
@@ -1552,14 +1546,6 @@ GetSnapshotData(Snapshot snapshot)
 	ereport((Debug_print_snapshot_dtm ? LOG : DEBUG5),
 			(errmsg("GetSnapshotData(): WRITER currentcommandid %d curcid %d segmatesync %d",
 					GetCurrentCommandId(false), snapshot->curcid, QEDtxContextInfo.segmateSync)));
-=======
-	 * This is a new snapshot, so set both refcounts are zero, and mark it
-	 * as not copied in persistent memory.
-	 */
-	snapshot->active_count = 0;
-	snapshot->regd_count = 0;
-	snapshot->copied = false;
->>>>>>> 49f001d81e
 
 	return snapshot;
 }
@@ -1672,7 +1658,7 @@ void UpdateSerializableCommandId(void)
 	if ((DistributedTransactionContext == DTX_CONTEXT_QE_TWO_PHASE_EXPLICIT_WRITER ||
 		 DistributedTransactionContext == DTX_CONTEXT_QE_TWO_PHASE_IMPLICIT_WRITER) &&
 		 SharedLocalSnapshotSlot != NULL &&
-		 SerializableSnapshot != NULL)
+		 FirstSnapshotSet)
 	{
 		int combocidSize;
 
@@ -1691,11 +1677,11 @@ void UpdateSerializableCommandId(void)
 		}
 
 		ereport((Debug_print_snapshot_dtm ? LOG : DEBUG5),
-				(errmsg("[Distributed Snapshot #%u] *Update Serializable Command Id* segment currcid = %d, QDcid = %d, SerializableSnapshot currcid = %d, Shared currcid = %d (gxid = %u, '%s')",
+				(errmsg("[Distributed Snapshot #%u] *Update Serializable Command Id* segment currcid = %d, QDcid = %d, TransactionSnapshot currcid = %d, Shared currcid = %d (gxid = %u, '%s')",
 						QEDtxContextInfo.distributedSnapshot.distribSnapshotId,
 						QEDtxContextInfo.curcid,
 						SharedLocalSnapshotSlot->QDcid,
-						SerializableSnapshot->curcid,
+						GetTransactionSnapshot()->curcid,
 						SharedLocalSnapshotSlot->snapshot.curcid,
 						getDistributedTransactionId(),
 						DtxContextToString(DistributedTransactionContext))));
@@ -1710,7 +1696,8 @@ void UpdateSerializableCommandId(void)
 		memcpy((void *)SharedLocalSnapshotSlot->combocids, comboCids,
 			   combocidSize * sizeof(ComboCidKeyData));
 
-		SharedLocalSnapshotSlot->snapshot.curcid = SerializableSnapshot->curcid;
+		/* GPDB_84_MERGE_FIXME: review use of TransactionSnapshot here */
+		SharedLocalSnapshotSlot->snapshot.curcid = GetTransactionSnapshot()->curcid;
 		SharedLocalSnapshotSlot->QDcid = QEDtxContextInfo.curcid;
 		SharedLocalSnapshotSlot->segmateSync = QEDtxContextInfo.segmateSync;
 

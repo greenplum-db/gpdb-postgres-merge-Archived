@@ -815,7 +815,17 @@ smgrcreate(
 
 	bool						*mirrorDataLossOccurred) /* FIXME: is this arg still needed? */
 {
-<<<<<<< HEAD
+	/* GPDB_84_MERGE_FIXME: the following performance tweak came in from 8.4; is
+	 * it still applicable to our system here? */
+#if 0
+	/*
+	 * Exit quickly in WAL replay mode if we've already opened the file. 
+	 * If it's open, it surely must exist.
+	 */ 
+	if (isRedo && reln->md_fd != NULL)
+		return;
+#endif
+
 	mdcreate(
 			reln,
 			isLocalBuf,
@@ -824,61 +834,6 @@ smgrcreate(
 			mirrorDataLossTrackingSessionNum,
 			ignoreAlreadyExists,
 			mirrorDataLossOccurred);
-=======
-	XLogRecPtr	lsn;
-	XLogRecData rdata;
-	xl_smgr_create xlrec;
-	PendingRelDelete *pending;
-
-	/*
-	 * Exit quickly in WAL replay mode if we've already opened the file. 
-	 * If it's open, it surely must exist.
-	 */ 
-	if (isRedo && reln->md_fd != NULL)
-		return;
-
-	/*
-	 * We may be using the target table space for the first time in this
-	 * database, so create a per-database subdirectory if needed.
-	 *
-	 * XXX this is a fairly ugly violation of module layering, but this seems
-	 * to be the best place to put the check.  Maybe TablespaceCreateDbspace
-	 * should be here and not in commands/tablespace.c?  But that would imply
-	 * importing a lot of stuff that smgr.c oughtn't know, either.
-	 */
-	TablespaceCreateDbspace(reln->smgr_rnode.spcNode,
-							reln->smgr_rnode.dbNode,
-							isRedo);
-
-	(*(smgrsw[reln->smgr_which].smgr_create)) (reln, isRedo);
-
-	if (isRedo)
-		return;
-
-	/*
-	 * Make an XLOG entry showing the file creation.  If we abort, the file
-	 * will be dropped at abort time.
-	 */
-	xlrec.rnode = reln->smgr_rnode;
-
-	rdata.data = (char *) &xlrec;
-	rdata.len = sizeof(xlrec);
-	rdata.buffer = InvalidBuffer;
-	rdata.next = NULL;
-
-	lsn = XLogInsert(RM_SMGR_ID, XLOG_SMGR_CREATE, &rdata);
-
-	/* Add the relation to the list of stuff to delete at abort */
-	pending = (PendingRelDelete *)
-		MemoryContextAlloc(TopMemoryContext, sizeof(PendingRelDelete));
-	pending->relnode = reln->smgr_rnode;
-	pending->which = reln->smgr_which;
-	pending->isTemp = isTemp;
-	pending->atCommit = false;	/* delete if abort */
-	pending->nestLevel = GetCurrentTransactionNestLevel();
-	pending->next = pendingDeletes;
-	pendingDeletes = pending;
->>>>>>> 49f001d81e
 }
 
 /*

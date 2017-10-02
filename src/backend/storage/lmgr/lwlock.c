@@ -28,18 +28,12 @@
 #include "access/twophase.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
-<<<<<<< HEAD
 #include "storage/barrier.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/spin.h"
 #include "utils/sharedsnapshot.h"
 #include "pg_trace.h"
-=======
-#include "storage/ipc.h"
-#include "storage/proc.h"
-#include "storage/spin.h"
->>>>>>> 49f001d81e
 
 
 /* We use the ShmemLock spinlock to protect LWLockAssign */
@@ -563,17 +557,13 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 		block_counts[lockid]++;
 #endif
 
-<<<<<<< HEAD
 		for (c = 0; c < num_held_lwlocks; c++)
 		{
 			if (held_lwlocks[c] == lockid)
 				elog(PANIC, "Waiting on lock already held!");
 		}
 
-		TRACE_POSTGRESQL_LWLOCK_STARTWAIT(lockid, mode);
-=======
 		TRACE_POSTGRESQL_LWLOCK_WAIT_START(lockid, mode);
->>>>>>> 49f001d81e
 
 		for (;;)
 		{
