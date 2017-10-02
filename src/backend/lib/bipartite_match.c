@@ -24,6 +24,7 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 
+#include "utils/palloc.h"
 
 static bool hk_breadth_search(BipartiteMatchState *state);
 static bool hk_depth_search(BipartiteMatchState *state, int u, int depth);

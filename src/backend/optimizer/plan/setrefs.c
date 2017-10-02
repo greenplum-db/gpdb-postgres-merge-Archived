@@ -2694,7 +2694,7 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
 	if (IsA(node, Param))
 		return fix_param_node(context->root, (Param *) node);
 	/* Try matching more complex expressions too, if tlist has any */
-	if (context->subplan_itlist->has_non_vars && !IsA(node, GroupId))
+	if (context->subplan_itlist->has_non_vars)
 	{
 		newvar = search_indexed_tlist_for_non_var(node,
 												  context->subplan_itlist,

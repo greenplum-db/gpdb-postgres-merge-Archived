@@ -3927,6 +3927,7 @@ CTranslatorQueryToDXL::CreateDXLProjectNullsForGroupingSets
 
 		ULONG colid = 0;
 		
+<<<<<<< HEAD
 		if (IsA(target_entry->expr, GroupingFunc))
 		{
 			colid = m_context->m_colid_counter->next_id();
@@ -3949,6 +3950,9 @@ CTranslatorQueryToDXL::CreateDXLProjectNullsForGroupingSets
 			StoreAttnoColIdMapping(output_attno_to_colid_mapping, resno, colid);
 		}
 		else if (!is_grouping_col && !IsA(target_entry->expr, Aggref))
+=======
+		if (!is_grouping_col && !IsA(target_entry->expr, Aggref))
+>>>>>>> dc67f74... Remove old GROUPING SETS implementation.
 		{
 			OID oid_type = gpdb::ExprType((Node *) target_entry->expr);
 
@@ -4007,6 +4011,7 @@ CTranslatorQueryToDXL::CreateDXLProjectGroupingFuncs
 
 	// construct a proj element node for those non-aggregate entries in the target list which
 	// are not included in the grouping set
+<<<<<<< HEAD
 	ListCell *lc = NULL;
 	ForEach (lc, target_list)
 	{
@@ -4039,6 +4044,8 @@ CTranslatorQueryToDXL::CreateDXLProjectGroupingFuncs
 		}
 	}
 
+=======
+>>>>>>> dc67f74... Remove old GROUPING SETS implementation.
 	if (0 == project_list_dxlnode->Arity())
 	{
 		// no project necessary
@@ -4220,59 +4227,6 @@ CTranslatorQueryToDXL::CreateDXLConstValueTrue()
 	gpdb::GPDBFree(const_expr);
 
 	return dxlnode;
-}
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CTranslatorQueryToDXL::TranslateGroupingFuncToDXL
-//
-//	@doc:
-//		Translate grouping func
-//
-//---------------------------------------------------------------------------
-CDXLNode *
-CTranslatorQueryToDXL::TranslateGroupingFuncToDXL
-	(
-	const Expr *expr,
-	CBitSet *bitset,
-	UlongToUlongMap *grpcol_index_to_colid_mapping
-	)
-	const
-{
-	GPOS_ASSERT(IsA(expr, GroupingFunc));
-	GPOS_ASSERT(NULL != grpcol_index_to_colid_mapping);
-
-	const GroupingFunc *grouping_func = (GroupingFunc *) expr;
-
-	if (1 < gpdb::ListLength(grouping_func->args))
-	{
-		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature, GPOS_WSZ_LIT("Grouping function with multiple arguments"));
-	}
-	
-	Node *node = (Node *) gpdb::ListNth(grouping_func->args, 0);
-	ULONG grouping_idx = gpdb::GetIntFromValue(node);
-		
-	// generate a constant value for the result of the grouping function as follows:
-	// if the grouping function argument is a group-by column, result is 0
-	// otherwise, the result is 1 
-	LINT l_value = 0;
-	
-	ULONG *sort_group_ref = grpcol_index_to_colid_mapping->Find(&grouping_idx);
-	GPOS_ASSERT(NULL != sort_group_ref);
-	BOOL is_grouping_col = bitset->Get(*sort_group_ref);
-	if (!is_grouping_col)
-	{
-		// not a grouping column
-		l_value = 1;
-	}
-
-	const IMDType *md_type = m_md_accessor->PtMDType<IMDTypeInt8>(m_sysid);
-	CMDIdGPDB *mdid_cast = CMDIdGPDB::CastMdid(md_type->MDId());
-	CMDIdGPDB *mdid = GPOS_NEW(m_mp) CMDIdGPDB(*mdid_cast);
-	
-	CDXLDatum *datum_dxl = GPOS_NEW(m_mp) CDXLDatumInt8(m_mp, mdid, false /* is_null */, l_value);
-	CDXLScalarConstValue *dxlop = GPOS_NEW(m_mp) CDXLScalarConstValue(m_mp, datum_dxl);
-	return GPOS_NEW(m_mp) CDXLNode(m_mp, dxlop);
 }
 
 //---------------------------------------------------------------------------

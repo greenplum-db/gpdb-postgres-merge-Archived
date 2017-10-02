@@ -837,6 +837,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
  */
 %nonassoc	UNBOUNDED		/* ideally should have same precedence as IDENT */
 %nonassoc	IDENT NULL_P PARTITION RANGE ROWS PRECEDING FOLLOWING CUBE ROLLUP
+
 /*
  * This is a bit ugly... To allow these to be column aliases without
  * the "AS" keyword, and not conflict with PostgreSQL's non-standard
@@ -1103,8 +1104,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 			%nonassoc EXTRACT
 			%nonassoc FLOAT_P
 			%nonassoc GREATEST
-			%nonassoc GROUP_ID
-			%nonassoc GROUPING
 			%nonassoc INOUT
 			%nonassoc INT_P
 			%nonassoc INTEGER

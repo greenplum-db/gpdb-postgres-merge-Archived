@@ -289,11 +289,7 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 		 * It is added here as a placeholder during merge conflict resolution.
 		 */
 		case T_GroupId:
-#if 0
 			result = transformGroupId(pstate, (GroupId *) expr);
-#else
-			elog(ERROR, "Consult GPDB_95_MERGE_FIXME comment above line %d in file '%s'", __LINE__, __FILE__);
-#endif
 			break;
 
 		case T_NamedArgExpr:

@@ -591,6 +591,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->append_rel_list = NIL;
 	root->rowMarks = NIL;
 	root->hasInheritedTarget = false;
+	root->grouping_map = NULL;
 	root->upd_del_replicated_table = 0;
 
 	Assert(config);
@@ -2349,6 +2350,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 *
 		 * Eventually we should add a parallel version of the min-max
 		 * optimization.  For now, it's either-or.
+		 *---
 		 */
 		if (Gp_role == GP_ROLE_DISPATCH && result_plan == NULL && !parse->groupingSets)
 		{
@@ -2428,7 +2430,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 			/* Detect if we'll need an explicit sort for grouping */
 			if (parse->groupClause && !use_hashed_grouping &&
-			  !pathkeys_contained_in(root->group_pathkeys, current_pathkeys))
+				!pathkeys_contained_in(root->group_pathkeys, current_pathkeys))
 			{
 				need_sort_for_grouping = true;
 
@@ -2585,7 +2587,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												   tlist,
 												   parse->havingQual,
 												   NULL);
-				/* Result will be only one row anyway; no sort order */
 				current_pathkeys = NIL;
 				mark_plan_general(result_plan, getgpsegmentCount());
 				CdbPathLocus_MakeNull(&current_locus, GP_POLICY_INVALID_NUMSEGMENTS());
@@ -4880,9 +4881,7 @@ choose_hashed_grouping(PlannerInfo *root,
 							   hashentrysize,
 							   false,
 							   &hash_info))
-	{
 		return false;
-	}
 
 	/*
 	 * When we have both GROUP BY and DISTINCT, use the more-rigorous of
@@ -5864,6 +5863,7 @@ get_column_info_for_window(PlannerInfo *root, WindowClause *wc, List *tlist,
 			elog(ERROR, "failed to deconstruct sort operators into partitioning/ordering operators");
 	}
 }
+
 
 /*
  * expression_planner

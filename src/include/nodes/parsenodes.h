@@ -167,20 +167,6 @@ typedef struct Query
 
 	List	   *returningList;	/* return-values list (of TargetEntry) */
 
-	/*
-	 * A list of GroupClauses or GroupingClauses.  The order of GroupClauses
-	 * or GroupingClauses are based on input queries. However, in each
-	 * grouping set, all GroupClauses will appear in front of GroupingClauses.
-	 * See the following GROUP BY clause:
-	 *
-	 * GROUP BY ROLLUP(b,c),a, CUBE(e,d)
-	 *
-	 * the result list can be roughly represented as follows.
-	 *
-	 * GroupClause(a) --> GroupingClause( ROLLUP, groupsets (GroupClause(b)
-	 * --> GroupClause(c) ) ) --> GroupingClause( CUBE, groupsets
-	 * (GroupClause(e) --> GroupClause(d) ) )
-	 */
 	List	   *groupClause;	/* a list of SortGroupClause's */
 
 	List	   *groupingSets;	/* a list of GroupingSet's if present */

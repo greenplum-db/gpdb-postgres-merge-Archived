@@ -1496,9 +1496,10 @@ make_three_stage_agg_plan(PlannerInfo *root, MppGroupContext *ctx)
 
 	/* GPDB_95_MERGE_FIXME: The comment bellow is outdated, update it */
 	/*
-	 * We assume that we are called only when - there are no grouping
-	 * extensions (like ROLLUP), - the input is partitioned and needs no
-	 * preparatory Motion, - the required transformation involves DQAs.
+	 * We assume that we are called only when:
+	 *
+	 * - the input is partitioned and needs no preparatory Motion,
+	 * - the required transformation involves DQAs.
 	 */
 	Assert(ctx->prep == MPP_GRP_PREP_NONE);
 	Assert(ctx->type == MPP_GRP_TYPE_GROUPED_DQA_2STAGE
@@ -5137,6 +5138,28 @@ set_coplan_strategies(PlannerInfo *root, MppGroupContext *ctx, DqaInfo *dqaArg, 
 	DqaCoplanType type_sorted;
 	DqaCoplanType type_cheapest;
 	Cost		trial;
+
+	/*
+	 * We can use hashing for preliminary duplicate elimination, even if
+	 * there are ordered aggregates. This is therefore a more relaxed
+	 * check than in choose_hashed_grouping.
+	 */
+	if (ctx->use_hashed_grouping)
+		can_hash_group_key = true;
+	else
+	{
+		/*
+		 * These are all the "hard" conditions on when we can't do hash
+		 * aggregation. These should match the hard checks in
+		 * choose_hashed_grouping().
+		 */
+		can_hash_group_key =
+			root->config->enable_hashagg &&
+			ctx->agg_costs->hasNonCombine &&
+			ctx->agg_costs->hasNonSerial &&
+			ctx->agg_costs->numOrderedAggs > 0 &&
+			grouping_is_hashable(root->parse->groupClause);
+	}
 
 	/* Preliminary aggregation */
 	use_hashed_preliminary = (can_hash_group_key || ctx->numGroupCols == 0)

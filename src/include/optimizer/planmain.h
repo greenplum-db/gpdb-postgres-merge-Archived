@@ -47,7 +47,6 @@ typedef struct GroupContext
 	List *tlist;
 	bool use_hashed_grouping;
 	double tuple_fraction;
-	CanonicalGroupingSets *canonical_grpsets;
 	uint64 grouping;
 
 	/*
@@ -97,26 +96,6 @@ extern Plan *make_distinctaggs_for_rollup(PlannerInfo *root, bool is_agg,
 										  List **p_current_pathkeys,
 										  Plan *lefttree);
 
-/*
- * prototype for plan/plangroupext.c
- */
-extern Plan *plan_grouping_extension(PlannerInfo *root,
-									 Path *path,
-									 double tuple_fraction,
-									 bool use_hashed_grouping,
-									 List **p_tlist, List *sub_tlist,
-									 bool twostage,
-									 List *qual,
-									 int *p_numGroupCols,
-									 AttrNumber **p_grpColIdx,
-									 Oid **p_grpOperators,
-									 AggClauseCosts *agg_costs,
-									 CanonicalGroupingSets *canonical_grpsets,
-									 double *p_dNumGroups,
-									 bool *querynode_changed,
-									 List **p_current_pathkeys,
-									 Plan *lefttree);
-extern void free_canonical_groupingsets(CanonicalGroupingSets *canonical_grpsets);
 extern Plan *add_repeat_node(Plan *result_plan, int repeat_count, uint64 grouping);
 extern bool contain_group_id(Node *node);
 

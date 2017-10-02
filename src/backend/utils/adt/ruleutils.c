@@ -10875,6 +10875,7 @@ partition_rule_def_worker(PartitionRule *rule, Node *start,
 	c.buf = &str;
 	c.prettyFlags = prettyFlags;
 	c.indentLevel = PRETTYINDENT_STD;
+	c.special_exprkind = EXPR_KIND_NONE;
 
 	if (rule->parisdefault)
 	{
@@ -11375,12 +11376,14 @@ pg_get_partition_template_def_worker(Oid relid, int prettyFlags,
 	headc.buf = &head;
 	headc.prettyFlags = prettyFlags;
 	headc.indentLevel = 0;
+	headc.special_exprkind = EXPR_KIND_NONE;
 
 	/* body: partition definition associated with template */
 	initStringInfo(&body);
 	bodyc.buf = &body;
 	bodyc.prettyFlags = prettyFlags;
 	bodyc.indentLevel = 0;
+	bodyc.special_exprkind = EXPR_KIND_NONE;
 
 	/* altr: the real "head" string (first part of ALTER TABLE statement) */
 	initStringInfo(&altr);
@@ -11391,6 +11394,7 @@ pg_get_partition_template_def_worker(Oid relid, int prettyFlags,
 	partidc.buf = &partidsid;
 	partidc.prettyFlags = prettyFlags;
 	partidc.indentLevel = 0;
+	partidc.special_exprkind = EXPR_KIND_NONE;
 
 
 	/* build the initial ALTER TABLE prefix.  Append the next level of
@@ -11542,11 +11546,13 @@ pg_get_partition_def_worker(Oid relid, int prettyFlags, int bLeafTablename)
 	headc.buf = &head;
 	headc.prettyFlags = prettyFlags;
 	headc.indentLevel = 0;
+	headc.special_exprkind = EXPR_KIND_NONE;
 
 	initStringInfo(&body);
 	bodyc.buf = &body;
 	bodyc.prettyFlags = prettyFlags;
 	bodyc.indentLevel = 0;
+	bodyc.special_exprkind = EXPR_KIND_NONE;
 
 	get_partition_recursive(pn, &headc, &bodyc, &leveldone, bLeafTablename);
 

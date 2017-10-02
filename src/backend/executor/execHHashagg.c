@@ -844,7 +844,9 @@ create_agg_hash_table(AggState *aggstate)
 
 	curaggcontext = aggstate->aggcontexts[aggstate->current_set]->ecxt_per_tuple_memory;
 
-	oldcxt = MemoryContextSwitchTo(curaggcontext);	hashtable = (HashAggTable *) palloc0(sizeof(HashAggTable));
+	oldcxt = MemoryContextSwitchTo(curaggcontext);
+	hashtable = (HashAggTable *) palloc0(sizeof(HashAggTable));
+
 	hashtable->entry_cxt = AllocSetContextCreate(curaggcontext,
 												 "HashAggTableEntryContext",
 												 ALLOCSET_DEFAULT_MINSIZE,
@@ -1037,7 +1039,7 @@ agg_hash_initial_pass(AggState *aggstate)
 			
 		/* Advance the aggregates */
 		advance_aggregates(aggstate, hashtable->groupaggs->aggs);
-		
+
 		hashtable->num_tuples++;
 
 		/* Reset per-input-tuple context after each tuple */
@@ -2257,9 +2259,9 @@ void reset_agg_hash_table(AggState *aggstate, int64 nentries)
 	HashAggTableSizes hats;
 	MemoryContext oldcxt;
 	MemoryContext curaggcontext;
-
-	curaggcontext = aggstate->aggcontexts[aggstate->current_set]->ecxt_per_tuple_memory;
 	
+	curaggcontext = aggstate->aggcontexts[aggstate->current_set]->ecxt_per_tuple_memory;
+
 	elog(HHA_MSG_LVL,
 		"HashAgg: resetting " INT64_FORMAT "-entry hash table",
 		hashtable->num_ht_groups);

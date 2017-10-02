@@ -87,6 +87,10 @@ test: case
 test: join
 test: aggregates
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+test: groupingsets
+>>>>>>> dc67f74... Remove old GROUPING SETS implementation.
 ignore: transactions
 =======
 test: groupingsets

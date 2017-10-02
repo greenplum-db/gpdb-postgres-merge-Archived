@@ -21,11 +21,12 @@
 #include "executor/instrument.h"
 #include "lib/pairingheap.h"
 #include "nodes/params.h"
+#include "nodes/parsenodes.h"
 #include "nodes/plannodes.h"
 #include "utils/reltrigger.h"
 #include "utils/sortsupport.h"
 #include "utils/tuplestore.h"
-#include "nodes/parsenodes.h"
+//#include "utils/tuplesort.h"
 
 #include "gpmon/gpmon.h"                /* gpmon_packet_t */
 
@@ -169,11 +170,6 @@ typedef struct ExprContext
 
 	/* Functions to call back when ExprContext is shut down or rescanned */
 	ExprContext_CB *ecxt_callbacks;
-
-	/* Representing the final grouping and group_id for a tuple
-	 * in a grouping extension query. */
-	uint64      grouping;
-	uint32      group_id;
 } ExprContext;
 
 /*

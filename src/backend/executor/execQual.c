@@ -3462,6 +3462,7 @@ ExecEvalCaseTestExpr(ExprState *exprstate,
 	*isNull = econtext->caseValue_isNull;
 	return econtext->caseValue_datum;
 }
+
 /*
  * ExecEvalGroupingFuncExpr
  *

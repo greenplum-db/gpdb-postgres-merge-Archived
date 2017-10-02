@@ -76,7 +76,8 @@ typedef struct
 
 	/* Scratch area for init_grouped_window context and map_sgr_mutator.
 	 */
-	Index *sgr_map;
+	Index  *sgr_map;
+	int		sgr_map_size;
 
 	/* Scratch area for grouped_window_mutator and var_for_gw_expr.
 	 */
@@ -1146,6 +1147,7 @@ init_grouped_window_context(grouped_window_ctx *ctx, Query *qry)
 	/* Map input = outer query sortgroupref values to subquery values while building the
 	 * subquery target list prefix. */
 	ctx->sgr_map = palloc0((maxsgr+1)*sizeof(ctx->sgr_map[0]));
+	ctx->sgr_map_size = maxsgr + 1;
 	foreach (lc, grp_tles)
 	{
 	    TargetEntry *tle;
@@ -1266,6 +1268,24 @@ map_sgr_mutator(Node *node, void *context)
 		}
 		return (Node*)new_lst;
 	}
+	else if (IsA(node, IntList))
+	{
+		ListCell *lc;
+		List *new_lst = NIL;
+
+		foreach ( lc, (List *) node)
+		{
+			int			sortgroupref = lfirst_int(lc);
+
+			if (sortgroupref < 0 || sortgroupref >= ctx->sgr_map_size)
+				elog(ERROR, "sortgroupref %d out of bounds", sortgroupref);
+
+			sortgroupref = ctx->sgr_map[sortgroupref];
+
+			new_lst = lappend_int(new_lst, sortgroupref);
+		}
+		return (Node *) new_lst;
+	}
 	else if (IsA(node, SortGroupClause))
 	{
 		SortGroupClause *g = (SortGroupClause *) node;
@@ -1286,8 +1306,8 @@ map_sgr_mutator(Node *node, void *context)
 
 		return (Node *) newgset;
 	}
-
-	return NULL; /* Never happens */
+	else
+		elog(ERROR, "unexpected node type %d", nodeTag(node));
 }
 
 
@@ -1738,10 +1758,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	/* make FOR UPDATE/FOR SHARE info available to addRangeTableEntry */
 	pstate->p_locking_clause = stmt->lockingClause;
 
-	/*
-	 * Put WINDOW clause data into pstate so that window references know
-	 * about them.
-	 */
+	/* make WINDOW info available for window functions, too */
 	pstate->p_windowdefs = stmt->windowClause;
 
 	/* process the FROM clause */

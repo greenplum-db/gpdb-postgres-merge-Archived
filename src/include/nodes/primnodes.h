@@ -406,7 +406,6 @@ typedef struct WindowFunc
 	int			location;		/* token location, or -1 if unknown */
 } WindowFunc;
 
-
 /* ----------------
  *	ArrayRef: describes an array subscripting operation
  *
@@ -1570,14 +1569,6 @@ typedef struct Flow
     struct Flow    *flow_before_req_move;
 
 } Flow;
-
-typedef enum GroupingType
-{
-	GROUPINGTYPE_ROLLUP,         /* ROLLUP grouping extension */
-	GROUPINGTYPE_CUBE,           /* CUBE grouping extension */
-	GROUPINGTYPE_GROUPING_SETS   /* GROUPING SETS grouping extension */
-} GroupingType;
-
 
 /*
  * DMLActionExpr

@@ -302,8 +302,6 @@ PlannerConfig *DefaultPlannerConfig(void)
 	c1->gp_eager_dqa_pruning = gp_eager_dqa_pruning;
 	c1->gp_eager_one_phase_agg = gp_eager_one_phase_agg;
 	c1->gp_eager_two_phase_agg = gp_eager_two_phase_agg;
-	c1->gp_enable_groupext_distinct_pruning = gp_enable_groupext_distinct_pruning;
-	c1->gp_enable_groupext_distinct_gather = gp_enable_groupext_distinct_gather;
 	c1->gp_enable_sort_distinct = gp_enable_sort_distinct;
 
 	c1->gp_enable_direct_dispatch = gp_enable_direct_dispatch;

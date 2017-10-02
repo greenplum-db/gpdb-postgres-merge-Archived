@@ -2432,8 +2432,8 @@ expression_tree_mutator(Node *node,
 			break;
 		case T_GroupingFunc:
 			{
-				GroupingFunc *grouping = (GroupingFunc *) node;
-				GroupingFunc *newnode;
+				GroupingFunc   *grouping = (GroupingFunc *) node;
+				GroupingFunc   *newnode;
 
 				FLATCOPY(newnode, grouping, GroupingFunc);
 				MUTATE(newnode->args, grouping->args, List *);
@@ -2455,10 +2455,10 @@ expression_tree_mutator(Node *node,
 			break;
 		case T_GroupId:
 			{
-				GroupId *grpid = (GroupId *) node;
-				GroupId *newnode;
+				GroupId   *groupid = (GroupId *) node;
+				GroupId   *newnode;
 
-				FLATCOPY(newnode, grpid, GroupId);
+				FLATCOPY(newnode, groupid, GroupId);
 
 				return (Node *) newnode;
 			}

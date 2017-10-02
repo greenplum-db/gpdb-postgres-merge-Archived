@@ -2212,9 +2212,6 @@ push_down_restrict(PlannerInfo *root, RelOptInfo *rel,
  * thereby changing the partition contents and thus the window functions'
  * results for rows that remain.
  *
- * 5. Do not push down quals if the subquery is a grouping extension
- * query, since this may change the meaning of the query.
- *
  * In addition, we make several checks on the subquery's output columns to see
  * if it is safe to reference them in pushed-down quals.  If output column k
  * is found to be unsafe to reference, we set safetyInfo->unsafeColumns[k]

@@ -3629,11 +3629,9 @@ assignSortGroupRef(TargetEntry *tle, List *tlist)
  * InvalidOid when considering grouping).  Note that the main reason we need
  * this routine (and not just a quick test for nonzeroness of ressortgroupref)
  * is that a TLE might be in only one of the lists.
- *
- * Any GroupingClauses in the list will be skipped during comparison.
  */
 bool
-targetIsInSortList(TargetEntry *tle, Oid sortop, List *sortgroupList)
+targetIsInSortList(TargetEntry *tle, Oid sortop, List *sortList)
 {
 	Index		ref = tle->ressortgroupref;
 	ListCell   *l;
@@ -3642,24 +3640,15 @@ targetIsInSortList(TargetEntry *tle, Oid sortop, List *sortgroupList)
 	if (ref == 0)
 		return false;
 
-	foreach(l, sortgroupList)
+	foreach(l, sortList)
 	{
-		Node *node = (Node *) lfirst(l);
+		SortGroupClause *scl = (SortGroupClause *) lfirst(l);
 
-		/* Skip the empty grouping set */
-		if (node == NULL)
-			continue;
-
-		if (IsA(node, SortGroupClause))
-		{
-			SortGroupClause *scl = (SortGroupClause *) node;
-
-			if (scl->tleSortGroupRef == ref &&
-				(sortop == InvalidOid ||
-				 sortop == scl->sortop ||
-				 sortop == get_commutator(scl->sortop)))
-				return true;
-		}
+		if (scl->tleSortGroupRef == ref &&
+			(sortop == InvalidOid ||
+			 sortop == scl->sortop ||
+			 sortop == get_commutator(scl->sortop)))
+			return true;
 	}
 	return false;
 }

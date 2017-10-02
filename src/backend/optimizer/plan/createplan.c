@@ -242,6 +242,9 @@ create_subplan(PlannerInfo *root, Path *best_path)
 {
 	Plan	   *plan;
 
+	/* plan_params should not be in use in current query level */
+	Assert(root->plan_params == NIL);
+
 	/* Initialize this module's private workspace in PlannerInfo */
 	root->curOuterRels = NULL;
 	root->curOuterParams = NIL;
@@ -5178,7 +5181,7 @@ make_mergejoin(List *tlist,
  * nullsFirst arrays already.
  * limit_tuples is as for cost_sort (in particular, pass -1 if no limit)
  */
-Sort *
+static Sort *
 make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
 		  AttrNumber *sortColIdx, Oid *sortOperators,
 		  Oid *collations, bool *nullsFirst,
@@ -5651,8 +5654,6 @@ make_sort_from_sortclauses(PlannerInfo *root, List *sortcls, Plan *lefttree)
  *
  * 'groupcls' is the list of SortGroupClauses
  * 'grpColIdx' gives the column numbers to use
- * 'appendGrouping' represents whether to append a Grouping
- *	  as the last sort key, used for grouping extension.
  *
  * This might look like it could be merged with make_sort_from_sortclauses,
  * but presently we *must* use the grpColIdx[] array to locate sort columns,
@@ -5856,6 +5857,7 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 
 	plan->qual = qual;
 	plan->targetlist = tlist;
+
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
 
