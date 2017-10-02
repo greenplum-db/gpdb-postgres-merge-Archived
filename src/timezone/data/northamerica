@@ -1,10 +1,5 @@
-<<<<<<< HEAD
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
-=======
-# @(#)northamerica	8.23
-# <pre>
->>>>>>> 49f001d81e
 
 # also includes Central America and the Caribbean
 
@@ -2778,35 +2773,18 @@ Zone America/Costa_Rica	-5:36:13 -	LMT	1890        # San José
 # From Arthur David Olson (2008-03-09):
 # I'm in Maryland which is now observing United States Eastern Daylight
 # Time. At 9:44 local time I used RealPlayer to listen to
-<<<<<<< HEAD
 # http://media.enet.cu/radioreloj
 # a Cuban information station, and heard
-=======
-# <a href="http://media.enet.cu/radioreloj">
-# http://media.enet.cu/radioreloj
-# </a>, a Cuban information station, and heard
->>>>>>> 49f001d81e
 # the time announced as "ocho cuarenta y cuatro" ("eight forty-four"),
 # indicating that Cuba is still on standard time.
 
 # From Steffen Thorsen (2008-03-12):
 # It seems that Cuba will start DST on Sunday, 2007-03-16...
 # It was announced yesterday, according to this source (in Spanish):
-<<<<<<< HEAD
 # http://www.nnc.cubaweb.cu/marzo-2008/cien-1-11-3-08.htm
 #
 # Some more background information is posted here:
 # http://www.timeanddate.com/news/time/cuba-starts-dst-march-16.html
-=======
-# <a href="http://www.nnc.cubaweb.cu/marzo-2008/cien-1-11-3-08.htm">
-# http://www.nnc.cubaweb.cu/marzo-2008/cien-1-11-3-08.htm
-# </a>
-#
-# Some more background information is posted here:
-# <a href="http://www.timeanddate.com/news/time/cuba-starts-dst-march-16.html">
-# http://www.timeanddate.com/news/time/cuba-starts-dst-march-16.html
-# </a>
->>>>>>> 49f001d81e
 #
 # The article also says that Cuba has been observing DST since 1963,
 # while Shanks (and tzdata) has 1965 as the first date (except in the
@@ -2816,7 +2794,6 @@ Zone America/Costa_Rica	-5:36:13 -	LMT	1890        # San José
 # change some historic records as well.
 #
 # One example:
-<<<<<<< HEAD
 # http://www.radiohc.cu/espanol/noticias/mar07/11mar/hor.htm
 
 # From Jesper Nørgaard Welen (2008-03-13):
@@ -2825,26 +2802,11 @@ Zone America/Costa_Rica	-5:36:13 -	LMT	1890        # San José
 # http://www.granma.cubaweb.cu/2008/03/13/nacional/artic10.html
 #
 # Basically as expected after Steffen Thorsen's information, the change
-=======
-# <a href="http://www.radiohc.cu/espanol/noticias/mar07/11mar/hor.htm">
-# http://www.radiohc.cu/espanol/noticias/mar07/11mar/hor.htm
-# </a>
-
-# From Jesper Norgaard Welen (2008-03-13):
-# The Cuban time change has just been confirmed on the most authoritative
-# web site, the Granma.  Please check out
-# <a href="http://www.granma.cubaweb.cu/2008/03/13/nacional/artic10.html">
-# http://www.granma.cubaweb.cu/2008/03/13/nacional/artic10.html
-# </a>
-#
-# Basically as expected after Steffen Thorsens information, the change
->>>>>>> 49f001d81e
 # will take place midnight between Saturday and Sunday.
 
 # From Arthur David Olson (2008-03-12):
 # Assume Sun>=15 (third Sunday) going forward.
 
-<<<<<<< HEAD
 # From Alexander Krivenyshev (2009-03-04)
 # According to the Radio Reloj - Cuba will start Daylight Saving Time on
 # midnight between Saturday, March 07, 2009 and Sunday, March 08, 2009-
@@ -2898,8 +2860,6 @@ Zone America/Costa_Rica	-5:36:13 -	LMT	1890        # San José
 # From Paul Eggert (2012-11-03):
 # For now, assume the future rule is first Sunday in November.
 
-=======
->>>>>>> 49f001d81e
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Cuba	1928	only	-	Jun	10	0:00	1:00	D
 Rule	Cuba	1928	only	-	Oct	10	0:00	0	S
@@ -2929,7 +2889,6 @@ Rule	Cuba	1996	only	-	Oct	 6	0:00s	0	S
 Rule	Cuba	1997	only	-	Oct	12	0:00s	0	S
 Rule	Cuba	1998	1999	-	Mar	lastSun	0:00s	1:00	D
 Rule	Cuba	1998	2003	-	Oct	lastSun	0:00s	0	S
-<<<<<<< HEAD
 Rule	Cuba	2000	2003	-	Apr	Sun>=1	0:00s	1:00	D
 Rule	Cuba	2004	only	-	Mar	lastSun	0:00s	1:00	D
 Rule	Cuba	2006	2010	-	Oct	lastSun	0:00s	0	S
@@ -2941,12 +2900,6 @@ Rule	Cuba	2011	only	-	Nov	13	0:00s	0	S
 Rule	Cuba	2012	only	-	Apr	1	0:00s	1:00	D
 Rule	Cuba	2012	max	-	Nov	Sun>=1	0:00s	0	S
 Rule	Cuba	2013	max	-	Mar	Sun>=8	0:00s	1:00	D
-=======
-Rule	Cuba	2000	2006	-	Apr	Sun>=1	0:00s	1:00	D
-Rule	Cuba	2006	max	-	Oct	lastSun	0:00s	0	S
-Rule	Cuba	2007	only	-	Mar	Sun>=8	0:00s	1:00	D
-Rule	Cuba	2008	max	-	Mar	Sun>=15	0:00s	1:00	D
->>>>>>> 49f001d81e
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Havana	-5:29:28 -	LMT	1890
