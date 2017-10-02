@@ -33,12 +33,9 @@
 #include "nodes/makefuncs.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/walwriter.h"
-<<<<<<< HEAD
 #include "replication/walreceiver.h"
 #include "storage/bufpage.h"
-=======
 #include "storage/bufmgr.h"
->>>>>>> 49f001d81e
 #include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"

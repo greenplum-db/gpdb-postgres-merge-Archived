@@ -225,11 +225,7 @@ Boot_CreateStmt:
 													  $6,
 													  BOOTSTRAP_SUPERUSERID,
 													  tupdesc,
-<<<<<<< HEAD
 													  /* relam */ InvalidOid,
-=======
-													  NIL,
->>>>>>> 49f001d81e
 													  RELKIND_RELATION,
 													  RELSTORAGE_HEAP,
 													  $3,
