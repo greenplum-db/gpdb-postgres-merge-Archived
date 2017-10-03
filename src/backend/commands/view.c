@@ -490,36 +490,3 @@ DefineView(ViewStmt *stmt, const char *queryString)
 									NULL);
 	}
 }
-<<<<<<< HEAD
-
-/*
- * RemoveView
- *
- * Remove a view given its name
- *
- * We just have to drop the relation; the associated rules will be
- * cleaned up automatically.
- */
-void
-RemoveView(const RangeVar *view, DropBehavior behavior)
-{
-	Oid			viewOid;
-	ObjectAddress object;
-
-	viewOid = RangeVarGetRelid(view, false);
-
-	object.classId = RelationRelationId;
-	object.objectId = viewOid;
-	object.objectSubId = 0;
-
-	if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		LockRelationOid(RelationRelationId, RowExclusiveLock);
-		LockRelationOid(TypeRelationId, RowExclusiveLock);
-		LockRelationOid(DependRelationId, RowExclusiveLock);
-	}
-
-	performDeletion(&object, behavior);
-}
-=======
->>>>>>> 49f001d81e

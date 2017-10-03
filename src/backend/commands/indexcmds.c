@@ -1545,65 +1545,6 @@ relationHasUniqueIndex(Relation rel)
 	return result;
 }
 
-<<<<<<< HEAD
-
-/*
- * RemoveIndex
- *		Deletes an index.
- */
-void
-RemoveIndex(RangeVar *relation, DropBehavior behavior)
-{
-	Oid			indOid;
-	char		relkind;
-	ObjectAddress object;
-	HeapTuple tuple;
-	PartStatus pstat;
-
-	indOid = RangeVarGetRelid(relation, false);
-
-	if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		LockRelationOid(RelationRelationId, RowExclusiveLock);
-	}
-
-	/* Lock the relation to be dropped */
-	LockRelationOid(indOid, AccessExclusiveLock);
-
-	/* XXX: just an existence (count(*)) check? */
-
-	tuple = SearchSysCache1(RELOID,
-							ObjectIdGetDatum(indOid));
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "index \"%s\" does not exist", relation->relname);
-
-	relkind = get_rel_relkind(indOid);
-	if (relkind != RELKIND_INDEX)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not an index",
-						relation->relname)));
-
-	object.classId = RelationRelationId;
-	object.objectId = indOid;
-	object.objectSubId = 0;
-	
-	pstat = rel_part_status(IndexGetRelation(indOid));
-
-	ReleaseSysCache(tuple);
-
-	performDeletion(&object, behavior);
-	
-	if ( pstat == PART_STATUS_ROOT || pstat == PART_STATUS_INTERIOR )
-	{
-		ereport(WARNING,
-				(errmsg("Only dropped the index \"%s\"", relation->relname),
-				 errhint("To drop other indexes on child partitions, drop each one explicitly.")));
-	}
-}
-
-=======
->>>>>>> 49f001d81e
 /*
  * ReindexIndex
  *		Recreate a specific index.

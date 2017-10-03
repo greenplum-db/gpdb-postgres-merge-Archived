@@ -76,7 +76,6 @@ PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 		RequireTransactionChain(isTopLevel, "DECLARE CURSOR");
 
 	/*
-<<<<<<< HEAD
 	 * Allow using the SCROLL keyword even though we don't support its
 	 * functionality (backward scrolling). Silently accept it and instead
 	 * of reporting an error like before, override it to NO SCROLL.
@@ -97,10 +96,7 @@ PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 	Assert(!(cstmt->options & CURSOR_OPT_SCROLL && cstmt->options & CURSOR_OPT_NO_SCROLL));
 
 	/*
-	 * Create a portal and copy the plan into its memory context.
-=======
 	 * Create a portal and copy the plan and queryString into its memory.
->>>>>>> 49f001d81e
 	 */
 	portal = CreatePortal(cstmt->portalname, false, false);
 

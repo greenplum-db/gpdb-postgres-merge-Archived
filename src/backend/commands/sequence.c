@@ -427,7 +427,7 @@ DefineSequence(CreateSeqStmt *seq)
 				value[i - 1] = Int64GetDatumFast(new.last_value);
 				break;
 			case SEQ_COL_STARTVAL:
-				coldef->typename = makeTypeNameFromOid(INT8OID, -1);
+				coldef->typeName = makeTypeNameFromOid(INT8OID, -1);
 				coldef->colname = "start_value";
 				value[i - 1] = Int64GetDatumFast(new.start_value);
 				break;
@@ -633,24 +633,7 @@ DefineSequence(CreateSeqStmt *seq)
 void
 AlterSequence(AlterSeqStmt *stmt)
 {
-	MIRROREDLOCK_BUFMGR_DECLARE;
-
 	Oid			relid;
-<<<<<<< HEAD
-	SeqTable	elm;
-	Relation	seqrel;
-	Buffer		buf;
-	HeapTupleData seqtuple;
-	Form_pg_sequence seq;
-	FormData_pg_sequence new;
-	List	   *owned_by;
-	int64		save_increment;
-	bool		bSeqIsTemp	   = false;
-	int			numopts	   = 0;
-	char	   *alter_subtype = "";		/* metadata tracking: kind of
-										   redundant to say "role" */
-=======
->>>>>>> 49f001d81e
 
 	/* find sequence */
 	relid = RangeVarGetRelid(stmt->sequence, false);
@@ -661,12 +644,16 @@ AlterSequence(AlterSeqStmt *stmt)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 					   stmt->sequence->relname);
 
-<<<<<<< HEAD
-	/* hack to keep ALTER SEQUENCE OWNED BY from changing currval state */
-	save_increment = elm->increment;
-=======
 	/* do the work */
 	AlterSequenceInternal(relid, stmt->options);
+
+	if (Gp_role == GP_ROLE_DISPATCH)
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									NIL,
+									NULL);
 }
 
 /*
@@ -678,22 +665,31 @@ AlterSequence(AlterSeqStmt *stmt)
 void
 AlterSequenceInternal(Oid relid, List *options)
 {
+	MIRROREDLOCK_BUFMGR_DECLARE;
+
 	SeqTable	elm;
 	Relation	seqrel;
 	Buffer		buf;
-	Page		page;
 	Form_pg_sequence seq;
 	FormData_pg_sequence new;
 	List	   *owned_by;
+	HeapTupleData seqtuple;
+	int64		save_increment;
+	bool		bSeqIsTemp = false;
+	int			numopts	   = 0;
+	char	   *alter_subtype = "";		/* metadata tracking: kind of
+										   redundant to say "role" */
 
 	/* open and AccessShareLock sequence */
 	init_sequence(relid, &elm, &seqrel);
->>>>>>> 49f001d81e
 
 	/* lock page' buffer and read tuple into new sequence structure */
 	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
+
+	/* hack to keep ALTER SEQUENCE OWNED BY from changing currval state */
+	save_increment = elm->increment;
 	
 	seq = read_seq_tuple(elm, seqrel, &buf, &seqtuple);
 	elm->increment = seq->increment_by;
@@ -769,7 +765,7 @@ AlterSequenceInternal(Oid relid, List *options)
 
 	relation_close(seqrel, NoLock);
 
-	numopts = list_length(stmt->options);
+	numopts = list_length(options);
 
 	if (numopts > 1)
 	{
@@ -785,7 +781,7 @@ AlterSequenceInternal(Oid relid, List *options)
 	}
 	else if ((Gp_role == GP_ROLE_DISPATCH) && (!bSeqIsTemp))
 	{
-		ListCell		*option = list_head(stmt->options);
+		ListCell		*option = list_head(options);
 		DefElem			*defel	= (DefElem *) lfirst(option);
 		char			*tempo	= NULL;
 
@@ -796,28 +792,15 @@ AlterSequenceInternal(Oid relid, List *options)
 		tempo = str_toupper(alter_subtype, strlen(alter_subtype));
 
 		alter_subtype = tempo;
-
 	}
 
-	if (Gp_role == GP_ROLE_DISPATCH)
+	if (Gp_role == GP_ROLE_DISPATCH && !bSeqIsTemp)
 	{
-		CdbDispatchUtilityStatement((Node *) stmt,
-									DF_CANCEL_ON_ERROR|
-									DF_WITH_SNAPSHOT|
-									DF_NEED_TWO_PHASE,
-									NIL,
-									NULL);
-
-		if (!bSeqIsTemp)
-		{
-			/* MPP-6929: metadata tracking */
-			MetaTrackUpdObject(RelationRelationId,
-							   relid,
-							   GetUserId(),
-							   "ALTER", alter_subtype
-					);
-		}
-
+		/* MPP-6929: metadata tracking */
+		MetaTrackUpdObject(RelationRelationId,
+						   relid,
+						   GetUserId(),
+						   "ALTER", alter_subtype);
 	}
 }
 
@@ -1915,17 +1898,11 @@ seq_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 
 	if (info != XLOG_SEQ_LOG)
 		elog(PANIC, "seq_redo: unknown op code %u", info);
-
-<<<<<<< HEAD
-	reln = XLogOpenRelation(xlrec->node);
 	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-	buffer = XLogReadBuffer(reln, 0, true);
-=======
 	buffer = XLogReadBuffer(xlrec->node, 0, true);
->>>>>>> 49f001d81e
 	Assert(BufferIsValid(buffer));
 	page = (Page) BufferGetPage(buffer);
 

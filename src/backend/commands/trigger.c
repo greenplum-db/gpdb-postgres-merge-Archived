@@ -2358,7 +2358,6 @@ ltrmark:;
 		
 		buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 
-<<<<<<< HEAD
 		/*
 		 * Although we already know this tuple is valid, we must lock the
 		 * buffer to ensure that no one has a buffer cleanup lock; otherwise
@@ -2369,12 +2368,8 @@ ltrmark:;
 		 */
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
-		dp = (PageHeader) BufferGetPage(buffer);
-		lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(tid));
-=======
 		page = BufferGetPage(buffer);
 		lp = PageGetItemId(page, ItemPointerGetOffsetNumber(tid));
->>>>>>> 49f001d81e
 
 		Assert(ItemIdIsNormal(lp));
 

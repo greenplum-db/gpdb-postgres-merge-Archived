@@ -329,9 +329,10 @@ RemoveTSParsers(DropStmt *drop)
 			}
 			else
 			{
-				ereport(NOTICE,
-					(errmsg("text search parser \"%s\" does not exist, skipping",
-							NameListToString(names))));
+				if (Gp_role != GP_ROLE_EXECUTE)
+					ereport(NOTICE,
+						(errmsg("text search parser \"%s\" does not exist, skipping",
+								NameListToString(names))));
 			}
 			continue;
 		}
@@ -704,9 +705,10 @@ RemoveTSDictionaries(DropStmt *drop)
 			}
 			else
 			{
-				ereport(NOTICE,
-				(errmsg("text search dictionary \"%s\" does not exist, skipping",
-						NameListToString(names))));
+				if (Gp_role != GP_ROLE_EXECUTE)
+					ereport(NOTICE,
+						(errmsg("text search dictionary \"%s\" does not exist, skipping",
+								NameListToString(names))));
 			}
 			continue;
 		}
@@ -1222,9 +1224,10 @@ RemoveTSTemplates(DropStmt *drop)
 			}
 			else
 			{
-				ereport(NOTICE,
-						(errmsg("text search template \"%s\" does not exist, skipping",
-								NameListToString(names))));
+				if (Gp_role != GP_ROLE_EXECUTE)
+					ereport(NOTICE,
+							(errmsg("text search template \"%s\" does not exist, skipping",
+									NameListToString(names))));
 			}
 			continue;
 		}
@@ -1642,9 +1645,10 @@ RemoveTSConfigurations(DropStmt *drop)
 			}
 			else
 			{
-				ereport(NOTICE,
-						(errmsg("text search configuration \"%s\" does not exist, skipping",
-								NameListToString(names))));
+				if (Gp_role != GP_ROLE_EXECUTE)
+					ereport(NOTICE,
+							(errmsg("text search configuration \"%s\" does not exist, skipping",
+									NameListToString(names))));
 			}
 			continue;
 		}

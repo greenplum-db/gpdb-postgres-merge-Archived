@@ -293,15 +293,11 @@ RemoveSchemas(DropStmt *drop)
 	 */
 	performMultipleDeletions(objects, drop->behavior);
 
-<<<<<<< HEAD
-	performDeletion(&object, behavior);
-
 	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH)
 		MetaTrackDropObject(NamespaceRelationId, namespaceId);
-=======
+
 	free_object_addresses(objects);
->>>>>>> 49f001d81e
 }
 
 

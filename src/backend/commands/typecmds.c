@@ -665,6 +665,11 @@ RemoveTypes(DropStmt *drop)
 		}
 
 		/*
+		 * Remove any storage encoding
+		 */
+		remove_type_encoding(typeoid);
+
+		/*
 		 * Note: we need no special check for array types here, as the normal
 		 * treatment of internal dependencies handles it just fine
 		 */
@@ -680,36 +685,7 @@ RemoveTypes(DropStmt *drop)
 
 	performMultipleDeletions(objects, drop->behavior);
 
-<<<<<<< HEAD
-	/* Permission check: must own type or its namespace */
-	if (!pg_type_ownercheck(typeoid, GetUserId()) &&
-		!pg_namespace_ownercheck(typ->typnamespace, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
-					   TypeNameToString(typename));
-
-	/*
-	 * Remove any storage encoding
-	 */
-	remove_type_encoding(typeoid);
-
-	/*
-	 * Note: we need no special check for array types here, as the normal
-	 * treatment of internal dependencies handles it just fine
-	 */
-
-	ReleaseSysCache(tup);
-
-	/*
-	 * Do the deletion
-	 */
-	object.classId = TypeRelationId;
-	object.objectId = typeoid;
-	object.objectSubId = 0;
-
-	performDeletion(&object, behavior);
-=======
 	free_object_addresses(objects);
->>>>>>> 49f001d81e
 }
 
 
@@ -1117,80 +1093,6 @@ DefineDomain(CreateDomainStmt *stmt)
 
 
 /*
-<<<<<<< HEAD
- *	RemoveDomain
- *		Removes a domain.
- *
- * This is identical to RemoveType except we insist it be a domain.
- */
-void
-RemoveDomain(List *names, DropBehavior behavior, bool missing_ok)
-{
-	TypeName   *typename;
-	Oid			typeoid;
-	HeapTuple	tup;
-	char		typtype;
-	ObjectAddress object;
-
-	/* Make a TypeName so we can use standard type lookup machinery */
-	typename = makeTypeNameFromNameList(names);
-
-	/* Use LookupTypeName here so that shell types can be removed. */
-	tup = LookupTypeName(NULL, typename, NULL);
-	if (tup == NULL)
-	{
-		if (!missing_ok)
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("type \"%s\" does not exist",
-							TypeNameToString(typename))));
-		}
-		else
-		{
-			if (Gp_role != GP_ROLE_EXECUTE)
-			ereport(NOTICE,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("type \"%s\" does not exist, skipping",
-							TypeNameToString(typename))));
-		}
-
-		return;
-	}
-
-	typeoid = typeTypeId(tup);
-
-	/* Permission check: must own type or its namespace */
-	if (!pg_type_ownercheck(typeoid, GetUserId()) &&
-	  !pg_namespace_ownercheck(((Form_pg_type) GETSTRUCT(tup))->typnamespace,
-							   GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
-					   TypeNameToString(typename));
-
-	/* Check that this is actually a domain */
-	typtype = ((Form_pg_type) GETSTRUCT(tup))->typtype;
-
-	if (typtype != TYPTYPE_DOMAIN)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a domain",
-						TypeNameToString(typename))));
-
-	ReleaseSysCache(tup);
-
-	/*
-	 * Do the deletion
-	 */
-	object.classId = TypeRelationId;
-	object.objectId = typeoid;
-	object.objectSubId = 0;
-
-	performDeletion(&object, behavior);
-}
-
-/*
-=======
->>>>>>> 49f001d81e
  * DefineEnum
  *		Registers a new enum.
  */

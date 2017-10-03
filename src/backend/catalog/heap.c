@@ -2716,18 +2716,20 @@ StoreRelCheck(Relation rel, char *ccname, Node *expr,
 }
 
 /*
- * AddRelationConstraints
+ * AddRelationNewConstraints
  *
- * Add both raw (not-yet-transformed) and cooked column default expressions and/or
- * constraint check expressions to an existing relation. This is defined to do both
- * for efficiency in DefineRelation, but of course you can do just one or
- * the other by passing empty lists.
+ * Add new column default expressions and/or constraint check expressions
+ * to an existing relation.  This is defined to do both for efficiency in
+ * DefineRelation, but of course you can do just one or the other by passing
+ * empty lists.
  *
  * rel: relation to be modified
- * colDefaults: list of ColumnDef nodes
- * constraints: list of Constraint nodes
+ * newColDefaults: list of RawColumnDefault structures
+ * newConstraints: list of Constraint nodes
+ * allow_merge: TRUE if check constraints may be merged with existing ones
+ * is_local: TRUE if definition is local, FALSE if it's inherited
  *
- * All entries in colDefaults will be processed.  Entries in constraints
+ * All entries in newColDefaults will be processed.  Entries in newConstraints
  * will be processed only if they are CONSTR_CHECK type.
  *
  * Returns a list of CookedConstraint nodes that shows the cooked form of
