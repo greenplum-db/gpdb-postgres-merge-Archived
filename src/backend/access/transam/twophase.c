@@ -1411,55 +1411,7 @@ RegisterTwoPhaseRecord(TwoPhaseRmgrId rmid, uint16 info,
 void
 PrepareIntentAppendOnlyCommitWork(char *gid)
 {
-<<<<<<< HEAD
 	GlobalTransaction gxact;
-=======
-	char		path[MAXPGPATH];
-	char	   *buf;
-	TwoPhaseFileHeader *hdr;
-	int			fd;
-	struct stat stat;
-	uint32		crc_offset;
-	pg_crc32	calc_crc,
-				file_crc;
-
-	TwoPhaseFilePath(path, xid);
-
-	fd = BasicOpenFile(path, O_RDONLY | PG_BINARY, 0);
-	if (fd < 0)
-	{
-		ereport(WARNING,
-				(errcode_for_file_access(),
-				 errmsg("could not open two-phase state file \"%s\": %m",
-						path)));
-		return NULL;
-	}
-
-	/*
-	 * Check file length.  We can determine a lower bound pretty easily. We
-	 * set an upper bound to avoid palloc() failure on a corrupt file, though
-	 * we can't guarantee that we won't get an out of memory error anyway,
-	 * even on a valid file.
-	 */
-	if (fstat(fd, &stat))
-	{
-		close(fd);
-		ereport(WARNING,
-				(errcode_for_file_access(),
-				 errmsg("could not stat two-phase state file \"%s\": %m",
-						path)));
-		return NULL;
-	}
-
-	if (stat.st_size < (MAXALIGN(sizeof(TwoPhaseFileHeader)) +
-						MAXALIGN(sizeof(TwoPhaseRecordOnDisk)) +
-						sizeof(pg_crc32)) ||
-		stat.st_size > MaxAllocSize)
-	{
-		close(fd);
-		return NULL;
-	}
->>>>>>> 49f001d81e
 
 	gxact = FindPrepareGXact(gid);
 
@@ -1781,74 +1733,7 @@ CheckPointTwoPhase(XLogRecPtr redo_horizon)
 	 * We have already attached all the prepared transactions to
 	 * the checkpoint record. For now, just return from this.
 	 */
-<<<<<<< HEAD
 	return;
-=======
-	if (max_prepared_xacts <= 0)
-		return;					/* nothing to do */
-
-	TRACE_POSTGRESQL_TWOPHASE_CHECKPOINT_START();
-
-	xids = (TransactionId *) palloc(max_prepared_xacts * sizeof(TransactionId));
-	nxids = 0;
-
-	LWLockAcquire(TwoPhaseStateLock, LW_SHARED);
-
-	for (i = 0; i < TwoPhaseState->numPrepXacts; i++)
-	{
-		GlobalTransaction gxact = TwoPhaseState->prepXacts[i];
-
-		if (gxact->valid &&
-			XLByteLE(gxact->prepare_lsn, redo_horizon))
-			xids[nxids++] = gxact->proc.xid;
-	}
-
-	LWLockRelease(TwoPhaseStateLock);
-
-	for (i = 0; i < nxids; i++)
-	{
-		TransactionId xid = xids[i];
-		int			fd;
-
-		TwoPhaseFilePath(path, xid);
-
-		fd = BasicOpenFile(path, O_RDWR | PG_BINARY, 0);
-		if (fd < 0)
-		{
-			if (errno == ENOENT)
-			{
-				/* OK if gxact is no longer valid */
-				if (!TransactionIdIsPrepared(xid))
-					continue;
-				/* Restore errno in case it was changed */
-				errno = ENOENT;
-			}
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not open two-phase state file \"%s\": %m",
-							path)));
-		}
-
-		if (pg_fsync(fd) != 0)
-		{
-			close(fd);
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not fsync two-phase state file \"%s\": %m",
-							path)));
-		}
-
-		if (close(fd) != 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not close two-phase state file \"%s\": %m",
-							path)));
-	}
-
-	pfree(xids);
-
-	TRACE_POSTGRESQL_TWOPHASE_CHECKPOINT_DONE();
->>>>>>> 49f001d81e
 }
 
 /*
