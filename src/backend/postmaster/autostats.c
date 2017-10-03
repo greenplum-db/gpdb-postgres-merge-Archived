@@ -72,7 +72,7 @@ autostats_issue_analyze(Oid relationOid)
 	analyzeStmt->rootonly = false;
 	analyzeStmt->relation = relation;	/* not used since we pass relids list */
 	analyzeStmt->va_cols = NIL;
-	vacuum(analyzeStmt, NIL, NULL, false, false);
+	vacuum(analyzeStmt, InvalidOid, NULL, false, false);
 	pfree(analyzeStmt);
 }
 
@@ -202,9 +202,12 @@ autostats_get_cmdtype(QueryDesc *queryDesc, AutoStatsCmdType * pcmdType, Oid *pr
 		case CMD_SELECT:
 			if (stmt->intoClause != NULL)
 			{
-				/* CTAS */
-				if (queryDesc->estate->es_into_relation_descriptor)
-					relationOid = RelationGetRelid(queryDesc->estate->es_into_relation_descriptor);
+				/* CTAS -- see executor/execMain.c for DR_intorel magic
+				 * GPDB_84_MERGE_FIXME: is this even close to correct? How do we test
+				 * that this is working correctly? */
+				DR_intorel *myState = (DR_intorel *) queryDesc->dest;
+				if (myState && myState->pub.mydest == DestIntoRel && myState->rel)
+					relationOid = RelationGetRelid(myState->rel);
 				cmdType = AUTOSTATS_CMDTYPE_CTAS;
 			}
 			break;

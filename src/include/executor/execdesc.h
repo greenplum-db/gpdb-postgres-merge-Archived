@@ -258,6 +258,35 @@ typedef struct QueryDesc
 
 } QueryDesc;
 
+/*
+ * Support for SELECT INTO (a/k/a CREATE TABLE AS)
+ *
+ * We implement SELECT INTO by diverting SELECT's normal output with
+ * a specialized DestReceiver type.
+ *
+ * GPDB_84_MERGE_FIXME: this is supposed to be private to execMain.c,
+ * but postmaster/autostats.c needs the relationOid that we can seemingly
+ * only get from this struct's .rel field. Is this what we want?
+ */
+
+typedef struct
+{
+	DestReceiver pub;			/* publicly-known function pointers */
+	EState	   *estate;			/* EState we are working with */
+	Relation	rel;			/* Relation to write to */
+	bool		use_wal;		/* do we need to WAL-log our writes? */
+
+	struct AppendOnlyInsertDescData *ao_insertDesc; /* descriptor to AO tables */
+	struct AOCSInsertDescData *aocs_ins;           /* descriptor for aocs */
+
+	bool		is_bulkload;
+
+	ItemPointerData last_heap_tid;
+
+	struct MirroredBufferPoolBulkLoadInfo *bulkloadinfo;
+
+} DR_intorel;
+
 /* in pquery.c */
 extern QueryDesc *CreateQueryDesc(PlannedStmt *plannedstmt,
 								  const char *sourceText,

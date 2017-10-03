@@ -91,12 +91,9 @@
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
-<<<<<<< HEAD
 #include "storage/procsignal.h"
 #include "storage/sinval.h"
-=======
 #include "storage/sinvaladt.h"
->>>>>>> 49f001d81e
 #include "tcop/tcopprot.h"
 #include "utils/flatfiles.h"
 #include "utils/fmgroids.h"
@@ -300,11 +297,7 @@ static HeapTuple get_pg_autovacuum_tuple_relid(Relation avRel, Oid relid);
 static PgStat_StatTabEntry *get_pgstat_tabentry_relid(Oid relid, bool isshared,
 						  PgStat_StatDBEntry *shared,
 						  PgStat_StatDBEntry *dbentry);
-<<<<<<< HEAD
-static void autovac_report_activity(VacuumStmt *vacstmt, Oid relid, bool for_wraparound);
-=======
 static void autovac_report_activity(autovac_table *tab);
->>>>>>> 49f001d81e
 static void avl_sighup_handler(SIGNAL_ARGS);
 static void avl_sigusr1_handler(SIGNAL_ARGS);
 static void avl_sigterm_handler(SIGNAL_ARGS);
@@ -2098,14 +2091,8 @@ do_autovacuum(void)
 		autovac_table *tab;
 		WorkerInfo	worker;
 		bool		skipit;
-<<<<<<< HEAD
-		char	   *datname,
-				   *nspname,
-				   *relname;
 		int			stdVacuumCostDelay;
 		int			stdVacuumCostLimit;
-=======
->>>>>>> 49f001d81e
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -2212,18 +2199,11 @@ do_autovacuum(void)
 		 * Note: they must live in a long-lived memory context because we call
 		 * vacuum and analyze in different transactions.
 		 */
-<<<<<<< HEAD
-		datname = get_database_name(MyDatabaseId);
-		nspname = get_namespace_name(get_rel_namespace(tab->at_relid));
-		relname = get_rel_name(tab->at_relid);
-		if (!datname || !nspname || !relname)
-=======
 
 		tab->at_relname = get_rel_name(tab->at_relid);
 		tab->at_nspname = get_namespace_name(get_rel_namespace(tab->at_relid));
 		tab->at_datname = get_database_name(MyDatabaseId);
 		if (!tab->at_relname || !tab->at_nspname || !tab->at_datname)
->>>>>>> 49f001d81e
 			goto deleted;
 
 		/*
@@ -2275,7 +2255,6 @@ do_autovacuum(void)
 
 deleted:
 		/* be tidy */
-deleted:
 		if (tab->at_datname != NULL)
 			pfree(tab->at_datname);
 		if (tab->at_nspname != NULL)
@@ -2283,15 +2262,6 @@ deleted:
 		if (tab->at_relname != NULL)
 			pfree(tab->at_relname);
 		pfree(tab);
-<<<<<<< HEAD
-		if (datname)
-			pfree(datname);
-		if (nspname)
-			pfree(nspname);
-		if (relname)
-			pfree(relname);
-=======
->>>>>>> 49f001d81e
 
 		/*
 		 * Remove my info from shared memory.  We could, but intentionally
@@ -2709,11 +2679,7 @@ autovacuum_do_vac_analyze(autovac_table *tab,
 	vacstmt.va_cols = NIL;
 
 	/* Let pgstat know what we're doing */
-<<<<<<< HEAD
-	autovac_report_activity(&vacstmt, relid, for_wraparound);
-=======
 	autovac_report_activity(tab);
->>>>>>> 49f001d81e
 
 	vacuum(&vacstmt, tab->at_relid, bstrategy, tab->at_wraparound, true);
 }
@@ -2730,21 +2696,11 @@ autovacuum_do_vac_analyze(autovac_table *tab,
  * bother to report "<IDLE>" or some such.
  */
 static void
-<<<<<<< HEAD
-autovac_report_activity(VacuumStmt *vacstmt, Oid relid, bool for_wraparound)
-{
-	char	   *relname = get_rel_name(relid);
-	char	   *nspname = get_namespace_name(get_rel_namespace(relid));
-
-#define MAX_AUTOVAC_ACTIV_LEN (NAMEDATALEN * 2 + 56)
-	char		activity[MAX_AUTOVAC_ACTIV_LEN];
-=======
 autovac_report_activity(autovac_table *tab)
 {
 #define MAX_AUTOVAC_ACTIV_LEN (NAMEDATALEN * 2 + 56)
 	char	activity[MAX_AUTOVAC_ACTIV_LEN];
 	int		len;
->>>>>>> 49f001d81e
 
 	/* Report the command and possible options */
 	if (tab->at_dovacuum)
@@ -2760,16 +2716,9 @@ autovac_report_activity(autovac_table *tab)
 	 */
 	len = strlen(activity);
 
-<<<<<<< HEAD
-		snprintf(activity + len, MAX_AUTOVAC_ACTIV_LEN - len,
-				 " %s.%s%s", nspname, relname,
-				 for_wraparound ? " (to prevent wraparound)" : "");
-	}
-=======
 	snprintf(activity + len, MAX_AUTOVAC_ACTIV_LEN - len,
 			 " %s.%s%s", tab->at_nspname, tab->at_relname,
 				 tab->at_wraparound ? " (to prevent wraparound)" : "");
->>>>>>> 49f001d81e
 
 	/* Set statement_timestamp() to current time for pg_stat_activity */
 	SetCurrentStatementStartTimestamp();

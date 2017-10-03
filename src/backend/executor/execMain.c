@@ -4666,31 +4666,6 @@ ExecGetActivePlanTree(QueryDesc *queryDesc)
 
 
 /*
- * Support for SELECT INTO (a/k/a CREATE TABLE AS)
- *
- * We implement SELECT INTO by diverting SELECT's normal output with
- * a specialized DestReceiver type.
- */
-
-typedef struct
-{
-	DestReceiver pub;			/* publicly-known function pointers */
-	EState	   *estate;			/* EState we are working with */
-	Relation	rel;			/* Relation to write to */
-	bool		use_wal;		/* do we need to WAL-log our writes? */
-
-	AppendOnlyInsertDescData *ao_insertDesc; /* descriptor to AO tables */
-	AOCSInsertDescData *aocs_ins;           /* descriptor for aocs */
-
-	bool		is_bulkload;
-
-	ItemPointerData last_heap_tid;
-
-	struct MirroredBufferPoolBulkLoadInfo *bulkloadinfo;
-
-} DR_intorel;
-
-/*
  * OpenIntoRel --- actually create the SELECT INTO target relation
  *
  * This also replaces QueryDesc->dest with the special DestReceiver for
