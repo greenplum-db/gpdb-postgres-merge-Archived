@@ -2506,75 +2506,48 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily)
 		case OID_BPCHAR_LIKE_OP:
 		case OID_NAME_LIKE_OP:
 		case OID_BYTEA_LIKE_OP:
-<<<<<<< HEAD
-			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like,
-										   &prefix, NULL);
-			result = prefix_quals(leftop, opfamily, prefix, pstatus);
-=======
 			if (!op_in_opfamily(expr_op, opfamily))
 			{
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like,
-											   &prefix, &rest);
+											   &prefix, NULL);
 				return prefix_quals(leftop, opfamily, prefix, pstatus);
 			}
->>>>>>> 49f001d81e
 			break;
 
 		case OID_TEXT_ICLIKE_OP:
 		case OID_BPCHAR_ICLIKE_OP:
 		case OID_NAME_ICLIKE_OP:
-<<<<<<< HEAD
-			/* the right-hand const is type text for all of these */
-			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
-										   &prefix, NULL);
-			result = prefix_quals(leftop, opfamily, prefix, pstatus);
-=======
 			if (!op_in_opfamily(expr_op, opfamily))
 			{
 				/* the right-hand const is type text for all of these */
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
-											   &prefix, &rest);
+											   &prefix, NULL);
 				return prefix_quals(leftop, opfamily, prefix, pstatus);
 			}
->>>>>>> 49f001d81e
 			break;
 
 		case OID_TEXT_REGEXEQ_OP:
 		case OID_BPCHAR_REGEXEQ_OP:
 		case OID_NAME_REGEXEQ_OP:
-<<<<<<< HEAD
-			/* the right-hand const is type text for all of these */
-			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex,
-										   &prefix, NULL);
-			result = prefix_quals(leftop, opfamily, prefix, pstatus);
-=======
 			if (!op_in_opfamily(expr_op, opfamily))
 			{
 				/* the right-hand const is type text for all of these */
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex,
-											   &prefix, &rest);
+											   &prefix, NULL);
 				return prefix_quals(leftop, opfamily, prefix, pstatus);
 			}
->>>>>>> 49f001d81e
 			break;
 
 		case OID_TEXT_ICREGEXEQ_OP:
 		case OID_BPCHAR_ICREGEXEQ_OP:
 		case OID_NAME_ICREGEXEQ_OP:
-<<<<<<< HEAD
-			/* the right-hand const is type text for all of these */
-			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
-										   &prefix, NULL);
-			result = prefix_quals(leftop, opfamily, prefix, pstatus);
-=======
 			if (!op_in_opfamily(expr_op, opfamily))
 			{
 				/* the right-hand const is type text for all of these */
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
-											   &prefix, &rest);
+											   &prefix, NULL);
 				return prefix_quals(leftop, opfamily, prefix, pstatus);
 			}
->>>>>>> 49f001d81e
 			break;
 
 		case OID_INET_SUB_OP:

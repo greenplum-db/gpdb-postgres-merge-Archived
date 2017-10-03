@@ -17,12 +17,9 @@
 
 #include "postgres.h"
 
-<<<<<<< HEAD
-#include "nodes/nodeFuncs.h"
-=======
 #include <math.h>
 
->>>>>>> 49f001d81e
+#include "nodes/nodeFuncs.h"
 #ifdef OPTIMIZER_DEBUG
 #include "nodes/print.h"
 #endif
@@ -464,16 +461,10 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 * Note: if you consider changing this logic, beware that child rels could
 	 * have zero rows and/or width, if they were excluded by constraints.
 	 */
-<<<<<<< HEAD
-	rel->rows = 0;
-	rel->tuples = 0;
-	rel->width = 0;
-=======
 	parent_rows = 0;
 	parent_size = 0;
 	nattrs = rel->max_attr - rel->min_attr + 1;
 	parent_attrsizes = (double *) palloc0(nattrs * sizeof(double));
->>>>>>> 49f001d81e
 
 	/*
 	 * Generate access paths for each member relation, and pick the cheapest
@@ -572,31 +563,18 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		/*
 		 * Accumulate size information from each child.
 		 */
-<<<<<<< HEAD
-		rel->tuples += childrel->tuples;
-		rel->rows += cdbpath_rows(root, childrel->cheapest_total_path);
-		width_avg += cdbpath_rows(root, childrel->cheapest_total_path) * childrel->width;
 
-		forboth(parentvars, rel->reltargetlist,
-				childvars, childrel->reltargetlist)
-=======
 		if (childrel->rows > 0)
->>>>>>> 49f001d81e
 		{
-			parent_rows += childrel->rows;
-			parent_size += childrel->width * childrel->rows;
+			parent_rows += cdbpath_rows(root, childrel->cheapest_total_path);
+			width_avg += cdbpath_rows(root, childrel->cheapest_total_path) * childrel->width;
 
-<<<<<<< HEAD
 			/*
 			 * Accumulate per-column estimates too.  Whole-row Vars and
 			 * PlaceHolderVars can be ignored here.
 			 */
-			if (IsA(parentvar, Var) &&
-				IsA(childvar, Var))
-=======
 			forboth(parentvars, rel->reltargetlist,
 					childvars, childrel->reltargetlist)
->>>>>>> 49f001d81e
 			{
 				Var		   *parentvar = (Var *) lfirst(parentvars);
 				Var		   *childvar = (Var *) lfirst(childvars);
@@ -613,15 +591,13 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		}
 	}
 
-<<<<<<< HEAD
-	rel->width = (int) (width_avg / Max(1.0, rel->rows));
-
-	/* CDB: Just one child (or none)?  Set flag if result is at most 1 row. */
-	if (!subpaths)
-		rel->onerow = true;
-	else if (list_length(subpaths) == 1)
-		rel->onerow = ((Path *) linitial(subpaths))->parent->onerow;
-=======
+	/*
+	 * GPDB_84_MERGE_FIXME: review the estimation math here; 8.4 changed the
+	 * logic around. In particular, we capped the minimum parent_rows at 1,
+	 * whereas upstream will divide by any positive number. We also set
+	 * rel->width to width_avg if the parent_rows are zero, whereas upstream
+	 * sets it to zero.
+	 */
 	/*
 	 * Save the finished size estimates.
 	 */
@@ -630,13 +606,22 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	{
 		int		i;
 
-		rel->width = rint(parent_size / parent_rows);
+		rel->width = rint(width_avg / parent_rows);
 		for (i = 0; i < nattrs; i++)
 			rel->attr_widths[i] = rint(parent_attrsizes[i] / parent_rows);
 	}
 	else
 		rel->width = 0;			/* attr_widths should be zero already */
 
+	/* CDB: Just one child (or none)?  Set flag if result is at most 1 row. */
+	if (!subpaths)
+		rel->onerow = true;
+	else if (list_length(subpaths) == 1)
+		rel->onerow = ((Path *) linitial(subpaths))->parent->onerow;
+
+	/*
+	 * GPDB_84_MERGE_FIXME: ensure that this rel->tuples count works for us.
+	 */
 	/*
 	 * Set "raw tuples" count equal to "rows" for the appendrel; needed
 	 * because some places assume rel->tuples is valid for any baserel.
@@ -644,7 +629,6 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	rel->tuples = parent_rows;
 
 	pfree(parent_attrsizes);
->>>>>>> 49f001d81e
 
 	/*
 	 * Finally, build Append path and install it as the only access path for

@@ -62,9 +62,6 @@
 /* GUC parameter */
 double cursor_tuple_fraction = DEFAULT_CURSOR_TUPLE_FRACTION;
 
-/* GUC parameter */
-double cursor_tuple_fraction = DEFAULT_CURSOR_TUPLE_FRACTION;
-
 /* Hook for plugins to get control in planner() */
 planner_hook_type planner_hook = NULL;
 
@@ -273,11 +270,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	{
 		/*
 		 * We have no real idea how many tuples the user will ultimately FETCH
-<<<<<<< HEAD
-		 * from a cursor, but it is sometimes the case that he doesn't want 'em
-=======
 		 * from a cursor, but it is often the case that he doesn't want 'em
->>>>>>> 49f001d81e
 		 * all, or would prefer a fast-start plan anyway so that he can
 		 * process some of the tuples sooner.  Use a GUC parameter to decide
 		 * what fraction to optimize for.
@@ -790,14 +783,10 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	 */
 	if (list_length(glob->subplans) != num_old_subplans ||
 		root->query_level > 1)
-<<<<<<< HEAD
 	{
 		Assert(root->parse == parse); /* GPDB isn't always careful about this. */
 		SS_finalize_plan(root, plan, true);
 	}
-=======
-		SS_finalize_plan(root, plan, true);
->>>>>>> 49f001d81e
 
 	/* Return internal info if caller wants it */
 	if (subroot)
@@ -1456,16 +1445,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		root->group_pathkeys =
 			make_pathkeys_for_groupclause(root,
 										  parse->groupClause,
-<<<<<<< HEAD
 										  tlist);
-		root->sort_pathkeys =
-			make_pathkeys_for_sortclauses(root,
-										  parse->sortClause,
-										  tlist,
-										  false);
-=======
-										  tlist,
-										  false);
 		if (list_length(parse->distinctClause) > list_length(parse->sortClause))
 			root->sort_pathkeys =
 				make_pathkeys_for_sortclauses(root,
@@ -1478,7 +1458,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 											  parse->sortClause,
 											  tlist,
 											  false);
->>>>>>> 49f001d81e
 
 		/*
 		 * Will need actual number of aggregates for estimating costs.
@@ -1881,14 +1860,10 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				/*
 				 * Make a copy of tlist. Really need to?
 				 */
-<<<<<<< HEAD
 				List	   *new_tlist = copyObject(tlist);
 
 				/* Make EXPLAIN output look nice */
 				foreach(lc, result_plan->targetlist)
-=======
-				if (need_sort_for_grouping)
->>>>>>> 49f001d81e
 				{
 					TargetEntry *tle = (TargetEntry *) lfirst(lc);
 

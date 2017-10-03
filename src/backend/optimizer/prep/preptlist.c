@@ -26,11 +26,8 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-<<<<<<< HEAD
-#include "catalog/gp_policy.h"     /* CDB: POLICYTYPE_PARTITIONED */
-=======
 #include "access/sysattr.h"
->>>>>>> 49f001d81e
+#include "catalog/gp_policy.h"     /* CDB: POLICYTYPE_PARTITIONED */
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/plancat.h"
@@ -41,12 +38,9 @@
 #include "parser/analyze.h"
 #include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
-<<<<<<< HEAD
 #include "parser/parse_relation.h"
 #include "utils/lsyscache.h"
-=======
 #include "utils/rel.h"
->>>>>>> 49f001d81e
 
 
 static List *expand_targetlist(List *tlist, int command_type,

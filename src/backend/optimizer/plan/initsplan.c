@@ -1456,21 +1456,12 @@ check_outerjoin_delay(PlannerInfo *root,
 				/* yes, so set the result flag */
 				outerjoin_delayed = true;
 				/* have we included all its rels in relids? */
-<<<<<<< HEAD
 				if (!bms_is_subset(sjinfo->min_lefthand, relids) ||
 					!bms_is_subset(sjinfo->min_righthand, relids))
 				{
 					/* no, so add them in */
 					relids = bms_add_members(relids, sjinfo->min_lefthand);
 					relids = bms_add_members(relids, sjinfo->min_righthand);
-=======
-				if (!bms_is_subset(ojinfo->min_lefthand, relids) ||
-					!bms_is_subset(ojinfo->min_righthand, relids))
-				{
-					/* no, so add them in */
-					relids = bms_add_members(relids, ojinfo->min_lefthand);
-					relids = bms_add_members(relids, ojinfo->min_righthand);
->>>>>>> 49f001d81e
 					/* we'll need another iteration */
 					found_some = true;
 				}

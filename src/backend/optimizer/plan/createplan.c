@@ -162,7 +162,6 @@ static Sort *make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
 		  AttrNumber *sortColIdx, Oid *sortOperators, bool *nullsFirst,
 		  double limit_tuples);
 static List *flatten_grouping_list(List *groupcls);
-static Material *make_material(Plan *lefttree);
 
 
 /*
@@ -877,16 +876,6 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 	 * Therefore newtlist starts from build_relation_tlist() not just a
 	 * copy of the subplan's tlist; and we don't install it into the subplan
 	 * unless we are sorting or stuff has to be added.
-<<<<<<< HEAD
-=======
-	 *
-	 * To find the correct list of values to unique-ify, we look in the
-	 * information saved for IN expressions.  If this code is ever used in
-	 * other scenarios, some other way of finding what to unique-ify will
-	 * be needed.  The IN clause's operators are needed too, since they
-	 * determine what the meaning of "unique" is in this context.
-	 *----------
->>>>>>> 49f001d81e
 	 */
 	uniq_exprs = best_path->distinct_on_exprs;	/* CDB */
 	in_operators = best_path->distinct_on_eq_operators; /* CDB */
@@ -4114,7 +4103,6 @@ make_append(List *appendplans, bool isTarget, List *tlist)
 	Plan	   *plan = &node->plan;
 	double		total_size;
 	ListCell   *subnode;
-	double		weighted_total_width = 0.0;		/* maintain weighted total */
 
 	/*
 	 * Compute cost as sum of subplan costs.  We charge nothing extra for the
@@ -4133,19 +4121,15 @@ make_append(List *appendplans, bool isTarget, List *tlist)
 			plan->startup_cost = subplan->startup_cost;
 		plan->total_cost += subplan->total_cost;
 		plan->plan_rows += subplan->plan_rows;
-<<<<<<< HEAD
-		weighted_total_width += (double) subplan->plan_rows * (double) subplan->plan_width;
-	}
-	plan->plan_width = (int) ceil(weighted_total_width / Max(1.0, plan->plan_rows));
-=======
 		total_size += subplan->plan_width * subplan->plan_rows;
 	}
+	/* GPDB_84_MERGE_FIXME: ensure this math is okay compared to before the
+	 * merge */
 	if (plan->plan_rows > 0)
 		plan->plan_width = rint(total_size / plan->plan_rows);
 	else
 		plan->plan_width = 0;
 
->>>>>>> 49f001d81e
 	plan->targetlist = tlist;
 	plan->qual = NIL;
 	plan->lefttree = NULL;
@@ -4767,7 +4751,6 @@ make_sort_from_groupcols(PlannerInfo *root,
 					 sortColIdx, sortOperators, nullsFirst, -1.0);
 }
 
-<<<<<<< HEAD
 
 /*
  * make_sort_from_reordered_groupcols
@@ -4917,9 +4900,6 @@ make_motion(PlannerInfo *root, Plan *lefttree, List *sortPathKeys, bool useExecu
 }
 
 Material *
-=======
-static Material *
->>>>>>> 49f001d81e
 make_material(Plan *lefttree)
 {
 	Material   *node = makeNode(Material);
