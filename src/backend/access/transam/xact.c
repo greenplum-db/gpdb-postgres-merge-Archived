@@ -2443,8 +2443,8 @@ StartTransaction(void)
 
 	ereport((Debug_print_snapshot_dtm ? LOG : DEBUG5),
 			(errmsg("[Distributed Snapshot #%u] *StartTransaction* (gxid = %u, xid = %u, '%s')",
-					(SerializableSnapshot == NULL ? 0 :
-					 SerializableSnapshot->distribSnapshotWithLocalMapping.ds.distribSnapshotId),
+					(!FirstSnapshotSet ? 0 :
+					 GetTransactionSnapshot()->distribSnapshotWithLocalMapping.ds.distribSnapshotId),
 					getDistributedTransactionId(),
 					s->transactionId,
 					DtxContextToString(DistributedTransactionContext))));

@@ -126,25 +126,8 @@ bool		XLOG_DEBUG = false;
  */
 #define XLOGfileslop	(2*CheckPointSegments + 1)
 
-<<<<<<< HEAD
-
-/* these are derived from XLOG_sync_method by assign_xlog_sync_method */
-int			sync_method = DEFAULT_SYNC_METHOD;
-static int	open_sync_bit = DEFAULT_SYNC_FLAGBIT;
-
-/*
- * walreceiver process receives xlog data from walsender process.
- * It needs to write the xlog data as soon as it receives and the amount it receives.
- * As the amount of data received by it to write cannot be guaranteed to be
- * OS/FS block size aligned, should never use O_DIRECT for the same.
- * Also, as code is not expecting O_DIRECT to be used for xlog writes on walreceiver,
- * the buffer pointer to perform xlog writes is not made usre to be OS/FS blocks size aligned.
- */
-#define XLOG_SYNC_BIT  (enableFsync && (MyAuxProcType != WalReceiverProcess) ? \
-						open_sync_bit : 0)
-
 bool am_startup = false;
-=======
+
 /*
  * GUC support
  */
@@ -164,7 +147,6 @@ const struct config_enum_entry sync_method_options[] = {
 #endif
 	{NULL, 0, false}
 };
->>>>>>> 49f001d81e
 
 /*
  * Statistics for current checkpoint are collected in this global struct.
@@ -702,11 +684,12 @@ static void WriteControlFile(void);
 static void ReadControlFile(void);
 
 static char *str_time(pg_time_t tnow);
-<<<<<<< HEAD
 
 static void xlog_outrec(StringInfo buf, XLogRecord *record);
 static void pg_start_backup_callback(int code, Datum arg);
 static bool read_backup_label(XLogRecPtr *checkPointLoc, bool *backupEndRequired);
+static void rm_redo_error_callback(void *arg);
+static int get_sync_bit(int method);
 static void ValidateXLOGDirectoryStructure(void);
 
 /* New functions added for WAL replication */
@@ -720,18 +703,6 @@ typedef struct RedoErrorCallBack
 
 	XLogRecord 	*record;
 } RedoErrorCallBack;
-
-=======
-#ifdef WAL_DEBUG
-static void xlog_outrec(StringInfo buf, XLogRecord *record);
-#endif
-static void issue_xlog_fsync(void);
-static void pg_start_backup_callback(int code, Datum arg);
-static bool read_backup_label(XLogRecPtr *checkPointLoc,
-				  XLogRecPtr *minRecoveryLoc);
->>>>>>> 49f001d81e
-static void rm_redo_error_callback(void *arg);
-static int get_sync_bit(int method);
 
 static int XLogGetEof(XLogRecPtr *eofRecPtr);
 
@@ -1589,12 +1560,8 @@ XLogCheckBuffer(XLogRecData *rdata, bool holdsExclusiveLock,
 				bool wal_check_consistency_enabled,
 				XLogRecPtr *lsn, BkpBlock *bkpb)
 {
-<<<<<<< HEAD
-	PageHeader	page;
-	bool needs_backup;
-=======
 	Page		page;
->>>>>>> 49f001d81e
+	bool needs_backup;
 
 	page = BufferGetPage(rdata->buffer);
 
@@ -1604,21 +1571,14 @@ XLogCheckBuffer(XLogRecData *rdata, bool holdsExclusiveLock,
 	 * don't need to take the buffer header lock for PageGetLSN if we hold
 	 * an exclusive lock on the page and/or the relation.
 	 */
-<<<<<<< HEAD
 	if (holdsExclusiveLock)
-		*lsn = PageGetLSN((Page) page);
+		*lsn = PageGetLSN(page);
 	else
 		*lsn = BufferGetLSNAtomic(rdata->buffer);
 
-	needs_backup = XLByteLE(page->pd_lsn, RedoRecPtr);
+	needs_backup = XLByteLE(((PageHeader) page)->pd_lsn, RedoRecPtr);
 
 	if (needs_backup || wal_check_consistency_enabled)
-=======
-	*lsn = PageGetLSN(page);
-
-	if (doPageWrites &&
-		XLByteLE(PageGetLSN(page), RedoRecPtr))
->>>>>>> 49f001d81e
 	{
 		/*
 		 * The page needs to be backed up, so set up *bkpb
@@ -2780,25 +2740,15 @@ XLogFileInit(
 	*use_existent = false;
 
 	/* Now open original target segment (might not be file I just made) */
-<<<<<<< HEAD
 	MirroredFlatFile_Open(
 						mirroredOpen,
 						XLOGDIR,
 						simpleFileName,
-						O_RDWR | PG_BINARY | XLOG_SYNC_BIT,
+						O_RDWR | PG_BINARY | get_sync_bit(sync_method),
 					    S_IRUSR | S_IWUSR,
 					    /* suppressError */ false,
 						/* atomic operation */ false,
 						/* isMirrorRecovery */ false);
-=======
-	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | get_sync_bit(sync_method),
-					   S_IRUSR | S_IWUSR);
-	if (fd < 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-		   errmsg("could not open file \"%s\" (log file %u, segment %u): %m",
-				  path, log, seg)));
->>>>>>> 49f001d81e
 
 	pfree(xlogDir);
 
@@ -3137,17 +3087,10 @@ XLogFileClose(void)
 #endif
 #endif   /* NOT_USED */
 
-<<<<<<< HEAD
 	MirroredFlatFile_Close(&mirroredLogFileOpen);
-=======
-	if (close(openLogFile))
-		ereport(PANIC,
-				(errcode_for_file_access(),
-				 errmsg("could not close log file %u, segment %u: %m",
-						openLogId, openLogSeg)));
-	openLogFile = -1;
 }
 
+#if 0 /* GPDB doesn't make use of this function */
 /*
  * Attempt to retrieve the specified file from off-line archival storage.
  * If successful, fill "path" with its complete path (note that this will be
@@ -3388,8 +3331,8 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	 */
 	snprintf(path, MAXPGPATH, XLOGDIR "/%s", xlogfname);
 	return false;
->>>>>>> 49f001d81e
 }
+#endif
 
 /*
  * Preallocate log files beyond the specified log endpoint.
@@ -3724,7 +3667,6 @@ CleanupBackupHistory(void)
 static void
 RestoreBkpBlocks(XLogRecord *record, XLogRecPtr lsn)
 {
-<<<<<<< HEAD
 	BkpBlock	bkpb;
 	char	   *blk;
 	int			i;
@@ -3754,22 +3696,18 @@ static void
 RestoreBackupBlockContents(XLogRecPtr lsn, BkpBlock bkpb, char *blk,
 						   bool get_cleanup_lock, bool keep_buffer)
 {
-=======
->>>>>>> 49f001d81e
 	Buffer		buffer;
 	Page		page;
-	Relation	reln;
 
 	if (! (bkpb.block_info & BLOCK_APPLY))
 		return;
 
 	MIRROREDLOCK_BUFMGR_DECLARE;
 
-	reln = XLogOpenRelation(bkpb.node);
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 
-	buffer = XLogReadBuffer(reln, bkpb.block, true);
+	buffer = XLogReadBuffer(bkpb.node, bkpb.block, true);
 	Assert(BufferIsValid(buffer));
 #if 0 /* upstream merge */
 	if (get_cleanup_lock)
@@ -3782,7 +3720,6 @@ RestoreBackupBlockContents(XLogRecPtr lsn, BkpBlock bkpb, char *blk,
 
 	if (bkpb.hole_length == 0)
 	{
-<<<<<<< HEAD
 		memcpy((char *) page, blk, BLCKSZ);
 	}
 	else
@@ -3804,35 +3741,6 @@ RestoreBackupBlockContents(XLogRecPtr lsn, BkpBlock bkpb, char *blk,
 	MarkBufferDirty(buffer);
 
 	if (!keep_buffer)
-=======
-		if (!(record->xl_info & XLR_SET_BKP_BLOCK(i)))
-			continue;
-
-		memcpy(&bkpb, blk, sizeof(BkpBlock));
-		blk += sizeof(BkpBlock);
-
-		buffer = XLogReadBuffer(bkpb.node, bkpb.block, true);
-		Assert(BufferIsValid(buffer));
-		page = (Page) BufferGetPage(buffer);
-
-		if (bkpb.hole_length == 0)
-		{
-			memcpy((char *) page, blk, BLCKSZ);
-		}
-		else
-		{
-			/* must zero-fill the hole */
-			MemSet((char *) page, 0, BLCKSZ);
-			memcpy((char *) page, blk, bkpb.hole_offset);
-			memcpy((char *) page + (bkpb.hole_offset + bkpb.hole_length),
-				   blk + bkpb.hole_offset,
-				   BLCKSZ - (bkpb.hole_offset + bkpb.hole_length));
-		}
-
-		PageSetLSN(page, lsn);
-		PageSetTLI(page, ThisTimeLineID);
-		MarkBufferDirty(buffer);
->>>>>>> 49f001d81e
 		UnlockReleaseBuffer(buffer);
 
 	MIRROREDLOCK_BUFMGR_UNLOCK;
@@ -4865,7 +4773,6 @@ retry:
 
 	return (XLogRecord *) buffer;
 
-<<<<<<< HEAD
 next_record_is_invalid:
 
 	elogif(debug_xlog_record_read, LOG,
@@ -4873,18 +4780,12 @@ next_record_is_invalid:
 
 	failedSources |= readSource;
 
-=======
-next_record_is_invalid:;
->>>>>>> 49f001d81e
 	if (readFile >= 0)
 	{
 		close(readFile);
 		readFile = -1;
 	}
-<<<<<<< HEAD
 
-=======
->>>>>>> 49f001d81e
 	nextRecord = NULL;
 
 	/* In standby-mode, keep trying */
@@ -6286,24 +6187,12 @@ XLogReadRecoveryCommandFile(int emode)
 			/*
 			 * does nothing if a recovery_target is not also set
 			 */
-<<<<<<< HEAD
-			if (strcmp(tok2, "on") == 0)
-				StandbyModeRequested = true;
-			else
-			{
-				StandbyModeRequested = false;
-				tok2 = "false";
-			}
-			ereport(emode,
-					(errmsg("StandbyModeRequested = %s", tok2)));
-=======
-			if (!parse_bool(tok2, &recoveryTargetInclusive))
+			if (!parse_bool(tok2, &StandbyModeRequested))
 				  ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					  errmsg("parameter \"recovery_target_inclusive\" requires a Boolean value")));
+					  errmsg("parameter \"standby_mode\" requires a Boolean value")));
 			ereport(LOG,
-					(errmsg("recovery_target_inclusive = %s", tok2)));
->>>>>>> 49f001d81e
+					(errmsg("standby_mode = %s", tok2)));
 		}
 		else if (strcmp(tok1, "log_restartpoints") == 0)
 		{
@@ -7339,15 +7228,9 @@ StartupXLOG(void)
 								BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
 		}
 
-<<<<<<< HEAD
-		/* Start up the recovery environment */
-		XLogInitRelationCache();
-
 		UtilityModeFindOrCreateDtmRedoFile();
 
-=======
 		/* Initialize resource managers */
->>>>>>> 49f001d81e
 		for (rmid = 0; rmid <= RM_MAX_ID; rmid++)
 		{
 			if (RmgrTable[rmid].rm_startup != NULL)
@@ -7723,18 +7606,9 @@ StartupXLOG(void)
 		 *
 		 * We only flush out the Resource Managers.
 		 */
-<<<<<<< HEAD
 		Checkpoint_RecoveryPass(XLogCtl->pass1LastLoc);
 
-		/*
-		 * Close down recovery environment
-		 */
-		XLogCloseRelationCache();
-
 		UtilityModeCloseDtmRedoFile();
-=======
-		CreateCheckPoint(CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_IMMEDIATE);
->>>>>>> 49f001d81e
 	}
 
 	/*
@@ -7762,11 +7636,9 @@ StartupXLOG(void)
 		 */
 		CurrentResourceOwner = ResourceOwnerCreate(NULL, "StartupXLOG");
 
-		/*
-		 * We don't have any hope of running a real relcache, but we can use the
-		 * same fake-relcache facility that WAL replay uses.
-		 */
-		XLogInitRelationCache();
+		/* GPDB_84_MERGE_FIXME: we removed XLogInitRelationCache from this code
+		 * because it doesn't exist in upstream anymore. Does it need a
+		 * replacement? */
 
 		/*
 		 * Setup syscache so that PT tuples may be updated using usual
@@ -7789,11 +7661,6 @@ StartupXLOG(void)
 		 * scan in the persistent meta-data into memory on already initdb database.
 		 */
 		PersistentFileSysObj_StartupInitScan();
-
-		/*
-		 * Close down recovery environment
-		 */
-		XLogCloseRelationCache();
 	}
 
 	if (!IsUnderPostmaster)
@@ -8075,8 +7942,9 @@ StartupXLOG_Pass3(void)
 		     XLogLocationToString(&ControlFile->checkPoint));
 	}
 
-	/* Start up the recovery environment */
-	XLogInitRelationCache();
+	/* GPDB_84_MERGE_FIXME: we removed XLogInitRelationCache from this code
+	 * because it doesn't exist in upstream anymore. Does it need a
+	 * replacement? */
 
 	UtilityModeFindOrCreateDtmRedoFile();
 
@@ -8189,11 +8057,6 @@ StartupXLOG_Pass3(void)
 
 	/* Reset pgstat data, because it may be invalid after recovery */
 	pgstat_reset_all();
-
-	/*
-	 * Close down recovery environment
-	 */
-	XLogCloseRelationCache();
 
 	UtilityModeCloseDtmRedoFile();
 
@@ -10427,16 +10290,22 @@ xlog_outrec(StringInfo buf, XLogRecord *record)
  * Return the (possible) sync flag used for opening a file, depending on the
  * value of the GUC wal_sync_method.
  */
-<<<<<<< HEAD
-const char *
-assign_xlog_sync_method(const char *method, bool doit, GucSource source __attribute__((unused)) )
-=======
 static int
 get_sync_bit(int method)
->>>>>>> 49f001d81e
 {
 	/* If fsync is disabled, never open in sync mode */
 	if (!enableFsync)
+		return 0;
+
+	/*
+	 * walreceiver process receives xlog data from walsender process.
+	 * It needs to write the xlog data as soon as it receives and the amount it receives.
+	 * As the amount of data received by it to write cannot be guaranteed to be
+	 * OS/FS block size aligned, should never use O_DIRECT for the same.
+	 * Also, as code is not expecting O_DIRECT to be used for xlog writes on walreceiver,
+	 * the buffer pointer to perform xlog writes is not made usre to be OS/FS blocks size aligned.
+	 */
+	if (MyAuxProcType == WalReceiverProcess)
 		return 0;
 
 	switch (method)
@@ -10470,7 +10339,7 @@ get_sync_bit(int method)
  * GUC support
  */
 bool
-assign_xlog_sync_method(int new_sync_method, bool doit, GucSource source)
+assign_xlog_sync_method(int new_sync_method, bool doit, GucSource source pg_attribute_unused() )
 {
 	if (!doit)
 		return true;
@@ -10537,11 +10406,7 @@ issue_xlog_fsync(int fd, uint32 log, uint32 seg)
 			break;
 #endif
 		case SYNC_METHOD_OPEN:
-<<<<<<< HEAD
 //		case SYNC_METHOD_OPEN_DSYNC:
-=======
-		case SYNC_METHOD_OPEN_DSYNC:
->>>>>>> 49f001d81e
 			/* write synced it already */
 			break;
 		default:
@@ -10640,11 +10505,7 @@ do_pg_start_backup(const char *backupidstr, bool fast, char **labelfile)
 	LWLockRelease(WALInsertLock);
 
 	/* Ensure we release forcePageWrites if fail below */
-<<<<<<< HEAD
 	PG_ENSURE_ERROR_CLEANUP(pg_start_backup_callback, (Datum) BoolGetDatum(exclusive));
-=======
-	PG_ENSURE_ERROR_CLEANUP(pg_start_backup_callback, (Datum) 0);
->>>>>>> 49f001d81e
 	{
 		bool		gotUniqueStartpoint = false;
 
@@ -10798,11 +10659,7 @@ do_pg_start_backup(const char *backupidstr, bool fast, char **labelfile)
 		else
 			*labelfile = labelfbuf.data;
 	}
-<<<<<<< HEAD
 	PG_END_ENSURE_ERROR_CLEANUP(pg_start_backup_callback, (Datum) BoolGetDatum(exclusive));
-=======
-	PG_END_ENSURE_ERROR_CLEANUP(pg_start_backup_callback, (Datum) 0);
->>>>>>> 49f001d81e
 
 	/*
 	 * We're done.  As a convenience, return the starting WAL location.
@@ -10837,32 +10694,12 @@ pg_start_backup_callback(int code, Datum arg)
 	LWLockRelease(WALInsertLock);
 }
 
-/* Error cleanup callback for pg_start_backup */
-static void
-pg_start_backup_callback(int code, Datum arg)
-{
-	/* Turn off forcePageWrites on failure */
-	LWLockAcquire(WALInsertLock, LW_EXCLUSIVE);
-	XLogCtl->Insert.forcePageWrites = false;
-	LWLockRelease(WALInsertLock);
-}
-
 /*
-<<<<<<< HEAD
  * do_pg_stop_backup is the workhorse of the user-visible pg_stop_backup()
  * function.
 
  * If labelfile is NULL, this stops an exclusive backup. Otherwise this stops
  * the non-exclusive backup specified by 'labelfile'.
-=======
- * pg_stop_backup: finish taking an on-line backup dump
- *
- * We remove the backup label file created by pg_start_backup, and instead
- * create a backup history file in pg_xlog (whence it will immediately be
- * archived).  The backup history file contains the same info found in
- * the label file, plus the backup-end time and WAL location.
- * Note: different from CancelBackup which just cancels online backup mode.
->>>>>>> 49f001d81e
  */
 XLogRecPtr
 do_pg_stop_backup(char *labelfile)
@@ -11485,7 +11322,57 @@ rm_redo_error_callback(void *arg)
 	pfree(buf.data);
 }
 
-<<<<<<< HEAD
+#if 0 /* GPDB doesn't have online backup */
+/*
+ * BackupInProgress: check if online backup mode is active
+ *
+ * This is done by checking for existence of the "backup_label" file.
+ */
+bool
+BackupInProgress(void)
+{
+	struct stat stat_buf;
+
+	return (stat(BACKUP_LABEL_FILE, &stat_buf) == 0);
+}
+
+/*
+ * CancelBackup: rename the "backup_label" file to cancel backup mode
+ *
+ * If the "backup_label" file exists, it will be renamed to "backup_label.old".
+ * Note that this will render an online backup in progress useless.
+ * To correctly finish an online backup, pg_stop_backup must be called.
+ */
+void
+CancelBackup(void)
+{
+	struct stat stat_buf;
+
+	/* if the file is not there, return */
+	if (stat(BACKUP_LABEL_FILE, &stat_buf) < 0)
+		return;
+
+	/* remove leftover file from previously cancelled backup if it exists */
+	unlink(BACKUP_LABEL_OLD);
+
+	if (rename(BACKUP_LABEL_FILE, BACKUP_LABEL_OLD) == 0)
+	{
+		ereport(LOG,
+				(errmsg("online backup mode cancelled"),
+				 errdetail("\"%s\" was renamed to \"%s\".",
+						BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
+	}
+	else
+	{
+		ereport(WARNING,
+				(errcode_for_file_access(),
+				 errmsg("online backup mode was not cancelled"),
+				 errdetail("Could not rename \"%s\" to \"%s\": %m.",
+						BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
+	}
+}
+#endif
+
 static char *
 XLogLocationToBuffer(char *buffer, XLogRecPtr *loc, bool longFormat)
 {
@@ -12723,7 +12610,6 @@ checkXLogConsistency(XLogRecord *record, XLogRecPtr EndRecPtr)
 	blk = (char *) XLogRecGetData(record) + record->xl_len;
 	for (int i = 0; i < XLR_MAX_BKP_BLOCKS; i++)
 	{
-		Relation    reln;
 		BkpBlock    bkpb;
 		Buffer		buf;
 		Page		page;
@@ -12753,8 +12639,6 @@ checkXLogConsistency(XLogRecord *record, XLogRecPtr EndRecPtr)
 			continue;
 		}
 
-		reln = XLogOpenRelation(bkpb.node);
-
 		// -------- MirroredLock ----------
 		MIRROREDLOCK_BUFMGR_LOCK;
 
@@ -12762,7 +12646,7 @@ checkXLogConsistency(XLogRecord *record, XLogRecPtr EndRecPtr)
 		 * Read the contents from the current buffer and store it in a
 		 * temporary page.
 		 */
-		buf = XLogReadBuffer(reln, bkpb.block, false);
+		buf = XLogReadBuffer(bkpb.node, bkpb.block, false);
 		if (!BufferIsValid(buf))
 			continue;
 
@@ -12835,54 +12719,3 @@ checkXLogConsistency(XLogRecord *record, XLogRecPtr EndRecPtr)
 		}
 	}
 }
-=======
-/*
- * BackupInProgress: check if online backup mode is active
- *
- * This is done by checking for existence of the "backup_label" file.
- */
-bool
-BackupInProgress(void)
-{
-	struct stat stat_buf;
-
-	return (stat(BACKUP_LABEL_FILE, &stat_buf) == 0);
-}
-
-/*
- * CancelBackup: rename the "backup_label" file to cancel backup mode
- *
- * If the "backup_label" file exists, it will be renamed to "backup_label.old".
- * Note that this will render an online backup in progress useless.
- * To correctly finish an online backup, pg_stop_backup must be called.
- */
-void
-CancelBackup(void)
-{
-	struct stat stat_buf;
-
-	/* if the file is not there, return */
-	if (stat(BACKUP_LABEL_FILE, &stat_buf) < 0)
-		return;
-
-	/* remove leftover file from previously cancelled backup if it exists */
-	unlink(BACKUP_LABEL_OLD);
-
-	if (rename(BACKUP_LABEL_FILE, BACKUP_LABEL_OLD) == 0)
-	{
-		ereport(LOG,
-				(errmsg("online backup mode cancelled"),
-				 errdetail("\"%s\" was renamed to \"%s\".",
-						BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
-	}
-	else
-	{
-		ereport(WARNING,
-				(errcode_for_file_access(),
-				 errmsg("online backup mode was not cancelled"),
-				 errdetail("Could not rename \"%s\" to \"%s\": %m.",
-						BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
-	}
-}
-
->>>>>>> 49f001d81e
