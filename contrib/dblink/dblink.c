@@ -97,13 +97,9 @@ static char *generate_relation_name(Relation rel);
 static void dblink_connstr_check(const char *connstr);
 static void dblink_security_check(PGconn *conn, remoteConn *rconn);
 static void dblink_res_error(const char *conname, PGresult *res, const char *dblink_context_msg, bool fail);
-<<<<<<< HEAD
-static void dblink_security_check(PGconn *conn, remoteConn *rconn);
 static void validate_pkattnums(Relation rel,
 				   int2vector *pkattnums_arg, int32 pknumatts_arg,
 				   int **pkattnums, int *pknumatts);
-=======
->>>>>>> 49f001d81e
 
 /* Global */
 static remoteConn *pconn = NULL;
@@ -135,15 +131,6 @@ typedef struct remoteConnHashEnt
 		} \
 	} while (0)
 
-<<<<<<< HEAD
-#define xpstrdup(tgtvar_, srcvar_) \
-    do { \
-        if (srcvar_) \
-            tgtvar_ = pstrdup(srcvar_); \
-        else \
-            tgtvar_ = NULL; \
-    } while (0)
-=======
 #define xpstrdup(var_c, var_) \
 	do { \
 		if (var_ != NULL) \
@@ -151,7 +138,6 @@ typedef struct remoteConnHashEnt
 		else \
 			var_c = NULL; \
 	} while (0)
->>>>>>> 49f001d81e
 
 #define DBLINK_RES_INTERNALERROR(p2) \
 	do { \
@@ -847,17 +833,11 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async, bool do_get)
 				(PQresultStatus(res) != PGRES_COMMAND_OK &&
 				 PQresultStatus(res) != PGRES_TUPLES_OK))
 			{
-				dblink_res_error(conname, res, "could not execute query", fail);
-<<<<<<< HEAD
-					if (freeconn)
-						PQfinish(conn);
-					MemoryContextSwitchTo(oldcontext);
-					SRF_RETURN_DONE(funcctx);
-=======
 				if (freeconn)
 					PQfinish(conn);
+				dblink_res_error(conname, res, "could not execute query", fail);
+				MemoryContextSwitchTo(oldcontext);
 				SRF_RETURN_DONE(funcctx);
->>>>>>> 49f001d81e
 			}
 
 			if (PQresultStatus(res) == PGRES_COMMAND_OK)
@@ -2243,7 +2223,6 @@ dblink_security_check(PGconn *conn, remoteConn *rconn)
 	}
 }
 
-<<<<<<< HEAD
 /*
  * For non-superusers, insist that the connstr specify a password.  This
  * prevents a password from being picked up from .pgpass, a service file,
@@ -2284,8 +2263,6 @@ dblink_connstr_check(const char *connstr)
 	}
 }
 
-=======
->>>>>>> 49f001d81e
 static void
 dblink_res_error(const char *conname, PGresult *res, const char *dblink_context_msg, bool fail)
 {
@@ -2336,7 +2313,6 @@ dblink_res_error(const char *conname, PGresult *res, const char *dblink_context_
 		 errcontext("Error occurred on dblink connection named \"%s\": %s.",
 					dblink_context_conname, dblink_context_msg)));
 }
-<<<<<<< HEAD
 
 /*
  * Validate the PK-attnums argument for dblink_build_sql_insert() and related
@@ -2386,5 +2362,3 @@ validate_pkattnums(Relation rel,
 		(*pkattnums)[i] = pkattnum - 1;
 	}
 }
-=======
->>>>>>> 49f001d81e

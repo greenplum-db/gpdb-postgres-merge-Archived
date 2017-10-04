@@ -10,11 +10,8 @@
 
 #include "access/htup.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
-#include "storage/block.h"
-=======
 #include "funcapi.h"
->>>>>>> 49f001d81e
+#include "storage/block.h"
 #include "storage/freespace.h"
 #include "storage/lmgr.h"
 

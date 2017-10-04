@@ -42,13 +42,9 @@ g_int_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	ArrayType  *query = (ArrayType *) PG_GETARG_ARRAYTYPE_P_COPY(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
-<<<<<<< HEAD
-	bool		retval = false;
-=======
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	bool		retval;
->>>>>>> 49f001d81e
 
 	/* this is exact except for RTSameStrategyNumber */
 	*recheck = (strategy == RTSameStrategyNumber);
