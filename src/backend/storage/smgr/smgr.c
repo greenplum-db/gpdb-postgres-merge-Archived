@@ -802,8 +802,6 @@ void
 smgrcreate(
 	SMgrRelation 				reln,
 
-	bool 						isLocalBuf,
-
 	char						*relationName,
 					/* For tracing only.  Can be NULL in some execution paths. */
 
@@ -828,7 +826,6 @@ smgrcreate(
 
 	mdcreate(
 			reln,
-			isLocalBuf,
 			relationName,
 			mirrorDataLossTrackingState,
 			mirrorDataLossTrackingSessionNum,

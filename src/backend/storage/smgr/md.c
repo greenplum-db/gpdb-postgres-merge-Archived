@@ -719,8 +719,6 @@ void
 mdcreate(
 	SMgrRelation 				reln,
 
-	bool 						isLocalBuf, 
-
 	char						*relationName,
 					/* For tracing only.  Can be NULL in some execution paths. */
 
