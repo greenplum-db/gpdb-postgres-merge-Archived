@@ -8429,7 +8429,9 @@ constraint_apply_mapped(HeapTuple tuple, AttrMap *map, Relation cand,
 								  InvalidOid,
 								  conexpr,
 								  conbin,
-								  consrc);
+								  consrc,
+								  con->conislocal,
+								  con->coninhcount);
 			break;
 		}
 
@@ -8478,7 +8480,9 @@ constraint_apply_mapped(HeapTuple tuple, AttrMap *map, Relation cand,
 								  indexoid,
 								  NULL,		/* no check constraint */
 								  NULL,
-								  NULL);
+								  NULL,
+								  con->conislocal,
+								  con->coninhcount);
 
 			heap_close(frel, AccessExclusiveLock);
 			break;

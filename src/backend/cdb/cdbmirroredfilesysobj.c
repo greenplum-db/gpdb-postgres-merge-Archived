@@ -988,7 +988,6 @@ void MirroredFileSysObj_TransactionCreateBufferPoolFile(
 	 */
 	smgrcreate(
 			smgrOpen,
-			isLocalBuf,
 			relationName,
 			mirrorDataLossTrackingState,
 			mirrorDataLossTrackingSessionNum,
