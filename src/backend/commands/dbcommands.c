@@ -1048,7 +1048,7 @@ createdb(CreatedbStmt *stmt)
 	 * trouble here than anywhere else.  XXX this code should be changed
 	 * whenever a generic fix is implemented.
 	 */
-	snapshot = CopySnapshot(GetLatestSnapshot());
+	snapshot = RegisterSnapshot(GetLatestSnapshot());
 
 	/*
 	 * Once we start copying subdirectories, we need to be able to clean 'em
@@ -2450,7 +2450,7 @@ check_db_file_conflict(Oid db_id)
 	 *
 	 * XXX change this when a generic fix for SnapshotNow races is implemented
 	 */
-	snapshot = CopySnapshot(GetLatestSnapshot());
+	snapshot = RegisterSnapshot(GetLatestSnapshot());
 
 	rel = heap_open(TableSpaceRelationId, AccessShareLock);
 	scan = heap_beginscan(rel, snapshot, 0, NULL);
@@ -2598,34 +2598,6 @@ dbase_redo(XLogRecPtr beginLoc  __attribute__((unused)), XLogRecPtr lsn  __attri
 		 */
 		copydir(src_path, dst_path, false);
 	}
-<<<<<<< HEAD
-=======
-	else if (info == XLOG_DBASE_DROP)
-	{
-		xl_dbase_drop_rec *xlrec = (xl_dbase_drop_rec *) XLogRecGetData(record);
-		char	   *dst_path;
-
-		dst_path = GetDatabasePath(xlrec->db_id, xlrec->tablespace_id);
-
-		/* Drop pages for this database that are in the shared buffer cache */
-		DropDatabaseBuffers(xlrec->db_id);
-
-		/* Also, clean out any entries in the shared free space map */
-		FreeSpaceMapForgetDatabase(xlrec->db_id);
-
-		/* Also, clean out any fsync requests that might be pending in md.c */
-		ForgetDatabaseFsyncRequests(xlrec->db_id);
-
-		/* Clean out the xlog relcache too */
-		XLogDropDatabase(xlrec->db_id);
-
-		/* And remove the physical files */
-		if (!rmtree(dst_path, true))
-			ereport(WARNING,
-					(errmsg("some useless files may be left behind in old database directory \"%s\"",
-							dst_path)));
-	}
->>>>>>> 49f001d81e
 	else
 		elog(PANIC, "dbase_redo: unknown op code %u", info);
 }

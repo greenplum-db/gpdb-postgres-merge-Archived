@@ -1575,13 +1575,9 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 		((DR_copy *) dest)->cstate = cstate;
 
 		/* Create a QueryDesc requesting no output */
-<<<<<<< HEAD
 		cstate->queryDesc = CreateQueryDesc(plan, queryString,
-											ActiveSnapshot, InvalidSnapshot,
-=======
-		cstate->queryDesc = CreateQueryDesc(plan, GetActiveSnapshot(),
+											GetActiveSnapshot(),
 											InvalidSnapshot,
->>>>>>> 49f001d81e
 											dest, NULL, false);
 
 		if (gp_enable_gpperfmon && Gp_role == GP_ROLE_DISPATCH)
@@ -1899,15 +1895,12 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 		/* Close down the query and free resources. */
 		ExecutorEnd(cstate->queryDesc);
 		FreeQueryDesc(cstate->queryDesc);
-<<<<<<< HEAD
 		cstate->queryDesc = NULL;
-=======
 		PopActiveSnapshot();
->>>>>>> 49f001d81e
 	}
 
 	/* Clean up single row error handling related memory */
-	if(cstate->cdbsreh)
+	if (cstate->cdbsreh)
 		destroyCdbSreh(cstate->cdbsreh);
 
 	/* Clean up storage (probably not really necessary) */
@@ -1926,15 +1919,13 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 				(unsigned int) processed);
 	}
 
-    /* 	 Fix for MPP-4082. Issue automatic ANALYZE if conditions are satisfied. */
+    /* Issue automatic ANALYZE if conditions are satisfied (MPP-4082). */
 	if (Gp_role == GP_ROLE_DISPATCH && is_from)
-	{
 		auto_stats(AUTOSTATS_CMDTYPE_COPY, relationOid, processed, false /* inFunction */);
-	} /*end auto-stats block*/
 
-	if(cstate->force_quote_flags)
+	if (cstate->force_quote_flags)
 		pfree(cstate->force_quote_flags);
-	if(cstate->force_notnull_flags)
+	if (cstate->force_notnull_flags)
 		pfree(cstate->force_notnull_flags);
 
 	pfree(cstate->attribute_buf.data);
@@ -2600,7 +2591,7 @@ CopyTo(CopyState cstate)
 			{
 				HeapTuple	tuple;
 
-				scandesc = heap_beginscan(rel, ActiveSnapshot, 0, NULL);
+				scandesc = heap_beginscan(rel, GetActiveSnapshot(), 0, NULL);
 				while ((tuple = heap_getnext(scandesc, ForwardScanDirection)) != NULL)
 				{
 					CHECK_FOR_INTERRUPTS();
@@ -2614,13 +2605,14 @@ CopyTo(CopyState cstate)
 
 				heap_endscan(scandesc);
 			}
-			else if(RelationIsAoRows(rel))
+			else if (RelationIsAoRows(rel))
 			{
 				MemTuple		tuple;
 				TupleTableSlot	*slot = MakeSingleTupleTableSlot(tupDesc);
 				MemTupleBinding *mt_bind = create_memtuple_binding(tupDesc);
 
-				aoscandesc = appendonly_beginscan(rel, ActiveSnapshot, ActiveSnapshot, 0, NULL);
+				aoscandesc = appendonly_beginscan(rel, GetActiveSnapshot(),
+												  GetActiveSnapshot(), 0, NULL);
 
 				while ((tuple = appendonly_getnext(aoscandesc, ForwardScanDirection, slot)) != NULL)
 				{
@@ -2631,19 +2623,15 @@ CopyTo(CopyState cstate)
 					values = slot_get_values(slot);
 					nulls = slot_get_isnull(slot);
 
-<<<<<<< HEAD
 					/* Format and send the data */
 					CopyOneRowTo(cstate, MemTupleGetOid(tuple, mt_bind), values, nulls);
 				}
-=======
-		scandesc = heap_beginscan(cstate->rel, GetActiveSnapshot(), 0, NULL);
->>>>>>> 49f001d81e
 
 				ExecDropSingleTupleTableSlot(slot);
 
 				appendonly_endscan(aoscandesc);
 			}
-			else if(RelationIsAoCols(rel))
+			else if (RelationIsAoCols(rel))
 			{
 				AOCSScanDesc scan = NULL;
 				TupleTableSlot *slot = MakeSingleTupleTableSlot(tupDesc);
@@ -2657,11 +2645,14 @@ CopyTo(CopyState cstate)
 				    elog(ERROR, "OIDS=TRUE is not allowed on tables that use column-oriented storage. Use OIDS=FALSE");
 				}
 
+				/* GPDB_84_MERGE_FIXME: use a memset instead? */
 				proj = palloc(sizeof(bool) * nvp);
-				for(i=0; i<nvp; ++i)
+				for(i = 0; i < nvp; ++i)
 				    proj[i] = true;
 
-				scan = aocs_beginscan(rel, ActiveSnapshot, ActiveSnapshot, NULL /* relationTupleDesc */, proj);
+				scan = aocs_beginscan(rel, GetActiveSnapshot(),
+									  GetActiveSnapshot(),
+									  NULL /* relationTupleDesc */, proj);
 				for(;;)
 				{
 				    CHECK_FOR_INTERRUPTS();

@@ -3747,51 +3747,38 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 	if (!stmt->deferred)
 	{
 		AfterTriggerEventList *events = &afterTriggers->events;
-		Snapshot	saveActiveSnapshot = ActiveSnapshot;
+		bool		snapshot_set = false;
 
-		/* PG_TRY to ensure previous ActiveSnapshot is restored on error */
-		PG_TRY();
+		while (afterTriggerMarkEvents(events, NULL, true))
 		{
-			Snapshot	mySnapshot = NULL;
+			CommandId	firing_id = afterTriggers->firing_counter++;
 
-			while (afterTriggerMarkEvents(events, NULL, true))
+			/*
+			 * Make sure a snapshot has been established in case trigger
+			 * functions need one.  Note that we avoid setting a snapshot
+			 * if we don't find at least one trigger that has to be fired
+			 * now.  This is so that BEGIN; SET CONSTRAINTS ...; SET
+			 * TRANSACTION ISOLATION LEVEL SERIALIZABLE; ... works
+			 * properly.  (If we are at the start of a transaction it's
+			 * not possible for any trigger events to be queued yet.)
+			 */
+			if (!snapshot_set)
 			{
-				CommandId	firing_id = afterTriggers->firing_counter++;
-
-				/*
-				 * Make sure a snapshot has been established in case trigger
-				 * functions need one.  Note that we avoid setting a snapshot
-				 * if we don't find at least one trigger that has to be fired
-				 * now.  This is so that BEGIN; SET CONSTRAINTS ...; SET
-				 * TRANSACTION ISOLATION LEVEL SERIALIZABLE; ... works
-				 * properly.  (If we are at the start of a transaction it's
-				 * not possible for any trigger events to be queued yet.)
-				 */
-				if (mySnapshot == NULL)
-				{
-					mySnapshot = CopySnapshot(GetTransactionSnapshot());
-					ActiveSnapshot = mySnapshot;
-				}
-
-				/*
-				 * We can delete fired events if we are at top transaction level,
-				 * but we'd better not if inside a subtransaction, since the
-				 * subtransaction could later get rolled back.
-				 */
-				afterTriggerInvokeEvents(-1, firing_id, NULL,
-										 !IsSubTransaction());
+				PushActiveSnapshot(GetTransactionSnapshot());
+				snapshot_set = true;
 			}
 
-			if (mySnapshot)
-				FreeSnapshot(mySnapshot);
+			/*
+			 * We can delete fired events if we are at top transaction level,
+			 * but we'd better not if inside a subtransaction, since the
+			 * subtransaction could later get rolled back.
+			 */
+			afterTriggerInvokeEvents(-1, firing_id, NULL,
+									 !IsSubTransaction());
 		}
-		PG_CATCH();
-		{
-			ActiveSnapshot = saveActiveSnapshot;
-			PG_RE_THROW();
-		}
-		PG_END_TRY();
-		ActiveSnapshot = saveActiveSnapshot;
+
+		if (snapshot_set)
+			PopActiveSnapshot();
 	}
 	
 	if (Gp_role == GP_ROLE_DISPATCH)

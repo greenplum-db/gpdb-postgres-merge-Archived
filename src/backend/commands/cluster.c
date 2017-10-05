@@ -45,6 +45,7 @@
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
+#include "storage/lmgr.h"
 #include "storage/procarray.h"
 #include "utils/acl.h"
 #include "utils/fmgroids.h"
@@ -243,14 +244,14 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		foreach(rv, rvs)
 		{
 			RelToCluster *rvtc = (RelToCluster *) lfirst(rv);
+			bool		dispatch;
 
 			/* Start a new transaction for each relation. */
 			StartTransactionCommand();
 			/* functions in indexes may want a snapshot set */
-<<<<<<< HEAD
-			ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
-
-			bool dispatch = cluster_rel(rvtc, true, stmt, false);
+			PushActiveSnapshot(GetTransactionSnapshot());
+			dispatch = cluster_rel(rvtc, true, stmt, false);
+			PopActiveSnapshot();
 
 			if (Gp_role == GP_ROLE_DISPATCH && dispatch)
 			{
@@ -263,11 +264,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 											GetAssignedOidsForDispatch(),
 											NULL);
 			}
-=======
-			PushActiveSnapshot(GetTransactionSnapshot());
-			cluster_rel(rvtc, true);
-			PopActiveSnapshot();
->>>>>>> 49f001d81e
+
 			CommitTransactionCommand();
 		}
 
@@ -294,8 +291,8 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
  * them incrementally while we load the table.
  *
  * Note that we don't support clustering on an AO table. If printError is true,
- * this function errors out when the relation is an AO table. Otherwise,
- * this functions prints out a warning message when the relation is an AO table.
+ * this function errors out when the relation is an AO table. Otherwise, this
+ * functions prints out a warning message when the relation is an AO table.
  */
 static bool
 cluster_rel(RelToCluster *rvtc, bool recheck, ClusterStmt *stmt, bool printError)
@@ -318,9 +315,10 @@ cluster_rel(RelToCluster *rvtc, bool recheck, ClusterStmt *stmt, bool printError
 	{
 		return false;
 	}
+
 	/*
-	 * We don't support cluster on an AO table. We print out
-	 * a warning/error to the user, and simply return.
+	 * We don't support cluster on an AO table. We print out a warning/error to
+	 * the user, and simply return.
 	 */
 	if (RelationIsAoRows(OldHeap) || RelationIsAoCols(OldHeap))
 	{
@@ -756,7 +754,7 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace,
 										  OldHeap->rd_rel->relowner,
 										  tupdesc,
 										  OldHeap->rd_rel->relam,
-										  NIL,
+										  /* GPDB_84_MERGE_FIXME constraints? NIL, */
 										  OldHeap->rd_rel->relkind,
 										  OldHeap->rd_rel->relstorage,
 										  OldHeap->rd_rel->relisshared,

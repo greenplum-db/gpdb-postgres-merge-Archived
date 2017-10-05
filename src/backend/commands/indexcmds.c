@@ -693,7 +693,6 @@ DefineIndex(RangeVar *heapRelation,
 	 */
 	LockRelationIdForSession(&heaprelid, ShareUpdateExclusiveLock);
 
-<<<<<<< HEAD
 	/*
 	 * CommitTransactionCommand will throw an error, if we haven't dispatched
 	 * the assigned oids to the segments, so pick them up first. We will
@@ -710,9 +709,7 @@ DefineIndex(RangeVar *heapRelation,
 		MemoryContextSwitchTo(old_context);
 	}
 
-=======
 	PopActiveSnapshot();
->>>>>>> 49f001d81e
 	CommitTransactionCommand();
 
 	/*
@@ -884,7 +881,7 @@ DefineIndex(RangeVar *heapRelation,
 	old_snapshots = GetCurrentVirtualXIDs(snapshot->xmax, false,
 										  PROC_IS_AUTOVACUUM | PROC_IN_VACUUM);
 #else
-	old_snapshots = GetCurrentVirtualXIDs(ActiveSnapshot->xmax, false,
+	old_snapshots = GetCurrentVirtualXIDs(snapshot->xmax, false,
 										  PROC_IS_AUTOVACUUM);
 #endif
 	while (VirtualTransactionIdIsValid(*old_snapshots))
@@ -1617,7 +1614,7 @@ ReindexRelationList(List *relids)
 		StartTransactionCommand();
 
 		/* functions in indexes may want a snapshot set */
-		ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
+		PushActiveSnapshot(GetTransactionSnapshot());
 
 		/*
 		 * Try to open the relation. If the try fails it may mean that
@@ -1649,6 +1646,7 @@ ReindexRelationList(List *relids)
 											DF_NEED_TWO_PHASE,
 											GetAssignedOidsForDispatch(), /* FIXME */
 											NULL);
+			PopActiveSnapshot();
 
 			/* keep lock until end of transaction (which comes soon) */
 			heap_close(rel, NoLock);
@@ -1865,28 +1863,8 @@ ReindexDatabase(ReindexStmt *stmt)
 	heap_endscan(scan);
 	heap_close(relationRelation, AccessShareLock);
 
-<<<<<<< HEAD
-	ReindexRelationList(relids);
-=======
-	/* Now reindex each rel in a separate transaction */
 	PopActiveSnapshot();
-	CommitTransactionCommand();
-	foreach(l, relids)
-	{
-		Oid			relid = lfirst_oid(l);
-
-		StartTransactionCommand();
-		/* functions in indexes may want a snapshot set */
-		PushActiveSnapshot(GetTransactionSnapshot());
-		if (reindex_relation(relid, true))
-			ereport(NOTICE,
-					(errmsg("table \"%s\" was reindexed",
-							get_rel_name(relid))));
-		PopActiveSnapshot();
-		CommitTransactionCommand();
-	}
-	StartTransactionCommand();
->>>>>>> 49f001d81e
+	ReindexRelationList(relids);
 
 	MemoryContextDelete(private_context);
 }

@@ -406,7 +406,7 @@ lazy_vacuum_aorel(Relation onerel, VacuumStmt *vacstmt, List *updated_stats)
 		elogif(Debug_appendonly_print_compaction, LOG,
 			   "Vacuum cleanup phase %s", RelationGetRelationName(onerel));
 
-		vacuum_appendonly_fill_stats(onerel, ActiveSnapshot,
+		vacuum_appendonly_fill_stats(onerel, GetActiveSnapshot(),
 									 &vacrelstats->rel_pages,
 									 &vacrelstats->rel_tuples,
 									 &vacrelstats->hasindex);

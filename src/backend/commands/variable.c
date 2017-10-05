@@ -550,28 +550,7 @@ show_log_timezone(void)
 const char *
 assign_XactIsoLevel(const char *value, bool doit, GucSource source)
 {
-<<<<<<< HEAD
 	int			newXactIsoLevel;
-=======
-	if (FirstSnapshotSet)
-	{
-		ereport(GUC_complaint_elevel(source),
-				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-				 errmsg("SET TRANSACTION ISOLATION LEVEL must be called before any query")));
-		/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
-		if (source != PGC_S_OVERRIDE)
-			return NULL;
-	}
-	else if (IsSubTransaction())
-	{
-		ereport(GUC_complaint_elevel(source),
-				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-				 errmsg("SET TRANSACTION ISOLATION LEVEL must not be called in a subtransaction")));
-		/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
-		if (source != PGC_S_OVERRIDE)
-			return NULL;
-	}
->>>>>>> 49f001d81e
 
 	if (strcmp(value, "serializable") == 0)
 	{
@@ -603,7 +582,7 @@ assign_XactIsoLevel(const char *value, bool doit, GucSource source)
 	if (source != PGC_S_OVERRIDE &&
 			newXactIsoLevel != XactIsoLevel && IsTransactionState())
 	{
-		if (SerializableSnapshot != NULL)
+		if (FirstSnapshotSet)
 		{
 			if (source >= PGC_S_INTERACTIVE)
 				ereport(ERROR,

@@ -11969,14 +11969,14 @@ build_ctas_with_dist(Relation rel, List *dist_clause,
 	 * Update snapshot command ID to ensure this query sees results of any
 	 * previously executed queries.
 	 */
-	//ActiveSnapshot->curcid = GetCurrentCommandId();
+	PushUpdatedSnapshot(GetActiveSnapshot());
 
 	/* Create dest receiver for COPY OUT */
 	dest = CreateDestReceiver(DestIntoRel, NULL);
 
 	/* Create a QueryDesc requesting no output */
-	queryDesc = CreateQueryDesc(stmt,  pstrdup("(internal SELECT INTO query)"),
-								ActiveSnapshot, InvalidSnapshot,
+	queryDesc = CreateQueryDesc(stmt, pstrdup("(internal SELECT INTO query)"),
+								GetActiveSnapshot(), InvalidSnapshot,
 								dest, NULL, false);
 	return queryDesc;
 }
@@ -12362,7 +12362,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 	if (Gp_role == GP_ROLE_UTILITY)
 		ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			errmsg("SET DISTRIBUTED BY not supported in utility mode")));
+			 errmsg("SET DISTRIBUTED BY not supported in utility mode")));
 
 	/* we only support fully distributed tables */
 	if (Gp_role == GP_ROLE_DISPATCH)
@@ -12370,8 +12370,8 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		if (rel->rd_cdbpolicy->ptype != POLICYTYPE_PARTITIONED)
 			ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("%s not supported on non-distributed tables",
-					ldistro ? "SET DISTRIBUTED BY" : "SET WITH")));
+				 errmsg("%s not supported on non-distributed tables",
+						ldistro ? "SET DISTRIBUTED BY" : "SET WITH")));
 	}
 
 	if (Gp_role == GP_ROLE_DISPATCH)
@@ -12393,8 +12393,9 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 					/* MPP-7770: disable changing storage options for now */
 					if (!gp_setwith_alter_storage)
 						ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("option \"%s\" not supported", def->defname)));
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("option \"%s\" not supported",
+								 		def->defname)));
 
 					if (pg_strcasecmp(def->defname, "appendonly") == 0)
 					{
@@ -12417,9 +12418,9 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 						{
 							if (!IsA(def->arg, String) || pg_strcasecmp(strVal(def->arg), "row") != 0)
 								ereport(ERROR,
-									(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-									errmsg("invalid orientation option"),
-									errhint("valid orientation option is \"column\" or \"row\"")));
+										(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+										 errmsg("invalid orientation option"),
+										 errhint("Valid orientation options are \"column\" or \"row\".")));
 						}
 					}
 					else
@@ -12434,8 +12435,9 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 					/* have we been here before ? */
 					if (seen_reorg)
 						ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							errmsg("\"%s\" specified more than once", reorg_str)));
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("\"%s\" specified more than once",
+								 		reorg_str)));
 
 					seen_reorg = true;
 					if (!def->arg)
@@ -12448,9 +12450,9 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 							force_reorg = false;
 						else
 							ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								errmsg("Invalid REORGANIZE option"),
-								errhint("valid REORGANIZE option is \"true\" or \"false\"")));
+									(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+									 errmsg("Invalid REORGANIZE option"),
+									 errhint("Valid REORGANIZE options are \"true\" or \"false\".")));
 					}
 				}
 			}
@@ -12458,16 +12460,16 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 			if (is_aocs && !is_ao)
 			{
 				ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("specify orientation requires appendonly")));
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("specified orientation requires appendonly")));
 			}
 
 			lwith = nlist;
 
 			/*
 			 * If there are other storage options, but REORGANIZE is not
-			 * specified, then the storage must be re-org'd.  But if
-			 * REORGANIZE was specified use that setting.
+			 * specified, then the storage must be re-org'd.  But if REORGANIZE
+			 * was specified use that setting.
 			 *
 			 * If the user specified we not force a reorg but there are other
 			 * WITH clause items, then we cannot honour what the user has
@@ -12477,15 +12479,15 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 				force_reorg = true;
 			else if (seen_reorg && force_reorg == false && list_length(lwith))
 				ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("%s must be set to true when changing storage "
-						"type", reorg_str)));
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("%s must be set to true when changing storage type",
+						 		reorg_str)));
 
 			newOptions = new_rel_opts(rel, lwith);
 
 			/* ensure that the options parse */
 			if (newOptions)
-				(void)heap_reloptions(rel->rd_rel->relkind, newOptions, true);
+				(void) heap_reloptions(rel->rd_rel->relkind, newOptions, true);
 		}
 		else
 		{
@@ -12505,15 +12507,11 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 			{
 				if (rel->rd_cdbpolicy->nattrs == 0)
 					ereport(WARNING,
-						(errcode(ERRCODE_DUPLICATE_OBJECT),
-						errmsg("distribution policy of relation \"%s\" "
-							"already set to DISTRIBUTED RANDOMLY",
-							RelationGetRelationName(rel)),
-						errhint("Use ALTER TABLE \"%s\" "
-							"SET WITH (REORGANIZE=TRUE) "
-							"DISTRIBUTED RANDOMLY "
-							"to force a random redistribution",
-							RelationGetRelationName(rel))));
+							(errcode(ERRCODE_DUPLICATE_OBJECT),
+							 errmsg("distribution policy of relation \"%s\" already set to DISTRIBUTED RANDOMLY",
+									RelationGetRelationName(rel)),
+							 errhint("Use ALTER TABLE \"%s\" SET WITH (REORGANIZE=TRUE) DISTRIBUTED RANDOMLY to force a random redistribution.",
+									 RelationGetRelationName(rel))));
 			}
 
 			policy = createRandomDistribution();
@@ -12534,26 +12532,26 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		}
 	}
 
-	/*
+	/*--
 	 * Changing a table from random distribution to a specific distribution
 	 * policy is the hard bit. For that, we must do the following:
 	 *
 	 * a) Ensure that the proposed policy is sensible
-	 * b) Create a temporary table and reorganise data according to
-	 * our desired distribution policy. To do this, we build a Query
-	 * node which expresses the query CREATE TABLE tmp_table_name AS
-	 * SELECT * FROM cur_table DISTRIBUTED BY (policy)
+	 * b) Create a temporary table and reorganise data according to our desired
+	 *    distribution policy. To do this, we build a Query node which express
+	 *    the query:
+	 *    CREATE TABLE tmp_tab_nam AS SELECT * FROM cur_table DISTRIBUTED BY (policy)
 	 * c) Execute the query across all nodes
 	 * d) Update our parse tree to include the details of the newly created
-	 * table
+	 *    table
 	 * e) Update the ownership of the temporary table
 	 * f) Swap the relfilenodes of the existing table and the temporary table
 	 * g) Update the policy on the QD to reflect the underlying data
 	 * h) Drop the temporary table -- and with it, the old copy of the data
+	 *--
 	 */
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
-		volatile Snapshot saveSnapshot = NULL;
 		if (change_policy)
 		{
 			policy = palloc(sizeof(GpPolicy) + sizeof(policy->attrs[0]) * list_length(ldistro));
@@ -12621,6 +12619,9 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 						 * a comma after each column entry except the last one,
 						 * at which point the string should be NULL terminated
 						 * instead.
+						 *
+						 * GPDB_84_MERGE_FIXME replace the strcat() loop with
+						 * a StringInfo instead.
 						 */
 						char *dist = palloc(list_length(ldistro) * (NAMEDATALEN + 1));
 
@@ -12670,11 +12671,10 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		optimizer = false;
 
 		if (saveOptimizerGucValue)
-		{
-			elog(LOG, "ALTER SET DISTRIBUTED BY: falling back to legacy query optimizer to ensure re-distribution of tuples.");
-		}
+			ereport(LOG,
+					(errmsg("ALTER SET DISTRIBUTED BY: falling back to legacy query optimizer to ensure re-distribution of tuples.")));
 
-		GpPolicy * original_policy = NULL;
+		GpPolicy *original_policy = NULL;
 
 		if (force_reorg && !rand_pol)
 		{
@@ -12686,7 +12686,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 			 * is same as the original one, the query optimizer will generate
 			 * redistribute plan.
 			 */
-			GpPolicy * random_policy = createRandomDistribution();
+			GpPolicy *random_policy = createRandomDistribution();
 
 			original_policy = rel->rd_cdbpolicy;
 			rel->rd_cdbpolicy = GpPolicyCopy(GetMemoryChunkContext(rel),
@@ -12700,35 +12700,22 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 						&tmprv,
 						useExistingColumnAttributes);
 
-		PG_TRY();
-		{
-			/* 
-			 * We need to update our snapshot here to make sure we see all
-			 * committed work. We have an exclusive lock on the table so no one
-			 * will be able to access the table now.
-			 */
-			saveSnapshot = ActiveSnapshot;
-			ActiveSnapshot = CopySnapshot(GetLatestSnapshot());
-
+		/* 
+		 * We need to update our snapshot here to make sure we see all
+		 * committed work. We have an exclusive lock on the table so no one
+		 * will be able to access the table now.
+		 */
+		PushActiveSnapshot(GetLatestSnapshot());
 	
-			/* Step (c) - run on all nodes */
-			ExecutorStart(queryDesc, 0);
-			ExecutorRun(queryDesc, ForwardScanDirection, 0L);
-			ExecutorEnd(queryDesc);
-			FreeQueryDesc(queryDesc);
+		/* Step (c) - run on all nodes */
+		ExecutorStart(queryDesc, 0);
+		ExecutorRun(queryDesc, ForwardScanDirection, 0L);
+		ExecutorEnd(queryDesc);
+		FreeQueryDesc(queryDesc);
 
-			/* Restore the old snapshot */
-			ActiveSnapshot = saveSnapshot;
-			optimizer = saveOptimizerGucValue;
-		}
-		PG_CATCH();
-		{
-			ActiveSnapshot = saveSnapshot;
-			optimizer = saveOptimizerGucValue;
-
-			PG_RE_THROW();
-		}
-		PG_END_TRY();
+		/* Restore the old snapshot */
+		PopActiveSnapshot();
+		optimizer = saveOptimizerGucValue;
 
 		CommandCounterIncrement(); /* see the effects of the command */
 
@@ -12748,10 +12735,10 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 	}
 	else
 	{
-		int backend_id;
-		bool reorg = false;
-		ListCell *lc = NULL;
-		DefElem	*def = NULL; 
+		int			backend_id;
+		bool		reorg = false;
+		ListCell   *lc;
+		DefElem    *def;
 
 		Assert(list_length(lprime) >= 2);
 
@@ -12935,12 +12922,9 @@ l_distro_fini:
 	{
 		char *distro_str = make_distro_str(lwith, ldistro);
 		/* don't check relkind - must be a table */
-		MetaTrackUpdObject(RelationRelationId,
-					tarrelid,
-					GetUserId(),
-					"ALTER", distro_str);
+		MetaTrackUpdObject(RelationRelationId, tarrelid, GetUserId(), "ALTER",
+						   distro_str);
 	}
-
 }
 
 

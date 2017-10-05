@@ -717,7 +717,6 @@ execute_sql_string(const char *sql, const char *filename)
 		foreach(lc2, stmt_list)
 		{
 			Node	   *stmt = (Node *) lfirst(lc2);
-			Snapshot	saveActiveSnapshot;
 
 			if (IsA(stmt, TransactionStmt))
 				ereport(ERROR,
@@ -726,8 +725,7 @@ execute_sql_string(const char *sql, const char *filename)
 
 			CommandCounterIncrement();
 
-			saveActiveSnapshot = ActiveSnapshot;
-			ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
+			PushActiveSnapshot(GetTransactionSnapshot());
 
 			if (IsA(stmt, PlannedStmt) &&
 				((PlannedStmt *) stmt)->utilityStmt == NULL)
@@ -736,7 +734,7 @@ execute_sql_string(const char *sql, const char *filename)
 
 				qdesc = CreateQueryDesc((PlannedStmt *) stmt,
 										sql,
-										ActiveSnapshot, NULL,
+										GetActiveSnapshot(), NULL,
 										dest, NULL, false);
 
 				ExecutorStart(qdesc, 0);
@@ -755,8 +753,7 @@ execute_sql_string(const char *sql, const char *filename)
 							   NULL);
 			}
 
-			FreeSnapshot(ActiveSnapshot);
-			ActiveSnapshot = saveActiveSnapshot;
+			PopActiveSnapshot();
 		}
 	}
 

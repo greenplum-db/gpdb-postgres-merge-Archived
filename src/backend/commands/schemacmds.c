@@ -219,6 +219,7 @@ RemoveSchemas(DropStmt *drop)
 {
 	ObjectAddresses *objects;
 	ListCell		*cell;
+	List			*namespaceIdList = NIL;
 
 	/*
 	 * First we identify all the schemas, then we delete them in a single
@@ -263,6 +264,8 @@ RemoveSchemas(DropStmt *drop)
 			continue;
 		}
 
+		namespaceIdList = lappend_int(namespaceIdList, namespaceId);
+
 		/* Permission check */
 		if (!pg_namespace_ownercheck(namespaceId, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_NAMESPACE,
@@ -295,7 +298,14 @@ RemoveSchemas(DropStmt *drop)
 
 	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH)
-		MetaTrackDropObject(NamespaceRelationId, namespaceId);
+	{
+		foreach(cell, namespaceIdList)
+		{
+			Oid namespaceId = (Oid) lfirst(cell);
+
+			MetaTrackDropObject(NamespaceRelationId, namespaceId);
+		}
+	}
 
 	free_object_addresses(objects);
 }

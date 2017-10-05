@@ -1045,7 +1045,7 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 		 * Functions in indexes may want a snapshot set. Also, setting
 		 * a snapshot ensures that RecentGlobalXmin is kept truly recent.
 		 */
-		ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
+		PushActiveSnapshot(GetTransactionSnapshot());
 
 		if (!vacstmt->full)
 		{
@@ -1124,10 +1124,10 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 			if (onerel == NULL)
 			{
 				CommitTransactionCommand();
+				PopActiveSnapshot();
 				continue;
 			}
 		}
-
 
 		vacuumStatement_AssignRelation(vacstmt, relid, relations);
 
@@ -1422,6 +1422,8 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 		{
 			SIMPLE_FAULT_INJECTOR(VacuumRelationEndOfFirstRound);
 		}
+
+		PopActiveSnapshot();
 
 		relationRound++;
 	}
@@ -2097,53 +2099,9 @@ vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_s
 	Oid         aoblkdir_relid = InvalidOid;
 	Oid         aovisimap_relid = InvalidOid;
 	Oid			save_userid;
-<<<<<<< HEAD
 	int			save_sec_context;
 	int			save_nestlevel;
 	bool		heldoff;
-=======
-	bool		save_secdefcxt;
-
-	/* Begin a transaction for vacuuming this relation */
-	StartTransactionCommand();
-
-	if (vacstmt->full)
-	{
-		/* functions in indexes may want a snapshot set */
-		PushActiveSnapshot(GetTransactionSnapshot());
-	}
-	else
-	{
-		/*
-		 * During a lazy VACUUM we do not run any user-supplied functions, and
-		 * so it should be safe to not create a transaction snapshot.
-		 *
-		 * We can furthermore set the PROC_IN_VACUUM flag, which lets other
-		 * concurrent VACUUMs know that they can ignore this one while
-		 * determining their OldestXmin.  (The reason we don't set it during a
-		 * full VACUUM is exactly that we may have to run user- defined
-		 * functions for functional indexes, and we want to make sure that if
-		 * they use the snapshot set above, any tuples it requires can't get
-		 * removed from other tables.  An index function that depends on the
-		 * contents of other tables is arguably broken, but we won't break it
-		 * here by violating transaction semantics.)
-		 *
-		 * We also set the VACUUM_FOR_WRAPAROUND flag, which is passed down
-		 * by autovacuum; it's used to avoid cancelling a vacuum that was
-		 * invoked in an emergency.
-		 *
-		 * Note: this flag remains set until CommitTransaction or
-		 * AbortTransaction.  We don't want to clear it until we reset
-		 * MyProc->xid/xmin, else OldestXmin might appear to go backwards,
-		 * which is probably Not Good.
-		 */
-		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
-		MyProc->vacuumFlags |= PROC_IN_VACUUM;
-		if (for_wraparound)
-			MyProc->vacuumFlags |= PROC_VACUUM_FOR_WRAPAROUND;
-		LWLockRelease(ProcArrayLock);
-	}
->>>>>>> 49f001d81e
 
 	/*
 	 * Check for user-requested abort.	Note we want this to be inside a
@@ -2152,111 +2110,7 @@ vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_s
 	CHECK_FOR_INTERRUPTS();
 
 	/*
-<<<<<<< HEAD
 	 * Remember the relation's TOAST and AO segments relations for later
-=======
-	 * Determine the type of lock we want --- hard exclusive lock for a FULL
-	 * vacuum, but just ShareUpdateExclusiveLock for concurrent vacuum. Either
-	 * way, we can be sure that no other backend is vacuuming the same table.
-	 */
-	lmode = vacstmt->full ? AccessExclusiveLock : ShareUpdateExclusiveLock;
-
-	/*
-	 * Open the relation and get the appropriate lock on it.
-	 *
-	 * There's a race condition here: the rel may have gone away since the
-	 * last time we saw it.  If so, we don't need to vacuum it.
-	 */
-	onerel = try_relation_open(relid, lmode);
-
-	if (!onerel)
-	{
-		if (vacstmt->full)
-			PopActiveSnapshot();
-		CommitTransactionCommand();
-		return;
-	}
-
-	/*
-	 * Check permissions.
-	 *
-	 * We allow the user to vacuum a table if he is superuser, the table
-	 * owner, or the database owner (but in the latter case, only if it's not
-	 * a shared relation).	pg_class_ownercheck includes the superuser case.
-	 *
-	 * Note we choose to treat permissions failure as a WARNING and keep
-	 * trying to vacuum the rest of the DB --- is this appropriate?
-	 */
-	if (!(pg_class_ownercheck(RelationGetRelid(onerel), GetUserId()) ||
-		  (pg_database_ownercheck(MyDatabaseId, GetUserId()) && !onerel->rd_rel->relisshared)))
-	{
-		if (onerel->rd_rel->relisshared)
-			ereport(WARNING,
-					(errmsg("skipping \"%s\" --- only superuser can vacuum it",
-							RelationGetRelationName(onerel))));
-		else if (onerel->rd_rel->relnamespace == PG_CATALOG_NAMESPACE)
-			ereport(WARNING,
-					(errmsg("skipping \"%s\" --- only superuser or database owner can vacuum it",
-							RelationGetRelationName(onerel))));
-		else
-			ereport(WARNING,
-					(errmsg("skipping \"%s\" --- only table or database owner can vacuum it",
-							RelationGetRelationName(onerel))));
-		relation_close(onerel, lmode);
-		if (vacstmt->full)
-			PopActiveSnapshot();
-		CommitTransactionCommand();
-		return;
-	}
-
-	/*
-	 * Check that it's a plain table; we used to do this in get_rel_oids() but
-	 * seems safer to check after we've locked the relation.
-	 */
-	if (onerel->rd_rel->relkind != expected_relkind)
-	{
-		ereport(WARNING,
-				(errmsg("skipping \"%s\" --- cannot vacuum indexes, views, or special system tables",
-						RelationGetRelationName(onerel))));
-		relation_close(onerel, lmode);
-		if (vacstmt->full)
-			PopActiveSnapshot();
-		CommitTransactionCommand();
-		return;
-	}
-
-	/*
-	 * Silently ignore tables that are temp tables of other backends ---
-	 * trying to vacuum these will lead to great unhappiness, since their
-	 * contents are probably not up-to-date on disk.  (We don't throw a
-	 * warning here; it would just lead to chatter during a database-wide
-	 * VACUUM.)
-	 */
-	if (isOtherTempNamespace(RelationGetNamespace(onerel)))
-	{
-		relation_close(onerel, lmode);
-		if (vacstmt->full)
-			PopActiveSnapshot();
-		CommitTransactionCommand();
-		return;
-	}
-
-	/*
-	 * Get a session-level lock too. This will protect our access to the
-	 * relation across multiple transactions, so that we can vacuum the
-	 * relation's TOAST table (if any) secure in the knowledge that no one is
-	 * deleting the parent relation.
-	 *
-	 * NOTE: this cannot block, even if someone else is waiting for access,
-	 * because the lock manager knows that both lock requests are from the
-	 * same process.
-	 */
-	onerelid = onerel->rd_lockInfo.lockRelId;
-	LockRelationIdForSession(&onerelid, lmode);
-
-	/*
-	 * Remember the relation's TOAST relation for later
->>>>>>> 49f001d81e
 	 */
 	toast_relid = onerel->rd_rel->reltoastrelid;
 	if (RelationIsAoRows(onerel) || RelationIsAoCols(onerel))
@@ -2785,7 +2639,7 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt, List *updated_stats)
 		{
 			elogif(Debug_appendonly_print_compaction, LOG,
 					"Vacuum full cleanup phase %s", RelationGetRelationName(onerel));
-			vacuum_appendonly_fill_stats(onerel, ActiveSnapshot,
+			vacuum_appendonly_fill_stats(onerel, GetActiveSnapshot(),
 										 &vacrelstats->rel_pages,
 										 &vacrelstats->rel_tuples,
 										 &vacrelstats->hasindex);

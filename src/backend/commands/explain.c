@@ -389,12 +389,8 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 
 	/* Create a QueryDesc requesting no output */
 	queryDesc = CreateQueryDesc(plannedstmt,
-<<<<<<< HEAD
 								queryString,
-								ActiveSnapshot, InvalidSnapshot,
-=======
 								GetActiveSnapshot(), InvalidSnapshot,
->>>>>>> 49f001d81e
 								None_Receiver, params,
 								stmt->analyze);
 
@@ -516,6 +512,11 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 	es->pstmt = queryDesc->plannedstmt;
 	es->rtable = queryDesc->plannedstmt->rtable;
 
+#if 0
+	/*
+	 * GPDB_84_MERGE_FIXME rewrite to use show_plan_tlist() per commit
+	 * 87a2f050a9b53b3effe0a4da9733b5dba784463d
+	 */
     if (stmt->verbose)
 	{
 		char	   *s;
@@ -548,6 +549,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 			do_text_output_oneline(tstate, ""); /* separator line */
 		}
 	}
+#endif
 
 	initStringInfo(&buf);
 
@@ -1986,7 +1988,8 @@ show_plan_tlist(Plan *plan,
 	/* Set up deparsing context */
 	context = deparse_context_for_plan((Node *) outerPlan(plan),
 									   (Node *) innerPlan(plan),
-									   es->rtable);
+									   es->rtable,
+									   es->pstmt->subplans);
 	useprefix = list_length(es->rtable) > 1;
 
 	/* Emit line prefix */

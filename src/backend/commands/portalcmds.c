@@ -159,11 +159,7 @@ PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 	/*
 	 * Start execution, inserting parameters if any.
 	 */
-<<<<<<< HEAD
-	PortalStart(portal, params, ActiveSnapshot, NULL);
-=======
-	PortalStart(portal, params, GetActiveSnapshot());
->>>>>>> 49f001d81e
+	PortalStart(portal, params, GetActiveSnapshot(), NULL);
 
 	Assert(portal->strategy == PORTAL_ONE_SELECT);
 
@@ -425,13 +421,8 @@ PersistHoldablePortal(Portal portal)
 	PG_TRY();
 	{
 		ActivePortal = portal;
-<<<<<<< HEAD
-		ActiveSnapshot = queryDesc->snapshot;
 		if (portal->resowner)
 			CurrentResourceOwner = portal->resowner;
-=======
-		CurrentResourceOwner = portal->resowner;
->>>>>>> 49f001d81e
 		PortalContext = PortalGetHeapMemory(portal);
 
 		MemoryContextSwitchTo(PortalContext);

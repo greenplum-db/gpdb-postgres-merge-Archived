@@ -297,11 +297,7 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 	/*
 	 * Run the portal to completion.
 	 */
-<<<<<<< HEAD
-	PortalStart(portal, paramLI, ActiveSnapshot, NULL);
-=======
-	PortalStart(portal, paramLI, GetActiveSnapshot());
->>>>>>> 49f001d81e
+	PortalStart(portal, paramLI, GetActiveSnapshot(), NULL);
 
 	(void) PortalRun(portal, FETCH_ALL, false, dest, dest, completionTag);
 
