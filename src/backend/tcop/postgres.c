@@ -898,12 +898,10 @@ pg_plan_query(Query *querytree, int cursorOptions, ParamListInfo boundParams)
 	if (querytree->commandType == CMD_UTILITY)
 		return NULL;
 
-<<<<<<< HEAD
 	/* Planner must have a snapshot in case it calls user-defined functions. */
-	Assert(ActiveSnapshot != NULL);
-=======
+	Assert(ActiveSnapshotSet());
+
 	TRACE_POSTGRESQL_QUERY_PLAN_START();
->>>>>>> 49f001d81e
 
 	if (log_planner_stats)
 		ResetUsage();
@@ -1728,8 +1726,8 @@ exec_simple_query(const char *query_string, const char *seqServerHost, int seqSe
 		 */
 		if (analyze_requires_snapshot(parsetree))
 		{
-			mySnapshot = CopySnapshot(GetTransactionSnapshot());
-			ActiveSnapshot = mySnapshot;
+			mySnapshot = RegisterSnapshot(GetTransactionSnapshot());
+			PushActiveSnapshot(mySnapshot);
 		}
 
 		/*
@@ -1746,9 +1744,8 @@ exec_simple_query(const char *query_string, const char *seqServerHost, int seqSe
 		plantree_list = pg_plan_queries(querytree_list, 0, NULL, false);
 
 		/* Done with the snapshot used for parsing/planning */
-		ActiveSnapshot = NULL;
 		if (mySnapshot)
-			FreeSnapshot(mySnapshot);
+			PopActiveSnapshot();
 
 		/* If we got a cancel signal in analysis or planning, quit */
 		CHECK_FOR_INTERRUPTS();
@@ -2044,8 +2041,8 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		 */
 		if (analyze_requires_snapshot(raw_parse_tree))
 		{
-			mySnapshot = CopySnapshot(GetTransactionSnapshot());
-			ActiveSnapshot = mySnapshot;
+			mySnapshot = RegisterSnapshot(GetTransactionSnapshot());
+			PushActiveSnapshot(mySnapshot);
 		}
 
 		/*
@@ -2106,9 +2103,8 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		}
 
 		/* Done with the snapshot used for parsing/planning */
-		ActiveSnapshot = NULL;
 		if (mySnapshot)
-			FreeSnapshot(mySnapshot);
+			PopActiveSnapshot();
 	}
 	else
 	{
@@ -2367,8 +2363,8 @@ exec_bind_message(StringInfo input_message)
 	 */
 	if (numParams > 0 || analyze_requires_snapshot(psrc->raw_parse_tree))
 	{
-		mySnapshot = CopySnapshot(GetTransactionSnapshot());
-		ActiveSnapshot = mySnapshot;
+		mySnapshot = RegisterSnapshot(GetTransactionSnapshot());
+		PushActiveSnapshot(mySnapshot);
 	}
 
 	/*
@@ -2600,9 +2596,8 @@ exec_bind_message(StringInfo input_message)
 					  cplan);
 
 	/* Done with the snapshot used for parameter I/O and parsing/planning */
-	ActiveSnapshot = NULL;
 	if (mySnapshot)
-		FreeSnapshot(mySnapshot);
+		PopActiveSnapshot();
 
 	/*
 	 * And we're ready to start portal execution.
@@ -4805,9 +4800,6 @@ PostgresMain(int argc, char *argv[],
 			write_stderr("An exception was encountered during the execution of statement: %s", debug_query_string);
 			debug_query_string = NULL;
 		}
-
-		/* No active snapshot any more either */
-		ActiveSnapshot = NULL;
 
 		/*
 		 * Abort the current transaction in order to recover.

@@ -87,15 +87,11 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 	qd->operation = plannedstmt->commandType;	/* operation */
 	qd->plannedstmt = plannedstmt;		/* plan */
 	qd->utilitystmt = plannedstmt->utilityStmt; /* in case DECLARE CURSOR */
-<<<<<<< HEAD
+	/* GPDB_84_MERGE_FIXME do we need to pstrdup sourceText? */
 	qd->sourceText = pstrdup(sourceText);		/* query text */
-	qd->snapshot = snapshot;	/* snapshot */
-	qd->crosscheck_snapshot = crosscheck_snapshot;		/* RI check snapshot */
-=======
 	qd->snapshot = RegisterSnapshot(snapshot);	/* snapshot */
 	/* RI check snapshot */
 	qd->crosscheck_snapshot = RegisterSnapshot(crosscheck_snapshot);
->>>>>>> 49f001d81e
 	qd->dest = dest;			/* output dest */
 	qd->params = params;		/* parameter values passed into query */
 	qd->doInstrument = doInstrument;	/* instrumentation wanted? */
@@ -147,12 +143,8 @@ CreateUtilityQueryDesc(Node *utilitystmt,
 	qd->operation = CMD_UTILITY;	/* operation */
 	qd->plannedstmt = NULL;
 	qd->utilitystmt = utilitystmt;		/* utility command */
-<<<<<<< HEAD
 	qd->sourceText = pstrdup(sourceText);		/* query text */
-	qd->snapshot = snapshot;	/* snapshot */
-=======
 	qd->snapshot = RegisterSnapshot(snapshot);	/* snapshot */
->>>>>>> 49f001d81e
 	qd->crosscheck_snapshot = InvalidSnapshot;	/* RI check snapshot */
 	qd->dest = dest;			/* output dest */
 	qd->params = params;		/* parameter values passed into query */
@@ -177,17 +169,14 @@ FreeQueryDesc(QueryDesc *qdesc)
 {
 	/* Can't be a live query */
 	Assert(qdesc->estate == NULL);
-<<<<<<< HEAD
 	/* Only the QueryDesc itself and the sourceText need be freed */
 	pfree((void*) qdesc->sourceText);
-=======
 
 	/* forget our snapshots */
 	UnregisterSnapshot(qdesc->snapshot);
 	UnregisterSnapshot(qdesc->crosscheck_snapshot);
 
 	/* Only the QueryDesc itself need be freed */
->>>>>>> 49f001d81e
 	pfree(qdesc);
 }
 
@@ -233,7 +222,6 @@ ProcessQuery(Portal portal,
 	/*
 	 * Create the QueryDesc object
 	 */
-<<<<<<< HEAD
 	Assert(portal);
 
 	if (portal->sourceTag == T_SelectStmt && gp_select_invisible)
@@ -242,7 +230,7 @@ ProcessQuery(Portal portal,
 									dest, params, false);
 	else
 		queryDesc = CreateQueryDesc(stmt, portal->sourceText,
-									ActiveSnapshot, InvalidSnapshot,
+									GetActiveSnapshot(), InvalidSnapshot,
 									dest, params, false);
 	queryDesc->ddesc = portal->ddesc;
 
@@ -261,17 +249,15 @@ ProcessQuery(Portal portal,
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
-
 		/*
-		 * If resource scheduling is enabled and we are locking non SELECT queries,
-		 * or this is a SELECT INTO then lock the portal here.
-		 * Skip if this query is added by the rewriter or
-		 * we are superuser.
+		 * If resource scheduling is enabled and we are locking non SELECT
+		 * queries, or this is a SELECT INTO then lock the portal here.  Skip
+		 * if this query is added by the rewriter or we are superuser.
 		 */
 		if (IsResQueueEnabled() && !superuser())
 		{
-			if((!ResourceSelectOnly || portal->sourceTag == T_SelectStmt) &&
-			   stmt->canSetTag)
+			if ((!ResourceSelectOnly || portal->sourceTag == T_SelectStmt) &&
+				stmt->canSetTag)
 			{
 				portal->status = PORTAL_QUEUE;
 
@@ -286,11 +272,6 @@ ProcessQuery(Portal portal,
 	}
 
 	portal->status = PORTAL_ACTIVE;
-=======
-	queryDesc = CreateQueryDesc(plan,
-								GetActiveSnapshot(), InvalidSnapshot,
-								dest, params, false);
->>>>>>> 49f001d81e
 
 	/*
 	 * Set up to collect AFTER triggers
@@ -352,7 +333,6 @@ ProcessQuery(Portal portal,
 		}
 	}
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		/* MPP-4082. Issue automatic ANALYZE if conditions are satisfied. */
@@ -360,31 +340,16 @@ ProcessQuery(Portal portal,
 		auto_stats(cmdType, relationOid, queryDesc->es_processed, inFunction);
 	}
 
+	PopActiveSnapshot();
+
 	FreeQueryDesc(queryDesc);
 
-	FreeSnapshot(ActiveSnapshot);
-	ActiveSnapshot = NULL;
-	
 	if (gp_enable_resqueue_priority 
 			&& Gp_role == GP_ROLE_DISPATCH 
 			&& gp_session_id > -1)
 	{
 		BackoffBackendEntryExit();
 	}
-
-=======
-	/* Now take care of any queued AFTER triggers */
-	AfterTriggerEndQuery(queryDesc->estate);
-
-	PopActiveSnapshot();
-
-	/*
-	 * Now, we close down all the scans and free allocated resources.
-	 */
-	ExecutorEnd(queryDesc);
-
-	FreeQueryDesc(queryDesc);
->>>>>>> 49f001d81e
 }
 
 /*
@@ -631,13 +596,8 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot,
 	PG_TRY();
 	{
 		ActivePortal = portal;
-<<<<<<< HEAD
-		ActiveSnapshot = NULL;	/* will be set later */
 		if (portal->resowner)
 			CurrentResourceOwner = portal->resowner;
-=======
-		CurrentResourceOwner = portal->resowner;
->>>>>>> 49f001d81e
 		PortalContext = PortalGetHeapMemory(portal);
 
 		MemoryContextSwitchTo(PortalGetHeapMemory(portal));
@@ -671,12 +631,8 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot,
 				 * the destination to DestNone.
 				 */
 				queryDesc = CreateQueryDesc((PlannedStmt *) linitial(portal->stmts),
-<<<<<<< HEAD
 											portal->sourceText,
-											(gp_select_invisible ? SnapshotAny : ActiveSnapshot),
-=======
-											GetActiveSnapshot(),
->>>>>>> 49f001d81e
+											(gp_select_invisible ? SnapshotAny : GetActiveSnapshot()),
 											InvalidSnapshot,
 											None_Receiver,
 											params,
@@ -991,13 +947,8 @@ PortalRun(Portal portal, int64 count, bool isTopLevel,
 	PG_TRY();
 	{
 		ActivePortal = portal;
-<<<<<<< HEAD
-		ActiveSnapshot = NULL;	/* will be set later */
 		if (portal->resowner)
 			CurrentResourceOwner = portal->resowner;
-=======
-		CurrentResourceOwner = portal->resowner;
->>>>>>> 49f001d81e
 		PortalContext = PortalGetHeapMemory(portal);
 
 		MemoryContextSwitchTo(PortalContext);
@@ -1607,13 +1558,8 @@ PortalRunFetch(Portal portal,
 	PG_TRY();
 	{
 		ActivePortal = portal;
-<<<<<<< HEAD
-		ActiveSnapshot = NULL;	/* will be set later */
 		if (portal->resowner)
 			CurrentResourceOwner = portal->resowner;
-=======
-		CurrentResourceOwner = portal->resowner;
->>>>>>> 49f001d81e
 		PortalContext = PortalGetHeapMemory(portal);
 
 		MemoryContextSwitchTo(PortalContext);

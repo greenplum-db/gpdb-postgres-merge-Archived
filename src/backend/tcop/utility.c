@@ -1989,7 +1989,6 @@ CreateCommandTag(Node *parsetree)
 				else if (stmt->relkind == OBJECT_EXTTABLE)
 					tag = "ALTER EXTERNAL TABLE";
 				case OBJECT_TABLE:
->>>>>>> 49f001d81e
 					tag = "ALTER TABLE";
 					break;
 				case OBJECT_INDEX:
