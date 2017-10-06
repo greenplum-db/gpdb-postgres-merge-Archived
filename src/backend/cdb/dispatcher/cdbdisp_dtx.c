@@ -221,8 +221,7 @@ qdSerializeDtxContextInfo(int *size, bool wantSnapshot, bool inCursor,
 	if (wantSnapshot)
 	{
 
-		if (LatestSnapshot == NULL &&
-			SerializableSnapshot == NULL && !IsAbortInProgress())
+		if (!FirstSnapshotSet && !IsAbortInProgress())
 		{
 			/*
 			 * unfortunately, the dtm issues a select for prepared xacts at the
@@ -238,6 +237,9 @@ qdSerializeDtxContextInfo(int *size, bool wantSnapshot, bool inCursor,
 			GetTransactionSnapshot();
 		}
 
+		snapshot = GetLatestSnapshot();
+
+		/* GPDB_84_MERGE_FIXME
 		if (LatestSnapshot != NULL)
 		{
 			elog((Debug_print_full_dtm ? LOG : DEBUG5),
@@ -265,6 +267,7 @@ qdSerializeDtxContextInfo(int *size, bool wantSnapshot, bool inCursor,
 				 DtxContextToString(DistributedTransactionContext));
 
 		}
+		*/
 	}
 
 	switch (DistributedTransactionContext)

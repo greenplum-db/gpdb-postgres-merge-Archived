@@ -1311,9 +1311,6 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	if (!bms_is_subset(upper_varnos, available_rels))
 		return NULL;
 
-	/* ... and the right-hand expressions better not contain Vars at all */
-	Assert(!contain_var_clause((Node *) right_exprs));
-
 	/*
 	 * The combining operators and left-hand expressions mustn't be volatile.
 	 */

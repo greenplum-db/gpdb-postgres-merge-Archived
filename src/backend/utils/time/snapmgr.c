@@ -167,20 +167,26 @@ GetTransactionSnapshot(void)
 
 	if (IsXactIsoLevelSerializable)
 	{
+		/*
+		 * GPDB_84_MERGE_FIXME
 		elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),"[Distributed Snapshot #%u] *Serializable Skip* (gxid = %u, '%s')",
 			 (SerializableSnapshot == NULL ? 0 : SerializableSnapshot->distribSnapshotWithLocalMapping.ds.distribSnapshotId),
 			 getDistributedTransactionId(),
 			 DtxContextToString(DistributedTransactionContext));
+		 */
 
 		UpdateSerializableCommandId();
 
-		return SerializableSnapshot;
+		return CurrentSnapshot;
 	}
 
+	/*
+	 * GPDB_84_MERGE_FIXME
 	elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),"[Distributed Snapshot #%u] (gxid = %u, '%s')",
 		 (LatestSnapshot == NULL ? 0 : LatestSnapshot->distribSnapshotWithLocalMapping.ds.distribSnapshotId),
 		 getDistributedTransactionId(),
 		 DtxContextToString(DistributedTransactionContext));
+	 */
 
 	CurrentSnapshot = GetSnapshotData(&CurrentSnapshotData);
 

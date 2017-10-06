@@ -51,9 +51,9 @@
 
  CREATE FUNCTION pg_get_partition_template_def(oid, bool, bool) RETURNS text LANGUAGE internal STABLE STRICT AS 'pg_get_partition_template_def' WITH (OID=5037, DESCRIPTION="ALTER statement to recreate subpartition templates for a give relation");
 
- CREATE FUNCTION pg_get_keywords(OUT word text, OUT catcode "char", OUT catdesc text) RETURNS SETOF pg_catalog.record LANGUAGE internal STABLE STRICT AS 'pg_get_keywords' WITH (OID=821, DESCRIPTION="list of SQL keywords");
+ CREATE FUNCTION pg_get_keywords(OUT word text, OUT catcode "char", OUT catdesc text) RETURNS SETOF pg_catalog.record LANGUAGE internal STABLE STRICT AS 'pg_get_keywords' WITH (OID=7302, DESCRIPTION="list of SQL keywords");
 
- CREATE FUNCTION pg_typeof("any") RETURNS regtype LANGUAGE internal STABLE AS 'pg_typeof' WITH (OID=822, DESCRIPTION="returns the type of the argument");
+ CREATE FUNCTION pg_typeof("any") RETURNS regtype LANGUAGE internal STABLE AS 'pg_typeof' WITH (OID=7301, DESCRIPTION="returns the type of the argument");
 
  CREATE FUNCTION numeric_dec("numeric") RETURNS "numeric" LANGUAGE internal IMMUTABLE STRICT AS 'numeric_dec' WITH (OID=6997, DESCRIPTION="increment by one");
 
@@ -107,7 +107,7 @@
 
  CREATE FUNCTION int8_avg_decum(bytea, int8) RETURNS bytea LANGUAGE internal IMMUTABLE STRICT AS 'int8_avg_decum' WITH (OID=3101, DESCRIPTION="AVG(int8) transition function");
 
- CREATE FUNCTION pg_stat_get_backend_waiting_reason(int4) RETURNS text LANGUAGE internal STABLE STRICT AS 'pg_stat_get_backend_waiting_reason' WITH (OID=2897, DESCRIPTION="Statistics: Reason backend is waiting for");
+ CREATE FUNCTION pg_stat_get_backend_waiting_reason(int4) RETURNS text LANGUAGE internal STABLE STRICT AS 'pg_stat_get_backend_waiting_reason' WITH (OID=7298, DESCRIPTION="Statistics: Reason backend is waiting for");
 
  CREATE FUNCTION pg_stat_get_queue_num_exec(oid) RETURNS int8 LANGUAGE internal STABLE STRICT AS 'pg_stat_get_queue_num_exec' WITH (OID=6031, DESCRIPTION="Statistics: Number of queries that executed in queue");
 
@@ -1801,4 +1801,4 @@ CREATE FUNCTION gp_nondbspecific_ptcat_verification() RETURNS bool LANGUAGE inte
  CREATE FUNCTION complex_gte(complex, complex) RETURNS bool  LANGUAGE internal IMMUTABLE STRICT AS 'complex_gte' WITH (OID=3596, DESCRIPTION="greater than or equal");
 
  -- functions for external table
- CREATE FUNCTION pg_options_to_table(IN options_array _text, OUT option_name text, OUT option_value text) RETURNS SETOF pg_catalog.record LANGUAGE internal IMMUTABLE STRICT AS 'pg_options_to_table' WITH (OID=2022, DESCRIPTION="convert generic options array to name/value table");
+ CREATE FUNCTION pg_options_to_table(IN options_array _text, OUT option_name text, OUT option_value text) RETURNS SETOF pg_catalog.record LANGUAGE internal IMMUTABLE STRICT AS 'pg_options_to_table' WITH (OID=7300, DESCRIPTION="convert generic options array to name/value table");

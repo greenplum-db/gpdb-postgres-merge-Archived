@@ -50,6 +50,7 @@
 bool
 localXidSatisfiesAnyDistributedSnapshot(TransactionId localXid)
 {
+	Snapshot		snapshot;
 	DistributedSnapshotCommitted distributedSnapshotCommitted;
 	Assert(TransactionIdIsNormal(localXid));
 
@@ -64,15 +65,16 @@ localXidSatisfiesAnyDistributedSnapshot(TransactionId localXid)
 	 * If don't have snapshot, can't check the global visibility and hence
 	 * return not to perform clean the tuple.
 	 */
-	if (NULL == SerializableSnapshot)
+	if (!FirstSnapshotSet)
 		return true;
 
+	snapshot = GetLatestSnapshot();
 	/* Only if we have distributed snapshot, evaluate against it */
-	if (SerializableSnapshot->haveDistribSnapshot)
+	if (snapshot->haveDistribSnapshot)
 	{
 		distributedSnapshotCommitted =
 			DistributedSnapshotWithLocalMapping_CommittedTest(
-				&SerializableSnapshot->distribSnapshotWithLocalMapping,
+				&snapshot->distribSnapshotWithLocalMapping,
 				localXid,
 				true);
 

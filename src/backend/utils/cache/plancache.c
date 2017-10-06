@@ -494,7 +494,6 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 	 */
 	if (!plan)
 	{
-		Snapshot	saveActiveSnapshot = ActiveSnapshot;
 		List	   *slist;
 
 		/*
@@ -506,6 +505,9 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 		PushOverrideSearchPath(plansource->search_path);
 
 		/*
+		 * GPDB_84_MERGE_FIXME This comment needs rewording after the Snapshot
+		 * changes in 5da9da71c44f27ba48fdad08ef263bf70e43e689
+		 *
 		 * If a snapshot is already set (the normal case), we can just use
 		 * that for parsing/planning.  But if it isn't, install one.  We must
 		 * arrange to restore ActiveSnapshot afterward, to ensure that
@@ -515,117 +517,98 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 		 * only in unusual cases.  (Besides, the snap might have been created
 		 * in a short-lived context.)
 		 */
-		PG_TRY();
+		TupleDesc	resultDesc;
+		Node	   *raw_parse_tree;
+
+		PushActiveSnapshot(GetTransactionSnapshot());
+
+		/*
+		 * If this is a CREATE TABLE AS, pass information about the
+		 * target table's distribution key to the planner.
+		 */
+		if (intoClause)
 		{
-			Snapshot	mySnapshot = NULL;
-			TupleDesc	resultDesc;
-			Node	   *raw_parse_tree;
+			SelectStmt *select;
 
-			if (ActiveSnapshot == NULL)
-			{
-				mySnapshot = CopySnapshot(GetTransactionSnapshot());
-				ActiveSnapshot = mySnapshot;
-			}
+			if (!IsA(plansource->raw_parse_tree, SelectStmt))
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("prepared statement is not a SELECT")));
 
-			/*
-			 * If this is a CREATE TABLE AS, pass information about the
-			 * target table's distribution key to the planner.
-			 */
-			if (intoClause)
-			{
-				SelectStmt *select;
+			select = (SelectStmt *) copyObject(plansource->raw_parse_tree);
 
-				if (!IsA(plansource->raw_parse_tree, SelectStmt))
-					ereport(ERROR,
-							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-							 errmsg("prepared statement is not a SELECT")));
+			select->intoClause = copyObject(intoClause);
 
-				select = (SelectStmt *) copyObject(plansource->raw_parse_tree);
-
-				select->intoClause = copyObject(intoClause);
-
-				raw_parse_tree = (Node *) select;
-			}
-			else
-				raw_parse_tree = copyObject(plansource->raw_parse_tree);
-
-			/*
-			 * Run parse analysis and rule rewriting.  The parser tends to
-			 * scribble on its input, so we must copy the raw parse tree to
-			 * prevent corruption of the cache.  Note that we do not use
-			 * parse_analyze_varparams(), assuming that the caller never wants
-			 * the parameter types to change from the original values.
-			 */
-			slist = pg_analyze_and_rewrite(raw_parse_tree,
-										   plansource->query_string,
-										   plansource->param_types,
-										   plansource->num_params);
-
-			if (plansource->fully_planned)
-			{
-				/*
-				 * Generate plans for queries.
-				 *
-				 * The planner may try to call SPI-using functions, which
-				 * causes a problem if we're already inside one.  Rather than
-				 * expect all SPI-using code to do SPI_push whenever a replan
-				 * could happen, it seems best to take care of the case here.
-				 */
-				bool	pushed;
-
-				pushed = SPI_push_conditional();
-
-				slist = pg_plan_queries(slist, plansource->cursor_options,
-										boundParams, false);
-
-				SPI_pop_conditional(pushed);
-			}
-
-			/*
-			 * Check or update the result tupdesc.	XXX should we use a weaker
-			 * condition than equalTupleDescs() here?
-			 */
-			resultDesc = PlanCacheComputeResultDesc(slist);
-			if (resultDesc == NULL && plansource->resultDesc == NULL)
-			{
-				/* OK, doesn't return tuples */
-			}
-			else if (intoClause)
-			{
-				/* OK */
-			}
-			else if (resultDesc == NULL || plansource->resultDesc == NULL ||
-					 !equalTupleDescs(resultDesc, plansource->resultDesc, true))
-			{
-				MemoryContext oldcxt;
-
-				/* can we give a better error message? */
-				if (plansource->fixed_result)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("cached plan must not change result type")));
-				oldcxt = MemoryContextSwitchTo(plansource->context);
-				if (resultDesc)
-					resultDesc = CreateTupleDescCopy(resultDesc);
-				if (plansource->resultDesc)
-					FreeTupleDesc(plansource->resultDesc);
-				plansource->resultDesc = resultDesc;
-				MemoryContextSwitchTo(oldcxt);
-			}
-
-			/* Done with snapshot */
-			if (mySnapshot)
-				FreeSnapshot(mySnapshot);
+			raw_parse_tree = (Node *) select;
 		}
-		PG_CATCH();
+		else
+			raw_parse_tree = copyObject(plansource->raw_parse_tree);
+
+		/*
+		 * Run parse analysis and rule rewriting.  The parser tends to
+		 * scribble on its input, so we must copy the raw parse tree to
+		 * prevent corruption of the cache.  Note that we do not use
+		 * parse_analyze_varparams(), assuming that the caller never wants
+		 * the parameter types to change from the original values.
+		 */
+		slist = pg_analyze_and_rewrite(raw_parse_tree,
+									   plansource->query_string,
+									   plansource->param_types,
+									   plansource->num_params);
+
+		if (plansource->fully_planned)
 		{
-			/* Restore global vars and propagate error */
-			ActiveSnapshot = saveActiveSnapshot;
-			PG_RE_THROW();
-		}
-		PG_END_TRY();
+			/*
+			 * Generate plans for queries.
+			 *
+			 * The planner may try to call SPI-using functions, which
+			 * causes a problem if we're already inside one.  Rather than
+			 * expect all SPI-using code to do SPI_push whenever a replan
+			 * could happen, it seems best to take care of the case here.
+			 */
+			bool	pushed;
 
-		ActiveSnapshot = saveActiveSnapshot;
+			pushed = SPI_push_conditional();
+
+			slist = pg_plan_queries(slist, plansource->cursor_options,
+									boundParams, false);
+
+			SPI_pop_conditional(pushed);
+		}
+
+		/*
+		 * Check or update the result tupdesc.	XXX should we use a weaker
+		 * condition than equalTupleDescs() here?
+		 */
+		resultDesc = PlanCacheComputeResultDesc(slist);
+		if (resultDesc == NULL && plansource->resultDesc == NULL)
+		{
+			/* OK, doesn't return tuples */
+		}
+		else if (intoClause)
+		{
+			/* OK */
+		}
+		else if (resultDesc == NULL || plansource->resultDesc == NULL ||
+				 !equalTupleDescs(resultDesc, plansource->resultDesc, true))
+		{
+			MemoryContext oldcxt;
+
+			/* can we give a better error message? */
+			if (plansource->fixed_result)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cached plan must not change result type")));
+			oldcxt = MemoryContextSwitchTo(plansource->context);
+			if (resultDesc)
+				resultDesc = CreateTupleDescCopy(resultDesc);
+			if (plansource->resultDesc)
+				FreeTupleDesc(plansource->resultDesc);
+			plansource->resultDesc = resultDesc;
+			MemoryContextSwitchTo(oldcxt);
+		}
+
+		PopActiveSnapshot();
 
 		/* Now we can restore current search path */
 		PopOverrideSearchPath();

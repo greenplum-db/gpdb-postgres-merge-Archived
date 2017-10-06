@@ -143,7 +143,7 @@ endif
 
 # Get some extra C modules from contrib/spi...
 
-all: refint$(DLSUFFIX) autoinc$(DLSUFFIX) all-spi tablespace-setup includecheck hooktest
+all: refint$(DLSUFFIX) autoinc$(DLSUFFIX) tablespace-setup includecheck hooktest
 
 refint$(DLSUFFIX): $(top_builddir)/contrib/spi/refint$(DLSUFFIX)
 	cp $< $@
@@ -230,7 +230,7 @@ bkuprestore: all
 clean distclean maintainer-clean: clean-lib
 # things built by `all' target
 	rm -f $(OBJS) refint$(DLSUFFIX) autoinc$(DLSUFFIX)
-	$(MAKE) -C $(contribdir)/spi clean
+	$(MAKE) -C $(top_builddir)/contrib/spi clean
 	$(MAKE) -C hooktest/ clean
 	rm -f $(output_files) $(input_files) pg_regress_main.o pg_regress.o pg_regress$(X) twophase_pqexecparams
 # things created by dynamic configs

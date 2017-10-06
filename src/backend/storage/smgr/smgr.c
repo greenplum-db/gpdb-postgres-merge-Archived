@@ -3130,7 +3130,6 @@ smgr_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 													&mirrorDataLossTrackingSessionNum);
 		smgrcreate(
 				reln,
-				/* isLocalBuf */ false,
 				/* relationName */ NULL,		// Ok to be NULL -- we don't know the name here.
 				mirrorDataLossTrackingState,
 				mirrorDataLossTrackingSessionNum,
@@ -3158,7 +3157,6 @@ smgr_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 													&mirrorDataLossTrackingSessionNum);
 		smgrcreate(
 				reln,
-				/* isLocalBuf */ false,
 				/* relationName */ NULL,		// Ok to be NULL -- we don't know the name here.
 				mirrorDataLossTrackingState,
 				mirrorDataLossTrackingSessionNum,

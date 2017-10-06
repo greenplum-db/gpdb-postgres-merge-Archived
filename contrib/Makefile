@@ -5,15 +5,10 @@ top_builddir = ..
 include $(top_builddir)/src/Makefile.global
 
 WANTED_DIRS = \
-		adminpack	\
-		btree_gist	\
-		chkpass		\
 		citext		\
-		cube		\
 		dblink		\
 		dict_int	\
 		dict_xsyn	\
-		earthdistance	\
 		fuzzystrmatch	\
 		hstore		\
 		intarray \

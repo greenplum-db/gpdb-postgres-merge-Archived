@@ -28,6 +28,7 @@
 #include "catalog/pg_authid.h"
 #include "gp-libpq-fe.h"
 #include "miscadmin.h"
+#include "storage/lmgr.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/snapmgr.h"
@@ -613,31 +614,29 @@ usedByConcurrentTransaction(AOSegfileStatus *segfilestat, int segno)
 	 * transaction isolation level, and it may be too late.
 	 */
 	Snapshot snapshot = NULL;
-	if (SerializableSnapshot == NULL) 
+	if (!FirstSnapshotSet)
 	{ 
-		Assert(LatestSnapshot == NULL); 
 		snapshot = GetTransactionSnapshot(); 
 	}
-	else if (LatestSnapshot != NULL) 
+	else
 	{ 
-		snapshot = LatestSnapshot; 
+		snapshot = GetLatestSnapshot();
 	} 
-	else 
-	{ 
-		snapshot = SerializableSnapshot; 
-	}
 
+/* GPDB_84_MERGE_FIXME */
+#if 0
 	if (Debug_appendonly_print_segfile_choice)
 	{
 		elog(LOG, "usedByConcurrentTransaction: current distributed transaction id = %x, latestWriteXid that uses segno %d is %x",
 			 getDistributedTransactionId(), segno, latestWriteXid);
-		if (SerializableSnapshot != NULL && SerializableSnapshot->haveDistribSnapshot)
-			LogDistributedSnapshotInfo(SerializableSnapshot, "SerializableSnapshot: ");
+		if (FirstSnapshotSet && CurrentSnapshot->haveDistribSnapshot)
+			LogDistributedSnapshotInfo(FirstSnapshotSet, "FirstSnapshotSet: ");
 		if (LatestSnapshot != NULL && LatestSnapshot->haveDistribSnapshot)
 			LogDistributedSnapshotInfo(LatestSnapshot, "LatestSnapshot: ");
 		if (snapshot->haveDistribSnapshot)
 			LogDistributedSnapshotInfo(snapshot, "Used snapshot: ");
 	}
+#endif
 	
 	if (!snapshot->haveDistribSnapshot)
 	{

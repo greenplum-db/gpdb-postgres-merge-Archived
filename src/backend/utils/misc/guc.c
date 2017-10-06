@@ -220,7 +220,7 @@ static const struct config_enum_entry client_message_level_options[] = {
 	{NULL, 0, false}
 };
 
-static const struct config_enum_entry server_message_level_options[] = {
+const struct config_enum_entry server_message_level_options[] = {
 	{"debug", DEBUG2, true},
 	{"debug5", DEBUG5, false},
 	{"debug4", DEBUG4, false},
