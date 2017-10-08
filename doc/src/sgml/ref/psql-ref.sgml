@@ -621,11 +621,6 @@ $ <userinput>psql "service=myservice sslmode=require"</userinput>
 $ <userinput>psql testdb</userinput>
 psql (&version;)
 Type "help" for help.
-<<<<<<< HEAD
-=======
-
-test=>
->>>>>>> 49f001d81e
 
 testdb=&gt;
 </programlisting>
@@ -1248,12 +1243,9 @@ testdb=&gt;
         and tables.  If <literal>+</literal> is
         appended to the command name, each object is listed with its
         physical size on disk and its associated description, if any.
-<<<<<<< HEAD
-=======
         </para>
 
         <para>
->>>>>>> 49f001d81e
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only objects whose names match the pattern are listed.
         By default, only user-created objects are shown; supply a
@@ -1354,7 +1346,6 @@ testdb=&gt;
         <term><literal>\dT[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
-<<<<<<< HEAD
         Lists data types.
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only types whose names match the pattern are listed.
@@ -1364,12 +1355,6 @@ testdb=&gt;
         By default, only user-created objects are shown;  supply a
         pattern or the <literal>S</literal> modifier to include system
         objects.
-=======
-        Lists all data types or only those that match <replaceable
-        class="parameter">pattern</replaceable>. The command form
-        <literal>\dT+</literal> shows extra information, namely the type's internal name, size, and
-        allowed values for <type>enum</> types.
->>>>>>> 49f001d81e
         </para>
         </listitem>
       </varlistentry>
@@ -1805,7 +1790,6 @@ lo_import 152801
           <para>
           <literal>unaligned</> format writes all columns of a row on one
           line, separated by the currently active field separator. This
-<<<<<<< HEAD
           is useful for creating output that might be intended to be read
           in by other programs (for example, tab-separated or comma-separated
           format).
@@ -1829,27 +1813,6 @@ lo_import 152801
           <para>
           The <literal>html</>, <literal>latex</>, and <literal>troff-ms</>
           formats put out tables that are intended to
-=======
-          is intended to create output that might be intended to be read
-          in by other programs (tab-separated, comma-separated).
-          <quote>Aligned</quote> mode is the standard, human-readable,
-          nicely formatted text output that is default.
-          </para>
-
-          <para>
-          <quote>Wrapped</quote> is like <literal>aligned</> but wraps
-          output to the specified width.  If <literal>\pset columns</> is
-          zero (the default), <literal>wrapped</> mode only affects screen
-          output and wrapped width is controlled by the environment
-          variable <envar>COLUMNS</> or the detected screen width.  If
-          <literal>\pset columns</> is set to a non-zero value, all output
-          is wrapped, including file and pipe output.
-          </para>
-
-          <para>
-          The <quote><acronym>HTML</acronym></quote> and
-          <quote>LaTeX</quote> modes put out tables that are intended to
->>>>>>> 49f001d81e
           be included in documents using the respective mark-up
           language. They are not complete documents! (This might not be
           so dramatic in <acronym>HTML</acronym>, but in LaTeX you must
@@ -1862,7 +1825,6 @@ lo_import 152801
           <term><literal>columns</literal></term>
           <listitem>
           <para>
-<<<<<<< HEAD
           Sets the target width for the <literal>wrapped</> format, and also
           the width limit for determining whether output is wide enough to
           require the pager.
@@ -1873,12 +1835,6 @@ lo_import 152801
           <literal>wrapped</> format only affects screen output.
           If <literal>columns</> is nonzero then file and pipe output is
           wrapped to that width as well.
-=======
-          Controls the target width for the <literal>wrapped</> format,
-          and width for determining if wide output requires the pager.
-          Zero (the default) causes the <literal>wrapped</> format to
-          affect only screen output.
->>>>>>> 49f001d81e
           </para>
           </listitem>
           </varlistentry>
@@ -2092,7 +2048,6 @@ lo_import 152801
           </para>
 
           <para>
-<<<<<<< HEAD
           When the <literal>pager</> option is <literal>off</>, the pager
           program is not used. When the <literal>pager</> option is
           <literal>on</>, the pager is used when appropriate, i.e., when the
@@ -2102,14 +2057,6 @@ lo_import 152801
           of whether it fits on the screen.  <literal>\pset pager</>
           without a <replaceable class="parameter">value</replaceable>
           toggles pager use on and off.
-=======
-          When the pager is <literal>off</>, the pager is not used. When the pager
-          is <literal>on</>, the pager is used only when appropriate, i.e. the
-          output is to a terminal and will not fit on the screen.
-          <literal>\pset pager</> turns the pager on and off. Pager can
-          also be set to <literal>always</>, which causes the pager to be
-          always used.
->>>>>>> 49f001d81e
           </para>
           </listitem>
           </varlistentry>
@@ -2884,7 +2831,6 @@ testdb=&gt; <userinput>SELECT * FROM :foo;</userinput>
     </para>
 
     <para>
-<<<<<<< HEAD
     When a value is to be used as an SQL literal or identifier, it is
     safest to arrange for it to be escaped.  To escape the value of
     a variable as an SQL literal, write a colon followed by the variable
@@ -2900,8 +2846,6 @@ testdb=&gt; <userinput>SELECT * FROM :"foo";</userinput>
     </para>
 
     <para>
-=======
->>>>>>> 49f001d81e
     One  possible use of this mechanism is to
     copy the contents of a file into a table column. First load the file into a
     variable and then proceed as above:

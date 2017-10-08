@@ -20,14 +20,9 @@ $PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.80 2008/07/18 03:32
  <refsynopsisdiv>
 <synopsis>
 CREATE [ OR REPLACE ] FUNCTION
-<<<<<<< HEAD
     <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [ { DEFAULT | = } <replaceable class="parameter">defexpr</replaceable>] [, ...] ] )
-    [ RETURNS [SETOF] <replaceableclass="parameter">rettype</replaceable> ]
-=======
-    <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
-    [ RETURNS <replaceable class="parameter">rettype</replaceable>
+    [ RETURNS [SETOF] <replaceableclass="parameter">rettype</replaceable> |
       | RETURNS TABLE ( <replaceable class="parameter">colname</replaceable> <replaceable class="parameter">coltype</replaceable> [, ...] ) ]
->>>>>>> 49f001d81e
   { LANGUAGE <replaceable class="parameter">langname</replaceable>
     | IMMUTABLE | STABLE | VOLATILE
     | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT

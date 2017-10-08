@@ -195,11 +195,7 @@
       <term><option>--ignore-version</option></term>
       <listitem>
        <para>
-<<<<<<< HEAD
-        This option has been deprecated.
-=======
         A deprecated option that is now ignored.
->>>>>>> 49f001d81e
        </para>
       </listitem>
      </varlistentry>

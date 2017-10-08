@@ -296,11 +296,7 @@ PostgreSQL documentation
       <term><option>--ignore-version</></term>
       <listitem>
        <para>
-<<<<<<< HEAD
-        This option has been deprecated.
-=======
         A deprecated option that is now ignored.
->>>>>>> 49f001d81e
        </para>
       </listitem>
      </varlistentry>
@@ -624,7 +620,6 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
-<<<<<<< HEAD
 
      <varlistentry>
       <term><option>-Z <replaceable class="parameter">0..9</replaceable></option></term>
@@ -642,8 +637,6 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
-=======
->>>>>>> 49f001d81e
     </variablelist>
    </para>
 

@@ -170,13 +170,8 @@ GRANT { SELECT | INSERT | ALL [PRIVILEGES] }
       <para>
        Allows <xref linkend="sql-update" endterm="sql-update-title"> of any
        column of the specified table.
-<<<<<<< HEAD
-       (In practice, any nontrivial <command>UPDATE</command> command will require
-       <literal>SELECT</literal> privilege as well, since it must reference table
-=======
        (In practice, any nontrivial <command>UPDATE</> command will require
        <literal>SELECT</> privilege as well, since it must reference table
->>>>>>> 49f001d81e
        columns to determine which rows to update, and/or to compute new
        values for columns.)
        <literal>SELECT ... FOR UPDATE</literal>
@@ -195,13 +190,8 @@ GRANT { SELECT | INSERT | ALL [PRIVILEGES] }
       <para>
        Allows <xref linkend="sql-delete" endterm="sql-delete-title"> of a row
        from the specified table.
-<<<<<<< HEAD
-       (In practice, any nontrivial <command>DELETE</command> command will require
-       <literal>SELECT</literal> privilege as well, since it must reference table
-=======
        (In practice, any nontrivial <command>DELETE</> command will require
        <literal>SELECT</> privilege as well, since it must reference table
->>>>>>> 49f001d81e
        columns to determine which rows to delete.)
       </para>
      </listitem>
