@@ -3304,6 +3304,7 @@ AbortTransaction(void)
 		AtEOXact_ComboCid();
 		AtEOXact_HashTables(false);
 		AtEOXact_PgStat(false);
+		AtEOXact_Snapshot(false);
 		pgstat_report_xact_timestamp(0);
 	}
 
