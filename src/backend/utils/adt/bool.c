@@ -184,7 +184,7 @@ boolin(PG_FUNCTION_ARGS)
 			break;
 	}
 
-	ereport(PANIC,
+	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 		   errmsg("invalid input syntax for type boolean: \"%s\"", in_str)));
 
