@@ -6612,8 +6612,6 @@ StartupXLOG_InProduction(void)
 
 	}
 
-	BuildFlatFiles(false);
-
 	/*
 	 * All done.  Allow backends to write WAL.	(Although the bool flag is
 	 * probably atomic in itself, we use the info_lck here to ensure that
@@ -11693,6 +11691,7 @@ StartupProcessMain(int passNum)
 	{
 	case 1:
 		StartupXLOG();
+		BuildFlatFiles(false);
 		break;
 
 	case 2:
