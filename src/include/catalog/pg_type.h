@@ -675,7 +675,7 @@ DATA(insert OID = 2776 ( anynonarray	PGNSP PGUID  4 t p P f t \054 0 0 0 anynona
 DATA(insert OID = 3500 ( anyenum		PGNSP PGUID  4 t p P f t \054 0 0 0 anyenum_in anyenum_out - - - - - i p f 0 -1 0 _null_ _null_ ));
 #define ANYENUMOID		3500
 
-DATA(insert OID = 3053 (	anytable	   PGNSP PGUID -1 f P f p t \054 0	0 0 anytable_in anytable_out - - - - - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 3053 ( anytable		PGNSP PGUID -1 f p P f t \054 0	0 0 anytable_in anytable_out - - - - - d x f 0 -1 0 _null_ _null_ ));
 DESCR("Represents a generic TABLE value expression");
 #define ANYTABLEOID     3053
 
