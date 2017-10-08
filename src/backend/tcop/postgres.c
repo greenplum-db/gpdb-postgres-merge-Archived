@@ -1651,7 +1651,7 @@ exec_simple_query(const char *query_string, const char *seqServerHost, int seqSe
 	foreach(parsetree_item, parsetree_list)
 	{
 		Node	   *parsetree = (Node *) lfirst(parsetree_item);
-		Snapshot	mySnapshot = NULL;
+		bool		snapshot_set = false;
 		const char *commandTag;
 		char		completionTag[COMPLETION_TAG_BUFSIZE];
 		List	   *querytree_list,
@@ -1726,8 +1726,8 @@ exec_simple_query(const char *query_string, const char *seqServerHost, int seqSe
 		 */
 		if (analyze_requires_snapshot(parsetree))
 		{
-			mySnapshot = RegisterSnapshot(GetTransactionSnapshot());
-			PushActiveSnapshot(mySnapshot);
+			PushActiveSnapshot(GetTransactionSnapshot());
+			snapshot_set = true;
 		}
 
 		/*
@@ -1744,7 +1744,7 @@ exec_simple_query(const char *query_string, const char *seqServerHost, int seqSe
 		plantree_list = pg_plan_queries(querytree_list, 0, NULL, false);
 
 		/* Done with the snapshot used for parsing/planning */
-		if (mySnapshot)
+		if (snapshot_set)
 			PopActiveSnapshot();
 
 		/* If we got a cancel signal in analysis or planning, quit */
@@ -2011,7 +2011,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	if (parsetree_list != NIL)
 	{
 		Query	   *query;
-		Snapshot	mySnapshot = NULL;
+		bool		snapshot_set = false;
 		int			i;
 
 		raw_parse_tree = (Node *) linitial(parsetree_list);
@@ -2041,8 +2041,8 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		 */
 		if (analyze_requires_snapshot(raw_parse_tree))
 		{
-			mySnapshot = RegisterSnapshot(GetTransactionSnapshot());
-			PushActiveSnapshot(mySnapshot);
+			PushActiveSnapshot(GetTransactionSnapshot());
+			snapshot_set = true;
 		}
 
 		/*
@@ -2103,7 +2103,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		}
 
 		/* Done with the snapshot used for parsing/planning */
-		if (mySnapshot)
+		if (snapshot_set)
 			PopActiveSnapshot();
 	}
 	else
@@ -2231,6 +2231,7 @@ exec_bind_message(StringInfo input_message)
 	MemoryContext oldContext;
 	bool		save_log_statement_stats = log_statement_stats;
 	Snapshot	mySnapshot = NULL;
+	bool		snapshot_set = false;
 	char		msec_str[32];
 
 	/* Get the fixed part of the message */
@@ -2363,8 +2364,8 @@ exec_bind_message(StringInfo input_message)
 	 */
 	if (numParams > 0 || analyze_requires_snapshot(psrc->raw_parse_tree))
 	{
-		mySnapshot = RegisterSnapshot(GetTransactionSnapshot());
-		PushActiveSnapshot(mySnapshot);
+		PushActiveSnapshot(GetTransactionSnapshot());
+		snapshot_set = true;
 	}
 
 	/*
