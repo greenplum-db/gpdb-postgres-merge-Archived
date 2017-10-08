@@ -264,7 +264,7 @@ RemoveSchemas(DropStmt *drop)
 			continue;
 		}
 
-		namespaceIdList = lappend_int(namespaceIdList, namespaceId);
+		namespaceIdList = lappend_oid(namespaceIdList, namespaceId);
 
 		/* Permission check */
 		if (!pg_namespace_ownercheck(namespaceId, GetUserId()))
@@ -301,7 +301,7 @@ RemoveSchemas(DropStmt *drop)
 	{
 		foreach(cell, namespaceIdList)
 		{
-			Oid namespaceId = (Oid) lfirst(cell);
+			Oid namespaceId = lfirst_oid(cell);
 
 			MetaTrackDropObject(NamespaceRelationId, namespaceId);
 		}
