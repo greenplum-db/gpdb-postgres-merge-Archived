@@ -367,22 +367,18 @@ CREATE VIEW pg_stat_activity AS
             S.datid AS datid,
             D.datname AS datname,
             S.procpid,
-<<<<<<< HEAD
             S.sess_id,
-=======
->>>>>>> 49f001d81e
             S.usesysid,
             U.rolname AS usename,
             S.current_query,
             S.waiting,
-<<<<<<< HEAD
             S.query_start,
             S.backend_start,
             S.client_addr,
             S.client_port,
             S.application_name,
-            S.xact_start,
-            S.waiting_reason,
+            S.act_start,
+            S.waiting_for,
             S.rsgid,
             S.rsgname,
             S.rsgqueueduration
@@ -439,16 +435,6 @@ CREATE VIEW gp_stat_replication AS
      client_port integer, backend_start timestamptz, state text,
      sent_location text, write_location text, flush_location text,
      replay_location text, sync_priority integer, sync_state text);
-=======
-            S.xact_start,
-            S.query_start,
-            S.backend_start,
-            S.client_addr,
-            S.client_port
-    FROM pg_database D, pg_stat_get_activity(NULL) AS S, pg_authid U
-    WHERE S.datid = D.oid AND 
-            S.usesysid = U.oid;
->>>>>>> 49f001d81e
 
 CREATE VIEW pg_stat_database AS 
     SELECT 
@@ -467,7 +453,6 @@ CREATE VIEW pg_stat_database AS
             pg_stat_get_db_tuples_deleted(D.oid) AS tup_deleted
     FROM pg_database D;
 
-<<<<<<< HEAD
 CREATE VIEW pg_stat_resqueues AS
 	SELECT
 		Q.oid AS queueid,
@@ -918,7 +903,7 @@ pg_resqueuecapability rc WHERE
 rq.oid=rc.resqueueid AND rc.restypid = rt.restypid
 ORDER BY rsqname, restypid
 ;
-=======
+
 CREATE VIEW pg_stat_user_functions AS 
     SELECT
             P.oid AS funcid, 
@@ -930,7 +915,6 @@ CREATE VIEW pg_stat_user_functions AS
     FROM pg_proc P LEFT JOIN pg_namespace N ON (N.oid = P.pronamespace)
     WHERE P.prolang != 12  -- fast check to eliminate built-in functions   
           AND pg_stat_get_function_calls(P.oid) IS NOT NULL;
->>>>>>> 49f001d81e
 
 CREATE VIEW pg_stat_bgwriter AS
     SELECT
