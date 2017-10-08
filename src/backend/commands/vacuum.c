@@ -1412,6 +1412,8 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 		}
 		vacstmt->appendonly_compaction_vacuum_prepare = false;
 
+		PopActiveSnapshot();
+
 		/*
 		 * Transaction commit is always executed on QD.
 		 */
@@ -1422,8 +1424,6 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 		{
 			SIMPLE_FAULT_INJECTOR(VacuumRelationEndOfFirstRound);
 		}
-
-		PopActiveSnapshot();
 
 		relationRound++;
 	}
@@ -2151,10 +2151,13 @@ vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_s
 
 	/*
 	 * Complete the transaction and free all temporary memory used.
+	 * NOT in GPDB, though! The caller still needs to have the relation open.
 	 */
+#if 0
 	if (vacstmt->full)
 		PopActiveSnapshot();
 	CommitTransactionCommand();
+#endif
 
 	/* now we can allow interrupts again, if disabled */
 	if (heldoff)
