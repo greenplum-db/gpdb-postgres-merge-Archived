@@ -4891,6 +4891,8 @@ OpenIntoRel(QueryDesc *queryDesc)
 
 	myState->is_bulkload = bufferPoolBulkLoad;
 
+	myState->bulkloadinfo = (struct MirroredBufferPoolBulkLoadInfo *) palloc0(sizeof(MirroredBufferPoolBulkLoadInfo));
+
 	relFileNode.spcNode = tablespaceId;
 	relFileNode.dbNode = MyDatabaseId;
 	relFileNode.relNode = intoRelationId;
