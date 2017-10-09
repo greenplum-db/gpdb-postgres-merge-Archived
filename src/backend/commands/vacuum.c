@@ -1123,8 +1123,8 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 
 			if (onerel == NULL)
 			{
-				CommitTransactionCommand();
 				PopActiveSnapshot();
+				CommitTransactionCommand();
 				continue;
 			}
 		}
