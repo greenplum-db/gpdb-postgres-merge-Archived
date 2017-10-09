@@ -703,6 +703,7 @@ ProcessUtility(Node *parsetree,
 
 				switch (stmt->removeType)
 				{
+					case OBJECT_EXTTABLE:
 					case OBJECT_TABLE:
 					case OBJECT_SEQUENCE:
 					case OBJECT_VIEW:
