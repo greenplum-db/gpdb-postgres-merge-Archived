@@ -1214,6 +1214,7 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 							MemoryContextSwitchTo(oldctx);
 							/* Nothing left to do for this relation */
 							relation_close(onerel, NoLock);
+							PopActiveSnapshot();
 							CommitTransactionCommand();
 							/* don't dispatch this iteration */
 							continue;
