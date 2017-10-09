@@ -115,7 +115,7 @@ WHERE attrelid = 'mytab'::regclass AND attnum > 0;
 -- Create & Drop type as non-superuser
 CREATE USER user_bob;
 SET SESSION AUTHORIZATION user_bob;
-CREATE TYPE shell;
+CREATE TYPE shell; -- not allowed
 CREATE TYPE compfoo as (f1 int, f2 text);
 DROP TYPE compfoo;
 RESET SESSION AUTHORIZATION;
