@@ -948,7 +948,6 @@ select c2[2].f2 from comptable;
 drop type _comptype;
 drop table comptable;
 drop type comptype;
-<<<<<<< HEAD
 -- Insert/update on a column that is array of composite
 create temp table t1 (f1 int8_tbl[], distkey int4) distributed by (distkey);
 insert into t1 (f1[5].q1) values(42);
@@ -965,18 +964,11 @@ select f1 from t1;
  [5:5]={"(42,43)"}
 (1 row)
 
-create or replace function unnest1(anyarray)
-returns setof anyelement as $$
-select $1[s] from generate_subscripts($1,1) g(s);
-$$ language sql immutable;
-create or replace function unnest2(anyarray)
-=======
 create or replace function unnest1(anyarray) 
 returns setof anyelement as $$
 select $1[s] from generate_subscripts($1,1) g(s);
 $$ language sql immutable;
 create or replace function unnest2(anyarray) 
->>>>>>> 49f001d81e
 returns setof anyelement as $$
 select $1[s1][s2] from generate_subscripts($1,1) g1(s1),
                    generate_subscripts($1,2) g2(s2);
@@ -1056,8 +1048,7 @@ ERROR:  dimension array or low bound array cannot be NULL
 select array_fill(1, array[2,2], null);
 ERROR:  dimension array or low bound array cannot be NULL
 select array_fill(1, array[3,3], array[1,1,1]);
-<<<<<<< HEAD
-ERROR:  wrong number of array subscripts
+ERROR:  wrong number of array_subscripts
 DETAIL:  Low bound array has different size than dimensions array.
 select array_fill(1, array[1,2,null]);
 ERROR:  dimension values cannot be null
@@ -1327,9 +1318,3 @@ NOTICE:  removing built-in function "int_agg_state"
 RESET SESSION AUTHORIZATION;
 DROP USER IF EXISTS user_internal_stype;
 -- end_ignore
-=======
-ERROR:  wrong number of array_subscripts
-DETAIL:  Low bound array has different size than dimensions array.
-select array_fill(1, array[1,2,null]);
-ERROR:  dimension values cannot be null
->>>>>>> 49f001d81e

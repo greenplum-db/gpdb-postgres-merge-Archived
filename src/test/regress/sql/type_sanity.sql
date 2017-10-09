@@ -33,11 +33,7 @@ WHERE p1.typbyval AND
     (p1.typlen != 1 OR p1.typalign != 'c') AND
     (p1.typlen != 2 OR p1.typalign != 's') AND
     (p1.typlen != 4 OR p1.typalign != 'i') AND
-<<<<<<< HEAD
-	(p1.typlen != 8 OR p1.typalign != 'd') ;
-=======
     (p1.typlen != 8 OR p1.typalign != 'd');
->>>>>>> 49f001d81e
 
 -- Look for "toastable" types that aren't varlena.
 
