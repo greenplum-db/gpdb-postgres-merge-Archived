@@ -293,7 +293,7 @@ AC_SUBST(enable_tap_tests)
 AC_MSG_CHECKING([for block size])
 PGAC_ARG_REQ(with, blocksize, [  --with-blocksize=BLOCKSIZE  set table block size in kB [[8]]],
              [blocksize=$withval],
-             [blocksize=8])
+             [blocksize=32])
 case ${blocksize} in
   1) BLCKSZ=1024;;
   2) BLCKSZ=2048;;
@@ -357,7 +357,7 @@ AC_DEFINE_UNQUOTED([RELSEG_SIZE], ${RELSEG_SIZE}, [
 AC_MSG_CHECKING([for WAL block size])
 PGAC_ARG_REQ(with, wal-blocksize, [  --with-wal-blocksize=BLOCKSIZE  set WAL block size in kB [[8]]],
              [wal_blocksize=$withval],
-             [wal_blocksize=8])
+             [wal_blocksize=32])
 case ${wal_blocksize} in
   1) XLOG_BLCKSZ=1024;;
   2) XLOG_BLCKSZ=2048;;
@@ -385,7 +385,7 @@ AC_DEFINE_UNQUOTED([XLOG_BLCKSZ], ${XLOG_BLCKSZ}, [
 AC_MSG_CHECKING([for WAL segment size])
 PGAC_ARG_REQ(with, wal-segsize, [  --with-wal-segsize=SEGSIZE  set WAL segment size in MB [[16]]],
              [wal_segsize=$withval],
-             [wal_segsize=16])
+             [wal_segsize=64])
 case ${wal_segsize} in
   1) ;;
   2) ;;

@@ -3952,7 +3952,7 @@ if test "${with_blocksize+set}" = set; then :
   esac
 
 else
-  blocksize=8
+  blocksize=32
 fi
 
 
@@ -4041,7 +4041,7 @@ if test "${with_wal_blocksize+set}" = set; then :
   esac
 
 else
-  wal_blocksize=8
+  wal_blocksize=32
 fi
 
 
@@ -4089,7 +4089,7 @@ if test "${with_wal_segsize+set}" = set; then :
   esac
 
 else
-  wal_segsize=16
+  wal_segsize=64
 fi
 
 
