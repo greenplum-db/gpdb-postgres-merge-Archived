@@ -241,7 +241,8 @@ NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_6" for table "foo_p"
 NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_7" for table "foo_p"
 NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_8" for table "foo_p"
 NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_9" for table "foo_p"
-ERROR:  OIDS=TRUE is not allowed on partitioned tables. Use OIDS=FALSE
+ERROR:  OIDS=TRUE is not allowed on partitioned tables
+HINT:  Use OIDS=FALSE.
 -- but disallow exchange if different oid settings
 create table foo_p (i int, j int) with (oids = false) distributed by (i)
 partition by range(j)
@@ -3369,7 +3370,8 @@ NOTICE:  CREATE TABLE will create partition "rank_damage_1_prt_6" for table "ran
 NOTICE:  CREATE TABLE will create partition "rank_damage_1_prt_7" for table "rank_damage"
 NOTICE:  CREATE TABLE will create partition "rank_damage_1_prt_8" for table "rank_damage"
 NOTICE:  CREATE TABLE will create partition "rank_damage_1_prt_9" for table "rank_damage"
-ERROR:  OIDS=TRUE is not allowed on partitioned tables. Use OIDS=FALSE
+ERROR:  OIDS=TRUE is not allowed on partitioned tables
+HINT:  Use OIDS=FALSE.
 -- this works
 create table rank_damage (i int, j int)  partition by range(j) (start(1) end(10)
 every(1));
@@ -3402,7 +3404,8 @@ ERROR:  can't drop a constraint from "rank_damage_1_prt_1"; it is part of a part
 HINT:  You may be able to perform the operation on the partitioned table as a whole.
 alter table rank_damage add partition ppo end (22) with (oids = true);
 NOTICE:  CREATE TABLE will create partition "rank_damage_1_prt_ppo" for table "rank_damage"
-ERROR:  OIDS=TRUE is not allowed on partitioned tables. Use OIDS=FALSE
+ERROR:  OIDS=TRUE is not allowed on partitioned tables
+HINT:  Use OIDS=FALSE.
 drop table rank_damage, rank2_damage;
 -- MPP-5831, type cast in SPLIT
 CREATE TABLE sg_cal_event_silvertail_hour (
