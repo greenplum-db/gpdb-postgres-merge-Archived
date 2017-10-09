@@ -1078,10 +1078,9 @@ FROM pg_am am JOIN pg_opclass op ON opcmethod = am.oid
 WHERE am.amname <> 'gin'
 GROUP BY amname, amsupport, opcname, amprocfamily
 HAVING count(*) != amsupport OR amprocfamily IS NULL;
- amname |   opcname    | count 
---------+--------------+-------
- gin    | _complex_ops |     1
-(1 row)
+amname | opcname | count 
+--------+---------+-------
+(0 rows)
 
 SELECT amname, opcname, count(*)
 FROM pg_am am JOIN pg_opclass op ON opcmethod = am.oid
@@ -1090,9 +1089,10 @@ FROM pg_am am JOIN pg_opclass op ON opcmethod = am.oid
 WHERE am.amname = 'gin'
 GROUP BY amname, amsupport, opcname, amprocfamily
 HAVING count(*) < amsupport - 1 OR amprocfamily IS NULL;
- amname | opcname | count 
---------+---------+-------
-(0 rows)
+  amname |   opcname    | count 
+--------+--------------+-------
+ gin    | _complex_ops |     1
+(1 row)
 
 -- Unfortunately, we can't check the amproc link very well because the
 -- signature of the function may be different for different support routines
