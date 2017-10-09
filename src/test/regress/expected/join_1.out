@@ -2334,7 +2334,6 @@ where a.unique1 = 42 and
 ---------+-----+----------+---------+---------
 (0 rows)
 
-<<<<<<< HEAD
 --
 -- test for sane behavior with noncanonical merge clauses, per bug #4926
 --
@@ -2387,5 +2386,3 @@ execute foo(false);
  10000
 (1 row)
 
-=======
->>>>>>> 49f001d81e
