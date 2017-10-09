@@ -531,6 +531,7 @@ static void free_stmt(PLpgSQL_stmt *stmt);
 static void free_block(PLpgSQL_stmt_block *block);
 static void free_assign(PLpgSQL_stmt_assign *stmt);
 static void free_if(PLpgSQL_stmt_if *stmt);
+static void free_case(PLpgSQL_stmt_case *stmt);
 static void free_loop(PLpgSQL_stmt_loop *stmt);
 static void free_while(PLpgSQL_stmt_while *stmt);
 static void free_fori(PLpgSQL_stmt_fori *stmt);
@@ -565,6 +566,9 @@ free_stmt(PLpgSQL_stmt *stmt)
 			break;
 		case PLPGSQL_STMT_IF:
 			free_if((PLpgSQL_stmt_if *) stmt);
+			break;
+		case PLPGSQL_STMT_CASE:
+			free_case((PLpgSQL_stmt_case *) stmt);
 			break;
 		case PLPGSQL_STMT_LOOP:
 			free_loop((PLpgSQL_stmt_loop *) stmt);
@@ -669,6 +673,22 @@ free_if(PLpgSQL_stmt_if *stmt)
 }
 
 static void
+free_case(PLpgSQL_stmt_case *stmt)
+{
+	ListCell   *l;
+
+	free_expr(stmt->t_expr);
+	foreach(l, stmt->case_when_list)
+	{
+		PLpgSQL_case_when *cwt = (PLpgSQL_case_when *) lfirst(l);
+
+		free_expr(cwt->expr);
+		free_stmts(cwt->stmts);
+	}
+	free_stmts(stmt->else_stmts);
+}
+
+static void
 free_loop(PLpgSQL_stmt_loop *stmt)
 {
 	free_stmts(stmt->body);
@@ -715,6 +735,7 @@ free_open(PLpgSQL_stmt_open *stmt)
 static void
 free_fetch(PLpgSQL_stmt_fetch *stmt)
 {
+	free_expr(stmt->expr);
 }
 
 static void
@@ -749,7 +770,14 @@ free_return_next(PLpgSQL_stmt_return_next *stmt)
 static void
 free_return_query(PLpgSQL_stmt_return_query *stmt)
 {
+	ListCell   *lc;
+
 	free_expr(stmt->query);
+	free_expr(stmt->dynquery);
+	foreach(lc, stmt->params)
+	{
+		free_expr((PLpgSQL_expr *) lfirst(lc));
+	}
 }
 
 static void
