@@ -2786,22 +2786,12 @@ AddRelationNewConstraints(Relation rel,
 	 */
 	foreach(cell, newColDefaults)
 	{
-		ColumnDef  *colDef = (ColumnDef *) lfirst(cell);
-
+		RawColumnDefault *colDef = (RawColumnDefault *) lfirst(cell);
 		Form_pg_attribute atp = rel->rd_att->attrs[colDef->attnum - 1];
 
-		if (colDef->raw_default != NULL)
-		{
-			Insist (colDef->cooked_default == NULL);
-			expr = cookDefault(pstate, colDef->raw_default,
-							   atp->atttypid, atp->atttypmod,
-							   NameStr(atp->attname));
-		}
-		else
-		{
-			Insist (colDef->cooked_default != NULL);
-			expr = stringToNode(colDef->cooked_default);
-		}
+		expr = cookDefault(pstate, colDef->raw_default,
+						   atp->atttypid, atp->atttypmod,
+						   NameStr(atp->attname));
 
 		/*
 		 * If the expression is just a NULL constant, we do not bother to make
