@@ -283,6 +283,11 @@ examine_parameter_list(List *parameters, Oid languageOid,
 		/* handle output parameters */
 		if (fp->mode != FUNC_PARAM_IN && fp->mode != FUNC_PARAM_VARIADIC)
 		{
+			if (toid == ANYTABLEOID)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+						 errmsg("functions cannot return \"anytable\" arguments")));
+
 			if (outCount == 0)	/* save first output param's type */
 				*requiredResultType = toid;
 			outCount++;
@@ -307,26 +312,6 @@ examine_parameter_list(List *parameters, Oid languageOid,
 			}
 
 			isinput = true;
-		}
-
-		/* input and output */
-		if (fp->mode == FUNC_PARAM_INOUT || fp->mode == FUNC_PARAM_OUT ||
-			fp->mode == FUNC_PARAM_TABLE)
-		{
-			if (toid == ANYTABLEOID)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-						 errmsg("functions cannot return \"anytable\" arguments")));
-
-			if (fp->mode == FUNC_PARAM_INOUT)
-			{
-				inTypes[inCount++] = toid;
-				isinput = true;
-
-				if (outCount == 0)	/* save first OUT param's type */
-					*requiredResultType = toid;
-				outCount++;
-			}
 		}
 
 		allTypes[i] = ObjectIdGetDatum(toid);
