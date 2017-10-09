@@ -2744,8 +2744,7 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 				if (skipped_sortitem)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-							 errmsg("SELECT DISTINCT ON expressions must match initial ORDER BY expressions"),
-							 parser_errposition(pstate, exprLocation((Node *) lfirst(dlitem)))));
+							 errmsg("SELECT DISTINCT ON expressions must match initial ORDER BY expressions")));
 				else
 					result = lappend(result, copyObject(scl));
 			}
