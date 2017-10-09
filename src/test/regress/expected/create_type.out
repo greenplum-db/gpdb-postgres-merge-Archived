@@ -122,8 +122,8 @@ WHERE attrelid = 'mytab'::regclass AND attnum > 0;
 CREATE USER user_bob;
 NOTICE:  resource queue required -- using default resource queue "pg_default"
 SET SESSION AUTHORIZATION user_bob;
-CREATE TYPE shell;
-DROP TYPE shell;
+CREATE TYPE shell; -- not allowed
+ERROR:  must be superuser to create a base type
 CREATE TYPE compfoo as (f1 int, f2 text);
 DROP TYPE compfoo;
 RESET SESSION AUTHORIZATION;

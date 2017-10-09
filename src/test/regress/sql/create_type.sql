@@ -116,7 +116,6 @@ WHERE attrelid = 'mytab'::regclass AND attnum > 0;
 CREATE USER user_bob;
 SET SESSION AUTHORIZATION user_bob;
 CREATE TYPE shell;
-DROP TYPE shell;
 CREATE TYPE compfoo as (f1 int, f2 text);
 DROP TYPE compfoo;
 RESET SESSION AUTHORIZATION;
