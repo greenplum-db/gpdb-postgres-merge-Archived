@@ -2669,6 +2669,7 @@ _copyTypeCast(TypeCast *from)
 
 	COPY_NODE_FIELD(arg);
 	COPY_NODE_FIELD(typeName);
+	COPY_LOCATION_FIELD(location);
 
 	return newnode;
 }
