@@ -380,7 +380,6 @@ DATA(insert (	3041 1114 1082 1 2370 ));	/* timestamp-date */
 DATA(insert (	3041 1114 1184 1 2526 ));	/* timestamp-timestamptz */
 DATA(insert (	3042	 25   25 1 2166 ));	/* text pattern */
 DATA(insert (	3044	1042  1042 1 2180 ));	/* bpchar pattern */
-DATA(insert (	3045	 19   19 1 2187 ));	/* name pattern */
 DATA(insert (	3046	790  790 1  377 ));	/* money */
 DATA(insert (	3047	703  703 1 380 ));		/* reltime */
 DATA(insert (	3048	704  704 1 381 ));		/* tinterval */

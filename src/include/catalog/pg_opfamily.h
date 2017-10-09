@@ -178,7 +178,6 @@ DATA(insert OID = 3039 (	3013	varbit_ops		PGNSP PGUID ));
 DATA(insert OID = 3041 (	3013	timestamp_ops	PGNSP PGUID ));
 DATA(insert OID = 3042 (	3013	text_pattern_ops	PGNSP PGUID ));
 DATA(insert OID = 3044 (	3013	bpchar_pattern_ops	PGNSP PGUID ));
-DATA(insert OID = 3045 (	3013	name_pattern_ops	PGNSP PGUID ));
 DATA(insert OID = 3046 (	3013	money_ops		PGNSP PGUID ));
 DATA(insert OID = 3047 (	3013	reltime_ops		PGNSP PGUID ));
 DATA(insert OID = 3048 (	3013	tinterval_ops	PGNSP PGUID ));

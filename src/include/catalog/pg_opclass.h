@@ -254,7 +254,6 @@ DATA(insert (	3013	timestamp_ops		PGNSP PGUID 3041 1114 t 0 ));
 DATA(insert (	3013	text_pattern_ops	PGNSP PGUID 3042  25 f 0 ));
 DATA(insert (	3013	varchar_pattern_ops PGNSP PGUID 3042  25 f 0 ));
 DATA(insert (	3013	bpchar_pattern_ops	PGNSP PGUID 3044 1042 f 0 ));
-DATA(insert (	3013	name_pattern_ops	PGNSP PGUID 3045  19 f 0 ));
 DATA(insert (	3013	money_ops			PGNSP PGUID 3046 790 t 0 ));
 DATA(insert (	3013	reltime_ops			PGNSP PGUID 3047 703 t 0 ));
 DATA(insert (	3013	tinterval_ops		PGNSP PGUID 3048 704 t 0 ));
