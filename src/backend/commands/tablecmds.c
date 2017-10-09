@@ -824,7 +824,7 @@ DefinePartitionedRelation(CreateStmt *stmt, Oid relOid)
 		DestReceiver *dest = None_Receiver;
 		List *pL1 = (List *)stmt->postCreate;
 
-		pUtl = parse_analyze(linitial(pL1), NULL, NULL, 0);
+		pUtl = parse_analyze(linitial(pL1), synthetic_sql, NULL, 0);
 
 		Assert(((Query *)pUtl)->commandType == CMD_UTILITY);
 
@@ -859,7 +859,7 @@ EvaluateDeferredStatements(List *deferredStmts)
 
 		Node *dstmt = lfirst(lc);
 
-		uquery = parse_analyze(dstmt, NULL, NULL, 0);
+		uquery = parse_analyze(dstmt, synthetic_sql, NULL, 0);
 		Insist(uquery->commandType == CMD_UTILITY);
 
 		ereport(DEBUG1,
@@ -11959,7 +11959,7 @@ build_ctas_with_dist(Relation rel, List *dist_clause,
 	}
 	*tmprv = tmprel;
 
-	q = parse_analyze((Node *)n, NULL, NULL, 0);
+	q = parse_analyze((Node *) n, synthetic_sql, NULL, 0);
 
 	AcquireRewriteLocks(q);
 
@@ -12229,7 +12229,7 @@ prebuild_temp_table(Relation rel, RangeVar *tmpname, List *distro, List *opts,
 			cd->typeName = tname;
 			cs->tableElts = lappend(cs->tableElts, cd);
 		}
-		q = parse_analyze((Node *)cs, NULL, NULL, 0);
+		q = parse_analyze((Node *) cs, synthetic_sql, NULL, 0);
 		ProcessUtility((Node *)q->utilityStmt,
 					   synthetic_sql,
 					   NULL,
@@ -15398,7 +15398,7 @@ ATPExecPartSplit(Relation *rel,
 		ct->ownerid = (*rel)->rd_rel->relowner;
 		ct->is_split_part = true;
 		/* No transformation happens for this stmt in parse_analyze() */
-		q = parse_analyze((Node *)ct, NULL, NULL, 0);
+		q = parse_analyze((Node *) ct, synthetic_sql, NULL, 0);
 		ProcessUtility((Node *)q->utilityStmt,
 					   synthetic_sql,
 					   NULL,
@@ -15441,7 +15441,7 @@ ATPExecPartSplit(Relation *rel,
 		cmd->def = (Node *)mypc;
 		ats->cmds = list_make1(cmd);
 		/* No transformation happens for this stmt in parse_analyze() */
-		q = parse_analyze((Node *)ats, NULL, NULL, 0);
+		q = parse_analyze((Node *) ats, synthetic_sql, NULL, 0);
 
 		heap_close(*rel, NoLock);
 		ProcessUtility((Node *)q->utilityStmt,
@@ -15497,7 +15497,7 @@ ATPExecPartSplit(Relation *rel,
 
 		cmd->def = (Node *)mypc;
 		/* No transformation happens for this stmt in parse_analyze() */
-		q = parse_analyze((Node *)ats, NULL, NULL, 0);
+		q = parse_analyze((Node *) ats, synthetic_sql, NULL, 0);
 		heap_close(*rel, NoLock);
 
 		ProcessUtility((Node *)q->utilityStmt,
@@ -15859,7 +15859,7 @@ ATPExecPartSplit(Relation *rel,
 
 			ats->cmds = list_make1(cmd);
 			/* No transformation happens for this stmt in parse_analyze() */
-			q = parse_analyze((Node *)ats, NULL, NULL, 0);
+			q = parse_analyze((Node *) ats, synthetic_sql, NULL, 0);
 
 			heap_close(*rel, NoLock);
 			ProcessUtility((Node *)q->utilityStmt,
