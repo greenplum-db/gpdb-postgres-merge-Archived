@@ -195,11 +195,9 @@ WHERE p1.oid != p2.oid AND
     NOT p1.proisagg AND NOT p2.proisagg AND
     NOT p1.proiswindow AND NOT p2.proiswindow AND
     (p1.proargtypes[1] < p2.proargtypes[1]);
-<<<<<<< HEAD
          proargtypes         |       proargtypes        
 -----------------------------+--------------------------
  integer                     | xid
- text                        | character
  smallint[]                  | integer[]
  smallint[]                  | bigint[]
  smallint[]                  | double precision[]
@@ -209,16 +207,7 @@ WHERE p1.oid != p2.oid AND
  timestamp without time zone | timestamp with time zone
  bit                         | bit varying
  anyarray                    | anyelement
-(11 rows)
-=======
- proargtypes | proargtypes 
--------------+-------------
-          23 |          28
-        1114 |        1184
-        1560 |        1562
-        2277 |        2283
-(4 rows)
->>>>>>> 49f001d81e
+(10 rows)
 
 SELECT DISTINCT p1.proargtypes[2]::regtype, p2.proargtypes[2]::regtype
 FROM pg_proc AS p1, pg_proc AS p2
