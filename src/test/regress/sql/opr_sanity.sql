@@ -59,16 +59,15 @@ WHERE p1.prolang = 0 OR p1.prorettype = 0 OR
        procost <= 0 OR
        CASE WHEN proretset THEN prorows <= 0 ELSE prorows != 0 END;
 
-<<<<<<< HEAD
--- pronargdefaults should be 0 iff proargdefaults is null
-SELECT p1.oid, p1.proname
-FROM pg_proc AS p1
-WHERE (pronargdefaults <> 0) != (proargdefaults IS NOT NULL);
-=======
 -- prosrc should never be null or empty
 SELECT p1.oid, p1.proname
 FROM pg_proc as p1
 WHERE prosrc IS NULL OR prosrc = '' OR prosrc = '-';
+
+-- pronargdefaults should be 0 iff proargdefaults is null
+SELECT p1.oid, p1.proname
+FROM pg_proc AS p1
+WHERE (pronargdefaults <> 0) != (proargdefaults IS NOT NULL);
 
 -- probin should be non-empty for C functions, null everywhere else
 SELECT p1.oid, p1.proname
@@ -78,7 +77,6 @@ WHERE prolang = 13 AND (probin IS NULL OR probin = '' OR probin = '-');
 SELECT p1.oid, p1.proname
 FROM pg_proc as p1
 WHERE prolang != 13 AND probin IS NOT NULL;
->>>>>>> 49f001d81e
 
 -- Look for conflicting proc definitions (same names and input datatypes).
 -- (This test should be dead code now that we have the unique index
