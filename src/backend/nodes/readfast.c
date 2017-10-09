@@ -1765,8 +1765,15 @@ _readBitmapIndexScan(void)
 {
 	READ_LOCALS(BitmapIndexScan);
 
-	/* BitmapIndexScan has some content from IndexScan. */
-	readIndexScanFields((IndexScan *)local_node);
+	READ_OID_FIELD(indexid);
+	READ_NODE_FIELD(indexqual);
+	READ_NODE_FIELD(indexqualorig);
+
+	if (isDynamicScan(&local_node->scan))
+	{
+		ALLOCATE_LOCAL(local_node->logicalIndexInfo, LogicalIndexInfo, 1 /* single node allocation  */);
+		readLogicalIndexInfo(local_node->logicalIndexInfo);
+	}
 
 	READ_DONE();
 }
