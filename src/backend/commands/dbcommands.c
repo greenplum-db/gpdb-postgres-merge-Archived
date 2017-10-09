@@ -1319,6 +1319,9 @@ createdb(CreatedbStmt *stmt)
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(createdb_failure_callback,
 								PointerGetDatum(&fparms));
+
+	/* Free our snapshot */
+	UnregisterSnapshot(snapshot);
 }
 
 
@@ -2479,6 +2482,8 @@ check_db_file_conflict(Oid db_id)
 
 	heap_endscan(scan);
 	heap_close(rel, AccessShareLock);
+	UnregisterSnapshot(snapshot);
+
 	return result;
 }
 
