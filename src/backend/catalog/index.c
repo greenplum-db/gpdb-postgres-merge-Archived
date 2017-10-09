@@ -1764,6 +1764,7 @@ IndexBuildScan(Relation parentRelation,
 	EState	   *estate;
 	ExprContext *econtext;
 	Snapshot	snapshot;
+	bool		registered_snapshot = false;
 	TransactionId OldestXmin;
 
 	/*
@@ -1802,6 +1803,7 @@ IndexBuildScan(Relation parentRelation,
 			 RelationIsAoCols(parentRelation))
 	{
 		snapshot = RegisterSnapshot(GetTransactionSnapshot());
+		registered_snapshot = true;
 		OldestXmin = InvalidTransactionId;		/* not used */
 	}
 	else
@@ -1844,12 +1846,8 @@ IndexBuildScan(Relation parentRelation,
 			 parentRelation->rd_rel->relstorage);
 	}
 
-	/*
-	 * GPDB_84_MERGE_FIXME: Does this call to UnregisterSnapshot() need to be
-	 * here, or just in IndexBuildHeapScan() ?
-	 */
 	/* we can now forget our snapshot, if set */
-	if (indexInfo->ii_Concurrent)
+	if (registered_snapshot)
 		UnregisterSnapshot(snapshot);
 
 	ExecDropSingleTupleTableSlot(slot);
