@@ -6877,16 +6877,21 @@ ATExecColumnDefault(Relation rel, const char *colName,
 	 */
 	RemoveAttrDefault(RelationGetRelid(rel), attnum, DROP_RESTRICT, false);
 
+	Assert(!colDef->cooked_default);
 	if (colDef->raw_default)
 	{
 		/* SET DEFAULT */
-		colDef->attnum = attnum;
+		RawColumnDefault *rawEnt;
+
+		rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
+		rawEnt->attnum = attnum;
+		rawEnt->raw_default = colDef->raw_default;
 
 		/*
 		 * This function is intended for CREATE TABLE, so it processes a
 		 * _list_ of defaults, but we just do one.
 		 */
-		AddRelationNewConstraints(rel, list_make1(colDef), NIL, false, true);
+		AddRelationNewConstraints(rel, list_make1(rawEnt), NIL, false, true);
 	}
 
 	/* MPP-6929: metadata tracking */
