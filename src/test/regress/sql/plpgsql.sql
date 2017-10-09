@@ -2670,132 +2670,6 @@ begin
 end;
 $$ language plpgsql;
 
-<<<<<<< HEAD
--- Test for appropriate cleanup of non-simple expression evaluations
--- (bug in all versions prior to August 2010)
-
-CREATE FUNCTION nonsimple_expr_test() RETURNS text[] AS $$
-DECLARE
-  arr text[];
-  lr text;
-  i integer;
-BEGIN
-  arr := array[array['foo','bar'], array['baz', 'quux']];
-  lr := 'fool';
-  i := 1;
-  -- use sub-SELECTs to make expressions non-simple
-  arr[(SELECT i)][(SELECT i+1)] := (SELECT lr);
-  RETURN arr;
-END;
-$$ LANGUAGE plpgsql;
-
-SELECT nonsimple_expr_test();
-
-DROP FUNCTION nonsimple_expr_test();
-
-CREATE FUNCTION nonsimple_expr_test() RETURNS integer AS $$
-declare
-   i integer NOT NULL := 0;
-begin
-  begin
-    i := (SELECT NULL::integer);  -- should throw error
-  exception
-    WHEN OTHERS THEN
-      i := (SELECT 1::integer);
-  end;
-  return i;
-end;
-$$ LANGUAGE plpgsql;
-
-SELECT nonsimple_expr_test();
-
-DROP FUNCTION nonsimple_expr_test();
-
---
--- Test cases involving recursion and error recovery in simple expressions
--- (bugs in all versions before October 2010).  The problems are most
--- easily exposed by mutual recursion between plpgsql and sql functions.
---
-
-create function recurse(float8) returns float8 as
-$$
-begin
-  if ($1 > 0) then
-    return sql_recurse($1 - 1);
-  else
-    return $1;
-  end if;
-end;
-$$ language plpgsql;
-
--- "limit" is to prevent this from being inlined
-create function sql_recurse(float8) returns float8 as
-$$ select recurse($1) limit 1; $$ language sql;
-
-select recurse(10);
-
-create function error1(text) returns text language sql as
-$$ SELECT relname::text FROM pg_class c WHERE c.oid = $1::regclass $$;
-
-create function error2(p_name_table text) returns text language plpgsql as $$
-begin
-  return error1(p_name_table);
-end$$;
-
-BEGIN;
-create table public.stuffs (stuff text);
-SAVEPOINT a;
-select error2('nonexistent.stuffs');
-ROLLBACK TO a;
-select error2('public.stuffs');
-rollback;
-
-drop function error2(p_name_table text);
-drop function error1(text);
-
--- Test anonymous code blocks.
-
-DO $$
-DECLARE r record;
-BEGIN
-    FOR r IN SELECT rtrim(roomno) AS roomno, comment FROM Room ORDER BY roomno
-    LOOP
-        RAISE NOTICE '%, %', r.roomno, r.comment;
-    END LOOP;
-END$$;
-
--- these are to check syntax error reporting
-DO LANGUAGE plpgsql $$begin return 1; end$$;
-
-DO $$
-DECLARE r record;
-BEGIN
-    FOR r IN SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomno
-    LOOP
-        RAISE NOTICE '%, %', r.roomno, r.comment;
-    END LOOP;
-END$$;
-
--- Check handling of errors thrown from/into anonymous code blocks.
-do $outer$
-begin
-  for i in 1..10 loop
-   begin
-    execute $ex$
-      do $$
-      declare x int = 0;
-      begin
-        x := 1 / x;
-      end;
-      $$;
-    $ex$;
-  exception when division_by_zero then
-    raise notice 'caught division by zero';
-  end;
-  end loop;
-end;
-$outer$;
-=======
 -- test RETURN QUERY EXECUTE
 
 create or replace function return_dquery()
@@ -3074,4 +2948,128 @@ $$ language plpgsql immutable strict;
 select * from tftest(10);
 
 drop function tftest(int);
->>>>>>> 49f001d81e
+
+-- Test for appropriate cleanup of non-simple expression evaluations
+-- (bug in all versions prior to August 2010)
+
+CREATE FUNCTION nonsimple_expr_test() RETURNS text[] AS $$
+DECLARE
+  arr text[];
+  lr text;
+  i integer;
+BEGIN
+  arr := array[array['foo','bar'], array['baz', 'quux']];
+  lr := 'fool';
+  i := 1;
+  -- use sub-SELECTs to make expressions non-simple
+  arr[(SELECT i)][(SELECT i+1)] := (SELECT lr);
+  RETURN arr;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT nonsimple_expr_test();
+
+DROP FUNCTION nonsimple_expr_test();
+
+CREATE FUNCTION nonsimple_expr_test() RETURNS integer AS $$
+declare
+   i integer NOT NULL := 0;
+begin
+  begin
+    i := (SELECT NULL::integer);  -- should throw error
+  exception
+    WHEN OTHERS THEN
+      i := (SELECT 1::integer);
+  end;
+  return i;
+end;
+$$ LANGUAGE plpgsql;
+
+SELECT nonsimple_expr_test();
+
+DROP FUNCTION nonsimple_expr_test();
+
+--
+-- Test cases involving recursion and error recovery in simple expressions
+-- (bugs in all versions before October 2010).  The problems are most
+-- easily exposed by mutual recursion between plpgsql and sql functions.
+--
+
+create function recurse(float8) returns float8 as
+$$
+begin
+  if ($1 > 0) then
+    return sql_recurse($1 - 1);
+  else
+    return $1;
+  end if;
+end;
+$$ language plpgsql;
+
+-- "limit" is to prevent this from being inlined
+create function sql_recurse(float8) returns float8 as
+$$ select recurse($1) limit 1; $$ language sql;
+
+select recurse(10);
+
+create function error1(text) returns text language sql as
+$$ SELECT relname::text FROM pg_class c WHERE c.oid = $1::regclass $$;
+
+create function error2(p_name_table text) returns text language plpgsql as $$
+begin
+  return error1(p_name_table);
+end$$;
+
+BEGIN;
+create table public.stuffs (stuff text);
+SAVEPOINT a;
+select error2('nonexistent.stuffs');
+ROLLBACK TO a;
+select error2('public.stuffs');
+rollback;
+
+drop function error2(p_name_table text);
+drop function error1(text);
+
+-- Test anonymous code blocks.
+
+DO $$
+DECLARE r record;
+BEGIN
+    FOR r IN SELECT rtrim(roomno) AS roomno, comment FROM Room ORDER BY roomno
+    LOOP
+        RAISE NOTICE '%, %', r.roomno, r.comment;
+    END LOOP;
+END$$;
+
+-- these are to check syntax error reporting
+DO LANGUAGE plpgsql $$begin return 1; end$$;
+
+DO $$
+DECLARE r record;
+BEGIN
+    FOR r IN SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomno
+    LOOP
+        RAISE NOTICE '%, %', r.roomno, r.comment;
+    END LOOP;
+END$$;
+
+-- Check handling of errors thrown from/into anonymous code blocks.
+do $outer$
+begin
+  for i in 1..10 loop
+   begin
+    execute $ex$
+      do $$
+      declare x int = 0;
+      begin
+        x := 1 / x;
+      end;
+      $$;
+    $ex$;
+  exception when division_by_zero then
+    raise notice 'caught division by zero';
+  end;
+  end loop;
+end;
+$outer$;
