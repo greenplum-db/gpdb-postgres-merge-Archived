@@ -424,7 +424,9 @@ SELECT * FROM array_index_op_test WHERE i = '{47,77}' ORDER BY seqno;
 
 -- And try it with a multicolumn GIN index
 DROP INDEX intarrayidx, textarrayidx;
+ERROR:  index "intarrayidx" does not exist
 CREATE INDEX botharrayidx ON array_index_op_test USING gin (i, t);
+ERROR:  GIN indexes are not supported
 SET enable_seqscan = OFF;
 SET enable_indexscan = ON;
 SET enable_bitmapscan = OFF;
