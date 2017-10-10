@@ -740,6 +740,10 @@ ProcessUtility(Node *parsetree,
 						RemoveTSConfigurations(stmt);
 						break;
 
+					case OBJECT_EXTPROTOCOL:
+						RemoveExtProtocols(stmt);
+						break;
+
 					default:
 						elog(ERROR, "unrecognized drop object type: %d",
 							 (int) stmt->removeType);
