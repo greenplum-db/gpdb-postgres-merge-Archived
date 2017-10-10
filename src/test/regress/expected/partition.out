@@ -837,29 +837,29 @@ create table foo_p (i int, j date) distributed by (i)
 partition by range(j)
 (start ('2007-01-01') end ('2008-01-01') every (interval '0.5 days'));
 ERROR:  EVERY parameter produces ambiguous partition rule
-LINE 3: ...('2007-01-01') end ('2008-01-01') every (interval '0.5 days'...
-                                                             ^
+LINE 3: (start ('2007-01-01') end ('2008-01-01') every (interval '0....
+                                                        ^
 -- should fail
 create table foo_p (i int, j date) distributed by (i)
 partition by range(j)
 (start ('2007-01-01') end ('2008-01-01') every (interval '0.5 days'));
 ERROR:  EVERY parameter produces ambiguous partition rule
-LINE 3: ...('2007-01-01') end ('2008-01-01') every (interval '0.5 days'...
-                                                             ^
+LINE 3: (start ('2007-01-01') end ('2008-01-01') every (interval '0....
+                                                        ^
 -- should fail
 create table foo_p (i int, j date) distributed by (i)
 partition by range(j)
 (start ('2007-01-01') end ('2008-01-01') every (interval '12 hours'));
 ERROR:  EVERY parameter produces ambiguous partition rule
-LINE 3: ...('2007-01-01') end ('2008-01-01') every (interval '12 hours'...
-                                                             ^
+LINE 3: (start ('2007-01-01') end ('2008-01-01') every (interval '12...
+                                                        ^
 -- should fail
 create table foo_p (i int, j date) distributed by (i)
 partition by range(j)
 (start ('2007-01-01') end ('2008-01-01') every (interval '1.2 days'));
 ERROR:  EVERY parameter produces ambiguous partition rule
-LINE 3: ...('2007-01-01') end ('2008-01-01') every (interval '1.2 days'...
-                                                             ^
+LINE 3: (start ('2007-01-01') end ('2008-01-01') every (interval '1....
+                                                        ^
 -- should work
 create table foo_p (i int, j timestamp) distributed by (i)
 partition by range(j)
