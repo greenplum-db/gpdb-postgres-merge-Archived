@@ -1601,6 +1601,7 @@ ReindexRelationList(List *relids)
 	 * Commit ongoing transaction so that we can start a new
 	 * transaction per relation.
 	 */
+	PopActiveSnapshot();
 	CommitTransactionCommand();
 
 	SIMPLE_FAULT_INJECTOR(ReindexDB);
@@ -1612,7 +1613,6 @@ ReindexRelationList(List *relids)
 
 		setupRegularDtxContext();
 		StartTransactionCommand();
-
 		/* functions in indexes may want a snapshot set */
 		PushActiveSnapshot(GetTransactionSnapshot());
 
@@ -1646,12 +1646,12 @@ ReindexRelationList(List *relids)
 											DF_NEED_TWO_PHASE,
 											GetAssignedOidsForDispatch(), /* FIXME */
 											NULL);
-			PopActiveSnapshot();
 
 			/* keep lock until end of transaction (which comes soon) */
 			heap_close(rel, NoLock);
 		}
 
+		PopActiveSnapshot();
 		CommitTransactionCommand();
 	}
 
