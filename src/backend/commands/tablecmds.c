@@ -3497,6 +3497,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_ADD_CONSTR;
 			break;
 		case AT_DropConstraint:	/* DROP CONSTRAINT */
+		case AT_DropConstraintRecurse:
 			ATSimplePermissions(rel, false);
 			/* (!recurse &&  !recursing) is supposed to detect the ONLY clause.
 			 * We allow operations on the root of a partitioning hierarchy, but
