@@ -526,11 +526,11 @@ copyIndexScanFields(const IndexScan *from, IndexScan *newnode)
 	 */
 	if (isDynamicScan(&from->scan))
 	{
-		Assert(NULL != ((IndexScan *) from)->logicalIndexInfo);
+		Assert(NULL != from->logicalIndexInfo);
 		Assert(NULL == newnode->logicalIndexInfo);
 		newnode->logicalIndexInfo = palloc(sizeof(LogicalIndexInfo));
 
-		CopyLogicalIndexInfo(((IndexScan *) from)->logicalIndexInfo, newnode->logicalIndexInfo);
+		CopyLogicalIndexInfo(from->logicalIndexInfo, newnode->logicalIndexInfo);
 	}
 	else
 	{
@@ -586,11 +586,11 @@ _copyBitmapIndexScan(BitmapIndexScan *from)
 	 */
 	if (isDynamicScan(&from->scan))
 	{
-		Assert(NULL != ((IndexScan *) from)->logicalIndexInfo);
+		Assert(NULL != from->logicalIndexInfo);
 		Assert(NULL == newnode->logicalIndexInfo);
 		newnode->logicalIndexInfo = palloc(sizeof(LogicalIndexInfo));
 
-		CopyLogicalIndexInfo(((IndexScan *) from)->logicalIndexInfo, newnode->logicalIndexInfo);
+		CopyLogicalIndexInfo(from->logicalIndexInfo, newnode->logicalIndexInfo);
 	}
 	else
 	{
