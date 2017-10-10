@@ -463,7 +463,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupdesc, (AttrNumber) 12, "sess_id", INT4OID, -1, 0);  /* GPDB */
 
 		if (nattr > 12)
-			TupleDescInitEntry(tupdesc, (AttrNumber) 13, "waiting_for", TEXTOID, -1, 0);
+			TupleDescInitEntry(tupdesc, (AttrNumber) 13, "waiting_reason", TEXTOID, -1, 0);
 
 		if (nattr > 13)
 		{
