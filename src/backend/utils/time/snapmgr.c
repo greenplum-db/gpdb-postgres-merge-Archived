@@ -175,7 +175,7 @@ GetTransactionSnapshot(void)
 			 DtxContextToString(DistributedTransactionContext));
 		 */
 
-		UpdateSerializableCommandId();
+		UpdateSerializableCommandId(CurrentSnapshot->curcid);
 
 		return CurrentSnapshot;
 	}
