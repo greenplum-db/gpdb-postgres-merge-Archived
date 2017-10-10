@@ -2466,6 +2466,17 @@ _readCreateTableSpaceStmt(void)
 	READ_DONE();
 }
 
+static DropTableSpaceStmt *
+_readDropTableSpaceStmt(void)
+{
+	READ_LOCALS(DropTableSpaceStmt);
+
+	READ_STRING_FIELD(tablespacename);
+	READ_BOOL_FIELD(missing_ok);
+
+	READ_DONE();
+}
+
 
 static CreateQueueStmt *
 _readCreateQueueStmt(void)
@@ -3468,6 +3479,10 @@ readNodeBinary(void)
 
 			case T_CreateTableSpaceStmt:
 				return_value = _readCreateTableSpaceStmt();
+				break;
+
+			case T_DropTableSpaceStmt:
+				return_value = _readDropTableSpaceStmt();
 				break;
 
 			case T_CreateQueueStmt:

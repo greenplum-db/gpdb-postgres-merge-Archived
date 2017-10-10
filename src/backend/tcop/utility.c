@@ -249,6 +249,7 @@ check_xact_readonly(Node *parsetree)
 		case T_ViewStmt:
 		case T_DropCastStmt:
 		case T_DropdbStmt:
+		case T_DropTableSpaceStmt:
 		case T_RemoveFuncStmt:
 		case T_DropQueueStmt:
 		case T_DropResourceGroupStmt:
@@ -689,6 +690,11 @@ ProcessUtility(Node *parsetree,
 
 		case T_CreateTableSpaceStmt:
 			CreateTableSpace((CreateTableSpaceStmt *) parsetree);
+			break;
+
+		case T_DropTableSpaceStmt:
+			PreventTransactionChain(isTopLevel, "DROP TABLESPACE");
+			DropTableSpace((DropTableSpaceStmt *) parsetree);
 			break;
 
 		case T_DropStmt:
@@ -1726,6 +1732,10 @@ CreateCommandTag(Node *parsetree)
 			tag = "CREATE TABLESPACE";
 			break;
 
+		case T_DropTableSpaceStmt:
+			tag = "DROP TABLESPACE";
+			break;
+
 		case T_DropStmt:
 			switch (((DropStmt *) parsetree)->removeType)
 			{
@@ -2546,6 +2556,10 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_CreateTableSpaceStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_DropTableSpaceStmt:
 			lev = LOGSTMT_DDL;
 			break;
 

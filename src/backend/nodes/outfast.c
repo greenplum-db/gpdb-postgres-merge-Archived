@@ -1968,6 +1968,10 @@ _outNode(StringInfo str, void *obj)
 				_outCreateTableSpaceStmt(str, obj);
 				break;
 
+			case T_DropTableSpaceStmt:
+				_outDropTableSpaceStmt(str, obj);
+				break;
+
 			case T_CreateQueueStmt:
 				_outCreateQueueStmt(str, obj);
 				break;

@@ -194,7 +194,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 		CreatedbStmt DeclareCursorStmt DefineStmt DeleteStmt DiscardStmt DoStmt
 		DropGroupStmt DropOpClassStmt DropOpFamilyStmt DropPLangStmt DropStmt
 		DropAssertStmt DropTrigStmt DropRuleStmt DropCastStmt DropRoleStmt
-		DropUserStmt DropdbStmt ExplainStmt FetchStmt
+		DropUserStmt DropdbStmt DropTableSpaceStmt ExplainStmt FetchStmt
 		GrantStmt GrantRoleStmt IndexStmt InsertStmt ListenStmt LoadStmt
 		LockStmt NotifyStmt ExplainableStmt PreparableStmt
 		CreateFunctionStmt AlterFunctionStmt ReindexStmt RemoveAggrStmt
@@ -1106,6 +1106,7 @@ stmt :
 			| DropResourceGroupStmt
 			| DropRuleStmt
 			| DropStmt
+			| DropTableSpaceStmt
 			| DropTrigStmt
 			| DropRoleStmt
 			| DropUserStmt
@@ -5290,6 +5291,32 @@ CreateTableSpaceStmt: CREATE TABLESPACE name OptOwner FILESPACE name
 
 /*****************************************************************************
  *
+ * 		QUERY :
+ *				DROP TABLESPACE <tablespace>
+ *
+ *		No need for drop behaviour as we cannot implement dependencies for
+ *		objects in other databases; we can only support RESTRICT.
+ *
+ ****************************************************************************/
+
+DropTableSpaceStmt: DROP TABLESPACE name
+				{
+					DropTableSpaceStmt *n = makeNode(DropTableSpaceStmt);
+					n->tablespacename = $3;
+					n->missing_ok = false;
+					$$ = (Node *) n;
+				}
+				|  DROP TABLESPACE IF_P EXISTS name
+                {
+					DropTableSpaceStmt *n = makeNode(DropTableSpaceStmt);
+					n->tablespacename = $5;
+					n->missing_ok = true;
+					$$ = (Node *) n;
+				}
+		;
+
+/*****************************************************************************
+ *
  *		QUERY:
  *             CREATE EXTENSION extension
  *             [ WITH ] [ SCHEMA schema ] [ VERSION version ] [ FROM oldversion ]
@@ -6285,7 +6312,6 @@ drop_type:	TABLE									{ $$ = OBJECT_TABLE; }
 			| TEXT_P SEARCH TEMPLATE				{ $$ = OBJECT_TSTEMPLATE; }
 			| TEXT_P SEARCH CONFIGURATION			{ $$ = OBJECT_TSCONFIGURATION; }
 			| FILESPACE								{ $$ = OBJECT_FILESPACE; }
-			| TABLESPACE							{ $$ = OBJECT_TABLESPACE; }
 			| PROTOCOL								{ $$ = OBJECT_EXTPROTOCOL; }
 		;
 

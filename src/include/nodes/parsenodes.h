@@ -1864,6 +1864,13 @@ typedef struct CreateTableSpaceStmt
 	char       *filespacename;
 } CreateTableSpaceStmt;
 
+typedef struct DropTableSpaceStmt
+{
+	NodeTag		type;
+	char	   *tablespacename;
+	bool		missing_ok;		/* skip error if missing? */
+} DropTableSpaceStmt;
+
 /* ----------------------
  *		Create/Drop TRIGGER Statements
  * ----------------------

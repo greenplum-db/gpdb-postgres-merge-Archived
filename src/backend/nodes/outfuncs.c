@@ -4166,6 +4166,15 @@ _outCreateTableSpaceStmt(StringInfo str, CreateTableSpaceStmt *node)
 	WRITE_STRING_FIELD(filespacename);
 }
 
+static void
+_outDropTableSpaceStmt(StringInfo str, DropTableSpaceStmt *node)
+{
+	WRITE_NODE_TYPE("DROPTABLESPACESTMT");
+
+	WRITE_STRING_FIELD(tablespacename);
+	WRITE_BOOL_FIELD(missing_ok);
+}
+
 #ifndef COMPILING_BINARY_FUNCS
 static void
 _outCreateQueueStmt(StringInfo str, CreateQueueStmt *node)
@@ -5168,6 +5177,10 @@ _outNode(StringInfo str, void *obj)
 
 			case T_CreateTableSpaceStmt:
 				_outCreateTableSpaceStmt(str, obj);
+				break;
+
+			case T_DropTableSpaceStmt:
+				_outDropTableSpaceStmt(str, obj);
 				break;
 
 			case T_CreateQueueStmt:

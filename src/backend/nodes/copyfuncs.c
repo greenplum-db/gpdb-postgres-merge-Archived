@@ -4037,6 +4037,17 @@ _copyCreateTableSpaceStmt(CreateTableSpaceStmt *from)
 	return newnode;
 }
 
+static DropTableSpaceStmt *
+_copyDropTableSpaceStmt(DropTableSpaceStmt *from)
+{
+	DropTableSpaceStmt *newnode = makeNode(DropTableSpaceStmt);
+
+	COPY_STRING_FIELD(tablespacename);
+	COPY_SCALAR_FIELD(missing_ok);
+
+	return newnode;
+}
+
 static CreateTrigStmt *
 _copyCreateTrigStmt(CreateTrigStmt *from)
 {
@@ -5190,6 +5201,9 @@ copyObject(void *from)
 			break;
 		case T_CreateTableSpaceStmt:
 			retval = _copyCreateTableSpaceStmt(from);
+			break;
+		case T_DropTableSpaceStmt:
+			retval = _copyDropTableSpaceStmt(from);
 			break;
 		case T_CreateTrigStmt:
 			retval = _copyCreateTrigStmt(from);

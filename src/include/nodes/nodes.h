@@ -429,7 +429,7 @@ typedef enum NodeTag
 	T_DeallocateStmt,
 	T_DeclareCursorStmt,
 	T_CreateTableSpaceStmt,
-	T_DropTableSpaceStmt,           /* Removed, See DropStmt */
+	T_DropTableSpaceStmt,
 	T_AlterObjectSchemaStmt,
 	T_AlterOwnerStmt,
 	T_DropOwnedStmt,
