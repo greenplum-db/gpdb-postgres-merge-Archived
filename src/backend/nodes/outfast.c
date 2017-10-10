@@ -1964,6 +1964,10 @@ _outNode(StringInfo str, void *obj)
 				_outFileSpaceEntry(str, obj);
 				break;
 
+			case T_DropFileSpaceStmt:
+				_outDropFileSpaceStmt(str, obj);
+				break;
+
 			case T_CreateTableSpaceStmt:
 				_outCreateTableSpaceStmt(str, obj);
 				break;

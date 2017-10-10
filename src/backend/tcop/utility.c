@@ -250,6 +250,7 @@ check_xact_readonly(Node *parsetree)
 		case T_DropCastStmt:
 		case T_DropdbStmt:
 		case T_DropTableSpaceStmt:
+		case T_DropFileSpaceStmt:
 		case T_RemoveFuncStmt:
 		case T_DropQueueStmt:
 		case T_DropResourceGroupStmt:
@@ -686,6 +687,11 @@ ProcessUtility(Node *parsetree,
 
 		case T_CreateFileSpaceStmt:
 			CreateFileSpace((CreateFileSpaceStmt *) parsetree);
+			break;
+
+		case T_DropFileSpaceStmt:
+			PreventTransactionChain(isTopLevel, "DROP FILESPACE");
+			DropFileSpace((DropFileSpaceStmt *) parsetree);
 			break;
 
 		case T_CreateTableSpaceStmt:
@@ -1728,6 +1734,10 @@ CreateCommandTag(Node *parsetree)
 			tag = "CREATE FILESPACE";
 			break;
 
+		case T_DropFileSpaceStmt:
+			tag = "DROP FILESPACE";
+			break;
+
 		case T_CreateTableSpaceStmt:
 			tag = "CREATE TABLESPACE";
 			break;
@@ -2552,6 +2562,10 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_CreateFileSpaceStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_DropFileSpaceStmt:
 			lev = LOGSTMT_DDL;
 			break;
 

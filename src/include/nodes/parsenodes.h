@@ -1836,7 +1836,6 @@ typedef struct CreateFileSpaceStmt
 	List       *locations;  /* List of FileSpaceEntry */
 } CreateFileSpaceStmt;
 
-
 /*
  * FileSpaceEntry:
  *   A CreateFilespaceStatement has a list of these, one per location
@@ -1850,6 +1849,14 @@ typedef struct FileSpaceEntry
 	char       *location;
 	char       *hostname;
 } FileSpaceEntry;
+
+typedef struct DropFileSpaceStmt
+{
+	NodeTag		type;
+	char	   *filespacename;
+	bool		missing_ok;		/* skip error if missing? */
+} DropFileSpaceStmt;
+
 
 /* ----------------------
  *		Create/Drop TableSpace Statements

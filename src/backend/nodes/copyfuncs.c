@@ -3962,31 +3962,6 @@ _copyDiscardStmt(DiscardStmt *from)
 	return newnode;
 }
 
-static CreateFileSpaceStmt *
-_copyCreateFileSpaceStmt(CreateFileSpaceStmt *from)
-{
-	CreateFileSpaceStmt *newnode = makeNode(CreateFileSpaceStmt);
-
-	COPY_STRING_FIELD(filespacename);
-	COPY_STRING_FIELD(owner);
-	COPY_NODE_FIELD(locations);
-
-	return newnode;
-}
-
-static FileSpaceEntry *
-_copyFileSpaceEntry(FileSpaceEntry *from)
-{
-	FileSpaceEntry *newnode = makeNode(FileSpaceEntry);
-
-	COPY_SCALAR_FIELD(dbid);
-	COPY_SCALAR_FIELD(contentid);
-	COPY_STRING_FIELD(location);
-	COPY_STRING_FIELD(hostname);
-
-	return newnode;
-}
-
 static CreateExtensionStmt *
 _copyCreateExtensionStmt(const CreateExtensionStmt *from)
 {
@@ -4021,6 +3996,42 @@ _copyAlterExtensionContentsStmt(AlterExtensionContentsStmt *from)
 	COPY_SCALAR_FIELD(objtype);
 	COPY_NODE_FIELD(objname);
 	COPY_NODE_FIELD(objargs);
+
+	return newnode;
+}
+
+static CreateFileSpaceStmt *
+_copyCreateFileSpaceStmt(CreateFileSpaceStmt *from)
+{
+	CreateFileSpaceStmt *newnode = makeNode(CreateFileSpaceStmt);
+
+	COPY_STRING_FIELD(filespacename);
+	COPY_STRING_FIELD(owner);
+	COPY_NODE_FIELD(locations);
+
+	return newnode;
+}
+
+static FileSpaceEntry *
+_copyFileSpaceEntry(FileSpaceEntry *from)
+{
+	FileSpaceEntry *newnode = makeNode(FileSpaceEntry);
+
+	COPY_SCALAR_FIELD(dbid);
+	COPY_SCALAR_FIELD(contentid);
+	COPY_STRING_FIELD(location);
+	COPY_STRING_FIELD(hostname);
+
+	return newnode;
+}
+
+static DropFileSpaceStmt *
+_copyDropFileSpaceStmt(DropFileSpaceStmt *from)
+{
+	DropFileSpaceStmt *newnode = makeNode(DropFileSpaceStmt);
+
+	COPY_STRING_FIELD(filespacename);
+	COPY_SCALAR_FIELD(missing_ok);
 
 	return newnode;
 }
@@ -5198,6 +5209,9 @@ copyObject(void *from)
 			break;
 		case T_FileSpaceEntry:
 			retval = _copyFileSpaceEntry(from);
+			break;
+		case T_DropFileSpaceStmt:
+			retval = _copyDropFileSpaceStmt(from);
 			break;
 		case T_CreateTableSpaceStmt:
 			retval = _copyCreateTableSpaceStmt(from);

@@ -4157,6 +4157,15 @@ _outFileSpaceEntry(StringInfo str, FileSpaceEntry *node)
 }
 
 static void
+_outDropFileSpaceStmt(StringInfo str, DropFileSpaceStmt *node)
+{
+	WRITE_NODE_TYPE("DROPFILESPACESTMT");
+
+	WRITE_STRING_FIELD(filespacename);
+	WRITE_BOOL_FIELD(missing_ok);
+}
+
+static void
 _outCreateTableSpaceStmt(StringInfo str, CreateTableSpaceStmt *node)
 {
 	WRITE_NODE_TYPE("CREATETABLESPACESTMT");
@@ -5173,6 +5182,10 @@ _outNode(StringInfo str, void *obj)
 
 			case T_FileSpaceEntry:
 				_outFileSpaceEntry(str, obj);
+				break;
+
+			case T_DropFileSpaceStmt:
+				_outDropFileSpaceStmt(str, obj);
 				break;
 
 			case T_CreateTableSpaceStmt:

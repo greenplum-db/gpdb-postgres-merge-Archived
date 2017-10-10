@@ -449,6 +449,7 @@ typedef enum NodeTag
 	T_InheritPartitionCmd,
 	T_CreateFileSpaceStmt,
 	T_FileSpaceEntry,
+	T_DropFileSpaceStmt,
 	T_TableValueExpr,
 	T_DenyLoginInterval,
 	T_DenyLoginPoint,

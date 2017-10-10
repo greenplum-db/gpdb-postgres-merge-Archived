@@ -210,7 +210,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 /* GPDB-specific commands */
 %type <node>	AlterTypeStmt AlterQueueStmt AlterResourceGroupStmt
-		CreateExternalStmt CreateFileSpaceStmt
+		CreateExternalStmt CreateFileSpaceStmt DropFileSpaceStmt
 		CreateQueueStmt CreateResourceGroupStmt
 		DropQueueStmt DropResourceGroupStmt
 		ExtTypedesc OptSingleRowErrorHandling
@@ -1106,6 +1106,7 @@ stmt :
 			| DropResourceGroupStmt
 			| DropRuleStmt
 			| DropStmt
+			| DropFileSpaceStmt
 			| DropTableSpaceStmt
 			| DropTrigStmt
 			| DropRoleStmt
@@ -5274,6 +5275,32 @@ OptOwner:
 
 /*****************************************************************************
  *
+ * 		QUERY :
+ *				DROP FILESPACE <tablespace>
+ *
+ *		No need for drop behaviour as we cannot implement dependencies for
+ *		objects in other databases; we can only support RESTRICT.
+ *
+ ****************************************************************************/
+
+DropFileSpaceStmt: DROP FILESPACE name
+				{
+					DropFileSpaceStmt *n = makeNode(DropFileSpaceStmt);
+					n->filespacename = $3;
+					n->missing_ok = false;
+					$$ = (Node *) n;
+				}
+				|  DROP FILESPACE IF_P EXISTS name
+                {
+					DropFileSpaceStmt *n = makeNode(DropFileSpaceStmt);
+					n->filespacename = $5;
+					n->missing_ok = true;
+					$$ = (Node *) n;
+				}
+		;
+
+/*****************************************************************************
+ *
  * 		QUERY:
  *             CREATE TABLESPACE tablespace FILESPACE filespace
  *
@@ -6311,7 +6338,6 @@ drop_type:	TABLE									{ $$ = OBJECT_TABLE; }
 			| TEXT_P SEARCH DICTIONARY				{ $$ = OBJECT_TSDICTIONARY; }
 			| TEXT_P SEARCH TEMPLATE				{ $$ = OBJECT_TSTEMPLATE; }
 			| TEXT_P SEARCH CONFIGURATION			{ $$ = OBJECT_TSCONFIGURATION; }
-			| FILESPACE								{ $$ = OBJECT_FILESPACE; }
 			| PROTOCOL								{ $$ = OBJECT_EXTPROTOCOL; }
 		;
 

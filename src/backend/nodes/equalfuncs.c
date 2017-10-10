@@ -1743,6 +1743,15 @@ _equalFileSpaceEntry(FileSpaceEntry *a, FileSpaceEntry *b)
 }
 
 static bool
+_equalDropFileSpaceStmt(DropFileSpaceStmt *a, DropFileSpaceStmt *b)
+{
+	COMPARE_STRING_FIELD(filespacename);
+	COMPARE_SCALAR_FIELD(missing_ok);
+
+	return true;
+}
+
+static bool
 _equalCreateTableSpaceStmt(CreateTableSpaceStmt *a, CreateTableSpaceStmt *b)
 {
 	COMPARE_STRING_FIELD(tablespacename);
@@ -2971,9 +2980,6 @@ equal(void *a, void *b)
 		case T_DiscardStmt:
 			retval = _equalDiscardStmt(a, b);
 			break;
-		case T_CreateFileSpaceStmt:
-			retval = _equalCreateFileSpaceStmt(a, b);
-			break;
 		case T_CreateExtensionStmt:
 			retval = _equalCreateExtensionStmt(a, b);
 			break;
@@ -2983,8 +2989,14 @@ equal(void *a, void *b)
 		case T_AlterExtensionContentsStmt:
 			retval = _equalAlterExtensionContentsStmt(a, b);
 			break;
+		case T_CreateFileSpaceStmt:
+			retval = _equalCreateFileSpaceStmt(a, b);
+			break;
 		case T_FileSpaceEntry:
 			retval = _equalFileSpaceEntry(a, b);
+			break;
+		case T_DropFileSpaceStmt:
+			retval = _equalDropFileSpaceStmt(a, b);
 			break;
 		case T_CreateTableSpaceStmt:
 			retval = _equalCreateTableSpaceStmt(a, b);

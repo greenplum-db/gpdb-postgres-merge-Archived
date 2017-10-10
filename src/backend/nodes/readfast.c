@@ -2453,6 +2453,16 @@ _readFileSpaceEntry(void)
 	READ_DONE();
 }
 
+static DropFileSpaceStmt *
+_readDropFileSpaceStmt(void)
+{
+	READ_LOCALS(DropFileSpaceStmt);
+
+	READ_STRING_FIELD(filespacename);
+	READ_BOOL_FIELD(missing_ok);
+
+	READ_DONE();
+}
 
 static CreateTableSpaceStmt *
 _readCreateTableSpaceStmt(void)
@@ -3472,9 +3482,11 @@ readNodeBinary(void)
 			case T_CreateFileSpaceStmt:
 				return_value = _readCreateFileSpaceStmt();
 				break;
-
 			case T_FileSpaceEntry:
 				return_value = _readFileSpaceEntry();
+				break;
+			case T_DropFileSpaceStmt:
+				return_value = _readDropFileSpaceStmt();
 				break;
 
 			case T_CreateTableSpaceStmt:
