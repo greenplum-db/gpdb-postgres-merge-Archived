@@ -2794,7 +2794,7 @@ DATA(insert OID = 1829 ( icregexnejoinsel	PGNSP PGUID 12 1 0 0 f f t f s 4 701 "
 DESCR("join selectivity of case-insensitive regex non-match");
 
 /* Aggregate-related functions */
-DATA(insert OID = 1830 (  float8_avg	   PGNSP PGUID 12 1 0 0 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_avg _null_ _null_ _null_ ));
+DATA(insert OID = 1830 (  float8_avg	   PGNSP PGUID 12 1 0 0 f f t f i 1 701 "17" _null_ _null_ _null_ float8_avg _null_ _null_ _null_ ));
 DESCR("AVG aggregate final function");
 DATA(insert OID = 2512 (  float8_var_pop   PGNSP PGUID 12 1 0 0 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_var_pop _null_ _null_ _null_ ));
 DESCR("VAR_POP aggregate final function");
@@ -2812,7 +2812,7 @@ DATA(insert OID = 1835 (  int4_accum	   PGNSP PGUID 12 1 0 0 f f t f i 2 1231 "1
 DESCR("aggregate transition function");
 DATA(insert OID = 1836 (  int8_accum	   PGNSP PGUID 12 1 0 0 f f t f i 2 1231 "1231 20" _null_ _null_ _null_ int8_accum _null_ _null_ _null_ ));
 DESCR("aggregate transition function");
-DATA(insert OID = 1837 (  numeric_avg	   PGNSP PGUID 12 1 0 0 f f t f i 1 1700 "1231" _null_ _null_ _null_	numeric_avg _null_ _null_ _null_ ));
+DATA(insert OID = 1837 (  numeric_avg	   PGNSP PGUID 12 1 0 0 f f t f i 1 1700 "17" _null_ _null_ _null_	numeric_avg _null_ _null_ _null_ ));
 DESCR("AVG aggregate final function");
 DATA(insert OID = 2514 (  numeric_var_pop  PGNSP PGUID 12 1 0 0 f f t f i 1 1700 "1231" _null_ _null_ _null_	numeric_var_pop _null_ _null_ _null_ ));
 DESCR("VAR_POP aggregate final function");
