@@ -1178,6 +1178,20 @@ RemoveRelations(DropStmt *drop)
 					 errmsg("permission denied: \"%s\" is a system catalog",
 							rel->relname)));
 
+		if (relkind == RELKIND_INDEX)
+		{
+			PartStatus pstat;
+
+			pstat = rel_part_status(IndexGetRelation(relOid));
+
+			if ( pstat == PART_STATUS_ROOT || pstat == PART_STATUS_INTERIOR )
+			{
+				ereport(WARNING,
+						(errmsg("Only dropped the index \"%s\"", rel->relname),
+						 errhint("To drop other indexes on child partitions, drop each one explicitly.")));
+			}
+		}
+
 		/* OK, we're ready to delete this one */
 		obj.classId = RelationRelationId;
 		obj.objectId = relOid;
