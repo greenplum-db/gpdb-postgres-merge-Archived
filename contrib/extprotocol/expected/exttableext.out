@@ -62,9 +62,10 @@ select max(cnt) - min(cnt)  > 20 from t;
 -- Test 4.1: create uni-directional write protocol
 -- create WET using created protocol
     DROP PROTOCOL IF EXISTS demoprot CASCADE;
-NOTICE:  drop cascades to external table exttabtest_r
-NOTICE:  drop cascades to external table exttabtest_w
-NOTICE:  drop cascades to external table exttabtest_options_r
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to external table exttabtest_options_r
+drop cascades to external table exttabtest_w
+drop cascades to external table exttabtest_r
     CREATE PROTOCOL demoprot (
         writefunc = write_to_file_stable
     );
@@ -250,11 +251,12 @@ ERROR:  protocol "demoprot_nonexist" does not exist
 -- Test 11: Negative - Using invalid protocol attribute name
 -- attribute names must be readproc, write proc, and validatorproc
     DROP PROTOCOL IF EXISTS demoprot CASCADE;
-NOTICE:  drop cascades to external table exttabtest_w_5url
-NOTICE:  drop cascades to external table exttabtest_w_2url
-NOTICE:  drop cascades to external table exttabtest_r_2url
-NOTICE:  drop cascades to external table exttabtest_r_dist
-NOTICE:  drop cascades to external table exttabtest_w_dist
+NOTICE:  drop cascades to 5 other objects
+DETAIL:  drop cascades to external table exttabtest_w_dist
+drop cascades to external table exttabtest_r_dist
+drop cascades to external table exttabtest_r_2url
+drop cascades to external table exttabtest_w_2url
+drop cascades to external table exttabtest_w_5url
     CREATE PROTOCOL demoprot (
         readfunction  = read_from_file, 
         writefunction = write_to_file
