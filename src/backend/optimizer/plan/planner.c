@@ -1629,8 +1629,19 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				 * change the previous root->parse Query node, which makes the
 				 * current sort_pathkeys invalid.
 				 */
-				sort_pathkeys = make_pathkeys_for_sortclauses(root, parse->sortClause,
-											  result_plan->targetlist, true);
+				if (list_length(parse->distinctClause) > list_length(parse->sortClause))
+					sort_pathkeys =
+							make_pathkeys_for_sortclauses(root,
+														  parse->distinctClause,
+														  result_plan->targetlist,
+														  true);
+				else
+					sort_pathkeys =
+							make_pathkeys_for_sortclauses(root,
+														  parse->sortClause,
+														  result_plan->targetlist,
+														  true);
+
 				sort_pathkeys = canonicalize_pathkeys(root, sort_pathkeys);
 			}
 		}
@@ -1990,14 +2001,15 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 					 * Reduce the number of rows to move by adding a [Sort
 					 * and] Unique prior to the redistribute Motion.
 					 */
-					if (parse->sortClause)
+					if (sort_pathkeys)
 					{
 						if (!pathkeys_contained_in(sort_pathkeys, current_pathkeys))
 						{
-							result_plan = (Plan *)
-								make_sort_from_sortclauses(root,
-														   parse->sortClause,
-														   result_plan);
+							result_plan = (Plan *) make_sort_from_pathkeys(root,
+																		   result_plan,
+																		   sort_pathkeys,
+																		   limit_tuples,
+																		   true);
 							((Sort *) result_plan)->noduplicates = gp_enable_sort_distinct;
 							current_pathkeys = sort_pathkeys;
 							mark_sort_locus(result_plan);
