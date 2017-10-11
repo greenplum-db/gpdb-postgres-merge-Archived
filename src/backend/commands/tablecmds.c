@@ -13084,28 +13084,17 @@ rel_get_table_oid(Relation rel)
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(toid));
 
-		/*
-		 * We use SnapshotAny because the ordering of the dependency code means
-		 * that some times we've already deleted the pg_depend tuple. So, we do
-		 * an extra test below to see that, if this tuple is deleted, it was
-		 * done so by our xid, otherwise we overlook it.
-		 */
 		sscan = systable_beginscan(deprel, DependDependerIndexId, true,
-								   SnapshotAny, 2, scankey);
+								   SnapshotNow, 2, scankey);
 
 		while (HeapTupleIsValid(tup = systable_getnext(sscan)))
 		{
 			Form_pg_depend foundDep = (Form_pg_depend) GETSTRUCT(tup);
-			HeapTupleHeader htup = tup->t_data;
 
-			if (!TransactionIdIsNormal(HeapTupleHeaderGetXmax(htup)) ||
-				TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(htup)))
+			if (foundDep->deptype == DEPENDENCY_INTERNAL)
 			{
-				if (foundDep->deptype == DEPENDENCY_INTERNAL)
-				{
-					toid = foundDep->refobjid;
-					break;
-				}
+				toid = foundDep->refobjid;
+				break;
 			}
 		}
 		systable_endscan(sscan);
