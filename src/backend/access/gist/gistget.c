@@ -205,6 +205,7 @@ gistnext(IndexScanDesc scan, ScanDirection dir, HashBitmap *tbm)
 		if ( so->curPageData < so->nPageData )
 		{
 			scan->xs_ctup.t_self = so->pageData[so->curPageData].heapPtr;
+			scan->xs_recheck = so->pageData[so->curPageData].recheck;
 
 			ItemPointerSet(&(so->curpos),
 						   BufferGetBlockNumber(so->curbuf),
@@ -383,6 +384,7 @@ gistnext(IndexScanDesc scan, ScanDirection dir, HashBitmap *tbm)
 					{
 						so->pageData[ so->nPageData ].heapPtr = it->t_tid;
 						so->pageData[ so->nPageData ].pageOffset = n;
+						so->pageData[so->nPageData].recheck = scan->xs_recheck;
 						so->nPageData ++;
 					}
 				}
@@ -502,7 +504,7 @@ gistindex_keytest(IndexTuple tuple,
 			 * always be zero, but might as well pass it for possible future
 			 * use.)
 			 *
-			 * We initialize the recheck flag to true (the safest assumption)
+			 * We initialize the recheck flag to true (the safest assumptison)
 			 * in case the Consistent function forgets to set it.
 			 */
 			recheck = true;
