@@ -2230,7 +2230,6 @@ exec_bind_message(StringInfo input_message)
 	List	   *plan_list;
 	MemoryContext oldContext;
 	bool		save_log_statement_stats = log_statement_stats;
-	Snapshot	mySnapshot = NULL;
 	bool		snapshot_set = false;
 	char		msec_str[32];
 
@@ -2597,7 +2596,7 @@ exec_bind_message(StringInfo input_message)
 					  cplan);
 
 	/* Done with the snapshot used for parameter I/O and parsing/planning */
-	if (mySnapshot)
+	if (snapshot_set)
 		PopActiveSnapshot();
 
 	/*
