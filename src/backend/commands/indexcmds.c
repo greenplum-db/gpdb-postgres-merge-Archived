@@ -1863,7 +1863,6 @@ ReindexDatabase(ReindexStmt *stmt)
 	heap_endscan(scan);
 	heap_close(relationRelation, AccessShareLock);
 
-	PopActiveSnapshot();
 	ReindexRelationList(relids);
 
 	MemoryContextDelete(private_context);
