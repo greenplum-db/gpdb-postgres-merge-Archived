@@ -7680,7 +7680,6 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		}
 	}
 
-	appendPQExpBuffer(q, "\n    %s", asPart->data);
 	appendPQExpBuffer(q, "\n    LANGUAGE %s", fmtId(lanname));
 
 	if (provolatile[0] != PROVOLATILE_VOLATILE)
