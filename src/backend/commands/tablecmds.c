@@ -7691,28 +7691,28 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	CommandCounterIncrement();
 
 	/*
-	 * If this constraint needs to be recursed, this is a base/parent table,
-	 * and we are the master, then cascade check constraint creation for all children.
-	 * We do it here to synchronize pg_constraint oid.
+	 * Propagate to children as appropriate.  Unlike most other ALTER routines,
+	 * we have to do this one level of recursion at a time; we can't use
+	 * find_all_inheritors to do it in one pass.
 	 */
-	if (Gp_role == GP_ROLE_DISPATCH && recurse)
+	children = find_inheritance_children(RelationGetRelid(rel));
+
+	/*
+	 * If we are told not to recurse, there had better not be any child tables;
+	 * else the addition would put them out of step.
+	 */
+	if (Gp_role == GP_ROLE_DISPATCH && children && !recurse)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("constraint must be added to child tables too")));
+
+	/*
+	 * If this constraint needs to be recursed, this is a base/parent table,
+	 * and we are the master, then cascade check constraint creation for all
+	 * children.  We do it here to synchronize pg_constraint oid.
+	 */
+	if (recurse)
 	{
-		/*
-		 * Propagate to children as appropriate.  Unlike most other ALTER
-		 * routines, we have to do this one level of recursion at a time; we can't
-		 * use find_all_inheritors to do it in one pass.
-		 */
-		children = find_inheritance_children(RelationGetRelid(rel));
-
-		/*
-		 * If we are told not to recurse, there had better not be any child
-		 * tables; else the addition would put them out of step.
-		 */
-		if (children && !recurse)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("constraint must be added to child tables too")));
-
 		foreach(child, children)
 		{
 			Oid			childrelid = lfirst_oid(child);
