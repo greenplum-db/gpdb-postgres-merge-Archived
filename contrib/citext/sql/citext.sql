@@ -95,11 +95,13 @@ SELECT citext_cmp('B'::citext, 'a'::citext) AS one;
 -- Do some tests using a table and index.
 
 CREATE TEMP TABLE try (
-   name citext PRIMARY KEY
-);
+   a text,
+   name citext,
+   UNIQUE (a, name)
+) DISTRIBUTED BY (a);
 
-INSERT INTO try (name)
-VALUES ('a'), ('ab'), ('â'), ('aba'), ('b'), ('ba'), ('bab'), ('AZ');
+INSERT INTO try (a, name)
+VALUES ('a', 'a'), ('a','ab'), ('â','â'), ('aba','aba'), ('b','b'), ('ba','ba'), ('bab','bab'), ('AZ','AZ');
 
 SELECT name, 'a' = name AS eq_a   FROM try WHERE name <> 'â';
 SELECT name, 'a' = name AS t      FROM try where name = 'a';
@@ -108,9 +110,9 @@ SELECT name, 'A' = name AS t      FROM try where name = 'A';
 SELECT name, 'A' = name AS t      FROM try where name = 'A';
 
 -- expected failures on duplicate key
-INSERT INTO try (name) VALUES ('a');
-INSERT INTO try (name) VALUES ('A');
-INSERT INTO try (name) VALUES ('aB');
+INSERT INTO try (a,name) VALUES ('a','a');
+INSERT INTO try (a,name) VALUES ('a','A');
+INSERT INTO try (a,name) VALUES ('a','aB');
 
 -- Make sure that citext_smaller() and citext_lager() work properly.
 SELECT citext_smaller( 'aa'::citext, 'ab'::citext ) = 'aa' AS t;

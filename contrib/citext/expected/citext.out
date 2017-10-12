@@ -221,11 +221,13 @@ SELECT citext_cmp('B'::citext, 'a'::citext) AS one;
 
 -- Do some tests using a table and index.
 CREATE TEMP TABLE try (
-   name citext PRIMARY KEY
-);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "try_pkey" for table "try"
-INSERT INTO try (name)
-VALUES ('a'), ('ab'), ('â'), ('aba'), ('b'), ('ba'), ('bab'), ('AZ');
+   a text,
+   name citext,
+   UNIQUE (a, name)
+) DISTRIBUTED BY (a);
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "try_a_key" for table "try"
+INSERT INTO try (a, name)
+VALUES ('a', 'a'), ('a','ab'), ('â','â'), ('aba','aba'), ('b','b'), ('ba','ba'), ('bab','bab'), ('AZ','AZ');
 SELECT name, 'a' = name AS eq_a   FROM try WHERE name <> 'â';
  name | eq_a 
 ------+------
@@ -269,12 +271,15 @@ SELECT name, 'A' = name AS t      FROM try where name = 'A';
 (1 row)
 
 -- expected failures on duplicate key
-INSERT INTO try (name) VALUES ('a');
-ERROR:  duplicate key value violates unique constraint "try_pkey"
-INSERT INTO try (name) VALUES ('A');
-ERROR:  duplicate key value violates unique constraint "try_pkey"
-INSERT INTO try (name) VALUES ('aB');
-ERROR:  duplicate key value violates unique constraint "try_pkey"
+INSERT INTO try (a,name) VALUES ('a','a');
+ERROR:  duplicate key value violates unique constraint "try_a_key"
+DETAIL:  Key (a, name)=(a, a) already exists.
+INSERT INTO try (a,name) VALUES ('a','A');
+ERROR:  duplicate key value violates unique constraint "try_a_key"
+DETAIL:  Key (a, name)=(a, A) already exists.
+INSERT INTO try (a,name) VALUES ('a','aB');
+ERROR:  duplicate key value violates unique constraint "try_a_key"
+DETAIL:  Key (a, name)=(a, aB) already exists.
 -- Make sure that citext_smaller() and citext_lager() work properly.
 SELECT citext_smaller( 'aa'::citext, 'ab'::citext ) = 'aa' AS t;
  t 
@@ -322,6 +327,7 @@ SELECT citext_larger( 'aardvark'::citext, 'Aaba'::citext ) = 'aardvark' AS t;
 CREATE TEMP TABLE srt (
    name CITEXT
 );
+NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause, and no column type is suitable for a distribution key. Creating a NULL policy entry.
 INSERT INTO srt (name)
 VALUES ('aardvark'),
        ('AAA'),
