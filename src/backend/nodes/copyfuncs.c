@@ -2215,6 +2215,8 @@ _copySpecialJoinInfo(SpecialJoinInfo *from)
 	COPY_NODE_FIELD(join_quals);
 	COPY_SCALAR_FIELD(try_join_unique);	/* CDB */
 	COPY_SCALAR_FIELD(consider_dedup);	/* CDB */
+	COPY_NODE_FIELD(semi_operators);
+	COPY_NODE_FIELD(semi_rhs_exprs);
 
 	return newnode;
 }
@@ -4933,6 +4935,7 @@ copyObject(void *from)
 			break;
 		case T_SpecialJoinInfo:
 			retval = _copySpecialJoinInfo(from);
+			break;
 		case T_AppendRelInfo:
 			retval = _copyAppendRelInfo(from);
 			break;

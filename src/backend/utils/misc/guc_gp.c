@@ -556,6 +556,10 @@ char	   *gp_default_storage_options = NULL;
 
 int			writable_external_table_bufsize = 64;
 
+/* Executor */
+bool		gp_enable_mk_sort = true;
+bool		gp_enable_motion_mk_sort = true;
+
 static const struct config_enum_entry gp_log_format_options[] = {
 	{"text", 0},
 	{"csv", 1},
@@ -3752,15 +3756,6 @@ struct config_int ConfigureNamesInt_gp[] =
 		},
 		&MaxResourceQueues,
 		9, 0, INT_MAX, NULL, NULL
-	},
-
-	{
-		{"max_resource_groups", PGC_POSTMASTER, RESOURCES_MGM,
-			gettext_noop("Maximum number of resource groups."),
-			NULL
-		},
-		&MaxResourceGroups,
-		9, 0, INT_MAX, gpvars_assign_max_resource_groups, NULL
 	},
 
 	{

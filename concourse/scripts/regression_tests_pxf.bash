@@ -22,13 +22,6 @@ function run_regression_test() {
 
 	[ -s regression.diffs ] && cat regression.diffs && exit 1
 
-	export HADOOP_HOME=\${1}/singlecluster/hadoop
-	cd "\${1}/gpdb_src/gpAux/extensions/pxf/regression/integrate"
-	HADOOP_HOST=localhost HADOOP_PORT=8020 ./generate_hdfs_data.sh
-
-	cd "\${1}/gpdb_src/gpAux/extensions/pxf/regression"
-	GP_HADOOP_TARGET_VERSION=cdh4.1 HADOOP_HOST=localhost HADOOP_PORT=8020 ./run_pxf_regression.sh
-
 	exit 0
 	EOF
 
@@ -39,23 +32,16 @@ function run_regression_test() {
 }
 
 function run_pxf_automation() {
-	export GPHD_ROOT=$1
-	pushd ${GPHD_ROOT} > /dev/null
-		mkdir -p pxf && cd pxf
-		ln -s ${PXF_HOME}/conf conf
-		for X in ${PXF_HOME}/lib/pxf-*-[0-9]*.jar; do \
-			ln -s ${X} $(echo $(basename ${X}) | sed -e 's/-[a-zA-Z0-9.]*.jar/.jar/'); \
-		done
-	popd > /dev/null
-
 	cat > /home/gpadmin/run_pxf_automation_test.sh <<-EOF
 	set -exo pipefail
 
 	source ${GPHOME}/greenplum_path.sh
 	source \${1}/gpdb_src/gpAux/gpdemo/gpdemo-env.sh
 
+	# set variables needed by PXF Automation and Parot to run in GPDB mode with SingleCluster and standalone PXF
 	export PG_MODE=GPDB
-	export GPHD_ROOT=\${1}/singlecluster
+	export GPHD_ROOT=$1
+	export PXF_HOME=${PXF_HOME}
 
 	# Copy PSI package from system python to GPDB as automation test requires it
 	psi_dir=\$(find /usr/lib64 -name psi | sort -r | head -1)
@@ -91,14 +77,16 @@ function setup_singlecluster() {
 	export SLAVES=1
 	./init-gphd.sh
 	./start-hdfs.sh
+	./start-yarn.sh
+	./start-hive.sh
 	popd
 }
 
 function start_pxf() {
 	local hdfsrepo=$1
 	pushd ${PXF_HOME} > /dev/null
-	./bin/pxf init --hadoop-home ${hdfsrepo}/hadoop
-	./bin/pxf start
+	su gpadmin -c "bash ./bin/pxf init --hadoop-home ${hdfsrepo}/hadoop --hive-home ${hdfsrepo}/hive"
+	su gpadmin -c "bash ./bin/pxf start"
 	popd > /dev/null
 }
 
@@ -122,8 +110,8 @@ function _main() {
 	time setup_singlecluster
 	time start_pxf $(pwd)/singlecluster
 	chown -R gpadmin:gpadmin $(pwd)
-	time run_pxf_automation $(pwd)/singlecluster
 	time run_regression_test
+	time run_pxf_automation $(pwd)/singlecluster
 }
 
 _main "$@"

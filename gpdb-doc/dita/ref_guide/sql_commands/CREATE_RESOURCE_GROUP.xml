@@ -20,15 +20,15 @@ MEMORY_LIMIT=<varname>integer</varname>
       <title>Description</title>
       <p>Creates a new resource group for Greenplum Database resource management. A resource
          group is assigned to one or more roles and identifies concurrent transaction, memory,
-         and CPU limits for the role when resource groups are enabled. Only a superuser can create a resource group.</p>
+         and CPU limits for the role when resource groups are enabled.</p>
+      <p>You must have <codeph>SUPERUSER</codeph> privileges to create a resource group. The maximum number of resource groups allowed in your Greenplum Database cluster is 100.</p>
       <p>Greenplum Database pre-defines two default resource groups: <codeph>admin_group</codeph>
          and <codeph>default_group</codeph>. These group names are reserved.</p>
-      <p>The <codeph>max_resource_groups</codeph> server configuration parameter governs the maximum number of resource groups you can create.</p>
       <p>
         To set appropriate limits for resource groups, the Greenplum Database administrator must
         be familiar with the queries typically executed on the system, as well as the users/roles executing those queries.</p>
       <p>
-        After defining a resource group, assign the group to one or more roles using the <codeph><xref
+        After creating a resource group, assign the group to one or more roles using the <codeph><xref
             href="ALTER_ROLE.xml#topic1" type="topic" format="dita"/></codeph> or <codeph><xref
             href="./CREATE_ROLE.xml#topic1" type="topic" format="dita"/></codeph> commands.</p>
     </section>
@@ -58,11 +58,11 @@ MEMORY_LIMIT=<varname>integer</varname>
         </plentry>
         <plentry>
           <pt>MEMORY_SHARED_QUOTA <varname>integer</varname></pt>
-          <pd>The quota of shared memory in the resource group. Resource groups with a <codeph>MEMORY_SHARED_QUOTA</codeph> threshold set aside a percentage of memory allotted to the resource group to share across transactions. This shared memory is allocated on a first-come, first-served basis as available. A transaction may use none, some, or all of this memory. The minimum memory shared quota percentage you can specify for a resource group is 0. The maximum is 100. The default <codeph>MEMORY_SHARED_QUOTA</codeph> value is 20. The sum of the <codeph>MEMORY_SHARED_QUOTA</codeph> and <codeph>MEMORY_SPILL_RATIO</codeph> values specified for a resource group cannot exceed 100.</pd>
+          <pd>The quota of shared memory in the resource group. Resource groups with a <codeph>MEMORY_SHARED_QUOTA</codeph> threshold set aside a percentage of memory allotted to the resource group to share across transactions. This shared memory is allocated on a first-come, first-served basis as available. A transaction may use none, some, or all of this memory. The minimum memory shared quota percentage you can specify for a resource group is 0. The maximum is 100. The default <codeph>MEMORY_SHARED_QUOTA</codeph> value is 20.</pd>
         </plentry>
         <plentry>
           <pt>MEMORY_SPILL_RATIO <varname>integer</varname></pt>
-          <pd>The memory usage threshold for memory-intensive operators in a transaction. When the transaction reaches this threshold, it spills to disk. The minimum memory spill ratio percentage you can specify for a resource group is 1. The maximum is 100. The upper limit is (100 - <codeph>MEMORY_SHARED_QUOTA</codeph>). The default <codeph>MEMORY_SPILL_RATIO</codeph> value is 20. The sum of the <codeph>MEMORY_SHARED_QUOTA</codeph> and <codeph>MEMORY_SPILL_RATIO</codeph> values specified for a resource group cannot exceed 100.</pd>
+          <pd>The memory usage threshold for memory-intensive operators in a transaction. When the transaction reaches this threshold, it spills to disk. The minimum memory spill ratio percentage you can specify for a resource group is 0. The maximum is 100. The default <codeph>MEMORY_SPILL_RATIO</codeph> value is 20.</pd>
         </plentry>
       </parml>
     </section>

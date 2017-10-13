@@ -2279,8 +2279,7 @@ typedef struct HashJoinState
 typedef union GenericTupStore
 {
 	struct NTupleStore        *matstore;     /* Used by Materialize */
-	struct Tuplesortstate_mk  *sortstore_mk; /* Used by Sort when gp_enable_mk_sort = true */
-	struct Tuplesortstate     *sortstore;    /* Used by Sort when gp_enable_mk_sort = false */
+	void	   *sortstore;	/* Used by Sort */
 } GenericTupStore;
 
 /* ----------------

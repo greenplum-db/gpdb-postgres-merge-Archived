@@ -47,8 +47,7 @@
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_trigger.h"
 
-#include "catalog/gp_configuration.h"
-#include "catalog/gp_configuration.h"
+#include "catalog/gp_configuration_history.h"
 #include "catalog/gp_segment_config.h"
 
 #include "catalog/gp_persistent.h"
@@ -591,10 +590,7 @@ IsSharedRelation(Oid relationId)
 		relationId == ResQueueCapabilityRelationId ||
 		relationId == ResGroupRelationId ||
 		relationId == ResGroupCapabilityRelationId ||
-		relationId == GpConfigurationRelationId ||
 		relationId == GpConfigHistoryRelationId ||
-		relationId == GpDbInterfacesRelationId ||
-		relationId == GpInterfacesRelationId ||
 		relationId == GpSegmentConfigRelationId ||
 		relationId == FileSpaceEntryRelationId ||
 
@@ -639,10 +635,6 @@ IsSharedRelation(Oid relationId)
 		relationId == ResGroupCapabilityResgroupidResLimittypeIndexId ||
 		relationId == AuthIdRolResQueueIndexId ||
 		relationId == AuthIdRolResGroupIndexId ||
-		relationId == GpConfigurationContentDefinedprimaryIndexId ||
-		relationId == GpConfigurationDbidIndexId ||
-		relationId == GpDbInterfacesDbidIndexId ||
-		relationId == GpInterfacesInterfaceidIndexId ||
 		relationId == GpSegmentConfigContentPreferred_roleIndexId ||
 		relationId == GpSegmentConfigDbidIndexId ||
 		relationId == FileSpaceEntryFsefsoidIndexId ||
