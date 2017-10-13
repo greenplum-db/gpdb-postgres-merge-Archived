@@ -533,16 +533,7 @@ typedef IndexScan DynamicIndexScan;
  * (such as for targeted dispatch)
  * ----------------
  */
-typedef struct BitmapIndexScan
-{
-	Scan		scan;
-	Oid			indexid;		/* OID of index to scan */
-	List	   *indexqual;		/* list of index quals (OpExprs) */
-	List	   *indexqualorig;	/* the same in original form */
-
-	/* logical index to use */
-	LogicalIndexInfo *logicalIndexInfo;
-} BitmapIndexScan;
+typedef IndexScan BitmapIndexScan;
 
 /* ----------------
  *		bitmap sequential scan node
