@@ -755,7 +755,6 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace,
 										  tupdesc,
 										  NIL,
 										  OldHeap->rd_rel->relam,
-										  /* GPDB_84_MERGE_FIXME constraints? NIL, */
 										  OldHeap->rd_rel->relkind,
 										  OldHeap->rd_rel->relstorage,
 										  OldHeap->rd_rel->relisshared,
