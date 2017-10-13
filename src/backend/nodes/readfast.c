@@ -1766,6 +1766,8 @@ _readBitmapIndexScan(void)
 {
 	READ_LOCALS(BitmapIndexScan);
 
+	readScanInfo((Scan *)local_node);
+
 	READ_OID_FIELD(indexid);
 	READ_NODE_FIELD(indexqual);
 	READ_NODE_FIELD(indexqualorig);
