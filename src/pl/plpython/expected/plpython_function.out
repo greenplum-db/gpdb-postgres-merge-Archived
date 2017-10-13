@@ -540,7 +540,6 @@ $$ LANGUAGE plpythonu;
 CREATE FUNCTION test_inout_params(first inout text) AS $$
 return first + '_inout';
 $$ LANGUAGE plpythonu;
-<<<<<<< HEAD
 -- RETURN value testing
 CREATE FUNCTION test_return_void(s text) 
 RETURNS void AS $$
@@ -696,5 +695,3 @@ x = """
   # This is not a comment so the quotes at the end of the line do end the string """ 
 return x
 $$ language plpythonu;
-=======
->>>>>>> 49f001d81e

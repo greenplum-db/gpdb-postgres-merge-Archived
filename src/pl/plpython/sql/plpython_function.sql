@@ -565,7 +565,6 @@ $$ LANGUAGE plpythonu;
 CREATE FUNCTION test_inout_params(first inout text) AS $$
 return first + '_inout';
 $$ LANGUAGE plpythonu;
-<<<<<<< HEAD
 
 
 -- RETURN value testing
@@ -735,5 +734,3 @@ x = """
 return x
 $$ language plpythonu;
 
-=======
->>>>>>> 49f001d81e

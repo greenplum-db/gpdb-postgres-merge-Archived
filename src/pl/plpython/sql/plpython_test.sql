@@ -165,7 +165,6 @@ SELECT * FROM test_in_out_params('test_in');
 -- this doesn't work yet :-(
 SELECT * FROM test_in_out_params_multi('test_in');
 SELECT * FROM test_inout_params('test_in');
-<<<<<<< HEAD
 
 SELECT (split(10)).*; 
 
@@ -184,5 +183,3 @@ union all
 select multiline2() 
 union all 
 select multiline3()
-=======
->>>>>>> 49f001d81e
