@@ -442,7 +442,8 @@ insert into atacc1 (test) values (-3);
 insert into atacc1 (test) values (3);
 -- check constraint is there on child
 insert into atacc2 (test) values (-3);
-ERROR:  new row for relation "atacc2" violates check constraint "foo"
+ERROR:  One or more assertions failed
+DETAIL:  Check constraint foo for table atacc2 was violated
 insert into atacc2 (test) values (3);
 drop table atacc2;
 drop table atacc1;
@@ -1367,7 +1368,7 @@ NOTICE:  merging definition of column "f2" for child "c1"
 insert into p1 values (1,2,'abc');
 insert into c1 values(11,'xyz',33,0); -- should fail
 ERROR:  One or more assertions failed  (seg0 antova-mbp.local:40010 pid=90951)
-DETAIL:  Check constraint c1_a1_check for table c1 was violated
+DETAIL:  Check constraint p1_a1_check for table c1 was violated
 insert into c1 values(11,'xyz',33,22);
 select * from p1 order by 1,2,3;
  f1 | a1 | f2  
