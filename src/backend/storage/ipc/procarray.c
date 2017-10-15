@@ -1237,6 +1237,8 @@ GetSnapshotData(Snapshot snapshot)
 
 				snapshot->curcid = SharedLocalSnapshotSlot->snapshot.curcid;
 
+				snapshot->subxcnt = -1;
+
 				/* combocid */
 				if (usedComboCids != SharedLocalSnapshotSlot->combocidcnt)
 				{
