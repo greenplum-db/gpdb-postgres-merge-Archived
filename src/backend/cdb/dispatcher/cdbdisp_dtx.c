@@ -186,12 +186,11 @@ qdSerializeDtxContextInfo(int *size, bool wantSnapshot, bool inCursor,
 	DtxContextInfo *pDtxContextInfo = NULL;
 
 	/*------------------------------------------------------------------------
-	 * If we already have a LatestSnapshot set then no reason to try and get a
-	 * new one. just use that one. But... there is one important reason why
-	 * this HAS to be here. ROLLBACK stmts get dispatched to QEs in the abort
-	 * transaction code. This code tears down enough stuff such that you can't
-	 * call GetTransactionSnapshot() within that code. So we need to use the
-	 * LatestSnapshot since we can't re-gen a new one.
+	 * If we already have an ActiveSnapshot set then no reason to try and get a
+	 * new one. just use that one. Otherwise acquire a new snapshot. If we're
+	 * aborting, though, we cannot necessarily get a snapshot anymore, so
+	 * don't try. It hardly matters what snapshot we use if we're aborting,
+	 * after all.
 	 *
 	 * It is also very possible that for a single user statement which may
 	 * only generate a single snapshot that we will dispatch multiple
@@ -219,60 +218,26 @@ qdSerializeDtxContextInfo(int *size, bool wantSnapshot, bool inCursor,
 	 */
 	*size = 0;
 
-	if (wantSnapshot)
+	if (wantSnapshot && !IsAbortInProgress())
 	{
-
-		if (!FirstSnapshotSet && !IsAbortInProgress())
+		if (ActiveSnapshotSet())
 		{
-			/*
-			 * unfortunately, the dtm issues a select for prepared xacts at
-			 * the beginning and this is before a snapshot has been set up, so
-			 * we need one for that but not for when we don't have a valid
-			 * XID.
-			 *
-			 * but we CAN'T do this if an ABORT is in progress... instead
-			 * we'll send a NONE since the qExecs don't need the information
-			 * to do a ROLLBACK.
-			 */
-			elog((Debug_print_full_dtm ? LOG : DEBUG5),
-				 "qdSerializeDtxContextInfo calling GetTransactionSnapshot to make snapshot");
+			snapshot = GetActiveSnapshot();
 
-			GetTransactionSnapshot();
-		}
-
-		snapshot = GetLatestSnapshot();
-
-		/* GPDB_84_MERGE_FIXME
-		if (LatestSnapshot != NULL)
-		{
-			elog((Debug_print_full_dtm ? LOG : DEBUG5),
-				 "qdSerializeDtxContextInfo using LatestSnapshot");
-
-			snapshot = LatestSnapshot;
 			elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),
-				 "[Distributed Snapshot #%u] *QD Use Latest* currcid = %d (gxid = %u, '%s')",
-				 LatestSnapshot->distribSnapshotWithLocalMapping.ds.distribSnapshotId,
-				 LatestSnapshot->curcid,
+				 "[Distributed Snapshot #%u] *QD Use Active* currcid = %d (gxid = %u, '%s')",
+				 snapshot->distribSnapshotWithLocalMapping.ds.distribSnapshotId,
+				 snapshot->curcid,
 				 getDistributedTransactionId(),
 				 DtxContextToString(DistributedTransactionContext));
 		}
-		else if (SerializableSnapshot != NULL)
+		else
 		{
+			snapshot = GetTransactionSnapshot();
 			elog((Debug_print_full_dtm ? LOG : DEBUG5),
-				 "qdSerializeDtxContextInfo using SerializableSnapshot");
-
-			snapshot = SerializableSnapshot;
-			elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),
-				 "[Distributed Snapshot #%u] *QD Use Serializable* currcid = %d (gxid = %u, '%s')",
-				 SerializableSnapshot->distribSnapshotWithLocalMapping.ds.distribSnapshotId,
-				 SerializableSnapshot->curcid,
-				 getDistributedTransactionId(),
-				 DtxContextToString(DistributedTransactionContext));
-
+				 "qdSerializeDtxContextInfo called GetTransactionSnapshot to make snapshot");
 		}
-		*/
 	}
-
 	switch (DistributedTransactionContext)
 	{
 		case DTX_CONTEXT_QD_DISTRIBUTED_CAPABLE:

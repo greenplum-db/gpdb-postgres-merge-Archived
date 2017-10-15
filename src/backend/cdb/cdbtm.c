@@ -2386,8 +2386,7 @@ DistributedSnapshotMappedEntry_Compare(const void *p1, const void *p2)
 }
 
 bool
-createDtxSnapshot(
-				  DistributedSnapshotWithLocalMapping *distribSnapshotWithLocalMapping)
+createDtxSnapshot(DistributedSnapshotWithLocalMapping *distribSnapshotWithLocalMapping)
 {
 	int			globalCount;
 	int			i;
