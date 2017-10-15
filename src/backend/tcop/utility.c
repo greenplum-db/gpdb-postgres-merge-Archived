@@ -690,7 +690,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_DropFileSpaceStmt:
-			PreventTransactionChain(isTopLevel, "DROP FILESPACE");
+			/* Note: This is allowed in a transaction */
 			DropFileSpace((DropFileSpaceStmt *) parsetree);
 			break;
 
@@ -699,7 +699,10 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_DropTableSpaceStmt:
+			/* In GPDB; this is allowed in a transaction */
+#if 0
 			PreventTransactionChain(isTopLevel, "DROP TABLESPACE");
+#endif
 			DropTableSpace((DropTableSpaceStmt *) parsetree);
 			break;
 

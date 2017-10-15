@@ -466,7 +466,18 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	/* We keep the lock on the row in pg_tablespace until commit */
 	heap_close(rel, NoLock);
 
-	/* Note: no need for dispatch, that is handled in utility.c */
+	/*
+	 * If we are the QD, dispatch this DROP command to all the QEs
+	 */
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									NIL,
+									NULL);
+	}
 	return;
 }
 

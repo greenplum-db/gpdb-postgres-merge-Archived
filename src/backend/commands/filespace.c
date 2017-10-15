@@ -586,10 +586,8 @@ DropFileSpace(DropFileSpaceStmt *drop)
 	heap_close(rel, NoLock);
 
 	/* 
-	 * Master Only:
-	 *   1) Remove entries from pg_filespace_entry
-	 *
-	 * Note: no need for dispatch, that is handled in utility.c
+	 * In the QD, also remove entries from pg_filespace_entry, and
+	 * dispatch to segments.
 	 */
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -598,6 +596,13 @@ DropFileSpace(DropFileSpaceStmt *drop)
 		/* MPP-6929: metadata tracking */
 		MetaTrackDropObject(FileSpaceRelationId,
 							fsoid);
+
+		CdbDispatchUtilityStatement((Node *) drop,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									NIL,
+									NULL);
 	}
 
 	/* 
