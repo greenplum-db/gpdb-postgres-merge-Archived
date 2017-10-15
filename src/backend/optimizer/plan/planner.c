@@ -1909,8 +1909,12 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 					 * subplan may change the previous root->parse Query node,
 					 * which makes the current sort_pathkeys invalid.
 					 */
-					sort_pathkeys = make_pathkeys_for_sortclauses(root, parse->sortClause,
-											  result_plan->targetlist, true);
+					if (list_length(parse->distinctClause) > list_length(parse->sortClause))
+						sort_pathkeys = make_pathkeys_for_sortclauses(root, parse->distinctClause,
+																	  result_plan->targetlist, true);
+					else
+						sort_pathkeys = make_pathkeys_for_sortclauses(root, parse->sortClause,
+																	  result_plan->targetlist, true);
 					sort_pathkeys = canonicalize_pathkeys(root, sort_pathkeys);
 					CdbPathLocus_MakeNull(&current_locus);
 				}
