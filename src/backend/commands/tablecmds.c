@@ -1143,7 +1143,21 @@ RemoveRelations(DropStmt *drop)
 							   ObjectIdGetDatum(relOid),
 							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
+		{
+			if (Gp_role == GP_ROLE_DISPATCH)
+			{
+				Oid again= RangeVarGetRelid(rel, true);
+
+				/* Not there? */
+				if (!OidIsValid(again))
+				{
+					DropErrorMsgNonExistent(rel->relname, relkind, drop->missing_ok);
+					UnlockRelationOid(relOid, AccessExclusiveLock);
+					continue;
+				}
+			}
 			elog(ERROR, "cache lookup failed for relation %u", relOid);
+		}
 		classform = (Form_pg_class) GETSTRUCT(tuple);
 
 		/* Disallow direct DROP TABLE of a partition (MPP-3260) */

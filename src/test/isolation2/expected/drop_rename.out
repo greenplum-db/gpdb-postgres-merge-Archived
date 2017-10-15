@@ -73,7 +73,7 @@ ERROR:  table "t3" does not exist
 2<:  <... completed>
 DROP
 2:select count(*) from t3;
-ERROR:  table "t3" does not exist
+ERROR:  relation "t3" does not exist
 LINE 1: select count(*) from t3;
                              ^
 
