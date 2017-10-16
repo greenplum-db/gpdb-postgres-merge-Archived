@@ -1120,7 +1120,7 @@ externalgettup_custom(FileScanDesc scan)
 							pstate->raw_buf_done = true;
 							justifyDatabuf(&formatter->fmt_databuf);
 
-							if (pstate->fe_eof)
+							if (pstate->fe_eof && formatter->fmt_databuf.len > 0)
 							{
 								/*
 								 * The formatter needs more data, but we have reached
