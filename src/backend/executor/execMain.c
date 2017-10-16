@@ -3184,7 +3184,11 @@ ExecInsert(TupleTableSlot *slot,
 		}
 		else
 		{
-			tuple = ExecFetchSlotHeapTuple(partslot);
+			/*
+			 * Make a modifiable copy, since external_insert() takes the
+			 * liberty to modify the tuple.
+			 */
+			tuple = ExecCopySlotHeapTuple(partslot);
 		}
 	}
 	else
