@@ -2804,19 +2804,6 @@ int2_sum(PG_FUNCTION_ARGS)
 		PG_RETURN_INT64(newval);
 	}
 
-	/* GPDB_84_MERGE_FIXME: ensure that the following block is equivalent to the
-	 * code that follows it, and then get rid of it */
-#if 0
-	oldsum = PG_GETARG_INT64(0);
-
-	/* Leave sum unchanged if new input is null. */
-	if (PG_ARGISNULL(1))
-		PG_RETURN_INT64(oldsum);
-
-	/* OK to do the addition. */
-	newval = oldsum + (int64) PG_GETARG_INT16(1);
-#endif
-
 	/*
 	 * If we're invoked by nodeAgg, we can cheat and modify our first
 	 * parameter in-place to avoid palloc overhead. If not, we need to return
@@ -2865,19 +2852,6 @@ int4_sum(PG_FUNCTION_ARGS)
 		newval = (int64) PG_GETARG_INT32(1);
 		PG_RETURN_INT64(newval);
 	}
-
-	/* GPDB_84_MERGE_FIXME: ensure that the following block is equivalent to the
-	 * code that follows it, and then get rid of it */
-#if 0
-	val = PG_GETARG_INT64(0);
-
-	/* Leave sum unchanged if new input is null. */
-	if (PG_ARGISNULL(1))
-		PG_RETURN_INT64(val); 
-
-	/* OK to do the addition. */
-	val = val + (int64) PG_GETARG_INT32(1);
-#endif
 
 	/*
 	 * If we're invoked by nodeAgg, we can cheat and modify our first
