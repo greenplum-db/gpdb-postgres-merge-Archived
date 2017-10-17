@@ -1380,7 +1380,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 */
 		sort_pathkeys = make_pathkeys_for_sortclauses(root, parse->sortClause,
 											  result_plan->targetlist, true);
-		sort_pathkeys = canonicalize_pathkeys(root, sort_pathkeys);
 	}
 	else
 	{
