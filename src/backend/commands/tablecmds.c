@@ -12734,9 +12734,6 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 						 * a comma after each column entry except the last one,
 						 * at which point the string should be NULL terminated
 						 * instead.
-						 *
-						 * GPDB_84_MERGE_FIXME replace the strcat() loop with
-						 * a StringInfo instead.
 						 */
 						char *dist = palloc(list_length(ldistro) * (NAMEDATALEN + 1));
 

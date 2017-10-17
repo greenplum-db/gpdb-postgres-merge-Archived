@@ -2645,7 +2645,6 @@ CopyTo(CopyState cstate)
 				    elog(ERROR, "OIDS=TRUE is not allowed on tables that use column-oriented storage. Use OIDS=FALSE");
 				}
 
-				/* GPDB_84_MERGE_FIXME: use a memset instead? */
 				proj = palloc(sizeof(bool) * nvp);
 				for(i = 0; i < nvp; ++i)
 				    proj[i] = true;
