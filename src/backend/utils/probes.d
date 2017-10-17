@@ -9,13 +9,13 @@
 
 
 /* typedefs used in PostgreSQL */
-typedef unsigned int LocalTransactionId;
-typedef int LWLockId;
-typedef int LWLockMode;
-typedef int LOCKMODE;
-typedef unsigned int BlockNumber;
-typedef unsigned int Oid;
-
+#define LocalTransactionId unsigned int
+#define LWLockId int
+#define LWLockMode int
+#define LOCKMODE int
+#define BlockNumber unsigned int
+#define Oid unsigned int
+#define ForkNumber int
 #define bool char
 
 provider postgresql {
