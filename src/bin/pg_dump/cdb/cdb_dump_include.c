@@ -3345,7 +3345,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 			resetPQExpBuffer(q);
 			appendPQExpBuffer(q, "SELECT tableoid, oid, conname, "
-							"pg_catalog.pg_get_constraintdef(oid) AS consrc "
+							  "pg_catalog.pg_get_constraintdef(oid) AS consrc, "
+							  "conislocal "
 							  "FROM pg_catalog.pg_constraint "
 							  "WHERE conrelid = '%u'::pg_catalog.oid "
 							  "   AND contype = 'c' "
