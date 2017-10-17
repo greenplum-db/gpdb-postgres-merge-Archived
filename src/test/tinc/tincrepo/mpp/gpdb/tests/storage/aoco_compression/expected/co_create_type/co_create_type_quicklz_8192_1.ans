@@ -30,8 +30,9 @@ CREATE TYPE int_quicklz(
 CREATE TYPE
 --Drop and recreate the data type 
  Drop type if exists int_quicklz cascade;
-psql:/path/sql_file:1: NOTICE:  drop cascades to function int_quicklz_out(int_quicklz)
-psql:/path/sql_file:1: NOTICE:  drop cascades to function int_quicklz_in(cstring)
+psql:/path/sql_file:1: NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to function int_quicklz_in(cstring)
+drop cascades to function int_quicklz_out(int_quicklz)
 DROP TYPE
 CREATE FUNCTION int_quicklz_in(cstring) 
  RETURNS int_quicklz
@@ -92,8 +93,9 @@ CREATE TYPE char_quicklz(
 CREATE TYPE
 --Drop and recreate the data type 
  Drop type if exists char_quicklz cascade;
-psql:/path/sql_file:1: NOTICE:  drop cascades to function char_quicklz_out(char_quicklz)
-psql:/path/sql_file:1: NOTICE:  drop cascades to function char_quicklz_in(cstring)
+psql:/path/sql_file:1: NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to function char_quicklz_in(cstring)
+drop cascades to function char_quicklz_out(char_quicklz)
 DROP TYPE
 CREATE FUNCTION char_quicklz_in(cstring) 
  RETURNS char_quicklz
@@ -154,8 +156,9 @@ CREATE TYPE text_quicklz(
 CREATE TYPE
 --Drop and recreate the data type 
  Drop type if exists text_quicklz cascade;
-psql:/path/sql_file:1: NOTICE:  drop cascades to function text_quicklz_out(text_quicklz)
-psql:/path/sql_file:1: NOTICE:  drop cascades to function text_quicklz_in(cstring)
+psql:/path/sql_file:1: NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to function text_quicklz_in(cstring)
+drop cascades to function text_quicklz_out(text_quicklz)
 DROP TYPE
 CREATE FUNCTION text_quicklz_in(cstring) 
  RETURNS text_quicklz
@@ -215,8 +218,9 @@ CREATE TYPE varchar_quicklz(
 CREATE TYPE
 --Drop and recreate the data type 
  Drop type if exists varchar_quicklz cascade;
-psql:/path/sql_file:1: NOTICE:  drop cascades to function varchar_quicklz_out(varchar_quicklz)
-psql:/path/sql_file:1: NOTICE:  drop cascades to function varchar_quicklz_in(cstring)
+psql:/path/sql_file:1: NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to function varchar_quicklz_in(cstring)
+drop cascades to function varchar_quicklz_out(varchar_quicklz)
 DROP TYPE
 CREATE FUNCTION varchar_quicklz_in(cstring) 
  RETURNS varchar_quicklz
@@ -277,8 +281,9 @@ CREATE TYPE date_quicklz(
 CREATE TYPE
 --Drop and recreate the data type 
  Drop type if exists date_quicklz cascade;
-psql:/path/sql_file:1: NOTICE:  drop cascades to function date_quicklz_out(date_quicklz)
-psql:/path/sql_file:1: NOTICE:  drop cascades to function date_quicklz_in(cstring)
+psql:/path/sql_file:1: NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to function date_quicklz_in(cstring)
+drop cascades to function date_quicklz_out(date_quicklz)
 DROP TYPE
 CREATE FUNCTION date_quicklz_in(cstring) 
  RETURNS date_quicklz
@@ -340,8 +345,9 @@ CREATE TYPE timestamp_quicklz(
 CREATE TYPE
 --Drop and recreate the data type 
  Drop type if exists timestamp_quicklz cascade;
-psql:/path/sql_file:1: NOTICE:  drop cascades to function timestamp_quicklz_out(timestamp_quicklz)
-psql:/path/sql_file:1: NOTICE:  drop cascades to function timestamp_quicklz_in(cstring)
+psql:/path/sql_file:1: NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to function timestamp_quicklz_in(cstring)
+drop cascades to function timestamp_quicklz_out(timestamp_quicklz)
 DROP TYPE
 CREATE FUNCTION timestamp_quicklz_in(cstring) 
  RETURNS timestamp_quicklz
