@@ -755,6 +755,10 @@ ProcessUtility(Node *parsetree,
 						RemoveTSConfigurations(stmt);
 						break;
 
+					case OBJECT_EXTENSION:
+						RemoveExtensions(stmt);
+						break;
+
 					case OBJECT_EXTPROTOCOL:
 						RemoveExtProtocols(stmt);
 						break;
