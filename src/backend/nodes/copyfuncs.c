@@ -705,8 +705,6 @@ _copySubqueryScan(SubqueryScan *from)
 	COPY_NODE_FIELD(subplan);
 	COPY_NODE_FIELD(subrtable);
 
-	COPY_NODE_FIELD(subrtable);
-
 	return newnode;
 }
 

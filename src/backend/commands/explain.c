@@ -511,45 +511,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 	es->pstmt = queryDesc->plannedstmt;
 	es->rtable = queryDesc->plannedstmt->rtable;
 
-#if 0
-	/*
-	 * GPDB_84_MERGE_FIXME rewrite to use show_plan_tlist() per commit
-	 * 87a2f050a9b53b3effe0a4da9733b5dba784463d
-	 */
-    if (stmt->verbose)
-	{
-		char	   *s;
-		char	   *f;
-
-		if (queryDesc->plannedstmt->planTree && estate->es_sliceTable)
-		{
-        	Node   *saved_es_sliceTable;
-
-			/* Little two-step to get EXPLAIN VERBOSE to show slice table. */
-			saved_es_sliceTable = queryDesc->plannedstmt->planTree->sliceTable;		/* probably NULL */
-			queryDesc->plannedstmt->planTree->sliceTable = (Node *) queryDesc->estate->es_sliceTable;
-			s = nodeToString(queryDesc->plannedstmt);
-			queryDesc->plannedstmt->planTree->sliceTable = saved_es_sliceTable;
-		}
-		else
-		{
-			s = nodeToString(queryDesc->plannedstmt);
-		}
-
-		if (s)
-		{
-			if (Explain_pretty_print)
-				f = pretty_format_node_dump(s);
-			else
-				f = format_node_dump(s);
-			pfree(s);
-			do_text_output_multiline(tstate, f);
-			pfree(f);
-			do_text_output_oneline(tstate, ""); /* separator line */
-		}
-	}
-#endif
-
 	initStringInfo(&buf);
 
     /*
@@ -1985,8 +1946,8 @@ show_plan_tlist(Plan *plan,
 		return;
 
 	/* Set up deparsing context */
-	context = deparse_context_for_plan((Node *) outerPlan(plan),
-									   (Node *) innerPlan(plan),
+	context = deparse_context_for_plan((Node *) plan,
+									   NULL,
 									   es->rtable,
 									   es->pstmt->subplans);
 	useprefix = list_length(es->rtable) > 1;
@@ -2248,7 +2209,8 @@ show_motion_keys(Plan *plan, List *hashExpr, int nkeys, AttrNumber *keycols,
 		return;
 
 	/* Set up deparse context */
-	context = deparse_context_for_plan((Node *) plan, (Node *) outerPlan(plan),
+	context = deparse_context_for_plan((Node *) plan,
+									   (Node *) outerPlan(plan),
 									   es->rtable,
 									   es->pstmt->subplans);
 
