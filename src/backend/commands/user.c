@@ -476,8 +476,8 @@ CreateRole(CreateRoleStmt *stmt)
 		 */
 		if (!IsResQueueEnabled() && !issuper)
 			ereport(WARNING,
-					(errmsg("resource scheduling is disabled"),
-					 errhint("To enable set resource_scheduler=on and gp_resource_manager=queue")));
+					(errmsg("resource queue is disabled"),
+					 errhint("To enable set gp_resource_manager=queue")));
 	}
 	else
 	{
@@ -514,7 +514,7 @@ CreateRole(CreateRoleStmt *stmt)
 		if (!IsResGroupActivated() && Gp_role == GP_ROLE_DISPATCH)
 			ereport(WARNING,
 					(errmsg("resource group is disabled"),
-					 errhint("To enable set resource_scheduler=on and gp_resource_manager=group")));
+					 errhint("To enable set gp_resource_manager=group")));
 	}
 	else if (issuper)
 	{
@@ -1109,8 +1109,8 @@ AlterRole(AlterRoleStmt *stmt)
 			 * who doesn't use the queue 
 			 */
 			ereport(WARNING,
-					(errmsg("resource scheduling is disabled"),
-					 errhint("To enable set resource_scheduler=on and gp_resource_manager=queue")));
+					(errmsg("resource queue is disabled"),
+					 errhint("To enable set gp_resource_manager=queue")));
 		}
 	}
 
@@ -1152,7 +1152,7 @@ AlterRole(AlterRoleStmt *stmt)
 		{
 			ereport(WARNING,
 					(errmsg("resource group is disabled"),
-					 errhint("To enable set resource_scheduler=on and gp_resource_manager=group")));
+					 errhint("To enable set gp_resource_manager=group")));
 		}
 	}
 

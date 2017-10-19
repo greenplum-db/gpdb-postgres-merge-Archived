@@ -16,6 +16,35 @@
 #ifndef FTS_H
 #define FTS_H
 
+#include "cdb/cdbutil.h"
+
+#ifdef USE_SEGWALREP
+typedef struct
+{
+	int16 dbid;
+	bool isPrimaryAlive;
+	bool isMirrorAlive;
+} probe_result;
+
+typedef struct
+{
+	CdbComponentDatabaseInfo *segment_db_info;
+	probe_result result;
+	bool isScheduled;
+} probe_response_per_segment;
+
+typedef struct
+{
+	int count;
+	probe_response_per_segment *responses;
+} probe_context;
+
+typedef struct ProbeResponse
+{
+	bool IsMirrorUp;
+} ProbeResponse;
+
+#endif
 
 /*
  * ENUMS
@@ -65,6 +94,8 @@ enum probe_transition_e
 #define IS_VALID_TRANSITION(trans) \
 	(trans == TRANS_D_D || trans == TRANS_D_U || trans == TRANS_U_D || trans == TRANS_U_U)
 
+/* buffer size for SQL command */
+#define SQL_CMD_BUF_SIZE     1024
 
 /*
  * STRUCTURES
@@ -90,7 +121,6 @@ typedef struct
 	uint32 stateMirror;
 } FtsSegmentPairState;
 
-
 /*
  * FTS process interface
  */
@@ -106,7 +136,6 @@ extern void FtsProbeSegments(CdbComponentDatabases *dbs, uint8 *scan_status);
  */
 extern bool FtsIsSegmentAlive(CdbComponentDatabaseInfo *segInfo);
 extern CdbComponentDatabaseInfo *FtsGetPeerSegment(int content, int dbid);
-extern void FtsMarkSegmentsInSync(CdbComponentDatabaseInfo *primary, CdbComponentDatabaseInfo *mirror);
 extern void FtsDumpChanges(FtsSegmentStatusChange *changes, int changeEntries);
 
 /*
@@ -114,6 +143,14 @@ extern void FtsDumpChanges(FtsSegmentStatusChange *changes, int changeEntries);
  */
 extern bool FtsIsActive(void);
 
+#ifdef USE_SEGWALREP
+/*
+ * Interface for WALREP specific checking
+ */
+extern void HandleFtsWalRepProbe(void);
+extern void FtsWalRepProbeSegments(probe_context *context);
+#else
+extern bool probePublishUpdate(CdbComponentDatabases *dbs, uint8 *probe_results);
 
 /*
  * Interface for FireRep-specific segment state machine and transitions
@@ -124,7 +161,7 @@ extern void FtsResolveStateFilerep(FtsSegmentPairState *pairState);
 
 extern void FtsPreprocessProbeResultsFilerep(CdbComponentDatabases *dbs, uint8 *probe_results);
 extern void FtsFailoverFilerep(FtsSegmentStatusChange *changes, int changeCount);
-
+#endif
 
 /*
  * Interface for requesting master to shut down

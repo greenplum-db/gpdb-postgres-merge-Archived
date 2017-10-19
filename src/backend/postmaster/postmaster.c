@@ -556,7 +556,9 @@ static int	BackendStartup(Port *port);
 static int	ProcessStartupPacket(Port *port, bool SSLdone);
 static void processCancelRequest(Port *port, void *pkt, MsgType code);
 static void processPrimaryMirrorTransitionRequest(Port *port, void *pkt);
+#ifndef USE_SEGWALREP
 static void processPrimaryMirrorTransitionQuery(Port *port, void *pkt);
+#endif
 static int	initMasks(fd_set *rmask);
 static void report_fork_failure_to_client(Port *port, int errnum);
 static enum CAC_state canAcceptConnections(void);
@@ -2693,7 +2695,11 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	    /* disable the authentication timeout in case it takes a long time */
         if (!disable_sig_alarm(false))
             elog(FATAL, "could not disable timer for authorization timeout");
+#ifdef USE_SEGWALREP
+		HandleFtsWalRepProbe();
+#else
 		processPrimaryMirrorTransitionQuery(port, buf);
+#endif
 		return 127;
 	}
 
@@ -3578,19 +3584,7 @@ processPrimaryMirrorTransitionRequest(Port *port, void *pkt)
 	}
 }
 
-#ifdef USE_SEGWALREP
-static void
-sendPrimaryMirrorTransitionQuery()
-{
-	StringInfoData buf;
-
-	initStringInfo(&buf);
-
-	pq_beginmessage(&buf, '\0');
-	pq_endmessage(&buf);
-	pq_flush();
-}
-#else
+#ifndef USE_SEGWALREP
 static void
 sendPrimaryMirrorTransitionQuery(uint32 mode, uint32 segstate, uint32 datastate, uint32 faulttype)
 {
@@ -3608,7 +3602,6 @@ sendPrimaryMirrorTransitionQuery(uint32 mode, uint32 segstate, uint32 datastate,
 	pq_endmessage(&buf);
 	pq_flush();
 }
-#endif
 
 /**
  * Called during startup packet processing.
@@ -3619,10 +3612,6 @@ sendPrimaryMirrorTransitionQuery(uint32 mode, uint32 segstate, uint32 datastate,
 static void
 processPrimaryMirrorTransitionQuery(Port *port, void *pkt)
 {
-#ifdef USE_SEGWALREP
-	/* Send FTS probe response */
-	sendPrimaryMirrorTransitionQuery();
-#else
 	PrimaryMirrorTransitionPacket *transition = (PrimaryMirrorTransitionPacket *) pkt;
 	int length;
 
@@ -3705,8 +3694,8 @@ processPrimaryMirrorTransitionQuery(Port *port, void *pkt)
 	sendPrimaryMirrorTransitionQuery((uint32)pm_mode, (uint32)s_state, (uint32)d_state, (uint32)f_type);
 
 	return;
-#endif
 }
+#endif
 
 /*
  * The client has sent a cancel request packet, not a normal

@@ -959,8 +959,8 @@ CreateQueue(CreateQueueStmt *stmt)
 		else
 		{
 				ereport(WARNING,
-						(errmsg("resource scheduling is disabled"),
-						 errhint("To enable set resource_scheduler=on and gp_resource_manager=queue")));
+						(errmsg("resource queue is disabled"),
+						 errhint("To enable set gp_resource_manager=queue")));
 		}
 	}
 
@@ -1377,8 +1377,8 @@ AlterQueue(AlterQueueStmt *stmt)
 		else
 		{
 			ereport(WARNING,
-					(errmsg("resource scheduling is disabled"),
-					 errhint("To enable set resource_scheduler=on and gp_resource_manager=queue")));
+					(errmsg("resource queue is disabled"),
+					 errhint("To enable set gp_resource_manager=queue")));
 		}
 	}
 
@@ -1515,8 +1515,8 @@ DropQueue(DropQueueStmt *stmt)
 		else
 		{
 			ereport(WARNING,
-					(errmsg("resource scheduling is disabled"),
-					 errhint("To enable set resource_scheduler=on and gp_resource_manager=queue")));
+					(errmsg("resource queue is disabled"),
+					 errhint("To enable set gp_resource_manager=queue")));
 		}
 	}
 
@@ -1570,6 +1570,9 @@ GetResqueueName(Oid resqueueOid)
 	HeapTuple	tuple;
 	char	   *result;
 
+	if (resqueueOid == InvalidOid)
+		return pstrdup("Unknown");
+
 	/* SELECT rsqname FROM pg_resqueue WHERE oid = :1 */
 	rel = heap_open(ResQueueRelationId, AccessShareLock);
 
@@ -1602,7 +1605,10 @@ GetResqueueName(Oid resqueueOid)
  */
 char *GetResqueuePriority(Oid queueId)
 {
-	return GetResqueueCapability(queueId, PG_RESRCTYPE_PRIORITY);
+	if (queueId == InvalidOid)
+		return pstrdup("Unknown");
+	else
+		return GetResqueueCapability(queueId, PG_RESRCTYPE_PRIORITY);
 }
 
 /**

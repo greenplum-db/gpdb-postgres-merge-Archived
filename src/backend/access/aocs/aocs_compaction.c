@@ -133,7 +133,7 @@ AOCSSegmentFileTruncateToEOF(Relation aorel,
 
 		if (OpenAOSegmentFile(aorel, filenamepath, fileSegNo, segeof, &mirroredOpened))
 		{
-			TruncateAOSegmentFile(&mirroredOpened, aorel, segeof, ERROR);
+			TruncateAOSegmentFile(&mirroredOpened, aorel, segeof);
 			CloseAOSegmentFile(&mirroredOpened);
 
 			elogif(Debug_appendonly_print_compaction, LOG,
@@ -482,16 +482,11 @@ AOCSDrop(Relation aorel,
 		/* Re-fetch under the write lock to get latest committed eof. */
 		fsinfo = GetAOCSFileSegInfo(aorel, SnapshotNow, segno);
 
-		/* drop not planned, try at least eof truncation */
 		if (fsinfo->state == AOSEG_STATE_AWAITING_DROP)
 		{
 			Assert(HasLockForSegmentFileDrop(aorel));
 			AOCSCompaction_DropSegmentFile(aorel, segno);
 			ClearAOCSFileSegInfo(aorel, segno, AOSEG_STATE_DEFAULT);
-		}
-		else
-		{
-			AOCSSegmentFileTruncateToEOF(aorel, fsinfo);
 		}
 		pfree(fsinfo);
 	}
@@ -600,11 +595,6 @@ AOCSCompact(Relation aorel,
 											   fsinfo->segno, fsinfo->total_tupcount, isFull))
 		{
 			AOCSSegmentFileFullCompaction(aorel, insertDesc, fsinfo);
-		}
-		else
-		{
-			/* compaction is skipped: Try eof truncation */
-			AOCSSegmentFileTruncateToEOF(aorel, fsinfo);
 		}
 
 		pfree(fsinfo);

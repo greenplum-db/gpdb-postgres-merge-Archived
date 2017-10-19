@@ -29,8 +29,8 @@ extern Relation CreateFakeRelcacheEntry(RelFileNode rnode);
 extern void FreeFakeRelcacheEntry(Relation fakerel);
 
 #ifdef USE_SEGWALREP
-extern void XLogAOSegmentFile(RelFileNode rnode, int segmentFileNum);
-extern void XLogAODropSegmentFile(RelFileNode rnode, int segmentFileNum);
+extern void XLogAOSegmentFile(RelFileNode rnode, uint32 segmentFileNum);
+extern void XLogAODropSegmentFile(RelFileNode rnode, uint32 segmentFileNum);
 #endif
 
 #endif

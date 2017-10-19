@@ -38,10 +38,9 @@
 #include "access/xlogutils.h"
 #include "cdb/cdbappendonlyam.h"
 
-
-static void insert_ao_xlog(MirroredAppendOnlyOpen *open, void *buffer,
-			   int32 bufferLen);
-#endif							/* USE_SEGWALREP */
+static void xlog_ao_insert(MirroredAppendOnlyOpen *open, int64 offset,
+						   void *buffer, int32 bufferLen);
+#endif		/* USE_SEGWALREP */
 
 static void
 MirroredAppendOnly_SetUpMirrorAccess(
@@ -2259,11 +2258,16 @@ MirroredAppendOnly_Append(
 	if (StorageManagerMirrorMode_DoPrimaryWork(open->mirrorMode) &&
 		!open->copyToMirror)
 	{
-
 #ifdef USE_SEGWALREP
-		/* Log each varblock to the XLog. */
-		insert_ao_xlog(open, buffer, bufferLen);
-#endif							/* USE_SEGWALREP */
+		/*
+		 * Using FileSeek to fetch the current write offset. Passing 0 offset
+		 * with SEEK_CUR avoids actual disk-io, as it just returns from
+		 * VFDCache the current file position value. Make sure to populate
+		 * this before the FileWrite call else the file pointer has moved
+		 * forward.
+		 */
+		int64 offset = FileSeek(open->primaryFile, 0, SEEK_CUR);
+#endif
 
 		errno = 0;
 
@@ -2274,6 +2278,22 @@ MirroredAppendOnly_Append(
 				errno = ENOSPC;
 			*primaryError = errno;
 		}
+#ifdef USE_SEGWALREP
+		else
+		{
+			/*
+			 * Log each varblock to the XLog. Write to the file first, before
+			 * writing the WAL record, to avoid trouble if you run out of disk
+			 * space. If WAL record is written first, and then the FileWrite()
+			 * fails, there's no way to "undo" the WAL record. If crash
+			 * happens, crash recovery will also try to replay the WAL record,
+			 * and will also run out of disk space, and will fail. As EOF
+			 * controls the visibility of data in AO / CO files, writing xlog
+			 * record after writing to file works fine.
+			 */
+			xlog_ao_insert(open, offset, buffer, bufferLen);
+		}
+#endif
 	}
 
 	if (open->guardOtherCallsWithMirroredLock)
@@ -2286,42 +2306,6 @@ MirroredAppendOnly_Append(
 
 }
 
-#ifdef USE_SEGWALREP
-/*
- * Insert an AO XLOG/AOCO record
- */
-static void
-insert_ao_xlog(MirroredAppendOnlyOpen *open, void *buffer,
-			   int32 bufferLen)
-{
-	xl_ao_insert xlaoinsert;
-	XLogRecData rdata[2];
-
-	xlaoinsert.node = open->relFileNode;
-	xlaoinsert.segment_filenum = open->segmentFileNum;
-
-	/*
-	 * Using FileSeek to fetch the current write offset. Passing 0 offset with
-	 * SEEK_CUR avoids actual disk-io, as it just returns from VFDCache the
-	 * current file position value. Make sure to populate this before the
-	 * FileWrite call else the file pointer has moved forward.
-	 */
-	xlaoinsert.offset = FileSeek(open->primaryFile, 0, SEEK_CUR);
-
-	rdata[0].data = (char *) &xlaoinsert;
-	rdata[0].len = SizeOfAOInsert;
-	rdata[0].buffer = InvalidBuffer;
-	rdata[0].next = &(rdata[1]);
-
-	rdata[1].data = (char *) buffer;
-	rdata[1].len = bufferLen;
-	rdata[1].buffer = InvalidBuffer;
-	rdata[1].next = NULL;
-
-	XLogInsert(RM_APPEND_ONLY_ID, XLOG_APPENDONLY_INSERT, rdata);
-}
-#endif							/* USE_SEGWALREP */
-
 /* ----------------------------------------------------------------------------- */
 /*  Truncate */
 /* ---------------------------------------------------------------------------- */
@@ -2329,7 +2313,6 @@ void
 MirroredAppendOnly_Truncate(
 							MirroredAppendOnlyOpen *open,
  /* The open struct. */
-
 							int64 position,
  /* The position to cutoff the data. */
 
@@ -2432,8 +2415,34 @@ MirroredAppendOnly_Read(
 }
 
 #ifdef USE_SEGWALREP
+/*
+ * Insert an AO XLOG/AOCO record
+ */
+static void xlog_ao_insert(MirroredAppendOnlyOpen *open, int64 offset,
+						   void *buffer, int32 bufferLen)
+{
+	xl_ao_insert	xlaoinsert;
+	XLogRecData		rdata[2];
+
+	xlaoinsert.target.node = open->relFileNode;
+	xlaoinsert.target.segment_filenum = open->segmentFileNum;
+	xlaoinsert.target.offset = offset;
+
+	rdata[0].data = (char*) &xlaoinsert;
+	rdata[0].len = SizeOfAOInsert;
+	rdata[0].buffer = InvalidBuffer;
+	rdata[0].next = &(rdata[1]);
+
+	rdata[1].data = (char*) buffer;
+	rdata[1].len = bufferLen;
+	rdata[1].buffer = InvalidBuffer;
+	rdata[1].next = NULL;
+
+	XLogInsert(RM_APPEND_ONLY_ID, XLOG_APPENDONLY_INSERT, rdata);
+}
+
 void
-ao_xlog_insert(XLogRecord *record)
+ao_insert_replay(XLogRecord *record)
 {
 	char	   *primaryFilespaceLocation;
 	char	   *mirrorFilespaceLocation;
@@ -2448,36 +2457,36 @@ ao_xlog_insert(XLogRecord *record)
 	uint32		len = record->xl_len - SizeOfAOInsert;
 
 	PersistentTablespace_GetPrimaryAndMirrorFilespaces(
-													   xlrec->node.spcNode,
-													   &primaryFilespaceLocation,
-													   &mirrorFilespaceLocation);
+							   xlrec->target.node.spcNode,
+							   &primaryFilespaceLocation,
+							   &mirrorFilespaceLocation);
 
 	FormDatabasePath(
-					 dbPath,
-					 primaryFilespaceLocation,
-					 xlrec->node.spcNode,
-					 xlrec->node.dbNode);
+			 dbPath,
+			 primaryFilespaceLocation,
+			 xlrec->target.node.spcNode,
+			 xlrec->target.node.dbNode);
 
-	if (xlrec->segment_filenum == 0)
-		snprintf(path, MAXPGPATH, "%s/%u", dbPath, xlrec->node.relNode);
+	if (xlrec->target.segment_filenum == 0)
+		snprintf(path, MAXPGPATH, "%s/%u", dbPath, xlrec->target.node.relNode);
 	else
-		snprintf(path, MAXPGPATH, "%s/%u.%u", dbPath, xlrec->node.relNode, xlrec->segment_filenum);
+		snprintf(path, MAXPGPATH, "%s/%u.%u", dbPath, xlrec->target.node.relNode, xlrec->target.segment_filenum);
 
 	file = PathNameOpenFile(path, O_RDWR | PG_BINARY, 0600);
 	if (file < 0)
 	{
-		XLogAOSegmentFile(xlrec->node, xlrec->segment_filenum);
+		XLogAOSegmentFile(xlrec->target.node, xlrec->target.segment_filenum);
 		return;
 	}
 
-	seek_offset = FileSeek(file, xlrec->offset, SEEK_SET);
-	if (seek_offset != xlrec->offset)
+	seek_offset = FileSeek(file, xlrec->target.offset, SEEK_SET);
+	if (seek_offset != xlrec->target.offset)
 	{
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("seeked to position " INT64_FORMAT " but expected to seek to position " INT64_FORMAT " in file \"%s\": %m",
 						seek_offset,
-						xlrec->offset,
+						xlrec->target.offset,
 						path)));
 	}
 
@@ -2501,4 +2510,69 @@ ao_xlog_insert(XLogRecord *record)
 
 	FileClose(file);
 }
-#endif							/* USE_SEGWALREP */
+
+/*
+ * AO/CO truncate xlog record insertion.
+ */
+void xlog_ao_truncate(MirroredAppendOnlyOpen *open, int64 offset)
+{
+	xl_ao_truncate	xlaotruncate;
+	XLogRecData		rdata[1];
+
+	xlaotruncate.target.node = open->relFileNode;
+	xlaotruncate.target.segment_filenum = open->segmentFileNum;
+	xlaotruncate.target.offset = offset;
+
+	rdata[0].data = (char*) &xlaotruncate;
+	rdata[0].len = sizeof(xl_ao_truncate);
+	rdata[0].buffer = InvalidBuffer;
+	rdata[0].next = NULL;
+
+	XLogInsert(RM_APPEND_ONLY_ID, XLOG_APPENDONLY_TRUNCATE, rdata);
+}
+
+void
+ao_truncate_replay(XLogRecord *record)
+{
+	char *primaryFilespaceLocation;
+	char *mirrorFilespaceLocation;
+	char dbPath[MAXPGPATH + 1];
+	char path[MAXPGPATH + 1];
+	File file;
+
+	xl_ao_truncate *xlrec = (xl_ao_truncate*) XLogRecGetData(record);
+
+	PersistentTablespace_GetPrimaryAndMirrorFilespaces(
+		xlrec->target.node.spcNode,
+		&primaryFilespaceLocation,
+		&mirrorFilespaceLocation);
+
+	FormDatabasePath(
+				dbPath,
+				primaryFilespaceLocation,
+				xlrec->target.node.spcNode,
+				xlrec->target.node.dbNode);
+
+	if (xlrec->target.segment_filenum == 0)
+		snprintf(path, MAXPGPATH, "%s/%u", dbPath, xlrec->target.node.relNode);
+	else
+		snprintf(path, MAXPGPATH, "%s/%u.%u", dbPath, xlrec->target.node.relNode, xlrec->target.segment_filenum);
+
+	file = PathNameOpenFile(path, O_RDWR | PG_BINARY, 0600);
+	if (file < 0)
+	{
+		XLogAOSegmentFile(xlrec->target.node, xlrec->target.segment_filenum);
+		return;
+	}
+
+	if (FileTruncate(file, xlrec->target.offset) != 0)
+	{
+		ereport(WARNING,
+				(errcode_for_file_access(),
+				 errmsg("failed to truncate file \"%s\" to offset:" INT64_FORMAT " : %m",
+						path, xlrec->target.offset)));
+	}
+
+	FileClose(file);
+}
+#endif /* USE_SEGWALREP */
