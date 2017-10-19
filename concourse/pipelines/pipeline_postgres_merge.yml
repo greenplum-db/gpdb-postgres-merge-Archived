@@ -2620,8 +2620,8 @@ jobs:
   - *ccp_destroy
 - name: MM_gpexpand
   plan:
-  - get: nightly-trigger
-    trigger: ((nightly-trigger-flag))
+  #- get: nightly-trigger
+  #  trigger: ((nightly-trigger-flag))
   - aggregate: &post_packaging_gets_trigger_based_on_flag
     - get: gpdb_src
       params: {submodules: none}
