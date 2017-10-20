@@ -690,11 +690,11 @@ pulse_properties_anchor: &pulse_properties
 cs_ccp_aggregate_cluster_start_anchor: &cs_ccp_aggregate_cluster_start
   - get: gpdb_src
     tags: ["gpdb5_ccp_external_worker"]
-    passed: [gate_cluster_start]
+    passed: [gate_compile_end]
   - get: gpdb_binary
     tags: ["gpdb5_ccp_external_worker"]
     resource: bin_gpdb_centos6
-    passed: [gate_cluster_start]
+    passed: [gate_compile_end]
     trigger: true
   - get: ccp_src
     tags: ["gpdb5_ccp_external_worker"]
@@ -2486,27 +2486,11 @@ jobs:
   plan:
   - get: gpdb_src
     passed:
-    - MU_check_centos
-    - MM_analyzedb
-    - MM_gpinitsystem
-    - MM_gpperfmon
-    - MM_gpcheck
-    - MM_pt-rebuild
-    - MM_gpinitstandby
     - MM_gppkg
-    - MM_gprecoverseg
     trigger: true
   - get: bin_gpdb_centos6
     passed:
-    - MU_check_centos
-    - MM_analyzedb
-    - MM_gpinitsystem
-    - MM_gpperfmon
-    - MM_gpcheck
-    - MM_pt-rebuild
-    - MM_gpinitstandby
     - MM_gppkg
-    - MM_gprecoverseg
   # Not used by icw group, but is passed through
   - get: gpdb_src_tinc_tarball
     passed:
@@ -2627,7 +2611,7 @@ jobs:
       params: {submodules: none}
       tags: ["gpdb5-pulse-worker"]
       passed: [gate_nightly_start]
-      trigger: ((reduced-frequency-trigger-flag))
+      trigger: true
     - get: gpdb_src_tinc_tarball
       tags: ["gpdb5-pulse-worker"]
       passed: [gate_nightly_start]
@@ -3078,11 +3062,11 @@ jobs:
   - aggregate:
     - get: gpdb_src
       tags: ["gpdb5_ccp_external_worker"]
-      passed: [gate_filerep_start]
+      passed: [gate_compile_end]
     - get: gpdb_binary
       tags: ["gpdb5_ccp_external_worker"]
       resource: bin_gpdb_centos6
-      passed: [gate_filerep_start]
+      passed: [gate_compile_end]
       trigger: true
     - get: ccp_src
       tags: ["gpdb5_ccp_external_worker"]
@@ -3118,11 +3102,11 @@ jobs:
   - aggregate:
     - get: gpdb_src
       tags: ["gpdb5_ccp_external_worker"]
-      passed: [gate_filerep_start]
+      passed: [gate_compile_end]
     - get: gpdb_binary
       tags: ["gpdb5_ccp_external_worker"]
       resource: bin_gpdb_centos6
-      passed: [gate_filerep_start]
+      passed: [gate_compile_end]
       trigger: true
     - get: ccp_src
       tags: ["gpdb5_ccp_external_worker"]
@@ -3158,11 +3142,11 @@ jobs:
   - aggregate:
     - get: gpdb_src
       tags: ["gpdb5_ccp_external_worker"]
-      passed: [gate_filerep_start]
+      passed: [gate_compile_end]
     - get: gpdb_binary
       tags: ["gpdb5_ccp_external_worker"]
       resource: bin_gpdb_centos6
-      passed: [gate_filerep_start]
+      passed: [gate_compile_end]
       trigger: true
     - get: ccp_src
       tags: ["gpdb5_ccp_external_worker"]
@@ -3197,11 +3181,11 @@ jobs:
   - aggregate:
     - get: gpdb_src
       tags: ["gpdb5_ccp_external_worker"]
-      passed: [gate_filerep_start]
+      passed: [gate_compile_end]
     - get: gpdb_binary
       tags: ["gpdb5_ccp_external_worker"]
       resource: bin_gpdb_centos6
-      passed: [gate_filerep_start]
+      passed: [gate_compile_end]
       trigger: true
     - get: ccp_src
       tags: ["gpdb5_ccp_external_worker"]
