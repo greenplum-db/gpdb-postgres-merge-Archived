@@ -277,7 +277,7 @@ CREATE TYPE
 --Drop and recreate the data type 
  Drop type if exists date_type1 cascade;
 psql:/path/sql_file:1: NOTICE:  drop cascades to 2 other objects
-NOTICE:  drop cascades to function date_type1_in(cstring)
+DETAIL:  drop cascades to function date_type1_in(cstring)
 drop cascades to function date_type1_out(date_type1)
 DROP TYPE
 CREATE FUNCTION date_type1_in(cstring) 
@@ -339,7 +339,7 @@ CREATE TYPE
 --Drop and recreate the data type 
  Drop type if exists timestamp_type1 cascade;
 psql:/path/sql_file:1: NOTICE:  drop cascades to 2 other objects
-NOTICE:  drop cascades to function timestamp_type1_in(cstring)
+DETAIL:  drop cascades to function timestamp_type1_in(cstring)
 drop cascades to function timestamp_type1_out(timestamp_type1)
 DROP TYPE
 CREATE FUNCTION timestamp_type1_in(cstring) 
