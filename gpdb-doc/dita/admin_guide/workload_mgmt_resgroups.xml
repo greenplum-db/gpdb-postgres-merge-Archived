@@ -90,11 +90,15 @@
             type="section"/></codeph> server configuration parameter identifies the maximum
         percentage of system CPU resources to allocate to resource groups on each Greenplum Database
         segment node. The remaining CPU resources are used for the OS kernel and the Greenplum
-        Database daemon processes. The default <codeph>gp_resource_group_cpu_limit</codeph> value is
-        .9 (90%).</p>
+        Database auxiliary daemon processes. The default
+        <codeph>gp_resource_group_cpu_limit</codeph> value is .9 (90%).</p>
       <note>The default <codeph>gp_resource_group_cpu_limit</codeph> value may not leave sufficient
         CPU resources if you are running other workloads on your Greenplum Database cluster nodes,
         so be sure to adjust this server configuration parameter accordingly.</note>
+      <note type="warning">Avoid setting <codeph>gp_resource_group_cpu_limit</codeph> to a value
+         higher than .9. Doing so may result in high workload
+         queries taking near all CPU resources, potentially starving Greenplum
+         Database auxiliary processes.</note>
       <p>The Greenplum Database node CPU percentage is further divided equally among each segment on
         the Greenplum node. Each resource group reserves a percentage of the segment CPU for
         resource management. You identify this percentage via the <codeph>CPU_RATE_LIMIT</codeph>
@@ -192,12 +196,12 @@
   <topic id="topic71717999" xml:lang="en">
     <title>Using Resource Groups</title>
     <body>
-      <note type="warning">Significant <ph otherprops="pivotal">Pivotal </ph>Greenplum Database
-        performance degradation has been observed when enabling resource group-based workload
-        management on <ph otherprops="pivotal">supported versions of </ph>RedHat 6.x, CentOS 6.x,
-        and SuSE 11 systems. The issue is due to a Linux cgroup kernel bug. The bug has been fixed
-        in supported versions of CentOS 7.x and Red Hat 7.x systems, and in Red Hat 6 with kernel
-        version 2.6.32-696 or higher.</note>
+      <note type="warning">Significant Greenplum Database performance degradation has been observed
+        when enabling resource group-based workload management on RedHat 6.x, CentOS 6.x, and SuSE
+        11 systems. This issue is caused by a Linux cgroup kernel bug. This kernel bug has been
+        fixed in CentOS 7.x and Red Hat 7.x systems, and in Red Hat 6 systems that use kernel
+        version 2.6.32-696 or higher. SuSE 11 does not have a kernel version that resolves this
+        issue.</note>
       <section id="topic833" xml:lang="en">
         <title>Prerequisite</title>
         <p>Greenplum Database resource groups use Linux Control Groups (cgroups) to manage CPU
@@ -529,14 +533,16 @@ gpstart
     </topic>
 
     <topic id="topic27" xml:lang="en">
-      <title id="iz153732">Canceling a Queued Transaction in a Resource Group</title>
+      <title id="iz153732">Cancelling a Running or Queued Transaction in a Resource Group</title>
       <body>
-        <p>There may be cases when you want to cancel a queued transaction in a resource group. For
+        <p>There may be cases when you want to cancel a running or queued transaction in a
+          resource group. For
           example, you may want to remove a query that is waiting in the resource group queue but
           has not yet been executed. Or, you may want to stop a running query that is taking too
           long to execute, or one that is sitting idle in a transaction and taking up resource group
           transaction slots that are needed by other users.</p>
-        <p>To cancel a queued transaction, you must first determine the process id (pid) associated
+        <p>To cancel a running or queued transaction, you must first determine the process
+          id (pid) associated
           with the transaction. Once you have obtained the process id, you can invoke
             <codeph>pg_cancel_backend()</codeph> to end that process, as shown below.</p>
         <p>For example, to view the process information associated with all statements currently
