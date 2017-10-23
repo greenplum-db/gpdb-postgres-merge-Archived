@@ -323,7 +323,7 @@ SELECT COUNT(*) FROM dml_ao_check_s;
 -- test4: Negative test - Insert with joins where the result tuples violate the user defined check constraint
 SELECT COUNT(*) FROM dml_ao_check_r;
 SELECT COUNT(*) FROM (SELECT dml_ao_check_r.a + 110 , dml_ao_check_r.b, dml_ao_check_r.c, dml_ao_check_r.d FROM dml_ao_check_r, dml_ao_check_s WHERE dml_ao_check_r.a = dml_ao_check_s.a)foo;
-INSERT INTO dml_ao_check_r SELECT dml_ao_check_r.a + 110 , dml_ao_check_r.b, dml_ao_check_r.c, dml_ao_check_r.d FROM dml_ao_check_r, dml_ao_check_s WHERE dml_ao_check_r.a = dml_ao_check_s.a;
+INSERT INTO dml_ao_check_r SELECT dml_ao_check_r.a + 110 , dml_ao_check_r.b, dml_ao_check_r.c, dml_ao_check_r.d FROM dml_ao_check_r, dml_ao_check_s WHERE dml_ao_check_r.a = dml_ao_check_s.a AND dml_ao_check_r.b > 10;
 SELECT COUNT(*) FROM dml_ao_check_r;
 
 -- test5: Insert with joins where the result tuples violate violates multiple check constraints
@@ -634,7 +634,7 @@ SELECT COUNT(*) FROM dml_co_check_s;
 -- test4: Negative test - Insert with joins where the result tuples violate the user defined check constraint
 SELECT COUNT(*) FROM dml_co_check_r;
 SELECT COUNT(*) FROM (SELECT dml_co_check_r.a + 110 , dml_co_check_r.b, dml_co_check_r.c, dml_co_check_r.d FROM dml_co_check_r, dml_co_check_s WHERE dml_co_check_r.a = dml_co_check_s.a)foo;
-INSERT INTO dml_co_check_r SELECT dml_co_check_r.a + 110 , dml_co_check_r.b, dml_co_check_r.c, dml_co_check_r.d FROM dml_co_check_r, dml_co_check_s WHERE dml_co_check_r.a = dml_co_check_s.a;
+INSERT INTO dml_co_check_r SELECT dml_co_check_r.a + 110 , dml_co_check_r.b, dml_co_check_r.c, dml_co_check_r.d FROM dml_co_check_r, dml_co_check_s WHERE dml_co_check_r.a = dml_co_check_s.a AND dml_co_check_r.b > 10;
 SELECT COUNT(*) FROM dml_co_check_r;
 
 -- test5: Insert with joins where the result tuples violate violates multiple check constraints
@@ -944,7 +944,7 @@ SELECT COUNT(*) FROM dml_heap_check_s;
 -- test4: Negative test - Insert with joins where the result tuples violate the user defined check constraint
 SELECT COUNT(*) FROM dml_heap_check_r;
 SELECT COUNT(*) FROM (SELECT dml_heap_check_r.a + 110 , dml_heap_check_r.b, dml_heap_check_r.c, dml_heap_check_r.d FROM dml_heap_check_r, dml_heap_check_s WHERE dml_heap_check_r.a = dml_heap_check_s.a)foo;
-INSERT INTO dml_heap_check_r SELECT dml_heap_check_r.a + 110 , dml_heap_check_r.b, dml_heap_check_r.c, dml_heap_check_r.d FROM dml_heap_check_r, dml_heap_check_s WHERE dml_heap_check_r.a = dml_heap_check_s.a;
+INSERT INTO dml_heap_check_r SELECT dml_heap_check_r.a + 110 , dml_heap_check_r.b, dml_heap_check_r.c, dml_heap_check_r.d FROM dml_heap_check_r, dml_heap_check_s WHERE dml_heap_check_r.a = dml_heap_check_s.a AND dml_heap_check_r.b > 10;
 SELECT COUNT(*) FROM dml_heap_check_r;
 
 -- test5: Insert with joins where the result tuples violate violates multiple check constraints
@@ -964,7 +964,7 @@ rollback;
 UPDATE dml_heap_check_s SET a = 100 + dml_heap_check_s.a FROM dml_heap_check_r WHERE dml_heap_check_r.a = dml_heap_check_s.a AND dml_heap_check_s.a = 99;
 
 -- test3: Negative test - Update violates check constraint(not NULL constraint)
-UPDATE dml_heap_check_s SET b = NULL FROM dml_heap_check_r WHERE dml_heap_check_r.a = dml_heap_check_s.b;
+UPDATE dml_heap_check_s SET b = NULL FROM dml_heap_check_r WHERE dml_heap_check_r.a = dml_heap_check_s.b and dml_heap_check_s.b = 99;
 
 -- test4: Negative test - Update moving tuple across partition .also violates the check constraint
 UPDATE dml_heap_check_s SET a = 110 + dml_heap_check_s.a FROM dml_heap_check_r WHERE dml_heap_check_r.a = dml_heap_check_s.a;
