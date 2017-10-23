@@ -116,3 +116,22 @@ select * from update_pk_test order by 1,2;
 explain update update_pk_test set a = 5;
 update update_pk_test set a = 5;
 select * from update_pk_test order by 1,2;
+
+
+--
+-- Verify that ExecInsert doesn't scribble on the old tuple, when the new
+-- tuple comes directly from the old table.
+--
+CREATE TABLE execinsert_test (id int4, t text) DISTRIBUTED BY (id);
+
+INSERT INTO execinsert_test values (1, 'foo');
+
+-- Insert another identical tuple, but roll it back. If the insertion
+-- incorrectly modified the xmin on the old tuple, then it will become
+-- invisible when we roll back.
+begin;
+INSERT INTO execinsert_test select * FROM execinsert_test;
+rollback;
+select * from execinsert_test;
+
+drop table execinsert_test;
