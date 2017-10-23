@@ -3163,14 +3163,18 @@ ExecInsert(TupleTableSlot *slot,
 	rel_is_aorows = RelationIsAoRows(resultRelationDesc);
 	rel_is_external = RelationIsExternal(resultRelationDesc);
 
+	/*
+	 * get the heap tuple out of the tuple table slot, making sure we have a
+	 * writable copy.
+	 */
 	partslot = reconstructMatchingTupleSlot(slot, resultRelInfo);
 	if (rel_is_heap)
 	{
-		tuple = ExecFetchSlotHeapTuple(partslot);
+		tuple = ExecCopySlotHeapTuple(partslot);
 	}
 	else if (rel_is_aorows)
 	{
-		tuple = ExecFetchSlotMemTuple(partslot, false);
+		tuple = ExecCopySlotMemTuple(partslot);
 	}
 	else if (rel_is_external) 
 	{
@@ -3180,24 +3184,30 @@ ExecInsert(TupleTableSlot *slot,
 			ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				errmsg("Insert into external partitions not supported.")));			
-			return;
 		}
-		else
-		{
-			/*
-			 * Make a modifiable copy, since external_insert() takes the
-			 * liberty to modify the tuple.
-			 */
-			tuple = ExecCopySlotHeapTuple(partslot);
-		}
+
+		tuple = ExecCopySlotHeapTuple(partslot);
 	}
 	else
 	{
 		Assert(rel_is_aocols);
-		tuple = ExecFetchSlotMemTuple(partslot, true);
+
+		/*
+		 * Call ExecFetchSlotMemTuple() with inline_toast==true, to force
+		 * detoasting of all the attributes. We want to store them untoasted
+		 * in column-oriented tables.
+		 *
+		 * NOTE: We don't actually use the return value for anything,
+		 * aocs_insert() works directly on the slot and doesn't require a
+		 * 'tuple'. But the call to ExecFetchSlotMemTupele() ensures that
+		 * the subsequent slot_getallattrs() call on the slot, from
+		 * aocs_insert(), will get untoasted values.
+		 */
+		(void) ExecFetchSlotMemTuple(partslot, true);
+		tuple = NULL;
 	}
 
-	Assert(partslot != NULL && tuple != NULL);
+	Assert(partslot != NULL && (tuple != NULL || rel_is_aocols));
 
 	/* Execute triggers in Planner-generated plans */
 	if (planGen == PLANGEN_PLANNER)
