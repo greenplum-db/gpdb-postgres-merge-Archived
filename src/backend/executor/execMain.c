@@ -155,13 +155,13 @@ void ExecCheckRTPerms(List *rangeTable);
 void ExecCheckRTEPerms(RangeTblEntry *rte);
 
 /*
- * For a partitioned insert target only:  
+ * For a partitioned insert target only:
  * This type represents an entry in the per-part hash table stored at
- * estate->es_partition_state->result_partition_hash.   The table maps 
+ * estate->es_partition_state->result_partition_hash.   The table maps
  * part OID -> ResultRelInfo and avoids repeated calculation of the
  * result information.
  */
-typedef struct ResultPartHashEntry 
+typedef struct ResultPartHashEntry
 {
 	Oid targetid; /* OID of part relation */
 	int offset; /* Index ResultRelInfo in es_result_partitions */
@@ -1112,14 +1112,14 @@ ExecutorEnd(QueryDesc *queryDesc)
 	 * Release EState and per-query memory context
 	 */
 	FreeExecutorState(estate);
-	
+
 	/**
 	 * Perfmon related stuff.
 	 */
-	if (gp_enable_gpperfmon 
+	if (gp_enable_gpperfmon
 			&& Gp_role == GP_ROLE_DISPATCH
 			&& queryDesc->gpmon_pkt)
-	{			
+	{
 		gpmon_qlog_query_end(queryDesc->gpmon_pkt);
 		queryDesc->gpmon_pkt = NULL;
 	}
@@ -1350,7 +1350,7 @@ static PartitionNode *
 BuildPartitionNodeFromRoot(Oid relid)
 {
 	PartitionNode *partitionNode = NULL;
-	
+
 	if (rel_is_child_partition(relid))
 	{
 		relid = rel_partition_get_master(relid);
@@ -1391,7 +1391,7 @@ createPartitionState(PartitionNode *partsAndRules,
 					 int resultPartSize)
 {
 	Assert(partsAndRules != NULL);
-	
+
 	PartitionState *partitionState = makeNode(PartitionState);
 	partitionState->accessMethods = createPartitionAccessMethods(num_partition_levels(partsAndRules));
 	partitionState->max_partition_attr = max_partition_attr(partsAndRules);
@@ -1439,7 +1439,7 @@ InitializeResultRelations(PlannedStmt *plannedstmt, EState *estate, CmdType oper
 	 */
 	/* CDB: we must promote locks for UPDATE and DELETE operations. */
 	lockmode = (Gp_role != GP_ROLE_EXECUTE || Gp_is_writer) ? RowExclusiveLock : NoLock;
-	
+
 	Assert(plannedstmt != NULL && estate != NULL);
 
 	if (plannedstmt->resultRelations)
@@ -1470,7 +1470,7 @@ InitializeResultRelations(PlannedStmt *plannedstmt, EState *estate, CmdType oper
 							  resultRelationIndex,
 							  operation,
 							  estate->es_instrument);
-			
+
 			resultRelInfo++;
 		}
 		estate->es_result_relations = resultRelInfos;
@@ -1498,7 +1498,7 @@ InitializeResultRelations(PlannedStmt *plannedstmt, EState *estate, CmdType oper
 	 * we do this information exchange here, via the parseTree. For now
 	 * this is used for partitioned and append-only tables.
 	 */
-	
+
 	if (Gp_role == GP_ROLE_EXECUTE)
 	{
 		estate->es_result_partitions = plannedstmt->result_partitions;
@@ -1515,15 +1515,15 @@ InitializeResultRelations(PlannedStmt *plannedstmt, EState *estate, CmdType oper
 		}
 
 		estate->es_result_partitions = BuildPartitionNodeFromRoot(relid);
-		
+
 		/*
 		 * list all the relids that may take part in this insert operation
 		 */
 		all_relids = lappend_oid(all_relids, relid);
 		all_relids = list_concat(all_relids,
 								 all_partition_relids(estate->es_result_partitions));
-		
-        /* 
+
+        /*
          * We also assign a segno for a deletion operation.
          * That segno will later be touched to ensure a correct
          * incremental backup.
@@ -1532,7 +1532,7 @@ InitializeResultRelations(PlannedStmt *plannedstmt, EState *estate, CmdType oper
 
 		plannedstmt->result_partitions = estate->es_result_partitions;
 		plannedstmt->result_aosegnos = estate->es_result_aosegnos;
-		
+
 		/* Set any QD resultrels segno, just in case. The QEs set their own in ExecInsert(). */
         int relno = 0;
         ResultRelInfo* relinfo;
@@ -1542,7 +1542,7 @@ InitializeResultRelations(PlannedStmt *plannedstmt, EState *estate, CmdType oper
             ResultRelInfoSetSegno(relinfo, estate->es_result_aosegnos);
         }
 	}
-	
+
 	estate->es_partition_state = NULL;
 	if (estate->es_result_partitions)
 	{
@@ -1559,7 +1559,7 @@ static void
 InitializeQueryPartsMetadata(PlannedStmt *plannedstmt, EState *estate)
 {
 	Assert(plannedstmt != NULL && estate != NULL);
-	
+
 	if (plannedstmt->queryPartOids == NIL)
 	{
 		plannedstmt->queryPartsMetadata = NIL;
@@ -1583,17 +1583,17 @@ InitializeQueryPartsMetadata(PlannedStmt *plannedstmt, EState *estate)
 				lappend(plannedstmt->queryPartsMetadata, partitionNode);
 		}
 	}
-	
+
 	/* Populate the partitioning metadata to EState */
 	Assert(estate->dynamicTableScanInfo != NULL);
-	
+
 	MemoryContext oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
-	
+
 	ListCell *lc = NULL;
 	foreach(lc, plannedstmt->queryPartsMetadata)
 	{
 		PartitionNode *partsAndRules = (PartitionNode *)lfirst(lc);
-		
+
 		PartitionMetadata *metadata = palloc(sizeof(PartitionMetadata));
 		metadata->partsAndRules = partsAndRules;
 		Assert(metadata->partsAndRules != NULL);
@@ -1601,7 +1601,7 @@ InitializeQueryPartsMetadata(PlannedStmt *plannedstmt, EState *estate)
 		estate->dynamicTableScanInfo->partsMetadata =
 			lappend(estate->dynamicTableScanInfo->partsMetadata, metadata);
 	}
-	
+
 	MemoryContextSwitchTo(oldContext);
 }
 
@@ -1907,7 +1907,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 	if (RootSliceIndex(estate) != LocallyExecutingSliceIndex(estate))
 		return;
-	
+
 	/*
 	 * Get the tuple descriptor describing the type of tuples to return. (this
 	 * is especially important if we are creating a relation with "SELECT
@@ -2622,7 +2622,7 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 			}
 			resultRelInfo->ri_updateDesc = NULL;
 		}
-		
+
 		if (resultRelInfo->ri_resultSlot)
 		{
 			Assert(resultRelInfo->ri_resultSlot->tts_tupleDescriptor);
@@ -3077,7 +3077,7 @@ ExecSelect(TupleTableSlot *slot,
  *		the base relation and insert appropriate tuples into the
  *		index relations.
  *		Insert can be part of an update operation when
- *		there is a preceding SplitUpdate node. 
+ *		there is a preceding SplitUpdate node.
  * ----------------------------------------------------------------
  */
 void
@@ -3176,14 +3176,14 @@ ExecInsert(TupleTableSlot *slot,
 	{
 		tuple = ExecCopySlotMemTuple(partslot);
 	}
-	else if (rel_is_external) 
+	else if (rel_is_external)
 	{
-		if (estate->es_result_partitions && 
+		if (estate->es_result_partitions &&
 			estate->es_result_partitions->part->parrelid != 0)
 		{
 			ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("Insert into external partitions not supported.")));			
+				errmsg("Insert into external partitions not supported.")));
 		}
 
 		tuple = ExecCopySlotHeapTuple(partslot);
@@ -3284,7 +3284,7 @@ ExecInsert(TupleTableSlot *slot,
 		if (resultRelInfo->ri_aocsInsertDesc == NULL)
 		{
 			ResultRelInfoSetSegno(resultRelInfo, estate->es_result_aosegnos);
-			resultRelInfo->ri_aocsInsertDesc = aocs_insert_init(resultRelationDesc, 
+			resultRelInfo->ri_aocsInsertDesc = aocs_insert_init(resultRelationDesc,
 																resultRelInfo->ri_aosegno, false);
 		}
 
@@ -3351,7 +3351,7 @@ ExecInsert(TupleTableSlot *slot,
  *		DELETE is like UPDATE, except that we delete the tuple and no
  *		index modifications are needed.
  *		DELETE can be part of an update operation when
- *		there is a preceding SplitUpdate node. 
+ *		there is a preceding SplitUpdate node.
  *
  * ----------------------------------------------------------------
  */
@@ -3418,12 +3418,12 @@ ExecDelete(ItemPointer tupleid,
 	bool isAOColsTable = RelationIsAoCols(resultRelationDesc);
 	bool isExternalTable = RelationIsExternal(resultRelationDesc);
 
-	if (isExternalTable && estate->es_result_partitions && 
+	if (isExternalTable && estate->es_result_partitions &&
 		estate->es_result_partitions->part->parrelid != 0)
 	{
 		ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			errmsg("Delete from external partitions not supported.")));			
+			errmsg("Delete from external partitions not supported.")));
 		return;
 	}
 	/*
@@ -3450,22 +3450,22 @@ ldelete:;
 			if (!isUpdate)
 				ereport(ERROR,
 					   (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Deletes on append-only tables are not supported in serializable transactions.")));		
+						errmsg("Deletes on append-only tables are not supported in serializable transactions.")));
 			else
 				ereport(ERROR,
 					   (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Updates on append-only tables are not supported in serializable transactions.")));	
+						errmsg("Updates on append-only tables are not supported in serializable transactions.")));
 		}
 
 		if (resultRelInfo->ri_deleteDesc == NULL)
 		{
-			resultRelInfo->ri_deleteDesc = 
+			resultRelInfo->ri_deleteDesc =
 				appendonly_delete_init(resultRelationDesc, GetActiveSnapshot());
 		}
 
 		AOTupleId* aoTupleId = (AOTupleId*)tupleid;
 		result = appendonly_delete(resultRelInfo->ri_deleteDesc, aoTupleId);
-	} 
+	}
 	else if (isAOColsTable)
 	{
 		if (IsXactIsoLevelSerializable)
@@ -3473,16 +3473,16 @@ ldelete:;
 			if (!isUpdate)
 				ereport(ERROR,
 					   (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Deletes on append-only tables are not supported in serializable transactions.")));		
+						errmsg("Deletes on append-only tables are not supported in serializable transactions.")));
 			else
 				ereport(ERROR,
 					   (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Updates on append-only tables are not supported in serializable transactions.")));		
+						errmsg("Updates on append-only tables are not supported in serializable transactions.")));
 		}
 
 		if (resultRelInfo->ri_deleteDesc == NULL)
 		{
-			resultRelInfo->ri_deleteDesc = 
+			resultRelInfo->ri_deleteDesc =
 				aocs_delete_init(resultRelationDesc);
 		}
 
@@ -3497,9 +3497,9 @@ ldelete:;
 	{
 		case HeapTupleSelfUpdated:
 			/* already deleted by self; nothing to do */
-		
+
 			/*
-			 * In an scenario in which R(a,b) and S(a,b) have 
+			 * In an scenario in which R(a,b) and S(a,b) have
 			 *        R               S
 			 *    ________         ________
 			 *     (1, 1)           (1, 2)
@@ -3507,12 +3507,12 @@ ldelete:;
  			 *
    			 *  An update query such as:
  			 *   UPDATE R SET a = S.b  FROM S WHERE R.b = S.a;
- 			 *   
- 			 *  will have an non-deterministic output. The tuple in R 
+ 			 *
+ 			 *  will have an non-deterministic output. The tuple in R
 			 * can be updated to (2,1) or (7,1).
- 			 * Since the introduction of SplitUpdate, these queries will 
-			 * send multiple requests to delete the same tuple. Therefore, 
-			 * in order to avoid a non-deterministic output, 
+ 			 * Since the introduction of SplitUpdate, these queries will
+			 * send multiple requests to delete the same tuple. Therefore,
+			 * in order to avoid a non-deterministic output,
 			 * an error is reported in such scenario.
  			 */
 			if (isUpdate)
@@ -3831,14 +3831,14 @@ ExecUpdate(TupleTableSlot *slot,
 		 */
 		tuple = ExecFetchSlotMemTuple(partslot, true);
 	}
-	else if (rel_is_external) 
+	else if (rel_is_external)
 	{
-		if (estate->es_result_partitions && 
+		if (estate->es_result_partitions &&
 			estate->es_result_partitions->part->parrelid != 0)
 		{
 			ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("Update external partitions not supported.")));			
+				errmsg("Update external partitions not supported.")));
 			return;
 		}
 		else
@@ -3847,7 +3847,7 @@ ExecUpdate(TupleTableSlot *slot,
 			tuple = ExecFetchSlotHeapTuple(partslot);
 		}
 	}
-	else 
+	else
 	{
 		Insist(false);
 	}
@@ -3904,14 +3904,14 @@ lreplace:;
 							 estate->es_output_cid,
 							 estate->es_crosscheck_snapshot,
 							 true /* wait for commit */ );
-		} 
+		}
 		else if (rel_is_aorows)
 		{
 			if (IsXactIsoLevelSerializable)
 			{
 				ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("Updates on append-only tables are not supported in serializable transactions.")));			
+					errmsg("Updates on append-only tables are not supported in serializable transactions.")));
 			}
 
 			if (resultRelInfo->ri_updateDesc == NULL)
@@ -3929,7 +3929,7 @@ lreplace:;
 			{
 				ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("Updates on append-only tables are not supported in serializable transactions.")));			
+					errmsg("Updates on append-only tables are not supported in serializable transactions.")));
 			}
 
 			if (resultRelInfo->ri_updateDesc == NULL)
@@ -4707,10 +4707,10 @@ OpenIntoRel(QueryDesc *queryDesc)
 	bool		bufferPoolBulkLoad;
 
 	RelFileNode relFileNode;
-	
+
 	ItemPointerData persistentTid;
 	int64			persistentSerialNum;
-	
+
 	targetPolicy = queryDesc->plannedstmt->intoPolicy;
 
 	Assert(into);
@@ -4812,7 +4812,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 		relstorage = stdRdOptions->columnstore ? RELSTORAGE_AOCOLS : RELSTORAGE_AOROWS;
 	else
 		relstorage = RELSTORAGE_HEAP;
-	
+
 	/* Copy the tupdesc because heap_create_with_catalog modifies it */
 	tupdesc = CreateTupleDescCopy(queryDesc->tupDesc);
 
@@ -4822,7 +4822,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 	 *
 	 * GPDP does not support PITR.
 	 */
-	bufferPoolBulkLoad = 
+	bufferPoolBulkLoad =
 		(relstorage_is_buffer_pool(relstorage) ?
 									XLog_CanBypassWal() : false);
 
@@ -4872,7 +4872,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 	 * And open the constructed table for writing.
 	 */
 	intoRelationDesc = heap_open(intoRelationId, AccessExclusiveLock);
-	
+
 	/*
 	 * Add column encoding entries based on the WITH clause.
 	 *
@@ -4986,7 +4986,7 @@ CloseIntoRel(QueryDesc *queryDesc)
 				{
 					bool bulkLoadFinished;
 
-					bulkLoadFinished = 
+					bulkLoadFinished =
 						MirroredBufferPool_EvaluateBulkLoadFinish(
 									myState->bulkloadinfo);
 
@@ -5151,13 +5151,13 @@ intorel_destroy(DestReceiver *self)
  * Calculate the part to use for the given key, then find or calculate
  * and cache required information about that part in the hash table
  * anchored in estate.
- * 
+ *
  * Return a pointer to the information, an entry in the table
  * estate->es_result_relations.  Note that the first entry in this
  * table is for the partitioned table itself and that the entire table
- * may be reallocated, changing the addresses of its entries.  
+ * may be reallocated, changing the addresses of its entries.
  *
- * Thus, it is important to avoid holding long-lived pointers to 
+ * Thus, it is important to avoid holding long-lived pointers to
  * table entries (such as the pointer returned from this function).
  */
 static ResultRelInfo *
@@ -5248,14 +5248,14 @@ get_part(EState *estate, Datum *values, bool *isnull, TupleDesc tupdesc)
 						  1,
 						  CMD_INSERT,
 						  estate->es_instrument);
-		
-		map_part_attrs(estate->es_result_relations->ri_RelationDesc, 
+
+		map_part_attrs(estate->es_result_relations->ri_RelationDesc,
 					   resultRelInfo->ri_RelationDesc,
 					   &(resultRelInfo->ri_partInsertMap),
 					   TRUE); /* throw on error, so result not needed */
 
 		if (resultRelInfo->ri_partInsertMap)
-			resultRelInfo->ri_partSlot = 
+			resultRelInfo->ri_partSlot =
 				MakeSingleTupleTableSlot(resultRelInfo->ri_RelationDesc->rd_att);
 	}
 	return resultRelInfo;
@@ -5311,27 +5311,27 @@ AttrMap *makeAttrMap(int base_count, AttrNumber *base_map)
 {
 	int i, n, p;
 	AttrMap *map;
-	
+
 	if ( base_count < 1 || base_map == NULL )
 		return NULL;
-	
+
 	map = palloc0(sizeof(AttrMap) + base_count * sizeof(AttrNumber));
-	
+
 	for ( i = n = p = 0; i <= base_count; i++ )
 	{
 		map->attr_map[i] = base_map[i];
-		
-		if ( map->attr_map[i] != 0 ) 
+
+		if ( map->attr_map[i] != 0 )
 		{
 			if ( map->attr_map[i] > p ) p = map->attr_map[i];
 			n++;
 		}
-	}	
-	
+	}
+
 	map->live_count = n;
 	map->attr_max = p;
 	map->attr_count = base_count;
-	
+
 	return map;
 }
 
@@ -5359,14 +5359,14 @@ static Node *apply_attrmap_mutator(Node *node, AttrMap *map)
 {
 	if ( node == NULL )
 		return NULL;
-	
+
 	if (IsA(node, Var) )
 	{
 		AttrNumber anum = 0;
 		Var *var = (Var*)node;
 		Assert(var->varno == 1); /* in CHECK constraints */
 		anum = attrMap(map, var->varattno);
-		
+
 		if ( anum == 0 )
 		{
 			/* Should never happen, but best caught early. */
@@ -5397,7 +5397,7 @@ Node *attrMapExpr(AttrMap *map, Node *expr)
  * on the segment databases as well as on the entry database.
  *
  * If requested and needed, make a vector mapping the attribute
- * numbers of the partitioned table to corresponding attribute 
+ * numbers of the partitioned table to corresponding attribute
  * numbers in the part.  Represent the "unneeded" identity map
  * as null.
  *
@@ -5415,18 +5415,18 @@ Node *attrMapExpr(AttrMap *map, Node *expr)
  * with the base relation.  If the throw argument is true, however,
  * an error is issued rather than returning false.
  *
- * Note that, in the map, element 0 is wasted and is always zero, 
+ * Note that, in the map, element 0 is wasted and is always zero,
  * so the vector is indexed by attribute number (origin 1).
  *
- * The i-th element of the map is the attribute number in 
- * the part relation that corresponds to attribute i of the  
- * base relation, or it is zero to indicate that attribute 
+ * The i-th element of the map is the attribute number in
+ * the part relation that corresponds to attribute i of the
+ * base relation, or it is zero to indicate that attribute
  * i of the base relation doesn't exist (has been dropped).
  *
  * This is a handy map for renumbering attributes for use with
- * part relations that may have a different configuration of 
+ * part relations that may have a different configuration of
  * "holes" than the partitioned table in which they occur.
- * 
+ *
  * Be sure to call this in the memory context in which the result
  * vector ought to be stored.
  *
@@ -5435,57 +5435,57 @@ Node *attrMapExpr(AttrMap *map, Node *expr)
  * correct, errors should not occur.  Still, the downside is
  * incorrect data, so use errors (not assertions) for the case.
  *
- * Checks include same number of non-dropped attributes in all 
- * parts of a partitioned table, non-dropped attributes in 
+ * Checks include same number of non-dropped attributes in all
+ * parts of a partitioned table, non-dropped attributes in
  * corresponding relative positions must match in name, type
  * and alignment, attribute numbers must agree with their
  * position in tuple, etc.
  */
-bool 
+bool
 map_part_attrs(Relation base, Relation part, AttrMap **map_ptr, bool throw)
-{	
+{
 	AttrNumber i = 1;
 	AttrNumber n = base->rd_att->natts;
 	FormData_pg_attribute *battr = NULL;
-	
+
 	AttrNumber j = 1;
 	AttrNumber m = part->rd_att->natts;
 	FormData_pg_attribute *pattr = NULL;
-	
+
 	AttrNumber *v = NULL;
-	
+
 	/* If we might want a map, allocate one. */
 	if ( map_ptr != NULL )
 	{
 		v = palloc0(sizeof(AttrNumber)*(n+1));
 		*map_ptr = NULL;
 	}
-	
+
 	bool is_identical = TRUE;
 	bool is_compatible = TRUE;
-	
+
 	/* For each matched pair of attributes ... */
 	while ( i <= n && j <= m )
 	{
 		battr = base->rd_att->attrs[i-1];
 		pattr = part->rd_att->attrs[j-1];
-		
+
 		/* Skip dropped attributes. */
-		
+
 		if ( battr->attisdropped )
 		{
 			i++;
 			continue;
 		}
-		
+
 		if ( pattr->attisdropped )
 		{
 			j++;
 			continue;
 		}
-		
+
 		/* Check attribute conformability requirements. */
-		
+
 		/* -- Names must match. */
 		if ( strncmp(NameStr(battr->attname), NameStr(pattr->attname), NAMEDATALEN) != 0 )
 		{
@@ -5499,7 +5499,7 @@ map_part_attrs(Relation base, Relation part, AttrMap **map_ptr, bool throw)
 			is_compatible = FALSE;
 			break;
 		}
-		
+
 		/* -- Types must match. */
 		if (battr->atttypid != pattr->atttypid)
 		{
@@ -5511,7 +5511,7 @@ map_part_attrs(Relation base, Relation part, AttrMap **map_ptr, bool throw)
 			is_compatible = FALSE;
 			break;
 		}
-		
+
 		/* -- Alignment should match, but check just to be safe. */
 		if (battr->attalign != pattr->attalign )
 		{
@@ -5523,28 +5523,28 @@ map_part_attrs(Relation base, Relation part, AttrMap **map_ptr, bool throw)
 			is_compatible = FALSE;
 			break;
 		}
-		
-		/* -- Attribute numbers must match position (+1) in tuple. 
+
+		/* -- Attribute numbers must match position (+1) in tuple.
 		 *    This is a hard requirement so always throw.  This could
-		 *    be an assertion, except that we want to fail even in a 
+		 *    be an assertion, except that we want to fail even in a
 		 *    distribution build.
 		 */
 		if ( battr->attnum != i || pattr->attnum != j )
 			elog(ERROR,
 				 "attribute numbers out of order");
-		
+
 		/* Note any attribute number difference. */
 		if ( i != j )
 			is_identical = FALSE;
-		
+
 		/* If we're building a map, update it. */
 		if ( v != NULL )
 			v[i] = j;
-		
+
 		i++;
 		j++;
 	}
-	
+
 	if ( is_compatible )
 	{
 		/* Any excess attributes in parent better be marked dropped */
@@ -5585,7 +5585,7 @@ map_part_attrs(Relation base, Relation part, AttrMap **map_ptr, bool throw)
 	{
 		is_identical = FALSE;
 	}
-	
+
 	if ( !is_compatible )
 	{
 		Assert( !throw );
@@ -5600,7 +5600,7 @@ map_part_attrs(Relation base, Relation part, AttrMap **map_ptr, bool throw)
 		pfree(v);
 		v = NULL;
 	}
-	
+
 	if ( map_ptr != NULL && v != NULL )
 	{
 		*map_ptr = makeAttrMap(n, v);
