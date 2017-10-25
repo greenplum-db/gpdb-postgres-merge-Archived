@@ -90,8 +90,15 @@ reconstructMatchingTupleSlot(TupleTableSlot *slot, ResultRelInfo *resultRelInfo)
 		}
 	}
 
-	/* No map and matching tuple descriptor means no restructuring needed. */
-	if (map == NULL && tupleDescMatch)
+	/*
+	 * No map and matching tuple descriptor means no restructuring needed.
+	 * But we restructure if target relation has oid. We don't need to care
+	 * about aoco since the aoco insert never modify the original tuple.
+	 */
+	if (map == NULL &&
+		tupleDescMatch &&
+		(resultRelInfo->ri_RelationDesc->rd_rel->relhasoids == false ||
+		RelationIsAoCols(resultRelInfo->ri_RelationDesc)))
 		return slot;
 
 	/* Put the given tuple into attribute arrays. */
@@ -122,6 +129,17 @@ reconstructMatchingTupleSlot(TupleTableSlot *slot, ResultRelInfo *resultRelInfo)
 	partslot = ExecStoreAllNullTuple(partslot);
 	partvalues = slot_get_values(partslot);
 	partisnull = slot_get_isnull(partslot);
+
+	/* If target relation has oids, we should regenerate it. */
+	if (map == NULL &&
+		tupleDescMatch &&
+		resultRelInfo->ri_RelationDesc->rd_rel->relhasoids)
+	{
+		memcpy(partvalues, values, sizeof(Datum) * natts);
+		memcpy(partisnull, isnull, sizeof(bool) * natts);
+		ExecStoreVirtualTuple(partslot);
+		return partslot;
+	}
 
 	/* Restructure the input tuple.  Non-zero map entries are attribute
 	 * numbers in the target tuple, however, not every attribute

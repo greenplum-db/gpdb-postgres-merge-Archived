@@ -3170,11 +3170,11 @@ ExecInsert(TupleTableSlot *slot,
 	partslot = reconstructMatchingTupleSlot(slot, resultRelInfo);
 	if (rel_is_heap)
 	{
-		tuple = ExecCopySlotHeapTuple(partslot);
+		tuple = ExecFetchSlotHeapTuple(partslot);
 	}
 	else if (rel_is_aorows)
 	{
-		tuple = ExecCopySlotMemTuple(partslot);
+		tuple = ExecFetchSlotMemTuple(partslot, false);
 	}
 	else if (rel_is_external)
 	{
@@ -3186,7 +3186,7 @@ ExecInsert(TupleTableSlot *slot,
 				errmsg("Insert into external partitions not supported.")));
 		}
 
-		tuple = ExecCopySlotHeapTuple(partslot);
+		tuple = ExecFetchSlotHeapTuple(partslot);
 	}
 	else
 	{
