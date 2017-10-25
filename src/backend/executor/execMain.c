@@ -3170,7 +3170,7 @@ ExecInsert(TupleTableSlot *slot,
 	partslot = reconstructMatchingTupleSlot(slot, resultRelInfo);
 	if (rel_is_heap)
 	{
-		tuple = ExecCopySlotHeapTuple(partslot);
+		tuple = ExecMaterializeSlotHeapTuple(partslot);
 	}
 	else if (rel_is_aorows)
 	{

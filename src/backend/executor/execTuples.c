@@ -751,6 +751,53 @@ ExecFetchSlotHeapTuple(TupleTableSlot *slot)
 	return htup;
 }
 
+HeapTuple
+ExecMaterializeSlotHeapTuple(TupleTableSlot *slot)
+{
+	uint32 tuplen;
+	HeapTuple htup;
+
+	/*
+	 * sanity checks
+	 */
+	Assert(!TupIsNull(slot));
+
+	/*
+	 * If we have a regular physical tuple, and it's locally palloc'd, we have
+	 * nothing to do.
+	 */
+	if (slot->PRIVATE_tts_heaptuple && slot->PRIVATE_tts_htup_buf)
+		return slot->PRIVATE_tts_heaptuple;
+
+	slot_getallattrs(slot);
+
+	Assert(TupHasVirtualTuple(slot));
+	Assert(slot->PRIVATE_tts_nvalid == slot->tts_tupleDescriptor->natts);
+
+	/* Get the length of the buffer we need to allocate. */
+	tuplen = 0;
+	htup = heaptuple_form_to(slot->tts_tupleDescriptor, slot_get_values(slot),
+							 slot_get_isnull(slot), slot->PRIVATE_tts_htup_buf,
+							 &tuplen);
+	Assert(!htup);
+	
+	/* Allocate. */
+	if(slot->PRIVATE_tts_htup_buf)
+		pfree(slot->PRIVATE_tts_htup_buf);
+	slot->PRIVATE_tts_htup_buf = (HeapTuple) MemoryContextAlloc(slot->tts_mcxt,
+																tuplen);
+	slot->PRIVATE_tts_htup_buf_len = tuplen;
+
+	/* Materialize in the allocated buffer. */
+	htup = heaptuple_form_to(slot->tts_tupleDescriptor, slot_get_values(slot),
+							 slot_get_isnull(slot), slot->PRIVATE_tts_htup_buf,
+							 &tuplen);
+	Assert(htup);
+
+	slot->PRIVATE_tts_heaptuple = htup;
+	return htup;
+}
+
 /* --------------------------------
  *		ExecFetchSlotMinimalTuple
  *			Fetch the slot's minimal physical tuple.

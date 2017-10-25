@@ -398,6 +398,7 @@ extern MemTuple ExecCopySlotMemTuple(TupleTableSlot *slot);
 extern MemTuple ExecCopySlotMemTupleTo(TupleTableSlot *slot, MemoryContext pctxt, char *dest, unsigned int *len);
 
 extern HeapTuple ExecFetchSlotHeapTuple(TupleTableSlot *slot);
+extern HeapTuple ExecMaterializeSlotHeapTuple(TupleTableSlot *slot);
 extern MemTuple ExecFetchSlotMemTuple(TupleTableSlot *slot, bool inline_toast);
 
 extern Datum ExecFetchSlotTupleDatum(TupleTableSlot *slot);
