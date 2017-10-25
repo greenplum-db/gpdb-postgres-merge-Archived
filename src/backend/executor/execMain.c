@@ -3170,7 +3170,8 @@ ExecInsert(TupleTableSlot *slot,
 	partslot = reconstructMatchingTupleSlot(slot, resultRelInfo);
 	if (rel_is_heap)
 	{
-		tuple = ExecCopySlotHeapTuple(partslot);
+		/* GPDB_84_MERGE_FIXME: do we need a similar function for memtuples? */
+		tuple = ExecMaterializeSlotHeapTuple(partslot);
 	}
 	else if (rel_is_aorows)
 	{
