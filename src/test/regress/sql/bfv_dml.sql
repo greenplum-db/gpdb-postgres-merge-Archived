@@ -122,16 +122,33 @@ select * from update_pk_test order by 1,2;
 -- Verify that ExecInsert doesn't scribble on the old tuple, when the new
 -- tuple comes directly from the old table.
 --
-CREATE TABLE execinsert_test (id int4, t text) DISTRIBUTED BY (id);
-
-INSERT INTO execinsert_test values (1, 'foo');
-
--- Insert another identical tuple, but roll it back. If the insertion
--- incorrectly modified the xmin on the old tuple, then it will become
--- invisible when we roll back.
-begin;
-INSERT INTO execinsert_test select * FROM execinsert_test;
-rollback;
-select * from execinsert_test;
-
-drop table execinsert_test;
+-- First insert a tuple into a table. Then insert another identical tuple, but
+-- roll it back. If the insertion incorrectly modified the xmin on the old
+-- tuple, then it will become invisible when we roll back.
+--
+-- GPDB_84_MERGE_FIXME: surely there's a better way to reproduce this failure
+-- than creating a utility mode connection? I cannot reproduce except on
+-- master-only tables (like system tables).
+--
+create external web table cmd(a text)
+  execute E'PGOPTIONS="-c gp_session_role=utility"                         \\
+    psql -p $GP_MASTER_PORT $GP_DATABASE $GP_USER -c                       \\
+      "CREATE TABLE execinsert_test (id int4, t text);                     \\
+       INSERT INTO execinsert_test values (1, ''foo'');"                   \\
+                                                                           \\
+    && PGOPTIONS="-c gp_session_role=utility"                              \\
+    psql -p $GP_MASTER_PORT $GP_DATABASE $GP_USER -c                       \\
+      "begin;                                                              \\
+       INSERT INTO execinsert_test select * FROM execinsert_test;          \\
+       rollback;"                                                          \\
+                                                                           \\
+    && PGOPTIONS="-c gp_session_role=utility"                              \\
+    psql -p $GP_MASTER_PORT $GP_DATABASE $GP_USER -c                       \\
+      "select * from execinsert_test;"                                     \\
+                                                                           \\
+    && PGOPTIONS="-c gp_session_role=utility"                              \\
+    psql -p $GP_MASTER_PORT $GP_DATABASE $GP_USER -c                       \\
+      "drop table execinsert_test;"'
+  on master format 'text';
+select * from cmd;
+drop external web table cmd;
