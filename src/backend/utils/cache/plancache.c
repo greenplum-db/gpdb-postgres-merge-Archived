@@ -505,9 +505,6 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 		PushOverrideSearchPath(plansource->search_path);
 
 		/*
-		 * GPDB_84_MERGE_FIXME This comment needs rewording after the Snapshot
-		 * changes in 5da9da71c44f27ba48fdad08ef263bf70e43e689
-		 *
 		 * If a snapshot is already set (the normal case), we can just use
 		 * that for parsing/planning.  But if it isn't, install one.  We must
 		 * arrange to restore ActiveSnapshot afterward, to ensure that
@@ -519,8 +516,13 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 		 */
 		TupleDesc	resultDesc;
 		Node	   *raw_parse_tree;
+		bool        snapshot_set = false;
 
-		PushActiveSnapshot(GetTransactionSnapshot());
+		if (!ActiveSnapshotSet())
+		{
+			PushActiveSnapshot(GetTransactionSnapshot());
+			snapshot_set = true;
+		}
 
 		/*
 		 * If this is a CREATE TABLE AS, pass information about the
@@ -608,7 +610,9 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 			MemoryContextSwitchTo(oldcxt);
 		}
 
-		PopActiveSnapshot();
+		/* Release snapshot if we got one */
+		if (snapshot_set)
+			PopActiveSnapshot();
 
 		/* Now we can restore current search path */
 		PopOverrideSearchPath();
