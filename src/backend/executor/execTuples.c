@@ -765,6 +765,10 @@ ExecMaterializeSlotHeapTuple(TupleTableSlot *slot)
 	/*
 	 * If we have a regular physical tuple, and it's locally palloc'd, we have
 	 * nothing to do.
+	 *
+	 * GPDB_84_MERGE_FIXME: do we need to utilize the "shouldFree" logic that's
+	 * set up elsewhere? We would need to update this function and others to set
+	 * the SHOULDFREE flag when appropriate.
 	 */
 	if (slot->PRIVATE_tts_heaptuple && slot->PRIVATE_tts_htup_buf)
 		return slot->PRIVATE_tts_heaptuple;
