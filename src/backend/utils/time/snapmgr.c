@@ -167,28 +167,24 @@ GetTransactionSnapshot(void)
 
 	if (IsXactIsoLevelSerializable)
 	{
-		/*
-		 * GPDB_84_MERGE_FIXME
-		elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),"[Distributed Snapshot #%u] *Serializable Skip* (gxid = %u, '%s')",
-			 (SerializableSnapshot == NULL ? 0 : SerializableSnapshot->distribSnapshotWithLocalMapping.ds.distribSnapshotId),
+		elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),
+			 "[Distributed Snapshot #%u] *Serializable* (gxid = %u, '%s')",
+			 CurrentSnapshot->distribSnapshotWithLocalMapping.ds.distribSnapshotId,
 			 getDistributedTransactionId(),
 			 DtxContextToString(DistributedTransactionContext));
-		 */
 
 		UpdateSerializableCommandId(CurrentSnapshot->curcid);
 
 		return CurrentSnapshot;
 	}
 
-	/*
-	 * GPDB_84_MERGE_FIXME
-	elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),"[Distributed Snapshot #%u] (gxid = %u, '%s')",
-		 (LatestSnapshot == NULL ? 0 : LatestSnapshot->distribSnapshotWithLocalMapping.ds.distribSnapshotId),
+	CurrentSnapshot = GetSnapshotData(&CurrentSnapshotData);
+
+	elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),
+		 "[Distributed Snapshot #%u] (gxid = %u, '%s')",
+		 CurrentSnapshot->distribSnapshotWithLocalMapping.ds.distribSnapshotId,
 		 getDistributedTransactionId(),
 		 DtxContextToString(DistributedTransactionContext));
-	 */
-
-	CurrentSnapshot = GetSnapshotData(&CurrentSnapshotData);
 
 	return CurrentSnapshot;
 }
@@ -719,4 +715,17 @@ AtEOXact_Snapshot(bool isCommit)
 
 	FirstSnapshotSet = false;
 	registered_serializable = false;
+}
+
+DistributedSnapshotWithLocalMapping *
+GetCurrentDistributedSnapshotWithLocalMapping()
+{
+	if (!FirstSnapshotSet)
+		return NULL;
+
+	Assert(CurrentSnapshot);
+	if (CurrentSnapshot->haveDistribSnapshot)
+		return &CurrentSnapshot->distribSnapshotWithLocalMapping;
+
+	return NULL;
 }
