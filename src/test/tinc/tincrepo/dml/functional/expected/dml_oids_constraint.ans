@@ -31,8 +31,7 @@ SELECT COUNT(*) FROM dml_heap_check_r;
 (1 row)
 
 INSERT INTO dml_heap_check_r VALUES(DEFAULT,DEFAULT,'rn',0);
-psql:dml_oids_constraint_orca.sql:20: ERROR:  One or more assertions failed  (seg1 antova-mbp.local:40011 pid=32564)
-DETAIL:  Check constraint rcheck_b for table dml_heap_check_r was violated
+psql:dml_oids_constraint_orca.sql:20: ERROR:  new row for relation "dml_heap_check_r" violates check constraint "rcheck_b"  (seg2 127.0.0.1:25434 pid=28707)
 SELECT SUM(a),SUM(b) FROM dml_heap_check_r;
  sum | sum 
 -----+-----
@@ -46,10 +45,7 @@ SELECT COUNT(*) FROM dml_heap_check_r;
 (1 row)
 
 INSERT INTO dml_heap_check_r VALUES(110,NULL,'rn',0);
-psql:dml_oids_constraint_orca.sql:24: ERROR:  One or more assertions failed  (seg1 antova-mbp.local:40011 pid=32564)
-DETAIL:  
-Check constraint rcheck_b for table dml_heap_check_r was violated
-Check constraint dml_heap_check_r_a_check for table dml_heap_check_r was violated
+psql:dml_oids_constraint_orca.sql:24: ERROR:  new row for relation "dml_heap_check_r" violates check constraint "rcheck_b"  (seg1 127.0.0.1:25433 pid=28706)
 SELECT SUM(a),SUM(b) FROM dml_heap_check_r;
  sum | sum 
 -----+-----
@@ -73,8 +69,7 @@ DROP TABLE
 CREATE TABLE tempoid as SELECT oid,a FROM dml_heap_check_r DISTRIBUTED BY (a);
 SELECT 2
 UPDATE dml_heap_check_r set a = 110;
-psql:dml_oids_constraint_orca.sql:32: ERROR:  One or more assertions failed  (seg1 slice1 antova-mbp.local:40011 pid=32567)
-DETAIL:  Check constraint dml_heap_check_r_a_check for table dml_heap_check_r was violated
+psql:dml_oids_constraint_orca.sql:32: ERROR:  new row for relation "dml_heap_check_r" violates check constraint "dml_heap_check_r_a_check"  (seg1 127.0.0.1:25433 pid=28706)
 SELECT SUM(a) FROM dml_heap_check_r;
  sum 
 -----
