@@ -615,34 +615,26 @@ usedByConcurrentTransaction(AOSegfileStatus *segfilestat, int segno)
 	 * isolation level, and it may be too late.
 	 */
 	Snapshot	snapshot = NULL;
-	if (!FirstSnapshotSet)
-	{
-		snapshot = GetTransactionSnapshot();
-	}
-	else
-	{
-		snapshot = GetLatestSnapshot();
-	}
 
-/* GPDB_84_MERGE_FIXME */
-#if 0
+	if (!ActiveSnapshotSet())
+		elog(ERROR, "could not check if dxid:%d is concurrently used, ActiveSnapshot not set",
+			 latestWriteXid);
+
+	snapshot = GetActiveSnapshot();
+
 	if (Debug_appendonly_print_segfile_choice)
 	{
 		elog(LOG, "usedByConcurrentTransaction: current distributed transaction id = %x, latestWriteXid that uses segno %d is %x",
 			 getDistributedTransactionId(), segno, latestWriteXid);
-		if (FirstSnapshotSet && CurrentSnapshot->haveDistribSnapshot)
-			LogDistributedSnapshotInfo(FirstSnapshotSet, "FirstSnapshotSet: ");
-		if (LatestSnapshot != NULL && LatestSnapshot->haveDistribSnapshot)
-			LogDistributedSnapshotInfo(LatestSnapshot, "LatestSnapshot: ");
 		if (snapshot->haveDistribSnapshot)
 			LogDistributedSnapshotInfo(snapshot, "Used snapshot: ");
+		else
+			elog(LOG,
+				 "usedByConcurrentTransaction: snapshot is not distributed, so it is NOT considered concurrent");
 	}
-#endif
 
 	if (!snapshot->haveDistribSnapshot)
 	{
-		ereportif(Debug_appendonly_print_segfile_choice, LOG,
-				  (errmsg("usedByConcurrentTransaction: snapshot is not distributed, so it is NOT considered concurrent")));
 		return false;
 	}
 
