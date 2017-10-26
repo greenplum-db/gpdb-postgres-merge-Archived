@@ -2781,11 +2781,11 @@ jobs:
       params:
         submodules:
         - gpMgmt/bin/pythonSrc/ext
-      passed: [gate_general_misc_start]
+      passed: [gate_compile_end]
     - get: gpdb_binary
       tags: ["gpdb5_ccp_external_worker"]
       resource: bin_gpdb_centos6
-      passed: [gate_general_misc_start]
+      passed: [gate_compile_end]
       trigger: true
     - get: ccp_src
       tags: ["gpdb5_ccp_external_worker"]
@@ -2817,10 +2817,10 @@ jobs:
   plan:
   - aggregate:
     - get: gpdb_src
-      passed: [gate_general_misc_start]
+      passed: [gate_compile_end]
       trigger: true
     - get: bin_gpdb
-      passed: [gate_general_misc_start]
+      passed: [gate_compile_end]
       resource: bin_gpdb_centos6
     - get: centos-gpdb-dev-6
   - task: memory-accounting
@@ -2836,10 +2836,10 @@ jobs:
   - aggregate:
     - get: gpdb_src
       params: {submodules: none}
-      passed: [gate_general_misc_start]
+      passed: [gate_compile_end]
     - get: bin_gpdb
       resource: bin_gpdb_centos6
-      passed: [gate_general_misc_start]
+      passed: [gate_compile_end]
       trigger: true
     - get: centos-gpdb-dev-6
   - aggregate:
@@ -3023,23 +3023,17 @@ jobs:
   plan:
   - get: gpdb_src
     passed:
-    - QP_memory-accounting
     - regression_tests_gpcloud_centos
     - regression_tests_gphdfs_centos
     - regression_tests_pxf_hdp
     - regression_tests_pxf_cdh
-    - QP_optimizer-functional
-    - MM_gpcheckcat
     trigger: true
   - get: bin_gpdb_centos6
     passed:
-    - QP_memory-accounting
     - regression_tests_gpcloud_centos
     - regression_tests_gphdfs_centos
     - regression_tests_pxf_hdp
     - regression_tests_pxf_cdh
-    - QP_optimizer-functional
-    - MM_gpcheckcat
     trigger: true
 ################ General Misc End
 
