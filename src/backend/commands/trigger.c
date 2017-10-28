@@ -3780,15 +3780,17 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 		if (snapshot_set)
 			PopActiveSnapshot();
 	}
-	
-	if (Gp_role == GP_ROLE_DISPATCH)
+	else
 	{
-		CdbDispatchUtilityStatement((Node *) stmt,
-									DF_CANCEL_ON_ERROR|
-									DF_WITH_SNAPSHOT|
-									DF_NEED_TWO_PHASE,
-									NIL,
-									NULL);
+		/* no snapshot needed */
+		if (Gp_role == GP_ROLE_DISPATCH)
+		{
+			CdbDispatchUtilityStatement((Node *) stmt,
+										DF_CANCEL_ON_ERROR|
+										DF_NEED_TWO_PHASE,
+										NIL,
+										NULL);
+		}
 	}
 }
 

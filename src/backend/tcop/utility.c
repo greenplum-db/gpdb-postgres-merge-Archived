@@ -1416,7 +1416,7 @@ ProcessUtility(Node *parsetree,
 
 			if (Gp_role == GP_ROLE_DISPATCH)
 			{
-				CdbDispatchCommand("CHECKPOINT", DF_WITH_SNAPSHOT, NULL);
+				CdbDispatchCommand("CHECKPOINT", 0, NULL);
 			}
 			RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
 			break;

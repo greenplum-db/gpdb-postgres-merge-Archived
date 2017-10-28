@@ -300,8 +300,8 @@ DistributedSnapshotWithLocalMapping_CommittedTest(
 		/*
 		 * Leverage the fact that ds->inProgressXidArray is sorted in
 		 * ascending order based on distribXid while creating the snapshot in
-		 * createDtxSnapshot. So, can fail fast once known are lower than rest
-		 * of them.
+		 * CreateDistributedSnapshot(). So, can fail fast once known are
+		 * lower than rest of them.
 		 */
 		if (distribXid < ds->inProgressXidArray[i])
 			break;
@@ -365,9 +365,16 @@ DistributedSnapshot_Copy(DistributedSnapshot *target,
 			target->inProgressXidArray = NULL;
 		}
 	}
+
+	/*
+	 * Allocate the XID array if necessary. Make it large enough to hold
+	 * the snapshot we're copying, plus a little headroom to make it more
+	 * likely that the space can be reused on next call.
+	 */
 	if (target->inProgressXidArray == NULL)
 	{
-		int			maxCount = source->count + 10;
+#define EXTRA_XID_ARRAY_HEADROOM 10
+		int			maxCount = source->count + EXTRA_XID_ARRAY_HEADROOM;
 
 		target->inProgressXidArray =
 			(DistributedTransactionId *)

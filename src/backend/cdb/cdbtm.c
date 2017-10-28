@@ -2386,7 +2386,7 @@ DistributedSnapshotMappedEntry_Compare(const void *p1, const void *p2)
 }
 
 bool
-createDtxSnapshot(DistributedSnapshotWithLocalMapping *distribSnapshotWithLocalMapping)
+CreateDistributedSnapshot(DistributedSnapshotWithLocalMapping *distribSnapshotWithLocalMapping)
 {
 	int			globalCount;
 	int			i;
@@ -2402,7 +2402,7 @@ createDtxSnapshot(DistributedSnapshotWithLocalMapping *distribSnapshotWithLocalM
 
 	if (currentGxact == NULL)
 	{
-		elog(DTM_DEBUG5, "createDtxSnapshot found currentGxact is NULL");
+		elog(DTM_DEBUG5, "CreateDistributedSnapshot found currentGxact is NULL");
 		return false;
 	}
 
@@ -2518,7 +2518,7 @@ createDtxSnapshot(DistributedSnapshotWithLocalMapping *distribSnapshotWithLocalM
 		count++;
 
 		elog(DTM_DEBUG5,
-			 "createDtxSnapshot added inProgressDistributedXid = %u to snapshot",
+			 "CreateDistributedSnapshot added inProgressDistributedXid = %u to snapshot",
 			 ds->inProgressXidArray[count]);
 	}
 
@@ -2558,7 +2558,7 @@ createDtxSnapshot(DistributedSnapshotWithLocalMapping *distribSnapshotWithLocalM
 		currentGxact->xminDistributedSnapshot = xmin;
 
 	elog(DTM_DEBUG5,
-		 "createDtxSnapshot distributed snapshot has xmin = %u, count = %u, xmax = %u.",
+		 "CreateDistributedSnapshot distributed snapshot has xmin = %u, count = %u, xmax = %u.",
 		 xmin, count, xmax);
 	elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),
 		 "[Distributed Snapshot #%u] *Create* (gxid = %u, '%s')",

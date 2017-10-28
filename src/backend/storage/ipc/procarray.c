@@ -1408,7 +1408,7 @@ GetSnapshotData(Snapshot snapshot)
 	 */
 	if (DistributedTransactionContext == DTX_CONTEXT_QD_DISTRIBUTED_CAPABLE)
 	{
-		snapshot->haveDistribSnapshot = createDtxSnapshot(&snapshot->distribSnapshotWithLocalMapping);
+		snapshot->haveDistribSnapshot = CreateDistributedSnapshot(&snapshot->distribSnapshotWithLocalMapping);
 
 		ereport((Debug_print_full_dtm ? LOG : DEBUG5),
 				(errmsg("Got distributed snapshot from DistributedSnapshotWithLocalXids_Create = %s",
@@ -1514,8 +1514,11 @@ GetSnapshotData(Snapshot snapshot)
 	LWLockRelease(ProcArrayLock);
 
 	/*
-	 * If we didn't need to fill in the snapshot while holding the lock, do it now.
-	 * (This is done after releasing ProcArrayLock to reduce contention.)
+	 * Fill in the distributed snapshot information we received from the the QD.
+	 * Unless we are the QD, in which case we already created a new distributed
+	 * snapshot above.
+	 *
+	 * (We do this after releasing ProcArrayLock, reduce contention.)
 	 */
 	if (DistributedTransactionContext != DTX_CONTEXT_QD_DISTRIBUTED_CAPABLE)
 		FillInDistributedSnapshot(snapshot);

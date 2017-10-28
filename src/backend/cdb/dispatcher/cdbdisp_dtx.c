@@ -185,59 +185,19 @@ qdSerializeDtxContextInfo(int *size, bool wantSnapshot, bool inCursor,
 	int			serializedLen;
 	DtxContextInfo *pDtxContextInfo = NULL;
 
-	/*------------------------------------------------------------------------
-	 * If we already have an ActiveSnapshot set then no reason to try and get a
-	 * new one. just use that one. Otherwise acquire a new snapshot. If we're
-	 * aborting, though, we cannot necessarily get a snapshot anymore, so
-	 * don't try. It hardly matters what snapshot we use if we're aborting,
-	 * after all.
-	 *
-	 * It is also very possible that for a single user statement which may
-	 * only generate a single snapshot that we will dispatch multiple
-	 * statements to our qExecs. Something like:
-	 *
-	 *    					  QD			  QEs
-	 *    					  |				  |
-	 * User SQL Statement --->|		BEGIN	  |
-	 *    					  |-------------->|
-	 *    					  |		STMT	  |
-	 *    					  |-------------->|
-	 *    					  |    PREPARE	  |
-	 *    					  |-------------->|
-	 *    					  |    COMMIT	  |
-	 *    					  |-------------->|
-	 *    					  |				  |
-	 *
-	 * This may seem like a problem because all four of those will dispatch
-	 * the same snapshot with the same curcid. But... this is OK because
-	 * BEGIN, PREPARE, and COMMIT don't need Snapshots on the QEs.
-	 *
-	 * NOTE: This will be a problem if we ever need to dispatch more than one
-	 * statement to the qExecs and more than one needs a snapshot!
-	 *------------------------------------------------------------------------
+	/*
+	 * If 'wantSnapshot' is set, then serialize the ActiveSnapshot. The
+	 * caller better have ActiveSnapshot set.
 	 */
 	*size = 0;
 
-	if (wantSnapshot && !IsAbortInProgress())
+	if (wantSnapshot)
 	{
-		if (ActiveSnapshotSet())
-		{
-			snapshot = GetActiveSnapshot();
-
-			elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),
-				 "[Distributed Snapshot #%u] *QD Use Active* currcid = %d (gxid = %u, '%s')",
-				 snapshot->distribSnapshotWithLocalMapping.ds.distribSnapshotId,
-				 snapshot->curcid,
-				 getDistributedTransactionId(),
-				 DtxContextToString(DistributedTransactionContext));
-		}
-		else
-		{
-			snapshot = GetTransactionSnapshot();
-			elog((Debug_print_full_dtm ? LOG : DEBUG5),
-				 "qdSerializeDtxContextInfo called GetTransactionSnapshot to make snapshot");
-		}
+		if (!ActiveSnapshotSet())
+			elog(ERROR, "could not serialize current snapshot, ActiveSnapshot not set");
+		snapshot = GetActiveSnapshot();
 	}
+
 	switch (DistributedTransactionContext)
 	{
 		case DTX_CONTEXT_QD_DISTRIBUTED_CAPABLE:
