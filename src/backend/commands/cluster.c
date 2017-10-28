@@ -251,7 +251,6 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 			/* functions in indexes may want a snapshot set */
 			PushActiveSnapshot(GetTransactionSnapshot());
 			dispatch = cluster_rel(rvtc, true, stmt, false);
-			PopActiveSnapshot();
 
 			if (Gp_role == GP_ROLE_DISPATCH && dispatch)
 			{
@@ -265,6 +264,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 											NULL);
 			}
 
+			PopActiveSnapshot();
 			CommitTransactionCommand();
 		}
 

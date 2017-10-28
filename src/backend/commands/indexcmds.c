@@ -723,10 +723,14 @@ DefineIndex(RangeVar *heapRelation,
 	 */
 	if (shouldDispatch)
 	{
-
+		/*
+		 * Note: We don't use a snapshot. Each QE will create their own
+		 * transactions and take their own snapshots. We will wait later
+		 * later for all the current distributed transactions to finish, so
+		 * it's not important what exact snapshot is used here.
+		 */
 		CdbDispatchUtilityStatement((Node *)stmt,
-									DF_CANCEL_ON_ERROR|
-									DF_WITH_SNAPSHOT,
+									DF_CANCEL_ON_ERROR,
 									dispatch_oids,
 									NULL);
 	}
