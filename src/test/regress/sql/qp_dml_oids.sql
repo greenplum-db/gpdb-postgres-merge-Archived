@@ -153,4 +153,15 @@ SELECT * FROM ( (SELECT COUNT(*) FROM dml_heap_r) UNION (SELECT COUNT(*) FROM te
 
 SELECT SUM(a) FROM dml_heap_r;
 
-
+--
+-- Check that a row gets a new OID, even when inserting an otherwise identical row
+-- to it (see commit 3d02cae310).
+--
+-- Note: GPDB doesn't guarantee OIDS to be unique across segments! So if you change
+-- this to DISTRIBUTED RANDOMLY, it can fail.
+--
+create table dml_heap_with_oids(id int4) with oids distributed by (id);
+insert into dml_heap_with_oids values (1);
+insert into dml_heap_with_oids select * from dml_heap_with_oids;
+insert into dml_heap_with_oids select * from dml_heap_with_oids;
+select count(*), count(distinct oid) from dml_heap_with_oids;

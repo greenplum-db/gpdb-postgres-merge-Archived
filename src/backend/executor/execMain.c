@@ -3175,8 +3175,7 @@ ExecInsert(TupleTableSlot *slot,
 	partslot = reconstructMatchingTupleSlot(slot, resultRelInfo);
 	if (rel_is_heap)
 	{
-		/* GPDB_84_MERGE_FIXME: do we need a similar function for memtuples? */
-		tuple = ExecMaterializeSlotHeapTuple(partslot);
+		tuple = ExecCopySlotHeapTuple(partslot);
 	}
 	else if (rel_is_aorows)
 	{
@@ -3214,6 +3213,21 @@ ExecInsert(TupleTableSlot *slot,
 	}
 
 	Assert(partslot != NULL && (tuple != NULL || rel_is_aocols));
+
+	/*
+	 * If the result relation has OIDs, force the tuple's OID to zero so that
+	 * heap_insert will assign a fresh OID.  Usually the OID already will be
+	 * zero at this point, but there are corner cases where the plan tree can
+	 * return a tuple extracted literally from some table with the same
+	 * rowtype.
+	 *
+	 * XXX if we ever wanted to allow users to assign their own OIDs to new
+	 * rows, this'd be the place to do it.  For the moment, we make a point
+	 * of doing this before calling triggers, so that a user-supplied trigger
+	 * could hack the OID if desired.
+	 */
+	if (rel_is_heap && resultRelationDesc->rd_rel->relhasoids)
+		HeapTupleSetOid((HeapTuple) tuple, InvalidOid);
 
 	/* Execute triggers in Planner-generated plans */
 	if (planGen == PLANGEN_PLANNER)
@@ -5116,7 +5130,19 @@ intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 	}
 	else
 	{
-		HeapTuple	tuple = ExecCopySlotHeapTuple(slot);
+		HeapTuple	tuple;
+
+		/*
+		 * get the heap tuple out of the tuple table slot, making sure we have a
+		 * writable copy
+		 */
+		tuple = ExecCopySlotHeapTuple(slot);
+
+		/*
+		 * force assignment of new OID (see comments in ExecInsert)
+		 */
+		if (myState->rel->rd_rel->relhasoids)
+			HeapTupleSetOid(tuple, InvalidOid);
 
 		heap_insert(into_rel,
 					tuple,
