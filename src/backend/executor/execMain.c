@@ -3225,8 +3225,10 @@ ExecInsert(TupleTableSlot *slot,
 	 * rows, this'd be the place to do it.  For the moment, we make a point
 	 * of doing this before calling triggers, so that a user-supplied trigger
 	 * could hack the OID if desired.
+	 *
+	 * GPDB: keep the OID, if this is actually part of a split UPDATE.
 	 */
-	if (rel_is_heap && resultRelationDesc->rd_rel->relhasoids)
+	if (rel_is_heap && resultRelationDesc->rd_rel->relhasoids && !isUpdate)
 		HeapTupleSetOid((HeapTuple) tuple, InvalidOid);
 
 	/* Execute triggers in Planner-generated plans */
