@@ -271,6 +271,21 @@ SELECT SUM(dml_heap_r.a) FROM dml_heap_p, dml_heap_r WHERE dml_heap_r.b = dml_he
    3
 (1 row)
 
+UPDATE dml_heap_r SET a = dml_heap_r.a FROM dml_heap_p WHERE dml_heap_r.b = dml_heap_p.a;
+-- The query checks that the tuple oids remain the remain pre and post update .
+-- SELECT COUNT(*) FROM tempoid, dml_heap_r WHERE tempoid.oid = dml_heap_r.oid AND tempoid.col1 = dml_heap_r.col1 is a join on the tuple oids before update and after update. If the oids remain the same the below query should return 1 row which is equivalent to the number of rows in the table
+SELECT * FROM ( (SELECT COUNT(*) FROM dml_heap_r) UNION (SELECT COUNT(*) FROM tempoid, dml_heap_r WHERE tempoid.oid = dml_heap_r.oid AND tempoid.col1 = dml_heap_r.col1))foo;
+ count 
+-------
+     3
+(1 row)
+
+SELECT SUM(a) FROM dml_heap_r;
+ sum 
+-----
+   3
+(1 row)
+
 --
 -- Check that a row gets a new OID, even when inserting an otherwise identical row
 -- to it (see commit 3d02cae310).
@@ -287,20 +302,5 @@ select count(*), count(distinct oid) from dml_heap_with_oids;
  count | count 
 -------+-------
      4 |     4
-(1 row)
-
-UPDATE dml_heap_r SET a = dml_heap_r.a FROM dml_heap_p WHERE dml_heap_r.b = dml_heap_p.a;
--- The query checks that the tuple oids remain the remain pre and post update .
--- SELECT COUNT(*) FROM tempoid, dml_heap_r WHERE tempoid.oid = dml_heap_r.oid AND tempoid.col1 = dml_heap_r.col1 is a join on the tuple oids before update and after update. If the oids remain the same the below query should return 1 row which is equivalent to the number of rows in the table
-SELECT * FROM ( (SELECT COUNT(*) FROM dml_heap_r) UNION (SELECT COUNT(*) FROM tempoid, dml_heap_r WHERE tempoid.oid = dml_heap_r.oid AND tempoid.col1 = dml_heap_r.col1))foo;
- count 
--------
-     3
-(1 row)
-
-SELECT SUM(a) FROM dml_heap_r;
- sum 
------
-   3
 (1 row)
 
