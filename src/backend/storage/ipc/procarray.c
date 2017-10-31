@@ -1718,7 +1718,6 @@ UpdateSerializableCommandId(CommandId curcid)
 		memcpy((void *)SharedLocalSnapshotSlot->combocids, comboCids,
 			   combocidSize * sizeof(ComboCidKeyData));
 
-		/* GPDB_84_MERGE_FIXME: review use of TransactionSnapshot here */
 		SharedLocalSnapshotSlot->snapshot.curcid = curcid;
 		SharedLocalSnapshotSlot->QDcid = QEDtxContextInfo.curcid;
 		SharedLocalSnapshotSlot->segmateSync = QEDtxContextInfo.segmateSync;
