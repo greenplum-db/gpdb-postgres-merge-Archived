@@ -363,14 +363,7 @@ ExecStoreHeapTuple(HeapTuple tuple,
 	/* passing shouldFree=true for a tuple on a disk page is not sane */
 	Assert(BufferIsValid(buffer) ? (!shouldFree) : true);
 
-	/*
-	 * Actually we are storing a memtuple!
-	 */
-	if(is_heaptuple_memtuple(tuple))
-	{
-		Assert(buffer == InvalidBuffer);
-		return ExecStoreMinimalTuple((MemTuple) tuple, slot, shouldFree);
-	}
+	Assert(!is_memtuple((GenericTuple) tuple));
 
 	/*
 	 * Free any old physical tuple belonging to the slot.
@@ -432,9 +425,7 @@ ExecStoreMinimalTuple(MemTuple mtup,
 	Assert(slot->tts_tupleDescriptor != NULL);
 	Assert(slot->tts_mt_bind != NULL);
 
-	/* Acctually we are storing a HeapTuple! */
-	if(!is_heaptuple_memtuple((HeapTuple) mtup))
-		return ExecStoreHeapTuple((HeapTuple) mtup, slot, InvalidBuffer, shouldFree);
+	Assert(is_memtuple((GenericTuple) mtup));
 
 	/*
 	 * Free any old physical tuple belonging to the slot.
@@ -635,7 +626,8 @@ ExecCopySlotHeapTuple(TupleTableSlot *slot)
  *			The slot itself is undisturbed.
  * --------------------------------
  */
-MemTuple ExecCopySlotMemTuple(TupleTableSlot *slot)
+MemTuple
+ExecCopySlotMemTuple(TupleTableSlot *slot)
 {
 	/*
 	 * sanity checks
@@ -658,7 +650,8 @@ MemTuple ExecCopySlotMemTuple(TupleTableSlot *slot)
 	return memtuple_form_to(slot->tts_mt_bind, slot_get_values(slot), slot_get_isnull(slot), NULL, 0, false);
 }
 
-MemTuple ExecCopySlotMemTupleTo(TupleTableSlot *slot, MemoryContext pctxt, char *dest, unsigned int *len)
+MemTuple
+ExecCopySlotMemTupleTo(TupleTableSlot *slot, MemoryContext pctxt, char *dest, unsigned int *len)
 {
 	uint32 dumlen;
 	MemTuple mtup = NULL;
@@ -764,7 +757,8 @@ ExecFetchSlotHeapTuple(TupleTableSlot *slot)
  * As above, the result must be treated as read-only.
  * --------------------------------
  */
-MemTuple ExecFetchSlotMemTuple(TupleTableSlot *slot, bool inline_toast)
+MemTuple
+ExecFetchSlotMemTuple(TupleTableSlot *slot, bool inline_toast)
 {
 	MemTuple newTuple;
 	MemTuple oldTuple = NULL;
@@ -1302,7 +1296,7 @@ do_tup_output(TupOutputState *tstate, char **values)
 	HeapTuple	tuple = BuildTupleFromCStrings(tstate->metadata, values);
 
 	/* put it in a slot */
-	ExecStoreGenericTuple(tuple, tstate->slot, true);
+	ExecStoreHeapTuple(tuple, tstate->slot, InvalidBuffer, true);
 
 	/* send the tuple to the receiver */
 	(*tstate->dest->receiveSlot) (tstate->slot, tstate->dest);

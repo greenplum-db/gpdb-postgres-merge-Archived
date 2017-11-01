@@ -2147,7 +2147,7 @@ IndexBuildHeapScan(Relation heapRelation,
 		MemoryContextReset(econtext->ecxt_per_tuple_memory);
 
 		/* Set up for predicate or expression evaluation */
-		ExecStoreGenericTuple(heapTuple, slot, false);
+		ExecStoreHeapTuple(heapTuple, slot, InvalidBuffer, false);
 
 		/*
 		 * In a partial index, discard tuples that don't satisfy the
@@ -2769,7 +2769,7 @@ validate_index_heapscan(Relation heapRelation,
 			MemoryContextReset(econtext->ecxt_per_tuple_memory);
 
 			/* Set up for predicate or expression evaluation */
-			ExecStoreGenericTuple(heapTuple, slot, false);
+			ExecStoreHeapTuple(heapTuple, slot, InvalidBuffer, false);
 
 			/*
 			 * In a partial index, discard tuples that don't satisfy the
