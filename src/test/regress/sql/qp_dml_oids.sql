@@ -197,6 +197,7 @@ SELECT COUNT(distinct oid) FROM dml_ao where a = 10;
 -- Check that new OIDs are generated even if the tuple being inserted came from
 -- the same relation and segment.
 --
-SELECT COUNT(DISTINCT oid) FROM dml_ao;
-INSERT INTO dml_ao SELECT * FROM dml_ao LIMIT 1;
-SELECT COUNT(DISTINCT oid) FROM dml_ao; -- should be one greater
+INSERT INTO dml_ao VALUES (11, 1, 'foo');
+INSERT INTO dml_ao VALUES (11, 2, 'bar');
+INSERT INTO dml_ao SELECT * FROM dml_ao WHERE a = 11 LIMIT 1;
+SELECT COUNT(DISTINCT oid) FROM dml_ao WHERE a = 11; -- all three rows should have different OID
