@@ -135,7 +135,7 @@ typedef struct TupleTableSlot
 	void 	*PRIVATE_tts_mtup_buf;
 	uint32  PRIVATE_tts_mtup_buf_len;
 	ItemPointerData PRIVATE_tts_synthetic_ctid;	/* needed if memtuple is stored on disk */
-	
+
 	/* Virtual tuple stuff */
 	int 	PRIVATE_tts_nvalid;		/* number of valid virtual tup entries */
 	long    PRIVATE_tts_off; 		/* hack to remember state of last decoding. */
@@ -144,7 +144,7 @@ typedef struct TupleTableSlot
 	bool 	*PRIVATE_tts_isnull;		/* virtual tuple nulls */
 
 	TupleDesc	tts_tupleDescriptor;	/* slot's tuple descriptor */
-	MemTupleBinding *tts_mt_bind;		/* mem tuple's binding */ 
+	MemTupleBinding *tts_mt_bind;		/* mem tuple's binding */
 	MemoryContext 	tts_mcxt;		/* slot itself is in this context */
 	Buffer		tts_buffer;		/* tuple's buffer, or InvalidBuffer */
 
@@ -163,11 +163,11 @@ static inline void TupClearIsEmpty(TupleTableSlot *slot)
 static inline bool TupShouldFree(TupleTableSlot *slot)
 {
 	Assert(slot);
-	return ((slot->PRIVATE_tts_flags & TTS_SHOULDFREE) != 0); 
+	return ((slot->PRIVATE_tts_flags & TTS_SHOULDFREE) != 0);
 }
 static inline void TupSetShouldFree(TupleTableSlot *slot)
 {
-	slot->PRIVATE_tts_flags |= TTS_SHOULDFREE; 
+	slot->PRIVATE_tts_flags |= TTS_SHOULDFREE;
 }
 static inline void TupClearShouldFree(TupleTableSlot *slot)
 {
@@ -191,7 +191,7 @@ static inline bool TupHasVirtualTuple(TupleTableSlot *slot)
 static inline HeapTuple TupGetHeapTuple(TupleTableSlot *slot)
 {
 	Assert(TupHasHeapTuple(slot));
-	return slot->PRIVATE_tts_heaptuple; 
+	return slot->PRIVATE_tts_heaptuple;
 }
 static inline MemTuple TupGetMemTuple(TupleTableSlot *slot)
 {
@@ -205,7 +205,7 @@ static inline void free_heaptuple_memtuple(TupleTableSlot *slot)
 	{
 		if(slot->PRIVATE_tts_heaptuple && slot->PRIVATE_tts_heaptuple != slot->PRIVATE_tts_htup_buf)
 			pfree(slot->PRIVATE_tts_heaptuple);
-		
+
 		if(slot->PRIVATE_tts_memtuple && slot->PRIVATE_tts_memtuple != slot->PRIVATE_tts_mtup_buf)
 			pfree(slot->PRIVATE_tts_memtuple);
 	}
@@ -249,10 +249,10 @@ static inline void slot_getsomeattrs(TupleTableSlot *slot, int attnum)
 
 	if(TupHasMemTuple(slot))
 	{
-		int i; 
+		int i;
 		for(i=0; i<attnum; ++i)
 			slot->PRIVATE_tts_values[i] = memtuple_getattr(
-					slot->PRIVATE_tts_memtuple, slot->tts_mt_bind, 
+					slot->PRIVATE_tts_memtuple, slot->tts_mt_bind,
 					i+1, &(slot->PRIVATE_tts_isnull[i]));
 
 		TupSetVirtualTuple(slot);
@@ -260,7 +260,7 @@ static inline void slot_getsomeattrs(TupleTableSlot *slot, int attnum)
 		return;
 	}
 
-	_slot_getsomeattrs(slot, attnum); 
+	_slot_getsomeattrs(slot, attnum);
 	TupSetVirtualTuple(slot);
 }
 
@@ -291,7 +291,7 @@ static inline void slot_set_ctid(TupleTableSlot *slot, ItemPointer new_ctid)
 		HeapTuple tuple = TupGetHeapTuple(slot);
 		tuple->t_self = *new_ctid;
 	}
-	
+
 	if (TupHasMemTuple(slot) || TupHasVirtualTuple(slot))
 		slot->PRIVATE_tts_synthetic_ctid = *new_ctid;
 }
@@ -311,7 +311,7 @@ static inline ItemPointer slot_get_ctid(TupleTableSlot *slot)
 		Assert(ItemPointerIsValid(&(slot->PRIVATE_tts_heaptuple->t_self)));
 		return &(slot->PRIVATE_tts_heaptuple->t_self);
 	}
-	
+
 	return &(slot->PRIVATE_tts_synthetic_ctid);
 }
 
@@ -357,7 +357,7 @@ static inline bool slot_attisnull(TupleTableSlot *slot, int attnum)
 
 	if(TupHasHeapTuple(slot))
 		return heap_attisnull_normalattr(slot->PRIVATE_tts_heaptuple, attnum);
-		
+
 	if(TupHasVirtualTuple(slot) && slot->PRIVATE_tts_nvalid >= attnum)
 		return slot->PRIVATE_tts_isnull[attnum-1];
 
@@ -378,7 +378,7 @@ extern TupleTableSlot *ExecAllocTableSlot(List **tupleTable);
 extern void ExecResetTupleTable(List *tupleTable, bool shouldFree);
 extern TupleTableSlot *MakeSingleTupleTableSlot(TupleDesc tupdesc);
 extern void ExecDropSingleTupleTableSlot(TupleTableSlot *slot);
-extern void ExecSetSlotDescriptor(TupleTableSlot *slot, TupleDesc tupdesc); 
+extern void ExecSetSlotDescriptor(TupleTableSlot *slot, TupleDesc tupdesc);
 
 extern TupleTableSlot *ExecStoreHeapTuple(HeapTuple tuple,
 			   TupleTableSlot *slot,
@@ -432,5 +432,6 @@ ExecCopyGenericTuple(TupleTableSlot *slot)
 extern TupleTableSlot *ExecCopySlot(TupleTableSlot *dstslot, TupleTableSlot *srcslot);
 
 extern void ExecModifyMemTuple(TupleTableSlot *slot, Datum *values, bool *isnull, bool *doRepl);
+extern HeapTuple ExecMaterializeSlotHeapTuple(TupleTableSlot *slot);
 
 #endif   /* TUPTABLE_H */

@@ -431,7 +431,7 @@ ExecStoreMinimalTuple(MemTuple mtup,
 	 * Free any old physical tuple belonging to the slot.
 	 */
 	free_heaptuple_memtuple(slot);
-	
+
 	/*
 	 * Store the new tuple into the specified slot.
 	 */
@@ -540,7 +540,7 @@ ExecStoreVirtualTuple(TupleTableSlot *slot)
 	 */
 	Assert(slot != NULL);
 	Assert(slot->tts_tupleDescriptor != NULL);
-	
+
 	TupClearIsEmpty(slot);
 	TupSetVirtualTuple(slot);
 
@@ -641,7 +641,7 @@ ExecCopySlotMemTuple(TupleTableSlot *slot)
 	 */
 	if (slot->PRIVATE_tts_memtuple)
 		return memtuple_copy_to(slot->PRIVATE_tts_memtuple, NULL, NULL);
-	
+
 	slot_getallattrs(slot);
 
 	/*
@@ -661,7 +661,7 @@ ExecCopySlotMemTupleTo(TupleTableSlot *slot, MemoryContext pctxt, char *dest, un
 
 	if(!len)
 		len = &dumlen;
-	
+
 	if (TupHasMemTuple(slot))
 	{
 		mtup = memtuple_copy_to(slot->PRIVATE_tts_memtuple, (MemTuple) dest, len);
@@ -686,7 +686,7 @@ ExecCopySlotMemTupleTo(TupleTableSlot *slot, MemoryContext pctxt, char *dest, un
 	Assert(mtup);
 	return mtup;
 }
-		
+
 /* --------------------------------
  *		ExecFetchSlotTuple
  *			Fetch the slot's regular physical tuple.
@@ -727,7 +727,7 @@ ExecFetchSlotHeapTuple(TupleTableSlot *slot)
 	tuplen = slot->PRIVATE_tts_htup_buf_len;
 	htup = heaptuple_form_to(slot->tts_tupleDescriptor, slot_get_values(slot), slot_get_isnull(slot),
 			slot->PRIVATE_tts_htup_buf, &tuplen);
-	
+
 	if(!htup)
 	{
 		if(slot->PRIVATE_tts_htup_buf)
@@ -880,7 +880,7 @@ void ExecModifyMemTuple(TupleTableSlot *slot, Datum *values, bool *isnull, bool 
 	 */
 	slot->PRIVATE_tts_nvalid = 0;
 	slot_getallattrs(slot);
-	
+
 	/* Next, we construct a new memtuple, on the htup buf to avoid palloc */
 	slot->PRIVATE_tts_heaptuple = NULL;
 	for(i = 0; i<slot->tts_tupleDescriptor->natts; ++i)
@@ -963,7 +963,7 @@ ExecInitResultTupleSlot(EState *estate, PlanState *planstate)
  *      so they can be reused for each tuple.  They're initialized here.
  *      During execution, Var nodes referencing system-defined attrs can
  *      occur only in the targetlist and qual exprs attached to a scan
- *      operator.  Those exprs are evaluated taking their input from the 
+ *      operator.  Those exprs are evaluated taking their input from the
  *      scan operator's Scan Tuple Slot.
  * ----------------
  */
@@ -1365,7 +1365,7 @@ slot_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
                 {
                         case SelfItemPointerAttributeNumber:
 							Assert(ItemPointerIsValid(&(htup->t_self)));
-							
+
 							result = PointerGetDatum(&(htup->t_self));
 							break;
                         case ObjectIdAttributeNumber:
@@ -1383,7 +1383,7 @@ slot_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
         else
         {
 			Assert(TupHasMemTuple(slot) || TupHasVirtualTuple(slot));
-			
+
                 switch(attnum)
                 {
                         case SelfItemPointerAttributeNumber:
@@ -1446,4 +1446,63 @@ slot_set_ctid_from_fake(TupleTableSlot *slot, ItemPointerData *fake_ctid)
 	}
 
 	slot_set_ctid(slot, fake_ctid);
+}
+
+HeapTuple
+ExecMaterializeSlotHeapTuple(TupleTableSlot *slot)
+{
+	uint32 tuplen;
+	HeapTuple htup;
+
+	/*
+	 * sanity checks
+	 */
+	Assert(!TupIsNull(slot));
+
+	/*
+	 * If we have a regular physical tuple, and it's locally palloc'd, we have
+	 * nothing to do.
+	 *
+	 * GPDB_84_MERGE_FIXME: do we need to utilize the "shouldFree" logic that's
+	 * set up elsewhere? We would need to update this function and others to set
+	 * the SHOULDFREE flag when appropriate.
+	 */
+	if (slot->PRIVATE_tts_heaptuple && TupShouldFree(slot))
+		return slot->PRIVATE_tts_heaptuple;
+
+	/*
+	 * If we already materialized heap tuple before, just return it to avoid
+	 * duplicated construction.
+	 */
+	if (slot->PRIVATE_tts_heaptuple &&
+		(slot->PRIVATE_tts_heaptuple == slot->PRIVATE_tts_htup_buf))
+		return slot->PRIVATE_tts_heaptuple;
+
+	slot_getallattrs(slot);
+
+	Assert(TupHasVirtualTuple(slot));
+	Assert(slot->PRIVATE_tts_nvalid == slot->tts_tupleDescriptor->natts);
+
+	/* Get the length of the buffer we need to allocate. */
+	tuplen = 0;
+	htup = heaptuple_form_to(slot->tts_tupleDescriptor, slot_get_values(slot),
+							 slot_get_isnull(slot), slot->PRIVATE_tts_htup_buf,
+							 &tuplen);
+	Assert(!htup);
+
+	/* Allocate. */
+	if(slot->PRIVATE_tts_htup_buf)
+		pfree(slot->PRIVATE_tts_htup_buf);
+	slot->PRIVATE_tts_htup_buf = (HeapTuple) MemoryContextAlloc(slot->tts_mcxt,
+																tuplen);
+	slot->PRIVATE_tts_htup_buf_len = tuplen;
+
+	/* Materialize in the allocated buffer. */
+	htup = heaptuple_form_to(slot->tts_tupleDescriptor, slot_get_values(slot),
+							 slot_get_isnull(slot), slot->PRIVATE_tts_htup_buf,
+							 &tuplen);
+	Assert(htup);
+
+	slot->PRIVATE_tts_heaptuple = htup;
+	return htup;
 }
