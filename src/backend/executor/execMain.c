@@ -3397,7 +3397,8 @@ ExecInsert(TupleTableSlot *slot,
 
 	/* AFTER ROW INSERT Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
-		resultRelInfo->ri_TrigDesc->n_after_row[TRIGGER_EVENT_INSERT] > 0)
+		resultRelInfo->ri_TrigDesc->n_after_row[TRIGGER_EVENT_INSERT] > 0 &&
+		!isUpdate)
 	{
 		HeapTuple tuple = ExecMaterializeSlot(slot);
 
