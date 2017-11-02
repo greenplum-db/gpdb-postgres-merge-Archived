@@ -225,49 +225,40 @@ set optimizer_trace_fallback = on;
 -- in ORCA currently, so we can use that to trigger fallback.
 update update_pk_test set a=1 where row(1,2) = (SELECT 1, 2);
 ERROR:  Cannot parallelize an UPDATE statement that updates the distribution columns
+reset optimizer_trace_fallback;
 --
 -- Verify that ExecInsert doesn't scribble on the old tuple, when the new
 -- tuple comes directly from the old table.
 --
--- First insert a tuple into a table. Then insert another identical tuple, but
--- roll it back. If the insertion incorrectly modified the xmin on the old
--- tuple, then it will become invisible when we roll back.
---
--- GPDB_84_MERGE_FIXME: surely there's a better way to reproduce this failure
--- than creating a utility mode connection? I cannot reproduce except on
--- master-only tables (like system tables).
---
-create external web table cmd(a text)
-  execute E'PGOPTIONS="-c gp_session_role=utility"                         \\
-    psql -p $GP_MASTER_PORT $GP_DATABASE $GP_USER -c                       \\
-      "CREATE TABLE execinsert_test (id int4, t text);                     \\
-       INSERT INTO execinsert_test values (1, ''foo'');"                   \\
-                                                                           \\
-    && PGOPTIONS="-c gp_session_role=utility"                              \\
-    psql -p $GP_MASTER_PORT $GP_DATABASE $GP_USER -c                       \\
-      "begin;                                                              \\
-       INSERT INTO execinsert_test select * FROM execinsert_test;          \\
-       rollback;"                                                          \\
-                                                                           \\
-    && PGOPTIONS="-c gp_session_role=utility"                              \\
-    psql -p $GP_MASTER_PORT $GP_DATABASE $GP_USER -c                       \\
-      "select * from execinsert_test;"                                     \\
-                                                                           \\
-    && PGOPTIONS="-c gp_session_role=utility"                              \\
-    psql -p $GP_MASTER_PORT $GP_DATABASE $GP_USER -c                       \\
-      "drop table execinsert_test;"'
-  on master format 'text';
-select * from cmd;
-     a      
-------------
- INSERT 0 1
- ROLLBACK
-  id |  t  
- ----+-----
-   1 | foo
- (1 row)
- 
- DROP TABLE
-(8 rows)
+CREATE TABLE execinsert_test (id int4, t text) DISTRIBUTED BY (id);
+INSERT INTO execinsert_test values (1, 'foo');
+-- Insert another identical tuple, but roll it back. If the insertion
+-- incorrectly modified the xmin on the old tuple, then it will become
+-- invisible when we roll back.
+begin;
+INSERT INTO execinsert_test select * FROM execinsert_test;
+rollback;
+select * from execinsert_test;
+ id |  t  
+----+-----
+  1 | foo
+(1 row)
 
-drop external web table cmd;
+drop table execinsert_test;
+-- Repeat with a hacked master-only table, just in case the planner decides
+-- to add a Motion node or something that hides the problem otherwise.
+CREATE TABLE execinsert_test (id int4, t text) DISTRIBUTED BY (id);
+set allow_system_table_mods='DML';
+delete from gp_distribution_policy where localoid='execinsert_test'::regclass;
+reset allow_system_table_mods;
+INSERT INTO execinsert_test values (1, 'foo');
+begin;
+INSERT INTO execinsert_test select * FROM execinsert_test;
+rollback;
+select * from execinsert_test;
+ id |  t  
+----+-----
+  1 | foo
+(1 row)
+
+drop table execinsert_test;
