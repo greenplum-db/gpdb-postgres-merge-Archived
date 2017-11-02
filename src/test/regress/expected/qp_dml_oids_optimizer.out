@@ -314,3 +314,22 @@ SELECT COUNT(distinct oid) FROM dml_ao where a = 10;
      2
 (1 row)
 
+--
+-- Check that new OIDs are generated even if the tuple being inserted came from
+-- the same relation and segment. This test is designed for planner only.
+--
+SET optimizer = off;
+SELECT COUNT(DISTINCT oid) FROM dml_ao;
+ count 
+-------
+     5
+(1 row)
+
+INSERT INTO dml_ao SELECT * FROM dml_ao LIMIT 1;
+SELECT COUNT(DISTINCT oid) FROM dml_ao; -- should be one greater
+ count 
+-------
+     6
+(1 row)
+
+RESET optimizer;

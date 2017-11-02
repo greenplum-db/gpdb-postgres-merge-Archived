@@ -175,3 +175,13 @@ INSERT INTO dml_ao (a, b, c) VALUES (10, 1, repeat('x', 50000));
 INSERT INTO dml_ao (a, b, c) VALUES (10, 2, repeat('x', 50000));
 
 SELECT COUNT(distinct oid) FROM dml_ao where a = 10;
+
+--
+-- Check that new OIDs are generated even if the tuple being inserted came from
+-- the same relation and segment. This test is designed for planner only.
+--
+SET optimizer = off;
+SELECT COUNT(DISTINCT oid) FROM dml_ao;
+INSERT INTO dml_ao SELECT * FROM dml_ao LIMIT 1;
+SELECT COUNT(DISTINCT oid) FROM dml_ao; -- should be one greater
+RESET optimizer;
