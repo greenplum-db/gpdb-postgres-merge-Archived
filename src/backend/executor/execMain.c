@@ -3101,6 +3101,8 @@ ExecInsert(TupleTableSlot *slot,
 	bool		rel_is_aocols = false;
 	bool		rel_is_external = false;
 	ItemPointerData lastTid;
+	Oid			row_oid = InvalidOid;
+	bool		result_rel_has_oids = false;
 
 	/*
 	 * get information on the (current) result relation
@@ -3167,6 +3169,9 @@ ExecInsert(TupleTableSlot *slot,
 
 	slot = reconstructMatchingTupleSlot(slot, resultRelInfo);
 
+	if (resultRelationDesc->rd_rel->relhasoids)
+		result_rel_has_oids = true;
+
 	if (rel_is_external &&
 		estate->es_result_partitions &&
 		estate->es_result_partitions->part->parrelid != 0)
@@ -3214,6 +3219,28 @@ ExecInsert(TupleTableSlot *slot,
 			newslot->tts_tableOid = slot->tts_tableOid; /* for constraints */
 			slot = newslot;
 			tuple = newtuple;
+
+
+			/*
+			 * If user want to set oid by trigger, remember it and set it back
+			 * later before inserting tuple. The behavior keeps the same as before, and
+			 * some extension depends on this feature.
+			 * NOTE: It's user's responsibility for keep oid unique, for example, use oid
+             * index to protect it.
+			 */
+			if (newtuple->t_data->t_infomask & HEAP_HASOID)
+			{
+				if (result_rel_has_oids)
+				{
+					row_oid = HeapTupleGetOid(newtuple);
+				}
+				else
+				{
+					ereport(WARNING,
+						(errcode(ERRCODE_TRIGGERED_DATA_CHANGE_VIOLATION),
+						errmsg("Oid returned by Trigger, but target relation doesn't have oids. So ignored.")));
+				}
+			}
 		}
 	}
 
@@ -3281,7 +3308,18 @@ ExecInsert(TupleTableSlot *slot,
 
 		Insist(rel_is_heap);
 
-		tuple = ExecFetchSlotHeapTuple(slot);
+		/*
+		 * We need to make a writable copy here, to avoid modification on physical tuple
+         * could damage shared buffer. In addition, we should set oid back which was generated
+         * by trigger UDF before, because some extension maybe depend on that.
+         * We don't care about aocs and external, because OID is not supported for two cases.
+         * In addition, we don't care about ao. MemTuple maybe point to internal buffer of
+         * AO scanner, but modification on MemTuple seems harmless.
+		 */
+		tuple = ExecMaterializeSlotHeapTuple(slot);
+
+		if (result_rel_has_oids && !isUpdate)
+			HeapTupleSetOid(tuple, row_oid);
 
 		newId = heap_insert(resultRelationDesc,
 							tuple,

@@ -1,0 +1,12 @@
+CREATE OR REPLACE FUNCTION trigger_return_new_oid(Oid)
+RETURNS trigger
+LANGUAGE C VOLATILE EXECUTE ON MASTER AS '@abs_builddir@/regress@DLSUFFIX@', 'trigger_udf_return_new_oid';
+
+CREATE OR REPLACE TABLE foo_oid(id int8, v text) WITH(OIDS=TRUE) DISTRIBUTED BY(id);
+
+CREATE TRIGGER t BEFORE INSERT ON foo_oid
+FOR EACH ROW EXECUTE PROCEDURE trigger_return_new_oid(20000);
+
+CREATE OR REPLACE TABLE foo_without_oid(id int8, v text) WITH(OIDS=TRUE) DISTRIBUTED BY(id);
+CREATE TRIGGER t BEFORE INSERT ON foo_without_oid
+FOR EACH ROW EXECUTE PROCEDURE trigger_return_new_oid(20000);

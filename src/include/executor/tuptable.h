@@ -432,5 +432,6 @@ ExecCopyGenericTuple(TupleTableSlot *slot)
 extern TupleTableSlot *ExecCopySlot(TupleTableSlot *dstslot, TupleTableSlot *srcslot);
 
 extern void ExecModifyMemTuple(TupleTableSlot *slot, Datum *values, bool *isnull, bool *doRepl);
+extern HeapTuple ExecMaterializeSlotHeapTuple(TupleTableSlot *slot);
 
 #endif   /* TUPTABLE_H */
