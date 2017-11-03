@@ -354,6 +354,7 @@ static void ATExecDropInherit(Relation rel, RangeVar *parent, bool is_partition)
 static void ATExecSetDistributedBy(Relation rel, Node *node,
 								   AlterTableCmd *cmd);
 static void ATPrepExchange(Relation rel, AlterPartitionCmd *pc);
+static void ATPrepDropConstraint(List **wqueue, Relation rel, AlterTableCmd *cmd, bool recurse, bool recursing);
 
 const char* synthetic_sql = "(internally generated SQL command)";
 
@@ -3661,12 +3662,10 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_DropConstraint:	/* DROP CONSTRAINT */
 		case AT_DropConstraintRecurse:
 			ATSimplePermissions(rel, false);
-			/* (!recurse &&  !recursing) is supposed to detect the ONLY clause.
-			 * We allow operations on the root of a partitioning hierarchy, but
-			 * not ONLY the root.
-			 */
-			ATExternalPartitionCheck(cmd->subtype, rel, recursing);
-			ATPartitionCheck(cmd->subtype, rel, (!recurse && !recursing), recursing);
+
+			/* In GPDB, we have some extra work to do because of partitioning */
+			ATPrepDropConstraint(wqueue, rel, cmd, recurse, recursing);
+
 			/* Recursion occurs during execution phase */
 			/* No command-specific prep needed except saving recurse flag */
 			if (recurse)
@@ -16828,6 +16827,123 @@ AtEOSubXact_on_commit_actions(bool isCommit, SubTransactionId mySubid,
 				oc->deleting_subid = isCommit ? parentSubid : InvalidSubTransactionId;
 			prev_item = cur_item;
 			cur_item = lnext(prev_item);
+		}
+	}
+}
+
+/* ALTER TABLE DROP CONSTRAINT */
+static void
+ATPrepDropConstraint(List **wqueue, Relation rel, AlterTableCmd *cmd, bool recurse, bool recursing)
+{
+	char	   *constrName = cmd->name;
+
+	/*
+	 * This command never recurses, but the offered relation may be partitioned,
+	 * in which case, we need to act as if the command specified the top-level
+	 * list of parts.
+	 */
+	if (cmd->subtype == AT_DropConstraintRecurse)
+		recursing = true;
+
+	/* (!recurse &&  !recursing) is supposed to detect the ONLY clause.
+	 * We allow operations on the root of a partitioning hierarchy, but
+	 * not ONLY the root.
+	 */
+	ATExternalPartitionCheck(cmd->subtype, rel, recursing);
+	ATPartitionCheck(cmd->subtype, rel, (!recurse && !recursing), recursing);
+
+	/*
+	 * If it's a UNIQUE or PRIMARY key constraint, and the table is partitioned,
+	 * also drop the constraint from the partitions. (CHECK constraints are handled
+	 * differently, by the normal constraint inheritance mechanism.)
+	 */
+	if (Gp_role == GP_ROLE_DISPATCH && rel_is_partitioned(RelationGetRelid(rel)))
+	{
+		List		*children;
+		ListCell	*lchild;
+		DestReceiver *dest = None_Receiver;
+		bool		is_unique_or_primary_key = false;
+		Relation	conrel;
+		Form_pg_constraint con;
+		SysScanDesc scan;
+		ScanKeyData key;
+		HeapTuple	tuple;
+
+		/* Is it UNIQUE or PRIMARY KEY constraint? */
+		conrel = heap_open(ConstraintRelationId, RowExclusiveLock);
+
+		/*
+		 * Find the target constraint
+		 */
+		ScanKeyInit(&key,
+					Anum_pg_constraint_conrelid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(RelationGetRelid(rel)));
+		scan = systable_beginscan(conrel, ConstraintRelidIndexId,
+								  true, SnapshotNow, 1, &key);
+
+		while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+		{
+			con = (Form_pg_constraint) GETSTRUCT(tuple);
+
+			if (strcmp(NameStr(con->conname), constrName) == 0)
+			{
+				if (con->contype == CONSTRAINT_PRIMARY ||
+					con->contype == CONSTRAINT_UNIQUE)
+					is_unique_or_primary_key = true;
+
+				break;
+			}
+		}
+
+		/*
+		 * If we don't find the constraint, assume it's not a UNIQUE or
+		 * PRIMARY KEY. We'll throw an error later, in the execution
+		 * phase.
+		 */
+		systable_endscan(scan);
+		heap_close(conrel, RowExclusiveLock);
+
+		if (is_unique_or_primary_key)
+		{
+			children = find_inheritance_children(RelationGetRelid(rel));
+
+			foreach(lchild, children)
+			{
+				Oid 			childrelid = lfirst_oid(lchild);
+				Relation 		childrel;
+
+				RangeVar 		*rv;
+				AlterTableCmd 	*atc;
+				AlterTableStmt 	*ats;
+
+				if (childrelid == RelationGetRelid(rel))
+					continue;
+
+				childrel = heap_open(childrelid, AccessShareLock);
+				CheckTableNotInUse(childrel, "ALTER TABLE");
+
+				/* Recurse to child */
+				atc = copyObject(cmd);
+				atc->subtype = AT_DropConstraintRecurse;
+
+				rv = makeRangeVar(get_namespace_name(RelationGetNamespace(childrel)),
+								  get_rel_name(childrelid), -1);
+
+				ats = makeNode(AlterTableStmt);
+				ats->relation = rv;
+				ats->cmds = list_make1(atc);
+				ats->relkind = OBJECT_TABLE;
+
+				heap_close(childrel, NoLock);
+
+				ProcessUtility((Node *)ats,
+							   synthetic_sql,
+							   NULL,
+							   false, /* not top level */
+							   dest,
+							   NULL);
+			}
 		}
 	}
 }
