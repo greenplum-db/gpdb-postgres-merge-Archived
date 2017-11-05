@@ -23,6 +23,7 @@
 #include "cdb/cdbpartition.h"
 #include "commands/vacuum.h"
 #include "executor/execdesc.h"
+#include "executor/executor.h"
 #include "nodes/makefuncs.h"
 #include "nodes/plannodes.h"
 #include "parser/parsetree.h"
@@ -205,9 +206,7 @@ autostats_get_cmdtype(QueryDesc *queryDesc, AutoStatsCmdType * pcmdType, Oid *pr
 				/* CTAS -- see executor/execMain.c for DR_intorel magic
 				 * GPDB_84_MERGE_FIXME: is this even close to correct? How do we test
 				 * that this is working correctly? */
-				DR_intorel *myState = (DR_intorel *) queryDesc->dest;
-				if (myState && myState->pub.mydest == DestIntoRel && myState->rel)
-					relationOid = RelationGetRelid(myState->rel);
+				relationOid = GetIntoRelOid(queryDesc);
 				cmdType = AUTOSTATS_CMDTYPE_CTAS;
 			}
 			break;

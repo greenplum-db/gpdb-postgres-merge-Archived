@@ -4726,6 +4726,30 @@ ExecGetActivePlanTree(QueryDesc *queryDesc)
 		return queryDesc->planstate;
 }
 
+/*
+ * Support for SELECT INTO (a/k/a CREATE TABLE AS)
+ *
+ * We implement SELECT INTO by diverting SELECT's normal output with
+ * a specialized DestReceiver type.
+ */
+
+typedef struct
+{
+	DestReceiver pub;			/* publicly-known function pointers */
+	EState	   *estate;			/* EState we are working with */
+	Relation	rel;			/* Relation to write to */
+	bool		use_wal;		/* do we need to WAL-log our writes? */
+
+	struct AppendOnlyInsertDescData *ao_insertDesc; /* descriptor to AO tables */
+	struct AOCSInsertDescData *aocs_ins;           /* descriptor for aocs */
+
+	bool		is_bulkload;
+
+	ItemPointerData last_heap_tid;
+
+	struct MirroredBufferPoolBulkLoadInfo *bulkloadinfo;
+
+} DR_intorel;
 
 /*
  * OpenIntoRel --- actually create the SELECT INTO target relation
@@ -5091,6 +5115,22 @@ CloseIntoRel(QueryDesc *queryDesc)
 
 		myState->rel = NULL;
 	}
+}
+
+/*
+ * Get the OID of the relation created for SELECT INTO or CREATE TABLE AS.
+ *
+ * To be called between ExecutorStart and ExecutorEnd.
+ */
+Oid
+GetIntoRelOid(QueryDesc *queryDesc)
+{
+	DR_intorel *myState = (DR_intorel *) queryDesc->dest;
+
+	if (myState && myState->pub.mydest == DestIntoRel && myState->rel)
+		return RelationGetRelid(myState->rel);
+	else
+		return InvalidOid;
 }
 
 /*

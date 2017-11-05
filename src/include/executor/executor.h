@@ -248,6 +248,8 @@ extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti,
 extern PlanState *ExecGetActivePlanTree(QueryDesc *queryDesc);
 extern DestReceiver *CreateIntoRelDestReceiver(void);
 
+extern Oid GetIntoRelOid(QueryDesc *queryDesc);
+
 extern AttrMap *makeAttrMap(int base_count, AttrNumber *base_map);
 extern AttrNumber attrMap(AttrMap *map, AttrNumber anum);
 extern Node *attrMapExpr(AttrMap *map, Node *expr);
