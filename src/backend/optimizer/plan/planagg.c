@@ -528,8 +528,6 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 	subparse->limitCount = (Node *) makeConst(INT8OID, -1, sizeof(int64),
 											  Int64GetDatum(1), false,
 											  FLOAT8PASSBYVAL);
-											  /* GPDB_84_MERGE_FIXME: make sure
-											   * FLOAT8PASSBYVAL is always true */
 
 	/*
 	 * Generate the plan for the subquery.	We already have a Path for the

@@ -2181,8 +2181,6 @@ float8_regr_accum(PG_FUNCTION_ARGS)
 
 		result = construct_array(transdatums, 6,
 								 FLOAT8OID,
-								 /* GPDB_84_MERGE_FIXME: make sure
-								  * FLOAT8PASSBYVAL is hardcoded to true */
 								 sizeof(float8), FLOAT8PASSBYVAL, 'd');
 
 		PG_RETURN_ARRAYTYPE_P(result);

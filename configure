@@ -894,8 +894,6 @@ with_libcurl
 with_apr_config
 with_apu_config
 with_gnu_ld
-enable_float4_byval
-enable_float8_byval
 enable_largefile
 '
       ac_precious_vars='build_alias
@@ -1556,8 +1554,6 @@ Optional Features:
   --enable-segwalrep      enable segment WAL replication
   --disable-thread-safety  Do not make client libraries thread-safe
   --enable-thread-safety-force  force thread-safety despite thread test failure
-  --disable-float4-byval  disable float4 passed by value
-  --disable-float8-byval  disable float8 passed by value
   --disable-largefile     omit support for large files
 
 Optional Packages:
@@ -17028,117 +17024,29 @@ _ACEOF
 
 
 
-# Decide whether float4 is passed by value: user-selectable, enabled by default
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build with float4 passed by value" >&5
-$as_echo_n "checking whether to build with float4 passed by value... " >&6; }
-
-pgac_args="$pgac_args enable_float4_byval"
-
-# Check whether --enable-float4-byval was given.
-if test "${enable_float4_byval+set}" = set; then :
-  enableval=$enable_float4_byval;
-  case $enableval in
-    yes)
+# In GPDB, float4 and float8 are always passed by value. There is
+# GPDB-specific code that assumes that in various places, so it's not
+# configurable.
+float4passbyval=true
 
 $as_echo "#define USE_FLOAT4_BYVAL 1" >>confdefs.h
 
-               float4passbyval=true
-      ;;
-    no)
-      float4passbyval=false
-      ;;
-    *)
-      as_fn_error $? "no argument expected for --enable-float4-byval option" "$LINENO" 5
-      ;;
-  esac
-
-else
-  enable_float4_byval=yes
-
-$as_echo "#define USE_FLOAT4_BYVAL 1" >>confdefs.h
-
-               float4passbyval=true
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_float4_byval" >&5
-$as_echo "$enable_float4_byval" >&6; }
 
 cat >>confdefs.h <<_ACEOF
 #define FLOAT4PASSBYVAL $float4passbyval
 _ACEOF
 
 
-# Decide whether float8 is passed by value.
 # Note: this setting also controls int8 and related types such as timestamp.
-# If sizeof(Datum) >= 8, this is user-selectable, enabled by default.
-# If not, trying to select it is an error.
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build with float8 passed by value" >&5
-$as_echo_n "checking whether to build with float8 passed by value... " >&6; }
+# If sizeof(Datum) < 8, we are screwed.
 if test $ac_cv_sizeof_unsigned_long -ge 8 ; then
-
-pgac_args="$pgac_args enable_float8_byval"
-
-# Check whether --enable-float8-byval was given.
-if test "${enable_float8_byval+set}" = set; then :
-  enableval=$enable_float8_byval;
-  case $enableval in
-    yes)
-      :
-      ;;
-    no)
-      :
-      ;;
-    *)
-      as_fn_error $? "no argument expected for --enable-float8-byval option" "$LINENO" 5
-      ;;
-  esac
-
+  float8passbyval=true
 else
-  enable_float8_byval=yes
-
+  as_fn_error $? "GPDB is not supported on 32-bit platforms." "$LINENO" 5
 fi
-
-
-else
-
-pgac_args="$pgac_args enable_float8_byval"
-
-# Check whether --enable-float8-byval was given.
-if test "${enable_float8_byval+set}" = set; then :
-  enableval=$enable_float8_byval;
-  case $enableval in
-    yes)
-      :
-      ;;
-    no)
-      :
-      ;;
-    *)
-      as_fn_error $? "no argument expected for --enable-float8-byval option" "$LINENO" 5
-      ;;
-  esac
-
-else
-  enable_float8_byval=no
-
-fi
-
-
-  if test "$enable_float8_byval" = yes ; then
-    as_fn_error $? "--enable-float8-byval is not supported on 32-bit platforms." "$LINENO" 5
-  fi
-fi
-if test "$enable_float8_byval" = yes ; then
 
 $as_echo "#define USE_FLOAT8_BYVAL 1" >>confdefs.h
 
-  float8passbyval=true
-else
-  float8passbyval=false
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_float8_byval" >&5
-$as_echo "$enable_float8_byval" >&6; }
 
 cat >>confdefs.h <<_ACEOF
 #define FLOAT8PASSBYVAL $float8passbyval

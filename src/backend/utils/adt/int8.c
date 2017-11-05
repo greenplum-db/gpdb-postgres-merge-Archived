@@ -681,27 +681,6 @@ int8mod(PG_FUNCTION_ARGS)
 	PG_RETURN_INT64(arg1 % arg2);
 }
 
-/* GPDB_84_MERGE_FIXME: ensure that USE_FLOAT8_BYVAL is hardcoded to true, then
- * remove the following block (since int8inc already handles it). */
-#if 0
-Datum
-int8inc(PG_FUNCTION_ARGS)
-{
-	/* Assume int8 is byval */
-	int64		arg = PG_GETARG_INT64(0);
-	int64		result;
-
-	result = arg + 1;
-	/* Overflow check */
-	if (result < 0 && arg > 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("bigint out of range")));
-
-	PG_RETURN_INT64(result);
-}
-#endif
-
 Datum
 int8inc(PG_FUNCTION_ARGS)
 {

@@ -2058,8 +2058,10 @@ OidSendFunctionCall(Oid functionId, Datum val)
 }
 
 
-/* GPDB_84_MERGE_FIXME: reenable the following code, perhaps? With USE_*_BYVAL
- * hardcoded to true, of course. */
+/*
+ * On GPDB, int64, float8 and float4 are always pass-by-value, and there are
+ * static inline functions in postgres.h to implement these.
+ */
 #if 0
 /*-------------------------------------------------------------------------
  *		Support routines for standard maybe-pass-by-reference datatypes
@@ -2173,7 +2175,8 @@ DatumGetFloat8(Datum X)
 }
 
 #endif /* USE_FLOAT8_BYVAL */
-#endif
+
+#endif /* GPDB */
 
 
 /*-------------------------------------------------------------------------

@@ -58,11 +58,12 @@
    (--enable-thread-safety) */
 #undef ENABLE_THREAD_SAFETY
 
-/* float4 values are passed by value if 'true', by reference if 'false' */
+/* float4 values are passed by value if 'true', by reference if 'false'
+   (always true in GPDB) */
 #undef FLOAT4PASSBYVAL
 
 /* float8, int8, and related values are passed by value if 'true', by
-   reference if 'false' */
+   reference if 'false' (always true in GPDB) */
 #undef FLOAT8PASSBYVAL
 
 /* Define to 1 if getpwuid_r() takes a 5th argument. */
@@ -893,12 +894,12 @@
 /* Define to 1 to build with debug_ntuplestore. (--enable-ntuplestore) */
 #undef USE_DEBUG_NTUPLESTORE
 
-/* Define to 1 if you want float4 values to be passed by value.
-   (--enable-float4-byval) */
+/* Define to 1 if you want float4 values to be passed by value. (Always
+   defined in GPDB) */
 #undef USE_FLOAT4_BYVAL
 
 /* Define to 1 if you want float8, int8, etc values to be passed by value.
-   (--enable-float8-byval) */
+   (Always defined in GPDB) */
 #undef USE_FLOAT8_BYVAL
 
 /* Define to 1 to build with gpcloud (--enable-gpcloud) */
