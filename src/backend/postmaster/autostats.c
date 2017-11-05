@@ -203,9 +203,7 @@ autostats_get_cmdtype(QueryDesc *queryDesc, AutoStatsCmdType * pcmdType, Oid *pr
 		case CMD_SELECT:
 			if (stmt->intoClause != NULL)
 			{
-				/* CTAS -- see executor/execMain.c for DR_intorel magic
-				 * GPDB_84_MERGE_FIXME: is this even close to correct? How do we test
-				 * that this is working correctly? */
+				/* CTAS */
 				relationOid = GetIntoRelOid(queryDesc);
 				cmdType = AUTOSTATS_CMDTYPE_CTAS;
 			}
