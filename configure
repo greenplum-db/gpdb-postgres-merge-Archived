@@ -17038,12 +17038,7 @@ _ACEOF
 
 
 # Note: this setting also controls int8 and related types such as timestamp.
-# If sizeof(Datum) < 8, we are screwed.
-if test $ac_cv_sizeof_unsigned_long -ge 8 ; then
-  float8passbyval=true
-else
-  as_fn_error $? "GPDB is not supported on 32-bit platforms." "$LINENO" 5
-fi
+float8passbyval=true
 
 $as_echo "#define USE_FLOAT8_BYVAL 1" >>confdefs.h
 
