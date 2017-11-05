@@ -7634,10 +7634,6 @@ StartupXLOG(void)
 		 */
 		CurrentResourceOwner = ResourceOwnerCreate(NULL, "StartupXLOG");
 
-		/* GPDB_84_MERGE_FIXME: we removed XLogInitRelationCache from this code
-		 * because it doesn't exist in upstream anymore. Does it need a
-		 * replacement? */
-
 		/*
 		 * Setup syscache so that PT tuples may be updated using usual
 		 * heap access methods.  This is safe because:
@@ -7939,10 +7935,6 @@ StartupXLOG_Pass3(void)
 		     "StartupXLOG_RedoPass3Context: Control File checkpoint location is %s",
 		     XLogLocationToString(&ControlFile->checkPoint));
 	}
-
-	/* GPDB_84_MERGE_FIXME: we removed XLogInitRelationCache from this code
-	 * because it doesn't exist in upstream anymore. Does it need a
-	 * replacement? */
 
 	UtilityModeFindOrCreateDtmRedoFile();
 
