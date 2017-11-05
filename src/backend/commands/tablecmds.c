@@ -8789,13 +8789,6 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 					 errmsg("constraint \"%s\" of relation \"%s\" does not exist",
 							constrName,
 							RelationGetRelationName(childrel))));
-		/* Otherwise if more than one constraint deleted, notify */
-		/* GPDB_84_MERGE_FIXME we dont have the deleted count easily anymore
-		else if (deleted > 1 && Gp_role != GP_ROLE_EXECUTE)
-			ereport(NOTICE,
-					(errmsg("multiple constraints named \"%s\" were dropped",
-							constrName)));
-		*/
 
 		heap_close(childrel, NoLock);
 	}
