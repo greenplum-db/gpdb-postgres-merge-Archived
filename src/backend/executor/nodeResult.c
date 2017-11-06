@@ -267,9 +267,19 @@ static bool TupleMatchesHashFilter(Result *resultNode, TupleTableSlot *resultSlo
 		Assert(resultNode->hashFilter);
 		ListCell	*cell = NULL;
 
-		// GPDB_84_MERGE_FIXME: Disabled this assertion temporarily. See
-		// https://github.com/greenplum-db/gpdb/issues/3527
-		//Assert(list_length(resultNode->hashList) <= resultSlot->tts_tupleDescriptor->natts);
+		/*
+		 * We don't need to check Assert(list_length(resultNode->hashList) <= resultSlot->tts_tupleDescriptor->natts),
+		 * because optimizer could be smart to reuse columns for following queries:
+		 * create table tbl(a int, b int, p text, c int) distributed by(a, b);
+		 * create function immutable_generate_series(integer, integer) returns setof integer as
+		 * 'generate_series_int4' language internal immutable;
+		 * set optimizer=on;
+		 * insert into tbl select i, i, i || 'SOME NUMBER SOME NUMBER', i % 10 from immutable_generate_series(1, 1000) i;
+		 * The hashList specified by planner is (1, 1) which references immutable_generate_series for (a, b), and
+		 * resultSlot->tts_tupleDescriptor only contains immutable_generate_series. It's good, so we don't need to
+		 * check again. And slot_getattr(resultSlot, attnum, &isnull) will check
+		 * attnum <= resultSlot->tts_tupleDescriptor->natts for us.
+		 */
 
 		CdbHash *hash = makeCdbHash(GpIdentity.numsegments);
 		cdbhashinit(hash);
