@@ -3187,7 +3187,7 @@ ExecInsert(TupleTableSlot *slot,
 		if (resultRelInfo->ri_aocsInsertDesc == NULL)
 		{
 			ResultRelInfoSetSegno(resultRelInfo, estate->es_result_aosegnos);
-			resultRelInfo->ri_aocsInsertDesc = aocs_insert_init(resultRelationDesc, 
+			resultRelInfo->ri_aocsInsertDesc = aocs_insert_init(resultRelationDesc,
 																resultRelInfo->ri_aosegno, false);
 		}
 	}
@@ -4903,7 +4903,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 	 */
 	bufferPoolBulkLoad = 
 		(relstorage_is_buffer_pool(relstorage) ?
-									XLog_CanBypassWal() : false);
+									!XLogIsNeeded() : false);
 
 	/* Now we can actually create the new relation */
 	intoRelationId = heap_create_with_catalog(intoName,

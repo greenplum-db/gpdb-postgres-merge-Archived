@@ -1137,8 +1137,6 @@ agg_retrieve_direct(AggState *aggstate)
 				 * comparison (in group mode) and for projection.
 				 */
 
-				Gpmon_Incr_Rows_In(GpmonPktFromAggState(aggstate));
-				CheckSendPlanStateGpmonPkt(&aggstate->ss.ps);
 				slot_getallattrs(outerslot);
 				aggstate->grp_firstTuple = memtuple_form_to(firstSlot->tts_mt_bind,
 						slot_get_values(outerslot),
@@ -1257,8 +1255,6 @@ agg_retrieve_direct(AggState *aggstate)
 						break;
 					}
 
-					Gpmon_Incr_Rows_In(GpmonPktFromAggState(aggstate));
-					CheckSendPlanStateGpmonPkt(&aggstate->ss.ps);
 					/* set up for next advance aggregates call */
 					tmpcontext->ecxt_outertuple = outerslot;
 
@@ -1481,9 +1477,6 @@ agg_retrieve_direct(AggState *aggstate)
 			 * and the representative input tuple.	Note we do not support
 			 * aggregates returning sets ...
 			 */
-			Gpmon_Incr_Rows_Out(GpmonPktFromAggState(aggstate));
-			CheckSendPlanStateGpmonPkt(&aggstate->ss.ps);
-
 			return ExecProject(projInfo, NULL);
 		}
 	}
@@ -1597,8 +1590,6 @@ agg_retrieve_hash_table(AggState *aggstate)
 			 * and the representative input tuple.	Note we do not support
 			 * aggregates returning sets ...
 			 */
-			Gpmon_Incr_Rows_Out(GpmonPktFromAggState(aggstate));
-			CheckSendPlanStateGpmonPkt(&aggstate->ss.ps);
 			return ExecProject(projInfo, NULL);
 		}
 	}
@@ -2354,8 +2345,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	aggstate->mem_manager.manager = aggstate->aggcontext;
 	aggstate->mem_manager.realloc_ratio = 1;
 
-	initGpmonPktForAgg((Plan *) node, &aggstate->ss.ps.gpmon_pkt, estate);
-
 	return aggstate;
 }
 
@@ -2629,14 +2618,6 @@ get_grouping_groupid(TupleTableSlot *slot, int grping_attno)
 	grouping = DatumGetInt64(grping_datum);
 
 	return grouping;
-}
-
-void
-initGpmonPktForAgg(Plan *planNode, gpmon_packet_t *gpmon_pkt, EState *estate)
-{
-	Assert(planNode != NULL && gpmon_pkt != NULL && IsA(planNode, Agg));
-
-	InitPlanNodeGpmonPkt(planNode, gpmon_pkt, estate);
 }
 
 /*

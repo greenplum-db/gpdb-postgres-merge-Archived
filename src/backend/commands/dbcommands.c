@@ -1175,7 +1175,7 @@ createdb(CreatedbStmt *stmt)
 				PersistentFileSysRelStorageMgr localRelStorageMgr;
 				PersistentFileSysRelBufpoolKind relBufpoolKind;
 				
-				useWal = !XLog_CanBypassWal();
+				useWal = XLogIsNeeded();
 				
 				GpPersistentRelationNode_GetRelationInfo(
 													dbInfoRel->relkind,

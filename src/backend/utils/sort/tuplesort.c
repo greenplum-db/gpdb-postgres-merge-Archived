@@ -1073,10 +1073,6 @@ puttuple_common(Tuplesortstate *state, SortTuple *tuple)
 
 	state->totalNumTuples++;
 
-	/* gpmon */
-	if(state->gpmon_pkt)
-		Gpmon_Incr_Rows_In(state->gpmon_pkt);
-
 	switch (state->status)
 	{
 		case TSS_INITIAL:
