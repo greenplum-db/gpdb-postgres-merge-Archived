@@ -532,7 +532,24 @@ generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
 	{
 		optype = PSETOP_SEQUENTIAL_QD;
 	}
-	
+
+	if ( optype == PSETOP_PARALLEL_PARTITIONED )
+	{
+		/*
+		 * CDB: Collocate non-distinct tuples prior to sort or hash. We must
+		 * put the Redistribute nodes below the Append, otherwise we lose
+		 * the order of the firstFlags.
+		 */
+		ListCell   *lc;
+		List	   *l = NIL;
+
+		foreach(lc, planlist)
+		{
+			l = lappend(l, make_motion_hash_all_targets(root, lfirst(lc)));
+		}
+		planlist = l;
+	}
+
 	/*
 	 * Generate tlist for Append plan node.
 	 *
@@ -559,12 +576,6 @@ generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
 	{
 		*sortClauses = NIL;
 		return plan;
-	}
-
-	if ( optype == PSETOP_PARALLEL_PARTITIONED )
-	{
-		/* CDB: Collocate non-distinct tuples prior to sort or hash. */
-		plan = (Plan *) make_motion_hash_all_targets(root, plan);
 	}
 
 	/*
