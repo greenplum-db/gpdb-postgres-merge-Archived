@@ -282,7 +282,7 @@ get_sortgroupclause_tle(SortGroupClause *sgClause,
 /*
  * get_sortgroupclauses_tles
  *      Find a list of unique targetlist entries matching the given list of
- *      SortClause, GroupClause, or GroupingClauses.
+ *      SortGroupClauses, or GroupingClauses.
  *
  * In each grouping set, targets that do not appear in a GroupingClause
  * will be put in the front of those that appear in a GroupingClauses.
@@ -290,7 +290,8 @@ get_sortgroupclause_tle(SortGroupClause *sgClause,
  * of their appearance.
  *
  * The unique targetlist entries are returned in *tles, and the sort
- * operators associated with each tle are returned in *grpOperators.
+ * and equality operators associated with each tle are returned in
+ * *sortops and *eqops.
  */
 static void
 get_sortgroupclauses_tles_recurse(List *clauses, List *targetList,
@@ -577,10 +578,31 @@ grouping_is_sortable(List *groupClause)
 
 	foreach(glitem, groupClause)
 	{
-		SortGroupClause *groupcl = (SortGroupClause *) lfirst(glitem);
+		Node	   *node = lfirst(glitem);
 
-		if (!OidIsValid(groupcl->sortop))
-			return false;
+		if (node == NULL)
+			continue;
+
+		if (IsA(node, List))
+		{
+			if (!grouping_is_sortable((List *) node))
+				return false;
+		}
+		else if (IsA(node, GroupingClause))
+		{
+			if (!grouping_is_sortable(((GroupingClause *) node)->groupsets))
+				return false;
+		}
+		else
+		{
+			SortGroupClause *groupcl;
+
+			Assert(IsA(node, SortGroupClause));
+
+			groupcl = (SortGroupClause *) node;
+			if (!OidIsValid(groupcl->sortop))
+				return false;
+		}
 	}
 	return true;
 }
@@ -600,10 +622,28 @@ grouping_is_hashable(List *groupClause)
 
 	foreach(glitem, groupClause)
 	{
-		SortGroupClause *groupcl = (SortGroupClause *) lfirst(glitem);
+		Node	   *node = lfirst(glitem);
 
-		if (!op_hashjoinable(groupcl->eqop))
-			return false;
+		if (node == NULL)
+			continue;
+
+		if (IsA(node, List))
+		{
+			if (!grouping_is_hashable((List *) node))
+				return false;
+		}
+		else if (IsA(node, GroupingClause))
+		{
+			if (!grouping_is_hashable(((GroupingClause *) node)->groupsets))
+				return false;
+		}
+		else
+		{
+			SortGroupClause *groupcl = (SortGroupClause *) node;
+
+			if (!op_hashjoinable(groupcl->eqop))
+				return false;
+		}
 	}
 	return true;
 }
