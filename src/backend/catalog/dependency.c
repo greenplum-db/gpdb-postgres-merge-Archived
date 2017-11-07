@@ -1574,8 +1574,7 @@ find_expr_references_walker(Node *node,
 						   context->addrs);
 		/* fall through to examine arguments */
 	}
-<<<<<<< HEAD
-	if (IsA(node, WindowFunc))
+	else if (IsA(node, WindowFunc))
 	{
 		WindowFunc *wfunc = (WindowFunc *) node;
 
@@ -1584,9 +1583,6 @@ find_expr_references_walker(Node *node,
 		/* fall through to examine arguments */
 	}
 	if (IsA(node, SubPlan))
-=======
-	else if (is_subplan(node))
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	{
 		/* Extra work needed here if we ever need this case */
 		elog(ERROR, "already-planned subqueries not supported");
