@@ -2679,11 +2679,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 			extra_conf = fopen(temp_config, "r");
 			if (extra_conf == NULL)
 			{
-<<<<<<< HEAD
-				fprintf(stderr, _("\n%s: could not open %s to read extra config:\nError was %s\n"), progname, temp_config, strerror(errno));
-=======
 				fprintf(stderr, _("\n%s: could not open \"%s\" to read extra config: %s\n"), progname, temp_config, strerror(errno));
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 				exit_nicely(2);
 			}
 			while (fgets(line_buf, sizeof(line_buf), extra_conf) != NULL)
