@@ -335,19 +335,14 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	 */
 	foreach(l, qry->groupClause)
 	{
-<<<<<<< HEAD
 		Node	   *grpcl = lfirst(l);
 		List	   *exprs;
 		ListCell   *l2;
-=======
-		SortGroupClause *grpcl = (SortGroupClause *) lfirst(l);
-		Node	   *expr;
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 		if (grpcl == NULL)
 			continue;
 
-		Assert(IsA(grpcl, GroupClause) || IsA(grpcl, GroupingClause));
+		Assert(IsA(grpcl, SortGroupClause) || IsA(grpcl, GroupingClause));
 
 		exprs = get_groupclause_exprs(grpcl, qry->targetList);
 
@@ -490,7 +485,7 @@ parseCheckWindowFuncs(ParseState *pstate, Query *qry)
 		Node	   *grpcl = lfirst(l);
 		Node	   *expr;
 
-		Assert(IsA(grpcl, GroupClause) || IsA(grpcl, GroupingClause));
+		Assert(IsA(grpcl, SortGroupClause) || IsA(grpcl, GroupingClause));
 
 		expr = (Node *) get_groupclause_exprs(grpcl, qry->targetList);
 
@@ -816,13 +811,13 @@ get_groupclause_exprs(Node *grpcl, List *targetList)
 	if ( !grpcl )
 		return result;
 
-	Assert(IsA(grpcl, GroupClause) ||
+	Assert(IsA(grpcl, SortGroupClause) ||
 		   IsA(grpcl, GroupingClause) ||
 		   IsA(grpcl, List));
 
-	if (IsA(grpcl, GroupClause))
+	if (IsA(grpcl, SortGroupClause))
 	{
-		Node *node = get_sortgroupclause_expr((GroupClause*)grpcl, targetList);
+		Node *node = get_sortgroupclause_expr((SortGroupClause *) grpcl, targetList);
 		result = lappend(result, node);
 	}
 
