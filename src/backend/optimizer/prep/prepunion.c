@@ -34,20 +34,14 @@
 #include "access/heapam.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
 #include "cdb/cdbpartition.h"
 #include "commands/tablecmds.h"
-#include "nodes/makefuncs.h"
-#include "optimizer/paths.h"
-#include "nodes/nodeFuncs.h"
-=======
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
-#include "optimizer/clauses.h"
+#include "nodes/nodeFuncs.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 #include "optimizer/plancat.h"
 #include "optimizer/planmain.h"
 #include "optimizer/planner.h"
@@ -68,15 +62,11 @@ static Plan *recurse_set_operations(Node *setOp, PlannerInfo *root,
 					   double tuple_fraction,
 					   List *colTypes, bool junkOK,
 					   int flag, List *refnames_tlist,
-<<<<<<< HEAD
-					   List **sortClauses);
+					   List **sortClauses, double *pNumGroups);
 static Plan *generate_recursion_plan(SetOperationStmt *setOp,
 						PlannerInfo *root, double tuple_fraction,
 						List *refnames_tlist,
 						List **sortClauses);
-=======
-					   List **sortClauses, double *pNumGroups);
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 static Plan *generate_union_plan(SetOperationStmt *op, PlannerInfo *root,
 					double tuple_fraction,
 					List *refnames_tlist,
@@ -353,13 +343,13 @@ generate_recursion_plan(SetOperationStmt *setOp, PlannerInfo *root,
 	 */
 	lplan = recurse_set_operations(setOp->larg, root, tuple_fraction,
 								   setOp->colTypes, false, -1,
-								   refnames_tlist, sortClauses);
+								   refnames_tlist, sortClauses, NULL);
 
 	/* The right plan will want to look at the left one ... */
 	root->non_recursive_plan = lplan;
 	rplan = recurse_set_operations(setOp->rarg, root, tuple_fraction,
 								   setOp->colTypes, false, -1,
-								   refnames_tlist, sortClauses);
+								   refnames_tlist, sortClauses, NULL);
 	root->non_recursive_plan = NULL;
 
 	/*
@@ -453,32 +443,17 @@ generate_union_plan(SetOperationStmt *op, PlannerInfo *root,
 	 * For UNION ALL, we just need the Append plan.  For UNION, need to add
 	 * node(s) to remove duplicates.
 	 */
-<<<<<<< HEAD
-	if (!op->all)
-	{
-		List	   *sortList;
-
-		sortList = generate_setop_sortlist(tlist);
-		if (sortList)
-		{
-			if ( optype == PSETOP_PARALLEL_PARTITIONED )
-			{
-				/* CDB: Hash motion to collocate non-distinct tuples. */
-				plan = (Plan *) make_motion_hash_all_targets(root, plan);
-			}
-			plan = (Plan *) make_sort_from_sortclauses(root, sortList, plan);
-			mark_sort_locus(plan); /* CDB */
-			plan = (Plan *) make_unique(plan, sortList);
-            plan->flow = pull_up_Flow(plan, plan->lefttree);
-		}
-		*sortClauses = sortList;
-	}
-=======
 	if (op->all)
 		*sortClauses = NIL;		/* result of UNION ALL is always unsorted */
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	else
+	{
+		if ( optype == PSETOP_PARALLEL_PARTITIONED )
+		{
+			/* CDB: Hash motion to collocate non-distinct tuples. */
+			plan = (Plan *) make_motion_hash_all_targets(root, plan);
+		}
 		plan = make_union_unique(op, plan, root, tuple_fraction, sortClauses);
+	}
 
 	/*
 	 * Estimate number of groups if caller wants it.  For now we just
@@ -514,11 +489,8 @@ generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
 	long		numGroups;
 	bool		use_hash;
 	SetOpCmd	cmd;
-<<<<<<< HEAD
-	GpSetOpType optype = PSETOP_NONE; /* CDB */
-=======
 	int			firstFlag;
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
+	GpSetOpType optype = PSETOP_NONE; /* CDB */
 
 	/* Recurse on children, ensuring their outputs are marked */
 	lplan = recurse_set_operations(op->larg, root,
@@ -588,18 +560,13 @@ generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
 		*sortClauses = NIL;
 		return plan;
 	}
-	
+
 	if ( optype == PSETOP_PARALLEL_PARTITIONED )
 	{
-		/* CDB: Collocate non-distinct tuples prior to sort. */
+		/* CDB: Collocate non-distinct tuples prior to sort or hash. */
 		plan = (Plan *) make_motion_hash_all_targets(root, plan);
 	}
 
-<<<<<<< HEAD
-	plan = (Plan *) make_sort_from_sortclauses(root, sortList, plan);
-	mark_sort_locus(plan); /* CDB */
-	
-=======
 	/*
 	 * Estimate number of distinct groups that we'll need hashtable entries
 	 * for; this is the size of the left-hand input for EXCEPT, or the smaller
@@ -630,12 +597,14 @@ generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
 								   (op->op == SETOP_INTERSECT) ? "INTERSECT" : "EXCEPT");
 
 	if (!use_hash)
+	{
 		plan = (Plan *) make_sort_from_sortclauses(root, groupList, plan);
+		mark_sort_locus(plan); /* CDB */
+	}
 
 	/*
 	 * Finally, add a SetOp plan node to generate the correct output.
 	 */
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	switch (op->op)
 	{
 		case SETOP_INTERSECT:
@@ -649,19 +618,15 @@ generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
 			cmd = SETOPCMD_INTERSECT;	/* keep compiler quiet */
 			break;
 	}
-<<<<<<< HEAD
-	plan = (Plan *) make_setop(cmd, plan, sortList, list_length(op->colTypes) + 1);
-    plan->flow = pull_up_Flow(plan, plan->lefttree);
-=======
 	plan = (Plan *) make_setop(cmd, use_hash ? SETOP_HASHED : SETOP_SORTED,
 							   plan, groupList,
 							   list_length(op->colTypes) + 1,
 							   use_hash ? firstFlag : -1,
 							   numGroups, dNumOutputRows);
+    plan->flow = pull_up_Flow(plan, plan->lefttree);
 
 	/* Result is sorted only if we're not hashing */
 	*sortClauses = use_hash ? NIL : groupList;
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 	if (pNumGroups)
 		*pNumGroups = dNumGroups;
@@ -764,12 +729,21 @@ make_union_unique(SetOperationStmt *op, Plan *plan,
 								 plan->targetlist,
 								 NIL,
 								 AGG_HASHED,
+								 false, /* streaming */
 								 list_length(groupList),
 								 extract_grouping_cols(groupList,
 													   plan->targetlist),
 								 extract_grouping_ops(groupList),
 								 numGroups,
+								 /* GPDB_84_MERGE_FIXME: What would be
+								  * appropriate values for these extra
+								  * arguments? */
+								 0, /* num_nullcols */
+								 0, /* input_grouping */
+								 0, /* grouping */
+								 0, /* rollupGSTimes */
 								 0,
+								 0, /* transSpace */
 								 plan);
 		/* Hashed aggregation produces randomly-ordered results */
 		*sortClauses = NIL;
@@ -778,11 +752,13 @@ make_union_unique(SetOperationStmt *op, Plan *plan,
 	{
 		/* Sort and Unique */
 		plan = (Plan *) make_sort_from_sortclauses(root, groupList, plan);
+		mark_sort_locus(plan); /* CDB */
 		plan = (Plan *) make_unique(plan, groupList);
 		plan->plan_rows = dNumGroups;
 		/* We know the sort order of the result */
 		*sortClauses = groupList;
 	}
+	plan->flow = pull_up_Flow(plan, plan->lefttree);
 
 	return plan;
 }
@@ -849,7 +825,13 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 	cost_agg(&hashed_p, root, AGG_HASHED, 0,
 			 numGroupCols, dNumGroups,
 			 input_plan->startup_cost, input_plan->total_cost,
-			 input_plan->plan_rows);
+			 input_plan->plan_rows,
+			 /* GPDB_84_MERGE_FIXME: What would be appropriate values for these extra
+			  * arguments? */
+			 0, /* input_width */
+			 0, /* hash_batches */
+			 0, /* hashentry_width */
+			 false /* hash_streaming */);
 
 	/*
 	 * Now for the sorted case.  Note that the input is *always* unsorted,
@@ -1114,24 +1096,6 @@ generate_setop_grouplist(SetOperationStmt *op, List *targetlist)
 	lg = list_head(grouplist);
 	foreach(lt, targetlist)
 	{
-<<<<<<< HEAD
-		TargetEntry *tle = (TargetEntry *) lfirst(l);
-		SortBy sortby;
-
-		/* GPDB_84_MERGE_FIXME: ensure that this block is deleted in a future
-		 * 8.4 merge iteration. */
-		sortby.type = T_SortBy;
-		sortby.sortby_dir = SORTBY_DEFAULT;
-		sortby.sortby_nulls = SORTBY_NULLS_DEFAULT;
-		sortby.useOp = NIL;
-		sortby.location = -1;
-		sortby.node = (Node *) tle->expr;
-
-		if (!tle->resjunk)
-			sortlist = addTargetToSortList(NULL, tle,
-										   sortlist, targetlist,
-										   &sortby, false);
-=======
 		TargetEntry *tle = (TargetEntry *) lfirst(lt);
 		SortGroupClause *sgc;
 
@@ -1149,7 +1113,6 @@ generate_setop_grouplist(SetOperationStmt *op, List *targetlist)
 
 		/* we could use assignSortGroupRef here, but seems a bit silly */
 		sgc->tleSortGroupRef = tle->ressortgroupref = refno++;
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	}
 	Assert(lg == NULL);
 	return grouplist;
