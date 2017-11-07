@@ -326,24 +326,8 @@ setop_retrieve_direct(SetOpState *setopstate)
 
 		if (setopstate->numOutput > 0)
 		{
-<<<<<<< HEAD
-			/*
-			 * Else test if the new tuple and the previously saved tuple
-			 * match.
-			 */
-			if (execTuplesMatch(inputTupleSlot,
-								resultTupleSlot,
-								plannode->numCols, plannode->dupColIdx,
-								node->eqfunctions,
-								node->ps.ps_ExprContext->ecxt_per_tuple_memory
-								))
-				endOfGroup = false;
-			else
-				endOfGroup = true;
-=======
 			setopstate->numOutput--;
 			return resultTupleSlot;
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 		}
 	}
 
@@ -614,14 +598,11 @@ ExecEndSetOp(SetOpState *node)
 	/* clean up tuple table */
 	ExecClearTuple(node->ps.ps_ResultTupleSlot);
 
-<<<<<<< HEAD
-=======
 	/* free subsidiary stuff including hashtable */
 	MemoryContextDelete(node->tempContext);
 	if (node->tableContext)
 		MemoryContextDelete(node->tableContext);
 
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	ExecEndNode(outerPlanState(node));
 
 	EndPlanStateGpmonPkt(&node->ps);
