@@ -324,12 +324,9 @@ _readQuery(void)
 	READ_BOOL_FIELD(hasAggs);
 	READ_BOOL_FIELD(hasWindowFuncs);
 	READ_BOOL_FIELD(hasSubLinks);
-<<<<<<< HEAD
+	READ_BOOL_FIELD(hasDistinctOn);
 	READ_BOOL_FIELD(hasDynamicFunctions);
 	READ_BOOL_FIELD(hasFuncsWithExecRestrictions);
-=======
-	READ_BOOL_FIELD(hasDistinctOn);
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	READ_NODE_FIELD(rtable);
 	READ_NODE_FIELD(jointree);
 	READ_NODE_FIELD(targetList);
@@ -2826,17 +2823,10 @@ parseNodeString(void)
 
 	if (MATCH("QUERY", 5))
 		return_value = _readQuery();
-<<<<<<< HEAD
-	else if (MATCH("SORTCLAUSE", 10))
-		return_value = _readSortClause();
-	else if (MATCH("GROUPCLAUSE", 11))
-		return_value = _readGroupClause();
-	else if (MATCH("WINDOWCLAUSE", 12))
-		return_value = _readWindowClause();
-=======
 	else if (MATCH("SORTGROUPCLAUSE", 15))
 		return_value = _readSortGroupClause();
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
+	else if (MATCH("WINDOWCLAUSE", 12))
+		return_value = _readWindowClause();
 	else if (MATCH("ROWMARKCLAUSE", 13))
 		return_value = _readRowMarkClause();
 	else if (MATCH("SETOPERATIONSTMT", 16))

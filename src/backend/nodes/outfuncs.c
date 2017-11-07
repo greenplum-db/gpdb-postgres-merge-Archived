@@ -2511,32 +2511,11 @@ _outInheritPartitionCmd(StringInfo str, InheritPartitionCmd *node)
 {
 	WRITE_NODE_TYPE("INHERITPARTITION");
 
-<<<<<<< HEAD
 	WRITE_NODE_FIELD(parent);
-=======
-	WRITE_INT_FIELD(resultRelation);
-	WRITE_NODE_FIELD(intoClause);
-	WRITE_BOOL_FIELD(hasAggs);
-	WRITE_BOOL_FIELD(hasSubLinks);
-	WRITE_BOOL_FIELD(hasDistinctOn);
-	WRITE_NODE_FIELD(rtable);
-	WRITE_NODE_FIELD(jointree);
-	WRITE_NODE_FIELD(targetList);
-	WRITE_NODE_FIELD(returningList);
-	WRITE_NODE_FIELD(groupClause);
-	WRITE_NODE_FIELD(havingQual);
-	WRITE_NODE_FIELD(distinctClause);
-	WRITE_NODE_FIELD(sortClause);
-	WRITE_NODE_FIELD(limitOffset);
-	WRITE_NODE_FIELD(limitCount);
-	WRITE_NODE_FIELD(rowMarks);
-	WRITE_NODE_FIELD(setOperations);
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 }
 
 #ifndef COMPILING_BINARY_FUNCS
 static void
-<<<<<<< HEAD
 _outAlterPartitionCmd(StringInfo str, AlterPartitionCmd *node)
 {
 	WRITE_NODE_TYPE("ALTERPARTITIONCMD");
@@ -3521,6 +3500,7 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_BOOL_FIELD(hasAggs);
 	WRITE_BOOL_FIELD(hasWindowFuncs);
 	WRITE_BOOL_FIELD(hasSubLinks);
+	WRITE_BOOL_FIELD(hasDistinctOn);
 	WRITE_BOOL_FIELD(hasDynamicFunctions);
 	WRITE_BOOL_FIELD(hasFuncsWithExecRestrictions);
 	WRITE_NODE_FIELD(rtable);
@@ -3545,21 +3525,12 @@ _outQuery(StringInfo str, Query *node)
 #endif /* COMPILING_BINARY_FUNCS */
 
 static void
-_outSortClause(StringInfo str, SortClause *node)
+_outSortGroupClause(StringInfo str, SortGroupClause *node)
 {
-	WRITE_NODE_TYPE("SORTCLAUSE");
+	WRITE_NODE_TYPE("SORTGROUPCLAUSE");
 
 	WRITE_UINT_FIELD(tleSortGroupRef);
-	WRITE_OID_FIELD(sortop);
-	WRITE_BOOL_FIELD(nulls_first);
-}
-
-static void
-_outGroupClause(StringInfo str, GroupClause *node)
-{
-	WRITE_NODE_TYPE("GROUPCLAUSE");
-
-	WRITE_UINT_FIELD(tleSortGroupRef);
+	WRITE_OID_FIELD(eqop);
 	WRITE_OID_FIELD(sortop);
 	WRITE_BOOL_FIELD(nulls_first);
 }
@@ -3623,16 +3594,6 @@ _outWindowClause(StringInfo str, WindowClause *node)
 	WRITE_NODE_FIELD(endOffset);
 	WRITE_UINT_FIELD(winref);
 	WRITE_BOOL_FIELD(copiedOrder);
-=======
-_outSortGroupClause(StringInfo str, SortGroupClause *node)
-{
-	WRITE_NODE_TYPE("SORTGROUPCLAUSE");
-
-	WRITE_UINT_FIELD(tleSortGroupRef);
-	WRITE_OID_FIELD(eqop);
-	WRITE_OID_FIELD(sortop);
-	WRITE_BOOL_FIELD(nulls_first);
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 }
 
 static void

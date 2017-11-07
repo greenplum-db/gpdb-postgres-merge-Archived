@@ -2860,12 +2860,9 @@ _copyQuery(Query *from)
 	COPY_SCALAR_FIELD(hasAggs);
 	COPY_SCALAR_FIELD(hasWindowFuncs);
 	COPY_SCALAR_FIELD(hasSubLinks);
-<<<<<<< HEAD
+	COPY_SCALAR_FIELD(hasDistinctOn);
 	COPY_SCALAR_FIELD(hasDynamicFunctions);
 	COPY_SCALAR_FIELD(hasFuncsWithExecRestrictions);
-=======
-	COPY_SCALAR_FIELD(hasDistinctOn);
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	COPY_NODE_FIELD(rtable);
 	COPY_NODE_FIELD(jointree);
 	COPY_NODE_FIELD(targetList);
@@ -2973,11 +2970,8 @@ _copySetOperationStmt(SetOperationStmt *from)
 	COPY_NODE_FIELD(rarg);
 	COPY_NODE_FIELD(colTypes);
 	COPY_NODE_FIELD(colTypmods);
-<<<<<<< HEAD
-=======
 	COPY_NODE_FIELD(groupClauses);
 
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	return newnode;
 }
 
