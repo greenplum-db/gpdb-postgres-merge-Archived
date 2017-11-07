@@ -1314,17 +1314,16 @@ make_pathkeys_for_groupclause(PlannerInfo *root,
 		if (node == NULL)
 			continue;
 
-		if (IsA(node, GroupClause))
+		if (IsA(node, SortGroupClause))
 		{
-			GroupClause *gc = (GroupClause *) node;
+			SortGroupClause *gc = (SortGroupClause *) node;
 
 			sortkey = (Expr *) get_sortgroupclause_expr(gc, tlist);
 			pathkey = make_pathkey_from_sortinfo(root, sortkey, gc->sortop, gc->nulls_first, false, 0);
 
 			/*
-			 * Similar to SortClauses, the pathkey becomes a one-elment
-			 * sublist. canonicalize_pathkeys() might replace it with a longer
-			 * sublist later.
+			 * The pathkey becomes a one-element sublist. canonicalize_pathkeys() might
+			 * replace it with a longer sublist later.
 			 */
 			pathkeys = lappend(pathkeys, pathkey);
 		}

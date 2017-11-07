@@ -1769,15 +1769,9 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 		Assert(tle != NULL);
 		Assert(!tle->resjunk);
 
-<<<<<<< HEAD
-		/* If subquery uses DISTINCT or DISTINCT ON, check point 4 */
-		if (subquery->distinctClause != NIL &&
-			!targetIsInSortGroupList(tle, InvalidOid, subquery->distinctClause))
-=======
 		/* If subquery uses DISTINCT ON, check point 4 */
 		if (subquery->hasDistinctOn &&
 			!targetIsInSortList(tle, InvalidOid, subquery->distinctClause))
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 		{
 			/* non-DISTINCT column, so fail */
 			safe = false;
@@ -1818,7 +1812,7 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 			{
 				WindowClause *wc = (WindowClause *) lfirst(lc);
 
-				if (!targetIsInSortGroupList(tle, InvalidOid, wc->partitionClause))
+				if (!targetIsInSortList(tle, InvalidOid, wc->partitionClause))
 				{
 					/*
 					 * qual's columns are not included in Partition-By clause,
