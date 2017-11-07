@@ -2927,11 +2927,8 @@ main(int argc, char *argv[])
 		"base/1",
 		"pg_tblspc",
 		"pg_stat_tmp"
-<<<<<<< HEAD
 		/* NOTE if you add to this list then please update other places (like management scripts) with this similar
 		 *   (search for pg_multixact, for example) */
-=======
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	};
 
 	progname = get_progname(argv[0]);
