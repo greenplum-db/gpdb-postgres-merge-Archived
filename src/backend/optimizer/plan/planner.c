@@ -1991,113 +1991,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		result_plan->flow = pull_up_Flow(result_plan, getAnySubplan(result_plan));
 
 	/*
-	 * MPP: If there's a DISTINCT clause and we're not collocated on the
-	 * distinct key, we need to redistribute on that key.  In addition, we
-	 * need to consider whether to "pre-unique" by doing a Sort-Unique
-	 * operation on the data as currently distributed, redistributing on the
-	 * district key, and doing the Sort-Unique again. This 2-phase approach
-	 * will be a win, if the cost of redistributing the entire input exceeds
-	 * the cost of an extra Redistribute-Sort-Unique on the pre-uniqued
-	 * (reduced) input.
-	 */
-	if (parse->distinctClause != NULL)
-	{
-		distinctExprs = get_sortgrouplist_exprs(parse->distinctClause,
-												result_plan->targetlist);
-		numDistinct = estimate_num_groups(root, distinctExprs,
-										  result_plan->plan_rows);
-
-		if (CdbPathLocus_IsNull(current_locus))
-		{
-			current_locus = cdbpathlocus_from_flow(result_plan->flow);
-		}
-
-		if (Gp_role == GP_ROLE_DISPATCH && CdbPathLocus_IsPartitioned(current_locus))
-		{
-			List	   *distinct_pathkeys = make_pathkeys_for_sortclauses(root, parse->distinctClause,
-											  result_plan->targetlist, true);
-			bool		needMotion = !cdbpathlocus_collocates(root, current_locus, distinct_pathkeys, false /* exact_match */ );
-
-			/* Apply the preunique optimization, if enabled and worthwhile. */
-			if (root->config->gp_enable_preunique && needMotion)
-			{
-				double		base_cost,
-							alt_cost;
-				Path		sort_path;	/* dummy for result of cost_sort */
-
-				base_cost = motion_cost_per_row * result_plan->plan_rows;
-				alt_cost = motion_cost_per_row * numDistinct;
-				cost_sort(&sort_path, root, NIL, alt_cost,
-						  numDistinct, result_plan->plan_rows, -1.0);
-				alt_cost += sort_path.startup_cost;
-				alt_cost += cpu_operator_cost * numDistinct
-					* list_length(parse->distinctClause);
-
-				if (alt_cost < base_cost || root->config->gp_eager_preunique)
-				{
-					/*
-					 * Reduce the number of rows to move by adding a [Sort
-					 * and] Unique prior to the redistribute Motion.
-					 */
-					if (root->sort_pathkeys)
-					{
-						if (!pathkeys_contained_in(root->sort_pathkeys, current_pathkeys))
-						{
-							result_plan = (Plan *) make_sort_from_pathkeys(root,
-																		   result_plan,
-																		   root->sort_pathkeys,
-																		   limit_tuples,
-																		   true);
-							((Sort *) result_plan)->noduplicates = gp_enable_sort_distinct;
-							current_pathkeys = root->sort_pathkeys;
-							mark_sort_locus(result_plan);
-						}
-					}
-
-					result_plan = (Plan *) make_unique(result_plan, parse->distinctClause);
-
-					result_plan->flow = pull_up_Flow(result_plan, result_plan->lefttree);
-
-					result_plan->plan_rows = numDistinct;
-
-					/*
-					 * Our sort node (under the unique node), unfortunately
-					 * can't guarantee uniqueness -- so we aren't allowed to
-					 * push the limit into the sort; but we can avoid moving
-					 * the entire sorted result-set by plunking a limit on the
-					 * top of the unique-node.
-					 */
-					if (parse->limitCount)
-					{
-						/*
-						 * Our extra limit operation is basically a
-						 * third-phase on multi-phase limit (see 2-phase limit
-						 * below)
-						 */
-						result_plan = pushdown_preliminary_limit(result_plan, parse->limitCount, count_est, parse->limitOffset, offset_est);
-					}
-				}
-			}
-
-			if (needMotion)
-			{
-				result_plan = (Plan *) make_motion_hash(root, result_plan, distinctExprs);
-				result_plan->total_cost += motion_cost_per_row * result_plan->plan_rows;
-				current_pathkeys = NULL;		/* Any pre-existing order now
-												 * lost. */
-			}
-		}
-		else if ( result_plan->flow->flotype == FLOW_SINGLETON )
-			; /* Already collocated. */
-		else
-		{
-			ereport(ERROR, (errcode(ERRCODE_CDB_INTERNAL_ERROR),
-							errmsg("unexpected input locus to distinct")));
-		}
-	}
-
-
-	/*
 	 * An ORDER BY or DISTINCT doesn't make much sense, unless we bring all
 	 * the data to a single node. Otherwise it's just a partial order. (If
 	 * there's a LIMIT or OFFSET clause, we'll take care of this below, after
@@ -2191,16 +2084,112 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			}
 		}
 
+		/*
+		 * MPP: If there's a DISTINCT clause and we're not collocated on the
+		 * distinct key, we need to redistribute on that key.  In addition, we
+		 * need to consider whether to "pre-unique" by doing a Sort-Unique
+		 * operation on the data as currently distributed, redistributing on the
+		 * district key, and doing the Sort-Unique again. This 2-phase approach
+		 * will be a win, if the cost of redistributing the entire input exceeds
+		 * the cost of an extra Redistribute-Sort-Unique on the pre-uniqued
+		 * (reduced) input.
+		 */
+		distinctExprs = get_sortgrouplist_exprs(parse->distinctClause,
+												result_plan->targetlist);
+		numDistinct = estimate_num_groups(root, distinctExprs,
+										  result_plan->plan_rows);
+
+		if (CdbPathLocus_IsNull(current_locus))
+		{
+			current_locus = cdbpathlocus_from_flow(result_plan->flow);
+		}
+
+		if (Gp_role == GP_ROLE_DISPATCH && CdbPathLocus_IsPartitioned(current_locus))
+		{
+			bool		needMotion = !cdbpathlocus_collocates(root, current_locus,
+															  root->distinct_pathkeys, false /* exact_match */ );
+
+			/* Apply the preunique optimization, if enabled and worthwhile. */
+			/* GPDB_84_MERGE_FIXME: pre-unique for hash distinct not implemented. */
+			if (root->config->gp_enable_preunique && needMotion && !use_hashed_distinct)
+			{
+				double		base_cost,
+							alt_cost;
+				Path		sort_path;	/* dummy for result of cost_sort */
+
+				base_cost = motion_cost_per_row * result_plan->plan_rows;
+				alt_cost = motion_cost_per_row * numDistinct;
+				cost_sort(&sort_path, root, NIL, alt_cost,
+						  numDistinct, result_plan->plan_rows, -1.0);
+				alt_cost += sort_path.startup_cost;
+				alt_cost += cpu_operator_cost * numDistinct
+					* list_length(parse->distinctClause);
+
+				if (alt_cost < base_cost || root->config->gp_eager_preunique)
+				{
+					/*
+					 * Reduce the number of rows to move by adding a [Sort
+					 * and] Unique prior to the redistribute Motion.
+					 */
+					if (root->sort_pathkeys)
+					{
+						if (!pathkeys_contained_in(root->sort_pathkeys, current_pathkeys))
+						{
+							result_plan = (Plan *) make_sort_from_pathkeys(root,
+																		   result_plan,
+																		   root->sort_pathkeys,
+																		   limit_tuples,
+																		   true);
+							((Sort *) result_plan)->noduplicates = gp_enable_sort_distinct;
+							current_pathkeys = root->sort_pathkeys;
+							mark_sort_locus(result_plan);
+						}
+					}
+
+					result_plan = (Plan *) make_unique(result_plan, parse->distinctClause);
+
+					result_plan->flow = pull_up_Flow(result_plan, result_plan->lefttree);
+
+					result_plan->plan_rows = numDistinct;
+
+					/*
+					 * Our sort node (under the unique node), unfortunately
+					 * can't guarantee uniqueness -- so we aren't allowed to
+					 * push the limit into the sort; but we can avoid moving
+					 * the entire sorted result-set by plunking a limit on the
+					 * top of the unique-node.
+					 */
+					if (parse->limitCount)
+					{
+						/*
+						 * Our extra limit operation is basically a
+						 * third-phase on multi-phase limit (see 2-phase limit
+						 * below)
+						 */
+						result_plan = pushdown_preliminary_limit(result_plan, parse->limitCount, count_est, parse->limitOffset, offset_est);
+					}
+				}
+			}
+
+			if (needMotion)
+			{
+				result_plan = (Plan *) make_motion_hash(root, result_plan, distinctExprs);
+				result_plan->total_cost += motion_cost_per_row * result_plan->plan_rows;
+				current_pathkeys = NULL;		/* Any pre-existing order now
+												 * lost. */
+			}
+		}
+		else if ( result_plan->flow->flotype == FLOW_SINGLETON )
+			; /* Already collocated. */
+		else
+		{
+			ereport(ERROR, (errcode(ERRCODE_CDB_INTERNAL_ERROR),
+							errmsg("unexpected input locus to distinct")));
+		}
+
 		if (use_hashed_distinct)
 		{
 			/* Hashed aggregate plan --- no sort needed */
-
-			if (must_gather)
-			{
-				result_plan = (Plan *) make_motion_gather(root, result_plan, -1,
-														  NIL);
-				must_gather = false;
-			}
 
 			result_plan = (Plan *) make_agg(root,
 											result_plan->targetlist,
@@ -2286,6 +2275,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			result_plan->plan_rows = dNumDistinctRows;
 			/* The Unique node won't change sort ordering */
 		}
+		result_plan->flow = pull_up_Flow(result_plan, result_plan->lefttree);
 	}
 
 	/*
