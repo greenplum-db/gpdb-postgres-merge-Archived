@@ -53,11 +53,19 @@ copy (select * from copyselect_test1 join copyselect_test2 using (id)) to stdout
 --
 -- Test UNION SELECT
 --
+<<<<<<< HEAD
 copy (select t from copyselect_test1 where id = 1 UNION select * from v_copyselect_test1) to stdout;
 --
 -- Test subselect
 --
 copy (select * from (select t from copyselect_test1 where id = 1 UNION select * from v_copyselect_test1) t1) to stdout;
+=======
+copy (select t from test1 where id = 1 UNION select * from v_test1 ORDER BY 1) to stdout;
+--
+-- Test subselect
+--
+copy (select * from (select t from test1 where id = 1 UNION select * from v_test1 ORDER BY 1) t1) to stdout;
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 --
 -- Test headers, CSV and quotes
 --

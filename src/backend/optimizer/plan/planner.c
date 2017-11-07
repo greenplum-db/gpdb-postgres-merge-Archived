@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.235 2008/07/31 22:47:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.240 2008/08/07 01:11:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,9 +83,21 @@ static Plan *grouping_planner(PlannerInfo *root, double tuple_fraction);
 static double preprocess_limit(PlannerInfo *root,
 				 double tuple_fraction,
 				 int64 *offset_est, int64 *count_est);
+<<<<<<< HEAD
 #ifdef NOT_USED
 static Oid *extract_grouping_ops(List *groupClause, int *numGroupOps);
 #endif
+=======
+static void preprocess_groupclause(PlannerInfo *root);
+static bool choose_hashed_grouping(PlannerInfo *root,
+					   double tuple_fraction, double limit_tuples,
+					   Path *cheapest_path, Path *sorted_path,
+					   double dNumGroups, AggClauseCounts *agg_counts);
+static bool choose_hashed_distinct(PlannerInfo *root,
+					   Plan *input_plan, List *input_pathkeys,
+					   double tuple_fraction, double limit_tuples,
+					   double dNumDistinctRows);
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 static List *make_subplanTargetList(PlannerInfo *root, List *tlist,
 					   AttrNumber **groupColIdx, Oid **groupOperators, bool *need_tlist_eval);
 static List *register_ordered_aggs(List *tlist, Node *havingqual, List *sub_tlist);
@@ -1263,10 +1275,14 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	int64		count_est = 0;
 	double		limit_tuples = -1.0;
 	Plan	   *result_plan;
+<<<<<<< HEAD
 	List	   *current_pathkeys = NIL;
 	CdbPathLocus current_locus;
 	List	   *sort_pathkeys;
 	Path	   *best_path = NULL;
+=======
+	List	   *current_pathkeys;
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	double		dNumGroups = 0;
 	double		numDistinct = 1;
 	List	   *distinctExprs = NIL;
@@ -1298,10 +1314,9 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 		/*
 		 * If there's a top-level ORDER BY, assume we have to fetch all the
-		 * tuples.	This might seem too simplistic given all the hackery below
-		 * to possibly avoid the sort ... but a nonzero tuple_fraction is only
-		 * of use to plan_set_operations() when the setop is UNION ALL, and
-		 * the result of UNION ALL is always unsorted.
+		 * tuples.	This might be too simplistic given all the hackery below
+		 * to possibly avoid the sort; but the odds of accurate estimates
+		 * here are pretty low anyway.
 		 */
 		if (parse->sortClause)
 			tuple_fraction = 0.0;
@@ -1334,7 +1349,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 */
 		Assert(parse->commandType == CMD_SELECT);
 
-		tlist = postprocess_setop_tlist(result_plan->targetlist, tlist);
+		tlist = postprocess_setop_tlist(copyObject(result_plan->targetlist),
+										tlist);
 
 		/*
 		 * Can't handle FOR UPDATE/SHARE here (parser should have checked
@@ -1349,10 +1365,10 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 * Calculate pathkeys that represent result ordering requirements
 		 */
 		Assert(parse->distinctClause == NIL);
-		sort_pathkeys = make_pathkeys_for_sortclauses(root,
-													  parse->sortClause,
-													  tlist,
-													  true);
+		root->sort_pathkeys = make_pathkeys_for_sortclauses(root,
+															parse->sortClause,
+															tlist,
+															true);
 	}
 	else if ( parse->windowClause && parse->targetList &&
 			  contain_window_function((Node *) parse->targetList) )
@@ -1385,16 +1401,14 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	{
 		/* No set operations, do regular planning */
 		List	   *sub_tlist;
-		List	   *group_pathkeys;
 		AttrNumber *groupColIdx = NULL;
-		Oid		   *groupOperators = NULL;
 		bool		need_tlist_eval = true;
 		QualCost	tlist_cost;
 		Path	   *cheapest_path;
 		Path	   *sorted_path;
 		long		numGroups = 0;
 		AggClauseCounts agg_counts;
-		int			numGroupCols = list_length(parse->groupClause);
+		int			numGroupCols;
 		bool		use_hashed_grouping = false;
 		bool		grpext = false;
 		bool		has_within = false;
@@ -1402,8 +1416,15 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 		MemSet(&agg_counts, 0, sizeof(AggClauseCounts));
 
+<<<<<<< HEAD
 		/* A recursive query should always have setOperations */
 		Assert(!root->hasRecursion);
+=======
+		/* Preprocess GROUP BY clause, if any */
+		if (parse->groupClause)
+			preprocess_groupclause(root);
+		numGroupCols = list_length(parse->groupClause);
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 		/* Preprocess targetlist */
 		tlist = preprocess_targetlist(root, tlist);
@@ -1434,29 +1455,44 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		/*
 		 * Calculate pathkeys that represent grouping/ordering requirements.
 		 * Stash them in PlannerInfo so that query_planner can canonicalize
-		 * them after EquivalenceClasses have been formed.
-		 *
-		 * Note: for the moment, DISTINCT is always implemented via sort/uniq,
-		 * and we set the sort_pathkeys to be the more rigorous of the
-		 * DISTINCT and ORDER BY requirements.  This should be changed
-		 * someday, but DISTINCT ON is a bit of a problem ...
+		 * them after EquivalenceClasses have been formed.  The sortClause
+		 * is certainly sort-able, but GROUP BY and DISTINCT might not be,
+		 * in which case we just leave their pathkeys empty.
 		 */
+<<<<<<< HEAD
 		root->group_pathkeys =
 			make_pathkeys_for_groupclause(root,
 										  parse->groupClause,
 										  tlist);
 		if (list_length(parse->distinctClause) > list_length(parse->sortClause))
 			root->sort_pathkeys =
+=======
+		if (parse->groupClause &&
+			grouping_is_sortable(parse->groupClause))
+			root->group_pathkeys =
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
+				make_pathkeys_for_sortclauses(root,
+											  parse->groupClause,
+											  tlist,
+											  false);
+		else
+			root->group_pathkeys = NIL;
+
+		if (parse->distinctClause &&
+			grouping_is_sortable(parse->distinctClause))
+			root->distinct_pathkeys =
 				make_pathkeys_for_sortclauses(root,
 											  parse->distinctClause,
 											  tlist,
 											  false);
 		else
-			root->sort_pathkeys =
-				make_pathkeys_for_sortclauses(root,
-											  parse->sortClause,
-											  tlist,
-											  false);
+			root->distinct_pathkeys = NIL;
+
+		root->sort_pathkeys =
+			make_pathkeys_for_sortclauses(root,
+										  parse->sortClause,
+										  tlist,
+										  false);
 
 		/*
 		 * Will need actual number of aggregates for estimating costs.
@@ -1478,6 +1514,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		}
 
 		/*
+<<<<<<< HEAD
 		 * Generate appropriate target list for subplan; may be different from
 		 * tlist if grouping or aggregation is needed.
 		 */
@@ -1497,16 +1534,29 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 		/*
 		 * Figure out whether we need a sorted result from query_planner.
+=======
+		 * Figure out whether we want a sorted result from query_planner.
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 		 *
-		 * If we have a GROUP BY clause, then we want a result sorted properly
-		 * for grouping.  Otherwise, if there is an ORDER BY clause, we want
-		 * to sort by the ORDER BY clause.	(Note: if we have both, and ORDER
-		 * BY is a superset of GROUP BY, it would be tempting to request sort
-		 * by ORDER BY --- but that might just leave us failing to exploit an
-		 * available sort order at all. Needs more thought...)
+		 * If we have a sortable GROUP BY clause, then we want a result sorted
+		 * properly for grouping.  Otherwise, if there's a sortable DISTINCT
+		 * clause that's more rigorous than the ORDER BY clause, we try to
+		 * produce output that's sufficiently well sorted for the DISTINCT.
+		 * Otherwise, if there is an ORDER BY clause, we want to sort by the
+		 * ORDER BY clause.
+		 *
+		 * Note: if we have both ORDER BY and GROUP BY, and ORDER BY is a
+		 * superset of GROUP BY, it would be tempting to request sort by ORDER
+		 * BY --- but that might just leave us failing to exploit an available
+		 * sort order at all.  Needs more thought.  The choice for DISTINCT
+		 * versus ORDER BY is much easier, since we know that the parser
+		 * ensured that one is a superset of the other.
 		 */
 		if (root->group_pathkeys)
 			root->query_pathkeys = root->group_pathkeys;
+		else if (list_length(root->distinct_pathkeys) >
+				 list_length(root->sort_pathkeys))
+			root->query_pathkeys = root->distinct_pathkeys;
 		else if (root->sort_pathkeys)
 			root->query_pathkeys = root->sort_pathkeys;
 		else
@@ -1521,20 +1571,48 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		query_planner(root, sub_tlist, tuple_fraction, limit_tuples,
 					  &cheapest_path, &sorted_path, &dNumGroups);
 
-		group_pathkeys = root->group_pathkeys;
-		sort_pathkeys = root->sort_pathkeys;
-
 		/*
-		 * If grouping, extract the grouping operators and decide whether we
-		 * want to use hashed grouping.
+		 * If grouping, decide whether to use sorted or hashed grouping.
 		 */
 		if (parse->groupClause)
 		{
+<<<<<<< HEAD
 			use_hashed_grouping =
 				choose_hashed_grouping(root, tuple_fraction, limit_tuples,
 									   cheapest_path, sorted_path,
 									groupOperators, numGroupCols, dNumGroups,
 									   &agg_counts);
+=======
+			bool	can_hash;
+			bool	can_sort;
+
+			/*
+			 * Executor doesn't support hashed aggregation with DISTINCT
+			 * aggregates.  (Doing so would imply storing *all* the input
+			 * values in the hash table, which seems like a certain loser.)
+			 */
+			can_hash = (agg_counts.numDistinctAggs == 0 &&
+						grouping_is_hashable(parse->groupClause));
+			can_sort = grouping_is_sortable(parse->groupClause);
+			if (can_hash && can_sort)
+			{
+				/* we have a meaningful choice to make ... */
+				use_hashed_grouping =
+					choose_hashed_grouping(root,
+										   tuple_fraction, limit_tuples,
+										   cheapest_path, sorted_path,
+										   dNumGroups, &agg_counts);
+			}
+			else if (can_hash)
+				use_hashed_grouping = true;
+			else if (can_sort)
+				use_hashed_grouping = false;
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("could not implement GROUP BY"),
+						 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 			/* Also convert # groups to long int --- but 'ware overflow! */
 			numGroups = (long) Min(dNumGroups, (double) LONG_MAX);
@@ -1694,7 +1772,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 			/* Detect if we'll need an explicit sort for grouping */
 			if (parse->groupClause && !use_hashed_grouping &&
-				!pathkeys_contained_in(group_pathkeys, current_pathkeys))
+				!pathkeys_contained_in(root->group_pathkeys, current_pathkeys))
 			{
 				need_sort_for_grouping = true;
 				/*
@@ -1772,7 +1850,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												AGG_HASHED, false,
 												numGroupCols,
 												groupColIdx,
-												groupOperators,
+									extract_grouping_ops(parse->groupClause),
 												numGroups,
 												0, /* num_nullcols */
 												0, /* input_grouping */
@@ -1811,10 +1889,14 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 													 groupColIdx,
 													 false,
 													 result_plan);
+<<<<<<< HEAD
 						current_pathkeys = group_pathkeys;
 
 						/* Decorate the Sort node with a Flow node. */
 						mark_sort_locus(result_plan);
+=======
+						current_pathkeys = root->group_pathkeys;
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 					}
 					aggstrategy = AGG_SORTED;
 
@@ -1839,7 +1921,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												aggstrategy, false,
 												numGroupCols,
 												groupColIdx,
-												groupOperators,
+									extract_grouping_ops(parse->groupClause),
 												numGroups,
 												0, /* num_nullcols */
 												0, /* input_grouping */
@@ -1875,6 +1957,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				/* Make EXPLAIN output look nice */
 				foreach(lc, result_plan->targetlist)
 				{
+<<<<<<< HEAD
 					TargetEntry *tle = (TargetEntry *) lfirst(lc);
 
 					if (IsA(tle->expr, Var) &&tle->resname == NULL)
@@ -1917,6 +2000,25 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 					sort_pathkeys = canonicalize_pathkeys(root, sort_pathkeys);
 					CdbPathLocus_MakeNull(&current_locus);
 				}
+=======
+					result_plan = (Plan *)
+						make_sort_from_groupcols(root,
+												 parse->groupClause,
+												 groupColIdx,
+												 result_plan);
+					current_pathkeys = root->group_pathkeys;
+				}
+
+				result_plan = (Plan *) make_group(root,
+												  tlist,
+												  (List *) parse->havingQual,
+												  numGroupCols,
+												  groupColIdx,
+									extract_grouping_ops(parse->groupClause),
+												  dNumGroups,
+												  result_plan);
+				/* The Group node won't change sort ordering */
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 			}
 			else if (root->hasHavingQual)
 			{
@@ -1948,6 +2050,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	}							/* end of if (setOperations) */
 
 	/*
+<<<<<<< HEAD
 	 * Decorate the top node with a Flow node if it doesn't have one yet. (In
 	 * such cases we require the next-to-top node to have a Flow node from
 	 * which we can obtain the distribution info.)
@@ -2065,11 +2168,42 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	 * If we were not able to make the plan come out in the right order, add
 	 * an explicit sort step.  Note that, if we going to add a Unique node,
 	 * the sort_pathkeys will have the distinct keys as a prefix.
+=======
+	 * If there is a DISTINCT clause, add the necessary node(s).
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	 */
-	if (sort_pathkeys)
+	if (parse->distinctClause)
 	{
-		if (!pathkeys_contained_in(sort_pathkeys, current_pathkeys))
+		double	dNumDistinctRows;
+		long	numDistinctRows;
+		bool	use_hashed_distinct;
+		bool	can_sort;
+		bool	can_hash;
+
+		/*
+		 * If there was grouping or aggregation, use the current number of
+		 * rows as the estimated number of DISTINCT rows (ie, assume the
+		 * result was already mostly unique).  If not, use the number of
+		 * distinct-groups calculated by query_planner.
+		 */
+		if (parse->groupClause || root->hasHavingQual || parse->hasAggs)
+			dNumDistinctRows = result_plan->plan_rows;
+		else
+			dNumDistinctRows = dNumGroups;
+
+		/* Also convert to long int --- but 'ware overflow! */
+		numDistinctRows = (long) Min(dNumDistinctRows, (double) LONG_MAX);
+
+		/*
+		 * If we have a sortable DISTINCT ON clause, we always use sorting.
+		 * This enforces the expected behavior of DISTINCT ON.
+		 */
+		can_sort = grouping_is_sortable(parse->distinctClause);
+		if (can_sort && parse->hasDistinctOn)
+			use_hashed_distinct = false;
+		else
 		{
+<<<<<<< HEAD
 			result_plan = (Plan *) make_sort_from_pathkeys(root,
 														   result_plan,
 														   sort_pathkeys,
@@ -2111,14 +2245,104 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		{
 			result_plan = (Plan *) make_motion_gather(root, result_plan, -1,
 													  sort_pathkeys);
+=======
+			can_hash = grouping_is_hashable(parse->distinctClause);
+			if (can_hash && can_sort)
+			{
+				/* we have a meaningful choice to make ... */
+				use_hashed_distinct =
+					choose_hashed_distinct(root,
+										   result_plan, current_pathkeys,
+										   tuple_fraction, limit_tuples,
+										   dNumDistinctRows);
+			}
+			else if (can_hash)
+				use_hashed_distinct = true;
+			else if (can_sort)
+				use_hashed_distinct = false;
+			else
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("could not implement DISTINCT"),
+						 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
+				use_hashed_distinct = false; /* keep compiler quiet */
+			}
+		}
+
+		if (use_hashed_distinct)
+		{
+			/* Hashed aggregate plan --- no sort needed */
+			result_plan = (Plan *) make_agg(root,
+											result_plan->targetlist,
+											NIL,
+											AGG_HASHED,
+											list_length(parse->distinctClause),
+											extract_grouping_cols(parse->distinctClause,
+																  result_plan->targetlist),
+											extract_grouping_ops(parse->distinctClause),
+											numDistinctRows,
+											0,
+											result_plan);
+			/* Hashed aggregation produces randomly-ordered results */
+			current_pathkeys = NIL;
+		}
+		else
+		{
+			/*
+			 * Use a Unique node to implement DISTINCT.  Add an explicit sort
+			 * if we couldn't make the path come out the way the Unique node
+			 * needs it.  If we do have to sort, always sort by the more
+			 * rigorous of DISTINCT and ORDER BY, to avoid a second sort
+			 * below.  However, for regular DISTINCT, don't sort now if we
+			 * don't have to --- sorting afterwards will likely be cheaper,
+			 * and also has the possibility of optimizing via LIMIT.  But
+			 * for DISTINCT ON, we *must* force the final sort now, else
+			 * it won't have the desired behavior.
+			 */
+			List   *needed_pathkeys;
+
+			if (parse->hasDistinctOn &&
+				list_length(root->distinct_pathkeys) <
+				list_length(root->sort_pathkeys))
+				needed_pathkeys = root->sort_pathkeys;
+			else
+				needed_pathkeys = root->distinct_pathkeys;
+
+			if (!pathkeys_contained_in(needed_pathkeys, current_pathkeys))
+			{
+				if (list_length(root->distinct_pathkeys) >=
+					list_length(root->sort_pathkeys))
+					current_pathkeys = root->distinct_pathkeys;
+				else
+				{
+					current_pathkeys = root->sort_pathkeys;
+					/* Assert checks that parser didn't mess up... */
+					Assert(pathkeys_contained_in(root->distinct_pathkeys,
+												 current_pathkeys));
+				}
+
+				result_plan = (Plan *) make_sort_from_pathkeys(root,
+															   result_plan,
+															   current_pathkeys,
+															   -1.0);
+			}
+
+			result_plan = (Plan *) make_unique(result_plan,
+											   parse->distinctClause);
+			result_plan->plan_rows = dNumDistinctRows;
+			/* The Unique node won't change sort ordering */
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 		}
 	}
 
 	/*
-	 * If there is a DISTINCT clause, add the UNIQUE node.
+	 * If ORDER BY was given and we were not able to make the plan come out in
+	 * the right order, add an explicit sort step.
 	 */
-	if (parse->distinctClause)
+	if (parse->sortClause)
 	{
+<<<<<<< HEAD
 		if (IsA(result_plan, Sort) &&gp_enable_sort_distinct)
 			((Sort *) result_plan)->noduplicates = true;
 		result_plan = (Plan *) make_unique(result_plan, parse->distinctClause);
@@ -2131,6 +2355,16 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 */
 		if (!parse->groupClause && !root->hasHavingQual && !parse->hasAggs)
 			result_plan->plan_rows = dNumGroups;
+=======
+		if (!pathkeys_contained_in(root->sort_pathkeys, current_pathkeys))
+		{
+			result_plan = (Plan *) make_sort_from_pathkeys(root,
+														   result_plan,
+														   root->sort_pathkeys,
+														   limit_tuples);
+			current_pathkeys = root->sort_pathkeys;
+		}
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	}
 
 	/*
@@ -2594,7 +2828,9 @@ preprocess_limit(PlannerInfo *root, double tuple_fraction,
 	return tuple_fraction;
 }
 
+
 /*
+<<<<<<< HEAD
  * extract_grouping_ops - make an array of the equality operator OIDs
  *		for the GROUP BY clause
  *
@@ -2612,9 +2848,46 @@ extract_grouping_ops(List *groupClause, int *numGroupOps)
 	ListCell   *glitem;
 
 	groupOperators = (Oid *) palloc(maxCols * sizeof(Oid));
+=======
+ * preprocess_groupclause - do preparatory work on GROUP BY clause
+ *
+ * The idea here is to adjust the ordering of the GROUP BY elements
+ * (which in itself is semantically insignificant) to match ORDER BY,
+ * thereby allowing a single sort operation to both implement the ORDER BY
+ * requirement and set up for a Unique step that implements GROUP BY.
+ *
+ * In principle it might be interesting to consider other orderings of the
+ * GROUP BY elements, which could match the sort ordering of other
+ * possible plans (eg an indexscan) and thereby reduce cost.  We don't
+ * bother with that, though.  Hashed grouping will frequently win anyway.
+ *
+ * Note: we need no comparable processing of the distinctClause because
+ * the parser already enforced that that matches ORDER BY.
+ */
+static void
+preprocess_groupclause(PlannerInfo *root)
+{
+	Query	   *parse = root->parse;
+	List	   *new_groupclause;
+	bool		partial_match;
+	ListCell   *sl;
+	ListCell   *gl;
 
-	foreach(glitem, groupClause)
+	/* If no ORDER BY, nothing useful to do here */
+	if (parse->sortClause == NIL)
+		return;
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
+
+	/*
+	 * Scan the ORDER BY clause and construct a list of matching GROUP BY
+	 * items, but only as far as we can make a matching prefix.
+	 *
+	 * This code assumes that the sortClause contains no duplicate items.
+	 */
+	new_groupclause = NIL;
+	foreach(sl, parse->sortClause)
 	{
+<<<<<<< HEAD
 		Node	   *node = lfirst(glitem);
 
 		if (node == NULL)
@@ -2658,28 +2931,88 @@ extract_grouping_ops(List *groupClause, int *numGroupOps)
 	*numGroupOps = colno;
 
 	return groupOperators;
+=======
+		SortGroupClause *sc = (SortGroupClause *) lfirst(sl);
+
+		foreach(gl, parse->groupClause)
+		{
+			SortGroupClause *gc = (SortGroupClause *) lfirst(gl);
+
+			if (equal(gc, sc))
+			{
+				new_groupclause = lappend(new_groupclause, gc);
+				break;
+			}
+		}
+		if (gl == NULL)
+			break;				/* no match, so stop scanning */
+	}
+
+	/* Did we match all of the ORDER BY list, or just some of it? */
+	partial_match = (sl != NULL);
+
+	/* If no match at all, no point in reordering GROUP BY */
+	if (new_groupclause == NIL)
+		return;
+
+	/*
+	 * Add any remaining GROUP BY items to the new list, but only if we
+	 * were able to make a complete match.  In other words, we only
+	 * rearrange the GROUP BY list if the result is that one list is a
+	 * prefix of the other --- otherwise there's no possibility of a
+	 * common sort.  Also, give up if there are any non-sortable GROUP BY
+	 * items, since then there's no hope anyway.
+	 */
+	foreach(gl, parse->groupClause)
+	{
+		SortGroupClause *gc = (SortGroupClause *) lfirst(gl);
+
+		if (list_member_ptr(new_groupclause, gc))
+			continue;			/* it matched an ORDER BY item */
+		if (partial_match)
+			return;				/* give up, no common sort possible */
+		if (!OidIsValid(gc->sortop))
+			return;				/* give up, GROUP BY can't be sorted */
+		new_groupclause = lappend(new_groupclause, gc);
+	}
+
+	/* Success --- install the rearranged GROUP BY list */
+	Assert(list_length(parse->groupClause) == list_length(new_groupclause));
+	parse->groupClause = new_groupclause;
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 }
 #endif
 
 /*
  * choose_hashed_grouping - should we use hashed grouping?
+ *
+ * Note: this is only applied when both alternatives are actually feasible.
  */
 bool
 choose_hashed_grouping(PlannerInfo *root,
 					   double tuple_fraction, double limit_tuples,
 					   Path *cheapest_path, Path *sorted_path,
+<<<<<<< HEAD
 					   Oid *groupOperators, int numGroupOps, double dNumGroups,
 					   AggClauseCounts *agg_counts)
+=======
+					   double dNumGroups, AggClauseCounts *agg_counts)
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 {
 	int			numGroupCols;
 	double		cheapest_path_rows;
 	int			cheapest_path_width;
+<<<<<<< HEAD
 	double		hashentrysize;
+=======
+	Size		hashentrysize;
+	List	   *target_pathkeys;
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	List	   *current_pathkeys;
 	Path		hashed_p;
 	Path		sorted_p;
-	int			i;
 
+<<<<<<< HEAD
 	HashAggTableSizes hash_info;
 	bool		has_dqa = false;
 	bool		hash_cheaper = false;
@@ -2707,6 +3040,11 @@ choose_hashed_grouping(PlannerInfo *root,
 		if (!op_hashjoinable(groupOperators[i]))
 			goto hash_not_ok;
 	}
+=======
+	/* Prefer sorting when enable_hashagg is off */
+	if (!enable_hashagg)
+		return false;
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 	/*
 	 * CDB: The preliminary function is used to merge transient values during
@@ -2756,6 +3094,20 @@ choose_hashed_grouping(PlannerInfo *root,
 	}
 
 	/*
+	 * When we have both GROUP BY and DISTINCT, use the more-rigorous of
+	 * DISTINCT and ORDER BY as the assumed required output sort order.
+	 * This is an oversimplification because the DISTINCT might get
+	 * implemented via hashing, but it's not clear that the case is common
+	 * enough (or that our estimates are good enough) to justify trying to
+	 * solve it exactly.
+	 */
+	if (list_length(root->distinct_pathkeys) >
+		list_length(root->sort_pathkeys))
+		target_pathkeys = root->distinct_pathkeys;
+	else
+		target_pathkeys = root->sort_pathkeys;
+
+	/*
 	 * See if the estimated cost is no more than doing it the other way. While
 	 * avoiding the need for sorted input is usually a win, the fact that the
 	 * output won't be sorted may be a loss; so we need to do an actual cost
@@ -2778,8 +3130,8 @@ choose_hashed_grouping(PlannerInfo *root,
 			 cheapest_path_rows, hash_info.workmem_per_entry,
 			 hash_info.nbatches, hash_info.hashentry_width, false);
 	/* Result of hashed agg is always unsorted */
-	if (root->sort_pathkeys)
-		cost_sort(&hashed_p, root, root->sort_pathkeys, hashed_p.total_cost,
+	if (target_pathkeys)
+		cost_sort(&hashed_p, root, target_pathkeys, hashed_p.total_cost,
 				  dNumGroups, cheapest_path_width, limit_tuples);
 
 	if (sorted_path)
@@ -2811,9 +3163,9 @@ choose_hashed_grouping(PlannerInfo *root,
 				   sorted_p.startup_cost, sorted_p.total_cost,
 				   cheapest_path_rows);
 	/* The Agg or Group node will preserve ordering */
-	if (root->sort_pathkeys &&
-		!pathkeys_contained_in(root->sort_pathkeys, current_pathkeys))
-		cost_sort(&sorted_p, root, root->sort_pathkeys, sorted_p.total_cost,
+	if (target_pathkeys &&
+		!pathkeys_contained_in(target_pathkeys, current_pathkeys))
+		cost_sort(&sorted_p, root, target_pathkeys, sorted_p.total_cost,
 				  dNumGroups, cheapest_path_width, limit_tuples);
 
 	/*
@@ -2835,6 +3187,120 @@ choose_hashed_grouping(PlannerInfo *root,
 
 hash_not_ok:
 	agg_counts->canHashAgg = false;
+	return false;
+}
+
+/*
+ * choose_hashed_distinct - should we use hashing for DISTINCT?
+ *
+ * This is fairly similar to choose_hashed_grouping, but there are enough
+ * differences that it doesn't seem worth trying to unify the two functions.
+ *
+ * But note that making the two choices independently is a bit bogus in
+ * itself.  If the two could be combined into a single choice operation
+ * it'd probably be better, but that seems far too unwieldy to be practical,
+ * especially considering that the combination of GROUP BY and DISTINCT
+ * isn't very common in real queries.  By separating them, we are giving
+ * extra preference to using a sorting implementation when a common sort key
+ * is available ... and that's not necessarily wrong anyway.
+ *
+ * Note: this is only applied when both alternatives are actually feasible.
+ */
+static bool
+choose_hashed_distinct(PlannerInfo *root,
+					   Plan *input_plan, List *input_pathkeys,
+					   double tuple_fraction, double limit_tuples,
+					   double dNumDistinctRows)
+{
+	int			numDistinctCols = list_length(root->parse->distinctClause);
+	Size		hashentrysize;
+	List	   *current_pathkeys;
+	List	   *needed_pathkeys;
+	Path		hashed_p;
+	Path		sorted_p;
+
+	/* Prefer sorting when enable_hashagg is off */
+	if (!enable_hashagg)
+		return false;
+
+	/*
+	 * Don't do it if it doesn't look like the hashtable will fit into
+	 * work_mem.
+	 */
+	hashentrysize = MAXALIGN(input_plan->plan_width) + MAXALIGN(sizeof(MinimalTupleData));
+
+	if (hashentrysize * dNumDistinctRows > work_mem * 1024L)
+		return false;
+
+	/*
+	 * See if the estimated cost is no more than doing it the other way. While
+	 * avoiding the need for sorted input is usually a win, the fact that the
+	 * output won't be sorted may be a loss; so we need to do an actual cost
+	 * comparison.
+	 *
+	 * We need to consider input_plan + hashagg [+ final sort] versus
+	 * input_plan [+ sort] + group [+ final sort] where brackets indicate
+	 * a step that may not be needed.
+	 *
+	 * These path variables are dummies that just hold cost fields; we don't
+	 * make actual Paths for these steps.
+	 */
+	cost_agg(&hashed_p, root, AGG_HASHED, 0,
+			 numDistinctCols, dNumDistinctRows,
+			 input_plan->startup_cost, input_plan->total_cost,
+			 input_plan->plan_rows);
+	/*
+	 * Result of hashed agg is always unsorted, so if ORDER BY is present
+	 * we need to charge for the final sort.
+	 */
+	if (root->parse->sortClause)
+		cost_sort(&hashed_p, root, root->sort_pathkeys, hashed_p.total_cost,
+				  dNumDistinctRows, input_plan->plan_width, limit_tuples);
+
+	/*
+	 * Now for the GROUP case.  See comments in grouping_planner about the
+	 * sorting choices here --- this code should match that code.
+	 */
+	sorted_p.startup_cost = input_plan->startup_cost;
+	sorted_p.total_cost = input_plan->total_cost;
+	current_pathkeys = input_pathkeys;
+	if (root->parse->hasDistinctOn &&
+		list_length(root->distinct_pathkeys) <
+		list_length(root->sort_pathkeys))
+		needed_pathkeys = root->sort_pathkeys;
+	else
+		needed_pathkeys = root->distinct_pathkeys;
+	if (!pathkeys_contained_in(needed_pathkeys, current_pathkeys))
+	{
+		if (list_length(root->distinct_pathkeys) >=
+			list_length(root->sort_pathkeys))
+			current_pathkeys = root->distinct_pathkeys;
+		else
+			current_pathkeys = root->sort_pathkeys;
+		cost_sort(&sorted_p, root, current_pathkeys, sorted_p.total_cost,
+				  input_plan->plan_rows, input_plan->plan_width, -1.0);
+	}
+	cost_group(&sorted_p, root, numDistinctCols, dNumDistinctRows,
+			   sorted_p.startup_cost, sorted_p.total_cost,
+			   input_plan->plan_rows);
+	if (root->parse->sortClause &&
+		!pathkeys_contained_in(root->sort_pathkeys, current_pathkeys))
+		cost_sort(&sorted_p, root, root->sort_pathkeys, sorted_p.total_cost,
+				  dNumDistinctRows, input_plan->plan_width, limit_tuples);
+
+	/*
+	 * Now make the decision using the top-level tuple fraction.  First we
+	 * have to convert an absolute count (LIMIT) into fractional form.
+	 */
+	if (tuple_fraction >= 1.0)
+		tuple_fraction /= dNumDistinctRows;
+
+	if (compare_fractional_path_costs(&hashed_p, &sorted_p,
+									  tuple_fraction) < 0)
+	{
+		/* Hashed is cheaper, so use it */
+		return true;
+	}
 	return false;
 }
 
@@ -2907,7 +3373,7 @@ make_subplanTargetList(PlannerInfo *root,
 
 	/*
 	 * Otherwise, start with a "flattened" tlist (having just the vars
-	 * mentioned in the targetlist and HAVING qual --- but not upper- level
+	 * mentioned in the targetlist and HAVING qual --- but not upper-level
 	 * Vars; they will be replaced by Params later on).
 	 */
 	sub_tlist = flatten_tlist(tlist);
@@ -2956,6 +3422,7 @@ make_subplanTargetList(PlannerInfo *root,
 			   numCols == list_length(groupops));
 		forboth(lc_tle, grouptles, lc_op, groupops)
 		{
+<<<<<<< HEAD
 			Node	   *groupexpr;
 			TargetEntry *tle;
 			TargetEntry *sub_tle = NULL;
@@ -2963,16 +3430,40 @@ make_subplanTargetList(PlannerInfo *root,
 
 			tle = (TargetEntry *) lfirst(lc_tle);
 			groupexpr = (Node *) tle->expr;
+=======
+			SortGroupClause *grpcl = (SortGroupClause *) lfirst(gl);
+			Node	   *groupexpr = get_sortgroupclause_expr(grpcl, tlist);
+			TargetEntry *te = NULL;
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
-			/* Find or make a matching sub_tlist entry */
-			foreach(sl, sub_tlist)
+			/*
+			 * Find or make a matching sub_tlist entry.  If the groupexpr
+			 * isn't a Var, no point in searching.  (Note that the parser
+			 * won't make multiple groupClause entries for the same TLE.)
+			 */
+			if (groupexpr && IsA(groupexpr, Var))
 			{
+<<<<<<< HEAD
 				sub_tle = (TargetEntry *) lfirst(sl);
 				if (equal(groupexpr, sub_tle->expr)
 					&& (sub_tle->ressortgroupref == 0))
 					break;
+=======
+				ListCell   *sl;
+
+				foreach(sl, sub_tlist)
+				{
+					TargetEntry *lte = (TargetEntry *) lfirst(sl);
+
+					if (equal(groupexpr, lte->expr))
+					{
+						te = lte;
+						break;
+					}
+				}
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 			}
-			if (!sl)
+			if (!te)
 			{
 				sub_tle = makeTargetEntry((Expr *) groupexpr,
 										  list_length(sub_tlist) + 1,
@@ -3213,9 +3704,14 @@ locate_grouping_columns(PlannerInfo *root,
 
 	foreach (ge, grouptles)
 	{
+<<<<<<< HEAD
 		TargetEntry *groupte = (TargetEntry *)lfirst(ge);
 		Node	*groupexpr;
 
+=======
+		SortGroupClause *grpcl = (SortGroupClause *) lfirst(gl);
+		Node	   *groupexpr = get_sortgroupclause_expr(grpcl, tlist);
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 		TargetEntry *te = NULL;
 		ListCell   *sl;
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.328 2008/07/17 16:02:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.333 2008/08/07 19:35:02 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -977,6 +977,7 @@ _outSetOp(StringInfo str, SetOp *node)
 	_outPlanInfo(str, (Plan *) node);
 
 	WRITE_ENUM_FIELD(cmd, SetOpCmd);
+	WRITE_ENUM_FIELD(strategy, SetOpStrategy);
 	WRITE_INT_FIELD(numCols);
 
 	appendStringInfoLiteral(str, " :dupColIdx");
@@ -988,6 +989,8 @@ _outSetOp(StringInfo str, SetOp *node)
 		appendStringInfo(str, " %u", node->dupOperators[i]);
 
 	WRITE_INT_FIELD(flagColIdx);
+	WRITE_INT_FIELD(firstFlag);
+	WRITE_LONG_FIELD(numGroups);
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
@@ -2005,6 +2008,7 @@ _outPlannerInfo(StringInfo str, PlannerInfo *node)
 	WRITE_NODE_FIELD(placeholder_list);
 	WRITE_NODE_FIELD(query_pathkeys);
 	WRITE_NODE_FIELD(group_pathkeys);
+	WRITE_NODE_FIELD(distinct_pathkeys);
 	WRITE_NODE_FIELD(sort_pathkeys);
 	WRITE_FLOAT_FIELD(total_table_pages, "%.0f");
 	WRITE_FLOAT_FIELD(tuple_fraction, "%.4f");
@@ -2507,11 +2511,32 @@ _outInheritPartitionCmd(StringInfo str, InheritPartitionCmd *node)
 {
 	WRITE_NODE_TYPE("INHERITPARTITION");
 
+<<<<<<< HEAD
 	WRITE_NODE_FIELD(parent);
+=======
+	WRITE_INT_FIELD(resultRelation);
+	WRITE_NODE_FIELD(intoClause);
+	WRITE_BOOL_FIELD(hasAggs);
+	WRITE_BOOL_FIELD(hasSubLinks);
+	WRITE_BOOL_FIELD(hasDistinctOn);
+	WRITE_NODE_FIELD(rtable);
+	WRITE_NODE_FIELD(jointree);
+	WRITE_NODE_FIELD(targetList);
+	WRITE_NODE_FIELD(returningList);
+	WRITE_NODE_FIELD(groupClause);
+	WRITE_NODE_FIELD(havingQual);
+	WRITE_NODE_FIELD(distinctClause);
+	WRITE_NODE_FIELD(sortClause);
+	WRITE_NODE_FIELD(limitOffset);
+	WRITE_NODE_FIELD(limitCount);
+	WRITE_NODE_FIELD(rowMarks);
+	WRITE_NODE_FIELD(setOperations);
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 }
 
 #ifndef COMPILING_BINARY_FUNCS
 static void
+<<<<<<< HEAD
 _outAlterPartitionCmd(StringInfo str, AlterPartitionCmd *node)
 {
 	WRITE_NODE_TYPE("ALTERPARTITIONCMD");
@@ -3598,6 +3623,16 @@ _outWindowClause(StringInfo str, WindowClause *node)
 	WRITE_NODE_FIELD(endOffset);
 	WRITE_UINT_FIELD(winref);
 	WRITE_BOOL_FIELD(copiedOrder);
+=======
+_outSortGroupClause(StringInfo str, SortGroupClause *node)
+{
+	WRITE_NODE_TYPE("SORTGROUPCLAUSE");
+
+	WRITE_UINT_FIELD(tleSortGroupRef);
+	WRITE_OID_FIELD(eqop);
+	WRITE_OID_FIELD(sortop);
+	WRITE_BOOL_FIELD(nulls_first);
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 }
 
 static void
@@ -3647,6 +3682,7 @@ _outSetOperationStmt(StringInfo str, SetOperationStmt *node)
 	WRITE_NODE_FIELD(rarg);
 	WRITE_NODE_FIELD(colTypes);
 	WRITE_NODE_FIELD(colTypmods);
+	WRITE_NODE_FIELD(groupClauses);
 }
 
 #ifndef COMPILING_BINARY_FUNCS
@@ -5026,11 +5062,8 @@ _outNode(StringInfo str, void *obj)
 			case T_Query:
 				_outQuery(str, obj);
 				break;
-			case T_SortClause:
-				_outSortClause(str, obj);
-				break;
-			case T_GroupClause:
-				_outGroupClause(str, obj);
+			case T_SortGroupClause:
+				_outSortGroupClause(str, obj);
 				break;
 			case T_GroupingClause:
 				_outGroupingClause(str, obj);

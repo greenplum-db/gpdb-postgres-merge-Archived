@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.374 2008/07/31 22:47:56 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.376 2008/08/07 01:11:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,8 +39,11 @@
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
+<<<<<<< HEAD
 #include "parser/parse_func.h"
 #include "parser/parse_cte.h"
+=======
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
@@ -1562,11 +1565,36 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 												stmt->scatterClause,
 												&qry->targetList);
 
+<<<<<<< HEAD
 	qry->distinctClause = transformDistinctClause(pstate,
 												  stmt->distinctClause,
 												  &qry->targetList,
 												  qry->sortClause,
 												  &qry->groupClause);
+=======
+	if (stmt->distinctClause == NIL)
+	{
+		qry->distinctClause = NIL;
+		qry->hasDistinctOn = false;
+	}
+	else if (linitial(stmt->distinctClause) == NULL)
+	{
+		/* We had SELECT DISTINCT */
+		qry->distinctClause = transformDistinctClause(pstate,
+													  &qry->targetList,
+													  qry->sortClause);
+		qry->hasDistinctOn = false;
+	}
+	else
+	{
+		/* We had SELECT DISTINCT ON */
+		qry->distinctClause = transformDistinctOnClause(pstate,
+														stmt->distinctClause,
+														&qry->targetList,
+														qry->sortClause);
+		qry->hasDistinctOn = true;
+	}
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 	/* transform LIMIT */
 	qry->limitOffset = transformLimitClause(pstate, stmt->limitOffset,
@@ -2502,7 +2530,12 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 
 		op->colTypes = NIL;
 		op->colTypmods = NIL;
+<<<<<<< HEAD
 		/* don't have a "foreach6", so chase four of the lists by hand */
+=======
+		op->groupClauses = NIL;
+		/* don't have a "foreach4", so chase two of the lists by hand */
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 		lcm = list_head(lcoltypmods);
 		rcm = list_head(rcoltypmods);
 		mct = list_head(preselected_coltypes);
@@ -2533,6 +2566,35 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 			/* Set final decision */
 			op->colTypes = lappend_oid(op->colTypes, rescoltype);
 			op->colTypmods = lappend_int(op->colTypmods, rescoltypmod);
+<<<<<<< HEAD
+=======
+
+			/*
+			 * For all cases except UNION ALL, identify the grouping operators
+			 * (and, if available, sorting operators) that will be used to
+			 * eliminate duplicates.
+			 */
+			if (op->op != SETOP_UNION || !op->all)
+			{
+				SortGroupClause *grpcl = makeNode(SortGroupClause);
+				Oid			sortop;
+				Oid			eqop;
+
+				/* determine the eqop and optional sortop */
+				get_sort_group_operators(rescoltype,
+										 false, true, false,
+										 &sortop, &eqop, NULL);
+
+				/* we don't have a tlist yet, so can't assign sortgrouprefs */
+				grpcl->tleSortGroupRef = 0;
+				grpcl->eqop = eqop;
+				grpcl->sortop = sortop;
+				grpcl->nulls_first = false;		/* OK with or without sortop */
+
+				op->groupClauses = lappend(op->groupClauses, grpcl);
+			}
+
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 			lcm = lnext(lcm);
 			rcm = lnext(rcm);
 			mct = lnext(mct);

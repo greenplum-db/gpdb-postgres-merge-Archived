@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.235 2008/08/01 13:16:08 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.236 2008/08/05 15:09:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -461,12 +461,19 @@ ReadBuffer_common(SMgrRelation smgr,
 		if (zeroPage)
 			MemSet((char *) bufBlock, 0, BLCKSZ);
 		else
+<<<<<<< HEAD
 			smgrread(smgr, blockNum, (char *) bufBlock);
 		/* check for garbage data */
 		if (!PageIsVerified((Page) bufBlock, blockNum))
+=======
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 		{
-			if (zero_damaged_pages)
+			smgrread(smgr, blockNum, (char *) bufBlock);
+
+			/* check for garbage data */
+			if (!PageHeaderIsValid((PageHeader) bufBlock))
 			{
+<<<<<<< HEAD
 				ereport(WARNING,
 						(errcode(ERRCODE_DATA_CORRUPTED),
 						 errmsg("invalid page in block %u of relation %s; zeroing out page",
@@ -479,6 +486,27 @@ ReadBuffer_common(SMgrRelation smgr,
 				 errmsg("invalid page in block %u of relation %s",
 						blockNum, relpath(smgr->smgr_rnode)),
 				 errSendAlert(true)));
+=======
+				if (zero_damaged_pages)
+				{
+					ereport(WARNING,
+							(errcode(ERRCODE_DATA_CORRUPTED),
+							 errmsg("invalid page header in block %u of relation %u/%u/%u; zeroing out page",
+									blockNum, 
+									smgr->smgr_rnode.spcNode,
+									smgr->smgr_rnode.dbNode,
+									smgr->smgr_rnode.relNode)));
+					MemSet((char *) bufBlock, 0, BLCKSZ);
+				}
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_DATA_CORRUPTED),
+							 errmsg("invalid page header in block %u of relation %u/%u/%u",
+									blockNum, smgr->smgr_rnode.spcNode,
+									smgr->smgr_rnode.dbNode,
+									smgr->smgr_rnode.relNode)));
+			}
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 		}
 	}
 

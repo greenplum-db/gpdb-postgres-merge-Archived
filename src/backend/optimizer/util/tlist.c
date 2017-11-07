@@ -21,6 +21,10 @@
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
+<<<<<<< HEAD
+=======
+#include "parser/parse_expr.h"
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 #include "utils/lsyscache.h"
 
 typedef struct maxSortGroupRef_context
@@ -29,7 +33,7 @@ typedef struct maxSortGroupRef_context
 	bool include_orderedagg;
 } maxSortGroupRef_context;
 
-static 
+static
 bool maxSortGroupRef_walker(Node *node, maxSortGroupRef_context *cxt);
 
 /*****************************************************************************
@@ -62,8 +66,8 @@ tlist_member(Node *node, List *targetlist)
  * tlist_members
  *	  Finds all members of the given tlist whose expression is
  *	  equal() to the given expression.	Result is NIL if no such member.
- *	  Note: We do not make a copy of the tlist entries that match. 
- *	  The caller is responsible for cleaning up the memory allocated 
+ *	  Note: We do not make a copy of the tlist entries that match.
+ *	  The caller is responsible for cleaning up the memory allocated
  *	  to the List returned.
  */
 List *
@@ -83,7 +87,7 @@ tlist_members(Node *node, List *targetlist)
 			tlist = lappend(tlist, tlentry);
 		}
 	}
-	
+
 	return tlist;
 }
 
@@ -176,6 +180,69 @@ add_to_flat_tlist(List *tlist, List *vars, bool resjunk)
 
 
 /*
+ * get_tlist_exprs
+ *		Get just the expression subtrees of a tlist
+ *
+ * Resjunk columns are ignored unless includeJunk is true
+ */
+List *
+get_tlist_exprs(List *tlist, bool includeJunk)
+{
+	List	   *result = NIL;
+	ListCell   *l;
+
+	foreach(l, tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
+
+		if (tle->resjunk && !includeJunk)
+			continue;
+
+		result = lappend(result, tle->expr);
+	}
+	return result;
+}
+
+
+/*
+ * Does tlist have same output datatypes as listed in colTypes?
+ *
+ * Resjunk columns are ignored if junkOK is true; otherwise presence of
+ * a resjunk column will always cause a 'false' result.
+ *
+ * Note: currently no callers care about comparing typmods.
+ */
+bool
+tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK)
+{
+	ListCell   *l;
+	ListCell   *curColType = list_head(colTypes);
+
+	foreach(l, tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
+
+		if (tle->resjunk)
+		{
+			if (!junkOK)
+				return false;
+		}
+		else
+		{
+			if (curColType == NULL)
+				return false;	/* tlist longer than colTypes */
+			if (exprType((Node *) tle->expr) != lfirst_oid(curColType))
+				return false;
+			curColType = lnext(curColType);
+		}
+	}
+	if (curColType != NULL)
+		return false;			/* tlist shorter than colTypes */
+	return true;
+}
+
+
+/*
  * get_sortgroupref_tle
  *		Find the targetlist entry matching the given SortGroupRef index,
  *		and return it.
@@ -205,17 +272,14 @@ get_sortgroupref_tle(Index sortref, List *targetList)
 
 /*
  * get_sortgroupclause_tle
- *		Find the targetlist entry matching the given SortClause
- *		(or GroupClause) by ressortgroupref, and return it.
- *
- * Because GroupClause is typedef'd as SortClause, either kind of
- * node can be passed without casting.
+ *		Find the targetlist entry matching the given SortGroupClause
+ *		by ressortgroupref, and return it.
  */
 TargetEntry *
-get_sortgroupclause_tle(SortClause *sortClause,
+get_sortgroupclause_tle(SortGroupClause *sgClause,
 						List *targetList)
 {
-	return get_sortgroupref_tle(sortClause->tleSortGroupRef, targetList);
+	return get_sortgroupref_tle(sgClause->tleSortGroupRef, targetList);
 }
 
 /*
@@ -301,34 +365,31 @@ get_sortgroupclauses_tles(List *clauses, List *targetList,
 
 /*
  * get_sortgroupclause_expr
- *		Find the targetlist entry matching the given SortClause
- *		(or GroupClause) by ressortgroupref, and return its expression.
- *
- * Because GroupClause is typedef'd as SortClause, either kind of
- * node can be passed without casting.
+ *		Find the targetlist entry matching the given SortGroupClause
+ *		by ressortgroupref, and return its expression.
  */
 Node *
-get_sortgroupclause_expr(SortClause *sortClause, List *targetList)
+get_sortgroupclause_expr(SortGroupClause *sgClause, List *targetList)
 {
-	TargetEntry *tle = get_sortgroupclause_tle(sortClause, targetList);
+	TargetEntry *tle = get_sortgroupclause_tle(sgClause, targetList);
 
 	return (Node *) tle->expr;
 }
 
 /*
  * get_sortgrouplist_exprs
- *		Given a list of SortClauses (or GroupClauses), build a list
+ *		Given a list of SortGroupClauses, build a list
  *		of the referenced targetlist expressions.
  */
 List *
-get_sortgrouplist_exprs(List *sortClauses, List *targetList)
+get_sortgrouplist_exprs(List *sgClauses, List *targetList)
 {
 	List	   *result = NIL;
 	ListCell   *l;
 
-	foreach(l, sortClauses)
+	foreach(l, sgClauses)
 	{
-		SortClause *sortcl = (SortClause *) lfirst(l);
+		SortGroupClause *sortcl = (SortGroupClause *) lfirst(l);
 		Node	   *sortexpr;
 
 		sortexpr = get_sortgroupclause_expr(sortcl, targetList);
@@ -418,7 +479,7 @@ get_grouplist_exprs(List *groupClauses, List *targetList)
 		{
 			Node *expr = get_sortgroupclause_expr((GroupClause*)groupClause,
 												  targetList);
-			
+
 			if (!list_member(result, expr))
 				result = lappend(result, expr);
 		}
@@ -437,55 +498,119 @@ get_grouplist_exprs(List *groupClauses, List *targetList)
 }
 
 
+/*****************************************************************************
+ *		Functions to extract data from a list of SortGroupClauses
+ *
+ * These don't really belong in tlist.c, but they are sort of related to the
+ * functions just above, and they don't seem to deserve their own file.
+ *****************************************************************************/
+
 /*
- * Does tlist have same output datatypes as listed in colTypes?
+ * extract_grouping_ops - make an array of the equality operator OIDs
+ *		for a SortGroupClause list
+ */
+Oid *
+extract_grouping_ops(List *groupClause)
+{
+	int			numCols = list_length(groupClause);
+	int			colno = 0;
+	Oid		   *groupOperators;
+	ListCell   *glitem;
+
+	groupOperators = (Oid *) palloc(sizeof(Oid) * numCols);
+
+	foreach(glitem, groupClause)
+	{
+		SortGroupClause *groupcl = (SortGroupClause *) lfirst(glitem);
+
+		groupOperators[colno] = groupcl->eqop;
+		Assert(OidIsValid(groupOperators[colno]));
+		colno++;
+	}
+
+	return groupOperators;
+}
+
+/*
+ * extract_grouping_cols - make an array of the grouping column resnos
+ *		for a SortGroupClause list
+ */
+AttrNumber *
+extract_grouping_cols(List *groupClause, List *tlist)
+{
+	AttrNumber *grpColIdx;
+	int			numCols = list_length(groupClause);
+	int			colno = 0;
+	ListCell   *glitem;
+
+	grpColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
+
+	foreach(glitem, groupClause)
+	{
+		SortGroupClause *groupcl = (SortGroupClause *) lfirst(glitem);
+		TargetEntry *tle = get_sortgroupclause_tle(groupcl, tlist);
+
+		grpColIdx[colno++] = tle->resno;
+	}
+
+	return grpColIdx;
+}
+
+/*
+ * grouping_is_sortable - is it possible to implement grouping list by sorting?
  *
- * Resjunk columns are ignored if junkOK is true; otherwise presence of
- * a resjunk column will always cause a 'false' result.
- *
- * Note: currently no callers care about comparing typmods.
+ * This is easy since the parser will have included a sortop if one exists.
  */
 bool
-tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK)
+grouping_is_sortable(List *groupClause)
 {
-	ListCell   *l;
-	ListCell   *curColType = list_head(colTypes);
+	ListCell   *glitem;
 
-	foreach(l, tlist)
+	foreach(glitem, groupClause)
 	{
-		TargetEntry *tle = (TargetEntry *) lfirst(l);
+		SortGroupClause *groupcl = (SortGroupClause *) lfirst(glitem);
 
-		if (tle->resjunk)
-		{
-			if (!junkOK)
-				return false;
-		}
-		else
-		{
-			if (curColType == NULL)
-				return false;	/* tlist longer than colTypes */
-			if (exprType((Node *) tle->expr) != lfirst_oid(curColType))
-				return false;
-			curColType = lnext(curColType);
-		}
+		if (!OidIsValid(groupcl->sortop))
+			return false;
 	}
-	if (curColType != NULL)
-		return false;			/* tlist shorter than colTypes */
+	return true;
+}
+
+/*
+ * grouping_is_hashable - is it possible to implement grouping list by hashing?
+ *
+ * We assume hashing is OK if the equality operators are marked oprcanhash.
+ * (If there isn't actually a supporting hash function, the executor will
+ * complain at runtime; but this is a misdeclaration of the operator, not
+ * a system bug.)
+ */
+bool
+grouping_is_hashable(List *groupClause)
+{
+	ListCell   *glitem;
+
+	foreach(glitem, groupClause)
+	{
+		SortGroupClause *groupcl = (SortGroupClause *) lfirst(glitem);
+
+		if (!op_hashjoinable(groupcl->eqop))
+			return false;
+	}
 	return true;
 }
 
 
 /*
- * Return the largest sortgroupref value in use in the given 
- * target list.  
+ * Return the largest sortgroupref value in use in the given
+ * target list.
  *
- * If include_orderedagg is false, consider only the top-level 
- * entries in the target list, i.e., those that might be occur 
- * in a groupClause, distinctClause, or sortClause of the Query 
+ * If include_orderedagg is false, consider only the top-level
+ * entries in the target list, i.e., those that might be occur
+ * in a groupClause, distinctClause, or sortClause of the Query
  * node that immediately contains the target list.
  *
- * If include_orderedagg is true, also consider AggOrder entries 
- * embedded in Aggref nodes within the target list.  Though 
+ * If include_orderedagg is true, also consider AggOrder entries
+ * embedded in Aggref nodes within the target list.  Though
  * such entries will only occur in the aggregation sub_tlist
  * (input) they affect sortgroupref numbering for both sub_tlist
  * and tlist (aggregate).
@@ -495,15 +620,15 @@ Index maxSortGroupRef(List *targetlist, bool include_orderedagg)
 	maxSortGroupRef_context context;
 	context.maxsgr = 0;
 	context.include_orderedagg = include_orderedagg;
-	
+
 	if (targetlist != NIL)
 	{
 		if ( !IsA(targetlist, List) || !IsA(linitial(targetlist), TargetEntry ) )
 			elog(ERROR, "non-targetlist argument supplied");
-			
+
 		maxSortGroupRef_walker((Node*)targetlist, &context);
 	}
-	
+
 	return context.maxsgr;
 }
 
@@ -511,20 +636,20 @@ bool maxSortGroupRef_walker(Node *node, maxSortGroupRef_context *cxt)
 {
 	if ( node == NULL )
 		return false;
-	
+
 	if ( IsA(node, TargetEntry) )
 	{
 		TargetEntry *tle = (TargetEntry*)node;
 		if ( tle->ressortgroupref > cxt->maxsgr )
 			cxt->maxsgr = tle->ressortgroupref;
-		
+
 		return maxSortGroupRef_walker((Node*)tle->expr, cxt);
 	}
-	
+
 	/* Aggref nodes don't nest, so we can treat them here without recurring
 	 * further.
 	 */
-	
+
 	if ( IsA(node, Aggref) )
 	{
 		Aggref *ref = (Aggref*)node;
@@ -532,7 +657,7 @@ bool maxSortGroupRef_walker(Node *node, maxSortGroupRef_context *cxt)
 		{
 			ListCell *lc;
 			AggOrder *aggorder = ref->aggorder;
-			
+
 			foreach (lc, aggorder->sortClause)
 			{
 				SortClause *sort = (SortClause *)lfirst(lc);
@@ -541,14 +666,14 @@ bool maxSortGroupRef_walker(Node *node, maxSortGroupRef_context *cxt)
 				if (sort->tleSortGroupRef > cxt->maxsgr )
 					cxt->maxsgr = sort->tleSortGroupRef;
 			}
-			
+
 		}
 		return false;
 	}
-	
+
 	return expression_tree_walker(node, maxSortGroupRef_walker, cxt);
 }
-	
+
 /**
  * Returns the width of the row by traversing through the
  * target list and adding up the width of each target entry.

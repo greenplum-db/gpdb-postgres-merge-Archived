@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.278 2008/07/18 03:32:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.279 2008/08/02 21:32:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,11 +173,15 @@ static void get_target_list(List *targetList, deparse_context *context,
 static void get_setop_query(Node *setOp, Query *query,
 				deparse_context *context,
 				TupleDesc resultDesc);
+<<<<<<< HEAD
 static void get_rule_grouplist(List *grplist, List *tlist,
 							   bool in_grpsets, deparse_context *context);
 static void get_rule_groupingclause(GroupingClause *grp, List *tlist,
 									deparse_context *context);
 static Node *get_rule_sortgroupclause(SortClause *srt, List *tlist,
+=======
+static Node *get_rule_sortgroupclause(SortGroupClause *srt, List *tlist,
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 						 bool force_colno,
 						 deparse_context *context);
 static void get_rule_windowspec(WindowClause *wc, List *targetList,
@@ -2345,11 +2349,58 @@ get_select_query_def(Query *query, deparse_context *context,
 	/* Add the ORDER BY clause if given */
 	if (query->sortClause != NIL)
 	{
+<<<<<<< HEAD
 		get_sortlist_expr(query->sortClause,
 						  query->targetList,
 						  force_colno,
 						  context,
 						  " ORDER BY ");
+=======
+		appendContextKeyword(context, " ORDER BY ",
+							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
+		sep = "";
+		foreach(l, query->sortClause)
+		{
+			SortGroupClause *srt = (SortGroupClause *) lfirst(l);
+			Node	   *sortexpr;
+			Oid			sortcoltype;
+			TypeCacheEntry *typentry;
+
+			appendStringInfoString(buf, sep);
+			sortexpr = get_rule_sortgroupclause(srt, query->targetList,
+												force_colno, context);
+			sortcoltype = exprType(sortexpr);
+			/* See whether operator is default < or > for datatype */
+			typentry = lookup_type_cache(sortcoltype,
+										 TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
+			if (srt->sortop == typentry->lt_opr)
+			{
+				/* ASC is default, so emit nothing for it */
+				if (srt->nulls_first)
+					appendStringInfo(buf, " NULLS FIRST");
+			}
+			else if (srt->sortop == typentry->gt_opr)
+			{
+				appendStringInfo(buf, " DESC");
+				/* DESC defaults to NULLS FIRST */
+				if (!srt->nulls_first)
+					appendStringInfo(buf, " NULLS LAST");
+			}
+			else
+			{
+				appendStringInfo(buf, " USING %s",
+								 generate_operator_name(srt->sortop,
+														sortcoltype,
+														sortcoltype));
+				/* be specific to eliminate ambiguity */
+				if (srt->nulls_first)
+					appendStringInfo(buf, " NULLS FIRST");
+				else
+					appendStringInfo(buf, " NULLS LAST");
+			}
+			sep = ", ";
+		}
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	}
 
 	/* Add the LIMIT clause if given */
@@ -2465,13 +2516,13 @@ get_basic_select_query(Query *query, deparse_context *context,
 	/* Add the DISTINCT clause if given */
 	if (query->distinctClause != NIL)
 	{
-		if (has_distinct_on_clause(query))
+		if (query->hasDistinctOn)
 		{
 			appendStringInfo(buf, " DISTINCT ON (");
 			sep = "";
 			foreach(l, query->distinctClause)
 			{
-				SortClause *srt = (SortClause *) lfirst(l);
+				SortGroupClause *srt = (SortGroupClause *) lfirst(l);
 
 				appendStringInfoString(buf, sep);
 				get_rule_sortgroupclause(srt, query->targetList,
@@ -2503,7 +2554,20 @@ get_basic_select_query(Query *query, deparse_context *context,
 	{
 		appendContextKeyword(context, " GROUP BY ",
 							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
+<<<<<<< HEAD
 		get_rule_grouplist(query->groupClause, query->targetList, false, context);
+=======
+		sep = "";
+		foreach(l, query->groupClause)
+		{
+			SortGroupClause *grp = (SortGroupClause *) lfirst(l);
+
+			appendStringInfoString(buf, sep);
+			get_rule_sortgroupclause(grp, query->targetList,
+									 false, context);
+			sep = ", ";
+		}
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	}
 
 	/* Add the HAVING clause if given */
@@ -2714,9 +2778,15 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
  * immediatelly inside a GROUPING SETS clause. This is used
  * to determine how to use parantheses.
  */
+<<<<<<< HEAD
 static void
 get_rule_grouplist(List *grplist, List *tlist,
 				   bool in_grpsets, deparse_context *context)
+=======
+static Node *
+get_rule_sortgroupclause(SortGroupClause *srt, List *tlist, bool force_colno,
+						 deparse_context *context)
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 {
 	StringInfo buf = context->buf;
 	char *sep;

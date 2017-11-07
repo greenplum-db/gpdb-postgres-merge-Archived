@@ -75,7 +75,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.158 2008/05/12 00:00:49 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.159 2008/08/02 21:31:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2046,9 +2046,14 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		 */
 		if (aggref->aggdistinct)
 		{
+<<<<<<< HEAD
 			TargetEntry *tle;
 			SortClause *sc;
 			Oid			eq_function;
+=======
+			Oid			lt_opr;
+			Oid			eq_opr;
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 			/*
 			 * GPDB 4 doesh't implement DISTINCT aggs for aggs having more
@@ -2072,6 +2077,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			 * record it in the Aggref node ... or at latest, do it in the
 			 * planner.
 			 */
+<<<<<<< HEAD
 			eq_function = equality_oper_funcid(inputTypes[0]);
 			fmgr_info(eq_function, &(peraggstate->equalfn));
 
@@ -2154,6 +2160,14 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			 */
 			eqfunc = equality_oper_funcid(inputTypes[0]);
 			fmgr_info(eqfunc, &peraggstate->equalfn);
+=======
+			get_sort_group_operators(inputTypes[0],
+									 true, true, false,
+									 &lt_opr, &eq_opr, NULL);
+			fmgr_info(get_opcode(eq_opr), &(peraggstate->equalfn));
+			peraggstate->sortOperator = lt_opr;
+			peraggstate->sortstate = NULL;
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 		}
 
 		ReleaseSysCache(aggTuple);

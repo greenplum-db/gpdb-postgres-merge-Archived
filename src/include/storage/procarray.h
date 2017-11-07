@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/procarray.h,v 1.22 2008/05/12 20:02:02 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/storage/procarray.h,v 1.23 2008/08/04 18:03:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,9 +48,14 @@ extern VirtualTransactionId *GetCurrentVirtualXIDs(TransactionId limitXmin,
 extern int	CountActiveBackends(void);
 extern int	CountDBBackends(Oid databaseid);
 extern int	CountUserBackends(Oid roleid);
+<<<<<<< HEAD
 extern bool CheckOtherDBBackends(Oid databaseId);
 extern bool HasSerializableBackends(bool allDbs);
 extern bool HasDropTransaction(bool allDbs);
+=======
+extern bool CountOtherDBBackends(Oid databaseId,
+								 int *nbackends, int *nprepared);
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 extern void XidCacheRemoveRunningXids(TransactionId xid,
 						  int nxids, const TransactionId *xids,

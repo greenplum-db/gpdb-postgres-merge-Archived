@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.123 2008/07/01 10:33:09 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.124 2008/08/02 21:31:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2060,10 +2060,8 @@ static bool
 std_typanalyze(VacAttrStats *stats)
 {
 	Form_pg_attribute attr = stats->attr;
-	Operator	func_operator;
-	Oid			eqopr = InvalidOid;
-	Oid			eqfunc = InvalidOid;
-	Oid			ltopr = InvalidOid;
+	Oid			ltopr;
+	Oid			eqopr;
 	StdAnalyzeData *mystats;
 
 	/* If the attstattarget column is negative, use the default value */
@@ -2071,7 +2069,13 @@ std_typanalyze(VacAttrStats *stats)
 	if (attr->attstattarget < 0)
 		attr->attstattarget = default_statistics_target;
 
+	/* Look for default "<" and "=" operators for column's type */
+	get_sort_group_operators(attr->atttypid,
+							 false, false, false,
+							 &ltopr, &eqopr, NULL);
+
 	/* If column has no "=" operator, we can't do much of anything */
+<<<<<<< HEAD
 	func_operator = equality_oper(attr->atttypid, true);
 	if (func_operator != NULL)
 	{
@@ -2087,19 +2091,15 @@ std_typanalyze(VacAttrStats *stats)
 		stats->minrows = 300 * attr->attstattarget;
 		return true;
 	}
-
-	/* Is there a "<" operator with suitable semantics? */
-	func_operator = ordering_oper(attr->atttypid, true);
-	if (func_operator != NULL)
-	{
-		ltopr = oprid(func_operator);
-		ReleaseSysCache(func_operator);
-	}
+=======
+	if (!OidIsValid(eqopr))
+		return false;
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 	/* Save the operator info for compute_stats routines */
 	mystats = (StdAnalyzeData *) palloc(sizeof(StdAnalyzeData));
 	mystats->eqopr = eqopr;
-	mystats->eqfunc = eqfunc;
+	mystats->eqfunc = get_opcode(eqopr);
 	mystats->ltopr = ltopr;
 	stats->extra_data = mystats;
 

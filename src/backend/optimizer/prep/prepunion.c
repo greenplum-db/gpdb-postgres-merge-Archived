@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.148 2008/07/31 22:47:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.152 2008/08/07 19:35:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,11 +34,20 @@
 #include "access/heapam.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
+<<<<<<< HEAD
 #include "cdb/cdbpartition.h"
 #include "commands/tablecmds.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/paths.h"
 #include "nodes/nodeFuncs.h"
+=======
+#include "miscadmin.h"
+#include "nodes/makefuncs.h"
+#include "optimizer/clauses.h"
+#include "optimizer/cost.h"
+#include "optimizer/pathnode.h"
+#include "optimizer/paths.h"
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 #include "optimizer/plancat.h"
 #include "optimizer/planmain.h"
 #include "optimizer/planner.h"
@@ -49,6 +58,7 @@
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
+#include "utils/selfuncs.h"
 
 #include "cdb/cdbllize.h"                   /* pull_up_Flow() */
 #include "cdb/cdbvars.h"
@@ -58,20 +68,35 @@ static Plan *recurse_set_operations(Node *setOp, PlannerInfo *root,
 					   double tuple_fraction,
 					   List *colTypes, bool junkOK,
 					   int flag, List *refnames_tlist,
+<<<<<<< HEAD
 					   List **sortClauses);
 static Plan *generate_recursion_plan(SetOperationStmt *setOp,
 						PlannerInfo *root, double tuple_fraction,
 						List *refnames_tlist,
 						List **sortClauses);
+=======
+					   List **sortClauses, double *pNumGroups);
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 static Plan *generate_union_plan(SetOperationStmt *op, PlannerInfo *root,
 					double tuple_fraction,
-					List *refnames_tlist, List **sortClauses);
+					List *refnames_tlist,
+					List **sortClauses, double *pNumGroups);
 static Plan *generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
-					   List *refnames_tlist, List **sortClauses);
+					   double tuple_fraction,
+					   List *refnames_tlist,
+					   List **sortClauses, double *pNumGroups);
 static List *recurse_union_children(Node *setOp, PlannerInfo *root,
 					   double tuple_fraction,
 					   SetOperationStmt *top_union,
 					   List *refnames_tlist);
+static Plan *make_union_unique(SetOperationStmt *op, Plan *plan,
+				  PlannerInfo *root, double tuple_fraction,
+				  List **sortClauses);
+static bool choose_hashed_setop(PlannerInfo *root, List *groupClauses,
+					Plan *input_plan,
+					double dNumGroups, double dNumOutputRows,
+					double tuple_fraction,
+					const char *construct);
 static List *generate_setop_tlist(List *colTypes, int flag,
 					 Index varno,
 					 bool hack_constants,
@@ -80,7 +105,7 @@ static List *generate_setop_tlist(List *colTypes, int flag,
 static List *generate_append_tlist(List *colTypes, bool flag,
 					  List *input_plans,
 					  List *refnames_tlist);
-static List *generate_setop_sortlist(List *targetlist);
+static List *generate_setop_grouplist(SetOperationStmt *op, List *targetlist);
 static void expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte,
 						 Index rti);
 static void make_inh_translation_lists(Relation oldrelation,
@@ -107,8 +132,9 @@ static List *adjust_inherited_tlist(List *tlist,
  * zero means "all the tuples will be fetched".  Any LIMIT present at the
  * top level has already been factored into tuple_fraction.
  *
- * *sortClauses is an output argument: it is set to a list of SortClauses
- * representing the result ordering of the topmost set operation.
+ * *sortClauses is an output argument: it is set to a list of SortGroupClauses
+ * representing the result ordering of the topmost set operation.  (This will
+ * be NIL if the output isn't ordered.)
  */
 Plan *
 plan_set_operations(PlannerInfo *root, double tuple_fraction,
@@ -157,7 +183,7 @@ plan_set_operations(PlannerInfo *root, double tuple_fraction,
 	return recurse_set_operations((Node *) topop, root, tuple_fraction,
 								  topop->colTypes, true, -1,
 								  leftmostQuery->targetList,
-								  sortClauses);
+								  sortClauses, NULL);
 }
 
 /*
@@ -169,7 +195,11 @@ plan_set_operations(PlannerInfo *root, double tuple_fraction,
  * junkOK: if true, child resjunk columns may be left in the result
  * flag: if >= 0, add a resjunk output column indicating value of flag
  * refnames_tlist: targetlist to take column names from
- * *sortClauses: receives list of SortClauses for result plan, if any
+ *
+ * Returns a plan for the subtree, as well as these output parameters:
+ * *sortClauses: receives list of SortGroupClauses for result plan, if any
+ * *pNumGroups: if not NULL, we estimate the number of distinct groups
+ *		in the result, and store it there
  *
  * We don't have to care about typmods here: the only allowed difference
  * between set-op input and output typmods is input is a specific typmod
@@ -180,7 +210,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 					   double tuple_fraction,
 					   List *colTypes, bool junkOK,
 					   int flag, List *refnames_tlist,
-					   List **sortClauses)
+					   List **sortClauses, double *pNumGroups)
 {
 	if (IsA(setOp, RangeTblRef))
 	{
@@ -204,6 +234,22 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 								   tuple_fraction,
 								   &subroot,
 								   config);
+
+		/*
+		 * Estimate number of groups if caller wants it.  If the subquery
+		 * used grouping or aggregation, its output is probably mostly
+		 * unique anyway; otherwise do statistical estimation.
+		 */
+		if (pNumGroups)
+		{
+			if (subquery->groupClause || subquery->distinctClause ||
+				subroot->hasHavingQual || subquery->hasAggs)
+				*pNumGroups = subplan->plan_rows;
+			else
+				*pNumGroups = estimate_num_groups(subroot,
+												  get_tlist_exprs(subquery->targetList, false),
+												  subplan->plan_rows);
+		}
 
 		/*
 		 * Add a SubqueryScan with the caller-requested targetlist
@@ -237,11 +283,11 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		if (op->op == SETOP_UNION)
 			plan = generate_union_plan(op, root, tuple_fraction,
 									   refnames_tlist,
-									   sortClauses);
+									   sortClauses, pNumGroups);
 		else
-			plan = generate_nonunion_plan(op, root,
+			plan = generate_nonunion_plan(op, root, tuple_fraction,
 										  refnames_tlist,
-										  sortClauses);
+										  sortClauses, pNumGroups);
 
 		/*
 		 * If necessary, add a Result node to project the caller-requested
@@ -341,7 +387,7 @@ static Plan *
 generate_union_plan(SetOperationStmt *op, PlannerInfo *root,
 					double tuple_fraction,
 					List *refnames_tlist,
-					List **sortClauses)
+					List **sortClauses, double *pNumGroups)
 {
 	List	   *planlist;
 	List	   *tlist;
@@ -365,8 +411,8 @@ generate_union_plan(SetOperationStmt *op, PlannerInfo *root,
 	/*
 	 * If any of my children are identical UNION nodes (same op, all-flag, and
 	 * colTypes) then they can be merged into this node so that we generate
-	 * only one Append and Sort for the lot.  Recurse to find such nodes and
-	 * compute their children's plans.
+	 * only one Append and unique-ification for the lot.  Recurse to find such
+	 * nodes and compute their children's plans.
 	 */
 	planlist = list_concat(recurse_union_children(op->larg, root,
 												  tuple_fraction,
@@ -405,8 +451,9 @@ generate_union_plan(SetOperationStmt *op, PlannerInfo *root,
 
 	/*
 	 * For UNION ALL, we just need the Append plan.  For UNION, need to add
-	 * Sort and Unique nodes to produce unique output.
+	 * node(s) to remove duplicates.
 	 */
+<<<<<<< HEAD
 	if (!op->all)
 	{
 		List	   *sortList;
@@ -426,8 +473,20 @@ generate_union_plan(SetOperationStmt *op, PlannerInfo *root,
 		}
 		*sortClauses = sortList;
 	}
+=======
+	if (op->all)
+		*sortClauses = NIL;		/* result of UNION ALL is always unsorted */
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	else
-		*sortClauses = NIL;
+		plan = make_union_unique(op, plan, root, tuple_fraction, sortClauses);
+
+	/*
+	 * Estimate number of groups if caller wants it.  For now we just
+	 * assume the output is unique --- this is certainly true for the
+	 * UNION case, and we want worst-case estimates anyway.
+	 */
+	if (pNumGroups)
+		*pNumGroups = plan->plan_rows;
 
 	return plan;
 }
@@ -437,31 +496,58 @@ generate_union_plan(SetOperationStmt *op, PlannerInfo *root,
  */
 static Plan *
 generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
+					   double tuple_fraction,
 					   List *refnames_tlist,
-					   List **sortClauses)
+					   List **sortClauses, double *pNumGroups)
 {
 	Plan	   *lplan,
 			   *rplan,
 			   *plan;
 	List	   *tlist,
-			   *sortList,
+			   *groupList,
 			   *planlist,
 			   *child_sortclauses;
+	double		dLeftGroups,
+				dRightGroups,
+				dNumGroups,
+				dNumOutputRows;
+	long		numGroups;
+	bool		use_hash;
 	SetOpCmd	cmd;
+<<<<<<< HEAD
 	GpSetOpType optype = PSETOP_NONE; /* CDB */
+=======
+	int			firstFlag;
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 	/* Recurse on children, ensuring their outputs are marked */
 	lplan = recurse_set_operations(op->larg, root,
 								   0.0 /* all tuples needed */ ,
 								   op->colTypes, false, 0,
 								   refnames_tlist,
-								   &child_sortclauses);
+								   &child_sortclauses, &dLeftGroups);
 	rplan = recurse_set_operations(op->rarg, root,
 								   0.0 /* all tuples needed */ ,
 								   op->colTypes, false, 1,
 								   refnames_tlist,
-								   &child_sortclauses);
-	planlist = list_make2(lplan, rplan);
+								   &child_sortclauses, &dRightGroups);
+
+	/*
+	 * For EXCEPT, we must put the left input first.  For INTERSECT, either
+	 * order should give the same results, and we prefer to put the smaller
+	 * input first in order to minimize the size of the hash table in the
+	 * hashing case.  "Smaller" means the one with the fewer groups.
+	 */
+	if (op->op == SETOP_EXCEPT || dLeftGroups <= dRightGroups)
+	{
+		planlist = list_make2(lplan, rplan);
+		firstFlag = 0;
+	}
+	else
+	{
+		planlist = list_make2(rplan, lplan);
+		firstFlag = 1;
+	}
 
 	/* CDB: Decide on approach, condition argument plans to suit. */
 	if ( Gp_role == GP_ROLE_DISPATCH )
@@ -493,13 +579,11 @@ generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
 	plan = (Plan *) make_append(planlist, false, tlist);
 	mark_append_locus(plan, optype); /* CDB: Mark the plan result locus. */
 
-	/*
-	 * Sort the child results, then add a SetOp plan node to generate the
-	 * correct output.
-	 */
-	sortList = generate_setop_sortlist(tlist);
+	/* Identify the grouping semantics */
+	groupList = generate_setop_grouplist(op, tlist);
 
-	if (sortList == NIL)		/* nothing to sort on? */
+	/* punt if nothing to group on (can this happen?) */
+	if (groupList == NIL)
 	{
 		*sortClauses = NIL;
 		return plan;
@@ -511,9 +595,47 @@ generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
 		plan = (Plan *) make_motion_hash_all_targets(root, plan);
 	}
 
+<<<<<<< HEAD
 	plan = (Plan *) make_sort_from_sortclauses(root, sortList, plan);
 	mark_sort_locus(plan); /* CDB */
 	
+=======
+	/*
+	 * Estimate number of distinct groups that we'll need hashtable entries
+	 * for; this is the size of the left-hand input for EXCEPT, or the smaller
+	 * input for INTERSECT.  Also estimate the number of eventual output rows.
+	 * In non-ALL cases, we estimate each group produces one output row;
+	 * in ALL cases use the relevant relation size.  These are worst-case
+	 * estimates, of course, but we need to be conservative.
+	 */
+	if (op->op == SETOP_EXCEPT)
+	{
+		dNumGroups = dLeftGroups;
+		dNumOutputRows = op->all ? lplan->plan_rows : dNumGroups;
+	}
+	else
+	{
+		dNumGroups = Min(dLeftGroups, dRightGroups);
+		dNumOutputRows = op->all ? Min(lplan->plan_rows, rplan->plan_rows) : dNumGroups;
+	}
+
+	/* Also convert to long int --- but 'ware overflow! */
+	numGroups = (long) Min(dNumGroups, (double) LONG_MAX);
+
+	/*
+	 * Decide whether to hash or sort, and add a sort node if needed.
+	 */
+	use_hash = choose_hashed_setop(root, groupList, plan,
+								   dNumGroups, dNumOutputRows, tuple_fraction,
+								   (op->op == SETOP_INTERSECT) ? "INTERSECT" : "EXCEPT");
+
+	if (!use_hash)
+		plan = (Plan *) make_sort_from_sortclauses(root, groupList, plan);
+
+	/*
+	 * Finally, add a SetOp plan node to generate the correct output.
+	 */
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	switch (op->op)
 	{
 		case SETOP_INTERSECT:
@@ -523,15 +645,26 @@ generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
 			cmd = op->all ? SETOPCMD_EXCEPT_ALL : SETOPCMD_EXCEPT;
 			break;
 		default:
-			elog(ERROR, "unrecognized set op: %d",
-				 (int) op->op);
+			elog(ERROR, "unrecognized set op: %d", (int) op->op);
 			cmd = SETOPCMD_INTERSECT;	/* keep compiler quiet */
 			break;
 	}
+<<<<<<< HEAD
 	plan = (Plan *) make_setop(cmd, plan, sortList, list_length(op->colTypes) + 1);
     plan->flow = pull_up_Flow(plan, plan->lefttree);
+=======
+	plan = (Plan *) make_setop(cmd, use_hash ? SETOP_HASHED : SETOP_SORTED,
+							   plan, groupList,
+							   list_length(op->colTypes) + 1,
+							   use_hash ? firstFlag : -1,
+							   numGroups, dNumOutputRows);
 
-	*sortClauses = sortList;
+	/* Result is sorted only if we're not hashing */
+	*sortClauses = use_hash ? NIL : groupList;
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
+
+	if (pNumGroups)
+		*pNumGroups = dNumGroups;
 
 	return plan;
 }
@@ -583,7 +716,168 @@ recurse_union_children(Node *setOp, PlannerInfo *root,
 											 tuple_fraction,
 											 top_union->colTypes, false,
 											 -1, refnames_tlist,
-											 &child_sortclauses));
+											 &child_sortclauses, NULL));
+}
+
+/*
+ * Add nodes to the given plan tree to unique-ify the result of a UNION.
+ */
+static Plan *
+make_union_unique(SetOperationStmt *op, Plan *plan,
+				  PlannerInfo *root, double tuple_fraction,
+				  List **sortClauses)
+{
+	List	   *groupList;
+	double		dNumGroups;
+	long		numGroups;
+
+	/* Identify the grouping semantics */
+	groupList = generate_setop_grouplist(op, plan->targetlist);
+
+	/* punt if nothing to group on (can this happen?) */
+	if (groupList == NIL)
+	{
+		*sortClauses = NIL;
+		return plan;
+	}
+
+	/*
+	 * XXX for the moment, take the number of distinct groups as equal to
+	 * the total input size, ie, the worst case.  This is too conservative,
+	 * but we don't want to risk having the hashtable overrun memory; also,
+	 * it's not clear how to get a decent estimate of the true size.  One
+	 * should note as well the propensity of novices to write UNION rather
+	 * than UNION ALL even when they don't expect any duplicates...
+	 */
+	dNumGroups = plan->plan_rows;
+
+	/* Also convert to long int --- but 'ware overflow! */
+	numGroups = (long) Min(dNumGroups, (double) LONG_MAX);
+
+	/* Decide whether to hash or sort */
+	if (choose_hashed_setop(root, groupList, plan,
+							dNumGroups, dNumGroups, tuple_fraction,
+							"UNION"))
+	{
+		/* Hashed aggregate plan --- no sort needed */
+		plan = (Plan *) make_agg(root,
+								 plan->targetlist,
+								 NIL,
+								 AGG_HASHED,
+								 list_length(groupList),
+								 extract_grouping_cols(groupList,
+													   plan->targetlist),
+								 extract_grouping_ops(groupList),
+								 numGroups,
+								 0,
+								 plan);
+		/* Hashed aggregation produces randomly-ordered results */
+		*sortClauses = NIL;
+	}
+	else
+	{
+		/* Sort and Unique */
+		plan = (Plan *) make_sort_from_sortclauses(root, groupList, plan);
+		plan = (Plan *) make_unique(plan, groupList);
+		plan->plan_rows = dNumGroups;
+		/* We know the sort order of the result */
+		*sortClauses = groupList;
+	}
+
+	return plan;
+}
+
+/*
+ * choose_hashed_setop - should we use hashing for a set operation?
+ */
+static bool
+choose_hashed_setop(PlannerInfo *root, List *groupClauses,
+					Plan *input_plan,
+					double dNumGroups, double dNumOutputRows,
+					double tuple_fraction,
+					const char *construct)
+{
+	int			numGroupCols = list_length(groupClauses);
+	bool		can_sort;
+	bool		can_hash;
+	Size		hashentrysize;
+	Path		hashed_p;
+	Path		sorted_p;
+
+	/* Check whether the operators support sorting or hashing */
+	can_sort = grouping_is_sortable(groupClauses);
+	can_hash = grouping_is_hashable(groupClauses);
+	if (can_hash && can_sort)
+	{
+		/* we have a meaningful choice to make, continue ... */
+	}
+	else if (can_hash)
+		return true;
+	else if (can_sort)
+		return false;
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 /* translator: %s is UNION, INTERSECT, or EXCEPT */
+				 errmsg("could not implement %s", construct),
+				 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
+
+	/* Prefer sorting when enable_hashagg is off */
+	if (!enable_hashagg)
+		return false;
+
+	/*
+	 * Don't do it if it doesn't look like the hashtable will fit into
+	 * work_mem.
+	 */
+	hashentrysize = MAXALIGN(input_plan->plan_width) + MAXALIGN(sizeof(MinimalTupleData));
+
+	if (hashentrysize * dNumGroups > work_mem * 1024L)
+		return false;
+
+	/*
+	 * See if the estimated cost is no more than doing it the other way.
+	 *
+	 * We need to consider input_plan + hashagg versus input_plan + sort +
+	 * group.  Note that the actual result plan might involve a SetOp or
+	 * Unique node, not Agg or Group, but the cost estimates for Agg and Group
+	 * should be close enough for our purposes here.
+	 *
+	 * These path variables are dummies that just hold cost fields; we don't
+	 * make actual Paths for these steps.
+	 */
+	cost_agg(&hashed_p, root, AGG_HASHED, 0,
+			 numGroupCols, dNumGroups,
+			 input_plan->startup_cost, input_plan->total_cost,
+			 input_plan->plan_rows);
+
+	/*
+	 * Now for the sorted case.  Note that the input is *always* unsorted,
+	 * since it was made by appending unrelated sub-relations together.
+	 */
+	sorted_p.startup_cost = input_plan->startup_cost;
+	sorted_p.total_cost = input_plan->total_cost;
+	/* XXX cost_sort doesn't actually look at pathkeys, so just pass NIL */
+	cost_sort(&sorted_p, root, NIL, sorted_p.total_cost,
+			  input_plan->plan_rows, input_plan->plan_width, -1.0);
+	cost_group(&sorted_p, root, numGroupCols, dNumGroups,
+			   sorted_p.startup_cost, sorted_p.total_cost,
+			   input_plan->plan_rows);
+
+	/*
+	 * Now make the decision using the top-level tuple fraction.  First we
+	 * have to convert an absolute count (LIMIT) into fractional form.
+	 */
+	if (tuple_fraction >= 1.0)
+		tuple_fraction /= dNumOutputRows;
+
+	if (compare_fractional_path_costs(&hashed_p, &sorted_p,
+									  tuple_fraction) < 0)
+	{
+		/* Hashed is cheaper, so use it */
+		return true;
+	}
+	return false;
 }
 
 /*
@@ -799,18 +1093,28 @@ generate_append_tlist(List *colTypes, bool flag,
 }
 
 /*
- * generate_setop_sortlist
- *		Build a SortClause list enumerating all the non-resjunk tlist entries,
- *		using default ordering properties.
+ * generate_setop_grouplist
+ *		Build a SortGroupClause list defining the sort/grouping properties
+ *		of the setop's output columns.
+ *
+ * Parse analysis already determined the properties and built a suitable
+ * list, except that the entries do not have sortgrouprefs set because
+ * the parser output representation doesn't include a tlist for each
+ * setop.  So what we need to do here is copy that list and install
+ * proper sortgrouprefs into it and into the targetlist.
  */
 static List *
-generate_setop_sortlist(List *targetlist)
+generate_setop_grouplist(SetOperationStmt *op, List *targetlist)
 {
-	List	   *sortlist = NIL;
-	ListCell   *l;
+	List	   *grouplist = (List *) copyObject(op->groupClauses);
+	ListCell   *lg;
+	ListCell   *lt;
+	Index		refno = 1;
 
-	foreach(l, targetlist)
+	lg = list_head(grouplist);
+	foreach(lt, targetlist)
 	{
+<<<<<<< HEAD
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 		SortBy sortby;
 
@@ -827,8 +1131,28 @@ generate_setop_sortlist(List *targetlist)
 			sortlist = addTargetToSortList(NULL, tle,
 										   sortlist, targetlist,
 										   &sortby, false);
+=======
+		TargetEntry *tle = (TargetEntry *) lfirst(lt);
+		SortGroupClause *sgc;
+
+		/* tlist shouldn't have any sortgrouprefs yet */
+		Assert(tle->ressortgroupref == 0);
+
+		if (tle->resjunk)
+			continue;			/* ignore resjunk columns */
+
+		/* non-resjunk columns should have grouping clauses */
+		Assert(lg != NULL);
+		sgc = (SortGroupClause *) lfirst(lg);
+		lg = lnext(lg);
+		Assert(sgc->tleSortGroupRef == 0);
+
+		/* we could use assignSortGroupRef here, but seems a bit silly */
+		sgc->tleSortGroupRef = tle->ressortgroupref = refno++;
+>>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	}
-	return sortlist;
+	Assert(lg == NULL);
+	return grouplist;
 }
 
 
