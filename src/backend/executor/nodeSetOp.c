@@ -44,7 +44,6 @@
 
 #include "postgres.h"
 
-#include "cdb/cdbvars.h"
 #include "executor/executor.h"
 #include "executor/nodeSetOp.h"
 #include "utils/memutils.h"
@@ -500,14 +499,16 @@ ExecInitSetOp(SetOp *node, EState *estate, int eflags)
 	/*
 	 * Miscellaneous initialization
 	 *
-	 * Init a expr context even though SetOp nodes never call
-	 * ExecQual or ExecProject.  
-	 *
-	 * SetOp may be the first node in a subplan, then ExecSetParamPlan
-	 * expects an expr context.  Besides, SetOp do need a per-tuple memory 
-	 * context anyway for calling execTuplesMatch.
+	 * SetOp nodes have no ExprContext initialization because they never call
+	 * ExecQual or ExecProject.  But they do need a per-tuple memory context
+	 * anyway for calling execTuplesMatch.
 	 */
-	 ExecAssignExprContext(estate, &setopstate->ps);
+	setopstate->tempContext =
+		AllocSetContextCreate(CurrentMemoryContext,
+							  "SetOp",
+							  ALLOCSET_DEFAULT_MINSIZE,
+							  ALLOCSET_DEFAULT_INITSIZE,
+							  ALLOCSET_DEFAULT_MAXSIZE);
 
 	/*
 	 * If hashing, we also need a longer-lived context to store the hash
@@ -593,8 +594,6 @@ ExecCountSlotsSetOp(SetOp *node)
 void
 ExecEndSetOp(SetOpState *node)
 {
-	ExecFreeExprContext(&node->ps);
-
 	/* clean up tuple table */
 	ExecClearTuple(node->ps.ps_ResultTupleSlot);
 
@@ -604,8 +603,6 @@ ExecEndSetOp(SetOpState *node)
 		MemoryContextDelete(node->tableContext);
 
 	ExecEndNode(outerPlanState(node));
-
-	EndPlanStateGpmonPkt(&node->ps);
 }
 
 
