@@ -2260,6 +2260,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 															current_pathkeys,
 															   -1.0,
 															   true);
+				mark_sort_locus(result_plan);
 			}
 
 			if (must_gather)
@@ -2298,7 +2299,9 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 														   root->sort_pathkeys,
 														   limit_tuples,
 														   true);
+			mark_sort_locus(result_plan);
 			current_pathkeys = root->sort_pathkeys;
+			result_plan->flow = pull_up_Flow(result_plan, result_plan->lefttree);
 		}
 
 		if (must_gather)
