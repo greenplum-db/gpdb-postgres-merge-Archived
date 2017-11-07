@@ -173,15 +173,11 @@ static void get_target_list(List *targetList, deparse_context *context,
 static void get_setop_query(Node *setOp, Query *query,
 				deparse_context *context,
 				TupleDesc resultDesc);
-<<<<<<< HEAD
 static void get_rule_grouplist(List *grplist, List *tlist,
 							   bool in_grpsets, deparse_context *context);
 static void get_rule_groupingclause(GroupingClause *grp, List *tlist,
 									deparse_context *context);
-static Node *get_rule_sortgroupclause(SortClause *srt, List *tlist,
-=======
 static Node *get_rule_sortgroupclause(SortGroupClause *srt, List *tlist,
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 						 bool force_colno,
 						 deparse_context *context);
 static void get_rule_windowspec(WindowClause *wc, List *targetList,
@@ -2349,58 +2345,11 @@ get_select_query_def(Query *query, deparse_context *context,
 	/* Add the ORDER BY clause if given */
 	if (query->sortClause != NIL)
 	{
-<<<<<<< HEAD
 		get_sortlist_expr(query->sortClause,
 						  query->targetList,
 						  force_colno,
 						  context,
 						  " ORDER BY ");
-=======
-		appendContextKeyword(context, " ORDER BY ",
-							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
-		sep = "";
-		foreach(l, query->sortClause)
-		{
-			SortGroupClause *srt = (SortGroupClause *) lfirst(l);
-			Node	   *sortexpr;
-			Oid			sortcoltype;
-			TypeCacheEntry *typentry;
-
-			appendStringInfoString(buf, sep);
-			sortexpr = get_rule_sortgroupclause(srt, query->targetList,
-												force_colno, context);
-			sortcoltype = exprType(sortexpr);
-			/* See whether operator is default < or > for datatype */
-			typentry = lookup_type_cache(sortcoltype,
-										 TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
-			if (srt->sortop == typentry->lt_opr)
-			{
-				/* ASC is default, so emit nothing for it */
-				if (srt->nulls_first)
-					appendStringInfo(buf, " NULLS FIRST");
-			}
-			else if (srt->sortop == typentry->gt_opr)
-			{
-				appendStringInfo(buf, " DESC");
-				/* DESC defaults to NULLS FIRST */
-				if (!srt->nulls_first)
-					appendStringInfo(buf, " NULLS LAST");
-			}
-			else
-			{
-				appendStringInfo(buf, " USING %s",
-								 generate_operator_name(srt->sortop,
-														sortcoltype,
-														sortcoltype));
-				/* be specific to eliminate ambiguity */
-				if (srt->nulls_first)
-					appendStringInfo(buf, " NULLS FIRST");
-				else
-					appendStringInfo(buf, " NULLS LAST");
-			}
-			sep = ", ";
-		}
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	}
 
 	/* Add the LIMIT clause if given */
@@ -2554,20 +2503,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 	{
 		appendContextKeyword(context, " GROUP BY ",
 							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
-<<<<<<< HEAD
 		get_rule_grouplist(query->groupClause, query->targetList, false, context);
-=======
-		sep = "";
-		foreach(l, query->groupClause)
-		{
-			SortGroupClause *grp = (SortGroupClause *) lfirst(l);
-
-			appendStringInfoString(buf, sep);
-			get_rule_sortgroupclause(grp, query->targetList,
-									 false, context);
-			sep = ", ";
-		}
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	}
 
 	/* Add the HAVING clause if given */
@@ -2778,15 +2714,9 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
  * immediatelly inside a GROUPING SETS clause. This is used
  * to determine how to use parantheses.
  */
-<<<<<<< HEAD
 static void
 get_rule_grouplist(List *grplist, List *tlist,
 				   bool in_grpsets, deparse_context *context)
-=======
-static Node *
-get_rule_sortgroupclause(SortGroupClause *srt, List *tlist, bool force_colno,
-						 deparse_context *context)
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 {
 	StringInfo buf = context->buf;
 	char *sep;
@@ -2798,7 +2728,7 @@ get_rule_sortgroupclause(SortGroupClause *srt, List *tlist, bool force_colno,
 		Node *node = (Node *)lfirst(lc);
 		Assert (node == NULL ||
 				IsA(node, List) ||
-				IsA(node, GroupClause) ||
+				IsA(node, SortGroupClause) ||
 				IsA(node, GroupingClause));
 
 		appendStringInfoString(buf, sep);
@@ -2818,11 +2748,11 @@ get_rule_sortgroupclause(SortGroupClause *srt, List *tlist, bool force_colno,
 			appendStringInfoString(buf, ")");
 		}
 
-		else if (IsA(node, GroupClause))
+		else if (IsA(node, SortGroupClause))
 		{
 			if (in_grpsets)
 				appendStringInfoString(buf, "(");
-			get_rule_sortgroupclause((GroupClause *)node, tlist,
+			get_rule_sortgroupclause((SortGroupClause *) node, tlist,
 									  false,context);
 			if (in_grpsets)
 				appendStringInfoString(buf, ")");
@@ -2875,7 +2805,7 @@ get_rule_groupingclause(GroupingClause *grp, List *tlist,
  * Also returns the expression tree, so caller need not find it again.
  */
 static Node *
-get_rule_sortgroupclause(SortClause *srt, List *tlist, bool force_colno,
+get_rule_sortgroupclause(SortGroupClause *srt, List *tlist, bool force_colno,
 						 deparse_context *context)
 {
 	StringInfo	buf = context->buf;
@@ -5549,7 +5479,7 @@ get_sortlist_expr(List *l, List *targetList, bool force_colno,
 	sep = "";
 	foreach(cell, l)
 	{
-		SortClause *srt = (SortClause *) lfirst(cell);
+		SortGroupClause *srt = (SortGroupClause *) lfirst(cell);
 		Node	   *sortexpr;
 		Oid			sortcoltype;
 		TypeCacheEntry *typentry;
