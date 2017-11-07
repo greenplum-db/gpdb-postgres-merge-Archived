@@ -579,12 +579,6 @@ execMotionSortedReceiver_mk(MotionState * node)
 	Motion *motion = (Motion *) node->ps.plan;
     MotionMKHeapContext *ctxt = (MotionMKHeapContext *) node->tupleheap;
 
-    Assert(motion->motionType == MOTIONTYPE_FIXED &&
-            motion->numOutputSegs <= 1 &&
-            motion->sendSorted &&
-            ctxt
-          );
-            
     if (node->stopRequested)
     {
 		SendStopMessage(node->ps.state->motionlayer_context,
@@ -623,10 +617,7 @@ execMotionSortedReceiver(MotionState * node)
 	ReceiveReturnCode recvRC;
 	CdbTupleHeapInfo *tupHeapInfo;
 
-	AssertState(motion->motionType == MOTIONTYPE_FIXED &&
-			motion->numOutputSegs <= 1 &&
-			motion->sendSorted &&
-			hp != NULL);
+    Assert(motion->sendSorted && hp);
 
 	/* Notify senders and return EOS if caller doesn't want any more data. */
     if (node->stopRequested)
