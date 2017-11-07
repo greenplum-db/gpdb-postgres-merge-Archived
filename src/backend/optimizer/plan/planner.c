@@ -89,7 +89,7 @@ static bool choose_hashed_distinct(PlannerInfo *root,
 					   double tuple_fraction, double limit_tuples,
 					   double dNumDistinctRows);
 static List *make_subplanTargetList(PlannerInfo *root, List *tlist,
-					   AttrNumber **groupColIdx, bool *need_tlist_eval);
+					   AttrNumber **groupColIdx, Oid **groupOperators, bool *need_tlist_eval);
 static List *register_ordered_aggs(List *tlist, Node *havingqual, List *sub_tlist);
 
 typedef struct
@@ -1390,6 +1390,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		/* No set operations, do regular planning */
 		List	   *sub_tlist;
 		AttrNumber *groupColIdx = NULL;
+		Oid		   *groupOperators = NULL;
 		bool		need_tlist_eval = true;
 		QualCost	tlist_cost;
 		Path	   *cheapest_path;
@@ -1494,7 +1495,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 * tlist if grouping or aggregation is needed.
 		 */
 		sub_tlist = make_subplanTargetList(root, tlist,
-										   &groupColIdx, &need_tlist_eval);
+										   &groupColIdx, &groupOperators, &need_tlist_eval);
 
 		/*
 		 * Augment the subplan target list to include targets for ordered
@@ -1800,7 +1801,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												AGG_HASHED, false,
 												numGroupCols,
 												groupColIdx,
-									extract_grouping_ops(parse->groupClause),
+												groupOperators,
 												numGroups,
 												/* GPDB_84_MERGE_FIXME: What would be
 												 * appropriate values for these extra
@@ -1870,7 +1871,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												aggstrategy, false,
 												numGroupCols,
 												groupColIdx,
-									extract_grouping_ops(parse->groupClause),
+												groupOperators,
 												numGroups,
 												0, /* num_nullcols */
 												0, /* input_grouping */
@@ -1924,6 +1925,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 													  (List *) parse->havingQual,
 													  &numGroupCols,
 													  &groupColIdx,
+													  &groupOperators,
 													  &agg_counts,
 													  canonical_grpsets,
 													  &dNumGroups,
@@ -3197,6 +3199,7 @@ static List *
 make_subplanTargetList(PlannerInfo *root,
 					   List *tlist,
 					   AttrNumber **groupColIdx,
+					   Oid **groupOperators,
 					   bool *need_tlist_eval)
 {
 	Query	   *parse = root->parse;
@@ -3255,16 +3258,19 @@ make_subplanTargetList(PlannerInfo *root,
 		List	   *sortops;
 		List	   *eqops;
 		ListCell   *lc_tle;
+		ListCell   *lc_eqop;
 
 		grpColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
 		grpOperators = (Oid *) palloc(sizeof(Oid) * numCols);
 		*groupColIdx = grpColIdx;
+		*groupOperators = grpOperators;
 
 		get_sortgroupclauses_tles(parse->groupClause, tlist,
 								  &grouptles, &sortops, &eqops);
-		Assert(numCols == list_length(sortops) &&
+		Assert(numCols == list_length(grouptles) &&
+			   numCols == list_length(sortops) &&
 			   numCols == list_length(eqops));
-		foreach(lc_tle, grouptles)
+		forboth(lc_tle, grouptles, lc_eqop, eqops)
 		{
 			Node	   *groupexpr;
 			TargetEntry *tle;
@@ -3297,6 +3303,9 @@ make_subplanTargetList(PlannerInfo *root,
 			/* Set its group reference and save its resno */
 			sub_tle->ressortgroupref = tle->ressortgroupref;
 			grpColIdx[keyno] = sub_tle->resno;
+			grpOperators[keyno] = lfirst_oid(lc_eqop);
+			if (!OidIsValid(grpOperators[keyno]))           /* shouldn't happen */
+				elog(ERROR, "could not find equality operator for grouping column");
 			keyno++;
 		}
 		Assert(keyno == numCols);
