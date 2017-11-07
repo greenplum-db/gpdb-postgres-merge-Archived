@@ -1587,6 +1587,7 @@ expression_tree_mutator(Node *node,
 				FLATCOPY(newnode, setop, SetOperationStmt);
 				MUTATE(newnode->larg, setop->larg, Node *);
 				MUTATE(newnode->rarg, setop->rarg, Node *);
+				/* We do not mutate groupClauses by default */
 				return (Node *) newnode;
 			}
 			break;

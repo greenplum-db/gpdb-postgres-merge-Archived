@@ -418,6 +418,8 @@ expression_tree_walker(Node *node,
 					return true;
 				if (walker(setop->rarg, context))
 					return true;
+
+				/* groupClauses are deemed uninteresting */
 			}
 			break;
 		case T_PlaceHolderVar:
