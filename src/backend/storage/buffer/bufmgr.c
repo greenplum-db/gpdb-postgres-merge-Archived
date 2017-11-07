@@ -467,25 +467,20 @@ ReadBuffer_common(SMgrRelation smgr,
 			/* check for garbage data */
 			if (!PageIsVerified((Page) bufBlock, blockNum))
 			{
-				smgrread(smgr, blockNum, (char *) bufBlock);
-
-				/* check for garbage data */
-				if (!PageHeaderIsValid((PageHeader) bufBlock))
-				{
-					ereport(WARNING,
-							(errcode(ERRCODE_DATA_CORRUPTED),
-							 errmsg("invalid page in block %u of relation %s; zeroing out page",
-									blockNum,
-									relpath(smgr->smgr_rnode))));
-					MemSet((char *) bufBlock, 0, BLCKSZ);
-				}
-				else
-					ereport(ERROR,
-							(errcode(ERRCODE_DATA_CORRUPTED),
-							 errmsg("invalid page in block %u of relation %s",
-									blockNum, relpath(smgr->smgr_rnode)),
-							 errSendAlert(true)));
+				ereport(WARNING,
+						(errcode(ERRCODE_DATA_CORRUPTED),
+						 errmsg("invalid page in block %u of relation %s; zeroing out page",
+								blockNum,
+								relpath(smgr->smgr_rnode))));
+				MemSet((char *) bufBlock, 0, BLCKSZ);
 			}
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_DATA_CORRUPTED),
+						 errmsg("invalid page in block %u of relation %s",
+								blockNum,
+								relpath(smgr->smgr_rnode)),
+						 errSendAlert(true)));
 		}
 	}
 
