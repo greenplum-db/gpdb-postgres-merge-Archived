@@ -52,13 +52,6 @@ extern void get_sort_group_operators(Oid argtype,
 
 /* Convenience routines for common calls on the above */
 extern Oid	compatible_oper_opid(List *op, Oid arg1, Oid arg2, bool noError);
-<<<<<<< HEAD
-extern Oid	equality_oper_funcid(Oid argtype);
-extern Oid	equality_oper_opid(Oid argtype);
-extern Oid	ordering_oper_opid(Oid argtype);
-extern Oid	reverse_ordering_oper_opid(Oid argtype);
-=======
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 /* Extract operator OID or underlying-function OID from an Operator tuple */
 extern Oid	oprid(Operator op);
