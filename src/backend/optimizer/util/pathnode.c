@@ -2188,30 +2188,21 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 	 */
 	if (query->groupClause)
 	{
-		List *grouptles;
-		List *groupops;
-		ListCell *l_groupop;
+		List	   *grouptles;
+		List	   *sortops;
+		List	   *eqops;
+		ListCell   *l_eqop;
 
 		get_sortgroupclauses_tles(query->groupClause, query->targetList,
-								  &grouptles, &groupops);
+								  &grouptles, &sortops, &eqops);
 
-		forboth(l, grouptles, l_groupop, groupops)
+		forboth(l, grouptles, l_eqop, eqops)
 		{
-<<<<<<< HEAD
 			TargetEntry *tle = (TargetEntry *) lfirst(l);
 
 			opid = distinct_col_search(tle->resno, colnos, opids);
 			if (!OidIsValid(opid) ||
-				!ops_in_same_btree_opfamily(opid, lfirst_oid(l_groupop)))
-=======
-			SortGroupClause *sgc = (SortGroupClause *) lfirst(l);
-			TargetEntry *tle = get_sortgroupclause_tle(sgc,
-													   query->targetList);
-
-			opid = distinct_col_search(tle->resno, colnos, opids);
-			if (!OidIsValid(opid) ||
-				!equality_ops_are_compatible(opid, sgc->eqop))
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
+				!equality_ops_are_compatible(opid, lfirst_oid(l_eqop)))
 				break;			/* exit early if no match */
 		}
 		if (l == NULL)			/* had matches for all? */
