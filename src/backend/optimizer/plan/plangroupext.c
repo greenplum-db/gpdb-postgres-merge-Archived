@@ -367,7 +367,7 @@ plan_grouping_extension(PlannerInfo *root,
 						List **p_tlist, List *sub_tlist,
 						bool is_agg, bool twostage,
 						List *qual,
-						int *p_numGroupCols, AttrNumber **p_grpColIdx, Oid **p_grpOperators,
+						int *p_numGroupCols, AttrNumber **p_grpColIdx,
 						AggClauseCounts *agg_counts,
 						CanonicalGroupingSets *canonical_grpsets,
 						double *p_dNumGroups,
@@ -390,8 +390,6 @@ plan_grouping_extension(PlannerInfo *root,
 	memcpy(context.grpColIdx, *p_grpColIdx,
 		   context.numGroupCols * sizeof(AttrNumber));
 	context.grpOperators = palloc0(context.numGroupCols * sizeof(Oid));
-	memcpy(context.grpOperators, *p_grpOperators,
-		   context.numGroupCols * sizeof(Oid));
 	context.numDistinctCols = 0;
 	context.distinctColIdx = NULL;
 	context.agg_counts = agg_counts;
@@ -430,9 +428,6 @@ plan_grouping_extension(PlannerInfo *root,
 		*p_grpColIdx =
 			(AttrNumber *)repalloc(*p_grpColIdx,
 								   (*p_numGroupCols + 2) * sizeof(AttrNumber));
-		*p_grpOperators =
-			(Oid *) repalloc(*p_grpOperators,
-							 (*p_numGroupCols + 2) * sizeof(Oid));
 	}
 	else
 	{
@@ -440,8 +435,6 @@ plan_grouping_extension(PlannerInfo *root,
 		
 		*p_grpColIdx = 
 			(AttrNumber *)palloc0((*p_numGroupCols + 2) * sizeof(AttrNumber));
-		*p_grpOperators =
-			(Oid *) palloc0((*p_numGroupCols + 2) * sizeof(Oid));
 	}
 	
 	(*p_numGroupCols) += 2;
@@ -449,11 +442,6 @@ plan_grouping_extension(PlannerInfo *root,
 	*p_tlist = context.tlist;
 	(*p_grpColIdx)[(*p_numGroupCols)-2] = list_length(*p_tlist) - 1;
 	(*p_grpColIdx)[(*p_numGroupCols)-1] = list_length(*p_tlist);
-
-	/* GROUPING column is an int8 */
-	(*p_grpOperators)[(*p_numGroupCols) - 2] = Int8EqualOperator;
-	/* GROUP_ID column is an int4 */
-	(*p_grpOperators)[(*p_numGroupCols) - 1] = Int4EqualOperator;
 
 	*p_current_pathkeys = context.current_pathkeys;
 
@@ -883,7 +871,7 @@ make_list_aggs_for_rollup(PlannerInfo *root,
 		dummy_path.total_cost = agg_node->total_cost;
 		dummy_path.pathkeys = NIL;
 		if (choose_hashed_grouping(root, context->tuple_fraction, -1.0, &dummy_path,
-								   NULL, NULL, 0, *context->p_dNumGroups,
+								   NULL, 0, *context->p_dNumGroups,
 								   context->agg_counts))
 			context->aggstrategy = AGG_HASHED;
 
@@ -1919,7 +1907,6 @@ convert_gs_to_rollups(AttrNumber *grpColIdx, Oid *grpOperators,
 	for (no = 0; no < max_sortgroupref; no++)
 	{
 		TargetEntry *tle = NULL;
-		SortClause sc = { };
 		
 		if (sortrefs_to_resnos[no] > 0)
 			continue;
@@ -1928,8 +1915,7 @@ convert_gs_to_rollups(AttrNumber *grpColIdx, Oid *grpOperators,
 		 * and find the corresponding target entry in sub_tlist. Fill in the
 		 * resno.
 		 */
-		sc.tleSortGroupRef = no+1;
-		tle = get_sortgroupclause_tle(&sc, tlist);
+		tle = get_sortgroupref_tle(no + 1, tlist);
 		foreach (sub_lc, sub_tlist)
 		{
 			TargetEntry *sub_tle = (TargetEntry *)lfirst(sub_lc);

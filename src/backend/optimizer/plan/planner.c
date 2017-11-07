@@ -3249,7 +3249,8 @@ make_subplanTargetList(PlannerInfo *root,
 		AttrNumber *grpColIdx;
 		Oid		   *grpOperators;
 		List	   *grouptles;
-		List	   *groupops;
+		List	   *sortops;
+		List	   *eqops;
 		ListCell   *lc_tle;
 
 		grpColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
@@ -3257,9 +3258,9 @@ make_subplanTargetList(PlannerInfo *root,
 		*groupColIdx = grpColIdx;
 
 		get_sortgroupclauses_tles(parse->groupClause, tlist,
-								  &grouptles, &groupops);
-		Assert(numCols == list_length(grouptles) &&
-			   numCols == list_length(groupops));
+								  &grouptles, &sortops, &eqops);
+		Assert(numCols == list_length(sortops) &&
+			   numCols == list_length(eqops));
 		foreach(lc_tle, grouptles)
 		{
 			Node	   *groupexpr;
@@ -3497,7 +3498,8 @@ locate_grouping_columns(PlannerInfo *root,
 {
 	int			keyno = 0;
 	List	   *grouptles;
-	List	   *groupops;
+	List	   *sortops;
+	List	   *eqops;
 	ListCell   *ge;
 
 	/*
@@ -3511,7 +3513,7 @@ locate_grouping_columns(PlannerInfo *root,
 	Assert(groupColIdx != NULL);
 
 	get_sortgroupclauses_tles(root->parse->groupClause, tlist,
-							  &grouptles, &groupops);
+							  &grouptles, &sortops, &eqops);
 
 	foreach (ge, grouptles)
 	{

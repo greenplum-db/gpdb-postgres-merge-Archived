@@ -4405,6 +4405,8 @@ add_sort_column(AttrNumber colIdx, Oid sortOp, bool nulls_first,
 
 	Assert(OidIsValid(sortOp));
 
+	Assert(OidIsValid(sortOp));
+
 	for (i = 0; i < numCols; i++)
 	{
 		/*
@@ -4754,7 +4756,7 @@ make_sort_from_groupcols(PlannerInfo *root,
 
 	if (appendGrouping)
 	{
-		Oid			sort_op;
+		Oid			lt_opr;
 
 		/* Grouping will be the last entry in grpColIdx */
 		TargetEntry *tle = get_tle_by_resno(sub_tlist, grpColIdx[grpno]);
@@ -4762,9 +4764,11 @@ make_sort_from_groupcols(PlannerInfo *root,
 		if (tle->resname == NULL)
 			tle->resname = "grouping";
 
-		sort_op = ordering_oper_opid(exprType((Node *) tle->expr));
+		get_sort_group_operators(exprType((Node *) tle->expr),
+								 true, false, false,
+								 &lt_opr, NULL, NULL);
 
-		numsortkeys = add_sort_column(tle->resno, sort_op, false,
+		numsortkeys = add_sort_column(tle->resno, lt_opr, false,
 						 numsortkeys, sortColIdx, sortOperators, nullsFirst);
 	}
 
@@ -4794,13 +4798,13 @@ reconstruct_group_clause(List *orig_groupClause, List *tlist, AttrNumber *grpCol
 	{
 		ListCell   *lc = NULL;
 		TargetEntry *te;
-		GroupClause *gc = NULL;
+		SortGroupClause *gc = NULL;
 
 		te = get_tle_by_resno(tlist, grpColIdx[grpno]);
 
 		foreach(lc, flat_groupcls)
 		{
-			gc = (GroupClause *) lfirst(lc);
+			gc = (SortGroupClause *) lfirst(lc);
 
 			if (gc->tleSortGroupRef == te->ressortgroupref)
 				break;
@@ -5527,16 +5531,16 @@ plan_pushdown_tlist(PlannerInfo *root, Plan *plan, List *tlist)
  * as the tleSortGroupRef in gc.
  */
 static bool
-groupcol_in_list(GroupClause *gc, List *glist)
+groupcol_in_list(SortGroupClause *gc, List *glist)
 {
 	bool		found = false;
 	ListCell   *lc;
 
 	foreach(lc, glist)
 	{
-		GroupClause *entry = (GroupClause *) lfirst(lc);
+		SortGroupClause *entry = (SortGroupClause *) lfirst(lc);
 
-		Assert(IsA(entry, GroupClause));
+		Assert(IsA(entry, SortGroupClause));
 		if (gc->tleSortGroupRef == entry->tleSortGroupRef)
 		{
 			found = true;
@@ -5565,7 +5569,7 @@ flatten_grouping_list(List *groupcls)
 			continue;
 
 		Assert(IsA(node, GroupingClause) ||
-			   IsA(node, GroupClause) ||
+			   IsA(node, SortGroupClause) ||
 			   IsA(node, List));
 
 		if (IsA(node, GroupingClause))
@@ -5577,9 +5581,9 @@ flatten_grouping_list(List *groupcls)
 
 			foreach(lc, flatten_groupsets)
 			{
-				GroupClause *flatten_gc = (GroupClause *) lfirst(lc);
+				SortGroupClause *flatten_gc = (SortGroupClause *) lfirst(lc);
 
-				Assert(IsA(flatten_gc, GroupClause));
+				Assert(IsA(flatten_gc, SortGroupClause));
 
 				if (!groupcol_in_list(flatten_gc, result))
 					result = lappend(result, flatten_gc);
@@ -5594,9 +5598,9 @@ flatten_grouping_list(List *groupcls)
 
 			foreach(lc, flatten_groupsets)
 			{
-				GroupClause *flatten_gc = (GroupClause *) lfirst(lc);
+				SortGroupClause *flatten_gc = (SortGroupClause *) lfirst(lc);
 
-				Assert(IsA(flatten_gc, GroupClause));
+				Assert(IsA(flatten_gc, SortGroupClause));
 
 				if (!groupcol_in_list(flatten_gc, result))
 					result = lappend(result, flatten_gc);
@@ -5604,9 +5608,9 @@ flatten_grouping_list(List *groupcls)
 		}
 		else
 		{
-			Assert(IsA(node, GroupClause));
+			Assert(IsA(node, SortGroupClause));
 
-			if (!groupcol_in_list((GroupClause *) node, result))
+			if (!groupcol_in_list((SortGroupClause *) node, result))
 				result = lappend(result, node);
 		}
 	}
