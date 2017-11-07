@@ -122,12 +122,9 @@ typedef struct Query
 	bool		hasAggs;		/* has aggregates in tlist or havingQual */
 	bool		hasWindowFuncs; /* has window functions in tlist */
 	bool		hasSubLinks;	/* has subquery SubLink */
-<<<<<<< HEAD
 	bool        hasDynamicFunctions; /* has functions with unstable return types */
 	bool		hasFuncsWithExecRestrictions; /* has functions with EXECUTE ON MASTER or ALL SEGMENTS */
-=======
 	bool		hasDistinctOn;	/* distinctClause is from DISTINCT ON */
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 	List	   *rtable;			/* list of range table entries */
 	FromExpr   *jointree;		/* table join tree (FROM and WHERE clauses) */
@@ -136,7 +133,6 @@ typedef struct Query
 
 	List	   *returningList;	/* return-values list (of TargetEntry) */
 
-<<<<<<< HEAD
 	/*
 	 * A list of GroupClauses or GroupingClauses.  The order of GroupClauses
 	 * or GroupingClauses are based on input queries. However, in each
@@ -151,7 +147,7 @@ typedef struct Query
 	 * --> GroupClause(c) ) ) --> GroupingClause( CUBE, groupsets
 	 * (GroupClause(e) --> GroupClause(d) ) )
 	 */
-	List	   *groupClause;
+	List	   *groupClause;	/* a list of SortGroupClause's */
 
 	Node	   *havingQual;		/* qualifications applied to groups */
 
@@ -167,15 +163,7 @@ typedef struct Query
 	List	   *cteList;		/* a list of CommonTableExprs in WITH clause */
 	bool		hasRecursive;	/* Whether this query has a recursive WITH
 								 * clause */
-=======
-	List	   *groupClause;	/* a list of SortGroupClause's */
 
-	Node	   *havingQual;		/* qualifications applied to groups */
-
-	List	   *distinctClause; /* a list of SortGroupClause's */
-
-	List	   *sortClause;		/* a list of SortGroupClause's */
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 	Node	   *limitOffset;	/* # of result tuples to skip (int8 expr) */
 	Node	   *limitCount;		/* # of result tuples to return (int8 expr) */
@@ -1341,7 +1329,7 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 } AlterTableCmd;
 
 
-typedef struct SetDistributionCmd 
+typedef struct SetDistributionCmd
 {
 	NodeTag		type;
 	int	        backendId;     /* backend ID on QD */

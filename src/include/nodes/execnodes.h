@@ -2533,8 +2533,6 @@ typedef struct SetOpState
 	FmgrInfo   *hashfunctions;	/* per-grouping-field hash fns */
 	bool		setop_done;		/* indicates completion of output scan */
 	long		numOutput;		/* number of dups left to output */
-<<<<<<< HEAD
-=======
 	MemoryContext tempContext;	/* short-term context for comparisons */
 	/* these fields are used in SETOP_SORTED mode: */
 	SetOpStatePerGroup pergroup;	/* per-group working state */
@@ -2544,7 +2542,6 @@ typedef struct SetOpState
 	MemoryContext tableContext;	/* memory context containing hash table */
 	bool		table_filled;	/* hash table filled yet? */
 	TupleHashIterator hashiter; /* for iterating through hash table */
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 } SetOpState;
 
 /* ----------------
@@ -2671,7 +2668,7 @@ typedef struct MotionState
 	void	   *tupleheap;		/* data structure for match merge in sorted motion node */
 	int			routeIdNext;	/* for a sorted motion node, the routeId to get next (same as
 								 * the routeId last returned ) */
-	bool		tupleheapReady; /* for a sorted motion node, false until we have a tuple from 
+	bool		tupleheapReady; /* for a sorted motion node, false until we have a tuple from
 								 * each source segindex */
 
 	/* The following can be used for debugging, usage stats, etc.  */
