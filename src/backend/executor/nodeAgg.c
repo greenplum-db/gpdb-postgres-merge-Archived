@@ -2046,14 +2046,10 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		 */
 		if (aggref->aggdistinct)
 		{
-<<<<<<< HEAD
 			TargetEntry *tle;
 			SortClause *sc;
-			Oid			eq_function;
-=======
 			Oid			lt_opr;
 			Oid			eq_opr;
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 			/*
 			 * GPDB 4 doesh't implement DISTINCT aggs for aggs having more

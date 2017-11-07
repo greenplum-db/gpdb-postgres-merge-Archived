@@ -2075,26 +2075,8 @@ std_typanalyze(VacAttrStats *stats)
 							 &ltopr, &eqopr, NULL);
 
 	/* If column has no "=" operator, we can't do much of anything */
-<<<<<<< HEAD
-	func_operator = equality_oper(attr->atttypid, true);
-	if (func_operator != NULL)
-	{
-		eqopr = oprid(func_operator);
-		eqfunc = oprfuncid(func_operator);
-		ReleaseSysCache(func_operator);
-	}
-	if (!OidIsValid(eqfunc))
-	{
-		/* Can't do much but the minimal stuff */
-		stats->compute_stats = compute_very_minimal_stats;
-		/* Might as well use the same minrows as below */
-		stats->minrows = 300 * attr->attstattarget;
-		return true;
-	}
-=======
 	if (!OidIsValid(eqopr))
 		return false;
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 	/* Save the operator info for compute_stats routines */
 	mystats = (StdAnalyzeData *) palloc(sizeof(StdAnalyzeData));
