@@ -5,11 +5,7 @@
 --
 -- awk '{print $3;}' onek.data | sort -n | uniq
 --
-<<<<<<< HEAD
-SELECT DISTINCT two FROM tmp  ORDER BY 1;
-=======
 SELECT DISTINCT two FROM tmp ORDER BY 1;
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 --
 -- awk '{print $5;}' onek.data | sort -n | uniq
