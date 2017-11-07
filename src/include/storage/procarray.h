@@ -48,14 +48,10 @@ extern VirtualTransactionId *GetCurrentVirtualXIDs(TransactionId limitXmin,
 extern int	CountActiveBackends(void);
 extern int	CountDBBackends(Oid databaseid);
 extern int	CountUserBackends(Oid roleid);
-<<<<<<< HEAD
-extern bool CheckOtherDBBackends(Oid databaseId);
-extern bool HasSerializableBackends(bool allDbs);
-extern bool HasDropTransaction(bool allDbs);
-=======
 extern bool CountOtherDBBackends(Oid databaseId,
 								 int *nbackends, int *nprepared);
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
+extern bool HasSerializableBackends(bool allDbs);
+extern bool HasDropTransaction(bool allDbs);
 
 extern void XidCacheRemoveRunningXids(TransactionId xid,
 						  int nxids, const TransactionId *xids,
