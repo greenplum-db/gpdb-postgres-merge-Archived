@@ -461,52 +461,31 @@ ReadBuffer_common(SMgrRelation smgr,
 		if (zeroPage)
 			MemSet((char *) bufBlock, 0, BLCKSZ);
 		else
-<<<<<<< HEAD
-			smgrread(smgr, blockNum, (char *) bufBlock);
-		/* check for garbage data */
-		if (!PageIsVerified((Page) bufBlock, blockNum))
-=======
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 		{
 			smgrread(smgr, blockNum, (char *) bufBlock);
 
 			/* check for garbage data */
-			if (!PageHeaderIsValid((PageHeader) bufBlock))
+			if (!PageIsVerified((Page) bufBlock, blockNum))
 			{
-<<<<<<< HEAD
-				ereport(WARNING,
-						(errcode(ERRCODE_DATA_CORRUPTED),
-						 errmsg("invalid page in block %u of relation %s; zeroing out page",
-								blockNum, relpath(smgr->smgr_rnode))));
-				MemSet((char *) bufBlock, 0, BLCKSZ);
-			}
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_DATA_CORRUPTED),
-				 errmsg("invalid page in block %u of relation %s",
-						blockNum, relpath(smgr->smgr_rnode)),
-				 errSendAlert(true)));
-=======
-				if (zero_damaged_pages)
+				smgrread(smgr, blockNum, (char *) bufBlock);
+
+				/* check for garbage data */
+				if (!PageHeaderIsValid((PageHeader) bufBlock))
 				{
 					ereport(WARNING,
 							(errcode(ERRCODE_DATA_CORRUPTED),
-							 errmsg("invalid page header in block %u of relation %u/%u/%u; zeroing out page",
-									blockNum, 
-									smgr->smgr_rnode.spcNode,
-									smgr->smgr_rnode.dbNode,
-									smgr->smgr_rnode.relNode)));
+							 errmsg("invalid page in block %u of relation %s; zeroing out page",
+									blockNum,
+									relpath(smgr->smgr_rnode))));
 					MemSet((char *) bufBlock, 0, BLCKSZ);
 				}
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_DATA_CORRUPTED),
-							 errmsg("invalid page header in block %u of relation %u/%u/%u",
-									blockNum, smgr->smgr_rnode.spcNode,
-									smgr->smgr_rnode.dbNode,
-									smgr->smgr_rnode.relNode)));
+							 errmsg("invalid page in block %u of relation %s",
+									blockNum, relpath(smgr->smgr_rnode)),
+							 errSendAlert(true)));
 			}
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 		}
 	}
 
