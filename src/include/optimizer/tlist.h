@@ -48,7 +48,7 @@ extern void get_grouplist_colidx(List *sortClauses,
 
 extern List *get_grouplist_exprs(List *groupClause, List *targetList);
 extern void get_sortgroupclauses_tles(List *clauses, List *targetList,
-									  List **tles, List **sortops);
+									  List **tles, List **sortops, List **eqops);
 
 extern Oid *extract_grouping_ops(List *groupClause);
 extern AttrNumber *extract_grouping_cols(List *groupClause, List *tlist);

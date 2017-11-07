@@ -39,11 +39,8 @@
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
-<<<<<<< HEAD
 #include "parser/parse_func.h"
 #include "parser/parse_cte.h"
-=======
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
@@ -1025,11 +1022,12 @@ init_grouped_window_context(grouped_window_ctx *ctx, Query *qry)
 {
 	List *grp_tles;
 	List *grp_sortops;
+	List *grp_eqops;
 	ListCell *lc = NULL;
 	Index maxsgr = 0;
 
 	get_sortgroupclauses_tles(qry->groupClause, qry->targetList,
-							  &grp_tles, &grp_sortops);
+							  &grp_tles, &grp_sortops, &grp_eqops);
 	list_free(grp_sortops);
 	maxsgr = maxSortGroupRef(grp_tles, true);
 
@@ -1161,26 +1159,14 @@ map_sgr_mutator(Node *node, void *context)
 		}
 		return (Node*)new_lst;
 	}
-
-	else if (IsA(node, GroupClause))
+	else if (IsA(node, SortGroupClause))
 	{
-		GroupClause *g = (GroupClause*)node;
-		GroupClause *new_g = makeNode(GroupClause);
-		memcpy(new_g, g, sizeof(GroupClause));
+		SortGroupClause *g = (SortGroupClause *) node;
+		SortGroupClause *new_g = makeNode(SortGroupClause);
+		memcpy(new_g, g, sizeof(SortGroupClause));
 		new_g->tleSortGroupRef = ctx->sgr_map[g->tleSortGroupRef];
 		return (Node*)new_g;
 	}
-
-	/* Just like above, but don't assume identical */
-	else if (IsA(node, SortClause))
-	{
-	SortClause *s = (SortClause*)node;
-		 SortClause *new_s = makeNode(SortClause);
-		 memcpy(new_s, s, sizeof(SortClause));
-		 new_s->tleSortGroupRef = ctx->sgr_map[s->tleSortGroupRef];
-		 return (Node*)new_s;
-	}
-
 	else if (IsA(node, GroupingClause))
 	{
 		GroupingClause *gc = (GroupingClause*)node;
@@ -1565,13 +1551,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 												stmt->scatterClause,
 												&qry->targetList);
 
-<<<<<<< HEAD
-	qry->distinctClause = transformDistinctClause(pstate,
-												  stmt->distinctClause,
-												  &qry->targetList,
-												  qry->sortClause,
-												  &qry->groupClause);
-=======
 	if (stmt->distinctClause == NIL)
 	{
 		qry->distinctClause = NIL;
@@ -1580,9 +1559,24 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	else if (linitial(stmt->distinctClause) == NULL)
 	{
 		/* We had SELECT DISTINCT */
-		qry->distinctClause = transformDistinctClause(pstate,
-													  &qry->targetList,
-													  qry->sortClause);
+		if (!pstate->p_hasAggs && !pstate->p_hasWindowFuncs && qry->groupClause == NIL)
+		{
+			/*
+			 * MPP-15040
+			 * turn distinct clause into grouping clause to make both sort-based
+			 * and hash-based grouping implementations viable plan options
+			 */
+			qry->distinctClause = transformDistinctToGroupBy(pstate,
+															 &qry->targetList,
+															 &qry->sortClause,
+															 &qry->groupClause);
+		}
+		else
+		{
+			qry->distinctClause = transformDistinctClause(pstate,
+														  &qry->targetList,
+														  qry->sortClause);
+		}
 		qry->hasDistinctOn = false;
 	}
 	else
@@ -1594,7 +1588,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 														qry->sortClause);
 		qry->hasDistinctOn = true;
 	}
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 	/* transform LIMIT */
 	qry->limitOffset = transformLimitClause(pstate, stmt->limitOffset,
@@ -2530,12 +2523,7 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 
 		op->colTypes = NIL;
 		op->colTypmods = NIL;
-<<<<<<< HEAD
 		/* don't have a "foreach6", so chase four of the lists by hand */
-=======
-		op->groupClauses = NIL;
-		/* don't have a "foreach4", so chase two of the lists by hand */
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 		lcm = list_head(lcoltypmods);
 		rcm = list_head(rcoltypmods);
 		mct = list_head(preselected_coltypes);
@@ -2566,8 +2554,6 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 			/* Set final decision */
 			op->colTypes = lappend_oid(op->colTypes, rescoltype);
 			op->colTypmods = lappend_int(op->colTypmods, rescoltypmod);
-<<<<<<< HEAD
-=======
 
 			/*
 			 * For all cases except UNION ALL, identify the grouping operators
@@ -2594,7 +2580,6 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 				op->groupClauses = lappend(op->groupClauses, grpcl);
 			}
 
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 			lcm = lnext(lcm);
 			rcm = lnext(rcm);
 			mct = lnext(mct);
