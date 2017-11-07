@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.103 2008/08/02 21:32:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.102 2008/04/22 01:34:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -194,7 +194,7 @@ get_sort_group_operators(Oid argtype,
 	 * are consistent, ie all from the same opclass.
 	 */
 	typentry = lookup_type_cache(argtype,
-					TYPECACHE_LT_OPR | TYPECACHE_EQ_OPR | TYPECACHE_GT_OPR);
+					 TYPECACHE_LT_OPR | TYPECACHE_EQ_OPR | TYPECACHE_GT_OPR);
 	lt_opr = typentry->lt_opr;
 	eq_opr = typentry->eq_opr;
 	gt_opr = typentry->gt_opr;
@@ -202,8 +202,8 @@ get_sort_group_operators(Oid argtype,
 	/*
 	 * If the datatype is an array, then we can use array_lt and friends ...
 	 * but only if there are suitable operators for the element type.  (This
-	 * check is not in the raw typcache.c code ... should it be?)  Testing
-	 * all three operator IDs here should be redundant.
+	 * check is not in the raw typcache.c code ... should it be?)  Testing all
+	 * three operator IDs here should be redundant, but let's do it anyway.
 	 */
 	if (lt_opr == ARRAY_LT_OP ||
 		eq_opr == ARRAY_EQ_OP ||
@@ -214,16 +214,35 @@ get_sort_group_operators(Oid argtype,
 		if (OidIsValid(elem_type))
 		{
 			typentry = lookup_type_cache(elem_type,
-					TYPECACHE_LT_OPR | TYPECACHE_EQ_OPR | TYPECACHE_GT_OPR);
-			if (!OidIsValid(typentry->lt_opr))
-				lt_opr = InvalidOid;	/* element type has no "<" */
+					 TYPECACHE_LT_OPR | TYPECACHE_EQ_OPR | TYPECACHE_GT_OPR);
+#ifdef NOT_USED
+			/* We should do this ... */
 			if (!OidIsValid(typentry->eq_opr))
-				eq_opr = InvalidOid;	/* element type has no "=" */
-			if (!OidIsValid(typentry->gt_opr))
-				gt_opr = InvalidOid;	/* element type has no ">" */
+			{
+				/* element type is neither sortable nor hashable */
+				lt_opr = eq_opr = gt_opr = InvalidOid;
+			}
+			else if (!OidIsValid(typentry->lt_opr) ||
+					 !OidIsValid(typentry->gt_opr))
+			{
+				/* element type is hashable but not sortable */
+				lt_opr = gt_opr = InvalidOid;
+			}
+#else
+			/*
+			 * ... but for the moment we have to do this.  This is because
+			 * anyarray has sorting but not hashing support.  So, if the
+			 * element type is only hashable, there is nothing we can do
+			 * with the array type.
+			 */
+			if (!OidIsValid(typentry->lt_opr) ||
+				!OidIsValid(typentry->eq_opr) ||
+				!OidIsValid(typentry->gt_opr))
+				lt_opr = eq_opr = gt_opr = InvalidOid;	/* not sortable */
+#endif
 		}
 		else
-			lt_opr = eq_opr = gt_opr = InvalidOid;	/* bogus array type? */
+			lt_opr = eq_opr = gt_opr = InvalidOid;		/* bogus array type? */
 	}
 
 	/* Report errors if needed */
@@ -237,73 +256,8 @@ get_sort_group_operators(Oid argtype,
 	if (needEQ && !OidIsValid(eq_opr))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-<<<<<<< HEAD
-				 errmsg("could not identify an ordering operator for type %s",
-						format_type_be(argtype)),
-		 errhint("Use an explicit ordering operator or modify the query.")));
-	return NULL;
-}
-
-/*
- * equality_oper_funcid - convenience routine for oprfuncid(equality_oper())
- */
-Oid
-equality_oper_funcid(Oid argtype)
-{
-	Operator	optup;
-	Oid			result;
-
-	optup = equality_oper(argtype, false);
-	result = oprfuncid(optup);
-	ReleaseSysCache(optup);
-	return result;
-}
-
-/*
- * ordering_oper_opid - convenience routine for oprid(ordering_oper())
- *
- * This was formerly called any_ordering_op()
- */
-Oid
-ordering_oper_opid(Oid argtype)
-{
-	Operator	optup;
-	Oid			result;
-
-	optup = ordering_oper(argtype, false);
-	result = oprid(optup);
-	ReleaseSysCache(optup);
-	return result;
-}
-
-
-/*
- * ordering_oper_opid - convenience routine for oprid(equality_oper())
- */
-Oid
-equality_oper_opid(Oid argtype)
-{
-	Operator	optup;
-	Oid			result;
-
-	optup = equality_oper(argtype, false);
-	result = oprid(optup);
-	ReleaseSysCache(optup);
-	return result;
-}
-
-/*
- * reverse_ordering_oper_opid - convenience routine for oprid(reverse_ordering_oper())
- */
-Oid
-reverse_ordering_oper_opid(Oid argtype)
-{
-	Operator	optup;
-	Oid			result;
-=======
 				 errmsg("could not identify an equality operator for type %s",
 						format_type_be(argtype))));
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 	/* Return results as needed */
 	if (ltOpr)
