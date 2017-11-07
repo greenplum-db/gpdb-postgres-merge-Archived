@@ -74,11 +74,6 @@
  */
 #define PGSTAT_STAT_PERMANENT_FILENAME		"global/pgstat.stat"
 #define PGSTAT_STAT_PERMANENT_TMPFILE		"global/pgstat.tmp"
-<<<<<<< HEAD
-=======
-#define PGSTAT_STAT_FILENAME				"pg_stat_tmp/pgstat.stat"
-#define PGSTAT_STAT_TMPFILE					"pg_stat_tmp/pgstat.tmp"
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 /* ----------
  * Timer definitions.
@@ -269,12 +264,9 @@ static void pgstat_beshutdown_hook(int code, Datum arg);
 static void pgstat_sighup_handler(SIGNAL_ARGS);
 
 static PgStat_StatDBEntry *pgstat_get_db_entry(Oid databaseid, bool create);
-<<<<<<< HEAD
 
 static PgStat_StatQueueEntry *pgstat_get_queue_entry(Oid queueid, bool create); /*GPDB*/
 
-=======
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 static void pgstat_write_statsfile(bool permanent);
 static HTAB *pgstat_read_statsfile(Oid onlydb, bool permanent);
 static void backend_read_statsfile(void);
@@ -576,11 +568,7 @@ startup_failed:
 void
 pgstat_reset_all(void)
 {
-<<<<<<< HEAD
 	unlink(pgstat_stat_filename);
-=======
-	unlink(PGSTAT_STAT_FILENAME);
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	unlink(PGSTAT_STAT_PERMANENT_FILENAME);
 }
 
@@ -2857,18 +2845,8 @@ PgstatCollectorMain(int argc, char *argv[])
 		 */
 		if (got_SIGHUP)
 		{
-<<<<<<< HEAD
 			ProcessConfigFile(PGC_SIGHUP);
 			got_SIGHUP = false;
-=======
-			/* Check for postmaster death; if so we'll write file below */
-			if (!PostmasterIsAlive(true))
-				break;
-
-			pgstat_write_statsfile(false);
-			need_statwrite = false;
-			need_timer = true;
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 		}
 
 		/*
@@ -3139,22 +3117,13 @@ pgstat_write_statsfile(bool permanent)
 	PgStat_StatQueueEntry *queueentry;
 	FILE	   *fpout;
 	int32		format_id;
-<<<<<<< HEAD
 	const char *tmpfile = permanent ? PGSTAT_STAT_PERMANENT_TMPFILE : pgstat_stat_tmpname;
 	const char *statfile = permanent ? PGSTAT_STAT_PERMANENT_FILENAME : pgstat_stat_filename;
-=======
-	const char *tmpfile = permanent?PGSTAT_STAT_PERMANENT_TMPFILE:PGSTAT_STAT_TMPFILE;
-	const char *statfile = permanent?PGSTAT_STAT_PERMANENT_FILENAME:PGSTAT_STAT_FILENAME;
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 	/*
 	 * Open the statistics temp file to write out the current values.
 	 */
-<<<<<<< HEAD
 	fpout = AllocateFile(tmpfile, PG_BINARY_W);
-=======
-	fpout = fopen(tmpfile, PG_BINARY_W);
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 	if (fpout == NULL)
 	{
 		ereport(LOG,
@@ -3243,11 +3212,7 @@ pgstat_write_statsfile(bool permanent)
 				(errcode_for_file_access(),
 			   errmsg("could not write temporary statistics file \"%s\": %m",
 					  tmpfile)));
-<<<<<<< HEAD
 		FreeFile(fpout);
-=======
-		fclose(fpout);
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 		unlink(tmpfile);
 	}
 	else if (FreeFile(fpout) < 0)
@@ -3265,7 +3230,6 @@ pgstat_write_statsfile(bool permanent)
 				 errmsg("could not rename temporary statistics file \"%s\" to \"%s\": %m",
 						tmpfile, statfile)));
 		unlink(tmpfile);
-<<<<<<< HEAD
 	}
 	else
 	{
@@ -3286,12 +3250,6 @@ pgstat_write_statsfile(bool permanent)
 
 	if (permanent)
 		unlink(pgstat_stat_filename);
-=======
-	}
-
-	if (permanent)
-		unlink(PGSTAT_STAT_FILENAME);
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 }
 
 
@@ -3321,11 +3279,7 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 	FILE	   *fpin;
 	int32		format_id;
 	bool		found;
-<<<<<<< HEAD
 	const char *statfile = permanent ? PGSTAT_STAT_PERMANENT_FILENAME : pgstat_stat_filename;
-=======
-	const char *statfile = permanent?PGSTAT_STAT_PERMANENT_FILENAME:PGSTAT_STAT_FILENAME;
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 	/*
 	 * The tables will live in pgStatLocalContext.
@@ -3373,17 +3327,6 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 	 * with empty counters.
 	 */
 	if ((fpin = AllocateFile(statfile, PG_BINARY_R)) == NULL)
-<<<<<<< HEAD
-		return dbhash;
-
-		/*
-	 * Try to open the status file. If it doesn't exist, the backends simply
-	 * return zero for anything and the collector simply starts from scratch
-	 * with empty counters.
-	 */
-	if ((fpin = AllocateFile(statfile, PG_BINARY_R)) == NULL)
-=======
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 		return dbhash;
 
 	/*
@@ -3669,11 +3612,10 @@ backend_read_statsfile(void)
 	TimestampTz min_ts;
 	int			count;
 
-<<<<<<< HEAD
-		/* already read it? */
-		if (pgStatDBHash)
-			return;
-		Assert(!pgStatRunningInCollector);
+	/* already read it? */
+	if (pgStatDBHash)
+		return;
+	Assert(!pgStatRunningInCollector);
 
 	/*
 	 * We set the minimum acceptable timestamp to PGSTAT_STAT_INTERVAL msec
@@ -3722,14 +3664,10 @@ backend_read_statsfile(void)
 						"because stats collector is not responding")));
 
 	/* Autovacuum launcher wants stats about all databases */
-	pgStatDBHash = pgstat_read_statsfile(InvalidOid, false);
-=======
-	/* Autovacuum launcher wants stats about all databases */
 	if (IsAutoVacuumLauncherProcess())
 		pgStatDBHash = pgstat_read_statsfile(InvalidOid, false);
 	else
 		pgStatDBHash = pgstat_read_statsfile(MyDatabaseId, false);
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 }
 
 
