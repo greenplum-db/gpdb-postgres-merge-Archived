@@ -21,10 +21,7 @@
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
-<<<<<<< HEAD
-=======
 #include "parser/parse_expr.h"
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 #include "utils/lsyscache.h"
 
 typedef struct maxSortGroupRef_context
@@ -181,7 +178,7 @@ add_to_flat_tlist(List *tlist, List *vars, bool resjunk)
 
 /*
  * get_tlist_exprs
- *		Get just the expression subtrees of a tlist
+ *		Get Ejust the expression subtrees of a tlist
  *
  * Resjunk columns are ignored unless includeJunk is true
  */
@@ -297,12 +294,14 @@ get_sortgroupclause_tle(SortGroupClause *sgClause,
  */
 static void
 get_sortgroupclauses_tles_recurse(List *clauses, List *targetList,
-								  List **tles, List **sortops)
+								  List **tles, List **sortops, List **eqops)
 {
-	ListCell *lc;
-	ListCell *lc_sortop;
-	List *sub_grouping_tles = NIL;
-	List *sub_grouping_sortops = NIL;
+	ListCell   *lc;
+	ListCell   *lc_sortop;
+	ListCell   *lc_eqop;
+	List	   *sub_grouping_tles = NIL;
+	List	   *sub_grouping_sortops = NIL;
+	List	   *sub_grouping_eqops = NIL;
 
 	foreach(lc, clauses)
 	{
@@ -311,9 +310,9 @@ get_sortgroupclauses_tles_recurse(List *clauses, List *targetList,
 		if (node == NULL)
 			continue;
 
-		if (IsA(node, GroupClause) || IsA(node, SortClause))
+		if (IsA(node, SortGroupClause))
 		{
-			SortClause *sgc = (SortClause *) node;
+			SortGroupClause *sgc = (SortGroupClause *) node;
 			TargetEntry *tle = get_sortgroupclause_tle(sgc,
 													   targetList);
 
@@ -321,12 +320,13 @@ get_sortgroupclauses_tles_recurse(List *clauses, List *targetList,
 			{
 				*tles = lappend(*tles, tle);
 				*sortops = lappend_oid(*sortops, sgc->sortop);
+				*eqops = lappend_oid(*eqops, sgc->eqop);
 			}
 		}
 		else if (IsA(node, List))
 		{
 			get_sortgroupclauses_tles_recurse((List *) node, targetList,
-											  tles, sortops);
+											  tles, sortops, eqops);
 		}
 		else if (IsA(node, GroupingClause))
 		{
@@ -334,33 +334,40 @@ get_sortgroupclauses_tles_recurse(List *clauses, List *targetList,
 			get_sortgroupclauses_tles_recurse(((GroupingClause *) node)->groupsets,
 											  targetList,
 											  &sub_grouping_tles,
-											  &sub_grouping_sortops);
+											  &sub_grouping_sortops,
+											  &sub_grouping_eqops);
 		}
 		else
 			elog(ERROR, "unrecognized node type in list of sort/group clauses: %d",
 				 (int) nodeTag(node));
 	}
 
-	/* Put GroupClauses before GroupingClauses. */
-	forboth(lc, sub_grouping_tles, lc_sortop, sub_grouping_sortops)
+	/*
+	 * Put SortGroupClauses before GroupingClauses.
+	 */
+	forthree(lc, sub_grouping_tles,
+			 lc_sortop, sub_grouping_sortops,
+			 lc_eqop, sub_grouping_eqops)
 	{
 		if (!list_member(*tles, lfirst(lc)))
 		{
 			*tles = lappend(*tles, lfirst(lc));
 			*sortops = lappend_oid(*sortops, lfirst_oid(lc_sortop));
+			*eqops = lappend_oid(*eqops, lfirst_oid(lc_eqop));
 		}
 	}
 }
 
 void
 get_sortgroupclauses_tles(List *clauses, List *targetList,
-						  List **tles, List **sortops)
+						  List **tles, List **sortops, List **eqops)
 {
 	*tles = NIL;
 	*sortops = NIL;
+	*eqops = NIL;
 
 	get_sortgroupclauses_tles_recurse(clauses, targetList,
-									  tles, sortops);
+									  tles, sortops, eqops);
 }
 
 /*
@@ -409,11 +416,13 @@ void
 get_grouplist_colidx(List *groupClauses, List *targetList, int *numCols,
 					 AttrNumber **colIdx, Oid **grpOperators)
 {
-	List		   *tles;
-	List		   *sortops;
-	ListCell	   *lc_tle;
-	ListCell	   *lc_sortop;
-	int				i, len;
+	List	   *tles;
+	List	   *sortops;
+	List	   *eqops;
+	ListCell   *lc_tle;
+	ListCell   *lc_eqop;
+	int			i,
+				len;
 
 	len = num_distcols_in_grouplist(groupClauses);
 	if (numCols)
@@ -426,21 +435,21 @@ get_grouplist_colidx(List *groupClauses, List *targetList, int *numCols,
 		return;
 	}
 
-	get_sortgroupclauses_tles(groupClauses, targetList, &tles, &sortops);
+	get_sortgroupclauses_tles(groupClauses, targetList, &tles, &sortops, &eqops);
 
 	*colIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * len);
 	*grpOperators = (Oid *) palloc(sizeof(Oid) * len);
 
 	i = 0;
-	forboth(lc_tle, tles, lc_sortop, sortops)
+	forboth(lc_tle, tles, lc_eqop, eqops)
 	{
 		TargetEntry	*tle = lfirst(lc_tle);
-		Oid			sortop = lfirst_oid(lc_sortop);
+		Oid			eqop = lfirst_oid(lc_eqop);
 
 		Assert (i < len);
 
 		(*colIdx)[i] = tle->resno;
-		(*grpOperators)[i] = get_equality_op_for_ordering_op(sortop);
+		(*grpOperators)[i] = eqop;
 		if (!OidIsValid((*grpOperators)[i]))		/* shouldn't happen */
 			elog(ERROR, "could not find equality operator for ordering operator %u",
 				 (*grpOperators)[i]);
@@ -471,13 +480,13 @@ get_grouplist_exprs(List *groupClauses, List *targetList)
 		if (groupClause == NULL)
 			continue;
 
-		Assert(IsA(groupClause, GroupClause) ||
+		Assert(IsA(groupClause, SortGroupClause) ||
 			   IsA(groupClause, GroupingClause) ||
 			   IsA(groupClause, List));
 
-		if (IsA(groupClause, GroupClause))
+		if (IsA(groupClause, SortGroupClause))
 		{
-			Node *expr = get_sortgroupclause_expr((GroupClause*)groupClause,
+			Node *expr = get_sortgroupclause_expr((SortGroupClause *) groupClause,
 												  targetList);
 
 			if (!list_member(result, expr))
@@ -660,8 +669,8 @@ bool maxSortGroupRef_walker(Node *node, maxSortGroupRef_context *cxt)
 
 			foreach (lc, aggorder->sortClause)
 			{
-				SortClause *sort = (SortClause *)lfirst(lc);
-				Assert(IsA(sort, SortClause));
+				SortGroupClause *sort = (SortGroupClause *)lfirst(lc);
+				Assert(IsA(sort, SortGroupClause));
 				Assert( sort->tleSortGroupRef != 0 );
 				if (sort->tleSortGroupRef > cxt->maxsgr )
 					cxt->maxsgr = sort->tleSortGroupRef;
