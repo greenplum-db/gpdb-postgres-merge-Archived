@@ -100,19 +100,11 @@ GetNewTransactionId(bool isSubXact, bool setProcXid)
 							 NameStr(ShmemVariableCache->limit_datname))));
 		else if (TransactionIdFollowsOrEquals(xid, ShmemVariableCache->xidWarnLimit))
 			ereport(WARNING,
-<<<<<<< HEAD
-					(errmsg("database \"%s\" must be vacuumed within %u transactions",
-							NameStr(ShmemVariableCache->limit_datname),
-							ShmemVariableCache->xidWrapLimit - xid),
-					 errhint("To avoid a database shutdown, execute a full-database VACUUM in \"%s\".",
-							 NameStr(ShmemVariableCache->limit_datname))));
-=======
 			(errmsg("database \"%s\" must be vacuumed within %u transactions",
 					NameStr(ShmemVariableCache->limit_datname),
 					ShmemVariableCache->xidWrapLimit - xid),
 			 errhint("To avoid a database shutdown, execute a database-wide VACUUM in \"%s\".",
 					 NameStr(ShmemVariableCache->limit_datname))));
->>>>>>> 38e9348282e
 	}
 
 	/*

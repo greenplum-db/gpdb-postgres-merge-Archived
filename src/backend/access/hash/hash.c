@@ -92,13 +92,8 @@ hashbuild(PG_FUNCTION_ARGS)
 	buildstate.indtuples = 0;
 
 	/* do the heap scan */
-<<<<<<< HEAD
 	reltuples = IndexBuildScan(heap, index, indexInfo, true,
 							   hashbuildCallback, (void *) &buildstate);
-=======
-	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
-								   hashbuildCallback, (void *) &buildstate);
->>>>>>> 38e9348282e
 
 	if (buildstate.spool)
 	{
@@ -133,13 +128,8 @@ hashbuildCallback(Relation index,
 	IndexTuple	itup;
 
 	/* form an index tuple and point it at the heap tuple */
-<<<<<<< HEAD
-	itup = index_form_tuple(RelationGetDescr(index), values, isnull);
-	itup->t_tid = *tupleId;
-=======
 	itup = _hash_form_tuple(index, values, isnull);
-	itup->t_tid = htup->t_self;
->>>>>>> 38e9348282e
+	itup->t_tid = *tupleId;
 
 	/* Hash indexes don't index nulls, see notes in hashinsert */
 	if (IndexTupleHasNulls(itup))
@@ -520,12 +510,8 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
-<<<<<<< HEAD
 	_hash_checkpage(rel, metabuf, LH_META_PAGE);
-	metap = (HashMetaPage) BufferGetPage(metabuf);
-=======
 	metap =  HashPageGetMeta(BufferGetPage(metabuf));
->>>>>>> 38e9348282e
 	orig_maxbucket = metap->hashm_maxbucket;
 	orig_ntuples = metap->hashm_ntuples;
 	memcpy(&local_metapage, metap, sizeof(local_metapage));

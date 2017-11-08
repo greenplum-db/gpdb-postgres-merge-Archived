@@ -38,14 +38,7 @@ _hash_checkqual(IndexScanDesc scan, IndexTuple itup)
 	TupleDesc	tupdesc = RelationGetDescr(scan->indexRelation);
 	ScanKey		key = scan->keyData;
 	int			scanKeySize = scan->numberOfKeys;
-#endif
 
-<<<<<<< HEAD
-=======
-	IncrIndexProcessed();
-
-#ifdef NOT_USED
->>>>>>> 38e9348282e
 	while (scanKeySize > 0)
 	{
 		Datum		datum;
