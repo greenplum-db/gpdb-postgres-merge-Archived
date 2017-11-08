@@ -2062,6 +2062,14 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		else
 		{
 			can_hash = grouping_is_hashable(parse->distinctClause);
+
+			/* GPDB_84_MERGE_FIXME: The hash Agg we build for DISTINCT currently
+			 * loses the GROUP_ID() information, so don't use it if there's a
+			 * GROUP_ID().
+			 */
+			if (can_hash && contain_group_id((Node *) result_plan->targetlist))
+				can_hash = false;
+
 			if (can_hash && can_sort)
 			{
 				/* we have a meaningful choice to make ... */

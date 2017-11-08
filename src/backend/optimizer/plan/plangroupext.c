@@ -2698,6 +2698,29 @@ contain_groupingfunc(Node *node)
 	return contain_groupingfunc_walker(node, NULL);
 }
 
+
+static bool
+contain_group_id_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	else if (IsA(node, GroupId))
+		return true;
+	return expression_tree_walker(node,
+								  contain_group_id_walker,
+								  context);
+}
+
+/*
+ * Return true if the given node contains GroupId
+ */
+bool
+contain_group_id(Node *node)
+{
+	return contain_group_id_walker(node, NULL);
+}
+
+
 #ifdef DEBUG_GROUPING_SETS
 
 /**

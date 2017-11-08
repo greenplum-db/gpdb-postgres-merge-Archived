@@ -126,6 +126,7 @@ extern Plan *plan_grouping_extension(PlannerInfo *root,
 									 Plan *lefttree);
 extern void free_canonical_groupingsets(CanonicalGroupingSets *canonical_grpsets);
 extern Plan *add_repeat_node(Plan *result_plan, int repeat_count, uint64 grouping);
+extern bool contain_group_id(Node *node);
 
 /*
  * prototypes for plan/createplan.c
