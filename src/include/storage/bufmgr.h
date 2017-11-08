@@ -325,21 +325,13 @@ typedef struct MirroredLockBufMgrLocalVars
  * prototypes for functions in bufmgr.c
  */
 extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
-<<<<<<< HEAD
-extern Buffer ReadBufferWithStrategy(Relation reln, BlockNumber blockNum,
-					   BufferAccessStrategy strategy);
-extern Buffer ReadOrZeroBuffer(Relation reln, BlockNumber blockNum);
-extern Buffer ReadBuffer_Resync(SMgrRelation reln, BlockNumber blockNum);
-extern Buffer ReadBufferWithoutRelcache(RelFileNode rnode, bool isLocalBuf,
-							 bool isTemp, BlockNumber blockNum, bool zeroPage);
-=======
 extern Buffer ReadBufferExtended(Relation reln, ForkNumber forkNum,
 								 BlockNumber blockNum, ReadBufferMode mode,
 								 BufferAccessStrategy strategy);
-extern Buffer ReadBufferWithoutRelcache(RelFileNode rnode, bool isTemp,
-						ForkNumber forkNum, BlockNumber blockNum,
+extern Buffer ReadBuffer_Resync(SMgrRelation reln, BlockNumber blockNum);
+extern Buffer ReadBufferWithoutRelcache(RelFileNode rnode, bool isLocalBuf,
+						bool isTemp, ForkNumber forkNum, BlockNumber blockNum,
 						ReadBufferMode mode, BufferAccessStrategy strategy);
->>>>>>> 38e9348282e
 extern void ReleaseBuffer(Buffer buffer);
 extern void UnlockReleaseBuffer(Buffer buffer);
 extern void MarkBufferDirty(Buffer buffer);
@@ -356,21 +348,13 @@ extern void PrintBufferLeakWarning(Buffer buffer);
 extern void CheckPointBuffers(int flags);
 extern BlockNumber BufferGetBlockNumber(Buffer buffer);
 extern BlockNumber RelationGetNumberOfBlocks(Relation relation);
-<<<<<<< HEAD
 extern void RelationTruncate(Relation rel, BlockNumber nblocks, bool markPersistentAsPhysicallyTruncated);
-extern void FlushRelationBuffers(Relation rel);
-extern void FlushDatabaseBuffers(Oid dbid);
-extern void DropRelFileNodeBuffers(RelFileNode rnode, bool istemp,
-					   BlockNumber firstDelBlock);
-extern void DropDatabaseBuffers(Oid tbpoid, Oid dbid);
-extern XLogRecPtr BufferGetLSNAtomic(Buffer buffer);
-=======
 extern void FlushRelationBuffers(Relation rel);
 extern void FlushDatabaseBuffers(Oid dbid);
 extern void DropRelFileNodeBuffers(RelFileNode rnode, ForkNumber forkNum,
 					   bool istemp, BlockNumber firstDelBlock);
-extern void DropDatabaseBuffers(Oid dbid);
->>>>>>> 38e9348282e
+extern void DropDatabaseBuffers(Oid tbpoid, Oid dbid);
+extern XLogRecPtr BufferGetLSNAtomic(Buffer buffer);
 
 #ifdef NOT_USED
 extern void PrintPinnedBufs(void);
