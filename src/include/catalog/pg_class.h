@@ -96,11 +96,7 @@ typedef FormData_pg_class *Form_pg_class;
  * ----------------
  */
 
-<<<<<<< HEAD
-#define Natts_pg_class					28
-=======
-#define Natts_pg_class					24
->>>>>>> 38e9348282e
+#define Natts_pg_class					25
 #define Anum_pg_class_relname			1
 #define Anum_pg_class_relnamespace		2
 #define Anum_pg_class_reltype			3
@@ -115,33 +111,17 @@ typedef FormData_pg_class *Form_pg_class;
 #define Anum_pg_class_relhasindex		12
 #define Anum_pg_class_relisshared		13
 #define Anum_pg_class_relkind			14
-<<<<<<< HEAD
 #define Anum_pg_class_relstorage		15
 #define Anum_pg_class_relnatts			16
 #define Anum_pg_class_relchecks			17
-#define Anum_pg_class_reltriggers		18
-#define Anum_pg_class_relukeys			19
-#define Anum_pg_class_relfkeys			20
-#define Anum_pg_class_relrefs			21
-#define Anum_pg_class_relhasoids		22
-#define Anum_pg_class_relhaspkey		23
-#define Anum_pg_class_relhasrules		24
-#define Anum_pg_class_relhassubclass	25
-#define Anum_pg_class_relfrozenxid		26
-#define Anum_pg_class_relacl			27
-#define Anum_pg_class_reloptions		28
-=======
-#define Anum_pg_class_relnatts			15
-#define Anum_pg_class_relchecks			16
-#define Anum_pg_class_relhasoids		17
-#define Anum_pg_class_relhaspkey		18
-#define Anum_pg_class_relhasrules		19
-#define Anum_pg_class_relhastriggers	20
-#define Anum_pg_class_relhassubclass	21
-#define Anum_pg_class_relfrozenxid		22
-#define Anum_pg_class_relacl			23
-#define Anum_pg_class_reloptions		24
->>>>>>> 38e9348282e
+#define Anum_pg_class_relhasoids		18
+#define Anum_pg_class_relhaspkey		19
+#define Anum_pg_class_relhasrules		20
+#define Anum_pg_class_relhastriggers	21
+#define Anum_pg_class_relhassubclass	22
+#define Anum_pg_class_relfrozenxid		23
+#define Anum_pg_class_relacl			24
+#define Anum_pg_class_reloptions		25
 
 /* ----------------
  *		initial contents of pg_class
@@ -153,23 +133,13 @@ typedef FormData_pg_class *Form_pg_class;
  */
 
 /* Note: "3" in the relfrozenxid column stands for FirstNormalTransactionId */
-<<<<<<< HEAD
-DATA(insert OID = 1247 (  pg_type		PGNSP 71 PGUID 0 1247 0 0 0 0 0 f f r h 28 0 0 0 0 0 t f f f 3 _null_ _null_ ));
+DATA(insert OID = 1247 (  pg_type		PGNSP 71 PGUID 0 1247 0 0 0 0 0 f f r h 28 0 t f f f f 3 _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 PGUID 0 1249 0 0 0 0 0 f f r h 17 0 0 0 0 0 f f f f 3 _null_ _null_ ));
+DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 PGUID 0 1249 0 0 0 0 0 f f r h 17 0 f f f f f 3 _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1255 (  pg_proc		PGNSP 81 PGUID 0 1255 0 0 0 0 0 f f r h 27 0 0 0 0 0 t f f f 3 _null_ _null_ ));
+DATA(insert OID = 1255 (  pg_proc		PGNSP 81 PGUID 0 1255 0 0 0 0 0 f f r h 27 0 t f f f f 3 _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1259 (  pg_class		PGNSP 83 PGUID 0 1259 0 0 0 0 0 f f r h 28 0 0 0 0 0 t f f f 3 _null_ _null_ ));
-=======
-DATA(insert OID = 1247 (  pg_type		PGNSP 71 PGUID 0 1247 0 0 0 0 0 f f r 28 0 t f f f f 3 _null_ _null_ ));
-DESCR("");
-DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 PGUID 0 1249 0 0 0 0 0 f f r 17 0 f f f f f 3 _null_ _null_ ));
-DESCR("");
-DATA(insert OID = 1255 (  pg_proc		PGNSP 81 PGUID 0 1255 0 0 0 0 0 f f r 25 0 t f f f f 3 _null_ _null_ ));
-DESCR("");
-DATA(insert OID = 1259 (  pg_class		PGNSP 83 PGUID 0 1259 0 0 0 0 0 f f r 24 0 t f f f f 3 _null_ _null_ ));
->>>>>>> 38e9348282e
+DATA(insert OID = 1259 (  pg_class		PGNSP 83 PGUID 0 1259 0 0 0 0 0 f f r h 25 0 t f f f f 3 _null_ _null_ ));
 DESCR("");
 
 /* abstract tuple types */
