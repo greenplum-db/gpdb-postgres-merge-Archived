@@ -4,10 +4,7 @@
  *	  PlaceHolderVar and PlaceHolderInfo manipulation routines
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2017, Pivotal Software Inc
-=======
->>>>>>> 38e9348282e
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *

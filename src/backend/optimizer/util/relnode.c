@@ -388,18 +388,12 @@ build_join_rel(PlannerInfo *root,
 	 * and inner rels we first try to build it from.  But the contents should
 	 * be the same regardless.
 	 */
-<<<<<<< HEAD
 	build_joinrel_tlist(root, joinrel, outer_rel->reltargetlist);
 	build_joinrel_tlist(root, joinrel, inner_rel->reltargetlist);
 	add_placeholders_to_joinrel(root, joinrel);
 
 	/* cap width of output row by sum of its inputs */
 	joinrel->width = Min(joinrel->width, outer_rel->width + inner_rel->width);
-=======
-	build_joinrel_tlist(root, joinrel, outer_rel);
-	build_joinrel_tlist(root, joinrel, inner_rel);
-	add_placeholders_to_joinrel(root, joinrel);
->>>>>>> 38e9348282e
 
 	/*
 	 * Construct restrict and join clause lists for the new joinrel. (The

@@ -32,10 +32,7 @@
 #include "optimizer/var.h"
 #include "optimizer/restrictinfo.h"
 #include "parser/parsetree.h"
-<<<<<<< HEAD
 #include "parser/parse_oper.h" /* for compatible_oper_opid() */
-=======
->>>>>>> 38e9348282e
 #include "utils/lsyscache.h"
 
 #include "cdb/cdbpullup.h"		/* cdbpullup_expr(), cdbpullup_make_var() */

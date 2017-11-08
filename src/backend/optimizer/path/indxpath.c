@@ -1744,10 +1744,7 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 	switch (jointype)
 	{
 		case JOIN_INNER:
-<<<<<<< HEAD
-=======
 		case JOIN_SEMI:
->>>>>>> 38e9348282e
 			isouterjoin = false;
 			break;
 		case JOIN_LEFT:

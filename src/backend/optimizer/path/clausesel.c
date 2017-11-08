@@ -118,12 +118,8 @@ clauselist_selectivity(PlannerInfo *root,
 					   List *clauses,
 					   int varRelid,
 					   JoinType jointype,
-<<<<<<< HEAD
 					   SpecialJoinInfo *sjinfo,
 					   bool use_damping)
-=======
-					   SpecialJoinInfo *sjinfo)
->>>>>>> 38e9348282e
 {
 	Selectivity s1 = 1.0;
 	Selectivity *rgsel = NULL;
@@ -142,11 +138,7 @@ clauselist_selectivity(PlannerInfo *root,
 	 */
 	if (list_length(clauses) == 1)
 		return clause_selectivity(root, (Node *) linitial(clauses),
-<<<<<<< HEAD
 								  varRelid, jointype, sjinfo, use_damping);
-=======
-								  varRelid, jointype, sjinfo);
->>>>>>> 38e9348282e
 
 	/*
 	 * Initial scan over clauses.  Anything that doesn't look like a potential
@@ -160,11 +152,7 @@ clauselist_selectivity(PlannerInfo *root,
 		Selectivity s2;
 
 		/* Always compute the selectivity using clause_selectivity */
-<<<<<<< HEAD
 		s2 = clause_selectivity(root, clause, varRelid, jointype, sjinfo, use_damping);
-=======
-		s2 = clause_selectivity(root, clause, varRelid, jointype, sjinfo);
->>>>>>> 38e9348282e
 
 		/*
 		 * Check for being passed a RestrictInfo.
@@ -548,12 +536,6 @@ treat_as_join_clause(Node *clause, RestrictInfo *rinfo,
  *	   root->join_info_list.
  *	2. For an INNER join, sjinfo is just a transient struct, and only the
  *	   relids and jointype fields in it can be trusted.
-<<<<<<< HEAD
- *	3. XXX sjinfo might be NULL even though it really is a join.  This case
- *	   will go away soon, but fixing it requires API changes for oprjoin and
- *	   amcostestimate functions.
-=======
->>>>>>> 38e9348282e
  * It is possible for jointype to be different from sjinfo->jointype.
  * This indicates we are considering a variant join: either with
  * the LHS and RHS switched, or with one input unique-ified.
@@ -567,12 +549,8 @@ clause_selectivity(PlannerInfo *root,
 				   Node *clause,
 				   int varRelid,
 				   JoinType jointype,
-<<<<<<< HEAD
 				   SpecialJoinInfo *sjinfo,
 				   bool use_damping)
-=======
-				   SpecialJoinInfo *sjinfo)
->>>>>>> 38e9348282e
 {
 	Selectivity s1 = 0.5;		/* default for any unhandled clause type */
 	RestrictInfo *rinfo = NULL;
@@ -688,12 +666,8 @@ clause_selectivity(PlannerInfo *root,
 								  (Node *) get_notclausearg((Expr *) clause),
 									  varRelid,
 									  jointype,
-<<<<<<< HEAD
 									  sjinfo,
 									  use_damping);
-=======
-									  sjinfo);
->>>>>>> 38e9348282e
 	}
 	else if (and_clause(clause))
 	{
@@ -702,12 +676,8 @@ clause_selectivity(PlannerInfo *root,
 									((BoolExpr *) clause)->args,
 									varRelid,
 									jointype,
-<<<<<<< HEAD
 									sjinfo,
 									use_damping);
-=======
-									sjinfo);
->>>>>>> 38e9348282e
 	}
 	else if (or_clause(clause))
 	{
@@ -726,12 +696,8 @@ clause_selectivity(PlannerInfo *root,
 												(Node *) lfirst(arg),
 												varRelid,
 												jointype,
-<<<<<<< HEAD
 												sjinfo,
 												use_damping);
-=======
-												sjinfo);
->>>>>>> 38e9348282e
 
 			s1 = s1 + s2 - s1 * s2;
 		}
@@ -840,12 +806,8 @@ clause_selectivity(PlannerInfo *root,
 								(Node *) ((RelabelType *) clause)->arg,
 								varRelid,
 								jointype,
-<<<<<<< HEAD
 								sjinfo,
 								use_damping);
-=======
-								sjinfo);
->>>>>>> 38e9348282e
 	}
 	else if (IsA(clause, CoerceToDomain))
 	{
@@ -854,12 +816,8 @@ clause_selectivity(PlannerInfo *root,
 								(Node *) ((CoerceToDomain *) clause)->arg,
 								varRelid,
 								jointype,
-<<<<<<< HEAD
 								sjinfo,
 								use_damping);
-=======
-								sjinfo);
->>>>>>> 38e9348282e
 	}
 
 	/* Cache the result if possible */

@@ -39,12 +39,8 @@ cdb_add_subquery_join_paths(PlannerInfo    *root,
 static bool has_join_restriction(PlannerInfo *root, RelOptInfo *rel);
 static bool has_legal_joinclause(PlannerInfo *root, RelOptInfo *rel);
 static bool is_dummy_rel(RelOptInfo *rel);
-<<<<<<< HEAD
-static void mark_dummy_join(PlannerInfo *root, RelOptInfo *rel);
-=======
-static void mark_dummy_rel(RelOptInfo *rel);
+static void mark_dummy_rel(PlannerInfo *root, RelOptInfo *rel);
 static bool restriction_is_constant_false(List *restrictlist);
->>>>>>> 38e9348282e
 
 
 /*
@@ -750,13 +746,10 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 	 * this way since it's conceivable that dummy-ness of a multi-element
 	 * join might only be noticeable for certain construction paths.)
 	 *
-<<<<<<< HEAD
-=======
 	 * Also, a provably constant-false join restriction typically means that
 	 * we can skip evaluating one or both sides of the join.  We do this
 	 * by marking the appropriate rel as dummy.
 	 *
->>>>>>> 38e9348282e
 	 * We need only consider the jointypes that appear in join_info_list,
 	 * plus JOIN_INNER.
 	 */
@@ -776,21 +769,10 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 			add_paths_to_joinrel(root, joinrel, rel1, rel2, sjinfo->jointype, sjinfo, restrictlist);
 			break;
 		case JOIN_INNER:
-<<<<<<< HEAD
-
-			if (is_dummy_rel(rel1) || is_dummy_rel(rel2))
-			{
-				mark_dummy_join(root, joinrel);
-				break;
-			}
-			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_INNER, sjinfo,
-								 restrictlist);
-			add_paths_to_joinrel(root, joinrel, rel2, rel1, JOIN_INNER, sjinfo,
-=======
 			if (is_dummy_rel(rel1) || is_dummy_rel(rel2) ||
 				restriction_is_constant_false(restrictlist))
 			{
-				mark_dummy_rel(joinrel);
+				mark_dummy_rel(root, joinrel);
 				break;
 			}
 			add_paths_to_joinrel(root, joinrel, rel1, rel2,
@@ -798,49 +780,28 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 								 restrictlist);
 			add_paths_to_joinrel(root, joinrel, rel2, rel1,
 								 JOIN_INNER, sjinfo,
->>>>>>> 38e9348282e
 								 restrictlist);
 			break;
 		case JOIN_LEFT:
 			if (is_dummy_rel(rel1))
 			{
-<<<<<<< HEAD
-				mark_dummy_join(root, joinrel);
-				break;
-			}
-			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_LEFT, sjinfo,
-								 restrictlist);
-			add_paths_to_joinrel(root, joinrel, rel2, rel1, JOIN_RIGHT, sjinfo,
-=======
-				mark_dummy_rel(joinrel);
+				mark_dummy_rel(root, joinrel);
 				break;
 			}
 			if (restriction_is_constant_false(restrictlist) &&
 				bms_is_subset(rel2->relids, sjinfo->syn_righthand))
-				mark_dummy_rel(rel2);
+				mark_dummy_rel(root, rel2);
 			add_paths_to_joinrel(root, joinrel, rel1, rel2,
 								 JOIN_LEFT, sjinfo,
 								 restrictlist);
 			add_paths_to_joinrel(root, joinrel, rel2, rel1,
 								 JOIN_RIGHT, sjinfo,
->>>>>>> 38e9348282e
 								 restrictlist);
 			break;
 		case JOIN_FULL:
 			if (is_dummy_rel(rel1) && is_dummy_rel(rel2))
 			{
-<<<<<<< HEAD
-				mark_dummy_join(root, joinrel);
-				break;
-			}
-			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_FULL, sjinfo,
-								 restrictlist);
-			add_paths_to_joinrel(root, joinrel, rel2, rel1, JOIN_FULL, sjinfo,
-								 restrictlist);
-			break;
-		default:
-=======
-				mark_dummy_rel(joinrel);
+				mark_dummy_rel(root, joinrel);
 				break;
 			}
 			add_paths_to_joinrel(root, joinrel, rel1, rel2,
@@ -861,7 +822,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 				if (is_dummy_rel(rel1) || is_dummy_rel(rel2) ||
 					restriction_is_constant_false(restrictlist))
 				{
-					mark_dummy_rel(joinrel);
+					mark_dummy_rel(root, joinrel);
 					break;
 				}
 				add_paths_to_joinrel(root, joinrel, rel1, rel2,
@@ -892,19 +853,18 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		case JOIN_ANTI:
 			if (is_dummy_rel(rel1))
 			{
-				mark_dummy_rel(joinrel);
+				mark_dummy_rel(root, joinrel);
 				break;
 			}
 			if (restriction_is_constant_false(restrictlist) &&
 				bms_is_subset(rel2->relids, sjinfo->syn_righthand))
-				mark_dummy_rel(rel2);
+				mark_dummy_rel(root, rel2);
 			add_paths_to_joinrel(root, joinrel, rel1, rel2,
 								 JOIN_ANTI, sjinfo,
 								 restrictlist);
 			break;
 		default:
 			/* other values not expected here */
->>>>>>> 38e9348282e
 			elog(ERROR, "unrecognized join type: %d", (int) sjinfo->jointype);
 			break;
 	}
@@ -1102,6 +1062,10 @@ have_join_order_restriction(PlannerInfo *root,
 		/* Likewise for the LHS. */
 		if (bms_overlap(sjinfo->min_lefthand, rel1->relids) &&
 			bms_overlap(sjinfo->min_lefthand, rel2->relids))
+		{
+			result = true;
+			break;
+		}
 <<<<<<< HEAD
 		{
 			result = true;
@@ -1258,11 +1222,7 @@ is_dummy_rel(RelOptInfo *rel)
  * Mark a rel as proven empty.
  */
 static void
-<<<<<<< HEAD
-mark_dummy_join(PlannerInfo *root, RelOptInfo *rel)
-=======
-mark_dummy_rel(RelOptInfo *rel)
->>>>>>> 38e9348282e
+mark_dummy_rel(PlannerInfo *root, RelOptInfo *rel)
 {
 	/* Set dummy size estimate */
 	rel->rows = 0;
@@ -1276,17 +1236,8 @@ mark_dummy_rel(RelOptInfo *rel)
 	/* The dummy path doesn't need deduplication */
 	rel->dedup_info = NULL;
 
-<<<<<<< HEAD
-	/*
-	 * Although set_cheapest will be done again later, we do it immediately
-	 * in order to keep is_dummy_rel as cheap as possible (ie, not have
-	 * to examine the pathlist).
-	 */
-	set_cheapest(root, rel);
-=======
 	/* Set or update cheapest_total_path */
-	set_cheapest(rel);
->>>>>>> 38e9348282e
+	set_cheapest(root, rel);
 }
 
 

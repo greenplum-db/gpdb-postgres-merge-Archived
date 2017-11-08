@@ -994,10 +994,7 @@ build_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
 
 		case RTE_TABLEFUNCTION:
 		case RTE_FUNCTION:
-<<<<<<< HEAD
-=======
 		case RTE_VALUES:
->>>>>>> 38e9348282e
 		case RTE_CTE:
 			/* Not all of these can have dropped cols, but share code anyway */
 			expandRTE(rte, varno, 0, -1, true /* include dropped */ ,
@@ -1024,24 +1021,6 @@ build_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
 			}
 			break;
 
-<<<<<<< HEAD
-		case RTE_VALUES:
-			expandRTE(rte, varno, 0, -1, false /* dropped not applicable */ ,
-					  NULL, &colvars);
-			foreach(l, colvars)
-			{
-				var = (Var *) lfirst(l);
-
-				tlist = lappend(tlist,
-								makeTargetEntry((Expr *) var,
-												var->varattno,
-												NULL,
-												false));
-			}
-			break;
-
-=======
->>>>>>> 38e9348282e
 		default:
 			/* caller error */
 			elog(ERROR, "unsupported RTE kind %d in build_physical_tlist",
