@@ -63,10 +63,6 @@
 #include "executor/nodeSubplan.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
-<<<<<<< HEAD
-#include "nodes/makefuncs.h" /* temporary */
-=======
->>>>>>> 38e9348282e
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "parser/parse_clause.h"
@@ -247,17 +243,15 @@ CopyDirectDispatchFromPlanToSliceTable(PlannedStmt *stmt, EState *estate)
  * NB: the CurrentMemoryContext when this is called will become the parent
  * of the per-query context used for this Executor invocation.
  *
-<<<<<<< HEAD
- * MPP: In here we take care of setting up all the necessary items that
- * will be needed to service the query, such as setting up interconnect,
- * and dispatching the query. Any other items in the future
- * must be added here.
-=======
  * We provide a function hook variable that lets loadable plugins
  * get control when ExecutorStart is called.  Such a plugin would
  * normally call standard_ExecutorStart().
  *
->>>>>>> 38e9348282e
+ * MPP: In here we take care of setting up all the necessary items that
+ * will be needed to service the query, such as setting up interconnect,
+ * and dispatching the query. Any other items in the future
+ * must be added here.
+ *
  * ----------------------------------------------------------------
  */
 void
@@ -833,10 +827,6 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	CmdType		operation;
 	DestReceiver *dest;
 	bool		sendTuples;
-<<<<<<< HEAD
-	TupleTableSlot *result = NULL;
-=======
->>>>>>> 38e9348282e
 	MemoryContext oldcontext;
 	/*
 	 * NOTE: Any local vars that are set in the PG_TRY block and examined in the

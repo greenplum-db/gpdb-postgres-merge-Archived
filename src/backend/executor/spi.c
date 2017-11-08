@@ -722,11 +722,7 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 		if (attnum[i] <= 0 || attnum[i] > numberOfAttributes)
 			break;
 		v[attnum[i] - 1] = Values[i];
-<<<<<<< HEAD
-		n[attnum[i] - 1] = (Nulls && Nulls[i] == 'n');
-=======
 		n[attnum[i] - 1] = (Nulls && Nulls[i] == 'n') ? true : false;
->>>>>>> 38e9348282e
 	}
 
 	if (i == natts)				/* no errors in *attnum */
@@ -1698,7 +1694,6 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan, ParamListInfo boundParams)
 		/* Need a copyObject here to keep parser from modifying raw tree */
 		stmt_list = pg_analyze_and_rewrite(copyObject(parsetree),
 										   src, argtypes, nargs);
-<<<<<<< HEAD
 
 		{
 			ListCell *lc;
@@ -1718,11 +1713,7 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan, ParamListInfo boundParams)
 			}
 		}
 
-		stmt_list = pg_plan_queries(stmt_list, cursor_options,
-									boundParams, false);
-=======
 		stmt_list = pg_plan_queries(stmt_list, cursor_options, boundParams);
->>>>>>> 38e9348282e
 
 		plansource = (CachedPlanSource *) palloc0(sizeof(CachedPlanSource));
 		cplan = (CachedPlan *) palloc0(sizeof(CachedPlan));

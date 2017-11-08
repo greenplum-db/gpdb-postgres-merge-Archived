@@ -93,13 +93,9 @@
 #include "access/tuptoaster.h"
 #include "funcapi.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
 #include "executor/executor.h"
-#include "parser/parse_expr.h"
-#include "parser/parsetree.h"               /* rt_fetch() */
-=======
->>>>>>> 38e9348282e
 #include "nodes/nodeFuncs.h"
+#include "parser/parsetree.h"               /* rt_fetch() */
 #include "storage/bufmgr.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"

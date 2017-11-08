@@ -106,7 +106,6 @@
 #include "executor/nodeTidscan.h"
 #include "executor/nodeUnique.h"
 #include "executor/nodeValuesscan.h"
-<<<<<<< HEAD
 #include "executor/nodeWorktablescan.h"
 #include "miscadmin.h"
 
@@ -191,12 +190,6 @@ setSubplanSliceId(SubPlan *subplan, EState *estate)
 }
 
 
-=======
-#include "executor/nodeCtescan.h"
-#include "executor/nodeWorktablescan.h"
-#include "miscadmin.h"
-
->>>>>>> 38e9348282e
 
 /* ------------------------------------------------------------------------
  *		ExecInitNode
@@ -1069,13 +1062,10 @@ ExecProcNode(PlanState *node)
 			result = ExecRecursiveUnion((RecursiveUnionState *) node);
 			break;
 
-<<<<<<< HEAD
 		case T_SequenceState:
 			result = ExecSequence((SequenceState *) node);
 			break;
 
-=======
->>>>>>> 38e9348282e
 			/* BitmapAndState does not yield tuples */
 
 			/* BitmapOrState does not yield tuples */
@@ -1367,12 +1357,9 @@ ExecCountSlotsNode(Plan *node)
 		case T_RecursiveUnion:
 			return ExecCountSlotsRecursiveUnion((RecursiveUnion *) node);
 
-<<<<<<< HEAD
 		case T_Sequence:
 			return ExecCountSlotsSequence((Sequence *) node);
 
-=======
->>>>>>> 38e9348282e
 		case T_BitmapAnd:
 			return ExecCountSlotsBitmapAnd((BitmapAnd *) node);
 
@@ -1672,13 +1659,10 @@ ExecEndNode(PlanState *node)
 			ExecEndRecursiveUnion((RecursiveUnionState *) node);
 			break;
 
-<<<<<<< HEAD
 		case T_SequenceState:
 			ExecEndSequence((SequenceState *) node);
 			break;
 
-=======
->>>>>>> 38e9348282e
 		case T_BitmapAndState:
 			ExecEndBitmapAnd((BitmapAndState *) node);
 			break;

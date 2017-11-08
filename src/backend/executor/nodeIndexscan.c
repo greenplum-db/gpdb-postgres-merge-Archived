@@ -30,11 +30,7 @@
 #include "access/relscan.h"
 #include "executor/execdebug.h"
 #include "executor/nodeIndexscan.h"
-<<<<<<< HEAD
 #include "executor/execIndexscan.h"
-#include "nodes/nodeFuncs.h"
-=======
->>>>>>> 38e9348282e
 #include "optimizer/clauses.h"
 #include "utils/array.h"
 #include "utils/lsyscache.h"
