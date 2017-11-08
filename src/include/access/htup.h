@@ -729,12 +729,8 @@ typedef struct xl_heap_clean
 /* NB: this is used for indexes as well as heaps */
 typedef struct xl_heap_newpage
 {
-<<<<<<< HEAD
 	xl_heapnode heapnode;
-=======
-	RelFileNode node;
 	ForkNumber	forknum;
->>>>>>> 38e9348282e
 	BlockNumber blkno;			/* location of new page */
 	/* entire page contents follow at end of record */
 } xl_heap_newpage;
@@ -889,19 +885,15 @@ static inline HeapTuple heap_copytuple(HeapTuple tuple)
 }
 
 extern void heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest);
-<<<<<<< HEAD
 
-extern HeapTuple heaptuple_form_to(TupleDesc tupdesc, Datum* values, bool *isnull, HeapTuple tup, uint32 *len);
-static inline HeapTuple heap_form_tuple(TupleDesc tupleDescriptor, Datum *values, bool *isnull)
+extern HeapTuple heaptuple_form_to(TupleDesc tupdesc, Datum* values,
+								   bool *isnull, HeapTuple tup, uint32 *len);
+static inline HeapTuple heap_form_tuple(TupleDesc tupleDescriptor,
+				Datum *values, bool *isnull)
 {
 	return heaptuple_form_to(tupleDescriptor, values, isnull, NULL, NULL);
 }
-extern HeapTuple heap_formtuple(TupleDesc tupleDescriptor, Datum *values, char *nulls) __attribute__ ((deprecated));
 
-=======
-extern HeapTuple heap_form_tuple(TupleDesc tupleDescriptor,
-				Datum *values, bool *isnull);
->>>>>>> 38e9348282e
 extern HeapTuple heap_modify_tuple(HeapTuple tuple,
 				  TupleDesc tupleDesc,
 				  Datum *replValues,
@@ -911,18 +903,12 @@ extern void heap_deform_tuple(HeapTuple tuple, TupleDesc tupleDesc,
 				  Datum *values, bool *isnull);
 /* these three are deprecated versions of the three above: */
 extern HeapTuple heap_formtuple(TupleDesc tupleDescriptor,
-			   Datum *values, char *nulls);
+			   Datum *values, char *nulls) __attribute__ ((deprecated));
 extern HeapTuple heap_modifytuple(HeapTuple tuple,
 				 TupleDesc tupleDesc,
 				 Datum *replValues,
 				 char *replNulls,
-<<<<<<< HEAD
 				 char *replActions) __attribute__ ((deprecated));
-extern void heap_deform_tuple(HeapTuple tuple, TupleDesc tupleDesc,
-				  Datum *values, bool *isnull);
-=======
-				 char *replActions);
->>>>>>> 38e9348282e
 extern void heap_deformtuple(HeapTuple tuple, TupleDesc tupleDesc,
 				 Datum *values, char *nulls) __attribute__ ((deprecated));
 extern void heap_freetuple(HeapTuple htup);
