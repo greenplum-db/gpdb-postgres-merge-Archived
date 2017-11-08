@@ -40,8 +40,3 @@ EXPSUFF=.exp
 
 %$(DLSUFFIX): %.o %.exp
 	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_SL) -o $@ $*.o -Wl,-bE:$*.exp $(SHLIB_LINK)
-<<<<<<< HEAD
-
-sqlmansect = 7
-=======
->>>>>>> 38e9348282e

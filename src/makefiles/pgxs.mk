@@ -263,11 +263,7 @@ endif
 
 # against installed postmaster
 installcheck: submake
-<<<<<<< HEAD
 	$(top_builddir)/src/test/regress/pg_regress --psqldir="$(PSQLDIR)" $(REGRESS_OPTS) $(REGRESS)
-=======
-	$(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS)
->>>>>>> 38e9348282e
 
 # in-tree test doesn't work yet (no way to install my shared library)
 #check: all submake
