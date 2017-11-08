@@ -580,7 +580,6 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 		{
 			/*
 			 * Generate plans for queries.
-<<<<<<< HEAD
 			 *
 			 * The planner may try to call SPI-using functions, which
 			 * causes a problem if we're already inside one.  Rather than
@@ -592,13 +591,9 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 			pushed = SPI_push_conditional();
 
 			slist = pg_plan_queries(slist, plansource->cursor_options,
-									boundParams, false);
+									boundParams);
 
 			SPI_pop_conditional(pushed);
-=======
-			 */
-			slist = pg_plan_queries(slist, plansource->cursor_options, NULL);
->>>>>>> 38e9348282e
 		}
 
 		/*

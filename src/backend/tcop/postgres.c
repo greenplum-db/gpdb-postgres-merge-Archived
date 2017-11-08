@@ -1721,11 +1721,7 @@ exec_simple_query(const char *query_string, const char *seqServerHost, int seqSe
 		querytree_list = pg_analyze_and_rewrite(parsetree, query_string,
 												NULL, 0);
 
-<<<<<<< HEAD
-		plantree_list = pg_plan_queries(querytree_list, 0, NULL, false);
-=======
 		plantree_list = pg_plan_queries(querytree_list, 0, NULL);
->>>>>>> 38e9348282e
 
 		/* Done with the snapshot used for parsing/planning */
 		if (snapshot_set)
@@ -2084,11 +2080,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		}
 		else
 		{
-<<<<<<< HEAD
-			stmt_list = pg_plan_queries(querytree_list, 0, NULL, false);
-=======
 			stmt_list = pg_plan_queries(querytree_list, 0, NULL);
->>>>>>> 38e9348282e
 			fully_planned = true;
 		}
 
@@ -2573,11 +2565,7 @@ exec_bind_message(StringInfo input_message)
 		 */
 		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 		query_list = copyObject(cplan->stmt_list);
-<<<<<<< HEAD
-		plan_list = pg_plan_queries(query_list, 0, params, false);
-=======
 		plan_list = pg_plan_queries(query_list, 0, params);
->>>>>>> 38e9348282e
 		MemoryContextSwitchTo(oldContext);
 
 		/* We no longer need the cached plan refcount ... */

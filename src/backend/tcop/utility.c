@@ -159,13 +159,8 @@ check_xact_readonly(Node *parsetree)
 
 	/*
 	 * Note: Commands that need to do more complicated checking are handled
-<<<<<<< HEAD
 	 * elsewhere, in particular COPY and plannable statements do their own
 	 * checking.
-=======
-	 * elsewhere, in particular COPY and plannable statements do their
-	 * own checking.
->>>>>>> 38e9348282e
 	 */
 
 	switch (nodeTag(parsetree))
@@ -1216,17 +1211,13 @@ ProcessUtility(Node *parsetree,
 			{
 				NotifyStmt *stmt = (NotifyStmt *) parsetree;
 
-<<<<<<< HEAD
 				if (Gp_role == GP_ROLE_EXECUTE)
 					ereport(ERROR, (
 								errcode(ERRCODE_GP_COMMAND_ERROR),
 						 errmsg("Notify command cannot run in a function running on a segDB.")
 								));
 
-				Async_Notify(stmt->relation->relname);
-=======
 				Async_Notify(stmt->conditionname);
->>>>>>> 38e9348282e
 			}
 			break;
 
@@ -1234,16 +1225,12 @@ ProcessUtility(Node *parsetree,
 			{
 				ListenStmt *stmt = (ListenStmt *) parsetree;
 
-<<<<<<< HEAD
 				if (Gp_role == GP_ROLE_EXECUTE)
 					ereport(ERROR,(errcode(ERRCODE_GP_COMMAND_ERROR),
 							errmsg("Listen command cannot run in a function running on a segDB.")));
 
 				CheckRestrictedOperation("LISTEN");
-				Async_Listen(stmt->relation->relname);
-=======
 				Async_Listen(stmt->conditionname);
->>>>>>> 38e9348282e
 			}
 			break;
 
@@ -1251,19 +1238,15 @@ ProcessUtility(Node *parsetree,
 			{
 				UnlistenStmt *stmt = (UnlistenStmt *) parsetree;
 
-<<<<<<< HEAD
 				if (Gp_role == GP_ROLE_EXECUTE)
 					ereport(ERROR, (errcode(ERRCODE_GP_COMMAND_ERROR),
 							errmsg("Unlisten command cannot run in a function running on a segDB.")));
 
 				CheckRestrictedOperation("UNLISTEN");
-				Async_Unlisten(stmt->relation->relname);
-=======
 				if (stmt->conditionname)
 					Async_Unlisten(stmt->conditionname);
 				else
 					Async_UnlistenAll();
->>>>>>> 38e9348282e
 			}
 			break;
 
@@ -2723,251 +2706,6 @@ GetCommandLogLevel(Node *parsetree)
 				lev = LOGSTMT_ALL;
 			break;
 
-<<<<<<< HEAD
-		case T_RenameStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_AlterObjectSchemaStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_AlterOwnerStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_AlterTableStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_AlterDomainStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_AlterFunctionStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_GrantStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_GrantRoleStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_DefineStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_CompositeTypeStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_CreateEnumStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_ViewStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_CreateFunctionStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_IndexStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_CreateExtensionStmt:
-		case T_AlterExtensionStmt:
-		case T_AlterExtensionContentsStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_RuleStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_CreateSeqStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_AlterSeqStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_RemoveFuncStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_DoStmt:
-			lev = LOGSTMT_ALL;
-			break;
-
-		case T_CreatedbStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_AlterDatabaseStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_AlterDatabaseSetStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_DropdbStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_NotifyStmt:
-			lev = LOGSTMT_ALL;
-			break;
-
-		case T_ListenStmt:
-			lev = LOGSTMT_ALL;
-			break;
-
-		case T_UnlistenStmt:
-			lev = LOGSTMT_ALL;
-			break;
-
-		case T_LoadStmt:
-			lev = LOGSTMT_ALL;
-			break;
-
-		case T_ClusterStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_VacuumStmt:
-			lev = LOGSTMT_ALL;
-			break;
-
-		case T_ExplainStmt:
-			{
-				ExplainStmt *stmt = (ExplainStmt *) parsetree;
-
-				/* Look through an EXPLAIN ANALYZE to the contained stmt */
-				if (stmt->analyze)
-					return GetCommandLogLevel(stmt->query);
-				/* Plain EXPLAIN isn't so interesting */
-				lev = LOGSTMT_ALL;
-			}
-			break;
-
-		case T_VariableSetStmt:
-			lev = LOGSTMT_ALL;
-			break;
-
-		case T_VariableShowStmt:
-			lev = LOGSTMT_ALL;
-			break;
-
-		case T_DiscardStmt:
-			lev = LOGSTMT_ALL;
-			break;
-
-		case T_CreateTrigStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_DropPropertyStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_CreatePLangStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_DropPLangStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_CreateRoleStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_AlterRoleStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_AlterRoleSetStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_DropRoleStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_DropOwnedStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_ReassignOwnedStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_LockStmt:
-			lev = LOGSTMT_ALL;
-			break;
-
-		case T_ConstraintsSetStmt:
-			lev = LOGSTMT_ALL;
-			break;
-
-		case T_CheckPointStmt:
-			lev = LOGSTMT_ALL;
-			break;
-
-		case T_ReindexStmt:
-			lev = LOGSTMT_ALL;	/* should this be DDL? */
-			break;
-
-		case T_CreateConversionStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_CreateCastStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_DropCastStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_CreateOpClassStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_CreateOpFamilyStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_AlterOpFamilyStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_RemoveOpClassStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_RemoveOpFamilyStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_AlterTSDictionaryStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_AlterTSConfigurationStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-=======
->>>>>>> 38e9348282e
 		case T_PrepareStmt:
 			{
 				PrepareStmt *stmt = (PrepareStmt *) parsetree;
@@ -3051,6 +2789,12 @@ GetCommandLogLevel(Node *parsetree)
 			lev = LOGSTMT_DDL;
 			break;
 
+		case T_CreateExtensionStmt:
+		case T_AlterExtensionStmt:
+		case T_AlterExtensionContentsStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
 		case T_RuleStmt:
 			lev = LOGSTMT_DDL;
 			break;
@@ -3065,6 +2809,10 @@ GetCommandLogLevel(Node *parsetree)
 
 		case T_RemoveFuncStmt:
 			lev = LOGSTMT_DDL;
+			break;
+
+		case T_DoStmt:
+			lev = LOGSTMT_ALL;
 			break;
 
 		case T_CreatedbStmt:
