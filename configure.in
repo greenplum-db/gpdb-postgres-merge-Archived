@@ -34,13 +34,8 @@ AC_CONFIG_AUX_DIR(config)
 AC_PREFIX_DEFAULT(/usr/local/gpdb)
 AC_SUBST(configure_args, [$ac_configure_args])
 
-<<<<<<< HEAD
 AC_DEFINE_UNQUOTED(PG_VERSION, "$PG_PACKAGE_VERSION", [Postgres version Greenplum Database is based on])
 [PG_MAJORVERSION=`expr "$PG_PACKAGE_VERSION" : '\([0-9][0-9]*\.[0-9][0-9]*\)'`]
-=======
-AC_DEFINE_UNQUOTED(PG_VERSION, "$PACKAGE_VERSION", [PostgreSQL version as a string])
-[PG_MAJORVERSION=`expr "$PACKAGE_VERSION" : '\([0-9][0-9]*\.[0-9][0-9]*\)'`]
->>>>>>> 38e9348282e
 AC_SUBST(PG_MAJORVERSION)
 AC_DEFINE_UNQUOTED(PG_MAJORVERSION, "$PG_MAJORVERSION", [PostgreSQL major version as a string])
 
@@ -145,11 +140,7 @@ PGAC_ARG_REQ(with, libs,      [DIRS], [alternative spelling of --with-libraries]
 # 64-bit integer date/time storage: enabled by default.
 #
 AC_MSG_CHECKING([whether to build with 64-bit integer date/time support])
-<<<<<<< HEAD
-PGAC_ARG_BOOL(enable, integer-datetimes, yes, [  --disable-integer-datetimes disable 64-bit integer date/time support],
-=======
 PGAC_ARG_BOOL(enable, integer-datetimes, yes, [disable 64-bit integer date/time support],
->>>>>>> 38e9348282e
               [AC_DEFINE([USE_INTEGER_DATETIMES], 1,
                          [Define to 1 if you want 64-bit integer timestamp and interval support. (--enable-integer-datetimes)])])
 AC_MSG_RESULT([$enable_integer_datetimes])
@@ -158,7 +149,6 @@ AC_MSG_RESULT([$enable_integer_datetimes])
 #
 # NLS
 #
-<<<<<<< HEAD
 # NLS is not supported in Greenplum. There's no fundamental reason for it,
 # but no-one's kept the translations up-to-date. The .po files have been
 # removed from the repository, so it won't work if you just uncomment the
@@ -169,7 +159,7 @@ AC_MSG_RESULT([$enable_integer_datetimes])
 # to the users to let them build with very incomplete translations.
 #AC_MSG_CHECKING([whether NLS is wanted])
 #PGAC_ARG_OPTARG(enable, nls,
-#                [[  --enable-nls[=LANGUAGES]  enable Native Language Support]],
+#                [LANGUAGES], [enable Native Language Support],
 #                [],
 #                [WANTED_LANGUAGES=$enableval],
 #                [AC_DEFINE(ENABLE_NLS, 1,
@@ -177,18 +167,6 @@ AC_MSG_RESULT([$enable_integer_datetimes])
 #AC_MSG_RESULT([$enable_nls])
 #AC_SUBST(enable_nls)
 #AC_SUBST(WANTED_LANGUAGES)
-=======
-AC_MSG_CHECKING([whether NLS is wanted])
-PGAC_ARG_OPTARG(enable, nls,
-                [LANGUAGES], [enable Native Language Support],
-                [],
-                [WANTED_LANGUAGES=$enableval],
-                [AC_DEFINE(ENABLE_NLS, 1,
-                           [Define to 1 if you want National Language Support. (--enable-nls)])])
-AC_MSG_RESULT([$enable_nls])
-AC_SUBST(enable_nls)
-AC_SUBST(WANTED_LANGUAGES)
->>>>>>> 38e9348282e
 
 #
 # Default port number (--with-pgport), default 5432
@@ -232,27 +210,27 @@ PGAC_ARG_BOOL(enable, spinlocks, yes,
 # Atomic operations
 #
 PGAC_ARG_BOOL(enable, atomics, yes,
-              [  --disable-atomics       do not use atomic operations])
+              [do not use atomic operations])
 
 #
 # gpfdist
 #
 PGAC_ARG_BOOL(enable, gpfdist, yes,
-             [  --disable-gpfdist       do not use gpfdist])
+             [do not use gpfdist])
 AC_SUBST(enable_gpfdist)
 
 #
 # pxf
 #
 PGAC_ARG_BOOL(enable, pxf, yes,
-             [  --disable-pxf           do not build pxf])
+             [do not build pxf])
 AC_SUBST(enable_pxf)
 
 #
 # --enable-gpperfmon
 #
 PGAC_ARG_BOOL(enable, gpperfmon, no,
-              [  --enable-gpperfmon      build with gpperfmon])
+              [build with gpperfmon])
 AC_SUBST(enable_gpperfmon)
 
 #
@@ -273,11 +251,7 @@ AC_SUBST(enable_profiling)
 # --enable-coverage enables generation of code coverage metrics with gcov
 #
 PGAC_ARG_BOOL(enable, coverage, no,
-<<<<<<< HEAD
-              [  --enable-coverage       build with coverage testing instrumentation],
-=======
               [build with coverage testing instrumentation],
->>>>>>> 38e9348282e
 [AC_CHECK_PROGS(GCOV, gcov)
 if test -z "$GCOV"; then
   AC_MSG_ERROR([gcov not found])
@@ -296,13 +270,8 @@ AC_SUBST(enable_coverage)
 # DTrace
 #
 PGAC_ARG_BOOL(enable, dtrace, no,
-<<<<<<< HEAD
-              [  --enable-dtrace         build with DTrace support],
-[AC_DEFINE([ENABLE_DTRACE], 1,
-=======
               [build with DTrace support],
 [AC_DEFINE([ENABLE_DTRACE], 1, 
->>>>>>> 38e9348282e
            [Define to 1 to enable DTrace support. (--enable-dtrace)])
 AC_CHECK_PROGS(DTRACE, dtrace)
 if test -z "$DTRACE"; then
@@ -315,7 +284,7 @@ AC_SUBST(enable_dtrace)
 # TAP tests
 #
 PGAC_ARG_BOOL(enable, tap-tests, no,
-              [  --enable-tap-tests      enable TAP tests (requires Perl and IPC::Run)])
+              [enable TAP tests (requires Perl and IPC::Run)])
 AC_SUBST(enable_tap_tests)
 
 #
@@ -493,13 +462,8 @@ unset CFLAGS
 # If the user specifies something in the environment, that is used.
 # else:  If the template file set something, that is used.
 # else:  If coverage was enabled, don't set anything.
-<<<<<<< HEAD
 # else:  If the compiler is GCC, then we use -O3.
 # else:  If the compiler is something else, then we use -O, unless debugging.
-=======
-# else:  If the compiler is GCC, then we use -O2.
-# else:  If the compiler is something else, then we use -O.
->>>>>>> 38e9348282e
 
 if test "$ac_env_CFLAGS_set" = set; then
   CFLAGS=$ac_env_CFLAGS_value
@@ -831,26 +795,26 @@ PGAC_ARG_BOOL(enable, cassert, no, [enable assertion checks (for debugging)],
 #
 # Enable debug_break
 #
-PGAC_ARG_BOOL(enable, debugbreak, no, [  --enable-debugbreak     enable debug_break and debug_break_n (for debugging)],
+PGAC_ARG_BOOL(enable, debugbreak, no, [enable debug_break and debug_break_n (for debugging)],
               [AC_DEFINE([USE_DEBUG_BREAK], 1,
                          [Define to 1 to build with debug_break capabilities. (--enable-debugbreak)])])
 
 # Enable debug ntuplestore
-PGAC_ARG_BOOL(enable, debugntuplestore, no, [  --enable-ntuplestore    enable debug_ntuplestore (for debugging)],
+PGAC_ARG_BOOL(enable, debugntuplestore, no, [enable debug_ntuplestore (for debugging)],
               [AC_DEFINE([USE_DEBUG_NTUPLESTORE], 1,
                          [Define to 1 to build with debug_ntuplestore. (--enable-ntuplestore)])])
 
 #
 # Enable testing utilities
 #
-PGAC_ARG_BOOL(enable, testutils, no, [  --enable-testutils      enable testing utilities],
+PGAC_ARG_BOOL(enable, testutils, no, [enable testing utilities],
               [AC_DEFINE([USE_TEST_UTILS], 1,
                          [Define to 1 to build with testing utilities. (--enable-testutils)])])
 
 #
 # Enable Greenplum ORCA optimizer
 #
-PGAC_ARG_BOOL(enable, orca, yes, [  --disable-orca          disable ORCA optimizer],
+PGAC_ARG_BOOL(enable, orca, yes, [disable ORCA optimizer],
               [AC_DEFINE([USE_ORCA], 1,
                          [Define to 1 to build with Greenplum ORCA optimizer. (--enable-orca)])])
 AC_MSG_RESULT([checking whether to build with ORCA... $enable_orca])
@@ -859,14 +823,14 @@ AC_SUBST(enable_orca)
 #
 # Enable code generation
 #
-PGAC_ARG_BOOL(enable, codegen, no, [  --enable-codegen        enable code generation],
+PGAC_ARG_BOOL(enable, codegen, no, [enable code generation],
               [AC_DEFINE([USE_CODEGEN], 1,
                          [Define to 1 to enable code generation. (--enable-codegen)])])
 AC_MSG_RESULT([checking whether to build with codegen... $enable_codegen])
 AC_SUBST(enable_codegen)
 
 PGAC_ARG_REQ(with, codegen-prefix,
-             [  --with-codegen-prefix="PATH;PATH"  semicolon separated prefix search path for LLVM and Clang],
+             [["PATH;PATH"]], [semicolon separated prefix search path for LLVM and Clang],
              [AS_IF([test "${enable_codegen}" = no],
 					[AC_MSG_WARN([--with-codegen-prefix used without --enable-codegen])])])
 
@@ -887,7 +851,7 @@ AS_IF([test "$enable_codegen" = yes],
 #
 # --enable-snmp enables snmp mib and trap/inform
 #
-PGAC_ARG_BOOL(enable, snmp, no, [  --enable-snmp           enable snmp for MIB and alerts via TRAP/INFORM],
+PGAC_ARG_BOOL(enable, snmp, no, [enable snmp for MIB and alerts via TRAP/INFORM],
               [AC_DEFINE([USE_SNMP], 1,
                          [Define to 1 to build with snmp capabilities. (--enable-snmp)])])
 AC_MSG_RESULT([checking whether to build with snmp... $enable_snmp])
@@ -896,7 +860,7 @@ AC_SUBST(enable_snmp)
 #
 # --enable-ddboost enables DD Boost support
 #
-PGAC_ARG_BOOL(enable, ddboost, no,  [  --enable-ddboost        enable DD Boost support],
+PGAC_ARG_BOOL(enable, ddboost, no, [enable DD Boost support],
               [AC_DEFINE([USE_DDBOOST], 1,
                          [Define to 1 to build with DD Boost capabilities. (--enable-ddboost)])])
 AC_MSG_RESULT([checking whether to build with DD Boost support... $enable_ddboost])
@@ -905,7 +869,7 @@ AC_SUBST(enable_ddboost)
 #
 # --enable-netbackup enables NetBackup support
 #
-PGAC_ARG_BOOL(enable, netbackup, no,  [  --enable-netbackup      enable NetBackup support],
+PGAC_ARG_BOOL(enable, netbackup, no, [enable NetBackup support],
               [AC_DEFINE([USE_NETBACKUP], 1,
                          [Define to 1 to build with NetBackup capabilities. (--enable-netbackup)])])
 AC_MSG_RESULT([checking whether to build with NetBackup support... $enable_netbackup])
@@ -914,7 +878,7 @@ AC_SUBST(enable_netbackup)
 #
 # --enable-mapreduce enables GPMapreduce support
 #
-PGAC_ARG_BOOL(enable, mapreduce, no, [  --enable-mapreduce      enable Greenplum Mapreduce support],
+PGAC_ARG_BOOL(enable, mapreduce, no, [enable Greenplum Mapreduce support],
               [AC_DEFINE([USE_MAPREDUCE], 1,
 			             [Define to 1 to build with Mapreduce capabilities (--enable-mapreduce)])])
 AC_MSG_RESULT([checking whether to build with Greenplum Mapreduce... $enable_mapreduce])
@@ -923,7 +887,7 @@ AC_SUBST(enable_mapreduce)
 #
 # gpcloud, enabled by default
 #
-PGAC_ARG_BOOL(enable, gpcloud, yes, [  --disable-gpcloud       disable gpcloud support],
+PGAC_ARG_BOOL(enable, gpcloud, yes, [disable gpcloud support],
               [AC_DEFINE([USE_GPCLOUD], 1,
 			             [Define to 1 to build with gpcloud (--enable-gpcloud)])])
 AC_MSG_RESULT([checking whether to build with gpcloud... $enable_gpcloud])
@@ -937,7 +901,7 @@ AS_IF([test "$enable_gpcloud" = yes],
 #
 # Enable segment WAL replication
 #
-PGAC_ARG_BOOL(enable, segwalrep, no, [  --enable-segwalrep      enable segment WAL replication ],
+PGAC_ARG_BOOL(enable, segwalrep, no, [enable segment WAL replication],
               [AC_DEFINE([USE_SEGWALREP], 1,
                          [Define to 1 to enable segment WAL replication. (--enable-segwalrep)])])
 AC_MSG_RESULT([checking whether to build with segment WAL replication... $enable_segwalrep])
@@ -979,18 +943,9 @@ IFS=$ac_save_IFS
 # Enable thread-safe client libraries
 #
 AC_MSG_CHECKING([allow thread-safe client libraries])
-<<<<<<< HEAD
 # GPDB wants the default here to be "yes", unlike PostgreSQL.
 # it's also required for Win32 client builds.
-PGAC_ARG_BOOL(enable, thread-safety, yes, [  --disable-thread-safety  Do not make client libraries thread-safe])
-=======
-if test "$PORTNAME" != "win32"; then
-PGAC_ARG_BOOL(enable, thread-safety, no, [make client libraries thread-safe])
-else
-# Win32 should always use threads
-PGAC_ARG_BOOL(enable, thread-safety, yes, [make client libraries thread-safe])
-fi
->>>>>>> 38e9348282e
+PGAC_ARG_BOOL(enable, thread-safety, yes, [do not make client libraries thread-safe])
 
 PGAC_ARG_BOOL(enable, thread-safety-force, no, [force thread-safety despite thread test failure])
 if test "$enable_thread_safety" = yes -o \
@@ -1132,15 +1087,10 @@ fi
 #
 # Prefer libedit
 #
-<<<<<<< HEAD
 # In GPDB we want the default to be yes, because we don't want to link with GPL code.
 #
 PGAC_ARG_BOOL(with, libedit-preferred, yes,
-              [  --without-libedit-preferred  Don't prefer BSD Libedit over GNU Readline])
-=======
-PGAC_ARG_BOOL(with, libedit-preferred, no,
-              [prefer BSD Libedit over GNU Readline])
->>>>>>> 38e9348282e
+              [do not prefer BSD Libedit over GNU Readline])
 
 
 #
@@ -1201,21 +1151,21 @@ AC_SUBST(with_zlib)
 # bzip2
 #
 PGAC_ARG_BOOL(with, libbz2, yes,
-              [  --without-libbz2        do not use bzip2])
+              [do not use bzip2])
 AC_SUBST(with_libbz2)
 
 #
 # Realtime library
 #
 PGAC_ARG_BOOL(with, rt, yes,
-              [  --without-rt            do not use Realtime Library])
+              [do not use Realtime Library])
 AC_SUBST(with_rt)
 
 #
 # libcurl. Used for external table support and the PXF extension
 #
 PGAC_ARG_BOOL(with, libcurl, yes,
-              [  --without-libcurl       do not use libcurl])
+              [do not use libcurl])
 AC_SUBST(with_libcurl)
 
 if test "$with_libcurl" = "no" && test "$enable_pxf" = "yes"; then
@@ -1226,14 +1176,14 @@ fi
 # libapr. Used for gpfdist and gpperfmon
 #
 PGAC_ARG_REQ(with, apr-config,
-             [  --with-apr-config=PATH  path to apr-1-config utility])
+             [PATH], [path to apr-1-config utility])
 AC_SUBST(with_apr_config)
 
 #
 # libapu. Used for gpperfmon.
 #
 PGAC_ARG_REQ(with, apu-config,
-             [  --with-apu-config=PATH  path to apu-1-config utility])
+             [PATH], [path to apu-1-config utility])
 AC_SUBST(with_apu_config)
 
 #
@@ -1546,7 +1496,6 @@ if test "$enable_orca" = yes; then
 fi
 
 dnl sys/socket.h is required by AC_FUNC_ACCEPT_ARGTYPES
-<<<<<<< HEAD
 AC_CHECK_HEADERS([atomic.h crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h pwd.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h kernel/OS.h kernel/image.h SupportDefs.h])
 
 # On BSD, cpp test for net/if.h will fail unless sys/socket.h
@@ -1557,9 +1506,6 @@ AC_CHECK_HEADERS(net/if.h, [], [],
 #include <sys/socket.h>
 #endif
 ])
-=======
-AC_CHECK_HEADERS([crypt.h dld.h fp_class.h getopt.h ieeefp.h langinfo.h poll.h pwd.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/socket.h sys/shm.h sys/tas.h sys/time.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h kernel/OS.h kernel/image.h SupportDefs.h])
->>>>>>> 38e9348282e
 
 # At least on IRIX, cpp test for netinet/tcp.h will fail unless
 # netinet/in.h is included first.
@@ -1796,16 +1742,12 @@ PGAC_VAR_INT_TIMEZONE
 AC_FUNC_ACCEPT_ARGTYPES
 PGAC_FUNC_GETTIMEOFDAY_1ARG
 
-<<<<<<< HEAD
 # Some versions of libedit contain strlcpy(), setproctitle(), and other
 # symbols that that library has no business exposing to the world.  Pending
 # acquisition of a clue by those developers, ignore libedit (including its
 # possible alias of libreadline) while checking for everything else.
 LIBS_including_readline="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
-=======
-AC_CHECK_FUNCS([cbrt dlopen fcvt fdatasync getpeereid getpeerucred getrlimit memmove poll pstat readlink setproctitle setsid sigprocmask symlink sysconf towlower utime utimes waitpid wcstombs])
->>>>>>> 38e9348282e
 
 AC_CHECK_FUNCS([cbrt dlopen fcvt fdatasync getifaddrs getpeereid getpeerucred getrlimit memmove poll pstat readlink setproctitle setsid sigprocmask symlink sysconf towlower utime utimes waitpid wcstombs])
 
@@ -2253,52 +2195,17 @@ AC_CHECK_SIZEOF([unsigned long])
 AC_CHECK_SIZEOF([void *])
 AC_CHECK_SIZEOF([size_t])
 
-<<<<<<< HEAD
 # In GPDB, float4 and float8 are always passed by value. There is
 # GPDB-specific code that assumes that in various places, so it's not
 # configurable.
 float4passbyval=true
 AC_DEFINE([USE_FLOAT4_BYVAL], 1, [Define to 1 if you want float4 values to be passed by value. (Always defined in GPDB)])
 AC_DEFINE_UNQUOTED([FLOAT4PASSBYVAL], [$float4passbyval], [float4 values are passed by value if 'true', by reference if 'false' (always true in GPDB)])
-=======
-# Decide whether float4 is passed by value: user-selectable, enabled by default
-AC_MSG_CHECKING([whether to build with float4 passed by value])   
-PGAC_ARG_BOOL(enable, float4-byval, yes, [disable float4 passed by value],
-              [AC_DEFINE([USE_FLOAT4_BYVAL], 1,
-                         [Define to 1 if you want float4 values to be passed by value. (--enable-float4-byval)])
-               float4passbyval=true],
-              [float4passbyval=false])
-AC_MSG_RESULT([$enable_float4_byval])
-AC_DEFINE_UNQUOTED([FLOAT4PASSBYVAL], [$float4passbyval], [float4 values are passed by value if 'true', by reference if 'false'])
->>>>>>> 38e9348282e
 
 # Note: this setting also controls int8 and related types such as timestamp.
-<<<<<<< HEAD
 float8passbyval=true
 AC_DEFINE([USE_FLOAT8_BYVAL], 1, [Define to 1 if you want float8, int8, etc values to be passed by value. (Always defined in GPDB)])
 AC_DEFINE_UNQUOTED([FLOAT8PASSBYVAL], [$float8passbyval], [float8, int8, and related values are passed by value if 'true', by reference if 'false' (always true in GPDB)])
-=======
-# If sizeof(Datum) >= 8, this is user-selectable, enabled by default.
-# If not, trying to select it is an error.
-AC_MSG_CHECKING([whether to build with float8 passed by value])
-if test $ac_cv_sizeof_unsigned_long -ge 8 ; then
-  PGAC_ARG_BOOL(enable, float8-byval, yes, [disable float8 passed by value])
-else
-  PGAC_ARG_BOOL(enable, float8-byval, no, [disable float8 passed by value])
-  if test "$enable_float8_byval" = yes ; then
-    AC_MSG_ERROR([--enable-float8-byval is not supported on 32-bit platforms.])
-  fi
-fi
-if test "$enable_float8_byval" = yes ; then
-  AC_DEFINE([USE_FLOAT8_BYVAL], 1,
-            [Define to 1 if you want float8, int8, etc values to be passed by value. (--enable-float8-byval)])
-  float8passbyval=true
-else
-  float8passbyval=false
-fi
-AC_MSG_RESULT([$enable_float8_byval])
-AC_DEFINE_UNQUOTED([FLOAT8PASSBYVAL], [$float8passbyval], [float8, int8, and related values are passed by value if 'true', by reference if 'false'])
->>>>>>> 38e9348282e
 
 # Determine memory alignment requirements for the basic C data types.
 
