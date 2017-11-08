@@ -49,12 +49,9 @@ CATALOG(pg_am,2601)
 	bool		amsearchnulls;	/* can AM search for NULL index entries? */
 	bool		amstorage;		/* can storage type differ from column type? */
 	bool		amclusterable;	/* does AM support cluster command? */
-<<<<<<< HEAD
 	bool		amcanshrink;	/* does AM do anything other than REINDEX in
 								 * VACUUM? */
-=======
 	Oid			amkeytype;		/* type of data in index, or InvalidOid */
->>>>>>> 38e9348282e
 	regproc		aminsert;		/* "insert this tuple" function */
 	regproc		ambeginscan;	/* "start new scan" function */
 	regproc		amgettuple;		/* "next valid tuple" function */
@@ -96,35 +93,11 @@ typedef FormData_pg_am *Form_pg_am;
  *		compiler constants for pg_am
  * ----------------
  */
-#define Natts_pg_am						26
+#define Natts_pg_am						27
 #define Anum_pg_am_amname				1
 #define Anum_pg_am_amstrategies			2
 #define Anum_pg_am_amsupport			3
 #define Anum_pg_am_amcanorder			4
-<<<<<<< HEAD
-#define Anum_pg_am_amcanunique			5
-#define Anum_pg_am_amcanmulticol		6
-#define Anum_pg_am_amoptionalkey		7
-#define Anum_pg_am_amindexnulls			8
-#define Anum_pg_am_amsearchnulls		9
-#define Anum_pg_am_amstorage			10
-#define Anum_pg_am_amclusterable		11
-#define Anum_pg_am_amcanshrink			12
-GPDB_COLUMN_DEFAULT(pg_am_amcanshrink, t);
-#define Anum_pg_am_aminsert				13
-#define Anum_pg_am_ambeginscan			14
-#define Anum_pg_am_amgettuple			15
-#define Anum_pg_am_amgetmulti			16
-#define Anum_pg_am_amrescan				17
-#define Anum_pg_am_amendscan			18
-#define Anum_pg_am_ammarkpos			19
-#define Anum_pg_am_amrestrpos			20
-#define Anum_pg_am_ambuild				21
-#define Anum_pg_am_ambulkdelete			22
-#define Anum_pg_am_amvacuumcleanup		23
-#define Anum_pg_am_amcostestimate		24
-#define Anum_pg_am_amoptions			25
-=======
 #define Anum_pg_am_amcanbackward		5
 #define Anum_pg_am_amcanunique			6
 #define Anum_pg_am_amcanmulticol		7
@@ -133,21 +106,22 @@ GPDB_COLUMN_DEFAULT(pg_am_amcanshrink, t);
 #define Anum_pg_am_amsearchnulls		10
 #define Anum_pg_am_amstorage			11
 #define Anum_pg_am_amclusterable		12
-#define Anum_pg_am_amkeytype			13
-#define Anum_pg_am_aminsert				14
-#define Anum_pg_am_ambeginscan			15
-#define Anum_pg_am_amgettuple			16
-#define Anum_pg_am_amgetbitmap			17
-#define Anum_pg_am_amrescan				18
-#define Anum_pg_am_amendscan			19
-#define Anum_pg_am_ammarkpos			20
-#define Anum_pg_am_amrestrpos			21
-#define Anum_pg_am_ambuild				22
-#define Anum_pg_am_ambulkdelete			23
-#define Anum_pg_am_amvacuumcleanup		24
-#define Anum_pg_am_amcostestimate		25
-#define Anum_pg_am_amoptions			26
->>>>>>> 38e9348282e
+#define Anum_pg_am_amcanshrink			13
+GPDB_COLUMN_DEFAULT(pg_am_amcanshrink, t);
+#define Anum_pg_am_amkeytype			14
+#define Anum_pg_am_aminsert				15
+#define Anum_pg_am_ambeginscan			16
+#define Anum_pg_am_amgettuple			17
+#define Anum_pg_am_amgetbitmap			18
+#define Anum_pg_am_amrescan				19
+#define Anum_pg_am_amendscan			20
+#define Anum_pg_am_ammarkpos			21
+#define Anum_pg_am_amrestrpos			22
+#define Anum_pg_am_ambuild				23
+#define Anum_pg_am_ambulkdelete			24
+#define Anum_pg_am_amvacuumcleanup		25
+#define Anum_pg_am_amcostestimate		26
+#define Anum_pg_am_amoptions			27
 
 /* ----------------
  *		initial contents of pg_am
@@ -168,7 +142,7 @@ DESCR("GIN index access method");
 #define GIN_AM_OID 2742
 
 GPDB_EXTRA_COL(pg_am_amcanshrink = f);
-DATA(insert OID = 3013 (  bitmap	5 1 f f t t t f f f f bminsert bmbeginscan bmgettuple bmgetbitmap bmrescan bmendscan bmmarkpos bmrestrpos bmbuild bmbulkdelete bmvacuumcleanup bmcostestimate bmoptions ));
+DATA(insert OID = 3013 (  bitmap	5 1 f f t t t f f f f 0 bminsert bmbeginscan bmgettuple bmgetbitmap bmrescan bmendscan bmmarkpos bmrestrpos bmbuild bmbulkdelete bmvacuumcleanup bmcostestimate bmoptions ));
 DESCR("bitmap index access method");
 #define BITMAP_AM_OID 3013
 
@@ -182,7 +156,7 @@ DESCR("bitmap index access method");
  * "utils/fmgroids.h" before including pg_am.h.
  */
 #define Am_btree \
-	{"btree"}, 5, 1, true, true, true, true, true, true, false, true, true, F_BTINSERT, F_BTBEGINSCAN, F_BTGETTUPLE, F_BTGETBITMAP, F_BTRESCAN, F_BTENDSCAN, F_BTMARKPOS, F_BTRESTRPOS, F_BTBUILD, F_BTBULKDELETE, F_BTVACUUMCLEANUP, F_BTCOSTESTIMATE, F_BTOPTIONS
+	{"btree"}, 5, 1, true, true, true, true, true, true, true, false, true, true, 0, F_BTINSERT, F_BTBEGINSCAN, F_BTGETTUPLE, F_BTGETBITMAP, F_BTRESCAN, F_BTENDSCAN, F_BTMARKPOS, F_BTRESTRPOS, F_BTBUILD, F_BTBULKDELETE, F_BTVACUUMCLEANUP, F_BTCOSTESTIMATE, F_BTOPTIONS
 
 
 #endif   /* PG_AM_H */
