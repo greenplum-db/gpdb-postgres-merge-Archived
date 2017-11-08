@@ -1,9 +1,5 @@
 /*
-<<<<<<< HEAD
  * $PostgreSQL: pgsql/contrib/xml2/xpath.c,v 1.23 2009/06/11 14:48:53 momjian Exp $
-=======
- * $PostgreSQL: pgsql/contrib/xml2/xpath.c,v 1.21 2008/10/29 00:00:38 tgl Exp $ 
->>>>>>> 38e9348282e
  *
  * Parser interface for DOM-based parser (libxml) rather than
  * stream-based SAX-type parser

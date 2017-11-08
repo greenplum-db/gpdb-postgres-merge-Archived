@@ -117,12 +117,8 @@ test: sequence
 test: polymorphism
 test: rowtypes
 test: returning
-<<<<<<< HEAD
 # GPDB_83_MERGE_FIXME: the largeobject test is temporarily disabled due to test errors
 ignore: largeobject
-=======
-test: largeobject
->>>>>>> 38e9348282e
 test: with
 test: xml
 test: stats

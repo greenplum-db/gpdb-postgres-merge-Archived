@@ -134,14 +134,8 @@ static bool output_failed = false;
 static int	output_errno = 0;
 
 /* defaults */
-<<<<<<< HEAD
 static int	n_connections = 0;
 static int	n_buffers = 0;
-static int	n_fsm_pages = 0;
-=======
-static int	n_connections = 10;
-static int	n_buffers = 50;
->>>>>>> 38e9348282e
 
 /*
  * Warning messages for authentication methods
@@ -1237,15 +1231,8 @@ test_config_settings(void)
 			test_conns = n_connections;
 
 		test_buffs = MIN_BUFS_FOR_CONNS(test_conns);
-<<<<<<< HEAD
 		if (n_buffers > 0)
 			test_buffs = n_buffers;
-
-		test_max_fsm = FSM_FOR_BUFS(test_buffs);
-		if (n_fsm_pages > 0)
-			test_max_fsm = n_fsm_pages;
-=======
->>>>>>> 38e9348282e
 
 		snprintf(cmd, sizeof(cmd),
 				 SYSTEMQUOTE "\"%s\" --boot -x0 %s "
@@ -1253,13 +1240,8 @@ test_config_settings(void)
 				 "-c shared_buffers=%d "
 				 "< \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
 				 backend_exec, boot_options,
-<<<<<<< HEAD
-				 test_conns, test_buffs, test_max_fsm,
-				 DEVNULL, backend_output);
-=======
 				 test_conns, test_buffs,
-				 DEVNULL, DEVNULL);
->>>>>>> 38e9348282e
+				 DEVNULL, backend_output);
 		status = system(cmd);
 		if (status == 0)
 		{
@@ -1288,13 +1270,6 @@ test_config_settings(void)
 			n_buffers = ok_buffers;
 			break;
 		}
-<<<<<<< HEAD
-
-		test_max_fsm = FSM_FOR_BUFS(test_buffs);
-		if (n_fsm_pages > 0)
-			test_max_fsm = n_fsm_pages;
-=======
->>>>>>> 38e9348282e
 
 		snprintf(cmd, sizeof(cmd),
 				 SYSTEMQUOTE "\"%s\" --boot -x0 %s "
@@ -1302,13 +1277,8 @@ test_config_settings(void)
 				 "-c shared_buffers=%d "
 				 "< \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
 				 backend_exec, boot_options,
-<<<<<<< HEAD
-				 n_connections, test_buffs, test_max_fsm,
-				 DEVNULL, backend_output);
-=======
 				 n_connections, test_buffs,
-				 DEVNULL, DEVNULL);
->>>>>>> 38e9348282e
+				 DEVNULL, backend_output);
 		status = system(cmd);
 		if (status == 0)
 		{
@@ -1316,19 +1286,12 @@ test_config_settings(void)
 			break;
 		}
 	}
-<<<<<<< HEAD
 	if (i == bufslen)
 	{
 		fprintf(stderr, _("%s: error %d from: %s\n"),
 				progname, status, cmd);
 		exit_nicely();
 	}
-
-	if (n_fsm_pages <= 0)
-		n_fsm_pages = FSM_FOR_BUFS(n_buffers);
-=======
-	n_buffers = test_buffs;
->>>>>>> 38e9348282e
 
 	if ((n_buffers * (BLCKSZ / 1024)) % 1024 == 0)
 		printf("%dMB\n", (n_buffers * (BLCKSZ / 1024)) / 1024);
@@ -1362,21 +1325,12 @@ setup_config(void)
 		conflines = add_assignment(conflines, "shared_buffers", "%dkB",
 								   n_buffers * (BLCKSZ / 1024));
 
-<<<<<<< HEAD
-	conflines = add_assignment(conflines, "max_fsm_pages", "%d", n_fsm_pages);
-
 	/* Upd comment to document the default port configured by --with-pgport */
 	if (DEF_PGPORT != 5432)
 	{
 		snprintf(repltok, sizeof(repltok), "#port = %d", DEF_PGPORT);
 		conflines = replace_token(conflines, "#port = 5432", repltok);
 	}
-=======
-#if DEF_PGPORT != 5432
-	snprintf(repltok, sizeof(repltok), "#port = %d", DEF_PGPORT);
-	conflines = replace_token(conflines, "#port = 5432", repltok);
-#endif
->>>>>>> 38e9348282e
 
 	conflines = add_assignment(conflines, "lc_messages", "'%s'",
 							   escape_quotes(lc_messages));
@@ -2906,16 +2860,10 @@ usage(const char *progname)
 	printf(_("  --locale=LOCALE           set default locale for new databases\n"));
 	printf(_("  --lc-collate, --lc-ctype, --lc-messages=LOCALE\n"
 			 "  --lc-monetary, --lc-numeric, --lc-time=LOCALE\n"
-<<<<<<< HEAD
-			 "                            initialize database cluster with given locale\n"
-			 "                            in the respective category (default taken from\n"
-			 "                            environment)\n"));
-	printf(_("  --is_filerep_mirrored=yes|no whether or not this db directory will be mirrored by file replication\n"));
-=======
 			 "                            set default locale in the respective\n"
 			 "                            category for new databases (default\n"
 			 "                            taken from environment)\n"));
->>>>>>> 38e9348282e
+	printf(_("  --is_filerep_mirrored=yes|no whether or not this db directory will be mirrored by file replication\n"));
 	printf(_("  --no-locale               equivalent to --locale=C\n"));
 	printf(_("  -T, --text-search-config=CFG\n"
 		 "                            default text search configuration\n"));

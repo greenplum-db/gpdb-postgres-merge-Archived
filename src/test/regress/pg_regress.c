@@ -83,11 +83,8 @@ bool		debug = false;
 char	   *inputdir = ".";
 char	   *outputdir = ".";
 char	   *psqldir = PGBINDIR;
-<<<<<<< HEAD
 bool 		optimizer_enabled = false;
 bool 		resgroup_enabled = false;
-=======
->>>>>>> 38e9348282e
 static _stringlist *loadlanguage = NULL;
 static int	max_connections = 0;
 static char *encoding = NULL;
