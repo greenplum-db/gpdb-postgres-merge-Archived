@@ -299,10 +299,6 @@ X509_NAME_to_text(X509_NAME *name)
 											PG_UTF8,
 											GetDatabaseEncoding());
 	result = cstring_to_text(dp);
-<<<<<<< HEAD
-
-=======
->>>>>>> 38e9348282e
 	if (dp != sp)
 		pfree(dp);
 	BIO_free(membuf);

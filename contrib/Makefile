@@ -5,13 +5,7 @@ top_builddir = ..
 include $(top_builddir)/src/Makefile.global
 
 WANTED_DIRS = \
-<<<<<<< HEAD
-=======
-		adminpack	\
 		auto_explain	\
-		btree_gist	\
-		chkpass		\
->>>>>>> 38e9348282e
 		citext		\
 		dblink		\
 		dict_int	\
