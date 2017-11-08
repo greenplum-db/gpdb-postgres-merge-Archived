@@ -96,11 +96,7 @@ transformAggregateCall(ParseState *pstate, Aggref *agg, List *agg_order)
 					(errcode(ERRCODE_GROUPING_ERROR),
 					 errmsg("aggregate function calls cannot be nested"),
 					 parser_errposition(pstate,
-<<<<<<< HEAD
-							   locate_agg_of_level((Node *) agg->args, 0))));
-=======
 										locate_agg_of_level((Node *) agg->args, 0))));
->>>>>>> 38e9348282e
 	}
 
 	/* It can't contain window functions either */
@@ -330,21 +326,13 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 				(errcode(ERRCODE_GROUPING_ERROR),
 				 errmsg("aggregates not allowed in WHERE clause"),
 				 parser_errposition(pstate,
-<<<<<<< HEAD
-							 locate_agg_of_level(qry->jointree->quals, 0))));
-=======
 									locate_agg_of_level(qry->jointree->quals, 0))));
->>>>>>> 38e9348282e
 	if (checkExprHasAggs((Node *) qry->jointree->fromlist))
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
 				 errmsg("aggregates not allowed in JOIN conditions"),
 				 parser_errposition(pstate,
-<<<<<<< HEAD
-				 locate_agg_of_level((Node *) qry->jointree->fromlist, 0))));
-=======
 									locate_agg_of_level((Node *) qry->jointree->fromlist, 0))));
->>>>>>> 38e9348282e
 
 	/*
 	 * No aggregates allowed in GROUP BY clauses, either.

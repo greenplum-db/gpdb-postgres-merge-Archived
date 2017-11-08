@@ -35,17 +35,10 @@ main(void)
 	 
 
 #line 16 "test3.pgc"
-<<<<<<< HEAD
- char id [ 200 ] ;
- 
-#line 17 "test3.pgc"
- char res [ 200 ] ;
-=======
  char  id  [ 200 ]   ;
  
 #line 17 "test3.pgc"
  char  res  [ 200 ]   ;
->>>>>>> 38e9348282e
 /* exec sql end declare section */
 #line 18 "test3.pgc"
 

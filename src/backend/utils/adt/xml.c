@@ -1590,11 +1590,7 @@ map_sql_identifier_to_xml_name(char *ident, bool fully_escaped,
 static char *
 unicode_to_sqlchar(pg_wchar c)
 {
-<<<<<<< HEAD
-	unsigned char utf8string[5];	/* need room for trailing zero */
-=======
 	unsigned char utf8string[5]; /* need room for trailing zero */
->>>>>>> 38e9348282e
 	char	   *result;
 
 	memset(utf8string, 0, sizeof(utf8string));
@@ -1602,11 +1598,7 @@ unicode_to_sqlchar(pg_wchar c)
 
 	result = (char *) pg_do_encoding_conversion(utf8string,
 												pg_encoding_mblen(PG_UTF8,
-<<<<<<< HEAD
-														(char *) utf8string),
-=======
 														 (char *) utf8string),
->>>>>>> 38e9348282e
 												PG_UTF8,
 												GetDatabaseEncoding());
 	/* if pg_do_encoding_conversion didn't strdup, we must */

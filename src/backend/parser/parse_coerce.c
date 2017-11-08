@@ -1442,11 +1442,7 @@ coerce_to_specific_type(ParseState *pstate, Node *node,
 
 	if (inputTypeId != targetTypeId)
 	{
-<<<<<<< HEAD
-		Node	   *newnode;
-=======
 		Node	*newnode;
->>>>>>> 38e9348282e
 
 		newnode = coerce_to_target_type(pstate, node, inputTypeId,
 										targetTypeId, -1,

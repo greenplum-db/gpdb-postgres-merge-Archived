@@ -463,11 +463,7 @@ my_sock_read(BIO *h, char *buf, int size)
 
 	prepare_for_client_read();
 
-<<<<<<< HEAD
- 	if (buf != NULL)
-=======
 	if (buf != NULL)
->>>>>>> 38e9348282e
 	{
 		res = recv(h->num, buf, size, 0);
 		BIO_clear_retry_flags(h);

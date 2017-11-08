@@ -115,17 +115,10 @@ main (void)
  int * did = & i ;
  
 #line 16 "array.pgc"
-<<<<<<< HEAD
- int a [ 10 ] = { 9 , 8 , 7 , 6 , 5 , 4 , 3 , 2 , 1 , 0 } ;
- 
-#line 17 "array.pgc"
- char text [ 25 ] = "klmnopqrst" ;
-=======
  int  a  [ 10 ]  = { 9 , 8 , 7 , 6 , 5 , 4 , 3 , 2 , 1 , 0 } ;
  
 #line 17 "array.pgc"
  char  text  [ 25 ]  = "klmnopqrst" ;
->>>>>>> 38e9348282e
  
 #line 18 "array.pgc"
  char * t = ( char * ) malloc ( 11 ) ;

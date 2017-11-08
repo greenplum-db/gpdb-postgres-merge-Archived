@@ -252,11 +252,7 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 			TargetEntry *tle;
 
 			if (IsA(var, Var) &&
-<<<<<<< HEAD
-					var->varno == result_relation)
-=======
 				var->varno == result_relation)
->>>>>>> 38e9348282e
 				continue;		/* don't need it */
 
 			if (tlist_member((Node *) var, tlist))

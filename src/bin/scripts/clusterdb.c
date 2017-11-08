@@ -4,11 +4,7 @@
  *
  * Portions Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/bin/scripts/clusterdb.c,v 1.25 2009/02/26 16:02:38 petere Exp $
-=======
  * $PostgreSQL: pgsql/src/bin/scripts/clusterdb.c,v 1.22 2008/12/11 07:34:08 petere Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */

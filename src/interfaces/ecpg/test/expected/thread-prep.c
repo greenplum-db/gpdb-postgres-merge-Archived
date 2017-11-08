@@ -136,17 +136,10 @@ static void* fn(void* arg)
  int value ;
  
 #line 40 "prep.pgc"
-<<<<<<< HEAD
- char name [ 100 ] ;
- 
-#line 41 "prep.pgc"
- char query [ 256 ] = "INSERT INTO T VALUES ( ? )" ;
-=======
  char  name  [ 100 ]   ;
  
 #line 41 "prep.pgc"
  char  query  [ 256 ]  = "INSERT INTO T VALUES ( ? )" ;
->>>>>>> 38e9348282e
 /* exec sql end declare section */
 #line 42 "prep.pgc"
 

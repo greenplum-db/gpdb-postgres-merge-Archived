@@ -4,11 +4,7 @@
  *	  lexical token lookup for reserved words in postgres embedded SQL
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.40 2009/06/11 14:49:13 momjian Exp $
-=======
  *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.39 2008/10/21 08:38:16 petere Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */

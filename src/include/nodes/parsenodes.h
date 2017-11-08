@@ -994,11 +994,7 @@ typedef struct RowMarkClause
 
 /*
  * WithClause -
-<<<<<<< HEAD
- *	   representation of WITH clause
-=======
  *     representation of WITH clause
->>>>>>> 38e9348282e
  *
  * Note: WithClause does not propagate into the Query representation;
  * but CommonTableExpr does.
@@ -1013,11 +1009,7 @@ typedef struct WithClause
 
 /*
  * CommonTableExpr -
-<<<<<<< HEAD
- *	   representation of WITH list element
-=======
  *     representation of WITH list element
->>>>>>> 38e9348282e
  *
  * We don't currently support the SEARCH or CYCLE clause.
  */

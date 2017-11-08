@@ -10251,11 +10251,7 @@ ATExecSetRelOptions(Relation rel, List *defList, bool isReset)
 	repl_repl[Anum_pg_class_reloptions - 1] = true;
 
 	newtuple = heap_modify_tuple(tuple, RelationGetDescr(pgclass),
-<<<<<<< HEAD
-								 repl_val, repl_null, repl_repl);
-=======
 								repl_val, repl_null, repl_repl);
->>>>>>> 38e9348282e
 
 	simple_heap_update(pgclass, &newtuple->t_self, newtuple);
 

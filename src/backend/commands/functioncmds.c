@@ -183,11 +183,7 @@ examine_parameter_list(List *parameters, Oid languageOid,
 					   ArrayType **allParameterTypes,
 					   ArrayType **parameterModes,
 					   ArrayType **parameterNames,
-<<<<<<< HEAD
-					   List	**parameterDefaults,
-=======
 					   List **parameterDefaults,
->>>>>>> 38e9348282e
 					   Oid *requiredResultType)
 {
 	int			parameterCount = list_length(parameters);
@@ -1635,11 +1631,7 @@ AlterFunctionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 		}
 
 		newtuple = heap_modify_tuple(tup, RelationGetDescr(rel), repl_val,
-<<<<<<< HEAD
-									 repl_null, repl_repl);
-=======
 									repl_null, repl_repl);
->>>>>>> 38e9348282e
 
 		simple_heap_update(rel, &newtuple->t_self, newtuple);
 		CatalogUpdateIndexes(rel, newtuple);
@@ -1781,11 +1773,7 @@ AlterFunction(AlterFunctionStmt *stmt)
 		}
 
 		tup = heap_modify_tuple(tup, RelationGetDescr(rel),
-<<<<<<< HEAD
-								repl_val, repl_null, repl_repl);
-=======
 							   repl_val, repl_null, repl_repl);
->>>>>>> 38e9348282e
 	}
 	if (data_access_item)
 	{

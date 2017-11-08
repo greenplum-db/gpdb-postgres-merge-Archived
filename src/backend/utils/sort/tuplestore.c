@@ -223,11 +223,7 @@ struct Tuplestorestate
  * If state->backward is true, then the stored representation of
  * the tuple must be followed by another "unsigned int" that is a copy of the
  * length --- so the total tape space used is actually sizeof(unsigned int)
-<<<<<<< HEAD
- * more than the stored length value.  This allows read-backwards.  When
-=======
  * more than the stored length value.  This allows read-backwards.	When
->>>>>>> 38e9348282e
  * state->backward is not set, the write/read routines may omit the extra
  * length word.
  *
@@ -418,11 +414,7 @@ tuplestore_alloc_read_pointer(Tuplestorestate *state, int eflags)
 	/* Make room for another read pointer if needed */
 	if (state->readptrcount >= state->readptrsize)
 	{
-<<<<<<< HEAD
-		int			newcnt = state->readptrsize * 2;
-=======
 		int		newcnt = state->readptrsize * 2;
->>>>>>> 38e9348282e
 
 		state->readptrs = (TSReadPointer *)
 			repalloc(state->readptrs, newcnt * sizeof(TSReadPointer));
@@ -1180,11 +1172,7 @@ tuplestore_rescan(Tuplestorestate *state)
 }
 
 /*
-<<<<<<< HEAD
- * tuplestore_copy_read_pointer - copy a read pointer's state to another
-=======
  * tuplestore_copy_read_pointer	- copy a read pointer's state to another
->>>>>>> 38e9348282e
  */
 void
 tuplestore_copy_read_pointer(Tuplestorestate *state,
@@ -1203,13 +1191,8 @@ tuplestore_copy_read_pointer(Tuplestorestate *state,
 	if (dptr->eflags != sptr->eflags)
 	{
 		/* Possible change of overall eflags, so copy and then recompute */
-<<<<<<< HEAD
-		int			eflags;
-		int			i;
-=======
 		int		eflags;
 		int		i;
->>>>>>> 38e9348282e
 
 		*dptr = *sptr;
 		eflags = state->readptrs[0].eflags;

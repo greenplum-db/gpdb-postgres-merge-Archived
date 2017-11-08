@@ -154,11 +154,7 @@ void *test_thread(void *arg)
  int l_i ;
  
 #line 102 "thread.pgc"
-<<<<<<< HEAD
- char l_connection [ 128 ] ;
-=======
  char  l_connection  [ 128 ]   ;
->>>>>>> 38e9348282e
 /* exec sql end declare section */
 #line 103 "thread.pgc"
 

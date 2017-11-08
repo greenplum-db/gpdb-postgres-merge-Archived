@@ -34,11 +34,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL$
-=======
  *	  $PostgreSQL: pgsql/src/backend/utils/time/combocid.c,v 1.5 2008/09/01 18:52:45 heikki Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */

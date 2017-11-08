@@ -948,11 +948,7 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 
 		case AUTH_REQ_CRYPT:
 			printfPQExpBuffer(&conn->errorMessage,
-<<<<<<< HEAD
-					  libpq_gettext("Crypt authentication not supported\n"));
-=======
 				 libpq_gettext("Crypt authentication not supported\n"));
->>>>>>> 38e9348282e
 			return STATUS_ERROR;
 
 		case AUTH_REQ_MD5:

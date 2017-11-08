@@ -2817,11 +2817,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	/*
 	 * Arrange to write the initial status file right away
 	 */
-<<<<<<< HEAD
-    last_statrequest = GetCurrentTimestamp();
-=======
 	last_statrequest = GetCurrentTimestamp();
->>>>>>> 38e9348282e
 	last_statwrite = last_statrequest - 1;
 
 	/*
@@ -2845,11 +2841,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	 *
 	 * For performance reasons, we don't want to do a PostmasterIsAlive() test
 	 * after every message; instead, do it only when select()/poll() is
-<<<<<<< HEAD
-	 * interrupted by timeout.	In essence, we'll stay alive as long as
-=======
 	 * interrupted by timeout.  In essence, we'll stay alive as long as
->>>>>>> 38e9348282e
 	 * backends keep sending us stuff often, even if the postmaster is gone.
 	 */
 	for (;;)
@@ -3654,22 +3646,14 @@ backend_read_statsfile(void)
 
 	/*
 	 * We set the minimum acceptable timestamp to PGSTAT_STAT_INTERVAL msec
-<<<<<<< HEAD
-	 * before now.	This indirectly ensures that the collector needn't write
-=======
 	 * before now.  This indirectly ensures that the collector needn't write
->>>>>>> 38e9348282e
 	 * the file more often than PGSTAT_STAT_INTERVAL.  In an autovacuum
 	 * worker, however, we want a lower delay to avoid using stale data, so we
 	 * use PGSTAT_RETRY_DELAY (since the number of worker is low, this
 	 * shouldn't be a problem).
 	 *
 	 * Note that we don't recompute min_ts after sleeping; so we might end up
-<<<<<<< HEAD
-	 * accepting a file a bit older than PGSTAT_STAT_INTERVAL.	In practice
-=======
 	 * accepting a file a bit older than PGSTAT_STAT_INTERVAL.  In practice
->>>>>>> 38e9348282e
 	 * that shouldn't happen, though, as long as the sleep time is less than
 	 * PGSTAT_STAT_INTERVAL; and we don't want to lie to the collector about
 	 * what our cutoff time really is.
@@ -4059,11 +4043,7 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 	else
 		tabentry->vacuum_timestamp = msg->m_vacuumtime;
 	if (msg->m_scanned_all)
-<<<<<<< HEAD
-	tabentry->n_live_tuples = msg->m_tuples;
-=======
 		tabentry->n_live_tuples = msg->m_tuples;
->>>>>>> 38e9348282e
 	/* Resetting dead_tuples to 0 is an approximation ... */
 	tabentry->n_dead_tuples = 0;
 	if (msg->m_analyze)

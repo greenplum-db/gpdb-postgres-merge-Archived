@@ -1947,13 +1947,8 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 x->op == IS_XMLELEMENT
-<<<<<<< HEAD
-			? errmsg("unnamed XML attribute value must be a column reference")
-			: errmsg("unnamed XML element value must be a column reference"),
-=======
 					 ? errmsg("unnamed XML attribute value must be a column reference")
 					 : errmsg("unnamed XML element value must be a column reference"),
->>>>>>> 38e9348282e
 					 parser_errposition(pstate, r->location)));
 			argname = NULL;		/* keep compiler quiet */
 		}
@@ -1968,13 +1963,8 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 				if (strcmp(argname, strVal(lfirst(lc2))) == 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-<<<<<<< HEAD
-					errmsg("XML attribute name \"%s\" appears more than once",
-						   argname),
-=======
 							 errmsg("XML attribute name \"%s\" appears more than once",
 									argname),
->>>>>>> 38e9348282e
 							 parser_errposition(pstate, r->location)));
 			}
 		}

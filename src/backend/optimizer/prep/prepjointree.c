@@ -4,11 +4,7 @@
  *	  Planner preprocessing for subqueries and join tree manipulation.
  *
  * NOTE: the intended sequence for invoking these operations is
-<<<<<<< HEAD
- * 		pull_up_sublinks
-=======
  *		pull_up_sublinks
->>>>>>> 38e9348282e
  *		inline_set_returning_functions
  *		pull_up_subqueries
  *		do expression preprocessing (including flattening JOIN alias vars)
@@ -27,11 +23,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.66.2.2 2010/06/21 00:14:54 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.60 2008/11/11 19:05:21 tgl Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -1271,11 +1263,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 
 	/*
 	 * We don't have to do the equivalent bookkeeping for outer-join info,
-<<<<<<< HEAD
-	 * because that hasn't been set up yet. placeholder_list likewise.
-=======
 	 * because that hasn't been set up yet.  placeholder_list likewise.
->>>>>>> 38e9348282e
 	 */
 	Assert(root->join_info_list == NIL);
 	Assert(subroot->join_info_list == NIL);
@@ -2108,22 +2096,13 @@ reduce_outer_joins_pass2(Node *jtnode,
 		ListCell   *l;
 		ListCell   *s;
 		Relids		pass_nonnullable_rels;
-<<<<<<< HEAD
-		List       *pass_nonnullable_vars;
-		List       *pass_forced_null_vars;
-=======
 		List	   *pass_nonnullable_vars;
 		List	   *pass_forced_null_vars;
->>>>>>> 38e9348282e
 
 		/* Scan quals to see if we can add any constraints */
 		pass_nonnullable_rels = find_nonnullable_rels(f->quals);
 		pass_nonnullable_rels = bms_add_members(pass_nonnullable_rels,
-<<<<<<< HEAD
-										   nonnullable_rels);
-=======
 												nonnullable_rels);
->>>>>>> 38e9348282e
 		/* NB: we rely on list_concat to not damage its second argument */
 		pass_nonnullable_vars = find_nonnullable_vars(f->quals);
 		pass_nonnullable_vars = list_concat(pass_nonnullable_vars,
@@ -2271,19 +2250,11 @@ reduce_outer_joins_pass2(Node *jtnode,
 
 		if (left_state->contains_outer || right_state->contains_outer)
 		{
-<<<<<<< HEAD
-			Relids          local_nonnullable_rels;
-			List       *local_forced_null_vars;
-			Relids          pass_nonnullable_rels;
-			List       *pass_nonnullable_vars;
-			List       *pass_forced_null_vars;
-=======
 			Relids		local_nonnullable_rels;
 			List	   *local_forced_null_vars;
 			Relids		pass_nonnullable_rels;
 			List	   *pass_nonnullable_vars;
 			List	   *pass_forced_null_vars;
->>>>>>> 38e9348282e
 
 			/*
 			 * If this join is (now) inner, we can add any constraints its

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt.h,v 1.44 2009/06/11 14:49:13 momjian Exp $ */
-=======
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt.h,v 1.40 2008/11/26 16:31:02 meskes Exp $ */
->>>>>>> 38e9348282e
 
 #ifndef DT_H
 #define DT_H
@@ -29,17 +25,10 @@ typedef double fsec_t;
 #define USE_SQL_DATES					2
 #define USE_GERMAN_DATES				3
 
-<<<<<<< HEAD
-#define INTSTYLE_POSTGRES			  0
-#define INTSTYLE_POSTGRES_VERBOSE	  1
-#define INTSTYLE_SQL_STANDARD		  2
-#define INTSTYLE_ISO_8601			  3
-=======
 #define INTSTYLE_POSTGRES             0
 #define INTSTYLE_POSTGRES_VERBOSE     1
 #define INTSTYLE_SQL_STANDARD         2
 #define INTSTYLE_ISO_8601             3
->>>>>>> 38e9348282e
 
 #define INTERVAL_FULL_RANGE (0x7FFF)
 #define INTERVAL_MASK(b) (1 << (b))

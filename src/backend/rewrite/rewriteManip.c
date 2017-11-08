@@ -9,11 +9,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.116 2008/10/21 20:42:53 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.118 2008/11/15 19:43:46 tgl Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -170,11 +166,7 @@ locate_agg_of_level(Node *node, int levelsup)
 {
 	locate_agg_of_level_context context;
 
-<<<<<<< HEAD
-	context.agg_location = -1;	/* in case we find nothing */
-=======
 	context.agg_location = -1;		/* in case we find nothing */
->>>>>>> 38e9348282e
 	context.sublevels_up = levelsup;
 
 	/*

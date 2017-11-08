@@ -518,11 +518,7 @@ contain_vars_of_level_walker(Node *node, int *sublevels_up)
  * unknown parse location.  (The former case is probably caller error,
  * but we don't bother to distinguish it from the latter case.)
  *
-<<<<<<< HEAD
- * Will recurse into sublinks.  Also, may be invoked directly on a Query.
-=======
  * Will recurse into sublinks.	Also, may be invoked directly on a Query.
->>>>>>> 38e9348282e
  *
  * Note: it might seem appropriate to merge this functionality into
  * contain_vars_of_level, but that would complicate that function's API.
@@ -533,17 +529,10 @@ int
 locate_var_of_level(Node *node, int levelsup)
 {
 	locate_var_of_level_context context;
-<<<<<<< HEAD
-
-	context.var_location = -1;	/* in case we find nothing */
-	context.sublevels_up = levelsup;
-
-=======
 
 	context.var_location = -1;		/* in case we find nothing */
 	context.sublevels_up = levelsup;
 
->>>>>>> 38e9348282e
 	(void) query_or_expression_tree_walker(node,
 										   locate_var_of_level_walker,
 										   (void *) &context,
@@ -560,11 +549,7 @@ locate_var_of_level_walker(Node *node,
 		return false;
 	if (IsA(node, Var))
 	{
-<<<<<<< HEAD
-		Var		   *var = (Var *) node;
-=======
 		Var	   *var = (Var *) node;
->>>>>>> 38e9348282e
 
 		if (var->varlevelsup == context->sublevels_up &&
 			var->location >= 0)

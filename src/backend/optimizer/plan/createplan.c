@@ -2800,11 +2800,7 @@ create_worktablescan_plan(PlannerInfo *root, Path *best_path,
 	 */
 	levelsup = rte->ctelevelsup;
 	if (levelsup == 0)			/* shouldn't happen */
-<<<<<<< HEAD
-		elog(ERROR, "bad levelsup for CTE \"%s\"", rte->ctename);
-=======
 			elog(ERROR, "bad levelsup for CTE \"%s\"", rte->ctename);
->>>>>>> 38e9348282e
 	levelsup--;
 	cteroot = root;
 	while (levelsup-- > 0)
@@ -2813,11 +2809,7 @@ create_worktablescan_plan(PlannerInfo *root, Path *best_path,
 		if (!cteroot)			/* shouldn't happen */
 			elog(ERROR, "bad levelsup for CTE \"%s\"", rte->ctename);
 	}
-<<<<<<< HEAD
-	if (cteroot->wt_param_id < 0)		/* shouldn't happen */
-=======
 	if (cteroot->wt_param_id < 0)	/* shouldn't happen */
->>>>>>> 38e9348282e
 		elog(ERROR, "could not find param ID for CTE \"%s\"", rte->ctename);
 
 	/* Sort clauses into best execution order */

@@ -10,11 +10,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.94 2008/10/04 21:56:53 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.95 2008/12/01 21:06:13 tgl Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -780,11 +776,7 @@ clause_selectivity(PlannerInfo *root,
 	}
 #ifdef NOT_USED
 	else if (IsA(clause, SubPlan) ||
-<<<<<<< HEAD
-					IsA(clause, AlternativeSubPlan))
-=======
 			 IsA(clause, AlternativeSubPlan))
->>>>>>> 38e9348282e
 	{
 		/*
 		 * Just for the moment! FIX ME! - vadim 02/04/98

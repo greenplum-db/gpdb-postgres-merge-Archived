@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.59 2009/06/11 14:49:13 momjian Exp $ */
-=======
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.56 2008/11/01 08:55:21 meskes Exp $ */
->>>>>>> 38e9348282e
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"

@@ -7,11 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/storage/relfilenode.h,v 1.23 2009/06/11 14:49:12 momjian Exp $
-=======
  * $PostgreSQL: pgsql/src/include/storage/relfilenode.h,v 1.21 2008/12/03 13:05:22 heikki Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */

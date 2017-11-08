@@ -5009,13 +5009,8 @@ set_config_option(const char *name, const char *value,
 			{
 				ereport(elevel,
 						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
-<<<<<<< HEAD
-					   errmsg("attempted change of parameter \"%s\" ignored",
-							  name),
-=======
 						 errmsg("attempted change of parameter \"%s\" ignored",
 								name),
->>>>>>> 38e9348282e
 						 errdetail("This parameter cannot be changed after server start.")));
 				return false;
 			}

@@ -229,11 +229,7 @@ pg_get_client_encoding_name(void)
  *
  * CAUTION: although the presence of a length argument means that callers
  * can pass non-null-terminated strings, care is required because the same
-<<<<<<< HEAD
- * string will be passed back if no conversion occurs.	Such callers *must*
-=======
  * string will be passed back if no conversion occurs.  Such callers *must*
->>>>>>> 38e9348282e
  * check whether result == src and handle that case differently.
  *
  * Note: we try to avoid raising error, since that could get us into

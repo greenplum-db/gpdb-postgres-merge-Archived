@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.43 2010/08/02 01:24:54 tgl Exp $ */
-=======
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.39 2008/11/26 16:47:08 meskes Exp $ */
->>>>>>> 38e9348282e
 
 #include "postgres_fe.h"
 #include <time.h>
@@ -22,11 +18,7 @@
 static int
 strtoi(const char *nptr, char **endptr, int base)
 {
-<<<<<<< HEAD
-	long		val;
-=======
 	long	val;
->>>>>>> 38e9348282e
 
 	val = strtol(nptr, endptr, base);
 #ifdef HAVE_LONG_INT_64
@@ -765,11 +757,7 @@ DecodeInterval(char **field, int *ftype, int nf, /*int range,*/
 				if (*cp == '-')
 				{
 					/* SQL "years-months" syntax */
-<<<<<<< HEAD
-					int			val2;
-=======
 					int		val2;
->>>>>>> 38e9348282e
 
 					val2 = strtoi(cp + 1, &cp, 10);
 					if (errno == ERANGE || val2 < 0 || val2 >= MONTHS_PER_YEAR)
@@ -958,11 +946,7 @@ DecodeInterval(char **field, int *ftype, int nf, /*int range,*/
 
 	/*----------
 	 * The SQL standard defines the interval literal
-<<<<<<< HEAD
-	 *	 '-1 1:00:00'
-=======
 	 *   '-1 1:00:00'
->>>>>>> 38e9348282e
 	 * to mean "negative 1 days and negative 1 hours", while Postgres
 	 * traditionally treats this as meaning "negative 1 days and positive
 	 * 1 hours".  In SQL_STANDARD intervalstyle, we apply the leading sign
@@ -972,22 +956,14 @@ DecodeInterval(char **field, int *ftype, int nf, /*int range,*/
 	 * This protects us against misinterpreting postgres-style dump output,
 	 * since the postgres-style output code has always put an explicit sign on
 	 * all fields following a negative field.  But note that SQL-spec output
-<<<<<<< HEAD
-	 * is ambiguous and can be misinterpreted on load!	(So it's best practice
-=======
 	 * is ambiguous and can be misinterpreted on load!  (So it's best practice
->>>>>>> 38e9348282e
 	 * to dump in postgres style, not SQL style.)
 	 *----------
 	 */
 	if (IntervalStyle == INTSTYLE_SQL_STANDARD && *field[0] == '-')
 	{
 		/* Check for additional explicit signs */
-<<<<<<< HEAD
-		bool		more_signs = false;
-=======
 		bool	more_signs = false;
->>>>>>> 38e9348282e
 
 		for (i = 1; i < nf; i++)
 		{
@@ -1149,19 +1125,11 @@ EncodeInterval(struct /*pg_*/tm * tm, fsec_t fsec, int style, char *str)
 
 	char	   *cp = str;
 	int			year = tm->tm_year;
-<<<<<<< HEAD
-	int			mon = tm->tm_mon;
-	int			mday = tm->tm_mday;
-	int			hour = tm->tm_hour;
-	int			min = tm->tm_min;
-	int			sec = tm->tm_sec;
-=======
 	int			mon  = tm->tm_mon;
 	int			mday = tm->tm_mday;
 	int			hour = tm->tm_hour;
 	int			min  = tm->tm_min;
 	int			sec  = tm->tm_sec;
->>>>>>> 38e9348282e
 	bool		is_before = FALSE;
 	bool		is_zero = TRUE;
 
@@ -1173,23 +1141,6 @@ EncodeInterval(struct /*pg_*/tm * tm, fsec_t fsec, int style, char *str)
 	 */
 	switch (style)
 	{
-<<<<<<< HEAD
-			/* SQL Standard interval format */
-		case INTSTYLE_SQL_STANDARD:
-			{
-				bool		has_negative = year < 0 || mon < 0 ||
-				mday < 0 || hour < 0 ||
-				min < 0 || sec < 0 || fsec < 0;
-				bool		has_positive = year > 0 || mon > 0 ||
-				mday > 0 || hour > 0 ||
-				min > 0 || sec > 0 || fsec > 0;
-				bool		has_year_month = year != 0 || mon != 0;
-				bool		has_day_time = mday != 0 || hour != 0 ||
-				min != 0 || sec != 0 || fsec != 0;
-				bool		has_day = mday != 0;
-				bool		sql_standard_value = !(has_negative && has_positive) &&
-				!(has_year_month && has_day_time);
-=======
 		/* SQL Standard interval format */
 		case INTSTYLE_SQL_STANDARD:
 			{
@@ -1205,7 +1156,6 @@ EncodeInterval(struct /*pg_*/tm * tm, fsec_t fsec, int style, char *str)
 				bool has_day        = mday != 0;
 				bool sql_standard_value = !(has_negative && has_positive) &&
 										  !(has_year_month && has_day_time);
->>>>>>> 38e9348282e
 
 				/*
 				 * SQL Standard wants only 1 "<sign>" preceding the whole
@@ -1215,19 +1165,11 @@ EncodeInterval(struct /*pg_*/tm * tm, fsec_t fsec, int style, char *str)
 				{
 					*cp++ = '-';
 					year = -year;
-<<<<<<< HEAD
-					mon = -mon;
-					mday = -mday;
-					hour = -hour;
-					min = -min;
-					sec = -sec;
-=======
 					mon  = -mon;
 					mday = -mday;
 					hour = -hour;
 					min  = -min;
 					sec  = -sec;
->>>>>>> 38e9348282e
 					fsec = -fsec;
 				}
 
@@ -1338,22 +1280,14 @@ EncodeInterval(struct /*pg_*/tm * tm, fsec_t fsec, int style, char *str)
 			}
 			break;
 
-<<<<<<< HEAD
-			/* Compatible with postgresql < 8.4 when DateStyle = 'iso' */
-=======
 		/* Compatible with postgresql < 8.4 when DateStyle = 'iso' */
->>>>>>> 38e9348282e
 		case INTSTYLE_POSTGRES:
 			cp = AddPostgresIntPart(cp, year, "year", &is_zero, &is_before);
 			cp = AddPostgresIntPart(cp, mon, "mon", &is_zero, &is_before);
 			cp = AddPostgresIntPart(cp, mday, "day", &is_zero, &is_before);
 			if (is_zero || hour != 0 || min != 0 || sec != 0 || fsec != 0)
 			{
-<<<<<<< HEAD
-				bool		minus = (hour < 0 || min < 0 || sec < 0 || fsec < 0);
-=======
 				bool	minus = (hour < 0 || min < 0 || sec < 0 || fsec < 0);
->>>>>>> 38e9348282e
 
 				sprintf(cp, "%s%s%02d:%02d:",
 						is_zero ? "" : " ",
@@ -1364,11 +1298,7 @@ EncodeInterval(struct /*pg_*/tm * tm, fsec_t fsec, int style, char *str)
 			}
 			break;
 
-<<<<<<< HEAD
-			/* Compatible with postgresql < 8.4 when DateStyle != 'iso' */
-=======
 		/* Compatible with postgresql < 8.4 when DateStyle != 'iso' */
->>>>>>> 38e9348282e
 		case INTSTYLE_POSTGRES_VERBOSE:
 		default:
 			strcpy(cp, "@");
@@ -1567,11 +1497,7 @@ PGTYPESinterval_to_asc(interval * span)
 			   *tm = &tt;
 	fsec_t		fsec;
 	char		buf[MAXDATELEN + 1];
-<<<<<<< HEAD
-	int			IntervalStyle = INTSTYLE_POSTGRES_VERBOSE;
-=======
 	int		    IntervalStyle = INTSTYLE_POSTGRES_VERBOSE;
->>>>>>> 38e9348282e
 
 	if (interval2tm(*span, tm, &fsec) != 0)
 	{

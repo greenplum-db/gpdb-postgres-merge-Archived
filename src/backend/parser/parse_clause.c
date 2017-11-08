@@ -711,11 +711,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("subquery in FROM cannot have SELECT INTO"),
 				 parser_errposition(pstate,
-<<<<<<< HEAD
-								 exprLocation((Node *) query->intoClause))));
-=======
 									exprLocation((Node *) query->intoClause))));
->>>>>>> 38e9348282e
 
 	/*
 	 * The subquery cannot make use of any variables from FROM items created
@@ -737,11 +733,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 					 errmsg("subquery in FROM cannot refer to other relations of same query level"),
 					 parser_errposition(pstate,
-<<<<<<< HEAD
-								   locate_var_of_level((Node *) query, 1))));
-=======
 										locate_var_of_level((Node *) query, 1))));
->>>>>>> 38e9348282e
 	}
 
 	/*

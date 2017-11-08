@@ -48,11 +48,7 @@ int
 PQregisterEventProc(PGconn *conn, PGEventProc proc,
 					const char *name, void *passThrough)
 {
-<<<<<<< HEAD
-	int			i;
-=======
 	int i;
->>>>>>> 38e9348282e
 	PGEventRegister regevt;
 
 	if (!proc || !conn || !name || !*name)
@@ -66,13 +62,8 @@ PQregisterEventProc(PGconn *conn, PGEventProc proc,
 
 	if (conn->nEvents >= conn->eventArraySize)
 	{
-<<<<<<< HEAD
-		PGEvent    *e;
-		int			newSize;
-=======
 		PGEvent *e;
 		int newSize;
->>>>>>> 38e9348282e
 
 		newSize = conn->eventArraySize ? conn->eventArraySize * 2 : 8;
 		if (conn->events)
@@ -114,11 +105,7 @@ PQregisterEventProc(PGconn *conn, PGEventProc proc,
 int
 PQsetInstanceData(PGconn *conn, PGEventProc proc, void *data)
 {
-<<<<<<< HEAD
-	int			i;
-=======
 	int i;
->>>>>>> 38e9348282e
 
 	if (!conn || !proc)
 		return FALSE;
@@ -141,11 +128,7 @@ PQsetInstanceData(PGconn *conn, PGEventProc proc, void *data)
 void *
 PQinstanceData(const PGconn *conn, PGEventProc proc)
 {
-<<<<<<< HEAD
-	int			i;
-=======
 	int i;
->>>>>>> 38e9348282e
 
 	if (!conn || !proc)
 		return NULL;
@@ -166,11 +149,7 @@ PQinstanceData(const PGconn *conn, PGEventProc proc)
 int
 PQresultSetInstanceData(PGresult *result, PGEventProc proc, void *data)
 {
-<<<<<<< HEAD
-	int			i;
-=======
 	int i;
->>>>>>> 38e9348282e
 
 	if (!result || !proc)
 		return FALSE;
@@ -193,11 +172,7 @@ PQresultSetInstanceData(PGresult *result, PGEventProc proc, void *data)
 void *
 PQresultInstanceData(const PGresult *result, PGEventProc proc)
 {
-<<<<<<< HEAD
-	int			i;
-=======
 	int i;
->>>>>>> 38e9348282e
 
 	if (!result || !proc)
 		return NULL;
@@ -217,11 +192,7 @@ PQresultInstanceData(const PGresult *result, PGEventProc proc)
 int
 PQfireResultCreateEvents(PGconn *conn, PGresult *res)
 {
-<<<<<<< HEAD
-	int			i;
-=======
 	int i;
->>>>>>> 38e9348282e
 
 	if (!res)
 		return FALSE;

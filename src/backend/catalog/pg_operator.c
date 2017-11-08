@@ -608,17 +608,10 @@ OperatorCreate(const char *operatorName,
 				 operatorObjectId);
 
 		tup = heap_modify_tuple(tup,
-<<<<<<< HEAD
-								RelationGetDescr(pg_operator_desc),
-								values,
-								nulls,
-								replaces);
-=======
 							   RelationGetDescr(pg_operator_desc),
 							   values,
 							   nulls,
 							   replaces);
->>>>>>> 38e9348282e
 
 		simple_heap_update(pg_operator_desc, &tup->t_self, tup);
 	}
@@ -786,17 +779,10 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 				}
 
 				tup = heap_modify_tuple(tup,
-<<<<<<< HEAD
-										RelationGetDescr(pg_operator_desc),
-										values,
-										nulls,
-										replaces);
-=======
 									   RelationGetDescr(pg_operator_desc),
 									   values,
 									   nulls,
 									   replaces);
->>>>>>> 38e9348282e
 
 				simple_heap_update(pg_operator_desc, &tup->t_self, tup);
 
@@ -818,17 +804,10 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 		replaces[Anum_pg_operator_oprcom - 1] = true;
 
 		tup = heap_modify_tuple(tup,
-<<<<<<< HEAD
-								RelationGetDescr(pg_operator_desc),
-								values,
-								nulls,
-								replaces);
-=======
 							   RelationGetDescr(pg_operator_desc),
 							   values,
 							   nulls,
 							   replaces);
->>>>>>> 38e9348282e
 
 		simple_heap_update(pg_operator_desc, &tup->t_self, tup);
 
@@ -860,17 +839,10 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 		replaces[Anum_pg_operator_oprnegate - 1] = true;
 
 		tup = heap_modify_tuple(tup,
-<<<<<<< HEAD
-								RelationGetDescr(pg_operator_desc),
-								values,
-								nulls,
-								replaces);
-=======
 							   RelationGetDescr(pg_operator_desc),
 							   values,
 							   nulls,
 							   replaces);
->>>>>>> 38e9348282e
 
 		simple_heap_update(pg_operator_desc, &tup->t_self, tup);
 

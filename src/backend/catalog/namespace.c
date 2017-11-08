@@ -992,11 +992,7 @@ FuncnameGetCandidates(List *names, int nargs,
 			}
 			else
 			{
-<<<<<<< HEAD
-				int			cmp_nargs = newResult->nargs - newResult->ndargs;
-=======
 				int		cmp_nargs = newResult->nargs - newResult->ndargs;
->>>>>>> 38e9348282e
 
 				for (prevResult = resultList;
 					 prevResult;
@@ -1019,11 +1015,7 @@ FuncnameGetCandidates(List *names, int nargs,
 				 * preference < 0 means prefer the new, preference = 0 means
 				 * ambiguous.
 				 */
-<<<<<<< HEAD
-				int			preference;
-=======
 				int		preference;
->>>>>>> 38e9348282e
 
 				if (pathpos != prevResult->pathpos)
 				{
@@ -1090,11 +1082,7 @@ FuncnameGetCandidates(List *names, int nargs,
 								break;
 							}
 						}
-<<<<<<< HEAD
-						Assert(prevPrevResult); /* assert we found it */
-=======
 						Assert(prevPrevResult);		/* assert we found it */
->>>>>>> 38e9348282e
 					}
 					pfree(prevResult);
 					/* fall through to add newResult to list */

@@ -61,11 +61,7 @@ static backslashResult exec_command(const char *cmd,
 			 PsqlScanState scan_state,
 			 PQExpBuffer query_buf);
 static bool do_edit(const char *filename_arg, PQExpBuffer query_buf,
-<<<<<<< HEAD
-		bool *edited);
-=======
 					bool *edited);
->>>>>>> 38e9348282e
 static bool do_connect(char *dbname, char *user, char *host, char *port);
 static bool do_shell(const char *command);
 static bool lookup_function_oid(PGconn *conn, const char *desc, Oid *foid);
@@ -610,11 +606,7 @@ exec_command(const char *cmd,
 
 		if (status != PSQL_CMD_ERROR)
 		{
-<<<<<<< HEAD
-			bool		edited = false;
-=======
 			bool edited = false;
->>>>>>> 38e9348282e
 
 			if (!do_edit(0, query_buf, &edited))
 				status = PSQL_CMD_ERROR;
@@ -2232,11 +2224,7 @@ lookup_function_oid(PGconn *conn, const char *desc, Oid *foid)
 {
 	bool		result = true;
 	PQExpBuffer query;
-<<<<<<< HEAD
-	PGresult   *res;
-=======
 	PGresult *res;
->>>>>>> 38e9348282e
 
 	query = createPQExpBuffer();
 	printfPQExpBuffer(query, "SELECT ");
@@ -2268,11 +2256,7 @@ get_create_function_cmd(PGconn *conn, Oid oid, PQExpBuffer buf)
 {
 	bool		result = true;
 	PQExpBuffer query;
-<<<<<<< HEAD
-	PGresult   *res;
-=======
 	PGresult *res;
->>>>>>> 38e9348282e
 
 	query = createPQExpBuffer();
 	printfPQExpBuffer(query, "SELECT pg_catalog.pg_get_functiondef(%u)", oid);

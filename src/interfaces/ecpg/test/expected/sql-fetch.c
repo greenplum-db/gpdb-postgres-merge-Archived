@@ -28,11 +28,7 @@ int main() {
        
   
 #line 9 "fetch.pgc"
-<<<<<<< HEAD
- char str [ 25 ] ;
-=======
  char  str  [ 25 ]   ;
->>>>>>> 38e9348282e
  
 #line 10 "fetch.pgc"
  int i , count = 1 ;

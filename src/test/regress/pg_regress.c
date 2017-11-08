@@ -312,11 +312,7 @@ stop_postmaster(void)
 		{
 			fprintf(stderr, _("\n%s: could not stop postmaster: exit code was %d\n"),
 					progname, r);
-<<<<<<< HEAD
-			exit(2);			/* not exit_nicely(), that would be recursive */
-=======
 			exit(2);   /* not exit_nicely(), that would be recursive */
->>>>>>> 38e9348282e
 		}
 
 		postmaster_running = false;
@@ -1078,11 +1074,7 @@ initialize_environment(void)
 	{
 		const char *my_pgoptions = "-c intervalstyle=postgres_verbose";
 		const char *old_pgoptions = getenv("PGOPTIONS");
-<<<<<<< HEAD
-		char	   *new_pgoptions;
-=======
 		char   *new_pgoptions;
->>>>>>> 38e9348282e
 
 		if (!old_pgoptions)
 			old_pgoptions = "";
@@ -2268,21 +2260,13 @@ create_role(const char *rolename, const _stringlist * granted_dbs)
 static char *
 make_absolute_path(const char *in)
 {
-<<<<<<< HEAD
-	char	   *result;
-=======
 	char *result;
->>>>>>> 38e9348282e
 
 	if (is_absolute_path(in))
 		result = strdup(in);
 	else
 	{
-<<<<<<< HEAD
-		static char cwdbuf[MAXPGPATH];
-=======
 		static char		cwdbuf[MAXPGPATH];
->>>>>>> 38e9348282e
 
 		if (!cwdbuf[0])
 		{

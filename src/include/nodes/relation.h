@@ -236,11 +236,7 @@ typedef struct PlannerInfo
 	List	   *full_join_clauses;		/* list of RestrictInfos for
 										 * mergejoinable full join clauses */
 
-<<<<<<< HEAD
-	List	   *join_info_list;     /* list of SpecialJoinInfos */
-=======
 	List	   *join_info_list;		/* list of SpecialJoinInfos */
->>>>>>> 38e9348282e
 
 	List	   *append_rel_list;	/* list of AppendRelInfos */
 	
@@ -1511,11 +1507,7 @@ typedef struct FlattenedSubLink
 typedef struct PlaceHolderVar
 {
 	Expr		xpr;
-<<<<<<< HEAD
-	Expr		*phexpr;			/* the represented expression */
-=======
 	Expr	   *phexpr;			/* the represented expression */
->>>>>>> 38e9348282e
 	Relids		phrels;			/* base relids syntactically within expr src */
 	Index		phid;			/* ID for PHV (unique within planner run) */
 	Index		phlevelsup;		/* > 0 if PHV belongs to outer query */

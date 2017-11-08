@@ -127,11 +127,7 @@ InsertRule(char *rulname,
 		replaces[Anum_pg_rewrite_ev_action - 1] = true;
 
 		tup = heap_modify_tuple(oldtup, RelationGetDescr(pg_rewrite_desc),
-<<<<<<< HEAD
-								values, nulls, replaces);
-=======
 							   values, nulls, replaces);
->>>>>>> 38e9348282e
 
 		simple_heap_update(pg_rewrite_desc, &tup->t_self, tup);
 

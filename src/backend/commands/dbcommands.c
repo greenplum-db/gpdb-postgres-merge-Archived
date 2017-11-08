@@ -1073,11 +1073,7 @@ createdb(CreatedbStmt *stmt)
 	new_record_nulls[Anum_pg_database_datacl - 1] = true;
 
 	tuple = heap_form_tuple(RelationGetDescr(pg_database_rel),
-<<<<<<< HEAD
-							new_record, new_record_nulls);
-=======
 						   new_record, new_record_nulls);
->>>>>>> 38e9348282e
 
 	HeapTupleSetOid(tuple, dboid);
 
@@ -2458,11 +2454,7 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	}
 
 	newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
-<<<<<<< HEAD
-								 repl_val, repl_null, repl_repl);
-=======
 								repl_val, repl_null, repl_repl);
->>>>>>> 38e9348282e
 	simple_heap_update(rel, &tuple->t_self, newtuple);
 
 	/* Update indexes */

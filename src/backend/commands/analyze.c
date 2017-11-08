@@ -1982,17 +1982,10 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 		{
 			/* Yes, replace it */
 			stup = heap_modify_tuple(oldtup,
-<<<<<<< HEAD
-									 RelationGetDescr(sd),
-									 values,
-									 nulls,
-									 replaces);
-=======
 									RelationGetDescr(sd),
 									values,
 									nulls,
 									replaces);
->>>>>>> 38e9348282e
 			ReleaseSysCache(oldtup);
 			simple_heap_update(sd, &stup->t_self, stup);
 		}

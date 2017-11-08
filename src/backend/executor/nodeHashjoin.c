@@ -10,11 +10,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.94 2008/08/14 18:47:58 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.96 2008/10/23 14:34:34 tgl Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */

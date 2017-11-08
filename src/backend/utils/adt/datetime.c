@@ -3318,11 +3318,7 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 
 	/* ensure that at least one time field has been found */
 	if (fmask == 0)
-<<<<<<< HEAD
-				return DTERR_BAD_FORMAT;
-=======
 		return DTERR_BAD_FORMAT;
->>>>>>> 38e9348282e
 
 	/* ensure fractional seconds are fractional */
 	if (*fsec != 0)
@@ -4271,19 +4267,11 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 {
 	char	   *cp = str;
 	int			year = tm->tm_year;
-<<<<<<< HEAD
-	int			mon = tm->tm_mon;
-	int			mday = tm->tm_mday;
-	int			hour = tm->tm_hour;
-	int			min = tm->tm_min;
-	int			sec = tm->tm_sec;
-=======
 	int			mon  = tm->tm_mon;
 	int			mday = tm->tm_mday;
 	int			hour = tm->tm_hour;
 	int			min  = tm->tm_min;
 	int			sec  = tm->tm_sec;
->>>>>>> 38e9348282e
 	bool		is_before = FALSE;
 	bool		is_zero = TRUE;
 

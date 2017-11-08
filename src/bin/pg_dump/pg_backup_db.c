@@ -353,11 +353,7 @@ ExecuteSqlCommand(ArchiveHandle *AH, const char *qry, const char *desc)
 	char		errStmt[DB_MAX_ERR_STMT];
 
 #ifdef NOT_USED
-<<<<<<< HEAD
-	fprintf(stderr, "Executing: '%s'\n\n", qry);
-=======
 	 fprintf(stderr, "Executing: '%s'\n\n", qry);
->>>>>>> 38e9348282e
 #endif
 	res = PQexec(conn, qry);
 

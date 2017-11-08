@@ -9,11 +9,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.20.2.1 2009/01/18 20:44:53 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.22 2008/12/19 16:25:18 petere Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */

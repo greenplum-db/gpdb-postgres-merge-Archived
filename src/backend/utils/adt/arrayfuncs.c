@@ -1534,11 +1534,7 @@ array_send(PG_FUNCTION_ARGS)
 
 /*
  * array_ndims :
-<<<<<<< HEAD
- *		  returns the number of dimensions of the array pointed to by "v"
-=======
  *        returns the number of dimensions of the array pointed to by "v"
->>>>>>> 38e9348282e
  */
 Datum
 array_ndims(PG_FUNCTION_ARGS)
@@ -4855,13 +4851,8 @@ array_unnest(PG_FUNCTION_ARGS)
 
 	if (fctx->nextelem < fctx->numelems)
 	{
-<<<<<<< HEAD
-		int			offset = fctx->nextelem++;
-		Datum		elem;
-=======
 		int		offset = fctx->nextelem++;
 		Datum	elem;
->>>>>>> 38e9348282e
 
 		/*
 		 * Check for NULL array element
@@ -4877,11 +4868,7 @@ array_unnest(PG_FUNCTION_ARGS)
 			/*
 			 * OK, get the element
 			 */
-<<<<<<< HEAD
-			char	   *ptr = fctx->elemdataptr;
-=======
 			char   *ptr = fctx->elemdataptr;
->>>>>>> 38e9348282e
 
 			fcinfo->isnull = false;
 			elem = ArrayCast(ptr, fctx->elmbyval, fctx->elmlen);

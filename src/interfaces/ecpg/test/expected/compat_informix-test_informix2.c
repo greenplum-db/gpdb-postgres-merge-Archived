@@ -157,11 +157,7 @@ int main(void)
  timestamp maxd ;
  
 #line 53 "test_informix2.pgc"
-<<<<<<< HEAD
- char dbname [ 30 ] ;
-=======
  char  dbname  [ 30 ]   ;
->>>>>>> 38e9348282e
 /* exec sql end declare section */
 #line 54 "test_informix2.pgc"
 

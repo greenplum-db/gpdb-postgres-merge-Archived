@@ -83,11 +83,7 @@ static bool PQexecStart(PGconn *conn);
 static PGresult *PQexecFinish(PGconn *conn);
 static int PQsendDescribe(PGconn *conn, char desc_type,
 			   const char *desc_target);
-<<<<<<< HEAD
-static int	check_field_number(const PGresult *res, int field_num);
-=======
 static int check_field_number(const PGresult *res, int field_num);
->>>>>>> 38e9348282e
 
 
 /* ----------------
@@ -256,11 +252,7 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 int
 PQsetResultAttrs(PGresult *res, int numAttributes, PGresAttDesc *attDescs)
 {
-<<<<<<< HEAD
-	int			i;
-=======
 	int i;
->>>>>>> 38e9348282e
 
 	/* If attrs already exist, they cannot be overwritten. */
 	if (!res || res->numAttributes > 0)
@@ -304,32 +296,15 @@ PQsetResultAttrs(PGresult *res, int numAttributes, PGresAttDesc *attDescs)
  * Returns a deep copy of the provided 'src' PGresult, which cannot be NULL.
  * The 'flags' argument controls which portions of the result will or will
  * NOT be copied.  The created result is always put into the
-<<<<<<< HEAD
- * PGRES_TUPLES_OK status.	The source result error message is not copied,
- * although cmdStatus is.
- *
- * To set custom attributes, use PQsetResultAttrs.	That function requires
-=======
  * PGRES_TUPLES_OK status.  The source result error message is not copied,
  * although cmdStatus is.
  *
  * To set custom attributes, use PQsetResultAttrs.  That function requires
->>>>>>> 38e9348282e
  * that there are no attrs contained in the result, so to use that
  * function you cannot use the PG_COPYRES_ATTRS or PG_COPYRES_TUPLES
  * options with this function.
  *
  * Options:
-<<<<<<< HEAD
- *	 PG_COPYRES_ATTRS - Copy the source result's attributes
- *
- *	 PG_COPYRES_TUPLES - Copy the source result's tuples.  This implies
- *	 copying the attrs, seeeing how the attrs are needed by the tuples.
- *
- *	 PG_COPYRES_EVENTS - Copy the source result's events.
- *
- *	 PG_COPYRES_NOTICEHOOKS - Copy the source result's notice hooks.
-=======
  *   PG_COPYRES_ATTRS - Copy the source result's attributes
  *
  *   PG_COPYRES_TUPLES - Copy the source result's tuples.  This implies
@@ -338,18 +313,12 @@ PQsetResultAttrs(PGresult *res, int numAttributes, PGresAttDesc *attDescs)
  *   PG_COPYRES_EVENTS - Copy the source result's events.
  *
  *   PG_COPYRES_NOTICEHOOKS - Copy the source result's notice hooks.
->>>>>>> 38e9348282e
  */
 PGresult *
 PQcopyResult(const PGresult *src, int flags)
 {
-<<<<<<< HEAD
-	PGresult   *dest;
-	int			i;
-=======
 	PGresult *dest;
 	int i;
->>>>>>> 38e9348282e
 
 	if (!src)
 		return NULL;
@@ -358,11 +327,7 @@ PQcopyResult(const PGresult *src, int flags)
 	if (!dest)
 		return NULL;
 
-<<<<<<< HEAD
-	/* Always copy these over.	Is cmdStatus really useful here? */
-=======
 	/* Always copy these over.  Is cmdStatus really useful here? */
->>>>>>> 38e9348282e
 	dest->client_encoding = src->client_encoding;
 	strcpy(dest->cmdStatus, src->cmdStatus);
 
@@ -447,13 +412,8 @@ PQcopyResult(const PGresult *src, int flags)
 static PGEvent *
 dupEvents(PGEvent *events, int count)
 {
-<<<<<<< HEAD
-	PGEvent    *newEvents;
-	int			i;
-=======
 	PGEvent *newEvents;
 	int i;
->>>>>>> 38e9348282e
 
 	if (!events || count <= 0)
 		return NULL;
@@ -754,11 +714,7 @@ void
 PQclear(PGresult *res)
 {
 	PGresult_data *block;
-<<<<<<< HEAD
-	int			i;
-=======
 	int i;
->>>>>>> 38e9348282e
 
 	if (!res)
 		return;
@@ -1875,11 +1831,7 @@ PQgetResult(PGconn *conn)
 
 	if (res)
 	{
-<<<<<<< HEAD
-		int			i;
-=======
 		int i;
->>>>>>> 38e9348282e
 
 		for (i = 0; i < res->nEvents; i++)
 		{

@@ -38,25 +38,12 @@ main(void)
 	 
 
 #line 14 "oldexec.pgc"
-<<<<<<< HEAD
- int amount [ 8 ] ;
-=======
  int  amount  [ 8 ]   ;
->>>>>>> 38e9348282e
  
 #line 15 "oldexec.pgc"
  int increment = 100 ;
  
 #line 16 "oldexec.pgc"
-<<<<<<< HEAD
- char name [ 8 ] [ 8 ] ;
- 
-#line 17 "oldexec.pgc"
- char letter [ 8 ] [ 1 ] ;
- 
-#line 18 "oldexec.pgc"
- char command [ 128 ] ;
-=======
  char  name  [ 8 ] [ 8 ]   ;
  
 #line 17 "oldexec.pgc"
@@ -64,7 +51,6 @@ main(void)
  
 #line 18 "oldexec.pgc"
  char  command  [ 128 ]   ;
->>>>>>> 38e9348282e
 /* exec sql end declare section */
 #line 19 "oldexec.pgc"
 
@@ -182,11 +168,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 		   
 		
 #line 58 "oldexec.pgc"
-<<<<<<< HEAD
- char n [ 8 ] , l = letter [ i ] [ 0 ] ;
-=======
  char  n  [ 8 ]   ,  l   = letter [ i ] [ 0 ] ;
->>>>>>> 38e9348282e
  
 #line 59 "oldexec.pgc"
  int a = amount [ i ] ;
@@ -247,11 +229,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 		   
 		
 #line 79 "oldexec.pgc"
-<<<<<<< HEAD
- char n [ 8 ] , l = letter [ i ] [ 0 ] ;
-=======
  char  n  [ 8 ]   ,  l   = letter [ i ] [ 0 ] ;
->>>>>>> 38e9348282e
  
 #line 80 "oldexec.pgc"
  int a = amount [ i ] ;

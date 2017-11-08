@@ -12,11 +12,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/utils/resowner.h,v 1.15.2.1 2009/12/03 11:03:44 heikki Exp $
-=======
  * $PostgreSQL: pgsql/src/include/utils/resowner.h,v 1.16 2008/11/25 20:28:29 alvherre Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */

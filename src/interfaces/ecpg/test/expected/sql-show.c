@@ -27,11 +27,7 @@ int main() {
        
   
 #line 9 "show.pgc"
-<<<<<<< HEAD
- char var [ 25 ] = "public" ;
-=======
  char  var  [ 25 ]  = "public" ;
->>>>>>> 38e9348282e
 /* exec sql end declare section */
 #line 10 "show.pgc"
 

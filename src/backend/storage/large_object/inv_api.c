@@ -641,11 +641,7 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 			values[Anum_pg_largeobject_data - 1] = PointerGetDatum(&workbuf);
 			replace[Anum_pg_largeobject_data - 1] = true;
 			newtup = heap_modify_tuple(oldtuple, RelationGetDescr(lo_heap_r),
-<<<<<<< HEAD
-									   values, nulls, replace);
-=======
 									  values, nulls, replace);
->>>>>>> 38e9348282e
 			simple_heap_update(lo_heap_r, &newtup->t_self, newtup);
 			CatalogIndexInsert(indstate, newtup);
 			heap_freetuple(newtup);
@@ -814,11 +810,7 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 		values[Anum_pg_largeobject_data - 1] = PointerGetDatum(&workbuf);
 		replace[Anum_pg_largeobject_data - 1] = true;
 		newtup = heap_modify_tuple(oldtuple, RelationGetDescr(lo_heap_r),
-<<<<<<< HEAD
-								   values, nulls, replace);
-=======
 								  values, nulls, replace);
->>>>>>> 38e9348282e
 		simple_heap_update(lo_heap_r, &newtup->t_self, newtup);
 		CatalogIndexInsert(indstate, newtup);
 		heap_freetuple(newtup);

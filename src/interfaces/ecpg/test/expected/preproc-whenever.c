@@ -51,11 +51,7 @@ int main(void)
 
 	
 #line 27 "whenever.pgc"
-<<<<<<< HEAD
- char c [ 6 ] ;
-=======
  char  c  [ 6 ]   ;
->>>>>>> 38e9348282e
 
 #line 27 "whenever.pgc"
 

@@ -8,11 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/tcop/dest.c,v 1.72.2.1 2010/01/30 20:10:05 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/tcop/dest.c,v 1.74 2008/11/30 20:51:25 tgl Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */

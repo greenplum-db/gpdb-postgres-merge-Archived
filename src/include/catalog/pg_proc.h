@@ -58,11 +58,7 @@ CATALOG(pg_proc,1255) BKI_BOOTSTRAP
 	Oid			proallargtypes[1];		/* all param types (NULL if IN only) */
 	char		proargmodes[1]; /* parameter modes (NULL if IN only) */
 	text		proargnames[1]; /* parameter names (NULL if no names) */
-<<<<<<< HEAD
-	text		proargdefaults; /* list of expression trees for argument
-=======
 	text		proargdefaults;	/* list of expression trees for argument
->>>>>>> 38e9348282e
 								 * defaults (NULL if none) */
 	text		prosrc;			/* procedure source text */
 	bytea		probin;			/* secondary procedure info (can be NULL) */

@@ -1563,11 +1563,7 @@ find_forced_null_vars(Node *node)
 	{
 		result = list_make1(var);
 	}
-<<<<<<< HEAD
-		/* Otherwise, handle AND-conditions */
-=======
 	/* Otherwise, handle AND-conditions */
->>>>>>> 38e9348282e
 	else if (IsA(node, List))
 	{
 		/*

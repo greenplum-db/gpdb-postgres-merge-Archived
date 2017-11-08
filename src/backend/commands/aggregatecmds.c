@@ -205,11 +205,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 		!IsPolymorphicType(transTypeId))
 	{
 		if (transTypeId == INTERNALOID && superuser())
-<<<<<<< HEAD
-			 /* okay */ ;
-=======
 			/* okay */ ;
->>>>>>> 38e9348282e
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),

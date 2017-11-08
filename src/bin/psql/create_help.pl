@@ -108,7 +108,6 @@ print CFILE
 ";
 
 my $maxlen = 0;
-<<<<<<< HEAD
 
 my %entries;
 
@@ -116,15 +115,6 @@ foreach my $file (sort readdir DIR) {
     my (@cmdnames, $cmddesc, $cmdsynopsis);
     $file =~ /\.sgml$/ or next;
 
-=======
-
-my %entries;
-
-foreach my $file (sort readdir DIR) {
-    my (@cmdnames, $cmddesc, $cmdsynopsis);
-    $file =~ /\.sgml$/ or next;
-
->>>>>>> 38e9348282e
     open(FILE, "$docdir/$file") or next;
     my $filecontent = join('', <FILE>);
     close FILE;

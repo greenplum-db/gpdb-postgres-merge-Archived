@@ -145,15 +145,9 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 17 "copystdout.pgc"
-<<<<<<< HEAD
-
-
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "copy foo to stdout with delimiter ','", ECPGt_EOIT, ECPGt_EORT);
-=======
 
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "copy  foo   to stdout  with  delimiter  ','", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 38e9348282e
 #line 19 "copystdout.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

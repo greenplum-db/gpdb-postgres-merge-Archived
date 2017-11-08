@@ -1313,11 +1313,7 @@ describeOneTableDetails(const char *schemaname,
 	PGresult   *res = NULL;
 	printTableOpt myopt = pset.popt.topt;
 	printTableContent cont;
-<<<<<<< HEAD
-	bool		printTableInitialized = false;
-=======
 	bool printTableInitialized = false;
->>>>>>> 38e9348282e
 	int			i;
 	char	   *view_def = NULL;
 	char	   *headers[9];

@@ -1,9 +1,5 @@
 <!--
-<<<<<<< HEAD
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_user_mapping.sgml,v 1.4 2009/09/19 10:23:26 petere Exp $
-=======
 $PostgreSQL: pgsql/doc/src/sgml/ref/alter_user_mapping.sgml,v 1.1 2008/12/19 16:25:16 petere Exp $
->>>>>>> 38e9348282e
 PostgreSQL documentation
 -->
 

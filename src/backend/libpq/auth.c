@@ -167,11 +167,7 @@ bool		pg_krb_caseins_users;
  *----------------------------------------------------------------
  */
 #ifdef KRB5
-<<<<<<< HEAD
-static int	pg_krb5_recvauth(Port *port);
-=======
 static int pg_krb5_recvauth(Port *port);
->>>>>>> 38e9348282e
 
 #include <krb5.h>
 /* Some old versions of Kerberos do not include <com_err.h> in <krb5.h> */
@@ -2127,15 +2123,9 @@ ident_unix(int sock, char *ident_user)
 	/* Solaris > 10 */
 	uid_t		uid;
 	struct passwd *pass;
-<<<<<<< HEAD
-	ucred_t    *ucred;
-
-	ucred = NULL;				/* must be initialized to NULL */
-=======
 	ucred_t	   *ucred;
 
 	ucred = NULL; /* must be initialized to NULL */
->>>>>>> 38e9348282e
 	if (getpeerucred(sock, &ucred) == -1)
 	{
 		ereport(LOG,

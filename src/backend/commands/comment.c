@@ -278,11 +278,7 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 		else
 		{
 			newtuple = heap_modify_tuple(oldtuple, RelationGetDescr(description), values,
-<<<<<<< HEAD
-										 nulls, replaces);
-=======
 										nulls, replaces);
->>>>>>> 38e9348282e
 			simple_heap_update(description, &oldtuple->t_self, newtuple);
 		}
 
@@ -296,11 +292,7 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 	if (newtuple == NULL && comment != NULL)
 	{
 		newtuple = heap_form_tuple(RelationGetDescr(description),
-<<<<<<< HEAD
-								   values, nulls);
-=======
 								  values, nulls);
->>>>>>> 38e9348282e
 		simple_heap_insert(description, newtuple);
 	}
 
@@ -381,11 +373,7 @@ CreateSharedComments(Oid oid, Oid classoid, char *comment)
 		else
 		{
 			newtuple = heap_modify_tuple(oldtuple, RelationGetDescr(shdescription),
-<<<<<<< HEAD
-										 values, nulls, replaces);
-=======
 										values, nulls, replaces);
->>>>>>> 38e9348282e
 			simple_heap_update(shdescription, &oldtuple->t_self, newtuple);
 		}
 
@@ -399,11 +387,7 @@ CreateSharedComments(Oid oid, Oid classoid, char *comment)
 	if (newtuple == NULL && comment != NULL)
 	{
 		newtuple = heap_form_tuple(RelationGetDescr(shdescription),
-<<<<<<< HEAD
-								   values, nulls);
-=======
 								  values, nulls);
->>>>>>> 38e9348282e
 		simple_heap_insert(shdescription, newtuple);
 	}
 

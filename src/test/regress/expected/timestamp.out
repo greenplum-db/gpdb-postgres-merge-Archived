@@ -927,11 +927,7 @@ SELECT '' AS "54", d1 as "timestamp",
    date_part( 'isoyear', d1) AS isoyear, date_part( 'week', d1) AS week,
    date_part( 'dow', d1) AS dow
    FROM TIMESTAMP_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
-<<<<<<< HEAD
- 54 |          timestamp         | isoyear | week | dow 
-=======
  54 |         timestamp          | isoyear | week | dow 
->>>>>>> 38e9348282e
 ----+----------------------------+---------+------+-----
     | Thu Jan 01 00:00:00 1970   |    1970 |    1 |   4
     | Mon Feb 10 17:32:01 1997   |    1997 |    7 |   1

@@ -7,11 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.38.2.1 2009/03/30 04:09:09 tgl Exp $
-=======
  * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.39 2008/10/28 22:02:05 tgl Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */

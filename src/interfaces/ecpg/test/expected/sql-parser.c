@@ -28,11 +28,7 @@ int main() {
   	   
   
 #line 10 "parser.pgc"
-<<<<<<< HEAD
- int item [ 3 ] , ind [ 3 ] , i ;
-=======
  int  item  [ 3 ]   ,  ind  [ 3 ]   ,  i    ;
->>>>>>> 38e9348282e
 /* exec sql end declare section */
 #line 11 "parser.pgc"
 

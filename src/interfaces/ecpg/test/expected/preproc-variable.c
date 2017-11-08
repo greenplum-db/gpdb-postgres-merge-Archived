@@ -42,11 +42,7 @@ typedef char* c;
 typedef union { int integer; short smallint; } ind;
 
 #define BUFFERSIZ 8
-<<<<<<< HEAD
-/* exec sql type str is [ BUFFERSIZ ] */
-=======
 /* exec sql type str is   [ BUFFERSIZ ]  */
->>>>>>> 38e9348282e
 #line 15 "variable.pgc"
 
 

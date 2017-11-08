@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.99.2.1 2009/09/03 22:11:13 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.97 2008/09/03 22:34:50 tgl Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -77,11 +73,7 @@ char	   *Dynamic_library_path;
 
 static void *internal_load_library(const char *libname);
 static void incompatible_module_error(const char *libname,
-<<<<<<< HEAD
-						  const Pg_magic_struct *module_magic_data);
-=======
 									const Pg_magic_struct *module_magic_data);
->>>>>>> 38e9348282e
 static void internal_unload_library(const char *libname);
 static bool file_exists(const char *name);
 static char *expand_dynamic_library_name(const char *name);

@@ -27,11 +27,7 @@ int main() {
   	  
   
 #line 9 "insupd.pgc"
-<<<<<<< HEAD
- int i1 [ 3 ] , i2 [ 3 ] ;
-=======
  int  i1  [ 3 ]   ,  i2  [ 3 ]   ;
->>>>>>> 38e9348282e
 /* exec sql end declare section */
 #line 10 "insupd.pgc"
 

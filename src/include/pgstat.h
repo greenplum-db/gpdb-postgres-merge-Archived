@@ -183,13 +183,8 @@ typedef struct PgStat_MsgDummy
 
 typedef struct PgStat_MsgInquiry
 {
-<<<<<<< HEAD
-	PgStat_MsgHdr m_hdr;
-	TimestampTz inquiry_time;	/* minimum acceptable file timestamp */
-=======
 	PgStat_MsgHdr	m_hdr;
 	TimestampTz		inquiry_time;	/* minimum acceptable file timestamp */
->>>>>>> 38e9348282e
 } PgStat_MsgInquiry;
 
 
@@ -575,11 +570,7 @@ typedef struct PgStat_StatPortalEntry
  */
 typedef struct PgStat_GlobalStats
 {
-<<<<<<< HEAD
-	TimestampTz stats_timestamp;	/* time of stats file update */
-=======
 	TimestampTz stats_timestamp;		/* time of stats file update */
->>>>>>> 38e9348282e
 	PgStat_Counter timed_checkpoints;
 	PgStat_Counter requested_checkpoints;
 	PgStat_Counter buf_written_checkpoints;

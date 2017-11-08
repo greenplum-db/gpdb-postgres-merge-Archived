@@ -34,11 +34,7 @@ int main(void)
 {
 	
 #line 15 "rnull.pgc"
-<<<<<<< HEAD
- char c [] = "abc" ;
-=======
  char  c  []  = "abc" ;
->>>>>>> 38e9348282e
 
 #line 15 "rnull.pgc"
 

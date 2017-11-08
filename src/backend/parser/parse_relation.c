@@ -205,21 +205,13 @@ CommonTableExpr *
 scanNameSpaceForCTE(ParseState *pstate, const char *refname,
 					Index *ctelevelsup)
 {
-<<<<<<< HEAD
-	Index		levelsup;
-=======
 	Index	levelsup;
->>>>>>> 38e9348282e
 
 	for (levelsup = 0;
 		 pstate != NULL;
 		 pstate = pstate->parentParseState, levelsup++)
 	{
-<<<<<<< HEAD
-		ListCell   *lc;
-=======
 		ListCell *lc;
->>>>>>> 38e9348282e
 
 		foreach(lc, pstate->p_ctenamespace)
 		{
@@ -245,11 +237,7 @@ isFutureCTE(ParseState *pstate, const char *refname)
 {
 	for (; pstate != NULL; pstate = pstate->parentParseState)
 	{
-<<<<<<< HEAD
-		ListCell   *lc;
-=======
 		ListCell *lc;
->>>>>>> 38e9348282e
 
 		foreach(lc, pstate->p_future_ctes)
 		{

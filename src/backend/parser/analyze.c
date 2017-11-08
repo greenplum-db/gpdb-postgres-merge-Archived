@@ -729,11 +729,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("VALUES must not contain table references"),
 					 parser_errposition(pstate,
-<<<<<<< HEAD
-							  locate_var_of_level((Node *) exprsLists, 0))));
-=======
 										locate_var_of_level((Node *) exprsLists, 0))));
->>>>>>> 38e9348282e
 
 		/*
 		 * Another thing we can't currently support is NEW/OLD references in
@@ -748,11 +744,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 					 errmsg("VALUES must not contain OLD or NEW references"),
 					 errhint("Use SELECT ... UNION ALL ... instead."),
 					 parser_errposition(pstate,
-<<<<<<< HEAD
-							  locate_var_of_level((Node *) exprsLists, 0))));
-=======
 										locate_var_of_level((Node *) exprsLists, 0))));
->>>>>>> 38e9348282e
 
 		/*
 		 * Generate the VALUES RTE
@@ -1948,11 +1940,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("VALUES must not contain table references"),
 				 parser_errposition(pstate,
-<<<<<<< HEAD
-						   locate_var_of_level((Node *) newExprsLists, 0))));
-=======
 									locate_var_of_level((Node *) newExprsLists, 0))));
->>>>>>> 38e9348282e
 
 	/*
 	 * Another thing we can't currently support is NEW/OLD references in rules
@@ -1967,11 +1955,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 				 errmsg("VALUES must not contain OLD or NEW references"),
 				 errhint("Use SELECT ... UNION ALL ... instead."),
 				 parser_errposition(pstate,
-<<<<<<< HEAD
-						   locate_var_of_level((Node *) newExprsLists, 0))));
-=======
 									locate_var_of_level((Node *) newExprsLists, 0))));
->>>>>>> 38e9348282e
 
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, NULL);
@@ -2217,11 +2201,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 				 errdetail("Only result column names can be used, not expressions or functions."),
 				 errhint("Add the expression/function to every SELECT, or move the UNION into a FROM clause."),
 				 parser_errposition(pstate,
-<<<<<<< HEAD
-						   exprLocation(list_nth(qry->targetList, tllen)))));
-=======
 									exprLocation(list_nth(qry->targetList, tllen)))));
->>>>>>> 38e9348282e
 
 	qry->limitOffset = transformLimitClause(pstate, limitOffset,
 											"OFFSET");

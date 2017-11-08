@@ -1810,13 +1810,8 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 										 &isnull);
 		if (!isnull)
 		{
-<<<<<<< HEAD
-			char	   *str;
-			List	   *argdefaults;
-=======
 			char   *str;
 			List   *argdefaults;
->>>>>>> 38e9348282e
 
 			str = TextDatumGetCString(proargdefaults);
 			argdefaults = (List *) stringToNode(str);
@@ -1836,11 +1831,7 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 		char	   *argname = argnames ? argnames[i] : NULL;
 		char		argmode = argmodes ? argmodes[i] : PROARGMODE_IN;
 		const char *modename;
-<<<<<<< HEAD
-		bool		isinput;
-=======
 		bool	isinput;
->>>>>>> 38e9348282e
 
 		switch (argmode)
 		{
@@ -1866,11 +1857,7 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 				break;
 			default:
 				elog(ERROR, "invalid parameter mode '%c'", argmode);
-<<<<<<< HEAD
-				modename = NULL;	/* keep compiler quiet */
-=======
 				modename = NULL; /* keep compiler quiet */
->>>>>>> 38e9348282e
 				isinput = false;
 				break;
 		}
@@ -1888,11 +1875,7 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 		appendStringInfoString(buf, format_type_be(argtype));
 		if (print_defaults && isinput && inputargno > nlackdefaults)
 		{
-<<<<<<< HEAD
-			Node	   *expr;
-=======
 			Node	*expr;
->>>>>>> 38e9348282e
 
 			Assert(nextargdefault != NULL);
 			expr = (Node *) lfirst(nextargdefault);
@@ -2523,13 +2506,8 @@ static void
 get_with_clause(Query *query, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
-<<<<<<< HEAD
-	const char *sep;
-	ListCell   *l;
-=======
 	const char	*sep;
 	ListCell	*l;
->>>>>>> 38e9348282e
 
 	if (query->cteList == NIL)
 		return;

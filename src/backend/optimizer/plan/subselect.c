@@ -2211,17 +2211,6 @@ convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
 {
 	Node	   *whereClause;
 	List	   *leftargs,
-<<<<<<< HEAD
-	*rightargs,
-	*opids,
-	*newWhere,
-	*tlist,
-	*testlist,
-	*paramids;
-	ListCell   *lc,
-	*rc,
-	*oc;
-=======
 			   *rightargs,
 			   *opids,
 			   *newWhere,
@@ -2231,7 +2220,6 @@ convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
 	ListCell   *lc,
 			   *rc,
 			   *oc;
->>>>>>> 38e9348282e
 	AttrNumber	resno;
 
 	/*

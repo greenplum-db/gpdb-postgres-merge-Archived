@@ -128,11 +128,7 @@ typedef struct Port
 	/*
 	 * Information that needs to be held during the authentication cycle.
 	 */
-<<<<<<< HEAD
-	HbaLine    *hba;
-=======
 	HbaLine	   *hba;
->>>>>>> 38e9348282e
 	char		md5Salt[4];		/* Password salt */
 
 	/*

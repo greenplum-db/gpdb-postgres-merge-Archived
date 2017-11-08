@@ -28,11 +28,7 @@ int main() {
      
   
 #line 9 "quote.pgc"
-<<<<<<< HEAD
- char var [ 25 ] ;
-=======
  char  var  [ 25 ]   ;
->>>>>>> 38e9348282e
  
 #line 10 "quote.pgc"
  int i ;

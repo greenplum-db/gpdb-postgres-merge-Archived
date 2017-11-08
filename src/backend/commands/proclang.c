@@ -764,11 +764,7 @@ AlterLanguageOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 		}
 
 		newtuple = heap_modify_tuple(tup, RelationGetDescr(rel),
-<<<<<<< HEAD
-									 repl_val, repl_null, repl_repl);
-=======
 									repl_val, repl_null, repl_repl);
->>>>>>> 38e9348282e
 
 		simple_heap_update(rel, &newtuple->t_self, newtuple);
 		CatalogUpdateIndexes(rel, newtuple);

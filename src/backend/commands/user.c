@@ -1445,11 +1445,7 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 	}
 
 	newtuple = heap_modify_tuple(oldtuple, RelationGetDescr(rel),
-<<<<<<< HEAD
-								 repl_val, repl_null, repl_repl);
-=======
 								repl_val, repl_null, repl_repl);
->>>>>>> 38e9348282e
 
 	simple_heap_update(rel, &oldtuple->t_self, newtuple);
 	CatalogUpdateIndexes(rel, newtuple);

@@ -10,11 +10,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.95 2008/11/22 22:47:06 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.96 2008/11/28 19:29:07 tgl Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -431,11 +427,7 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			reversed = false;
 		}
 		else if (bms_is_subset(sjinfo->min_lefthand, rel2->relids) &&
-<<<<<<< HEAD
-			bms_is_subset(sjinfo->min_righthand, rel1->relids))
-=======
 				 bms_is_subset(sjinfo->min_righthand, rel1->relids))
->>>>>>> 38e9348282e
 		{
 			if (match_sjinfo)
 				return false;	/* invalid join path */

@@ -13,11 +13,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/placeholder.c,v 1.1 2008/10/21 20:42:53 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/optimizer/util/placeholder.c,v 1.2 2008/10/22 20:17:52 tgl Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -369,11 +365,7 @@ fix_placeholder_eval_levels(PlannerInfo *root)
 					{
 						/* no, so add them in */
 						eval_at = bms_add_members(eval_at,
-<<<<<<< HEAD
-												sjinfo->min_lefthand);
-=======
 												  sjinfo->min_lefthand);
->>>>>>> 38e9348282e
 						eval_at = bms_add_members(eval_at,
 												  sjinfo->min_righthand);
 						/* we'll need another iteration */

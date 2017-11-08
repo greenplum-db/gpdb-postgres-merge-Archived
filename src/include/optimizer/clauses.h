@@ -7,11 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/optimizer/clauses.h,v 1.94 2008/08/25 22:42:34 tgl Exp $
-=======
  * $PostgreSQL: pgsql/src/include/optimizer/clauses.h,v 1.95 2008/10/09 19:27:40 tgl Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */

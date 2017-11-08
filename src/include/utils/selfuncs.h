@@ -8,11 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.45 2008/08/14 18:48:00 tgl Exp $
-=======
  * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.47 2008/09/28 19:51:40 tgl Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */

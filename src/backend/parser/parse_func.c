@@ -319,21 +319,13 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * If there are default arguments, we have to include their types in
 	 * actual_arg_types for the purpose of checking generic type consistency.
 	 * However, we do NOT put them into the generated parse node, because
-<<<<<<< HEAD
-	 * their actual values might change before the query gets run. The
-=======
 	 * their actual values might change before the query gets run.  The
->>>>>>> 38e9348282e
 	 * planner has to insert the up-to-date values at plan time.
 	 */
 	nargsplusdefs = nargs;
 	foreach(l, argdefaults)
 	{
-<<<<<<< HEAD
-		Node	   *expr = (Node *) lfirst(l);
-=======
 		Node	*expr = (Node *) lfirst(l);
->>>>>>> 38e9348282e
 
 		/* probably shouldn't happen ... */
 		if (nargsplusdefs >= FUNC_MAX_ARGS)
@@ -387,15 +379,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		if (!OidIsValid(newa->array_typeid))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-<<<<<<< HEAD
-					errmsg("could not find array type for data type %s",
-						   format_type_be(newa->element_typeid)),
-					parser_errposition(pstate, exprLocation((Node *) vargs))));
-=======
 					 errmsg("could not find array type for data type %s",
 							format_type_be(newa->element_typeid)),
 					 parser_errposition(pstate, exprLocation((Node *) vargs))));
->>>>>>> 38e9348282e
 		newa->multidims = false;
 		newa->location = exprLocation((Node *) vargs);
 

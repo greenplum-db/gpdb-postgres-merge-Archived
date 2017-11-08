@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_cte.c,v 2.2 2008/10/05 22:50:55 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/parser/parse_cte.c,v 2.4 2008/10/08 01:14:44 tgl Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -262,11 +258,7 @@ transformWithClause(ParseState *pstate, WithClause *withClause)
 			pstate->p_ctenamespace = lappend(pstate->p_ctenamespace, cte);
 			pstate->p_future_ctes = list_delete_first(pstate->p_future_ctes);
 		}
-<<<<<<< HEAD
-	}
-=======
  	}
->>>>>>> 38e9348282e
 
 	return pstate->p_ctenamespace;
 }

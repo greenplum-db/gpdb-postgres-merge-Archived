@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.49 2009/06/11 14:49:13 momjian Exp $ */
-=======
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.46 2008/12/15 19:07:48 tgl Exp $ */
->>>>>>> 38e9348282e
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -245,17 +241,10 @@ void
 ecpg_log(const char *format,...)
 {
 	va_list		ap;
-<<<<<<< HEAD
-	struct sqlca_t *sqlca = ECPGget_sqlca();
-	const char *intl_format;
-	int			bufsize;
-	char	   *fmt;
-=======
 	struct sqlca_t	*sqlca = ECPGget_sqlca();
 	const char *intl_format;
 	int			bufsize;
 	char		*fmt;
->>>>>>> 38e9348282e
 
 	if (!simple_debug)
 		return;

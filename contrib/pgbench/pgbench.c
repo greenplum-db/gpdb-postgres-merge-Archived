@@ -163,11 +163,7 @@ char	   *pgtty = NULL;
 char	   *login = NULL;
 char	   *dbName;
 
-<<<<<<< HEAD
-volatile bool timer_exceeded = false;	/* flag from signal handler */
-=======
 volatile bool timer_exceeded = false;		/* flag from signal handler */
->>>>>>> 38e9348282e
 
 /* variable definitions */
 typedef struct
@@ -2123,17 +2119,10 @@ main(int argc, char **argv)
 	{
 		if (duration <= 0)
 			printf("pghost: %s pgport: %s nclients: %d nxacts: %d dbName: %s\n",
-<<<<<<< HEAD
-				   pghost, pgport, nclients, nxacts, dbName);
-		else
-			printf("pghost: %s pgport: %s nclients: %d duration: %d dbName: %s\n",
-				   pghost, pgport, nclients, duration, dbName);
-=======
 			   pghost, pgport, nclients, nxacts, dbName);
 		else
 			printf("pghost: %s pgport: %s nclients: %d duration: %d dbName: %s\n",
 			   pghost, pgport, nclients, duration, dbName);
->>>>>>> 38e9348282e
 	}
 
 	/* opening connection... */

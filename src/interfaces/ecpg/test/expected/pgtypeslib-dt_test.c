@@ -80,11 +80,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "set intervalstyle to postgres_verbose", ECPGt_EOIT, ECPGt_EORT);
 #line 31 "dt_test.pgc"
 
-<<<<<<< HEAD
-if (sqlca.sqlcode < 0) sqlprint ( );}
-=======
 if (sqlca.sqlcode < 0) sqlprint (  );}
->>>>>>> 38e9348282e
 #line 31 "dt_test.pgc"
 
 
@@ -98,11 +94,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 36 "dt_test.pgc"
 
-<<<<<<< HEAD
-if (sqlca.sqlcode < 0) sqlprint ( );}
-=======
 if (sqlca.sqlcode < 0) sqlprint (  );}
->>>>>>> 38e9348282e
 #line 36 "dt_test.pgc"
 
 
@@ -115,11 +107,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 38 "dt_test.pgc"
 
-<<<<<<< HEAD
-if (sqlca.sqlcode < 0) sqlprint ( );}
-=======
 if (sqlca.sqlcode < 0) sqlprint (  );}
->>>>>>> 38e9348282e
 #line 38 "dt_test.pgc"
 
 

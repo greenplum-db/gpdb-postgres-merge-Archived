@@ -7913,13 +7913,8 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	PQExpBuffer labelq;
 	PQExpBuffer asPart;
 	PGresult   *res;
-<<<<<<< HEAD
-	char       *funcsig;                /* identity signature */
-	char       *funcfullsig;            /* full signature */
-=======
 	char	   *funcsig;				/* identity signature */
 	char	   *funcfullsig;			/* full signature */
->>>>>>> 38e9348282e
 	char	   *funcsig_tag;
 	int			ntups;
 	char	   *proretset;

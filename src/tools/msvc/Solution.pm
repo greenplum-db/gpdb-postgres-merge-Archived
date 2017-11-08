@@ -317,11 +317,7 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
         }
 
     if (IsNewer('src\include\utils\probes.h','src\backend\utils\probes.d'))
-<<<<<<< HEAD
-        {
-=======
     {
->>>>>>> 38e9348282e
 		print "Generating probes.h...\n";
         system(
 'psed -f src\backend\utils\Gen_dummy_probes.sed src\backend\utils\probes.d > src\include\utils\probes.h'

@@ -224,11 +224,7 @@ struct pg_result
 	 * on the PGresult don't have to reference the PGconn.
 	 */
 	PGNoticeHooks noticeHooks;
-<<<<<<< HEAD
-	PGEvent    *events;
-=======
 	PGEvent	   *events;
->>>>>>> 38e9348282e
 	int			nEvents;
 	int			client_encoding;	/* encoding id */
 
@@ -409,15 +405,9 @@ struct pg_conn
 	PGNoticeHooks noticeHooks;
 
 	/* Event procs registered via PQregisterEventProc */
-<<<<<<< HEAD
-	PGEvent    *events;			/* expandable array of event data */
-	int			nEvents;		/* number of active events */
-	int			eventArraySize; /* allocated array size */
-=======
 	PGEvent	   *events;			/* expandable array of event data */
 	int			nEvents;		/* number of active events */
 	int			eventArraySize;	/* allocated array size */
->>>>>>> 38e9348282e
 
 	/* Status indicators */
 	ConnStatusType status;
