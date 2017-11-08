@@ -2797,6 +2797,19 @@ preprocess_groupclause(PlannerInfo *root)
 		return;
 
 	/*
+	 * GPDB: The grouping clause might contain grouping sets, not just plain
+	 * SortGroupClauses. Give up if we see any. (Yes, we could probably do
+	 * better than that, but this will do for now.)
+	 */
+	foreach(gl, parse->groupClause)
+	{
+		Node *node = lfirst(gl);
+
+		if (node == NULL || !IsA(node, SortGroupClause))
+			return;
+	}
+
+	/*
 	 * Scan the ORDER BY clause and construct a list of matching GROUP BY
 	 * items, but only as far as we can make a matching prefix.
 	 *
