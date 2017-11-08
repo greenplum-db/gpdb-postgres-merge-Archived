@@ -1941,16 +1941,19 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 					 * subplan may change the previous root->parse Query node,
 					 * which makes the current sort_pathkeys invalid.
 					 */
-					if (list_length(parse->distinctClause) > list_length(parse->sortClause))
-						root->sort_pathkeys = make_pathkeys_for_sortclauses(root,
-																			parse->distinctClause,
-																			result_plan->targetlist,
-																			true);
-					else
-						root->sort_pathkeys = make_pathkeys_for_sortclauses(root,
-																			parse->sortClause,
-																			result_plan->targetlist,
-																			true);
+					if (parse->distinctClause &&
+						grouping_is_sortable(parse->distinctClause))
+						root->distinct_pathkeys =
+							make_pathkeys_for_sortclauses(root,
+														  parse->distinctClause,
+														  result_plan->targetlist,
+														  true);
+					if (parse->sortClause)
+						root->sort_pathkeys =
+							make_pathkeys_for_sortclauses(root,
+														  parse->sortClause,
+														  result_plan->targetlist,
+														  true);
 					CdbPathLocus_MakeNull(&current_locus);
 				}
 			}
