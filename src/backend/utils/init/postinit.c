@@ -35,6 +35,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
+#include "postmaster/fts.h"
 #include "postmaster/postmaster.h"
 #include "replication/walsender.h"
 #include "storage/backendid.h"
@@ -556,6 +557,20 @@ BaseInit(void)
 	init_codegen();
 }
 
+/*
+ * Make sure we reserve enough connections for FTS handler.
+ */
+static void check_superuser_connection_limit()
+{
+	if (!am_ftshandler &&
+		!HaveNFreeProcs(RESERVED_FTS_CONNECTIONS))
+		ereport(FATAL,
+				(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
+						errmsg("connection limit exceeded for superusers (need "
+									   "at least %d connections reserved for FTS handler)",
+							   RESERVED_FTS_CONNECTIONS),
+						errSendAlert(true)));
+}
 
 /* --------------------------------
  * InitPostgres
@@ -748,12 +763,15 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 				 errmsg("connection limit exceeded for non-superusers"),
 				 errSendAlert(true)));
 
+	if (am_superuser)
+		check_superuser_connection_limit();
+
 	/*
-	 * If walsender, we don't want to connect to any particular database. Just
-	 * finish the backend startup by processing any options from the startup
-	 * packet, and we're done.
+	 * If walsender or fts handler, we don't want to connect to any particular
+	 * database. Just finish the backend startup by processing any options from
+	 * the startup packet, and we're done.
 	 */
-	if (am_walsender)
+	if (am_walsender || am_ftshandler)
 	{
 		Assert(!bootstrap);
 

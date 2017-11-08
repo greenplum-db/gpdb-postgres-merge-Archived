@@ -49,7 +49,6 @@ aocoalter_catalog_loaders:
 storage_uao_and_transactionmanagement:
 	$(TESTER) $(DISCOVER) -t tincrepo/mpp/gpdb/tests \
 	-s storage/transaction_management \
-	-s storage/basic \
 	-s storage/uao
 
 storage_persistent_accessmethods_and_vacuum:
@@ -151,12 +150,6 @@ test_switch_13_24:
 	$(TESTER) $(DISCOVER) \
 	-s tincrepo/mpp/gpdb/tests/storage/pg_twophase \
 	-p test_switch_13_24.py
-
-test_switch_25_33:
-	$(TESTER) $(DISCOVER) \
-	-s tincrepo/mpp/gpdb/tests/storage/pg_twophase \
-	-p test_switch_25_33.py
-
 
 # cs-fts
 # The following targets are pulled from:
