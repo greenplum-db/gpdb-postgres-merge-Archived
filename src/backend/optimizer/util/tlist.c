@@ -18,10 +18,7 @@
 
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-<<<<<<< HEAD
 #include "optimizer/planmain.h"
-=======
->>>>>>> 38e9348282e
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "utils/lsyscache.h"
@@ -163,11 +160,7 @@ add_to_flat_tlist(List *tlist, List *vars, bool resjunk)
 	{
 		Node	   *var = (Node *) lfirst(v);
 
-<<<<<<< HEAD
 		if (!tlist_member_ignore_relabel(var, tlist))
-=======
-		if (!tlist_member(var, tlist))
->>>>>>> 38e9348282e
 		{
 			TargetEntry *tle;
 

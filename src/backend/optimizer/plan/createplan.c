@@ -26,10 +26,7 @@
 #include "access/skey.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-<<<<<<< HEAD
 #include "executor/execHHashagg.h"
-=======
->>>>>>> 38e9348282e
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
@@ -494,10 +491,7 @@ use_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
 		rel->rtekind != RTE_SUBQUERY &&
 		rel->rtekind != RTE_FUNCTION &&
 		rel->rtekind != RTE_VALUES &&
-<<<<<<< HEAD
 		rel->rtekind != RTE_TABLEFUNCTION &&
-=======
->>>>>>> 38e9348282e
 		rel->rtekind != RTE_CTE)
 		return false;
 
@@ -526,24 +520,17 @@ use_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
 	foreach(lc, root->placeholder_list)
 	{
 		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc);
-<<<<<<< HEAD
-		
-=======
 
->>>>>>> 38e9348282e
 		if (bms_nonempty_difference(phinfo->ph_needed, rel->relids) &&
 			bms_is_subset(phinfo->ph_eval_at, rel->relids))
 			return false;
 	}
 
-<<<<<<< HEAD
 	/* CDB: Don't use physical tlist if rel has pseudo columns. */
 	rte = rt_fetch(rel->relid, root->parse->rtable);
 	if (rte->pseudocols)
 		return false;
 
-=======
->>>>>>> 38e9348282e
 	return true;
 }
 
@@ -863,7 +850,6 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 	if (best_path->umethod == UNIQUE_PATH_NOOP)
 		return subplan;
 
-<<<<<<< HEAD
 	/* CDB: Result will surely be unique if we produce only its first row. */
 	if (best_path->umethod == UNIQUE_PATH_LIMIT1)
 	{
@@ -883,8 +869,6 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 		return (Plan *) limitplan;
 	}
 
-=======
->>>>>>> 38e9348282e
 	/*
 	 * As constructed, the subplan has a "flat" tlist containing just the
 	 * Vars needed here and at upper levels.  The values we are supposed
@@ -2660,11 +2644,6 @@ create_valuesscan_plan(PlannerInfo *root, Path *best_path,
 	return scan_plan;
 }
 
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 38e9348282e
 /*
  * create_ctescan_plan
  *	 Returns a ctescan plan for the base relation scanned by 'best_path'
@@ -4200,11 +4179,7 @@ make_valuesscan(List *qptlist,
 	return node;
 }
 
-<<<<<<< HEAD
 static pg_attribute_unused() CteScan *
-=======
-static CteScan *
->>>>>>> 38e9348282e
 make_ctescan(List *qptlist,
 			 List *qpqual,
 			 Index scanrelid,
@@ -5662,11 +5637,8 @@ is_projection_capable_plan(Plan *plan)
 		case T_Limit:
 		case T_Append:
 		case T_RecursiveUnion:
-<<<<<<< HEAD
 		case T_Motion:
 		case T_ShareInputScan:
-=======
->>>>>>> 38e9348282e
 			return false;
 		default:
 			break;

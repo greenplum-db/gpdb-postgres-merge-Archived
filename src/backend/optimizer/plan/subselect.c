@@ -69,29 +69,16 @@ typedef struct finalize_primnode_context
 static Node *build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 			  SubLinkType subLinkType, Node *testexpr,
 			  bool adjust_testexpr, bool unknownEqFalse);
-<<<<<<< HEAD
-
-=======
->>>>>>> 38e9348282e
 static List *generate_subquery_params(PlannerInfo *root, List *tlist,
 						 List **paramIds);
 static Node *convert_testexpr_mutator(Node *node,
 						 convert_testexpr_context *context);
-<<<<<<< HEAD
 static bool subplan_is_hashable(PlannerInfo *root, Plan *plan);
 static bool testexpr_is_hashable(Node *testexpr);
 static bool hash_ok_operator(OpExpr *expr);
 static bool simplify_EXISTS_query(PlannerInfo *root, Query *query);
 static Query *convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
-									Node **testexpr, List **paramIds);
-=======
-static bool subplan_is_hashable(Plan *plan);
-static bool testexpr_is_hashable(Node *testexpr);
-static bool hash_ok_operator(OpExpr *expr);
-static bool simplify_EXISTS_query(Query *query);
-static Query *convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
 					  Node **testexpr, List **paramIds);
->>>>>>> 38e9348282e
 static Node *replace_correlation_vars_mutator(Node *node, PlannerInfo *root);
 static Node *process_sublinks_mutator(Node *node,
 						 process_sublinks_context *context);
@@ -724,7 +711,7 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 									&subroot);
 
 			/* Now we can check if it'll fit in work_mem */
-			if (subplan_is_hashable(plan))
+			if (subplan_is_hashable(root, plan))
 			{
 				SubPlan	   *hashplan;
 				AlternativeSubPlan *asplan;
@@ -1010,15 +997,8 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 	/*
 	 * Add the subplan and its rtable to the global lists.
 	 */
-<<<<<<< HEAD
-	root->glob->subplans = lappend(root->glob->subplans,
-								   plan);
-	root->glob->subrtables = lappend(root->glob->subrtables,
-									 rtable);
-=======
 	root->glob->subplans = lappend(root->glob->subplans, plan);
 	root->glob->subrtables = lappend(root->glob->subrtables, rtable);
->>>>>>> 38e9348282e
 	splan->plan_id = list_length(root->glob->subplans);
 
 	if (splan->is_initplan)
@@ -1067,10 +1047,9 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 		buf = NULL;
 	}
 
-    /* Lastly, fill in the cost estimates for use later */
 =======
-	/* Lastly, fill in the cost estimates for use later */
 >>>>>>> 38e9348282e
+	/* Lastly, fill in the cost estimates for use later */
 	cost_subplan(root, splan, plan);
 
 	return result;
@@ -1215,11 +1194,7 @@ convert_testexpr_mutator(Node *node,
  * subplan_is_hashable: can we implement an ANY subplan by hashing?
  */
 static bool
-<<<<<<< HEAD
 subplan_is_hashable(PlannerInfo *root, Plan *plan)
-=======
-subplan_is_hashable(Plan *plan)
->>>>>>> 38e9348282e
 {
 	double		subquery_size;
 

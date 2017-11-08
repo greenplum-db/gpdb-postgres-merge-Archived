@@ -73,10 +73,7 @@ planner_hook_type planner_hook = NULL;
 #define EXPRKIND_VALUES		3
 #define EXPRKIND_LIMIT		4
 #define EXPRKIND_APPINFO	5
-<<<<<<< HEAD
 #define EXPRKIND_WINDOW_BOUND 6
-=======
->>>>>>> 38e9348282e
 
 
 static Node *preprocess_expression(PlannerInfo *root, Node *expr, int kind);
@@ -304,12 +301,8 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	config = DefaultPlannerConfig();
 
 	/* primary planning entry point (may recurse for subqueries) */
-<<<<<<< HEAD
-	top_plan = subquery_planner(glob, parse, NULL, false, tuple_fraction, &root, config);
-=======
 	top_plan = subquery_planner(glob, parse, NULL,
 								false, tuple_fraction, &root);
->>>>>>> 38e9348282e
 
 	/*
 	 * If creating a plan for a scrollable cursor, make sure it can run
@@ -508,15 +501,9 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 Plan *
 subquery_planner(PlannerGlobal *glob, Query *parse,
 				 PlannerInfo *parent_root,
-<<<<<<< HEAD
-				 bool hasRecursion,
-				 double tuple_fraction,
+				 bool hasRecursion, double tuple_fraction,
 				 PlannerInfo **subroot,
 				 PlannerConfig *config)
-=======
-				 bool hasRecursion, double tuple_fraction,
-				 PlannerInfo **subroot)
->>>>>>> 38e9348282e
 {
 	int			num_old_subplans = list_length(glob->subplans);
 	PlannerInfo *root;
@@ -1021,11 +1008,7 @@ inheritance_planner(PlannerInfo *root)
 		 */
 		memcpy(&subroot, root, sizeof(PlannerInfo));
 		subroot.parse = (Query *)
-<<<<<<< HEAD
 			adjust_appendrel_attrs(&subroot, (Node *) parse,
-=======
-			adjust_appendrel_attrs((Node *) parse,
->>>>>>> 38e9348282e
 								   appinfo);
 		subroot.returningLists = NIL;
 		subroot.init_plans = NIL;
@@ -3280,11 +3263,7 @@ make_subplanTargetList(PlannerInfo *root,
 	 */
 	sub_tlist = flatten_tlist(tlist);
 	extravars = pull_var_clause(parse->havingQual, true);
-<<<<<<< HEAD
 	sub_tlist = add_to_flat_tlist(sub_tlist, extravars, false /* resjunk */);
-=======
-	sub_tlist = add_to_flat_tlist(sub_tlist, extravars);
->>>>>>> 38e9348282e
 	list_free(extravars);
 
 	/*

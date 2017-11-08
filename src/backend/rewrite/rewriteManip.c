@@ -926,10 +926,7 @@ rangeTableEntry_used_walker(Node *node,
 		/* fall through to examine children */
 	}
 	/* Shouldn't need to handle planner auxiliary nodes here */
-<<<<<<< HEAD
-=======
 	Assert(!IsA(node, FlattenedSubLink));
->>>>>>> 38e9348282e
 	Assert(!IsA(node, PlaceHolderVar));
 	Assert(!IsA(node, SpecialJoinInfo));
 	Assert(!IsA(node, AppendRelInfo));

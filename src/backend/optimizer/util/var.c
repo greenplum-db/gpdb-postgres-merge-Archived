@@ -3,11 +3,6 @@
  * var.c
  *	  Var node manipulation routines
  *
-<<<<<<< HEAD
- * Portions Copyright (c) 2006-2008, Greenplum inc
- * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
-=======
->>>>>>> 38e9348282e
  * Note: for most purposes, PlaceHolderVar is considered a Var too,
  * even if its contained expression is variable-free.  Also, CurrentOfExpr
  * is treated as a Var for purposes of determining whether an expression
@@ -16,6 +11,8 @@
  *
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 2006-2008, Greenplum inc
+ * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  *
  *
  * IDENTIFICATION
@@ -28,10 +25,6 @@
 #include "access/htup.h"
 #include "access/sysattr.h"
 #include "nodes/nodeFuncs.h"
-<<<<<<< HEAD
-#include "optimizer/clauses.h"
-=======
->>>>>>> 38e9348282e
 #include "optimizer/prep.h"
 #include "optimizer/var.h"
 #include "optimizer/walkers.h"
@@ -52,16 +45,10 @@ typedef struct
 
 typedef struct
 {
-<<<<<<< HEAD
-	Index		varno;
-	int			varattno;
-} contain_var_reference_context;
-=======
 	int			var_location;
 	int			relid;
 	int			sublevels_up;
 } locate_var_of_relation_context;
->>>>>>> 38e9348282e
 
 typedef struct
 {
@@ -83,14 +70,6 @@ typedef struct
 } flatten_join_alias_vars_context;
 
 static bool pull_varattnos_walker(Node *node, Bitmapset **varattnos);
-<<<<<<< HEAD
-
-static bool contain_var_clause_walker(Node *node, void *context);
-static bool contain_vars_of_level_walker(Node *node, int *sublevels_up);
-static bool locate_var_of_level_walker(Node *node,
-						   locate_var_of_level_context *context);
-static inline Relids pull_varnos_of_level(Node *node, int levelsup);
-=======
 static bool contain_var_clause_walker(Node *node, void *context);
 static bool contain_vars_of_level_walker(Node *node, int *sublevels_up);
 static bool locate_var_of_level_walker(Node *node,
@@ -99,12 +78,13 @@ static bool locate_var_of_relation_walker(Node *node,
 									locate_var_of_relation_context *context);
 static bool find_minimum_var_level_walker(Node *node,
 							  find_minimum_var_level_context *context);
->>>>>>> 38e9348282e
 static bool pull_var_clause_walker(Node *node,
 					   pull_var_clause_context *context);
 static Node *flatten_join_alias_vars_mutator(Node *node,
 								flatten_join_alias_vars_context *context);
 static Relids alias_relid_set(PlannerInfo *root, Relids relids);
+
+static inline Relids pull_varnos_of_level(Node *node, int levelsup);
 
 
 /*

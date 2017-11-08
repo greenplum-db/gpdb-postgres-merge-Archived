@@ -1740,11 +1740,7 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfoContext *ctx)
 					rowexpr->row_format = COERCE_IMPLICIT_CAST;
 					rowexpr->colnames = NIL;
 					rowexpr->location = -1;
-<<<<<<< HEAD
-					
-=======
 
->>>>>>> 38e9348282e
 					return (Node *) rowexpr;
 				}
 			}

@@ -1170,14 +1170,11 @@ fix_expr_common(PlannerGlobal *glob, Node *node)
 		record_plan_function_dependency(glob,
 										((Aggref *) node)->aggfnoid);
 	}
-<<<<<<< HEAD
 	else if (IsA(node, WindowFunc))
 	{
 		record_plan_function_dependency(glob,
 										((WindowFunc *) node)->winfnoid);
 	}
-=======
->>>>>>> 38e9348282e
 	else if (IsA(node, FuncExpr))
 	{
 		record_plan_function_dependency(glob,
@@ -1223,7 +1220,6 @@ fix_expr_common(PlannerGlobal *glob, Node *node)
 				lappend_oid(glob->relationOids,
 							DatumGetObjectId(con->constvalue));
 	}
-<<<<<<< HEAD
     else if (IsA(node, Var))
     {
         Var    *var = (Var *)node;
@@ -1243,8 +1239,6 @@ fix_expr_common(PlannerGlobal *glob, Node *node)
                    var->varno <= list_length(glob->finalrtable));
         }
     }
-=======
->>>>>>> 38e9348282e
 }
 
 /*
@@ -1376,15 +1370,12 @@ fix_scan_expr_walker(Node *node, fix_scan_expr_context *context)
 	if (node == NULL)
 		return false;
 	Assert(!IsA(node, PlaceHolderVar));
-<<<<<<< HEAD
 
 	/*
 	 * fix_expr_common will look up and set operator opcodes in the
 	 * nodes. That's not needed, as ORCA has set those already, but
 	 * shouldn't do any harm either.
 	 */
-=======
->>>>>>> 38e9348282e
 	fix_expr_common(context->glob, node);
 	return expression_tree_walker(node, fix_scan_expr_walker,
 								  (void *) context);
@@ -2175,11 +2166,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 	if (IsA(node, PlaceHolderVar))
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
-<<<<<<< HEAD
-		
-=======
 
->>>>>>> 38e9348282e
 		/* See if the PlaceHolderVar has bubbled up from a lower plan node */
 		if (context->outer_itlist->has_ph_vars)
 		{
@@ -2300,11 +2287,7 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
 	if (IsA(node, PlaceHolderVar))
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
-<<<<<<< HEAD
-		
-=======
 
->>>>>>> 38e9348282e
 		/* See if the PlaceHolderVar has bubbled up from a lower plan node */
 		if (context->subplan_itlist->has_ph_vars)
 		{
@@ -2562,7 +2545,6 @@ extract_query_dependencies_walker(Node *node, PlannerGlobal *context)
 	return expression_tree_walker(node, extract_query_dependencies_walker,
 								  (void *) context);
 }
-<<<<<<< HEAD
 
 /*
  * cdb_extract_plan_dependencies()
@@ -2665,5 +2647,3 @@ cdb_insert_result_node(PlannerGlobal *glob, Plan *plan, int rtoffset)
 
     return resultplan;
 }                               /* cdb_insert_result_node */
-=======
->>>>>>> 38e9348282e

@@ -100,10 +100,7 @@ static Expr *simplify_function(Oid funcid,
 				  Oid result_type, int32 result_typmod, List **args,
 				  bool allow_inline,
 				  eval_const_expressions_context *context);
-<<<<<<< HEAD
 static bool large_const(Expr *expr, Size max_size);
-=======
->>>>>>> 38e9348282e
 static List *add_function_defaults(List *args, Oid result_type,
 								   HeapTuple func_tuple);
 static Expr *evaluate_function(Oid funcid,
@@ -121,13 +118,9 @@ static void sql_inline_error_callback(void *arg);
 static Query *substitute_actual_srf_parameters(Query *expr,
 								 int nargs, List *args);
 static Node *substitute_actual_srf_parameters_mutator(Node *node,
-<<<<<<< HEAD
-						  substitute_actual_srf_parameters_context *context);
-static bool contain_grouping_clause_walker(Node *node, void *context);
-=======
 							substitute_actual_srf_parameters_context *context);
 static bool tlist_matches_coltypelist(List *tlist, List *coltypelist);
->>>>>>> 38e9348282e
+static bool contain_grouping_clause_walker(Node *node, void *context);
 
 
 /*****************************************************************************
@@ -1293,12 +1286,6 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 			 expr->booltesttype == IS_NOT_UNKNOWN))
 			result = find_nonnullable_rels_walker((Node *) expr->arg, false);
 	}
-<<<<<<< HEAD
-	else if (IsA(node, PlaceHolderVar))
-	{
-		PlaceHolderVar *phv = (PlaceHolderVar *) node;
-		
-=======
 	else if (IsA(node, FlattenedSubLink))
 	{
 		/* JOIN_SEMI sublinks preserve strictness, but JOIN_ANTI ones don't */
@@ -1312,7 +1299,6 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
 
->>>>>>> 38e9348282e
 		result = find_nonnullable_rels_walker((Node *) phv->phexpr, top_level);
 	}
 	return result;
@@ -1511,12 +1497,6 @@ find_nonnullable_vars_walker(Node *node, bool top_level)
 			 expr->booltesttype == IS_NOT_UNKNOWN))
 			result = find_nonnullable_vars_walker((Node *) expr->arg, false);
 	}
-<<<<<<< HEAD
-	else if (IsA(node, PlaceHolderVar))
-	{
-		PlaceHolderVar *phv = (PlaceHolderVar *) node;
-		
-=======
 	else if (IsA(node, FlattenedSubLink))
 	{
 		/* JOIN_SEMI sublinks preserve strictness, but JOIN_ANTI ones don't */
@@ -1530,7 +1510,6 @@ find_nonnullable_vars_walker(Node *node, bool top_level)
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
 
->>>>>>> 38e9348282e
 		result = find_nonnullable_vars_walker((Node *) phv->phexpr, top_level);
 	}
 	return result;
@@ -2581,13 +2560,8 @@ eval_const_expressions_mutator(Node *node,
 				break;
 		}
 	}
-<<<<<<< HEAD
-	if (IsA(node, SubPlan)||
-			IsA(node, AlternativeSubPlan))
-=======
 	if (IsA(node, SubPlan) ||
 		IsA(node, AlternativeSubPlan))
->>>>>>> 38e9348282e
 	{
 		/*
 		 * Return a SubPlan unchanged --- too late to do anything with it.
@@ -3652,10 +3626,6 @@ add_function_defaults(List *args, Oid result_type, HeapTuple func_tuple)
 	defaults = (List *) stringToNode(str);
 	Assert(IsA(defaults, List));
 	pfree(str);
-<<<<<<< HEAD
-
-=======
->>>>>>> 38e9348282e
 	/* Delete any unused defaults from the list */
 	ndelete = list_length(args) + list_length(defaults) - funcform->pronargs;
 	if (ndelete < 0)
@@ -3684,10 +3654,6 @@ add_function_defaults(List *args, Oid result_type, HeapTuple func_tuple)
 											   nargs,
 											   funcform->prorettype,
 											   false);
-<<<<<<< HEAD
-
-=======
->>>>>>> 38e9348282e
 	/* let's just check we got the same answer as the parser did ... */
 	if (rettype != result_type)
 		elog(ERROR, "function's resolved result type changed during planning");
@@ -3699,7 +3665,6 @@ add_function_defaults(List *args, Oid result_type, HeapTuple func_tuple)
 }
 
 /*
-<<<<<<< HEAD
  * large_const: check if given expression is a Const expression larger than
  * the given size
  *
@@ -3729,8 +3694,6 @@ large_const(Expr *expr, Size max_size)
 }
 
 /*
-=======
->>>>>>> 38e9348282e
  * evaluate_function: try to pre-evaluate a function call
  *
  * We can do this if the function is strict and has any constant-null inputs
@@ -4554,7 +4517,6 @@ substitute_actual_srf_parameters_mutator(Node *node,
 }
 
 /*
-<<<<<<< HEAD
  * flatten_join_alias_var_optimizer
  *	  Replace Vars that reference JOIN outputs with references to the original
  *	  relation variables instead.
@@ -4892,7 +4854,9 @@ bool subexpression_match(Expr *expr1, Expr *expr2)
 	subexpression_matching_context ctx;
 	ctx.needle = expr1;
 	return subexpression_matching_walker((Node *) expr2, (void *) &ctx);
-=======
+}
+
+/*
  * Check whether a SELECT targetlist emits the specified column types,
  * to see if it's safe to inline a function returning record.
  *
@@ -4933,5 +4897,4 @@ tlist_matches_coltypelist(List *tlist, List *coltypelist)
 		return false;			/* too few tlist items */
 
 	return true;
->>>>>>> 38e9348282e
 }
