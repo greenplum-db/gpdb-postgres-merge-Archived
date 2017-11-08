@@ -1671,8 +1671,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				 * change the previous root->parse Query node, which makes the
 				 * current sort_pathkeys invalid.
 				 */
-				if (parse->distinctClause &&
-					grouping_is_sortable(parse->distinctClause))
+				if (parse->distinctClause)
 					root->distinct_pathkeys =
 						make_pathkeys_for_sortclauses(root,
 													  parse->distinctClause,

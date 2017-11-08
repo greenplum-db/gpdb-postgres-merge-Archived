@@ -486,21 +486,6 @@ WHERE c = 87 ;
 ----------
 (0 rows)
 
---
--- In this test, one of the grouping columns is a constant.
---
-SELECT sale.pn, sale.vn
-FROM sale
-WHERE sale.pn = 300
-GROUP BY CUBE((sale.pn),(sale.vn));
- pn  | vn 
------+----
-     |   
-     | 30
- 300 |   
- 300 | 30
-(4 rows)
-
 -- CLEANUP
 -- start_ignore
 drop schema bfv_olap cascade;

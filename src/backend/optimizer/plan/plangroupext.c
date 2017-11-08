@@ -242,8 +242,7 @@ reorder_pathkeys(PlannerInfo *root,
 				break;
 		}
 
-		if (pos >= numgrpkeys)
-			elog(ERROR, "could not re-find grouping column");
+		Assert(pos < numgrpkeys);
 
 		pk = (PathKey *) list_nth(pathkeys, pos);
 
@@ -668,15 +667,9 @@ make_list_aggs_for_rollup(PlannerInfo *root,
 			/* Add sort node if needed, and set AggStrategy */
 			if (root->parse->groupClause)
 			{
-				/* GPDB_84_MERGE_FIXME: It seems that this is no longer necessary. Why
-				 * was it on master? */
-#if 0
 				group_pathkeys = reorder_pathkeys(root, root->group_pathkeys,
 												  orig_grpColIdx,
 												  groupColIdx);
-#else
-				group_pathkeys = root->group_pathkeys;
-#endif
 				if (!pathkeys_contained_in(group_pathkeys,
 										   context->current_pathkeys))
 				{
@@ -2111,8 +2104,7 @@ append_colIdx(AttrNumber *colIdx, Oid *operators, int numcols, int colno,
 			if (sortrefs_to_resnos[x - 1] == grpColIdx[pos])
 				break;
 		}
-		if (pos >= numcols)
-			elog(ERROR, "could not re-find grouping column");
+		Assert(pos < numcols);
 
 		colIdx[colno] = sortrefs_to_resnos[x - 1];
 		operators[colno] = grpOperators[pos];
