@@ -158,9 +158,9 @@ WHERE p1.oid != p2.oid AND
 	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-<<<<<<< HEAD
     NOT p1.proiswindow AND NOT p2.proiswindow AND
-    (p1.prorettype < p2.prorettype);
+    (p1.prorettype < p2.prorettype)
+ORDER BY 1, 2; -- order none
          prorettype          |        prorettype        
 -----------------------------+--------------------------
  text                        | character varying
@@ -169,26 +169,15 @@ WHERE p1.oid != p2.oid AND
 (3 rows)
 
 SELECT DISTINCT p1.proargtypes[0]::regtype, p2.proargtypes[0]::regtype
-=======
-    (p1.prorettype < p2.prorettype)
-ORDER BY 1, 2;
- prorettype | prorettype 
-------------+------------
-         25 |       1043
-       1114 |       1184
-(2 rows)
-
-SELECT DISTINCT p1.proargtypes[0], p2.proargtypes[0]
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
 	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-<<<<<<< HEAD
     NOT p1.proiswindow AND NOT p2.proiswindow AND
-    (p1.proargtypes[0] < p2.proargtypes[0]);
+    (p1.proargtypes[0] < p2.proargtypes[0])
+ORDER BY 1, 2; -- order none
          proargtypes         |       proargtypes        
 -----------------------------+--------------------------
  text                        | character
@@ -198,18 +187,6 @@ WHERE p1.oid != p2.oid AND
  bit                         | bit varying
  anyarray                    | anyelement
 (6 rows)
-=======
-    (p1.proargtypes[0] < p2.proargtypes[0])
-ORDER BY 1, 2;
- proargtypes | proargtypes 
--------------+-------------
-          25 |        1042
-          25 |        1043
-        1114 |        1184
-        1560 |        1562
-        2277 |        2283
-(5 rows)
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 
 SELECT DISTINCT p1.proargtypes[1]::regtype, p2.proargtypes[1]::regtype
 FROM pg_proc AS p1, pg_proc AS p2
@@ -218,9 +195,9 @@ WHERE p1.oid != p2.oid AND
 	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-<<<<<<< HEAD
     NOT p1.proiswindow AND NOT p2.proiswindow AND
-    (p1.proargtypes[1] < p2.proargtypes[1]);
+    (p1.proargtypes[1] < p2.proargtypes[1])
+ORDER BY 1, 2; -- order none
          proargtypes         |       proargtypes        
 -----------------------------+--------------------------
  integer                     | xid
@@ -236,38 +213,18 @@ WHERE p1.oid != p2.oid AND
 (10 rows)
 
 SELECT DISTINCT p1.proargtypes[2]::regtype, p2.proargtypes[2]::regtype
-=======
-    (p1.proargtypes[1] < p2.proargtypes[1])
-ORDER BY 1, 2;
- proargtypes | proargtypes 
--------------+-------------
-          23 |          28
-        1114 |        1184
-        1560 |        1562
-        2277 |        2283
-(4 rows)
-
-SELECT DISTINCT p1.proargtypes[2], p2.proargtypes[2]
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
 	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-<<<<<<< HEAD
     NOT p1.proiswindow AND NOT p2.proiswindow AND
-    (p1.proargtypes[2] < p2.proargtypes[2]);
+    (p1.proargtypes[2] < p2.proargtypes[2])
+ORDER BY 1, 2; -- order none
          proargtypes         |       proargtypes        
 -----------------------------+--------------------------
  timestamp without time zone | timestamp with time zone
-=======
-    (p1.proargtypes[2] < p2.proargtypes[2])
-ORDER BY 1, 2;
- proargtypes | proargtypes 
--------------+-------------
-        1114 |        1184
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 (1 row)
 
 SELECT DISTINCT p1.proargtypes[3]::regtype, p2.proargtypes[3]::regtype
@@ -277,19 +234,12 @@ WHERE p1.oid != p2.oid AND
 	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-<<<<<<< HEAD
     NOT p1.proiswindow AND NOT p2.proiswindow AND
-    (p1.proargtypes[3] < p2.proargtypes[3]);
+    (p1.proargtypes[3] < p2.proargtypes[3])
+ORDER BY 1, 2; -- order none
          proargtypes         |       proargtypes        
 -----------------------------+--------------------------
  timestamp without time zone | timestamp with time zone
-=======
-    (p1.proargtypes[3] < p2.proargtypes[3])
-ORDER BY 1, 2;
- proargtypes | proargtypes 
--------------+-------------
-        1114 |        1184
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 (1 row)
 
 SELECT DISTINCT p1.proargtypes[4]::regtype, p2.proargtypes[4]::regtype
@@ -299,13 +249,9 @@ WHERE p1.oid != p2.oid AND
 	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-<<<<<<< HEAD
     NOT p1.proiswindow AND NOT p2.proiswindow AND
-    (p1.proargtypes[4] < p2.proargtypes[4]);
-=======
     (p1.proargtypes[4] < p2.proargtypes[4])
-ORDER BY 1, 2;
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
+ORDER BY 1, 2; -- order none
  proargtypes | proargtypes 
 -------------+-------------
 (0 rows)
@@ -317,13 +263,9 @@ WHERE p1.oid != p2.oid AND
 	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-<<<<<<< HEAD
     NOT p1.proiswindow AND NOT p2.proiswindow AND
-    (p1.proargtypes[5] < p2.proargtypes[5]);
-=======
     (p1.proargtypes[5] < p2.proargtypes[5])
-ORDER BY 1, 2;
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
+ORDER BY 1, 2; -- order none
  proargtypes | proargtypes 
 -------------+-------------
 (0 rows)
@@ -335,13 +277,9 @@ WHERE p1.oid != p2.oid AND
 	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-<<<<<<< HEAD
     NOT p1.proiswindow AND NOT p2.proiswindow AND
-    (p1.proargtypes[6] < p2.proargtypes[6]);
-=======
     (p1.proargtypes[6] < p2.proargtypes[6])
-ORDER BY 1, 2;
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
+ORDER BY 1, 2; -- order none
  proargtypes | proargtypes 
 -------------+-------------
 (0 rows)
@@ -353,13 +291,9 @@ WHERE p1.oid != p2.oid AND
 	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-<<<<<<< HEAD
     NOT p1.proiswindow AND NOT p2.proiswindow AND
-    (p1.proargtypes[7] < p2.proargtypes[7]);
-=======
     (p1.proargtypes[7] < p2.proargtypes[7])
-ORDER BY 1, 2;
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
+ORDER BY 1, 2; -- order none 
  proargtypes | proargtypes 
 -------------+-------------
 (0 rows)
