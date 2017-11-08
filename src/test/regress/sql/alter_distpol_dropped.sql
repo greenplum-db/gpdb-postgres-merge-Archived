@@ -8,6 +8,8 @@ align="int2 int4 char double"
 length="variable 1 3 4 11 17 19 23 32 196"
 pbv="true false"
 storage="true false"
+types=()
+aa=""
 
 # First create all the datatypes and test tables to test with. We do these in one large
 # transaction, to keep transaction overhead to minimum.
@@ -31,14 +33,40 @@ do
 					continue
 				fi
 
+				if [ $p == "true" ] && [ $l == 3 ];
+				then
+					continue
+				fi
+
+				aa=$a
+				# Not all alignments are valid for all internal lengths
+				if [ $l == "1" ];
+				then
+					aa="char"
+				fi
+				if [ $l == "4" ] && [ $a == "int2" ];
+				then
+					aa="int4"
+				fi
+				if [ $l == "variable" ];
+				then
+					aa="int4";
+				fi
+				if [ $a == "char" ] && [ $l != "1" ] && [ $l != "3" ];
+				then
+					aa="int4"
+				fi
+
 				typesuffix="${a}_${l}_${p}_${s}"
+
+				types+=("${typesuffix}")
 
 				cat <<EOF
 create type break_${typesuffix};
 create function breakin_${typesuffix} (cstring) returns break_${typesuffix} as 'textin' language internal strict;
 create function breakout_${typesuffix} (break_${typesuffix}) returns cstring as 'textout' language internal strict;
 
-create type break_${typesuffix} (input = breakin_${typesuffix}, output = breakout_${typesuffix}, internallength = $l, passedbyvalue = $p, alignment = $a);
+create type break_${typesuffix} (input = breakin_${typesuffix}, output = breakout_${typesuffix}, internallength = $l, passedbyvalue = $p, alignment = $aa);
 create table alter_distpol_g_${typesuffix} (i int, j break_${typesuffix}, k text) with (appendonly = $s) distributed by (i);
 insert into alter_distpol_g_${typesuffix} (i, k) select i, i from generate_series(1, 10) i;
 EOF
@@ -48,26 +76,11 @@ EOF
 done
 echo "COMMIT;"
 
-for a in $align
+for t in ${types[@]}
 do
-	for l in $length
-	do
-		for p in $pbv
-		do
-			for s in $storage
-			do
-				if [ $p == "true" ] && [ $l != "variable" ] && [ $l -gt 8 ];
-				then
-					continue
-				fi
-				if [ $p == "true" ] && [ $l == "variable" ];
-				then
-					continue
-				fi
+	typesuffix="$t"
 
-				typesuffix="${a}_${l}_${p}_${s}"
-
-				cat <<EOF
+	cat <<EOF
 alter table alter_distpol_g_${typesuffix} drop column j;
 select * from alter_distpol_g_${typesuffix} order by 1;
 alter table alter_distpol_g_${typesuffix} set with(reorganize = true) distributed randomly;
@@ -76,9 +89,6 @@ drop type break_${typesuffix} cascade;
 alter table alter_distpol_g_${typesuffix} set with(reorganize = true) distributed randomly;
 select * from alter_distpol_g_${typesuffix} order by 1;
 EOF
-			done
-		done
-	done
 done
 */
 
