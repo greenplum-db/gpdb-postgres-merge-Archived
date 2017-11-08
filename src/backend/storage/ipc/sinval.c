@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/backend/storage/ipc/sinval.c
-=======
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.88 2008/12/09 15:59:39 heikki Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */

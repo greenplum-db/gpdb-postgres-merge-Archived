@@ -664,12 +664,7 @@ Node *
 index_getbitmap(IndexScanDesc scan, Node *bitmap)
 {
 	FmgrInfo   *procedure;
-<<<<<<< HEAD
 	Node		*bm;
-=======
-	int64		ntids;
-	Datum		d;
->>>>>>> 38e9348282e
 
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(amgetbitmap);
@@ -680,22 +675,9 @@ index_getbitmap(IndexScanDesc scan, Node *bitmap)
 	/*
 	 * have the am's getbitmap proc do all the work.
 	 */
-<<<<<<< HEAD
 	bm = (Node *) DatumGetPointer(FunctionCall2(procedure,
 									  PointerGetDatum(scan),
 									  PointerGetDatum(bitmap)));
-=======
-	d = FunctionCall2(procedure,
-					  PointerGetDatum(scan),
-					  PointerGetDatum(bitmap));
-
-	ntids = DatumGetInt64(d);
-
-	/* If int8 is pass-by-ref, must free the result to avoid memory leak */
-#ifndef USE_FLOAT8_BYVAL
-	pfree(DatumGetPointer(d));
-#endif
->>>>>>> 38e9348282e
 
 	return bm;
 }

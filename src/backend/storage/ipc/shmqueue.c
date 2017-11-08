@@ -46,13 +46,8 @@ SHMQueueInit(SHM_QUEUE *queue)
 bool
 SHMQueueIsDetached(SHM_QUEUE *queue)
 {
-<<<<<<< HEAD
-	Assert(SHM_PTR_VALID(queue));
-	return ((queue)->prev == INVALID_OFFSET) && ((queue)->next== INVALID_OFFSET);
-=======
 	Assert(ShmemAddrIsValid(queue));
 	return (queue->prev == NULL);
->>>>>>> 38e9348282e
 }
 
 /*
