@@ -25,11 +25,7 @@ pgevent.dll: pgevent.def $(OBJS)
 	$(DLLWRAP) --def $< -o $(NAME) $(OBJS)
 
 pgmsgevent.o: pgmsgevent.rc win32ver.rc
-<<<<<<< HEAD
 	$(WINDRES) $< -o $@ --include-dir=$(top_builddir)/src/include --include-dir=$(top_srcdir)/src/include --include-dir=$(srcdir)
-=======
-	$(WINDRES) pgmsgevent.rc -o pgmsgevent.o --include-dir=$(top_builddir)/src/include
->>>>>>> 38e9348282e
 
 all-lib: $(NAME)
 

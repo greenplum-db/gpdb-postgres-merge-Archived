@@ -17,17 +17,13 @@ endif
 OBJS = catalog.o dependency.o heap.o index.o indexing.o namespace.o aclchk.o \
        objectaddress.o pg_aggregate.o pg_constraint.o pg_conversion.o pg_depend.o pg_enum.o \
        pg_largeobject.o pg_namespace.o pg_operator.o pg_proc.o pg_shdepend.o \
-<<<<<<< HEAD
-       pg_type.o toasting.o \
+       pg_type.o storage.o toasting.o \
        pg_exttable.o pg_extprotocol.o \
        pg_proc_callback.o \
        aoseg.o aoblkdir.o gp_fastsequence.o gp_segment_config.o \
        pg_attribute_encoding.o pg_compression.o aovisimap.o \
        gp_global_sequence.o gp_persistent.o pg_appendonly.o \
        oid_dispatch.o aocatalog.o $(QUICKLZ_COMPRESSION)
-=======
-       pg_type.o storage.o toasting.o
->>>>>>> 38e9348282e
 
 BKIFILES = postgres.bki postgres.description postgres.shdescription
 
@@ -51,8 +47,8 @@ POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/, \
 	pg_database.h pg_tablespace.h pg_pltemplate.h \
 	pg_authid.h pg_auth_members.h pg_shdepend.h pg_shdescription.h pg_resqueue.h pg_resgroup.h\
 	pg_ts_config.h pg_ts_config_map.h pg_ts_dict.h \
-<<<<<<< HEAD
 	pg_ts_parser.h pg_ts_template.h pg_extension.h \
+	pg_foreign_data_wrapper.h pg_foreign_server.h pg_user_mapping.h \
 	gp_configuration_history.h gp_id.h gp_policy.h gp_version.h \
 	gp_segment_config.h \
 	pg_window.h \
@@ -66,10 +62,6 @@ POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/, \
 	pg_proc_callback.h \
 	pg_partition_encoding.h \
 	pg_type_encoding.h \
-=======
-	pg_ts_parser.h pg_ts_template.h \
-	pg_foreign_data_wrapper.h pg_foreign_server.h pg_user_mapping.h \
->>>>>>> 38e9348282e
 	toasting.h indexing.h \
     )
 

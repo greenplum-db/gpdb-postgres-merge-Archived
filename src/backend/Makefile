@@ -14,14 +14,13 @@ subdir = src/backend
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-<<<<<<< HEAD
 BLD_TOP = $(top_builddir)/gpAux
 
 ifdef ADDON_DIR
 include $(BLD_TOP)/$(ADDON_DIR)/src/Makefile
 endif
 
-SUBDIRS = access bootstrap catalog parser commands executor \
+SUBDIRS = access bootstrap catalog parser commands executor foreign \
 	fts lib libpq main nodes optimizer port postmaster regex \
 	replication rewrite storage tcop tsearch utils $(top_builddir)/src/timezone cdb \
 	$(ADDON_SUBDIR)
@@ -33,11 +32,6 @@ endif
 ifeq ($(enable_codegen),yes)
 SUBDIRS += codegen
 endif
-=======
-SUBDIRS = access bootstrap catalog parser commands executor foreign lib libpq \
-	main nodes optimizer port postmaster regex rewrite \
-	storage tcop tsearch utils $(top_builddir)/src/timezone
->>>>>>> 38e9348282e
 
 include $(srcdir)/common.mk
 
@@ -192,11 +186,7 @@ utils/probes.o: utils/probes.d $(SUBDIROBJS)
 
 distprep:
 	$(MAKE) -C parser	gram.c gram.h scan.c
-<<<<<<< HEAD
-	$(MAKE) -C bootstrap	bootparse.c bootstrap_tokens.h bootscanner.c
-=======
 	$(MAKE) -C bootstrap	bootparse.c bootscanner.c
->>>>>>> 38e9348282e
 	$(MAKE) -C utils/misc	guc-file.c
 
 
@@ -290,10 +280,6 @@ endif
 clean:
 	rm -f $(LOCALOBJS) postgres$(X) $(POSTGRES_IMP) \
 		$(top_srcdir)/src/include/parser/gram.h \
-<<<<<<< HEAD
-		$(top_srcdir)/src/include/parser/parse.h \
-=======
->>>>>>> 38e9348282e
 		$(top_builddir)/src/include/utils/fmgroids.h
 ifeq ($(PORTNAME), cygwin)
 	rm -f postgres.dll postgres.def libpostgres.a
@@ -311,10 +297,6 @@ maintainer-clean: distclean
 	      $(srcdir)/parser/gram.c \
 	      $(srcdir)/parser/scan.c \
 	      $(srcdir)/parser/gram.h \
-<<<<<<< HEAD
-	      $(srcdir)/parser/parse.h \
-=======
->>>>>>> 38e9348282e
 	      $(srcdir)/utils/misc/guc-file.c
 
 

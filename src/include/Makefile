@@ -49,7 +49,7 @@ install: all installdirs
 	  chmod $(INSTALL_DATA_MODE) '$(DESTDIR)$(includedir_server)'/$$dir/*.h  || exit; \
 	done
 ifeq ($(vpath_build),yes)
-	for file in dynloader.h parser/parse.h utils/probes.h; do \
+	for file in dynloader.h parser/gram.h utils/probes.h; do \
 	  cp $$file '$(DESTDIR)$(includedir_server)'/$$file || exit; \
 	  chmod $(INSTALL_DATA_MODE) '$(DESTDIR)$(includedir_server)'/$$file || exit; \
 	done
@@ -70,11 +70,7 @@ check_oids:
 	(cd $(abs_top_srcdir)/src/include/catalog/ && ./duplicate_oids) 
 
 clean:
-<<<<<<< HEAD
-	rm -f utils/fmgroids.h parser/parse.h parser/gram.h utils/probes.h
-=======
 	rm -f utils/fmgroids.h parser/gram.h utils/probes.h
->>>>>>> 38e9348282e
 
 distclean maintainer-clean: clean
 	rm -f pg_config.h dynloader.h pg_config_os.h stamp-h

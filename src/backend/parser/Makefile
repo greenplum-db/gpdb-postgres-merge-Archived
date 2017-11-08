@@ -36,10 +36,7 @@ gram.o: $(srcdir)/scan.c
 $(srcdir)/gram.h: $(srcdir)/gram.c ;
 
 $(srcdir)/gram.c: gram.y
-<<<<<<< HEAD
 	$(PERL) $(srcdir)/check_keywords.pl $< $(top_srcdir)/src/include/parser/kwlist.h
-=======
->>>>>>> 38e9348282e
 ifdef BISON
 	$(BISON) -d $(BISONFLAGS) -o $@ $<
 else
@@ -61,9 +58,3 @@ gram.o keywords.o parser.o: $(srcdir)/gram.h
 
 # gram.c, gram.h, and scan.c are in the distribution tarball, so they
 # are not cleaned here.
-<<<<<<< HEAD
-clean: 
-# And the garbage that might have been left behind by partial build:
-	@rm -f y.tab.h y.tab.c y.output lex.yy.c gram.tab.c gram.tab.h
-=======
->>>>>>> 38e9348282e

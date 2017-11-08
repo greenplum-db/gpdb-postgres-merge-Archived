@@ -14,10 +14,6 @@ include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 
 OBJS = clauses.o joininfo.o pathnode.o placeholder.o plancat.o predtest.o \
-<<<<<<< HEAD
        relnode.o restrictinfo.o tlist.o var.o walkers.o
-=======
-       relnode.o restrictinfo.o tlist.o var.o
->>>>>>> 38e9348282e
 
 include $(top_srcdir)/src/backend/common.mk
