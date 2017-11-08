@@ -152,7 +152,6 @@ PQresultInstanceData      149
 PQresultSetInstanceData   150
 PQfireResultCreateEvents  151
 PQconninfoParse           152
-<<<<<<< HEAD
 PQinitOpenSSL             153
 PQescapeLiteral           154
 PQescapeIdentifier        155
@@ -163,5 +162,3 @@ PQpingParams              159
 PQlibVersion              160
 PQsetSingleRowMode        161
 PQconninfo                162
-=======
->>>>>>> 38e9348282e

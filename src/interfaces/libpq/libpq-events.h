@@ -5,17 +5,10 @@
  *	  that invoke the libpq "events" API, but are not interesting to
  *	  ordinary users of libpq.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-events.h,v 1.5 2010/01/02 16:58:12 momjian Exp $
-=======
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-events.h,v 1.2 2008/09/19 20:06:13 tgl Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -31,11 +24,7 @@ extern		"C"
 #endif
 
 /* Callback Event Ids */
-<<<<<<< HEAD
-			typedef enum
-=======
 typedef enum
->>>>>>> 38e9348282e
 {
 	PGEVT_REGISTER,
 	PGEVT_CONNRESET,

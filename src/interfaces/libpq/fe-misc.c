@@ -24,11 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-misc.c
-=======
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.137 2008/12/11 07:34:09 petere Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -873,18 +869,11 @@ pqSendSome(PGconn *conn, int len)
 #ifndef WIN32
 		sent = pqsecure_write(conn, ptr, len);
 #else
-<<<<<<< HEAD
 
 		/*
 		 * Windows can fail on large sends, per KB article Q201213. The
 		 * failure-point appears to be different in different versions of
 		 * Windows, but 64k should always be safe.
-=======
-		/*
-		 * Windows can fail on large sends, per KB article Q201213. The failure-point
-		 * appears to be different in different versions of Windows, but 64k should
-		 * always be safe.
->>>>>>> 38e9348282e
 		 */
 		sent = pqsecure_write(conn, ptr, Min(len, 65536));
 #endif
