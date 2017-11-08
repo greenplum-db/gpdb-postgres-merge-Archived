@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.240 2008/08/07 01:11:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.247 2008/12/18 18:20:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,10 @@ planner_hook_type planner_hook = NULL;
 #define EXPRKIND_VALUES		3
 #define EXPRKIND_LIMIT		4
 #define EXPRKIND_APPINFO	5
+<<<<<<< HEAD
 #define EXPRKIND_WINDOW_BOUND 6
+=======
+>>>>>>> 38e9348282e
 
 
 static Node *preprocess_expression(PlannerInfo *root, Node *expr, int kind);
@@ -301,7 +304,12 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	config = DefaultPlannerConfig();
 
 	/* primary planning entry point (may recurse for subqueries) */
+<<<<<<< HEAD
 	top_plan = subquery_planner(glob, parse, NULL, false, tuple_fraction, &root, config);
+=======
+	top_plan = subquery_planner(glob, parse, NULL,
+								false, tuple_fraction, &root);
+>>>>>>> 38e9348282e
 
 	/*
 	 * If creating a plan for a scrollable cursor, make sure it can run
@@ -500,10 +508,15 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 Plan *
 subquery_planner(PlannerGlobal *glob, Query *parse,
 				 PlannerInfo *parent_root,
+<<<<<<< HEAD
 				 bool hasRecursion,
 				 double tuple_fraction,
 				 PlannerInfo **subroot,
 				 PlannerConfig *config)
+=======
+				 bool hasRecursion, double tuple_fraction,
+				 PlannerInfo **subroot)
+>>>>>>> 38e9348282e
 {
 	int			num_old_subplans = list_length(glob->subplans);
 	PlannerInfo *root;
@@ -522,6 +535,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->init_plans = NIL;
 	root->cte_plan_ids = NIL;
 	root->eq_classes = NIL;
+<<<<<<< HEAD
 	root->init_plans = NIL;
 
 	root->list_cteplaninfo = NIL;
@@ -541,6 +555,10 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 		gp_singleton_segindex = gp_session_id % getgpsegmentCount();
 	}
 
+=======
+	root->append_rel_list = NIL;
+
+>>>>>>> 38e9348282e
 	root->hasRecursion = hasRecursion;
 	if (hasRecursion)
 		root->wt_param_id = SS_assign_worktable_param(root);
@@ -551,6 +569,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	/*
 	 * If there is a WITH list, process each WITH query and build an
 	 * initplan SubPlan structure for it.
+<<<<<<< HEAD
 	 *
 	 * Unlike upstrem, we do not use initplan + CteScan, so SS_process_ctes
 	 * will generate unused initplans. Commenting out the following two
@@ -574,6 +593,15 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	/*
 	 * Look for ANY and EXISTS SubLinks in WHERE and JOIN/ON clauses, and try
 	 * to transform them into joins. Note that this step does not descend
+=======
+	 */
+	if (parse->cteList)
+		SS_process_ctes(root);
+
+	/*
+	 * Look for ANY and EXISTS SubLinks in WHERE and JOIN/ON clauses, and try
+	 * to transform them into joins.  Note that this step does not descend
+>>>>>>> 38e9348282e
 	 * into subqueries; if we pull up any subqueries below, their SubLinks are
 	 * processed just before pulling them up.
 	 */
@@ -583,7 +611,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	/*
 	 * Scan the rangetable for set-returning functions, and inline them
 	 * if possible (producing subqueries that might get pulled up next).
-	 * Recursion issues here are handled in the same way as for IN clauses.
+	 * Recursion issues here are handled in the same way as for SubLinks.
 	 */
 	inline_set_returning_functions(root);
 
@@ -993,7 +1021,11 @@ inheritance_planner(PlannerInfo *root)
 		 */
 		memcpy(&subroot, root, sizeof(PlannerInfo));
 		subroot.parse = (Query *)
+<<<<<<< HEAD
 			adjust_appendrel_attrs(&subroot, (Node *) parse,
+=======
+			adjust_appendrel_attrs((Node *) parse,
+>>>>>>> 38e9348282e
 								   appinfo);
 		subroot.returningLists = NIL;
 		subroot.init_plans = NIL;
@@ -3248,7 +3280,11 @@ make_subplanTargetList(PlannerInfo *root,
 	 */
 	sub_tlist = flatten_tlist(tlist);
 	extravars = pull_var_clause(parse->havingQual, true);
+<<<<<<< HEAD
 	sub_tlist = add_to_flat_tlist(sub_tlist, extravars, false /* resjunk */);
+=======
+	sub_tlist = add_to_flat_tlist(sub_tlist, extravars);
+>>>>>>> 38e9348282e
 	list_free(extravars);
 
 	/*

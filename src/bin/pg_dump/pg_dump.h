@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.140 2008/05/09 23:32:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.144 2008/12/19 16:25:18 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,6 +136,8 @@ typedef enum
 	DO_TSDICT,
 	DO_TSTEMPLATE,
 	DO_TSCONFIG,
+	DO_FDW,
+	DO_FOREIGN_SERVER,
 	DO_BLOBS,
 	DO_BLOB_COMMENTS,
 	DO_EXTPROTOCOL,
@@ -299,10 +301,10 @@ typedef struct _tableInfo
 	char	   *reloptions;		/* options specified by WITH (...) */
 	bool		hasindex;		/* does it have any indexes? */
 	bool		hasrules;		/* does it have any rules? */
+	bool		hastriggers;	/* does it have any triggers? */
 	bool		hasoids;		/* does it have OIDs? */
 	bool		istoasted;		/* does table have toast table? */
 	int			ncheck;			/* # of CHECK expressions */
-	int			ntrig;			/* # of triggers */
 	/* these two are set only if table is a sequence owned by a column: */
 	Oid			owning_tab;		/* OID of table owning sequence */
 	int			owning_col;		/* attr # of column owning sequence */
@@ -335,8 +337,12 @@ typedef struct _tableInfo
 	 */
 	int			numParents;		/* number of (immediate) parent tables */
 	struct _tableInfo **parents;	/* TableInfos of immediate parents */
+<<<<<<< HEAD
 	struct _tableDataInfo *dataObj;		/* TableDataInfo, if dumping its data */
 	Oid			parrelid;			/* external partition's parent oid */
+=======
+	struct _tableDataInfo *dataObj;	/* TableDataInfo, if dumping its data */
+>>>>>>> 38e9348282e
 } TableInfo;
 
 typedef struct _attrDefInfo
@@ -410,6 +416,7 @@ typedef struct _constraintInfo
 	TypeInfo   *condomain;		/* NULL if table constraint */
 	char		contype;
 	char	   *condef;			/* definition, if CHECK or FOREIGN KEY */
+	Oid			confrelid;		/* referenced table, if FOREIGN KEY */
 	DumpId		conindex;		/* identifies associated index if any */
 	bool		conislocal;		/* TRUE if constraint has local definition */
 	bool		separate;		/* TRUE if must dump as separate item */
@@ -433,6 +440,7 @@ typedef struct _castInfo
 	Oid			casttarget;
 	Oid			castfunc;
 	char		castcontext;
+	char		castmethod;
 } CastInfo;
 
 /* InhInfo isn't a DumpableObject, just temporary state */
@@ -474,6 +482,7 @@ typedef struct _cfgInfo
 	Oid			cfgparser;
 } TSConfigInfo;
 
+<<<<<<< HEAD
 /*
  * We build an array of these with an entry for each object that is an
  * extension member according to pg_depend.
@@ -483,6 +492,27 @@ typedef struct _extensionMemberId
 	CatalogId	catId;			/* tableoid+oid of some member object */
 	ExtensionInfo *ext;			/* owning extension */
 } ExtensionMemberId;
+=======
+typedef struct _fdwInfo
+{
+	DumpableObject dobj;
+	char	   *rolname;
+	char	   *fdwlibrary;
+	char	   *fdwoptions;
+	char	   *fdwacl;
+} FdwInfo;
+
+typedef struct _foreignServerInfo
+{
+	DumpableObject dobj;
+	char	   *rolname;
+	Oid			srvfdw;
+	char	   *srvtype;
+	char	   *srvversion;
+	char	   *srvacl;
+	char	   *srvoptions;
+} ForeignServerInfo;
+>>>>>>> 38e9348282e
 
 /* global decls */
 extern bool force_quotes;		/* double-quotes for identifiers flag */
@@ -585,10 +615,15 @@ extern TSParserInfo *getTSParsers(int *numTSParsers);
 extern TSDictInfo *getTSDictionaries(int *numTSDicts);
 extern TSTemplateInfo *getTSTemplates(int *numTSTemplates);
 extern TSConfigInfo *getTSConfigurations(int *numTSConfigs);
+<<<<<<< HEAD
 extern void getExtensionMembership(ExtensionInfo extinfo[], int numExtensions);
 extern void processExtensionTables(ExtensionInfo extinfo[], int numExtensions);
 
 extern bool	testExtProtocolSupport(void);
 
+=======
+extern FdwInfo *getForeignDataWrappers(int *numForeignDataWrappers);
+extern ForeignServerInfo *getForeignServers(int *numForeignServers);
+>>>>>>> 38e9348282e
 
 #endif   /* PG_DUMP_H */

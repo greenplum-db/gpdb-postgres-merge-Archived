@@ -4,8 +4,13 @@
  * A simple benchmark program for PostgreSQL
  * Originally written by Tatsuo Ishii and enhanced by many contributors.
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.93 2009/12/15 07:17:57 itagaki Exp $
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
+=======
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.82 2008/09/11 23:52:48 tgl Exp $
+ * Copyright (c) 2000-2008, PostgreSQL Global Development Group
+>>>>>>> 38e9348282e
  * ALL RIGHTS RESERVED;
  *
  * Permission to use, copy, modify, and distribute this software and its
@@ -35,7 +40,10 @@
 
 #include "libpq-fe.h"
 #include "pqsignal.h"
+<<<<<<< HEAD
 #include "portability/instr_time.h"
+=======
+>>>>>>> 38e9348282e
 
 #include <ctype.h>
 
@@ -113,6 +121,10 @@ extern int	optind;
 
 #define DEFAULT_NXACTS	10		/* default nxacts */
 
+<<<<<<< HEAD
+=======
+int			nclients = 1;		/* default number of simulated clients */
+>>>>>>> 38e9348282e
 int			nxacts = 0;			/* number of transactions per client */
 int			duration = 0;		/* duration in seconds */
 
@@ -151,7 +163,11 @@ char	   *pgtty = NULL;
 char	   *login = NULL;
 char	   *dbName;
 
+<<<<<<< HEAD
 volatile bool timer_exceeded = false;	/* flag from signal handler */
+=======
+volatile bool timer_exceeded = false;		/* flag from signal handler */
+>>>>>>> 38e9348282e
 
 /* variable definitions */
 typedef struct
@@ -231,9 +247,14 @@ typedef struct
 	char	   *argv[MAX_ARGS]; /* command list */
 } Command;
 
+<<<<<<< HEAD
 static Command	  **sql_files[MAX_FILES];	/* SQL script files */
 static int			num_files;				/* number of script files */
 static int			debug = 0;				/* debug flag */
+=======
+Command   **sql_files[MAX_FILES];		/* SQL script files */
+int			num_files;			/* number of script files */
+>>>>>>> 38e9348282e
 
 /* default scenario */
 static char *tpc_b = {
@@ -280,9 +301,18 @@ static char *select_only = {
 static void setalarm(int seconds);
 static void* threadRun(void *arg);
 
+<<<<<<< HEAD
+=======
+/* Function prototypes */
+static void setalarm(int seconds);
+
+
+/* Calculate total time */
+>>>>>>> 38e9348282e
 static void
 usage(const char *progname)
 {
+<<<<<<< HEAD
 	printf("%s is a benchmarking tool for PostgreSQL.\n\n"
 		   "Usage:\n"
 		   "  %s [OPTIONS]... [DBNAME]\n"
@@ -319,6 +349,39 @@ usage(const char *progname)
 		   "\n"
 		   "Report bugs to <bugs@greenplum.org>.\n",
 		   progname, progname);
+=======
+	int sec = t1->tv_sec + t2->tv_sec;
+	int usec = t1->tv_usec + t2->tv_usec;
+	if (usec >= 1000000)
+	{
+		usec -= 1000000;
+		sec++;
+	}
+	result->tv_sec = sec;
+	result->tv_usec = usec;
+}
+
+/* Calculate time difference */
+static void
+diffTime(struct timeval *t1, struct timeval *t2, struct timeval *result)
+{
+	int sec = t1->tv_sec - t2->tv_sec;
+	int usec = t1->tv_usec - t2->tv_usec;
+	if (usec < 0)
+	{
+		usec += 1000000;
+		sec--;
+	}
+	result->tv_sec = sec;
+	result->tv_usec = usec;
+}
+
+static void
+usage(void)
+{
+	fprintf(stderr, "usage: pgbench [-h hostname][-p port][-c nclients][-t ntransactions | -T duration][-s scaling_factor][-D varname=value][-n][-C][-v][-S][-N][-M querymode][-f filename][-l][-U login][-d][dbname]\n");
+	fprintf(stderr, "(initialize mode): pgbench -i [-h hostname][-p port][-s scaling_factor] [-F fillfactor] [-U login][-d][dbname]\n");
+>>>>>>> 38e9348282e
 }
 
 /* random number generator: uniform distribution from min to max inclusive */
@@ -815,7 +878,19 @@ top:
 
 			++st->cnt;
 			if ((st->cnt >= nxacts && duration <= 0) || timer_exceeded)
+<<<<<<< HEAD
 				return clientDone(st, true);	/* exit success */
+=======
+			{
+				remains--;		/* I've done */
+				if (st->con != NULL)
+				{
+					PQfinish(st->con);
+					st->con = NULL;
+				}
+				return;
+			}
+>>>>>>> 38e9348282e
 		}
 
 		/* increment state counter */
@@ -1309,10 +1384,17 @@ init(void)
 
 	/* vacuum */
 	fprintf(stderr, "vacuum...");
+<<<<<<< HEAD
 	executeStatement(con, "vacuum analyze pgbench_branches");
 	executeStatement(con, "vacuum analyze pgbench_tellers");
 	executeStatement(con, "vacuum analyze pgbench_accounts");
 	executeStatement(con, "vacuum analyze pgbench_history");
+=======
+	executeStatement(con, "vacuum analyze branches");
+	executeStatement(con, "vacuum analyze tellers");
+	executeStatement(con, "vacuum analyze accounts");
+	executeStatement(con, "vacuum analyze history");
+>>>>>>> 38e9348282e
 
 	fprintf(stderr, "done.\n");
 	PQfinish(con);
@@ -1695,7 +1777,10 @@ printResults(int ttype, int normal_xacts, int nclients, int nthreads,
 	printf("scaling factor: %d\n", scale);
 	printf("query mode: %s\n", QUERYMODE[querymode]);
 	printf("number of clients: %d\n", nclients);
+<<<<<<< HEAD
 	printf("number of threads: %d\n", nthreads);
+=======
+>>>>>>> 38e9348282e
 	if (duration <= 0)
 	{
 		printf("number of transactions per client: %d\n", nxacts);
@@ -1708,8 +1793,13 @@ printResults(int ttype, int normal_xacts, int nclients, int nthreads,
 		printf("number of transactions actually processed: %d\n",
 			   normal_xacts);
 	}
+<<<<<<< HEAD
 	printf("tps = %f (including connections establishing)\n", tps_include);
 	printf("tps = %f (excluding connections establishing)\n", tps_exclude);
+=======
+	printf("tps = %f (including connections establishing)\n", t1);
+	printf("tps = %f (excluding connections establishing)\n", t2);
+>>>>>>> 38e9348282e
 }
 
 
@@ -1786,7 +1876,11 @@ main(int argc, char **argv)
 
 	memset(state, 0, sizeof(*state));
 
+<<<<<<< HEAD
 	while ((c = getopt(argc, argv, "ih:nvp:dSNc:Cs:t:T:U:lf:D:F:M:j:x:q")) != -1)
+=======
+	while ((c = getopt(argc, argv, "ih:nvp:dSNc:Cs:t:T:U:lf:D:F:M:")) != -1)
+>>>>>>> 38e9348282e
 	{
 		switch (c)
 		{
@@ -1973,11 +2067,15 @@ main(int argc, char **argv)
 	if (nxacts <= 0 && duration <= 0)
 		nxacts = DEFAULT_NXACTS;
 
+<<<<<<< HEAD
 	if (nclients % nthreads != 0)
 	{
 		fprintf(stderr, "number of clients (%d) must be a multiple of number of threads (%d)\n", nclients, nthreads);
 		exit(1);
 	}
+=======
+	remains = nclients;
+>>>>>>> 38e9348282e
 
 	if (nclients > 1)
 	{
@@ -2025,10 +2123,17 @@ main(int argc, char **argv)
 	{
 		if (duration <= 0)
 			printf("pghost: %s pgport: %s nclients: %d nxacts: %d dbName: %s\n",
+<<<<<<< HEAD
 				   pghost, pgport, nclients, nxacts, dbName);
 		else
 			printf("pghost: %s pgport: %s nclients: %d duration: %d dbName: %s\n",
 				   pghost, pgport, nclients, duration, dbName);
+=======
+			   pghost, pgport, nclients, nxacts, dbName);
+		else
+			printf("pghost: %s pgport: %s nclients: %d duration: %d dbName: %s\n",
+			   pghost, pgport, nclients, duration, dbName);
+>>>>>>> 38e9348282e
 	}
 
 	/* opening connection... */
@@ -2090,9 +2195,15 @@ main(int argc, char **argv)
 	if (!is_no_vacuum)
 	{
 		fprintf(stderr, "starting vacuum...");
+<<<<<<< HEAD
 		executeStatement(con, "vacuum pgbench_branches");
 		executeStatement(con, "vacuum pgbench_tellers");
 		executeStatement(con, "truncate pgbench_history");
+=======
+		executeStatement(con, "vacuum branches");
+		executeStatement(con, "vacuum tellers");
+		executeStatement(con, "truncate history");
+>>>>>>> 38e9348282e
 		fprintf(stderr, "end.\n");
 
 		if (do_vacuum_accounts)
@@ -2108,7 +2219,35 @@ main(int argc, char **argv)
 	INSTR_TIME_SET_CURRENT(start_time);
 	srandom((unsigned int) INSTR_TIME_GET_MICROSEC(start_time));
 
+<<<<<<< HEAD
 	/* process builtin SQL scripts */
+=======
+	/* get start up time */
+	gettimeofday(&start_time, NULL);
+
+	/* set alarm if duration is specified. */
+	if (duration > 0)
+		setalarm(duration);
+
+	if (is_connect == 0)
+	{
+		struct timeval t, now;
+
+		/* make connections to the database */
+		for (i = 0; i < nclients; i++)
+		{
+			state[i].id = i;
+			if ((state[i].con = doConnect()) == NULL)
+				exit(1);
+		}
+		/* time after connections set up */
+		gettimeofday(&now, NULL);
+		diffTime(&now, &start_time, &t);
+		addTime(&conn_total_time, &t, &conn_total_time);
+	}
+
+	/* process bultin SQL scripts */
+>>>>>>> 38e9348282e
 	switch (ttype)
 	{
 		case 0:
@@ -2373,6 +2512,7 @@ setalarm(int seconds)
 	alarm(seconds);
 }
 
+<<<<<<< HEAD
 #ifndef ENABLE_THREAD_SAFETY
 
 /*
@@ -2466,6 +2606,9 @@ pthread_join(pthread_t th, void **thread_return)
 #endif
 
 #else							/* WIN32 */
+=======
+#else  /* WIN32 */
+>>>>>>> 38e9348282e
 
 static VOID CALLBACK
 win32_timer_callback(PVOID lpParameter, BOOLEAN TimerOrWaitFired)
@@ -2476,12 +2619,21 @@ win32_timer_callback(PVOID lpParameter, BOOLEAN TimerOrWaitFired)
 static void
 setalarm(int seconds)
 {
+<<<<<<< HEAD
 	HANDLE		queue;
 	HANDLE		timer;
 
 	/* This function will be called at most once, so we can cheat a bit. */
 	queue = CreateTimerQueue();
 	if (seconds > ((DWORD) -1) / 1000 ||
+=======
+	HANDLE	queue;
+	HANDLE	timer;
+
+	/* This function will be called at most once, so we can cheat a bit. */
+	queue = CreateTimerQueue();
+	if (seconds > ((DWORD)-1) / 1000 ||
+>>>>>>> 38e9348282e
 		!CreateTimerQueueTimer(&timer, queue,
 							   win32_timer_callback, NULL, seconds * 1000, 0,
 							   WT_EXECUTEINTIMERTHREAD | WT_EXECUTEONLYONCE))
@@ -2491,6 +2643,7 @@ setalarm(int seconds)
 	}
 }
 
+<<<<<<< HEAD
 /* partial pthread implementation for Windows */
 
 typedef struct win32_pthread
@@ -2558,3 +2711,6 @@ pthread_join(pthread_t th, void **thread_return)
 }
 
 #endif   /* WIN32 */
+=======
+#endif  /* WIN32 */
+>>>>>>> 38e9348282e

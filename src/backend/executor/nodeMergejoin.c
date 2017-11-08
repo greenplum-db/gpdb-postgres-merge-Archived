@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.91 2008/04/13 20:51:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.93 2008/08/15 19:20:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -851,6 +851,7 @@ ExecMergeJoin(MergeJoinState *node)
 				innerTupleSlot = node->mj_InnerTupleSlot;
 				econtext->ecxt_innertuple = innerTupleSlot;
 
+<<<<<<< HEAD
 				if (node->js.jointype == JOIN_SEMI &&
 					node->mj_MatchedOuter)
 					qualResult = false;
@@ -860,6 +861,11 @@ ExecMergeJoin(MergeJoinState *node)
 								  ExecQual(joinqual, econtext, false));
 					MJ_DEBUG_QUAL(joinqual, qualResult);
 				}
+=======
+				qualResult = (joinqual == NIL ||
+							  ExecQual(joinqual, econtext, false));
+				MJ_DEBUG_QUAL(joinqual, qualResult);
+>>>>>>> 38e9348282e
 
 				if (qualResult)
 				{
@@ -872,6 +878,17 @@ ExecMergeJoin(MergeJoinState *node)
 						node->mj_JoinState = EXEC_MJ_NEXTOUTER;
 						break;
 					}
+<<<<<<< HEAD
+=======
+
+					/*
+					 * In a semijoin, we'll consider returning the first match,
+					 * but after that we're done with this outer tuple.
+					 */
+					if (node->js.jointype == JOIN_SEMI)
+						node->mj_JoinState = EXEC_MJ_NEXTOUTER;
+
+>>>>>>> 38e9348282e
 					qualResult = (otherqual == NIL ||
 								  ExecQual(otherqual, econtext, false));
 					MJ_DEBUG_QUAL(otherqual, qualResult);

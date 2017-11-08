@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.79 2008/04/13 03:49:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.80 2008/08/16 02:25:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -336,10 +336,15 @@ notice_processor(void *arg __attribute__((unused)), const char *message)
 }
 
 
+<<<<<<< HEAD
 /*
  * Convenience function to send a query.
  * Monitors result to detect COPY statements
  */
+=======
+/* Public interface */
+/* Convenience function to send a query. Monitors result to handle COPY statements */
+>>>>>>> 38e9348282e
 static void
 ExecuteSqlCommand(ArchiveHandle *AH, const char *qry, const char *desc)
 {
@@ -348,7 +353,11 @@ ExecuteSqlCommand(ArchiveHandle *AH, const char *qry, const char *desc)
 	char		errStmt[DB_MAX_ERR_STMT];
 
 #ifdef NOT_USED
+<<<<<<< HEAD
 	fprintf(stderr, "Executing: '%s'\n\n", qry);
+=======
+	 fprintf(stderr, "Executing: '%s'\n\n", qry);
+>>>>>>> 38e9348282e
 #endif
 	res = PQexec(conn, qry);
 
@@ -356,7 +365,10 @@ ExecuteSqlCommand(ArchiveHandle *AH, const char *qry, const char *desc)
 	{
 		case PGRES_COMMAND_OK:
 		case PGRES_TUPLES_OK:
+<<<<<<< HEAD
 		case PGRES_EMPTY_QUERY:
+=======
+>>>>>>> 38e9348282e
 			/* A-OK */
 			break;
 		case PGRES_COPY_IN:
@@ -423,7 +435,12 @@ ExecuteInsertCommands(ArchiveHandle *AH, const char *buf, size_t bufLen)
 					 * We've found the end of a statement. Send it and reset
 					 * the buffer.
 					 */
+<<<<<<< HEAD
 					ExecuteSqlCommand(AH, AH->sqlparse.curCmd->data,
+=======
+					appendPQExpBufferChar(AH->sqlBuf, ';');		/* inessential */
+					ExecuteSqlCommand(AH, AH->sqlBuf->data,
+>>>>>>> 38e9348282e
 									  "could not execute query");
 					resetPQExpBuffer(AH->sqlparse.curCmd);
 				}
@@ -547,4 +564,36 @@ void
 CommitTransaction(ArchiveHandle *AH)
 {
 	ExecuteSqlCommand(AH, "COMMIT", "could not commit database transaction");
+<<<<<<< HEAD
+=======
+}
+
+static bool
+_isIdentChar(unsigned char c)
+{
+	if ((c >= 'a' && c <= 'z')
+		|| (c >= 'A' && c <= 'Z')
+		|| (c >= '0' && c <= '9')
+		|| (c == '_')
+		|| (c == '$')
+		|| (c >= (unsigned char) '\200')		/* no need to check <= \377 */
+		)
+		return true;
+	else
+		return false;
+}
+
+static bool
+_isDQChar(unsigned char c, bool atStart)
+{
+	if ((c >= 'a' && c <= 'z')
+		|| (c >= 'A' && c <= 'Z')
+		|| (c == '_')
+		|| (!atStart && c >= '0' && c <= '9')
+		|| (c >= (unsigned char) '\200')		/* no need to check <= \377 */
+		)
+		return true;
+	else
+		return false;
+>>>>>>> 38e9348282e
 }

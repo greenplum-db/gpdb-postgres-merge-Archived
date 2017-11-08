@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.124 2008/08/02 21:31:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.130 2008/12/17 09:15:02 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,10 +136,18 @@ static void analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 
 /*
  *	analyze_rel() -- analyze one relation
+ *
+ * If update_reltuples is true, we update reltuples and relpages columns
+ * in pg_class.  Caller should pass false if we're part of VACUUM ANALYZE,
+ * and the VACUUM didn't skip any pages.  We only have an approximate count,
+ * so we don't want to overwrite the accurate values already inserted by the
+ * VACUUM in that case.  VACUUM always scans all indexes, however, so the
+ * pg_class entries for indexes are never updated if we're part of VACUUM
+ * ANALYZE.
  */
 void
 analyze_rel(Oid relid, VacuumStmt *vacstmt,
-			BufferAccessStrategy bstrategy)
+			BufferAccessStrategy bstrategy, bool update_reltuples)
 {
 	bool		optimizerBackup;
 
@@ -429,7 +437,19 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 	/*
 	 * Quit if no analyzable columns and no pg_class update needed.
 	 */
+<<<<<<< HEAD
 	if (attr_cnt <= 0 && !analyzableindex && vacstmt->vacuum)
+=======
+	if (attr_cnt <= 0 && !analyzableindex)
+	{
+		/*
+		 * We report that the table is empty; this is just so that the
+		 * autovacuum code doesn't go nuts trying to get stats about a
+		 * zero-column table.
+		 */
+		if (update_reltuples)
+			pgstat_report_analyze(onerel, 0, 0);
+>>>>>>> 38e9348282e
 		goto cleanup;
 
 	/*
@@ -566,19 +586,31 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 	}
 
 	/*
-	 * If we are running a standalone ANALYZE, update pages/tuples stats in
-	 * pg_class.  We know the accurate page count from the smgr, but only an
-	 * approximate number of tuples; therefore, if we are part of VACUUM
-	 * ANALYZE do *not* overwrite the accurate count already inserted by
-	 * VACUUM.	The same consideration applies to indexes.
+	 * Update pages/tuples stats in pg_class.
 	 */
-	if (!vacstmt->vacuum)
+	if (update_reltuples)
 	{
+<<<<<<< HEAD
 		vac_update_relstats(RelationGetRelid(onerel),
 							totalpages,
 							totalrows, hasindex,
 							InvalidTransactionId);
+=======
+		vac_update_relstats(onerel,
+							RelationGetNumberOfBlocks(onerel),
+							totalrows, hasindex, InvalidTransactionId);
+		/* report results to the stats collector, too */
+		pgstat_report_analyze(onerel, totalrows, totaldeadrows);
+	}
+>>>>>>> 38e9348282e
 
+	/*
+	 * Same for indexes. Vacuum always scans all indexes, so if we're part of
+	 * VACUUM ANALYZE, don't overwrite the accurate count already inserted by 
+	 * VACUUM.
+	 */
+	if (!vacstmt->vacuum)
+	{
 		for (ind = 0; ind < nindexes; ind++)
 		{
 			AnlIndexData *thisdata = &indexdata[ind];
@@ -609,14 +641,17 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 			}
 
 			totalindexrows = ceil(thisdata->tupleFract * totalrows);
+<<<<<<< HEAD
 			vac_update_relstats(RelationGetRelid(Irel[ind]),
 								estimatedIndexPages,
 								totalindexrows, false,
 								InvalidTransactionId);
+=======
+			vac_update_relstats(Irel[ind],
+								RelationGetNumberOfBlocks(Irel[ind]),
+								totalindexrows, false, InvalidTransactionId);
+>>>>>>> 38e9348282e
 		}
-
-		/* report results to the stats collector, too */
-		pgstat_report_analyze(onerel, totalrows, totaldeadrows);
 	}
 
 	/* MPP-6929: metadata tracking */
@@ -1084,7 +1119,8 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 		 * each tuple, but since we aren't doing much work per tuple, the
 		 * extra lock traffic is probably better avoided.
 		 */
-		targbuffer = ReadBufferWithStrategy(onerel, targblock, vac_strategy);
+		targbuffer = ReadBufferExtended(onerel, MAIN_FORKNUM, targblock,
+										RBM_NORMAL, vac_strategy);
 		LockBuffer(targbuffer, BUFFER_LOCK_SHARE);
 		targpage = BufferGetPage(targbuffer);
 		maxoffset = PageGetMaxOffsetNumber(targpage);
@@ -1855,7 +1891,11 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 					n;
 		Datum		values[Natts_pg_statistic];
 		bool		nulls[Natts_pg_statistic];
+<<<<<<< HEAD
 		char		replaces[Natts_pg_statistic];
+=======
+		bool		replaces[Natts_pg_statistic];
+>>>>>>> 38e9348282e
 
 		/* Ignore attr if we weren't able to collect stats */
 		if (!stats->stats_valid)
@@ -1867,7 +1907,11 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 		for (i = 0; i < Natts_pg_statistic; ++i)
 		{
 			nulls[i] = false;
+<<<<<<< HEAD
 			replaces[i] = 'r';
+=======
+			replaces[i] = true;
+>>>>>>> 38e9348282e
 		}
 
 		i = 0;
@@ -1938,10 +1982,17 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 		{
 			/* Yes, replace it */
 			stup = heap_modify_tuple(oldtup,
+<<<<<<< HEAD
 									 RelationGetDescr(sd),
 									 values,
 									 nulls,
 									 replaces);
+=======
+									RelationGetDescr(sd),
+									values,
+									nulls,
+									replaces);
+>>>>>>> 38e9348282e
 			ReleaseSysCache(oldtup);
 			simple_heap_update(sd, &stup->t_self, stup);
 		}

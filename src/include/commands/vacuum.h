@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.79 2008/07/01 10:33:09 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.82 2008/12/17 09:15:03 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,12 +140,12 @@ extern int	vacuum_freeze_min_age;
 
 
 /* in commands/vacuum.c */
-extern void vacuum(VacuumStmt *vacstmt, Oid relid,
+extern void vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	   BufferAccessStrategy bstrategy, bool for_wraparound, bool isTopLevel);
 extern void vac_open_indexes(Relation relation, LOCKMODE lockmode,
 				 int *nindexes, Relation **Irel);
 extern void vac_close_indexes(int nindexes, Relation *Irel, LOCKMODE lockmode);
-extern void vac_update_relstats(Oid relid,
+extern void vac_update_relstats(Relation relation,
 					BlockNumber num_pages,
 					double num_tuples,
 					bool hasindex,
@@ -170,6 +170,7 @@ extern bool vacuumStatement_IsInAppendOnlyCompactionPhase(VacuumStmt* vacstmt);
 extern bool vacuumStatement_IsInAppendOnlyPseudoCompactionPhase(VacuumStmt* vacstmt);
 
 /* in commands/vacuumlazy.c */
+<<<<<<< HEAD
 extern bool lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 				BufferAccessStrategy bstrategy, List *updated_stats);
 extern void vacuum_appendonly_rel(Relation aorel, VacuumStmt *vacstmt);
@@ -184,5 +185,13 @@ extern void analyze_rel(Oid relid, VacuumStmt *vacstmt,
 			BufferAccessStrategy bstrategy);
 extern void analyzeStatement(VacuumStmt *vacstmt, List *relids, BufferAccessStrategy start, bool isTopLevel);
 //extern void analyzeStmt(VacuumStmt *vacstmt, List *relids);
+=======
+extern void lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
+				BufferAccessStrategy bstrategy, bool *scanned_all);
+
+/* in commands/analyze.c */
+extern void analyze_rel(Oid relid, VacuumStmt *vacstmt,
+			BufferAccessStrategy bstrategy, bool update_reltuples);
+>>>>>>> 38e9348282e
 
 #endif   /* VACUUM_H */

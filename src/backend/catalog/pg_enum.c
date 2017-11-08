@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_enum.c,v 1.7 2008/06/19 00:46:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_enum.c,v 1.8 2008/11/02 01:45:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,11 @@ EnumValuesCreate(Oid enumTypeOid, List *vals,
 		values[Anum_pg_enum_enumlabel - 1] = NameGetDatum(&enumlabel);
 
 		tup = heap_form_tuple(tupDesc, values, nulls);
+<<<<<<< HEAD
 		HeapTupleSetOid(tup, oids[elemno]);
+=======
+		HeapTupleSetOid(tup, oids[i]);
+>>>>>>> 38e9348282e
 
 		simple_heap_insert(pg_enum, tup);
 		CatalogUpdateIndexes(pg_enum, tup);

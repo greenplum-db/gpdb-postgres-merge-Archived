@@ -7,7 +7,11 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/parser/analyze.h,v 1.38.2.1 2008/12/13 02:00:30 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/parser/analyze.h,v 1.39 2008/12/13 02:00:20 tgl Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */

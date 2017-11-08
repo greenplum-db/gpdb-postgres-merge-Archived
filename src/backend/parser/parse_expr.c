@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.229 2008/07/16 01:30:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.237 2008/10/26 02:46:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,10 +21,15 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+<<<<<<< HEAD
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/parse_agg.h"
+=======
+#include "optimizer/var.h"
+#include "parser/analyze.h"
+>>>>>>> 38e9348282e
 #include "parser/parse_coerce.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
@@ -70,10 +75,14 @@ static Node *transformWholeRowRef(ParseState *pstate, char *schemaname,
 					 char *relname, int location);
 static Node *transformIndirection(ParseState *pstate, Node *basenode,
 					 List *indirection);
+<<<<<<< HEAD
 static Node *transformGroupingFunc(ParseState *pstate, GroupingFunc *gf);
 static Node *transformPercentileExpr(ParseState *pstate, PercentileExpr *p);
 static Node *typecast_expression(ParseState *pstate, Node *expr,
 					TypeName *typename);
+=======
+static Node *transformTypeCast(ParseState *pstate, TypeCast *tc);
+>>>>>>> 38e9348282e
 static Node *make_row_comparison_op(ParseState *pstate, List *opname,
 					   List *largs, List *rargs, int location);
 static Node *make_row_distinct_op(ParseState *pstate, List *opname,
@@ -159,7 +168,6 @@ transformExpr(ParseState *pstate, Node *expr)
 		case T_TypeCast:
 			{
 				TypeCast   *tc = (TypeCast *) expr;
-				Node	   *arg;
 
 				/*
 				 * If the subject of the typecast is an ARRAY[] construct and
@@ -198,8 +206,12 @@ transformExpr(ParseState *pstate, Node *expr)
 					}
 				}
 
+<<<<<<< HEAD
 				arg = transformExpr(pstate, tc->arg);
 				result = typecast_expression(pstate, arg, tc->typeName);
+=======
+				result = transformTypeCast(pstate, tc);
+>>>>>>> 38e9348282e
 				break;
 			}
 
@@ -436,6 +448,13 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 
 		if (IsA(n, A_Indices))
 			subscripts = lappend(subscripts, n);
+		else if (IsA(n, A_Star))
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("row expansion via \"*\" is not supported here"),
+					 parser_errposition(pstate, exprLocation(basenode))));
+		}
 		else
 		{
 			Assert(IsA(n, String));
@@ -505,10 +524,14 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 	{
 		case 1:
 			{
-				char	   *name = strVal(linitial(cref->fields));
+				Node	   *field1 = (Node *) linitial(cref->fields);
+				char	   *name1;
+
+				Assert(IsA(field1, String));
+				name1 = strVal(field1);
 
 				/* Try to identify as an unqualified column */
-				node = colNameToVar(pstate, name, false, cref->location);
+				node = colNameToVar(pstate, name1, false, cref->location);
 
 				if (node == NULL)
 				{
@@ -521,9 +544,17 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					 * have used VALUE as a column name in the past.)
 					 */
 					if (pstate->p_value_substitute != NULL &&
-						strcmp(name, "value") == 0)
+						strcmp(name1, "value") == 0)
 					{
 						node = (Node *) copyObject(pstate->p_value_substitute);
+
+						/*
+						 * Try to propagate location knowledge.  This should
+						 * be extended if p_value_substitute can ever take on
+						 * other node types.
+						 */
+						if (IsA(node, CoerceToDomainValue))
+							((CoerceToDomainValue *) node)->location = cref->location;
 						break;
 					}
 
@@ -536,31 +567,44 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					 * PostQUEL-inspired syntax.  The preferred form now is
 					 * "rel.*".
 					 */
+<<<<<<< HEAD
 					if (refnameRangeTblEntry(pstate, NULL, name, cref->location,
+=======
+					if (refnameRangeTblEntry(pstate, NULL, name1,
+											 cref->location,
+>>>>>>> 38e9348282e
 											 &levels_up) != NULL)
-						node = transformWholeRowRef(pstate, NULL, name,
+						node = transformWholeRowRef(pstate, NULL, name1,
 													cref->location);
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_COLUMN),
 								 errmsg("column \"%s\" does not exist",
-										name),
+										name1),
 								 parser_errposition(pstate, cref->location)));
 				}
 				break;
 			}
 		case 2:
 			{
-				char	   *name1 = strVal(linitial(cref->fields));
-				char	   *name2 = strVal(lsecond(cref->fields));
+				Node	   *field1 = (Node *) linitial(cref->fields);
+				Node	   *field2 = (Node *) lsecond(cref->fields);
+				char	   *name1;
+				char	   *name2;
+
+				Assert(IsA(field1, String));
+				name1 = strVal(field1);
 
 				/* Whole-row reference? */
-				if (strcmp(name2, "*") == 0)
+				if (IsA(field2, A_Star))
 				{
 					node = transformWholeRowRef(pstate, NULL, name1,
 												cref->location);
 					break;
 				}
+
+				Assert(IsA(field2, String));
+				name2 = strVal(field2);
 
 				/* Try to identify as a once-qualified column */
 				node = qualifiedNameToVar(pstate, NULL, name1, name2, true,
@@ -584,17 +628,28 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 			}
 		case 3:
 			{
-				char	   *name1 = strVal(linitial(cref->fields));
-				char	   *name2 = strVal(lsecond(cref->fields));
-				char	   *name3 = strVal(lthird(cref->fields));
+				Node	   *field1 = (Node *) linitial(cref->fields);
+				Node	   *field2 = (Node *) lsecond(cref->fields);
+				Node	   *field3 = (Node *) lthird(cref->fields);
+				char	   *name1;
+				char	   *name2;
+				char	   *name3;
+
+				Assert(IsA(field1, String));
+				name1 = strVal(field1);
+				Assert(IsA(field2, String));
+				name2 = strVal(field2);
 
 				/* Whole-row reference? */
-				if (strcmp(name3, "*") == 0)
+				if (IsA(field3, A_Star))
 				{
 					node = transformWholeRowRef(pstate, name1, name2,
 												cref->location);
 					break;
 				}
+
+				Assert(IsA(field3, String));
+				name3 = strVal(field3);
 
 				/* Try to identify as a twice-qualified column */
 				node = qualifiedNameToVar(pstate, name1, name2, name3, true,
@@ -614,10 +669,21 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 			}
 		case 4:
 			{
-				char	   *name1 = strVal(linitial(cref->fields));
-				char	   *name2 = strVal(lsecond(cref->fields));
-				char	   *name3 = strVal(lthird(cref->fields));
-				char	   *name4 = strVal(lfourth(cref->fields));
+				Node	   *field1 = (Node *) linitial(cref->fields);
+				Node	   *field2 = (Node *) lsecond(cref->fields);
+				Node	   *field3 = (Node *) lthird(cref->fields);
+				Node	   *field4 = (Node *) lfourth(cref->fields);
+				char	   *name1;
+				char	   *name2;
+				char	   *name3;
+				char	   *name4;
+
+				Assert(IsA(field1, String));
+				name1 = strVal(field1);
+				Assert(IsA(field2, String));
+				name2 = strVal(field2);
+				Assert(IsA(field3, String));
+				name3 = strVal(field3);
 
 				/*
 				 * We check the catalog name and then ignore it.
@@ -630,12 +696,15 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 							 parser_errposition(pstate, cref->location)));
 
 				/* Whole-row reference? */
-				if (strcmp(name4, "*") == 0)
+				if (IsA(field4, A_Star))
 				{
 					node = transformWholeRowRef(pstate, name2, name3,
 												cref->location);
 					break;
 				}
+
+				Assert(IsA(field4, String));
+				name4 = strVal(field4);
 
 				/* Try to identify as a twice-qualified column */
 				node = qualifiedNameToVar(pstate, name2, name3, name4, true,
@@ -795,6 +864,7 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 		s->subLinkType = ROWCOMPARE_SUBLINK;
 		s->testexpr = lexpr;
 		s->operName = a->name;
+		s->location = a->location;
 		result = transformExpr(pstate, (Node *) s);
 	}
 	else if (lexpr && IsA(lexpr, RowExpr) &&
@@ -956,6 +1026,7 @@ transformAExprOf(ParseState *pstate, A_Expr *a)
 	 * in a boolean constant node.
 	 */
 	Node	   *lexpr = transformExpr(pstate, a->lexpr);
+	Const	   *result;
 	ListCell   *telem;
 	Oid			ltype,
 				rtype;
@@ -977,7 +1048,12 @@ transformAExprOf(ParseState *pstate, A_Expr *a)
 	if (strcmp(strVal(linitial(a->name)), "<>") == 0)
 		matched = (!matched);
 
-	return makeBoolConst(matched, false);
+	result = (Const *) makeBoolConst(matched, false);
+
+	/* Make the result have the original input's parse location */
+	result->location = exprLocation((Node *) a);
+
+	return (Node *) result;
 }
 
 static Node *
@@ -988,7 +1064,10 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 	List	   *rexprs;
 	List	   *rvars;
 	List	   *rnonvars;
+<<<<<<< HEAD
 	List	   *typeids;
+=======
+>>>>>>> 38e9348282e
 	bool		useOr;
 	bool		haveRowExpr;
 	ListCell   *l;
@@ -1015,7 +1094,10 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 	 */
 	lexpr = transformExpr(pstate, a->lexpr);
 	haveRowExpr = (lexpr && IsA(lexpr, RowExpr));
+<<<<<<< HEAD
 	typeids = list_make1_oid(exprType(lexpr));
+=======
+>>>>>>> 38e9348282e
 	rexprs = rvars = rnonvars = NIL;
 	foreach(l, (List *) a->rexpr)
 	{
@@ -1026,10 +1108,14 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 		if (contain_vars_of_level(rexpr, 0))
 			rvars = lappend(rvars, rexpr);
 		else
+<<<<<<< HEAD
 		{
 			rnonvars = lappend(rnonvars, rexpr);
 			typeids = lappend_oid(typeids, exprType(rexpr));
 		}
+=======
+			rnonvars = lappend(rnonvars, rexpr);
+>>>>>>> 38e9348282e
 	}
 
 	/*
@@ -1038,6 +1124,7 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 	 */
 	if (!haveRowExpr && list_length(rnonvars) > 1)
 	{
+		List	   *allexprs;
 		Oid			scalar_type;
 		Oid			array_type;
 
@@ -1045,8 +1132,16 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 		 * Try to select a common type for the array elements.  Note that
 		 * since the LHS' type is first in the list, it will be preferred when
 		 * there is doubt (eg, when all the RHS items are unknown literals).
+<<<<<<< HEAD
 		 */
 		scalar_type = select_common_type(typeids, NULL);
+=======
+		 *
+		 * Note: use list_concat here not lcons, to avoid damaging rnonvars.
+		 */
+		allexprs = list_concat(list_make1(lexpr), rnonvars);
+		scalar_type = select_common_type(pstate, allexprs, NULL, NULL);
+>>>>>>> 38e9348282e
 
 		/* Do we have an array type to use? */
 		if (OidIsValid(scalar_type))
@@ -1125,7 +1220,12 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 			result = cmp;
 		else
 			result = (Node *) makeBoolExpr(useOr ? OR_EXPR : AND_EXPR,
+<<<<<<< HEAD
 										   list_make2(result, cmp), a->location);
+=======
+										   list_make2(result, cmp),
+										   a->location);
+>>>>>>> 38e9348282e
 	}
 
 	return result;
@@ -1187,7 +1287,7 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 	Node	   *arg;
 	CaseTestExpr *placeholder;
 	List	   *newargs;
-	List	   *typeids;
+	List	   *resultexprs;
 	ListCell   *l;
 	Node	   *defresult;
 	Oid			ptype;
@@ -1225,7 +1325,7 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 
 	/* transform the list of arguments */
 	newargs = NIL;
-	typeids = NIL;
+	resultexprs = NIL;
 	foreach(l, c->args)
 	{
 		CaseWhen   *w = (CaseWhen *) lfirst(l);
@@ -1237,6 +1337,7 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 		warg = (Node *) w->expr;
 		if (placeholder)
 		{
+<<<<<<< HEAD
 			/* 
 			 * CASE placeholder WHEN IS NOT DISTINCT FROM warg:
 			 * 		set: warg->rhs->lhs = placeholder
@@ -1267,6 +1368,13 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 						 errmsg("syntax error at or near \"NOT\""),
 						 errhint("Missing <operand> for \"CASE <operand> WHEN IS NOT DISTINCT FROM ...\""),
 						 parser_errposition(pstate, exprLocation((Node *) warg))));
+=======
+			/* shorthand form was specified, so expand... */
+			warg = (Node *) makeSimpleA_Expr(AEXPR_OP, "=",
+											 (Node *) placeholder,
+											 warg,
+											 w->location);
+>>>>>>> 38e9348282e
 		}
 		neww->expr = (Expr *) transformExpr(pstate, warg);
 
@@ -1276,9 +1384,10 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 
 		warg = (Node *) w->result;
 		neww->result = (Expr *) transformExpr(pstate, warg);
+		neww->location = w->location;
 
 		newargs = lappend(newargs, neww);
-		typeids = lappend_oid(typeids, exprType((Node *) neww->result));
+		resultexprs = lappend(resultexprs, neww->result);
 	}
 
 	newc->args = newargs;
@@ -1290,6 +1399,7 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 		A_Const    *n = makeNode(A_Const);
 
 		n->val.type = T_Null;
+		n->location = -1;
 		defresult = (Node *) n;
 	}
 	newc->defresult = (Expr *) transformExpr(pstate, defresult);
@@ -1299,9 +1409,9 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 	 * determining preferred type. This is how the code worked before, but it
 	 * seems a little bogus to me --- tgl
 	 */
-	typeids = lcons_oid(exprType((Node *) newc->defresult), typeids);
+	resultexprs = lcons(newc->defresult, resultexprs);
 
-	ptype = select_common_type(typeids, "CASE");
+	ptype = select_common_type(pstate, resultexprs, "CASE", NULL);
 	Assert(OidIsValid(ptype));
 	newc->casetype = ptype;
 
@@ -1323,6 +1433,8 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 								  ptype,
 								  "CASE/WHEN");
 	}
+
+	newc->location = c->location;
 
 	return (Node *) newc;
 }
@@ -1351,7 +1463,13 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 	if (qtree->intoClause)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
+<<<<<<< HEAD
 				 errmsg("subquery cannot have SELECT INTO")));
+=======
+				 errmsg("subquery cannot have SELECT INTO"),
+				 parser_errposition(pstate,
+									exprLocation((Node *) qtree->intoClause))));
+>>>>>>> 38e9348282e
 
 	sublink->subselect = (Node *) qtree;
 
@@ -1377,14 +1495,19 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 			((TargetEntry *) lfirst(tlist_item))->resjunk)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("subquery must return a column")));
+					 errmsg("subquery must return a column"),
+					 parser_errposition(pstate, sublink->location)));
 		while ((tlist_item = lnext(tlist_item)) != NULL)
 		{
 			if (!((TargetEntry *) lfirst(tlist_item))->resjunk)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("subquery must return only one column"),
+<<<<<<< HEAD
 						 parser_errposition(pstate, exprLocation((Node *) sublink))));
+=======
+						 parser_errposition(pstate, sublink->location)));
+>>>>>>> 38e9348282e
 		}
 
 		/*
@@ -1429,6 +1552,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 			param->paramid = tent->resno;
 			param->paramtype = exprType((Node *) tent->expr);
 			param->paramtypmod = exprTypmod((Node *) tent->expr);
+			param->location = -1;
 
 			right_list = lappend(right_list, param);
 		}
@@ -1441,11 +1565,13 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		if (list_length(left_list) < list_length(right_list))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("subquery has too many columns")));
+					 errmsg("subquery has too many columns"),
+					 parser_errposition(pstate, sublink->location)));
 		if (list_length(left_list) > list_length(right_list))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("subquery has too few columns")));
+					 errmsg("subquery has too few columns"),
+					 parser_errposition(pstate, sublink->location)));
 
 		/*
 		 * Identify the combining operator(s) and generate a suitable
@@ -1455,7 +1581,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 												   sublink->operName,
 												   left_list,
 												   right_list,
-												   -1);
+												   sublink->location);
 	}
 
 	return result;
@@ -1475,7 +1601,6 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 	ArrayExpr  *newa = makeNode(ArrayExpr);
 	List	   *newelems = NIL;
 	List	   *newcoercedelems = NIL;
-	List	   *typeids = NIL;
 	ListCell   *element;
 	Oid			coerce_type;
 	bool		coerce_hard;
@@ -1491,7 +1616,6 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 	{
 		Node	   *e = (Node *) lfirst(element);
 		Node	   *newe;
-		Oid			newe_type;
 
 		/*
 		 * If an element is itself an A_ArrayExpr, recurse directly so that
@@ -1504,25 +1628,22 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 									  array_type,
 									  element_type,
 									  typmod);
-			newe_type = exprType(newe);
 			/* we certainly have an array here */
-			Assert(array_type == InvalidOid || array_type == newe_type);
+			Assert(array_type == InvalidOid || array_type == exprType(newe));
 			newa->multidims = true;
 		}
 		else
 		{
 			newe = transformExpr(pstate, e);
-			newe_type = exprType(newe);
 			/*
 			 * Check for sub-array expressions, if we haven't already
 			 * found one.
 			 */
-			if (!newa->multidims && type_is_array(newe_type))
+			if (!newa->multidims && type_is_array(exprType(newe)))
 				newa->multidims = true;
 		}
 
 		newelems = lappend(newelems, newe);
-		typeids = lappend_oid(typeids, newe_type);
 	}
 
 	/*
@@ -1541,15 +1662,16 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 	else
 	{
 		/* Can't handle an empty array without a target type */
-		if (typeids == NIL)
+		if (newelems == NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDETERMINATE_DATATYPE),
 					 errmsg("cannot determine type of empty array"),
 					 errhint("Explicitly cast to the desired type, "
-							 "for example ARRAY[]::integer[].")));
+							 "for example ARRAY[]::integer[]."),
+					 parser_errposition(pstate, a->location)));
 
 		/* Select a common type for the elements */
-		coerce_type = select_common_type(typeids, "ARRAY");
+		coerce_type = select_common_type(pstate, newelems, "ARRAY", NULL);
 
 		if (newa->multidims)
 		{
@@ -1559,7 +1681,8 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
 						 errmsg("could not find element type for data type %s",
-								format_type_be(array_type))));
+								format_type_be(array_type)),
+						 parser_errposition(pstate, a->location)));
 		}
 		else
 		{
@@ -1639,6 +1762,10 @@ transformRowExpr(ParseState *pstate, RowExpr *r)
 	/* Barring later casting, we consider the type RECORD */
 	newr->row_typeid = RECORDOID;
 	newr->row_format = COERCE_IMPLICIT_CAST;
+<<<<<<< HEAD
+=======
+	newr->colnames = NIL;		/* ROW() has anonymous columns */
+>>>>>>> 38e9348282e
 	newr->location = r->location;
 
 	return (Node *) newr;
@@ -1700,7 +1827,6 @@ transformCoalesceExpr(ParseState *pstate, CoalesceExpr *c)
 	CoalesceExpr *newc = makeNode(CoalesceExpr);
 	List	   *newargs = NIL;
 	List	   *newcoercedargs = NIL;
-	List	   *typeids = NIL;
 	ListCell   *args;
 
 	foreach(args, c->args)
@@ -1710,10 +1836,9 @@ transformCoalesceExpr(ParseState *pstate, CoalesceExpr *c)
 
 		newe = transformExpr(pstate, e);
 		newargs = lappend(newargs, newe);
-		typeids = lappend_oid(typeids, exprType(newe));
 	}
 
-	newc->coalescetype = select_common_type(typeids, "COALESCE");
+	newc->coalescetype = select_common_type(pstate, newargs, "COALESCE", NULL);
 
 	/* Convert arguments if necessary */
 	foreach(args, newargs)
@@ -1738,7 +1863,7 @@ transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m)
 	MinMaxExpr *newm = makeNode(MinMaxExpr);
 	List	   *newargs = NIL;
 	List	   *newcoercedargs = NIL;
-	List	   *typeids = NIL;
+	const char *funcname = (m->op == IS_GREATEST) ? "GREATEST" : "LEAST";
 	ListCell   *args;
 
 	newm->op = m->op;
@@ -1749,10 +1874,9 @@ transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m)
 
 		newe = transformExpr(pstate, e);
 		newargs = lappend(newargs, newe);
-		typeids = lappend_oid(typeids, exprType(newe));
 	}
 
-	newm->minmaxtype = select_common_type(typeids, "GREATEST/LEAST");
+	newm->minmaxtype = select_common_type(pstate, newargs, funcname, NULL);
 
 	/* Convert arguments if necessary */
 	foreach(args, newargs)
@@ -1762,7 +1886,7 @@ transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m)
 
 		newe = coerce_to_common_type(pstate, e,
 									 newm->minmaxtype,
-									 "GREATEST/LEAST");
+									 funcname);
 		newcoercedargs = lappend(newcoercedargs, newe);
 	}
 
@@ -1789,8 +1913,11 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 	else
 		newx->name = NULL;
 	newx->xmloption = x->xmloption;
+<<<<<<< HEAD
 	newx->type = XMLOID;		/* this just marks the node as transformed */
 	newx->typmod = -1;
+=======
+>>>>>>> 38e9348282e
 	newx->location = x->location;
 
 	/*
@@ -1820,8 +1947,13 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 x->op == IS_XMLELEMENT
+<<<<<<< HEAD
 			? errmsg("unnamed XML attribute value must be a column reference")
 			: errmsg("unnamed XML element value must be a column reference"),
+=======
+					 ? errmsg("unnamed XML attribute value must be a column reference")
+					 : errmsg("unnamed XML element value must be a column reference"),
+>>>>>>> 38e9348282e
 					 parser_errposition(pstate, r->location)));
 			argname = NULL;		/* keep compiler quiet */
 		}
@@ -1836,8 +1968,13 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 				if (strcmp(argname, strVal(lfirst(lc2))) == 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
+<<<<<<< HEAD
 					errmsg("XML attribute name \"%s\" appears more than once",
 						   argname),
+=======
+							 errmsg("XML attribute name \"%s\" appears more than once",
+									argname),
+>>>>>>> 38e9348282e
 							 parser_errposition(pstate, r->location)));
 			}
 		}
@@ -1939,7 +2076,11 @@ transformXmlSerialize(ParseState *pstate, XmlSerialize *xs)
 								   TEXTOID, targetType, targetTypmod,
 								   COERCION_IMPLICIT,
 								   COERCE_IMPLICIT_CAST,
+<<<<<<< HEAD
 								   xexpr->location);
+=======
+								   -1);
+>>>>>>> 38e9348282e
 	if (result == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_CANNOT_COERCE),
@@ -2049,7 +2190,7 @@ static Node *
 transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname,
 					 int location)
 {
-	Node	   *result;
+	Var		   *result;
 	RangeTblEntry *rte;
 	int			vnum;
 	int			sublevels_up;
@@ -2076,11 +2217,11 @@ transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname,
 			if (!OidIsValid(toid))
 				elog(ERROR, "could not find type OID for relation %u",
 					 rte->relid);
-			result = (Node *) makeVar(vnum,
-									  InvalidAttrNumber,
-									  toid,
-									  -1,
-									  sublevels_up);
+			result = makeVar(vnum,
+							 InvalidAttrNumber,
+							 toid,
+							 -1,
+							 sublevels_up);
 			break;
 		case RTE_TABLEFUNCTION:
 		case RTE_FUNCTION:
@@ -2088,11 +2229,11 @@ transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname,
 			if (type_is_rowtype(toid))
 			{
 				/* func returns composite; same as relation case */
-				result = (Node *) makeVar(vnum,
-										  InvalidAttrNumber,
-										  toid,
-										  -1,
-										  sublevels_up);
+				result = makeVar(vnum,
+								 InvalidAttrNumber,
+								 toid,
+								 -1,
+								 sublevels_up);
 			}
 			else
 			{
@@ -2102,21 +2243,21 @@ transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname,
 				 * seems a tad inconsistent, especially if "f.*" was
 				 * explicitly written ...)
 				 */
-				result = (Node *) makeVar(vnum,
-										  1,
-										  toid,
-										  -1,
-										  sublevels_up);
+				result = makeVar(vnum,
+								 1,
+								 toid,
+								 -1,
+								 sublevels_up);
 			}
 			break;
 		case RTE_VALUES:
 			toid = RECORDOID;
 			/* returns composite; same as relation case */
-			result = (Node *) makeVar(vnum,
-									  InvalidAttrNumber,
-									  toid,
-									  -1,
-									  sublevels_up);
+			result = makeVar(vnum,
+							 InvalidAttrNumber,
+							 toid,
+							 -1,
+							 sublevels_up);
 			break;
 		default:
 
@@ -2126,17 +2267,18 @@ transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname,
 			 * expanded to a RowExpr during planning, but that is not our
 			 * concern here.)
 			 */
-			result = (Node *) makeVar(vnum,
-									  InvalidAttrNumber,
-									  RECORDOID,
-									  -1,
-									  sublevels_up);
+			result = makeVar(vnum,
+							 InvalidAttrNumber,
+							 RECORDOID,
+							 -1,
+							 sublevels_up);
 			break;
 	}
 
-	return result;
-}
+	/* location is not filled in by makeVar */
+	result->location = location;
 
+<<<<<<< HEAD
 static Node *
 transformGroupingFunc(ParseState *pstate, GroupingFunc *gf)
 {
@@ -2485,40 +2627,64 @@ transformPercentileExpr(ParseState *pstate, PercentileExpr *p)
 	pstate->p_hasAggs = true;
 
 	return (Node *) p;
+=======
+	return (Node *) result;
+>>>>>>> 38e9348282e
 }
 
 /*
  * Handle an explicit CAST construct.
  *
- * The given expr has already been transformed, but we need to lookup
- * the type name and then apply any necessary coercion function(s).
+ * Transform the argument, then look up the type name and apply any necessary
+ * coercion function(s).
  */
 static Node *
-typecast_expression(ParseState *pstate, Node *expr, TypeName *typename)
+transformTypeCast(ParseState *pstate, TypeCast *tc)
 {
+	Node	   *result;
+	Node	   *expr = transformExpr(pstate, tc->arg);
 	Oid			inputType = exprType(expr);
 	Oid			targetType;
 	int32		targetTypmod;
+	int			location;
 
-	targetType = typenameTypeId(pstate, typename, &targetTypmod);
+	targetType = typenameTypeId(pstate, tc->typename, &targetTypmod);
 
 	if (inputType == InvalidOid)
 		return expr;			/* do nothing if NULL input */
 
+<<<<<<< HEAD
 	expr = coerce_to_target_type(pstate, expr, inputType,
 								 targetType, targetTypmod,
 								 COERCION_EXPLICIT,
 								 COERCE_EXPLICIT_CAST,
 								 typename->location);
 	if (expr == NULL)
+=======
+	/*
+	 * Location of the coercion is preferentially the location of the :: or
+	 * CAST symbol, but if there is none then use the location of the type
+	 * name (this can happen in TypeName 'string' syntax, for instance).
+	 */
+	location = tc->location;
+	if (location < 0)
+		location = tc->typename->location;
+
+	result = coerce_to_target_type(pstate, expr, inputType,
+								   targetType, targetTypmod,
+								   COERCION_EXPLICIT,
+								   COERCE_EXPLICIT_CAST,
+								   location);
+	if (result == NULL)
+>>>>>>> 38e9348282e
 		ereport(ERROR,
 				(errcode(ERRCODE_CANNOT_COERCE),
 				 errmsg("cannot cast type %s to %s",
 						format_type_be(inputType),
 						format_type_be(targetType)),
-				 parser_errposition(pstate, typename->location)));
+				 parser_coercion_errposition(pstate, location, expr)));
 
-	return expr;
+	return result;
 }
 
 /*

@@ -7,7 +7,11 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/rewrite/rewriteManip.h,v 1.46 2008/08/22 00:16:04 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/rewrite/rewriteManip.h,v 1.47 2008/09/01 20:42:45 tgl Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -37,8 +41,11 @@ extern void IncrementVarSublevelsUp(Node *node, int delta_sublevels_up,
 						int min_sublevels_up);
 extern void IncrementVarSublevelsUp_rtable(List *rtable,
 							   int delta_sublevels_up,	int min_sublevels_up);
+<<<<<<< HEAD
 extern void IncrementVarSublevelsUpInTransformGroupedWindows(Node *node,
 		int delta_sublevels_up, int min_sublevels_up);
+=======
+>>>>>>> 38e9348282e
 
 extern bool rangeTableEntry_used(Node *node, int rt_index,
 					 int sublevels_up);
@@ -52,7 +59,10 @@ extern void AddInvertedQual(Query *parsetree, Node *qual);
 
 extern bool contain_aggs_of_level(Node *node, int levelsup);
 extern int	locate_agg_of_level(Node *node, int levelsup);
+<<<<<<< HEAD
 extern int	locate_windowfunc(Node *node);
+=======
+>>>>>>> 38e9348282e
 extern bool checkExprHasAggs(Node *node);
 extern bool checkExprHasWindowFuncs(Node *node);
 extern bool checkExprHasSubLink(Node *node);

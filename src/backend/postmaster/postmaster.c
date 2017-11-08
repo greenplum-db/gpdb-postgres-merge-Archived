@@ -39,7 +39,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.554 2008/03/31 02:43:14 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.567 2008/12/11 10:25:17 petere Exp $
+>>>>>>> 38e9348282e
  *
  * NOTES
  *
@@ -656,8 +660,8 @@ typedef struct
 	char		my_exec_path[MAXPGPATH];
 	char		pkglib_path[MAXPGPATH];
 	char		ExtraOptions[MAXPGPATH];
-	char		lc_collate[LOCALE_NAME_BUFLEN];
-	char		lc_ctype[LOCALE_NAME_BUFLEN];
+	char		lc_collate[NAMEDATALEN];
+	char		lc_ctype[NAMEDATALEN];
 }	BackendParameters;
 
 static void read_backend_variables(char *id, Port *port);
@@ -1404,7 +1408,20 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * Set reference point for stack-depth checking.
 	 */
+<<<<<<< HEAD
 	set_stack_base();
+=======
+	if (!load_hba())
+	{
+		/* 
+		 * It makes no sense continue if we fail to load the HBA file, since 
+		 * there is no way to connect to the database in this case.
+		 */
+		ereport(FATAL,
+				(errmsg("could not load pg_hba.conf")));
+	}
+	load_ident();
+>>>>>>> 38e9348282e
 
 	/*
 	 * Initialize the list of active backends.
@@ -2102,6 +2119,7 @@ pmdaemonize(void)
 		ExitPostmaster(1);
 	}
 #endif
+<<<<<<< HEAD
 
 	/*
 	 * Reassociate stdin/stdout/stderr.  fork_process() cleared any pending
@@ -2119,6 +2137,13 @@ pmdaemonize(void)
 		res = dup2(pmlog, 2);
 	} while (res < 0 && errno == EINTR);
 	close(pmlog);
+=======
+	i = open(DEVNULL, O_RDWR, 0);
+	dup2(i, 0);
+	dup2(i, 1);
+	dup2(i, 2);
+	close(i);
+>>>>>>> 38e9348282e
 #else							/* WIN32 */
 	/* not supported */
 	elog(FATAL, "silent_mode is not supported under Windows");
@@ -4014,6 +4039,7 @@ SIGHUP_handler(SIGNAL_ARGS)
 				(errmsg("received SIGHUP, reloading configuration files")));
 		ProcessConfigFile(PGC_SIGHUP);
 		SignalChildren(SIGHUP);
+<<<<<<< HEAD
 		signal_child_if_up(StartupPID, SIGHUP);
         signal_child_if_up(StartupPass2PID, SIGHUP);
         signal_child_if_up(StartupPass3PID, SIGHUP);
@@ -4037,6 +4063,20 @@ SIGHUP_handler(SIGNAL_ARGS)
 		}
 		signal_child_if_up(SysLoggerPID, SIGHUP);
 		signal_child_if_up(PgStatPID, SIGHUP);
+=======
+		if (BgWriterPID != 0)
+			signal_child(BgWriterPID, SIGHUP);
+		if (WalWriterPID != 0)
+			signal_child(WalWriterPID, SIGHUP);
+		if (AutoVacPID != 0)
+			signal_child(AutoVacPID, SIGHUP);
+		if (PgArchPID != 0)
+			signal_child(PgArchPID, SIGHUP);
+		if (SysLoggerPID != 0)
+			signal_child(SysLoggerPID, SIGHUP);
+		if (PgStatPID != 0)
+			signal_child(PgStatPID, SIGHUP);
+>>>>>>> 38e9348282e
 
 		/* Reload authentication config files too */
 		if (!load_hba())
@@ -6583,6 +6623,39 @@ BackendInitialize(Port *port)
 	port->remote_port = strdup(remote_port);
 
 	/*
+<<<<<<< HEAD
+=======
+	 * In EXEC_BACKEND case, we didn't inherit the contents of pg_hba.conf
+	 * etcetera from the postmaster, and have to load them ourselves. Build
+	 * the PostmasterContext (which didn't exist before, in this process) to
+	 * contain the data.
+	 *
+	 * FIXME: [fork/exec] Ugh.	Is there a way around this overhead?
+	 */
+#ifdef EXEC_BACKEND
+	Assert(PostmasterContext == NULL);
+	PostmasterContext = AllocSetContextCreate(TopMemoryContext,
+											  "Postmaster",
+											  ALLOCSET_DEFAULT_MINSIZE,
+											  ALLOCSET_DEFAULT_INITSIZE,
+											  ALLOCSET_DEFAULT_MAXSIZE);
+	MemoryContextSwitchTo(PostmasterContext);
+
+	if (!load_hba())
+	{
+		/* 
+		 * It makes no sense continue if we fail to load the HBA file, since 
+		 * there is no way to connect to the database in this case.
+		 */
+		ereport(FATAL,
+				(errmsg("could not load pg_hba.conf")));
+	}
+	load_ident();
+	load_role();
+#endif
+
+	/*
+>>>>>>> 38e9348282e
 	 * Ready to begin client interaction.  We will give up and exit(0) after a
 	 * time delay, so that a broken client can't hog a connection
 	 * indefinitely.  PreAuthDelay doesn't count against the time limit.
@@ -8052,8 +8125,8 @@ save_backend_variables(BackendParameters *param, Port *port,
 
 	strlcpy(param->ExtraOptions, ExtraOptions, MAXPGPATH);
 
-	strlcpy(param->lc_collate, setlocale(LC_COLLATE, NULL), LOCALE_NAME_BUFLEN);
-	strlcpy(param->lc_ctype, setlocale(LC_CTYPE, NULL), LOCALE_NAME_BUFLEN);
+	strlcpy(param->lc_collate, setlocale(LC_COLLATE, NULL), NAMEDATALEN);
+	strlcpy(param->lc_ctype, setlocale(LC_CTYPE, NULL), NAMEDATALEN);
 
 	return true;
 }

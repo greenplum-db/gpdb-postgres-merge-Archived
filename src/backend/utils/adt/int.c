@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.82 2008/06/17 19:10:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.83 2008/10/05 23:18:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -731,6 +731,19 @@ int4div(PG_FUNCTION_ARGS)
 
 	result = arg1 / arg2;
 
+<<<<<<< HEAD
+=======
+	/*
+	 * Overflow check.	The only possible overflow case is for arg1 = INT_MIN,
+	 * arg2 = -1, where the correct result is -INT_MIN, which can't be
+	 * represented on a two's-complement machine.  Most machines produce
+	 * INT_MIN but it seems some produce zero.
+	 */
+	if (arg2 == -1 && arg1 < 0 && result <= 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
+>>>>>>> 38e9348282e
 	PG_RETURN_INT32(result);
 }
 
@@ -853,6 +866,7 @@ int2div(PG_FUNCTION_ARGS)
 	}
 
 	/*
+<<<<<<< HEAD
 	 * SHRT_MIN / -1 is problematic, since the result can't be represented on
 	 * a two's-complement machine.  Some machines produce SHRT_MIN, some
 	 * produce zero, some throw an exception.  We can dodge the problem by
@@ -873,6 +887,17 @@ int2div(PG_FUNCTION_ARGS)
 
 	result = arg1 / arg2;
 
+=======
+	 * Overflow check.	The only possible overflow case is for arg1 =
+	 * SHRT_MIN, arg2 = -1, where the correct result is -SHRT_MIN, which can't
+	 * be represented on a two's-complement machine.  Most machines produce
+	 * SHRT_MIN but it seems some produce zero.
+	 */
+	if (arg2 == -1 && arg1 < 0 && result <= 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallint out of range")));
+>>>>>>> 38e9348282e
 	PG_RETURN_INT16(result);
 }
 
@@ -1050,6 +1075,7 @@ int42div(PG_FUNCTION_ARGS)
 	}
 
 	/*
+<<<<<<< HEAD
 	 * INT_MIN / -1 is problematic, since the result can't be represented on a
 	 * two's-complement machine.  Some machines produce INT_MIN, some produce
 	 * zero, some throw an exception.  We can dodge the problem by recognizing
@@ -1070,6 +1096,17 @@ int42div(PG_FUNCTION_ARGS)
 
 	result = arg1 / arg2;
 
+=======
+	 * Overflow check.	The only possible overflow case is for arg1 = INT_MIN,
+	 * arg2 = -1, where the correct result is -INT_MIN, which can't be
+	 * represented on a two's-complement machine.  Most machines produce
+	 * INT_MIN but it seems some produce zero.
+	 */
+	if (arg2 == -1 && arg1 < 0 && result <= 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
+>>>>>>> 38e9348282e
 	PG_RETURN_INT32(result);
 }
 

@@ -184,10 +184,17 @@ main ()
  int DATETIME_INTERVAL_CODE ;
  
 #line 28 "dyntest.pgc"
+<<<<<<< HEAD
  char NAME [ 120 ] , BOOLVAR ;
  
 #line 29 "dyntest.pgc"
  char STRINGVAR [ 1024 ] ;
+=======
+ char  NAME  [ 120 ]   ,  BOOLVAR    ;
+ 
+#line 29 "dyntest.pgc"
+ char  STRINGVAR  [ 1024 ]   ;
+>>>>>>> 38e9348282e
  
 #line 30 "dyntest.pgc"
  double DOUBLEVAR ;

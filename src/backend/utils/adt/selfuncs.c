@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.250 2008/07/07 20:24:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.257 2008/10/23 00:24:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,19 +57,34 @@
  *
  *		float8 oprrest (internal, oid, internal, int4);
  *
+ * The result is a selectivity, that is, a fraction (0 to 1) of the rows
+ * of the relation that are expected to produce a TRUE result for the
+ * given operator.
+ *
  * The call convention for a join estimator (oprjoin function) is similar
- * except that varRelid is not needed, and instead the join type is
+ * except that varRelid is not needed, and instead join information is
  * supplied:
  *
  *		Selectivity oprjoin (PlannerInfo *root,
  *							 Oid operator,
  *							 List *args,
- *							 JoinType jointype);
+ *							 JoinType jointype,
+ *							 SpecialJoinInfo *sjinfo);
  *
- *		float8 oprjoin (internal, oid, internal, int2);
+ *		float8 oprjoin (internal, oid, internal, int2, internal);
  *
- * (We deliberately make the SQL signature different to facilitate
- * catching errors.)
+ * (Before Postgres 8.4, join estimators had only the first four of these
+ * parameters.  That signature is still allowed, but deprecated.)  The
+ * relationship between jointype and sjinfo is explained in the comments for
+ * clause_selectivity() --- the short version is that jointype is usually
+ * best ignored in favor of examining sjinfo.
+ *
+ * Join selectivity for regular inner and outer joins is defined as the
+ * fraction (0 to 1) of the cross product of the relations that is expected
+ * to produce a TRUE result for the given operator.  For both semi and anti
+ * joins, however, the selectivity is defined as the fraction of the left-hand
+ * side relation's rows that are expected to have a match (ie, at least one
+ * row with a TRUE result) in the right-hand side.
  *----------
  */
 
@@ -109,6 +124,10 @@
 
 #include "cdb/cdbvars.h"                /* getgpsegmentCount */
 
+/* Hooks for plugins to get control when we ask for stats */
+get_relation_stats_hook_type get_relation_stats_hook = NULL;
+get_index_stats_hook_type get_index_stats_hook = NULL;
+
 static double var_eq_const(VariableStatData *vardata, Oid operator,
 			 Datum constval, bool constisnull,
 			 bool varonleft);
@@ -118,6 +137,10 @@ static double var_eq_non_const(VariableStatData *vardata, Oid operator,
 static double ineq_histogram_selectivity(VariableStatData *vardata,
 						   FmgrInfo *opproc, bool isgt,
 						   Datum constval, Oid consttype);
+static double eqjoinsel_inner(Oid operator,
+				VariableStatData *vardata1, VariableStatData *vardata2);
+static double eqjoinsel_semi(Oid operator,
+				VariableStatData *vardata1, VariableStatData *vardata2);
 static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				  Datum lobound, Datum hibound, Oid boundstypid,
 				  double *scaledlobound, double *scaledhibound, bool isgt);
@@ -1474,16 +1497,26 @@ booltestsel(PlannerInfo *root, BoolTestType booltesttype, Node *arg,
 			case IS_TRUE:
 			case IS_NOT_FALSE:
 				selec = (double) clause_selectivity(root, arg,
+<<<<<<< HEAD
 													varRelid, jointype,
 													sjinfo,
 													false /* use_damping */);
+=======
+													varRelid,
+													jointype, sjinfo);
+>>>>>>> 38e9348282e
 				break;
 			case IS_FALSE:
 			case IS_NOT_TRUE:
 				selec = 1.0 - (double) clause_selectivity(root, arg,
+<<<<<<< HEAD
 														  varRelid, jointype,
 														  sjinfo,
 														  false /* use_damping */);
+=======
+														  varRelid,
+														  jointype, sjinfo);
+>>>>>>> 38e9348282e
 				break;
 			default:
 				elog(ERROR, "unrecognized booltesttype: %d",
@@ -1511,6 +1544,7 @@ nulltestsel(PlannerInfo *root, NullTestType nulltesttype, Node *arg,
 	VariableStatData vardata;
 	double		selec;
 
+<<<<<<< HEAD
 	/*
 	 * GPDB_84_MERGE_NOTE: Following hack is removed in the upstream commit e006a24a.
 	 * However, removing this causes cost differences for some ICG queries.
@@ -1528,6 +1562,8 @@ nulltestsel(PlannerInfo *root, NullTestType nulltesttype, Node *arg,
 		return (Selectivity) 0.5;
 
 
+=======
+>>>>>>> 38e9348282e
 	examine_variable(root, arg, varRelid, &vardata);
 
 	if (HeapTupleIsValid(getStatsTuple(&vardata)))
@@ -1637,7 +1673,6 @@ scalararraysel(PlannerInfo *root,
 	Oid			nominal_element_type;
 	RegProcedure oprsel;
 	FmgrInfo	oprselproc;
-	Datum		selarg4;
 	Selectivity s1;
 
 	/*
@@ -1645,15 +1680,9 @@ scalararraysel(PlannerInfo *root,
 	 * it hasn't got one.
 	 */
 	if (is_join_clause)
-	{
 		oprsel = get_oprjoin(operator);
-		selarg4 = Int16GetDatum(jointype);
-	}
 	else
-	{
 		oprsel = get_oprrest(operator);
-		selarg4 = Int32GetDatum(varRelid);
-	}
 	if (!oprsel)
 		return (Selectivity) 0.5;
 	fmgr_info(oprsel, &oprselproc);
@@ -1718,11 +1747,19 @@ scalararraysel(PlannerInfo *root,
 										elem_values[i],
 										elem_nulls[i],
 										elmbyval));
-			s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
-											  PointerGetDatum(root),
-											  ObjectIdGetDatum(operator),
-											  PointerGetDatum(args),
-											  selarg4));
+			if (is_join_clause)
+				s2 = DatumGetFloat8(FunctionCall5(&oprselproc,
+												  PointerGetDatum(root),
+												  ObjectIdGetDatum(operator),
+												  PointerGetDatum(args),
+												  Int16GetDatum(jointype),
+												  PointerGetDatum(sjinfo)));
+			else
+				s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
+												  PointerGetDatum(root),
+												  ObjectIdGetDatum(operator),
+												  PointerGetDatum(args),
+												  Int32GetDatum(varRelid)));
 			if (useOr)
 				s1 = s1 + s2 - s1 * s2;
 			else
@@ -1752,11 +1789,19 @@ scalararraysel(PlannerInfo *root,
 			 * estimation function would really care ...
 			 */
 			args = list_make2(leftop, elem);
-			s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
-											  PointerGetDatum(root),
-											  ObjectIdGetDatum(operator),
-											  PointerGetDatum(args),
-											  selarg4));
+			if (is_join_clause)
+				s2 = DatumGetFloat8(FunctionCall5(&oprselproc,
+												  PointerGetDatum(root),
+												  ObjectIdGetDatum(operator),
+												  PointerGetDatum(args),
+												  Int16GetDatum(jointype),
+												  PointerGetDatum(sjinfo)));
+			else
+				s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
+												  PointerGetDatum(root),
+												  ObjectIdGetDatum(operator),
+												  PointerGetDatum(args),
+												  Int32GetDatum(varRelid)));
 			if (useOr)
 				s1 = s1 + s2 - s1 * s2;
 			else
@@ -1779,11 +1824,19 @@ scalararraysel(PlannerInfo *root,
 		dummyexpr->typeId = nominal_element_type;
 		dummyexpr->typeMod = -1;
 		args = list_make2(leftop, dummyexpr);
-		s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
-										  PointerGetDatum(root),
-										  ObjectIdGetDatum(operator),
-										  PointerGetDatum(args),
-										  selarg4));
+		if (is_join_clause)
+			s2 = DatumGetFloat8(FunctionCall5(&oprselproc,
+											  PointerGetDatum(root),
+											  ObjectIdGetDatum(operator),
+											  PointerGetDatum(args),
+											  Int16GetDatum(jointype),
+											  PointerGetDatum(sjinfo)));
+		else
+			s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
+											  PointerGetDatum(root),
+											  ObjectIdGetDatum(operator),
+											  PointerGetDatum(args),
+											  Int32GetDatum(varRelid)));
 		s1 = useOr ? 0.0 : 1.0;
 
 		/*
@@ -1861,13 +1914,24 @@ rowcomparesel(PlannerInfo *root,
 	/* Build equivalent arg list for single operator */
 	opargs = list_make2(linitial(clause->largs), linitial(clause->rargs));
 
-	/* Decide if it's a join clause, same as for OpExpr */
+	/*
+	 * Decide if it's a join clause.  This should match clausesel.c's
+	 * treat_as_join_clause(), except that we intentionally consider only
+	 * the leading columns and not the rest of the clause.
+	 */
 	if (varRelid != 0)
 	{
 		/*
-		 * If we are considering a nestloop join then all clauses are
-		 * restriction clauses, since we are only interested in the one
-		 * relation.
+		 * Caller is forcing restriction mode (eg, because we are examining
+		 * an inner indexscan qual).
+		 */
+		is_join_clause = false;
+	}
+	else if (sjinfo == NULL)
+	{
+		/*
+		 * It must be a restriction clause, since it's being evaluated at
+		 * a scan node.
 		 */
 		is_join_clause = false;
 	}
@@ -1875,7 +1939,6 @@ rowcomparesel(PlannerInfo *root,
 	{
 		/*
 		 * Otherwise, it's a join if there's more than one relation used.
-		 * Notice we ignore the low-order columns here.
 		 */
 		is_join_clause = (NumRelids((Node *) opargs) > 1);
 	}
@@ -1885,7 +1948,8 @@ rowcomparesel(PlannerInfo *root,
 		/* Estimate selectivity for a join clause. */
 		s1 = join_selectivity(root, opno,
 							  opargs,
-							  jointype);
+							  jointype,
+							  sjinfo);
 	}
 	else
 	{
@@ -1907,10 +1971,60 @@ eqjoinsel(PG_FUNCTION_ARGS)
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	Oid			operator = PG_GETARG_OID(1);
 	List	   *args = (List *) PG_GETARG_POINTER(2);
+#ifdef NOT_USED
 	JoinType	jointype = (JoinType) PG_GETARG_INT16(3);
+#endif
+	SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) PG_GETARG_POINTER(4);
 	double		selec;
 	VariableStatData vardata1;
 	VariableStatData vardata2;
+	bool		join_is_reversed;
+
+	get_join_variables(root, args, sjinfo,
+					   &vardata1, &vardata2, &join_is_reversed);
+
+	switch (sjinfo->jointype)
+	{
+		case JOIN_INNER:
+		case JOIN_LEFT:
+		case JOIN_FULL:
+			selec = eqjoinsel_inner(operator, &vardata1, &vardata2);
+			break;
+		case JOIN_SEMI:
+		case JOIN_ANTI:
+			if (!join_is_reversed)
+				selec = eqjoinsel_semi(operator, &vardata1, &vardata2);
+			else
+				selec = eqjoinsel_semi(get_commutator(operator),
+									   &vardata2, &vardata1);
+			break;
+		default:
+			/* other values not expected here */
+			elog(ERROR, "unrecognized join type: %d",
+				 (int) sjinfo->jointype);
+			selec = 0;			/* keep compiler quiet */
+			break;
+	}
+
+	ReleaseVariableStats(vardata1);
+	ReleaseVariableStats(vardata2);
+
+	CLAMP_PROBABILITY(selec);
+
+	PG_RETURN_FLOAT8((float8) selec);
+}
+
+/*
+ * eqjoinsel_inner --- eqjoinsel for normal inner join
+ *
+ * We also use this for LEFT/FULL outer joins; it's not presently clear
+ * that it's worth trying to distinguish them here.
+ */
+static double
+eqjoinsel_inner(Oid operator,
+				VariableStatData *vardata1, VariableStatData *vardata2)
+{
+	double		selec;
 	double		nd1;
 	double		nd2;
 	Form_pg_statistic stats1 = NULL;
@@ -1926,8 +2040,10 @@ eqjoinsel(PG_FUNCTION_ARGS)
 	float4	   *numbers2 = NULL;
 	int			nnumbers2 = 0;
 
-	get_join_variables(root, args, &vardata1, &vardata2);
+	nd1 = get_variable_numdistinct(vardata1);
+	nd2 = get_variable_numdistinct(vardata2);
 
+<<<<<<< HEAD
 	nd1 = get_variable_numdistinct(&vardata1);
 	nd2 = get_variable_numdistinct(&vardata2);
 
@@ -1938,12 +2054,21 @@ eqjoinsel(PG_FUNCTION_ARGS)
 		have_mcvs1 = get_attstatsslot(tp,
 									  vardata1.atttype,
 									  vardata1.atttypmod,
+=======
+	if (HeapTupleIsValid(vardata1->statsTuple))
+	{
+		stats1 = (Form_pg_statistic) GETSTRUCT(vardata1->statsTuple);
+		have_mcvs1 = get_attstatsslot(vardata1->statsTuple,
+									  vardata1->atttype,
+									  vardata1->atttypmod,
+>>>>>>> 38e9348282e
 									  STATISTIC_KIND_MCV,
 									  InvalidOid,
 									  &values1, &nvalues1,
 									  &numbers1, &nnumbers1);
 	}
 
+<<<<<<< HEAD
 	if (HeapTupleIsValid(getStatsTuple(&vardata2)))
 	{
 		HeapTuple tp = getStatsTuple(&vardata2);
@@ -1951,6 +2076,14 @@ eqjoinsel(PG_FUNCTION_ARGS)
 		have_mcvs2 = get_attstatsslot(tp,
 									  vardata2.atttype,
 									  vardata2.atttypmod,
+=======
+	if (HeapTupleIsValid(vardata2->statsTuple))
+	{
+		stats2 = (Form_pg_statistic) GETSTRUCT(vardata2->statsTuple);
+		have_mcvs2 = get_attstatsslot(vardata2->statsTuple,
+									  vardata2->atttype,
+									  vardata2->atttypmod,
+>>>>>>> 38e9348282e
 									  STATISTIC_KIND_MCV,
 									  InvalidOid,
 									  &values2, &nvalues2,
@@ -1993,6 +2126,7 @@ eqjoinsel(PG_FUNCTION_ARGS)
 		hasmatch2 = (bool *) palloc0(nvalues2 * sizeof(bool));
 
 		/*
+<<<<<<< HEAD
 		 * If we are doing any variant of JOIN_SEMI, pretend all the values of
 		 * the righthand relation are unique (ie, act as if it's been
 		 * DISTINCT'd).
@@ -2018,6 +2152,8 @@ eqjoinsel(PG_FUNCTION_ARGS)
 		}
 
 		/*
+=======
+>>>>>>> 38e9348282e
 		 * Note we assume that each MCV will match at most one member of the
 		 * other MCV list.	If the operator isn't really equality, there could
 		 * be multiple matches --- but we don't look for them, both for speed
@@ -2129,9 +2265,21 @@ eqjoinsel(PG_FUNCTION_ARGS)
 		 * XXX Can we be smarter if we have an MCV list for just one side? It
 		 * seems that if we assume equal distribution for the other side, we
 		 * end up with the same answer anyway.
+		 *
+		 * An additional hack we use here is to clamp the nd1 and nd2 values
+		 * to not more than what we are estimating the input relation sizes
+		 * to be, providing a crude correction for the selectivity of
+		 * restriction clauses on those relations.  (We don't do that in the
+		 * other path since there we are comparing the nd values to stats for
+		 * the whole relations.)
 		 */
 		double		nullfrac1 = stats1 ? stats1->stanullfrac : 0.0;
 		double		nullfrac2 = stats2 ? stats2->stanullfrac : 0.0;
+
+		if (vardata1->rel)
+			nd1 = Min(nd1, vardata1->rel->rows);
+		if (vardata2->rel)
+			nd2 = Min(nd2, vardata2->rel->rows);
 
 		selec = (1.0 - nullfrac1) * (1.0 - nullfrac2);
 		if (nd1 > nd2)
@@ -2141,18 +2289,175 @@ eqjoinsel(PG_FUNCTION_ARGS)
 	}
 
 	if (have_mcvs1)
-		free_attstatsslot(vardata1.atttype, values1, nvalues1,
+		free_attstatsslot(vardata1->atttype, values1, nvalues1,
 						  numbers1, nnumbers1);
 	if (have_mcvs2)
-		free_attstatsslot(vardata2.atttype, values2, nvalues2,
+		free_attstatsslot(vardata2->atttype, values2, nvalues2,
 						  numbers2, nnumbers2);
 
-	ReleaseVariableStats(vardata1);
-	ReleaseVariableStats(vardata2);
+	return selec;
+}
 
-	CLAMP_PROBABILITY(selec);
+/*
+ * eqjoinsel_semi --- eqjoinsel for semi join
+ *
+ * (Also used for anti join, which we are supposed to estimate the same way.)
+ * Caller has ensured that vardata1 is the LHS variable.
+ */
+static double
+eqjoinsel_semi(Oid operator,
+			   VariableStatData *vardata1, VariableStatData *vardata2)
+{
+	double		selec;
+	double		nd1;
+	double		nd2;
+	Form_pg_statistic stats1 = NULL;
+	Form_pg_statistic stats2 = NULL;
+	bool		have_mcvs1 = false;
+	Datum	   *values1 = NULL;
+	int			nvalues1 = 0;
+	float4	   *numbers1 = NULL;
+	int			nnumbers1 = 0;
+	bool		have_mcvs2 = false;
+	Datum	   *values2 = NULL;
+	int			nvalues2 = 0;
+	float4	   *numbers2 = NULL;
+	int			nnumbers2 = 0;
 
-	PG_RETURN_FLOAT8((float8) selec);
+	nd1 = get_variable_numdistinct(vardata1);
+	nd2 = get_variable_numdistinct(vardata2);
+
+	if (HeapTupleIsValid(vardata1->statsTuple))
+	{
+		stats1 = (Form_pg_statistic) GETSTRUCT(vardata1->statsTuple);
+		have_mcvs1 = get_attstatsslot(vardata1->statsTuple,
+									  vardata1->atttype,
+									  vardata1->atttypmod,
+									  STATISTIC_KIND_MCV,
+									  InvalidOid,
+									  &values1, &nvalues1,
+									  &numbers1, &nnumbers1);
+	}
+
+	if (HeapTupleIsValid(vardata2->statsTuple))
+	{
+		stats2 = (Form_pg_statistic) GETSTRUCT(vardata2->statsTuple);
+		have_mcvs2 = get_attstatsslot(vardata2->statsTuple,
+									  vardata2->atttype,
+									  vardata2->atttypmod,
+									  STATISTIC_KIND_MCV,
+									  InvalidOid,
+									  &values2, &nvalues2,
+									  &numbers2, &nnumbers2);
+	}
+
+	if (have_mcvs1 && have_mcvs2 && OidIsValid(operator))
+	{
+		/*
+		 * We have most-common-value lists for both relations.	Run through
+		 * the lists to see which MCVs actually join to each other with the
+		 * given operator.	This allows us to determine the exact join
+		 * selectivity for the portion of the relations represented by the MCV
+		 * lists.  We still have to estimate for the remaining population, but
+		 * in a skewed distribution this gives us a big leg up in accuracy.
+		 */
+		FmgrInfo	eqproc;
+		bool	   *hasmatch1;
+		bool	   *hasmatch2;
+		double		nullfrac1 = stats1->stanullfrac;
+		double		matchfreq1;
+		int			i,
+					nmatches;
+
+		fmgr_info(get_opcode(operator), &eqproc);
+		hasmatch1 = (bool *) palloc0(nvalues1 * sizeof(bool));
+		hasmatch2 = (bool *) palloc0(nvalues2 * sizeof(bool));
+
+		/*
+		 * Note we assume that each MCV will match at most one member of the
+		 * other MCV list.	If the operator isn't really equality, there could
+		 * be multiple matches --- but we don't look for them, both for speed
+		 * and because the math wouldn't add up...
+		 */
+		nmatches = 0;
+		for (i = 0; i < nvalues1; i++)
+		{
+			int			j;
+
+			for (j = 0; j < nvalues2; j++)
+			{
+				if (hasmatch2[j])
+					continue;
+				if (DatumGetBool(FunctionCall2(&eqproc,
+											   values1[i],
+											   values2[j])))
+				{
+					hasmatch1[i] = hasmatch2[j] = true;
+					nmatches++;
+					break;
+				}
+			}
+		}
+		/* Sum up frequencies of matched MCVs */
+		matchfreq1 = 0.0;
+		for (i = 0; i < nvalues1; i++)
+		{
+			if (hasmatch1[i])
+				matchfreq1 += numbers1[i];
+		}
+		CLAMP_PROBABILITY(matchfreq1);
+		pfree(hasmatch1);
+		pfree(hasmatch2);
+
+		/*
+		 * Now we need to estimate the fraction of relation 1 that has at
+		 * least one join partner.  We know for certain that the matched
+		 * MCVs do, so that gives us a lower bound, but we're really in the
+		 * dark about everything else.  Our crude approach is: if nd1 <= nd2
+		 * then assume all non-null rel1 rows have join partners, else assume
+		 * for the uncertain rows that a fraction nd2/nd1 have join partners.
+		 * We can discount the known-matched MCVs from the distinct-values
+		 * counts before doing the division.
+		 */
+		nd1 -= nmatches;
+		nd2 -= nmatches;
+		if (nd1 <= nd2 || nd2 <= 0)
+			selec = Max(matchfreq1, 1.0 - nullfrac1);
+		else
+		{
+			double	uncertain = 1.0 - matchfreq1 - nullfrac1;
+
+			CLAMP_PROBABILITY(uncertain);
+			selec = matchfreq1 + (nd2/nd1) * uncertain;
+		}
+	}
+	else
+	{
+		/*
+		 * Without MCV lists for both sides, we can only use the heuristic
+		 * about nd1 vs nd2.
+		 */
+		double		nullfrac1 = stats1 ? stats1->stanullfrac : 0.0;
+
+		if (vardata1->rel)
+			nd1 = Min(nd1, vardata1->rel->rows);
+		if (vardata2->rel)
+			nd2 = Min(nd2, vardata2->rel->rows);
+
+		if (nd1 <= nd2 || nd2 <= 0)
+			selec = 1.0 - nullfrac1;
+		else
+			selec = (nd2/nd1) * (1.0 - nullfrac1);
+	}
+
+	if (have_mcvs1)
+		free_attstatsslot(vardata1->atttype, values1, nvalues1,
+						  numbers1, nnumbers1);
+	if (have_mcvs2)
+		free_attstatsslot(vardata2->atttype, values2, nvalues2,
+						  numbers2, nnumbers2);
+
+	return selec;
 }
 
 /*
@@ -2165,6 +2470,7 @@ neqjoinsel(PG_FUNCTION_ARGS)
 	Oid			operator = PG_GETARG_OID(1);
 	List	   *args = (List *) PG_GETARG_POINTER(2);
 	JoinType	jointype = (JoinType) PG_GETARG_INT16(3);
+	SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) PG_GETARG_POINTER(4);
 	Oid			eqop;
 	float8		result;
 
@@ -2175,11 +2481,12 @@ neqjoinsel(PG_FUNCTION_ARGS)
 	eqop = get_negator(operator);
 	if (eqop)
 	{
-		result = DatumGetFloat8(DirectFunctionCall4(eqjoinsel,
+		result = DatumGetFloat8(DirectFunctionCall5(eqjoinsel,
 													PointerGetDatum(root),
 													ObjectIdGetDatum(eqop),
 													PointerGetDatum(args),
-													Int16GetDatum(jointype)));
+													Int16GetDatum(jointype),
+													PointerGetDatum(sjinfo)));
 	}
 	else
 	{
@@ -2780,9 +3087,13 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows)
 		 * complicated.
 		 */
 		examine_variable(root, groupexpr, 0, &vardata);
+<<<<<<< HEAD
 
 		if (HeapTupleIsValid(getStatsTuple(&vardata))
 			|| vardata.isunique)
+=======
+		if (HeapTupleIsValid(vardata.statsTuple) || vardata.isunique)
+>>>>>>> 38e9348282e
 		{
 			varinfos = add_unique_group_var(root, varinfos,
 											groupexpr, &vardata);
@@ -3263,6 +3574,241 @@ convert_numeric_to_scalar(Datum value, Oid typid)
 }
 
 /*
+<<<<<<< HEAD
+=======
+ * Do convert_to_scalar()'s work for any character-string data type.
+ *
+ * String datatypes are converted to a scale that ranges from 0 to 1,
+ * where we visualize the bytes of the string as fractional digits.
+ *
+ * We do not want the base to be 256, however, since that tends to
+ * generate inflated selectivity estimates; few databases will have
+ * occurrences of all 256 possible byte values at each position.
+ * Instead, use the smallest and largest byte values seen in the bounds
+ * as the estimated range for each byte, after some fudging to deal with
+ * the fact that we probably aren't going to see the full range that way.
+ *
+ * An additional refinement is that we discard any common prefix of the
+ * three strings before computing the scaled values.  This allows us to
+ * "zoom in" when we encounter a narrow data range.  An example is a phone
+ * number database where all the values begin with the same area code.
+ * (Actually, the bounds will be adjacent histogram-bin-boundary values,
+ * so this is more likely to happen than you might think.)
+ */
+static void
+convert_string_to_scalar(char *value,
+						 double *scaledvalue,
+						 char *lobound,
+						 double *scaledlobound,
+						 char *hibound,
+						 double *scaledhibound)
+{
+	int			rangelo,
+				rangehi;
+	char	   *sptr;
+
+	rangelo = rangehi = (unsigned char) hibound[0];
+	for (sptr = lobound; *sptr; sptr++)
+	{
+		if (rangelo > (unsigned char) *sptr)
+			rangelo = (unsigned char) *sptr;
+		if (rangehi < (unsigned char) *sptr)
+			rangehi = (unsigned char) *sptr;
+	}
+	for (sptr = hibound; *sptr; sptr++)
+	{
+		if (rangelo > (unsigned char) *sptr)
+			rangelo = (unsigned char) *sptr;
+		if (rangehi < (unsigned char) *sptr)
+			rangehi = (unsigned char) *sptr;
+	}
+	/* If range includes any upper-case ASCII chars, make it include all */
+	if (rangelo <= 'Z' && rangehi >= 'A')
+	{
+		if (rangelo > 'A')
+			rangelo = 'A';
+		if (rangehi < 'Z')
+			rangehi = 'Z';
+	}
+	/* Ditto lower-case */
+	if (rangelo <= 'z' && rangehi >= 'a')
+	{
+		if (rangelo > 'a')
+			rangelo = 'a';
+		if (rangehi < 'z')
+			rangehi = 'z';
+	}
+	/* Ditto digits */
+	if (rangelo <= '9' && rangehi >= '0')
+	{
+		if (rangelo > '0')
+			rangelo = '0';
+		if (rangehi < '9')
+			rangehi = '9';
+	}
+
+	/*
+	 * If range includes less than 10 chars, assume we have not got enough
+	 * data, and make it include regular ASCII set.
+	 */
+	if (rangehi - rangelo < 9)
+	{
+		rangelo = ' ';
+		rangehi = 127;
+	}
+
+	/*
+	 * Now strip any common prefix of the three strings.
+	 */
+	while (*lobound)
+	{
+		if (*lobound != *hibound || *lobound != *value)
+			break;
+		lobound++, hibound++, value++;
+	}
+
+	/*
+	 * Now we can do the conversions.
+	 */
+	*scaledvalue = convert_one_string_to_scalar(value, rangelo, rangehi);
+	*scaledlobound = convert_one_string_to_scalar(lobound, rangelo, rangehi);
+	*scaledhibound = convert_one_string_to_scalar(hibound, rangelo, rangehi);
+}
+
+static double
+convert_one_string_to_scalar(char *value, int rangelo, int rangehi)
+{
+	int			slen = strlen(value);
+	double		num,
+				denom,
+				base;
+
+	if (slen <= 0)
+		return 0.0;				/* empty string has scalar value 0 */
+
+	/*
+	 * Since base is at least 10, need not consider more than about 20 chars
+	 */
+	if (slen > 20)
+		slen = 20;
+
+	/* Convert initial characters to fraction */
+	base = rangehi - rangelo + 1;
+	num = 0.0;
+	denom = base;
+	while (slen-- > 0)
+	{
+		int			ch = (unsigned char) *value++;
+
+		if (ch < rangelo)
+			ch = rangelo - 1;
+		else if (ch > rangehi)
+			ch = rangehi + 1;
+		num += ((double) (ch - rangelo)) / denom;
+		denom *= base;
+	}
+
+	return num;
+}
+
+/*
+ * Convert a string-type Datum into a palloc'd, null-terminated string.
+ *
+ * When using a non-C locale, we must pass the string through strxfrm()
+ * before continuing, so as to generate correct locale-specific results.
+ */
+static char *
+convert_string_datum(Datum value, Oid typid)
+{
+	char	   *val;
+
+	switch (typid)
+	{
+		case CHAROID:
+			val = (char *) palloc(2);
+			val[0] = DatumGetChar(value);
+			val[1] = '\0';
+			break;
+		case BPCHAROID:
+		case VARCHAROID:
+		case TEXTOID:
+			val = TextDatumGetCString(value);
+			break;
+		case NAMEOID:
+			{
+				NameData   *nm = (NameData *) DatumGetPointer(value);
+
+				val = pstrdup(NameStr(*nm));
+				break;
+			}
+		default:
+
+			/*
+			 * Can't get here unless someone tries to use scalarltsel on an
+			 * operator with one string and one non-string operand.
+			 */
+			elog(ERROR, "unsupported type: %u", typid);
+			return NULL;
+	}
+
+	if (!lc_collate_is_c())
+	{
+		char	   *xfrmstr;
+		size_t		xfrmlen;
+		size_t		xfrmlen2;
+
+		/*
+		 * Note: originally we guessed at a suitable output buffer size, and
+		 * only needed to call strxfrm twice if our guess was too small.
+		 * However, it seems that some versions of Solaris have buggy strxfrm
+		 * that can write past the specified buffer length in that scenario.
+		 * So, do it the dumb way for portability.
+		 *
+		 * Yet other systems (e.g., glibc) sometimes return a smaller value
+		 * from the second call than the first; thus the Assert must be <= not
+		 * == as you'd expect.  Can't any of these people program their way
+		 * out of a paper bag?
+		 *
+		 * XXX: strxfrm doesn't support UTF-8 encoding on Win32, it can return
+		 * bogus data or set an error. This is not really a problem unless it
+		 * crashes since it will only give an estimation error and nothing
+		 * fatal.
+		 */
+#if _MSC_VER == 1400			/* VS.Net 2005 */
+
+		/*
+		 * http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?FeedbackID=99694
+		 */
+		{
+			char		x[1];
+
+			xfrmlen = strxfrm(x, val, 0);
+		}
+#else
+		xfrmlen = strxfrm(NULL, val, 0);
+#endif
+#ifdef WIN32
+
+		/*
+		 * On Windows, strxfrm returns INT_MAX when an error occurs. Instead
+		 * of trying to allocate this much memory (and fail), just return the
+		 * original string unmodified as if we were in the C locale.
+		 */
+		if (xfrmlen == INT_MAX)
+			return val;
+#endif
+		xfrmstr = (char *) palloc(xfrmlen + 1);
+		xfrmlen2 = strxfrm(xfrmstr, val, xfrmlen + 1);
+		Assert(xfrmlen2 <= xfrmlen);
+		pfree(val);
+		val = xfrmstr;
+	}
+
+	return val;
+}
+
+/*
+>>>>>>> 38e9348282e
  * Do convert_to_scalar()'s work for any bytea data type.
  *
  * Very similar to the old convert_string_to_scalar except we can't assume
@@ -3508,10 +4054,17 @@ get_restriction_variable(PlannerInfo *root, List *args, int varRelid,
 /*
  * get_join_variables
  *		Apply examine_variable() to each side of a join clause.
+ *		Also, attempt to identify whether the join clause has the same
+ *		or reversed sense compared to the SpecialJoinInfo.
+ *
+ * We consider the join clause "normal" if it is "lhs_var OP rhs_var",
+ * or "reversed" if it is "rhs_var OP lhs_var".  In complicated cases
+ * where we can't tell for sure, we default to assuming it's normal.
  */
 void
-get_join_variables(PlannerInfo *root, List *args,
-				   VariableStatData *vardata1, VariableStatData *vardata2)
+get_join_variables(PlannerInfo *root, List *args, SpecialJoinInfo *sjinfo,
+				   VariableStatData *vardata1, VariableStatData *vardata2,
+				   bool *join_is_reversed)
 {
 	Node	   *left,
 			   *right;
@@ -3524,6 +4077,15 @@ get_join_variables(PlannerInfo *root, List *args,
 
 	examine_variable(root, left, 0, vardata1);
 	examine_variable(root, right, 0, vardata2);
+
+	if (vardata1->rel &&
+		bms_is_subset(vardata1->rel->relids, sjinfo->syn_righthand))
+		*join_is_reversed = true;				/* var1 is on RHS */
+	else if (vardata2->rel &&
+			 bms_is_subset(vardata2->rel->relids, sjinfo->syn_lefthand))
+		*join_is_reversed = true;				/* var2 is on LHS */
+	else
+		*join_is_reversed = false;
 }
 
 /*
@@ -3640,6 +4202,7 @@ static void inline adjust_partition_table_statistic_for_parent(HeapTuple statsTu
  *		subquery, not one in the current query).
  *	statsTuple: the pg_statistic entry for the variable, if one exists;
  *		otherwise NULL.
+ *	freefunc: pointer to a function to release statsTuple with.
  *	vartype: exposed type of the expression; this should always match
  *		the declared input type of the operator we are estimating for.
  *	atttype, atttypmod: type data to pass to get_attstatsslot().  This is
@@ -3686,6 +4249,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 
 		rte = rt_fetch(var->varno, root->parse->rtable);
 
+<<<<<<< HEAD
 		/*
 		 * If this attribute has a foreign key relationship, then first look
 		 * at primary key statistics. If there exist stats on that attribute,
@@ -3717,6 +4281,20 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 			}
 		}
 		if (rte->inh)
+=======
+		if (get_relation_stats_hook &&
+			(*get_relation_stats_hook) (root, rte, var->varattno, vardata))
+		{
+			/*
+			 * The hook took control of acquiring a stats tuple.  If it
+			 * did supply a tuple, it'd better have supplied a freefunc.
+			 */
+			if (HeapTupleIsValid(vardata->statsTuple) &&
+				!vardata->freefunc)
+				elog(ERROR, "no function provided to release variable stats with");
+		}
+		else if (rte->inh)
+>>>>>>> 38e9348282e
 		{
 			/*
 			 * If gp_statistics_pullup_from_child_partition is set, we attempt to pull up statistics from
@@ -3757,6 +4335,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 												 ObjectIdGetDatum(rte->relid),
 												 Int16GetDatum(var->varattno),
 												 0, 0);
+			vardata->freefunc = ReleaseSysCache;
 		}
 		else
 		{
@@ -3873,10 +4452,28 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 							index->indpred == NIL)
 							vardata->isunique = true;
 						/* Has it got stats? */
-						vardata->statsTuple = SearchSysCache(STATRELATT,
-										   ObjectIdGetDatum(index->indexoid),
-													  Int16GetDatum(pos + 1),
-															 0, 0);
+						if (get_index_stats_hook &&
+							(*get_index_stats_hook) (root, index->indexoid,
+													 pos + 1, vardata))
+						{
+							/*
+							 * The hook took control of acquiring a stats
+							 * tuple.  If it did supply a tuple, it'd better
+							 * have supplied a freefunc.
+							 */
+							if (HeapTupleIsValid(vardata->statsTuple) &&
+								!vardata->freefunc)
+								elog(ERROR, "no function provided to release variable stats with");
+						}
+						else
+						{
+							vardata->statsTuple =
+								SearchSysCache(STATRELATT,
+											   ObjectIdGetDatum(index->indexoid),
+											   Int16GetDatum(pos + 1),
+											   0, 0);
+							vardata->freefunc = ReleaseSysCache;
+						}
 						if (vardata->statsTuple)
 							break;
 					}
@@ -4956,8 +5553,12 @@ genericcostestimate(PlannerInfo *root,
 	*indexSelectivity = clauselist_selectivity(root, selectivityQuals,
 											   index->rel->relid,
 											   JOIN_INNER,
+<<<<<<< HEAD
 											   NULL,
 											   false /* use_damping */);
+=======
+											   NULL);
+>>>>>>> 38e9348282e
 
 	/*
 	 * If caller didn't give us an estimate, estimate the number of index
@@ -5136,7 +5737,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
 	Oid			relid;
 	AttrNumber	colnum;
-	HeapTuple	tuple;
+	VariableStatData vardata;
 	double		numIndexTuples;
 	List	   *indexBoundQuals;
 	int			indexcol;
@@ -5316,8 +5917,12 @@ btcostestimate(PG_FUNCTION_ARGS)
 		btreeSelectivity = clauselist_selectivity(root, indexBoundQuals,
 												  index->rel->relid,
 												  JOIN_INNER,
+<<<<<<< HEAD
 												  NULL,
 												  false /* use_damping */);
+=======
+												  NULL);
+>>>>>>> 38e9348282e
 		numIndexTuples = btreeSelectivity * index->rel->tuples;
 
 		/*
@@ -5347,31 +5952,71 @@ btcostestimate(PG_FUNCTION_ARGS)
 	if (found_saop)
 		PG_RETURN_VOID();
 
+	MemSet(&vardata, 0, sizeof(vardata));
+
 	if (index->indexkeys[0] != 0)
 	{
 		/* Simple variable --- look to stats for the underlying table */
-		relid = getrelid(index->rel->relid, root->parse->rtable);
+		RangeTblEntry *rte = planner_rt_fetch(index->rel->relid, root);
+
+		Assert(rte->rtekind == RTE_RELATION);
+		relid = rte->relid;
 		Assert(relid != InvalidOid);
 		colnum = index->indexkeys[0];
+
+		if (get_relation_stats_hook &&
+			(*get_relation_stats_hook) (root, rte, colnum, &vardata))
+		{
+			/*
+			 * The hook took control of acquiring a stats tuple.  If it did
+			 * supply a tuple, it'd better have supplied a freefunc.
+			 */
+			if (HeapTupleIsValid(vardata.statsTuple) &&
+				!vardata.freefunc)
+				elog(ERROR, "no function provided to release variable stats with");
+		}
+		else
+		{
+			vardata.statsTuple = SearchSysCache(STATRELATT,
+												ObjectIdGetDatum(relid),
+												Int16GetDatum(colnum),
+												0, 0);
+			vardata.freefunc = ReleaseSysCache;
+		}
 	}
 	else
 	{
 		/* Expression --- maybe there are stats for the index itself */
 		relid = index->indexoid;
 		colnum = 1;
+
+		if (get_index_stats_hook &&
+			(*get_index_stats_hook) (root, relid, colnum, &vardata))
+		{
+			/*
+			 * The hook took control of acquiring a stats tuple.  If it did
+			 * supply a tuple, it'd better have supplied a freefunc.
+			 */
+			if (HeapTupleIsValid(vardata.statsTuple) &&
+				!vardata.freefunc)
+				elog(ERROR, "no function provided to release variable stats with");
+		}
+		else
+		{
+			vardata.statsTuple = SearchSysCache(STATRELATT,
+												ObjectIdGetDatum(relid),
+												Int16GetDatum(colnum),
+												0, 0);
+			vardata.freefunc = ReleaseSysCache;
+		}
 	}
 
-	tuple = SearchSysCache(STATRELATT,
-						   ObjectIdGetDatum(relid),
-						   Int16GetDatum(colnum),
-						   0, 0);
-
-	if (HeapTupleIsValid(tuple))
+	if (HeapTupleIsValid(vardata.statsTuple))
 	{
 		float4	   *numbers;
 		int			nnumbers;
 
-		if (get_attstatsslot(tuple, InvalidOid, 0,
+		if (get_attstatsslot(vardata.statsTuple, InvalidOid, 0,
 							 STATISTIC_KIND_CORRELATION,
 							 index->fwdsortop[0],
 							 NULL, NULL, &numbers, &nnumbers))
@@ -5388,7 +6033,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 
 			free_attstatsslot(InvalidOid, NULL, 0, numbers, nnumbers);
 		}
-		else if (get_attstatsslot(tuple, InvalidOid, 0,
+		else if (get_attstatsslot(vardata.statsTuple, InvalidOid, 0,
 								  STATISTIC_KIND_CORRELATION,
 								  index->revsortop[0],
 								  NULL, NULL, &numbers, &nnumbers))
@@ -5405,8 +6050,9 @@ btcostestimate(PG_FUNCTION_ARGS)
 
 			free_attstatsslot(InvalidOid, NULL, 0, numbers, nnumbers);
 		}
-		ReleaseSysCache(tuple);
 	}
+
+	ReleaseVariableStats(vardata);
 
 	PG_RETURN_VOID();
 }

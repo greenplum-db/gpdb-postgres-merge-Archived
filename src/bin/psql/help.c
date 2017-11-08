@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.129 2008/06/11 10:55:43 heikki Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.132 2008/12/19 16:25:18 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -208,6 +208,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, "\n");
 
 	fprintf(output, _("Informational\n"));
+<<<<<<< HEAD
 	fprintf(output, _("  (options: S = show system objects, + = additional detail)\n"));
 	fprintf(output, _("  \\d[S+]                 list tables, views, and sequences\n"));
 	fprintf(output, _("  \\d[S+]  NAME           describe table, view, sequence, or index\n"));
@@ -243,6 +244,34 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\dE     [PATTERN]      list external tables\n"));
 	fprintf(output, _("  \\l[+]                  list all databases\n"));
 	fprintf(output, _("  \\z      [PATTERN]      same as \\dp\n"));
+=======
+	fprintf(output, _("  \\d [NAME]      describe table, index, sequence, or view\n"));
+	fprintf(output, _("  \\d{t|i|s|v|S} [PATTERN] (add \"+\" for more detail)\n"
+	"                 list tables/indexes/sequences/views/system tables\n"));
+	fprintf(output, _("  \\da [PATTERN]  list aggregate functions\n"));
+	fprintf(output, _("  \\db [PATTERN]  list tablespaces (add \"+\" for more detail)\n"));
+	fprintf(output, _("  \\dc [PATTERN]  list conversions\n"));
+	fprintf(output, _("  \\dC [PATTERN]  list casts\n"));
+	fprintf(output, _("  \\dd [PATTERN]  show comment for object\n"));
+	fprintf(output, _("  \\dD [PATTERN]  list domains\n"));
+	fprintf(output, _("  \\des [PATTERN] list foreign servers (add \"+\" for more detail)\n"));
+	fprintf(output, _("  \\deu [PATTERN] list user mappings (add \"+\" for more detail)\n"));
+	fprintf(output, _("  \\dew [PATTERN] list foreign-data wrappers (add \"+\" for more detail)\n"));
+	fprintf(output, _("  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"));
+	fprintf(output, _("  \\dF [PATTERN]  list text search configurations (add \"+\" for more detail)\n"));
+	fprintf(output, _("  \\dFd [PATTERN] list text search dictionaries (add \"+\" for more detail)\n"));
+	fprintf(output, _("  \\dFt [PATTERN] list text search templates\n"));
+	fprintf(output, _("  \\dFp [PATTERN] list text search parsers (add \"+\" for more detail)\n"));
+	fprintf(output, _("  \\dg [PATTERN]  list roles (groups)\n"));
+	fprintf(output, _("  \\dn [PATTERN]  list schemas (add \"+\" for more detail)\n"));
+	fprintf(output, _("  \\do [NAME]     list operators\n"));
+	fprintf(output, _("  \\dl            list large objects, same as \\lo_list\n"));
+	fprintf(output, _("  \\dp [PATTERN]  list table, view, and sequence access privileges\n"));
+	fprintf(output, _("  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"));
+	fprintf(output, _("  \\du [PATTERN]  list roles (users)\n"));
+	fprintf(output, _("  \\l             list all databases (add \"+\" for more detail)\n"));
+	fprintf(output, _("  \\z [PATTERN]   list table, view, and sequence access privileges (same as \\dp)\n"));
+>>>>>>> 38e9348282e
 	fprintf(output, "\n");
 
 	fprintf(output, _("Formatting\n"));
@@ -251,6 +280,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\f [STRING]            show or set field separator for unaligned query output\n"));
 	fprintf(output, _("  \\H                     toggle HTML output mode (currently %s)\n"),
 			ON(pset.popt.topt.format == PRINT_HTML));
+<<<<<<< HEAD
 	fprintf(output, _("  \\pset NAME [VALUE]     set table output option\n"
 					  "                         (NAME := {format|border|expanded|fieldsep|footer|null|\n"
 					  "                         numericlocale|recordsep|tuples_only|title|tableattr|pager})\n"));
@@ -258,6 +288,15 @@ slashUsage(unsigned short int pager)
 			ON(pset.popt.topt.tuples_only));
 	fprintf(output, _("  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"));
 	fprintf(output, _("  \\x [on|off]            toggle expanded output (currently %s)\n"),
+=======
+	fprintf(output, _("  \\pset NAME [VALUE]  set table output option\n"
+					  "                 (NAME := {format|border|expanded|fieldsep|footer|null|\n"
+					  "                 numericlocale|recordsep|tuples_only|title|tableattr|pager})\n"));
+	fprintf(output, _("  \\t [on|off]    show only rows (currently %s)\n"),
+			ON(pset.popt.topt.tuples_only));
+	fprintf(output, _("  \\T [STRING]    set HTML <table> tag attributes, or unset if none\n"));
+	fprintf(output, _("  \\x [on|off]    toggle expanded output (currently %s)\n"),
+>>>>>>> 38e9348282e
 			ON(pset.popt.topt.expanded));
 	fprintf(output, "\n");
 

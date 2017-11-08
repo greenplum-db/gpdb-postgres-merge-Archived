@@ -808,7 +808,11 @@ list_union_oid(List *list1, List *list2)
  * "intersection" if list1 is known unique beforehand.
  *
  * This variant works on lists of pointers, and determines list
+<<<<<<< HEAD
  * membership via equal().	Note that the list1 member will be pointed
+=======
+ * membership via equal().  Note that the list1 member will be pointed
+>>>>>>> 38e9348282e
  * to in the result.
  */
 List *

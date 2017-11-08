@@ -12,7 +12,11 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.148 2009/04/05 19:59:40 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.143 2008/10/06 17:39:26 tgl Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -253,9 +257,12 @@ typedef struct Aggref
 	Index		agglevelsup;	/* > 0 if agg belongs to outer query */
 	bool		aggstar;		/* TRUE if argument list was really '*' */
 	bool		aggdistinct;	/* TRUE if it's agg(DISTINCT ...) */
+<<<<<<< HEAD
 	Expr	   *aggfilter;		/* FILTER expression, if any */
 	AggStage	aggstage;		/* MPP: 2-stage? If so, which stage */
     AggOrder   *aggorder;       /* Ordered aggregate definition */
+=======
+>>>>>>> 38e9348282e
 	int			location;		/* token location, or -1 if unknown */
 } Aggref;
 
@@ -424,7 +431,10 @@ typedef struct FuncExpr
 	CoercionForm funcformat;	/* how to display this function call */
 	List	   *args;			/* arguments to the function */
 	int			location;		/* token location, or -1 if unknown */
+<<<<<<< HEAD
 	bool        is_tablefunc;   /* Is a TableFunction reference */
+=======
+>>>>>>> 38e9348282e
 } FuncExpr;
 
 /*
@@ -484,7 +494,11 @@ typedef struct ScalarArrayOpExpr
  *
  * Notice the arguments are given as a List.  For NOT, of course the list
  * must always have exactly one element.  For AND and OR, the executor can
+<<<<<<< HEAD
  * handle any number of arguments.	The parser generally treats AND and OR
+=======
+ * handle any number of arguments.  The parser generally treats AND and OR
+>>>>>>> 38e9348282e
  * as binary and so it typically only produces two-element lists, but the
  * optimizer will flatten trees of AND and OR nodes to produce longer lists
  * when possible.  There are also a few special cases where more arguments
@@ -568,8 +582,12 @@ typedef enum SubLinkType
 	ROWCOMPARE_SUBLINK,
 	EXPR_SUBLINK,
 	ARRAY_SUBLINK,
+<<<<<<< HEAD
 	CTE_SUBLINK,
 	NOT_EXISTS_SUBLINK   /* GPDB_84_MERGE_FIXME: Does ORCA really need this? */
+=======
+	CTE_SUBLINK					/* for SubPlans only */
+>>>>>>> 38e9348282e
 } SubLinkType;
 
 
@@ -604,7 +622,11 @@ typedef struct SubLink
  * If the sub-select becomes an initplan rather than a subplan, the executable
  * expression is part of the outer plan's expression tree (and the SubPlan
  * node itself is not, but rather is found in the outer plan's initPlan
+<<<<<<< HEAD
  * list). In this case testexpr is NULL to avoid duplication.
+=======
+ * list).  In this case testexpr is NULL to avoid duplication.
+>>>>>>> 38e9348282e
  *
  * The planner also derives lists of the values that need to be passed into
  * and out of the subplan.	Input values are represented as a list "args" of
@@ -657,7 +679,10 @@ typedef struct SubPlan
 								 * Params for parent plan */
 	List	   *parParam;		/* indices of input Params from parent plan */
 	List	   *args;			/* exprs to pass as parParam values */
+<<<<<<< HEAD
 	List	   *extParam;		/* indices of input Params from ancestor plan */
+=======
+>>>>>>> 38e9348282e
 	/* Estimated execution costs: */
 	Cost		startup_cost;	/* one-time setup cost */
 	Cost		per_call_cost;	/* cost for each subplan evaluation */

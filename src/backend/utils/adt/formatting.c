@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.145 2008/07/12 00:44:37 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.152 2008/12/15 14:55:50 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2008, PostgreSQL Global Development Group
@@ -148,9 +148,15 @@ typedef struct
  */
 typedef enum
 {
+<<<<<<< HEAD
 	FROM_CHAR_DATE_NONE = 0,	/* Value does not affect date mode. */
 	FROM_CHAR_DATE_GREGORIAN,	/* Gregorian (day, month, year) style date */
 	FROM_CHAR_DATE_ISOWEEK		/* ISO 8601 week date */
+=======
+	FROM_CHAR_DATE_NONE = 0,  /* Value does not affect date mode. */
+	FROM_CHAR_DATE_GREGORIAN, /* Gregorian (day, month, year) style date */
+	FROM_CHAR_DATE_ISOWEEK    /* ISO 8601 week date */
+>>>>>>> 38e9348282e
 } FromCharDateMode;
 
 typedef struct FormatNode FormatNode;
@@ -414,7 +420,6 @@ typedef struct
 				ddd,
 				mm,
 				ms,
-				iyear,
 				year,
 				bc,
 				ww,
@@ -434,11 +439,19 @@ typedef struct
  */
 #ifdef DEBUG_TO_FROM_CHAR
 #define DEBUG_TMFC(_X) \
+<<<<<<< HEAD
 		elog(DEBUG_elog_output, "TMFC:\nmode %d\nhh %d\npm %d\nmi %d\nss %d\nssss %d\nd %d\ndd %d\nddd %d\nmm %d\nms: %d\nyear %d\nbc %d\nww %d\nw %d\ncc %d\nj %d\nus: %d\nyysz: %d\nclock: %d", \
 			(_X)->mode, (_X)->hh, (_X)->pm, (_X)->mi, (_X)->ss, (_X)->ssss, \
 			(_X)->d, (_X)->dd, (_X)->ddd, (_X)->mm, (_X)->ms, (_X)->year, \
 			(_X)->bc, (_X)->ww, (_X)->w, (_X)->cc, (_X)->j, (_X)->us, \
 			(_X)->yysz, (_X)->clock);
+=======
+		elog(DEBUG_elog_output, "TMFC:\nmode %d\nhh %d\nam %d\npm %d\nmi %d\nss %d\nssss %d\nd %d\ndd %d\nddd %d\nmm %d\nms: %d\nyear %d\nbc %d\nww %d\nw %d\ncc %d\nj %d\nus: %d\nyysz: %d", \
+			(_X)->mode, (_X)->hh, (_X)->am, (_X)->pm, (_X)->mi, (_X)->ss, \
+			(_X)->ssss, (_X)->d, (_X)->dd, (_X)->ddd, (_X)->mm, (_X)->ms, \
+			(_X)->year, (_X)->bc, (_X)->ww, (_X)->w, (_X)->cc, (_X)->j, \
+			(_X)->us, (_X)->yysz);
+>>>>>>> 38e9348282e
 #define DEBUG_TM(_X) \
 		elog(DEBUG_elog_output, "TM:\nsec %d\nyear %d\nmin %d\nwday %d\nhour %d\nyday %d\nmday %d\nnisdst %d\nmon %d\n",\
 			(_X)->tm_sec, (_X)->tm_year,\
@@ -712,6 +725,7 @@ typedef enum
  */
 static const KeyWord DCH_keywords[] = {
 /*	name, len, id, is_digit, date_mode */
+<<<<<<< HEAD
 	{"A.D.", 4, DCH_A_D, FALSE, FROM_CHAR_DATE_NONE},	/* A */
 	{"A.M.", 4, DCH_A_M, FALSE, FROM_CHAR_DATE_NONE},
 	{"AD", 2, DCH_AD, FALSE, FROM_CHAR_DATE_NONE},
@@ -720,31 +734,55 @@ static const KeyWord DCH_keywords[] = {
 	{"BC", 2, DCH_BC, FALSE, FROM_CHAR_DATE_NONE},
 	{"CC", 2, DCH_CC, TRUE, FROM_CHAR_DATE_NONE},		/* C */
 	{"DAY", 3, DCH_DAY, FALSE, FROM_CHAR_DATE_NONE},	/* D */
+=======
+	{"A.D.", 4, DCH_A_D, FALSE, FROM_CHAR_DATE_GREGORIAN},	/* A */
+	{"A.M.", 4, DCH_A_M, FALSE, FROM_CHAR_DATE_NONE},
+	{"AD", 2, DCH_AD, FALSE, FROM_CHAR_DATE_GREGORIAN},
+	{"AM", 2, DCH_AM, FALSE, FROM_CHAR_DATE_NONE},
+	{"B.C.", 4, DCH_B_C, FALSE, FROM_CHAR_DATE_GREGORIAN},	/* B */
+	{"BC", 2, DCH_BC, FALSE, FROM_CHAR_DATE_GREGORIAN},
+	{"CC", 2, DCH_CC, TRUE, FROM_CHAR_DATE_GREGORIAN},		/* C */
+	{"DAY", 3, DCH_DAY, FALSE, FROM_CHAR_DATE_NONE},		/* D */
+>>>>>>> 38e9348282e
 	{"DDD", 3, DCH_DDD, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"DD", 2, DCH_DD, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"DY", 2, DCH_DY, FALSE, FROM_CHAR_DATE_NONE},
 	{"Day", 3, DCH_Day, FALSE, FROM_CHAR_DATE_NONE},
 	{"Dy", 2, DCH_Dy, FALSE, FROM_CHAR_DATE_NONE},
 	{"D", 1, DCH_D, TRUE, FROM_CHAR_DATE_GREGORIAN},
+<<<<<<< HEAD
 	{"FX", 2, DCH_FX, FALSE, FROM_CHAR_DATE_NONE},		/* F */
 	{"HH24", 4, DCH_HH24, TRUE, FROM_CHAR_DATE_NONE},	/* H */
 	{"HH12", 4, DCH_HH12, TRUE, FROM_CHAR_DATE_NONE},
 	{"HH", 2, DCH_HH, TRUE, FROM_CHAR_DATE_NONE},
 	{"IDDD", 4, DCH_IDDD, TRUE, FROM_CHAR_DATE_ISOWEEK},		/* I */
+=======
+	{"FX", 2, DCH_FX, FALSE, FROM_CHAR_DATE_NONE},			/* F */
+	{"HH24", 4, DCH_HH24, TRUE, FROM_CHAR_DATE_NONE},		/* H */
+	{"HH12", 4, DCH_HH12, TRUE, FROM_CHAR_DATE_NONE},
+	{"HH", 2, DCH_HH, TRUE, FROM_CHAR_DATE_NONE},
+	{"IDDD", 4, DCH_IDDD, TRUE, FROM_CHAR_DATE_ISOWEEK},	/* I */
+>>>>>>> 38e9348282e
 	{"ID", 2, DCH_ID, TRUE, FROM_CHAR_DATE_ISOWEEK},
 	{"IW", 2, DCH_IW, TRUE, FROM_CHAR_DATE_ISOWEEK},
 	{"IYYY", 4, DCH_IYYY, TRUE, FROM_CHAR_DATE_ISOWEEK},
 	{"IYY", 3, DCH_IYY, TRUE, FROM_CHAR_DATE_ISOWEEK},
 	{"IY", 2, DCH_IY, TRUE, FROM_CHAR_DATE_ISOWEEK},
 	{"I", 1, DCH_I, TRUE, FROM_CHAR_DATE_ISOWEEK},
+<<<<<<< HEAD
 	{"J", 1, DCH_J, TRUE, FROM_CHAR_DATE_NONE}, /* J */
 	{"MI", 2, DCH_MI, TRUE, FROM_CHAR_DATE_NONE},		/* M */
+=======
+	{"J", 1, DCH_J, TRUE, FROM_CHAR_DATE_NONE},				/* J */
+	{"MI", 2, DCH_MI, TRUE, FROM_CHAR_DATE_NONE},			/* M */
+>>>>>>> 38e9348282e
 	{"MM", 2, DCH_MM, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"MONTH", 5, DCH_MONTH, FALSE, FROM_CHAR_DATE_GREGORIAN},
 	{"MON", 3, DCH_MON, FALSE, FROM_CHAR_DATE_GREGORIAN},
 	{"MS", 2, DCH_MS, TRUE, FROM_CHAR_DATE_NONE},
 	{"Month", 5, DCH_Month, FALSE, FROM_CHAR_DATE_GREGORIAN},
 	{"Mon", 3, DCH_Mon, FALSE, FROM_CHAR_DATE_GREGORIAN},
+<<<<<<< HEAD
 	{"P.M.", 4, DCH_P_M, FALSE, FROM_CHAR_DATE_NONE},	/* P */
 	{"PM", 2, DCH_PM, FALSE, FROM_CHAR_DATE_NONE},
 	{"Q", 1, DCH_Q, TRUE, FROM_CHAR_DATE_NONE}, /* Q */
@@ -756,10 +794,24 @@ static const KeyWord DCH_keywords[] = {
 	{"WW", 2, DCH_WW, TRUE, FROM_CHAR_DATE_GREGORIAN},	/* W */
 	{"W", 1, DCH_W, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"Y,YYY", 5, DCH_Y_YYY, TRUE, FROM_CHAR_DATE_GREGORIAN},	/* Y */
+=======
+	{"P.M.", 4, DCH_P_M, FALSE, FROM_CHAR_DATE_NONE},		/* P */
+	{"PM", 2, DCH_PM, FALSE, FROM_CHAR_DATE_NONE},
+	{"Q", 1, DCH_Q, TRUE, FROM_CHAR_DATE_NONE},				/* Q */
+	{"RM", 2, DCH_RM, FALSE, FROM_CHAR_DATE_GREGORIAN},		/* R */
+	{"SSSS", 4, DCH_SSSS, TRUE, FROM_CHAR_DATE_NONE},		/* S */
+	{"SS", 2, DCH_SS, TRUE, FROM_CHAR_DATE_NONE},
+	{"TZ", 2, DCH_TZ, FALSE, FROM_CHAR_DATE_NONE},			/* T */
+	{"US", 2, DCH_US, TRUE, FROM_CHAR_DATE_NONE},			/* U */
+	{"WW", 2, DCH_WW, TRUE, FROM_CHAR_DATE_GREGORIAN},		/* W */
+	{"W", 1, DCH_W, TRUE, FROM_CHAR_DATE_GREGORIAN},
+	{"Y,YYY", 5, DCH_Y_YYY, TRUE, FROM_CHAR_DATE_GREGORIAN},/* Y */
+>>>>>>> 38e9348282e
 	{"YYYY", 4, DCH_YYYY, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"YYY", 3, DCH_YYY, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"YY", 2, DCH_YY, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"Y", 1, DCH_Y, TRUE, FROM_CHAR_DATE_GREGORIAN},
+<<<<<<< HEAD
 	{"a.d.", 4, DCH_a_d, FALSE, FROM_CHAR_DATE_NONE},	/* a */
 	{"a.m.", 4, DCH_a_m, FALSE, FROM_CHAR_DATE_NONE},
 	{"ad", 2, DCH_ad, FALSE, FROM_CHAR_DATE_NONE},
@@ -768,27 +820,51 @@ static const KeyWord DCH_keywords[] = {
 	{"bc", 2, DCH_bc, FALSE, FROM_CHAR_DATE_NONE},
 	{"cc", 2, DCH_CC, TRUE, FROM_CHAR_DATE_NONE},		/* c */
 	{"day", 3, DCH_day, FALSE, FROM_CHAR_DATE_NONE},	/* d */
+=======
+	{"a.d.", 4, DCH_a_d, FALSE, FROM_CHAR_DATE_GREGORIAN},	/* a */
+	{"a.m.", 4, DCH_a_m, FALSE, FROM_CHAR_DATE_NONE},
+	{"ad", 2, DCH_ad, FALSE, FROM_CHAR_DATE_GREGORIAN},
+	{"am", 2, DCH_am, FALSE, FROM_CHAR_DATE_NONE},
+	{"b.c.", 4, DCH_b_c, FALSE, FROM_CHAR_DATE_GREGORIAN},	/* b */
+	{"bc", 2, DCH_bc, FALSE, FROM_CHAR_DATE_GREGORIAN},
+	{"cc", 2, DCH_CC, TRUE, FROM_CHAR_DATE_GREGORIAN},		/* c */
+	{"day", 3, DCH_day, FALSE, FROM_CHAR_DATE_NONE},		/* d */
+>>>>>>> 38e9348282e
 	{"ddd", 3, DCH_DDD, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"dd", 2, DCH_DD, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"dy", 2, DCH_dy, FALSE, FROM_CHAR_DATE_NONE},
 	{"d", 1, DCH_D, TRUE, FROM_CHAR_DATE_GREGORIAN},
+<<<<<<< HEAD
 	{"fx", 2, DCH_FX, FALSE, FROM_CHAR_DATE_NONE},		/* f */
 	{"hh24", 4, DCH_HH24, TRUE, FROM_CHAR_DATE_NONE},	/* h */
 	{"hh12", 4, DCH_HH12, TRUE, FROM_CHAR_DATE_NONE},
 	{"hh", 2, DCH_HH, TRUE, FROM_CHAR_DATE_NONE},
 	{"iddd", 4, DCH_IDDD, TRUE, FROM_CHAR_DATE_ISOWEEK},		/* i */
+=======
+	{"fx", 2, DCH_FX, FALSE, FROM_CHAR_DATE_NONE},			/* f */
+	{"hh24", 4, DCH_HH24, TRUE, FROM_CHAR_DATE_NONE},		/* h */
+	{"hh12", 4, DCH_HH12, TRUE, FROM_CHAR_DATE_NONE},
+	{"hh", 2, DCH_HH, TRUE, FROM_CHAR_DATE_NONE},
+	{"iddd", 4, DCH_IDDD, TRUE, FROM_CHAR_DATE_ISOWEEK},	/* i */
+>>>>>>> 38e9348282e
 	{"id", 2, DCH_ID, TRUE, FROM_CHAR_DATE_ISOWEEK},
 	{"iw", 2, DCH_IW, TRUE, FROM_CHAR_DATE_ISOWEEK},
 	{"iyyy", 4, DCH_IYYY, TRUE, FROM_CHAR_DATE_ISOWEEK},
 	{"iyy", 3, DCH_IYY, TRUE, FROM_CHAR_DATE_ISOWEEK},
 	{"iy", 2, DCH_IY, TRUE, FROM_CHAR_DATE_ISOWEEK},
 	{"i", 1, DCH_I, TRUE, FROM_CHAR_DATE_ISOWEEK},
+<<<<<<< HEAD
 	{"j", 1, DCH_J, TRUE, FROM_CHAR_DATE_NONE}, /* j */
 	{"mi", 2, DCH_MI, TRUE, FROM_CHAR_DATE_NONE},		/* m */
+=======
+	{"j", 1, DCH_J, TRUE, FROM_CHAR_DATE_NONE},				/* j */
+	{"mi", 2, DCH_MI, TRUE, FROM_CHAR_DATE_NONE},			/* m */
+>>>>>>> 38e9348282e
 	{"mm", 2, DCH_MM, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"month", 5, DCH_month, FALSE, FROM_CHAR_DATE_GREGORIAN},
 	{"mon", 3, DCH_mon, FALSE, FROM_CHAR_DATE_GREGORIAN},
 	{"ms", 2, DCH_MS, TRUE, FROM_CHAR_DATE_NONE},
+<<<<<<< HEAD
 	{"p.m.", 4, DCH_p_m, FALSE, FROM_CHAR_DATE_NONE},	/* p */
 	{"pm", 2, DCH_pm, FALSE, FROM_CHAR_DATE_NONE},
 	{"q", 1, DCH_Q, TRUE, FROM_CHAR_DATE_NONE}, /* q */
@@ -800,6 +876,19 @@ static const KeyWord DCH_keywords[] = {
 	{"ww", 2, DCH_WW, TRUE, FROM_CHAR_DATE_GREGORIAN},	/* w */
 	{"w", 1, DCH_W, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"y,yyy", 5, DCH_Y_YYY, TRUE, FROM_CHAR_DATE_GREGORIAN},	/* y */
+=======
+	{"p.m.", 4, DCH_p_m, FALSE, FROM_CHAR_DATE_NONE},		/* p */
+	{"pm", 2, DCH_pm, FALSE, FROM_CHAR_DATE_NONE},
+	{"q", 1, DCH_Q, TRUE, FROM_CHAR_DATE_NONE},				/* q */
+	{"rm", 2, DCH_rm, FALSE, FROM_CHAR_DATE_GREGORIAN},		/* r */
+	{"ssss", 4, DCH_SSSS, TRUE, FROM_CHAR_DATE_NONE},		/* s */
+	{"ss", 2, DCH_SS, TRUE, FROM_CHAR_DATE_NONE},
+	{"tz", 2, DCH_tz, FALSE, FROM_CHAR_DATE_NONE},			/* t */
+	{"us", 2, DCH_US, TRUE, FROM_CHAR_DATE_NONE},			/* u */
+	{"ww", 2, DCH_WW, TRUE, FROM_CHAR_DATE_GREGORIAN},		/* w */
+	{"w", 1, DCH_W, TRUE, FROM_CHAR_DATE_GREGORIAN},
+	{"y,yyy", 5, DCH_Y_YYY, TRUE, FROM_CHAR_DATE_GREGORIAN},/* y */
+>>>>>>> 38e9348282e
 	{"yyyy", 4, DCH_YYYY, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"yyy", 3, DCH_YYY, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"yy", 2, DCH_YY, TRUE, FROM_CHAR_DATE_GREGORIAN},
@@ -1126,7 +1215,11 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n, char *func)
 				NUM_cache_remove(last_NUMCacheEntry);
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
+<<<<<<< HEAD
 						 errmsg("cannot use \"S\" twice for function \"%s\"", func)));
+=======
+						 errmsg("cannot use \"S\" twice")));
+>>>>>>> 38e9348282e
 			}
 			if (IS_PLUS(num) || IS_MINUS(num) || IS_BRACKET(num))
 			{
@@ -1487,7 +1580,11 @@ str_tolower(const char *buff, size_t nbytes)
 #ifdef USE_WIDE_UPPER_LOWER
 	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c())
 	{
+<<<<<<< HEAD
 		wchar_t    *workspace;
+=======
+		wchar_t		*workspace;
+>>>>>>> 38e9348282e
 		size_t		curr_char;
 		size_t		result_size;
 
@@ -1543,7 +1640,11 @@ str_toupper(const char *buff, size_t nbytes)
 #ifdef USE_WIDE_UPPER_LOWER
 	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c())
 	{
+<<<<<<< HEAD
 		wchar_t    *workspace;
+=======
+		wchar_t		*workspace;
+>>>>>>> 38e9348282e
 		size_t		curr_char;
 		size_t		result_size;
 
@@ -1591,7 +1692,11 @@ str_toupper(const char *buff, size_t nbytes)
 char *
 str_initcap(const char *buff, size_t nbytes)
 {
+<<<<<<< HEAD
 	char	   *result;
+=======
+	char		*result;
+>>>>>>> 38e9348282e
 	int			wasalnum = false;
 
 	if (!buff)
@@ -1600,7 +1705,11 @@ str_initcap(const char *buff, size_t nbytes)
 #ifdef USE_WIDE_UPPER_LOWER
 	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c())
 	{
+<<<<<<< HEAD
 		wchar_t    *workspace;
+=======
+		wchar_t		*workspace;
+>>>>>>> 38e9348282e
 		size_t		curr_char;
 		size_t		result_size;
 
@@ -1871,6 +1980,13 @@ strdigits_len(char *str)
 	return len;
 }
 
+<<<<<<< HEAD
+=======
+#define AMPM_ERROR	ereport(ERROR, \
+							(errcode(ERRCODE_INVALID_DATETIME_FORMAT), \
+							 errmsg("invalid AM/PM string")));
+
+>>>>>>> 38e9348282e
 /*
  * Set the date mode of a from-char conversion.
  *
@@ -1905,8 +2021,13 @@ from_char_set_int(int *dest, const int value, const FormatNode *node)
 	if (*dest != 0 && *dest != value)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+<<<<<<< HEAD
 		   errmsg("conflicting values for \"%s\" field in formatting string",
 				  node->key->name),
+=======
+				 errmsg("conflicting values for \"%s\" field in formatting string",
+					    node->key->name),
+>>>>>>> 38e9348282e
 				 errdetail("This value contradicts a previous setting for "
 						   "the same field type.")));
 	*dest = value;
@@ -1917,7 +2038,11 @@ from_char_set_int(int *dest, const int value, const FormatNode *node)
  * 'dest'. If 'dest' is NULL, the result is discarded.
  *
  * In fixed-width mode (the node does not have the FM suffix), consume at most
+<<<<<<< HEAD
  * 'len' characters.  However, any leading whitespace isn't counted in 'len'.
+=======
+ * 'len' characters.
+>>>>>>> 38e9348282e
  *
  * We use strtol() to recover the integer value from the source string, in
  * accordance with the given FormatNode.
@@ -1936,6 +2061,7 @@ static int
 from_char_parse_int_len(int *dest, char **src, const int len, FormatNode *node)
 {
 	long		result;
+<<<<<<< HEAD
 	char		copy[DCH_MAX_ITEM_SIZ + 1];
 	char	   *init = *src;
 	int			used;
@@ -1947,12 +2073,20 @@ from_char_parse_int_len(int *dest, char **src, const int len, FormatNode *node)
 
 	Assert(len <= DCH_MAX_ITEM_SIZ);
 	used = (int) strlcpy(copy, *src, len + 1);
+=======
+	char	   *init = *src;
+>>>>>>> 38e9348282e
 
 	if (S_FM(node->suffix) || is_next_separator(node))
 	{
 		/*
 		 * This node is in Fill Mode, or the next node is known to be a
+<<<<<<< HEAD
 		 * non-digit value, so we just slurp as many characters as we can get.
+=======
+		 * non-digit value, so we just slurp as many characters as we
+		 * can get.
+>>>>>>> 38e9348282e
 		 */
 		errno = 0;
 		result = strtol(init, src, 10);
@@ -1963,6 +2097,7 @@ from_char_parse_int_len(int *dest, char **src, const int len, FormatNode *node)
 		 * We need to pull exactly the number of characters given in 'len' out
 		 * of the string, and convert those.
 		 */
+<<<<<<< HEAD
 		char	   *last;
 
 		if (used < len)
@@ -1973,22 +2108,54 @@ from_char_parse_int_len(int *dest, char **src, const int len, FormatNode *node)
 					 errdetail("Field requires %d characters, but only %d "
 							   "remain.",
 							   len, used),
+=======
+		char first[DCH_MAX_ITEM_SIZ + 1];
+		char *last;
+		int used;
+
+		Assert(len <= DCH_MAX_ITEM_SIZ);
+		strncpy(first, init, len);
+		first[len] = '\0';
+
+		if (strlen(first) < len)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+					 errmsg("source string too short for \"%s\" formatting field",
+						    node->key->name),
+					 errdetail("Field requires %d characters, but only %d "
+							   "remain.",
+							   len, (int) strlen(first)),
+>>>>>>> 38e9348282e
 					 errhint("If your source string is not fixed-width, try "
 							 "using the \"FM\" modifier.")));
 
 		errno = 0;
+<<<<<<< HEAD
 		result = strtol(copy, &last, 10);
 		used = last - copy;
+=======
+		result = strtol(first, &last, 10);
+		used = last - first;
+>>>>>>> 38e9348282e
 
 		if (used > 0 && used < len)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+<<<<<<< HEAD
 					 errmsg("invalid value \"%s\" for \"%s\"",
 							copy, node->key->name),
 					 errdetail("Field requires %d characters, but only %d "
 							   "could be parsed.", len, used),
 					 errhint("If your source string is not fixed-width, try "
 							 "using the \"FM\" modifier.")));
+=======
+					 errmsg("invalid value for \"%s\" in source string", 
+						 	node->key->name),
+					 errdetail("Field requires %d characters, but only %d "
+						 	   "could be parsed.", len, used),
+					 errhint("If your source string is not fixed-width, try "
+						 	 "using the \"FM\" modifier.")));
+>>>>>>> 38e9348282e
 
 		*src += used;
 	}
@@ -1996,15 +2163,24 @@ from_char_parse_int_len(int *dest, char **src, const int len, FormatNode *node)
 	if (*src == init)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+<<<<<<< HEAD
 				 errmsg("invalid value \"%s\" for \"%s\"",
 						copy, node->key->name),
+=======
+				 errmsg("invalid value for \"%s\" in source string",
+					    node->key->name),
+>>>>>>> 38e9348282e
 				 errdetail("Value must be an integer.")));
 
 	if (errno == ERANGE || result < INT_MIN || result > INT_MAX)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("value for \"%s\" in source string is out of range",
+<<<<<<< HEAD
 						node->key->name),
+=======
+					    node->key->name),
+>>>>>>> 38e9348282e
 				 errdetail("Value must be in the range %d to %d.",
 						   INT_MIN, INT_MAX)));
 
@@ -2089,8 +2265,16 @@ seq_search(char *name, char **array, int type, int max, int *len)
 			}
 
 #ifdef DEBUG_TO_FROM_CHAR
+<<<<<<< HEAD
 			elog(DEBUG_elog_output, "N: %c, P: %c, A: %s (%s)",
 				 *n, *p, *a, name);
+=======
+
+			/*
+			 * elog(DEBUG_elog_output, "N: %c, P: %c, A: %s (%s)", *n, *p, *a,
+			 * name);
+			 */
+>>>>>>> 38e9348282e
 #endif
 			if (*n != *p)
 				break;
@@ -2102,7 +2286,11 @@ seq_search(char *name, char **array, int type, int max, int *len)
 
 /*
  * Perform a sequential search in 'array' for text matching the first 'max'
+<<<<<<< HEAD
  * characters of the source string.
+=======
+ * characters of the source string.  
+>>>>>>> 38e9348282e
  *
  * If a match is found, copy the array index of the match into the integer
  * pointed to by 'dest', advance 'src' to the end of the part of the string
@@ -2111,6 +2299,7 @@ seq_search(char *name, char **array, int type, int max, int *len)
  * If the string doesn't match, throw an error.
  */
 static int
+<<<<<<< HEAD
 from_char_seq_search(int *dest, char **src, char **array, int type, int max,
 					 FormatNode *node)
 {
@@ -2131,6 +2320,23 @@ from_char_seq_search(int *dest, char **src, char **array, int type, int max,
 				 errdetail("The given value did not match any of the allowed "
 						   "values for this field.")));
 	}
+=======
+from_char_seq_search(int *dest, char **src, char **array, int type, int max, 
+					 FormatNode *node)
+{
+	int result;
+	int len;
+
+	result = seq_search(*src, array, type, max, &len);
+	if (len <= 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid value for \"%s\" in source string",
+					    node->key->name),
+				 errdetail("The given value did not match any of the allowed "
+					 	   "values for this field.")));
+	from_char_set_int(dest, result, node);
+>>>>>>> 38e9348282e
 	*src += len;
 	return len;
 }
@@ -2700,8 +2906,12 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 {
 	FormatNode *n;
 	char	   *s;
+<<<<<<< HEAD
 	int			len,
 				value;
+=======
+	int			len;
+>>>>>>> 38e9348282e
 	bool		fx_mode = false;
 
 	for (n = node, s = in; n->type != NODE_TYPE_END && *s != '\0'; n++)
@@ -2745,10 +2955,13 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 				break;
 			case DCH_HH:
 			case DCH_HH12:
+<<<<<<< HEAD
 				from_char_parse_int_len(&out->hh, &s, 2, n);
 				out->clock = CLOCK_12_HOUR;
 				s += SKIP_THth(n->suffix);
 				break;
+=======
+>>>>>>> 38e9348282e
 			case DCH_HH24:
 				from_char_parse_int_len(&out->hh, &s, 2, n);
 				s += SKIP_THth(n->suffix);
@@ -2761,7 +2974,11 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 				from_char_parse_int(&out->ss, &s, n);
 				s += SKIP_THth(n->suffix);
 				break;
+<<<<<<< HEAD
 			case DCH_MS:		/* millisecond */
+=======
+			case DCH_MS:			/* millisecond */
+>>>>>>> 38e9348282e
 				len = from_char_parse_int_len(&out->ms, &s, 3, n);
 
 				/*
@@ -2772,7 +2989,11 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 
 				s += SKIP_THth(n->suffix);
 				break;
+<<<<<<< HEAD
 			case DCH_US:		/* microsecond */
+=======
+			case DCH_US:			/* microsecond */
+>>>>>>> 38e9348282e
 				len = from_char_parse_int_len(&out->us, &s, 6, n);
 
 				out->us *= len == 1 ? 100000 :
@@ -2811,16 +3032,28 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 			case DCH_MONTH:
 			case DCH_Month:
 			case DCH_month:
+<<<<<<< HEAD
 				from_char_seq_search(&value, &s, months_full, ONE_UPPER,
 									 MAX_MONTH_LEN, n);
 				from_char_set_int(&out->mm, value + 1, n);
+=======
+				from_char_seq_search(&out->mm, &s, months_full, ONE_UPPER, 
+									 FULL_SIZ, n);
+				out->mm++;
+>>>>>>> 38e9348282e
 				break;
 			case DCH_MON:
 			case DCH_Mon:
 			case DCH_mon:
+<<<<<<< HEAD
 				from_char_seq_search(&value, &s, months, ONE_UPPER,
 									 MAX_MON_LEN, n);
 				from_char_set_int(&out->mm, value + 1, n);
+=======
+				from_char_seq_search(&out->mm, &s, months, ONE_UPPER, 
+									 MAX_MON_LEN, n);
+				out->mm++;
+>>>>>>> 38e9348282e
 				break;
 			case DCH_MM:
 				from_char_parse_int(&out->mm, &s, n);
@@ -2829,16 +3062,26 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 			case DCH_DAY:
 			case DCH_Day:
 			case DCH_day:
+<<<<<<< HEAD
 				from_char_seq_search(&value, &s, days, ONE_UPPER,
 									 MAX_DAY_LEN, n);
 				from_char_set_int(&out->d, value, n);
+=======
+				from_char_seq_search(&out->d, &s, days, ONE_UPPER, 
+									 FULL_SIZ, n);
+>>>>>>> 38e9348282e
 				break;
 			case DCH_DY:
 			case DCH_Dy:
 			case DCH_dy:
+<<<<<<< HEAD
 				from_char_seq_search(&value, &s, days, ONE_UPPER,
 									 MAX_DY_LEN, n);
 				from_char_set_int(&out->d, value, n);
+=======
+				from_char_seq_search(&out->d, &s, days, ONE_UPPER, 
+									 MAX_DY_LEN, n);
+>>>>>>> 38e9348282e
 				break;
 			case DCH_DDD:
 				from_char_parse_int(&out->ddd, &s, n);
@@ -2884,15 +3127,23 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 				break;
 			case DCH_Y_YYY:
 				{
+<<<<<<< HEAD
 					int			matched,
 								years,
 								millenia;
+=======
+					int matched, years, millenia;
+>>>>>>> 38e9348282e
 
 					matched = sscanf(s, "%d,%03d", &millenia, &years);
 					if (matched != 2)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+<<<<<<< HEAD
 							 errmsg("invalid input string for \"Y,YYY\" in function \"to_date\"")));
+=======
+								 errmsg("invalid input string for \"Y,YYY\"")));
+>>>>>>> 38e9348282e
 					years += (millenia * 1000);
 					from_char_set_int(&out->year, years, n);
 					out->yysz = 4;
@@ -2947,6 +3198,7 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 				s += SKIP_THth(n->suffix);
 				break;
 			case DCH_RM:
+<<<<<<< HEAD
 				from_char_seq_search(&value, &s, rm_months_upper,
 									 ALL_UPPER, MAX_RM_LEN, n);
 				from_char_set_int(&out->mm, 12 - value, n);
@@ -2955,6 +3207,16 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 				from_char_seq_search(&value, &s, rm_months_lower,
 									 ALL_LOWER, MAX_RM_LEN, n);
 				from_char_set_int(&out->mm, 12 - value, n);
+=======
+				from_char_seq_search(&out->mm, &s, rm_months_upper, 
+									 ALL_UPPER, FULL_SIZ, n);
+				out->mm = 12 - out->mm;
+				break;
+			case DCH_rm:
+				from_char_seq_search(&out->mm, &s, rm_months_lower, 
+									 ALL_LOWER, FULL_SIZ, n);
+				out->mm = 12 - out->mm;
+>>>>>>> 38e9348282e
 				break;
 			case DCH_W:
 				from_char_parse_int(&out->w, &s, n);
@@ -3507,6 +3769,7 @@ do_to_timestamp(text *date_txt, text *fmt,
 	if (tmfc.ddd && (tm->tm_mon <= 1 || tm->tm_mday <= 1))
 	{
 		/*
+<<<<<<< HEAD
 		 * The month and day field have not been set, so we use the
 		 * day-of-year field to populate them.	Depending on the date mode,
 		 * this field may be interpreted as a Gregorian day-of-year, or an ISO
@@ -3518,11 +3781,22 @@ do_to_timestamp(text *date_txt, text *fmt,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 			errmsg("cannot calculate day of year without year information")));
 
+=======
+		 * The month and day field have not been set, so we use the day-of-year
+		 * field to populate them.  Depending on the date mode, this field may
+		 * be interpreted as a Gregorian day-of-year, or an ISO week date
+		 * day-of-year.
+		 */
+>>>>>>> 38e9348282e
 		if (tmfc.mode == FROM_CHAR_DATE_ISOWEEK)
 		{
 			int			j0;		/* zeroth day of the ISO year, in Julian */
 
+<<<<<<< HEAD
 			j0 = isoweek2j(tm->tm_year, 1) - 1;
+=======
+			j0 = isoweek2j(tmfc.year, 1) - 1;
+>>>>>>> 38e9348282e
 
 			j2date(j0 + tmfc.ddd, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 		}
@@ -3531,9 +3805,20 @@ do_to_timestamp(text *date_txt, text *fmt,
 			const int  *y;
 			int			i;
 
+<<<<<<< HEAD
 			static const int ysum[2][13] = {
 				{0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365},
 			{0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366}};
+=======
+			int			ysum[2][13] = {
+				{31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365, 0},
+				{31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366, 0}};
+
+			if (!tm->tm_year)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+						 errmsg("cannot calculate day of year without year information")));
+>>>>>>> 38e9348282e
 
 			y = ysum[isleap(tm->tm_year)];
 

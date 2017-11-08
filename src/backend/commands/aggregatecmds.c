@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.46 2008/06/08 21:09:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.47 2008/11/14 19:47:50 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -190,16 +190,26 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	 * values of the transtype.  However, we can allow polymorphic transtype
 	 * in some cases (AggregateCreate will check).  Also, we allow "internal"
 	 * for functions that want to pass pointers to private data structures;
+<<<<<<< HEAD
 	 * but allow that only to superusers, since you could crash the system (or
 	 * worse) by connecting up incompatible internal-using functions in an
 	 * aggregate.
+=======
+	 * but allow that only to superusers, since you could crash the system
+	 * (or worse) by connecting up incompatible internal-using functions
+	 * in an aggregate.
+>>>>>>> 38e9348282e
 	 */
 	transTypeId = typenameTypeId(NULL, transType, NULL);
 	if (get_typtype(transTypeId) == TYPTYPE_PSEUDO &&
 		!IsPolymorphicType(transTypeId))
 	{
 		if (transTypeId == INTERNALOID && superuser())
+<<<<<<< HEAD
 			 /* okay */ ;
+=======
+			/* okay */ ;
+>>>>>>> 38e9348282e
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),

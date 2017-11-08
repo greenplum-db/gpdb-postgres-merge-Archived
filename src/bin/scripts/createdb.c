@@ -5,7 +5,11 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.34 2009/04/06 08:42:53 heikki Exp $
+=======
+ * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.29 2008/12/11 07:34:08 petere Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +36,9 @@ main(int argc, char *argv[])
 		{"tablespace", required_argument, NULL, 'D'},
 		{"template", required_argument, NULL, 'T'},
 		{"encoding", required_argument, NULL, 'E'},
+		{"lc-collate", required_argument, NULL, 1},
+		{"lc-ctype", required_argument, NULL, 2},
+		{"locale", required_argument, NULL, 'l'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -50,6 +57,9 @@ main(int argc, char *argv[])
 	char	   *tablespace = NULL;
 	char	   *template = NULL;
 	char	   *encoding = NULL;
+	char	   *lc_collate = NULL;
+	char	   *lc_ctype = NULL;
+	char	   *locale = NULL;
 
 	PQExpBufferData sql;
 
@@ -61,7 +71,11 @@ main(int argc, char *argv[])
 
 	handle_help_version_opts(argc, argv, "createdb", help);
 
+<<<<<<< HEAD
 	while ((c = getopt_long(argc, argv, "h:p:U:wWeO:D:T:E:", long_options, &optindex)) != -1)
+=======
+	while ((c = getopt_long(argc, argv, "h:p:U:WeqO:D:T:E:l:", long_options, &optindex)) != -1)
+>>>>>>> 38e9348282e
 	{
 		switch (c)
 		{
@@ -95,6 +109,15 @@ main(int argc, char *argv[])
 			case 'E':
 				encoding = optarg;
 				break;
+			case 1:
+				lc_collate = optarg;
+				break;
+			case 2:
+				lc_ctype = optarg;
+				break;
+			case 'l':
+				locale = optarg;
+				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -117,6 +140,24 @@ main(int argc, char *argv[])
 					progname, argv[optind + 2]);
 			fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 			exit(1);
+	}
+
+	if (locale)
+	{
+		if (lc_ctype)
+		{
+			fprintf(stderr, _("%s: only one of --locale and --lc-ctype can be specified\n"),
+					progname);
+			exit(1);
+		}
+		if (lc_collate)
+		{
+			fprintf(stderr, _("%s: only one of --locale and --lc-collate can be specified\n"),
+					progname);
+			exit(1);
+		}
+		lc_ctype = locale;
+		lc_collate = locale;
 	}
 
 	if (encoding)
@@ -152,6 +193,13 @@ main(int argc, char *argv[])
 		appendPQExpBuffer(&sql, " ENCODING '%s'", encoding);
 	if (template)
 		appendPQExpBuffer(&sql, " TEMPLATE %s", fmtId(template));
+<<<<<<< HEAD
+=======
+	if (lc_collate)
+		appendPQExpBuffer(&sql, " COLLATE '%s'", lc_collate);
+	if (lc_ctype)
+		appendPQExpBuffer(&sql, " CTYPE '%s'", lc_ctype);
+>>>>>>> 38e9348282e
 
 	appendPQExpBuffer(&sql, ";\n");
 
@@ -211,6 +259,9 @@ help(const char *progname)
 	printf(_("  -D, --tablespace=TABLESPACE  default tablespace for the database\n"));
 	printf(_("  -e, --echo                   show the commands being sent to the server\n"));
 	printf(_("  -E, --encoding=ENCODING      encoding for the database\n"));
+	printf(_("  -l, --locale=LOCALE          locale settings for the database\n"));
+	printf(_("  --lc-collate=LOCALE          LC_COLLATE setting for the database\n"));
+	printf(_("  --lc-ctype=LOCALE            LC_CTYPE setting for the database\n"));
 	printf(_("  -O, --owner=OWNER            database user to own the new database\n"));
 	printf(_("  -T, --template=TEMPLATE      template database to copy\n"));
 	printf(_("  --help                       show this help, then exit\n"));

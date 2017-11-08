@@ -121,6 +121,11 @@ int main()
 	{ ECPGtrans(__LINE__, NULL, "commit work");}
 #line 22 "indicators.pgc"
 
+<<<<<<< HEAD
+=======
+	{ ECPGtrans(__LINE__, NULL, "commit work");}
+#line 23 "indicators.pgc"
+>>>>>>> 38e9348282e
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into indicator_test ( id , str , val ) values ( 1 , 'Hello' , 0 )", ECPGt_EOIT, ECPGt_EORT);}
 #line 24 "indicators.pgc"
@@ -141,6 +146,12 @@ int main()
 	{ ECPGtrans(__LINE__, NULL, "commit work");}
 #line 30 "indicators.pgc"
 
+<<<<<<< HEAD
+=======
+	{ ECPGtrans(__LINE__, NULL, "commit work");}
+#line 31 "indicators.pgc"
+
+>>>>>>> 38e9348282e
 
 	/* use indicators to get information about selects */
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select val from indicator_test where id = 1", ECPGt_EOIT, 
@@ -181,6 +192,12 @@ int main()
 	{ ECPGtrans(__LINE__, NULL, "commit work");}
 #line 46 "indicators.pgc"
 
+<<<<<<< HEAD
+=======
+	{ ECPGtrans(__LINE__, NULL, "commit work");}
+#line 47 "indicators.pgc"
+
+>>>>>>> 38e9348282e
 
 	{ ECPGdisconnect(__LINE__, "CURRENT");}
 #line 48 "indicators.pgc"

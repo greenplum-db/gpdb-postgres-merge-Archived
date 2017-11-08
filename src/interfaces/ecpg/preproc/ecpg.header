@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.7.2.1 2009/09/08 04:25:14 tgl Exp $ */
+=======
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.3 2008/11/26 08:45:12 petere Exp $ */
+>>>>>>> 38e9348282e
 
 /* Copyright comment */
 %{
@@ -23,12 +27,15 @@
 #define base_yylex filtered_base_yylex
 
 /*
+<<<<<<< HEAD
  * This is only here so the string gets into the POT.  Bison uses it
  * internally.
  */
 #define bison_gettext_dummy gettext_noop("syntax error")
 
 /*
+=======
+>>>>>>> 38e9348282e
  * Variables containing simple states.
  */
 int struct_level = 0;
@@ -62,7 +69,11 @@ struct ECPGtype ecpg_query = {ECPGt_char_variable, NULL, NULL, {NULL}, 0};
  * Handle parsing errors and warnings
  */
 void
+<<<<<<< HEAD
 mmerror(int error_code, enum errortype type, const char *error, ...)
+=======
+mmerror(int error_code, enum errortype type, char * error, ...)
+>>>>>>> 38e9348282e
 {
 	va_list ap;
 
@@ -117,8 +128,12 @@ cat2_str(char *str1, char *str2)
 	char * res_str	= (char *)mm_alloc(strlen(str1) + strlen(str2) + 2);
 
 	strcpy(res_str, str1);
+<<<<<<< HEAD
 	if (strlen(str1) != 0 && strlen(str2) != 0)
 		strcat(res_str, " ");
+=======
+	strcat(res_str, " ");
+>>>>>>> 38e9348282e
 	strcat(res_str, str2);
 	free(str1);
 	free(str2);
@@ -184,7 +199,15 @@ make3_str(char *str1, char *str2, char *str3)
 static char *
 make_name(void)
 {
+<<<<<<< HEAD
 	return mm_strdup(yytext);
+=======
+	char * name = (char *)mm_alloc(yyleng + 1);
+
+	strncpy(name, yytext, yyleng);
+	name[yyleng] = '\0';
+	return(name);
+>>>>>>> 38e9348282e
 }
 
 static char *
@@ -216,7 +239,11 @@ create_questionmarks(char *name, bool array)
 	for (; count > 0; count --)
 	{
 		sprintf(pacounter_buffer, "$%d", pacounter++);
+<<<<<<< HEAD
 		result = cat_str(3, result, mm_strdup(pacounter_buffer), make_str(" , "));
+=======
+		result = cat_str(3, result, strdup(pacounter_buffer), make_str(" , "));
+>>>>>>> 38e9348282e
 	}
 
 	/* removed the trailing " ," */
@@ -310,7 +337,11 @@ add_additional_variables(char *name, bool insert)
 
 	if (ptr == NULL)
 	{
+<<<<<<< HEAD
 		mmerror(PARSE_ERROR, ET_ERROR, "cursor \"%s\" does not exist", name);
+=======
+		mmerror(PARSE_ERROR, ET_ERROR, "trying to access an undeclared cursor \"%s\"\n", name);
+>>>>>>> 38e9348282e
 		return NULL;
 	}
 
@@ -338,14 +369,22 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 	if ((type_enum == ECPGt_struct ||
 	     type_enum == ECPGt_union) &&
 	    initializer == 1)
+<<<<<<< HEAD
 		mmerror(PARSE_ERROR, ET_ERROR, "initializer not allowed in type definition");
+=======
+		mmerror(PARSE_ERROR, ET_ERROR, "initializer not allowed in typedef command");
+>>>>>>> 38e9348282e
 	else
 	{
 		for (ptr = types; ptr != NULL; ptr = ptr->next)
 		{
 			if (strcmp(name, ptr->name) == 0)
 				/* re-definition is a bug */
+<<<<<<< HEAD
 				mmerror(PARSE_ERROR, ET_ERROR, "type \"%s\" is already defined", name);
+=======
+				mmerror(PARSE_ERROR, ET_ERROR, "type %s already defined", name);
+>>>>>>> 38e9348282e
 		}
 		adjust_array(type_enum, &dimension, &length, type_dimension, type_index, array, true);
 
@@ -368,7 +407,11 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 			type_enum != ECPGt_char &&
 			type_enum != ECPGt_unsigned_char &&
 			atoi(this->type->type_index) >= 0)
+<<<<<<< HEAD
 			mmerror(PARSE_ERROR, ET_ERROR, "multidimensional arrays for simple data types are not supported");
+=======
+			mmerror(PARSE_ERROR, ET_ERROR, "no multidimensional array support for simple data types");
+>>>>>>> 38e9348282e
 
 		types = this;
 	}

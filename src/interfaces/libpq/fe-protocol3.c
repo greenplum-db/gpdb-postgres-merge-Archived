@@ -9,7 +9,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-protocol3.c
+=======
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.36 2008/10/27 09:42:31 mha Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */

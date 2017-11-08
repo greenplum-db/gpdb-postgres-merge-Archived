@@ -38,12 +38,17 @@ main(void)
 	 
 
 #line 14 "execute.pgc"
+<<<<<<< HEAD
  int amount [ 8 ] ;
+=======
+ int  amount  [ 8 ]   ;
+>>>>>>> 38e9348282e
  
 #line 15 "execute.pgc"
  int increment = 100 ;
  
 #line 16 "execute.pgc"
+<<<<<<< HEAD
  char name [ 8 ] [ 8 ] ;
  
 #line 17 "execute.pgc"
@@ -51,6 +56,15 @@ main(void)
  
 #line 18 "execute.pgc"
  char command [ 128 ] ;
+=======
+ char  name  [ 8 ] [ 8 ]   ;
+ 
+#line 17 "execute.pgc"
+ char  letter  [ 8 ] [ 1 ]   ;
+ 
+#line 18 "execute.pgc"
+ char  command  [ 128 ]   ;
+>>>>>>> 38e9348282e
 /* exec sql end declare section */
 #line 19 "execute.pgc"
 
@@ -70,7 +84,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 25 "execute.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit");
+	{ ECPGtrans(__LINE__, NULL, "commit ");
 #line 26 "execute.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -121,7 +135,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 	printf("Inserted %ld tuples via prepared execute\n", sqlca.sqlerrd[2]);
 
-	{ ECPGtrans(__LINE__, NULL, "commit");
+	{ ECPGtrans(__LINE__, NULL, "commit ");
 #line 45 "execute.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -168,7 +182,11 @@ if (sqlca.sqlcode < 0) sqlprint();}
 		   
 		
 #line 58 "execute.pgc"
+<<<<<<< HEAD
  char n [ 8 ] , l = letter [ i ] [ 0 ] ;
+=======
+ char  n  [ 8 ]   ,  l   = letter [ i ] [ 0 ] ;
+>>>>>>> 38e9348282e
  
 #line 59 "execute.pgc"
  int a = amount [ i ] ;
@@ -235,7 +253,11 @@ if (sqlca.sqlcode < 0) sqlprint();}
 		   
 		
 #line 80 "execute.pgc"
+<<<<<<< HEAD
  char n [ 8 ] , l = letter [ i ] [ 0 ] ;
+=======
+ char  n  [ 8 ]   ,  l   = letter [ i ] [ 0 ] ;
+>>>>>>> 38e9348282e
  
 #line 81 "execute.pgc"
  int a = amount [ i ] ;
@@ -293,7 +315,11 @@ if (sqlca.sqlcode < 0) sqlprint();}
 		   
 		
 #line 99 "execute.pgc"
+<<<<<<< HEAD
  char n [ 8 ] , l = letter [ i ] [ 0 ] ;
+=======
+ char  n  [ 8 ]   ,  l   = letter [ i ] [ 0 ] ;
+>>>>>>> 38e9348282e
  
 #line 100 "execute.pgc"
  int a = amount [ i ] ;
@@ -317,7 +343,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 108 "execute.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit");
+	{ ECPGtrans(__LINE__, NULL, "commit ");
 #line 109 "execute.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

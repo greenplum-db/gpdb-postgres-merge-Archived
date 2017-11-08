@@ -9,7 +9,11 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.215 2008/11/22 22:47:06 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.216 2008/12/19 16:25:19 petere Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +67,10 @@ typedef enum NodeTag
 	T_Plan_Start = T_Result,
 	T_Append,
 	T_RecursiveUnion,
+<<<<<<< HEAD
 	T_Sequence,
+=======
+>>>>>>> 38e9348282e
 	T_BitmapAnd,
 	T_BitmapOr,
 	T_SeqScan,
@@ -85,6 +92,10 @@ typedef enum NodeTag
 	T_ValuesScan,
 	T_CteScan,
 	T_WorkTableScan,
+<<<<<<< HEAD
+=======
+	T_Join,
+>>>>>>> 38e9348282e
 	T_NestLoop,
 	T_MergeJoin,
 	T_HashJoin,
@@ -96,6 +107,7 @@ typedef enum NodeTag
 	T_Hash,
 	T_SetOp,
 	T_Limit,
+<<<<<<< HEAD
 	T_Motion,
 	T_ShareInputScan,
 	T_Repeat,
@@ -105,6 +117,8 @@ typedef enum NodeTag
 	T_AssertOp,
 	T_PartitionSelector,
 	T_Plan_End,
+=======
+>>>>>>> 38e9348282e
 	/* this one isn't a subclass of Plan: */
 	T_PlanInvalItem,
 
@@ -123,7 +137,10 @@ typedef enum NodeTag
 	T_ResultState,
 	T_AppendState,
 	T_RecursiveUnionState,
+<<<<<<< HEAD
 	T_SequenceState,
+=======
+>>>>>>> 38e9348282e
 	T_BitmapAndState,
 	T_BitmapOrState,
 	T_SeqScanState,
@@ -145,6 +162,10 @@ typedef enum NodeTag
 	T_ValuesScanState,
 	T_CteScanState,
 	T_WorkTableScanState,
+<<<<<<< HEAD
+=======
+	T_JoinState,
+>>>>>>> 38e9348282e
 	T_NestLoopState,
 	T_MergeJoinState,
 	T_HashJoinState,
@@ -305,15 +326,22 @@ typedef enum NodeTag
 	T_PathKey,
 	T_RestrictInfo,
 	T_InnerIndexscanInfo,
+<<<<<<< HEAD
+=======
+	T_FlattenedSubLink,
+>>>>>>> 38e9348282e
 	T_PlaceHolderVar,
 	T_SpecialJoinInfo,
 	T_AppendRelInfo,
 	T_PlaceHolderInfo,
+<<<<<<< HEAD
 	T_Partition,
 	T_PartitionRule,
 	T_PartitionNode,
 	T_PgPartRule,
 	T_SegfileMapNode,
+=======
+>>>>>>> 38e9348282e
 	T_PlannerParamItem,
 
     /* Tags for MPP planner nodes (relation.h) */
@@ -438,6 +466,7 @@ typedef enum NodeTag
 	T_CreateEnumStmt,
 	T_AlterTSDictionaryStmt,
 	T_AlterTSConfigurationStmt,
+<<<<<<< HEAD
 	T_PartitionBy,
 	T_PartitionElem,
 	T_PartitionRangeItem,
@@ -458,6 +487,17 @@ typedef enum NodeTag
 	T_AlterExtensionStmt,
 	T_AlterExtensionContentsStmt,
 	T_SetDistributionCmd,
+=======
+	T_CreateFdwStmt,
+	T_AlterFdwStmt,
+	T_DropFdwStmt,
+	T_CreateForeignServerStmt,
+	T_AlterForeignServerStmt,
+	T_DropForeignServerStmt,
+	T_CreateUserMappingStmt,
+	T_AlterUserMappingStmt,
+	T_DropUserMappingStmt,
+>>>>>>> 38e9348282e
 
 	/*
 	 * TAGS FOR PARSE TREE NODES (parsenodes.h)
@@ -482,6 +522,7 @@ typedef enum NodeTag
 	T_IndexElem,
 	T_Constraint,
 	T_DefElem,
+	T_OptionDefElem,
 	T_RangeTblEntry,
 	T_GroupingClause,
 	T_GroupingFunc,
@@ -499,6 +540,7 @@ typedef enum NodeTag
 	T_XmlSerialize,
 	T_WithClause,
 	T_CommonTableExpr,
+<<<<<<< HEAD
 	T_ColumnReferenceStorageDirective,
 
 	/*
@@ -507,6 +549,8 @@ typedef enum NodeTag
 	T_IdentifySystemCmd,
 	T_BaseBackupCmd,
 	T_StartReplicationCmd,
+=======
+>>>>>>> 38e9348282e
 
 	/*
 	 * TAGS FOR RANDOM OTHER STUFF
@@ -566,6 +610,10 @@ typedef struct Node
 	_result->type = (tag); \
 	_result; \
 })
+<<<<<<< HEAD
+=======
+
+>>>>>>> 38e9348282e
 #else
 
 /*
@@ -583,6 +631,8 @@ extern PGDLLIMPORT Node *newNodeMacroHolder;
 	newNodeMacroHolder->type = (tag), \
 	newNodeMacroHolder \
 )
+#endif   /* __GNUC__ */
+
 #endif   /* __GNUC__ */
 
 
@@ -685,6 +735,7 @@ typedef enum JoinType
 	 * support these codes.  NOTE: in JOIN_SEMI output, it is unspecified
 	 * which matching RHS row is joined to.  In JOIN_ANTI output, the row
 	 * is guaranteed to be null-extended.
+<<<<<<< HEAD
      *
      * CDB: We no longer use JOIN_REVERSE_IN, JOIN_UNIQUE_OUTER or
      * JOIN_UNIQUE_INNER.  The definitions are retained in case they
@@ -697,12 +748,22 @@ typedef enum JoinType
 									If any NULL values are produced by inner side,
 									return no join results. Otherwise, same as LASJ */
 	JOIN_REVERSE_IN,			/* at most one result per inner row */
+=======
+	 */
+	JOIN_SEMI,					/* 1 copy of each LHS row that has match(es) */
+	JOIN_ANTI,					/* 1 copy of each LHS row that has no match */
+
+>>>>>>> 38e9348282e
 	/*
 	 * These codes are used internally in the planner, but are not supported
 	 * by the executor (nor, indeed, by most of the planner).
 	 */
 	JOIN_UNIQUE_OUTER,			/* LHS path must be made unique */
 	JOIN_UNIQUE_INNER			/* RHS path must be made unique */
+<<<<<<< HEAD
+=======
+
+>>>>>>> 38e9348282e
 	/*
 	 * We might need additional join types someday.
 	 */
@@ -727,6 +788,7 @@ typedef enum JoinType
 	  ((1 << JOIN_LEFT) | \
 	   (1 << JOIN_FULL) | \
 	   (1 << JOIN_RIGHT) | \
+<<<<<<< HEAD
 	   (1 << JOIN_ANTI) | \
 	   (1 << JOIN_LASJ_NOTIN))) != 0)
 
@@ -772,5 +834,8 @@ typedef enum DispatchMethod
  * any dynamic partition scanning
  */
 #define INVALID_PART_INDEX 0
+=======
+	   (1 << JOIN_ANTI))) != 0)
+>>>>>>> 38e9348282e
 
 #endif   /* NODES_H */

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.151 2008/06/12 09:12:29 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.155 2008/11/19 10:34:50 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "catalog/index.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
+#include "storage/indexfsm.h"
 #include "utils/memutils.h"
 
 /* Working state for gistbuild and its callback */
@@ -150,8 +151,13 @@ gistbuild(PG_FUNCTION_ARGS)
 	buildstate.tmpCtx = createTempGistContext();
 
 	/* do the heap scan */
+<<<<<<< HEAD
 	reltuples = IndexBuildScan(heap, index, indexInfo, true,
 							   gistbuildCallback, (void *) &buildstate);
+=======
+	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
+								   gistbuildCallback, (void *) &buildstate);
+>>>>>>> 38e9348282e
 
 	/* okay, all heap tuples are indexed */
 	MemoryContextDelete(buildstate.tmpCtx);
@@ -352,7 +358,7 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 			 * we must create temporary page to operate
 			 */
 			dist->buffer = state->stack->buffer;
-			dist->page = PageGetTempPage(BufferGetPage(dist->buffer), sizeof(GISTPageOpaqueData));
+			dist->page = PageGetTempPageCopySpecial(BufferGetPage(dist->buffer));
 
 			/* clean all flags except F_LEAF */
 			GistPageGetOpaque(dist->page)->flags = (is_leaf) ? F_LEAF : 0;

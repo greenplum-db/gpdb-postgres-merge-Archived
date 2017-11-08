@@ -80,7 +80,11 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "set intervalstyle to postgres_verbose", ECPGt_EOIT, ECPGt_EORT);
 #line 31 "dt_test.pgc"
 
+<<<<<<< HEAD
 if (sqlca.sqlcode < 0) sqlprint ( );}
+=======
+if (sqlca.sqlcode < 0) sqlprint (  );}
+>>>>>>> 38e9348282e
 #line 31 "dt_test.pgc"
 
 
@@ -94,7 +98,11 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 36 "dt_test.pgc"
 
+<<<<<<< HEAD
 if (sqlca.sqlcode < 0) sqlprint ( );}
+=======
+if (sqlca.sqlcode < 0) sqlprint (  );}
+>>>>>>> 38e9348282e
 #line 36 "dt_test.pgc"
 
 
@@ -107,7 +115,11 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 38 "dt_test.pgc"
 
+<<<<<<< HEAD
 if (sqlca.sqlcode < 0) sqlprint ( );}
+=======
+if (sqlca.sqlcode < 0) sqlprint (  );}
+>>>>>>> 38e9348282e
 #line 38 "dt_test.pgc"
 
 
@@ -422,6 +434,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
 	free(text);
 
+<<<<<<< HEAD
 	in = "1234567890";
 	fmt = "%s";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
@@ -440,6 +453,19 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 359 "dt_test.pgc"
+=======
+	{ ECPGtrans(__LINE__, NULL, "rollback ");
+#line 351 "dt_test.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint (  );}
+#line 351 "dt_test.pgc"
+
+        { ECPGdisconnect(__LINE__, "CURRENT");
+#line 352 "dt_test.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint (  );}
+#line 352 "dt_test.pgc"
+>>>>>>> 38e9348282e
 
 
 	return (0);

@@ -7,7 +7,11 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/executor/tstoreReceiver.h,v 1.8.2.1 2008/12/01 17:06:35 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/executor/tstoreReceiver.h,v 1.12 2008/12/01 17:06:21 tgl Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -19,8 +23,12 @@
 #include "utils/tuplestore.h"
 
 
-extern DestReceiver *CreateTuplestoreDestReceiver(Tuplestorestate *tStore,
-							 MemoryContext tContext);
+extern DestReceiver *CreateTuplestoreDestReceiver(void);
+
+extern void SetTuplestoreDestReceiverParams(DestReceiver *self,
+											Tuplestorestate *tStore,
+											MemoryContext tContext,
+											bool detoast);
 
 extern void SetTuplestoreDestReceiverDeToast(DestReceiver *self,
 											 bool detoast);

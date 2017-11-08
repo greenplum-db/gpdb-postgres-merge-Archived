@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.142 2008/06/17 14:51:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.146 2008/10/21 20:42:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,11 +25,17 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
+<<<<<<< HEAD
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "cdb/cdbhash.h"
+=======
+#include "parser/parsetree.h"
+#include "utils/lsyscache.h"
+#include "utils/syscache.h"
+>>>>>>> 38e9348282e
 
 
 typedef struct
@@ -141,10 +147,15 @@ static Node *fix_upper_expr(PlannerGlobal *glob,
 static Node *fix_upper_expr_mutator(Node *node,
 					   fix_upper_expr_context *context);
 static bool fix_opfuncids_walker(Node *node, void *context);
+<<<<<<< HEAD
 static  bool cdb_expr_requires_full_eval(Node *node);
 static Plan *cdb_insert_result_node(PlannerGlobal *glob, 
 									Plan *plan, 
 									int rtoffset);
+=======
+static bool extract_query_dependencies_walker(Node *node,
+											  PlannerGlobal *context);
+>>>>>>> 38e9348282e
 
 static bool extract_query_dependencies_walker(Node *node,
 								  PlannerGlobal *context);
@@ -377,10 +388,22 @@ set_plan_references(PlannerGlobal *glob, Plan *plan, List *rtable)
 		/* flat copy to duplicate all the scalar fields */
 		newrte = copyObject(rte);
 
+<<<<<<< HEAD
 		/** Need to fix up some of the references in the newly created newrte */
 		fix_scan_expr(glob, (Node *) newrte->funcexpr, rtoffset);
 		fix_scan_expr(glob, (Node *) newrte->joinaliasvars, rtoffset);
 		fix_scan_expr(glob, (Node *) newrte->values_lists, rtoffset);
+=======
+		/* zap unneeded sub-structure */
+		newrte->subquery = NULL;
+		newrte->joinaliasvars = NIL;
+		newrte->funcexpr = NULL;
+		newrte->funccoltypes = NIL;
+		newrte->funccoltypmods = NIL;
+		newrte->values_lists = NIL;
+		newrte->ctecoltypes = NIL;
+		newrte->ctecoltypmods = NIL;
+>>>>>>> 38e9348282e
 
 		glob->finalrtable = lappend(glob->finalrtable, newrte);
 
@@ -676,6 +699,20 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 					fix_scan_list(glob, splan->scan.plan.qual, rtoffset);
 			}
 			break;
+<<<<<<< HEAD
+=======
+		case T_WorkTableScan:
+			{
+				WorkTableScan *splan = (WorkTableScan *) plan;
+
+				splan->scan.scanrelid += rtoffset;
+				splan->scan.plan.targetlist =
+					fix_scan_list(glob, splan->scan.plan.targetlist, rtoffset);
+				splan->scan.plan.qual =
+					fix_scan_list(glob, splan->scan.plan.qual, rtoffset);
+			}
+			break;
+>>>>>>> 38e9348282e
 		case T_NestLoop:
 		case T_MergeJoin:
 		case T_HashJoin:
@@ -1133,11 +1170,14 @@ fix_expr_common(PlannerGlobal *glob, Node *node)
 		record_plan_function_dependency(glob,
 										((Aggref *) node)->aggfnoid);
 	}
+<<<<<<< HEAD
 	else if (IsA(node, WindowFunc))
 	{
 		record_plan_function_dependency(glob,
 										((WindowFunc *) node)->winfnoid);
 	}
+=======
+>>>>>>> 38e9348282e
 	else if (IsA(node, FuncExpr))
 	{
 		record_plan_function_dependency(glob,
@@ -1183,6 +1223,7 @@ fix_expr_common(PlannerGlobal *glob, Node *node)
 				lappend_oid(glob->relationOids,
 							DatumGetObjectId(con->constvalue));
 	}
+<<<<<<< HEAD
     else if (IsA(node, Var))
     {
         Var    *var = (Var *)node;
@@ -1202,6 +1243,8 @@ fix_expr_common(PlannerGlobal *glob, Node *node)
                    var->varno <= list_length(glob->finalrtable));
         }
     }
+=======
+>>>>>>> 38e9348282e
 }
 
 /*
@@ -1222,6 +1265,7 @@ fix_scan_expr(PlannerGlobal *glob, Node *node, int rtoffset)
 	context.glob = glob;
 	context.rtoffset = rtoffset;
 
+<<<<<<< HEAD
 	/*
 	 * Postgres has an optimization to mutate the expression tree only if
 	 * rtoffset is non-zero. However, this optimization does not work for
@@ -1232,6 +1276,25 @@ fix_scan_expr(PlannerGlobal *glob, Node *node, int rtoffset)
 	 * using mutation. Therefore, in GPDB we need to unconditionally mutate the tree.
 	 */
 	return fix_scan_expr_mutator(node, &context);
+=======
+	if (rtoffset != 0 || glob->lastPHId != 0)
+	{
+		return fix_scan_expr_mutator(node, &context);
+	}
+	else
+	{
+		/*
+		 * If rtoffset == 0, we don't need to change any Vars, and if there
+		 * are no placeholders anywhere we won't need to remove them.  Then
+		 * it's OK to just scribble on the input node tree instead of copying
+		 * (since the only change, filling in any unset opfuncid fields,
+		 * is harmless).  This saves just enough cycles to be noticeable on
+		 * trivial queries.
+		 */
+		(void) fix_scan_expr_walker(node, &context);
+		return node;
+	}
+>>>>>>> 38e9348282e
 }
 
 static Node *
@@ -1255,6 +1318,7 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 		if (var->varnoold > 0)
 			var->varnoold += context->rtoffset;
 
+<<<<<<< HEAD
         /* Pseudo column reference? */
         if (var->varattno <= FirstLowInvalidHeapAttributeNumber)
         {
@@ -1287,6 +1351,20 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 		return fix_scan_expr_mutator((Node *) phv->phexpr, context);
 	}
 	
+=======
+		Assert(cexpr->cvarno != INNER);
+		Assert(cexpr->cvarno != OUTER);
+		cexpr->cvarno += context->rtoffset;
+		return (Node *) cexpr;
+	}
+	if (IsA(node, PlaceHolderVar))
+	{
+		/* At scan level, we should always just evaluate the contained expr */
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
+		return fix_scan_expr_mutator((Node *) phv->phexpr, context);
+	}
+>>>>>>> 38e9348282e
 	fix_expr_common(context->glob, node);
 	return expression_tree_mutator(node, fix_scan_expr_mutator,
 								   (void *) context);
@@ -1298,12 +1376,15 @@ fix_scan_expr_walker(Node *node, fix_scan_expr_context *context)
 	if (node == NULL)
 		return false;
 	Assert(!IsA(node, PlaceHolderVar));
+<<<<<<< HEAD
 
 	/*
 	 * fix_expr_common will look up and set operator opcodes in the
 	 * nodes. That's not needed, as ORCA has set those already, but
 	 * shouldn't do any harm either.
 	 */
+=======
+>>>>>>> 38e9348282e
 	fix_expr_common(context->glob, node);
 	return expression_tree_walker(node, fix_scan_expr_walker,
 								  (void *) context);
@@ -2094,7 +2175,11 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 	if (IsA(node, PlaceHolderVar))
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+<<<<<<< HEAD
 		
+=======
+
+>>>>>>> 38e9348282e
 		/* See if the PlaceHolderVar has bubbled up from a lower plan node */
 		if (context->outer_itlist->has_ph_vars)
 		{
@@ -2112,6 +2197,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 			if (newvar)
 				return (Node *) newvar;
 		}
+<<<<<<< HEAD
 		
 		/* If not supplied by input plans, evaluate the contained expr */
 		return fix_join_expr_mutator((Node *) phv->phexpr, context);
@@ -2119,6 +2205,14 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 
 	if (context->outer_itlist && context->outer_itlist->has_non_vars &&
 	        context->use_outer_tlist_for_matching_nonvars)
+=======
+
+		/* If not supplied by input plans, evaluate the contained expr */
+		return fix_join_expr_mutator((Node *) phv->phexpr, context);
+	}
+	/* Try matching more complex expressions too, if tlists have any */
+	if (context->outer_itlist->has_non_vars)
+>>>>>>> 38e9348282e
 	{
 		newvar = search_indexed_tlist_for_non_var(node,
 												  context->outer_itlist,
@@ -2206,7 +2300,11 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
 	if (IsA(node, PlaceHolderVar))
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+<<<<<<< HEAD
 		
+=======
+
+>>>>>>> 38e9348282e
 		/* See if the PlaceHolderVar has bubbled up from a lower plan node */
 		if (context->subplan_itlist->has_ph_vars)
 		{
@@ -2464,6 +2562,7 @@ extract_query_dependencies_walker(Node *node, PlannerGlobal *context)
 	return expression_tree_walker(node, extract_query_dependencies_walker,
 								  (void *) context);
 }
+<<<<<<< HEAD
 
 /*
  * cdb_extract_plan_dependencies()
@@ -2566,3 +2665,5 @@ cdb_insert_result_node(PlannerGlobal *glob, Plan *plan, int rtoffset)
 
     return resultplan;
 }                               /* cdb_insert_result_node */
+=======
+>>>>>>> 38e9348282e

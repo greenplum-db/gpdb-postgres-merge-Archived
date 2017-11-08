@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.160 2008/04/29 14:59:17 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.168 2008/10/07 01:47:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,14 +110,14 @@ transformTargetList(ParseState *pstate, List *targetlist)
 
 		/*
 		 * Check for "something.*".  Depending on the complexity of the
-		 * "something", the star could appear as the last name in ColumnRef,
+		 * "something", the star could appear as the last field in ColumnRef,
 		 * or as the last indirection item in A_Indirection.
 		 */
 		if (IsA(res->val, ColumnRef))
 		{
 			ColumnRef  *cref = (ColumnRef *) res->val;
 
-			if (strcmp(strVal(llast(cref->fields)), "*") == 0)
+			if (IsA(llast(cref->fields), A_Star))
 			{
 				/* It is something.*, expand into multiple items */
 				p_target = list_concat(p_target,
@@ -129,10 +129,8 @@ transformTargetList(ParseState *pstate, List *targetlist)
 		else if (IsA(res->val, A_Indirection))
 		{
 			A_Indirection *ind = (A_Indirection *) res->val;
-			Node	   *lastitem = llast(ind->indirection);
 
-			if (IsA(lastitem, String) &&
-				strcmp(strVal(lastitem), "*") == 0)
+			if (IsA(llast(ind->indirection), A_Star))
 			{
 				/* It is something.*, expand into multiple items */
 				p_target = list_concat(p_target,
@@ -177,14 +175,14 @@ transformExpressionList(ParseState *pstate, List *exprlist)
 
 		/*
 		 * Check for "something.*".  Depending on the complexity of the
-		 * "something", the star could appear as the last name in ColumnRef,
+		 * "something", the star could appear as the last field in ColumnRef,
 		 * or as the last indirection item in A_Indirection.
 		 */
 		if (IsA(e, ColumnRef))
 		{
 			ColumnRef  *cref = (ColumnRef *) e;
 
-			if (strcmp(strVal(llast(cref->fields)), "*") == 0)
+			if (IsA(llast(cref->fields), A_Star))
 			{
 				/* It is something.*, expand into multiple items */
 				result = list_concat(result,
@@ -196,10 +194,8 @@ transformExpressionList(ParseState *pstate, List *exprlist)
 		else if (IsA(e, A_Indirection))
 		{
 			A_Indirection *ind = (A_Indirection *) e;
-			Node	   *lastitem = llast(ind->indirection);
 
-			if (IsA(lastitem, String) &&
-				strcmp(strVal(lastitem), "*") == 0)
+			if (IsA(llast(ind->indirection), A_Star))
 			{
 				/* It is something.*, expand into multiple items */
 				result = list_concat(result,
@@ -350,6 +346,11 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
  * location		error cursor position for the target column, or -1
  *
  * Returns the modified expression.
+ *
+ * Note: location points at the target column name (SET target or INSERT
+ * column name list entry), and must therefore be -1 in an INSERT that
+ * omits the column name list.  So we should usually prefer to use
+ * exprLocation(expr) for errors that can happen in a default INSERT.
  */
 Expr *
 transformAssignedExpr(ParseState *pstate,
@@ -453,13 +454,19 @@ transformAssignedExpr(ParseState *pstate,
 		 * For normal non-qualified target column, do type checking and
 		 * coercion.
 		 */
+		Node   *orig_expr = (Node *) expr;
+
 		expr = (Expr *)
 			coerce_to_target_type(pstate,
-								  (Node *) expr, type_id,
+								  orig_expr, type_id,
 								  attrtype, attrtypmod,
 								  COERCION_ASSIGNMENT,
 								  COERCE_IMPLICIT_CAST,
+<<<<<<< HEAD
 								  location);
+=======
+								  -1);
+>>>>>>> 38e9348282e
 		if (expr == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -469,7 +476,7 @@ transformAssignedExpr(ParseState *pstate,
 							format_type_be(attrtype),
 							format_type_be(type_id)),
 				 errhint("You will need to rewrite or cast the expression."),
-					 parser_errposition(pstate, location)));
+					 parser_errposition(pstate, exprLocation(orig_expr))));
 	}
 
 	return expr;
@@ -588,6 +595,13 @@ transformAssignmentIndirection(ParseState *pstate,
 			subscripts = lappend(subscripts, n);
 			if (((A_Indices *) n)->lidx != NULL)
 				isSlice = true;
+		}
+		else if (IsA(n, A_Star))
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("row expansion via \"*\" is not supported here"),
+					 parser_errposition(pstate, location)));
 		}
 		else
 		{
@@ -709,7 +723,11 @@ transformAssignmentIndirection(ParseState *pstate,
 								   targetTypeId, targetTypMod,
 								   COERCION_ASSIGNMENT,
 								   COERCE_IMPLICIT_CAST,
+<<<<<<< HEAD
 								   location);
+=======
+								   -1);
+>>>>>>> 38e9348282e
 	if (result == NULL)
 	{
 		if (targetIsArray)
@@ -859,13 +877,15 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		 * (e.g., SELECT * FROM emp, dept)
 		 *
 		 * Since the grammar only accepts bare '*' at top level of SELECT, we
-		 * need not handle the targetlist==false case here.  However, we must
-		 * test for it because the grammar currently fails to distinguish a
-		 * quoted name "*" from a real asterisk.
+		 * need not handle the targetlist==false case here.
 		 */
+<<<<<<< HEAD
 		if (!targetlist)
 			elog(ERROR, "invalid use of *");
 
+=======
+		Assert(targetlist);
+>>>>>>> 38e9348282e
 		return ExpandAllTables(pstate, cref->location);
 	}
 	else
@@ -1208,6 +1228,7 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 			 */
 			break;
 		case RTE_CTE:
+<<<<<<< HEAD
 			if (!rte->self_reference)
 			{
 				/* Similar to RTE_SUBQUERY */
@@ -1219,10 +1240,26 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 					elog(ERROR, "WITH query %s does not have attribute %d",
 						 cte->ctename, attnum);
 				
+=======
+			/* CTE reference: examine subquery's output expr */
+			if (!rte->self_reference)
+			{
+				CommonTableExpr *cte = GetCTEForRTE(pstate, rte, netlevelsup);
+				TargetEntry *ste;
+
+				/* should be analyzed by now */
+				Assert(IsA(cte->ctequery, Query));
+				ste = get_tle_by_resno(((Query *) cte->ctequery)->targetList,
+									   attnum);
+				if (ste == NULL || ste->resjunk)
+					elog(ERROR, "subquery %s does not have attribute %d",
+						 rte->eref->aliasname, attnum);
+>>>>>>> 38e9348282e
 				expr = (Node *) ste->expr;
 				if (IsA(expr, Var))
 				{
 					/*
+<<<<<<< HEAD
 					 * Recurse into the sub-select to see what its Var refers
 					 * to.	We have to build an additional level of ParseState
 					 * to keep in step with varlevelsup in the subselect.
@@ -1238,6 +1275,24 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 
 					mypstate.parentParseState = pstate;
 					mypstate.p_rtable = ((Query *)cte->ctequery)->rtable;
+=======
+					 * Recurse into the CTE to see what its Var refers to. We
+					 * have to build an additional level of ParseState to keep
+					 * in step with varlevelsup in the CTE; furthermore it
+					 * could be an outer CTE.
+					 */
+					ParseState	mypstate;
+					Index		levelsup;
+
+					MemSet(&mypstate, 0, sizeof(mypstate));
+					/* this loop must work, since GetCTEForRTE did */
+					for (levelsup = 0;
+						 levelsup < rte->ctelevelsup + netlevelsup;
+						 levelsup++)
+						pstate = pstate->parentParseState;
+					mypstate.parentParseState = pstate;
+					mypstate.p_rtable = ((Query *) cte->ctequery)->rtable;
+>>>>>>> 38e9348282e
 					/* don't bother filling the rest of the fake pstate */
 
 					return expandRecordVariable(&mypstate, (Var *) expr, 0);
@@ -1245,9 +1300,12 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 				/* else fall through to inspect the expression */
 			}
 			break;
+<<<<<<< HEAD
 		case RTE_VOID:
 	            Insist(0);
         	    break;
+=======
+>>>>>>> 38e9348282e
 	}
 
 	/*
@@ -1305,7 +1363,7 @@ FigureColnameInternal(Node *node, char **name)
 				{
 					Node	   *i = lfirst(l);
 
-					if (strcmp(strVal(i), "*") != 0)
+					if (IsA(i, String))
 						fname = strVal(i);
 				}
 				if (fname)
@@ -1321,13 +1379,12 @@ FigureColnameInternal(Node *node, char **name)
 				char	   *fname = NULL;
 				ListCell   *l;
 
-				/* find last field name, if any, ignoring "*" */
+				/* find last field name, if any, ignoring "*" and subscripts */
 				foreach(l, ind->indirection)
 				{
 					Node	   *i = lfirst(l);
 
-					if (IsA(i, String) &&
-						strcmp(strVal(i), "*") != 0)
+					if (IsA(i, String))
 						fname = strVal(i);
 				}
 				if (fname)

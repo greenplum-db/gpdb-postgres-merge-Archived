@@ -3,87 +3,32 @@
  * pg_freespacemap.c
  *	  display contents of a free space map
  *
- *	  $PostgreSQL: pgsql/contrib/pg_freespacemap/pg_freespacemap.c,v 1.10 2008/05/12 00:00:43 alvherre Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_freespacemap/pg_freespacemap.c,v 1.12 2008/10/02 12:20:50 heikki Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/htup.h"
-#include "catalog/pg_type.h"
+#include "access/heapam.h"
 #include "funcapi.h"
 #include "storage/block.h"
 #include "storage/freespace.h"
-#include "storage/lmgr.h"
 
-
-#define		NUM_FREESPACE_PAGES_ELEM	5
-#define		NUM_FREESPACE_RELATIONS_ELEM	7
 
 PG_MODULE_MAGIC;
 
-Datum		pg_freespacemap_pages(PG_FUNCTION_ARGS);
-Datum		pg_freespacemap_relations(PG_FUNCTION_ARGS);
-
-
-/*
- * Record structure holding the to be exposed per-page data.
- */
-typedef struct
-{
-	Oid			reltablespace;
-	Oid			reldatabase;
-	Oid			relfilenode;
-	BlockNumber relblocknumber;
-	Size		bytes;
-	bool		isindex;
-}	FreeSpacePagesRec;
-
+Datum		pg_freespace(PG_FUNCTION_ARGS);
+Datum		pg_freespacedump(PG_FUNCTION_ARGS);
 
 /*
- * Record structure holding the to be exposed per-relation data.
+ * Returns the amount of free space on a given page, according to the
+ * free space map.
  */
-typedef struct
-{
-	Oid			reltablespace;
-	Oid			reldatabase;
-	Oid			relfilenode;
-	Size		avgrequest;
-	BlockNumber interestingpages;
-	int			storedpages;
-	int			nextpage;
-	bool		isindex;
-}	FreeSpaceRelationsRec;
-
-
-
-/*
- * Function context for page data persisting over repeated calls.
- */
-typedef struct
-{
-	TupleDesc	tupdesc;
-	FreeSpacePagesRec *record;
-}	FreeSpacePagesContext;
-
-
-/*
- * Function context for relation data persisting over repeated calls.
- */
-typedef struct
-{
-	TupleDesc	tupdesc;
-	FreeSpaceRelationsRec *record;
-}	FreeSpaceRelationsContext;
-
-
-/*
- * Function returning page data from the Free Space Map (FSM).
- */
-PG_FUNCTION_INFO_V1(pg_freespacemap_pages);
+PG_FUNCTION_INFO_V1(pg_freespace);
 
 Datum
-pg_freespacemap_pages(PG_FUNCTION_ARGS)
+pg_freespace(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	FuncCallContext *funcctx;
 	Datum		result;
 	MemoryContext oldcontext;
@@ -360,39 +305,22 @@ pg_freespacemap_relations(PG_FUNCTION_ARGS)
 		FreeSpaceRelationsRec *record = &fctx->record[i];
 		Datum		values[NUM_FREESPACE_RELATIONS_ELEM];
 		bool		nulls[NUM_FREESPACE_RELATIONS_ELEM];
+=======
+	Oid		relid = PG_GETARG_OID(0);
+	int64	blkno = PG_GETARG_INT64(1);
+	int16	freespace;
+	Relation rel;
+>>>>>>> 38e9348282e
 
-		values[0] = ObjectIdGetDatum(record->reltablespace);
-		nulls[0] = false;
-		values[1] = ObjectIdGetDatum(record->reldatabase);
-		nulls[1] = false;
-		values[2] = ObjectIdGetDatum(record->relfilenode);
-		nulls[2] = false;
+	rel = relation_open(relid, AccessShareLock);
 
-		/*
-		 * avgrequest isn't meaningful for an index
-		 */
-		if (record->isindex)
-		{
-			nulls[3] = true;
-		}
-		else
-		{
-			values[3] = UInt32GetDatum(record->avgrequest);
-			nulls[3] = false;
-		}
-		values[4] = Int32GetDatum(record->interestingpages);
-		nulls[4] = false;
-		values[5] = Int32GetDatum(record->storedpages);
-		nulls[5] = false;
-		values[6] = Int32GetDatum(record->nextpage);
-		nulls[6] = false;
+	if (blkno < 0 || blkno > MaxBlockNumber)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid block number")));
 
-		/* Build and return the tuple. */
-		tuple = heap_form_tuple(fctx->tupdesc, values, nulls);
-		result = HeapTupleGetDatum(tuple);
+	freespace = GetRecordedFreeSpace(rel, blkno);
 
-		SRF_RETURN_NEXT(funcctx, result);
-	}
-	else
-		SRF_RETURN_DONE(funcctx);
+	relation_close(rel, AccessShareLock);
+	PG_RETURN_INT16(freespace);
 }

@@ -11,7 +11,11 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/test/regress/pg_regress_main.c,v 1.9 2010/01/02 16:58:16 momjian Exp $
+=======
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress_main.c,v 1.4 2008/10/01 22:38:57 petere Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +61,7 @@ psql_start_test(const char *testname,
 	char		use_utility_mode = 0;
 	char	   *lastslash;
 
+<<<<<<< HEAD
 	/* generalise later */
 	if (strcmp(testname, "upg2") == 0)
 		use_utility_mode = 1;
@@ -66,6 +71,13 @@ psql_start_test(const char *testname,
 	 * This is mainly to create more reasonable error messages if the file is
 	 * not found.  It also allows local test overrides when running pg_regress
 	 * outside of the source tree.
+=======
+	/*
+	 * Look for files in the output dir first, consistent with a vpath
+	 * search.  This is mainly to create more reasonable error
+	 * messages if the file is not found.  It also allows local test
+	 * overrides when running pg_regress outside of the source tree.
+>>>>>>> 38e9348282e
 	 */
 	snprintf(infile, sizeof(infile), "%s/sql/%s.sql",
 			 outputdir, testname);
@@ -76,6 +88,7 @@ psql_start_test(const char *testname,
 	snprintf(outfile, sizeof(outfile), "%s/results/%s.out",
 			 outputdir, testname);
 
+<<<<<<< HEAD
 	/*
 	 * If the test name contains slashes, create intermediary results
 	 * directory.
@@ -113,6 +126,13 @@ psql_start_test(const char *testname,
 		fprintf(stderr, _("missing answer file for test \"%s\"\n"), testname);
 		exit_nicely(2);
 	}
+=======
+	snprintf(expectfile, sizeof(expectfile), "%s/expected/%s.out",
+			 outputdir, testname);
+	if (!file_exists(expectfile))
+		snprintf(expectfile, sizeof(expectfile), "%s/expected/%s.out",
+				 inputdir, testname);
+>>>>>>> 38e9348282e
 
 	add_stringlist_item(resultfiles, outfile);
 	add_stringlist_item(expectfiles, expectfile);

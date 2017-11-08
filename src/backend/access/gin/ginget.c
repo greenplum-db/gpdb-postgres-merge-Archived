@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.18 2008/07/11 21:06:29 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.20 2008/10/20 13:39:44 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -405,14 +405,7 @@ startScanKey(Relation index, GinState *ginstate, GinScanKey key)
 		return;
 
 	for (i = 0; i < key->nentries; i++)
-	{
 		startScanEntry(index, ginstate, key->scanEntry + i);
-		/*
-		 * Copy strategy number to each entry of key to
-		 * use in comparePartialFn call
-		 */
-		key->scanEntry[i].strategy = key->strategy;
-	}
 
 	memset(key->entryRes, TRUE, sizeof(bool) * key->nentries);
 	key->isFinished = FALSE;
@@ -615,6 +608,7 @@ entryGetItem(Relation index, GinScanEntry entry)
 }
 
 /*
+<<<<<<< HEAD
  * restart from saved position. Actually it's needed only for
  * partial match. function is called only by ginrestpos()
  */
@@ -663,6 +657,8 @@ ginrestartentry(GinScanEntry entry)
 }
 
 /*
+=======
+>>>>>>> 38e9348282e
  * Sets key->curItem to new found heap item pointer for one scan key
  * Returns isFinished, ie TRUE means we did NOT get a new item pointer!
  * Also, *keyrecheck is set true if recheck is needed for this scan key.

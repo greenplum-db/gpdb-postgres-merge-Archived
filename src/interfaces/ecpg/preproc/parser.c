@@ -14,7 +14,11 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/parser.c,v 1.5 2009/01/01 17:24:02 momjian Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/parser.c,v 1.4 2008/10/28 14:09:45 petere Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -105,6 +109,7 @@ filtered_base_yylex(void)
 			next_token = base_yylex();
 			switch (next_token)
 			{
+<<<<<<< HEAD
 #ifdef WITH_TIME
 				case TIME:
 					cur_token = WITH_TIME;
@@ -118,6 +123,10 @@ filtered_base_yylex(void)
 					break;
 				case CHECK:
 					cur_token = WITH_CHECK;
+=======
+				case TIME:
+					cur_token = WITH_TIME;
+>>>>>>> 38e9348282e
 					break;
 				default:
 					/* save the lookahead token for next time */

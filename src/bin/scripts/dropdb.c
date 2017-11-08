@@ -5,7 +5,11 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/bin/scripts/dropdb.c,v 1.27 2009/02/26 16:20:55 petere Exp $
+=======
+ * $PostgreSQL: pgsql/src/bin/scripts/dropdb.c,v 1.23 2008/12/11 07:34:08 petere Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */

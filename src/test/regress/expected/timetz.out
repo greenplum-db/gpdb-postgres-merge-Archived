@@ -21,7 +21,11 @@ INSERT INTO TIMETZ_TBL VALUES ('15:36:39 America/New_York');
 ERROR:  invalid input syntax for type time with time zone: "15:36:39 America/New_York"
 LINE 1: INSERT INTO TIMETZ_TBL VALUES ('15:36:39 America/New_York');
                                        ^
+<<<<<<< HEAD
 SELECT f1 AS "Time TZ" FROM TIMETZ_TBL ORDER BY 1;
+=======
+SELECT f1 AS "Time TZ" FROM TIMETZ_TBL;
+>>>>>>> 38e9348282e
     Time TZ     
 ----------------
  00:01:00-07

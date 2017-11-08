@@ -3,7 +3,11 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * src/bin/psql/describe.h
+=======
+ * $PostgreSQL: pgsql/src/bin/psql/describe.h,v 1.36 2008/12/19 16:25:18 petere Exp $
+>>>>>>> 38e9348282e
  */
 #ifndef DESCRIBE_H
 #define DESCRIBE_H
@@ -84,10 +88,22 @@ extern bool listCasts(const char *pattern);
 /* \dn */
 extern bool listSchemas(const char *pattern, bool verbose);
 
+<<<<<<< HEAD
 /* \dx */
 extern bool listExtensions(const char *pattern);
 
 /* \dx+ */
 extern bool listExtensionContents(const char *pattern);
+=======
+/* \dew */
+extern bool listForeignDataWrappers(const char *pattern, bool verbose);
+
+/* \des */
+extern bool listForeignServers(const char *pattern, bool verbose);
+
+/* \deu */
+extern bool listUserMappings(const char *pattern, bool verbose);
+
+>>>>>>> 38e9348282e
 
 #endif   /* DESCRIBE_H */

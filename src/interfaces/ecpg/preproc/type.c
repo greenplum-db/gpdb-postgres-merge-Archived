@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.78 2008/03/02 10:54:11 meskes Exp $ */
+=======
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.81 2008/11/26 15:35:30 meskes Exp $ */
+>>>>>>> 38e9348282e
 
 #include "postgres_fe.h"
 
@@ -327,10 +331,16 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 		fprintf(o, "\n\tECPGt_descriptor, %s, 0L, 0L, 0L, ", name);
 	else
 	{
+<<<<<<< HEAD
 		char	   *variable = (char *) mm_alloc(strlen(name) + ((prefix == NULL) ? 0 : strlen(prefix)) + 4);
 		char	   *offset = (char *) mm_alloc(strlen(name) + strlen("sizeof(struct varchar_)") + 1 + strlen(varcharsize) + sizeof(int) * CHAR_BIT * 10 / 3);
 		char	   *var_name,
 				   *ptr;
+=======
+		char *variable = (char *) mm_alloc(strlen(name) + ((prefix == NULL) ? 0 : strlen(prefix)) + 4);
+		char *offset = (char *) mm_alloc(strlen(name) + strlen("sizeof(struct varchar_)") + 1 + strlen(varcharsize) + sizeof(int) * CHAR_BIT * 10 / 3);
+		char *var_name, *ptr; 
+>>>>>>> 38e9348282e
 
 		switch (type)
 		{
@@ -355,8 +365,12 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				/* remove trailing [] is name is array element */
 				var_name = mm_strdup(name);
 				ptr = strchr(var_name, '[');
+<<<<<<< HEAD
 				if (ptr)
 					*ptr = '\0';
+=======
+				if (ptr) *ptr = '\0';
+>>>>>>> 38e9348282e
 				if (lineno)
 					sprintf(offset, "sizeof(struct varchar_%s_%d)", var_name, lineno);
 				else

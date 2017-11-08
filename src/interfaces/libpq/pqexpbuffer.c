@@ -18,7 +18,11 @@
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * src/interfaces/libpq/pqexpbuffer.c
+=======
+ * $PostgreSQL: pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.25 2008/11/26 00:26:23 tgl Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -55,12 +59,20 @@ markPQExpBufferBroken(PQExpBuffer str)
 {
 	if (str->data != oom_buffer)
 		free(str->data);
+<<<<<<< HEAD
 
 	/*
 	 * Casting away const here is a bit ugly, but it seems preferable to not
 	 * marking oom_buffer const.  We want to do that to encourage the compiler
 	 * to put oom_buffer in read-only storage, so that anyone who tries to
 	 * scribble on a broken PQExpBuffer will get a failure.
+=======
+	/*
+	 * Casting away const here is a bit ugly, but it seems preferable to
+	 * not marking oom_buffer const.  We want to do that to encourage the
+	 * compiler to put oom_buffer in read-only storage, so that anyone who
+	 * tries to scribble on a broken PQExpBuffer will get a failure.
+>>>>>>> 38e9348282e
 	 */
 	str->data = (char *) oom_buffer;
 	str->len = 0;
@@ -135,7 +147,11 @@ termPQExpBuffer(PQExpBuffer str)
 	if (str->data != oom_buffer)
 		free(str->data);
 	/* just for luck, make the buffer validly empty. */
+<<<<<<< HEAD
 	str->data = (char *) oom_buffer;	/* see comment above */
+=======
+	str->data = (char *) oom_buffer;		/* see comment above */
+>>>>>>> 38e9348282e
 	str->maxlen = 0;
 	str->len = 0;
 }
@@ -169,7 +185,11 @@ resetPQExpBuffer(PQExpBuffer str)
  * Make sure there is enough space for 'needed' more bytes in the buffer
  * ('needed' does not include the terminating null).
  *
+<<<<<<< HEAD
  * Returns 1 if OK, 0 if failed to enlarge buffer.	(In the latter case
+=======
+ * Returns 1 if OK, 0 if failed to enlarge buffer.  (In the latter case
+>>>>>>> 38e9348282e
  * the buffer is left in "broken" state.)
  */
 int
@@ -312,12 +332,15 @@ appendPQExpBufferVA(PQExpBuffer str, const char *fmt, va_list args)
 	size_t		avail;
 	int			nprinted;
 
+<<<<<<< HEAD
 #ifdef __va_copy
     __va_copy(saveargs, args);
 #else
     saveargs = args;
 #endif
 
+=======
+>>>>>>> 38e9348282e
 	if (PQExpBufferBroken(str))
 		return;					/* already failed */
 

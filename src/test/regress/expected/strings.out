@@ -41,6 +41,7 @@ SELECT 'first line'
 ERROR:  syntax error at or near "' - third line'"
 LINE 3: ' - third line'
         ^
+<<<<<<< HEAD
 -- bytea
 SET bytea_output TO hex;
 SELECT E'\\xDeAdBeEf'::bytea;
@@ -134,6 +135,33 @@ SELECT E'De\\123dBeEf'::bytea;
  DeSdBeEf
 (1 row)
 
+=======
+-- Unicode escapes
+SELECT U&'d\0061t\+000061' AS U&"d\0061t\+000061";
+ data 
+------
+ data
+(1 row)
+
+SELECT U&'d!0061t\+000061' UESCAPE '!' AS U&"d*0061t\+000061" UESCAPE '*';
+ dat\+000061 
+-------------
+ dat\+000061
+(1 row)
+
+SELECT U&'wrong: \061';
+ERROR:  invalid Unicode escape value at or near "\061'"
+LINE 1: SELECT U&'wrong: \061';
+                         ^
+SELECT U&'wrong: \+0061';
+ERROR:  invalid Unicode escape value at or near "\+0061'"
+LINE 1: SELECT U&'wrong: \+0061';
+                         ^
+SELECT U&'wrong: +0061' UESCAPE '+';
+ERROR:  invalid Unicode escape character at or near "+'"
+LINE 1: SELECT U&'wrong: +0061' UESCAPE '+';
+                                         ^
+>>>>>>> 38e9348282e
 --
 -- test conversions between various string types
 -- E021-10 implicit casting among the character data types
@@ -1501,6 +1529,7 @@ select 'a\\bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3, 'abcd\\'   as f4, '
 (1 row)
 
 --
+<<<<<<< HEAD
 -- test unicode escape
 --
 select E'A\u0041' as f1, E'\u0127' as f2;
@@ -1531,6 +1560,8 @@ ERROR:  invalid Unicode surrogate pair at or near "E'\uD834'"
 LINE 1: select E'\uD834';
                ^
 --
+=======
+>>>>>>> 38e9348282e
 -- Additional string functions
 --
 SELECT initcap('hi THOMAS');
@@ -1673,7 +1704,10 @@ SELECT btrim(E'\\000trim\\000'::bytea, ''::bytea);
  \000trim\000
 (1 row)
 
+<<<<<<< HEAD
 -- Clean up GPDB-added tables
 DROP TABLE char_strings_tbl;
 DROP TABLE varchar_strings_tbl;
 DROP TABLE text_strings_tbl;
+=======
+>>>>>>> 38e9348282e

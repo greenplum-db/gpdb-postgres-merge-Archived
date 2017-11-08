@@ -8,7 +8,11 @@
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * src/interfaces/libpq/libpq-fe.h
+=======
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.144 2008/09/22 13:55:14 tgl Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -32,10 +36,17 @@ extern		"C"
 /*
  * Option flags for PQcopyResult
  */
+<<<<<<< HEAD
 #define PG_COPYRES_ATTRS		  0x01
 #define PG_COPYRES_TUPLES		  0x02	/* Implies PG_COPYRES_ATTRS */
 #define PG_COPYRES_EVENTS		  0x04
 #define PG_COPYRES_NOTICEHOOKS	  0x08
+=======
+#define PG_COPYRES_ATTRS          0x01
+#define PG_COPYRES_TUPLES         0x02		/* Implies PG_COPYRES_ATTRS */
+#define PG_COPYRES_EVENTS         0x04
+#define PG_COPYRES_NOTICEHOOKS    0x08
+>>>>>>> 38e9348282e
 
 /* Application-visible enum types */
 
@@ -233,6 +244,7 @@ typedef struct pgresAttDesc
 	int			atttypmod;		/* type-specific modifier info */
 } PGresAttDesc;
 
+<<<<<<< HEAD
 /* Greenplum specific struct */
 typedef struct
 {
@@ -251,6 +263,8 @@ typedef struct
 struct PartitionNode;
 struct HTAB;
 
+=======
+>>>>>>> 38e9348282e
 /* ----------------
  * Exported functions of libpq
  * ----------------
@@ -286,9 +300,12 @@ extern PQconninfoOption *PQconndefaults(void);
 /* parse connection options in same way as PQconnectdb */
 extern PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
 
+<<<<<<< HEAD
 /* return the connection options used by a live connection */
 extern PQconninfoOption *PQconninfo(PGconn *conn);
 
+=======
+>>>>>>> 38e9348282e
 /* free the data structure returned by PQconndefaults() or PQconninfoParse() */
 extern void PQconninfoFree(PQconninfoOption *connOptions);
 
@@ -512,9 +529,15 @@ extern void PQfreemem(void *ptr);
 /* Create and manipulate PGresults */
 extern PGresult *PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status);
 extern PGresult *PQcopyResult(const PGresult *src, int flags);
+<<<<<<< HEAD
 extern int	PQsetResultAttrs(PGresult *res, int numAttributes, PGresAttDesc *attDescs);
 extern void *PQresultAlloc(PGresult *res, size_t nBytes);
 extern int	PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, int len);
+=======
+extern int PQsetResultAttrs(PGresult *res, int numAttributes, PGresAttDesc *attDescs);
+extern void *PQresultAlloc(PGresult *res, size_t nBytes);
+extern int PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, int len);
+>>>>>>> 38e9348282e
 
 /* Quoting strings before inclusion in queries. */
 extern size_t PQescapeStringConn(PGconn *conn,

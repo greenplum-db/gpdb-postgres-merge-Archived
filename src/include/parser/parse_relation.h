@@ -7,7 +7,11 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/parser/parse_relation.h,v 1.59 2008/10/04 21:56:55 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/parser/parse_relation.h,v 1.61 2008/10/06 15:15:22 tgl Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +43,11 @@ extern RangeTblEntry *GetRTEByRangeTablePosn(ParseState *pstate,
 					   int varno,
 					   int sublevels_up);
 extern CommonTableExpr *GetCTEForRTE(ParseState *pstate, RangeTblEntry *rte,
+<<<<<<< HEAD
 			 int rtelevelsup);
+=======
+									 int rtelevelsup);
+>>>>>>> 38e9348282e
 extern Node *scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte,
 				 char *colname, int location);
 extern Node *colNameToVar(ParseState *pstate, char *colname, bool localonly,
@@ -50,6 +58,8 @@ extern Node *qualifiedNameToVar(ParseState *pstate,
 				   char *colname,
 				   bool implicitRTEOK,
 				   int location);
+extern Relation parserOpenTable(ParseState *pstate, const RangeVar *relation,
+								int lockmode);
 extern RangeTblEntry *addRangeTableEntry(ParseState *pstate,
 				   RangeVar *relation,
 				   Alias *alias,
@@ -84,8 +94,11 @@ extern RangeTblEntry *addRangeTableEntryForCTE(ParseState *pstate,
 						 Index levelsup,
 						 Alias *alias,
 						 bool inFromCl);
+<<<<<<< HEAD
 extern bool isSimplyUpdatableRelation(Oid relid, bool noerror);
 extern Index extractSimplyUpdatableRTEIndex(List *rtable);
+=======
+>>>>>>> 38e9348282e
 extern void addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
 			  bool addToJoinList,
 			  bool addToRelNameSpace, bool addToVarNameSpace);

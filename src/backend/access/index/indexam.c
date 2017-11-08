@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.109 2008/06/19 00:46:03 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.111 2008/10/10 14:17:08 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -417,6 +417,8 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(amgettuple);
 
+	Assert(TransactionIdIsValid(RecentGlobalXmin));
+
 	/*
 	 * We always reset xs_hot_dead; if we are here then either we are just
 	 * starting the scan, or we previously returned a visible tuple, and in
@@ -662,7 +664,12 @@ Node *
 index_getbitmap(IndexScanDesc scan, Node *bitmap)
 {
 	FmgrInfo   *procedure;
+<<<<<<< HEAD
 	Node		*bm;
+=======
+	int64		ntids;
+	Datum		d;
+>>>>>>> 38e9348282e
 
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(amgetbitmap);
@@ -673,9 +680,22 @@ index_getbitmap(IndexScanDesc scan, Node *bitmap)
 	/*
 	 * have the am's getbitmap proc do all the work.
 	 */
+<<<<<<< HEAD
 	bm = (Node *) DatumGetPointer(FunctionCall2(procedure,
 									  PointerGetDatum(scan),
 									  PointerGetDatum(bitmap)));
+=======
+	d = FunctionCall2(procedure,
+					  PointerGetDatum(scan),
+					  PointerGetDatum(bitmap));
+
+	ntids = DatumGetInt64(d);
+
+	/* If int8 is pass-by-ref, must free the result to avoid memory leak */
+#ifndef USE_FLOAT8_BYVAL
+	pfree(DatumGetPointer(d));
+#endif
+>>>>>>> 38e9348282e
 
 	return bm;
 }

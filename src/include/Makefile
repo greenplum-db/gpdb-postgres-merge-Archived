@@ -4,7 +4,7 @@
 #
 # 'make install' installs whole contents of src/include.
 #
-# $PostgreSQL: pgsql/src/include/Makefile,v 1.25 2008/05/14 19:10:29 tgl Exp $
+# $PostgreSQL: pgsql/src/include/Makefile,v 1.26 2008/08/29 13:02:32 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -70,7 +70,11 @@ check_oids:
 	(cd $(abs_top_srcdir)/src/include/catalog/ && ./duplicate_oids) 
 
 clean:
+<<<<<<< HEAD
 	rm -f utils/fmgroids.h parser/parse.h parser/gram.h utils/probes.h
+=======
+	rm -f utils/fmgroids.h parser/gram.h utils/probes.h
+>>>>>>> 38e9348282e
 
 distclean maintainer-clean: clean
 	rm -f pg_config.h dynloader.h pg_config_os.h stamp-h

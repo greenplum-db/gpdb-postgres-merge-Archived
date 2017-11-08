@@ -7,7 +7,11 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/contrib/isn/isn.c,v 1.11 2009/06/11 14:48:51 momjian Exp $
+=======
+ *	  $PostgreSQL: pgsql/contrib/isn/isn.c,v 1.9 2008/11/28 18:04:00 tgl Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */

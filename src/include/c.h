@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.229 2008/07/03 02:49:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.233 2008/12/11 10:25:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,8 +106,11 @@ extern "C" {
 #else
 #define gettext(x) (x)
 #define dgettext(d,x) (x)
+<<<<<<< HEAD
 #define ngettext(s,p,n) ((n) == 1 ? (s) : (p))
 #define dngettext(d,s,p,n) ((n) == 1 ? (s) : (p))
+=======
+>>>>>>> 38e9348282e
 #endif
 
 /*
@@ -864,6 +867,7 @@ typedef NameData *Name;
 #define STATUS_WAITING			(2)
 
 
+<<<<<<< HEAD
 /*
  * Append PG_USED_FOR_ASSERTS_ONLY to definitions of variables that are only
  * used in assert-enabled builds, to avoid compiler warnings about unused
@@ -876,6 +880,8 @@ typedef NameData *Name;
 #endif
 
 
+=======
+>>>>>>> 38e9348282e
 /* gettext domain name mangling */
 
 /*
@@ -896,11 +902,20 @@ typedef NameData *Name;
 #define CppAsString2(x) CppAsString(x)
 
 #ifdef SO_MAJOR_VERSION
+<<<<<<< HEAD
 #define PG_TEXTDOMAIN(domain) (domain CppAsString2(SO_MAJOR_VERSION) "-" PG_MAJORVERSION)
 #else
 #define PG_TEXTDOMAIN(domain) (domain "-" PG_MAJORVERSION)
 #endif
 
+=======
+# define PG_TEXTDOMAIN(domain) (domain CppAsString2(SO_MAJOR_VERSION) "-" PG_MAJORVERSION)
+#else
+# define PG_TEXTDOMAIN(domain) (domain "-" PG_MAJORVERSION)
+#endif
+
+
+>>>>>>> 38e9348282e
 /* ----------------------------------------------------------------
  *				Section 8: system-specific hacks
  *
@@ -929,10 +944,13 @@ typedef NameData *Name;
 #define PG_BINARY_W "w"
 #endif
 
+<<<<<<< HEAD
 #if defined(sun) && defined(__sparc__) && !defined(__SVR4)
 #include <unistd.h>
 #endif
 
+=======
+>>>>>>> 38e9348282e
 /*
  * Provide prototypes for routines not present in a particular machine's
  * standard C library.

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.93 2008/05/12 00:00:49 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.95 2008/10/04 21:56:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
 #include "cdb/cdbdisp_query.h"
 #include "cdb/ml_ipc.h"
 
+<<<<<<< HEAD
 static Datum ExecSubPlan(SubPlanState *node,
 						 ExprContext *econtext,
 						 bool *isNull,
@@ -44,6 +45,17 @@ static Datum ExecAlternativeSubPlan(AlternativeSubPlanState *node,
 									ExprContext *econtext,
 									bool *isNull,
 									ExprDoneCond *isDone);
+=======
+
+static Datum ExecSubPlan(SubPlanState *node,
+			ExprContext *econtext,
+			bool *isNull,
+			ExprDoneCond *isDone);
+static Datum ExecAlternativeSubPlan(AlternativeSubPlanState *node,
+			ExprContext *econtext,
+			bool *isNull,
+			ExprDoneCond *isDone);
+>>>>>>> 38e9348282e
 static Datum ExecHashSubPlan(SubPlanState *node,
 				ExprContext *econtext,
 				bool *isNull);
@@ -81,9 +93,12 @@ ExecSubPlan(SubPlanState *node,
 	if (subplan->setParam != NIL)
 		elog(ERROR, "cannot set parent params from subquery");
 
+<<<<<<< HEAD
 	/* Remember that we're recursing into a sub-plan */
 	node->planstate->state->currentSubplanLevel++;
 
+=======
+>>>>>>> 38e9348282e
 	/* Select appropriate evaluation strategy */
 	if (subplan->useHashTable)
 		result = ExecHashSubPlan(node, econtext, isNull);
@@ -970,6 +985,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext, QueryDesc *queryDesc
 	 */
 	MemoryContextSetPeakSpace(planstate->state->es_query_cxt, 0);
 
+<<<<<<< HEAD
 	/*
 	 * Need a try/catch block here so that if an ereport is called from
 	 * within ExecutePlan, we can clean up by calling CdbCheckDispatchResult.
@@ -1014,6 +1030,8 @@ PG_TRY();
 		}
 	}
 
+=======
+>>>>>>> 38e9348282e
 	if (subLinkType == ANY_SUBLINK ||
 		subLinkType == ALL_SUBLINK)
 		elog(ERROR, "ANY/ALL subselect unsupported as initplan");
@@ -1108,8 +1126,31 @@ PG_TRY();
 
 	if (!found)
 	{
+<<<<<<< HEAD
 		if (subLinkType == EXISTS_SUBLINK || subLinkType == NOT_EXISTS_SUBLINK)
 		{
+=======
+		/* There can be only one setParam... */
+		int			paramid = linitial_int(subplan->setParam);
+		ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
+
+		prm->execPlan = NULL;
+		/* We build the result in query context so it won't disappear */
+		if (astate != NULL)
+			prm->value = makeArrayResult(astate,
+										 econtext->ecxt_per_query_memory);
+		else
+		{
+			MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+			prm->value = PointerGetDatum(construct_empty_array(subplan->firstColType));
+		}
+		prm->isnull = false;
+	}
+	else if (!found)
+	{
+		if (subLinkType == EXISTS_SUBLINK)
+		{
+>>>>>>> 38e9348282e
 			/* There can be only one setParam... */
 			int			paramid = linitial_int(subplan->setParam);
 			ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
@@ -1298,6 +1339,10 @@ ExecReScanSetParamPlan(SubPlanState *node, PlanState *parent)
 	}
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 38e9348282e
 /*
  * ExecInitAlternativeSubPlan
  *
@@ -1312,17 +1357,28 @@ ExecInitAlternativeSubPlan(AlternativeSubPlan *asplan, PlanState *parent)
 	SubPlan	   *subplan2;
 	Cost		cost1;
 	Cost		cost2;
+<<<<<<< HEAD
 	
 	asstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecAlternativeSubPlan;
 	asstate->xprstate.expr = (Expr *) asplan;
 	
+=======
+
+	asstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecAlternativeSubPlan;
+	asstate->xprstate.expr = (Expr *) asplan;
+
+>>>>>>> 38e9348282e
 	/*
 	 * Initialize subplans.  (Can we get away with only initializing the
 	 * one we're going to use?)
 	 */
 	asstate->subplans = (List *) ExecInitExpr((Expr *) asplan->subplans,
 											  parent);
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> 38e9348282e
 	/*
 	 * Select the one to be used.  For this, we need an estimate of the
 	 * number of executions of the subplan.  We use the number of output
@@ -1331,7 +1387,11 @@ ExecInitAlternativeSubPlan(AlternativeSubPlan *asplan, PlanState *parent)
 	 * probably not by more than a factor of 2) if we are in the qual.
 	 */
 	num_calls = parent->plan->plan_rows;
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> 38e9348282e
 	/*
 	 * The planner saved enough info so that we don't have to work very hard
 	 * to estimate the total cost, given the number-of-calls estimate.
@@ -1339,15 +1399,26 @@ ExecInitAlternativeSubPlan(AlternativeSubPlan *asplan, PlanState *parent)
 	Assert(list_length(asplan->subplans) == 2);
 	subplan1 = (SubPlan *) linitial(asplan->subplans);
 	subplan2 = (SubPlan *) lsecond(asplan->subplans);
+<<<<<<< HEAD
 	
 	cost1 = subplan1->startup_cost + num_calls * subplan1->per_call_cost;
 	cost2 = subplan2->startup_cost + num_calls * subplan2->per_call_cost;
 	
+=======
+
+	cost1 = subplan1->startup_cost + num_calls * subplan1->per_call_cost;
+	cost2 = subplan2->startup_cost + num_calls * subplan2->per_call_cost;
+
+>>>>>>> 38e9348282e
 	if (cost1 < cost2)
 		asstate->active = 0;
 	else
 		asstate->active = 1;
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> 38e9348282e
 	return asstate;
 }
 
@@ -1368,9 +1439,15 @@ ExecAlternativeSubPlan(AlternativeSubPlanState *node,
 	/* Just pass control to the active subplan */
 	SubPlanState   *activesp = (SubPlanState *) list_nth(node->subplans,
 														 node->active);
+<<<<<<< HEAD
 	
 	Assert(IsA(activesp, SubPlanState));
 	
+=======
+
+	Assert(IsA(activesp, SubPlanState));
+
+>>>>>>> 38e9348282e
 	return ExecSubPlan(activesp,
 					   econtext,
 					   isNull,

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.93 2008/04/16 23:59:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.97 2008/10/27 19:37:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,6 +167,7 @@ void elog_internalerror(const char *filename, int lineno, const char *funcname)
  * and have errstart insert the default text domain.  Modules can either use
  * ereport_domain() directly, or preferably they can override the TEXTDOMAIN
  * macro.
+<<<<<<< HEAD
  *
  * If elevel >= ERROR, the call will not return; we try to inform the compiler
  * of that via pg_unreachable().  However, no useful optimization effect is
@@ -209,6 +210,18 @@ void elog_internalerror(const char *filename, int lineno, const char *funcname)
 		if(p) ereport_domain(elevel, TEXTDOMAIN, __VA_ARGS__); \
 	} while (0)
 
+=======
+ *----------
+ */
+#define ereport_domain(elevel, domain, rest)	\
+	(errstart(elevel, __FILE__, __LINE__, PG_FUNCNAME_MACRO, domain) ? \
+	 (errfinish rest) : (void) 0)
+>>>>>>> 38e9348282e
+
+#define ereport(level, rest)	\
+	ereport_domain(level, TEXTDOMAIN, rest)
+
+#define TEXTDOMAIN NULL
 
 extern bool errstart(int elevel, const char *filename, int lineno,
 		 const char *funcname, const char *domain);

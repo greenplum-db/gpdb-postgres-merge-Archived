@@ -35,10 +35,17 @@ main(void)
 	 
 
 #line 16 "test3.pgc"
+<<<<<<< HEAD
  char id [ 200 ] ;
  
 #line 17 "test3.pgc"
  char res [ 200 ] ;
+=======
+ char  id  [ 200 ]   ;
+ 
+#line 17 "test3.pgc"
+ char  res  [ 200 ]   ;
+>>>>>>> 38e9348282e
 /* exec sql end declare section */
 #line 18 "test3.pgc"
 
@@ -54,7 +61,11 @@ main(void)
 
 
 	/* this selects from "second" which was opened last */
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select current_database ( )", ECPGt_EOIT, 
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  current_database ( )     ", ECPGt_EOIT, 
+>>>>>>> 38e9348282e
 	ECPGt_char,(res),(long)200,(long)1,(200)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
 #line 27 "test3.pgc"
@@ -64,7 +75,11 @@ main(void)
 	{ ECPGdisconnect(__LINE__, "CURRENT");}
 #line 30 "test3.pgc"
 
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select current_database ( )", ECPGt_EOIT, 
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  current_database ( )     ", ECPGt_EOIT, 
+>>>>>>> 38e9348282e
 	ECPGt_char,(res),(long)200,(long)1,(200)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
 #line 31 "test3.pgc"

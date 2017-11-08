@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.70 2008/06/19 00:46:03 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.74 2008/12/04 11:08:46 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,30 +49,30 @@ gistrescan(PG_FUNCTION_ARGS)
 	{
 		/* rescan an existing indexscan --- reset state */
 		gistfreestack(so->stack);
-		gistfreestack(so->markstk);
-		so->stack = so->markstk = NULL;
-		so->flags = 0x0;
+		so->stack = NULL;
 		/* drop pins on buffers -- no locks held */
 		if (BufferIsValid(so->curbuf))
 		{
 			ReleaseBuffer(so->curbuf);
 			so->curbuf = InvalidBuffer;
 		}
+<<<<<<< HEAD
 		if (BufferIsValid(so->markbuf))
 		{
 			ReleaseBuffer(so->markbuf);
 			so->markbuf = InvalidBuffer;
 		}
 
+=======
+>>>>>>> 38e9348282e
 	}
 	else
 	{
 		/* initialize opaque data */
 		so = (GISTScanOpaque) palloc(sizeof(GISTScanOpaqueData));
-		so->stack = so->markstk = NULL;
-		so->flags = 0x0;
+		so->stack = NULL;
 		so->tempCxt = createTempGistContext();
-		so->curbuf = so->markbuf = InvalidBuffer;
+		so->curbuf = InvalidBuffer;
 		so->giststate = (GISTSTATE *) palloc(sizeof(GISTSTATE));
 		initGISTstate(so->giststate, scan->indexRelation);
 
@@ -85,7 +85,10 @@ gistrescan(PG_FUNCTION_ARGS)
 	 * Clear all the pointers.
 	 */
 	ItemPointerSetInvalid(&so->curpos);
+<<<<<<< HEAD
 	ItemPointerSetInvalid(&so->markpos);
+=======
+>>>>>>> 38e9348282e
 	so->nPageData = so->curPageData = 0;
 
 	so->qual_ok = true;
@@ -122,6 +125,7 @@ gistrescan(PG_FUNCTION_ARGS)
 Datum
 gistmarkpos(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	GISTScanOpaque so;
 	GISTSearchStack *o,
@@ -170,12 +174,16 @@ gistmarkpos(PG_FUNCTION_ARGS)
 	if ( so->markNPageData > 0 )
 		memcpy(so->markPageData, so->pageData, sizeof(ItemResult) * so->markNPageData);
 
+=======
+	elog(ERROR, "GiST does not support mark/restore");
+>>>>>>> 38e9348282e
 	PG_RETURN_VOID();
 }
 
 Datum
 gistrestrpos(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	GISTScanOpaque so;
 	GISTSearchStack *o,
@@ -224,6 +232,9 @@ gistrestrpos(PG_FUNCTION_ARGS)
 	if ( so->markNPageData > 0 )
 		memcpy(so->pageData, so->markPageData, sizeof(ItemResult) * so->markNPageData);
 
+=======
+	elog(ERROR, "GiST does not support mark/restore");
+>>>>>>> 38e9348282e
 	PG_RETURN_VOID();
 }
 
@@ -238,7 +249,6 @@ gistendscan(PG_FUNCTION_ARGS)
 	if (so != NULL)
 	{
 		gistfreestack(so->stack);
-		gistfreestack(so->markstk);
 		if (so->giststate != NULL)
 		{
 			freeGISTstate(so->giststate);
@@ -247,8 +257,6 @@ gistendscan(PG_FUNCTION_ARGS)
 		/* drop pins on buffers -- we aren't holding any locks */
 		if (BufferIsValid(so->curbuf))
 			ReleaseBuffer(so->curbuf);
-		if (BufferIsValid(so->markbuf))
-			ReleaseBuffer(so->markbuf);
 		MemoryContextDelete(so->tempCxt);
 		pfree(so);
 	}

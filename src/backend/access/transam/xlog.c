@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.316 2008/07/13 20:45:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.325 2008/12/24 20:41:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,7 @@
 #include "storage/smgr.h"
 #include "storage/spin.h"
 #include "utils/builtins.h"
+<<<<<<< HEAD
 #include "utils/nabstime.h"
 #include "utils/faultinjector.h"
 #include "utils/flatfiles.h"
@@ -88,6 +89,11 @@
 #include "cdb/cdbpersistentfilesysobj.h"
 #include "cdb/cdbpersistentcheck.h"
 #include "utils/snapmgr.h"
+=======
+#include "utils/guc.h"
+#include "utils/ps_status.h"
+#include "pg_trace.h"
+>>>>>>> 38e9348282e
 
 extern uint32 bootstrap_data_checksum_version;
 
@@ -617,7 +623,8 @@ static volatile sig_atomic_t in_restore_command = false;
 
 static void XLogArchiveNotify(const char *xlog);
 static void XLogArchiveNotifySeg(uint32 log, uint32 seg);
-static bool XLogArchiveCheckDone(const char *xlog, bool create_if_missing);
+static bool XLogArchiveCheckDone(const char *xlog);
+static bool XLogArchiveIsBusy(const char *xlog);
 static void XLogArchiveCleanup(const char *xlog);
 static void exitArchiveRecovery(TimeLineID endTLI,
 					uint32 endLogId, uint32 endLogSeg);
@@ -655,7 +662,12 @@ static bool XLogPageRead(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt,
 			 bool randAccess);
 
 static void PreallocXlogFiles(XLogRecPtr endptr);
+<<<<<<< HEAD
 static void UpdateLastRemovedPtr(char *filename);
+=======
+static void RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr);
+static void ValidateXLOGDirectoryStructure(void);
+>>>>>>> 38e9348282e
 static void CleanupBackupHistory(void);
 static XLogRecord *ReadCheckpointRecord(XLogRecPtr RecPtr, int whichChkpt);
 static bool ValidXLOGHeader(XLogPageHeader hdr, int emode, bool segmentonly);
@@ -856,6 +868,8 @@ XLogInsert_Internal(RmgrId rmid, uint8 info, XLogRecData *rdata, TransactionId h
 	/* info's high bits are reserved for use by me */
 	if (info & XLR_INFO_MASK)
 		elog(PANIC, "invalid xlog info mask %02X", info);
+
+	TRACE_POSTGRESQL_XLOG_INSERT(rmid, info);
 
 	/*
 	 * In bootstrap mode, we don't actually log anything but XLOG resources;
@@ -1322,6 +1336,8 @@ begin:;
 		XLogwrtRqst FlushRqst;
 		XLogRecPtr	OldSegEnd;
 
+		TRACE_POSTGRESQL_XLOG_SWITCH();
+
 		LWLockAcquire(WALWriteLock, LW_EXCLUSIVE);
 
 		/*
@@ -1549,6 +1565,7 @@ XLogCheckBuffer(XLogRecData *rdata, bool holdsExclusiveLock,
 		/*
 		 * The page needs to be backed up, so set up *bkpb
 		 */
+<<<<<<< HEAD
 		bkpb->node = BufferGetFileNode(rdata->buffer);
 		bkpb->block = BufferGetBlockNumber(rdata->buffer);
 		bkpb->block_info = 0;
@@ -1562,6 +1579,9 @@ XLogCheckBuffer(XLogRecData *rdata, bool holdsExclusiveLock,
 		 */
 		if (needs_backup)
 			bkpb->block_info |= BLOCK_APPLY;
+=======
+		BufferGetTag(rdata->buffer, &bkpb->node, &bkpb->fork, &bkpb->block);
+>>>>>>> 38e9348282e
 
 		if (rdata->buffer_std)
 		{
@@ -1664,7 +1684,7 @@ XLogArchiveNotifySeg(uint32 log, uint32 seg)
  * create <XLOG>.ready fails, we'll retry during subsequent checkpoints.
  */
 static bool
-XLogArchiveCheckDone(const char *xlog, bool create_if_missing)
+XLogArchiveCheckDone(const char *xlog)
 {
 	char		archiveStatusPath[MAXPGPATH];
 	struct stat stat_buf;
@@ -1689,10 +1709,52 @@ XLogArchiveCheckDone(const char *xlog, bool create_if_missing)
 		return true;
 
 	/* Retry creation of the .ready file */
-	if (create_if_missing)
-		XLogArchiveNotify(xlog);
-
+	XLogArchiveNotify(xlog);
 	return false;
+}
+
+/*
+ * XLogArchiveIsBusy
+ *
+ * Check to see if an XLOG segment file is still unarchived.
+ * This is almost but not quite the inverse of XLogArchiveCheckDone: in
+ * the first place we aren't chartered to recreate the .ready file, and
+ * in the second place we should consider that if the file is already gone
+ * then it's not busy.  (This check is needed to handle the race condition
+ * that a checkpoint already deleted the no-longer-needed file.)
+ */
+static bool
+XLogArchiveIsBusy(const char *xlog)
+{
+	char		archiveStatusPath[MAXPGPATH];
+	struct stat stat_buf;
+
+	/* First check for .done --- this means archiver is done with it */
+	StatusFilePath(archiveStatusPath, xlog, ".done");
+	if (stat(archiveStatusPath, &stat_buf) == 0)
+		return false;
+
+	/* check for .ready --- this means archiver is still busy with it */
+	StatusFilePath(archiveStatusPath, xlog, ".ready");
+	if (stat(archiveStatusPath, &stat_buf) == 0)
+		return true;
+
+	/* Race condition --- maybe archiver just finished, so recheck */
+	StatusFilePath(archiveStatusPath, xlog, ".done");
+	if (stat(archiveStatusPath, &stat_buf) == 0)
+		return false;
+
+	/*
+	 * Check to see if the WAL file has been removed by checkpoint,
+	 * which implies it has already been archived, and explains why we
+	 * can't see a status file for it.
+	 */
+	snprintf(archiveStatusPath, MAXPGPATH, XLOGDIR "/%s", xlog);
+	if (stat(archiveStatusPath, &stat_buf) != 0 &&
+		errno == ENOENT)
+		return false;
+
+	return true;
 }
 
 /*
@@ -1796,12 +1858,14 @@ AdvanceXLInsertBuffer(bool new_segment)
 				 * Have to write buffers while holding insert lock. This is
 				 * not good, so only write as much as we absolutely must.
 				 */
+				TRACE_POSTGRESQL_WAL_BUFFER_WRITE_DIRTY_START();
 				WriteRqst.Write = OldPageRqstPtr;
 				WriteRqst.Flush.xlogid = 0;
 				WriteRqst.Flush.xrecoff = 0;
 				XLogWrite(WriteRqst, false, false);
 				LWLockRelease(WALWriteLock);
 				Insert->LogwrtResult = LogwrtResult;
+				TRACE_POSTGRESQL_WAL_BUFFER_WRITE_DIRTY_DONE();
 			}
 		}
 	}
@@ -3140,14 +3204,14 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	 *
 	 * We initialise this with the filename of an InvalidXLogRecPtr, which
 	 * will prevent the deletion of any WAL files from the archive
-	 * because of the alphabetic sorting property of WAL filenames. 
+	 * because of the alphabetic sorting property of WAL filenames.
 	 *
 	 * Once we have successfully located the redo pointer of the checkpoint
 	 * from which we start recovery we never request a file prior to the redo
 	 * pointer of the last restartpoint. When redo begins we know that we
 	 * have successfully located it, so there is no need for additional
 	 * status flags to signify the point when we can begin deleting WAL files
-	 * from the archive. 
+	 * from the archive.
 	 */
 	if (InRedo)
 	{
@@ -3435,7 +3499,7 @@ RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr)
 			strspn(xlde->d_name, "0123456789ABCDEF") == 24 &&
 			strcmp(xlde->d_name + 8, lastoff + 8) <= 0)
 		{
-			if (XLogArchiveCheckDone(xlde->d_name, true))
+			if (XLogArchiveCheckDone(xlde->d_name))
 			{
 				if (snprintf(path, MAXPGPATH, "%s/%s", xlogDir, xlde->d_name) > MAXPGPATH)
 				{
@@ -3571,6 +3635,53 @@ XLogPrintLogNames(void)
 }
 
 /*
+ * Verify whether pg_xlog and pg_xlog/archive_status exist.
+ * If the latter does not exist, recreate it.
+ *
+ * It is not the goal of this function to verify the contents of these
+ * directories, but to help in cases where someone has performed a cluster
+ * copy for PITR purposes but omitted pg_xlog from the copy.
+ *
+ * We could also recreate pg_xlog if it doesn't exist, but a deliberate
+ * policy decision was made not to.  It is fairly common for pg_xlog to be
+ * a symlink, and if that was the DBA's intent then automatically making a
+ * plain directory would result in degraded performance with no notice.
+ */
+static void
+ValidateXLOGDirectoryStructure(void)
+{
+	char		path[MAXPGPATH];
+	struct stat	stat_buf;
+
+	/* Check for pg_xlog; if it doesn't exist, error out */
+	if (stat(XLOGDIR, &stat_buf) != 0 ||
+		!S_ISDIR(stat_buf.st_mode))
+		ereport(FATAL, 
+				(errmsg("required WAL directory \"%s\" does not exist",
+						XLOGDIR)));
+
+	/* Check for archive_status */
+	snprintf(path, MAXPGPATH, XLOGDIR "/archive_status");
+	if (stat(path, &stat_buf) == 0)
+	{
+		/* Check for weird cases where it exists but isn't a directory */
+		if (!S_ISDIR(stat_buf.st_mode))
+			ereport(FATAL, 
+					(errmsg("required WAL directory \"%s\" does not exist",
+							path)));
+	}
+	else
+	{
+		ereport(LOG,
+				(errmsg("creating missing WAL directory \"%s\"", path)));
+		if (mkdir(path, 0700) < 0)
+			ereport(FATAL, 
+					(errmsg("could not create missing directory \"%s\": %m",
+							path)));
+	}
+}
+
+/*
  * Remove previous backup history files.  This also retries creation of
  * .ready files for any backup history files for which XLogArchiveNotify
  * failed earlier.
@@ -3598,7 +3709,7 @@ CleanupBackupHistory(void)
 			strcmp(xlde->d_name + strlen(xlde->d_name) - strlen(".backup"),
 				   ".backup") == 0)
 		{
-			if (XLogArchiveCheckDone(xlde->d_name, true))
+			if (XLogArchiveCheckDone(xlde->d_name))
 			{
 				ereport(DEBUG2,
 				(errmsg("removing transaction log backup history file \"%s\"",
@@ -3687,6 +3798,7 @@ RestoreBackupBlockContents(XLogRecPtr lsn, BkpBlock bkpb, char *blk,
 
 	if (bkpb.hole_length == 0)
 	{
+<<<<<<< HEAD
 		memcpy((char *) page, blk, BLCKSZ);
 	}
 	else
@@ -3708,6 +3820,36 @@ RestoreBackupBlockContents(XLogRecPtr lsn, BkpBlock bkpb, char *blk,
 	MarkBufferDirty(buffer);
 
 	if (!keep_buffer)
+=======
+		if (!(record->xl_info & XLR_SET_BKP_BLOCK(i)))
+			continue;
+
+		memcpy(&bkpb, blk, sizeof(BkpBlock));
+		blk += sizeof(BkpBlock);
+
+		buffer = XLogReadBufferExtended(bkpb.node, bkpb.fork, bkpb.block,
+										RBM_ZERO);
+		Assert(BufferIsValid(buffer));
+		page = (Page) BufferGetPage(buffer);
+
+		if (bkpb.hole_length == 0)
+		{
+			memcpy((char *) page, blk, BLCKSZ);
+		}
+		else
+		{
+			/* must zero-fill the hole */
+			MemSet((char *) page, 0, BLCKSZ);
+			memcpy((char *) page, blk, bkpb.hole_offset);
+			memcpy((char *) page + (bkpb.hole_offset + bkpb.hole_length),
+				   blk + bkpb.hole_offset,
+				   BLCKSZ - (bkpb.hole_offset + bkpb.hole_length));
+		}
+
+		PageSetLSN(page, lsn);
+		PageSetTLI(page, ThisTimeLineID);
+		MarkBufferDirty(buffer);
+>>>>>>> 38e9348282e
 		UnlockReleaseBuffer(buffer);
 
 	MIRROREDLOCK_BUFMGR_UNLOCK;
@@ -5328,7 +5470,6 @@ WriteControlFile(void)
 	MirroredFlatFileOpen	mirroredOpen;
 
 	char		buffer[PG_CONTROL_SIZE];		/* need not be aligned */
-	char	   *localeptr;
 
 	/*
 	 * Initialize version and compatibility-check fields
@@ -5356,18 +5497,6 @@ WriteControlFile(void)
 #endif
 	ControlFile->float4ByVal = FLOAT4PASSBYVAL;
 	ControlFile->float8ByVal = FLOAT8PASSBYVAL;
-
-	ControlFile->localeBuflen = LOCALE_NAME_BUFLEN;
-	localeptr = setlocale(LC_COLLATE, NULL);
-	if (!localeptr)
-		ereport(PANIC,
-				(errmsg("invalid LC_COLLATE setting")));
-	StrNCpy(ControlFile->lc_collate, localeptr, LOCALE_NAME_BUFLEN);
-	localeptr = setlocale(LC_CTYPE, NULL);
-	if (!localeptr)
-		ereport(PANIC,
-				(errmsg("invalid LC_CTYPE setting")));
-	StrNCpy(ControlFile->lc_ctype, localeptr, LOCALE_NAME_BUFLEN);
 
 	/* Contents are protected with a CRC */
 	INIT_CRC32C(ControlFile->crc);
@@ -5603,6 +5732,7 @@ ReadControlFile(void)
 						   " but the server was compiled without USE_FLOAT8_BYVAL."),
 				 errhint("It looks like you need to recompile or initdb.")));
 #endif
+<<<<<<< HEAD
 
 	if (ControlFile->localeBuflen != LOCALE_NAME_BUFLEN)
 		ereport(FATAL,
@@ -5735,6 +5865,8 @@ XLogInChangeTrackingTransition(void)
 		elog(Persistent_DebugPrintLevel(),
 			 "XLogInChangeTrackingTransition: Released ChangeTrackingTransitionLock");
 
+=======
+>>>>>>> 38e9348282e
 }
 
 void
@@ -6418,6 +6550,10 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 								recoveryStopXid,
 								timestamptz_to_str(recoveryStopTime))));
 		}
+<<<<<<< HEAD
+=======
+
+>>>>>>> 38e9348282e
 		if (recoveryStopAfter)
 			recoveryLastXTime = recordXtime;
 	}
@@ -6850,6 +6986,13 @@ StartupXLOG(void)
 	 * first backend startup.
 	 */
 	RelationCacheInitFileRemove();
+
+	/*
+	 * Verify that pg_xlog and pg_xlog/archive_status exist.  In cases where
+	 * someone has performed a copy for PITR, these directories may have
+	 * been excluded and need to be re-created.
+	 */
+	ValidateXLOGDirectoryStructure();
 
 	/*
 	 * Initialize on the assumption we want to recover to the same timeline
@@ -9274,6 +9417,8 @@ CreateCheckPoint(int flags)
 	if (log_checkpoints)
 		LogCheckpointStart(flags);
 
+	TRACE_POSTGRESQL_CHECKPOINT_START(flags);
+
 	/*
 	 * Before flushing data, we must wait for any transactions that are
 	 * currently in their commit critical sections.  If an xact inserted its
@@ -9603,6 +9748,7 @@ CreateCheckPoint(int flags)
 	if (log_checkpoints)
 		LogCheckpointEnd();
 
+<<<<<<< HEAD
 	if (resync_to_sync_transition)
 	{
 		RequestXLogSwitch();
@@ -9623,6 +9769,12 @@ CreateCheckPoint(int flags)
 		 */
 		MIRRORED_UNLOCK;
 	}
+=======
+        TRACE_POSTGRESQL_CHECKPOINT_DONE(CheckpointStats.ckpt_bufs_written,
+                                NBuffers, CheckpointStats.ckpt_segs_added,
+                                CheckpointStats.ckpt_segs_removed,
+                                CheckpointStats.ckpt_segs_recycled);
+>>>>>>> 38e9348282e
 
 	LWLockRelease(CheckpointLock);
 }
@@ -10671,7 +10823,12 @@ do_pg_stop_backup(char *labelfile)
 	char		histfilepath[MAXPGPATH];
 	char		startxlogfilename[MAXFNAMELEN];
 	char		stopxlogfilename[MAXFNAMELEN];
+<<<<<<< HEAD
 	char		backupfrom[20];
+=======
+	char		lastxlogfilename[MAXFNAMELEN];
+	char		histfilename[MAXFNAMELEN];
+>>>>>>> 38e9348282e
 	uint32		_logId;
 	uint32		_logSeg;
 	FILE	   *lfp;
@@ -10689,6 +10846,12 @@ do_pg_stop_backup(char *labelfile)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 		 (errmsg("must be superuser or replication role to run a backup"))));
+
+	if (!XLogArchivingActive())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("WAL archiving is not active"),
+				 errhint("archive_mode must be enabled at server start.")));
 
 	/*
 	 * OK to update backup counters and forcePageWrites
@@ -10852,25 +11015,27 @@ do_pg_stop_backup(char *labelfile)
 	CleanupBackupHistory();
 
 	/*
-	 * Wait until the history file has been archived. We assume that the 
-	 * alphabetic sorting property of the WAL files ensures the last WAL
-	 * file is guaranteed archived by the time the history file is archived.
+	 * Wait until both the last WAL file filled during backup and the history
+	 * file have been archived.  We assume that the alphabetic sorting
+	 * property of the WAL files ensures any earlier WAL files are safely
+	 * archived as well.
 	 *
 	 * We wait forever, since archive_command is supposed to work and
-	 * we assume the admin wanted his backup to work completely. If you 
-	 * don't wish to wait, you can SET statement_timeout = xx;
-	 *
-	 * If the status file is missing, we assume that is because it was
-	 * set to .ready before we slept, then while asleep it has been set
-	 * to .done and then removed by a concurrent checkpoint.
+	 * we assume the admin wanted his backup to work completely. If you
+	 * don't wish to wait, you can set statement_timeout.
 	 */
-	BackupHistoryFileName(histfilepath, ThisTimeLineID, _logId, _logSeg,
+	XLByteToPrevSeg(stoppoint, _logId, _logSeg);
+	XLogFileName(lastxlogfilename, ThisTimeLineID, _logId, _logSeg);
+
+	XLByteToSeg(startpoint, _logId, _logSeg);
+	BackupHistoryFileName(histfilename, ThisTimeLineID, _logId, _logSeg,
 						  startpoint.xrecoff % XLogSegSize);
 
 	seconds_before_warning = 60;
 	waits = 0;
 
-	while (!XLogArchiveCheckDone(histfilepath, false))
+	while (XLogArchiveIsBusy(lastxlogfilename) ||
+		   XLogArchiveIsBusy(histfilename))
 	{
 		CHECK_FOR_INTERRUPTS();
 
@@ -10879,8 +11044,9 @@ do_pg_stop_backup(char *labelfile)
 		if (++waits >= seconds_before_warning)
 		{
 			seconds_before_warning *= 2;     /* This wraps in >10 years... */
-			elog(WARNING, "pg_stop_backup() waiting for archive to complete " 
-							"(%d seconds delay)", waits);
+			ereport(WARNING,
+					(errmsg("pg_stop_backup still waiting for archive to complete (%d seconds elapsed)",
+							waits)));
 		}
 	}
 

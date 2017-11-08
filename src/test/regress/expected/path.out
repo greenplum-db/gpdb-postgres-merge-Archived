@@ -15,6 +15,7 @@ INSERT INTO PATH_TBL(f1) VALUES ('(11,12,13,14)');
 -- bad values for parser testing
 INSERT INTO PATH_TBL(f1) VALUES ('[(,2),(3,4)]');
 ERROR:  invalid input syntax for type path: "[(,2),(3,4)]"
+<<<<<<< HEAD
 LINE 1: INSERT INTO PATH_TBL(f1) VALUES ('[(,2),(3,4)]');
                                          ^
 INSERT INTO PATH_TBL(f1) VALUES ('[(1,2),(3,4)');
@@ -22,6 +23,15 @@ ERROR:  invalid input syntax for type path: "[(1,2),(3,4)"
 LINE 1: INSERT INTO PATH_TBL(f1) VALUES ('[(1,2),(3,4)');
                                          ^
 SELECT f1 FROM PATH_TBL ORDER BY s;
+=======
+LINE 1: INSERT INTO PATH_TBL VALUES ('[(,2),(3,4)]');
+                                     ^
+INSERT INTO PATH_TBL VALUES ('[(1,2),(3,4)');
+ERROR:  invalid input syntax for type path: "[(1,2),(3,4)"
+LINE 1: INSERT INTO PATH_TBL VALUES ('[(1,2),(3,4)');
+                                     ^
+SELECT f1 FROM PATH_TBL;
+>>>>>>> 38e9348282e
             f1             
 ---------------------------
  [(1,2),(3,4)]

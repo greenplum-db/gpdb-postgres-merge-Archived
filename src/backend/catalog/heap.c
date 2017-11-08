@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.336 2008/07/30 19:35:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.347 2008/11/29 00:13:21 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -60,6 +60,7 @@
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_type_fn.h"
+#include "catalog/storage.h"
 #include "commands/tablecmds.h"
 #include "commands/typecmds.h"
 #include "miscadmin.h"
@@ -69,6 +70,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "storage/bufmgr.h"
+#include "storage/freespace.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -338,10 +340,14 @@ heap_create(const char *relname,
 									 shared_relation);
 
 	/*
-	 * have the storage manager create the relation's disk file, if needed.
+	 * Have the storage manager create the relation's disk file, if needed.
+	 *
+	 * We only create the main fork here, other forks will be created on
+	 * demand.
 	 */
 	if (create_storage)
 	{
+<<<<<<< HEAD
 		bool isAppendOnly;
 		bool skipCreatingSharedTable = false;
 
@@ -423,6 +429,10 @@ heap_create(const char *relname,
 				 (isAppendOnly ? "true" : "false"),
 				 ItemPointerToString(&rel->rd_segfile0_relationnodeinfo.persistentTid),
 				 rel->rd_segfile0_relationnodeinfo.persistentSerialNum);
+=======
+		RelationOpenSmgr(rel);
+		RelationCreateStorage(rel->rd_node, rel->rd_istemp);
+>>>>>>> 38e9348282e
 	}
 
 	return rel;
@@ -634,6 +644,7 @@ CheckAttributeType(const char *attname, Oid atttypid,
 	}
 }
 
+<<<<<<< HEAD
 /* MPP-6929: metadata tracking */
 /* --------------------------------
  *		MetaTrackAddObject
@@ -902,6 +913,62 @@ void MetaTrackDropObject(Oid		classid,
 
 
 
+=======
+/*
+ * InsertPgAttributeTuple
+ *		Construct and insert a new tuple in pg_attribute.
+ *
+ * Caller has already opened and locked pg_attribute.  new_attribute is the
+ * attribute to insert.
+ *
+ * indstate is the index state for CatalogIndexInsert.  It can be passed as
+ * NULL, in which case we'll fetch the necessary info.  (Don't do this when
+ * inserting multiple attributes, because it's a tad more expensive.)
+ */
+void
+InsertPgAttributeTuple(Relation pg_attribute_rel,
+					   Form_pg_attribute new_attribute,
+					   CatalogIndexState indstate)
+{
+	Datum		values[Natts_pg_attribute];
+	bool		nulls[Natts_pg_attribute];
+	HeapTuple	tup;
+
+	/* This is a tad tedious, but way cleaner than what we used to do... */
+	memset(values, 0, sizeof(values));
+	memset(nulls, false, sizeof(nulls));
+
+	values[Anum_pg_attribute_attrelid - 1] = ObjectIdGetDatum(new_attribute->attrelid);
+	values[Anum_pg_attribute_attname - 1] = NameGetDatum(&new_attribute->attname);
+	values[Anum_pg_attribute_atttypid - 1] = ObjectIdGetDatum(new_attribute->atttypid);
+	values[Anum_pg_attribute_attstattarget - 1] = Int32GetDatum(new_attribute->attstattarget);
+	values[Anum_pg_attribute_attlen - 1] = Int16GetDatum(new_attribute->attlen);
+	values[Anum_pg_attribute_attnum - 1] = Int16GetDatum(new_attribute->attnum);
+	values[Anum_pg_attribute_attndims - 1] = Int32GetDatum(new_attribute->attndims);
+	values[Anum_pg_attribute_attcacheoff - 1] = Int32GetDatum(new_attribute->attcacheoff);
+	values[Anum_pg_attribute_atttypmod - 1] = Int32GetDatum(new_attribute->atttypmod);
+	values[Anum_pg_attribute_attbyval - 1] = BoolGetDatum(new_attribute->attbyval);
+	values[Anum_pg_attribute_attstorage - 1] = CharGetDatum(new_attribute->attstorage);
+	values[Anum_pg_attribute_attalign - 1] = CharGetDatum(new_attribute->attalign);
+	values[Anum_pg_attribute_attnotnull - 1] = BoolGetDatum(new_attribute->attnotnull);
+	values[Anum_pg_attribute_atthasdef - 1] = BoolGetDatum(new_attribute->atthasdef);
+	values[Anum_pg_attribute_attisdropped - 1] = BoolGetDatum(new_attribute->attisdropped);
+	values[Anum_pg_attribute_attislocal - 1] = BoolGetDatum(new_attribute->attislocal);
+	values[Anum_pg_attribute_attinhcount - 1] = Int32GetDatum(new_attribute->attinhcount);
+
+	tup = heap_form_tuple(RelationGetDescr(pg_attribute_rel), values, nulls);
+
+	/* finally insert the new tuple, update the indexes, and clean up */
+	simple_heap_insert(pg_attribute_rel, tup);
+
+	if (indstate != NULL)
+		CatalogIndexInsert(indstate, tup);
+	else
+		CatalogUpdateIndexes(pg_attribute_rel, tup);
+
+	heap_freetuple(tup);
+}
+>>>>>>> 38e9348282e
 /* --------------------------------
  *		AddNewAttributeTuples
  *
@@ -916,9 +983,8 @@ AddNewAttributeTuples(Oid new_rel_oid,
 					  bool oidislocal,
 					  int oidinhcount)
 {
-	const Form_pg_attribute *dpp;
+	Form_pg_attribute attr;
 	int			i;
-	HeapTuple	tup;
 	Relation	rel;
 	CatalogIndexState indstate;
 	int			natts = tupdesc->natts;
@@ -936,35 +1002,25 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	 * First we add the user attributes.  This is also a convenient place to
 	 * add dependencies on their datatypes.
 	 */
-	dpp = tupdesc->attrs;
 	for (i = 0; i < natts; i++)
 	{
+		attr = tupdesc->attrs[i];
 		/* Fill in the correct relation OID */
-		(*dpp)->attrelid = new_rel_oid;
+		attr->attrelid = new_rel_oid;
 		/* Make sure these are OK, too */
-		(*dpp)->attstattarget = -1;
-		(*dpp)->attcacheoff = -1;
+		attr->attstattarget = -1;
+		attr->attcacheoff = -1;
 
-		tup = heap_addheader(Natts_pg_attribute,
-							 false,
-							 ATTRIBUTE_TUPLE_SIZE,
-							 (void *) *dpp);
+		InsertPgAttributeTuple(rel, attr, indstate);
 
-		simple_heap_insert(rel, tup);
-
-		CatalogIndexInsert(indstate, tup);
-
-		heap_freetuple(tup);
-
+		/* Add dependency info */
 		myself.classId = RelationRelationId;
 		myself.objectId = new_rel_oid;
 		myself.objectSubId = i + 1;
 		referenced.classId = TypeRelationId;
-		referenced.objectId = (*dpp)->atttypid;
+		referenced.objectId = attr->atttypid;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
-
-		dpp++;
 	}
 
 	/*
@@ -974,44 +1030,28 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	 */
 	if (relkind != RELKIND_VIEW && relkind != RELKIND_COMPOSITE_TYPE)
 	{
-		dpp = SysAtt;
-		for (i = 0; i < -1 - FirstLowInvalidHeapAttributeNumber; i++)
+		for (i = 0; i < (int) lengthof(SysAtt); i++)
 		{
-			if (tupdesc->tdhasoid ||
-				(*dpp)->attnum != ObjectIdAttributeNumber)
+			FormData_pg_attribute attStruct;
+
+			/* skip OID where appropriate */
+			if (!tupdesc->tdhasoid &&
+				SysAtt[i]->attnum == ObjectIdAttributeNumber)
+				continue;
+
+			memcpy(&attStruct, (char *) SysAtt[i], sizeof(FormData_pg_attribute));
+
+			/* Fill in the correct relation OID in the copied tuple */
+			attStruct.attrelid = new_rel_oid;
+
+			/* Fill in correct inheritance info for the OID column */
+			if (attStruct.attnum == ObjectIdAttributeNumber)
 			{
-				Form_pg_attribute attStruct;
-
-				tup = heap_addheader(Natts_pg_attribute,
-									 false,
-									 ATTRIBUTE_TUPLE_SIZE,
-									 (void *) *dpp);
-				attStruct = (Form_pg_attribute) GETSTRUCT(tup);
-
-				/* Fill in the correct relation OID in the copied tuple */
-				attStruct->attrelid = new_rel_oid;
-
-				/* Fill in correct inheritance info for the OID column */
-				if (attStruct->attnum == ObjectIdAttributeNumber)
-				{
-					attStruct->attislocal = oidislocal;
-					attStruct->attinhcount = oidinhcount;
-				}
-
-				/*
-				 * Unneeded since they should be OK in the constant data
-				 * anyway
-				 */
-				/* attStruct->attstattarget = 0; */
-				/* attStruct->attcacheoff = -1; */
-
-				simple_heap_insert(rel, tup);
-
-				CatalogIndexInsert(indstate, tup);
-
-				heap_freetuple(tup);
+				attStruct.attislocal = oidislocal;
+				attStruct.attinhcount = oidinhcount;
 			}
-			dpp++;
+
+			InsertPgAttributeTuple(rel, &attStruct, indstate);
 		}
 	}
 
@@ -1072,13 +1112,10 @@ InsertPgClassTuple(Relation pg_class_desc,
 	values[Anum_pg_class_relstorage - 1] = CharGetDatum(rd_rel->relstorage);
 	values[Anum_pg_class_relnatts - 1] = Int16GetDatum(rd_rel->relnatts);
 	values[Anum_pg_class_relchecks - 1] = Int16GetDatum(rd_rel->relchecks);
-	values[Anum_pg_class_reltriggers - 1] = Int16GetDatum(rd_rel->reltriggers);
-	values[Anum_pg_class_relukeys - 1] = Int16GetDatum(rd_rel->relukeys);
-	values[Anum_pg_class_relfkeys - 1] = Int16GetDatum(rd_rel->relfkeys);
-	values[Anum_pg_class_relrefs - 1] = Int16GetDatum(rd_rel->relrefs);
 	values[Anum_pg_class_relhasoids - 1] = BoolGetDatum(rd_rel->relhasoids);
 	values[Anum_pg_class_relhaspkey - 1] = BoolGetDatum(rd_rel->relhaspkey);
 	values[Anum_pg_class_relhasrules - 1] = BoolGetDatum(rd_rel->relhasrules);
+	values[Anum_pg_class_relhastriggers - 1] = BoolGetDatum(rd_rel->relhastriggers);
 	values[Anum_pg_class_relhassubclass - 1] = BoolGetDatum(rd_rel->relhassubclass);
 	values[Anum_pg_class_relfrozenxid - 1] = TransactionIdGetDatum(rd_rel->relfrozenxid);
 	/* start out with empty permissions */
@@ -2428,13 +2465,28 @@ heap_drop_with_catalog(Oid relid)
 	CheckTableNotInUse(rel, "DROP TABLE");
 
 	/*
-	 * Schedule unlinking of the relation's physical file at commit.
+	 * There can no longer be anyone *else* touching the relation, but we
+	 * might still have open queries or cursors in our own session.
+	 */
+	if (rel->rd_refcnt != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 errmsg("cannot drop \"%s\" because "
+						"it is being used by active queries in this session",
+						RelationGetRelationName(rel))));
+
+	/*
+	 * Schedule unlinking of the relation's physical files at commit.
 	 */
 	if (relkind != RELKIND_VIEW &&
 		relkind != RELKIND_COMPOSITE_TYPE &&
 		!RelationIsExternal(rel))
 	{
+<<<<<<< HEAD
 		remove_gp_relation_node_and_schedule_drop(rel);
+=======
+		RelationDropStorage(rel);
+>>>>>>> 38e9348282e
 	}
 
 	/*
@@ -2565,11 +2617,15 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, Node *expr)
 
 	adrel = heap_open(AttrDefaultRelationId, RowExclusiveLock);
 
+<<<<<<< HEAD
 	// Fetch gp_persistent_relation_node information that will be added to XLOG record.
 	RelationFetchGpRelationNodeForXLog(adrel);
 
 	tuple = heap_form_tuple(adrel->rd_att, values, nulls);
 
+=======
+	tuple = heap_form_tuple(adrel->rd_att, values, nulls);
+>>>>>>> 38e9348282e
 	attrdefOid = simple_heap_insert(adrel, tuple);
 
 	CatalogUpdateIndexes(adrel, tuple);
@@ -3349,11 +3405,18 @@ RelationTruncateIndexes(Relation heapRelation)
 		/* Fetch info needed for index_build */
 		indexInfo = BuildIndexInfo(currentIndex);
 
+<<<<<<< HEAD
 		/* Now truncate the actual file (and discard buffers) */
 		RelationTruncate(
 					currentIndex, 
 					0,
 					/* markPersistentAsPhysicallyTruncated */ true);
+=======
+		/*
+		 * Now truncate the actual file (and discard buffers).
+		 */
+		RelationTruncate(currentIndex, 0);
+>>>>>>> 38e9348282e
 
 		/* Initialize the index and rebuild */
 		/* Note: we do not need to re-establish pkey setting */
@@ -3484,7 +3547,7 @@ heap_truncate_check_FKs(List *relations, bool tempTables)
 	{
 		Relation	rel = lfirst(cell);
 
-		if (rel->rd_rel->reltriggers != 0)
+		if (rel->rd_rel->relhastriggers)
 			oids = lappend_oid(oids, RelationGetRelid(rel));
 	}
 

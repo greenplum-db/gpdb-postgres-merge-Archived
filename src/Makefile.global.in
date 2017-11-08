@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.241 2008/02/17 16:36:43 petere Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.249 2008/12/11 07:34:07 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -18,7 +18,11 @@
 #
 # Meta configuration
 
+<<<<<<< HEAD
 .PHONY: all install install-strip installdirs uninstall clean distclean maintainer-clean distprep check installcheck maintainer-check coverage installcheck-good
+=======
+.PHONY: all install install-strip installdirs uninstall clean distclean maintainer-clean distprep check installcheck maintainer-check coverage
+>>>>>>> 38e9348282e
 .SILENT: installdirs
 
 # make `all' the default target
@@ -32,6 +36,7 @@ all:
 BLD_ARCH = @BLD_ARCH@
 
 # PostgreSQL version number
+<<<<<<< HEAD
 PG_VERSION = @PG_PACKAGE_VERSION@
 PG_MAJORVERSION = @PG_MAJORVERSION@
 
@@ -40,6 +45,10 @@ GP_VERSION = @GP_VERSION_SHORT@
 GP_MAJORVERSION = @GP_MAJORVERSION@
 
 ADDON_DIR = @ADDON_DIR@
+=======
+VERSION = @PACKAGE_VERSION@
+MAJORVERSION = @PG_MAJORVERSION@
+>>>>>>> 38e9348282e
 
 # Support for VPATH builds
 vpath_build = @vpath_build@
@@ -154,8 +163,6 @@ includedir_server = $(pkgincludedir)/server
 includedir_internal = $(pkgincludedir)/internal
 pgxsdir = $(pkglibdir)/pgxs
 
-sqlmansect_dummy = l
-
 
 ##########################################################################
 #
@@ -224,6 +231,7 @@ have_yaml 		= @have_yaml@
 have_docbook	= @have_docbook@
 DOCBOOKSTYLE	= @DOCBOOKSTYLE@
 COLLATEINDEX	= @COLLATEINDEX@
+DOCBOOK2MAN	= @DOCBOOK2MAN@
 
 
 ##########################################################################
@@ -587,6 +595,7 @@ TAS         = @TAS@
 %.bz2: %
 	$(BZIP2) -c $< >$@
 
+<<<<<<< HEAD
 ifeq ($(PORTNAME),win32)
 # Build rules to add versioninfo resources to win32 binaries
 WIN32RES += win32ver.o
@@ -606,6 +615,8 @@ win32ver.o: $(top_builddir)/src/port/win32ver.rc
 	rm -f win32ver.rc
 endif
 
+=======
+>>>>>>> 38e9348282e
 ifndef PGXS
 
 # Remake Makefile.global from Makefile.global.in if the latter

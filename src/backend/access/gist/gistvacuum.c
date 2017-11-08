@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.36 2008/06/12 09:12:30 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.41 2008/11/19 10:34:50 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,10 +17,12 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/gist_private.h"
+#include "catalog/storage.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
+#include "storage/indexfsm.h"
 #include "storage/lmgr.h"
 #include "utils/memutils.h"
 
@@ -85,9 +87,14 @@ gistDeleteSubtree(GistVacuum *gv, BlockNumber blkno)
 	Buffer		buffer;
 	Page		page;
 
+<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
 
 	buffer = ReadBufferWithStrategy(gv->index, blkno, gv->strategy);
+=======
+	buffer = ReadBufferExtended(gv->index, MAIN_FORKNUM, blkno, RBM_NORMAL,
+								gv->strategy);
+>>>>>>> 38e9348282e
 	LockBuffer(buffer, GIST_EXCLUSIVE);
 	page = (Page) BufferGetPage(buffer);
 
@@ -145,18 +152,6 @@ gistDeleteSubtree(GistVacuum *gv, BlockNumber blkno)
 	END_CRIT_SECTION();
 
 	UnlockReleaseBuffer(buffer);
-}
-
-static Page
-GistPageGetCopyPage(Page page)
-{
-	Size		pageSize = PageGetPageSize(page);
-	Page		tmppage;
-
-	tmppage = (Page) palloc(pageSize);
-	memcpy(tmppage, page, pageSize);
-
-	return tmppage;
 }
 
 static ArrayTuple
@@ -316,10 +311,15 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 
 	vacuum_delay_point();
 
+<<<<<<< HEAD
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 
 	buffer = ReadBufferWithStrategy(gv->index, blkno, gv->strategy);
+=======
+	buffer = ReadBufferExtended(gv->index, MAIN_FORKNUM, blkno, RBM_NORMAL,
+								gv->strategy);
+>>>>>>> 38e9348282e
 	LockBuffer(buffer, GIST_EXCLUSIVE);
 	gistcheckpage(gv->index, buffer);
 	page = (Page) BufferGetPage(buffer);
@@ -336,7 +336,7 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 		addon = (IndexTuple *) palloc(sizeof(IndexTuple) * lenaddon);
 
 		/* get copy of page to work */
-		tempPage = GistPageGetCopyPage(page);
+		tempPage = PageGetTempPageCopy(page);
 
 		for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 		{
@@ -535,10 +535,7 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 	Relation	rel = info->index;
 	BlockNumber npages,
 				blkno;
-	BlockNumber totFreePages,
-				nFreePages,
-			   *freePages,
-				maxFreePages;
+	BlockNumber	totFreePages;
 	BlockNumber lastBlock = GIST_ROOT_BLKNO,
 				lastFilledBlock = GIST_ROOT_BLKNO;
 	bool		needLock;
@@ -606,13 +603,7 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 	if (needLock)
 		UnlockRelationForExtension(rel, ExclusiveLock);
 
-	maxFreePages = npages;
-	if (maxFreePages > MaxFSMPages)
-		maxFreePages = MaxFSMPages;
-
-	totFreePages = nFreePages = 0;
-	freePages = (BlockNumber *) palloc(sizeof(BlockNumber) * maxFreePages);
-
+	totFreePages = 0;
 	for (blkno = GIST_ROOT_BLKNO + 1; blkno < npages; blkno++)
 	{
 		Buffer		buffer;
@@ -620,18 +611,22 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 
 		vacuum_delay_point();
 
+<<<<<<< HEAD
 		// -------- MirroredLock ----------
 		MIRROREDLOCK_BUFMGR_LOCK;
 
 		buffer = ReadBufferWithStrategy(rel, blkno, info->strategy);
+=======
+		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
+									info->strategy);
+>>>>>>> 38e9348282e
 		LockBuffer(buffer, GIST_SHARE);
 		page = (Page) BufferGetPage(buffer);
 
 		if (PageIsNew(page) || GistPageIsDeleted(page))
 		{
-			if (nFreePages < maxFreePages)
-				freePages[nFreePages++] = blkno;
 			totFreePages++;
+			RecordFreeIndexPage(rel, blkno);
 		}
 		else
 			lastFilledBlock = blkno;
@@ -642,10 +637,11 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 	}
 	lastBlock = npages - 1;
 
-	if (info->vacuum_full && nFreePages > 0)
+	if (info->vacuum_full && lastFilledBlock < lastBlock)
 	{							/* try to truncate index */
-		int			i;
+		RelationTruncate(rel, lastFilledBlock + 1);
 
+<<<<<<< HEAD
 		for (i = 0; i < nFreePages; i++)
 			if (freePages[i] >= lastFilledBlock)
 			{
@@ -656,11 +652,14 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 		if (lastBlock > lastFilledBlock)
 			RelationTruncate(rel, lastFilledBlock + 1,
 							 /* markPersistentAsPhysicallyTruncated */ true);
+=======
+>>>>>>> 38e9348282e
 		stats->std.pages_removed = lastBlock - lastFilledBlock;
+		totFreePages = totFreePages - stats->std.pages_removed;
 	}
 
-	RecordIndexFreeSpace(&rel->rd_node, totFreePages, nFreePages, freePages);
-	pfree(freePages);
+	/* Finally, vacuum the FSM */
+	IndexFreeSpaceMapVacuum(info->index);
 
 	/* return statistics */
 	stats->std.pages_free = totFreePages;
@@ -740,11 +739,16 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 		IndexTuple	idxtuple;
 		ItemId		iid;
 
+<<<<<<< HEAD
 		// -------- MirroredLock ----------
 		MIRROREDLOCK_BUFMGR_LOCK;
 
 		buffer = ReadBufferWithStrategy(rel, stack->blkno, info->strategy);
 		
+=======
+		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, stack->blkno,
+									RBM_NORMAL, info->strategy);
+>>>>>>> 38e9348282e
 		LockBuffer(buffer, GIST_SHARE);
 		gistcheckpage(rel, buffer);
 		page = (Page) BufferGetPage(buffer);

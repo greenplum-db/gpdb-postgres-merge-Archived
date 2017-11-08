@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.49 2009/06/11 14:49:13 momjian Exp $ */
+=======
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.46 2008/12/15 19:07:48 tgl Exp $ */
+>>>>>>> 38e9348282e
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -241,10 +245,17 @@ void
 ecpg_log(const char *format,...)
 {
 	va_list		ap;
+<<<<<<< HEAD
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 	const char *intl_format;
 	int			bufsize;
 	char	   *fmt;
+=======
+	struct sqlca_t	*sqlca = ECPGget_sqlca();
+	const char *intl_format;
+	int			bufsize;
+	char		*fmt;
+>>>>>>> 38e9348282e
 
 	if (!simple_debug)
 		return;
@@ -253,8 +264,13 @@ ecpg_log(const char *format,...)
 	intl_format = ecpg_gettext(format);
 
 	/*
+<<<<<<< HEAD
 	 * Insert PID into the format, unless ecpg_internal_regression_mode is set
 	 * (regression tests want unchanging output).
+=======
+	 * Insert PID into the format, unless ecpg_internal_regression_mode is
+	 * set (regression tests want unchanging output).
+>>>>>>> 38e9348282e
 	 */
 	bufsize = strlen(intl_format) + 100;
 	fmt = (char *) malloc(bufsize);
@@ -475,7 +491,11 @@ ecpg_gettext(const char *msgid)
 		ldir = getenv("PGLOCALEDIR");
 		if (!ldir)
 			ldir = LOCALEDIR;
+<<<<<<< HEAD
 		bindtextdomain(PG_TEXTDOMAIN("ecpglib"), ldir);
+=======
+		bindtextdomain(PG_TEXTDOMAIN("ecpg"), ldir);
+>>>>>>> 38e9348282e
 #ifdef WIN32
 		SetLastError(save_errno);
 #else

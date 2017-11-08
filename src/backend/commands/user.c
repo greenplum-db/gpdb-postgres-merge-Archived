@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.182 2008/05/12 00:00:48 alvherre Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.183 2008/11/02 01:45:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -506,6 +506,7 @@ CreateRole(CreateRoleStmt *stmt)
 					 errhint("To enable set gp_resource_manager=queue")));
 	}
 	else
+<<<<<<< HEAD
 	{
 		/*
 		 * Resource queue required -- use default queue
@@ -564,6 +565,9 @@ CreateRole(CreateRoleStmt *stmt)
 	}
 
 	new_record_nulls[Anum_pg_authid_rolresgroup - 1] = false;
+=======
+		new_record_nulls[Anum_pg_authid_rolvaliduntil - 1] = true;
+>>>>>>> 38e9348282e
 
 	new_record_nulls[Anum_pg_authid_rolconfig - 1] = true;
 
@@ -1004,8 +1008,11 @@ AlterRole(AlterRoleStmt *stmt)
 
 		new_record[Anum_pg_authid_rolcatupdate - 1] = BoolGetDatum(issuper > 0);
 		new_record_repl[Anum_pg_authid_rolcatupdate - 1] = true;
+<<<<<<< HEAD
 
 		bWas_super = (issuper > 0); /* get current superuser status */
+=======
+>>>>>>> 38e9348282e
 	}
 
 	if (inherit >= 0)
@@ -1168,6 +1175,7 @@ AlterRole(AlterRoleStmt *stmt)
 	/* resource group */
 	if (resgroup)
 	{
+<<<<<<< HEAD
 		Oid			rsgid;
 
 		if (strcmp(resgroup, "none") == 0)
@@ -1205,6 +1213,14 @@ AlterRole(AlterRoleStmt *stmt)
 					(errmsg("resource group is disabled"),
 					 errhint("To enable set gp_resource_manager=group")));
 		}
+=======
+		new_record[Anum_pg_authid_rolvaliduntil - 1] =
+			DirectFunctionCall3(timestamptz_in,
+								CStringGetDatum(validUntil),
+								ObjectIdGetDatum(InvalidOid),
+								Int32GetDatum(-1));
+		new_record_repl[Anum_pg_authid_rolvaliduntil - 1] = true;
+>>>>>>> 38e9348282e
 	}
 
 	new_tuple = heap_modify_tuple(tuple, pg_authid_dsc, new_record,
@@ -1326,7 +1342,10 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 	Datum		repl_val[Natts_pg_authid];
 	bool		repl_null[Natts_pg_authid];
 	bool		repl_repl[Natts_pg_authid];
+<<<<<<< HEAD
 	char	   *alter_subtype = "SET"; /* metadata tracking */
+=======
+>>>>>>> 38e9348282e
 
 	valuestr = ExtractSetVariableArgs(stmt->setstmt);
 
@@ -1364,6 +1383,7 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 
 	if (stmt->setstmt->kind == VAR_RESET_ALL)
 	{
+<<<<<<< HEAD
 		ArrayType  *new = NULL;
 		Datum		datum;
 		bool		isnull;
@@ -1390,6 +1410,11 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 			repl_null[Anum_pg_authid_rolconfig - 1] = true;
 			repl_val[Anum_pg_authid_rolconfig - 1] = (Datum) 0;
 		}
+=======
+		/* RESET ALL, so just set rolconfig to null */
+		repl_null[Anum_pg_authid_rolconfig - 1] = true;
+		repl_val[Anum_pg_authid_rolconfig - 1] = (Datum) 0;
+>>>>>>> 38e9348282e
 	}
 	else
 	{
@@ -1420,7 +1445,11 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 	}
 
 	newtuple = heap_modify_tuple(oldtuple, RelationGetDescr(rel),
+<<<<<<< HEAD
 								 repl_val, repl_null, repl_repl);
+=======
+								repl_val, repl_null, repl_repl);
+>>>>>>> 38e9348282e
 
 	simple_heap_update(rel, &oldtuple->t_self, newtuple);
 	CatalogUpdateIndexes(rel, newtuple);
@@ -1723,7 +1752,11 @@ RenameRole(const char *oldname, const char *newname)
 
 	repl_repl[Anum_pg_authid_rolname - 1] = true;
 	repl_val[Anum_pg_authid_rolname - 1] = DirectFunctionCall1(namein,
+<<<<<<< HEAD
 												   CStringGetDatum((char *) newname));
+=======
+												   CStringGetDatum(newname));
+>>>>>>> 38e9348282e
 	repl_null[Anum_pg_authid_rolname - 1] = false;
 
 	datum = heap_getattr(oldtuple, Anum_pg_authid_rolpassword, dsc, &isnull);

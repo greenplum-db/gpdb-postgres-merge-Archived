@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.99 2008/05/09 23:32:03 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.102 2008/12/13 19:13:44 tgl Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERTABLE">
  <refmeta>
   <refentrytitle id="sql-altertable-title">ALTER TABLE</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 
@@ -20,6 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
+<<<<<<< HEAD
 ALTER TABLE [ONLY] name RENAME [COLUMN] column TO new_column
 
 ALTER TABLE name RENAME TO new_name
@@ -120,6 +122,46 @@ Where column_reference_storage_directive is:
    COLUMN column_name ENCODING ( storage_directive [, ... ] ), ... 
  | DEFAULT COLUMN ENCODING ( storage_directive [, ... ] )
 
+=======
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
+    <replaceable class="PARAMETER">action</replaceable> [, ... ]
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
+    RENAME [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> TO <replaceable class="PARAMETER">new_column</replaceable>
+ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
+    RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
+ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
+    SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
+
+where <replaceable class="PARAMETER">action</replaceable> is one of:
+
+    ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable class="PARAMETER">type</replaceable> [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+    DROP [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> [ RESTRICT | CASCADE ]
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">type</replaceable> [ USING <replaceable class="PARAMETER">expression</replaceable> ]
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET DEFAULT <replaceable class="PARAMETER">expression</replaceable>
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> DROP DEFAULT
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET | DROP } NOT NULL
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
+    ADD <replaceable class="PARAMETER">table_constraint</replaceable>
+    DROP CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
+    DISABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
+    ENABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
+    ENABLE REPLICA TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable>
+    ENABLE ALWAYS TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable>
+    DISABLE RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
+    ENABLE RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
+    ENABLE REPLICA RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
+    ENABLE ALWAYS RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
+    CLUSTER ON <replaceable class="PARAMETER">index_name</replaceable>
+    SET WITHOUT CLUSTER
+    SET WITHOUT OIDS
+    SET ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
+    RESET ( <replaceable class="PARAMETER">storage_parameter</replaceable> [, ... ] )
+    INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
+    NO INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
+    OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
+    SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable>
+>>>>>>> 38e9348282e
 </synopsis>
  </refsynopsisdiv>
 
@@ -155,7 +197,7 @@ Where column_reference_storage_directive is:
    </varlistentry>
 
    <varlistentry>
-    <term><literal>ALTER COLUMN TYPE</literal></term>
+    <term><literal>SET DATA TYPE</literal></term>
     <listitem>
      <para>
       This form changes the type of a column of a table. Indexes and
@@ -827,7 +869,7 @@ ALTER TABLE distributors
    with time zone</type> via a <literal>USING</literal> clause:
 <programlisting>
 ALTER TABLE foo
-    ALTER COLUMN foo_timestamp TYPE timestamp with time zone
+    ALTER COLUMN foo_timestamp SET DATA TYPE timestamp with time zone
     USING
         timestamp with time zone 'epoch' + foo_timestamp * interval '1 second';
 </programlisting>
@@ -935,8 +977,9 @@ ALTER TABLE myschema.distributors SET SCHEMA yourschema;
   <title>Compatibility</title>
 
   <para>
-   The <literal>ADD</literal>, <literal>DROP</>, and <literal>SET DEFAULT</>
-   forms conform with the SQL standard.  The other forms are
+   The forms <literal>ADD</literal>, <literal>DROP</>, <literal>SET DEFAULT</>,
+   and <literal>SET DATA TYPE</literal> (without <literal>USING</literal>)
+   conform with the SQL standard.  The other forms are
    <productname>PostgreSQL</productname> extensions of the SQL standard.
    Also, the ability to specify more than one manipulation in a single
    <command>ALTER TABLE</> command is an extension.

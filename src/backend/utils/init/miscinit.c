@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.167 2008/03/27 17:24:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.169 2008/12/11 07:34:07 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1397,11 +1397,18 @@ pg_bindtextdomain(const char *domain)
 #ifdef ENABLE_NLS
 	if (my_exec_path[0] != '\0')
 	{
+<<<<<<< HEAD
 		char		locale_path[MAXPGPATH];
 
 		get_locale_path(my_exec_path, locale_path);
 		bindtextdomain(domain, locale_path);
 		pg_bind_textdomain_codeset(domain);
+=======
+		char	locale_path[MAXPGPATH];
+
+		get_locale_path(my_exec_path, locale_path);
+		bindtextdomain(domain, locale_path);
+>>>>>>> 38e9348282e
 	}
 #endif
 }

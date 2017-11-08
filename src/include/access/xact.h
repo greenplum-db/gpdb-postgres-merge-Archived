@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.94 2008/03/04 19:54:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.96 2008/11/19 10:34:52 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,10 +98,15 @@ typedef struct xl_xact_commit
 								/* number of PersistentEndXactRec style objects */
 
 	int			nsubxacts;		/* number of subtransaction XIDs */
+<<<<<<< HEAD
 
 	/* PersistentEndXactRec style objects for commit */
 	uint8 data[0];		/* VARIABLE LENGTH ARRAY */
 
+=======
+	/* Array of RelFileNode(s) to drop at commit */
+	RelFileNode	xnodes[1];		/* VARIABLE LENGTH ARRAY */
+>>>>>>> 38e9348282e
 	/* ARRAY OF COMMITTED SUBTRANSACTION XIDs FOLLOWS */
 } xl_xact_commit;
 
@@ -116,11 +121,17 @@ typedef struct xl_xact_abort
 								/* number of PersistentEndXactRec style objects */
 
 	int			nsubxacts;		/* number of subtransaction XIDs */
+<<<<<<< HEAD
 	
 	/* PersistentEndXactRec style objects for abort */
 	uint8 data[0];		/* VARIABLE LENGTH ARRAY */
 	
 	/* ARRAY OF COMMITTED SUBTRANSACTION XIDs FOLLOWS */
+=======
+	/* Array of RelFileNode(s) to drop at abort */
+	RelFileNode	xnodes[1];		/* VARIABLE LENGTH ARRAY */
+	/* ARRAY OF ABORTED SUBTRANSACTION XIDs FOLLOWS */
+>>>>>>> 38e9348282e
 } xl_xact_abort;
 
 #define MinSizeOfXactAbort offsetof(xl_xact_abort, data)

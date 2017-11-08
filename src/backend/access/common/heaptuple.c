@@ -52,7 +52,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.122 2008/05/12 00:00:43 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.124 2008/11/14 01:57:41 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,8 +269,11 @@ heap_fill_tuple(TupleDesc tupleDesc,
 
 	Assert((data - start) == data_size);
 
+<<<<<<< HEAD
 	return data - start;
 }
+=======
+>>>>>>> 38e9348282e
 
 /* ----------------------------------------------------------------
  *						heap tuple interface
@@ -954,6 +957,7 @@ heap_modifytuple(HeapTuple tuple,
 				 char *replNulls,
 				 char *replActions)
 {
+<<<<<<< HEAD
 	bool *replIsNull = (bool *) palloc(sizeof(bool) * tupleDesc->natts);
 	bool *doRepl = (bool *) palloc(sizeof(bool) * tupleDesc->natts);
 	HeapTuple ret;
@@ -970,6 +974,26 @@ heap_modifytuple(HeapTuple tuple,
 	pfree(doRepl);
 
 	return ret;
+=======
+	HeapTuple	result;
+	int			numberOfAttributes = tupleDesc->natts;
+	bool	   *boolNulls = (bool *) palloc(numberOfAttributes * sizeof(bool));
+	bool	   *boolActions = (bool *) palloc(numberOfAttributes * sizeof(bool));
+	int			attnum;
+
+	for (attnum = 0; attnum < numberOfAttributes; attnum++)
+	{
+		boolNulls[attnum] = (replNulls[attnum] == 'n');
+		boolActions[attnum] = (replActions[attnum] == 'r');
+	}
+
+	result = heap_modify_tuple(tuple, tupleDesc, replValues, boolNulls, boolActions);
+
+	pfree(boolNulls);
+	pfree(boolActions);
+
+	return result;
+>>>>>>> 38e9348282e
 }
 
 /*
@@ -1106,90 +1130,16 @@ heap_deformtuple(HeapTuple tuple,
 				 Datum *values,
 				 char *nulls)
 {
-	HeapTupleHeader tup = tuple->t_data;
-	bool		hasnulls = HeapTupleHasNulls(tuple);
-	Form_pg_attribute *att = tupleDesc->attrs;
-	int			tdesc_natts = tupleDesc->natts;
-	int			natts;			/* number of atts to extract */
+	int			natts = tupleDesc->natts;
+	bool	   *boolNulls = (bool *) palloc(natts * sizeof(bool));
 	int			attnum;
-	char	   *tp;				/* ptr to tuple data */
-	long		off;			/* offset in tuple data */
-	bits8	   *bp = tup->t_bits;		/* ptr to null bitmap in tuple */
-	bool		slow = false;	/* can we use/set attcacheoff? */
 
-	natts = HeapTupleHeaderGetNatts(tup);
-
-	/*
-	 * In inheritance situations, it is possible that the given tuple actually
-	 * has more fields than the caller is expecting.  Don't run off the end of
-	 * the caller's arrays.
-	 */
-	natts = Min(natts, tdesc_natts);
-
-	tp = (char *) tup + tup->t_hoff;
-
-	off = 0;
+	heap_deform_tuple(tuple, tupleDesc, values, boolNulls);
 
 	for (attnum = 0; attnum < natts; attnum++)
-	{
-		Form_pg_attribute thisatt = att[attnum];
+		nulls[attnum] = (boolNulls[attnum] ? 'n' : ' ');
 
-		if (hasnulls && att_isnull(attnum, bp))
-		{
-			values[attnum] = (Datum) 0;
-			nulls[attnum] = 'n';
-			slow = true;		/* can't use attcacheoff anymore */
-			continue;
-		}
-
-		nulls[attnum] = ' ';
-
-		if (!slow && thisatt->attcacheoff >= 0)
-			off = thisatt->attcacheoff;
-		else if (thisatt->attlen == -1)
-		{
-			/*
-			 * We can only cache the offset for a varlena attribute if the
-			 * offset is already suitably aligned, so that there would be no
-			 * pad bytes in any case: then the offset will be valid for either
-			 * an aligned or unaligned value.
-			 */
-			if (!slow &&
-				off == att_align_nominal(off, thisatt->attalign))
-				thisatt->attcacheoff = off;
-			else
-			{
-				off = att_align_pointer(off, thisatt->attalign, -1,
-										tp + off);
-				slow = true;
-			}
-		}
-		else
-		{
-			/* not varlena, so safe to use att_align_nominal */
-			off = att_align_nominal(off, thisatt->attalign);
-
-			if (!slow)
-				thisatt->attcacheoff = off;
-		}
-
-		values[attnum] = fetchatt(thisatt, tp + off);
-
-		off = att_addlength_pointer(off, thisatt->attlen, tp + off);
-
-		if (thisatt->attlen <= 0)
-			slow = true;		/* can't use attcacheoff anymore */
-	}
-
-	/*
-	 * If tuple doesn't have all the atts indicated by tupleDesc, read the
-	 * rest as null
-	 */
-	for (; attnum < tdesc_natts; attnum++)
-	{
-		values[attnum] = (Datum) 0;
-		nulls[attnum] = 'n';
-	}
+	pfree(boolNulls);
 }
 
 /*
@@ -1529,6 +1479,7 @@ minimal_tuple_from_heap_tuple(HeapTuple htup)
 	result->t_len = len;
 	return result;
 }
+<<<<<<< HEAD
 
 
 /* ----------------
@@ -1581,3 +1532,5 @@ heap_addheader(int natts,		/* max domain index */
 
 	return tuple;
 }
+=======
+>>>>>>> 38e9348282e

@@ -7,7 +7,11 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-auth.c
+=======
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.138 2008/10/28 12:10:44 mha Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -779,8 +783,11 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 					free(crypt_pwd);
 					return STATUS_ERROR;
 				}
+<<<<<<< HEAD
 
 				pwd_to_send = crypt_pwd;
+=======
+>>>>>>> 38e9348282e
 				break;
 			}
 		case AUTH_REQ_PASSWORD:
@@ -941,7 +948,11 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 
 		case AUTH_REQ_CRYPT:
 			printfPQExpBuffer(&conn->errorMessage,
+<<<<<<< HEAD
 					  libpq_gettext("Crypt authentication not supported\n"));
+=======
+				 libpq_gettext("Crypt authentication not supported\n"));
+>>>>>>> 38e9348282e
 			return STATUS_ERROR;
 
 		case AUTH_REQ_MD5:

@@ -93,7 +93,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.86 2008/08/01 13:16:09 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.88 2008/10/28 15:51:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,6 @@
 #include <limits.h>
 
 #include "access/genam.h"
-#include "access/hash.h"
 #include "access/nbtree.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_operator.h"
@@ -397,7 +396,6 @@ struct Tuplesortstate
 	bool		enforceUnique;	/* complain if we find duplicate tuples */
 
 	/* These are specific to the index_hash subcase: */
-	FmgrInfo   *hash_proc;		/* call info for the hash function */
 	uint32		hash_mask;		/* mask for sortable part of hash code */
 
 	/*
@@ -775,13 +773,6 @@ tuplesort_begin_index_hash(Relation indexRel,
 
 	state->indexRel = indexRel;
 
-	/*
-	 * We look up the index column's hash function just once, to avoid
-	 * chewing lots of cycles in repeated index_getprocinfo calls.  This
-	 * assumes that our caller holds the index relation open throughout the
-	 * sort, else the pointer obtained here might cease to be valid.
-	 */
-	state->hash_proc = index_getprocinfo(indexRel, 1, HASHPROC);
 	state->hash_mask = hash_mask;
 
 	MemoryContextSwitchTo(oldcontext);
@@ -2908,17 +2899,27 @@ copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup)
 	stup->datum1 = memtuple_getattr(stup->tuple, state->mt_bind, state->scanKeys[0].sk_attno, &stup->isnull1);
 }
 
-/*
- * Since MinimalTuple already has length in its first word, we don't need
- * to write that separately.
- */
 static void
 writetup_heap(Tuplesortstate *state, LogicalTape *lt, SortTuple *stup)
 {
+<<<<<<< HEAD
 	uint32 tuplen = memtuple_get_size(stup->tuple);
 
 	LogicalTapeWrite(state->tapeset, lt, (void *) stup->tuple, tuplen);
 
+=======
+	MinimalTuple tuple = (MinimalTuple) stup->tuple;
+	/* the part of the MinimalTuple we'll write: */
+	char	   *tupbody = (char *) tuple + MINIMAL_TUPLE_DATA_OFFSET;
+	unsigned int tupbodylen = tuple->t_len - MINIMAL_TUPLE_DATA_OFFSET;
+	/* total on-disk footprint: */
+	unsigned int tuplen = tupbodylen + sizeof(int);
+
+	LogicalTapeWrite(state->tapeset, tapenum,
+					 (void *) &tuplen, sizeof(tuplen));
+	LogicalTapeWrite(state->tapeset, tapenum,
+					 (void *) tupbody, tupbodylen);
+>>>>>>> 38e9348282e
 	if (state->randomAccess)	/* need trailing length word? */
 		LogicalTapeWrite(state->tapeset, lt, (void *) &tuplen, sizeof(tuplen));
 
@@ -2930,6 +2931,7 @@ static void
 readtup_heap(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 			 LogicalTape *lt, uint32 len)
 {
+<<<<<<< HEAD
 	uint32 tuplen;
 	size_t readSize;
 
@@ -2943,6 +2945,20 @@ readtup_heap(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 				memtuple_size_from_uint32(len) - sizeof(uint32));
 
 	if (readSize != (size_t) (memtuple_size_from_uint32(len) - sizeof(uint32))) 
+=======
+	unsigned int tupbodylen = len - sizeof(int);
+	unsigned int tuplen = tupbodylen + MINIMAL_TUPLE_DATA_OFFSET;
+	MinimalTuple tuple = (MinimalTuple) palloc(tuplen);
+	char	   *tupbody = (char *) tuple + MINIMAL_TUPLE_DATA_OFFSET;
+	HeapTupleData htup;
+
+	USEMEM(state, GetMemoryChunkSpace(tuple));
+	/* read in the tuple proper */
+	tuple->t_len = tuplen;
+	if (LogicalTapeRead(state->tapeset, tapenum,
+						(void *) tupbody,
+						tupbodylen) != (size_t) tupbodylen)
+>>>>>>> 38e9348282e
 		elog(ERROR, "unexpected end of data");
 
 	if (state->randomAccess)	/* need trailing length word? */
@@ -3100,11 +3116,6 @@ static int
 comparetup_index_hash(const SortTuple *a, const SortTuple *b,
 					  Tuplesortstate *state)
 {
-	/*
-	 * It's slightly annoying to redo the hash function each time, although
-	 * most hash functions ought to be cheap.  Is it worth having a variant
-	 * tuple storage format so we can store the hash code?
-	 */
 	uint32		hash1;
 	uint32		hash2;
 	IndexTuple	tuple1;
@@ -3113,13 +3124,14 @@ comparetup_index_hash(const SortTuple *a, const SortTuple *b,
 	/* Allow interrupting long sorts */
 	CHECK_FOR_INTERRUPTS();
 
-	/* Compute hash codes and mask off bits we don't want to sort by */
+	/*
+	 * Fetch hash keys and mask off bits we don't want to sort by.
+	 * We know that the first column of the index tuple is the hash key.
+	 */
 	Assert(!a->isnull1);
-	hash1 = DatumGetUInt32(FunctionCall1(state->hash_proc, a->datum1))
-		& state->hash_mask;
+	hash1 = DatumGetUInt32(a->datum1) & state->hash_mask;
 	Assert(!b->isnull1);
-	hash2 = DatumGetUInt32(FunctionCall1(state->hash_proc, b->datum1))
-		& state->hash_mask;
+	hash2 = DatumGetUInt32(b->datum1) & state->hash_mask;
 
 	if (hash1 > hash2)
 		return 1;

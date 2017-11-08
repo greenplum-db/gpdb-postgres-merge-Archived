@@ -1,12 +1,19 @@
 <!--
+<<<<<<< HEAD
 $PostgreSQL: pgsql/doc/src/sgml/ref/drop_user_mapping.sgml,v 1.4 2009/09/19 10:23:27 petere Exp $
+=======
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_user_mapping.sgml,v 1.1 2008/12/19 16:25:16 petere Exp $
+>>>>>>> 38e9348282e
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPUSERMAPPING">
  <refmeta>
   <refentrytitle id="sql-dropusermapping-title">DROP USER MAPPING</refentrytitle>
+<<<<<<< HEAD
   <manvolnum>7</manvolnum>
+=======
+>>>>>>> 38e9348282e
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 
@@ -21,7 +28,11 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
+<<<<<<< HEAD
 DROP USER MAPPING [ IF EXISTS ] FOR { <replaceable class="parameter">user_name</replaceable> | USER | CURRENT_USER | PUBLIC } SERVER <replaceable class="parameter">server_name</replaceable>
+=======
+DROP USER MAPPING [ IF EXISTS ] FOR { <replaceable class="parameter">username</replaceable> | USER | CURRENT_USER | PUBLIC } SERVER <replaceable class="parameter">servername</replaceable>
+>>>>>>> 38e9348282e
 </synopsis>
  </refsynopsisdiv>
 
@@ -30,6 +41,7 @@ DROP USER MAPPING [ IF EXISTS ] FOR { <replaceable class="parameter">user_name</
 
   <para>
    <command>DROP USER MAPPING</command> removes an existing user
+<<<<<<< HEAD
    mapping from foreign server.
   </para>
 
@@ -38,6 +50,10 @@ DROP USER MAPPING [ IF EXISTS ] FOR { <replaceable class="parameter">user_name</
    for any user.  Also, a user can drop a user mapping for his own
    user name if <literal>USAGE</> privilege on the server has been
    granted to the user.
+=======
+   mapping from foreign server.  To execute this command, the current
+   user must be the owner of the server containing the mapping.
+>>>>>>> 38e9348282e
   </para>
  </refsect1>
 
@@ -56,7 +72,11 @@ DROP USER MAPPING [ IF EXISTS ] FOR { <replaceable class="parameter">user_name</
    </varlistentry>
 
    <varlistentry>
+<<<<<<< HEAD
     <term><replaceable class="parameter">user_name</replaceable></term>
+=======
+    <term><replaceable class="parameter">username</replaceable></term>
+>>>>>>> 38e9348282e
     <listitem>
      <para>
       User name of the mapping.  <literal>CURRENT_USER</>
@@ -68,7 +88,11 @@ DROP USER MAPPING [ IF EXISTS ] FOR { <replaceable class="parameter">user_name</
    </varlistentry>
 
    <varlistentry>
+<<<<<<< HEAD
     <term><replaceable class="parameter">server_name</replaceable></term>
+=======
+    <term><replaceable class="parameter">servername</replaceable></term>
+>>>>>>> 38e9348282e
     <listitem>
      <para>
       Server name of the user mapping.

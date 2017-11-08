@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2009, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.178 2008/08/05 12:09:30 mha Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.186 2008/12/17 09:15:03 heikki Exp $
  * ----------
  */
 #include "postgres.h"
@@ -117,8 +117,11 @@ bool		pgstat_track_counts = false;
 int			pgstat_track_functions = TRACK_FUNC_OFF;
 int			pgstat_track_activity_query_size = 1024;
 
+<<<<<<< HEAD
 bool		pgstat_collect_queuelevel = false;
 
+=======
+>>>>>>> 38e9348282e
 /* ----------
  * Built from GUC parameter
  * ----------
@@ -228,12 +231,16 @@ static PgStat_GlobalStats globalStats;
 
 /* Last time the collector successfully wrote the stats file */
 static TimestampTz last_statwrite;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 38e9348282e
 /* Latest statistics request time from backends */
 static TimestampTz last_statrequest;
 
 static volatile bool need_exit = false;
 static volatile bool got_SIGHUP = false;
+<<<<<<< HEAD
 
 /*
  * Total time charged to functions so far in the current backend.
@@ -241,6 +248,8 @@ static volatile bool got_SIGHUP = false;
  * (We assume this initializes to zero.)
  */
 static instr_time total_func_time;
+=======
+>>>>>>> 38e9348282e
 
 /*
  * Total time charged to functions so far in the current backend.
@@ -705,8 +714,13 @@ pgstat_report_stat(bool force)
 	int			i;
 
 	/* Don't expend a clock check if nothing to do */
+<<<<<<< HEAD
 	if ((pgStatTabList == NULL || pgStatTabList->tsa_used == 0) &&
 		!have_function_stats)
+=======
+	if ((pgStatTabList == NULL || pgStatTabList->tsa_used == 0)
+		&& !have_function_stats)
+>>>>>>> 38e9348282e
 		return;
 
 	/*
@@ -2803,7 +2817,11 @@ PgstatCollectorMain(int argc, char *argv[])
 	/*
 	 * Arrange to write the initial status file right away
 	 */
+<<<<<<< HEAD
     last_statrequest = GetCurrentTimestamp();
+=======
+	last_statrequest = GetCurrentTimestamp();
+>>>>>>> 38e9348282e
 	last_statwrite = last_statrequest - 1;
 
 	/*
@@ -2827,7 +2845,11 @@ PgstatCollectorMain(int argc, char *argv[])
 	 *
 	 * For performance reasons, we don't want to do a PostmasterIsAlive() test
 	 * after every message; instead, do it only when select()/poll() is
+<<<<<<< HEAD
 	 * interrupted by timeout.	In essence, we'll stay alive as long as
+=======
+	 * interrupted by timeout.  In essence, we'll stay alive as long as
+>>>>>>> 38e9348282e
 	 * backends keep sending us stuff often, even if the postmaster is gone.
 	 */
 	for (;;)
@@ -3117,8 +3139,13 @@ pgstat_write_statsfile(bool permanent)
 	PgStat_StatQueueEntry *queueentry;
 	FILE	   *fpout;
 	int32		format_id;
+<<<<<<< HEAD
 	const char *tmpfile = permanent ? PGSTAT_STAT_PERMANENT_TMPFILE : pgstat_stat_tmpname;
 	const char *statfile = permanent ? PGSTAT_STAT_PERMANENT_FILENAME : pgstat_stat_filename;
+=======
+	const char *tmpfile = permanent?PGSTAT_STAT_PERMANENT_TMPFILE:pgstat_stat_tmpname;
+	const char *statfile = permanent?PGSTAT_STAT_PERMANENT_FILENAME:pgstat_stat_filename;
+>>>>>>> 38e9348282e
 
 	/*
 	 * Open the statistics temp file to write out the current values.
@@ -3279,7 +3306,11 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 	FILE	   *fpin;
 	int32		format_id;
 	bool		found;
+<<<<<<< HEAD
 	const char *statfile = permanent ? PGSTAT_STAT_PERMANENT_FILENAME : pgstat_stat_filename;
+=======
+	const char *statfile = permanent?PGSTAT_STAT_PERMANENT_FILENAME:pgstat_stat_filename;
+>>>>>>> 38e9348282e
 
 	/*
 	 * The tables will live in pgStatLocalContext.
@@ -3568,7 +3599,11 @@ pgstat_read_statsfile_timestamp(bool permanent, TimestampTz *ts)
 	PgStat_GlobalStats myGlobalStats;
 	FILE	   *fpin;
 	int32		format_id;
+<<<<<<< HEAD
 	const char *statfile = permanent ? PGSTAT_STAT_PERMANENT_FILENAME : pgstat_stat_filename;
+=======
+	const char *statfile = permanent?PGSTAT_STAT_PERMANENT_FILENAME:pgstat_stat_filename;
+>>>>>>> 38e9348282e
 
 	/*
 	 * Try to open the status file.
@@ -3619,14 +3654,22 @@ backend_read_statsfile(void)
 
 	/*
 	 * We set the minimum acceptable timestamp to PGSTAT_STAT_INTERVAL msec
+<<<<<<< HEAD
 	 * before now.	This indirectly ensures that the collector needn't write
+=======
+	 * before now.  This indirectly ensures that the collector needn't write
+>>>>>>> 38e9348282e
 	 * the file more often than PGSTAT_STAT_INTERVAL.  In an autovacuum
 	 * worker, however, we want a lower delay to avoid using stale data, so we
 	 * use PGSTAT_RETRY_DELAY (since the number of worker is low, this
 	 * shouldn't be a problem).
 	 *
 	 * Note that we don't recompute min_ts after sleeping; so we might end up
+<<<<<<< HEAD
 	 * accepting a file a bit older than PGSTAT_STAT_INTERVAL.	In practice
+=======
+	 * accepting a file a bit older than PGSTAT_STAT_INTERVAL.  In practice
+>>>>>>> 38e9348282e
 	 * that shouldn't happen, though, as long as the sleep time is less than
 	 * PGSTAT_STAT_INTERVAL; and we don't want to lie to the collector about
 	 * what our cutoff time really is.
@@ -3635,6 +3678,7 @@ backend_read_statsfile(void)
 		min_ts = TimestampTzPlusMilliseconds(GetCurrentTimestamp(),
 											 -PGSTAT_RETRY_DELAY);
 	else
+<<<<<<< HEAD
 	 	min_ts = TimestampTzPlusMilliseconds(GetCurrentTimestamp(),
 	 										 -PGSTAT_STAT_INTERVAL);
 
@@ -3642,6 +3686,14 @@ backend_read_statsfile(void)
 	 * Loop until fresh enough stats file is available or we ran out of time.
 	 * The stats inquiry message is sent repeatedly in case collector drops
 	 * it.
+=======
+		min_ts = TimestampTzPlusMilliseconds(GetCurrentTimestamp(),
+											 -PGSTAT_STAT_INTERVAL);
+
+	/*
+	 * Loop until fresh enough stats file is available or we ran out of time.
+	 * The stats inquiry message is sent repeatedly in case collector drops it.
+>>>>>>> 38e9348282e
 	 */
 	for (count = 0; count < PGSTAT_POLL_LOOP_COUNT; count++)
 	{
@@ -3659,9 +3711,13 @@ backend_read_statsfile(void)
 	}
 
 	if (count >= PGSTAT_POLL_LOOP_COUNT)
+<<<<<<< HEAD
 		ereport(LOG,
 				(errmsg("using stale statistics instead of current ones "
 						"because stats collector is not responding")));
+=======
+		elog(WARNING, "pgstat wait timeout");
+>>>>>>> 38e9348282e
 
 	/* Autovacuum launcher wants stats about all databases */
 	if (IsAutoVacuumLauncherProcess())
@@ -4003,12 +4059,17 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 	else
 		tabentry->vacuum_timestamp = msg->m_vacuumtime;
 	if (msg->m_scanned_all)
+<<<<<<< HEAD
 	tabentry->n_live_tuples = msg->m_tuples;
+=======
+		tabentry->n_live_tuples = msg->m_tuples;
+>>>>>>> 38e9348282e
 	/* Resetting dead_tuples to 0 is an approximation ... */
 	tabentry->n_dead_tuples = 0;
 	if (msg->m_analyze)
 	{
 		if (msg->m_scanned_all)
+<<<<<<< HEAD
 		tabentry->last_anl_tuples = msg->m_tuples;
 		else
 		{
@@ -4017,6 +4078,9 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 											tabentry->n_live_tuples);
 		}
 
+=======
+			tabentry->last_anl_tuples = msg->m_tuples;
+>>>>>>> 38e9348282e
 		if (msg->m_autovacuum)
 			tabentry->autovac_analyze_timestamp = msg->m_vacuumtime;
 		else

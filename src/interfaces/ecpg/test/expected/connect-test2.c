@@ -36,10 +36,17 @@ main(void)
 	 
 
 #line 17 "test2.pgc"
+<<<<<<< HEAD
  char id [ 200 ] ;
  
 #line 18 "test2.pgc"
  char res [ 200 ] ;
+=======
+ char  id  [ 200 ]   ;
+ 
+#line 18 "test2.pgc"
+ char  res  [ 200 ]   ;
+>>>>>>> 38e9348282e
 /* exec sql end declare section */
 #line 19 "test2.pgc"
 
@@ -55,17 +62,29 @@ main(void)
 
 
 	/* this selects from "second" which was opened last */
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select current_database ( )", ECPGt_EOIT, 
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  current_database ( )     ", ECPGt_EOIT, 
+>>>>>>> 38e9348282e
 	ECPGt_char,(res),(long)200,(long)1,(200)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
 #line 28 "test2.pgc"
 
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, "first", 0, ECPGst_normal, "select current_database ( )", ECPGt_EOIT, 
+=======
+	{ ECPGdo(__LINE__, 0, 1, "first", 0, ECPGst_normal, "select  current_database ( )     ", ECPGt_EOIT, 
+>>>>>>> 38e9348282e
 	ECPGt_char,(res),(long)200,(long)1,(200)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
 #line 29 "test2.pgc"
 
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, "second", 0, ECPGst_normal, "select current_database ( )", ECPGt_EOIT, 
+=======
+	{ ECPGdo(__LINE__, 0, 1, "second", 0, ECPGst_normal, "select  current_database ( )     ", ECPGt_EOIT, 
+>>>>>>> 38e9348282e
 	ECPGt_char,(res),(long)200,(long)1,(200)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
 #line 30 "test2.pgc"
@@ -74,7 +93,11 @@ main(void)
 	{ ECPGsetconn(__LINE__, "first");}
 #line 32 "test2.pgc"
 
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select current_database ( )", ECPGt_EOIT, 
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  current_database ( )     ", ECPGt_EOIT, 
+>>>>>>> 38e9348282e
 	ECPGt_char,(res),(long)200,(long)1,(200)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
 #line 33 "test2.pgc"
@@ -84,7 +107,11 @@ main(void)
 	{ ECPGdisconnect(__LINE__, "CURRENT");}
 #line 36 "test2.pgc"
 
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select current_database ( )", ECPGt_EOIT, 
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  current_database ( )     ", ECPGt_EOIT, 
+>>>>>>> 38e9348282e
 	ECPGt_char,(res),(long)200,(long)1,(200)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
 #line 37 "test2.pgc"

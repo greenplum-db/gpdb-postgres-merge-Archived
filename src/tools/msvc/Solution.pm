@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.43 2008/06/24 01:15:36 tgl Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.46 2008/12/16 15:42:21 adunstan Exp $
 #
 use Carp;
 use strict;
@@ -177,8 +177,12 @@ sub GenerateFiles
 s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY(z)\n#define PG_VERSION_STR "PostgreSQL $self->{strver}, compiled by Visual C++ build " __STRINGIFY2(_MSC_VER) ", $bits-bit"};
             print O;
         }
+<<<<<<< HEAD
         print O "#define GP_VERSION \"unknown\"\n";
         print O "#define PG_MAJORVERSION \"$self->{majorver}\"\n";
+=======
+		print O "#define PG_MAJORVERSION \"$self->{majorver}\"\n";
+>>>>>>> 38e9348282e
         print O "#define LOCALEDIR \"/share/locale\"\n" if ($self->{options}->{nls});
 	if ($self->{options}->{xml}) {
 	    print O "#define HAVE_LIBXML2\n";
@@ -313,7 +317,11 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
         }
 
     if (IsNewer('src\include\utils\probes.h','src\backend\utils\probes.d'))
+<<<<<<< HEAD
         {
+=======
+    {
+>>>>>>> 38e9348282e
 		print "Generating probes.h...\n";
         system(
 'psed -f src\backend\utils\Gen_dummy_probes.sed src\backend\utils\probes.d > src\include\utils\probes.h'
@@ -361,6 +369,19 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
         print "Generating preproc.y...\n";
         chdir('src\interfaces\ecpg\preproc');
         system('attrib -r preproc.y');
+        system('perl parse.pl < ..\..\..\backend\parser\gram.y > preproc.y');
+        chdir('..\..\..\..');
+    }
+
+    if (
+        IsNewer(
+            'src\interfaces\ecpg\preproc\preproc.y',
+            'src\backend\parser\gram.y'
+        )
+      )
+    {
+        print "Generating preproc.y...\n";
+        chdir('src\interfaces\ecpg\preproc');
         system('perl parse.pl < ..\..\..\backend\parser\gram.y > preproc.y');
         chdir('..\..\..\..');
     }

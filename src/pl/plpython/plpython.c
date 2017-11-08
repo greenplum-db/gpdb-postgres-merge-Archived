@@ -1,7 +1,11 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
+<<<<<<< HEAD
  *	src/pl/plpython/plpython.c
+=======
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.117 2008/12/11 07:34:09 petere Exp $
+>>>>>>> 38e9348282e
  *
  *********************************************************************
  */
@@ -97,7 +101,10 @@ typedef int Py_ssize_t;
 #include "executor/spi.h"
 #include "funcapi.h"
 #include "fmgr.h"
+<<<<<<< HEAD
 #include "mb/pg_wchar.h"
+=======
+>>>>>>> 38e9348282e
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_type.h"
@@ -116,7 +123,10 @@ typedef int Py_ssize_t;
 #undef TEXTDOMAIN
 #define TEXTDOMAIN PG_TEXTDOMAIN("plpython")
 
+<<<<<<< HEAD
 /* Python header files beyond the basic Python.h */
+=======
+>>>>>>> 38e9348282e
 #include <compile.h>
 #include <eval.h>
 
@@ -3154,12 +3164,32 @@ PLyMapping_ToTuple(PLyTypeInfo *info, TupleDesc desc, PyObject *mapping)
 			value = PyMapping_GetItemString(mapping, key);
 			if (value == Py_None)
 			{
+<<<<<<< HEAD
 				values[i] = (Datum) 0; 
+=======
+				values[i] = (Datum) NULL;
+>>>>>>> 38e9348282e
 				nulls[i] = true;
 			}
 			else if (value)
 			{
+<<<<<<< HEAD
 				values[i] = (att->func) (att, -1, value, false);
+=======
+				char	   *valuestr;
+
+				so = PyObject_Str(value);
+				if (so == NULL)
+					PLy_elog(ERROR, "cannot convert mapping type");
+				valuestr = PyString_AsString(so);
+
+				values[i] = InputFunctionCall(&info->out.r.atts[i].typfunc
+											  ,valuestr
+											  ,info->out.r.atts[i].typioparam
+											  ,-1);
+				Py_DECREF(so);
+				so = NULL;
+>>>>>>> 38e9348282e
 				nulls[i] = false;
 			}
 			else
@@ -3194,7 +3224,10 @@ PLySequence_ToTuple(PLyTypeInfo *info, TupleDesc desc, PyObject *sequence, bool 
 	HeapTuple	tuple;
 	Datum	   *values;
 	bool	   *nulls;
+<<<<<<< HEAD
 	volatile int idx;
+=======
+>>>>>>> 38e9348282e
 	volatile int i;
 
 	Assert(PySequence_Check(sequence));
@@ -3222,7 +3255,10 @@ PLySequence_ToTuple(PLyTypeInfo *info, TupleDesc desc, PyObject *sequence, bool 
 	/* Build tuple */
 	values = palloc(sizeof(Datum) * desc->natts);
 	nulls = palloc(sizeof(bool) * desc->natts);
+<<<<<<< HEAD
 	idx = 0;
+=======
+>>>>>>> 38e9348282e
 	for (i = 0; i < desc->natts; ++i)
 	{
 		PyObject   *volatile value;
@@ -3239,12 +3275,31 @@ PLySequence_ToTuple(PLyTypeInfo *info, TupleDesc desc, PyObject *sequence, bool 
 			Assert(value);
 			if (value == Py_None)
 			{
+<<<<<<< HEAD
 				values[i] = (Datum) 0; 
+=======
+				values[i] = (Datum) NULL;
+>>>>>>> 38e9348282e
 				nulls[i] = true;
 			}
 			else if (value)
 			{
+<<<<<<< HEAD
 				values[i] = (att->func) (att, -1, value, false);
+=======
+				char	   *valuestr;
+
+				so = PyObject_Str(value);
+				if (so == NULL)
+					PLy_elog(ERROR, "cannot convert sequence type");
+				valuestr = PyString_AsString(so);
+				values[i] = InputFunctionCall(&info->out.r.atts[i].typfunc
+											  ,valuestr
+											  ,info->out.r.atts[i].typioparam
+											  ,-1);
+				Py_DECREF(so);
+				so = NULL;
+>>>>>>> 38e9348282e
 				nulls[i] = false;
 			}
 
@@ -3302,12 +3357,31 @@ PLyGenericObject_ToTuple(PLyTypeInfo *info, TupleDesc desc, PyObject *object, bo
 			value = PyObject_GetAttrString(object, key);
 			if (value == Py_None)
 			{
+<<<<<<< HEAD
 				values[i] = (Datum) 0; 
+=======
+				values[i] = (Datum) NULL;
+>>>>>>> 38e9348282e
 				nulls[i] = true;
 			}
 			else if (value)
 			{
+<<<<<<< HEAD
 				values[i] = (att->func) (att, -1, value, false);
+=======
+				char	   *valuestr;
+
+				so = PyObject_Str(value);
+				if (so == NULL)
+					PLy_elog(ERROR, "cannot convert object type");
+				valuestr = PyString_AsString(so);
+				values[i] = InputFunctionCall(&info->out.r.atts[i].typfunc
+											  ,valuestr
+											  ,info->out.r.atts[i].typioparam
+											  ,-1);
+				Py_DECREF(so);
+				so = NULL;
+>>>>>>> 38e9348282e
 				nulls[i] = false;
 			}
 			else
@@ -4527,6 +4601,7 @@ _PG_init(void)
 	if (inited)
 		return;
 
+<<<<<<< HEAD
 	/* Be sure we don't run Python 2 and 3 in the same session (might crash) */
 	version_ptr = (const int **) find_rendezvous_variable("plpython_python_version");
 	if (!(*version_ptr))
@@ -4546,6 +4621,10 @@ _PG_init(void)
 #if PY_MAJOR_VERSION >= 3
 	PyImport_AppendInittab("plpy", PyInit_plpy);
 #endif
+=======
+	pg_bindtextdomain(TEXTDOMAIN);
+
+>>>>>>> 38e9348282e
 	Py_Initialize();
 #if PY_MAJOR_VERSION >= 3
 	PyImport_ImportModule("plpy");

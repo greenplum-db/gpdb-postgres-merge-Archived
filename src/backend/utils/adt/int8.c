@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.70 2008/06/17 19:10:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.71 2008/10/05 23:18:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -609,6 +609,7 @@ int8div(PG_FUNCTION_ARGS)
 	}
 
 	/*
+<<<<<<< HEAD
 	 * INT64_MIN / -1 is problematic, since the result can't be represented on
 	 * a two's-complement machine.  Some machines produce INT64_MIN, some
 	 * produce zero, some throw an exception.  We can dodge the problem by
@@ -629,6 +630,17 @@ int8div(PG_FUNCTION_ARGS)
 
 	result = arg1 / arg2;
 
+=======
+	 * Overflow check.	The only possible overflow case is for arg1 =
+	 * INT64_MIN, arg2 = -1, where the correct result is -INT64_MIN, which
+	 * can't be represented on a two's-complement machine.  Most machines
+	 * produce INT64_MIN but it seems some produce zero.
+	 */
+	if (arg2 == -1 && arg1 < 0 && result <= 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("bigint out of range")));
+>>>>>>> 38e9348282e
 	PG_RETURN_INT64(result);
 }
 
@@ -873,6 +885,7 @@ int84div(PG_FUNCTION_ARGS)
 	}
 
 	/*
+<<<<<<< HEAD
 	 * INT64_MIN / -1 is problematic, since the result can't be represented on
 	 * a two's-complement machine.  Some machines produce INT64_MIN, some
 	 * produce zero, some throw an exception.  We can dodge the problem by
@@ -893,6 +906,17 @@ int84div(PG_FUNCTION_ARGS)
 
 	result = arg1 / arg2;
 
+=======
+	 * Overflow check.	The only possible overflow case is for arg1 =
+	 * INT64_MIN, arg2 = -1, where the correct result is -INT64_MIN, which
+	 * can't be represented on a two's-complement machine.  Most machines
+	 * produce INT64_MIN but it seems some produce zero.
+	 */
+	if (arg2 == -1 && arg1 < 0 && result <= 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("bigint out of range")));
+>>>>>>> 38e9348282e
 	PG_RETURN_INT64(result);
 }
 
@@ -1070,9 +1094,10 @@ int82div(PG_FUNCTION_ARGS)
 	/*
 	 * Overflow check.	The only possible overflow case is for arg1 =
 	 * INT64_MIN, arg2 = -1, where the correct result is -INT64_MIN, which
-	 * can't be represented on a two's-complement machine.
+	 * can't be represented on a two's-complement machine.  Most machines
+	 * produce INT64_MIN but it seems some produce zero.
 	 */
-	if (arg2 == -1 && arg1 < 0 && result < 0)
+	if (arg2 == -1 && arg1 < 0 && result <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("bigint out of range")));

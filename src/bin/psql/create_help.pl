@@ -5,7 +5,11 @@
 #
 # Copyright (c) 2000-2010, PostgreSQL Global Development Group
 #
+<<<<<<< HEAD
 # src/bin/psql/create_help.pl
+=======
+# $PostgreSQL: pgsql/src/bin/psql/create_help.pl,v 1.18 2008/11/19 09:51:55 petere Exp $
+>>>>>>> 38e9348282e
 #################################################################
 
 #
@@ -22,27 +26,44 @@
 use strict;
 
 my $docdir = $ARGV[0] or die "$0: missing required argument: docdir\n";
+<<<<<<< HEAD
 my $hfile = $ARGV[1] . '.h' or die "$0: missing required argument: output file\n";
 my $cfile = $ARGV[1] . '.c';
 
 my $hfilebasename;
 if ($hfile =~ m!.*/([^/]+)$!) {
     $hfilebasename = $1;
+=======
+my $outputfile = $ARGV[1] or die "$0: missing required argument: output file\n";
+
+my $outputfilebasename;
+if ($outputfile =~ m!.*/([^/]+)$!) {
+    $outputfilebasename = $1;
+>>>>>>> 38e9348282e
 }
 else {
     $hfilebasename = $hfile;
 }
 
+<<<<<<< HEAD
 my $define = $hfilebasename;
+=======
+my $define = $outputfilebasename;
+>>>>>>> 38e9348282e
 $define =~ tr/a-z/A-Z/;
 $define =~ s/\W/_/g;
 
 opendir(DIR, $docdir)
     or die "$0: could not open documentation source dir '$docdir': $!\n";
+<<<<<<< HEAD
 open(HFILE, ">$hfile")
     or die "$0: could not open output file '$hfile': $!\n";
 open(CFILE, ">$cfile")
     or die "$0: could not open output file '$cfile': $!\n";
+=======
+open(OUT, ">$outputfile")
+    or die "$0: could not open output file '$outputfile': $!\n";
+>>>>>>> 38e9348282e
 
 print HFILE
 "/*
@@ -87,6 +108,7 @@ print CFILE
 ";
 
 my $maxlen = 0;
+<<<<<<< HEAD
 
 my %entries;
 
@@ -94,6 +116,15 @@ foreach my $file (sort readdir DIR) {
     my (@cmdnames, $cmddesc, $cmdsynopsis);
     $file =~ /\.sgml$/ or next;
 
+=======
+
+my %entries;
+
+foreach my $file (sort readdir DIR) {
+    my (@cmdnames, $cmddesc, $cmdsynopsis);
+    $file =~ /\.sgml$/ or next;
+
+>>>>>>> 38e9348282e
     open(FILE, "$docdir/$file") or next;
     my $filecontent = join('', <FILE>);
     close FILE;
@@ -132,7 +163,11 @@ foreach my $file (sort readdir DIR) {
         $cmdsynopsis =~ s/\"/\\"/g;
 
         foreach my $cmdname (@cmdnames) {
+<<<<<<< HEAD
 	    $entries{$cmdname} = { cmddesc => $cmddesc, cmdsynopsis => $cmdsynopsis, params => \@params, nl_count => $nl_count };
+=======
+	    $entries{$cmdname} = { cmddesc => $cmddesc, cmdsynopsis => $cmdsynopsis };
+>>>>>>> 38e9348282e
 	    $maxlen = ($maxlen >= length $cmdname) ? $maxlen : length $cmdname;
 	}
     }
@@ -141,6 +176,7 @@ foreach my $file (sort readdir DIR) {
     }
 }
 
+<<<<<<< HEAD
 foreach (sort keys %entries) {
     my $prefix = "\t"x5 . '  ';
     my $id = $_;
@@ -176,6 +212,11 @@ foreach (sort keys %entries) {
 }
 
 print HFILE "
+=======
+print OUT "    { \"$_\",\n      N_(\"".$entries{$_}{cmddesc}."\"),\n      N_(\"".$entries{$_}{cmdsynopsis}."\") },\n\n" foreach (sort keys %entries);
+
+print OUT "
+>>>>>>> 38e9348282e
     { NULL, NULL, NULL }    /* End of list marker */
 };
 

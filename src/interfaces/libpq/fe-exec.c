@@ -9,7 +9,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-exec.c
+=======
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.199 2008/09/19 16:40:40 tgl Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +64,11 @@ static bool static_std_strings = false;
 
 
 static PGEvent *dupEvents(PGEvent *events, int count);
+<<<<<<< HEAD
 static bool pqAddTuple(PGresult *res, PGresAttValue *tup);
+=======
+static bool PQsendQueryStart(PGconn *conn);
+>>>>>>> 38e9348282e
 static int PQsendQueryGuts(PGconn *conn,
 				const char *command,
 				const char *stmtName,
@@ -75,7 +83,11 @@ static bool PQexecStart(PGconn *conn);
 static PGresult *PQexecFinish(PGconn *conn);
 static int PQsendDescribe(PGconn *conn, char desc_type,
 			   const char *desc_target);
+<<<<<<< HEAD
 static int	check_field_number(const PGresult *res, int field_num);
+=======
+static int check_field_number(const PGresult *res, int field_num);
+>>>>>>> 38e9348282e
 
 
 /* ----------------
@@ -233,14 +245,22 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
  *
  * Set the attributes for a given result.  This function fails if there are
  * already attributes contained in the provided result.  The call is
+<<<<<<< HEAD
  * ignored if numAttributes is zero or attDescs is NULL.  If the
+=======
+ * ignored if numAttributes is is zero or attDescs is NULL.  If the
+>>>>>>> 38e9348282e
  * function fails, it returns zero.  If the function succeeds, it
  * returns a non-zero value.
  */
 int
 PQsetResultAttrs(PGresult *res, int numAttributes, PGresAttDesc *attDescs)
 {
+<<<<<<< HEAD
 	int			i;
+=======
+	int i;
+>>>>>>> 38e9348282e
 
 	/* If attrs already exist, they cannot be overwritten. */
 	if (!res || res->numAttributes > 0)
@@ -284,15 +304,23 @@ PQsetResultAttrs(PGresult *res, int numAttributes, PGresAttDesc *attDescs)
  * Returns a deep copy of the provided 'src' PGresult, which cannot be NULL.
  * The 'flags' argument controls which portions of the result will or will
  * NOT be copied.  The created result is always put into the
+<<<<<<< HEAD
  * PGRES_TUPLES_OK status.	The source result error message is not copied,
  * although cmdStatus is.
  *
  * To set custom attributes, use PQsetResultAttrs.	That function requires
+=======
+ * PGRES_TUPLES_OK status.  The source result error message is not copied,
+ * although cmdStatus is.
+ *
+ * To set custom attributes, use PQsetResultAttrs.  That function requires
+>>>>>>> 38e9348282e
  * that there are no attrs contained in the result, so to use that
  * function you cannot use the PG_COPYRES_ATTRS or PG_COPYRES_TUPLES
  * options with this function.
  *
  * Options:
+<<<<<<< HEAD
  *	 PG_COPYRES_ATTRS - Copy the source result's attributes
  *
  *	 PG_COPYRES_TUPLES - Copy the source result's tuples.  This implies
@@ -301,12 +329,27 @@ PQsetResultAttrs(PGresult *res, int numAttributes, PGresAttDesc *attDescs)
  *	 PG_COPYRES_EVENTS - Copy the source result's events.
  *
  *	 PG_COPYRES_NOTICEHOOKS - Copy the source result's notice hooks.
+=======
+ *   PG_COPYRES_ATTRS - Copy the source result's attributes
+ *
+ *   PG_COPYRES_TUPLES - Copy the source result's tuples.  This implies
+ *   copying the attrs, seeeing how the attrs are needed by the tuples.
+ *
+ *   PG_COPYRES_EVENTS - Copy the source result's events.
+ *
+ *   PG_COPYRES_NOTICEHOOKS - Copy the source result's notice hooks.
+>>>>>>> 38e9348282e
  */
 PGresult *
 PQcopyResult(const PGresult *src, int flags)
 {
+<<<<<<< HEAD
 	PGresult   *dest;
 	int			i;
+=======
+	PGresult *dest;
+	int i;
+>>>>>>> 38e9348282e
 
 	if (!src)
 		return NULL;
@@ -315,7 +358,11 @@ PQcopyResult(const PGresult *src, int flags)
 	if (!dest)
 		return NULL;
 
+<<<<<<< HEAD
 	/* Always copy these over.	Is cmdStatus really useful here? */
+=======
+	/* Always copy these over.  Is cmdStatus really useful here? */
+>>>>>>> 38e9348282e
 	dest->client_encoding = src->client_encoding;
 	strcpy(dest->cmdStatus, src->cmdStatus);
 
@@ -332,8 +379,12 @@ PQcopyResult(const PGresult *src, int flags)
 	/* Wants to copy tuples? */
 	if (flags & PG_COPYRES_TUPLES)
 	{
+<<<<<<< HEAD
 		int			tup,
 					field;
+=======
+		int tup, field;
+>>>>>>> 38e9348282e
 
 		for (tup = 0; tup < src->ntups; tup++)
 		{
@@ -396,8 +447,13 @@ PQcopyResult(const PGresult *src, int flags)
 static PGEvent *
 dupEvents(PGEvent *events, int count)
 {
+<<<<<<< HEAD
 	PGEvent    *newEvents;
 	int			i;
+=======
+	PGEvent *newEvents;
+	int i;
+>>>>>>> 38e9348282e
 
 	if (!events || count <= 0)
 		return NULL;
@@ -444,11 +500,39 @@ PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, int len)
 	if (tup_num < 0 || tup_num > res->ntups)
 		return FALSE;
 
+<<<<<<< HEAD
 	/* need to allocate a new tuple? */
 	if (tup_num == res->ntups)
 	{
 		PGresAttValue *tup;
 		int			i;
+=======
+	/* need to grow the tuple table? */
+	if (res->ntups >= res->tupArrSize)
+	{
+		int n = res->tupArrSize ? res->tupArrSize * 2 : 128;
+		PGresAttValue **tups;
+
+		if (res->tuples)
+			tups = (PGresAttValue **) realloc(res->tuples, n * sizeof(PGresAttValue *));
+		else
+			tups = (PGresAttValue **) malloc(n * sizeof(PGresAttValue *));
+
+		if (!tups)
+			return FALSE;
+
+		memset(tups + res->tupArrSize, 0,
+			   (n - res->tupArrSize) * sizeof(PGresAttValue *));
+		res->tuples = tups;
+		res->tupArrSize = n;
+	}
+
+	/* need to allocate a new tuple? */
+	if (tup_num == res->ntups && !res->tuples[tup_num])
+	{
+		PGresAttValue *tup;
+		int i;
+>>>>>>> 38e9348282e
 
 		tup = (PGresAttValue *)
 			pqResultAlloc(res, res->numAttributes * sizeof(PGresAttValue),
@@ -464,9 +548,14 @@ PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, int len)
 			tup[i].value = res->null_field;
 		}
 
+<<<<<<< HEAD
 		/* add it to the array */
 		if (!pqAddTuple(res, tup))
 			return FALSE;
+=======
+		res->tuples[tup_num] = tup;
+		res->ntups++;
+>>>>>>> 38e9348282e
 	}
 
 	attval = &res->tuples[tup_num][field_num];
@@ -665,7 +754,11 @@ void
 PQclear(PGresult *res)
 {
 	PGresult_data *block;
+<<<<<<< HEAD
 	int			i;
+=======
+	int i;
+>>>>>>> 38e9348282e
 
 	if (!res)
 		return;
@@ -1782,7 +1875,11 @@ PQgetResult(PGconn *conn)
 
 	if (res)
 	{
+<<<<<<< HEAD
 		int			i;
+=======
+		int i;
+>>>>>>> 38e9348282e
 
 		for (i = 0; i < res->nEvents; i++)
 		{
@@ -3499,12 +3596,20 @@ PQescapeByteaInternal(PGconn *conn,
 		}
 		else if (c < 0x20 || c > 0x7e)
 		{
+			int		val = *vp;
+
 			if (!std_strings)
 				*rp++ = '\\';
 			*rp++ = '\\';
+<<<<<<< HEAD
 			*rp++ = (c >> 6) + '0';
 			*rp++ = ((c >> 3) & 07) + '0';
 			*rp++ = (c & 07) + '0';
+=======
+			*rp++ = (val >> 6) + '0';
+			*rp++ = ((val >> 3) & 07) + '0';
+			*rp++ = (val & 07) + '0';
+>>>>>>> 38e9348282e
 		}
 		else if (c == '\'')
 		{

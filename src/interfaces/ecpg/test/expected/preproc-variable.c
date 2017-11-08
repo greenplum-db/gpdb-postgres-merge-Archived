@@ -42,7 +42,11 @@ typedef char* c;
 typedef union { int integer; short smallint; } ind;
 
 #define BUFFERSIZ 8
+<<<<<<< HEAD
 /* exec sql type str is [ BUFFERSIZ ] */
+=======
+/* exec sql type str is   [ BUFFERSIZ ]  */
+>>>>>>> 38e9348282e
 #line 15 "variable.pgc"
 
 
@@ -175,7 +179,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 
 	strcpy(msg, "commit");
-	{ ECPGtrans(__LINE__, NULL, "commit");
+	{ ECPGtrans(__LINE__, NULL, "commit ");
 #line 59 "variable.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
@@ -250,7 +254,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 
 	strcpy(msg, "commit");
-	{ ECPGtrans(__LINE__, NULL, "commit");
+	{ ECPGtrans(__LINE__, NULL, "commit ");
 #line 94 "variable.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}

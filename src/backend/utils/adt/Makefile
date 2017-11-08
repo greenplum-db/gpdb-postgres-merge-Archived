@@ -1,7 +1,7 @@
 #
 # Makefile for utils/adt
 #
-# $PostgreSQL: pgsql/src/backend/utils/adt/Makefile,v 1.69 2008/02/19 10:30:08 petere Exp $
+# $PostgreSQL: pgsql/src/backend/utils/adt/Makefile,v 1.70 2008/11/03 20:17:20 adunstan Exp $
 #
 
 subdir = src/backend/utils/adt
@@ -16,6 +16,7 @@ override CFLAGS+= -mieee
 endif
 endif
 
+<<<<<<< HEAD
 OBJS = acl.o array_userfuncs.o arrayfuncs.o arrayutils.o ascii.o \
 	bool.o cash.o char.o complex_type.o date.o datetime.o datum.o dbsize.o \
 	domains.o encode.o enum.o float.o format_type.o formatting.o genfile.o \
@@ -26,6 +27,19 @@ OBJS = acl.o array_userfuncs.o arrayfuncs.o arrayutils.o ascii.o \
 	percentile.o pg_locale.o pg_lzcompress.o pgstatfuncs.o pivot.o \
 	pseudotypes.o quote.o regexp.o regproc.o ri_triggers.o rowtypes.o \
 	ruleutils.o selfuncs.o tid.o timestamp.o varbit.o varchar.o varlena.o version.o \
+=======
+OBJS = acl.o arrayfuncs.o array_userfuncs.o arrayutils.o bool.o \
+	cash.o char.o date.o datetime.o datum.o domains.o \
+	enum.o float.o format_type.o \
+	geo_ops.o geo_selfuncs.o int.o int8.o like.o lockfuncs.o \
+	misc.o nabstime.o name.o numeric.o numutils.o \
+	oid.o oracle_compat.o pseudotypes.o rowtypes.o \
+	regexp.o regproc.o ruleutils.o selfuncs.o \
+	tid.o timestamp.o varbit.o varchar.o varlena.o version.o xid.o \
+	network.o mac.o inet_net_ntop.o inet_net_pton.o \
+	ri_triggers.o pg_lzcompress.o pg_locale.o formatting.o \
+	ascii.o quote.o pgstatfuncs.o encode.o dbsize.o genfile.o trigfuncs.o \
+>>>>>>> 38e9348282e
 	tsginidx.o tsgistidx.o tsquery.o tsquery_cleanup.o tsquery_gist.o \
 	tsquery_op.o tsquery_rewrite.o tsquery_util.o tsrank.o \
 	tsvector.o tsvector_op.o tsvector_parser.o \

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.273 2008/08/10 19:02:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.278 2008/12/03 13:05:22 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -785,6 +785,8 @@ AllocateRelationDesc(Form_pg_class relp)
 	 * clear fields of reldesc that should initialize to something non-zero
 	 */
 	relation->rd_targblock = InvalidBlockNumber;
+	relation->rd_fsm_nblocks = InvalidBlockNumber;
+	relation->rd_vm_nblocks = InvalidBlockNumber;
 
 	/* make sure relation is marked as having no open file yet */
 	relation->rd_smgr = NULL;
@@ -1221,6 +1223,17 @@ RelationBuildRuleLock(Relation relation)
 	heap_close(rewrite_desc, AccessShareLock);
 
 	/*
+	 * there might not be any rules (if relhasrules is out-of-date)
+	 */
+	if (numlocks == 0)
+	{
+		relation->rd_rules = NULL;
+		relation->rd_rulescxt = NULL;
+		MemoryContextDelete(rulescxt);
+		return;
+	}
+
+	/*
 	 * form a RuleLock and insert into relation
 	 */
 	rulelock = (RuleLock *) MemoryContextAlloc(rulescxt, sizeof(RuleLock));
@@ -1370,7 +1383,7 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 		relation->rd_rulescxt = NULL;
 	}
 
-	if (relation->rd_rel->reltriggers > 0)
+	if (relation->rd_rel->relhastriggers)
 		RelationBuildTriggers(relation);
 	else
 		relation->trigdesc = NULL;
@@ -1901,6 +1914,8 @@ formrdesc(const char *relationName, Oid relationReltype,
 	 */
 	relation = (Relation) palloc0(sizeof(RelationData));
 	relation->rd_targblock = InvalidBlockNumber;
+	relation->rd_fsm_nblocks = InvalidBlockNumber;
+	relation->rd_vm_nblocks = InvalidBlockNumber;
 
 	/* make sure relation is marked as having no open file yet */
 	relation->rd_smgr = NULL;
@@ -2290,9 +2305,23 @@ RelationReloadIndexInfo(Relation relation)
 	heap_freetuple(pg_class_tuple);
 	/* We must recalculate physical address in case it changed */
 	RelationInitPhysicalAddr(relation);
+<<<<<<< HEAD
 
 	/* Forget gp_relation_node information -- it may have changed. */
 	MemSet(&relation->rd_segfile0_relationnodeinfo, 0, sizeof(RelationNodeInfo));
+=======
+	/*
+	 * Must reset targblock, fsm_nblocks and vm_nblocks in case rel was
+	 * truncated
+	 */
+	relation->rd_targblock = InvalidBlockNumber;
+	relation->rd_fsm_nblocks = InvalidBlockNumber;
+	relation->rd_vm_nblocks = InvalidBlockNumber;
+	/* Must free any AM cached data, too */
+	if (relation->rd_amcache)
+		pfree(relation->rd_amcache);
+	relation->rd_amcache = NULL;
+>>>>>>> 38e9348282e
 
 	/*
 	 * For a non-system index, there are fields of the pg_index row that are
@@ -2443,6 +2472,8 @@ RelationClearRelation(Relation relation, bool rebuild)
 	if (relation->rd_isnailed)
 	{
 		relation->rd_targblock = InvalidBlockNumber;
+		relation->rd_fsm_nblocks = InvalidBlockNumber;
+		relation->rd_vm_nblocks = InvalidBlockNumber;
 		if (relation->rd_rel->relkind == RELKIND_INDEX)
 		{
 			relation->rd_isvalid = false;		/* needs to be revalidated */
@@ -3102,6 +3133,8 @@ RelationBuildLocalRelation(const char *relname,
 	rel = (Relation) palloc0(sizeof(RelationData));
 
 	rel->rd_targblock = InvalidBlockNumber;
+	rel->rd_fsm_nblocks = InvalidBlockNumber;
+	rel->rd_vm_nblocks = InvalidBlockNumber;
 
 	/* make sure relation is marked as having no open file yet */
 	rel->rd_smgr = NULL;
@@ -3558,12 +3591,16 @@ RelationCacheInitializePhase3(void)
 		if (relation->rd_rel->relhasrules && relation->rd_rules == NULL)
 		{
 			RelationBuildRuleLock(relation);
+<<<<<<< HEAD
 			if (relation->rd_rules == NULL)
 				relation->rd_rel->relhasrules = false;
 			restart = true;
 		}
 		if (relation->rd_rel->reltriggers > 0 && relation->trigdesc == NULL)
 		{
+=======
+		if (relation->rd_rel->relhastriggers && relation->trigdesc == NULL)
+>>>>>>> 38e9348282e
 			RelationBuildTriggers(relation);
 			if (relation->trigdesc == NULL)
 				relation->rd_rel->reltriggers = 0;
@@ -4598,6 +4635,8 @@ load_relcache_init_file(bool shared)
 		 */
 		rel->rd_smgr = NULL;
 		rel->rd_targblock = InvalidBlockNumber;
+		rel->rd_fsm_nblocks = InvalidBlockNumber;
+		rel->rd_vm_nblocks = InvalidBlockNumber;
 		if (rel->rd_isnailed)
 			rel->rd_refcnt = 1;
 		else

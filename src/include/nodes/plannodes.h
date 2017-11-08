@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.102 2008/08/07 19:35:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.105 2008/10/07 19:27:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -390,6 +390,26 @@ typedef struct RecursiveUnion
 } RecursiveUnion;
 
 /* ----------------
+ *	RecursiveUnion node -
+ *		Generate a recursive union of two subplans.
+ *
+ * The "outer" subplan is always the non-recursive term, and the "inner"
+ * subplan is the recursive term.
+ * ----------------
+ */
+typedef struct RecursiveUnion
+{
+	Plan		plan;
+	int			wtParam;		/* ID of Param representing work table */
+	/* Remaining fields are zero/null in UNION ALL case */
+	int			numCols;		/* number of columns to check for
+								 * duplicate-ness */
+	AttrNumber *dupColIdx;		/* their indexes in the target list */
+	Oid		   *dupOperators;	/* equality operators to compare with */
+	long		numGroups;		/* estimated number of groups in input */
+} RecursiveUnion;
+
+/* ----------------
  *	 BitmapAnd node -
  *		Generate the intersection of the results of sub-plans.
  *
@@ -671,6 +691,7 @@ typedef struct WorkTableScan
 	int			wtParam;		/* ID of Param representing work table */
 } WorkTableScan;
 
+<<<<<<< HEAD
 /* ----------------
 * External Scan node
 *
@@ -717,6 +738,8 @@ typedef struct AOCSScan
 	Scan		scan;
 	/* nothing for now... */
 } AOCSScan;
+=======
+>>>>>>> 38e9348282e
 
 /*
  * ==========
@@ -1077,6 +1100,7 @@ typedef struct Limit
 	Node	   *limitCount;		/* COUNT parameter, or NULL if none */
 } Limit;
 
+<<<<<<< HEAD
 /* -------------------------
  *		motion node structs
  * -------------------------
@@ -1171,6 +1195,8 @@ typedef struct RowTrigger
 	List		*newValuesColIdx;	/* list of new columns */
 
 } RowTrigger;
+=======
+>>>>>>> 38e9348282e
 
 /*
  * Plan invalidation info
@@ -1188,6 +1214,7 @@ typedef struct PlanInvalItem
 	ItemPointerData tupleId;	/* TID of the object's catalog tuple */
 } PlanInvalItem;
 
+<<<<<<< HEAD
 /* ----------------
  * PartitionSelector node
  *
@@ -1236,4 +1263,6 @@ typedef struct PartitionSelector
 
 } PartitionSelector;
 
+=======
+>>>>>>> 38e9348282e
 #endif   /* PLANNODES_H */

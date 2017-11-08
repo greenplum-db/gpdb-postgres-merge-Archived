@@ -1,9 +1,17 @@
 #!/usr/bin/perl
+<<<<<<< HEAD
 # $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/parse.pl,v 1.3 2009/01/29 09:38:38 petere Exp $
 # parser generater for ecpg
 # call with backend parser as stdin
 #
 # Copyright (c) 2007-2009, PostgreSQL Global Development Group
+=======
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/parse.pl,v 1.1 2008/11/14 10:01:04 meskes Exp $
+# parser generater for ecpg
+# call with backend parser as stdin
+#
+# Copyright (c) 2007-2008, PostgreSQL Global Development Group
+>>>>>>> 38e9348282e
 #
 # Written by Mike Aubury <mike.aubury@aubit.com>
 #	     Michael Meskes <meskes@postgresql.org>
@@ -37,9 +45,12 @@ $replace_token{'Sconst'} = 'ecpg_sconst';
 $replace_token{'IDENT'} = 'ecpg_ident';
 $replace_token{'PARAM'} = 'ecpg_param';
 # or in the block
+<<<<<<< HEAD
 $replace_string{'WITH_CASCADED'} = 'with cascaded';
 $replace_string{'WITH_LOCAL'} = 'with local';
 $replace_string{'WITH_CHECK'} = 'with check';
+=======
+>>>>>>> 38e9348282e
 $replace_string{'WITH_TIME'} = 'with time';
 $replace_string{'NULLS_FIRST'} = 'nulls first';
 $replace_string{'NULLS_LAST'} = 'nulls last';
@@ -98,7 +109,11 @@ line: while (<>) {
 	$copymode = 'on';
 	$yaccmode++;
 	$infield = 0;
+<<<<<<< HEAD
 	#$fieldcount = 0;
+=======
+	$fieldcount = 0;
+>>>>>>> 38e9348282e
     }
 
     $S = $_;
@@ -116,7 +131,11 @@ line: while (<>) {
     if ($arr[1] eq '%token' && $tokenmode == 0) {
 	$tokenmode = 1;
 	&include_stuff('tokens', 'ecpg.tokens', '', 1, 0);
+<<<<<<< HEAD
 	#$type = 1;
+=======
+	$type = 1;
+>>>>>>> 38e9348282e
     }
     elsif ($arr[1] eq '%type' && $header_included == 0) {
 	&include_stuff('header', 'ecpg.header', '', 1, 0);
@@ -374,7 +393,11 @@ sub dump_fields {
 	    # filter out ExecuteStmt: CREATE OptTemp TABLE ...
 	    # because the warning there is only valid in some situations
 	    if ($flds{0} ne 'create' || $flds{2} ne 'table') {
+<<<<<<< HEAD
 		&add_to_buffer('rules', "mmerror(PARSE_ERROR, ET_WARNING, \"unsupported feature will be passed to server\");");
+=======
+		&add_to_buffer('rules', "mmerror(PARSE_ERROR, ET_WARNING, \"unsupported feature will be passed to backend\\n\");");
+>>>>>>> 38e9348282e
 	    }
 	    $feature_not_supported = 0;
 	}
@@ -422,9 +445,15 @@ sub dump_fields {
 		$str = $str . ');';
 		&add_to_buffer('rules', $str);
 	    }
+<<<<<<< HEAD
 	    #if ($literal_mode == 0) {
 		&add_to_buffer('rules', '}');
 	    #}
+=======
+	    if ($literal_mode == 0) {
+		&add_to_buffer('rules', '}');
+	    }
+>>>>>>> 38e9348282e
 	}
     }
     else {

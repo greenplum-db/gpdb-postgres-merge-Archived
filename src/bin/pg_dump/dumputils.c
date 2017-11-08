@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.40 2008/01/01 19:45:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.42 2008/12/19 16:25:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -756,10 +756,21 @@ do { \
 		{
 			/* table only */
 			CONVERT_PRIV('a', "INSERT");
+<<<<<<< HEAD
 			CONVERT_PRIV('d', "DELETE");
 			CONVERT_PRIV('x', "REFERENCES");
 			CONVERT_PRIV('t', "TRIGGER");
 			CONVERT_PRIV('D', "TRUNCATE");
+=======
+			if (remoteVersion >= 70200)
+			{
+				CONVERT_PRIV('d', "DELETE");
+				CONVERT_PRIV('x', "REFERENCES");
+				CONVERT_PRIV('t', "TRIGGER");
+			}
+			if (remoteVersion >= 80400)
+				CONVERT_PRIV('D', "TRUNCATE");
+>>>>>>> 38e9348282e
 		}
 
 		/* UPDATE */
@@ -782,11 +793,18 @@ do { \
 	}
 	else if (strcmp(type, "TABLESPACE") == 0)
 		CONVERT_PRIV('C', "CREATE");
+<<<<<<< HEAD
 	else if (strcmp(type, "PROTOCOL") == 0)
 	{
 		CONVERT_PRIV('r', "SELECT");
 		CONVERT_PRIV('a', "INSERT");
 	}
+=======
+	else if (strcmp(type, "FOREIGN DATA WRAPPER") == 0)
+		CONVERT_PRIV('U', "USAGE");
+	else if (strcmp(type, "SERVER") == 0)
+		CONVERT_PRIV('U', "USAGE");
+>>>>>>> 38e9348282e
 	else
 		abort();
 

@@ -3,7 +3,11 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * src/bin/psql/command.c
+=======
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.199 2008/12/19 16:25:18 petere Exp $
+>>>>>>> 38e9348282e
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -57,12 +61,17 @@ static backslashResult exec_command(const char *cmd,
 			 PsqlScanState scan_state,
 			 PQExpBuffer query_buf);
 static bool do_edit(const char *filename_arg, PQExpBuffer query_buf,
+<<<<<<< HEAD
 		bool *edited);
+=======
+					bool *edited);
+>>>>>>> 38e9348282e
 static bool do_connect(char *dbname, char *user, char *host, char *port);
 static bool do_shell(const char *command);
 static bool lookup_function_oid(PGconn *conn, const char *desc, Oid *foid);
 static bool get_create_function_cmd(PGconn *conn, Oid oid, PQExpBuffer buf);
 static void minimal_error_message(PGresult *res);
+<<<<<<< HEAD
 
 static void printSSLInfo(void);
 
@@ -70,10 +79,10 @@ static void printSSLInfo(void);
 static void checkWin32Codepage(void);
 #endif
 
+=======
+>>>>>>> 38e9348282e
 
-#ifdef USE_SSL
 static void printSSLInfo(void);
-#endif
 
 #ifdef WIN32
 static void checkWin32Codepage(void);
@@ -484,11 +493,30 @@ exec_command(const char *cmd,
 						break;
 				}
 				break;
+<<<<<<< HEAD
 			case 'x':			/* Extensions */
 				if (show_verbose)
 					success = listExtensionContents(pattern);
 				else
 					success = listExtensions(pattern);
+=======
+			case 'e':			/* SQL/MED subsystem */
+				switch(cmd[2])
+				{
+					case 's':
+						success = listForeignServers(pattern, show_verbose);
+						break;
+					case 'u':
+						success = listUserMappings(pattern, show_verbose);
+						break;
+					case 'w':
+						success = listForeignDataWrappers(pattern, show_verbose);
+						break;
+					default:
+						status = PSQL_CMD_UNKNOWN;
+						break;
+				}
+>>>>>>> 38e9348282e
 				break;
 			default:
 				status = PSQL_CMD_UNKNOWN;
@@ -533,6 +561,7 @@ exec_command(const char *cmd,
 	 */
 	else if (strcmp(cmd, "ef") == 0)
 	{
+<<<<<<< HEAD
 		if (pset.sversion < 80400)
 		{
 			psql_error("The server (version %d.%d) does not support editing function source.\n",
@@ -540,6 +569,9 @@ exec_command(const char *cmd,
 			status = PSQL_CMD_ERROR;
 		}
 		else if (!query_buf)
+=======
+		if (!query_buf)
+>>>>>>> 38e9348282e
 		{
 			psql_error("no query buffer\n");
 			status = PSQL_CMD_ERROR;
@@ -578,12 +610,20 @@ exec_command(const char *cmd,
 
 		if (status != PSQL_CMD_ERROR)
 		{
+<<<<<<< HEAD
 			bool		edited = false;
+=======
+			bool edited = false;
+>>>>>>> 38e9348282e
 
 			if (!do_edit(0, query_buf, &edited))
 				status = PSQL_CMD_ERROR;
 			else if (!edited)
+<<<<<<< HEAD
 				puts(_("No changes"));
+=======
+				puts(_("No changes."));
+>>>>>>> 38e9348282e
 			else
 				status = PSQL_CMD_NEWEDIT;
 		}
@@ -1384,7 +1424,11 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	PQsetNoticeProcessor(n_conn, NoticeProcessor, NULL);
 	pset.db = n_conn;
 	SyncVariables();
+<<<<<<< HEAD
 	connection_warnings(false); /* Must be after SyncVariables */
+=======
+	connection_warnings(); /* Must be after SyncVariables */
+>>>>>>> 38e9348282e
 
 	/* Tell the user about the new connection */
 	if (!pset.quiet)
@@ -1480,11 +1524,18 @@ printSSLInfo(void)
 	printf(_("SSL connection (cipher: %s, bits: %i)\n"),
 		   SSL_get_cipher(ssl), sslbits);
 #else
+<<<<<<< HEAD
 
 	/*
 	 * If psql is compiled without SSL but is using a libpq with SSL, we
 	 * cannot figure out the specifics about the connection. But we know it's
 	 * SSL secured.
+=======
+	/*
+	 * If psql is compiled without SSL but is using a libpq with SSL,
+	 * we cannot figure out the specifics about the connection. But
+	 * we know it's SSL secured.
+>>>>>>> 38e9348282e
 	 */
 	if (PQgetssl(pset.db))
 		printf(_("SSL connection (unknown cipher)\n"));
@@ -2181,7 +2232,11 @@ lookup_function_oid(PGconn *conn, const char *desc, Oid *foid)
 {
 	bool		result = true;
 	PQExpBuffer query;
+<<<<<<< HEAD
 	PGresult   *res;
+=======
+	PGresult *res;
+>>>>>>> 38e9348282e
 
 	query = createPQExpBuffer();
 	printfPQExpBuffer(query, "SELECT ");
@@ -2213,7 +2268,11 @@ get_create_function_cmd(PGconn *conn, Oid oid, PQExpBuffer buf)
 {
 	bool		result = true;
 	PQExpBuffer query;
+<<<<<<< HEAD
 	PGresult   *res;
+=======
+	PGresult *res;
+>>>>>>> 38e9348282e
 
 	query = createPQExpBuffer();
 	printfPQExpBuffer(query, "SELECT pg_catalog.pg_get_functiondef(%u)", oid);

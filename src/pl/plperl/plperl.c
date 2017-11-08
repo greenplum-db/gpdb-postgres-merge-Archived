@@ -1,7 +1,11 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
+<<<<<<< HEAD
  *	  src/pl/plperl/plperl.c
+=======
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.143 2008/12/11 07:34:09 petere Exp $
+>>>>>>> 38e9348282e
  *
  **********************************************************************/
 
@@ -38,6 +42,10 @@
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
+
+/* define our text domain for translations */
+#undef TEXTDOMAIN
+#define TEXTDOMAIN PG_TEXTDOMAIN("plperl")
 
 /* define our text domain for translations */
 #undef TEXTDOMAIN
@@ -390,6 +398,7 @@ _PG_init(void)
 	if (inited)
 		return;
 
+<<<<<<< HEAD
 	/*
 	 * Support localized messages.
 	 */
@@ -400,9 +409,16 @@ _PG_init(void)
 	 */
 	DefineCustomBoolVariable("plperl.use_strict",
 							 gettext_noop("If true, trusted and untrusted Perl code will be compiled in strict mode."),
+=======
+	pg_bindtextdomain(TEXTDOMAIN);
+
+	DefineCustomBoolVariable("plperl.use_strict",
+	  gettext_noop("If true, will compile trusted and untrusted perl code in strict mode"),
+>>>>>>> 38e9348282e
 							 NULL,
 							 &plperl_use_strict,
-							 PGC_USERSET,
+							 false,
+							 PGC_USERSET, 0,
 							 NULL, NULL);
 
 	/*
@@ -2984,8 +3000,18 @@ plperl_return_next(SV *sv)
 
 		current_call_data->ret_tdesc = CreateTupleDescCopy(tupdesc);
 		current_call_data->tuple_store =
+<<<<<<< HEAD
 			tuplestore_begin_heap(rsi->allowedModes,
 								  false, work_mem);
+=======
+			tuplestore_begin_heap(rsi->allowedModes & SFRM_Materialize_Random,
+								  false, work_mem);
+		if (prodesc->fn_retistuple)
+		{
+			current_call_data->attinmeta =
+				TupleDescGetAttInMetadata(current_call_data->ret_tdesc);
+		}
+>>>>>>> 38e9348282e
 
 		MemoryContextSwitchTo(old_cxt);
 	}

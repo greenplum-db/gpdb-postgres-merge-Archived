@@ -43,7 +43,11 @@ INSERT INTO INT4_TBL(f1) VALUES ('');
 ERROR:  invalid input syntax for integer: ""
 LINE 1: INSERT INTO INT4_TBL(f1) VALUES ('');
                                          ^
+<<<<<<< HEAD
 SELECT '' AS five, * FROM INT4_TBL  order by f1;
+=======
+SELECT '' AS five, * FROM INT4_TBL;
+>>>>>>> 38e9348282e
  five |     f1      
 ------+-------------
       | -2147483647

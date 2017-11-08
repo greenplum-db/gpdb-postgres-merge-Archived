@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.144 2008/03/10 20:06:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.145 2008/09/19 04:57:10 alvherre Exp $
  *
  * NOTES:
  *
@@ -148,6 +148,12 @@ static int	max_safe_fds = 32;	/* default if not changed */
 /* these are the assigned bits in fdstate below: */
 #define FD_TEMPORARY		(1 << 0)	/* T = delete when closed */
 #define FD_CLOSE_AT_EOXACT	(1 << 1)	/* T = close at eoXact */
+
+/*
+ * Flag to tell whether it's worth scanning VfdCache looking for temp files to
+ * close
+ */
+static bool		have_xact_temporary_files = false;
 
 typedef struct vfd
 {
@@ -910,11 +916,76 @@ PathNameOpenFile(FileName fileName, int fileFlags, int fileMode)
 /*
  * open a file in the database directory ($PGDATA/base/DIROID/)
  *
+<<<<<<< HEAD
  * if we are using the system default filespace. Otherwise open
  * the file in the filespace configured for temporary files.
  * The passed name MUST be a relative path.  Effectively, this
  * prepends DatabasePath or path of the filespace to it and then
  * acts like PathNameOpenFile.
+=======
+ * This routine takes care of generating an appropriate tempfile name.
+ * There's no need to pass in fileFlags or fileMode either, since only
+ * one setting makes any sense for a temp file.
+ *
+ * interXact: if true, don't close the file at end-of-transaction. In
+ * most cases, you don't want temporary files to outlive the transaction
+ * that created them, so this should be false -- but if you need
+ * "somewhat" temporary storage, this might be useful. In either case,
+ * the file is removed when the File is explicitly closed.
+ */
+File
+OpenTemporaryFile(bool interXact)
+{
+	File		file = 0;
+
+	/*
+	 * If some temp tablespace(s) have been given to us, try to use the next
+	 * one.  If a given tablespace can't be found, we silently fall back to
+	 * the database's default tablespace.
+	 *
+	 * BUT: if the temp file is slated to outlive the current transaction,
+	 * force it into the database's default tablespace, so that it will not
+	 * pose a threat to possible tablespace drop attempts.
+	 */
+	if (numTempTableSpaces > 0 && !interXact)
+	{
+		Oid			tblspcOid = GetNextTempTableSpace();
+
+		if (OidIsValid(tblspcOid))
+			file = OpenTemporaryFileInTablespace(tblspcOid, false);
+	}
+
+	/*
+	 * If not, or if tablespace is bad, create in database's default
+	 * tablespace.	MyDatabaseTableSpace should normally be set before we get
+	 * here, but just in case it isn't, fall back to pg_default tablespace.
+	 */
+	if (file <= 0)
+		file = OpenTemporaryFileInTablespace(MyDatabaseTableSpace ?
+											 MyDatabaseTableSpace :
+											 DEFAULTTABLESPACE_OID,
+											 true);
+
+	/* Mark it for deletion at close */
+	VfdCache[file].fdstate |= FD_TEMPORARY;
+
+	/* Mark it for deletion at EOXact */
+	if (!interXact)
+	{
+		VfdCache[file].fdstate |= FD_XACT_TEMPORARY;
+		VfdCache[file].create_subid = GetCurrentSubTransactionId();
+
+		/* ensure cleanup happens at eoxact */
+		have_xact_temporary_files = true;
+	}
+
+	return file;
+}
+
+/*
+ * Open a temporary file in a specific tablespace.
+ * Subroutine for OpenTemporaryFile, which see for details.
+>>>>>>> 38e9348282e
  */
 static File
 FileNameOpenFile(FileName fileName, int fileFlags, int fileMode)
@@ -1935,6 +2006,27 @@ AtEOSubXact_Files(bool isCommit, SubTransactionId mySubid,
 {
 	Index		i;
 
+<<<<<<< HEAD
+=======
+	if (have_xact_temporary_files)
+	{
+		Assert(FileIsNotOpen(0));		/* Make sure ring not corrupted */
+		for (i = 1; i < SizeVfdCache; i++)
+		{
+			unsigned short fdstate = VfdCache[i].fdstate;
+
+			if ((fdstate & FD_XACT_TEMPORARY) &&
+				VfdCache[i].create_subid == mySubid)
+			{
+				if (isCommit)
+					VfdCache[i].create_subid = parentSubid;
+				else if (VfdCache[i].fileName != NULL)
+					FileClose(i);
+			}
+		}
+	}
+
+>>>>>>> 38e9348282e
 	for (i = 0; i < numAllocatedDescs; i++)
 	{
 		if (allocatedDescs[i].create_subid == mySubid)
@@ -1994,7 +2086,11 @@ CleanupTempFiles(bool isProcExit)
 {
 	Index		i;
 
-	if (SizeVfdCache > 0)
+	/*
+	 * Careful here: at proc_exit we need extra cleanup, not just
+	 * xact_temporary files.
+	 */
+	if (isProcExit || have_xact_temporary_files)
 	{
 		Assert(FileIsNotOpen(0));		/* Make sure ring not corrupted */
 		for (i = 1; i < SizeVfdCache; i++)
@@ -2021,6 +2117,8 @@ CleanupTempFiles(bool isProcExit)
 				}
 			}
 		}
+
+		have_xact_temporary_files = false;
 	}
 
 	workfile_mgr_cleanup();

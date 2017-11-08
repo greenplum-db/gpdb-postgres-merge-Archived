@@ -13,12 +13,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.110 2008/06/12 09:12:31 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.114 2008/11/19 10:34:52 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+<<<<<<< HEAD
 #include "access/persistentfilesysobjname.h"
 #include "access/xact.h"
 #include "access/xlogmm.h"
@@ -40,16 +41,20 @@
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
 #include "commands/filespace.h"
+=======
+#include "access/xlogutils.h"
+#include "catalog/catalog.h"
+>>>>>>> 38e9348282e
 #include "commands/tablespace.h"
 #include "postmaster/postmaster.h"
 #include "storage/bufmgr.h"
-#include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/faultinjector.h"
 #include "utils/guc.h"
 #include "utils/hsearch.h"
+<<<<<<< HEAD
 #include "utils/memutils.h"
 #include "cdb/cdbtm.h"
 #include "access/twophase.h"
@@ -61,12 +66,63 @@
 #include <dirent.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+=======
+
+
+/*
+ * This struct of function pointers defines the API between smgr.c and
+ * any individual storage manager module.  Note that smgr subfunctions are
+ * generally expected to report problems via elog(ERROR).  An exception is
+ * that smgr_unlink should use elog(WARNING), rather than erroring out,
+ * because we normally unlink relations during post-commit/abort cleanup,
+ * and so it's too late to raise an error.  Also, various conditions that
+ * would normally be errors should be allowed during bootstrap and/or WAL
+ * recovery --- see comments in md.c for details.
+ */
+typedef struct f_smgr
+{
+	void		(*smgr_init) (void);	/* may be NULL */
+	void		(*smgr_shutdown) (void);		/* may be NULL */
+	void		(*smgr_close) (SMgrRelation reln, ForkNumber forknum);
+	void		(*smgr_create) (SMgrRelation reln, ForkNumber forknum,
+								bool isRedo);
+	bool		(*smgr_exists) (SMgrRelation reln, ForkNumber forknum);
+	void		(*smgr_unlink) (RelFileNode rnode, ForkNumber forknum,
+								bool isRedo);
+	void		(*smgr_extend) (SMgrRelation reln, ForkNumber forknum,
+							BlockNumber blocknum, char *buffer, bool isTemp);
+	void		(*smgr_read) (SMgrRelation reln, ForkNumber forknum,
+							  BlockNumber blocknum, char *buffer);
+	void		(*smgr_write) (SMgrRelation reln, ForkNumber forknum, 
+						   BlockNumber blocknum, char *buffer, bool isTemp);
+	BlockNumber (*smgr_nblocks) (SMgrRelation reln, ForkNumber forknum);
+	void		(*smgr_truncate) (SMgrRelation reln, ForkNumber forknum,
+								  BlockNumber nblocks, bool isTemp);
+	void		(*smgr_immedsync) (SMgrRelation reln, ForkNumber forknum);
+	void		(*smgr_pre_ckpt) (void);		/* may be NULL */
+	void		(*smgr_sync) (void);	/* may be NULL */
+	void		(*smgr_post_ckpt) (void);		/* may be NULL */
+} f_smgr;
+
+
+static const f_smgr smgrsw[] = {
+	/* magnetic disk */
+	{mdinit, NULL, mdclose, mdcreate, mdexists, mdunlink, mdextend,
+		mdread, mdwrite, mdnblocks, mdtruncate, mdimmedsync,
+		mdpreckpt, mdsync, mdpostckpt
+	}
+};
+
+static const int NSmgr = lengthof(smgrsw);
+
+>>>>>>> 38e9348282e
 
 /*
  * Each backend has a hashtable that stores all extant SMgrRelation objects.
  */
 static HTAB *SMgrRelationHash = NULL;
 
+<<<<<<< HEAD
 /*
  * We keep a list of all relations (represented as RelFileNode values)
  * that have been created or deleted in the current transaction.  When
@@ -303,6 +359,12 @@ typedef struct xl_smgr_truncate
 static void smgrshutdown(int code, Datum arg);
 static void smgr_internal_unlink(
 	RelFileNode 				rnode,
+=======
+/* local function prototypes */
+static void smgrshutdown(int code, Datum arg);
+static void smgr_internal_unlink(RelFileNode rnode, ForkNumber forknum, 
+								 int which, bool isTemp, bool isRedo);
+>>>>>>> 38e9348282e
 
 	bool 						isLocalBuf,
 
@@ -431,10 +493,19 @@ smgropen(RelFileNode rnode)
 	/* Initialize it if not present before */
 	if (!found)
 	{
+		int forknum;
+
 		/* hash_search already filled in the lookup key */
 		reln->smgr_owner = NULL;
 		reln->smgr_which = 0;	/* we only have md.c at present */
+<<<<<<< HEAD
 		reln->md_mirvec = NULL;		/* mark it not open */
+=======
+
+		/* mark it not open */
+		for(forknum = 0; forknum <= MAX_FORKNUM; forknum++)
+			reln->md_fd[forknum] = NULL;
+>>>>>>> 38e9348282e
 	}
 
 	return reln;
@@ -464,14 +535,29 @@ smgrsetowner(SMgrRelation *owner, SMgrRelation reln)
 }
 
 /*
+ *	smgrexists() -- Does the underlying file for a fork exist?
+ */
+bool
+smgrexists(SMgrRelation reln, ForkNumber forknum)
+{
+	return (*(smgrsw[reln->smgr_which].smgr_exists)) (reln, forknum);
+}
+
+/*
  *	smgrclose() -- Close and delete an SMgrRelation object.
  */
 void
 smgrclose(SMgrRelation reln)
 {
 	SMgrRelation *owner;
+	ForkNumber forknum;
 
+<<<<<<< HEAD
 	mdclose(reln);
+=======
+	for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
+		(*(smgrsw[reln->smgr_which].smgr_close)) (reln, forknum);
+>>>>>>> 38e9348282e
 
 	owner = reln->smgr_owner;
 
@@ -791,8 +877,10 @@ void smgrcreatepending(
  *	smgrcreate() -- Create a new relation.
  *
  *		Given an already-created (but presumably unused) SMgrRelation,
- *		cause the underlying disk file or other storage to be created.
+ *		cause the underlying disk file or other storage for the fork
+ *		to be created.
  *
+<<<<<<< HEAD
  *		We assume the persistent 'Create Pending' work has already been done.
  *
  *		And, we assume the Just-In-Time database directory in the tablespace has already
@@ -816,12 +904,21 @@ smgrcreate(
 	/* GPDB_84_MERGE_FIXME: the following performance tweak came in from 8.4; is
 	 * it still applicable to our system here? */
 #if 0
+=======
+ *		If isRedo is true, it is okay for the underlying file to exist
+ *		already because we are in a WAL replay sequence.
+ */
+void
+smgrcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
+{
+>>>>>>> 38e9348282e
 	/*
 	 * Exit quickly in WAL replay mode if we've already opened the file. 
 	 * If it's open, it surely must exist.
 	 */ 
-	if (isRedo && reln->md_fd != NULL)
+	if (isRedo && reln->md_fd[forknum] != NULL)
 		return;
+<<<<<<< HEAD
 #endif
 
 	mdcreate(
@@ -908,20 +1005,37 @@ smgrscheduleunlink(
 	 *
 	 * See above.
 	 */
+=======
+
+	/*
+	 * We may be using the target table space for the first time in this
+	 * database, so create a per-database subdirectory if needed.
+	 *
+	 * XXX this is a fairly ugly violation of module layering, but this seems
+	 * to be the best place to put the check.  Maybe TablespaceCreateDbspace
+	 * should be here and not in commands/tablespace.c?  But that would imply
+	 * importing a lot of stuff that smgr.c oughtn't know, either.
+	 */
+	TablespaceCreateDbspace(reln->smgr_rnode.spcNode,
+							reln->smgr_rnode.dbNode,
+							isRedo);
+
+	(*(smgrsw[reln->smgr_which].smgr_create)) (reln, forknum, isRedo);
+>>>>>>> 38e9348282e
 }
 
 /*
  *	smgrdounlink() -- Immediately unlink a relation.
  *
- *		The relation is removed from the store.  This should not be used
- *		during transactional operations, since it can't be undone.
+ *		The specified fork of the relation is removed from the store.  This
+ *		should not be used during transactional operations, since it can't be
+ *		undone.
  *
  *		If isRedo is true, it is okay for the underlying file to be gone
  *		already.
- *
- * This also implies smgrclose() on the SMgrRelation object.
  */
 void
+<<<<<<< HEAD
 smgrdounlink(
 	RelFileNode 				*relFileNode,
 
@@ -946,12 +1060,24 @@ smgrdounlink(
 				isRedo,
 				ignoreNonExistence,
 				mirrorDataLossOccurred);
+=======
+smgrdounlink(SMgrRelation reln, ForkNumber forknum, bool isTemp, bool isRedo)
+{
+	RelFileNode rnode = reln->smgr_rnode;
+	int			which = reln->smgr_which;
+
+	/* Close the fork */
+	(*(smgrsw[which].smgr_close)) (reln, forknum);
+
+	smgr_internal_unlink(rnode, forknum, which, isTemp, isRedo);
+>>>>>>> 38e9348282e
 }
 
 /*
  * Shared subroutine that actually does the unlink ...
  */
 static void
+<<<<<<< HEAD
 smgr_internal_unlink(
 	RelFileNode 				rnode,
 
@@ -967,11 +1093,16 @@ smgr_internal_unlink(
 	bool 						ignoreNonExistence,
 
 	bool						*mirrorDataLossOccurred)
+=======
+smgr_internal_unlink(RelFileNode rnode, ForkNumber forknum, 
+					 int which, bool isTemp, bool isRedo)
+>>>>>>> 38e9348282e
 {
 	/*
 	 * Get rid of any remaining buffers for the relation.  bufmgr will just
 	 * drop them without bothering to write the contents.
 	 */
+<<<<<<< HEAD
 	DropRelFileNodeBuffers(rnode, isLocalBuf, 0);   /*CDB*/
 
 	/*
@@ -979,6 +1110,9 @@ smgr_internal_unlink(
 	 * any more anyway, but we may as well recycle the map space quickly.
 	 */
 	FreeSpaceMapForgetRel(&rnode);
+=======
+	DropRelFileNodeBuffers(rnode, forknum, isTemp, 0);
+>>>>>>> 38e9348282e
 
 	/*
 	 * It'd be nice to tell the stats collector to forget it immediately, too.
@@ -994,6 +1128,7 @@ smgr_internal_unlink(
 	 * ERROR, because we've already decided to commit or abort the current
 	 * xact.
 	 */
+<<<<<<< HEAD
 	mdunlink(rnode, relationName, primaryOnly, isRedo, ignoreNonExistence, mirrorDataLossOccurred);
 }
 
@@ -1299,6 +1434,9 @@ smgrgetappendonlyinfo(
 	}
 
 	return false;
+=======
+	(*(smgrsw[which].smgr_unlink)) (rnode, forknum, isRedo);
+>>>>>>> 38e9348282e
 }
 
 /*
@@ -1312,9 +1450,15 @@ smgrgetappendonlyinfo(
  *		failure we clean up by truncating.
  */
 void
-smgrextend(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
+smgrextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum, 
+		   char *buffer, bool isTemp)
 {
+<<<<<<< HEAD
 	mdextend(reln, blocknum, buffer, isTemp);
+=======
+	(*(smgrsw[reln->smgr_which].smgr_extend)) (reln, forknum, blocknum,
+											   buffer, isTemp);
+>>>>>>> 38e9348282e
 }
 
 /*
@@ -1326,9 +1470,14 @@ smgrextend(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
  *		return pages in the format that POSTGRES expects.
  */
 void
-smgrread(SMgrRelation reln, BlockNumber blocknum, char *buffer)
+smgrread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum, 
+		 char *buffer)
 {
+<<<<<<< HEAD
 	mdread(reln, blocknum, buffer);
+=======
+	(*(smgrsw[reln->smgr_which].smgr_read)) (reln, forknum, blocknum, buffer);
+>>>>>>> 38e9348282e
 }
 
 /*
@@ -1347,9 +1496,15 @@ smgrread(SMgrRelation reln, BlockNumber blocknum, char *buffer)
  *		made to fsync the write before checkpointing.
  */
 void
-smgrwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
+smgrwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum, 
+		  char *buffer, bool isTemp)
 {
+<<<<<<< HEAD
 	mdwrite(reln, blocknum, buffer, isTemp);
+=======
+	(*(smgrsw[reln->smgr_which].smgr_write)) (reln, forknum, blocknum,
+											  buffer, isTemp);
+>>>>>>> 38e9348282e
 }
 
 /*
@@ -1357,9 +1512,13 @@ smgrwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
  *					 supplied relation.
  */
 BlockNumber
-smgrnblocks(SMgrRelation reln)
+smgrnblocks(SMgrRelation reln, ForkNumber forknum)
 {
+<<<<<<< HEAD
 	return mdnblocks(reln);
+=======
+	return (*(smgrsw[reln->smgr_which].smgr_nblocks)) (reln, forknum);
+>>>>>>> 38e9348282e
 }
 
 /*
@@ -1367,12 +1526,18 @@ smgrnblocks(SMgrRelation reln)
  *					  of blocks
  */
 void
+<<<<<<< HEAD
 smgrtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp, bool isLocalBuf, ItemPointer persistentTid, int64 persistentSerialNum)
+=======
+smgrtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks,
+			 bool isTemp)
+>>>>>>> 38e9348282e
 {
 	/*
 	 * Get rid of any buffers for the about-to-be-deleted blocks. bufmgr will
 	 * just drop them without bothering to write the contents.
 	 */
+<<<<<<< HEAD
 	DropRelFileNodeBuffers(reln->smgr_rnode, isLocalBuf, nblocks);
 
 	/*
@@ -1406,6 +1571,13 @@ smgrtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp, bool isLocalBu
 
 		lsn = XLogInsert(RM_SMGR_ID, XLOG_SMGR_TRUNCATE, &rdata);
 	}
+=======
+	DropRelFileNodeBuffers(reln->smgr_rnode, forknum, isTemp, nblocks);
+
+	/* Do the truncation */
+	(*(smgrsw[reln->smgr_which].smgr_truncate)) (reln, forknum, nblocks,
+												 isTemp);
+>>>>>>> 38e9348282e
 }
 
 bool smgrgetpersistentinfo(
@@ -1460,9 +1632,13 @@ bool smgrgetpersistentinfo(
  *		otherwise the sync is not very meaningful.
  */
 void
-smgrimmedsync(SMgrRelation reln)
+smgrimmedsync(SMgrRelation reln, ForkNumber forknum)
 {
+<<<<<<< HEAD
 	mdimmedsync(reln);
+=======
+	(*(smgrsw[reln->smgr_which].smgr_immedsync)) (reln, forknum);
+>>>>>>> 38e9348282e
 }
 
 static void
@@ -1724,6 +1900,7 @@ AppendOnlyMirrorResyncEofs_RemoveForDrop(
 }
 
 /*
+<<<<<<< HEAD
  *	PostPrepare_smgr -- Clean up after a successful PREPARE
  *
  * What we have to do here is throw away the in-memory state about pending
@@ -3083,6 +3260,9 @@ smgrabort(void)
 
 /*
  *     smgrpreckpt() -- Prepare for checkpoint.
+=======
+ *	smgrpreckpt() -- Prepare for checkpoint.
+>>>>>>> 38e9348282e
  */
 void
 smgrpreckpt(void)
@@ -3108,6 +3288,7 @@ smgrpostckpt(void)
 	mdpostckpt();
 }
 
+<<<<<<< HEAD
 
 void
 smgr_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
@@ -3222,3 +3403,5 @@ smgr_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
 	else
 		appendStringInfo(buf, "UNKNOWN");
 }
+=======
+>>>>>>> 38e9348282e

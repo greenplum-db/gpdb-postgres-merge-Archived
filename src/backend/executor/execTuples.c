@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.101 2008/05/12 00:00:49 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.104 2008/11/02 01:45:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,9 +93,12 @@
 #include "access/tuptoaster.h"
 #include "funcapi.h"
 #include "catalog/pg_type.h"
+<<<<<<< HEAD
 #include "executor/executor.h"
 #include "parser/parse_expr.h"
 #include "parser/parsetree.h"               /* rt_fetch() */
+=======
+>>>>>>> 38e9348282e
 #include "nodes/nodeFuncs.h"
 #include "storage/bufmgr.h"
 #include "utils/lsyscache.h"
@@ -780,6 +783,33 @@ ExecFetchSlotMemTuple(TupleTableSlot *slot, bool inline_toast)
 		pfree(oldTuple);
 
 	return newTuple;
+}
+
+/* --------------------------------
+ *		ExecFetchSlotTupleDatum
+ *			Fetch the slot's tuple as a composite-type Datum.
+ *
+ *		We convert the slot's contents to local physical-tuple form,
+ *		and fill in the Datum header fields.  Note that the result
+ *		always points to storage owned by the slot.
+ * --------------------------------
+ */
+Datum
+ExecFetchSlotTupleDatum(TupleTableSlot *slot)
+{
+	HeapTuple	tup;
+	HeapTupleHeader td;
+	TupleDesc	tupdesc;
+
+	/* Make sure we can scribble on the slot contents ... */
+	tup = ExecMaterializeSlot(slot);
+	/* ... and set up the composite-Datum header fields, in case not done */
+	td = tup->t_data;
+	tupdesc = slot->tts_tupleDescriptor;
+	HeapTupleHeaderSetDatumLength(td, tup->t_len);
+	HeapTupleHeaderSetTypeId(td, tupdesc->tdtypeid);
+	HeapTupleHeaderSetTypMod(td, tupdesc->tdtypmod);
+	return PointerGetDatum(td);
 }
 
 /* --------------------------------

@@ -52,7 +52,11 @@ INSERT INTO OID_TBL(f1) VALUES ('-23582358720398502385');
 ERROR:  value "-23582358720398502385" is out of range for type oid
 LINE 1: INSERT INTO OID_TBL(f1) VALUES ('-23582358720398502385');
                                         ^
+<<<<<<< HEAD
 SELECT '' AS six, * FROM OID_TBL order by 1, 2;
+=======
+SELECT '' AS six, * FROM OID_TBL;
+>>>>>>> 38e9348282e
  six |     f1     
 -----+------------
      |          5

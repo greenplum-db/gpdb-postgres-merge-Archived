@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.175 2008/08/07 01:11:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.181 2008/10/06 02:12:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,10 @@
 #include "commands/defrem.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+<<<<<<< HEAD
 #include "optimizer/clauses.h"
+=======
+>>>>>>> 38e9348282e
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/analyze.h"
@@ -80,6 +83,7 @@ static Node *transformFromClauseItem(ParseState *pstate, Node *n,
 						Relids *containedRels);
 static Node *buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 				   Var *l_colvar, Var *r_colvar);
+<<<<<<< HEAD
 static TargetEntry *findTargetlistEntrySQL92(ParseState *pstate, Node *node,
 						 List **tlist, int clause);
 static TargetEntry *findTargetlistEntrySQL99(ParseState *pstate, Node *node,
@@ -88,6 +92,15 @@ static List *findListTargetlistEntries(ParseState *pstate, Node *node,
 									   List **tlist, bool in_grpext,
 									   bool ignore_in_grpext,
                                        bool useSQL99);
+=======
+static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
+					List **tlist, int clause);
+static int	get_matching_location(int sortgroupref,
+								  List *sortgrouprefs, List *exprs);
+static List *addTargetToSortList(ParseState *pstate, TargetEntry *tle,
+					List *sortlist, List *targetlist, SortBy *sortby,
+					bool resolveUnknown);
+>>>>>>> 38e9348282e
 static List *addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
 					 List *grouplist, List *targetlist, int location,
 					 bool resolveUnknown);
@@ -312,6 +325,7 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 	 * CDB: Acquire ExclusiveLock if it is a distributed relation and we are
 	 * doing UPDATE or DELETE activity
 	 */
+<<<<<<< HEAD
 	setup_parser_errposition_callback(&pcbstate, pstate, relation->location);
 	if (pstate->p_is_insert && !pstate->p_is_update)
 	{
@@ -325,6 +339,11 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 	}
 	cancel_parser_errposition_callback(&pcbstate);
 	
+=======
+	pstate->p_target_relation = parserOpenTable(pstate, relation,
+												RowExclusiveLock);
+
+>>>>>>> 38e9348282e
 	/*
 	 * Now build an RTE.
 	 */
@@ -611,7 +630,9 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 		 errmsg("JOIN/ON clause refers to \"%s\", which is not part of JOIN",
-				rt_fetch(varno, pstate->p_rtable)->eref->aliasname)));
+				rt_fetch(varno, pstate->p_rtable)->eref->aliasname),
+				 parser_errposition(pstate,
+									locate_var_of_relation(result, varno, 0))));
 	}
 	bms_free(clause_varnos);
 
@@ -666,12 +687,11 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	/*
 	 * We require user to supply an alias for a subselect, per SQL92. To relax
 	 * this, we'd have to be prepared to gin up a unique alias for an
-	 * unlabeled subselect.
+	 * unlabeled subselect.  (This is just elog, not ereport, because the
+	 * grammar should have enforced it already.)
 	 */
 	if (r->alias == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("subquery in FROM must have an alias")));
+		elog(ERROR, "subquery in FROM must have an alias");
 
 	/*
 	 * Analyze and transform the subquery.
@@ -691,7 +711,11 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("subquery in FROM cannot have SELECT INTO"),
 				 parser_errposition(pstate,
+<<<<<<< HEAD
 								 exprLocation((Node *) query->intoClause))));
+=======
+									exprLocation((Node *) query->intoClause))));
+>>>>>>> 38e9348282e
 
 	/*
 	 * The subquery cannot make use of any variables from FROM items created
@@ -713,7 +737,11 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 					 errmsg("subquery in FROM cannot refer to other relations of same query level"),
 					 parser_errposition(pstate,
+<<<<<<< HEAD
 								   locate_var_of_level((Node *) query, 1))));
+=======
+										locate_var_of_level((Node *) query, 1))));
+>>>>>>> 38e9348282e
 	}
 
 	/*
@@ -906,6 +934,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		RangeTblEntry *rte = NULL;
 		int			rtindex;
 
+<<<<<<< HEAD
 		/*
 		 * If it is an unqualified name, it might be a reference to some
 		 * CTE visible in this or a parent query.
@@ -934,6 +963,17 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 				if (rte)
 					break;
 			}
+=======
+		/* if it is an unqualified name, it might be a CTE reference */
+		if (!rv->schemaname)
+		{
+			CommonTableExpr *cte;
+			Index	levelsup;
+
+			cte = scanNameSpaceForCTE(pstate, rv->relname, &levelsup);
+			if (cte)
+				rte = transformCTEReference(pstate, rv, cte, levelsup);
+>>>>>>> 38e9348282e
 		}
 
 		/* if not found as a CTE, must be a table reference */
@@ -1305,9 +1345,10 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 	outcoltypmod = l_colvar->vartypmod;
 	if (outcoltype != r_colvar->vartype)
 	{
-		outcoltype = select_common_type(list_make2_oid(l_colvar->vartype,
-													   r_colvar->vartype),
-										"JOIN/USING");
+		outcoltype = select_common_type(pstate,
+										list_make2(l_colvar, r_colvar),
+										"JOIN/USING",
+										NULL);
 		outcoltypmod = -1;		/* ie, unknown */
 	}
 	else if (outcoltypmod != r_colvar->vartypmod)
@@ -1325,8 +1366,12 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 	if (l_colvar->vartype != outcoltype)
 		l_node = coerce_type(pstate, (Node *) l_colvar, l_colvar->vartype,
 							 outcoltype, outcoltypmod,
+<<<<<<< HEAD
 							 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST,
 							 -1);
+=======
+							 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST, -1);
+>>>>>>> 38e9348282e
 	else if (l_colvar->vartypmod != outcoltypmod)
 		l_node = (Node *) makeRelabelType((Expr *) l_colvar,
 										  outcoltype, outcoltypmod,
@@ -1337,8 +1382,12 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 	if (r_colvar->vartype != outcoltype)
 		r_node = coerce_type(pstate, (Node *) r_colvar, r_colvar->vartype,
 							 outcoltype, outcoltypmod,
+<<<<<<< HEAD
 							 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST,
 							 -1);
+=======
+							 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST, -1);
+>>>>>>> 38e9348282e
 	else if (r_colvar->vartypmod != outcoltypmod)
 		r_node = (Node *) makeRelabelType((Expr *) r_colvar,
 										  outcoltype, outcoltypmod,
@@ -1381,6 +1430,7 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 
 				c->coalescetype = outcoltype;
 				c->args = list_make2(l_node, r_node);
+				c->location = -1;
 				res_node = (Node *) c;
 				break;
 			}
@@ -1642,7 +1692,8 @@ findTargetlistEntrySQL92(ParseState *pstate, Node *node, List **tlist,
 	 *----------
 	 */
 	if (IsA(node, ColumnRef) &&
-		list_length(((ColumnRef *) node)->fields) == 1)
+		list_length(((ColumnRef *) node)->fields) == 1 &&
+		IsA(linitial(((ColumnRef *) node)->fields), String))
 	{
 		char	   *name = strVal(linitial(((ColumnRef *) node)->fields));
 		int			location = ((ColumnRef *) node)->location;
@@ -2214,6 +2265,7 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 		 * We stash them in the ParseState, to be processed later by
 		 * processExtendedGrouping().
 		 */
+<<<<<<< HEAD
 		foreach (lc, reorder_grouplist)
 		{
 			pstate->p_grp_tles = list_concat_unique(
@@ -2221,6 +2273,13 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 				findListTargetlistEntries(pstate, lfirst(lc),
 										  targetlist, false, true, useSQL99));
 		}
+=======
+		if (!found)
+			result = addTargetToGroupList(pstate, tle,
+										  result, *targetlist,
+										  exprLocation(gexpr),
+										  true);
+>>>>>>> 38e9348282e
 	}
 
 	list_free(tle_list);
@@ -2687,11 +2746,19 @@ transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 
 	/*
 	 * Add all the DISTINCT ON expressions to the tlist (if not already
+<<<<<<< HEAD
 	 * present, they are added as resjunk items).  Assign sortgroupref numbers
 	 * to them, and make a list of these numbers.  (NB: we rely below on the
 	 * sortgrouprefs list being one-for-one with the original distinctlist.
 	 * Also notice that we could have duplicate DISTINCT ON expressions and
 	 * hence duplicate entries in sortgrouprefs.)
+=======
+	 * present, they are added as resjunk items).  Assign sortgroupref
+	 * numbers to them, and make a list of these numbers.  (NB: we rely
+	 * below on the sortgrouprefs list being one-for-one with the original
+	 * distinctlist.  Also notice that we could have duplicate DISTINCT ON
+	 * expressions and hence duplicate entries in sortgrouprefs.)
+>>>>>>> 38e9348282e
 	 */
 	foreach(lc, distinctlist)
 	{
@@ -2723,7 +2790,11 @@ transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 			if (skipped_sortitem)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-						 errmsg("SELECT DISTINCT ON expressions must match initial ORDER BY expressions")));
+						 errmsg("SELECT DISTINCT ON expressions must match initial ORDER BY expressions"),
+						 parser_errposition(pstate,
+											get_matching_location(scl->tleSortGroupRef,
+																  sortgrouprefs,
+																  distinctlist))));
 			else
 				result = lappend(result, copyObject(scl));
 		}
@@ -2763,6 +2834,7 @@ transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 }
 
 /*
+<<<<<<< HEAD
  * transformScatterClause -
  *	  transform a SCATTER BY clause
  *
@@ -2803,6 +2875,32 @@ transformScatterClause(ParseState *pstate,
 		outlist = lappend(outlist, tle->expr);
 	}
 	return outlist;
+=======
+ * get_matching_location
+ *		Get the exprLocation of the exprs member corresponding to the
+ *		(first) member of sortgrouprefs that equals sortgroupref.
+ *
+ * This is used so that we can point at a troublesome DISTINCT ON entry.
+ * (Note that we need to use the original untransformed DISTINCT ON list
+ * item, as whatever TLE it corresponds to will very possibly have a
+ * parse location pointing to some matching entry in the SELECT list
+ * or ORDER BY list.)
+ */
+static int
+get_matching_location(int sortgroupref, List *sortgrouprefs, List *exprs)
+{
+	ListCell   *lcs;
+	ListCell   *lce;
+
+	forboth(lcs, sortgrouprefs, lce, exprs)
+	{
+		if (lfirst_int(lcs) == sortgroupref)
+			return exprLocation((Node *) lfirst(lce));
+	}
+	/* if no match, caller blew it */
+	elog(ERROR, "get_matching_location: no matching sortgroupref");
+	return -1;					/* keep compiler quiet */
+>>>>>>> 38e9348282e
 }
 
 /*
@@ -2837,7 +2935,11 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 										 restype, TEXTOID, -1,
 										 COERCION_IMPLICIT,
 										 COERCE_IMPLICIT_CAST,
+<<<<<<< HEAD
 										 exprLocation((Node *) tle->expr));
+=======
+										 -1);
+>>>>>>> 38e9348282e
 		restype = TEXTOID;
 	}
 
@@ -2854,7 +2956,11 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 		location = exprLocation(sortby->node);
 	setup_parser_errposition_callback(&pcbstate, pstate, location);
 
+<<<<<<< HEAD
 	/* determine the sortop */
+=======
+	/* determine the sortop, eqop, and directionality */
+>>>>>>> 38e9348282e
 	switch (sortby->sortby_dir)
 	{
 		case SORTBY_DEFAULT:
@@ -2888,7 +2994,10 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					   errmsg("operator %s is not a valid ordering operator",
 							  strVal(llast(sortby->useOp))),
+<<<<<<< HEAD
 						 parser_errposition(pstate, sortby->location),
+=======
+>>>>>>> 38e9348282e
 						 errhint("Ordering operators must be \"<\" or \">\" members of btree operator families.")));
 			break;
 		default:
@@ -2945,6 +3054,11 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
  * case where only a grouping (equality) operator can be found, and that
  * the TLE is considered "already in the list" if it appears there with any
  * sorting semantics.
+ *
+ * location is the parse location to be fingered in event of trouble.  Note
+ * that we can't rely on exprLocation(tle->expr), because that might point
+ * to a SELECT item that matches the GROUP BY item; it'd be pretty confusing
+ * to report such a location.
  *
  * If resolveUnknown is TRUE, convert TLEs of type UNKNOWN to TEXT.  If not,
  * do nothing (which implies the search for an equality operator will fail).

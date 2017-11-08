@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/backend/storage/ipc/sinvaladt.c
+=======
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.76 2008/12/09 15:59:39 heikki Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */

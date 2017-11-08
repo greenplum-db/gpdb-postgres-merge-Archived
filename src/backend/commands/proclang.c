@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.79 2008/06/19 00:46:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.82 2008/12/18 18:20:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -764,7 +764,11 @@ AlterLanguageOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 		}
 
 		newtuple = heap_modify_tuple(tup, RelationGetDescr(rel),
+<<<<<<< HEAD
 									 repl_val, repl_null, repl_repl);
+=======
+									repl_val, repl_null, repl_repl);
+>>>>>>> 38e9348282e
 
 		simple_heap_update(rel, &newtuple->t_self, newtuple);
 		CatalogUpdateIndexes(rel, newtuple);

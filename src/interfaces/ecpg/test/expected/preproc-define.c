@@ -30,7 +30,11 @@
 
 
 
+<<<<<<< HEAD
 /* exec sql type intarray is int [ 6 ] */
+=======
+/* exec sql type intarray is int  [ 6 ]  */
+>>>>>>> 38e9348282e
 #line 13 "define.pgc"
 
 typedef int intarray[ 6];
@@ -40,7 +44,11 @@ main(void)
 {
 /* exec sql begin declare section */
 
+<<<<<<< HEAD
 	   typedef char  string [ 8 ];
+=======
+	   typedef char  string  [ 8 ];
+>>>>>>> 38e9348282e
 
 #line 21 "define.pgc"
 
@@ -52,10 +60,17 @@ main(void)
  intarray amount ;
  
 #line 23 "define.pgc"
+<<<<<<< HEAD
  char name [ 6 ] [ 8 ] ;
  
 #line 24 "define.pgc"
  char letter [ 6 ] [ 1 ] ;
+=======
+ char  name  [ 6 ] [ 8 ]   ;
+ 
+#line 24 "define.pgc"
+ char  letter  [ 6 ] [ 1 ]   ;
+>>>>>>> 38e9348282e
  
 #if 0
  
@@ -83,7 +98,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 36 "define.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit");
+	{ ECPGtrans(__LINE__, NULL, "commit ");
 #line 37 "define.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -102,7 +117,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 40 "define.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit");
+	{ ECPGtrans(__LINE__, NULL, "commit ");
 #line 41 "define.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -129,7 +144,11 @@ if (sqlca.sqlcode < 0) sqlprint();}
 		   
 		
 #line 48 "define.pgc"
+<<<<<<< HEAD
  char n [ 8 ] , l = letter [ i ] [ 0 ] ;
+=======
+ char  n  [ 8 ]   ,  l   = letter [ i ] [ 0 ] ;
+>>>>>>> 38e9348282e
  
 #line 49 "define.pgc"
  int a = amount [ i ] ;
@@ -147,7 +166,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 56 "define.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit");
+	{ ECPGtrans(__LINE__, NULL, "commit ");
 #line 57 "define.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

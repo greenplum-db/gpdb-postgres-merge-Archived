@@ -34,7 +34,11 @@ int main(void)
 {
 	
 #line 15 "rnull.pgc"
+<<<<<<< HEAD
  char c [] = "abc" ;
+=======
+ char  c  []  = "abc" ;
+>>>>>>> 38e9348282e
 
 #line 15 "rnull.pgc"
 
@@ -111,7 +115,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 33 "rnull.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit");
+	{ ECPGtrans(__LINE__, NULL, "commit ");
 #line 34 "rnull.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
@@ -138,7 +142,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 38 "rnull.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit");
+	{ ECPGtrans(__LINE__, NULL, "commit ");
 #line 39 "rnull.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
@@ -182,7 +186,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 54 "rnull.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit");
+	{ ECPGtrans(__LINE__, NULL, "commit ");
 #line 55 "rnull.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
@@ -275,7 +279,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 91 "rnull.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit");
+	{ ECPGtrans(__LINE__, NULL, "commit ");
 #line 92 "rnull.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}

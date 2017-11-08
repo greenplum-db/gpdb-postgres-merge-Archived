@@ -8,13 +8,17 @@
  * used for positioning an error cursor when there is an error related to
  * the node.  Access to the original source text is needed to make use of
  * the location.
+<<<<<<< HEAD
+=======
+ *
+>>>>>>> 38e9348282e
  *
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.371 2008/08/07 01:11:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.384 2008/12/19 16:25:19 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,6 +59,13 @@ typedef enum SortByNulls
 	SORTBY_NULLS_LAST
 } SortByNulls;
 
+/* Alter operations for generic options */
+typedef enum AlterOptionOp
+{
+	ALTER_OPT_DROP = -1,
+	ALTER_OPT_SET,
+	ALTER_OPT_ADD
+} AlterOptionOp;
 
 /*
  * Grantable rights are encoded so that we can OR them together in a bitmask.
@@ -73,8 +84,12 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
 #define ACL_REFERENCES	(1<<5)
 #define ACL_TRIGGER		(1<<6)
 #define ACL_EXECUTE		(1<<7)	/* for functions */
+<<<<<<< HEAD
 #define ACL_USAGE		(1<<8)	/* for languages, namespaces
 								 * and external protocols */
+=======
+#define ACL_USAGE		(1<<8)	/* for languages, namespaces, FDWs, and servers */
+>>>>>>> 38e9348282e
 #define ACL_CREATE		(1<<9)	/* for namespaces and databases */
 #define ACL_CREATE_TEMP (1<<10) /* for databases */
 #define ACL_CONNECT		(1<<11) /* for databases */
@@ -125,6 +140,9 @@ typedef struct Query
 	bool        hasDynamicFunctions; /* has functions with unstable return types */
 	bool		hasFuncsWithExecRestrictions; /* has functions with EXECUTE ON MASTER or ALL SEGMENTS */
 	bool		hasDistinctOn;	/* distinctClause is from DISTINCT ON */
+	bool		hasRecursive;	/* WITH RECURSIVE was specified */
+
+	List	   *cteList;		/* WITH list (of CommonTableExpr's) */
 
 	List	   *rtable;			/* list of range table entries */
 	FromExpr   *jointree;		/* table join tree (FROM and WHERE clauses) */
@@ -187,11 +205,6 @@ typedef struct Query
  *	Most of these node types appear in raw parsetrees output by the grammar,
  *	and get transformed to something else by the analyzer.	A few of them
  *	are used as-is in transformed querytrees.
- *
- *	Many of the node types used in raw parsetrees include a "location" field.
- *	This is a byte (not character) offset in the original source text, to be
- *	used for positioning an error cursor when there is an analysis-time
- *	error related to the node.
  ****************************************************************************/
 
 /*
@@ -295,7 +308,11 @@ typedef struct TypeCast
 {
 	NodeTag		type;
 	Node	   *arg;			/* the expression being casted */
+<<<<<<< HEAD
 	TypeName   *typeName;		/* the target type */
+=======
+	TypeName   *typename;		/* the target type */
+>>>>>>> 38e9348282e
 	int			location;		/* token location, or -1 if unknown */
 } TypeCast;
 
@@ -323,7 +340,18 @@ typedef struct FuncCall
 } FuncCall;
 
 /*
- * A_Indices - array reference or bounds ([lidx:uidx] or [uidx])
+ * A_Star - '*' representing all columns of a table or compound field
+ *
+ * This can appear within ColumnRef.fields, A_Indirection.indirection, and
+ * ResTarget.indirection lists.
+ */
+typedef struct A_Star
+{
+	NodeTag		type;
+} A_Star;
+
+/*
+ * A_Indices - array subscript or slice bounds ([lidx:uidx] or [uidx])
  */
 typedef struct A_Indices
 {
@@ -335,17 +363,17 @@ typedef struct A_Indices
 /*
  * A_Indirection - select a field and/or array element from an expression
  *
- * The indirection list can contain both A_Indices nodes (representing
- * subscripting) and string Value nodes (representing field selection
- * --- the string value is the name of the field to select).  For example,
- * a complex selection operation like
+ * The indirection list can contain A_Indices nodes (representing
+ * subscripting), string Value nodes (representing field selection --- the
+ * string value is the name of the field to select), and A_Star nodes
+ * (representing selection of all fields of a composite type).
+ * For example, a complex selection operation like
  *				(foo).field1[42][7].field2
  * would be represented with a single A_Indirection node having a 4-element
  * indirection list.
  *
- * Note: as of Postgres 8.0, we don't support arrays of composite values,
- * so cases in which a field select follows a subscript aren't actually
- * semantically legal.	However the parser is prepared to handle such.
+ * Currently, A_Star must appear only as the last list element --- the grammar
+ * is responsible for enforcing this!
  */
 typedef struct A_Indirection
 {
@@ -397,10 +425,14 @@ typedef struct ResTarget
 typedef struct SortBy
 {
 	NodeTag		type;
-	SortByDir	sortby_dir;		/* ASC/DESC/USING */
+	Node	   *node;			/* expression to sort on */
+	SortByDir	sortby_dir;		/* ASC/DESC/USING/default */
 	SortByNulls sortby_nulls;	/* NULLS FIRST/LAST */
 	List	   *useOp;			/* name of op to use, if SORTBY_USING */
+<<<<<<< HEAD
 	Node	   *node;			/* expression to sort on */
+=======
+>>>>>>> 38e9348282e
 	int			location;		/* operator location, or -1 if none/unknown */
 } SortBy;
 
@@ -584,10 +616,23 @@ typedef struct DefElem
 } DefElem;
 
 /*
+ * Option definition. Used in options definition lists, with optional alter
+ * operation.
+ */
+typedef struct OptionDefElem
+{
+	NodeTag			type;
+	AlterOptionOp	alter_op;		/* Alter operation: ADD/SET/DROP */
+	DefElem		   *def;			/* The actual definition */
+} OptionDefElem;
+
+/*
  * LockingClause - raw representation of FOR UPDATE/SHARE options
  *
  * Note: lockedRels == NIL means "all relations in query".	Otherwise it
- * is a list of String nodes giving relation eref names.
+ * is a list of RangeVar nodes.  (We use RangeVar mainly because it carries
+ * a location field --- currently, parse analysis insists on unqualified
+ * names in LockingClause.)
  */
 typedef struct LockingClause
 {
@@ -605,7 +650,11 @@ typedef struct XmlSerialize
 	NodeTag		type;
 	XmlOptionType xmloption;	/* DOCUMENT or CONTENT */
 	Node	   *expr;
+<<<<<<< HEAD
 	TypeName   *typeName;
+=======
+	TypeName   *typename;
+>>>>>>> 38e9348282e
 	int			location;		/* token location, or -1 if unknown */
 } XmlSerialize;
 
@@ -682,9 +731,13 @@ typedef enum RTEKind
 	RTE_SPECIAL,				/* special rule relation (NEW or OLD) */
 	RTE_FUNCTION,				/* function in FROM */
 	RTE_VALUES,					/* VALUES (<exprlist>), (<exprlist>), ... */
+<<<<<<< HEAD
 	RTE_VOID,                   /* CDB: deleted RTE */
 	RTE_CTE,					/* common table expr (WITH list element) */
 	RTE_TABLEFUNCTION,          /* CDB: Functions over multiset input */
+=======
+	RTE_CTE						/* common table expr (WITH list element) */
+>>>>>>> 38e9348282e
 } RTEKind;
 
 typedef struct RangeTblEntry
@@ -709,6 +762,7 @@ typedef struct RangeTblEntry
 	 */
 	Query	   *subquery;		/* the sub-query */
 
+<<<<<<< HEAD
 	/* These are for pre-planned sub-queries only.  They are internal to
 	 * window planning.
 	 */
@@ -716,6 +770,8 @@ typedef struct RangeTblEntry
 	List		*subquery_rtable;
 	List		*subquery_pathkeys;
 
+=======
+>>>>>>> 38e9348282e
 	/*
 	 * Fields valid for a join RTE (else NULL/zero):
 	 *
@@ -740,7 +796,10 @@ typedef struct RangeTblEntry
 	Node	   *funcexpr;		/* expression tree for func call */
 	List	   *funccoltypes;	/* OID list of column type OIDs */
 	List	   *funccoltypmods; /* integer list of column typmods */
+<<<<<<< HEAD
 	bytea	   *funcuserdata;	/* describe function user data. assume bytea */
+=======
+>>>>>>> 38e9348282e
 
 	/*
 	 * Fields valid for a values RTE (else NIL):
@@ -756,11 +815,14 @@ typedef struct RangeTblEntry
 	List	   *ctecoltypes;	/* OID list of column type OIDs */
 	List	   *ctecoltypmods;	/* integer list of column typmods */
 
+<<<<<<< HEAD
 	/* GPDB: Valid for base-relations, true if GP_DIST_RANDOM
 	 * pseudo-function was specified as modifier in FROM-clause
 	 */
 	bool		forceDistRandom;
 
+=======
+>>>>>>> 38e9348282e
 	/*
 	 * Fields valid in all RTEs:
 	 */
@@ -911,19 +973,32 @@ typedef struct WindowClause
  * RowMarkClause -
  *	   representation of FOR UPDATE/SHARE clauses
  *
- * We create a separate RowMarkClause node for each target relation
+ * We create a separate RowMarkClause node for each target relation.  In the
+ * output of the parser and rewriter, all RowMarkClauses have rti == prti and
+ * isParent == false.  When the planner discovers that a target relation
+ * is the root of an inheritance tree, it sets isParent true, and adds an
+ * additional RowMarkClause to the list for each child relation (including
+ * the target rel itself in its role as a child).  The child entries have
+ * rti == child rel's RT index, prti == parent's RT index, and can therefore
+ * be recognized as children by the fact that prti != rti.
  */
 typedef struct RowMarkClause
 {
 	NodeTag		type;
 	Index		rti;			/* range table index of target relation */
+	Index		prti;			/* range table index of parent relation */
 	bool		forUpdate;		/* true = FOR UPDATE, false = FOR SHARE */
 	bool		noWait;			/* NOWAIT option */
+	bool		isParent;		/* set by planner when expanding inheritance */
 } RowMarkClause;
 
 /*
  * WithClause -
+<<<<<<< HEAD
  *	   representation of WITH clause
+=======
+ *     representation of WITH clause
+>>>>>>> 38e9348282e
  *
  * Note: WithClause does not propagate into the Query representation;
  * but CommonTableExpr does.
@@ -938,7 +1013,11 @@ typedef struct WithClause
 
 /*
  * CommonTableExpr -
+<<<<<<< HEAD
  *	   representation of WITH list element
+=======
+ *     representation of WITH list element
+>>>>>>> 38e9348282e
  *
  * We don't currently support the SEARCH or CYCLE clause.
  */
@@ -958,12 +1037,15 @@ typedef struct CommonTableExpr
 	List	   *ctecoltypmods;	/* integer list of output column typmods */
 } CommonTableExpr;
 
+<<<<<<< HEAD
 #define GetCTETargetList(cte) \
 	(AssertMacro((cte)->ctequery != NULL && IsA((cte)->ctequery, Query)), \
 	 ((Query *) (cte)->ctequery)->commandType == CMD_SELECT ? \
 	 ((Query *) (cte)->ctequery)->targetList : \
 	 ((Query *) (cte)->ctequery)->returningList)
 
+=======
+>>>>>>> 38e9348282e
 /*****************************************************************************
  *		Optimizable Statements
  *****************************************************************************/
@@ -1048,9 +1130,13 @@ typedef struct SelectStmt
 	Node	   *whereClause;	/* WHERE qualification */
 	List	   *groupClause;	/* GROUP BY clauses */
 	Node	   *havingClause;	/* HAVING conditional-expression */
+<<<<<<< HEAD
 	List	   *windowClause;	/* window specification clauses */
 	List       *scatterClause;	/* GPDB: TableValueExpr data distribution */
 	WithClause *withClause; 	/* WITH clause */
+=======
+	WithClause *withClause;		/* WITH clause */
+>>>>>>> 38e9348282e
 
 	/*
 	 * In a "leaf" node representing a VALUES list, the above fields are all
@@ -1144,7 +1230,12 @@ typedef enum ObjectType
 	OBJECT_CONVERSION,
 	OBJECT_DATABASE,
 	OBJECT_DOMAIN,
+<<<<<<< HEAD
 	OBJECT_EXTENSION,
+=======
+	OBJECT_FDW,
+	OBJECT_FOREIGN_SERVER,
+>>>>>>> 38e9348282e
 	OBJECT_FUNCTION,
 	OBJECT_INDEX,
 	OBJECT_LANGUAGE,
@@ -1258,7 +1349,11 @@ typedef struct AlterTableStmt
 typedef enum AlterTableType
 {
 	AT_AddColumn,				/* add column */
+<<<<<<< HEAD
 	AT_AddColumnRecurse,		/* internal to commands/tablecmds.c */
+=======
+	AT_AddColumnToView,			/* implicitly via CREATE OR REPLACE VIEW */
+>>>>>>> 38e9348282e
 	AT_ColumnDefault,			/* alter column default */
 	AT_ColumnDefaultRecurse,	/* internal to commands/tablecmds.c */
 	AT_DropNotNull,				/* alter column drop not null */
@@ -1408,7 +1503,12 @@ typedef enum GrantObjectType
 	ACL_OBJECT_RELATION,		/* table, view */
 	ACL_OBJECT_SEQUENCE,		/* sequence */
 	ACL_OBJECT_DATABASE,		/* database */
+<<<<<<< HEAD
 	ACL_OBJECT_EXTPROTOCOL,		/* external table protocol */
+=======
+	ACL_OBJECT_FDW,				/* foreign-data wrapper */
+	ACL_OBJECT_FOREIGN_SERVER,	/* foreign server */
+>>>>>>> 38e9348282e
 	ACL_OBJECT_FUNCTION,		/* function */
 	ACL_OBJECT_LANGUAGE,		/* procedural language */
 	ACL_OBJECT_NAMESPACE,		/* namespace */
@@ -1899,6 +1999,96 @@ typedef struct DropTableSpaceStmt
 } DropTableSpaceStmt;
 
 /* ----------------------
+ *		Create/Drop FOREIGN DATA WRAPPER Statements
+ * ----------------------
+ */
+
+typedef struct CreateFdwStmt
+{
+	NodeTag		type;
+	char	   *fdwname;		/* foreign-data wrapper name */
+	char	   *library;		/* libray name */
+	List	   *options;		/* generic options to FDW */
+} CreateFdwStmt;
+
+typedef struct AlterFdwStmt
+{
+	NodeTag		type;
+	char	   *fdwname;		/* foreign-data wrapper name */
+	char	   *library;		/* libray name */
+	List	   *options;		/* generic options to FDW */
+} AlterFdwStmt;
+
+typedef struct DropFdwStmt
+{
+	NodeTag		type;
+	char	   *fdwname;		/* foreign-data wrapper name */
+	bool		missing_ok;		/* don't complain if missing */
+	DropBehavior behavior;		/* drop behavior - cascade/restrict */
+} DropFdwStmt;
+
+/* ----------------------
+ *		Create/Drop FOREIGN SERVER Statements
+ * ----------------------
+ */
+
+typedef struct CreateForeignServerStmt
+{
+	NodeTag		type;
+	char	   *servername;		/* server name */
+	char	   *servertype;		/* optional server type */
+	char	   *version;		/* optional server version */
+	char	   *fdwname;		/* FDW name */
+	List	   *options;		/* generic options to server */
+} CreateForeignServerStmt;
+
+typedef struct AlterForeignServerStmt
+{
+	NodeTag		type;
+	char	   *servername;		/* server name */
+	char	   *version;		/* optional server version */
+	List	   *options;		/* generic options to server */
+	bool		has_version;	/* version specified */
+} AlterForeignServerStmt;
+
+typedef struct DropForeignServerStmt
+{
+	NodeTag		type;
+	char	   *servername;		/* server name */
+	bool		missing_ok;		/* ignore missing servers */
+	DropBehavior behavior;		/* drop behavior - cascade/restrict */
+} DropForeignServerStmt;
+
+/* ----------------------
+ *		Create/Drop USER MAPPING Statements
+ * ----------------------
+ */
+
+typedef struct CreateUserMappingStmt
+{
+	NodeTag		type;
+	char	   *username;		/* username or PUBLIC/CURRENT_USER */
+	char	   *servername;		/* server name */
+	List	   *options;		/* generic options to server */
+} CreateUserMappingStmt;
+
+typedef struct AlterUserMappingStmt
+{
+	NodeTag		type;
+	char	   *username;		/* username or PUBLIC/CURRENT_USER */
+	char	   *servername;		/* server name */
+	List	   *options;		/* generic options to server */
+} AlterUserMappingStmt;
+
+typedef struct DropUserMappingStmt
+{
+	NodeTag		type;
+	char	   *username;		/* username or PUBLIC/CURRENT_USER */
+	char	   *servername;		/* server name */
+	bool		missing_ok;		/* ignore missing mappings */
+} DropUserMappingStmt;
+
+/* ----------------------
  *		Create/Drop TRIGGER Statements
  * ----------------------
  */
@@ -2336,7 +2526,11 @@ typedef struct FunctionParameter
 	NodeTag		type;
 	char	   *name;			/* parameter name, or NULL if not given */
 	TypeName   *argType;		/* TypeName for parameter type */
+<<<<<<< HEAD
 	FunctionParameterMode mode; /* IN/OUT/INOUT/VARIADIC/TABLE */
+=======
+	FunctionParameterMode mode; /* IN/OUT/etc */
+>>>>>>> 38e9348282e
 	Node	   *defexpr;		/* raw default expr, or NULL if not given */
 } FunctionParameter;
 
@@ -2489,7 +2683,7 @@ typedef struct RuleStmt
 typedef struct NotifyStmt
 {
 	NodeTag		type;
-	RangeVar   *relation;		/* qualified name to notify */
+	char	   *conditionname;	/* condition name to notify */
 } NotifyStmt;
 
 /* ----------------------
@@ -2499,7 +2693,7 @@ typedef struct NotifyStmt
 typedef struct ListenStmt
 {
 	NodeTag		type;
-	RangeVar   *relation;		/* qualified name to listen on */
+	char	   *conditionname;	/* condition name to listen on */
 } ListenStmt;
 
 /* ----------------------
@@ -2509,7 +2703,7 @@ typedef struct ListenStmt
 typedef struct UnlistenStmt
 {
 	NodeTag		type;
-	RangeVar   *relation;		/* qualified name to unlisten on, or '*' */
+	char	   *conditionname;	/* name to unlisten on, or NULL for all */
 } UnlistenStmt;
 
 /* ----------------------
@@ -2633,6 +2827,7 @@ typedef struct ClusterStmt
 	NodeTag		type;
 	RangeVar   *relation;		/* relation being indexed, or NULL if all */
 	char	   *indexname;		/* original index defined */
+	bool		verbose;		/* print progress info */
 } ClusterStmt;
 
 /* ----------------------
@@ -2649,7 +2844,11 @@ typedef struct VacuumStmt
 	bool		full;			/* do FULL (non-concurrent) vacuum */
 	bool		analyze;		/* do ANALYZE step */
 	bool		verbose;		/* print progress info */
+<<<<<<< HEAD
 	bool		rootonly;		/* only ANALYZE root partition tables */
+=======
+	bool		scan_all;		/* force scan of all pages */
+>>>>>>> 38e9348282e
 	int			freeze_min_age; /* min freeze age, or -1 to use default */
 	RangeVar   *relation;		/* single table to process, or NULL */
 	List	   *va_cols;		/* list of column names, or NIL for all */
@@ -2802,6 +3001,7 @@ typedef struct CreateCastStmt
 	TypeName   *targettype;
 	FuncWithArgs *func;
 	CoercionContext context;
+	bool		inout;
 } CreateCastStmt;
 
 /* ----------------------

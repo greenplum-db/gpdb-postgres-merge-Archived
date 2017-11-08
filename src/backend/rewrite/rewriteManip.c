@@ -9,7 +9,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.116 2008/10/21 20:42:53 tgl Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.118 2008/11/15 19:43:46 tgl Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +40,7 @@ typedef struct
 	int			sublevels_up;
 } locate_agg_of_level_context;
 
+<<<<<<< HEAD
 typedef struct
 {
 	int			win_location;
@@ -48,6 +53,12 @@ static bool locate_agg_of_level_walker(Node *node,
 static bool contain_windowfuncs_walker(Node *node, void *context);
 static bool locate_windowfunc_walker(Node *node,
 						 locate_windowfunc_context *context);
+=======
+static bool contain_aggs_of_level_walker(Node *node,
+						contain_aggs_of_level_context *context);
+static bool locate_agg_of_level_walker(Node *node,
+						locate_agg_of_level_context *context);
+>>>>>>> 38e9348282e
 static bool checkExprHasSubLink_walker(Node *node, void *context);
 static Relids offset_relid_set(Relids relids, int offset);
 static Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
@@ -64,7 +75,19 @@ checkExprHasAggs(Node *node)
 
 /*
  * checkExprHasAggs -
- *	Check if an expression contains an aggregate function call.
+ *	Check if an expression contains an aggregate function call of the
+ *	current query level.
+ */
+bool
+checkExprHasAggs(Node *node)
+{
+	return contain_aggs_of_level(node, 0);
+}
+
+/*
+ * contain_aggs_of_level -
+ *	Check if an expression contains an aggregate function call of a
+ *	specified query level.
  *
  * The objective of this routine is to detect whether there are aggregates
  * belonging to the given query level.  Aggregates belonging to subqueries
@@ -90,7 +113,12 @@ contain_aggs_of_level(Node *node, int levelsup)
 }
 
 static bool
+<<<<<<< HEAD
 contain_aggs_of_level_walker(Node *node, contain_aggs_of_level_context *context)
+=======
+contain_aggs_of_level_walker(Node *node,
+							 contain_aggs_of_level_context *context)
+>>>>>>> 38e9348282e
 {
 	if (node == NULL)
 		return false;
@@ -142,7 +170,11 @@ locate_agg_of_level(Node *node, int levelsup)
 {
 	locate_agg_of_level_context context;
 
+<<<<<<< HEAD
 	context.agg_location = -1;	/* in case we find nothing */
+=======
+	context.agg_location = -1;		/* in case we find nothing */
+>>>>>>> 38e9348282e
 	context.sublevels_up = levelsup;
 
 	/*
@@ -173,6 +205,7 @@ locate_agg_of_level_walker(Node *node,
 		}
 		/* else fall through to examine argument */
 	}
+<<<<<<< HEAD
 	if (IsA(node, PercentileExpr))
 	{
 		/* PercentileExpr is always levelsup == 0 */
@@ -183,6 +216,8 @@ locate_agg_of_level_walker(Node *node,
 			return true;
 		}
 	}
+=======
+>>>>>>> 38e9348282e
 	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */
@@ -196,6 +231,7 @@ locate_agg_of_level_walker(Node *node,
 		return result;
 	}
 	return expression_tree_walker(node, locate_agg_of_level_walker,
+<<<<<<< HEAD
 								  (void *) context);
 }
 
@@ -277,6 +313,8 @@ locate_windowfunc_walker(Node *node, locate_windowfunc_context *context)
 	}
 	/* Mustn't recurse into subselects */
 	return expression_tree_walker(node, locate_windowfunc_walker,
+=======
+>>>>>>> 38e9348282e
 								  (void *) context);
 }
 
@@ -368,10 +406,34 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 			j->rtindex += context->offset;
 		/* fall through to examine children */
 	}
+<<<<<<< HEAD
 	if (IsA(node, PlaceHolderVar))
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
 		
+		if (phv->phlevelsup == context->sublevels_up)
+		{
+			phv->phrels = offset_relid_set(phv->phrels,
+										   context->offset);
+=======
+	if (IsA(node, FlattenedSubLink))
+	{
+		FlattenedSubLink *fslink = (FlattenedSubLink *) node;
+
+		if (context->sublevels_up == 0)
+		{
+			fslink->lefthand = offset_relid_set(fslink->lefthand,
+												context->offset);
+			fslink->righthand = offset_relid_set(fslink->righthand,
+												 context->offset);
+>>>>>>> 38e9348282e
+		}
+		/* fall through to examine children */
+	}
+	if (IsA(node, PlaceHolderVar))
+	{
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
 		if (phv->phlevelsup == context->sublevels_up)
 		{
 			phv->phrels = offset_relid_set(phv->phrels,
@@ -444,6 +506,7 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 				RowMarkClause *rc = (RowMarkClause *) lfirst(l);
 
 				rc->rti += offset;
+				rc->prti += offset;
 			}
 		}
 		query_tree_walker(qry, OffsetVarNodes_walker,
@@ -532,10 +595,37 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 			j->rtindex = context->new_index;
 		/* fall through to examine children */
 	}
+<<<<<<< HEAD
 	if (IsA(node, PlaceHolderVar))
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
 		
+		if (phv->phlevelsup == context->sublevels_up)
+		{
+			phv->phrels = adjust_relid_set(phv->phrels,
+										   context->rt_index,
+										   context->new_index);
+=======
+	if (IsA(node, FlattenedSubLink))
+	{
+		FlattenedSubLink *fslink = (FlattenedSubLink *) node;
+
+		if (context->sublevels_up == 0)
+		{
+			fslink->lefthand = adjust_relid_set(fslink->lefthand,
+												context->rt_index,
+												context->new_index);
+			fslink->righthand = adjust_relid_set(fslink->righthand,
+												 context->rt_index,
+												 context->new_index);
+>>>>>>> 38e9348282e
+		}
+		/* fall through to examine children */
+	}
+	if (IsA(node, PlaceHolderVar))
+	{
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
 		if (phv->phlevelsup == context->sublevels_up)
 		{
 			phv->phrels = adjust_relid_set(phv->phrels,
@@ -613,6 +703,8 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 
 				if (rc->rti == rt_index)
 					rc->rti = new_index;
+				if (rc->prti == rt_index)
+					rc->prti = new_index;
 			}
 		}
 		query_tree_walker(qry, ChangeVarNodes_walker,
@@ -711,7 +803,11 @@ IncrementVarSublevelsUp_walker(Node *node,
 	if (IsA(node, PlaceHolderVar))
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+<<<<<<< HEAD
 		
+=======
+
+>>>>>>> 38e9348282e
 		if (phv->phlevelsup >= context->min_sublevels_up)
 			phv->phlevelsup += context->delta_sublevels_up;
 		/* fall through to recurse into argument */
@@ -724,6 +820,7 @@ IncrementVarSublevelsUp_walker(Node *node,
 		{
 			if (rte->ctelevelsup >= context->min_sublevels_up)
 				rte->ctelevelsup += context->delta_sublevels_up;
+<<<<<<< HEAD
 
 			/*
 			* Fix for MPP-19436: in transformGroupedWindows, min_sublevels_up
@@ -734,6 +831,8 @@ IncrementVarSublevelsUp_walker(Node *node,
 			{
 				rte->ctelevelsup += context->delta_sublevels_up;
 			}
+=======
+>>>>>>> 38e9348282e
 		}
 		return false;			/* allow range_table_walker to continue */
 	}
@@ -774,6 +873,7 @@ IncrementVarSublevelsUp(Node *node, int delta_sublevels_up,
 									QTW_EXAMINE_RTES);
 }
 
+<<<<<<< HEAD
 void
 IncrementVarSublevelsUpInTransformGroupedWindows(Node *node,
 		int delta_sublevels_up, int min_sublevels_up)
@@ -794,6 +894,8 @@ IncrementVarSublevelsUpInTransformGroupedWindows(Node *node,
 									QTW_EXAMINE_RTES);
 }
 
+=======
+>>>>>>> 38e9348282e
 /*
  * IncrementVarSublevelsUp_rtable -
  *	Same as IncrementVarSublevelsUp, but to be invoked on a range table.
@@ -806,7 +908,10 @@ IncrementVarSublevelsUp_rtable(List *rtable, int delta_sublevels_up,
 
 	context.delta_sublevels_up = delta_sublevels_up;
 	context.min_sublevels_up = min_sublevels_up;
+<<<<<<< HEAD
 	context.ignore_min_sublevels_up = false;
+=======
+>>>>>>> 38e9348282e
 
 	range_table_walker(rtable,
 					   IncrementVarSublevelsUp_walker,
@@ -870,6 +975,10 @@ rangeTableEntry_used_walker(Node *node,
 		/* fall through to examine children */
 	}
 	/* Shouldn't need to handle planner auxiliary nodes here */
+<<<<<<< HEAD
+=======
+	Assert(!IsA(node, FlattenedSubLink));
+>>>>>>> 38e9348282e
 	Assert(!IsA(node, PlaceHolderVar));
 	Assert(!IsA(node, SpecialJoinInfo));
 	Assert(!IsA(node, AppendRelInfo));
@@ -1471,7 +1580,93 @@ ResolveNew_callback(Var *var,
 
 		/* Must adjust varlevelsup if tlist item is from higher query */
 		if (var->varlevelsup > 0)
+<<<<<<< HEAD
 			IncrementVarSublevelsUp(newnode, var->varlevelsup, 0);
+=======
+			IncrementVarSublevelsUp(n, var->varlevelsup, 0);
+		/* Report it if we are adding a sublink to query */
+		if (!context->inserted_sublink)
+			context->inserted_sublink = checkExprHasSubLink(n);
+		return n;
+	}
+}
+
+static Node *
+ResolveNew_mutator(Node *node, ResolveNew_context *context)
+{
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+		int			this_varno = (int) var->varno;
+		int			this_varlevelsup = (int) var->varlevelsup;
+
+		if (this_varno == context->target_varno &&
+			this_varlevelsup == context->sublevels_up)
+		{
+			if (var->varattno == InvalidAttrNumber)
+			{
+				/* Must expand whole-tuple reference into RowExpr */
+				RowExpr    *rowexpr;
+				List	   *colnames;
+				List	   *fields;
+
+				/*
+				 * If generating an expansion for a var of a named rowtype
+				 * (ie, this is a plain relation RTE), then we must include
+				 * dummy items for dropped columns.  If the var is RECORD (ie,
+				 * this is a JOIN), then omit dropped columns.  Either way,
+				 * attach column names to the RowExpr for use of ruleutils.c.
+				 */
+				expandRTE(context->target_rte,
+						  this_varno, this_varlevelsup, var->location,
+						  (var->vartype != RECORDOID),
+						  &colnames, &fields);
+				/* Adjust the generated per-field Vars... */
+				fields = (List *) ResolveNew_mutator((Node *) fields,
+													 context);
+				rowexpr = makeNode(RowExpr);
+				rowexpr->args = fields;
+				rowexpr->row_typeid = var->vartype;
+				rowexpr->row_format = COERCE_IMPLICIT_CAST;
+				rowexpr->colnames = colnames;
+				rowexpr->location = -1;
+
+				return (Node *) rowexpr;
+			}
+
+			/* Normal case for scalar variable */
+			return resolve_one_var(var, context);
+		}
+		/* otherwise fall through to copy the var normally */
+	}
+	else if (IsA(node, CurrentOfExpr))
+	{
+		CurrentOfExpr *cexpr = (CurrentOfExpr *) node;
+		int			this_varno = (int) cexpr->cvarno;
+
+		if (this_varno == context->target_varno &&
+			context->sublevels_up == 0)
+		{
+			/*
+			 * We get here if a WHERE CURRENT OF expression turns out to apply
+			 * to a view.  Someday we might be able to translate the
+			 * expression to apply to an underlying table of the view, but
+			 * right now it's not implemented.
+			 */
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				   errmsg("WHERE CURRENT OF on a view is not implemented")));
+		}
+		/* otherwise fall through to copy the expr normally */
+	}
+	else if (IsA(node, Query))
+	{
+		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
+		Query	   *newnode;
+		bool		save_inserted_sublink;
+>>>>>>> 38e9348282e
 
 		return newnode;
 	}

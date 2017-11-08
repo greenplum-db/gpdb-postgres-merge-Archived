@@ -21,7 +21,11 @@ REVOKE SELECT ON deptest FROM GROUP regression_group;
 DROP GROUP regression_group;
 
 -- can't drop the user if we revoke the privileges partially
+<<<<<<< HEAD
 REVOKE SELECT, INSERT, UPDATE, DELETE, RULE, TRUNCATE, REFERENCES ON deptest FROM regression_user;
+=======
+REVOKE SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES ON deptest FROM regression_user;
+>>>>>>> 38e9348282e
 DROP USER regression_user;
 
 -- now we are OK to drop him

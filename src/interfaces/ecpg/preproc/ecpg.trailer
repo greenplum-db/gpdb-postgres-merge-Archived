@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.9 2009/06/10 23:11:52 petere Exp $ */
+=======
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.3 2008/12/12 12:14:43 meskes Exp $ */
+>>>>>>> 38e9348282e
 
 statements: /*EMPTY*/
                 | statements statement
@@ -19,10 +23,17 @@ statement: ecpgstart at stmt ';'        { connection = NULL; }
                 | '}'                   { remove_typedefs(braces_open); remove_variables(braces_open--); fputs("}", yyout); }
                 ;
 
+<<<<<<< HEAD
 CreateAsStmt: CREATE OptTemp TABLE create_as_target AS {FoundInto = 0;} SelectStmt opt_with_data OptDistributedBy OptTabPartitionBy
 		{
 			if (FoundInto == 1)
 				mmerror(PARSE_ERROR, ET_ERROR, "CREATE TABLE AS cannot specify INTO");
+=======
+CreateAsStmt: CREATE OptTemp TABLE create_as_target AS {FoundInto = 0;} SelectStmt opt_with_data
+		{
+			if (FoundInto == 1)
+				mmerror(PARSE_ERROR, ET_ERROR, "CREATE TABLE / AS SELECT cannot specify INTO\n");
+>>>>>>> 38e9348282e
 
 			$$ = cat_str(6, make_str("create"), $2, make_str("table"), $4, make_str("as"), $7);
 		}
@@ -89,7 +100,11 @@ connection_target: opt_database_name opt_server opt_port
 			if (strncmp($1, "unix", strlen("unix")) == 0 &&
 				strncmp($3 + strlen("//"), "localhost", strlen("localhost")) != 0 &&
 				strncmp($3 + strlen("//"), "127.0.0.1", strlen("127.0.0.1")) != 0)
+<<<<<<< HEAD
 				mmerror(PARSE_ERROR, ET_ERROR, "Unix-domain sockets only work on \"localhost\" but not on \"%s\"", $3 + strlen("//"));
+=======
+				mmerror(PARSE_ERROR, ET_ERROR, "unix domain sockets only work on \"localhost\" but not on \"%s\"", $3 + strlen("//"));
+>>>>>>> 38e9348282e
 
 			$$ = make3_str(make3_str(make_str("\""), $1, make_str(":")), $3, make3_str(make3_str($4, make_str("/"), $6),	$7, make_str("\"")));
 		}
@@ -118,7 +133,11 @@ db_prefix: ecpg_ident cvariable
 				mmerror(PARSE_ERROR, ET_ERROR, "expected \"postgresql\", found \"%s\"", $2);
 
 			if (strcmp($1, "tcp") != 0 && strcmp($1, "unix") != 0)
+<<<<<<< HEAD
 				mmerror(PARSE_ERROR, ET_ERROR, "invalid connection type: %s", $1);
+=======
+				mmerror(PARSE_ERROR, ET_ERROR, "illegal connection type %s", $1);
+>>>>>>> 38e9348282e
 
 			$$ = make3_str($1, make_str(":"), $2);
 		}
@@ -202,7 +221,11 @@ char_variable: cvariable
 
 			/* If we have just one character this is not a string */
 			if (atol(p->type->size) == 1)
+<<<<<<< HEAD
 					mmerror(PARSE_ERROR, ET_ERROR, "invalid data type");
+=======
+					mmerror(PARSE_ERROR, ET_ERROR, "invalid datatype");
+>>>>>>> 38e9348282e
 			else
 			{
 				/* if array see what's inside */
@@ -219,7 +242,11 @@ char_variable: cvariable
 						$$ = make2_str($1, make_str(".arr"));
 						break;
 					default:
+<<<<<<< HEAD
 						mmerror(PARSE_ERROR, ET_ERROR, "invalid data type");
+=======
+						mmerror(PARSE_ERROR, ET_ERROR, "invalid datatype");
+>>>>>>> 38e9348282e
 						$$ = $1;
 						break;
 				}
@@ -294,7 +321,11 @@ ECPGCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR prepared_name
 			{
 				if (strcmp($2, ptr->name) == 0)
 					/* re-definition is a bug */
+<<<<<<< HEAD
 					mmerror(PARSE_ERROR, ET_ERROR, "cursor \"%s\" is already defined", $2);
+=======
+					mmerror(PARSE_ERROR, ET_ERROR, "cursor \"%s\" already defined", $2);
+>>>>>>> 38e9348282e
 			}
 
 			this = (struct cursor *) mm_alloc(sizeof(struct cursor));
@@ -475,7 +506,11 @@ var_type:	simple_type
 				$$.type_sizeof = NULL;
 			}
 		}
+<<<<<<< HEAD
  		| enum_type
+=======
+		| enum_type
+>>>>>>> 38e9348282e
 		{
 			$$.type_str = $1;
 			$$.type_enum = ECPGt_int;
@@ -497,7 +532,11 @@ var_type:	simple_type
 			}
 			else
 			{
+<<<<<<< HEAD
 				mmerror(PARSE_ERROR, ET_ERROR, "only data types numeric and decimal have precision/scale argument");
+=======
+				mmerror(PARSE_ERROR, ET_ERROR, "only numeric/decimal have precision/scale argument");
+>>>>>>> 38e9348282e
 				$$.type_enum = ECPGt_numeric;
 				$$.type_str = make_str("numeric");
 			}
@@ -678,7 +717,11 @@ struct_union_type_with_symbol: s_struct_union_symbol
 			{
 					if (strcmp(su_type.type_str, ptr->name) == 0)
 							/* re-definition is a bug */
+<<<<<<< HEAD
 							mmerror(PARSE_ERROR, ET_ERROR, "type \"%s\" is already defined", su_type.type_str);
+=======
+							mmerror(PARSE_ERROR, ET_ERROR, "type \"%s\" already defined", su_type.type_str);
+>>>>>>> 38e9348282e
 			}
 
 			this = (struct typedefs *) mm_alloc(sizeof(struct typedefs));
@@ -836,7 +879,11 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 							sprintf(dim, "[%s]", dimension);
 					/* cannot check for atoi <= 0 because a defined constant will yield 0 here as well */
 					if (atoi(length) < 0 || strcmp(length, "0") == 0)
+<<<<<<< HEAD
 						mmerror(PARSE_ERROR, ET_ERROR, "pointers to varchar are not implemented");
+=======
+						mmerror(PARSE_ERROR, ET_ERROR, "pointer to varchar are not implemented");
+>>>>>>> 38e9348282e
 
 					/* make sure varchar struct name is unique by adding linenumer of its definition */
 					vcn = (char *) mm_alloc(strlen($2) + sizeof(int) * CHAR_BIT * 10 / 3);
@@ -1000,21 +1047,33 @@ UsingConst: Iconst			{ $$ = $1; }
 ECPGDescribe: SQL_DESCRIBE INPUT_P name using_descriptor
 	{
 		const char *con = connection ? connection : "NULL";
+<<<<<<< HEAD
 		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported DESCRIBE statement");
+=======
+		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement\n");
+>>>>>>> 38e9348282e
 		$$ = (char *) mm_alloc(sizeof("1, ECPGprepared_statement(, \"\", __LINE__)") + strlen(con) + strlen($3));
 		sprintf($$, "1, ECPGprepared_statement(%s, \"%s\", __LINE__)", con, $3);
 	}
 	| SQL_DESCRIBE opt_output name using_descriptor
 	{
 		const char *con = connection ? connection : "NULL";
+<<<<<<< HEAD
 		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported DESCRIBE statement");
+=======
+		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement\n");
+>>>>>>> 38e9348282e
 		$$ = (char *) mm_alloc(sizeof("0, ECPGprepared_statement(, \"\", __LINE__)") + strlen(con) + strlen($3));
 		sprintf($$, "0, ECPGprepared_statement(%s, \"%s\", __LINE__)", con, $3);
 	}
 	| SQL_DESCRIBE opt_output name into_descriptor
 	{
 		const char *con = connection ? connection : "NULL";
+<<<<<<< HEAD
 		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported DESCRIBE statement");
+=======
+		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement\n");
+>>>>>>> 38e9348282e
 		$$ = (char *) mm_alloc(sizeof("0, ECPGprepared_statement(, \"\", __LINE__)") + strlen(con) + strlen($3));
 		sprintf($$, "0, ECPGprepared_statement(%s, \"%s\", __LINE__)", con, $3);
 	}
@@ -1277,7 +1336,11 @@ ECPGVar: SQL_VAR
 
 					default:
 						if (atoi(length) >= 0)
+<<<<<<< HEAD
 							mmerror(PARSE_ERROR, ET_ERROR, "multidimensional arrays for simple data types are not supported");
+=======
+							mmerror(PARSE_ERROR, ET_ERROR, "no multidimensional array support for simple data types");
+>>>>>>> 38e9348282e
 
 						if (atoi(dimension) < 0)
 							type = ECPGmake_simple_type($5.type_enum, make_str("1"), 0);
@@ -1514,7 +1577,11 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| AGGREGATE			{ $$ = make_str("aggregate"); }
 		| ALSO				{ $$ = make_str("also"); }
 		| ALTER				{ $$ = make_str("alter"); }
+<<<<<<< HEAD
 /*		| ALWAYS			{ $$ = make_str("always"); }*/
+=======
+		| ALWAYS			{ $$ = make_str("always"); }
+>>>>>>> 38e9348282e
 		| ASSERTION			{ $$ = make_str("assertion"); }
 		| ASSIGNMENT		{ $$ = make_str("assignment"); }
 		| AT				{ $$ = make_str("at"); }
@@ -1535,7 +1602,11 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| COMMIT			{ $$ = make_str("commit"); }
 		| COMMITTED			{ $$ = make_str("committed"); }
 		| CONCURRENTLY		{ $$ = make_str("concurrently"); }
+<<<<<<< HEAD
 /*		| CONFIGURATION		{ $$ = make_str("configuration"); }*/
+=======
+		| CONFIGURATION		{ $$ = make_str("configuration"); }
+>>>>>>> 38e9348282e
 /*		| CONNECTION		{ $$ = make_str("connection"); }*/
 		| CONSTRAINTS		{ $$ = make_str("constraints"); }
 		| CONTENT_P		{ $$ = make_str("content"); }
@@ -1547,6 +1618,10 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| CREATEROLE		{ $$ = make_str("createrole"); }
 		| CREATEUSER		{ $$ = make_str("createuser"); }
 		| CSV				{ $$ = make_str("csv"); }
+<<<<<<< HEAD
+=======
+		| CTYPE			{ $$ = make_str("ctype"); }
+>>>>>>> 38e9348282e
 		| CURSOR			{ $$ = make_str("cursor"); }
 		| CYCLE				{ $$ = make_str("cycle"); }
 		| DATA_P			{ $$ = make_str("data"); }
@@ -1559,10 +1634,17 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| DELETE_P			{ $$ = make_str("delete"); }
 		| DELIMITER			{ $$ = make_str("delimiter"); }
 		| DELIMITERS		{ $$ = make_str("delimiters"); }
+<<<<<<< HEAD
 /*		| DICTIONARY		{ $$ = make_str("dictionary"); }*/
 		| DISABLE_P			{ $$ = make_str("disable"); }
 /*		| DISCARD			{ $$ = make_str("discard"); }*/
 /*		| DOCUMENT_P			{ $$ = make_str("document"); }*/
+=======
+		| DICTIONARY		{ $$ = make_str("dictionary"); }
+		| DISABLE_P			{ $$ = make_str("disable"); }
+		| DISCARD			{ $$ = make_str("discard"); }
+		| DOCUMENT_P			{ $$ = make_str("document"); }
+>>>>>>> 38e9348282e
 		| DOMAIN_P			{ $$ = make_str("domain"); }
 		| DOUBLE_P			{ $$ = make_str("double"); }
 		| DROP				{ $$ = make_str("drop"); }
@@ -1570,14 +1652,22 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| ENABLE_P			{ $$ = make_str("enable"); }
 		| ENCODING			{ $$ = make_str("encoding"); }
 		| ENCRYPTED			{ $$ = make_str("encrypted"); }
+<<<<<<< HEAD
 		| ENUM_P			{ $$ = make_str("enum"); }
+=======
+/*		| ENUM_P			{ $$ = make_str("enum"); }*/
+>>>>>>> 38e9348282e
 		| ESCAPE			{ $$ = make_str("escape"); }
 		| EXCLUDING			{ $$ = make_str("excluding"); }
 		| EXCLUSIVE			{ $$ = make_str("exclusive"); }
 		| EXECUTE			{ $$ = make_str("execute"); }
 		| EXPLAIN			{ $$ = make_str("explain"); }
 		| EXTERNAL			{ $$ = make_str("external"); }
+<<<<<<< HEAD
 /*		| FAMILY			{ $$ = make_str("family"); }*/
+=======
+		| FAMILY			{ $$ = make_str("family"); }
+>>>>>>> 38e9348282e
 /*		| FETCH				{ $$ = make_str("fetch"); }*/
 		| FIRST_P			{ $$ = make_str("first"); }
 		| FORCE				{ $$ = make_str("force"); }
@@ -1600,17 +1690,27 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| INDEXES			{ $$ = make_str("indexes"); }
 		| INHERIT			{ $$ = make_str("inherit"); }
 		| INHERITS			{ $$ = make_str("inherits"); }
+<<<<<<< HEAD
 		| INLINE_P			{ $$ = make_str("inline"); }
+=======
+>>>>>>> 38e9348282e
 		| INSENSITIVE		{ $$ = make_str("insensitive"); }
 		| INSERT			{ $$ = make_str("insert"); }
 		| INSTEAD			{ $$ = make_str("instead"); }
 		| ISOLATION			{ $$ = make_str("isolation"); }
 		| KEY				{ $$ = make_str("key"); }
+<<<<<<< HEAD
 		| LANGUAGE			{ $$ = make_str("language"); }
 		| LARGE_P			{ $$ = make_str("large"); }
 		| LAST_P			{ $$ = make_str("last"); }
 /*		| LC_COLLATE_P		{ $$ = make_str("lc_collate"); }
 		| LC_CTYPE_P		{ $$ = make_str("lc_ctype"); }*/
+=======
+		| LANCOMPILER		{ $$ = make_str("lancompiler"); }
+		| LANGUAGE			{ $$ = make_str("language"); }
+		| LARGE_P			{ $$ = make_str("large"); }
+		| LAST_P			{ $$ = make_str("last"); }
+>>>>>>> 38e9348282e
 		| LEVEL				{ $$ = make_str("level"); }
 		| LISTEN			{ $$ = make_str("listen"); }
 		| LOAD				{ $$ = make_str("load"); }
@@ -1618,7 +1718,11 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| LOCATION			{ $$ = make_str("location"); }
 		| LOCK_P			{ $$ = make_str("lock"); }
 		| LOGIN_P			{ $$ = make_str("login"); }
+<<<<<<< HEAD
 /*		| MAPPING			{ $$ = make_str("mapping"); }*/
+=======
+		| MAPPING			{ $$ = make_str("mapping"); }
+>>>>>>> 38e9348282e
 		| MATCH				{ $$ = make_str("match"); }
 		| MAXVALUE			{ $$ = make_str("maxvalue"); }
 /*		| MINUTE_P			{ $$ = make_str("minute"); }*/
@@ -1647,10 +1751,17 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| OPTION			{ $$ = make_str("option"); }
 		| OWNED				{ $$ = make_str("owned"); }
 		| OWNER				{ $$ = make_str("owner"); }
+<<<<<<< HEAD
 /*		| PARSER			{ $$ = make_str("parser"); }*/
 		| PARTIAL			{ $$ = make_str("partial"); }
 		| PASSWORD			{ $$ = make_str("password"); }
 /*		| PLANS				{ $$ = make_str("plans"); }*/
+=======
+		| PARSER			{ $$ = make_str("parser"); }
+		| PARTIAL			{ $$ = make_str("partial"); }
+		| PASSWORD			{ $$ = make_str("password"); }
+		| PLANS				{ $$ = make_str("plans"); }
+>>>>>>> 38e9348282e
 		| PREPARE			{ $$ = make_str("prepare"); }
 		| PREPARED			{ $$ = make_str("prepared"); }
 		| PRESERVE			{ $$ = make_str("preserver"); }
@@ -1669,7 +1780,11 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| RENAME			{ $$ = make_str("rename"); }
 		| REPEATABLE		{ $$ = make_str("repeatable"); }
 		| REPLACE			{ $$ = make_str("replace"); }
+<<<<<<< HEAD
 /*		| REPLICA			{ $$ = make_str("replica"); }*/
+=======
+		| REPLICA			{ $$ = make_str("replica"); }
+>>>>>>> 38e9348282e
 		| RESET				{ $$ = make_str("reset"); }
 		| RESTART			{ $$ = make_str("restart"); }
 		| RESTRICT			{ $$ = make_str("restrict"); }
@@ -1677,7 +1792,11 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| REVOKE			{ $$ = make_str("revoke"); }
 		| ROLE				{ $$ = make_str("role"); }
 		| ROLLBACK			{ $$ = make_str("rollback"); }
+<<<<<<< HEAD
 /*		| ROWS				{ $$ = make_str("rows"); }*/
+=======
+		| ROWS				{ $$ = make_str("rows"); }
+>>>>>>> 38e9348282e
 		| RULE				{ $$ = make_str("rule"); }
 		| SAVEPOINT			{ $$ = make_str("savepoint"); }
 		| SCHEMA			{ $$ = make_str("schema"); }
@@ -1692,7 +1811,11 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| SHOW				{ $$ = make_str("show"); }
 		| SIMPLE			{ $$ = make_str("simple"); }
 		| STABLE			{ $$ = make_str("stable"); }
+<<<<<<< HEAD
 /*		| STANDALONE_P			{ $$ = make_str("standalone"); }*/
+=======
+		| STANDALONE_P			{ $$ = make_str("standalone"); }
+>>>>>>> 38e9348282e
 		| START				{ $$ = make_str("start"); }
 		| STATEMENT			{ $$ = make_str("statement"); }
 		| STATISTICS		{ $$ = make_str("statistics"); }
@@ -1700,7 +1823,11 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| STDOUT			{ $$ = make_str("stdout"); }
 		| STORAGE			{ $$ = make_str("storage"); }
 		| STRICT_P			{ $$ = make_str("strict"); }
+<<<<<<< HEAD
 /*		| STRIP_P			{ $$ = make_str("strip"); }*/
+=======
+		| STRIP_P			{ $$ = make_str("strip"); }
+>>>>>>> 38e9348282e
 		| SUPERUSER_P		{ $$ = make_str("superuser"); }
 		| SYSTEM_P			{ $$ = make_str("system"); }
 		| SYSID				{ $$ = make_str("sysid"); }
@@ -1708,7 +1835,11 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| TEMP				{ $$ = make_str("temp"); }
 		| TEMPLATE			{ $$ = make_str("template"); }
 		| TEMPORARY			{ $$ = make_str("temporary"); }
+<<<<<<< HEAD
 /*		| TEXT_P			{ $$ = make_str("text"); }*/
+=======
+		| TEXT_P			{ $$ = make_str("text"); }
+>>>>>>> 38e9348282e
 		| TRANSACTION		{ $$ = make_str("transaction"); }
 		| TRIGGER			{ $$ = make_str("trigger"); }
 		| TRUNCATE			{ $$ = make_str("truncate"); }
@@ -1725,6 +1856,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| VALIDATOR			{ $$ = make_str("validator"); }
 		| VALUE_P			{ $$ = make_str("value"); }
 		| VARYING			{ $$ = make_str("varying"); }
+<<<<<<< HEAD
 /*		| VERSION_P			{ $$ = make_str("version"); }*/
 		| VIEW				{ $$ = make_str("view"); }
 		| VOLATILE			{ $$ = make_str("volatile"); }
@@ -1734,6 +1866,17 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| WRITE  			{ $$ = make_str("write"); }
 /*		| XML_P  			{ $$ = make_str("xml"); }*/
 /*		| YES_P  			{ $$ = make_str("yes"); }*/
+=======
+		| VERSION_P			{ $$ = make_str("version"); }
+		| VIEW				{ $$ = make_str("view"); }
+		| VOLATILE			{ $$ = make_str("volatile"); }
+		| WHITESPACE_P			{ $$ = make_str("whitespace"); }
+		| WITHOUT			{ $$ = make_str("without"); }
+		| WORK				{ $$ = make_str("work"); }
+		| WRITE  			{ $$ = make_str("write"); }
+		| XML_P  			{ $$ = make_str("xml"); }
+		| YES_P  			{ $$ = make_str("yes"); }
+>>>>>>> 38e9348282e
 /*		| YEAR_P			{ $$ = make_str("year"); }*/
 		| ZONE				{ $$ = make_str("zone"); }
 		;
@@ -1792,7 +1935,11 @@ cvariable:	CVARIABLE
 				{
 					case '[':
 							if (brace)
+<<<<<<< HEAD
 								mmerror(PARSE_ERROR, ET_FATAL, "multidimensional arrays for simple data types are not supported");
+=======
+								mmerror(PARSE_ERROR, ET_FATAL, "no multidimensional array support for simple data types");
+>>>>>>> 38e9348282e
 							brace_open++;
 							break;
 					case ']':
@@ -1985,11 +2132,21 @@ ecpg_into: INTO into_list	{ $$ = EMPTY; }
 
 %%
 
+<<<<<<< HEAD
 void base_yyerror(const char *error)
 {
 	/* translator: %s is typically the translation of "syntax error" */
 	mmerror(PARSE_ERROR, ET_ERROR, "%s at or near \"%s\"",
 			_(error), token_start ? token_start : yytext);
+=======
+void base_yyerror(const char * error)
+{
+	char buf[1024];
+
+	snprintf(buf,sizeof buf, _("%s at or near \"%s\""), error, token_start ? token_start : yytext);
+	buf[sizeof(buf)-1]=0;
+	mmerror(PARSE_ERROR, ET_ERROR, buf);
+>>>>>>> 38e9348282e
 }
 
 void parser_init(void)

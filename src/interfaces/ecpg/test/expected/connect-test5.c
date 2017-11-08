@@ -27,10 +27,17 @@ main(void)
 	 
 
 #line 16 "test5.pgc"
+<<<<<<< HEAD
  char db [ 200 ] ;
  
 #line 17 "test5.pgc"
  char id [ 200 ] ;
+=======
+ char  db  [ 200 ]   ;
+ 
+#line 17 "test5.pgc"
+ char  id  [ 200 ]   ;
+>>>>>>> 38e9348282e
  
 #line 18 "test5.pgc"
  char * user = "connectuser" ;
@@ -43,7 +50,11 @@ main(void)
 	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL, NULL , "main", 0); }
 #line 23 "test5.pgc"
 
+<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "alter user connectuser encrypted password 'connectpw'", ECPGt_EOIT, ECPGt_EORT);}
+=======
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "alter user connectuser   encrypted password 'connectpw'", ECPGt_EOIT, ECPGt_EORT);}
+>>>>>>> 38e9348282e
 #line 24 "test5.pgc"
 
 	{ ECPGdisconnect(__LINE__, "CURRENT");}

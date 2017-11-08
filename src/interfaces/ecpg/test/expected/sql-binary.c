@@ -34,13 +34,21 @@ struct TBempl {
  long idnum ;
  
 #line 10 "binary.pgc"
+<<<<<<< HEAD
  char name [ 21 ] ;
+=======
+ char  name  [ 21 ]   ;
+>>>>>>> 38e9348282e
  
 #line 11 "binary.pgc"
  short accs ;
  
 #line 12 "binary.pgc"
+<<<<<<< HEAD
  char byte [ 20 ] ;
+=======
+ char  byte  [ 20 ]   ;
+>>>>>>> 38e9348282e
  } ;/* exec sql end declare section */
 #line 14 "binary.pgc"
 

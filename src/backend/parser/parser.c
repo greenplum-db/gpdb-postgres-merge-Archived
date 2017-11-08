@@ -14,7 +14,11 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/parser/parser.c,v 1.78 2009/06/11 14:49:00 momjian Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/parser/parser.c,v 1.75 2008/10/28 14:09:45 petere Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -129,6 +133,7 @@ filtered_base_yylex(void)
 		case WITH:
 
 			/*
+<<<<<<< HEAD
 			 * WITH TIME, CASCADED, LOCAL, or CHECK must be reduced to one token
 			 *
 			 * XXX an alternative way is to recognize just WITH_TIME and put
@@ -137,6 +142,9 @@ filtered_base_yylex(void)
 			 * fully reserved word.  If we ever have to do that anyway
 			 * (perhaps for SQL99 recursive queries), come back and simplify
 			 * this code.
+=======
+			 * WITH TIME must be reduced to one token
+>>>>>>> 38e9348282e
 			 */
 			cur_yylval = base_yylval;
 			cur_yylloc = base_yylloc;
@@ -145,6 +153,7 @@ filtered_base_yylex(void)
 			{
 				case TIME:
 					cur_token = WITH_TIME;
+<<<<<<< HEAD
 					break;
 				case CASCADED:
 					cur_token = WITH_CASCADED;
@@ -154,6 +163,8 @@ filtered_base_yylex(void)
 					break;
 				case CHECK:
 					cur_token = WITH_CHECK;
+=======
+>>>>>>> 38e9348282e
 					break;
 				default:
 					/* save the lookahead token for next time */

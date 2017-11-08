@@ -7,7 +7,11 @@
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * src/backend/utils/adt/xml.c
+=======
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.81 2008/11/10 18:02:20 tgl Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -235,6 +239,11 @@ xml_out_internal(xmltype *x, pg_enc target_encoding)
 		}
 		appendStringInfoString(&buf, str + len);
 
+<<<<<<< HEAD
+=======
+		if (version)
+			xmlFree(version);
+>>>>>>> 38e9348282e
 		pfree(str);
 
 		return buf.data;
@@ -1581,7 +1590,11 @@ map_sql_identifier_to_xml_name(char *ident, bool fully_escaped,
 static char *
 unicode_to_sqlchar(pg_wchar c)
 {
+<<<<<<< HEAD
 	unsigned char utf8string[5];	/* need room for trailing zero */
+=======
+	unsigned char utf8string[5]; /* need room for trailing zero */
+>>>>>>> 38e9348282e
 	char	   *result;
 
 	memset(utf8string, 0, sizeof(utf8string));
@@ -1589,7 +1602,11 @@ unicode_to_sqlchar(pg_wchar c)
 
 	result = (char *) pg_do_encoding_conversion(utf8string,
 												pg_encoding_mblen(PG_UTF8,
+<<<<<<< HEAD
 														(char *) utf8string),
+=======
+														 (char *) utf8string),
+>>>>>>> 38e9348282e
 												PG_UTF8,
 												GetDatabaseEncoding());
 	/* if pg_do_encoding_conversion didn't strdup, we must */
@@ -1645,6 +1662,11 @@ map_xml_name_to_sql_identifier(char *name)
 char *
 map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
 {
+<<<<<<< HEAD
+=======
+	StringInfoData buf;
+
+>>>>>>> 38e9348282e
 	if (type_is_array(type))
 	{
 		ArrayType  *array;
@@ -1713,8 +1735,12 @@ map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
 					if (DATE_NOT_FINITE(date))
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+<<<<<<< HEAD
 								 errmsg("date out of range"),
 								 errdetail("XML does not support infinite date values.")));
+=======
+								 errmsg("date out of range")));
+>>>>>>> 38e9348282e
 					j2date(date + POSTGRES_EPOCH_JDATE,
 						   &(tm.tm_year), &(tm.tm_mon), &(tm.tm_mday));
 					EncodeDateOnly(&tm, USE_XSD_DATES, buf);
@@ -1779,6 +1805,7 @@ map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
 			case BYTEAOID:
 				{
 					bytea	   *bstr = DatumGetByteaPP(value);
+<<<<<<< HEAD
 					xmlBufferPtr buf = NULL;
 					xmlTextWriterPtr writer = NULL;
 					char	   *result;
@@ -1821,6 +1848,27 @@ map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
 
 					xmlBufferFree(buf);
 
+=======
+					xmlBufferPtr buf;
+					xmlTextWriterPtr writer;
+					char	   *result;
+
+					xml_init();
+
+					buf = xmlBufferCreate();
+					writer = xmlNewTextWriterMemory(buf, 0);
+
+					if (xmlbinary == XMLBINARY_BASE64)
+						xmlTextWriterWriteBase64(writer, VARDATA_ANY(bstr),
+												 0, VARSIZE_ANY_EXHDR(bstr));
+					else
+						xmlTextWriterWriteBinHex(writer, VARDATA_ANY(bstr),
+												 0, VARSIZE_ANY_EXHDR(bstr));
+
+					xmlFreeTextWriter(writer);
+					result = pstrdup((const char *) xmlBufferContent(buf));
+					xmlBufferFree(buf);
+>>>>>>> 38e9348282e
 					return result;
 				}
 #endif   /* USE_LIBXML */
@@ -1833,6 +1881,7 @@ map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
 		getTypeOutputInfo(type, &typeOut, &isvarlena);
 		str = OidOutputFunctionCall(typeOut, value);
 
+<<<<<<< HEAD
 		/* ... exactly as-is for XML, and when escaping is not wanted */
 		if (type == XMLOID || !xml_escape_strings)
 			return str;
@@ -1879,6 +1928,39 @@ escape_xml(const char *str)
 		}
 	}
 	return buf.data;
+=======
+		/* ... exactly as-is for XML */
+		if (type == XMLOID)
+			return str;
+
+		/* otherwise, translate special characters as needed */
+		initStringInfo(&buf);
+
+		for (p = str; *p; p++)
+		{
+			switch (*p)
+			{
+				case '&':
+					appendStringInfoString(&buf, "&amp;");
+					break;
+				case '<':
+					appendStringInfoString(&buf, "&lt;");
+					break;
+				case '>':
+					appendStringInfoString(&buf, "&gt;");
+					break;
+				case '\r':
+					appendStringInfoString(&buf, "&#x0d;");
+					break;
+				default:
+					appendStringInfoCharMacro(&buf, *p);
+					break;
+			}
+		}
+
+		return buf.data;
+	}
+>>>>>>> 38e9348282e
 }
 
 

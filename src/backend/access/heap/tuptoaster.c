@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.89 2008/06/19 00:46:03 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.91 2008/11/06 20:51:14 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -76,8 +76,12 @@ do { \
 #define SET_VARSIZE_C(PTR)			(((varattrib_1b *) (PTR))->va_header |= 0x40)
 
 static void toast_delete_datum(Relation rel, Datum value);
+<<<<<<< HEAD
 static Datum toast_save_datum(Relation rel, Datum value, bool isFrozen,
 						bool use_wal, bool use_fsm);
+=======
+static Datum toast_save_datum(Relation rel, Datum value, int options);
+>>>>>>> 38e9348282e
 static struct varlena *toast_fetch_datum(struct varlena * attr);
 static struct varlena *toast_fetch_datum_slice(struct varlena * attr,
 						int32 sliceoffset, int32 length);
@@ -527,7 +531,7 @@ toast_delete(Relation rel, GenericTuple oldtup, MemTupleBinding *pbind)
  * Inputs:
  *	newtup: the candidate new tuple to be inserted
  *	oldtup: the old row version for UPDATE, or NULL for INSERT
- *	use_wal, use_fsm: flags to be passed to heap_insert() for toast rows
+ *	options: options to be passed to heap_insert() for toast rows
  * Result:
  *	either newtup if no toasting is needed, or a palloc'd modified tuple
  *	that is what should actually get stored
@@ -536,8 +540,14 @@ toast_delete(Relation rel, GenericTuple oldtup, MemTupleBinding *pbind)
  * from the pre-8.1 API of this routine.
  * ----------
  */
+<<<<<<< HEAD
 
 static int compute_dest_tuplen(TupleDesc tupdesc, MemTupleBinding *pbind, bool hasnull, Datum *d, bool *isnull)
+=======
+HeapTuple
+toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
+					   int options)
+>>>>>>> 38e9348282e
 {
 	if(pbind) 
 	{
@@ -838,8 +848,12 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 		{
 			old_value = toast_values[i];
 			toast_action[i] = 'p';
+<<<<<<< HEAD
 			toast_values[i] = toast_save_datum(rel, toast_values[i], isFrozen,
 											   use_wal, use_fsm);
+=======
+			toast_values[i] = toast_save_datum(rel, toast_values[i], options);
+>>>>>>> 38e9348282e
 			if (toast_free[i])
 				pfree(DatumGetPointer(old_value));
 			toast_free[i] = true;
@@ -889,8 +903,12 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 		i = biggest_attno;
 		old_value = toast_values[i];
 		toast_action[i] = 'p';
+<<<<<<< HEAD
 		toast_values[i] = toast_save_datum(rel, toast_values[i], isFrozen,
 										   use_wal, use_fsm);
+=======
+		toast_values[i] = toast_save_datum(rel, toast_values[i], options);
+>>>>>>> 38e9348282e
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
 		toast_free[i] = true;
@@ -999,8 +1017,12 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 		i = biggest_attno;
 		old_value = toast_values[i];
 		toast_action[i] = 'p';
+<<<<<<< HEAD
 		toast_values[i] = toast_save_datum(rel, toast_values[i], isFrozen,
 										   use_wal, use_fsm);
+=======
+		toast_values[i] = toast_save_datum(rel, toast_values[i], options);
+>>>>>>> 38e9348282e
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
 		toast_free[i] = true;
@@ -1428,8 +1450,12 @@ toast_compress_datum(Datum value)
  * ----------
  */
 static Datum
+<<<<<<< HEAD
 toast_save_datum(Relation rel, Datum value, bool isFrozen,
 				 bool use_wal, bool use_fsm)
+=======
+toast_save_datum(Relation rel, Datum value, int options)
+>>>>>>> 38e9348282e
 {
 	Relation	toastrel;
 	Relation	toastidx;
@@ -1548,6 +1574,7 @@ toast_save_datum(Relation rel, Datum value, bool isFrozen,
 		memcpy(VARDATA(&chunk_data), data_p, chunk_size);
 		toasttup = heap_form_tuple(toasttupDesc, t_values, t_isnull);
 
+<<<<<<< HEAD
 		if (!isFrozen)
 		{
 			/* the normal case. regular insert */
@@ -1559,6 +1586,10 @@ toast_save_datum(Relation rel, Datum value, bool isFrozen,
 			frozen_heap_insert(toastrel, toasttup);
 		}
 			
+=======
+		heap_insert(toastrel, toasttup, mycid, options, NULL);
+
+>>>>>>> 38e9348282e
 		/*
 		 * Create the index entry.	We cheat a little here by not using
 		 * FormIndexDatum: this relies on the knowledge that the index columns

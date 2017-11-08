@@ -18,7 +18,11 @@ INSERT INTO TIME_TBL VALUES ('15:36:39 America/New_York');
 ERROR:  invalid input syntax for type time: "15:36:39 America/New_York"
 LINE 1: INSERT INTO TIME_TBL VALUES ('15:36:39 America/New_York');
                                      ^
+<<<<<<< HEAD
 SELECT f1 AS "Time" FROM TIME_TBL ORDER BY 1;
+=======
+SELECT f1 AS "Time" FROM TIME_TBL;
+>>>>>>> 38e9348282e
     Time     
 -------------
  00:00:00

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.167 2008/08/01 11:41:12 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.174 2008/11/20 20:45:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,11 @@
 #include <sys/ucred.h>
 #endif
 #ifdef HAVE_UCRED_H
+<<<<<<< HEAD
 #include <ucred.h>
+=======
+# include <ucred.h>
+>>>>>>> 38e9348282e
 #endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -140,6 +144,14 @@ static int	CheckLDAPAuth(Port *port);
 static int	CheckCertAuth(Port *port);
 #endif
 
+/*----------------------------------------------------------------
+ * Cert authentication
+ *----------------------------------------------------------------
+ */
+#ifdef USE_SSL
+static int	CheckCertAuth(Port *port);
+#endif
+
 
 /*----------------------------------------------------------------
  * Kerberos and GSSAPI GUCs
@@ -155,7 +167,11 @@ bool		pg_krb_caseins_users;
  *----------------------------------------------------------------
  */
 #ifdef KRB5
+<<<<<<< HEAD
 static int	pg_krb5_recvauth(Port *port);
+=======
+static int pg_krb5_recvauth(Port *port);
+>>>>>>> 38e9348282e
 
 #include <krb5.h>
 /* Some old versions of Kerberos do not include <com_err.h> in <krb5.h> */
@@ -184,9 +200,14 @@ static krb5_principal pg_krb5_server;
 #include <gssapi/gssapi.h>
 #endif
 
+<<<<<<< HEAD
 static int	pg_GSS_recvauth(Port *port);
 static int check_valid_until_for_gssapi(Port *port);
 #endif   /* ENABLE_GSS */
+=======
+static int pg_GSS_recvauth(Port *port);
+#endif /* ENABLE_GSS */
+>>>>>>> 38e9348282e
 
 
 /*----------------------------------------------------------------
@@ -262,6 +283,7 @@ auth_failed(Port *port, int status)
 	if (status == STATUS_EOF)
 		proc_exit(0);
 
+<<<<<<< HEAD
 	/* internal communication failure */
 	if (!port->hba)
 	{
@@ -313,6 +335,41 @@ auth_failed(Port *port, int status)
 				errstr = gettext_noop("authentication failed for user \"%s\": invalid authentication method");
 				break;
 		}
+=======
+	switch (port->hba->auth_method)
+	{
+		case uaReject:
+			errstr = gettext_noop("authentication failed for user \"%s\": host rejected");
+			break;
+		case uaKrb5:
+			errstr = gettext_noop("Kerberos 5 authentication failed for user \"%s\"");
+			break;
+		case uaGSS:
+			errstr = gettext_noop("GSSAPI authentication failed for user \"%s\"");
+			break;
+		case uaSSPI:
+			errstr = gettext_noop("SSPI authentication failed for user \"%s\"");
+			break;
+		case uaTrust:
+			errstr = gettext_noop("\"trust\" authentication failed for user \"%s\"");
+			break;
+		case uaIdent:
+			errstr = gettext_noop("Ident authentication failed for user \"%s\"");
+			break;
+		case uaMD5:
+		case uaPassword:
+			errstr = gettext_noop("password authentication failed for user \"%s\"");
+			break;
+		case uaPAM:
+			errstr = gettext_noop("PAM authentication failed for user \"%s\"");
+			break;
+		case uaLDAP:
+			errstr = gettext_noop("LDAP authentication failed for user \"%s\"");
+			break;
+		default:
+			errstr = gettext_noop("authentication failed for user \"%s\": invalid authentication method");
+			break;
+>>>>>>> 38e9348282e
 	}
 
 	ereport(FATAL,
@@ -457,6 +514,7 @@ ClientAuthentication(Port *port)
 				 errhint("See server log for details.")));
 
 	/*
+<<<<<<< HEAD
 	 * Enable immediate response to SIGTERM/SIGINT/timeout interrupts. (We
 	 * don't want this during hba_getauthmethod() because it might have to do
 	 * database access, eg for role membership checks.)
@@ -469,6 +527,12 @@ ClientAuthentication(Port *port)
 	 * This is the first point where we have access to the hba record for the
 	 * current connection, so perform any verifications based on the hba
 	 * options field that should be done *before* the authentication here.
+=======
+	 * This is the first point where we have access to the hba record for
+	 * the current connection, so perform any verifications based on the
+	 * hba options field that should be done *before* the authentication
+	 * here.
+>>>>>>> 38e9348282e
 	 */
 	if (port->hba->clientcert)
 	{
@@ -487,10 +551,16 @@ ClientAuthentication(Port *port)
 					 errmsg("connection requires a valid client certificate")));
 		}
 #else
+<<<<<<< HEAD
 
 		/*
 		 * hba.c makes sure hba->clientcert can't be set unless OpenSSL is
 		 * present.
+=======
+		/*
+		 * hba.c makes sure hba->clientcert can't be set unless OpenSSL
+		 * is present.
+>>>>>>> 38e9348282e
 		 */
 		Assert(false);
 #endif
@@ -622,12 +692,15 @@ ClientAuthentication(Port *port)
 
 		case uaGSS:
 #ifdef ENABLE_GSS
+<<<<<<< HEAD
 			if (check_valid_until_for_gssapi(port) == STATUS_ERROR) {
 				ereport(FATAL,
 					(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 					errmsg("authentication failed for user \"%s\": valid until timestamp expired", port->user_name)));
 			}
 
+=======
+>>>>>>> 38e9348282e
 			sendAuthRequest(port, AUTH_REQ_GSS);
 			status = pg_GSS_recvauth(port);
 #else
@@ -692,6 +765,10 @@ ClientAuthentication(Port *port)
 
 		case uaPAM:
 #ifdef USE_PAM
+<<<<<<< HEAD
+=======
+			pam_port_cludge = port;
+>>>>>>> 38e9348282e
 			status = CheckPAMAuth(port, port->user_name, "");
 #else
 			Assert(false);
@@ -703,6 +780,17 @@ ClientAuthentication(Port *port)
 			status = CheckLDAPAuth(port);
 #else
 			Assert(false);
+<<<<<<< HEAD
+=======
+#endif
+			break;
+
+		case uaCert:
+#ifdef USE_SSL
+			status = CheckCertAuth(port);
+#else
+			Assert(false);
+>>>>>>> 38e9348282e
 #endif
 			break;
 
@@ -1689,6 +1777,7 @@ pg_SSPI_recvauth(Port *port)
 	 *
 	 * If set to include realm, append it in <username>@<realm> format.
 	 */
+<<<<<<< HEAD
 	if (port->hba->include_realm)
 	{
 		char	   *namebuf;
@@ -1702,6 +1791,9 @@ pg_SSPI_recvauth(Port *port)
 	}
 	else
 		return check_usermap(port->hba->usermap, port->user_name, accountname, true);
+=======
+	return check_usermap(port->hba->usermap, port->user_name, accountname, true);
+>>>>>>> 38e9348282e
 }
 #endif   /* ENABLE_SSPI */
 
@@ -2035,9 +2127,15 @@ ident_unix(int sock, char *ident_user)
 	/* Solaris > 10 */
 	uid_t		uid;
 	struct passwd *pass;
+<<<<<<< HEAD
 	ucred_t    *ucred;
 
 	ucred = NULL;				/* must be initialized to NULL */
+=======
+	ucred_t	   *ucred;
+
+	ucred = NULL; /* must be initialized to NULL */
+>>>>>>> 38e9348282e
 	if (getpeerucred(sock, &ucred) == -1)
 	{
 		ereport(LOG,
@@ -2426,6 +2524,7 @@ CheckPAMAuth(Port *port, char *user, char *password)
 static int
 InitializeLDAPConnection(Port *port, LDAP **ldap)
 {
+<<<<<<< HEAD
 	int			ldapversion = LDAP_VERSION3;
 	int			r;
 
@@ -2447,6 +2546,32 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 	}
 
 	if (!*ldap)
+=======
+	char	   *passwd;
+	LDAP	   *ldap;
+	int			r;
+	int			ldapversion = LDAP_VERSION3;
+	char		fulluser[NAMEDATALEN + 256 + 1];
+
+	if (!port->hba->ldapserver|| port->hba->ldapserver[0] == '\0')
+	{
+		ereport(LOG,
+				(errmsg("LDAP server not specified")));
+		return STATUS_ERROR;
+	}
+
+	if (port->hba->ldapport == 0)
+		port->hba->ldapport = LDAP_PORT;
+
+	sendAuthRequest(port, AUTH_REQ_PASSWORD);
+
+	passwd = recv_password_packet(port);
+	if (passwd == NULL)
+		return STATUS_EOF;		/* client wouldn't send password */
+
+	ldap = ldap_init(port->hba->ldapserver, port->hba->ldapport);
+	if (!ldap)
+>>>>>>> 38e9348282e
 	{
 #ifndef WIN32
 		ereport(LOG,
@@ -2522,6 +2647,7 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 		}
 	}
 
+<<<<<<< HEAD
 	return STATUS_OK;
 }
 
@@ -2712,6 +2838,13 @@ CheckLDAPAuth(Port *port)
 			 port->user_name,
 			 port->hba->ldapsuffix ? port->hba->ldapsuffix : "");
 	}
+=======
+	snprintf(fulluser, sizeof(fulluser), "%s%s%s",
+			 port->hba->ldapprefix ? port->hba->ldapprefix : "",
+			 port->user_name,
+			 port->hba->ldapsuffix ? port->hba->ldapsuffix : "");
+	fulluser[sizeof(fulluser) - 1] = '\0';
+>>>>>>> 38e9348282e
 
 	r = ldap_simple_bind_s(ldap, fulluser, passwd);
 	ldap_unbind(ldap);
@@ -2719,9 +2852,14 @@ CheckLDAPAuth(Port *port)
 	if (r != LDAP_SUCCESS)
 	{
 		ereport(LOG,
+<<<<<<< HEAD
 				(errmsg("LDAP login failed for user \"%s\" on server \"%s\": %s",
 						fulluser, port->hba->ldapserver, ldap_err2string(r))));
 		pfree(fulluser);
+=======
+				(errmsg("LDAP login failed for user \"%s\" on server \"%s\": error code %d",
+						fulluser, port->hba->ldapserver, r)));
+>>>>>>> 38e9348282e
 		return STATUS_ERROR;
 	}
 
@@ -2747,7 +2885,11 @@ CheckCertAuth(Port *port)
 		strlen(port->peer_cn) <= 0)
 	{
 		ereport(LOG,
+<<<<<<< HEAD
 				(errmsg("certificate authentication failed for user \"%s\": client certificate contains no user name",
+=======
+				(errmsg("Certificate login failed for user \"%s\": client certificate contains no username",
+>>>>>>> 38e9348282e
 						port->user_name)));
 		return STATUS_ERROR;
 	}
@@ -2756,6 +2898,7 @@ CheckCertAuth(Port *port)
 	return check_usermap(port->hba->usermap, port->user_name, port->peer_cn, false);
 }
 #endif
+<<<<<<< HEAD
 
 
 /*----------------------------------------------------------------
@@ -3292,3 +3435,5 @@ check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp)
 	list_free(role_intervals);
 	return true;
 }
+=======
+>>>>>>> 38e9348282e

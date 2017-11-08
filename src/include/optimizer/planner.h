@@ -33,6 +33,7 @@ extern PlannedStmt *standard_planner(Query *parse, int cursorOptions,
 
 extern Plan *subquery_planner(PlannerGlobal *glob, Query *parse,
 				 PlannerInfo *parent_root,
+<<<<<<< HEAD
 				 bool hasRecursion,
 				 double tuple_fraction,
 				 PlannerInfo **subroot,
@@ -45,5 +46,9 @@ extern bool choose_hashed_grouping(PlannerInfo *root,
 								   int numGroupOps,
 								   double dNumGroups,
 								   AggClauseCounts *agg_counts);
+=======
+				 bool hasRecursion, double tuple_fraction,
+				 PlannerInfo **subroot);
+>>>>>>> 38e9348282e
 
 #endif   /* PLANNER_H */

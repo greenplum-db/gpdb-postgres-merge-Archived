@@ -96,7 +96,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/rewriteheap.c,v 1.14 2008/06/19 00:46:03 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/rewriteheap.c,v 1.16 2008/11/06 20:51:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,6 +269,7 @@ end_heap_rewrite(RewriteState state)
 	if (state->rs_buffer_valid)
 	{
 		if (state->rs_use_wal)
+<<<<<<< HEAD
 			log_newpage_rel(state->rs_new_rel,state->rs_blockno, state->rs_buffer);
 
 		RelationOpenSmgr(state->rs_new_rel);
@@ -276,6 +277,14 @@ end_heap_rewrite(RewriteState state)
 		PageSetChecksumInplace(state->rs_buffer, state->rs_blockno);
 
 		smgrextend(state->rs_new_rel->rd_smgr, state->rs_blockno,
+=======
+			log_newpage(&state->rs_new_rel->rd_node,
+						MAIN_FORKNUM,
+						state->rs_blockno,
+						state->rs_buffer);
+		RelationOpenSmgr(state->rs_new_rel);
+		smgrextend(state->rs_new_rel->rd_smgr, MAIN_FORKNUM, state->rs_blockno,
+>>>>>>> 38e9348282e
 				   (char *) state->rs_buffer, true);
 	}
 
@@ -576,8 +585,14 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 	}
 	else if (HeapTupleHasExternal(tup) || tup->t_len > TOAST_TUPLE_THRESHOLD)
 		heaptup = toast_insert_or_update(state->rs_new_rel, tup, NULL,
+<<<<<<< HEAD
 										 TOAST_TUPLE_TARGET, false,
 										 state->rs_use_wal, false);
+=======
+										 HEAP_INSERT_SKIP_FSM |
+										 (state->rs_use_wal ?
+									     0 : HEAP_INSERT_SKIP_WAL));
+>>>>>>> 38e9348282e
 	else
 		heaptup = tup;
 
@@ -608,7 +623,14 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 
 			/* XLOG stuff */
 			if (state->rs_use_wal)
+<<<<<<< HEAD
 				log_newpage_rel(state->rs_new_rel, state->rs_blockno, page);
+=======
+				log_newpage(&state->rs_new_rel->rd_node,
+							MAIN_FORKNUM,
+							state->rs_blockno,
+							page);
+>>>>>>> 38e9348282e
 
 			/*
 			 * Now write the page. We say isTemp = true even if it's not a
@@ -617,11 +639,16 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 			 * end_heap_rewrite.
 			 */
 			RelationOpenSmgr(state->rs_new_rel);
+<<<<<<< HEAD
 
 			PageSetChecksumInplace(page, state->rs_blockno);
 
 			smgrextend(state->rs_new_rel->rd_smgr, state->rs_blockno,
 					   (char *) page, true);
+=======
+			smgrextend(state->rs_new_rel->rd_smgr, MAIN_FORKNUM,
+					   state->rs_blockno, (char *) page, true);
+>>>>>>> 38e9348282e
 
 			state->rs_blockno++;
 			state->rs_buffer_valid = false;

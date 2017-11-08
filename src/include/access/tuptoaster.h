@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.41 2008/07/13 20:45:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.42 2008/11/06 20:51:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,6 +104,7 @@
  * ----------
  */
 extern HeapTuple toast_insert_or_update(Relation rel,
+<<<<<<< HEAD
 					   HeapTuple newtup, HeapTuple oldtup, 
 					   int toast_tuple_target,
 					   bool isFrozen, bool use_wal, bool use_fsm);
@@ -112,6 +113,10 @@ extern MemTuple toast_insert_or_update_memtup(Relation rel,
 							  MemTuple newtup, MemTuple oldtup, 
 							  MemTupleBinding *pbind, int toast_tuple_target,
 							  bool isFrozen, bool use_wal, bool use_fsm);
+=======
+					   HeapTuple newtup, HeapTuple oldtup,
+					   int options);
+>>>>>>> 38e9348282e
 
 /* ----------
  * toast_delete -

@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.45 2008/02/17 02:09:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.46 2008/12/11 10:25:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,6 +217,7 @@ SysLoggerMain(int argc, char *argv[])
     else
     	init_ps_display("logger process", "", "", "");
 
+<<<<<<< HEAD
     /*
      * If we restarted, our stderr is already redirected into our own input
      * pipe.  This is of course pretty useless, not to mention that it
@@ -226,6 +227,31 @@ SysLoggerMain(int argc, char *argv[])
      */
     {
         int			fd = open(DEVNULL, O_WRONLY, 0);
+=======
+	/*
+	 * If we restarted, our stderr is already redirected into our own input
+	 * pipe.  This is of course pretty useless, not to mention that it
+	 * interferes with detecting pipe EOF.	Point stderr to /dev/null. This
+	 * assumes that all interesting messages generated in the syslogger will
+	 * come through elog.c and will be sent to write_syslogger_file.
+	 */
+	if (redirection_done)
+	{
+		int			fd = open(DEVNULL, O_WRONLY, 0);
+
+		/*
+		 * The closes might look redundant, but they are not: we want to be
+		 * darn sure the pipe gets closed even if the open failed.	We can
+		 * survive running with stderr pointing nowhere, but we can't afford
+		 * to have extra pipe input descriptors hanging around.
+		 */
+		close(fileno(stdout));
+		close(fileno(stderr));
+		dup2(fd, fileno(stdout));
+		dup2(fd, fileno(stderr));
+		close(fd);
+	}
+>>>>>>> 38e9348282e
 
         /*
          * The closes might look redundant, but they are not: we want to be

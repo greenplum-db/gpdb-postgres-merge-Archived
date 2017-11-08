@@ -123,11 +123,14 @@ extern void cost_group(Path *path, PlannerInfo *root,
 		   int numGroupCols, double numGroups,
 		   Cost input_startup_cost, Cost input_total_cost,
 		   double input_tuples);
+<<<<<<< HEAD
 extern void cost_window(Path *path, PlannerInfo *root,
 		   int numOrderCols,
 		   Cost input_startup_cost, Cost input_total_cost,
 		   double input_tuples);
 extern void cost_shareinputscan(Path *path, PlannerInfo *root, Cost sharecost, double ntuples, int width);
+=======
+>>>>>>> 38e9348282e
 extern void cost_nestloop(NestPath *path, PlannerInfo *root,
 						  SpecialJoinInfo *sjinfo);
 extern void cost_mergejoin(MergePath *path, PlannerInfo *root,
@@ -147,6 +150,7 @@ extern void set_function_size_estimates(PlannerInfo *root, RelOptInfo *rel);
 extern void set_table_function_size_estimates(PlannerInfo *root, RelOptInfo *rel);
 extern void set_rel_width(PlannerInfo *root, RelOptInfo *rel);
 extern void set_values_size_estimates(PlannerInfo *root, RelOptInfo *rel);
+<<<<<<< HEAD
 extern void set_cte_size_estimates(PlannerInfo *root, RelOptInfo *rel, Plan *cteplan);
 
 /* Additional costsize.c prototypes for CDB incremental cost functions. */
@@ -155,6 +159,10 @@ extern Cost incremental_hashjoin_cost(double rows,
 									  List *hashclauses,
 									  PlannerInfo *root);
 extern Cost incremental_mergejoin_cost(double rows, List *mergeclauses, PlannerInfo *root);
+=======
+extern void set_cte_size_estimates(PlannerInfo *root, RelOptInfo *rel,
+								   Plan *cteplan);
+>>>>>>> 38e9348282e
 
 /*
  * prototypes for clausesel.c
@@ -164,14 +172,23 @@ extern Selectivity clauselist_selectivity(PlannerInfo *root,
 					   List *clauses,
 					   int varRelid,
 					   JoinType jointype,
+<<<<<<< HEAD
 					   SpecialJoinInfo *sjinfo,
 					   bool use_damping);
+=======
+					   SpecialJoinInfo *sjinfo);
+>>>>>>> 38e9348282e
 extern Selectivity clause_selectivity(PlannerInfo *root,
 				   Node *clause,
 				   int varRelid,
 				   JoinType jointype,
+<<<<<<< HEAD
 				   SpecialJoinInfo *sjinfo,
 				   bool use_damping);
 extern int planner_segment_count(void);
 extern double global_work_mem(PlannerInfo *root);
+=======
+				   SpecialJoinInfo *sjinfo);
+
+>>>>>>> 38e9348282e
 #endif   /* COST_H */

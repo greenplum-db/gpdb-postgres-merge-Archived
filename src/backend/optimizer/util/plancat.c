@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.148 2008/07/13 20:45:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.152 2008/10/04 21:56:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -994,6 +994,10 @@ build_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
 
 		case RTE_TABLEFUNCTION:
 		case RTE_FUNCTION:
+<<<<<<< HEAD
+=======
+		case RTE_VALUES:
+>>>>>>> 38e9348282e
 		case RTE_CTE:
 			/* Not all of these can have dropped cols, but share code anyway */
 			expandRTE(rte, varno, 0, -1, true /* include dropped */ ,
@@ -1020,6 +1024,7 @@ build_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
 			}
 			break;
 
+<<<<<<< HEAD
 		case RTE_VALUES:
 			expandRTE(rte, varno, 0, -1, false /* dropped not applicable */ ,
 					  NULL, &colvars);
@@ -1035,6 +1040,8 @@ build_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
 			}
 			break;
 
+=======
+>>>>>>> 38e9348282e
 		default:
 			/* caller error */
 			elog(ERROR, "unsupported RTE kind %d in build_physical_tlist",
@@ -1093,7 +1100,8 @@ Selectivity
 join_selectivity(PlannerInfo *root,
 				 Oid operator,
 				 List *args,
-				 JoinType jointype)
+				 JoinType jointype,
+				 SpecialJoinInfo *sjinfo)
 {
 	RegProcedure oprjoin = get_oprjoin(operator);
 	float8		result;
@@ -1105,11 +1113,12 @@ join_selectivity(PlannerInfo *root,
 	if (!oprjoin)
 		return (Selectivity) 0.5;
 
-	result = DatumGetFloat8(OidFunctionCall4(oprjoin,
+	result = DatumGetFloat8(OidFunctionCall5(oprjoin,
 											 PointerGetDatum(root),
 											 ObjectIdGetDatum(operator),
 											 PointerGetDatum(args),
-											 Int16GetDatum(jointype)));
+											 Int16GetDatum(jointype),
+											 PointerGetDatum(sjinfo)));
 
 	if (result < 0.0 || result > 1.0)
 		elog(ERROR, "invalid join selectivity: %f", result);

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.62 2008/03/23 00:54:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.64 2008/12/27 17:39:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,18 +67,23 @@ ExecMaterial(MaterialState *node)
 	estate = node->ss.ps.state;
 	dir = estate->es_direction;
 	forward = ScanDirectionIsForward(dir);
+<<<<<<< HEAD
 
 	ts = node->ts_state->matstore;
 	tsa = (NTupleStoreAccessor *) node->ts_pos;
 
 	ma = (Material *) node->ss.ps.plan;
 	Assert(IsA(ma, Material));
+=======
+	tuplestorestate = node->tuplestorestate;
+>>>>>>> 38e9348282e
 
 	/*
 	 * If first time through, and we need a tuplestore, initialize it.
 	 */
 	if (ts == NULL && (ma->share_type != SHARE_NOTSHARED || node->eflags != 0))
 	{
+<<<<<<< HEAD
 		/*
 		 * For cross slice material, we only run ExecMaterial on DriverSlice
 		 */
@@ -158,6 +163,35 @@ ExecMaterial(MaterialState *node)
 
 		/* for share input, material do not need to return any tuple */
 		if(ma->share_type != SHARE_NOTSHARED)
+=======
+		tuplestorestate = tuplestore_begin_heap(true, false, work_mem);
+		tuplestore_set_eflags(tuplestorestate, node->eflags);
+		if (node->eflags & EXEC_FLAG_MARK)
+		{
+			/*
+			 * Allocate a second read pointer to serve as the mark.
+			 * We know it must have index 1, so needn't store that.
+			 */
+			int		ptrno;
+
+			ptrno = tuplestore_alloc_read_pointer(tuplestorestate,
+												  node->eflags);
+			Assert(ptrno == 1);
+		}
+		node->tuplestorestate = tuplestorestate;
+	}
+
+	/*
+	 * If we are not at the end of the tuplestore, or are going backwards, try
+	 * to fetch a tuple from tuplestore.
+	 */
+	eof_tuplestore = (tuplestorestate == NULL) ||
+		tuplestore_ateof(tuplestorestate);
+
+	if (!forward && eof_tuplestore)
+	{
+		if (!node->eof_underlying)
+>>>>>>> 38e9348282e
 		{
 			Assert(ma->share_type == SHARE_MATERIAL || ma->share_type == SHARE_MATERIAL_XSLICE);
 			/*
@@ -278,6 +312,16 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	matstate->eflags = (eflags & (EXEC_FLAG_REWIND |
 								  EXEC_FLAG_BACKWARD |
 								  EXEC_FLAG_MARK));
+
+	/*
+	 * Tuplestore's interpretation of the flag bits is subtly different from
+	 * the general executor meaning: it doesn't think BACKWARD necessarily
+	 * means "backwards all the way to start".  If told to support BACKWARD we
+	 * must include REWIND in the tuplestore eflags, else tuplestore_trim
+	 * might throw away too much.
+	 */
+	if (eflags & EXEC_FLAG_BACKWARD)
+		matstate->eflags |= EXEC_FLAG_REWIND;
 
 	matstate->eof_underlying = false;
 	matstate->ts_state = palloc0(sizeof(GenericTupStore));
@@ -410,6 +454,7 @@ ExecEndMaterial(MaterialState *node)
 	/*
 	 * Release tuplestore resources for cases where EagerFree doesn't do it
 	 */
+<<<<<<< HEAD
 	if (node->ts_state->matstore != NULL)
 	{
 		Material   *ma = (Material *) node->ss.ps.plan;
@@ -421,6 +466,11 @@ ExecEndMaterial(MaterialState *node)
 
 		DestroyTupleStore(node);
 	}
+=======
+	if (node->tuplestorestate != NULL)
+		tuplestore_end(node->tuplestorestate);
+	node->tuplestorestate = NULL;
+>>>>>>> 38e9348282e
 
 	/*
 	 * shut down the subplan
@@ -456,6 +506,7 @@ ExecMaterialMarkPos(MaterialState *node)
 		return;
 	}
 
+<<<<<<< HEAD
 	Assert(node->ts_pos);
 
 	if(node->ts_markpos == NULL)
@@ -464,6 +515,17 @@ ExecMaterialMarkPos(MaterialState *node)
 	}
 
 	ntuplestore_acc_tell((NTupleStoreAccessor *) node->ts_pos, (NTupleStorePos *) node->ts_markpos);
+=======
+	/*
+	 * copy the active read pointer to the mark.
+	 */
+	tuplestore_copy_read_pointer(node->tuplestorestate, 0, 1);
+
+	/*
+	 * since we may have advanced the mark, try to truncate the tuplestore.
+	 */
+	tuplestore_trim(node->tuplestorestate);
+>>>>>>> 38e9348282e
 }
 
 /* ----------------------------------------------------------------
@@ -531,6 +593,7 @@ ExecChildRescan(MaterialState *node, ExprContext *exprCtxt)
 {
 	Assert(node);
 	/*
+<<<<<<< HEAD
 	 * if parameters of subplan have changed, then subplan will be rescanned by
 	 * first ExecProcNode. Otherwise, we need to rescan subplan here
 	 */
@@ -538,6 +601,11 @@ ExecChildRescan(MaterialState *node, ExprContext *exprCtxt)
 		ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
 
 	node->eof_underlying = false;
+=======
+	 * copy the mark to the active read pointer.
+	 */
+	tuplestore_copy_read_pointer(node->tuplestorestate, 1, 0);
+>>>>>>> 38e9348282e
 }
 
 /* ----------------------------------------------------------------
@@ -583,14 +651,23 @@ ExecMaterialReScan(MaterialState *node, ExprContext *exprCtxt)
 		if (((PlanState *) node)->lefttree->chgParam != NULL ||
 			(node->eflags & EXEC_FLAG_REWIND) == 0)
 		{
+<<<<<<< HEAD
 			DestroyTupleStore(node);
+=======
+			tuplestore_end(node->tuplestorestate);
+			node->tuplestorestate = NULL;
+>>>>>>> 38e9348282e
 			if (((PlanState *) node)->lefttree->chgParam == NULL)
 				ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
 		}
 		else
+<<<<<<< HEAD
 		{
 			ntuplestore_acc_seek_bof((NTupleStoreAccessor *) node->ts_pos);
 		}
+=======
+			tuplestore_rescan(node->tuplestorestate);
+>>>>>>> 38e9348282e
 	}
 	else
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.147 2008/07/21 04:47:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.150 2008/11/14 00:51:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1534,7 +1534,11 @@ array_send(PG_FUNCTION_ARGS)
 
 /*
  * array_ndims :
+<<<<<<< HEAD
  *		  returns the number of dimensions of the array pointed to by "v"
+=======
+ *        returns the number of dimensions of the array pointed to by "v"
+>>>>>>> 38e9348282e
  */
 Datum
 array_ndims(PG_FUNCTION_ARGS)
@@ -4750,6 +4754,7 @@ array_fill_internal(ArrayType *dims, ArrayType *lbs,
 
 /*
  * UNNEST
+<<<<<<< HEAD
  *    function name array_unnest() in Postgres.  Different in GP because we
  * added the function before we merged in the postgres function.
  */
@@ -4766,6 +4771,22 @@ unnest(PG_FUNCTION_ARGS)
 		int16		elmlen;
 		bool		elmbyval;
 		char		elmalign;
+=======
+ */
+Datum
+array_unnest(PG_FUNCTION_ARGS)
+{
+	typedef struct
+	{
+		ArrayType *arr;
+		int		nextelem;
+		int		numelems;
+		char   *elemdataptr;	/* this moves with nextelem */
+		bits8  *arraynullsptr;	/* this does not */
+		int16	elmlen;
+		bool	elmbyval;
+		char	elmalign;
+>>>>>>> 38e9348282e
 	} array_unnest_fctx;
 
 	FuncCallContext *funcctx;
@@ -4775,7 +4796,11 @@ unnest(PG_FUNCTION_ARGS)
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
+<<<<<<< HEAD
 		ArrayType  *arr;
+=======
+		ArrayType  *arr = PG_GETARG_ARRAYTYPE_P(0);
+>>>>>>> 38e9348282e
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -4785,6 +4810,7 @@ unnest(PG_FUNCTION_ARGS)
 		 */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
+<<<<<<< HEAD
 		/*
 		 * Get the array value and detoast if needed.  We can't do this
 		 * earlier because if we have to detoast, we want the detoasted copy
@@ -4798,6 +4824,15 @@ unnest(PG_FUNCTION_ARGS)
 		fctx = (array_unnest_fctx *) palloc(sizeof(array_unnest_fctx));
 
 		/* initialize state */
+=======
+		/* allocate memory for user context */
+		fctx = (array_unnest_fctx *) palloc(sizeof(array_unnest_fctx));
+
+		/*
+		 * Initialize state.  Note we assume that the originally passed
+		 * array will stick around for the whole call series.
+		 */
+>>>>>>> 38e9348282e
 		fctx->arr = arr;
 		fctx->nextelem = 0;
 		fctx->numelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
@@ -4820,8 +4855,13 @@ unnest(PG_FUNCTION_ARGS)
 
 	if (fctx->nextelem < fctx->numelems)
 	{
+<<<<<<< HEAD
 		int			offset = fctx->nextelem++;
 		Datum		elem;
+=======
+		int		offset = fctx->nextelem++;
+		Datum	elem;
+>>>>>>> 38e9348282e
 
 		/*
 		 * Check for NULL array element
@@ -4837,7 +4877,11 @@ unnest(PG_FUNCTION_ARGS)
 			/*
 			 * OK, get the element
 			 */
+<<<<<<< HEAD
 			char	   *ptr = fctx->elemdataptr;
+=======
+			char   *ptr = fctx->elemdataptr;
+>>>>>>> 38e9348282e
 
 			fcinfo->isnull = false;
 			elem = ArrayCast(ptr, fctx->elmbyval, fctx->elmlen);

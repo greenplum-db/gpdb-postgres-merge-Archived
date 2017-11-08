@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.105 2008/06/26 01:35:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.109 2008/12/11 07:34:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,6 +138,7 @@ main(int argc, char *argv[])
 		{"roles-only", no_argument, &roles_only, 1},
 		{"no-tablespaces", no_argument, &no_tablespaces, 1},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
+		{"lock-wait-timeout", required_argument, NULL, 2},
 
 		/* START MPP ADDITION */
 		{"gp-syntax", no_argument, NULL, 1},
@@ -149,7 +150,7 @@ main(int argc, char *argv[])
 
 	int			optindex;
 
-	set_pglocale_pgservice(argv[0], "pg_dump");
+	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_dump"));
 
 	progname = get_progname(argv[0]);
 
@@ -343,6 +344,7 @@ main(int argc, char *argv[])
 			case 0:
 				break;
 
+<<<<<<< HEAD
 				/* START MPP ADDITION */
 			case 1:
 				/* gp-format */
@@ -359,6 +361,13 @@ main(int argc, char *argv[])
 
 				/* END MPP ADDITION */
 
+=======
+			case 2:
+				appendPQExpBuffer(pgdumpopts, " --lock-wait-timeout=");
+				appendPQExpBuffer(pgdumpopts, "%s", optarg);
+				break;
+
+>>>>>>> 38e9348282e
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -565,6 +574,8 @@ help(void)
 	printf(_("  -f, --file=FILENAME      output file name\n"));
 	printf(_("  --help                   show this help, then exit\n"));
 	printf(_("  --version                output version information, then exit\n"));
+	printf(_("  --lock-wait-timeout=TIMEOUT\n"
+			 "                           fail after waiting TIMEOUT for a table lock\n"));
 	printf(_("\nOptions controlling the output content:\n"));
 	printf(_("  -a, --data-only          dump only the data, not the schema\n"));
 	printf(_("  -c, --clean              clean (drop) databases before recreating\n"));
@@ -1432,6 +1443,7 @@ dumpCreateDB(PGconn *conn)
 
 	fprintf(OPF, "--\n-- Database creation\n--\n\n");
 
+<<<<<<< HEAD
 	res = executeQuery(conn,
 					   "SELECT datname, "
 					   "coalesce(rolname, (select rolname from pg_authid where oid=(select datdba from pg_database where datname='template0'))), "
@@ -1440,16 +1452,89 @@ dumpCreateDB(PGconn *conn)
 					   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
 					   "WHERE datallowconn ORDER BY 1");
+=======
+	if (server_version >= 80400)
+		res = executeQuery(conn,
+						   "SELECT datname, "
+						   "coalesce(rolname, (select rolname from pg_authid where oid=(select datdba from pg_database where datname='template0'))), "
+						   "pg_encoding_to_char(d.encoding), "
+						   "datcollate, datctype, "
+						   "datistemplate, datacl, datconnlimit, "
+						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
+			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
+						   "WHERE datallowconn ORDER BY 1");
+	else if (server_version >= 80100)
+		res = executeQuery(conn,
+						   "SELECT datname, "
+						   "coalesce(rolname, (select rolname from pg_authid where oid=(select datdba from pg_database where datname='template0'))), "
+						   "pg_encoding_to_char(d.encoding), "
+						   "null::text AS datcollate, null::text AS datctype, "
+						   "datistemplate, datacl, datconnlimit, "
+						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
+			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
+						   "WHERE datallowconn ORDER BY 1");
+	else if (server_version >= 80000)
+		res = executeQuery(conn,
+						   "SELECT datname, "
+						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
+						   "pg_encoding_to_char(d.encoding), "
+						   "null::text AS datcollate, null::text AS datctype, "
+						   "datistemplate, datacl, -1 as datconnlimit, "
+						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
+		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
+						   "WHERE datallowconn ORDER BY 1");
+	else if (server_version >= 70300)
+		res = executeQuery(conn,
+						   "SELECT datname, "
+						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
+						   "pg_encoding_to_char(d.encoding), "
+						   "null::text AS datcollate, null::text AS datctype, "
+						   "datistemplate, datacl, -1 as datconnlimit, "
+						   "'pg_default' AS dattablespace "
+		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
+						   "WHERE datallowconn ORDER BY 1");
+	else if (server_version >= 70100)
+		res = executeQuery(conn,
+						   "SELECT datname, "
+						   "coalesce("
+					"(select usename from pg_shadow where usesysid=datdba), "
+						   "(select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
+						   "pg_encoding_to_char(d.encoding), "
+						   "null::text AS datcollate, null::text AS datctype, "
+						   "datistemplate, '' as datacl, -1 as datconnlimit, "
+						   "'pg_default' AS dattablespace "
+						   "FROM pg_database d "
+						   "WHERE datallowconn ORDER BY 1");
+	else
+	{
+		/*
+		 * Note: 7.0 fails to cope with sub-select in COALESCE, so just deal
+		 * with getting a NULL by not printing any OWNER clause.
+		 */
+		res = executeQuery(conn,
+						   "SELECT datname, "
+					"(select usename from pg_shadow where usesysid=datdba), "
+						   "pg_encoding_to_char(d.encoding), "
+						   "null::text AS datcollate, null::text AS datctype, "
+						   "'f' as datistemplate, "
+						   "'' as datacl, -1 as datconnlimit, "
+						   "'pg_default' AS dattablespace "
+						   "FROM pg_database d "
+						   "ORDER BY 1");
+	}
+>>>>>>> 38e9348282e
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
 		char	   *dbname = PQgetvalue(res, i, 0);
 		char	   *dbowner = PQgetvalue(res, i, 1);
 		char	   *dbencoding = PQgetvalue(res, i, 2);
-		char	   *dbistemplate = PQgetvalue(res, i, 3);
-		char	   *dbacl = PQgetvalue(res, i, 4);
-		char	   *dbconnlimit = PQgetvalue(res, i, 5);
-		char	   *dbtablespace = PQgetvalue(res, i, 6);
+		char	   *dbcollate = PQgetvalue(res, i, 3);
+		char	   *dbctype = PQgetvalue(res, i, 4);
+		char	   *dbistemplate = PQgetvalue(res, i, 5);
+		char	   *dbacl = PQgetvalue(res, i, 6);
+		char	   *dbconnlimit = PQgetvalue(res, i, 7);
+		char	   *dbtablespace = PQgetvalue(res, i, 8);
 		char	   *fdbname;
 
 		fdbname = strdup(fmtId(dbname));
@@ -1476,6 +1561,18 @@ dumpCreateDB(PGconn *conn)
 
 			appendPQExpBuffer(buf, " ENCODING = ");
 			appendStringLiteralConn(buf, dbencoding, conn);
+
+			if (strlen(dbcollate) != 0)
+			{
+				appendPQExpBuffer(buf, " COLLATE = ");
+				appendStringLiteralConn(buf, dbcollate, conn);
+			}
+
+			if (strlen(dbctype) != 0)
+			{
+				appendPQExpBuffer(buf, " CTYPE = ");
+				appendStringLiteralConn(buf, dbctype, conn);
+			}
 
 			/*
 			 * Output tablespace if it isn't the default.  For default, it

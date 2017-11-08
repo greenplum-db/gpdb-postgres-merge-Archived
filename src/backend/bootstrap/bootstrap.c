@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.244 2008/06/24 17:58:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.247 2008/11/02 01:45:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,6 @@
 #include "replication/walreceiver.h"
 #include "storage/bufpage.h"
 #include "storage/bufmgr.h"
-#include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
@@ -458,6 +457,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			proc_exit(1);		/* should never return */
 
 		case StartupProcess:
+<<<<<<< HEAD
 			/* don't set signals, startup process has its own agenda */
 			StartupProcessMain(1);
 			proc_exit(1);		/* should never return */
@@ -476,6 +476,12 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			/* don't set signals, startup process has its own agenda */
 			StartupProcessMain(4);
 			proc_exit(1);		/* should never return */
+=======
+			bootstrap_signals();
+			StartupXLOG();
+			BuildFlatFiles(false);
+			proc_exit(0);		/* startup done */
+>>>>>>> 38e9348282e
 
 		case BgWriterProcess:
 			/* don't set signals, bgwriter has its own agenda */

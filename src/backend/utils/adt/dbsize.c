@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.19 2008/06/19 00:46:05 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.22 2008/10/06 14:13:17 heikki Exp $
  *
  */
 
@@ -385,14 +385,22 @@ pg_tablespace_size_name(PG_FUNCTION_ARGS)
  * database.  So we handle all cases, instead. 
  */
 static int64
+<<<<<<< HEAD
 calculate_relation_size(Relation rel)
+=======
+calculate_relation_size(RelFileNode *rfn, ForkNumber forknum)
+>>>>>>> 38e9348282e
 {
 	int64		totalsize = 0;
 	char	   *relationpath;
 	char		pathname[MAXPGPATH];
 
+<<<<<<< HEAD
     struct stat fst;
     int i;
+=======
+	relationpath = relpath(*rfn, forknum);
+>>>>>>> 38e9348282e
 
 	relationpath = relpath(rel->rd_node);
 
@@ -434,9 +442,10 @@ calculate_relation_size(Relation rel)
 
 
 Datum
-pg_relation_size_oid(PG_FUNCTION_ARGS)
+pg_relation_size(PG_FUNCTION_ARGS)
 {
 	Oid			relOid = PG_GETARG_OID(0);
+	text	   *forkName = PG_GETARG_TEXT_P(1);
 	Relation	rel;
 	int64		size = 0;
 	
@@ -471,6 +480,7 @@ pg_relation_size_oid(PG_FUNCTION_ARGS)
 		char *schemaName;
 		char *relName;
 
+<<<<<<< HEAD
 		schemaName = get_namespace_name(get_rel_namespace(relOid));
 		if (schemaName == NULL)
 		{
@@ -571,6 +581,10 @@ pg_relation_size_name(PG_FUNCTION_ARGS)
 
 		size += get_size_from_segDBs(buffer.data);
 	}
+=======
+	size = calculate_relation_size(&(rel->rd_node),
+							   forkname_to_number(text_to_cstring(forkName)));
+>>>>>>> 38e9348282e
 
 	relation_close(rel, AccessShareLock);
 
@@ -590,6 +604,7 @@ calculate_total_relation_size(Oid Relid)
 	Oid			toastOid;
 	int64		size;
 	ListCell   *cell;
+	ForkNumber	forkNum;
 
 	heapRel = try_relation_open(Relid, AccessShareLock, false);
 
@@ -599,10 +614,16 @@ calculate_total_relation_size(Oid Relid)
 	toastOid = heapRel->rd_rel->reltoastrelid;
 	
 	/* Get the heap size */
+<<<<<<< HEAD
 	if (Relid == 0 || heapRel->rd_node.relNode == 0)
 		size = 0;
 	else
 		size = calculate_relation_size(heapRel); 
+=======
+	size = 0;
+	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
+		size += calculate_relation_size(&(heapRel->rd_node), forkNum);
+>>>>>>> 38e9348282e
 
 	/* Include any dependent indexes */
 	if (heapRel->rd_rel->relhasindex)
@@ -616,9 +637,14 @@ calculate_total_relation_size(Oid Relid)
 
 			iRel = try_relation_open(idxOid, AccessShareLock, false);
 
+<<<<<<< HEAD
 			if (RelationIsValid(iRel))
 			{
 				size += calculate_relation_size(iRel); 
+=======
+			for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
+				size += calculate_relation_size(&(iRel->rd_node), forkNum);
+>>>>>>> 38e9348282e
 
 				relation_close(iRel, AccessShareLock);
 			}
@@ -653,7 +679,7 @@ calculate_total_relation_size(Oid Relid)
 }
 
 Datum
-pg_total_relation_size_oid(PG_FUNCTION_ARGS)
+pg_total_relation_size(PG_FUNCTION_ARGS)
 {
 	int64		size = 0;
 	Oid			relOid = PG_GETARG_OID(0);
@@ -696,6 +722,7 @@ pg_total_relation_size_oid(PG_FUNCTION_ARGS)
 	PG_RETURN_INT64(size);
 }
 
+<<<<<<< HEAD
 Datum
 pg_total_relation_size_name(PG_FUNCTION_ARGS)
 {
@@ -744,6 +771,8 @@ pg_total_relation_size_name(PG_FUNCTION_ARGS)
 	PG_RETURN_INT64(size);
 }
 
+=======
+>>>>>>> 38e9348282e
 /*
  * formatting with size units
  */

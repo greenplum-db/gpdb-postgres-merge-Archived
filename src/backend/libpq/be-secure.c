@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.84 2008/03/31 02:43:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.88 2008/12/14 19:39:37 mha Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -443,8 +443,14 @@ wloop:
  * the bulk of openssl runs, because it uses malloc() and possibly other
  * non-reentrant libc facilities. We also need to call send() and recv()
  * directly so it gets passed through the socket/signals layer on Win32.
+<<<<<<< HEAD
  *
  * They are closely modelled on the original socket implementations in OpenSSL.
+=======
+ *
+ * They are closely modelled on the original socket implementations in OpenSSL.
+ *
+>>>>>>> 38e9348282e
  */
 
 static bool my_bio_initialized = false;
@@ -457,7 +463,11 @@ my_sock_read(BIO *h, char *buf, int size)
 
 	prepare_for_client_read();
 
+<<<<<<< HEAD
  	if (buf != NULL)
+=======
+	if (buf != NULL)
+>>>>>>> 38e9348282e
 	{
 		res = recv(h->num, buf, size, 0);
 		BIO_clear_retry_flags(h);
@@ -481,8 +491,11 @@ my_sock_write(BIO *h, const char *buf, int size)
 {
 	int			res = 0;
 
+<<<<<<< HEAD
 	prepare_for_client_write();
 
+=======
+>>>>>>> 38e9348282e
 	res = send(h->num, buf, size, 0);
 	if (res <= 0)
 	{
@@ -492,8 +505,11 @@ my_sock_write(BIO *h, const char *buf, int size)
 		}
 	}
 
+<<<<<<< HEAD
 	client_write_ended();
 
+=======
+>>>>>>> 38e9348282e
 	return res;
 }
 
@@ -835,6 +851,7 @@ initialize_SSL(void)
 		elog(FATAL, "could not set the cipher list (no valid ciphers available)");
 
 	/*
+<<<<<<< HEAD
 	 * Attempt to load CA store, so we can verify client certificates if
 	 * needed.
 	 */
@@ -849,10 +866,26 @@ initialize_SSL(void)
 		 * error.
 	 */
 		if (errno != ENOENT)
+=======
+	 * Attempt to load CA store, so we can verify client certificates if needed.
+	 */
+	if (access(ROOT_CERT_FILE, R_OK))
+	{
+		ssl_loaded_verify_locations = false;
+
+		/*
+		 * If root certificate file simply not found. Don't log an error here, because
+		 * it's quite likely the user isn't planning on using client certificates.
+		 * If we can't access it for other reasons, it is an error.
+		 */
+		if (errno != ENOENT)
+		{
+>>>>>>> 38e9348282e
 			ereport(FATAL,
 					(errmsg("could not access root certificate file \"%s\": %m",
 							ROOT_CERT_FILE)));
 		}
+<<<<<<< HEAD
 	else if (SSL_CTX_load_verify_locations(SSL_context, ROOT_CERT_FILE, NULL) != 1 ||
 		  (root_cert_list = SSL_load_client_CA_file(ROOT_CERT_FILE)) == NULL)
 	{
@@ -860,6 +893,16 @@ initialize_SSL(void)
 		 * File was there, but we could not load it. This means the file is
 		 * somehow broken, and we cannot do verification at all - so fail.
 		 */
+=======
+	}
+	else if (!SSL_CTX_load_verify_locations(SSL_context, ROOT_CERT_FILE, NULL))
+	{
+		/*
+		 * File was there, but we could not load it. This means the file is somehow
+		 * broken, and we cannot do verification at all - so abort here.
+		 */
+		ssl_loaded_verify_locations = false;
+>>>>>>> 38e9348282e
 		ereport(FATAL,
 				(errmsg("could not load root certificate file \"%s\": %s",
 						ROOT_CERT_FILE, SSLerrmessage())));
@@ -895,6 +938,7 @@ initialize_SSL(void)
 				ereport(LOG,
 						(errmsg("SSL certificate revocation list file \"%s\" not found, skipping: %s",
 								ROOT_CRL_FILE, SSLerrmessage()),
+<<<<<<< HEAD
 					 errdetail("Certificates will not be checked against revocation list.")));
 		}
 
@@ -918,6 +962,22 @@ initialize_SSL(void)
 		 * appropriate client certificate to send to us.
 		 */
 		SSL_CTX_set_client_CA_list(SSL_context, root_cert_list);
+=======
+						 errdetail("Certificates will not be checked against revocation list.")));
+			}
+
+			/*
+			 * Always ask for SSL client cert, but don't fail if it's not presented. We'll fail later in this case,
+			 * based on what we find in pg_hba.conf.
+			 */
+			SSL_CTX_set_verify(SSL_context,
+							   (SSL_VERIFY_PEER |
+								SSL_VERIFY_CLIENT_ONCE),
+							   verify_cb);
+
+			ssl_loaded_verify_locations = true;
+		}
+>>>>>>> 38e9348282e
 	}
 }
 

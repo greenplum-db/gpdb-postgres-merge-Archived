@@ -28,7 +28,11 @@ int main() {
        
   
 #line 9 "fetch.pgc"
+<<<<<<< HEAD
  char str [ 25 ] ;
+=======
+ char  str  [ 25 ]   ;
+>>>>>>> 38e9348282e
  
 #line 10 "fetch.pgc"
  int i , count = 1 ;
@@ -162,11 +166,19 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
   printf("%d: %s\n", i, str);
 
+<<<<<<< HEAD
   /* declare D cursor for select * from My_Table where Item1 = $1 */
 #line 42 "fetch.pgc"
 
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare D cursor for select * from My_Table where Item1 = $1", 
+=======
+  /* declare D  cursor  for select  *  from My_Table where Item1 = $1    */
+#line 42 "fetch.pgc"
+
+
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare D  cursor  for select  *  from My_Table where Item1 = $1   ", 
+>>>>>>> 38e9348282e
 	ECPGt_const,"1",(long)1,(long)1,strlen("1"), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 44 "fetch.pgc"
@@ -176,6 +188,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 44 "fetch.pgc"
+<<<<<<< HEAD
 
 
   /* exec sql whenever not found  break ; */
@@ -217,6 +230,49 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 #line 53 "fetch.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
+=======
+
+
+  /* exec sql whenever not found  break ; */
+#line 46 "fetch.pgc"
+
+  while (1) {
+  	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch 1 in D", ECPGt_EOIT, 
+	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
+	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
+	ECPGt_char,(str),(long)25,(long)1,(25)*sizeof(char), 
+	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
+#line 48 "fetch.pgc"
+
+if (sqlca.sqlcode == ECPG_NOT_FOUND) break;
+#line 48 "fetch.pgc"
+
+if (sqlca.sqlwarn[0] == 'W') sqlprint();
+#line 48 "fetch.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 48 "fetch.pgc"
+
+	printf("%d: %s\n", i, str);
+  }
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "close D", ECPGt_EOIT, ECPGt_EORT);
+#line 51 "fetch.pgc"
+
+if (sqlca.sqlwarn[0] == 'W') sqlprint();
+#line 51 "fetch.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 51 "fetch.pgc"
+
+
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table My_Table ", ECPGt_EOIT, ECPGt_EORT);
+#line 53 "fetch.pgc"
+
+if (sqlca.sqlwarn[0] == 'W') sqlprint();
+#line 53 "fetch.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint();}
+>>>>>>> 38e9348282e
 #line 53 "fetch.pgc"
 
 

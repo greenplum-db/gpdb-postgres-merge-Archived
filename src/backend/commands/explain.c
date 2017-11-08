@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.176 2008/08/07 03:04:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.181 2008/11/19 01:10:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -292,7 +292,7 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, const char *queryString,
 		PlannedStmt *plan;
 
 		/* plan the query */
-		plan = planner(query, 0, params);
+		plan = pg_plan_query(query, 0, params);
 
 		/* run it (if needed) and produce output */
 		ExplainOnePlan(plan, params, stmt, queryString, tstate);
@@ -373,7 +373,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 	QueryDesc  *queryDesc;
 	instr_time	starttime;
 	double		totaltime = 0;
-	ExplainState *es;
 	StringInfoData buf;
 	EState     *estate = NULL;
 	int			eflags;
@@ -506,6 +505,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
                                      es->showstatctx);
 	}
 
+<<<<<<< HEAD
 	es->printTList = stmt->verbose;
 	es->printAnalyze = stmt->analyze;
 	es->pstmt = queryDesc->plannedstmt;
@@ -579,6 +579,11 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
         buf.data[Min(buf.len, buf.maxlen-1)] = '\0';
     }
     PG_END_TRY();
+=======
+	/* Create textual dump of plan tree */
+	initStringInfo(&buf);
+	ExplainPrintPlan(&buf, queryDesc, stmt->analyze, stmt->verbose);
+>>>>>>> 38e9348282e
 
 	/*
 	 * If we ran the command, run any AFTER triggers it queued.  (Note this
@@ -586,8 +591,20 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 	 * transaction, we can't measure them.)  Include into total runtime.
      * Skip triggers if there has been an error.
 	 */
+<<<<<<< HEAD
 	if (es->printAnalyze &&
         !es->deferredError)
+=======
+	if (stmt->analyze)
+	{
+		INSTR_TIME_SET_CURRENT(starttime);
+		AfterTriggerEndQuery(queryDesc->estate);
+		totaltime += elapsed_time(&starttime);
+	}
+
+	/* Print info about runtime of triggers */
+	if (stmt->analyze)
+>>>>>>> 38e9348282e
 	{
 		ResultRelInfo *rInfo;
 		bool		show_relname;
@@ -657,6 +674,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
         do_text_output_multiline(tstate, buf.data);
 
 	pfree(buf.data);
+<<<<<<< HEAD
 
     /*
 	 * Close down the query and free resources.
@@ -706,6 +724,37 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 	if (stmt->analyze)
 		CommandCounterIncrement();
 }                               /* ExplainOnePlan_internal */
+=======
+}
+
+/*
+ * ExplainPrintPlan -
+ *	  convert a QueryDesc's plan tree to text and append it to 'str'
+ *
+ * 'analyze' means to include runtime instrumentation results
+ * 'verbose' means a verbose printout (currently, it shows targetlists)
+ *
+ * NB: will not work on utility statements
+ */
+void
+ExplainPrintPlan(StringInfo str, QueryDesc *queryDesc,
+				 bool analyze, bool verbose)
+{
+	ExplainState	es;
+
+	Assert(queryDesc->plannedstmt != NULL);
+
+	memset(&es, 0, sizeof(es));
+	es.printTList = verbose;
+	es.printAnalyze = analyze;
+	es.pstmt = queryDesc->plannedstmt;
+	es.rtable = queryDesc->plannedstmt->rtable;
+
+	explain_outNode(str,
+					queryDesc->plannedstmt->planTree, queryDesc->planstate,
+					NULL, 0, &es);
+}
+>>>>>>> 38e9348282e
 
 /*
  * report_triggers -
@@ -907,9 +956,12 @@ explain_outNode(StringInfo str,
 		case T_RecursiveUnion:
 			pname = "Recursive Union";
 			break;
+<<<<<<< HEAD
 		case T_Sequence:
 			pname = "Sequence";
 			break;
+=======
+>>>>>>> 38e9348282e
 		case T_BitmapAnd:
 			pname = "BitmapAnd";
 			break;
@@ -942,9 +994,12 @@ explain_outNode(StringInfo str,
 					break;
 				case JOIN_ANTI:
 					pname = "Nested Loop Anti Join";
+<<<<<<< HEAD
 					break;
 				case JOIN_LASJ_NOTIN:
 					pname = "Nested Loop Left Anti Semi Join (Not-In)";
+=======
+>>>>>>> 38e9348282e
 					break;
 				default:
 					pname = "Nested Loop ??? Join";
@@ -971,9 +1026,12 @@ explain_outNode(StringInfo str,
 					break;
 				case JOIN_ANTI:
 					pname = "Merge Anti Join";
+<<<<<<< HEAD
 					break;
 				case JOIN_LASJ_NOTIN:
 					pname = "Merge Left Anti Semi Join (Not-In)";
+=======
+>>>>>>> 38e9348282e
 					break;
 				default:
 					pname = "Merge ??? Join";
@@ -1000,9 +1058,12 @@ explain_outNode(StringInfo str,
 					break;
 				case JOIN_ANTI:
 					pname = "Hash Anti Join";
+<<<<<<< HEAD
 					break;
 				case JOIN_LASJ_NOTIN:
 					pname = "Hash Left Anti Semi Join (Not-In)";
+=======
+>>>>>>> 38e9348282e
 					break;
 				default:
 					pname = "Hash ??? Join";
@@ -1066,6 +1127,7 @@ explain_outNode(StringInfo str,
 		case T_WorkTableScan:
 			pname = "WorkTable Scan";
 			break;
+<<<<<<< HEAD
 		case T_ShareInputScan:
 			{
 				ShareInputScan *sisc = (ShareInputScan *) plan;
@@ -1074,6 +1136,8 @@ explain_outNode(StringInfo str,
 				pname = "";
 			}
 			break;
+=======
+>>>>>>> 38e9348282e
 		case T_Material:
 			pname = "Materialize";
 			break;
@@ -1419,6 +1483,7 @@ explain_outNode(StringInfo str,
 									 quote_identifier(rte->eref->aliasname));
 			}
 			break;
+<<<<<<< HEAD
 		case T_PartitionSelector:
 			{
 				PartitionSelector *ps = (PartitionSelector *)plan;
@@ -1430,6 +1495,8 @@ explain_outNode(StringInfo str,
 				}
 			}
 			break;
+=======
+>>>>>>> 38e9348282e
 		default:
 			break;
 	}
@@ -1483,6 +1550,7 @@ explain_outNode(StringInfo str,
 		case T_BitmapAppendOnlyScan:
 		case T_BitmapTableScan:
 			/* XXX do we want to show this in production? */
+<<<<<<< HEAD
 			if (nodeTag(plan) == T_BitmapHeapScan)
 			{
 				show_scan_qual(((BitmapHeapScan *) plan)->bitmapqualorig,
@@ -1507,6 +1575,13 @@ explain_outNode(StringInfo str,
 							   plan, outer_plan,
 							   str, indent, es);
 			}
+=======
+			show_scan_qual(((BitmapHeapScan *) plan)->bitmapqualorig,
+						   "Recheck Cond",
+						   ((Scan *) plan)->scanrelid,
+						   plan, outer_plan,
+						   str, indent, es);
+>>>>>>> 38e9348282e
 			/* FALL THRU */
 		case T_SeqScan:
 		case T_ExternalScan:
@@ -1971,6 +2046,9 @@ show_plan_tlist(Plan *plan,
 		return;
 	/* The tlist of an Append isn't real helpful, so suppress it */
 	if (IsA(plan, Append))
+		return;
+	/* Likewise for RecursiveUnion */
+	if (IsA(plan, RecursiveUnion))
 		return;
 
 	/* Set up deparsing context */

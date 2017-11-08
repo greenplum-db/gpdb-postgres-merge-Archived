@@ -25,7 +25,11 @@
 int main() {
   
 #line 8 "func.pgc"
+<<<<<<< HEAD
  char text [ 25 ] ;
+=======
+ char  text  [ 25 ]   ;
+>>>>>>> 38e9348282e
 
 #line 8 "func.pgc"
 
@@ -64,11 +68,15 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 18 "func.pgc"
 
 
+<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create function My_Table_Check ( ) returns trigger as $test$\
+=======
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  function My_Table_Check ( ) returns trigger   as $test$\
+>>>>>>> 38e9348282e
     BEGIN\
 	INSERT INTO Log VALUES(TG_NAME, TG_WHEN);\
 	RETURN NEW;\
-    END; $test$ language plpgsql", ECPGt_EOIT, ECPGt_EORT);
+    END; $test$ language plpgsql ", ECPGt_EOIT, ECPGt_EORT);
 #line 26 "func.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -128,7 +136,11 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 39 "func.pgc"
 
+<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop function My_Table_Check ( )", ECPGt_EOIT, ECPGt_EORT);
+=======
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop function My_Table_Check ( ) ", ECPGt_EOIT, ECPGt_EORT);
+>>>>>>> 38e9348282e
 #line 40 "func.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();

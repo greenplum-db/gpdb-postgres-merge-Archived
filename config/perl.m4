@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # config/perl.m4
+=======
+# $PostgreSQL: pgsql/config/perl.m4,v 1.4 2008/11/12 00:00:05 adunstan Exp $
+>>>>>>> 38e9348282e
 
 
 # PGAC_PATH_PERL

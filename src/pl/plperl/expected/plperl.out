@@ -135,8 +135,12 @@ CREATE OR REPLACE FUNCTION perl_set() RETURNS SETOF testrowperl AS $$
     ];
 $$  LANGUAGE plperl;
 SELECT perl_set();
+<<<<<<< HEAD
 ERROR:  SETOF-composite-returning PL/Perl function must call return_next with reference to hash
 CONTEXT:  PL/Perl function "perl_set"
+=======
+ERROR:  setof-composite-returning Perl function must call return_next with reference to hash
+>>>>>>> 38e9348282e
 SELECT * FROM perl_set();
 ERROR:  SETOF-composite-returning PL/Perl function must call return_next with reference to hash
 CONTEXT:  PL/Perl function "perl_set"
@@ -152,6 +156,7 @@ CREATE OR REPLACE FUNCTION perl_set() RETURNS SETOF testrowperl AS $$
     ];
 $$  LANGUAGE plperl;
 SELECT perl_set();
+<<<<<<< HEAD
          perl_set          
 ---------------------------
  (1,Hello,World,)
@@ -162,6 +167,14 @@ SELECT perl_set();
  (6,Hello,PL/Perl,"({1})")
  (7,Hello,PL/Perl,"({1})")
 (7 rows)
+=======
+       perl_set       
+----------------------
+ (1,Hello,World)
+ (2,Hello,PostgreSQL)
+ (3,Hello,PL/Perl)
+(3 rows)
+>>>>>>> 38e9348282e
 
 SELECT * FROM perl_set();
  f1 |  f2   |     f3     |  f4   
@@ -188,10 +201,17 @@ SELECT * FROM perl_record();
 ERROR:  a column definition list is required for functions returning "record"
 LINE 1: SELECT * FROM perl_record();
                       ^
+<<<<<<< HEAD
 SELECT * FROM perl_record() AS (f1 integer, f2 text, f3 text, f4 testnestperl);
  f1 | f2 | f3 | f4 
 ----+----+----+----
     |    |    | 
+=======
+SELECT * FROM perl_record() AS (f1 integer, f2 text, f3 text);
+ f1 | f2 | f3 
+----+----+----
+    |    | 
+>>>>>>> 38e9348282e
 (1 row)
 
 CREATE OR REPLACE FUNCTION perl_record() RETURNS record AS $$
@@ -204,10 +224,17 @@ SELECT * FROM perl_record();
 ERROR:  a column definition list is required for functions returning "record"
 LINE 1: SELECT * FROM perl_record();
                       ^
+<<<<<<< HEAD
 SELECT * FROM perl_record() AS (f1 integer, f2 text, f3 text, f4 testnestperl);
  f1 |  f2   |  f3   |  f4   
 ----+-------+-------+-------
   1 | hello | world | ({1})
+=======
+SELECT * FROM perl_record() AS (f1 integer, f2 text, f3 text);
+ f1 |  f2   |  f3   
+----+-------+-------
+  1 | hello | world
+>>>>>>> 38e9348282e
 (1 row)
 
 CREATE OR REPLACE FUNCTION perl_record_set() RETURNS SETOF record AS $$

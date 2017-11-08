@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.77 2008/06/19 00:46:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.80 2008/12/03 13:05:22 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,8 +65,10 @@
 #include "cdb/cdbpersistenttablespace.h"
 #include "cdb/cdbvars.h"
 
-#define OIDCHARS	10			/* max chars printed by %u */
+#define OIDCHARS		10			/* max chars printed by %u */
+#define FORKNAMECHARS	4			/* max chars for a fork name */
 
+<<<<<<< HEAD
 static char *
 GetFilespacePathForTablespace(Oid tablespaceOid)
 {
@@ -122,6 +124,38 @@ GetFilespacePathForTablespace(Oid tablespaceOid)
 	Assert(primary_path != NULL);
 
 	return primary_path;
+=======
+/*
+ * Lookup table of fork name by fork number.
+ *
+ * If you add a new entry, remember to update the errhint below, and the
+ * documentation for pg_relation_size(). Also keep FORKNAMECHARS above
+ * up-to-date.
+ */
+const char *forkNames[] = {
+	"main", /* MAIN_FORKNUM */
+	"fsm",   /* FSM_FORKNUM */
+	"vm"   /* VISIBILITYMAP_FORKNUM */
+};
+
+/*
+ * forkname_to_number - look up fork number by name
+ */
+ForkNumber
+forkname_to_number(char *forkName)
+{
+	ForkNumber forkNum;
+
+	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
+		if (strcmp(forkNames[forkNum], forkName) == 0)
+			return forkNum;
+
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("invalid fork name"),
+			 errhint("Valid fork names are 'main' and 'fsm'")));
+	return InvalidForkNumber; /* keep compiler quiet */
+>>>>>>> 38e9348282e
 }
 
 /*
@@ -130,7 +164,7 @@ GetFilespacePathForTablespace(Oid tablespaceOid)
  * Result is a palloc'd string.
  */
 char *
-relpath(RelFileNode rnode)
+relpath(RelFileNode rnode, ForkNumber forknum)
 {
 	int			pathlen;
 	char	   *path;
@@ -140,24 +174,40 @@ relpath(RelFileNode rnode)
 	{
 		/* Shared system relations live in {datadir}/global */
 		Assert(rnode.dbNode == 0);
-		pathlen = 7 + OIDCHARS + 1;
+		pathlen = 7 + OIDCHARS + 1 + FORKNAMECHARS + 1;
 		path = (char *) palloc(pathlen);
+<<<<<<< HEAD
 		snprintfResult =
 			snprintf(path, pathlen, "global/%u",
 					 rnode.relNode);
 		
+=======
+		if (forknum != MAIN_FORKNUM)
+			snprintf(path, pathlen, "global/%u_%s",
+					 rnode.relNode, forkNames[forknum]);
+		else
+			snprintf(path, pathlen, "global/%u", rnode.relNode);
+>>>>>>> 38e9348282e
 	}
 	else if (rnode.spcNode == DEFAULTTABLESPACE_OID)
 	{
 		/* The default tablespace is {datadir}/base */
-		pathlen = 5 + OIDCHARS + 1 + OIDCHARS + 1;
+		pathlen = 5 + OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1;
 		path = (char *) palloc(pathlen);
+<<<<<<< HEAD
 		snprintfResult =
+=======
+		if (forknum != MAIN_FORKNUM)
+			snprintf(path, pathlen, "base/%u/%u_%s",
+					 rnode.dbNode, rnode.relNode, forkNames[forknum]);
+		else
+>>>>>>> 38e9348282e
 			snprintf(path, pathlen, "base/%u/%u",
 					 rnode.dbNode, rnode.relNode);
 	}
 	else
 	{
+<<<<<<< HEAD
 		char *primary_path;
 
 		/* All other tablespaces are accessed via filespace locations */
@@ -175,6 +225,19 @@ relpath(RelFileNode rnode)
 
 		/* Throw away the allocation we got from persistent layer */
 		pfree(primary_path);
+=======
+		/* All other tablespaces are accessed via symlinks */
+		pathlen = 10 + OIDCHARS + 1 + OIDCHARS + 1 + OIDCHARS + 1
+			+ FORKNAMECHARS + 1;
+		path = (char *) palloc(pathlen);
+		if (forknum != MAIN_FORKNUM)
+			snprintf(path, pathlen, "pg_tblspc/%u/%u/%u_%s",
+					 rnode.spcNode, rnode.dbNode, rnode.relNode,
+					 forkNames[forknum]);
+		else
+			snprintf(path, pathlen, "pg_tblspc/%u/%u/%u",
+					 rnode.spcNode, rnode.dbNode, rnode.relNode);
+>>>>>>> 38e9348282e
 	}
 	
 	Assert(snprintfResult >= 0);
@@ -961,7 +1024,7 @@ GetNewRelFileNode(Oid reltablespace, bool relisshared)
 			continue;
 
 		/* Check for existing file of same name */
-		rpath = relpath(rnode);
+		rpath = relpath(rnode, MAIN_FORKNUM);
 		fd = BasicOpenFile(rpath, O_RDONLY | PG_BINARY, 0);
 
 		if (fd >= 0)

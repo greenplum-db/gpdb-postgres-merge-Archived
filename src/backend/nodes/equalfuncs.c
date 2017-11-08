@@ -16,6 +16,10 @@
  * NOTE: it is intentional that parse location fields (in nodes that have
  * one) are not compared.  This is because we want, for example, a variable
  * "x" to be considered equal() to another reference to "x" in the query.
+<<<<<<< HEAD
+=======
+ *
+>>>>>>> 38e9348282e
  *
  *
  * Portions Copyright (c) 2005-2010, Greenplum inc
@@ -24,7 +28,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.326 2008/08/07 01:11:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.341 2008/12/19 16:25:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,6 +86,7 @@
 			return false; \
 	} while (0)
 
+<<<<<<< HEAD
 /*
  * Compare a field that is a varlena datum to the other.
  * Note the result will be false if one is toasted and the other is untoasted.
@@ -99,6 +104,8 @@
 		} \
 	} while (0)
 
+=======
+>>>>>>> 38e9348282e
 /* Compare a parse location field (this is a no-op, per note above) */
 #define COMPARE_LOCATION_FIELD(fldname) \
 	((void) 0)
@@ -163,6 +170,7 @@ _equalVar(Var *a, Var *b)
 	COMPARE_SCALAR_FIELD(varlevelsup);
 	COMPARE_SCALAR_FIELD(varnoold);
 	COMPARE_SCALAR_FIELD(varoattno);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -175,6 +183,7 @@ _equalConst(Const *a, Const *b)
 	COMPARE_SCALAR_FIELD(constlen);
 	COMPARE_SCALAR_FIELD(constisnull);
 	COMPARE_SCALAR_FIELD(constbyval);
+	COMPARE_LOCATION_FIELD(location);
 
 	/*
 	 * We treat all NULL constants of the same type as equal. Someday this
@@ -193,6 +202,7 @@ _equalParam(Param *a, Param *b)
 	COMPARE_SCALAR_FIELD(paramid);
 	COMPARE_SCALAR_FIELD(paramtype);
 	COMPARE_SCALAR_FIELD(paramtypmod);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -205,6 +215,7 @@ _equalAggref(Aggref *a, Aggref *b)
 	COMPARE_NODE_FIELD(args);
 	COMPARE_NODE_FIELD(aggorder);
 	COMPARE_SCALAR_FIELD(aggdistinct);
+<<<<<<< HEAD
 	COMPARE_NODE_FIELD(aggfilter);
 	COMPARE_SCALAR_FIELD(aggstar);
 	COMPARE_SCALAR_FIELD(aggstage);
@@ -237,6 +248,8 @@ _equalWindowFunc(WindowFunc *a, WindowFunc *b)
 	COMPARE_SCALAR_FIELD(windistinct);
 	COMPARE_SCALAR_FIELD(winindex);
 	COMPARE_SCALAR_FIELD(winstage);
+=======
+>>>>>>> 38e9348282e
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -273,6 +286,7 @@ _equalFuncExpr(FuncExpr *a, FuncExpr *b)
 		return false;
 
 	COMPARE_NODE_FIELD(args);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -296,6 +310,7 @@ _equalOpExpr(OpExpr *a, OpExpr *b)
 	COMPARE_SCALAR_FIELD(opresulttype);
 	COMPARE_SCALAR_FIELD(opretset);
 	COMPARE_NODE_FIELD(args);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -319,6 +334,7 @@ _equalDistinctExpr(DistinctExpr *a, DistinctExpr *b)
 	COMPARE_SCALAR_FIELD(opresulttype);
 	COMPARE_SCALAR_FIELD(opretset);
 	COMPARE_NODE_FIELD(args);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -341,6 +357,7 @@ _equalScalarArrayOpExpr(ScalarArrayOpExpr *a, ScalarArrayOpExpr *b)
 
 	COMPARE_SCALAR_FIELD(useOr);
 	COMPARE_NODE_FIELD(args);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -350,6 +367,7 @@ _equalBoolExpr(BoolExpr *a, BoolExpr *b)
 {
 	COMPARE_SCALAR_FIELD(boolop);
 	COMPARE_NODE_FIELD(args);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -361,7 +379,11 @@ _equalSubLink(SubLink *a, SubLink *b)
 	COMPARE_NODE_FIELD(testexpr);
 	COMPARE_NODE_FIELD(operName);
 	COMPARE_NODE_FIELD(subselect);
+<<<<<<< HEAD
 	/* do not compare 'location' field */
+=======
+	COMPARE_LOCATION_FIELD(location);
+>>>>>>> 38e9348282e
 
 	return true;
 }
@@ -384,7 +406,10 @@ _equalSubPlan(SubPlan *a, SubPlan *b)
 	COMPARE_NODE_FIELD(setParam);
 	COMPARE_NODE_FIELD(parParam);
 	COMPARE_NODE_FIELD(args);
+<<<<<<< HEAD
 	COMPARE_NODE_FIELD(extParam);
+=======
+>>>>>>> 38e9348282e
 	COMPARE_SCALAR_FIELD(startup_cost);
 	COMPARE_SCALAR_FIELD(per_call_cost);
 
@@ -437,6 +462,8 @@ _equalRelabelType(RelabelType *a, RelabelType *b)
 		b->relabelformat != COERCE_DONTCARE)
 		return false;
 
+	COMPARE_LOCATION_FIELD(location);
+
 	return true;
 }
 
@@ -454,6 +481,8 @@ _equalCoerceViaIO(CoerceViaIO *a, CoerceViaIO *b)
 		a->coerceformat != COERCE_DONTCARE &&
 		b->coerceformat != COERCE_DONTCARE)
 		return false;
+
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -476,6 +505,8 @@ _equalArrayCoerceExpr(ArrayCoerceExpr *a, ArrayCoerceExpr *b)
 		b->coerceformat != COERCE_DONTCARE)
 		return false;
 
+	COMPARE_LOCATION_FIELD(location);
+
 	return true;
 }
 
@@ -494,6 +525,8 @@ _equalConvertRowtypeExpr(ConvertRowtypeExpr *a, ConvertRowtypeExpr *b)
 		b->convertformat != COERCE_DONTCARE)
 		return false;
 
+	COMPARE_LOCATION_FIELD(location);
+
 	return true;
 }
 
@@ -504,6 +537,7 @@ _equalCaseExpr(CaseExpr *a, CaseExpr *b)
 	COMPARE_NODE_FIELD(arg);
 	COMPARE_NODE_FIELD(args);
 	COMPARE_NODE_FIELD(defresult);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -513,6 +547,7 @@ _equalCaseWhen(CaseWhen *a, CaseWhen *b)
 {
 	COMPARE_NODE_FIELD(expr);
 	COMPARE_NODE_FIELD(result);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -553,6 +588,9 @@ _equalRowExpr(RowExpr *a, RowExpr *b)
 		b->row_format != COERCE_DONTCARE)
 		return false;
 
+	COMPARE_NODE_FIELD(colnames);
+	COMPARE_LOCATION_FIELD(location);
+
 	return true;
 }
 
@@ -573,6 +611,7 @@ _equalCoalesceExpr(CoalesceExpr *a, CoalesceExpr *b)
 {
 	COMPARE_SCALAR_FIELD(coalescetype);
 	COMPARE_NODE_FIELD(args);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -583,6 +622,7 @@ _equalMinMaxExpr(MinMaxExpr *a, MinMaxExpr *b)
 	COMPARE_SCALAR_FIELD(minmaxtype);
 	COMPARE_SCALAR_FIELD(op);
 	COMPARE_NODE_FIELD(args);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -622,6 +662,7 @@ _equalNullIfExpr(NullIfExpr *a, NullIfExpr *b)
 	COMPARE_SCALAR_FIELD(opresulttype);
 	COMPARE_SCALAR_FIELD(opretset);
 	COMPARE_NODE_FIELD(args);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -660,6 +701,8 @@ _equalCoerceToDomain(CoerceToDomain *a, CoerceToDomain *b)
 		b->coercionformat != COERCE_DONTCARE)
 		return false;
 
+	COMPARE_LOCATION_FIELD(location);
+
 	return true;
 }
 
@@ -668,6 +711,7 @@ _equalCoerceToDomainValue(CoerceToDomainValue *a, CoerceToDomainValue *b)
 {
 	COMPARE_SCALAR_FIELD(typeId);
 	COMPARE_SCALAR_FIELD(typeMod);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -677,6 +721,7 @@ _equalSetToDefault(SetToDefault *a, SetToDefault *b)
 {
 	COMPARE_SCALAR_FIELD(typeId);
 	COMPARE_SCALAR_FIELD(typeMod);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -801,6 +846,20 @@ _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 }
 
 static bool
+<<<<<<< HEAD
+=======
+_equalFlattenedSubLink(FlattenedSubLink *a, FlattenedSubLink *b)
+{
+	COMPARE_SCALAR_FIELD(jointype);
+	COMPARE_BITMAPSET_FIELD(lefthand);
+	COMPARE_BITMAPSET_FIELD(righthand);
+	COMPARE_NODE_FIELD(quals);
+
+	return true;
+}
+
+static bool
+>>>>>>> 38e9348282e
 _equalPlaceHolderVar(PlaceHolderVar *a, PlaceHolderVar *b)
 {
 	/*
@@ -832,10 +891,13 @@ _equalSpecialJoinInfo(SpecialJoinInfo *a, SpecialJoinInfo *b)
 	COMPARE_SCALAR_FIELD(lhs_strict);
 	COMPARE_SCALAR_FIELD(delay_upper_joins);
 	COMPARE_NODE_FIELD(join_quals);
+<<<<<<< HEAD
 	COMPARE_SCALAR_FIELD(try_join_unique);	/* CDB */
 	COMPARE_SCALAR_FIELD(consider_dedup);		/* CDB */
 	COMPARE_NODE_FIELD(semi_operators);
 	COMPARE_NODE_FIELD(semi_rhs_exprs);
+=======
+>>>>>>> 38e9348282e
 
 	return true;
 }
@@ -847,7 +909,6 @@ _equalAppendRelInfo(AppendRelInfo *a, AppendRelInfo *b)
 	COMPARE_SCALAR_FIELD(child_relid);
 	COMPARE_SCALAR_FIELD(parent_reltype);
 	COMPARE_SCALAR_FIELD(child_reltype);
-	COMPARE_NODE_FIELD(col_mappings);
 	COMPARE_NODE_FIELD(translated_vars);
 	COMPARE_SCALAR_FIELD(parent_reloid);
 
@@ -861,7 +922,10 @@ _equalPlaceHolderInfo(PlaceHolderInfo *a, PlaceHolderInfo *b)
 	COMPARE_NODE_FIELD(ph_var);
 	COMPARE_BITMAPSET_FIELD(ph_eval_at);
 	COMPARE_BITMAPSET_FIELD(ph_needed);
+<<<<<<< HEAD
 	COMPARE_BITMAPSET_FIELD(ph_may_need);
+=======
+>>>>>>> 38e9348282e
 	COMPARE_SCALAR_FIELD(ph_width);
 
 	return true;
@@ -885,8 +949,13 @@ _equalQuery(Query *a, Query *b)
 	COMPARE_SCALAR_FIELD(hasWindowFuncs);
 	COMPARE_SCALAR_FIELD(hasSubLinks);
 	COMPARE_SCALAR_FIELD(hasDistinctOn);
+<<<<<<< HEAD
 	COMPARE_SCALAR_FIELD(hasDynamicFunctions);
 	COMPARE_SCALAR_FIELD(hasFuncsWithExecRestrictions);
+=======
+	COMPARE_SCALAR_FIELD(hasRecursive);
+	COMPARE_NODE_FIELD(cteList);
+>>>>>>> 38e9348282e
 	COMPARE_NODE_FIELD(rtable);
 	COMPARE_NODE_FIELD(jointree);
 	COMPARE_NODE_FIELD(targetList);
@@ -959,7 +1028,11 @@ _equalSelectStmt(SelectStmt *a, SelectStmt *b)
 	COMPARE_NODE_FIELD(whereClause);
 	COMPARE_NODE_FIELD(groupClause);
 	COMPARE_NODE_FIELD(havingClause);
+<<<<<<< HEAD
 	COMPARE_NODE_FIELD(windowClause);
+=======
+	COMPARE_NODE_FIELD(withClause);
+>>>>>>> 38e9348282e
 	COMPARE_NODE_FIELD(valuesLists);
 	COMPARE_NODE_FIELD(sortClause);
 	COMPARE_NODE_FIELD(scatterClause);
@@ -1167,6 +1240,7 @@ _equalClusterStmt(ClusterStmt *a, ClusterStmt *b)
 {
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_STRING_FIELD(indexname);
+	COMPARE_SCALAR_FIELD(verbose);
 
 	return true;
 }
@@ -1495,7 +1569,7 @@ _equalRuleStmt(RuleStmt *a, RuleStmt *b)
 static bool
 _equalNotifyStmt(NotifyStmt *a, NotifyStmt *b)
 {
-	COMPARE_NODE_FIELD(relation);
+	COMPARE_STRING_FIELD(conditionname);
 
 	return true;
 }
@@ -1503,7 +1577,7 @@ _equalNotifyStmt(NotifyStmt *a, NotifyStmt *b)
 static bool
 _equalListenStmt(ListenStmt *a, ListenStmt *b)
 {
-	COMPARE_NODE_FIELD(relation);
+	COMPARE_STRING_FIELD(conditionname);
 
 	return true;
 }
@@ -1511,7 +1585,7 @@ _equalListenStmt(ListenStmt *a, ListenStmt *b)
 static bool
 _equalUnlistenStmt(UnlistenStmt *a, UnlistenStmt *b)
 {
-	COMPARE_NODE_FIELD(relation);
+	COMPARE_STRING_FIELD(conditionname);
 
 	return true;
 }
@@ -1664,6 +1738,7 @@ _equalVacuumStmt(VacuumStmt *a, VacuumStmt *b)
 	COMPARE_SCALAR_FIELD(verbose);
 	COMPARE_SCALAR_FIELD(rootonly);
 	COMPARE_SCALAR_FIELD(freeze_min_age);
+	COMPARE_SCALAR_FIELD(scan_all);
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_NODE_FIELD(va_cols);
 	COMPARE_NODE_FIELD(expanded_relids);
@@ -1769,6 +1844,99 @@ static bool
 _equalDropTableSpaceStmt(DropTableSpaceStmt *a, DropTableSpaceStmt *b)
 {
 	COMPARE_STRING_FIELD(tablespacename);
+	COMPARE_SCALAR_FIELD(missing_ok);
+
+	return true;
+}
+
+static bool
+_equalCreateFdwStmt(CreateFdwStmt *a, CreateFdwStmt *b)
+{
+	COMPARE_STRING_FIELD(fdwname);
+	COMPARE_STRING_FIELD(library);
+	COMPARE_NODE_FIELD(options);
+
+	return true;
+}
+
+static bool
+_equalAlterFdwStmt(AlterFdwStmt *a, AlterFdwStmt *b)
+{
+	COMPARE_STRING_FIELD(fdwname);
+	COMPARE_STRING_FIELD(library);
+	COMPARE_NODE_FIELD(options);
+
+	return true;
+}
+
+static bool
+_equalDropFdwStmt(DropFdwStmt *a, DropFdwStmt *b)
+{
+	COMPARE_STRING_FIELD(fdwname);
+	COMPARE_SCALAR_FIELD(missing_ok);
+	COMPARE_SCALAR_FIELD(behavior);
+
+	return true;
+}
+
+static bool
+_equalCreateForeignServerStmt(CreateForeignServerStmt *a, CreateForeignServerStmt *b)
+{
+	COMPARE_STRING_FIELD(servername);
+	COMPARE_STRING_FIELD(servertype);
+	COMPARE_STRING_FIELD(version);
+	COMPARE_STRING_FIELD(fdwname);
+	COMPARE_NODE_FIELD(options);
+
+	return true;
+}
+
+static bool
+_equalAlterForeignServerStmt(AlterForeignServerStmt *a, AlterForeignServerStmt *b)
+{
+	COMPARE_STRING_FIELD(servername);
+	COMPARE_STRING_FIELD(version);
+	COMPARE_NODE_FIELD(options);
+	COMPARE_SCALAR_FIELD(has_version);
+
+	return true;
+}
+
+static bool
+_equalDropForeignServerStmt(DropForeignServerStmt *a, DropForeignServerStmt *b)
+{
+	COMPARE_STRING_FIELD(servername);
+	COMPARE_SCALAR_FIELD(missing_ok);
+	COMPARE_SCALAR_FIELD(behavior);
+
+	return true;
+}
+
+static bool
+_equalCreateUserMappingStmt(CreateUserMappingStmt *a, CreateUserMappingStmt *b)
+{
+	COMPARE_STRING_FIELD(username);
+	COMPARE_STRING_FIELD(servername);
+	COMPARE_NODE_FIELD(options);
+
+	return true;
+}
+
+static bool
+_equalAlterUserMappingStmt(AlterUserMappingStmt *a, AlterUserMappingStmt *b)
+{
+	COMPARE_STRING_FIELD(username);
+	COMPARE_STRING_FIELD(servername);
+	COMPARE_NODE_FIELD(options);
+
+	return true;
+}
+
+static bool
+_equalDropUserMappingStmt(DropUserMappingStmt *a, DropUserMappingStmt *b)
+{
+	COMPARE_STRING_FIELD(username);
+	COMPARE_STRING_FIELD(servername);
 	COMPARE_SCALAR_FIELD(missing_ok);
 
 	return true;
@@ -1945,6 +2113,7 @@ _equalCreateCastStmt(CreateCastStmt *a, CreateCastStmt *b)
 	COMPARE_NODE_FIELD(targettype);
 	COMPARE_NODE_FIELD(func);
 	COMPARE_SCALAR_FIELD(context);
+	COMPARE_SCALAR_FIELD(inout);
 
 	return true;
 }
@@ -2105,7 +2274,11 @@ static bool
 _equalParamRef(ParamRef *a, ParamRef *b)
 {
 	COMPARE_SCALAR_FIELD(number);
+<<<<<<< HEAD
 	/* do not compare 'location' field */
+=======
+	COMPARE_LOCATION_FIELD(location);
+>>>>>>> 38e9348282e
 
 	return true;
 }
@@ -2115,7 +2288,11 @@ _equalAConst(A_Const *a, A_Const *b)
 {
 	if (!equal(&a->val, &b->val))		/* hack for in-line Value field */
 		return false;
+<<<<<<< HEAD
 	/* do not compare 'location' field */;
+=======
+	COMPARE_LOCATION_FIELD(location);
+>>>>>>> 38e9348282e
 
 	return true;
 }
@@ -2130,9 +2307,18 @@ _equalFuncCall(FuncCall *a, FuncCall *b)
 	COMPARE_SCALAR_FIELD(agg_star);
 	COMPARE_SCALAR_FIELD(agg_distinct);
 	COMPARE_SCALAR_FIELD(func_variadic);
+<<<<<<< HEAD
 	COMPARE_NODE_FIELD(over);
+=======
+>>>>>>> 38e9348282e
 	COMPARE_LOCATION_FIELD(location);
 
+	return true;
+}
+
+static bool
+_equalAStar(A_Star *a, A_Star *b)
+{
 	return true;
 }
 
@@ -2193,7 +2379,12 @@ static bool
 _equalTypeCast(TypeCast *a, TypeCast *b)
 {
 	COMPARE_NODE_FIELD(arg);
+<<<<<<< HEAD
 	COMPARE_NODE_FIELD(typeName);
+=======
+	COMPARE_NODE_FIELD(typename);
+	COMPARE_LOCATION_FIELD(location);
+>>>>>>> 38e9348282e
 
 	return true;
 }
@@ -2206,6 +2397,7 @@ _equalSortBy(SortBy *a, SortBy *b)
 	COMPARE_SCALAR_FIELD(sortby_nulls);
 	COMPARE_NODE_FIELD(useOp);
 	COMPARE_LOCATION_FIELD(location);
+<<<<<<< HEAD
 
 	return true;
 }
@@ -2221,6 +2413,8 @@ _equalWindowDef(WindowDef *a, WindowDef *b)
 	COMPARE_NODE_FIELD(startOffset);
 	COMPARE_NODE_FIELD(endOffset);
 	COMPARE_LOCATION_FIELD(location);
+=======
+>>>>>>> 38e9348282e
 
 	return true;
 }
@@ -2291,6 +2485,15 @@ _equalDefElem(DefElem *a, DefElem *b)
 {
 	COMPARE_STRING_FIELD(defname);
 	COMPARE_NODE_FIELD(arg);
+
+	return true;
+}
+
+static bool
+_equalOptionDefElem(OptionDefElem *a, OptionDefElem *b)
+{
+	COMPARE_SCALAR_FIELD(alter_op);
+	COMPARE_NODE_FIELD(def);
 
 	return true;
 }
@@ -2410,8 +2613,36 @@ static bool
 _equalRowMarkClause(RowMarkClause *a, RowMarkClause *b)
 {
 	COMPARE_SCALAR_FIELD(rti);
+	COMPARE_SCALAR_FIELD(prti);
 	COMPARE_SCALAR_FIELD(forUpdate);
 	COMPARE_SCALAR_FIELD(noWait);
+	COMPARE_SCALAR_FIELD(isParent);
+
+	return true;
+}
+
+static bool
+_equalWithClause(WithClause *a, WithClause *b)
+{
+	COMPARE_NODE_FIELD(ctes);
+	COMPARE_SCALAR_FIELD(recursive);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+static bool
+_equalCommonTableExpr(CommonTableExpr *a, CommonTableExpr *b)
+{
+	COMPARE_STRING_FIELD(ctename);
+	COMPARE_NODE_FIELD(aliascolnames);
+	COMPARE_NODE_FIELD(ctequery);
+	COMPARE_LOCATION_FIELD(location);
+	COMPARE_SCALAR_FIELD(cterecursive);
+	COMPARE_SCALAR_FIELD(cterefcount);
+	COMPARE_NODE_FIELD(ctecolnames);
+	COMPARE_NODE_FIELD(ctecoltypes);
+	COMPARE_NODE_FIELD(ctecoltypmods);
 
 	return true;
 }
@@ -2485,7 +2716,11 @@ _equalXmlSerialize(XmlSerialize *a, XmlSerialize *b)
 {
 	COMPARE_SCALAR_FIELD(xmloption);
 	COMPARE_NODE_FIELD(expr);
+<<<<<<< HEAD
 	COMPARE_NODE_FIELD(typeName);
+=======
+	COMPARE_NODE_FIELD(typename);
+>>>>>>> 38e9348282e
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -2754,9 +2989,18 @@ equal(void *a, void *b)
 		case T_RestrictInfo:
 			retval = _equalRestrictInfo(a, b);
 			break;
+<<<<<<< HEAD
 		case T_PlaceHolderVar:
 			retval = _equalPlaceHolderVar(a, b);
 			break;
+=======
+		case T_FlattenedSubLink:
+			retval = _equalFlattenedSubLink(a, b);
+			break;
+		case T_PlaceHolderVar:
+			retval = _equalPlaceHolderVar(a, b);
+			break;
+>>>>>>> 38e9348282e
 		case T_SpecialJoinInfo:
 			retval = _equalSpecialJoinInfo(a, b);
 			break;
@@ -3009,6 +3253,33 @@ equal(void *a, void *b)
 		case T_DropTableSpaceStmt:
 			retval = _equalDropTableSpaceStmt(a, b);
 			break;
+		case T_CreateFdwStmt:
+			retval = _equalCreateFdwStmt(a, b);
+			break;
+		case T_AlterFdwStmt:
+			retval = _equalAlterFdwStmt(a, b);
+			break;
+		case T_DropFdwStmt:
+			retval = _equalDropFdwStmt(a, b);
+			break;
+		case T_CreateForeignServerStmt:
+			retval = _equalCreateForeignServerStmt(a, b);
+			break;
+		case T_AlterForeignServerStmt:
+			retval = _equalAlterForeignServerStmt(a, b);
+			break;
+		case T_DropForeignServerStmt:
+			retval = _equalDropForeignServerStmt(a, b);
+			break;
+		case T_CreateUserMappingStmt:
+			retval = _equalCreateUserMappingStmt(a, b);
+			break;
+		case T_AlterUserMappingStmt:
+			retval = _equalAlterUserMappingStmt(a, b);
+			break;
+		case T_DropUserMappingStmt:
+			retval = _equalDropUserMappingStmt(a, b);
+			break;
 		case T_CreateTrigStmt:
 			retval = _equalCreateTrigStmt(a, b);
 			break;
@@ -3114,6 +3385,9 @@ equal(void *a, void *b)
 		case T_FuncCall:
 			retval = _equalFuncCall(a, b);
 			break;
+		case T_A_Star:
+			retval = _equalAStar(a, b);
+			break;
 		case T_A_Indices:
 			retval = _equalAIndices(a, b);
 			break;
@@ -3155,6 +3429,9 @@ equal(void *a, void *b)
 			break;
 		case T_DefElem:
 			retval = _equalDefElem(a, b);
+			break;
+		case T_OptionDefElem:
+			retval = _equalOptionDefElem(a, b);
 			break;
 		case T_LockingClause:
 			retval = _equalLockingClause(a, b);

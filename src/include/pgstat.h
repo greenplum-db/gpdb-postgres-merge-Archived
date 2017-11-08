@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2009, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.77 2008/06/30 10:58:47 heikki Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.80 2008/12/17 09:15:03 heikki Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -183,8 +183,13 @@ typedef struct PgStat_MsgDummy
 
 typedef struct PgStat_MsgInquiry
 {
+<<<<<<< HEAD
 	PgStat_MsgHdr m_hdr;
 	TimestampTz inquiry_time;	/* minimum acceptable file timestamp */
+=======
+	PgStat_MsgHdr	m_hdr;
+	TimestampTz		inquiry_time;	/* minimum acceptable file timestamp */
+>>>>>>> 38e9348282e
 } PgStat_MsgInquiry;
 
 
@@ -570,7 +575,11 @@ typedef struct PgStat_StatPortalEntry
  */
 typedef struct PgStat_GlobalStats
 {
+<<<<<<< HEAD
 	TimestampTz stats_timestamp;	/* time of stats file update */
+=======
+	TimestampTz stats_timestamp;		/* time of stats file update */
+>>>>>>> 38e9348282e
 	PgStat_Counter timed_checkpoints;
 	PgStat_Counter requested_checkpoints;
 	PgStat_Counter buf_written_checkpoints;
@@ -667,6 +676,8 @@ extern bool pgstat_track_activities;
 extern bool pgstat_track_counts;
 extern int	pgstat_track_functions;
 extern int	pgstat_track_activity_query_size;
+extern char *pgstat_stat_tmpname;
+extern char *pgstat_stat_filename;
 
 extern bool pgstat_collect_queuelevel;
 

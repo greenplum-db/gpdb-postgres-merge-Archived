@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.43 2010/08/02 01:24:54 tgl Exp $ */
+=======
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.39 2008/11/26 16:47:08 meskes Exp $ */
+>>>>>>> 38e9348282e
 
 #include "postgres_fe.h"
 #include <time.h>
@@ -18,7 +22,11 @@
 static int
 strtoi(const char *nptr, char **endptr, int base)
 {
+<<<<<<< HEAD
 	long		val;
+=======
+	long	val;
+>>>>>>> 38e9348282e
 
 	val = strtol(nptr, endptr, base);
 #ifdef HAVE_LONG_INT_64
@@ -28,6 +36,7 @@ strtoi(const char *nptr, char **endptr, int base)
 	return (int) val;
 }
 
+<<<<<<< HEAD
 /* copy&pasted from .../src/backend/utils/adt/datetime.c
  * and changesd struct pg_tm to struct tm
  */
@@ -46,10 +55,31 @@ AdjustFractSeconds(double frac, struct /* pg_ */ tm * tm, fsec_t *fsec, int scal
 	*fsec += rint(frac * 1000000);
 #else
 	*fsec += frac;
+=======
+/* copy&pasted from .../src/backend/utils/adt/datetime.c 
+ * and changesd struct pg_tm to struct tm
+ */
+static void
+AdjustFractSeconds(double frac, struct /*pg_*/tm * tm, fsec_t *fsec, int scale)
+{
+	int	sec;
+
+	if (frac == 0)
+		return;
+	frac       *= scale;
+	sec         = (int) frac;
+	tm->tm_sec += sec;
+	frac       -= sec;
+#ifdef HAVE_INT64_TIMESTAMP
+	*fsec      += rint(frac * 1000000);
+#else
+	*fsec      += frac;
+>>>>>>> 38e9348282e
 #endif
 }
 
 
+<<<<<<< HEAD
 /* copy&pasted from .../src/backend/utils/adt/datetime.c
  * and changesd struct pg_tm to struct tm
  */
@@ -64,6 +94,22 @@ AdjustFractDays(double frac, struct /* pg_ */ tm * tm, fsec_t *fsec, int scale)
 	extra_days = (int) frac;
 	tm->tm_mday += extra_days;
 	frac -= extra_days;
+=======
+/* copy&pasted from .../src/backend/utils/adt/datetime.c 
+ * and changesd struct pg_tm to struct tm
+ */
+static void
+AdjustFractDays(double frac, struct /*pg_*/tm * tm, fsec_t *fsec, int scale)
+{
+	int	extra_days;
+
+	if (frac == 0)
+		return;
+	frac        *= scale;
+	extra_days   = (int) frac;
+	tm->tm_mday += extra_days;
+	frac        -= extra_days;
+>>>>>>> 38e9348282e
 	AdjustFractSeconds(frac, tm, fsec, SECS_PER_DAY);
 }
 
@@ -103,6 +149,7 @@ ISO8601IntegerWidth(char *fieldstart)
 }
 
 
+<<<<<<< HEAD
 /* copy&pasted from .../src/backend/utils/adt/datetime.c
  * and changesd struct pg_tm to struct tm
  */
@@ -344,6 +391,247 @@ DecodeInterval(char **field, int *ftype, int nf,		/* int range, */
 {
 	int			IntervalStyle = INTSTYLE_POSTGRES_VERBOSE;
 	int			range = INTERVAL_FULL_RANGE;
+=======
+/* copy&pasted from .../src/backend/utils/adt/datetime.c 
+ * and changesd struct pg_tm to struct tm
+ */
+static inline void 
+ClearPgTm(struct /*pg_*/tm *tm, fsec_t *fsec)
+{
+	tm->tm_year = 0;
+	tm->tm_mon  = 0;
+	tm->tm_mday = 0;
+	tm->tm_hour = 0;
+	tm->tm_min  = 0;
+	tm->tm_sec  = 0;
+	*fsec       = 0;
+}
+
+/* copy&pasted from .../src/backend/utils/adt/datetime.c 
+ * 
+ * * changesd struct pg_tm to struct tm
+ * 
+ * * Made the function static
+ */
+static int
+DecodeISO8601Interval(char *str,
+					  int *dtype, struct /*pg_*/tm * tm, fsec_t *fsec)
+{
+	bool	datepart = true;
+	bool	havefield = false;
+
+	*dtype = DTK_DELTA;
+	ClearPgTm(tm, fsec);
+
+	if (strlen(str) < 2 || str[0] != 'P')
+		return DTERR_BAD_FORMAT;
+
+	str++;
+	while (*str)
+	{
+		char   *fieldstart;
+		int		val;
+		double	fval;
+		char    unit;
+		int		dterr;
+
+		if (*str == 'T') /* T indicates the beginning of the time part */
+		{
+			datepart = false;
+			havefield = false;
+			str++;
+			continue;
+		}
+
+		fieldstart = str;
+		dterr = ParseISO8601Number(str, &str, &val, &fval);
+		if (dterr)
+			return dterr;
+
+		/*
+		 * Note: we could step off the end of the string here.  Code below
+		 * *must* exit the loop if unit == '\0'.
+		 */
+		unit = *str++;
+
+		if (datepart)
+		{
+			switch (unit) /* before T: Y M W D */
+			{
+				case 'Y':
+					tm->tm_year += val;
+					tm->tm_mon += (fval * 12);
+					break;
+				case 'M':
+					tm->tm_mon += val;
+					AdjustFractDays(fval, tm, fsec, DAYS_PER_MONTH);
+					break;
+				case 'W':
+					tm->tm_mday += val * 7;
+					AdjustFractDays(fval, tm, fsec, 7);
+					break;
+				case 'D':
+					tm->tm_mday += val;
+					AdjustFractSeconds(fval, tm, fsec, SECS_PER_DAY);
+					break;
+				case 'T': /* ISO 8601 4.4.3.3 Alternative Format / Basic */
+				case '\0':
+					if (ISO8601IntegerWidth(fieldstart) == 8 && !havefield)
+					{
+						tm->tm_year += val / 10000;
+						tm->tm_mon  += (val / 100) % 100;
+						tm->tm_mday += val % 100;
+						AdjustFractSeconds(fval, tm, fsec, SECS_PER_DAY);
+						if (unit == '\0')
+							return 0;
+						datepart = false;
+						havefield = false;
+						continue;
+					}
+					/* Else fall through to extended alternative format */
+				case '-': /* ISO 8601 4.4.3.3 Alternative Format, Extended */
+					if (havefield)
+						return DTERR_BAD_FORMAT;
+
+					tm->tm_year += val;
+					tm->tm_mon  += (fval * 12);
+					if (unit == '\0')
+						return 0;
+					if (unit == 'T')
+					{
+						datepart = false;
+						havefield = false;
+						continue;
+					}
+
+					dterr = ParseISO8601Number(str, &str, &val, &fval);
+					if (dterr)
+						return dterr;
+					tm->tm_mon  += val;
+					AdjustFractDays(fval, tm, fsec, DAYS_PER_MONTH);
+					if (*str == '\0')
+						return 0;
+					if (*str == 'T')
+					{
+						datepart = false;
+						havefield = false;
+						continue;
+					}
+					if (*str != '-')
+						return DTERR_BAD_FORMAT;
+					str++;
+					
+					dterr = ParseISO8601Number(str, &str, &val, &fval);
+					if (dterr)
+						return dterr;
+					tm->tm_mday += val;
+					AdjustFractSeconds(fval, tm, fsec, SECS_PER_DAY);
+					if (*str == '\0')
+						return 0;
+					if (*str == 'T')
+					{
+						datepart = false;
+						havefield = false;
+						continue;
+					}
+					return DTERR_BAD_FORMAT;
+				default:
+					/* not a valid date unit suffix */
+					return DTERR_BAD_FORMAT;
+			}
+		}
+		else
+		{
+			switch (unit) /* after T: H M S */
+			{
+				case 'H':
+					tm->tm_hour += val;
+					AdjustFractSeconds(fval, tm, fsec, SECS_PER_HOUR);
+					break;
+				case 'M':
+					tm->tm_min += val;
+					AdjustFractSeconds(fval, tm, fsec, SECS_PER_MINUTE);
+					break;
+				case 'S':
+					tm->tm_sec += val;
+					AdjustFractSeconds(fval, tm, fsec, 1);
+					break;
+				case '\0': /* ISO 8601 4.4.3.3 Alternative Format */
+				    if (ISO8601IntegerWidth(fieldstart) == 6 && !havefield)
+					{
+						tm->tm_hour += val / 10000;
+						tm->tm_min  += (val / 100) % 100;
+						tm->tm_sec  += val % 100;
+						AdjustFractSeconds(fval, tm, fsec, 1);
+						return 0;
+					}
+					/* Else fall through to extended alternative format */
+				case ':': /* ISO 8601 4.4.3.3 Alternative Format, Extended */
+					if (havefield)
+						return DTERR_BAD_FORMAT;
+
+					tm->tm_hour += val;
+					AdjustFractSeconds(fval, tm, fsec, SECS_PER_HOUR);
+					if (unit == '\0')
+						return 0;
+					
+					dterr = ParseISO8601Number(str, &str, &val, &fval);
+					if (dterr)
+						return dterr;
+					tm->tm_min  += val;
+					AdjustFractSeconds(fval, tm, fsec, SECS_PER_MINUTE);
+					if (*str == '\0')
+						return 0;
+					if (*str != ':')
+						return DTERR_BAD_FORMAT;
+					str++;
+					
+					dterr = ParseISO8601Number(str, &str, &val, &fval);
+					if (dterr)
+						return dterr;
+					tm->tm_sec  += val;
+					AdjustFractSeconds(fval, tm, fsec, 1);
+					if (*str == '\0')
+						return 0;
+					return DTERR_BAD_FORMAT;
+
+				default:
+					/* not a valid time unit suffix */
+					return DTERR_BAD_FORMAT;
+			}
+		}
+
+		havefield = true;
+	}
+
+	return 0;
+}
+
+
+
+/* copy&pasted from .../src/backend/utils/adt/datetime.c
+ * with 3 exceptions
+ *
+ *  * changesd struct pg_tm to struct tm
+ *
+ *  * ECPG code called this without a 'range' parameter
+ *    removed 'int range' from the argument list and
+ *    places where DecodeTime is called; and added
+ *       int range = INTERVAL_FULL_RANGE;
+ *
+ *  * ECPG semes not to have a global IntervalStyle
+ *    so added
+ *	    int IntervalStyle = INTSTYLE_POSTGRES;
+ *
+ *  * Assert wasn't available so removed it.
+ */
+int
+DecodeInterval(char **field, int *ftype, int nf, /*int range,*/
+			   int *dtype, struct /*pg_*/tm * tm, fsec_t *fsec)
+{
+    int IntervalStyle = INTSTYLE_POSTGRES_VERBOSE;
+    int range = INTERVAL_FULL_RANGE;
+>>>>>>> 38e9348282e
 	bool		is_before = FALSE;
 	char	   *cp;
 	int			fmask = 0,
@@ -356,7 +644,11 @@ DecodeInterval(char **field, int *ftype, int nf,		/* int range, */
 
 	*dtype = DTK_DELTA;
 	type = IGNORE_DTF;
+<<<<<<< HEAD
 	ClearPgTm(tm, fsec);
+=======
+	ClearPgTm(tm,fsec);
+>>>>>>> 38e9348282e
 
 	/* read through list backwards to pick up units before values */
 	for (i = nf - 1; i >= 0; i--)
@@ -364,7 +656,11 @@ DecodeInterval(char **field, int *ftype, int nf,		/* int range, */
 		switch (ftype[i])
 		{
 			case DTK_TIME:
+<<<<<<< HEAD
 				dterr = DecodeTime(field[i],	/* range, */
+=======
+				dterr = DecodeTime(field[i], fmask, /* range, */
+>>>>>>> 38e9348282e
 								   &tmask, tm, fsec);
 				if (dterr)
 					return dterr;
@@ -374,19 +670,33 @@ DecodeInterval(char **field, int *ftype, int nf,		/* int range, */
 			case DTK_TZ:
 
 				/*
+<<<<<<< HEAD
 				 * Timezone is a token with a leading sign character and at
 				 * least one digit; there could be ':', '.', '-' embedded in
 				 * it as well.
+=======
+				 * Timezone is a token with a leading sign character and
+				 * at least one digit; there could be ':', '.', '-'
+				 * embedded in it as well.
+>>>>>>> 38e9348282e
 				 */
 				/* Assert(*field[i] == '-' || *field[i] == '+'); */
 
 				/*
 				 * Try for hh:mm or hh:mm:ss.  If not, fall through to
+<<<<<<< HEAD
 				 * DTK_NUMBER case, which can handle signed float numbers and
 				 * signed year-month values.
 				 */
 				if (strchr(field[i] + 1, ':') != NULL &&
 					DecodeTime(field[i] + 1,	/* INTERVAL_FULL_RANGE, */
+=======
+				 * DTK_NUMBER case, which can handle signed float numbers
+				 * and signed year-month values.
+				 */
+				if (strchr(field[i] + 1, ':') != NULL &&
+					DecodeTime(field[i] + 1, fmask, /* INTERVAL_FULL_RANGE, */
+>>>>>>> 38e9348282e
 							   &tmask, tm, fsec) == 0)
 				{
 					if (*field[i] == '-')
@@ -455,7 +765,11 @@ DecodeInterval(char **field, int *ftype, int nf,		/* int range, */
 				if (*cp == '-')
 				{
 					/* SQL "years-months" syntax */
+<<<<<<< HEAD
 					int			val2;
+=======
+					int		val2;
+>>>>>>> 38e9348282e
 
 					val2 = strtoi(cp + 1, &cp, 10);
 					if (errno == ERANGE || val2 < 0 || val2 >= MONTHS_PER_YEAR)
@@ -644,7 +958,11 @@ DecodeInterval(char **field, int *ftype, int nf,		/* int range, */
 
 	/*----------
 	 * The SQL standard defines the interval literal
+<<<<<<< HEAD
 	 *	 '-1 1:00:00'
+=======
+	 *   '-1 1:00:00'
+>>>>>>> 38e9348282e
 	 * to mean "negative 1 days and negative 1 hours", while Postgres
 	 * traditionally treats this as meaning "negative 1 days and positive
 	 * 1 hours".  In SQL_STANDARD intervalstyle, we apply the leading sign
@@ -654,14 +972,22 @@ DecodeInterval(char **field, int *ftype, int nf,		/* int range, */
 	 * This protects us against misinterpreting postgres-style dump output,
 	 * since the postgres-style output code has always put an explicit sign on
 	 * all fields following a negative field.  But note that SQL-spec output
+<<<<<<< HEAD
 	 * is ambiguous and can be misinterpreted on load!	(So it's best practice
+=======
+	 * is ambiguous and can be misinterpreted on load!  (So it's best practice
+>>>>>>> 38e9348282e
 	 * to dump in postgres style, not SQL style.)
 	 *----------
 	 */
 	if (IntervalStyle == INTSTYLE_SQL_STANDARD && *field[0] == '-')
 	{
 		/* Check for additional explicit signs */
+<<<<<<< HEAD
 		bool		more_signs = false;
+=======
+		bool	more_signs = false;
+>>>>>>> 38e9348282e
 
 		for (i = 1; i < nf; i++)
 		{
@@ -675,8 +1001,13 @@ DecodeInterval(char **field, int *ftype, int nf,		/* int range, */
 		if (!more_signs)
 		{
 			/*
+<<<<<<< HEAD
 			 * Rather than re-determining which field was field[0], just force
 			 * 'em all negative.
+=======
+			 * Rather than re-determining which field was field[0], just
+			 * force 'em all negative.
+>>>>>>> 38e9348282e
 			 */
 			if (*fsec > 0)
 				*fsec = -(*fsec);
@@ -744,10 +1075,16 @@ AddPostgresIntPart(char *cp, int value, const char *units,
 			value,
 			units,
 			(value != 1) ? "s" : "");
+<<<<<<< HEAD
 
 	/*
 	 * Each nonzero field sets is_before for (only) the next one.  This is a
 	 * tad bizarre but it's how it worked before...
+=======
+	/*
+	 * Each nonzero field sets is_before for (only) the next one.  This is
+	 * a tad bizarre but it's how it worked before...
+>>>>>>> 38e9348282e
 	 */
 	*is_before = (value < 0);
 	*is_zero = FALSE;
@@ -794,21 +1131,37 @@ AppendSeconds(char *cp, int sec, fsec_t fsec, int precision, bool fillzeros)
 
 
 /* copy&pasted from .../src/backend/utils/adt/datetime.c
+<<<<<<< HEAD
  *
+=======
+ * 
+>>>>>>> 38e9348282e
  * Change pg_tm to tm
  */
 
 int
+<<<<<<< HEAD
 EncodeInterval(struct /* pg_ */ tm * tm, fsec_t fsec, int style, char *str)
+=======
+EncodeInterval(struct /*pg_*/tm * tm, fsec_t fsec, int style, char *str)
+>>>>>>> 38e9348282e
 {
 
 	char	   *cp = str;
 	int			year = tm->tm_year;
+<<<<<<< HEAD
 	int			mon = tm->tm_mon;
 	int			mday = tm->tm_mday;
 	int			hour = tm->tm_hour;
 	int			min = tm->tm_min;
 	int			sec = tm->tm_sec;
+=======
+	int			mon  = tm->tm_mon;
+	int			mday = tm->tm_mday;
+	int			hour = tm->tm_hour;
+	int			min  = tm->tm_min;
+	int			sec  = tm->tm_sec;
+>>>>>>> 38e9348282e
 	bool		is_before = FALSE;
 	bool		is_zero = TRUE;
 
@@ -820,6 +1173,7 @@ EncodeInterval(struct /* pg_ */ tm * tm, fsec_t fsec, int style, char *str)
 	 */
 	switch (style)
 	{
+<<<<<<< HEAD
 			/* SQL Standard interval format */
 		case INTSTYLE_SQL_STANDARD:
 			{
@@ -835,6 +1189,23 @@ EncodeInterval(struct /* pg_ */ tm * tm, fsec_t fsec, int style, char *str)
 				bool		has_day = mday != 0;
 				bool		sql_standard_value = !(has_negative && has_positive) &&
 				!(has_year_month && has_day_time);
+=======
+		/* SQL Standard interval format */
+		case INTSTYLE_SQL_STANDARD:
+			{
+				bool has_negative = year < 0 || mon  < 0 ||
+									mday < 0 || hour < 0 ||
+									min  < 0 || sec  < 0 || fsec < 0;
+				bool has_positive = year > 0 || mon  > 0 ||
+									mday > 0 || hour > 0 ||
+									min  > 0 || sec  > 0 || fsec > 0;
+				bool has_year_month = year != 0 || mon  != 0;
+				bool has_day_time   = mday != 0 || hour != 0 ||
+									  min  != 0 || sec  != 0 || fsec != 0;
+				bool has_day        = mday != 0;
+				bool sql_standard_value = !(has_negative && has_positive) &&
+										  !(has_year_month && has_day_time);
+>>>>>>> 38e9348282e
 
 				/*
 				 * SQL Standard wants only 1 "<sign>" preceding the whole
@@ -844,11 +1215,19 @@ EncodeInterval(struct /* pg_ */ tm * tm, fsec_t fsec, int style, char *str)
 				{
 					*cp++ = '-';
 					year = -year;
+<<<<<<< HEAD
 					mon = -mon;
 					mday = -mday;
 					hour = -hour;
 					min = -min;
 					sec = -sec;
+=======
+					mon  = -mon;
+					mday = -mday;
+					hour = -hour;
+					min  = -min;
+					sec  = -sec;
+>>>>>>> 38e9348282e
 					fsec = -fsec;
 				}
 
@@ -859,6 +1238,7 @@ EncodeInterval(struct /* pg_ */ tm * tm, fsec_t fsec, int style, char *str)
 				else if (!sql_standard_value)
 				{
 					/*
+<<<<<<< HEAD
 					 * For non sql-standard interval values, force outputting
 					 * the signs to avoid ambiguities with intervals with
 					 * mixed sign components.
@@ -867,6 +1247,17 @@ EncodeInterval(struct /* pg_ */ tm * tm, fsec_t fsec, int style, char *str)
 					char		day_sign = (mday < 0) ? '-' : '+';
 					char		sec_sign = (hour < 0 || min < 0 ||
 											sec < 0 || fsec < 0) ? '-' : '+';
+=======
+					 * For non sql-standard interval values,
+					 * force outputting the signs to avoid
+					 * ambiguities with intervals with mixed
+					 * sign components.
+					 */
+					char year_sign = (year < 0 || mon < 0) ? '-' : '+';
+					char day_sign = (mday < 0) ? '-' : '+';
+					char sec_sign = (hour < 0 || min < 0 ||
+									 sec < 0 || fsec < 0) ? '-' : '+';
+>>>>>>> 38e9348282e
 
 					sprintf(cp, "%c%d-%d %c%d %c%d:%02d:",
 							year_sign, abs(year), abs(mon),
@@ -891,6 +1282,7 @@ EncodeInterval(struct /* pg_ */ tm * tm, fsec_t fsec, int style, char *str)
 					cp += strlen(cp);
 					AppendSeconds(cp, sec, fsec, MAX_INTERVAL_PRECISION, true);
 				}
+<<<<<<< HEAD
 			}
 			break;
 
@@ -913,6 +1305,30 @@ EncodeInterval(struct /* pg_ */ tm * tm, fsec_t fsec, int style, char *str)
 			cp = AddISO8601IntPart(cp, min, 'M');
 			if (sec != 0 || fsec != 0)
 			{
+=======
+			}
+			break;
+
+		/* ISO 8601 "time-intervals by duration only" */
+		case INTSTYLE_ISO_8601:
+			/* special-case zero to avoid printing nothing */
+			if (year == 0 && mon == 0 && mday == 0 &&
+			    hour == 0 && min == 0 && sec  == 0 && fsec == 0)
+			{
+				sprintf(cp, "PT0S");
+				break;
+			}
+			*cp++ = 'P';
+			cp = AddISO8601IntPart(cp, year, 'Y');
+			cp = AddISO8601IntPart(cp, mon , 'M');
+			cp = AddISO8601IntPart(cp, mday, 'D');
+			if (hour != 0 || min != 0 || sec != 0 || fsec != 0)
+				*cp++ = 'T';
+			cp = AddISO8601IntPart(cp, hour, 'H');
+			cp = AddISO8601IntPart(cp, min , 'M');
+			if (sec != 0 || fsec != 0)
+			{
+>>>>>>> 38e9348282e
 				if (sec < 0 || fsec < 0)
 					*cp++ = '-';
 				AppendSeconds(cp, sec, fsec, MAX_INTERVAL_PRECISION, false);
@@ -922,14 +1338,22 @@ EncodeInterval(struct /* pg_ */ tm * tm, fsec_t fsec, int style, char *str)
 			}
 			break;
 
+<<<<<<< HEAD
 			/* Compatible with postgresql < 8.4 when DateStyle = 'iso' */
+=======
+		/* Compatible with postgresql < 8.4 when DateStyle = 'iso' */
+>>>>>>> 38e9348282e
 		case INTSTYLE_POSTGRES:
 			cp = AddPostgresIntPart(cp, year, "year", &is_zero, &is_before);
 			cp = AddPostgresIntPart(cp, mon, "mon", &is_zero, &is_before);
 			cp = AddPostgresIntPart(cp, mday, "day", &is_zero, &is_before);
 			if (is_zero || hour != 0 || min != 0 || sec != 0 || fsec != 0)
 			{
+<<<<<<< HEAD
 				bool		minus = (hour < 0 || min < 0 || sec < 0 || fsec < 0);
+=======
+				bool	minus = (hour < 0 || min < 0 || sec < 0 || fsec < 0);
+>>>>>>> 38e9348282e
 
 				sprintf(cp, "%s%s%02d:%02d:",
 						is_zero ? "" : " ",
@@ -940,7 +1364,11 @@ EncodeInterval(struct /* pg_ */ tm * tm, fsec_t fsec, int style, char *str)
 			}
 			break;
 
+<<<<<<< HEAD
 			/* Compatible with postgresql < 8.4 when DateStyle != 'iso' */
+=======
+		/* Compatible with postgresql < 8.4 when DateStyle != 'iso' */
+>>>>>>> 38e9348282e
 		case INTSTYLE_POSTGRES_VERBOSE:
 		default:
 			strcpy(cp, "@");
@@ -1098,7 +1526,11 @@ PGTYPESinterval_from_asc(char *str, char **endptr)
 		return NULL;
 	}
 
+<<<<<<< HEAD
 	if (ParseDateTime(str, lowstr, field, ftype, &nf, ptr) != 0 ||
+=======
+	if (ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf, ptr) != 0 ||
+>>>>>>> 38e9348282e
 		(DecodeInterval(field, ftype, nf, &dtype, tm, &fsec) != 0 &&
 		 DecodeISO8601Interval(str, &dtype, tm, &fsec) != 0))
 	{
@@ -1135,7 +1567,11 @@ PGTYPESinterval_to_asc(interval * span)
 			   *tm = &tt;
 	fsec_t		fsec;
 	char		buf[MAXDATELEN + 1];
+<<<<<<< HEAD
 	int			IntervalStyle = INTSTYLE_POSTGRES_VERBOSE;
+=======
+	int		    IntervalStyle = INTSTYLE_POSTGRES_VERBOSE;
+>>>>>>> 38e9348282e
 
 	if (interval2tm(*span, tm, &fsec) != 0)
 	{

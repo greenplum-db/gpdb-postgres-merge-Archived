@@ -22,5 +22,8 @@ endif
 
 %.so: %.o
 	$(CC) $(CFLAGS) -shared -o $@ $<
+<<<<<<< HEAD
 
 sqlmansect = 7
+=======
+>>>>>>> 38e9348282e

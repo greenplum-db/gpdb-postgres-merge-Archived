@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/libpq/exports.txt,v 1.19 2008/03/19 00:39:33 ishii Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/exports.txt,v 1.22 2008/09/22 13:55:14 tgl Exp $
 # Functions to be exported by libpq DLLs
 PQconnectdb               1
 PQsetdbLogin              2
@@ -152,6 +152,7 @@ PQresultInstanceData      149
 PQresultSetInstanceData   150
 PQfireResultCreateEvents  151
 PQconninfoParse           152
+<<<<<<< HEAD
 PQinitOpenSSL             153
 PQescapeLiteral           154
 PQescapeIdentifier        155
@@ -162,3 +163,5 @@ PQpingParams              159
 PQlibVersion              160
 PQsetSingleRowMode        161
 PQconninfo                162
+=======
+>>>>>>> 38e9348282e

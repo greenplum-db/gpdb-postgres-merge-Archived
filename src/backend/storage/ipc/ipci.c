@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.96 2008/05/12 00:00:50 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.97 2008/09/30 10:52:13 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,6 @@
 #include "replication/walsender.h"
 #include "replication/walreceiver.h"
 #include "storage/bufmgr.h"
-#include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
@@ -165,6 +164,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		size = add_size(size, SharedSnapshotShmemSize());
 
 		size = add_size(size, SInvalShmemSize());
+<<<<<<< HEAD
 		size = add_size(size, PMSignalShmemSize());
 		size = add_size(size, ProcSignalShmemSize());
 		size = add_size(size, primaryMirrorModeShmemSize());
@@ -216,6 +216,9 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		elog(DEBUG1, "Size not including the buffer pool %lu",
 			 (unsigned long) size);
 
+=======
+		size = add_size(size, BgWriterShmemSize());
+>>>>>>> 38e9348282e
 		size = add_size(size, AutoVacuumShmemSize());
 		size = add_size(size, BTreeShmemSize());
 		size = add_size(size, SyncScanShmemSize());
@@ -358,11 +361,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	 * Set up shared-inval messaging
 	 */
 	CreateSharedInvalidationState();
-
-	/*
-	 * Set up free-space map
-	 */
-	InitFreeSpaceMap();
 
 	/*
 	 * Set up interprocess signaling mechanisms

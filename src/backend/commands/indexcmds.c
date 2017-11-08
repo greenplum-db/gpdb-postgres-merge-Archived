@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.178 2008/07/30 17:05:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.180 2008/10/13 16:25:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,10 @@
 #include "commands/tablespace.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+<<<<<<< HEAD
 #include "nodes/makefuncs.h"
+=======
+>>>>>>> 38e9348282e
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "parser/parse_coerce.h"

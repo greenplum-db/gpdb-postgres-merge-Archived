@@ -28,7 +28,11 @@ int main() {
   	     
   
 #line 10 "autoprep.pgc"
+<<<<<<< HEAD
  int item [ 4 ] , ind [ 4 ] , i = 1 ;
+=======
+ int  item  [ 4 ]   ,  ind  [ 4 ]   ,  i   = 1 ;
+>>>>>>> 38e9348282e
 /* exec sql end declare section */
 #line 11 "autoprep.pgc"
 

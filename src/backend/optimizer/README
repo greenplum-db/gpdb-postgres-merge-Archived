@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/optimizer/README,v 1.47 2008/08/02 21:31:59 tgl Exp $
+$PostgreSQL: pgsql/src/backend/optimizer/README,v 1.48 2008/08/14 18:47:59 tgl Exp $
 
 Optimizer
 =========
@@ -230,7 +230,11 @@ FULL JOIN ordering is enforced by not collapsing FULL JOIN nodes when
 translating the jointree to "joinlist" representation.  Other types of
 JOIN nodes are normally collapsed so that they participate fully in the
 join order search.  To avoid generating illegal join orders, the planner
+<<<<<<< HEAD
 creates a SpecialJoinInfo node for each non-inner join, and join_is_legal
+=======
+creates a SpecialJoinInfo node for each outer join, and join_is_legal
+>>>>>>> 38e9348282e
 checks this list to decide if a proposed join is legal.
 
 What we store in SpecialJoinInfo nodes are the minimum sets of Relids

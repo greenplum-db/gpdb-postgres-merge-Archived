@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.104 2008/05/09 23:32:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.105 2008/12/19 16:25:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,6 +105,22 @@ getSchemaData(int *numTablesPtr, int g_role)
 	NamespaceInfo *nspinfo;
 	ExtensionInfo *extinfo;
 	InhInfo    *inhinfo;
+<<<<<<< HEAD
+=======
+	RuleInfo   *ruleinfo;
+	ProcLangInfo *proclanginfo;
+	CastInfo   *castinfo;
+	OpclassInfo *opcinfo;
+	OpfamilyInfo *opfinfo;
+	ConvInfo   *convinfo;
+	TSParserInfo *prsinfo;
+	TSTemplateInfo *tmplinfo;
+	TSDictInfo *dictinfo;
+	TSConfigInfo *cfginfo;
+	FdwInfo	   *fdwinfo;
+	ForeignServerInfo *srvinfo;
+	int			numNamespaces;
+>>>>>>> 38e9348282e
 	int			numAggregates;
 	int			numInherits;
 	int			numRules;
@@ -118,6 +134,7 @@ getSchemaData(int *numTablesPtr, int g_role)
 	int			numTSTemplates;
 	int			numTSDicts;
 	int			numTSConfigs;
+<<<<<<< HEAD
 	const char *LOGGER_INFO = "INFO";
 
 	/*
@@ -146,6 +163,77 @@ getSchemaData(int *numTablesPtr, int g_role)
 	 * linked to their containing namespaces during getTables.
 	 */
 	if (is_gpdump || g_verbose)
+=======
+	int			numForeignDataWrappers;
+	int			numForeignServers;
+
+	if (g_verbose)
+		write_msg(NULL, "reading schemas\n");
+	nsinfo = getNamespaces(&numNamespaces);
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined functions\n");
+	funinfo = getFuncs(&numFuncs);
+	funinfoindex = buildIndexArray(funinfo, numFuncs, sizeof(FuncInfo));
+
+	/* this must be after getFuncs */
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined types\n");
+	typinfo = getTypes(&numTypes);
+	typinfoindex = buildIndexArray(typinfo, numTypes, sizeof(TypeInfo));
+
+	/* this must be after getFuncs, too */
+	if (g_verbose)
+		write_msg(NULL, "reading procedural languages\n");
+	proclanginfo = getProcLangs(&numProcLangs);
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined aggregate functions\n");
+	agginfo = getAggregates(&numAggregates);
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined operators\n");
+	oprinfo = getOperators(&numOperators);
+	oprinfoindex = buildIndexArray(oprinfo, numOperators, sizeof(OprInfo));
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined operator classes\n");
+	opcinfo = getOpclasses(&numOpclasses);
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined text search parsers\n");
+	prsinfo = getTSParsers(&numTSParsers);
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined text search templates\n");
+	tmplinfo = getTSTemplates(&numTSTemplates);
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined text search dictionaries\n");
+	dictinfo = getTSDictionaries(&numTSDicts);
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined text search configurations\n");
+	cfginfo = getTSConfigurations(&numTSConfigs);
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined foreign-data wrappers\n");
+	fdwinfo = getForeignDataWrappers(&numForeignDataWrappers);
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined foreign servers\n");
+	srvinfo = getForeignServers(&numForeignServers);
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined operator families\n");
+	opfinfo = getOpfamilies(&numOpfamilies);
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined conversions\n");
+	convinfo = getConversions(&numConversions);
+
+	if (g_verbose)
+>>>>>>> 38e9348282e
 		write_msg(NULL, "reading user-defined tables\n");
 	tblinfo = getTables(&numTables);
 	tblinfoindex = buildIndexArray(tblinfo, numTables, sizeof(TableInfo));

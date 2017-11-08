@@ -75,7 +75,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.159 2008/08/02 21:31:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.163 2008/10/23 15:29:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,10 @@
 #include "executor/nodeAgg.h"
 #include "lib/stringinfo.h"             /* StringInfo */
 #include "miscadmin.h"
+<<<<<<< HEAD
 #include "nodes/makefuncs.h"
+=======
+>>>>>>> 38e9348282e
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
@@ -856,10 +859,65 @@ static List *
 find_hash_columns(AggState *aggstate)
 {
 	Agg		   *node = (Agg *) aggstate->ss.ps.plan;
+<<<<<<< HEAD
 	Bitmapset  *colnos;
 	List	   *collist;
 	int			i;
 
+=======
+	MemoryContext tmpmem = aggstate->tmpcontext->ecxt_per_tuple_memory;
+	Size		entrysize;
+
+	Assert(node->aggstrategy == AGG_HASHED);
+	Assert(node->numGroups > 0);
+
+	entrysize = sizeof(AggHashEntryData) +
+		(aggstate->numaggs - 1) *sizeof(AggStatePerGroupData);
+
+	aggstate->hashtable = BuildTupleHashTable(node->numCols,
+											  node->grpColIdx,
+											  aggstate->eqfunctions,
+											  aggstate->hashfunctions,
+											  node->numGroups,
+											  entrysize,
+											  aggstate->aggcontext,
+											  tmpmem);
+}
+
+/*
+ * Create a list of the tuple columns that actually need to be stored in
+ * hashtable entries.  The incoming tuples from the child plan node will
+ * contain grouping columns, other columns referenced in our targetlist and
+ * qual, columns used to compute the aggregate functions, and perhaps just
+ * junk columns we don't use at all.  Only columns of the first two types
+ * need to be stored in the hashtable, and getting rid of the others can
+ * make the table entries significantly smaller.  To avoid messing up Var
+ * numbering, we keep the same tuple descriptor for hashtable entries as the
+ * incoming tuples have, but set unwanted columns to NULL in the tuples that
+ * go into the table.
+ *
+ * To eliminate duplicates, we build a bitmapset of the needed columns, then
+ * convert it to an integer list (cheaper to scan at runtime). The list is
+ * in decreasing order so that the first entry is the largest;
+ * lookup_hash_entry depends on this to use slot_getsomeattrs correctly.
+ * Note that the list is preserved over ExecReScanAgg, so we allocate it in
+ * the per-query context (unlike the hash table itself).
+ *
+ * Note: at present, searching the tlist/qual is not really necessary since
+ * the parser should disallow any unaggregated references to ungrouped
+ * columns.  However, the search will be needed when we add support for
+ * SQL99 semantics that allow use of "functionally dependent" columns that
+ * haven't been explicitly grouped by.
+ */
+static List *
+find_hash_columns(AggState *aggstate)
+{
+	Agg		   *node = (Agg *) aggstate->ss.ps.plan;
+	Bitmapset  *colnos;
+	List	   *collist;
+	int			i;
+
+>>>>>>> 38e9348282e
 	/* Find Vars that will be needed in tlist and qual */
 	colnos = find_unaggregated_cols(aggstate);
 	/* Add in all the grouping columns */
@@ -926,6 +984,23 @@ ExecAgg(AggState *node)
 		return NULL;
 	}
 
+
+	/*
+	 * Check to see if we're still projecting out tuples from a previous agg
+	 * tuple (because there is a function-returning-set in the projection
+	 * expressions).  If so, try to project another one.
+	 */
+	if (node->ss.ps.ps_TupFromTlist)
+	{
+		TupleTableSlot *result;
+		ExprDoneCond isDone;
+
+		result = ExecProject(node->ss.ps.ps_ProjInfo, &isDone);
+		if (isDone == ExprMultipleResult)
+			return result;
+		/* Done with that source tuple... */
+		node->ss.ps.ps_TupFromTlist = false;
+	}
 
 	if (((Agg *) node->ss.ps.plan)->aggstrategy == AGG_HASHED)
 	{
@@ -1052,7 +1127,6 @@ agg_retrieve_direct(AggState *aggstate)
 	PlanState  *outerPlan;
 	ExprContext *econtext;
 	ExprContext *tmpcontext;
-	ProjectionInfo *projInfo;
 	Datum	   *aggvalues;
 	bool	   *aggnulls;
 	AggStatePerAgg peragg;
@@ -1083,7 +1157,6 @@ agg_retrieve_direct(AggState *aggstate)
 	aggnulls = econtext->ecxt_aggnulls;
 	/* tmpcontext is the per-input-tuple expression context */
 	tmpcontext = aggstate->tmpcontext;
-	projInfo = aggstate->ss.ps.ps_ProjInfo;
 	peragg = aggstate->peragg;
 	pergroup = aggstate->pergroup;
 	perpassthru = aggstate->perpassthru;
@@ -1474,10 +1547,19 @@ agg_retrieve_direct(AggState *aggstate)
 		{
 			/*
 			 * Form and return a projection tuple using the aggregate results
-			 * and the representative input tuple.	Note we do not support
-			 * aggregates returning sets ...
+			 * and the representative input tuple.
 			 */
-			return ExecProject(projInfo, NULL);
+			TupleTableSlot *result;
+			ExprDoneCond isDone;
+
+			result = ExecProject(aggstate->ss.ps.ps_ProjInfo, &isDone);
+
+			if (isDone != ExprEndResult)
+			{
+				aggstate->ss.ps.ps_TupFromTlist =
+					(isDone == ExprMultipleResult);
+				return result;
+			}
 		}
 	}
 
@@ -1492,7 +1574,6 @@ static TupleTableSlot *
 agg_retrieve_hash_table(AggState *aggstate)
 {
 	ExprContext *econtext;
-	ProjectionInfo *projInfo;
 	Datum	   *aggvalues;
 	bool	   *aggnulls;
 	AggStatePerAgg peragg;
@@ -1512,7 +1593,6 @@ agg_retrieve_hash_table(AggState *aggstate)
 	econtext = aggstate->ss.ps.ps_ExprContext;
 	aggvalues = econtext->ecxt_aggvalues;
 	aggnulls = econtext->ecxt_aggnulls;
-	projInfo = aggstate->ss.ps.ps_ProjInfo;
 	peragg = aggstate->peragg;
 	firstSlot = aggstate->ss.ss_ScanTupleSlot;
 
@@ -1587,10 +1667,19 @@ agg_retrieve_hash_table(AggState *aggstate)
 		{
 			/*
 			 * Form and return a projection tuple using the aggregate results
-			 * and the representative input tuple.	Note we do not support
-			 * aggregates returning sets ...
+			 * and the representative input tuple.
 			 */
-			return ExecProject(projInfo, NULL);
+			TupleTableSlot *result;
+			ExprDoneCond isDone;
+
+			result = ExecProject(aggstate->ss.ps.ps_ProjInfo, &isDone);
+
+			if (isDone != ExprEndResult)
+			{
+				aggstate->ss.ps.ps_TupFromTlist =
+					(isDone == ExprMultipleResult);
+				return result;
+			}
 		}
 	}
 
@@ -1714,6 +1803,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	ExecAssignResultTypeFromTL(&aggstate->ss.ps);
 	ExecAssignProjectionInfo(&aggstate->ss.ps, NULL);
 
+	aggstate->ss.ps.ps_TupFromTlist = false;
+
 	/*
 	 * get the count of aggregates in targetlist and quals
 	 */
@@ -1762,6 +1853,12 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 	if (node->aggstrategy == AGG_HASHED)
 	{
+<<<<<<< HEAD
+=======
+		build_hash_table(aggstate);
+		aggstate->table_filled = false;
+		/* Compute the columns we actually need to hash on */
+>>>>>>> 38e9348282e
 		aggstate->hash_needed = find_hash_columns(aggstate);
 	}
 	else
@@ -2432,7 +2529,57 @@ ExecReScanAgg(AggState *node, ExprContext *exprCtxt)
 {
 	ExprContext *econtext = node->ss.ps.ps_ExprContext;
 
+<<<<<<< HEAD
 	ExecEagerFreeAgg(node);
+=======
+	node->agg_done = false;
+
+	node->ss.ps.ps_TupFromTlist = false;
+
+	if (((Agg *) node->ss.ps.plan)->aggstrategy == AGG_HASHED)
+	{
+		/*
+		 * In the hashed case, if we haven't yet built the hash table then we
+		 * can just return; nothing done yet, so nothing to undo. If subnode's
+		 * chgParam is not NULL then it will be re-scanned by ExecProcNode,
+		 * else no reason to re-scan it at all.
+		 */
+		if (!node->table_filled)
+			return;
+
+		/*
+		 * If we do have the hash table and the subplan does not have any
+		 * parameter changes, then we can just rescan the existing hash table;
+		 * no need to build it again.
+		 */
+		if (((PlanState *) node)->lefttree->chgParam == NULL)
+		{
+			ResetTupleHashIterator(node->hashtable, &node->hashiter);
+			return;
+		}
+	}
+
+	/* Make sure we have closed any open tuplesorts */
+	for (aggno = 0; aggno < node->numaggs; aggno++)
+	{
+		AggStatePerAgg peraggstate = &node->peragg[aggno];
+
+		if (peraggstate->sortstate)
+			tuplesort_end(peraggstate->sortstate);
+		peraggstate->sortstate = NULL;
+	}
+
+	/* Release first tuple of group, if we have made a copy */
+	if (node->grp_firstTuple != NULL)
+	{
+		heap_freetuple(node->grp_firstTuple);
+		node->grp_firstTuple = NULL;
+	}
+
+	/* Forget current agg values */
+	MemSet(econtext->ecxt_aggvalues, 0, sizeof(Datum) * node->numaggs);
+	MemSet(econtext->ecxt_aggnulls, 0, sizeof(bool) * node->numaggs);
+>>>>>>> 38e9348282e
 
 	/*
 	 * Release all temp storage. Note that with AGG_HASHED, the hash table is

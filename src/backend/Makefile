@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.129 2008/08/01 13:16:08 alvherre Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.131 2008/12/19 16:25:16 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,6 +14,7 @@ subdir = src/backend
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
+<<<<<<< HEAD
 BLD_TOP = $(top_builddir)/gpAux
 
 ifdef ADDON_DIR
@@ -32,6 +33,11 @@ endif
 ifeq ($(enable_codegen),yes)
 SUBDIRS += codegen
 endif
+=======
+SUBDIRS = access bootstrap catalog parser commands executor foreign lib libpq \
+	main nodes optimizer port postmaster regex rewrite \
+	storage tcop tsearch utils $(top_builddir)/src/timezone
+>>>>>>> 38e9348282e
 
 include $(srcdir)/common.mk
 
@@ -186,7 +192,11 @@ utils/probes.o: utils/probes.d $(SUBDIROBJS)
 
 distprep:
 	$(MAKE) -C parser	gram.c gram.h scan.c
+<<<<<<< HEAD
 	$(MAKE) -C bootstrap	bootparse.c bootstrap_tokens.h bootscanner.c
+=======
+	$(MAKE) -C bootstrap	bootparse.c bootscanner.c
+>>>>>>> 38e9348282e
 	$(MAKE) -C utils/misc	guc-file.c
 
 
@@ -280,7 +290,10 @@ endif
 clean:
 	rm -f $(LOCALOBJS) postgres$(X) $(POSTGRES_IMP) \
 		$(top_srcdir)/src/include/parser/gram.h \
+<<<<<<< HEAD
 		$(top_srcdir)/src/include/parser/parse.h \
+=======
+>>>>>>> 38e9348282e
 		$(top_builddir)/src/include/utils/fmgroids.h
 ifeq ($(PORTNAME), cygwin)
 	rm -f postgres.dll postgres.def libpostgres.a
@@ -295,11 +308,13 @@ distclean: clean
 maintainer-clean: distclean
 	rm -f $(srcdir)/bootstrap/bootparse.c \
 	      $(srcdir)/bootstrap/bootscanner.c \
-	      $(srcdir)/bootstrap/bootstrap_tokens.h \
 	      $(srcdir)/parser/gram.c \
 	      $(srcdir)/parser/scan.c \
 	      $(srcdir)/parser/gram.h \
+<<<<<<< HEAD
 	      $(srcdir)/parser/parse.h \
+=======
+>>>>>>> 38e9348282e
 	      $(srcdir)/utils/misc/guc-file.c
 
 

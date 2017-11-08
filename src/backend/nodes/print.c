@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.89 2008/06/19 00:46:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.90 2008/10/04 21:56:53 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -282,6 +282,7 @@ print_rt(List *rtable)
 				printf("%d\t%s\t[tablefunction]",
 					   i, name);
 				break;
+<<<<<<< HEAD
 			case RTE_FUNCTION:
 				printf("%d\t%s\t[rangefunction]",
 					   i, name);
@@ -290,6 +291,8 @@ print_rt(List *rtable)
 				printf("%d\t%s\t[values list]",
 					   i, rte->eref->aliasname);
 				break;
+=======
+>>>>>>> 38e9348282e
 			case RTE_JOIN:
 				printf("%d\t%s\t[join]",
 					   i, name);
@@ -301,6 +304,18 @@ print_rt(List *rtable)
 			case RTE_VOID:
 				printf("%d\t%s\t[void]",
 					   i, name);
+				break;
+			case RTE_FUNCTION:
+				printf("%d\t%s\t[rangefunction]",
+					   i, rte->eref->aliasname);
+				break;
+			case RTE_VALUES:
+				printf("%d\t%s\t[values list]",
+					   i, rte->eref->aliasname);
+				break;
+			case RTE_CTE:
+				printf("%d\t%s\t[cte]",
+					   i, rte->eref->aliasname);
 				break;
 			default:
 				printf("%d\t%s\t[unknown rtekind]",

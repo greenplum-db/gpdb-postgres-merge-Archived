@@ -31,6 +31,7 @@ CREATE FUNCTION user_relns()
    LANGUAGE SQL READS SQL DATA;
 CREATE FUNCTION pt_in_widget(point, widget)
    RETURNS bool
+<<<<<<< HEAD
    AS '@abs_builddir@/regress@DLSUFFIX@'
    LANGUAGE C IMMUTABLE NO SQL;
 CREATE FUNCTION overpaid(emp)
@@ -67,3 +68,31 @@ SELECT checkRelationAfterInvalidation();
  t
 (1 row)
 
+=======
+   AS '@libdir@/regress@DLSUFFIX@'
+   LANGUAGE C;
+CREATE FUNCTION overpaid(emp)
+   RETURNS bool
+   AS '@libdir@/regress@DLSUFFIX@'
+   LANGUAGE C;
+CREATE FUNCTION boxarea(box)
+   RETURNS float8
+   AS '@libdir@/regress@DLSUFFIX@'
+   LANGUAGE C;
+CREATE FUNCTION interpt_pp(path, path)
+   RETURNS point
+   AS '@libdir@/regress@DLSUFFIX@'
+   LANGUAGE C;
+CREATE FUNCTION reverse_name(name)
+   RETURNS name
+   AS '@libdir@/regress@DLSUFFIX@'
+   LANGUAGE C;
+CREATE FUNCTION oldstyle_length(int4, text)
+   RETURNS int4
+   AS '@libdir@/regress@DLSUFFIX@'
+   LANGUAGE C;
+--
+-- Function dynamic loading
+--
+LOAD '@libdir@/regress@DLSUFFIX@';
+>>>>>>> 38e9348282e

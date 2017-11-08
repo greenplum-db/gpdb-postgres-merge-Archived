@@ -38,6 +38,7 @@ CREATE FUNCTION user_relns()
 
 CREATE FUNCTION pt_in_widget(point, widget)
    RETURNS bool
+<<<<<<< HEAD
    AS '@abs_builddir@/regress@DLSUFFIX@'
    LANGUAGE C IMMUTABLE NO SQL;
 
@@ -65,11 +66,40 @@ CREATE FUNCTION oldstyle_length(int4, text)
    RETURNS int4
    AS '@abs_builddir@/regress@DLSUFFIX@'
    LANGUAGE C READS SQL DATA;
+=======
+   AS '@libdir@/regress@DLSUFFIX@'
+   LANGUAGE C;
+
+CREATE FUNCTION overpaid(emp)
+   RETURNS bool
+   AS '@libdir@/regress@DLSUFFIX@'
+   LANGUAGE C;
+
+CREATE FUNCTION boxarea(box)
+   RETURNS float8
+   AS '@libdir@/regress@DLSUFFIX@'
+   LANGUAGE C;
+
+CREATE FUNCTION interpt_pp(path, path)
+   RETURNS point
+   AS '@libdir@/regress@DLSUFFIX@'
+   LANGUAGE C;
+
+CREATE FUNCTION reverse_name(name)
+   RETURNS name
+   AS '@libdir@/regress@DLSUFFIX@'
+   LANGUAGE C;
+
+CREATE FUNCTION oldstyle_length(int4, text)
+   RETURNS int4
+   AS '@libdir@/regress@DLSUFFIX@'
+   LANGUAGE C;
+>>>>>>> 38e9348282e
 
 --
 -- Function dynamic loading
 --
-LOAD '@abs_builddir@/regress@DLSUFFIX@';
+LOAD '@libdir@/regress@DLSUFFIX@';
 
 -- Persistent table check
 -- It's not the right place, but good fit to put misc UDFs.

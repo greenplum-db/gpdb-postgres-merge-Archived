@@ -21,7 +21,11 @@ INSERT INTO POINT_TBL(f1) VALUES ('(10.0,10.0');
 ERROR:  invalid input syntax for type point: "(10.0,10.0"
 LINE 1: INSERT INTO POINT_TBL(f1) VALUES ('(10.0,10.0');
                                           ^
+<<<<<<< HEAD
 SELECT '' AS six, * FROM POINT_TBL ORDER BY f1[0],f1[1];
+=======
+SELECT '' AS six, * FROM POINT_TBL;
+>>>>>>> 38e9348282e
  six |     f1     
 -----+------------
      | (-10,0)

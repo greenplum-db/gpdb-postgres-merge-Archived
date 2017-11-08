@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.264 2008/05/12 20:01:58 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.270 2008/12/04 14:51:02 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,9 +26,15 @@
 #include "access/transam.h"
 #include "access/twophase.h"
 #include "access/xlogutils.h"
+<<<<<<< HEAD
 #include "access/fileam.h"
 #include "catalog/namespace.h"
 #include "catalog/oid_dispatch.h"
+=======
+#include "catalog/catalog.h"
+#include "catalog/namespace.h"
+#include "catalog/storage.h"
+>>>>>>> 38e9348282e
 #include "commands/async.h"
 #include "commands/resgroupcmds.h"
 #include "commands/tablecmds.h"
@@ -309,7 +315,6 @@ static void CommitTransaction(void);
 static TransactionId RecordTransactionAbort(bool isSubXact);
 static void StartTransaction(void);
 
-static void RecordSubTransactionCommit(void);
 static void StartSubTransaction(void);
 static void CommitSubTransaction(void);
 static void AbortSubTransaction(void);
@@ -1375,6 +1380,7 @@ RecordTransactionCommit(void)
 		 * Now we may update the CLOG, if we wrote a COMMIT record above
 		 */
 		if (markXidCommitted)
+<<<<<<< HEAD
 		{
 			/*
 			 * Mark the distributed transaction committed. Note that this
@@ -1394,6 +1400,9 @@ RecordTransactionCommit(void)
 			/* to avoid race conditions, the parent must commit first */
 			TransactionIdCommitTree(nchildren, children);
 		}
+=======
+			TransactionIdCommitTree(xid, nchildren, children);
+>>>>>>> 38e9348282e
 	}
 #ifdef IMPLEMENT_ASYNC_COMMIT
 	else
@@ -1412,11 +1421,7 @@ RecordTransactionCommit(void)
 		 * flushed before the CLOG may be updated.
 		 */
 		if (markXidCommitted)
-		{
-			TransactionIdAsyncCommit(xid, XactLastRecEnd);
-			/* to avoid race conditions, the parent must commit first */
-			TransactionIdAsyncCommitTree(nchildren, children, XactLastRecEnd);
-		}
+			TransactionIdAsyncCommitTree(xid, nchildren, children, XactLastRecEnd);
 	}
 #endif
 
@@ -1640,6 +1645,7 @@ AtSubCommit_childXids(void)
 	s->maxChildXids = 0;
 }
 
+<<<<<<< HEAD
 /*
  * RecordSubTransactionCommit
  */
@@ -1705,6 +1711,8 @@ RecordSubTransactionCommit(void)
 	}
 }
 
+=======
+>>>>>>> 38e9348282e
 /* ----------------------------------------------------------------
  *						AbortTransaction stuff
  * ----------------------------------------------------------------
@@ -1847,14 +1855,8 @@ RecordTransactionAbort(bool isSubXact)
 	 * waiting for already-aborted subtransactions.  It is OK to do it without
 	 * having flushed the ABORT record to disk, because in event of a crash
 	 * we'd be assumed to have aborted anyway.
-	 *
-	 * The ordering here isn't critical but it seems best to mark the parent
-	 * first.  This assures an atomic transition of all the subtransactions to
-	 * aborted state from the point of view of concurrent
-	 * TransactionIdDidAbort calls.
 	 */
-	TransactionIdAbort(xid);
-	TransactionIdAbortTree(nchildren, children);
+	TransactionIdAbortTree(xid, nchildren, children);
 
 	END_CRIT_SECTION();
 
@@ -2749,6 +2751,9 @@ CommitTransaction(void)
 	/* Clean up the relation cache */
 	AtEOXact_RelationCache(true);
 
+	/* Clean up the snapshot manager */
+	AtEarlyCommit_Snapshot();
+
 	/*
 	 * Make catalog changes visible to all backends.  This has to happen after
 	 * relcache references are dropped (see comments for
@@ -3055,6 +3060,9 @@ PrepareTransaction(void)
 	/* Clean up the relation cache */
 	AtEOXact_RelationCache(true);
 
+	/* Clean up the snapshot manager */
+	AtEarlyCommit_Snapshot();
+
 	/* notify and flatfiles don't need a postprepare call */
 
 	PostPrepare_PgStat();
@@ -3308,6 +3316,7 @@ AbortTransaction(void)
 		pgstat_report_xact_timestamp(0);
 	}
 
+<<<<<<< HEAD
 	/*
 	 * Do abort to all QE. NOTE: we don't process
 	 * signals to prevent recursion until we've notified the QEs.
@@ -3324,6 +3333,19 @@ AbortTransaction(void)
 	rollbackDtxTransaction();
 
 	MyProc->localDistribXactData.state = LOCALDISTRIBXACT_STATE_NONE;
+=======
+	AtEOXact_GUC(false, 1);
+	AtEOXact_SPI(false);
+	AtEOXact_xml();
+	AtEOXact_on_commit_actions(false);
+	AtEOXact_Namespace(false);
+	AtEOXact_Files();
+	AtEOXact_ComboCid();
+	AtEOXact_HashTables(false);
+	AtEOXact_PgStat(false);
+	AtEOXact_Snapshot(false);
+	pgstat_report_xact_timestamp(0);
+>>>>>>> 38e9348282e
 
 	/*
 	 * State remains TRANS_ABORT until CleanupTransaction().
@@ -5290,8 +5312,11 @@ CommitSubTransaction(void)
 	/* Must CCI to ensure commands of subtransaction are seen as done */
 	CommandCounterIncrement();
 
-	/* Mark subtransaction as subcommitted */
-	RecordSubTransactionCommit();
+	/* 
+	 * Prior to 8.4 we marked subcommit in clog at this point.  We now only
+	 * perform that step, if required, as part of the atomic update of the
+	 * whole transaction tree at top level commit or abort.
+	 */
 
 	/* Post-commit cleanup */
 	if (TransactionIdIsValid(s->transactionId))
@@ -5837,6 +5862,7 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid,
 	TransactionId max_xid;
 	int			i;
 
+<<<<<<< HEAD
 	if (distribXid != 0 && distribTimeStamp != 0)
 	{
 		DistributedLog_SetCommitted(
@@ -5862,6 +5888,11 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid,
 
 	/* Mark committed subtransactions as committed */
 	TransactionIdCommitTree(xlrec->nsubxacts, sub_xids);
+=======
+	/* Mark the transaction committed in pg_clog */
+	sub_xids = (TransactionId *) &(xlrec->xnodes[xlrec->nrels]);
+	TransactionIdCommitTree(xid, xlrec->nsubxacts, sub_xids);
+>>>>>>> 38e9348282e
 
 	/* Make sure nextXid is beyond any XID mentioned in the record */
 	max_xid = xid;
@@ -5912,6 +5943,7 @@ xact_redo_distributed_commit(xl_xact_commit *xlrec, TransactionId xid)
 
 	if (TransactionIdIsValid(xid))
 	{
+<<<<<<< HEAD
 		/*
 		 * Mark the distributed transaction committed before we
 		 * update the CLOG in xact_redo_commit.
@@ -5978,6 +6010,20 @@ xact_redo_distributed_commit(xl_xact_commit *xlrec, TransactionId xid)
 			ShmemVariableCache->nextXid = max_xid;
 			TransactionIdAdvance(ShmemVariableCache->nextXid);
 		}
+=======
+		SMgrRelation srel = smgropen(xlrec->xnodes[i]);
+		ForkNumber fork;
+
+		for (fork = 0; fork <= MAX_FORKNUM; fork++)
+		{
+			if (smgrexists(srel, fork))
+			{
+				XLogDropRelation(xlrec->xnodes[i], fork);
+				smgrdounlink(srel, fork, false, true);
+			}
+		}
+		smgrclose(srel);
+>>>>>>> 38e9348282e
 	}
 
 	/*
@@ -5995,6 +6041,7 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 	TransactionId max_xid;
 	int			i;
 
+<<<<<<< HEAD
 	TransactionIdAbort(xid);
 
 	data = xlrec->data;
@@ -6011,6 +6058,11 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 
 	/* Mark subtransactions as aborted */
 	TransactionIdAbortTree(xlrec->nsubxacts, sub_xids);
+=======
+	/* Mark the transaction aborted in pg_clog */
+	sub_xids = (TransactionId *) &(xlrec->xnodes[xlrec->nrels]);
+	TransactionIdAbortTree(xid, xlrec->nsubxacts, sub_xids);
+>>>>>>> 38e9348282e
 
 	/* Make sure nextXid is beyond any XID mentioned in the record */
 	max_xid = xid;
@@ -6027,10 +6079,29 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 	}
 }
 
+<<<<<<< HEAD
 static void
 xact_redo_distributed_forget(xl_xact_distributed_forget *xlrec, TransactionId xid __attribute__((unused)) )
 {
 	redoDistributedForgetCommitRecord(&xlrec->gxact_log);
+=======
+	/* Make sure files supposed to be dropped are dropped */
+	for (i = 0; i < xlrec->nrels; i++)
+	{
+		SMgrRelation srel = smgropen(xlrec->xnodes[i]);
+		ForkNumber fork;
+
+		for (fork = 0; fork <= MAX_FORKNUM; fork++)
+		{
+			if (smgrexists(srel, fork))
+			{
+				XLogDropRelation(xlrec->xnodes[i], fork);
+				smgrdounlink(srel, fork, false, true);
+			}
+		}
+		smgrclose(srel);
+	}
+>>>>>>> 38e9348282e
 }
 
 
@@ -6254,6 +6325,7 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 		appendStringInfo(buf, "; drop file-system objects:");
 		for (i = 0; i < persistentCommitObjects.typed.fileSysActionInfosCount; i++)
 		{
+<<<<<<< HEAD
 			PersistentEndXactFileSysActionInfo	*fileSysActionInfo =
 						&persistentCommitObjects.typed.fileSysActionInfos[i];
 
@@ -6268,6 +6340,11 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 				appendStringInfo(buf, " %s",
 								 PersistentFileSysObjName_TypeAndObjectName(&fileSysActionInfo->fsObjName));
 			}
+=======
+			char *path = relpath(xlrec->xnodes[i], MAIN_FORKNUM);
+			appendStringInfo(buf, " %s", path);
+			pfree(path);
+>>>>>>> 38e9348282e
 		}
 	}
 
@@ -6338,6 +6415,7 @@ xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
 		appendStringInfo(buf, "; aborted create file-system objects:");
 		for (i = 0; i < persistentAbortObjects.typed.fileSysActionInfosCount; i++)
 		{
+<<<<<<< HEAD
 			PersistentEndXactFileSysActionInfo	*fileSysActionInfo =
 						&persistentAbortObjects.typed.fileSysActionInfos[i];
 
@@ -6349,6 +6427,11 @@ xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
 
 			appendStringInfo(buf, " %s",
 							 PersistentFileSysObjName_TypeAndObjectName(&fileSysActionInfo->fsObjName));
+=======
+			char *path = relpath(xlrec->xnodes[i], MAIN_FORKNUM);
+			appendStringInfo(buf, " %s", path);
+			pfree(path);
+>>>>>>> 38e9348282e
 		}
 	}
 	if (xlrec->nsubxacts > 0)

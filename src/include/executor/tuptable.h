@@ -7,7 +7,11 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.38.2.1 2009/03/30 04:09:09 tgl Exp $
+=======
+ * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.39 2008/10/28 22:02:05 tgl Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -391,6 +395,7 @@ extern TupleTableSlot *ExecStoreMinimalTuple(MemTuple mtup,
 extern TupleTableSlot *ExecClearTuple(TupleTableSlot *slot);
 extern TupleTableSlot *ExecStoreVirtualTuple(TupleTableSlot *slot);
 extern TupleTableSlot *ExecStoreAllNullTuple(TupleTableSlot *slot);
+<<<<<<< HEAD
 
 extern HeapTuple ExecCopySlotHeapTuple(TupleTableSlot *slot);
 extern MemTuple ExecCopySlotMemTuple(TupleTableSlot *slot);
@@ -429,6 +434,13 @@ ExecCopyGenericTuple(TupleTableSlot *slot)
 	return (GenericTuple) ExecCopySlotMemTuple(slot);
 }
 
+=======
+extern HeapTuple ExecCopySlotTuple(TupleTableSlot *slot);
+extern MinimalTuple ExecCopySlotMinimalTuple(TupleTableSlot *slot);
+extern HeapTuple ExecFetchSlotTuple(TupleTableSlot *slot);
+extern MinimalTuple ExecFetchSlotMinimalTuple(TupleTableSlot *slot);
+extern Datum ExecFetchSlotTupleDatum(TupleTableSlot *slot);
+>>>>>>> 38e9348282e
 extern HeapTuple ExecMaterializeSlot(TupleTableSlot *slot);
 extern TupleTableSlot *ExecCopySlot(TupleTableSlot *dstslot, TupleTableSlot *srcslot);
 

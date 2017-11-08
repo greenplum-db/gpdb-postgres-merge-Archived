@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.113 2008/05/12 00:00:54 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.114 2008/09/16 01:56:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -452,7 +452,10 @@ typedef struct LOCALLOCK
 	LOCK	   *lock;			/* associated LOCK object in shared mem */
 	PROCLOCK   *proclock;		/* associated PROCLOCK object in shmem */
 	uint32		hashcode;		/* copy of LOCKTAG's hash value */
+<<<<<<< HEAD
 	bool		preparable;		/* MPP: During prepare we populate this to avoid MPP-1094 */
+=======
+>>>>>>> 38e9348282e
 	int64		nLocks;			/* total number of times lock is held */
 	int			numLockOwners;	/* # of relevant ResourceOwners */
 	int			maxLockOwners;	/* allocated size of array */

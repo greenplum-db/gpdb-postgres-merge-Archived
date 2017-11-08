@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.31 2008/06/19 00:46:05 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.35 2008/10/22 12:53:56 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,9 +60,15 @@ typedef struct GISTSTATE
 
 typedef struct ItemResult
 {
+<<<<<<< HEAD
 	ItemPointerData heapPtr;
 	OffsetNumber pageOffset;	/* offset in index page */
 	bool		recheck;
+=======
+	ItemPointerData		heapPtr;
+	OffsetNumber		pageOffset; /* offset in index page */
+	bool				recheck;
+>>>>>>> 38e9348282e
 } ItemResult;
 
 /*
@@ -73,12 +79,16 @@ typedef struct GISTScanOpaqueData
 {
 	GISTSearchStack *stack;
 	GISTSearchStack *markstk;
+<<<<<<< HEAD
 	uint16		flags;
+=======
+>>>>>>> 38e9348282e
 	bool        qual_ok;        /* false if qual can never be satisfied */
 	GISTSTATE  *giststate;
 	MemoryContext tempCxt;
 	Buffer		curbuf;
 	ItemPointerData curpos;
+<<<<<<< HEAD
 	Buffer		markbuf;
 	ItemPointerData markpos;
 
@@ -88,6 +98,12 @@ typedef struct GISTScanOpaqueData
 	ItemResult	markPageData[BLCKSZ/sizeof(IndexTupleData)];
 	OffsetNumber	markNPageData;
 	OffsetNumber	markCurPageData;
+=======
+
+	ItemResult		pageData[BLCKSZ/sizeof(IndexTupleData)];
+	OffsetNumber	nPageData;
+	OffsetNumber	curPageData;
+>>>>>>> 38e9348282e
 } GISTScanOpaqueData;
 
 typedef GISTScanOpaqueData *GISTScanOpaque;
@@ -239,15 +255,6 @@ typedef struct
 	/* pointer to heap tuple */
 	ItemPointerData key;
 } GISTInsertState;
-
-/*
- * When we're doing a scan and updating a tree at the same time, the
- * updates may affect the scan.  We use the flags entry of the scan's
- * opaque space to record our actual position in response to updates
- * that we can't handle simply by adjusting pointers.
- */
-#define GS_CURBEFORE	((uint16) (1 << 0))
-#define GS_MRKBEFORE	((uint16) (1 << 1))
 
 /* root page of a gist index */
 #define GIST_ROOT_BLKNO				0

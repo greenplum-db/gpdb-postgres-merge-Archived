@@ -4,7 +4,11 @@
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/bin/scripts/reindexdb.c,v 1.18 2009/06/11 14:49:08 momjian Exp $
+=======
+ * $PostgreSQL: pgsql/src/bin/scripts/reindexdb.c,v 1.14 2008/12/11 07:34:08 petere Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */

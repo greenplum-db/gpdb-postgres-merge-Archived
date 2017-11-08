@@ -39,7 +39,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.57 2008/06/19 00:46:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.58 2008/11/02 01:45:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -207,17 +207,27 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	 */
 	rel = heap_open(TableSpaceRelationId, RowExclusiveLock);
 
+<<<<<<< HEAD
 	MemSet(nulls, true, sizeof(nulls));
+=======
+	MemSet(nulls, false, sizeof(nulls));
+>>>>>>> 38e9348282e
 
 	values[Anum_pg_tablespace_spcname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->tablespacename));
 	values[Anum_pg_tablespace_spcowner - 1] =
 		ObjectIdGetDatum(ownerId);
+<<<<<<< HEAD
 	values[Anum_pg_tablespace_spcfsoid - 1] =
 		ObjectIdGetDatum(filespaceoid);
 	nulls[Anum_pg_tablespace_spcname - 1] = false;
 	nulls[Anum_pg_tablespace_spcowner - 1] = false;
 	nulls[Anum_pg_tablespace_spcfsoid - 1] = false;
+=======
+	values[Anum_pg_tablespace_spclocation - 1] =
+		CStringGetTextDatum(location);
+	nulls[Anum_pg_tablespace_spcacl - 1] = true;
+>>>>>>> 38e9348282e
 
 	tuple = heap_form_tuple(rel->rd_att, values, nulls);
 

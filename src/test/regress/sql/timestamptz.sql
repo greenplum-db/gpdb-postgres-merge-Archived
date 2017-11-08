@@ -242,6 +242,7 @@ SELECT '' AS to_char_10, to_char(d1, 'IYYY IYY IY I IW IDDD ID')
 
 SELECT '' AS to_char_11, to_char(d1, 'FMIYYY FMIYY FMIY FMI FMIW FMIDDD FMID')
    FROM TIMESTAMPTZ_TBL;
+<<<<<<< HEAD
 
 -- TO_TIMESTAMP()
 SELECT '' AS to_timestamp_1, to_timestamp('0097/Feb/16 --> 08:14:30', 'YYYY/Mon/DD --> HH:MI:SS');
@@ -303,3 +304,5 @@ insert into dttm_com values
 select id from dttm_com where d1 <> current_date;
 
 SET DateStyle TO DEFAULT;
+=======
+>>>>>>> 38e9348282e

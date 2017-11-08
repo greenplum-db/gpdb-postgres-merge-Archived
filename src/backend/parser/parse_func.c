@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.204 2008/07/30 17:05:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.209 2008/12/18 18:20:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,10 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+<<<<<<< HEAD
 #include "optimizer/walkers.h"
+=======
+>>>>>>> 38e9348282e
 #include "parser/parse_agg.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
@@ -316,21 +319,36 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * If there are default arguments, we have to include their types in
 	 * actual_arg_types for the purpose of checking generic type consistency.
 	 * However, we do NOT put them into the generated parse node, because
+<<<<<<< HEAD
 	 * their actual values might change before the query gets run. The
+=======
+	 * their actual values might change before the query gets run.  The
+>>>>>>> 38e9348282e
 	 * planner has to insert the up-to-date values at plan time.
 	 */
 	nargsplusdefs = nargs;
 	foreach(l, argdefaults)
 	{
+<<<<<<< HEAD
 		Node	   *expr = (Node *) lfirst(l);
+=======
+		Node	*expr = (Node *) lfirst(l);
+>>>>>>> 38e9348282e
 
 		/* probably shouldn't happen ... */
 		if (nargsplusdefs >= FUNC_MAX_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+<<<<<<< HEAD
 							 errmsg("cannot pass more than %d arguments to a function",
 									 FUNC_MAX_ARGS),
 									 parser_errposition(pstate, location)));
+=======
+					 errmsg("cannot pass more than %d arguments to a function",
+							FUNC_MAX_ARGS),
+					 parser_errposition(pstate, location)));
+
+>>>>>>> 38e9348282e
 		actual_arg_types[nargsplusdefs++] = exprType(expr);
 	}
 
@@ -341,7 +359,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 */
 	rettype = enforce_generic_type_consistency(actual_arg_types,
 											   declared_arg_types,
-											   nargs,
+											   nargsplusdefs,
 											   rettype,
 											   false);
 
@@ -369,9 +387,15 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		if (!OidIsValid(newa->array_typeid))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
+<<<<<<< HEAD
 					errmsg("could not find array type for data type %s",
 						   format_type_be(newa->element_typeid)),
 					parser_errposition(pstate, exprLocation((Node *) vargs))));
+=======
+					 errmsg("could not find array type for data type %s",
+							format_type_be(newa->element_typeid)),
+					 parser_errposition(pstate, exprLocation((Node *) vargs))));
+>>>>>>> 38e9348282e
 		newa->multidims = false;
 		newa->location = exprLocation((Node *) vargs);
 
@@ -1141,12 +1165,16 @@ func_get_detail(List *funcname,
 			else
 				*argdefaults = NIL;
 		}
+<<<<<<< HEAD
 		if (pform->proisagg)
 			result = FUNCDETAIL_AGGREGATE;
 		else if (pform->proiswindow)
 			result = FUNCDETAIL_WINDOWFUNC;
 		else
 			result = FUNCDETAIL_NORMAL;
+=======
+		result = pform->proisagg ? FUNCDETAIL_AGGREGATE : FUNCDETAIL_NORMAL;
+>>>>>>> 38e9348282e
 		ReleaseSysCache(ftup);
 		return result;
 	}

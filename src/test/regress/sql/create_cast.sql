@@ -40,12 +40,19 @@ SELECT casttestfunc('foo'::text); -- Should work now
 -- Try I/O conversion cast.
 SELECT 1234::int4::casttesttype; -- No cast yet, should fail
 
+<<<<<<< HEAD
 /* This will come in PostgreSQL 8.4
+=======
+>>>>>>> 38e9348282e
 CREATE CAST (int4 AS casttesttype) WITH INOUT;
 SELECT 1234::int4::casttesttype; -- Should work now
 
 DROP CAST (int4 AS casttesttype);
+<<<<<<< HEAD
 */
+=======
+
+>>>>>>> 38e9348282e
 -- Try cast with a function
 
 CREATE FUNCTION int4_casttesttype(int4) RETURNS casttesttype LANGUAGE SQL AS

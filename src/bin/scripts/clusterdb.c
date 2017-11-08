@@ -4,7 +4,11 @@
  *
  * Portions Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/bin/scripts/clusterdb.c,v 1.25 2009/02/26 16:02:38 petere Exp $
+=======
+ * $PostgreSQL: pgsql/src/bin/scripts/clusterdb.c,v 1.22 2008/12/11 07:34:08 petere Exp $
+>>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +23,11 @@ static void cluster_one_database(const char *dbname, bool verbose, const char *t
 					 const char *username, enum trivalue prompt_password,
 					 const char *progname, bool echo);
 static void cluster_all_databases(bool verbose, const char *host, const char *port,
+<<<<<<< HEAD
 					  const char *username, enum trivalue prompt_password,
+=======
+					  const char *username, bool password,
+>>>>>>> 38e9348282e
 					  const char *progname, bool echo, bool quiet);
 
 static void help(const char *progname);
@@ -63,7 +71,11 @@ main(int argc, char *argv[])
 
 	handle_help_version_opts(argc, argv, "clusterdb", help);
 
+<<<<<<< HEAD
 	while ((c = getopt_long(argc, argv, "h:p:U:wWeqd:at:v", long_options, &optindex)) != -1)
+=======
+	while ((c = getopt_long(argc, argv, "h:p:U:Weqd:at:v", long_options, &optindex)) != -1)
+>>>>>>> 38e9348282e
 	{
 		switch (c)
 		{
@@ -97,10 +109,13 @@ main(int argc, char *argv[])
 			case 't':
 				table = optarg;
 				break;
+<<<<<<< HEAD
 			/*
 			 * -v accepted for PostgreSQL compatability, although GPDB
 			 * doesn't actually handle CLUSTER VERBOSE.
 			 */
+=======
+>>>>>>> 38e9348282e
 			case 'v':
 				verbose = true;
 				break;
@@ -141,7 +156,11 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
+<<<<<<< HEAD
 		cluster_all_databases(verbose, host, port, username, prompt_password,
+=======
+		cluster_all_databases(verbose, host, port, username, password,
+>>>>>>> 38e9348282e
 							  progname, echo, quiet);
 	}
 	else
@@ -157,7 +176,11 @@ main(int argc, char *argv[])
 		}
 
 		cluster_one_database(dbname, verbose, table,
+<<<<<<< HEAD
 							 host, port, username, prompt_password,
+=======
+							 host, port, username, password,
+>>>>>>> 38e9348282e
 							 progname, echo);
 	}
 
@@ -203,7 +226,11 @@ cluster_one_database(const char *dbname, bool verbose, const char *table,
 
 static void
 cluster_all_databases(bool verbose, const char *host, const char *port,
+<<<<<<< HEAD
 					  const char *username, enum trivalue prompt_password,
+=======
+					  const char *username, bool password,
+>>>>>>> 38e9348282e
 					  const char *progname, bool echo, bool quiet)
 {
 	PGconn	   *conn;
@@ -225,7 +252,11 @@ cluster_all_databases(bool verbose, const char *host, const char *port,
 		}
 
 		cluster_one_database(dbname, verbose, NULL,
+<<<<<<< HEAD
 							 host, port, username, prompt_password,
+=======
+							 host, port, username, password,
+>>>>>>> 38e9348282e
 							 progname, echo);
 	}
 
@@ -244,8 +275,12 @@ help(const char *progname)
 	printf(_("  -d, --dbname=DBNAME       database to cluster\n"));
 	printf(_("  -e, --echo                show the commands being sent to the server\n"));
 	printf(_("  -q, --quiet               don't write any messages\n"));
+<<<<<<< HEAD
 	printf(_("  -t, --table=TABLE         cluster specific table only\n"));
 	//printf(_("  -v, --verbose             write a lot of output\n"));
+=======
+	printf(_("  -v, --verbose             write a lot of output\n"));
+>>>>>>> 38e9348282e
 	printf(_("  --help                    show this help, then exit\n"));
 	printf(_("  --version                 output version information, then exit\n"));
 	printf(_("\nConnection options:\n"));

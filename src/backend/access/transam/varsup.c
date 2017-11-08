@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.81 2008/01/01 19:45:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.82 2008/12/11 18:16:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,11 +100,19 @@ GetNewTransactionId(bool isSubXact, bool setProcXid)
 							 NameStr(ShmemVariableCache->limit_datname))));
 		else if (TransactionIdFollowsOrEquals(xid, ShmemVariableCache->xidWarnLimit))
 			ereport(WARNING,
+<<<<<<< HEAD
 					(errmsg("database \"%s\" must be vacuumed within %u transactions",
 							NameStr(ShmemVariableCache->limit_datname),
 							ShmemVariableCache->xidWrapLimit - xid),
 					 errhint("To avoid a database shutdown, execute a full-database VACUUM in \"%s\".",
 							 NameStr(ShmemVariableCache->limit_datname))));
+=======
+			(errmsg("database \"%s\" must be vacuumed within %u transactions",
+					NameStr(ShmemVariableCache->limit_datname),
+					ShmemVariableCache->xidWrapLimit - xid),
+			 errhint("To avoid a database shutdown, execute a database-wide VACUUM in \"%s\".",
+					 NameStr(ShmemVariableCache->limit_datname))));
+>>>>>>> 38e9348282e
 	}
 
 	/*
@@ -315,7 +323,7 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid,
 		   (errmsg("database \"%s\" must be vacuumed within %u transactions",
 				   NameStr(*oldest_datname),
 				   xidWrapLimit - curXid),
-			errhint("To avoid a database shutdown, execute a full-database VACUUM in \"%s\".",
+			errhint("To avoid a database shutdown, execute a database-wide VACUUM in \"%s\".",
 					NameStr(*oldest_datname))));
 }
 

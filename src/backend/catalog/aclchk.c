@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.147 2008/06/19 00:46:03 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.150 2008/12/19 16:25:16 petere Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -28,8 +28,13 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
+<<<<<<< HEAD
 #include "catalog/pg_extension.h"
 #include "catalog/pg_extprotocol.h"
+=======
+#include "catalog/pg_foreign_data_wrapper.h"
+#include "catalog/pg_foreign_server.h"
+>>>>>>> 38e9348282e
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
@@ -42,7 +47,11 @@
 #include "catalog/pg_ts_config.h"
 #include "catalog/pg_ts_dict.h"
 #include "commands/dbcommands.h"
+<<<<<<< HEAD
 #include "commands/tablecmds.h"
+=======
+#include "foreign/foreign.h"
+>>>>>>> 38e9348282e
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_func.h"
@@ -60,6 +69,8 @@
 
 static void ExecGrant_Relation(InternalGrant *grantStmt);
 static void ExecGrant_Database(InternalGrant *grantStmt);
+static void ExecGrant_Fdw(InternalGrant *grantStmt);
+static void ExecGrant_ForeignServer(InternalGrant *grantStmt);
 static void ExecGrant_Function(InternalGrant *grantStmt);
 static void ExecGrant_Language(InternalGrant *grantStmt);
 static void ExecGrant_Namespace(InternalGrant *grantStmt);
@@ -199,8 +210,16 @@ restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
 		case ACL_KIND_TABLESPACE:
 			whole_mask = ACL_ALL_RIGHTS_TABLESPACE;
 			break;
+<<<<<<< HEAD
 		case ACL_KIND_EXTPROTOCOL:
 			whole_mask = ACL_ALL_RIGHTS_EXTPROTOCOL;
+=======
+		case ACL_KIND_FDW:
+			whole_mask = ACL_ALL_RIGHTS_FDW;
+			break;
+		case ACL_KIND_FOREIGN_SERVER:
+			whole_mask = ACL_ALL_RIGHTS_FOREIGN_SERVER;
+>>>>>>> 38e9348282e
 			break;
 		default:
 			elog(ERROR, "unrecognized object kind: %d", objkind);
@@ -299,6 +318,7 @@ ExecuteGrantStmt(GrantStmt *stmt)
 				{
 					PartitionNode *pn = RelationBuildPartitionDesc(rel, false);
 
+<<<<<<< HEAD
 					a = all_partition_relids(pn);
 					if (a)
 						added_objs = true;
@@ -325,6 +345,60 @@ ExecuteGrantStmt(GrantStmt *stmt)
 				objs = lappend_oid(objs, relid);
 		}
 		istmt.objects = objs;
+=======
+	/*
+	 * Convert stmt->privileges, a textual list, into an AclMode bitmask.
+	 */
+	switch (stmt->objtype)
+	{
+			/*
+			 * Because this might be a sequence, we test both relation and
+			 * sequence bits, and later do a more limited test when we know
+			 * the object type.
+			 */
+		case ACL_OBJECT_RELATION:
+			all_privileges = ACL_ALL_RIGHTS_RELATION | ACL_ALL_RIGHTS_SEQUENCE;
+			errormsg = gettext_noop("invalid privilege type %s for relation");
+			break;
+		case ACL_OBJECT_SEQUENCE:
+			all_privileges = ACL_ALL_RIGHTS_SEQUENCE;
+			errormsg = gettext_noop("invalid privilege type %s for sequence");
+			break;
+		case ACL_OBJECT_DATABASE:
+			all_privileges = ACL_ALL_RIGHTS_DATABASE;
+			errormsg = gettext_noop("invalid privilege type %s for database");
+			break;
+		case ACL_OBJECT_FUNCTION:
+			all_privileges = ACL_ALL_RIGHTS_FUNCTION;
+			errormsg = gettext_noop("invalid privilege type %s for function");
+			break;
+		case ACL_OBJECT_LANGUAGE:
+			all_privileges = ACL_ALL_RIGHTS_LANGUAGE;
+			errormsg = gettext_noop("invalid privilege type %s for language");
+			break;
+		case ACL_OBJECT_NAMESPACE:
+			all_privileges = ACL_ALL_RIGHTS_NAMESPACE;
+			errormsg = gettext_noop("invalid privilege type %s for schema");
+			break;
+		case ACL_OBJECT_TABLESPACE:
+			all_privileges = ACL_ALL_RIGHTS_TABLESPACE;
+			errormsg = gettext_noop("invalid privilege type %s for tablespace");
+			break;
+		case ACL_OBJECT_FDW:
+			all_privileges = ACL_ALL_RIGHTS_FDW;
+			errormsg = gettext_noop("invalid privilege type %s for foreign-data wrapper");
+			break;
+		case ACL_OBJECT_FOREIGN_SERVER:
+			all_privileges = ACL_ALL_RIGHTS_FOREIGN_SERVER;
+			errormsg = gettext_noop("invalid privilege type %s for foreign server");
+			break;
+		default:
+			/* keep compiler quiet */
+			all_privileges = ACL_NO_RIGHTS;
+			errormsg = NULL;
+			elog(ERROR, "unrecognized GrantStmt.objtype: %d",
+				 (int) stmt->objtype);
+>>>>>>> 38e9348282e
 	}
 
 	/* If we're dispatching, put the objects back in into the parse tree */
@@ -499,6 +573,12 @@ ExecGrantStmt_oids(InternalGrant *istmt)
 		case ACL_OBJECT_DATABASE:
 			ExecGrant_Database(istmt);
 			break;
+		case ACL_OBJECT_FDW:
+			ExecGrant_Fdw(istmt);
+			break;
+		case ACL_OBJECT_FOREIGN_SERVER:
+			ExecGrant_ForeignServer(istmt);
+			break;
 		case ACL_OBJECT_FUNCTION:
 			ExecGrant_Function(istmt);
 			break;
@@ -637,6 +717,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				heap_close(relation, AccessShareLock);
 			}
 			break;
+<<<<<<< HEAD
 		case ACL_OBJECT_EXTPROTOCOL:
 			foreach(cell, objnames)
 			{
@@ -646,6 +727,26 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				objects = lappend_oid(objects, ptcid);
 			}
 			break;			
+=======
+		case ACL_OBJECT_FDW:
+			foreach(cell, objnames)
+			{
+				char   *fdwname = strVal(lfirst(cell));
+				Oid		fdwid = GetForeignDataWrapperOidByName(fdwname, false);
+
+				objects = lappend_oid(objects, fdwid);
+			}
+			break;
+		case ACL_OBJECT_FOREIGN_SERVER:
+			foreach(cell, objnames)
+			{
+				char   *srvname = strVal(lfirst(cell));
+				Oid		srvid = GetForeignServerOidByName(srvname, false);
+
+				objects = lappend_oid(objects, srvid);
+			}
+			break;
+>>>>>>> 38e9348282e
 		default:
 			elog(ERROR, "unrecognized GrantStmt.objtype: %d",
 				 (int) objtype);
@@ -682,6 +783,10 @@ ExecGrant_Relation(InternalGrant *istmt)
 		Datum		values[Natts_pg_class];
 		bool		nulls[Natts_pg_class];
 		bool		replaces[Natts_pg_class];
+<<<<<<< HEAD
+=======
+		int			noldmembers;
+>>>>>>> 38e9348282e
 		int			nnewmembers;
 		Oid		   *newmembers;
 		int			noldmembers = 0;
@@ -1027,6 +1132,239 @@ ExecGrant_Database(InternalGrant *istmt)
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(DatabaseRelationId, HeapTupleGetOid(tuple),
+							  ownerId, istmt->is_grant,
+							  noldmembers, oldmembers,
+							  nnewmembers, newmembers);
+
+		ReleaseSysCache(tuple);
+
+		pfree(new_acl);
+
+		/* prevent error when processing duplicate objects */
+		CommandCounterIncrement();
+	}
+
+	heap_close(relation, RowExclusiveLock);
+}
+
+static void
+ExecGrant_Fdw(InternalGrant *istmt)
+{
+	Relation	relation;
+	ListCell   *cell;
+
+	if (istmt->all_privs && istmt->privileges == ACL_NO_RIGHTS)
+		istmt->privileges = ACL_ALL_RIGHTS_FDW;
+
+	relation = heap_open(ForeignDataWrapperRelationId, RowExclusiveLock);
+
+	foreach(cell, istmt->objects)
+	{
+		Oid			fdwid = lfirst_oid(cell);
+		Form_pg_foreign_data_wrapper pg_fdw_tuple;
+		Datum		aclDatum;
+		bool		isNull;
+		AclMode		avail_goptions;
+		AclMode		this_privileges;
+		Acl		   *old_acl;
+		Acl		   *new_acl;
+		Oid			grantorId;
+		Oid			ownerId;
+		HeapTuple	tuple;
+		HeapTuple	newtuple;
+		Datum		values[Natts_pg_foreign_data_wrapper];
+		bool		nulls[Natts_pg_foreign_data_wrapper];
+		bool		replaces[Natts_pg_foreign_data_wrapper];
+		int			noldmembers;
+		int			nnewmembers;
+		Oid		   *oldmembers;
+		Oid		   *newmembers;
+
+		tuple = SearchSysCache(FOREIGNDATAWRAPPEROID,
+							   ObjectIdGetDatum(fdwid),
+							   0, 0, 0);
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "cache lookup failed for foreign-data wrapper %u", fdwid);
+
+		pg_fdw_tuple = (Form_pg_foreign_data_wrapper) GETSTRUCT(tuple);
+
+		/*
+		 * Get owner ID and working copy of existing ACL. If there's no ACL,
+		 * substitute the proper default.
+		 */
+		ownerId = pg_fdw_tuple->fdwowner;
+		aclDatum = SysCacheGetAttr(FOREIGNDATAWRAPPEROID, tuple,
+								   Anum_pg_foreign_data_wrapper_fdwacl,
+								   &isNull);
+		if (isNull)
+			old_acl = acldefault(ACL_OBJECT_FDW, ownerId);
+		else
+			old_acl = DatumGetAclPCopy(aclDatum);
+
+		/* Determine ID to do the grant as, and available grant options */
+		select_best_grantor(GetUserId(), istmt->privileges,
+							old_acl, ownerId,
+							&grantorId, &avail_goptions);
+
+		/*
+		 * Restrict the privileges to what we can actually grant, and emit the
+		 * standards-mandated warning and error messages.
+		 */
+		this_privileges =
+			restrict_and_check_grant(istmt->is_grant, avail_goptions,
+									 istmt->all_privs, istmt->privileges,
+									 fdwid, grantorId, ACL_KIND_FDW,
+									 NameStr(pg_fdw_tuple->fdwname));
+
+		/*
+		 * Generate new ACL.
+		 *
+		 * We need the members of both old and new ACLs so we can correct the
+		 * shared dependency information.
+		 */
+		noldmembers = aclmembers(old_acl, &oldmembers);
+
+		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
+									   istmt->grant_option, istmt->behavior,
+									   istmt->grantees, this_privileges,
+									   grantorId, ownerId);
+
+		nnewmembers = aclmembers(new_acl, &newmembers);
+
+		/* finished building new ACL value, now insert it */
+		MemSet(values, 0, sizeof(values));
+		MemSet(nulls, false, sizeof(nulls));
+		MemSet(replaces, false, sizeof(replaces));
+
+		replaces[Anum_pg_foreign_data_wrapper_fdwacl - 1] = true;
+		values[Anum_pg_foreign_data_wrapper_fdwacl - 1] = PointerGetDatum(new_acl);
+
+		newtuple = heap_modify_tuple(tuple, RelationGetDescr(relation), values,
+									 nulls, replaces);
+
+		simple_heap_update(relation, &newtuple->t_self, newtuple);
+
+		/* keep the catalog indexes up to date */
+		CatalogUpdateIndexes(relation, newtuple);
+
+		/* Update the shared dependency ACL info */
+		updateAclDependencies(ForeignDataWrapperRelationId, HeapTupleGetOid(tuple),
+							  ownerId, istmt->is_grant,
+							  noldmembers, oldmembers,
+							  nnewmembers, newmembers);
+
+		ReleaseSysCache(tuple);
+
+		pfree(new_acl);
+
+		/* prevent error when processing duplicate objects */
+		CommandCounterIncrement();
+	}
+
+	heap_close(relation, RowExclusiveLock);
+}
+
+static void ExecGrant_ForeignServer(InternalGrant *istmt)
+{
+	Relation	relation;
+	ListCell   *cell;
+
+	if (istmt->all_privs && istmt->privileges == ACL_NO_RIGHTS)
+		istmt->privileges = ACL_ALL_RIGHTS_FOREIGN_SERVER;
+
+	relation = heap_open(ForeignServerRelationId, RowExclusiveLock);
+
+	foreach(cell, istmt->objects)
+	{
+		Oid			srvid = lfirst_oid(cell);
+		Form_pg_foreign_server pg_server_tuple;
+		Datum		aclDatum;
+		bool		isNull;
+		AclMode		avail_goptions;
+		AclMode		this_privileges;
+		Acl		   *old_acl;
+		Acl		   *new_acl;
+		Oid			grantorId;
+		Oid			ownerId;
+		HeapTuple	tuple;
+		HeapTuple	newtuple;
+		Datum		values[Natts_pg_foreign_server];
+		bool		nulls[Natts_pg_foreign_server];
+		bool		replaces[Natts_pg_foreign_server];
+		int			noldmembers;
+		int			nnewmembers;
+		Oid		   *oldmembers;
+		Oid		   *newmembers;
+
+		tuple = SearchSysCache(FOREIGNSERVEROID,
+							   ObjectIdGetDatum(srvid),
+							   0, 0, 0);
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "cache lookup failed for foreign server %u", srvid);
+
+		pg_server_tuple = (Form_pg_foreign_server) GETSTRUCT(tuple);
+
+		/*
+		 * Get owner ID and working copy of existing ACL. If there's no ACL,
+		 * substitute the proper default.
+		 */
+		ownerId = pg_server_tuple->srvowner;
+		aclDatum = SysCacheGetAttr(FOREIGNSERVEROID, tuple,
+								   Anum_pg_foreign_server_srvacl,
+								   &isNull);
+		if (isNull)
+			old_acl = acldefault(ACL_OBJECT_FOREIGN_SERVER, ownerId);
+		else
+			old_acl = DatumGetAclPCopy(aclDatum);
+
+		/* Determine ID to do the grant as, and available grant options */
+		select_best_grantor(GetUserId(), istmt->privileges,
+							old_acl, ownerId,
+							&grantorId, &avail_goptions);
+
+		/*
+		 * Restrict the privileges to what we can actually grant, and emit the
+		 * standards-mandated warning and error messages.
+		 */
+		this_privileges =
+			restrict_and_check_grant(istmt->is_grant, avail_goptions,
+									 istmt->all_privs, istmt->privileges,
+									 srvid, grantorId, ACL_KIND_FOREIGN_SERVER,
+									 NameStr(pg_server_tuple->srvname));
+
+		/*
+		 * Generate new ACL.
+		 *
+		 * We need the members of both old and new ACLs so we can correct the
+		 * shared dependency information.
+		 */
+		noldmembers = aclmembers(old_acl, &oldmembers);
+
+		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
+									   istmt->grant_option, istmt->behavior,
+									   istmt->grantees, this_privileges,
+									   grantorId, ownerId);
+
+		nnewmembers = aclmembers(new_acl, &newmembers);
+
+		/* finished building new ACL value, now insert it */
+		MemSet(values, 0, sizeof(values));
+		MemSet(nulls, false, sizeof(nulls));
+		MemSet(replaces, false, sizeof(replaces));
+
+		replaces[Anum_pg_foreign_server_srvacl - 1] = true;
+		values[Anum_pg_foreign_server_srvacl - 1] = PointerGetDatum(new_acl);
+
+		newtuple = heap_modify_tuple(tuple, RelationGetDescr(relation), values,
+									 nulls, replaces);
+
+		simple_heap_update(relation, &newtuple->t_self, newtuple);
+
+		/* keep the catalog indexes up to date */
+		CatalogUpdateIndexes(relation, newtuple);
+
+		/* Update the shared dependency ACL info */
+		updateAclDependencies(ForeignServerRelationId, HeapTupleGetOid(tuple),
 							  ownerId, istmt->is_grant,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
@@ -1817,10 +2155,17 @@ static const char *const no_priv_msg[MAX_ACL_KIND] =
 	gettext_noop("permission denied for text search dictionary %s"),
 	/* ACL_KIND_TSCONFIGURATION */
 	gettext_noop("permission denied for text search configuration %s"),
+<<<<<<< HEAD
 	/* ACL_KIND_FILESPACE */
 	gettext_noop("permission denied for filespace %s"),	
 	/* ACL_KIND_EXTPROTOCOL */
 	gettext_noop("permission denied for external protocol %s")	
+=======
+	/* ACL_KIND_FDW */
+	gettext_noop("permission denied for foreign-data wrapper %s"),
+	/* ACL_KIND_FOREIGN_SERVER */
+	gettext_noop("permission denied for foreign server %s")
+>>>>>>> 38e9348282e
 };
 
 static const char *const not_owner_msg[MAX_ACL_KIND] =
@@ -1853,10 +2198,17 @@ static const char *const not_owner_msg[MAX_ACL_KIND] =
 	gettext_noop("must be owner of text search dictionary %s"),
 	/* ACL_KIND_TSCONFIGURATION */
 	gettext_noop("must be owner of text search configuration %s"),
+<<<<<<< HEAD
 	/* ACL_KIND_FILESPACE */
 	gettext_noop("must be owner of filespace %s"),
 	/* ACL_KIND_EXTPROTOCOL */
 	gettext_noop("must be owner of external protocol %s")
+=======
+	/* ACL_KIND_FDW */
+	gettext_noop("must be owner of foreign-data wrapper %s"),
+	/* ACL_KIND_FOREIGN_SERVER */
+	gettext_noop("must be owner of foreign server %s")
+>>>>>>> 38e9348282e
 };
 
 
@@ -1930,8 +2282,15 @@ pg_aclmask(AclObjectKind objkind, Oid table_oid, Oid roleid,
 			return pg_namespace_aclmask(table_oid, roleid, mask, how);
 		case ACL_KIND_TABLESPACE:
 			return pg_tablespace_aclmask(table_oid, roleid, mask, how);
+<<<<<<< HEAD
 		case ACL_KIND_EXTPROTOCOL:
 			return pg_extprotocol_aclmask(table_oid, roleid, mask, how);
+=======
+		case ACL_KIND_FDW:
+			return pg_foreign_data_wrapper_aclmask(table_oid, roleid, mask, how);
+		case ACL_KIND_FOREIGN_SERVER:
+			return pg_foreign_server_aclmask(table_oid, roleid, mask, how);
+>>>>>>> 38e9348282e
 		default:
 			elog(ERROR, "unrecognized objkind: %d",
 				 (int) objkind);
@@ -1985,10 +2344,18 @@ pg_class_aclmask(Oid table_oid, Oid roleid,
 	 * protected in this way.  Assume the view rules can take care of
 	 * themselves.	ACL_USAGE is if we ever have system sequences.
 	 */
+<<<<<<< HEAD
 
 	updating = ((mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE | ACL_USAGE)) != 0);
 
 	if (updating)
+=======
+	if ((mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE | ACL_USAGE)) &&
+		IsSystemClass(classForm) &&
+		classForm->relkind != RELKIND_VIEW &&
+		!has_rolcatupdate(roleid) &&
+		!allowSystemTableMods)
+>>>>>>> 38e9348282e
 	{
 		if (IsSystemClass(classForm) &&
 			classForm->relkind != RELKIND_VIEW &&
@@ -1998,6 +2365,7 @@ pg_class_aclmask(Oid table_oid, Oid roleid,
 #ifdef ACLDEBUG
 			elog(DEBUG2, "permission denied for system catalog update");
 #endif
+<<<<<<< HEAD
 			mask &= ~(ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE | ACL_USAGE);
 		}
 
@@ -2040,6 +2408,9 @@ pg_class_aclmask(Oid table_oid, Oid roleid,
 				mask &= ~(ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_USAGE);
 			}
 		}
+=======
+		mask &= ~(ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE | ACL_USAGE);
+>>>>>>> 38e9348282e
 	}
 
 	/*
@@ -2407,16 +2778,26 @@ pg_tablespace_aclmask(Oid spc_oid, Oid roleid,
 }
 
 /*
+<<<<<<< HEAD
  * Exported routine for examining a user's privileges for an external
  * protocol.
  */
 AclMode
 pg_extprotocol_aclmask(Oid ptcOid, Oid roleid,
 					   AclMode mask, AclMaskHow how)
+=======
+ * Exported routine for examining a user's privileges for a foreign
+ * data wrapper
+ */
+AclMode
+pg_foreign_data_wrapper_aclmask(Oid fdw_oid, Oid roleid,
+								AclMode mask, AclMaskHow how)
+>>>>>>> 38e9348282e
 {
 	AclMode		result;
 	HeapTuple	tuple;
 	Datum		aclDatum;
+<<<<<<< HEAD
 	Datum		ownerDatum;
 	bool		isNull;
 	Acl		   *acl;
@@ -2424,10 +2805,18 @@ pg_extprotocol_aclmask(Oid ptcOid, Oid roleid,
 	Relation	rel;
 	ScanKeyData scankey;
 	SysScanDesc sscan;
+=======
+	bool		isNull;
+	Acl		   *acl;
+	Oid			ownerId;
+
+	Form_pg_foreign_data_wrapper fdwForm;
+>>>>>>> 38e9348282e
 
 	/* Bypass permission checks for superusers */
 	if (superuser_arg(roleid))
 		return mask;
+<<<<<<< HEAD
 	
 	rel = heap_open(ExtprotocolRelationId, AccessShareLock);
 
@@ -2463,6 +2852,31 @@ pg_extprotocol_aclmask(Oid ptcOid, Oid roleid,
 	{
 		/* No ACL, so build default ACL */
 		acl = acldefault(ACL_OBJECT_EXTPROTOCOL, ownerId);
+=======
+
+	/*
+	 * Must get the FDW's tuple from pg_foreign_data_wrapper
+	 */
+	tuple = SearchSysCache(FOREIGNDATAWRAPPEROID,
+						   ObjectIdGetDatum(fdw_oid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				 (errmsg("foreign-data wrapper with OID %u does not exist",
+						fdw_oid)));
+	fdwForm = (Form_pg_foreign_data_wrapper) GETSTRUCT(tuple);
+
+	/*
+	 * Normal case: get the FDW's ACL from pg_foreign_data_wrapper
+	 */
+	ownerId = fdwForm->fdwowner;
+
+	aclDatum = SysCacheGetAttr(FOREIGNDATAWRAPPEROID, tuple,
+							   Anum_pg_foreign_data_wrapper_fdwacl, &isNull);
+	if (isNull)
+	{
+		/* No ACL, so build default ACL */
+		acl = acldefault(ACL_OBJECT_FDW, ownerId);
 		aclDatum = (Datum) 0;
 	}
 	else
@@ -2477,9 +2891,77 @@ pg_extprotocol_aclmask(Oid ptcOid, Oid roleid,
 	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
 		pfree(acl);
 
+	ReleaseSysCache(tuple);
+
+	return result;
+}
+
+/*
+ * Exported routine for examining a user's privileges for a foreign
+ * server.
+ */
+AclMode
+pg_foreign_server_aclmask(Oid srv_oid, Oid roleid,
+			   			  AclMode mask, AclMaskHow how)
+{
+	AclMode		result;
+	HeapTuple	tuple;
+	Datum		aclDatum;
+	bool		isNull;
+	Acl		   *acl;
+	Oid			ownerId;
+
+	Form_pg_foreign_server srvForm;
+
+	/* Bypass permission checks for superusers */
+	if (superuser_arg(roleid))
+		return mask;
+
+	/*
+	 * Must get the FDW's tuple from pg_foreign_data_wrapper
+	 */
+	tuple = SearchSysCache(FOREIGNSERVEROID,
+						   ObjectIdGetDatum(srv_oid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				 (errmsg("foreign server with OID %u does not exist",
+						srv_oid)));
+	srvForm = (Form_pg_foreign_server) GETSTRUCT(tuple);
+
+	/*
+	 * Normal case: get the foreign server's ACL from pg_foreign_server
+	 */
+	ownerId = srvForm->srvowner;
+
+	aclDatum = SysCacheGetAttr(FOREIGNSERVEROID, tuple,
+							   Anum_pg_foreign_server_srvacl, &isNull);
+	if (isNull)
+	{
+		/* No ACL, so build default ACL */
+		acl = acldefault(ACL_OBJECT_FOREIGN_SERVER, ownerId);
+>>>>>>> 38e9348282e
+		aclDatum = (Datum) 0;
+	}
+	else
+	{
+		/* detoast rel's ACL if necessary */
+		acl = DatumGetAclP(aclDatum);
+	}
+
+	result = aclmask(acl, roleid, ownerId, mask, how);
+
+	/* if we have a detoasted copy, free it */
+	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
+		pfree(acl);
+
+<<<<<<< HEAD
 	/* Finish up scan and close pg_extprotocol catalog. */
 	systable_endscan(sscan);
 	heap_close(rel, AccessShareLock);
+=======
+	ReleaseSysCache(tuple);
+>>>>>>> 38e9348282e
 
 	return result;
 }
@@ -2561,6 +3043,7 @@ pg_tablespace_aclcheck(Oid spc_oid, Oid roleid, AclMode mode)
 }
 
 /*
+<<<<<<< HEAD
  * Exported routine for checking a user's access privileges to an
  * external protocol
  */
@@ -2568,6 +3051,28 @@ AclResult
 pg_extprotocol_aclcheck(Oid ptcid, Oid roleid, AclMode mode)
 {
 	if (pg_extprotocol_aclmask(ptcid, roleid, mode, ACLMASK_ANY) != 0)
+=======
+ * Exported routine for checking a user's access privileges to a foreign
+ * data wrapper
+ */
+AclResult
+pg_foreign_data_wrapper_aclcheck(Oid fdw_oid, Oid roleid, AclMode mode)
+{
+	if (pg_foreign_data_wrapper_aclmask(fdw_oid, roleid, mode, ACLMASK_ANY) != 0)
+		return ACLCHECK_OK;
+	else
+		return ACLCHECK_NO_PRIV;
+}
+
+/*
+ * Exported routine for checking a user's access privileges to a foreign
+ * server
+ */
+AclResult
+pg_foreign_server_aclcheck(Oid srv_oid, Oid roleid, AclMode mode)
+{
+	if (pg_foreign_server_aclmask(srv_oid, roleid, mode, ACLMASK_ANY) != 0)
+>>>>>>> 38e9348282e
 		return ACLCHECK_OK;
 	else
 		return ACLCHECK_NO_PRIV;
@@ -2936,6 +3441,34 @@ pg_ts_config_ownercheck(Oid cfg_oid, Oid roleid)
 	return has_privs_of_role(roleid, ownerId);
 }
 
+/*
+ * Ownership check for a foreign server (specified by OID).
+ */
+bool
+pg_foreign_server_ownercheck(Oid srv_oid, Oid roleid)
+{
+	HeapTuple	tuple;
+	Oid			ownerId;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(roleid))
+		return true;
+
+	tuple = SearchSysCache(FOREIGNSERVEROID,
+						   ObjectIdGetDatum(srv_oid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+			   errmsg("foreign server with OID %u does not exist",
+					  srv_oid)));
+
+	ownerId = ((Form_pg_foreign_server) GETSTRUCT(tuple))->srvowner;
+
+	ReleaseSysCache(tuple);
+
+	return has_privs_of_role(roleid, ownerId);
+}
 
 /*
  * Ownership check for a database (specified by OID).

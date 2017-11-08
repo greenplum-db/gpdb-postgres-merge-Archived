@@ -84,6 +84,7 @@ int main()
        
     
 #line 26 "array_of_struct.pgc"
+<<<<<<< HEAD
  customer custs1 [ 10 ] ;
  
 #line 27 "array_of_struct.pgc"
@@ -91,6 +92,15 @@ int main()
  
 #line 33 "array_of_struct.pgc"
  customer2 custs2 [ 10 ] ;
+=======
+ customer  custs1  [ 10 ]   ;
+ 
+#line 27 "array_of_struct.pgc"
+ cust_ind  inds  [ 10 ]   ;
+  
+#line 33 "array_of_struct.pgc"
+ customer2  custs2  [ 10 ]   ;
+>>>>>>> 38e9348282e
  
 #line 38 "array_of_struct.pgc"
  struct customer3 { 
@@ -98,8 +108,13 @@ int main()
   struct varchar_name_36  { int len; char arr[ 50 ]; }  name ;
  
 #line 37 "array_of_struct.pgc"
+<<<<<<< HEAD
  int phone ;
  } custs3 [ 10 ] ;
+=======
+ int  phone    ;
+ }  custs3  [ 10 ]   ;
+>>>>>>> 38e9348282e
  
 #line 43 "array_of_struct.pgc"
  struct customer4 { 
