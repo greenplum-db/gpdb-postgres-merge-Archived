@@ -85,7 +85,7 @@ typedef struct AnlIndexData
 
 /*
  * Maintain the row index for large datums which must not be considered for
- * samples while calculating statistcs. The sample value at the row index for 
+ * samples while calculating statistcs. The sample value at the row index for
  * a column are masked as NULL.
  */
 typedef struct RowIndexes
@@ -595,7 +595,7 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 					 RelationGetRelationName(Irel[ind]), RelationGetRelationName(onerel));
 				estimatedIndexPages = 1.0;
 			}
-			else 
+			else
 			{
 				/**
 				 * NOTE: we don't attempt to estimate the number of tuples in an index.
@@ -1622,7 +1622,7 @@ acquire_sample_rows_by_query(Relation onerel, int nattrs, VacAttrStats **attrsta
 												  SPI_tuptable->tupdesc,
 												  &dummyNull);
 
-					/* 
+					/*
 					 * If Datum is too large, mark the index position as true
 					 * and increase the too wide count
 					 */
@@ -1669,9 +1669,9 @@ acquire_sample_rows_by_query(Relation onerel, int nattrs, VacAttrStats **attrsta
 static void
 analyzeEstimateReltuplesRelpages(Oid relationOid, float4 *relTuples, float4 *relPages, bool rootonly)
 {
-	*relPages = 0.0;		
-	*relTuples = 0.0;			
-	
+	*relPages = 0.0;
+	*relTuples = 0.0;
+
 	List *allRelOids = NIL;
 
 	/* if GUC optimizer_analyze_root_partition is off, we do not analyze root partitions, unless
@@ -2074,10 +2074,6 @@ std_typanalyze(VacAttrStats *stats)
 							 false, false, false,
 							 &ltopr, &eqopr, NULL);
 
-	/* If column has no "=" operator, we can't do much of anything */
-	if (!OidIsValid(eqopr))
-		return false;
-
 	/* Save the operator info for compute_stats routines */
 	mystats = (StdAnalyzeData *) palloc(sizeof(StdAnalyzeData));
 	mystats->eqopr = eqopr;
@@ -2088,7 +2084,7 @@ std_typanalyze(VacAttrStats *stats)
 	/*
 	 * Determine which standard statistics algorithm to use
 	 */
-	if (OidIsValid(ltopr))
+	if (OidIsValid(ltopr) && OidIsValid(eqopr))
 	{
 		/* Seems to be a scalar datatype */
 		stats->compute_stats = compute_scalar_stats;
@@ -2113,10 +2109,17 @@ std_typanalyze(VacAttrStats *stats)
 		 */
 		stats->minrows = 300 * attr->attstattarget;
 	}
-	else
+	else if (OidIsValid(eqopr))
 	{
 		/* Can't do much but the minimal stuff */
 		stats->compute_stats = compute_minimal_stats;
+		/* Might as well use the same minrows as above */
+		stats->minrows = 300 * attr->attstattarget;
+	}
+	else
+	{
+		/* Can't do much but the minimal stuff */
+		stats->compute_stats = compute_very_minimal_stats;
 		/* Might as well use the same minrows as above */
 		stats->minrows = 300 * attr->attstattarget;
 	}
