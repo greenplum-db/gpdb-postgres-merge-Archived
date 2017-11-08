@@ -463,22 +463,9 @@ DETAIL:  SQL function "hobbies" during startup
 -- the next two queries demonstrate how functions generate bogus duplicates.
 -- this is a "feature" ..
 --
-<<<<<<< HEAD
 SELECT DISTINCT hobbies_r.name, name(hobbies_r.equipment) FROM hobbies_r;
 ERROR:  function cannot execute on segment because it accesses relation "public.equipment_r"
 DETAIL:  SQL function "equipment" during startup
-=======
-SELECT DISTINCT hobbies_r.name, name(hobbies_r.equipment) FROM hobbies_r
-  ORDER BY 1,2;
-    name     |     name      
--------------+---------------
- basketball  | hightops
- posthacking | advil
- posthacking | peet's coffee
- skywalking  | guts
-(4 rows)
-
->>>>>>> eca1388629facd9e65d2c7ce405e079ba2bc60c4
 SELECT hobbies_r.name, (hobbies_r.equipment).name FROM hobbies_r;
 ERROR:  function cannot execute on segment because it accesses relation "public.equipment_r"
 DETAIL:  SQL function "equipment" during startup
