@@ -90,58 +90,44 @@ create type break_int2_variable_false_true;
 create function breakin_int2_variable_false_true (cstring) returns break_int2_variable_false_true as 'textin' language internal strict;
 create function breakout_int2_variable_false_true (break_int2_variable_false_true) returns cstring as 'textout' language internal strict;
 
-create type break_int2_variable_false_true (input = breakin_int2_variable_false_true, output = breakout_int2_variable_false_true, internallength = variable, passedbyvalue = false, alignment = int2);
+create type break_int2_variable_false_true (input = breakin_int2_variable_false_true, output = breakout_int2_variable_false_true, internallength = variable, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_int2_variable_false_true (i int, j break_int2_variable_false_true, k text) with (appendonly = true) distributed by (i);
 insert into alter_distpol_g_int2_variable_false_true (i, k) select i, i from generate_series(1, 10) i;
 create type break_int2_variable_false_false;
 create function breakin_int2_variable_false_false (cstring) returns break_int2_variable_false_false as 'textin' language internal strict;
 create function breakout_int2_variable_false_false (break_int2_variable_false_false) returns cstring as 'textout' language internal strict;
 
-create type break_int2_variable_false_false (input = breakin_int2_variable_false_false, output = breakout_int2_variable_false_false, internallength = variable, passedbyvalue = false, alignment = int2);
+create type break_int2_variable_false_false (input = breakin_int2_variable_false_false, output = breakout_int2_variable_false_false, internallength = variable, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_int2_variable_false_false (i int, j break_int2_variable_false_false, k text) with (appendonly = false) distributed by (i);
 insert into alter_distpol_g_int2_variable_false_false (i, k) select i, i from generate_series(1, 10) i;
 create type break_int2_1_true_true;
 create function breakin_int2_1_true_true (cstring) returns break_int2_1_true_true as 'textin' language internal strict;
 create function breakout_int2_1_true_true (break_int2_1_true_true) returns cstring as 'textout' language internal strict;
 
-create type break_int2_1_true_true (input = breakin_int2_1_true_true, output = breakout_int2_1_true_true, internallength = 1, passedbyvalue = true, alignment = int2);
+create type break_int2_1_true_true (input = breakin_int2_1_true_true, output = breakout_int2_1_true_true, internallength = 1, passedbyvalue = true, alignment = char);
 create table alter_distpol_g_int2_1_true_true (i int, j break_int2_1_true_true, k text) with (appendonly = true) distributed by (i);
 insert into alter_distpol_g_int2_1_true_true (i, k) select i, i from generate_series(1, 10) i;
 create type break_int2_1_true_false;
 create function breakin_int2_1_true_false (cstring) returns break_int2_1_true_false as 'textin' language internal strict;
 create function breakout_int2_1_true_false (break_int2_1_true_false) returns cstring as 'textout' language internal strict;
 
-create type break_int2_1_true_false (input = breakin_int2_1_true_false, output = breakout_int2_1_true_false, internallength = 1, passedbyvalue = true, alignment = int2);
+create type break_int2_1_true_false (input = breakin_int2_1_true_false, output = breakout_int2_1_true_false, internallength = 1, passedbyvalue = true, alignment = char);
 create table alter_distpol_g_int2_1_true_false (i int, j break_int2_1_true_false, k text) with (appendonly = false) distributed by (i);
 insert into alter_distpol_g_int2_1_true_false (i, k) select i, i from generate_series(1, 10) i;
 create type break_int2_1_false_true;
 create function breakin_int2_1_false_true (cstring) returns break_int2_1_false_true as 'textin' language internal strict;
 create function breakout_int2_1_false_true (break_int2_1_false_true) returns cstring as 'textout' language internal strict;
 
-create type break_int2_1_false_true (input = breakin_int2_1_false_true, output = breakout_int2_1_false_true, internallength = 1, passedbyvalue = false, alignment = int2);
+create type break_int2_1_false_true (input = breakin_int2_1_false_true, output = breakout_int2_1_false_true, internallength = 1, passedbyvalue = false, alignment = char);
 create table alter_distpol_g_int2_1_false_true (i int, j break_int2_1_false_true, k text) with (appendonly = true) distributed by (i);
 insert into alter_distpol_g_int2_1_false_true (i, k) select i, i from generate_series(1, 10) i;
 create type break_int2_1_false_false;
 create function breakin_int2_1_false_false (cstring) returns break_int2_1_false_false as 'textin' language internal strict;
 create function breakout_int2_1_false_false (break_int2_1_false_false) returns cstring as 'textout' language internal strict;
 
-create type break_int2_1_false_false (input = breakin_int2_1_false_false, output = breakout_int2_1_false_false, internallength = 1, passedbyvalue = false, alignment = int2);
+create type break_int2_1_false_false (input = breakin_int2_1_false_false, output = breakout_int2_1_false_false, internallength = 1, passedbyvalue = false, alignment = char);
 create table alter_distpol_g_int2_1_false_false (i int, j break_int2_1_false_false, k text) with (appendonly = false) distributed by (i);
 insert into alter_distpol_g_int2_1_false_false (i, k) select i, i from generate_series(1, 10) i;
-create type break_int2_3_true_true;
-create function breakin_int2_3_true_true (cstring) returns break_int2_3_true_true as 'textin' language internal strict;
-create function breakout_int2_3_true_true (break_int2_3_true_true) returns cstring as 'textout' language internal strict;
-
-create type break_int2_3_true_true (input = breakin_int2_3_true_true, output = breakout_int2_3_true_true, internallength = 3, passedbyvalue = true, alignment = int2);
-create table alter_distpol_g_int2_3_true_true (i int, j break_int2_3_true_true, k text) with (appendonly = true) distributed by (i);
-insert into alter_distpol_g_int2_3_true_true (i, k) select i, i from generate_series(1, 10) i;
-create type break_int2_3_true_false;
-create function breakin_int2_3_true_false (cstring) returns break_int2_3_true_false as 'textin' language internal strict;
-create function breakout_int2_3_true_false (break_int2_3_true_false) returns cstring as 'textout' language internal strict;
-
-create type break_int2_3_true_false (input = breakin_int2_3_true_false, output = breakout_int2_3_true_false, internallength = 3, passedbyvalue = true, alignment = int2);
-create table alter_distpol_g_int2_3_true_false (i int, j break_int2_3_true_false, k text) with (appendonly = false) distributed by (i);
-insert into alter_distpol_g_int2_3_true_false (i, k) select i, i from generate_series(1, 10) i;
 create type break_int2_3_false_true;
 create function breakin_int2_3_false_true (cstring) returns break_int2_3_false_true as 'textin' language internal strict;
 create function breakout_int2_3_false_true (break_int2_3_false_true) returns cstring as 'textout' language internal strict;
@@ -160,28 +146,28 @@ create type break_int2_4_true_true;
 create function breakin_int2_4_true_true (cstring) returns break_int2_4_true_true as 'textin' language internal strict;
 create function breakout_int2_4_true_true (break_int2_4_true_true) returns cstring as 'textout' language internal strict;
 
-create type break_int2_4_true_true (input = breakin_int2_4_true_true, output = breakout_int2_4_true_true, internallength = 4, passedbyvalue = true, alignment = int2);
+create type break_int2_4_true_true (input = breakin_int2_4_true_true, output = breakout_int2_4_true_true, internallength = 4, passedbyvalue = true, alignment = int4);
 create table alter_distpol_g_int2_4_true_true (i int, j break_int2_4_true_true, k text) with (appendonly = true) distributed by (i);
 insert into alter_distpol_g_int2_4_true_true (i, k) select i, i from generate_series(1, 10) i;
 create type break_int2_4_true_false;
 create function breakin_int2_4_true_false (cstring) returns break_int2_4_true_false as 'textin' language internal strict;
 create function breakout_int2_4_true_false (break_int2_4_true_false) returns cstring as 'textout' language internal strict;
 
-create type break_int2_4_true_false (input = breakin_int2_4_true_false, output = breakout_int2_4_true_false, internallength = 4, passedbyvalue = true, alignment = int2);
+create type break_int2_4_true_false (input = breakin_int2_4_true_false, output = breakout_int2_4_true_false, internallength = 4, passedbyvalue = true, alignment = int4);
 create table alter_distpol_g_int2_4_true_false (i int, j break_int2_4_true_false, k text) with (appendonly = false) distributed by (i);
 insert into alter_distpol_g_int2_4_true_false (i, k) select i, i from generate_series(1, 10) i;
 create type break_int2_4_false_true;
 create function breakin_int2_4_false_true (cstring) returns break_int2_4_false_true as 'textin' language internal strict;
 create function breakout_int2_4_false_true (break_int2_4_false_true) returns cstring as 'textout' language internal strict;
 
-create type break_int2_4_false_true (input = breakin_int2_4_false_true, output = breakout_int2_4_false_true, internallength = 4, passedbyvalue = false, alignment = int2);
+create type break_int2_4_false_true (input = breakin_int2_4_false_true, output = breakout_int2_4_false_true, internallength = 4, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_int2_4_false_true (i int, j break_int2_4_false_true, k text) with (appendonly = true) distributed by (i);
 insert into alter_distpol_g_int2_4_false_true (i, k) select i, i from generate_series(1, 10) i;
 create type break_int2_4_false_false;
 create function breakin_int2_4_false_false (cstring) returns break_int2_4_false_false as 'textin' language internal strict;
 create function breakout_int2_4_false_false (break_int2_4_false_false) returns cstring as 'textout' language internal strict;
 
-create type break_int2_4_false_false (input = breakin_int2_4_false_false, output = breakout_int2_4_false_false, internallength = 4, passedbyvalue = false, alignment = int2);
+create type break_int2_4_false_false (input = breakin_int2_4_false_false, output = breakout_int2_4_false_false, internallength = 4, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_int2_4_false_false (i int, j break_int2_4_false_false, k text) with (appendonly = false) distributed by (i);
 insert into alter_distpol_g_int2_4_false_false (i, k) select i, i from generate_series(1, 10) i;
 create type break_int2_11_false_true;
@@ -286,44 +272,30 @@ create type break_int4_1_true_true;
 create function breakin_int4_1_true_true (cstring) returns break_int4_1_true_true as 'textin' language internal strict;
 create function breakout_int4_1_true_true (break_int4_1_true_true) returns cstring as 'textout' language internal strict;
 
-create type break_int4_1_true_true (input = breakin_int4_1_true_true, output = breakout_int4_1_true_true, internallength = 1, passedbyvalue = true, alignment = int4);
+create type break_int4_1_true_true (input = breakin_int4_1_true_true, output = breakout_int4_1_true_true, internallength = 1, passedbyvalue = true, alignment = char);
 create table alter_distpol_g_int4_1_true_true (i int, j break_int4_1_true_true, k text) with (appendonly = true) distributed by (i);
 insert into alter_distpol_g_int4_1_true_true (i, k) select i, i from generate_series(1, 10) i;
 create type break_int4_1_true_false;
 create function breakin_int4_1_true_false (cstring) returns break_int4_1_true_false as 'textin' language internal strict;
 create function breakout_int4_1_true_false (break_int4_1_true_false) returns cstring as 'textout' language internal strict;
 
-create type break_int4_1_true_false (input = breakin_int4_1_true_false, output = breakout_int4_1_true_false, internallength = 1, passedbyvalue = true, alignment = int4);
+create type break_int4_1_true_false (input = breakin_int4_1_true_false, output = breakout_int4_1_true_false, internallength = 1, passedbyvalue = true, alignment = char);
 create table alter_distpol_g_int4_1_true_false (i int, j break_int4_1_true_false, k text) with (appendonly = false) distributed by (i);
 insert into alter_distpol_g_int4_1_true_false (i, k) select i, i from generate_series(1, 10) i;
 create type break_int4_1_false_true;
 create function breakin_int4_1_false_true (cstring) returns break_int4_1_false_true as 'textin' language internal strict;
 create function breakout_int4_1_false_true (break_int4_1_false_true) returns cstring as 'textout' language internal strict;
 
-create type break_int4_1_false_true (input = breakin_int4_1_false_true, output = breakout_int4_1_false_true, internallength = 1, passedbyvalue = false, alignment = int4);
+create type break_int4_1_false_true (input = breakin_int4_1_false_true, output = breakout_int4_1_false_true, internallength = 1, passedbyvalue = false, alignment = char);
 create table alter_distpol_g_int4_1_false_true (i int, j break_int4_1_false_true, k text) with (appendonly = true) distributed by (i);
 insert into alter_distpol_g_int4_1_false_true (i, k) select i, i from generate_series(1, 10) i;
 create type break_int4_1_false_false;
 create function breakin_int4_1_false_false (cstring) returns break_int4_1_false_false as 'textin' language internal strict;
 create function breakout_int4_1_false_false (break_int4_1_false_false) returns cstring as 'textout' language internal strict;
 
-create type break_int4_1_false_false (input = breakin_int4_1_false_false, output = breakout_int4_1_false_false, internallength = 1, passedbyvalue = false, alignment = int4);
+create type break_int4_1_false_false (input = breakin_int4_1_false_false, output = breakout_int4_1_false_false, internallength = 1, passedbyvalue = false, alignment = char);
 create table alter_distpol_g_int4_1_false_false (i int, j break_int4_1_false_false, k text) with (appendonly = false) distributed by (i);
 insert into alter_distpol_g_int4_1_false_false (i, k) select i, i from generate_series(1, 10) i;
-create type break_int4_3_true_true;
-create function breakin_int4_3_true_true (cstring) returns break_int4_3_true_true as 'textin' language internal strict;
-create function breakout_int4_3_true_true (break_int4_3_true_true) returns cstring as 'textout' language internal strict;
-
-create type break_int4_3_true_true (input = breakin_int4_3_true_true, output = breakout_int4_3_true_true, internallength = 3, passedbyvalue = true, alignment = int4);
-create table alter_distpol_g_int4_3_true_true (i int, j break_int4_3_true_true, k text) with (appendonly = true) distributed by (i);
-insert into alter_distpol_g_int4_3_true_true (i, k) select i, i from generate_series(1, 10) i;
-create type break_int4_3_true_false;
-create function breakin_int4_3_true_false (cstring) returns break_int4_3_true_false as 'textin' language internal strict;
-create function breakout_int4_3_true_false (break_int4_3_true_false) returns cstring as 'textout' language internal strict;
-
-create type break_int4_3_true_false (input = breakin_int4_3_true_false, output = breakout_int4_3_true_false, internallength = 3, passedbyvalue = true, alignment = int4);
-create table alter_distpol_g_int4_3_true_false (i int, j break_int4_3_true_false, k text) with (appendonly = false) distributed by (i);
-insert into alter_distpol_g_int4_3_true_false (i, k) select i, i from generate_series(1, 10) i;
 create type break_int4_3_false_true;
 create function breakin_int4_3_false_true (cstring) returns break_int4_3_false_true as 'textin' language internal strict;
 create function breakout_int4_3_false_true (break_int4_3_false_true) returns cstring as 'textout' language internal strict;
@@ -454,14 +426,14 @@ create type break_char_variable_false_true;
 create function breakin_char_variable_false_true (cstring) returns break_char_variable_false_true as 'textin' language internal strict;
 create function breakout_char_variable_false_true (break_char_variable_false_true) returns cstring as 'textout' language internal strict;
 
-create type break_char_variable_false_true (input = breakin_char_variable_false_true, output = breakout_char_variable_false_true, internallength = variable, passedbyvalue = false, alignment = char);
+create type break_char_variable_false_true (input = breakin_char_variable_false_true, output = breakout_char_variable_false_true, internallength = variable, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_char_variable_false_true (i int, j break_char_variable_false_true, k text) with (appendonly = true) distributed by (i);
 insert into alter_distpol_g_char_variable_false_true (i, k) select i, i from generate_series(1, 10) i;
 create type break_char_variable_false_false;
 create function breakin_char_variable_false_false (cstring) returns break_char_variable_false_false as 'textin' language internal strict;
 create function breakout_char_variable_false_false (break_char_variable_false_false) returns cstring as 'textout' language internal strict;
 
-create type break_char_variable_false_false (input = breakin_char_variable_false_false, output = breakout_char_variable_false_false, internallength = variable, passedbyvalue = false, alignment = char);
+create type break_char_variable_false_false (input = breakin_char_variable_false_false, output = breakout_char_variable_false_false, internallength = variable, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_char_variable_false_false (i int, j break_char_variable_false_false, k text) with (appendonly = false) distributed by (i);
 insert into alter_distpol_g_char_variable_false_false (i, k) select i, i from generate_series(1, 10) i;
 create type break_char_1_true_true;
@@ -492,20 +464,6 @@ create function breakout_char_1_false_false (break_char_1_false_false) returns c
 create type break_char_1_false_false (input = breakin_char_1_false_false, output = breakout_char_1_false_false, internallength = 1, passedbyvalue = false, alignment = char);
 create table alter_distpol_g_char_1_false_false (i int, j break_char_1_false_false, k text) with (appendonly = false) distributed by (i);
 insert into alter_distpol_g_char_1_false_false (i, k) select i, i from generate_series(1, 10) i;
-create type break_char_3_true_true;
-create function breakin_char_3_true_true (cstring) returns break_char_3_true_true as 'textin' language internal strict;
-create function breakout_char_3_true_true (break_char_3_true_true) returns cstring as 'textout' language internal strict;
-
-create type break_char_3_true_true (input = breakin_char_3_true_true, output = breakout_char_3_true_true, internallength = 3, passedbyvalue = true, alignment = char);
-create table alter_distpol_g_char_3_true_true (i int, j break_char_3_true_true, k text) with (appendonly = true) distributed by (i);
-insert into alter_distpol_g_char_3_true_true (i, k) select i, i from generate_series(1, 10) i;
-create type break_char_3_true_false;
-create function breakin_char_3_true_false (cstring) returns break_char_3_true_false as 'textin' language internal strict;
-create function breakout_char_3_true_false (break_char_3_true_false) returns cstring as 'textout' language internal strict;
-
-create type break_char_3_true_false (input = breakin_char_3_true_false, output = breakout_char_3_true_false, internallength = 3, passedbyvalue = true, alignment = char);
-create table alter_distpol_g_char_3_true_false (i int, j break_char_3_true_false, k text) with (appendonly = false) distributed by (i);
-insert into alter_distpol_g_char_3_true_false (i, k) select i, i from generate_series(1, 10) i;
 create type break_char_3_false_true;
 create function breakin_char_3_false_true (cstring) returns break_char_3_false_true as 'textin' language internal strict;
 create function breakout_char_3_false_true (break_char_3_false_true) returns cstring as 'textout' language internal strict;
@@ -524,112 +482,112 @@ create type break_char_4_true_true;
 create function breakin_char_4_true_true (cstring) returns break_char_4_true_true as 'textin' language internal strict;
 create function breakout_char_4_true_true (break_char_4_true_true) returns cstring as 'textout' language internal strict;
 
-create type break_char_4_true_true (input = breakin_char_4_true_true, output = breakout_char_4_true_true, internallength = 4, passedbyvalue = true, alignment = char);
+create type break_char_4_true_true (input = breakin_char_4_true_true, output = breakout_char_4_true_true, internallength = 4, passedbyvalue = true, alignment = int4);
 create table alter_distpol_g_char_4_true_true (i int, j break_char_4_true_true, k text) with (appendonly = true) distributed by (i);
 insert into alter_distpol_g_char_4_true_true (i, k) select i, i from generate_series(1, 10) i;
 create type break_char_4_true_false;
 create function breakin_char_4_true_false (cstring) returns break_char_4_true_false as 'textin' language internal strict;
 create function breakout_char_4_true_false (break_char_4_true_false) returns cstring as 'textout' language internal strict;
 
-create type break_char_4_true_false (input = breakin_char_4_true_false, output = breakout_char_4_true_false, internallength = 4, passedbyvalue = true, alignment = char);
+create type break_char_4_true_false (input = breakin_char_4_true_false, output = breakout_char_4_true_false, internallength = 4, passedbyvalue = true, alignment = int4);
 create table alter_distpol_g_char_4_true_false (i int, j break_char_4_true_false, k text) with (appendonly = false) distributed by (i);
 insert into alter_distpol_g_char_4_true_false (i, k) select i, i from generate_series(1, 10) i;
 create type break_char_4_false_true;
 create function breakin_char_4_false_true (cstring) returns break_char_4_false_true as 'textin' language internal strict;
 create function breakout_char_4_false_true (break_char_4_false_true) returns cstring as 'textout' language internal strict;
 
-create type break_char_4_false_true (input = breakin_char_4_false_true, output = breakout_char_4_false_true, internallength = 4, passedbyvalue = false, alignment = char);
+create type break_char_4_false_true (input = breakin_char_4_false_true, output = breakout_char_4_false_true, internallength = 4, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_char_4_false_true (i int, j break_char_4_false_true, k text) with (appendonly = true) distributed by (i);
 insert into alter_distpol_g_char_4_false_true (i, k) select i, i from generate_series(1, 10) i;
 create type break_char_4_false_false;
 create function breakin_char_4_false_false (cstring) returns break_char_4_false_false as 'textin' language internal strict;
 create function breakout_char_4_false_false (break_char_4_false_false) returns cstring as 'textout' language internal strict;
 
-create type break_char_4_false_false (input = breakin_char_4_false_false, output = breakout_char_4_false_false, internallength = 4, passedbyvalue = false, alignment = char);
+create type break_char_4_false_false (input = breakin_char_4_false_false, output = breakout_char_4_false_false, internallength = 4, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_char_4_false_false (i int, j break_char_4_false_false, k text) with (appendonly = false) distributed by (i);
 insert into alter_distpol_g_char_4_false_false (i, k) select i, i from generate_series(1, 10) i;
 create type break_char_11_false_true;
 create function breakin_char_11_false_true (cstring) returns break_char_11_false_true as 'textin' language internal strict;
 create function breakout_char_11_false_true (break_char_11_false_true) returns cstring as 'textout' language internal strict;
 
-create type break_char_11_false_true (input = breakin_char_11_false_true, output = breakout_char_11_false_true, internallength = 11, passedbyvalue = false, alignment = char);
+create type break_char_11_false_true (input = breakin_char_11_false_true, output = breakout_char_11_false_true, internallength = 11, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_char_11_false_true (i int, j break_char_11_false_true, k text) with (appendonly = true) distributed by (i);
 insert into alter_distpol_g_char_11_false_true (i, k) select i, i from generate_series(1, 10) i;
 create type break_char_11_false_false;
 create function breakin_char_11_false_false (cstring) returns break_char_11_false_false as 'textin' language internal strict;
 create function breakout_char_11_false_false (break_char_11_false_false) returns cstring as 'textout' language internal strict;
 
-create type break_char_11_false_false (input = breakin_char_11_false_false, output = breakout_char_11_false_false, internallength = 11, passedbyvalue = false, alignment = char);
+create type break_char_11_false_false (input = breakin_char_11_false_false, output = breakout_char_11_false_false, internallength = 11, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_char_11_false_false (i int, j break_char_11_false_false, k text) with (appendonly = false) distributed by (i);
 insert into alter_distpol_g_char_11_false_false (i, k) select i, i from generate_series(1, 10) i;
 create type break_char_17_false_true;
 create function breakin_char_17_false_true (cstring) returns break_char_17_false_true as 'textin' language internal strict;
 create function breakout_char_17_false_true (break_char_17_false_true) returns cstring as 'textout' language internal strict;
 
-create type break_char_17_false_true (input = breakin_char_17_false_true, output = breakout_char_17_false_true, internallength = 17, passedbyvalue = false, alignment = char);
+create type break_char_17_false_true (input = breakin_char_17_false_true, output = breakout_char_17_false_true, internallength = 17, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_char_17_false_true (i int, j break_char_17_false_true, k text) with (appendonly = true) distributed by (i);
 insert into alter_distpol_g_char_17_false_true (i, k) select i, i from generate_series(1, 10) i;
 create type break_char_17_false_false;
 create function breakin_char_17_false_false (cstring) returns break_char_17_false_false as 'textin' language internal strict;
 create function breakout_char_17_false_false (break_char_17_false_false) returns cstring as 'textout' language internal strict;
 
-create type break_char_17_false_false (input = breakin_char_17_false_false, output = breakout_char_17_false_false, internallength = 17, passedbyvalue = false, alignment = char);
+create type break_char_17_false_false (input = breakin_char_17_false_false, output = breakout_char_17_false_false, internallength = 17, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_char_17_false_false (i int, j break_char_17_false_false, k text) with (appendonly = false) distributed by (i);
 insert into alter_distpol_g_char_17_false_false (i, k) select i, i from generate_series(1, 10) i;
 create type break_char_19_false_true;
 create function breakin_char_19_false_true (cstring) returns break_char_19_false_true as 'textin' language internal strict;
 create function breakout_char_19_false_true (break_char_19_false_true) returns cstring as 'textout' language internal strict;
 
-create type break_char_19_false_true (input = breakin_char_19_false_true, output = breakout_char_19_false_true, internallength = 19, passedbyvalue = false, alignment = char);
+create type break_char_19_false_true (input = breakin_char_19_false_true, output = breakout_char_19_false_true, internallength = 19, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_char_19_false_true (i int, j break_char_19_false_true, k text) with (appendonly = true) distributed by (i);
 insert into alter_distpol_g_char_19_false_true (i, k) select i, i from generate_series(1, 10) i;
 create type break_char_19_false_false;
 create function breakin_char_19_false_false (cstring) returns break_char_19_false_false as 'textin' language internal strict;
 create function breakout_char_19_false_false (break_char_19_false_false) returns cstring as 'textout' language internal strict;
 
-create type break_char_19_false_false (input = breakin_char_19_false_false, output = breakout_char_19_false_false, internallength = 19, passedbyvalue = false, alignment = char);
+create type break_char_19_false_false (input = breakin_char_19_false_false, output = breakout_char_19_false_false, internallength = 19, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_char_19_false_false (i int, j break_char_19_false_false, k text) with (appendonly = false) distributed by (i);
 insert into alter_distpol_g_char_19_false_false (i, k) select i, i from generate_series(1, 10) i;
 create type break_char_23_false_true;
 create function breakin_char_23_false_true (cstring) returns break_char_23_false_true as 'textin' language internal strict;
 create function breakout_char_23_false_true (break_char_23_false_true) returns cstring as 'textout' language internal strict;
 
-create type break_char_23_false_true (input = breakin_char_23_false_true, output = breakout_char_23_false_true, internallength = 23, passedbyvalue = false, alignment = char);
+create type break_char_23_false_true (input = breakin_char_23_false_true, output = breakout_char_23_false_true, internallength = 23, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_char_23_false_true (i int, j break_char_23_false_true, k text) with (appendonly = true) distributed by (i);
 insert into alter_distpol_g_char_23_false_true (i, k) select i, i from generate_series(1, 10) i;
 create type break_char_23_false_false;
 create function breakin_char_23_false_false (cstring) returns break_char_23_false_false as 'textin' language internal strict;
 create function breakout_char_23_false_false (break_char_23_false_false) returns cstring as 'textout' language internal strict;
 
-create type break_char_23_false_false (input = breakin_char_23_false_false, output = breakout_char_23_false_false, internallength = 23, passedbyvalue = false, alignment = char);
+create type break_char_23_false_false (input = breakin_char_23_false_false, output = breakout_char_23_false_false, internallength = 23, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_char_23_false_false (i int, j break_char_23_false_false, k text) with (appendonly = false) distributed by (i);
 insert into alter_distpol_g_char_23_false_false (i, k) select i, i from generate_series(1, 10) i;
 create type break_char_32_false_true;
 create function breakin_char_32_false_true (cstring) returns break_char_32_false_true as 'textin' language internal strict;
 create function breakout_char_32_false_true (break_char_32_false_true) returns cstring as 'textout' language internal strict;
 
-create type break_char_32_false_true (input = breakin_char_32_false_true, output = breakout_char_32_false_true, internallength = 32, passedbyvalue = false, alignment = char);
+create type break_char_32_false_true (input = breakin_char_32_false_true, output = breakout_char_32_false_true, internallength = 32, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_char_32_false_true (i int, j break_char_32_false_true, k text) with (appendonly = true) distributed by (i);
 insert into alter_distpol_g_char_32_false_true (i, k) select i, i from generate_series(1, 10) i;
 create type break_char_32_false_false;
 create function breakin_char_32_false_false (cstring) returns break_char_32_false_false as 'textin' language internal strict;
 create function breakout_char_32_false_false (break_char_32_false_false) returns cstring as 'textout' language internal strict;
 
-create type break_char_32_false_false (input = breakin_char_32_false_false, output = breakout_char_32_false_false, internallength = 32, passedbyvalue = false, alignment = char);
+create type break_char_32_false_false (input = breakin_char_32_false_false, output = breakout_char_32_false_false, internallength = 32, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_char_32_false_false (i int, j break_char_32_false_false, k text) with (appendonly = false) distributed by (i);
 insert into alter_distpol_g_char_32_false_false (i, k) select i, i from generate_series(1, 10) i;
 create type break_char_196_false_true;
 create function breakin_char_196_false_true (cstring) returns break_char_196_false_true as 'textin' language internal strict;
 create function breakout_char_196_false_true (break_char_196_false_true) returns cstring as 'textout' language internal strict;
 
-create type break_char_196_false_true (input = breakin_char_196_false_true, output = breakout_char_196_false_true, internallength = 196, passedbyvalue = false, alignment = char);
+create type break_char_196_false_true (input = breakin_char_196_false_true, output = breakout_char_196_false_true, internallength = 196, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_char_196_false_true (i int, j break_char_196_false_true, k text) with (appendonly = true) distributed by (i);
 insert into alter_distpol_g_char_196_false_true (i, k) select i, i from generate_series(1, 10) i;
 create type break_char_196_false_false;
 create function breakin_char_196_false_false (cstring) returns break_char_196_false_false as 'textin' language internal strict;
 create function breakout_char_196_false_false (break_char_196_false_false) returns cstring as 'textout' language internal strict;
 
-create type break_char_196_false_false (input = breakin_char_196_false_false, output = breakout_char_196_false_false, internallength = 196, passedbyvalue = false, alignment = char);
+create type break_char_196_false_false (input = breakin_char_196_false_false, output = breakout_char_196_false_false, internallength = 196, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_char_196_false_false (i int, j break_char_196_false_false, k text) with (appendonly = false) distributed by (i);
 insert into alter_distpol_g_char_196_false_false (i, k) select i, i from generate_series(1, 10) i;
 create type break_double_variable_false_true;
@@ -650,44 +608,30 @@ create type break_double_1_true_true;
 create function breakin_double_1_true_true (cstring) returns break_double_1_true_true as 'textin' language internal strict;
 create function breakout_double_1_true_true (break_double_1_true_true) returns cstring as 'textout' language internal strict;
 
-create type break_double_1_true_true (input = breakin_double_1_true_true, output = breakout_double_1_true_true, internallength = 1, passedbyvalue = true, alignment = double);
+create type break_double_1_true_true (input = breakin_double_1_true_true, output = breakout_double_1_true_true, internallength = 1, passedbyvalue = true, alignment = char);
 create table alter_distpol_g_double_1_true_true (i int, j break_double_1_true_true, k text) with (appendonly = true) distributed by (i);
 insert into alter_distpol_g_double_1_true_true (i, k) select i, i from generate_series(1, 10) i;
 create type break_double_1_true_false;
 create function breakin_double_1_true_false (cstring) returns break_double_1_true_false as 'textin' language internal strict;
 create function breakout_double_1_true_false (break_double_1_true_false) returns cstring as 'textout' language internal strict;
 
-create type break_double_1_true_false (input = breakin_double_1_true_false, output = breakout_double_1_true_false, internallength = 1, passedbyvalue = true, alignment = double);
+create type break_double_1_true_false (input = breakin_double_1_true_false, output = breakout_double_1_true_false, internallength = 1, passedbyvalue = true, alignment = char);
 create table alter_distpol_g_double_1_true_false (i int, j break_double_1_true_false, k text) with (appendonly = false) distributed by (i);
 insert into alter_distpol_g_double_1_true_false (i, k) select i, i from generate_series(1, 10) i;
 create type break_double_1_false_true;
 create function breakin_double_1_false_true (cstring) returns break_double_1_false_true as 'textin' language internal strict;
 create function breakout_double_1_false_true (break_double_1_false_true) returns cstring as 'textout' language internal strict;
 
-create type break_double_1_false_true (input = breakin_double_1_false_true, output = breakout_double_1_false_true, internallength = 1, passedbyvalue = false, alignment = double);
+create type break_double_1_false_true (input = breakin_double_1_false_true, output = breakout_double_1_false_true, internallength = 1, passedbyvalue = false, alignment = char);
 create table alter_distpol_g_double_1_false_true (i int, j break_double_1_false_true, k text) with (appendonly = true) distributed by (i);
 insert into alter_distpol_g_double_1_false_true (i, k) select i, i from generate_series(1, 10) i;
 create type break_double_1_false_false;
 create function breakin_double_1_false_false (cstring) returns break_double_1_false_false as 'textin' language internal strict;
 create function breakout_double_1_false_false (break_double_1_false_false) returns cstring as 'textout' language internal strict;
 
-create type break_double_1_false_false (input = breakin_double_1_false_false, output = breakout_double_1_false_false, internallength = 1, passedbyvalue = false, alignment = double);
+create type break_double_1_false_false (input = breakin_double_1_false_false, output = breakout_double_1_false_false, internallength = 1, passedbyvalue = false, alignment = char);
 create table alter_distpol_g_double_1_false_false (i int, j break_double_1_false_false, k text) with (appendonly = false) distributed by (i);
 insert into alter_distpol_g_double_1_false_false (i, k) select i, i from generate_series(1, 10) i;
-create type break_double_3_true_true;
-create function breakin_double_3_true_true (cstring) returns break_double_3_true_true as 'textin' language internal strict;
-create function breakout_double_3_true_true (break_double_3_true_true) returns cstring as 'textout' language internal strict;
-
-create type break_double_3_true_true (input = breakin_double_3_true_true, output = breakout_double_3_true_true, internallength = 3, passedbyvalue = true, alignment = double);
-create table alter_distpol_g_double_3_true_true (i int, j break_double_3_true_true, k text) with (appendonly = true) distributed by (i);
-insert into alter_distpol_g_double_3_true_true (i, k) select i, i from generate_series(1, 10) i;
-create type break_double_3_true_false;
-create function breakin_double_3_true_false (cstring) returns break_double_3_true_false as 'textin' language internal strict;
-create function breakout_double_3_true_false (break_double_3_true_false) returns cstring as 'textout' language internal strict;
-
-create type break_double_3_true_false (input = breakin_double_3_true_false, output = breakout_double_3_true_false, internallength = 3, passedbyvalue = true, alignment = double);
-create table alter_distpol_g_double_3_true_false (i int, j break_double_3_true_false, k text) with (appendonly = false) distributed by (i);
-insert into alter_distpol_g_double_3_true_false (i, k) select i, i from generate_series(1, 10) i;
 create type break_double_3_false_true;
 create function breakin_double_3_false_true (cstring) returns break_double_3_false_true as 'textin' language internal strict;
 create function breakout_double_3_false_true (break_double_3_false_true) returns cstring as 'textout' language internal strict;
@@ -706,28 +650,28 @@ create type break_double_4_true_true;
 create function breakin_double_4_true_true (cstring) returns break_double_4_true_true as 'textin' language internal strict;
 create function breakout_double_4_true_true (break_double_4_true_true) returns cstring as 'textout' language internal strict;
 
-create type break_double_4_true_true (input = breakin_double_4_true_true, output = breakout_double_4_true_true, internallength = 4, passedbyvalue = true, alignment = double);
+create type break_double_4_true_true (input = breakin_double_4_true_true, output = breakout_double_4_true_true, internallength = 4, passedbyvalue = true, alignment = int4);
 create table alter_distpol_g_double_4_true_true (i int, j break_double_4_true_true, k text) with (appendonly = true) distributed by (i);
 insert into alter_distpol_g_double_4_true_true (i, k) select i, i from generate_series(1, 10) i;
 create type break_double_4_true_false;
 create function breakin_double_4_true_false (cstring) returns break_double_4_true_false as 'textin' language internal strict;
 create function breakout_double_4_true_false (break_double_4_true_false) returns cstring as 'textout' language internal strict;
 
-create type break_double_4_true_false (input = breakin_double_4_true_false, output = breakout_double_4_true_false, internallength = 4, passedbyvalue = true, alignment = double);
+create type break_double_4_true_false (input = breakin_double_4_true_false, output = breakout_double_4_true_false, internallength = 4, passedbyvalue = true, alignment = int4);
 create table alter_distpol_g_double_4_true_false (i int, j break_double_4_true_false, k text) with (appendonly = false) distributed by (i);
 insert into alter_distpol_g_double_4_true_false (i, k) select i, i from generate_series(1, 10) i;
 create type break_double_4_false_true;
 create function breakin_double_4_false_true (cstring) returns break_double_4_false_true as 'textin' language internal strict;
 create function breakout_double_4_false_true (break_double_4_false_true) returns cstring as 'textout' language internal strict;
 
-create type break_double_4_false_true (input = breakin_double_4_false_true, output = breakout_double_4_false_true, internallength = 4, passedbyvalue = false, alignment = double);
+create type break_double_4_false_true (input = breakin_double_4_false_true, output = breakout_double_4_false_true, internallength = 4, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_double_4_false_true (i int, j break_double_4_false_true, k text) with (appendonly = true) distributed by (i);
 insert into alter_distpol_g_double_4_false_true (i, k) select i, i from generate_series(1, 10) i;
 create type break_double_4_false_false;
 create function breakin_double_4_false_false (cstring) returns break_double_4_false_false as 'textin' language internal strict;
 create function breakout_double_4_false_false (break_double_4_false_false) returns cstring as 'textout' language internal strict;
 
-create type break_double_4_false_false (input = breakin_double_4_false_false, output = breakout_double_4_false_false, internallength = 4, passedbyvalue = false, alignment = double);
+create type break_double_4_false_false (input = breakin_double_4_false_false, output = breakout_double_4_false_false, internallength = 4, passedbyvalue = false, alignment = int4);
 create table alter_distpol_g_double_4_false_false (i int, j break_double_4_false_false, k text) with (appendonly = false) distributed by (i);
 insert into alter_distpol_g_double_4_false_false (i, k) select i, i from generate_series(1, 10) i;
 create type break_double_11_false_true;
@@ -857,20 +801,6 @@ select * from alter_distpol_g_int2_1_false_false order by 1;
 drop type break_int2_1_false_false cascade;
 alter table alter_distpol_g_int2_1_false_false set with(reorganize = true) distributed randomly;
 select * from alter_distpol_g_int2_1_false_false order by 1;
-alter table alter_distpol_g_int2_3_true_true drop column j;
-select * from alter_distpol_g_int2_3_true_true order by 1;
-alter table alter_distpol_g_int2_3_true_true set with(reorganize = true) distributed randomly;
-select * from alter_distpol_g_int2_3_true_true order by 1;
-drop type break_int2_3_true_true cascade;
-alter table alter_distpol_g_int2_3_true_true set with(reorganize = true) distributed randomly;
-select * from alter_distpol_g_int2_3_true_true order by 1;
-alter table alter_distpol_g_int2_3_true_false drop column j;
-select * from alter_distpol_g_int2_3_true_false order by 1;
-alter table alter_distpol_g_int2_3_true_false set with(reorganize = true) distributed randomly;
-select * from alter_distpol_g_int2_3_true_false order by 1;
-drop type break_int2_3_true_false cascade;
-alter table alter_distpol_g_int2_3_true_false set with(reorganize = true) distributed randomly;
-select * from alter_distpol_g_int2_3_true_false order by 1;
 alter table alter_distpol_g_int2_3_false_true drop column j;
 select * from alter_distpol_g_int2_3_false_true order by 1;
 alter table alter_distpol_g_int2_3_false_true set with(reorganize = true) distributed randomly;
@@ -1039,20 +969,6 @@ select * from alter_distpol_g_int4_1_false_false order by 1;
 drop type break_int4_1_false_false cascade;
 alter table alter_distpol_g_int4_1_false_false set with(reorganize = true) distributed randomly;
 select * from alter_distpol_g_int4_1_false_false order by 1;
-alter table alter_distpol_g_int4_3_true_true drop column j;
-select * from alter_distpol_g_int4_3_true_true order by 1;
-alter table alter_distpol_g_int4_3_true_true set with(reorganize = true) distributed randomly;
-select * from alter_distpol_g_int4_3_true_true order by 1;
-drop type break_int4_3_true_true cascade;
-alter table alter_distpol_g_int4_3_true_true set with(reorganize = true) distributed randomly;
-select * from alter_distpol_g_int4_3_true_true order by 1;
-alter table alter_distpol_g_int4_3_true_false drop column j;
-select * from alter_distpol_g_int4_3_true_false order by 1;
-alter table alter_distpol_g_int4_3_true_false set with(reorganize = true) distributed randomly;
-select * from alter_distpol_g_int4_3_true_false order by 1;
-drop type break_int4_3_true_false cascade;
-alter table alter_distpol_g_int4_3_true_false set with(reorganize = true) distributed randomly;
-select * from alter_distpol_g_int4_3_true_false order by 1;
 alter table alter_distpol_g_int4_3_false_true drop column j;
 select * from alter_distpol_g_int4_3_false_true order by 1;
 alter table alter_distpol_g_int4_3_false_true set with(reorganize = true) distributed randomly;
@@ -1221,20 +1137,6 @@ select * from alter_distpol_g_char_1_false_false order by 1;
 drop type break_char_1_false_false cascade;
 alter table alter_distpol_g_char_1_false_false set with(reorganize = true) distributed randomly;
 select * from alter_distpol_g_char_1_false_false order by 1;
-alter table alter_distpol_g_char_3_true_true drop column j;
-select * from alter_distpol_g_char_3_true_true order by 1;
-alter table alter_distpol_g_char_3_true_true set with(reorganize = true) distributed randomly;
-select * from alter_distpol_g_char_3_true_true order by 1;
-drop type break_char_3_true_true cascade;
-alter table alter_distpol_g_char_3_true_true set with(reorganize = true) distributed randomly;
-select * from alter_distpol_g_char_3_true_true order by 1;
-alter table alter_distpol_g_char_3_true_false drop column j;
-select * from alter_distpol_g_char_3_true_false order by 1;
-alter table alter_distpol_g_char_3_true_false set with(reorganize = true) distributed randomly;
-select * from alter_distpol_g_char_3_true_false order by 1;
-drop type break_char_3_true_false cascade;
-alter table alter_distpol_g_char_3_true_false set with(reorganize = true) distributed randomly;
-select * from alter_distpol_g_char_3_true_false order by 1;
 alter table alter_distpol_g_char_3_false_true drop column j;
 select * from alter_distpol_g_char_3_false_true order by 1;
 alter table alter_distpol_g_char_3_false_true set with(reorganize = true) distributed randomly;
@@ -1403,20 +1305,6 @@ select * from alter_distpol_g_double_1_false_false order by 1;
 drop type break_double_1_false_false cascade;
 alter table alter_distpol_g_double_1_false_false set with(reorganize = true) distributed randomly;
 select * from alter_distpol_g_double_1_false_false order by 1;
-alter table alter_distpol_g_double_3_true_true drop column j;
-select * from alter_distpol_g_double_3_true_true order by 1;
-alter table alter_distpol_g_double_3_true_true set with(reorganize = true) distributed randomly;
-select * from alter_distpol_g_double_3_true_true order by 1;
-drop type break_double_3_true_true cascade;
-alter table alter_distpol_g_double_3_true_true set with(reorganize = true) distributed randomly;
-select * from alter_distpol_g_double_3_true_true order by 1;
-alter table alter_distpol_g_double_3_true_false drop column j;
-select * from alter_distpol_g_double_3_true_false order by 1;
-alter table alter_distpol_g_double_3_true_false set with(reorganize = true) distributed randomly;
-select * from alter_distpol_g_double_3_true_false order by 1;
-drop type break_double_3_true_false cascade;
-alter table alter_distpol_g_double_3_true_false set with(reorganize = true) distributed randomly;
-select * from alter_distpol_g_double_3_true_false order by 1;
 alter table alter_distpol_g_double_3_false_true drop column j;
 select * from alter_distpol_g_double_3_false_true order by 1;
 alter table alter_distpol_g_double_3_false_true set with(reorganize = true) distributed randomly;
