@@ -485,7 +485,6 @@ extern void ValidatePgVersion(const char *path);
 extern void process_shared_preload_libraries(void);
 extern void process_local_preload_libraries(void);
 extern void pg_bindtextdomain(const char *domain);
-<<<<<<< HEAD
 
 extern int64 db_dir_size(const char *path); /* implemented in dbsize.c */
 
@@ -518,8 +517,6 @@ extern AuxProcType MyAuxProcType; /* bootstrap.c */
 #define AmCheckpointerProcess()     (MyAuxProcType == CheckpointerProcess)
 #define AmWalWriterProcess()        (MyAuxProcType == WalWriterProcess)
 #define AmWalReceiverProcess()      (MyAuxProcType == WalReceiverProcess)
-=======
->>>>>>> 38e9348282e
 
 /* in access/transam/xlog.c */
 extern bool BackupInProgress(void);

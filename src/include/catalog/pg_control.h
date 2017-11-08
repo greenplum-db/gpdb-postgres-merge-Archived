@@ -20,18 +20,13 @@
 #include "port/pg_crc32c.h"
 
 
-<<<<<<< HEAD
 /*
  * Version identifier for this pg_control format.
  *
  * The first three digits is the PostgreSQL version number. The last
  * four digits indicates the GPDB version.
  */
-#define PG_CONTROL_VERSION	8420600
-=======
-/* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	843
->>>>>>> 38e9348282e
+#define PG_CONTROL_VERSION	8430600
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -186,17 +181,9 @@ typedef struct ControlFileData
 	bool		float4ByVal;	/* float4 pass-by-value? */
 	bool		float8ByVal;	/* float8, int8, etc pass-by-value? */
 
-<<<<<<< HEAD
-	/* active locales */
-	uint32		localeBuflen;
-	char		lc_collate[LOCALE_NAME_BUFLEN];
-	char		lc_ctype[LOCALE_NAME_BUFLEN];
-
 	/* Are data pages protected by checksums? Zero if no checksum version */
 	uint32		data_checksum_version;
 
-=======
->>>>>>> 38e9348282e
 	/* CRC of all above ... MUST BE LAST! */
 	pg_crc32c	crc;
 } ControlFileData;
