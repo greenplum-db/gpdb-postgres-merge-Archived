@@ -103,12 +103,8 @@ m4_define([pgac_defined_$1_$2_bool], [$3])dnl
 ])# PGAC_ARG_BOOL
 
 
-<<<<<<< HEAD
-# PGAC_ARG_REQ(TYPE, NAME, HELP-STRING, [ACTION-IF-GIVEN], [ACTION-IF-NOT-GIVEN])
-=======
 # PGAC_ARG_REQ(TYPE, NAME, HELP-ARGNAME, HELP-STRING-RHS,
 #              [ACTION-IF-GIVEN], [ACTION-IF-NOT-GIVEN])
->>>>>>> 38e9348282e
 # -------------------------------------------------------
 # This option will require an argument; "yes" or "no" will not be
 # accepted.  HELP-ARGNAME is a name for the argument for the help output.
