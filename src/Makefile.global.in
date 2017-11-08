@@ -18,11 +18,7 @@
 #
 # Meta configuration
 
-<<<<<<< HEAD
 .PHONY: all install install-strip installdirs uninstall clean distclean maintainer-clean distprep check installcheck maintainer-check coverage installcheck-good
-=======
-.PHONY: all install install-strip installdirs uninstall clean distclean maintainer-clean distprep check installcheck maintainer-check coverage
->>>>>>> 38e9348282e
 .SILENT: installdirs
 
 # make `all' the default target
@@ -36,7 +32,6 @@ all:
 BLD_ARCH = @BLD_ARCH@
 
 # PostgreSQL version number
-<<<<<<< HEAD
 PG_VERSION = @PG_PACKAGE_VERSION@
 PG_MAJORVERSION = @PG_MAJORVERSION@
 
@@ -45,10 +40,6 @@ GP_VERSION = @GP_VERSION_SHORT@
 GP_MAJORVERSION = @GP_MAJORVERSION@
 
 ADDON_DIR = @ADDON_DIR@
-=======
-VERSION = @PACKAGE_VERSION@
-MAJORVERSION = @PG_MAJORVERSION@
->>>>>>> 38e9348282e
 
 # Support for VPATH builds
 vpath_build = @vpath_build@
@@ -595,28 +586,6 @@ TAS         = @TAS@
 %.bz2: %
 	$(BZIP2) -c $< >$@
 
-<<<<<<< HEAD
-ifeq ($(PORTNAME),win32)
-# Build rules to add versioninfo resources to win32 binaries
-WIN32RES += win32ver.o
-ifeq ($(PGFILESHLIB),1)
-PGFTYPE=VFT_DLL
-else
-PGFTYPE=VFT_APP
-endif
-ifneq (,$(PGAPPICON))
-PGICOSTR=$(subst /,\/,IDI_ICON ICON \"$(top_builddir)/src/port/$(PGAPPICON).ico\")
-endif
-win32ver.rc: $(top_builddir)/src/port/win32ver.rc
-	sed -e 's;FILEDESC;$(PGFILEDESC);' -e 's;VFT_APP;$(PGFTYPE);' -e 's;_ICO_;$(PGICOSTR);' -e 's;\(VERSION.*\),0 *$$;\1,'`date '+%y%j' | sed 's/^0*//'`';' $(top_builddir)/src/port/win32ver.rc > win32ver.rc
-win32ver.o: $(top_builddir)/src/port/win32ver.rc
-	sed -e 's;FILEDESC;$(PGFILEDESC);' -e 's;VFT_APP;$(PGFTYPE);' -e 's;_ICO_;$(PGICOSTR);' -e 's;\(VERSION.*\),0 *$$;\1,'`date '+%y%j' | sed 's/^0*//'`';' $(top_builddir)/src/port/win32ver.rc > win32ver.rc
-	/usr/bin/i686-pc-mingw32-windres -i win32ver.rc -o win32ver.o --include-dir=$(top_builddir)/src/include
-	rm -f win32ver.rc
-endif
-
-=======
->>>>>>> 38e9348282e
 ifndef PGXS
 
 # Remake Makefile.global from Makefile.global.in if the latter

@@ -813,15 +813,11 @@
 /* PostgreSQL major version as a string */
 #undef PG_MAJORVERSION
 
-<<<<<<< HEAD
 /* Define to 1 if "static inline" works without unwanted warnings from
    compilations where static inline functions are defined but not called. */
 #undef PG_USE_INLINE
 
 /* Postgres version Greenplum Database is based on */
-=======
-/* PostgreSQL version as a string */
->>>>>>> 38e9348282e
 #undef PG_VERSION
 
 /* PostgreSQL version as a number */
