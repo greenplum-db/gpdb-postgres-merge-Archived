@@ -8,10 +8,7 @@
  * used for positioning an error cursor when there is an error related to
  * the node.  Access to the original source text is needed to make use of
  * the location.
-<<<<<<< HEAD
-=======
  *
->>>>>>> 38e9348282e
  *
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
@@ -84,12 +81,7 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
 #define ACL_REFERENCES	(1<<5)
 #define ACL_TRIGGER		(1<<6)
 #define ACL_EXECUTE		(1<<7)	/* for functions */
-<<<<<<< HEAD
-#define ACL_USAGE		(1<<8)	/* for languages, namespaces
-								 * and external protocols */
-=======
 #define ACL_USAGE		(1<<8)	/* for languages, namespaces, FDWs, and servers */
->>>>>>> 38e9348282e
 #define ACL_CREATE		(1<<9)	/* for namespaces and databases */
 #define ACL_CREATE_TEMP (1<<10) /* for databases */
 #define ACL_CONNECT		(1<<11) /* for databases */
@@ -177,11 +169,6 @@ typedef struct Query
 
 	List	   *scatterClause;	/* a list of tle's */
 	bool		isTableValueSelect; /* GPDB: Is this a TABLE (...) subquery argument? */
-
-	List	   *cteList;		/* a list of CommonTableExprs in WITH clause */
-	bool		hasRecursive;	/* Whether this query has a recursive WITH
-								 * clause */
-
 
 	Node	   *limitOffset;	/* # of result tuples to skip (int8 expr) */
 	Node	   *limitCount;		/* # of result tuples to return (int8 expr) */
@@ -308,11 +295,7 @@ typedef struct TypeCast
 {
 	NodeTag		type;
 	Node	   *arg;			/* the expression being casted */
-<<<<<<< HEAD
 	TypeName   *typeName;		/* the target type */
-=======
-	TypeName   *typename;		/* the target type */
->>>>>>> 38e9348282e
 	int			location;		/* token location, or -1 if unknown */
 } TypeCast;
 
@@ -429,10 +412,6 @@ typedef struct SortBy
 	SortByDir	sortby_dir;		/* ASC/DESC/USING/default */
 	SortByNulls sortby_nulls;	/* NULLS FIRST/LAST */
 	List	   *useOp;			/* name of op to use, if SORTBY_USING */
-<<<<<<< HEAD
-	Node	   *node;			/* expression to sort on */
-=======
->>>>>>> 38e9348282e
 	int			location;		/* operator location, or -1 if none/unknown */
 } SortBy;
 
@@ -650,11 +629,7 @@ typedef struct XmlSerialize
 	NodeTag		type;
 	XmlOptionType xmloption;	/* DOCUMENT or CONTENT */
 	Node	   *expr;
-<<<<<<< HEAD
 	TypeName   *typeName;
-=======
-	TypeName   *typename;
->>>>>>> 38e9348282e
 	int			location;		/* token location, or -1 if unknown */
 } XmlSerialize;
 
@@ -731,13 +706,9 @@ typedef enum RTEKind
 	RTE_SPECIAL,				/* special rule relation (NEW or OLD) */
 	RTE_FUNCTION,				/* function in FROM */
 	RTE_VALUES,					/* VALUES (<exprlist>), (<exprlist>), ... */
-<<<<<<< HEAD
 	RTE_VOID,                   /* CDB: deleted RTE */
 	RTE_CTE,					/* common table expr (WITH list element) */
 	RTE_TABLEFUNCTION,          /* CDB: Functions over multiset input */
-=======
-	RTE_CTE						/* common table expr (WITH list element) */
->>>>>>> 38e9348282e
 } RTEKind;
 
 typedef struct RangeTblEntry
@@ -762,7 +733,6 @@ typedef struct RangeTblEntry
 	 */
 	Query	   *subquery;		/* the sub-query */
 
-<<<<<<< HEAD
 	/* These are for pre-planned sub-queries only.  They are internal to
 	 * window planning.
 	 */
@@ -770,8 +740,6 @@ typedef struct RangeTblEntry
 	List		*subquery_rtable;
 	List		*subquery_pathkeys;
 
-=======
->>>>>>> 38e9348282e
 	/*
 	 * Fields valid for a join RTE (else NULL/zero):
 	 *
@@ -796,10 +764,7 @@ typedef struct RangeTblEntry
 	Node	   *funcexpr;		/* expression tree for func call */
 	List	   *funccoltypes;	/* OID list of column type OIDs */
 	List	   *funccoltypmods; /* integer list of column typmods */
-<<<<<<< HEAD
 	bytea	   *funcuserdata;	/* describe function user data. assume bytea */
-=======
->>>>>>> 38e9348282e
 
 	/*
 	 * Fields valid for a values RTE (else NIL):
@@ -815,14 +780,11 @@ typedef struct RangeTblEntry
 	List	   *ctecoltypes;	/* OID list of column type OIDs */
 	List	   *ctecoltypmods;	/* integer list of column typmods */
 
-<<<<<<< HEAD
 	/* GPDB: Valid for base-relations, true if GP_DIST_RANDOM
 	 * pseudo-function was specified as modifier in FROM-clause
 	 */
 	bool		forceDistRandom;
 
-=======
->>>>>>> 38e9348282e
 	/*
 	 * Fields valid in all RTEs:
 	 */
@@ -1029,15 +991,12 @@ typedef struct CommonTableExpr
 	List	   *ctecoltypmods;	/* integer list of output column typmods */
 } CommonTableExpr;
 
-<<<<<<< HEAD
 #define GetCTETargetList(cte) \
 	(AssertMacro((cte)->ctequery != NULL && IsA((cte)->ctequery, Query)), \
 	 ((Query *) (cte)->ctequery)->commandType == CMD_SELECT ? \
 	 ((Query *) (cte)->ctequery)->targetList : \
 	 ((Query *) (cte)->ctequery)->returningList)
 
-=======
->>>>>>> 38e9348282e
 /*****************************************************************************
  *		Optimizable Statements
  *****************************************************************************/
@@ -1122,13 +1081,9 @@ typedef struct SelectStmt
 	Node	   *whereClause;	/* WHERE qualification */
 	List	   *groupClause;	/* GROUP BY clauses */
 	Node	   *havingClause;	/* HAVING conditional-expression */
-<<<<<<< HEAD
 	List	   *windowClause;	/* window specification clauses */
 	List       *scatterClause;	/* GPDB: TableValueExpr data distribution */
 	WithClause *withClause; 	/* WITH clause */
-=======
-	WithClause *withClause;		/* WITH clause */
->>>>>>> 38e9348282e
 
 	/*
 	 * In a "leaf" node representing a VALUES list, the above fields are all
@@ -1222,12 +1177,9 @@ typedef enum ObjectType
 	OBJECT_CONVERSION,
 	OBJECT_DATABASE,
 	OBJECT_DOMAIN,
-<<<<<<< HEAD
 	OBJECT_EXTENSION,
-=======
 	OBJECT_FDW,
 	OBJECT_FOREIGN_SERVER,
->>>>>>> 38e9348282e
 	OBJECT_FUNCTION,
 	OBJECT_INDEX,
 	OBJECT_LANGUAGE,
@@ -1341,11 +1293,8 @@ typedef struct AlterTableStmt
 typedef enum AlterTableType
 {
 	AT_AddColumn,				/* add column */
-<<<<<<< HEAD
 	AT_AddColumnRecurse,		/* internal to commands/tablecmds.c */
-=======
 	AT_AddColumnToView,			/* implicitly via CREATE OR REPLACE VIEW */
->>>>>>> 38e9348282e
 	AT_ColumnDefault,			/* alter column default */
 	AT_ColumnDefaultRecurse,	/* internal to commands/tablecmds.c */
 	AT_DropNotNull,				/* alter column drop not null */
@@ -1495,12 +1444,9 @@ typedef enum GrantObjectType
 	ACL_OBJECT_RELATION,		/* table, view */
 	ACL_OBJECT_SEQUENCE,		/* sequence */
 	ACL_OBJECT_DATABASE,		/* database */
-<<<<<<< HEAD
 	ACL_OBJECT_EXTPROTOCOL,		/* external table protocol */
-=======
 	ACL_OBJECT_FDW,				/* foreign-data wrapper */
 	ACL_OBJECT_FOREIGN_SERVER,	/* foreign server */
->>>>>>> 38e9348282e
 	ACL_OBJECT_FUNCTION,		/* function */
 	ACL_OBJECT_LANGUAGE,		/* procedural language */
 	ACL_OBJECT_NAMESPACE,		/* namespace */
@@ -2518,11 +2464,7 @@ typedef struct FunctionParameter
 	NodeTag		type;
 	char	   *name;			/* parameter name, or NULL if not given */
 	TypeName   *argType;		/* TypeName for parameter type */
-<<<<<<< HEAD
-	FunctionParameterMode mode; /* IN/OUT/INOUT/VARIADIC/TABLE */
-=======
 	FunctionParameterMode mode; /* IN/OUT/etc */
->>>>>>> 38e9348282e
 	Node	   *defexpr;		/* raw default expr, or NULL if not given */
 } FunctionParameter;
 
@@ -2836,11 +2778,8 @@ typedef struct VacuumStmt
 	bool		full;			/* do FULL (non-concurrent) vacuum */
 	bool		analyze;		/* do ANALYZE step */
 	bool		verbose;		/* print progress info */
-<<<<<<< HEAD
 	bool		rootonly;		/* only ANALYZE root partition tables */
-=======
 	bool		scan_all;		/* force scan of all pages */
->>>>>>> 38e9348282e
 	int			freeze_min_age; /* min freeze age, or -1 to use default */
 	RangeVar   *relation;		/* single table to process, or NULL */
 	List	   *va_cols;		/* list of column names, or NIL for all */
