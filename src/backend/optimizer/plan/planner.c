@@ -2175,8 +2175,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			{
 				result_plan = (Plan *) make_motion_hash(root, result_plan, distinctExprs);
 				result_plan->total_cost += motion_cost_per_row * result_plan->plan_rows;
-				current_pathkeys = NULL;		/* Any pre-existing order now
-												 * lost. */
+				current_pathkeys = NIL;		/* Any pre-existing order now lost. */
 			}
 		}
 		else if ( result_plan->flow->flotype == FLOW_SINGLETON )
@@ -2298,6 +2297,14 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 		if (must_gather)
 		{
+			/*
+			 * current_pathkeys might contain unneeded columns that have been
+			 * eliminated from the final target list, and we cannot maintain
+			 * such an order in the Motion anymore. So use root->sortpathkeys
+			 * rather than current_pathkeys here. (See similar case in LIMIT
+			 * handling below.
+			 */
+			current_pathkeys = root->sort_pathkeys;
 			result_plan = (Plan *) make_motion_gather(root, result_plan, -1,
 													  current_pathkeys);
 			must_gather = false;
@@ -2328,14 +2335,15 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			{
 				if (!pathkeys_contained_in(root->sort_pathkeys, current_pathkeys))
 					elog(ERROR, "invalid result order generated for ORDER BY + LIMIT");
+				current_pathkeys = root->sort_pathkeys;
 				result_plan = (Plan *) make_motion_gather_to_QE(root, result_plan,
-																root->sort_pathkeys);
+																current_pathkeys);
 			}
 			else
 				result_plan = (Plan *) make_motion_gather_to_QE(root, result_plan, NIL);
 			result_plan->total_cost += motion_cost_per_row * result_plan->plan_rows;
 		}
-			
+
 		if (current_pathkeys == NIL)
 		{
 			/* This used to be a WARNING.  If reinstated, it should be a NOTICE
