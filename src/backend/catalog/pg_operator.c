@@ -231,11 +231,7 @@ OperatorShellMake(const char *operatorName,
 	for (i = 0; i < Natts_pg_operator; ++i)
 	{
 		nulls[i] = false;
-<<<<<<< HEAD
-		values[i] = (Datum) 0;		/* redundant, but safe */
-=======
 		values[i] = (Datum) NULL;		/* redundant, but safe */
->>>>>>> 38e9348282e
 	}
 
 	/*
@@ -813,16 +809,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 
 		CatalogUpdateIndexes(pg_operator_desc, tup);
 
-<<<<<<< HEAD
-		/* XXX XXX XXX XXX XXX XXX
-		 * NOTE: reset the values/replaces arrays *after*
-		 * this update because we might re-use them in the next update
-		 * XXX XXX XXX XXX XXX XXX
-		 */
-		values[Anum_pg_operator_oprcom - 1] = (Datum) 0;
-=======
 		values[Anum_pg_operator_oprcom - 1] = (Datum) NULL;
->>>>>>> 38e9348282e
 		replaces[Anum_pg_operator_oprcom - 1] = false;
 	}
 

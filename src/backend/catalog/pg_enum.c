@@ -121,11 +121,7 @@ EnumValuesCreate(Oid enumTypeOid, List *vals,
 		values[Anum_pg_enum_enumlabel - 1] = NameGetDatum(&enumlabel);
 
 		tup = heap_form_tuple(tupDesc, values, nulls);
-<<<<<<< HEAD
 		HeapTupleSetOid(tup, oids[elemno]);
-=======
-		HeapTupleSetOid(tup, oids[i]);
->>>>>>> 38e9348282e
 
 		simple_heap_insert(pg_enum, tup);
 		CatalogUpdateIndexes(pg_enum, tup);

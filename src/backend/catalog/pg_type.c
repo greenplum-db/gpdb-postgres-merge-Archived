@@ -108,11 +108,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	for (i = 0; i < Natts_pg_type; ++i)
 	{
 		nulls[i] = false;
-<<<<<<< HEAD
-		values[i] = (Datum) 0;		/* redundant, but safe */
-=======
 		values[i] = (Datum) NULL;		/* redundant, but safe */
->>>>>>> 38e9348282e
 	}
 
 	/*
