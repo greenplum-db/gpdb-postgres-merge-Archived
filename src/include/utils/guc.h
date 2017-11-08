@@ -150,11 +150,6 @@ typedef enum
 
 #define GUC_QUALIFIER_SEPARATOR '.'
 
-<<<<<<< HEAD
-/* GUC lists for gp_guc_list_show().  (List of struct config_generic) */
-extern List    *gp_guc_list_for_explain;
-extern List    *gp_guc_list_for_no_plan;
-=======
 /*
  * bit values in "flags" of a GUC variable
  */
@@ -178,7 +173,10 @@ extern List    *gp_guc_list_for_no_plan;
 #define GUC_UNIT_S				0x2000	/* value is in seconds */
 #define GUC_UNIT_MIN			0x4000	/* value is in minutes */
 #define GUC_UNIT_TIME			0x7000	/* mask for MS, S, MIN */
->>>>>>> 38e9348282e
+
+/* GUC lists for gp_guc_list_show().  (List of struct config_generic) */
+extern List    *gp_guc_list_for_explain;
+extern List    *gp_guc_list_for_no_plan;
 
 /* GUC vars that are actually declared in guc.c, rather than elsewhere */
 extern bool log_duration;

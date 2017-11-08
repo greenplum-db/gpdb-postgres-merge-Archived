@@ -302,22 +302,13 @@ extern Datum GetAttributeByNum(HeapTupleHeader tuple, AttrNumber attrno,
 				  bool *isNull);
 extern Datum GetAttributeByName(HeapTupleHeader tuple, const char *attname,
 				   bool *isNull);
-<<<<<<< HEAD
-extern void init_fcache(Oid foid, FuncExprState *fcache,
-						MemoryContext fcacheCxt, bool needDescForSets);
 extern ExprDoneCond ExecEvalFuncArgs(FunctionCallInfo fcinfo,
 									 List *argList, 
 									 ExprContext *econtext);
 extern Tuplestorestate *ExecMakeTableFunctionResult(ExprState *funcexpr,
 							ExprContext *econtext,
 							TupleDesc expectedDesc,
-							uint64 memKB); 
-=======
-extern Tuplestorestate *ExecMakeTableFunctionResult(ExprState *funcexpr,
-							ExprContext *econtext,
-							TupleDesc expectedDesc,
 							bool randomAccess);
->>>>>>> 38e9348282e
 extern Datum ExecEvalExprSwitchContext(ExprState *expression, ExprContext *econtext,
 						  bool *isNull, ExprDoneCond *isDone);
 extern ExprState *ExecInitExpr(Expr *node, PlanState *parent);

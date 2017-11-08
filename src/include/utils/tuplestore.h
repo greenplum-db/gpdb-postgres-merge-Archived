@@ -65,19 +65,12 @@ extern int	tuplestore_alloc_read_pointer(Tuplestorestate *state, int eflags);
 extern void tuplestore_select_read_pointer(Tuplestorestate *state, int ptr);
 
 extern void tuplestore_copy_read_pointer(Tuplestorestate *state,
-<<<<<<< HEAD
 							 int srcptr, int destptr);
 
 extern void tuplestore_trim(Tuplestorestate *state);
 
 extern bool tuplestore_in_memory(Tuplestorestate *state);
 
-=======
-										 int srcptr, int destptr);
-
-extern void tuplestore_trim(Tuplestorestate *state);
-
->>>>>>> 38e9348282e
 extern bool tuplestore_gettupleslot(Tuplestorestate *state, bool forward,
 						bool copy, TupleTableSlot *slot);
 extern bool tuplestore_advance(Tuplestorestate *state, bool forward);
@@ -89,11 +82,8 @@ extern void tuplestore_rescan(Tuplestorestate *state);
 extern void tuplestore_clear(Tuplestorestate *state);
 
 extern void tuplestore_end(Tuplestorestate *state);
-<<<<<<< HEAD
 
 extern void tuplestore_set_instrument(Tuplestorestate *state,
                           struct Instrumentation *instrument);
-=======
->>>>>>> 38e9348282e
 
 #endif   /* TUPLESTORE_H */

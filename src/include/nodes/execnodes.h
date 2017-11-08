@@ -1401,7 +1401,6 @@ typedef struct PlanState
 	TupleTableSlot *ps_ResultTupleSlot; /* slot for my result tuples */
 	ExprContext *ps_ExprContext;	/* node's expression-evaluation context */
 	ProjectionInfo *ps_ProjInfo;	/* info for doing tuple projection */
-<<<<<<< HEAD
 
 	/* The manager manages all the code generators and generation process */
 	void *CodegenManager;
@@ -1419,10 +1418,6 @@ typedef struct PlanState
 	 */
 	int		gpmon_plan_tick;
 	gpmon_packet_t gpmon_pkt;
-=======
-	bool		ps_TupFromTlist;	/* state flag for processing set-valued
-									 * functions in targetlist */
->>>>>>> 38e9348282e
 } PlanState;
 
 /* Gpperfmon helper functions defined in execGpmon.c */
@@ -2010,7 +2005,6 @@ typedef struct WorkTableScanState
 	RecursiveUnionState *rustate;
 } WorkTableScanState;
 
-<<<<<<< HEAD
 
 /* ----------------
  *         ExternalScanState information
@@ -2141,8 +2135,6 @@ typedef struct DynamicTableScanState
 
 } DynamicTableScanState;
 
-=======
->>>>>>> 38e9348282e
 /* ----------------------------------------------------------------
  *				 Join State Information
  * ----------------------------------------------------------------
@@ -2323,16 +2315,12 @@ typedef struct MaterialState
 	ScanState	ss;				/* its first field is NodeTag */
 	int			eflags;			/* capability flags to pass to tuplestore */
 	bool		eof_underlying; /* reached end of underlying plan? */
-<<<<<<< HEAD
 	bool		ts_destroyed;	/* called destroy tuple store? */
 
 	GenericTupStore *ts_state;	/* private state of tuplestore.c */
 	void	   *ts_pos;
 	void	   *ts_markpos;
 	void	   *share_lk_ctxt;
-=======
-	Tuplestorestate *tuplestorestate;
->>>>>>> 38e9348282e
 } MaterialState;
 
 /* ----------------

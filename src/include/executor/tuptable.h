@@ -391,7 +391,6 @@ extern TupleTableSlot *ExecStoreMinimalTuple(MemTuple mtup,
 extern TupleTableSlot *ExecClearTuple(TupleTableSlot *slot);
 extern TupleTableSlot *ExecStoreVirtualTuple(TupleTableSlot *slot);
 extern TupleTableSlot *ExecStoreAllNullTuple(TupleTableSlot *slot);
-<<<<<<< HEAD
 
 extern HeapTuple ExecCopySlotHeapTuple(TupleTableSlot *slot);
 extern MemTuple ExecCopySlotMemTuple(TupleTableSlot *slot);
@@ -399,7 +398,6 @@ extern MemTuple ExecCopySlotMemTupleTo(TupleTableSlot *slot, MemoryContext pctxt
 
 extern HeapTuple ExecFetchSlotHeapTuple(TupleTableSlot *slot);
 extern MemTuple ExecFetchSlotMemTuple(TupleTableSlot *slot, bool inline_toast);
-
 extern Datum ExecFetchSlotTupleDatum(TupleTableSlot *slot);
 
 static inline GenericTuple
@@ -430,13 +428,6 @@ ExecCopyGenericTuple(TupleTableSlot *slot)
 	return (GenericTuple) ExecCopySlotMemTuple(slot);
 }
 
-=======
-extern HeapTuple ExecCopySlotTuple(TupleTableSlot *slot);
-extern MinimalTuple ExecCopySlotMinimalTuple(TupleTableSlot *slot);
-extern HeapTuple ExecFetchSlotTuple(TupleTableSlot *slot);
-extern MinimalTuple ExecFetchSlotMinimalTuple(TupleTableSlot *slot);
-extern Datum ExecFetchSlotTupleDatum(TupleTableSlot *slot);
->>>>>>> 38e9348282e
 extern HeapTuple ExecMaterializeSlot(TupleTableSlot *slot);
 extern TupleTableSlot *ExecCopySlot(TupleTableSlot *dstslot, TupleTableSlot *srcslot);
 

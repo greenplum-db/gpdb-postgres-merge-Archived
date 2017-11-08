@@ -206,11 +206,7 @@ extern Datum generate_subscripts(PG_FUNCTION_ARGS);
 extern Datum generate_subscripts_nodir(PG_FUNCTION_ARGS);
 extern Datum array_fill(PG_FUNCTION_ARGS);
 extern Datum array_fill_with_lower_bounds(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
-extern Datum unnest(PG_FUNCTION_ARGS);
-=======
 extern Datum array_unnest(PG_FUNCTION_ARGS);
->>>>>>> 38e9348282e
 
 extern Datum array_ref(ArrayType *array, int nSubscripts, int *indx,
 		  int arraytyplen, int elmlen, bool elmbyval, char elmalign,
@@ -284,10 +280,7 @@ extern ArrayType *create_singleton_array(FunctionCallInfo fcinfo,
 extern Datum array_agg_transfn(PG_FUNCTION_ARGS);
 extern Datum array_agg_finalfn(PG_FUNCTION_ARGS);
 
-<<<<<<< HEAD
 /* MPP Additions: */
 extern Datum array_int4_add(PG_FUNCTION_ARGS);
 
-=======
->>>>>>> 38e9348282e
 #endif   /* ARRAY_H */
