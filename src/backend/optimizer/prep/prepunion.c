@@ -33,7 +33,6 @@
 
 #include "access/heapam.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "cdb/cdbpartition.h"
 #include "commands/tablecmds.h"
@@ -534,6 +533,35 @@ generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
 		optype = PSETOP_SEQUENTIAL_QD;
 	}
 
+	if ( optype == PSETOP_PARALLEL_PARTITIONED )
+	{
+		/*
+		 * CDB: Collocate non-distinct tuples prior to sort or hash. We must
+		 * put the Redistribute nodes below the Append, otherwise we lose
+		 * the order of the firstFlags.
+		 */
+		ListCell   *lc;
+		List	   *l = NIL;
+
+		foreach(lc, planlist)
+		{
+			Plan	   *subplan = (Plan *) lfirst(lc);
+
+			/*
+			 * If the subplan already has a Motion at the top, peel it off
+			 * first, so that we don't have a Motion on top of a Motion.
+			 * That would be silly. I wish we could be smarter and not
+			 * create such a Motion in the first place, but it's too late
+			 * for that here.
+			 */
+			while (IsA(subplan, Motion))
+				subplan = subplan->lefttree;
+
+			l = lappend(l, make_motion_hash_all_targets(root, subplan));
+		}
+		planlist = l;
+	}
+
 	/*
 	 * Generate tlist for Append plan node.
 	 *
@@ -560,30 +588,6 @@ generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
 	{
 		*sortClauses = NIL;
 		return plan;
-	}
-
-	if ( optype == PSETOP_PARALLEL_PARTITIONED )
-	{
-		/*
-		 * CDB: Collocate non-distinct tuples prior to sort or hash. Make sure
-		 * to keep the output sorted by the flag.
-		 */
-		Motion *motion;
-
-		motion = make_motion_hash_all_targets(root, plan);
-
-		motion->numSortCols = 1;
-		motion->sortColIdx = palloc(sizeof(AttrNumber));
-		motion->sortOperators = palloc(sizeof(Oid));
-		motion->nullsFirst = palloc(sizeof(bool));
-		*motion->sortColIdx = list_length(op->colTypes) + 1;
-		/* GPDB_84_MERGE_FIXME: shouldn't this be "greater than", if
-		 * firstflag is 1? */
-		*motion->sortOperators = Int4LessOperator;
-		*motion->nullsFirst = false;
-		motion->sendSorted = true;
-
-		plan = (Plan *) motion;
 	}
 
 	/*
