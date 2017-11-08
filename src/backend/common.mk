@@ -46,17 +46,13 @@ ifdef SUBDIRS
 	for dir in $(SUBDIRS); do $(MAKE) -C $$dir clean || exit; done
 endif
 	rm -f $(subsysfilename) $(OBJS)
-<<<<<<< HEAD
 	@if [ -d $(CURDIR)/test ]; then $(MAKE) -C $(CURDIR)/test clean; fi
-=======
->>>>>>> 38e9348282e
 
 
 coverage: $(gcda_files:.gcda=.c.gcov) lcov.info
 ifdef SUBDIRS
 	for dir in $(SUBDIRS); do $(MAKE) -C $$dir coverage || exit; done
 endif
-<<<<<<< HEAD
 
 .PHONY : unittest-check
 unittest-check:
@@ -64,5 +60,3 @@ unittest-check:
 ifdef SUBDIRS
 	for dir in $(SUBDIRS); do $(MAKE) -C $$dir unittest-check || exit; done
 endif
-=======
->>>>>>> 38e9348282e
