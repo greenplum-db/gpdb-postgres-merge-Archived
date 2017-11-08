@@ -2,11 +2,7 @@
 #
 # Makefile for backend/catalog
 #
-<<<<<<< HEAD
 # src/backend/catalog/Makefile
-=======
-# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.68 2008/12/19 16:25:16 petere Exp $
->>>>>>> 38e9348282e
 #
 #-------------------------------------------------------------------------
 

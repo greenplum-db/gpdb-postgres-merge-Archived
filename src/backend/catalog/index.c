@@ -1793,21 +1793,12 @@ index_build(Relation heapRelation,
  * chain tip.
  */
 double
-<<<<<<< HEAD
 IndexBuildScan(Relation parentRelation,
 			   Relation indexRelation,
-			   struct IndexInfo *indexInfo,
+			   IndexInfo *indexInfo,
 			   bool allow_sync,
 			   IndexBuildCallback callback,
 			   void *callback_state)
-=======
-IndexBuildHeapScan(Relation heapRelation,
-				   Relation indexRelation,
-				   IndexInfo *indexInfo,
-				   bool allow_sync,
-				   IndexBuildCallback callback,
-				   void *callback_state)
->>>>>>> 38e9348282e
 {
 	double		reltuples;
 	TupleTableSlot *slot;

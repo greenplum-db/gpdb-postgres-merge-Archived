@@ -249,14 +249,11 @@ systable_beginscan(Relation heapRelation,
 	{
 		int			i;
 
-<<<<<<< HEAD
 		if (!IsBootstrapProcessingMode())
 		{
 			Insist(RelationGetRelid(heapRelation) == irel->rd_index->indrelid);
 		}
 
-=======
->>>>>>> 38e9348282e
 		/* Change attribute numbers to be index column numbers. */
 		for (i = 0; i < nkeys; i++)
 		{

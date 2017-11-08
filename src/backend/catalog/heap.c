@@ -2617,15 +2617,10 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, Node *expr)
 
 	adrel = heap_open(AttrDefaultRelationId, RowExclusiveLock);
 
-<<<<<<< HEAD
 	// Fetch gp_persistent_relation_node information that will be added to XLOG record.
 	RelationFetchGpRelationNodeForXLog(adrel);
 
 	tuple = heap_form_tuple(adrel->rd_att, values, nulls);
-
-=======
-	tuple = heap_form_tuple(adrel->rd_att, values, nulls);
->>>>>>> 38e9348282e
 	attrdefOid = simple_heap_insert(adrel, tuple);
 
 	CatalogUpdateIndexes(adrel, tuple);

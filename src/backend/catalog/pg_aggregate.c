@@ -291,11 +291,7 @@ AggregateCreate(const char *aggName,
 	for (i = 0; i < Natts_pg_aggregate; i++)
 	{
 		nulls[i] = false;
-<<<<<<< HEAD
-		values[i] = (Datum) 0;
-=======
 		values[i] = (Datum) NULL;
->>>>>>> 38e9348282e
 	}
 	values[Anum_pg_aggregate_aggfnoid - 1] = ObjectIdGetDatum(procOid);
 	values[Anum_pg_aggregate_aggtransfn - 1] = ObjectIdGetDatum(transfn);
@@ -410,13 +406,8 @@ lookup_agg_function(List *fnName,
 	 * the function.
 	 */
 	fdresult = func_get_detail(fnName, NIL, nargs, input_types, false, false,
-<<<<<<< HEAD
-							   &fnOid, rettype, &retset,
-							   &nvargs, &true_oid_array, NULL);
-=======
 							   &fnOid, rettype, &retset, &nvargs,
 							   &true_oid_array, NULL);
->>>>>>> 38e9348282e
 
 	/* only valid case is a normal function not returning a set */
 	if (fdresult != FUNCDETAIL_NORMAL || !OidIsValid(fnOid))

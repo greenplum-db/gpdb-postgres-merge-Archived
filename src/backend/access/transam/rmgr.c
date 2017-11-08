@@ -23,13 +23,9 @@
 #include "commands/dbcommands.h"
 #include "commands/sequence.h"
 #include "commands/tablespace.h"
-<<<<<<< HEAD
-#include "storage/smgr.h"
-#include "cdb/cdbappendonlyam.h"
-=======
 #include "storage/freespace.h"
+#include "cdb/cdbappendonlyam.h"
 
->>>>>>> 38e9348282e
 
 const RmgrData RmgrTable[RM_MAX_ID + 1] = {
 	{"XLOG", xlog_redo, xlog_desc, NULL, NULL, NULL, NULL},
