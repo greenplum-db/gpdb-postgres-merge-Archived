@@ -253,12 +253,9 @@ typedef struct Aggref
 	Index		agglevelsup;	/* > 0 if agg belongs to outer query */
 	bool		aggstar;		/* TRUE if argument list was really '*' */
 	bool		aggdistinct;	/* TRUE if it's agg(DISTINCT ...) */
-<<<<<<< HEAD
 	Expr	   *aggfilter;		/* FILTER expression, if any */
 	AggStage	aggstage;		/* MPP: 2-stage? If so, which stage */
     AggOrder   *aggorder;       /* Ordered aggregate definition */
-=======
->>>>>>> 38e9348282e
 	int			location;		/* token location, or -1 if unknown */
 } Aggref;
 
@@ -427,10 +424,7 @@ typedef struct FuncExpr
 	CoercionForm funcformat;	/* how to display this function call */
 	List	   *args;			/* arguments to the function */
 	int			location;		/* token location, or -1 if unknown */
-<<<<<<< HEAD
 	bool        is_tablefunc;   /* Is a TableFunction reference */
-=======
->>>>>>> 38e9348282e
 } FuncExpr;
 
 /*
@@ -574,12 +568,8 @@ typedef enum SubLinkType
 	ROWCOMPARE_SUBLINK,
 	EXPR_SUBLINK,
 	ARRAY_SUBLINK,
-<<<<<<< HEAD
-	CTE_SUBLINK,
+	CTE_SUBLINK,				/* for SubPlans only */
 	NOT_EXISTS_SUBLINK   /* GPDB_84_MERGE_FIXME: Does ORCA really need this? */
-=======
-	CTE_SUBLINK					/* for SubPlans only */
->>>>>>> 38e9348282e
 } SubLinkType;
 
 
@@ -667,10 +657,7 @@ typedef struct SubPlan
 								 * Params for parent plan */
 	List	   *parParam;		/* indices of input Params from parent plan */
 	List	   *args;			/* exprs to pass as parParam values */
-<<<<<<< HEAD
 	List	   *extParam;		/* indices of input Params from ancestor plan */
-=======
->>>>>>> 38e9348282e
 	/* Estimated execution costs: */
 	Cost		startup_cost;	/* one-time setup cost */
 	Cost		per_call_cost;	/* cost for each subplan evaluation */
