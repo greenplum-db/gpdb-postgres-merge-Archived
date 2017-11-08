@@ -1,9 +1,5 @@
 # Makefile for PL/Perl
-<<<<<<< HEAD
 # src/pl/plperl/GNUmakefile
-=======
-# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.36 2008/10/02 08:11:11 petere Exp $
->>>>>>> 38e9348282e
 
 subdir = src/pl/plperl
 top_builddir = ../../..
@@ -82,16 +78,12 @@ SPI.c: SPI.xs plperl_helpers.h
 	@if [ x"$(perl_privlibexp)" = x"" ]; then echo "configure switch --with-perl was not specified."; exit 1; fi
 	$(PERL) $(XSUBPPDIR)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap $< >$@
 
-<<<<<<< HEAD
 Util.c: Util.xs plperl_helpers.h
 	@if [ x"$(perl_privlibexp)" = x"" ]; then echo "configure switch --with-perl was not specified."; exit 1; fi
 	$(PERL) $(XSUBPPDIR)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap $< >$@
 
 
 install: all install-lib install-data
-=======
-install: all installdirs install-lib
->>>>>>> 38e9348282e
 
 installdirs: installdirs-lib
 	$(MKDIR_P) '$(DESTDIR)$(datadir)/extension'
@@ -111,11 +103,7 @@ check: submake
 	$(top_builddir)/src/test/regress/pg_regress --init-file=init_file $(REGRESS_OPTS) $(REGRESS)
 
 installcheck: submake
-<<<<<<< HEAD
 	$(top_builddir)/src/test/regress/pg_regress --init-file=init_file $(REGRESS_OPTS) $(REGRESS)
-=======
-	$(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS)
->>>>>>> 38e9348282e
 
 .PHONY: submake
 submake:
