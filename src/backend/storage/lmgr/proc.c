@@ -216,15 +216,10 @@ InitProcGlobal(int mppLocalProcessCounter)
 	for (i = 0; i < MaxConnections; i++)
 	{
 		PGSemaphoreCreate(&(procs[i].sem));
-<<<<<<< HEAD
 		InitSharedLatch(&(procs[i].procLatch));
 
-		procs[i].links.next = ProcGlobal->freeProcs;
-		ProcGlobal->freeProcs = MAKE_OFFSET(&procs[i]);
-=======
 		procs[i].links.next = (SHM_QUEUE *) ProcGlobal->freeProcs;
 		ProcGlobal->freeProcs = &procs[i];
->>>>>>> 38e9348282e
 	}
 	ProcGlobal->procs = procs;
 	ProcGlobal->numFreeProcs = MaxConnections;
@@ -238,14 +233,9 @@ InitProcGlobal(int mppLocalProcessCounter)
 	for (i = 0; i < autovacuum_max_workers; i++)
 	{
 		PGSemaphoreCreate(&(procs[i].sem));
-<<<<<<< HEAD
 		InitSharedLatch(&(procs[i].procLatch));
-		procs[i].links.next = ProcGlobal->autovacFreeProcs;
-		ProcGlobal->autovacFreeProcs = MAKE_OFFSET(&procs[i]);
-=======
 		procs[i].links.next = (SHM_QUEUE *) ProcGlobal->autovacFreeProcs;
 		ProcGlobal->autovacFreeProcs = &procs[i];
->>>>>>> 38e9348282e
 	}
 
 	MemSet(AuxiliaryProcs, 0, NUM_AUXILIARY_PROCS * sizeof(PGPROC));
@@ -317,15 +307,11 @@ InitProcess(void)
 		if (IsAutoVacuumWorkerProcess())
 			procglobal->autovacFreeProcs = (PGPROC *) MyProc->links.next;
 		else
-<<<<<<< HEAD
-			procglobal->freeProcs = MyProc->links.next;
+			procglobal->freeProcs = (PGPROC *) MyProc->links.next;
 
 		procglobal->numFreeProcs--;		/* we removed an entry from the list. */
 		Assert(procglobal->numFreeProcs >= 0);
 
-=======
-			procglobal->freeProcs = (PGPROC *) MyProc->links.next;
->>>>>>> 38e9348282e
 		SpinLockRelease(ProcStructLock);
 	}
 	else
@@ -621,30 +607,9 @@ InitAuxiliaryProcess(void)
 bool
 HaveNFreeProcs(int n)
 {
-<<<<<<< HEAD
 	Assert(n >= 0);
 
 	return (ProcGlobal->numFreeProcs >= n);
-=======
-	PGPROC	   *proc;
-
-	/* use volatile pointer to prevent code rearrangement */
-	volatile PROC_HDR *procglobal = ProcGlobal;
-
-	SpinLockAcquire(ProcStructLock);
-
-	proc = procglobal->freeProcs;
-
-	while (n > 0 && proc != NULL)
-	{
-		proc = (PGPROC *) proc->links.next;
-		n--;
-	}
-
-	SpinLockRelease(ProcStructLock);
-
-	return (n <= 0);
->>>>>>> 38e9348282e
 }
 
 /*
@@ -838,23 +803,13 @@ ProcKill(int code, Datum arg)
 	/* Return PGPROC structure (and semaphore) to freelist */
 	if (IsAutoVacuumWorkerProcess())
 	{
-<<<<<<< HEAD
-		proc->links.next = procglobal->autovacFreeProcs;
-		procglobal->autovacFreeProcs = MAKE_OFFSET(proc);
+		proc->links.next = (SHM_QUEUE *) procglobal->autovacFreeProcs;
+		procglobal->autovacFreeProcs = proc;
 	}
 	else
 	{
-		proc->links.next = procglobal->freeProcs;
-		procglobal->freeProcs = MAKE_OFFSET(proc);
-=======
-		MyProc->links.next = (SHM_QUEUE *) procglobal->autovacFreeProcs;
-		procglobal->autovacFreeProcs = MyProc;
-	}
-	else
-	{
-		MyProc->links.next = (SHM_QUEUE *) procglobal->freeProcs;
-		procglobal->freeProcs = MyProc;
->>>>>>> 38e9348282e
+		proc->links.next = (SHM_QUEUE *) procglobal->freeProcs;
+		procglobal->freeProcs = proc;
 	}
 
 	procglobal->numFreeProcs++;	/* we added an entry */
