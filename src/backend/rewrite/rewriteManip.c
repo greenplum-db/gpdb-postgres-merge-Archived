@@ -36,25 +36,18 @@ typedef struct
 	int			sublevels_up;
 } locate_agg_of_level_context;
 
-<<<<<<< HEAD
 typedef struct
 {
 	int			win_location;
 } locate_windowfunc_context;
 
 static bool contain_aggs_of_level_walker(Node *node,
-										 contain_aggs_of_level_context *context);
-static bool locate_agg_of_level_walker(Node *node,
-						   locate_agg_of_level_context *context);
-static bool contain_windowfuncs_walker(Node *node, void *context);
-static bool locate_windowfunc_walker(Node *node,
-						 locate_windowfunc_context *context);
-=======
-static bool contain_aggs_of_level_walker(Node *node,
 						contain_aggs_of_level_context *context);
 static bool locate_agg_of_level_walker(Node *node,
 						locate_agg_of_level_context *context);
->>>>>>> 38e9348282e
+static bool contain_windowfuncs_walker(Node *node, void *context);
+static bool locate_windowfunc_walker(Node *node,
+						 locate_windowfunc_context *context);
 static bool checkExprHasSubLink_walker(Node *node, void *context);
 static Relids offset_relid_set(Relids relids, int offset);
 static Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
@@ -109,12 +102,8 @@ contain_aggs_of_level(Node *node, int levelsup)
 }
 
 static bool
-<<<<<<< HEAD
-contain_aggs_of_level_walker(Node *node, contain_aggs_of_level_context *context)
-=======
 contain_aggs_of_level_walker(Node *node,
 							 contain_aggs_of_level_context *context)
->>>>>>> 38e9348282e
 {
 	if (node == NULL)
 		return false;
@@ -197,7 +186,6 @@ locate_agg_of_level_walker(Node *node,
 		}
 		/* else fall through to examine argument */
 	}
-<<<<<<< HEAD
 	if (IsA(node, PercentileExpr))
 	{
 		/* PercentileExpr is always levelsup == 0 */
@@ -208,8 +196,6 @@ locate_agg_of_level_walker(Node *node,
 			return true;
 		}
 	}
-=======
->>>>>>> 38e9348282e
 	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */
@@ -223,7 +209,6 @@ locate_agg_of_level_walker(Node *node,
 		return result;
 	}
 	return expression_tree_walker(node, locate_agg_of_level_walker,
-<<<<<<< HEAD
 								  (void *) context);
 }
 
@@ -305,8 +290,6 @@ locate_windowfunc_walker(Node *node, locate_windowfunc_context *context)
 	}
 	/* Mustn't recurse into subselects */
 	return expression_tree_walker(node, locate_windowfunc_walker,
-=======
->>>>>>> 38e9348282e
 								  (void *) context);
 }
 
@@ -398,16 +381,6 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 			j->rtindex += context->offset;
 		/* fall through to examine children */
 	}
-<<<<<<< HEAD
-	if (IsA(node, PlaceHolderVar))
-	{
-		PlaceHolderVar *phv = (PlaceHolderVar *) node;
-		
-		if (phv->phlevelsup == context->sublevels_up)
-		{
-			phv->phrels = offset_relid_set(phv->phrels,
-										   context->offset);
-=======
 	if (IsA(node, FlattenedSubLink))
 	{
 		FlattenedSubLink *fslink = (FlattenedSubLink *) node;
@@ -418,7 +391,6 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 												context->offset);
 			fslink->righthand = offset_relid_set(fslink->righthand,
 												 context->offset);
->>>>>>> 38e9348282e
 		}
 		/* fall through to examine children */
 	}
@@ -587,7 +559,6 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 			j->rtindex = context->new_index;
 		/* fall through to examine children */
 	}
-<<<<<<< HEAD
 	if (IsA(node, PlaceHolderVar))
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
@@ -597,7 +568,9 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 			phv->phrels = adjust_relid_set(phv->phrels,
 										   context->rt_index,
 										   context->new_index);
-=======
+		}
+		/* fall through to examine children */
+	}
 	if (IsA(node, FlattenedSubLink))
 	{
 		FlattenedSubLink *fslink = (FlattenedSubLink *) node;
@@ -610,7 +583,6 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 			fslink->righthand = adjust_relid_set(fslink->righthand,
 												 context->rt_index,
 												 context->new_index);
->>>>>>> 38e9348282e
 		}
 		/* fall through to examine children */
 	}
@@ -795,11 +767,7 @@ IncrementVarSublevelsUp_walker(Node *node,
 	if (IsA(node, PlaceHolderVar))
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
-<<<<<<< HEAD
-		
-=======
 
->>>>>>> 38e9348282e
 		if (phv->phlevelsup >= context->min_sublevels_up)
 			phv->phlevelsup += context->delta_sublevels_up;
 		/* fall through to recurse into argument */
@@ -812,7 +780,6 @@ IncrementVarSublevelsUp_walker(Node *node,
 		{
 			if (rte->ctelevelsup >= context->min_sublevels_up)
 				rte->ctelevelsup += context->delta_sublevels_up;
-<<<<<<< HEAD
 
 			/*
 			* Fix for MPP-19436: in transformGroupedWindows, min_sublevels_up
@@ -823,8 +790,6 @@ IncrementVarSublevelsUp_walker(Node *node,
 			{
 				rte->ctelevelsup += context->delta_sublevels_up;
 			}
-=======
->>>>>>> 38e9348282e
 		}
 		return false;			/* allow range_table_walker to continue */
 	}
@@ -865,7 +830,6 @@ IncrementVarSublevelsUp(Node *node, int delta_sublevels_up,
 									QTW_EXAMINE_RTES);
 }
 
-<<<<<<< HEAD
 void
 IncrementVarSublevelsUpInTransformGroupedWindows(Node *node,
 		int delta_sublevels_up, int min_sublevels_up)
@@ -886,8 +850,6 @@ IncrementVarSublevelsUpInTransformGroupedWindows(Node *node,
 									QTW_EXAMINE_RTES);
 }
 
-=======
->>>>>>> 38e9348282e
 /*
  * IncrementVarSublevelsUp_rtable -
  *	Same as IncrementVarSublevelsUp, but to be invoked on a range table.
@@ -900,10 +862,7 @@ IncrementVarSublevelsUp_rtable(List *rtable, int delta_sublevels_up,
 
 	context.delta_sublevels_up = delta_sublevels_up;
 	context.min_sublevels_up = min_sublevels_up;
-<<<<<<< HEAD
 	context.ignore_min_sublevels_up = false;
-=======
->>>>>>> 38e9348282e
 
 	range_table_walker(rtable,
 					   IncrementVarSublevelsUp_walker,

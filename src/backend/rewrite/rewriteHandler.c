@@ -400,13 +400,10 @@ rewriteRuleAction(Query *parsetree,
 
 			switch (rte->rtekind)
 			{
-<<<<<<< HEAD
 				case RTE_TABLEFUNCTION:
 					sub_action->hasSubLinks =
 						checkExprHasSubLink(rte->funcexpr);
 					break;
-=======
->>>>>>> 38e9348282e
 				case RTE_FUNCTION:
 					sub_action->hasSubLinks =
 						checkExprHasSubLink(rte->funcexpr);
@@ -533,11 +530,7 @@ rewriteRuleAction(Query *parsetree,
 								parsetree->rtable),
 					   rule_action->returningList,
 					   CMD_SELECT,
-<<<<<<< HEAD
 					   0, &rule_action->hasSubLinks);
-=======
-					   0);
->>>>>>> 38e9348282e
 
 		/*
 		 * There could have been some SubLinks in parsetree's returningList,
