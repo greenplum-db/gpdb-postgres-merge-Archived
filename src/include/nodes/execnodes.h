@@ -1526,32 +1526,17 @@ typedef struct RecursiveUnionState
 	bool		intermediate_empty;
 	Tuplestorestate *working_table;
 	Tuplestorestate *intermediate_table;
-} RecursiveUnionState;
 
-/* ----------------
- *	 RecursiveUnionState information
- *
- *		RecursiveUnionState is used for performing a recursive union.
- *
- *		recursing			T when we're done scanning the non-recursive term
- *		intermediate_empty	T if intermediate_table is currently empty
- *		working_table		working table (to be scanned by recursive term)
- *		intermediate_table	current recursive output (next generation of WT)
- * ----------------
- */
-typedef struct RecursiveUnionState
-{
-	PlanState	ps;				/* its first field is NodeTag */
-	bool		recursing;
-	bool		intermediate_empty;
-	Tuplestorestate *working_table;
-	Tuplestorestate *intermediate_table;
+	/* GPDB_84_MERGE_FIXME: These fields were missing from the GPDB backport
+	 * of CTEs. Are they needed? */
+#if 0
 	/* Remaining fields are unused in UNION ALL case */
 	FmgrInfo   *eqfunctions;	/* per-grouping-field equality fns */
 	FmgrInfo   *hashfunctions;	/* per-grouping-field hash fns */
 	MemoryContext tempContext;	/* short-term context for comparisons */
 	TupleHashTable hashtable;	/* hash table for tuples already seen */
 	MemoryContext tableContext;	/* memory context containing hash table */
+#endif
 } RecursiveUnionState;
 
 /* ----------------

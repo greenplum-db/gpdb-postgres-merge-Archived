@@ -26,8 +26,12 @@
 #include "utils/snapshot.h"
 #include "utils/tqual.h"
 
+/* "options" flag bits for heap_insert */
+#define HEAP_INSERT_SKIP_WAL	0x0001
+#define HEAP_INSERT_SKIP_FSM	0x0002
 
-<<<<<<< HEAD
+typedef struct BulkInsertStateData *BulkInsertState;
+
 // UNDONE: Temporarily.
 extern void RelationFetchGpRelationNodeForXLog_Index(Relation relation);
 
@@ -66,13 +70,6 @@ RelationFetchGpRelationNodeForXLog(Relation relation)
 
 extern bool
 RelationAllowedToGenerateXLogRecord(Relation relation);
-=======
-/* "options" flag bits for heap_insert */
-#define HEAP_INSERT_SKIP_WAL	0x0001
-#define HEAP_INSERT_SKIP_FSM	0x0002
-
-typedef struct BulkInsertStateData *BulkInsertState;
->>>>>>> 38e9348282e
 
 typedef enum
 {
@@ -122,22 +119,15 @@ extern Relation try_relation_open(Oid relationId, LOCKMODE lockmode,
 								  bool noWait);
 extern Relation relation_open_nowait(Oid relationId, LOCKMODE lockmode);
 extern Relation relation_openrv(const RangeVar *relation, LOCKMODE lockmode);
-<<<<<<< HEAD
 extern Relation try_relation_openrv(const RangeVar *relation, LOCKMODE lockmode,
 									bool noWait);
 
-=======
-extern Relation try_relation_openrv(const RangeVar *relation, LOCKMODE lockmode);
->>>>>>> 38e9348282e
 extern void relation_close(Relation relation, LOCKMODE lockmode);
 
 extern Relation heap_open(Oid relationId, LOCKMODE lockmode);
 extern Relation heap_openrv(const RangeVar *relation, LOCKMODE lockmode);
-<<<<<<< HEAD
 extern Relation try_heap_open(Oid relationId, LOCKMODE lockmode, bool noWait);
-=======
 extern Relation try_heap_openrv(const RangeVar *relation, LOCKMODE lockmode);
->>>>>>> 38e9348282e
 
 #define heap_close(r,l)  relation_close(r,l)
 
@@ -188,11 +178,7 @@ extern BulkInsertState GetBulkInsertState(void);
 extern void FreeBulkInsertState(BulkInsertState);
 
 extern Oid heap_insert(Relation relation, HeapTuple tup, CommandId cid,
-<<<<<<< HEAD
-			bool use_wal, bool use_fsm, TransactionId xid);
-=======
-			int options, BulkInsertState bistate);
->>>>>>> 38e9348282e
+					   int options, BulkInsertState bistate, TransactionId xid);
 extern HTSU_Result heap_delete(Relation relation, ItemPointer tid,
 			ItemPointer ctid, TransactionId *update_xmax,
 			CommandId cid, Snapshot crosscheck, bool wait);
@@ -246,19 +232,15 @@ extern XLogRecPtr log_heap_clean(Relation reln, Buffer buffer,
 extern XLogRecPtr log_heap_freeze(Relation reln, Buffer buffer,
 				TransactionId cutoff_xid,
 				OffsetNumber *offsets, int offcnt);
-<<<<<<< HEAD
 
-extern XLogRecPtr log_newpage_rel(Relation rel, BlockNumber blkno,
-								  Page page);
+extern XLogRecPtr log_newpage(RelFileNode *rnode, ForkNumber forkNum,
+							  BlockNumber blk, Page page);
 
 extern XLogRecPtr log_newpage_relFileNode(RelFileNode *relFileNode,
+										  ForkNumber forkNum,
 										  BlockNumber blkno, Page page,
 										  ItemPointer persistentTid,
 										  int64 persistentSerialNum);
-=======
-extern XLogRecPtr log_newpage(RelFileNode *rnode, ForkNumber forkNum,
-							  BlockNumber blk, Page page);
->>>>>>> 38e9348282e
 
 /* in heap/pruneheap.c */
 extern void heap_page_prune_opt(Relation relation, Buffer buffer,

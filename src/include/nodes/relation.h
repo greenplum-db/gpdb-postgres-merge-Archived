@@ -238,8 +238,6 @@ typedef struct PlannerInfo
 	
 	List	   *placeholder_list;	/* list of PlaceHolderInfos */
 
-	List	   *placeholder_list;	/* list of PlaceHolderInfos */
-
 	List	   *query_pathkeys; /* desired pathkeys for query_planner(), and
 								 * actual pathkeys afterwards */
 
@@ -776,7 +774,6 @@ typedef struct PathKey
 } PathKey;
 
 /*
-<<<<<<< HEAD
  * CdbEquivClassIsConstant
  *      is true if the equivalence class represents a pseudo-constant
  *
@@ -796,8 +793,6 @@ typedef struct PathKey
 
 
 /*
-=======
->>>>>>> 38e9348282e
  * Type "Path" is used as-is for sequential-scan paths, as well as some other
  * simple plan types that we don't need any extra information in the path for.
  * For other path types it is the first component of a larger struct.
@@ -1457,8 +1452,6 @@ typedef struct InnerIndexscanInfo
 } InnerIndexscanInfo;
 
 /*
-<<<<<<< HEAD
-=======
  * "Flattened SubLinks"
  *
  * When we pull an IN or EXISTS SubLink up into the parent query, the
@@ -1483,7 +1476,6 @@ typedef struct FlattenedSubLink
 } FlattenedSubLink;
 
 /*
->>>>>>> 38e9348282e
  * Placeholder node for an expression to be evaluated below the top level
  * of a plan tree.  This is used during planning to represent the contained
  * expression.  At the end of the planning process it is replaced by either
@@ -1585,7 +1577,7 @@ typedef struct SpecialJoinInfo
 	bool		lhs_strict;		/* joinclause is strict for some LHS rel */
 	bool		delay_upper_joins;		/* can't commute with upper RHS */
 	List	   *join_quals;		/* join quals, in implicit-AND list format */
-<<<<<<< HEAD
+
 	bool		try_join_unique;
 								/* CDB: true => comparison is equality op and
 								 *  subquery is not correlated.  Ok to consider
@@ -1599,8 +1591,7 @@ typedef struct SpecialJoinInfo
 								 */
 	List		*semi_operators; /* OIDs of equality join operators */
 	List		*semi_rhs_exprs; /* righthand-side expressions of these ops */
-=======
->>>>>>> 38e9348282e
+
 } SpecialJoinInfo;
 
 /*
@@ -1697,7 +1688,6 @@ typedef struct AppendRelInfo
  * The idea is to evaluate the expression at (only) the ph_eval_at join level,
  * then allow it to bubble up like a Var until the ph_needed join level.
  * ph_needed has the same definition as attr_needed for a regular Var.
-<<<<<<< HEAD
  * ph_may_need is an initial estimate of ph_needed, formed using the
  * syntactic locations of references to the PHV.  We need this in order to
  * determine whether the PHV reference forces a join ordering constraint:
@@ -1714,11 +1704,6 @@ typedef struct AppendRelInfo
  * We create a PlaceHolderInfo only after determining that the PlaceHolderVar
  * is actually referenced in the plan tree, so that unreferenced placeholders
  * don't result in unnecessary constraints on join order.
-=======
- *
- * We create a PlaceHolderInfo only after determining that the PlaceHolderVar
- * is actually referenced in the plan tree.
->>>>>>> 38e9348282e
  */
 
 typedef struct PlaceHolderInfo
@@ -1729,10 +1714,7 @@ typedef struct PlaceHolderInfo
 	PlaceHolderVar *ph_var;		/* copy of PlaceHolderVar tree */
 	Relids		ph_eval_at;		/* lowest level we can evaluate value at */
 	Relids		ph_needed;		/* highest level the value is needed at */
-<<<<<<< HEAD
 	Relids		ph_may_need;	/* highest level it might be needed at */
-=======
->>>>>>> 38e9348282e
 	int32		ph_width;		/* estimated attribute width */
 } PlaceHolderInfo;
 
