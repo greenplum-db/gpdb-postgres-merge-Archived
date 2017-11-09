@@ -23,6 +23,7 @@
 #include "storage/dbdirnode.h"
 #include "access/persistentendxactrec.h"
 #include "access/filerepdefs.h"
+#include "storage/smgr_gp.h"
 
 
 /*
@@ -57,23 +58,10 @@ typedef struct SMgrRelationData
 	int			smgr_which;		/* storage manager selector */
 
 	/* for md.c; NULL for forks that are not open */
-	struct _MdMirVec *md_mirvec[MAX_FORKNUM + 1];
+	struct _MdfdVec *md_fd[MAX_FORKNUM + 1];
 } SMgrRelationData;
 
 typedef SMgrRelationData *SMgrRelation;
-
-/*
- * Whether the object is being dropped in the original transaction, crash recovery, or
- * as part of (re)create / (re)drop during resynchronize.
- */
-typedef enum StorageManagerMirrorMode
-{
-	StorageManagerMirrorMode_None = 0,
-	StorageManagerMirrorMode_PrimaryOnly = 1,
-	StorageManagerMirrorMode_Both = 2,
-	StorageManagerMirrorMode_MirrorOnly = 3,
-	MaxStorageManagerMirrorMode /* must always be last */
-} StorageManagerMirrorMode;
 
 inline static bool StorageManagerMirrorMode_DoPrimaryWork(
 	StorageManagerMirrorMode		mirrorMode)
@@ -97,6 +85,10 @@ extern void smgrsetowner(SMgrRelation *owner, SMgrRelation reln);
 extern void smgrclose(SMgrRelation reln);
 extern void smgrcloseall(void);
 extern void smgrclosenode(RelFileNode rnode);
+extern void smgrcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo);
+extern void smgrdounlink(SMgrRelation reln, ForkNumber forknum,
+			 bool isTemp, bool isRedo);
+
 extern void smgrcreatefilespacedirpending(
 	Oid 							filespaceOid,
 	int16							primaryDbId,
@@ -153,7 +145,7 @@ extern void smgrcreatedbdir(
 	bool						*mirrorDataLossOccurred);
 extern void smgrcreatepending(
 	RelFileNode 					*relFileNode,
-
+	int32			segmentFileNum,
 	PersistentFileSysRelStorageMgr relStorageMgr,
 	PersistentFileSysRelBufpoolKind relBufpoolKind,
 	MirroredObjectExistenceState 	mirrorExistenceState,
@@ -164,23 +156,13 @@ extern void smgrcreatepending(
 	bool							isLocalBuf,
 	bool							bufferPoolBulkLoad,
 	bool							flushToXLog);
-extern void smgrcreate(
+extern void smgrmirroredcreate(
 	SMgrRelation 				reln,
 	char						*relationName,
 					/* For tracing only.  Can be NULL in some execution paths. */
 	MirrorDataLossTrackingState mirrorDataLossTrackingState,
 	int64						mirrorDataLossTrackingSessionNum,
 	bool						ignoreAlreadyExists,
-	bool						*mirrorDataLossOccurred);
-extern void smgrrecreate(
-	RelFileNode 				*relFileNode,
-	ForkNumber forknum,
-	bool						isLocalBuf, 
-	char						*relationName,
-					/* For tracing only.  Can be NULL in some execution paths. */
-	MirrorDataLossTrackingState mirrorDataLossTrackingState,
-	int64						mirrorDataLossTrackingSessionNum,
-	int 						*primaryError,
 	bool						*mirrorDataLossOccurred);
 extern void smgrscheduleunlink(
 	RelFileNode 	*relFileNode,
@@ -191,9 +173,8 @@ extern void smgrscheduleunlink(
 	char			*relationName,
 	ItemPointer 	persistentTid,
 	int64			persistentSerialNum);
-extern void smgrdounlink(
+extern void smgrdomirroredunlink(
 	RelFileNode 				*relFileNode,
-	ForkNumber forknum,
 	bool 						isLocalBuf, 
 	char						*relationName,
 					/* For tracing only.  Can be NULL in some execution paths. */
@@ -245,8 +226,7 @@ extern void smgrwrite(SMgrRelation reln, ForkNumber forknum,
 					  BlockNumber blocknum, char *buffer, bool isTemp);
 extern BlockNumber smgrnblocks(SMgrRelation reln, ForkNumber forknum);
 extern void smgrtruncate(SMgrRelation reln, ForkNumber forknum,
-						 BlockNumber nblocks, bool isTemp,
-						 bool isLocalBuf, ItemPointer persistentTid, int64 persistentSerialNum);
+						 BlockNumber nblocks, bool isTemp);
 extern bool smgrgetpersistentinfo(	
 	XLogRecord		*record,
 	RelFileNode	*relFileNode,
@@ -289,6 +269,7 @@ extern void smgrpostckpt(void);
 /* in md.c */
 extern void mdinit(void);
 extern void mdclose(SMgrRelation reln, ForkNumber forknum);
+extern void mdcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo);
 extern void mdcreatefilespacedir(
 	Oid 						filespaceOid,
 	char						*primaryFilespaceLocation,
@@ -313,9 +294,8 @@ extern void mdcreatedbdir(
 	bool						ignoreAlreadyExists,
 	int 						*primaryError,
 	bool						*mirrorDataLossOccurred);
-extern void mdcreate(
+extern void mdmirroredcreate(
 	SMgrRelation 				reln,
-	ForkNumber forknum,
 	char						*relationName,
 					/* For tracing only.  Can be NULL in some execution paths. */
 	MirrorDataLossTrackingState mirrorDataLossTrackingState,
@@ -323,7 +303,7 @@ extern void mdcreate(
 	bool						ignoreAlreadyExists,
 	bool						*mirrorDataLossOccurred);
 extern bool mdexists(SMgrRelation reln, ForkNumber forknum);
-extern void mdunlink(
+extern void mdmirroredunlink(
 	RelFileNode 				rnode, 
 	ForkNumber forknum,
 	char						*relationName,
@@ -358,6 +338,7 @@ extern bool mdrmdbdir(
 	bool						*mirrorDataLossOccurred);
 extern void mdextend(SMgrRelation reln,  ForkNumber forknum,
 		 BlockNumber blocknum, char *buffer, bool isTemp);
+extern void mdunlink(RelFileNode rnode, ForkNumber forknum, bool isRedo);
 extern void mdread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 				   char *buffer);
 extern void mdwrite(SMgrRelation reln, ForkNumber forknum,

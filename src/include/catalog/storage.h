@@ -20,23 +20,34 @@
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
 
-extern void RelationCreateStorage(RelFileNode rnode, bool istemp);
-extern void RelationDropStorage(Relation rel);
-extern void RelationTruncate(Relation rel, BlockNumber nblocks,
-							 bool markPersistentAsPhysicallyTruncated);
+extern void RelationCreateStorage(RelFileNode rnode, bool istemp,
+					  char *relationName,
+					  MirrorDataLossTrackingState mirrorDataLossTrackingState,
+					  int64 mirrorDataLossTrackingSessionNum,
+					  bool *mirrorDataLossOccurred);
+
+extern void RelationDropStorage(RelFileNode *relFileNode,
+					ForkNumber forknum,
+					int32 segmentFileNum,
+					PersistentFileSysRelStorageMgr relStorageMgr,
+					bool isLocalBuf,
+					char *relationName,
+					ItemPointer persistentTid,
+					int64 persistentSerialNum);
+extern void RelationTruncate(Relation rel, BlockNumber nblocks, bool markPersistentAsPhysicallyTruncated);
 
 /*
  * These functions used to be in storage/smgr/smgr.c, which explains the
  * naming
  */
-extern void smgrDoPendingDeletes(bool isCommit);
-extern int smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr,
-					  bool *haveNonTemp);
+extern void AtEOXact_smgr(bool isCommit);
+extern int smgrGetPendingFileSysWork(EndXactRecKind endXactRecKind,
+									 PersistentEndXactFileSysActionInfo **ptr);
 extern void AtSubCommit_smgr(void);
 extern void AtSubAbort_smgr(void);
 extern void PostPrepare_smgr(void);
 
-extern void smgr_redo(XLogRecPtr lsn, XLogRecord *record);
-extern void smgr_desc(StringInfo buf, uint8 xl_info, char *rec);
+extern void smgr_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record);
+extern void smgr_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
 
 #endif   /* STORAGE_H */
