@@ -249,7 +249,6 @@ typedef struct QueryDesc
 	EState	   *estate;			/* executor's query-wide state */
 	PlanState  *planstate;		/* tree of per-plan-node state */
 
-<<<<<<< HEAD
 	/* This field is set by ExecutorEnd after collecting cdbdisp results */
 	uint64		es_processed;	/* # of tuples processed */
 	Oid			es_lastoid;		/* oid of row inserted */
@@ -266,11 +265,6 @@ typedef struct QueryDesc
 
 	/* This is always set NULL by the core system, but plugins can change it */
 	struct Instrumentation *totaltime;	/* total time spent in ExecutorRun */
-
-=======
-	/* This is always set NULL by the core system, but plugins can change it */
-	struct Instrumentation *totaltime;	/* total time spent in ExecutorRun */
->>>>>>> 38e9348282e
 } QueryDesc;
 
 /* in pquery.c */
