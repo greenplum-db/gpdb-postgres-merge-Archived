@@ -305,10 +305,7 @@ AggregateCreate(const char *aggName,
 		values[Anum_pg_aggregate_agginitval - 1] = CStringGetTextDatum(agginitval);
 	else
 		nulls[Anum_pg_aggregate_agginitval - 1] = true;
-<<<<<<< HEAD
 	values[Anum_pg_aggregate_aggordered - 1] = BoolGetDatum(aggordered);
-=======
->>>>>>> 38e9348282e
 
 	aggdesc = heap_open(AggregateRelationId, RowExclusiveLock);
 	tupDesc = aggdesc->rd_att;
