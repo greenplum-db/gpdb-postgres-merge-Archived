@@ -296,7 +296,6 @@ internal_load_library(const char *libname)
 }
 
 /*
-<<<<<<< HEAD
  * Identify what product a particular magic data was compiled for.
  */
 static const char*
@@ -326,15 +325,12 @@ get_magic_product(const Pg_magic_struct *module_magic_data)
 
 
 /*
-=======
->>>>>>> 38e9348282e
  * Report a suitable error for an incompatible magic block.
  */
 static void
 incompatible_module_error(const char *libname,
 						  const Pg_magic_struct *module_magic_data)
 {
-<<<<<<< HEAD
 	StringInfoData details;
 	const char *magic_product     = get_magic_product(&magic_data);
 	const char *mod_magic_product = get_magic_product(module_magic_data);
@@ -350,15 +346,11 @@ incompatible_module_error(const char *libname,
 	{
 		lib_internal_version = module_magic_data->headerversion;
 	}
-=======
-	StringInfoData	details;
->>>>>>> 38e9348282e
 
 	/*
 	 * If the version doesn't match, just report that, because the rest of the
 	 * block might not even have the fields we expect.
 	 */
-<<<<<<< HEAD
 	if (magic_data.version != module_magic_data->version ||
 		magic_data.product != module_magic_data->product ||
 		magic_data.headerversion != lib_internal_version)
@@ -378,17 +370,6 @@ incompatible_module_error(const char *libname,
 				)
 		);
 	}
-=======
-	if (magic_data.version != module_magic_data->version)
-		ereport(ERROR,
-				(errmsg("incompatible library \"%s\": version mismatch",
-						libname),
-				 errdetail("Server is version %d.%d, library is version %d.%d.",
-						   magic_data.version / 100,
-						   magic_data.version % 100,
-						   module_magic_data->version / 100,
-						   module_magic_data->version % 100)));
->>>>>>> 38e9348282e
 
 	/*
 	 * Otherwise, spell out which fields don't agree.
@@ -401,13 +382,7 @@ incompatible_module_error(const char *libname,
 	if (module_magic_data->funcmaxargs != magic_data.funcmaxargs)
 	{
 		if (details.len)
-<<<<<<< HEAD
-		{
 			appendStringInfoChar(&details, '\n');
-		}
-=======
-			appendStringInfoChar(&details, '\n');
->>>>>>> 38e9348282e
 		appendStringInfo(&details,
 						 _("Server has FUNC_MAX_ARGS = %d, library has %d."),
 						 magic_data.funcmaxargs,
@@ -416,13 +391,7 @@ incompatible_module_error(const char *libname,
 	if (module_magic_data->indexmaxkeys != magic_data.indexmaxkeys)
 	{
 		if (details.len)
-<<<<<<< HEAD
-		{
 			appendStringInfoChar(&details, '\n');
-		}
-=======
-			appendStringInfoChar(&details, '\n');
->>>>>>> 38e9348282e
 		appendStringInfo(&details,
 						 _("Server has INDEX_MAX_KEYS = %d, library has %d."),
 						 magic_data.indexmaxkeys,
@@ -431,13 +400,7 @@ incompatible_module_error(const char *libname,
 	if (module_magic_data->namedatalen != magic_data.namedatalen)
 	{
 		if (details.len)
-<<<<<<< HEAD
-		{
 			appendStringInfoChar(&details, '\n');
-		}
-=======
-			appendStringInfoChar(&details, '\n');
->>>>>>> 38e9348282e
 		appendStringInfo(&details,
 						 _("Server has NAMEDATALEN = %d, library has %d."),
 						 magic_data.namedatalen,
@@ -446,48 +409,25 @@ incompatible_module_error(const char *libname,
 	if (module_magic_data->float4byval != magic_data.float4byval)
 	{
 		if (details.len)
-<<<<<<< HEAD
-		{
-			appendStringInfoChar(&details, '\n');
-		}
-		appendStringInfo(&details,
-					   _("Server has FLOAT4PASSBYVAL = %s, library has %s."),
-=======
 			appendStringInfoChar(&details, '\n');
 		appendStringInfo(&details,
 						 _("Server has FLOAT4PASSBYVAL = %s, library has %s."),
->>>>>>> 38e9348282e
 						 magic_data.float4byval ? "true" : "false",
 						 module_magic_data->float4byval ? "true" : "false");
 	}
 	if (module_magic_data->float8byval != magic_data.float8byval)
 	{
 		if (details.len)
-<<<<<<< HEAD
-		{
-			appendStringInfoChar(&details, '\n');
-		}
-		appendStringInfo(&details,
-					   _("Server has FLOAT8PASSBYVAL = %s, library has %s."),
-=======
 			appendStringInfoChar(&details, '\n');
 		appendStringInfo(&details,
 						 _("Server has FLOAT8PASSBYVAL = %s, library has %s."),
->>>>>>> 38e9348282e
 						 magic_data.float8byval ? "true" : "false",
 						 module_magic_data->float8byval ? "true" : "false");
 	}
 
 	if (details.len == 0)
-<<<<<<< HEAD
-	{
-		appendStringInfo(&details,
-			  _("Magic block has unexpected length or padding difference."));
-	}
-=======
 		appendStringInfo(&details,
 						 _("Magic block has unexpected length or padding difference."));
->>>>>>> 38e9348282e
 
 	ereport(ERROR,
 			(errmsg("incompatible library \"%s\": magic block mismatch",
