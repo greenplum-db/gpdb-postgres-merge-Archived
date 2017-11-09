@@ -34,18 +34,12 @@ bool        cdb_walk_vars(Node                         *node,
 extern Relids pull_varnos(Node *node);
 
 extern void pull_varattnos(Node *node, Bitmapset **varattnos);
-<<<<<<< HEAD
 extern bool contain_ctid_var_reference(Scan *scan);
 extern bool contain_var_clause(Node *node);
 extern bool contain_vars_of_level(Node *node, int levelsup);
 extern bool contain_vars_of_level_or_above(Node *node, int levelsup);
 extern int	locate_var_of_level(Node *node, int levelsup);
-=======
-extern bool contain_var_clause(Node *node);
-extern bool contain_vars_of_level(Node *node, int levelsup);
-extern int	locate_var_of_level(Node *node, int levelsup);
 extern int	locate_var_of_relation(Node *node, int relid, int levelsup);
->>>>>>> 38e9348282e
 extern int	find_minimum_var_level(Node *node);
 extern List *pull_var_clause(Node *node, bool includePlaceHolderVars);
 extern Node *flatten_join_alias_vars(PlannerInfo *root, Node *node);

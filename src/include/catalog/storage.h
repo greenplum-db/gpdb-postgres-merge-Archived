@@ -22,7 +22,8 @@
 
 extern void RelationCreateStorage(RelFileNode rnode, bool istemp);
 extern void RelationDropStorage(Relation rel);
-extern void RelationTruncate(Relation rel, BlockNumber nblocks);
+extern void RelationTruncate(Relation rel, BlockNumber nblocks,
+							 bool markPersistentAsPhysicallyTruncated);
 
 /*
  * These functions used to be in storage/smgr/smgr.c, which explains the

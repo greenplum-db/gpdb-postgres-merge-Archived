@@ -347,10 +347,11 @@ heap_create(const char *relname,
 	 */
 	if (create_storage)
 	{
-<<<<<<< HEAD
 		bool isAppendOnly;
 		bool skipCreatingSharedTable = false;
 
+		/* GPDB_84_MERGE_FIXME: ensure RelationCreateStorage is eventually
+		 * called by our custom helpers here. */
 		/*
 		 * We save the persistent TID and serial number in pg_class so we
 		 * can supply them to the Storage Manager if the object is subsequently
@@ -425,14 +426,10 @@ heap_create(const char *relname,
 		if (Debug_persistent_print)
 			elog(Persistent_DebugPrintLevel(), 
 			     "heap_create: '%s', Append-Only '%s', persistent TID %s and serial number " INT64_FORMAT " for CREATE",
-				 relpath(rel->rd_node),
+				 relpath(rel->rd_node, MAIN_FORKNUM),
 				 (isAppendOnly ? "true" : "false"),
 				 ItemPointerToString(&rel->rd_segfile0_relationnodeinfo.persistentTid),
 				 rel->rd_segfile0_relationnodeinfo.persistentSerialNum);
-=======
-		RelationOpenSmgr(rel);
-		RelationCreateStorage(rel->rd_node, rel->rd_istemp);
->>>>>>> 38e9348282e
 	}
 
 	return rel;
@@ -644,7 +641,6 @@ CheckAttributeType(const char *attname, Oid atttypid,
 	}
 }
 
-<<<<<<< HEAD
 /* MPP-6929: metadata tracking */
 /* --------------------------------
  *		MetaTrackAddObject
@@ -911,9 +907,6 @@ void MetaTrackDropObject(Oid		classid,
 
 } /* end MetaTrackDropObject */
 
-
-
-=======
 /*
  * InsertPgAttributeTuple
  *		Construct and insert a new tuple in pg_attribute.
@@ -968,7 +961,6 @@ InsertPgAttributeTuple(Relation pg_attribute_rel,
 
 	heap_freetuple(tup);
 }
->>>>>>> 38e9348282e
 /* --------------------------------
  *		AddNewAttributeTuples
  *
@@ -2347,13 +2339,15 @@ void
 remove_gp_relation_node_and_schedule_drop(Relation rel)
 {
 	PersistentFileSysRelStorageMgr relStorageMgr;
+
+	/* GPDB_84_MERGE_FIXME: do we want to debug-log other forks besides main? */
 	
 	if (Debug_persistent_print)
 		elog(Persistent_DebugPrintLevel(), 
 			 "remove_gp_relation_node_and_schedule_drop: dropping relation '%s', relation id %u '%s', relfilenode %u",
 			 rel->rd_rel->relname.data,
 			 rel->rd_id,
-			 relpath(rel->rd_node),
+			 relpath(rel->rd_node, MAIN_FORKNUM),
 			 rel->rd_rel->relfilenode);
 
 	relStorageMgr = ((RelationIsAoRows(rel) || RelationIsAoCols(rel)) ?
@@ -2371,7 +2365,7 @@ remove_gp_relation_node_and_schedule_drop(Relation rel)
 		if (Debug_persistent_print)
 			elog(Persistent_DebugPrintLevel(), 
 				 "remove_gp_relation_node_and_schedule_drop: For Buffer Pool managed relation '%s' persistent TID %s and serial number " INT64_FORMAT " for DROP",
-				 relpath(rel->rd_node),
+				 relpath(rel->rd_node, MAIN_FORKNUM),
 				 ItemPointerToString(&rel->rd_segfile0_relationnodeinfo.persistentTid),
 				 rel->rd_segfile0_relationnodeinfo.persistentSerialNum);
 	}
@@ -2482,11 +2476,9 @@ heap_drop_with_catalog(Oid relid)
 		relkind != RELKIND_COMPOSITE_TYPE &&
 		!RelationIsExternal(rel))
 	{
-<<<<<<< HEAD
+		/* GPDB_84_MERGE_FIXME: ensure RelationDropStorage() eventually gets
+		   called by our helper here. */
 		remove_gp_relation_node_and_schedule_drop(rel);
-=======
-		RelationDropStorage(rel);
->>>>>>> 38e9348282e
 	}
 
 	/*
@@ -3400,18 +3392,11 @@ RelationTruncateIndexes(Relation heapRelation)
 		/* Fetch info needed for index_build */
 		indexInfo = BuildIndexInfo(currentIndex);
 
-<<<<<<< HEAD
 		/* Now truncate the actual file (and discard buffers) */
 		RelationTruncate(
 					currentIndex, 
 					0,
 					/* markPersistentAsPhysicallyTruncated */ true);
-=======
-		/*
-		 * Now truncate the actual file (and discard buffers).
-		 */
-		RelationTruncate(currentIndex, 0);
->>>>>>> 38e9348282e
 
 		/* Initialize the index and rebuild */
 		/* Note: we do not need to re-establish pkey setting */
