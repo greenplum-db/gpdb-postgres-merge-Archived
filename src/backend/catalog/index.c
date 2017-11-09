@@ -46,11 +46,8 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
-#include "cdb/cdbpersistentfilesysobj.h"
-=======
 #include "catalog/storage.h"
->>>>>>> 38e9348282e
+#include "cdb/cdbpersistentfilesysobj.h"
 #include "commands/tablecmds.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
@@ -289,7 +286,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 			 * whether a table column is of a safe type (which is why we
 			 * needn't check for the non-expression case).
 			 */
-			CheckAttributeType(NameStr(to->attname), to->atttypid);
+			CheckAttributeType(NameStr(to->attname), to->atttypid, NIL);
 		}
 
 		/*
@@ -1067,16 +1064,13 @@ index_drop(Oid indexId)
 	/*
 	 * Schedule physical removal of the files
 	 */
-<<<<<<< HEAD
+	/* GPDB_84_MERGE_FIXME: make sure this calls RelationDropStorage. */
 	MirroredFileSysObj_ScheduleDropBufferPoolRel(userIndexRelation);
 
 	DeleteGpRelationNodeTuple(
 					userIndexRelation,
 					/* segmentFileNum */ 0);
 	
-=======
-	RelationDropStorage(userIndexRelation);
->>>>>>> 38e9348282e
 
 	/*
 	 * Close and flush the index's relcache entry, to ensure relcache doesn't
@@ -1854,7 +1848,6 @@ IndexBuildScan(Relation parentRelation,
 		OldestXmin = GetOldestXmin(parentRelation->rd_rel->relisshared, true);
 	}
 
-<<<<<<< HEAD
 	if (RelationIsHeap(parentRelation))
 		reltuples = IndexBuildHeapScan(parentRelation,
 									   indexRelation,
@@ -1955,8 +1948,6 @@ IndexBuildHeapScan(Relation heapRelation,
 		ExecPrepareExpr((Expr *) indexInfo->ii_Predicate,
 						estate);
 
-=======
->>>>>>> 38e9348282e
 	scan = heap_beginscan_strat(heapRelation,	/* relation */
 								snapshot,		/* snapshot */
 								0,				/* number of keys */
@@ -3044,19 +3035,13 @@ reindex_index(Oid indexId)
 
 		if (inplace)
 		{
-<<<<<<< HEAD
-			/* Truncate the actual file (and discard buffers) */
-
+			/*
+			 * Truncate the actual file (and discard buffers).
+			 */
 			RelationTruncate(
 						iRel, 
 						0,
 						/* markPersistentAsPhysicallyTruncated */ true);
-=======
-			/*
-			 * Truncate the actual file (and discard buffers).
-			 */
-			RelationTruncate(iRel, 0);
->>>>>>> 38e9348282e
 		}
 		else
 		{
