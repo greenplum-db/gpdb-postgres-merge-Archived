@@ -39,7 +39,6 @@
 #include "executor/nodeValuesscan.h"
 #include "executor/nodeCtescan.h"
 #include "executor/nodeWorktablescan.h"
-<<<<<<< HEAD
 #include "executor/nodeAssertOp.h"
 #include "executor/nodeTableScan.h"
 #include "executor/nodeDynamicTableScan.h"
@@ -53,7 +52,6 @@
 #include "executor/nodeBitmapAppendOnlyscan.h"
 #include "executor/nodeWindow.h"
 #include "executor/nodeShareInputScan.h"
-=======
 #include "nodes/nodeFuncs.h"
 #include "utils/syscache.h"
 
@@ -61,7 +59,6 @@
 static bool TargetListSupportsBackwardScan(List *targetlist);
 static bool IndexSupportsBackwardScan(Oid indexid);
 
->>>>>>> 38e9348282e
 
 /*
  * ExecReScan
@@ -147,13 +144,10 @@ ExecReScan(PlanState *node, ExprContext *exprCtxt)
 			ExecRecursiveUnionReScan((RecursiveUnionState *) node, exprCtxt);
 			break;
 
-<<<<<<< HEAD
 		case T_AssertOpState:
 			ExecReScanAssertOp((AssertOpState *) node, exprCtxt);
 			break;
 
-=======
->>>>>>> 38e9348282e
 		case T_BitmapAndState:
 			ExecReScanBitmapAnd((BitmapAndState *) node, exprCtxt);
 			break;
@@ -228,13 +222,10 @@ ExecReScan(PlanState *node, ExprContext *exprCtxt)
 			ExecWorkTableScanReScan((WorkTableScanState *) node, exprCtxt);
 			break;
 
-<<<<<<< HEAD
 		case T_BitmapAppendOnlyScanState:
 			ExecBitmapAppendOnlyReScan((BitmapAppendOnlyScanState *) node, exprCtxt);
 			break;
 
-=======
->>>>>>> 38e9348282e
 		case T_NestLoopState:
 			ExecReScanNestLoop((NestLoopState *) node, exprCtxt);
 			break;
@@ -536,16 +527,12 @@ ExecSupportsBackwardScan(Plan *node)
 		case T_FunctionScan:
 		case T_ValuesScan:
 		case T_CteScan:
-<<<<<<< HEAD
 		case T_WorkTableScan:
-			return true;
-=======
 			return TargetListSupportsBackwardScan(node->targetlist);
 
 		case T_IndexScan:
 			return IndexSupportsBackwardScan(((IndexScan *) node)->indexid) &&
 				TargetListSupportsBackwardScan(node->targetlist);
->>>>>>> 38e9348282e
 
 		case T_SubqueryScan:
 			return ExecSupportsBackwardScan(((SubqueryScan *) node)->subplan) &&
@@ -569,7 +556,6 @@ ExecSupportsBackwardScan(Plan *node)
 }
 
 /*
-<<<<<<< HEAD
  * ExecEagerFree
  *    Eager free the memory that is used by the given node.
  */
@@ -828,7 +814,8 @@ ExecEagerFreeChildNodes(PlanState *node, bool subplanDone)
 			break;
 		}
 	}
-=======
+
+/*
  * If the tlist contains set-returning functions, we can't support backward
  * scan, because the TupFromTlist code is direction-ignorant.
  */
@@ -875,5 +862,4 @@ IndexSupportsBackwardScan(Oid indexid)
 	ReleaseSysCache(ht_am);
 
 	return result;
->>>>>>> 38e9348282e
 }
