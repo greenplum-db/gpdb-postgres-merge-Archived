@@ -223,7 +223,13 @@ typedef struct RelationData
 	void	   *rd_amcache;		/* available for use by index AM */
 
 	/*
-<<<<<<< HEAD
+	 * sizes of the free space and visibility map forks, or InvalidBlockNumber
+	 * if not known yet
+	 */
+	BlockNumber	rd_fsm_nblocks;
+	BlockNumber	rd_vm_nblocks;
+
+	/*
 	 * AO table support info (used only for AO and AOCS relations)
 	 */
 	Form_pg_appendonly rd_appendonly;
@@ -234,13 +240,6 @@ typedef struct RelationData
 	 */
 	struct RelationNodeInfo rd_segfile0_relationnodeinfo;
 								/* Values from gp_relation_node, if present */
-=======
-	 * sizes of the free space and visibility map forks, or InvalidBlockNumber
-	 * if not known yet
-	 */
-	BlockNumber	rd_fsm_nblocks;
-	BlockNumber	rd_vm_nblocks;
->>>>>>> 38e9348282e
 
 	/* use "struct" here to avoid needing to include pgstat.h: */
 	struct PgStat_TableStatus *pgstat_info;		/* statistics collection area */

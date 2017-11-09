@@ -20,16 +20,10 @@
 
 extern void XLogCheckInvalidPages(void);
 
-<<<<<<< HEAD
-extern void XLogDropRelation(RelFileNode rnode);
-extern void XLogDropDatabase(Oid tblspc, Oid dbid);
-extern void XLogTruncateRelation(RelFileNode rnode, BlockNumber nblocks);
-=======
 extern void XLogDropRelation(RelFileNode rnode, ForkNumber forknum);
-extern void XLogDropDatabase(Oid dbid);
+extern void XLogDropDatabase(Oid tblspc, Oid dbid);
 extern void XLogTruncateRelation(RelFileNode rnode, ForkNumber forkNum,
 								 BlockNumber nblocks);
->>>>>>> 38e9348282e
 
 extern Buffer XLogReadBuffer(RelFileNode rnode, BlockNumber blkno, bool init);
 extern Buffer XLogReadBufferExtended(RelFileNode rnode, ForkNumber forknum,
