@@ -68,7 +68,6 @@
 #define OIDCHARS		10			/* max chars printed by %u */
 #define FORKNAMECHARS	4			/* max chars for a fork name */
 
-<<<<<<< HEAD
 static char *
 GetFilespacePathForTablespace(Oid tablespaceOid)
 {
@@ -124,7 +123,8 @@ GetFilespacePathForTablespace(Oid tablespaceOid)
 	Assert(primary_path != NULL);
 
 	return primary_path;
-=======
+}
+
 /*
  * Lookup table of fork name by fork number.
  *
@@ -155,7 +155,6 @@ forkname_to_number(char *forkName)
 			 errmsg("invalid fork name"),
 			 errhint("Valid fork names are 'main' and 'fsm'")));
 	return InvalidForkNumber; /* keep compiler quiet */
->>>>>>> 38e9348282e
 }
 
 /*
@@ -176,38 +175,28 @@ relpath(RelFileNode rnode, ForkNumber forknum)
 		Assert(rnode.dbNode == 0);
 		pathlen = 7 + OIDCHARS + 1 + FORKNAMECHARS + 1;
 		path = (char *) palloc(pathlen);
-<<<<<<< HEAD
-		snprintfResult =
-			snprintf(path, pathlen, "global/%u",
-					 rnode.relNode);
-		
-=======
 		if (forknum != MAIN_FORKNUM)
-			snprintf(path, pathlen, "global/%u_%s",
-					 rnode.relNode, forkNames[forknum]);
+			snprintfResult = snprintf(path, pathlen, "global/%u_%s",
+									  rnode.relNode, forkNames[forknum]);
 		else
-			snprintf(path, pathlen, "global/%u", rnode.relNode);
->>>>>>> 38e9348282e
+			snprintfResult = snprintf(path, pathlen, "global/%u",
+									  rnode.relNode);
 	}
 	else if (rnode.spcNode == DEFAULTTABLESPACE_OID)
 	{
 		/* The default tablespace is {datadir}/base */
 		pathlen = 5 + OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1;
 		path = (char *) palloc(pathlen);
-<<<<<<< HEAD
-		snprintfResult =
-=======
 		if (forknum != MAIN_FORKNUM)
-			snprintf(path, pathlen, "base/%u/%u_%s",
-					 rnode.dbNode, rnode.relNode, forkNames[forknum]);
+			snprintfResult = snprintf(path, pathlen, "base/%u/%u_%s",
+									  rnode.dbNode, rnode.relNode,
+									  forkNames[forknum]);
 		else
->>>>>>> 38e9348282e
-			snprintf(path, pathlen, "base/%u/%u",
-					 rnode.dbNode, rnode.relNode);
+			snprintfResult = snprintf(path, pathlen, "base/%u/%u",
+									  rnode.dbNode, rnode.relNode);
 	}
 	else
 	{
-<<<<<<< HEAD
 		char *primary_path;
 
 		/* All other tablespaces are accessed via filespace locations */
@@ -217,27 +206,20 @@ relpath(RelFileNode rnode, ForkNumber forknum)
 		 * We should develop an interface for the above that doesn't
 		 * require reallocating to a slightly larger size...
 		 */
-		pathlen = strlen(primary_path)+1+OIDCHARS+1+OIDCHARS+1+OIDCHARS+1;
+		pathlen = strlen(primary_path) + 1 + OIDCHARS + 1 + OIDCHARS + 1
+			+ OIDCHARS + 1 + FORKNAMECHARS + 1;
 		path = (char *) palloc(pathlen);
-		snprintfResult =
-			snprintf(path, pathlen, "%s/%u/%u/%u",
-					 primary_path, rnode.spcNode, rnode.dbNode, rnode.relNode);
+		if (forknum != MAIN_FORKNUM)
+			snprintfResult = snprintf(path, pathlen, "%s/%u/%u/%u_%s",
+									  primary_path, rnode.spcNode, rnode.dbNode,
+									  rnode.relNode, forkNames[forknum]);
+		else
+			snprintfResult = snprintf(path, pathlen, "%s/%u/%u/%u",
+									  primary_path, rnode.spcNode, rnode.dbNode,
+									  rnode.relNode);
 
 		/* Throw away the allocation we got from persistent layer */
 		pfree(primary_path);
-=======
-		/* All other tablespaces are accessed via symlinks */
-		pathlen = 10 + OIDCHARS + 1 + OIDCHARS + 1 + OIDCHARS + 1
-			+ FORKNAMECHARS + 1;
-		path = (char *) palloc(pathlen);
-		if (forknum != MAIN_FORKNUM)
-			snprintf(path, pathlen, "pg_tblspc/%u/%u/%u_%s",
-					 rnode.spcNode, rnode.dbNode, rnode.relNode,
-					 forkNames[forknum]);
-		else
-			snprintf(path, pathlen, "pg_tblspc/%u/%u/%u",
-					 rnode.spcNode, rnode.dbNode, rnode.relNode);
->>>>>>> 38e9348282e
 	}
 	
 	Assert(snprintfResult >= 0);
@@ -947,7 +929,8 @@ GetNewSequenceRelationOid(Relation relation)
 		if (!collides)
 		{
 			/* Check for existing file of same name */
-			rpath = relpath(rnode);
+			/* GPDB_84_MERGE_FIXME: check my work; is MAIN_FORKNUM right? */
+			rpath = relpath(rnode, MAIN_FORKNUM);
 			fd = BasicOpenFile(rpath, O_RDONLY | PG_BINARY, 0);
 
 			if (fd >= 0)
