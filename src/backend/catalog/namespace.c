@@ -198,10 +198,7 @@ static void recomputeNamespacePath(void);
 static void RemoveTempRelations(Oid tempNamespaceId);
 static void RemoveTempRelationsCallback(int code, Datum arg);
 static void NamespaceCallback(Datum arg, int cacheid, ItemPointer tuplePtr);
-<<<<<<< HEAD
 static bool TempNamespaceValid(bool error_if_removed);
-=======
->>>>>>> 38e9348282e
 
 /* These don't really need to appear in any header file */
 Datum		pg_table_is_visible(PG_FUNCTION_ARGS);
@@ -808,22 +805,10 @@ TypeIsVisible(Oid typid)
  * we report such situations by setting oid = 0 in the ambiguous entries.
  * The caller might end up discarding such an entry anyway, but if it selects
  * such an entry it should react as though the call were ambiguous.
-<<<<<<< HEAD
- *
- * GPDB: this function has been backported from PostgreSQL 8.4, to get
- * support for variadic arguments and default arguments.
- *
- */
-FuncCandidateList
-FuncnameGetCandidates(List *names, int nargs,
-					  bool expand_variadic,
-					  bool expand_defaults)
-=======
  */
 FuncCandidateList
 FuncnameGetCandidates(List *names, int nargs,
 					  bool expand_variadic, bool expand_defaults)
->>>>>>> 38e9348282e
 {
 	FuncCandidateList resultList = NULL;
 	bool		any_special = false;
@@ -1028,15 +1013,9 @@ FuncnameGetCandidates(List *names, int nargs,
 				{
 					/*
 					 * With variadic functions we could have, for example,
-<<<<<<< HEAD
 					 * both foo(numeric) and foo(variadic numeric[]) in the
 					 * same namespace; if so we prefer the non-variadic match
 					 * on efficiency grounds.
-=======
-					 * both foo(numeric) and foo(variadic numeric[]) in
-					 * the same namespace; if so we prefer the
-					 * non-variadic match on efficiency grounds.
->>>>>>> 38e9348282e
 					 */
 					preference = 1;
 				}
