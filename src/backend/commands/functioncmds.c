@@ -274,13 +274,10 @@ examine_parameter_list(List *parameters, Oid languageOid,
 						 errmsg("VARIADIC parameter must be the last input parameter")));
 			inTypes[inCount++] = toid;
 			isinput = true;
-<<<<<<< HEAD
 
 			/* Keep track of the number of anytable arguments */
 			if (toid == ANYTABLEOID)
 				multisetCount++;
-=======
->>>>>>> 38e9348282e
 		}
 
 		/* handle output parameters */
@@ -336,14 +333,11 @@ examine_parameter_list(List *parameters, Oid languageOid,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("only input parameters can have default values")));
 
-<<<<<<< HEAD
 			if (toid == ANYTABLEOID)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("anytable parameter cannot have default value")));
 
-=======
->>>>>>> 38e9348282e
 			def = transformExpr(pstate, fp->defexpr);
 			def = coerce_to_specific_type(pstate, def, toid, "DEFAULT");
 
@@ -352,16 +346,10 @@ examine_parameter_list(List *parameters, Oid languageOid,
 			 */
 			if (list_length(pstate->p_rtable) != 0 ||
 				contain_var_clause(def))
-<<<<<<< HEAD
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-							 errmsg("cannot use table references in parameter default value")));
-=======
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 						 errmsg("cannot use table references in parameter default value")));
 
->>>>>>> 38e9348282e
 			/*
 			 * No subplans or aggregates, either...
 			 */
@@ -369,23 +357,17 @@ examine_parameter_list(List *parameters, Oid languageOid,
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("cannot use subquery in parameter default value")));
-<<<<<<< HEAD
 
-=======
->>>>>>> 38e9348282e
 			if (pstate->p_hasAggs)
 				ereport(ERROR,
 						(errcode(ERRCODE_GROUPING_ERROR),
 						 errmsg("cannot use aggregate function in parameter default value")));
 
-<<<<<<< HEAD
 			if (pstate->p_hasWindowFuncs)
 				ereport(ERROR,
 						(errcode(ERRCODE_WINDOWING_ERROR),
 						 errmsg("cannot use window function in parameter default value")));
 
-=======
->>>>>>> 38e9348282e
 			*parameterDefaults = lappend(*parameterDefaults, def);
 			have_defaults = true;
 		}
@@ -402,7 +384,6 @@ examine_parameter_list(List *parameters, Oid languageOid,
 
 	free_parsestate(pstate);
 
-<<<<<<< HEAD
 	/* Currently only support single multiset input parameters */
 	if (multisetCount > 1)
 	{
@@ -411,8 +392,6 @@ examine_parameter_list(List *parameters, Oid languageOid,
 				 errmsg("functions cannot have multiple \"anytable\" arguments")));
 	}
 
-=======
->>>>>>> 38e9348282e
 	/* Now construct the proper outputs as needed */
 	*parameterTypes = buildoidvector(inTypes, inCount);
 
@@ -1173,12 +1152,7 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 	 * Convert remaining parameters of CREATE to form wanted by
 	 * ProcedureCreate.
 	 */
-<<<<<<< HEAD
-	examine_parameter_list(stmt->parameters, languageOid,
-						   queryString,
-=======
 	examine_parameter_list(stmt->parameters, languageOid, queryString,
->>>>>>> 38e9348282e
 						   &parameterTypes,
 						   &allParameterTypes,
 						   &parameterModes,

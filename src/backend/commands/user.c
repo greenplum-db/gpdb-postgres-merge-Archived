@@ -395,32 +395,31 @@ CreateRole(CreateRoleStmt *stmt)
 				 errmsg("role \"%s\" already exists",
 						stmt->role)));
 
-    /* Convert validuntil to internal form */
-    if (validUntil)
-    {
-        validUntil_datum = DirectFunctionCall3(timestamptz_in,
-                CStringGetDatum(validUntil),
-                ObjectIdGetDatum(InvalidOid),
-                Int32GetDatum(-1));
-        validUntil_null = false;
+	/* Convert validuntil to internal form */
+	if (validUntil)
+	{
+		validUntil_datum = DirectFunctionCall3(timestamptz_in,
+				CStringGetDatum(validUntil),
+				ObjectIdGetDatum(InvalidOid),
+				Int32GetDatum(-1));
+		validUntil_null = false;
 
-    }
-    else
-    {
-        validUntil_datum = (Datum) 0;
-        validUntil_null = true;
+	}
+	else
+	{
+		validUntil_datum = (Datum) 0;
+		validUntil_null = true;
+	}
 
-    }
-
-    /*
-     *   * Call the password checking hook if there is one defined
-     *       */
-    if (check_password_hook && password)
-        (*check_password_hook) (stmt->role,
-                password,
-                isMD5(password) ? PASSWORD_TYPE_MD5 : PASSWORD_TYPE_PLAINTEXT,
-                validUntil_datum,
-                validUntil_null);
+	/*
+	 * Call the password checking hook if there is one defined
+	 */
+	if (check_password_hook && password)
+		(*check_password_hook) (stmt->role,
+				password,
+				isMD5(password) ? PASSWORD_TYPE_MD5 : PASSWORD_TYPE_PLAINTEXT,
+				validUntil_datum,
+				validUntil_null);
 
 	/*
 	 * Build a tuple to insert
@@ -472,9 +471,8 @@ CreateRole(CreateRoleStmt *stmt)
 	else
 		new_record_nulls[Anum_pg_authid_rolpassword - 1] = true;
 
-
-    new_record[Anum_pg_authid_rolvaliduntil - 1] = validUntil_datum;
-    new_record_nulls[Anum_pg_authid_rolvaliduntil - 1] = validUntil_null;
+	new_record[Anum_pg_authid_rolvaliduntil - 1] = validUntil_datum;
+	new_record_nulls[Anum_pg_authid_rolvaliduntil - 1] = validUntil_null;
 
 	if (resqueue)
 	{
@@ -506,7 +504,6 @@ CreateRole(CreateRoleStmt *stmt)
 					 errhint("To enable set gp_resource_manager=queue")));
 	}
 	else
-<<<<<<< HEAD
 	{
 		/*
 		 * Resource queue required -- use default queue
@@ -517,8 +514,7 @@ CreateRole(CreateRoleStmt *stmt)
 		if (IsResQueueEnabled() && Gp_role == GP_ROLE_DISPATCH && !issuper)
 			ereport(NOTICE,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("resource queue required -- "
-							"using default resource queue \"%s\"",
+					 errmsg("resource queue required -- using default resource queue \"%s\"",
 							GP_DEFAULT_RESOURCE_QUEUE_NAME)));
 	}
 
@@ -565,9 +561,6 @@ CreateRole(CreateRoleStmt *stmt)
 	}
 
 	new_record_nulls[Anum_pg_authid_rolresgroup - 1] = false;
-=======
-		new_record_nulls[Anum_pg_authid_rolvaliduntil - 1] = true;
->>>>>>> 38e9348282e
 
 	new_record_nulls[Anum_pg_authid_rolconfig - 1] = true;
 
@@ -650,8 +643,7 @@ CreateRole(CreateRoleStmt *stmt)
 		MetaTrackAddObject(AuthIdRelationId,
 						   roleid,
 						   GetUserId(),
-						   "CREATE", "ROLE"
-				);
+						   "CREATE", "ROLE");
 	}
 }
 
@@ -689,8 +681,8 @@ AlterRole(AlterRoleStmt *stmt)
 	List	   *exttabcreate = NIL;	/* external table create privileges being added  */
 	List	   *exttabnocreate = NIL;	/* external table create privileges being removed */
 	char	   *validUntil = NULL;		/* time the login is valid until */
-    Datum        validUntil_datum;        /* same, as timestamptz Datum */
-    bool        validUntil_null;
+	Datum		validUntil_datum;		/* same, as timestamptz Datum */
+	bool		validUntil_null;
 	DefElem    *dpassword = NULL;
 	DefElem    *dresqueue = NULL;
 	DefElem    *dresgroup = NULL;
@@ -712,8 +704,8 @@ AlterRole(AlterRoleStmt *stmt)
 	bool		createwextgpfd;
 	bool 		createrexthdfs;
 	bool		createwexthdfs;
-	List	   *addintervals = NIL;    /* list of time intervals for which login should be denied */
-	List		*dropintervals = NIL;    /* list of time intervals for which matching rules should be dropped */
+	List	   *addintervals = NIL;		/* list of time intervals for which login should be denied */
+	List	   *dropintervals = NIL;	/* list of time intervals for which matching rules should be dropped */
 
 	numopts = list_length(stmt->options);
 
@@ -957,34 +949,32 @@ AlterRole(AlterRoleStmt *stmt)
 					 errmsg("permission denied")));
 	}
 
-    /* Convert validuntil to internal form */
-    if (validUntil)
-    {
-        validUntil_datum = DirectFunctionCall3(timestamptz_in,
-                CStringGetDatum(validUntil),
-                ObjectIdGetDatum(InvalidOid),
-                Int32GetDatum(-1));
-        validUntil_null = false;
+	/* Convert validuntil to internal form */
+	if (validUntil)
+	{
+		validUntil_datum = DirectFunctionCall3(timestamptz_in,
+				CStringGetDatum(validUntil),
+				ObjectIdGetDatum(InvalidOid),
+				Int32GetDatum(-1));
+		validUntil_null = false;
+	}
+	else
+	{
+		/* fetch existing setting in case hook needs it */
+		validUntil_datum = SysCacheGetAttr(AUTHNAME, tuple,
+				Anum_pg_authid_rolvaliduntil,
+				&validUntil_null);
+	}
 
-    }
-    else
-    {
-        /* fetch existing setting in case hook needs it */
-        validUntil_datum = SysCacheGetAttr(AUTHNAME, tuple,
-                Anum_pg_authid_rolvaliduntil,
-                &validUntil_null);
-
-    }
-
-    /*
-     *      * Call the password checking hook if there is one defined
-     *           */
-    if (check_password_hook && password)
-        (*check_password_hook) (stmt->role,
-                password,
-                isMD5(password) ? PASSWORD_TYPE_MD5 : PASSWORD_TYPE_PLAINTEXT,
-                validUntil_datum,
-                validUntil_null);
+	/*
+	 * Call the password checking hook if there is one defined
+	 */
+	if (check_password_hook && password)
+		(*check_password_hook) (stmt->role,
+				password,
+				isMD5(password) ? PASSWORD_TYPE_MD5 : PASSWORD_TYPE_PLAINTEXT,
+				validUntil_datum,
+				validUntil_null);
 
 	/*
 	 * Build an updated tuple, perusing the information just obtained
@@ -1008,11 +998,9 @@ AlterRole(AlterRoleStmt *stmt)
 
 		new_record[Anum_pg_authid_rolcatupdate - 1] = BoolGetDatum(issuper > 0);
 		new_record_repl[Anum_pg_authid_rolcatupdate - 1] = true;
-<<<<<<< HEAD
 
-		bWas_super = (issuper > 0); /* get current superuser status */
-=======
->>>>>>> 38e9348282e
+		/* get current superuser status */
+		bWas_super = (issuper > 0);
 	}
 
 	if (inherit >= 0)
@@ -1072,9 +1060,9 @@ AlterRole(AlterRoleStmt *stmt)
 	}
 
 	/* valid until */
-    new_record[Anum_pg_authid_rolvaliduntil - 1] = validUntil_datum;
-    new_record_nulls[Anum_pg_authid_rolvaliduntil - 1] = validUntil_null;
-    new_record_repl[Anum_pg_authid_rolvaliduntil - 1] = true;
+	new_record[Anum_pg_authid_rolvaliduntil - 1] = validUntil_datum;
+	new_record_nulls[Anum_pg_authid_rolvaliduntil - 1] = validUntil_null;
+	new_record_repl[Anum_pg_authid_rolvaliduntil - 1] = true;
 
 	/* Set the CREATE EXTERNAL TABLE permissions for this role, if specified in ALTER */
 	if (exttabcreate || exttabnocreate)
@@ -1133,8 +1121,7 @@ AlterRole(AlterRoleStmt *stmt)
 			{
 				ereport(NOTICE,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("resource queue required -- "
-								"using default resource queue \"%s\"",
+						 errmsg("resource queue required -- using default resource queue \"%s\"",
 								GP_DEFAULT_RESOURCE_QUEUE_NAME)));
 			}
 
@@ -1175,7 +1162,6 @@ AlterRole(AlterRoleStmt *stmt)
 	/* resource group */
 	if (resgroup)
 	{
-<<<<<<< HEAD
 		Oid			rsgid;
 
 		if (strcmp(resgroup, "none") == 0)
@@ -1213,14 +1199,6 @@ AlterRole(AlterRoleStmt *stmt)
 					(errmsg("resource group is disabled"),
 					 errhint("To enable set gp_resource_manager=group")));
 		}
-=======
-		new_record[Anum_pg_authid_rolvaliduntil - 1] =
-			DirectFunctionCall3(timestamptz_in,
-								CStringGetDatum(validUntil),
-								ObjectIdGetDatum(InvalidOid),
-								Int32GetDatum(-1));
-		new_record_repl[Anum_pg_authid_rolvaliduntil - 1] = true;
->>>>>>> 38e9348282e
 	}
 
 	new_tuple = heap_modify_tuple(tuple, pg_authid_dsc, new_record,
@@ -1303,8 +1281,7 @@ AlterRole(AlterRoleStmt *stmt)
 		MetaTrackUpdObject(AuthIdRelationId,
 						   roleid,
 						   GetUserId(),
-						   "ALTER", alter_subtype
-				);
+						   "ALTER", alter_subtype);
 
 	/*
 	 * Close pg_authid, but keep lock till commit (this is important to
@@ -1342,10 +1319,7 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 	Datum		repl_val[Natts_pg_authid];
 	bool		repl_null[Natts_pg_authid];
 	bool		repl_repl[Natts_pg_authid];
-<<<<<<< HEAD
 	char	   *alter_subtype = "SET"; /* metadata tracking */
-=======
->>>>>>> 38e9348282e
 
 	valuestr = ExtractSetVariableArgs(stmt->setstmt);
 
@@ -1383,7 +1357,6 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 
 	if (stmt->setstmt->kind == VAR_RESET_ALL)
 	{
-<<<<<<< HEAD
 		ArrayType  *new = NULL;
 		Datum		datum;
 		bool		isnull;
@@ -1410,11 +1383,6 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 			repl_null[Anum_pg_authid_rolconfig - 1] = true;
 			repl_val[Anum_pg_authid_rolconfig - 1] = (Datum) 0;
 		}
-=======
-		/* RESET ALL, so just set rolconfig to null */
-		repl_null[Anum_pg_authid_rolconfig - 1] = true;
-		repl_val[Anum_pg_authid_rolconfig - 1] = (Datum) 0;
->>>>>>> 38e9348282e
 	}
 	else
 	{
@@ -1450,13 +1418,12 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 	simple_heap_update(rel, &oldtuple->t_self, newtuple);
 	CatalogUpdateIndexes(rel, newtuple);
 
+	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH)
-		/* MPP-6929: metadata tracking */
 		MetaTrackUpdObject(AuthIdRelationId,
 						   HeapTupleGetOid(oldtuple),
 						   GetUserId(),
-						   "ALTER", alter_subtype
-				);
+						   "ALTER", alter_subtype);
 
 	ReleaseSysCache(oldtuple);
 	/* needn't keep lock since we won't be updating the flat file */
@@ -1748,11 +1715,7 @@ RenameRole(const char *oldname, const char *newname)
 
 	repl_repl[Anum_pg_authid_rolname - 1] = true;
 	repl_val[Anum_pg_authid_rolname - 1] = DirectFunctionCall1(namein,
-<<<<<<< HEAD
-												   CStringGetDatum((char *) newname));
-=======
 												   CStringGetDatum(newname));
->>>>>>> 38e9348282e
 	repl_null[Anum_pg_authid_rolname - 1] = false;
 
 	datum = heap_getattr(oldtuple, Anum_pg_authid_rolpassword, dsc, &isnull);

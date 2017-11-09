@@ -40,11 +40,8 @@
 #include "catalog/namespace.h"
 #include "catalog/oid_dispatch.h"
 #include "catalog/pg_operator.h"
-<<<<<<< HEAD
-#include "commands/alter.h"
-=======
 #include "catalog/pg_type.h"
->>>>>>> 38e9348282e
+#include "commands/alter.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"

@@ -277,13 +277,10 @@ Async_Unlisten(const char *relname)
 	if (Trace_notify)
 		elog(DEBUG1, "Async_Unlisten(%s,%d)", relname, MyProcPid);
 
-<<<<<<< HEAD
 	/* If we couldn't possibly be listening, no need to queue anything */
 	if (pendingActions == NIL && !unlistenExitRegistered)
 		return;
 
-=======
->>>>>>> 38e9348282e
 	queue_listen(LISTEN_UNLISTEN, relname);
 }
 
@@ -491,7 +488,7 @@ Exec_Listen(Relation lRel, const char *relname)
 	namestrcpy(&condname, relname);
 	values[Anum_pg_listener_relname - 1] = NameGetDatum(&condname);
 	values[Anum_pg_listener_listenerpid - 1] = Int32GetDatum(MyProcPid);
-	values[Anum_pg_listener_notification - 1] = Int32GetDatum(0);		/* no notifies pending */
+	values[Anum_pg_listener_notify - 1] = Int32GetDatum(0);		/* no notifies pending */
 
 	tuple = heap_form_tuple(RelationGetDescr(lRel), values, nulls);
 
@@ -602,15 +599,9 @@ Send_Notify(Relation lRel)
 	/* preset data to update notify column to MyProcPid */
 	memset(nulls, false, sizeof(nulls));
 	memset(repl, false, sizeof(repl));
-<<<<<<< HEAD
-	repl[Anum_pg_listener_notification - 1] = true;
-	memset(value, 0, sizeof(value));
-	value[Anum_pg_listener_notification - 1] = Int32GetDatum(MyProcPid);
-=======
 	repl[Anum_pg_listener_notify - 1] = true;
 	memset(value, 0, sizeof(value));
 	value[Anum_pg_listener_notify - 1] = Int32GetDatum(MyProcPid);
->>>>>>> 38e9348282e
 
 	scan = heap_beginscan(lRel, SnapshotNow, 0, NULL);
 
@@ -998,15 +989,9 @@ ProcessIncomingNotify(void)
 	/* Prepare data for rewriting 0 into notification field */
 	memset(nulls, false, sizeof(nulls));
 	memset(repl, false, sizeof(repl));
-<<<<<<< HEAD
-	repl[Anum_pg_listener_notification - 1] = true;
-	memset(value, 0, sizeof(value));
-	value[Anum_pg_listener_notification - 1] = Int32GetDatum(0);
-=======
 	repl[Anum_pg_listener_notify - 1] = true;
 	memset(value, 0, sizeof(value));
 	value[Anum_pg_listener_notify - 1] = Int32GetDatum(0);
->>>>>>> 38e9348282e
 
 	while ((lTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{

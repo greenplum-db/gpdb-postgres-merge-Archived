@@ -190,15 +190,9 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	 * values of the transtype.  However, we can allow polymorphic transtype
 	 * in some cases (AggregateCreate will check).  Also, we allow "internal"
 	 * for functions that want to pass pointers to private data structures;
-<<<<<<< HEAD
 	 * but allow that only to superusers, since you could crash the system (or
 	 * worse) by connecting up incompatible internal-using functions in an
 	 * aggregate.
-=======
-	 * but allow that only to superusers, since you could crash the system
-	 * (or worse) by connecting up incompatible internal-using functions
-	 * in an aggregate.
->>>>>>> 38e9348282e
 	 */
 	transTypeId = typenameTypeId(NULL, transType, NULL);
 	if (get_typtype(transTypeId) == TYPTYPE_PSEUDO &&

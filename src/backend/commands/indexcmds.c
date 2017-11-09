@@ -34,10 +34,7 @@
 #include "commands/tablespace.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
-<<<<<<< HEAD
 #include "nodes/makefuncs.h"
-=======
->>>>>>> 38e9348282e
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "parser/parse_coerce.h"

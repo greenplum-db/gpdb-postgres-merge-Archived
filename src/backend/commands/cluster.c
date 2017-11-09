@@ -25,24 +25,21 @@
 #include "access/rewriteheap.h"
 #include "access/transam.h"
 #include "access/xact.h"
+#include "catalog/aoseg.h"
+#include "catalog/aoblkdir.h"
+#include "catalog/aovisimap.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
-<<<<<<< HEAD
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/pg_attribute_encoding.h"
 #include "catalog/pg_type.h"
-=======
 #include "catalog/pg_namespace.h"
->>>>>>> 38e9348282e
-#include "catalog/toasting.h"
-#include "catalog/aoseg.h"
-#include "catalog/aoblkdir.h"
-#include "catalog/aovisimap.h"
 #include "catalog/pg_tablespace.h"
+#include "catalog/toasting.h"
 #include "commands/cluster.h"
 #include "commands/tablecmds.h"
 #include "commands/trigger.h"
@@ -78,13 +75,8 @@ typedef struct
 } RelToCluster;
 
 
-<<<<<<< HEAD
-static bool cluster_rel(RelToCluster *rv, bool recheck, ClusterStmt *stmt, bool printError);
+static bool cluster_rel(RelToCluster *rv, bool recheck, bool verbose, ClusterStmt *stmt, bool printError);
 static void rebuild_relation(Relation OldHeap, Oid indexOid, ClusterStmt *stmt);
-=======
-static void cluster_rel(RelToCluster *rv, bool recheck, bool verbose);
-static void rebuild_relation(Relation OldHeap, Oid indexOid);
->>>>>>> 38e9348282e
 static TransactionId copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
 static List *get_tables_to_cluster(MemoryContext cluster_context);
 
@@ -199,8 +191,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		heap_close(rel, NoLock);
 
 		/* Do the job */
-<<<<<<< HEAD
-		cluster_rel(&rvtc, false, stmt, true);
+		cluster_rel(&rvtc, false, stmt->verbose, stmt, true);
 
 		if (Gp_role == GP_ROLE_DISPATCH)
 		{
@@ -211,9 +202,6 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 										GetAssignedOidsForDispatch(),
 										NULL);
 		}
-=======
-		cluster_rel(&rvtc, false, stmt->verbose);
->>>>>>> 38e9348282e
 	}
 	else
 	{
@@ -263,8 +251,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 			StartTransactionCommand();
 			/* functions in indexes may want a snapshot set */
 			PushActiveSnapshot(GetTransactionSnapshot());
-<<<<<<< HEAD
-			dispatch = cluster_rel(rvtc, true, stmt, false);
+			dispatch = cluster_rel(rvtc, true, stmt->verbose, stmt, false);
 
 			if (Gp_role == GP_ROLE_DISPATCH && dispatch)
 			{
@@ -278,9 +265,6 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 											NULL);
 			}
 
-=======
-			cluster_rel(rvtc, true, stmt->verbose);
->>>>>>> 38e9348282e
 			PopActiveSnapshot();
 			CommitTransactionCommand();
 		}
@@ -311,13 +295,8 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
  * this function errors out when the relation is an AO table. Otherwise, this
  * functions prints out a warning message when the relation is an AO table.
  */
-<<<<<<< HEAD
 static bool
-cluster_rel(RelToCluster *rvtc, bool recheck, ClusterStmt *stmt, bool printError)
-=======
-static void
-cluster_rel(RelToCluster *rvtc, bool recheck, bool verbose)
->>>>>>> 38e9348282e
+cluster_rel(RelToCluster *rvtc, bool recheck, bool verbose, ClusterStmt *stmt, bool printError)
 {
 	Relation	OldHeap;
 
@@ -334,9 +313,7 @@ cluster_rel(RelToCluster *rvtc, bool recheck, bool verbose)
 
 	/* If the table has gone away, we can skip processing it */
 	if (!OldHeap)
-	{
 		return false;
-	}
 
 	/*
 	 * We don't support cluster on an AO table. We print out a warning/error to
@@ -344,12 +321,7 @@ cluster_rel(RelToCluster *rvtc, bool recheck, bool verbose)
 	 */
 	if (RelationIsAoRows(OldHeap) || RelationIsAoCols(OldHeap))
 	{
-		int elevel = WARNING;
-		
-		if (printError)
-			elevel = ERROR;
-		
-		ereport(elevel,
+		ereport((printError ? ERROR : WARNING),
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot cluster append-only table \"%s\": not supported",
 						RelationGetRelationName(OldHeap))));
@@ -429,15 +401,11 @@ cluster_rel(RelToCluster *rvtc, bool recheck, bool verbose)
 	check_index_is_clusterable(OldHeap, rvtc->indexOid, recheck);
 
 	/* rebuild_relation does all the dirty work */
-<<<<<<< HEAD
-	rebuild_relation(OldHeap, rvtc->indexOid, stmt);
-=======
 	ereport(verbose ? INFO : DEBUG2,
 			(errmsg("clustering \"%s.%s\"",
 					get_namespace_name(RelationGetNamespace(OldHeap)),
 					RelationGetRelationName(OldHeap))));
-	rebuild_relation(OldHeap, rvtc->indexOid);
->>>>>>> 38e9348282e
+	rebuild_relation(OldHeap, rvtc->indexOid, stmt);
 
 	/* NB: rebuild_relation does heap_close() on OldHeap */
 	return true;
