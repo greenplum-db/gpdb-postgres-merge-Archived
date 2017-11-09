@@ -16,16 +16,8 @@
 
 #include "storage/block.h"
 #include "storage/bufpage.h"
-<<<<<<< HEAD
-#include "storage/itemptr.h"
-#include "nodes/pg_list.h"
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
-#include "utils/rel.h"
-=======
-#include "storage/relfilenode.h"
-#include "utils/relcache.h"
->>>>>>> 38e9348282e
 
 /* prototypes for public functions in freespace.c */
 extern Size GetRecordedFreeSpace(Relation rel, BlockNumber heapBlk);
@@ -42,25 +34,9 @@ extern void XLogRecordPageWithFreeSpace(RelFileNode rnode, BlockNumber heapBlk,
 extern void FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks);
 extern void FreeSpaceMapVacuum(Relation rel);
 
-<<<<<<< HEAD
-extern void FreeSpaceMapTruncateRel(RelFileNode *rel, BlockNumber nblocks);
-extern void FreeSpaceMapForgetRel(RelFileNode *rel);
-extern void FreeSpaceMapForgetDatabase(Oid tblspc, Oid dbid);
-
-extern void PrintFreeSpaceMapStatistics(int elevel);
-
-extern void DumpFreeSpaceMap(int code, Datum arg);
-extern void LoadFreeSpaceMap(void);
-
+/* GPDB_84_MERGE_FIXME: I think these functions are gone now. */
 extern List *AppendRelToVacuumRels(Relation rel);
 extern void ResetVacuumRels(void);
 extern void ClearFreeSpaceForVacuumRels(void);
 
-#ifdef FREESPACE_DEBUG
-extern void DumpFreeSpace(void);
-#endif
-
-#endif   /* FREESPACE_H */
-=======
 #endif   /* FREESPACE_H_ */
->>>>>>> 38e9348282e
