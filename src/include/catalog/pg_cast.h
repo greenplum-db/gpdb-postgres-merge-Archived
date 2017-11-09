@@ -360,22 +360,22 @@ DATA(insert ( 1562 1562 1687 i f ));
 DATA(insert ( 1700 1700 1703 i f ));
 
 /* complex type */
-DATA(insert OID=9069 (701  195 3584 i));
-DATA(insert OID=9070 (700  195 3585 i));
-DATA(insert OID=9088 (20   195 3586 i));
-DATA(insert OID=9089 (23   195 3587 i));
-DATA(insert OID=9090 (21   195 3588 i));
-DATA(insert OID=9091 (600  195 0 e));
-DATA(insert OID=9092 (195  600 0 e));
-DATA(insert OID=9093 (1700 195 3592 i));
+DATA(insert OID=9069 (701  195 3584 i f));
+DATA(insert OID=9070 (700  195 3585 i f));
+DATA(insert OID=9088 (20   195 3586 i f));
+DATA(insert OID=9089 (23   195 3587 i f));
+DATA(insert OID=9090 (21   195 3588 i f));
+DATA(insert OID=9091 (600  195 0 e b));
+DATA(insert OID=9092 (195  600 0 e b));
+DATA(insert OID=9093 (1700 195 3592 i f));
 
 /*
  * CDB: Allow explicit cast from tid to int8
  */
-DATA(insert (   27   20 6021 e ));
+DATA(insert (   27   20 6021 e f ));
 
 /* GP: Allow explicit cast between tid and aotid. */
-DATA(insert (	27 3300    0 e ));
-DATA(insert ( 3300	 27    0 e ));
+DATA(insert (	27 3300    0 e b ));
+DATA(insert ( 3300	 27    0 e b ));
 
 #endif   /* PG_CAST_H */
