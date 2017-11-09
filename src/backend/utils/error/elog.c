@@ -218,7 +218,6 @@ static void append_with_tabs(StringInfo buf, const char *str);
 static bool is_log_level_output(int elevel, int log_min_level);
 static void write_pipe_chunks(char *data, int len, int dest);
 static void write_csvlog(ErrorData *edata);
-<<<<<<< HEAD
 static void elog_debug_linger(ErrorData *edata);
 
 
@@ -234,12 +233,10 @@ static void verify_and_replace_mbstr(char **str, int len)
 	}
 }
 
-=======
 static void setup_formatted_log_time(void);
 static void setup_formatted_start_time(void);
 
 
->>>>>>> 38e9348282e
 /*
  * in_error_recursion_trouble --- are we at risk of infinite error recursion?
  *
@@ -253,7 +250,6 @@ in_error_recursion_trouble(void)
 	/* Pull the plug if recurse more than once */
 	return (recursion_depth > 2);
 }
-<<<<<<< HEAD
 
 /*
  * One of those fallback steps is to stop trying to localize the error
@@ -298,8 +294,6 @@ elog_internalerror(const char *filename, int lineno, const char *funcname)
     abort();
 }                               /* elog_internalerror */
 
-=======
->>>>>>> 38e9348282e
 
 /*
  * errstart --- begin an error-reporting cycle
@@ -505,12 +499,8 @@ errstart(int elevel, const char *filename, int lineno,
 	edata->lineno = lineno;
 	edata->funcname = funcname;
 	/* the default text domain is the backend's */
-<<<<<<< HEAD
 	edata->domain = domain ? domain : PG_TEXTDOMAIN("postgres");
 	edata->omit_location = true;
-=======
-	edata->domain = domain ? domain : "postgres";
->>>>>>> 38e9348282e
 	/* Select default errcode based on elevel */
 	if (elevel >= ERROR)
 	{
@@ -909,11 +899,7 @@ sqlstate_to_errcode(const char *sqlstate)
 		char		   *fmtbuf; \
 		StringInfoData	buf; \
 		/* Internationalize the error format string */ \
-<<<<<<< HEAD
 		if (translateit && !in_error_recursion_trouble()) \
-=======
-		if (translateit) \
->>>>>>> 38e9348282e
 			fmt = dgettext(edata->domain, fmt); \
 		/* Expand %m in format string */ \
 		fmtbuf = expand_fmt_string(fmt, edata); \
@@ -1003,12 +989,9 @@ errmsg(const char *fmt,...)
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
 	EVALUATE_MESSAGE(message, false, true);
-<<<<<<< HEAD
 
 	/* enforce correct encoding */
 	verify_and_replace_mbstr(&(edata->message), strlen(edata->message));
-=======
->>>>>>> 38e9348282e
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -1039,7 +1022,6 @@ errmsg_internal(const char *fmt,...)
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
 	EVALUATE_MESSAGE(message, false, false);
-<<<<<<< HEAD
 
 	/* enforce correct encoding */
 	verify_and_replace_mbstr(&(edata->message), strlen(edata->message));
@@ -1070,8 +1052,6 @@ errmsg_plural(const char *fmt_singular, const char *fmt_plural,
 
 	/* enforce correct encoding */
 	verify_and_replace_mbstr(&(edata->message), strlen(edata->message));
-=======
->>>>>>> 38e9348282e
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -1094,7 +1074,6 @@ errdetail(const char *fmt,...)
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
 	EVALUATE_MESSAGE(detail, false, true);
-<<<<<<< HEAD
 
 	/* enforce correct encoding */
 	verify_and_replace_mbstr(&(edata->detail), strlen(edata->detail));
@@ -1125,8 +1104,6 @@ errdetail_plural(const char *fmt_singular, const char *fmt_plural,
 
 	/* enforce correct encoding */
 	verify_and_replace_mbstr(&(edata->detail), strlen(edata->detail));
-=======
->>>>>>> 38e9348282e
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -1149,12 +1126,9 @@ errdetail_log(const char *fmt,...)
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
 	EVALUATE_MESSAGE(detail_log, false, true);
-<<<<<<< HEAD
 
 	/* enforce correct encoding */
 	verify_and_replace_mbstr(&(edata->detail_log), strlen(edata->detail_log));
-=======
->>>>>>> 38e9348282e
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -1177,12 +1151,9 @@ errhint(const char *fmt,...)
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
 	EVALUATE_MESSAGE(hint, false, true);
-<<<<<<< HEAD
 
 	/* enforce correct encoding */
 	verify_and_replace_mbstr(&(edata->hint), strlen(edata->hint));
-=======
->>>>>>> 38e9348282e
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -1209,12 +1180,9 @@ errcontext(const char *fmt,...)
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
 	EVALUATE_MESSAGE(context, true, true);
-<<<<<<< HEAD
 
 	/* enforce correct encoding */
 	verify_and_replace_mbstr(&(edata->context), strlen(edata->context));
-=======
->>>>>>> 38e9348282e
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -1505,12 +1473,9 @@ elog_finish(int elevel, const char *fmt,...)
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
 	EVALUATE_MESSAGE(message, false, false);
-<<<<<<< HEAD
 
 	/* enforce correct encoding */
 	verify_and_replace_mbstr(&(edata->message), strlen(edata->message));
-=======
->>>>>>> 38e9348282e
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -2319,12 +2284,12 @@ setup_formatted_log_time(void)
 	tz = log_timezone ? log_timezone : gmt_timezone;
 
 	pg_strftime(formatted_log_time, FORMATTED_TS_LEN,
-				/* leave room for milliseconds... */
-				"%Y-%m-%d %H:%M:%S     %Z",
+				/* leave room for microseconds... */
+				"%Y-%m-%d %H:%M:%S        %Z",
 				pg_localtime(&stamp_time, tz));
 
-	/* 'paste' milliseconds into place... */
-	sprintf(msbuf, ".%03d", (int) (tv.tv_usec / 1000));
+	/* 'paste' microseconds into place... */
+	sprintf(msbuf, ".%06d", (int) (tv.tv_usec));
 	strncpy(formatted_log_time + 19, msbuf, 4);
 }
 
@@ -2431,56 +2396,8 @@ log_line_prefix(StringInfo buf)
 				appendStringInfo(buf, "%ld", log_line_number);
 				break;
 			case 'm':
-<<<<<<< HEAD
-				{
-					/*
-					 * Note: for %m, %t, and %s we deliberately use the C
-					 * library's strftime/localtime, and not the equivalent
-					 * functions from src/timezone.  This ensures that all
-					 * backends will report log entries in the same timezone,
-					 * namely whatever C-library setting they inherit from the
-					 * postmaster.	If we used src/timezone then local
-					 * settings of the TimeZone GUC variable would confuse the
-					 * log.
-					 *
-					 * 	CDB:  It is not safe to call strftime since it is not async-safe, and it
-					 * is expensive to call strftime to get timezone everytime, we use
-					 * pg_strftime, but stick on a fixed timezone (log_timezone)
-					 * instead a settable timezone as PostgreSQL does, since we want all
-					 * log messages to have the same time format. See MPP-2591.
-					 *
-					 */
-					struct timeval tv;
-					pg_time_t	stamp_time;
-					pg_tz	   *tz;
-					char		msbuf[8];
-
-					gettimeofday(&tv, NULL);
-					stamp_time = (pg_time_t) tv.tv_sec;
-
-					/*
-					 * Normally we print log timestamps in log_timezone, but
-					 * during startup we could get here before that's set. If
-					 * so, fall back to gmt_timezone (which guc.c ensures is
-					 * set up before Log_line_prefix can become nonempty).
-					 */
-					tz = log_timezone ? log_timezone : gmt_timezone;
-
-					pg_strftime(formatted_log_time, FORMATTED_TS_LEN,
-					/* leave room for microseconds... */
-								"%Y-%m-%d %H:%M:%S        %Z",
-							 pg_localtime(&stamp_time, log_timezone ? log_timezone : gmt_timezone));
-
-					/* 'paste' microseconds into place... */
-					sprintf(msbuf, ".%06d", (int) (tv.tv_usec));
-					strncpy(formatted_log_time + 19, msbuf, 4);
-
-					appendStringInfoString(buf, formatted_log_time);
-				}
-=======
 				setup_formatted_log_time();
 				appendStringInfoString(buf, formatted_log_time);
->>>>>>> 38e9348282e
 				break;
 			case 't':
 				{
