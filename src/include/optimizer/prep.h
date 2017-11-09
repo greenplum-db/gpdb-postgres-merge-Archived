@@ -23,10 +23,7 @@
 /*
  * prototypes for prepjointree.c
  */
-<<<<<<< HEAD
-=======
 extern void pull_up_sublinks(PlannerInfo *root);
->>>>>>> 38e9348282e
 extern void inline_set_returning_functions(PlannerInfo *root);
 extern void pull_up_sublinks(PlannerInfo *root);
 extern Node *pull_up_subqueries(PlannerInfo *root, Node *jtnode,
@@ -58,10 +55,6 @@ extern List *find_all_inheritors(Oid parentrel);
 
 extern void expand_inherited_tables(PlannerInfo *root);
 
-<<<<<<< HEAD
 extern Node *adjust_appendrel_attrs(PlannerInfo *root, Node *node, AppendRelInfo *appinfo);
-=======
-extern Node *adjust_appendrel_attrs(Node *node, AppendRelInfo *appinfo);
->>>>>>> 38e9348282e
 
 #endif   /* PREP_H */

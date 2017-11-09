@@ -57,11 +57,6 @@ enum config_group
 	APPENDONLY_TABLES,                  /*CDB*/
 	RESOURCES,
 	RESOURCES_MEM,
-<<<<<<< HEAD
-	RESOURCES_FSM,
-
-=======
->>>>>>> 38e9348282e
 	RESOURCES_KERNEL,
 	RESOURCES_MGM,
 	WAL,

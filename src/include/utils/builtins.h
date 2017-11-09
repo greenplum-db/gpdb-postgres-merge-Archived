@@ -611,10 +611,7 @@ extern char *deparse_expression(Node *expr, List *dpcontext,
 extern char *deparse_expr_sweet(Node *expr, List *dpcontext,
 				   bool forceprefix, bool showimplicit);                /*CDB*/
 extern List *deparse_context_for(const char *aliasname, Oid relid);
-<<<<<<< HEAD
 extern const char *quote_literal_internal(const char *literal);
-=======
->>>>>>> 38e9348282e
 extern List *deparse_context_for_plan(Node *plan, Node *outer_plan,
 						 List *rtable, List *subplans);
 extern const char *quote_identifier(const char *ident);

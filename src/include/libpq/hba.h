@@ -53,11 +53,7 @@ typedef enum ConnType
 	ctHostNoSSL
 } ConnType;
 
-<<<<<<< HEAD
 typedef struct
-=======
-typedef struct 
->>>>>>> 38e9348282e
 {
 	int			linenumber;
 	ConnType	conntype;

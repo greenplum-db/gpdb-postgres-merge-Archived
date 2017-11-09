@@ -98,15 +98,10 @@ typedef struct xl_xact_commit
 								/* number of PersistentEndXactRec style objects */
 
 	int			nsubxacts;		/* number of subtransaction XIDs */
-<<<<<<< HEAD
 
 	/* PersistentEndXactRec style objects for commit */
 	uint8 data[0];		/* VARIABLE LENGTH ARRAY */
 
-=======
-	/* Array of RelFileNode(s) to drop at commit */
-	RelFileNode	xnodes[1];		/* VARIABLE LENGTH ARRAY */
->>>>>>> 38e9348282e
 	/* ARRAY OF COMMITTED SUBTRANSACTION XIDs FOLLOWS */
 } xl_xact_commit;
 
@@ -121,17 +116,11 @@ typedef struct xl_xact_abort
 								/* number of PersistentEndXactRec style objects */
 
 	int			nsubxacts;		/* number of subtransaction XIDs */
-<<<<<<< HEAD
 	
 	/* PersistentEndXactRec style objects for abort */
 	uint8 data[0];		/* VARIABLE LENGTH ARRAY */
 	
 	/* ARRAY OF COMMITTED SUBTRANSACTION XIDs FOLLOWS */
-=======
-	/* Array of RelFileNode(s) to drop at abort */
-	RelFileNode	xnodes[1];		/* VARIABLE LENGTH ARRAY */
-	/* ARRAY OF ABORTED SUBTRANSACTION XIDs FOLLOWS */
->>>>>>> 38e9348282e
 } xl_xact_abort;
 
 #define MinSizeOfXactAbort offsetof(xl_xact_abort, data)

@@ -17,11 +17,8 @@
 #define HEAP_H
 
 #include "parser/parse_node.h"
-<<<<<<< HEAD
 #include "catalog/gp_persistent.h"
-=======
 #include "catalog/indexing.h"
->>>>>>> 38e9348282e
 
 /*
  * GPDB_84_MERGE_FIXME: the new constraints work in tablecmds use RawColumnDefault

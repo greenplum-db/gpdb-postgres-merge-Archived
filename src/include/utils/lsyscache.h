@@ -29,7 +29,6 @@ typedef enum IOFuncSelector
 	IOFunc_send
 } IOFuncSelector;
 
-<<<<<<< HEAD
 /* comparison types */
 typedef enum CmpType
 {
@@ -41,11 +40,10 @@ typedef enum CmpType
 	CmptGEq, 	// greater or equal to
 	CmptOther	// other operator
 } CmpType;
-=======
+
 /* Hook for plugins to get control in get_attavgwidth() */
 typedef int32 (*get_attavgwidth_hook_type) (Oid relid, AttrNumber attnum);
 extern PGDLLIMPORT get_attavgwidth_hook_type get_attavgwidth_hook;
->>>>>>> 38e9348282e
 
 extern bool op_in_opfamily(Oid opno, Oid opfamily);
 extern int	get_op_opfamily_strategy(Oid opno, Oid opfamily);

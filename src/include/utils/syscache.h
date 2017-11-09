@@ -83,12 +83,9 @@ enum SysCacheIdentifier
 	TSTEMPLATEOID,
 	TYPENAMENSP,
 	TYPEOID,
-<<<<<<< HEAD
-	WINFNOID
-=======
 	USERMAPPINGOID,
-	USERMAPPINGUSERSERVER
->>>>>>> 38e9348282e
+	USERMAPPINGUSERSERVER,
+	WINFNOID
 };
 
 extern void InitCatalogCache(void);

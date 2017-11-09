@@ -56,16 +56,14 @@ struct HTAB;  /* utils/hsearch.h */
  * at the moment.  This is different from p_relnamespace because you have
  * to make an RTE before you can access a CTE.
  *
-<<<<<<< HEAD
+ * p_future_ctes: list of CommonTableExprs (WITH items) that are not yet
+ * visible due to scope rules.  This is used to help improve error messages.
+
  * p_windowdefs: list of WindowDefs representing WINDOW and OVER clauses.
  * We collect these while transforming expressions and then transform them
  * afterwards (so that any resjunk tlist items needed for the sort/group
  * clauses end up at the end of the query tlist).  A WindowDef's location in
  * this list, counting from 1, is the winref number to use to reference it.
-=======
- * p_future_ctes: list of CommonTableExprs (WITH items) that are not yet
- * visible due to scope rules.  This is used to help improve error messages.
->>>>>>> 38e9348282e
  *
  * p_paramtypes: an array of p_numparams type OIDs for $n parameter symbols
  * (zeroth entry in array corresponds to $1).  If p_variableparams is true, the
@@ -85,14 +83,9 @@ typedef struct ParseState
 								 * node's fromlist) */
 	List	   *p_relnamespace; /* current namespace for relations */
 	List	   *p_varnamespace; /* current namespace for columns */
-<<<<<<< HEAD
-	List       *p_ctenamespace; /* current namespace for common-table-expressions */
-	List	   *p_future_ctes;	/* common table exprs not yet in namespace */
-	List	   *p_windowdefs;	/* raw representations of window clauses */
-=======
 	List	   *p_ctenamespace; /* current namespace for common table exprs */
 	List	   *p_future_ctes;	/* common table exprs not yet in namespace */
->>>>>>> 38e9348282e
+	List	   *p_windowdefs;	/* raw representations of window clauses */
 	Oid		   *p_paramtypes;	/* OIDs of types for $n parameter symbols */
 	int			p_numparams;	/* allocated size of p_paramtypes[] */
 	int			p_next_resno;	/* next targetlist resno to assign */

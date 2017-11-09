@@ -107,11 +107,7 @@ typedef struct PlannerGlobal
 	List	   *relationOids;	/* OIDs of relations the plan depends on */
 
 	List	   *invalItems;		/* other dependencies, as PlanInvalItems */
-<<<<<<< HEAD
-	
-=======
 
->>>>>>> 38e9348282e
 	Index		lastPHId;		/* highest PlaceHolderVar ID assigned */
 
 	bool		transientPlan;	/* redo plan when TransactionXmin changes? */
@@ -268,13 +264,10 @@ typedef struct PlannerInfo
 	/* These fields are used only when hasRecursion is true: */
 	int			wt_param_id;			/* PARAM_EXEC ID for the work table */
 	struct Plan *non_recursive_plan;	/* plan for non-recursive term */
-<<<<<<< HEAD
 
 	PlannerConfig *config;		/* Planner configuration */
 
 	List	   *dynamicScans;	/* DynamicScanInfos */
-=======
->>>>>>> 38e9348282e
 } PlannerInfo;
 
 /*----------
@@ -1731,11 +1724,7 @@ typedef struct AppendRelInfo
 typedef struct PlaceHolderInfo
 {
 	NodeTag		type;
-<<<<<<< HEAD
-	
-=======
 
->>>>>>> 38e9348282e
 	Index		phid;			/* ID for PH (unique within planner run) */
 	PlaceHolderVar *ph_var;		/* copy of PlaceHolderVar tree */
 	Relids		ph_eval_at;		/* lowest level we can evaluate value at */

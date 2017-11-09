@@ -21,9 +21,6 @@ extern RecursiveUnionState *ExecInitRecursiveUnion(RecursiveUnion *node, EState 
 extern TupleTableSlot *ExecRecursiveUnion(RecursiveUnionState *node);
 extern void ExecEndRecursiveUnion(RecursiveUnionState *node);
 extern void ExecRecursiveUnionReScan(RecursiveUnionState *node, ExprContext *exprCtxt);
-<<<<<<< HEAD
 extern void ExecEagerFreeRecursiveUnion(RecursiveUnionState *node);
-=======
->>>>>>> 38e9348282e
 
 #endif   /* NODERECURSIVEUNION_H */

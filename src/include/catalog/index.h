@@ -74,21 +74,12 @@ extern void index_build(Relation heapRelation,
 			bool isprimary,
 			bool isreindex);
 
-<<<<<<< HEAD
 extern double IndexBuildScan(Relation parentRelation,
 					Relation indexRelation,
 					IndexInfo *indexInfo,
 					bool allow_sync,
 					IndexBuildCallback callback,
 					void *callback_state);
-=======
-extern double IndexBuildHeapScan(Relation heapRelation,
-				   Relation indexRelation,
-				   IndexInfo *indexInfo,
-				   bool allow_sync,
-				   IndexBuildCallback callback,
-				   void *callback_state);
->>>>>>> 38e9348282e
 
 extern void validate_index(Oid heapId, Oid indexId, Snapshot snapshot);
 

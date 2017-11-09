@@ -52,13 +52,7 @@ extern FuncDetailCode func_get_detail(List *funcname, List *fargs,
 				int nargs, Oid *argtypes,
 				bool expand_variadic, bool expand_defaults,
 				Oid *funcid, Oid *rettype,
-<<<<<<< HEAD
-				bool *retset,
-				int *nvargs,
-				Oid **true_typeids,
-=======
 				bool *retset, int *nvargs, Oid **true_typeids,
->>>>>>> 38e9348282e
 				List **argdefaults);
 
 extern int func_match_argtypes(int nargs,
