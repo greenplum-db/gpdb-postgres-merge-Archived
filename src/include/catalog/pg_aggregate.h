@@ -263,15 +263,11 @@ DATA(insert ( 3230  float8_pivot_accum    - float8_matrix_accum   - -   0   1022
 DATA(insert ( 2901  xmlconcat2	             - - - - 				  0	142  _null_ t));
 
 /* array */
-DATA(insert ( 6098	array_agg_transfn        - - - array_agg_finalfn  0 2281 _null_ t));
+DATA(insert ( 2335	array_agg_transfn        - - - array_agg_finalfn  0 2281 _null_ t));
 
 /* text */
 DATA(insert ( 3537	string_agg_transfn       - - - string_agg_finalfn 0 2281 _null_ t));
 DATA(insert ( 3538	string_agg_delim_transfn - - - string_agg_finalfn 0 2281 _null_ t));
-
-
-/* array */
-DATA(insert ( 2335	array_agg_transfn	array_agg_finalfn		0	2281	_null_ ));
 
 /*
  * prototypes for functions in pg_aggregate.c
