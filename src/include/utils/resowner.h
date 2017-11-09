@@ -128,20 +128,18 @@ extern void ResourceOwnerRememberTupleDesc(ResourceOwner owner,
 extern void ResourceOwnerForgetTupleDesc(ResourceOwner owner,
 							 TupleDesc tupdesc);
 
-<<<<<<< HEAD
-/* support for temporary file management */
-extern void ResourceOwnerEnlargeFiles(ResourceOwner owner);
-extern void ResourceOwnerRememberFile(ResourceOwner owner,
-						  File file);
-extern void ResourceOwnerForgetFile(ResourceOwner owner,
-						File file);
-=======
 /* support for snapshot refcount management */
 extern void ResourceOwnerEnlargeSnapshots(ResourceOwner owner);
 extern void ResourceOwnerRememberSnapshot(ResourceOwner owner,
 							  Snapshot snapshot);
 extern void ResourceOwnerForgetSnapshot(ResourceOwner owner,
 							Snapshot snapshot);
->>>>>>> 38e9348282e
+
+/* support for temporary file management */
+extern void ResourceOwnerEnlargeFiles(ResourceOwner owner);
+extern void ResourceOwnerRememberFile(ResourceOwner owner,
+						  File file);
+extern void ResourceOwnerForgetFile(ResourceOwner owner,
+						File file);
 
 #endif   /* RESOWNER_H */
