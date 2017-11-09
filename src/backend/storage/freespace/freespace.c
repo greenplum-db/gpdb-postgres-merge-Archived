@@ -36,14 +36,6 @@
 #include "utils/inval.h"
 #include "miscadmin.h"
 
-<<<<<<< HEAD
-#include "cdb/cdbvars.h"
-
-/*----------
- * During database shutdown, we store the contents of FSM into a disk file,
- * which is re-read during startup.  This way we don't have a startup
- * transient condition where FSM isn't really functioning.
-=======
 /*
  * We use just one byte to store the amount of free space on a page, so we
  * divide the amount of free space a page can have into 256 different
@@ -56,7 +48,6 @@
  * default 8k BLCKSZ, and that MaxFSMRequestSize is 24 bytes, the categories
  * look like this
  *
->>>>>>> 38e9348282e
  *
  * Range     Category
  * 0    - 31   0
@@ -73,82 +64,9 @@
  * completely empty page, that would mean that we could never satisfy a
  * request of exactly MaxFSMRequestSize bytes.
  */
-<<<<<<< HEAD
-
-/* Name of FSM cache file (relative to $PGDATA) */
-#define FSM_CACHE_FILENAME	"global/pg_fsm.cache"
-
-/* Fixed values in header */
-#define FSM_CACHE_LABEL		"FSM"
-#define FSM_CACHE_ENDIAN	0x01020304
-#define FSM_CACHE_VERSION	20030305
-
-/* File header layout */
-typedef struct FsmCacheFileHeader
-{
-	char		label[4];
-	uint32		endian;
-	uint32		version;
-	int32		numRels;
-} FsmCacheFileHeader;
-
-/* Per-relation header */
-typedef struct FsmCacheRelHeader
-{
-	RelFileNode key;			/* hash key (must be first) */
-	bool		isIndex;		/* if true, we store only page numbers */
-	uint32		avgRequest;		/* moving average of space requests */
-	BlockNumber interestingPages;		/* # of pages with useful free space */
-	int32		storedPages;	/* # of pages stored in arena */
-} FsmCacheRelHeader;
-
-int			MaxFSMRelations;	/* these are set by guc.c */
-int			MaxFSMPages;
-
-static FSMHeader *FreeSpaceMap; /* points to FSMHeader in shared memory */
-static HTAB *FreeSpaceMapRelHash;		/* points to (what used to be)
-										 * FSMHeader->relHash */
-
-
-static void CheckFreeSpaceMapStatistics(int elevel, int numRels,
-							double needed);
-static FSMRelation *lookup_fsm_rel(RelFileNode *rel);
-static FSMRelation *create_fsm_rel(RelFileNode *rel);
-static void delete_fsm_rel(FSMRelation *fsmrel);
-static int realloc_fsm_rel(FSMRelation *fsmrel, BlockNumber interestingPages,
-				bool isIndex);
-static void link_fsm_rel_usage(FSMRelation *fsmrel);
-static void unlink_fsm_rel_usage(FSMRelation *fsmrel);
-static void link_fsm_rel_storage(FSMRelation *fsmrel);
-static void unlink_fsm_rel_storage(FSMRelation *fsmrel);
-static BlockNumber find_free_space(FSMRelation *fsmrel, Size spaceNeeded);
-static BlockNumber find_index_free_space(FSMRelation *fsmrel);
-static void fsm_record_free_space(FSMRelation *fsmrel, BlockNumber page,
-					  Size spaceAvail);
-static bool lookup_fsm_page_entry(FSMRelation *fsmrel, BlockNumber page,
-					  int *outPageIndex);
-static void compact_fsm_storage(void);
-static void push_fsm_rels_after(FSMRelation *afterRel);
-static void pack_incoming_pages(FSMPageData *newLocation, int newPages,
-					FSMPageData *pageSpaces, int nPages);
-static void pack_existing_pages(FSMPageData *newLocation, int newPages,
-					FSMPageData *oldLocation, int oldPages);
-static int	fsm_calc_request(FSMRelation *fsmrel);
-static int	fsm_calc_request_unclamped(FSMRelation *fsmrel);
-static int	fsm_calc_target_allocation(int myRequest);
-static int	fsm_current_chunks(FSMRelation *fsmrel);
-static int	fsm_current_allocation(FSMRelation *fsmrel);
-
-/*
- * List of relations that are in the vacuum process and have not been
- * commited.
- */
-static List *vacuumRels = NIL;
-=======
 #define FSM_CATEGORIES	256
 #define FSM_CAT_STEP	(BLCKSZ / FSM_CATEGORIES)
 #define MaxFSMRequestSize	MaxHeapTupleSize
->>>>>>> 38e9348282e
 
 /*
  * Depth of the on-disk tree. We need to be able to address 2^32-1 blocks,
@@ -395,43 +313,18 @@ FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
 }
 
 /*
-<<<<<<< HEAD
- * FreeSpaceMapForgetDatabase - forget all relations of a database.
- *
- * This is called during DROP DATABASE and DROP TABLESPACE.  As above,
- * might as well reclaim map space sooner instead of later.
- */
-void
-FreeSpaceMapForgetDatabase(Oid tblspc, Oid dbid)
-=======
  * FreeSpaceMapVacuum - scan and fix any inconsistencies in the FSM
  */
 void
 FreeSpaceMapVacuum(Relation rel)
->>>>>>> 38e9348282e
 {
 	bool dummy;
 
-<<<<<<< HEAD
-	LWLockAcquire(FreeSpaceLock, LW_EXCLUSIVE);
-	for (fsmrel = FreeSpaceMap->usageList; fsmrel; fsmrel = nextrel)
-	{
-		nextrel = fsmrel->nextUsage;	/* in case we delete it */
-		if (!OidIsValid(tblspc) ||
-			fsmrel->key.spcNode == tblspc)
-		{
-			if (fsmrel->key.dbNode == dbid)
-				delete_fsm_rel(fsmrel);
-		}
-	}
-	LWLockRelease(FreeSpaceLock);
-=======
 	/*
 	 * Traverse the tree in depth-first order. The tree is stored physically
 	 * in depth-first order, so this should be pretty I/O efficient.
 	 */
 	fsm_vacuum_page(rel, FSM_ROOT_ADDRESS, &dummy);
->>>>>>> 38e9348282e
 }
 
 /******** Internal routines ********/
@@ -458,32 +351,7 @@ fsm_space_avail_to_cat(Size avail)
 	if (cat > 254)
 		cat = 254;
 
-<<<<<<< HEAD
-	/* Copy other stats before dropping lock */
-	numRels = FreeSpaceMap->numRels;
-	LWLockRelease(FreeSpaceLock);
-
-	/* Convert stats to actual number of page slots needed */
-	needed = (sumRequests + numRels) * CHUNKPAGES;
-
-	ereport(elevel,
-			(errmsg("free space map contains %d pages in %d relations",
-					storedPages, numRels),
-	errdetail("A total of %.0f page slots are in use (including overhead).\n"
-			  "%.0f page slots are required to track all free space.\n"
-		  "Current limits are:  %d page slots, %d relations, using %.0f kB.",
-			  Min(needed, MaxFSMPages),
-			  needed,
-			  MaxFSMPages, MaxFSMRelations,
-			  (double) FreeSpaceShmemSize() / 1024.0)));
-
-	if (Gp_role != GP_ROLE_DISPATCH) /* not interesting on the dispatch node */
-		CheckFreeSpaceMapStatistics(NOTICE, numRels, needed);
-	/* Print to server logs too because is deals with a config variable. */
-	CheckFreeSpaceMapStatistics(LOG, numRels, needed);
-=======
 	return (uint8) cat;
->>>>>>> 38e9348282e
 }
 
 /*
@@ -874,174 +742,7 @@ fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof_p)
 		int slot;
 		bool eof = false;
 
-<<<<<<< HEAD
-/*
- * Calculate target allocation (number of chunks) for a rel
- *
- * Parameter is the result from fsm_calc_request().  The global sumRequests
- * and numRels totals must be up-to-date already.
- *
- * See notes at top of file for details.
- */
-static int
-fsm_calc_target_allocation(int myRequest)
-{
-	double		spareChunks;
-	int			extra;
-
-	spareChunks = FreeSpaceMap->totalChunks - FreeSpaceMap->numRels;
-	Assert(spareChunks > 0);
-	if (spareChunks >= FreeSpaceMap->sumRequests)
-	{
-		/* We aren't oversubscribed, so allocate exactly the request */
-		extra = myRequest;
-	}
-	else
-	{
-		extra = (int) rint(spareChunks * myRequest / FreeSpaceMap->sumRequests);
-		if (extra < 0)			/* shouldn't happen, but make sure */
-			extra = 0;
-	}
-	return 1 + extra;
-}
-
-/*
- * Calculate number of chunks actually used to store current data
- */
-static int
-fsm_current_chunks(FSMRelation *fsmrel)
-{
-	int			chunkCount;
-
-	/* Make sure storedPages==0 produces right answer */
-	if (fsmrel->storedPages <= 0)
-		return 0;
-	/* Convert page count to chunk count */
-	if (fsmrel->isIndex)
-		chunkCount = (fsmrel->storedPages - 1) / INDEXCHUNKPAGES + 1;
-	else
-		chunkCount = (fsmrel->storedPages - 1) / CHUNKPAGES + 1;
-	return chunkCount;
-}
-
-/*
- * Calculate current actual allocation (number of chunks) for a rel
- */
-static int
-fsm_current_allocation(FSMRelation *fsmrel)
-{
-	if (fsmrel->nextPhysical != NULL)
-		return fsmrel->nextPhysical->firstChunk - fsmrel->firstChunk;
-	else if (fsmrel == FreeSpaceMap->lastRel)
-		return FreeSpaceMap->usedChunks - fsmrel->firstChunk;
-	else
-	{
-		/* it's not in the storage-order list */
-		Assert(fsmrel->firstChunk < 0 && fsmrel->storedPages == 0);
-		return 0;
-	}
-}
-
-
-/*
- * Return the FreeSpaceMap structure for examination.
- */
-FSMHeader *
-GetFreeSpaceMap(void)
-{
-
-	return FreeSpaceMap;
-}
-
-/*
- * Append relations that are in the vacuum process to the vacuumRels list.
- *
- * Only support non-index relations.
- */
-List *
-AppendRelToVacuumRels(Relation rel)
-{
-	RelFileNode *relfilenode = palloc(sizeof(RelFileNode));
-
-	/* This relation should not be an index. */
-	Assert(!OidIsValid(rel->rd_rel->relam));
-
-	relfilenode->spcNode = (rel->rd_node).spcNode;
-	relfilenode->dbNode = (rel->rd_node).dbNode;
-	relfilenode->relNode = (rel->rd_node).relNode;
-	vacuumRels = lappend(vacuumRels, relfilenode);
-
-	elog(DEBUG2, "Add relation %d/%d/%d to VacuumRels",
-		 relfilenode->spcNode, relfilenode->dbNode, relfilenode->relNode);
-
-	return vacuumRels;
-}
-
-/*
- * Remove all relations in the vacuumRels list. This should be called during
- * commit.
- */
-void
-ResetVacuumRels()
-{
-	if (vacuumRels == NULL)
-		return;
-	
-	list_free_deep(vacuumRels);
-	vacuumRels = NIL;
-	elog(DEBUG2, "Reset VacuumRels");
-}
-
-/*
- * Clear the freespace map entries for relations that are in vacuumRels.
- */
-void
-ClearFreeSpaceForVacuumRels()
-{
-	ListCell *lc;
-
-	if (vacuumRels == NULL)
-		return;
-	
-	foreach (lc, vacuumRels)
-	{
-		RelFileNode *relfilenode = (RelFileNode *)lfirst(lc);
-		RecordRelationFreeSpace(relfilenode, 0, 0, NULL);
-
-		elog(DEBUG2, "Clear the freespace map entry for relation %d/%d/%d in VacuumRels",
-			 relfilenode->spcNode, relfilenode->dbNode, relfilenode->relNode);
-	}
-
-	ResetVacuumRels();
-}
-
-#ifdef FREESPACE_DEBUG
-/*
- * Dump contents of freespace map for debugging.
- *
- * We assume caller holds the FreeSpaceLock, or is otherwise unconcerned
- * about other processes.
- */
-void
-DumpFreeSpace(void)
-{
-	FSMRelation *fsmrel;
-	FSMRelation *prevrel = NULL;
-	int			relNum = 0;
-	int			nPages;
-
-	for (fsmrel = FreeSpaceMap->usageList; fsmrel; fsmrel = fsmrel->nextUsage)
-	{
-		relNum++;
-		fprintf(stderr, "Map %d: rel %u/%u/%u isIndex %d avgRequest %u interestingPages %u nextPage %d\nMap= ",
-				relNum,
-				fsmrel->key.spcNode, fsmrel->key.dbNode, fsmrel->key.relNode,
-				(int) fsmrel->isIndex, fsmrel->avgRequest,
-				fsmrel->interestingPages, fsmrel->nextPage);
-		if (fsmrel->isIndex)
-=======
 		for (slot = 0; slot < SlotsPerFSMPage; slot++)
->>>>>>> 38e9348282e
 		{
 			int child_avail;
 

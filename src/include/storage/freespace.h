@@ -34,9 +34,4 @@ extern void XLogRecordPageWithFreeSpace(RelFileNode rnode, BlockNumber heapBlk,
 extern void FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks);
 extern void FreeSpaceMapVacuum(Relation rel);
 
-/* GPDB_84_MERGE_FIXME: I think these functions are gone now. */
-extern List *AppendRelToVacuumRels(Relation rel);
-extern void ResetVacuumRels(void);
-extern void ClearFreeSpaceForVacuumRels(void);
-
 #endif   /* FREESPACE_H_ */
