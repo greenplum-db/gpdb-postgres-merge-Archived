@@ -21,11 +21,7 @@
 #include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
-<<<<<<< HEAD
-#include "catalog/oid_dispatch.h"
-=======
 #include "catalog/namespace.h"
->>>>>>> 38e9348282e
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
@@ -428,90 +424,10 @@ OperatorCreate(const char *operatorName,
 	 * filling in a previously-created shell.  Insist that the user own
 	 * any such shell.
 	 */
-<<<<<<< HEAD
-
-	/*
-	 * Look up registered procedures -- find the return type of procedureName
-	 * to place in "result" field. Do this before shells are created so we
-	 * don't have to worry about deleting them later.
-	 */
-	if (!OidIsValid(leftTypeId))
-	{
-		typeId[0] = rightTypeId;
-		nargs = 1;
-	}
-	else if (!OidIsValid(rightTypeId))
-	{
-		typeId[0] = leftTypeId;
-		nargs = 1;
-	}
-	else
-	{
-		typeId[0] = leftTypeId;
-		typeId[1] = rightTypeId;
-		nargs = 2;
-	}
-	procOid = LookupFuncName(procedureName, nargs, typeId, false);
-	operResultType = get_func_rettype(procOid);
-
-	/*
-	 * find restriction estimator
-	 */
-	if (restrictionName)
-	{
-		typeId[0] = INTERNALOID;	/* Query */
-		typeId[1] = OIDOID;		/* operator OID */
-		typeId[2] = INTERNALOID;	/* args list */
-		typeId[3] = INT4OID;	/* varRelid */
-
-		restOid = LookupFuncName(restrictionName, 4, typeId, false);
-	}
-	else
-		restOid = InvalidOid;
-
-	/*
-	 * find join estimator
-	 */
-	if (joinName)
-	{
-		typeId[0] = INTERNALOID;	/* Query */
-		typeId[1] = OIDOID;		/* operator OID */
-		typeId[2] = INTERNALOID;	/* args list */
-		typeId[3] = INT2OID;	/* jointype */
-
-		joinOid = LookupFuncName(joinName, 4, typeId, false);
-	}
-	else
-		joinOid = InvalidOid;
-
-	/*
-	 * set up values in the operator tuple
-	 */
-
-	for (i = 0; i < Natts_pg_operator; ++i)
-	{
-		values[i] = 0;
-		replaces[i] = true;
-		nulls[i] = false;
-	}
-
-	i = 0;
-	namestrcpy(&oname, operatorName);
-	values[i++] = NameGetDatum(&oname); /* oprname */
-	values[i++] = ObjectIdGetDatum(operatorNamespace);	/* oprnamespace */
-	values[i++] = ObjectIdGetDatum(GetUserId());		/* oprowner */
-	values[i++] = CharGetDatum(leftTypeId ? (rightTypeId ? 'b' : 'r') : 'l');	/* oprkind */
-	values[i++] = BoolGetDatum(canMerge);		/* oprcanmerge */
-	values[i++] = BoolGetDatum(canHash);		/* oprcanhash */
-	values[i++] = ObjectIdGetDatum(leftTypeId); /* oprleft */
-	values[i++] = ObjectIdGetDatum(rightTypeId);		/* oprright */
-	values[i++] = ObjectIdGetDatum(operResultType);		/* oprresult */
-=======
 	if (OidIsValid(operatorObjectId) &&
 		!pg_oper_ownercheck(operatorObjectId, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPER,
 					   operatorName);
->>>>>>> 38e9348282e
 
 	/*
 	 * Set up the other operators.	If they do not currently exist, create
