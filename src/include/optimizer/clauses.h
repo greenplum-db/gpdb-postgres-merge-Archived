@@ -20,14 +20,11 @@
 
 #define is_opclause(clause)		((clause) != NULL && IsA(clause, OpExpr))
 #define is_funcclause(clause)	((clause) != NULL && IsA(clause, FuncExpr))
-<<<<<<< HEAD
 
 // max size of a folded constant when optimizing queries in Orca
 // Note: this is to prevent OOM issues when trying to serialize very large constants
 // Current limit: 100KB
 #define GPOPT_MAX_FOLDED_CONSTANT_SIZE (100*1024)
-=======
->>>>>>> 38e9348282e
 
 typedef struct
 {
@@ -73,11 +70,8 @@ extern List *make_ands_implicit(Expr *clause);
 extern bool contain_agg_clause(Node *clause);
 extern void count_agg_clauses(Node *clause, AggClauseCounts *counts);
 
-<<<<<<< HEAD
 extern bool contain_window_function(Node *clause);
 
-=======
->>>>>>> 38e9348282e
 extern double expression_returns_set_rows(Node *clause);
 
 extern bool contain_subplans(Node *clause);
@@ -89,11 +83,8 @@ extern Relids find_nonnullable_rels(Node *clause);
 extern List *find_nonnullable_vars(Node *clause);
 extern List *find_forced_null_vars(Node *clause);
 extern Var *find_forced_null_var(Node *clause);
-<<<<<<< HEAD
 
 extern char check_execute_on_functions(Node *clause);
-=======
->>>>>>> 38e9348282e
 
 extern bool is_pseudo_constant_clause(Node *clause);
 extern bool is_pseudo_constant_clause_relids(Node *clause, Relids relids);
@@ -115,8 +106,8 @@ extern Expr *transform_array_Const_to_ArrayExpr(Const *c);
 
 extern Node *estimate_expression_value(PlannerInfo *root, Node *node);
 
-<<<<<<< HEAD
-extern Query *inline_set_returning_function(PlannerInfo *root, Node *node);
+extern Query *inline_set_returning_function(PlannerInfo *root,
+											RangeTblEntry *rte);
 
 extern Expr *evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod);
 
@@ -130,9 +121,5 @@ extern bool subexpression_match(Expr *expr1, Expr *expr2);
 
 // resolve the join alias varno/varattno information to its base varno/varattno information
 extern Query *flatten_join_alias_var_optimizer(Query *query, int queryLevel);
-=======
-extern Query *inline_set_returning_function(PlannerInfo *root,
-											RangeTblEntry *rte);
->>>>>>> 38e9348282e
 
 #endif   /* CLAUSES_H */

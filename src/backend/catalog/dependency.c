@@ -35,14 +35,11 @@
 #include "catalog/pg_conversion_fn.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_depend.h"
-<<<<<<< HEAD
 #include "catalog/pg_extprotocol.h"
 #include "catalog/pg_extension.h"
 #include "catalog/pg_filespace.h"
-=======
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
->>>>>>> 38e9348282e
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
@@ -58,12 +55,9 @@
 #include "catalog/pg_ts_parser.h"
 #include "catalog/pg_ts_template.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
 #include "catalog/pg_type_encoding.h"
-#include "cdb/cdbpartition.h"
-=======
 #include "catalog/pg_user_mapping.h"
->>>>>>> 38e9348282e
+#include "cdb/cdbpartition.h"
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
@@ -1168,7 +1162,18 @@ doDeletion(const ObjectAddress *object)
 			RemoveTSConfigurationById(object->objectId);
 			break;
 
-<<<<<<< HEAD
+		case OCLASS_USER_MAPPING:
+			RemoveUserMappingById(object->objectId);
+			break;
+
+		case OCLASS_FOREIGN_SERVER:
+			RemoveForeignServerById(object->objectId);
+			break;
+
+		case OCLASS_FDW:
+			RemoveForeignDataWrapperById(object->objectId);
+			break;
+
 		case OCLASS_EXTENSION:
 			RemoveExtensionById(object->objectId);
 			break;
@@ -1189,21 +1194,6 @@ doDeletion(const ObjectAddress *object)
 			 * OCLASS_ROLE, OCLASS_DATABASE, OCLASS_TBLSPACE intentionally
 			 * not handled here
 			 */
-=======
-		case OCLASS_USER_MAPPING:
-			RemoveUserMappingById(object->objectId);
-			break;
-
-		case OCLASS_FOREIGN_SERVER:
-			RemoveForeignServerById(object->objectId);
-			break;
-
-		case OCLASS_FDW:
-			RemoveForeignDataWrapperById(object->objectId);
-			break;
-
-			/* OCLASS_ROLE, OCLASS_DATABASE, OCLASS_TBLSPACE not handled */
->>>>>>> 38e9348282e
 
 		default:
 			elog(ERROR, "unrecognized object class: %u",
@@ -1600,7 +1590,6 @@ find_expr_references_walker(Node *node,
 						   context->addrs);
 		/* fall through to examine arguments */
 	}
-<<<<<<< HEAD
 	else if (IsA(node, WindowFunc))
 	{
 		WindowFunc *wfunc = (WindowFunc *) node;
@@ -1609,10 +1598,7 @@ find_expr_references_walker(Node *node,
 						   context->addrs);
 		/* fall through to examine arguments */
 	}
-	if (IsA(node, SubPlan))
-=======
 	else if (IsA(node, SubPlan))
->>>>>>> 38e9348282e
 	{
 		/* Extra work needed here if we ever need this case */
 		elog(ERROR, "already-planned subqueries not supported");
@@ -2155,7 +2141,18 @@ getObjectClass(const ObjectAddress *object)
 			Assert(object->objectSubId == 0);
 			return OCLASS_TBLSPACE;
 
-<<<<<<< HEAD
+		case ForeignDataWrapperRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_FDW;
+
+		case ForeignServerRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_FOREIGN_SERVER;
+
+		case UserMappingRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_USER_MAPPING;
+
 		case FileSpaceRelationId:
 			Assert(object->objectSubId == 0);
 			return OCLASS_FILESPACE;
@@ -2171,19 +2168,6 @@ getObjectClass(const ObjectAddress *object)
 		case CompressionRelationId:
 			Assert(object->objectSubId == 0);
 			return OCLASS_COMPRESSION;
-=======
-		case ForeignDataWrapperRelationId:
-			Assert(object->objectSubId == 0);
-			return OCLASS_FDW;
-
-		case ForeignServerRelationId:
-			Assert(object->objectSubId == 0);
-			return OCLASS_FOREIGN_SERVER;
-
-		case UserMappingRelationId:
-			Assert(object->objectSubId == 0);
-			return OCLASS_USER_MAPPING;
->>>>>>> 38e9348282e
 	}
 
 	/* shouldn't get here */
@@ -2680,43 +2664,6 @@ getObjectDescription(const ObjectAddress *object)
 				break;
 			}
 
-<<<<<<< HEAD
-		case OCLASS_FILESPACE:
-			{
-				char       *fsname;
-
-				fsname = get_filespace_name(object->objectId);
-				if (!fsname)
-					elog(ERROR, "cache lookup failed for filespace %u",
-						 object->objectId);
-				appendStringInfo(&buffer, _("filespace %s"), fsname);
-				break;
-			}				
-
-		case OCLASS_EXTENSION:
-			{
-				char       *extname;
-
-				extname = get_extension_name(object->objectId);
-				if (!extname)
-					elog(ERROR, "cache lookup failed for extension %u",
-						 object->objectId);
-				appendStringInfo(&buffer, _("extension %s"), extname);
-				break;
-			}
-
-		case OCLASS_EXTPROTOCOL:
-			{
-				appendStringInfo(&buffer, _("protocol %s"),
-								 ExtProtocolGetNameByOid(object->objectId));
-				break;
-			}
-		case OCLASS_COMPRESSION:
-			{
-				elog(NOTICE, "NOT YET IMPLEMENTED");
-				break;
-			}
-=======
 		case OCLASS_FDW:
 			{
 				ForeignDataWrapper *fdw;
@@ -2761,7 +2708,42 @@ getObjectDescription(const ObjectAddress *object)
 				break;
 			}
 
->>>>>>> 38e9348282e
+		case OCLASS_FILESPACE:
+			{
+				char       *fsname;
+
+				fsname = get_filespace_name(object->objectId);
+				if (!fsname)
+					elog(ERROR, "cache lookup failed for filespace %u",
+						 object->objectId);
+				appendStringInfo(&buffer, _("filespace %s"), fsname);
+				break;
+			}				
+
+		case OCLASS_EXTENSION:
+			{
+				char       *extname;
+
+				extname = get_extension_name(object->objectId);
+				if (!extname)
+					elog(ERROR, "cache lookup failed for extension %u",
+						 object->objectId);
+				appendStringInfo(&buffer, _("extension %s"), extname);
+				break;
+			}
+
+		case OCLASS_EXTPROTOCOL:
+			{
+				appendStringInfo(&buffer, _("protocol %s"),
+								 ExtProtocolGetNameByOid(object->objectId));
+				break;
+			}
+		case OCLASS_COMPRESSION:
+			{
+				elog(NOTICE, "NOT YET IMPLEMENTED");
+				break;
+			}
+
 		default:
 			appendStringInfo(&buffer, "unrecognized object %u %u %d",
 							 object->classId,
