@@ -33,13 +33,7 @@
  * backend-only stuff in the XLOG include files we need.  But we need a
  * frontend-ish environment otherwise.  Hence this ugly hack.
  */
-<<<<<<< HEAD
-#ifndef FRONTEND
 #define FRONTEND 1
-#endif 
-=======
-#define FRONTEND 1
->>>>>>> 38e9348282e
 
 #include "postgres.h"
 #include "pgtime.h"
@@ -608,26 +602,7 @@ GuessControlValues(void)
 #endif
 	ControlFile.float4ByVal = FLOAT4PASSBYVAL;
 	ControlFile.float8ByVal = FLOAT8PASSBYVAL;
-<<<<<<< HEAD
-	ControlFile.localeBuflen = LOCALE_NAME_BUFLEN;
 	ControlFile.data_checksum_version = PG_DATA_CHECKSUM_VERSION;
-
-	localeptr = setlocale(LC_COLLATE, "");
-	if (!localeptr)
-	{
-		fprintf(stderr, _("%s: invalid LC_COLLATE setting\n"), progname);
-		exit(1);
-	}
-	strlcpy(ControlFile.lc_collate, localeptr, sizeof(ControlFile.lc_collate));
-	localeptr = setlocale(LC_CTYPE, "");
-	if (!localeptr)
-	{
-		fprintf(stderr, _("%s: invalid LC_CTYPE setting\n"), progname);
-		exit(1);
-	}
-	strlcpy(ControlFile.lc_ctype, localeptr, sizeof(ControlFile.lc_ctype));
-=======
->>>>>>> 38e9348282e
 
 	/*
 	 * XXX eventually, should try to grovel through old XLOG to develop more
@@ -705,17 +680,8 @@ PrintControlValues(bool guessed)
 		   (ControlFile.float4ByVal ? _("by value") : _("by reference")));
 	printf(_("Float8 argument passing:              %s\n"),
 		   (ControlFile.float8ByVal ? _("by value") : _("by reference")));
-<<<<<<< HEAD
-	printf(_("Maximum length of locale name:        %u\n"),
-		   ControlFile.localeBuflen);
-	printf(_("LC_COLLATE:                           %s\n"),
-		   ControlFile.lc_collate);
-	printf(_("LC_CTYPE:                             %s\n"),
-		   ControlFile.lc_ctype);
 	printf(_("Data page checksum version:           %u\n"),
 		   ControlFile.data_checksum_version);
-=======
->>>>>>> 38e9348282e
 }
 
 

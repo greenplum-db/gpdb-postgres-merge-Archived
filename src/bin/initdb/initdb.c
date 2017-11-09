@@ -3085,9 +3085,6 @@ main(int argc, char *argv[])
 			case 1001:
                 n_connections = parse_long(optarg, false, optname);
 				break;
-			case 1002:
-                n_fsm_pages = parse_long(optarg, false, optname);
-				break;
 			case 1003:
                 n_buffers = parse_long(optarg, true, optname);
 				break;

@@ -236,16 +236,7 @@ main(int argc, char *argv[])
 		   (ControlFile.float4ByVal ? _("by value") : _("by reference")));
 	printf(_("Float8 argument passing:              %s\n"),
 		   (ControlFile.float8ByVal ? _("by value") : _("by reference")));
-<<<<<<< HEAD
-	printf(_("Maximum length of locale name:        %u\n"),
-		   ControlFile.localeBuflen);
-	printf(_("LC_COLLATE:                           %s\n"),
-		   ControlFile.lc_collate);
-	printf(_("LC_CTYPE:                             %s\n"),
-		   ControlFile.lc_ctype);
 	printf(_("Data page checksum version:           %u\n"),
 		   ControlFile.data_checksum_version);
-=======
->>>>>>> 38e9348282e
 	return 0;
 }
