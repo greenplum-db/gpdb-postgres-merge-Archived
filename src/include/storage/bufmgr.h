@@ -348,7 +348,6 @@ extern void PrintBufferLeakWarning(Buffer buffer);
 extern void CheckPointBuffers(int flags);
 extern BlockNumber BufferGetBlockNumber(Buffer buffer);
 extern BlockNumber RelationGetNumberOfBlocks(Relation relation);
-extern void RelationTruncate(Relation rel, BlockNumber nblocks, bool markPersistentAsPhysicallyTruncated);
 extern void FlushRelationBuffers(Relation rel);
 extern void FlushDatabaseBuffers(Oid dbid);
 extern void DropRelFileNodeBuffers(RelFileNode rnode, ForkNumber forkNum,
