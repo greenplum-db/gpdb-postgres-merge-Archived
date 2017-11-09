@@ -691,7 +691,6 @@ typedef struct WorkTableScan
 	int			wtParam;		/* ID of Param representing work table */
 } WorkTableScan;
 
-<<<<<<< HEAD
 /* ----------------
 * External Scan node
 *
@@ -738,8 +737,6 @@ typedef struct AOCSScan
 	Scan		scan;
 	/* nothing for now... */
 } AOCSScan;
-=======
->>>>>>> 38e9348282e
 
 /*
  * ==========
@@ -1100,7 +1097,6 @@ typedef struct Limit
 	Node	   *limitCount;		/* COUNT parameter, or NULL if none */
 } Limit;
 
-<<<<<<< HEAD
 /* -------------------------
  *		motion node structs
  * -------------------------
@@ -1195,8 +1191,6 @@ typedef struct RowTrigger
 	List		*newValuesColIdx;	/* list of new columns */
 
 } RowTrigger;
-=======
->>>>>>> 38e9348282e
 
 /*
  * Plan invalidation info
@@ -1214,7 +1208,6 @@ typedef struct PlanInvalItem
 	ItemPointerData tupleId;	/* TID of the object's catalog tuple */
 } PlanInvalItem;
 
-<<<<<<< HEAD
 /* ----------------
  * PartitionSelector node
  *
@@ -1263,6 +1256,4 @@ typedef struct PartitionSelector
 
 } PartitionSelector;
 
-=======
->>>>>>> 38e9348282e
 #endif   /* PLANNODES_H */

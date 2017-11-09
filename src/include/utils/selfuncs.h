@@ -70,11 +70,8 @@ typedef struct VariableStatData
 	RelOptInfo *rel;			/* Relation, or NULL if not identifiable */
 	HeapTuple	statsTuple;		/* pg_statistic tuple, or NULL if none */
 	/* NB: if statsTuple!=NULL, it must be freed when caller is done */
-<<<<<<< HEAD
 	double		numdistinctFromPrimaryKey; /* this is the numdistinct as estimated from the primary key relation. If this is < 0, then it is ignored. */
-=======
 	void		(*freefunc) (HeapTuple tuple);	/* how to free statsTuple */
->>>>>>> 38e9348282e
 	Oid			vartype;		/* exposed type of expression */
 	Oid			atttype;		/* type to pass to get_attstatsslot */
 	int32		atttypmod;		/* typmod to pass to get_attstatsslot */

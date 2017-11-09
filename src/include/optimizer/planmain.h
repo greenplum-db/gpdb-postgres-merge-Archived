@@ -267,11 +267,8 @@ extern void record_plan_function_dependency(PlannerGlobal *glob, Oid funcid);
 extern void extract_query_dependencies(List *queries,
 									   List **relationOids,
 									   List **invalItems);
-<<<<<<< HEAD
 extern void cdb_extract_plan_dependencies(PlannerGlobal *glob, Plan *plan);
 
 extern int num_distcols_in_grouplist(List *gc);
-=======
->>>>>>> 38e9348282e
 
 #endif   /* PLANMAIN_H */

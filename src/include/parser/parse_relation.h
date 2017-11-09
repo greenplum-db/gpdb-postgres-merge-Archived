@@ -86,11 +86,6 @@ extern RangeTblEntry *addRangeTableEntryForCTE(ParseState *pstate,
 						 Index levelsup,
 						 Alias *alias,
 						 bool inFromCl);
-<<<<<<< HEAD
-extern bool isSimplyUpdatableRelation(Oid relid, bool noerror);
-extern Index extractSimplyUpdatableRTEIndex(List *rtable);
-=======
->>>>>>> 38e9348282e
 extern void addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
 			  bool addToJoinList,
 			  bool addToRelNameSpace, bool addToVarNameSpace);
@@ -103,5 +98,8 @@ extern List *expandRelAttrs(ParseState *pstate, RangeTblEntry *rte,
 extern int	attnameAttNum(Relation rd, const char *attname, bool sysColOK);
 extern Name attnumAttName(Relation rd, int attid);
 extern Oid	attnumTypeId(Relation rd, int attid);
+
+extern bool isSimplyUpdatableRelation(Oid relid, bool noerror);
+extern Index extractSimplyUpdatableRTEIndex(List *rtable);
 
 #endif   /* PARSE_RELATION_H */

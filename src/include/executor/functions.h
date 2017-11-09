@@ -25,10 +25,8 @@ extern bool check_sql_fn_retval(Oid func_id, Oid rettype,
 					bool insertRelabels,
 					JunkFilter **junkFilter);
 
-<<<<<<< HEAD
-extern void querytree_safe_for_segment(Query *query);
-=======
 extern DestReceiver *CreateSQLFunctionDestReceiver(void);
->>>>>>> 38e9348282e
+
+extern void querytree_safe_for_segment(Query *query);
 
 #endif   /* FUNCTIONS_H */
