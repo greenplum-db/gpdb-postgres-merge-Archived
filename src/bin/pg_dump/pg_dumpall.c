@@ -141,8 +141,8 @@ main(int argc, char *argv[])
 		{"lock-wait-timeout", required_argument, NULL, 2},
 
 		/* START MPP ADDITION */
-		{"gp-syntax", no_argument, NULL, 1},
-		{"no-gp-syntax", no_argument, NULL, 2},
+		{"gp-syntax", no_argument, NULL, 1000},
+		{"no-gp-syntax", no_argument, NULL, 1001},
 		/* END MPP ADDITION */
 
 		{NULL, 0, NULL, 0}
@@ -344,16 +344,20 @@ main(int argc, char *argv[])
 			case 0:
 				break;
 
-<<<<<<< HEAD
+			case 2:
+				appendPQExpBuffer(pgdumpopts, " --lock-wait-timeout=");
+				appendPQExpBuffer(pgdumpopts, "%s", optarg);
+				break;
+
 				/* START MPP ADDITION */
-			case 1:
+			case 1000:
 				/* gp-format */
 				appendPQExpBuffer(pgdumpopts, " --gp-syntax");
 				gp_syntax = true;
 				resource_queues = 1; /* --resource-queues is implied by --gp-syntax */
 				resource_groups = 1; /* --resource-groups is implied by --gp-syntax */
 				break;
-			case 2:
+			case 1001:
 				/* no-gp-format */
 				appendPQExpBuffer(pgdumpopts, " --no-gp-syntax");
 				no_gp_syntax = true;
@@ -361,13 +365,6 @@ main(int argc, char *argv[])
 
 				/* END MPP ADDITION */
 
-=======
-			case 2:
-				appendPQExpBuffer(pgdumpopts, " --lock-wait-timeout=");
-				appendPQExpBuffer(pgdumpopts, "%s", optarg);
-				break;
-
->>>>>>> 38e9348282e
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -1443,16 +1440,6 @@ dumpCreateDB(PGconn *conn)
 
 	fprintf(OPF, "--\n-- Database creation\n--\n\n");
 
-<<<<<<< HEAD
-	res = executeQuery(conn,
-					   "SELECT datname, "
-					   "coalesce(rolname, (select rolname from pg_authid where oid=(select datdba from pg_database where datname='template0'))), "
-					   "pg_encoding_to_char(d.encoding), "
-					   "datistemplate, datacl, datconnlimit, "
-					   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
-			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
-					   "WHERE datallowconn ORDER BY 1");
-=======
 	if (server_version >= 80400)
 		res = executeQuery(conn,
 						   "SELECT datname, "
@@ -1473,56 +1460,6 @@ dumpCreateDB(PGconn *conn)
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
 						   "WHERE datallowconn ORDER BY 1");
-	else if (server_version >= 80000)
-		res = executeQuery(conn,
-						   "SELECT datname, "
-						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
-						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, "
-						   "datistemplate, datacl, -1 as datconnlimit, "
-						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
-		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
-						   "WHERE datallowconn ORDER BY 1");
-	else if (server_version >= 70300)
-		res = executeQuery(conn,
-						   "SELECT datname, "
-						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
-						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, "
-						   "datistemplate, datacl, -1 as datconnlimit, "
-						   "'pg_default' AS dattablespace "
-		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
-						   "WHERE datallowconn ORDER BY 1");
-	else if (server_version >= 70100)
-		res = executeQuery(conn,
-						   "SELECT datname, "
-						   "coalesce("
-					"(select usename from pg_shadow where usesysid=datdba), "
-						   "(select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
-						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, "
-						   "datistemplate, '' as datacl, -1 as datconnlimit, "
-						   "'pg_default' AS dattablespace "
-						   "FROM pg_database d "
-						   "WHERE datallowconn ORDER BY 1");
-	else
-	{
-		/*
-		 * Note: 7.0 fails to cope with sub-select in COALESCE, so just deal
-		 * with getting a NULL by not printing any OWNER clause.
-		 */
-		res = executeQuery(conn,
-						   "SELECT datname, "
-					"(select usename from pg_shadow where usesysid=datdba), "
-						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, "
-						   "'f' as datistemplate, "
-						   "'' as datacl, -1 as datconnlimit, "
-						   "'pg_default' AS dattablespace "
-						   "FROM pg_database d "
-						   "ORDER BY 1");
-	}
->>>>>>> 38e9348282e
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
