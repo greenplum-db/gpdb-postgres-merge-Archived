@@ -140,14 +140,6 @@ static int	CheckLDAPAuth(Port *port);
 static int	CheckCertAuth(Port *port);
 #endif
 
-/*----------------------------------------------------------------
- * Cert authentication
- *----------------------------------------------------------------
- */
-#ifdef USE_SSL
-static int	CheckCertAuth(Port *port);
-#endif
-
 
 /*----------------------------------------------------------------
  * Kerberos and GSSAPI GUCs

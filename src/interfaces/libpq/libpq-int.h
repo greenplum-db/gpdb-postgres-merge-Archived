@@ -13,11 +13,7 @@
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
  * src/interfaces/libpq/libpq-int.h
-=======
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.138 2008/12/15 10:28:22 mha Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -26,11 +22,7 @@
 #define LIBPQ_INT_H
 
 /* We assume libpq-fe.h has already been included. */
-<<<<<<< HEAD
 #include "c.h"
-=======
-#include "postgres_fe.h"
->>>>>>> 38e9348282e
 #include "libpq-events.h"
 
 #include <time.h>
@@ -179,7 +171,6 @@ typedef struct
 
 typedef struct PGEvent
 {
-<<<<<<< HEAD
 	PGEventProc proc;			/* the function to call on events */
 	char	   *name;			/* used only for error messages */
 	void	   *passThrough;	/* pointer supplied at registration time */
@@ -195,15 +186,6 @@ typedef struct pgCdbStatCell
     char       *data;
 } pgCdbStatCell;
 
-=======
-	PGEventProc	proc;			/* the function to call on events */
-	char	   *name;			/* used only for error messages */
-	void	   *passThrough;	/* pointer supplied at registration time */
-	void	   *data;			/* optional state (instance) data */
-	bool		resultInitialized;	/* T if RESULTCREATE/COPY succeeded */
-} PGEvent;
-
->>>>>>> 38e9348282e
 struct pg_result
 {
 	int			ntups;
@@ -370,7 +352,6 @@ struct pg_conn
 	char	   *replication;	/* connect as the replication standby? */
 	char	   *pguser;			/* Postgres username and password, if any */
 	char	   *pgpass;
-<<<<<<< HEAD
 	char	   *keepalives;		/* use TCP keepalives? */
 	char	   *keepalives_idle;	/* time between TCP keepalives */
 	char	   *keepalives_interval;	/* time between TCP keepalive
@@ -379,18 +360,11 @@ struct pg_conn
 										 * retransmits */
 	char	   *sslmode;		/* SSL mode (require,prefer,allow,disable) */
 	char	   *sslcompression; /* SSL compression (0 or 1) */
-=======
-	char	   *sslmode;		/* SSL mode (require,prefer,allow,disable) */
-	char	   *sslverify;		/* Verify server SSL certificate (none,chain,cn) */
->>>>>>> 38e9348282e
 	char	   *sslkey;			/* client key filename */
 	char	   *sslcert;		/* client certificate filename */
 	char	   *sslrootcert;	/* root certificate filename */
 	char	   *sslcrl;			/* certificate revocation list filename */
-<<<<<<< HEAD
 	char	   *requirepeer;	/* required peer credentials for local sockets */
-=======
->>>>>>> 38e9348282e
 
 #if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	char	   *krbsrvname;		/* Kerberos service name */
