@@ -67,11 +67,7 @@ main(int argc, char *argv[])
 
 	handle_help_version_opts(argc, argv, "createdb", help);
 
-<<<<<<< HEAD
-	while ((c = getopt_long(argc, argv, "h:p:U:wWeO:D:T:E:", long_options, &optindex)) != -1)
-=======
 	while ((c = getopt_long(argc, argv, "h:p:U:WeqO:D:T:E:l:", long_options, &optindex)) != -1)
->>>>>>> 38e9348282e
 	{
 		switch (c)
 		{
@@ -189,13 +185,10 @@ main(int argc, char *argv[])
 		appendPQExpBuffer(&sql, " ENCODING '%s'", encoding);
 	if (template)
 		appendPQExpBuffer(&sql, " TEMPLATE %s", fmtId(template));
-<<<<<<< HEAD
-=======
 	if (lc_collate)
 		appendPQExpBuffer(&sql, " COLLATE '%s'", lc_collate);
 	if (lc_ctype)
 		appendPQExpBuffer(&sql, " CTYPE '%s'", lc_ctype);
->>>>>>> 38e9348282e
 
 	appendPQExpBuffer(&sql, ";\n");
 
