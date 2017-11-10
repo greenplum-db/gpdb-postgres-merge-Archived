@@ -57,11 +57,8 @@
 #include "utils/portal.h"
 #include "utils/ps_status.h"
 #include "utils/relcache.h"
-<<<<<<< HEAD
 #include "utils/resscheduler.h"
 #include "utils/sharedsnapshot.h"
-=======
->>>>>>> 38e9348282e
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"

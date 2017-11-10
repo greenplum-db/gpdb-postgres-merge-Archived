@@ -58,18 +58,6 @@ enum {
 	GUC_ERROR = 100
 };
 
-<<<<<<< HEAD
-=======
-struct name_value_pair
-{
-	char       *name;
-	char       *value;
-	char	   *filename;
-	int			sourceline;
-	struct name_value_pair *next;
-};
-
->>>>>>> 38e9348282e
 static unsigned int ConfigFileLineno;
 static const char *GUC_flex_fatal_errmsg;
 static sigjmp_buf *GUC_flex_fatal_jmp;

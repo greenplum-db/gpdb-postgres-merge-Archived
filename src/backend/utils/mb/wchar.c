@@ -501,7 +501,6 @@ unicode_to_utf8(pg_wchar c, unsigned char *utf8string)
 	return utf8string;
 }
 
-<<<<<<< HEAD
 /*
  * Trivial conversion from pg_wchar to UTF-8.
  * caller should allocate enough space for "to"
@@ -527,8 +526,6 @@ pg_wchar2utf_with_len(const pg_wchar *from, unsigned char *to, int len)
 	*to = 0;
 	return cnt;
 }
-=======
->>>>>>> 38e9348282e
 
 /*
  * Return the byte length of a UTF8 character pointed to by s
@@ -1805,14 +1802,6 @@ report_untranslatable_char(int src_encoding, int dest_encoding,
 	for (j = 0; j < jlimit; j++)
 		p += sprintf(p, "%02x", (unsigned char) mbstr[j]);
 
-<<<<<<< HEAD
-	ereport(ERROR,
-			(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
-			 errmsg("character 0x%s of encoding \"%s\" has no equivalent in \"%s\"",
-					buf,
-					pg_enc2name_tbl[src_encoding].name,
-					pg_enc2name_tbl[dest_encoding].name)));
-=======
 	/*
 	 * In an error recursion situation, don't try to translate the message.
 	 * This gets us out of trouble if the problem is failure to convert
@@ -1832,7 +1821,6 @@ report_untranslatable_char(int src_encoding, int dest_encoding,
 						buf,
 						pg_enc2name_tbl[src_encoding].name,
 						pg_enc2name_tbl[dest_encoding].name)));
->>>>>>> 38e9348282e
 }
 
 #endif

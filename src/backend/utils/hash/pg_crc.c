@@ -12,11 +12,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/backend/utils/hash/pg_crc.c
-=======
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/pg_crc.c,v 1.20 2008/08/25 17:37:40 alvherre Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */

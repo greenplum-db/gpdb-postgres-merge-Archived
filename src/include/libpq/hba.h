@@ -28,7 +28,6 @@ typedef enum UserAuth
 	uaSSPI,
 	uaPAM,
 	uaLDAP,
-<<<<<<< HEAD
 	uaCert,
 	uaRADIUS
 } UserAuth;
@@ -40,11 +39,6 @@ typedef enum IPCompareMethod
 	ipCmpSameNet
 } IPCompareMethod;
 
-=======
-	uaCert
-} UserAuth;
-
->>>>>>> 38e9348282e
 typedef enum ConnType
 {
 	ctLocal,
@@ -61,10 +55,7 @@ typedef struct
 	char	   *role;
 	struct sockaddr_storage addr;
 	struct sockaddr_storage mask;
-<<<<<<< HEAD
 	IPCompareMethod ip_cmp_method;
-=======
->>>>>>> 38e9348282e
 	UserAuth	auth_method;
 
 	char	   *usermap;
@@ -72,7 +63,6 @@ typedef struct
 	bool		ldaptls;
 	char	   *ldapserver;
 	int			ldapport;
-<<<<<<< HEAD
 	char	   *ldapbinddn;
 	char	   *ldapbindpasswd;
 	char	   *ldapsearchattribute;
@@ -94,16 +84,6 @@ typedef struct Port hbaPort;
 
 extern List **get_role_line(const char *role);
 extern List *get_role_intervals(const char *role);
-=======
-	char	   *ldapprefix;
-	char	   *ldapsuffix;
-	bool		clientcert;
-} HbaLine;
-
-typedef struct Port hbaPort;
-
-extern List **get_role_line(const char *role);
->>>>>>> 38e9348282e
 extern bool load_hba(void);
 extern void load_ident(void);
 extern void load_role(void);
@@ -112,16 +92,10 @@ extern void force_load_role(void);
 extern int	hba_getauthmethod(hbaPort *port);
 extern bool read_pg_database_line(FILE *fp, char *dbname, Oid *dboid,
 					  Oid *dbtablespace, TransactionId *dbfrozenxid);
-<<<<<<< HEAD
 extern int check_usermap(const char *usermap_name,
 			  const char *pg_role, const char *auth_user,
 			  bool case_sensitive);
 extern bool check_same_host_or_net(SockAddr *raddr, IPCompareMethod method);
-=======
-extern int  check_usermap(const char *usermap_name,
-					  const char *pg_role, const char *auth_user,
-					  bool case_sensitive);
->>>>>>> 38e9348282e
 extern bool pg_isblank(const char c);
 
 #endif   /* HBA_H */
