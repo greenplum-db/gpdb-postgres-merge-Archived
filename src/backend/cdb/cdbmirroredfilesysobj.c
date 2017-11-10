@@ -929,21 +929,13 @@ MirroredFileSysObj_JustInTimeDbDirCreate(
 }
 
 void
-MirroredFileSysObj_TransactionCreateBufferPoolFile(
-												   SMgrRelation smgrOpen,
-
+MirroredFileSysObj_TransactionCreateBufferPoolFile(RelFileNode *rnode,
 												   PersistentFileSysRelBufpoolKind relBufpoolKind,
-
 												   bool isLocalBuf,
-
 												   char *relationName,
-
 												   bool doJustInTimeDirCreate,
-
 												   bool bufferPoolBulkLoad,
-
 												   ItemPointer persistentTid,
-
 												   int64 *persistentSerialNum)
 {
 	PersistentFileSysObjName fsObjName;
@@ -969,14 +961,13 @@ MirroredFileSysObj_TransactionCreateBufferPoolFile(
 		 * "Fault-in" the database directory in a tablespace if it doesn't
 		 * exist yet.
 		 */
-		justInTimeDbDirNode.tablespace = smgrOpen->smgr_rnode.spcNode;
-		justInTimeDbDirNode.database = smgrOpen->smgr_rnode.dbNode;
+		justInTimeDbDirNode.tablespace = rnode->spcNode;
+		justInTimeDbDirNode.database = rnode->dbNode;
 		MirroredFileSysObj_JustInTimeDbDirCreate(&justInTimeDbDirNode);
 	}
 
-	PersistentFileSysObjName_SetRelationFile(
-											 &fsObjName,
-											 &smgrOpen->smgr_rnode,
+	PersistentFileSysObjName_SetRelationFile(&fsObjName,
+											 rnode,
 											  /* segmentFileNum */ 0);
 
 	LWLockAcquire(MirroredLock, LW_SHARED);
@@ -996,8 +987,7 @@ MirroredFileSysObj_TransactionCreateBufferPoolFile(
 	 * We write our intention or 'Create Pending' persistent information
 	 * before we do any create relation work on either the primary or mirror.
 	 */
-	smgrcreatepending(
-					  &smgrOpen->smgr_rnode,
+	smgrcreatepending(rnode,
 					   /* segmentFileNum */ 0,
 					  PersistentFileSysRelStorageMgr_BufferPool,
 					  relBufpoolKind,
@@ -1013,12 +1003,13 @@ MirroredFileSysObj_TransactionCreateBufferPoolFile(
 	/*
 	 * Synchronous primary and mirror create relation.
 	 */
-	smgrcreate(smgrOpen,
-			   relationName,
-			   mirrorDataLossTrackingState,
-			   mirrorDataLossTrackingSessionNum,
-			   /* ignoreAlreadyExists */ false,
-			   &mirrorDataLossOccurred);
+	RelationCreateStorage(newrnode, relation->rd_istemp,
+						  relationName,
+						  mirrorDataLossTrackingState,
+						  mirrorDataLossTrackingSessionNum,
+						  /* ignoreAlreadyExists */ false,
+						  &mirrorDataLossOccurred);
+	smgrclosenode(newrnode);
 
 	MirroredFileSysObj_FinishMirroredCreate(
 											&fsObjName,
@@ -1038,9 +1029,9 @@ MirroredFileSysObj_TransactionCreateBufferPoolFile(
 		elog(Persistent_DebugPrintLevel(),
 			 "MirroredFileSysObj_TransactionCreateBufferPoolFile: %u/%u/%u, relation name '%s', bulk load %s, mirror existence state '%s', mirror data loss occurred %s"
 			 ", persistent serial number " INT64_FORMAT " at TID %s",
-			 smgrOpen->smgr_rnode.spcNode,
-			 smgrOpen->smgr_rnode.dbNode,
-			 smgrOpen->smgr_rnode.relNode,
+			 rnode->spcNode,
+			 rnode->dbNode,
+			 rnode->relNode,
 			 (relationName == NULL ? "<null>" : relationName),
 			 (bufferPoolBulkLoad ? "true" : "false"),
 			 MirroredObjectExistenceState_Name(mirrorExistenceState),

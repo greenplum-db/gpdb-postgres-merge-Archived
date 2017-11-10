@@ -367,7 +367,6 @@ smgrcreatedbdirpending(DbDirNode *dbDirNode,
  */
 void
 RelationDropStorage(RelFileNode *relFileNode,
-					ForkNumber forknum,
 					int32 segmentFileNum,
 					PersistentFileSysRelStorageMgr relStorageMgr,
 					bool isLocalBuf,

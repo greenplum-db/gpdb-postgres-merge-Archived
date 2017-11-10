@@ -1457,6 +1457,7 @@ setNewRelfilenode(Relation relation, TransactionId freezeXid)
 	bool		isAppendOnly;
 	bool		is_gp_relation_node_index;
 
+	PersistentFileSysRelStorageMgr localRelStorageMgr;
 	ItemPointerData		persistentTid;
 	int64				persistentSerialNum;
 
@@ -1497,16 +1498,18 @@ setNewRelfilenode(Relation relation, TransactionId freezeXid)
 	newrnode = relation->rd_node;
 	newrnode.relNode = newrelfilenode;
 
-<<<<<<< HEAD
 	/* schedule unlinking old relfilenode */
 	remove_gp_relation_node_and_schedule_drop(relation);
 
+	/*
+	 * Create the main fork, like heap_create() does, and drop the old
+	 * storage.
+	 */
 	isAppendOnly = (relation->rd_rel->relstorage == RELSTORAGE_AOROWS || 
 					relation->rd_rel->relstorage == RELSTORAGE_AOCOLS);
 
 	if (!isAppendOnly)
 	{
-		PersistentFileSysRelStorageMgr localRelStorageMgr;
 		PersistentFileSysRelBufpoolKind relBufpoolKind;
 
 		GpPersistentRelationNode_GetRelationInfo(
@@ -1517,10 +1520,7 @@ setNewRelfilenode(Relation relation, TransactionId freezeXid)
 											&relBufpoolKind);
 		Assert(localRelStorageMgr == PersistentFileSysRelStorageMgr_BufferPool);
 
-		srel = smgropen(newrnode);
-
-		MirroredFileSysObj_TransactionCreateBufferPoolFile(
-											srel,
+		MirroredFileSysObj_TransactionCreateBufferPoolFile(&newrnode,
 											relBufpoolKind,
 											relation->rd_isLocalBuf,
 											NameStr(relation->rd_rel->relname),
@@ -1528,10 +1528,10 @@ setNewRelfilenode(Relation relation, TransactionId freezeXid)
 											/* bufferPoolBulkLoad */ false,
 											&persistentTid,
 											&persistentSerialNum);
-		smgrclose(srel);
 	}
 	else
 	{
+		localRelStorageMgr = PersistentFileSysRelStorageMgr_AppendOnly;
 		MirroredFileSysObj_TransactionCreateAppendOnlyFile(
 											&newrnode,
 											/* segmentFileNum */ 0,
@@ -1556,19 +1556,19 @@ setNewRelfilenode(Relation relation, TransactionId freezeXid)
 	if (Debug_persistent_print)
 		elog(Persistent_DebugPrintLevel(),
 			 "setNewRelfilenodeCommon: NEW '%s', Append-Only '%s', persistent TID %s and serial number " INT64_FORMAT,
-			 relpath(newrnode),
+			 relpath(newrnode, MAIN_FORKNUM),
 			 (isAppendOnly ? "true" : "false"),
 			 ItemPointerToString(&persistentTid),
 			 persistentSerialNum);
-=======
-	/*
-	 * Create the main fork, like heap_create() does, and drop the old
-	 * storage.
-	 */
-	RelationCreateStorage(newrnode, relation->rd_istemp);
+
 	smgrclosenode(newrnode);
-	RelationDropStorage(relation);
->>>>>>> 38e9348282e
+	RelationDropStorage(&relation->rd_node,
+						/* segmentFileNum */ 0,
+						localRelStorageMgr,
+						relation->rd_isLocalBuf,
+						NameStr(relation->rd_rel->relname),
+						&persistentTid,
+						persistentSerialNum);
 
 	/* update the pg_class row */
 	rd_rel->relfilenode = newrelfilenode;

@@ -387,7 +387,7 @@ heap_create(const char *relname,
 				RelationOpenSmgr(rel);
 
 				MirroredFileSysObj_TransactionCreateBufferPoolFile(
-													rel->rd_smgr,
+													&rel->rd_node,
 													relBufpoolKind,
 													rel->rd_isLocalBuf,
 													rel->rd_rel->relname.data,

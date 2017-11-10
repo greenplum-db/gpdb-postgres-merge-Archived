@@ -27,7 +27,6 @@ extern void RelationCreateStorage(RelFileNode rnode, bool istemp,
 					  bool *mirrorDataLossOccurred);
 
 extern void RelationDropStorage(RelFileNode *relFileNode,
-					ForkNumber forknum,
 					int32 segmentFileNum,
 					PersistentFileSysRelStorageMgr relStorageMgr,
 					bool isLocalBuf,
