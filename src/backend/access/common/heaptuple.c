@@ -269,11 +269,8 @@ heap_fill_tuple(TupleDesc tupleDesc,
 
 	Assert((data - start) == data_size);
 
-<<<<<<< HEAD
 	return data - start;
 }
-=======
->>>>>>> 38e9348282e
 
 /* ----------------------------------------------------------------
  *						heap tuple interface
@@ -957,24 +954,6 @@ heap_modifytuple(HeapTuple tuple,
 				 char *replNulls,
 				 char *replActions)
 {
-<<<<<<< HEAD
-	bool *replIsNull = (bool *) palloc(sizeof(bool) * tupleDesc->natts);
-	bool *doRepl = (bool *) palloc(sizeof(bool) * tupleDesc->natts);
-	HeapTuple ret;
-
-	int i;
-	for(i=0; i<tupleDesc->natts; ++i)
-	{
-		replIsNull[i] = (replNulls[i] != ' ');
-		doRepl[i] = (replActions[i] == 'r');
-	}
-
-	ret = heap_modify_tuple(tuple, tupleDesc, replValues, replIsNull, doRepl);
-	pfree(replIsNull);
-	pfree(doRepl);
-
-	return ret;
-=======
 	HeapTuple	result;
 	int			numberOfAttributes = tupleDesc->natts;
 	bool	   *boolNulls = (bool *) palloc(numberOfAttributes * sizeof(bool));
@@ -993,7 +972,6 @@ heap_modifytuple(HeapTuple tuple,
 	pfree(boolActions);
 
 	return result;
->>>>>>> 38e9348282e
 }
 
 /*
@@ -1479,58 +1457,3 @@ minimal_tuple_from_heap_tuple(HeapTuple htup)
 	result->t_len = len;
 	return result;
 }
-<<<<<<< HEAD
-
-
-/* ----------------
- *		heap_addheader
- *
- * This routine forms a HeapTuple by copying the given structure (tuple
- * data) and adding a generic header.  Note that the tuple data is
- * presumed to contain no null fields and no varlena fields.
- *
- * This routine is really only useful for certain system tables that are
- * known to be fixed-width and null-free.  Currently it is only used for
- * pg_attribute tuples.
- * ----------------
- */
-HeapTuple
-heap_addheader(int natts,		/* max domain index */
-			   bool withoid,	/* reserve space for oid */
-			   Size structlen,	/* its length */
-			   void *structure) /* pointer to the struct */
-{
-	HeapTuple	tuple;
-	HeapTupleHeader td;
-	Size		len;
-	int			hoff;
-
-	AssertArg(natts > 0);
-
-	/* header needs no null bitmap */
-	hoff = offsetof(HeapTupleHeaderData, t_bits);
-	if (withoid)
-		hoff += sizeof(Oid);
-	hoff = MAXALIGN(hoff);
-	len = hoff + structlen;
-
-	tuple = (HeapTuple) palloc0(HEAPTUPLESIZE + len);
-	tuple->t_data = td = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
-
-	tuple->t_len = len;
-	ItemPointerSetInvalid(&(tuple->t_self));
-
-	/* we don't bother to fill the Datum fields */
-
-	HeapTupleHeaderSetNatts(td, natts);
-	td->t_hoff = hoff;
-
-	if (withoid)				/* else leave infomask = 0 */
-		td->t_infomask = HEAP_HASOID;
-
-	memcpy((char *) td + hoff, structure, structlen);
-
-	return tuple;
-}
-=======
->>>>>>> 38e9348282e

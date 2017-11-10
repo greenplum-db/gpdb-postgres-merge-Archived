@@ -6512,32 +6512,6 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	CheckAttributeType(colDef->colname, typeOid,
 					   list_make1_oid(rel->rd_rel->reltype));
 
-<<<<<<< HEAD
-	attributeTuple = heap_addheader(Natts_pg_attribute,
-									false,
-									ATTRIBUTE_TUPLE_SIZE,
-									(void *) &attributeD);
-
-	attribute = (Form_pg_attribute) GETSTRUCT(attributeTuple);
-
-	attribute->attrelid = myrelid;
-	namestrcpy(&(attribute->attname), colDef->colname);
-	attribute->atttypid = typeOid;
-	attribute->attstattarget = -1;
-	attribute->attlen = tform->typlen;
-	attribute->attcacheoff = -1;
-	attribute->atttypmod = typmod;
-	attribute->attnum = i;
-	attribute->attbyval = tform->typbyval;
-	attribute->attndims = list_length(colDef->typeName->arrayBounds);
-	attribute->attstorage = tform->typstorage;
-	attribute->attalign = tform->typalign;
-	attribute->attnotnull = colDef->is_not_null;
-	attribute->atthasdef = false;
-	attribute->attisdropped = false;
-	attribute->attislocal = colDef->is_local;
-	attribute->attinhcount = colDef->inhcount;
-=======
 	/* construct new attribute's pg_attribute entry */
 	attribute.attrelid = myrelid;
 	namestrcpy(&(attribute.attname), colDef->colname);
@@ -6556,7 +6530,6 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	attribute.attisdropped = false;
 	attribute.attislocal = colDef->is_local;
 	attribute.attinhcount = colDef->inhcount;
->>>>>>> 38e9348282e
 
 	ReleaseSysCache(typeTuple);
 
