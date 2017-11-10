@@ -152,10 +152,7 @@ static char *pg_get_expr_worker(text *expr, Oid relid, char *relname,
 				   int prettyFlags);
 static int print_function_arguments(StringInfo buf, HeapTuple proctup,
 						 bool print_table_args, bool print_defaults);
-<<<<<<< HEAD
-=======
 static void print_function_rettype(StringInfo buf, HeapTuple proctup);
->>>>>>> 38e9348282e
 static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 			 int prettyFlags);
 static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
@@ -184,11 +181,8 @@ static void get_rule_groupingclause(GroupingClause *grp, List *tlist,
 static Node *get_rule_sortgroupclause(SortGroupClause *srt, List *tlist,
 						 bool force_colno,
 						 deparse_context *context);
-<<<<<<< HEAD
 static void get_rule_windowspec(WindowClause *wc, List *targetList,
 					deparse_context *context);
-=======
->>>>>>> 38e9348282e
 static void push_plan(deparse_namespace *dpns, Plan *subplan);
 static char *get_variable(Var *var, int levelsup, bool showstar,
 			 deparse_context *context);
@@ -230,10 +224,7 @@ static void get_opclass_name(Oid opclass, Oid actual_datatype,
 static Node *processIndirection(Node *node, deparse_context *context,
 				   bool printit);
 static void printSubscripts(ArrayRef *aref, deparse_context *context);
-<<<<<<< HEAD
 static char *get_relation_name(Oid relid);
-=======
->>>>>>> 38e9348282e
 static char *generate_relation_name(Oid relid, List *namespaces);
 static char *generate_function_name(Oid funcid, int nargs, Oid *argtypes,
 					   bool *is_variadic);
@@ -1661,8 +1652,6 @@ pg_get_function_arguments(PG_FUNCTION_ARGS)
 		elog(ERROR, "cache lookup failed for function %u", funcid);
 
 	(void) print_function_arguments(&buf, proctup, false, true);
-<<<<<<< HEAD
-=======
 
 	ReleaseSysCache(proctup);
 
@@ -1691,37 +1680,6 @@ pg_get_function_identity_arguments(PG_FUNCTION_ARGS)
 		elog(ERROR, "cache lookup failed for function %u", funcid);
 
 	(void) print_function_arguments(&buf, proctup, false, false);
->>>>>>> 38e9348282e
-
-	ReleaseSysCache(proctup);
-
-	PG_RETURN_TEXT_P(string_to_text(buf.data));
-}
-
-/*
- * pg_get_function_identity_arguments
- *		Get a formatted list of arguments for a function.
- *		This is everything that would go between the parentheses in
- *		ALTER FUNCTION, etc.  In particular, don't print defaults.
- */
-Datum
-pg_get_function_identity_arguments(PG_FUNCTION_ARGS)
-{
-	Oid			funcid = PG_GETARG_OID(0);
-	StringInfoData buf;
-	HeapTuple	proctup;
-<<<<<<< HEAD
-=======
-
-	initStringInfo(&buf);
-
-	proctup = SearchSysCache(PROCOID,
-							 ObjectIdGetDatum(funcid),
-							 0, 0, 0);
-	if (!HeapTupleIsValid(proctup))
-		elog(ERROR, "cache lookup failed for function %u", funcid);
-
-	print_function_rettype(&buf, proctup);
 
 	ReleaseSysCache(proctup);
 
@@ -1738,19 +1696,9 @@ print_function_rettype(StringInfo buf, HeapTuple proctup)
 	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
 	int			ntabargs = 0;
 	StringInfoData rbuf;
->>>>>>> 38e9348282e
 
 	initStringInfo(&rbuf);
 
-<<<<<<< HEAD
-	proctup = SearchSysCache(PROCOID,
-							 ObjectIdGetDatum(funcid),
-							 0, 0, 0);
-	if (!HeapTupleIsValid(proctup))
-		elog(ERROR, "cache lookup failed for function %u", funcid);
-
-	(void) print_function_arguments(&buf, proctup, false, false);
-=======
 	if (proc->proretset)
 	{
 		/* It might be a table function; try to print the arguments */
@@ -1769,7 +1717,6 @@ print_function_rettype(StringInfo buf, HeapTuple proctup)
 			appendStringInfoString(&rbuf, "SETOF ");
 		appendStringInfoString(&rbuf, format_type_be(proc->prorettype));
 	}
->>>>>>> 38e9348282e
 
 	appendStringInfoString(buf, rbuf.data);
 }
@@ -2075,11 +2022,7 @@ deparse_context_for_plan(Node *plan, Node *outer_plan,
 	dpns->rtable = rtable;
 	dpns->ctes = NIL;
 	dpns->subplans = subplans;
-<<<<<<< HEAD
-	dpns->inner_plan = NULL;
-=======
 
->>>>>>> 38e9348282e
 	/*
 	 * Set up outer_plan and inner_plan from the Plan node (this includes
 	 * various special cases for particular Plan types).
@@ -2091,7 +2034,6 @@ deparse_context_for_plan(Node *plan, Node *outer_plan,
 	 */
 	if (outer_plan)
 		dpns->outer_plan = (Plan *) outer_plan;
-<<<<<<< HEAD
 
 	/*
 	 * Previously, this function was called from explain_partition_selector with
@@ -2108,8 +2050,6 @@ deparse_context_for_plan(Node *plan, Node *outer_plan,
 		dpns->inner_plan = (Plan *) plan;
 		dpns->outer_plan = (Plan *) plan;
 	}
-=======
->>>>>>> 38e9348282e
 
 	/* Return a one-deep namespace stack */
 	return list_make1(dpns);
@@ -2578,16 +2518,11 @@ get_select_query_def(Query *query, deparse_context *context,
 	List	   *save_windowtlist;
 	List	   *save_groupclause;
 	bool		force_colno;
-<<<<<<< HEAD
-=======
-	const char *sep;
->>>>>>> 38e9348282e
 	ListCell   *l;
 
 	/* Insert the WITH clause if given */
 	get_with_clause(query, context);
 
-<<<<<<< HEAD
 	/* Set up context for possible window functions */
 	save_windowclause = context->windowClause;
 	context->windowClause = query->windowClause;
@@ -2596,8 +2531,6 @@ get_select_query_def(Query *query, deparse_context *context,
 	save_groupclause = context->groupClause;
 	context->groupClause = query->groupClause;
 
-=======
->>>>>>> 38e9348282e
 	/*
 	 * If the Query node has a setOperations tree, then it's the top level of
 	 * a UNION/INTERSECT/EXCEPT query; only the WITH, ORDER BY and LIMIT
@@ -3258,11 +3191,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 		context->indentLevel += PRETTYINDENT_STD;
 		appendStringInfoChar(buf, ' ');
 	}
-<<<<<<< HEAD
 	appendStringInfo(buf, "INSERT INTO %s ",
-=======
-	appendStringInfo(buf, "INSERT INTO %s (",
->>>>>>> 38e9348282e
 					 generate_relation_name(rte->relid, NIL));
 
 	/*
@@ -3567,7 +3496,6 @@ push_plan(deparse_namespace *dpns, Plan *subplan)
 		else
 			dpns->inner_plan = NULL;
 	}
-<<<<<<< HEAD
 	else if (IsA(subplan, Sequence))
 	{
 		/*
@@ -3579,8 +3507,6 @@ push_plan(deparse_namespace *dpns, Plan *subplan)
 		if (IsA(node, PartitionSelector))
 			dpns->inner_plan = node;
 	}
-=======
->>>>>>> 38e9348282e
 	else
 		dpns->inner_plan = innerPlan(subplan);
 }
@@ -4106,11 +4032,7 @@ get_name_for_var_field(Var *var, int fieldno,
 				if (lc != NULL)
 				{
 					Query	   *ctequery = (Query *) cte->ctequery;
-<<<<<<< HEAD
 					TargetEntry *ste = get_tle_by_resno(GetCTETargetList(cte),
-=======
-					TargetEntry *ste = get_tle_by_resno(ctequery->targetList,
->>>>>>> 38e9348282e
 														attnum);
 
 					if (ste == NULL || ste->resjunk)
@@ -4184,12 +4106,9 @@ get_name_for_var_field(Var *var, int fieldno,
 				}
 			}
 			break;
-<<<<<<< HEAD
 		case RTE_VOID:
             /* No references should exist to a deleted RTE. */
 			break;
-=======
->>>>>>> 38e9348282e
 	}
 
 	/*
@@ -4793,11 +4712,6 @@ get_rule_expr(Node *node, deparse_context *context,
 			}
 			break;
 
-		case T_AlternativeSubPlan:
-			/* As above, just punt */
-			appendStringInfo(buf, "(alternative subplans)");
-			break;
-
 		case T_FieldSelect:
 			{
 				FieldSelect *fselect = (FieldSelect *) node;
@@ -5022,10 +4936,6 @@ get_rule_expr(Node *node, deparse_context *context,
 				appendStringInfo(buf, "ARRAY[");
 				get_rule_expr((Node *) arrayexpr->elements, context, true);
 				appendStringInfoChar(buf, ']');
-<<<<<<< HEAD
-
-=======
->>>>>>> 38e9348282e
 				/*
 				 * If the array isn't empty, we assume its elements are
 				 * coerced to the desired type.  If it's empty, though, we
@@ -5034,7 +4944,6 @@ get_rule_expr(Node *node, deparse_context *context,
 				if (arrayexpr->elements == NIL)
 					appendStringInfo(buf, "::%s",
 						format_type_with_typemod(arrayexpr->array_typeid, -1));
-<<<<<<< HEAD
 			}
 			break;
 
@@ -5047,8 +4956,6 @@ get_rule_expr(Node *node, deparse_context *context,
 				get_query_def(subquery, buf, context->namespaces, NULL,
 							  context->prettyFlags, context->indentLevel);
 				appendStringInfoChar(buf, ')');
-=======
->>>>>>> 38e9348282e
 			}
 			break;
 
@@ -6993,16 +6900,9 @@ generate_function_name(Oid funcid, int nargs, Oid *argtypes,
 	 * specified argtypes.
 	 */
 	p_result = func_get_detail(list_make1(makeString(proname)),
-<<<<<<< HEAD
-							   NIL, nargs, argtypes, false, false,
-							   &p_funcid, &p_rettype,
-							   &p_retset,
-							   &p_nvargs, &p_true_typeids, NULL);
-=======
 							   NIL, nargs, argtypes, false, true,
 							   &p_funcid, &p_rettype,
 							   &p_retset, &p_nvargs, &p_true_typeids, NULL);
->>>>>>> 38e9348282e
 	if ((p_result == FUNCDETAIL_NORMAL || p_result == FUNCDETAIL_AGGREGATE) &&
 		p_funcid == funcid)
 		nspname = NULL;
