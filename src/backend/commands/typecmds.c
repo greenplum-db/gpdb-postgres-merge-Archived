@@ -288,30 +288,9 @@ DefineType(List *names, List *parameters)
 		else if (pg_strcasecmp(defel->defname, "alignment") == 0)
 			defelp = &alignmentEl;
 		else if (pg_strcasecmp(defel->defname, "storage") == 0)
-<<<<<<< HEAD
-		{
-			char	   *a = defGetString(defel);
-
-			if (pg_strcasecmp(a, "plain") == 0)
-				storage = 'p';
-			else if (pg_strcasecmp(a, "external") == 0)
-				storage = 'e';
-			else if (pg_strcasecmp(a, "extended") == 0)
-				storage = 'x';
-			else if (pg_strcasecmp(a, "main") == 0)
-				storage = 'm';
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("storage \"%s\" not recognized", a)));
-		}
-		else if (is_storage_encoding_directive(defel->defname))
-		{
-			encoding = lappend(encoding, defel);
-		}
-=======
 			defelp = &storageEl;
->>>>>>> 38e9348282e
+		else if (is_storage_encoding_directive(defel->defname))
+			encoding = lappend(encoding, defel);
 		else
 		{
 			/* WARNING, not ERROR, for historical backwards-compatibility */

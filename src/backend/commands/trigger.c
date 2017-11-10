@@ -340,11 +340,7 @@ CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid)
 	/*
 	 * Build the new pg_trigger tuple.
 	 */
-<<<<<<< HEAD
-	memset(nulls, false, Natts_pg_trigger * sizeof(bool));
-=======
 	memset(nulls, false, sizeof(nulls));
->>>>>>> 38e9348282e
 
 	values[Anum_pg_trigger_tgrelid - 1] = ObjectIdGetDatum(RelationGetRelid(rel));
 	values[Anum_pg_trigger_tgname - 1] = DirectFunctionCall1(namein,
@@ -3077,25 +3073,14 @@ afterTriggerMarkEvents(AfterTriggerEventList *events,
  *	Returns TRUE if no unfired events remain in the list (this allows us
  *	to avoid repeating afterTriggerMarkEvents).
  */
-<<<<<<< HEAD
-static void
-afterTriggerInvokeEvents(int query_depth,
-=======
 static bool
 afterTriggerInvokeEvents(AfterTriggerEventList *events,
->>>>>>> 38e9348282e
 						 CommandId firing_id,
 						 EState *estate,
 						 bool delete_ok)
 {
-<<<<<<< HEAD
-	AfterTriggerEventList *events;
-	AfterTriggerEvent event,
-				prev_event;
-=======
 	bool		all_fired = true;
 	AfterTriggerEventChunk *chunk;
->>>>>>> 38e9348282e
 	MemoryContext per_tuple_context;
 	bool		local_estate = false;
 	Relation	rel = NULL;
@@ -3118,15 +3103,7 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 							  ALLOCSET_DEFAULT_INITSIZE,
 							  ALLOCSET_DEFAULT_MAXSIZE);
 
-<<<<<<< HEAD
-	prev_event = NULL;
-	events = (query_depth >= 0) ? &afterTriggers->query_stack[query_depth] : &afterTriggers->events;
-	event = events->head;
-
-	while (event != NULL)
-=======
 	for_each_chunk(chunk, *events)
->>>>>>> 38e9348282e
 	{
 		AfterTriggerEvent event;
 		bool		all_fired_in_chunk = true;
@@ -3183,30 +3160,11 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 		/* Clear the chunk if delete_ok and nothing left of interest */
 		if (delete_ok && all_fired_in_chunk)
 		{
-<<<<<<< HEAD
-			/* Delink it from list and free it */
-			if (prev_event)
-				prev_event->ate_next = next_event;
-			else
-			{
-				events = (query_depth >= 0) ? &afterTriggers->query_stack[query_depth] : &afterTriggers->events;
-				events->head = next_event;
-			}
-			pfree(event);
-=======
 			chunk->freeptr = CHUNK_DATA_START(chunk);
 			chunk->endfree = chunk->endptr;
->>>>>>> 38e9348282e
 		}
 	}
 
-<<<<<<< HEAD
-	/* Update list tail pointer in case we just deleted tail event */
-	events = (query_depth >= 0) ? &afterTriggers->query_stack[query_depth] : &afterTriggers->events;
-	events->tail = prev_event;
-
-=======
->>>>>>> 38e9348282e
 	/* Release working resources */
 	MemoryContextDelete(per_tuple_context);
 
@@ -3354,28 +3312,19 @@ AfterTriggerEndQuery(EState *estate)
 	 * If we find no firable events, we don't have to increment
 	 * firing_counter.
 	 */
-<<<<<<< HEAD
-	while (afterTriggerMarkEvents(&afterTriggers->query_stack[afterTriggers->query_depth], &afterTriggers->events, true))
-=======
 	for (;;)
->>>>>>> 38e9348282e
 	{
 		events = &afterTriggers->query_stack[afterTriggers->query_depth];
 		if (afterTriggerMarkEvents(events, &afterTriggers->events, true))
 		{
 			CommandId	firing_id = afterTriggers->firing_counter++;
 
-<<<<<<< HEAD
-		/* OK to delete the immediate events after processing them */
-		afterTriggerInvokeEvents(afterTriggers->query_depth, firing_id, estate, true);
-=======
 			/* OK to delete the immediate events after processing them */
 			if (afterTriggerInvokeEvents(events, firing_id, estate, true))
 				break;			/* all fired */
 		}
 		else
 			break;
->>>>>>> 38e9348282e
 	}
 
 	/* Release query-local storage for events */
@@ -3428,12 +3377,8 @@ AfterTriggerFireDeferred(void)
 	{
 		CommandId	firing_id = afterTriggers->firing_counter++;
 
-<<<<<<< HEAD
-		afterTriggerInvokeEvents(-1, firing_id, NULL, true);
-=======
 		if (afterTriggerInvokeEvents(events, firing_id, NULL, true))
 			break;				/* all fired */
->>>>>>> 38e9348282e
 	}
 
 	/*
@@ -3591,26 +3536,8 @@ AfterTriggerEndSubXact(bool isCommit)
 	else
 	{
 		/*
-<<<<<<< HEAD
-		 * Aborting.  It is possible subxact start failed before calling
-		 * AfterTriggerBeginSubXact, in which case we mustn't risk touching
-		 * stack levels that aren't there.
-		 */
-		if (my_level >= afterTriggers->maxtransdepth)
-			return;
-
-		/*
-		 * We don't really need to release the subxact's event_cxt,
-		 * since it will go away anyway when CurTransactionContext gets reset,
-		 * but doing so early in subxact abort helps free space we might need.
-		 *
-		 * (Note: any event_cxts of child subtransactions could also be
-		 * deleted here, but we have no convenient way to find them, so we
-		 * leave it to CurTransactionContext reset to clean them up.)
-=======
 		 * Aborting.  Release any event lists from queries being aborted,
 		 * and restore query_depth to its pre-subxact value.
->>>>>>> 38e9348282e
 		 */
 		while (afterTriggers->query_depth > afterTriggers->depth_stack[my_level])
 		{
@@ -3982,21 +3909,12 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 
 			/*
 			 * Make sure a snapshot has been established in case trigger
-<<<<<<< HEAD
-			 * functions need one.  Note that we avoid setting a snapshot
-			 * if we don't find at least one trigger that has to be fired
-			 * now.  This is so that BEGIN; SET CONSTRAINTS ...; SET
-			 * TRANSACTION ISOLATION LEVEL SERIALIZABLE; ... works
-			 * properly.  (If we are at the start of a transaction it's
-			 * not possible for any trigger events to be queued yet.)
-=======
 			 * functions need one.  Note that we avoid setting a snapshot if
 			 * we don't find at least one trigger that has to be fired now.
 			 * This is so that BEGIN; SET CONSTRAINTS ...; SET TRANSACTION
 			 * ISOLATION LEVEL SERIALIZABLE; ... works properly.  (If we are
 			 * at the start of a transaction it's not possible for any trigger
 			 * events to be queued yet.)
->>>>>>> 38e9348282e
 			 */
 			if (!snapshot_set)
 			{
@@ -4009,19 +3927,13 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 			 * but we'd better not if inside a subtransaction, since the
 			 * subtransaction could later get rolled back.
 			 */
-<<<<<<< HEAD
-			afterTriggerInvokeEvents(-1, firing_id, NULL,
-									 !IsSubTransaction());
-=======
 			if (afterTriggerInvokeEvents(events, firing_id, NULL,
 										 !IsSubTransaction()))
 				break;			/* all fired */
->>>>>>> 38e9348282e
 		}
 
 		if (snapshot_set)
 			PopActiveSnapshot();
-<<<<<<< HEAD
 	}
 	else
 	{
@@ -4034,8 +3946,6 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 										NIL,
 										NULL);
 		}
-=======
->>>>>>> 38e9348282e
 	}
 }
 
@@ -4133,18 +4043,11 @@ AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 	 */
 	if (afterTriggers == NULL)
 		elog(ERROR, "AfterTriggerSaveEvent() called outside of transaction");
-<<<<<<< HEAD
-	if (afterTriggers->query_depth < 0)
-		elog(ERROR, "AfterTriggerSaveEvent() called outside of query");
-
-	if (!row_trigger && Gp_role == GP_ROLE_EXECUTE)
-	{
-		/* Don't fire statement-triggers in executor nodes. */
-		return;
-	}
-=======
 	Assert(afterTriggers->query_depth >= 0);
->>>>>>> 38e9348282e
+
+	/* Don't fire statement-triggers in executor nodes. */
+	if (!row_trigger && Gp_role == GP_ROLE_EXECUTE)
+		return;
 
 	/*
 	 * Validate the event code and collect the associated tuple CTIDs.
