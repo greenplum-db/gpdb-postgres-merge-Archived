@@ -154,10 +154,7 @@ static void addunicode(pg_wchar c);
  *  <xdolq> $foo$ quoted strings
  *  <xui> quoted identifier with Unicode escapes
  *  <xus> quoted string with Unicode escapes
-<<<<<<< HEAD
  *  <xeu> Unicode surrogate escape in extended string
-=======
->>>>>>> 38e9348282e
  */
 
 %x xb
@@ -169,10 +166,7 @@ static void addunicode(pg_wchar c);
 %x xdolq
 %x xui
 %x xus
-<<<<<<< HEAD
 %x xeu
-=======
->>>>>>> 38e9348282e
 
 /*
  * In order to make the world safe for Windows and Mac clients as well as
@@ -506,15 +500,12 @@ other			.
 				}
 {xusstart}		{
 					SET_YYLLOC();
-<<<<<<< HEAD
 					if (!standard_conforming_strings)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("unsafe use of string constant with Unicode escapes"),
 								 errdetail("String constants with Unicode escapes cannot be used when standard_conforming_strings is off."),
 								 lexer_errposition()));
-=======
->>>>>>> 38e9348282e
 					BEGIN(xus);
 					startlit();
 				}
@@ -738,7 +729,6 @@ other			.
 <xd,xui><<EOF>>		{ yyerror("unterminated quoted identifier"); }
 
 {xufailed}	{
-<<<<<<< HEAD
 					char		   *ident;
 
 					SET_YYLLOC();
@@ -748,12 +738,6 @@ other			.
 					ident = downcase_truncate_identifier(yytext, yyleng, true);
 					yylval.str = ident;
 					return IDENT;
-=======
-					/* throw back all but the initial u/U */
-					yyless(1);
-					/* and treat it as {other} */
-					return yytext[0];
->>>>>>> 38e9348282e
 				}
 
 {typecast}		{
@@ -1181,14 +1165,11 @@ litbuf_udeescape(unsigned char escape)
 	}
 
 	*out = '\0';
-<<<<<<< HEAD
 	/*
 	 * We could skip pg_verifymbstr if we didn't process any non-7-bit-ASCII
 	 * codes; but it's probably not worth the trouble, since this isn't
 	 * likely to be a performance-critical path.
 	 */
-=======
->>>>>>> 38e9348282e
 	pg_verifymbstr(new, out - new, false);
 	return new;
 }
