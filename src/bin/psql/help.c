@@ -208,7 +208,6 @@ slashUsage(unsigned short int pager)
 	fprintf(output, "\n");
 
 	fprintf(output, _("Informational\n"));
-<<<<<<< HEAD
 	fprintf(output, _("  (options: S = show system objects, + = additional detail)\n"));
 	fprintf(output, _("  \\d[S+]                 list tables, views, and sequences\n"));
 	fprintf(output, _("  \\d[S+]  NAME           describe table, view, sequence, or index\n"));
@@ -244,34 +243,6 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\dE     [PATTERN]      list external tables\n"));
 	fprintf(output, _("  \\l[+]                  list all databases\n"));
 	fprintf(output, _("  \\z      [PATTERN]      same as \\dp\n"));
-=======
-	fprintf(output, _("  \\d [NAME]      describe table, index, sequence, or view\n"));
-	fprintf(output, _("  \\d{t|i|s|v|S} [PATTERN] (add \"+\" for more detail)\n"
-	"                 list tables/indexes/sequences/views/system tables\n"));
-	fprintf(output, _("  \\da [PATTERN]  list aggregate functions\n"));
-	fprintf(output, _("  \\db [PATTERN]  list tablespaces (add \"+\" for more detail)\n"));
-	fprintf(output, _("  \\dc [PATTERN]  list conversions\n"));
-	fprintf(output, _("  \\dC [PATTERN]  list casts\n"));
-	fprintf(output, _("  \\dd [PATTERN]  show comment for object\n"));
-	fprintf(output, _("  \\dD [PATTERN]  list domains\n"));
-	fprintf(output, _("  \\des [PATTERN] list foreign servers (add \"+\" for more detail)\n"));
-	fprintf(output, _("  \\deu [PATTERN] list user mappings (add \"+\" for more detail)\n"));
-	fprintf(output, _("  \\dew [PATTERN] list foreign-data wrappers (add \"+\" for more detail)\n"));
-	fprintf(output, _("  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"));
-	fprintf(output, _("  \\dF [PATTERN]  list text search configurations (add \"+\" for more detail)\n"));
-	fprintf(output, _("  \\dFd [PATTERN] list text search dictionaries (add \"+\" for more detail)\n"));
-	fprintf(output, _("  \\dFt [PATTERN] list text search templates\n"));
-	fprintf(output, _("  \\dFp [PATTERN] list text search parsers (add \"+\" for more detail)\n"));
-	fprintf(output, _("  \\dg [PATTERN]  list roles (groups)\n"));
-	fprintf(output, _("  \\dn [PATTERN]  list schemas (add \"+\" for more detail)\n"));
-	fprintf(output, _("  \\do [NAME]     list operators\n"));
-	fprintf(output, _("  \\dl            list large objects, same as \\lo_list\n"));
-	fprintf(output, _("  \\dp [PATTERN]  list table, view, and sequence access privileges\n"));
-	fprintf(output, _("  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"));
-	fprintf(output, _("  \\du [PATTERN]  list roles (users)\n"));
-	fprintf(output, _("  \\l             list all databases (add \"+\" for more detail)\n"));
-	fprintf(output, _("  \\z [PATTERN]   list table, view, and sequence access privileges (same as \\dp)\n"));
->>>>>>> 38e9348282e
 	fprintf(output, "\n");
 
 	fprintf(output, _("Formatting\n"));

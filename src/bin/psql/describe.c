@@ -8,11 +8,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
  * src/bin/psql/describe.c
-=======
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.190 2008/12/19 16:25:18 petere Exp $
->>>>>>> 38e9348282e
  */
 #include "postgres_fe.h"
 
@@ -795,36 +791,19 @@ listAllDbs(bool verbose)
 
 	printfPQExpBuffer(&buf,
 					  "SELECT d.datname as \"%s\",\n"
-<<<<<<< HEAD
 				   "       pg_catalog.pg_get_userbyid(d.datdba) as \"%s\",\n"
 			"       pg_catalog.pg_encoding_to_char(d.encoding) as \"%s\",\n",
 					  gettext_noop("Name"),
 					  gettext_noop("Owner"),
 					  gettext_noop("Encoding"));
-/* GPDB_84_MERGE_FIXME: datcollate and datctype have not been added yet */
-#if 0
-=======
-					  "       pg_catalog.pg_get_userbyid(d.datdba) as \"%s\",\n"
-					  "       pg_catalog.pg_encoding_to_char(d.encoding) as \"%s\",\n",
-					  gettext_noop("Name"),
-					  gettext_noop("Owner"),
-					  gettext_noop("Encoding"));
->>>>>>> 38e9348282e
 	if (pset.sversion >= 80400)
 		appendPQExpBuffer(&buf,
 						  "       d.datcollate as \"%s\",\n"
 						  "       d.datctype as \"%s\",\n",
 						  gettext_noop("Collation"),
 						  gettext_noop("Ctype"));
-<<<<<<< HEAD
-#endif
 	appendPQExpBuffer(&buf, "       ");
 	printACLColumn(&buf, "d.datacl");
-=======
-	appendPQExpBuffer(&buf,
-					  "       d.datacl as \"%s\"",
-					  gettext_noop("Access Privileges"));
->>>>>>> 38e9348282e
 	if (verbose && pset.sversion >= 80200)
 		appendPQExpBuffer(&buf,
 						  ",\n       CASE WHEN pg_catalog.has_database_privilege(d.datname, 'CONNECT')\n"
@@ -1336,14 +1315,11 @@ describeOneTableDetails(const char *schemaname,
 		bool		hasoids;
 		Oid			tablespace;
 		char	   *reloptions;
-<<<<<<< HEAD
 		char	   *reloftype;
 		char	   *compressionType;
 		char	   *compressionLevel;
 		char	   *blockSize;
 		char	   *checksum;
-=======
->>>>>>> 38e9348282e
 	}			tableinfo;
 	bool		show_modifiers = false;
 	bool		retval;
@@ -1363,7 +1339,6 @@ describeOneTableDetails(const char *schemaname,
 	initPQExpBuffer(&tmpbuf);
 
 	/* Get general table info */
-<<<<<<< HEAD
 	if (pset.sversion >= 90000)
 	{
 		printfPQExpBuffer(&buf,
@@ -1380,8 +1355,6 @@ describeOneTableDetails(const char *schemaname,
 						   : "''"),
 						  oid);
 	}
-	// GPDB_84_MERGE_FIXME: We haven't merged the patch that added relhastriggers yet.
-#if 0
 	else if (pset.sversion >= 80400)
 	{
 		printfPQExpBuffer(&buf,
@@ -1397,7 +1370,6 @@ describeOneTableDetails(const char *schemaname,
 						   : "''"),
 						  oid);
 	}
-#endif
 	else if (pset.sversion >= 80200)
 	{
 		printfPQExpBuffer(&buf,
@@ -1431,18 +1403,6 @@ describeOneTableDetails(const char *schemaname,
 						  oid);
 	}
 
-=======
-	printfPQExpBuffer(&buf,
-	   "SELECT relchecks, relkind, relhasindex, relhasrules, %s, "
-					  "relhasoids"
-					 "%s%s\n"
-					  "FROM pg_catalog.pg_class WHERE oid = '%s'",
-					  (pset.sversion >= 80400 ? "relhastriggers" : "reltriggers <> 0"),
-					  (pset.sversion >= 80200 && verbose ?
-					   ", pg_catalog.array_to_string(reloptions, E', ')" : ",''"),
-					  (pset.sversion >= 80000 ? ", reltablespace" : ""),
-					  oid);
->>>>>>> 38e9348282e
 	res = PSQLexec(buf.data, false);
 	if (!res)
 		goto error_return;
@@ -1462,7 +1422,6 @@ describeOneTableDetails(const char *schemaname,
 	tableinfo.hasrules = strcmp(PQgetvalue(res, 0, 3), "t") == 0;
 	tableinfo.hastriggers = strcmp(PQgetvalue(res, 0, 4), "t") == 0;
 	tableinfo.hasoids = strcmp(PQgetvalue(res, 0, 5), "t") == 0;
-<<<<<<< HEAD
 	tableinfo.reloptions = (pset.sversion >= 80200) ?
 		strdup(PQgetvalue(res, 0, 6)) : 0;
 	tableinfo.tablespace = (pset.sversion >= 80000) ?
@@ -1478,18 +1437,6 @@ describeOneTableDetails(const char *schemaname,
 	/*
 	 * If it's a sequence, fetch its values and store into an array that will
 	 * be used later.
-=======
-	tableinfo.reloptions = pset.sversion >= 80200 ?
-							strdup(PQgetvalue(res, 0, 6)) : 0;
-	tableinfo.tablespace = (pset.sversion >= 80000) ?
-								atooid(PQgetvalue(res, 0, 7)) : 0;
-	PQclear(res);
-	res = NULL;
-	
-	/*
-	 * If it's a sequence, fetch its values and store into an
-	 * array that will be used later.
->>>>>>> 38e9348282e
 	 */
 	if (tableinfo.relkind == 'S')
 	{
@@ -1518,22 +1465,10 @@ describeOneTableDetails(const char *schemaname,
 		 * always have 4 bits of info: blocksize, compresstype, compresslevel and checksum
 		 */
 		printfPQExpBuffer(&buf,
-<<<<<<< HEAD
 				"SELECT a.compresstype, a.compresslevel, a.blocksize, a.checksum\n"
 					"FROM pg_catalog.pg_appendonly a, pg_catalog.pg_class c\n"
 					"WHERE c.oid = a.relid AND c.oid = '%s'", oid);
 
-=======
-						  "SELECT sequence_name, last_value,\n"
-						  "       start_value, increment_by,\n"
-						  "       max_value, min_value, cache_value,\n"
-						  "       log_cnt, is_cycled, is_called\n"
-						  "FROM %s",
-						  fmtId(schemaname));
-		/* must be separate because fmtId isn't reentrant */
-		appendPQExpBuffer(&buf, ".%s", fmtId(relationname));
-		
->>>>>>> 38e9348282e
 		result = PSQLexec(buf.data, false);
 		if (!result)
 			goto error_return;
@@ -1693,11 +1628,7 @@ describeOneTableDetails(const char *schemaname,
 		printTableAddCell(&cont, PQgetvalue(res, i, 0), false, false);
 
 		/* Type */
-<<<<<<< HEAD
 		printTableAddCell(&cont, PQgetvalue(res, i, 1), false, false);
-=======
-		printTableAddCell(&cont, PQgetvalue(res, i, 1), false);
->>>>>>> 38e9348282e
 
 		/* Modifiers: not null and default */
 		if (show_modifiers)
@@ -1723,29 +1654,20 @@ describeOneTableDetails(const char *schemaname,
 
 		/* Value: for sequences only */
 		if (tableinfo.relkind == 'S')
-<<<<<<< HEAD
 			printTableAddCell(&cont, seq_values[i], false, false);
 
 		/* Expression for index column */
 		if (tableinfo.relkind == 'i')
 			printTableAddCell(&cont, PQgetvalue(res, i, 5), false, false);
-=======
-			printTableAddCell(&cont, seq_values[i], false);
->>>>>>> 38e9348282e
 
 		/* Storage and Description */
 		if (verbose)
 		{
-<<<<<<< HEAD
 			int			firstvcol = (tableinfo.relkind == 'i' ? 6 : 5);
 			int			firstvcol_offset = 0;
 			char	   *storage = PQgetvalue(res, i, firstvcol);
 
 			/* Storage */
-=======
-			char *storage = PQgetvalue(res, i, 5);
-
->>>>>>> 38e9348282e
 			/* these strings are literal in our syntax, so not translated. */
 			printTableAddCell(&cont, (storage[0] == 'p' ? "plain" :
 									  (storage[0] == 'm' ? "main" :
@@ -2507,11 +2429,7 @@ describeOneTableDetails(const char *schemaname,
 			PQclear(result);
 		}
 
-<<<<<<< HEAD
 		/* print triggers (but only user-defined triggers) */
-=======
-		/* print triggers (but ignore foreign-key triggers) */
->>>>>>> 38e9348282e
 		if (tableinfo.hastriggers)
 		{
 			printfPQExpBuffer(&buf,
@@ -2721,7 +2639,6 @@ describeOneTableDetails(const char *schemaname,
 					printTableAddFooter(&cont, buf.data);
 				}
 			}
-<<<<<<< HEAD
 		}
 
 		/* mpp addition start: dump distributed by clause */
@@ -2735,8 +2652,6 @@ describeOneTableDetails(const char *schemaname,
 			resetPQExpBuffer(&tmpbuf);
 			add_partition_by_footer(oid, &tmpbuf, &buf);
 			printTableAddFooter(&cont, tmpbuf.data);
-=======
->>>>>>> 38e9348282e
 		}
 
 		add_tablespace_footer(&cont, tableinfo.relkind, tableinfo.tablespace,
@@ -4228,27 +4143,170 @@ describeOneTSConfig(const char *oid, const char *nspname, const char *cfgname,
 
 
 /*
-<<<<<<< HEAD
- * \dx
- *
- * Briefly describes installed extensions.
- */
-bool
-listExtensions(const char *pattern)
-=======
  * \dew
  *
  * Describes foreign-data wrappers
  */
 bool
 listForeignDataWrappers(const char *pattern, bool verbose)
->>>>>>> 38e9348282e
 {
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
 
-<<<<<<< HEAD
+	initPQExpBuffer(&buf);
+	printfPQExpBuffer(&buf,
+					  "SELECT fdwname AS \"%s\",\n"
+					  "  pg_catalog.pg_get_userbyid(fdwowner) AS \"%s\",\n"
+					  "  fdwlibrary AS \"%s\"\n",
+					  gettext_noop("Name"),
+					  gettext_noop("Owner"),
+					  gettext_noop("Library"));
+
+	if (verbose)
+		appendPQExpBuffer(&buf,
+						  ",\n  fdwacl AS \"%s\","
+						  "  fdwoptions AS \"%s\"",
+						  gettext_noop("Access privileges"),
+						  gettext_noop("Options"));
+
+	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_foreign_data_wrapper WHERE 1=1\n");
+
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  NULL, "fdwname", NULL, NULL);
+
+	appendPQExpBuffer(&buf, "ORDER BY 1;");
+
+	res = PSQLexec(buf.data, false);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	myopt.nullPrint = NULL;
+	myopt.title = _("List of foreign-data wrappers");
+	myopt.translate_header = true;
+
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
+
+	PQclear(res);
+	return true;
+}
+
+/*
+ * \des
+ *
+ * Describes servers.
+ */
+bool
+listForeignServers(const char *pattern, bool verbose)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	printQueryOpt myopt = pset.popt;
+
+	initPQExpBuffer(&buf);
+	printfPQExpBuffer(&buf,
+					  "SELECT s.srvname AS \"%s\",\n"
+					  "  pg_catalog.pg_get_userbyid(s.srvowner) AS \"%s\",\n"
+					  "  f.fdwname AS \"%s\"\n",
+					  gettext_noop("Name"),
+					  gettext_noop("Owner"),
+					  gettext_noop("Foreign-data wrapper"));
+
+	if (verbose)
+		appendPQExpBuffer(&buf,
+						  ",\n  s.srvacl AS \"%s\","
+						  "  s.srvtype AS \"%s\","
+						  "  s.srvversion AS \"%s\","
+						  "  s.srvoptions AS \"%s\"",
+						  gettext_noop("Access privileges"),
+						  gettext_noop("Type"),
+						  gettext_noop("Version"),
+						  gettext_noop("Options"));
+
+	appendPQExpBuffer(&buf,
+			  		  "\nFROM pg_foreign_server s\n"
+					  "JOIN pg_catalog.pg_foreign_data_wrapper f ON f.oid=s.srvfdw\n");
+
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  NULL, "s.srvname", NULL, NULL);
+
+	appendPQExpBuffer(&buf, "ORDER BY 1;");
+
+	res = PSQLexec(buf.data, false);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	myopt.nullPrint = NULL;
+	myopt.title = _("List of foreign servers");
+	myopt.translate_header = true;
+
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
+
+	PQclear(res);
+	return true;
+}
+
+/*
+ * \deu
+ *
+ * Describes user mappings.
+ */
+bool
+listUserMappings(const char *pattern, bool verbose)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	printQueryOpt myopt = pset.popt;
+
+	initPQExpBuffer(&buf);
+	printfPQExpBuffer(&buf,
+					  "SELECT um.srvname AS \"%s\",\n"
+					  "  um.usename AS \"%s\"",
+					  gettext_noop("Server"),
+					  gettext_noop("Username"));
+
+	if (verbose)
+		appendPQExpBuffer(&buf,
+						  ",\n  um.umoptions AS \"%s\"",
+						  gettext_noop("Options"));
+
+	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_user_mappings um WHERE 1=1\n");
+
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  NULL, "um.srvname", "um.usename", NULL);
+
+	appendPQExpBuffer(&buf, "ORDER BY 1, 2;");
+
+	res = PSQLexec(buf.data, false);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	myopt.nullPrint = NULL;
+	myopt.title = _("List of user mappings");
+	myopt.translate_header = true;
+
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
+
+	PQclear(res);
+	return true;
+}
+
+
+/*
+ * \dx
+ *
+ * Briefly describes installed extensions.
+ */
+bool
+listExtensions(const char *pattern)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	printQueryOpt myopt = pset.popt;
+
 	if (pset.sversion < 80300)
 	{
 		fprintf(stderr, _("The server (version %d.%d) does not support extensions.\n"),
@@ -4273,28 +4331,6 @@ listForeignDataWrappers(const char *pattern, bool verbose)
 						  false, false,
 						  NULL, "e.extname", NULL,
 						  NULL);
-=======
-	initPQExpBuffer(&buf);
-	printfPQExpBuffer(&buf,
-					  "SELECT fdwname AS \"%s\",\n"
-					  "  pg_catalog.pg_get_userbyid(fdwowner) AS \"%s\",\n"
-					  "  fdwlibrary AS \"%s\"\n",
-					  gettext_noop("Name"),
-					  gettext_noop("Owner"),
-					  gettext_noop("Library"));
-
-	if (verbose)
-		appendPQExpBuffer(&buf,
-						  ",\n  fdwacl AS \"%s\","
-						  "  fdwoptions AS \"%s\"",
-						  gettext_noop("Access privileges"),
-						  gettext_noop("Options"));
-
-	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_foreign_data_wrapper WHERE 1=1\n");
-
-	processSQLNamePattern(pset.db, &buf, pattern, true, false,
-						  NULL, "fdwname", NULL, NULL);
->>>>>>> 38e9348282e
 
 	appendPQExpBuffer(&buf, "ORDER BY 1;");
 
@@ -4304,11 +4340,7 @@ listForeignDataWrappers(const char *pattern, bool verbose)
 		return false;
 
 	myopt.nullPrint = NULL;
-<<<<<<< HEAD
 	myopt.title = _("List of installed extensions");
-=======
-	myopt.title = _("List of foreign-data wrappers");
->>>>>>> 38e9348282e
 	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
@@ -4318,7 +4350,6 @@ listForeignDataWrappers(const char *pattern, bool verbose)
 }
 
 /*
-<<<<<<< HEAD
  * \dx+
  *
  * List contents of installed extensions.
@@ -4357,45 +4388,6 @@ listExtensionContents(const char *pattern)
 						  false, false,
 						  NULL, "e.extname", NULL,
 						  NULL);
-=======
- * \des
- *
- * Describes servers.
- */
-bool
-listForeignServers(const char *pattern, bool verbose)
-{
-	PQExpBufferData buf;
-	PGresult   *res;
-	printQueryOpt myopt = pset.popt;
-
-	initPQExpBuffer(&buf);
-	printfPQExpBuffer(&buf,
-					  "SELECT s.srvname AS \"%s\",\n"
-					  "  pg_catalog.pg_get_userbyid(s.srvowner) AS \"%s\",\n"
-					  "  f.fdwname AS \"%s\"\n",
-					  gettext_noop("Name"),
-					  gettext_noop("Owner"),
-					  gettext_noop("Foreign-data wrapper"));
-
-	if (verbose)
-		appendPQExpBuffer(&buf,
-						  ",\n  s.srvacl AS \"%s\","
-						  "  s.srvtype AS \"%s\","
-						  "  s.srvversion AS \"%s\","
-						  "  s.srvoptions AS \"%s\"",
-						  gettext_noop("Access privileges"),
-						  gettext_noop("Type"),
-						  gettext_noop("Version"),
-						  gettext_noop("Options"));
-
-	appendPQExpBuffer(&buf,
-			  		  "\nFROM pg_foreign_server s\n"
-					  "JOIN pg_catalog.pg_foreign_data_wrapper f ON f.oid=s.srvfdw\n");
-
-	processSQLNamePattern(pset.db, &buf, pattern, true, false,
-						  NULL, "s.srvname", NULL, NULL);
->>>>>>> 38e9348282e
 
 	appendPQExpBuffer(&buf, "ORDER BY 1;");
 
@@ -4404,7 +4396,6 @@ listForeignServers(const char *pattern, bool verbose)
 	if (!res)
 		return false;
 
-<<<<<<< HEAD
 	if (PQntuples(res) == 0)
 	{
 		if (!pset.quiet)
@@ -4438,66 +4429,27 @@ listForeignServers(const char *pattern, bool verbose)
 			return false;
 		}
 	}
-=======
-	myopt.nullPrint = NULL;
-	myopt.title = _("List of foreign servers");
-	myopt.translate_header = true;
-
-	printQuery(res, &myopt, pset.queryFout, pset.logfile);
->>>>>>> 38e9348282e
 
 	PQclear(res);
 	return true;
 }
 
-<<<<<<< HEAD
 static bool
 listOneExtensionContents(const char *extname, const char *oid)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
 	char		title[1024];
-=======
-/*
- * \deu
- *
- * Describes user mappings.
- */
-bool
-listUserMappings(const char *pattern, bool verbose)
-{
-	PQExpBufferData buf;
-	PGresult   *res;
->>>>>>> 38e9348282e
 	printQueryOpt myopt = pset.popt;
 
 	initPQExpBuffer(&buf);
 	printfPQExpBuffer(&buf,
-<<<<<<< HEAD
 					  "SELECT pg_catalog.pg_describe_object(classid, objid, 0) AS \"%s\"\n"
 							  "FROM pg_catalog.pg_depend\n"
 							  "WHERE refclassid = 'pg_catalog.pg_extension'::pg_catalog.regclass AND refobjid = '%s' AND deptype = 'e'\n"
 							  "ORDER BY 1;",
 					  gettext_noop("Object Description"),
 					  oid);
-=======
-					  "SELECT um.srvname AS \"%s\",\n"
-					  "  um.usename AS \"%s\"",
-					  gettext_noop("Server"),
-					  gettext_noop("Username"));
-
-	if (verbose)
-		appendPQExpBuffer(&buf,
-						  ",\n  um.umoptions AS \"%s\"",
-						  gettext_noop("Options"));
-
-	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_user_mappings um WHERE 1=1\n");
-
-	processSQLNamePattern(pset.db, &buf, pattern, true, false,
-						  NULL, "um.srvname", "um.usename", NULL);
-
-	appendPQExpBuffer(&buf, "ORDER BY 1, 2;");
->>>>>>> 38e9348282e
 
 	res = PSQLexec(buf.data, false);
 	termPQExpBuffer(&buf);
@@ -4505,12 +4457,8 @@ listUserMappings(const char *pattern, bool verbose)
 		return false;
 
 	myopt.nullPrint = NULL;
-<<<<<<< HEAD
 	snprintf(title, sizeof(title), _("Objects in extension \"%s\""), extname);
 	myopt.title = title;
-=======
-	myopt.title = _("List of user mappings");
->>>>>>> 38e9348282e
 	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
@@ -4518,7 +4466,6 @@ listUserMappings(const char *pattern, bool verbose)
 	PQclear(res);
 	return true;
 }
-<<<<<<< HEAD
 
 
 /*
@@ -4540,5 +4487,3 @@ printACLColumn(PQExpBuffer buf, const char *colname)
 						  "pg_catalog.array_to_string(%s, '\\n') AS \"%s\"",
 						  colname, gettext_noop("Access privileges"));
 }
-=======
->>>>>>> 38e9348282e

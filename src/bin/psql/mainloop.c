@@ -3,11 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
  * src/bin/psql/mainloop.c
-=======
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.93 2008/11/26 00:26:23 tgl Exp $
->>>>>>> 38e9348282e
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -32,16 +28,10 @@ int
 MainLoop(FILE *source)
 {
 	PsqlScanState scan_state;	/* lexer working state */
-<<<<<<< HEAD
 	volatile PQExpBuffer query_buf;		/* buffer for query being accumulated */
 	volatile PQExpBuffer previous_buf;	/* if there isn't anything in the new
 										 * buffer yet, use this one for \e,
 										 * etc. */
-=======
-	volatile PQExpBuffer query_buf;	/* buffer for query being accumulated */
-	volatile PQExpBuffer previous_buf;	/* if there isn't anything in the new
-								 * buffer yet, use this one for \e, etc. */
->>>>>>> 38e9348282e
 	PQExpBuffer history_buf;	/* earlier lines of a multi-line command, not
 								 * yet saved to readline history */
 	char	   *line;			/* current line of input */
