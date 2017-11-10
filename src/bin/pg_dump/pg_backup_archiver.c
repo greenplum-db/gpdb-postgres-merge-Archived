@@ -2805,12 +2805,8 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 				 strcmp(te->desc, "INDEX") == 0 ||
 				 strcmp(te->desc, "RULE") == 0 ||
 				 strcmp(te->desc, "TRIGGER") == 0 ||
-<<<<<<< HEAD
 				 strcmp(te->desc, "USER MAPPING") == 0 ||
 				 strcmp(te->desc, "BINARY UPGRADE"))
-=======
-				 strcmp(te->desc, "USER MAPPING") == 0)
->>>>>>> 38e9348282e
 		{
 			/* these object types don't have separate owners */
 		}
