@@ -68,30 +68,6 @@ static Snapshot	SecondarySnapshot = NULL;
 TransactionId TransactionXmin = FirstNormalTransactionId;
 TransactionId RecentXmin = FirstNormalTransactionId;
 TransactionId RecentGlobalXmin = InvalidTransactionId;
-<<<<<<< HEAD
-
-/*
- * Elements of the list of registered snapshots.
- *
- * Note that we keep refcounts both here and in SnapshotData.  This is because
- * the same snapshot may be registered more than once in a subtransaction, and
- * if a subxact aborts we want to be able to subtract the correct amount of
- * counts from SnapshotData.  (Another approach would be keeping one
- * RegdSnapshotElt each time a snapshot is registered, but that seems
- * unnecessary wastage.)
- *
- * NB: the code assumes that elements in this list are in non-increasing
- * order of s_level; also, the list must be NULL-terminated.
- */
-typedef struct RegdSnapshotElt
-{
-	Snapshot	s_snap;
-	uint32		s_count;
-	int			s_level;
-	struct RegdSnapshotElt	*s_next;
-} RegdSnapshotElt;
-=======
->>>>>>> 38e9348282e
 
 /*
  * Elements of the active snapshot stack.

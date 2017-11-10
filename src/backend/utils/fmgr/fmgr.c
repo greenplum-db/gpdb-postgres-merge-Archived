@@ -23,10 +23,6 @@
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
-<<<<<<< HEAD
-#include "parser/parse_expr.h"
-=======
->>>>>>> 38e9348282e
 #include "pgstat.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"

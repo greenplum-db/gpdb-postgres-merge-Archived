@@ -27,13 +27,7 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/resowner.h"
-<<<<<<< HEAD
-#include "utils/relcache.h"
-#include "executor/execdesc.h"
-#include "utils/resource_manager.h"
-=======
 #include "utils/snapmgr.h"
->>>>>>> 38e9348282e
 
 /*
  * To speed up bulk releasing or reassigning locks from a resource owner to
@@ -96,17 +90,15 @@ typedef struct ResourceOwnerData
 	TupleDesc  *tupdescs;		/* dynamically allocated array */
 	int			maxtupdescs;	/* currently allocated array size */
 
-<<<<<<< HEAD
-	/* We have built-in support for remembering open temporary files */
-	int			nfiles;			/* number of owned temporary files */
-	File	   *files;			/* dynamically allocated array */
-	int			maxfiles;		/* currently allocated array size */
-=======
 	/* We have built-in support for remembering snapshot references */
 	int			nsnapshots;		/* number of owned snapshot references */
 	Snapshot   *snapshots;		/* dynamically allocated array */
 	int			maxsnapshots;	/* currently allocated array size */
->>>>>>> 38e9348282e
+
+	/* We have built-in support for remembering open temporary files */
+	int			nfiles;			/* number of owned temporary files */
+	File	   *files;			/* dynamically allocated array */
+	int			maxfiles;		/* currently allocated array size */
 } ResourceOwnerData;
 
 
@@ -139,11 +131,8 @@ static void ResourceOwnerReleaseInternal(ResourceOwner owner,
 static void PrintRelCacheLeakWarning(Relation rel);
 static void PrintPlanCacheLeakWarning(CachedPlan *plan);
 static void PrintTupleDescLeakWarning(TupleDesc tupdesc);
-<<<<<<< HEAD
-static void PrintFileLeakWarning(File file);
-=======
 static void PrintSnapshotLeakWarning(Snapshot snapshot);
->>>>>>> 38e9348282e
+static void PrintFileLeakWarning(File file);
 
 
 /*****************************************************************************
@@ -432,11 +421,8 @@ ResourceOwnerDelete(ResourceOwner owner)
 	Assert(owner->nrelrefs == 0);
 	Assert(owner->nplanrefs == 0);
 	Assert(owner->ntupdescs == 0);
-<<<<<<< HEAD
-	Assert(owner->nfiles == 0);
-=======
 	Assert(owner->nsnapshots == 0);
->>>>>>> 38e9348282e
+	Assert(owner->nfiles == 0);
 
 	/*
 	 * Delete children.  The recursive call will delink the child from me, so
@@ -465,13 +451,10 @@ ResourceOwnerDelete(ResourceOwner owner)
 		pfree(owner->planrefs);
 	if (owner->tupdescs)
 		pfree(owner->tupdescs);
-<<<<<<< HEAD
-	if (owner->files)
-		pfree(owner->files);
-=======
 	if (owner->snapshots)
 		pfree(owner->snapshots);
->>>>>>> 38e9348282e
+	if (owner->files)
+		pfree(owner->files);
 
 	pfree(owner);
 }
@@ -1099,43 +1082,14 @@ PrintTupleDescLeakWarning(TupleDesc tupdesc)
 		 tupdesc, tupdesc->tdtypeid, tupdesc->tdtypmod);
 }
 
-<<<<<<< HEAD
-
-/*
- * Make sure there is room for at least one more entry in a ResourceOwner's
- * files reference array.
-=======
 /*
  * Make sure there is room for at least one more entry in a ResourceOwner's
  * snapshot reference array.
->>>>>>> 38e9348282e
  *
  * This is separate from actually inserting an entry because if we run out
  * of memory, it's critical to do so *before* acquiring the resource.
  */
 void
-<<<<<<< HEAD
-ResourceOwnerEnlargeFiles(ResourceOwner owner)
-{
-	int			newmax;
-
-	if (owner->nfiles < owner->maxfiles)
-		return;					/* nothing to do */
-
-	if (owner->files == NULL)
-	{
-		newmax = 16;
-		owner->files = (File *)
-			MemoryContextAlloc(TopMemoryContext, newmax * sizeof(File));
-		owner->maxfiles = newmax;
-	}
-	else
-	{
-		newmax = owner->maxfiles * 2;
-		owner->files = (File *)
-			repalloc(owner->files, newmax * sizeof(File));
-		owner->maxfiles = newmax;
-=======
 ResourceOwnerEnlargeSnapshots(ResourceOwner owner)
 {
 	int			newmax;
@@ -1156,33 +1110,10 @@ ResourceOwnerEnlargeSnapshots(ResourceOwner owner)
 		owner->snapshots = (Snapshot *)
 			repalloc(owner->snapshots, newmax * sizeof(Snapshot));
 		owner->maxsnapshots = newmax;
->>>>>>> 38e9348282e
 	}
 }
 
 /*
-<<<<<<< HEAD
- * Remember that a temporary file is owned by a ResourceOwner
- *
- * Caller must have previously done ResourceOwnerEnlargeFiles()
- */
-void
-ResourceOwnerRememberFile(ResourceOwner owner, File file)
-{
-	Assert(owner->nfiles < owner->maxfiles);
-	owner->files[owner->nfiles] = file;
-	owner->nfiles++;
-}
-
-/*
- * Forget that a temporary file is owned by a ResourceOwner
- */
-void
-ResourceOwnerForgetFile(ResourceOwner owner, File file)
-{
-	File	   *files = owner->files;
-	int			ns1 = owner->nfiles - 1;
-=======
  * Remember that a snapshot reference is owned by a ResourceOwner
  *
  * Caller must have previously done ResourceOwnerEnlargeSnapshots()
@@ -1203,12 +1134,93 @@ ResourceOwnerForgetSnapshot(ResourceOwner owner, Snapshot snapshot)
 {
 	Snapshot   *snapshots = owner->snapshots;
 	int			ns1 = owner->nsnapshots -1;
->>>>>>> 38e9348282e
 	int			i;
 
 	for (i = ns1; i >= 0; i--)
 	{
-<<<<<<< HEAD
+		if (snapshots[i] == snapshot)
+		{
+			while (i < ns1)
+			{
+				snapshots[i] = snapshots[i + 1];
+				i++;
+			}
+			owner->nsnapshots = ns1;
+			return;
+		}
+	}
+	elog(ERROR, "snapshot reference %p is not owned by resource owner %s",
+		 snapshot, owner->name);
+}
+
+/*
+ * Debugging subroutine
+ */
+static void
+PrintSnapshotLeakWarning(Snapshot snapshot)
+{
+	elog(WARNING,
+		 "Snapshot reference leak: Snapshot %p still referenced",
+		 snapshot);
+}
+
+
+/*
+ * Make sure there is room for at least one more entry in a ResourceOwner's
+ * files reference array.
+ *
+ * This is separate from actually inserting an entry because if we run out
+ * of memory, it's critical to do so *before* acquiring the resource.
+ */
+void
+ResourceOwnerEnlargeFiles(ResourceOwner owner)
+{
+	int			newmax;
+
+	if (owner->nfiles < owner->maxfiles)
+		return;					/* nothing to do */
+
+	if (owner->files == NULL)
+	{
+		newmax = 16;
+		owner->files = (File *)
+			MemoryContextAlloc(TopMemoryContext, newmax * sizeof(File));
+		owner->maxfiles = newmax;
+	}
+	else
+	{
+		newmax = owner->maxfiles * 2;
+		owner->files = (File *)
+			repalloc(owner->files, newmax * sizeof(File));
+		owner->maxfiles = newmax;
+	}
+}
+
+/*
+ * Remember that a temporary file is owned by a ResourceOwner
+ *
+ * Caller must have previously done ResourceOwnerEnlargeFiles()
+ */
+void
+ResourceOwnerRememberFile(ResourceOwner owner, File file)
+{
+	Assert(owner->nfiles < owner->maxfiles);
+	owner->files[owner->nfiles] = file;
+	owner->nfiles++;
+}
+
+/*
+ * Forget that a temporary file is owned by a ResourceOwner
+ */
+void
+ResourceOwnerForgetFile(ResourceOwner owner, File file)
+{
+	File	   *files = owner->files;
+	int			ns1 = owner->nfiles - 1;
+	int			i;
+
+	for (i = ns1; i >= 0; i--)
+	{
 		if (files[i] == file)
 		{
 			while (i < ns1)
@@ -1225,38 +1237,13 @@ ResourceOwnerForgetSnapshot(ResourceOwner owner, Snapshot snapshot)
 }
 
 
-=======
-		if (snapshots[i] == snapshot)
-		{
-			while (i < ns1)
-			{
-				snapshots[i] = snapshots[i + 1];
-				i++;
-			}
-			owner->nsnapshots = ns1;
-			return;
-		}
-	}
-	elog(ERROR, "snapshot reference %p is not owned by resource owner %s",
-		 snapshot, owner->name);
-}
-
->>>>>>> 38e9348282e
 /*
  * Debugging subroutine
  */
 static void
-<<<<<<< HEAD
 PrintFileLeakWarning(File file)
 {
 	elog(WARNING,
 		 "temporary file leak: File %d still referenced",
 		 file);
-=======
-PrintSnapshotLeakWarning(Snapshot snapshot)
-{
-	elog(WARNING,
-		 "Snapshot reference leak: Snapshot %p still referenced",
-		 snapshot);
->>>>>>> 38e9348282e
 }
