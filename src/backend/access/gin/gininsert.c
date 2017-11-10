@@ -342,13 +342,8 @@ ginbuild(PG_FUNCTION_ARGS)
 	 * Do the heap scan.  We disallow sync scan here because dataPlaceToPage
 	 * prefers to receive tuples in TID order.
 	 */
-<<<<<<< HEAD
 	reltuples = IndexBuildScan(heap, index, indexInfo, false,
 							   ginBuildCallback, (void *) &buildstate);
-=======
-	reltuples = IndexBuildHeapScan(heap, index, indexInfo, false,
-								   ginBuildCallback, (void *) &buildstate);
->>>>>>> 38e9348282e
 
 	/* dump remaining entries to the index */
 	oldCtx = MemoryContextSwitchTo(buildstate.tmpCtx);

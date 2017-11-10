@@ -159,14 +159,10 @@ ginVacuumPostingTreeLeaves(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, 
 	Page		page;
 	bool		hasVoidPage = FALSE;
 
-<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
 
-	buffer = ReadBufferWithStrategy(gvs->index, blkno, gvs->strategy);
-=======
 	buffer = ReadBufferExtended(gvs->index, MAIN_FORKNUM, blkno,
 								RBM_NORMAL, gvs->strategy);
->>>>>>> 38e9348282e
 	page = BufferGetPage(buffer);
 
 	/*
@@ -257,14 +253,8 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 	Page		page,
 				parentPage;
 
-<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
 
-	dBuffer = ReadBufferWithStrategy(gvs->index, deleteBlkno, gvs->strategy);
-	lBuffer = (leftBlkno == InvalidBlockNumber) ?
-		InvalidBuffer : ReadBufferWithStrategy(gvs->index, leftBlkno, gvs->strategy);
-	pBuffer = ReadBufferWithStrategy(gvs->index, parentBlkno, gvs->strategy);
-=======
 	dBuffer = ReadBufferExtended(gvs->index, MAIN_FORKNUM, deleteBlkno,
 								 RBM_NORMAL, gvs->strategy);
 
@@ -276,7 +266,6 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 
 	pBuffer = ReadBufferExtended(gvs->index, MAIN_FORKNUM, parentBlkno,
 								 RBM_NORMAL, gvs->strategy);
->>>>>>> 38e9348282e
 
 	LockBuffer(dBuffer, GIN_EXCLUSIVE);
 	if (!isParentRoot)			/* parent is already locked by
@@ -429,17 +418,12 @@ ginScanToDelete(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, DataPageDel
 		else
 			me = parent->child;
 	}
-<<<<<<< HEAD
-	
+
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
-	
-	buffer = ReadBufferWithStrategy(gvs->index, blkno, gvs->strategy);
-=======
 
 	buffer = ReadBufferExtended(gvs->index, MAIN_FORKNUM, blkno,
 								RBM_NORMAL, gvs->strategy);
->>>>>>> 38e9348282e
 	page = BufferGetPage(buffer);
 
 	Assert(GinPageIsData(page));
@@ -631,17 +615,12 @@ ginbulkdelete(PG_FUNCTION_ARGS)
 	gvs.callback_state = callback_state;
 	gvs.strategy = info->strategy;
 	initGinState(&gvs.ginstate, index);
-<<<<<<< HEAD
-	
+
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
-	
-	buffer = ReadBufferWithStrategy(index, blkno, info->strategy);
-=======
 
 	buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,
 								RBM_NORMAL, info->strategy);
->>>>>>> 38e9348282e
 
 	/* find leaf page */
 	for (;;)
@@ -776,17 +755,12 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 		Page		page;
 
 		vacuum_delay_point();
-<<<<<<< HEAD
-		
+
 		// -------- MirroredLock ----------
 		MIRROREDLOCK_BUFMGR_LOCK;
-		
-		buffer = ReadBufferWithStrategy(index, blkno, info->strategy);
-=======
 
 		buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,
 									RBM_NORMAL, info->strategy);
->>>>>>> 38e9348282e
 		LockBuffer(buffer, GIN_SHARE);
 		page = (Page) BufferGetPage(buffer);
 
@@ -809,24 +783,8 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 	if (info->vacuum_full && lastBlock > lastFilledBlock)
 	{
 		/* try to truncate index */
-<<<<<<< HEAD
-		int			i;
-
-		for (i = 0; i < nFreePages; i++)
-			if (freePages[i] >= lastFilledBlock)
-			{
-				totFreePages = nFreePages = i;
-				break;
-			}
-
-		if (lastBlock > lastFilledBlock)
-			RelationTruncate(
-					index, 
-					lastFilledBlock + 1,
-					/* markPersistentAsPhysicallyTruncated */ true);
-=======
-		RelationTruncate(index, lastFilledBlock + 1);
->>>>>>> 38e9348282e
+		RelationTruncate(index, lastFilledBlock + 1,
+						 /* markPersistentAsPhysicallyTruncated */ true);
 
 		stats->pages_removed = lastBlock - lastFilledBlock;
 		totFreePages = totFreePages - stats->pages_removed;
