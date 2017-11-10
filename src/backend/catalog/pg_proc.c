@@ -33,10 +33,7 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
-<<<<<<< HEAD
 #include "parser/parse_expr.h"
-=======
->>>>>>> 38e9348282e
 #include "parser/parse_type.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
@@ -117,9 +114,6 @@ ProcedureCreate(const char *procedureName,
 	ObjectAddress myself,
 				referenced;
 	int			i;
-	bool		isnull;
-	Datum		ndefDatum;
-	int			ndefCount;
 
 	/*
 	 * sanity checks
@@ -311,12 +305,7 @@ ProcedureCreate(const char *procedureName,
 	values[Anum_pg_proc_prorows - 1] = Float4GetDatum(prorows);
 	values[Anum_pg_proc_provariadic - 1] = ObjectIdGetDatum(variadicType);
 	values[Anum_pg_proc_proisagg - 1] = BoolGetDatum(isAgg);
-<<<<<<< HEAD
 	values[Anum_pg_proc_proiswindow - 1] = BoolGetDatum(isWin);
-=======
-	/* XXX we don't currently have a way to make new window functions */
-	values[Anum_pg_proc_proiswindow - 1] = BoolGetDatum(false);
->>>>>>> 38e9348282e
 	values[Anum_pg_proc_prosecdef - 1] = BoolGetDatum(security_definer);
 	values[Anum_pg_proc_proisstrict - 1] = BoolGetDatum(isStrict);
 	values[Anum_pg_proc_proretset - 1] = BoolGetDatum(returnsSet);
@@ -337,13 +326,10 @@ ProcedureCreate(const char *procedureName,
 		values[Anum_pg_proc_proargnames - 1] = parameterNames;
 	else
 		nulls[Anum_pg_proc_proargnames - 1] = true;
-<<<<<<< HEAD
-=======
 	if (parameterDefaults != NIL)
 		values[Anum_pg_proc_proargdefaults - 1] = CStringGetTextDatum(nodeToString(parameterDefaults));
 	else
 		nulls[Anum_pg_proc_proargdefaults - 1] = true;
->>>>>>> 38e9348282e
 	values[Anum_pg_proc_prosrc - 1] = CStringGetTextDatum(prosrc);
 	if (probin)
 		values[Anum_pg_proc_probin - 1] = CStringGetTextDatum(probin);
@@ -355,17 +341,8 @@ ProcedureCreate(const char *procedureName,
 		nulls[Anum_pg_proc_proconfig - 1] = true;
 	/* start out with empty permissions */
 	nulls[Anum_pg_proc_proacl - 1] = true;
-<<<<<<< HEAD
 	values[Anum_pg_proc_prodataaccess - 1] = CharGetDatum(prodataaccess);
 	values[Anum_pg_proc_proexeclocation - 1] = CharGetDatum(proexeclocation);
-	values[Anum_pg_proc_provariadic - 1] = ObjectIdGetDatum(variadicType);
-	values[Anum_pg_proc_pronargdefaults - 1] = UInt16GetDatum(list_length(parameterDefaults));
-	if (parameterDefaults != NIL)
-		values[Anum_pg_proc_proargdefaults - 1] = CStringGetTextDatum(nodeToString(parameterDefaults));
-	else
-		nulls[Anum_pg_proc_proargdefaults - 1] = true;
-=======
->>>>>>> 38e9348282e
 
 	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 	tupDesc = RelationGetDescr(rel);
@@ -435,19 +412,8 @@ ProcedureCreate(const char *procedureName,
 		 * parameter is polymorphic, and in such cases a change of default
 		 * type might alter the resolved output type of existing calls.)
 		 */
-<<<<<<< HEAD
-		ndefDatum = SysCacheGetAttr(PROCNAMEARGSNSP, oldtup,
-									Anum_pg_proc_pronargdefaults, &isnull);
-		ndefCount = DatumGetObjectId(ndefDatum);
-		if (ndefCount != 0)
-		{
-			Datum       proargdefaults;
-			List       *oldDefaults;
-			ListCell   *oldlc;
-			ListCell   *newlc;
-
-			if (list_length(parameterDefaults) < ndefCount)
-=======
+		/* GPDB_84_MERGE_FIXME: was it correct to get rid of the
+		 * SysCacheGetAttr() calls to retrieve pronargdefaults? */
 		if (oldproc->pronargdefaults != 0)
 		{
 			Datum		proargdefaults;
@@ -457,7 +423,6 @@ ProcedureCreate(const char *procedureName,
 			ListCell   *newlc;
 
 			if (list_length(parameterDefaults) < oldproc->pronargdefaults)
->>>>>>> 38e9348282e
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("cannot remove parameter defaults from existing function"),
@@ -469,13 +434,6 @@ ProcedureCreate(const char *procedureName,
 			Assert(!isnull);
 			oldDefaults = (List *) stringToNode(TextDatumGetCString(proargdefaults));
 			Assert(IsA(oldDefaults, List));
-<<<<<<< HEAD
-			Assert(list_length(oldDefaults) == ndefCount);
-
-			/* new list can have more defaults than old, advance over 'em */
-			newlc = list_head(parameterDefaults);
-			for (i = list_length(parameterDefaults) - ndefCount; i > 0; i--)
-=======
 			Assert(list_length(oldDefaults) == oldproc->pronargdefaults);
 
 			/* new list can have more defaults than old, advance over 'em */
@@ -483,7 +441,6 @@ ProcedureCreate(const char *procedureName,
 			for (i = list_length(parameterDefaults) - oldproc->pronargdefaults;
 				 i > 0;
 				 i--)
->>>>>>> 38e9348282e
 				newlc = lnext(newlc);
 
 			foreach(oldlc, oldDefaults)
@@ -500,7 +457,6 @@ ProcedureCreate(const char *procedureName,
 			}
 		}
 
-<<<<<<< HEAD
 		/*
 		 * Cannot add a describe callback to a function that has views defined
 		 * on it.  This restriction is for the same set of reasons that we 
@@ -549,9 +505,6 @@ ProcedureCreate(const char *procedureName,
 		}
 
 		/* Can't change aggregate or window status, either */
-=======
-		/* Can't change aggregate status, either */
->>>>>>> 38e9348282e
 		if (oldproc->proisagg != isAgg)
 		{
 			if (oldproc->proisagg)
@@ -579,14 +532,10 @@ ProcedureCreate(const char *procedureName,
 								procedureName)));
 		}
 
-<<<<<<< HEAD
 		/*
 		 * Do not change existing ownership or permissions, either.  Note
 		 * dependency-update code below has to agree with this decision.
 		 */
-=======
-		/* do not change existing ownership or permissions, either */
->>>>>>> 38e9348282e
 		replaces[Anum_pg_proc_proowner - 1] = false;
 		replaces[Anum_pg_proc_proacl - 1] = false;
 
@@ -600,17 +549,8 @@ ProcedureCreate(const char *procedureName,
 	else
 	{
 		/* Creating a new procedure */
-<<<<<<< HEAD
-		Oid			funcOid;
-
-		tup = heap_form_tuple(tupDesc, values, nulls);
-
-		/* Insert tuple into the relation */
-		funcOid = simple_heap_insert(rel, tup);
-=======
 		tup = heap_form_tuple(tupDesc, values, nulls);
 		simple_heap_insert(rel, tup);
->>>>>>> 38e9348282e
 		is_update = false;
 	}
 
