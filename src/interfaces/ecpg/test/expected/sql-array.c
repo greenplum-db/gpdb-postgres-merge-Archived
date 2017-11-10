@@ -115,10 +115,10 @@ main (void)
  int * did = & i ;
  
 #line 16 "array.pgc"
- int  a  [ 10 ]  = { 9 , 8 , 7 , 6 , 5 , 4 , 3 , 2 , 1 , 0 } ;
+ int a [ 10 ] = { 9 , 8 , 7 , 6 , 5 , 4 , 3 , 2 , 1 , 0 } ;
  
 #line 17 "array.pgc"
- char  text  [ 25 ]  = "klmnopqrst" ;
+ char text [ 25 ] = "klmnopqrst" ;
  
 #line 18 "array.pgc"
  char * t = ( char * ) malloc ( 11 ) ;
@@ -148,22 +148,14 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 29 "array.pgc"
 
 
-<<<<<<< HEAD
  	{ ECPGtrans(__LINE__, NULL, "begin work");
-=======
- 	{ ECPGtrans(__LINE__, NULL, "begin work ");
->>>>>>> 38e9348282e
 #line 31 "array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 31 "array.pgc"
 
 
-<<<<<<< HEAD
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table test ( f float , i int , a int [ 10 ] , text char ( 10 ) )", ECPGt_EOIT, ECPGt_EORT);
-=======
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table test ( f float    , i int   , a int  [ 10 ]  , text char  ( 10 )    )    ", ECPGt_EOIT, ECPGt_EORT);
->>>>>>> 38e9348282e
 #line 33 "array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -201,18 +193,14 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 39 "array.pgc"
 
 
-	{ ECPGtrans(__LINE__, NULL, "commit ");
+	{ ECPGtrans(__LINE__, NULL, "commit");
 #line 41 "array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 41 "array.pgc"
 
 
-<<<<<<< HEAD
 	{ ECPGtrans(__LINE__, NULL, "begin work");
-=======
-	{ ECPGtrans(__LINE__, NULL, "begin work ");
->>>>>>> 38e9348282e
 #line 43 "array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -271,7 +259,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 70 "array.pgc"
 
 
-	{ ECPGtrans(__LINE__, NULL, "commit ");
+	{ ECPGtrans(__LINE__, NULL, "commit");
 #line 72 "array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

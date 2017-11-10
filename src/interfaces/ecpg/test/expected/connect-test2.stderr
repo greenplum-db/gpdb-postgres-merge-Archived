@@ -4,11 +4,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-<<<<<<< HEAD
 [NO_PID]: ecpg_execute on line 28: query: select current_database ( ); with 0 parameter(s) on connection second
-=======
-[NO_PID]: ecpg_execute on line 28: query: select  current_database ( )     ; with 0 parameter(s) on connection second
->>>>>>> 38e9348282e
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 28: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -16,11 +12,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 28: RESULT: regress1 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-<<<<<<< HEAD
 [NO_PID]: ecpg_execute on line 29: query: select current_database ( ); with 0 parameter(s) on connection first
-=======
-[NO_PID]: ecpg_execute on line 29: query: select  current_database ( )     ; with 0 parameter(s) on connection first
->>>>>>> 38e9348282e
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 29: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -28,11 +20,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 29: RESULT: connectdb offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-<<<<<<< HEAD
 [NO_PID]: ecpg_execute on line 30: query: select current_database ( ); with 0 parameter(s) on connection second
-=======
-[NO_PID]: ecpg_execute on line 30: query: select  current_database ( )     ; with 0 parameter(s) on connection second
->>>>>>> 38e9348282e
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 30: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -40,11 +28,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 30: RESULT: regress1 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-<<<<<<< HEAD
 [NO_PID]: ecpg_execute on line 33: query: select current_database ( ); with 0 parameter(s) on connection first
-=======
-[NO_PID]: ecpg_execute on line 33: query: select  current_database ( )     ; with 0 parameter(s) on connection first
->>>>>>> 38e9348282e
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 33: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -54,11 +38,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection first closed
 [NO_PID]: sqlca: code: 0, state: 00000
-<<<<<<< HEAD
 [NO_PID]: ecpg_execute on line 37: query: select current_database ( ); with 0 parameter(s) on connection second
-=======
-[NO_PID]: ecpg_execute on line 37: query: select  current_database ( )     ; with 0 parameter(s) on connection second
->>>>>>> 38e9348282e
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 37: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000

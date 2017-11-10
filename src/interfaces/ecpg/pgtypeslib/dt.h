@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt.h,v 1.40 2008/11/26 16:31:02 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt.h,v 1.44 2009/06/11 14:49:13 momjian Exp $ */
 
 #ifndef DT_H
 #define DT_H
@@ -25,10 +25,10 @@ typedef double fsec_t;
 #define USE_SQL_DATES					2
 #define USE_GERMAN_DATES				3
 
-#define INTSTYLE_POSTGRES             0
-#define INTSTYLE_POSTGRES_VERBOSE     1
-#define INTSTYLE_SQL_STANDARD         2
-#define INTSTYLE_ISO_8601             3
+#define INTSTYLE_POSTGRES			  0
+#define INTSTYLE_POSTGRES_VERBOSE	  1
+#define INTSTYLE_SQL_STANDARD		  2
+#define INTSTYLE_ISO_8601			  3
 
 #define INTERVAL_FULL_RANGE (0x7FFF)
 #define INTERVAL_MASK(b) (1 << (b))
@@ -188,7 +188,6 @@ typedef double fsec_t;
  */
 /* Copy&pasted these values from src/include/utils/datetime.h */
 #define DTK_M(t)		(0x01 << (t))
-<<<<<<< HEAD
 #define DTK_ALL_SECS_M	   (DTK_M(SECOND) | DTK_M(MILLISECOND) | DTK_M(MICROSECOND))
 #define DTK_DATE_M		(DTK_M(YEAR) | DTK_M(MONTH) | DTK_M(DAY))
 #define DTK_TIME_M		(DTK_M(HOUR) | DTK_M(MINUTE) | DTK_M(SECOND))
@@ -204,18 +203,6 @@ typedef double fsec_t;
 #define MAXDATEFIELDS	25
 /* only this many chars are stored in datetktbl */
 #define TOKMAXLEN		10
-=======
-#define DTK_ALL_SECS_M     (DTK_M(SECOND) | DTK_M(MILLISECOND) | DTK_M(MICROSECOND))
-#define DTK_DATE_M		(DTK_M(YEAR) | DTK_M(MONTH) | DTK_M(DAY))
-#define DTK_TIME_M		(DTK_M(HOUR) | DTK_M(MINUTE) | DTK_M(SECOND))
-
-#define MAXDATELEN		63		/* maximum possible length of an input date
-								 * string (not counting tr. null) */
-#define MAXDATEFIELDS	25		/* maximum possible number of fields in a date
-								 * string */
-#define TOKMAXLEN		10		/* only this many chars are stored in
-								 * datetktbl */
->>>>>>> 38e9348282e
 
 /* keep this struct small; it gets used a lot */
 typedef struct

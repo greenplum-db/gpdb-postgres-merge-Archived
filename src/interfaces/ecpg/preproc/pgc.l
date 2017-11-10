@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.167 2008/10/29 08:04:53 petere Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.163 2008/02/17 18:14:29 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -567,11 +567,7 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 						BEGIN(state_before);
 						if (literallen == 2) /* "U&" */
 							mmerror(PARSE_ERROR, ET_ERROR, "zero-length delimited identifier");
-<<<<<<< HEAD
 						/* The backend will truncate the identifier here. We do not as it does not change the result. */
-=======
-						/* The backend will truncate the idnetifier here. We do not as it does not change the result. */
->>>>>>> 38e9348282e
 						addlit(yytext, yyleng);
 						yylval.str = mm_strdup(literalbuf);
 						return UIDENT;

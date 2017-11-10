@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2009, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.140 2008/11/15 22:20:55 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.132 2008/03/18 17:46:23 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -65,12 +65,7 @@ $(srcdir)/preproc.y: $(top_srcdir)/src/backend/parser/gram.y parse.pl ecpg.addon
 
 ecpg_keywords.o c_keywords.o keywords.o preproc.o parser.o: preproc.h
 
-<<<<<<< HEAD
 kwlookup.c: % : $(top_srcdir)/src/backend/parser/%
-=======
-# instead of maintaining our own list, take the one from the backend
-keywords.c: % : $(top_srcdir)/src/backend/parser/%
->>>>>>> 38e9348282e
 	rm -f $@ && $(LN_S) $< .
 
 distprep: $(srcdir)/preproc.y $(srcdir)/preproc.c $(srcdir)/preproc.h $(srcdir)/pgc.c
@@ -85,15 +80,11 @@ uninstall:
 	rm -f '$(DESTDIR)$(bindir)/ecpg$(X)'
 
 clean distclean:
-<<<<<<< HEAD
 	rm -f kwlookup.c *.o ecpg$(X)
 # garbage from partial builds
 	@rm -f y.tab.c y.tab.h preproc.tab.c preproc.tab.y preproc.tab.h
-=======
-	rm -f keywords.c *.o ecpg$(X)
->>>>>>> 38e9348282e
 # garbage from development
-	@rm -f core a.out
+	@rm -f core a.out *.output *.tab.c
 
 # `make distclean' must not remove preproc.y, preproc.c, preproc.h, or pgc.c
 # since we want to ship those files in the distribution for people with
