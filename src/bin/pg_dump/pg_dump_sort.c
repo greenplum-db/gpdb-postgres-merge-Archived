@@ -58,6 +58,8 @@ static const int oldObjectTypePriority[] =
 	10,							/* DO_BLOBS */
 	11,							/* DO_BLOB_COMMENTS */
 	3,							/* DO_EXTPROTOCOL */
+	/* GPDB_84_MERGE_FIXME: missing DO_TYPE_STORAGE_OPTIONS? */
+	/* GPDB_84_MERGE_FIXME: missing DO_TYPE_CACHE? */
 };
 
 /*
@@ -85,29 +87,19 @@ static const int newObjectTypePriority[] =
 	24,							/* DO_FK_CONSTRAINT */
 	2,							/* DO_PROCLANG */
 	8,							/* DO_CAST */
-<<<<<<< HEAD
-	8,							/* DO_EXTPROTOCOL */
 	17,							/* DO_TABLE_DATA */
 	15,							/* DO_DUMMY_TYPE */
 	10,							/* DO_TSPARSER */
 	12,							/* DO_TSDICT */
 	11,							/* DO_TSTEMPLATE */
 	13,							/* DO_TSCONFIG */
-	18,							/* DO_BLOBS */
-	19,							/* DO_BLOB_COMMENTS */
-	19							/* DO_TYPE_STORAGE_OPTIONS */
-=======
-	13,							/* DO_TABLE_DATA */
-	11,							/* DO_TABLE_TYPE */
-	5,							/* DO_TSPARSER */
-	6,							/* DO_TSDICT */
-	5,							/* DO_TSTEMPLATE */
-	7,							/* DO_TSCONFIG */
 	3,							/* DO_FDW */
 	4,							/* DO_FOREIGN_SERVER */
-	14,							/* DO_BLOBS */
-	15							/* DO_BLOB_COMMENTS */
->>>>>>> 38e9348282e
+	18,							/* DO_BLOBS */
+	19,							/* DO_BLOB_COMMENTS */
+	8,							/* DO_EXTPROTOCOL */
+	19							/* DO_TYPE_STORAGE_OPTIONS */
+	/* GPDB_84_MERGE_FIXME: missing DO_TYPE_CACHE? */
 };
 
 
