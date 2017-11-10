@@ -76,12 +76,7 @@ do { \
 #define SET_VARSIZE_C(PTR)			(((varattrib_1b *) (PTR))->va_header |= 0x40)
 
 static void toast_delete_datum(Relation rel, Datum value);
-<<<<<<< HEAD
-static Datum toast_save_datum(Relation rel, Datum value, bool isFrozen,
-						bool use_wal, bool use_fsm);
-=======
-static Datum toast_save_datum(Relation rel, Datum value, int options);
->>>>>>> 38e9348282e
+static Datum toast_save_datum(Relation rel, Datum value, bool isFrozen, int options);
 static struct varlena *toast_fetch_datum(struct varlena * attr);
 static struct varlena *toast_fetch_datum_slice(struct varlena * attr,
 						int32 sliceoffset, int32 length);

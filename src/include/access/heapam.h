@@ -236,6 +236,9 @@ extern XLogRecPtr log_heap_freeze(Relation reln, Buffer buffer,
 extern XLogRecPtr log_newpage(RelFileNode *rnode, ForkNumber forkNum,
 							  BlockNumber blk, Page page);
 
+extern XLogRecPtr log_newpage_rel(Relation rel, ForkNumber forkNum, BlockNumber blkno,
+								  Page page);
+
 extern XLogRecPtr log_newpage_relFileNode(RelFileNode *relFileNode,
 										  ForkNumber forkNum,
 										  BlockNumber blkno, Page page,
