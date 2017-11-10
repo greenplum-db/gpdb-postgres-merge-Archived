@@ -337,12 +337,8 @@ typedef struct _tableInfo
 	 */
 	int			numParents;		/* number of (immediate) parent tables */
 	struct _tableInfo **parents;	/* TableInfos of immediate parents */
-<<<<<<< HEAD
-	struct _tableDataInfo *dataObj;		/* TableDataInfo, if dumping its data */
-	Oid			parrelid;			/* external partition's parent oid */
-=======
 	struct _tableDataInfo *dataObj;	/* TableDataInfo, if dumping its data */
->>>>>>> 38e9348282e
+	Oid			parrelid;			/* external partition's parent oid */
 } TableInfo;
 
 typedef struct _attrDefInfo
@@ -482,17 +478,6 @@ typedef struct _cfgInfo
 	Oid			cfgparser;
 } TSConfigInfo;
 
-<<<<<<< HEAD
-/*
- * We build an array of these with an entry for each object that is an
- * extension member according to pg_depend.
- */
-typedef struct _extensionMemberId
-{
-	CatalogId	catId;			/* tableoid+oid of some member object */
-	ExtensionInfo *ext;			/* owning extension */
-} ExtensionMemberId;
-=======
 typedef struct _fdwInfo
 {
 	DumpableObject dobj;
@@ -512,7 +497,16 @@ typedef struct _foreignServerInfo
 	char	   *srvacl;
 	char	   *srvoptions;
 } ForeignServerInfo;
->>>>>>> 38e9348282e
+
+/*
+ * We build an array of these with an entry for each object that is an
+ * extension member according to pg_depend.
+ */
+typedef struct _extensionMemberId
+{
+	CatalogId	catId;			/* tableoid+oid of some member object */
+	ExtensionInfo *ext;			/* owning extension */
+} ExtensionMemberId;
 
 /* global decls */
 extern bool force_quotes;		/* double-quotes for identifiers flag */
@@ -615,15 +609,12 @@ extern TSParserInfo *getTSParsers(int *numTSParsers);
 extern TSDictInfo *getTSDictionaries(int *numTSDicts);
 extern TSTemplateInfo *getTSTemplates(int *numTSTemplates);
 extern TSConfigInfo *getTSConfigurations(int *numTSConfigs);
-<<<<<<< HEAD
+extern FdwInfo *getForeignDataWrappers(int *numForeignDataWrappers);
+extern ForeignServerInfo *getForeignServers(int *numForeignServers);
 extern void getExtensionMembership(ExtensionInfo extinfo[], int numExtensions);
 extern void processExtensionTables(ExtensionInfo extinfo[], int numExtensions);
 
 extern bool	testExtProtocolSupport(void);
 
-=======
-extern FdwInfo *getForeignDataWrappers(int *numForeignDataWrappers);
-extern ForeignServerInfo *getForeignServers(int *numForeignServers);
->>>>>>> 38e9348282e
 
 #endif   /* PG_DUMP_H */

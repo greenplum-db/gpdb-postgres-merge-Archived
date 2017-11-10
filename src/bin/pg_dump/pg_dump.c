@@ -216,11 +216,8 @@ static void getDependencies(void);
 static void setExtPartDependency(TableInfo *tblinfo, int numTables);
 static void getDomainConstraints(TypeInfo *tinfo);
 static void getTableData(TableInfo *tblinfo, int numTables, bool oids);
-<<<<<<< HEAD
 static void makeTableDataInfo(TableInfo *tbinfo, bool oids);
-=======
 static void getTableDataFKConstraints(void);
->>>>>>> 38e9348282e
 static char *format_function_arguments(FuncInfo *finfo, char *funcargs);
 static char *format_function_arguments_old(FuncInfo *finfo, int nallargs,
 						  char **allargtypes,
@@ -1881,37 +1878,11 @@ getTableData(TableInfo *tblinfo, int numTables, bool oids)
 	for (i = 0; i < numTables; i++)
 	{
 		if (tblinfo[i].dobj.dump)
-<<<<<<< HEAD
 			makeTableDataInfo(&(tblinfo[i]), oids);
-=======
-		{
-			TableDataInfo *tdinfo;
-
-			tdinfo = (TableDataInfo *) malloc(sizeof(TableDataInfo));
-
-			tdinfo->dobj.objType = DO_TABLE_DATA;
-
-			/*
-			 * Note: use tableoid 0 so that this object won't be mistaken for
-			 * something that pg_depend entries apply to.
-			 */
-			tdinfo->dobj.catId.tableoid = 0;
-			tdinfo->dobj.catId.oid = tblinfo[i].dobj.catId.oid;
-			AssignDumpId(&tdinfo->dobj);
-			tdinfo->dobj.name = tblinfo[i].dobj.name;
-			tdinfo->dobj.namespace = tblinfo[i].dobj.namespace;
-			tdinfo->tdtable = &(tblinfo[i]);
-			tdinfo->oids = oids;
-			addObjectDependency(&tdinfo->dobj, tblinfo[i].dobj.dumpId);
-
-			tblinfo[i].dataObj = tdinfo;
-		}
->>>>>>> 38e9348282e
 	}
 }
 
 /*
-<<<<<<< HEAD
  * Make a dumpable object for the data of this specific table
  *
  * Note: we make a TableDataInfo if and only if we are going to dump the
@@ -1962,7 +1933,8 @@ makeTableDataInfo(TableInfo *tbinfo, bool oids)
 
 	tbinfo->dataObj = tdinfo;
 }
-=======
+
+/*
  * getTableDataFKConstraints -
  *	  add dump-order dependencies reflecting foreign key constraints
  *
@@ -2009,7 +1981,6 @@ getTableDataFKConstraints(void)
 	free(dobjs);
 }
 
->>>>>>> 38e9348282e
 
 /*
  * guessConstraintInheritance:
@@ -2151,49 +2122,9 @@ dumpDatabase(Archive *AH)
 						  username_subquery);
 		appendStringLiteralAH(dbQry, datname, AH);
 	}
-<<<<<<< HEAD
 	else
 	{
 		error_unsupported_server_version();
-=======
-	else if (g_fout->remoteVersion >= 80000)
-	{
-		appendPQExpBuffer(dbQry, "SELECT tableoid, oid, "
-						  "(%s datdba) as dba, "
-						  "pg_encoding_to_char(encoding) as encoding, "
-						  "NULL as datcollate, NULL as datctype, "
-						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = dattablespace) as tablespace "
-						  "FROM pg_database "
-						  "WHERE datname = ",
-						  username_subquery);
-		appendStringLiteralAH(dbQry, datname, AH);
-	}
-	else if (g_fout->remoteVersion >= 70100)
-	{
-		appendPQExpBuffer(dbQry, "SELECT tableoid, oid, "
-						  "(%s datdba) as dba, "
-						  "pg_encoding_to_char(encoding) as encoding, "
-						  "NULL as datcollate, NULL as datctype, "
-						  "NULL as tablespace "
-						  "FROM pg_database "
-						  "WHERE datname = ",
-						  username_subquery);
-		appendStringLiteralAH(dbQry, datname, AH);
-	}
-	else
-	{
-		appendPQExpBuffer(dbQry, "SELECT "
-						  "(SELECT oid FROM pg_class WHERE relname = 'pg_database') AS tableoid, "
-						  "oid, "
-						  "(%s datdba) as dba, "
-						  "pg_encoding_to_char(encoding) as encoding, "
-						  "NULL as datcollate, NULL as datctype, "
-						  "NULL as tablespace "
-						  "FROM pg_database "
-						  "WHERE datname = ",
-						  username_subquery);
-		appendStringLiteralAH(dbQry, datname, AH);
->>>>>>> 38e9348282e
 	}
 
 	res = PQexec(g_conn, dbQry->data);
@@ -3825,7 +3756,6 @@ getTables(int *numTables)
 						  username_subquery,
 						  RELKIND_SEQUENCE,
 						  RELKIND_RELATION, RELKIND_SEQUENCE,
-<<<<<<< HEAD
 						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE,
 						  g_fout->remoteVersion >= 80209 ?
 						  "AND c.oid NOT IN (select p.parchildrelid from pg_partition_rule p left "
@@ -3834,136 +3764,6 @@ getTables(int *numTables)
 	else
 	{
 		error_unsupported_server_version();
-=======
-						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE);
-	}
-	else if (g_fout->remoteVersion >= 80000)
-	{
-		/*
-		 * Left join to pick up dependency info linking sequences to their
-		 * owning column, if any
-		 */
-		appendPQExpBuffer(query,
-						  "SELECT c.tableoid, c.oid, relname, "
-						  "relacl, relkind, relnamespace, "
-						  "(%s relowner) as rolname, "
-						  "relchecks, (reltriggers <> 0) as relhastriggers, "
-						  "relhasindex, relhasrules, relhasoids, "
-						  "d.refobjid as owning_tab, "
-						  "d.refobjsubid as owning_col, "
-						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
-						  "NULL as reloptions "
-						  "from pg_class c "
-						  "left join pg_depend d on "
-						  "(c.relkind = '%c' and "
-						  "d.classid = c.tableoid and d.objid = c.oid and "
-						  "d.objsubid = 0 and "
-						  "d.refclassid = c.tableoid and d.deptype = 'i') "
-						  "where relkind in ('%c', '%c', '%c', '%c') "
-						  "order by c.oid",
-						  username_subquery,
-						  RELKIND_SEQUENCE,
-						  RELKIND_RELATION, RELKIND_SEQUENCE,
-						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE);
-	}
-	else if (g_fout->remoteVersion >= 70300)
-	{
-		/*
-		 * Left join to pick up dependency info linking sequences to their
-		 * owning column, if any
-		 */
-		appendPQExpBuffer(query,
-						  "SELECT c.tableoid, c.oid, relname, "
-						  "relacl, relkind, relnamespace, "
-						  "(%s relowner) as rolname, "
-						  "relchecks, (reltriggers <> 0) as relhastriggers, "
-						  "relhasindex, relhasrules, relhasoids, "
-						  "d.refobjid as owning_tab, "
-						  "d.refobjsubid as owning_col, "
-						  "NULL as reltablespace, "
-						  "NULL as reloptions "
-						  "from pg_class c "
-						  "left join pg_depend d on "
-						  "(c.relkind = '%c' and "
-						  "d.classid = c.tableoid and d.objid = c.oid and "
-						  "d.objsubid = 0 and "
-						  "d.refclassid = c.tableoid and d.deptype = 'i') "
-						  "where relkind in ('%c', '%c', '%c', '%c') "
-						  "order by c.oid",
-						  username_subquery,
-						  RELKIND_SEQUENCE,
-						  RELKIND_RELATION, RELKIND_SEQUENCE,
-						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE);
-	}
-	else if (g_fout->remoteVersion >= 70200)
-	{
-		appendPQExpBuffer(query,
-						  "SELECT tableoid, oid, relname, relacl, relkind, "
-						  "0::oid as relnamespace, "
-						  "(%s relowner) as rolname, "
-						  "relchecks, (reltriggers <> 0) as relhastriggers, "
-						  "relhasindex, relhasrules, relhasoids, "
-						  "NULL::oid as owning_tab, "
-						  "NULL::int4 as owning_col, "
-						  "NULL as reltablespace, "
-						  "NULL as reloptions "
-						  "from pg_class "
-						  "where relkind in ('%c', '%c', '%c') "
-						  "order by oid",
-						  username_subquery,
-						  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
-	}
-	else if (g_fout->remoteVersion >= 70100)
-	{
-		/* all tables have oids in 7.1 */
-		appendPQExpBuffer(query,
-						  "SELECT tableoid, oid, relname, relacl, relkind, "
-						  "0::oid as relnamespace, "
-						  "(%s relowner) as rolname, "
-						  "relchecks, (reltriggers <> 0) as relhastriggers, "
-						  "relhasindex, relhasrules, "
-						  "'t'::bool as relhasoids, "
-						  "NULL::oid as owning_tab, "
-						  "NULL::int4 as owning_col, "
-						  "NULL as reltablespace, "
-						  "NULL as reloptions "
-						  "from pg_class "
-						  "where relkind in ('%c', '%c', '%c') "
-						  "order by oid",
-						  username_subquery,
-						  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
-	}
-	else
-	{
-		/*
-		 * Before 7.1, view relkind was not set to 'v', so we must check if we
-		 * have a view by looking for a rule in pg_rewrite.
-		 */
-		appendPQExpBuffer(query,
-						  "SELECT "
-		"(SELECT oid FROM pg_class WHERE relname = 'pg_class') AS tableoid, "
-						  "oid, relname, relacl, "
-						  "CASE WHEN relhasrules and relkind = 'r' "
-					  "  and EXISTS(SELECT rulename FROM pg_rewrite r WHERE "
-					  "             r.ev_class = c.oid AND r.ev_type = '1') "
-						  "THEN '%c'::\"char\" "
-						  "ELSE relkind END AS relkind,"
-						  "0::oid as relnamespace, "
-						  "(%s relowner) as rolname, "
-						  "relchecks, (reltriggers <> 0) as relhastriggers, "
-						  "relhasindex, relhasrules, "
-						  "'t'::bool as relhasoids, "
-						  "NULL::oid as owning_tab, "
-						  "NULL::int4 as owning_col, "
-						  "NULL as reltablespace, "
-						  "NULL as reloptions "
-						  "from pg_class c "
-						  "where relkind in ('%c', '%c') "
-						  "order by oid",
-						  RELKIND_VIEW,
-						  username_subquery,
-						  RELKIND_RELATION, RELKIND_SEQUENCE);
->>>>>>> 38e9348282e
 	}
 
 	res = PQexec(g_conn, query->data);
@@ -4999,19 +4799,7 @@ getCasts(int *numCasts)
 	}
 	else
 	{
-<<<<<<< HEAD
 		error_unsupported_server_version();
-=======
-		appendPQExpBuffer(query, "SELECT 0 as tableoid, p.oid, "
-						  "t1.oid as castsource, t2.oid as casttarget, "
-						  "p.oid as castfunc, 'e' as castcontext, "
-						  "'f' as castmethod "
-						  "FROM pg_type t1, pg_type t2, pg_proc p "
-						  "WHERE p.pronargs = 1 AND "
-						  "p.proargtypes[0] = t1.oid AND "
-						  "p.prorettype = t2.oid AND p.proname = t2.typname "
-						  "ORDER BY 3,4");
->>>>>>> 38e9348282e
 	}
 
 	res = PQexec(g_conn, query->data);
@@ -7721,13 +7509,8 @@ format_function_arguments(FuncInfo *finfo, char *funcargs)
  * The argument type names are qualified if needed.  The function name
  * is never qualified.
  *
-<<<<<<< HEAD
  * This is used only with pre-GPDB 5.0 servers, so we aren't expecting to see
  * DEFAULT arguments.
-=======
- * This is used only with pre-8.4 servers, so we aren't expecting to see
- * VARIADIC or TABLE arguments, nor are there any defaults for arguments.
->>>>>>> 38e9348282e
  *
  * Any or all of allargtypes, argmodes, argnames may be NULL.
  */
@@ -8161,24 +7944,6 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		}
 	}
 
-<<<<<<< HEAD
-=======
-	if (funcargs)
-	{
-		/* 8.4 or later; we rely on server-side code for most of the work */
-		funcfullsig = format_function_arguments(finfo, funcargs);
-		funcsig = format_function_arguments(finfo, funciargs);
-	}
-	else
-	{
-		/* pre-8.4, do it ourselves */
-		funcsig = format_function_arguments_old(finfo, nallargs, allargtypes,
-												argmodes, argnames);
-		funcfullsig = funcsig;
-	}
-
-	funcsig_tag = format_function_signature(finfo, false);
->>>>>>> 38e9348282e
 
 	/*
 	 * DROP must be fully qualified in case same name appears in pg_catalog
@@ -8188,10 +7953,6 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 					  funcsig);
 
 	appendPQExpBuffer(q, "CREATE FUNCTION %s ", funcfullsig);
-<<<<<<< HEAD
-
-=======
->>>>>>> 38e9348282e
 	if (funcresult)
 		appendPQExpBuffer(q, "RETURNS %s", funcresult);
 	else
