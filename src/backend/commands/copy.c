@@ -4434,8 +4434,11 @@ CopyFrom(CopyState cstate)
 	 */
 	ExecBSInsertTriggers(estate, resultRelInfo);
 
-	/* Skip header processing if dummy file get from master for COPY FROM ON SEGMENT */
-	if(!cstate->on_segment || Gp_role != GP_ROLE_EXECUTE)
+	/* 
+	 * Skip header processing if dummy file get from master for COPY FROM ON
+	 * SEGMENT
+	 */
+	if (!cstate->on_segment || Gp_role != GP_ROLE_EXECUTE)
 	{
 		CopyFromProcessDataFileHeader(cstate, cdbCopy, &file_has_oids);
 	}

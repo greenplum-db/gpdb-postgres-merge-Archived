@@ -913,8 +913,9 @@ explain_outNode(StringInfo str,
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
-		/**
-		 * Estimates will have to be scaled down to be per-segment (except in a few cases).
+		/*
+		 * Estimates will have to be scaled down to be per-segment (except in a
+		 * few cases).
 		 */
 		if ((plan->directDispatch).isDirectDispatch)
 		{
@@ -922,16 +923,19 @@ explain_outNode(StringInfo str,
 		}
 		else if (plan->flow != NULL && CdbPathLocus_IsBottleneck(*(plan->flow)))
 		{
-			/**
-			 * Data is unified in one place (singleQE or QD), or executed on a single segment.
-			 * We scale up estimates to make it global.
-			 * We will later amend this for Motion nodes.
+			/*
+			 * Data is unified in one place (singleQE or QD), or executed on a
+			 * single segment.  We scale up estimates to make it global.  We
+			 * will later amend this for Motion nodes.
 			 */
 			scaleFactor = 1.0;
 		}
 		else
 		{
-			/* the plan node is executed on multiple nodes, so scale down the number of rows seen by each segment */
+			/*
+			 * The plan node is executed on multiple nodes, so scale down the
+			 * number of rows seen by each segment
+			 */
 			scaleFactor = getgpsegmentCount();
 		}
 	}
@@ -956,12 +960,9 @@ explain_outNode(StringInfo str,
 		case T_RecursiveUnion:
 			pname = "Recursive Union";
 			break;
-<<<<<<< HEAD
 		case T_Sequence:
 			pname = "Sequence";
 			break;
-=======
->>>>>>> 38e9348282e
 		case T_BitmapAnd:
 			pname = "BitmapAnd";
 			break;
@@ -994,12 +995,9 @@ explain_outNode(StringInfo str,
 					break;
 				case JOIN_ANTI:
 					pname = "Nested Loop Anti Join";
-<<<<<<< HEAD
 					break;
 				case JOIN_LASJ_NOTIN:
 					pname = "Nested Loop Left Anti Semi Join (Not-In)";
-=======
->>>>>>> 38e9348282e
 					break;
 				default:
 					pname = "Nested Loop ??? Join";
@@ -1026,12 +1024,9 @@ explain_outNode(StringInfo str,
 					break;
 				case JOIN_ANTI:
 					pname = "Merge Anti Join";
-<<<<<<< HEAD
 					break;
 				case JOIN_LASJ_NOTIN:
 					pname = "Merge Left Anti Semi Join (Not-In)";
-=======
->>>>>>> 38e9348282e
 					break;
 				default:
 					pname = "Merge ??? Join";
@@ -1058,12 +1053,9 @@ explain_outNode(StringInfo str,
 					break;
 				case JOIN_ANTI:
 					pname = "Hash Anti Join";
-<<<<<<< HEAD
 					break;
 				case JOIN_LASJ_NOTIN:
 					pname = "Hash Left Anti Semi Join (Not-In)";
-=======
->>>>>>> 38e9348282e
 					break;
 				default:
 					pname = "Hash ??? Join";
@@ -1127,7 +1119,6 @@ explain_outNode(StringInfo str,
 		case T_WorkTableScan:
 			pname = "WorkTable Scan";
 			break;
-<<<<<<< HEAD
 		case T_ShareInputScan:
 			{
 				ShareInputScan *sisc = (ShareInputScan *) plan;
@@ -1136,8 +1127,6 @@ explain_outNode(StringInfo str,
 				pname = "";
 			}
 			break;
-=======
->>>>>>> 38e9348282e
 		case T_Material:
 			pname = "Materialize";
 			break;
@@ -1483,20 +1472,16 @@ explain_outNode(StringInfo str,
 									 quote_identifier(rte->eref->aliasname));
 			}
 			break;
-<<<<<<< HEAD
 		case T_PartitionSelector:
 			{
 				PartitionSelector *ps = (PartitionSelector *)plan;
-				char *relname = get_rel_name(ps->relid);
+				char 			  *relname = get_rel_name(ps->relid);
+
 				appendStringInfo(str, " for %s", quote_identifier(relname));
-				if (0 != ps->scanId)
-				{
+				if (ps->scanId != 0)
 					appendStringInfo(str, " (dynamic scan id: %d)", ps->scanId);
-				}
 			}
 			break;
-=======
->>>>>>> 38e9348282e
 		default:
 			break;
 	}
@@ -1550,7 +1535,6 @@ explain_outNode(StringInfo str,
 		case T_BitmapAppendOnlyScan:
 		case T_BitmapTableScan:
 			/* XXX do we want to show this in production? */
-<<<<<<< HEAD
 			if (nodeTag(plan) == T_BitmapHeapScan)
 			{
 				show_scan_qual(((BitmapHeapScan *) plan)->bitmapqualorig,
@@ -1575,13 +1559,6 @@ explain_outNode(StringInfo str,
 							   plan, outer_plan,
 							   str, indent, es);
 			}
-=======
-			show_scan_qual(((BitmapHeapScan *) plan)->bitmapqualorig,
-						   "Recheck Cond",
-						   ((Scan *) plan)->scanrelid,
-						   plan, outer_plan,
-						   str, indent, es);
->>>>>>> 38e9348282e
 			/* FALL THRU */
 		case T_SeqScan:
 		case T_ExternalScan:

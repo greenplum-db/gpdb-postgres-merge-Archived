@@ -611,15 +611,10 @@ createdb(CreatedbStmt *stmt)
 {
 	Oid			src_dboid = InvalidOid;
 	Oid			src_owner;
-<<<<<<< HEAD
-	int			src_encoding = -1;
-	bool		src_istemplate = false;
-=======
 	int			src_encoding;
 	char	   *src_collate;
 	char	   *src_ctype;
 	bool		src_istemplate;
->>>>>>> 38e9348282e
 	bool		src_allowconn;
 	Oid			src_lastsysoid = InvalidOid;
 	TransactionId src_frozenxid = InvalidTransactionId;
@@ -887,16 +882,10 @@ createdb(CreatedbStmt *stmt)
 		  encoding == PG_UTF8 ||
 #endif
 		  (encoding == PG_SQL_ASCII && superuser())))
-<<<<<<< HEAD
 	{
-		int			elevel = gp_encoding_check_locale_compatibility ? ERROR : WARNING;
 
-		ereport(elevel,
+		ereport(gp_encoding_check_locale_compatibility ? ERROR : WARNING,
 				(errmsg("encoding %s does not match server's locale %s",
-=======
-		ereport(ERROR,
-				(errmsg("encoding %s does not match locale %s",
->>>>>>> 38e9348282e
 						pg_encoding_to_char(encoding),
 						dbctype),
 			 errdetail("The chosen CTYPE setting requires encoding %s.",
@@ -1602,18 +1591,9 @@ dropdb(const char *dbname, bool missing_ok)
 	
 	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH)
-		MetaTrackDropObject(DatabaseRelationId,
-							db_id);
+		MetaTrackDropObject(DatabaseRelationId, db_id);
 
 	/*
-<<<<<<< HEAD
-	 * Also, clean out any entries in the shared free space map.
-	 */
-	FreeSpaceMapForgetDatabase(InvalidOid, db_id);
-
-	/*
-=======
->>>>>>> 38e9348282e
 	 * Tell the stats collector to forget it immediately, too.
 	 */
 	pgstat_drop_database(db_id);
@@ -2217,10 +2197,6 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 	Datum		new_record[Natts_pg_database];
 	bool		new_record_nulls[Natts_pg_database];
 	bool		new_record_repl[Natts_pg_database];
-<<<<<<< HEAD
-	Oid			dboid = InvalidOid;
-=======
->>>>>>> 38e9348282e
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
@@ -2279,9 +2255,7 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", stmt->dbname)));
 
-	dboid = HeapTupleGetOid(tuple);
-
-	if (!pg_database_ownercheck(dboid, GetUserId()))
+	if (!pg_database_ownercheck(HeapTupleGetOid(tuple), GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
 					   stmt->dbname);
 
@@ -2310,22 +2284,20 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH)
 		MetaTrackUpdObject(DatabaseRelationId,
-						   dboid,
+						   HeapTupleGetOid(tuple),
 						   GetUserId(),
-						   "ALTER", "CONNECTION LIMIT"
-				);
+						   "ALTER", "CONNECTION LIMIT");
 
 	/* Close pg_database, but keep lock till commit */
 	heap_close(rel, NoLock);
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
-
 		StringInfoData buffer;
 
 		initStringInfo(&buffer);
-
-		appendStringInfo(&buffer, "ALTER DATABASE \"%s\" CONNECTION LIMIT %d", stmt->dbname, connlimit);
+		appendStringInfo(&buffer, "ALTER DATABASE \"%s\" CONNECTION LIMIT %d",
+						 stmt->dbname, connlimit);
 
 		CdbDispatchCommand(buffer.data,
 							DF_NEED_TWO_PHASE|
@@ -2467,35 +2439,28 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 		MetaTrackUpdObject(DatabaseRelationId,
 						   dboid,
 						   GetUserId(),
-						   "ALTER", alter_subtype
-				);
+						   "ALTER", alter_subtype);
 
 	/* Close pg_database, but keep lock till commit */
 	heap_close(rel, NoLock);
 	
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
-
 		StringInfoData buffer;
 
 		initStringInfo(&buffer);
-
 		appendStringInfo(&buffer, "ALTER DATABASE \"%s\" ", stmt->dbname);
 		
 		if (stmt->setstmt->kind ==  VAR_RESET_ALL)
-		{
 			appendStringInfo(&buffer, "RESET ALL");
-		}
 		else if (valuestr == NULL)
-		{
 			appendStringInfo(&buffer, "RESET \"%s\"", stmt->setstmt->name);
-		}
 		else
 		{
 			ListCell   *l;
 			bool		first;
 
-			appendStringInfo(&buffer, "SET \"%s\" TO ",stmt->setstmt->name);
+			appendStringInfo(&buffer, "SET \"%s\" TO ", stmt->setstmt->name);
 		
 			/* Parse string into list of identifiers */
 			first = true;
@@ -2519,10 +2484,10 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 						appendStringInfo(&buffer,"'%s'", strVal(&arg->val));
 						break;
 					default:
-						appendStringInfo(&buffer, "%s", quote_identifier(strVal(&arg->val)));
+						appendStringInfo(&buffer, "%s",
+										 quote_identifier(strVal(&arg->val)));
 				}
 			}
-
 		}
 
 		CdbDispatchCommand(buffer.data,
