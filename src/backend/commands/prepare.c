@@ -379,12 +379,8 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 		expr = coerce_to_target_type(pstate, expr, given_type_id,
 									 expected_type_id, -1,
 									 COERCION_ASSIGNMENT,
-<<<<<<< HEAD
-									 COERCE_IMPLICIT_CAST, -1);
-=======
 									 COERCE_IMPLICIT_CAST,
 									 -1);
->>>>>>> 38e9348282e
 
 		if (expr == NULL)
 			ereport(ERROR,

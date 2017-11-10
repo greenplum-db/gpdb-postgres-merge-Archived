@@ -40,17 +40,14 @@
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
+#include "catalog/pg_partition.h"
+#include "catalog/pg_partition_rule.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_type_fn.h"
-<<<<<<< HEAD
-#include "catalog/pg_partition.h"
-#include "catalog/pg_partition_rule.h"
-=======
 #include "catalog/storage.h"
->>>>>>> 38e9348282e
 #include "catalog/toasting.h"
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbaocsam.h"
@@ -1733,11 +1730,7 @@ truncate_check_rel(Relation rel)
 {
 	AclResult	aclresult;
 
-<<<<<<< HEAD
 	/* Only allow truncate on regular or append-only tables */
-=======
-	/* Only allow truncate on regular tables */
->>>>>>> 38e9348282e
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -4659,11 +4652,8 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	switch (cmd->subtype)
 	{
 		case AT_AddColumn:		/* ADD COLUMN */
-<<<<<<< HEAD
 		case AT_AddColumnRecurse:
-=======
 		case AT_AddColumnToView: /* add column via CREATE OR REPLACE VIEW */
->>>>>>> 38e9348282e
 			ATExecAddColumn(tab, rel, (ColumnDef *) cmd->def);
 			break;
 		case AT_ColumnDefault:	/* ALTER COLUMN DEFAULT */
@@ -8565,12 +8555,8 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	 * Reconstruct a RangeVar for my relation (not passed in, unfortunately).
 	 */
 	myRel = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
-<<<<<<< HEAD
-						 pstrdup(RelationGetRelationName(rel)), -1);
-=======
 						 pstrdup(RelationGetRelationName(rel)),
 						 -1);
->>>>>>> 38e9348282e
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -10743,8 +10729,7 @@ ATExecSetTableSpace_BufferPool(
 	oldTablespace = rel->rd_rel->reltablespace ? rel->rd_rel->reltablespace : MyDatabaseTableSpace;
 
 	/*
-	 * We need to log the copied data in WAL enabled AND
-	 * it's not a temp rel.
+	 * We need to log the copied data in WAL enabled AND it's not a temp rel.
 	 */
 	useWal = XLogIsNeeded() && !rel->rd_istemp;
 
@@ -10771,6 +10756,7 @@ ATExecSetTableSpace_BufferPool(
 					/* segmentFileNum */ 0,
 					&oldPersistentTid,
 					&oldPersistentSerialNum);
+
 	if (!HeapTupleIsValid(nodeTuple))
 		elog(ERROR, "cache lookup failed for relation %u, tablespace %u, relation file node %u", 
 		     tableOid,
@@ -10834,12 +10820,11 @@ ATExecSetTableSpace_BufferPool(
 	UpdateGpRelationNodeTuple(
 						gp_relation_node,
 						nodeTuple,
-						(newRelFileNode->spcNode == MyDatabaseTableSpace) ? 0:newRelFileNode->spcNode,
+						(newRelFileNode->spcNode == MyDatabaseTableSpace) ? 0 : newRelFileNode->spcNode,
 						newRelFileNode->relNode,
 						/* segmentFileNum */ 0,
 						&newPersistentTid,
 						newPersistentSerialNum);
-
 }
 
 static bool
@@ -10851,12 +10836,9 @@ ATExecSetTableSpace_Relation(Oid tableOid, Oid newTableSpace)
 	Oid			newrelfilenode;
 	HeapTuple	tuple;
 	Form_pg_class rd_rel;
-<<<<<<< HEAD
 	Relation	gp_relation_node;
 	RelFileNode newrnode;
-=======
 	ForkNumber	forkNum;
->>>>>>> 38e9348282e
 
 	rel = relation_open(tableOid, AccessExclusiveLock);
 
@@ -10892,7 +10874,6 @@ ATExecSetTableSpace_Relation(Oid tableOid, Oid newTableSpace)
 	if (newTableSpace == oldTableSpace ||
 		(newTableSpace == MyDatabaseTableSpace && oldTableSpace == 0))
 	{
-		/* XXX - Why do we hold the lock if we aren't changing anything? */
 		relation_close(rel, NoLock);
 		return false;
 	}
@@ -10908,8 +10889,6 @@ ATExecSetTableSpace_Relation(Oid tableOid, Oid newTableSpace)
 	rd_rel = (Form_pg_class) GETSTRUCT(tuple);
 
 	/*
-<<<<<<< HEAD
-=======
 	 * Since we copy the file directly without looking at the shared buffers,
 	 * we'd better first flush out any pages of the source relation that are
 	 * in shared buffers.  We assume no new changes will be made while we are
@@ -10918,24 +10897,14 @@ ATExecSetTableSpace_Relation(Oid tableOid, Oid newTableSpace)
 	FlushRelationBuffers(rel);
 
 	/*
->>>>>>> 38e9348282e
 	 * Relfilenodes are not unique across tablespaces, so we need to allocate
 	 * a new one in the new tablespace.
 	 */
 	newrelfilenode = GetNewRelFileNode(newTableSpace,
-<<<<<<< HEAD
-									   rel->rd_rel->relisshared);
-
-	gp_relation_node = heap_open(GpRelationNodeRelationId, RowExclusiveLock);
-
-	/* create another storage file. Is it a little ugly ? */
-	/* NOTE: any conflict in relfilenode value will be caught here */
-	newrnode = rel->rd_node;
-	newrnode.relNode = newrelfilenode;
-	newrnode.spcNode = newTableSpace;
-=======
 									   rel->rd_rel->relisshared,
 									   NULL);
+
+	gp_relation_node = heap_open(GpRelationNodeRelationId, RowExclusiveLock);
 
 	/* Open old and new relation */
 	newrnode = rel->rd_node;
@@ -10970,12 +10939,10 @@ ATExecSetTableSpace_Relation(Oid tableOid, Oid newTableSpace)
 	/* drop old relation, and close new one */
 	RelationDropStorage(rel);
 	smgrclose(dstrel);
->>>>>>> 38e9348282e
 
 	/* update the pg_class row */
 	rd_rel->reltablespace = (newTableSpace == MyDatabaseTableSpace) ? InvalidOid : newTableSpace;
 	rd_rel->relfilenode = newrelfilenode;
-<<<<<<< HEAD
 	
 	if (Debug_persistent_print)
 		elog(Persistent_DebugPrintLevel(), 
@@ -10984,8 +10951,6 @@ ATExecSetTableSpace_Relation(Oid tableOid, Oid newTableSpace)
 			 rd_rel->relfilenode,
 			 rd_rel->reltablespace);
 
-=======
->>>>>>> 38e9348282e
 	simple_heap_update(pg_class, &tuple->t_self, tuple);
 	CatalogUpdateIndexes(pg_class, tuple);
 
@@ -11036,7 +11001,6 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace)
 	Oid			relbmrelid = InvalidOid;
 	Oid			relbmidxid = InvalidOid;
 
-
 	/* Ensure valid input */
 	Assert(OidIsValid(tableOid));
 	Assert(OidIsValid(newTableSpace));
@@ -11072,7 +11036,6 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace)
 	/* Move the main table */
 	if (!ATExecSetTableSpace_Relation(tableOid, newTableSpace))
 	{
-		/* XXX - Why do we hold the lock if we aren't changing anything? */
 		relation_close(rel, NoLock);
 		return;
 	}
@@ -11107,8 +11070,7 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace)
 		MetaTrackUpdObject(RelationRelationId,
 						   RelationGetRelid(rel),
 						   GetUserId(),
-						   "ALTER", "SET TABLESPACE"
-			);
+						   "ALTER", "SET TABLESPACE");
 
 	/* Hold the lock until commit */
 	relation_close(rel, NoLock);
@@ -11230,14 +11192,10 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 		 * rel, because there's no need for smgr to schedule an fsync for this
 		 * write; we'll do it ourselves below.
 		 */
-<<<<<<< HEAD
-		smgrextend(dst, blkno, buf, true);
-		
+		smgrextend(dst, forkNum, blkno, buf, true);
+
 		LWLockRelease(MirroredLock);
 		// -------- MirroredLock ----------
-=======
-		smgrextend(dst, forkNum, blkno, buf, true);
->>>>>>> 38e9348282e
 	}
 
 	pfree(buf);
@@ -17200,7 +17158,7 @@ char *alterTableCmdString(AlterTableType subtype)
 	switch (subtype)
 	{
 		case AT_AddColumn: /* add column */
-		case AT_AddColumnRecurse: /* internal to command/tablecmds.c*/
+		case AT_AddColumnRecurse: /* internal to command/tablecmds.c */
 			cmdstring = pstrdup("add a column to");
 			break;
 			

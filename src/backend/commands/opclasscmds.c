@@ -252,10 +252,6 @@ CreateOpFamily(char *amname, char *opfname, Oid namespaceoid, Oid amoid)
 	HeapTuple	tup;
 	Datum		values[Natts_pg_opfamily];
 	bool		nulls[Natts_pg_opfamily];
-<<<<<<< HEAD
-	int			i;
-=======
->>>>>>> 38e9348282e
 	NameData	opfName;
 	ObjectAddress myself,
 				referenced;
@@ -280,12 +276,7 @@ CreateOpFamily(char *amname, char *opfname, Oid namespaceoid, Oid amoid)
 	 * Okay, let's create the pg_opfamily entry.
 	 */
 	memset(values, 0, sizeof(values));
-<<<<<<< HEAD
-	for (i = 0; i < sizeof(nulls); i++)
-		nulls[i] = false;
-=======
 	memset(nulls, false, sizeof(nulls));
->>>>>>> 38e9348282e
 
 	values[Anum_pg_opfamily_opfmethod - 1] = ObjectIdGetDatum(amoid);
 	namestrcpy(&opfName, opfname);
@@ -651,16 +642,8 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	/*
 	 * Okay, let's create the pg_opclass entry.
 	 */
-<<<<<<< HEAD
-	for (i = 0; i < Natts_pg_opclass; ++i)
-	{
-		nulls[i] = false;
-		values[i] = 0;		/* redundant, but safe */
-	}
-=======
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
->>>>>>> 38e9348282e
 
 	values[Anum_pg_opclass_opcmethod - 1] = ObjectIdGetDatum(amoid);
 	namestrcpy(&opcName, opcname);
@@ -822,12 +805,7 @@ DefineOpFamily(CreateOpFamilyStmt *stmt)
 	 * Okay, let's create the pg_opfamily entry.
 	 */
 	memset(values, 0, sizeof(values));
-<<<<<<< HEAD
-	for (i = 0; i < sizeof(nulls); i++)
-		nulls[i] = false;
-=======
 	memset(nulls, false, sizeof(nulls));
->>>>>>> 38e9348282e
 
 	values[Anum_pg_opfamily_opfmethod - 1] = ObjectIdGetDatum(amoid);
 	namestrcpy(&opfName, opfname);
@@ -1380,17 +1358,9 @@ storeOperators(List *opfamilyname, Oid amoid,
 							NameListToString(opfamilyname))));
 
 		/* Create the pg_amop entry */
-<<<<<<< HEAD
-		for (i = 0; i < Natts_pg_amop; ++i)
-		{
-			nulls[i] = false;
-			values[i] = 0;
-		}
-=======
 		memset(values, 0, sizeof(values));
 		memset(nulls, false, sizeof(nulls));
 
->>>>>>> 38e9348282e
 		values[Anum_pg_amop_amopfamily - 1] = ObjectIdGetDatum(opfamilyoid);
 		values[Anum_pg_amop_amoplefttype - 1] = ObjectIdGetDatum(op->lefttype);
 		values[Anum_pg_amop_amoprighttype - 1] = ObjectIdGetDatum(op->righttype);
@@ -1489,16 +1459,8 @@ storeProcedures(List *opfamilyname, Oid amoid,
 							NameListToString(opfamilyname))));
 
 		/* Create the pg_amproc entry */
-<<<<<<< HEAD
-		for (i = 0; i < Natts_pg_amproc; ++i)
-		{
-			nulls[i] = false;
-			values[i] = 0;
-		}
-=======
 		memset(values, 0, sizeof(values));
 		memset(nulls, false, sizeof(nulls));
->>>>>>> 38e9348282e
 
 		values[Anum_pg_amproc_amprocfamily - 1] = ObjectIdGetDatum(opfamilyoid);
 		values[Anum_pg_amproc_amproclefttype - 1] = ObjectIdGetDatum(proc->lefttype);
