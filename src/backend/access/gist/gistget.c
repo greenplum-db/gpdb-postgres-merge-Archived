@@ -24,21 +24,14 @@
 #include "utils/memutils.h"
 
 
-<<<<<<< HEAD
-static OffsetNumber gistfindnext(IndexScanDesc scan, OffsetNumber n,
-			 ScanDirection dir);
-static int64 gistnext(IndexScanDesc scan, ScanDirection dir, HashBitmap *tbm);
-=======
 static OffsetNumber gistfindnext(IndexScanDesc scan, OffsetNumber n);
-static int64 gistnext(IndexScanDesc scan, TIDBitmap *tbm);
->>>>>>> 38e9348282e
+static int64 gistnext(IndexScanDesc scan, HashBitmap *tbm);
 static bool gistindex_keytest(IndexTuple tuple, IndexScanDesc scan,
 				  OffsetNumber offset);
 
 static void
 killtuple(Relation r, GISTScanOpaque so, ItemPointer iptr)
 {
-<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_DECLARE;
 
 	Page        p;
@@ -58,21 +51,6 @@ killtuple(Relation r, GISTScanOpaque so, ItemPointer iptr)
 		ItemIdMarkDead(PageGetItemId(p, offset));
 
 		MarkBufferDirtyHint(so->curbuf, r);
-=======
-	Page		p;
-	OffsetNumber offset;
-
-	LockBuffer(so->curbuf, GIST_SHARE);
-	gistcheckpage(r, so->curbuf);
-	p = (Page) BufferGetPage(so->curbuf);
-
-	if (XLByteEQ(so->stack->lsn, PageGetLSN(p)))
-	{
-		/* page unchanged, so all is simple */
-		offset = ItemPointerGetOffsetNumber(iptr);
-		ItemIdMarkDead(PageGetItemId(p, offset));
-		SetBufferCommitInfoNeedsSave(so->curbuf);
->>>>>>> 38e9348282e
 	}
 	else
 	{
@@ -86,23 +64,16 @@ killtuple(Relation r, GISTScanOpaque so, ItemPointer iptr)
 			{
 				/* found */
 				ItemIdMarkDead(PageGetItemId(p, offset));
-<<<<<<< HEAD
 				MarkBufferDirtyHint(so->curbuf, r);
-=======
-				SetBufferCommitInfoNeedsSave(so->curbuf);
->>>>>>> 38e9348282e
 				break;
 			}
 		}
 	}
 
 	LockBuffer(so->curbuf, GIST_UNLOCK);
-<<<<<<< HEAD
 
 	MIRROREDLOCK_BUFMGR_UNLOCK;
 	// -------- MirroredLock ----------
-=======
->>>>>>> 38e9348282e
 }
 
 /*
@@ -171,11 +142,7 @@ gistgetbitmap(PG_FUNCTION_ARGS)
  * non-killed tuple that matches the search key.
  */
 static int64
-<<<<<<< HEAD
-gistnext(IndexScanDesc scan, ScanDirection dir, HashBitmap *tbm)
-=======
-gistnext(IndexScanDesc scan, TIDBitmap *tbm)
->>>>>>> 38e9348282e
+gistnext(IndexScanDesc scan, HashBitmap *tbm)
 {
 	MIRROREDLOCK_BUFMGR_DECLARE;
 
@@ -189,19 +156,11 @@ gistnext(IndexScanDesc scan, TIDBitmap *tbm)
 
 	so = (GISTScanOpaque) scan->opaque;
 
-<<<<<<< HEAD
+	if (so->qual_ok == false)
+		return 0;
+
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
-
-	if ( so->qual_ok == false )
-	{
-		MIRROREDLOCK_BUFMGR_UNLOCK;
-		// -------- MirroredLock ----------
-
-=======
-	if ( so->qual_ok == false )
->>>>>>> 38e9348282e
-		return 0;
 
 	if ( so->curbuf == InvalidBuffer ) 
 	{
@@ -366,7 +325,6 @@ gistnext(IndexScanDesc scan, TIDBitmap *tbm)
 		opaque = GistPageGetOpaque(p);
 
 		/* remember lsn to identify page changed for tuple's killing */
-<<<<<<< HEAD
 		so->stack->lsn = BufferGetLSNAtomic(so->curbuf);
 
 		/* check page split, occured from last visit or visit to parent */
@@ -378,19 +336,6 @@ gistnext(IndexScanDesc scan, TIDBitmap *tbm)
 		{
 			/* detect page split, follow right link to add pages */
 
-=======
-		so->stack->lsn = PageGetLSN(p);
-
-		/* check page split, occured since visit to parent */
-		if (!XLogRecPtrIsInvalid(so->stack->parentlsn) &&
-			XLByteLT(so->stack->parentlsn, opaque->nsn) &&
-			opaque->rightlink != InvalidBlockNumber /* sanity check */ &&
-			(so->stack->next == NULL || so->stack->next->block != opaque->rightlink)		/* check if already
-				added */ )
-		{
-			/* detect page split, follow right link to add pages */
-
->>>>>>> 38e9348282e
 			stk = (GISTSearchStack *) palloc(sizeof(GISTSearchStack));
 			stk->next = so->stack->next;
 			stk->block = opaque->rightlink;
@@ -423,14 +368,7 @@ gistnext(IndexScanDesc scan, TIDBitmap *tbm)
 			continue;
 		}
 
-<<<<<<< HEAD
-		if (ScanDirectionIsBackward(dir))
-			n = PageGetMaxOffsetNumber(p);
-		else
-			n = FirstOffsetNumber;
-=======
 		n = FirstOffsetNumber;
->>>>>>> 38e9348282e
 
 		/* wonderful, we can look at page */
 		so->nPageData = so->curPageData = 0;
@@ -446,7 +384,7 @@ gistnext(IndexScanDesc scan, TIDBitmap *tbm)
 					LockBuffer(so->curbuf, GIST_UNLOCK);
 					MIRROREDLOCK_BUFMGR_UNLOCK;
 
-					return gistnext(scan, dir, NULL);
+					return gistnext(scan, NULL);
 				}
 
 #if 0
@@ -522,11 +460,7 @@ gistnext(IndexScanDesc scan, TIDBitmap *tbm)
 					{
 						so->pageData[ so->nPageData ].heapPtr = it->t_tid;
 						so->pageData[ so->nPageData ].pageOffset = n;
-<<<<<<< HEAD
-						so->pageData[so->nPageData].recheck = scan->xs_recheck;
-=======
 						so->pageData[ so->nPageData ].recheck = scan->xs_recheck;
->>>>>>> 38e9348282e
 						so->nPageData ++;
 					}
 				}

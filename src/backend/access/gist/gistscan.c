@@ -56,15 +56,6 @@ gistrescan(PG_FUNCTION_ARGS)
 			ReleaseBuffer(so->curbuf);
 			so->curbuf = InvalidBuffer;
 		}
-<<<<<<< HEAD
-		if (BufferIsValid(so->markbuf))
-		{
-			ReleaseBuffer(so->markbuf);
-			so->markbuf = InvalidBuffer;
-		}
-
-=======
->>>>>>> 38e9348282e
 	}
 	else
 	{
@@ -85,10 +76,6 @@ gistrescan(PG_FUNCTION_ARGS)
 	 * Clear all the pointers.
 	 */
 	ItemPointerSetInvalid(&so->curpos);
-<<<<<<< HEAD
-	ItemPointerSetInvalid(&so->markpos);
-=======
->>>>>>> 38e9348282e
 	so->nPageData = so->curPageData = 0;
 
 	so->qual_ok = true;
@@ -125,116 +112,14 @@ gistrescan(PG_FUNCTION_ARGS)
 Datum
 gistmarkpos(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	GISTScanOpaque so;
-	GISTSearchStack *o,
-			   *n,
-			   *tmp;
-
-	so = (GISTScanOpaque) scan->opaque;
-	so->markpos = so->curpos;
-	if (so->flags & GS_CURBEFORE)
-		so->flags |= GS_MRKBEFORE;
-	else
-		so->flags &= ~GS_MRKBEFORE;
-
-	o = NULL;
-	n = so->stack;
-
-	/* copy the parent stack from the current item data */
-	while (n != NULL)
-	{
-		tmp = (GISTSearchStack *) palloc(sizeof(GISTSearchStack));
-		tmp->lsn = n->lsn;
-		tmp->parentlsn = n->parentlsn;
-		tmp->block = n->block;
-		tmp->next = o;
-		o = tmp;
-		n = n->next;
-	}
-
-	gistfreestack(so->markstk);
-	so->markstk = o;
-
-	/* Update markbuf: make sure to bump ref count on curbuf */
-	if (BufferIsValid(so->markbuf))
-	{
-		ReleaseBuffer(so->markbuf);
-		so->markbuf = InvalidBuffer;
-	}
-	if (BufferIsValid(so->curbuf))
-	{
-		IncrBufferRefCount(so->curbuf);
-		so->markbuf = so->curbuf;
-	}
-
-	so->markNPageData = so->nPageData;
-	so->markCurPageData = so->curPageData;
-	if ( so->markNPageData > 0 )
-		memcpy(so->markPageData, so->pageData, sizeof(ItemResult) * so->markNPageData);
-
-=======
 	elog(ERROR, "GiST does not support mark/restore");
->>>>>>> 38e9348282e
 	PG_RETURN_VOID();
 }
 
 Datum
 gistrestrpos(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	GISTScanOpaque so;
-	GISTSearchStack *o,
-			   *n,
-			   *tmp;
-
-	so = (GISTScanOpaque) scan->opaque;
-	so->curpos = so->markpos;
-	if (so->flags & GS_MRKBEFORE)
-		so->flags |= GS_CURBEFORE;
-	else
-		so->flags &= ~GS_CURBEFORE;
-
-	o = NULL;
-	n = so->markstk;
-
-	/* copy the parent stack from the current item data */
-	while (n != NULL)
-	{
-		tmp = (GISTSearchStack *) palloc(sizeof(GISTSearchStack));
-		tmp->lsn = n->lsn;
-		tmp->parentlsn = n->parentlsn;
-		tmp->block = n->block;
-		tmp->next = o;
-		o = tmp;
-		n = n->next;
-	}
-
-	gistfreestack(so->stack);
-	so->stack = o;
-
-	/* Update curbuf: be sure to bump ref count on markbuf */
-	if (BufferIsValid(so->curbuf))
-	{
-		ReleaseBuffer(so->curbuf);
-		so->curbuf = InvalidBuffer;
-	}
-	if (BufferIsValid(so->markbuf))
-	{
-		IncrBufferRefCount(so->markbuf);
-		so->curbuf = so->markbuf;
-	}
-
-	so->nPageData = so->markNPageData;
-	so->curPageData = so->markNPageData;
-	if ( so->markNPageData > 0 )
-		memcpy(so->pageData, so->markPageData, sizeof(ItemResult) * so->markNPageData);
-
-=======
 	elog(ERROR, "GiST does not support mark/restore");
->>>>>>> 38e9348282e
 	PG_RETURN_VOID();
 }
 

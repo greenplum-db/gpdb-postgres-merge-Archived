@@ -87,14 +87,10 @@ gistDeleteSubtree(GistVacuum *gv, BlockNumber blkno)
 	Buffer		buffer;
 	Page		page;
 
-<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
 
-	buffer = ReadBufferWithStrategy(gv->index, blkno, gv->strategy);
-=======
 	buffer = ReadBufferExtended(gv->index, MAIN_FORKNUM, blkno, RBM_NORMAL,
 								gv->strategy);
->>>>>>> 38e9348282e
 	LockBuffer(buffer, GIST_EXCLUSIVE);
 	page = (Page) BufferGetPage(buffer);
 
@@ -311,15 +307,11 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 
 	vacuum_delay_point();
 
-<<<<<<< HEAD
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 
-	buffer = ReadBufferWithStrategy(gv->index, blkno, gv->strategy);
-=======
 	buffer = ReadBufferExtended(gv->index, MAIN_FORKNUM, blkno, RBM_NORMAL,
 								gv->strategy);
->>>>>>> 38e9348282e
 	LockBuffer(buffer, GIST_EXCLUSIVE);
 	gistcheckpage(gv->index, buffer);
 	page = (Page) BufferGetPage(buffer);
@@ -611,15 +603,11 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 
 		vacuum_delay_point();
 
-<<<<<<< HEAD
 		// -------- MirroredLock ----------
 		MIRROREDLOCK_BUFMGR_LOCK;
 
-		buffer = ReadBufferWithStrategy(rel, blkno, info->strategy);
-=======
 		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
 									info->strategy);
->>>>>>> 38e9348282e
 		LockBuffer(buffer, GIST_SHARE);
 		page = (Page) BufferGetPage(buffer);
 
@@ -639,21 +627,8 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 
 	if (info->vacuum_full && lastFilledBlock < lastBlock)
 	{							/* try to truncate index */
-		RelationTruncate(rel, lastFilledBlock + 1);
-
-<<<<<<< HEAD
-		for (i = 0; i < nFreePages; i++)
-			if (freePages[i] >= lastFilledBlock)
-			{
-				totFreePages = nFreePages = i;
-				break;
-			}
-
-		if (lastBlock > lastFilledBlock)
-			RelationTruncate(rel, lastFilledBlock + 1,
-							 /* markPersistentAsPhysicallyTruncated */ true);
-=======
->>>>>>> 38e9348282e
+		RelationTruncate(rel, lastFilledBlock + 1,
+						 /* markPersistentAsPhysicallyTruncated */ true);
 		stats->std.pages_removed = lastBlock - lastFilledBlock;
 		totFreePages = totFreePages - stats->std.pages_removed;
 	}
@@ -739,16 +714,11 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 		IndexTuple	idxtuple;
 		ItemId		iid;
 
-<<<<<<< HEAD
 		// -------- MirroredLock ----------
 		MIRROREDLOCK_BUFMGR_LOCK;
 
-		buffer = ReadBufferWithStrategy(rel, stack->blkno, info->strategy);
-		
-=======
 		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, stack->blkno,
 									RBM_NORMAL, info->strategy);
->>>>>>> 38e9348282e
 		LockBuffer(buffer, GIST_SHARE);
 		gistcheckpage(rel, buffer);
 		page = (Page) BufferGetPage(buffer);

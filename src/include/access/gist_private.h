@@ -73,31 +73,15 @@ typedef struct GISTScanOpaqueData
 {
 	GISTSearchStack *stack;
 	GISTSearchStack *markstk;
-<<<<<<< HEAD
-	uint16		flags;
-=======
->>>>>>> 38e9348282e
 	bool        qual_ok;        /* false if qual can never be satisfied */
 	GISTSTATE  *giststate;
 	MemoryContext tempCxt;
 	Buffer		curbuf;
 	ItemPointerData curpos;
-<<<<<<< HEAD
-	Buffer		markbuf;
-	ItemPointerData markpos;
 
 	ItemResult	pageData[BLCKSZ / sizeof(IndexTupleData)];
-	OffsetNumber	nPageData;
-	OffsetNumber	curPageData;
-	ItemResult	markPageData[BLCKSZ/sizeof(IndexTupleData)];
-	OffsetNumber	markNPageData;
-	OffsetNumber	markCurPageData;
-=======
-
-	ItemResult		pageData[BLCKSZ/sizeof(IndexTupleData)];
-	OffsetNumber	nPageData;
-	OffsetNumber	curPageData;
->>>>>>> 38e9348282e
+	OffsetNumber nPageData;
+	OffsetNumber curPageData;
 } GISTScanOpaqueData;
 
 typedef GISTScanOpaqueData *GISTScanOpaque;
