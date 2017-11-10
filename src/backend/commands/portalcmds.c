@@ -437,7 +437,7 @@ PersistHoldablePortal(Portal portal)
 		 * We don't allow scanning backwards in MPP! skip this call and 
 		 * skip the reset position call few lines down.
 		 */
-		if(Gp_role == GP_ROLE_UTILITY)
+		if (Gp_role == GP_ROLE_UTILITY)
 			ExecutorRewind(queryDesc);
 
 		/*

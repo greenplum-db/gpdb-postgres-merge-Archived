@@ -2351,13 +2351,9 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
 	 * Complete the transaction and free all temporary memory used.
 	 * NOT in GPDB, though! The caller still needs to have the relation open.
 	 */
-<<<<<<< HEAD
 #if 0
 	if (vacstmt->full)
 		PopActiveSnapshot();
-=======
-	PopActiveSnapshot();
->>>>>>> 38e9348282e
 	CommitTransactionCommand();
 #endif
 

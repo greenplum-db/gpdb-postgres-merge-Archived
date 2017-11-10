@@ -437,19 +437,7 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 	/*
 	 * Quit if no analyzable columns and no pg_class update needed.
 	 */
-<<<<<<< HEAD
 	if (attr_cnt <= 0 && !analyzableindex && vacstmt->vacuum)
-=======
-	if (attr_cnt <= 0 && !analyzableindex)
-	{
-		/*
-		 * We report that the table is empty; this is just so that the
-		 * autovacuum code doesn't go nuts trying to get stats about a
-		 * zero-column table.
-		 */
-		if (update_reltuples)
-			pgstat_report_analyze(onerel, 0, 0);
->>>>>>> 38e9348282e
 		goto cleanup;
 
 	/*
@@ -1891,11 +1879,7 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 					n;
 		Datum		values[Natts_pg_statistic];
 		bool		nulls[Natts_pg_statistic];
-<<<<<<< HEAD
-		char		replaces[Natts_pg_statistic];
-=======
 		bool		replaces[Natts_pg_statistic];
->>>>>>> 38e9348282e
 
 		/* Ignore attr if we weren't able to collect stats */
 		if (!stats->stats_valid)
@@ -1907,11 +1891,7 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 		for (i = 0; i < Natts_pg_statistic; ++i)
 		{
 			nulls[i] = false;
-<<<<<<< HEAD
-			replaces[i] = 'r';
-=======
 			replaces[i] = true;
->>>>>>> 38e9348282e
 		}
 
 		i = 0;
