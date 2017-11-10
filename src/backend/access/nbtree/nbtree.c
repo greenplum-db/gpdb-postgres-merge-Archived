@@ -22,11 +22,8 @@
 #include "access/nbtree.h"
 #include "access/relscan.h"
 #include "catalog/index.h"
-<<<<<<< HEAD
 #include "catalog/pg_namespace.h"
-=======
 #include "catalog/storage.h"
->>>>>>> 38e9348282e
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
@@ -1054,28 +1051,11 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	{
 		BlockNumber new_pages = vstate.lastUsedPage + 1;
 
-<<<<<<< HEAD
-		while (vstate.nFreePages > 0 &&
-			   vstate.freePages[vstate.nFreePages - 1] == new_pages - 1)
-		{
-			new_pages--;
-			stats->pages_deleted--;
-			vstate.nFreePages--;
-			vstate.totFreePages = vstate.nFreePages;	/* can't be more */
-		}
-		if (new_pages != num_pages)
-		{
-			/*
-			 * Okay to truncate.
-			 */
-			RelationTruncate(rel, new_pages,
-							 /* markPersistentAsPhysicallyTruncated */ true);
-=======
 		/*
 		 * Okay to truncate.
 		 */
-		RelationTruncate(rel, new_pages);
->>>>>>> 38e9348282e
+		RelationTruncate(rel, new_pages,
+						 /* markPersistentAsPhysicallyTruncated */ true);
 
 		/* update statistics */
 		stats->pages_removed += num_pages - new_pages;
@@ -1132,16 +1112,12 @@ restart:
 	 * recycle all-zero pages, not fail.  Also, we want to use a nondefault
 	 * buffer access strategy.
 	 */
-<<<<<<< HEAD
 	
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
-	buf = ReadBufferWithStrategy(rel, blkno, info->strategy);
-=======
 	buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
 							 info->strategy);
->>>>>>> 38e9348282e
 	LockBuffer(buf, BT_READ);
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);

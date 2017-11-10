@@ -274,16 +274,7 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 	if (wstate->btws_use_wal)
 	{
 		/* We use the heap NEWPAGE record type for this */
-<<<<<<< HEAD
-		log_newpage_rel(wstate->index, blkno, page);
-=======
 		log_newpage(&wstate->index->rd_node, MAIN_FORKNUM, blkno, page);
-	}
-	else
-	{
-		/* Leave the page LSN zero if not WAL-logged, but set TLI anyway */
-		PageSetTLI(page, ThisTimeLineID);
->>>>>>> 38e9348282e
 	}
 
 	/*
@@ -297,18 +288,14 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 	{
 		if (!wstate->btws_zeropage)
 			wstate->btws_zeropage = (Page) palloc0(BLCKSZ);
-<<<<<<< HEAD
 
 		// -------- MirroredLock ----------
 		// UNDONE: Unfortunately, I think we write temp relations to the mirror...
 		LWLockAcquire(MirroredLock, LW_SHARED);
 
 		/* don't set checksum for all-zero page */
-		smgrextend(wstate->index->rd_smgr, wstate->btws_pages_written++,
-=======
 		smgrextend(wstate->index->rd_smgr, MAIN_FORKNUM,
 				   wstate->btws_pages_written++,
->>>>>>> 38e9348282e
 				   (char *) wstate->btws_zeropage,
 				   true);
 
