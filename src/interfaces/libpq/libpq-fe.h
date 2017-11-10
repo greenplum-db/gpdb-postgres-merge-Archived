@@ -237,7 +237,6 @@ typedef struct pgresAttDesc
 	int			atttypmod;		/* type-specific modifier info */
 } PGresAttDesc;
 
-<<<<<<< HEAD
 /* Greenplum specific struct */
 typedef struct
 {
@@ -256,8 +255,6 @@ typedef struct
 struct PartitionNode;
 struct HTAB;
 
-=======
->>>>>>> 38e9348282e
 /* ----------------
  * Exported functions of libpq
  * ----------------
@@ -293,12 +290,9 @@ extern PQconninfoOption *PQconndefaults(void);
 /* parse connection options in same way as PQconnectdb */
 extern PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
 
-<<<<<<< HEAD
 /* return the connection options used by a live connection */
 extern PQconninfoOption *PQconninfo(PGconn *conn);
 
-=======
->>>>>>> 38e9348282e
 /* free the data structure returned by PQconndefaults() or PQconninfoParse() */
 extern void PQconninfoFree(PQconninfoOption *connOptions);
 
