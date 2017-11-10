@@ -26,10 +26,6 @@
 #include "commands/defrem.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-<<<<<<< HEAD
-#include "optimizer/clauses.h"
-=======
->>>>>>> 38e9348282e
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/analyze.h"
@@ -83,7 +79,6 @@ static Node *transformFromClauseItem(ParseState *pstate, Node *n,
 						Relids *containedRels);
 static Node *buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 				   Var *l_colvar, Var *r_colvar);
-<<<<<<< HEAD
 static TargetEntry *findTargetlistEntrySQL92(ParseState *pstate, Node *node,
 						 List **tlist, int clause);
 static TargetEntry *findTargetlistEntrySQL99(ParseState *pstate, Node *node,
@@ -92,15 +87,8 @@ static List *findListTargetlistEntries(ParseState *pstate, Node *node,
 									   List **tlist, bool in_grpext,
 									   bool ignore_in_grpext,
                                        bool useSQL99);
-=======
-static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
-					List **tlist, int clause);
 static int	get_matching_location(int sortgroupref,
 								  List *sortgrouprefs, List *exprs);
-static List *addTargetToSortList(ParseState *pstate, TargetEntry *tle,
-					List *sortlist, List *targetlist, SortBy *sortby,
-					bool resolveUnknown);
->>>>>>> 38e9348282e
 static List *addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
 					 List *grouplist, List *targetlist, int location,
 					 bool resolveUnknown);
@@ -324,12 +312,16 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
      *
 	 * CDB: Acquire ExclusiveLock if it is a distributed relation and we are
 	 * doing UPDATE or DELETE activity
+	 *
+	 * GPDB_84_MERGE_FIXME: Why can't we just always call parserOpenTable here?
 	 */
-<<<<<<< HEAD
 	setup_parser_errposition_callback(&pcbstate, pstate, relation->location);
 	if (pstate->p_is_insert && !pstate->p_is_update)
 	{
-		pstate->p_target_relation = heap_openrv(relation, RowExclusiveLock);
+		pstate->p_target_relation = parserOpenTable(pstate, relation,
+													RowExclusiveLock,
+													false,
+													NULL);
 	}
 	else
 	{
@@ -338,12 +330,7 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 													  false, NULL);
 	}
 	cancel_parser_errposition_callback(&pcbstate);
-	
-=======
-	pstate->p_target_relation = parserOpenTable(pstate, relation,
-												RowExclusiveLock);
 
->>>>>>> 38e9348282e
 	/*
 	 * Now build an RTE.
 	 */
@@ -926,36 +913,6 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		RangeTblEntry *rte = NULL;
 		int			rtindex;
 
-<<<<<<< HEAD
-		/*
-		 * If it is an unqualified name, it might be a reference to some
-		 * CTE visible in this or a parent query.
-		 */
-		if (!rv->schemaname)
-		{
-			ParseState *ps;
-			Index	levelsup;
-
-			for (ps = pstate, levelsup = 0;
-				 ps != NULL;
-				 ps = ps->parentParseState, levelsup++)
-			{
-				ListCell *lc;
-
-				foreach(lc, ps->p_ctenamespace)
-				{
-					CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
-
-					if (strcmp(rv->relname, cte->ctename) == 0)
-					{
-						rte = transformCTEReference(pstate, rv, cte, levelsup);
-						break;
-					}
-				}
-				if (rte)
-					break;
-			}
-=======
 		/* if it is an unqualified name, it might be a CTE reference */
 		if (!rv->schemaname)
 		{
@@ -965,7 +922,6 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 			cte = scanNameSpaceForCTE(pstate, rv->relname, &levelsup);
 			if (cte)
 				rte = transformCTEReference(pstate, rv, cte, levelsup);
->>>>>>> 38e9348282e
 		}
 
 		/* if not found as a CTE, must be a table reference */
@@ -1358,12 +1314,7 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 	if (l_colvar->vartype != outcoltype)
 		l_node = coerce_type(pstate, (Node *) l_colvar, l_colvar->vartype,
 							 outcoltype, outcoltypmod,
-<<<<<<< HEAD
-							 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST,
-							 -1);
-=======
 							 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST, -1);
->>>>>>> 38e9348282e
 	else if (l_colvar->vartypmod != outcoltypmod)
 		l_node = (Node *) makeRelabelType((Expr *) l_colvar,
 										  outcoltype, outcoltypmod,
@@ -1374,12 +1325,7 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 	if (r_colvar->vartype != outcoltype)
 		r_node = coerce_type(pstate, (Node *) r_colvar, r_colvar->vartype,
 							 outcoltype, outcoltypmod,
-<<<<<<< HEAD
-							 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST,
-							 -1);
-=======
 							 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST, -1);
->>>>>>> 38e9348282e
 	else if (r_colvar->vartypmod != outcoltypmod)
 		r_node = (Node *) makeRelabelType((Expr *) r_colvar,
 										  outcoltype, outcoltypmod,
@@ -2257,7 +2203,6 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 		 * We stash them in the ParseState, to be processed later by
 		 * processExtendedGrouping().
 		 */
-<<<<<<< HEAD
 		foreach (lc, reorder_grouplist)
 		{
 			pstate->p_grp_tles = list_concat_unique(
@@ -2265,13 +2210,6 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 				findListTargetlistEntries(pstate, lfirst(lc),
 										  targetlist, false, true, useSQL99));
 		}
-=======
-		if (!found)
-			result = addTargetToGroupList(pstate, tle,
-										  result, *targetlist,
-										  exprLocation(gexpr),
-										  true);
->>>>>>> 38e9348282e
 	}
 
 	list_free(tle_list);
@@ -2738,19 +2676,11 @@ transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 
 	/*
 	 * Add all the DISTINCT ON expressions to the tlist (if not already
-<<<<<<< HEAD
 	 * present, they are added as resjunk items).  Assign sortgroupref numbers
 	 * to them, and make a list of these numbers.  (NB: we rely below on the
 	 * sortgrouprefs list being one-for-one with the original distinctlist.
 	 * Also notice that we could have duplicate DISTINCT ON expressions and
 	 * hence duplicate entries in sortgrouprefs.)
-=======
-	 * present, they are added as resjunk items).  Assign sortgroupref
-	 * numbers to them, and make a list of these numbers.  (NB: we rely
-	 * below on the sortgrouprefs list being one-for-one with the original
-	 * distinctlist.  Also notice that we could have duplicate DISTINCT ON
-	 * expressions and hence duplicate entries in sortgrouprefs.)
->>>>>>> 38e9348282e
 	 */
 	foreach(lc, distinctlist)
 	{
@@ -2826,7 +2756,6 @@ transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 }
 
 /*
-<<<<<<< HEAD
  * transformScatterClause -
  *	  transform a SCATTER BY clause
  *
@@ -2867,7 +2796,9 @@ transformScatterClause(ParseState *pstate,
 		outlist = lappend(outlist, tle->expr);
 	}
 	return outlist;
-=======
+}
+
+/*
  * get_matching_location
  *		Get the exprLocation of the exprs member corresponding to the
  *		(first) member of sortgrouprefs that equals sortgroupref.
@@ -2892,7 +2823,6 @@ get_matching_location(int sortgroupref, List *sortgrouprefs, List *exprs)
 	/* if no match, caller blew it */
 	elog(ERROR, "get_matching_location: no matching sortgroupref");
 	return -1;					/* keep compiler quiet */
->>>>>>> 38e9348282e
 }
 
 /*
@@ -2927,11 +2857,7 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 										 restype, TEXTOID, -1,
 										 COERCION_IMPLICIT,
 										 COERCE_IMPLICIT_CAST,
-<<<<<<< HEAD
 										 exprLocation((Node *) tle->expr));
-=======
-										 -1);
->>>>>>> 38e9348282e
 		restype = TEXTOID;
 	}
 
@@ -2948,11 +2874,7 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 		location = exprLocation(sortby->node);
 	setup_parser_errposition_callback(&pcbstate, pstate, location);
 
-<<<<<<< HEAD
-	/* determine the sortop */
-=======
 	/* determine the sortop, eqop, and directionality */
->>>>>>> 38e9348282e
 	switch (sortby->sortby_dir)
 	{
 		case SORTBY_DEFAULT:
@@ -2986,10 +2908,6 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					   errmsg("operator %s is not a valid ordering operator",
 							  strVal(llast(sortby->useOp))),
-<<<<<<< HEAD
-						 parser_errposition(pstate, sortby->location),
-=======
->>>>>>> 38e9348282e
 						 errhint("Ordering operators must be \"<\" or \">\" members of btree operator families.")));
 			break;
 		default:

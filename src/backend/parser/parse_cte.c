@@ -18,10 +18,7 @@
 #include "nodes/nodeFuncs.h"
 #include "parser/analyze.h"
 #include "parser/parse_cte.h"
-<<<<<<< HEAD
-#include "parser/parse_expr.h"
-=======
->>>>>>> 38e9348282e
+//#include "parser/parse_expr.h"
 #include "utils/builtins.h"
 
 
@@ -37,11 +34,7 @@ typedef enum
 } RecursionContext;
 
 /* Associated error messages --- each must have one %s for CTE name */
-<<<<<<< HEAD
 static const char *const recursion_errormsgs[] = {
-=======
-static const char * const recursion_errormsgs[] = {
->>>>>>> 38e9348282e
 	/* RECURSION_OK */
 	NULL,
 	/* RECURSION_NONRECURSIVETERM */
@@ -99,11 +92,8 @@ static void checkWellFormedRecursion(CteState *cstate);
 static bool checkWellFormedRecursionWalker(Node *node, CteState *cstate);
 static void checkWellFormedSelectStmt(SelectStmt *stmt, CteState *cstate);
 
-<<<<<<< HEAD
 static void checkSelfRefInRangeSubSelect(SelectStmt *stmt, CteState *cstate);
 static void checkWindowFuncInRecursiveTerm(SelectStmt *stmt, CteState *cstate);
-=======
->>>>>>> 38e9348282e
 
 /*
  * transformWithClause -
@@ -229,8 +219,7 @@ transformWithClause(ParseState *pstate, WithClause *withClause)
 	{
 		/*
 		 * For non-recursive WITH, just analyze each CTE in sequence and then
-<<<<<<< HEAD
-		 * add it to the ctenamespace.	This corresponds to the spec's
+		 * add it to the ctenamespace.  This corresponds to the spec's
 		 * definition of the scope of each WITH name.  However, to allow error
 		 * reports to be aware of the possibility of an erroneous reference,
 		 * we maintain a list in p_future_ctes of the not-yet-visible CTEs.
@@ -239,20 +228,7 @@ transformWithClause(ParseState *pstate, WithClause *withClause)
 
 		foreach (lc, withClause->ctes)
 		{
-			CommonTableExpr *cte = (CommonTableExpr *)lfirst(lc);
-=======
-		 * add it to the ctenamespace.  This corresponds to the spec's
-		 * definition of the scope of each WITH name.  However, to allow
-		 * error reports to be aware of the possibility of an erroneous
-		 * reference, we maintain a list in p_future_ctes of the
-		 * not-yet-visible CTEs.
-		 */
-		pstate->p_future_ctes = list_copy(withClause->ctes);
-
-		foreach(lc, withClause->ctes)
-		{
 			CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
->>>>>>> 38e9348282e
 
 			analyzeCTE(pstate, cte);
 			pstate->p_ctenamespace = lappend(pstate->p_ctenamespace, cte);
@@ -296,12 +272,9 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 				 parser_errposition(pstate,
 									exprLocation((Node *) query->intoClause))));
 
-<<<<<<< HEAD
 	/* CTE queries are always marked as not canSetTag */
 	query->canSetTag = false;
 
-=======
->>>>>>> 38e9348282e
 	if (!cte->cterecursive)
 	{
 		/* Compute the output column names/types if not done yet */
@@ -355,8 +328,6 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 	}
 }
 
-<<<<<<< HEAD
-
 /*
  * reportDuplicateNames
  *    Report error when a given list of names (in String) contain duplicate values for a given
@@ -392,8 +363,6 @@ reportDuplicateNames(const char *queryName, List *names)
 	}
 }
 
-=======
->>>>>>> 38e9348282e
 /*
  * Compute derived fields of a CTE, given the transformed output targetlist
  */
@@ -456,11 +425,8 @@ analyzeCTETargetList(ParseState *pstate, CommonTableExpr *cte, List *tlist)
 				 errmsg("WITH query \"%s\" has %d columns available but %d columns specified",
 						cte->ctename, varattno, numaliases),
 				 parser_errposition(pstate, cte->location)));
-<<<<<<< HEAD
 
 	reportDuplicateNames(cte->ctename, cte->ctecolnames);
-=======
->>>>>>> 38e9348282e
 }
 
 
@@ -684,19 +650,12 @@ checkWellFormedRecursion(CteState *cstate)
 		if (!cte->cterecursive)
 			continue;
 
-<<<<<<< HEAD
-		/* Must have top-level UNION ALL */
-		if (stmt->op != SETOP_UNION || !stmt->all)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_RECURSION),
-					 errmsg("recursive query \"%s\" does not have the form non-recursive-term UNION ALL recursive-term",
-=======
+		/* GPDB_84_MERGE_FIXME: Do we support UNION without ALL in GPDB? Can we? */
 		/* Must have top-level UNION */
 		if (stmt->op != SETOP_UNION)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_RECURSION),
 					 errmsg("recursive query \"%s\" does not have the form non-recursive-term UNION [ALL] recursive-term",
->>>>>>> 38e9348282e
 							cte->ctename),
 					 parser_errposition(cstate->pstate, cte->location)));
 
@@ -718,7 +677,6 @@ checkWellFormedRecursion(CteState *cstate)
 		if (cstate->selfrefcount != 1)			/* shouldn't happen */
 			elog(ERROR, "missing recursive reference");
 
-<<<<<<< HEAD
 		/* WITH mustn't contain self-reference, either */
 		if (stmt->withClause)
 		{
@@ -732,11 +690,7 @@ checkWellFormedRecursion(CteState *cstate)
 		}
 
 		/*
-		 * Disallow ORDER BY and similar decoration atop the UNION ALL.
-=======
-		/*
 		 * Disallow ORDER BY and similar decoration atop the UNION.
->>>>>>> 38e9348282e
 		 * These don't make sense because it's impossible to figure out what
 		 * they mean when we have only part of the recursive query's results.
 		 * (If we did allow them, we'd have to check for recursive references
@@ -838,10 +792,6 @@ checkWellFormedRecursionWalker(Node *node, CteState *cstate)
 		SelectStmt *stmt = (SelectStmt *) node;
 		ListCell *lc;
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 38e9348282e
 		if (stmt->withClause)
 		{
 			if (stmt->withClause->recursive)
@@ -884,7 +834,6 @@ checkWellFormedRecursionWalker(Node *node, CteState *cstate)
 			}
 		}
 		else
-<<<<<<< HEAD
 			checkWellFormedSelectStmt(stmt, cstate);
 
 		if (cstate->context == RECURSION_OK)
@@ -907,9 +856,6 @@ checkWellFormedRecursionWalker(Node *node, CteState *cstate)
 
 		checkSelfRefInRangeSubSelect(stmt, cstate);
 
-=======
-				checkWellFormedSelectStmt(stmt, cstate);
->>>>>>> 38e9348282e
 		/* We're done examining the SelectStmt */
 		return false;
 	}
@@ -977,7 +923,6 @@ checkWellFormedRecursionWalker(Node *node, CteState *cstate)
 		checkWellFormedRecursionWalker(sl->testexpr, cstate);
 		return false;
 	}
-<<<<<<< HEAD
 	if (IsA(node, RangeSubselect))
 	{
 		RangeSubselect *rs = (RangeSubselect *) node;
@@ -991,8 +936,6 @@ checkWellFormedRecursionWalker(Node *node, CteState *cstate)
 		cstate->context = save_context;
 		return false;
 	}
-=======
->>>>>>> 38e9348282e
 	return raw_expression_tree_walker(node,
 									  checkWellFormedRecursionWalker,
 									  (void *) cstate);
@@ -1066,7 +1009,6 @@ checkWellFormedSelectStmt(SelectStmt *stmt, CteState *cstate)
 		}
 	}
 }
-<<<<<<< HEAD
 
 /*
  * Check if a recursive cte is referred to in a RangeSubSelect's SelectStmt.
@@ -1119,6 +1061,3 @@ checkWindowFuncInRecursiveTerm(SelectStmt *stmt, CteState *cstate)
 		}
 	}
 }
-
-=======
->>>>>>> 38e9348282e

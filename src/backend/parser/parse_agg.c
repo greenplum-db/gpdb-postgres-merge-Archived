@@ -16,12 +16,9 @@
 
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-<<<<<<< HEAD
-#include "optimizer/walkers.h"
-=======
->>>>>>> 38e9348282e
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
+#include "optimizer/walkers.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
@@ -308,13 +305,9 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	}
 
 	/*
-<<<<<<< HEAD
 	 * Aggregates and window functions must never appear in WHERE or
 	 * JOIN/ON clauses.  Window function must never appear in HAVING
 	 * clauses.
-=======
-	 * Aggregates must never appear in WHERE or JOIN/ON clauses.
->>>>>>> 38e9348282e
 	 *
 	 * (Note this check should appear first to deliver an appropriate error
 	 * message; otherwise we are likely to complain about some innocent
@@ -342,7 +335,6 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	 */
 	foreach(l, qry->groupClause)
 	{
-<<<<<<< HEAD
 		Node	   *grpcl = lfirst(l);
 		List	   *exprs;
 		ListCell   *l2;
@@ -371,21 +363,6 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 						 errmsg("grouping() or group_id() not allowed in GROUP BY clause")));
 			groupClauses = lcons(expr, groupClauses);
 		}
-=======
-		SortGroupClause *grpcl = (SortGroupClause *) lfirst(l);
-		Node	   *expr;
-
-		expr = get_sortgroupclause_expr(grpcl, qry->targetList);
-		if (expr == NULL)
-			continue;			/* probably cannot happen */
-		if (checkExprHasAggs(expr))
-			ereport(ERROR,
-					(errcode(ERRCODE_GROUPING_ERROR),
-					 errmsg("aggregates not allowed in GROUP BY clause"),
-					 parser_errposition(pstate,
-										locate_agg_of_level(expr, 0))));
-		groupClauses = lcons(expr, groupClauses);
->>>>>>> 38e9348282e
 	}
 
 	/*
@@ -441,7 +418,6 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 							groupClauses, have_non_var_grouping);
 
 	/*
-<<<<<<< HEAD
 	 * Unfortunately, percentile functions in CSQ return wrong result
 	 * and looks like a big effort to fix.  The issue is that cdbllize tries
 	 * to push down Param node to subquery, but it fails to do it in
@@ -458,8 +434,6 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	}
 
 	/*
-=======
->>>>>>> 38e9348282e
 	 * Per spec, aggregates can't appear in a recursive term.
 	 */
 	if (pstate->p_hasAggs && hasSelfRefRTEs)
@@ -923,22 +897,7 @@ checkExprHasGroupExtFuncs(Node *node)
 	 * Must be prepared to start with a Query or a bare expression tree; if
 	 * it's a Query, we don't want to increment sublevels_up.
 	 */
-<<<<<<< HEAD
 	return query_or_expression_tree_walker(node,
 										   checkExprHasGroupExtFuncs_walker,
 										   (void *) &context, 0);
-=======
-	argp = makeNode(Param);
-	argp->paramkind = PARAM_EXEC;
-	argp->paramid = -1;
-	argp->paramtype = agg_state_type;
-	argp->paramtypmod = -1;
-	argp->location = -1;
-	args = list_make1(argp);
-
-	*finalfnexpr = (Expr *) makeFuncExpr(finalfn_oid,
-										 agg_result_type,
-										 args,
-										 COERCE_DONTCARE);
->>>>>>> 38e9348282e
 }

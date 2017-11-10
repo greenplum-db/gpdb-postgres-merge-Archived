@@ -51,7 +51,7 @@ extern Node *qualifiedNameToVar(ParseState *pstate,
 				   bool implicitRTEOK,
 				   int location);
 extern Relation parserOpenTable(ParseState *pstate, const RangeVar *relation,
-								int lockmode);
+								int lockmode, bool nowait, bool *lockUpgraded);
 extern RangeTblEntry *addRangeTableEntry(ParseState *pstate,
 				   RangeVar *relation,
 				   Alias *alias,

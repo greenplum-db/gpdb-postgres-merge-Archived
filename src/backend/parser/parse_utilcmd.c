@@ -481,10 +481,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		 */
 		seqstmt = makeNode(CreateSeqStmt);
 		seqstmt->sequence = makeRangeVar(snamespace, sname, -1);
-<<<<<<< HEAD
 		seqstmt->sequence->istemp = cxt->relation->istemp;
-=======
->>>>>>> 38e9348282e
 		seqstmt->options = NIL;
 
 		cxt->blist = lappend(cxt->blist, seqstmt);
@@ -689,7 +686,8 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 	bool		including_indexes = false;
 	ListCell   *elem;
 
-	relation = parserOpenTable(pstate, inhRelation->relation, AccessShareLock);
+	relation = parserOpenTable(pstate, inhRelation->relation, AccessShareLock,
+							   false, NULL);
 
 	if (relation->rd_rel->relkind != RELKIND_RELATION)
 		ereport(ERROR,

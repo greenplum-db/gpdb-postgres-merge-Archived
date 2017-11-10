@@ -28,10 +28,6 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-<<<<<<< HEAD
-#include "optimizer/walkers.h"
-=======
->>>>>>> 38e9348282e
 #include "parser/parse_agg.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
@@ -331,16 +327,10 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		if (nargsplusdefs >= FUNC_MAX_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-<<<<<<< HEAD
-							 errmsg("cannot pass more than %d arguments to a function",
-									 FUNC_MAX_ARGS),
-									 parser_errposition(pstate, location)));
-=======
 					 errmsg("cannot pass more than %d arguments to a function",
 							FUNC_MAX_ARGS),
 					 parser_errposition(pstate, location)));
 
->>>>>>> 38e9348282e
 		actual_arg_types[nargsplusdefs++] = exprType(expr);
 	}
 
@@ -1151,16 +1141,12 @@ func_get_detail(List *funcname,
 			else
 				*argdefaults = NIL;
 		}
-<<<<<<< HEAD
 		if (pform->proisagg)
 			result = FUNCDETAIL_AGGREGATE;
 		else if (pform->proiswindow)
 			result = FUNCDETAIL_WINDOWFUNC;
 		else
 			result = FUNCDETAIL_NORMAL;
-=======
-		result = pform->proisagg ? FUNCDETAIL_AGGREGATE : FUNCDETAIL_NORMAL;
->>>>>>> 38e9348282e
 		ReleaseSysCache(ftup);
 		return result;
 	}

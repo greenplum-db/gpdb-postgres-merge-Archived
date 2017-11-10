@@ -462,11 +462,7 @@ transformAssignedExpr(ParseState *pstate,
 								  attrtype, attrtypmod,
 								  COERCION_ASSIGNMENT,
 								  COERCE_IMPLICIT_CAST,
-<<<<<<< HEAD
-								  location);
-=======
 								  -1);
->>>>>>> 38e9348282e
 		if (expr == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -723,11 +719,7 @@ transformAssignmentIndirection(ParseState *pstate,
 								   targetTypeId, targetTypMod,
 								   COERCION_ASSIGNMENT,
 								   COERCE_IMPLICIT_CAST,
-<<<<<<< HEAD
-								   location);
-=======
 								   -1);
->>>>>>> 38e9348282e
 	if (result == NULL)
 	{
 		if (targetIsArray)
@@ -879,13 +871,9 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		 * Since the grammar only accepts bare '*' at top level of SELECT, we
 		 * need not handle the targetlist==false case here.
 		 */
-<<<<<<< HEAD
 		if (!targetlist)
 			elog(ERROR, "invalid use of *");
 
-=======
-		Assert(targetlist);
->>>>>>> 38e9348282e
 		return ExpandAllTables(pstate, cref->location);
 	}
 	else
@@ -1228,19 +1216,6 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 			 */
 			break;
 		case RTE_CTE:
-<<<<<<< HEAD
-			if (!rte->self_reference)
-			{
-				/* Similar to RTE_SUBQUERY */
-				CommonTableExpr *cte = GetCTEForRTE(pstate, rte, netlevelsup);
-				Assert(cte != NULL);
-
-				TargetEntry *ste = get_tle_by_resno(GetCTETargetList(cte), attnum);
-				if (ste == NULL || ste->resjunk)
-					elog(ERROR, "WITH query %s does not have attribute %d",
-						 cte->ctename, attnum);
-				
-=======
 			/* CTE reference: examine subquery's output expr */
 			if (!rte->self_reference)
 			{
@@ -1254,28 +1229,10 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 				if (ste == NULL || ste->resjunk)
 					elog(ERROR, "subquery %s does not have attribute %d",
 						 rte->eref->aliasname, attnum);
->>>>>>> 38e9348282e
 				expr = (Node *) ste->expr;
 				if (IsA(expr, Var))
 				{
 					/*
-<<<<<<< HEAD
-					 * Recurse into the sub-select to see what its Var refers
-					 * to.	We have to build an additional level of ParseState
-					 * to keep in step with varlevelsup in the subselect.
-					 */
-					ParseState	mypstate;
-
-					MemSet(&mypstate, 0, sizeof(mypstate));
-
-					for (Index levelsup = 0;
-						 levelsup < rte->ctelevelsup + netlevelsup;
-						 levelsup++)
-						pstate = pstate->parentParseState;
-
-					mypstate.parentParseState = pstate;
-					mypstate.p_rtable = ((Query *)cte->ctequery)->rtable;
-=======
 					 * Recurse into the CTE to see what its Var refers to. We
 					 * have to build an additional level of ParseState to keep
 					 * in step with varlevelsup in the CTE; furthermore it
@@ -1292,7 +1249,6 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 						pstate = pstate->parentParseState;
 					mypstate.parentParseState = pstate;
 					mypstate.p_rtable = ((Query *) cte->ctequery)->rtable;
->>>>>>> 38e9348282e
 					/* don't bother filling the rest of the fake pstate */
 
 					return expandRecordVariable(&mypstate, (Var *) expr, 0);
@@ -1300,12 +1256,9 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 				/* else fall through to inspect the expression */
 			}
 			break;
-<<<<<<< HEAD
 		case RTE_VOID:
 	            Insist(0);
         	    break;
-=======
->>>>>>> 38e9348282e
 	}
 
 	/*

@@ -19,12 +19,9 @@
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-<<<<<<< HEAD
 #include "nodes/print.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parsetree.h"               /* get_tle_by_resno */
-=======
->>>>>>> 38e9348282e
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
 #include "parser/parse_relation.h"
@@ -50,19 +47,13 @@ static Node *build_coercion_expression(Node *node,
 static Node *coerce_record_to_complex(ParseState *pstate, Node *node,
 						 Oid targetTypeId,
 						 CoercionContext ccontext,
-<<<<<<< HEAD
-						 CoercionForm cformat);
+						 CoercionForm cformat,
+						 int location);
 static Var *coerce_unknown_var(ParseState *pstate, Var *var,
 							   Oid targetTypeId, int32 targetTypeMod,
 							   CoercionContext ccontext, CoercionForm cformat,
 							   int levelsup);
 static bool is_complex_array(Oid typid);
-=======
-						 CoercionForm cformat,
-						 int location);
-static bool is_complex_array(Oid typid);
-
->>>>>>> 38e9348282e
 
 /*
  * coerce_to_target_type()
@@ -957,12 +948,8 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
  */
 Node *
 coerce_to_domain(Node *arg, Oid baseTypeId, int32 baseTypeMod, Oid typeId,
-<<<<<<< HEAD
-				 CoercionForm cformat, int location, bool hideInputCoercion,
-=======
 				 CoercionForm cformat, int location,
 				 bool hideInputCoercion,
->>>>>>> 38e9348282e
 				 bool lengthCoercionDone)
 {
 	CoerceToDomain *result;
@@ -1315,16 +1302,6 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 		expr = (Node *) lfirst(arg);
 		exprtype = exprType(expr);
 
-<<<<<<< HEAD
-		expr = coerce_to_target_type(pstate,
-									 expr, exprtype,
-									 tupdesc->attrs[i]->atttypid,
-									 tupdesc->attrs[i]->atttypmod,
-									 ccontext,
-									 COERCE_IMPLICIT_CAST,
-									 -1);
-		if (expr == NULL)
-=======
 		cexpr = coerce_to_target_type(pstate,
 									  expr, exprtype,
 									  tupdesc->attrs[i]->atttypid,
@@ -1333,7 +1310,6 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 									  COERCE_IMPLICIT_CAST,
 									  -1);
 		if (cexpr == NULL)
->>>>>>> 38e9348282e
 			ereport(ERROR,
 					(errcode(ERRCODE_CANNOT_COERCE),
 					 errmsg("cannot cast type %s to %s",
@@ -1386,14 +1362,6 @@ coerce_to_boolean(ParseState *pstate, Node *node,
 
 	if (inputTypeId != BOOLOID)
 	{
-<<<<<<< HEAD
-		node = coerce_to_target_type(pstate, node, inputTypeId,
-									 BOOLOID, -1,
-									 COERCION_ASSIGNMENT,
-									 COERCE_IMPLICIT_CAST,
-									 -1);
-		if (node == NULL)
-=======
 		Node	*newnode;
 
 		newnode = coerce_to_target_type(pstate, node, inputTypeId,
@@ -1402,7 +1370,6 @@ coerce_to_boolean(ParseState *pstate, Node *node,
 										COERCE_IMPLICIT_CAST,
 										-1);
 		if (newnode == NULL)
->>>>>>> 38e9348282e
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 			/* translator: first %s is name of a SQL construct, eg WHERE */
@@ -1506,11 +1473,8 @@ parser_coercion_errposition(ParseState *pstate,
  * 'context' is a phrase to use in the error message if we fail to select
  * a usable type.  Pass NULL to have the routine return InvalidOid
  * rather than throwing an error on failure.
-<<<<<<< HEAD
-=======
  * 'which_expr': if not NULL, receives a pointer to the particular input
  * expression from which the result type was taken.
->>>>>>> 38e9348282e
  */
 Oid
 select_common_type(ParseState *pstate, List *exprs, const char *context,

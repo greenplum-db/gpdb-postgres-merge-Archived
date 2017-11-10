@@ -390,15 +390,6 @@ transformArraySubscripts(ParseState *pstate,
 		Oid			typeneeded = isSlice ? arrayType : elementType;
 		Node	   *newFrom;
 
-<<<<<<< HEAD
-		assignFrom = coerce_to_target_type(pstate,
-										   assignFrom, typesource,
-										   typeneeded, elementTypMod,
-										   COERCION_ASSIGNMENT,
-										   COERCE_IMPLICIT_CAST,
-										   -1);
-		if (assignFrom == NULL)
-=======
 		newFrom = coerce_to_target_type(pstate,
 										assignFrom, typesource,
 										typeneeded, elementTypMod,
@@ -406,7 +397,6 @@ transformArraySubscripts(ParseState *pstate,
 										COERCE_IMPLICIT_CAST,
 										-1);
 		if (newFrom == NULL)
->>>>>>> 38e9348282e
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("array assignment requires type %s"

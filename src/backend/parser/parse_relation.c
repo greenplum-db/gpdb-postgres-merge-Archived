@@ -27,11 +27,8 @@
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-<<<<<<< HEAD
 #include "nodes/relation.h"                 /* CdbRelColumnInfo */
 #include "optimizer/pathnode.h"             /* cdb_rte_find_pseudo_column() */
-=======
->>>>>>> 38e9348282e
 #include "parser/parsetree.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
@@ -48,11 +45,7 @@ static RangeTblEntry *scanNameSpaceForRefname(ParseState *pstate,
 						const char *refname, int location);
 static RangeTblEntry *scanNameSpaceForRelid(ParseState *pstate, Oid relid,
 											int location);
-<<<<<<< HEAD
 static LockingClause *getLockingClause(ParseState *pstate, char *refname);
-=======
-static bool isLockedRel(ParseState *pstate, char *refname);
->>>>>>> 38e9348282e
 static void expandRelation(Oid relid, Alias *eref,
 			   int rtindex, int sublevels_up,
 			   int location, bool include_dropped,
@@ -275,15 +268,9 @@ searchRangeTable(ParseState *pstate, RangeVar *relation)
 	Index		levelsup;
 
 	/*
-<<<<<<< HEAD
 	 * If it's an unqualified name, check for possible CTE matches. A CTE
 	 * hides any real relation matches.  If no CTE, look for a matching
 	 * relation.
-=======
-	 * If it's an unqualified name, check for possible CTE matches.
-	 * A CTE hides any real relation matches.  If no CTE, look for
-	 * a matching relation.
->>>>>>> 38e9348282e
 	 */
 	if (!relation->schemaname)
 		cte = scanNameSpaceForCTE(pstate, refname, &ctelevelsup);
@@ -309,18 +296,12 @@ searchRangeTable(ParseState *pstate, RangeVar *relation)
 				cte != NULL &&
 				rte->ctelevelsup + levelsup == ctelevelsup &&
 				strcmp(rte->ctename, refname) == 0)
-<<<<<<< HEAD
 				return rte;
 
 			if (rte->eref != NULL &&
                 rte->eref->aliasname != NULL &&
                 strcmp(rte->eref->aliasname, refname) == 0)
 				return rte;
-=======
-				return rte;
-			if (strcmp(rte->eref->aliasname, refname) == 0)
-				return rte;
->>>>>>> 38e9348282e
 		}
 	}
 	return NULL;
@@ -760,11 +741,10 @@ buildScalarFunctionAlias(Node *funcexpr, char *funcname,
 /*
  * Open a table during parse analysis
  *
-<<<<<<< HEAD
  * This is essentially the same as CdbOpenRelationRv, except that it caters
  * to some parser-specific error reporting needs.
  */
-static Relation
+Relation
 parserOpenTable(ParseState *pstate, const RangeVar *relation,
 				int lockmode, bool nowait, bool *lockUpgraded)
 {
@@ -792,55 +772,6 @@ parserOpenTable(ParseState *pstate, const RangeVar *relation,
 	}
 	PG_END_TRY();
 
-=======
- * This is essentially just the same as heap_openrv(), except that it caters
- * to some parser-specific error reporting needs, notably that it arranges
- * to include the RangeVar's parse location in any resulting error.
- *
- * Note: properly, lockmode should be declared LOCKMODE not int, but that
- * would require importing storage/lock.h into parse_relation.h.  Since
- * LOCKMODE is typedef'd as int anyway, that seems like overkill.
- */
-Relation
-parserOpenTable(ParseState *pstate, const RangeVar *relation, int lockmode)
-{
-	Relation	rel;
-	ParseCallbackState pcbstate;
-
-	setup_parser_errposition_callback(&pcbstate, pstate, relation->location);
-	rel = try_heap_openrv(relation, lockmode);
-	if (rel == NULL)
-	{
-		if (relation->schemaname)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_TABLE),
-					 errmsg("relation \"%s.%s\" does not exist",
-							relation->schemaname, relation->relname)));
-		else
-		{
-			/*
-			 * An unqualified name might have been meant as a reference to
-			 * some not-yet-in-scope CTE.  The bare "does not exist" message
-			 * has proven remarkably unhelpful for figuring out such problems,
-			 * so we take pains to offer a specific hint.
-			 */
-			if (isFutureCTE(pstate, relation->relname))
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_TABLE),
-						 errmsg("relation \"%s\" does not exist",
-								relation->relname),
-						 errdetail("There is a WITH item named \"%s\", but it cannot be referenced from this part of the query.",
-								   relation->relname),
-						 errhint("Use WITH RECURSIVE, or re-order the WITH items to remove forward references.")));
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_TABLE),
-						 errmsg("relation \"%s\" does not exist",
-								relation->relname)));
-		}
-	}
-	cancel_parser_errposition_callback(&pcbstate);
->>>>>>> 38e9348282e
 	return rel;
 }
 
@@ -879,9 +810,6 @@ addRangeTableEntry(ParseState *pstate,
 		lockmode = locking->forUpdate ? RowExclusiveLock : RowShareLock;
 		nowait	 = locking->noWait;
 	}
-	setup_parser_errposition_callback(&pcbstate, pstate, relation->location);
-	rel = parserOpenTable(pstate, relation, lockmode, nowait, NULL);
-	cancel_parser_errposition_callback(&pcbstate);
 
 	/*
 	 * Get the rel's OID.  This access also ensures that we have an up-to-date
@@ -889,11 +817,9 @@ addRangeTableEntry(ParseState *pstate,
 	 * to a rel in a statement, be careful to get the right access level
 	 * depending on whether we're doing SELECT FOR UPDATE/SHARE.
 	 */
-<<<<<<< HEAD
-=======
-	lockmode = isLockedRel(pstate, refname) ? RowShareLock : AccessShareLock;
-	rel = parserOpenTable(pstate, relation, lockmode);
->>>>>>> 38e9348282e
+	setup_parser_errposition_callback(&pcbstate, pstate, relation->location);
+	rel = parserOpenTable(pstate, relation, lockmode, nowait, NULL);
+	cancel_parser_errposition_callback(&pcbstate);
 	rte->relid = RelationGetRelid(rel);
 	rte->alias = alias;
 	rte->rtekind = RTE_RELATION;
@@ -1280,13 +1206,8 @@ addRangeTableEntryForFunction(ParseState *pstate,
 						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 						 errmsg("column \"%s\" cannot be declared SETOF",
 								attrname),
-<<<<<<< HEAD
 						 parser_errposition(pstate, n->typeName->location)));
 			attrtype = typenameTypeId(pstate, n->typeName, &attrtypmod);
-=======
-						 parser_errposition(pstate, n->typename->location)));
-			attrtype = typenameTypeId(pstate, n->typename, &attrtypmod);
->>>>>>> 38e9348282e
 			eref->colnames = lappend(eref->colnames, makeString(attrname));
 			rte->funccoltypes = lappend_oid(rte->funccoltypes, attrtype);
 			rte->funccoltypmods = lappend_int(rte->funccoltypmods, attrtypmod);
@@ -1577,13 +1498,8 @@ getLockingClause(ParseState *pstate, char *refname)
 				{
 					RangeVar   *thisrel = (RangeVar *) lfirst(l2);
 
-<<<<<<< HEAD
-					if (strcmp(refname, rname) == 0)
-						return lc;         /* refname matched */
-=======
 					if (strcmp(refname, thisrel->relname) == 0)
-						return true;
->>>>>>> 38e9348282e
+						return lc;         /* refname matched */
 				}
 			}
 		}
@@ -1742,13 +1658,10 @@ addImplicitRTE(ParseState *pstate, RangeVar *relation)
 
 	/* issue warning or error as needed */
 	warnAutoRange(pstate, relation);
-<<<<<<< HEAD
-=======
 
 	/* if it is an unqualified name, it might be a CTE reference */
 	if (!relation->schemaname)
 		cte = scanNameSpaceForCTE(pstate, relation->relname, &levelsup);
->>>>>>> 38e9348282e
 
 	/*
 	 * Note that we set inFromCl true, so that the RTE will be listed
@@ -2693,16 +2606,11 @@ warnAutoRange(ParseState *pstate, RangeVar *relation)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_TABLE),
-<<<<<<< HEAD
 					 (pstate->parentParseState ?
 			 errmsg("missing FROM-clause entry in subquery for table \"%s\"",
 					relation->relname) :
 					  errmsg("missing FROM-clause entry for table \"%s\"",
 							 relation->relname)),
-=======
-					 errmsg("missing FROM-clause entry for table \"%s\"",
-							relation->relname),
->>>>>>> 38e9348282e
 					 parser_errposition(pstate, relation->location)));
 	}
 	else
