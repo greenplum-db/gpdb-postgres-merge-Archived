@@ -22,12 +22,7 @@
 #include "catalog/pg_proc.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
-<<<<<<< HEAD
-#include "optimizer/clauses.h"              /* contain_mutable_functions() */
-#include "nodes/nodeFuncs.h"
-=======
 #include "optimizer/clauses.h"
->>>>>>> 38e9348282e
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
@@ -1258,12 +1253,8 @@ create_index_path(PlannerInfo *root,
 								   allclauses,
 								   rel->relid,	/* do not use 0! */
 								   JOIN_INNER,
-<<<<<<< HEAD
 								   NULL,
 								   false /* use_damping */);
-=======
-								   NULL);
->>>>>>> 38e9348282e
 		/* Like costsize.c, force estimate to be at least one row */
 		pathnode->rows = clamp_row_est(pathnode->rows);
 	}

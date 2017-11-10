@@ -430,7 +430,6 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			match_sjinfo = sjinfo;
 			reversed = true;
 		}
-<<<<<<< HEAD
 		else if (sjinfo->consider_dedup &&
 			bms_equal(sjinfo->syn_righthand, rel2->relids))
 		{
@@ -457,31 +456,13 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			 *----------
 			 */
 
-=======
-		else if (sjinfo->jointype == JOIN_SEMI &&
-				 bms_equal(sjinfo->syn_righthand, rel2->relids) &&
-				 create_unique_path(root, rel2, rel2->cheapest_total_path,
-									sjinfo) != NULL)
-		{
-			/*
-			 * For a semijoin, we can join the RHS to anything else by
-			 * unique-ifying the RHS (if the RHS can be unique-ified).
-			 */
->>>>>>> 38e9348282e
 			if (match_sjinfo)
 				return false;	/* invalid join path */
 			match_sjinfo = sjinfo;
 			reversed = false;
 		}
-<<<<<<< HEAD
 		else if (sjinfo->consider_dedup &&
 			bms_equal(sjinfo->syn_righthand, rel1->relids))
-=======
-		else if (sjinfo->jointype == JOIN_SEMI &&
-				 bms_equal(sjinfo->syn_righthand, rel1->relids) &&
-				 create_unique_path(root, rel1, rel1->cheapest_total_path,
-									sjinfo) != NULL)
->>>>>>> 38e9348282e
 		{
 			/* Reversed semijoin case */
 			if (match_sjinfo)
@@ -519,26 +500,16 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			 * the RHS (per the unique-ification case above).
 			 *----------
 			 */
-<<<<<<< HEAD
 			if (!sjinfo->consider_dedup &&
-=======
-			if (sjinfo->jointype != JOIN_SEMI &&
->>>>>>> 38e9348282e
 				bms_overlap(rel1->relids, sjinfo->min_righthand) &&
 				bms_overlap(rel2->relids, sjinfo->min_righthand))
 			{
 				/* seems OK */
 				Assert(!bms_overlap(joinrelids, sjinfo->min_lefthand));
 			}
-<<<<<<< HEAD
 			else if (sjinfo->consider_dedup &&
 				(bms_is_subset(sjinfo->syn_righthand, rel1->relids) ||
 				bms_is_subset(sjinfo->syn_righthand, rel2->relids)))
-=======
-			else if (sjinfo->jointype == JOIN_SEMI &&
-					 (bms_is_subset(sjinfo->syn_righthand, rel1->relids) ||
-					  bms_is_subset(sjinfo->syn_righthand, rel2->relids)))
->>>>>>> 38e9348282e
 			{
 				/* seems OK */
 			}
@@ -755,19 +726,6 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 	 */
 	switch (sjinfo->jointype)
 	{
-		case JOIN_ANTI:
-		case JOIN_LASJ_NOTIN:
-			/*
-			 * For antijoins, the outer and inner rel are fixed.
-			 * If left rel is empty, the result set will be empty
-			 */
-			if (is_dummy_rel(rel1))
-			{
-				mark_dummy_join(root, joinrel);
-				break;
-			}
-			add_paths_to_joinrel(root, joinrel, rel1, rel2, sjinfo->jointype, sjinfo, restrictlist);
-			break;
 		case JOIN_INNER:
 			if (is_dummy_rel(rel1) || is_dummy_rel(rel2) ||
 				restriction_is_constant_false(restrictlist))
@@ -839,8 +797,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 			 * anyway to be sure.)
 			 */
 			if (bms_equal(sjinfo->syn_righthand, rel2->relids) &&
-				create_unique_path(root, rel2, rel2->cheapest_total_path,
-								   sjinfo) != NULL)
+				sjinfo->consider_dedup)
 			{
 				add_paths_to_joinrel(root, joinrel, rel1, rel2,
 									 JOIN_UNIQUE_INNER, sjinfo,
@@ -851,6 +808,9 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 			}
 			break;
 		case JOIN_ANTI:
+		/* GPDB_84_MERGE_FIXME: Is JOIN_LASJ_NOTIN in the right place? Why does it
+		 * exist? */
+		case JOIN_LASJ_NOTIN:
 			if (is_dummy_rel(rel1))
 			{
 				mark_dummy_rel(root, joinrel);
@@ -1066,11 +1026,6 @@ have_join_order_restriction(PlannerInfo *root,
 			result = true;
 			break;
 		}
-<<<<<<< HEAD
-		{
-			result = true;
-			break;
-		}
 
 		/*
 		 * In CDB, unlike PostgreSQL, flattened subqueries do not restrict the
@@ -1086,8 +1041,6 @@ have_join_order_restriction(PlannerInfo *root,
 			bms_is_subset(rel2->relids, sjinfo->min_righthand) &&
 			bms_num_members(rel1->relids) + bms_num_members(rel2->relids) ==
 			bms_num_members(sjinfo->min_righthand)))
-=======
->>>>>>> 38e9348282e
 		{
 			result = true;
 			break;

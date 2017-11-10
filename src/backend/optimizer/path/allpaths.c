@@ -431,24 +431,10 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	/* weighted average of widths */
 	double		width_avg = 0;
 
-	/*
-<<<<<<< HEAD
-	 * XXX for now, can't handle inherited expansion of FOR UPDATE/SHARE; can
-	 * we do better?  (This will take some redesign because the executor
-	 * currently supposes that every rowMark relation is involved in every row
-	 * returned by the query.)
-	 */
-	if (get_rowmark(root->parse, parentRTindex))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("SELECT FOR UPDATE/SHARE is not supported for inheritance queries")));
-
 	/* Mark rel with estimated output rows, width, etc */
 	set_baserel_size_estimates(root, rel);
 
 	/*
-=======
->>>>>>> 38e9348282e
 	 * Initialize to compute size estimates for whole append relation.
 	 *
 	 * We handle width estimates by weighting the widths of different
@@ -776,7 +762,6 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		rel->subrtable = subroot->parse->rtable;
 	}
 	else
-<<<<<<< HEAD
 	{
 		/* This is a preplanned sub-query RTE. */
 		rel->subplan = rte->subquery_plan;
@@ -784,16 +769,6 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		subroot = root;
 		/* XXX rel->onerow = ??? */
 	}
-=======
-		tuple_fraction = root->tuple_fraction;
-
-	/* Generate the plan for the subquery */
-	rel->subplan = subquery_planner(root->glob, subquery,
-									root,
-									false, tuple_fraction,
-									&subroot);
-	rel->subrtable = subroot->parse->rtable;
->>>>>>> 38e9348282e
 
 	/* Copy number of output rows from subplan */
 	if (rel->onerow)
@@ -1171,104 +1146,6 @@ set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 
 	/* Select cheapest path (pretty easy in this case...) */
 	set_cheapest(root, rel);
-}
-
-/*
- * set_cte_pathlist
- *		Build the (single) access path for a non-self-reference CTE RTE
- */
-static void
-set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
-{
-	Plan	   *cteplan;
-	PlannerInfo *cteroot;
-	Index		levelsup;
-	int			ndx;
-	ListCell   *lc;
-	int			plan_id;
-
-	/*
-	 * Find the referenced CTE, and locate the plan previously made for it.
-	 */
-	levelsup = rte->ctelevelsup;
-	cteroot = root;
-	while (levelsup-- > 0)
-	{
-		cteroot = cteroot->parent_root;
-		if (!cteroot)			/* shouldn't happen */
-			elog(ERROR, "bad levelsup for CTE \"%s\"", rte->ctename);
-	}
-	/*
-	 * Note: cte_plan_ids can be shorter than cteList, if we are still working
-	 * on planning the CTEs (ie, this is a side-reference from another CTE).
-	 * So we mustn't use forboth here.
-	 */
-	ndx = 0;
-	foreach(lc, cteroot->parse->cteList)
-	{
-		CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
-
-		if (strcmp(cte->ctename, rte->ctename) == 0)
-			break;
-		ndx++;
-	}
-	if (lc == NULL)				/* shouldn't happen */
-		elog(ERROR, "could not find CTE \"%s\"", rte->ctename);
-	if (ndx >= list_length(cteroot->cte_plan_ids))
-		elog(ERROR, "could not find plan for CTE \"%s\"", rte->ctename);
-	plan_id = list_nth_int(cteroot->cte_plan_ids, ndx);
-	Assert(plan_id > 0);
-	cteplan = (Plan *) list_nth(root->glob->subplans, plan_id - 1);
-
-	/* Mark rel with estimated output rows, width, etc */
-	set_cte_size_estimates(root, rel, cteplan);
-
-	/* Generate appropriate path */
-	add_path(rel, create_ctescan_path(root, rel));
-
-	/* Select cheapest path (pretty easy in this case...) */
-	set_cheapest(rel);
-}
-
-/*
- * set_worktable_pathlist
- *		Build the (single) access path for a self-reference CTE RTE
- */
-static void
-set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
-{
-	Plan	   *cteplan;
-	PlannerInfo *cteroot;
-	Index		levelsup;
-
-	/*
-	 * We need to find the non-recursive term's plan, which is in the plan
-	 * level that's processing the recursive UNION, which is one level
-	 * *below* where the CTE comes from.
-	 */
-	levelsup = rte->ctelevelsup;
-	if (levelsup == 0)			/* shouldn't happen */
-		elog(ERROR, "bad levelsup for CTE \"%s\"", rte->ctename);
-	levelsup--;
-	cteroot = root;
-	while (levelsup-- > 0)
-	{
-		cteroot = cteroot->parent_root;
-		if (!cteroot)			/* shouldn't happen */
-			elog(ERROR, "bad levelsup for CTE \"%s\"", rte->ctename);
-	}
-	cteplan = cteroot->non_recursive_plan;
-	if (!cteplan)				/* shouldn't happen */
-		elog(ERROR, "could not find plan for CTE \"%s\"", rte->ctename);
-
-	/* Mark rel with estimated output rows, width, etc */
-	set_cte_size_estimates(root, rel, cteplan);
-
-	/* Generate appropriate path */
-	add_path(rel, create_worktablescan_path(root, rel));
-
-	/* Select cheapest path (pretty easy in this case...) */
-	set_cheapest(rel);
 }
 
 /*
