@@ -207,27 +207,16 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	 */
 	rel = heap_open(TableSpaceRelationId, RowExclusiveLock);
 
-<<<<<<< HEAD
-	MemSet(nulls, true, sizeof(nulls));
-=======
 	MemSet(nulls, false, sizeof(nulls));
->>>>>>> 38e9348282e
 
 	values[Anum_pg_tablespace_spcname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->tablespacename));
 	values[Anum_pg_tablespace_spcowner - 1] =
 		ObjectIdGetDatum(ownerId);
-<<<<<<< HEAD
+	nulls[Anum_pg_tablespace_spclocation - 1] = true;
 	values[Anum_pg_tablespace_spcfsoid - 1] =
 		ObjectIdGetDatum(filespaceoid);
-	nulls[Anum_pg_tablespace_spcname - 1] = false;
-	nulls[Anum_pg_tablespace_spcowner - 1] = false;
-	nulls[Anum_pg_tablespace_spcfsoid - 1] = false;
-=======
-	values[Anum_pg_tablespace_spclocation - 1] =
-		CStringGetTextDatum(location);
 	nulls[Anum_pg_tablespace_spcacl - 1] = true;
->>>>>>> 38e9348282e
 
 	tuple = heap_form_tuple(rel->rd_att, values, nulls);
 
@@ -265,7 +254,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	 * (the emptiness check above will fail), and to label tablespace
 	 * directories by PG version.
 	 */
-	// set_short_version(sublocation);
+	/* set_short_version(sublocation); */
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -280,9 +269,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 		MetaTrackAddObject(TableSpaceRelationId,
 						   tablespaceoid,
 						   GetUserId(),
-						   "CREATE", "TABLESPACE"
-				);
-
+						   "CREATE", "TABLESPACE");
 	}
 
 	/*
