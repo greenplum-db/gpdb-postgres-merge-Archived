@@ -170,9 +170,8 @@ extern bool vacuumStatement_IsInAppendOnlyCompactionPhase(VacuumStmt* vacstmt);
 extern bool vacuumStatement_IsInAppendOnlyPseudoCompactionPhase(VacuumStmt* vacstmt);
 
 /* in commands/vacuumlazy.c */
-<<<<<<< HEAD
 extern bool lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
-				BufferAccessStrategy bstrategy, List *updated_stats);
+				BufferAccessStrategy bstrategy, bool *scanned_all, List *updated_stats);
 extern void vacuum_appendonly_rel(Relation aorel, VacuumStmt *vacstmt);
 extern void vacuum_appendonly_fill_stats(Relation aorel, Snapshot snapshot,
 										 BlockNumber *rel_pages, double *rel_tuples,
@@ -182,16 +181,8 @@ extern void vacuum_aocs_rel(Relation aorel, void *vacrelstats, bool isVacFull);
 
 /* in commands/analyze.c */
 extern void analyze_rel(Oid relid, VacuumStmt *vacstmt,
-			BufferAccessStrategy bstrategy);
+			BufferAccessStrategy bstrategy, bool update_reltuples);
 extern void analyzeStatement(VacuumStmt *vacstmt, List *relids, BufferAccessStrategy start, bool isTopLevel);
 //extern void analyzeStmt(VacuumStmt *vacstmt, List *relids);
-=======
-extern void lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
-				BufferAccessStrategy bstrategy, bool *scanned_all);
-
-/* in commands/analyze.c */
-extern void analyze_rel(Oid relid, VacuumStmt *vacstmt,
-			BufferAccessStrategy bstrategy, bool update_reltuples);
->>>>>>> 38e9348282e
 
 #endif   /* VACUUM_H */

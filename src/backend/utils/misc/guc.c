@@ -243,19 +243,11 @@ const struct config_enum_entry server_message_level_options[] = {
 };
 
 static const struct config_enum_entry intervalstyle_options[] = {
-<<<<<<< HEAD
-	{"postgres", INTSTYLE_POSTGRES},
-	{"postgres_verbose", INTSTYLE_POSTGRES_VERBOSE},
-	{"sql_standard", INTSTYLE_SQL_STANDARD},
-	{"iso_8601", INTSTYLE_ISO_8601},
-	{NULL, 0}
-=======
 	{"postgres", INTSTYLE_POSTGRES, false},
 	{"postgres_verbose", INTSTYLE_POSTGRES_VERBOSE, false},
 	{"sql_standard", INTSTYLE_SQL_STANDARD, false},
 	{"iso_8601", INTSTYLE_ISO_8601, false},
 	{NULL, 0, false}
->>>>>>> 38e9348282e
 };
 
 static const struct config_enum_entry log_error_verbosity_options[] = {
@@ -392,11 +384,8 @@ char	   *external_pid_file;
 
 char	   *pgstat_temp_directory;
 
-<<<<<<< HEAD
 char	   *application_name;
 
-=======
->>>>>>> 38e9348282e
 int			tcp_keepalives_idle;
 int			tcp_keepalives_interval;
 int			tcp_keepalives_count;
@@ -2660,18 +2649,13 @@ static struct config_string ConfigureNamesString[] =
 		{"stats_temp_directory", PGC_SIGHUP, STATS_COLLECTOR,
 			gettext_noop("Writes temporary statistics files to the specified directory."),
 			NULL,
-<<<<<<< HEAD
 			GUC_SUPERUSER_ONLY | GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-=======
-			GUC_SUPERUSER_ONLY
->>>>>>> 38e9348282e
 		},
 		&pgstat_temp_directory,
 		"pg_stat_tmp", assign_pgstat_temp_directory, NULL
 	},
 
 	{
-<<<<<<< HEAD
 		{"synchronous_standby_names", PGC_SIGHUP, WAL_REPLICATION,
 			gettext_noop("List of names of potential synchronous standbys."),
 			NULL,
@@ -2683,8 +2667,6 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-=======
->>>>>>> 38e9348282e
 		{"default_text_search_config", PGC_USERSET, CLIENT_CONN_LOCALE,
 			gettext_noop("Sets default text search configuration."),
 			NULL
@@ -8355,35 +8337,49 @@ show_tcp_keepalives_count(void)
 	return nbuf;
 }
 
+static bool
+assign_maxconnections(int newval, bool doit, GucSource source)
+{
+	if (newval + autovacuum_max_workers > INT_MAX / 4)
+		return false;
+
+	if (doit)
+		MaxBackends = newval + autovacuum_max_workers;
+
+	return true;
+}
+
+static bool
+assign_autovacuum_max_workers(int newval, bool doit, GucSource source)
+{
+	if (newval + MaxConnections > INT_MAX / 4)
+		return false;
+
+	if (doit)
+		MaxBackends = newval + MaxConnections;
+
+	return true;
+}
+
 static const char *
 assign_pgstat_temp_directory(const char *newval, bool doit, GucSource source)
 {
 	if (doit)
 	{
-		char	   *canon_val = guc_strdup(ERROR, newval);
-		char	   *tname;
-		char	   *fname;
-
-		canonicalize_path(canon_val);
-
-		tname = guc_malloc(ERROR, strlen(canon_val) + 12);		/* /pgstat.tmp */
-		sprintf(tname, "%s/pgstat.tmp", canon_val);
-		fname = guc_malloc(ERROR, strlen(canon_val) + 13);		/* /pgstat.stat */
-		sprintf(fname, "%s/pgstat.stat", canon_val);
-
 		if (pgstat_stat_tmpname)
 			free(pgstat_stat_tmpname);
-		pgstat_stat_tmpname = tname;
 		if (pgstat_stat_filename)
 			free(pgstat_stat_filename);
-		pgstat_stat_filename = fname;
 
-		return canon_val;
+		pgstat_stat_tmpname = guc_malloc(FATAL, strlen(newval) + 12);  /* /pgstat.tmp */
+		pgstat_stat_filename = guc_malloc(FATAL, strlen(newval) + 13); /* /pgstat.stat */
+
+		sprintf(pgstat_stat_tmpname, "%s/pgstat.tmp", newval);
+		sprintf(pgstat_stat_filename, "%s/pgstat.stat", newval);
 	}
-	else
-		return newval;
-}
 
+	return newval;
+}
 
 static const char *
 assign_application_name(const char *newval, bool doit, GucSource source)
@@ -8465,50 +8461,6 @@ show_allow_system_table_mods(void)
 		return "DML";
 	else
 		return "NONE";
-}
-
-static bool
-assign_maxconnections(int newval, bool doit, GucSource source)
-{
-	if (newval + autovacuum_max_workers > INT_MAX / 4)
-		return false;
-
-	if (doit)
-		MaxBackends = newval + autovacuum_max_workers;
-
-	return true;
-}
-
-static bool
-assign_autovacuum_max_workers(int newval, bool doit, GucSource source)
-{
-	if (newval + MaxConnections > INT_MAX / 4)
-		return false;
-
-	if (doit)
-		MaxBackends = newval + MaxConnections;
-
-	return true;
-}
-
-static const char *
-assign_pgstat_temp_directory(const char *newval, bool doit, GucSource source)
-{
-	if (doit)
-	{
-		if (pgstat_stat_tmpname)
-			free(pgstat_stat_tmpname);
-		if (pgstat_stat_filename)
-			free(pgstat_stat_filename);
-
-		pgstat_stat_tmpname = guc_malloc(FATAL, strlen(newval) + 12);  /* /pgstat.tmp */
-		pgstat_stat_filename = guc_malloc(FATAL, strlen(newval) + 13); /* /pgstat.stat */
-
-		sprintf(pgstat_stat_tmpname, "%s/pgstat.tmp", newval);
-		sprintf(pgstat_stat_filename, "%s/pgstat.stat", newval);
-	}
-
-	return newval;
 }
 
 #include "guc-file.c"

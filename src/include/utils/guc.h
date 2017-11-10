@@ -123,6 +123,8 @@ typedef struct name_value_pair
 {
 	char       *name;
 	char       *value;
+	char	   *filename;
+	int			sourceline;
 	struct name_value_pair *next;
 } name_value_pair;
 
