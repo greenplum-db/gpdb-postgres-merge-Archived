@@ -517,19 +517,11 @@ T601	Local cursor references			NO
 T611	Elementary OLAP operations			YES	
 T612	Advanced OLAP operations			NO	some forms supported
 T613	Sampling			NO	
-<<<<<<< HEAD
 T614	NTILE function			YES	
 T615	LEAD and LAG functions			YES	
 T616	Null treatment option for LEAD and LAG functions			NO	
 T617	FIRST_VALUE and LAST_VALUE function			YES	
 T618	NTH_VALUE function			NO	function exists, but some options missing
-=======
-T614	NTILE function			NO	
-T615	LEAD and LAG functions			NO	
-T616	Null treatment option for LEAD and LAG functions			NO	
-T617	FIRST_VALUE and LAST_VALUE function			NO	
-T618	NTH_VALUE function			NO	
->>>>>>> 38e9348282e
 T621	Enhanced numeric functions			YES	
 T631	IN predicate with one list element			NO	
 T641	Multiple column assignment			NO	only some syntax variants supported
@@ -604,10 +596,7 @@ X058	Advanced table mapping: base64 encoding of binary strings			YES
 X059	Advanced table mapping: hex encoding of binary strings			YES	
 X060	XMLParse: Character string input and CONTENT option			YES	
 X061	XMLParse: Character string input and DOCUMENT option			YES	
-<<<<<<< HEAD
 X062	XMLParse: explicit WHITESPACE option			YES	
-=======
->>>>>>> 38e9348282e
 X065	XMLParse: BLOB input and CONTENT option			NO	
 X066	XMLParse: BLOB input and DOCUMENT option			NO	
 X068	XMLSerialize: BOM			NO	
