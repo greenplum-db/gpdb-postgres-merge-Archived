@@ -275,17 +275,10 @@ query_planner(PlannerInfo *root, List *tlist,
 
 	/*
 	 * Examine any "placeholder" expressions generated during subquery pullup.
-<<<<<<< HEAD
 	 * Make sure that the Vars they need are marked as needed at the relevant
 	 * join level.
 	 */
 	fix_placeholder_input_needed_levels(root);
-=======
-	 * Make sure that we know what level to evaluate them at, and that the
-	 * Vars they need are marked as needed.
-	 */
-	fix_placeholder_eval_levels(root);
->>>>>>> 38e9348282e
 
 	/*
 	 * Ready to do the primary planning.

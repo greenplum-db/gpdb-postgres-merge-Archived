@@ -302,7 +302,8 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 
 	/* primary planning entry point (may recurse for subqueries) */
 	top_plan = subquery_planner(glob, parse, NULL,
-								false, tuple_fraction, &root);
+								false, tuple_fraction, &root,
+								config);
 
 	/*
 	 * If creating a plan for a scrollable cursor, make sure it can run
@@ -522,7 +523,6 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->init_plans = NIL;
 	root->cte_plan_ids = NIL;
 	root->eq_classes = NIL;
-<<<<<<< HEAD
 	root->init_plans = NIL;
 
 	root->list_cteplaninfo = NIL;
@@ -542,10 +542,6 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 		gp_singleton_segindex = gp_session_id % getgpsegmentCount();
 	}
 
-=======
-	root->append_rel_list = NIL;
-
->>>>>>> 38e9348282e
 	root->hasRecursion = hasRecursion;
 	if (hasRecursion)
 		root->wt_param_id = SS_assign_worktable_param(root);
@@ -556,17 +552,15 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	/*
 	 * If there is a WITH list, process each WITH query and build an
 	 * initplan SubPlan structure for it.
-<<<<<<< HEAD
 	 *
 	 * Unlike upstrem, we do not use initplan + CteScan, so SS_process_ctes
 	 * will generate unused initplans. Commenting out the following two
 	 * lines.
 	 */
-
-	/*
+#if 0
 	if (parse->cteList)
 		SS_process_ctes(root);
-	 */
+#endif
 
 	/*
 	 * Ensure that jointree has been normalized. See
@@ -579,16 +573,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 
 	/*
 	 * Look for ANY and EXISTS SubLinks in WHERE and JOIN/ON clauses, and try
-	 * to transform them into joins. Note that this step does not descend
-=======
-	 */
-	if (parse->cteList)
-		SS_process_ctes(root);
-
-	/*
-	 * Look for ANY and EXISTS SubLinks in WHERE and JOIN/ON clauses, and try
 	 * to transform them into joins.  Note that this step does not descend
->>>>>>> 38e9348282e
 	 * into subqueries; if we pull up any subqueries below, their SubLinks are
 	 * processed just before pulling them up.
 	 */

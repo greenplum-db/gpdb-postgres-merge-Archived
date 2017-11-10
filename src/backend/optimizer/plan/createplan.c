@@ -53,11 +53,6 @@
 
 static Plan *create_subplan(PlannerInfo *root, Path *best_path);		/* CDB */
 static Plan *create_scan_plan(PlannerInfo *root, Path *best_path);
-<<<<<<< HEAD
-
-=======
-static List *build_relation_tlist(RelOptInfo *rel);
->>>>>>> 38e9348282e
 static bool use_physical_tlist(PlannerInfo *root, RelOptInfo *rel);
 static void disuse_physical_tlist(Plan *plan, Path *path);
 static Plan *create_gating_plan(PlannerInfo *root, Plan *plan, List *quals);
@@ -94,7 +89,6 @@ static TableFunctionScan *create_tablefunction_plan(PlannerInfo *root,
 						  List *scan_clauses);
 static ValuesScan *create_valuesscan_plan(PlannerInfo *root, Path *best_path,
 					   List *tlist, List *scan_clauses);
-<<<<<<< HEAD
 static SubqueryScan * create_ctescan_plan(PlannerInfo *root, Path *best_path,
 										  List *tlist, List *scan_clauses);
 static WorkTableScan *create_worktablescan_plan(PlannerInfo *root, Path *best_path,
@@ -102,12 +96,6 @@ static WorkTableScan *create_worktablescan_plan(PlannerInfo *root, Path *best_pa
 static BitmapAppendOnlyScan *create_bitmap_appendonly_scan_plan(PlannerInfo *root,
 								   BitmapAppendOnlyPath *best_path,
 								   List *tlist, List *scan_clauses);
-=======
-static CteScan *create_ctescan_plan(PlannerInfo *root, Path *best_path,
-									List *tlist, List *scan_clauses);
-static WorkTableScan *create_worktablescan_plan(PlannerInfo *root, Path *best_path,
-												List *tlist, List *scan_clauses);
->>>>>>> 38e9348282e
 static NestLoop *create_nestloop_plan(PlannerInfo *root, NestPath *best_path,
 					 Plan *outer_plan, Plan *inner_plan);
 static MergeJoin *create_mergejoin_plan(PlannerInfo *root, MergePath *best_path,
@@ -885,13 +873,8 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 	 * copy of the subplan's tlist; and we don't install it into the subplan
 	 * unless we are sorting or stuff has to be added.
 	 */
-<<<<<<< HEAD
-	uniq_exprs = best_path->distinct_on_exprs;	/* CDB */
 	in_operators = best_path->distinct_on_eq_operators; /* CDB */
-=======
-	in_operators = best_path->in_operators;
-	uniq_exprs = best_path->uniq_exprs;
->>>>>>> 38e9348282e
+	uniq_exprs = best_path->distinct_on_exprs;	/* CDB */
 
 	/* initialize modified subplan tlist as just the "required" vars */
 	newtlist = build_relation_tlist(best_path->path.parent);
@@ -2070,13 +2053,8 @@ create_bitmap_scan_plan(PlannerInfo *root,
 {
 	Index		baserelid = best_path->path.parent->relid;
 	Plan	   *bitmapqualplan;
-<<<<<<< HEAD
-	List	   *bitmapqualorig = NULL;
-	List	   *indexquals = NULL;
-=======
 	List	   *bitmapqualorig;
 	List	   *indexquals;
->>>>>>> 38e9348282e
 	List	   *qpqual;
 	ListCell   *l;
 	BitmapHeapScan *scan_plan;
@@ -2649,7 +2627,6 @@ create_valuesscan_plan(PlannerInfo *root, Path *best_path,
  *	 Returns a ctescan plan for the base relation scanned by 'best_path'
  *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
  */
-<<<<<<< HEAD
 static SubqueryScan *
 create_ctescan_plan(PlannerInfo *root, Path *best_path,
 					List *tlist, List *scan_clauses)
@@ -2660,73 +2637,6 @@ create_ctescan_plan(PlannerInfo *root, Path *best_path,
 	Assert(best_path->parent->rtekind == RTE_CTE);
 
 	Assert(scan_relid > 0);
-=======
-static CteScan *
-create_ctescan_plan(PlannerInfo *root, Path *best_path,
-					List *tlist, List *scan_clauses)
-{
-	CteScan	   *scan_plan;
-	Index		scan_relid = best_path->parent->relid;
-	RangeTblEntry *rte;
-	SubPlan	   *ctesplan = NULL;
-	int			plan_id;
-	int			cte_param_id;
-	PlannerInfo *cteroot;
-	Index		levelsup;
-	int			ndx;
-	ListCell   *lc;
-
-	Assert(scan_relid > 0);
-	rte = planner_rt_fetch(scan_relid, root);
-	Assert(rte->rtekind == RTE_CTE);
-	Assert(!rte->self_reference);
-
-	/*
-	 * Find the referenced CTE, and locate the SubPlan previously made for it.
-	 */
-	levelsup = rte->ctelevelsup;
-	cteroot = root;
-	while (levelsup-- > 0)
-	{
-		cteroot = cteroot->parent_root;
-		if (!cteroot)			/* shouldn't happen */
-			elog(ERROR, "bad levelsup for CTE \"%s\"", rte->ctename);
-	}
-	/*
-	 * Note: cte_plan_ids can be shorter than cteList, if we are still working
-	 * on planning the CTEs (ie, this is a side-reference from another CTE).
-	 * So we mustn't use forboth here.
-	 */
-	ndx = 0;
-	foreach(lc, cteroot->parse->cteList)
-	{
-		CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
-
-		if (strcmp(cte->ctename, rte->ctename) == 0)
-			break;
-		ndx++;
-	}
-	if (lc == NULL)				/* shouldn't happen */
-		elog(ERROR, "could not find CTE \"%s\"", rte->ctename);
-	if (ndx >= list_length(cteroot->cte_plan_ids))
-		elog(ERROR, "could not find plan for CTE \"%s\"", rte->ctename);
-	plan_id = list_nth_int(cteroot->cte_plan_ids, ndx);
-	Assert(plan_id > 0);
-	foreach(lc, cteroot->init_plans)
-	{
-		ctesplan = (SubPlan *) lfirst(lc);
-		if (ctesplan->plan_id == plan_id)
-			break;
-	}
-	if (lc == NULL)				/* shouldn't happen */
-		elog(ERROR, "could not find plan for CTE \"%s\"", rte->ctename);
-
-	/*
-	 * We need the CTE param ID, which is the sole member of the
-	 * SubPlan's setParam list.
-	 */
-	cte_param_id = linitial_int(ctesplan->setParam);
->>>>>>> 38e9348282e
 
 	/* Sort clauses into best execution order */
 	scan_clauses = order_qual_clauses(root, scan_clauses);
@@ -2734,7 +2644,6 @@ create_ctescan_plan(PlannerInfo *root, Path *best_path,
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
-<<<<<<< HEAD
 	scan_plan = make_subqueryscan(root, tlist,
 								  scan_clauses,
 								  scan_relid,
@@ -2742,12 +2651,6 @@ create_ctescan_plan(PlannerInfo *root, Path *best_path,
 								  best_path->parent->subrtable);
 
 	copy_path_costsize(root, &scan_plan->scan.plan, best_path);
-=======
-	scan_plan = make_ctescan(tlist, scan_clauses, scan_relid,
-							 plan_id, cte_param_id);
-
-	copy_path_costsize(&scan_plan->scan.plan, best_path);
->>>>>>> 38e9348282e
 
 	return scan_plan;
 }
@@ -2800,16 +2703,11 @@ create_worktablescan_plan(PlannerInfo *root, Path *best_path,
 	scan_plan = make_worktablescan(tlist, scan_clauses, scan_relid,
 								   cteroot->wt_param_id);
 
-<<<<<<< HEAD
 	copy_path_costsize(root, &scan_plan->scan.plan, best_path);
-=======
-	copy_path_costsize(&scan_plan->scan.plan, best_path);
->>>>>>> 38e9348282e
 
 	return scan_plan;
 }
 
-<<<<<<< HEAD
 static Expr *
 remove_isnotfalse_expr(Expr *expr)
 {
@@ -2862,8 +2760,6 @@ remove_isnotfalse(List *clauses)
 	}
 	return t_list;
 }
-=======
->>>>>>> 38e9348282e
 
 /*****************************************************************************
  *
@@ -4270,34 +4166,16 @@ RecursiveUnion *
 make_recursive_union(List *tlist,
 					 Plan *lefttree,
 					 Plan *righttree,
-					 int wtParam)
-{
-	RecursiveUnion *node = makeNode(RecursiveUnion);
-	Plan	   *plan = &node->plan;
-
-	cost_recursive_union(plan, lefttree, righttree);
-
-	plan->targetlist = tlist;
-	plan->qual = NIL;
-	plan->lefttree = lefttree;
-	plan->righttree = righttree;
-	node->wtParam = wtParam;
-
-	return node;
-}
-
-RecursiveUnion *
-make_recursive_union(List *tlist,
-					 Plan *lefttree,
-					 Plan *righttree,
 					 int wtParam,
 					 List *distinctList,
 					 long numGroups)
 {
 	RecursiveUnion *node = makeNode(RecursiveUnion);
 	Plan	   *plan = &node->plan;
+#if 0	/* not used in GPDB */
 	int			numCols = list_length(distinctList);
-
+#endif
+	
 	cost_recursive_union(plan, lefttree, righttree);
 
 	plan->targetlist = tlist;
@@ -4306,6 +4184,7 @@ make_recursive_union(List *tlist,
 	plan->righttree = righttree;
 	node->wtParam = wtParam;
 
+#if 0	/* not used in GPDB */
 	/*
 	 * convert SortGroupClause list into arrays of attr indexes and equality
 	 * operators, as wanted by executor
@@ -4336,6 +4215,7 @@ make_recursive_union(List *tlist,
 		node->dupOperators = dupOperators;
 	}
 	node->numGroups = numGroups;
+#endif
 
 	return node;
 }
