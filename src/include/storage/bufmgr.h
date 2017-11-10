@@ -330,7 +330,7 @@ extern Buffer ReadBufferExtended(Relation reln, ForkNumber forkNum,
 								 BufferAccessStrategy strategy);
 extern Buffer ReadBuffer_Resync(SMgrRelation reln, BlockNumber blockNum);
 extern Buffer ReadBufferWithoutRelcache(RelFileNode rnode, bool isLocalBuf,
-						bool isTemp, ForkNumber forkNum, BlockNumber blockNum,
+						ForkNumber forkNum, BlockNumber blockNum,
 						ReadBufferMode mode, BufferAccessStrategy strategy);
 extern void ReleaseBuffer(Buffer buffer);
 extern void UnlockReleaseBuffer(Buffer buffer);

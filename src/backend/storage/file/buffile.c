@@ -34,13 +34,11 @@
 
 #include "storage/fd.h"
 #include "storage/buffile.h"
-<<<<<<< HEAD
+#include "storage/buf_internals.h"
 #include "miscadmin.h"
+
 #include "cdb/cdbvars.h"
 #include "utils/workfile_mgr.h"
-=======
-#include "storage/buf_internals.h"
->>>>>>> 38e9348282e
 
 /*
  * This data structure represents a buffered file that consists of one
@@ -272,11 +270,9 @@ BufFileLoadBuffer(BufFile *file, void* buffer, size_t bufsize)
 
 	/* we choose not to advance curOffset here */
 
-<<<<<<< HEAD
-	return nb;
-=======
 	BufFileReadCount++;
->>>>>>> 38e9348282e
+
+	return nb;
 }
 
 /*
@@ -319,19 +315,10 @@ BufFileDumpBuffer(BufFile *file, const void* buffer, Size nbytes)
 			}
 			elog(ERROR, "could not write %d bytes to temporary file: %m", (int)bytestowrite);
 		}
-<<<<<<< HEAD
 		file->offset += wrote;
 		wpos += wrote;
-=======
-		bytestowrite = FileWrite(thisfile, file->buffer + wpos, bytestowrite);
-		if (bytestowrite <= 0)
-			return;				/* failed to write */
-		file->offsets[file->curFile] += bytestowrite;
-		file->curOffset += bytestowrite;
-		wpos += bytestowrite;
 
 		BufFileWriteCount++;
->>>>>>> 38e9348282e
 	}
 	file->dirty = false;
 

@@ -78,14 +78,6 @@ bool		zero_damaged_pages = false;
 int			bgwriter_lru_maxpages = 100;
 double		bgwriter_lru_multiplier = 2.0;
 
-<<<<<<< HEAD
-long		NDirectFileRead;	/* some I/O's are direct file access. bypass
-								 * bufmgr */
-long		NDirectFileWrite;	/* e.g., I/O in psort and hashjoin. */
-
-
-=======
->>>>>>> 38e9348282e
 /* local state for StartBufferIO and related functions */
 static volatile BufferDesc *InProgressBuf = NULL;
 static bool IsForInput;
@@ -95,18 +87,10 @@ static volatile BufferDesc *PinCountWaitBuf = NULL;
 
 static XLogRecPtr InvalidXLogRecPtr = {0, 0};
 
-<<<<<<< HEAD
-static Buffer ReadBuffer_relcache(Relation reln, BlockNumber blockNum,
-				  bool zeroPage, BufferAccessStrategy strategy);
 static Buffer ReadBuffer_common(SMgrRelation reln, bool isLocalBuf,
-				  bool isTemp, BlockNumber blockNum, bool zeroPage,
-				  BufferAccessStrategy strategy, bool *pHit);
-=======
-static Buffer ReadBuffer_common(SMgrRelation reln, bool isLocalBuf,
-					ForkNumber forkNum, BlockNumber blockNum,
-					ReadBufferMode mode , BufferAccessStrategy strategy,
-					bool *hit);
->>>>>>> 38e9348282e
+				  ForkNumber forkNum, BlockNumber blockNum,
+				  ReadBufferMode mode, BufferAccessStrategy strategy,
+				  bool *hit);
 static bool PinBuffer(volatile BufferDesc *buf, BufferAccessStrategy strategy);
 static void PinBuffer_Locked(volatile BufferDesc *buf);
 static void UnpinBuffer(volatile BufferDesc *buf, bool fixOwner);
@@ -190,6 +174,23 @@ static inline bool ConditionalAcquireContentLock( volatile BufferDesc *buf, LWLo
 }
 
 /*
+ * Read Buffer for pages to be Resynced
+ */
+Buffer
+ReadBuffer_Resync(SMgrRelation reln, BlockNumber blockNum)
+{
+	bool		isHit;
+
+	return ReadBuffer_common(reln,
+							 false, /* isLocalBuf */
+							 MAIN_FORKNUM,
+							 blockNum,
+							 RBM_NORMAL, /* mode */
+							 NULL,	/* strategy */
+							 &isHit);
+}
+
+/*
  * ReadBuffer -- a shorthand for ReadBufferExtended, for reading from main
  *		fork with RBM_NORMAL mode and default strategy.
  */
@@ -232,46 +233,8 @@ ReadBuffer(Relation reln, BlockNumber blockNum)
  * See buffer/README for details.
  */
 Buffer
-<<<<<<< HEAD
-ReadBufferWithoutRelcache(RelFileNode rnode, bool isLocalBuf, bool isTemp,
-						  BlockNumber blockNum, bool zeroPage)
-{
-	bool hit;
-
-	SMgrRelation smgr = smgropen(rnode);
-	return ReadBuffer_common(smgr, isLocalBuf, isTemp, blockNum, zeroPage, NULL,
-							 &hit);
-}
-
-
-/*
- * Read Buffer for pages to be Resynced
- */
-Buffer
-ReadBuffer_Resync(SMgrRelation reln, BlockNumber blockNum)
-{
-	bool		isHit;
-
-	return ReadBuffer_common(reln,
-							 false, /* isLocalBuf */
-							 false, /* isTemp */
-							 blockNum,
-							 false, /* zeroPage */
-							 NULL,	/* strategy */
-							 &isHit);
-}
-
-/*
- * ReadBuffer_relcache -- common logic for ReadBuffer-variants that 
- *		operate on a Relation.
- */
-static Buffer
-ReadBuffer_relcache(Relation reln, BlockNumber blockNum, 
-					bool zeroPage, BufferAccessStrategy strategy)
-=======
 ReadBufferExtended(Relation reln, ForkNumber forkNum, BlockNumber blockNum,
 				   ReadBufferMode mode, BufferAccessStrategy strategy)
->>>>>>> 38e9348282e
 {
 	bool hit;
 	Buffer buf;
@@ -285,13 +248,8 @@ ReadBufferExtended(Relation reln, ForkNumber forkNum, BlockNumber blockNum,
 	 * hit or miss.
 	 */
 	pgstat_count_buffer_read(reln);
-<<<<<<< HEAD
-	buf = ReadBuffer_common(reln->rd_smgr, reln->rd_isLocalBuf, reln->rd_istemp,
-							blockNum, zeroPage, strategy, &hit);
-=======
 	buf = ReadBuffer_common(reln->rd_smgr, reln->rd_istemp, forkNum, blockNum,
 							mode, strategy, &hit);
->>>>>>> 38e9348282e
 	if (hit)
 		pgstat_count_buffer_hit(reln);
 	return buf;
@@ -321,19 +279,9 @@ ReadBufferWithoutRelcache(RelFileNode rnode, bool isTemp,
  * *hit is set to true if the request was satisfied from shared buffer cache.
  */
 static Buffer
-<<<<<<< HEAD
-ReadBuffer_common(SMgrRelation smgr,
-				  bool isLocalBuf,
-				  bool isTemp,
-				  BlockNumber blockNum,
-				  bool zeroPage,
-				  BufferAccessStrategy strategy,
-				  bool *pHit)
-=======
 ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 				  BlockNumber blockNum, ReadBufferMode mode,
 				  BufferAccessStrategy strategy, bool *hit)
->>>>>>> 38e9348282e
 {
 		//MIRROREDLOCK_BUFMGR_DECLARE;
 
@@ -342,7 +290,7 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 	bool		found;
 	bool		isExtend;
 
-	*pHit = false;
+	*hit = false;
 
 	Assert(smgr != NULL);
 
@@ -406,23 +354,9 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 		if (!isExtend)
 		{
 			/* Just need to update stats before we exit */
-<<<<<<< HEAD
 //			pgstat_count_buffer_hit(smgr);
-			*pHit = true;
-			goto done;
-=======
 			*hit = true;
-
-			if (VacuumCostActive)
-				VacuumCostBalance += VacuumCostPageHit;
-
-			TRACE_POSTGRESQL_BUFFER_READ_DONE(forkNum, blockNum,
-				smgr->smgr_rnode.spcNode,
-				smgr->smgr_rnode.dbNode,
-				smgr->smgr_rnode.relNode, isLocalBuf, found);
-
-			return BufferDescriptorGetBuffer(bufHdr);
->>>>>>> 38e9348282e
+			goto done;
 		}
 
 		/*
@@ -442,11 +376,7 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 		if (!PageIsNew((Page) bufBlock))
 			ereport(ERROR,
 					(errmsg("unexpected data beyond EOF in block %u of relation %s",
-<<<<<<< HEAD
-							blockNum, relpath(smgr->smgr_rnode)),
-=======
 							blockNum, relpath(smgr->smgr_rnode, forkNum)),
->>>>>>> 38e9348282e
 					 errhint("This has been seen to occur with buggy kernels; consider updating your system.")));
 
 		/*
@@ -500,12 +430,8 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 	{
 		/* new buffers are zero-filled */
 		MemSet((char *) bufBlock, 0, BLCKSZ);
-<<<<<<< HEAD
 		/* don't set checksum for all-zero page */
-		smgrextend(smgr, blockNum, (char *) bufBlock, isTemp);
-=======
 		smgrextend(smgr, forkNum, blockNum, (char *) bufBlock, isLocalBuf);
->>>>>>> 38e9348282e
 	}
 	else
 	{
@@ -526,30 +452,17 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 				{
 					ereport(WARNING,
 							(errcode(ERRCODE_DATA_CORRUPTED),
-<<<<<<< HEAD
 							 errmsg("invalid page in block %u of relation %s; zeroing out page",
 									blockNum,
-									relpath(smgr->smgr_rnode))));
-=======
-							 errmsg("invalid page header in block %u of relation %s; zeroing out page",
-									blockNum,
 									relpath(smgr->smgr_rnode, forkNum))));
->>>>>>> 38e9348282e
 					MemSet((char *) bufBlock, 0, BLCKSZ);
 				}
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_DATA_CORRUPTED),
-<<<<<<< HEAD
 							 errmsg("invalid page in block %u of relation %s",
 									blockNum,
-									relpath(smgr->smgr_rnode)),
-							 errSendAlert(true)));
-=======
-							 errmsg("invalid page header in block %u of relation %s",
-									blockNum,
 									relpath(smgr->smgr_rnode, forkNum))));
->>>>>>> 38e9348282e
 			}
 		}
 	}
@@ -571,18 +484,12 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 	if (VacuumCostActive)
 		VacuumCostBalance += VacuumCostPageMiss;
 
-<<<<<<< HEAD
 	//MIRROREDLOCK_BUFMGR_UNLOCK;
 	// -------- MirroredLock ----------
 
-	TRACE_POSTGRESQL_BUFFER_READ_DONE(blockNum, smgr->smgr_rnode.spcNode,
-			smgr->smgr_rnode.dbNode, smgr->smgr_rnode.relNode,
-			isLocalBuf, found);
-=======
 	TRACE_POSTGRESQL_BUFFER_READ_DONE(forkNum, blockNum,
 			smgr->smgr_rnode.spcNode, smgr->smgr_rnode.dbNode,
 			smgr->smgr_rnode.relNode, isLocalBuf, found);
->>>>>>> 38e9348282e
 
 	return BufferDescriptorGetBuffer(bufHdr);
 }
@@ -726,16 +633,7 @@ BufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 			 * happens to be trying to split the page the first one got from
 			 * StrategyGetBuffer.)
 			 */
-<<<<<<< HEAD
 			if ( ConditionalAcquireContentLock(buf, LW_SHARED))
-=======
-
-                        TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_START(forkNum,
-			  blockNum, smgr->smgr_rnode.spcNode,
-			  smgr->smgr_rnode.dbNode, smgr->smgr_rnode.relNode);
-
-			if (LWLockConditionalAcquire(buf->content_lock, LW_SHARED))
->>>>>>> 38e9348282e
 			{
 				/*
 				 * If using a nondefault strategy, and writing the buffer
@@ -764,17 +662,18 @@ BufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 				}
 
 				/* OK, do the I/O */
-				FlushBuffer(buf, NULL);
-<<<<<<< HEAD
-				ReleaseContentLock(buf);
-=======
-				LWLockRelease(buf->content_lock);
+				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_START(forkNum, blockNum,
+											   smgr->smgr_rnode.node.spcNode,
+												smgr->smgr_rnode.node.dbNode,
+											  smgr->smgr_rnode.node.relNode);
 
-                                TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_DONE(
-                                  forkNum, blockNum, smgr->smgr_rnode.spcNode,
-                                  smgr->smgr_rnode.dbNode,
-				  smgr->smgr_rnode.relNode);
->>>>>>> 38e9348282e
+				FlushBuffer(buf, NULL);
+				ReleaseContentLock(buf);
+
+				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_DONE(forkNum, blockNum,
+											   smgr->smgr_rnode.node.spcNode,
+												smgr->smgr_rnode.node.dbNode,
+											  smgr->smgr_rnode.node.relNode);
 			}
 			else
 			{
@@ -2168,75 +2067,7 @@ RelationGetNumberOfBlocks(Relation relation)
 	/* For non-AO tables, open it at the smgr level if not already done */
 	RelationOpenSmgr(relation);
 
-<<<<<<< HEAD
-	return smgrnblocks(relation->rd_smgr);
-}
-
-/*
- * RelationTruncate
- *		Physically truncate a relation to the specified number of blocks.
- *
- * As of Postgres 8.1, this includes getting rid of any buffers for the
- * blocks that are to be dropped; previously, callers had to do that.
- */
-void
-RelationTruncate(Relation rel, BlockNumber nblocks, bool markPersistentAsPhysicallyTruncated)
-{
-	MIRROREDLOCK_BUFMGR_DECLARE;
-
-	// Fetch gp_persistent_relation_node information that will be added to XLOG record.
-	RelationFetchGpRelationNodeForXLog(rel);
-
-	if (markPersistentAsPhysicallyTruncated)
-	{
-		LockRelationForResynchronize(&rel->rd_node, AccessExclusiveLock);
-
-		/*
-		 * Fetch gp_persistent_relation_node information so we can mark the persistent entry.
-		 */
-		RelationFetchGpRelationNodeForXLog(rel);
-
-		if (rel->rd_segfile0_relationnodeinfo.isPresent)
-		{
-			/*
-			 * Since we are deleting 0, 1, or more segments files and possibly lopping off the
-			 * end of new last segment file, we need to indicate to resynchronize that
-			 * it should use 'Scan Incremental' only.
-			 */
-			PersistentRelation_MarkBufPoolRelationForScanIncrementalResync(
-															&rel->rd_node,
-															&rel->rd_segfile0_relationnodeinfo.persistentTid,
-															rel->rd_segfile0_relationnodeinfo.persistentSerialNum);
-		}
-	}
-
-	// -------- MirroredLock ----------
-	// NOTE: PersistentFileSysObj_EndXactDrop acquires relation resynchronize lock before MirroredLock, too.
-	MIRROREDLOCK_BUFMGR_LOCK;
-	
-
-	/* Open it at the smgr level if not already done */
-	RelationOpenSmgr(rel);
-
-	/* Make sure rd_targblock isn't pointing somewhere past end */
-	rel->rd_targblock = InvalidBlockNumber;
-
-	/* Do the real work */
-	smgrtruncate(
-			rel->rd_smgr, 
-			nblocks, 
-			rel->rd_istemp, 
-			rel->rd_isLocalBuf,
-			&rel->rd_segfile0_relationnodeinfo.persistentTid,
-			rel->rd_segfile0_relationnodeinfo.persistentSerialNum);
-
-	MIRROREDLOCK_BUFMGR_UNLOCK;
-	// -------- MirroredLock ----------
-	
-	if (markPersistentAsPhysicallyTruncated)
-	{
-		UnlockRelationForResynchronize(&rel->rd_node, AccessExclusiveLock);
-	}
+	return smgrnblocks(relation->rd_smgr, MAIN_FORKNUM);
 }
 
 /*
@@ -2271,9 +2102,6 @@ BufferGetLSNAtomic(Buffer buffer)
 	UnlockBufHdr(bufHdr);
 
 	return lsn;
-=======
-	return smgrnblocks(relation->rd_smgr, MAIN_FORKNUM);
->>>>>>> 38e9348282e
 }
 
 /* ---------------------------------------------------------------------
