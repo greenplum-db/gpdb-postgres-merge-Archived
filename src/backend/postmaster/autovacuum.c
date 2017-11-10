@@ -1958,17 +1958,6 @@ do_autovacuum(void)
 		bool		wraparound;
 		int			backendID;
 
-<<<<<<< HEAD
-		/* Consider only regular, toast and aosegment tables. */
-		if (classForm->relkind != RELKIND_RELATION &&
-			classForm->relkind != RELKIND_TOASTVALUE &&
-			classForm->relkind != RELKIND_AOSEGMENTS &&
-			classForm->relkind != RELKIND_AOBLOCKDIR &&
-			classForm->relkind != RELKIND_AOVISIMAP)
-			continue;
-
-=======
->>>>>>> 38e9348282e
 		relid = HeapTupleGetOid(tuple);
 
 		/* Fetch the pg_autovacuum tuple for the relation, if any */
