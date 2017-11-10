@@ -535,14 +535,8 @@ toast_delete(Relation rel, GenericTuple oldtup, MemTupleBinding *pbind)
  * from the pre-8.1 API of this routine.
  * ----------
  */
-<<<<<<< HEAD
-
-static int compute_dest_tuplen(TupleDesc tupdesc, MemTupleBinding *pbind, bool hasnull, Datum *d, bool *isnull)
-=======
-HeapTuple
-toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
-					   int options)
->>>>>>> 38e9348282e
+static int
+compute_dest_tuplen(TupleDesc tupdesc, MemTupleBinding *pbind, bool hasnull, Datum *d, bool *isnull)
 {
 	if(pbind) 
 	{
@@ -557,7 +551,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 static GenericTuple
 toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple oldtup,
 					   MemTupleBinding *pbind, int toast_tuple_target,
-					   bool isFrozen, bool use_wal, bool use_fsm)
+					   bool isFrozen, int options)
 {
 	GenericTuple result_gtuple;
 	TupleDesc	tupleDesc;
@@ -843,12 +837,7 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 		{
 			old_value = toast_values[i];
 			toast_action[i] = 'p';
-<<<<<<< HEAD
-			toast_values[i] = toast_save_datum(rel, toast_values[i], isFrozen,
-											   use_wal, use_fsm);
-=======
-			toast_values[i] = toast_save_datum(rel, toast_values[i], options);
->>>>>>> 38e9348282e
+			toast_values[i] = toast_save_datum(rel, toast_values[i], isFrozen, options);
 			if (toast_free[i])
 				pfree(DatumGetPointer(old_value));
 			toast_free[i] = true;
@@ -898,12 +887,7 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 		i = biggest_attno;
 		old_value = toast_values[i];
 		toast_action[i] = 'p';
-<<<<<<< HEAD
-		toast_values[i] = toast_save_datum(rel, toast_values[i], isFrozen,
-										   use_wal, use_fsm);
-=======
-		toast_values[i] = toast_save_datum(rel, toast_values[i], options);
->>>>>>> 38e9348282e
+		toast_values[i] = toast_save_datum(rel, toast_values[i], isFrozen, options);
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
 		toast_free[i] = true;
@@ -1012,12 +996,7 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 		i = biggest_attno;
 		old_value = toast_values[i];
 		toast_action[i] = 'p';
-<<<<<<< HEAD
-		toast_values[i] = toast_save_datum(rel, toast_values[i], isFrozen,
-										   use_wal, use_fsm);
-=======
-		toast_values[i] = toast_save_datum(rel, toast_values[i], options);
->>>>>>> 38e9348282e
+		toast_values[i] = toast_save_datum(rel, toast_values[i], isFrozen, options);
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
 		toast_free[i] = true;
@@ -1132,7 +1111,7 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 HeapTuple
 toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 					   int toast_tuple_target,
-					   bool isFrozen, bool use_wal, bool use_fsm)
+					   bool isFrozen, int options)
 {
 	return (HeapTuple) toast_insert_or_update_generic(rel,
 													  (GenericTuple) newtup,
@@ -1140,14 +1119,13 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 													  NULL,
 													  toast_tuple_target,
 													  isFrozen,
-													  use_wal,
-													  use_fsm);
+													  options);
 }
 
 MemTuple
 toast_insert_or_update_memtup(Relation rel, MemTuple newtup, MemTuple oldtup,
 					   MemTupleBinding *pbind, int toast_tuple_target,
-					   bool isFrozen, bool use_wal, bool use_fsm)
+					   bool isFrozen, int options)
 {
 	return (MemTuple) toast_insert_or_update_generic(rel,
 													 (GenericTuple) newtup,
@@ -1155,8 +1133,7 @@ toast_insert_or_update_memtup(Relation rel, MemTuple newtup, MemTuple oldtup,
 													 pbind,
 													 toast_tuple_target,
 													 isFrozen,
-													 use_wal,
-													 use_fsm);
+													 options);
 }
 
 /* ----------
@@ -1445,12 +1422,7 @@ toast_compress_datum(Datum value)
  * ----------
  */
 static Datum
-<<<<<<< HEAD
-toast_save_datum(Relation rel, Datum value, bool isFrozen,
-				 bool use_wal, bool use_fsm)
-=======
-toast_save_datum(Relation rel, Datum value, int options)
->>>>>>> 38e9348282e
+toast_save_datum(Relation rel, Datum value, bool isFrozen, int options)
 {
 	Relation	toastrel;
 	Relation	toastidx;
@@ -1569,11 +1541,10 @@ toast_save_datum(Relation rel, Datum value, int options)
 		memcpy(VARDATA(&chunk_data), data_p, chunk_size);
 		toasttup = heap_form_tuple(toasttupDesc, t_values, t_isnull);
 
-<<<<<<< HEAD
 		if (!isFrozen)
 		{
 			/* the normal case. regular insert */
-			heap_insert(toastrel, toasttup, mycid, use_wal, use_fsm, myxid);
+			heap_insert(toastrel, toasttup, mycid, options, NULL, myxid);
 		}
 		else
 		{
@@ -1581,10 +1552,6 @@ toast_save_datum(Relation rel, Datum value, int options)
 			frozen_heap_insert(toastrel, toasttup);
 		}
 			
-=======
-		heap_insert(toastrel, toasttup, mycid, options, NULL);
-
->>>>>>> 38e9348282e
 		/*
 		 * Create the index entry.	We cheat a little here by not using
 		 * FormIndexDatum: this relies on the knowledge that the index columns
