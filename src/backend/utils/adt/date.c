@@ -341,16 +341,12 @@ date_mi(PG_FUNCTION_ARGS)
 	DateADT		dateVal1 = PG_GETARG_DATEADT(0);
 	DateADT		dateVal2 = PG_GETARG_DATEADT(1);
 
-<<<<<<< HEAD
-	PG_RETURN_INT32(date_diff(dateVal1, dateVal2));
-=======
 	if (DATE_NOT_FINITE(dateVal1) || DATE_NOT_FINITE(dateVal2))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("cannot subtract infinite dates")));
 
 	PG_RETURN_INT32((int32) (dateVal1 - dateVal2));
->>>>>>> 38e9348282e
 }
 
 /* Add a number of days to a date, giving a new date.
@@ -362,14 +358,10 @@ date_pli(PG_FUNCTION_ARGS)
 	DateADT		dateVal = PG_GETARG_DATEADT(0);
 	int32		days = PG_GETARG_INT32(1);
 
-<<<<<<< HEAD
-	PG_RETURN_DATEADT(date_pl_days(dateVal, days));
-=======
 	if (DATE_NOT_FINITE(dateVal))
 		days = 0;				/* can't change infinity */
 
 	PG_RETURN_DATEADT(dateVal + days);
->>>>>>> 38e9348282e
 }
 
 /* Subtract a number of days from a date, giving a new date.

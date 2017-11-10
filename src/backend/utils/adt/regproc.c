@@ -189,12 +189,8 @@ regprocout(PG_FUNCTION_ARGS)
 			 * Would this proc be found (uniquely!) by regprocin? If not,
 			 * qualify it.
 			 */
-<<<<<<< HEAD
-			clist = FuncnameGetCandidates(list_make1(makeString(proname)), -1, false, false);
-=======
 			clist = FuncnameGetCandidates(list_make1(makeString(proname)),
 										  -1, false, false);
->>>>>>> 38e9348282e
 			if (clist != NULL && clist->next == NULL &&
 				clist->oid == proid)
 				nspname = NULL;

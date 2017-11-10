@@ -475,12 +475,8 @@ create_singleton_array(FunctionCallInfo fcinfo,
 Datum
 array_agg_transfn(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
 	Oid			arg1_typeid = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	MemoryContext aggcontext;
-=======
-	Oid arg1_typeid = get_fn_expr_argtype(fcinfo->flinfo, 1);
->>>>>>> 38e9348282e
 	ArrayBuildState *state;
 	Datum		elem;
 
@@ -489,17 +485,14 @@ array_agg_transfn(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("could not determine input data type")));
 
-<<<<<<< HEAD
-	if (!(fcinfo->context && IsA(fcinfo->context, AggState)))
+	if (fcinfo->context && IsA(fcinfo->context, AggState))
+		aggcontext = ((AggState *) fcinfo->context)->aggcontext;
+	else
 	{
 		/* cannot be called directly because of internal-type argument */
 		elog(ERROR, "array_agg_transfn called in non-aggregate context");
+		aggcontext = NULL;		/* keep compiler quiet */
 	}
-	aggcontext = ((AggState*)fcinfo->context)->aggcontext;
-=======
-	/* cannot be called directly because of internal-type argument */
-	Assert(fcinfo->context && IsA(fcinfo->context, AggState));
->>>>>>> 38e9348282e
 
 	state = PG_ARGISNULL(0) ? NULL : (ArrayBuildState *) PG_GETARG_POINTER(0);
 	elem = PG_ARGISNULL(1) ? (Datum) 0 : PG_GETARG_DATUM(1);
@@ -507,22 +500,12 @@ array_agg_transfn(PG_FUNCTION_ARGS)
 							 elem,
 							 PG_ARGISNULL(1),
 							 arg1_typeid,
-<<<<<<< HEAD
 							 aggcontext);
 
 	/*
 	 * The transition type for array_agg() is declared to be "internal", which
 	 * is a pass-by-value type the same size as a pointer.	So we can safely
 	 * pass the ArrayBuildState pointer through nodeAgg.c's machinations.
-=======
-							 ((AggState *) fcinfo->context)->aggcontext);
-
-	/*
-	 * The transition type for array_agg() is declared to be "internal",
-	 * which is a pass-by-value type the same size as a pointer.  So we
-	 * can safely pass the ArrayBuildState pointer through nodeAgg.c's
-	 * machinations.
->>>>>>> 38e9348282e
 	 */
 	PG_RETURN_POINTER(state);
 }
@@ -530,7 +513,6 @@ array_agg_transfn(PG_FUNCTION_ARGS)
 Datum
 array_agg_finalfn(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
 	Datum		result;
 	ArrayBuildState *state;
 	int			dims[1];
@@ -797,17 +779,3 @@ void accumToArray(int rank, int *rshape, int *rdata, int *ashape, int *adata)
 	}
 	while ( d >= 0 );
 }
-
-=======
-	ArrayBuildState *state;
-
-	/* cannot be called directly because of internal-type argument */
-	Assert(fcinfo->context && IsA(fcinfo->context, AggState));
-
-	if (PG_ARGISNULL(0))
-		PG_RETURN_NULL();   /* returns null iff no input values */
-
-	state = (ArrayBuildState *) PG_GETARG_POINTER(0);
-	PG_RETURN_ARRAYTYPE_P(makeArrayResult(state, CurrentMemoryContext));
-}
->>>>>>> 38e9348282e
