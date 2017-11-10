@@ -18,7 +18,6 @@
 #include "nodes/relation.h"
 
 extern void SS_process_ctes(PlannerInfo *root);
-<<<<<<< HEAD
 extern Node *convert_testexpr(PlannerInfo *root,
 				 Node *testexpr,
 				 List *subst_nodes);
@@ -26,15 +25,6 @@ extern JoinExpr *convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink
 										Relids available_rels);
 extern Node *convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 											bool under_not, Relids available_rels);
-=======
-extern bool convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
-										Relids available_rels,
-										Node **new_qual, List **fromlist);
-extern bool convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
-										   bool under_not,
-										   Relids available_rels,
-										   Node **new_qual, List **fromlist);
->>>>>>> 38e9348282e
 extern Node *SS_replace_correlation_vars(PlannerInfo *root, Node *expr);
 extern Node *SS_process_sublinks(PlannerInfo *root, Node *expr, bool isQual);
 extern void SS_finalize_plan(PlannerInfo *root, Plan *plan,
@@ -42,7 +32,6 @@ extern void SS_finalize_plan(PlannerInfo *root, Plan *plan,
 extern Param *SS_make_initplan_from_plan(PlannerInfo *root, Plan *plan,
 						   Oid resulttype, int32 resulttypmod);
 extern int	SS_assign_worktable_param(PlannerInfo *root);
-<<<<<<< HEAD
 
 
 extern bool IsSubqueryCorrelated(Query *sq);
@@ -50,7 +39,5 @@ extern bool IsSubqueryMultiLevelCorrelated(Query *sq);
 
 extern List *generate_subquery_vars(PlannerInfo *root, List *tlist,
 					   Index varno);
-=======
->>>>>>> 38e9348282e
 
 #endif   /* SUBSELECT_H */
