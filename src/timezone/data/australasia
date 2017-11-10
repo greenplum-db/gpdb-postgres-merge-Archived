@@ -1,10 +1,5 @@
-<<<<<<< HEAD
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
-=======
-# @(#)australasia	8.9
-# <pre>
->>>>>>> 38e9348282e
 
 # This file also includes Pacific islands.
 
@@ -1642,10 +1637,6 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # * Tonga will introduce DST in November
 #
 # I was given this link by John Letts:
-<<<<<<< HEAD
-=======
-# <a href="http://news.bbc.co.uk/hi/english/world/asia-pacific/newsid_424000/424764.stm">
->>>>>>> 38e9348282e
 # http://news.bbc.co.uk/hi/english/world/asia-pacific/newsid_424000/424764.stm
 #
 # I have not been able to find exact dates for the transition in November
@@ -1654,13 +1645,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # (12 + 1 hour DST).
 
 # From Arthur David Olson (1999-09-20):
-<<<<<<< HEAD
 # According to <http://www.tongaonline.com/news/sept1799.html>:
-=======
-# According to <a href="http://www.tongaonline.com/news/sept1799.html">
-# http://www.tongaonline.com/news/sept1799.html
-# </a>:
->>>>>>> 38e9348282e
 # "Daylight Savings Time will take effect on Oct. 2 through April 15, 2000
 # and annually thereafter from the first Saturday in October through the
 # third Saturday of April.  Under the system approved by Privy Council on
