@@ -9,11 +9,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-exec.c
-=======
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.199 2008/09/19 16:40:40 tgl Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -64,11 +60,7 @@ static bool static_std_strings = false;
 
 
 static PGEvent *dupEvents(PGEvent *events, int count);
-<<<<<<< HEAD
 static bool pqAddTuple(PGresult *res, PGresAttValue *tup);
-=======
-static bool PQsendQueryStart(PGconn *conn);
->>>>>>> 38e9348282e
 static int PQsendQueryGuts(PGconn *conn,
 				const char *command,
 				const char *stmtName,
@@ -241,11 +233,7 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
  *
  * Set the attributes for a given result.  This function fails if there are
  * already attributes contained in the provided result.  The call is
-<<<<<<< HEAD
  * ignored if numAttributes is zero or attDescs is NULL.  If the
-=======
- * ignored if numAttributes is is zero or attDescs is NULL.  If the
->>>>>>> 38e9348282e
  * function fails, it returns zero.  If the function succeeds, it
  * returns a non-zero value.
  */
@@ -344,12 +332,8 @@ PQcopyResult(const PGresult *src, int flags)
 	/* Wants to copy tuples? */
 	if (flags & PG_COPYRES_TUPLES)
 	{
-<<<<<<< HEAD
 		int			tup,
 					field;
-=======
-		int tup, field;
->>>>>>> 38e9348282e
 
 		for (tup = 0; tup < src->ntups; tup++)
 		{
@@ -460,39 +444,11 @@ PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, int len)
 	if (tup_num < 0 || tup_num > res->ntups)
 		return FALSE;
 
-<<<<<<< HEAD
 	/* need to allocate a new tuple? */
 	if (tup_num == res->ntups)
 	{
 		PGresAttValue *tup;
 		int			i;
-=======
-	/* need to grow the tuple table? */
-	if (res->ntups >= res->tupArrSize)
-	{
-		int n = res->tupArrSize ? res->tupArrSize * 2 : 128;
-		PGresAttValue **tups;
-
-		if (res->tuples)
-			tups = (PGresAttValue **) realloc(res->tuples, n * sizeof(PGresAttValue *));
-		else
-			tups = (PGresAttValue **) malloc(n * sizeof(PGresAttValue *));
-
-		if (!tups)
-			return FALSE;
-
-		memset(tups + res->tupArrSize, 0,
-			   (n - res->tupArrSize) * sizeof(PGresAttValue *));
-		res->tuples = tups;
-		res->tupArrSize = n;
-	}
-
-	/* need to allocate a new tuple? */
-	if (tup_num == res->ntups && !res->tuples[tup_num])
-	{
-		PGresAttValue *tup;
-		int i;
->>>>>>> 38e9348282e
 
 		tup = (PGresAttValue *)
 			pqResultAlloc(res, res->numAttributes * sizeof(PGresAttValue),
@@ -508,14 +464,9 @@ PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, int len)
 			tup[i].value = res->null_field;
 		}
 
-<<<<<<< HEAD
 		/* add it to the array */
 		if (!pqAddTuple(res, tup))
 			return FALSE;
-=======
-		res->tuples[tup_num] = tup;
-		res->ntups++;
->>>>>>> 38e9348282e
 	}
 
 	attval = &res->tuples[tup_num][field_num];
@@ -3548,20 +3499,12 @@ PQescapeByteaInternal(PGconn *conn,
 		}
 		else if (c < 0x20 || c > 0x7e)
 		{
-			int		val = *vp;
-
 			if (!std_strings)
 				*rp++ = '\\';
 			*rp++ = '\\';
-<<<<<<< HEAD
 			*rp++ = (c >> 6) + '0';
 			*rp++ = ((c >> 3) & 07) + '0';
 			*rp++ = (c & 07) + '0';
-=======
-			*rp++ = (val >> 6) + '0';
-			*rp++ = ((val >> 3) & 07) + '0';
-			*rp++ = (val & 07) + '0';
->>>>>>> 38e9348282e
 		}
 		else if (c == '\'')
 		{
