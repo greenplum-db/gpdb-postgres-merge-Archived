@@ -84,11 +84,7 @@ installdirs: installdirs-lib
 uninstall: uninstall-lib
 
 installcheck: submake
-<<<<<<< HEAD
 	$(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir="$(PSQLDIR)" $(REGRESS_OPTS) $(REGRESS)
-=======
-	$(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS)
->>>>>>> 38e9348282e
 
 .PHONY: submake
 submake:
