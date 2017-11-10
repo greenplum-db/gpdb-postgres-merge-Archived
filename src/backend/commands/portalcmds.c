@@ -444,16 +444,11 @@ PersistHoldablePortal(Portal portal)
 		 * Change the destination to output to the tuplestore.  Note we
 		 * tell the tuplestore receiver to detoast all data passed through it.
 		 */
-<<<<<<< HEAD
-		queryDesc->dest = CreateDestReceiver(DestTuplestore, portal);
-		SetTuplestoreDestReceiverDeToast(queryDesc->dest, true);
-=======
 		queryDesc->dest = CreateDestReceiver(DestTuplestore);
 		SetTuplestoreDestReceiverParams(queryDesc->dest,
 										portal->holdStore,
 										portal->holdContext,
 										true);
->>>>>>> 38e9348282e
 
 		/* Fetch the result set into the tuplestore */
 		ExecutorRun(queryDesc, ForwardScanDirection, 0L);

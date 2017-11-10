@@ -20,10 +20,7 @@
 
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "access/heapam.h"
-=======
->>>>>>> 38e9348282e
 #include "access/tuptoaster.h"
 #include "executor/tstoreReceiver.h"
 
@@ -258,23 +255,13 @@ CreateTuplestoreDestReceiver(void)
 {
 	TStoreState *self = (TStoreState *) palloc0(sizeof(TStoreState));
 
-<<<<<<< HEAD
-	self->pub.receiveSlot = tstoreReceiveSlot_notoast;
-=======
 	self->pub.receiveSlot = tstoreReceiveSlot_notoast;	/* might change */
->>>>>>> 38e9348282e
 	self->pub.rStartup = tstoreStartupReceiver;
 	self->pub.rShutdown = tstoreShutdownReceiver;
 	self->pub.rDestroy = tstoreDestroyReceiver;
 	self->pub.mydest = DestTuplestore;
 
-<<<<<<< HEAD
-	self->tstore = tStore;
-	self->cxt = tContext;
-	self->detoast = false;
-=======
 	/* private fields will be set by SetTuplestoreDestReceiverParams */
->>>>>>> 38e9348282e
 
 	return (DestReceiver *) self;
 }
@@ -283,23 +270,15 @@ CreateTuplestoreDestReceiver(void)
  * Set parameters for a TuplestoreDestReceiver
  */
 void
-<<<<<<< HEAD
-SetTuplestoreDestReceiverDeToast(DestReceiver *self,
-								 bool detoast)
-=======
 SetTuplestoreDestReceiverParams(DestReceiver *self,
 								Tuplestorestate *tStore,
 								MemoryContext tContext,
 								bool detoast)
->>>>>>> 38e9348282e
 {
 	TStoreState *myState = (TStoreState *) self;
 
 	Assert(myState->pub.mydest == DestTuplestore);
-<<<<<<< HEAD
-=======
 	myState->tstore = tStore;
 	myState->cxt = tContext;
->>>>>>> 38e9348282e
 	myState->detoast = detoast;
 }
