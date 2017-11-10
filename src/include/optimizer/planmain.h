@@ -136,12 +136,8 @@ extern SubqueryScan *make_subqueryscan(PlannerInfo *root, List *qptlist, List *q
 				  Index scanrelid, Plan *subplan, List *subrtable);
 extern Append *make_append(List *appendplans, bool isTarget, List *tlist);
 extern RecursiveUnion *make_recursive_union(List *tlist,
-<<<<<<< HEAD
-			   Plan *lefttree, Plan *righttree, int wtParam);
-=======
 			   Plan *lefttree, Plan *righttree, int wtParam,
 			   List *distinctList, long numGroups);
->>>>>>> 38e9348282e
 extern Sort *make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree,
 						List *pathkeys, double limit_tuples, bool add_keys_to_targetlist);
 extern Sort *make_sort_from_sortclauses(PlannerInfo *root, List *sortcls,

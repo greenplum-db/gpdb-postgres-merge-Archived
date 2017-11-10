@@ -2305,11 +2305,7 @@ RelationReloadIndexInfo(Relation relation)
 	heap_freetuple(pg_class_tuple);
 	/* We must recalculate physical address in case it changed */
 	RelationInitPhysicalAddr(relation);
-<<<<<<< HEAD
 
-	/* Forget gp_relation_node information -- it may have changed. */
-	MemSet(&relation->rd_segfile0_relationnodeinfo, 0, sizeof(RelationNodeInfo));
-=======
 	/*
 	 * Must reset targblock, fsm_nblocks and vm_nblocks in case rel was
 	 * truncated
@@ -2321,7 +2317,9 @@ RelationReloadIndexInfo(Relation relation)
 	if (relation->rd_amcache)
 		pfree(relation->rd_amcache);
 	relation->rd_amcache = NULL;
->>>>>>> 38e9348282e
+
+	/* Forget gp_relation_node information -- it may have changed. */
+	MemSet(&relation->rd_segfile0_relationnodeinfo, 0, sizeof(RelationNodeInfo));
 
 	/*
 	 * For a non-system index, there are fields of the pg_index row that are
@@ -3591,19 +3589,15 @@ RelationCacheInitializePhase3(void)
 		if (relation->rd_rel->relhasrules && relation->rd_rules == NULL)
 		{
 			RelationBuildRuleLock(relation);
-<<<<<<< HEAD
 			if (relation->rd_rules == NULL)
 				relation->rd_rel->relhasrules = false;
 			restart = true;
 		}
-		if (relation->rd_rel->reltriggers > 0 && relation->trigdesc == NULL)
-		{
-=======
 		if (relation->rd_rel->relhastriggers && relation->trigdesc == NULL)
->>>>>>> 38e9348282e
+		{
 			RelationBuildTriggers(relation);
 			if (relation->trigdesc == NULL)
-				relation->rd_rel->reltriggers = 0;
+				relation->rd_rel->relhastriggers = false;
 			restart = true;
 		}
 

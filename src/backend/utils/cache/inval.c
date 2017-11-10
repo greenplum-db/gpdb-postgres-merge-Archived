@@ -170,25 +170,6 @@ static TransInvalidationInfo *transInvalInfo = NULL;
 #define MAX_SYSCACHE_CALLBACKS 40
 #define MAX_RELCACHE_CALLBACKS 5
 
-<<<<<<< HEAD
-static struct SYSCACHECALLBACK
-{
-	int16		id;				/* cache number */
-	SyscacheCallbackFunction function;
-	Datum		arg;
-}	syscache_callback_list[MAX_SYSCACHE_CALLBACKS];
-
-static int	syscache_callback_count = 0;
-
-static struct RELCACHECALLBACK
-{
-	RelcacheCallbackFunction function;
-	Datum		arg;
-}	relcache_callback_list[MAX_RELCACHE_CALLBACKS];
-
-=======
-#define MAX_SYSCACHE_CALLBACKS 20
-#define MAX_RELCACHE_CALLBACKS 5
 
 static struct SYSCACHECALLBACK
 {
@@ -205,7 +186,6 @@ static struct RELCACHECALLBACK
 	Datum		arg;
 }	relcache_callback_list[MAX_RELCACHE_CALLBACKS];
 
->>>>>>> 38e9348282e
 static int	relcache_callback_count = 0;
 
 /* info values for 2PC callback */

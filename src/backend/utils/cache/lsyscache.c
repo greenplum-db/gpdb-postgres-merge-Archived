@@ -4198,16 +4198,16 @@ child_triggers(Oid relationId, int32 triggerType)
 		Relation relChild = RelationIdGetRelation(oidChild);
 		Assert(NULL != relChild);
 
-		if (0 < relChild->rd_rel->reltriggers && NULL == relChild->trigdesc)
+		if (relChild->rd_rel->relhastriggers && NULL == relChild->trigdesc)
 		{
 			RelationBuildTriggers(relChild);
 			if (NULL == relChild->trigdesc)
 			{
-				relChild->rd_rel->reltriggers = 0;
+				relChild->rd_rel->relhastriggers = false;
 			}
 		}
 
-		for (int i = 0; i < relChild->rd_rel->reltriggers && !found; i++)
+		for (int i = 0; i < relChild->trigdesc->numtriggers && !found; i++)
 		{
 			Trigger trigger = relChild->trigdesc->triggers[i];
 			found = trigger_enabled(trigger.tgoid) &&

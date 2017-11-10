@@ -55,11 +55,8 @@
 #include "catalog/pg_ts_parser.h"
 #include "catalog/pg_ts_template.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
-#include "catalog/pg_window.h"
-=======
 #include "catalog/pg_user_mapping.h"
->>>>>>> 38e9348282e
+#include "catalog/pg_window.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
@@ -707,27 +704,27 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		1024
 	},
-<<<<<<< HEAD
 	{WindowRelationId,			/* WINFNOID */
 		WindowWinfnoidIndexId,
 		1,
 		{
 			Anum_pg_window_winfnoid,
-=======
-	{UserMappingRelationId,                  /* USERMAPPINGOID */
+			0,
+			0,
+			0
+		},
+		32
+	},
+	{UserMappingRelationId,		/* USERMAPPINGOID */
 		UserMappingOidIndexId,
 		0,
 		1,
 		{
 			ObjectIdAttributeNumber,
->>>>>>> 38e9348282e
 			0,
 			0,
 			0
 		},
-<<<<<<< HEAD
-		32
-=======
 		128
 	},
 	{UserMappingRelationId,                  /* USERMAPPINGUSERSERVER */
@@ -741,7 +738,6 @@ static const struct cachedesc cacheinfo[] = {
 			0
 		},
 		128
->>>>>>> 38e9348282e
 	}
 };
 

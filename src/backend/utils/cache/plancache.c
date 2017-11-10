@@ -45,10 +45,7 @@
 #include "access/transam.h"
 #include "catalog/namespace.h"
 #include "executor/executor.h"
-<<<<<<< HEAD
 #include "executor/spi.h"
-=======
->>>>>>> 38e9348282e
 #include "nodes/nodeFuncs.h"
 #include "optimizer/planmain.h"
 #include "storage/lmgr.h"
@@ -72,10 +69,7 @@ static void ScanQueryForLocks(Query *parsetree, bool acquire);
 static bool ScanQueryWalker(Node *node, bool *acquire);
 static bool rowmark_member(List *rowMarks, int rt_index);
 static bool plan_list_is_transient(List *stmt_list);
-<<<<<<< HEAD
 static bool plan_list_is_oneoff(List *stmt_list);
-=======
->>>>>>> 38e9348282e
 static void PlanCacheRelCallback(Datum arg, Oid relid);
 static void PlanCacheFuncCallback(Datum arg, int cacheid, ItemPointer tuplePtr);
 static void PlanCacheSysCallback(Datum arg, int cacheid, ItemPointer tuplePtr);
@@ -502,6 +496,8 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 	{
 		bool		snapshot_set = false;
 		List	   *slist;
+		TupleDesc	resultDesc;
+		Node	   *raw_parse_tree;
 
 		/*
 		 * Restore the search_path that was in use when the plan was made.
@@ -513,26 +509,11 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 
 		/*
 		 * If a snapshot is already set (the normal case), we can just use
-<<<<<<< HEAD
-		 * that for parsing/planning.  But if it isn't, install one.  We must
-		 * arrange to restore ActiveSnapshot afterward, to ensure that
-		 * RevalidateCachedPlan has no caller-visible effects on the
-		 * snapshot.  Having to replan is an unusual case, and it seems a
-		 * really bad idea for RevalidateCachedPlan to affect the snapshot
-		 * only in unusual cases.  (Besides, the snap might have been created
-		 * in a short-lived context.)
-		 */
-		TupleDesc	resultDesc;
-		Node	   *raw_parse_tree;
-		bool        snapshot_set = false;
-
-=======
 		 * that for parsing/planning.  But if it isn't, install one.  Note:
 		 * no point in checking whether parse analysis requires a snapshot;
 		 * utility commands don't have invalidatable plans, so we'd not get
 		 * here for such a command.
 		 */
->>>>>>> 38e9348282e
 		if (!ActiveSnapshotSet())
 		{
 			PushActiveSnapshot(GetTransactionSnapshot());
@@ -540,7 +521,6 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 		}
 
 		/*
-<<<<<<< HEAD
 		 * If this is a CREATE TABLE AS, pass information about the
 		 * target table's distribution key to the planner.
 		 */
@@ -563,8 +543,6 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 			raw_parse_tree = copyObject(plansource->raw_parse_tree);
 
 		/*
-=======
->>>>>>> 38e9348282e
 		 * Run parse analysis and rule rewriting.  The parser tends to
 		 * scribble on its input, so we must copy the raw parse tree to
 		 * prevent corruption of the cache.  Note that we do not use

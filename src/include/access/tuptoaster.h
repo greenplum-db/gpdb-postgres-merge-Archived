@@ -104,19 +104,14 @@
  * ----------
  */
 extern HeapTuple toast_insert_or_update(Relation rel,
-<<<<<<< HEAD
 					   HeapTuple newtup, HeapTuple oldtup, 
 					   int toast_tuple_target,
-					   bool isFrozen, bool use_wal, bool use_fsm);
+					   bool isFrozen, int options);
 
 extern MemTuple toast_insert_or_update_memtup(Relation rel,
 							  MemTuple newtup, MemTuple oldtup, 
 							  MemTupleBinding *pbind, int toast_tuple_target,
-							  bool isFrozen, bool use_wal, bool use_fsm);
-=======
-					   HeapTuple newtup, HeapTuple oldtup,
-					   int options);
->>>>>>> 38e9348282e
+							  bool isFrozen, int options);
 
 /* ----------
  * toast_delete -
