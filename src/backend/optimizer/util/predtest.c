@@ -34,14 +34,6 @@
 
 #include "catalog/pg_operator.h"
 #include "optimizer/paths.h"
-/*
- * Proof attempts involving many AND or OR branches are likely to require
- * O(N^2) time, and more often than not fail anyway.  So we set an arbitrary
- * limit on the number of branches that we will allow at any one level of
- * clause.  (Note that this is only effective because the trees have been
- * AND/OR flattened!)  XXX is it worth exposing this as a GUC knob?
- */
-#define MAX_BRANCHES_TO_TEST    100
 
 #define INT16MAX (32767)
 #define INT16MIN (-32768)
@@ -58,15 +50,6 @@ static const bool kUseFnEvaluationForPredicates = true;
  * XXX is it worth exposing this as a GUC knob?
  */
 #define MAX_SAOP_ARRAY_SIZE		100
-
-/*
- * Proof attempts involving many AND or OR branches are likely to require
- * O(N^2) time, and more often than not fail anyway.  So we set an arbitrary
- * limit on the number of branches that we will allow at any one level of
- * clause.  (Note that this is only effective because the trees have been
- * AND/OR flattened!)  XXX is it worth exposing this as a GUC knob?
- */
-#define MAX_BRANCHES_TO_TEST	100
 
 /*
  * To avoid redundant coding in predicate_implied_by_recurse and
@@ -752,21 +735,12 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
  * If the expression is classified as AND- or OR-type, then *info is filled
  * in with the functions needed to iterate over its components.
  *
-<<<<<<< HEAD
  * This function also implements enforcement of MAX_SAOP_ARRAY_SIZE: if a
  * ScalarArrayOpExpr's array has too many elements, we just classify it as an
  * atom.  (This will result in its being passed as-is to the simple_clause
  * functions, which will fail to prove anything about it.)  Note that we
  * cannot just stop after considering MAX_SAOP_ARRAY_SIZE elements; in general
  * that would result in wrong proofs, rather than failing to prove anything.
-=======
- * This function also implements enforcement of MAX_BRANCHES_TO_TEST: if an
- * AND/OR expression has too many branches, we just classify it as an atom.
- * (This will result in its being passed as-is to the simple_clause functions,
- * which will fail to prove anything about it.)  Note that we cannot just stop
- * after considering MAX_BRANCHES_TO_TEST branches; in general that would
- * result in wrong proofs rather than failing to prove anything.
->>>>>>> 38e9348282e
  */
 static PredClass
 predicate_classify(Node *clause, PredIterInfo info)
@@ -779,8 +753,7 @@ predicate_classify(Node *clause, PredIterInfo info)
 	 * If we see a List, assume it's an implicit-AND list; this is the correct
 	 * semantics for lists of RestrictInfo nodes.
 	 */
-	if (IsA(clause, List) &&
-		list_length((List *) clause) <= MAX_BRANCHES_TO_TEST)
+	if (IsA(clause, List))
 	{
 		info->startup_fn = list_startup_fn;
 		info->next_fn = list_next_fn;
@@ -789,16 +762,14 @@ predicate_classify(Node *clause, PredIterInfo info)
 	}
 
 	/* Handle normal AND and OR boolean clauses */
-	if (and_clause(clause) &&
-		list_length(((BoolExpr *) clause)->args) <= MAX_BRANCHES_TO_TEST)
+	if (and_clause(clause))
 	{
 		info->startup_fn = boolexpr_startup_fn;
 		info->next_fn = list_next_fn;
 		info->cleanup_fn = list_cleanup_fn;
 		return CLASS_AND;
 	}
-	if (or_clause(clause) &&
-		list_length(((BoolExpr *) clause)->args) <= MAX_BRANCHES_TO_TEST)
+	if (or_clause(clause))
 	{
 		info->startup_fn = boolexpr_startup_fn;
 		info->next_fn = list_next_fn;
@@ -826,11 +797,7 @@ predicate_classify(Node *clause, PredIterInfo info)
 
 			arrayval = DatumGetArrayTypeP(((Const *) arraynode)->constvalue);
 			nelems = ArrayGetNItems(ARR_NDIM(arrayval), ARR_DIMS(arrayval));
-<<<<<<< HEAD
 			if (nelems <= MAX_SAOP_ARRAY_SIZE)
-=======
-			if (nelems <= MAX_BRANCHES_TO_TEST)
->>>>>>> 38e9348282e
 			{
 				info->startup_fn = arrayconst_startup_fn;
 				info->next_fn = arrayconst_next_fn;
@@ -840,11 +807,7 @@ predicate_classify(Node *clause, PredIterInfo info)
 		}
 		else if (arraynode && IsA(arraynode, ArrayExpr) &&
 				 !((ArrayExpr *) arraynode)->multidims &&
-<<<<<<< HEAD
 				 list_length(((ArrayExpr *) arraynode)->elements) <= MAX_SAOP_ARRAY_SIZE)
-=======
-				 list_length(((ArrayExpr *) arraynode)->elements) <= MAX_BRANCHES_TO_TEST)
->>>>>>> 38e9348282e
 		{
 			info->startup_fn = arrayexpr_startup_fn;
 			info->next_fn = arrayexpr_next_fn;
