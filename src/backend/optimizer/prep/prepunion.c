@@ -98,20 +98,10 @@ static List *generate_append_tlist(List *colTypes, bool flag,
 static List *generate_setop_grouplist(SetOperationStmt *op, List *targetlist);
 static void expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte,
 						 Index rti);
-<<<<<<< HEAD
-static void make_inh_translation_lists(Relation oldrelation,
-						   Relation newrelation,
-						   Index newvarno,
-						   List **col_mappings,
-						   List **translated_vars);
-=======
 static void make_inh_translation_list(Relation oldrelation,
 						  Relation newrelation,
 						  Index newvarno,
 						  List **translated_vars);
-static Node *adjust_appendrel_attrs_mutator(Node *node,
-							   AppendRelInfo *context);
->>>>>>> 38e9348282e
 static Relids adjust_relid_set(Relids relids, Index oldrelid, Index newrelid);
 static List *adjust_inherited_tlist(List *tlist,
 					   AppendRelInfo *apprelinfo);
@@ -229,15 +219,10 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		config->honor_order_by = false;
 		subplan = subquery_planner(root->glob, subquery,
 								   root,
-<<<<<<< HEAD
 								   false,
 								   tuple_fraction,
 								   &subroot,
 								   config);
-=======
-								   false, tuple_fraction,
-								   &subroot);
->>>>>>> 38e9348282e
 
 		/*
 		 * Estimate number of groups if caller wants it.  If the subquery
@@ -344,19 +329,12 @@ generate_recursion_plan(SetOperationStmt *setOp, PlannerInfo *root,
 	Plan	   *lplan;
 	Plan	   *rplan;
 	List	   *tlist;
-<<<<<<< HEAD
-
-	/* Parser should have rejected other cases */
-	if (setOp->op != SETOP_UNION || !setOp->all)
-		elog(ERROR, "only UNION ALL queries can be recursive");
-=======
 	List	   *groupList;
 	long		numGroups;
 
 	/* Parser should have rejected other cases */
 	if (setOp->op != SETOP_UNION)
 		elog(ERROR, "only UNION queries can be recursive");
->>>>>>> 38e9348282e
 	/* Worktable ID should be assigned */
 	Assert(root->wt_param_id >= 0);
 
@@ -367,10 +345,6 @@ generate_recursion_plan(SetOperationStmt *setOp, PlannerInfo *root,
 	lplan = recurse_set_operations(setOp->larg, root, tuple_fraction,
 								   setOp->colTypes, false, -1,
 								   refnames_tlist, sortClauses, NULL);
-<<<<<<< HEAD
-
-=======
->>>>>>> 38e9348282e
 	/* The right plan will want to look at the left one ... */
 	root->non_recursive_plan = lplan;
 	rplan = recurse_set_operations(setOp->rarg, root, tuple_fraction,
@@ -386,14 +360,6 @@ generate_recursion_plan(SetOperationStmt *setOp, PlannerInfo *root,
 								  refnames_tlist);
 
 	/*
-<<<<<<< HEAD
-	 * And make the plan node.
-	 */
-	plan = (Plan *) make_recursive_union(tlist, lplan, rplan,
-										 root->wt_param_id);
-
-	*sortClauses = NIL;			/* result of UNION ALL is always unsorted */
-=======
 	 * If UNION, identify the grouping operators
 	 */
 	if (setOp->all)
@@ -433,7 +399,6 @@ generate_recursion_plan(SetOperationStmt *setOp, PlannerInfo *root,
 										 groupList, numGroups);
 
 	*sortClauses = NIL;			/* RecursiveUnion result is always unsorted */
->>>>>>> 38e9348282e
 
 	return plan;
 }
@@ -1641,13 +1606,8 @@ adjust_appendrel_attrs(PlannerInfo *root, Node *node, AppendRelInfo *appinfo)
 
 		newnode = query_tree_mutator((Query *) node,
 									 adjust_appendrel_attrs_mutator,
-<<<<<<< HEAD
-									 (void *) &ctx,
-									 QTW_IGNORE_RT_SUBQUERIES);
-=======
 									 (void *) appinfo,
 									 QTW_IGNORE_RC_SUBQUERIES);
->>>>>>> 38e9348282e
 		if (newnode->resultRelation == appinfo->parent_relid)
 		{
 			newnode->resultRelation = appinfo->child_relid;
@@ -1777,49 +1737,14 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfoContext *ctx)
 			j->rtindex = appinfo->child_relid;
 		return (Node *) j;
 	}
-<<<<<<< HEAD
 	if (IsA(node, PlaceHolderVar))
 	{
 		/* Copy the PlaceHolderVar node with correct mutation of subnodes */
 		PlaceHolderVar *phv;
-		
+
 		phv = (PlaceHolderVar *) expression_tree_mutator(node,
-														 adjust_appendrel_attrs_mutator,
+											  adjust_appendrel_attrs_mutator,
 														 (void *) ctx);
-		/* now fix PlaceHolderVar's relid sets */
-		if (phv->phlevelsup == 0)
-			phv->phrels = adjust_relid_set(phv->phrels,
-										   appinfo->parent_relid,
-										   appinfo->child_relid);
-		return (Node *) phv;
-	}
-
-=======
-	if (IsA(node, FlattenedSubLink))
-	{
-		/* Copy the FlattenedSubLink node with correct mutation of subnodes */
-		FlattenedSubLink *fslink;
-
-		fslink = (FlattenedSubLink *) expression_tree_mutator(node,
-											  adjust_appendrel_attrs_mutator,
-															 (void *) context);
-		/* now fix FlattenedSubLink's relid sets */
-		fslink->lefthand = adjust_relid_set(fslink->lefthand,
-											context->parent_relid,
-											context->child_relid);
-		fslink->righthand = adjust_relid_set(fslink->righthand,
-											 context->parent_relid,
-											 context->child_relid);
-		return (Node *) fslink;
-	}
-	if (IsA(node, PlaceHolderVar))
-	{
-		/* Copy the PlaceHolderVar node with correct mutation of subnodes */
-		PlaceHolderVar *phv;
-
-		phv = (PlaceHolderVar *) expression_tree_mutator(node,
-											  adjust_appendrel_attrs_mutator,
-														 (void *) context);
 		/* now fix PlaceHolderVar's relid sets */
 		if (phv->phlevelsup == 0)
 			phv->phrels = adjust_relid_set(phv->phrels,
@@ -1827,7 +1752,6 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfoContext *ctx)
 										   context->child_relid);
 		return (Node *) phv;
 	}
->>>>>>> 38e9348282e
 	/* Shouldn't need to handle planner auxiliary nodes here */
 	Assert(!IsA(node, SpecialJoinInfo));
 	Assert(!IsA(node, AppendRelInfo));
