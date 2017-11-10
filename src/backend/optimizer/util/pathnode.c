@@ -2701,17 +2701,12 @@ create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
  *	  returning the pathnode.
  */
 Path *
-<<<<<<< HEAD
 create_ctescan_path(PlannerInfo *root, RelOptInfo *rel, List *pathkeys)
-=======
-create_ctescan_path(PlannerInfo *root, RelOptInfo *rel)
->>>>>>> 38e9348282e
 {
 	Path	   *pathnode = makeNode(Path);
 
 	pathnode->pathtype = T_CteScan;
 	pathnode->parent = rel;
-<<<<<<< HEAD
 	pathnode->pathkeys = pathkeys;
 
 	pathnode->locus = cdbpathlocus_from_subquery(root, rel->subplan, rel->relid);
@@ -2724,10 +2719,6 @@ create_ctescan_path(PlannerInfo *root, RelOptInfo *rel)
 	pathnode->rescannable = false;
 	pathnode->sameslice_relids = NULL;
 
-=======
-	pathnode->pathkeys = NIL;	/* XXX for now, result is always unordered */
->>>>>>> 38e9348282e
-
 	cost_ctescan(pathnode, root, rel);
 
 	return pathnode;
@@ -2739,7 +2730,6 @@ create_ctescan_path(PlannerInfo *root, RelOptInfo *rel)
  *	  returning the pathnode.
  */
 Path *
-<<<<<<< HEAD
 create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel, CdbLocusType ctelocus)
 {
 	Path	   *pathnode = makeNode(Path);
@@ -2753,24 +2743,16 @@ create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel, CdbLocusType ctelo
 		CdbPathLocus_MakeGeneral(&result);
 	else
 		CdbPathLocus_MakeStrewn(&result);
-=======
-create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel)
-{
-	Path	   *pathnode = makeNode(Path);
->>>>>>> 38e9348282e
 
 	pathnode->pathtype = T_WorkTableScan;
 	pathnode->parent = rel;
 	pathnode->pathkeys = NIL;	/* result is always unordered */
 
-<<<<<<< HEAD
 	pathnode->locus = result;
 	pathnode->motionHazard = false;
 	pathnode->rescannable = true;
 	pathnode->sameslice_relids = rel->relids;
 
-=======
->>>>>>> 38e9348282e
 	/* Cost is the same as for a regular CTE scan */
 	cost_ctescan(pathnode, root, rel);
 
@@ -2778,7 +2760,6 @@ create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel)
 }
 
 /*
-<<<<<<< HEAD
  * cdb_jointype_to_join_in
  *    Returns JOIN_SEMI if the jointype should be changed from JOIN_INNER to
  *    JOIN_SEMI so as to produce at most one matching inner row per outer row.
@@ -2836,8 +2817,6 @@ path_contains_inner_index(Path *path)
 }
 
 /*
-=======
->>>>>>> 38e9348282e
  * create_nestloop_path
  *	  Creates a pathnode corresponding to a nestloop join between two
  *	  relations.
@@ -2930,7 +2909,6 @@ create_nestloop_path(PlannerInfo *root,
 	pathnode->joinrestrictinfo = restrict_clauses;
 	pathnode->path.pathkeys = pathkeys;
 
-<<<<<<< HEAD
     pathnode->path.locus = join_locus;
     pathnode->path.motionHazard = outer_path->motionHazard || inner_path->motionHazard;
 
@@ -2939,8 +2917,6 @@ create_nestloop_path(PlannerInfo *root,
 
 	pathnode->path.sameslice_relids = bms_union(inner_path->sameslice_relids, outer_path->sameslice_relids);
 
-=======
->>>>>>> 38e9348282e
 	cost_nestloop(pathnode, root, sjinfo);
 
 	return pathnode;
@@ -3068,7 +3044,6 @@ create_mergejoin_path(PlannerInfo *root,
 	 * So that case is not handled here.  Instead, cost_mergejoin has to
 	 * factor in the cost and create_mergejoin_plan has to add the plan node.
 	 */
-<<<<<<< HEAD
 	if (!ExecSupportsMarkRestore(inner_path->pathtype))
 	{
 		/*
@@ -3100,35 +3075,13 @@ create_mergejoin_path(PlannerInfo *root,
 			}
 		}
 		// else: innersortkeys == NIL -> no sort node will be added
-		
+
 		if (!need_sort)
 		{
 			/* no sort node will be added - add a materialize node */
 			inner_path = (Path *)
 							create_material_path(root, inner_path->parent, inner_path);
 		}
-=======
-	if (innersortkeys == NIL &&
-		!ExecSupportsMarkRestore(inner_path->pathtype))
-	{
-		Path   *mpath;
-
-		mpath = (Path *) create_material_path(inner_path->parent, inner_path);
-
-		/*
-		 * We expect the materialize won't spill to disk (it could only do
-		 * so if there were a whole lot of duplicate tuples, which is a case
-		 * cost_mergejoin will avoid choosing anyway).  Therefore
-		 * cost_material's cost estimate is bogus and we should charge
-		 * just cpu_tuple_cost per tuple.  (Keep this estimate in sync with
-		 * similar ones in cost_mergejoin and create_mergejoin_plan.)
-		 */
-		mpath->startup_cost = inner_path->startup_cost;
-		mpath->total_cost = inner_path->total_cost;
-		mpath->total_cost += cpu_tuple_cost * inner_path->parent->rows;
-
-		inner_path = mpath;
->>>>>>> 38e9348282e
 	}
 
 	pathnode->jpath.path.pathtype = T_MergeJoin;
@@ -3214,7 +3167,6 @@ create_hashjoin_path(PlannerInfo *root,
 
 	pathnode->path_hashclauses = hashclauses;
 
-<<<<<<< HEAD
     /*
      * If hash table overflows to disk, and an ancestor node requests rescan
      * (e.g. because the HJ is in the inner subtree of a NJ), then the HJ has
@@ -3230,8 +3182,6 @@ create_hashjoin_path(PlannerInfo *root,
 		pathnode->jpath.path.motionHazard = outer_path->motionHazard || inner_path->motionHazard;
 	pathnode->jpath.path.sameslice_relids = bms_union(inner_path->sameslice_relids, outer_path->sameslice_relids);
 
-=======
->>>>>>> 38e9348282e
 	cost_hashjoin(pathnode, root, sjinfo);
 
 	return pathnode;
