@@ -1748,8 +1748,8 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfoContext *ctx)
 		/* now fix PlaceHolderVar's relid sets */
 		if (phv->phlevelsup == 0)
 			phv->phrels = adjust_relid_set(phv->phrels,
-										   context->parent_relid,
-										   context->child_relid);
+										   appinfo->parent_relid,
+										   appinfo->child_relid);
 		return (Node *) phv;
 	}
 	/* Shouldn't need to handle planner auxiliary nodes here */

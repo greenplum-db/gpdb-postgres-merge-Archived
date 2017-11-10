@@ -219,7 +219,6 @@ query_planner(PlannerInfo *root, List *tlist,
 	root->total_table_pages = total_pages;
 
 	/*
-<<<<<<< HEAD
 	 * Examine the targetlist and join tree, adding entries to baserel
 	 * targetlists for all referenced Vars, and generating PlaceHolderInfo
 	 * entries for all referenced PlaceHolderVars.  Restrict and join clauses
@@ -228,13 +227,6 @@ query_planner(PlannerInfo *root, List *tlist,
 	 * The SpecialJoinInfo list is also built to hold information about join
 	 * order restrictions.  Finally, we form a target joinlist for
 	 * make_one_rel() to work from.
-=======
-	 * Examine the targetlist and qualifications, adding entries to baserel
-	 * targetlists for all referenced Vars.  Restrict and join clauses are
-	 * added to appropriate lists belonging to the mentioned relations.  We
-	 * also build EquivalenceClasses for provably equivalent expressions, and
-	 * form a target joinlist for make_one_rel() to work from.
->>>>>>> 38e9348282e
 	 */
 	build_base_rel_tlists(root, tlist);
 

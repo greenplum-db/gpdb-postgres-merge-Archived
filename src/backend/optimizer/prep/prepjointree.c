@@ -39,6 +39,7 @@
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
+#include "parser/parse_relation.h"
 #include "rewrite/rewriteManip.h"
 #include "cdb/cdbsubselect.h"
 
