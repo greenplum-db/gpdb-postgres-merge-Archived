@@ -14,10 +14,6 @@
  */
 
 #include "plpgsql.h"
-<<<<<<< HEAD
-#include "pl_gram.h"
-=======
->>>>>>> 38e9348282e
 
 #include <ctype.h>
 
@@ -2369,18 +2365,14 @@ exec_init_tuple_store(PLpgSQL_execstate *estate)
 	 * entered, and not in the subtransaction resource owner.
 	 */
 	oldcxt = MemoryContextSwitchTo(estate->tuple_store_cxt);
-<<<<<<< HEAD
 	oldowner = CurrentResourceOwner;
 	CurrentResourceOwner = estate->tuple_store_owner;
 
-	estate->tuple_store = tuplestore_begin_heap(true, false, work_mem);
-
-	CurrentResourceOwner = oldowner;
-=======
 	estate->tuple_store =
 		tuplestore_begin_heap(rsi->allowedModes & SFRM_Materialize_Random,
 							  false, work_mem);
->>>>>>> 38e9348282e
+
+	CurrentResourceOwner = oldowner;
 	MemoryContextSwitchTo(oldcxt);
 
 	estate->rettupdesc = rsi->expectedDesc;
@@ -3655,10 +3647,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				int			natts;
 				Datum	   *values;
 				bool	   *nulls;
-<<<<<<< HEAD
-=======
 				bool	   *replaces;
->>>>>>> 38e9348282e
 				void	   *mustfree;
 				bool		attisnull;
 				Oid			atttype;
@@ -3693,32 +3682,16 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				natts = rec->tupdesc->natts;
 
 				/*
-<<<<<<< HEAD
-				 * Set up values/datums arrays for heap_form_tuple.	For all
-=======
 				 * Set up values/control arrays for heap_modify_tuple. For all
->>>>>>> 38e9348282e
 				 * the attributes except the one we want to replace, use the
 				 * value that's in the old tuple.
 				 */
 				values = palloc(sizeof(Datum) * natts);
 				nulls = palloc(sizeof(bool) * natts);
-<<<<<<< HEAD
-
-				for (i = 0; i < natts; i++)
-				{
-					if (i == fno)
-						continue;
-					values[i] = SPI_getbinval(rec->tup, rec->tupdesc,
-											  i + 1, &attisnull);
-					nulls[i] = attisnull;
-				}
-=======
 				replaces = palloc(sizeof(bool) * natts);
 
 				memset(replaces, false, sizeof(bool) * natts);
 				replaces[fno] = true;
->>>>>>> 38e9348282e
 
 				/*
 				 * Now insert the new value, being careful to cast it to the
@@ -3745,18 +3718,11 @@ exec_assign_value(PLpgSQL_execstate *estate,
 					mustfree = NULL;
 
 				/*
-<<<<<<< HEAD
-				 * Now call heap_form_tuple() to create a new tuple that
-				 * replaces the old one in the record.
-				 */
-				newtup = heap_form_tuple(rec->tupdesc, values, nulls);
-=======
 				 * Now call heap_modify_tuple() to create a new tuple that
 				 * replaces the old one in the record.
 				 */
 				newtup = heap_modify_tuple(rec->tup, rec->tupdesc,
 										   values, nulls, replaces);
->>>>>>> 38e9348282e
 
 				if (rec->freetup)
 					heap_freetuple(rec->tup);
@@ -3766,12 +3732,9 @@ exec_assign_value(PLpgSQL_execstate *estate,
 
 				pfree(values);
 				pfree(nulls);
-<<<<<<< HEAD
-=======
 				pfree(replaces);
 				if (mustfree)
 					pfree(mustfree);
->>>>>>> 38e9348282e
 
 				break;
 			}

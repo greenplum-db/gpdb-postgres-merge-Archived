@@ -14,10 +14,6 @@
  */
 
 #include "plpgsql.h"
-<<<<<<< HEAD
-#include "pl_gram.h"
-=======
->>>>>>> 38e9348282e
 
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"

@@ -14,15 +14,11 @@
  */
 
 #include "plpgsql.h"
-<<<<<<< HEAD
-
-#include "utils/memutils.h"
-=======
->>>>>>> 38e9348282e
 
 #include <ctype.h>
 
 #include "parser/scansup.h"
+#include "utils/memutils.h"
 
 
 /* ----------
