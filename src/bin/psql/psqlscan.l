@@ -33,11 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/bin/psql/psqlscan.l
-=======
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.27 2008/11/26 00:26:23 tgl Exp $
->>>>>>> 38e9348282e
  *
  *-------------------------------------------------------------------------
  */
@@ -185,14 +181,11 @@ static void escape_variable(bool as_ident);
  *  <xdolq> $foo$ quoted strings
  *  <xui> quoted identifier with Unicode escapes
  *  <xus> quoted string with Unicode escapes
-<<<<<<< HEAD
  *
  * Note: we intentionally don't mimic the backend's <xeu> state; we have
  * no need to distinguish it from <xe> state, and no good way to get out
  * of it in error cases.  The backend just throws yyerror() in those
  * cases, but that's not an option here.
-=======
->>>>>>> 38e9348282e
  */
 
 %x xb

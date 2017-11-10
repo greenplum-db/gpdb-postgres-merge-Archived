@@ -3,11 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
  * src/bin/psql/input.c
-=======
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.65 2008/11/26 00:26:23 tgl Exp $
->>>>>>> 38e9348282e
  */
 #include "postgres_fe.h"
 
