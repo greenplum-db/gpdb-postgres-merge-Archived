@@ -194,11 +194,7 @@ F131	Grouped operations	04	Subqueries with GROUP BY and HAVING clauses and group
 F131	Grouped operations	05	Single row SELECT with GROUP BY and HAVING clauses and grouped views	YES	
 F171	Multiple schemas per user			YES	
 F181	Multiple module support			NO	
-<<<<<<< HEAD
 F191	Referential delete actions			NO	
-=======
-F191	Referential delete actions			YES	
->>>>>>> 38e9348282e
 F200	TRUNCATE TABLE statement			YES	
 F201	CAST function			YES	
 F202	TRUNCATE TABLE: identity column restart option			NO	
@@ -241,23 +237,14 @@ F381	Extended schema manipulation	02	ALTER TABLE statement: ADD CONSTRAINT claus
 F381	Extended schema manipulation	03	ALTER TABLE statement: DROP CONSTRAINT clause	YES	
 F382	Alter column data type			YES	
 F391	Long identifiers			YES	
-<<<<<<< HEAD
-F392	Unicode escapes in identifiers			NO	
-F393	Unicode escapes in literals			NO	
-=======
 F392	Unicode escapes in identifiers			YES	
 F393	Unicode escapes in literals			YES	
->>>>>>> 38e9348282e
 F394	Optional normal form specification			NO	
 F401	Extended joined table			YES	
 F401	Extended joined table	01	NATURAL JOIN	YES	
 F401	Extended joined table	02	FULL OUTER JOIN	YES	
 F401	Extended joined table	04	CROSS JOIN	YES	
-<<<<<<< HEAD
-F402	Named column joins for LOBs, arrays, and multisets			NO	
-=======
 F402	Named column joins for LOBs, arrays, and multisets			YES	
->>>>>>> 38e9348282e
 F403	Partitioned joined tables			NO	
 F411	Time zone specification			YES	differences regarding literal interpretation
 F421	National character			YES	
@@ -307,13 +294,8 @@ F731	INSERT column privileges			NO
 F741	Referential MATCH types			NO	no partial match yet
 F751	View CHECK enhancements			NO	
 F761	Session management			YES	
-<<<<<<< HEAD
-F762	CURRENT_CATALOG			NO	
-F763	CURRENT_SCHEMA			NO	
-=======
 F762	CURRENT_CATALOG			YES	
 F763	CURRENT_SCHEMA			YES	
->>>>>>> 38e9348282e
 F771	Connection management			YES	
 F781	Self-referencing operations			YES	
 F791	Insensitive cursors			YES	
@@ -332,21 +314,6 @@ F845	TRANSLATE_REGEX function			NO
 F846	Octet support in regular expression operators			NO	
 F847	Nonconstant regular expressions			NO	
 F850	Top-level <order by clause> in <query expression>			YES	
-<<<<<<< HEAD
-F851	<order by clause> in subqueries			NO	
-F852	Top-level <order by clause> in views			NO	
-F855	Nested <order by clause> in <query expression>			NO	
-F856	Nested <fetch first clause> in <query expression>			NO	
-F857	Top-level <fetch first clause> in <query expression>			NO	
-F858	<fetch first clause> in subqueries			NO	
-F859	Top-level <fetch first clause> in views			NO	
-F860	<fetch first row count> in <fetch first clause>			NO	
-F861	Top-level <result offset clause> in <query expression>			NO	
-F862	<result offset clause> in subqueries			NO	
-F863	Nested <result offset clause> in <query expression>			NO	
-F864	Top-level <result offset clause> in views			NO	
-F865	<offset row count> in <result offset clause>			NO	
-=======
 F851	<order by clause> in subqueries			YES	
 F852	Top-level <order by clause> in views			YES	
 F855	Nested <order by clause> in <query expression>			YES	
@@ -360,7 +327,6 @@ F862	<result offset clause> in subqueries			YES
 F863	Nested <result offset clause> in <query expression>			YES	
 F864	Top-level <result offset clause> in views			YES	
 F865	<offset row count> in <result offset clause>			YES	
->>>>>>> 38e9348282e
 S011	Distinct data types			NO	
 S011	Distinct data types	01	USER_DEFINED_TYPES view	NO	
 S023	Basic structured types			NO	
@@ -448,13 +414,8 @@ T175	Generated columns			NO
 T176	Sequence generator support			NO	
 T177	Sequence generator support: simple restart option			NO	
 T178	Identity columns:  simple restart option			NO	
-<<<<<<< HEAD
 T191	Referential action RESTRICT			NO	
 T201	Comparable data types for referential constraints			NO	
-=======
-T191	Referential action RESTRICT			YES	
-T201	Comparable data types for referential constraints			YES	
->>>>>>> 38e9348282e
 T211	Basic trigger capability			NO	
 T211	Basic trigger capability	01	Triggers activated on UPDATE, INSERT, or DELETE of one base table	NO	
 T211	Basic trigger capability	02	BEFORE triggers	NO	
@@ -464,11 +425,7 @@ T211	Basic trigger capability	05	Ability to specify a search condition that must
 T211	Basic trigger capability	06	Support for run-time rules for the interaction of triggers and constraints	NO	
 T211	Basic trigger capability	07	TRIGGER privilege	YES	
 T211	Basic trigger capability	08	Multiple triggers for the same event are executed in the order in which they were created in the catalog	NO	intentionally omitted
-<<<<<<< HEAD
 T212	Enhanced trigger capability			NO	
-=======
-T212	Enhanced trigger capability			YES	
->>>>>>> 38e9348282e
 T213	INSTEAD OF triggers			NO	
 T231	Sensitive cursors			YES	
 T241	START TRANSACTION statement			YES	
@@ -572,10 +529,7 @@ X035	XMLAgg: ORDER BY option			NO
 X036	XMLComment			YES	
 X037	XMLPI			YES	
 X038	XMLText			NO	
-<<<<<<< HEAD
-=======
 X040	Basic table mapping			NO	
->>>>>>> 38e9348282e
 X041	Basic table mapping: nulls absent			YES	
 X042	Basic table mapping: null as nil			YES	
 X043	Basic table mapping: table as forest			YES	
@@ -603,11 +557,7 @@ X068	XMLSerialize: BOM			NO
 X069	XMLSerialize: INDENT			NO	
 X070	XMLSerialize: Character string serialization and CONTENT option			YES	
 X071	XMLSerialize: Character string serialization and DOCUMENT option			YES	
-<<<<<<< HEAD
-X072	XMLSerialize: Character string serialization			NO	
-=======
 X072	XMLSerialize: Character string serialization			YES	
->>>>>>> 38e9348282e
 X073	XMLSerialize: BLOB serialization and CONTENT option			NO	
 X074	XMLSerialize: BLOB serialization and DOCUMENT option			NO	
 X075	XMLSerialize: BLOB serialization			NO	
