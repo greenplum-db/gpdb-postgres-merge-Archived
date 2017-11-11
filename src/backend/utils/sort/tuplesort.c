@@ -2902,24 +2902,10 @@ copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup)
 static void
 writetup_heap(Tuplesortstate *state, LogicalTape *lt, SortTuple *stup)
 {
-<<<<<<< HEAD
 	uint32 tuplen = memtuple_get_size(stup->tuple);
 
 	LogicalTapeWrite(state->tapeset, lt, (void *) stup->tuple, tuplen);
 
-=======
-	MinimalTuple tuple = (MinimalTuple) stup->tuple;
-	/* the part of the MinimalTuple we'll write: */
-	char	   *tupbody = (char *) tuple + MINIMAL_TUPLE_DATA_OFFSET;
-	unsigned int tupbodylen = tuple->t_len - MINIMAL_TUPLE_DATA_OFFSET;
-	/* total on-disk footprint: */
-	unsigned int tuplen = tupbodylen + sizeof(int);
-
-	LogicalTapeWrite(state->tapeset, tapenum,
-					 (void *) &tuplen, sizeof(tuplen));
-	LogicalTapeWrite(state->tapeset, tapenum,
-					 (void *) tupbody, tupbodylen);
->>>>>>> 38e9348282e
 	if (state->randomAccess)	/* need trailing length word? */
 		LogicalTapeWrite(state->tapeset, lt, (void *) &tuplen, sizeof(tuplen));
 
@@ -2931,7 +2917,6 @@ static void
 readtup_heap(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 			 LogicalTape *lt, uint32 len)
 {
-<<<<<<< HEAD
 	uint32 tuplen;
 	size_t readSize;
 
@@ -2945,20 +2930,6 @@ readtup_heap(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 				memtuple_size_from_uint32(len) - sizeof(uint32));
 
 	if (readSize != (size_t) (memtuple_size_from_uint32(len) - sizeof(uint32))) 
-=======
-	unsigned int tupbodylen = len - sizeof(int);
-	unsigned int tuplen = tupbodylen + MINIMAL_TUPLE_DATA_OFFSET;
-	MinimalTuple tuple = (MinimalTuple) palloc(tuplen);
-	char	   *tupbody = (char *) tuple + MINIMAL_TUPLE_DATA_OFFSET;
-	HeapTupleData htup;
-
-	USEMEM(state, GetMemoryChunkSpace(tuple));
-	/* read in the tuple proper */
-	tuple->t_len = tuplen;
-	if (LogicalTapeRead(state->tapeset, tapenum,
-						(void *) tupbody,
-						tupbodylen) != (size_t) tupbodylen)
->>>>>>> 38e9348282e
 		elog(ERROR, "unexpected end of data");
 
 	if (state->randomAccess)	/* need trailing length word? */
