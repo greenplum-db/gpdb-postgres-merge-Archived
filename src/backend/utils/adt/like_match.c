@@ -96,16 +96,12 @@ MatchText(char *t, int tlen, char *p, int plen)
 		{
 			/* Next pattern byte must match literally, whatever it is */
 			NextByte(p, plen);
-<<<<<<< HEAD
-			if (plen <= 0 || GETCHAR(*p) != GETCHAR(*t))
-=======
 			/* ... and there had better be one, per SQL standard */
 			if (plen <= 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
-						 errmsg("LIKE pattern must not end with escape character")));
-			if (TCHAR(*p) != TCHAR(*t))
->>>>>>> 38e9348282e
+				 errmsg("LIKE pattern must not end with escape character")));
+			if (GETCHAR(*p) != GETCHAR(*t))
 				return LIKE_FALSE;
 		}
 		else if (*p == '%')
