@@ -182,11 +182,6 @@ max_prepared_transactions = 250		# can be 0 or more
 
 # - Other Planner Options -
 
-<<<<<<< HEAD
-=======
-#default_statistics_target = 100	# range 1-10000
-#constraint_exclusion = off
->>>>>>> 38e9348282e
 #cursor_tuple_fraction = 0.1		# range 0.0-1.0
 #from_collapse_limit = 20
 #join_collapse_limit = 20		# 1 disables collapsing of explicit
