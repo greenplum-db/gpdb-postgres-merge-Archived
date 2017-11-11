@@ -274,25 +274,6 @@ print_rt(List *rtable)
 				printf("%d\t%s\t[subquery]",
 					   i, name);
 				break;
-			case RTE_CTE:
-				printf("%d\t%s\t[cte]",
-					   i, name);
-				break;
-			case RTE_TABLEFUNCTION:
-				printf("%d\t%s\t[tablefunction]",
-					   i, name);
-				break;
-<<<<<<< HEAD
-			case RTE_FUNCTION:
-				printf("%d\t%s\t[rangefunction]",
-					   i, name);
-				break;
-			case RTE_VALUES:
-				printf("%d\t%s\t[values list]",
-					   i, rte->eref->aliasname);
-				break;
-=======
->>>>>>> 38e9348282e
 			case RTE_JOIN:
 				printf("%d\t%s\t[join]",
 					   i, name);
@@ -301,10 +282,6 @@ print_rt(List *rtable)
 				printf("%d\t%s\t[special]",
 					   i, name);
 				break;
-			case RTE_VOID:
-				printf("%d\t%s\t[void]",
-					   i, name);
-				break;
 			case RTE_FUNCTION:
 				printf("%d\t%s\t[rangefunction]",
 					   i, rte->eref->aliasname);
@@ -316,6 +293,14 @@ print_rt(List *rtable)
 			case RTE_CTE:
 				printf("%d\t%s\t[cte]",
 					   i, rte->eref->aliasname);
+				break;
+			case RTE_TABLEFUNCTION:
+				printf("%d\t%s\t[tablefunction]",
+					   i, name);
+				break;
+			case RTE_VOID:
+				printf("%d\t%s\t[void]",
+					   i, name);
 				break;
 			default:
 				printf("%d\t%s\t[unknown rtekind]",
