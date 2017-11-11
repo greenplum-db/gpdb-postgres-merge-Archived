@@ -1497,26 +1497,16 @@ booltestsel(PlannerInfo *root, BoolTestType booltesttype, Node *arg,
 			case IS_TRUE:
 			case IS_NOT_FALSE:
 				selec = (double) clause_selectivity(root, arg,
-<<<<<<< HEAD
-													varRelid, jointype,
-													sjinfo,
-													false /* use_damping */);
-=======
 													varRelid,
-													jointype, sjinfo);
->>>>>>> 38e9348282e
+													jointype, sjinfo,
+													false /* use_damping */);
 				break;
 			case IS_FALSE:
 			case IS_NOT_TRUE:
 				selec = 1.0 - (double) clause_selectivity(root, arg,
-<<<<<<< HEAD
-														  varRelid, jointype,
-														  sjinfo,
-														  false /* use_damping */);
-=======
 														  varRelid,
-														  jointype, sjinfo);
->>>>>>> 38e9348282e
+														  jointype, sjinfo,
+														  false /* use_damping */);
 				break;
 			default:
 				elog(ERROR, "unrecognized booltesttype: %d",
@@ -1544,7 +1534,6 @@ nulltestsel(PlannerInfo *root, NullTestType nulltesttype, Node *arg,
 	VariableStatData vardata;
 	double		selec;
 
-<<<<<<< HEAD
 	/*
 	 * GPDB_84_MERGE_NOTE: Following hack is removed in the upstream commit e006a24a.
 	 * However, removing this causes cost differences for some ICG queries.
@@ -1561,9 +1550,6 @@ nulltestsel(PlannerInfo *root, NullTestType nulltesttype, Node *arg,
 	if (IS_OUTER_JOIN(jointype) && nulltesttype == IS_NULL)
 		return (Selectivity) 0.5;
 
-
-=======
->>>>>>> 38e9348282e
 	examine_variable(root, arg, varRelid, &vardata);
 
 	if (HeapTupleIsValid(getStatsTuple(&vardata)))
@@ -2043,47 +2029,26 @@ eqjoinsel_inner(Oid operator,
 	nd1 = get_variable_numdistinct(vardata1);
 	nd2 = get_variable_numdistinct(vardata2);
 
-<<<<<<< HEAD
-	nd1 = get_variable_numdistinct(&vardata1);
-	nd2 = get_variable_numdistinct(&vardata2);
-
-	if (HeapTupleIsValid(getStatsTuple(&vardata1)))
+	if (HeapTupleIsValid(getStatsTuple(vardata1)))
 	{
-		HeapTuple tp = getStatsTuple(&vardata1);
+		HeapTuple tp = getStatsTuple(vardata1);
 		stats1 = (Form_pg_statistic) GETSTRUCT(tp);
 		have_mcvs1 = get_attstatsslot(tp,
-									  vardata1.atttype,
-									  vardata1.atttypmod,
-=======
-	if (HeapTupleIsValid(vardata1->statsTuple))
-	{
-		stats1 = (Form_pg_statistic) GETSTRUCT(vardata1->statsTuple);
-		have_mcvs1 = get_attstatsslot(vardata1->statsTuple,
 									  vardata1->atttype,
 									  vardata1->atttypmod,
->>>>>>> 38e9348282e
 									  STATISTIC_KIND_MCV,
 									  InvalidOid,
 									  &values1, &nvalues1,
 									  &numbers1, &nnumbers1);
 	}
 
-<<<<<<< HEAD
-	if (HeapTupleIsValid(getStatsTuple(&vardata2)))
+	if (HeapTupleIsValid(getStatsTuple(vardata2)))
 	{
-		HeapTuple tp = getStatsTuple(&vardata2);
+		HeapTuple tp = getStatsTuple(vardata2);
 		stats2 = (Form_pg_statistic) GETSTRUCT(tp);
 		have_mcvs2 = get_attstatsslot(tp,
-									  vardata2.atttype,
-									  vardata2.atttypmod,
-=======
-	if (HeapTupleIsValid(vardata2->statsTuple))
-	{
-		stats2 = (Form_pg_statistic) GETSTRUCT(vardata2->statsTuple);
-		have_mcvs2 = get_attstatsslot(vardata2->statsTuple,
 									  vardata2->atttype,
 									  vardata2->atttypmod,
->>>>>>> 38e9348282e
 									  STATISTIC_KIND_MCV,
 									  InvalidOid,
 									  &values2, &nvalues2,
@@ -2126,34 +2091,6 @@ eqjoinsel_inner(Oid operator,
 		hasmatch2 = (bool *) palloc0(nvalues2 * sizeof(bool));
 
 		/*
-<<<<<<< HEAD
-		 * If we are doing any variant of JOIN_SEMI, pretend all the values of
-		 * the righthand relation are unique (ie, act as if it's been
-		 * DISTINCT'd).
-		 *
-		 * NOTE: it might seem that we should unique-ify the lefthand input
-		 * when considering JOIN_REVERSE_IN.  But this is not so, because the
-		 * join clause we've been handed has not been commuted from the way
-		 * the parser originally wrote it.	We know that the unique side of
-		 * the IN clause is *always* on the right.
-		 *
-		 * NOTE: it would be dangerous to try to be smart about JOIN_LEFT or
-		 * JOIN_RIGHT here, because we do not have enough information to
-		 * determine which var is really on which side of the join. Perhaps
-		 * someday we should pass in more information.
-		 */
-		if (jointype == JOIN_SEMI)
-		{
-			float4		oneovern = 1.0 / nd2;
-
-			for (i = 0; i < nvalues2; i++)
-				numbers2[i] = oneovern;
-			nullfrac2 = oneovern;
-		}
-
-		/*
-=======
->>>>>>> 38e9348282e
 		 * Note we assume that each MCV will match at most one member of the
 		 * other MCV list.	If the operator isn't really equality, there could
 		 * be multiple matches --- but we don't look for them, both for speed
@@ -3087,13 +3024,7 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows)
 		 * complicated.
 		 */
 		examine_variable(root, groupexpr, 0, &vardata);
-<<<<<<< HEAD
-
-		if (HeapTupleIsValid(getStatsTuple(&vardata))
-			|| vardata.isunique)
-=======
-		if (HeapTupleIsValid(vardata.statsTuple) || vardata.isunique)
->>>>>>> 38e9348282e
+		if (HeapTupleIsValid(getStatsTuple(&vardata)) || vardata.isunique)
 		{
 			varinfos = add_unique_group_var(root, varinfos,
 											groupexpr, &vardata);
@@ -3574,241 +3505,6 @@ convert_numeric_to_scalar(Datum value, Oid typid)
 }
 
 /*
-<<<<<<< HEAD
-=======
- * Do convert_to_scalar()'s work for any character-string data type.
- *
- * String datatypes are converted to a scale that ranges from 0 to 1,
- * where we visualize the bytes of the string as fractional digits.
- *
- * We do not want the base to be 256, however, since that tends to
- * generate inflated selectivity estimates; few databases will have
- * occurrences of all 256 possible byte values at each position.
- * Instead, use the smallest and largest byte values seen in the bounds
- * as the estimated range for each byte, after some fudging to deal with
- * the fact that we probably aren't going to see the full range that way.
- *
- * An additional refinement is that we discard any common prefix of the
- * three strings before computing the scaled values.  This allows us to
- * "zoom in" when we encounter a narrow data range.  An example is a phone
- * number database where all the values begin with the same area code.
- * (Actually, the bounds will be adjacent histogram-bin-boundary values,
- * so this is more likely to happen than you might think.)
- */
-static void
-convert_string_to_scalar(char *value,
-						 double *scaledvalue,
-						 char *lobound,
-						 double *scaledlobound,
-						 char *hibound,
-						 double *scaledhibound)
-{
-	int			rangelo,
-				rangehi;
-	char	   *sptr;
-
-	rangelo = rangehi = (unsigned char) hibound[0];
-	for (sptr = lobound; *sptr; sptr++)
-	{
-		if (rangelo > (unsigned char) *sptr)
-			rangelo = (unsigned char) *sptr;
-		if (rangehi < (unsigned char) *sptr)
-			rangehi = (unsigned char) *sptr;
-	}
-	for (sptr = hibound; *sptr; sptr++)
-	{
-		if (rangelo > (unsigned char) *sptr)
-			rangelo = (unsigned char) *sptr;
-		if (rangehi < (unsigned char) *sptr)
-			rangehi = (unsigned char) *sptr;
-	}
-	/* If range includes any upper-case ASCII chars, make it include all */
-	if (rangelo <= 'Z' && rangehi >= 'A')
-	{
-		if (rangelo > 'A')
-			rangelo = 'A';
-		if (rangehi < 'Z')
-			rangehi = 'Z';
-	}
-	/* Ditto lower-case */
-	if (rangelo <= 'z' && rangehi >= 'a')
-	{
-		if (rangelo > 'a')
-			rangelo = 'a';
-		if (rangehi < 'z')
-			rangehi = 'z';
-	}
-	/* Ditto digits */
-	if (rangelo <= '9' && rangehi >= '0')
-	{
-		if (rangelo > '0')
-			rangelo = '0';
-		if (rangehi < '9')
-			rangehi = '9';
-	}
-
-	/*
-	 * If range includes less than 10 chars, assume we have not got enough
-	 * data, and make it include regular ASCII set.
-	 */
-	if (rangehi - rangelo < 9)
-	{
-		rangelo = ' ';
-		rangehi = 127;
-	}
-
-	/*
-	 * Now strip any common prefix of the three strings.
-	 */
-	while (*lobound)
-	{
-		if (*lobound != *hibound || *lobound != *value)
-			break;
-		lobound++, hibound++, value++;
-	}
-
-	/*
-	 * Now we can do the conversions.
-	 */
-	*scaledvalue = convert_one_string_to_scalar(value, rangelo, rangehi);
-	*scaledlobound = convert_one_string_to_scalar(lobound, rangelo, rangehi);
-	*scaledhibound = convert_one_string_to_scalar(hibound, rangelo, rangehi);
-}
-
-static double
-convert_one_string_to_scalar(char *value, int rangelo, int rangehi)
-{
-	int			slen = strlen(value);
-	double		num,
-				denom,
-				base;
-
-	if (slen <= 0)
-		return 0.0;				/* empty string has scalar value 0 */
-
-	/*
-	 * Since base is at least 10, need not consider more than about 20 chars
-	 */
-	if (slen > 20)
-		slen = 20;
-
-	/* Convert initial characters to fraction */
-	base = rangehi - rangelo + 1;
-	num = 0.0;
-	denom = base;
-	while (slen-- > 0)
-	{
-		int			ch = (unsigned char) *value++;
-
-		if (ch < rangelo)
-			ch = rangelo - 1;
-		else if (ch > rangehi)
-			ch = rangehi + 1;
-		num += ((double) (ch - rangelo)) / denom;
-		denom *= base;
-	}
-
-	return num;
-}
-
-/*
- * Convert a string-type Datum into a palloc'd, null-terminated string.
- *
- * When using a non-C locale, we must pass the string through strxfrm()
- * before continuing, so as to generate correct locale-specific results.
- */
-static char *
-convert_string_datum(Datum value, Oid typid)
-{
-	char	   *val;
-
-	switch (typid)
-	{
-		case CHAROID:
-			val = (char *) palloc(2);
-			val[0] = DatumGetChar(value);
-			val[1] = '\0';
-			break;
-		case BPCHAROID:
-		case VARCHAROID:
-		case TEXTOID:
-			val = TextDatumGetCString(value);
-			break;
-		case NAMEOID:
-			{
-				NameData   *nm = (NameData *) DatumGetPointer(value);
-
-				val = pstrdup(NameStr(*nm));
-				break;
-			}
-		default:
-
-			/*
-			 * Can't get here unless someone tries to use scalarltsel on an
-			 * operator with one string and one non-string operand.
-			 */
-			elog(ERROR, "unsupported type: %u", typid);
-			return NULL;
-	}
-
-	if (!lc_collate_is_c())
-	{
-		char	   *xfrmstr;
-		size_t		xfrmlen;
-		size_t		xfrmlen2;
-
-		/*
-		 * Note: originally we guessed at a suitable output buffer size, and
-		 * only needed to call strxfrm twice if our guess was too small.
-		 * However, it seems that some versions of Solaris have buggy strxfrm
-		 * that can write past the specified buffer length in that scenario.
-		 * So, do it the dumb way for portability.
-		 *
-		 * Yet other systems (e.g., glibc) sometimes return a smaller value
-		 * from the second call than the first; thus the Assert must be <= not
-		 * == as you'd expect.  Can't any of these people program their way
-		 * out of a paper bag?
-		 *
-		 * XXX: strxfrm doesn't support UTF-8 encoding on Win32, it can return
-		 * bogus data or set an error. This is not really a problem unless it
-		 * crashes since it will only give an estimation error and nothing
-		 * fatal.
-		 */
-#if _MSC_VER == 1400			/* VS.Net 2005 */
-
-		/*
-		 * http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?FeedbackID=99694
-		 */
-		{
-			char		x[1];
-
-			xfrmlen = strxfrm(x, val, 0);
-		}
-#else
-		xfrmlen = strxfrm(NULL, val, 0);
-#endif
-#ifdef WIN32
-
-		/*
-		 * On Windows, strxfrm returns INT_MAX when an error occurs. Instead
-		 * of trying to allocate this much memory (and fail), just return the
-		 * original string unmodified as if we were in the C locale.
-		 */
-		if (xfrmlen == INT_MAX)
-			return val;
-#endif
-		xfrmstr = (char *) palloc(xfrmlen + 1);
-		xfrmlen2 = strxfrm(xfrmstr, val, xfrmlen + 1);
-		Assert(xfrmlen2 <= xfrmlen);
-		pfree(val);
-		val = xfrmstr;
-	}
-
-	return val;
-}
-
-/*
->>>>>>> 38e9348282e
  * Do convert_to_scalar()'s work for any bytea data type.
  *
  * Very similar to the old convert_string_to_scalar except we can't assume
@@ -4249,7 +3945,6 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 
 		rte = rt_fetch(var->varno, root->parse->rtable);
 
-<<<<<<< HEAD
 		/*
 		 * If this attribute has a foreign key relationship, then first look
 		 * at primary key statistics. If there exist stats on that attribute,
@@ -4280,8 +3975,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 				ReleaseSysCache(pkStatsTuple);
 			}
 		}
-		if (rte->inh)
-=======
+
 		if (get_relation_stats_hook &&
 			(*get_relation_stats_hook) (root, rte, var->varattno, vardata))
 		{
@@ -4294,7 +3988,6 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 				elog(ERROR, "no function provided to release variable stats with");
 		}
 		else if (rte->inh)
->>>>>>> 38e9348282e
 		{
 			/*
 			 * If gp_statistics_pullup_from_child_partition is set, we attempt to pull up statistics from
@@ -5553,12 +5246,8 @@ genericcostestimate(PlannerInfo *root,
 	*indexSelectivity = clauselist_selectivity(root, selectivityQuals,
 											   index->rel->relid,
 											   JOIN_INNER,
-<<<<<<< HEAD
 											   NULL,
 											   false /* use_damping */);
-=======
-											   NULL);
->>>>>>> 38e9348282e
 
 	/*
 	 * If caller didn't give us an estimate, estimate the number of index
@@ -5917,12 +5606,8 @@ btcostestimate(PG_FUNCTION_ARGS)
 		btreeSelectivity = clauselist_selectivity(root, indexBoundQuals,
 												  index->rel->relid,
 												  JOIN_INNER,
-<<<<<<< HEAD
 												  NULL,
 												  false /* use_damping */);
-=======
-												  NULL);
->>>>>>> 38e9348282e
 		numIndexTuples = btreeSelectivity * index->rel->tuples;
 
 		/*

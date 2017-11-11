@@ -274,13 +274,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		LOCKMODE	mode = 0;
 		const char *locktypename;
 		char		tnbuf[32];
-<<<<<<< HEAD
 		Datum		values[17];
 		bool		nulls[17];
-=======
-		Datum		values[14];
-		bool		nulls[14];
->>>>>>> 38e9348282e
 		HeapTuple	tuple;
 		Datum		result;
 
@@ -410,7 +405,6 @@ pg_lock_status(PG_FUNCTION_ARGS)
 				nulls[7] = true;
 				nulls[8] = true;
 				nulls[9] = true;
-<<<<<<< HEAD
 				break;
 			case LOCKTAG_RELATION_APPENDONLY_SEGMENT_FILE:
 				values[1] = ObjectIdGetDatum(lock->tag.locktag_field1);
@@ -433,8 +427,6 @@ pg_lock_status(PG_FUNCTION_ARGS)
 				nulls[6] = true;
 				nulls[7] = true;
 				nulls[9] = true;
-=======
->>>>>>> 38e9348282e
 				break;
 			case LOCKTAG_OBJECT:
 			case LOCKTAG_USERLOCK:
@@ -462,7 +454,6 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		
 		values[14] = Int32GetDatum(proc->mppSessionId);
 
-<<<<<<< HEAD
 		values[15] = BoolGetDatum(proc->mppIsWriter);
 
 		values[16] = Int32GetDatum(Gp_segment);
@@ -561,8 +552,6 @@ pg_lock_status(PG_FUNCTION_ARGS)
 			nulls[i] = PQgetisnull(mystatus->segresults[whichresultset], whichrow, i);
 		}
 
-=======
->>>>>>> 38e9348282e
 		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 		result = HeapTupleGetDatum(tuple);
 		SRF_RETURN_NEXT(funcctx, result);

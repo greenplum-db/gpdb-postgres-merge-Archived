@@ -464,7 +464,8 @@ pg_relation_size(PG_FUNCTION_ARGS)
 	if (relOid == 0 || rel->rd_node.relNode == 0)
 		size = 0;
 	else
-		size = calculate_relation_size(rel); 
+		size = calculate_relation_size(rel,
+									   forkname_to_number(text_to_cstring(forkName)));
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -516,7 +517,11 @@ calculate_total_relation_size(Oid Relid)
 	if (Relid == 0 || heapRel->rd_node.relNode == 0)
 		size = 0;
 	else
-		size = calculate_relation_size(heapRel); 
+	{
+		size = 0;
+		for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
+			size += calculate_relation_size(heapRel, forkNum);
+	}
 
 	/* Include any dependent indexes */
 	if (heapRel->rd_rel->relhasindex)
@@ -532,7 +537,8 @@ calculate_total_relation_size(Oid Relid)
 
 			if (RelationIsValid(iRel))
 			{
-				size += calculate_relation_size(iRel); 
+				for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
+					size += calculate_relation_size(iRel, forkNum);
 
 				relation_close(iRel, AccessShareLock);
 			}
@@ -604,54 +610,6 @@ pg_total_relation_size(PG_FUNCTION_ARGS)
 
 		appendStringInfo(&buffer, "select sum(pg_total_relation_size('%s.%s'))::int8 from gp_dist_random('gp_id');", quote_identifier(schemaName), quote_identifier(relName));
 
-		size += get_size_from_segDBs(buffer.data);
-	}
-
-	PG_RETURN_INT64(size);
-}
-
-Datum
-pg_total_relation_size_name(PG_FUNCTION_ARGS)
-{
-	int64		size = 0;
-	text	   *relname = PG_GETARG_TEXT_P(0);
-	RangeVar   *relrv;
-	Oid			relid;
-
-	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
-	
-	if (Gp_role == GP_ROLE_EXECUTE && relrv->schemaname != NULL)
-	{
-		Oid namespaceId;
-		/*
-		 * Do this the hard way to avoid access check we don't want
-		 */
-		AcceptInvalidationMessages();
-
-		namespaceId = GetSysCacheOid1(NAMESPACENAME,
-									  CStringGetDatum(relrv->schemaname));
-		relid = get_relname_relid(relrv->relname, namespaceId);
-	}
-	else
-		relid = RangeVarGetRelid(relrv, true);
-
-	if (!OidIsValid(relid))
-		PG_RETURN_NULL();
-
-	size = calculate_total_relation_size(relid);
-	
-	if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		char * rawname;
-		StringInfoData buffer;
-		
-		initStringInfo(&buffer);
-		
-		rawname = DatumGetCString(DirectFunctionCall1(textout,
-													  PointerGetDatum(relname)));
-		
-		appendStringInfo(&buffer, "select sum(pg_total_relation_size('%s'))::int8 from gp_dist_random('gp_id');", rawname);
-		
 		size += get_size_from_segDBs(buffer.data);
 	}
 
