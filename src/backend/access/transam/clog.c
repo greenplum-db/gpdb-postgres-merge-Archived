@@ -268,20 +268,9 @@ TransactionIdSetPageStatus(TransactionId xid, int nsubxids,
 						   TransactionId *subxids, XidStatus status,
 						   XLogRecPtr lsn, int pageno)
 {
-<<<<<<< HEAD
 	MIRRORED_LOCK_DECLARE;
-
-	int			pageno = TransactionIdToPage(xid);
-	int			byteno = TransactionIdToByte(xid);
-	int			bshift = TransactionIdToBIndex(xid) * CLOG_BITS_PER_XACT;
-	int			slotno;
-	char	   *byteptr;
-	char		byteval;
-	int			debugStatus;
-=======
 	int			slotno;
 	int 		i;
->>>>>>> 38e9348282e
 
 	Assert(status == TRANSACTION_STATUS_COMMITTED ||
 		   status == TRANSACTION_STATUS_ABORTED ||
@@ -339,6 +328,8 @@ TransactionIdSetPageStatus(TransactionId xid, int nsubxids,
 	ClogCtl->shared->page_dirty[slotno] = true;
 
 	LWLockRelease(CLogControlLock);
+
+	MIRRORED_UNLOCK;
 }
 
 /*
@@ -358,26 +349,6 @@ TransactionIdSetStatusBit(TransactionId xid, XidStatus status, XLogRecPtr lsn, i
 	byteptr = ClogCtl->shared->page_buffer[slotno] + byteno;
 	curval = (*byteptr >> bshift) & CLOG_XACT_BITMASK;
 
-<<<<<<< HEAD
-	debugStatus = ((*byteptr >> bshift) & CLOG_XACT_BITMASK);
-	if (debugStatus != 0 &&
-		debugStatus != TRANSACTION_STATUS_SUB_COMMITTED &&
-		debugStatus != status)
-	{
-		elog(FATAL,"TransactionIdSetStatus invalid for transaction %u current status '%s' (0x%x) and new status '%s' (0x%x)",
-			 xid, 
-			 XidStatus_Name(debugStatus),
-			 debugStatus,
-			 XidStatus_Name(status),
-			 status);
-	}
-
-
-	/* Current state should be 0, subcommitted or target state */
-	Assert(((*byteptr >> bshift) & CLOG_XACT_BITMASK) == 0 ||
-		   ((*byteptr >> bshift) & CLOG_XACT_BITMASK) == TRANSACTION_STATUS_SUB_COMMITTED ||
-		   ((*byteptr >> bshift) & CLOG_XACT_BITMASK) == status);
-=======
 	/*
 	 * When replaying transactions during recovery we still need to perform
 	 * the two phases of subcommit and then commit. However, some transactions
@@ -396,7 +367,6 @@ TransactionIdSetStatusBit(TransactionId xid, XidStatus status, XLogRecPtr lsn, i
 		   (curval == TRANSACTION_STATUS_SUB_COMMITTED &&
 			status != TRANSACTION_STATUS_IN_PROGRESS) ||
 		   curval == status);
->>>>>>> 38e9348282e
 
 	/* note this assumes exclusive access to the clog page */
 	byteval = *byteptr;
@@ -419,13 +389,6 @@ TransactionIdSetStatusBit(TransactionId xid, XidStatus status, XLogRecPtr lsn, i
 		if (XLByteLT(ClogCtl->shared->group_lsn[lsnindex], lsn))
 			ClogCtl->shared->group_lsn[lsnindex] = lsn;
 	}
-<<<<<<< HEAD
-
-	LWLockRelease(CLogControlLock);
-
-	MIRRORED_UNLOCK;
-=======
->>>>>>> 38e9348282e
 }
 
 /*
