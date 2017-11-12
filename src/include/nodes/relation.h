@@ -1540,13 +1540,6 @@ typedef struct PlaceHolderVar
  * For JOIN_SEMI joins, this is cleared to NIL in create_unique_path() if
  * the join is found not to be suitable for a uniqueify-the-RHS plan.
  *
-<<<<<<< HEAD
- * For a semijoin, we also extract the join operators and their RHS arguments
- * and set semi_operators and semi_rhs_exprs. This is used for applying pre-join
- * deduplication used by cdb_make_rel_dedup_info().
- *
-=======
->>>>>>> 38e9348282e
  * jointype is never JOIN_RIGHT; a RIGHT JOIN is handled by switching
  * the inputs to make it a LEFT JOIN.  So the allowed values of jointype
  * in a join_info_list member are only LEFT, FULL, SEMI, or ANTI.
@@ -1554,16 +1547,11 @@ typedef struct PlaceHolderVar
  * For purposes of join selectivity estimation, we create transient
  * SpecialJoinInfo structures for regular inner joins; so it is possible
  * to have jointype == JOIN_INNER in such a structure, even though this is
-<<<<<<< HEAD
  * not allowed within join_info_list.  We also create transient
  * SpecialJoinInfos with jointype == JOIN_INNER for outer joins, since for
  * cost estimation purposes it is sometimes useful to know the join size under
  * plain innerjoin semantics.  Note that lhs_strict, delay_upper_joins, and
  * join_quals are not set meaningfully within such structs.
-=======
- * not allowed within join_info_list.  Note that lhs_strict, delay_upper_joins,
- * and join_quals are not set meaningfully for such structs.
->>>>>>> 38e9348282e
  */
 
 typedef struct SpecialJoinInfo
