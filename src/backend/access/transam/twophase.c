@@ -50,11 +50,8 @@
 #include "access/twophase.h"
 #include "access/twophase_rmgr.h"
 #include "access/xact.h"
-<<<<<<< HEAD
 #include "access/xlogmm.h"
-=======
 #include "access/xlogutils.h"
->>>>>>> 38e9348282e
 #include "catalog/pg_type.h"
 #include "catalog/storage.h"
 #include "funcapi.h"
@@ -427,9 +424,8 @@ TwoPhaseShmemInit(void)
 					  sizeof(GlobalTransaction) * max_prepared_xacts));
 		for (i = 0; i < max_prepared_xacts; i++)
 		{
-<<<<<<< HEAD
-			gxacts[i].proc.links.next = TwoPhaseState->freeGXacts;
-			TwoPhaseState->freeGXacts = MAKE_OFFSET(&gxacts[i]);
+			gxacts[i].proc.links.next = (SHM_QUEUE *) TwoPhaseState->freeGXacts;
+			TwoPhaseState->freeGXacts = &gxacts[i];
 
 			/*
 			 * Assign a unique ID for each dummy proc, so that the range of
@@ -444,10 +440,6 @@ TwoPhaseShmemInit(void)
 			 * uses that technique.
 			 */
 			gxacts[i].dummyBackendId = MaxBackends + 1 + i;
-=======
-			gxacts[i].proc.links.next = (SHM_QUEUE *) TwoPhaseState->freeGXacts;
-			TwoPhaseState->freeGXacts = &gxacts[i];
->>>>>>> 38e9348282e
 		}
 	}
 	else
@@ -559,30 +551,6 @@ MarkAsPreparing(TransactionId xid,
 
 	LWLockAcquire(TwoPhaseStateLock, LW_EXCLUSIVE);
 
-<<<<<<< HEAD
-=======
-	/*
-	 * First, find and recycle any gxacts that failed during prepare. We do
-	 * this partly to ensure we don't mistakenly say their GIDs are still
-	 * reserved, and partly so we don't fail on out-of-slots unnecessarily.
-	 */
-	for (i = 0; i < TwoPhaseState->numPrepXacts; i++)
-	{
-		gxact = TwoPhaseState->prepXacts[i];
-		if (!gxact->valid && !TransactionIdIsActive(gxact->locking_xid))
-		{
-			/* It's dead Jim ... remove from the active array */
-			TwoPhaseState->numPrepXacts--;
-			TwoPhaseState->prepXacts[i] = TwoPhaseState->prepXacts[TwoPhaseState->numPrepXacts];
-			/* and put it back in the freelist */
-			gxact->proc.links.next = (SHM_QUEUE *) TwoPhaseState->freeGXacts;
-			TwoPhaseState->freeGXacts = gxact;
-			/* Back up index count too, so we don't miss scanning one */
-			i--;
-		}
-	}
-
->>>>>>> 38e9348282e
 	/* Check for conflicting GID */
 	for (i = 0; i < TwoPhaseState->numPrepXacts; i++)
 	{
@@ -602,15 +570,9 @@ MarkAsPreparing(TransactionId xid,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("maximum number of prepared transactions reached"),
 				 errhint("Increase max_prepared_transactions (currently %d).",
-<<<<<<< HEAD
-					 max_prepared_xacts)));
-	gxact = (GlobalTransaction) MAKE_PTR(TwoPhaseState->freeGXacts);
-	TwoPhaseState->freeGXacts = gxact->proc.links.next;
-=======
 						 max_prepared_xacts)));
 	gxact = TwoPhaseState->freeGXacts;
 	TwoPhaseState->freeGXacts = (GlobalTransaction) gxact->proc.links.next;
->>>>>>> 38e9348282e
 
 	/* Initialize it */
 	MemSet(&gxact->proc, 0, sizeof(PGPROC));
@@ -1487,7 +1449,6 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	TwoPhaseFileHeader *hdr;
 	TransactionId latestXid;
 	TransactionId *children;
-<<<<<<< HEAD
 
 	PersistentEndXactRecObjects persistentPrepareObjects;
 	int32		deserializeLen;
@@ -1495,13 +1456,6 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	int			prepareAppendOnlyIntentCount;
     XLogRecPtr   tfXLogRecPtr;
     XLogRecord  *tfRecord  = NULL;
-=======
-	RelFileNode *commitrels;
-	RelFileNode *abortrels;
-	RelFileNode *delrels;
-	int			ndelrels;
-	int			i;
->>>>>>> 38e9348282e
 
 	/*
 	 * Validate the GID, and lock the GXACT to ensure that two backends do not
@@ -1664,7 +1618,6 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	 *
 	 * NB: this code knows that we couldn't be dropping any temp rels ...
 	 */
-<<<<<<< HEAD
 
 	PersistentFileSysObj_PreparedEndXactAction(
 			xid,
@@ -1672,33 +1625,6 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 			&persistentPrepareObjects,
 			isCommit,
 			prepareAppendOnlyIntentCount);
-=======
-	if (isCommit)
-	{
-		delrels = commitrels;
-		ndelrels = hdr->ncommitrels;
-	}
-	else
-	{
-		delrels = abortrels;
-		ndelrels = hdr->nabortrels;
-	}
-	for (i = 0; i < ndelrels; i++)
-	{
-		SMgrRelation srel = smgropen(delrels[i]);
-		ForkNumber	fork;
-
-		for (fork = 0; fork <= MAX_FORKNUM; fork++)
-		{
-			if (smgrexists(srel, fork))
-			{
-				XLogDropRelation(delrels[i], fork);
-				smgrdounlink(srel, fork, false, true);
-			}
-		}
-		smgrclose(srel);
-	}
->>>>>>> 38e9348282e
 
 	/* And now do the callbacks */
 	if (isCommit)
@@ -2219,14 +2145,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 		/* isRedo */ false);
 
 	/* Mark the transaction committed in pg_clog */
-<<<<<<< HEAD
-	TransactionIdCommit(xid);
-
-	/* to avoid race conditions, the parent must commit first */
-	TransactionIdCommitTree(nchildren, children);
-=======
 	TransactionIdCommitTree(xid, nchildren, children);
->>>>>>> 38e9348282e
 
 	/*
 	 * Wait for synchronous replication, if required.

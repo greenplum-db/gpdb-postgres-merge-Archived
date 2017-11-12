@@ -75,10 +75,35 @@ static bool DistributedLog_PagePrecedes(int page1, int page2);
 static void DistributedLog_WriteZeroPageXlogRec(int page);
 static void DistributedLog_WriteTruncateXlogRec(int page);
 
+void
+DistributedLog_SetCommittedTree(TransactionId xid, int nxids, TransactionId *xids,
+								DistributedTransactionTimeStamp	distribTimeStamp,
+								DistributedTransactionId distribXid,
+								bool isRedo)
+{
+	int			i;
+
+	/*
+	 * GPDB_84_MERGE_FIXME: This is a naive implementation, not very efficient.
+	 * Should update the list of transaction one distributed clog page at a time.
+	 * Similar to how we do for the clog now, since commit 06da3c570.
+	 */
+	DistributedLog_SetCommitted(xid,
+								distribTimeStamp,
+								distribXid,
+								isRedo);
+	for (i = 0; i < nxids; i++)
+	{
+		DistributedLog_SetCommitted(xids[i],
+									distribTimeStamp,
+									distribXid,
+									isRedo);
+	}
+}
+
 
 /*
  * Record that a distributed transaction committed in the distributed log.
- *
  */
 void
 DistributedLog_SetCommitted(

@@ -1385,13 +1385,13 @@ RecordTransactionCommit(void)
 			 */
 			/* UNDONE: What are the locking issues here? */
 			if (isDtxPrepared)
-				DistributedLog_SetCommitted(
-										xid,
-										getDtxStartTime(),
-										getDistributedTransactionId(),
-										/* isRedo */ false);
+				DistributedLog_SetCommittedTree(xid, nchildren, children,
+												getDtxStartTime(),
+												getDistributedTransactionId(),
+												/* isRedo */ false);
 
 			TransactionIdCommitTree(xid, nchildren, children);
+		}
 	}
 #ifdef IMPLEMENT_ASYNC_COMMIT
 	else
@@ -1634,74 +1634,6 @@ AtSubCommit_childXids(void)
 	s->maxChildXids = 0;
 }
 
-<<<<<<< HEAD
-/*
- * RecordSubTransactionCommit
- */
-static void
-RecordSubTransactionCommit(void)
-{
-	TransactionId xid = GetCurrentTransactionIdIfAny();
-
-	/*
-	 * We do not log the subcommit in XLOG; it doesn't matter until the
-	 * top-level transaction commits.
-	 *
-	 * We must mark the subtransaction subcommitted in the CLOG if it had a
-	 * valid XID assigned.	If it did not, nobody else will ever know about
-	 * the existence of this subxact.  We don't have to deal with deletions
-	 * scheduled for on-commit here, since they'll be reassigned to our parent
-	 * (who might still abort).
-	 */
-	if (TransactionIdIsValid(xid))
-	{
-		/* XXX does this really need to be a critical section? */
-		START_CRIT_SECTION();
-
-		/* Record subtransaction subcommit */
-		TransactionIdSubCommit(xid);
-
-		/*
-		 * Write the distributed commit entry for the subtransaction so when
-		 * we are researching a transaction in the distributed snapshot logic,
-		 * we can see this subtransaction was part of a distributed transaction.
-		 */
-		switch (DistributedTransactionContext)
-		{
-			case DTX_CONTEXT_LOCAL_ONLY:
-				break;		// Ignore.
-
-			case DTX_CONTEXT_QD_DISTRIBUTED_CAPABLE:
-			case DTX_CONTEXT_QE_TWO_PHASE_EXPLICIT_WRITER:
-			case DTX_CONTEXT_QE_TWO_PHASE_IMPLICIT_WRITER:
-			case DTX_CONTEXT_QE_AUTO_COMMIT_IMPLICIT:
-				DistributedLog_SetCommitted(xid,
-											MyProc->localDistribXactData.distribTimeStamp,
-											MyProc->localDistribXactData.distribXid,
-											/* isRedo */ false);
-				break;
-
-			case DTX_CONTEXT_QE_ENTRY_DB_SINGLETON:
-			case DTX_CONTEXT_QE_READER:
-			case DTX_CONTEXT_QD_RETRY_PHASE_2:
-			case DTX_CONTEXT_QE_FINISH_PREPARED:
-			case DTX_CONTEXT_QE_PREPARED:
-				elog(FATAL, "Unexpected segment distribute transaction context: '%s'",
-					 DtxContextToString(DistributedTransactionContext));
-				break;
-
-			default:
-				elog(PANIC, "Unrecognized DTX transaction context: %d",
-					 (int) DistributedTransactionContext);
-				break;
-		}
-
-		END_CRIT_SECTION();
-	}
-}
-
-=======
->>>>>>> 38e9348282e
 /* ----------------------------------------------------------------
  *						AbortTransaction stuff
  * ----------------------------------------------------------------
@@ -2728,9 +2660,6 @@ CommitTransaction(void)
 						 RESOURCE_RELEASE_BEFORE_LOCKS,
 						 true, true);
 
-	/* All relations that are in the vacuum process are being commited now. */
-	ResetVacuumRels();
-
 	/* Process resource group related callbacks */
 	AtEOXact_ResGroup(true);
 
@@ -3194,12 +3123,6 @@ AbortTransaction(void)
 	SetUserIdAndSecContext(s->prevUser, s->prevSecContext);
 
 	/*
-	 * Clear the freespace map entries for any relations that
-	 * are in the vacuum process.
-	 */
-	ClearFreeSpaceForVacuumRels();
-
-	/*
 	 * do abort processing
 	 */
 	AfterTriggerEndXact(false);
@@ -3296,7 +3219,6 @@ AbortTransaction(void)
 		AtEOXact_SPI(false);
 		AtEOXact_on_commit_actions(false);
 		AtEOXact_Namespace(false);
-		smgrabort();
 		AtEOXact_Files();
 		AtEOXact_ComboCid();
 		AtEOXact_HashTables(false);
@@ -3305,7 +3227,6 @@ AbortTransaction(void)
 		pgstat_report_xact_timestamp(0);
 	}
 
-<<<<<<< HEAD
 	/*
 	 * Do abort to all QE. NOTE: we don't process
 	 * signals to prevent recursion until we've notified the QEs.
@@ -3322,19 +3243,6 @@ AbortTransaction(void)
 	rollbackDtxTransaction();
 
 	MyProc->localDistribXactData.state = LOCALDISTRIBXACT_STATE_NONE;
-=======
-	AtEOXact_GUC(false, 1);
-	AtEOXact_SPI(false);
-	AtEOXact_xml();
-	AtEOXact_on_commit_actions(false);
-	AtEOXact_Namespace(false);
-	AtEOXact_Files();
-	AtEOXact_ComboCid();
-	AtEOXact_HashTables(false);
-	AtEOXact_PgStat(false);
-	AtEOXact_Snapshot(false);
-	pgstat_report_xact_timestamp(0);
->>>>>>> 38e9348282e
 
 	/*
 	 * State remains TRANS_ABORT until CleanupTransaction().
@@ -5851,15 +5759,6 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid,
 	TransactionId max_xid;
 	int			i;
 
-	if (distribXid != 0 && distribTimeStamp != 0)
-	{
-		DistributedLog_SetCommitted(
-			xid,
-			distribTimeStamp,
-			distribXid,
-			/* isRedo */ true);
-	}
-
 	data = xlrec->data;
 	PersistentEndXactRec_Deserialize(
 								data,
@@ -5872,6 +5771,13 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid,
 
 	/* Mark the transaction committed in pg_clog */
 	sub_xids = (TransactionId *) data;
+
+	if (distribXid != 0 && distribTimeStamp != 0)
+	{
+		DistributedLog_SetCommittedTree(xid, xlrec->nsubxacts, sub_xids,
+										distribTimeStamp, distribXid,
+										/* isRedo */ true);
+	}
 	TransactionIdCommitTree(xid, xlrec->nsubxacts, sub_xids);
 
 	/* Make sure nextXid is beyond any XID mentioned in the record */
@@ -5887,6 +5793,24 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid,
 		ShmemVariableCache->nextXid = max_xid;
 		TransactionIdAdvance(ShmemVariableCache->nextXid);
 	}
+
+	/* GPDB_84_MERGE_FIXME: This came from upstream, but the old code this replaced
+	 * had been removed from this function GPDB. Where does this belong now? */
+#if 0
+		SMgrRelation srel = smgropen(xlrec->xnodes[i]);
+		ForkNumber fork;
+
+		for (fork = 0; fork <= MAX_FORKNUM; fork++)
+		{
+			if (smgrexists(srel, fork))
+			{
+				XLogDropRelation(xlrec->xnodes[i], fork);
+				smgrdounlink(srel, fork, false, true);
+			}
+		}
+		smgrclose(srel);
+	}
+#endif
 }
 
 static void
@@ -5923,7 +5847,6 @@ xact_redo_distributed_commit(xl_xact_commit *xlrec, TransactionId xid)
 
 	if (TransactionIdIsValid(xid))
 	{
-<<<<<<< HEAD
 		/*
 		 * Mark the distributed transaction committed before we
 		 * update the CLOG in xact_redo_commit.
@@ -5938,12 +5861,6 @@ xact_redo_distributed_commit(xl_xact_commit *xlrec, TransactionId xid)
 			TransactionIdAdvance(ShmemVariableCache->nextXid);
 		}
 
-		DistributedLog_SetCommitted(
-			xid,
-			distribTimeStamp,
-			gxact_log->gxid,
-			/* isRedo */ true);
-
 		/*
 		 * Now update the CLOG and do local commit actions.
 		 *
@@ -5951,8 +5868,6 @@ xact_redo_distributed_commit(xl_xact_commit *xlrec, TransactionId xid)
 		 * only addition being redo of DistributeLog updates to subtransaction
 		 * log.
 		 */
-		TransactionIdCommit(xid);
-
 		data = xlrec->data;
 		PersistentEndXactRec_Deserialize(
 			data,
@@ -5963,24 +5878,21 @@ xact_redo_distributed_commit(xl_xact_commit *xlrec, TransactionId xid)
 		if (Debug_persistent_print)
 			PersistentEndXactRec_Print("xact_redo_distributed_commit", &persistentCommitObjects);
 
-		sub_xids = (TransactionId *)data;
+		/* Mark the transaction committed in pg_clog */
+		sub_xids = (TransactionId *) data;
 
-		/* Mark committed subtransactions as committed */
-		TransactionIdCommitTree(xlrec->nsubxacts, sub_xids);
+		/* Add the committed subtransactions to the DistributedLog, too. */
+		DistributedLog_SetCommittedTree(xid, xlrec->nsubxacts, sub_xids,
+										distribTimeStamp,
+										gxact_log->gxid,
+										/* isRedo */ true);
+
+		TransactionIdCommitTree(xid, xlrec->nsubxacts, sub_xids);
 
 		/* Make sure nextXid is beyond any XID mentioned in the record */
 		max_xid = xid;
 		for (i = 0; i < xlrec->nsubxacts; i++)
 		{
-			/*
-			 * Add the committed subtransactions to the DistributedLog, too.
-			 */
-			DistributedLog_SetCommitted(
-				sub_xids[i],
-				distribTimeStamp,
-				gxact_log->gxid,
-				/* isRedo */ true);
-		
 			if (TransactionIdPrecedes(max_xid, sub_xids[i]))
 				max_xid = sub_xids[i];
 		}
@@ -5990,7 +5902,10 @@ xact_redo_distributed_commit(xl_xact_commit *xlrec, TransactionId xid)
 			ShmemVariableCache->nextXid = max_xid;
 			TransactionIdAdvance(ShmemVariableCache->nextXid);
 		}
-=======
+
+		/* GPDB_84_MERGE_FIXME: This came from upstream, but the old code this replaced
+		 * had been removed from this function GPDB. Where does this belong now? */
+#if 0
 		SMgrRelation srel = smgropen(xlrec->xnodes[i]);
 		ForkNumber fork;
 
@@ -6003,7 +5918,7 @@ xact_redo_distributed_commit(xl_xact_commit *xlrec, TransactionId xid)
 			}
 		}
 		smgrclose(srel);
->>>>>>> 38e9348282e
+#endif
 	}
 
 	/*
@@ -6050,7 +5965,7 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 	}
 
 	/* GPDB_84_MERGE_FIXME: This came from upstream, but the old code this replaced
-	 * had been removed from this function GPDB. Where does this belong now?
+	 * had been removed from this function GPDB. Where does this belong now? */
 #if 0
 	/* Make sure files supposed to be dropped are dropped */
 	for (i = 0; i < xlrec->nrels; i++)
