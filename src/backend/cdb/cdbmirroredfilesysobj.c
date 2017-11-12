@@ -29,6 +29,7 @@
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_database.h"
 #include "catalog/gp_persistent.h"
+#include "catalog/storage.h"
 #include "cdb/cdbpersistentdatabase.h"
 #include "cdb/cdbpersistenttablespace.h"
 #include "cdb/cdbpersistentfilespace.h"
@@ -1003,13 +1004,13 @@ MirroredFileSysObj_TransactionCreateBufferPoolFile(RelFileNode *rnode,
 	/*
 	 * Synchronous primary and mirror create relation.
 	 */
-	RelationCreateStorage(newrnode, relation->rd_istemp,
+	RelationCreateStorage(*rnode,
+						  isLocalBuf, /* GPDB_84_MERGE_FIXME: is isLocalBuf the same as isTemp? */
 						  relationName,
 						  mirrorDataLossTrackingState,
 						  mirrorDataLossTrackingSessionNum,
-						  /* ignoreAlreadyExists */ false,
 						  &mirrorDataLossOccurred);
-	smgrclosenode(newrnode);
+	smgrclosenode(*rnode);
 
 	MirroredFileSysObj_FinishMirroredCreate(
 											&fsObjName,
@@ -1141,7 +1142,7 @@ MirroredFileSysObj_TransactionCreateAppendOnlyFile(
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not create relation file '%s', relation name '%s': %s",
-						relpath(*relFileNode),
+						relpath(*relFileNode, MAIN_FORKNUM),
 						relationName,
 						strerror(primaryError))));
 	}
@@ -1197,8 +1198,7 @@ MirroredFileSysObj_ScheduleDropBufferPoolRel(
 	 */
 	RelationOpenSmgr(relation);
 	Assert(relation->rd_smgr != NULL);
-	smgrscheduleunlink(
-					   &relation->rd_node,
+	RelationDropStorage(&relation->rd_node,
 					    /* segmentFileNum */ 0,
 					   PersistentFileSysRelStorageMgr_BufferPool,
 					   relation->rd_isLocalBuf,
@@ -1253,14 +1253,13 @@ MirroredFileSysObj_ScheduleDropBufferPoolFile(
 {
 	Assert(persistentTid != NULL);
 
-	smgrscheduleunlink(
-					   relFileNode,
+	RelationDropStorage(relFileNode,
 					    /* segmentFileNum */ 0,
-					   PersistentFileSysRelStorageMgr_BufferPool,
-					   isLocalBuf,
-					   relationName,
-					   persistentTid,
-					   persistentSerialNum);
+						PersistentFileSysRelStorageMgr_BufferPool,
+						isLocalBuf,
+						relationName,
+						persistentTid,
+						persistentSerialNum);
 
 	if (Debug_persistent_print)
 	{
@@ -1310,14 +1309,13 @@ MirroredFileSysObj_ScheduleDropAppendOnlyFile(
 		SUPPRESS_ERRCONTEXT_POP();
 	}
 
-	smgrscheduleunlink(
-					   relFileNode,
-					   segmentFileNum,
-					   PersistentFileSysRelStorageMgr_AppendOnly,
+	RelationDropStorage(relFileNode,
+						segmentFileNum,
+						PersistentFileSysRelStorageMgr_AppendOnly,
 					    /* isLocalBuf */ false,
-					   relationName,
-					   persistentTid,
-					   persistentSerialNum);
+						relationName,
+						persistentTid,
+						persistentSerialNum);
 }
 
 void
@@ -1344,14 +1342,13 @@ MirroredFileSysObj_DropRelFile(
 	switch (relStorageMgr)
 	{
 		case PersistentFileSysRelStorageMgr_BufferPool:
-			smgrdounlink(
-						 relFileNode,
-						 isLocalBuf,
-						 relationName,
-						 primaryOnly,
-						  /* isRedo */ false,
-						 ignoreNonExistence,
-						 mirrorDataLossOccurred);
+			smgrdomirroredunlink(relFileNode,
+								 isLocalBuf,
+								 relationName,
+								 primaryOnly,
+								 /* isRedo */ false,
+								 ignoreNonExistence,
+								 mirrorDataLossOccurred);
 			break;
 
 		case PersistentFileSysRelStorageMgr_AppendOnly:

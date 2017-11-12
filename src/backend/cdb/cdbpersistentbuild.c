@@ -30,6 +30,7 @@
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_database.h"
 #include "catalog/gp_persistent.h"
+#include "catalog/storage.h"
 #include "cdb/cdbdirectopen.h"
 #include "cdb/cdbpersistentstore.h"
 #include "cdb/cdbpersistentfilesysobj.h"
@@ -66,13 +67,7 @@ PersistentBuild_NonTransactionTruncate(RelFileNode *relFileNode)
 
 	smgrRelation = smgropen(*relFileNode);
 
-	smgrtruncate(
-				 smgrRelation,
-				 0,
-				  /* isTemp */ true,
-				  /* isLocalBuf */ false,
-				  /* persistentTid */ NULL,
-				  /* persistentSerialNum */ 0);
+	smgrtruncate(smgrRelation, MAIN_FORKNUM, 0, /* isTemp */ true);
 
 	smgrclose(smgrRelation);
 }
@@ -919,12 +914,12 @@ PersistentBuild_TruncateAllGpRelationNode(void)
 		btree_metapage = (Page) palloc(BLCKSZ);
 		_bt_initmetapage(btree_metapage, P_NONE, 0);
 		PageSetChecksumInplace(btree_metapage, 0);
-		smgrwrite(
-				  smgrRelation,
+		smgrwrite(smgrRelation,
+				  MAIN_FORKNUM,
 				   /* blockNum */ 0,
 				  (char *) btree_metapage,
 				   /* isTemp */ false);
-		smgrimmedsync(smgrRelation);
+		smgrimmedsync(smgrRelation, MAIN_FORKNUM);
 		pfree(btree_metapage);
 
 		smgrclose(smgrRelation);
