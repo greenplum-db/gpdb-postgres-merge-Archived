@@ -16,10 +16,7 @@
  * NOTE: it is intentional that parse location fields (in nodes that have
  * one) are not compared.  This is because we want, for example, a variable
  * "x" to be considered equal() to another reference to "x" in the query.
-<<<<<<< HEAD
-=======
  *
->>>>>>> 38e9348282e
  *
  *
  * Portions Copyright (c) 2005-2010, Greenplum inc
@@ -86,7 +83,6 @@
 			return false; \
 	} while (0)
 
-<<<<<<< HEAD
 /*
  * Compare a field that is a varlena datum to the other.
  * Note the result will be false if one is toasted and the other is untoasted.
@@ -104,8 +100,6 @@
 		} \
 	} while (0)
 
-=======
->>>>>>> 38e9348282e
 /* Compare a parse location field (this is a no-op, per note above) */
 #define COMPARE_LOCATION_FIELD(fldname) \
 	((void) 0)
@@ -215,7 +209,6 @@ _equalAggref(Aggref *a, Aggref *b)
 	COMPARE_NODE_FIELD(args);
 	COMPARE_NODE_FIELD(aggorder);
 	COMPARE_SCALAR_FIELD(aggdistinct);
-<<<<<<< HEAD
 	COMPARE_NODE_FIELD(aggfilter);
 	COMPARE_SCALAR_FIELD(aggstar);
 	COMPARE_SCALAR_FIELD(aggstage);
@@ -248,8 +241,6 @@ _equalWindowFunc(WindowFunc *a, WindowFunc *b)
 	COMPARE_SCALAR_FIELD(windistinct);
 	COMPARE_SCALAR_FIELD(winindex);
 	COMPARE_SCALAR_FIELD(winstage);
-=======
->>>>>>> 38e9348282e
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -379,11 +370,7 @@ _equalSubLink(SubLink *a, SubLink *b)
 	COMPARE_NODE_FIELD(testexpr);
 	COMPARE_NODE_FIELD(operName);
 	COMPARE_NODE_FIELD(subselect);
-<<<<<<< HEAD
-	/* do not compare 'location' field */
-=======
 	COMPARE_LOCATION_FIELD(location);
->>>>>>> 38e9348282e
 
 	return true;
 }
@@ -406,10 +393,7 @@ _equalSubPlan(SubPlan *a, SubPlan *b)
 	COMPARE_NODE_FIELD(setParam);
 	COMPARE_NODE_FIELD(parParam);
 	COMPARE_NODE_FIELD(args);
-<<<<<<< HEAD
 	COMPARE_NODE_FIELD(extParam);
-=======
->>>>>>> 38e9348282e
 	COMPARE_SCALAR_FIELD(startup_cost);
 	COMPARE_SCALAR_FIELD(per_call_cost);
 
@@ -846,20 +830,6 @@ _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 }
 
 static bool
-<<<<<<< HEAD
-=======
-_equalFlattenedSubLink(FlattenedSubLink *a, FlattenedSubLink *b)
-{
-	COMPARE_SCALAR_FIELD(jointype);
-	COMPARE_BITMAPSET_FIELD(lefthand);
-	COMPARE_BITMAPSET_FIELD(righthand);
-	COMPARE_NODE_FIELD(quals);
-
-	return true;
-}
-
-static bool
->>>>>>> 38e9348282e
 _equalPlaceHolderVar(PlaceHolderVar *a, PlaceHolderVar *b)
 {
 	/*
@@ -891,13 +861,10 @@ _equalSpecialJoinInfo(SpecialJoinInfo *a, SpecialJoinInfo *b)
 	COMPARE_SCALAR_FIELD(lhs_strict);
 	COMPARE_SCALAR_FIELD(delay_upper_joins);
 	COMPARE_NODE_FIELD(join_quals);
-<<<<<<< HEAD
 	COMPARE_SCALAR_FIELD(try_join_unique);	/* CDB */
 	COMPARE_SCALAR_FIELD(consider_dedup);		/* CDB */
 	COMPARE_NODE_FIELD(semi_operators);
 	COMPARE_NODE_FIELD(semi_rhs_exprs);
-=======
->>>>>>> 38e9348282e
 
 	return true;
 }
@@ -922,10 +889,7 @@ _equalPlaceHolderInfo(PlaceHolderInfo *a, PlaceHolderInfo *b)
 	COMPARE_NODE_FIELD(ph_var);
 	COMPARE_BITMAPSET_FIELD(ph_eval_at);
 	COMPARE_BITMAPSET_FIELD(ph_needed);
-<<<<<<< HEAD
 	COMPARE_BITMAPSET_FIELD(ph_may_need);
-=======
->>>>>>> 38e9348282e
 	COMPARE_SCALAR_FIELD(ph_width);
 
 	return true;
@@ -949,13 +913,10 @@ _equalQuery(Query *a, Query *b)
 	COMPARE_SCALAR_FIELD(hasWindowFuncs);
 	COMPARE_SCALAR_FIELD(hasSubLinks);
 	COMPARE_SCALAR_FIELD(hasDistinctOn);
-<<<<<<< HEAD
+	COMPARE_SCALAR_FIELD(hasRecursive);
 	COMPARE_SCALAR_FIELD(hasDynamicFunctions);
 	COMPARE_SCALAR_FIELD(hasFuncsWithExecRestrictions);
-=======
-	COMPARE_SCALAR_FIELD(hasRecursive);
 	COMPARE_NODE_FIELD(cteList);
->>>>>>> 38e9348282e
 	COMPARE_NODE_FIELD(rtable);
 	COMPARE_NODE_FIELD(jointree);
 	COMPARE_NODE_FIELD(targetList);
@@ -1028,11 +989,8 @@ _equalSelectStmt(SelectStmt *a, SelectStmt *b)
 	COMPARE_NODE_FIELD(whereClause);
 	COMPARE_NODE_FIELD(groupClause);
 	COMPARE_NODE_FIELD(havingClause);
-<<<<<<< HEAD
 	COMPARE_NODE_FIELD(windowClause);
-=======
 	COMPARE_NODE_FIELD(withClause);
->>>>>>> 38e9348282e
 	COMPARE_NODE_FIELD(valuesLists);
 	COMPARE_NODE_FIELD(sortClause);
 	COMPARE_NODE_FIELD(scatterClause);
@@ -2274,11 +2232,7 @@ static bool
 _equalParamRef(ParamRef *a, ParamRef *b)
 {
 	COMPARE_SCALAR_FIELD(number);
-<<<<<<< HEAD
-	/* do not compare 'location' field */
-=======
 	COMPARE_LOCATION_FIELD(location);
->>>>>>> 38e9348282e
 
 	return true;
 }
@@ -2288,11 +2242,7 @@ _equalAConst(A_Const *a, A_Const *b)
 {
 	if (!equal(&a->val, &b->val))		/* hack for in-line Value field */
 		return false;
-<<<<<<< HEAD
-	/* do not compare 'location' field */;
-=======
 	COMPARE_LOCATION_FIELD(location);
->>>>>>> 38e9348282e
 
 	return true;
 }
@@ -2307,10 +2257,7 @@ _equalFuncCall(FuncCall *a, FuncCall *b)
 	COMPARE_SCALAR_FIELD(agg_star);
 	COMPARE_SCALAR_FIELD(agg_distinct);
 	COMPARE_SCALAR_FIELD(func_variadic);
-<<<<<<< HEAD
 	COMPARE_NODE_FIELD(over);
-=======
->>>>>>> 38e9348282e
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -2379,12 +2326,8 @@ static bool
 _equalTypeCast(TypeCast *a, TypeCast *b)
 {
 	COMPARE_NODE_FIELD(arg);
-<<<<<<< HEAD
 	COMPARE_NODE_FIELD(typeName);
-=======
-	COMPARE_NODE_FIELD(typename);
 	COMPARE_LOCATION_FIELD(location);
->>>>>>> 38e9348282e
 
 	return true;
 }
@@ -2397,7 +2340,6 @@ _equalSortBy(SortBy *a, SortBy *b)
 	COMPARE_SCALAR_FIELD(sortby_nulls);
 	COMPARE_NODE_FIELD(useOp);
 	COMPARE_LOCATION_FIELD(location);
-<<<<<<< HEAD
 
 	return true;
 }
@@ -2413,8 +2355,6 @@ _equalWindowDef(WindowDef *a, WindowDef *b)
 	COMPARE_NODE_FIELD(startOffset);
 	COMPARE_NODE_FIELD(endOffset);
 	COMPARE_LOCATION_FIELD(location);
-=======
->>>>>>> 38e9348282e
 
 	return true;
 }
@@ -2648,32 +2588,6 @@ _equalCommonTableExpr(CommonTableExpr *a, CommonTableExpr *b)
 }
 
 static bool
-_equalWithClause(WithClause *a, WithClause *b)
-{
-	COMPARE_NODE_FIELD(ctes);
-	COMPARE_SCALAR_FIELD(recursive);
-	COMPARE_LOCATION_FIELD(location);
-
-	return true;
-}
-
-static bool
-_equalCommonTableExpr(CommonTableExpr *a, CommonTableExpr *b)
-{
-	COMPARE_STRING_FIELD(ctename);
-	COMPARE_NODE_FIELD(aliascolnames);
-	COMPARE_NODE_FIELD(ctequery);
-	COMPARE_LOCATION_FIELD(location);
-	COMPARE_SCALAR_FIELD(cterecursive);
-	COMPARE_SCALAR_FIELD(cterefcount);
-	COMPARE_NODE_FIELD(ctecolnames);
-	COMPARE_NODE_FIELD(ctecoltypes);
-	COMPARE_NODE_FIELD(ctecoltypmods);
-
-	return true;
-}
-
-static bool
 _equalFkConstraint(FkConstraint *a, FkConstraint *b)
 {
 	COMPARE_STRING_FIELD(constr_name);
@@ -2716,11 +2630,7 @@ _equalXmlSerialize(XmlSerialize *a, XmlSerialize *b)
 {
 	COMPARE_SCALAR_FIELD(xmloption);
 	COMPARE_NODE_FIELD(expr);
-<<<<<<< HEAD
 	COMPARE_NODE_FIELD(typeName);
-=======
-	COMPARE_NODE_FIELD(typename);
->>>>>>> 38e9348282e
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -2989,18 +2899,9 @@ equal(void *a, void *b)
 		case T_RestrictInfo:
 			retval = _equalRestrictInfo(a, b);
 			break;
-<<<<<<< HEAD
 		case T_PlaceHolderVar:
 			retval = _equalPlaceHolderVar(a, b);
 			break;
-=======
-		case T_FlattenedSubLink:
-			retval = _equalFlattenedSubLink(a, b);
-			break;
-		case T_PlaceHolderVar:
-			retval = _equalPlaceHolderVar(a, b);
-			break;
->>>>>>> 38e9348282e
 		case T_SpecialJoinInfo:
 			retval = _equalSpecialJoinInfo(a, b);
 			break;

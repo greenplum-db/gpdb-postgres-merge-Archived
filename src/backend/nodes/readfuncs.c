@@ -143,9 +143,6 @@ inline static char extended_char(char* token, size_t length)
 #define READ_STRING_FIELD(fldname)  READ_SCALAR_FIELD(fldname, nullable_string(token, length))
 
 /* Read a parse location field (and throw away the value, per notes above) */
-#define READ_LOCATION_FIELD(fldname) READ_SCALAR_FIELD(fldname, -1)
-
-/* Read a parse location field (and throw away the value, per notes above) */
 #define READ_LOCATION_FIELD(fldname) \
 	token = pg_strtok(&length);		/* skip :fldname */ \
 	token = pg_strtok(&length);		/* get field value */ \
@@ -337,13 +334,10 @@ _readQuery(void)
 	READ_BOOL_FIELD(hasWindowFuncs);
 	READ_BOOL_FIELD(hasSubLinks);
 	READ_BOOL_FIELD(hasDistinctOn);
-<<<<<<< HEAD
+	READ_BOOL_FIELD(hasRecursive);
 	READ_BOOL_FIELD(hasDynamicFunctions);
 	READ_BOOL_FIELD(hasFuncsWithExecRestrictions);
-=======
-	READ_BOOL_FIELD(hasRecursive);
 	READ_NODE_FIELD(cteList);
->>>>>>> 38e9348282e
 	READ_NODE_FIELD(rtable);
 	READ_NODE_FIELD(jointree);
 	READ_NODE_FIELD(targetList);
@@ -569,24 +563,6 @@ _readWithClause(void)
 	READ_NODE_FIELD(ctes);
 	READ_BOOL_FIELD(recursive);
 	READ_LOCATION_FIELD(location);
-
-	READ_DONE();
-}
-
-static CommonTableExpr *
-_readCommonTableExpr(void)
-{
-	READ_LOCALS(CommonTableExpr);
-
-	READ_STRING_FIELD(ctename);
-	READ_NODE_FIELD(aliascolnames);
-	READ_NODE_FIELD(ctequery);
-	READ_LOCATION_FIELD(location);
-	READ_BOOL_FIELD(cterecursive);
-	READ_INT_FIELD(cterefcount);
-	READ_NODE_FIELD(ctecolnames);
-	READ_NODE_FIELD(ctecoltypes);
-	READ_NODE_FIELD(ctecoltypmods);
 
 	READ_DONE();
 }
@@ -1087,39 +1063,6 @@ _readRenameStmt(void)
 
 
 /*
- * _readCoerceViaIO
- */
-static CoerceViaIO *
-_readCoerceViaIO(void)
-{
-	READ_LOCALS(CoerceViaIO);
-
-	READ_NODE_FIELD(arg);
-	READ_OID_FIELD(resulttype);
-	READ_ENUM_FIELD(coerceformat, CoercionForm);
-
-	READ_DONE();
-}
-
-/*
- * _readArrayCoerceExpr
- */
-static ArrayCoerceExpr *
-_readArrayCoerceExpr(void)
-{
-	READ_LOCALS(ArrayCoerceExpr);
-
-	READ_NODE_FIELD(arg);
-	READ_OID_FIELD(elemfuncid);
-	READ_OID_FIELD(resulttype);
-	READ_INT_FIELD(resulttypmod);
-	READ_BOOL_FIELD(isExplicit);
-	READ_ENUM_FIELD(coerceformat, CoercionForm);
-
-	READ_DONE();
-}
-
-/*
  * _readFuncCall
  *
  * This parsenode is transformed during parse_analyze.
@@ -1320,7 +1263,6 @@ _readAggref(void)
 	READ_UINT_FIELD(agglevelsup);
 	READ_BOOL_FIELD(aggstar);
 	READ_BOOL_FIELD(aggdistinct);
-<<<<<<< HEAD
 	READ_NODE_FIELD(aggfilter);
 	READ_ENUM_FIELD(aggstage, AggStage);
 	READ_NODE_FIELD(aggorder);
@@ -1362,8 +1304,6 @@ _readWindowFunc(void)
 	READ_BOOL_FIELD(windistinct);
 	READ_UINT_FIELD(winindex);
 	READ_ENUM_FIELD(winstage, WinStage);
-=======
->>>>>>> 38e9348282e
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -1402,11 +1342,8 @@ _readFuncExpr(void)
 	READ_BOOL_FIELD(funcretset);
 	READ_ENUM_FIELD(funcformat, CoercionForm);
 	READ_NODE_FIELD(args);
-<<<<<<< HEAD
 	READ_BOOL_FIELD(is_tablefunc);  /* GPDB */
-=======
 	READ_LOCATION_FIELD(location);
->>>>>>> 38e9348282e
 
 	READ_DONE();
 }
@@ -1605,8 +1542,6 @@ _readRelabelType(void)
 }
 
 /*
-<<<<<<< HEAD
-=======
  * _readCoerceViaIO
  */
 static CoerceViaIO *
@@ -1642,7 +1577,6 @@ _readArrayCoerceExpr(void)
 }
 
 /*
->>>>>>> 38e9348282e
  * _readConvertRowtypeExpr
  */
 static ConvertRowtypeExpr *
@@ -1716,8 +1650,7 @@ _readArrayExpr(void)
 	READ_OID_FIELD(element_typeid);
 	READ_NODE_FIELD(elements);
 	READ_BOOL_FIELD(multidims);
-<<<<<<< HEAD
-	/*READ_LOCATION_FIELD(location);*/
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -1731,8 +1664,6 @@ _readA_ArrayExpr(void)
 	READ_LOCALS(A_ArrayExpr);
 
 	READ_NODE_FIELD(elements);
-=======
->>>>>>> 38e9348282e
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -1819,11 +1750,7 @@ _readXmlExpr(void)
 	READ_ENUM_FIELD(xmloption, XmlOptionType);
 	READ_OID_FIELD(type);
 	READ_INT_FIELD(typmod);
-<<<<<<< HEAD
-	/*READ_LOCATION_FIELD(location);*/
-=======
 	READ_LOCATION_FIELD(location);
->>>>>>> 38e9348282e
 
 	READ_DONE();
 }
@@ -2107,24 +2034,6 @@ _readRangeTblEntry(void)
 		case RTE_JOIN:
 			READ_ENUM_FIELD(jointype, JoinType);
 			READ_NODE_FIELD(joinaliasvars);
-<<<<<<< HEAD
-=======
-			break;
-		case RTE_FUNCTION:
-			READ_NODE_FIELD(funcexpr);
-			READ_NODE_FIELD(funccoltypes);
-			READ_NODE_FIELD(funccoltypmods);
-			break;
-		case RTE_VALUES:
-			READ_NODE_FIELD(values_lists);
-			break;
-		case RTE_CTE:
-			READ_STRING_FIELD(ctename);
-			READ_UINT_FIELD(ctelevelsup);
-			READ_BOOL_FIELD(self_reference);
-			READ_NODE_FIELD(ctecoltypes);
-			READ_NODE_FIELD(ctecoltypmods);
->>>>>>> 38e9348282e
 			break;
 		case RTE_FUNCTION:
 			READ_NODE_FIELD(funcexpr);

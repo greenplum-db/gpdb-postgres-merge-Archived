@@ -370,7 +370,6 @@ makeDefElem(char *name, Node *arg)
 }
 
 /*
-<<<<<<< HEAD
  * makeAggrefByOid -
  * 	make a trivial aggregate expression.
  *
@@ -398,7 +397,7 @@ makeAggrefByOid(Oid aggfnoid, List *args)
 	return aggref;
 }
 
-=======
+/*
  * makeOptionDefElem -
  *	build an OptionDefElem node
  */
@@ -410,4 +409,3 @@ makeOptionDefElem(int op, DefElem *def)
 	res->def = def;
 	return res;
 }
->>>>>>> 38e9348282e

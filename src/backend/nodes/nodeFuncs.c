@@ -1376,14 +1376,6 @@ expression_tree_walker(Node *node,
 				/* groupClauses are deemed uninteresting */
 			}
 			break;
-		case T_FlattenedSubLink:
-			{
-				FlattenedSubLink *fslink = (FlattenedSubLink *) node;
-
-				if (walker(fslink->quals, context))
-					return true;
-			}
-			break;
 		case T_PlaceHolderVar:
 			return walker(((PlaceHolderVar *) node)->phexpr, context);
 		case T_AppendRelInfo:
@@ -2182,17 +2174,6 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
-		case T_FlattenedSubLink:
-			{
-				FlattenedSubLink *fslink = (FlattenedSubLink *) node;
-				FlattenedSubLink *newnode;
-
-				FLATCOPY(newnode, fslink, FlattenedSubLink);
-				/* Assume we need not copy the relids bitmapsets */
-				MUTATE(newnode->quals, fslink->quals, Expr *);
-				return (Node *) newnode;
-			}
-			break;
 		case T_PlaceHolderVar:
 			{
 				PlaceHolderVar *phv = (PlaceHolderVar *) node;
@@ -2739,7 +2720,7 @@ raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
 
 				if (walker(tc->arg, context))
 					return true;
-				if (walker(tc->typename, context))
+				if (walker(tc->typeName, context))
 					return true;
 			}
 			break;
@@ -2794,7 +2775,7 @@ raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
 			{
 				ColumnDef *coldef = (ColumnDef *) node;
 
-				if (walker(coldef->typename, context))
+				if (walker(coldef->typeName, context))
 					return true;
 				if (walker(coldef->raw_default, context))
 					return true;
@@ -2809,7 +2790,7 @@ raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
 
 				if (walker(xs->expr, context))
 					return true;
-				if (walker(xs->typename, context))
+				if (walker(xs->typeName, context))
 					return true;
 			}
 			break;
