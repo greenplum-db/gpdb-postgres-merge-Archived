@@ -71,7 +71,6 @@ extern ResultPath *create_result_path(List *quals);
 extern MaterialPath *create_material_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath);
 extern UniquePath *create_unique_path(PlannerInfo *root,
 		Path        *subpath,
-		SpecialJoinInfo *sjinfo,
 		List        *distinct_on_exprs,
 		List		   *distinct_on_operators,
 		Relids       distinct_on_rowid_relids);
