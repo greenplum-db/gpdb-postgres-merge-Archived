@@ -58,20 +58,16 @@
 #include "storage/smgr.h"
 #include "storage/spin.h"
 #include "utils/builtins.h"
-<<<<<<< HEAD
 #include "utils/nabstime.h"
 #include "utils/faultinjector.h"
 #include "utils/flatfiles.h"
-#include "utils/pg_locale.h"
 #include "utils/guc.h"
 #include "utils/ps_status.h"
-#include "utils/resscheduler.h"
 #include "pg_trace.h"
 #include "utils/catcache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 #include "utils/pg_crc.h"
-#include "utils/pg_locale.h"
 #include "utils/ps_status.h"
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
@@ -88,12 +84,8 @@
 #include "cdb/cdbresynchronizechangetracking.h"
 #include "cdb/cdbpersistentfilesysobj.h"
 #include "cdb/cdbpersistentcheck.h"
+#include "utils/resscheduler.h"
 #include "utils/snapmgr.h"
-=======
-#include "utils/guc.h"
-#include "utils/ps_status.h"
-#include "pg_trace.h"
->>>>>>> 38e9348282e
 
 extern uint32 bootstrap_data_checksum_version;
 
@@ -662,12 +654,8 @@ static bool XLogPageRead(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt,
 			 bool randAccess);
 
 static void PreallocXlogFiles(XLogRecPtr endptr);
-<<<<<<< HEAD
 static void UpdateLastRemovedPtr(char *filename);
-=======
-static void RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr);
 static void ValidateXLOGDirectoryStructure(void);
->>>>>>> 38e9348282e
 static void CleanupBackupHistory(void);
 static XLogRecord *ReadCheckpointRecord(XLogRecPtr RecPtr, int whichChkpt);
 static bool ValidXLOGHeader(XLogPageHeader hdr, int emode, bool segmentonly);
@@ -1565,9 +1553,7 @@ XLogCheckBuffer(XLogRecData *rdata, bool holdsExclusiveLock,
 		/*
 		 * The page needs to be backed up, so set up *bkpb
 		 */
-<<<<<<< HEAD
-		bkpb->node = BufferGetFileNode(rdata->buffer);
-		bkpb->block = BufferGetBlockNumber(rdata->buffer);
+		BufferGetTag(rdata->buffer, &bkpb->node, &bkpb->fork, &bkpb->block);
 		bkpb->block_info = 0;
 
 		/*
@@ -1579,9 +1565,6 @@ XLogCheckBuffer(XLogRecData *rdata, bool holdsExclusiveLock,
 		 */
 		if (needs_backup)
 			bkpb->block_info |= BLOCK_APPLY;
-=======
-		BufferGetTag(rdata->buffer, &bkpb->node, &bkpb->fork, &bkpb->block);
->>>>>>> 38e9348282e
 
 		if (rdata->buffer_std)
 		{
@@ -3635,53 +3618,6 @@ XLogPrintLogNames(void)
 }
 
 /*
- * Verify whether pg_xlog and pg_xlog/archive_status exist.
- * If the latter does not exist, recreate it.
- *
- * It is not the goal of this function to verify the contents of these
- * directories, but to help in cases where someone has performed a cluster
- * copy for PITR purposes but omitted pg_xlog from the copy.
- *
- * We could also recreate pg_xlog if it doesn't exist, but a deliberate
- * policy decision was made not to.  It is fairly common for pg_xlog to be
- * a symlink, and if that was the DBA's intent then automatically making a
- * plain directory would result in degraded performance with no notice.
- */
-static void
-ValidateXLOGDirectoryStructure(void)
-{
-	char		path[MAXPGPATH];
-	struct stat	stat_buf;
-
-	/* Check for pg_xlog; if it doesn't exist, error out */
-	if (stat(XLOGDIR, &stat_buf) != 0 ||
-		!S_ISDIR(stat_buf.st_mode))
-		ereport(FATAL, 
-				(errmsg("required WAL directory \"%s\" does not exist",
-						XLOGDIR)));
-
-	/* Check for archive_status */
-	snprintf(path, MAXPGPATH, XLOGDIR "/archive_status");
-	if (stat(path, &stat_buf) == 0)
-	{
-		/* Check for weird cases where it exists but isn't a directory */
-		if (!S_ISDIR(stat_buf.st_mode))
-			ereport(FATAL, 
-					(errmsg("required WAL directory \"%s\" does not exist",
-							path)));
-	}
-	else
-	{
-		ereport(LOG,
-				(errmsg("creating missing WAL directory \"%s\"", path)));
-		if (mkdir(path, 0700) < 0)
-			ereport(FATAL, 
-					(errmsg("could not create missing directory \"%s\": %m",
-							path)));
-	}
-}
-
-/*
  * Remove previous backup history files.  This also retries creation of
  * .ready files for any backup history files for which XLogArchiveNotify
  * failed earlier.
@@ -3798,7 +3734,6 @@ RestoreBackupBlockContents(XLogRecPtr lsn, BkpBlock bkpb, char *blk,
 
 	if (bkpb.hole_length == 0)
 	{
-<<<<<<< HEAD
 		memcpy((char *) page, blk, BLCKSZ);
 	}
 	else
@@ -3820,36 +3755,6 @@ RestoreBackupBlockContents(XLogRecPtr lsn, BkpBlock bkpb, char *blk,
 	MarkBufferDirty(buffer);
 
 	if (!keep_buffer)
-=======
-		if (!(record->xl_info & XLR_SET_BKP_BLOCK(i)))
-			continue;
-
-		memcpy(&bkpb, blk, sizeof(BkpBlock));
-		blk += sizeof(BkpBlock);
-
-		buffer = XLogReadBufferExtended(bkpb.node, bkpb.fork, bkpb.block,
-										RBM_ZERO);
-		Assert(BufferIsValid(buffer));
-		page = (Page) BufferGetPage(buffer);
-
-		if (bkpb.hole_length == 0)
-		{
-			memcpy((char *) page, blk, BLCKSZ);
-		}
-		else
-		{
-			/* must zero-fill the hole */
-			MemSet((char *) page, 0, BLCKSZ);
-			memcpy((char *) page, blk, bkpb.hole_offset);
-			memcpy((char *) page + (bkpb.hole_offset + bkpb.hole_length),
-				   blk + bkpb.hole_offset,
-				   BLCKSZ - (bkpb.hole_offset + bkpb.hole_length));
-		}
-
-		PageSetLSN(page, lsn);
-		PageSetTLI(page, ThisTimeLineID);
-		MarkBufferDirty(buffer);
->>>>>>> 38e9348282e
 		UnlockReleaseBuffer(buffer);
 
 	MIRROREDLOCK_BUFMGR_UNLOCK;
@@ -3966,14 +3871,39 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
 static void
 ValidateXLOGDirectoryStructure(void)
 {
+	char		path[MAXPGPATH];
+	char	   *fullpath;
 	struct stat stat_buf;
 
+	fullpath = makeRelativeToTxnFilespace(XLOGDIR);
+
 	/* Check for pg_xlog; if it doesn't exist, error out */
-	if (stat(makeRelativeToTxnFilespace(XLOGDIR), &stat_buf) != 0 ||
+	if (stat(fullpath, &stat_buf) != 0 ||
 			!S_ISDIR(stat_buf.st_mode))
 			ereport(FATAL,
 					(errmsg("required WAL directory \"%s\" does not exist",
 							XLOGDIR)));
+
+	/* Check for archive_status */
+	snprintf(path, MAXPGPATH, XLOGDIR "/archive_status");
+	fullpath = makeRelativeToTxnFilespace(path);
+	if (stat(fullpath, &stat_buf) == 0)
+	{
+		/* Check for weird cases where it exists but isn't a directory */
+		if (!S_ISDIR(stat_buf.st_mode))
+			ereport(FATAL, 
+					(errmsg("required WAL directory \"%s\" does not exist",
+							path)));
+	}
+	else
+	{
+		ereport(LOG,
+				(errmsg("creating missing WAL directory \"%s\"", path)));
+		if (mkdir(fullpath, 0700) < 0)
+			ereport(FATAL, 
+					(errmsg("could not create missing directory \"%s\": %m",
+							path)));
+	}
 }
 
 /*
@@ -5732,35 +5662,6 @@ ReadControlFile(void)
 						   " but the server was compiled without USE_FLOAT8_BYVAL."),
 				 errhint("It looks like you need to recompile or initdb.")));
 #endif
-<<<<<<< HEAD
-
-	if (ControlFile->localeBuflen != LOCALE_NAME_BUFLEN)
-		ereport(FATAL,
-				(errmsg("database files are incompatible with server"),
-				 errdetail("The database cluster was initialized with LOCALE_NAME_BUFLEN %d,"
-				  " but the server was compiled with LOCALE_NAME_BUFLEN %d.",
-						   ControlFile->localeBuflen, LOCALE_NAME_BUFLEN),
-				 errhint("It looks like you need to recompile or initdb.")));
-	if (pg_perm_setlocale(LC_COLLATE, ControlFile->lc_collate) == NULL)
-		ereport(FATAL,
-			(errmsg("database files are incompatible with operating system"),
-			 errdetail("The database cluster was initialized with LC_COLLATE \"%s\","
-					   " which is not recognized by setlocale().",
-					   ControlFile->lc_collate),
-			 errhint("It looks like you need to initdb or install locale support.")));
-	if (pg_perm_setlocale(LC_CTYPE, ControlFile->lc_ctype) == NULL)
-		ereport(FATAL,
-			(errmsg("database files are incompatible with operating system"),
-		errdetail("The database cluster was initialized with LC_CTYPE \"%s\","
-				  " which is not recognized by setlocale().",
-				  ControlFile->lc_ctype),
-			 errhint("It looks like you need to initdb or install locale support.")));
-
-	/* Make the fixed locale settings visible as GUC variables, too */
-	SetConfigOption("lc_collate", ControlFile->lc_collate,
-					PGC_INTERNAL, PGC_S_OVERRIDE);
-	SetConfigOption("lc_ctype", ControlFile->lc_ctype,
-					PGC_INTERNAL, PGC_S_OVERRIDE);
 
 	/* Make the initdb settings visible as GUC variables, too */
 	SetConfigOption("data_checksums", DataChecksumsEnabled() ? "yes" : "no",
@@ -5865,8 +5766,6 @@ XLogInChangeTrackingTransition(void)
 		elog(Persistent_DebugPrintLevel(),
 			 "XLogInChangeTrackingTransition: Released ChangeTrackingTransitionLock");
 
-=======
->>>>>>> 38e9348282e
 }
 
 void
@@ -6550,10 +6449,7 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 								recoveryStopXid,
 								timestamptz_to_str(recoveryStopTime))));
 		}
-<<<<<<< HEAD
-=======
 
->>>>>>> 38e9348282e
 		if (recoveryStopAfter)
 			recoveryLastXTime = recordXtime;
 	}
@@ -9748,7 +9644,6 @@ CreateCheckPoint(int flags)
 	if (log_checkpoints)
 		LogCheckpointEnd();
 
-<<<<<<< HEAD
 	if (resync_to_sync_transition)
 	{
 		RequestXLogSwitch();
@@ -9769,12 +9664,11 @@ CreateCheckPoint(int flags)
 		 */
 		MIRRORED_UNLOCK;
 	}
-=======
-        TRACE_POSTGRESQL_CHECKPOINT_DONE(CheckpointStats.ckpt_bufs_written,
-                                NBuffers, CheckpointStats.ckpt_segs_added,
-                                CheckpointStats.ckpt_segs_removed,
-                                CheckpointStats.ckpt_segs_recycled);
->>>>>>> 38e9348282e
+
+	TRACE_POSTGRESQL_CHECKPOINT_DONE(CheckpointStats.ckpt_bufs_written,
+									 NBuffers, CheckpointStats.ckpt_segs_added,
+									 CheckpointStats.ckpt_segs_removed,
+									 CheckpointStats.ckpt_segs_recycled);
 
 	LWLockRelease(CheckpointLock);
 }
@@ -10823,12 +10717,9 @@ do_pg_stop_backup(char *labelfile)
 	char		histfilepath[MAXPGPATH];
 	char		startxlogfilename[MAXFNAMELEN];
 	char		stopxlogfilename[MAXFNAMELEN];
-<<<<<<< HEAD
-	char		backupfrom[20];
-=======
 	char		lastxlogfilename[MAXFNAMELEN];
 	char		histfilename[MAXFNAMELEN];
->>>>>>> 38e9348282e
+	char		backupfrom[20];
 	uint32		_logId;
 	uint32		_logSeg;
 	FILE	   *lfp;

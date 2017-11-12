@@ -26,15 +26,11 @@
 #include "access/transam.h"
 #include "access/twophase.h"
 #include "access/xlogutils.h"
-<<<<<<< HEAD
 #include "access/fileam.h"
-#include "catalog/namespace.h"
-#include "catalog/oid_dispatch.h"
-=======
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
+#include "catalog/oid_dispatch.h"
 #include "catalog/storage.h"
->>>>>>> 38e9348282e
 #include "commands/async.h"
 #include "commands/resgroupcmds.h"
 #include "commands/tablecmds.h"
@@ -1380,7 +1376,6 @@ RecordTransactionCommit(void)
 		 * Now we may update the CLOG, if we wrote a COMMIT record above
 		 */
 		if (markXidCommitted)
-<<<<<<< HEAD
 		{
 			/*
 			 * Mark the distributed transaction committed. Note that this
@@ -1396,13 +1391,7 @@ RecordTransactionCommit(void)
 										getDistributedTransactionId(),
 										/* isRedo */ false);
 
-			TransactionIdCommit(xid);
-			/* to avoid race conditions, the parent must commit first */
-			TransactionIdCommitTree(nchildren, children);
-		}
-=======
 			TransactionIdCommitTree(xid, nchildren, children);
->>>>>>> 38e9348282e
 	}
 #ifdef IMPLEMENT_ASYNC_COMMIT
 	else
@@ -5862,7 +5851,6 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid,
 	TransactionId max_xid;
 	int			i;
 
-<<<<<<< HEAD
 	if (distribXid != 0 && distribTimeStamp != 0)
 	{
 		DistributedLog_SetCommitted(
@@ -5871,8 +5859,6 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid,
 			distribXid,
 			/* isRedo */ true);
 	}
-
-	TransactionIdCommit(xid);
 
 	data = xlrec->data;
 	PersistentEndXactRec_Deserialize(
@@ -5884,15 +5870,9 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid,
 	if (Debug_persistent_print)
 		PersistentEndXactRec_Print("xact_redo_commit", &persistentCommitObjects);
 
-	sub_xids = (TransactionId *)data; 
-
-	/* Mark committed subtransactions as committed */
-	TransactionIdCommitTree(xlrec->nsubxacts, sub_xids);
-=======
 	/* Mark the transaction committed in pg_clog */
-	sub_xids = (TransactionId *) &(xlrec->xnodes[xlrec->nrels]);
+	sub_xids = (TransactionId *) data;
 	TransactionIdCommitTree(xid, xlrec->nsubxacts, sub_xids);
->>>>>>> 38e9348282e
 
 	/* Make sure nextXid is beyond any XID mentioned in the record */
 	max_xid = xid;
@@ -6041,9 +6021,6 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 	TransactionId max_xid;
 	int			i;
 
-<<<<<<< HEAD
-	TransactionIdAbort(xid);
-
 	data = xlrec->data;
 	PersistentEndXactRec_Deserialize(
 								data,
@@ -6054,15 +6031,9 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 	if (Debug_persistent_print)
 		PersistentEndXactRec_Print("xact_redo_abort", &persistentAbortObjects);
 
-	sub_xids = (TransactionId *) data; 
-
-	/* Mark subtransactions as aborted */
-	TransactionIdAbortTree(xlrec->nsubxacts, sub_xids);
-=======
 	/* Mark the transaction aborted in pg_clog */
-	sub_xids = (TransactionId *) &(xlrec->xnodes[xlrec->nrels]);
+	sub_xids = (TransactionId *) data;
 	TransactionIdAbortTree(xid, xlrec->nsubxacts, sub_xids);
->>>>>>> 38e9348282e
 
 	/* Make sure nextXid is beyond any XID mentioned in the record */
 	max_xid = xid;
@@ -6077,14 +6048,10 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 		ShmemVariableCache->nextXid = max_xid;
 		TransactionIdAdvance(ShmemVariableCache->nextXid);
 	}
-}
 
-<<<<<<< HEAD
-static void
-xact_redo_distributed_forget(xl_xact_distributed_forget *xlrec, TransactionId xid __attribute__((unused)) )
-{
-	redoDistributedForgetCommitRecord(&xlrec->gxact_log);
-=======
+	/* GPDB_84_MERGE_FIXME: This came from upstream, but the old code this replaced
+	 * had been removed from this function GPDB. Where does this belong now?
+#if 0
 	/* Make sure files supposed to be dropped are dropped */
 	for (i = 0; i < xlrec->nrels; i++)
 	{
@@ -6101,7 +6068,13 @@ xact_redo_distributed_forget(xl_xact_distributed_forget *xlrec, TransactionId xi
 		}
 		smgrclose(srel);
 	}
->>>>>>> 38e9348282e
+#endif
+}
+
+static void
+xact_redo_distributed_forget(xl_xact_distributed_forget *xlrec, TransactionId xid __attribute__((unused)) )
+{
+	redoDistributedForgetCommitRecord(&xlrec->gxact_log);
 }
 
 
@@ -6325,7 +6298,6 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 		appendStringInfo(buf, "; drop file-system objects:");
 		for (i = 0; i < persistentCommitObjects.typed.fileSysActionInfosCount; i++)
 		{
-<<<<<<< HEAD
 			PersistentEndXactFileSysActionInfo	*fileSysActionInfo =
 						&persistentCommitObjects.typed.fileSysActionInfos[i];
 
@@ -6340,11 +6312,6 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 				appendStringInfo(buf, " %s",
 								 PersistentFileSysObjName_TypeAndObjectName(&fileSysActionInfo->fsObjName));
 			}
-=======
-			char *path = relpath(xlrec->xnodes[i], MAIN_FORKNUM);
-			appendStringInfo(buf, " %s", path);
-			pfree(path);
->>>>>>> 38e9348282e
 		}
 	}
 
@@ -6415,7 +6382,6 @@ xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
 		appendStringInfo(buf, "; aborted create file-system objects:");
 		for (i = 0; i < persistentAbortObjects.typed.fileSysActionInfosCount; i++)
 		{
-<<<<<<< HEAD
 			PersistentEndXactFileSysActionInfo	*fileSysActionInfo =
 						&persistentAbortObjects.typed.fileSysActionInfos[i];
 
@@ -6427,11 +6393,6 @@ xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
 
 			appendStringInfo(buf, " %s",
 							 PersistentFileSysObjName_TypeAndObjectName(&fileSysActionInfo->fsObjName));
-=======
-			char *path = relpath(xlrec->xnodes[i], MAIN_FORKNUM);
-			appendStringInfo(buf, " %s", path);
-			pfree(path);
->>>>>>> 38e9348282e
 		}
 	}
 	if (xlrec->nsubxacts > 0)
