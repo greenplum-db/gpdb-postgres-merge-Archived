@@ -1254,7 +1254,7 @@ dumpMain(bool oids, const char *dumpencoding, int outputBlobs, int plainText, Re
 	g_gp_supportsLanOwner = g_fout->remoteVersion >= 80300;
 
 	/* Let cdb_dump_include functions know whether to handle fdw */
-	gp_gp_fdw = g_fout->remoteVersion >= 80400;
+	g_gp_fdw = g_fout->remoteVersion >= 80400;
 
 	/*
 	 * Process the schema and table include/exclude lists and develop a list
