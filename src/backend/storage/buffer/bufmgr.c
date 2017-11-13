@@ -663,17 +663,17 @@ BufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 
 				/* OK, do the I/O */
 				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_START(forkNum, blockNum,
-											   smgr->smgr_rnode.node.spcNode,
-												smgr->smgr_rnode.node.dbNode,
-											  smgr->smgr_rnode.node.relNode);
+											   smgr->smgr_rnode.spcNode,
+												smgr->smgr_rnode.dbNode,
+											  smgr->smgr_rnode.relNode);
 
 				FlushBuffer(buf, NULL);
 				ReleaseContentLock(buf);
 
 				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_DONE(forkNum, blockNum,
-											   smgr->smgr_rnode.node.spcNode,
-												smgr->smgr_rnode.node.dbNode,
-											  smgr->smgr_rnode.node.relNode);
+											   smgr->smgr_rnode.spcNode,
+												smgr->smgr_rnode.dbNode,
+											  smgr->smgr_rnode.relNode);
 			}
 			else
 			{
