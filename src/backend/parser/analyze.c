@@ -104,7 +104,7 @@ static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt);
 static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 									   List **colInfo);
 static Node *transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
-												setop_types_ctx *setop_types, List **colInfo);
+												setop_types_ctx *setop_types);
 static void coerceSetOpTypes(ParseState *pstate, Node *sop, List *coltypes, List *coltypmods,
 							 List **colInfo);
 static void applyColumnNames(List *dst, List *src);
@@ -2153,7 +2153,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 	 */
 	ctx.ncols = -1;
 	ctx.leafinfos = NULL;
-	top = transformSetOperationTree_internal(pstate, stmt, &ctx, colInfo);
+	top = transformSetOperationTree_internal(pstate, stmt, &ctx);
 	Assert(ctx.ncols >= 0);
 
 	/*
@@ -2280,7 +2280,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 
 static Node *
 transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
-								   setop_types_ctx *setop_types, List **colInfo)
+								   setop_types_ctx *setop_types)
 {
 	bool		isLeaf;
 
@@ -2364,17 +2364,13 @@ transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 		/*
 		 * Extract a list of the result expressions for upper-level checking.
 		 */
-		*colInfo = NIL;
 		numCols = 0;
 		foreach(tl, selectQuery->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(tl);
 
 			if (!tle->resjunk)
-			{
-				*colInfo = lappend(*colInfo, tle->expr);
 				numCols++;
-			}
 		}
 
 		/*
@@ -2439,10 +2435,7 @@ transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 	{
 		/* Process an internal node (set operation node) */
 		SetOperationStmt *op = makeNode(SetOperationStmt);
-		List	   *lcolinfo;
-		List	   *rcolinfo;
 		const char *context;
-		int			i;
 
 		context = (stmt->op == SETOP_UNION ? "UNION" :
 				   (stmt->op == SETOP_INTERSECT ? "INTERSECT" :
@@ -2455,40 +2448,15 @@ transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 		 * Recursively transform the child nodes.
 		 */
 		op->larg = transformSetOperationTree_internal(pstate, stmt->larg,
-													  setop_types, &lcolinfo);
+													  setop_types);
 		op->rarg = transformSetOperationTree_internal(pstate, stmt->rarg,
-													  setop_types, &rcolinfo);
-
-		/*
-		 * Verify that the two children have the same number of non-junk
-		 * columns, and determine the types of the merged output columns.
-		 */
-		if (list_length(lcolinfo) != list_length(rcolinfo))
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("each %s query must have the same number of columns",
-						context),
-					 parser_errposition(pstate,
-										exprLocation((Node *) rcolinfo))));
+													  setop_types);
 
 		/*
 		 * In PostgreSQL, we select the common type for each column here.
 		 * In GPDB, we do that as a separate pass, after we have collected
 		 * information on the types of each leaf node first.
-		 *
-		 * But fill the lists with invalid types for now. These will be
-		 * replaced with the real values in the second pass, but in the
-		 * meanwhile, we we need something with the right length, for the
-		 * check above, that checks that each subtree has the same number of
-		 * columns.
 		 */
-		op->colTypes = NIL;
-		op->colTypmods = NIL;
-		for (i = 0; i < list_length(lcolinfo); i++)
-		{
-			op->colTypes = lappend_oid(op->colTypes, InvalidOid);
-			op->colTypmods = lappend_oid(op->colTypmods, -1);
-		}
 
 		return (Node *) op;
 	}
@@ -2545,7 +2513,18 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 		coerceSetOpTypes(pstate, op->rarg, preselected_coltypes, preselected_coltypmods,
 						 &rcolinfo);
 
-		Assert(list_length(lcolinfo) == list_length(rcolinfo));
+		/*
+		 * Verify that the two children have the same number of non-junk
+		 * columns, and determine the types of the merged output columns.
+		 */
+		if (list_length(lcolinfo) != list_length(rcolinfo))
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("each %s query must have the same number of columns",
+						context),
+					 parser_errposition(pstate,
+										exprLocation((Node *) rcolinfo))));
+
 		Assert(list_length(lcolinfo) == list_length(preselected_coltypes));
 		Assert(list_length(lcolinfo) == list_length(preselected_coltypmods));
 
