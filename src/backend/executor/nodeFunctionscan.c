@@ -35,10 +35,7 @@
 #include "executor/spi.h"
 
 static TupleTableSlot *FunctionNext(FunctionScanState *node);
-<<<<<<< HEAD
 static void ExecFunctionScanExplainEnd(PlanState *planstate, struct StringInfoData *buf);
-=======
->>>>>>> 38e9348282e
 
 /* ----------------------------------------------------------------
  *						Scan Support
@@ -72,16 +69,11 @@ FunctionNext(FunctionScanState *node)
 	 */
 	if (tuplestorestate == NULL)
 	{
-<<<<<<< HEAD
-		ExprContext *econtext = node->ss.ps.ps_ExprContext;
-
-=======
->>>>>>> 38e9348282e
 		node->tuplestorestate = tuplestorestate =
 			ExecMakeTableFunctionResult(node->funcexpr,
 										node->ss.ps.ps_ExprContext,
 										node->tupdesc,
-<<<<<<< HEAD
+										node->eflags & EXEC_FLAG_BACKWARD,
 										PlanStateOperatorMemKB( (PlanState *) node));
 
 		/* CDB: Offer extra info for EXPLAIN ANALYZE. */
@@ -93,9 +85,6 @@ FunctionNext(FunctionScanState *node)
 			/* Request a callback at end of query. */
 			node->ss.ps.cdbexplainfun = ExecFunctionScanExplainEnd;
 		}
-=======
-										node->eflags & EXEC_FLAG_BACKWARD);
->>>>>>> 38e9348282e
 	}
 
 	/*
@@ -325,12 +314,9 @@ ExecEndFunctionScan(FunctionScanState *node)
 
 	ExecEagerFreeFunctionScan(node);
 
-<<<<<<< HEAD
 	EndPlanStateGpmonPkt(&node->ss.ps);
 }
 
-=======
->>>>>>> 38e9348282e
 /* ----------------------------------------------------------------
  *		ExecFunctionReScan
  *
@@ -364,7 +350,6 @@ ExecFunctionReScan(FunctionScanState *node, ExprContext *exprCtxt)
 	else
 		tuplestore_rescan(node->tuplestorestate);
 }
-<<<<<<< HEAD
 
 void
 ExecEagerFreeFunctionScan(FunctionScanState *node)
@@ -376,5 +361,3 @@ ExecEagerFreeFunctionScan(FunctionScanState *node)
 	
 	node->tuplestorestate = NULL;
 }
-=======
->>>>>>> 38e9348282e

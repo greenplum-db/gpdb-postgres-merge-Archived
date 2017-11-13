@@ -308,7 +308,8 @@ extern ExprDoneCond ExecEvalFuncArgs(FunctionCallInfo fcinfo,
 extern Tuplestorestate *ExecMakeTableFunctionResult(ExprState *funcexpr,
 							ExprContext *econtext,
 							TupleDesc expectedDesc,
-							bool randomAccess);
+							bool randomAccess,
+							uint64 operatorMemKB);
 extern Datum ExecEvalExprSwitchContext(ExprState *expression, ExprContext *econtext,
 						  bool *isNull, ExprDoneCond *isDone);
 extern ExprState *ExecInitExpr(Expr *node, PlanState *parent);
