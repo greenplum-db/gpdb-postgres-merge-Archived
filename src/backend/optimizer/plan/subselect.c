@@ -1343,7 +1343,7 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 * The combining operators and left-hand expressions mustn't be volatile.
 	 */
 	if (contain_volatile_functions(sublink->testexpr))
-		return false;
+		return NULL;
 
 	/*
 	 * Okay, pull up the sub-select into upper range table.
