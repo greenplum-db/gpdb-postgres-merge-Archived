@@ -260,7 +260,7 @@ static void copy_buffer_pool_files(
 
 	srcrel = smgropen(*srcRelFileNode);
 
-	nblocks = smgrnblocks(srcrel);
+	nblocks = smgrnblocks(srcrel, MAIN_FORKNUM);
 
 	dstrel = smgropen(*dstRelFileNode);
 
@@ -296,7 +296,7 @@ static void copy_buffer_pool_files(
 		XLogRecPtr	recptr;
 		XLogRecData rdata[2];
 		
-		smgrread(srcrel, blkno, buffer);
+		smgrread(srcrel, MAIN_FORKNUM, blkno, buffer);
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -341,7 +341,7 @@ static void copy_buffer_pool_files(
 		// -------- MirroredLock ----------
 		LWLockAcquire(MirroredLock, LW_SHARED);
 
-		smgrwrite(dstrel, blkno, buffer, false);
+		smgrwrite(dstrel, MAIN_FORKNUM, blkno, buffer, false);
 
 		LWLockRelease(MirroredLock);
 		// -------- MirroredLock ----------
@@ -361,7 +361,7 @@ static void copy_buffer_pool_files(
 	// -------- MirroredLock ----------
 	LWLockAcquire(MirroredLock, LW_SHARED);
 	
-	smgrimmedsync(dstrel);
+	smgrimmedsync(dstrel, MAIN_FORKNUM);
 	
 	LWLockRelease(MirroredLock);
 	// -------- MirroredLock ----------
@@ -461,7 +461,7 @@ static void copy_append_only_segment_file(
 			 ItemPointerToString(persistentTid),
 			 eof);
 
-	basepath = relpath(*srcRelFileNode);
+	basepath = relpath(*srcRelFileNode, MAIN_FORKNUM);
 	if (segmentFileNum > 0)
 		snprintf(srcFileName, sizeof(srcFileName), "%s.%u", basepath, segmentFileNum);
 	else
@@ -477,7 +477,7 @@ static void copy_append_only_segment_file(
 				(errcode_for_file_access(),
 				 errmsg("could not open file \"%s\": %m", srcFileName)));
 
-	basepath = relpath(*dstRelFileNode);
+	basepath = relpath(*dstRelFileNode, MAIN_FORKNUM);
 	if (segmentFileNum > 0)
 		snprintf(dstFileName, sizeof(dstFileName), "%s.%u", basepath, segmentFileNum);
 	else
@@ -1118,7 +1118,6 @@ createdb(CreatedbStmt *stmt)
 	 * to fail with ENOENT.
 	 */
 	RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
-<<<<<<< HEAD
 
 	/*
 	 * Take an MVCC snapshot to use while scanning through pg_tablespace.  For
@@ -1142,8 +1141,6 @@ createdb(CreatedbStmt *stmt)
 	 * whenever a generic fix is implemented.
 	 */
 	snapshot = RegisterSnapshot(GetLatestSnapshot());
-=======
->>>>>>> 38e9348282e
 
 	/*
 	 * Once we start copying subdirectories, we need to be able to clean 'em
@@ -1285,14 +1282,14 @@ createdb(CreatedbStmt *stmt)
 				 * serial number for the Buffer Pool managed relation.
 				 */
 				MirroredFileSysObj_TransactionCreateBufferPoolFile(
-													smgropen(dstRelFileNode),
-													relBufpoolKind,
-													/* isLocalBuf */ false,
-													dbInfoRel->relname,
-													/* doJustInTimeDirCreate */ false,
-													/* bufferPoolBulkLoad */ !useWal,
-													&dbInfoRel->gpRelationNodes[0].persistentTid,		// OUTPUT
-													&dbInfoRel->gpRelationNodes[0].persistentSerialNum);	// OUTPUT
+					&dstRelFileNode,
+					relBufpoolKind,
+					/* isLocalBuf */ false,
+					dbInfoRel->relname,
+					/* doJustInTimeDirCreate */ false,
+					/* bufferPoolBulkLoad */ !useWal,
+					&dbInfoRel->gpRelationNodes[0].persistentTid,		// OUTPUT
+					&dbInfoRel->gpRelationNodes[0].persistentSerialNum);	// OUTPUT
 
 				if (dstRelFileNode.relNode == GpRelationNodeRelationId)
 				{
@@ -1463,11 +1460,7 @@ dropdb(const char *dbname, bool missing_ok)
 	pgdbrel = heap_open(DatabaseRelationId, RowExclusiveLock);
 
 	if (!get_db_info(dbname, AccessExclusiveLock, &db_id, NULL, NULL,
-<<<<<<< HEAD
-					 &db_istemplate, NULL, NULL, NULL, &defaultTablespace))
-=======
-					 &db_istemplate, NULL, NULL, NULL, NULL, NULL, NULL))
->>>>>>> 38e9348282e
+					 &db_istemplate, NULL, NULL, NULL, &defaultTablespace, NULL, NULL))
 	{
 		if (!missing_ok)
 		{
@@ -1925,7 +1918,7 @@ movedb(const char *dbname, const char *tblspcname)
 	/*
 	 * Get tablespace's oid
 	 */
-	dst_tblspcoid = get_tablespace_oid(tblspcname);
+	dst_tblspcoid = get_tablespace_oid(tblspcname, true);
 	if (dst_tblspcoid == InvalidOid)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
@@ -2065,7 +2058,7 @@ movedb(const char *dbname, const char *tblspcname)
 		ScanKeyInit(&scankey,
 					Anum_pg_database_datname,
 					BTEqualStrategyNumber, F_NAMEEQ,
-					NameGetDatum(dbname));
+					CStringGetDatum(dbname));
 		sysscan = systable_beginscan(pgdbrel, DatabaseNameIndexId, true,
 									 SnapshotNow, 1, &scankey);
 		oldtuple = systable_getnext(sysscan);
@@ -2328,11 +2321,8 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	Datum		repl_val[Natts_pg_database];
 	bool		repl_null[Natts_pg_database];
 	bool		repl_repl[Natts_pg_database];
-<<<<<<< HEAD
 	Oid			dboid = InvalidOid;
 	char	   *alter_subtype = "SET"; /* metadata tracking */
-=======
->>>>>>> 38e9348282e
 
 	valuestr = ExtractSetVariableArgs(stmt->setstmt);
 
@@ -2365,7 +2355,6 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 
 	if (stmt->setstmt->kind == VAR_RESET_ALL)
 	{
-<<<<<<< HEAD
 		ArrayType  *new = NULL;
 		Datum		datum;
 		bool		isnull;
@@ -2392,11 +2381,6 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 			repl_null[Anum_pg_database_datconfig - 1] = true;
 			repl_val[Anum_pg_database_datconfig - 1] = (Datum) 0;
 		}
-=======
-		/* RESET ALL, so just set datconfig to null */
-		repl_null[Anum_pg_database_datconfig - 1] = true;
-		repl_val[Anum_pg_database_datconfig - 1] = (Datum) 0;
->>>>>>> 38e9348282e
 	}
 	else
 	{
@@ -2739,15 +2723,11 @@ get_db_info(const char *name, LOCKMODE lockmode,
 				/* default tablespace for this database */
 				if (dbTablespace)
 					*dbTablespace = dbform->dattablespace;
-<<<<<<< HEAD
-				
-=======
  				/* default locale settings for this database */
  				if (dbCollate)
  					*dbCollate = pstrdup(NameStr(dbform->datcollate));
  				if (dbCtype)
  					*dbCtype = pstrdup(NameStr(dbform->datctype));
->>>>>>> 38e9348282e
 				ReleaseSysCache(tuple);
 				result = true;
 				break;
@@ -3068,31 +3048,6 @@ dbase_redo(XLogRecPtr beginLoc  __attribute__((unused)), XLogRecPtr lsn  __attri
 		 */
 		copydir(src_path, dst_path, false);
 	}
-<<<<<<< HEAD
-=======
-	else if (info == XLOG_DBASE_DROP)
-	{
-		xl_dbase_drop_rec *xlrec = (xl_dbase_drop_rec *) XLogRecGetData(record);
-		char	   *dst_path;
-
-		dst_path = GetDatabasePath(xlrec->db_id, xlrec->tablespace_id);
-
-		/* Drop pages for this database that are in the shared buffer cache */
-		DropDatabaseBuffers(xlrec->db_id);
-
-		/* Also, clean out any fsync requests that might be pending in md.c */
-		ForgetDatabaseFsyncRequests(xlrec->db_id);
-
-		/* Clean out the xlog relcache too */
-		XLogDropDatabase(xlrec->db_id);
-
-		/* And remove the physical files */
-		if (!rmtree(dst_path, true))
-			ereport(WARNING,
-					(errmsg("some useless files may be left behind in old database directory \"%s\"",
-							dst_path)));
-	}
->>>>>>> 38e9348282e
 	else
 		elog(PANIC, "dbase_redo: unknown op code %u", info);
 }
