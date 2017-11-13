@@ -464,16 +464,13 @@ _outSequence(StringInfo str, Sequence *node)
 static void
 _outRecursiveUnion(StringInfo str, RecursiveUnion *node)
 {
-#if 0
 	int			i;
-#endif
 
 	WRITE_NODE_TYPE("RECURSIVEUNION");
 
 	_outPlanInfo(str, (Plan *) node);
 
 	WRITE_INT_FIELD(wtParam);
-#if 0 /* GPDB_84_MERGE_FIXME: see FIXME in the typedef */
 	WRITE_INT_FIELD(numCols);
 
 	appendStringInfo(str, " :dupColIdx");
@@ -485,7 +482,6 @@ _outRecursiveUnion(StringInfo str, RecursiveUnion *node)
 		appendStringInfo(str, " %u", node->dupOperators[i]);
 
 	WRITE_LONG_FIELD(numGroups);
-#endif
 }
 
 static void
@@ -1311,7 +1307,6 @@ _outArrayRef(StringInfo str, ArrayRef *node)
 	WRITE_NODE_FIELD(refassgnexpr);
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 static void
 _outFuncExpr(StringInfo str, FuncExpr *node)
 {
@@ -1325,7 +1320,6 @@ _outFuncExpr(StringInfo str, FuncExpr *node)
 	WRITE_BOOL_FIELD(is_tablefunc);  /* GPDB */
 	WRITE_LOCATION_FIELD(location);
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 static void
 _outOpExpr(StringInfo str, OpExpr *node)
@@ -1394,7 +1388,6 @@ _outBoolExpr(StringInfo str, BoolExpr *node)
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
-#ifndef COMPILING_BINARY_FUNCS
 static void
 _outSubLink(StringInfo str, SubLink *node)
 {
@@ -1403,16 +1396,9 @@ _outSubLink(StringInfo str, SubLink *node)
 	WRITE_ENUM_FIELD(subLinkType, SubLinkType);
 	WRITE_NODE_FIELD(testexpr);
 	WRITE_NODE_FIELD(operName);
-    /*
-     * CDB: For now we don't serialize the 'location' field, for compatibility
-     * so stored sublinks can be read by pre-3.2 releases.  Anyway it's only
-     * meaningful with the original source string, which isn't kept when a
-     * view or rule definition is stored in the catalog.
-     */
 	WRITE_NODE_FIELD(subselect);
 	WRITE_LOCATION_FIELD(location);
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 static void
 _outSubPlan(StringInfo str, SubPlan *node)
@@ -3216,7 +3202,6 @@ _outSelectStmt(StringInfo str, SelectStmt *node)
 	WRITE_NODE_FIELD(valuesLists);
 	WRITE_NODE_FIELD(sortClause);
 	WRITE_NODE_FIELD(scatterClause);
-	WRITE_NODE_FIELD(withClause);
 	WRITE_NODE_FIELD(limitOffset);
 	WRITE_NODE_FIELD(limitCount);
 	WRITE_NODE_FIELD(lockingClause);
@@ -3561,8 +3546,6 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_NODE_FIELD(sortClause);
 	WRITE_NODE_FIELD(scatterClause);
 	WRITE_BOOL_FIELD(isTableValueSelect);
-	WRITE_NODE_FIELD(cteList);
-	WRITE_BOOL_FIELD(hasRecursive);
 	WRITE_NODE_FIELD(limitOffset);
 	WRITE_NODE_FIELD(limitCount);
 	WRITE_NODE_FIELD(rowMarks);
@@ -3898,13 +3881,13 @@ _outAConst(StringInfo str, A_Const *node)
 	_outValue(str, &(node->val));
 	WRITE_LOCATION_FIELD(location);
 }
+#endif /* COMPILING_BINARY_FUNCS */
 
 static void
 _outA_Star(StringInfo str, A_Star *node)
 {
 	WRITE_NODE_TYPE("A_STAR");
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 static void
 _outA_Indices(StringInfo str, A_Indices *node)

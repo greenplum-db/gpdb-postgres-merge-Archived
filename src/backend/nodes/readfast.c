@@ -232,8 +232,10 @@ _readQuery(void)
 	READ_BOOL_FIELD(hasWindowFuncs);
 	READ_BOOL_FIELD(hasSubLinks);
 	READ_BOOL_FIELD(hasDistinctOn);
+	READ_BOOL_FIELD(hasRecursive);
 	READ_BOOL_FIELD(hasDynamicFunctions);
 	READ_BOOL_FIELD(hasFuncsWithExecRestrictions);
+	READ_NODE_FIELD(cteList);
 	READ_NODE_FIELD(rtable);
 	READ_NODE_FIELD(jointree);
 	READ_NODE_FIELD(targetList);
@@ -245,8 +247,6 @@ _readQuery(void)
 	READ_NODE_FIELD(sortClause);
 	READ_NODE_FIELD(scatterClause);
 	READ_BOOL_FIELD(isTableValueSelect);
-	READ_NODE_FIELD(cteList);
-	READ_BOOL_FIELD(hasRecursive);
 	READ_NODE_FIELD(limitOffset);
 	READ_NODE_FIELD(limitCount);
 	READ_NODE_FIELD(rowMarks);
@@ -393,6 +393,7 @@ _readConst(void)
 	READ_INT_FIELD(constlen);
 	READ_BOOL_FIELD(constbyval);
 	READ_BOOL_FIELD(constisnull);
+	READ_LOCATION_FIELD(location);
 
 	if (local_node->constisnull)
 		local_node->constvalue = 0;
@@ -621,10 +622,10 @@ _readSelectStmt(void)
 	READ_NODE_FIELD(groupClause);
 	READ_NODE_FIELD(havingClause);
 	READ_NODE_FIELD(windowClause);
+	READ_NODE_FIELD(withClause);
 	READ_NODE_FIELD(valuesLists);
 	READ_NODE_FIELD(sortClause);
 	READ_NODE_FIELD(scatterClause);
-	READ_NODE_FIELD(withClause);
 	READ_NODE_FIELD(limitOffset);
 	READ_NODE_FIELD(limitCount);
 	READ_NODE_FIELD(lockingClause);
@@ -810,24 +811,6 @@ _readAggref(void)
 }
 
 /*
- * _readFuncExpr
- */
-static FuncExpr *
-_readFuncExpr(void)
-{
-	READ_LOCALS(FuncExpr);
-
-	READ_OID_FIELD(funcid);
-	READ_OID_FIELD(funcresulttype);
-	READ_BOOL_FIELD(funcretset);
-	READ_ENUM_FIELD(funcformat, CoercionForm);
-	READ_NODE_FIELD(args);
-	READ_BOOL_FIELD(is_tablefunc);
-
-	READ_DONE();
-}
-
-/*
  * _readOpExpr
  */
 static OpExpr *
@@ -851,6 +834,7 @@ _readOpExpr(void)
 	READ_OID_FIELD(opresulttype);
 	READ_BOOL_FIELD(opretset);
 	READ_NODE_FIELD(args);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -869,6 +853,7 @@ _readDistinctExpr(void)
 	READ_OID_FIELD(opresulttype);
 	READ_BOOL_FIELD(opretset);
 	READ_NODE_FIELD(args);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -886,6 +871,7 @@ _readScalarArrayOpExpr(void)
 
 	READ_BOOL_FIELD(useOr);
 	READ_NODE_FIELD(args);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -901,23 +887,7 @@ _readBoolExpr(void)
 	READ_ENUM_FIELD(boolop, BoolExprType);
 
 	READ_NODE_FIELD(args);
-
-	READ_DONE();
-}
-
-/*
- * _readSubLink
- */
-static SubLink *
-_readSubLink(void)
-{
-	READ_LOCALS(SubLink);
-
-	READ_ENUM_FIELD(subLinkType, SubLinkType);
-	READ_NODE_FIELD(testexpr);
-	READ_NODE_FIELD(operName);
-	READ_LOCATION_FIELD(location);   /*CDB*/
-	READ_NODE_FIELD(subselect);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -980,6 +950,7 @@ _readNullIfExpr(void)
 	READ_OID_FIELD(opresulttype);
 	READ_BOOL_FIELD(opretset);
 	READ_NODE_FIELD(args);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -1574,6 +1545,10 @@ _readRecursiveUnion(void)
 	readPlanInfo((Plan *)local_node);
 
 	READ_INT_FIELD(wtParam);
+	READ_INT_FIELD(numCols);
+	READ_INT_ARRAY(dupColIdx, local_node->numCols, AttrNumber);
+	READ_OID_ARRAY(dupOperators, local_node->numCols);
+	READ_LONG_FIELD(numGroups);
 
 	READ_DONE();
 }

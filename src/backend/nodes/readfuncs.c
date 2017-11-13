@@ -349,8 +349,6 @@ _readQuery(void)
 	READ_NODE_FIELD(sortClause);
 	READ_NODE_FIELD(scatterClause);
 	READ_BOOL_FIELD(isTableValueSelect);
-	READ_NODE_FIELD(cteList);
-	READ_BOOL_FIELD(hasRecursive);
 	READ_NODE_FIELD(limitOffset);
 	READ_NODE_FIELD(limitCount);
 	READ_NODE_FIELD(rowMarks);
@@ -1328,7 +1326,6 @@ _readArrayRef(void)
 	READ_DONE();
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 /*
  * _readFuncExpr
  */
@@ -1347,7 +1344,6 @@ _readFuncExpr(void)
 
 	READ_DONE();
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 #ifndef COMPILING_BINARY_FUNCS
 /*
@@ -1469,7 +1465,6 @@ _readBoolExpr(void)
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
-#ifndef COMPILING_BINARY_FUNCS
 /*
  * _readSubLink
  */
@@ -1481,16 +1476,11 @@ _readSubLink(void)
 	READ_ENUM_FIELD(subLinkType, SubLinkType);
 	READ_NODE_FIELD(testexpr);
 	READ_NODE_FIELD(operName);
-
-    /* CDB: 'location' field is not serialized */
-    local_node->location = -1;
-
 	READ_NODE_FIELD(subselect);
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 /*
  * _readFieldSelect

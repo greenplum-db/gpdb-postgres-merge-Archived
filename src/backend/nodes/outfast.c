@@ -557,6 +557,7 @@ _outConst(StringInfo str, Const *node)
 	WRITE_INT_FIELD(constlen);
 	WRITE_BOOL_FIELD(constbyval);
 	WRITE_BOOL_FIELD(constisnull);
+	WRITE_LOCATION_FIELD(location);
 
 	if (!node->constisnull)
 		_outDatum(str, node->constvalue, node->constlen, node->constbyval);
@@ -581,37 +582,12 @@ _outAggref(StringInfo str, Aggref *node)
 }
 
 static void
-_outFuncExpr(StringInfo str, FuncExpr *node)
-{
-	WRITE_NODE_TYPE("FUNCEXPR");
-
-	WRITE_OID_FIELD(funcid);
-	WRITE_OID_FIELD(funcresulttype);
-	WRITE_BOOL_FIELD(funcretset);
-	WRITE_ENUM_FIELD(funcformat, CoercionForm);
-	WRITE_NODE_FIELD(args);
-	WRITE_BOOL_FIELD(is_tablefunc);
-}
-
-static void
 _outBoolExpr(StringInfo str, BoolExpr *node)
 {
 	WRITE_NODE_TYPE("BOOLEXPR");
 	WRITE_ENUM_FIELD(boolop, BoolExprType);
 
 	WRITE_NODE_FIELD(args);
-}
-
-static void
-_outSubLink(StringInfo str, SubLink *node)
-{
-	WRITE_NODE_TYPE("SUBLINK");
-
-	WRITE_ENUM_FIELD(subLinkType, SubLinkType);
-	WRITE_NODE_FIELD(testexpr);
-	WRITE_NODE_FIELD(operName);
-	WRITE_LOCATION_FIELD(location);      /*CDB*/
-	WRITE_NODE_FIELD(subselect);
 }
 
 static void
@@ -863,8 +839,10 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_BOOL_FIELD(hasWindowFuncs);
 	WRITE_BOOL_FIELD(hasSubLinks);
 	WRITE_BOOL_FIELD(hasDistinctOn);
+	WRITE_BOOL_FIELD(hasRecursive);
 	WRITE_BOOL_FIELD(hasDynamicFunctions);
 	WRITE_BOOL_FIELD(hasFuncsWithExecRestrictions);
+	WRITE_NODE_FIELD(cteList);
 	WRITE_NODE_FIELD(rtable);
 	WRITE_NODE_FIELD(jointree);
 	WRITE_NODE_FIELD(targetList);
@@ -876,8 +854,6 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_NODE_FIELD(sortClause);
 	WRITE_NODE_FIELD(scatterClause);
 	WRITE_BOOL_FIELD(isTableValueSelect);
-	WRITE_NODE_FIELD(cteList);
-	WRITE_BOOL_FIELD(hasRecursive);
 	WRITE_NODE_FIELD(limitOffset);
 	WRITE_NODE_FIELD(limitCount);
 	WRITE_NODE_FIELD(rowMarks);
@@ -1861,6 +1837,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_A_Const:
 				_outAConst(str, obj);
+				break;
+			case T_A_Star:
+				_outA_Star(str, obj);
 				break;
 			case T_A_Indices:
 				_outA_Indices(str, obj);

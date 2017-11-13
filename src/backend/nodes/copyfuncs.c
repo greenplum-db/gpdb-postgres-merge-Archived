@@ -2980,7 +2980,6 @@ _copySelectStmt(SelectStmt *from)
 	COPY_NODE_FIELD(valuesLists);
 	COPY_NODE_FIELD(sortClause);
 	COPY_NODE_FIELD(scatterClause);
-	COPY_NODE_FIELD(withClause);
 	COPY_NODE_FIELD(limitOffset);
 	COPY_NODE_FIELD(limitCount);
 	COPY_NODE_FIELD(lockingClause);
