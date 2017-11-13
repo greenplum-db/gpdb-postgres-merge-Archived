@@ -452,7 +452,6 @@ smgrdomirroredunlink(RelFileNode *relFileNode,
 	 * xact.
 	 */
 	mdmirroredunlink(*relFileNode,
-					 isLocalBuf,
 					 relationName,
 					 primaryOnly,
 					 isRedo,

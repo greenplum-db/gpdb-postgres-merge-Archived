@@ -486,6 +486,177 @@ mdunlink(RelFileNode rnode, ForkNumber forkNum, bool isRedo)
 		register_unlink(rnode);
 }
 
+
+/*
+ *	mdunlink() -- Unlink a relation.
+ *
+ * Note that we're passed a RelFileNode --- by the time this is called,
+ * there won't be an SMgrRelation hashtable entry anymore.
+ *
+ * Actually, we don't unlink the first segment file of the relation, but
+ * just truncate it to zero length, and record a request to unlink it after
+ * the next checkpoint.  Additional segments can be unlinked immediately,
+ * however.  Leaving the empty file in place prevents that relfilenode
+ * number from being reused.  The scenario this protects us from is:
+ * 1. We delete a relation (and commit, and actually remove its file).
+ * 2. We create a new relation, which by chance gets the same relfilenode as
+ *	  the just-deleted one (OIDs must've wrapped around for that to happen).
+ * 3. We crash before another checkpoint occurs.
+ * During replay, we would delete the file and then recreate it, which is fine
+ * if the contents of the file were repopulated by subsequent WAL entries.
+ * But if we didn't WAL-log insertions, but instead relied on fsyncing the
+ * file after populating it (as for instance CLUSTER and CREATE INDEX do),
+ * the contents of the file would be lost forever.	By leaving the empty file
+ * until after the next checkpoint, we prevent reassignment of the relfilenode
+ * number until it's safe, because relfilenode assignment skips over any
+ * existing file.
+ *
+ * If isRedo is true, it's okay for the relation to be already gone.
+ * Also, we should remove the file immediately instead of queuing a request
+ * for later, since during redo there's no possibility of creating a
+ * conflicting relation.
+ *
+ * Note: any failure should be reported as WARNING not ERROR, because
+ * we are usually not in a transaction anymore when this is called.
+ */
+void
+mdmirroredunlink(RelFileNode rnode, 
+				 char *relationName, /* For tracing only.  Can be NULL in some execution paths. */
+				 bool primaryOnly,
+				 bool isRedo,
+				 bool ignoreNonExistence,
+				 bool *mirrorDataLossOccurred)
+{
+	int			 primaryError = 0;
+	char		 tmp[MAXPGPATH];
+	char	   *path;
+	int			 segmentFileNum;
+
+	/*
+	 * We have to clean out any pending fsync requests for the doomed
+	 * relation, else the next mdsync() will fail.
+	 */
+	ForgetRelationFsyncRequests(rnode, MAIN_FORKNUM);
+
+	/* 
+	 * Delete All segment file extensions
+	 *
+	 * This code used to be implemented via glob(), but globbing data is slow
+	 * when there are many files in a directory, so using glob is to be avoided.
+	 * Instead we perform point lookups for files and delete the ones we find.
+	 * There are different rules for this depending on the type of table:
+	 *
+	 *   Heap Tables: contiguous extensions, no upper bound
+	 *   AO Tables: non contiguous extensions [.1 - .127]
+	 *   CO Tables: non contiguous extensions
+	 *          [  .1 - .127] for first column
+	 *          [.128 - .255] for second column
+	 *          [.256 - .283] for third column
+	 *          etc
+	 *
+	 * mdunlink is only called on Heap Tables, AO/CO tables are handled by a
+	 * different code path.  The following logic assumes that the files are
+	 * a single contiguous range of numbers.
+	 *
+	 * UNDONE: Probably should have mirror do pattern match too.
+	 *    It is conceivably possible that the primary/mirror may have a 
+	 *    different set of segment files, so doing the pattern match only
+	 *    in one place is dangerous.
+	 *
+	 * UNDONE: This is broken for mirroring !!!
+	 *    The fundamental problem is that if we drop a file on the mirror
+	 *    then fail over before we have dropped the file on the primary
+	 *    then the mirror is unaware that the file still needs to be dropped
+	 *    on the old primary.  
+	 *
+	 * The above two issues are tracked in MPP-11724
+	 */
+
+	/* 
+	 * We do this in two passes because it is safer to drop the files in reverse
+	 * order so as to prevent the creation of holes, but we need to scan forward
+	 * to know what files actually exist.
+	 */
+	path = relpath(rnode, MAIN_FORKNUM);
+	for (segmentFileNum = 0; /* break in code */ ; segmentFileNum++)
+	{
+		struct stat sbuf;
+		
+		/* the zero segment file does not have the ".0" extension */
+		if (segmentFileNum == 0)
+			snprintf(tmp, sizeof(tmp), "%s", path);
+		else
+			snprintf(tmp, sizeof(tmp), "%s.%d", path, segmentFileNum);
+
+		if (stat(tmp, &sbuf) < 0)
+			break;  /* No such file, loop is done */
+	}
+	pfree(path);
+
+	/* If the zero segment didn't exist raise an error if requested */
+	if (segmentFileNum == 0)
+	{
+		if (!ignoreNonExistence)
+		{
+			ereport(WARNING,
+					(errcode_for_file_access(),
+					 errmsg("could not remove relation %u/%u/%u: %m",
+							rnode.spcNode,
+							rnode.dbNode,
+							rnode.relNode)));
+		}
+		else
+		{
+			/* 
+			 * Mirror can still have the file, so lets attempt to delete 
+			 * atleast zero segment file.
+			 */
+			int temp_primaryError = 0;
+			MirroredBufferPool_Drop(&rnode, segmentFileNum, relationName, 
+						primaryOnly, isRedo, &temp_primaryError,
+						mirrorDataLossOccurred);
+		}
+	}
+
+	/* second pass perform the drops in reverse order: important for REDO */
+	for(segmentFileNum--; segmentFileNum >= 0; segmentFileNum--)
+	{
+		MirroredBufferPool_Drop(&rnode, segmentFileNum, relationName, 
+								primaryOnly, isRedo, &primaryError,
+								mirrorDataLossOccurred);
+		if (primaryError != 0)
+		{
+			if (segmentFileNum == 0)
+				ereport(WARNING,
+						(errcode_for_file_access(),
+						 errmsg("could not remove relation %u/%u/%u: %m",
+								rnode.spcNode,
+								rnode.dbNode,
+								rnode.relNode)));
+			else
+				ereport(WARNING,
+						(errcode_for_file_access(),
+						 errmsg("could not remove segment %u of relation %u/%u/%u: %m",
+								segmentFileNum,
+								rnode.spcNode,
+								rnode.dbNode,
+								rnode.relNode)));
+			break;
+		}
+	}
+
+	/*
+	 * In PostgreSQL, register_unlink is called to let the checkpoint process to clean up the files.
+	 * In GPDB, the cleanup is handled by persistent table. Hence, we don't need to register the
+	 * unlink request.
+	 */
+#if 0 /* Upstream code not applicable to GPDB */
+	/* Register request to unlink first segment later */
+	if (!isRedo)
+		register_unlink(rnode);
+#endif
+}
+
 /*
  *	mdextend() -- Add a block to the specified relation.
  *

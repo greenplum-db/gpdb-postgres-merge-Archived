@@ -305,7 +305,6 @@ extern void mdmirroredcreate(
 extern bool mdexists(SMgrRelation reln, ForkNumber forknum);
 extern void mdmirroredunlink(
 	RelFileNode 				rnode, 
-	ForkNumber forknum,
 	char						*relationName,
 					/* For tracing only.  Can be NULL in some execution paths. */
 	bool  						primaryOnly,
