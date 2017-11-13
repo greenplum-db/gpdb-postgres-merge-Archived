@@ -321,7 +321,7 @@ mdmirroredcreate(
 	if (reln->md_fd[MAIN_FORKNUM] != NULL)
 		mdclose(reln, MAIN_FORKNUM);		// Don't assume it has been created -- make sure it gets created on both mirrors.
 
-	Assert(reln->md_fd == NULL);
+	Assert(reln->md_fd[MAIN_FORKNUM] == NULL);
 	
 	MirroredBufferPool_Create(
 					&mirroredOpen,
