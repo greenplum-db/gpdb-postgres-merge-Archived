@@ -76,7 +76,6 @@ typedef struct ExplainState
     /* CDB */
     struct CdbExplain_ShowStatCtx  *showstatctx;    /* EXPLAIN ANALYZE info */
     Slice          *currentSlice;   /* slice whose nodes we are visiting */
-    ErrorData      *deferredError;  /* caught error to be re-thrown */
 } ExplainState;
 
 extern bool Test_print_direct_dispatch_info;
@@ -96,7 +95,6 @@ static void ExplainDXL(Query *query, ExplainStmt *stmt,
 static void ExplainCodegen(PlanState *planstate, TupOutputState *tstate);
 #endif
 static double elapsed_time(instr_time *starttime);
-static ErrorData *explain_defer_error(ExplainState *es);
 static void explain_outNode(StringInfo str,
 				Plan *plan, PlanState *planstate,
 				Plan *outer_plan, Plan *parentPlan,
@@ -217,7 +215,6 @@ ExplainDXL(Query *query, ExplainStmt *stmt, const char *queryString,
 	/* Initialize ExplainState structure. */
 	memset(es, 0, sizeof(*es));
 	es->showstatctx = NULL;
-	es->deferredError = NULL;
 	es->pstmt = NULL;
 
 	initStringInfo(&buf);
@@ -377,7 +374,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 	EState     *estate = NULL;
 	int			eflags;
 	char	   *settings;
-	MemoryContext explaincxt = CurrentMemoryContext;
 
 	/*
 	 * Use a snapshot with an updated command ID to ensure this query sees
@@ -403,10 +399,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 				GetResqueuePriority(GetResQueueId()));
 	}
 
-	/* Initialize ExplainState structure. */
-	es = (ExplainState *) palloc0(sizeof(ExplainState));
-	es->pstmt = queryDesc->plannedstmt;
-
     /*
      * Start timing.
      */
@@ -419,11 +411,9 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
     /* Allocate workarea for summary stats. */
     if (stmt->analyze)
     {
-        es->showstatctx = cdbexplain_showExecStatsBegin(queryDesc,
-                                                        starttime);
-
         /* Attach workarea to QueryDesc so ExecSetParamPlan() can find it. */
-        queryDesc->showstatctx = es->showstatctx;
+        queryDesc->showstatctx = cdbexplain_showExecStatsBegin(queryDesc,
+															   starttime);
     }
 
 	/* Select execution options */
@@ -453,148 +443,30 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 
     estate = queryDesc->estate;
 
-    /* CDB: Find slice table entry for the root slice. */
-    es->currentSlice = getCurrentSlice(estate, LocallyExecutingSliceIndex(estate));
-
 	/* Execute the plan for statistics if asked for */
-	/* In GPDB, we attempt to proceed with our report even if there is an error.
-     */
 	if (stmt->analyze)
 	{
 		/* run the plan */
-        PG_TRY();
-        {
-		    ExecutorRun(queryDesc, ForwardScanDirection, 0L);
-        }
-        PG_CATCH();
-        {
-			MemoryContextSwitchTo(explaincxt);
-			es->deferredError = explain_defer_error(es);
-        }
-        PG_END_TRY();
+		ExecutorRun(queryDesc, ForwardScanDirection, 0L);
 
-        /* Wait for completion of all qExec processes. */
-        PG_TRY();
-        {
-            if (estate->dispatcherState && estate->dispatcherState->primaryResults)
-			{
-				CdbCheckDispatchResult(estate->dispatcherState,
-									   DISPATCH_WAIT_NONE);
-			}
-        }
-        PG_CATCH();
-        {
-			MemoryContextSwitchTo(explaincxt);
-            es->deferredError = explain_defer_error(es);
-        }
-        PG_END_TRY();
+		/* Wait for completion of all qExec processes. */
+		if (estate->dispatcherState && estate->dispatcherState->primaryResults)
+			CdbCheckDispatchResult(estate->dispatcherState, DISPATCH_WAIT_NONE);
 
+		/* We can't clean up 'till we're done printing the stats... */
         /* Suspend timing. */
 	    totaltime += elapsed_time(&starttime);
-
-        /* Get local stats if root slice was executed here in the qDisp. */
-        if (!es->currentSlice ||
-            sliceRunsOnQD(es->currentSlice))
-            cdbexplain_localExecStats(queryDesc->planstate, es->showstatctx);
-
-        /* Fill in the plan's Instrumentation with stats from qExecs. */
-        if (estate->dispatcherState && estate->dispatcherState->primaryResults)
-            cdbexplain_recvExecStats(queryDesc->planstate,
-                                     estate->dispatcherState->primaryResults,
-                                     LocallyExecutingSliceIndex(estate),
-                                     es->showstatctx);
 	}
 
-<<<<<<< HEAD
-	es->printTList = stmt->verbose;
-	es->printAnalyze = stmt->analyze;
-	es->pstmt = queryDesc->plannedstmt;
-	es->rtable = queryDesc->plannedstmt->rtable;
-
-	initStringInfo(&buf);
-
-    /*
-     * Produce the EXPLAIN report into buf.  (Sometimes we get internal errors
-     * while doing this; try to proceed with a partial report anyway.)
-     */
-    PG_TRY();
-    {
-     	int indent = 0;
-    	CmdType cmd = queryDesc->plannedstmt->commandType;
-    	Plan *childPlan = queryDesc->plannedstmt->planTree;
-
-    	if ( (cmd == CMD_DELETE || cmd == CMD_INSERT || cmd == CMD_UPDATE) &&
-    		  queryDesc->plannedstmt->planGen == PLANGEN_PLANNER )
-    	{
-    	   	/* Set sliceNum to the slice number of the outer-most query plan node */
-    	   	int sliceNum = 0;
-    	   	int numSegments = getgpsegmentCount();
-	    	char *cmdName = NULL;
-
-   			switch (cmd)
-			{
-				case CMD_DELETE:
-					cmdName = "Delete";
-					break;
-				case CMD_INSERT:
-					cmdName = "Insert";
-					break;
-				case CMD_UPDATE:
-					cmdName = "Update";
-					break;
-				default:
-					/* This should never be reached */
-					Assert(!"Unexpected statement type");
-					break;
-			}
-			appendStringInfo(&buf, "%s", cmdName);
-
-			if (IsA(childPlan, Motion))
-			{
-				Motion	   *pMotion = (Motion *) childPlan;
-				if (pMotion->motionType == MOTIONTYPE_FIXED && pMotion->numOutputSegs != 0)
-				{
-					numSegments = 1;
-				}
-				/* else: other motion nodes execute on all segments */
-			}
-			else if ((childPlan->directDispatch).isDirectDispatch)
-			{
-				numSegments = 1;
-			}
-			appendStringInfo(&buf, " (slice%d; segments: %d)", sliceNum, numSegments);
-			appendStringInfo(&buf, "  (rows=%.0f width=%d)\n", ceil(childPlan->plan_rows / numSegments), childPlan->plan_width);
-			appendStringInfo(&buf, "  ->  ");
-			indent = 3;
-		}
-	    explain_outNode(&buf, childPlan, queryDesc->planstate,
-					    NULL, NULL, indent, es);
-    }
-    PG_CATCH();
-    {
-		MemoryContextSwitchTo(explaincxt);
-        es->deferredError = explain_defer_error(es);
-
-        /* Keep a NUL at the end of the output buffer. */
-        buf.data[Min(buf.len, buf.maxlen-1)] = '\0';
-    }
-    PG_END_TRY();
-=======
 	/* Create textual dump of plan tree */
 	initStringInfo(&buf);
 	ExplainPrintPlan(&buf, queryDesc, stmt->analyze, stmt->verbose);
->>>>>>> 38e9348282e
 
 	/*
 	 * If we ran the command, run any AFTER triggers it queued.  (Note this
 	 * will not include DEFERRED triggers; since those don't run until end of
 	 * transaction, we can't measure them.)  Include into total runtime.
-     * Skip triggers if there has been an error.
 	 */
-<<<<<<< HEAD
-	if (es->printAnalyze &&
-        !es->deferredError)
-=======
 	if (stmt->analyze)
 	{
 		INSTR_TIME_SET_CURRENT(starttime);
@@ -604,7 +476,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 
 	/* Print info about runtime of triggers */
 	if (stmt->analyze)
->>>>>>> 38e9348282e
 	{
 		ResultRelInfo *rInfo;
 		bool		show_relname;
@@ -612,11 +483,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 		List	   *targrels = queryDesc->estate->es_trig_target_relations;
 		int			nr;
 		ListCell   *l;
-
-
-		INSTR_TIME_SET_CURRENT(starttime);
-		AfterTriggerEndQuery(queryDesc->estate);
-		totaltime += elapsed_time(&starttime);
 
 		show_relname = (numrels > 1 || targrels != NIL);
 		rInfo = queryDesc->estate->es_result_relations;
@@ -634,7 +500,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
      * Display per-slice and whole-query statistics.
      */
     if (stmt->analyze)
-        cdbexplain_showExecStatsEnd(queryDesc->plannedstmt, es->showstatctx, &buf, estate);
+        cdbexplain_showExecStatsEnd(queryDesc->plannedstmt, queryDesc->showstatctx, &buf, estate);
 
     /*
      * Show non-default GUC settings that might have affected the plan.
@@ -657,74 +523,30 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
 	}
 #endif
 
-	totaltime += elapsed_time(&starttime);
-
-    /*
-     * Display final elapsed time.
-     */
-	if (stmt->analyze)
-		appendStringInfo(&buf, "Total runtime: %.3f ms\n",
-						 1000.0 * totaltime);
-
-    /*
-     * Send EXPLAIN report to client.  Some might have been sent already
-     * by explain_outNode().
-     */
-    if (buf.len > 0)
-        do_text_output_multiline(tstate, buf.data);
-
-	pfree(buf.data);
-<<<<<<< HEAD
-
-    /*
-	 * Close down the query and free resources.
-     *
-     * For EXPLAIN ANALYZE, if a qExec failed or gave an error, ExecutorEnd()
-     * will reissue the error locally at this point.  Intercept any such error
-     * and reduce it to a NOTICE so it won't interfere with our output.
+	/*
+	 * Close down the query and free resources.  Include time for this in the
+	 * total runtime (although it should be pretty minimal).
 	 */
-    PG_TRY();
-    {
-	    ExecutorEnd(queryDesc);
-    }
-    PG_CATCH();
-    {
-		MemoryContextSwitchTo(explaincxt);
-        es->deferredError = explain_defer_error(es);
-    }
-    PG_END_TRY();
+	INSTR_TIME_SET_CURRENT(starttime);
 
-    /*
-     * If we intercepted an error, now's the time to re-throw it.
-     * Although we have marked it as a NOTICE instead of an ERROR,
-     * it will still get the same error handling and cleanup treatment.
-     *
-     * We must call EndCommand() to send a successful completion response;
-     * otherwise libpq clients just discard the nice report they have received.
-     * Oddly, the NOTICE will be sent *after* the success response; that
-     * should be good enough for now.
-     */
-    if (es->deferredError)
-    {
-        ErrorData  *edata = es->deferredError;
+	ExecutorEnd(queryDesc);
 
-        /* Tell client the command ended successfully. */
-        EndCommand("EXPLAIN", tstate->dest->mydest);
-
-        /* Resume handling the error.  Clean up and send the NOTICE message. */
-        es->deferredError = NULL;
-        ReThrowError(edata);
-    }
-
-    FreeQueryDesc(queryDesc);
+	FreeQueryDesc(queryDesc);
 
 	PopActiveSnapshot();
 
 	/* We need a CCI just in case query expanded to multiple plans */
 	if (stmt->analyze)
 		CommandCounterIncrement();
-}                               /* ExplainOnePlan_internal */
-=======
+
+	totaltime += elapsed_time(&starttime);
+
+	if (stmt->analyze)
+		appendStringInfo(&buf, "Total runtime: %.3f ms\n",
+						 1000.0 * totaltime);
+	do_text_output_multiline(tstate, buf.data);
+
+	pfree(buf.data);
 }
 
 /*
@@ -740,7 +562,10 @@ void
 ExplainPrintPlan(StringInfo str, QueryDesc *queryDesc,
 				 bool analyze, bool verbose)
 {
-	ExplainState	es;
+	ExplainState es;
+	int			indent = 0;
+	CmdType		cmd = queryDesc->plannedstmt->commandType;
+	Plan	   *childPlan = queryDesc->plannedstmt->planTree;
 
 	Assert(queryDesc->plannedstmt != NULL);
 
@@ -749,12 +574,68 @@ ExplainPrintPlan(StringInfo str, QueryDesc *queryDesc,
 	es.printAnalyze = analyze;
 	es.pstmt = queryDesc->plannedstmt;
 	es.rtable = queryDesc->plannedstmt->rtable;
+	es.showstatctx = queryDesc->showstatctx;
 
+	/* CDB: Find slice table entry for the root slice. */
+	es.currentSlice = getCurrentSlice(queryDesc->estate,
+									  LocallyExecutingSliceIndex(queryDesc->estate));
+
+	/* Get local stats if root slice was executed here in the qDisp. */
+	if (!es.currentSlice ||
+		sliceRunsOnQD(es.currentSlice))
+		cdbexplain_localExecStats(queryDesc->planstate, es.showstatctx);
+
+	/*
+	 * Produce the EXPLAIN report into buf.
+	 */
+	if ( (cmd == CMD_DELETE || cmd == CMD_INSERT || cmd == CMD_UPDATE) &&
+		 queryDesc->plannedstmt->planGen == PLANGEN_PLANNER )
+	{
+		/* Set sliceNum to the slice number of the outer-most query plan node */
+		int sliceNum = 0;
+		int numSegments = getgpsegmentCount();
+		char *cmdName = NULL;
+
+		switch (cmd)
+		{
+			case CMD_DELETE:
+				cmdName = "Delete";
+				break;
+			case CMD_INSERT:
+				cmdName = "Insert";
+				break;
+			case CMD_UPDATE:
+				cmdName = "Update";
+				break;
+			default:
+				/* This should never be reached */
+				Assert(!"Unexpected statement type");
+				break;
+		}
+		appendStringInfo(str, "%s", cmdName);
+
+		if (IsA(childPlan, Motion))
+		{
+			Motion	   *pMotion = (Motion *) childPlan;
+			if (pMotion->motionType == MOTIONTYPE_FIXED && pMotion->numOutputSegs != 0)
+			{
+				numSegments = 1;
+			}
+			/* else: other motion nodes execute on all segments */
+		}
+		else if ((childPlan->directDispatch).isDirectDispatch)
+		{
+			numSegments = 1;
+		}
+		appendStringInfo(str, " (slice%d; segments: %d)", sliceNum, numSegments);
+		appendStringInfo(str, "  (rows=%.0f width=%d)\n", ceil(childPlan->plan_rows / numSegments), childPlan->plan_width);
+		appendStringInfo(str, "  ->  ");
+		indent = 3;
+	}
 	explain_outNode(str,
-					queryDesc->plannedstmt->planTree, queryDesc->planstate,
-					NULL, 0, &es);
+					childPlan, queryDesc->planstate,
+					NULL, NULL, indent, &es);
 }
->>>>>>> 38e9348282e
 
 /*
  * report_triggers -
@@ -812,40 +693,6 @@ elapsed_time(instr_time *starttime)
 	return INSTR_TIME_GET_DOUBLE(endtime);
 }
 
-
-/*
- * explain_defer_error
- *    Called within PG_CATCH handler to demote and save the current error.
- *
- * We'll try to postpone the error cleanup until after we have produced
- * the EXPLAIN ANALYZE report, and then reflect the error to the client as
- * merely a NOTICE (because an ERROR causes libpq clients to discard the
- * report).
- *
- * If successful, upon return we fall thru the bottom of the PG_CATCH
- * handler and continue sequentially.  Otherwise we re-throw to the
- * next outer error handler.
- */
-static ErrorData *
-explain_defer_error(ExplainState *es)
-{
-    ErrorData  *edata;
-
-    /* Already saved an earlier error?  Rethrow it now. */
-    if (es->deferredError)
-        ReThrowError(es->deferredError);    /* does not return */
-
-    /* Try to downgrade the error to a NOTICE.  Rethrow if disallowed. */
-    if (!elog_demote(NOTICE))
-        PG_RE_THROW();
-
-    /* Save the error info and expunge it from the error system. */
-    edata = CopyErrorData();
-    FlushErrorState();
-
-    /* Caller must eventually ReThrowError() for proper cleanup. */
-    return edata;
-}                               /* explain_defer_error */
 
 static void
 appendGangAndDirectDispatchInfo(StringInfo str, PlanState *planstate, int sliceId)
@@ -913,9 +760,8 @@ explain_outNode(StringInfo str,
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
-		/*
-		 * Estimates will have to be scaled down to be per-segment (except in a
-		 * few cases).
+		/**
+		 * Estimates will have to be scaled down to be per-segment (except in a few cases).
 		 */
 		if ((plan->directDispatch).isDirectDispatch)
 		{
@@ -923,19 +769,16 @@ explain_outNode(StringInfo str,
 		}
 		else if (plan->flow != NULL && CdbPathLocus_IsBottleneck(*(plan->flow)))
 		{
-			/*
-			 * Data is unified in one place (singleQE or QD), or executed on a
-			 * single segment.  We scale up estimates to make it global.  We
-			 * will later amend this for Motion nodes.
+			/**
+			 * Data is unified in one place (singleQE or QD), or executed on a single segment.
+			 * We scale up estimates to make it global.
+			 * We will later amend this for Motion nodes.
 			 */
 			scaleFactor = 1.0;
 		}
 		else
 		{
-			/*
-			 * The plan node is executed on multiple nodes, so scale down the
-			 * number of rows seen by each segment
-			 */
+			/* the plan node is executed on multiple nodes, so scale down the number of rows seen by each segment */
 			scaleFactor = getgpsegmentCount();
 		}
 	}
@@ -1475,11 +1318,12 @@ explain_outNode(StringInfo str,
 		case T_PartitionSelector:
 			{
 				PartitionSelector *ps = (PartitionSelector *)plan;
-				char 			  *relname = get_rel_name(ps->relid);
-
+				char *relname = get_rel_name(ps->relid);
 				appendStringInfo(str, " for %s", quote_identifier(relname));
-				if (ps->scanId != 0)
+				if (0 != ps->scanId)
+				{
 					appendStringInfo(str, " (dynamic scan id: %d)", ps->scanId);
+				}
 			}
 			break;
 		default:
