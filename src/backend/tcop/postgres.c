@@ -1354,7 +1354,7 @@ exec_mpp_query(const char *query_string,
 		/*
 		 * Now we can create the destination receiver object.
 		 */
-		receiver = CreateDestReceiver(dest, portal);
+		receiver = CreateDestReceiver(dest);
 
 		/*
 		 * Switch back to transaction context for execution.
