@@ -2759,12 +2759,12 @@ procIsInWaitQueue(const PGPROC *proc)
 {
 	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
 
-	AssertImply(proc->links.next != INVALID_OFFSET,
+	AssertImply(proc->links.next != NULL,
 				proc->resWaiting != false);
 
 	/* TODO: verify that proc is really in the queue in debug mode */
 
-	return proc->links.next != INVALID_OFFSET;
+	return proc->links.next != NULL;
 }
 
 /*
@@ -2777,7 +2777,7 @@ procIsInWaitQueue(const PGPROC *proc)
 static bool
 procIsWaiting(const PGPROC *proc)
 {
-	AssertImply(proc->links.next != INVALID_OFFSET,
+	AssertImply(proc->links.next != NULL,
 				proc->resWaiting != false);
 
 	return proc->resWaiting;
@@ -2921,8 +2921,8 @@ groupWaitQueueValidate(const ResGroupData *group)
 	waitQueue = &group->waitProcs;
 
 	AssertImply(waitQueue->size == 0,
-				waitQueue->links.next == MAKE_OFFSET(&waitQueue->links) &&
-				waitQueue->links.prev == MAKE_OFFSET(&waitQueue->links));
+				waitQueue->links.next == &waitQueue->links &&
+				waitQueue->links.prev == &waitQueue->links);
 }
 
 /*
@@ -2966,7 +2966,7 @@ groupWaitQueuePop(ResGroupData *group)
 
 	waitQueue = &group->waitProcs;
 
-	proc = (PGPROC *) MAKE_PTR(waitQueue->links.next);
+	proc = (PGPROC *) waitQueue->links.next;
 	Assert(procIsInWaitQueue(proc));
 	Assert(proc->resWaiting != false);
 	Assert(proc->resSlot == NULL);
@@ -3140,7 +3140,7 @@ resgroupDumpWaitQueue(StringInfo str, PROC_QUEUE *queue)
 								  &queue->links, 
 								  offsetof(PGPROC, links));
 
-	if (!SHM_PTR_VALID(&proc->links))
+	if (!ShmemAddrIsValid(&proc->links))
 	{
 		appendStringInfo(str, "]},");
 		return;
