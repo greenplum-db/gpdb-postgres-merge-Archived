@@ -240,6 +240,7 @@ typedef struct MirroredLockBufMgrLocalVars
 	}
 #endif
 
+
 #define MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD \
 	{ \
 		bool alreadyMirroredLockIsHeldByMe; \
@@ -249,6 +250,17 @@ typedef struct MirroredLockBufMgrLocalVars
 		alreadySpecialResyncManagerFlag = FileRepPrimary_IsResyncManagerOrWorker(); \
 		if (!alreadyMirroredLockIsHeldByMe && !alreadySpecialResyncManagerFlag) \
 			elog(ERROR, "Mirrored lock must already be held"); \
+	}
+
+#define MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD_BUF(buf) \
+	{ \
+		if (!BufferIsLocal(buf)) \
+		{ \
+			volatile BufferDesc *bufHdr; \
+			bufHdr = &BufferDescriptors[buffer - 1]; \
+			if (bufHdr->tag.forkNum == MAIN_FORKNUM) \
+				MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD; \
+		} \
 	}
 
 #ifdef USE_ASSERT_CHECKING

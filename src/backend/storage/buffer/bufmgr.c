@@ -294,7 +294,8 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 
 	Assert(smgr != NULL);
 
-	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
+	if (forkNum == MAIN_FORKNUM)
+		MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
 	/* Make sure we will have room to remember the buffer pin */
 	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
 
@@ -1019,7 +1020,7 @@ ReleaseAndReadBuffer(Buffer buffer,
 	ForkNumber forkNum = MAIN_FORKNUM;
 	volatile BufferDesc *bufHdr;
 
-	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
+	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD_BUF(buffer);
 
 	if (BufferIsValid(buffer))
 	{
@@ -2430,7 +2431,7 @@ ReleaseBuffer(Buffer buffer)
 void
 UnlockReleaseBuffer(Buffer buffer)
 {
-	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
+	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD_BUF(buffer);
 
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	ReleaseBuffer(buffer);
@@ -2644,7 +2645,7 @@ LockBuffer(Buffer buffer, int mode)
 {
 	volatile BufferDesc *buf;
 
-	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
+	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD_BUF(buffer);
 
 	Assert(BufferIsValid(buffer));
 	if (BufferIsLocal(buffer))
@@ -2672,7 +2673,7 @@ ConditionalLockBuffer(Buffer buffer)
 {
 	volatile BufferDesc *buf;
 
-	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD;
+	MIRROREDLOCK_BUFMGR_MUST_ALREADY_BE_HELD_BUF(buffer);
 
 	Assert(BufferIsValid(buffer));
 	if (BufferIsLocal(buffer))
