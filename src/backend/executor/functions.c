@@ -26,17 +26,13 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parse_coerce.h"
-<<<<<<< HEAD
 #include "tcop/tcopprot.h"
-=======
->>>>>>> 38e9348282e
 #include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
-<<<<<<< HEAD
 #include "utils/typcache.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_namespace.h"
@@ -45,8 +41,6 @@
 #include "executor/spi.h"
 #include "cdb/memquota.h"
 #include "postmaster/autostats.h"
-=======
->>>>>>> 38e9348282e
 
 
 /*
@@ -118,15 +112,9 @@ typedef SQLFunctionCache *SQLFunctionCachePtr;
 
 /* non-export function prototypes */
 static execution_state *init_execution_state(List *queryTree_list,
-<<<<<<< HEAD
-					 SQLFunctionCache *fcache,
-					 bool readonly_func);
-static void init_sql_fcache(FmgrInfo *finfo);
-=======
 											 SQLFunctionCachePtr fcache,
 											 bool lazyEvalOK);
 static void init_sql_fcache(FmgrInfo *finfo, bool lazyEvalOK);
->>>>>>> 38e9348282e
 static void postquel_start(execution_state *es, SQLFunctionCachePtr fcache);
 static bool postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache);
 static void postquel_end(execution_state *es);
@@ -138,14 +126,11 @@ static Datum postquel_get_single_result(TupleTableSlot *slot,
 						   MemoryContext resultcontext);
 static void sql_exec_error_callback(void *arg);
 static void ShutdownSQLFunction(Datum arg);
-<<<<<<< HEAD
 static bool querytree_safe_for_segment_walker(Node *expr, void *context);
-=======
 static void sqlfunction_startup(DestReceiver *self, int operation, TupleDesc typeinfo);
 static void sqlfunction_receive(TupleTableSlot *slot, DestReceiver *self);
 static void sqlfunction_shutdown(DestReceiver *self);
 static void sqlfunction_destroy(DestReceiver *self);
->>>>>>> 38e9348282e
 
 /**
  * Walker for querytree_safe_for_segment. 
@@ -228,13 +213,9 @@ void querytree_safe_for_segment(Query *query)
 
 /* Set up the list of per-query execution_state records for a SQL function */
 static execution_state *
-<<<<<<< HEAD
-init_execution_state(List *queryTree_list, SQLFunctionCache *fcache, bool readonly_func)
-=======
 init_execution_state(List *queryTree_list,
 					 SQLFunctionCachePtr fcache,
 					 bool lazyEvalOK)
->>>>>>> 38e9348282e
 {
 	execution_state *firstes = NULL;
 	execution_state *preves = NULL;
@@ -514,11 +495,7 @@ init_sql_fcache(FmgrInfo *finfo, bool lazyEvalOK)
 	/* Finally, plan the queries */
 	fcache->func_state = init_execution_state(queryTree_list,
 											  fcache,
-<<<<<<< HEAD
-											  fcache->readonly_func);
-=======
 											  lazyEvalOK);
->>>>>>> 38e9348282e
 
 	ReleaseSysCache(procedureTuple);
 
@@ -883,7 +860,6 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	while (es && es->status == F_EXEC_DONE)
 		es = es->next;
 
-<<<<<<< HEAD
 	bool orig_gp_enable_gpperfmon = gp_enable_gpperfmon;
 
 	PG_TRY();
@@ -897,57 +873,47 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			gp_enable_gpperfmon = false;
 		}
 
+		gp_enable_gpperfmon = orig_gp_enable_gpperfmon;
+
 		/*
-		 * Execute each command in the function one after another until we're
-		 * executing the final command and get a result or we run out of commands.
+		 * Execute each command in the function one after another until we either
+		 * run out of commands or get a result row from a lazily-evaluated SELECT.
 		 */
 		while (es)
 		{
-			result = postquel_execute(es, fcinfo, fcache, oldcontext);
+			bool	completed;
+
+			if (es->status == F_EXEC_START)
+				postquel_start(es, fcache);
+
+			completed = postquel_getnext(es, fcache);
+
+			/*
+			 * If we ran the command to completion, we can shut it down now.
+			 * Any row(s) we need to return are safely stashed in the tuplestore,
+			 * and we want to be sure that, for example, AFTER triggers get fired
+			 * before we return anything.  Also, if the function doesn't return
+			 * set, we can shut it down anyway because it must be a SELECT and
+			 * we don't care about fetching any more result rows.
+			 */
+			if (completed || !fcache->returnsSet)
+				postquel_end(es);
+
+			/*
+			 * Break from loop if we didn't shut down (implying we got a
+			 * lazily-evaluated row).  Otherwise we'll press on till the
+			 * whole function is done, relying on the tuplestore to keep hold
+			 * of the data to eventually be returned.  This is necessary since
+			 * an INSERT/UPDATE/DELETE RETURNING that sets the result might be
+			 * followed by additional rule-inserted commands, and we want to
+			 * finish doing all those commands before we return anything.
+			 */
 			if (es->status != F_EXEC_DONE)
 				break;
 			es = es->next;
 		}
 
 		gp_enable_gpperfmon = orig_gp_enable_gpperfmon;
-=======
-	/*
-	 * Execute each command in the function one after another until we either
-	 * run out of commands or get a result row from a lazily-evaluated SELECT.
-	 */
-	while (es)
-	{
-		bool	completed;
-
-		if (es->status == F_EXEC_START)
-			postquel_start(es, fcache);
-
-		completed = postquel_getnext(es, fcache);
-
-		/*
-		 * If we ran the command to completion, we can shut it down now.
-		 * Any row(s) we need to return are safely stashed in the tuplestore,
-		 * and we want to be sure that, for example, AFTER triggers get fired
-		 * before we return anything.  Also, if the function doesn't return
-		 * set, we can shut it down anyway because it must be a SELECT and
-		 * we don't care about fetching any more result rows.
-		 */
-		if (completed || !fcache->returnsSet)
-			postquel_end(es);
-
-		/*
-		 * Break from loop if we didn't shut down (implying we got a
-		 * lazily-evaluated row).  Otherwise we'll press on till the
-		 * whole function is done, relying on the tuplestore to keep hold
-		 * of the data to eventually be returned.  This is necessary since
-		 * an INSERT/UPDATE/DELETE RETURNING that sets the result might be
-		 * followed by additional rule-inserted commands, and we want to
-		 * finish doing all those commands before we return anything.
-		 */
-		if (es->status != F_EXEC_DONE)
-			break;
-		es = es->next;
->>>>>>> 38e9348282e
 	}
 	PG_CATCH();
 	{
