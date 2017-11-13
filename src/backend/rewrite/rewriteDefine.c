@@ -499,7 +499,6 @@ DefineQueryRewrite(char *rulename,
 	 * XXX what about getting rid of its TOAST table?  For now, we don't.
 	 */
 	if (RelisBecomingView)
-<<<<<<< HEAD
 	{
 		PersistentFileSysRelStorageMgr relStorageMgr;
 
@@ -568,9 +567,6 @@ DefineQueryRewrite(char *rulename,
 			heap_close(relNodeRelation, RowExclusiveLock);		
 		}
 	}
-=======
-		RelationDropStorage(event_relation);
->>>>>>> 38e9348282e
 
 	/* Close rel, but keep lock till commit... */
 	heap_close(event_relation, NoLock);

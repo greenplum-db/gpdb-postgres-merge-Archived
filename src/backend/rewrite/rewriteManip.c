@@ -52,15 +52,6 @@ static bool checkExprHasSubLink_walker(Node *node, void *context);
 static Relids offset_relid_set(Relids relids, int offset);
 static Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
 
-/*
- * checkExprHasAggs -
- *	Check if an expression contains an aggregate function call.
- */
-bool
-checkExprHasAggs(Node *node)
-{
-	return contain_aggs_of_level(node, 0);
-}
 
 /*
  * checkExprHasAggs -
@@ -381,19 +372,6 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 			j->rtindex += context->offset;
 		/* fall through to examine children */
 	}
-	if (IsA(node, FlattenedSubLink))
-	{
-		FlattenedSubLink *fslink = (FlattenedSubLink *) node;
-
-		if (context->sublevels_up == 0)
-		{
-			fslink->lefthand = offset_relid_set(fslink->lefthand,
-												context->offset);
-			fslink->righthand = offset_relid_set(fslink->righthand,
-												 context->offset);
-		}
-		/* fall through to examine children */
-	}
 	if (IsA(node, PlaceHolderVar))
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
@@ -563,33 +541,6 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
 		
-		if (phv->phlevelsup == context->sublevels_up)
-		{
-			phv->phrels = adjust_relid_set(phv->phrels,
-										   context->rt_index,
-										   context->new_index);
-		}
-		/* fall through to examine children */
-	}
-	if (IsA(node, FlattenedSubLink))
-	{
-		FlattenedSubLink *fslink = (FlattenedSubLink *) node;
-
-		if (context->sublevels_up == 0)
-		{
-			fslink->lefthand = adjust_relid_set(fslink->lefthand,
-												context->rt_index,
-												context->new_index);
-			fslink->righthand = adjust_relid_set(fslink->righthand,
-												 context->rt_index,
-												 context->new_index);
-		}
-		/* fall through to examine children */
-	}
-	if (IsA(node, PlaceHolderVar))
-	{
-		PlaceHolderVar *phv = (PlaceHolderVar *) node;
-
 		if (phv->phlevelsup == context->sublevels_up)
 		{
 			phv->phrels = adjust_relid_set(phv->phrels,
@@ -926,7 +877,6 @@ rangeTableEntry_used_walker(Node *node,
 		/* fall through to examine children */
 	}
 	/* Shouldn't need to handle planner auxiliary nodes here */
-	Assert(!IsA(node, FlattenedSubLink));
 	Assert(!IsA(node, PlaceHolderVar));
 	Assert(!IsA(node, SpecialJoinInfo));
 	Assert(!IsA(node, AppendRelInfo));
@@ -1528,93 +1478,7 @@ ResolveNew_callback(Var *var,
 
 		/* Must adjust varlevelsup if tlist item is from higher query */
 		if (var->varlevelsup > 0)
-<<<<<<< HEAD
 			IncrementVarSublevelsUp(newnode, var->varlevelsup, 0);
-=======
-			IncrementVarSublevelsUp(n, var->varlevelsup, 0);
-		/* Report it if we are adding a sublink to query */
-		if (!context->inserted_sublink)
-			context->inserted_sublink = checkExprHasSubLink(n);
-		return n;
-	}
-}
-
-static Node *
-ResolveNew_mutator(Node *node, ResolveNew_context *context)
-{
-	if (node == NULL)
-		return NULL;
-	if (IsA(node, Var))
-	{
-		Var		   *var = (Var *) node;
-		int			this_varno = (int) var->varno;
-		int			this_varlevelsup = (int) var->varlevelsup;
-
-		if (this_varno == context->target_varno &&
-			this_varlevelsup == context->sublevels_up)
-		{
-			if (var->varattno == InvalidAttrNumber)
-			{
-				/* Must expand whole-tuple reference into RowExpr */
-				RowExpr    *rowexpr;
-				List	   *colnames;
-				List	   *fields;
-
-				/*
-				 * If generating an expansion for a var of a named rowtype
-				 * (ie, this is a plain relation RTE), then we must include
-				 * dummy items for dropped columns.  If the var is RECORD (ie,
-				 * this is a JOIN), then omit dropped columns.  Either way,
-				 * attach column names to the RowExpr for use of ruleutils.c.
-				 */
-				expandRTE(context->target_rte,
-						  this_varno, this_varlevelsup, var->location,
-						  (var->vartype != RECORDOID),
-						  &colnames, &fields);
-				/* Adjust the generated per-field Vars... */
-				fields = (List *) ResolveNew_mutator((Node *) fields,
-													 context);
-				rowexpr = makeNode(RowExpr);
-				rowexpr->args = fields;
-				rowexpr->row_typeid = var->vartype;
-				rowexpr->row_format = COERCE_IMPLICIT_CAST;
-				rowexpr->colnames = colnames;
-				rowexpr->location = -1;
-
-				return (Node *) rowexpr;
-			}
-
-			/* Normal case for scalar variable */
-			return resolve_one_var(var, context);
-		}
-		/* otherwise fall through to copy the var normally */
-	}
-	else if (IsA(node, CurrentOfExpr))
-	{
-		CurrentOfExpr *cexpr = (CurrentOfExpr *) node;
-		int			this_varno = (int) cexpr->cvarno;
-
-		if (this_varno == context->target_varno &&
-			context->sublevels_up == 0)
-		{
-			/*
-			 * We get here if a WHERE CURRENT OF expression turns out to apply
-			 * to a view.  Someday we might be able to translate the
-			 * expression to apply to an underlying table of the view, but
-			 * right now it's not implemented.
-			 */
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				   errmsg("WHERE CURRENT OF on a view is not implemented")));
-		}
-		/* otherwise fall through to copy the expr normally */
-	}
-	else if (IsA(node, Query))
-	{
-		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
-		Query	   *newnode;
-		bool		save_inserted_sublink;
->>>>>>> 38e9348282e
 
 		return newnode;
 	}
