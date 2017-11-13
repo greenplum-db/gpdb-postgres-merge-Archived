@@ -31,19 +31,10 @@ WorkTableScanNext(WorkTableScanState *node)
 {
 	TupleTableSlot *slot;
 	EState	   *estate;
-<<<<<<< HEAD
-	ScanDirection direction;
-=======
->>>>>>> 38e9348282e
 	Tuplestorestate *tuplestorestate;
 
 	/*
 	 * get information from the estate and scan state
-<<<<<<< HEAD
-	 */
-	estate = node->ss.ps.state;
-	direction = estate->es_direction;
-=======
 	 *
 	 * Note: we intentionally do not support backward scan.  Although it would
 	 * take only a couple more lines here, it would force nodeRecursiveunion.c
@@ -54,8 +45,12 @@ WorkTableScanNext(WorkTableScanState *node)
 	 * requirement.  So it's not worth expending effort to support it.
 	 */
 	estate = node->ss.ps.state;
+
+	/*
+	 * GPDB_84_MERGE_FIXME: Double check we don't have backward scan required by
+	 * plan (both planner and ORCA).
+	 */
 	Assert(ScanDirectionIsForward(estate->es_direction));
->>>>>>> 38e9348282e
 
 	tuplestorestate = node->rustate->working_table;
 
@@ -63,11 +58,7 @@ WorkTableScanNext(WorkTableScanState *node)
 	 * Get the next tuple from tuplestore. Return NULL if no more tuples.
 	 */
 	slot = node->ss.ss_ScanTupleSlot;
-<<<<<<< HEAD
 	(void) tuplestore_gettupleslot(tuplestorestate, true, false, slot);
-=======
-	(void) tuplestore_gettupleslot(tuplestorestate, true, slot);
->>>>>>> 38e9348282e
 	return slot;
 }
 
@@ -83,8 +74,6 @@ TupleTableSlot *
 ExecWorkTableScan(WorkTableScanState *node)
 {
 	/*
-<<<<<<< HEAD
-=======
 	 * On the first call, find the ancestor RecursiveUnion's state
 	 * via the Param slot reserved for it.  (We can't do this during node
 	 * init because there are corner cases where we'll get the init call
@@ -119,7 +108,6 @@ ExecWorkTableScan(WorkTableScanState *node)
 	}
 
 	/*
->>>>>>> 38e9348282e
 	 * use WorkTableScanNext as access method
 	 */
 	return ExecScan(&node->ss, (ExecScanAccessMtd) WorkTableScanNext);
@@ -134,16 +122,13 @@ WorkTableScanState *
 ExecInitWorkTableScan(WorkTableScan *node, EState *estate, int eflags)
 {
 	WorkTableScanState *scanstate;
-<<<<<<< HEAD
-	ParamExecData *prmdata;
 
 	/* check for unsupported flags */
-	Assert(!(eflags & EXEC_FLAG_MARK));
-=======
-
-	/* check for unsupported flags */
+	/*
+	 * GPDB_84_MERGE_FIXME: Make sure we don't require EXEC_FLAG_BACKWARD
+	 * in GPDB.
+	 */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
->>>>>>> 38e9348282e
 
 	/*
 	 * WorkTableScan should not have any children.
@@ -157,20 +142,7 @@ ExecInitWorkTableScan(WorkTableScan *node, EState *estate, int eflags)
 	scanstate = makeNode(WorkTableScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
-<<<<<<< HEAD
-
-	/*
-	 * Find the ancestor RecursiveUnion's state
-	 * via the Param slot reserved for it.
-	 */
-	prmdata = &(estate->es_param_exec_vals[node->wtParam]);
-	Assert(prmdata->execPlan == NULL);
-	Assert(!prmdata->isnull);
-	scanstate->rustate = (RecursiveUnionState *) DatumGetPointer(prmdata->value);
-	Assert(scanstate->rustate && IsA(scanstate->rustate, RecursiveUnionState));
-=======
 	scanstate->rustate = NULL;	/* we'll set this later */
->>>>>>> 38e9348282e
 
 	/*
 	 * Miscellaneous initialization
@@ -198,27 +170,11 @@ ExecInitWorkTableScan(WorkTableScan *node, EState *estate, int eflags)
 	ExecInitScanTupleSlot(estate, &scanstate->ss);
 
 	/*
-<<<<<<< HEAD
-	 * The scan tuple type (ie, the rowtype we expect to find in the work
-	 * table) is the same as the result rowtype of the ancestor RecursiveUnion
-	 * node.  Note this depends on the assumption that RecursiveUnion doesn't
-	 * allow projection.
-	 */
-	ExecAssignScanType(&scanstate->ss,
-					   ExecGetResultType(&scanstate->rustate->ps));
-
-	/*
-	 * Initialize result tuple type and projection info.
-	 */
-	ExecAssignResultTypeFromTL(&scanstate->ss.ps);
-	ExecAssignScanProjectionInfo(&scanstate->ss);
-=======
 	 * Initialize result tuple type, but not yet projection info.
 	 */
 	ExecAssignResultTypeFromTL(&scanstate->ss.ps);
 
-	scanstate->ss.ps.ps_TupFromTlist = false;
->>>>>>> 38e9348282e
+	/* scanstate->ss.ps.ps_TupFromTlist = false; */
 
 	return scanstate;
 }
@@ -262,13 +218,9 @@ void
 ExecWorkTableScanReScan(WorkTableScanState *node, ExprContext *exprCtxt)
 {
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-<<<<<<< HEAD
-	tuplestore_rescan(node->rustate->working_table);
-=======
-	node->ss.ps.ps_TupFromTlist = false;
+	/* node->ss.ps.ps_TupFromTlist = false; */
 
 	/* No need (or way) to rescan if ExecWorkTableScan not called yet */
 	if (node->rustate)
 		tuplestore_rescan(node->rustate->working_table);
->>>>>>> 38e9348282e
 }
