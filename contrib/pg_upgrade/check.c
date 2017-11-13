@@ -348,8 +348,10 @@ set_locale_and_encoding(migratorContext *ctx, Cluster whichCluster)
 	int			i_encoding;
 	ControlData *ctrl = (whichCluster == CLUSTER_OLD) ?
 	&ctx->old.controldata : &ctx->new.controldata;
+	/* GPDB_84_MERGE_FIXME: see below
 	int			cluster_version = (whichCluster == CLUSTER_OLD) ?
 	ctx->old.major_version : ctx->new.major_version;
+	*/
 
 	conn = connectToServer(ctx, "template1", whichCluster);
 

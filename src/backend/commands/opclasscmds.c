@@ -346,7 +346,6 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	NameData	opcName;
 	ObjectAddress myself,
 				referenced;
-	int			i;
 
 	/* Convert list of names to a name and namespace */
 	namespaceoid = QualifiedNameGetCreationNamespace(stmt->opclassname,
@@ -746,7 +745,6 @@ DefineOpFamily(CreateOpFamilyStmt *stmt)
 	NameData	opfName;
 	ObjectAddress myself,
 				referenced;
-	int			i;
 
 	/* Convert list of names to a name and namespace */
 	namespaceoid = QualifiedNameGetCreationNamespace(stmt->opfamilyname,
@@ -1331,7 +1329,6 @@ storeOperators(List *opfamilyname, Oid amoid,
 	ObjectAddress myself,
 				referenced;
 	ListCell   *l;
-	int			i;
 
 	rel = heap_open(AccessMethodOperatorRelationId, RowExclusiveLock);
 
@@ -1432,7 +1429,6 @@ storeProcedures(List *opfamilyname, Oid amoid,
 	ObjectAddress myself,
 				referenced;
 	ListCell   *l;
-	int			i;
 
 	rel = heap_open(AccessMethodProcedureRelationId, RowExclusiveLock);
 
