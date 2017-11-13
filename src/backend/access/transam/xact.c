@@ -1822,6 +1822,8 @@ bool RecordCrashTransactionAbortRecord(
 	XLogRecPtr	recptr;
 	XidStatus status;
 	bool           validStatus;
+	int			nchildren;
+	TransactionId *children;
 
 	/* Fix for MPP-12614. The call to TransactionIdGetStatus() has been removed since    */
 	/* The clog many not have the the referenced transaction as of crash recovery        */
@@ -1930,7 +1932,11 @@ bool RecordCrashTransactionAbortRecord(
 	/* value for TransactionIdGetStatus() was good.                                    */
 
 	if (validStatus == true)
-	  TransactionIdAbort(xid);
+	{
+		nchildren = xactGetCommittedChildren(&children);
+
+		TransactionIdAbortTree(xid, nchildren, children);
+	}
 
 	END_CRIT_SECTION();
 

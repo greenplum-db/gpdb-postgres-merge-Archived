@@ -230,7 +230,6 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, XLogRecPtr recptr,
 
 		if (XLByteLT(PageGetLSN(page), recptr))
 			PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
 		MarkBufferDirty(*buf);
 	}
 
