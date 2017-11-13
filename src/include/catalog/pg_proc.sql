@@ -45,8 +45,6 @@
 
  CREATE FUNCTION pg_get_partition_template_def(oid, bool, bool) RETURNS text LANGUAGE internal STABLE STRICT AS 'pg_get_partition_template_def' WITH (OID=5037, DESCRIPTION="ALTER statement to recreate subpartition templates for a give relation");
 
- CREATE FUNCTION pg_get_keywords(OUT word text, OUT catcode "char", OUT catdesc text) RETURNS SETOF pg_catalog.record LANGUAGE internal STABLE STRICT AS 'pg_get_keywords' WITH (OID=7302, DESCRIPTION="list of SQL keywords");
-
  CREATE FUNCTION pg_typeof("any") RETURNS regtype LANGUAGE internal STABLE AS 'pg_typeof' WITH (OID=7301, DESCRIPTION="returns the type of the argument");
 
  CREATE FUNCTION numeric_dec("numeric") RETURNS "numeric" LANGUAGE internal IMMUTABLE STRICT AS 'numeric_dec' WITH (OID=6997, DESCRIPTION="increment by one");
