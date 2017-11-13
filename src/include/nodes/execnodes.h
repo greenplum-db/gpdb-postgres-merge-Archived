@@ -1527,16 +1527,12 @@ typedef struct RecursiveUnionState
 	Tuplestorestate *working_table;
 	Tuplestorestate *intermediate_table;
 
-	/* GPDB_84_MERGE_FIXME: These fields were missing from the GPDB backport
-	 * of CTEs. Are they needed? */
-#if 0
 	/* Remaining fields are unused in UNION ALL case */
 	FmgrInfo   *eqfunctions;	/* per-grouping-field equality fns */
 	FmgrInfo   *hashfunctions;	/* per-grouping-field hash fns */
 	MemoryContext tempContext;	/* short-term context for comparisons */
 	TupleHashTable hashtable;	/* hash table for tuples already seen */
 	MemoryContext tableContext;	/* memory context containing hash table */
-#endif
 } RecursiveUnionState;
 
 /* ----------------
