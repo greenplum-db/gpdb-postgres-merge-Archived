@@ -17,8 +17,6 @@
 #include "executor/execdebug.h"
 #include "executor/nodeRecursiveunion.h"
 #include "miscadmin.h"
-<<<<<<< HEAD
-=======
 #include "utils/memutils.h"
 
 
@@ -54,7 +52,6 @@ build_hash_table(RecursiveUnionState *rustate)
 											 rustate->tableContext,
 											 rustate->tempContext);
 }
->>>>>>> 38e9348282e
 
 
 /* ----------------------------------------------------------------
@@ -82,26 +79,21 @@ ExecRecursiveUnion(RecursiveUnionState *node)
 	PlanState  *innerPlan = innerPlanState(node);
 	RecursiveUnion *plan = (RecursiveUnion *) node->ps.plan;
 	TupleTableSlot *slot;
-<<<<<<< HEAD
-=======
 	RUHashEntry entry;
 	bool		isnew;
->>>>>>> 38e9348282e
 
 	/* 1. Evaluate non-recursive term */
 	if (!node->recursing)
 	{
-<<<<<<< HEAD
-		slot = ExecProcNode(outerPlan);
-		if (!TupIsNull(slot))
-		{
-			tuplestore_puttupleslot(node->working_table, slot);
-=======
 		for (;;)
 		{
 			slot = ExecProcNode(outerPlan);
 			if (TupIsNull(slot))
 				break;
+			/*
+			 * GPDB_84_MERGE_FIXME: It suppose plan->numCols should be 0 if we don't
+			 * support recursive union. QP should fix this later.
+			 */
 			if (plan->numCols > 0)
 			{
 				/* Find or build hashtable entry for this tuple's group */
@@ -116,49 +108,11 @@ ExecRecursiveUnion(RecursiveUnionState *node)
 			/* Each non-duplicate tuple goes to the working table ... */
 			tuplestore_puttupleslot(node->working_table, slot);
 			/* ... and to the caller */
->>>>>>> 38e9348282e
 			return slot;
 		}
 		node->recursing = true;
 	}
 
-<<<<<<< HEAD
-retry:
-	/* 2. Execute recursive term */
-	slot = ExecProcNode(innerPlan);
-	if (TupIsNull(slot))
-	{
-		if (node->intermediate_empty)
-		{
-			if (!node->ps.delayEagerFree)
-				ExecEagerFreeRecursiveUnion(node);
-
-			return NULL;
-		}
-
-		/* done with old working table ... */
-		tuplestore_end(node->working_table);
-
-		/* intermediate table becomes working table */
-		node->working_table = node->intermediate_table;
-
-		/* create new empty intermediate table */
-		node->intermediate_table = tuplestore_begin_heap(false, false, work_mem);
-		node->intermediate_empty = true;
-
-		/* and reset the inner plan */
-		innerPlan->chgParam = bms_add_member(innerPlan->chgParam,
-											 plan->wtParam);
-		goto retry;
-	}
-	else
-	{
-		node->intermediate_empty = false;
-		tuplestore_puttupleslot(node->intermediate_table, slot);
-	}
-
-	return slot;
-=======
 	/* 2. Execute recursive term */
 	for (;;)
 	{
@@ -188,6 +142,10 @@ retry:
 			continue;
 		}
 
+		/*
+		 * GPDB_84_MERGE_FIXME: It suppose plan->numCols should be 0 if we don't
+		 * support recursive union. QP should fix this later.
+		 */
 		if (plan->numCols > 0)
 		{
 			/* Find or build hashtable entry for this tuple's group */
@@ -204,11 +162,11 @@ retry:
  		node->intermediate_empty = false;
  		tuplestore_puttupleslot(node->intermediate_table, slot);
 		/* ... and return it */
+
 		return slot;
 	}
 
 	return NULL;
->>>>>>> 38e9348282e
 }
 
 /* ----------------------------------------------------------------
@@ -230,16 +188,13 @@ ExecInitRecursiveUnion(RecursiveUnion *node, EState *estate, int eflags)
 	rustate = makeNode(RecursiveUnionState);
 	rustate->ps.plan = (Plan *) node;
 	rustate->ps.state = estate;
-<<<<<<< HEAD
 	rustate->ps.delayEagerFree = (eflags & EXEC_FLAG_REWIND) != 0;
-=======
 
 	rustate->eqfunctions = NULL;
 	rustate->hashfunctions = NULL;
 	rustate->hashtable = NULL;
 	rustate->tempContext = NULL;
 	rustate->tableContext = NULL;
->>>>>>> 38e9348282e
 
 	/* initialize processing state */
 	rustate->recursing = false;
@@ -248,12 +203,13 @@ ExecInitRecursiveUnion(RecursiveUnion *node, EState *estate, int eflags)
 	rustate->intermediate_table = tuplestore_begin_heap(false, false, work_mem);
 
 	/*
-<<<<<<< HEAD
-=======
 	 * If hashing, we need a per-tuple memory context for comparisons, and a
 	 * longer-lived context to store the hash table.  The table can't just be
 	 * kept in the per-query context because we want to be able to throw it
 	 * away when rescanning.
+	 *
+	 * GPDB_84_MERGE_FIXME: It suppose plan->numCols should be 0 if we don't
+	 * support recursive union. QP should fix this later.
 	 */
 	if (node->numCols > 0)
 	{
@@ -272,7 +228,6 @@ ExecInitRecursiveUnion(RecursiveUnion *node, EState *estate, int eflags)
 	}
 
 	/*
->>>>>>> 38e9348282e
 	 * Make the state structure available to descendant WorkTableScan nodes
 	 * via the Param slot reserved for it.
 	 */
@@ -309,14 +264,14 @@ ExecInitRecursiveUnion(RecursiveUnion *node, EState *estate, int eflags)
 	 * initialize child nodes
 	 */
 	outerPlanState(rustate) = ExecInitNode(outerPlan(node), estate, eflags);
-<<<<<<< HEAD
 	innerPlanState(rustate) = ExecInitNode(innerPlan(node), estate, eflags | EXEC_FLAG_REWIND);
-=======
-	innerPlanState(rustate) = ExecInitNode(innerPlan(node), estate, eflags);
 
 	/*
 	 * If hashing, precompute fmgr lookup data for inner loop, and create
 	 * the hash table.
+	 *
+	 * GPDB_84_MERGE_FIXME: It suppose plan->numCols should be 0 if we don't
+	 * support recursive union. QP should fix this later.
 	 */
 	if (node->numCols > 0)
 	{
@@ -326,7 +281,6 @@ ExecInitRecursiveUnion(RecursiveUnion *node, EState *estate, int eflags)
 							  &rustate->hashfunctions);
 		build_hash_table(rustate);
 	}
->>>>>>> 38e9348282e
 
 	return rustate;
 }
@@ -349,21 +303,16 @@ void
 ExecEndRecursiveUnion(RecursiveUnionState *node)
 {
 	/* Release tuplestores */
-<<<<<<< HEAD
 	if (node->working_table != NULL)
 		tuplestore_end(node->working_table);
 	if (node->intermediate_table != NULL)
 		tuplestore_end(node->intermediate_table);
-=======
-	tuplestore_end(node->working_table);
-	tuplestore_end(node->intermediate_table);
 
 	/* free subsidiary stuff including hashtable */
 	if (node->tempContext)
 		MemoryContextDelete(node->tempContext);
 	if (node->tableContext)
 		MemoryContextDelete(node->tableContext);
->>>>>>> 38e9348282e
 
 	/*
 	 * clean out the upper tuple table
@@ -404,24 +353,24 @@ ExecRecursiveUnionReScan(RecursiveUnionState *node, ExprContext *exprCtxt)
 	if (outerPlan->chgParam == NULL)
 		ExecReScan(outerPlan, exprCtxt);
 
-<<<<<<< HEAD
-=======
 	/* Release any hashtable storage */
 	if (node->tableContext)
 		MemoryContextResetAndDeleteChildren(node->tableContext);
 
 	/* And rebuild empty hashtable if needed */
+	/*
+	 * GPDB_84_MERGE_FIXME: It suppose plan->numCols should be 0 if we don't
+	 * support recursive union. QP should fix this later.
+	 */
 	if (plan->numCols > 0)
 		build_hash_table(node);
 
->>>>>>> 38e9348282e
 	/* reset processing state */
 	node->recursing = false;
 	node->intermediate_empty = true;
 	tuplestore_clear(node->working_table);
 	tuplestore_clear(node->intermediate_table);
 }
-<<<<<<< HEAD
 
 void
 ExecEagerFreeRecursiveUnion(RecursiveUnionState *node)
@@ -437,5 +386,3 @@ ExecEagerFreeRecursiveUnion(RecursiveUnionState *node)
 
 	ExecEagerFreeChildNodes((PlanState *) node, false);
 }
-=======
->>>>>>> 38e9348282e
