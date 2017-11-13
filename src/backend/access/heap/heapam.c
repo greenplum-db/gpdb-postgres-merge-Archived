@@ -308,7 +308,6 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 					t_xmax = HeapTupleHeaderGetXmax(loctup.t_data);
 					t_xmin = HeapTupleHeaderGetXmin(loctup.t_data);
 					t_cid = HeapTupleHeaderGetRawCommandId(loctup.t_data);
-					scan->rs_vistuples[ntup++] = lineoff;
 				}
 			}
 			if (valid)
