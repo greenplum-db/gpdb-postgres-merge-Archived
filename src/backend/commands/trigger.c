@@ -3288,6 +3288,8 @@ AfterTriggerBeginQuery(void)
 void
 AfterTriggerEndQuery(EState *estate)
 {
+	AfterTriggerEventList *events;
+
 	/* Must be inside a transaction */
 	Assert(afterTriggers != NULL);
 
