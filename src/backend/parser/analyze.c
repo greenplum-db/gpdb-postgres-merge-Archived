@@ -80,8 +80,7 @@ typedef struct
 typedef struct
 {
 	int			ncols;
-	List	  **leaftypes;
-	List	  **leaftypmods;
+	List	  **leafinfos;
 } setop_types_ctx;
 
 static Query *transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt);
@@ -2153,8 +2152,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 	 * Transform all the subtrees.
 	 */
 	ctx.ncols = -1;
-	ctx.leaftypes = NULL;
-	ctx.leaftypmods = NULL;
+	ctx.leafinfos = NULL;
 	top = transformSetOperationTree_internal(pstate, stmt, &ctx, colInfo);
 	Assert(ctx.ncols >= 0);
 
@@ -2174,9 +2172,8 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 	selected_typmods = NIL;
 	for (i = 0; i < ctx.ncols; i++)
 	{
-		List	   *types = ctx.leaftypes[i];
-		List	   *typmods = ctx.leaftypmods[i];
-		ListCell   *lct2, *lcm2;
+		List	   *typinfos = ctx.leafinfos[i];
+		ListCell   *lci2;
 		Oid			ptype;
 		int32		ptypmod;
 		Oid			restype;
@@ -2184,19 +2181,17 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 		bool		allsame, hasnontext;
 		char	   *context;
 
-		Insist(list_length(types) == list_length(typmods));
-
 		context = (stmt->op == SETOP_UNION ? "UNION" :
 				   stmt->op == SETOP_INTERSECT ? "INTERSECT" :
 				   "EXCEPT");
 		allsame = true;
 		hasnontext = false;
-		ptype = linitial_oid(types);
-		ptypmod = linitial_int(typmods);
-		forboth (lct2, types, lcm2, typmods)
+		ptype = exprType(linitial(typinfos));
+		ptypmod = exprTypmod(linitial(typinfos));
+		foreach (lci2, typinfos)
 		{
-			Oid			ntype = lfirst_oid(lct2);
-			int32		ntypmod = lfirst_int(lcm2);
+			Oid			ntype = exprType(lfirst(lci2));
+			int32		ntypmod = exprTypmod(lfirst(lci2));
 
 			/*
 			 * In the first iteration, ntype and ptype is the same element,
@@ -2251,7 +2246,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 			 * This restriction will be solved once upgrade/view issues get clean.
 			 * See MPP-7509 for the issue.
 			 */
-			restype = select_common_type(pstate, types, context, NULL);
+			restype = select_common_type(pstate, typinfos, context, NULL);
 			/*
 			 * If there's no common type, the last resort is TEXT.
 			 * See also select_common_type().
@@ -2370,6 +2365,7 @@ transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 		 * Extract a list of the result expressions for upper-level checking.
 		 */
 		*colInfo = NIL;
+		numCols = 0;
 		foreach(tl, selectQuery->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(tl);
@@ -2391,8 +2387,7 @@ transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 			if (setop_types->ncols == -1)
 			{
 				setop_types->ncols = numCols;
-				setop_types->leaftypes = (List **) palloc0(setop_types->ncols * sizeof(List *));
-				setop_types->leaftypmods = (List **) palloc0(setop_types->ncols * sizeof(List *));
+				setop_types->leafinfos = (List **) palloc0(setop_types->ncols * sizeof(List *));
 			}
 			i = 0;
 			foreach(tl, selectQuery->targetList)
@@ -2402,10 +2397,8 @@ transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 				if (tle->resjunk)
 					continue;
 
-				setop_types->leaftypes[i] = lappend_oid(setop_types->leaftypes[i],
-														exprType((Node *) tle->expr));
-				setop_types->leaftypmods[i] = lappend_int(setop_types->leaftypmods[i],
-														  exprTypmod((Node *) tle->expr));
+				setop_types->leafinfos[i] = lappend(setop_types->leafinfos[i],
+													(Node *) tle->expr);
 				i++;
 
 				/*
@@ -2584,7 +2577,7 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 			{
 				/* select common type, same as CASE et al */
 				rescoltype = select_common_type(pstate,
-												list_make2_oid(lcoltype, rcoltype),
+												list_make2(lcolinfo, rcolinfo),
 												context,
 												&bestexpr);
 				/* if same type and same typmod, use typmod; else default */
