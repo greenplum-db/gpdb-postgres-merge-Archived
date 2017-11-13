@@ -1607,6 +1607,8 @@ prsd_end(PG_FUNCTION_ARGS)
 #define ENDPUNCTOKEN(x) ( (x)==SPACE )
 
 #define TS_IDIGNORE(x)  ( (x)==TAG_T || (x)==PROTOCOL || (x)==SPACE || (x)==XMLENTITY )
+#define HLIDIGNORE(x) ( (x)==URL_T || (x)==TAG_T || (x)==NUMHWORD || (x)==ASCIIHWORD || (x)==HWORD )
+#define XMLHLIDIGNORE(x) ( (x)==URL_T || (x)==NUMHWORD || (x)==ASCIIHWORD || (x)==HWORD )
 #define HLIDREPLACE(x)  ( (x)==TAG_T )
 #define HLIDSKIP(x)     ( (x)==URL_T || (x)==NUMHWORD || (x)==ASCIIHWORD || (x)==HWORD )
 #define XMLHLIDSKIP(x)  ( (x)==URL_T || (x)==NUMHWORD || (x)==ASCIIHWORD || (x)==HWORD )
