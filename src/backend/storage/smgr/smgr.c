@@ -69,25 +69,6 @@ static HTAB *SMgrRelationHash = NULL;
 /* local function prototypes */
 static void smgrshutdown(int code, Datum arg);
 
-char *
-StorageManagerMirrorMode_Name(StorageManagerMirrorMode mirrorMode)
-{
-	switch (mirrorMode)
-	{
-		case StorageManagerMirrorMode_None:
-			return "None";
-		case StorageManagerMirrorMode_PrimaryOnly:
-			return "Primary Only";
-		case StorageManagerMirrorMode_MirrorOnly:
-			return "Mirror Only";
-		case StorageManagerMirrorMode_Both:
-			return "Both";
-
-		default:
-			return "Unknown";
-	}
-}
-
 /*
  *	smgrinit(), smgrshutdown() -- Initialize or shut down storage
  *								  managers.
