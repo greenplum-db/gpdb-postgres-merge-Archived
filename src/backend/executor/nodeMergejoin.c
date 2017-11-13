@@ -851,7 +851,7 @@ ExecMergeJoin(MergeJoinState *node)
 				innerTupleSlot = node->mj_InnerTupleSlot;
 				econtext->ecxt_innertuple = innerTupleSlot;
 
-<<<<<<< HEAD
+				/* GPDB_84_MERGE_FIXME: why is this condition different from upstream? */
 				if (node->js.jointype == JOIN_SEMI &&
 					node->mj_MatchedOuter)
 					qualResult = false;
@@ -861,11 +861,6 @@ ExecMergeJoin(MergeJoinState *node)
 								  ExecQual(joinqual, econtext, false));
 					MJ_DEBUG_QUAL(joinqual, qualResult);
 				}
-=======
-				qualResult = (joinqual == NIL ||
-							  ExecQual(joinqual, econtext, false));
-				MJ_DEBUG_QUAL(joinqual, qualResult);
->>>>>>> 38e9348282e
 
 				if (qualResult)
 				{
@@ -878,8 +873,6 @@ ExecMergeJoin(MergeJoinState *node)
 						node->mj_JoinState = EXEC_MJ_NEXTOUTER;
 						break;
 					}
-<<<<<<< HEAD
-=======
 
 					/*
 					 * In a semijoin, we'll consider returning the first match,
@@ -888,7 +881,6 @@ ExecMergeJoin(MergeJoinState *node)
 					if (node->js.jointype == JOIN_SEMI)
 						node->mj_JoinState = EXEC_MJ_NEXTOUTER;
 
->>>>>>> 38e9348282e
 					qualResult = (otherqual == NIL ||
 								  ExecQual(otherqual, econtext, false));
 					MJ_DEBUG_QUAL(otherqual, qualResult);

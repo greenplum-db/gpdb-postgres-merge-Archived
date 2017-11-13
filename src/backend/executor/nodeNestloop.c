@@ -83,30 +83,6 @@ ExecNestLoop(NestLoopState *node)
 	econtext = node->js.ps.ps_ExprContext;
 
 	/*
-<<<<<<< HEAD
-	 * get the current outer tuple
-	 */
-	outerTupleSlot = node->js.ps.ps_OuterTupleSlot;
-	econtext->ecxt_outertuple = outerTupleSlot;
-=======
-	 * Check to see if we're still projecting out tuples from a previous join
-	 * tuple (because there is a function-returning-set in the projection
-	 * expressions).  If so, try to project another one.
-	 */
-	if (node->js.ps.ps_TupFromTlist)
-	{
-		TupleTableSlot *result;
-		ExprDoneCond isDone;
-
-		result = ExecProject(node->js.ps.ps_ProjInfo, &isDone);
-		if (isDone == ExprMultipleResult)
-			return result;
-		/* Done with that source tuple... */
-		node->js.ps.ps_TupFromTlist = false;
-	}
->>>>>>> 38e9348282e
-
-	/*
 	 * Reset per-tuple memory context to free any expression evaluation
 	 * storage allocated in the previous tuple cycle.  Note this can't happen
 	 * until we're done projecting out tuples from a join tuple.
@@ -261,12 +237,8 @@ ExecNestLoop(NestLoopState *node)
 
 			if (!node->nl_MatchedOuter &&
 				(node->js.jointype == JOIN_LEFT ||
-<<<<<<< HEAD
 				 node->js.jointype == JOIN_ANTI ||
 				 node->js.jointype == JOIN_LASJ_NOTIN))
-=======
-				 node->js.jointype == JOIN_ANTI))
->>>>>>> 38e9348282e
 			{
 				/*
 				 * We are doing an outer join and there were no join matches
@@ -330,32 +302,7 @@ ExecNestLoop(NestLoopState *node)
 			node->nl_MatchedOuter = true;
 
 			/* In an antijoin, we never return a matched tuple */
-<<<<<<< HEAD
 			if (node->js.jointype == JOIN_LASJ_NOTIN || node->js.jointype == JOIN_ANTI)
-			{
-				node->nl_NeedNewOuter = true;
-				continue;		/* return to top of loop */
-			}
-			else
-			{
-				/*
-				 * In a semijoin, we'll consider returning the first match,
-				 * but after that we're done with this outer tuple.
-				 */
-				if (node->js.jointype == JOIN_SEMI)
-					node->nl_NeedNewOuter = true;
-
-				if (otherqual == NIL || ExecQual(otherqual, econtext, false))
-				{
-					/*
-					 * qualification was satisfied so we project and return the
-					 * slot containing the result tuple using ExecProject().
-					 */
-					ENL1_printf("qualification succeeded, projecting tuple");
-
-					return ExecProject(node->js.ps.ps_ProjInfo, NULL);
-=======
-			if (node->js.jointype == JOIN_ANTI)
 			{
 				node->nl_NeedNewOuter = true;
 				continue;		/* return to top of loop */
@@ -375,19 +322,12 @@ ExecNestLoop(NestLoopState *node)
 				 * slot containing the result tuple using ExecProject().
 				 */
 				TupleTableSlot *result;
-				ExprDoneCond isDone;
 
 				ENL1_printf("qualification succeeded, projecting tuple");
 
-				result = ExecProject(node->js.ps.ps_ProjInfo, &isDone);
+				result = ExecProject(node->js.ps.ps_ProjInfo, NULL);
 
-				if (isDone != ExprEndResult)
-				{
-					node->js.ps.ps_TupFromTlist =
-						(isDone == ExprMultipleResult);
-					return result;
->>>>>>> 38e9348282e
-				}
+				return result;
 			}
 		}
 
@@ -509,10 +449,7 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 			break;
 		case JOIN_LEFT:
 		case JOIN_ANTI:
-<<<<<<< HEAD
 		case JOIN_LASJ_NOTIN:
-=======
->>>>>>> 38e9348282e
 			nlstate->nl_NullInnerTupleSlot =
 				ExecInitNullTupleSlot(estate,
 								 ExecGetResultType(innerPlanState(nlstate)));
@@ -531,11 +468,6 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 	/*
 	 * finally, wipe the current outer tuple clean.
 	 */
-<<<<<<< HEAD
-	nlstate->js.ps.ps_OuterTupleSlot = NULL;
-=======
-	nlstate->js.ps.ps_TupFromTlist = false;
->>>>>>> 38e9348282e
 	nlstate->nl_NeedNewOuter = true;
 	nlstate->nl_MatchedOuter = false;
 	nlstate->nl_innerSquelchNeeded = true;		/*CDB*/
@@ -623,12 +555,6 @@ ExecReScanNestLoop(NestLoopState *node, ExprContext *exprCtxt)
 	if (outerPlan->chgParam == NULL)
 		ExecReScan(outerPlan, exprCtxt);
 
-<<<<<<< HEAD
-	/* let outerPlan to free its result tuple ... */
-	node->js.ps.ps_OuterTupleSlot = NULL;
-=======
-	node->js.ps.ps_TupFromTlist = false;
->>>>>>> 38e9348282e
 	node->nl_NeedNewOuter = true;
 	node->nl_MatchedOuter = false;
 	node->nl_innerSideScanned = false;
