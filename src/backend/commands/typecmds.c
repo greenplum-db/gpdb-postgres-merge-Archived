@@ -290,7 +290,15 @@ DefineType(List *names, List *parameters)
 		else if (pg_strcasecmp(defel->defname, "storage") == 0)
 			defelp = &storageEl;
 		else if (is_storage_encoding_directive(defel->defname))
+		{
+			/* 
+			 * GPDB_84_MERGE_FIXME: need to check to make sure that this is
+			 * copied correctly when using CREATE TABLE LIKE. See new logic
+			 * below.
+			 */
 			encoding = lappend(encoding, defel);
+			continue;
+		}
 		else
 		{
 			/* WARNING, not ERROR, for historical backwards-compatibility */

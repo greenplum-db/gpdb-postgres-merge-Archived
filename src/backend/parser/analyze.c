@@ -2565,7 +2565,7 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 			int32		rcoltypmod = exprTypmod(rcolinfo);
 			Oid			rescoltype = lfirst_oid(pct);
 			int32		rescoltypmod = lfirst_int(pcm);
-			Node       *bestexpr;
+			Node       *bestexpr = NULL;
 			SetToDefault *rescolinfo;
 
 			/*
