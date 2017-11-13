@@ -415,6 +415,8 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
         queryDesc->showstatctx = cdbexplain_showExecStatsBegin(queryDesc,
 															   starttime);
     }
+	else
+		queryDesc->showstatctx = NULL;
 
 	/* Select execution options */
 	if (stmt->analyze)
@@ -581,9 +583,11 @@ ExplainPrintPlan(StringInfo str, QueryDesc *queryDesc,
 									  LocallyExecutingSliceIndex(queryDesc->estate));
 
 	/* Get local stats if root slice was executed here in the qDisp. */
-	if (!es.currentSlice ||
-		sliceRunsOnQD(es.currentSlice))
-		cdbexplain_localExecStats(queryDesc->planstate, es.showstatctx);
+	if (analyze)
+	{
+		if (!es.currentSlice || sliceRunsOnQD(es.currentSlice))
+			cdbexplain_localExecStats(queryDesc->planstate, es.showstatctx);
+	}
 
 	/*
 	 * Produce the EXPLAIN report into buf.
