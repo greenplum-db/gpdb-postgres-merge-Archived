@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.28 2008/08/25 20:20:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.27 2008/04/13 20:51:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,39 +213,7 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 	if (eflags & EXEC_FLAG_EXPLAIN_ONLY)
 		return indexstate;
 
-<<<<<<< HEAD
 	IndexScan_BeginIndexScan(scanState, indexstate->partitionMemoryContext, false, false, true);
-=======
-	/*
-	 * Open the index relation.
-	 *
-	 * If the parent table is one of the target relations of the query, then
-	 * InitPlan already opened and write-locked the index, so we can avoid
-	 * taking another lock here.  Otherwise we need a normal reader's lock.
-	 */
-	relistarget = ExecRelationIsTargetRelation(estate, node->scan.scanrelid);
-	indexstate->biss_RelationDesc = index_open(node->indexid,
-									 relistarget ? NoLock : AccessShareLock);
-
-	/*
-	 * Initialize index-specific scan state
-	 */
-	indexstate->biss_RuntimeKeysReady = false;
-
-	/*
-	 * build the index scan keys from the index qualification
-	 */
-	ExecIndexBuildScanKeys((PlanState *) indexstate,
-						   indexstate->biss_RelationDesc,
-						   node->scan.scanrelid,
-						   node->indexqual,
-						   &indexstate->biss_ScanKeys,
-						   &indexstate->biss_NumScanKeys,
-						   &indexstate->biss_RuntimeKeys,
-						   &indexstate->biss_NumRuntimeKeys,
-						   &indexstate->biss_ArrayKeys,
-						   &indexstate->biss_NumArrayKeys);
->>>>>>> 38e9348282e
 
 	/*
 	 * We do not open or lock the base relation here.  We assume that an
