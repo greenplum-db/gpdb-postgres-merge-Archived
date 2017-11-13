@@ -2557,16 +2557,16 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 		pcm = list_head(preselected_coltypmods);
 		forboth(lci, lcolinfo, rci, rcolinfo)
 		{
-			Node	   *lcolinfo = lfirst(lci);
-			Node		*rcolinfo = lfirst(rci);
-			Oid			lcoltype = exprType(lcolinfo);
-			Oid			rcoltype = exprType(rcolinfo);
-			int32		lcoltypmod = exprTypmod(lcolinfo);
-			int32		rcoltypmod = exprTypmod(rcolinfo);
+			Node	   *lcolnode = lfirst(lci);
+			Node	   *rcolnode = lfirst(rci);
+			Oid			lcoltype = exprType(lcolnode);
+			Oid			rcoltype = exprType(rcolnode);
+			int32		lcoltypmod = exprTypmod(lcolnode);
+			int32		rcoltypmod = exprTypmod(rcolnode);
+			Node       *bestexpr = NULL;
+			SetToDefault *rescolnode;
 			Oid			rescoltype = lfirst_oid(pct);
 			int32		rescoltypmod = lfirst_int(pcm);
-			Node       *bestexpr = NULL;
-			SetToDefault *rescolinfo;
 
 			/*
 			 * If the preprocessed coltype is InvalidOid, we fall back
@@ -2577,7 +2577,7 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 			{
 				/* select common type, same as CASE et al */
 				rescoltype = select_common_type(pstate,
-												list_make2(lcolinfo, rcolinfo),
+												list_make2(lcolnode, rcolnode),
 												context,
 												&bestexpr);
 				/* if same type and same typmod, use typmod; else default */
@@ -2586,17 +2586,17 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 			}
 
 			/* verify the coercions are actually possible */
-			(void) coerce_to_common_type(pstate, lcolinfo,
+			(void) coerce_to_common_type(pstate, lcolnode,
 										 rescoltype, context);
-			(void) coerce_to_common_type(pstate, rcolinfo,
+			(void) coerce_to_common_type(pstate, rcolnode,
 										 rescoltype, context);
 
 			/* emit results */
-			rescolinfo = makeNode(SetToDefault);
-			rescolinfo->typeId = rescoltype;
-			rescolinfo->typeMod = rescoltypmod;
-			rescolinfo->location = exprLocation(bestexpr);
-			*colInfo = lappend(*colInfo, rescolinfo);
+			rescolnode = makeNode(SetToDefault);
+			rescolnode->typeId = rescoltype;
+			rescolnode->typeMod = rescoltypmod;
+			rescolnode->location = exprLocation(bestexpr);
+			*colInfo = lappend(*colInfo, rescolnode);
 
 			/* Set final decision */
 			op->colTypes = lappend_oid(op->colTypes, rescoltype);
@@ -2618,7 +2618,7 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 				ParseCallbackState pcbstate;
 
 				setup_parser_errposition_callback(&pcbstate, pstate,
-												  rescolinfo->location);
+												  rescolnode->location);
 
 				/* determine the eqop and optional sortop */
 				get_sort_group_operators(rescoltype,
@@ -2635,6 +2635,9 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 
 				op->groupClauses = lappend(op->groupClauses, grpcl);
 			}
+
+			pct = lnext(pct);
+			pcm = lnext(pcm);
 		}
 	}
 }
