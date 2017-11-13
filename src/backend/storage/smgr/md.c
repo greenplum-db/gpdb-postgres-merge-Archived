@@ -364,6 +364,7 @@ mdmirroredcreate(
 
 	reln->md_fd[MAIN_FORKNUM] = _fdvec_alloc();
 
+	reln->md_fd[MAIN_FORKNUM]->mdfd_vfd = -1;
 	reln->md_fd[MAIN_FORKNUM]->mdmir_open = mirroredOpen;
 	reln->md_fd[MAIN_FORKNUM]->mdfd_segno = 0;
 	reln->md_fd[MAIN_FORKNUM]->mdfd_chain = NULL;
@@ -861,13 +862,16 @@ else
 					 errmsg("could not open relation %s: %m", path)));
 		}
 	}
-}
 	pfree(path);
+}
 
 	reln->md_fd[forknum] = mdfd = _fdvec_alloc();
 
 	if (forknum == MAIN_FORKNUM)
+	{
 		mdfd->mdmir_open = mirroredOpen;
+		reln->md_fd[forknum]->mdfd_vfd = -1;
+	}
 	else
 		mdfd->mdfd_vfd = fd;
 
@@ -2029,7 +2033,6 @@ _mdnblocks(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 	else
 		len = FileSeek(seg->mdfd_vfd, 0L, SEEK_END);
 
-	len = MirroredBufferPool_SeekEnd(&seg->mdmir_open);
 	if (len < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
