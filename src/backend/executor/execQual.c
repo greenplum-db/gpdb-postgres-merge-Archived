@@ -102,11 +102,6 @@ static void ShutdownFuncExpr(Datum arg);
 static TupleDesc get_cached_rowtype(Oid type_id, int32 typmod,
 				   TupleDesc *cache_field, ExprContext *econtext);
 static void ShutdownTupleDescRef(Datum arg);
-<<<<<<< HEAD
-=======
-static ExprDoneCond ExecEvalFuncArgs(FunctionCallInfo fcinfo,
-				 List *argList, ExprContext *econtext);
->>>>>>> 38e9348282e
 static void ExecPrepareTuplestoreResult(FuncExprState *fcache,
 							ExprContext *econtext,
 							Tuplestorestate *resultStore,
@@ -1334,11 +1329,7 @@ GetAttributeByName(HeapTupleHeader tuple, const char *attname, bool *isNull)
 /*
  * init_fcache - initialize a FuncExprState node during first use
  */
-<<<<<<< HEAD
 void
-=======
-static void
->>>>>>> 38e9348282e
 init_fcache(Oid foid, FuncExprState *fcache,
 			MemoryContext fcacheCxt, bool needDescForSets)
 {
@@ -1410,13 +1401,7 @@ init_fcache(Oid foid, FuncExprState *fcache,
 		MemoryContextSwitchTo(oldcontext);
 	}
 	else
-<<<<<<< HEAD
-	{
 		fcache->funcResultDesc = NULL;
-	}
-=======
-		fcache->funcResultDesc = NULL;
->>>>>>> 38e9348282e
 
 	/* Initialize additional state */
 	fcache->funcResultStore = NULL;
@@ -1679,10 +1664,7 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 					   bool *isNull,
 					   ExprDoneCond *isDone)
 {
-<<<<<<< HEAD
-=======
 	List	   *arguments;
->>>>>>> 38e9348282e
 	Datum		result;
 	FunctionCallInfoData fcinfo_data;
 	FunctionCallInfo fcinfo;
@@ -1706,11 +1688,7 @@ restart:
 	{
 		Assert(isDone);				/* it was provided before ... */
 		if (tuplestore_gettupleslot(fcache->funcResultStore, true,
-<<<<<<< HEAD
 									false, fcache->funcResultSlot))
-=======
-									fcache->funcResultSlot))
->>>>>>> 38e9348282e
 		{
 			*isDone = ExprMultipleResult;
 			if (fcache->funcReturnsTuple)
@@ -1740,8 +1718,6 @@ restart:
 	}
 
 	/*
-<<<<<<< HEAD
-=======
 	 * For non-set-returning functions, we just use a local-variable
 	 * FunctionCallInfoData.  For set-returning functions we keep the callinfo
 	 * record in fcache->setArgs so that it can survive across multiple
@@ -1756,17 +1732,12 @@ restart:
 		fcinfo = &fcinfo_data;
 
 	/*
->>>>>>> 38e9348282e
 	 * arguments is a list of expressions to evaluate before passing to the
 	 * function manager.  We skip the evaluation if it was already done in the
 	 * previous call (ie, we are continuing the evaluation of a set-valued
 	 * function).  Otherwise, collect the current argument values into fcinfo.
 	 */
-<<<<<<< HEAD
-	List	   *arguments = fcache->args;
-=======
 	arguments = fcache->args;
->>>>>>> 38e9348282e
 	if (!fcache->setArgsValid)
 	{
 		/* Need to prep callinfo structure */
@@ -1795,36 +1766,10 @@ restart:
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Prepare a resultinfo node for communication.  If the function
-	 * doesn't itself return set, we don't pass the resultinfo to the
-	 * function, but we need to fill it in anyway for internal use.
-=======
-	 * Now call the function, passing the evaluated parameter values.
->>>>>>> 38e9348282e
-	 */
-	if (fcache->func.fn_retset || hasSetArg)
-	{
-<<<<<<< HEAD
-		fcinfo.resultinfo = (Node *) &rsinfo;
-	}
-	rsinfo.type = T_ReturnSetInfo;
-	rsinfo.econtext = econtext;
-	rsinfo.expectedDesc = fcache->funcResultDesc;
-	rsinfo.allowedModes = (int) (SFRM_ValuePerCall | SFRM_Materialize);
-	/* note we do not set SFRM_Materialize_Random or _Preferred */
-	rsinfo.returnMode = SFRM_ValuePerCall;
-	/* isDone is filled below */
-	rsinfo.setResult = NULL;
-	rsinfo.setDesc = NULL;
-
-	/*
 	 * Now call the function, passing the evaluated parameter values.
 	 */
 	if (fcache->func.fn_retset || hasSetArg)
 	{
-=======
->>>>>>> 38e9348282e
 		/*
 		 * We need to return a set result.	Complain if caller not ready to
 		 * accept one.
@@ -1833,8 +1778,6 @@ restart:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("set-valued function called in context that cannot accept a set")));
-<<<<<<< HEAD
-=======
 
 		/*
 		 * Prepare a resultinfo node for communication.  If the function
@@ -1852,7 +1795,6 @@ restart:
 		/* isDone is filled below */
 		rsinfo.setResult = NULL;
 		rsinfo.setDesc = NULL;
->>>>>>> 38e9348282e
 
 		/*
 		 * This loop handles the situation where we have both a set argument
@@ -1915,11 +1857,7 @@ restart:
 					if (fcache->func.fn_retset &&
 						*isDone == ExprMultipleResult)
 					{
-<<<<<<< HEAD
 						memcpy(&fcache->setArgs, &fcinfo, sizeof(fcinfo));
-=======
-						Assert(fcinfo == &fcache->setArgs);
->>>>>>> 38e9348282e
 						fcache->setHasSetArg = hasSetArg;
 						fcache->setArgsValid = true;
 						/* Register cleanup callback if we didn't already */
@@ -2112,11 +2050,8 @@ Tuplestorestate *
 ExecMakeTableFunctionResult(ExprState *funcexpr,
 							ExprContext *econtext,
 							TupleDesc expectedDesc,
-<<<<<<< HEAD
+							bool randomAccess,
 							uint64 operatorMemKB)
-=======
-							bool randomAccess)
->>>>>>> 38e9348282e
 {
 	Tuplestorestate *tupstore = NULL;
 	TupleDesc	tupdesc = NULL;
@@ -2330,14 +2265,10 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 									   -1,
 									   0);
 				}
-<<<<<<< HEAD
 
 				mt_bind = create_memtuple_binding(tupdesc);
 
-				tupstore = tuplestore_begin_heap(true, false, operatorMemKB);
-=======
-				tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
->>>>>>> 38e9348282e
+				tupstore = tuplestore_begin_heap(randomAccess, false, operatorMemKB);
 				MemoryContextSwitchTo(oldcontext);
 				rsinfo.setResult = tupstore;
 				rsinfo.setDesc = tupdesc;
@@ -2435,11 +2366,7 @@ no_function_result:
 	if (rsinfo.setResult == NULL)
 	{
 		MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-<<<<<<< HEAD
-		tupstore = tuplestore_begin_heap(true, false, operatorMemKB);
-=======
-		tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
->>>>>>> 38e9348282e
+		tupstore = tuplestore_begin_heap(randomAccess, false, operatorMemKB);
 		rsinfo.setResult = tupstore;
 		if (!returnsSet)
 		{
@@ -2471,14 +2398,7 @@ no_function_result:
 		 * leaking it across multiple usages.
 		 */
 		if (rsinfo.setDesc->tdrefcount == -1)
-<<<<<<< HEAD
-		{
 			FreeTupleDesc(rsinfo.setDesc);
-			rsinfo.setDesc = NULL;
-		}
-=======
-			FreeTupleDesc(rsinfo.setDesc);
->>>>>>> 38e9348282e
 	}
 
 	MemoryContextSwitchTo(callerContext);
@@ -3984,228 +3904,6 @@ ExecEvalMinMax(MinMaxExprState *minmaxExpr, ExprContext *econtext,
 }
 
 /* ----------------------------------------------------------------
-<<<<<<< HEAD
-=======
- *		ExecEvalXml
- * ----------------------------------------------------------------
- */
-static Datum
-ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
-			bool *isNull, ExprDoneCond *isDone)
-{
-	XmlExpr    *xexpr = (XmlExpr *) xmlExpr->xprstate.expr;
-	Datum		value;
-	bool		isnull;
-	ListCell   *arg;
-	ListCell   *narg;
-
-	if (isDone)
-		*isDone = ExprSingleResult;
-	*isNull = true;				/* until we get a result */
-
-	switch (xexpr->op)
-	{
-		case IS_XMLCONCAT:
-			{
-				List	   *values = NIL;
-
-				foreach(arg, xmlExpr->args)
-				{
-					ExprState  *e = (ExprState *) lfirst(arg);
-
-					value = ExecEvalExpr(e, econtext, &isnull, NULL);
-					if (!isnull)
-						values = lappend(values, DatumGetPointer(value));
-				}
-
-				if (list_length(values) > 0)
-				{
-					*isNull = false;
-					return PointerGetDatum(xmlconcat(values));
-				}
-				else
-					return (Datum) 0;
-			}
-			break;
-
-		case IS_XMLFOREST:
-		{
-			StringInfoData buf;
-
-			initStringInfo(&buf);
-			forboth(arg, xmlExpr->named_args, narg, xexpr->arg_names)
-			{
-				ExprState  *e = (ExprState *) lfirst(arg);
-				char	   *argname = strVal(lfirst(narg));
-
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (!isnull)
-				{
-					appendStringInfo(&buf, "<%s>%s</%s>",
-									 argname,
-									 map_sql_value_to_xml_value(value, exprType((Node *) e->expr)),
-									 argname);
-					*isNull = false;
-				}
-			}
-
-			if (*isNull)
-			{
-				pfree(buf.data);
-				return (Datum) 0;
-			}
-			else
-			{
-				text	   *result;
-
-				result = cstring_to_text_with_len(buf.data, buf.len);
-				pfree(buf.data);
-
-				return PointerGetDatum(result);
-			}
-		}
-			break;
-
-		case IS_XMLELEMENT:
-			*isNull = false;
-			return PointerGetDatum(xmlelement(xmlExpr, econtext));
-			break;
-
-		case IS_XMLPARSE:
-			{
-				ExprState  *e;
-				text	   *data;
-				bool		preserve_whitespace;
-
-				/* arguments are known to be text, bool */
-				Assert(list_length(xmlExpr->args) == 2);
-
-				e = (ExprState *) linitial(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (isnull)
-					return (Datum) 0;
-				data = DatumGetTextP(value);
-
-				e = (ExprState *) lsecond(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (isnull)		/* probably can't happen */
-					return (Datum) 0;
-				preserve_whitespace = DatumGetBool(value);
-
-				*isNull = false;
-
-				return PointerGetDatum(xmlparse(data,
-												xexpr->xmloption,
-												preserve_whitespace));
-			}
-			break;
-
-		case IS_XMLPI:
-			{
-				ExprState  *e;
-				text	   *arg;
-
-				/* optional argument is known to be text */
-				Assert(list_length(xmlExpr->args) <= 1);
-
-				if (xmlExpr->args)
-				{
-					e = (ExprState *) linitial(xmlExpr->args);
-					value = ExecEvalExpr(e, econtext, &isnull, NULL);
-					if (isnull)
-						arg = NULL;
-					else
-						arg = DatumGetTextP(value);
-				}
-				else
-				{
-					arg = NULL;
-					isnull = false;
-				}
-
-				return PointerGetDatum(xmlpi(xexpr->name, arg, isnull, isNull));
-			}
-			break;
-
-		case IS_XMLROOT:
-			{
-				ExprState  *e;
-				xmltype    *data;
-				text	   *version;
-				int			standalone;
-
-				/* arguments are known to be xml, text, int */
-				Assert(list_length(xmlExpr->args) == 3);
-
-				e = (ExprState *) linitial(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (isnull)
-					return (Datum) 0;
-				data = DatumGetXmlP(value);
-
-				e = (ExprState *) lsecond(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (isnull)
-					version = NULL;
-				else
-					version = DatumGetTextP(value);
-
-				e = (ExprState *) lthird(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				standalone = DatumGetInt32(value);
-
-				*isNull = false;
-
-				return PointerGetDatum(xmlroot(data,
-											   version,
-											   standalone));
-			}
-			break;
-
-		case IS_XMLSERIALIZE:
-			{
-				ExprState  *e;
-
-				/* argument type is known to be xml */
-				Assert(list_length(xmlExpr->args) == 1);
-
-				e = (ExprState *) linitial(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (isnull)
-					return (Datum) 0;
-
-				*isNull = false;
-
-				return PointerGetDatum(xmltotext_with_xmloption(DatumGetXmlP(value), xexpr->xmloption));
-			}
-			break;
-
-		case IS_DOCUMENT:
-			{
-				ExprState  *e;
-
-				/* optional argument is known to be xml */
-				Assert(list_length(xmlExpr->args) == 1);
-
-				e = (ExprState *) linitial(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (isnull)
-					return (Datum) 0;
-				else
-				{
-					*isNull = false;
-					return BoolGetDatum(xml_is_document(DatumGetXmlP(value)));
-				}
-			}
-			break;
-	}
-
-	elog(ERROR, "unrecognized XML operation");
-	return (Datum) 0;
-}
-
-/* ----------------------------------------------------------------
->>>>>>> 38e9348282e
  *		ExecEvalNullIf
  *
  * Note that this is *always* derived from the equals operator,
