@@ -425,6 +425,7 @@ typedef struct replacements
 	char *abs_srcdir;
 	char *abs_builddir;
 	char *testtablespace;
+	char *dlpath;
 	char *dlsuffix;
 	char *bindir;
 	char *orientation;
@@ -476,6 +477,7 @@ convert_line(char *line, replacements *repls)
 	replace_string(line, "@abs_srcdir@", repls->abs_srcdir);
 	replace_string(line, "@abs_builddir@", repls->abs_builddir);
 	replace_string(line, "@testtablespace@", repls->testtablespace);
+	replace_string(line, "@libdir@", repls->dlpath);
 	replace_string(line, "@DLSUFFIX@", repls->dlsuffix);
 	replace_string(line, "@bindir@", repls->bindir);
 	if (repls->orientation)
@@ -635,13 +637,8 @@ generate_uao_sourcefiles(char *src_dir, char *dest_dir, char *suffix, replacemen
  * in the "dest" directory, replacing the ".source" prefix in their names with
  * the given suffix.
  */
-<<<<<<< HEAD
 static int
-convert_sourcefiles_in(char *source, char * dest_dir, char *dest, char *suffix)
-=======
-static void
-convert_sourcefiles_in(char *source_subdir, char *dest_subdir, char *suffix)
->>>>>>> 38e9348282e
+convert_sourcefiles_in(char *source_subdir, char *dest_dir, char *dest_subdir, char *suffix)
 {
 	char		testtablespace[MAXPGPATH];
 	char		indir[MAXPGPATH];
@@ -671,31 +668,11 @@ convert_sourcefiles_in(char *source_subdir, char *dest_subdir, char *suffix)
 		/* Error logged in pgfnames */
 		exit_nicely(2);
 
-<<<<<<< HEAD
 	/* also create the output directory if not present */
-	{
-		char		outdir[MAXPGPATH];
+	if (!directory_exists(dest_subdir))
+		make_directory(dest_subdir);
 
-		snprintf(outdir, MAXPGPATH, "%s/%s", dest_dir, dest);
-
-		if (!directory_exists(outdir))
-			make_directory(outdir);
-	}
-
-#ifdef WIN32
-	/* in Win32, replace backslashes with forward slashes */
-	for (c = abs_builddir; *c; c++)
-		if (*c == '\\')
-			*c = '/';
-	for (c = abs_srcdir; *c; c++)
-		if (*c == '\\')
-			*c = '/';
-#endif
-
-	snprintf(testtablespace, MAXPGPATH, "%s/testtablespace", abs_builddir);
-=======
 	snprintf(testtablespace, MAXPGPATH, "%s/testtablespace", outputdir);
->>>>>>> 38e9348282e
 
 #ifdef WIN32
 	/*
@@ -719,9 +696,10 @@ convert_sourcefiles_in(char *source_subdir, char *dest_subdir, char *suffix)
 		strcpy(cgroup_mnt_point, "/sys/fs/cgroup");
 
 	memset(&repls, 0, sizeof(repls));
-	repls.abs_srcdir = abs_srcdir;
-	repls.abs_builddir = abs_builddir;
+	repls.abs_srcdir = inputdir;
+	repls.abs_builddir = outputdir;
 	repls.testtablespace = testtablespace;
+	repls.dlpath = dlpath;
 	repls.dlsuffix = DLSUFFIX;
 	repls.bindir = bindir;
 	repls.cgroup_mnt_point = cgroup_mnt_point;
@@ -737,12 +715,11 @@ convert_sourcefiles_in(char *source_subdir, char *dest_subdir, char *suffix)
 		char		line[1024];
 		bool		has_tokens = false;
 
-
 		if (aodir && strncmp(*name, aodir, strlen(aodir)) == 0 &&
 			(strlen(*name) < 8 || strcmp(*name + strlen(*name) - 7, ".source") != 0))
 		{
 			snprintf(srcfile, MAXPGPATH, "%s/%s",  indir, *name);
-			snprintf(destfile, MAXPGPATH, "%s/%s/%s", dest_dir, dest, *name);
+			snprintf(destfile, MAXPGPATH, "%s/%s", dest_subdir, *name);
 			count += generate_uao_sourcefiles(srcfile, destfile, suffix, &repls);
 			continue;
 		}
@@ -750,8 +727,8 @@ convert_sourcefiles_in(char *source_subdir, char *dest_subdir, char *suffix)
 		if (resgroupdir && strncmp(*name, resgroupdir, strlen(resgroupdir)) == 0 &&
 			(strlen(*name) < 8 || strcmp(*name + strlen(*name) - 7, ".source") != 0))
 		{
-			snprintf(srcfile, MAXPGPATH, "%s/%s", source, *name);
-			snprintf(destfile, MAXPGPATH, "%s/%s/%s", dest_dir, dest, *name);
+			snprintf(srcfile, MAXPGPATH, "%s/%s", source_subdir, *name);
+			snprintf(destfile, MAXPGPATH, "%s/%s", dest_subdir, *name);
 			count += convert_sourcefiles_in(srcfile, dest_dir, destfile, suffix);
 			continue;
 		}
@@ -767,12 +744,7 @@ convert_sourcefiles_in(char *source_subdir, char *dest_subdir, char *suffix)
 		/* build the full actual paths to open */
 		snprintf(prefix, strlen(*name) - 6, "%s", *name);
 		snprintf(srcfile, MAXPGPATH, "%s/%s", indir, *name);
-<<<<<<< HEAD
-		snprintf(destfile, MAXPGPATH, "%s/%s/%s.%s", dest_dir, dest, 
-				 prefix, suffix);
-=======
 		snprintf(destfile, MAXPGPATH, "%s/%s.%s", dest_subdir, prefix, suffix);
->>>>>>> 38e9348282e
 
 		infile = fopen(srcfile, "r");
 		if (!infile)
@@ -790,15 +762,7 @@ convert_sourcefiles_in(char *source_subdir, char *dest_subdir, char *suffix)
 		}
 		while (fgets(line, sizeof(line), infile))
 		{
-<<<<<<< HEAD
 			convert_line(line, &repls);
-=======
-			replace_string(line, "@abs_srcdir@", inputdir);
-			replace_string(line, "@abs_builddir@", outputdir);
-			replace_string(line, "@testtablespace@", testtablespace);
-			replace_string(line, "@libdir@", dlpath);
-			replace_string(line, "@DLSUFFIX@", DLSUFFIX);
->>>>>>> 38e9348282e
 			fputs(line, outfile);
 
 			/*
@@ -1058,15 +1022,9 @@ initialize_environment(void)
 	putenv("PGDATESTYLE=Postgres, MDY");
 
 	/*
-<<<<<<< HEAD
 	 * Likewise set intervalstyle to ensure consistent results.  This is a bit
 	 * more painful because we must use PGOPTIONS, and we want to preserve the
 	 * user's ability to set other variables through that.
-=======
-	 * Likewise set intervalstyle to ensure consistent results.  This is a
-	 * bit more painful because we must use PGOPTIONS, and we want to preserve
-	 * the user's ability to set other variables through that.
->>>>>>> 38e9348282e
 	 */
 	{
 		const char *my_pgoptions = "-c intervalstyle=postgres_verbose";
@@ -2282,7 +2240,6 @@ make_absolute_path(const char *in)
 	return result;
 }
 
-<<<<<<< HEAD
 static char *
 trim_white_space(char *str)
 {
@@ -2388,8 +2345,6 @@ check_feature_status(const char *feature_name, const char *feature_value,
 	return isEnabled;
 }
 
-=======
->>>>>>> 38e9348282e
 static void
 help(void)
 {
@@ -2410,12 +2365,8 @@ help(void)
 	printf(_("  --outputdir=DIR           place output files in DIR (default \".\")\n"));
 	printf(_("  --schedule=FILE           use test ordering schedule from FILE\n"));
 	printf(_("                            (can be used multiple times to concatenate)\n"));
-<<<<<<< HEAD
 	printf(_("  --exclude-tests=TEST      command or space delimited tests to exclude from running\n"));
-	printf(_("  --srcdir=DIR              absolute path to source directory (for VPATH builds)\n"));
-=======
 	printf(_("  --dlpath=DIR              look for dynamic libraries in DIR\n"));
->>>>>>> 38e9348282e
 	printf(_("  --temp-install=DIR        create a temporary installation in DIR\n"));
     printf(_(" --init-file=GPD_INIT_FILE  init file to be used for gpdiff\n"));
 	printf(_("  --ao-dir=DIR              directory name prefix containing generic\n"));
