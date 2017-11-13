@@ -330,16 +330,16 @@ InitProcess(void)
 
 	if (gp_debug_pgproc)
 	{
-		elog(LOG, "allocating PGPROC entry for pid %d, freeProcs (prev offset, new offset): (%ld, %ld)",
-			 MyProcPid, MAKE_OFFSET(MyProc), MyProc->links.next);
+		elog(LOG, "allocating PGPROC entry for pid %d, freeProcs (prev ptr, new ptr): (%p, %p)",
+			 MyProcPid, MyProc, MyProc->links.next);
 	}
 
 	int mppLocalProcessSerial = pg_atomic_add_fetch_u32((pg_atomic_uint32 *)&procglobal->mppLocalProcessCounter, 1);
 
 	lockHolderProcPtr = MyProc;
 
-	/* Set the next pointer to INVALID_OFFSET */
-	MyProc->links.next = INVALID_OFFSET;
+	/* Set the next pointer to NULL */
+	MyProc->links.next = NULL;
 
 	/*
 	 * Now that we have a PGPROC, mark ourselves as an active postmaster
@@ -2047,7 +2047,7 @@ ResLockWaitCancel(void)
 		partitionLock = LockHashPartitionLock(lockAwaited->hashcode);
 		LWLockAcquire(partitionLock, LW_EXCLUSIVE);
 
-		if (MyProc->links.next != INVALID_OFFSET)
+		if (MyProc->links.next != NULL)
 		{
 			/* We could not have been granted the lock yet */
 			Assert(MyProc->waitStatus == STATUS_ERROR);

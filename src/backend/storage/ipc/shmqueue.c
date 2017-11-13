@@ -165,9 +165,9 @@ SHMQueueNext(SHM_QUEUE *queue, SHM_QUEUE *curElem, Size linkOffset)
 Pointer
 SHMQueuePrev(SHM_QUEUE *queue, SHM_QUEUE *curElem, Size linkOffset)
 {
-	SHM_QUEUE  *elemPtr = (SHM_QUEUE *) MAKE_PTR((curElem)->prev);
+	SHM_QUEUE  *elemPtr = curElem->prev;
 
-	Assert(SHM_PTR_VALID(curElem));
+	Assert(ShmemAddrIsValid(curElem));
 
 	if (elemPtr == queue)		/* back to the queue head? */
 		return NULL;
