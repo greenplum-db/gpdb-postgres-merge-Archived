@@ -831,6 +831,13 @@ processSequenceRequest(int sockfd )
 	 */
 	PG_TRY();
 	{
+		/*
+		 * Processing the request might need to do catalog lookups, which requires
+		 * a transaction. Updating the sequence itself is not transactional, so this
+		 * transaction should be read-only.
+		 */
+		StartTransactionCommand();
+
 		cdb_sequence_nextval_server(nextValRequest.tablespaceid,
 									nextValRequest.dbid,
 									nextValRequest.seq_oid,
@@ -839,6 +846,8 @@ processSequenceRequest(int sockfd )
 									&pcached,
 									&pincrement,
 									&poverflow);
+
+		CommitTransactionCommand();
 	}
 	PG_CATCH();
 	{
