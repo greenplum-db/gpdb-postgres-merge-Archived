@@ -96,8 +96,6 @@ static Datum ExecEvalConst(ExprState *exprstate, ExprContext *econtext,
 			  bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalParam(ExprState *exprstate, ExprContext *econtext,
 			  bool *isNull, ExprDoneCond *isDone);
-static void init_fcache(Oid foid, FuncExprState *fcache,
-						MemoryContext fcacheCxt, bool needDescForSets);
 static void ShutdownFuncExpr(Datum arg);
 static TupleDesc get_cached_rowtype(Oid type_id, int32 typmod,
 				   TupleDesc *cache_field, ExprContext *econtext);

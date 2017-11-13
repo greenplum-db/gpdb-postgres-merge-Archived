@@ -23,7 +23,7 @@ OBJS = execAmi.o execCurrent.o execGrouping.o execJunk.o execMain.o \
        nodeNestloop.o nodeFunctionscan.o nodeRecursiveunion.o nodeResult.o \
        nodeSeqscan.o nodeSetOp.o nodeSort.o nodeUnique.o \
        nodeValuesscan.o nodeCtescan.o nodeWorktablescan.o \
-       nodeLimit.o nodeGroup.o nodeSubplan.o nodeSubqueryscan.o nodeTidscan.o \
+       nodeLimit.o nodeSubplan.o nodeSubqueryscan.o nodeTidscan.o \
        tstoreReceiver.o spi.o \
        nodeBitmapTableScan.o \
        nodeExternalscan.o \

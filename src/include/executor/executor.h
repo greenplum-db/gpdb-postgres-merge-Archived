@@ -302,6 +302,8 @@ extern Datum GetAttributeByNum(HeapTupleHeader tuple, AttrNumber attrno,
 				  bool *isNull);
 extern Datum GetAttributeByName(HeapTupleHeader tuple, const char *attname,
 				   bool *isNull);
+extern void init_fcache(Oid foid, FuncExprState *fcache,
+						MemoryContext fcacheCxt, bool needDescForSets);
 extern ExprDoneCond ExecEvalFuncArgs(FunctionCallInfo fcinfo,
 									 List *argList, 
 									 ExprContext *econtext);
