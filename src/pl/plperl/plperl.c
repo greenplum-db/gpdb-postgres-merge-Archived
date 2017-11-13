@@ -420,7 +420,8 @@ _PG_init(void)
 							   gettext_noop("Perl initialization code to execute when a Perl interpreter is initialized."),
 							   NULL,
 							   &plperl_on_init,
-							   PGC_SIGHUP,
+							   NULL,
+							   PGC_SIGHUP, 0,
 							   NULL, NULL);
 
 	/*
@@ -441,14 +442,16 @@ _PG_init(void)
 							   gettext_noop("Perl initialization code to execute once when plperl is first used."),
 							   NULL,
 							   &plperl_on_plperl_init,
-							   PGC_SUSET,
+							   NULL,
+							   PGC_SUSET, 0,
 							   NULL, NULL);
 
 	DefineCustomStringVariable("plperl.on_plperlu_init",
 							   gettext_noop("Perl initialization code to execute once when plperlu is first used."),
 							   NULL,
 							   &plperl_on_plperlu_init,
-							   PGC_SUSET,
+							   NULL,
+							   PGC_SUSET, 0,
 							   NULL, NULL);
 
 	EmitWarningsOnPlaceholders("plperl");
