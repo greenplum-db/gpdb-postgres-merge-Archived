@@ -457,7 +457,6 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			proc_exit(1);		/* should never return */
 
 		case StartupProcess:
-<<<<<<< HEAD
 			/* don't set signals, startup process has its own agenda */
 			StartupProcessMain(1);
 			proc_exit(1);		/* should never return */
@@ -476,12 +475,6 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			/* don't set signals, startup process has its own agenda */
 			StartupProcessMain(4);
 			proc_exit(1);		/* should never return */
-=======
-			bootstrap_signals();
-			StartupXLOG();
-			BuildFlatFiles(false);
-			proc_exit(0);		/* startup done */
->>>>>>> 38e9348282e
 
 		case BgWriterProcess:
 			/* don't set signals, bgwriter has its own agenda */
