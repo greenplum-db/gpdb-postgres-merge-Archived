@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execCurrent.c,v 1.8 2008/11/16 17:34:28 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execCurrent.c,v 1.7 2008/05/12 00:00:48 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,6 @@ getCurrentOf(CurrentOfExpr *cexpr,
 	char	   *table_name;
 	Portal		portal;
 	QueryDesc  *queryDesc;
-<<<<<<< HEAD
 	TupleTableSlot *slot;
 	AttrNumber	gp_segment_id_attno;
 	AttrNumber	ctid_attno;
@@ -143,8 +142,6 @@ getCurrentOf(CurrentOfExpr *cexpr,
 	 */
 	if (Gp_role == GP_ROLE_EXECUTE)
 		elog(ERROR, "getCurrentOf called in executor node");
-=======
->>>>>>> 38e9348282e
 
 	/* Get the cursor name --- may have to look up a parameter reference */
 	if (cexpr->cursor_name)
@@ -186,7 +183,6 @@ getCurrentOf(CurrentOfExpr *cexpr,
 						cursor_name)));
 
 	/*
-<<<<<<< HEAD
 	 * The referenced cursor must be simply updatable. This has already
 	 * been discerned by parse/analyze for the DECLARE CURSOR of the given
 	 * cursor. This flag assures us that gp_segment_id, ctid, and tableoid (if necessary)
@@ -212,18 +208,38 @@ getCurrentOf(CurrentOfExpr *cexpr,
 				(errcode(ERRCODE_INVALID_CURSOR_STATE),
 				 errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
 						cursor_name, table_name)));
-=======
+
+	/*
+	 * The cursor must have a current result row: per the SQL spec, it's an
+	 * error if not.  We test this at the top level, rather than at the scan
+	 * node level, because in inheritance cases any one table scan could
+	 * easily not be on a row.	We want to return false, not raise error, if
+	 * the passed-in table OID is for one of the inactive scans.
+	 */
+	if (portal->atStart || portal->atEnd)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_STATE),
+				 errmsg("cursor \"%s\" is not positioned on a row",
+						cursor_name)));
+
+	/*
 	 * We have two different strategies depending on whether the cursor uses
 	 * FOR UPDATE/SHARE or not.  The reason for supporting both is that the
 	 * FOR UPDATE code is able to identify a target table in many cases where
 	 * the other code can't, while the non-FOR-UPDATE case allows use of WHERE
 	 * CURRENT OF with an insensitive cursor.
+	 *
+	 * GPDB: Neither of those methods work in GPDB, however, because the scan
+	 * is most likely below a Motion node, and belongs to a different slice
+	 * than the top node. The slot of the scan node is empty, and the tuple
+	 * has been received by a Motion node higher up in the tree instead. So
+	 * we use a different approach.
 	 */
+#if 0
 	if (queryDesc->estate->es_rowMarks)
 	{
 		ExecRowMark *erm;
 		ListCell   *lc;
->>>>>>> 38e9348282e
 
 		/*
 		 * Here, the query must have exactly one FOR UPDATE/SHARE reference to
@@ -268,78 +284,10 @@ getCurrentOf(CurrentOfExpr *cexpr,
 			return true;
 		}
 
-<<<<<<< HEAD
-	/*
-	 * In PostgreSQL, we extract the current tuple's TID from the scan node
-	 * we dug above. That doesn't work in GPDB, however, because the scan is
-	 * most likely below a Motion node, and belongs to a different slice
-	 * than the top node. The slot of the scan node is empty, and the tuple
-	 * has been received by a Motion node higher up in the tree instead. So
-	 * we use a different approach:
-	 *
-	 * The planner should've made the gp_segment_id, ctid, and tableoid
-	 * available as junk columns at the top of the plan. To retrieve this
-	 * junk metadata, we leverage the EState's junkfilter against the raw
-	 * tuple yielded by the top node in the plan.
-	 */
-
-	slot = queryDesc->planstate->ps_ResultTupleSlot;
-	Insist(!TupIsNull(slot));
-	Assert(queryDesc->estate->es_junkFilter);
-
-	/* extract gp_segment_id metadata */
-	gp_segment_id_attno = ExecFindJunkAttribute(queryDesc->estate->es_junkFilter, "gp_segment_id");
-	if (!AttributeNumberIsValid(gp_segment_id_attno))
-		elog(ERROR, "could not find junk gp_segment_id column");
-
-	value = ExecGetJunkAttribute(slot, gp_segment_id_attno, &isnull);
-	if (isnull)
-		elog(ERROR, "gp_segment_id is NULL");
-	*current_gp_segment_id = DatumGetInt32(value);
-
-	/* extract ctid metadata */
-	ctid_attno = ExecFindJunkAttribute(queryDesc->estate->es_junkFilter, "ctid");
-	if (!AttributeNumberIsValid(ctid_attno))
-		elog(ERROR, "could not find junk ctid column");
-	value = ExecGetJunkAttribute(slot, ctid_attno, &isnull);
-	if (isnull)
-		elog(ERROR, "ctid is NULL");
-	ItemPointerCopy(DatumGetItemPointer(value), current_tid);
-
-	/*
-	 * extract tableoid metadata
-	 *
-	 * DECLARE CURSOR planning only includes tableoid metadata when
-	 * scrolling a partitioned table. Otherwise gp_segment_id and ctid alone
-	 * are sufficient to uniquely identify a tuple.
-	 */
-	tableoid_attno = ExecFindJunkAttribute(queryDesc->estate->es_junkFilter,
-										   "tableoid");
-	if (AttributeNumberIsValid(tableoid_attno))
-	{
-		value = ExecGetJunkAttribute(slot, tableoid_attno, &isnull);
-		if (isnull)
-			elog(ERROR, "tableoid is NULL");
-		*current_table_oid = DatumGetObjectId(value);
-
-		/*
-		 * This is our last opportunity to verify that the physical table given
-		 * by tableoid is, indeed, simply updatable.
-		 */
-		if (!isSimplyUpdatableRelation(*current_table_oid, true /* noerror */))
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("%s is not updatable",
-							get_rel_name_partition(*current_table_oid))));
-	}
-
-	if (p_cursor_name)
-		*p_cursor_name = pstrdup(cursor_name);
-=======
 		/*
 		 * This table didn't produce the cursor's current row; some other
-		 * inheritance child of the same parent must have.  Signal caller
-		 * to do nothing on this table.
+		 * inheritance child of the same parent must have.  Signal caller to
+		 * do nothing on this table.
 		 */
 		return false;
 	}
@@ -398,7 +346,69 @@ getCurrentOf(CurrentOfExpr *cexpr,
 
 		return true;
 	}
->>>>>>> 38e9348282e
+#endif
+	{
+		/*
+		 * GPDB method:
+		 *
+		 * The planner should've made the gp_segment_id, ctid, and tableoid
+		 * available as junk columns at the top of the plan. To retrieve this
+		 * junk metadata, we leverage the EState's junkfilter against the raw
+		 * tuple yielded by the top node in the plan.
+		 */
+		slot = queryDesc->planstate->ps_ResultTupleSlot;
+		Insist(!TupIsNull(slot));
+		Assert(queryDesc->estate->es_junkFilter);
+
+		/* extract gp_segment_id metadata */
+		gp_segment_id_attno = ExecFindJunkAttribute(queryDesc->estate->es_junkFilter, "gp_segment_id");
+		if (!AttributeNumberIsValid(gp_segment_id_attno))
+			elog(ERROR, "could not find junk gp_segment_id column");
+
+		value = ExecGetJunkAttribute(slot, gp_segment_id_attno, &isnull);
+		if (isnull)
+			elog(ERROR, "gp_segment_id is NULL");
+		*current_gp_segment_id = DatumGetInt32(value);
+
+		/* extract ctid metadata */
+		ctid_attno = ExecFindJunkAttribute(queryDesc->estate->es_junkFilter, "ctid");
+		if (!AttributeNumberIsValid(ctid_attno))
+			elog(ERROR, "could not find junk ctid column");
+		value = ExecGetJunkAttribute(slot, ctid_attno, &isnull);
+		if (isnull)
+			elog(ERROR, "ctid is NULL");
+		ItemPointerCopy(DatumGetItemPointer(value), current_tid);
+
+		/*
+		 * extract tableoid metadata
+		 *
+		 * DECLARE CURSOR planning only includes tableoid metadata when
+		 * scrolling a partitioned table. Otherwise gp_segment_id and ctid alone
+		 * are sufficient to uniquely identify a tuple.
+		 */
+		tableoid_attno = ExecFindJunkAttribute(queryDesc->estate->es_junkFilter,
+											   "tableoid");
+		if (AttributeNumberIsValid(tableoid_attno))
+		{
+			value = ExecGetJunkAttribute(slot, tableoid_attno, &isnull);
+			if (isnull)
+				elog(ERROR, "tableoid is NULL");
+			*current_table_oid = DatumGetObjectId(value);
+
+			/*
+			 * This is our last opportunity to verify that the physical table given
+			 * by tableoid is, indeed, simply updatable.
+			 */
+			if (!isSimplyUpdatableRelation(*current_table_oid, true /* noerror */))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("%s is not updatable",
+								get_rel_name_partition(*current_table_oid))));
+		}
+
+		if (p_cursor_name)
+			*p_cursor_name = pstrdup(cursor_name);
+	}
 }
 
 /*
