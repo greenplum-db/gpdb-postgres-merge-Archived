@@ -47,7 +47,6 @@ test: copy copyselect
 # ----------
 # Another group of parallel tests
 # ----------
-<<<<<<< HEAD
 test: constraints create_misc create_aggregate create_operator vacuum drop_if_exists create_cast
 
 # 'inherit' test is disabled in GPDB. FIXME: why?
@@ -58,9 +57,6 @@ test: constraints create_misc create_aggregate create_operator vacuum drop_if_ex
 # get errors like:
 # ERROR: function cannot execute on segment because it accesses relation "public.pkeys"
 #test: triggers
-=======
-test: constraints triggers create_misc create_aggregate create_operator inherit vacuum drop_if_exists create_cast
->>>>>>> 38e9348282e
 
 # Depends on the above
 test: create_index create_view
@@ -105,8 +101,7 @@ test: misc
 # ----------
 # Another group of parallel tests
 # ----------
-<<<<<<< HEAD
-test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts json
+test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts foreign_data json
 
 # GPDB_84_MERGE_FIXME: While disabling this was not really an effect of the 8.4
 # merge, it was done a long time ago, it's time to revisit this so we can re-
@@ -124,15 +119,11 @@ test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts j
 # 'foreign_key' test is disabled, because it contains several tables with
 # multiple UNIQUE constraints, which is not supported in GPDB.
 #test: foreign_key
-=======
-test: select_views portals_p2 rules foreign_key cluster dependency guc bitmapops combocid tsearch tsdicts foreign_data
->>>>>>> 38e9348282e
 
 # ----------
 # Another group of parallel tests
 # ----------
 # "plpgsql" cannot run concurrently with "rules", nor can "plancache"
-<<<<<<< HEAD
 test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid conversion truncate alter_table sequence polymorphism rowtypes with xml
 
 # GPDB_83_MERGE_FIXME: the largeobject test is temporarily disabled due to test errors
@@ -140,9 +131,6 @@ test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid c
 
 # INSERT RETURNING is not supported by GPDB
 #test: returning
-=======
-test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid conversion truncate alter_table sequence polymorphism rowtypes returning largeobject with xml
->>>>>>> 38e9348282e
 
 # run stats by itself because its delay may be insufficient under heavy load
 #
