@@ -442,7 +442,18 @@ mmxlog_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 				if (smgrexists(srel, fork))
 				{
 					XLogDropRelation(rnode, fork);
-					smgrdounlink(srel, fork, false, true);
+
+					if (fork == MAIN_FORKNUM)
+						smgrdomirroredunlink(
+							&rnode,
+							/* isLocalBuf */ false,
+							/* relationName */ NULL,
+							/* primaryOnly */ true,
+							/* isRedo */ true,        // Don't generate Master Mirroring records...
+							/* ignoreNonExistence */ true,
+							&mirrorDataLossOccurred);
+					else
+						smgrdounlink(srel, fork, false, true);
 				}
 			}
 			smgrclose(srel);
