@@ -387,15 +387,12 @@ typedef struct RecursiveUnion
 {
 	Plan		plan;
 	int			wtParam;		/* ID of Param representing work table */
-
-#if 0 /* GPDB_84_MERGE_FIXME: We didn't have these fields in the GDPB backport. Why? */
 	/* Remaining fields are zero/null in UNION ALL case */
 	int			numCols;		/* number of columns to check for
 								 * duplicate-ness */
 	AttrNumber *dupColIdx;		/* their indexes in the target list */
 	Oid		   *dupOperators;	/* equality operators to compare with */
 	long		numGroups;		/* estimated number of groups in input */
-#endif
 } RecursiveUnion;
 
 /* ----------------

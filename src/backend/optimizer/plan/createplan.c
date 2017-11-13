@@ -4172,9 +4172,7 @@ make_recursive_union(List *tlist,
 {
 	RecursiveUnion *node = makeNode(RecursiveUnion);
 	Plan	   *plan = &node->plan;
-#if 0	/* not used in GPDB */
 	int			numCols = list_length(distinctList);
-#endif
 	
 	cost_recursive_union(plan, lefttree, righttree);
 
@@ -4184,7 +4182,6 @@ make_recursive_union(List *tlist,
 	plan->righttree = righttree;
 	node->wtParam = wtParam;
 
-#if 0	/* not used in GPDB */
 	/*
 	 * convert SortGroupClause list into arrays of attr indexes and equality
 	 * operators, as wanted by executor
@@ -4215,7 +4212,6 @@ make_recursive_union(List *tlist,
 		node->dupOperators = dupOperators;
 	}
 	node->numGroups = numGroups;
-#endif
 
 	return node;
 }
