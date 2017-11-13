@@ -3169,15 +3169,9 @@ CopyFromDispatch(CopyState cstate)
 	Oid			out_func_oid;
 	Datum	   *values;
 	bool	   *nulls;
-<<<<<<< HEAD
 	int		   *attr_offsets;
 	int			total_rejected_from_qes = 0;
 	int			total_completed_from_qes = 0;
-=======
-	int			nfields;
-	char	  **field_strings;
-	bool		done = false;
->>>>>>> 38e9348282e
 	bool		isnull;
 	bool	   *isvarlena;
 	ResultRelInfo *resultRelInfo;
@@ -4260,9 +4254,8 @@ CopyFrom(CopyState cstate)
 	MemoryContext oldcontext = CurrentMemoryContext;
 	ErrorContextCallback errcontext;
 	CommandId	mycid = GetCurrentCommandId(true);
-<<<<<<< HEAD
-	bool		use_wal = true; /* by default, use WAL logging */
-	bool		use_fsm = true; /* by default, use FSM for free space */
+	int			hi_options = 0; /* start with default heap_insert options */
+	BulkInsertState bistate;
 	int		   *attr_offsets;
 	bool		no_more_data = false;
 	ListCell   *cur;
@@ -4278,31 +4271,6 @@ CopyFrom(CopyState cstate)
 	bool is_check_distkey = (cstate->on_segment && Gp_role == GP_ROLE_EXECUTE && gp_enable_segment_copy_checking) ? true : false;
 	GpDistributionData	*distData = NULL; /* distribution data used to compute target seg */
 	unsigned int	target_seg = 0; /* result segment of cdbhash */
-=======
-	int			hi_options = 0;	/* start with default heap_insert options */
-	BulkInsertState bistate;
-
-	Assert(cstate->rel);
-
-	if (cstate->rel->rd_rel->relkind != RELKIND_RELATION)
-	{
-		if (cstate->rel->rd_rel->relkind == RELKIND_VIEW)
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot copy to view \"%s\"",
-							RelationGetRelationName(cstate->rel))));
-		else if (cstate->rel->rd_rel->relkind == RELKIND_SEQUENCE)
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot copy to sequence \"%s\"",
-							RelationGetRelationName(cstate->rel))));
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot copy to non-table relation \"%s\"",
-							RelationGetRelationName(cstate->rel))));
-	}
->>>>>>> 38e9348282e
 
 	/*----------
 	 * Check to see if we can avoid writing WAL
@@ -4334,14 +4302,9 @@ CopyFrom(CopyState cstate)
 	if (cstate->rel->rd_createSubid != InvalidSubTransactionId ||
 		cstate->rel->rd_newRelfilenodeSubid != InvalidSubTransactionId)
 	{
-<<<<<<< HEAD
-		use_fsm = false;
-		use_wal = XLogIsNeeded();
-=======
 		hi_options |= HEAP_INSERT_SKIP_FSM;
-		if (!XLogArchivingActive())
+		if (!XLogIsNeeded())
 			hi_options |= HEAP_INSERT_SKIP_WAL;
->>>>>>> 38e9348282e
 	}
 
 	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
@@ -4443,23 +4406,7 @@ CopyFrom(CopyState cstate)
 		CopyFromProcessDataFileHeader(cstate, cdbCopy, &file_has_oids);
 	}
 
-<<<<<<< HEAD
 	attr_offsets = (int *) palloc(num_phys_attrs * sizeof(int));
-=======
-	if (file_has_oids && cstate->binary)
-	{
-		getTypeBinaryInputInfo(OIDOID,
-							   &in_func_oid, &oid_typioparam);
-		fmgr_info(in_func_oid, &oid_in_function);
-	}
-
-	values = (Datum *) palloc(num_phys_attrs * sizeof(Datum));
-	nulls = (bool *) palloc(num_phys_attrs * sizeof(bool));
-
-	/* create workspace for CopyReadAttributes results */
-	nfields = file_has_oids ? (attr_count + 1) : attr_count;
-	field_strings = (char **) palloc(nfields * sizeof(char *));
->>>>>>> 38e9348282e
 
 	partValues = (Datum *) palloc(attr_count * sizeof(Datum));
 	partNulls = (bool *) palloc(attr_count * sizeof(bool));
@@ -4479,22 +4426,10 @@ CopyFrom(CopyState cstate)
 
 	CopyInitDataParser(cstate);
 
-<<<<<<< HEAD
 PROCESS_SEGMENT_DATA:
 	do
 	{
 		size_t		bytesread = 0;
-=======
-		/* Reset the per-tuple exprcontext */
-		ResetPerTupleExprContext(estate);
-
-		/* Switch into its memory context */
-		MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
-
-		/* Initialize all values for row to NULL */
-		MemSet(values, 0, num_phys_attrs * sizeof(Datum));
-		MemSet(nulls, true, num_phys_attrs * sizeof(bool));
->>>>>>> 38e9348282e
 
 		if (!cstate->binary)
 		{
@@ -4502,144 +4437,9 @@ PROCESS_SEGMENT_DATA:
 		bytesread = CopyGetData(cstate, cstate->raw_buf, RAW_BUF_SIZE);
 		cstate->raw_buf_done = false;
 
-<<<<<<< HEAD
 		/* set buffer pointers to beginning of the buffer */
 		cstate->begloc = cstate->raw_buf;
 		cstate->raw_buf_index = 0;
-=======
-			/* Actually read the line into memory here */
-			done = CopyReadLine(cstate);
-
-			/*
-			 * EOF at start of line means we're done.  If we see EOF after
-			 * some characters, we act as though it was newline followed by
-			 * EOF, ie, process the line and then exit loop on next iteration.
-			 */
-			if (done && cstate->line_buf.len == 0)
-				break;
-
-			/* Parse the line into de-escaped field values */
-			if (cstate->csv_mode)
-				fldct = CopyReadAttributesCSV(cstate, nfields, field_strings);
-			else
-				fldct = CopyReadAttributesText(cstate, nfields, field_strings);
-			fieldno = 0;
-
-			/* Read the OID field if present */
-			if (file_has_oids)
-			{
-				if (fieldno >= fldct)
-					ereport(ERROR,
-							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-							 errmsg("missing data for OID column")));
-				string = field_strings[fieldno++];
-
-				if (string == NULL)
-					ereport(ERROR,
-							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-							 errmsg("null OID in COPY data")));
-				else
-				{
-					cstate->cur_attname = "oid";
-					cstate->cur_attval = string;
-					loaded_oid = DatumGetObjectId(DirectFunctionCall1(oidin,
-												   CStringGetDatum(string)));
-					if (loaded_oid == InvalidOid)
-						ereport(ERROR,
-								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-								 errmsg("invalid OID in COPY data")));
-					cstate->cur_attname = NULL;
-					cstate->cur_attval = NULL;
-				}
-			}
-
-			/* Loop to read the user attributes on the line. */
-			foreach(cur, cstate->attnumlist)
-			{
-				int			attnum = lfirst_int(cur);
-				int			m = attnum - 1;
-
-				if (fieldno >= fldct)
-					ereport(ERROR,
-							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-							 errmsg("missing data for column \"%s\"",
-									NameStr(attr[m]->attname))));
-				string = field_strings[fieldno++];
-
-				if (cstate->csv_mode && string == NULL &&
-					cstate->force_notnull_flags[m])
-				{
-					/* Go ahead and read the NULL string */
-					string = cstate->null_print;
-				}
-
-				cstate->cur_attname = NameStr(attr[m]->attname);
-				cstate->cur_attval = string;
-				values[m] = InputFunctionCall(&in_functions[m],
-											  string,
-											  typioparams[m],
-											  attr[m]->atttypmod);
-				if (string != NULL)
-					nulls[m] = false;
-				cstate->cur_attname = NULL;
-				cstate->cur_attval = NULL;
-			}
-
-			Assert(fieldno == nfields);
-		}
-		else
-		{
-			/* binary */
-			int16		fld_count;
-			ListCell   *cur;
-
-			if (!CopyGetInt16(cstate, &fld_count) ||
-				fld_count == -1)
-			{
-				done = true;
-				break;
-			}
-
-			if (fld_count != attr_count)
-				ereport(ERROR,
-						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 errmsg("row field count is %d, expected %d",
-								(int) fld_count, attr_count)));
-
-			if (file_has_oids)
-			{
-				cstate->cur_attname = "oid";
-				loaded_oid =
-					DatumGetObjectId(CopyReadBinaryAttribute(cstate,
-															 0,
-															 &oid_in_function,
-															 oid_typioparam,
-															 -1,
-															 &isnull));
-				if (isnull || loaded_oid == InvalidOid)
-					ereport(ERROR,
-							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-							 errmsg("invalid OID in COPY data")));
-				cstate->cur_attname = NULL;
-			}
-
-			i = 0;
-			foreach(cur, cstate->attnumlist)
-			{
-				int			attnum = lfirst_int(cur);
-				int			m = attnum - 1;
-
-				cstate->cur_attname = NameStr(attr[m]->attname);
-				i++;
-				values[m] = CopyReadBinaryAttribute(cstate,
-													i,
-													&in_functions[m],
-													typioparams[m],
-													attr[m]->atttypmod,
-													&nulls[m]);
-				cstate->cur_attname = NULL;
-			}
->>>>>>> 38e9348282e
 		}
 
 		/*
@@ -4649,37 +4449,8 @@ PROCESS_SEGMENT_DATA:
 		 */
 		if (bytesread > 0 || !cstate->fe_eof)
 		{
-<<<<<<< HEAD
 			/* handle HEADER, but only if COPY FROM ON SEGMENT */
 			if (cstate->header_line && cstate->on_segment)
-=======
-			values[defmap[i]] = ExecEvalExpr(defexprs[i], econtext,
-											 &nulls[defmap[i]], NULL);
-		}
-
-		/* And now we can form the input tuple. */
-		tuple = heap_form_tuple(tupDesc, values, nulls);
-
-		if (cstate->oids && file_has_oids)
-			HeapTupleSetOid(tuple, loaded_oid);
-
-		/* Triggers and stuff need to be invoked in query context. */
-		MemoryContextSwitchTo(oldcontext);
-
-		skip_tuple = false;
-
-		/* BEFORE ROW INSERT Triggers */
-		if (resultRelInfo->ri_TrigDesc &&
-		  resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
-		{
-			HeapTuple	newtuple;
-
-			newtuple = ExecBRInsertTriggers(estate, resultRelInfo, tuple);
-
-			if (newtuple == NULL)		/* "do nothing" */
-				skip_tuple = true;
-			else if (newtuple != tuple) /* modified by Trigger(s) */
->>>>>>> 38e9348282e
 			{
 				/* on first time around just throw the header line away */
 				PG_TRY();
@@ -5167,7 +4938,8 @@ PROCESS_SEGMENT_DATA:
 						HeapTuple tuple;
 
 						tuple = ExecFetchSlotHeapTuple(slot);
-						heap_insert(resultRelInfo->ri_RelationDesc, tuple, mycid, use_wal, use_fsm, GetCurrentTransactionId());
+						heap_insert(resultRelInfo->ri_RelationDesc, tuple, mycid, hi_options, bistate,
+									GetCurrentTransactionId());
 						insertedTid = tuple->t_self;
 					}
 
@@ -5220,7 +4992,6 @@ PROCESS_SEGMENT_DATA:
 			cstate->program_pipes = open_program_pipes(cstate->filename, false);
 			cstate->copy_file = fdopen(cstate->program_pipes->pipes[0], PG_BINARY_R);
 
-<<<<<<< HEAD
 			if (cstate->copy_file == NULL)
 				ereport(ERROR,
 						(errmsg("could not execute command \"%s\": %m",
@@ -5231,10 +5002,6 @@ PROCESS_SEGMENT_DATA:
 			struct stat st;
 			char *filename = cstate->filename;
 			cstate->copy_file = AllocateFile(filename, PG_BINARY_R);
-=======
-			/* OK, store the tuple and create index entries for it */
-			heap_insert(cstate->rel, tuple, mycid, hi_options, bistate);
->>>>>>> 38e9348282e
 
 			if (cstate->copy_file == NULL)
 				ereport(ERROR,
@@ -5280,13 +5047,9 @@ PROCESS_SEGMENT_DATA:
 
 	error_context_stack = errcontext.previous;
 
-<<<<<<< HEAD
-	MemoryContextSwitchTo(estate->es_query_cxt);
-=======
 	FreeBulkInsertState(bistate);
 
-	MemoryContextSwitchTo(oldcontext);
->>>>>>> 38e9348282e
+	MemoryContextSwitchTo(estate->es_query_cxt);
 
 	/* Execute AFTER STATEMENT insertion triggers */
 	ExecASInsertTriggers(estate, resultRelInfo);
