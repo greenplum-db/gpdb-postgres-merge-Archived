@@ -1855,7 +1855,7 @@ restart:
 					if (fcache->func.fn_retset &&
 						*isDone == ExprMultipleResult)
 					{
-						memcpy(&fcache->setArgs, &fcinfo, sizeof(fcinfo));
+						Assert(fcinfo == &fcache->setArgs);
 						fcache->setHasSetArg = hasSetArg;
 						fcache->setArgsValid = true;
 						/* Register cleanup callback if we didn't already */
