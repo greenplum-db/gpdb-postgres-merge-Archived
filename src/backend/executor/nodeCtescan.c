@@ -258,8 +258,6 @@ ExecInitCteScan(CteScan *node, EState *estate, int eflags)
 	ExecAssignResultTypeFromTL(&scanstate->ss.ps);
 	ExecAssignScanProjectionInfo(&scanstate->ss);
 
-	scanstate->ss.ps.ps_TupFromTlist = false;
-
 	return scanstate;
 }
 
@@ -310,7 +308,6 @@ ExecCteScanReScan(CteScanState *node, ExprContext *exprCtxt)
 	Tuplestorestate *tuplestorestate = node->leader->cte_table;
 
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	node->ss.ps.ps_TupFromTlist = false;
 
 	if (node->leader == node)
 	{

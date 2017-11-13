@@ -1312,7 +1312,6 @@ ReleaseHashTable(HashJoinState *node)
 	node->hj_CurBucketNo = 0;
 	node->hj_CurTuple = NULL;
 
-	node->js.ps.ps_OuterTupleSlot = NULL;
 	node->hj_NeedNewOuter = true;
 	node->hj_MatchedOuter = false;
 	node->hj_FirstOuterTupleSlot = NULL;

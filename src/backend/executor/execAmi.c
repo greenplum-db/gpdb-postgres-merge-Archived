@@ -814,6 +814,7 @@ ExecEagerFreeChildNodes(PlanState *node, bool subplanDone)
 			break;
 		}
 	}
+}
 
 /*
  * If the tlist contains set-returning functions, we can't support backward

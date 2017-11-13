@@ -330,11 +330,6 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 			END_MEMORY_ACCOUNT();
 			break;
 
-		case T_RecursiveUnion:
-			result = (PlanState *) ExecInitRecursiveUnion((RecursiveUnion *) node,
-														  estate, eflags);
-			break;
-
 		case T_BitmapAnd:
 			curMemoryAccountId = CREATE_EXECUTOR_MEMORY_ACCOUNT(isAlienPlanNode, node, BitmapAnd);
 
@@ -567,16 +562,6 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 														 estate, eflags);
 			}
 			END_MEMORY_ACCOUNT();
-			break;
-
-		case T_CteScan:
-			result = (PlanState *) ExecInitCteScan((CteScan *) node,
-												   estate, eflags);
-			break;
-
-		case T_WorkTableScan:
-			result = (PlanState *) ExecInitWorkTableScan((WorkTableScan *) node,
-														 estate, eflags);
 			break;
 
 			/*
