@@ -324,6 +324,14 @@ ftsMain(int argc, char *argv[])
 	RelationCacheInitializePhase2();
 
 	/*
+	 * Start a new transaction here before first access to db, and get a
+	 * snapshot.  We don't have a use for the snapshot itself, but we're
+	 * interested in the secondary effect that it sets RecentGlobalXmin.
+	 */
+	StartTransactionCommand();
+	(void) GetTransactionSnapshot();
+
+	/*
 	 * In order to access the catalog, we need a database, and a
 	 * tablespace; our access to the heap is going to be slightly
 	 * limited, so we'll just use some defaults.
@@ -342,6 +350,9 @@ ftsMain(int argc, char *argv[])
 	SetDatabasePath(fullpath);
 
 	RelationCacheInitializePhase3();
+
+	/* close the transaction we started above */
+	CommitTransactionCommand();
 
 	/* shmem: publish probe pid */
 	ftsProbeInfo->fts_probePid = MyProcPid;
@@ -362,7 +373,9 @@ static void
 readCdbComponentInfoAndUpdateStatus(MemoryContext probeContext)
 {
 	int i;
-	MemoryContext save = MemoryContextSwitchTo(probeContext);
+	MemoryContext save;
+
+	save = MemoryContextSwitchTo(probeContext);
 	/* cdb_component_dbs is free'd by FtsLoop(). */
 	cdb_component_dbs = getCdbComponentInfo(false);
 	MemoryContextSwitchTo(save);
@@ -594,11 +607,11 @@ void FtsLoop()
 										 ALLOCSET_DEFAULT_INITSIZE,	/* always have some memory */
 										 ALLOCSET_DEFAULT_INITSIZE,
 										 ALLOCSET_DEFAULT_MAXSIZE);
-	
-	readCdbComponentInfoAndUpdateStatus(probeContext);
 
 	for (;;)
 	{
+		bool		has_mirrors;
+
 		if (shutdown_requested)
 			break;
 		/* no need to live on if postmaster has died */
@@ -639,10 +652,18 @@ void FtsLoop()
 		else
 			processing_fullscan = false;
 
+		/* Need a transaction to access the catalogs */
+		StartTransactionCommand();
+
 		readCdbComponentInfoAndUpdateStatus(probeContext);
 
 		/* Check here gp_segment_configuration if has mirror's */
-		if (! gp_segment_config_has_mirrors())
+		has_mirrors = gp_segment_config_has_mirrors();
+
+		/* close the transaction we started above */
+		CommitTransactionCommand();
+
+		if (!has_mirrors)
 		{
 			/* The dispatcher could have requested a scan so just ignore it and unblock the dispatcher */
 			if (processing_fullscan)
