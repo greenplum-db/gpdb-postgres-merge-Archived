@@ -71,7 +71,6 @@ CteScanNext(CteScanState *node)
 
 	/*
 	 * If we can fetch another tuple from the tuplestore, return it.
-<<<<<<< HEAD
 	 *
 	 * Note: we have to use copy=true in the tuplestore_gettupleslot call,
 	 * because we are sharing the tuplestore with other nodes that might write
@@ -80,12 +79,6 @@ CteScanNext(CteScanState *node)
 	if (!eof_tuplestore)
 	{
 		if (tuplestore_gettupleslot(tuplestorestate, forward, true, slot))
-=======
-	 */
-	if (!eof_tuplestore)
-	{
-		if (tuplestore_gettupleslot(tuplestorestate, forward, slot))
->>>>>>> 38e9348282e
 			return slot;
 		if (forward)
 			eof_tuplestore = true;
@@ -265,11 +258,8 @@ ExecInitCteScan(CteScan *node, EState *estate, int eflags)
 	ExecAssignResultTypeFromTL(&scanstate->ss.ps);
 	ExecAssignScanProjectionInfo(&scanstate->ss);
 
-<<<<<<< HEAD
-=======
 	scanstate->ss.ps.ps_TupFromTlist = false;
 
->>>>>>> 38e9348282e
 	return scanstate;
 }
 
@@ -317,18 +307,10 @@ ExecEndCteScan(CteScanState *node)
 void
 ExecCteScanReScan(CteScanState *node, ExprContext *exprCtxt)
 {
-<<<<<<< HEAD
-	Tuplestorestate *tuplestorestate;
-
-	tuplestorestate = node->leader->cte_table;
-
-	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-=======
 	Tuplestorestate *tuplestorestate = node->leader->cte_table;
 
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 	node->ss.ps.ps_TupFromTlist = false;
->>>>>>> 38e9348282e
 
 	if (node->leader == node)
 	{
