@@ -83,8 +83,8 @@ SHDESCR("default template database");
 { 1262, {"datname"}       ,   19,  -1 , NAMEDATALEN,  1, 0, -1, -1 , false, 'p', 'i',  true, false, false, true, 0}, \
 { 1262, {"datdba"}        ,   26,  -1 ,           4,  2, 0, -1, -1 ,  true, 'p', 'i',  true, false, false, true, 0}, \
 { 1262, {"encoding"}      ,   23,  -1 ,           4,  3, 0, -1, -1 ,  true, 'p', 'i',  true, false, false, true, 0}, \
-{ 1262, {"datcollate"}    ,   19,  -1 , NAMEDATALEN,  4, 0, -1, -1 ,  true, 'p', 'i',  true, false, false, true, 0}, \
-{ 1262, {"datctype"}      ,   19,  -1 , NAMEDATALEN,  5, 0, -1, -1 ,  true, 'p', 'i',  true, false, false, true, 0}, \
+{ 1262, {"datcollate"}    ,   19,  -1 , NAMEDATALEN,  4, 0, -1, -1 , false, 'p', 'i',  true, false, false, true, 0}, \
+{ 1262, {"datctype"}      ,   19,  -1 , NAMEDATALEN,  5, 0, -1, -1 , false, 'p', 'i',  true, false, false, true, 0}, \
 { 1262, {"datistemplate"} ,   16,  -1 ,           1,  6, 0, -1, -1 ,  true, 'p', 'c',  true, false, false, true, 0}, \
 { 1262, {"datallowconn"}  ,   16,  -1 ,           1,  7, 0, -1, -1 ,  true, 'p', 'c',  true, false, false, true, 0}, \
 { 1262, {"datconnlimit"}  ,   23,  -1 ,           4,  8, 0, -1, -1 ,  true, 'p', 'i',  true, false, false, true, 0}, \
