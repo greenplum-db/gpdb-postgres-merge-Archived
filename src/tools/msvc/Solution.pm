@@ -177,12 +177,8 @@ sub GenerateFiles
 s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY(z)\n#define PG_VERSION_STR "PostgreSQL $self->{strver}, compiled by Visual C++ build " __STRINGIFY2(_MSC_VER) ", $bits-bit"};
             print O;
         }
-<<<<<<< HEAD
         print O "#define GP_VERSION \"unknown\"\n";
         print O "#define PG_MAJORVERSION \"$self->{majorver}\"\n";
-=======
-		print O "#define PG_MAJORVERSION \"$self->{majorver}\"\n";
->>>>>>> 38e9348282e
         print O "#define LOCALEDIR \"/share/locale\"\n" if ($self->{options}->{nls});
 	if ($self->{options}->{xml}) {
 	    print O "#define HAVE_LIBXML2\n";

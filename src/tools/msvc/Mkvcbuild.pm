@@ -36,11 +36,7 @@ my $contrib_extrasource = {
     'cube' => ['cubescan.l','cubeparse.y'],
     'seg' => ['segscan.l','segparse.y']
 };
-<<<<<<< HEAD
 my @contrib_excludes = ('pgcrypto','intagg','uuid-ossp','bufferedtest', 'varblocktest', 'hstore', 'gp_filedump', 'tsearch2', 'dblink', 'xlogdump','xlogviewer', 'changetrackingdump','gp_sparse_vector','xml2','adminpack');
-=======
-my @contrib_excludes = ('pgcrypto','intagg');
->>>>>>> 38e9348282e
 
 sub mkvcbuild
 {
