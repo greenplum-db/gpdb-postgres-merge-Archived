@@ -114,23 +114,14 @@ all: all-lib
 input_files = $(patsubst $(srcdir)/input/%.source,sql/%.sql, $(wildcard $(srcdir)/input/*.source))
 output_files := $(patsubst $(srcdir)/output/%.source,expected/%.out, $(wildcard $(srcdir)/output/*.source))
 
-<<<<<<< HEAD
-
-ifneq ($(PORTNAME),win32)
-abs_srcdir := $(shell cd "$(srcdir)" && pwd)
-abs_builddir := $(shell pwd)
-else
-abs_srcdir := $(shell cd $(srcdir) && pwd -W)
-endif
-=======
->>>>>>> 38e9348282e
-
 # not installed by default
 
 regress_data_files = \
 	$(filter-out $(addprefix $(srcdir)/,$(output_files)),$(wildcard $(srcdir)/expected/*.out)) \
 	$(wildcard $(srcdir)/input/*.source) \
 	$(wildcard $(srcdir)/output/*.source) \
+	$(wildcard $(srcdir)/output/uao_dml/*.source) \
+	$(wildcard $(srcdir)/output/uao_ddl/*.source) \
 	$(filter-out $(addprefix $(srcdir)/,$(input_files)),$(wildcard $(srcdir)/sql/*.sql)) \
 	$(wildcard $(srcdir)/data/*.data) \
 	$(srcdir)/parallel_schedule $(srcdir)/serial_schedule $(srcdir)/resultmap
@@ -184,8 +175,7 @@ hooktest:
 ## Run tests
 ##
 
-<<<<<<< HEAD
-pg_regress_call = ./pg_regress --inputdir=$(srcdir) --multibyte=$(MULTIBYTE) $(MAXCONNOPT) $(NOLOCALE) --init-file=$(srcdir)/init_file
+pg_regress_call = ./pg_regress --inputdir=$(srcdir) --dlpath=. --multibyte=$(MULTIBYTE) $(MAXCONNOPT) $(NOLOCALE) --init-file=$(srcdir)/init_file
 
 # These are currently skipped because they don't work yet for segment wal replication
 # segspace: cannot restart database at the moment
@@ -195,30 +185,18 @@ pg_regress_call := $(pg_regress_call) --exclude-tests="segspace_setup segspace s
 endif
 
 check: all
-	$(pg_regress_call) --temp-install=./tmp_check --top-builddir=$(top_builddir) --srcdir=$(abs_srcdir) --temp-port=$(TEMP_PORT) --schedule=$(srcdir)/parallel_schedule 
+	$(pg_regress_call) --temp-install=./tmp_check --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule 
 
 installcheck: all
-	$(pg_regress_call)  --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule --srcdir=$(abs_srcdir)
+	$(pg_regress_call)  --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule 
 
 installcheck-good: all twophase_pqexecparams hooktest
 	if [ -z "$(INSTALLCHECK_GOOD_KERBEROS)" ]; then \
-	$(pg_regress_call)  --psqldir=$(PSQLDIR) --schedule=$(srcdir)/parallel_schedule --schedule=$(srcdir)/greenplum_schedule --srcdir=$(abs_srcdir) --ao-dir=uao; \
+	$(pg_regress_call)  --psqldir=$(PSQLDIR) --schedule=$(srcdir)/parallel_schedule --schedule=$(srcdir)/greenplum_schedule --ao-dir=uao; \
 	else \
 	bash kerberos/setup_test.sh; \
-	PGUSER="gpadmin/kerberos-test" $(pg_regress_call)  --psqldir=$(PSQLDIR) --schedule=$(srcdir)/parallel_schedule --schedule=$(srcdir)/greenplum_schedule --srcdir=$(abs_srcdir) --ao-dir=uao --host=`hostname`; \
+	PGUSER="gpadmin/kerberos-test" $(pg_regress_call)  --psqldir=$(PSQLDIR) --schedule=$(srcdir)/parallel_schedule --schedule=$(srcdir)/greenplum_schedule --ao-dir=uao --host=`hostname`; \
 	fi
-=======
-pg_regress_call = ./pg_regress --inputdir=$(srcdir) --dlpath=. --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE)
-
-check: all
-	$(pg_regress_call) --temp-install=./tmp_check --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) $(TEMP_CONF)
-
-installcheck: all
-	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule
-
-installcheck-parallel: all
-	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT)
->>>>>>> 38e9348282e
 
 testbouncer: all
 	bash -c "bouncer/setup.sh"
@@ -232,17 +210,10 @@ runtest: installcheck
 runtest-parallel: installcheck-parallel
 
 bigtest: all
-<<<<<<< HEAD
-	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule --srcdir=$(abs_srcdir) numeric_big 
-
-bigcheck: all
-	$(pg_regress_call)  --temp-install=./tmp_check --top-builddir=$(top_builddir) --srcdir=$(abs_srcdir) --temp-port=$(TEMP_PORT) --schedule=$(srcdir)/parallel_schedule numeric_big
-=======
 	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule numeric_big 
 
 bigcheck: all
 	$(pg_regress_call) --temp-install=./tmp_check --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) numeric_big
->>>>>>> 38e9348282e
 
 bkuprestore: all
 	$(pg_regress_call)  --psqldir=$(PSQLDIR) --schedule=$(srcdir)/bkuprestore_schedule --srcdir=$(abs_srcdir)
@@ -253,31 +224,18 @@ bkuprestore: all
 
 clean distclean maintainer-clean: clean-lib
 # things built by `all' target
-<<<<<<< HEAD
-	rm -f $(OBJS) refint$(DLSUFFIX) autoinc$(DLSUFFIX)
 	$(MAKE) -C $(top_builddir)/contrib/spi clean
 	$(MAKE) -C hooktest/ clean
-	rm -f $(output_files) $(input_files) pg_regress_main.o pg_regress.o pg_regress$(X) twophase_pqexecparams
+	rm -f twophase_pqexecparams
 # things created by dynamic configs
 	find sql -type l | xargs rm -f
 	find expected -type l | xargs rm -f
-=======
 	rm -f $(OBJS) refint$(DLSUFFIX) autoinc$(DLSUFFIX) pg_regress_main.o pg_regress.o pg_regress$(X)
->>>>>>> 38e9348282e
 # things created by various check targets
 	rm -f $(output_files) $(input_files)
 	rm -rf testtablespace
 	rm -rf results tmp_check log
 	rm -f regression.diffs regression.out regress.out run_check.out
-<<<<<<< HEAD
 	rm -f data/pg_class32.data
 	rm -f gmon.out
 	rm -f $(srcdir)/sql/cppudf.sql
-ifeq ($(PORTNAME), cygwin)
-	rm -f regress.def
-endif
-ifdef VPATH
-	rm -f $(remaining_files_build)
-endif
-=======
->>>>>>> 38e9348282e
