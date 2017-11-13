@@ -531,17 +531,6 @@ GRANT SELECT, UPDATE, INSERT ON mytable TO admin;
    </para>
 
    <para>
-<<<<<<< HEAD
-   If the <quote>Access privileges</quote> column is empty for a given object,
-it means the object has default privileges (that is, its privileges column
-is null).  Default privileges always include all privileges for the owner,
-and can include some privileges for <literal>PUBLIC</literal> depending on the
-object type, as explained above.  The first <command>GRANT</command> or
-<command>REVOKE</command> on an object
-will instantiate the default privileges (producing, for example,
-<literal>{miriam=arwdxt/miriam}</literal>) and then modify them per the
-specified request.
-=======
     If the <quote>Access privileges</> column is empty for a given object,
     it means the object has default privileges (that is, its privileges column
     is null).  Default privileges always include all privileges for the owner,
@@ -551,7 +540,6 @@ specified request.
     will instantiate the default privileges (producing, for example,
     <literal>{miriam=arwdDxt/miriam}</>) and then modify them per the
     specified request.
->>>>>>> 38e9348282e
    </para>
 
    <para>

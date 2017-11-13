@@ -6,10 +6,6 @@ PostgreSQL documentation
 <refentry id="SQL-ALTERUSERMAPPING">
  <refmeta>
   <refentrytitle id="sql-alterusermapping-title">ALTER USER MAPPING</refentrytitle>
-<<<<<<< HEAD
-  <manvolnum>7</manvolnum>
-=======
->>>>>>> 38e9348282e
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 
@@ -24,13 +20,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-<<<<<<< HEAD
-ALTER USER MAPPING FOR { <replaceable class="parameter">user_name</replaceable> | USER | CURRENT_USER | PUBLIC }
-    SERVER <replaceable class="parameter">server_name</replaceable>
-=======
 ALTER USER MAPPING FOR { <replaceable class="parameter">username</replaceable> | USER | CURRENT_USER | PUBLIC }
     SERVER <replaceable class="parameter">servername</replaceable>
->>>>>>> 38e9348282e
     OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] )
 </synopsis>
  </refsynopsisdiv>
@@ -40,22 +31,10 @@ ALTER USER MAPPING FOR { <replaceable class="parameter">username</replaceable> |
 
   <para>
    <command>ALTER USER MAPPING</command> changes the definition of a
-<<<<<<< HEAD
-   user mapping.
-  </para>
-
-  <para>
-   The owner of a foreign server can alter user mappings for that
-   server for any user.  Also, a user can alter a user mapping for
-   his own user name if <literal>USAGE</> privilege on the server has
-   been granted to the user.
-  </para>
-=======
    user mapping.  Only the owner of the server can change the user
    mappings of that server.
   </para>
 
->>>>>>> 38e9348282e
  </refsect1>
 
  <refsect1>
@@ -63,11 +42,7 @@ ALTER USER MAPPING FOR { <replaceable class="parameter">username</replaceable> |
 
   <variablelist>
    <varlistentry>
-<<<<<<< HEAD
-    <term><replaceable class="parameter">user_name</replaceable></term>
-=======
     <term><replaceable class="parameter">username</replaceable></term>
->>>>>>> 38e9348282e
     <listitem>
      <para>
       User name of the mapping. <literal>CURRENT_USER</>
@@ -79,11 +54,7 @@ ALTER USER MAPPING FOR { <replaceable class="parameter">username</replaceable> |
    </varlistentry>
 
    <varlistentry>
-<<<<<<< HEAD
-    <term><replaceable class="parameter">server_name</replaceable></term>
-=======
     <term><replaceable class="parameter">servername</replaceable></term>
->>>>>>> 38e9348282e
     <listitem>
      <para>
       Server name of the user mapping.

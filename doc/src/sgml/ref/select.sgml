@@ -80,7 +80,6 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
     <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] ) AS ( <replaceable class="parameter">column_definition</replaceable> [, ...] )
     <replaceable class="parameter">from_item</replaceable> [ NATURAL ] <replaceable class="parameter">join_type</replaceable> <replaceable class="parameter">from_item</replaceable> [ ON <replaceable class="parameter">join_condition</replaceable> | USING ( <replaceable class="parameter">join_column</replaceable> [, ...] ) ]
 
-<<<<<<< HEAD
 where <replaceable class="parameter">group_elem</replaceable> can be one of:
     <replaceable class="parameter">expression</replaceable> [, ...] ]
     ROLLUP ( <replaceable class="parameter">expression</replaceable> [, ...] ] )
@@ -91,13 +90,6 @@ where <replaceable class="parameter">group_elem</replaceable> can be one of:
 and <replaceable class="parameter">with_query</replaceable> is:
 
     <replaceable class="parameter">with_query_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ] AS ( <replaceable class="parameter">select</replaceable> )
-=======
-and <replaceable class="parameter">with_query</replaceable> is:
-
-    <replaceable class="parameter">with_query_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ] AS ( <replaceable class="parameter">select</replaceable> )
-
-TABLE { [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] | <replaceable class="parameter">with_query_name</replaceable> }
->>>>>>> 38e9348282e
 </synopsis>
 
  </refsynopsisdiv>
@@ -255,17 +247,10 @@ TABLE { [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] |
     subquery to reference itself by name.  Such a subquery must have
     the form
 <synopsis>
-<<<<<<< HEAD
 <replaceable class="parameter">non_recursive_term</replaceable> UNION ALL <replaceable class="parameter">recursive_term</replaceable>
 </synopsis>
     where the recursive self-reference must appear on the right-hand
     side of <literal>UNION ALL</>.  Only one recursive self-reference
-=======
-<replaceable class="parameter">non_recursive_term</replaceable> UNION [ ALL ] <replaceable class="parameter">recursive_term</replaceable>
-</synopsis>
-    where the recursive self-reference must appear on the right-hand
-    side of the <literal>UNION</>.  Only one recursive self-reference
->>>>>>> 38e9348282e
     is permitted per query.
    </para>
 
@@ -1346,11 +1331,7 @@ SELECT distance, employee_name FROM employee_recursive;
 </programlisting>
 
    Notice the typical form of recursive queries:
-<<<<<<< HEAD
    an initial condition, followed by <literal>UNION ALL</literal>,
-=======
-   an initial condition, followed by <literal>UNION</literal>,
->>>>>>> 38e9348282e
    followed by the recursive part of the query. Be sure that the
    recursive part of the query will eventually return no tuples, or
    else the query will loop indefinitely.  (See <xref linkend="queries-with">

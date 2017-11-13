@@ -196,7 +196,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-<<<<<<< HEAD
       <term><option>--resource-queues</option></term>
       <listitem>
        <para>
@@ -212,7 +211,6 @@ PostgreSQL documentation
        <para>
         Dump <literal>resource groups</literal> and <literal>role</literal>
         to <literal>resource groups</literal> associations.
-=======
       <term><option>--lock-wait-timeout=<replaceable class="parameter">timeout</replaceable></option></term>
       <listitem>
        <para>
@@ -224,7 +222,6 @@ PostgreSQL documentation
         version you are dumping from, but an integer number of milliseconds
         is accepted by all versions since 7.3.  This option is ignored when
         dumping from a pre-7.3 server.)
->>>>>>> 38e9348282e
        </para>
       </listitem>
      </varlistentry>

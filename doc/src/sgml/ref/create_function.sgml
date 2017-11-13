@@ -21,13 +21,8 @@ $PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.83 2008/12/18 18:20
  <refsynopsisdiv>
 <synopsis>
 CREATE [ OR REPLACE ] FUNCTION
-<<<<<<< HEAD
     <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [ { DEFAULT | = } <replaceable class="parameter">defexpr</replaceable>] [, ...] ] )
     [ RETURNS [SETOF] <replaceableclass="parameter">rettype</replaceable> |
-=======
-    <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [ { DEFAULT | = } <replaceable class="parameter">defexpr</replaceable> ] [, ...] ] )
-    [ RETURNS <replaceable class="parameter">rettype</replaceable>
->>>>>>> 38e9348282e
       | RETURNS TABLE ( <replaceable class="parameter">colname</replaceable> <replaceable class="parameter">coltype</replaceable> [, ...] ) ]
   { LANGUAGE <replaceable class="parameter">langname</replaceable>
     | IMMUTABLE | STABLE | VOLATILE
@@ -166,18 +161,11 @@ CREATE [ OR REPLACE ] FUNCTION
      <listitem>
       <para>
        An expression to be used as default value if the parameter is
-<<<<<<< HEAD
-       not specified.  The expression has to be convertable to the
-       argument type of the parameter.  All parameters after a
-       parameter with default value have to be parameters with default
-       values as well.
-=======
        not specified.  The expression has to be coercible to the
        argument type of the parameter.
        Only input (including <literal>INOUT</>) parameters can have a default
         value.  All input parameters following a
        parameter with a default value must have default values as well.
->>>>>>> 38e9348282e
       </para>
      </listitem>
     </varlistentry>

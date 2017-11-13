@@ -6,10 +6,6 @@ PostgreSQL documentation
 <refentry id="SQL-ALTERSERVER">
  <refmeta>
   <refentrytitle id="sql-alterserver-title">ALTER SERVER</refentrytitle>
-<<<<<<< HEAD
-  <manvolnum>7</manvolnum>
-=======
->>>>>>> 38e9348282e
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 
@@ -24,15 +20,9 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-<<<<<<< HEAD
-ALTER SERVER <replaceable class="parameter">server_name</replaceable> [ VERSION '<replaceable class="parameter">new_version</replaceable>' ]
-    [ OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] ) ]
-ALTER SERVER <replaceable class="PARAMETER">server_name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
-=======
 ALTER SERVER <replaceable class="parameter">servername</replaceable> [ VERSION 'newversion' ]
     [ OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] ) ]
 ALTER SERVER <replaceable class="PARAMETER">servername</replaceable> OWNER TO <replaceable>new_owner</replaceable>
->>>>>>> 38e9348282e
 </synopsis>
  </refsynopsisdiv>
 
@@ -61,11 +51,7 @@ ALTER SERVER <replaceable class="PARAMETER">servername</replaceable> OWNER TO <r
 
   <variablelist>
    <varlistentry>
-<<<<<<< HEAD
-    <term><replaceable class="parameter">server_name</replaceable></term>
-=======
     <term><replaceable class="parameter">servername</replaceable></term>
->>>>>>> 38e9348282e
     <listitem>
      <para>
       The name of an existing server.
@@ -74,11 +60,7 @@ ALTER SERVER <replaceable class="PARAMETER">servername</replaceable> OWNER TO <r
    </varlistentry>
 
    <varlistentry>
-<<<<<<< HEAD
-    <term><replaceable class="parameter">new_version</replaceable></term>
-=======
     <term><replaceable class="parameter">serverversion</replaceable></term>
->>>>>>> 38e9348282e
     <listitem>
      <para>
       New server version.

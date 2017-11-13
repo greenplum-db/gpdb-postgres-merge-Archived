@@ -6,10 +6,6 @@ PostgreSQL documentation
 <refentry id="SQL-DROPSERVER">
  <refmeta>
   <refentrytitle id="sql-dropserver-title">DROP SERVER</refentrytitle>
-<<<<<<< HEAD
-  <manvolnum>7</manvolnum>
-=======
->>>>>>> 38e9348282e
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 
@@ -24,11 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-<<<<<<< HEAD
-DROP SERVER [ IF EXISTS ] <replaceable class="parameter">server_name</replaceable> [ CASCADE | RESTRICT ]
-=======
 DROP SERVER [ IF EXISTS ] <replaceable class="parameter">servername</replaceable> [ CASCADE | RESTRICT ]
->>>>>>> 38e9348282e
 </synopsis>
  </refsynopsisdiv>
 
@@ -57,11 +49,7 @@ DROP SERVER [ IF EXISTS ] <replaceable class="parameter">servername</replaceable
    </varlistentry>
 
    <varlistentry>
-<<<<<<< HEAD
-    <term><replaceable class="parameter">server_name</replaceable></term>
-=======
     <term><replaceable class="parameter">servername</replaceable></term>
->>>>>>> 38e9348282e
     <listitem>
      <para>
       The name of an existing server.
