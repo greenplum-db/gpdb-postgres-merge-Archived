@@ -350,7 +350,6 @@ static const struct cachedesc cacheinfo[] = {
 	},
 	{ForeignDataWrapperRelationId,                  /* FOREIGNDATAWRAPPERNAME */
 		ForeignDataWrapperNameIndexId,
-		0,
 		1,
 		{
 			Anum_pg_foreign_data_wrapper_fdwname,
@@ -362,7 +361,6 @@ static const struct cachedesc cacheinfo[] = {
 	},
 	{ForeignDataWrapperRelationId,                  /* FOREIGNDATAWRAPPEROID */
 		ForeignDataWrapperOidIndexId,
-		0,
 		1,
 		{
 			ObjectIdAttributeNumber,
@@ -374,7 +372,6 @@ static const struct cachedesc cacheinfo[] = {
 	},
 	{ForeignServerRelationId,                       /* FOREIGNSERVERNAME */
 		ForeignServerNameIndexId,
-		0,
 		1,
 		{
 			Anum_pg_foreign_server_srvname,
@@ -386,7 +383,6 @@ static const struct cachedesc cacheinfo[] = {
 	},
 	{ForeignServerRelationId,                       /* FOREIGNSERVEROID */
 		ForeignServerOidIndexId,
-		0,
 		1,
 		{
 			ObjectIdAttributeNumber,
@@ -717,7 +713,6 @@ static const struct cachedesc cacheinfo[] = {
 	},
 	{UserMappingRelationId,		/* USERMAPPINGOID */
 		UserMappingOidIndexId,
-		0,
 		1,
 		{
 			ObjectIdAttributeNumber,
@@ -729,7 +724,6 @@ static const struct cachedesc cacheinfo[] = {
 	},
 	{UserMappingRelationId,                  /* USERMAPPINGUSERSERVER */
 		UserMappingUserServerIndexId,
-		0,
 		2,
 		{
 			Anum_pg_user_mapping_umuser,
