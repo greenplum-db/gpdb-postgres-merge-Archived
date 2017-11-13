@@ -270,30 +270,6 @@ extern void smgrpostckpt(void);
 extern void mdinit(void);
 extern void mdclose(SMgrRelation reln, ForkNumber forknum);
 extern void mdcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo);
-extern void mdcreatefilespacedir(
-	Oid 						filespaceOid,
-	char						*primaryFilespaceLocation,
-								/* 
-								 * The primary filespace directory path.  NOT Blank padded.
-								 * Just a NULL terminated string.
-								 */
-	char						*mirrorFilespaceLocation,
-	StorageManagerMirrorMode	mirrorMode,
-	bool						ignoreAlreadyExists,
-	int 						*primaryError,
-	bool						*mirrorDataLossOccurred);
-extern void mdcreatetablespacedir(
-	Oid 						tablespaceOid,
-	StorageManagerMirrorMode	mirrorMode,
-	bool						ignoreAlreadyExists,
-	int 						*primaryError,
-	bool						*mirrorDataLossOccurred);
-extern void mdcreatedbdir(
-	DbDirNode					*dbDirNode,
-	StorageManagerMirrorMode	mirrorMode,
-	bool						ignoreAlreadyExists,
-	int 						*primaryError,
-	bool						*mirrorDataLossOccurred);
 extern void mdmirroredcreate(
 	SMgrRelation 				reln,
 	char						*relationName,
@@ -309,30 +285,6 @@ extern void mdmirroredunlink(
 					/* For tracing only.  Can be NULL in some execution paths. */
 	bool  						primaryOnly,
 	bool						isRedo,
-	bool 						ignoreNonExistence,
-	bool						*mirrorDataLossOccurred);
-extern bool mdrmfilespacedir(
-	Oid 						filespaceOid,
-	char						*primaryFilespaceLocation,
-								/* 
-								 * The primary filespace directory path.  NOT Blank padded.
-								 * Just a NULL terminated string.
-								 */
-	char						*mirrorFilespaceLocation,
-	bool						primaryOnly,
-	bool						mirrorOnly,
-	bool 						ignoreNonExistence,
-	bool						*mirrorDataLossOccurred);
-extern bool mdrmtablespacedir(
-	Oid 						tablespaceOid,
-	bool						primaryOnly,
-	bool						mirrorOnly,
-	bool 						ignoreNonExistence,
-	bool						*mirrorDataLossOccurred);
-extern bool mdrmdbdir(
-	DbDirNode					*dbDirNode,
-	bool						primaryOnly,
-	bool						mirrorOnly,
 	bool 						ignoreNonExistence,
 	bool						*mirrorDataLossOccurred);
 extern void mdextend(SMgrRelation reln,  ForkNumber forknum,
@@ -386,6 +338,57 @@ extern void RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum,
 								 BlockNumber segno);
 extern void ForgetRelationFsyncRequests(RelFileNode rnode, ForkNumber forknum);
 extern void ForgetDatabaseFsyncRequests(Oid tblspc, Oid dbid);
+
+/* md_gp.c */
+extern int errdetail_nonexistent_relation(int error, RelFileNode *relFileNode);
+extern void mdcreatefilespacedir(
+	Oid 						filespaceOid,
+	char						*primaryFilespaceLocation,
+								/* 
+								 * The primary filespace directory path.  NOT Blank padded.
+								 * Just a NULL terminated string.
+								 */
+	char						*mirrorFilespaceLocation,
+	StorageManagerMirrorMode	mirrorMode,
+	bool						ignoreAlreadyExists,
+	int 						*primaryError,
+	bool						*mirrorDataLossOccurred);
+extern void mdcreatetablespacedir(
+	Oid 						tablespaceOid,
+	StorageManagerMirrorMode	mirrorMode,
+	bool						ignoreAlreadyExists,
+	int 						*primaryError,
+	bool						*mirrorDataLossOccurred);
+extern void mdcreatedbdir(
+	DbDirNode					*dbDirNode,
+	StorageManagerMirrorMode	mirrorMode,
+	bool						ignoreAlreadyExists,
+	int 						*primaryError,
+	bool						*mirrorDataLossOccurred);
+extern bool mdrmfilespacedir(
+	Oid 						filespaceOid,
+	char						*primaryFilespaceLocation,
+								/* 
+								 * The primary filespace directory path.  NOT Blank padded.
+								 * Just a NULL terminated string.
+								 */
+	char						*mirrorFilespaceLocation,
+	bool						primaryOnly,
+	bool						mirrorOnly,
+	bool 						ignoreNonExistence,
+	bool						*mirrorDataLossOccurred);
+extern bool mdrmtablespacedir(
+	Oid 						tablespaceOid,
+	bool						primaryOnly,
+	bool						mirrorOnly,
+	bool 						ignoreNonExistence,
+	bool						*mirrorDataLossOccurred);
+extern bool mdrmdbdir(
+	DbDirNode					*dbDirNode,
+	bool						primaryOnly,
+	bool						mirrorOnly,
+	bool 						ignoreNonExistence,
+	bool						*mirrorDataLossOccurred);
 
 /* smgrtype.c */
 extern Datum smgrout(PG_FUNCTION_ARGS);
