@@ -700,17 +700,6 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		1024
 	},
-	{WindowRelationId,			/* WINFNOID */
-		WindowWinfnoidIndexId,
-		1,
-		{
-			Anum_pg_window_winfnoid,
-			0,
-			0,
-			0
-		},
-		32
-	},
 	{UserMappingRelationId,		/* USERMAPPINGOID */
 		UserMappingOidIndexId,
 		1,
@@ -732,6 +721,17 @@ static const struct cachedesc cacheinfo[] = {
 			0
 		},
 		128
+	},
+	{WindowRelationId,			/* WINFNOID */
+		WindowWinfnoidIndexId,
+		1,
+		{
+			Anum_pg_window_winfnoid,
+			0,
+			0,
+			0
+		},
+		32
 	}
 };
 
