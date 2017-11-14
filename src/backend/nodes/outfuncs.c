@@ -3398,7 +3398,6 @@ _outTypeName(StringInfo str, TypeName *node)
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
-#ifndef COMPILING_BINARY_FUNCS
 static void
 _outTypeCast(StringInfo str, TypeCast *node)
 {
@@ -3408,7 +3407,6 @@ _outTypeCast(StringInfo str, TypeCast *node)
 	WRITE_NODE_FIELD(typeName);
 	WRITE_LOCATION_FIELD(location);
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 static void
 _outIndexElem(StringInfo str, IndexElem *node)

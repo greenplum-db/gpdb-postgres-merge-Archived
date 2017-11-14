@@ -1415,6 +1415,7 @@ static PlannedStmt *
 _readPlannedStmt(void)
 {
 	READ_LOCALS(PlannedStmt);
+
 	READ_ENUM_FIELD(commandType, CmdType);
 	READ_ENUM_FIELD(planGen, PlanGenerator);
 	READ_BOOL_FIELD(canSetTag);
@@ -1429,6 +1430,7 @@ _readPlannedStmt(void)
 	READ_NODE_FIELD(subplans);
 	READ_BITMAPSET_FIELD(rewindPlanIDs);
 	READ_NODE_FIELD(returningLists);
+
 	READ_NODE_FIELD(result_partitions);
 	READ_NODE_FIELD(result_aosegnos);
 	READ_NODE_FIELD(queryPartOids);
@@ -2322,12 +2324,15 @@ void readScanInfo(Scan *local_node)
 void readPlanInfo(Plan *local_node)
 {
 	READ_INT_FIELD(plan_node_id);
+
 	READ_FLOAT_FIELD(startup_cost);
 	READ_FLOAT_FIELD(total_cost);
 	READ_FLOAT_FIELD(plan_rows);
 	READ_INT_FIELD(plan_width);
+
 	READ_NODE_FIELD(targetlist);
 	READ_NODE_FIELD(qual);
+
 	READ_BITMAPSET_FIELD(extParam);
 	READ_BITMAPSET_FIELD(allParam);
 
@@ -2338,6 +2343,7 @@ void readPlanInfo(Plan *local_node)
 
 	READ_INT_FIELD(nMotionNodes);
 	READ_INT_FIELD(nInitPlans);
+
 	READ_NODE_FIELD(sliceTable);
 
     READ_NODE_FIELD(lefttree);

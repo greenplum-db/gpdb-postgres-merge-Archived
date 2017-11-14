@@ -317,11 +317,8 @@ _outPlannedStmt(StringInfo str, PlannedStmt *node)
 	WRITE_BOOL_FIELD(transientPlan);
 	WRITE_BOOL_FIELD(oneoffPlan);
 	WRITE_BOOL_FIELD(simplyUpdatable);
-
 	WRITE_NODE_FIELD(planTree);
-
 	WRITE_NODE_FIELD(rtable);
-
 	WRITE_NODE_FIELD(resultRelations);
 	WRITE_NODE_FIELD(utilityStmt);
 	WRITE_NODE_FIELD(intoClause);
@@ -588,6 +585,7 @@ _outBoolExpr(StringInfo str, BoolExpr *node)
 	WRITE_ENUM_FIELD(boolop, BoolExprType);
 
 	WRITE_NODE_FIELD(args);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -812,15 +810,6 @@ _outTypeName(StringInfo str, TypeName *node)
 	WRITE_INT_FIELD(typemod);
 	WRITE_NODE_FIELD(arrayBounds);
 	WRITE_LOCATION_FIELD(location);
-}
-
-static void
-_outTypeCast(StringInfo str, TypeCast *node)
-{
-	WRITE_NODE_TYPE("TYPECAST");
-
-	WRITE_NODE_FIELD(arg);
-	WRITE_NODE_FIELD(typeName);
 }
 
 static void
