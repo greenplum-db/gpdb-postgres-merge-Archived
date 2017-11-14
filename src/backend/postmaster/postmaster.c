@@ -3241,22 +3241,8 @@ processTransitionRequest_getStatus(void)
 	sendPrimaryMirrorTransitionResult(statusBuf);
 }
 
-static void
-processTransitionRequest_getCollationAndDataDir(void)
-{
-	char statusBuf[10000 + MAXPGPATH];
 
-	snprintf(statusBuf, sizeof(statusBuf), "Success: lc_collate:%s\n"
-				"lc_monetary:%s\n"
-				"lc_numeric:%s\n"
-				"datadir:%s\n",
-				locale_collate,
-				locale_monetary,
-				locale_numeric,
-				data_directory );
 
-	sendPrimaryMirrorTransitionResult(statusBuf);
-}
 
 static void
 processTransitionRequest_getVersion(void)
@@ -3450,10 +3436,6 @@ processPrimaryMirrorTransitionRequest(Port *port, void *pkt)
 	{
 		processTransitionRequest_getStatus();
 	}
-	else if (strcmp("getCollationAndDataDirSettings", targetModeStr) == 0)
-	{
-		processTransitionRequest_getCollationAndDataDir();
-    }
 	else if (strcmp("getMirrorStatus", targetModeStr) == 0)
 	{
 		processTransitionRequest_getMirrorStatus();
