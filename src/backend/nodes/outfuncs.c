@@ -461,6 +461,7 @@ _outSequence(StringInfo str, Sequence *node)
 	WRITE_NODE_FIELD(subplans);
 }
 
+#ifndef COMPILING_BINARY_FUNCS
 static void
 _outRecursiveUnion(StringInfo str, RecursiveUnion *node)
 {
@@ -483,6 +484,7 @@ _outRecursiveUnion(StringInfo str, RecursiveUnion *node)
 
 	WRITE_LONG_FIELD(numGroups);
 }
+#endif /* COMPILING_BINARY_FUNCS */
 
 static void
 _outBitmapAnd(StringInfo str, BitmapAnd *node)

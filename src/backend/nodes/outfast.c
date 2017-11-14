@@ -307,6 +307,22 @@ _outPlanInfo(StringInfo str, Plan *node)
 }
 
 static void
+_outRecursiveUnion(StringInfo str, RecursiveUnion *node)
+{
+	WRITE_NODE_TYPE("RECURSIVEUNION");
+
+	_outPlanInfo(str, (Plan *) node);
+
+	WRITE_INT_FIELD(wtParam);
+	WRITE_INT_FIELD(numCols);
+
+	WRITE_INT_ARRAY(dupColIdx, node->numCols, AttrNumber);
+	WRITE_OID_ARRAY(dupOperators, node->numCols);
+
+	WRITE_LONG_FIELD(numGroups);
+}
+
+static void
 _outPlannedStmt(StringInfo str, PlannedStmt *node)
 {
 	WRITE_NODE_TYPE("PLANNEDSTMT");
