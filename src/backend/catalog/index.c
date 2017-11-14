@@ -1561,14 +1561,11 @@ setNewRelfilenode(Relation relation, TransactionId freezeXid)
 			 ItemPointerToString(&persistentTid),
 			 persistentSerialNum);
 
+	/*
+	 * In upstream, we call RelationDropStorage() here. In GPDB, that's done by
+	 * the remove_gp_relation_node_and_schedule_drop() call above.
+	 */
 	smgrclosenode(newrnode);
-	RelationDropStorage(&relation->rd_node,
-						/* segmentFileNum */ 0,
-						localRelStorageMgr,
-						relation->rd_isLocalBuf,
-						NameStr(relation->rd_rel->relname),
-						&persistentTid,
-						persistentSerialNum);
 
 	/* update the pg_class row */
 	rd_rel->relfilenode = newrelfilenode;
