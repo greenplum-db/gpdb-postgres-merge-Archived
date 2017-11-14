@@ -284,6 +284,8 @@ fsm_search_avail(Buffer buf, uint8 minvalue, bool advancenext,
 				exclusive_lock_held = true;
 			}
 			fsm_rebuild_page(page);
+			/* GPDB_84_MERGE_FIXME: upstream calls MarkBufferDirtyHint instead.
+			 * Backport commit 20723ce80 to fix. */
 			MarkBufferDirty(buf);
 			goto restart;
 		}

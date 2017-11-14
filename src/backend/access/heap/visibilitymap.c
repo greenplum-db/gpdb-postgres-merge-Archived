@@ -461,6 +461,8 @@ vm_extend(Relation rel, BlockNumber vm_nblocks)
 
 	while (vm_nblocks_now < vm_nblocks)
 	{
+		PageSetChecksumInplace(pg, vm_nblocks_now);
+
 		smgrextend(rel->rd_smgr, VISIBILITYMAP_FORKNUM, vm_nblocks_now,
 				   (char *) pg, rel->rd_istemp);
 		vm_nblocks_now++;
