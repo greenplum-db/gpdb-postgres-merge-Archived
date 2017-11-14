@@ -41,7 +41,6 @@ SELECT 'first line'
 ERROR:  syntax error at or near "' - third line'"
 LINE 3: ' - third line'
         ^
-<<<<<<< HEAD
 -- bytea
 SET bytea_output TO hex;
 SELECT E'\\xDeAdBeEf'::bytea;
@@ -135,7 +134,6 @@ SELECT E'De\\123dBeEf'::bytea;
  DeSdBeEf
 (1 row)
 
-=======
 -- Unicode escapes
 SELECT U&'d\0061t\+000061' AS U&"d\0061t\+000061";
  data 
@@ -161,7 +159,6 @@ SELECT U&'wrong: +0061' UESCAPE '+';
 ERROR:  invalid Unicode escape character at or near "+'"
 LINE 1: SELECT U&'wrong: +0061' UESCAPE '+';
                                          ^
->>>>>>> 38e9348282e
 --
 -- test conversions between various string types
 -- E021-10 implicit casting among the character data types

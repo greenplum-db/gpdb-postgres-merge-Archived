@@ -33,7 +33,6 @@ SELECT 'first line'
 ' - third line'
 	AS "Illegal comment within continuation";
 
-<<<<<<< HEAD
 -- bytea
 SET bytea_output TO hex;
 SELECT E'\\xDeAdBeEf'::bytea;
@@ -54,7 +53,7 @@ SELECT E'\\xDe00BeEf'::bytea;
 SELECT E'DeAdBeEf'::bytea;
 SELECT E'De\\000dBeEf'::bytea;
 SELECT E'De\\123dBeEf'::bytea;
-=======
+
 -- Unicode escapes
 SELECT U&'d\0061t\+000061' AS U&"d\0061t\+000061";
 SELECT U&'d!0061t\+000061' UESCAPE '!' AS U&"d*0061t\+000061" UESCAPE '*';
@@ -62,7 +61,6 @@ SELECT U&'d!0061t\+000061' UESCAPE '!' AS U&"d*0061t\+000061" UESCAPE '*';
 SELECT U&'wrong: \061';
 SELECT U&'wrong: \+0061';
 SELECT U&'wrong: +0061' UESCAPE '+';
->>>>>>> 38e9348282e
 
 --
 -- test conversions between various string types
@@ -546,7 +544,6 @@ set standard_conforming_strings = off;
 
 select 'a\\bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3, 'abcd\\'   as f4, 'ab\\\'cd' as f5, '\\\\' as f6;
 
-<<<<<<< HEAD
 --
 -- test unicode escape
 --
@@ -556,8 +553,6 @@ select E'\udsfs';
 select E'\uD843\uE001';
 select E'\uDC01';
 select E'\uD834';
-=======
->>>>>>> 38e9348282e
 
 --
 -- Additional string functions
@@ -595,12 +590,9 @@ SELECT trim(E'\\000'::bytea from E'\\000Tom\\000'::bytea);
 SELECT btrim(E'\\000trim\\000'::bytea, E'\\000'::bytea);
 SELECT btrim(''::bytea, E'\\000'::bytea);
 SELECT btrim(E'\\000trim\\000'::bytea, ''::bytea);
-<<<<<<< HEAD
 
 
 -- Clean up GPDB-added tables
 DROP TABLE char_strings_tbl;
 DROP TABLE varchar_strings_tbl;
 DROP TABLE text_strings_tbl;
-=======
->>>>>>> 38e9348282e
