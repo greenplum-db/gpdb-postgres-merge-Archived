@@ -767,8 +767,8 @@ mdopen(SMgrRelation reln, ForkNumber forknum, ExtensionBehavior behavior)
 {
 	MdfdVec    *mdfd;
 	char	   *path;
-	File		fd;
-	MirroredBufferPoolOpen mirroredOpen;
+	File		fd = -1;
+	MirroredBufferPoolOpen mirroredOpen = { false /* isActive */};
 
 	/* No work if already open */
 	if (reln->md_fd[forknum])
@@ -865,14 +865,8 @@ else
 
 	reln->md_fd[forknum] = mdfd = _fdvec_alloc();
 
-	if (forknum == MAIN_FORKNUM)
-	{
-		mdfd->mdmir_open = mirroredOpen;
-		reln->md_fd[forknum]->mdfd_vfd = -1;
-	}
-	else
-		mdfd->mdfd_vfd = fd;
-
+	mdfd->mdmir_open = mirroredOpen;
+	mdfd->mdfd_vfd = fd;
 	mdfd->mdfd_segno = 0;
 	mdfd->mdfd_chain = NULL;
 	Assert(_mdnblocks(reln, forknum, mdfd) <= ((BlockNumber) RELSEG_SIZE));
@@ -1851,7 +1845,7 @@ _mdfd_openseg(SMgrRelation reln, ForkNumber forknum, BlockNumber segno,
 {
 	MdfdVec    *v;
 	int			fd = -1;
-	MirroredBufferPoolOpen mirroredOpen;
+	MirroredBufferPoolOpen mirroredOpen = { false /* isActive */};
 
 if (forknum == MAIN_FORKNUM)
 {
@@ -1926,10 +1920,8 @@ else
 	v = _fdvec_alloc();
 
 	/* fill the entry */
-	if (forknum == MAIN_FORKNUM)
-		v->mdmir_open = mirroredOpen;
-	else
-		v->mdfd_vfd = fd;
+	v->mdmir_open = mirroredOpen;
+	v->mdfd_vfd = fd;
 	v->mdfd_segno = segno;
 	v->mdfd_chain = NULL;
 	Assert(_mdnblocks(reln, forknum, v) <= ((BlockNumber) RELSEG_SIZE));
