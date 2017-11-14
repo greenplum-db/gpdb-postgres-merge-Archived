@@ -2525,8 +2525,7 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 					 parser_errposition(pstate,
 										exprLocation((Node *) rcolinfo))));
 
-		Assert(list_length(lcolinfo) == list_length(preselected_coltypes));
-		Assert(list_length(lcolinfo) == list_length(preselected_coltypmods));
+		Assert(list_length(preselected_coltypes) == list_length(preselected_coltypmods));
 
 		*colInfo = NIL;
 		op->colTypes = NIL;
@@ -2544,8 +2543,8 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 			int32		rcoltypmod = exprTypmod(rcolnode);
 			Node       *bestexpr = NULL;
 			SetToDefault *rescolnode;
-			Oid			rescoltype = lfirst_oid(pct);
-			int32		rescoltypmod = lfirst_int(pcm);
+			Oid			rescoltype = pct ? lfirst_oid(pct) : InvalidOid;
+			int32		rescoltypmod = pcm ? lfirst_int(pcm) : -1;
 
 			/*
 			 * If the preprocessed coltype is InvalidOid, we fall back
@@ -2562,6 +2561,14 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 				/* if same type and same typmod, use typmod; else default */
 				if (lcoltype == rcoltype && lcoltypmod == rcoltypmod)
 					rescoltypmod = lcoltypmod;
+			}
+			else
+			{
+				/*
+				 * If we used the preselected type, arbitrarily use the left
+				 * query's expression for error reporting purposes.
+				 */
+				bestexpr = lcolnode;
 			}
 
 			/* verify the coercions are actually possible */
@@ -2615,8 +2622,8 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 				op->groupClauses = lappend(op->groupClauses, grpcl);
 			}
 
-			pct = lnext(pct);
-			pcm = lnext(pcm);
+			pct = pct ? lnext(pct) : NULL;
+			pcm = pcm ? lnext(pcm) : NULL;
 		}
 	}
 }
