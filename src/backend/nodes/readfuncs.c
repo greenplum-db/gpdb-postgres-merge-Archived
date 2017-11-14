@@ -2482,6 +2482,7 @@ _readCreateCastStmt(void)
 	READ_NODE_FIELD(targettype);
 	READ_NODE_FIELD(func);
 	READ_ENUM_FIELD(context, CoercionContext);
+	READ_BOOL_FIELD(inout);
 
 	READ_DONE();
 }

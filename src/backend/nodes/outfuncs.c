@@ -2973,6 +2973,7 @@ _outCreateCastStmt(StringInfo str, CreateCastStmt *node)
 	WRITE_NODE_FIELD(targettype);
 	WRITE_NODE_FIELD(func);
 	WRITE_ENUM_FIELD(context, CoercionContext);
+	WRITE_BOOL_FIELD(inout);
 }
 
 static void
