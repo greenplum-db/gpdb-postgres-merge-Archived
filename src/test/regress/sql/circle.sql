@@ -24,7 +24,7 @@ INSERT INTO CIRCLE_TBL VALUES ('1abc,3,5');
 
 INSERT INTO CIRCLE_TBL VALUES ('(3,(1,2),3)');
 
-SELECT * FROM CIRCLE_TBL ORDER BY (center(f1))[0],diameter(f1);
+SELECT * FROM CIRCLE_TBL;
 
 SELECT '' AS six, center(f1) AS center
   FROM CIRCLE_TBL ORDER BY (center(f1))[0],diameter(f1);

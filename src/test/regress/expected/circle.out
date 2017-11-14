@@ -21,11 +21,7 @@ INSERT INTO CIRCLE_TBL VALUES ('(3,(1,2),3)');
 ERROR:  invalid input syntax for type circle: "(3,(1,2),3)"
 LINE 1: INSERT INTO CIRCLE_TBL VALUES ('(3,(1,2),3)');
                                        ^
-<<<<<<< HEAD
-SELECT * FROM CIRCLE_TBL ORDER BY (center(f1))[0],diameter(f1);
-=======
 SELECT * FROM CIRCLE_TBL;
->>>>>>> 38e9348282e
        f1       
 ----------------
  <(1,2),3>

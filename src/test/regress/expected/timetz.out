@@ -21,11 +21,7 @@ INSERT INTO TIMETZ_TBL VALUES ('15:36:39 America/New_York');
 ERROR:  invalid input syntax for type time with time zone: "15:36:39 America/New_York"
 LINE 1: INSERT INTO TIMETZ_TBL VALUES ('15:36:39 America/New_York');
                                        ^
-<<<<<<< HEAD
-SELECT f1 AS "Time TZ" FROM TIMETZ_TBL ORDER BY 1;
-=======
 SELECT f1 AS "Time TZ" FROM TIMETZ_TBL;
->>>>>>> 38e9348282e
     Time TZ     
 ----------------
  00:01:00-07
@@ -42,7 +38,7 @@ SELECT f1 AS "Time TZ" FROM TIMETZ_TBL;
  23:59:59.99-07
 (12 rows)
 
-SELECT f1 AS "Three" FROM TIMETZ_TBL WHERE f1 < '05:06:07-07' ORDER BY 1;
+SELECT f1 AS "Three" FROM TIMETZ_TBL WHERE f1 < '05:06:07-07';
     Three    
 -------------
  00:01:00-07
@@ -50,7 +46,7 @@ SELECT f1 AS "Three" FROM TIMETZ_TBL WHERE f1 < '05:06:07-07' ORDER BY 1;
  02:03:00-07
 (3 rows)
 
-SELECT f1 AS "Seven" FROM TIMETZ_TBL WHERE f1 > '05:06:07-07' ORDER BY 1;
+SELECT f1 AS "Seven" FROM TIMETZ_TBL WHERE f1 > '05:06:07-07';
      Seven      
 ----------------
  08:08:00-04
@@ -64,12 +60,12 @@ SELECT f1 AS "Seven" FROM TIMETZ_TBL WHERE f1 > '05:06:07-07' ORDER BY 1;
  23:59:59.99-07
 (9 rows)
 
-SELECT f1 AS "None" FROM TIMETZ_TBL WHERE f1 < '00:00-07' ORDER BY 1;
+SELECT f1 AS "None" FROM TIMETZ_TBL WHERE f1 < '00:00-07';
  None 
 ------
 (0 rows)
 
-SELECT f1 AS "Ten" FROM TIMETZ_TBL WHERE f1 >= '00:00-07' ORDER BY 1;
+SELECT f1 AS "Ten" FROM TIMETZ_TBL WHERE f1 >= '00:00-07';
       Ten       
 ----------------
  00:01:00-07

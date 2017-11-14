@@ -1529,7 +1529,6 @@ select 'a\\bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3, 'abcd\\'   as f4, '
 (1 row)
 
 --
-<<<<<<< HEAD
 -- test unicode escape
 --
 select E'A\u0041' as f1, E'\u0127' as f2;
@@ -1560,8 +1559,6 @@ ERROR:  invalid Unicode surrogate pair at or near "E'\uD834'"
 LINE 1: select E'\uD834';
                ^
 --
-=======
->>>>>>> 38e9348282e
 -- Additional string functions
 --
 SELECT initcap('hi THOMAS');
@@ -1704,10 +1701,7 @@ SELECT btrim(E'\\000trim\\000'::bytea, ''::bytea);
  \000trim\000
 (1 row)
 
-<<<<<<< HEAD
 -- Clean up GPDB-added tables
 DROP TABLE char_strings_tbl;
 DROP TABLE varchar_strings_tbl;
 DROP TABLE text_strings_tbl;
-=======
->>>>>>> 38e9348282e

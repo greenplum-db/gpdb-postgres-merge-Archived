@@ -31,11 +31,7 @@ INSERT INTO BOX_TBL (f1) VALUES ('asdfasdf(ad');
 ERROR:  invalid input syntax for type box: "asdfasdf(ad"
 LINE 1: INSERT INTO BOX_TBL (f1) VALUES ('asdfasdf(ad');
                                          ^
-<<<<<<< HEAD
-SELECT '' AS four, * FROM BOX_TBL ORDER BY (f1[0])[0],(f1[1])[0];
-=======
 SELECT '' AS four, * FROM BOX_TBL;
->>>>>>> 38e9348282e
  four |         f1          
 ------+---------------------
       | (2,2),(0,0)

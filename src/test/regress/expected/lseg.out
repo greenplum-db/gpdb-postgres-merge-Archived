@@ -26,11 +26,7 @@ INSERT INTO LSEG_TBL VALUES ('[(1,2),(3,4)');
 ERROR:  invalid input syntax for type lseg: "[(1,2),(3,4)"
 LINE 1: INSERT INTO LSEG_TBL VALUES ('[(1,2),(3,4)');
                                      ^
-<<<<<<< HEAD
-select * from LSEG_TBL ORDER BY (s[0])[0];
-=======
 select * from LSEG_TBL;
->>>>>>> 38e9348282e
                s               
 -------------------------------
  [(-1000000,200),(300000,-40)]
@@ -40,13 +36,13 @@ select * from LSEG_TBL;
  [(11,22),(33,44)]
 (5 rows)
 
-SELECT * FROM LSEG_TBL WHERE s <= lseg '[(1,2),(3,4)]' ORDER BY (s[0])[0];
+SELECT * FROM LSEG_TBL WHERE s <= lseg '[(1,2),(3,4)]';
        s       
 ---------------
  [(1,2),(3,4)]
 (1 row)
 
-SELECT * FROM LSEG_TBL WHERE (s <-> lseg '[(1,2),(3,4)]') < 10 ORDER BY (s[0])[0];
+SELECT * FROM LSEG_TBL WHERE (s <-> lseg '[(1,2),(3,4)]') < 10;
          s          
 --------------------
  [(0,0),(6,6)]
