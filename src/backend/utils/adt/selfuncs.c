@@ -1978,6 +1978,7 @@ eqjoinsel(PG_FUNCTION_ARGS)
 			break;
 		case JOIN_SEMI:
 		case JOIN_ANTI:
+		case JOIN_LASJ_NOTIN:
 			if (!join_is_reversed)
 				selec = eqjoinsel_semi(operator, &vardata1, &vardata2);
 			else
