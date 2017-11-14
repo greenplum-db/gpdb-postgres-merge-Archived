@@ -1993,6 +1993,7 @@ _readTypeCast(void)
 
 	READ_NODE_FIELD(arg);
 	READ_NODE_FIELD(typeName);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
