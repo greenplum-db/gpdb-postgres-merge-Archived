@@ -1344,7 +1344,7 @@ describeOneTableDetails(const char *schemaname,
 		printfPQExpBuffer(&buf,
 			  "SELECT c.relchecks, c.relkind, c.relhasindex, c.relhasrules, "
 						  "c.relhastriggers, c.relhasoids, "
-						  "%s, c.reltablespace, "
+						  "%s, c.reltablespace, %s, "
 						  "CASE WHEN c.reloftype = 0 THEN '' ELSE c.reloftype::pg_catalog.regtype::pg_catalog.text END\n"
 						  "FROM pg_catalog.pg_class c\n "
 		   "LEFT JOIN pg_catalog.pg_class tc ON (c.reltoastrelid = tc.oid)\n"
@@ -1353,6 +1353,8 @@ describeOneTableDetails(const char *schemaname,
 						   "pg_catalog.array_to_string(c.reloptions || "
 						   "array(select 'toast.' || x from pg_catalog.unnest(tc.reloptions) x), ', ')\n"
 						   : "''"),
+						  /* GPDB Only:  relstorage  */
+						  (isGPDB() ? "c.relstorage" : "'h'"),
 						  oid);
 	}
 	else if (pset.sversion >= 80400)
@@ -1360,7 +1362,7 @@ describeOneTableDetails(const char *schemaname,
 		printfPQExpBuffer(&buf,
 			  "SELECT c.relchecks, c.relkind, c.relhasindex, c.relhasrules, "
 						  "c.relhastriggers, c.relhasoids, "
-						  "%s, c.reltablespace\n"
+						  "%s, c.reltablespace, %s \n"
 						  "FROM pg_catalog.pg_class c\n "
 		   "LEFT JOIN pg_catalog.pg_class tc ON (c.reltoastrelid = tc.oid)\n"
 						  "WHERE c.oid = '%s'\n",
@@ -1368,6 +1370,8 @@ describeOneTableDetails(const char *schemaname,
 						   "pg_catalog.array_to_string(c.reloptions || "
 						   "array(select 'toast.' || x from pg_catalog.unnest(tc.reloptions) x), ', ')\n"
 						   : "''"),
+						  /* GPDB Only:  relstorage  */
+						  (isGPDB() ? "c.relstorage" : "'h'"),
 						  oid);
 	}
 	else if (pset.sversion >= 80200)
@@ -1379,9 +1383,8 @@ describeOneTableDetails(const char *schemaname,
 						  "FROM pg_catalog.pg_class WHERE oid = '%s'",
 						  (verbose ?
 					 "pg_catalog.array_to_string(reloptions, E', ')" : "''"),
-					 /* GPDB Only:  relstorage  */
-					 	  (isGPDB() ?
-					 		"relstorage" : "'h'"),
+						  /* GPDB Only:  relstorage  */
+						  (isGPDB() ? "relstorage" : "'h'"),
 						  oid);
 	}
 	else if (pset.sversion >= 80000)
@@ -1429,8 +1432,7 @@ describeOneTableDetails(const char *schemaname,
 	tableinfo.reloftype = (pset.sversion >= 90000 && strcmp(PQgetvalue(res, 0, 8), "") != 0) ?
 		strdup(PQgetvalue(res, 0, 8)) : 0;
 	/* GPDB Only:  relstorage  */
-	tableinfo.relstorage = (isGPDB()) ?
-		*(PQgetvalue(res, 0, 8)) : 'h';
+	tableinfo.relstorage = (isGPDB()) ? *(PQgetvalue(res, 0, 8)) : 'h';
 	PQclear(res);
 	res = NULL;
 
