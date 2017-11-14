@@ -36,13 +36,9 @@ LINE 1: insert into inserttest (col1) values (1, 2);
                                                  ^
 insert into inserttest (col1) values (DEFAULT, DEFAULT);
 ERROR:  INSERT has more expressions than target columns
-<<<<<<< HEAD
-select * from inserttest order by 1,2,3;
-=======
 LINE 1: insert into inserttest (col1) values (DEFAULT, DEFAULT);
                                                        ^
 select * from inserttest;
->>>>>>> 38e9348282e
  col1 | col2 |  col3   
 ------+------+---------
       |    3 | testing

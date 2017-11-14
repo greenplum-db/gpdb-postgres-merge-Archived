@@ -18,7 +18,7 @@ insert into inserttest (col1, col2, col3) values (1, 2);
 insert into inserttest (col1) values (1, 2);
 insert into inserttest (col1) values (DEFAULT, DEFAULT);
 
-select * from inserttest order by 1,2,3;
+select * from inserttest;
 
 --
 -- VALUES test
