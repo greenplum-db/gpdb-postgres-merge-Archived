@@ -2882,7 +2882,6 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, Oid namespaceId)
 	Relation	relrelation;	/* for RELATION relation */
 	HeapTuple	reltup;
 	Form_pg_class relform;
-	bool		isSystemRelation;
 
 	/*
 	 * In Postgres:
@@ -2898,12 +2897,6 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, Oid namespaceId)
 		targetrelation = fake_relation_open(myrelid);
 	else
 		targetrelation = relation_open(myrelid, AccessExclusiveLock);
-
-	isSystemRelation = IsSystemNamespace(namespaceId) ||
-					   IsToastNamespace(namespaceId) ||
-					   IsAoSegmentNamespace(namespaceId);
-
-	Assert (allowSystemTableModsDDL || !isSystemRelation);
 
 	/*
 	 * Find relation's pg_class tuple, and make sure newrelname isn't in use.
