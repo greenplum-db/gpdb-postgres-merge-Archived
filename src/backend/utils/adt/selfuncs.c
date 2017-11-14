@@ -4019,6 +4019,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 					{
 						adjust_partition_table_statistic_for_parent(vardata->statsTuple, childrel->tuples);
 					}
+					vardata->freefunc = ReleaseSysCache;
 				}
 			}
 		}
