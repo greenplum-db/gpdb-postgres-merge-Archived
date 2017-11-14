@@ -58,6 +58,20 @@
 #include "cdb/cdbvars.h"
 #include "cdb/cdbsetop.h"
 
+/*
+ * In PostgreSQL, adjust_appendrel_attrs_mutator() uses AppendRelInfo as the
+ * 'context'. But in GPDB, we need the PlannerInfo as well, so we pass this
+ * struct instead.
+ * Struct to enable adjusting for partitioned tables.
+ */
+typedef struct AppendRelInfoContext
+{
+	PlannerInfo *root;
+	AppendRelInfo *appinfo;
+} AppendRelInfoContext;
+
+static Node *adjust_appendrel_attrs_mutator(Node *node, AppendRelInfoContext *ctx);
+
 static Plan *recurse_set_operations(Node *setOp, PlannerInfo *root,
 					   double tuple_fraction,
 					   List *colTypes, bool junkOK,
@@ -1565,17 +1579,6 @@ make_inh_translation_list(Relation oldrelation, Relation newrelation,
 	*translated_vars = vars;
 }
 
-/**
- * Struct to enable adjusting for partitioned tables.
- */
-typedef struct AppendRelInfoContext
-{
-	plan_tree_base_prefix base;
-	AppendRelInfo *appinfo;
-} AppendRelInfoContext;
-
-static Node *adjust_appendrel_attrs_mutator(Node *node, AppendRelInfoContext *ctx);
-
 /*
  * adjust_appendrel_attrs
  *	  Copy the specified query or expression and translate Vars referring
@@ -1594,7 +1597,7 @@ adjust_appendrel_attrs(PlannerInfo *root, Node *node, AppendRelInfo *appinfo)
 {
 	Node	   *result;
 	AppendRelInfoContext ctx;
-	ctx.base.node = (Node *) root;
+	ctx.root = root;
 	ctx.appinfo = appinfo;
 
 	/*
@@ -1606,7 +1609,7 @@ adjust_appendrel_attrs(PlannerInfo *root, Node *node, AppendRelInfo *appinfo)
 
 		newnode = query_tree_mutator((Query *) node,
 									 adjust_appendrel_attrs_mutator,
-									 (void *) appinfo,
+									 (void *) &ctx,
 									 QTW_IGNORE_RC_SUBQUERIES);
 		if (newnode->resultRelation == appinfo->parent_relid)
 		{
@@ -1834,7 +1837,7 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfoContext *ctx)
 
 		if (!sp->is_initplan)
 		{
-			PlannerInfo *root = (PlannerInfo *) ctx->base.node;
+			PlannerInfo *root = ctx->root;
 			Plan *newsubplan = (Plan *) copyObject(planner_subplan_get_plan(root, sp));
 			List *newrtable = (List *) copyObject(planner_subplan_get_rtable(root, sp));
 
