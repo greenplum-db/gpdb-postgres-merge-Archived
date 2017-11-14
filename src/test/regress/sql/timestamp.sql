@@ -56,6 +56,8 @@ INSERT INTO TIMESTAMP_TBL VALUES ('current');
 
 -- Postgres v6.0 standard output format
 INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01 1997 PST');
+INSERT INTO TIMESTAMP_TBL VALUES ('Invalid Abstime');
+INSERT INTO TIMESTAMP_TBL VALUES ('Undefined Abstime');
 
 -- Variations on Postgres v6.1 standard output format
 INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01.000001 1997 PST');
@@ -221,7 +223,6 @@ SELECT '' AS to_char_10, to_char(d1, 'IYYY IYY IY I IW IDDD ID')
 
 SELECT '' AS to_char_11, to_char(d1, 'FMIYYY FMIYY FMIY FMI FMIW FMIDDD FMID')
    FROM TIMESTAMP_TBL;
-<<<<<<< HEAD
 
 -- TO_TIMESTAMP()
 SELECT '' AS to_timestamp_1, to_timestamp('0097/Feb/16 --> 08:14:30', 'YYYY/Mon/DD --> HH:MI:SS');
@@ -281,5 +282,3 @@ select '20090625123002.111111111111'::timestamp;
 -- should error out
 select '2009062512300.111111111111'::timestamp;
 select '200906251230021.111111111111'::timestamp;
-=======
->>>>>>> 38e9348282e
