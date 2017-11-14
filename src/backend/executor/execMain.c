@@ -910,6 +910,7 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 		if (exec_identity == GP_IGNORE)
 		{
 			/* do nothing */
+			estate->es_got_eos = true;
 		}
 		else if (exec_identity == GP_NON_ROOT_ON_QE)
 		{
@@ -2875,7 +2876,16 @@ lnext:	;
 		 * process so we just end the loop...
 		 */
 		if (TupIsNull(planSlot))
+		{
+			/*
+			 * We got end-of-stream. We need to mark it since with a cursor
+			 * end-of-stream will only be received with the fetch that
+			 * returns the last tuple. ExecutorEnd needs to know if EOS was
+			 * received in order to do the right cleanup.
+			 */
+			estate->es_got_eos = true;
 			break;
+		}
 
 		/* ORCA plans of UPDATES/DELETES/INSERTS are handled elsewhere. */
 		if (estate->es_plannedstmt->planGen != PLANGEN_PLANNER && operation != CMD_SELECT)
@@ -3081,15 +3091,6 @@ lnext:	;
 		if (numberTuples && numberTuples == current_tuple_count)
 			break;
 	}
-
-	/*
-	 * if result is null we got end-of-stream. We need to mark it
-	 * since with a cursor end-of-stream will only be received with
-	 * the fetch that returns the last tuple. ExecutorEnd needs to
-	 * know if EOS was received in order to do the right cleanup.
-	 */
-	if (numberTuples == 0 || numberTuples < current_tuple_count)
-		estate->es_got_eos = true;
 
 	/*
 	 * Process AFTER EACH STATEMENT triggers
