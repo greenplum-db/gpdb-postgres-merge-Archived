@@ -707,6 +707,13 @@ _readAConst(void)
 	READ_DONE();
 }
 
+static A_Star *
+_readA_Star(void)
+{
+	READ_LOCALS(A_Star);
+	READ_DONE();
+}
+
 
 static A_Indices *
 _readA_Indices(void)
@@ -3411,6 +3418,9 @@ readNodeBinary(void)
 				break;
 			case T_A_Const:
 				return_value = _readAConst();
+				break;
+			case T_A_Star:
+				return_value = _readA_Star();
 				break;
 			case T_A_Indices:
 				return_value = _readA_Indices();
