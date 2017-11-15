@@ -107,6 +107,7 @@
 #include "catalog/pg_ts_parser.h"
 #include "catalog/pg_ts_template.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_user_mapping.h"
 #include "catalog/oid_dispatch.h"
 #include "cdb/cdbvars.h"
 #include "nodes/pg_list.h"
