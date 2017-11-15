@@ -2684,6 +2684,127 @@ _readCookedConstraint(void)
 	READ_DONE();
 }
 
+static CreateFdwStmt *
+_readCreateFdwStmt(void)
+{
+	READ_LOCALS(CreateFdwStmt);
+
+	READ_STRING_FIELD(fdwname);
+	READ_STRING_FIELD(library);
+	READ_NODE_FIELD(options);
+
+	READ_DONE();
+}
+
+static AlterFdwStmt *
+_readAlterFdwStmt(void)
+{
+	READ_LOCALS(AlterFdwStmt);
+
+	READ_STRING_FIELD(fdwname);
+	READ_STRING_FIELD(library);
+	READ_NODE_FIELD(options);
+
+	READ_DONE();
+}
+
+static DropFdwStmt *
+_readDropFdwStmt(void)
+{
+	READ_LOCALS(DropFdwStmt);
+
+	READ_STRING_FIELD(fdwname);
+	READ_BOOL_FIELD(missing_ok);
+	READ_ENUM_FIELD(behavior, DropBehavior);
+
+	READ_DONE();
+}
+
+static CreateForeignServerStmt *
+_readCreateForeignServerStmt(void)
+{
+	READ_LOCALS(CreateForeignServerStmt);
+
+	READ_STRING_FIELD(servername);
+	READ_STRING_FIELD(servertype);
+	READ_STRING_FIELD(version);
+	READ_STRING_FIELD(fdwname);
+	READ_NODE_FIELD(options);
+
+	READ_DONE();
+}
+
+static AlterForeignServerStmt *
+_readAlterForeignServerStmt(void)
+{
+	READ_LOCALS(AlterForeignServerStmt);
+
+	READ_STRING_FIELD(servername);
+	READ_STRING_FIELD(version);
+	READ_NODE_FIELD(options);
+	READ_BOOL_FIELD(has_version);
+
+	READ_DONE();
+}
+
+static DropForeignServerStmt *
+_readDropForeignServerStmt(void)
+{
+	READ_LOCALS(DropForeignServerStmt);
+
+	READ_STRING_FIELD(servername);
+	READ_BOOL_FIELD(missing_ok);
+	READ_ENUM_FIELD(behavior, DropBehavior);
+
+	READ_DONE();
+}
+
+static CreateUserMappingStmt *
+_readCreateUserMappingStmt(void)
+{
+	READ_LOCALS(CreateUserMappingStmt);
+
+	READ_STRING_FIELD(username);
+	READ_STRING_FIELD(servername);
+	READ_NODE_FIELD(options);
+
+	READ_DONE();
+}
+
+static AlterUserMappingStmt *
+_readAlterUserMappingStmt(void)
+{
+	READ_LOCALS(AlterUserMappingStmt);
+
+	READ_STRING_FIELD(username);
+	READ_STRING_FIELD(servername);
+	READ_NODE_FIELD(options);
+
+	READ_DONE();
+}
+
+static DropUserMappingStmt *
+_readDropUserMappingStmt(void)
+{
+	READ_LOCALS(DropUserMappingStmt);
+
+	READ_STRING_FIELD(username);
+	READ_STRING_FIELD(servername);
+	READ_BOOL_FIELD(missing_ok);
+
+	READ_DONE();
+}
+
+static OptionDefElem *
+_readOptionDefElem(void)
+{
+	READ_LOCALS(OptionDefElem);
+
+	READ_ENUM_FIELD(alter_op, AlterOptionOp);
+	READ_NODE_FIELD(def);
+
+	READ_DONE();
+}
 
 static Node *
 _readValue(NodeTag nt)
@@ -3443,6 +3564,9 @@ readNodeBinary(void)
 			case T_DefElem:
 				return_value = _readDefElem();
 				break;
+			case T_OptionDefElem:
+				return_value = _readOptionDefElem();
+				break;
 			case T_CreateSchemaStmt:
 				return_value = _readCreateSchemaStmt();
 				break;
@@ -3554,6 +3678,34 @@ readNodeBinary(void)
 
 			case T_CookedConstraint:
 				return_value = _readCookedConstraint();
+				break;
+
+			case T_DropUserMappingStmt:
+				return_value = _readDropUserMappingStmt();
+				break;
+			case T_AlterUserMappingStmt:
+				return_value = _readAlterUserMappingStmt();
+				break;
+			case T_CreateUserMappingStmt:
+				return_value = _readCreateUserMappingStmt();
+				break;
+			case T_DropForeignServerStmt:
+				return_value = _readDropForeignServerStmt();
+				break;
+			case T_AlterForeignServerStmt:
+				return_value = _readAlterForeignServerStmt();
+				break;
+			case T_CreateForeignServerStmt:
+				return_value = _readCreateForeignServerStmt();
+				break;
+			case T_DropFdwStmt:
+				return_value = _readDropFdwStmt();
+				break;
+			case T_AlterFdwStmt:
+				return_value = _readAlterFdwStmt();
+				break;
+			case T_CreateFdwStmt:
+				return_value = _readCreateFdwStmt();
 				break;
 
 

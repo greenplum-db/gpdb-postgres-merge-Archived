@@ -491,6 +491,7 @@ exec_command(const char *cmd,
 						status = PSQL_CMD_UNKNOWN;
 						break;
 				}
+				break;
 			case 'x':			/* Extensions */
 				if (show_verbose)
 					success = listExtensionContents(pattern);

@@ -86,6 +86,8 @@
 #include "catalog/pg_enum.h"
 #include "catalog/pg_extension.h"
 #include "catalog/pg_extprotocol.h"
+#include "catalog/pg_foreign_data_wrapper.h"
+#include "catalog/pg_foreign_server.h"
 #include "catalog/pg_filespace.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
@@ -243,6 +245,22 @@ CreateKeyFromCatalogTuple(Relation catalogrel, HeapTuple tuple,
 				key.objname = NameStr(fsForm->fsname);
 				break;
 			}
+		case ForeignDataWrapperRelationId:
+			{
+				Form_pg_foreign_data_wrapper fdwForm = (Form_pg_foreign_data_wrapper) GETSTRUCT(tuple);
+
+				key.keyOid1 = fdwForm->fdwowner;
+				key.objname = NameStr(fdwForm->fdwname);
+				break;
+			}
+		case ForeignServerRelationId:
+			{
+				Form_pg_foreign_server fsrvForm = (Form_pg_foreign_server) GETSTRUCT(tuple);
+
+				key.keyOid1 = fsrvForm->srvfdw;
+				key.objname = NameStr(fsrvForm->srvname);
+				break;
+			}
 		case LanguageRelationId:
 			{
 				Form_pg_language lanForm = (Form_pg_language) GETSTRUCT(tuple);
@@ -382,6 +400,14 @@ CreateKeyFromCatalogTuple(Relation catalogrel, HeapTuple tuple,
 
 				key.keyOid1 = rsgCapForm->resgroupid;
 				key.keyOid2 = (Oid) rsgCapForm->reslimittype;
+				break;
+			}
+		case UserMappingRelationId:
+			{
+				Form_pg_user_mapping usermapForm = (Form_pg_user_mapping) GETSTRUCT(tuple);
+
+				key.keyOid1 = usermapForm->umuser;
+				key.keyOid2 = usermapForm->umserver;
 				break;
 			}
 
