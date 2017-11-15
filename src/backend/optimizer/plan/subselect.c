@@ -792,6 +792,12 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 		 * correlated subplans, we add MATERIAL unless the subplan's top plan
 		 * node would materialize its output anyway.
 		 */
+#if 0
+		/*
+		 * In GPDB, don't add a MATERIAL node here. We'll most likely add one
+		 * later anyway, when the SubPlan reference is "parallelized" in
+		 * ParallelizeCorrelatedSubPlan.
+		 */
 		else if (splan->parParam == NIL)
 		{
 			bool		use_material;
@@ -812,7 +818,7 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 			if (use_material)
 				plan = materialize_finished_plan(root, plan);
 		}
-
+#endif
 		result = (Node *) splan;
 	}
 
