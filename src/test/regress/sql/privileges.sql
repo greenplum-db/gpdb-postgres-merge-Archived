@@ -46,14 +46,9 @@ CREATE TABLE atest1 ( a int, b text );
 SELECT * FROM atest1;
 INSERT INTO atest1 VALUES (1, 'one');
 DELETE FROM atest1;
-<<<<<<< HEAD
 UPDATE atest1 SET b = 'blech' WHERE a = 213;
 TRUNCATE atest1;
-=======
-UPDATE atest1 SET a = 1 WHERE b = 'blech';
-TRUNCATE atest1;
 BEGIN;
->>>>>>> 38e9348282e
 LOCK atest1 IN ACCESS EXCLUSIVE MODE;
 COMMIT;
 
@@ -87,10 +82,7 @@ SELECT * FROM atest1 FOR UPDATE; -- ok
 SELECT * FROM atest2 FOR UPDATE; -- fail
 DELETE FROM atest2; -- fail
 TRUNCATE atest2; -- fail
-<<<<<<< HEAD
-=======
 BEGIN;
->>>>>>> 38e9348282e
 LOCK atest2 IN ACCESS EXCLUSIVE MODE; -- fail
 COMMIT;
 COPY atest2 FROM stdin; -- fail
@@ -117,10 +109,7 @@ SELECT * FROM atest1 FOR UPDATE; -- fail
 SELECT * FROM atest2 FOR UPDATE; -- fail
 DELETE FROM atest2; -- fail
 TRUNCATE atest2; -- fail
-<<<<<<< HEAD
-=======
 BEGIN;
->>>>>>> 38e9348282e
 LOCK atest2 IN ACCESS EXCLUSIVE MODE; -- ok
 COMMIT;
 COPY atest2 FROM stdin; -- fail
@@ -441,7 +430,4 @@ DROP USER regressuser2;
 DROP USER regressuser3;
 DROP USER regressuser4;
 DROP USER regressuser5;
-<<<<<<< HEAD
 reset optimizer;
-=======
->>>>>>> 38e9348282e

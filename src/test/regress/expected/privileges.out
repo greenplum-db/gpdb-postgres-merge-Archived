@@ -46,14 +46,9 @@ SELECT * FROM atest1;
 
 INSERT INTO atest1 VALUES (1, 'one');
 DELETE FROM atest1;
-<<<<<<< HEAD
 UPDATE atest1 SET b = 'blech' WHERE a = 213;
 TRUNCATE atest1;
-=======
-UPDATE atest1 SET a = 1 WHERE b = 'blech';
-TRUNCATE atest1;
 BEGIN;
->>>>>>> 38e9348282e
 LOCK atest1 IN ACCESS EXCLUSIVE MODE;
 COMMIT;
 REVOKE ALL ON atest1 FROM PUBLIC;
@@ -115,10 +110,7 @@ DELETE FROM atest2; -- fail
 ERROR:  permission denied for relation atest2
 TRUNCATE atest2; -- fail
 ERROR:  permission denied for relation atest2
-<<<<<<< HEAD
-=======
 BEGIN;
->>>>>>> 38e9348282e
 LOCK atest2 IN ACCESS EXCLUSIVE MODE; -- fail
 ERROR:  permission denied for relation atest2
 COMMIT;
@@ -173,10 +165,7 @@ DELETE FROM atest2; -- fail
 ERROR:  permission denied for relation atest2
 TRUNCATE atest2; -- fail
 ERROR:  permission denied for relation atest2
-<<<<<<< HEAD
-=======
 BEGIN;
->>>>>>> 38e9348282e
 LOCK atest2 IN ACCESS EXCLUSIVE MODE; -- ok
 COMMIT;
 COPY atest2 FROM stdin; -- fail
@@ -745,7 +734,4 @@ DROP USER regressuser2;
 DROP USER regressuser3;
 DROP USER regressuser4;
 DROP USER regressuser5;
-<<<<<<< HEAD
 reset optimizer;
-=======
->>>>>>> 38e9348282e
