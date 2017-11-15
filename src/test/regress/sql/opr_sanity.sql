@@ -64,14 +64,11 @@ SELECT p1.oid, p1.proname
 FROM pg_proc as p1
 WHERE prosrc IS NULL OR prosrc = '' OR prosrc = '-';
 
-<<<<<<< HEAD
-=======
 -- proiswindow shouldn't be set together with proisagg or proretset
 SELECT p1.oid, p1.proname
 FROM pg_proc AS p1
 WHERE proiswindow AND (proisagg OR proretset);
 
->>>>>>> 38e9348282e
 -- pronargdefaults should be 0 iff proargdefaults is null
 SELECT p1.oid, p1.proname
 FROM pg_proc AS p1
@@ -277,7 +274,7 @@ WHERE p1.prorettype = 'internal'::regtype AND NOT
 -- Catch bogus values in pg_cast columns (other than cases detected by
 -- oidjoins test).
 
-SELECT castsource::regtype, casttarget::regtype, castfunc::regproc, castcontext
+SELECT *
 FROM pg_cast c
 WHERE castsource = 0 OR casttarget = 0 OR castcontext NOT IN ('e', 'a', 'i')
     OR castmethod NOT IN ('f', 'b' ,'i');
@@ -294,11 +291,11 @@ WHERE (castmethod = 'f' AND castfunc = 0)
 -- (We assume they are length coercions if they take multiple arguments.)
 -- Such entries are not necessarily harmful, but they are useless.
 
-SELECT castsource::regtype, casttarget::regtype, castfunc::regproc, castcontext
+SELECT *
 FROM pg_cast c
 WHERE castsource = casttarget AND castfunc = 0;
 
-SELECT castsource::regtype, casttarget::regtype, castfunc::regproc, castcontext
+SELECT c.*
 FROM pg_cast c, pg_proc p
 WHERE c.castfunc = p.oid AND p.pronargs < 2 AND castsource = casttarget;
 
@@ -310,7 +307,7 @@ WHERE c.castfunc = p.oid AND p.pronargs < 2 AND castsource = casttarget;
 -- because CHAR(n)-to-TEXT normally invokes rtrim().  However, the results
 -- are the same, so long as the function is one that ignores trailing blanks.
 
-SELECT castsource::regtype, casttarget::regtype, castfunc::regproc, castcontext
+SELECT c.*
 FROM pg_cast c, pg_proc p
 WHERE c.castfunc = p.oid AND
     (p.pronargs < 1 OR p.pronargs > 3
@@ -319,7 +316,7 @@ WHERE c.castfunc = p.oid AND
                  p.proargtypes[0] = 'text'::regtype))
      OR NOT binary_coercible(p.prorettype, c.casttarget));
 
-SELECT castsource::regtype, casttarget::regtype, castfunc::regproc, castcontext
+SELECT c.*
 FROM pg_cast c, pg_proc p
 WHERE c.castfunc = p.oid AND
     ((p.pronargs > 1 AND p.proargtypes[1] != 'int4'::regtype) OR
