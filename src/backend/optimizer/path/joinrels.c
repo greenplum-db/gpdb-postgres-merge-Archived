@@ -617,35 +617,6 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 	if (sjinfo->jointype == JOIN_SEMI)
 		sjinfo->jointype = JOIN_INNER;
 
-	/* Swap rels if needed to match the join info. */
-	if (reversed)
-	{
-		RelOptInfo *trel = rel1;
-
-		rel1 = rel2;
-		rel2 = trel;
-	}
-
-	/*
-	 * If it's a plain inner join, then we won't have found anything in
-	 * join_info_list.  Make up a SpecialJoinInfo so that selectivity
-	 * estimation functions will know what's being joined.
-	 */
-	if (sjinfo == NULL)
-	{
-		sjinfo = &sjinfo_data;
-		sjinfo->type = T_SpecialJoinInfo;
-		sjinfo->min_lefthand = rel1->relids;
-		sjinfo->min_righthand = rel2->relids;
-		sjinfo->syn_lefthand = rel1->relids;
-		sjinfo->syn_righthand = rel2->relids;
-		sjinfo->jointype = JOIN_INNER;
-		/* we don't bother trying to make the remaining fields valid */
-		sjinfo->lhs_strict = false;
-		sjinfo->delay_upper_joins = false;
-		sjinfo->join_quals = NIL;
-	}
-
 	/*
 	 * Find or build the join RelOptInfo, and compute the restrictlist that
 	 * goes with this particular joining.
