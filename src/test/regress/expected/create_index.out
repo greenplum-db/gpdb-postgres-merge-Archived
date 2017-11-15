@@ -87,9 +87,9 @@ SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
 
 SELECT * FROM polygon_tbl WHERE f1 ~ '((1,1),(2,2),(2,1))'::polygon
     ORDER BY (poly_center(f1))[0];
- s |         f1          
----+---------------------
- 1 | ((2,0),(2,4),(0,0))
+         f1
+---------------------
+ ((2,0),(2,4),(0,0))
 (1 row)
 
 SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
@@ -143,9 +143,9 @@ SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
 
 SELECT * FROM polygon_tbl WHERE f1 ~ '((1,1),(2,2),(2,1))'::polygon
     ORDER BY (poly_center(f1))[0];
- s |         f1          
----+---------------------
- 1 | ((2,0),(2,4),(0,0))
+         f1
+---------------------
+ ((2,0),(2,4),(0,0))
 (1 row)
 
 SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
