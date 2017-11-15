@@ -185,5 +185,6 @@ test: metadata_track
 test: workfile_mgr_test
 
 test: psql_gp_commands pg_resetxlog
+test: constraints_gp
 
 # end of tests
