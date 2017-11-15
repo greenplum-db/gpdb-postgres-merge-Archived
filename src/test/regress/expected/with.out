@@ -49,8 +49,6 @@ SELECT * FROM t;
  5
 (5 rows)
 
-<<<<<<< HEAD
-=======
 -- This is an infinite loop with UNION ALL, but not with UNION
 WITH RECURSIVE t(n) AS (
     SELECT 1
@@ -63,7 +61,6 @@ SELECT * FROM t;
  9
 (2 rows)
 
->>>>>>> 38e9348282e
 -- This'd be an infinite loop, but outside query reads only as much as needed
 WITH RECURSIVE t(n) AS (
     VALUES (1)
@@ -84,8 +81,6 @@ SELECT * FROM t LIMIT 10;
  10
 (10 rows)
 
-<<<<<<< HEAD
-=======
 -- UNION case should have same property
 WITH RECURSIVE t(n) AS (
     SELECT 1
@@ -106,7 +101,6 @@ SELECT * FROM t LIMIT 10;
  10
 (10 rows)
 
->>>>>>> 38e9348282e
 -- Test behavior with an unknown-type literal in the WITH
 WITH q AS (SELECT 'foo' AS x)
 SELECT x, x IS OF (unknown) as is_unknown FROM q;
@@ -154,6 +148,10 @@ INSERT INTO department VALUES (4, 2, 'D');
 INSERT INTO department VALUES (5, 0, 'E');
 INSERT INTO department VALUES (6, 4, 'F');
 INSERT INTO department VALUES (7, 5, 'G');
+-- GPDB: Some of the queries below will return non-deterministic results
+-- because of moving rows across segments. This table is the same, except that
+-- all the rows reside on a single segment, so that you get consistent results.
+CREATE TEMP TABLE department_oneseg AS SELECT 1 AS distkey, * FROM department DISTRIBUTED BY (distkey);
 -- extract all departments under 'A'. Result should be A, B, C, D and F
 WITH RECURSIVE subdepartment AS
 (
@@ -298,16 +296,14 @@ SELECT pg_get_viewdef('vsubdepartment'::regclass, true);
     FROM subdepartment;
 (1 row)
 
-<<<<<<< HEAD
-=======
 -- corner case in which sub-WITH gets initialized first
 with recursive q as (
-      select * from department
+      select * from department_oneseg
     union all
       (with x as (select * from q)
        select * from x)
     )
-select * from q limit 24;
+select id, parent_department, name from q limit 24;
  id | parent_department | name 
 ----+-------------------+------
   0 |                   | ROOT
@@ -337,16 +333,16 @@ select * from q limit 24;
 (24 rows)
 
 with recursive q as (
-      select * from department
+      select * from department_oneseg
     union all
       (with recursive x as (
-           select * from department
+           select * from department_oneseg
          union all
            (select * from q union all select * from x)
         )
        select * from x)
     )
-select * from q limit 32;
+select id, parent_department, name from q limit 32;
  id | parent_department | name 
 ----+-------------------+------
   0 |                   | ROOT
@@ -383,7 +379,6 @@ select * from q limit 32;
   7 |                 5 | G
 (32 rows)
 
->>>>>>> 38e9348282e
 -- recursive term has sub-UNION
 WITH RECURSIVE t(i,j) AS (
 	VALUES (1,2)
@@ -461,8 +456,6 @@ SELECT t1.id, count(t2.*) FROM t AS t1 JOIN t AS t2 ON
 (2 rows)
 
 --
-<<<<<<< HEAD
-=======
 -- test cycle detection
 --
 create temp table graph( f int, t int, label text );
@@ -549,7 +542,6 @@ select * from search_graph order by path;
 (25 rows)
 
 --
->>>>>>> 38e9348282e
 -- test multiple WITH queries
 --
 WITH RECURSIVE
@@ -723,48 +715,26 @@ WITH RECURSIVE
 --
 -- error cases
 --
-<<<<<<< HEAD
--- UNION (should be supported someday)
-WITH RECURSIVE x(n) AS (SELECT 1 UNION SELECT n+1 FROM x)
-	SELECT * FROM x;
-ERROR:  recursive query "x" does not have the form non-recursive-term UNION ALL recursive-term
-LINE 1: WITH RECURSIVE x(n) AS (SELECT 1 UNION SELECT n+1 FROM x)
-                       ^
--- INTERSECT
-WITH RECURSIVE x(n) AS (SELECT 1 INTERSECT SELECT n+1 FROM x)
-	SELECT * FROM x;
-ERROR:  recursive query "x" does not have the form non-recursive-term UNION ALL recursive-term
-=======
 -- INTERSECT
 WITH RECURSIVE x(n) AS (SELECT 1 INTERSECT SELECT n+1 FROM x)
 	SELECT * FROM x;
 ERROR:  recursive query "x" does not have the form non-recursive-term UNION [ALL] recursive-term
->>>>>>> 38e9348282e
 LINE 1: WITH RECURSIVE x(n) AS (SELECT 1 INTERSECT SELECT n+1 FROM x...
                        ^
 WITH RECURSIVE x(n) AS (SELECT 1 INTERSECT ALL SELECT n+1 FROM x)
 	SELECT * FROM x;
-<<<<<<< HEAD
-ERROR:  recursive query "x" does not have the form non-recursive-term UNION ALL recursive-term
-=======
 ERROR:  recursive query "x" does not have the form non-recursive-term UNION [ALL] recursive-term
->>>>>>> 38e9348282e
 LINE 1: WITH RECURSIVE x(n) AS (SELECT 1 INTERSECT ALL SELECT n+1 FR...
                        ^
 -- EXCEPT
 WITH RECURSIVE x(n) AS (SELECT 1 EXCEPT SELECT n+1 FROM x)
 	SELECT * FROM x;
-<<<<<<< HEAD
-ERROR:  recursive query "x" does not have the form non-recursive-term UNION ALL recursive-term
-=======
 ERROR:  recursive query "x" does not have the form non-recursive-term UNION [ALL] recursive-term
->>>>>>> 38e9348282e
 LINE 1: WITH RECURSIVE x(n) AS (SELECT 1 EXCEPT SELECT n+1 FROM x)
                        ^
 WITH RECURSIVE x(n) AS (SELECT 1 EXCEPT ALL SELECT n+1 FROM x)
 	SELECT * FROM x;
-<<<<<<< HEAD
-ERROR:  recursive query "x" does not have the form non-recursive-term UNION ALL recursive-term
+ERROR:  recursive query "x" does not have the form non-recursive-term UNION [ALL] recursive-term
 LINE 1: WITH RECURSIVE x(n) AS (SELECT 1 EXCEPT ALL SELECT n+1 FROM ...
                        ^
 -- GPDB Specific Error Cases
@@ -794,16 +764,7 @@ WITH RECURSIVE x(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM (SELECT * from z UNIO
 -- no non-recursive term
 WITH RECURSIVE x(n) AS (SELECT n FROM x)
 	SELECT * FROM x;
-ERROR:  recursive query "x" does not have the form non-recursive-term UNION ALL recursive-term
-=======
 ERROR:  recursive query "x" does not have the form non-recursive-term UNION [ALL] recursive-term
-LINE 1: WITH RECURSIVE x(n) AS (SELECT 1 EXCEPT ALL SELECT n+1 FROM ...
-                       ^
--- no non-recursive term
-WITH RECURSIVE x(n) AS (SELECT n FROM x)
-	SELECT * FROM x;
-ERROR:  recursive query "x" does not have the form non-recursive-term UNION [ALL] recursive-term
->>>>>>> 38e9348282e
 LINE 1: WITH RECURSIVE x(n) AS (SELECT n FROM x)
                        ^
 -- recursive term in the left hand side (strictly speaking, should allow this)
@@ -812,7 +773,6 @@ WITH RECURSIVE x(n) AS (SELECT n FROM x UNION ALL SELECT 1)
 ERROR:  recursive reference to query "x" must not appear within its non-recursive term
 LINE 1: WITH RECURSIVE x(n) AS (SELECT n FROM x UNION ALL SELECT 1)
                                               ^
-<<<<<<< HEAD
 -- recursive term with a self-reference within a subquery is not allowed
 WITH RECURSIVE cte(level, id) as (
 	SELECT 1, 2
@@ -847,11 +807,6 @@ ERROR:  Window Functions in a recursive query is not implemented
 LINE 4:  SELECT level+1, row_number() over() FROM x, bar)
                          ^
 CREATE TEMPORARY TABLE y (a INTEGER);
-NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
-HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-=======
-CREATE TEMPORARY TABLE y (a INTEGER);
->>>>>>> 38e9348282e
 INSERT INTO y SELECT generate_series(1, 10);
 -- LEFT JOIN
 WITH RECURSIVE x(n) AS (SELECT a FROM y WHERE a = 1
@@ -946,15 +901,9 @@ WITH RECURSIVE foo(i) AS
           UNION ALL
        SELECT i+1 FROM foo WHERE i < 5) AS t
 ) SELECT * FROM foo;
-<<<<<<< HEAD
 ERROR:  recursive reference to query "foo" must not appear within a subquery
 LINE 5:        (SELECT i+1 FROM foo WHERE i < 10
                                 ^
-=======
-ERROR:  recursive reference to query "foo" must not appear more than once
-LINE 7:        SELECT i+1 FROM foo WHERE i < 5) AS t
-                               ^
->>>>>>> 38e9348282e
 WITH RECURSIVE foo(i) AS
     (values (1)
     UNION ALL
@@ -995,7 +944,6 @@ ERROR:  recursive query "foo" column 1 has type numeric(3,0) in non-recursive te
 LINE 2:    (SELECT i::numeric(3,0) FROM (VALUES(1),(2)) t(i)
                    ^
 HINT:  Cast the output of the non-recursive term to the correct type.
-<<<<<<< HEAD
 --
 -- test for bug #4902
 --
@@ -1054,5 +1002,3 @@ x
  3
 (3 rows)
 
-=======
->>>>>>> 38e9348282e

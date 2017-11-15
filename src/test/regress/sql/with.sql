@@ -2,13 +2,10 @@
 -- Tests for common table expressions (WITH query, ... SELECT ...)
 --
 
-<<<<<<< HEAD
 --start_ignore
 set gp_cte_sharing = on;
 --end_ignore
 
-=======
->>>>>>> 38e9348282e
 -- Basic WITH
 WITH q1(x,y) AS (SELECT 1,2)
 SELECT * FROM q1, q1 AS q2;
@@ -38,8 +35,6 @@ UNION ALL
 )
 SELECT * FROM t;
 
-<<<<<<< HEAD
-=======
 -- This is an infinite loop with UNION ALL, but not with UNION
 WITH RECURSIVE t(n) AS (
     SELECT 1
@@ -47,7 +42,6 @@ UNION
     SELECT 10-n FROM t)
 SELECT * FROM t;
 
->>>>>>> 38e9348282e
 -- This'd be an infinite loop, but outside query reads only as much as needed
 WITH RECURSIVE t(n) AS (
     VALUES (1)
@@ -55,8 +49,6 @@ UNION ALL
     SELECT n+1 FROM t)
 SELECT * FROM t LIMIT 10;
 
-<<<<<<< HEAD
-=======
 -- UNION case should have same property
 WITH RECURSIVE t(n) AS (
     SELECT 1
@@ -64,7 +56,6 @@ UNION
     SELECT n+1 FROM t)
 SELECT * FROM t LIMIT 10;
 
->>>>>>> 38e9348282e
 -- Test behavior with an unknown-type literal in the WITH
 WITH q AS (SELECT 'foo' AS x)
 SELECT x, x IS OF (unknown) as is_unknown FROM q;
@@ -101,6 +92,10 @@ INSERT INTO department VALUES (5, 0, 'E');
 INSERT INTO department VALUES (6, 4, 'F');
 INSERT INTO department VALUES (7, 5, 'G');
 
+-- GPDB: Some of the queries below will return non-deterministic results
+-- because of moving rows across segments. This table is the same, except that
+-- all the rows reside on a single segment, so that you get consistent results.
+CREATE TEMP TABLE department_oneseg AS SELECT 1 AS distkey, * FROM department DISTRIBUTED BY (distkey);
 
 -- extract all departments under 'A'. Result should be A, B, C, D and F
 WITH RECURSIVE subdepartment AS
@@ -191,30 +186,27 @@ SELECT * FROM vsubdepartment ORDER BY name;
 SELECT pg_get_viewdef('vsubdepartment'::regclass);
 SELECT pg_get_viewdef('vsubdepartment'::regclass, true);
 
-<<<<<<< HEAD
-=======
 -- corner case in which sub-WITH gets initialized first
 with recursive q as (
-      select * from department
+      select * from department_oneseg
     union all
       (with x as (select * from q)
        select * from x)
     )
-select * from q limit 24;
+select id, parent_department, name from q limit 24;
 
 with recursive q as (
-      select * from department
+      select * from department_oneseg
     union all
       (with recursive x as (
-           select * from department
+           select * from department_oneseg
          union all
            (select * from q union all select * from x)
         )
        select * from x)
     )
-select * from q limit 32;
+select id, parent_department, name from q limit 32;
 
->>>>>>> 38e9348282e
 -- recursive term has sub-UNION
 WITH RECURSIVE t(i,j) AS (
 	VALUES (1,2)
@@ -267,8 +259,6 @@ SELECT t1.id, count(t2.*) FROM t AS t1 JOIN t AS t2 ON
 	ORDER BY t1.id;
 
 --
-<<<<<<< HEAD
-=======
 -- test cycle detection
 --
 create temp table graph( f int, t int, label text );
@@ -301,7 +291,6 @@ with recursive search_graph(f, t, label, path, cycle) as (
 select * from search_graph order by path;
 
 --
->>>>>>> 38e9348282e
 -- test multiple WITH queries
 --
 WITH RECURSIVE
@@ -351,13 +340,6 @@ WITH RECURSIVE
 -- error cases
 --
 
-<<<<<<< HEAD
--- UNION (should be supported someday)
-WITH RECURSIVE x(n) AS (SELECT 1 UNION SELECT n+1 FROM x)
-	SELECT * FROM x;
-
-=======
->>>>>>> 38e9348282e
 -- INTERSECT
 WITH RECURSIVE x(n) AS (SELECT 1 INTERSECT SELECT n+1 FROM x)
 	SELECT * FROM x;
@@ -372,7 +354,6 @@ WITH RECURSIVE x(n) AS (SELECT 1 EXCEPT SELECT n+1 FROM x)
 WITH RECURSIVE x(n) AS (SELECT 1 EXCEPT ALL SELECT n+1 FROM x)
 	SELECT * FROM x;
 
-<<<<<<< HEAD
 -- GPDB Specific Error Cases
 -- Set operations within the recursive term with a self-reference.
 -- Currently set operations in the recursive term involving the cte itself must
@@ -389,8 +370,6 @@ CREATE TEMPORARY TABLE u(x int primary key);
 WITH RECURSIVE x(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM (SELECT * from z UNION SELECT * FROM u)foo, x where foo.x = x.n)
 	SELECT * FROM x;
 
-=======
->>>>>>> 38e9348282e
 -- no non-recursive term
 WITH RECURSIVE x(n) AS (SELECT n FROM x)
 	SELECT * FROM x;
@@ -399,7 +378,6 @@ WITH RECURSIVE x(n) AS (SELECT n FROM x)
 WITH RECURSIVE x(n) AS (SELECT n FROM x UNION ALL SELECT 1)
 	SELECT * FROM x;
 
-<<<<<<< HEAD
 -- recursive term with a self-reference within a subquery is not allowed
 WITH RECURSIVE cte(level, id) as (
 	SELECT 1, 2
@@ -425,8 +403,6 @@ WITH RECURSIVE x(n) AS (
 	SELECT level+1, row_number() over() FROM x, bar)
   SELECT * FROM x LIMIT 10;
 
-=======
->>>>>>> 38e9348282e
 CREATE TEMPORARY TABLE y (a INTEGER);
 INSERT INTO y SELECT generate_series(1, 10);
 
@@ -532,7 +508,6 @@ WITH RECURSIVE foo(i) AS
    UNION ALL
    SELECT (i+1)::numeric(10,0) FROM foo WHERE i < 10)
 SELECT * FROM foo;
-<<<<<<< HEAD
 
 --
 -- test for bug #4902
@@ -560,5 +535,3 @@ WITH outermost(x) AS (
          UNION SELECT 3)
 )
 SELECT * FROM outermost;
-=======
->>>>>>> 38e9348282e
