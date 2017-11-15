@@ -361,6 +361,18 @@ select t.a, t, t.a from foo1(10000) t limit 1;
 
 drop function foo1(n integer);
 
+-- test use of SQL functions returning record
+-- this is supported in some cases where the query doesn't specify
+-- the actual record type ...
+
+create function array_to_set(anyarray) returns setof record as $$
+  select i AS "index", $1[i] AS "value" from generate_subscripts($1, 1) i
+$$ language sql strict immutable;
+
+select array_to_set(array['one', 'two']);
+select * from array_to_set(array['one', 'two']) as t(f1 int,f2 text);
+select * from array_to_set(array['one', 'two']); -- fail
+
 -- check handling of a SQL function with multiple OUT params (bug #5777)
 
 create or replace function foobar(out integer, out numeric) as
