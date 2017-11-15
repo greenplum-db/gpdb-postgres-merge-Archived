@@ -1493,18 +1493,10 @@ agg_retrieve_direct(AggState *aggstate)
 			 * and the representative input tuple.
 			 */
 			TupleTableSlot *result;
-			ExprDoneCond isDone;
 
-			result = ExecProject(aggstate->ss.ps.ps_ProjInfo, &isDone);
+			result = ExecProject(aggstate->ss.ps.ps_ProjInfo, NULL);
 
-			if (isDone != ExprEndResult)
-			{
-#if 0
-				aggstate->ss.ps.ps_TupFromTlist =
-					(isDone == ExprMultipleResult);
-#endif
-				return result;
-			}
+			return result;
 		}
 	}
 
@@ -1615,18 +1607,10 @@ agg_retrieve_hash_table(AggState *aggstate)
 			 * and the representative input tuple.
 			 */
 			TupleTableSlot *result;
-			ExprDoneCond isDone;
 
-			result = ExecProject(aggstate->ss.ps.ps_ProjInfo, &isDone);
+			result = ExecProject(aggstate->ss.ps.ps_ProjInfo, NULL);
 
-			if (isDone != ExprEndResult)
-			{
-#if 0
-				aggstate->ss.ps.ps_TupFromTlist =
-					(isDone == ExprMultipleResult);
-#endif
-				return result;
-			}
+			return result;
 		}
 	}
 
