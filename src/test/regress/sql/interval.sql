@@ -132,13 +132,17 @@ SELECT '1 second 2 seconds'::interval;              -- error
 SELECT '10 milliseconds 20 milliseconds'::interval; -- error
 SELECT '5.5 seconds 3 milliseconds'::interval;      -- error
 SELECT '1:20:05 5 microseconds'::interval;          -- error
-<<<<<<< HEAD
+SELECT '1 day 1 day'::interval;                     -- error
+SELECT interval '1-2';  -- SQL year-month literal
+SELECT interval '999' second;  -- oversize leading field is ok
+SELECT interval '999' minute;
+SELECT interval '999' hour;
+SELECT interval '999' day;
+SELECT interval '999' month;
 
 -- check that '30 days' equals '1 month' according to the hash function
 select '30 days'::interval = '1 month'::interval as t;
 select interval_hash('30 days'::interval) = interval_hash('1 month'::interval) as t;
-=======
-SELECT interval '1-2';  -- SQL year-month literal
 
 -- test SQL-spec syntaxes for restricted field sets
 SELECT interval '1' year;
@@ -167,6 +171,9 @@ SELECT interval '1 2:03:04' hour to second;
 SELECT interval '1 2' minute to second;
 SELECT interval '1 2:03' minute to second;
 SELECT interval '1 2:03:04' minute to second;
+SELECT interval '123 11' day to hour; -- ok
+SELECT interval '123 11' day; -- not ok
+SELECT interval '123 11'; -- not ok, too ambiguous
 
 -- test syntaxes for restricted precision
 SELECT interval(0) '1 day 01:23:45.6789';
@@ -249,4 +256,3 @@ SET IntervalStyle to postgres_verbose;
 select interval '-10 mons -3 days +03:55:06.70';
 select interval '1 year 2 mons 3 days 04:05:06.699999';
 select interval '0:0:0.7', interval '@ 0.70 secs', interval '0.7 seconds'; 
->>>>>>> 38e9348282e
