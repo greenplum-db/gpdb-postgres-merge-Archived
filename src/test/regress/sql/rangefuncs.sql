@@ -280,43 +280,16 @@ AS $$ SELECT a, b
 SELECT * FROM foo(3);
 DROP FUNCTION foo(int);
 
-<<<<<<< HEAD
--- test case for a whole-row-variable bug
-create function foo1(n integer, out a text, out b text)
-  returns setof record
-  language sql
-  as $$ select 'foo ' || i, 'bar ' || i from generate_series(1,$1) i $$;
-
-set work_mem='64kB';
-select t.a, t, t.a from foo1(10000) t limit 1;
-reset work_mem;
-select t.a, t, t.a from foo1(10000) t limit 1;
-
-drop function foo1(n integer);
-
--- check handling of a SQL function with multiple OUT params (bug #5777)
-
-create or replace function foobar(out integer, out numeric) as
-$$ select (1, 2.1) $$ language sql;
-
-select * from foobar();
-
-create or replace function foobar(out integer, out numeric) as
-$$ select (1, 2) $$ language sql;
-
-select * from foobar();  -- fail
-
-create or replace function foobar(out integer, out numeric) as
-$$ select (1, 2.1, 3) $$ language sql;
-
-select * from foobar();  -- fail
-
-drop function foobar();
-=======
 --
 -- some tests on SQL functions with RETURNING
 --
 
+-- start_ignore
+-- GPDB_90_MERGE_FIXME: GPDB doesn't currently support the RETURNING clause.
+-- These tests have therefore been disabled. I'm marking this as a FIXME for
+-- the 9.0 merge, because I think we'll tackle the RETURNING clause and try
+-- to make that work again at that time, once we merge the ModifyTable node
+-- from the upstream.
 create temp table tt(f1 serial, data text);
 
 create function insert_tt(text) returns int as
@@ -371,4 +344,38 @@ select * from tt;
 -- note that nextval() gets executed a second time in the rule expansion,
 -- which is expected.
 select * from tt_log;
->>>>>>> 38e9348282e
+
+-- end of disabled RETURNING tests.
+-- end_ignore
+
+-- test case for a whole-row-variable bug
+create function foo1(n integer, out a text, out b text)
+  returns setof record
+  language sql
+  as $$ select 'foo ' || i, 'bar ' || i from generate_series(1,$1) i $$;
+
+set work_mem='64kB';
+select t.a, t, t.a from foo1(10000) t limit 1;
+reset work_mem;
+select t.a, t, t.a from foo1(10000) t limit 1;
+
+drop function foo1(n integer);
+
+-- check handling of a SQL function with multiple OUT params (bug #5777)
+
+create or replace function foobar(out integer, out numeric) as
+$$ select (1, 2.1) $$ language sql;
+
+select * from foobar();
+
+create or replace function foobar(out integer, out numeric) as
+$$ select (1, 2) $$ language sql;
+
+select * from foobar();  -- fail
+
+create or replace function foobar(out integer, out numeric) as
+$$ select (1, 2.1, 3) $$ language sql;
+
+select * from foobar();  -- fail
+
+drop function foobar();

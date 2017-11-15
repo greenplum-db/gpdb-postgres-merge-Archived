@@ -478,53 +478,15 @@ SELECT * FROM foo(3);
 (9 rows)
 
 DROP FUNCTION foo(int);
-<<<<<<< HEAD
--- test case for a whole-row-variable bug
-create function foo1(n integer, out a text, out b text)
-  returns setof record
-  language sql
-  as $$ select 'foo ' || i, 'bar ' || i from generate_series(1,$1) i $$;
-set work_mem='64kB';
-WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
-select t.a, t, t.a from foo1(10000) t limit 1;
-   a   |         t         |   a   
--------+-------------------+-------
- foo 1 | ("foo 1","bar 1") | foo 1
-(1 row)
-
-reset work_mem;
-WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
-select t.a, t, t.a from foo1(10000) t limit 1;
-   a   |         t         |   a   
--------+-------------------+-------
- foo 1 | ("foo 1","bar 1") | foo 1
-(1 row)
-
-drop function foo1(n integer);
--- check handling of a SQL function with multiple OUT params (bug #5777)
-create or replace function foobar(out integer, out numeric) as
-$$ select (1, 2.1) $$ language sql;
-select * from foobar();
- column1 | column2 
----------+---------
-       1 |     2.1
-(1 row)
-
-create or replace function foobar(out integer, out numeric) as
-$$ select (1, 2) $$ language sql;
-select * from foobar();  -- fail
-ERROR:  function return row and query-specified return row do not match
-DETAIL:  Returned type integer at ordinal position 2, but query expects numeric.
-create or replace function foobar(out integer, out numeric) as
-$$ select (1, 2.1, 3) $$ language sql;
-select * from foobar();  -- fail
-ERROR:  function return row and query-specified return row do not match
-DETAIL:  Returned row contains 3 attributes, but query expects 2.
-drop function foobar();
-=======
 --
 -- some tests on SQL functions with RETURNING
 --
+-- start_ignore
+-- GPDB_90_MERGE_FIXME: GPDB doesn't currently support the RETURNING clause.
+-- These tests have therefore been disabled. I'm marking this as a FIXME for
+-- the 9.0 merge, because I think we'll tackle the RETURNING clause and try
+-- to make that work again at that time, once we merge the ModifyTable node
+-- from the upstream.
 create temp table tt(f1 serial, data text);
 NOTICE:  CREATE TABLE will create implicit sequence "tt_f1_seq" for serial column "tt.f1"
 create function insert_tt(text) returns int as
@@ -698,4 +660,47 @@ select * from tt_log;
  16 | barlog
 (2 rows)
 
->>>>>>> 38e9348282e
+-- end of disabled RETURNING tests.
+-- end_ignore
+-- test case for a whole-row-variable bug
+create function foo1(n integer, out a text, out b text)
+  returns setof record
+  language sql
+  as $$ select 'foo ' || i, 'bar ' || i from generate_series(1,$1) i $$;
+set work_mem='64kB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+select t.a, t, t.a from foo1(10000) t limit 1;
+   a   |         t         |   a   
+-------+-------------------+-------
+ foo 1 | ("foo 1","bar 1") | foo 1
+(1 row)
+
+reset work_mem;
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+select t.a, t, t.a from foo1(10000) t limit 1;
+   a   |         t         |   a   
+-------+-------------------+-------
+ foo 1 | ("foo 1","bar 1") | foo 1
+(1 row)
+
+drop function foo1(n integer);
+-- check handling of a SQL function with multiple OUT params (bug #5777)
+create or replace function foobar(out integer, out numeric) as
+$$ select (1, 2.1) $$ language sql;
+select * from foobar();
+ column1 | column2 
+---------+---------
+       1 |     2.1
+(1 row)
+
+create or replace function foobar(out integer, out numeric) as
+$$ select (1, 2) $$ language sql;
+select * from foobar();  -- fail
+ERROR:  function return row and query-specified return row do not match
+DETAIL:  Returned type integer at ordinal position 2, but query expects numeric.
+create or replace function foobar(out integer, out numeric) as
+$$ select (1, 2.1, 3) $$ language sql;
+select * from foobar();  -- fail
+ERROR:  function return row and query-specified return row do not match
+DETAIL:  Returned row contains 3 attributes, but query expects 2.
+drop function foobar();
