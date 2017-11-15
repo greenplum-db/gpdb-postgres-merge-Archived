@@ -779,8 +779,6 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 			}
 			break;
 		case JOIN_ANTI:
-		/* GPDB_84_MERGE_FIXME: Is JOIN_LASJ_NOTIN in the right place? Why does it
-		 * exist? */
 		case JOIN_LASJ_NOTIN:
 			if (is_dummy_rel(rel1))
 			{
@@ -791,7 +789,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 				bms_is_subset(rel2->relids, sjinfo->syn_righthand))
 				mark_dummy_rel(root, rel2);
 			add_paths_to_joinrel(root, joinrel, rel1, rel2,
-								 JOIN_ANTI, sjinfo,
+								 sjinfo->jointype, sjinfo,
 								 restrictlist);
 			break;
 		default:
