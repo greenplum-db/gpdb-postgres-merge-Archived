@@ -78,7 +78,6 @@ static PendingDelete *pendingDeletes = NULL; /* head of linked list */
 static int pendingDeletesCount = 0;
 static bool pendingDeletesSorted = false;
 static bool pendingDeletesPerformed = true;
-static int pendingAppendOnlyMirrorResyncIntentCount = 0;
 
 typedef PendingDelete *PendingDeletePtr;
 
@@ -948,12 +947,13 @@ AtEOXact_smgr(bool isCommit)
 		pendingDeletesSorted = true;
 	}
 
+	/*
+	 * We need to complete this work, or let Crash Recovery complete it.
+	 */
+	START_CRIT_SECTION();
+
 	if (!pendingDeletesPerformed)
 	{
-		/*
-		 * We need to complete this work, or let Crash Recovery complete it.
-		 */
-		START_CRIT_SECTION();
 
 		/*
 		 * Do abort actions for the sub-transaction's creates and deletes.
@@ -965,23 +965,21 @@ AtEOXact_smgr(bool isCommit)
 		Assert(pendingDeletes == NULL);
 		Assert(pendingDeletesCount == 0);
 		pendingDeletesSorted = false;
-
-		/*
-		 * Update the Append-Only mirror resync EOFs.
-		 */
-		smgrDoAppendOnlyResyncEofs(isCommit);
-
-		pendingAppendOnlyMirrorResyncIntentCount = 0;
-
-		/*
-		 * Free the Append-Only mirror resync EOFs hash table.
-		 */
-		AppendOnlyMirrorResyncEofs_HashTableRemove("AtEOXact_smgr");
-
 		pendingDeletesPerformed = true;
-
-		END_CRIT_SECTION();
 	}
+
+	/*
+	 * Update the Append-Only mirror resync EOFs.
+	 */
+	smgrDoAppendOnlyResyncEofs(isCommit);
+
+	/*
+	 * Free the Append-Only mirror resync EOFs hash table.
+	 */
+	AppendOnlyMirrorResyncEofs_HashTableRemove("AtEOXact_smgr");
+
+
+	END_CRIT_SECTION();
 }
 
 static void
@@ -1482,7 +1480,6 @@ PostPrepare_smgr(void)
 	AppendOnlyMirrorResyncEofs_HashTableRemove("PostPrepare_smgr");
 
 	// UNDONE: We are passing the responsibility on to PersistentFileSysObj_PreparedEndXactAction...
-	pendingAppendOnlyMirrorResyncIntentCount = 0;
 }
 
 /*
