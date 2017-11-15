@@ -248,7 +248,7 @@ ReadBufferExtended(Relation reln, ForkNumber forkNum, BlockNumber blockNum,
 	 * hit or miss.
 	 */
 	pgstat_count_buffer_read(reln);
-	buf = ReadBuffer_common(reln->rd_smgr, reln->rd_istemp, forkNum, blockNum,
+	buf = ReadBuffer_common(reln->rd_smgr, reln->rd_isLocalBuf, forkNum, blockNum,
 							mode, strategy, &hit);
 	if (hit)
 		pgstat_count_buffer_hit(reln);
