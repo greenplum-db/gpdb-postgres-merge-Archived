@@ -564,6 +564,7 @@ void
 ExplainPrintPlan(StringInfo str, QueryDesc *queryDesc,
 				 bool analyze, bool verbose)
 {
+	EState     *estate = queryDesc->estate;
 	ExplainState es;
 	int			indent = 0;
 	CmdType		cmd = queryDesc->plannedstmt->commandType;
@@ -579,14 +580,20 @@ ExplainPrintPlan(StringInfo str, QueryDesc *queryDesc,
 	es.showstatctx = queryDesc->showstatctx;
 
 	/* CDB: Find slice table entry for the root slice. */
-	es.currentSlice = getCurrentSlice(queryDesc->estate,
-									  LocallyExecutingSliceIndex(queryDesc->estate));
+	es.currentSlice = getCurrentSlice(estate, LocallyExecutingSliceIndex(estate));
 
 	/* Get local stats if root slice was executed here in the qDisp. */
 	if (analyze)
 	{
 		if (!es.currentSlice || sliceRunsOnQD(es.currentSlice))
 			cdbexplain_localExecStats(queryDesc->planstate, es.showstatctx);
+
+        /* Fill in the plan's Instrumentation with stats from qExecs. */
+        if (estate->dispatcherState && estate->dispatcherState->primaryResults)
+            cdbexplain_recvExecStats(queryDesc->planstate,
+                                     estate->dispatcherState->primaryResults,
+                                     LocallyExecutingSliceIndex(estate),
+                                     es.showstatctx);
 	}
 
 	/*
