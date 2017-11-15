@@ -295,7 +295,6 @@ having exists (select 1 from onek b
 ERROR:  aggregates not allowed in WHERE clause
 LINE 4:                where sum(distinct a.four + b.four) = b.four)...
                              ^
-<<<<<<< HEAD
 -- Test handling of sublinks within outer-level aggregates.
 -- Per bug report from Daniel Grace.
 select
@@ -306,8 +305,6 @@ from tenk1 o;
      9999
 (1 row)
 
-=======
->>>>>>> 38e9348282e
 --
 -- test for bitwise integer aggregates
 --
