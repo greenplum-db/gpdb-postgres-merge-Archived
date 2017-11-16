@@ -10682,7 +10682,6 @@ ATExecSetTableSpace_BufferPool(
 										&relBufpoolKind);
 	Assert(localRelStorageMgr == PersistentFileSysRelStorageMgr_BufferPool);
 
-	dstrel = smgropen(*newRelFileNode);
 	MirroredFileSysObj_TransactionCreateBufferPoolFile(
 		newRelFileNode,
 		relBufpoolKind,
@@ -10702,6 +10701,7 @@ ATExecSetTableSpace_BufferPool(
 			 newPersistentSerialNum);
 
 	/* copy main fork */
+	dstrel = smgropen(*newRelFileNode);
 	copy_buffer_pool_data(rel, dstrel, MAIN_FORKNUM, rel->rd_istemp,
 						  &newPersistentTid,
 						  newPersistentSerialNum,
@@ -10722,6 +10722,7 @@ ATExecSetTableSpace_BufferPool(
 								  useWal);
 		}
 	}
+	smgrclose(dstrel);
 
 	if (Debug_persistent_print)
 		elog(Persistent_DebugPrintLevel(), 
@@ -10734,12 +10735,6 @@ ATExecSetTableSpace_BufferPool(
 
 	/* schedule unlinking old physical file */
 	MirroredFileSysObj_ScheduleDropBufferPoolRel(rel);
-
-	/*
-	 * Now drop smgr references.  The source was already dropped by
-	 * smgrscheduleunlink.
-	 */
-	smgrclose(dstrel);
 
 	/* Update gp_relation_node row. */
 	UpdateGpRelationNodeTuple(
