@@ -4207,11 +4207,14 @@ child_triggers(Oid relationId, int32 triggerType)
 			}
 		}
 
-		for (int i = 0; i < relChild->trigdesc->numtriggers && !found; i++)
+		if (relChild->rd_rel->relhastriggers)
 		{
-			Trigger trigger = relChild->trigdesc->triggers[i];
-			found = trigger_enabled(trigger.tgoid) &&
-					(get_trigger_type(trigger.tgoid) & triggerType) == triggerType;
+			for (int i = 0; i < relChild->trigdesc->numtriggers && !found; i++)
+			{
+				Trigger trigger = relChild->trigdesc->triggers[i];
+				found = trigger_enabled(trigger.tgoid) &&
+						(get_trigger_type(trigger.tgoid) & triggerType) == triggerType;
+			}
 		}
 
 		RelationClose(relChild);
