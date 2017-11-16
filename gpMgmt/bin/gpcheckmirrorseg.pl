@@ -319,10 +319,6 @@ BEGIN {
 	push @{$glob_dirignore}, "pgsql_tmp"; # this directory only on primaries
 	push @{$glob_dirignore}, "pg_verify"; # this directory may be just on primary
 
-	# Ignore FSM and VM.
-	push @{$glob_dirignore}, '_fsm';
-	push @{$glob_dirignore}, '_vm';
-
 	$glob_content = \@content;
 
 	if (defined($skipseg))
