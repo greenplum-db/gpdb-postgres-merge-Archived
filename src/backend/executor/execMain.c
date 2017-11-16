@@ -3458,6 +3458,8 @@ ExecInsert(TupleTableSlot *slot,
 	{
 		HeapTuple tuple = ExecMaterializeSlot(slot);
 
+		Assert(planGen == PLANGEN_PLANNER);
+
 		ExecARInsertTriggers(estate, resultRelInfo, tuple);
 	}
 }
