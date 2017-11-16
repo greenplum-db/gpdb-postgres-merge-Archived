@@ -369,6 +369,7 @@ plan_tree_mutator(Node *node,
 			break;
 
 		case T_IndexScan:
+		case T_DynamicIndexScan:
 			{
 				IndexScan  *idxscan = (IndexScan *) node;
 				IndexScan  *newidxscan;
