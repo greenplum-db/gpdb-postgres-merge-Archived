@@ -318,10 +318,7 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 	setup_parser_errposition_callback(&pcbstate, pstate, relation->location);
 	if (pstate->p_is_insert && !pstate->p_is_update)
 	{
-		pstate->p_target_relation = parserOpenTable(pstate, relation,
-													RowExclusiveLock,
-													false,
-													NULL);
+		pstate->p_target_relation = heap_openrv(relation, RowExclusiveLock);
 	}
 	else
 	{
