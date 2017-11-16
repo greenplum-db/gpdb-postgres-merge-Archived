@@ -70,8 +70,6 @@ static bool check_outerjoin_delay(PlannerInfo *root, Relids *relids_p,
 static bool check_equivalence_delay(PlannerInfo *root,
 						RestrictInfo *restrictinfo);
 static bool check_redundant_nullability_qual(PlannerInfo *root, Node *clause);
-static void check_mergejoinable(RestrictInfo *restrictinfo);
-static void check_hashjoinable(RestrictInfo *restrictinfo);
 static void compute_semijoin_info(SpecialJoinInfo* sjinfo, PlannerInfo* root);
 
 
@@ -1804,7 +1802,7 @@ build_implied_join_equality(Oid opno,
  *	  the operator is a mergejoinable operator.  The arguments can be
  *	  anything --- as long as there are no volatile functions in them.
  */
-static void
+void
 check_mergejoinable(RestrictInfo *restrictinfo)
 {
 	Expr	   *clause = restrictinfo->clause;
@@ -1839,7 +1837,7 @@ check_mergejoinable(RestrictInfo *restrictinfo)
  *	  the operator is a hashjoinable operator.	The arguments can be
  *	  anything --- as long as there are no volatile functions in them.
  */
-static void
+void
 check_hashjoinable(RestrictInfo *restrictinfo)
 {
 	Expr	   *clause = restrictinfo->clause;

@@ -242,6 +242,9 @@ extern RestrictInfo *build_implied_join_equality(Oid opno,
 							Relids qualscope,
 							Relids nullable_relids);
 
+extern void check_mergejoinable(RestrictInfo *restrictinfo);
+extern void check_hashjoinable(RestrictInfo *restrictinfo);
+
 /*
  * prototypes for plan/setrefs.c
  */
