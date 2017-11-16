@@ -2190,6 +2190,7 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 	Datum		new_record[Natts_pg_database];
 	bool		new_record_nulls[Natts_pg_database];
 	bool		new_record_repl[Natts_pg_database];
+	Oid			dboid;
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
@@ -2248,7 +2249,9 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", stmt->dbname)));
 
-	if (!pg_database_ownercheck(HeapTupleGetOid(tuple), GetUserId()))
+	dboid = HeapTupleGetOid(tuple);
+
+	if (!pg_database_ownercheck(dboid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
 					   stmt->dbname);
 
@@ -2277,7 +2280,7 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH)
 		MetaTrackUpdObject(DatabaseRelationId,
-						   HeapTupleGetOid(tuple),
+						   dboid,
 						   GetUserId(),
 						   "ALTER", "CONNECTION LIMIT");
 
