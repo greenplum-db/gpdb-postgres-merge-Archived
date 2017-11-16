@@ -261,13 +261,8 @@ insert into arr_tbl values ('{1,2,10}');
 
 set enable_seqscan to off;
 set enable_bitmapscan to off;
-<<<<<<< HEAD
-select * from arr_tbl where f1 > '{1,2,3}' and f1 <= '{1,5,3}' ORDER BY 1;
-select * from arr_tbl where f1 >= '{1,2,3}' and f1 < '{1,5,3}' ORDER BY 1;
-=======
 select * from arr_tbl where f1 > '{1,2,3}' and f1 <= '{1,5,3}';
 select * from arr_tbl where f1 >= '{1,2,3}' and f1 < '{1,5,3}';
->>>>>>> 38e9348282e
 -- note: if above selects don't produce the expected tuple order,
 -- then you didn't get an indexscan plan, and something is busted.
 reset enable_seqscan;
@@ -410,23 +405,16 @@ select array_length(array[[1,2,3], [4,5,6]], 0);
 select array_length(array[[1,2,3], [4,5,6]], 1);
 select array_length(array[[1,2,3], [4,5,6]], 2);
 select array_length(array[[1,2,3], [4,5,6]], 3);
-<<<<<<< HEAD
 
-select array_agg(unique1 order by unique1) from (select unique1 from tenk1 where unique1 < 15 order by unique1) ss;
-select array_agg(ten order by ten) from (select ten from tenk1 where unique1 < 15 order by unique1) ss;
-select array_agg(nullif(ten, 4) order by ten) from (select ten from tenk1 where unique1 < 15 order by unique1) ss;
-select array_agg(unique1 order by unique1) from tenk1 where unique1 < -15;
-=======
 select cardinality(array[1,2,3]);
 select cardinality(array[[1,2,3], [4,5,6]]);
 select c, cardinality(c), d, cardinality(d) from arrtest;
 
-select array_agg(unique1) from (select unique1 from tenk1 where unique1 < 15 order by unique1) ss;
-select array_agg(ten) from (select ten from tenk1 where unique1 < 15 order by unique1) ss;
-select array_agg(nullif(ten, 4)) from (select ten from tenk1 where unique1 < 15 order by unique1) ss;
+select array_agg(unique1 order by unique1) from (select unique1 from tenk1 where unique1 < 15 order by unique1) ss;
+select array_agg(ten order by ten) from (select ten from tenk1 where unique1 < 15 order by unique1) ss;
+select array_agg(nullif(ten, 4) order by ten) from (select ten from tenk1 where unique1 < 15 order by unique1) ss;
 select cardinality(array_agg(unique1)) from tenk1 where unique1 < 15;
-select array_agg(unique1) from tenk1 where unique1 < -15;
->>>>>>> 38e9348282e
+select array_agg(unique1 order by unique1) from tenk1 where unique1 < -15;
 
 select unnest(array[1,2,3]);
 select * from unnest(array[1,2,3]);
@@ -434,7 +422,6 @@ select unnest(array[1,2,3,4.5]::float8[]);
 select unnest(array[1,2,3,4.5]::numeric[]);
 select unnest(array[1,2,3,null,4,null,null,5,6]);
 select unnest(array[1,2,3,null,4,null,null,5,6]::text[]);
-<<<<<<< HEAD
 
 -- Suppress NOTICE messages when users/groups don't exist
 SET client_min_messages TO 'error';
@@ -527,5 +514,3 @@ DROP FUNCTION int_agg_state (internal, int4);
 RESET SESSION AUTHORIZATION;
 DROP USER IF EXISTS user_internal_stype;
 -- end_ignore
-=======
->>>>>>> 38e9348282e
