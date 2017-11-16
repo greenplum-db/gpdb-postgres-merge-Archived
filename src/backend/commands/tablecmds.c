@@ -10996,7 +10996,7 @@ copy_buffer_pool_data(Relation rel, SMgrRelation dst,
 	/* RelationGetNumberOfBlocks will certainly have opened rd_smgr */
 	src = rel->rd_smgr;
 
-	if (!useWal)
+	if (!useWal && forkNum == MAIN_FORKNUM)
 	{
 		MirroredBufferPool_BeginBulkLoad(
 								&rel->rd_node,
@@ -11081,7 +11081,7 @@ copy_buffer_pool_data(Relation rel, SMgrRelation dst,
 	LWLockRelease(MirroredLock);
 	// -------- MirroredLock ----------
 
-	if (!useWal)
+	if (!useWal && forkNum == MAIN_FORKNUM)
 	{
 		bool mirrorDataLossOccurred;
 	
