@@ -247,6 +247,7 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
 {
 	char	   *path;
 	File		fd;
+	MirroredBufferPoolOpen inactiveMirroredOpen = { false /* isActive */};
 
 	/*
 	 * Currently, this is only for use with the extra FSM and VM forks.
@@ -292,6 +293,7 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
 	reln->md_fd[forkNum] = _fdvec_alloc();
 
 	reln->md_fd[forkNum]->mdfd_vfd = fd;
+	reln->md_fd[forkNum]->mdmir_open = inactiveMirroredOpen;
 	reln->md_fd[forkNum]->mdfd_segno = 0;
 	reln->md_fd[forkNum]->mdfd_chain = NULL;
 }
