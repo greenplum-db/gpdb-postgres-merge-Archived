@@ -1416,18 +1416,34 @@ static bool
 simplify_EXISTS_query(PlannerInfo *root, Query *query)
 {
 	/*
+	 * PostgreSQL:
+	 *
 	 * We don't try to simplify at all if the query uses set operations,
 	 * aggregates, HAVING, LIMIT/OFFSET, or FOR UPDATE/SHARE; none of these
 	 * seem likely in normal usage and their possible effects are complex.
+	 *
+	 * In GPDB, we try a bit harder: Try to demote HAVING to WHERE, in case
+	 * there are no aggregates. If that fails, only then give up. Also, just
+	 * discard any window functions; they shouldn't affect the number of
+	 * rows returned.
+	 *
+	 * GPDB_84_MERGE_FIXME: What about "LIMIT 0"? We can't just ignore it.
+	 * Furthermore, the rule used here, for when it's safe to demote a HAVING
+	 * to WHERE, is different from the one in subquery_planner(). Notably,
+	 * what if there are volatile functions or subplans?
 	 */
 	if (query->commandType != CMD_SELECT ||
 		query->intoClause ||
 		query->setOperations ||
+#if 0
 		query->hasAggs ||
 		query->hasWindowFuncs ||
 		query->havingQual ||
+#endif
 		query->limitOffset ||
+#if 0
 		query->limitCount ||
+#endif
 		query->rowMarks)
 		return false;
 
@@ -1438,15 +1454,41 @@ simplify_EXISTS_query(PlannerInfo *root, Query *query)
 	if (expression_returns_set((Node *) query->targetList))
 		return false;
 
+	if (query->havingQual)
+	{
+		/* If HAVING has no aggregates, demote it to WHERE. */
+		if (!checkExprHasAggs(query->havingQual))
+		{
+			query->jointree->quals = make_and_qual(query->jointree->quals,
+												   query->havingQual);
+			query->havingQual = NULL;
+			query->hasAggs = false;
+		}
+		else
+			return false;
+	}
+
 	/*
 	 * Otherwise, we can throw away the targetlist, as well as any GROUP,
-	 * DISTINCT, and ORDER BY clauses; none of those clauses will change
-	 * a nonzero-rows result to zero rows or vice versa.  (Furthermore,
+	 * WINDOW, DISTINCT, and ORDER BY clauses; none of those clauses will
+	 * change a nonzero-rows result to zero rows or vice versa.  (Furthermore,
 	 * since our parsetree representation of these clauses depends on the
 	 * targetlist, we'd better throw them away if we drop the targetlist.)
 	 */
 	query->targetList = NIL;
-	query->groupClause = NIL;
+	/*
+	 * Delete GROUP BY if no aggregates.
+	 *
+	 * Note: It's important that we don't clear hasAggs, even though we
+	 * removed any possible aggregates from the targetList! If you have a
+	 * subquery like "SELECT SUM(foo) ...", we don't need to compute the sum,
+	 * but we must still aggregate all the rows, and return a single row,
+	 * regardless of how many input rows there are. (In particular, even
+	 * if there are no input rows).
+	 */
+	if (!query->hasAggs)
+		query->groupClause = NIL;
+	query->windowClause = NIL;
 	query->distinctClause = NIL;
 	query->sortClause = NIL;
 	query->hasDistinctOn = false;
