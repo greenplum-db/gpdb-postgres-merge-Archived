@@ -1085,23 +1085,13 @@ select * from t1 where a=1 and a=2 and a > (select t2.b from t2);
 explain select * from t1,
 (select * from t1 where a=1 and a=2 and a > (select t2.b from t2)) foo
 where t1.a = foo.a;
-                                           QUERY PLAN                                            
--------------------------------------------------------------------------------------------------
- Gather Motion 1:1  (slice2; segments: 1)  (cost=2607.56..4213.88 rows=6 width=8)
-   ->  Result  (cost=2607.56..4213.88 rows=2 width=8)
-         One-Time Filter: false
-         InitPlan 1 (returns $0)  (slice3)
-           ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..1063.00 rows=96300 width=4)
-                 ->  Seq Scan on t2  (cost=0.00..1063.00 rows=32100 width=4)
-         ->  Nested Loop  (cost=1544.56..3150.88 rows=2 width=8)
-               ->  Seq Scan on t1  (cost=0.00..1544.50 rows=19 width=4)
-                     Filter: a > $0 AND a = 1
-               ->  Materialize  (cost=1544.56..1545.11 rows=19 width=4)
-                     ->  Seq Scan on t1  (cost=0.00..1544.50 rows=19 width=4)
-                           Filter: a > $0 AND a = 1
- Settings:  optimizer_segments=3
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
+ Result  (cost=1063.00..1063.01 rows=1 width=0)
+   One-Time Filter: false
+ Settings:  optimizer=off; optimizer_nestloop_factor=1; optimizer_segments=3
  Optimizer status: legacy query optimizer
-(14 rows)
+(4 rows)
 
 select * from t1,
 (select * from t1 where a=1 and a=2 and a > (select t2.b from t2)) foo
