@@ -4786,6 +4786,8 @@ PROCESS_SEGMENT_DATA:
 						resultRelInfo = values_get_partition(baseValues, baseNulls,
 															 tupDesc, estate);
 						estate->es_result_relation_info = resultRelInfo;
+						FreeBulkInsertState(bistate);
+						bistate = GetBulkInsertState();
 					}
 				}
 				PG_CATCH();
