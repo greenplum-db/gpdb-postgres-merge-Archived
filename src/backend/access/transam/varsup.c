@@ -96,7 +96,7 @@ GetNewTransactionId(bool isSubXact, bool setProcXid)
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 					 errmsg("database is not accepting commands to avoid wraparound data loss in database \"%s\"",
 							NameStr(ShmemVariableCache->limit_datname)),
-					 errhint("Shutdown Greenplum Database. Lower the xid_stop_limit GUC. Execute a full-database VACUUM in \"%s\". Reset the xid_stop_limit GUC.",
+					 errhint("Shutdown Greenplum Database. Lower the xid_stop_limit GUC. Execute a database-wide VACUUM in \"%s\". Reset the xid_stop_limit GUC.",
 							 NameStr(ShmemVariableCache->limit_datname))));
 		else if (TransactionIdFollowsOrEquals(xid, ShmemVariableCache->xidWarnLimit))
 			ereport(WARNING,
