@@ -24,7 +24,7 @@ CREATE FOREIGN DATA WRAPPER dummy LIBRARY 'dummy_fdw' LANGUAGE C;
 CREATE FOREIGN DATA WRAPPER postgresql LIBRARY 'postgresql_fdw' LANGUAGE C;
 
 -- At this point we should have 2 built-in wrappers and no servers.
-SELECT fdwname, fdwlibrary, fdwoptions FROM pg_foreign_data_wrapper ORDER BY 1, 2, 3; -- order none
+SELECT fdwname, fdwlibrary, fdwoptions FROM pg_foreign_data_wrapper ORDER BY 1, 2, 3;
 SELECT srvname, srvoptions FROM pg_foreign_server;
 SELECT * FROM pg_user_mapping;
 
@@ -262,18 +262,18 @@ DROP SERVER s7;
 
 -- Information schema
 
-SELECT * FROM information_schema.foreign_data_wrappers ORDER BY 1, 2; -- order none
-SELECT * FROM information_schema.foreign_data_wrapper_options ORDER BY 1, 2, 3; -- order none
-SELECT * FROM information_schema.foreign_servers ORDER BY 1, 2; -- order none
-SELECT * FROM information_schema.foreign_server_options ORDER BY 1, 2, 3; -- order none
-SELECT * FROM information_schema.user_mappings ORDER BY 1, 2, 3; -- order none
-SELECT * FROM information_schema.user_mapping_options ORDER BY 1, 2, 3, 4; -- order none
-SELECT * FROM information_schema.usage_privileges WHERE object_type LIKE 'FOREIGN%' ORDER BY 1, 2, 3, 4, 5; -- order none
-SELECT * FROM information_schema.role_usage_grants WHERE object_type LIKE 'FOREIGN%' ORDER BY 1, 2, 3, 4, 5; -- order none
+SELECT * FROM information_schema.foreign_data_wrappers ORDER BY 1, 2;
+SELECT * FROM information_schema.foreign_data_wrapper_options ORDER BY 1, 2, 3;
+SELECT * FROM information_schema.foreign_servers ORDER BY 1, 2;
+SELECT * FROM information_schema.foreign_server_options ORDER BY 1, 2, 3;
+SELECT * FROM information_schema.user_mappings ORDER BY 1, 2, 3;
+SELECT * FROM information_schema.user_mapping_options ORDER BY 1, 2, 3, 4;
+SELECT * FROM information_schema.usage_privileges WHERE object_type LIKE 'FOREIGN%' ORDER BY 1, 2, 3, 4, 5;
+SELECT * FROM information_schema.role_usage_grants WHERE object_type LIKE 'FOREIGN%' ORDER BY 1, 2, 3, 4, 5;
 SET ROLE regress_test_role;
-SELECT * FROM information_schema.user_mapping_options ORDER BY 1, 2, 3, 4; -- order none
-SELECT * FROM information_schema.usage_privileges WHERE object_type LIKE 'FOREIGN%' ORDER BY 1, 2, 3, 4, 5; -- order none
-SELECT * FROM information_schema.role_usage_grants WHERE object_type LIKE 'FOREIGN%' ORDER BY 1, 2, 3, 4, 5; -- order none
+SELECT * FROM information_schema.user_mapping_options ORDER BY 1, 2, 3, 4;
+SELECT * FROM information_schema.usage_privileges WHERE object_type LIKE 'FOREIGN%' ORDER BY 1, 2, 3, 4, 5;
+SELECT * FROM information_schema.role_usage_grants WHERE object_type LIKE 'FOREIGN%' ORDER BY 1, 2, 3, 4, 5;
 DROP USER MAPPING FOR current_user SERVER st1;
 RESET ROLE;
 
