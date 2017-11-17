@@ -53,8 +53,8 @@ static void
 PersistentBuild_NonTransactionTruncate(RelFileNode *relFileNode)
 {
 	SMgrRelation smgrRelation;
-
 	PersistentFileSysObjName fsObjName;
+	ForkNumber forknum;
 
 	PersistentFileSysObjName_SetRelationFile(
 											 &fsObjName,
@@ -67,7 +67,22 @@ PersistentBuild_NonTransactionTruncate(RelFileNode *relFileNode)
 
 	smgrRelation = smgropen(*relFileNode);
 
+	DropRelFileNodeBuffers(*relFileNode, MAIN_FORKNUM, /* isTemp */ false, 0);
 	smgrtruncate(smgrRelation, MAIN_FORKNUM, 0, /* isTemp */ true);
+	for (forknum = 1; forknum <= MAX_FORKNUM; forknum++)
+	{
+		if (smgrexists(smgrRelation, forknum))
+		{
+			DropRelFileNodeBuffers(*relFileNode, forknum, /* isTemp */ false, 0);
+			smgrtruncate(smgrRelation, forknum, 0, /* isTemp */ true);
+		}
+	}
+
+	/*
+	 * GPDB_84_MERGE_FIXME: We're missing a lot of other things that
+	 * RelationTruncate does, like resetting rd_targblock on the relcache
+	 * entry.
+	 */
 
 	smgrclose(smgrRelation);
 }
