@@ -3710,14 +3710,19 @@ getTables(int *numTables)
 						  "d.refobjid as owning_tab, "
 						  "d.refobjsubid as owning_col, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
-						  "array_to_string(c.reloptions, ', ') as reloptions "
+						  "array_to_string(c.reloptions, ', ') as reloptions, "
+						  "p.parrelid as parrelid "
 						  "from pg_class c "
 						  "left join pg_depend d on "
 						  "(c.relkind = '%c' and "
 						  "d.classid = c.tableoid and d.objid = c.oid and "
 						  "d.objsubid = 0 and "
 						  "d.refclassid = c.tableoid and d.deptype = 'a') "
+						  "left join pg_partition_rule pr on c.oid = pr.parchildrelid "
+						  "left join pg_partition p on pr.paroid = p.oid "
 						  "where relkind in ('%c', '%c', '%c', '%c') "
+						  "AND c.oid NOT IN (select p.parchildrelid from pg_partition_rule p left "
+						  "join pg_exttable e on p.parchildrelid=e.reloid where e.reloid is null)"
 						  "order by c.oid",
 						  username_subquery,
 						  RELKIND_SEQUENCE,
@@ -3732,7 +3737,7 @@ getTables(int *numTables)
 		 */
 		appendPQExpBuffer(query,
 						  "SELECT c.tableoid, c.oid, relname, "
-						  "relacl, relkind, relnamespace, "
+						  "relacl, relkind, relstorage, relnamespace, "
 						  "(%s relowner) as rolname, "
 						  "relchecks, (reltriggers <> 0) as relhastriggers, "
 						  "relhasindex, relhasrules, relhasoids, "
