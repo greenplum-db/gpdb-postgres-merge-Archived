@@ -986,6 +986,14 @@ gp_persistent_reset_all(PG_FUNCTION_ARGS)
 	 */
 	PersistentFileSysObj_Reset();
 
+	/*
+	 * Make sure the relcache entries for the relations we just truncated are
+	 * also blown away, as the rd_targblock, rd_fsm_nblocks and rd_vm_nblocks
+	 * fields on them are now invalid. (This is not performance critical,
+	 * so we don't bother to be any more fine-grained.)
+	 */
+	RelationCacheInvalidate();
+
 	PG_RETURN_INT32(1);
 }
 
