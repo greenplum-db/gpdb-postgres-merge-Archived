@@ -598,7 +598,7 @@ void FtsLoop()
 	bool	updated_probe_state, processing_fullscan;
 	MemoryContext probeContext = NULL, oldContext = NULL;
 	time_t elapsed,	probe_start_time;
-	CdbComponentDatabases *cdbs;
+	CdbComponentDatabases *cdbs = NULL;
 
 	probeContext = AllocSetContextCreate(TopMemoryContext,
 										 "FtsProbeMemCtxt",
