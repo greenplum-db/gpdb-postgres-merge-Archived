@@ -369,17 +369,11 @@ static void ATPExecPartAdd(AlteredTableInfo *tab,
 static void ATPExecPartAlter(List **wqueue, AlteredTableInfo *tab, 
 							 Relation rel,
                              AlterPartitionCmd *pc);		/* Alter */
-static void ATPExecPartCoalesce(Relation rel,
-                                AlterPartitionCmd *pc);		/* Coalesce */
 static void ATPExecPartDrop(Relation rel,
                             AlterPartitionCmd *pc);			/* Drop */
 static void ATPExecPartExchange(AlteredTableInfo *tab,
 								Relation rel,
                                 AlterPartitionCmd *pc);		/* Exchange */
-static void ATPExecPartMerge(Relation rel,
-                             AlterPartitionCmd *pc);		/* Merge */
-static void ATPExecPartModify(Relation rel,
-                              AlterPartitionCmd *pc);		/* Modify */
 static void ATPExecPartRename(Relation rel,
                               AlterPartitionCmd *pc);		/* Rename */
 
@@ -3133,11 +3127,8 @@ ATVerifyObject(AlterTableStmt *stmt, Relation rel)
 				case AT_PartAdd:
 				case AT_PartAddForSplit:
 				case AT_PartAlter:
-				case AT_PartCoalesce:
 				case AT_PartDrop:
 				case AT_PartExchange:
-				case AT_PartMerge:
-				case AT_PartModify:
 				case AT_PartRename:
 				case AT_PartSetTemplate:
 				case AT_PartSplit:
@@ -3410,7 +3401,6 @@ ATController(Relation rel, List *cmds, bool recurse)
  * Do initial sanity checking for an ALTER TABLE ... SPLIT PARTITION cmd.
  * - Shouldn't have children
  * - The usual permissions checks
- * - Not called on HASH
  */
 static void
 prepSplitCmd(Relation rel, PgPartRule *prule, bool is_at)
@@ -3455,12 +3445,6 @@ prepSplitCmd(Relation rel, PgPartRule *prule, bool is_at)
 				errhint("Use SPLIT with the AT clause instead.")));
 
 	}
-
-	if (prule->pNode->part->parkind == 'h')
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					errmsg("SPLIT is not supported for "
-						"HASH partitions")));
 }
 
 /*
@@ -3891,105 +3875,6 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			ATPrepExchange(rel, (AlterPartitionCmd *)cmd->def);
 			
 			break;
-		case AT_PartMerge:
-		{
-			AlterPartitionCmd  *pc    	= (AlterPartitionCmd *) cmd->def;
-			PgPartRule   	   *prule1	= NULL;
-			PgPartRule		   *prule2	= NULL;
-			PgPartRule		   *prule3	= NULL;
-			ListCell		   *lc;
-			List			   *source_rels = NIL;
-			Relation			target = NULL;
-
-			ATPartitionCheck(cmd->subtype, rel, false, recursing);
-
-			if (Gp_role == GP_ROLE_UTILITY)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
- 						 errmsg("MERGE is not supported in utility mode")));
-			else if (Gp_role == GP_ROLE_DISPATCH)
-			{
-				Relation srel;
-				AlterPartitionId *pid = (AlterPartitionId *) pc->partid;
-
-				prule1 = get_part_rule(rel, pid, true, true,
-									   NULL, false);
-
-				prule2 = get_part_rule(rel, (AlterPartitionId *)pc->arg1,
-									   true, true,
-									   NULL, false);
-
-				if (pc->arg2)
-				{
-					AlterPartitionCmd *pc2 = (AlterPartitionCmd *)pc->arg2;
-
-					prule3 = get_part_rule(rel,
-										   (AlterPartitionId *)pc2->partid,
-										   true, true, NULL, false);
-				}
-
-				if (prule1)
-				{
-					/* cannot exchange a hash partition */
-					if ('h' == prule1->pNode->part->parkind)
-						ereport(ERROR,
-							(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
-								 errmsg("cannot merge HASH partition%s "
-									    "of relation \"%s\"",
-										prule1->partIdStr,
-										RelationGetRelationName(rel))));
-				}
-
-				srel = heap_open(prule1->topRule->parchildrelid,
-								 AccessExclusiveLock);
-				source_rels = lappend(source_rels, srel);
-
-				srel = heap_open(prule2->topRule->parchildrelid,
-								 AccessExclusiveLock);
-				if (prule3)
-				{
-					source_rels = lappend(source_rels, srel);
-					target = heap_open(prule3->topRule->parchildrelid,
-									   AccessExclusiveLock);
-				}
-				else
-					target = srel;
-			}
-			else
-			{
-				Relation srel;
-				srel = heap_openrv((RangeVar *)pc->partid,
-								   AccessExclusiveLock);
-				source_rels = lappend(source_rels, srel);
-
-				srel = heap_openrv((RangeVar *)pc->arg1, AccessExclusiveLock);
-
-				if (pc->arg2)
-				{
-					source_rels = lappend(source_rels, srel);
-					target = heap_openrv((RangeVar *)pc->arg2,
-										 AccessExclusiveLock);
-				}
-				else
-					target = heap_openrv((RangeVar *)pc->arg1,
-										 AccessExclusiveLock);
-			}
-
-			ATSimplePermissions(rel, false);
-
-			foreach(lc, source_rels)
-				ATSimplePermissions(lfirst(lc), false);
-
-			ATSimplePermissions(target, false);
-
-			foreach(lc, source_rels)
-				heap_close(lfirst(lc), NoLock);
-
-			heap_close(target, NoLock);
-
-			pass = AT_PASS_MISC;
-			break;
-		}
 
 		case AT_PartSplit:				/* Split */
 		{
@@ -4022,9 +3907,8 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 				 * 0) Target exists
 				 * 0.5) Shouldn't have children (Done in prepSplitCmd)
 				 * 1) The usual permissions checks (Done in prepSplitCmd)
-				 * 2) Not called on HASH
-				 * 3) AT () parameter falls into constraint specified
-				 * 4) INTO partitions don't exist except for the one being split
+				 * 2) AT () parameter falls into constraint specified
+				 * 3) INTO partitions don't exist except for the one being split
 				 */
 
 				/* We'll error out if it doesn't exist */
@@ -4505,13 +4389,11 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			}
 		case AT_PartAdd:				/* Add */
 		case AT_PartAddForSplit:		/* Add, as part of a split */
-		case AT_PartCoalesce:			/* Coalesce */
 		case AT_PartDrop:				/* Drop */
 		case AT_PartRename:				/* Rename */
 
 		case AT_PartTruncate:			/* Truncate */
 		case AT_PartAddInternal:		/* internal partition creation */
-		case AT_PartModify:             /* Modify */
 			ATSimplePermissions(rel, false);
 			ATPartitionCheck(cmd->subtype, rel, false, recursing);
 				/* XXX XXX XXX */
@@ -4780,20 +4662,11 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		case AT_PartAlter:				/* Alter */
             ATPExecPartAlter(wqueue, tab, rel, (AlterPartitionCmd *) cmd->def);
             break;
-		case AT_PartCoalesce:			/* Coalesce */
-            ATPExecPartCoalesce(rel, (AlterPartitionCmd *) cmd->def);
-            break;
 		case AT_PartDrop:				/* Drop */
             ATPExecPartDrop(rel, (AlterPartitionCmd *) cmd->def);
             break;
 		case AT_PartExchange:			/* Exchange */
             ATPExecPartExchange(tab, rel, (AlterPartitionCmd *) cmd->def);
-            break;
-		case AT_PartMerge:				/* Merge */
-            ATPExecPartMerge(rel, (AlterPartitionCmd *) cmd->def);
-            break;
-		case AT_PartModify:				/* Modify */
-            ATPExecPartModify(rel, (AlterPartitionCmd *) cmd->def);
             break;
 		case AT_PartRename:				/* Rename */
             ATPExecPartRename(rel, (AlterPartitionCmd *) cmd->def);
@@ -13277,9 +13150,6 @@ ATPExecPartAdd(AlteredTableInfo *tab,
 
 	switch (pNode->part->parkind)
 	{
-		case 'h': /* hash */
-			parTypName = "HASH";
-			break;
 		case 'r': /* range */
 			parTypName = "RANGE";
 			break;
@@ -13295,20 +13165,9 @@ ATPExecPartAdd(AlteredTableInfo *tab,
 
 
 	if (locPid->idtype == AT_AP_IDName)
-			snprintf(namBuf, sizeof(namBuf), " \"%s\"",
-					 strVal(locPid->partiddef));
+		snprintf(namBuf, sizeof(namBuf), " \"%s\"", strVal(locPid->partiddef));
 	else
-			namBuf[0] = '\0';
-
-	if ('h' == pNode->part->parkind)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("cannot add HASH partition%s to %s",
-						namBuf,
-						lrelname),
-				 errhint("recreate the table to increase the "
-						 "number of partitions")));
-
+		namBuf[0] = '\0';
 
 	/* partition must have a valid name */
 	if ((locPid->idtype != AT_AP_IDName)
@@ -13347,14 +13206,6 @@ ATPExecPartAdd(AlteredTableInfo *tab,
 
 		if (isDefault && !is_split)
 		{
-			if ('h' == pNode->part->parkind)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-						 errmsg("cannot add a DEFAULT partition%s "
-								"to %s of type HASH",
-								namBuf,
-								lrelname)));
-
 			/* MPP-6093: ok to reset template */
 			if (pNode->default_part && !bSetTemplate)
 				ereport(ERROR,
@@ -13470,10 +13321,7 @@ ATPExecPartAlter(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		}
 		case AT_PartAdd:				/* Add */
 		case AT_PartAddForSplit:		/* Add, as part of a split */
-		case AT_PartCoalesce:			/* Coalesce */
 		case AT_PartDrop:				/* Drop */
-		case AT_PartMerge:				/* Merge */
-		case AT_PartModify:				/* Modify */
 		case AT_PartSetTemplate:		/* Set Subpartition Template */
 				if (!gp_allow_non_uniform_partitioning_ddl)
 				{
@@ -13623,20 +13471,6 @@ ATPExecPartAlter(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 } /* end ATPExecPartAlter */
 
-
-/* ALTER TABLE ... COALESCE PARTITION */
-static void
-ATPExecPartCoalesce(Relation rel,
-                    AlterPartitionCmd *pc)
-{
-	if (Gp_role != GP_ROLE_DISPATCH)
-		return;
-
-    ereport(ERROR,
-            (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-             errmsg("cannot COALESCE PARTITION for relation \"%s\"",
-                    RelationGetRelationName(rel))));
-}
 
 /* ALTER TABLE ... DROP PARTITION */
 
@@ -13790,16 +13624,6 @@ ATPExecPartDrop(Relation rel,
 			numParts++;
 
 		/* maybe ERRCODE_INVALID_TABLE_DEFINITION ? */
-
-		/* cannot drop a hash partition */
-		if ('h' == prule->pNode->part->parkind)
-			ereport(ERROR,
-					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
-					 errmsg("cannot drop HASH partition%s of %s",
-							prule->partIdStr,
-							prule->relname),
-					 errhint("recreate the table to reduce the "
-							 "number of partitions")));
 
 		/* cannot drop last partition of table */
 		if (!bForceDrop && (numParts <= 1))
@@ -14193,234 +14017,6 @@ ATPExecPartExchange(AlteredTableInfo *tab, Relation rel, AlterPartitionCmd *pc)
 	}
 	tab->exchange_relid = newrelid;
 #endif
-}
-
-/* ALTER TABLE ... MERGE PARTITION */
-static void
-ATPExecPartMerge(Relation rel,
-                 AlterPartitionCmd *pc)
-{
-	Relation source = NULL;
-	Relation target = NULL;
-
-	if (Gp_role == GP_ROLE_UTILITY)
-		return;
-	else if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		AlterPartitionId   *pid   = (AlterPartitionId *)pc->partid;
-		PgPartRule   	   *prule1 = NULL;
-		PgPartRule   	   *prule2 = NULL;
-		PgPartRule   	   *prule3 = NULL;
-		RangeVar		   *relrv1, *relrv2;
-		Relation			r1, r2;
-
-		prule1 = get_part_rule(rel, pid, true, true, NULL, false);
-
-		/*
-		 * XXX: get_namespace_name(prule1->topRule->parchildrelid) is wrong
-		 * need the relnamespace not relid
-		 */
-		relrv1 = makeRangeVar(
-					get_namespace_name(prule1->topRule->parchildrelid),
-					get_rel_name(prule1->topRule->parchildrelid), -1);
-
-		r1 = heap_openrv(relrv1, AccessExclusiveLock);
-
-		prule2 = get_part_rule(rel, (AlterPartitionId *)pc->arg1,
-							   true, true, NULL, false);
-
-		relrv2 = makeRangeVar(
-					get_namespace_name(prule2->topRule->parchildrelid),
-					get_rel_name(prule2->topRule->parchildrelid), -1);
-
-		r2 = heap_openrv(relrv2, AccessExclusiveLock);
-
-		if (pc->arg2)
-		{
-			AlterPartitionCmd *pc2 = (AlterPartitionCmd *)pc->arg2;
-
-			prule3 = get_part_rule(rel, (AlterPartitionId *)pc2->partid,
-								   true, true, NULL, false);
-
-			Assert(PointerIsValid(prule3));
-
-			if (prule3->topRule->parchildrelid == prule1->topRule->parchildrelid)
-			{
-				source = r1;
-				pc->partid = (Node *)relrv1;
-				target = r2;
-				pc->arg1 = (Node *)relrv2;
-			}
-			else if (prule3->topRule->parchildrelid == prule2->topRule->parchildrelid)
-			{
-				source = r2;
-				pc->partid = (Node *)relrv2;
-				target = r1;
-				pc->arg1 = (Node *)relrv1;
-			}
-			else
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-						 errmsg("target of MERGE must be either \"%s\" or "
-								"\"%s\"",
-								get_rel_name(prule1->topRule->parchildrelid),
-								get_rel_name(prule2->topRule->parchildrelid))));
-
-			}
-		}
-		else
-		{
-			source = r1;
-			target = r2;
-			pc->partid = (Node *)relrv1;
-			pc->arg1 = (Node *)relrv2;
-		}
-
-		/* MPP-6929: metadata tracking */
-		MetaTrackUpdObject(RelationRelationId,
-						   RelationGetRelid(rel),
-						   GetUserId(),
-						   "PARTITION", "MERGE"
-				);
-	}
-	else if (Gp_role == GP_ROLE_EXECUTE)
-	{
-		RangeVar *relrv;
-
-		Assert(IsA(pc->partid, RangeVar));
-		Assert(IsA(pc->arg1, RangeVar));
-
-		relrv = (RangeVar *)pc->partid;
-		source = heap_openrv(relrv, AccessExclusiveLock);
-
-		relrv = (RangeVar *)pc->arg1;
-		target = heap_openrv(relrv, AccessExclusiveLock);
-	}
-
-	elog(NOTICE, "merging");
-	elog(NOTICE, "%s", RelationGetRelationName(source));
-
-	elog(NOTICE, "with %s", RelationGetRelationName(target));
-
-    ereport(ERROR,
-            (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-             errmsg("cannot MERGE PARTITION for relation \"%s\"",
-                    RelationGetRelationName(rel))));
-
-}
-
-
-/* ALTER TABLE ... MODIFY PARTITION */
-static void
-ATPExecPartModify(Relation rel,
-                  AlterPartitionCmd *pc)
-{
-	AlterPartitionId *pid = (AlterPartitionId *)pc->partid;
-	PgPartRule   *prule = NULL;
-
-	if (Gp_role != GP_ROLE_DISPATCH)
-		return;
-
-	prule = get_part_rule(rel, pid, true, true, NULL, false);
-
-	if (prule)
-	{
-		AlterPartitionCmd 		*pc2 	= (AlterPartitionCmd *)pc->arg1;
-		AlterPartitionCmd 		*pc3 	= (AlterPartitionCmd *)pc2;
-		DefElem    				*def 	= (DefElem *)pc3->arg1;
-		bool 					 bStart = false;
-		bool 					 bEnd 	= false;
-		bool 					 bAdd 	= false;
-		bool 					 bDrop 	= false;
-		char           *parTypName = NULL;
-
-		if (0 == strcmp(def->defname, "START"))
-			bStart = true;
-		else if (0 == strcmp(def->defname, "END"))
-			bEnd = true;
-		else if (0 == strcmp(def->defname, "ADD"))
-			bAdd = true;
-		else if (0 == strcmp(def->defname, "DROP"))
-			bDrop = true;
-		else Assert(false);
-
-		switch (prule->pNode->part->parkind)
-		{
-			case 'h': /* hash */
-				parTypName = "HASH";
-				break;
-			case 'r': /* range */
-				parTypName = "RANGE";
-				break;
-			case 'l': /* list */
-				parTypName = "LIST";
-				break;
-			default:
-				elog(ERROR, "unrecognized partitioning kind '%c'",
-					 prule->pNode->part->parkind);
-				Assert(false);
-				break;
-		} /* end switch */
-
-		/* cannot modify default partitions */
-		if (prule->pNode->default_part == prule->topRule)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("cannot MODIFY DEFAULT %s partition%s "
-							"for relation \"%s\"",
-							parTypName,
-							((prule && prule->isName) ? prule->partIdStr : ""),
-							RelationGetRelationName(rel))));
-
-		if ((bStart || bEnd) && ('r' != prule->pNode->part->parkind))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("invalid use of %s boundary specification "
-							"in partition%s of type %s",
-							"RANGE",
-							((prule && prule->isName) ? prule->partIdStr : ""),
-							parTypName
-							 )));
-
-		if ((bAdd || bDrop) && ('l' != prule->pNode->part->parkind))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("invalid use of %s boundary specification "
-							"in partition%s of type %s",
-							"LIST",
-							((prule && prule->isName) ? prule->partIdStr : ""),
-							parTypName
-							 )));
-
-		if (bAdd || bDrop)
-		{
-			bool stat = atpxModifyListOverlap(rel, pid, prule,
-											  (PartitionElem *)pc3->arg2,
-											  bAdd);
-			stat = false;
-		}
-		if (bStart || bEnd)
-		{
-			bool stat = atpxModifyRangeOverlap(rel, pid, prule,
-											   (PartitionElem *)pc3->arg2);
-			stat = false;
-		}
-
-		/* MPP-6929: metadata tracking */
-		MetaTrackUpdObject(RelationRelationId,
-						   RelationGetRelid(rel),
-						   GetUserId(),
-						   "PARTITION", "MODIFY"
-				);
-	}
-
-	if (0)
-    ereport(ERROR,
-            (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-             errmsg("cannot MODIFY PARTITION for relation \"%s\"",
-                    RelationGetRelationName(rel))));
-
 }
 
 /* ALTER TABLE ... RENAME PARTITION */
@@ -15083,62 +14679,6 @@ split_rows(Relation intoa, Relation intob, Relation temprel)
 
 /* ALTER TABLE ... SPLIT PARTITION */
 
-/* 
-   atpxSplitDropRule: walk the partition rules, eliminating rules that
-   match parruleid and paroid.  If topRule is supplied, walk his
-   subtree as well (it may differ from pnode if the PgPartRule was
-   copied).
-*/
-static void
-atpxSplitDropRule(PartitionNode *pNode, PartitionRule *topRule,
-				  Oid parruleid, Oid paroid)
-{
-	ListCell *lc;
-	ListCell *lcprev = NULL, *lcdel = NULL;
-
-	if (!pNode)
-		return;
-
-	foreach(lc, pNode->rules)
-	{
-		PartitionRule *rule = lfirst(lc);
-
-		if (rule->children)
-			atpxSplitDropRule(rule->children, NULL, 
-							  parruleid, paroid);
-
-		if ((parruleid == rule->parruleid) &&
-			(paroid == rule->paroid))
-		{
-			lcdel = lc; /* should only be one match */
-			break;
-		}
-		lcprev = lc;
-	}
-	if (lcdel)
-		pNode->rules = list_delete_cell(pNode->rules, lcdel, lcprev);
-
-	/* and the default partition */
-	if (pNode->default_part)
-	{
-		PartitionRule *rule = pNode->default_part;
-
-		if (rule->children)
-				atpxSplitDropRule(rule->children, NULL,
-								  parruleid, paroid);
-
-		if ((parruleid == rule->parruleid) &&
-			(paroid == rule->paroid))
-			pNode->default_part = NULL;
-	}
-
-	/* check optional topRule */
-	if (topRule && topRule->children)
-		atpxSplitDropRule(topRule->children, NULL,
-						  parruleid, paroid);
-
-} /* end atpxSplitDropRule */
-
 /* Given a Relation, make a distributed by () clause for parser consumption. */
 List *
 make_dist_clause(Relation rel)
@@ -15620,58 +15160,66 @@ ATPExecPartSplit(Relation *rel,
 		*rel = heap_open(relid, AccessExclusiveLock);
 		CommandCounterIncrement();
 
-		/*
-		 * Now that we've dropped the partition, we need to handle updating
-		 * the PgPartRule pid for the case where it is a pid representing
-		 * ALTER PARTITION ... ALTER PARTITION ...
-		 *
-		 * For the normal case, we'll just run get_part_rule() again deeper
-		 * in the code.
-		 */
-		if (pid->idtype == AT_AP_IDRule)
-		{
-			AlterPartitionId *tmppid = copyObject(pid);
-
-			/* MPP-10223: pid contains a "stale" pNode with a
-			 * partition rule for the partition we just dropped.
-			 * Delve deep into pNode to eliminate the topRule.
-			 */
-			if (1)
-			{
-				AlterPartitionId		*newpid	 = tmppid;
-				PgPartRule				*tmprule = NULL;
-
-				while (tmppid->idtype == AT_AP_IDRule)
-				{
-					List *l = (List *)tmppid->partiddef;
-
-					/* wipe out the topRule because the partition was
-					 * dropped, or PartAdd will find it and complain!!
-					 * Note that because the pid was copied,
-					 * tmprule->topRule has a separate copy of the
-					 * prule subtree, so we need to fix this one, too.
-					 */
-					tmprule = (PgPartRule *)linitial(l);
-
-					atpxSplitDropRule(tmprule->pNode, 
-									  tmprule->topRule,
-									  prule->topRule->parruleid, 
-									  prule->topRule->paroid);
-					tmppid = lsecond(l);
-				}
-				
-				tmppid = newpid;
-			}
-
-			aapid = tmppid;
-		}
-
-		/* Add two new partitions */
 		elog(DEBUG5, "Split partition: adding two new partitions");
 
 		/* 4) add two new partitions, via a loop to reduce code duplication */
 		for (i = 1; i <= 2; i++)
 		{
+			/*
+			 * Now that we've dropped the partition, we need to handle updating
+			 * the PgPartRule pid for the case where it is a pid representing
+			 * ALTER PARTITION ... ALTER PARTITION ...
+			 *
+			 * For the normal case, we'll just run get_part_rule() again deeper
+			 * in the code.
+			 */
+			if (pid->idtype == AT_AP_IDRule)
+			{
+				/*
+				 * MPP-10223: pid contains a "stale" pgPartRule with a
+				 * partition rule for the partition we just dropped.
+				 * Refresh partition rule from the catalog.
+				 */
+				AlterPartitionId *tmppid = copyObject(pid);
+
+				/*
+				 * Save the pointer value before we modify the partition rule
+				 * tree.
+				 */
+				aapid = tmppid;
+
+
+				while (tmppid->idtype == AT_AP_IDRule)
+				{
+					PgPartRule	*tmprule = NULL;
+					PgPartRule	*newRule = NULL;
+
+					List *l = (List *) tmppid->partiddef;
+
+					/*
+					 * We need to update the PgPartNode under
+					 * our AlterPartitionId because it still
+					 * contains the partition that we just
+					 * dropped. If we do not remove it here
+					 * PartAdd will find it and refuse to
+					 * add the new partition.
+					 */
+					tmprule = (PgPartRule *) linitial(l);
+					Assert(nodeTag(tmprule) == T_PgPartRule);
+
+					AlterPartitionId *apidByName = makeNode(AlterPartitionId);
+
+					apidByName->partiddef = (Node *)makeString(tmprule->topRule->parname);
+					apidByName->idtype = AT_AP_IDName;
+
+					newRule = get_part_rule(*rel, apidByName, true, true, NULL, false);
+					list_nth_replace(l, 0, newRule);
+					pfree(tmprule);
+
+					tmppid = lsecond(l);
+				}
+			}
+
 			/* build up commands for adding two. */
 			AlterPartitionId *mypid = makeNode(AlterPartitionId);
 			char *parname = NULL;
@@ -16961,20 +16509,9 @@ ATPrepExchange(Relation rel, AlterPartitionCmd *pc)
 			return;
 		
 		prule = get_part_rule(rel, pid, true, true, NULL, false);
-		if (prule)
-		{
-			/* cannot exchange a hash partition */
-			if ('h' == prule->pNode->part->parkind)
-				ereport(ERROR,
-						(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
-						 errmsg("cannot exchange HASH partition%s "
-								"of relation \"%s\"", prule->partIdStr,
-								RelationGetRelationName(rel))));
-		}
-		oldrel = heap_open(prule->topRule->parchildrelid,
-						   AccessExclusiveLock);
-		newrel = heap_openrv((RangeVar *)pc->arg1,
-							 AccessExclusiveLock);
+
+		oldrel = heap_open(prule->topRule->parchildrelid, AccessExclusiveLock);
+		newrel = heap_openrv((RangeVar *)pc->arg1, AccessExclusiveLock);
 	}
 	else
 	{
@@ -17105,7 +16642,6 @@ char *alterTableCmdString(AlterTableType subtype)
 		case AT_PartAdd: /* Add */
 		case AT_PartAddForSplit: /* Add */
 		case AT_PartAlter: /* Alter */
-		case AT_PartCoalesce: /* Coalesce */
 		case AT_PartDrop: /* Drop */
 			break;
 			
@@ -17113,11 +16649,6 @@ char *alterTableCmdString(AlterTableType subtype)
 			cmdstring = pstrdup("exchange a part into");
 			break;
 			
-		case AT_PartMerge: /* Merge */
-			cmdstring = pstrdup("merge parts of");
-			break;
-			
-		case AT_PartModify: /* Modify */
 		case AT_PartRename: /* Rename */
 		case AT_PartSetTemplate: /* Set Subpartition Template */
 			break;

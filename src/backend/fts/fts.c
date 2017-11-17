@@ -89,10 +89,6 @@ static volatile sig_atomic_t got_SIGHUP = false;
 
 static char *probeDatabase = "postgres";
 
-/* struct holding segment configuration */
-static CdbComponentDatabases *cdb_component_dbs = NULL;
-
-
 /*
  * FUNCTION PROTOTYPES
  */
@@ -103,7 +99,7 @@ static pid_t ftsprobe_forkexec(void);
 NON_EXEC_STATIC void ftsMain(int argc, char *argv[]);
 static void FtsLoop(void);
 
-static void readCdbComponentInfoAndUpdateStatus(MemoryContext probeContext);
+static CdbComponentDatabases *readCdbComponentInfoAndUpdateStatus(MemoryContext);
 
 /*
  * Main entry point for ftsprobe process.
@@ -369,20 +365,18 @@ ftsMain(int argc, char *argv[])
  * probeContext instead of current memory context because current
  * context will be destroyed by CommitTransactionCommand().
  */
-static void
-readCdbComponentInfoAndUpdateStatus(MemoryContext probeContext)
+static
+CdbComponentDatabases *readCdbComponentInfoAndUpdateStatus(MemoryContext probeContext)
 {
 	int i;
-	MemoryContext save;
-
-	save = MemoryContextSwitchTo(probeContext);
-	/* cdb_component_dbs is free'd by FtsLoop(). */
-	cdb_component_dbs = getCdbComponentInfo(false);
+	MemoryContext save = MemoryContextSwitchTo(probeContext);
+	/* cdbs is free'd by FtsLoop(). */
+	CdbComponentDatabases *cdbs = getCdbComponentInfo(false);
 	MemoryContextSwitchTo(save);
 
-	for (i=0; i < cdb_component_dbs->total_segment_dbs; i++)
+	for (i=0; i < cdbs->total_segment_dbs; i++)
 	{
-		CdbComponentDatabaseInfo *segInfo = &cdb_component_dbs->segment_db_info[i];
+		CdbComponentDatabaseInfo *segInfo = &cdbs->segment_db_info[i];
 		uint8	segStatus;
 
 		segStatus = 0;
@@ -404,6 +398,8 @@ readCdbComponentInfoAndUpdateStatus(MemoryContext probeContext)
 
 		ftsProbeInfo->fts_status[segInfo->dbid] = segStatus;
 	}
+
+	return cdbs;
 }
 
 #ifdef USE_SEGWALREP
@@ -493,7 +489,7 @@ probeWalRepUpdateConfig(int16 dbid, int16 segindex, bool IsSegmentAlive)
 }
 
 static bool
-probeWalRepPublishUpdate(probe_context *context)
+probeWalRepPublishUpdate(CdbComponentDatabases *cdbs, probe_context *context)
 {
 	bool is_updated = false;
 
@@ -504,12 +500,12 @@ probeWalRepPublishUpdate(probe_context *context)
 		Assert(SEGMENT_IS_ACTIVE_PRIMARY(response->segment_db_info));
 
 		if (!FtsIsActive())
-		{
 			return false;
-		}
 
 		CdbComponentDatabaseInfo *primary = response->segment_db_info;
-		CdbComponentDatabaseInfo *mirror = FtsGetPeerSegment(primary->segindex, primary->dbid);
+		CdbComponentDatabaseInfo *mirror = FtsGetPeerSegment(cdbs,
+															 primary->segindex,
+															 primary->dbid);
 
 		bool IsPrimaryAlive = response->result.isPrimaryAlive;
 		bool IsMirrorAlive = response->result.isMirrorAlive;
@@ -553,14 +549,14 @@ probeWalRepPublishUpdate(probe_context *context)
 static void
 FtsWalRepInitProbeContext(CdbComponentDatabases *cdbs, probe_context *context)
 {
-	context->count = cdb_component_dbs->total_segments;
+	context->count = cdbs->total_segments;
 	context->responses = (probe_response_per_segment *)palloc(context->count * sizeof(probe_response_per_segment));
 
 	int response_index = 0;
 
 	for(int segment_index = 0; segment_index < cdbs->total_segment_dbs; segment_index++)
 	{
-		CdbComponentDatabaseInfo *segment = &(cdb_component_dbs->segment_db_info[segment_index]);
+		CdbComponentDatabaseInfo *segment = &(cdbs->segment_db_info[segment_index]);
 		probe_response_per_segment *response = &(context->responses[response_index]);
 
 		if (!SEGMENT_IS_ACTIVE_PRIMARY(segment))
@@ -572,7 +568,8 @@ FtsWalRepInitProbeContext(CdbComponentDatabases *cdbs, probe_context *context)
 		 * changing of mirror status if the primary goes down.
 		 */
 		CdbComponentDatabaseInfo *primary = segment;
-		CdbComponentDatabaseInfo *mirror = FtsGetPeerSegment(primary->segindex,
+		CdbComponentDatabaseInfo *mirror = FtsGetPeerSegment(cdbs,
+															 primary->segindex,
 															 primary->dbid);
 
 		/* primary in catalog will NEVER be marked down. */
@@ -601,6 +598,7 @@ void FtsLoop()
 	bool	updated_probe_state, processing_fullscan;
 	MemoryContext probeContext = NULL, oldContext = NULL;
 	time_t elapsed,	probe_start_time;
+	CdbComponentDatabases *cdbs;
 
 	probeContext = AllocSetContextCreate(TopMemoryContext,
 										 "FtsProbeMemCtxt",
@@ -641,10 +639,10 @@ void FtsLoop()
 			goto prober_sleep;
 		}
 
-		if (cdb_component_dbs != NULL)
+		if (cdbs != NULL)
 		{
-			freeCdbComponentDatabases(cdb_component_dbs);
-			cdb_component_dbs = NULL;
+			freeCdbComponentDatabases(cdbs);
+			cdbs = NULL;
 		}
 
 		if (ftsProbeInfo->fts_probeScanRequested == ftsProbeInfo->fts_statusVersion)
@@ -655,7 +653,7 @@ void FtsLoop()
 		/* Need a transaction to access the catalogs */
 		StartTransactionCommand();
 
-		readCdbComponentInfoAndUpdateStatus(probeContext);
+		cdbs = readCdbComponentInfoAndUpdateStatus(probeContext);
 
 		/* Check here gp_segment_configuration if has mirror's */
 		has_mirrors = gp_segment_config_has_mirrors();
@@ -676,8 +674,8 @@ void FtsLoop()
 
 		elog(DEBUG3, "FTS: starting %s scan with %d segments and %d contents",
 			 (processing_fullscan ? "full " : ""),
-			 cdb_component_dbs->total_segment_dbs,
-			 cdb_component_dbs->total_segments);
+			 cdbs->total_segment_dbs,
+			 cdbs->total_segments);
 
 		/*
 		 * We probe in a special context, some of the heap access
@@ -688,26 +686,26 @@ void FtsLoop()
 #ifdef USE_SEGWALREP
 		probe_context context;
 
-		FtsWalRepInitProbeContext(cdb_component_dbs, &context);
+		FtsWalRepInitProbeContext(cdbs, &context);
 		FtsWalRepProbeSegments(&context);
 
-		updated_probe_state = probeWalRepPublishUpdate(&context);
+		updated_probe_state = probeWalRepPublishUpdate(cdbs, &context);
 #else
 		/* probe segments */
-		FtsProbeSegments(cdb_component_dbs, scan_status);
+		FtsProbeSegments(cdbs, scan_status);
 
 		/*
 		 * Now we've completed the scan, update shared-memory. if we
 		 * change anything, we return true.
 		 */
-		updated_probe_state = probePublishUpdate(cdb_component_dbs, scan_status);
+		updated_probe_state = probePublishUpdate(cdbs, scan_status);
 #endif
 
 		MemoryContextSwitchTo(oldContext);
 
 		/* free any pallocs we made inside probeSegments() */
 		MemoryContextReset(probeContext);
-		cdb_component_dbs = NULL;
+		cdbs = NULL;
 
 		if (!FtsIsActive())
 		{
@@ -811,13 +809,14 @@ FtsDumpChanges(FtsSegmentStatusChange *changes, int changeEntries)
 /*
  * Get peer segment descriptor
  */
-CdbComponentDatabaseInfo *FtsGetPeerSegment(int content, int dbid)
+CdbComponentDatabaseInfo *FtsGetPeerSegment(CdbComponentDatabases *cdbs,
+											int content, int dbid)
 {
 	int i;
 
-	for (i=0; i < cdb_component_dbs->total_segment_dbs; i++)
+	for (i=0; i < cdbs->total_segment_dbs; i++)
 	{
-		CdbComponentDatabaseInfo *segInfo = &cdb_component_dbs->segment_db_info[i];
+		CdbComponentDatabaseInfo *segInfo = &cdbs->segment_db_info[i];
 
 		if (segInfo->segindex == content && segInfo->dbid != dbid)
 		{

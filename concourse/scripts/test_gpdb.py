@@ -8,7 +8,6 @@ import subprocess
 import sys
 
 from builds.GpBuild import GpBuild
-from subprocess import check_output
 
 def install_gpdb(dependency_name):
     status = subprocess.call("mkdir -p /usr/local/gpdb", shell=True)
@@ -27,13 +26,34 @@ def create_gpadmin_user():
 
 
 def copy_output():
-    diff_files = check_output("find gpdb_src/ -name regression.diffs", shell=True).splitlines()
-    for diff_file in diff_files:
-        print(  "======================================================================\n" +
-                "DIFF FILE: " + diff_file+"\n" +
-                "----------------------------------------------------------------------")
-        with open(diff_file, 'r') as fin:
-            print fin.read()
+    for dirpath, dirs, diff_files in os.walk('gpdb_src/'):
+        if 'regression.diffs' in diff_files:
+            diff_file = dirpath + '/' + 'regression.diffs'
+            print(  "======================================================================\n" +
+                    "DIFF FILE: " + diff_file+"\n" +
+                    "----------------------------------------------------------------------")
+            with open(diff_file, 'r') as fin:
+                print fin.read()
+    shutil.copyfile("gpdb_src/src/test/regress/regression.diffs", "icg_output/regression.diffs")
+    shutil.copyfile("gpdb_src/src/test/regress/regression.out", "icg_output/regression.out")
+
+
+def configure():
+    p_env = os.environ.copy()
+    p_env['LD_LIBRARY_PATH'] = '/usr/local/gpdb/lib'
+    p_env['CFLAGS'] = '-I/usr/local/gpdb/include'
+    p_env['CPPFLAGS'] = '-I/usr/local/gpdb/include'
+    p_env['LDFLAGS'] = '-L/usr/local/gpdb/lib'
+    return subprocess.call(["./configure",
+                            "--enable-mapreduce",
+                            "--with-gssapi",
+                            "--with-perl",
+                            "--with-libxml",
+                            "--with-python",
+                            "--disable-gpcloud",
+                            "--with-libs=/usr/local/gpdb/lib",
+                            "--with-includes=/usr/local/gpdb/include",
+                            "--prefix=/usr/local/gpdb"], env=p_env, shell=True, cwd="gpdb_src")
 
 def main():
     parser = optparse.OptionParser()
@@ -49,14 +69,14 @@ def main():
     elif options.mode == 'planner':
         ciCommon = GpBuild(options.mode)
 
-    for dependency in args:
-        status = ciCommon.install_dependency(dependency)
-        if status:
-            return status
+    # for dependency in args:
+    #     status = ciCommon.install_dependency(dependency)
+    #     if status:
+    #         return status
     status = install_gpdb(options.gpdb_name)
     if status:
         return status
-    status = ciCommon.configure()
+    status = configure()
     if status:
         return status
     status = create_gpadmin_user()

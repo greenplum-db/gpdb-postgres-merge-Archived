@@ -1524,9 +1524,6 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 
 	Assert(IsA(subselect, Query));
 
-	if (has_correlation_in_funcexpr_rte(subselect->rtable))
-		return NULL;
-
 	/*
 	 * Can't flatten if it contains WITH.  (We could arrange to pull up the
 	 * WITH into the parent query's cteList, but that risks changing the
@@ -1538,11 +1535,16 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	if (subselect->cteList)
 		return NULL;
 
+
+	if (has_correlation_in_funcexpr_rte(subselect->rtable))
+		return NULL;
+
 	/*
 	 * If deeply correlated, don't bother.
 	 */
 	if (IsSubqueryMultiLevelCorrelated(subselect))
 		return NULL;
+
 	/*
 	 * 'LIMIT n' makes EXISTS false when n <= 0, and doesn't affect the
 	 * outcome when n > 0.  Delete subquery's LIMIT and build (0 < n) expr to
@@ -1558,12 +1560,6 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 									 lnode, rnode, -1);
 		subselect->limitCount = NULL;
 	}
-
-	/* CDB TODO: Set-returning function in tlist could return empty set. */
-	if (expression_returns_set((Node *) subselect->targetList))
-		ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_YET),
-						errmsg("Set-returning function in EXISTS subquery: not yet implemented")
-						));
 
 	/*
 	 * Trivial EXISTS subquery can be eliminated altogether.  If subquery has
@@ -1616,12 +1612,12 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 		return node;
 	}
 
-        /*
-        * Don't remove the sublink if we cannot pull-up the subquery
-        * later during pull_up_simple_subquery()
-        */
-        if (!simplify_EXISTS_query(root, subselect))
-                return NULL;
+	/*
+	 * Don't remove the sublink if we cannot pull-up the subquery
+	 * later during pull_up_simple_subquery()
+	 */
+	if (!simplify_EXISTS_query(root, subselect))
+		return NULL;
 
 	/*
 	 * The subquery must have a nonempty jointree, else we won't have a join.

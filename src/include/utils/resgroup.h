@@ -92,10 +92,6 @@ typedef enum
 	RES_GROUP_STAT_MEM_USAGE,
 } ResGroupStatType;
 
-/*
- * Functions in resgroup.c
- */
-
 /* Shared memory and semaphores */
 extern Size ResGroupShmemSize(void);
 extern void ResGroupControlInit(void);

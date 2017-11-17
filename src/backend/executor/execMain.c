@@ -4802,8 +4802,6 @@ typedef struct
 	struct AppendOnlyInsertDescData *ao_insertDesc; /* descriptor to AO tables */
 	struct AOCSInsertDescData *aocs_ins;           /* descriptor for aocs */
 
-	bool		is_bulkload;
-
 	ItemPointerData last_heap_tid;
 
 	struct MirroredBufferPoolBulkLoadInfo *bulkloadinfo;
@@ -4836,7 +4834,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 	DR_intorel *myState;
 	char	   *intoTableSpaceName;
     GpPolicy   *targetPolicy;
-	bool		bufferPoolBulkLoad;
+	bool		use_wal;
 	bool		validate_reloptions;
 
 	RelFileNode relFileNode;
@@ -4956,13 +4954,11 @@ OpenIntoRel(QueryDesc *queryDesc)
 
 	/*
 	 * We can skip WAL-logging the insertions for FileRep on segments, but not on
-	 * master since we are using the old WAL based physical replication.
+	 * master since we are using the WAL based physical replication.
 	 *
 	 * GPDP does not support PITR.
 	 */
-	bufferPoolBulkLoad = 
-		(relstorage_is_buffer_pool(relstorage) ?
-									!XLogIsNeeded() : false);
+	use_wal = XLogIsNeeded();
 
 	/* Now we can actually create the new relation */
 	intoRelationId = heap_create_with_catalog(intoName,
@@ -4977,7 +4973,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 											  relstorage,
 											  false,
 											  true,
-											  bufferPoolBulkLoad,
+											  relstorage_is_buffer_pool(relstorage) ? !use_wal:false,
 											  0,
 											  into->onCommit,
 											  targetPolicy,  	/* MPP */
@@ -5038,20 +5034,18 @@ OpenIntoRel(QueryDesc *queryDesc)
 	 * can skip the FSM in any case.
 	 */
 	myState->hi_options = HEAP_INSERT_SKIP_FSM |
-		(XLogArchivingActive() ? 0 : HEAP_INSERT_SKIP_WAL);
+		(use_wal ? 0 : HEAP_INSERT_SKIP_WAL);
 	myState->bistate = GetBulkInsertState();
 
 	/* Not using WAL requires rd_targblock be initially invalid */
 	Assert(intoRelationDesc->rd_targblock == InvalidBlockNumber);
-
-	myState->is_bulkload = bufferPoolBulkLoad;
 
 	myState->bulkloadinfo = (struct MirroredBufferPoolBulkLoadInfo *) palloc0(sizeof(MirroredBufferPoolBulkLoadInfo));
 
 	relFileNode.spcNode = tablespaceId;
 	relFileNode.dbNode = MyDatabaseId;
 	relFileNode.relNode = intoRelationId;
-	if (myState->is_bulkload)
+	if (relstorage_is_buffer_pool(relstorage) && !use_wal)
 	{
 		MirroredBufferPool_BeginBulkLoad(
 								&relFileNode,
@@ -5099,78 +5093,60 @@ CloseIntoRel(QueryDesc *queryDesc)
 
 		FreeBulkInsertState(myState->bistate);
 
-		/* APPEND_ONLY is closed in the intorel_shutdown */
-		if (!(RelationIsAoRows(rel) || RelationIsAoCols(rel)))
+		/*
+		 * APPEND_ONLY is closed in the intorel_shutdown.
+		 * If we skipped using WAL, must heap_sync before commit.
+		 */
+		if (RelationIsHeap(rel) && (myState->hi_options & HEAP_INSERT_SKIP_WAL) != 0)
 		{
 			int32 numOfBlocks;
+			bool mirrorDataLossOccurred;
 
-			/* If we skipped using WAL, must heap_sync before commit */
-			if (myState->is_bulkload)
-			{
-				FlushRelationBuffers(rel);
-				/* FlushRelationBuffers will have opened rd_smgr */
-				smgrimmedsync(rel->rd_smgr, MAIN_FORKNUM);
-			}
+			FlushRelationBuffers(rel);
+			/* FlushRelationBuffers will have opened rd_smgr */
+			smgrimmedsync(rel->rd_smgr, MAIN_FORKNUM);
 
 			if (PersistentStore_IsZeroTid(&myState->last_heap_tid))
 				numOfBlocks = 0;
 			else
 				numOfBlocks = ItemPointerGetBlockNumber(&myState->last_heap_tid) + 1;
 
-			if (myState->is_bulkload)
+			/*
+			 * We may have to catch-up the mirror since bulk loading of data is
+			 * ignored by resynchronize.
+			 */
+			while (true)
 			{
-				bool mirrorDataLossOccurred;
+				bool bulkLoadFinished;
+
+				bulkLoadFinished =
+					MirroredBufferPool_EvaluateBulkLoadFinish(
+						myState->bulkloadinfo);
+
+				if (bulkLoadFinished)
+				{
+					/*
+					 * The flush was successful to the mirror (or the mirror is
+					 * not configured).
+					 *
+					 * We have done a state-change from 'Bulk Load Create Pending'
+					 * to 'Create Pending'.
+					 */
+					break;
+				}
 
 				/*
-				 * We may have to catch-up the mirror since bulk loading of data is
-				 * ignored by resynchronize.
+				 * Copy primary data to mirror and flush.
 				 */
-				while (true)
-				{
-					bool bulkLoadFinished;
-
-					bulkLoadFinished = 
-						MirroredBufferPool_EvaluateBulkLoadFinish(
-									myState->bulkloadinfo);
-
-					if (bulkLoadFinished)
-					{
-						/*
-						 * The flush was successful to the mirror (or the mirror is
-						 * not configured).
-						 *
-						 * We have done a state-change from 'Bulk Load Create Pending'
-						 * to 'Create Pending'.
-						 */
-						break;
-					}
-
-					/*
-					 * Copy primary data to mirror and flush.
-					 */
-					MirroredBufferPool_CopyToMirror(
-							&myState->bulkloadinfo->relFileNode,
-							rel->rd_rel->relname.data,
-							&myState->bulkloadinfo->persistentTid,
-							myState->bulkloadinfo->persistentSerialNum,
-							myState->bulkloadinfo->mirrorDataLossTrackingState,
-							myState->bulkloadinfo->mirrorDataLossTrackingSessionNum,
-							numOfBlocks,
-							&mirrorDataLossOccurred);
-				}
-			}
-			else
-			{
-				if (Debug_persistent_print)
-				{
-					elog(Persistent_DebugPrintLevel(),
-						 "CloseIntoRel %u/%u/%u: did not bypass the WAL -- did not use bulk load, persistent serial num " INT64_FORMAT ", TID %s",
-						 myState->bulkloadinfo->relFileNode.spcNode,
-						 myState->bulkloadinfo->relFileNode.dbNode,
-						 myState->bulkloadinfo->relFileNode.relNode,
-						 myState->bulkloadinfo->persistentSerialNum,
-						 ItemPointerToString(&myState->bulkloadinfo->persistentTid));
-				}
+				MirroredBufferPool_CopyToMirror(
+					&myState->bulkloadinfo->relFileNode,
+					rel->rd_rel->relname.data,
+					&myState->bulkloadinfo->persistentTid,
+					myState->bulkloadinfo->persistentSerialNum,
+					myState->bulkloadinfo->mirrorDataLossTrackingState,
+					myState->bulkloadinfo->mirrorDataLossTrackingSessionNum,
+					numOfBlocks,
+					&mirrorDataLossOccurred);
 			}
 		}
 

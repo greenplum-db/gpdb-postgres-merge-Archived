@@ -2666,9 +2666,6 @@ CommitTransaction(void)
 						 RESOURCE_RELEASE_BEFORE_LOCKS,
 						 true, true);
 
-	/* Process resource group related callbacks */
-	AtEOXact_ResGroup(true);
-
 	/* Check we've released all buffer pins */
 	AtEOXact_Buffers(true);
 
@@ -2975,9 +2972,6 @@ PrepareTransaction(void)
 						 RESOURCE_RELEASE_BEFORE_LOCKS,
 						 true, true);
 
-	/* Process resource group related callbacks */
-	AtEOXact_ResGroup(true);
-
 	/* Check we've released all buffer pins */
 	AtEOXact_Buffers(true);
 
@@ -3058,6 +3052,10 @@ PrepareTransaction(void)
 	s->state = TRANS_DEFAULT;
 
 	RESUME_INTERRUPTS();
+
+	/* Release resource group slot at the end of prepare transaction on segment */
+	if (ShouldUnassignResGroup())
+		UnassignResGroup();
 }
 
 
@@ -3199,7 +3197,6 @@ AbortTransaction(void)
 		ResourceOwnerRelease(TopTransactionResourceOwner,
 							 RESOURCE_RELEASE_BEFORE_LOCKS,
 							 false, true);
-		AtEOXact_ResGroup(false);
 		AtEOXact_Buffers(false);
 		AtEOXact_RelationCache(false);
 		AtEOXact_Inval(false);
@@ -3270,6 +3267,10 @@ AbortTransaction(void)
 	 */
 	if (elog_geterrcode() == ERRCODE_GP_MEMPROT_KILL)
 		DisconnectAndDestroyAllGangs(true);
+
+	/* Release resource group slot at the end of a transaction */
+	if (ShouldUnassignResGroup())
+		UnassignResGroup();
 }
 
 /*
@@ -3330,6 +3331,9 @@ CleanupTransaction(void)
 void
 StartTransactionCommand(void)
 {
+	if (Gp_role == GP_ROLE_DISPATCH)
+		setupRegularDtxContext();
+
 	TransactionState s = CurrentTransactionState;
 
 	switch (s->blockState)

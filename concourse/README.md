@@ -29,7 +29,6 @@ There should be just a handful of pipelines in this directory:
   from the master branch of gpdb.
 * `dev_generate_installer.yml` which compiles and generates an installer for
   the given source and saves it to a dev bucket.
-* `gpcloud_pipeline.yml` run gpcloud tests against developers specified branch.
 * `pr_pipeline.yml` which compiles and tests pull requests.
 * `concourse-upgrade.yml` which uses Concourse to upgrade itself.
 * `pipeline_coverity.yml` run a build with coverity flags, separate so that it
@@ -79,6 +78,7 @@ Many developers want to create their own copies of the master pipeline.
 To accommodate this without naming confusion, workload instability, nor
 artifact collision, we have the following solution:
 
+1. install fly from the Concourse UI [detailed directions](https://github.com/concourse/fly#installing-from-the-concourse-ui-for-project-development)
 1. Fork or branch the gpdb git repo
 1. Create an s3 bucket for your pipeline to use
 1. Edit `concourse/pipelines/pipeline.yml` to point at your git branch and s3 bucket

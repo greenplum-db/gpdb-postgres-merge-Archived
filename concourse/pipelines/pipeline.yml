@@ -14,7 +14,6 @@ groups:
   - compile_gpdb_ubuntu16
   - compile_gpdb_open_source_centos6
   - compile_gpdb_binary_swap_centos6
-  - compile_gpdb_and_orca_conan_ubuntu16
   - compile_gpdb_windows_cl
   - compile_gpdb_aix7_remote
   - client_loader_remote_test_aix
@@ -27,6 +26,7 @@ groups:
   - icw_gporca_sles11
   - icw_planner_ubuntu16
   - icw_gporca_conan_ubuntu16
+  - icw_extensions_gpcloud
   - icw_planner_ictcp_centos6
   - icw_gporca_centos6_gpos_memory
   - QP_memory-accounting
@@ -40,8 +40,7 @@ groups:
   - cs_pg_twophase_21_30
   - cs_pg_twophase_31_40
   - cs_pg_twophase_41_49
-  - cs_pg_twophase_switch_01_12
-  - cs_pg_twophase_switch_13_24
+  - cs_pg_twophase_switch
   - cs_crash_recovery_schema_topology
   - cs_crash_recovery_04_10
   - cs_crash_recovery_11_20
@@ -84,7 +83,6 @@ groups:
   - regression_tests_pxf_cdh_rpm
   - regression_tests_pxf_cdh_tar
   - regression_tests_gphdfs_centos
-  - regression_tests_gpcloud_centos
   - gate_ud_end
 ################################
   - gate_filerep_start
@@ -108,7 +106,6 @@ groups:
   - compile_gpdb_ubuntu16
   - compile_gpdb_open_source_centos6
   - compile_gpdb_binary_swap_centos6
-  - compile_gpdb_and_orca_conan_ubuntu16
   - compile_gpdb_windows_cl
   - compile_gpdb_aix7_remote
   - client_loader_remote_test_aix
@@ -124,6 +121,7 @@ groups:
   - icw_gporca_centos7
   - icw_gporca_sles11
   - icw_planner_ictcp_centos6
+  - icw_extensions_gpcloud
   - icw_gporca_centos6_gpos_memory
   - QP_memory-accounting
   - gate_icw_end
@@ -138,8 +136,7 @@ groups:
   - cs_pg_twophase_21_30
   - cs_pg_twophase_31_40
   - cs_pg_twophase_41_49
-  - cs_pg_twophase_switch_01_12
-  - cs_pg_twophase_switch_13_24
+  - cs_pg_twophase_switch
   - cs_crash_recovery_schema_topology
   - cs_crash_recovery_04_10
   - cs_crash_recovery_11_20
@@ -192,7 +189,6 @@ groups:
   - regression_tests_pxf_cdh_rpm
   - regression_tests_pxf_cdh_tar
   - regression_tests_gphdfs_centos
-  - regression_tests_gpcloud_centos
   - gate_ud_end
 
 - name: G:FileRep
@@ -225,7 +221,7 @@ resources:
     branch: {{ccp-git-branch}}
     private_key: {{ccp-git-key}}
     uri: {{ccp-git-remote}}
-    tag_filter: 1.4.2
+    tag_filter: {{ccp-tag-filter}}
 
 - name: terraform
   type: terraform
@@ -338,24 +334,6 @@ resources:
   type: docker-image
   source:
     repository: pivotaldata/centos-mingw
-
-- name: compiled_bits_orca_with_conan_ubuntu16
-  type: s3
-  source:
-    access_key_id: {{bucket-access-key-id}}
-    bucket: {{bucket-name}}
-    region_name: {{aws-region}}
-    secret_access_key: {{bucket-secret-access-key}}
-    versioned_file: {{compiled_bits_orca_with_conan_ubuntu16_versioned_file}}
-
-- name: compiled_bits_gpdb_with_orca_conan_ubuntu16
-  type: s3
-  source:
-    access_key_id: {{bucket-access-key-id}}
-    bucket: {{bucket-name}}
-    region_name: {{aws-region}}
-    secret_access_key: {{bucket-secret-access-key}}
-    versioned_file: {{compiled_bits_gpdb_with_orca_conan_ubuntu16_versioned_file}}
 
 - name: bin_gpdb_centos6
   type: s3
@@ -662,6 +640,7 @@ jobs:
   plan:
   - aggregate:
     - get: gpdb_src
+      passed: [gate_compile_start]
       trigger: ((gpdb_src-trigger-flag))
     - get: reduced-frequency-trigger
       trigger: ((reduced-frequency-trigger-flag))
@@ -695,6 +674,7 @@ jobs:
     - get: reduced-frequency-trigger
       trigger: ((reduced-frequency-trigger-flag))
     - get: gpdb_src
+      passed: [gate_compile_start]
       trigger: ((gpdb_src-trigger-flag))
       passed: [gate_compile_start]
     - get: gpaddon_src
@@ -727,6 +707,7 @@ jobs:
     - get: reduced-frequency-trigger
       trigger: ((reduced-frequency-trigger-flag))
     - get: gpdb_src
+      passed: [gate_compile_start]
       trigger: ((gpdb_src-trigger-flag))
     - get: gpaddon_src
       passed: [gate_compile_start]
@@ -753,6 +734,7 @@ jobs:
     - get: reduced-frequency-trigger
       trigger: ((reduced-frequency-trigger-flag))
     - get: gpdb_src
+      passed: [gate_compile_start]
       trigger: ((gpdb_src-trigger-flag))
     - get: ubuntu-gpdb-dev-16
       passed: [gate_compile_start]
@@ -772,6 +754,7 @@ jobs:
     - get: reduced-frequency-trigger
       trigger: ((reduced-frequency-trigger-flag))
     - get: gpdb_src
+      passed: [gate_compile_start]
       trigger: ((gpdb_src-trigger-flag))
     - get: centos-gpdb-dev-6
       passed: [gate_compile_start]
@@ -813,27 +796,6 @@ jobs:
       params:
         file: gpdb_artifacts/bin_gpdb.tar.gz
 
-- name: compile_gpdb_and_orca_conan_ubuntu16
-  plan:
-  - aggregate:
-    - get: reduced-frequency-trigger
-      trigger: ((reduced-frequency-trigger-flag))
-    - get: gpdb_src
-      trigger: ((gpdb_src-trigger-flag))
-    - get: ubuntu-gpdb-dev-16
-      passed: [gate_compile_start]
-  - task: compile_gpdb_and_orca
-    file: gpdb_src/concourse/tasks/compile_gpdb_and_orca_with_conan.yml
-    params:
-      BINTRAY_REMOTE: {{bintray_remote}}
-      BINTRAY_REMOTE_URL: {{bintray_remote_url}}
-  - put: compiled_bits_gpdb_with_orca_conan_ubuntu16
-    params:
-      file: {{compiled_bits_gpdb_with_orca_conan_ubuntu16_versioned_file}}
-  - put: compiled_bits_orca_with_conan_ubuntu16
-    params:
-      file: {{compiled_bits_orca_with_conan_ubuntu16_versioned_file}}
-
 - name: compile_gpdb_windows_cl
   plan:
   - aggregate:
@@ -842,6 +804,7 @@ jobs:
       tags: ["wix"]
     - get: gpdb_src
       trigger: ((gpdb_src-trigger-flag))
+      passed: [gate_compile_start]
       tags: ["wix"]
     - get: gpaddon_src
       passed: [gate_compile_start]
@@ -968,7 +931,6 @@ jobs:
       - compile_gpdb_centos7
       - compile_gpdb_sles11
       - compile_gpdb_ubuntu16
-      - compile_gpdb_and_orca_conan_ubuntu16
       - compile_gpdb_windows_cl
       trigger: true
     - get: bin_gpdb_sles11
@@ -986,12 +948,6 @@ jobs:
     - get: compiled_bits_ubuntu16
       passed:
       - compile_gpdb_ubuntu16
-    - get: compiled_bits_gpdb_with_orca_conan_ubuntu16
-      passed:
-      - compile_gpdb_and_orca_conan_ubuntu16
-    - get: compiled_bits_orca_with_conan_ubuntu16
-      passed:
-      - compile_gpdb_and_orca_conan_ubuntu16
 ################# Compile Group End
 
 ################# ICW Group
@@ -1015,12 +971,6 @@ jobs:
         passed:
         - gate_compile_end
       - get: compiled_bits_ubuntu16
-        passed:
-        - gate_compile_end
-      - get: compiled_bits_gpdb_with_orca_conan_ubuntu16
-        passed:
-        - gate_compile_end
-      - get: compiled_bits_orca_with_conan_ubuntu16
         passed:
         - gate_compile_end
 
@@ -1128,11 +1078,7 @@ jobs:
       passed: [gate_icw_start]
     - get: bin_gpdb
       passed: [gate_icw_start]
-      resource: compiled_bits_gpdb_with_orca_conan_ubuntu16
-      trigger: true
-    - get: bin_orca
-      passed: [gate_icw_start]
-      resource: compiled_bits_orca_with_conan_ubuntu16
+      resource: compiled_bits_ubuntu16
       trigger: true
     - get: ubuntu-gpdb-dev-16
   - task: icw_with_orca
@@ -1178,6 +1124,52 @@ jobs:
       BLDWRAP_POSTGRES_CONF_ADDONS: "fsync=off"
       TEST_OS: centos
 
+- name: icw_extensions_gpcloud
+  plan:
+  - aggregate:
+    - get: gpdb_src
+      passed: [gate_icw_start]
+      trigger: true
+    - get: bin_gpdb_centos6
+      passed: [gate_icw_start]
+    - get: compiled_bits_ubuntu16
+      passed: [gate_icw_start]
+    - get: centos-gpdb-dev-6
+    - get: ubuntu-gpdb-dev-16
+  - aggregate:
+    - task: unit_tests_gpcloud
+      file: gpdb_src/concourse/tasks/unit_tests_gpcloud.yml
+      image: centos-gpdb-dev-6
+      params:
+        TARGET_OS: centos
+    - task: regression_tests_gpcloud_centos
+      input_mapping:
+        bin_gpdb: bin_gpdb_centos6
+      file: gpdb_src/concourse/tasks/regression_tests_gpcloud.yml
+      image: centos-gpdb-dev-6
+      params:
+        gpcloud_access_key_id: {{gpcloud-access-key-id}}
+        gpcloud_secret_access_key: {{gpcloud-secret-access-key}}
+        TARGET_OS: centos
+    - task: regression_tests_gpcloud_ubuntu
+      input_mapping:
+        bin_gpdb: compiled_bits_ubuntu16
+      file: gpdb_src/concourse/tasks/regression_tests_gpcloud.yml
+      image: ubuntu-gpdb-dev-16
+      params:
+        gpcloud_access_key_id: {{gpcloud-access-key-id}}
+        gpcloud_secret_access_key: {{gpcloud-secret-access-key}}
+        TARGET_OS: ubuntu
+    - task: gpcheckcloud_tests_gpcloud_centos
+      input_mapping:
+        bin_gpdb: bin_gpdb_centos6
+      file: gpdb_src/concourse/tasks/gpcheckcloud_tests_gpcloud.yml
+      image: centos-gpdb-dev-6
+      params:
+        gpcloud_access_key_id: {{gpcloud-access-key-id}}
+        gpcloud_secret_access_key: {{gpcloud-secret-access-key}}
+        TARGET_OS: centos
+
 - name: QP_memory-accounting
   plan:
   - aggregate:
@@ -1209,6 +1201,7 @@ jobs:
       - icw_gporca_centos7
       - icw_gporca_sles11
       - icw_planner_ictcp_centos6
+      - icw_extensions_gpcloud
       - icw_gporca_centos6_gpos_memory
       - QP_memory-accounting
       trigger: true
@@ -1534,7 +1527,7 @@ jobs:
       <<: *debug_sleep
   - *ccp_destroy
 
-- name: cs_pg_twophase_switch_01_12
+- name: cs_pg_twophase_switch
   plan:
   - *ccp_jitter_delay
   - aggregate:
@@ -1572,48 +1565,6 @@ jobs:
     image: centos-gpdb-dev-6
     params:
       TINC_TARGET: test_switch_01_12
-    on_failure:
-      <<: *debug_sleep
-  - *ccp_destroy
-
-- name: cs_pg_twophase_switch_13_24
-  plan:
-  - *ccp_jitter_delay
-  - aggregate:
-    - get: gpdb_src
-      tags: ["ccp"]
-      passed: [gate_cs_start]
-    - get: gpdb_binary
-      tags: ["ccp"]
-      resource: bin_gpdb_centos6
-      passed: [gate_cs_start]
-      trigger: true
-    - get: ccp_src
-      tags: ["ccp"]
-    - get: centos-gpdb-dev-6
-      tags: ["ccp"]
-  - put: terraform
-    tags: ["ccp"]
-    params:
-      <<: *ccp_default_params
-      vars:
-        <<: *ccp_default_vars
-        aws_instance-node-instance_type: m4.large
-        aws_ebs_volume_type: gp2
-        number_of_nodes: 1
-  - task: gen_cluster
-    tags: ["ccp"]
-    file: ccp_src/ci/tasks/gen_cluster.yml
-    params:
-      <<: *ccp_gen_cluster_default_params
-    on_failure:
-      <<: *ccp_destroy
-  - task: run_tests
-    tags: ["ccp"]
-    file: gpdb_src/concourse/tasks/run_tinc.yml
-    image: centos-gpdb-dev-6
-    params:
-      TINC_TARGET: test_switch_13_24
     on_failure:
       <<: *debug_sleep
   - *ccp_destroy
@@ -1794,8 +1745,7 @@ jobs:
       - cs_pg_twophase_21_30
       - cs_pg_twophase_31_40
       - cs_pg_twophase_41_49
-      - cs_pg_twophase_switch_01_12
-      - cs_pg_twophase_switch_13_24
+      - cs_pg_twophase_switch
       - cs_crash_recovery_schema_topology
       - cs_crash_recovery_04_10
       - cs_crash_recovery_11_20
@@ -1850,12 +1800,30 @@ jobs:
     <<: *cs_ccp_terraform_params
   - task: gen_cluster
     <<: *cs_ccp_gen_cluster_params
+  - task: pre_run_test_setup
+    tags: ["ccp"]
+    image: centos-gpdb-dev-6
+    config:
+      platform: linux
+      inputs:
+       - name: ccp_src
+       - name: cluster_env_files
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          set -ex
+          ccp_src/aws/setup_ssh_to_cluster.sh
+          ssh -t centos@mdw << 'SSH_CMD'
+            sudo yum -y install kernel-devel-$(uname -r)
+          SSH_CMD
+    on_failure:
+      <<: *debug_sleep
   - task: run_tests
     <<: *cs_ccp_run_tests_params
     params:
       TINC_TARGET: mpp_interconnect
-      PRE_TEST_SCRIPT_USER: centos
-      PRE_TEST_SCRIPT: sudo bash -c 'yum -y install "kernel-devel-uname-r == $(uname -r)"'
   - *ccp_destroy
 
 - name: mpp_resource_group_centos6
@@ -2256,6 +2224,25 @@ jobs:
       <<: *ccp_gen_cluster_default_params
     on_failure:
       <<: *ccp_destroy
+  - task: pre_run_test_setup
+    tags: ["ccp"]
+    image: centos-gpdb-dev-6
+    config:
+      platform: linux
+      inputs:
+       - name: ccp_src
+       - name: cluster_env_files
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          set -ex
+          ccp_src/aws/setup_ssh_to_cluster.sh
+          ssh -t mdw "HOST1=mdw HOST2=sdw1 HOST3=sdw2 HOST4=sdw3 HOST5=sdw4 \
+                      bash -c 'ssh-keygen -f ~/.ssh/id_rsa -y > ~/.ssh/id_rsa.pub; for i in mdw sdw{1..4}; do ssh centos@\$i \"sudo chmod 777 /usr/local\"; done'"
+    on_failure:
+      <<: *debug_sleep
   - task: run_tests
     tags: ["ccp"]
     file: gpdb_src/concourse/tasks/run_tinc.yml
@@ -2263,7 +2250,6 @@ jobs:
     params:
       TINC_TARGET: gpexpand_2
       CUSTOM_ENV: HOST1=mdw HOST2=sdw1 HOST3=sdw2 HOST4=sdw3 HOST5=sdw4
-      PRE_TEST_SCRIPT: bash -c 'ssh-keygen -f ~/.ssh/id_rsa -y > ~/.ssh/id_rsa.pub; for i in mdw sdw{1..4}; do ssh centos@$i "sudo chmod 777 /usr/local"; done'
     on_failure:
       <<: *debug_sleep
   - *ccp_destroy
@@ -2774,25 +2760,6 @@ jobs:
       TARGET_OS: centos
       TARGET_OS_VERSION: 6
 
-- name: regression_tests_gpcloud_centos
-  plan:
-  - aggregate:
-    - get: gpdb_src
-      passed: [gate_ud_start]
-    - get: bin_gpdb
-      resource: bin_gpdb_centos6
-      passed: [gate_ud_start]
-      trigger: true
-    - get: centos-gpdb-dev-6
-  - task: regression_tests_gpcloud
-    file: gpdb_src/concourse/tasks/regression_tests_gpcloud.yml
-    image: centos-gpdb-dev-6
-    params:
-      gpcloud_access_key_id: {{gpcloud-access-key-id}}
-      gpcloud_secret_access_key: {{gpcloud-secret-access-key}}
-      overwrite_gpcloud: false
-      TARGET_OS: centos
-      TARGET_OS_VERSION: 6
 
 - name: gate_ud_end
   plan:
@@ -2804,7 +2771,6 @@ jobs:
       - regression_tests_pxf_cdh_rpm
       - regression_tests_pxf_cdh_tar
       - regression_tests_gphdfs_centos
-      - regression_tests_gpcloud_centos
       trigger: true
 ################ General Misc End
 
@@ -3019,7 +2985,6 @@ jobs:
     - compile_gpdb_centos7
     - compile_gpdb_sles11
     - compile_gpdb_ubuntu16
-    - compile_gpdb_and_orca_conan_ubuntu16
     - compile_gpdb_windows_cl
     - compile_gpdb_aix7_remote
     - icw_planner_centos6
@@ -3029,6 +2994,7 @@ jobs:
     - icw_planner_ubuntu16
     - icw_gporca_conan_ubuntu16
     - icw_planner_ictcp_centos6
+    - icw_extensions_gpcloud
     - client_loader_remote_test_aix
     - mpp_resource_group_centos6
     - mpp_resource_group_centos7
@@ -3053,15 +3019,13 @@ jobs:
     - cs_pg_twophase_21_30
     - cs_pg_twophase_31_40
     - cs_pg_twophase_41_49
-    - cs_pg_twophase_switch_01_12
-    - cs_pg_twophase_switch_13_24
+    - cs_pg_twophase_switch
     - cs_crash_recovery_schema_topology
     - cs_crash_recovery_04_10
     - cs_crash_recovery_11_20
     - cs_crash_recovery_21_30
     - cs_crash_recovery_31_42
     - QP_memory-accounting
-    - regression_tests_gpcloud_centos
     - regression_tests_gphdfs_centos
     - regression_tests_pxf_hdp_rpm
     - regression_tests_pxf_hdp_tar
