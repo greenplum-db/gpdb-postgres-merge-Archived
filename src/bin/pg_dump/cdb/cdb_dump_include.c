@@ -2116,7 +2116,7 @@ getTables(int *numTables)
 					  "SELECT c.tableoid, c.oid, relname, "
 					  "relacl, relkind, relstorage, relnamespace, "
 					  "(%s relowner) as rolname, "
-					  "relchecks, reltriggers, "
+					  "relchecks, relhastriggers, "
 					  "relhasindex, relhasrules, relhasoids, "
 					  "d.refobjid as owning_tab, "
 					  "d.refobjsubid as owning_col, "
