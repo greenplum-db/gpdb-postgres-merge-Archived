@@ -180,7 +180,7 @@ ROLLBACK;
 COMMIT;		-- should not be in a transaction block
 WARNING:  there is no transaction in progress
 		
-SELECT * FROM savepoints ORDER BY 1;
+SELECT * FROM savepoints;
  a 
 ---
  1
@@ -197,7 +197,7 @@ ERROR:  column "foo" does not exist
 LINE 1: SELECT foo;
                ^
 COMMIT;
-SELECT * FROM savepoints ORDER BY 1;
+SELECT * FROM savepoints;
  a 
 ---
  1
@@ -232,7 +232,7 @@ BEGIN;
 	ROLLBACK TO SAVEPOINT one;
 		INSERT INTO savepoints VALUES (11);
 COMMIT;
-SELECT a FROM savepoints WHERE a in (9, 10, 11) ORDER BY 1;
+SELECT a FROM savepoints WHERE a in (9, 10, 11);
  a  
 ----
   9
@@ -259,7 +259,7 @@ BEGIN;
 			SAVEPOINT three;
 				INSERT INTO savepoints VALUES (17);
 COMMIT;
-SELECT a FROM savepoints WHERE a BETWEEN 12 AND 17 ORDER BY 1;
+SELECT a FROM savepoints WHERE a BETWEEN 12 AND 17;
  a  
 ----
  12
@@ -279,7 +279,7 @@ BEGIN;
 	ROLLBACK TO SAVEPOINT one;
 		INSERT INTO savepoints VALUES (22);
 COMMIT;
-SELECT a FROM savepoints WHERE a BETWEEN 18 AND 22 ORDER BY 1;
+SELECT a FROM savepoints WHERE a BETWEEN 18 AND 22;
  a  
 ----
  18

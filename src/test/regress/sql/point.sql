@@ -61,7 +61,7 @@ SELECT '' AS thirtysix, p1.f1 AS point1, p2.f1 AS point2, p1.f1 <-> p2.f1 AS dis
 
 SELECT '' AS thirty, p1.f1 AS point1, p2.f1 AS point2
    FROM POINT_TBL p1, POINT_TBL p2
-   WHERE (p1.f1 <-> p2.f1) > 3 ORDER BY p1.f1[0],p1.f1[1],p2.f1[0],p2.f1[1];
+   WHERE (p1.f1 <-> p2.f1) > 3;
 
 -- put distance result into output to allow sorting with GEQ optimizer - tgl 97/05/10
 SELECT '' AS fifteen, p1.f1 AS point1, p2.f1 AS point2, (p1.f1 <-> p2.f1) AS distance

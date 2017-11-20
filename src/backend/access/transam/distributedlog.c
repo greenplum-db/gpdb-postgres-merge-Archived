@@ -70,11 +70,19 @@ typedef struct DistributedLogShmem
 
 static DistributedLogShmem *DistributedLogShared = NULL;
 
+static void DistributedLog_SetCommitted(TransactionId localXid,
+							DistributedTransactionTimeStamp dtxStartTime,
+							DistributedTransactionId distribXid,
+							bool isRedo);
 static int	DistributedLog_ZeroPage(int page, bool writeXlog);
 static bool DistributedLog_PagePrecedes(int page1, int page2);
 static void DistributedLog_WriteZeroPageXlogRec(int page);
 static void DistributedLog_WriteTruncateXlogRec(int page);
 
+/*
+ * Record that a distributed transaction and its possible sub-transactions
+ * committed, in the distributed log.
+ */
 void
 DistributedLog_SetCommittedTree(TransactionId xid, int nxids, TransactionId *xids,
 								DistributedTransactionTimeStamp	distribTimeStamp,
@@ -105,7 +113,7 @@ DistributedLog_SetCommittedTree(TransactionId xid, int nxids, TransactionId *xid
 /*
  * Record that a distributed transaction committed in the distributed log.
  */
-void
+static void
 DistributedLog_SetCommitted(
 	TransactionId 						localXid,
 	DistributedTransactionTimeStamp		distribTimeStamp,

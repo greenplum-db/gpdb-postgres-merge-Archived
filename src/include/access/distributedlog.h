@@ -49,11 +49,6 @@ extern void DistributedLog_SetCommittedTree(TransactionId xid, int nxids, Transa
 								DistributedTransactionTimeStamp	distribTimeStamp,
 								DistributedTransactionId distribXid,
 								bool isRedo);
-extern void DistributedLog_SetCommitted(
-							TransactionId localXid,
-							DistributedTransactionTimeStamp dtxStartTime,
-							DistributedTransactionId distribXid,
-							bool isRedo);
 extern bool DistributedLog_CommittedCheck(
 							  TransactionId localXid,
 							  DistributedTransactionTimeStamp *dtxStartTime,

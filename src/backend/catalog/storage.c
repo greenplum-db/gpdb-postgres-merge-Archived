@@ -34,7 +34,7 @@
 #include "cdb/cdbpersistentrelation.h"
 #include "utils/faultinjector.h"
 #include "storage/lmgr.h"
-#include "storage/smgr_gp.h"
+#include "storage/smgr_ao.h"
 
 /*
  * We keep a list of all relations (represented as RelFileNode values)

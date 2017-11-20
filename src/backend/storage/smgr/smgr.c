@@ -25,41 +25,19 @@
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
-#include "catalog/pg_filespace.h"
-#include "catalog/pg_resqueue.h"
-#include "catalog/pg_tablespace.h"
-#include "cdb/cdbfilerepprimary.h"
 #include "cdb/cdbpersistentfilespace.h"
 #include "cdb/cdbpersistenttablespace.h"
 #include "cdb/cdbpersistentdatabase.h"
 #include "cdb/cdbpersistentrelation.h"
-#include "cdb/cdbmirroredfilesysobj.h"
-#include "cdb/cdbpersistentfilesysobj.h"
-#include "cdb/cdbpersistentrecovery.h"
-#include "cdb/cdbmirroredappendonly.h"
-#include "cdb/cdbutil.h"
-#include "cdb/cdbvars.h"
-#include "commands/filespace.h"
 #include "commands/tablespace.h"
 #include "postmaster/postmaster.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
 #include "storage/smgr.h"
-#include "utils/builtins.h"
+#include "storage/smgr_ao.h"
 #include "utils/faultinjector.h"
-#include "utils/guc.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
-#include "cdb/cdbtm.h"
-#include "access/twophase.h"
-
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/file.h>
-#include <glob.h>
-#include <dirent.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 
 /*
  * Each backend has a hashtable that stores all extant SMgrRelation objects.
@@ -68,6 +46,25 @@ static HTAB *SMgrRelationHash = NULL;
 
 /* local function prototypes */
 static void smgrshutdown(int code, Datum arg);
+
+char *
+StorageManagerMirrorMode_Name(StorageManagerMirrorMode mirrorMode)
+{
+	switch (mirrorMode)
+	{
+		case StorageManagerMirrorMode_None:
+			return "None";
+		case StorageManagerMirrorMode_PrimaryOnly:
+			return "Primary Only";
+		case StorageManagerMirrorMode_MirrorOnly:
+			return "Mirror Only";
+		case StorageManagerMirrorMode_Both:
+			return "Both";
+
+		default:
+			return "Unknown";
+	}
+}
 
 /*
  *	smgrinit(), smgrshutdown() -- Initialize or shut down storage
@@ -244,15 +241,17 @@ smgrclosenode(RelFileNode rnode)
 
 /*
  *	smgrcreatefilespacedir() -- Create a new filespace directory.
- *
- * 'primaryFilespaceLocation ' is the primary filespace directory path.
- * NOT Blank padded. Just a NULL terminated string.
  */
 void
 smgrcreatefilespacedir(Oid filespaceOid,
 					   char *primaryFilespaceLocation,
+
+ /*
+  * The primary filespace directory path.  NOT Blank padded. Just a NULL
+  * terminated string.
+  */
 					   char *mirrorFilespaceLocation,
-					   StorageManagerMirrorMode	mirrorMode,
+					   StorageManagerMirrorMode mirrorMode,
 					   bool ignoreAlreadyExists,
 					   int *primaryError,
 					   bool *mirrorDataLossOccurred)
@@ -268,6 +267,7 @@ smgrcreatefilespacedir(Oid filespaceOid,
 
 /*
  *	smgrcreatetablespacedir() -- Create a new tablespace directory.
+ *
  */
 void
 smgrcreatetablespacedir(Oid tablespaceOid,
@@ -380,14 +380,18 @@ smgrmirroredcreate(SMgrRelation reln,
 void
 smgrcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
 {
-	/* GPDB_84_MERGE_FIXME: the following performance tweak came in from 8.4; is
-	 * it still applicable to our system here? */
+	/*
+	 * GPDB_84_MERGE_FIXME: the following performance tweak came in from 8.4;
+	 * is it still applicable to our system here?
+	 */
+#if 0
 	/*
 	 * Exit quickly in WAL replay mode if we've already opened the file. If
 	 * it's open, it surely must exist.
 	 */
 	if (isRedo && reln->md_fd[forknum] != NULL)
 		return;
+#endif
 
 	mdcreate(reln, forknum, isRedo);
 }
@@ -453,26 +457,19 @@ smgrdounlink(SMgrRelation reln, ForkNumber forknum, bool isTemp, bool isRedo)
 	mdunlink(rnode, forknum, isRedo);
 }
 
-
 void
-smgrdormfilespacedir(
-	Oid							filespaceOid,
+smgrdormfilespacedir(Oid filespaceOid,
+					 char *primaryFilespaceLocation,
 
-	char						*primaryFilespaceLocation,
-								/*
-								 * The primary filespace directory path.  NOT Blank padded.
-								 * Just a NULL terminated string.
-								 */
-
-	char						*mirrorFilespaceLocation,
-
-	bool						primaryOnly,
-
-	bool					 	mirrorOnly,
-
-	bool 						ignoreNonExistence,
-
-	bool						*mirrorDataLossOccurred)
+ /*
+  * The primary filespace directory path.  NOT Blank padded. Just a NULL
+  * terminated string.
+  */
+					 char *mirrorFilespaceLocation,
+					 bool primaryOnly,
+					 bool mirrorOnly,
+					 bool ignoreNonExistence,
+					 bool *mirrorDataLossOccurred)
 {
 	/*
 	 * And remove the physical filespace directory.
@@ -480,33 +477,25 @@ smgrdormfilespacedir(
 	 * Note: we treat deletion failure as a WARNING, not an error, because
 	 * we've already decided to commit or abort the current xact.
 	 */
-	if (!mdrmfilespacedir(
-						filespaceOid,
-						primaryFilespaceLocation,
-						mirrorFilespaceLocation,
-						primaryOnly,
-						mirrorOnly,
-						ignoreNonExistence,
-						mirrorDataLossOccurred))
+	if (!mdrmfilespacedir(filespaceOid,
+						  primaryFilespaceLocation,
+						  mirrorFilespaceLocation,
+						  primaryOnly,
+						  mirrorOnly,
+						  ignoreNonExistence,
+						  mirrorDataLossOccurred))
 		ereport(WARNING,
 				(errcode_for_file_access(),
 				 errmsg("could not remove filespace directory %u: %m",
 						filespaceOid)));
 }
 
-
-
 void
-smgrdormtablespacedir(
-	Oid							tablespaceOid,
-
-	bool						primaryOnly,
-
-	bool					 	mirrorOnly,
-
-	bool 						ignoreNonExistence,
-
-	bool						*mirrorDataLossOccurred)
+smgrdormtablespacedir(Oid tablespaceOid,
+					  bool primaryOnly,
+					  bool mirrorOnly,
+					  bool ignoreNonExistence,
+					  bool *mirrorDataLossOccurred)
 {
 	/*
 	 * And remove the physical tablespace directory.
@@ -525,16 +514,11 @@ smgrdormtablespacedir(
  * Shared subroutine that actually does the rmdir of a database directory ...
  */
 static void
-smgr_internal_rmdbdir(
-	DbDirNode					*dbDirNode,
-
-	bool						primaryOnly,
-
-	bool					 	mirrorOnly,
-
-	bool 						ignoreNonExistence,
-
-	bool						*mirrorDataLossOccurred)
+smgr_internal_rmdbdir(DbDirNode *dbDirNode,
+					  bool primaryOnly,
+					  bool mirrorOnly,
+					  bool ignoreNonExistence,
+					  bool *mirrorDataLossOccurred)
 {
 	/*
 	 * And remove the physical database directory.
@@ -551,23 +535,17 @@ smgr_internal_rmdbdir(
 }
 
 void
-smgrdormdbdir(
-	DbDirNode					*dbDirNode,
-
-	bool						primaryOnly,
-
-	bool					 	mirrorOnly,
-
-	bool 						ignoreNonExistence,
-
-	bool						*mirrorDataLossOccurred)
+smgrdormdbdir(DbDirNode *dbDirNode,
+			  bool primaryOnly,
+			  bool mirrorOnly,
+			  bool ignoreNonExistence,
+			  bool *mirrorDataLossOccurred)
 {
-	smgr_internal_rmdbdir(
-					dbDirNode,
-					primaryOnly,
-					mirrorOnly,
-					ignoreNonExistence,
-					mirrorDataLossOccurred);
+	smgr_internal_rmdbdir(dbDirNode,
+						  primaryOnly,
+						  mirrorOnly,
+						  ignoreNonExistence,
+						  mirrorDataLossOccurred);
 }
 
 /*
