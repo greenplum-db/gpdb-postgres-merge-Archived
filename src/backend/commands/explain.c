@@ -943,6 +943,9 @@ explain_outNode(StringInfo str,
 		case T_BitmapIndexScan:
 			pname = "Bitmap Index Scan";
 			break;
+		case T_DynamicBitmapIndexScan:
+			pname = "Dynamic Bitmap Index Scan";
+			break;
 		case T_BitmapHeapScan:
 			pname = "Bitmap Heap Scan";
 			break;
@@ -1198,6 +1201,7 @@ explain_outNode(StringInfo str,
 			}
 			break;
 		case T_BitmapIndexScan:
+		case T_DynamicBitmapIndexScan:
 			appendStringInfo(str, " on %s",
 				explain_get_index_name(((BitmapIndexScan *) plan)->indexid));
 			break;
@@ -1380,6 +1384,7 @@ explain_outNode(StringInfo str,
 						   str, indent, es);
 			break;
 		case T_BitmapIndexScan:
+		case T_DynamicBitmapIndexScan:
 			show_scan_qual(((BitmapIndexScan *) plan)->indexqualorig,
 						   "Index Cond",
 						   ((Scan *) plan)->scanrelid,
