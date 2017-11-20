@@ -261,8 +261,8 @@ insert into arr_tbl values ('{1,2,10}');
 
 set enable_seqscan to off;
 set enable_bitmapscan to off;
-select * from arr_tbl where f1 > '{1,2,3}' and f1 <= '{1,5,3}';
-select * from arr_tbl where f1 >= '{1,2,3}' and f1 < '{1,5,3}';
+select * from arr_tbl where f1 > '{1,2,3}' and f1 <= '{1,5,3}' ORDER BY 1;
+select * from arr_tbl where f1 >= '{1,2,3}' and f1 < '{1,5,3}' ORDER BY 1;
 -- note: if above selects don't produce the expected tuple order,
 -- then you didn't get an indexscan plan, and something is busted.
 reset enable_seqscan;
