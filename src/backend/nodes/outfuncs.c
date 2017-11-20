@@ -4089,8 +4089,10 @@ _outVacuumStmt(StringInfo str, VacuumStmt *node)
 	WRITE_BOOL_FIELD(verbose);
 	WRITE_BOOL_FIELD(rootonly);
 	WRITE_INT_FIELD(freeze_min_age);
+	WRITE_BOOL_FIELD(scan_all);
 	WRITE_NODE_FIELD(relation);
 	WRITE_NODE_FIELD(va_cols);
+
 	WRITE_NODE_FIELD(expanded_relids);
 	WRITE_NODE_FIELD(appendonly_compaction_segno);
 	WRITE_NODE_FIELD(appendonly_compaction_insert_segno);
