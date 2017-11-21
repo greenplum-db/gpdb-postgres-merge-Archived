@@ -22,7 +22,8 @@ class PartitionComparator(object):
 
         # Strip out any :location fields, they are not relevant for the comparison.
         for column_key in KEYS_WITH_LOCATIONS:
-            result[column_key] = re.sub(' :location -?[0-9]+', '', result[column_key])
+            if isinstance(result[column_key], str):
+                result[column_key] = re.sub(' :location -?[0-9]+', '', result[column_key])
 
         for column_key in column_list:
             value = result[column_key]
