@@ -556,23 +556,15 @@ RelationTruncate(Relation rel, BlockNumber nblocks, bool markPersistentAsPhysica
  *		successfully commit the current transaction.
  */
 void
-smgrschedulermfilespacedir(
-	Oid 				filespaceOid,
-
-	ItemPointer 		persistentTid,
-
-	int64				persistentSerialNum)
+smgrschedulermfilespacedir(Oid filespaceOid,
+						   ItemPointer persistentTid,
+						   int64 persistentSerialNum)
 {
 	PersistentFileSysObjName fsObjName;
 
-	PersistentFileSysObjName_SetFilespaceDir(
-									&fsObjName,
-									filespaceOid);
+	PersistentFileSysObjName_SetFilespaceDir(&fsObjName, filespaceOid);
 
-	PendingDelete_AddDropEntry(
-						&fsObjName,
-						persistentTid,
-						persistentSerialNum);
+	PendingDelete_AddDropEntry(&fsObjName, persistentTid, persistentSerialNum);
 }
 
 /*
@@ -582,23 +574,15 @@ smgrschedulermfilespacedir(
  *		successfully commit the current transaction.
  */
 void
-smgrschedulermtablespacedir(
-	Oid 				tablespaceOid,
-
-	ItemPointer 		persistentTid,
-
-	int64				persistentSerialNum)
+smgrschedulermtablespacedir(Oid tablespaceOid,
+							ItemPointer persistentTid,
+							int64 persistentSerialNum)
 {
 	PersistentFileSysObjName fsObjName;
 
-	PersistentFileSysObjName_SetTablespaceDir(
-									&fsObjName,
-									tablespaceOid);
+	PersistentFileSysObjName_SetTablespaceDir(&fsObjName, tablespaceOid);
 
-	PendingDelete_AddDropEntry(
-						&fsObjName,
-						persistentTid,
-						persistentSerialNum);
+	PendingDelete_AddDropEntry(&fsObjName,persistentTid, persistentSerialNum);
 }
 
 /*
@@ -608,30 +592,24 @@ smgrschedulermtablespacedir(
  *		successfully commit the current transaction.
  */
 void
-smgrschedulermdbdir(
-	DbDirNode			*dbDirNode,
-
-	ItemPointer			persistentTid,
-
-	int64 				persistentSerialNum)
+smgrschedulermdbdir(DbDirNode *dbDirNode,
+					ItemPointer persistentTid,
+					int64 persistentSerialNum)
 {
 	PersistentFileSysObjName fsObjName;
-
-	Oid tablespace;
-	Oid database;
+	Oid			tablespace;
+	Oid			database;
 
 	tablespace = dbDirNode->tablespace;
 	database = dbDirNode->database;
 
-	PersistentFileSysObjName_SetDatabaseDir(
-									&fsObjName,
-									tablespace,
-									database);
+	PersistentFileSysObjName_SetDatabaseDir(&fsObjName,
+											tablespace,
+											database);
 
-	PendingDelete_AddDropEntry(
-						&fsObjName,
-						persistentTid,
-						persistentSerialNum);
+	PendingDelete_AddDropEntry(&fsObjName,
+							   persistentTid,
+							   persistentSerialNum);
 }
 
 
@@ -643,11 +621,10 @@ smgrschedulermdbdir(
 static int
 PendingDelete_Compare(const PendingDelete *entry1, const PendingDelete *entry2)
 {
-	int cmp;
+	int			cmp;
 
-	cmp = PersistentFileSysObjName_Compare(
-								&entry1->fsObjName,
-								&entry2->fsObjName);
+	cmp = PersistentFileSysObjName_Compare(&entry1->fsObjName,
+										   &entry2->fsObjName);
 	if (cmp == 0)
 	{
 		/*
@@ -679,24 +656,19 @@ PendingDeletePtr_Compare(const void *p1, const void *p2)
 }
 
 static void
-smgrSortDeletesList(
-	PendingDelete 	**list,
-	int 			*listCount,
-	int				nestLevel)
+smgrSortDeletesList(PendingDelete **list, int *listCount, int nestLevel)
 {
 	PendingDeletePtr *ptrArray;
 	PendingDelete *current;
-	int i;
+	int			i;
 	PendingDelete *prev;
-	int collapseCount;
+	int			collapseCount;
 
 	if (*listCount == 0)
 		return;
 
-	ptrArray =
-			(PendingDeletePtr*)
-						palloc(*listCount * sizeof(PendingDeletePtr));
-
+	ptrArray = (PendingDeletePtr *)
+		palloc(*listCount * sizeof(PendingDeletePtr));
 
 	i = 0;
 	for (current = *list; current != NULL; current = current->next)
@@ -711,11 +683,10 @@ smgrSortDeletesList(
 	 * Supports the collapsing of same transaction create-deletes and to be able
 	 * to process relations before database directories, etc.
 	 */
-	qsort(
-		ptrArray,
-		*listCount,
-		sizeof(PendingDeletePtr),
-		PendingDeletePtr_Compare);
+	qsort(ptrArray,
+		  *listCount,
+		  sizeof(PendingDeletePtr),
+		  PendingDeletePtr_Compare);
 
 	/*
 	 * Collapse same transaction create-drops and re-link list.
@@ -732,8 +703,8 @@ smgrSortDeletesList(
 		current = ptrArray[i];
 
 		/*
-		 * Only do CREATE-DROP collapsing when both are at or below the requested
-		 * transaction nest level.
+		 * Only do CREATE-DROP collapsing when both are at or below the
+		 * requested transaction nest level.
 		 */
 		if (current->nestLevel >= nestLevel &&
 			prev->nestLevel >= nestLevel &&
@@ -742,10 +713,10 @@ smgrSortDeletesList(
 								&current->fsObjName) == 0))
 		{
 			/*
-			 * If there are two sequential entries for the same object, it should
-			 * be a CREATE-DROP pair (XXX: why?). Sanity check that it really is.
-			 * NOTE: We cannot elog(ERROR) here, because that would leave the list in
-			 * an inconsistent state.
+			 * If there are two sequential entries for the same object, it
+			 * should be a CREATE-DROP pair (XXX: why?). Sanity check that it
+			 * really is. NOTE: We cannot elog(ERROR) here, because that
+			 * would leave the list in an inconsistent state.
 			 */
 			if (prev->dropForCommit)
 			{
@@ -804,7 +775,7 @@ smgrSortDeletesList(
 	{
 		PendingDelete	*check;
 		PendingDelete	*checkPrev;
-		int checkCount;
+		int			checkCount;
 
 		checkPrev = NULL;
 		checkCount = 0;
@@ -988,12 +959,12 @@ smgrDoDeleteActions(PendingDelete **list, int *listCount, bool forCommit)
 	MIRRORED_LOCK_DECLARE;
 
 	PendingDelete *current;
-	int entryIndex;
+	int			entryIndex;
 
 	PersistentEndXactFileSysAction action;
 
-	bool dropPending;
-	bool abortingCreate;
+	bool		dropPending;
+	bool		abortingCreate;
 
 	PersistentFileSysObjStateChangeResult *stateChangeResults;
 
@@ -1154,8 +1125,7 @@ smgrDoDeleteActions(PendingDelete **list, int *listCount, bool forCommit)
 				abortingCreate = true;
 			}
 #ifdef FAULT_INJECTOR
-				FaultInjector_InjectFaultIfSet(
-											   forCommit ?
+				FaultInjector_InjectFaultIfSet(forCommit ?
 											   TransactionCommitPass1FromCreatePendingToCreated :
 											   TransactionAbortPass1FromCreatePendingToAbortingCreate,
 											   DDLNotSpecified,
@@ -1180,8 +1150,7 @@ smgrDoDeleteActions(PendingDelete **list, int *listCount, bool forCommit)
 			abortingCreate = true;
 
 #ifdef FAULT_INJECTOR
-				FaultInjector_InjectFaultIfSet(
-											   forCommit ?
+				FaultInjector_InjectFaultIfSet(forCommit ?
 											   TransactionCommitPass1FromAbortingCreateNeededToAbortingCreate:
 											   TransactionAbortPass1FromAbortingCreateNeededToAbortingCreate,
 											   DDLNotSpecified,
@@ -1199,21 +1168,19 @@ smgrDoDeleteActions(PendingDelete **list, int *listCount, bool forCommit)
 		{
 			if (stateChangeResults[entryIndex] == PersistentFileSysObjStateChangeResult_StateChangeOk)
 			{
-				PersistentFileSysObj_EndXactDrop(
-								&current->fsObjName,
-								current->relStorageMgr,
-								current->relationName,
-								&current->persistentTid,
-								current->persistentSerialNum,
-								/* ignoreNonExistence */ abortingCreate);
+				PersistentFileSysObj_EndXactDrop(&current->fsObjName,
+												 current->relStorageMgr,
+												 current->relationName,
+												 &current->persistentTid,
+												 current->persistentSerialNum,
+												 /* ignoreNonExistence */ abortingCreate);
 			}
 		}
 
 #ifdef FAULT_INJECTOR
 		if (abortingCreate && !forCommit)
 		{
-			FaultInjector_InjectFaultIfSet(
-										   TransactionAbortPass2FromCreatePendingToAbortingCreate,
+			FaultInjector_InjectFaultIfSet(TransactionAbortPass2FromCreatePendingToAbortingCreate,
 										   DDLNotSpecified,
 										   "",	// databaseName
 										   ""); // tableName
@@ -1221,8 +1188,7 @@ smgrDoDeleteActions(PendingDelete **list, int *listCount, bool forCommit)
 
 		if (dropPending && forCommit)
 		{
-			FaultInjector_InjectFaultIfSet(
-										   TransactionCommitPass2FromDropInMemoryToDropPending,
+			FaultInjector_InjectFaultIfSet(TransactionCommitPass2FromDropInMemoryToDropPending,
 										   DDLNotSpecified,
 										   "",	// databaseName
 										   ""); // tableName
@@ -1233,8 +1199,7 @@ smgrDoDeleteActions(PendingDelete **list, int *listCount, bool forCommit)
 			case PersistentEndXactFileSysAction_Create:
 				if (!forCommit)
 				{
-					FaultInjector_InjectFaultIfSet(
-												   TransactionAbortPass2FromCreatePendingToAbortingCreate,
+					FaultInjector_InjectFaultIfSet(TransactionAbortPass2FromCreatePendingToAbortingCreate,
 												   DDLNotSpecified,
 												   "",	// databaseName
 												   ""); // tableName
@@ -1244,8 +1209,7 @@ smgrDoDeleteActions(PendingDelete **list, int *listCount, bool forCommit)
 			case PersistentEndXactFileSysAction_Drop:
 				if (forCommit)
 				{
-					FaultInjector_InjectFaultIfSet(
-												   TransactionCommitPass2FromDropInMemoryToDropPending,
+					FaultInjector_InjectFaultIfSet(TransactionCommitPass2FromDropInMemoryToDropPending,
 												   DDLNotSpecified,
 												   "",	// databaseName
 												   ""); // tableName
@@ -1253,8 +1217,7 @@ smgrDoDeleteActions(PendingDelete **list, int *listCount, bool forCommit)
 				break;
 
 			case PersistentEndXactFileSysAction_AbortingCreateNeeded:
-				FaultInjector_InjectFaultIfSet(
-											   forCommit ?
+				FaultInjector_InjectFaultIfSet(forCommit ?
 											   TransactionCommitPass2FromAbortingCreateNeededToAbortingCreate :
 											   TransactionAbortPass2FromAbortingCreateNeededToAbortingCreate,
 											   DDLNotSpecified,
@@ -1265,7 +1228,6 @@ smgrDoDeleteActions(PendingDelete **list, int *listCount, bool forCommit)
 			default:
 				break;
 		}
-
 #endif
 
 		/* must explicitly free the list entry */
@@ -1283,7 +1245,6 @@ smgrDoDeleteActions(PendingDelete **list, int *listCount, bool forCommit)
 
 	if (stateChangeResults != NULL)
 		pfree(stateChangeResults);
-
 }
 
 /*
@@ -1357,12 +1318,12 @@ smgrGetPendingFileSysWork(EndXactRecKind endXactRecKind,
 			 nestLevel);
 
 	rptr = (PersistentEndXactFileSysActionInfo *)
-							palloc(nrels * sizeof(PersistentEndXactFileSysActionInfo));
+		palloc(nrels * sizeof(PersistentEndXactFileSysActionInfo));
 	*ptr = rptr;
 	entryIndex = 0;
 	for (pending = pendingDeletes; pending != NULL; pending = pending->next)
 	{
-		bool returned;
+		bool		returned;
 
 		action = PendingDelete_Action(pending);
 		returned = false;
