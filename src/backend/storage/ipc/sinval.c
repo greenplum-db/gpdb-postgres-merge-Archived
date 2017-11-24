@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/backend/storage/ipc/sinval.c
-=======
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.89 2009/01/01 17:23:47 momjian Exp $
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  *
  *-------------------------------------------------------------------------
  */
