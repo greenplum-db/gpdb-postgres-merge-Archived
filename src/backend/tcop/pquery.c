@@ -172,8 +172,6 @@ FreeQueryDesc(QueryDesc *qdesc)
 {
 	/* Can't be a live query */
 	Assert(qdesc->estate == NULL);
-	/* Only the QueryDesc itself and the sourceText need be freed */
-	pfree((void*) qdesc->sourceText);
 
 	/* forget our snapshots */
 	UnregisterSnapshot(qdesc->snapshot);
