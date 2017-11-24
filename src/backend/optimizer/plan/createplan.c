@@ -5,13 +5,9 @@
  *	  Planning is complete, we just need to convert the selected
  *	  Path into a Plan.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -5143,19 +5139,12 @@ add_agg_cost(PlannerInfo *root, Plan *plan,
 
 WindowAgg *
 make_windowagg(PlannerInfo *root, List *tlist,
-<<<<<<< HEAD
 			   List *windowFuncs, Index winref,
 			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
 			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators,
 			   AttrNumber firstOrderCol, Oid firstOrderCmpOperator, bool firstOrderNullsFirst,
 			   int frameOptions, Node *startOffset, Node *endOffset,
 			   Plan *lefttree)
-=======
-			   int numWindowFuncs, Index winref,
-			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
-			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators,
-			   int frameOptions, Plan *lefttree)
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 {
 	WindowAgg  *node = makeNode(WindowAgg);
 	Plan	   *plan = &node->plan;
@@ -5169,16 +5158,12 @@ make_windowagg(PlannerInfo *root, List *tlist,
 	node->ordNumCols = ordNumCols;
 	node->ordColIdx = ordColIdx;
 	node->ordOperators = ordOperators;
-<<<<<<< HEAD
 	node->firstOrderCol = firstOrderCol;
 	node->firstOrderCmpOperator= firstOrderCmpOperator;
 	node->firstOrderNullsFirst= firstOrderNullsFirst;
 	node->frameOptions = frameOptions;
 	node->startOffset = startOffset;
 	node->endOffset = endOffset;
-=======
-	node->frameOptions = frameOptions;
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 	copy_plan_costsize(plan, lefttree); /* only care about copying size */
 	cost_windowagg(&windowagg_path, root,
