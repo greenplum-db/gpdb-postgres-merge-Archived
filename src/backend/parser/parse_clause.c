@@ -3,13 +3,9 @@
  * parse_clause.c
  *	  handle clauses in parser
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -2461,7 +2457,6 @@ transformWindowDefinitions(ParseState *pstate,
 		/*
 		 * Per spec, a windowdef that references a previous one copies the
 		 * previous partition clause (and mustn't specify its own).  It can
-<<<<<<< HEAD
 		 * specify its own ordering clause, but only if the previous one had
 		 * none.  It always specifies its own frame clause, and the previous
 		 * one must not have a frame clause.  Yeah, it's bizarre that each of
@@ -2472,13 +2467,6 @@ transformWindowDefinitions(ParseState *pstate,
 		 * error if foo has a nondefault frame clause.  Well, ours not to
 		 * reason why, but we do go out of our way to throw a useful error
 		 * message for such cases.
-=======
-		 * specify its own ordering clause. but only if the previous one
-		 * had none.  It always specifies its own frame clause, and the
-		 * previous one must not have a frame clause.  (Yeah, it's bizarre
-		 * that each of these cases works differently, but SQL:2008 says so;
-		 * see 7.11 <window clause> syntax rule 10 and general rule 1.)
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 		 */
 		if (refwc)
 		{
@@ -2517,7 +2505,6 @@ transformWindowDefinitions(ParseState *pstate,
 			wc->copiedOrder = false;
 		}
 		if (refwc && refwc->frameOptions != FRAMEOPTION_DEFAULTS)
-<<<<<<< HEAD
 		{
 			/*
 			 * Use this message if this is a WINDOW clause, or if it's an OVER
@@ -2562,13 +2549,6 @@ transformWindowDefinitions(ParseState *pstate,
 		 *   +/- <integer> operations and must be merge-joinable.
 		 */
 
-=======
-			ereport(ERROR,
-					(errcode(ERRCODE_WINDOWING_ERROR),
-					 errmsg("cannot override frame clause of window \"%s\"",
-							windef->refname),
-					 parser_errposition(pstate, windef->location)));
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 		wc->frameOptions = windef->frameOptions;
 		wc->winref = winref;
 		/* Process frame offset expressions */

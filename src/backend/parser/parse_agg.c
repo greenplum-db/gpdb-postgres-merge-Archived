@@ -562,7 +562,6 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 								  locate_windowfunc((Node *) wfunc->args))));
 
 	/*
-<<<<<<< HEAD
 	 * Check to see if the window function is in an invalid place within the
 	 * query.
 	 *
@@ -717,14 +716,6 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 		name = NULL;
 
 	if (name)
-=======
-	 * If the OVER clause just specifies a window name, find that
-	 * WINDOW clause (which had better be present).  Otherwise, try to
-	 * match all the properties of the OVER clause, and make a new entry
-	 * in the p_windowdefs list if no luck.
-	 */
-	if (windef->name)
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	{
 		Index		winref = 0;
 		ListCell   *lc;
@@ -739,11 +730,7 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 			WindowDef  *refwin = (WindowDef *) lfirst(lc);
 
 			winref++;
-<<<<<<< HEAD
 			if (refwin->name && strcmp(refwin->name, name) == 0)
-=======
-			if (refwin->name && strcmp(refwin->name, windef->name) == 0)
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 			{
 				wfunc->winref = winref;
 				break;
@@ -774,13 +761,9 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 				continue;
 			if (equal(refwin->partitionClause, windef->partitionClause) &&
 				equal(refwin->orderClause, windef->orderClause) &&
-<<<<<<< HEAD
 				refwin->frameOptions == windef->frameOptions &&
 				equal(refwin->startOffset, windef->startOffset) &&
 				equal(refwin->endOffset, windef->endOffset))
-=======
-				refwin->frameOptions == windef->frameOptions)
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 			{
 				/* found a duplicate window specification */
 				wfunc->winref = winref;
