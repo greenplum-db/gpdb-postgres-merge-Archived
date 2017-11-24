@@ -4,19 +4,12 @@
  *	  prototypes for various files in optimizer/plan
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.114 2008/10/07 19:27:04 tgl Exp $
-=======
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
  * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.117 2009/01/01 17:24:00 momjian Exp $
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  *
  *-------------------------------------------------------------------------
  */
@@ -177,7 +170,6 @@ extern MergeJoin *make_mergejoin(List *tlist,
 			   Plan *lefttree, Plan *righttree,
 			   JoinType jointype);
 extern WindowAgg *make_windowagg(PlannerInfo *root, List *tlist,
-<<<<<<< HEAD
 			   List *windowFuncs, Index winref,
 			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
 			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators,
@@ -186,17 +178,6 @@ extern WindowAgg *make_windowagg(PlannerInfo *root, List *tlist,
 			   Plan *lefttree);
 extern Material *make_material(Plan *lefttree);
 extern Plan *materialize_finished_plan(PlannerInfo *root, Plan *subplan);
-=======
-			   int numWindowFuncs, Index winref,
-			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
-			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators,
-			   int frameOptions, Plan *lefttree);
-extern Group *make_group(PlannerInfo *root, List *tlist, List *qual,
-		   int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
-		   double numGroups,
-		   Plan *lefttree);
-extern Plan *materialize_finished_plan(Plan *subplan);
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 extern Unique *make_unique(Plan *lefttree, List *distinctList);
 extern Limit *make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount,
 		   int64 offset_est, int64 count_est);

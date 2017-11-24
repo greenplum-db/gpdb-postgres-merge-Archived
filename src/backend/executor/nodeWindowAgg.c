@@ -23,11 +23,11 @@
  * aggregate function over all rows in the current row's window frame.
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeWindowAgg.c,v 1.3 2009/01/01 17:23:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeWindowAgg.c,v 1.13 2010/03/21 00:17:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,12 +170,8 @@ static void spool_tuples(WindowAggState *winstate, int64 pos);
 static void release_partition(WindowAggState *winstate);
 
 static bool row_is_in_frame(WindowAggState *winstate, int64 pos,
-<<<<<<< HEAD
 				TupleTableSlot *slot);
 static void update_frameheadpos(WindowObject winobj, TupleTableSlot *slot);
-=======
-							TupleTableSlot *slot);
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 static void update_frametailpos(WindowObject winobj, TupleTableSlot *slot);
 
 static WindowStatePerAggData *initialize_peragg(WindowAggState *winstate,
@@ -433,7 +429,6 @@ finalize_windowaggregate(WindowAggState *winstate,
 static void
 eval_windowaggregates(WindowAggState *winstate)
 {
-<<<<<<< HEAD
 	WindowStatePerAgg peraggstate;
 	int			wfuncno,
 				numaggs;
@@ -442,14 +437,6 @@ eval_windowaggregates(WindowAggState *winstate)
 	ExprContext *econtext;
 	WindowObject agg_winobj;
 	TupleTableSlot *agg_row_slot;
-=======
-	WindowStatePerAgg   peraggstate;
-	int					wfuncno, numaggs;
-	int					i;
-	MemoryContext		oldContext;
-	ExprContext		   *econtext;
-	TupleTableSlot	   *agg_row_slot;
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 	numaggs = winstate->numaggs;
 	if (numaggs == 0)
@@ -462,7 +449,6 @@ eval_windowaggregates(WindowAggState *winstate)
 
 	/*
 	 * Currently, we support only a subset of the SQL-standard window framing
-<<<<<<< HEAD
 	 * rules.
 	 *
 	 * If the frame start is UNBOUNDED_PRECEDING, the window frame consists of
@@ -501,52 +487,12 @@ eval_windowaggregates(WindowAggState *winstate)
 
 	/*
 	 * First, update the frame head position.
-=======
-	 * rules.  In all the supported cases, the window frame always consists
-	 * of a contiguous group of rows extending forward from the start of the
-	 * partition, and rows only enter the frame, never exit it, as the
-	 * current row advances forward.  This makes it possible to use an
-	 * incremental strategy for evaluating aggregates: we run the transition
-	 * function for each row added to the frame, and run the final function
-	 * whenever we need the current aggregate value.  This is considerably
-	 * more efficient than the naive approach of re-running the entire
-	 * aggregate calculation for each current row.  It does assume that the
-	 * final function doesn't damage the running transition value.  (Some
-	 * C-coded aggregates do that for efficiency's sake --- but they are
-	 * supposed to do so only when their fcinfo->context is an AggState, not
-	 * a WindowAggState.)
-	 *
-	 * In many common cases, multiple rows share the same frame and hence
-	 * the same aggregate value. (In particular, if there's no ORDER BY in
-	 * a RANGE window, then all rows are peers and so they all have window
-	 * frame equal to the whole partition.)  We optimize such cases by
-	 * calculating the aggregate value once when we reach the first row of a
-	 * peer group, and then returning the saved value for all subsequent rows.
-	 *
-	 * 'aggregatedupto' keeps track of the first row that has not yet been
-	 * accumulated into the aggregate transition values.  Whenever we start a
-	 * new peer group, we accumulate forward to the end of the peer group.
-	 *
-	 * TODO: In the future, we should implement the full SQL-standard set
-	 * of framing rules.  We could implement the other cases by recalculating
-	 * the aggregates whenever a row exits the frame.  That would be pretty
-	 * slow, though.  For aggregates like SUM and COUNT we could implement a
-	 * "negative transition function" that would be called for each row as it
-	 * exits the frame.  We'd have to think about avoiding recalculation of
-	 * volatile arguments of aggregate functions, too.
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	 */
 	update_frameheadpos(agg_winobj, winstate->temp_slot_1);
 
 	/*
-<<<<<<< HEAD
 	 * Initialize aggregates on first call for partition, or if the frame head
 	 * position moved since last time.
-=======
-	 * If we've already aggregated up through current row, reuse the
-	 * saved result values.  NOTE: this test works for the currently
-	 * supported framing rules, but will need fixing when more are added.
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	 */
 	if (winstate->currentpos == 0 ||
 		winstate->frameheadpos != winstate->aggregatedbase ||
@@ -562,27 +508,10 @@ eval_windowaggregates(WindowAggState *winstate)
 		{
 			peraggstate = &winstate->peragg[i];
 			wfuncno = peraggstate->wfuncno;
-<<<<<<< HEAD
-=======
-			econtext->ecxt_aggvalues[wfuncno] = peraggstate->resultValue;
-			econtext->ecxt_aggnulls[wfuncno] = peraggstate->resultValueIsNull;
-		}
-		return;
-	}
-
-	/* Initialize aggregates on first call for partition */
-	if (winstate->currentpos == 0)
-	{
-		for (i = 0; i < numaggs; i++)
-		{
-			peraggstate = &winstate->peragg[i];
-			wfuncno = peraggstate->wfuncno;
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 			initialize_windowaggregate(winstate,
 									   &winstate->perfunc[wfuncno],
 									   peraggstate);
 		}
-<<<<<<< HEAD
 
 		/*
 		 * If we created a mark pointer for aggregates, keep it pushed up to
@@ -628,32 +557,13 @@ eval_windowaggregates(WindowAggState *winstate)
 	 * at position aggregatedupto.  We advance aggregatedupto after processing
 	 * a row.
 	 */
-=======
-	}
-
-	/*
-	 * Advance until we reach a row not in frame (or end of partition).
-	 *
-	 * Note the loop invariant: agg_row_slot is either empty or holds the
-	 * row at position aggregatedupto.  The agg_ptr read pointer must always
-	 * point to the next row to read into agg_row_slot.
-	 */
-	agg_row_slot = winstate->agg_row_slot;
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	for (;;)
 	{
 		/* Fetch next row if we didn't already */
 		if (TupIsNull(agg_row_slot))
 		{
-<<<<<<< HEAD
 			if (!window_gettupleslot(agg_winobj, winstate->aggregatedupto,
 									 agg_row_slot))
-=======
-			spool_tuples(winstate, winstate->aggregatedupto);
-			tuplestore_select_read_pointer(winstate->buffer,
-										   winstate->agg_ptr);
-			if (!tuplestore_gettupleslot(winstate->buffer, true, agg_row_slot))
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 				break;			/* must be end of partition */
 		}
 
@@ -702,28 +612,16 @@ eval_windowaggregates(WindowAggState *winstate)
 		/*
 		 * save the result in case next row shares the same frame.
 		 *
-<<<<<<< HEAD
 		 * XXX in some framing modes, eg ROWS/END_CURRENT_ROW, we can know in
 		 * advance that the next row can't possibly share the same frame. Is
 		 * it worth detecting that and skipping this code?
-=======
-		 * XXX in some framing modes, eg ROWS/END_CURRENT_ROW, we can know
-		 * in advance that the next row can't possibly share the same frame.
-		 * Is it worth detecting that and skipping this code?
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 		 */
 		if (!peraggstate->resulttypeByVal)
 		{
 			/*
-<<<<<<< HEAD
 			 * clear old resultValue in order not to leak memory.  (Note: the
 			 * new result can't possibly be the same datum as old resultValue,
 			 * because we never passed it to the trans function.)
-=======
-			 * clear old resultValue in order not to leak memory.  (Note:
-			 * the new result can't possibly be the same datum as old
-			 * resultValue, because we never passed it to the trans function.)
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 			 */
 			if (!peraggstate->resultValueIsNull)
 				pfree(DatumGetPointer(peraggstate->resultValue));
@@ -733,11 +631,7 @@ eval_windowaggregates(WindowAggState *winstate)
 			 */
 			if (!*isnull)
 			{
-<<<<<<< HEAD
 				oldContext = MemoryContextSwitchTo(winstate->aggcontext);
-=======
-				oldContext = MemoryContextSwitchTo(winstate->wincontext);
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 				peraggstate->resultValue =
 					datumCopy(*result,
 							  peraggstate->resulttypeByVal,
@@ -821,32 +715,19 @@ begin_partition(WindowAggState *winstate)
 	int			i;
 
 	winstate->partition_spooled = false;
-<<<<<<< HEAD
 	winstate->framehead_valid = false;
 	winstate->frametail_valid = false;
 	winstate->start_offset_valid = false;
 	winstate->end_offset_valid = false;
-=======
-	winstate->frametail_valid = false;
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	winstate->spooled_rows = 0;
 	winstate->currentpos = 0;
 	winstate->frameheadpos = 0;
 	winstate->frametailpos = -1;
-<<<<<<< HEAD
 	ExecClearTuple(winstate->agg_row_slot);
 
 	/*
 	 * If this is the very first partition, we need to fetch the first input
 	 * row to store in first_part_slot.
-=======
-	winstate->aggregatedupto = 0;
-	ExecClearTuple(winstate->agg_row_slot);
-
-	/*
-	 * If this is the very first partition, we need to fetch the first
-	 * input row to store in first_part_slot.
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	 */
 	if (TupIsNull(winstate->first_part_slot))
 	{
@@ -1024,12 +905,8 @@ release_partition(WindowAggState *winstate)
 	 * any aggregate temp data).  We don't rely on retail pfree because some
 	 * aggregates might have allocated data we don't have direct pointers to.
 	 */
-<<<<<<< HEAD
 	MemoryContextResetAndDeleteChildren(winstate->partcontext);
 	MemoryContextResetAndDeleteChildren(winstate->aggcontext);
-=======
-	MemoryContextResetAndDeleteChildren(winstate->wincontext);
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 	if (winstate->buffer)
 		tuplestore_end(winstate->buffer);
@@ -1049,7 +926,6 @@ release_partition(WindowAggState *winstate)
 static bool
 row_is_in_frame(WindowAggState *winstate, int64 pos, TupleTableSlot *slot)
 {
-<<<<<<< HEAD
 	int			frameOptions = winstate->frameOptions;
 
 	compute_start_end_offsets(winstate);
@@ -1260,69 +1136,26 @@ update_frameheadpos(WindowObject winobj, TupleTableSlot *slot)
 	}
 	else
 		Assert(false);
-=======
-	WindowAgg  *node = (WindowAgg *) winstate->ss.ps.plan;
-	int			frameOptions = node->frameOptions;
-
-	Assert(pos >= 0);			/* else caller error */
-
-	/* We only support frame start mode UNBOUNDED PRECEDING for now */
-	Assert(frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING);
-
-	/* In UNBOUNDED FOLLOWING mode, all partition rows are in frame */
-	if (frameOptions & FRAMEOPTION_END_UNBOUNDED_FOLLOWING)
-		return true;
-
-	/* Else frame tail mode must be CURRENT ROW */
-	Assert(frameOptions & FRAMEOPTION_END_CURRENT_ROW);
-
-	/* if row is current row or a predecessor, it must be in frame */
-	if (pos <= winstate->currentpos)
-		return true;
-
-	/* In ROWS mode, *only* such rows are in frame */
-	if (frameOptions & FRAMEOPTION_ROWS)
-		return false;
-
-	/* Else must be RANGE mode */
-	Assert(frameOptions & FRAMEOPTION_RANGE);
-
-	/* In frame iff it's a peer of current row */
-	return are_peers(winstate, slot, winstate->ss.ss_ScanTupleSlot);
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 }
 
 /*
  * update_frametailpos
  * make frametailpos valid for the current row
  *
-<<<<<<< HEAD
  * Uses the winobj's read pointer for any required fetches; hence, if the
  * frame mode is one that requires row comparisons, the winobj's mark must
  * not be past the currently known frame tail.  Also uses the specified slot
  * for any required fetches.
-=======
- * Uses the winobj's read pointer for any required fetches; the winobj's
- * mark must not be past the currently known frame tail.  Also uses the
- * specified slot for any required fetches.
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  */
 static void
 update_frametailpos(WindowObject winobj, TupleTableSlot *slot)
 {
 	WindowAggState *winstate = winobj->winstate;
-<<<<<<< HEAD
 	int			frameOptions = winstate->frameOptions;
-=======
-	WindowAgg  *node = (WindowAgg *) winstate->ss.ps.plan;
-	int			frameOptions = node->frameOptions;
-	int64		ftnext;
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 	if (winstate->frametail_valid)
 		return;					/* already known for current row */
 
-<<<<<<< HEAD
 	compute_start_end_offsets(winstate);
 
 	if (frameOptions & FRAMEOPTION_END_UNBOUNDED_FOLLOWING)
@@ -1527,63 +1360,6 @@ compute_start_end_offsets(WindowAggState *winstate)
 		winstate->end_offset_valid = true;
 	}
 }
-=======
-	/* We only support frame start mode UNBOUNDED PRECEDING for now */
-	Assert(frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING);
-
-	/* In UNBOUNDED FOLLOWING mode, all partition rows are in frame */
-	if (frameOptions & FRAMEOPTION_END_UNBOUNDED_FOLLOWING)
-	{
-		spool_tuples(winstate, -1);
-		winstate->frametailpos = winstate->spooled_rows - 1;
-		winstate->frametail_valid = true;
-		return;
-	}
-
-	/* Else frame tail mode must be CURRENT ROW */
-	Assert(frameOptions & FRAMEOPTION_END_CURRENT_ROW);
-
-	/* In ROWS mode, exactly the rows up to current are in frame */
-	if (frameOptions & FRAMEOPTION_ROWS)
-	{
-		winstate->frametailpos = winstate->currentpos;
-		winstate->frametail_valid = true;
-		return;
-	}
-
-	/* Else must be RANGE mode */
-	Assert(frameOptions & FRAMEOPTION_RANGE);
-
-	/* If no ORDER BY, all rows are peers with each other */
-	if (node->ordNumCols == 0)
-	{
-		spool_tuples(winstate, -1);
-		winstate->frametailpos = winstate->spooled_rows - 1;
-		winstate->frametail_valid = true;
-		return;
-	}
-
-	/*
-	 * Else we have to search for the first non-peer of the current row.
-	 * We assume the current value of frametailpos is a lower bound on the
-	 * possible frame tail location, ie, frame tail never goes backward, and
-	 * that currentpos is also a lower bound, ie, current row is always in
-	 * frame.
-	 */
-	ftnext = Max(winstate->frametailpos, winstate->currentpos) + 1;
-	for (;;)
-	{
-		if (!window_gettupleslot(winobj, ftnext, slot))
-			break;				/* end of partition */
-		if (!are_peers(winstate, slot, winstate->ss.ss_ScanTupleSlot))
-			break;				/* not peer of current row */
-		ftnext++;
-	}
-	winstate->frametailpos = ftnext - 1;
-	winstate->frametail_valid = true;
-}
-
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 /* -----------------
  * ExecWindowAgg
@@ -1637,7 +1413,6 @@ restart:
 	{
 		/* Advance current row within partition */
 		winstate->currentpos++;
-<<<<<<< HEAD
 		/* This might mean that the frame moves, too */
 		winstate->framehead_valid = false;
 		winstate->frametail_valid = false;
@@ -1654,10 +1429,6 @@ restart:
 			if (!winstate->end_offset_var_free)
 				winstate->end_offset_valid = false;
 		}
-=======
-		/* This might mean that the frame tail moves, too */
-		winstate->frametail_valid = false;
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	}
 
 	/*
@@ -1897,7 +1668,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 		AclResult	aclresult;
 		int			i;
 
-		if (wfunc->winref != node->winref)			/* planner screwed up? */
+		if (wfunc->winref != node->winref)		/* planner screwed up? */
 			elog(ERROR, "WindowFunc with winref %u assigned to WindowAgg with winref %u",
 				 wfunc->winref, node->winref);
 
