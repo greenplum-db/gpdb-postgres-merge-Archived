@@ -6,11 +6,8 @@
  * gram.y
  *	  POSTGRES SQL YACC rules/actions
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
-=======
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -504,12 +501,8 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <windef>	window_definition over_clause window_specification
 %type <list>	opt_window_order_clause
 %type <str>		opt_existing_window_name
-<<<<<<< HEAD
 %type <windef>	opt_frame_clause frame_extent frame_bound
 %type <ival>	window_frame_exclusion
-=======
-%type <ival>	opt_frame_clause frame_extent frame_bound
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 
 /*
@@ -573,15 +566,9 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OPTIONS OR
 	ORDER OUT_P OUTER_P OVERLAPS OVERLAY OWNED OWNER
 
-<<<<<<< HEAD
 	PARSER PARTIAL PASSWORD PLACING PLANS POSITION
-	PRECISION PRESERVE PREPARE PREPARED PRIMARY
-	PRIOR PRIVILEGES PROCEDURAL PROCEDURE PROGRAM
-=======
-	PARSER PARTIAL PARTITION PASSWORD PLACING PLANS POSITION
 	PRECEDING PRECISION PRESERVE PREPARE PREPARED PRIMARY
-	PRIOR PRIVILEGES PROCEDURAL PROCEDURE
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
+	PRIOR PRIVILEGES PROCEDURAL PROCEDURE PROGRAM
 
 	QUOTE
 
@@ -625,7 +612,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 	ERRORS EVERY EXCHANGE EXCLUDE
 
-	FIELDS FILESPACE FILL FILTER FOLLOWING FORMAT
+	FIELDS FILESPACE FILL FILTER FORMAT
 
 	GROUP_ID GROUPING
 
@@ -642,18 +629,16 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 	ORDERED OTHERS OVER OVERCOMMIT
 
 	PARTITION PARTITIONS PASSING PERCENT
-	PRECEDING PROTOCOL
+	PROTOCOL
 
 	QUEUE
 
-	RANDOMLY RANGE READABLE READS REF REJECT_P RESOURCE
+	RANDOMLY READABLE READS REF REJECT_P RESOURCE
 	ROLLUP ROOTPARTITION
 
 	SCATTER SEGMENT SEGMENTS SETS SPLIT SQL SUBPARTITION
 
 	THRESHOLD TIES
-
-	UNBOUNDED
 
 	VALIDATION
 
@@ -697,7 +682,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
  * postfix-operator problems.
  */
 %nonassoc	IDENT PARTITION RANGE ROWS
-<<<<<<< HEAD
 /*
  * This is a bit ugly... To allow these to be column aliases without
  * the "AS" keyword, and not conflict with PostgreSQL's non-standard
@@ -1016,8 +1000,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 			
 
 
-=======
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 %left		Op OPERATOR		/* multi-character ops and user-defined operators */
 %nonassoc	NOTNULL
 %nonassoc	ISNULL
@@ -12506,11 +12488,8 @@ over_clause: OVER window_specification
 					n->partitionClause = NIL;
 					n->orderClause = NIL;
 					n->frameOptions = FRAMEOPTION_DEFAULTS;
-<<<<<<< HEAD
 					n->startOffset = NULL;
 					n->endOffset = NULL;
-=======
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 					n->location = @2;
 					$$ = n;
 				}
@@ -12519,43 +12498,22 @@ over_clause: OVER window_specification
 		;
 
 window_specification: '(' opt_existing_window_name opt_partition_clause
-<<<<<<< HEAD
 				opt_window_order_clause opt_frame_clause ')'
-=======
-						opt_sort_clause opt_frame_clause ')'
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 				{
 					WindowDef *n = makeNode(WindowDef);
 					n->name = NULL;
 					n->refname = $2;
 					n->partitionClause = $3;
 					n->orderClause = $4;
-<<<<<<< HEAD
 					/* copy relevant fields of opt_frame_clause */
 					n->frameOptions = $5->frameOptions;
 					n->startOffset = $5->startOffset;
 					n->endOffset = $5->endOffset;
-=======
-					n->frameOptions = $5;
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 					n->location = @1;
 					$$ = n;
 				}
 		;
 
-<<<<<<< HEAD
-=======
-/*
- * If we see PARTITION, RANGE, or ROWS as the first token after the '('
- * of a window_specification, we want the assumption to be that there is
- * no existing_window_name; but those keywords are unreserved and so could
- * be ColIds.  We fix this by making them have the same precedence as IDENT
- * and giving the empty production here a slightly higher precedence, so
- * that the shift/reduce conflict is resolved in favor of reducing the rule.
- * These keywords are thus precluded from being an existing_window_name but
- * are not reserved for any other purpose.
- */
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 opt_existing_window_name: ColId						{ $$ = $1; }
 			| /*EMPTY*/ { $$ = NULL; }
 		;
@@ -12723,83 +12681,6 @@ window_frame_exclusion: EXCLUDE CURRENT_P ROW { checkWindowExclude(); $$ = 0; }
 			| EXCLUDE TIES { checkWindowExclude(); $$ = 0; }
 			| EXCLUDE NO OTHERS { checkWindowExclude(); $$ = 0; }
 			| /*EMPTY*/ { $$ = 0; }
-		;
-
-
-/*
- * This is only a subset of the full SQL:2008 frame_clause grammar.
- * We don't support <expression> PRECEDING, <expression> FOLLOWING,
- * nor <window frame exclusion> yet.
- */
-opt_frame_clause:
-			RANGE frame_extent
-				{
-					$$ = FRAMEOPTION_NONDEFAULT | FRAMEOPTION_RANGE | $2;
-				}
-			| ROWS frame_extent
-				{
-					$$ = FRAMEOPTION_NONDEFAULT | FRAMEOPTION_ROWS | $2;
-				}
-			| /*EMPTY*/
-				{ $$ = FRAMEOPTION_DEFAULTS; }
-		;
-
-frame_extent: frame_bound
-				{
-					/* reject invalid cases */
-					if ($1 & FRAMEOPTION_START_UNBOUNDED_FOLLOWING)
-						ereport(ERROR,
-								(errcode(ERRCODE_WINDOWING_ERROR),
-								 errmsg("frame start cannot be UNBOUNDED FOLLOWING"),
-								 scanner_errposition(@1)));
-					if ($1 & FRAMEOPTION_START_CURRENT_ROW)
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("frame start at CURRENT ROW is not implemented"),
-								 scanner_errposition(@1)));
-					$$ = $1 | FRAMEOPTION_END_CURRENT_ROW;
-				}
-			| BETWEEN frame_bound AND frame_bound
-				{
-					/* reject invalid cases */
-					if ($2 & FRAMEOPTION_START_UNBOUNDED_FOLLOWING)
-						ereport(ERROR,
-								(errcode(ERRCODE_WINDOWING_ERROR),
-								 errmsg("frame start cannot be UNBOUNDED FOLLOWING"),
-								 scanner_errposition(@2)));
-					if ($2 & FRAMEOPTION_START_CURRENT_ROW)
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("frame start at CURRENT ROW is not implemented"),
-								 scanner_errposition(@2)));
-					if ($4 & FRAMEOPTION_START_UNBOUNDED_PRECEDING)
-						ereport(ERROR,
-								(errcode(ERRCODE_WINDOWING_ERROR),
-								 errmsg("frame end cannot be UNBOUNDED PRECEDING"),
-								 scanner_errposition(@4)));
-					/* shift converts START_ options to END_ options */
-					$$ = FRAMEOPTION_BETWEEN | $2 | ($4 << 1);
-				}
-		;
-
-/*
- * This is used for both frame start and frame end, with output set up on
- * the assumption it's frame start; the frame_extent productions must reject
- * invalid cases.
- */
-frame_bound:
-			UNBOUNDED PRECEDING
-				{
-					$$ = FRAMEOPTION_START_UNBOUNDED_PRECEDING;
-				}
-			| UNBOUNDED FOLLOWING
-				{
-					$$ = FRAMEOPTION_START_UNBOUNDED_FOLLOWING;
-				}
-			| CURRENT_P ROW
-				{
-					$$ = FRAMEOPTION_START_CURRENT_ROW;
-				}
 		;
 
 
@@ -13615,7 +13496,6 @@ unreserved_keyword:
 			| FILESPACE
 			| FILL
 			| FIRST_P
-			| FOLLOWING
 			| FORCE
 			| FORMAT
 			| FORWARD
@@ -13711,7 +13591,6 @@ unreserved_keyword:
 			| PASSWORD
 			| PERCENT
 			| PLANS
-			| PRECEDING
 			| PREPARE
 			| PREPARED
 			| PRESERVE
@@ -13723,11 +13602,7 @@ unreserved_keyword:
 			| PROTOCOL
 			| QUEUE
 			| QUOTE
-<<<<<<< HEAD
 			| RANDOMLY /* gp */
-=======
-			| RANGE
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 			| READ
 			| READABLE
 			| READS
@@ -13797,7 +13672,6 @@ unreserved_keyword:
 			| TRUNCATE
 			| TRUSTED
 			| TYPE_P
-			| UNBOUNDED
 			| UNCOMMITTED
 			| UNENCRYPTED
 			| UNKNOWN
