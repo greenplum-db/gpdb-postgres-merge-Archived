@@ -54,11 +54,7 @@ zic: $(ZICOBJS)
 
 install: all installdirs
 ifeq (,$(with_system_tzdata))
-<<<<<<< HEAD
 	$(ZIC) -d '$(DESTDIR)$(datadir)/timezone' -p '$(POSIXRULES)' $(TZDATAFILES)
-=======
-	$(if $(ZIC),$(ZIC),./zic) -d '$(DESTDIR)$(datadir)/timezone' -p '$(POSIXRULES)' $(TZDATAFILES)
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 endif
 	$(MAKE) -C tznames $@
 

@@ -12,9 +12,9 @@ WANTED_DIRS = \
 		dict_xsyn	\
 		fuzzystrmatch	\
 		hstore		\
-<<<<<<< HEAD
 		intarray \
 		pageinspect \
+		pg_stat_statements \
 		pg_upgrade \
 		pg_upgrade_support \
 		test_parser \
@@ -34,30 +34,6 @@ WANTED_DIRS += \
 		gp_cancel_query \
 		indexscan \
     passwordcheck
-=======
-		intagg		\
-		intarray	\
-		isn		\
-		lo		\
-		ltree		\
-		oid2name	\
-		pageinspect	\
-		pg_buffercache	\
-		pg_freespacemap \
-		pg_standby	\
-		pg_stat_statements \
-		pg_trgm		\
-		pgbench		\
-		pgcrypto	\
-		pgrowlocks	\
-		pgstattuple	\
-		seg		\
-		spi		\
-		tablefunc	\
-		test_parser	\
-		tsearch2	\
-		vacuumlo
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 ifeq ($(with_openssl),yes)
 WANTED_DIRS += sslinfo

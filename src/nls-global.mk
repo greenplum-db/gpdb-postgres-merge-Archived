@@ -36,11 +36,7 @@ PO_FILES = $(addprefix po/, $(addsuffix .po, $(LANGUAGES)))
 MO_FILES = $(addprefix po/, $(addsuffix .mo, $(LANGUAGES)))
 
 ifdef XGETTEXT
-<<<<<<< HEAD
 XGETTEXT += -ctranslator --copyright-holder='Greenplum Project' --msgid-bugs-address=bugs@greenplum.org
-=======
-XGETTEXT += -ctranslator --copyright-holder='PostgreSQL Global Development Group' --msgid-bugs-address=pgsql-bugs@postgresql.org
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 endif
 
 
@@ -59,11 +55,7 @@ po/$(CATALOG_NAME).pot: $(GETTEXT_FILES) $(MAKEFILE_LIST)
 # consistent #: file references in the po files.
 	$(XGETTEXT) -D $(srcdir) -n $(addprefix -k, $(GETTEXT_TRIGGERS)) $(GETTEXT_FILES)
 endif
-<<<<<<< HEAD
 	@$(MKDIR_P) $(dir $@)
-=======
-	@$(mkinstalldirs) $(dir $@)
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	sed -e '1,18 { s/SOME DESCRIPTIVE TITLE./LANGUAGE message translation file for $(CATALOG_NAME)/;s/PACKAGE/PostgreSQL/g;s/VERSION/$(MAJORVERSION)/g;s/YEAR/'`date +%Y`'/g; }' messages.po >$@
 	rm messages.po
 else # not XGETTEXT
