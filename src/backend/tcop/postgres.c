@@ -2320,36 +2320,6 @@ exec_bind_message(StringInfo input_message)
 	 */
 	oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
-	/* Copy the plan's query string, if available, into the portal */
-	query_string = psrc->query_string;
-	if (query_string)
-		query_string = pstrdup(query_string);
-
-	/* Likewise make a copy of the statement name, unless it's unnamed */
-	if (stmt_name[0])
-		saved_stmt_name = pstrdup(stmt_name);
-	else
-		saved_stmt_name = NULL;
-
-	/*
-	 * Set a snapshot if we have parameters to fetch (since the input
-	 * functions might need it) or the query isn't a utility command (and
-	 * hence could require redoing parse analysis and planning).
-	 */
-	if (numParams > 0 || analyze_requires_snapshot(psrc->raw_parse_tree))
-	{
-		PushActiveSnapshot(GetTransactionSnapshot());
-		snapshot_set = true;
-	}
-
-	/*
-	 * Prepare to copy stuff into the portal's memory context.  We do all this
-	 * copying first, because it could possibly fail (out-of-memory) and we
-	 * don't want a failure to occur between RevalidateCachedPlan and
-	 * PortalDefineQuery; that would result in leaking our plancache refcount.
-	 */
-	oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
-
 	/* Copy the plan's query string into the portal */
 	query_string = pstrdup(psrc->query_string);
 
