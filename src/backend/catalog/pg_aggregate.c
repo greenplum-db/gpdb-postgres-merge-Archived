@@ -384,11 +384,7 @@ AggregateCreate(const char *aggName,
 							  "aggregate_dummy",		/* placeholder proc */
 							  NULL,		/* probin */
 							  true,		/* isAgg */
-<<<<<<< HEAD
-							  false,	/* isWin */
-=======
 							  false,	/* isWindowFunc */
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 							  false,	/* security invoker (currently not
 										 * definable for agg) */
 							  false,	/* isStrict (not needed for agg) */

@@ -5,13 +5,8 @@
  *
  * Joe Conway <mail@joeconway.com>
  *
-<<<<<<< HEAD
  * contrib/fuzzystrmatch/fuzzystrmatch.c
  * Copyright (c) 2001-2011, PostgreSQL Global Development Group
-=======
- * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.c,v 1.28 2009/01/01 17:23:32 momjian Exp $
- * Copyright (c) 2001-2009, PostgreSQL Global Development Group
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  * ALL RIGHTS RESERVED;
  *
  * metaphone()
