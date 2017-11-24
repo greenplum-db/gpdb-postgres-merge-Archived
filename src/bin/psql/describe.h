@@ -1,15 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
-<<<<<<< HEAD
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
  * src/bin/psql/describe.h
-=======
- * Copyright (c) 2000-2009, PostgreSQL Global Development Group
- *
- * $PostgreSQL: pgsql/src/bin/psql/describe.h,v 1.37 2009/01/01 17:23:55 momjian Exp $
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  */
 #ifndef DESCRIBE_H
 #define DESCRIBE_H

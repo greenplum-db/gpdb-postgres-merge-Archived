@@ -497,12 +497,9 @@ NewRestoreOptions(void)
 
 	/* set any fields that shouldn't default to zeroes */
 	opts->format = archUnknown;
-<<<<<<< HEAD
 	opts->promptPassword = TRI_DEFAULT;
 	opts->suppressDumpWarnings = false;
 	opts->exit_on_error = false;
-=======
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 	return opts;
 }

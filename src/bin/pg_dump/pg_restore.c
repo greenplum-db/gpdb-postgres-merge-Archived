@@ -54,10 +54,7 @@
 
 extern char *optarg;
 extern int	optind;
-<<<<<<< HEAD
-=======
 
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 #ifndef HAVE_INT_OPTRESET
 int			optreset;
 #endif

@@ -2,13 +2,9 @@
  *
  * pg_dumpall.c
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -94,12 +90,8 @@ main(int argc, char *argv[])
 	char	   *pgport = NULL;
 	char	   *pguser = NULL;
 	char	   *pgdb = NULL;
-<<<<<<< HEAD
 	enum trivalue prompt_password = TRI_DEFAULT;
-=======
 	char	   *use_role = NULL;
-	bool		force_password = false;
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	bool		data_only = false;
 	bool		globals_only = false;
 	bool		tablespaces_only = false;
@@ -143,13 +135,10 @@ main(int argc, char *argv[])
 		 */
 		{"disable-dollar-quoting", no_argument, &disable_dollar_quoting, 1},
 		{"disable-triggers", no_argument, &disable_triggers, 1},
-<<<<<<< HEAD
 		{"resource-queues", no_argument, &resource_queues, 1},
 		{"resource-groups", no_argument, &resource_groups, 1},
 		{"roles-only", no_argument, &roles_only, 1},
-=======
 		{"lock-wait-timeout", required_argument, NULL, 2},
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 		{"no-tablespaces", no_argument, &no_tablespaces, 1},
 		{"role", required_argument, NULL, 3},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
@@ -495,9 +484,7 @@ main(int argc, char *argv[])
 	if (!std_strings)
 		std_strings = "off";
 
-<<<<<<< HEAD
 	fprintf(OPF,"--\n-- Greenplum Database cluster dump\n--\n\n");
-=======
 	/* Set the role if requested */
 	if (use_role && server_version >= 80100)
 	{
@@ -508,8 +495,6 @@ main(int argc, char *argv[])
 		destroyPQExpBuffer(query);
 	}
 
-	fprintf(OPF, "--\n-- PostgreSQL database cluster dump\n--\n\n");
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	if (verbose)
 		dumpTimestamp("Started on");
 

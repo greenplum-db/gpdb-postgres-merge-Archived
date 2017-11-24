@@ -6,15 +6,9 @@
  * with servers of versions 7.4 and up.  It's okay to omit irrelevant
  * information for an old server, but not to fail outright.
  *
-<<<<<<< HEAD
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
  * src/bin/psql/describe.c
-=======
- * Copyright (c) 2000-2009, PostgreSQL Global Development Group
- *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.193 2009/01/01 17:23:54 momjian Exp $
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  */
 #include "postgres_fe.h"
 
@@ -46,14 +40,11 @@ static bool describeOneTSConfig(const char *oid, const char *nspname,
 					const char *cfgname,
 					const char *pnspname, const char *prsname);
 static void printACLColumn(PQExpBuffer buf, const char *colname);
-<<<<<<< HEAD
 static bool listOneExtensionContents(const char *extname, const char *oid);
 static bool isGPDB(void);
 static bool isGPDB4200OrLater(void);
 static bool isGPDB5000OrLater(void);
 static bool isGPDB6000OrLater(void);
-=======
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 /* GPDB 3.2 used PG version 8.2.10, and we've moved the minor number up since then for each release,  4.1 = 8.2.15 */
 /* Allow for a couple of future releases.  If the version isn't in this range, we are talking to PostgreSQL, not GPDB */
@@ -883,7 +874,6 @@ permissionsList(const char *pattern)
 					  gettext_noop("Name"),
 	   gettext_noop("table"), gettext_noop("view"), gettext_noop("sequence"),
 					  gettext_noop("Type"));
-<<<<<<< HEAD
 
 	printACLColumn(&buf, "c.relacl");
 
@@ -898,9 +888,6 @@ permissionsList(const char *pattern)
 						  "  ), E'\\n') AS \"%s\"",
 						  gettext_noop("Column access privileges"));
 #endif
-=======
-	printACLColumn(&buf, "c.relacl");
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_class c\n"
 	   "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n"
 					  "WHERE c.relkind IN ('r', 'v', 'S')\n");
@@ -4319,7 +4306,6 @@ listUserMappings(const char *pattern, bool verbose)
 	return true;
 }
 
-<<<<<<< HEAD
 
 /*
  * \dx
@@ -4494,8 +4480,6 @@ listOneExtensionContents(const char *extname, const char *oid)
 }
 
 
-=======
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 /*
  * printACLColumn
  *

@@ -1,11 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
-<<<<<<< HEAD
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
-=======
- * Copyright (c) 2000-2009, PostgreSQL Global Development Group
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  *
  * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.133 2009/01/01 17:23:55 momjian Exp $
  */
@@ -464,23 +460,15 @@ helpSQL(const char *topic, unsigned short int pager)
 void
 print_copyright(void)
 {
-<<<<<<< HEAD
-	puts("Greenplum Database version of PostgreSQL Database Management System\n"
-		 "(formerly known as Postgres, then as Postgres95)\n\n"
+	puts(
+		 "Greenplum Database version of PostgreSQL Database Management System\n"
+		 "Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group\n\n"
 		 "Portions Copyright (c) 2014-Present Pivotal Software, Inc.\n\n"
 		 "Portions Copyright (c) 2011-2014 EMC\n\n"
-		 "Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group\n\n"
-		 "Portions Copyright (c) 1994, The Regents of the University of California\n\n"
-		 "Permission to use, copy, modify, and distribute this software and its\n"
-=======
-	puts(
-		 "PostgreSQL Data Base Management System\n\n"
-		 "Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group\n\n"
 		 "This software is based on Postgres95, formerly known as Postgres, which\n"
 		 "contains the following notice:\n\n"
-	"Portions Copyright(c) 1994, Regents of the University of California\n\n"
-	"Permission to use, copy, modify, and distribute this software and its\n"
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
+		 "Portions Copyright (c) 1994, The Regents of the University of California\n\n"
+		 "Permission to use, copy, modify, and distribute this software and its\n"
 		 "documentation for any purpose, without fee, and without a written agreement\n"
 		 "is hereby granted, provided that the above copyright notice and this paragraph\n"
 		 "and the following two paragraphs appear in all copies.\n\n"
