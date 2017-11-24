@@ -3141,7 +3141,6 @@ get_rule_windowspec(WindowClause *wc, List *targetList,
 			appendStringInfoString(buf, "UNBOUNDED PRECEDING ");
 		else if (wc->frameOptions & FRAMEOPTION_START_CURRENT_ROW)
 			appendStringInfoString(buf, "CURRENT ROW ");
-<<<<<<< HEAD
 		else if (wc->frameOptions & FRAMEOPTION_START_VALUE)
 		{
 			get_rule_expr(wc->startOffset, context, false);
@@ -3152,8 +3151,6 @@ get_rule_windowspec(WindowClause *wc, List *targetList,
 			else
 				Assert(false);
 		}
-=======
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 		else
 			Assert(false);
 		if (wc->frameOptions & FRAMEOPTION_BETWEEN)
@@ -3163,7 +3160,6 @@ get_rule_windowspec(WindowClause *wc, List *targetList,
 				appendStringInfoString(buf, "UNBOUNDED FOLLOWING ");
 			else if (wc->frameOptions & FRAMEOPTION_END_CURRENT_ROW)
 				appendStringInfoString(buf, "CURRENT ROW ");
-<<<<<<< HEAD
 			else if (wc->frameOptions & FRAMEOPTION_END_VALUE)
 			{
 				get_rule_expr(wc->endOffset, context, false);
@@ -3174,8 +3170,6 @@ get_rule_windowspec(WindowClause *wc, List *targetList,
 				else
 					Assert(false);
 			}
-=======
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 			else
 				Assert(false);
 		}
