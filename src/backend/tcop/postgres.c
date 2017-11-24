@@ -2588,11 +2588,7 @@ exec_bind_message(StringInfo input_message)
 	/*
 	 * And we're ready to start portal execution.
 	 */
-<<<<<<< HEAD
 	PortalStart(portal, params, InvalidSnapshot, NULL);
-=======
-	PortalStart(portal, params, InvalidSnapshot);
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 	/*
 	 * Apply the result format requests to the portal.
