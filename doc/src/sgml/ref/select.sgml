@@ -597,8 +597,6 @@ HAVING <replaceable class="parameter">condition</replaceable>
    </para>
   </refsect2>
 
-<<<<<<< HEAD
-=======
   <refsect2 id="SQL-WINDOW">
    <title id="sql-window-title"><literal>WINDOW</literal> Clause</title>
 
@@ -693,7 +691,6 @@ ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
    </para>
   </refsect2>
 
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
   <refsect2 id="sql-select-list">
    <title id="sql-select-list-title"><command>SELECT</command> List</title>
 

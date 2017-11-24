@@ -5,11 +5,7 @@
 #
 # Copyright (c) 2008-2009, PostgreSQL Global Development Group
 #
-<<<<<<< HEAD
 # src/tools/version_stamp.pl
-=======
-# $PostgreSQL: pgsql/src/tools/version_stamp.pl,v 1.2 2009/01/01 17:24:04 momjian Exp $
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 #################################################################
 
 #

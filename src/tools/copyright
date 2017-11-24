@@ -1,10 +1,6 @@
 #!/bin/sh
 
-<<<<<<< HEAD
 # src/tools/copyright
-=======
-# $PostgreSQL: pgsql/src/tools/copyright,v 1.18 2009/01/01 18:31:55 momjian Exp $
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 echo "Using current year:  `date '+%Y'`"
 
@@ -16,7 +12,3 @@ do
 done
 
 echo "Manually update doc/src/sgml/legal.sgml and src/interfaces/libpq/libpq.rc.in too" 1>&2
-<<<<<<< HEAD
-=======
-
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
