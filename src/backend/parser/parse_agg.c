@@ -720,11 +720,6 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 		Index		winref = 0;
 		ListCell   *lc;
 
-		Assert(windef->refname == NULL &&
-			   windef->partitionClause == NIL &&
-			   windef->orderClause == NIL &&
-			   windef->frameOptions == FRAMEOPTION_DEFAULTS);
-
 		foreach(lc, pstate->p_windowdefs)
 		{
 			WindowDef  *refwin = (WindowDef *) lfirst(lc);
