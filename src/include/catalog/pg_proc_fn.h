@@ -27,11 +27,7 @@ extern Oid ProcedureCreate(const char *procedureName,
 				const char *prosrc,
 				const char *probin,
 				bool isAgg,
-<<<<<<< HEAD
-				bool isWin,
-=======
 				bool isWindowFunc,
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 				bool security_definer,
 				bool isStrict,
 				char volatility,
