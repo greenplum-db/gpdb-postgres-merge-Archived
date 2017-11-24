@@ -173,11 +173,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										 pltemplate->tmplhandler,
 										 pltemplate->tmpllibrary,
 										 false, /* isAgg */
-<<<<<<< HEAD
-										 false, /* isWin */
-=======
 										 false,	/* isWindowFunc */
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 										 false, /* security_definer */
 										 false, /* isStrict */
 										 PROVOLATILE_VOLATILE,
@@ -257,11 +253,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										 pltemplate->tmplvalidator,
 										 pltemplate->tmpllibrary,
 										 false, /* isAgg */
-<<<<<<< HEAD
-										 false, /* isWin */
-=======
 										 false,	/* isWindowFunc */
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 										 false, /* security_definer */
 										 true, /* isStrict */
 										 PROVOLATILE_IMMUTABLE,

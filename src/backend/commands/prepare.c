@@ -679,16 +679,12 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
 	if (!entry->plansource->fixed_result)
 		elog(ERROR, "EXPLAIN EXECUTE does not support variable-result cached plans");
 
-<<<<<<< HEAD
-=======
-	query_string = entry->plansource->query_string;
+	/*
+	 * In Greenplum we first need to evaluate the parameters since we pass
+	 * paramLI to RevalidateCachedPlanWithParams(), while PostgreSQL uses
+	 * RevalidateCachedPlan().
+	 */
 
-	/* Replan if needed, and acquire a transient refcount */
-	cplan = RevalidateCachedPlan(entry->plansource, true);
-
-	plan_list = cplan->stmt_list;
-
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	/* Evaluate parameters, if any */
 	if (entry->plansource->num_params)
 	{
@@ -701,6 +697,8 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
 		paramLI = EvaluateParams(entry, execstmt->params,
 								 queryString, estate);
 	}
+
+	query_string = entry->plansource->query_string;
 
 	/* Replan if needed, and acquire a transient refcount */
 	cplan = RevalidateCachedPlanWithParams(entry->plansource, true,
@@ -732,12 +730,8 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
 				pstmt->intoClause = execstmt->into;
 			}
 
-<<<<<<< HEAD
-			ExplainOnePlan(pstmt, paramLI, stmt, queryString, tstate);
-=======
 			ExplainOnePlan(pstmt, stmt, query_string,
 						   paramLI, tstate);
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 		}
 		else
 		{

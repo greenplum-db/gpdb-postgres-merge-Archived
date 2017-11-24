@@ -1121,15 +1121,10 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 	/* override attributes from explicit list */
 	compute_attributes_sql_style(stmt->options,
 								 &as_clause, &language,
-<<<<<<< HEAD
-								 &volatility, &isStrict, &security,
-								 &proconfig, &procost, &prorows,
-								 &dataAccess, &execLocation);
-=======
 								 &isWindowFunc, &volatility,
 								 &isStrict, &security,
-								 &proconfig, &procost, &prorows);
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
+								 &proconfig, &procost, &prorows,
+								 &dataAccess, &execLocation);
 
 	/* Convert language name to canonical case */
 	languageName = case_translate_language_name(language);
@@ -1284,11 +1279,7 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 					prosrc_str, /* converted to text later */
 					probin_str, /* converted to text later */
 					false,		/* not an aggregate */
-<<<<<<< HEAD
-					false,		/* not a window function */
-=======
 					isWindowFunc,
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 					security,
 					isStrict,
 					volatility,
