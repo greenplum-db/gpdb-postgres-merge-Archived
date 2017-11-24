@@ -11,6 +11,7 @@
  * be handled easily in a simple depth-first traversal.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
@@ -18,6 +19,13 @@
  *
  * IDENTIFICATION
  *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.416 2008/12/19 16:25:17 petere Exp $
+=======
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.419 2009/01/01 17:23:43 momjian Exp $
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  *
  *-------------------------------------------------------------------------
  */
@@ -1022,6 +1030,7 @@ _copyWindowAgg(WindowAgg *from)
 		COPY_POINTER_FIELD(ordColIdx, from->ordNumCols * sizeof(AttrNumber));
 		COPY_POINTER_FIELD(ordOperators, from->ordNumCols * sizeof(Oid));
 	}
+<<<<<<< HEAD
 	COPY_SCALAR_FIELD(firstOrderCol);
 	COPY_SCALAR_FIELD(firstOrderCmpOperator);
 	COPY_SCALAR_FIELD(firstOrderNullsFirst);
@@ -1041,6 +1050,9 @@ _copyTableFunctionScan(TableFunctionScan *from)
 	TableFunctionScan	*newnode = makeNode(TableFunctionScan);
 
 	CopyScanFields((Scan *) from, (Scan *) newnode);
+=======
+	COPY_SCALAR_FIELD(frameOptions);
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 	return newnode;
 }
@@ -2380,8 +2392,11 @@ _copyWindowClause(WindowClause *from)
 	COPY_NODE_FIELD(partitionClause);
 	COPY_NODE_FIELD(orderClause);
 	COPY_SCALAR_FIELD(frameOptions);
+<<<<<<< HEAD
 	COPY_NODE_FIELD(startOffset);
 	COPY_NODE_FIELD(endOffset);
+=======
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	COPY_SCALAR_FIELD(winref);
 	COPY_SCALAR_FIELD(copiedOrder);
 
@@ -2614,8 +2629,11 @@ _copyWindowDef(WindowDef *from)
 	COPY_NODE_FIELD(partitionClause);
 	COPY_NODE_FIELD(orderClause);
 	COPY_SCALAR_FIELD(frameOptions);
+<<<<<<< HEAD
 	COPY_NODE_FIELD(startOffset);
 	COPY_NODE_FIELD(endOffset);
+=======
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;

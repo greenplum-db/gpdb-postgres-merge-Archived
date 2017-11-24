@@ -3,14 +3,17 @@
  * pquery.c
  *	  POSTGRES process query command code
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
+=======
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.127 2008/12/01 17:06:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.129 2009/01/02 20:42:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,8 +47,13 @@
 Portal		ActivePortal = NULL;
 
 
+<<<<<<< HEAD
 static void ProcessQuery(Portal portal, /* Resource queueing need SQL, so we pass portal. */
 			 PlannedStmt *stmt,
+=======
+static void ProcessQuery(PlannedStmt *plan,
+			 const char *sourceText,
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 			 ParamListInfo params,
 			 DestReceiver *dest,
 			 char *completionTag);
@@ -88,8 +96,12 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 	qd->operation = plannedstmt->commandType;	/* operation */
 	qd->plannedstmt = plannedstmt;		/* plan */
 	qd->utilitystmt = plannedstmt->utilityStmt; /* in case DECLARE CURSOR */
+<<<<<<< HEAD
 	/* GPDB_84_MERGE_FIXME do we need to pstrdup sourceText? */
 	qd->sourceText = pstrdup(sourceText);		/* query text */
+=======
+	qd->sourceText = sourceText;		/* query text */
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	qd->snapshot = RegisterSnapshot(snapshot);	/* snapshot */
 	/* RI check snapshot */
 	qd->crosscheck_snapshot = RegisterSnapshot(crosscheck_snapshot);
@@ -145,7 +157,11 @@ CreateUtilityQueryDesc(Node *utilitystmt,
 	qd->operation = CMD_UTILITY;	/* operation */
 	qd->plannedstmt = NULL;
 	qd->utilitystmt = utilitystmt;		/* utility command */
+<<<<<<< HEAD
 	qd->sourceText = pstrdup(sourceText);		/* query text */
+=======
+	qd->sourceText = sourceText;		/* query text */
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	qd->snapshot = RegisterSnapshot(snapshot);	/* snapshot */
 	qd->crosscheck_snapshot = InvalidSnapshot;	/* RI check snapshot */
 	qd->dest = dest;			/* output dest */
@@ -203,8 +219,13 @@ FreeQueryDesc(QueryDesc *qdesc)
  * error; otherwise the executor's memory usage will be leaked.
  */
 static void
+<<<<<<< HEAD
 ProcessQuery(Portal portal,
 			 PlannedStmt *stmt,
+=======
+ProcessQuery(PlannedStmt *plan,
+			 const char *sourceText,
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 			 ParamListInfo params,
 			 DestReceiver *dest,
 			 char *completionTag)
@@ -225,6 +246,7 @@ ProcessQuery(Portal portal,
 	/*
 	 * Create the QueryDesc object
 	 */
+<<<<<<< HEAD
 	Assert(portal);
 
 	if (portal->sourceTag == T_SelectStmt && gp_select_invisible)
@@ -275,6 +297,11 @@ ProcessQuery(Portal portal,
 	}
 
 	portal->status = PORTAL_ACTIVE;
+=======
+	queryDesc = CreateQueryDesc(plan, sourceText,
+								GetActiveSnapshot(), InvalidSnapshot,
+								dest, params, false);
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 	/*
 	 * Set up to collect AFTER triggers
@@ -635,7 +662,11 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot,
 				 */
 				queryDesc = CreateQueryDesc((PlannedStmt *) linitial(portal->stmts),
 											portal->sourceText,
+<<<<<<< HEAD
 											(gp_select_invisible ? SnapshotAny : GetActiveSnapshot()),
+=======
+											GetActiveSnapshot(),
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 											InvalidSnapshot,
 											None_Receiver,
 											params,
@@ -1457,14 +1488,24 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 			if (pstmt->canSetTag)
 			{
 				/* statement can set tag string */
+<<<<<<< HEAD
 				ProcessQuery(portal, pstmt,
+=======
+				ProcessQuery(pstmt,
+							 portal->sourceText,
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 							 portal->portalParams,
 							 dest, completionTag);
 			}
 			else
 			{
 				/* stmt added by rewrite cannot set tag */
+<<<<<<< HEAD
 				ProcessQuery(portal, pstmt,
+=======
+				ProcessQuery(pstmt,
+							 portal->sourceText,
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 							 portal->portalParams,
 							 altdest, NULL);
 			}

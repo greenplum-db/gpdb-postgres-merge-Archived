@@ -3,14 +3,14 @@
  * dirmod.c
  *	  directory handling functions
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	This includes replacement versions of functions that work on
  *	Win32 (NT4 and newer).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.55 2008/04/18 17:05:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.56 2009/01/01 17:24:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

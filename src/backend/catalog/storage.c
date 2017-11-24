@@ -3,12 +3,12 @@
  * storage.c
  *	  code to create and destroy physical storage for relations
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/storage.c,v 1.2 2008/12/03 13:05:22 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/storage.c,v 1.4 2009/01/04 14:59:22 heikki Exp $
  *
  * NOTES
  *	  Some of this code used to be in storage/smgr/smgr.c, and the
@@ -244,6 +244,7 @@ RelationCreateStorage(RelFileNode rnode, bool istemp,
 	SMgrRelation srel;
 
 	srel = smgropen(rnode);
+<<<<<<< HEAD
 	smgrmirroredcreate(srel,
 					   relationName,
 					   mirrorDataLossTrackingState,
@@ -251,6 +252,11 @@ RelationCreateStorage(RelFileNode rnode, bool istemp,
 					   false, /* ignoreAlreadyExists */
 					   mirrorDataLossOccurred);
 	if (istemp)
+=======
+	smgrcreate(srel, MAIN_FORKNUM, false);
+
+	if (!istemp)
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	{
 		/*
 		 * Make an XLOG entry showing the file creation.  If we abort, the file

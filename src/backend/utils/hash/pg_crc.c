@@ -7,12 +7,27 @@
  * A PAINLESS GUIDE TO CRC ERROR DETECTION ALGORITHMS, available from
  * http://www.ross.net/crc/download/crc_v3.txt or several other net sites.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+=======
+ * We use a normal (not "reflected", in Williams' terms) CRC, using initial
+ * all-ones register contents and a final bit inversion.
+ *
+ * The 64-bit variant is not used as of PostgreSQL 8.1, but we retain the
+ * code for possible future use.
+ *
+ *
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/backend/utils/hash/pg_crc.c
+=======
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/pg_crc.c,v 1.21 2009/01/01 17:23:51 momjian Exp $
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  *
  *-------------------------------------------------------------------------
  */

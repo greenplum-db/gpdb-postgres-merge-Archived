@@ -111,10 +111,10 @@ int main()
  } custs4 ;
  
 #line 44 "array_of_struct.pgc"
- int  r    ;
+ int r ;
  
 #line 45 "array_of_struct.pgc"
-   struct varchar_onlyname_45  { int len; char arr[ 50 ]; }  onlyname [2]   ;
+  struct varchar_onlyname_45  { int len; char arr[ 50 ]; }  onlyname [2] ;
 /* exec sql end declare section */
 #line 46 "array_of_struct.pgc"
 

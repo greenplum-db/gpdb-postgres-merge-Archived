@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.159 2008/12/19 16:25:17 petere Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.160 2009/01/05 16:54:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -497,9 +497,12 @@ NewRestoreOptions(void)
 
 	/* set any fields that shouldn't default to zeroes */
 	opts->format = archUnknown;
+<<<<<<< HEAD
 	opts->promptPassword = TRI_DEFAULT;
 	opts->suppressDumpWarnings = false;
 	opts->exit_on_error = false;
+=======
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 	return opts;
 }
@@ -2205,6 +2208,10 @@ _doSetFixedOutputState(ArchiveHandle *AH)
 	/* Select the correct string literal syntax */
 	ahprintf(AH, "SET standard_conforming_strings = %s;\n",
 			 AH->public.std_strings ? "on" : "off");
+
+	/* Select the role to be used during restore */
+	if (AH->ropt && AH->ropt->use_role)
+		ahprintf(AH, "SET ROLE %s;\n", fmtId(AH->ropt->use_role));
 
 	/* Make sure function checking is disabled */
 	ahprintf(AH, "SET check_function_bodies = false;\n");

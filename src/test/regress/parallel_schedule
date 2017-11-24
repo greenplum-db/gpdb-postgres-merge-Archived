@@ -1,5 +1,5 @@
 # ----------
-# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.51 2008/12/19 16:25:19 petere Exp $
+# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.53 2008/12/30 17:11:26 tgl Exp $
 #
 # By convention, we put no more than twenty tests in any one parallel group;
 # this limits the number of connections needed to run the tests.
@@ -101,6 +101,7 @@ test: misc
 # ----------
 # Another group of parallel tests
 # ----------
+<<<<<<< HEAD
 test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts foreign_data json
 
 # GPDB_84_MERGE_FIXME: While disabling this was not really an effect of the 8.4
@@ -119,11 +120,17 @@ test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts f
 # 'foreign_key' test is disabled, because it contains several tables with
 # multiple UNIQUE constraints, which is not supported in GPDB.
 #test: foreign_key
+=======
+test: select_views portals_p2 rules foreign_key cluster dependency guc bitmapops combocid tsearch tsdicts foreign_data window
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 # ----------
 # Another group of parallel tests
+# NB: temp.sql does a reconnect which transiently uses 2 connections,
+# so keep this parallel group to at most 19 tests
 # ----------
 # "plpgsql" cannot run concurrently with "rules", nor can "plancache"
+<<<<<<< HEAD
 test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid conversion truncate alter_table sequence polymorphism rowtypes window with xml
 
 # GPDB_83_MERGE_FIXME: the largeobject test is temporarily disabled due to test errors
@@ -131,6 +138,9 @@ test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid c
 
 # INSERT RETURNING is not supported by GPDB
 #test: returning
+=======
+test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid conversion truncate alter_table sequence polymorphism rowtypes returning largeobject with xml
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 # run stats by itself because its delay may be insufficient under heavy load
 #

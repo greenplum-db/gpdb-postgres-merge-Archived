@@ -4,12 +4,15 @@
  *	  POSTGRES relation descriptor (a/k/a relcache entry) definitions.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
+=======
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.110 2008/12/03 13:05:22 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.111 2009/01/01 17:24:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

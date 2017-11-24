@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/Makefile,v 1.85 2008/11/19 02:59:28 tgl Exp $
+# $PostgreSQL: pgsql/contrib/Makefile,v 1.86 2009/01/04 22:19:59 tgl Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -12,6 +12,7 @@ WANTED_DIRS = \
 		dict_xsyn	\
 		fuzzystrmatch	\
 		hstore		\
+<<<<<<< HEAD
 		intarray \
 		pageinspect \
 		pg_upgrade \
@@ -33,6 +34,30 @@ WANTED_DIRS += \
 		gp_cancel_query \
 		indexscan \
     passwordcheck
+=======
+		intagg		\
+		intarray	\
+		isn		\
+		lo		\
+		ltree		\
+		oid2name	\
+		pageinspect	\
+		pg_buffercache	\
+		pg_freespacemap \
+		pg_standby	\
+		pg_stat_statements \
+		pg_trgm		\
+		pgbench		\
+		pgcrypto	\
+		pgrowlocks	\
+		pgstattuple	\
+		seg		\
+		spi		\
+		tablefunc	\
+		test_parser	\
+		tsearch2	\
+		vacuumlo
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 ifeq ($(with_openssl),yes)
 WANTED_DIRS += sslinfo

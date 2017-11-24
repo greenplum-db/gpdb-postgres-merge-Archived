@@ -4,12 +4,19 @@
  *	  definitions for executor state nodes
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.196 2008/11/16 17:34:28 tgl Exp $
+=======
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.199 2009/01/01 17:23:59 momjian Exp $
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  *
  *-------------------------------------------------------------------------
  */
@@ -2501,6 +2508,7 @@ typedef struct WindowAggState
 	Datum		startOffsetValue;		/* result of startOffset evaluation */
 	Datum		endOffsetValue; /* result of endOffset evaluation */
 
+<<<<<<< HEAD
 	FmgrInfo	ordCmpFunction;	/* btree cmp function for first ORDER BY col */
 	bool		ordReverse;		/* is the first ORDER BY col reversed? */
 	bool		start_offset_valid;	/* is startOffsetValue valid for current row? */
@@ -2542,6 +2550,15 @@ typedef struct WindowAggState
 								 * for current row */
 	bool		frametail_valid;/* true if frametailpos is known up to date
 								 * for current row */
+=======
+	bool		all_done;			/* true if the scan is finished */
+	bool		partition_spooled;	/* true if all tuples in current partition
+									 * have been spooled into tuplestore */
+	bool		more_partitions;	/* true if there's more partitions after
+									 * this one */
+	bool		frametail_valid;	/* true if frametailpos is known up to date
+									 * for current row */
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 	TupleTableSlot *first_part_slot;	/* first tuple of current or next
 										 * partition */

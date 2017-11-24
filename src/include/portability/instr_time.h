@@ -43,9 +43,15 @@
  * Beware of multiple evaluations of the macro arguments.
  *
  *
+<<<<<<< HEAD
  * Copyright (c) 2001-2010, PostgreSQL Global Development Group
  *
  * $PostgreSQL: pgsql/src/include/portability/instr_time.h,v 1.6 2010/02/13 02:34:15 tgl Exp $
+=======
+ * Copyright (c) 2001-2009, PostgreSQL Global Development Group
+ *
+ * $PostgreSQL: pgsql/src/include/portability/instr_time.h,v 1.3 2009/01/01 17:24:01 momjian Exp $
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  *
  *-------------------------------------------------------------------------
  */

@@ -8,10 +8,10 @@
  * exit-time cleanup for either a postmaster or a backend.
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/ipc.h,v 1.75 2008/04/16 23:59:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/ipc.h,v 1.77 2009/01/03 17:08:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,10 @@ extern void proc_exit_prepare(int code);
 
 /* ipci.c */
 extern PGDLLIMPORT shmem_startup_hook_type shmem_startup_hook;
+<<<<<<< HEAD
 extern bool gp_simex_enable;
+=======
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 extern void CreateSharedMemoryAndSemaphores(bool makePrivate, int port);
 

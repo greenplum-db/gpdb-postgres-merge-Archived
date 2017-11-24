@@ -1,9 +1,15 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
+<<<<<<< HEAD
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
  * src/bin/psql/input.h
+=======
+ * Copyright (c) 2000-2009, PostgreSQL Global Development Group
+ *
+ * $PostgreSQL: pgsql/src/bin/psql/input.h,v 1.31 2009/01/01 17:23:55 momjian Exp $
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  */
 #ifndef INPUT_H
 #define INPUT_H

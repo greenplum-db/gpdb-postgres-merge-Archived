@@ -21,11 +21,14 @@
  * lookup key's hash value as a partition number --- this will work because
  * of the way calc_bucket() maps hash values to bucket numbers.
  *
+<<<<<<< HEAD
  * For hash tables in shared memory, the memory allocator function should
  * match malloc's semantics of returning NULL on failure.  For hash tables
  * in local memory, we typically use palloc() which will throw error on
  * failure.  The code in this file has to cope with both cases.
  *
+=======
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *

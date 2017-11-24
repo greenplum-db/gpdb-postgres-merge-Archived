@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.77 2009/01/15 09:30:20 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.76 2009/01/05 09:54:13 petere Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..

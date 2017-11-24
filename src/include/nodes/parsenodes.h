@@ -10,12 +10,19 @@
  * the location.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.384 2008/12/19 16:25:19 petere Exp $
+=======
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.387 2009/01/01 17:24:00 momjian Exp $
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  *
  *-------------------------------------------------------------------------
  */
@@ -429,6 +436,7 @@ typedef struct SortBy
 typedef struct WindowDef
 {
 	NodeTag		type;
+<<<<<<< HEAD
 	char	   *name;			/* window's own name */
 	char	   *refname;		/* referenced window name, if any */
 	List	   *partitionClause;	/* PARTITION BY expression list */
@@ -437,6 +445,14 @@ typedef struct WindowDef
 	Node	   *startOffset;	/* expression for starting bound, if any */
 	Node	   *endOffset;		/* expression for ending bound, if any */
 	int			location;		/* parse location, or -1 if none/unknown */
+=======
+	char	   *name;				/* window's own name */
+	char	   *refname;			/* referenced window name, if any */
+	List	   *partitionClause;	/* PARTITION BY expression list */
+	List	   *orderClause;		/* ORDER BY (list of SortBy) */
+	int			frameOptions;		/* frame_clause options, see below */
+	int			location;			/* parse location, or -1 if none/unknown */
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 } WindowDef;
 
 /*
@@ -447,6 +463,7 @@ typedef struct WindowDef
  * the convenience of gram.y, even though some of them are useless/invalid.
  * We will need more bits (and fields) to cover the full SQL:2008 option set.
  */
+<<<<<<< HEAD
 #define FRAMEOPTION_NONDEFAULT					0x00001 /* any specified? */
 #define FRAMEOPTION_RANGE						0x00002 /* RANGE behavior */
 #define FRAMEOPTION_ROWS						0x00004 /* ROWS behavior */
@@ -466,6 +483,18 @@ typedef struct WindowDef
 	(FRAMEOPTION_START_VALUE_PRECEDING | FRAMEOPTION_START_VALUE_FOLLOWING)
 #define FRAMEOPTION_END_VALUE \
 	(FRAMEOPTION_END_VALUE_PRECEDING | FRAMEOPTION_END_VALUE_FOLLOWING)
+=======
+#define FRAMEOPTION_NONDEFAULT					0x00001	/* any specified? */
+#define FRAMEOPTION_RANGE						0x00002	/* RANGE behavior */
+#define FRAMEOPTION_ROWS						0x00004	/* ROWS behavior */
+#define FRAMEOPTION_BETWEEN						0x00008	/* BETWEEN given? */
+#define FRAMEOPTION_START_UNBOUNDED_PRECEDING	0x00010	/* start is U. P. */
+#define FRAMEOPTION_END_UNBOUNDED_PRECEDING		0x00020	/* (disallowed) */
+#define FRAMEOPTION_START_UNBOUNDED_FOLLOWING	0x00040	/* (disallowed) */
+#define FRAMEOPTION_END_UNBOUNDED_FOLLOWING		0x00080	/* end is U. F. */
+#define FRAMEOPTION_START_CURRENT_ROW			0x00100	/* start is C. R. */
+#define FRAMEOPTION_END_CURRENT_ROW				0x00200	/* end is C. R. */
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 #define FRAMEOPTION_DEFAULTS \
 	(FRAMEOPTION_RANGE | FRAMEOPTION_START_UNBOUNDED_PRECEDING | \
@@ -926,12 +955,19 @@ typedef struct WindowClause
 	char	   *name;			/* window name (NULL in an OVER clause) */
 	char	   *refname;		/* referenced window name, if any */
 	List	   *partitionClause;	/* PARTITION BY list */
+<<<<<<< HEAD
 	List	   *orderClause;	/* ORDER BY list */
 	int			frameOptions;	/* frame_clause options, copied from WindowDef */
 	Node	   *startOffset;	/* expression for starting bound, if any */
 	Node	   *endOffset;		/* expression for ending bound, if any */
 	Index		winref;			/* ID referenced by window functions */
 	bool		copiedOrder;	/* did we copy orderClause from refname? */
+=======
+	List	   *orderClause;		/* ORDER BY list */
+	int			frameOptions;		/* frame_clause options, see WindowDef */
+	Index		winref;				/* ID referenced by window functions */
+	bool		copiedOrder;		/* did we copy orderClause from refname? */
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 } WindowClause;
 
 /*

@@ -4,9 +4,13 @@
  *	  pg_dump is a utility for dumping out a postgres database
  *	  into a script file.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	pg_dump will read the system catalogs in a database and dump out a
@@ -27,7 +31,7 @@
  *	http://archives.postgresql.org/pgsql-bugs/2010-02/msg00187.php
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.509 2008/12/19 16:25:18 petere Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.512 2009/01/05 16:54:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -409,6 +413,7 @@ main(int argc, char **argv)
 	bool		outputBlobs = false;
 	int			outputNoOwner = 0;
 	char	   *outputSuperuser = NULL;
+	char	   *use_role = NULL;
 	int			my_version;
 	int			optindex;
 	RestoreOptions *ropt;
@@ -467,6 +472,7 @@ main(int argc, char **argv)
 		{"inserts", no_argument, &dump_inserts, 1},
 		{"lock-wait-timeout", required_argument, NULL, 2},
 		{"no-tablespaces", no_argument, &outputNoTablespaces, 1},
+		{"role", required_argument, NULL, 3},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 
 		/* START MPP ADDITION */
@@ -665,11 +671,11 @@ main(int argc, char **argv)
 				/* This covers the long options equivalent to -X xxx. */
 				break;
 
-			case 2:
-				/* lock-wait-timeout */
+			case 2:				/* lock-wait-timeout */
 				lockWaitTimeout = optarg;
 				break;
 
+<<<<<<< HEAD
 			case 1000:				/* gp-syntax */
 				if (gp_syntax_option != GPS_NOT_SPECIFIED)
 				{
@@ -696,6 +702,10 @@ main(int argc, char **argv)
 			case 1003:
 				simple_string_list_append(&relid_string_list, optarg);
 				include_everything = false;
+=======
+			case 3:				/* SET ROLE */
+				use_role = optarg;
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 				break;
 
 			default:
@@ -824,6 +834,16 @@ main(int argc, char **argv)
 
 	std_strings = PQparameterStatus(g_conn, "standard_conforming_strings");
 	g_fout->std_strings = (std_strings && strcmp(std_strings, "on") == 0);
+
+	/* Set the role if requested */
+	if (use_role && g_fout->remoteVersion >= 80100)
+	{
+		PQExpBuffer query = createPQExpBuffer();
+
+		appendPQExpBuffer(query, "SET ROLE %s", fmtId(use_role));
+		do_sql_command(g_conn, query->data);
+		destroyPQExpBuffer(query);
+	}
 
 	/* Set the datestyle to ISO to ensure the dump's portability */
 	do_sql_command(g_conn, "SET DATESTYLE = ISO");
@@ -1097,6 +1117,7 @@ help(const char *progname)
 	printf(_("  --disable-dollar-quoting    disable dollar quoting, use SQL standard quoting\n"));
 	printf(_("  --disable-triggers          disable triggers during data-only restore\n"));
 	printf(_("  --no-tablespaces            do not dump tablespace assignments\n"));
+	printf(_("  --role=ROLENAME             do SET ROLE before dump\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                              use SESSION AUTHORIZATION commands instead of\n"
 	"                              ALTER OWNER commands to set ownership\n"));
@@ -7716,6 +7737,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	char	   *proallargtypes;
 	char	   *proargmodes;
 	char	   *proargnames;
+	char	   *proiswindow;
 	char	   *provolatile;
 	char	   *proisstrict;
 	char	   *prosecdef;
@@ -7778,18 +7800,100 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "pg_catalog.pg_get_function_arguments(oid) as funcargs, "
 						  "pg_catalog.pg_get_function_identity_arguments(oid) as funciargs, "
 						  "pg_catalog.pg_get_function_result(oid) as funcresult, "
+<<<<<<< HEAD
 						  "provolatile, proisstrict, prosecdef, "
 						  "proconfig, procost, prorows, prodataaccess, "
 						  "'a' as proexeclocation, "
+=======
+						  "proiswindow, provolatile, proisstrict, prosecdef, "
+						  "proconfig, procost, prorows, "
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname "
 						  "FROM pg_catalog.pg_proc "
 						  "WHERE oid = '%u'::pg_catalog.oid",
 						  finfo->dobj.catId.oid);
 	}
+<<<<<<< HEAD
+=======
+	else if (g_fout->remoteVersion >= 80300)
+	{
+		appendPQExpBuffer(query,
+						  "SELECT proretset, prosrc, probin, "
+						  "proallargtypes, proargmodes, proargnames, "
+						  "false as proiswindow, "
+						  "provolatile, proisstrict, prosecdef, "
+						  "proconfig, procost, prorows, "
+						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname "
+						  "FROM pg_catalog.pg_proc "
+						  "WHERE oid = '%u'::pg_catalog.oid",
+						  finfo->dobj.catId.oid);
+	}
+	else if (g_fout->remoteVersion >= 80100)
+	{
+		appendPQExpBuffer(query,
+						  "SELECT proretset, prosrc, probin, "
+						  "proallargtypes, proargmodes, proargnames, "
+						  "false as proiswindow, "
+						  "provolatile, proisstrict, prosecdef, "
+						  "null as proconfig, 0 as procost, 0 as prorows, "
+						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname "
+						  "FROM pg_catalog.pg_proc "
+						  "WHERE oid = '%u'::pg_catalog.oid",
+						  finfo->dobj.catId.oid);
+	}
+	else if (g_fout->remoteVersion >= 80000)
+	{
+		appendPQExpBuffer(query,
+						  "SELECT proretset, prosrc, probin, "
+						  "null as proallargtypes, "
+						  "null as proargmodes, "
+						  "proargnames, "
+						  "false as proiswindow, "
+						  "provolatile, proisstrict, prosecdef, "
+						  "null as proconfig, 0 as procost, 0 as prorows, "
+						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname "
+						  "FROM pg_catalog.pg_proc "
+						  "WHERE oid = '%u'::pg_catalog.oid",
+						  finfo->dobj.catId.oid);
+	}
+	else if (g_fout->remoteVersion >= 70300)
+	{
+		appendPQExpBuffer(query,
+						  "SELECT proretset, prosrc, probin, "
+						  "null as proallargtypes, "
+						  "null as proargmodes, "
+						  "null as proargnames, "
+						  "false as proiswindow, "
+						  "provolatile, proisstrict, prosecdef, "
+						  "null as proconfig, 0 as procost, 0 as prorows, "
+						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname "
+						  "FROM pg_catalog.pg_proc "
+						  "WHERE oid = '%u'::pg_catalog.oid",
+						  finfo->dobj.catId.oid);
+	}
+	else if (g_fout->remoteVersion >= 70100)
+	{
+		appendPQExpBuffer(query,
+						  "SELECT proretset, prosrc, probin, "
+						  "null as proallargtypes, "
+						  "null as proargmodes, "
+						  "null as proargnames, "
+						  "false as proiswindow, "
+			 "case when proiscachable then 'i' else 'v' end as provolatile, "
+						  "proisstrict, "
+						  "false as prosecdef, "
+						  "null as proconfig, 0 as procost, 0 as prorows, "
+		  "(SELECT lanname FROM pg_language WHERE oid = prolang) as lanname "
+						  "FROM pg_proc "
+						  "WHERE oid = '%u'::oid",
+						  finfo->dobj.catId.oid);
+	}
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	else
 	{
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
+<<<<<<< HEAD
 						  "proallargtypes, proargmodes, proargnames, "
 						  "provolatile, proisstrict, prosecdef, "
 						  "null as proconfig, 0 as procost, 0 as prorows, %s"
@@ -7798,6 +7902,19 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "FROM pg_catalog.pg_proc "
 						  "WHERE oid = '%u'::pg_catalog.oid",
 						  (isGE43 ? "prodataaccess, " : ""),
+=======
+						  "null as proallargtypes, "
+						  "null as proargmodes, "
+						  "null as proargnames, "
+						  "false as proiswindow, "
+			 "case when proiscachable then 'i' else 'v' end as provolatile, "
+						  "false as proisstrict, "
+						  "false as prosecdef, "
+						  "null as proconfig, 0 as procost, 0 as prorows, "
+		  "(SELECT lanname FROM pg_language WHERE oid = prolang) as lanname "
+						  "FROM pg_proc "
+						  "WHERE oid = '%u'::oid",
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 						  finfo->dobj.catId.oid);
 	}
 
@@ -7830,6 +7947,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		proargnames = PQgetvalue(res, 0, PQfnumber(res, "proargnames"));
 		funcargs = funciargs = funcresult = NULL;
 	}
+	proiswindow = PQgetvalue(res, 0, PQfnumber(res, "proiswindow"));
 	provolatile = PQgetvalue(res, 0, PQfnumber(res, "provolatile"));
 	proisstrict = PQgetvalue(res, 0, PQfnumber(res, "proisstrict"));
 	prosecdef = PQgetvalue(res, 0, PQfnumber(res, "prosecdef"));
@@ -7985,6 +8103,12 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 
 	appendPQExpBuffer(q, "\n    LANGUAGE %s", fmtId(lanname));
 
+<<<<<<< HEAD
+=======
+	if (proiswindow[0] == 't')
+		appendPQExpBuffer(q, " WINDOW");
+
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	if (provolatile[0] != PROVOLATILE_VOLATILE)
 	{
 		if (provolatile[0] == PROVOLATILE_IMMUTABLE)

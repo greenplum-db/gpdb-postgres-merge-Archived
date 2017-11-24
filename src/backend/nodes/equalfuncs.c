@@ -18,14 +18,17 @@
  * "x" to be considered equal() to another reference to "x" in the query.
  *
  *
+<<<<<<< HEAD
  *
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
+=======
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.341 2008/12/19 16:25:17 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.344 2009/01/01 17:23:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2343,8 +2346,11 @@ _equalWindowDef(WindowDef *a, WindowDef *b)
 	COMPARE_NODE_FIELD(partitionClause);
 	COMPARE_NODE_FIELD(orderClause);
 	COMPARE_SCALAR_FIELD(frameOptions);
+<<<<<<< HEAD
 	COMPARE_NODE_FIELD(startOffset);
 	COMPARE_NODE_FIELD(endOffset);
+=======
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -2517,8 +2523,11 @@ _equalWindowClause(WindowClause *a, WindowClause *b)
 	COMPARE_NODE_FIELD(partitionClause);
 	COMPARE_NODE_FIELD(orderClause);
 	COMPARE_SCALAR_FIELD(frameOptions);
+<<<<<<< HEAD
 	COMPARE_NODE_FIELD(startOffset);
 	COMPARE_NODE_FIELD(endOffset);
+=======
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	COMPARE_SCALAR_FIELD(winref);
 	COMPARE_SCALAR_FIELD(copiedOrder);
 

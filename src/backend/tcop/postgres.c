@@ -3,12 +3,12 @@
  * postgres.c
  *	  POSTGRES C Backend Interface
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.562 2008/12/13 02:29:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.564 2009/01/01 17:23:48 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2567,10 +2567,6 @@ exec_bind_message(StringInfo input_message)
 		cplan = NULL;
 	}
 
-	/* Done with the snapshot used for parameter I/O and parsing/planning */
-	if (snapshot_set)
-		PopActiveSnapshot();
-
 	/*
 	 * Now we can define the portal.
 	 *
@@ -2592,7 +2588,11 @@ exec_bind_message(StringInfo input_message)
 	/*
 	 * And we're ready to start portal execution.
 	 */
+<<<<<<< HEAD
 	PortalStart(portal, params, InvalidSnapshot, NULL);
+=======
+	PortalStart(portal, params, InvalidSnapshot);
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 	/*
 	 * Apply the result format requests to the portal.

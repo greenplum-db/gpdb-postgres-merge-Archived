@@ -11,6 +11,7 @@
  *		reduce_outer_joins
  *
  *
+<<<<<<< HEAD
  * In PostgreSQL, there is code here to do with pulling up "simple UNION ALLs".
  * In GPDB, there is no such thing as a simple UNION ALL as locus of the relations
  * may be different, so all that has been removed.
@@ -19,11 +20,14 @@
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.60 2008/11/11 19:05:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.62 2009/01/01 17:23:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

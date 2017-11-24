@@ -17,7 +17,11 @@ BEGIN
             VALUE "FileDescription", "PostgreSQL Access Library\0"
             VALUE "FileVersion", "9.0.0\0"
             VALUE "InternalName", "libpq\0"
+<<<<<<< HEAD
             VALUE "LegalCopyright", "Copyright (C) 2010\0"
+=======
+            VALUE "LegalCopyright", "Copyright (C) 2009\0"
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "libpq.dll\0"
             VALUE "ProductName", "PostgreSQL\0"

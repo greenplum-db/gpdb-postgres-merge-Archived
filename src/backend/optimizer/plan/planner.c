@@ -3,14 +3,18 @@
  * planner.c
  *	  The query optimizer external interface.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.247 2008/12/18 18:20:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.250 2009/01/01 17:23:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2235,7 +2239,11 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				result_plan = (Plan *)
 					make_windowagg(root,
 								   (List *) copyObject(window_tlist),
+<<<<<<< HEAD
 								   wflists->windowFuncs[wc->winref],
+=======
+								   list_length(wflists->windowFuncs[wc->winref]),
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 								   wc->winref,
 								   partNumCols,
 								   partColIdx,
@@ -2243,12 +2251,16 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 								   ordNumCols,
 								   ordColIdx,
 								   ordOperators,
+<<<<<<< HEAD
 								   firstOrderCol,
 								   firstOrderCmpOperator,
 								   firstOrderNullsFirst,
 								   wc->frameOptions,
 								   wc->startOffset,
 								   wc->endOffset,
+=======
+								   wc->frameOptions,
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 								   result_plan);
 			}
 		}

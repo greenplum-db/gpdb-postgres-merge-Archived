@@ -5,12 +5,15 @@
  *	  along with the relation's initial contents.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
+=======
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.144 2008/12/19 18:25:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.145 2009/01/01 17:23:56 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

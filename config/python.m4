@@ -1,7 +1,11 @@
 #
 # Autoconf macros for configuring the build of Python extension modules
 #
+<<<<<<< HEAD
 # config/python.m4
+=======
+# $PostgreSQL: pgsql/config/python.m4,v 1.15 2009/01/04 00:54:15 petere Exp $
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 #
 
 # PGAC_PATH_PYTHON
@@ -30,7 +34,10 @@ else
     AC_MSG_ERROR([distutils module not found])
 fi
 AC_MSG_CHECKING([Python configuration directory])
+<<<<<<< HEAD
 python_majorversion=`${PYTHON} -c "import sys; print(sys.version[[0]])"`
+=======
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 python_version=`${PYTHON} -c "import sys; print(sys.version[[:3]])"`
 python_configdir=`${PYTHON} -c "from distutils.sysconfig import get_python_lib as f; import os; print(os.path.join(f(plat_specific=1,standard_lib=1),'config'))"`
 python_includespec=`${PYTHON} -c "import distutils.sysconfig; print('-I'+distutils.sysconfig.get_python_inc())"`

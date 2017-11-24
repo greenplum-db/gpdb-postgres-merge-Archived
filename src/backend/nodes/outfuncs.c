@@ -3,14 +3,18 @@
  * outfuncs.c
  *	  Output functions for Postgres tree nodes.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.346 2008/12/01 21:06:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.349 2009/01/01 17:23:43 momjian Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -871,6 +875,7 @@ _outWindowAgg(StringInfo str, WindowAgg *node)
 	for (i = 0; i < node->ordNumCols; i++)
 		appendStringInfo(str, " %u", node->ordOperators[i]);
 
+<<<<<<< HEAD
 	WRITE_INT_FIELD(firstOrderCol);
 	WRITE_OID_FIELD(firstOrderCmpOperator);
 	WRITE_BOOL_FIELD(firstOrderNullsFirst);
@@ -878,6 +883,9 @@ _outWindowAgg(StringInfo str, WindowAgg *node)
 	WRITE_INT_FIELD(frameOptions);
 	WRITE_NODE_FIELD(startOffset);
 	WRITE_NODE_FIELD(endOffset);
+=======
+	WRITE_INT_FIELD(frameOptions);
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
@@ -3600,8 +3608,11 @@ _outWindowClause(StringInfo str, WindowClause *node)
 	WRITE_NODE_FIELD(partitionClause);
 	WRITE_NODE_FIELD(orderClause);
 	WRITE_INT_FIELD(frameOptions);
+<<<<<<< HEAD
 	WRITE_NODE_FIELD(startOffset);
 	WRITE_NODE_FIELD(endOffset);
+=======
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	WRITE_UINT_FIELD(winref);
 	WRITE_BOOL_FIELD(copiedOrder);
 }
@@ -3931,8 +3942,11 @@ _outWindowDef(StringInfo str, WindowDef *node)
 	WRITE_NODE_FIELD(partitionClause);
 	WRITE_NODE_FIELD(orderClause);
 	WRITE_INT_FIELD(frameOptions);
+<<<<<<< HEAD
 	WRITE_NODE_FIELD(startOffset);
 	WRITE_NODE_FIELD(endOffset);
+=======
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	WRITE_LOCATION_FIELD(location);
 }
 

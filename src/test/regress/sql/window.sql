@@ -142,9 +142,12 @@ SELECT empno, depname, salary, bonus, depadj, MIN(bonus) OVER (ORDER BY empno), 
 		THEN 200 END AS depadj FROM empsalary
 )s;
 
+<<<<<<< HEAD
 -- window function over ungrouped agg over empty row set (bug before 9.1)
 SELECT SUM(COUNT(f1)) OVER () FROM int4_tbl WHERE f1=42;
 
+=======
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 -- test non-default frame specifications
 SELECT four, ten,
 	sum(ten) over (partition by four order by ten),
@@ -171,6 +174,7 @@ SELECT four, ten/4 as two,
 	last_value(ten/4) over (partition by four order by ten/4 rows between unbounded preceding and current row)
 FROM (select distinct ten, four from tenk1) ss;
 
+<<<<<<< HEAD
 SELECT sum(unique1) over (order by four range between current row and unbounded following),
 	unique1, four
 FROM tenk1 WHERE unique1 < 10;
@@ -228,6 +232,8 @@ SELECT pg_get_viewdef('v_window');
 
 reset search_path;
 
+=======
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 -- with UNION
 SELECT count(*) OVER (PARTITION BY four) FROM (SELECT * FROM tenk1 UNION ALL SELECT * FROM tenk2)s LIMIT 0;
 

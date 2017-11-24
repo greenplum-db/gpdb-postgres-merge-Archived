@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.4.2.1 2009/11/27 16:11:50 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.2 2008/12/29 17:07:05 meskes Exp $ */
 
 ECPG: stmtClosePortalStmt block
 	{

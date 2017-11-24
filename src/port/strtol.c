@@ -1,5 +1,9 @@
 /*
+<<<<<<< HEAD
  * $PostgreSQL: pgsql/src/port/strtol.c,v 1.17 2009/06/11 14:49:15 momjian Exp $
+=======
+ * $PostgreSQL: pgsql/src/port/strtol.c,v 1.16 2009/01/01 17:24:04 momjian Exp $ 
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  *
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group

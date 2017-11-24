@@ -1,11 +1,15 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
+=======
+ * Copyright (c) 2000-2009, PostgreSQL Global Development Group
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.178 2008/12/19 16:25:18 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.179 2009/01/01 17:23:55 momjian Exp $
  */
 
 /*----------------------------------------------------------------------

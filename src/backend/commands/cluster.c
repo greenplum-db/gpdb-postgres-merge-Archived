@@ -6,14 +6,18 @@
  * There is hardly anything left of Paul Brown's original implementation...
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.179 2008/11/24 08:46:03 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.180 2009/01/01 17:23:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

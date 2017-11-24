@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.206 2008/12/11 07:34:08 petere Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.209 2009/01/05 02:27:45 alvherre Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -201,10 +201,13 @@ do { \
 extern pid_t PostmasterPid;
 extern bool IsPostmasterEnvironment;
 extern PGDLLIMPORT bool IsUnderPostmaster;
+<<<<<<< HEAD
 extern bool IsBinaryUpgrade;
 
 /* Are we binary-upgrading a QE node? */
 #define IsBinaryUpgradeQE() (IsBinaryUpgrade && GpIdentity.segindex >= 0)
+=======
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 extern bool ExitOnAnyError;
 

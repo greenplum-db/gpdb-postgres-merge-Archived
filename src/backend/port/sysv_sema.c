@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/sysv_sema.c,v 1.25 2009/06/11 14:49:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/sysv_sema.c,v 1.24 2009/01/01 17:23:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

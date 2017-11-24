@@ -4,7 +4,7 @@
  *
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.75 2008/11/11 03:01:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.76 2009/01/04 18:37:35 tgl Exp $
  */
 #include "postgres.h"
 
@@ -859,6 +859,7 @@ pg_encoding_mb2wchar_with_len(int encoding,
 	return (*pg_wchar_table[encoding].mb2wchar_with_len) ((const unsigned char *) from, to, len);
 }
 
+<<<<<<< HEAD
 /* convert a wchar string to a multibyte */
 int
 pg_wchar2mb(const pg_wchar *from, char *to)
@@ -882,6 +883,9 @@ pg_encoding_wchar2mb_with_len(int encoding,
 }
 
 /* returns the byte length of a multibyte word */
+=======
+/* returns the byte length of a multibyte character */
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 int
 pg_mblen(const char *mbstr)
 {
@@ -1020,6 +1024,7 @@ cliplen(const char *str, int len, int limit)
 	return l;
 }
 
+<<<<<<< HEAD
 #if defined(ENABLE_NLS) && defined(WIN32)
 static const struct codeset_map {
 	int	encoding;
@@ -1060,6 +1065,8 @@ static const struct codeset_map {
 };
 #endif /* WIN32 */
 
+=======
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 void
 SetDatabaseEncoding(int encoding)
 {

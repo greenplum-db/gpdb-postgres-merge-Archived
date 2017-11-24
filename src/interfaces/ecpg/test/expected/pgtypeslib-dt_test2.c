@@ -83,6 +83,7 @@ main(void)
 		 
 		 
 	
+<<<<<<< HEAD
 #line 62 "dt_test2.pgc"
  date date1 ;
  
@@ -96,6 +97,21 @@ main(void)
  interval * i1 ;
  
 #line 66 "dt_test2.pgc"
+=======
+#line 52 "dt_test2.pgc"
+ date date1 ;
+ 
+#line 53 "dt_test2.pgc"
+ timestamp ts1 , ts2 ;
+ 
+#line 54 "dt_test2.pgc"
+ char * text ;
+ 
+#line 55 "dt_test2.pgc"
+ interval * i1 ;
+ 
+#line 56 "dt_test2.pgc"
+>>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  date * dc ;
 /* exec sql end declare section */
 #line 67 "dt_test2.pgc"
