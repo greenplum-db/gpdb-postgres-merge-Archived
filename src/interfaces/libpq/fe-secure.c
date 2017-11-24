@@ -11,11 +11,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-secure.c
-=======
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.115 2009/01/01 17:24:03 momjian Exp $
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  *
  * NOTES
  *
