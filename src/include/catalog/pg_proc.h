@@ -4,19 +4,12 @@
  *	  definition of the system "procedure" relation (pg_proc)
  *	  along with the relation's initial contents.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.533 2008/12/19 18:25:19 tgl Exp $
-=======
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
  * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.535 2009/01/01 17:23:57 momjian Exp $
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki

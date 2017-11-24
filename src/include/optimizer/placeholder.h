@@ -4,12 +4,8 @@
  *	  prototypes for optimizer/util/placeholder.c.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2017, Pivotal Inc.
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/optimizer/placeholder.h,v 1.2 2009/01/01 17:24:00 momjian Exp $
