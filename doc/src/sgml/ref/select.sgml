@@ -1529,8 +1529,6 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
   </refsect2>
 
   <refsect2>
-<<<<<<< HEAD
-=======
    <title><literal>WINDOW</literal> Clause Restrictions</title>
 
    <para>
@@ -1542,7 +1540,6 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
   </refsect2>
 
   <refsect2>
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
    <title><literal>LIMIT</literal> and <literal>OFFSET</literal></title>
 
    <para>
