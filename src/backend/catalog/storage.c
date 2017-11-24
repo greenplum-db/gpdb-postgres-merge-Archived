@@ -232,7 +232,7 @@ static void smgrDoDeleteActions(PendingDelete **list, int *listCount, bool forCo
  * transaction aborts later on, the storage will be destroyed.
  */
 void
-RelationCreateStorage(RelFileNode rnode, bool istemp,
+RelationCreateStorage(RelFileNode rnode, bool isLocalBuf,
 					  char *relationName, /* For tracing only. Can be NULL in some execution paths. */
 					  MirrorDataLossTrackingState mirrorDataLossTrackingState,
 					  int64 mirrorDataLossTrackingSessionNum,
@@ -244,19 +244,14 @@ RelationCreateStorage(RelFileNode rnode, bool istemp,
 	SMgrRelation srel;
 
 	srel = smgropen(rnode);
-<<<<<<< HEAD
 	smgrmirroredcreate(srel,
 					   relationName,
 					   mirrorDataLossTrackingState,
 					   mirrorDataLossTrackingSessionNum,
 					   false, /* ignoreAlreadyExists */
 					   mirrorDataLossOccurred);
-	if (istemp)
-=======
-	smgrcreate(srel, MAIN_FORKNUM, false);
 
-	if (!istemp)
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
+	if (!isLocalBuf)
 	{
 		/*
 		 * Make an XLOG entry showing the file creation.  If we abort, the file

@@ -20,7 +20,7 @@
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
 
-extern void RelationCreateStorage(RelFileNode rnode, bool istemp,
+extern void RelationCreateStorage(RelFileNode rnode, bool isLocalBuf,
 					  char *relationName,
 					  MirrorDataLossTrackingState mirrorDataLossTrackingState,
 					  int64 mirrorDataLossTrackingSessionNum,
