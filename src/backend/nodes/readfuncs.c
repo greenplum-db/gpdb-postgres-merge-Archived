@@ -3,13 +3,9 @@
  * readfuncs.c
  *	  Reader functions for Postgres tree nodes.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -494,11 +490,8 @@ _readWindowClause(void)
 	READ_NODE_FIELD(partitionClause);
 	READ_NODE_FIELD(orderClause);
 	READ_INT_FIELD(frameOptions);
-<<<<<<< HEAD
 	READ_NODE_FIELD(startOffset);
 	READ_NODE_FIELD(endOffset);
-=======
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	READ_UINT_FIELD(winref);
 	READ_BOOL_FIELD(copiedOrder);
 
