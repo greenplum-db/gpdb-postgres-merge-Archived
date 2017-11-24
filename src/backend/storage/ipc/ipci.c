@@ -73,8 +73,6 @@
 
 shmem_startup_hook_type shmem_startup_hook = NULL;
 
-shmem_startup_hook_type shmem_startup_hook = NULL;
-
 static Size total_addin_request = 0;
 static bool addin_request_allowed = true;
 
