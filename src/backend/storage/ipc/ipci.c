@@ -411,12 +411,9 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		ShmemBackendArrayAllocation();
 #endif
 
-<<<<<<< HEAD
 	if (gp_enable_resqueue_priority)
 		BackoffStateInit();
-	
-=======
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
+
 	/*
 	 * Now give loadable modules a chance to set up their shmem allocations
 	 */

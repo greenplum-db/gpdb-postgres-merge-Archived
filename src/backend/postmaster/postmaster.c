@@ -2202,7 +2202,7 @@ BeginResetOfPostmasterAfterChildrenAreShutDown(void)
 	 * this happens before forking the filerep peer reset process;
 	 * the latter process should not use information from shared memory;
 	 */
-	shmem_exit(0 /*code*/);
+	shmem_exit(1 /*code*/);
 	reset_shared(PostPortNumber, true /*isReset*/);
 
 	/*
@@ -6035,7 +6035,6 @@ static void StateMachineTransition_NoChildren(void)
 static void
 PostmasterStateMachine(void)
 {
-<<<<<<< HEAD
     int passThroughStateMachine;
     const int minStateForLogging = PM_CHILD_STOP_BEGIN;
 
@@ -6202,164 +6201,6 @@ PostmasterStateMachine(void)
         /* and now loop again to see if the new pmState has already been satisfied, most likely if our
          *   current actions on entering the state were no-ops */
     }
-=======
-	if (pmState == PM_WAIT_BACKUP)
-	{
-		/*
-		 * PM_WAIT_BACKUP state ends when online backup mode is not active.
-		 */
-		if (!BackupInProgress())
-			pmState = PM_WAIT_BACKENDS;
-	}
-
-	/*
-	 * If we are in a state-machine state that implies waiting for backends to
-	 * exit, see if they're all gone, and change state if so.
-	 */
-	if (pmState == PM_WAIT_BACKENDS)
-	{
-		/*
-		 * PM_WAIT_BACKENDS state ends when we have no regular backends
-		 * (including autovac workers) and no walwriter or autovac launcher.
-		 * If we are doing crash recovery then we expect the bgwriter to exit
-		 * too, otherwise not.	The archiver, stats, and syslogger processes
-		 * are disregarded since they are not connected to shared memory; we
-		 * also disregard dead_end children here.
-		 */
-		if (CountChildren() == 0 &&
-			StartupPID == 0 &&
-			(BgWriterPID == 0 || !FatalError) &&
-			WalWriterPID == 0 &&
-			AutoVacPID == 0)
-		{
-			if (FatalError)
-			{
-				/*
-				 * Start waiting for dead_end children to die.	This state
-				 * change causes ServerLoop to stop creating new ones.
-				 */
-				pmState = PM_WAIT_DEAD_END;
-
-				/*
-				 * We already SIGQUIT'd the archiver and stats processes,
-				 * if any, when we entered FatalError state.
-				 */
-			}
-			else
-			{
-				/*
-				 * If we get here, we are proceeding with normal shutdown. All
-				 * the regular children are gone, and it's time to tell the
-				 * bgwriter to do a shutdown checkpoint.
-				 */
-				Assert(Shutdown > NoShutdown);
-				/* Start the bgwriter if not running */
-				if (BgWriterPID == 0)
-					BgWriterPID = StartBackgroundWriter();
-				/* And tell it to shut down */
-				if (BgWriterPID != 0)
-				{
-					signal_child(BgWriterPID, SIGUSR2);
-					pmState = PM_SHUTDOWN;
-				}
-				else
-				{
-					/*
-					 * If we failed to fork a bgwriter, just shut down. Any
-					 * required cleanup will happen at next restart. We set
-					 * FatalError so that an "abnormal shutdown" message gets
-					 * logged when we exit.
-					 */
-					FatalError = true;
-					pmState = PM_WAIT_DEAD_END;
-
-					/* Kill the archiver and stats collector too */
-					if (PgArchPID != 0)
-						signal_child(PgArchPID, SIGQUIT);
-					if (PgStatPID != 0)
-						signal_child(PgStatPID, SIGQUIT);
-				}
-			}
-		}
-	}
-
-	if (pmState == PM_WAIT_DEAD_END)
-	{
-		/*
-		 * PM_WAIT_DEAD_END state ends when the BackendList is entirely empty
-		 * (ie, no dead_end children remain), and the archiver and stats
-		 * collector are gone too.
-		 *
-		 * The reason we wait for those two is to protect them against a new
-		 * postmaster starting conflicting subprocesses; this isn't an
-		 * ironclad protection, but it at least helps in the
-		 * shutdown-and-immediately-restart scenario.  Note that they have
-		 * already been sent appropriate shutdown signals, either during a
-		 * normal state transition leading up to PM_WAIT_DEAD_END, or during
-		 * FatalError processing.
-		 */
-		if (DLGetHead(BackendList) == NULL &&
-			PgArchPID == 0 && PgStatPID == 0)
-		{
-			/* These other guys should be dead already */
-			Assert(StartupPID == 0);
-			Assert(BgWriterPID == 0);
-			Assert(WalWriterPID == 0);
-			Assert(AutoVacPID == 0);
-			/* syslogger is not considered here */
-			pmState = PM_NO_CHILDREN;
-		}
-	}
-
-	/*
-	 * If we've been told to shut down, we exit as soon as there are no
-	 * remaining children.	If there was a crash, cleanup will occur at the
-	 * next startup.  (Before PostgreSQL 8.3, we tried to recover from the
-	 * crash before exiting, but that seems unwise if we are quitting because
-	 * we got SIGTERM from init --- there may well not be time for recovery
-	 * before init decides to SIGKILL us.)
-	 *
-	 * Note that the syslogger continues to run.  It will exit when it sees
-	 * EOF on its input pipe, which happens when there are no more upstream
-	 * processes.
-	 */
-	if (Shutdown > NoShutdown && pmState == PM_NO_CHILDREN)
-	{
-		if (FatalError)
-		{
-			ereport(LOG, (errmsg("abnormal database system shutdown")));
-			ExitPostmaster(1);
-		}
-		else
-		{
-			/*
-			 * Terminate backup mode to avoid recovery after a
-			 * clean fast shutdown.
-			 */
-			CancelBackup();
-
-			/* Normal exit from the postmaster is here */
-			ExitPostmaster(0);
-		}
-	}
-
-	/*
-	 * If we need to recover from a crash, wait for all non-syslogger
-	 * children to exit, then reset shmem and StartupDataBase.
-	 */
-	if (FatalError && pmState == PM_NO_CHILDREN)
-	{
-		ereport(LOG,
-				(errmsg("all server processes terminated; reinitializing")));
-
-		shmem_exit(1);
-		reset_shared(PostPortNumber);
-
-		StartupPID = StartupDataBase();
-		Assert(StartupPID != 0);
-		pmState = PM_STARTUP;
-	}
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 }
 
 
@@ -7299,17 +7140,10 @@ SubPostmasterMain(int argc, char *argv[])
 	read_nondefault_variables();
 
 	/*
-<<<<<<< HEAD
 	 * Reload any libraries that were preloaded by the postmaster.	Since we
 	 * exec'd this process, those libraries didn't come along with us; but we
 	 * should load them into all child processes to be consistent with the
 	 * non-EXEC_BACKEND behavior.
-=======
-	 * Reload any libraries that were preloaded by the postmaster.  Since
-	 * we exec'd this process, those libraries didn't come along with us;
-	 * but we should load them into all child processes to be consistent
-	 * with the non-EXEC_BACKEND behavior.
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 	 */
 	process_shared_preload_libraries();
 
