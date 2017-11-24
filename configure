@@ -11,17 +11,10 @@
 # This configure script is free software; the Free Software Foundation
 # gives unlimited permission to copy, distribute and modify it.
 #
-<<<<<<< HEAD
 # Copyright (c) 1996-2010, PostgreSQL Global Development Group
 ## -------------------- ##
 ## M4sh Initialization. ##
 ## -------------------- ##
-=======
-# Copyright (c) 1996-2009, PostgreSQL Global Development Group
-## --------------------- ##
-## M4sh Initialization.  ##
-## --------------------- ##
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 
 # Be more Bourne compatible
 DUALCASE=1; export DUALCASE # for MKS sh
@@ -632,165 +625,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-<<<<<<< HEAD
 ac_subst_vars='LTLIBOBJS
-=======
-ac_subst_vars='SHELL
-PATH_SEPARATOR
-PACKAGE_NAME
-PACKAGE_TARNAME
-PACKAGE_VERSION
-PACKAGE_STRING
-PACKAGE_BUGREPORT
-exec_prefix
-prefix
-program_transform_name
-bindir
-sbindir
-libexecdir
-datarootdir
-datadir
-sysconfdir
-sharedstatedir
-localstatedir
-includedir
-oldincludedir
-docdir
-infodir
-htmldir
-dvidir
-pdfdir
-psdir
-libdir
-localedir
-mandir
-DEFS
-ECHO_C
-ECHO_N
-ECHO_T
-LIBS
-build_alias
-host_alias
-target_alias
-configure_args
-PG_MAJORVERSION
-build
-build_cpu
-build_vendor
-build_os
-host
-host_cpu
-host_vendor
-host_os
-PORTNAME
-enable_nls
-WANTED_LANGUAGES
-default_port
-enable_shared
-enable_rpath
-enable_debug
-enable_profiling
-GCOV
-LCOV
-GENHTML
-enable_coverage
-DTRACE
-DTRACEFLAGS
-enable_dtrace
-CC
-CFLAGS
-LDFLAGS
-CPPFLAGS
-ac_ct_CC
-EXEEXT
-OBJEXT
-SUN_STUDIO_CC
-CPP
-GCC
-TAS
-autodepend
-INCLUDES
-enable_thread_safety
-with_tcl
-with_perl
-with_python
-with_gssapi
-with_krb5
-krb_srvtab
-with_pam
-with_ldap
-with_bonjour
-with_openssl
-with_ossp_uuid
-XML2_CONFIG
-with_libxml
-with_libxslt
-with_system_tzdata
-with_zlib
-GREP
-EGREP
-ELF_SYS
-LDFLAGS_SL
-LD
-with_gnu_ld
-ld_R_works
-RANLIB
-STRIP
-STRIP_STATIC_LIB
-STRIP_SHARED_LIB
-AR
-DLLTOOL
-DLLWRAP
-WINDRES
-TAR
-LN_S
-AWK
-BISON
-BISONFLAGS
-FLEX
-FLEXFLAGS
-PERL
-perl_archlibexp
-perl_privlibexp
-perl_useshrplib
-perl_embed_ldflags
-PYTHON
-python_version
-python_configdir
-python_includespec
-python_libdir
-python_libspec
-python_additional_libs
-ZIC
-OSSP_UUID_LIBS
-HAVE_IPV6
-LIBOBJS
-acx_pthread_config
-PTHREAD_CC
-PTHREAD_LIBS
-PTHREAD_CFLAGS
-LDAP_LIBS_FE
-LDAP_LIBS_BE
-HAVE_POSIX_SIGNALS
-MSGFMT
-MSGMERGE
-XGETTEXT
-TCLSH
-TCL_CONFIG_SH
-TCL_INCLUDE_SPEC
-TCL_LIB_FILE
-TCL_LIBS
-TCL_LIB_SPEC
-TCL_SHARED_BUILD
-TCL_SHLIB_LD_LIBS
-NSGMLS
-JADE
-have_docbook
-DOCBOOKSTYLE
-COLLATEINDEX
-SGMLSPL
-DOCBOOK2MAN
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 vpath_build
 PROVE
 DOCBOOK2MAN
@@ -1865,11 +1700,7 @@ Copyright (C) 2012 Free Software Foundation, Inc.
 This configure script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it.
 
-<<<<<<< HEAD
 Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
-Copyright (c) 1996-2009, PostgreSQL Global Development Group
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 _ACEOF
   exit
 fi
@@ -9790,14 +9621,9 @@ else
 $as_echo "no" >&6; }
     as_fn_error $? "distutils module not found" "$LINENO" 5
 fi
-<<<<<<< HEAD
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking Python configuration directory" >&5
 $as_echo_n "checking Python configuration directory... " >&6; }
 python_majorversion=`${PYTHON} -c "import sys; print(sys.version[0])"`
-=======
-{ echo "$as_me:$LINENO: checking Python configuration directory" >&5
-echo $ECHO_N "checking Python configuration directory... $ECHO_C" >&6; }
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 python_version=`${PYTHON} -c "import sys; print(sys.version[:3])"`
 python_configdir=`${PYTHON} -c "from distutils.sysconfig import get_python_lib as f; import os; print(os.path.join(f(plat_specific=1,standard_lib=1),'config'))"`
 python_includespec=`${PYTHON} -c "import distutils.sysconfig; print('-I'+distutils.sysconfig.get_python_inc())"`
@@ -9837,15 +9663,9 @@ python_additional_libs=`${PYTHON} -c "import distutils.sysconfig,string; print('
 $as_echo "${python_libspec} ${python_additional_libs}" >&6; }
 
 
-<<<<<<< HEAD
 # threaded python is not supported on OpenBSD
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether Python is compiled with thread support" >&5
 $as_echo_n "checking whether Python is compiled with thread support... " >&6; }
-=======
-# threaded python is not supported on bsd's
-{ echo "$as_me:$LINENO: checking whether Python is compiled with thread support" >&5
-echo $ECHO_N "checking whether Python is compiled with thread support... $ECHO_C" >&6; }
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 pythreads=`${PYTHON} -c "import sys; print(int('thread' in sys.builtin_module_names))"`
 if test "$pythreads" = "1"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
@@ -9863,8 +9683,6 @@ fi
 
 fi
 
-<<<<<<< HEAD
-ZIC=
 if test "$cross_compiling" = yes && test -z "$with_system_tzdata"; then
   # Extract the first word of "zic", so it can be a program name with args.
 set dummy zic; ac_word=$2
@@ -9872,15 +9690,6 @@ set dummy zic; ac_word=$2
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_path_ZIC+:} false; then :
   $as_echo_n "(cached) " >&6
-=======
-if test "$cross_compiling" = yes && test -z "$with_system_tzdata"; then
-  # Extract the first word of "zic", so it can be a program name with args.
-set dummy zic; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_path_ZIC+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 else
   case $ZIC in
   [\\/]* | ?:[\\/]*)
@@ -9892,7 +9701,6 @@ for as_dir in $PATH
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
-<<<<<<< HEAD
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
     ac_cv_path_ZIC="$as_dir/$ac_word$ac_exec_ext"
@@ -9901,16 +9709,6 @@ do
   fi
 done
   done
-=======
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_ZIC="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 IFS=$as_save_IFS
 
   ;;
@@ -9918,24 +9716,15 @@ esac
 fi
 ZIC=$ac_cv_path_ZIC
 if test -n "$ZIC"; then
-<<<<<<< HEAD
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ZIC" >&5
 $as_echo "$ZIC" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-=======
-  { echo "$as_me:$LINENO: result: $ZIC" >&5
-echo "${ECHO_T}$ZIC" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 fi
 
 
   if test -z "$ZIC"; then
-<<<<<<< HEAD
     as_fn_error $? "
 When cross-compiling, either use the option --with-system-tzdata to use
 existing time-zone data, or set the environment variable ZIC to a zic
@@ -9945,20 +9734,6 @@ fi
 
 
 
-=======
-    { { echo "$as_me:$LINENO: error:
-When cross-compiling, either use the option --with-system-tzdata to use
-existing time-zone data, or set the environment variable ZIC to a zic
-program to use during the build." >&5
-echo "$as_me: error:
-When cross-compiling, either use the option --with-system-tzdata to use
-existing time-zone data, or set the environment variable ZIC to a zic
-program to use during the build." >&2;}
-   { (exit 1); exit 1; }; }
-  fi
-fi
-
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 # Supply a numeric version string for use by 3rd party add-ons
 # awk -F is a regex on some platforms, and not on others, so make "." a tab
 PG_VERSION_NUM="`echo "$PG_PACKAGE_VERSION" | sed 's/[A-Za-z].*$//' |
@@ -20027,78 +19802,11 @@ _ACEOF
 ac_delim_num=`echo "$ac_subst_vars" | grep -c '^'`
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
-<<<<<<< HEAD
   . ./conf$$subs.sh ||
     as_fn_error $? "could not make $CONFIG_STATUS" "$LINENO" 5
 
   ac_delim_n=`sed -n "s/.*$ac_delim\$/X/p" conf$$subs.awk | grep -c X`
   if test $ac_delim_n = $ac_delim_num; then
-=======
-  cat >conf$$subs.sed <<_ACEOF
-with_gnu_ld!$with_gnu_ld$ac_delim
-ld_R_works!$ld_R_works$ac_delim
-RANLIB!$RANLIB$ac_delim
-STRIP!$STRIP$ac_delim
-STRIP_STATIC_LIB!$STRIP_STATIC_LIB$ac_delim
-STRIP_SHARED_LIB!$STRIP_SHARED_LIB$ac_delim
-AR!$AR$ac_delim
-DLLTOOL!$DLLTOOL$ac_delim
-DLLWRAP!$DLLWRAP$ac_delim
-WINDRES!$WINDRES$ac_delim
-TAR!$TAR$ac_delim
-LN_S!$LN_S$ac_delim
-AWK!$AWK$ac_delim
-BISON!$BISON$ac_delim
-BISONFLAGS!$BISONFLAGS$ac_delim
-FLEX!$FLEX$ac_delim
-FLEXFLAGS!$FLEXFLAGS$ac_delim
-PERL!$PERL$ac_delim
-perl_archlibexp!$perl_archlibexp$ac_delim
-perl_privlibexp!$perl_privlibexp$ac_delim
-perl_useshrplib!$perl_useshrplib$ac_delim
-perl_embed_ldflags!$perl_embed_ldflags$ac_delim
-PYTHON!$PYTHON$ac_delim
-python_version!$python_version$ac_delim
-python_configdir!$python_configdir$ac_delim
-python_includespec!$python_includespec$ac_delim
-python_libdir!$python_libdir$ac_delim
-python_libspec!$python_libspec$ac_delim
-python_additional_libs!$python_additional_libs$ac_delim
-ZIC!$ZIC$ac_delim
-OSSP_UUID_LIBS!$OSSP_UUID_LIBS$ac_delim
-HAVE_IPV6!$HAVE_IPV6$ac_delim
-LIBOBJS!$LIBOBJS$ac_delim
-acx_pthread_config!$acx_pthread_config$ac_delim
-PTHREAD_CC!$PTHREAD_CC$ac_delim
-PTHREAD_LIBS!$PTHREAD_LIBS$ac_delim
-PTHREAD_CFLAGS!$PTHREAD_CFLAGS$ac_delim
-LDAP_LIBS_FE!$LDAP_LIBS_FE$ac_delim
-LDAP_LIBS_BE!$LDAP_LIBS_BE$ac_delim
-HAVE_POSIX_SIGNALS!$HAVE_POSIX_SIGNALS$ac_delim
-MSGFMT!$MSGFMT$ac_delim
-MSGMERGE!$MSGMERGE$ac_delim
-XGETTEXT!$XGETTEXT$ac_delim
-TCLSH!$TCLSH$ac_delim
-TCL_CONFIG_SH!$TCL_CONFIG_SH$ac_delim
-TCL_INCLUDE_SPEC!$TCL_INCLUDE_SPEC$ac_delim
-TCL_LIB_FILE!$TCL_LIB_FILE$ac_delim
-TCL_LIBS!$TCL_LIBS$ac_delim
-TCL_LIB_SPEC!$TCL_LIB_SPEC$ac_delim
-TCL_SHARED_BUILD!$TCL_SHARED_BUILD$ac_delim
-TCL_SHLIB_LD_LIBS!$TCL_SHLIB_LD_LIBS$ac_delim
-NSGMLS!$NSGMLS$ac_delim
-JADE!$JADE$ac_delim
-have_docbook!$have_docbook$ac_delim
-DOCBOOKSTYLE!$DOCBOOKSTYLE$ac_delim
-COLLATEINDEX!$COLLATEINDEX$ac_delim
-SGMLSPL!$SGMLSPL$ac_delim
-DOCBOOK2MAN!$DOCBOOK2MAN$ac_delim
-vpath_build!$vpath_build$ac_delim
-LTLIBOBJS!$LTLIBOBJS$ac_delim
-_ACEOF
-
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 60; then
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
     break
   elif $ac_last_try; then
     as_fn_error $? "could not make $CONFIG_STATUS" "$LINENO" 5
