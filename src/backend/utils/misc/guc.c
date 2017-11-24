@@ -2322,21 +2322,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-<<<<<<< HEAD
-		{"krb_server_keyfile", PGC_POSTMASTER, CONN_AUTH_SECURITY,
-=======
-		{"krb_realm", PGC_SIGHUP, CONN_AUTH_SECURITY,
-			gettext_noop("Sets realm to match Kerberos and GSSAPI users against."),
-			NULL,
-			GUC_SUPERUSER_ONLY
-		},
-		&pg_krb_realm,
-		NULL, NULL, NULL
-	},
-
-	{
 		{"krb_server_keyfile", PGC_SIGHUP, CONN_AUTH_SECURITY,
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 			gettext_noop("Sets the location of the Kerberos server key file."),
 			NULL,
 			GUC_SUPERUSER_ONLY
@@ -2355,18 +2341,6 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-<<<<<<< HEAD
-=======
-		{"krb_server_hostname", PGC_SIGHUP, CONN_AUTH_SECURITY,
-			gettext_noop("Sets the hostname of the Kerberos server."),
-			NULL
-		},
-		&pg_krb_server_hostname,
-		NULL, NULL, NULL
-	},
-
-	{
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
 		{"bonjour_name", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
 			gettext_noop("Sets the Bonjour broadcast service name."),
 			NULL
