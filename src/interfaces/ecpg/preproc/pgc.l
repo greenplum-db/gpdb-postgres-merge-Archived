@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.168 2009/01/01 17:24:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.163 2008/02/17 18:14:29 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/parse.pl,v 1.2 2009/01/01 17:24:02 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/parse.pl,v 1.3 2009/01/29 09:38:38 petere Exp $
 # parser generater for ecpg
 # call with backend parser as stdin
 #

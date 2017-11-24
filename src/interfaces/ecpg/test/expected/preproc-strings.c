@@ -37,13 +37,10 @@ int main(void)
 #line 13 "strings.pgc"
 
 
-<<<<<<< HEAD
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "set standard_conforming_strings to on", ECPGt_EOIT, ECPGt_EORT);}
 #line 15 "strings.pgc"
 
 
-=======
->>>>>>> b0a6ad70a12b6949fdebffa8ca1650162bf0254a
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select 'abcdef' , N'abcdef' as foo , E'abc\\bdef' as \"foo\" , U&'d\\0061t\\0061' as U&\"foo\" , U&'d!+000061t!+000061' uescape '!' , $foo$abc$def$foo$", ECPGt_EOIT, 
 	ECPGt_char,&(s1),(long)0,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
