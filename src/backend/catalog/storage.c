@@ -251,6 +251,11 @@ RelationCreateStorage(RelFileNode rnode, bool isLocalBuf,
 					   false, /* ignoreAlreadyExists */
 					   mirrorDataLossOccurred);
 
+	/*
+	 * With file replication, the caller is expected to create an MMXLOG WAL
+	 * record for this instead.
+	 */
+#ifdef USE_SEGWALREP
 	if (!isLocalBuf)
 	{
 		/*
