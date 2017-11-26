@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.10 2009/01/01 17:24:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.11 2009/02/10 19:29:39 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
