@@ -271,6 +271,7 @@ RelationCreateStorage(RelFileNode rnode, bool isLocalBuf,
 
 		lsn = XLogInsert(RM_SMGR_ID, XLOG_SMGR_CREATE, &rdata);
 	}
+#ifdef
 }
 
 void
