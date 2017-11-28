@@ -122,7 +122,6 @@
 
 typedef struct TupleTableSlot
 {
-<<<<<<< HEAD
 	NodeTag		type;
 	int         PRIVATE_tts_flags;      /* TTS_xxx flags */
 
@@ -144,19 +143,10 @@ typedef struct TupleTableSlot
 	Datum 	*PRIVATE_tts_values;		/* virtual tuple values */
 	bool 	*PRIVATE_tts_isnull;		/* virtual tuple nulls */
 
-=======
-	NodeTag		type;			/* vestigial ... allows IsA tests */
-	bool		tts_isempty;	/* true = slot is empty */
-	bool		tts_shouldFree; /* should pfree tts_tuple? */
-	bool		tts_shouldFreeMin;		/* should pfree tts_mintuple? */
-	bool		tts_slow;		/* saved state for slot_deform_tuple */
-	HeapTuple	tts_tuple;		/* physical tuple, or NULL if virtual */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	TupleDesc	tts_tupleDescriptor;	/* slot's tuple descriptor */
 	MemTupleBinding *tts_mt_bind;		/* mem tuple's binding */ 
 	MemoryContext 	tts_mcxt;		/* slot itself is in this context */
 	Buffer		tts_buffer;		/* tuple's buffer, or InvalidBuffer */
-<<<<<<< HEAD
 
     /* System attributes */
     Oid         tts_tableOid;
@@ -281,18 +271,6 @@ slot_getallattrs(TupleTableSlot *slot)
 }
 
 extern Datum slot_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull);
-=======
-	int			tts_nvalid;		/* # of valid values in tts_values */
-	Datum	   *tts_values;		/* current per-attribute values */
-	bool	   *tts_isnull;		/* current per-attribute isnull flags */
-	MinimalTuple tts_mintuple;	/* minimal tuple, or NULL if none */
-	HeapTupleData tts_minhdr;	/* workspace for minimal-tuple-only case */
-	long		tts_off;		/* saved state for slot_deform_tuple */
-} TupleTableSlot;
-
-#define TTS_HAS_PHYSICAL_TUPLE(slot)  \
-	((slot)->tts_tuple != NULL && (slot)->tts_tuple != &((slot)->tts_minhdr))
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 /*
  * Set the synthetic ctid to a given ctid value.
