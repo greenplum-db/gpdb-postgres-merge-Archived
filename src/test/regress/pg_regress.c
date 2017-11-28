@@ -642,11 +642,8 @@ convert_sourcefiles_in(char *source_subdir, char *dest_dir, char *dest_subdir, c
 {
 	char		testtablespace[MAXPGPATH];
 	char		indir[MAXPGPATH];
-<<<<<<< HEAD
 	char		cgroup_mnt_point[MAXPGPATH];
 	replacements repls;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	struct stat st;
 	int			ret;
 	char	  **name;
@@ -1663,11 +1660,7 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
  * Note: it's OK to scribble on the pids array, but not on the names array
  */
 static void
-<<<<<<< HEAD
 wait_for_tests(PID_TYPE *pids, int *statuses, char **names, struct timeval *end_times, int num_tests)
-=======
-wait_for_tests(PID_TYPE * pids, int *statuses, char **names, int num_tests)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	int			tests_left;
 	int			i;

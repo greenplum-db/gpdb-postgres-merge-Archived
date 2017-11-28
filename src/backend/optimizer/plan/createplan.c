@@ -89,20 +89,13 @@ static TableFunctionScan *create_tablefunction_plan(PlannerInfo *root,
 						  List *scan_clauses);
 static ValuesScan *create_valuesscan_plan(PlannerInfo *root, Path *best_path,
 					   List *tlist, List *scan_clauses);
-<<<<<<< HEAD
-static SubqueryScan * create_ctescan_plan(PlannerInfo *root, Path *best_path,
-										  List *tlist, List *scan_clauses);
-static WorkTableScan *create_worktablescan_plan(PlannerInfo *root, Path *best_path,
-												List *tlist, List *scan_clauses);
-static BitmapAppendOnlyScan *create_bitmap_appendonly_scan_plan(PlannerInfo *root,
-								   BitmapAppendOnlyPath *best_path,
-								   List *tlist, List *scan_clauses);
-=======
-static CteScan *create_ctescan_plan(PlannerInfo *root, Path *best_path,
+static SubqueryScan *create_ctescan_plan(PlannerInfo *root, Path *best_path,
 					List *tlist, List *scan_clauses);
 static WorkTableScan *create_worktablescan_plan(PlannerInfo *root, Path *best_path,
 						  List *tlist, List *scan_clauses);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+static BitmapAppendOnlyScan *create_bitmap_appendonly_scan_plan(PlannerInfo *root,
+								   BitmapAppendOnlyPath *best_path,
+								   List *tlist, List *scan_clauses);
 static NestLoop *create_nestloop_plan(PlannerInfo *root, NestPath *best_path,
 					 Plan *outer_plan, Plan *inner_plan);
 static MergeJoin *create_mergejoin_plan(PlannerInfo *root, MergePath *best_path,
@@ -164,36 +157,7 @@ static WorkTableScan *make_worktablescan(List *qptlist, List *qpqual,
 				   Index scanrelid, int wtParam);
 static BitmapAnd *make_bitmap_and(List *bitmapplans);
 static BitmapOr *make_bitmap_or(List *bitmapplans);
-<<<<<<< HEAD
 static List *flatten_grouping_list(List *groupcls);
-=======
-static NestLoop *make_nestloop(List *tlist,
-			  List *joinclauses, List *otherclauses,
-			  Plan *lefttree, Plan *righttree,
-			  JoinType jointype);
-static HashJoin *make_hashjoin(List *tlist,
-			  List *joinclauses, List *otherclauses,
-			  List *hashclauses,
-			  Plan *lefttree, Plan *righttree,
-			  JoinType jointype);
-static Hash *make_hash(Plan *lefttree,
-		  Oid skewTable,
-		  AttrNumber skewColumn,
-		  Oid skewColType,
-		  int32 skewColTypmod);
-static MergeJoin *make_mergejoin(List *tlist,
-			   List *joinclauses, List *otherclauses,
-			   List *mergeclauses,
-			   Oid *mergefamilies,
-			   int *mergestrategies,
-			   bool *mergenullsfirst,
-			   Plan *lefttree, Plan *righttree,
-			   JoinType jointype);
-static Sort *make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
-		  AttrNumber *sortColIdx, Oid *sortOperators, bool *nullsFirst,
-		  double limit_tuples);
-static Material *make_material(Plan *lefttree);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 
 /*
@@ -2667,77 +2631,12 @@ static SubqueryScan *
 create_ctescan_plan(PlannerInfo *root, Path *best_path,
 					List *tlist, List *scan_clauses)
 {
-<<<<<<< HEAD
 	Index		scan_relid = best_path->parent->relid;
 	SubqueryScan *scan_plan;
 
 	Assert(best_path->parent->rtekind == RTE_CTE);
 
 	Assert(scan_relid > 0);
-=======
-	CteScan    *scan_plan;
-	Index		scan_relid = best_path->parent->relid;
-	RangeTblEntry *rte;
-	SubPlan    *ctesplan = NULL;
-	int			plan_id;
-	int			cte_param_id;
-	PlannerInfo *cteroot;
-	Index		levelsup;
-	int			ndx;
-	ListCell   *lc;
-
-	Assert(scan_relid > 0);
-	rte = planner_rt_fetch(scan_relid, root);
-	Assert(rte->rtekind == RTE_CTE);
-	Assert(!rte->self_reference);
-
-	/*
-	 * Find the referenced CTE, and locate the SubPlan previously made for it.
-	 */
-	levelsup = rte->ctelevelsup;
-	cteroot = root;
-	while (levelsup-- > 0)
-	{
-		cteroot = cteroot->parent_root;
-		if (!cteroot)			/* shouldn't happen */
-			elog(ERROR, "bad levelsup for CTE \"%s\"", rte->ctename);
-	}
-
-	/*
-	 * Note: cte_plan_ids can be shorter than cteList, if we are still working
-	 * on planning the CTEs (ie, this is a side-reference from another CTE).
-	 * So we mustn't use forboth here.
-	 */
-	ndx = 0;
-	foreach(lc, cteroot->parse->cteList)
-	{
-		CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
-
-		if (strcmp(cte->ctename, rte->ctename) == 0)
-			break;
-		ndx++;
-	}
-	if (lc == NULL)				/* shouldn't happen */
-		elog(ERROR, "could not find CTE \"%s\"", rte->ctename);
-	if (ndx >= list_length(cteroot->cte_plan_ids))
-		elog(ERROR, "could not find plan for CTE \"%s\"", rte->ctename);
-	plan_id = list_nth_int(cteroot->cte_plan_ids, ndx);
-	Assert(plan_id > 0);
-	foreach(lc, cteroot->init_plans)
-	{
-		ctesplan = (SubPlan *) lfirst(lc);
-		if (ctesplan->plan_id == plan_id)
-			break;
-	}
-	if (lc == NULL)				/* shouldn't happen */
-		elog(ERROR, "could not find plan for CTE \"%s\"", rte->ctename);
-
-	/*
-	 * We need the CTE param ID, which is the sole member of the SubPlan's
-	 * setParam list.
-	 */
-	cte_param_id = linitial_int(ctesplan->setParam);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* Sort clauses into best execution order */
 	scan_clauses = order_qual_clauses(root, scan_clauses);
@@ -4454,17 +4353,12 @@ make_hashjoin(List *tlist,
 	return node;
 }
 
-<<<<<<< HEAD
 Hash *
-make_hash(Plan *lefttree)
-=======
-static Hash *
 make_hash(Plan *lefttree,
 		  Oid skewTable,
 		  AttrNumber skewColumn,
 		  Oid skewColType,
 		  int32 skewColTypmod)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	Hash	   *node = makeNode(Hash);
 	Plan	   *plan = &node->plan;
@@ -4481,14 +4375,12 @@ make_hash(Plan *lefttree,
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
 
-<<<<<<< HEAD
-	node->rescannable = false;	/* CDB (unused for now) */
-=======
 	node->skewTable = skewTable;
 	node->skewColumn = skewColumn;
 	node->skewColType = skewColType;
 	node->skewColTypmod = skewColTypmod;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+
+	node->rescannable = false;	/* CDB (unused for now) */
 
 	return node;
 }
@@ -4775,10 +4667,7 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 						continue;
 					sortexpr = em->em_expr;
 					exprvars = pull_var_clause((Node *) sortexpr,
-<<<<<<< HEAD
 											   PVC_RECURSE_AGGREGATES,
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 											   PVC_INCLUDE_PLACEHOLDERS);
 					foreach(k, exprvars)
 					{

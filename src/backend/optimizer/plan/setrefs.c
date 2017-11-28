@@ -148,11 +148,8 @@ static Plan *cdb_insert_result_node(PlannerGlobal *glob,
 
 static bool extract_query_dependencies_walker(Node *node,
 								  PlannerGlobal *context);
-<<<<<<< HEAD
 static bool cdb_extract_plan_dependencies_walker(Node *node,
 									 cdb_extract_plan_dependencies_context *context);
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 #ifdef USE_ASSERT_CHECKING
 #include "cdb/cdbplan.h"
@@ -1235,7 +1232,6 @@ fix_scan_expr(PlannerGlobal *glob, Node *node, int rtoffset)
 	context.glob = glob;
 	context.rtoffset = rtoffset;
 
-<<<<<<< HEAD
 	/*
 	 * Postgres has an optimization to mutate the expression tree only if
 	 * rtoffset is non-zero. However, this optimization does not work for
@@ -1246,25 +1242,6 @@ fix_scan_expr(PlannerGlobal *glob, Node *node, int rtoffset)
 	 * using mutation. Therefore, in GPDB we need to unconditionally mutate the tree.
 	 */
 	return fix_scan_expr_mutator(node, &context);
-=======
-	if (rtoffset != 0 || glob->lastPHId != 0)
-	{
-		return fix_scan_expr_mutator(node, &context);
-	}
-	else
-	{
-		/*
-		 * If rtoffset == 0, we don't need to change any Vars, and if there
-		 * are no placeholders anywhere we won't need to remove them.  Then
-		 * it's OK to just scribble on the input node tree instead of copying
-		 * (since the only change, filling in any unset opfuncid fields, is
-		 * harmless).  This saves just enough cycles to be noticeable on
-		 * trivial queries.
-		 */
-		(void) fix_scan_expr_walker(node, &context);
-		return node;
-	}
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 static Node *

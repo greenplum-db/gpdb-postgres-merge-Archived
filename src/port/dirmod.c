@@ -509,11 +509,7 @@ rmtree(const char *path, bool rmtopdir)
  * to update this field.
  */
 int
-<<<<<<< HEAD
 pgwin32_safestat(const char *path, struct stat *buf)
-=======
-pgwin32_safestat(const char *path, struct stat * buf)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	int			r;
 	WIN32_FILE_ATTRIBUTE_DATA attr;

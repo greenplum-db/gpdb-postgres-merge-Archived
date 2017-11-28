@@ -110,7 +110,6 @@ static void get_column_info_for_window(PlannerInfo *root, WindowClause *wc,
 						   int *ordNumCols,
 						   AttrNumber **ordColIdx,
 						   Oid **ordOperators);
-<<<<<<< HEAD
 
 static Bitmapset *canonicalize_colref_list(Node *node);
 static List *canonicalize_gs_list(List *gsl, bool ordinary);
@@ -125,8 +124,6 @@ static Plan *pushdown_preliminary_limit(Plan *plan, Node *limitCount, int64 coun
 static bool is_dummy_plan(Plan *plan);
 
 static bool isSimplyUpdatableQuery(Query *query);
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 
 /*****************************************************************************
@@ -2497,10 +2494,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 											result_plan->targetlist,
 											NIL,
 											AGG_HASHED,
-<<<<<<< HEAD
 											false, /* streaming */
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 										  list_length(parse->distinctClause),
 								 extract_grouping_cols(parse->distinctClause,
 													result_plan->targetlist),

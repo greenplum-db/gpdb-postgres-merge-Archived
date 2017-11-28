@@ -42,8 +42,7 @@ extern List *transformDistinctToGroupBy(ParseState *pstate, List **targetlist,
 extern List *transformDistinctClause(ParseState *pstate,
 						List **targetlist, List *sortClause, bool is_agg);
 extern List *transformDistinctOnClause(ParseState *pstate, List *distinctlist,
-<<<<<<< HEAD
-						List **targetlist, List *sortClause);
+						  List **targetlist, List *sortClause);
 extern List *transformScatterClause(ParseState *pstate, List *scatterlist,
 									List **targetlist);
 extern void processExtendedGrouping(ParseState *pstate, Node *havingQual,
@@ -51,9 +50,6 @@ extern void processExtendedGrouping(ParseState *pstate, Node *havingQual,
 extern List *addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 					List *sortlist, List *targetlist, SortBy *sortby,
 					bool resolveUnknown);
-=======
-						  List **targetlist, List *sortClause);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 extern Index assignSortGroupRef(TargetEntry *tle, List *tlist);
 extern bool targetIsInSortList(TargetEntry *tle, Oid sortop, List *sortList);

@@ -333,22 +333,14 @@ query_planner(PlannerInfo *root, List *tlist,
 		/*
 		 * If both GROUP BY and ORDER BY are specified, we will need two
 		 * levels of sort --- and, therefore, certainly need to read all the
-<<<<<<< HEAD
-		 * tuples --- unless ORDER BY is a subset of GROUP BY.  Likewise if
-		 * we have both DISTINCT and GROUP BY.
+		 * tuples --- unless ORDER BY is a subset of GROUP BY.  Likewise if we
+		 * have both DISTINCT and GROUP BY.
 		 */
 		if (!pathkeys_contained_in(root->sort_pathkeys, root->group_pathkeys) ||
 			!pathkeys_contained_in(root->distinct_pathkeys, root->group_pathkeys))
-=======
-		 * tuples --- unless ORDER BY is a subset of GROUP BY.	Likewise if we
-		 * have both DISTINCT and GROUP BY, or if we have a window
-		 * specification not compatible with the GROUP BY.
-		 */
-		if (!pathkeys_contained_in(root->sort_pathkeys, root->group_pathkeys) ||
-			!pathkeys_contained_in(root->distinct_pathkeys, root->group_pathkeys) ||
-		 !pathkeys_contained_in(root->window_pathkeys, root->group_pathkeys))
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			tuple_fraction = 0.0;
+		/* GPDB_84_MERGE_FIXME: Are we missing the condition on window_pathkeys on
+		 * purpose? */
 	}
 	else if (parse->hasAggs || root->hasHavingQual)
 	{
