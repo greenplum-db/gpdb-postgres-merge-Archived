@@ -5,7 +5,7 @@
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.58 2009/01/01 17:23:37 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.60 2009/04/07 00:31:26 tgl Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -146,7 +146,7 @@ CREATE VIEW pg_stats AS
     FROM pg_statistic s JOIN pg_class c ON (c.oid = s.starelid) 
          JOIN pg_attribute a ON (c.oid = attrelid AND attnum = s.staattnum) 
          LEFT JOIN pg_namespace n ON (n.oid = c.relnamespace) 
-    WHERE has_table_privilege(c.oid, 'select');
+    WHERE NOT attisdropped AND has_column_privilege(c.oid, a.attnum, 'select');
 
 REVOKE ALL on pg_statistic FROM public;
 
@@ -933,6 +933,12 @@ CREATE VIEW pg_user_mappings AS
 
 REVOKE ALL on pg_user_mapping FROM public;
 
+--
+-- We have a few function definitions in here, too.
+-- At some point there might be enough to justify breaking them out into
+-- a separate "system_functions.sql" file.
+--
+
 -- Tsearch debug function.  Defined here because it'd be pretty unwieldy
 -- to put it into pg_proc.h
 
@@ -995,6 +1001,7 @@ LANGUAGE SQL STRICT STABLE;
 COMMENT ON FUNCTION ts_debug(text) IS
     'debug function for current text search configuration';
 
+<<<<<<< HEAD
 CREATE OR REPLACE FUNCTION
   json_populate_record(base anyelement, from_json json, use_json_as_text boolean DEFAULT false)
   RETURNS anyelement LANGUAGE internal STABLE AS 'json_populate_record';
@@ -1002,3 +1009,17 @@ CREATE OR REPLACE FUNCTION
 CREATE OR REPLACE FUNCTION
   json_populate_recordset(base anyelement, from_json json, use_json_as_text boolean DEFAULT false)
   RETURNS SETOF anyelement LANGUAGE internal STABLE ROWS 100  AS 'json_populate_recordset';
+=======
+--
+-- Redeclare built-in functions that need default values attached to their
+-- arguments.  It's impractical to set those up directly in pg_proc.h because
+-- of the complexity and platform-dependency of the expression tree
+-- representation.  (Note that internal functions still have to have entries
+-- in pg_proc.h; we are merely causing their proargnames and proargdefaults
+-- to get filled in.)
+--
+
+CREATE OR REPLACE FUNCTION
+  pg_start_backup(label text, fast boolean DEFAULT false)
+  RETURNS text STRICT VOLATILE LANGUAGE internal AS 'pg_start_backup';
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805

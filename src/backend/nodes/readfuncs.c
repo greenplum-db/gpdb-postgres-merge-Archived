@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.220 2009/01/01 17:23:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.222 2009/06/11 14:48:58 momjian Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not need to have any readfuncs support, because we
@@ -146,7 +146,7 @@ inline static char extended_char(char* token, size_t length)
 #define READ_LOCATION_FIELD(fldname) \
 	token = pg_strtok(&length);		/* skip :fldname */ \
 	token = pg_strtok(&length);		/* get field value */ \
-	local_node->fldname = -1		/* set field to "unknown" */
+	local_node->fldname = -1	/* set field to "unknown" */
 
 /* Read a Node field */
 #define READ_NODE_FIELD(fldname) \
@@ -168,6 +168,11 @@ inline static char extended_char(char* token, size_t length)
 
 /* Set field to a given value, ignoring the value read from the input */
 #define READ_DUMMY_FIELD(fldname,fldvalue)  READ_SCALAR_FIELD(fldname, fldvalue)
+
+/* Read a bitmapset field */
+#define READ_BITMAPSET_FIELD(fldname) \
+	token = pg_strtok(&length);		/* skip :fldname */ \
+	local_node->fldname = _readBitmapset()
 
 /* Routine exit */
 #define READ_DONE() \
@@ -313,6 +318,47 @@ inline static char extended_char(char* token, size_t length)
 #endif /* COMPILING_BINARY_FUNCS */
 
 static Datum readDatum(bool typbyval);
+
+/*
+ * _readBitmapset
+ */
+static Bitmapset *
+_readBitmapset(void)
+{
+	Bitmapset  *result = NULL;
+
+	READ_TEMP_LOCALS();
+
+	token = pg_strtok(&length);
+	if (token == NULL)
+		elog(ERROR, "incomplete Bitmapset structure");
+	if (length != 1 || token[0] != '(')
+		elog(ERROR, "unrecognized token: \"%.*s\"", length, token);
+
+	token = pg_strtok(&length);
+	if (token == NULL)
+		elog(ERROR, "incomplete Bitmapset structure");
+	if (length != 1 || token[0] != 'b')
+		elog(ERROR, "unrecognized token: \"%.*s\"", length, token);
+
+	for (;;)
+	{
+		int			val;
+		char	   *endptr;
+
+		token = pg_strtok(&length);
+		if (token == NULL)
+			elog(ERROR, "unterminated Bitmapset structure");
+		if (length == 1 && token[0] == ')')
+			break;
+		val = (int) strtol(token, &endptr, 10);
+		if (endptr != token + length)
+			elog(ERROR, "unrecognized integer: \"%.*s\"", length, token);
+		result = bms_add_member(result, val);
+	}
+
+	return result;
+}
 
 
 #ifndef COMPILING_BINARY_FUNCS
@@ -2035,6 +2081,8 @@ _readRangeTblEntry(void)
 	READ_BOOL_FIELD(inFromCl);
 	READ_UINT_FIELD(requiredPerms);
 	READ_OID_FIELD(checkAsUser);
+	READ_BITMAPSET_FIELD(selectedCols);
+	READ_BITMAPSET_FIELD(modifiedCols);
 
 	READ_BOOL_FIELD(forceDistRandom);
 	READ_NODE_FIELD(pseudocols);

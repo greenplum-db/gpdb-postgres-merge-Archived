@@ -52,7 +52,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.125 2009/01/01 17:23:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.127 2009/06/11 14:48:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -414,7 +414,7 @@ nocachegetattr(HeapTuple tuple,
 		 * Now check to see if any preceding bits are null...
 		 */
 		{
-			int			byte = attnum >> 3;
+			int byte = attnum >> 3;
 			int			finalbit = attnum & 0x07;
 
 			/* check for nulls "before" final bit of last byte */
@@ -1226,9 +1226,162 @@ slot_deform_tuple(TupleTableSlot *slot, int natts)
 	/*
 	 * Save state for next execution
 	 */
+<<<<<<< HEAD
 	slot->PRIVATE_tts_nvalid = attnum;
 	slot->PRIVATE_tts_off = off;
 	slot->PRIVATE_tts_slow = slow;
+=======
+	slot->tts_nvalid = attnum;
+	slot->tts_off = off;
+	slot->tts_slow = slow;
+}
+
+/*
+ * slot_getattr
+ *		This function fetches an attribute of the slot's current tuple.
+ *		It is functionally equivalent to heap_getattr, but fetches of
+ *		multiple attributes of the same tuple will be optimized better,
+ *		because we avoid O(N^2) behavior from multiple calls of
+ *		nocachegetattr(), even when attcacheoff isn't usable.
+ *
+ *		A difference from raw heap_getattr is that attnums beyond the
+ *		slot's tupdesc's last attribute will be considered NULL even
+ *		when the physical tuple is longer than the tupdesc.
+ */
+Datum
+slot_getattr(TupleTableSlot *slot, int attnum, bool *isnull)
+{
+	HeapTuple	tuple = slot->tts_tuple;
+	TupleDesc	tupleDesc = slot->tts_tupleDescriptor;
+	HeapTupleHeader tup;
+
+	/*
+	 * system attributes are handled by heap_getsysattr
+	 */
+	if (attnum <= 0)
+	{
+		if (tuple == NULL)		/* internal error */
+			elog(ERROR, "cannot extract system attribute from virtual tuple");
+		if (tuple == &(slot->tts_minhdr))		/* internal error */
+			elog(ERROR, "cannot extract system attribute from minimal tuple");
+		return heap_getsysattr(tuple, attnum, tupleDesc, isnull);
+	}
+
+	/*
+	 * fast path if desired attribute already cached
+	 */
+	if (attnum <= slot->tts_nvalid)
+	{
+		*isnull = slot->tts_isnull[attnum - 1];
+		return slot->tts_values[attnum - 1];
+	}
+
+	/*
+	 * return NULL if attnum is out of range according to the tupdesc
+	 */
+	if (attnum > tupleDesc->natts)
+	{
+		*isnull = true;
+		return (Datum) 0;
+	}
+
+	/*
+	 * otherwise we had better have a physical tuple (tts_nvalid should equal
+	 * natts in all virtual-tuple cases)
+	 */
+	if (tuple == NULL)			/* internal error */
+		elog(ERROR, "cannot extract attribute from empty tuple slot");
+
+	/*
+	 * return NULL if attnum is out of range according to the tuple
+	 *
+	 * (We have to check this separately because of various inheritance and
+	 * table-alteration scenarios: the tuple could be either longer or shorter
+	 * than the tupdesc.)
+	 */
+	tup = tuple->t_data;
+	if (attnum > HeapTupleHeaderGetNatts(tup))
+	{
+		*isnull = true;
+		return (Datum) 0;
+	}
+
+	/*
+	 * check if target attribute is null: no point in groveling through tuple
+	 */
+	if (HeapTupleHasNulls(tuple) && att_isnull(attnum - 1, tup->t_bits))
+	{
+		*isnull = true;
+		return (Datum) 0;
+	}
+
+	/*
+	 * If the attribute's column has been dropped, we force a NULL result.
+	 * This case should not happen in normal use, but it could happen if we
+	 * are executing a plan cached before the column was dropped.
+	 */
+	if (tupleDesc->attrs[attnum - 1]->attisdropped)
+	{
+		*isnull = true;
+		return (Datum) 0;
+	}
+
+	/*
+	 * Extract the attribute, along with any preceding attributes.
+	 */
+	slot_deform_tuple(slot, attnum);
+
+	/*
+	 * The result is acquired from tts_values array.
+	 */
+	*isnull = slot->tts_isnull[attnum - 1];
+	return slot->tts_values[attnum - 1];
+}
+
+/*
+ * slot_getallattrs
+ *		This function forces all the entries of the slot's Datum/isnull
+ *		arrays to be valid.  The caller may then extract data directly
+ *		from those arrays instead of using slot_getattr.
+ */
+void
+slot_getallattrs(TupleTableSlot *slot)
+{
+	int			tdesc_natts = slot->tts_tupleDescriptor->natts;
+	int			attnum;
+	HeapTuple	tuple;
+
+	/* Quick out if we have 'em all already */
+	if (slot->tts_nvalid == tdesc_natts)
+		return;
+
+	/*
+	 * otherwise we had better have a physical tuple (tts_nvalid should equal
+	 * natts in all virtual-tuple cases)
+	 */
+	tuple = slot->tts_tuple;
+	if (tuple == NULL)			/* internal error */
+		elog(ERROR, "cannot extract attribute from empty tuple slot");
+
+	/*
+	 * load up any slots available from physical tuple
+	 */
+	attnum = HeapTupleHeaderGetNatts(tuple->t_data);
+	attnum = Min(attnum, tdesc_natts);
+
+	slot_deform_tuple(slot, attnum);
+
+	/*
+	 * If tuple doesn't have all the atts indicated by tupleDesc, read the
+	 * rest as null
+	 */
+	for (; attnum < tdesc_natts; attnum++)
+	{
+		slot->tts_values[attnum] = (Datum) 0;
+		slot->tts_isnull[attnum] = true;
+	}
+	slot->tts_nvalid = tdesc_natts;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 /*
@@ -1275,8 +1428,58 @@ _slot_getsomeattrs(TupleTableSlot *slot, int attnum)
 		slot->PRIVATE_tts_values[attno] = (Datum) 0;
 		slot->PRIVATE_tts_isnull[attno] = true;
 	}
+<<<<<<< HEAD
 	slot->PRIVATE_tts_nvalid = attnum;
 	TupSetVirtualTuple(slot);
+=======
+	slot->tts_nvalid = attnum;
+}
+
+/*
+ * slot_attisnull
+ *		Detect whether an attribute of the slot is null, without
+ *		actually fetching it.
+ */
+bool
+slot_attisnull(TupleTableSlot *slot, int attnum)
+{
+	HeapTuple	tuple = slot->tts_tuple;
+	TupleDesc	tupleDesc = slot->tts_tupleDescriptor;
+
+	/*
+	 * system attributes are handled by heap_attisnull
+	 */
+	if (attnum <= 0)
+	{
+		if (tuple == NULL)		/* internal error */
+			elog(ERROR, "cannot extract system attribute from virtual tuple");
+		if (tuple == &(slot->tts_minhdr))		/* internal error */
+			elog(ERROR, "cannot extract system attribute from minimal tuple");
+		return heap_attisnull(tuple, attnum);
+	}
+
+	/*
+	 * fast path if desired attribute already cached
+	 */
+	if (attnum <= slot->tts_nvalid)
+		return slot->tts_isnull[attnum - 1];
+
+	/*
+	 * return NULL if attnum is out of range according to the tupdesc
+	 */
+	if (attnum > tupleDesc->natts)
+		return true;
+
+	/*
+	 * otherwise we had better have a physical tuple (tts_nvalid should equal
+	 * natts in all virtual-tuple cases)
+	 */
+	if (tuple == NULL)			/* internal error */
+		elog(ERROR, "cannot extract attribute from empty tuple slot");
+
+	/* and let the tuple tell it */
+	return heap_attisnull(tuple, attnum);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 /*

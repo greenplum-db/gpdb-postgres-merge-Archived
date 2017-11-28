@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.153 2009/01/01 17:23:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.158 2009/06/11 14:48:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,12 +24,12 @@
 #include "access/sysattr.h"
 #include "access/transam.h"
 #include "catalog/catalog.h"
-#include "catalog/pg_inherits.h"
 #include "miscadmin.h"
 #include "commands/tablecmds.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
+#include "optimizer/cost.h"
 #include "optimizer/plancat.h"
 #include "optimizer/predtest.h"
 #include "optimizer/prep.h"
@@ -37,12 +37,9 @@
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
 #include "storage/bufmgr.h"
-#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
-#include "utils/syscache.h"
-#include "utils/tqual.h"
 
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbrelsize.h"
@@ -51,7 +48,7 @@
 
 
 /* GUC parameter */
-bool		constraint_exclusion = false;
+int			constraint_exclusion = CONSTRAINT_EXCLUSION_PARTITION;
 
 /* Hook for plugins to get control in get_relation_info() */
 get_relation_info_hook_type get_relation_info_hook = NULL;
@@ -268,6 +265,8 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			info->amcostestimate = indexRelation->rd_am->amcostestimate;
 			info->amoptionalkey = indexRelation->rd_am->amoptionalkey;
 			info->amsearchnulls = indexRelation->rd_am->amsearchnulls;
+			info->amhasgettuple = OidIsValid(indexRelation->rd_am->amgettuple);
+			info->amhasgetbitmap = OidIsValid(indexRelation->rd_am->amgetbitmap);
 
 			/*
 			 * Fetch the ordering operators associated with the index, if any.
@@ -757,7 +756,7 @@ get_relation_constraints(PlannerInfo *root,
 		/* Add NOT NULL constraints in expression form, if requested */
 		if (include_notnull && constr->has_not_null)
 		{
-			int		natts = relation->rd_att->natts;
+			int			natts = relation->rd_att->natts;
 
 			for (i = 1; i <= natts; i++)
 			{
@@ -765,7 +764,7 @@ get_relation_constraints(PlannerInfo *root,
 
 				if (att->attnotnull && !att->attisdropped)
 				{
-					NullTest *ntest = makeNode(NullTest);
+					NullTest   *ntest = makeNode(NullTest);
 
 					ntest->arg = (Expr *) makeVar(varno,
 												  i,
@@ -792,8 +791,9 @@ get_relation_constraints(PlannerInfo *root,
  * self-inconsistent restrictions, or restrictions inconsistent with the
  * relation's CHECK constraints.
  *
- * Note: this examines only rel->relid and rel->baserestrictinfo; therefore
- * it can be called before filling in other fields of the RelOptInfo.
+ * Note: this examines only rel->relid, rel->reloptkind, and
+ * rel->baserestrictinfo; therefore it can be called before filling in
+ * other fields of the RelOptInfo.
  */
 bool
 relation_excluded_by_constraints(PlannerInfo *root,
@@ -804,8 +804,15 @@ relation_excluded_by_constraints(PlannerInfo *root,
 	List	   *safe_constraints;
 	ListCell   *lc;
 
+<<<<<<< HEAD
 	/* Skip the test if constraint exclusion is disabled */
 	if (!root->config->constraint_exclusion)
+=======
+	/* Skip the test if constraint exclusion is disabled for the rel */
+	if (constraint_exclusion == CONSTRAINT_EXCLUSION_OFF ||
+		(constraint_exclusion == CONSTRAINT_EXCLUSION_PARTITION &&
+		 rel->reloptkind != RELOPT_OTHER_MEMBER_REL))
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		return false;
 
 	/*
@@ -856,7 +863,7 @@ relation_excluded_by_constraints(PlannerInfo *root,
 		return false;
 
 	/*
-	 * OK to fetch the constraint expressions.  Include "col IS NOT NULL"
+	 * OK to fetch the constraint expressions.	Include "col IS NOT NULL"
 	 * expressions for attnotnull columns, in case we can refute those.
 	 */
 	constraint_pred = get_relation_constraints(root, rte->relid, rel, true);
@@ -1116,6 +1123,7 @@ oid_cmp(const void *left, const void *right)
 }
 
 /*
+<<<<<<< HEAD
  * find_inheritance_children
  *
  * Returns a list containing the OIDs of all relations which
@@ -1186,6 +1194,8 @@ find_inheritance_children(Oid inhparent)
 }
 
 /*
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  * has_unique_index
  *
  * Detect whether there is a unique index on the specified attribute
@@ -1203,15 +1213,16 @@ has_unique_index(RelOptInfo *rel, AttrNumber attno)
 
 		/*
 		 * Note: ignore partial indexes, since they don't allow us to conclude
-		 * that all attr values are distinct.  We don't take any interest in
-		 * expressional indexes either. Also, a multicolumn unique index
-		 * doesn't allow us to conclude that just the specified attr is
-		 * unique.
+		 * that all attr values are distinct, *unless* they are marked predOK
+		 * which means we know the index's predicate is satisfied by the
+		 * query. We don't take any interest in expressional indexes either.
+		 * Also, a multicolumn unique index doesn't allow us to conclude that
+		 * just the specified attr is unique.
 		 */
 		if (index->unique &&
 			index->ncolumns == 1 &&
 			index->indexkeys[0] == attno &&
-			index->indpred == NIL)
+			(index->indpred == NIL || index->predOK))
 			return true;
 	}
 	return false;

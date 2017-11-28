@@ -17,7 +17,7 @@
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/nodes/tidbitmap.h,v 1.8 2009/01/01 17:24:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/tidbitmap.h,v 1.11 2009/06/11 14:49:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,6 +149,9 @@ typedef struct StreamNode   IndexStream;
  */
 typedef struct StreamNode   OpStream;
 
+/* Likewise, TBMIterator is private */
+typedef struct TBMIterator TBMIterator;
+
 /* Result structure for tbm_iterate */
 typedef struct
 {
@@ -163,12 +166,22 @@ typedef struct
 extern HashBitmap *tbm_create(long maxbytes);
 extern void tbm_free(HashBitmap *tbm);
 
+<<<<<<< HEAD
 extern void tbm_add_tuples(HashBitmap *tbm,
 						   const ItemPointer tids, int ntids,
 						   bool recheck);
 extern void tbm_union(HashBitmap *a, const HashBitmap *b);
 extern void tbm_intersect(HashBitmap *a, const HashBitmap *b);
 extern bool tbm_is_empty(const HashBitmap *tbm);
+=======
+extern TIDBitmap *tbm_create(long maxbytes);
+extern void tbm_free(TIDBitmap *tbm);
+
+extern void tbm_add_tuples(TIDBitmap *tbm,
+			   const ItemPointer tids, int ntids,
+			   bool recheck);
+extern void tbm_add_page(TIDBitmap *tbm, BlockNumber pageno);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 extern void tbm_begin_iterate(HashBitmap *tbm);
 extern bool tbm_iterate(Node *tbm, TBMIterateResult *output);
@@ -178,11 +191,17 @@ extern void stream_add_node(StreamBitmap *strm, StreamNode *node, StreamType kin
 extern StreamNode *tbm_create_stream_node(HashBitmap *tbm);
 extern bool bitmap_stream_iterate(StreamNode *n, PagetableEntry *e);
 
+<<<<<<< HEAD
 /* These functions accept either a HashBitmap or a StreamBitmap... */
 extern void tbm_bitmap_free(Node *bm);
 extern void tbm_bitmap_set_instrument(Node *bm, struct Instrumentation *instr);
 extern void tbm_bitmap_upd_instrument(Node *bm);
 
 extern void tbm_convert_appendonly_tid_out(ItemPointer psudeoHeapTid, AOTupleId *aoTid);
+=======
+extern TBMIterator *tbm_begin_iterate(TIDBitmap *tbm);
+extern TBMIterateResult *tbm_iterate(TBMIterator *iterator);
+extern void tbm_end_iterate(TBMIterator *iterator);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 #endif   /* TIDBITMAP_H */

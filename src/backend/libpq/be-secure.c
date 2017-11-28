@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.89 2009/01/01 17:23:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.92 2009/06/11 14:48:58 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -786,6 +786,7 @@ initialize_SSL(void)
 		 * Disable OpenSSL's moving-write-buffer sanity check, because it
 		 * causes unnecessary failures in nonblocking send cases.
 		 */
+<<<<<<< HEAD
 		SSL_CTX_set_mode(SSL_context, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
 
 		/*
@@ -793,6 +794,10 @@ initialize_SSL(void)
 		 */
 		if (SSL_CTX_use_certificate_chain_file(SSL_context,
 										  SERVER_CERT_FILE) != 1)
+=======
+		if (SSL_CTX_use_certificate_chain_file(SSL_context,
+											   SERVER_CERT_FILE) != 1)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			ereport(FATAL,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				  errmsg("could not load server certificate file \"%s\": %s",
@@ -816,14 +821,14 @@ initialize_SSL(void)
 		if (!S_ISREG(buf.st_mode) || buf.st_mode & (S_IRWXG | S_IRWXO))
 			ereport(FATAL,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("private key file \"%s\" has group or world access",
-							SERVER_PRIVATE_KEY_FILE),
-					 errdetail("Permissions should be u=rw (0600) or less.")));
+				  errmsg("private key file \"%s\" has group or world access",
+						 SERVER_PRIVATE_KEY_FILE),
+				   errdetail("Permissions should be u=rw (0600) or less.")));
 #endif
 
 		if (SSL_CTX_use_PrivateKey_file(SSL_context,
-										 SERVER_PRIVATE_KEY_FILE,
-										 SSL_FILETYPE_PEM) != 1)
+										SERVER_PRIVATE_KEY_FILE,
+										SSL_FILETYPE_PEM) != 1)
 			ereport(FATAL,
 					(errmsg("could not load private key file \"%s\": %s",
 							SERVER_PRIVATE_KEY_FILE, SSLerrmessage())));
@@ -851,13 +856,18 @@ initialize_SSL(void)
 	if (access(ROOT_CERT_FILE, R_OK) != 0)
 	{
 		/*
+<<<<<<< HEAD
 		 * If root certificate file simply not found, don't log an error here,
+=======
+		 * If root certificate file simply not found. Don't log an error here,
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		 * because it's quite likely the user isn't planning on using client
 		 * certificates. If we can't access it for other reasons, it is an
 		 * error.
 		 */
 		if (errno != ENOENT)
 			ereport(FATAL,
+<<<<<<< HEAD
 					(errmsg("could not access root certificate file \"%s\": %m",
 							ROOT_CERT_FILE)));
 	}
@@ -867,6 +877,18 @@ initialize_SSL(void)
 		/*
 		 * File was there, but we could not load it. This means the file is
 		 * somehow broken, and we cannot do verification at all - so fail.
+=======
+				 (errmsg("could not access root certificate file \"%s\": %m",
+						 ROOT_CERT_FILE)));
+		}
+	}
+	else if (SSL_CTX_load_verify_locations(SSL_context, ROOT_CERT_FILE, NULL) != 1)
+	{
+		/*
+		 * File was there, but we could not load it. This means the file is
+		 * somehow broken, and we cannot do verification at all - so abort
+		 * here.
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		 */
 		ereport(FATAL,
 				(errmsg("could not load root certificate file \"%s\": %s",
@@ -885,7 +907,10 @@ initialize_SSL(void)
 		{
 			/* Set the flags to check against the complete CRL chain */
 			if (X509_STORE_load_locations(cvstore, ROOT_CRL_FILE, NULL) == 1)
+<<<<<<< HEAD
 			{
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 /* OpenSSL 0.96 does not support X509_V_FLAG_CRL_CHECK */
 #ifdef X509_V_FLAG_CRL_CHECK
 				X509_STORE_set_flags(cvstore,
@@ -908,8 +933,13 @@ initialize_SSL(void)
 
 			/*
 			 * Always ask for SSL client cert, but don't fail if it's not
+<<<<<<< HEAD
 			 * presented.  We might fail such connections later, depending on
 			 * what we find in pg_hba.conf.
+=======
+			 * presented. We'll fail later in this case, based on what we find
+			 * in pg_hba.conf.
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			 */
 			SSL_CTX_set_verify(SSL_context,
 							   (SSL_VERIFY_PEER |

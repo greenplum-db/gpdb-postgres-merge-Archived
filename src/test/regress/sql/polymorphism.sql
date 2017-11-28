@@ -363,6 +363,7 @@ insert into t values(3,array[3],'a');
 insert into t values(3,array[3],'b');
 
 -- test the successfully created polymorphic aggregates
+<<<<<<< HEAD
 select f3, myaggp01a(*) from t group by f3;
 select f3, myaggp03a(*) from t group by f3;
 select f3, myaggp03b(*) from t group by f3;
@@ -386,6 +387,31 @@ select f3, myaggn08a(f1) from t group by f3;
 select f3, myaggn08b(f1) from t group by f3;
 select f3, myaggn09a(f1) from t group by f3;
 select f3, array_sort(myaggn10a(f1)) as myaggn10a from t group by f3;
+=======
+select f3, myaggp01a(*) from t group by f3 order by f3;
+select f3, myaggp03a(*) from t group by f3 order by f3;
+select f3, myaggp03b(*) from t group by f3 order by f3;
+select f3, myaggp05a(f1) from t group by f3 order by f3;
+select f3, myaggp06a(f1) from t group by f3 order by f3;
+select f3, myaggp08a(f1) from t group by f3 order by f3;
+select f3, myaggp09a(f1) from t group by f3 order by f3;
+select f3, myaggp09b(f1) from t group by f3 order by f3;
+select f3, myaggp10a(f1) from t group by f3 order by f3;
+select f3, myaggp10b(f1) from t group by f3 order by f3;
+select f3, myaggp20a(f1) from t group by f3 order by f3;
+select f3, myaggp20b(f1) from t group by f3 order by f3;
+select f3, myaggn01a(*) from t group by f3 order by f3;
+select f3, myaggn01b(*) from t group by f3 order by f3;
+select f3, myaggn03a(*) from t group by f3 order by f3;
+select f3, myaggn05a(f1) from t group by f3 order by f3;
+select f3, myaggn05b(f1) from t group by f3 order by f3;
+select f3, myaggn06a(f1) from t group by f3 order by f3;
+select f3, myaggn06b(f1) from t group by f3 order by f3;
+select f3, myaggn08a(f1) from t group by f3 order by f3;
+select f3, myaggn08b(f1) from t group by f3 order by f3;
+select f3, myaggn09a(f1) from t group by f3 order by f3;
+select f3, myaggn10a(f1) from t group by f3 order by f3;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 select mysum2(f1, f1 + 1) from t;
 
 -- test inlining of polymorphic SQL functions

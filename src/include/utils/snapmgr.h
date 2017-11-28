@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/snapmgr.h,v 1.4 2009/01/01 17:24:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/snapmgr.h,v 1.5 2009/06/11 14:49:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,11 @@ extern void AtSubAbort_Snapshot(int level);
 extern void AtEarlyCommit_Snapshot(void);
 extern void AtEOXact_Snapshot(bool isCommit);
 
+<<<<<<< HEAD
 extern void LogDistributedSnapshotInfo(Snapshot snapshot, const char *prefix);
 extern DistributedSnapshotWithLocalMapping *GetCurrentDistributedSnapshotWithLocalMapping(void);
 
 #endif /* SNAPMGR_H */
+=======
+#endif   /* SNAPMGR_H */
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805

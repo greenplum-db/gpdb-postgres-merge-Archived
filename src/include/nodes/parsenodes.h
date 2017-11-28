@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.387 2009/01/01 17:24:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.395 2009/06/18 01:27:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,14 +56,6 @@ typedef enum SortByNulls
 	SORTBY_NULLS_LAST
 } SortByNulls;
 
-/* Alter operations for generic options */
-typedef enum AlterOptionOp
-{
-	ALTER_OPT_DROP = -1,
-	ALTER_OPT_SET,
-	ALTER_OPT_ADD
-} AlterOptionOp;
-
 /*
  * Grantable rights are encoded so that we can OR them together in a bitmask.
  * The present representation of AclItem limits us to 16 distinct rights,
@@ -81,7 +73,8 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
 #define ACL_REFERENCES	(1<<5)
 #define ACL_TRIGGER		(1<<6)
 #define ACL_EXECUTE		(1<<7)	/* for functions */
-#define ACL_USAGE		(1<<8)	/* for languages, namespaces, FDWs, and servers */
+#define ACL_USAGE		(1<<8)	/* for languages, namespaces, FDWs, and
+								 * servers */
 #define ACL_CREATE		(1<<9)	/* for namespaces and databases */
 #define ACL_CREATE_TEMP (1<<10) /* for databases */
 #define ACL_CONNECT		(1<<11) /* for databases */
@@ -224,7 +217,7 @@ typedef struct TypeName
 /*
  * ColumnRef - specifies a reference to a column, or possibly a whole tuple
  *
- * The "fields" list must be nonempty.  It can contain string Value nodes
+ * The "fields" list must be nonempty.	It can contain string Value nodes
  * (representing names) and A_Star nodes (representing occurrence of a '*').
  * Currently, A_Star must appear only as the last list element --- the grammar
  * is responsible for enforcing this!
@@ -434,8 +427,11 @@ typedef struct WindowDef
 	List	   *partitionClause;	/* PARTITION BY expression list */
 	List	   *orderClause;	/* ORDER BY (list of SortBy) */
 	int			frameOptions;	/* frame_clause options, see below */
+<<<<<<< HEAD
 	Node	   *startOffset;	/* expression for starting bound, if any */
 	Node	   *endOffset;		/* expression for ending bound, if any */
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	int			location;		/* parse location, or -1 if none/unknown */
 } WindowDef;
 
@@ -457,6 +453,7 @@ typedef struct WindowDef
 #define FRAMEOPTION_END_UNBOUNDED_FOLLOWING		0x00080 /* end is U. F. */
 #define FRAMEOPTION_START_CURRENT_ROW			0x00100 /* start is C. R. */
 #define FRAMEOPTION_END_CURRENT_ROW				0x00200 /* end is C. R. */
+<<<<<<< HEAD
 #define FRAMEOPTION_START_VALUE_PRECEDING		0x00400 /* start is V. P. */
 #define FRAMEOPTION_END_VALUE_PRECEDING			0x00800 /* end is V. P. */
 #define FRAMEOPTION_START_VALUE_FOLLOWING		0x01000 /* start is V. F. */
@@ -466,6 +463,8 @@ typedef struct WindowDef
 	(FRAMEOPTION_START_VALUE_PRECEDING | FRAMEOPTION_START_VALUE_FOLLOWING)
 #define FRAMEOPTION_END_VALUE \
 	(FRAMEOPTION_END_VALUE_PRECEDING | FRAMEOPTION_END_VALUE_FOLLOWING)
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 #define FRAMEOPTION_DEFAULTS \
 	(FRAMEOPTION_RANGE | FRAMEOPTION_START_UNBOUNDED_PRECEDING | \
@@ -561,6 +560,7 @@ typedef struct IndexElem
 } IndexElem;
 
 /*
+<<<<<<< HEAD
  * column reference encoding clause for storage
  */
 typedef struct ColumnReferenceStorageDirective
@@ -581,6 +581,17 @@ typedef struct ColumnReferenceStorageDirective
  * where they are relevant; C code can just ignore those fields in other
  * statements.)
  */
+=======
+ * DefElem - a generic "name = value" option definition
+ *
+ * In some contexts the name can be qualified.	Also, certain SQL commands
+ * allow a SET/ADD/DROP action to be attached to option settings, so it's
+ * convenient to carry a field for that too.  (Note: currently, it is our
+ * practice that the grammar allows namespace and action only in statements
+ * where they are relevant; C code can just ignore those fields in other
+ * statements.)
+ */
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 typedef enum DefElemAction
 {
 	DEFELEM_UNSPEC,				/* no action given */
@@ -592,21 +603,11 @@ typedef enum DefElemAction
 typedef struct DefElem
 {
 	NodeTag		type;
+	char	   *defnamespace;	/* NULL if unqualified name */
 	char	   *defname;
 	Node	   *arg;			/* a (Value *) or a (TypeName *) */
 	DefElemAction defaction;	/* unspecified action, or SET/ADD/DROP */
 } DefElem;
-
-/*
- * Option definition. Used in options definition lists, with optional alter
- * operation.
- */
-typedef struct OptionDefElem
-{
-	NodeTag			type;
-	AlterOptionOp	alter_op;		/* Alter operation: ADD/SET/DROP */
-	DefElem		   *def;			/* The actual definition */
-} OptionDefElem;
 
 /*
  * LockingClause - raw representation of FOR UPDATE/SHARE options
@@ -699,6 +700,15 @@ typedef struct XmlSerialize
  *	  then do the permissions checks using the access rights of that user,
  *	  not the current effective user ID.  (This allows rules to act as
  *	  setuid gateways.)
+ *
+ *	  For SELECT/INSERT/UPDATE permissions, if the user doesn't have
+ *	  table-wide permissions then it is sufficient to have the permissions
+ *	  on all columns identified in selectedCols (for SELECT) and/or
+ *	  modifiedCols (for INSERT/UPDATE; we can tell which from the query type).
+ *	  selectedCols and modifiedCols are bitmapsets, which cannot have negative
+ *	  integer members, so we subtract FirstLowInvalidHeapAttributeNumber from
+ *	  column numbers before storing them in these fields.  A whole-row Var
+ *	  reference is represented by setting the bit for InvalidAttrNumber.
  *--------------------
  */
 typedef enum RTEKind
@@ -779,7 +789,7 @@ typedef struct RangeTblEntry
 	 */
 	char	   *ctename;		/* name of the WITH list item */
 	Index		ctelevelsup;	/* number of query levels up */
-	bool		self_reference;	/* is this a recursive self-reference? */
+	bool		self_reference; /* is this a recursive self-reference? */
 	List	   *ctecoltypes;	/* OID list of column type OIDs */
 	List	   *ctecoltypmods;	/* integer list of column typmods */
 
@@ -797,6 +807,7 @@ typedef struct RangeTblEntry
 	bool		inFromCl;		/* present in FROM clause? */
 	AclMode		requiredPerms;	/* bitmask of required access permissions */
 	Oid			checkAsUser;	/* if valid, check access as this role */
+<<<<<<< HEAD
 
     List       *pseudocols;     /* CDB: List of CdbRelColumnInfo nodes defining
                                  *  pseudo columns for targetlist of scan node.
@@ -805,6 +816,10 @@ typedef struct RangeTblEntry
                                  *  the 0-based position in the list.  Used
                                  *  only in planner & EXPLAIN, not in executor.
                                  */
+=======
+	Bitmapset  *selectedCols;	/* columns needing SELECT permission */
+	Bitmapset  *modifiedCols;	/* columns needing INSERT/UPDATE permission */
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 } RangeTblEntry;
 
 /*
@@ -814,7 +829,7 @@ typedef struct RangeTblEntry
  * You might think that ORDER BY is only interested in defining ordering,
  * and GROUP/DISTINCT are only interested in defining equality.  However,
  * one way to implement grouping is to sort and then apply a "uniq"-like
- * filter.  So it's also interesting to keep track of possible sort operators
+ * filter.	So it's also interesting to keep track of possible sort operators
  * for GROUP/DISTINCT, and in particular to try to sort for the grouping
  * in a way that will also yield a requested ORDER BY ordering.  So we need
  * to be able to compare ORDER BY and GROUP/DISTINCT lists, which motivates
@@ -832,10 +847,10 @@ typedef struct RangeTblEntry
  * here, but it's cheap to get it along with the sortop, and requiring it
  * to be valid eases comparisons to grouping items.)
  *
- * In a grouping item, eqop must be valid.  If the eqop is a btree equality
+ * In a grouping item, eqop must be valid.	If the eqop is a btree equality
  * operator, then sortop should be set to a compatible ordering operator.
  * We prefer to set eqop/sortop/nulls_first to match any ORDER BY item that
- * the query presents for the same tlist item.  If there is none, we just
+ * the query presents for the same tlist item.	If there is none, we just
  * use the default ordering op for the datatype.
  *
  * If the tlist item's type has a hash opclass but no btree opclass, then
@@ -856,9 +871,9 @@ typedef struct SortGroupClause
 {
 	NodeTag		type;
 	Index		tleSortGroupRef;	/* reference into targetlist */
-	Oid			eqop;				/* the equality operator ('=' op) */
-	Oid			sortop;				/* the ordering operator ('<' op), or 0 */
-	bool		nulls_first;		/* do NULLs come before normal values? */
+	Oid			eqop;			/* the equality operator ('=' op) */
+	Oid			sortop;			/* the ordering operator ('<' op), or 0 */
+	bool		nulls_first;	/* do NULLs come before normal values? */
 } SortGroupClause;
 
 /*
@@ -927,9 +942,13 @@ typedef struct WindowClause
 	char	   *refname;		/* referenced window name, if any */
 	List	   *partitionClause;	/* PARTITION BY list */
 	List	   *orderClause;	/* ORDER BY list */
+<<<<<<< HEAD
 	int			frameOptions;	/* frame_clause options, copied from WindowDef */
 	Node	   *startOffset;	/* expression for starting bound, if any */
 	Node	   *endOffset;		/* expression for ending bound, if any */
+=======
+	int			frameOptions;	/* frame_clause options, see WindowDef */
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	Index		winref;			/* ID referenced by window functions */
 	bool		copiedOrder;	/* did we copy orderClause from refname? */
 } WindowClause;
@@ -959,7 +978,7 @@ typedef struct RowMarkClause
 
 /*
  * WithClause -
- *     representation of WITH clause
+ *	   representation of WITH clause
  *
  * Note: WithClause does not propagate into the Query representation;
  * but CommonTableExpr does.
@@ -974,7 +993,7 @@ typedef struct WithClause
 
 /*
  * CommonTableExpr -
- *     representation of WITH list element
+ *	   representation of WITH list element
  *
  * We don't currently support the SEARCH or CYCLE clause.
  */
@@ -1130,7 +1149,7 @@ typedef struct SelectStmt
  * range table.  Its setOperations field shows the tree of set operations,
  * with leaf SelectStmt nodes replaced by RangeTblRef nodes, and internal
  * nodes replaced by SetOperationStmt nodes.  Information about the output
- * column types is added, too.  (Note that the child nodes do not necessarily
+ * column types is added, too.	(Note that the child nodes do not necessarily
  * produce these types directly, but we've checked that their output types
  * can be coerced to the output column type.)  Also, if it's not UNION ALL,
  * information about the types' sort/group semantics is provided in the form
@@ -1318,6 +1337,7 @@ typedef enum AlterTableType
 	AT_ChangeOwner,				/* change owner */
 	AT_ClusterOn,				/* CLUSTER ON */
 	AT_DropCluster,				/* SET WITHOUT CLUSTER */
+	AT_AddOids,					/* SET WITH OIDS */
 	AT_DropOids,				/* SET WITHOUT OIDS */
 	AT_SetTableSpace,			/* SET TABLESPACE */
 	AT_SetRelOptions,			/* SET (...) -- AM specific parameters */
@@ -1441,6 +1461,7 @@ typedef struct AlterDomainStmt
  */
 typedef enum GrantObjectType
 {
+	ACL_OBJECT_COLUMN,			/* column */
 	ACL_OBJECT_RELATION,		/* table, view */
 	ACL_OBJECT_SEQUENCE,		/* sequence */
 	ACL_OBJECT_DATABASE,		/* database */
@@ -1460,8 +1481,8 @@ typedef struct GrantStmt
 	GrantObjectType objtype;	/* kind of object being operated on */
 	List	   *objects;		/* list of RangeVar nodes, FuncWithArgs nodes,
 								 * or plain names (as Value strings) */
-	List	   *privileges;		/* list of privilege names (as Strings) */
-	/* privileges == NIL denotes "all privileges" */
+	List	   *privileges;		/* list of AccessPriv nodes */
+	/* privileges == NIL denotes ALL PRIVILEGES */
 	List	   *grantees;		/* list of PrivGrantee nodes */
 	bool		grant_option;	/* grant or revoke grant option */
 	DropBehavior behavior;		/* drop behavior (for REVOKE) */
@@ -1486,13 +1507,19 @@ typedef struct FuncWithArgs
 	List	   *funcargs;		/* list of Typename nodes */
 } FuncWithArgs;
 
-/* This is only used internally in gram.y. */
-typedef struct PrivTarget
+/*
+ * An access privilege, with optional list of column names
+ * priv_name == NULL denotes ALL PRIVILEGES (only used with a column list)
+ * cols == NIL denotes "all columns"
+ * Note that simple "ALL PRIVILEGES" is represented as a NIL list, not
+ * an AccessPriv with both fields null.
+ */
+typedef struct AccessPriv
 {
 	NodeTag		type;
-	GrantObjectType objtype;
-	List	   *objs;
-} PrivTarget;
+	char	   *priv_name;		/* string name of privilege */
+	List	   *cols;			/* list of Value strings */
+} AccessPriv;
 
 /* ----------------------
  *		Grant/Revoke Role Statement
@@ -1942,7 +1969,7 @@ typedef struct CreateFdwStmt
 {
 	NodeTag		type;
 	char	   *fdwname;		/* foreign-data wrapper name */
-	char	   *library;		/* libray name */
+	List	   *validator;		/* optional validator function (qual. name) */
 	List	   *options;		/* generic options to FDW */
 } CreateFdwStmt;
 
@@ -1950,7 +1977,8 @@ typedef struct AlterFdwStmt
 {
 	NodeTag		type;
 	char	   *fdwname;		/* foreign-data wrapper name */
-	char	   *library;		/* libray name */
+	List	   *validator;		/* optional validator function (qual. name) */
+	bool		change_validator;
 	List	   *options;		/* generic options to FDW */
 } AlterFdwStmt;
 
@@ -2037,7 +2065,8 @@ typedef struct CreateTrigStmt
 	List	   *args;			/* list of (T_String) Values or NIL */
 	bool		before;			/* BEFORE/AFTER */
 	bool		row;			/* ROW/STATEMENT */
-	char		actions[4];		/* 1 to 3 of 'i', 'u', 'd', + trailing \0 */
+	/* events uses the TRIGGER_TYPE bits defined in catalog/pg_trigger.h */
+	int16		events;			/* INSERT/UPDATE/DELETE/TRUNCATE */
 
 	/* The following are used for referential */
 	/* integrity constraint triggers */
@@ -2774,9 +2803,13 @@ typedef struct VacuumStmt
 	bool		full;			/* do FULL (non-concurrent) vacuum */
 	bool		analyze;		/* do ANALYZE step */
 	bool		verbose;		/* print progress info */
+<<<<<<< HEAD
 	bool		rootonly;		/* only ANALYZE root partition tables */
 	bool		scan_all;		/* force scan of all pages */
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	int			freeze_min_age; /* min freeze age, or -1 to use default */
+	int			freeze_table_age;		/* age at which to scan whole table */
 	RangeVar   *relation;		/* single table to process, or NULL */
 	List	   *va_cols;		/* list of column names, or NIL for all */
 

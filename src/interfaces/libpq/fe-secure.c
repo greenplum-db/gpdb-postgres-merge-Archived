@@ -11,7 +11,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-secure.c
+=======
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.127 2009/06/23 18:13:23 mha Exp $
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *
  * NOTES
  *
@@ -152,6 +156,7 @@ struct sigpipe_info
 			(spinfo).got_epipe = true; \
 	} while (0)
 
+<<<<<<< HEAD
 #define RESTORE_SIGPIPE(conn, spinfo) \
 	do { \
 		if (!SIGPIPE_MASKED(conn)) \
@@ -182,6 +187,25 @@ struct sigpipe_info
 #define DISABLE_SIGPIPE(conn, spinfo, failaction)
 #define REMEMBER_EPIPE(spinfo, cond)
 #define RESTORE_SIGPIPE(conn, spinfo)
+=======
+#define RESTORE_SIGPIPE() \
+	pq_reset_sigpipe(&osigmask, sigpipe_pending, got_epipe)
+#else							/* !ENABLE_THREAD_SAFETY */
+
+#define DISABLE_SIGPIPE(failaction) \
+	pqsigfunc	oldsighandler = pqsignal(SIGPIPE, SIG_IGN)
+
+#define REMEMBER_EPIPE(cond)
+
+#define RESTORE_SIGPIPE() \
+	pqsignal(SIGPIPE, oldsighandler)
+#endif   /* ENABLE_THREAD_SAFETY */
+#else							/* WIN32 */
+
+#define DISABLE_SIGPIPE(failaction)
+#define REMEMBER_EPIPE(cond)
+#define RESTORE_SIGPIPE()
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #endif   /* WIN32 */
 
 /* ------------------------------------------------------------ */
@@ -700,11 +724,11 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
  * Check if a wildcard certificate matches the server hostname.
  *
  * The rule for this is:
- *  1. We only match the '*' character as wildcard
- *  2. We match only wildcards at the start of the string
- *  3. The '*' character does *not* match '.', meaning that we match only
- *     a single pathname component.
- *  4. We don't support more than one '*' in a single pattern.
+ *	1. We only match the '*' character as wildcard
+ *	2. We match only wildcards at the start of the string
+ *	3. The '*' character does *not* match '.', meaning that we match only
+ *	   a single pathname component.
+ *	4. We don't support more than one '*' in a single pattern.
  *
  * This is roughly in line with RFC2818, but contrary to what most browsers
  * appear to be implementing (point 3 being the difference)
@@ -714,8 +738,8 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
 static int
 wildcard_certificate_match(const char *pattern, const char *string)
 {
-	int lenpat = strlen(pattern);
-	int lenstr = strlen(string);
+	int			lenpat = strlen(pattern);
+	int			lenstr = strlen(string);
 
 	/* If we don't start with a wildcard, it's not a match (rule 1 & 2) */
 	if (lenpat < 3 ||
@@ -760,8 +784,13 @@ verify_peer_name_matches_certificate(PGconn *conn)
 	bool		result;
 
 	/*
+<<<<<<< HEAD
 	 * If told not to verify the peer name, don't do it. Return true
 	 * indicating that the verification was successful.
+=======
+	 * If told not to verify the peer name, don't do it. Return 0 indicating
+	 * that the verification was successful.
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	if (strcmp(conn->sslmode, "verify-full") != 0)
 		return true;
@@ -777,7 +806,11 @@ verify_peer_name_matches_certificate(PGconn *conn)
 	if (len == -1)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
+<<<<<<< HEAD
 						  libpq_gettext("could not get server common name from server certificate\n"));
+=======
+						  libpq_gettext("verified SSL connections are only supported when connecting to a host name"));
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		return false;
 	}
 	peer_cn = malloc(len + 1);
@@ -833,14 +866,279 @@ verify_peer_name_matches_certificate(PGconn *conn)
 		else
 		{
 			printfPQExpBuffer(&conn->errorMessage,
+<<<<<<< HEAD
 							  libpq_gettext("server common name \"%s\" does not match host name \"%s\"\n"),
 							  peer_cn, conn->pghost);
 			result = false;
+=======
+							  libpq_gettext("server common name \"%s\" does not match host name \"%s\""),
+							  conn->peer_cn, conn->pghost);
+			return false;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		}
 	}
 
+<<<<<<< HEAD
 	free(peer_cn);
 	return result;
+=======
+/*
+ *	Callback used by SSL to load client cert and key.
+ *	This callback is only called when the server wants a
+ *	client cert.
+ *
+ *	Since BIO functions can set OpenSSL error codes, we must
+ *	reset the OpenSSL error stack on *every* exit from this
+ *	function once we've started using BIO.
+ *
+ *	Must return 1 on success, 0 on no data or error.
+ */
+static int
+client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
+{
+	char		homedir[MAXPGPATH];
+	struct stat buf;
+
+#ifndef WIN32
+	struct stat buf2;
+	FILE	   *fp;
+#endif
+	char		fnbuf[MAXPGPATH];
+	BIO		   *bio;
+	PGconn	   *conn = (PGconn *) SSL_get_app_data(ssl);
+	char		sebuf[256];
+
+	/*
+	 * If conn->sslcert  or conn->sslkey is not set, we don't need the home
+	 * directory to find the required files.
+	 */
+	if (!conn->sslcert || !conn->sslkey)
+	{
+		if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("could not get home directory to locate client certificate files"));
+			return 0;
+		}
+	}
+
+	/* read the user certificate */
+	if (conn->sslcert)
+		strncpy(fnbuf, conn->sslcert, sizeof(fnbuf));
+	else
+		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USER_CERT_FILE);
+
+	/*
+	 * OpenSSL <= 0.9.8 lacks error stack handling, which means it's likely to
+	 * report wrong error messages if access to the cert file fails. Do our
+	 * own check for the readability of the file to catch the majority of such
+	 * problems before OpenSSL gets involved.
+	 */
+#ifndef HAVE_ERR_SET_MARK
+	{
+		FILE	   *fp2;
+
+		if ((fp2 = fopen(fnbuf, "r")) == NULL)
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+			   libpq_gettext("could not open certificate file \"%s\": %s\n"),
+							  fnbuf, pqStrerror(errno, sebuf, sizeof(sebuf)));
+			return 0;
+		}
+		fclose(fp2);
+	}
+#endif
+
+	/* save OpenSSL error stack */
+	ERR_set_mark();
+
+	if ((bio = BIO_new_file(fnbuf, "r")) == NULL)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+			   libpq_gettext("could not open certificate file \"%s\": %s\n"),
+						  fnbuf, pqStrerror(errno, sebuf, sizeof(sebuf)));
+		ERR_pop_to_mark();
+		return 0;
+	}
+
+	if (PEM_read_bio_X509(bio, x509, NULL, NULL) == NULL)
+	{
+		char	   *err = SSLerrmessage();
+
+		printfPQExpBuffer(&conn->errorMessage,
+			   libpq_gettext("could not read certificate file \"%s\": %s\n"),
+						  fnbuf, err);
+		SSLerrfree(err);
+		BIO_free(bio);
+		ERR_pop_to_mark();
+		return 0;
+	}
+
+	BIO_free(bio);
+
+	/*
+	 * Read the SSL key. If a key is specified, treat it as an engine:key
+	 * combination if there is colon present - we don't support files with
+	 * colon in the name. The exception is if the second character is a colon,
+	 * in which case it can be a Windows filename with drive specification.
+	 */
+	if (conn->sslkey && strlen(conn->sslkey) > 0)
+	{
+#ifdef USE_SSL_ENGINE
+		if (strchr(conn->sslkey, ':')
+#ifdef WIN32
+			&& conn->sslkey[1] != ':'
+#endif
+			)
+		{
+			/* Colon, but not in second character, treat as engine:key */
+			char	   *engine_str = strdup(conn->sslkey);
+			char	   *engine_colon = strchr(engine_str, ':');
+
+			*engine_colon = '\0';		/* engine_str now has engine name */
+			engine_colon++;		/* engine_colon now has key name */
+
+			conn->engine = ENGINE_by_id(engine_str);
+			if (conn->engine == NULL)
+			{
+				char	   *err = SSLerrmessage();
+
+				printfPQExpBuffer(&conn->errorMessage,
+					 libpq_gettext("could not load SSL engine \"%s\": %s\n"),
+								  engine_str, err);
+				SSLerrfree(err);
+				free(engine_str);
+				ERR_pop_to_mark();
+				return 0;
+			}
+
+			if (ENGINE_init(conn->engine) == 0)
+			{
+				char	   *err = SSLerrmessage();
+
+				printfPQExpBuffer(&conn->errorMessage,
+					 libpq_gettext("could not initialize SSL engine \"%s\": %s\n"),
+								  engine_str, err);
+				SSLerrfree(err);
+				ENGINE_free(conn->engine);
+				conn->engine = NULL;
+				free(engine_str);
+				ERR_pop_to_mark();
+				return 0;
+			}
+
+			*pkey = ENGINE_load_private_key(conn->engine, engine_colon,
+											NULL, NULL);
+			if (*pkey == NULL)
+			{
+				char	   *err = SSLerrmessage();
+
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("could not read private SSL key \"%s\" from engine \"%s\": %s\n"),
+								  engine_colon, engine_str, err);
+				SSLerrfree(err);
+				ENGINE_finish(conn->engine);
+				ENGINE_free(conn->engine);
+				conn->engine = NULL;
+				free(engine_str);
+				ERR_pop_to_mark();
+				return 0;
+			}
+			free(engine_str);
+
+			fnbuf[0] = '\0';	/* indicate we're not going to load from a
+								 * file */
+		}
+		else
+#endif   /* support for SSL engines */
+		{
+			/* PGSSLKEY is not an engine, treat it as a filename */
+			strncpy(fnbuf, conn->sslkey, sizeof(fnbuf));
+		}
+	}
+	else
+	{
+		/* No PGSSLKEY specified, load default file */
+		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USER_KEY_FILE);
+	}
+
+	if (fnbuf[0] != '\0')
+	{
+		/* read the user key from file */
+
+		if (stat(fnbuf, &buf) != 0)
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("certificate present, but not private key file \"%s\"\n"),
+							  fnbuf);
+			ERR_pop_to_mark();
+			return 0;
+		}
+#ifndef WIN32
+		if (!S_ISREG(buf.st_mode) || buf.st_mode & (S_IRWXG | S_IRWXO))
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("private key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"),
+							  fnbuf);
+			ERR_pop_to_mark();
+			return 0;
+		}
+#endif
+
+		if ((bio = BIO_new_file(fnbuf, "r")) == NULL)
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+			   libpq_gettext("could not open private key file \"%s\": %s\n"),
+							  fnbuf, pqStrerror(errno, sebuf, sizeof(sebuf)));
+			ERR_pop_to_mark();
+			return 0;
+		}
+#ifndef WIN32
+		BIO_get_fp(bio, &fp);
+		if (fstat(fileno(fp), &buf2) == -1 ||
+			buf.st_dev != buf2.st_dev || buf.st_ino != buf2.st_ino)
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("private key file \"%s\" changed during execution\n"), fnbuf);
+			ERR_pop_to_mark();
+			return 0;
+		}
+#endif
+
+		if (PEM_read_bio_PrivateKey(bio, pkey, NULL, NULL) == NULL)
+		{
+			char	   *err = SSLerrmessage();
+
+			printfPQExpBuffer(&conn->errorMessage,
+			   libpq_gettext("could not read private key file \"%s\": %s\n"),
+							  fnbuf, err);
+			SSLerrfree(err);
+
+			BIO_free(bio);
+			ERR_pop_to_mark();
+			return 0;
+		}
+
+		BIO_free(bio);
+	}
+
+	/* verify that the cert and key go together */
+	if (X509_check_private_key(*x509, *pkey) != 1)
+	{
+		char	   *err = SSLerrmessage();
+
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("certificate does not match private key file \"%s\": %s\n"),
+						  fnbuf, err);
+		SSLerrfree(err);
+		ERR_pop_to_mark();
+		return 0;
+	}
+
+	ERR_pop_to_mark();
+
+	return 1;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 #ifdef ENABLE_THREAD_SAFETY
@@ -878,12 +1176,18 @@ pq_lockingcallback(int mode, int n, const char *file, int line)
 #endif   /* ENABLE_THREAD_SAFETY */
 
 /*
+<<<<<<< HEAD
  * Initialize SSL system, in particular creating the SSL_context object
  * that will be shared by all SSL-using connections in this process.
  *
  * In threadsafe mode, this includes setting up libcrypto callback functions
  * to do thread locking.
  *
+=======
+ * Initialize SSL system. In threadsafe mode, this includes setting
+ * up libcrypto callback functions to do thread locking.
+ *
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  * If the caller has told us (through PQinitOpenSSL) that he's taking care
  * of libcrypto, we expect that callbacks are already set, and won't try to
  * override it.
@@ -949,7 +1253,7 @@ init_ssl_system(PGconn *conn)
 			CRYPTO_set_locking_callback(pq_lockingcallback);
 		}
 	}
-#endif /* ENABLE_THREAD_SAFETY */
+#endif   /* ENABLE_THREAD_SAFETY */
 
 	if (!SSL_context)
 	{
@@ -1064,6 +1368,7 @@ initialize_SSL(PGconn *conn)
 	EVP_PKEY   *pkey = NULL;
 
 	/*
+<<<<<<< HEAD
 	 * We'll need the home directory if any of the relevant parameters are
 	 * defaulted.  If pqGetHomeDirectory fails, act as though none of the
 	 * files could be found.
@@ -1335,6 +1640,70 @@ initialize_SSL(PGconn *conn)
 				X509_STORE_set_flags(cvstore,
 						  X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
 #else
+=======
+	 * If sslmode is set to one of the verify options, perform certificate
+	 * verification. If set to "verify-full" we will also do further
+	 * verification after the connection has been completed.
+	 *
+	 * If we are going to look for either root certificate or CRL in the home
+	 * directory, we need pqGetHomeDirectory() to succeed. In other cases, we
+	 * don't need to get the home directory explicitly.
+	 */
+	if (!conn->sslrootcert || !conn->sslcrl)
+	{
+		if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
+		{
+			if (conn->sslmode[0] == 'v')		/* "verify-ca" or
+												 * "verify-full" */
+			{
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("could not get home directory to locate root certificate file"));
+				return -1;
+			}
+		}
+	}
+	else
+	{
+		homedir[0] = '\0';
+	}
+
+	if (conn->sslrootcert)
+		strncpy(fnbuf, conn->sslrootcert, sizeof(fnbuf));
+	else
+		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CERT_FILE);
+
+	if (stat(fnbuf, &buf) == 0)
+	{
+		X509_STORE *cvstore;
+
+		if (SSL_CTX_load_verify_locations(SSL_context, fnbuf, NULL) != 1)
+		{
+			char	   *err = SSLerrmessage();
+
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("could not read root certificate file \"%s\": %s\n"),
+							  fnbuf, err);
+			SSLerrfree(err);
+			return -1;
+		}
+
+		if ((cvstore = SSL_CTX_get_cert_store(SSL_context)) != NULL)
+		{
+			if (conn->sslcrl)
+				strncpy(fnbuf, conn->sslcrl, sizeof(fnbuf));
+			else
+				snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CRL_FILE);
+
+			/* setting the flags to check against the complete CRL chain */
+			if (X509_STORE_load_locations(cvstore, fnbuf, NULL) == 1)
+/* OpenSSL 0.96 does not support X509_V_FLAG_CRL_CHECK */
+#ifdef X509_V_FLAG_CRL_CHECK
+				X509_STORE_set_flags(cvstore,
+						  X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
+			/* if not found, silently ignore;  we do not require CRL */
+#else
+			{
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				char	   *err = SSLerrmessage();
 
 				printfPQExpBuffer(&conn->errorMessage,
@@ -1344,6 +1713,7 @@ initialize_SSL(PGconn *conn)
 				return -1;
 #endif
 			}
+<<<<<<< HEAD
 			/* if not found, silently ignore;  we do not require CRL */
 		}
 
@@ -1369,6 +1739,19 @@ initialize_SSL(PGconn *conn)
 												"Either provide the file or change sslmode to disable server certificate verification.\n"));
 			else
 				printfPQExpBuffer(&conn->errorMessage,
+=======
+#endif
+		}
+
+		SSL_CTX_set_verify(SSL_context, SSL_VERIFY_PEER, verify_cb);
+	}
+	else
+	{
+		/* stat() failed; assume cert file doesn't exist */
+		if (conn->sslmode[0] == 'v')	/* "verify-ca" or "verify-full" */
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				libpq_gettext("root certificate file \"%s\" does not exist\n"
 							  "Either provide the file or change sslmode to disable server certificate verification.\n"), fnbuf);
 			return -1;
@@ -1453,7 +1836,11 @@ open_client_SSL(PGconn *conn)
 
 	/*
 	 * We already checked the server certificate in initialize_SSL() using
+<<<<<<< HEAD
 	 * SSL_CTX_set_verify(), if root.crt exists.
+=======
+	 * SSL_CTX_set_verify() if root.crt exists.
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 
 	/* get server certificate */

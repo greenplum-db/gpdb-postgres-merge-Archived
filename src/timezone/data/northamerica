@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+# <pre>
+# @(#)northamerica	8.28
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -2081,6 +2086,7 @@ Zone America/Creston	-7:46:04 -	LMT	1884
 # the Arctic Circle. The zone file was required because Resolute Bay had
 # decided to use UTC-5 instead of UTC-6 for the winter of 2006-2007.
 #
+<<<<<<< HEAD
 # According to new information which I received last week, Resolute Bay
 # went back to using UTC-6 in the winter of 2007-2008...
 #
@@ -2136,6 +2142,18 @@ Zone America/Creston	-7:46:04 -	LMT	1884
 # never have contacted her.  I now believe that all the information I
 # obtained in November 2008 should be ignored...
 # I apologize for reporting incorrect information in 2008.
+=======
+# The individual that answered the phone confirmed that the clocks did not
+# move at the end of daylight saving on October 29/2006.  He also told me that
+# the clocks did not move this past weekend (March 11/2007)....
+
+# From Chris Walton (2008-11-13):
+# ...the residents of Resolute believe that they are changing "time zones"
+# twice a year.  In winter months, local time is qualified with "Eastern
+# Time" which is really "Eastern Standard Time (UTC-5)".  In summer
+# months, local time is qualified with "Central Time" which is really
+# "Central Daylight Time (UTC-5)"...
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	NT_YK	1918	only	-	Apr	14	2:00	1:00	D
@@ -2163,12 +2181,22 @@ Zone America/Iqaluit	0	-	zzz	1942 Aug # Frobisher Bay est.
 			-6:00	Canada	C%sT	2000 Oct 29  2:00
 			-5:00	Canada	E%sT
 # aka Qausuittuq
+# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+Rule	Resolute 2006	max	-	Nov	Sun>=1	2:00	0	ES
+Rule	Resolute 2007	max	-	Mar	Sun>=8	2:00	0	CD
 Zone America/Resolute	0	-	zzz	1947 Aug 31 # Resolute founded
+<<<<<<< HEAD
 			-6:00	NT_YK	C%sT	2000 Oct 29  2:00
 			-5:00	-	EST	2001 Apr  1  3:00
 			-6:00	Canada	C%sT	2006 Oct 29  2:00
 			-5:00	-	EST	2007 Mar 11  3:00
 			-6:00	Canada	C%sT
+=======
+			-6:00	NT_YK	C%sT	2000 Oct 29 2:00
+			-5:00	-	EST	2001 Apr  1 3:00
+			-6:00	Canada	C%sT	2006 Oct 29 2:00
+			-5:00	Resolute	%sT
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 # aka Kangiqiniq
 Zone America/Rankin_Inlet 0	-	zzz	1957 # Rankin Inlet founded
 			-6:00	NT_YK	C%sT	2000 Oct 29  2:00
@@ -2812,6 +2840,7 @@ Zone America/Costa_Rica	-5:36:13 -	LMT	1890        # San José
 # midnight between Saturday, March 07, 2009 and Sunday, March 08, 2009-
 # not on midnight March 14 / March 15 as previously thought.
 #
+<<<<<<< HEAD
 # http://www.worldtimezone.com/dst_news/dst_news_cuba05.html
 # (in Spanish)
 
@@ -2860,6 +2889,22 @@ Zone America/Costa_Rica	-5:36:13 -	LMT	1890        # San José
 # From Paul Eggert (2012-11-03):
 # For now, assume the future rule is first Sunday in November.
 
+=======
+# <a href="http://www.worldtimezone.com/dst_news/dst_news_cuba05.html">
+# http://www.worldtimezone.com/dst_news/dst_news_cuba05.html
+# (in Spanish)
+# </a>
+
+# From Arthur David Olson (2009-03-09)
+# I listened over the Internet to
+# <a href="http://media.enet.cu/readioreloj">
+# http://media.enet.cu/readioreloj
+# </a>
+# this morning; when it was 10:05 a. m. here in Bethesda, Maryland the
+# the time was announced as "diez cinco"--the same time as here, indicating
+# that has indeed switched to DST. Assume second Sunday from 2009 forward.
+
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Cuba	1928	only	-	Jun	10	0:00	1:00	D
 Rule	Cuba	1928	only	-	Oct	10	0:00	0	S
@@ -2889,6 +2934,7 @@ Rule	Cuba	1996	only	-	Oct	 6	0:00s	0	S
 Rule	Cuba	1997	only	-	Oct	12	0:00s	0	S
 Rule	Cuba	1998	1999	-	Mar	lastSun	0:00s	1:00	D
 Rule	Cuba	1998	2003	-	Oct	lastSun	0:00s	0	S
+<<<<<<< HEAD
 Rule	Cuba	2000	2003	-	Apr	Sun>=1	0:00s	1:00	D
 Rule	Cuba	2004	only	-	Mar	lastSun	0:00s	1:00	D
 Rule	Cuba	2006	2010	-	Oct	lastSun	0:00s	0	S
@@ -2900,6 +2946,13 @@ Rule	Cuba	2011	only	-	Nov	13	0:00s	0	S
 Rule	Cuba	2012	only	-	Apr	1	0:00s	1:00	D
 Rule	Cuba	2012	max	-	Nov	Sun>=1	0:00s	0	S
 Rule	Cuba	2013	max	-	Mar	Sun>=8	0:00s	1:00	D
+=======
+Rule	Cuba	2000	2004	-	Apr	Sun>=1	0:00s	1:00	D
+Rule	Cuba	2006	max	-	Oct	lastSun	0:00s	0	S
+Rule	Cuba	2007	only	-	Mar	Sun>=8	0:00s	1:00	D
+Rule	Cuba	2008	only	-	Mar	Sun>=15	0:00s	1:00	D
+Rule	Cuba	2009	max	-	Mar	Sun>=8	0:00s	1:00	D
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Havana	-5:29:28 -	LMT	1890

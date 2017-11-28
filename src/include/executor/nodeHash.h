@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/nodeHash.h,v 1.46 2009/01/01 17:23:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/nodeHash.h,v 1.47 2009/03/21 00:04:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,10 +45,19 @@ extern void ExecHashGetBucketAndBatch(HashJoinTable hashtable,
 						  int *batchno);
 extern HashJoinTuple ExecScanHashBucket(HashState *hashState, HashJoinState *hjstate,
 				   ExprContext *econtext);
+<<<<<<< HEAD
 extern void ExecHashTableReset(HashState *hashState, HashJoinTable hashtable);
 extern void ExecHashTableExplainInit(HashState *hashState, HashJoinState *hjstate,
                                      HashJoinTable  hashtable);
 extern void ExecHashTableExplainBatchEnd(HashState *hashState, HashJoinTable hashtable);
+=======
+extern void ExecHashTableReset(HashJoinTable hashtable);
+extern void ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
+						int *numbuckets,
+						int *numbatches,
+						int *num_skew_mcvs);
+extern int	ExecHashGetSkewBucket(HashJoinTable hashtable, uint32 hashvalue);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 static inline int
 ExecHashRowSize(int tupwidth)

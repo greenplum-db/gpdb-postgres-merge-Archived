@@ -1,7 +1,11 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
+<<<<<<< HEAD
  *	  src/pl/plperl/plperl.c
+=======
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.150 2009/06/11 14:49:14 momjian Exp $
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *
  **********************************************************************/
 
@@ -28,8 +32,11 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_type.h"
+<<<<<<< HEAD
 #include "storage/ipc.h"
 #include "tcop/tcopprot.h"
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
@@ -38,10 +45,13 @@
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
+<<<<<<< HEAD
 
 /* define our text domain for translations */
 #undef TEXTDOMAIN
 #define TEXTDOMAIN PG_TEXTDOMAIN("plperl")
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 /* define our text domain for translations */
 #undef TEXTDOMAIN
@@ -490,6 +500,106 @@ _PG_init(void)
 	inited = true;
 }
 
+<<<<<<< HEAD
+=======
+/* Each of these macros must represent a single string literal */
+
+#define PERLBOOT \
+	"SPI::bootstrap(); use vars qw(%_SHARED);" \
+	"sub ::plperl_warn { my $msg = shift; " \
+	"       $msg =~ s/\\(eval \\d+\\) //g; &elog(&NOTICE, $msg); } " \
+	"$SIG{__WARN__} = \\&::plperl_warn; " \
+	"sub ::plperl_die { my $msg = shift; " \
+	"       $msg =~ s/\\(eval \\d+\\) //g; die $msg; } " \
+	"$SIG{__DIE__} = \\&::plperl_die; " \
+	"sub ::mkunsafefunc {" \
+	"      my $ret = eval(qq[ sub { $_[0] $_[1] } ]); " \
+	"      $@ =~ s/\\(eval \\d+\\) //g if $@; return $ret; }" \
+	"use strict; " \
+	"sub ::mk_strict_unsafefunc {" \
+	"      my $ret = eval(qq[ sub { use strict; $_[0] $_[1] } ]); " \
+	"      $@ =~ s/\\(eval \\d+\\) //g if $@; return $ret; } " \
+	"sub ::_plperl_to_pg_array {" \
+	"  my $arg = shift; ref $arg eq 'ARRAY' || return $arg; " \
+	"  my $res = ''; my $first = 1; " \
+	"  foreach my $elem (@$arg) " \
+	"  { " \
+	"    $res .= ', ' unless $first; $first = undef; " \
+	"    if (ref $elem) " \
+	"    { " \
+	"      $res .= _plperl_to_pg_array($elem); " \
+	"    } " \
+	"    elsif (defined($elem)) " \
+	"    { " \
+	"      my $str = qq($elem); " \
+	"      $str =~ s/([\"\\\\])/\\\\$1/g; " \
+	"      $res .= qq(\"$str\"); " \
+	"    } " \
+	"    else " \
+	"    { "\
+	"      $res .= 'NULL' ; " \
+	"    } "\
+	"  } " \
+	"  return qq({$res}); " \
+	"} "
+
+#define SAFE_MODULE \
+	"require Safe; $Safe::VERSION"
+
+/*
+ * The temporary enabling of the caller opcode here is to work around a
+ * bug in perl 5.10, which unkindly changed the way its Safe.pm works, without
+ * notice. It is quite safe, as caller is informational only, and in any case
+ * we only enable it while we load the 'strict' module.
+ */
+
+#define SAFE_OK \
+	"use vars qw($PLContainer); $PLContainer = new Safe('PLPerl');" \
+	"$PLContainer->permit_only(':default');" \
+	"$PLContainer->permit(qw[:base_math !:base_io sort time]);" \
+	"$PLContainer->share(qw[&elog &spi_exec_query &return_next " \
+	"&spi_query &spi_fetchrow &spi_cursor_close " \
+	"&spi_prepare &spi_exec_prepared &spi_query_prepared &spi_freeplan " \
+	"&_plperl_to_pg_array " \
+	"&DEBUG &LOG &INFO &NOTICE &WARNING &ERROR %_SHARED ]);" \
+	"sub ::mksafefunc {" \
+	"      my $ret = $PLContainer->reval(qq[sub { $_[0] $_[1] }]); " \
+	"      $@ =~ s/\\(eval \\d+\\) //g if $@; return $ret; }" \
+	"$PLContainer->permit(qw[require caller]); $PLContainer->reval('use strict;');" \
+	"$PLContainer->deny(qw[require caller]); " \
+	"sub ::mk_strict_safefunc {" \
+	"      my $ret = $PLContainer->reval(qq[sub { BEGIN { strict->import(); } $_[0] $_[1] }]); " \
+	"      $@ =~ s/\\(eval \\d+\\) //g if $@; return $ret; }"
+
+#define SAFE_BAD \
+	"use vars qw($PLContainer); $PLContainer = new Safe('PLPerl');" \
+	"$PLContainer->permit_only(':default');" \
+	"$PLContainer->share(qw[&elog &ERROR ]);" \
+	"sub ::mksafefunc { return $PLContainer->reval(qq[sub { " \
+	"      elog(ERROR,'trusted Perl functions disabled - " \
+	"      please upgrade Perl Safe module to version 2.09 or later');}]); }" \
+	"sub ::mk_strict_safefunc { return $PLContainer->reval(qq[sub { " \
+	"      elog(ERROR,'trusted Perl functions disabled - " \
+	"      please upgrade Perl Safe module to version 2.09 or later');}]); }"
+
+#define TEST_FOR_MULTI \
+	"use Config; " \
+	"$Config{usemultiplicity} eq 'define' or "	\
+	"($Config{usethreads} eq 'define' " \
+	" and $Config{useithreads} eq 'define')"
+
+
+/********************************************************************
+ *
+ * We start out by creating a "held" interpreter that we can use in
+ * trusted or untrusted mode (but not both) as the need arises. Later, we
+ * assign that interpreter if it is available to either the trusted or
+ * untrusted interpreter. If it has already been assigned, and we need to
+ * create the other interpreter, we do that if we can, or error out.
+ * We detect if it is safe to run two interpreters during the setup of the
+ * dummy interpreter.
+ */
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 static void
 set_interp_require(bool trusted)
@@ -801,12 +911,42 @@ plperl_init_interp(void)
 	}
 #endif
 
+<<<<<<< HEAD
 	plperl = perl_alloc();
 	if (!plperl)
 		elog(ERROR, "could not allocate Perl interpreter");
 
 	PERL_SET_CONTEXT(plperl);
 	perl_construct(plperl);
+=======
+	/****
+	 * The perl API docs state that PERL_SYS_INIT3 should be called before
+	 * allocating interprters. Unfortunately, on some platforms this fails
+	 * in the Perl_do_taint() routine, which is called when the platform is
+	 * using the system's malloc() instead of perl's own. Other platforms,
+	 * notably Windows, fail if PERL_SYS_INIT3 is not called. So we call it
+	 * if it's available, unless perl is using the system malloc(), which is
+	 * true when MYMALLOC is set.
+	 */
+#if defined(PERL_SYS_INIT3) && !defined(MYMALLOC)
+	/* only call this the first time through, as per perlembed man page */
+	if (interp_state == INTERP_NONE)
+	{
+		char	   *dummy_env[1] = {NULL};
+
+		PERL_SYS_INIT3(&nargs, (char ***) &embedding, (char ***) &dummy_env);
+	}
+#endif
+
+	plperl_held_interp = perl_alloc();
+	if (!plperl_held_interp)
+		elog(ERROR, "could not allocate Perl interpreter");
+
+	perl_construct(plperl_held_interp);
+	perl_parse(plperl_held_interp, plperl_init_shared_libs,
+			   nargs, embedding, NULL);
+	perl_run(plperl_held_interp);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* run END blocks in perl_destruct instead of perl_run */
 	PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
@@ -913,6 +1053,7 @@ plperl_destroy_interp(PerlInterpreter **interp)
 		/* Run END blocks - based on perl's perl_destruct() */
 		if (PL_exit_flags & PERL_EXIT_DESTRUCT_END)
 		{
+<<<<<<< HEAD
 			dJMPENV;
 			int			x = 0;
 
@@ -921,6 +1062,38 @@ plperl_destroy_interp(PerlInterpreter **interp)
 			if (PL_endav && !PL_minus_c)
 				call_list(PL_scopestack_ix, PL_endav);
 			JMPENV_POP;
+=======
+			/*
+			 * Fill in just enough information to set up this perl function in
+			 * the safe container and call it. For some reason not entirely
+			 * clear, it prevents errors that can arise from the regex code
+			 * later trying to load utf8 modules.
+			 */
+			plperl_proc_desc desc;
+			FunctionCallInfoData fcinfo;
+			SV		   *ret;
+			SV		   *func;
+
+			/* make sure we don't call ourselves recursively */
+			plperl_safe_init_done = true;
+
+			/* compile the function */
+			func = plperl_create_sub("utf8fix",
+							 "return shift =~ /\\xa9/i ? 'true' : 'false' ;",
+									 true);
+
+			/* set up to call the function with a single text argument 'a' */
+			desc.reference = func;
+			desc.nargs = 1;
+			desc.arg_is_rowtype[0] = false;
+			fmgr_info(F_TEXTOUT, &(desc.arg_out_func[0]));
+
+			fcinfo.arg[0] = CStringGetTextDatum("a");
+			fcinfo.argnull[0] = false;
+
+			/* and make the call */
+			ret = plperl_call_perl_func(&desc, &fcinfo);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		}
 		LEAVE;
 		FREETMPS;
@@ -2298,8 +2471,19 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			rsi->isDone = ExprEndResult;
 	}
 
+<<<<<<< HEAD
 	/* Restore the previous error callback */
 	error_context_stack = pl_error_context.previous;
+=======
+		if (!SvOK(perlret) || SvTYPE(perlret) != SVt_RV ||
+			SvTYPE(SvRV(perlret)) != SVt_PVHV)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("composite-returning PL/Perl function "
+							"must return reference to hash")));
+		}
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	SvREFCNT_dec(perlret);
 
@@ -2969,6 +3153,16 @@ plperl_return_next(SV *sv)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("cannot use return_next in a non-SETOF function")));
 
+<<<<<<< HEAD
+=======
+	if (prodesc->fn_retistuple &&
+		!(SvOK(sv) && SvTYPE(sv) == SVt_RV && SvTYPE(SvRV(sv)) == SVt_PVHV))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("SETOF-composite-returning PL/Perl function "
+						"must call return_next with reference to hash")));
+
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	if (!current_call_data->ret_tdesc)
 	{
 		TupleDesc	tupdesc;
@@ -3019,12 +3213,15 @@ plperl_return_next(SV *sv)
 	if (prodesc->fn_retistuple)
 	{
 		HeapTuple	tuple;
+<<<<<<< HEAD
 
 		if (!(SvOK(sv) && SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVHV))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("SETOF-composite-returning PL/Perl function "
 							"must call return_next with reference to hash")));
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		tuple = plperl_build_tuple_result((HV *) SvRV(sv),
 										  current_call_data->ret_tdesc);

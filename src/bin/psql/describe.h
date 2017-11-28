@@ -3,7 +3,11 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * src/bin/psql/describe.h
+=======
+ * $PostgreSQL: pgsql/src/bin/psql/describe.h,v 1.40 2009/04/21 15:49:06 momjian Exp $
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  */
 #ifndef DESCRIBE_H
 #define DESCRIBE_H
@@ -41,6 +45,7 @@ extern bool objectDescription(const char *pattern, bool showSystem);
 
 /* \d foo */
 extern bool describeTableDetails(const char *pattern, bool verbose, bool showSystem);
+<<<<<<< HEAD
 
 /* \dF */
 extern bool listTSConfigs(const char *pattern, bool verbose);
@@ -53,6 +58,8 @@ extern bool listTSDictionaries(const char *pattern, bool verbose);
 
 /* \dFt */
 extern bool listTSTemplates(const char *pattern, bool verbose);
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 /* \dF */
 extern bool listTSConfigs(const char *pattern, bool verbose);

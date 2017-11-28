@@ -405,6 +405,7 @@ select array_length(array[[1,2,3], [4,5,6]], 0);
 select array_length(array[[1,2,3], [4,5,6]], 1);
 select array_length(array[[1,2,3], [4,5,6]], 2);
 select array_length(array[[1,2,3], [4,5,6]], 3);
+<<<<<<< HEAD
 
 select cardinality(array[1,2,3]);
 select cardinality(array[[1,2,3], [4,5,6]]);
@@ -415,6 +416,13 @@ select array_agg(ten order by ten) from (select ten from tenk1 where unique1 < 1
 select array_agg(nullif(ten, 4) order by ten) from (select ten from tenk1 where unique1 < 15 order by unique1) ss;
 select cardinality(array_agg(unique1)) from tenk1 where unique1 < 15;
 select array_agg(unique1 order by unique1) from tenk1 where unique1 < -15;
+=======
+
+select array_agg(unique1) from (select unique1 from tenk1 where unique1 < 15 order by unique1) ss;
+select array_agg(ten) from (select ten from tenk1 where unique1 < 15 order by unique1) ss;
+select array_agg(nullif(ten, 4)) from (select ten from tenk1 where unique1 < 15 order by unique1) ss;
+select array_agg(unique1) from tenk1 where unique1 < -15;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 select unnest(array[1,2,3]);
 select * from unnest(array[1,2,3]);

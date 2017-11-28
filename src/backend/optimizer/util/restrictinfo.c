@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.56 2009/01/01 17:23:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.60 2009/06/11 14:48:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,17 +28,28 @@ static RestrictInfo *make_restrictinfo_internal(Expr *clause,
 						   bool outerjoin_delayed,
 						   bool pseudoconstant,
 						   Relids required_relids,
+<<<<<<< HEAD
 						   Relids nullable_relids,
 						   Relids ojscope_relids);
+=======
+						   Relids nullable_relids);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static Expr *make_sub_restrictinfos(Expr *clause,
 					   bool is_pushed_down,
 					   bool outerjoin_delayed,
 					   bool pseudoconstant,
 					   Relids required_relids,
+<<<<<<< HEAD
 					   Relids nullable_relids,
 					   Relids ojscope_relids);
 static bool join_clause_is_redundant(PlannerInfo *root,
 						 RestrictInfo *rinfo,
+=======
+					   Relids nullable_relids);
+static List *select_nonredundant_join_list(List *restrictinfo_list,
+							  List *reference_list);
+static bool join_clause_is_redundant(RestrictInfo *rinfo,
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 						 List *reference_list);
 
 /*
@@ -61,8 +72,12 @@ make_restrictinfo(Expr *clause,
 				  bool outerjoin_delayed,
 				  bool pseudoconstant,
 				  Relids required_relids,
+<<<<<<< HEAD
 				  Relids nullable_relids,
 				  Relids ojscope_relids)
+=======
+				  Relids nullable_relids)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	/*
 	 * If it's an OR clause, build a modified copy with RestrictInfos inserted
@@ -74,8 +89,12 @@ make_restrictinfo(Expr *clause,
 													   outerjoin_delayed,
 													   pseudoconstant,
 													   required_relids,
+<<<<<<< HEAD
 													   nullable_relids,
 													   ojscope_relids);
+=======
+													   nullable_relids);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* Shouldn't be an AND clause, else AND/OR flattening messed up */
 	Assert(!and_clause((Node *) clause));
@@ -86,8 +105,12 @@ make_restrictinfo(Expr *clause,
 									  outerjoin_delayed,
 									  pseudoconstant,
 									  required_relids,
+<<<<<<< HEAD
 									  nullable_relids,
 									  ojscope_relids);
+=======
+									  nullable_relids);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 /*
@@ -234,7 +257,10 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 													  false,
 													  false,
 													  NULL,
+<<<<<<< HEAD
 													  NULL,
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 													  NULL));
 		}
 	}
@@ -262,7 +288,10 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 													   false,
 													   false,
 													   NULL,
+<<<<<<< HEAD
 													   NULL,
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 													   NULL));
 			}
 		}
@@ -288,8 +317,12 @@ make_restrictinfo_internal(Expr *clause,
 						   bool outerjoin_delayed,
 						   bool pseudoconstant,
 						   Relids required_relids,
+<<<<<<< HEAD
 						   Relids nullable_relids,
 						   Relids ojscope_relids)
+=======
+						   Relids nullable_relids)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	RestrictInfo *restrictinfo = makeNode(RestrictInfo);
 
@@ -300,6 +333,7 @@ make_restrictinfo_internal(Expr *clause,
 	restrictinfo->pseudoconstant = pseudoconstant;
 	restrictinfo->can_join = false;		/* may get set below */
 	restrictinfo->nullable_relids = nullable_relids;
+<<<<<<< HEAD
 	restrictinfo->ojscope_relids = ojscope_relids;
 
 	/**
@@ -314,6 +348,8 @@ make_restrictinfo_internal(Expr *clause,
 			clause = bt->arg;
 		}
 	}
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * If it's a binary opclause, set up left/right relids info. In any case
@@ -368,7 +404,8 @@ make_restrictinfo_internal(Expr *clause,
 	restrictinfo->parent_ec = NULL;
 
 	restrictinfo->eval_cost.startup = -1;
-	restrictinfo->this_selec = -1;
+	restrictinfo->norm_selec = -1;
+	restrictinfo->outer_selec = -1;
 
 	restrictinfo->mergeopfamilies = NIL;
 
@@ -411,8 +448,12 @@ make_sub_restrictinfos(Expr *clause,
 					   bool outerjoin_delayed,
 					   bool pseudoconstant,
 					   Relids required_relids,
+<<<<<<< HEAD
 					   Relids nullable_relids,
 					   Relids ojscope_relids)
+=======
+					   Relids nullable_relids)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	if (or_clause((Node *) clause))
 	{
@@ -426,16 +467,24 @@ make_sub_restrictinfos(Expr *clause,
 													outerjoin_delayed,
 													pseudoconstant,
 													NULL,
+<<<<<<< HEAD
 													nullable_relids,
 													ojscope_relids));
+=======
+													nullable_relids));
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		return (Expr *) make_restrictinfo_internal(clause,
 												   make_orclause(orlist),
 												   is_pushed_down,
 												   outerjoin_delayed,
 												   pseudoconstant,
 												   required_relids,
+<<<<<<< HEAD
 												   nullable_relids,
 												   ojscope_relids);
+=======
+												   nullable_relids);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 	else if (and_clause((Node *) clause))
 	{
@@ -449,8 +498,12 @@ make_sub_restrictinfos(Expr *clause,
 													 outerjoin_delayed,
 													 pseudoconstant,
 													 required_relids,
+<<<<<<< HEAD
 													 nullable_relids,
 													 ojscope_relids));
+=======
+													 nullable_relids));
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		return make_andclause(andlist);
 	}
 	else
@@ -460,8 +513,12 @@ make_sub_restrictinfos(Expr *clause,
 												   outerjoin_delayed,
 												   pseudoconstant,
 												   required_relids,
+<<<<<<< HEAD
 												   nullable_relids,
 												   ojscope_relids);
+=======
+												   nullable_relids);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 /*
@@ -570,26 +627,91 @@ extract_actual_join_clauses(List *restrictinfo_list,
 	}
 }
 
+
 /*
  * select_nonredundant_join_clauses
  *
  * Given a list of RestrictInfo clauses that are to be applied in a join,
- * select the ones that are not redundant with any clause in the
- * reference_list.	This is used only for nestloop-with-inner-indexscan
- * joins: any clauses being checked by the index should be removed from
- * the qpquals list.
+ * select the ones that are not redundant with any clause that's enforced
+ * by the inner_path.  This is used for nestloop joins, wherein any clause
+ * being used in an inner indexscan need not be checked again at the join.
  *
  * "Redundant" means either equal() or derived from the same EquivalenceClass.
  * We have to check the latter because indxqual.c may select different derived
  * clauses than were selected by generate_join_implied_equalities().
  *
- * Note that we assume the given restrictinfo_list has already been checked
- * for local redundancies, so we don't check again.
+ * Note that we are *not* checking for local redundancies within the given
+ * restrictinfo_list; that should have been handled elsewhere.
  */
 List *
 select_nonredundant_join_clauses(PlannerInfo *root,
 								 List *restrictinfo_list,
-								 List *reference_list)
+								 Path *inner_path)
+{
+	if (IsA(inner_path, IndexPath))
+	{
+		/*
+		 * Check the index quals to see if any of them are join clauses.
+		 *
+		 * We can skip this if the index path is an ordinary indexpath and not
+		 * a special innerjoin path, since it then wouldn't be using any join
+		 * clauses.
+		 */
+		IndexPath  *innerpath = (IndexPath *) inner_path;
+
+		if (innerpath->isjoininner)
+			restrictinfo_list =
+				select_nonredundant_join_list(restrictinfo_list,
+											  innerpath->indexclauses);
+	}
+	else if (IsA(inner_path, BitmapHeapPath))
+	{
+		/*
+		 * Same deal for bitmapped index scans.
+		 *
+		 * Note: both here and above, we ignore any implicit index
+		 * restrictions associated with the use of partial indexes.  This is
+		 * OK because we're only trying to prove we can dispense with some
+		 * join quals; failing to prove that doesn't result in an incorrect
+		 * plan.  It's quite unlikely that a join qual could be proven
+		 * redundant by an index predicate anyway.	(Also, if we did manage to
+		 * prove it, we'd have to have a special case for update targets; see
+		 * notes about EvalPlanQual testing in create_indexscan_plan().)
+		 */
+		BitmapHeapPath *innerpath = (BitmapHeapPath *) inner_path;
+
+		if (innerpath->isjoininner)
+		{
+			List	   *bitmapclauses;
+
+			bitmapclauses =
+				make_restrictinfo_from_bitmapqual(innerpath->bitmapqual,
+												  true,
+												  false);
+			restrictinfo_list =
+				select_nonredundant_join_list(restrictinfo_list,
+											  bitmapclauses);
+		}
+	}
+
+	/*
+	 * XXX the inner path of a nestloop could also be an append relation whose
+	 * elements use join quals.  However, they might each use different quals;
+	 * we could only remove join quals that are enforced by all the appendrel
+	 * members.  For the moment we don't bother to try.
+	 */
+
+	return restrictinfo_list;
+}
+
+/*
+ * select_nonredundant_join_list
+ *		Select the members of restrictinfo_list that are not redundant with
+ *		any member of reference_list.  See above for more info.
+ */
+static List *
+select_nonredundant_join_list(List *restrictinfo_list,
+							  List *reference_list)
 {
 	List	   *result = NIL;
 	ListCell   *item;
@@ -599,7 +721,7 @@ select_nonredundant_join_clauses(PlannerInfo *root,
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(item);
 
 		/* drop it if redundant with any reference clause */
-		if (join_clause_is_redundant(root, rinfo, reference_list))
+		if (join_clause_is_redundant(rinfo, reference_list))
 			continue;
 
 		/* otherwise, add it to result list */
@@ -614,8 +736,7 @@ select_nonredundant_join_clauses(PlannerInfo *root,
  *		Test whether rinfo is redundant with any clause in reference_list.
  */
 static bool
-join_clause_is_redundant(PlannerInfo *root,
-						 RestrictInfo *rinfo,
+join_clause_is_redundant(RestrictInfo *rinfo,
 						 List *reference_list)
 {
 	ListCell   *refitem;

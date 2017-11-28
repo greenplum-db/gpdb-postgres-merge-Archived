@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.54 2010/06/16 00:54:16 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.51 2009/06/11 14:49:13 momjian Exp $ */
 
 #include "postgres_fe.h"
 

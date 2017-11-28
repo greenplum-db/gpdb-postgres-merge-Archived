@@ -660,15 +660,21 @@ select * from tt_log;
  16 | barlog
 (2 rows)
 
+<<<<<<< HEAD
 -- end of disabled RETURNING tests.
 -- end_ignore
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 -- test case for a whole-row-variable bug
 create function foo1(n integer, out a text, out b text)
   returns setof record
   language sql
   as $$ select 'foo ' || i, 'bar ' || i from generate_series(1,$1) i $$;
 set work_mem='64kB';
+<<<<<<< HEAD
 WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 select t.a, t, t.a from foo1(10000) t limit 1;
    a   |         t         |   a   
 -------+-------------------+-------
@@ -676,7 +682,10 @@ select t.a, t, t.a from foo1(10000) t limit 1;
 (1 row)
 
 reset work_mem;
+<<<<<<< HEAD
 WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 select t.a, t, t.a from foo1(10000) t limit 1;
    a   |         t         |   a   
 -------+-------------------+-------
@@ -708,6 +717,7 @@ select * from array_to_set(array['one', 'two']); -- fail
 ERROR:  a column definition list is required for functions returning "record"
 LINE 1: select * from array_to_set(array['one', 'two']);
                       ^
+<<<<<<< HEAD
 -- check handling of a SQL function with multiple OUT params (bug #5777)
 create or replace function foobar(out integer, out numeric) as
 $$ select (1, 2.1) $$ language sql;
@@ -728,3 +738,48 @@ select * from foobar();  -- fail
 ERROR:  function return row and query-specified return row do not match
 DETAIL:  Returned row contains 3 attributes, but query expects 2.
 drop function foobar();
+=======
+create temp table foo(f1 int8, f2 int8);
+create function testfoo() returns record as $$
+  insert into foo values (1,2) returning *;
+$$ language sql;
+select testfoo();
+ testfoo 
+---------
+ (1,2)
+(1 row)
+
+select * from testfoo() as t(f1 int8,f2 int8);
+ f1 | f2 
+----+----
+  1 |  2
+(1 row)
+
+select * from testfoo(); -- fail
+ERROR:  a column definition list is required for functions returning "record"
+LINE 1: select * from testfoo();
+                      ^
+drop function testfoo();
+create function testfoo() returns setof record as $$
+  insert into foo values (1,2), (3,4) returning *;
+$$ language sql;
+select testfoo();
+ testfoo 
+---------
+ (1,2)
+ (3,4)
+(2 rows)
+
+select * from testfoo() as t(f1 int8,f2 int8);
+ f1 | f2 
+----+----
+  1 |  2
+  3 |  4
+(2 rows)
+
+select * from testfoo(); -- fail
+ERROR:  a column definition list is required for functions returning "record"
+LINE 1: select * from testfoo();
+                      ^
+drop function testfoo();
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805

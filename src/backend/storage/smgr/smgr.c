@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.115 2009/01/01 17:23:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.117 2009/06/11 14:49:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,60 @@
 #include "storage/smgr_ao.h"
 #include "utils/faultinjector.h"
 #include "utils/hsearch.h"
+<<<<<<< HEAD
 #include "utils/memutils.h"
+=======
+
+
+/*
+ * This struct of function pointers defines the API between smgr.c and
+ * any individual storage manager module.  Note that smgr subfunctions are
+ * generally expected to report problems via elog(ERROR).  An exception is
+ * that smgr_unlink should use elog(WARNING), rather than erroring out,
+ * because we normally unlink relations during post-commit/abort cleanup,
+ * and so it's too late to raise an error.  Also, various conditions that
+ * would normally be errors should be allowed during bootstrap and/or WAL
+ * recovery --- see comments in md.c for details.
+ */
+typedef struct f_smgr
+{
+	void		(*smgr_init) (void);	/* may be NULL */
+	void		(*smgr_shutdown) (void);		/* may be NULL */
+	void		(*smgr_close) (SMgrRelation reln, ForkNumber forknum);
+	void		(*smgr_create) (SMgrRelation reln, ForkNumber forknum,
+											bool isRedo);
+	bool		(*smgr_exists) (SMgrRelation reln, ForkNumber forknum);
+	void		(*smgr_unlink) (RelFileNode rnode, ForkNumber forknum,
+											bool isRedo);
+	void		(*smgr_extend) (SMgrRelation reln, ForkNumber forknum,
+							BlockNumber blocknum, char *buffer, bool isTemp);
+	void		(*smgr_prefetch) (SMgrRelation reln, ForkNumber forknum,
+											  BlockNumber blocknum);
+	void		(*smgr_read) (SMgrRelation reln, ForkNumber forknum,
+										  BlockNumber blocknum, char *buffer);
+	void		(*smgr_write) (SMgrRelation reln, ForkNumber forknum,
+							BlockNumber blocknum, char *buffer, bool isTemp);
+	BlockNumber (*smgr_nblocks) (SMgrRelation reln, ForkNumber forknum);
+	void		(*smgr_truncate) (SMgrRelation reln, ForkNumber forknum,
+										   BlockNumber nblocks, bool isTemp);
+	void		(*smgr_immedsync) (SMgrRelation reln, ForkNumber forknum);
+	void		(*smgr_pre_ckpt) (void);		/* may be NULL */
+	void		(*smgr_sync) (void);	/* may be NULL */
+	void		(*smgr_post_ckpt) (void);		/* may be NULL */
+} f_smgr;
+
+
+static const f_smgr smgrsw[] = {
+	/* magnetic disk */
+	{mdinit, NULL, mdclose, mdcreate, mdexists, mdunlink, mdextend,
+		mdprefetch, mdread, mdwrite, mdnblocks, mdtruncate, mdimmedsync,
+		mdpreckpt, mdsync, mdpostckpt
+	}
+};
+
+static const int NSmgr = lengthof(smgrsw);
+
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 /*
  * Each backend has a hashtable that stores all extant SMgrRelation objects.
@@ -46,6 +99,11 @@ static HTAB *SMgrRelationHash = NULL;
 
 /* local function prototypes */
 static void smgrshutdown(int code, Datum arg);
+<<<<<<< HEAD
+=======
+static void smgr_internal_unlink(RelFileNode rnode, ForkNumber forknum,
+					 int which, bool isTemp, bool isRedo);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 char *
 StorageManagerMirrorMode_Name(StorageManagerMirrorMode mirrorMode)
@@ -123,14 +181,14 @@ smgropen(RelFileNode rnode)
 	/* Initialize it if not present before */
 	if (!found)
 	{
-		int forknum;
+		int			forknum;
 
 		/* hash_search already filled in the lookup key */
 		reln->smgr_owner = NULL;
 		reln->smgr_which = 0;	/* we only have md.c at present */
 
 		/* mark it not open */
-		for(forknum = 0; forknum <= MAX_FORKNUM; forknum++)
+		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
 			reln->md_fd[forknum] = NULL;
 	}
 
@@ -176,7 +234,7 @@ void
 smgrclose(SMgrRelation reln)
 {
 	SMgrRelation *owner;
-	ForkNumber forknum;
+	ForkNumber	forknum;
 
 	for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
 		mdclose(reln, forknum);
@@ -381,11 +439,14 @@ void
 smgrcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
 {
 	/*
+<<<<<<< HEAD
 	 * GPDB_84_MERGE_FIXME: the following performance tweak came in from 8.4;
 	 * is it still applicable to our system here?
 	 */
 #if 0
 	/*
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 * Exit quickly in WAL replay mode if we've already opened the file. If
 	 * it's open, it surely must exist.
 	 */
@@ -408,6 +469,7 @@ smgrcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
  *		already.
  */
 void
+<<<<<<< HEAD
 smgrdomirroredunlink(RelFileNode *relFileNode,
 	bool isLocalBuf,
 	char *relationName, /* For tracing only.  Can be NULL in some execution paths. */
@@ -415,6 +477,25 @@ smgrdomirroredunlink(RelFileNode *relFileNode,
 	bool isRedo,
 	bool ignoreNonExistence,
 	bool *mirrorDataLossOccurred)
+=======
+smgrdounlink(SMgrRelation reln, ForkNumber forknum, bool isTemp, bool isRedo)
+{
+	RelFileNode rnode = reln->smgr_rnode;
+	int			which = reln->smgr_which;
+
+	/* Close the fork */
+	(*(smgrsw[which].smgr_close)) (reln, forknum);
+
+	smgr_internal_unlink(rnode, forknum, which, isTemp, isRedo);
+}
+
+/*
+ * Shared subroutine that actually does the unlink ...
+ */
+static void
+smgr_internal_unlink(RelFileNode rnode, ForkNumber forknum,
+					 int which, bool isTemp, bool isRedo)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	/*
 	 * Get rid of any remaining buffers for the relation.  bufmgr will just
@@ -559,10 +640,19 @@ smgrdormdbdir(DbDirNode *dbDirNode,
  *		failure we clean up by truncating.
  */
 void
-smgrextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum, 
+smgrextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		   char *buffer, bool isTemp)
 {
 	mdextend(reln, forknum, blocknum, buffer, isTemp);
+}
+
+/*
+ *	smgrprefetch() -- Initiate asynchronous read of the specified block of a relation.
+ */
+void
+smgrprefetch(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum)
+{
+	(*(smgrsw[reln->smgr_which].smgr_prefetch)) (reln, forknum, blocknum);
 }
 
 /*
@@ -574,7 +664,7 @@ smgrextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
  *		return pages in the format that POSTGRES expects.
  */
 void
-smgrread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum, 
+smgrread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		 char *buffer)
 {
 	mdread(reln, forknum, blocknum, buffer);
@@ -596,7 +686,7 @@ smgrread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
  *		made to fsync the write before checkpointing.
  */
 void
-smgrwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum, 
+smgrwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		  char *buffer, bool isTemp)
 {
 		mdwrite(reln, forknum, blocknum, buffer, isTemp);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.53 2009/01/01 17:23:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.54 2009/06/11 14:49:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -363,7 +363,7 @@ pg_stat_get_last_autoanalyze_time(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_function_calls(PG_FUNCTION_ARGS)
 {
-	Oid	funcid = PG_GETARG_OID(0);
+	Oid			funcid = PG_GETARG_OID(0);
 	PgStat_StatFuncEntry *funcentry;
 
 	if ((funcentry = pgstat_fetch_stat_funcentry(funcid)) == NULL)
@@ -374,7 +374,7 @@ pg_stat_get_function_calls(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_function_time(PG_FUNCTION_ARGS)
 {
-	Oid	funcid = PG_GETARG_OID(0);
+	Oid			funcid = PG_GETARG_OID(0);
 	PgStat_StatFuncEntry *funcentry;
 
 	if ((funcentry = pgstat_fetch_stat_funcentry(funcid)) == NULL)
@@ -385,7 +385,7 @@ pg_stat_get_function_time(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_function_self_time(PG_FUNCTION_ARGS)
 {
-	Oid	funcid = PG_GETARG_OID(0);
+	Oid			funcid = PG_GETARG_OID(0);
 	PgStat_StatFuncEntry *funcentry;
 
 	if ((funcentry = pgstat_fetch_stat_funcentry(funcid)) == NULL)
@@ -442,7 +442,10 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 	{
 		MemoryContext oldcontext;
 		TupleDesc	tupdesc;
+<<<<<<< HEAD
 		int			nattr = 16;
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		funcctx = SRF_FIRSTCALL_INIT();
 
@@ -522,24 +525,40 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 	if (funcctx->call_cntr < funcctx->max_calls)
 	{
 		/* for each row */
+<<<<<<< HEAD
 		Datum		values[16];
 		bool		nulls[16];
 		HeapTuple	tuple;
 		PgBackendStatus *beentry;
+=======
+		Datum		values[10];
+		bool		nulls[10];
+		HeapTuple	tuple;
+		PgBackendStatus *beentry;
+		SockAddr	zero_clientaddr;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, 0, sizeof(nulls));
 
 		if (*(int *) (funcctx->user_fctx) > 0)
+<<<<<<< HEAD
 		{
 			/* Get specific pid slot */
 			beentry = pgstat_fetch_stat_beentry(*(int *) (funcctx->user_fctx));
 		}
+=======
+			/* Get specific pid slot */
+			beentry = pgstat_fetch_stat_beentry(*(int *) (funcctx->user_fctx));
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		else
 		{
 			/* Get the next one in the list */
 			beentry = pgstat_fetch_stat_beentry(funcctx->call_cntr + 1);		/* 1-based index */
+<<<<<<< HEAD
 		}
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		if (!beentry)
 		{
 			int			i;
@@ -597,7 +616,11 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			/* A zeroed client addr means we don't know */
 			memset(&zero_clientaddr, 0, sizeof(zero_clientaddr));
 			if (memcmp(&(beentry->st_clientaddr), &zero_clientaddr,
+<<<<<<< HEAD
 					   sizeof(zero_clientaddr)) == 0)
+=======
+					   sizeof(zero_clientaddr) == 0))
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			{
 				nulls[9] = true;
 				nulls[10] = true;
@@ -608,9 +631,9 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 #ifdef HAVE_IPV6
 					|| beentry->st_clientaddr.addr.ss_family == AF_INET6
 #endif
-				   )
+					)
 				{
-					char        remote_host[NI_MAXHOST];
+					char		remote_host[NI_MAXHOST];
 					char		remote_port[NI_MAXSERV];
 					int			ret;
 
@@ -629,9 +652,15 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					else
 					{
 						clean_ipv6_addr(beentry->st_clientaddr.addr.ss_family, remote_host);
+<<<<<<< HEAD
 						values[9] = DirectFunctionCall1(inet_in,
 											   CStringGetDatum(remote_host));
 						values[10] = Int32GetDatum(atoi(remote_port));
+=======
+						values[8] = DirectFunctionCall1(inet_in,
+											   CStringGetDatum(remote_host));
+						values[9] = Int32GetDatum(atoi(remote_port));
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 					}
 				}
 				else if (beentry->st_clientaddr.addr.ss_family == AF_UNIX)

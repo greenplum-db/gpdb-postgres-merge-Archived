@@ -13,7 +13,7 @@
  * this version handles 64 bit numbers and so can hold values up to
  * $92,233,720,368,547,758.07.
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.80 2008/06/09 19:58:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.82 2009/06/11 14:49:03 momjian Exp $
  */
 
 #include "postgres.h"
@@ -205,12 +205,28 @@ cash_in(PG_FUNCTION_ARGS)
 		/* decimal point? then start counting fractions... */
 		else if (*s == dsymbol && !seen_dot)
 		{
+<<<<<<< HEAD
 			seen_dot = true;
 		}
 		/* ignore if "thousands" separator, else we're done */
 		else if (strncmp(s, ssymbol, strlen(ssymbol)) == 0)
 			s += strlen(ssymbol) - 1;
 		else
+=======
+			seen_dot = 1;
+		}
+		/* ignore if "thousands" separator, else we're done */
+		else if (*s != ssymbol)
+		{
+			/* round off */
+			if (isdigit((unsigned char) *s) && *s >= '5')
+				value++;
+
+			/* adjust for less than required decimal places */
+			for (; dec < fpoint; dec++)
+				value *= 10;
+
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			break;
 	}
 
@@ -342,9 +358,21 @@ cash_out(PG_FUNCTION_ARGS)
 		digit_pos--;
 	} while (value || digit_pos >= 0);
 
+<<<<<<< HEAD
 	/* prepend csymbol */
 	bufptr -= strlen(csymbol);
 	memcpy(bufptr, csymbol, strlen(csymbol));
+=======
+	strncpy((buf + count - strlen(csymbol) + 1), csymbol, strlen(csymbol));
+	count -= strlen(csymbol) - 1;
+
+	/*
+	 * If points == 0 and the number of digits % mon_group == 0, the code
+	 * above adds a trailing ssymbol on the far right, so remove it.
+	 */
+	if (buf[LAST_DIGIT] == ssymbol)
+		buf[LAST_DIGIT] = '\0';
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* see if we need to signify negative amount */
 	if (minus)
@@ -811,13 +839,13 @@ cash_words(PG_FUNCTION_ARGS)
 	/* Now treat as unsigned, to avoid trouble at INT_MIN */
 	val = (uint64) value;
 
-	m0 = val % INT64CONST(100);							/* cents */
-	m1 = (val / INT64CONST(100)) % 1000;				/* hundreds */
-	m2 = (val / INT64CONST(100000)) % 1000;				/* thousands */
-	m3 = (val / INT64CONST(100000000)) % 1000;			/* millions */
+	m0 = val % INT64CONST(100); /* cents */
+	m1 = (val / INT64CONST(100)) % 1000;		/* hundreds */
+	m2 = (val / INT64CONST(100000)) % 1000;		/* thousands */
+	m3 = (val / INT64CONST(100000000)) % 1000;	/* millions */
 	m4 = (val / INT64CONST(100000000000)) % 1000;		/* billions */
 	m5 = (val / INT64CONST(100000000000000)) % 1000;	/* trillions */
-	m6 = (val / INT64CONST(100000000000000000)) % 1000;	/* quadrillions */
+	m6 = (val / INT64CONST(100000000000000000)) % 1000; /* quadrillions */
 
 	if (m6)
 	{

@@ -136,10 +136,15 @@ CREATE OR REPLACE FUNCTION perl_set() RETURNS SETOF testrowperl AS $$
 $$  LANGUAGE plperl;
 SELECT perl_set();
 ERROR:  SETOF-composite-returning PL/Perl function must call return_next with reference to hash
+<<<<<<< HEAD
 CONTEXT:  PL/Perl function "perl_set"
 SELECT * FROM perl_set();
 ERROR:  SETOF-composite-returning PL/Perl function must call return_next with reference to hash
 CONTEXT:  PL/Perl function "perl_set"
+=======
+SELECT * FROM perl_set();
+ERROR:  SETOF-composite-returning PL/Perl function must call return_next with reference to hash
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 CREATE OR REPLACE FUNCTION perl_set() RETURNS SETOF testrowperl AS $$
     return [
         { f1 => 1, f2 => 'Hello', f3 =>  'World' },
@@ -241,7 +246,10 @@ LINE 1: SELECT * FROM perl_record_set();
                       ^
 SELECT * FROM perl_record_set() AS (f1 integer, f2 text, f3 text);
 ERROR:  SETOF-composite-returning PL/Perl function must call return_next with reference to hash
+<<<<<<< HEAD
 CONTEXT:  PL/Perl function "perl_record_set"
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 CREATE OR REPLACE FUNCTION perl_record_set() RETURNS SETOF record AS $$
     return [
         { f1 => 1, f2 => 'Hello', f3 =>  'World' },
@@ -346,9 +354,13 @@ CREATE OR REPLACE FUNCTION foo_bad() RETURNS footype AS $$
 return 42;
 $$ LANGUAGE plperl;
 SELECT * FROM foo_bad();
+<<<<<<< HEAD
 ERROR:  malformed record literal: "42"
 DETAIL:  Missing left parenthesis.
 CONTEXT:  PL/Perl function "foo_bad"
+=======
+ERROR:  composite-returning PL/Perl function must return reference to hash
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 CREATE OR REPLACE FUNCTION foo_bad() RETURNS footype AS $$
 return [
     [1, 2],
@@ -356,20 +368,30 @@ return [
 ];
 $$ LANGUAGE plperl;
 SELECT * FROM foo_bad();
+<<<<<<< HEAD
 ERROR:  cannot convert Perl array to non-array type footype
 CONTEXT:  PL/Perl function "foo_bad"
+=======
+ERROR:  composite-returning PL/Perl function must return reference to hash
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 CREATE OR REPLACE FUNCTION foo_set_bad() RETURNS SETOF footype AS $$
     return 42;
 $$ LANGUAGE plperl;
 SELECT * FROM foo_set_bad();
 ERROR:  set-returning PL/Perl function must return reference to array or use return_next
+<<<<<<< HEAD
 CONTEXT:  PL/Perl function "foo_set_bad"
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 CREATE OR REPLACE FUNCTION foo_set_bad() RETURNS SETOF footype AS $$
     return {y => 3, z => 4};
 $$ LANGUAGE plperl;
 SELECT * FROM foo_set_bad();
 ERROR:  set-returning PL/Perl function must return reference to array or use return_next
+<<<<<<< HEAD
 CONTEXT:  PL/Perl function "foo_set_bad"
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 CREATE OR REPLACE FUNCTION foo_set_bad() RETURNS SETOF footype AS $$
 return [
     [1, 2],
@@ -378,7 +400,10 @@ return [
 $$ LANGUAGE plperl;
 SELECT * FROM foo_set_bad();
 ERROR:  SETOF-composite-returning PL/Perl function must call return_next with reference to hash
+<<<<<<< HEAD
 CONTEXT:  PL/Perl function "foo_set_bad"
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 CREATE OR REPLACE FUNCTION foo_set_bad() RETURNS SETOF footype AS $$
 return [
     {y => 3, z => 4}

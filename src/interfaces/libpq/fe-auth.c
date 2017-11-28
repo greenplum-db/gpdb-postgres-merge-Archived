@@ -7,7 +7,11 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-auth.c
+=======
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.142 2009/06/11 14:49:13 momjian Exp $
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *
  *-------------------------------------------------------------------------
  */
@@ -941,7 +945,7 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 
 		case AUTH_REQ_CRYPT:
 			printfPQExpBuffer(&conn->errorMessage,
-				 libpq_gettext("Crypt authentication not supported\n"));
+					  libpq_gettext("Crypt authentication not supported\n"));
 			return STATUS_ERROR;
 
 		case AUTH_REQ_MD5:

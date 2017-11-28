@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.101 2009/01/01 17:23:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.102 2009/06/11 14:48:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -346,9 +346,9 @@ AggregateCreate(const char *aggName,
 
 	/*
 	 * Also, the return type can't be INTERNAL unless there's at least one
-	 * INTERNAL argument.  This is the same type-safety restriction we
-	 * enforce for regular functions, but at the level of aggregates.  We
-	 * must test this explicitly because we allow INTERNAL as the transtype.
+	 * INTERNAL argument.  This is the same type-safety restriction we enforce
+	 * for regular functions, but at the level of aggregates.  We must test
+	 * this explicitly because we allow INTERNAL as the transtype.
 	 */
 	if (finaltype == INTERNALOID && !hasInternalArg)
 		ereport(ERROR,
@@ -390,11 +390,20 @@ AggregateCreate(const char *aggName,
 							  false,	/* isStrict (not needed for agg) */
 							  PROVOLATILE_IMMUTABLE,	/* volatility (not
 														 * needed for agg) */
+<<<<<<< HEAD
 							  parameterTypes,	/* paramTypes */
 							  allParameterTypes,		/* allParamTypes */
 							  parameterModes,	/* parameterModes */
 							  parameterNames,	/* parameterNames */
 							  parameterDefaults,		/* parameterDefaults */
+=======
+							  buildoidvector(aggArgTypes,
+											 numArgs),	/* paramTypes */
+							  PointerGetDatum(NULL),	/* allParamTypes */
+							  PointerGetDatum(NULL),	/* parameterModes */
+							  PointerGetDatum(NULL),	/* parameterNames */
+							  NIL,		/* parameterDefaults */
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 							  PointerGetDatum(NULL),	/* proconfig */
 							  1,				/* procost */
 							  0,				/* prorows */

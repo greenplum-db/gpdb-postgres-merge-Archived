@@ -55,12 +55,31 @@ SELECT E'De\\000dBeEf'::bytea;
 SELECT E'De\\123dBeEf'::bytea;
 
 -- Unicode escapes
+SET standard_conforming_strings TO on;
+
 SELECT U&'d\0061t\+000061' AS U&"d\0061t\+000061";
 SELECT U&'d!0061t\+000061' UESCAPE '!' AS U&"d*0061t\+000061" UESCAPE '*';
+
+SELECT U&' \' UESCAPE '!' AS "tricky";
+SELECT 'tricky' AS U&"\" UESCAPE '!';
 
 SELECT U&'wrong: \061';
 SELECT U&'wrong: \+0061';
 SELECT U&'wrong: +0061' UESCAPE '+';
+
+SET standard_conforming_strings TO off;
+
+SELECT U&'d\0061t\+000061' AS U&"d\0061t\+000061";
+SELECT U&'d!0061t\+000061' UESCAPE '!' AS U&"d*0061t\+000061" UESCAPE '*';
+
+SELECT U&' \' UESCAPE '!' AS "tricky";
+SELECT 'tricky' AS U&"\" UESCAPE '!';
+
+SELECT U&'wrong: \061';
+SELECT U&'wrong: \+0061';
+SELECT U&'wrong: +0061' UESCAPE '+';
+
+RESET standard_conforming_strings;
 
 --
 -- test conversions between various string types
@@ -299,7 +318,11 @@ SELECT 'Hawkeye' ILIKE 'h%' AS "true";
 SELECT 'Hawkeye' NOT ILIKE 'h%' AS "false";
 
 --
+<<<<<<< HEAD
 -- test %/_ combination cases, cf bugs #4821 and #5478
+=======
+-- test %/_ combination cases, cf bug #4821
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 --
 
 SELECT 'foo' LIKE '_%' as t, 'f' LIKE '_%' as t, '' LIKE '_%' as f;
@@ -308,8 +331,11 @@ SELECT 'foo' LIKE '%_' as t, 'f' LIKE '%_' as t, '' LIKE '%_' as f;
 SELECT 'foo' LIKE '__%' as t, 'foo' LIKE '___%' as t, 'foo' LIKE '____%' as f;
 SELECT 'foo' LIKE '%__' as t, 'foo' LIKE '%___' as t, 'foo' LIKE '%____' as f;
 
+<<<<<<< HEAD
 SELECT 'jack' LIKE '%____%' AS t;
 
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 --
 -- test implicit type conversion

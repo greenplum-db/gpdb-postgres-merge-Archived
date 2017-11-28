@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.104 2008/02/17 18:14:29 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.110 2009/06/11 14:49:13 momjian Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -59,7 +59,11 @@ help(const char *progname)
 	printf(_("  --version      output version information, then exit\n"));
 	printf(_("\nIf no output file is specified, the name is formed by adding .c to the\n"
 			 "input file name, after stripping off .pgc if present.\n"));
+<<<<<<< HEAD
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
+=======
+	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 static void

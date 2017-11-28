@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.141 2009/01/01 17:23:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.143 2009/06/11 14:49:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,9 +115,13 @@ inline static void xl_heapnode_set(
 
 /* in heap/heapam.c */
 extern Relation relation_open(Oid relationId, LOCKMODE lockmode);
+<<<<<<< HEAD
 extern Relation try_relation_open(Oid relationId, LOCKMODE lockmode, 
 								  bool noWait);
 extern Relation relation_open_nowait(Oid relationId, LOCKMODE lockmode);
+=======
+extern Relation try_relation_open(Oid relationId, LOCKMODE lockmode);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 extern Relation relation_openrv(const RangeVar *relation, LOCKMODE lockmode);
 extern Relation try_relation_openrv(const RangeVar *relation, LOCKMODE lockmode,
 									bool noWait);
@@ -233,6 +237,7 @@ extern XLogRecPtr log_heap_clean(Relation reln, Buffer buffer,
 extern XLogRecPtr log_heap_freeze(Relation reln, Buffer buffer,
 				TransactionId cutoff_xid,
 				OffsetNumber *offsets, int offcnt);
+<<<<<<< HEAD
 
 extern XLogRecPtr log_newpage_rel(Relation rel, ForkNumber forkNum, BlockNumber blkno,
 								  Page page);
@@ -242,6 +247,10 @@ extern XLogRecPtr log_newpage_relFileNode(RelFileNode *relFileNode,
 										  BlockNumber blkno, Page page,
 										  ItemPointer persistentTid,
 										  int64 persistentSerialNum);
+=======
+extern XLogRecPtr log_newpage(RelFileNode *rnode, ForkNumber forkNum,
+			BlockNumber blk, Page page);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 /* in heap/pruneheap.c */
 extern void heap_page_prune_opt(Relation relation, Buffer buffer,

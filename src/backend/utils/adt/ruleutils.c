@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.294 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.300 2009/06/11 14:49:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,12 +27,21 @@
 #include "catalog/pg_attribute_encoding.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
+<<<<<<< HEAD
 #include "catalog/pg_partition.h"
 #include "catalog/pg_partition_rule.h"
+=======
+#include "catalog/pg_language.h"
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
+<<<<<<< HEAD
 #include "cdb/cdbpartition.h"
+=======
+#include "catalog/pg_type.h"
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
 #include "commands/tablespace.h"
@@ -52,9 +61,12 @@
 #include "rewrite/rewriteHandler.h"
 #include "rewrite/rewriteManip.h"
 #include "rewrite/rewriteSupport.h"
+#include "utils/array.h"
+#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/tqual.h"
+#include "utils/syscache.h"
 #include "utils/typcache.h"
 #include "utils/xml.h"
 
@@ -150,7 +162,7 @@ static char *pg_get_indexdef_worker(Oid indexrelid, int colno,
 					   int prettyFlags);
 static char *pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 							int prettyFlags);
-static char *pg_get_expr_worker(text *expr, Oid relid, char *relname,
+static text *pg_get_expr_worker(text *expr, Oid relid, const char *relname,
 				   int prettyFlags);
 static int print_function_arguments(StringInfo buf, HeapTuple proctup,
 						 bool print_table_args, bool print_defaults);
@@ -183,6 +195,12 @@ static void get_rule_groupingclause(GroupingClause *grp, List *tlist,
 static Node *get_rule_sortgroupclause(SortGroupClause *srt, List *tlist,
 						 bool force_colno,
 						 deparse_context *context);
+<<<<<<< HEAD
+=======
+static void get_rule_orderby(List *orderList, List *targetList,
+				 bool force_colno, deparse_context *context);
+static void get_rule_windowclause(Query *query, deparse_context *context);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static void get_rule_windowspec(WindowClause *wc, List *targetList,
 					deparse_context *context);
 static void push_plan(deparse_namespace *dpns, Plan *subplan);
@@ -228,9 +246,14 @@ static Node *processIndirection(Node *node, deparse_context *context,
 static void printSubscripts(ArrayRef *aref, deparse_context *context);
 static char *get_relation_name(Oid relid);
 static char *generate_relation_name(Oid relid, List *namespaces);
+<<<<<<< HEAD
 static char *generate_function_name(Oid funcid, int nargs,
 					   Oid *argtypes,
 					   bool has_variadic, bool *use_variadic_p);
+=======
+static char *generate_function_name(Oid funcid, int nargs, Oid *argtypes,
+					   bool *is_variadic);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
 static text *string_to_text(char *str);
 static char *flatten_reloptions(Oid relid);
@@ -1238,7 +1261,8 @@ decompile_column_index_array(Datum column_index_array, Oid relId,
  *
  * Currently, the expression can only refer to a single relation, namely
  * the one specified by the second parameter.  This is sufficient for
- * partial indexes, column default expressions, etc.
+ * partial indexes, column default expressions, etc.  We also support
+ * Var-free expressions, for which the OID can be InvalidOid.
  * ----------
  */
 Datum
@@ -1248,12 +1272,24 @@ pg_get_expr(PG_FUNCTION_ARGS)
 	Oid			relid = PG_GETARG_OID(1);
 	char	   *relname;
 
-	/* Get the name for the relation */
-	relname = get_rel_name(relid);
-	if (relname == NULL)
-		PG_RETURN_NULL();		/* should we raise an error? */
+	if (OidIsValid(relid))
+	{
+		/* Get the name for the relation */
+		relname = get_rel_name(relid);
 
-	PG_RETURN_TEXT_P(string_to_text(pg_get_expr_worker(expr, relid, relname, 0)));
+		/*
+		 * If the OID isn't actually valid, don't throw an error, just return
+		 * NULL.  This is a bit questionable, but it's what we've done
+		 * historically, and it can help avoid unwanted failures when
+		 * examining catalog entries for just-deleted relations.
+		 */
+		if (relname == NULL)
+			PG_RETURN_NULL();
+	}
+	else
+		relname = NULL;
+
+	PG_RETURN_TEXT_P(pg_get_expr_worker(expr, relid, relname, 0));
 }
 
 Datum
@@ -1267,16 +1303,22 @@ pg_get_expr_ext(PG_FUNCTION_ARGS)
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : 0;
 
-	/* Get the name for the relation */
-	relname = get_rel_name(relid);
-	if (relname == NULL)
-		PG_RETURN_NULL();		/* should we raise an error? */
+	if (OidIsValid(relid))
+	{
+		/* Get the name for the relation */
+		relname = get_rel_name(relid);
+		/* See notes above */
+		if (relname == NULL)
+			PG_RETURN_NULL();
+	}
+	else
+		relname = NULL;
 
-	PG_RETURN_TEXT_P(string_to_text(pg_get_expr_worker(expr, relid, relname, prettyFlags)));
+	PG_RETURN_TEXT_P(pg_get_expr_worker(expr, relid, relname, prettyFlags));
 }
 
-static char *
-pg_get_expr_worker(text *expr, Oid relid, char *relname, int prettyFlags)
+static text *
+pg_get_expr_worker(text *expr, Oid relid, const char *relname, int prettyFlags)
 {
 	Node	   *node;
 	List	   *context;
@@ -1301,7 +1343,11 @@ pg_get_expr_worker(text *expr, Oid relid, char *relname, int prettyFlags)
 	str = deparse_expression_pretty(node, context, false, false,
 									prettyFlags, 0);
 
+<<<<<<< HEAD
 	return str;
+=======
+	return string_to_text(str);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 
@@ -1455,8 +1501,8 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 
 /*
  * pg_get_functiondef
- * 		Returns the complete "CREATE OR REPLACE FUNCTION ..." statement for
- * 		the specified function.
+ *		Returns the complete "CREATE OR REPLACE FUNCTION ..." statement for
+ *		the specified function.
  */
 Datum
 pg_get_functiondef(PG_FUNCTION_ARGS)
@@ -1501,8 +1547,8 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 	lang = (Form_pg_language) GETSTRUCT(langtup);
 
 	/*
-	 * We always qualify the function name, to ensure the right function
-	 * gets replaced.
+	 * We always qualify the function name, to ensure the right function gets
+	 * replaced.
 	 */
 	nsp = get_namespace_name(proc->pronamespace);
 	appendStringInfo(&buf, "CREATE OR REPLACE FUNCTION %s(",
@@ -1553,7 +1599,7 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_proconfig, &isnull);
 	if (!isnull)
 	{
-		ArrayType	*a = DatumGetArrayTypeP(tmp);
+		ArrayType  *a = DatumGetArrayTypeP(tmp);
 		int			i;
 
 		Assert(ARR_ELEMTYPE(a) == TEXTOID);
@@ -1562,7 +1608,7 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 
 		for (i = 1; i <= ARR_DIMS(a)[0]; i++)
 		{
-			Datum	d;
+			Datum		d;
 
 			d = array_ref(a, 1, &i,
 						  -1 /* varlenarray */ ,
@@ -1615,9 +1661,9 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 	/*
 	 * We always use dollar quoting.  Figure out a suitable delimiter.
 	 *
-	 * Since the user is likely to be editing the function body string,
-	 * we shouldn't use a short delimiter that he might easily create a
-	 * conflict with.  Hence prefer "$function$", but extend if needed.
+	 * Since the user is likely to be editing the function body string, we
+	 * shouldn't use a short delimiter that he might easily create a conflict
+	 * with.  Hence prefer "$function$", but extend if needed.
 	 */
 	initStringInfo(&dq);
 	appendStringInfoString(&dq, "$function");
@@ -1765,8 +1811,8 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 										 &isnull);
 		if (!isnull)
 		{
-			char   *str;
-			List   *argdefaults;
+			char	   *str;
+			List	   *argdefaults;
 
 			str = TextDatumGetCString(proargdefaults);
 			argdefaults = (List *) stringToNode(str);
@@ -1803,7 +1849,7 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 		char	   *argname = argnames ? argnames[i] : NULL;
 		char		argmode = argmodes ? argmodes[i] : PROARGMODE_IN;
 		const char *modename;
-		bool	isinput;
+		bool		isinput;
 
 		switch (argmode)
 		{
@@ -1829,7 +1875,7 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 				break;
 			default:
 				elog(ERROR, "invalid parameter mode '%c'", argmode);
-				modename = NULL; /* keep compiler quiet */
+				modename = NULL;	/* keep compiler quiet */
 				isinput = false;
 				break;
 		}
@@ -1854,7 +1900,7 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 		appendStringInfoString(buf, format_type_be(argtype));
 		if (print_defaults && isinput && inputargno > nlackdefaults)
 		{
-			Node	*expr;
+			Node	   *expr;
 
 			Assert(nextargdefault != NULL);
 			expr = (Node *) lfirst(nextargdefault);
@@ -2036,7 +2082,7 @@ deparse_context_for(const char *aliasname, Oid relid)
  * right child plans.  A special case is that a nestloop inner indexscan
  * might have OUTER Vars, but the outer side of the join is not a child
  * plan node.  To handle such cases the outer plan node must be passed
- * separately.  (Pass NULL for outer_plan otherwise.)
+ * separately.	(Pass NULL for outer_plan otherwise.)
  *
  * Note: plan and outer_plan really ought to be declared as "Plan *", but
  * we use "Node *" to avoid having to include plannodes.h in builtins.h.
@@ -2483,8 +2529,8 @@ static void
 get_with_clause(Query *query, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
-	const char	*sep;
-	ListCell	*l;
+	const char *sep;
+	ListCell   *l;
 
 	if (query->cteList == NIL)
 		return;
@@ -3060,11 +3106,11 @@ get_rule_sortgroupclause(SortGroupClause *srt, List *tlist, bool force_colno,
 
 	/*
 	 * Use column-number form if requested by caller.  Otherwise, if
-	 * expression is a constant, force it to be dumped with an explicit
-	 * cast as decoration --- this is because a simple integer constant
-	 * is ambiguous (and will be misinterpreted by findTargetlistEntry())
-	 * if we dump it without any decoration.  Otherwise, just dump the
-	 * expression normally.
+	 * expression is a constant, force it to be dumped with an explicit cast
+	 * as decoration --- this is because a simple integer constant is
+	 * ambiguous (and will be misinterpreted by findTargetlistEntry()) if we
+	 * dump it without any decoration.	Otherwise, just dump the expression
+	 * normally.
 	 */
 	if (force_colno)
 	{
@@ -3526,7 +3572,7 @@ push_plan(deparse_namespace *dpns, Plan *subplan)
 		dpns->inner_plan = ((SubqueryScan *) subplan)->subplan;
 	else if (IsA(subplan, CteScan))
 	{
-		int		ctePlanId = ((CteScan *) subplan)->ctePlanId;
+		int			ctePlanId = ((CteScan *) subplan)->ctePlanId;
 
 		if (ctePlanId > 0 && ctePlanId <= list_length(dpns->subplans))
 			dpns->inner_plan = list_nth(dpns->subplans, ctePlanId - 1);
@@ -3814,7 +3860,7 @@ get_name_for_var_field(Var *var, int fieldno,
 	 */
 	if (IsA(var, RowExpr))
 	{
-		RowExpr	   *r = (RowExpr *) var;
+		RowExpr    *r = (RowExpr *) var;
 
 		if (fieldno > 0 && fieldno <= list_length(r->colnames))
 			return strVal(list_nth(r->colnames, fieldno - 1));
@@ -3926,8 +3972,8 @@ get_name_for_var_field(Var *var, int fieldno,
 	 * This part has essentially the same logic as the parser's
 	 * expandRecordVariable() function, but we are dealing with a different
 	 * representation of the input context, and we only need one field name
-	 * not a TupleDesc.  Also, we need special cases for finding subquery
-	 * and CTE subplans when deparsing Plan trees.
+	 * not a TupleDesc.  Also, we need special cases for finding subquery and
+	 * CTE subplans when deparsing Plan trees.
 	 */
 	expr = (Node *) var;		/* default if we can't drill down */
 
@@ -3988,10 +4034,10 @@ get_name_for_var_field(Var *var, int fieldno,
 				{
 					/*
 					 * We're deparsing a Plan tree so we don't have complete
-					 * RTE entries (in particular, rte->subquery is NULL).
-					 * But the only place we'd see a Var directly referencing
-					 * a SUBQUERY RTE is in a SubqueryScan plan node, and we
-					 * can look into the child plan's tlist instead.
+					 * RTE entries (in particular, rte->subquery is NULL). But
+					 * the only place we'd see a Var directly referencing a
+					 * SUBQUERY RTE is in a SubqueryScan plan node, and we can
+					 * look into the child plan's tlist instead.
 					 */
 					TargetEntry *tle;
 					Plan	   *save_outer;
@@ -4079,11 +4125,11 @@ get_name_for_var_field(Var *var, int fieldno,
 					if (IsA(expr, Var))
 					{
 						/*
-						 * Recurse into the CTE to see what its Var refers
-						 * to.  We have to build an additional level of
-						 * namespace to keep in step with varlevelsup in the
-						 * CTE.  Furthermore it could be an outer CTE, so
-						 * we may have to delete some levels of namespace.
+						 * Recurse into the CTE to see what its Var refers to.
+						 * We have to build an additional level of namespace
+						 * to keep in step with varlevelsup in the CTE.
+						 * Furthermore it could be an outer CTE, so we may
+						 * have to delete some levels of namespace.
 						 */
 						List	   *save_nslist = context->namespaces;
 						List	   *new_nslist;
@@ -4113,8 +4159,8 @@ get_name_for_var_field(Var *var, int fieldno,
 					/*
 					 * We're deparsing a Plan tree so we don't have a CTE
 					 * list.  But the only place we'd see a Var directly
-					 * referencing a CTE RTE is in a CteScan plan node, and
-					 * we can look into the subplan's tlist instead.
+					 * referencing a CTE RTE is in a CteScan plan node, and we
+					 * can look into the subplan's tlist instead.
 					 */
 					TargetEntry *tle;
 					Plan	   *save_outer;
@@ -4710,11 +4756,11 @@ get_rule_expr(Node *node, deparse_context *context,
 
 		case T_SubPlan:
 			{
-				SubPlan *subplan = (SubPlan *) node;
+				SubPlan    *subplan = (SubPlan *) node;
 
 				/*
 				 * We cannot see an already-planned subplan in rule deparsing,
-				 * only while EXPLAINing a query plan.  We don't try to
+				 * only while EXPLAINing a query plan.	We don't try to
 				 * reconstruct the original SQL, just reference the subplan
 				 * that appears elsewhere in EXPLAIN's result.
 				 */
@@ -4734,7 +4780,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				appendStringInfo(buf, "(alternatives: ");
 				foreach(lc, asplan->subplans)
 				{
-					SubPlan	   *splan = (SubPlan *) lfirst(lc);
+					SubPlan    *splan = (SubPlan *) lfirst(lc);
 
 					Assert(IsA(splan, SubPlan));
 					if (splan->useHashTable)
@@ -4921,6 +4967,7 @@ get_rule_expr(Node *node, deparse_context *context,
 					/* WHEN IS NOT DISTINCT FROM */
 					if (not_clause(w))
 					{
+<<<<<<< HEAD
 						Expr *arg = get_notclausearg((Expr *) w);
 
 						if (IsA(arg, DistinctExpr))
@@ -4932,6 +4979,44 @@ get_rule_expr(Node *node, deparse_context *context,
 							rhs = (Node *) lsecond(dexpr->args);
 							get_rule_expr(rhs, context, false);
 						}
+=======
+						/*
+						 * The parser should have produced WHEN clauses of the
+						 * form "CaseTestExpr = RHS"; we want to show just the
+						 * RHS.  If the user wrote something silly like "CASE
+						 * boolexpr WHEN TRUE THEN ...", then the optimizer's
+						 * simplify_boolean_equality() may have reduced this
+						 * to just "CaseTestExpr" or "NOT CaseTestExpr", for
+						 * which we have to show "TRUE" or "FALSE".  Also,
+						 * depending on context the original CaseTestExpr
+						 * might have been reduced to a Const (but we won't
+						 * see "WHEN Const").  We have also to consider the
+						 * possibility that an implicit coercion was inserted
+						 * between the CaseTestExpr and the operator.
+						 */
+						if (IsA(w, OpExpr))
+						{
+							List	   *args = ((OpExpr *) w)->args;
+							Node	   *lhs;
+							Node	   *rhs;
+
+							Assert(list_length(args) == 2);
+							lhs = strip_implicit_coercions(linitial(args));
+							Assert(IsA(lhs, CaseTestExpr) ||
+								   IsA(lhs, Const));
+							rhs = (Node *) lsecond(args);
+							get_rule_expr(rhs, context, false);
+						}
+						else if (IsA(strip_implicit_coercions(w),
+									 CaseTestExpr))
+							appendStringInfo(buf, "TRUE");
+						else if (not_clause(w))
+						{
+							Assert(IsA(strip_implicit_coercions((Node *) get_notclausearg((Expr *) w)),
+									   CaseTestExpr));
+							appendStringInfo(buf, "FALSE");
+						}
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 						else
 							get_rule_expr(w, context, false);
 					}
@@ -4972,6 +5057,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				appendStringInfo(buf, "ARRAY[");
 				get_rule_expr((Node *) arrayexpr->elements, context, true);
 				appendStringInfoChar(buf, ']');
+
 				/*
 				 * If the array isn't empty, we assume its elements are
 				 * coerced to the desired type.  If it's empty, though, we
@@ -4979,7 +5065,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				 */
 				if (arrayexpr->elements == NIL)
 					appendStringInfo(buf, "::%s",
-						format_type_with_typemod(arrayexpr->array_typeid, -1));
+					  format_type_with_typemod(arrayexpr->array_typeid, -1));
 			}
 			break;
 
@@ -6067,9 +6153,9 @@ simple_quote_literal(StringInfo buf, const char *val)
 	const char *valptr;
 
 	/*
-	 * We form the string literal according to the prevailing setting
-	 * of standard_conforming_strings; we never use E''. User is
-	 * responsible for making sure result is used correctly.
+	 * We form the string literal according to the prevailing setting of
+	 * standard_conforming_strings; we never use E''. User is responsible for
+	 * making sure result is used correctly.
 	 */
 	appendStringInfoChar(buf, '\'');
 	for (valptr = val; *valptr; valptr++)
@@ -6950,6 +7036,7 @@ generate_relation_name(Oid relid, List *namespaces)
  *		given that it is being called with the specified actual arg types.
  *		(Arg types matter because of ambiguous-function resolution rules.)
  *
+<<<<<<< HEAD
  * If we're dealing with a potentially variadic function (in practice, this
  * means a FuncExpr or Aggref, not some other way of calling a function), then
  * has_variadic must specify whether variadic arguments have been merged,
@@ -6958,6 +7045,10 @@ generate_relation_name(Oid relid, List *namespaces)
  * use_variadic_p can be NULL.
  *
  * The result includes all necessary quoting and schema-prefixing.
+=======
+ * The result includes all necessary quoting and schema-prefixing.	We can
+ * also pass back an indication of whether the function is variadic.
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  */
 static char *
 generate_function_name(Oid funcid, int nargs, Oid *argtypes,

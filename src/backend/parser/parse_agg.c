@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.87 2009/01/01 17:23:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.88 2009/06/11 14:49:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,6 +150,7 @@ transformAggregateCall(ParseState *pstate, Aggref *agg,
 	}
 	else
 	{
+<<<<<<< HEAD
 		/* Regular aggregate, so it has no direct args */
 		agg->aggdirectargs = NIL;
 
@@ -215,6 +216,15 @@ transformAggregateCall(ParseState *pstate, Aggref *agg,
 		}
 
 		pstate->p_next_resno = save_next_resno;
+=======
+		if (pstate->p_hasAggs &&
+			checkExprHasAggs((Node *) agg->args))
+			ereport(ERROR,
+					(errcode(ERRCODE_GROUPING_ERROR),
+					 errmsg("aggregate function calls cannot be nested"),
+					 parser_errposition(pstate,
+							   locate_agg_of_level((Node *) agg->args, 0))));
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 
 	/* Update the Aggref with the transformation results */
@@ -548,10 +558,13 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 	/*
 	 * A window function call can't contain another one (but aggs are OK). XXX
 	 * is this required by spec, or just an unimplemented feature?
+<<<<<<< HEAD
 	 *
 	 * Note: we don't need to check the filter expression here, because the
 	 * context checks done below and in transformAggregateCall would have
 	 * already rejected any window funcs or aggs within the filter.
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	if (pstate->p_hasWindowFuncs &&
 		contain_windowfuncs((Node *) wfunc->args))
@@ -562,6 +575,7 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 								  locate_windowfunc((Node *) wfunc->args))));
 
 	/*
+<<<<<<< HEAD
 	 * Check to see if the window function is in an invalid place within the
 	 * query.
 	 *
@@ -687,13 +701,18 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 				 parser_errposition(pstate, wfunc->location)));
 
 	/*
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 * If the OVER clause just specifies a window name, find that WINDOW
 	 * clause (which had better be present).  Otherwise, try to match all the
 	 * properties of the OVER clause, and make a new entry in the p_windowdefs
 	 * list if no luck.
+<<<<<<< HEAD
 	 *
 	 * In PostgreSQL, the syntax for this is "agg() OVER w". In GPDB, we also
 	 * accept "agg() OVER (w)", with the extra parens.
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	if (windef->name)
 	{
@@ -749,7 +768,7 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 			winref++;
 			if (refwin->refname && windef->refname &&
 				strcmp(refwin->refname, windef->refname) == 0)
-				/* matched on refname */ ;
+				 /* matched on refname */ ;
 			else if (!refwin->refname && !windef->refname)
 				 /* matched, no refname */ ;
 			else
@@ -817,8 +836,36 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	}
 
 	/*
+<<<<<<< HEAD
 	 * Build a list of the acceptable GROUP BY expressions for use by
 	 * check_ungrouped_columns().
+=======
+	 * Aggregates must never appear in WHERE or JOIN/ON clauses.
+	 *
+	 * (Note this check should appear first to deliver an appropriate error
+	 * message; otherwise we are likely to complain about some innocent
+	 * variable in the target list, which is outright misleading if the
+	 * problem is in WHERE.)
+	 */
+	if (checkExprHasAggs(qry->jointree->quals))
+		ereport(ERROR,
+				(errcode(ERRCODE_GROUPING_ERROR),
+				 errmsg("aggregates not allowed in WHERE clause"),
+				 parser_errposition(pstate,
+							 locate_agg_of_level(qry->jointree->quals, 0))));
+	if (checkExprHasAggs((Node *) qry->jointree->fromlist))
+		ereport(ERROR,
+				(errcode(ERRCODE_GROUPING_ERROR),
+				 errmsg("aggregates not allowed in JOIN conditions"),
+				 parser_errposition(pstate,
+				 locate_agg_of_level((Node *) qry->jointree->fromlist, 0))));
+
+	/*
+	 * No aggregates allowed in GROUP BY clauses, either.
+	 *
+	 * While we are at it, build a list of the acceptable GROUP BY expressions
+	 * for use by check_ungrouped_columns().
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	foreach(l, qry->groupClause)
 	{
@@ -850,10 +897,9 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	 * If there are join alias vars involved, we have to flatten them to the
 	 * underlying vars, so that aliased and unaliased vars will be correctly
 	 * taken as equal.	We can skip the expense of doing this if no rangetable
-	 * entries are RTE_JOIN kind.
-	 * We use the planner's flatten_join_alias_vars routine to do the
-	 * flattening; it wants a PlannerInfo root node, which fortunately can be
-	 * mostly dummy.
+	 * entries are RTE_JOIN kind. We use the planner's flatten_join_alias_vars
+	 * routine to do the flattening; it wants a PlannerInfo root node, which
+	 * fortunately can be mostly dummy.
 	 */
 	if (hasJoinRTEs)
 	{
@@ -885,6 +931,14 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 
 	/*
 	 * Check the targetlist and HAVING clause for ungrouped variables.
+<<<<<<< HEAD
+=======
+	 *
+	 * Note: because we check resjunk tlist elements as well as regular ones,
+	 * this will also find ungrouped variables that came from ORDER BY and
+	 * WINDOW clauses.	For that matter, it's also going to examine the
+	 * grouping expressions themselves --- but they'll all pass the test ...
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	clause = (Node *) qry->targetList;
 	if (hasJoinRTEs)
@@ -910,6 +964,93 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 }
 
 /*
+<<<<<<< HEAD
+=======
+ * parseCheckWindowFuncs
+ *	Check for window functions where they shouldn't be.
+ *
+ *	We have to forbid window functions in WHERE, JOIN/ON, HAVING, GROUP BY,
+ *	and window specifications.	(Other clauses, such as RETURNING and LIMIT,
+ *	have already been checked.)  Transformation of all these clauses must
+ *	be completed already.
+ */
+void
+parseCheckWindowFuncs(ParseState *pstate, Query *qry)
+{
+	ListCell   *l;
+
+	/* This should only be called if we found window functions */
+	Assert(pstate->p_hasWindowFuncs);
+
+	if (checkExprHasWindowFuncs(qry->jointree->quals))
+		ereport(ERROR,
+				(errcode(ERRCODE_WINDOWING_ERROR),
+				 errmsg("window functions not allowed in WHERE clause"),
+				 parser_errposition(pstate,
+								  locate_windowfunc(qry->jointree->quals))));
+	if (checkExprHasWindowFuncs((Node *) qry->jointree->fromlist))
+		ereport(ERROR,
+				(errcode(ERRCODE_WINDOWING_ERROR),
+				 errmsg("window functions not allowed in JOIN conditions"),
+				 parser_errposition(pstate,
+					  locate_windowfunc((Node *) qry->jointree->fromlist))));
+	if (checkExprHasWindowFuncs(qry->havingQual))
+		ereport(ERROR,
+				(errcode(ERRCODE_WINDOWING_ERROR),
+				 errmsg("window functions not allowed in HAVING clause"),
+				 parser_errposition(pstate,
+									locate_windowfunc(qry->havingQual))));
+
+	foreach(l, qry->groupClause)
+	{
+		SortGroupClause *grpcl = (SortGroupClause *) lfirst(l);
+		Node	   *expr;
+
+		expr = get_sortgroupclause_expr(grpcl, qry->targetList);
+		if (checkExprHasWindowFuncs(expr))
+			ereport(ERROR,
+					(errcode(ERRCODE_WINDOWING_ERROR),
+				   errmsg("window functions not allowed in GROUP BY clause"),
+					 parser_errposition(pstate,
+										locate_windowfunc(expr))));
+	}
+
+	foreach(l, qry->windowClause)
+	{
+		WindowClause *wc = (WindowClause *) lfirst(l);
+		ListCell   *l2;
+
+		foreach(l2, wc->partitionClause)
+		{
+			SortGroupClause *grpcl = (SortGroupClause *) lfirst(l2);
+			Node	   *expr;
+
+			expr = get_sortgroupclause_expr(grpcl, qry->targetList);
+			if (checkExprHasWindowFuncs(expr))
+				ereport(ERROR,
+						(errcode(ERRCODE_WINDOWING_ERROR),
+				 errmsg("window functions not allowed in window definition"),
+						 parser_errposition(pstate,
+											locate_windowfunc(expr))));
+		}
+		foreach(l2, wc->orderClause)
+		{
+			SortGroupClause *grpcl = (SortGroupClause *) lfirst(l2);
+			Node	   *expr;
+
+			expr = get_sortgroupclause_expr(grpcl, qry->targetList);
+			if (checkExprHasWindowFuncs(expr))
+				ereport(ERROR,
+						(errcode(ERRCODE_WINDOWING_ERROR),
+				 errmsg("window functions not allowed in window definition"),
+						 parser_errposition(pstate,
+											locate_windowfunc(expr))));
+		}
+	}
+}
+
+/*
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  * check_ungrouped_columns -
  *	  Scan the given expression tree for ungrouped variables (variables
  *	  that are not listed in the groupClauses list and are not within

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # config/tcl.m4
+=======
+# $PostgreSQL: pgsql/config/tcl.m4,v 1.8 2009/02/03 01:24:57 adunstan Exp $
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 # Autoconf macros to check for Tcl related things
 

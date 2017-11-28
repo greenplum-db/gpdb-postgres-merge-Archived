@@ -80,7 +80,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.88 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.89 2009/06/11 14:49:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -410,7 +410,11 @@ ProcessInvalidationMessages(InvalidationListHeader *hdr,
  * rather than just one at a time.
  */
 static void
+<<<<<<< HEAD
 ProcessInvalidationMessageMulti(InvalidationListHeader *hdr,
+=======
+ProcessInvalidationMessagesMulti(InvalidationListHeader *hdr,
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				 void (*func) (const SharedInvalidationMessage *msgs, int n))
 {
 	ProcessMessageListMulti(hdr->cclist, func(msgs, n));
@@ -450,9 +454,9 @@ RegisterRelcacheInvalidation(Oid dbId, Oid relId)
 
 	/*
 	 * Most of the time, relcache invalidation is associated with system
-	 * catalog updates, but there are a few cases where it isn't.  Quick
-	 * hack to ensure that the next CommandCounterIncrement() will think
-	 * that we need to do CommandEndInvalidationMessages().
+	 * catalog updates, but there are a few cases where it isn't.  Quick hack
+	 * to ensure that the next CommandCounterIncrement() will think that we
+	 * need to do CommandEndInvalidationMessages().
 	 */
 	(void) GetCurrentCommandId(true);
 
@@ -1093,7 +1097,7 @@ CommandEndInvalidationMessages(void)
  *		Prepare for invalidation messages for nontransactional updates.
  *
  * A nontransactional invalidation is one that must be sent whether or not
- * the current transaction eventually commits.  We arrange for all invals
+ * the current transaction eventually commits.	We arrange for all invals
  * queued between this call and EndNonTransactionalInvalidation() to be sent
  * immediately when the latter is called.
  *
@@ -1156,10 +1160,10 @@ EndNonTransactionalInvalidation(void)
 	Assert(transInvalInfo->PriorCmdInvalidMsgs.rclist == NULL);
 
 	/*
-	 * At present, this function is only used for CTID-changing updates;
-	 * since the relcache init file doesn't store any tuple CTIDs, we
-	 * don't have to invalidate it.  That might not be true forever
-	 * though, in which case we'd need code similar to AtEOXact_Inval.
+	 * At present, this function is only used for CTID-changing updates; since
+	 * the relcache init file doesn't store any tuple CTIDs, we don't have to
+	 * invalidate it.  That might not be true forever though, in which case
+	 * we'd need code similar to AtEOXact_Inval.
 	 */
 
 	/* Send out the invals */

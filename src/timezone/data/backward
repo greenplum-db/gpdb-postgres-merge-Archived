@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+# <pre>
+# @(#)backward	8.8
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -27,6 +32,12 @@ Link	America/Denver		America/Shiprock
 Link	America/Port_of_Spain	America/Virgin
 Link	Pacific/Auckland	Antarctica/South_Pole
 Link	Asia/Ashgabat		Asia/Ashkhabad
+<<<<<<< HEAD
+=======
+Link	Asia/Chongqing		Asia/Chungking
+Link	Asia/Dhaka		Asia/Dacca
+Link	Asia/Kathmandu		Asia/Katmandu
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 Link	Asia/Kolkata		Asia/Calcutta
 Link	Asia/Shanghai		Asia/Chongqing
 Link	Asia/Shanghai		Asia/Chungking

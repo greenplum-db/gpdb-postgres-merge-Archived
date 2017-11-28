@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.95 2009/01/01 17:23:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.96 2009/04/19 19:46:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,7 +246,10 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 		ListCell   *l;
 
 		vars = pull_var_clause((Node *) parse->returningList,
+<<<<<<< HEAD
 							   PVC_RECURSE_AGGREGATES,
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 							   PVC_INCLUDE_PLACEHOLDERS);
 		foreach(l, vars)
 		{

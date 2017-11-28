@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.175 2009/01/01 17:23:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.183 2009/06/25 11:30:08 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 #include <sys/ucred.h>
 #endif
 #ifdef HAVE_UCRED_H
-# include <ucred.h>
+#include <ucred.h>
 #endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -74,7 +74,10 @@ static int	recv_and_check_password_packet(Port *port);
 #define IDENT_PORT 113
 
 static int	authident(hbaPort *port);
+<<<<<<< HEAD
 static bool ident_unix(int sock, char *ident_user);
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 
 /*----------------------------------------------------------------
@@ -120,12 +123,12 @@ static Port *pam_port_cludge;	/* Workaround for passing "Port *port" into
 
 /* Correct header from the Platform SDK */
 typedef
-ULONG(*__ldap_start_tls_sA) (
-							 IN PLDAP ExternalHandle,
-							 OUT PULONG ServerReturnValue,
-							 OUT LDAPMessage ** result,
-							 IN PLDAPControlA * ServerControls,
-							 IN PLDAPControlA * ClientControls
+ULONG		(*__ldap_start_tls_sA) (
+												IN PLDAP ExternalHandle,
+												OUT PULONG ServerReturnValue,
+												OUT LDAPMessage **result,
+										   IN PLDAPControlA * ServerControls,
+											IN PLDAPControlA * ClientControls
 );
 #endif
 
@@ -155,7 +158,7 @@ bool		pg_krb_caseins_users;
  *----------------------------------------------------------------
  */
 #ifdef KRB5
-static int pg_krb5_recvauth(Port *port);
+static int	pg_krb5_recvauth(Port *port);
 
 #include <krb5.h>
 /* Some old versions of Kerberos do not include <com_err.h> in <krb5.h> */
@@ -170,7 +173,7 @@ static int	pg_krb5_initialised;
 static krb5_context pg_krb5_context;
 static krb5_keytab pg_krb5_keytab;
 static krb5_principal pg_krb5_server;
-#endif /* KRB5 */
+#endif   /* KRB5 */
 
 
 /*----------------------------------------------------------------
@@ -185,7 +188,10 @@ static krb5_principal pg_krb5_server;
 #endif
 
 static int	pg_GSS_recvauth(Port *port);
+<<<<<<< HEAD
 static int check_valid_until_for_gssapi(Port *port);
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #endif   /* ENABLE_GSS */
 
 
@@ -194,10 +200,10 @@ static int check_valid_until_for_gssapi(Port *port);
  *----------------------------------------------------------------
  */
 #ifdef ENABLE_SSPI
-typedef		SECURITY_STATUS
+typedef SECURITY_STATUS
 			(WINAPI * QUERY_SECURITY_CONTEXT_TOKEN_FN) (
 													   PCtxtHandle, void **);
-static int pg_SSPI_recvauth(Port *port);
+static int	pg_SSPI_recvauth(Port *port);
 #endif
 
 /*----------------------------------------------------------------
@@ -457,6 +463,7 @@ ClientAuthentication(Port *port)
 				 errhint("See server log for details.")));
 
 	/*
+<<<<<<< HEAD
 	 * Enable immediate response to SIGTERM/SIGINT/timeout interrupts. (We
 	 * don't want this during hba_getauthmethod() because it might have to do
 	 * database access, eg for role membership checks.)
@@ -466,6 +473,8 @@ ClientAuthentication(Port *port)
 	CHECK_FOR_INTERRUPTS();
 
 	/*
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 * This is the first point where we have access to the hba record for the
 	 * current connection, so perform any verifications based on the hba
 	 * options field that should be done *before* the authentication here.
@@ -484,7 +493,7 @@ ClientAuthentication(Port *port)
 		{
 			ereport(FATAL,
 					(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-					 errmsg("connection requires a valid client certificate")));
+				  errmsg("connection requires a valid client certificate")));
 		}
 #else
 
@@ -856,7 +865,11 @@ recv_password_packet(Port *port)
 
 
 /*----------------------------------------------------------------
+<<<<<<< HEAD
  * hashed password (MD5, SHA-256) authentication
+=======
+ * MD5 authentication
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *----------------------------------------------------------------
  */
 
@@ -2035,9 +2048,9 @@ ident_unix(int sock, char *ident_user)
 	/* Solaris > 10 */
 	uid_t		uid;
 	struct passwd *pass;
-	ucred_t	   *ucred;
+	ucred_t    *ucred;
 
-	ucred = NULL; /* must be initialized to NULL */
+	ucred = NULL;				/* must be initialized to NULL */
 	if (getpeerucred(sock, &ucred) == -1)
 	{
 		ereport(LOG,
@@ -2050,7 +2063,7 @@ ident_unix(int sock, char *ident_user)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not get effective UID from peer credentials: %m")));
+		   errmsg("could not get effective UID from peer credentials: %m")));
 		return false;
 	}
 
@@ -2060,8 +2073,8 @@ ident_unix(int sock, char *ident_user)
 	if (pass == NULL)
 	{
 		ereport(LOG,
-			(errmsg("local user with ID %d does not exist",
-					(int) uid)));
+				(errmsg("local user with ID %d does not exist",
+						(int) uid)));
 		return false;
 	}
 
@@ -2429,8 +2442,12 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 	int			ldapversion = LDAP_VERSION3;
 	int			r;
 
+<<<<<<< HEAD
 	if (strncmp(port->hba->ldapserver, "ldaps://", 8) == 0 ||
 		strncmp(port->hba->ldapserver, "ldap://",  7) == 0)
+=======
+	if (!port->hba->ldapserver || port->hba->ldapserver[0] == '\0')
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	{
 		if ((r = ldap_initialize(ldap, port->hba->ldapserver)) != LDAP_SUCCESS)
 		{
@@ -2446,7 +2463,28 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 		*ldap = ldap_init(port->hba->ldapserver, port->hba->ldapport);
 	}
 
+<<<<<<< HEAD
 	if (!*ldap)
+=======
+	if (port->hba->ldapport == 0)
+		port->hba->ldapport = LDAP_PORT;
+
+	sendAuthRequest(port, AUTH_REQ_PASSWORD);
+
+	passwd = recv_password_packet(port);
+	if (passwd == NULL)
+		return STATUS_EOF;		/* client wouldn't send password */
+
+	if (strlen(passwd) == 0)
+	{
+		ereport(LOG,
+				(errmsg("empty password returned by client")));
+		return STATUS_ERROR;
+	}
+
+	ldap = ldap_init(port->hba->ldapserver, port->hba->ldapport);
+	if (!ldap)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	{
 #ifndef WIN32
 		ereport(LOG,
@@ -2755,6 +2793,7 @@ CheckCertAuth(Port *port)
 	/* Just pass the certificate CN to the usermap check */
 	return check_usermap(port->hba->usermap, port->user_name, port->peer_cn, false);
 }
+
 #endif
 
 

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/tools/fsync/test_fsync.c,v 1.23.2.2 2009/09/21 20:21:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/tools/fsync/test_fsync.c,v 1.23 2009/06/11 14:49:15 momjian Exp $
  *
  *
  *	test_fsync.c
@@ -60,7 +60,7 @@ main(int argc, char *argv[])
 	for (i = 0; i < XLOG_SEG_SIZE; i++)
 		full_buf[i] = 'a';
 
-	if ((tmpfile = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR)) == -1)
+	if ((tmpfile = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR, 0)) == -1)
 		die("Cannot open output file.");
 	if (write(tmpfile, full_buf, XLOG_SEG_SIZE) != XLOG_SEG_SIZE)
 		die("write failed");

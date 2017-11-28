@@ -9,7 +9,11 @@
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/timezone/pgtz.h
+=======
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.h,v 1.24 2009/06/11 14:49:15 momjian Exp $
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *
  *-------------------------------------------------------------------------
  */

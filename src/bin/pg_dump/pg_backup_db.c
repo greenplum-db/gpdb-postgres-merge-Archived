@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.80 2008/08/16 02:25:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.84 2009/06/11 14:49:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,8 +235,12 @@ ConnectDatabase(Archive *AHX,
 				const char *pghost,
 				const char *pgport,
 				const char *username,
+<<<<<<< HEAD
 				enum trivalue prompt_password,
 				bool binary_upgrade)
+=======
+				enum trivalue prompt_password)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	char	   *password = AH->savedPassword;
@@ -348,7 +352,7 @@ ExecuteSqlCommand(ArchiveHandle *AH, const char *qry, const char *desc)
 	char		errStmt[DB_MAX_ERR_STMT];
 
 #ifdef NOT_USED
-	 fprintf(stderr, "Executing: '%s'\n\n", qry);
+	fprintf(stderr, "Executing: '%s'\n\n", qry);
 #endif
 	res = PQexec(conn, qry);
 

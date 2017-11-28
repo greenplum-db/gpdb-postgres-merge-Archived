@@ -78,6 +78,7 @@ pg_getaddrinfo_all(const char *hostname, const char *servname,
 	rc = getaddrinfo((!hostname || hostname[0] == '\0') ? NULL : hostname,
 					 servname, hintp, result);
 
+<<<<<<< HEAD
 
 
 #if defined(__darwin__)
@@ -184,6 +185,8 @@ pg_getaddrinfo_all(const char *hostname, const char *servname,
 							 servname, hintp, result);
 	}
 
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	return rc;
 }
 

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/var.h,v 1.40 2009/01/01 17:24:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/var.h,v 1.41 2009/04/19 19:46:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 
 typedef enum
 {
+<<<<<<< HEAD
 	PVC_REJECT_AGGREGATES,		/* throw error if Aggref found */
 	PVC_INCLUDE_AGGREGATES,		/* include Aggrefs in output list */
 	PVC_RECURSE_AGGREGATES		/* recurse into Aggref arguments */
@@ -43,6 +44,12 @@ bool        cdb_walk_vars(Node                         *node,
 						  Cdb_walk_vars_callback_placeholdervar callback_placeholdervar,
                           void                         *context,
                           int                           levelsup);
+=======
+	PVC_REJECT_PLACEHOLDERS,	/* throw error if PlaceHolderVar found */
+	PVC_INCLUDE_PLACEHOLDERS,	/* include PlaceHolderVars in output list */
+	PVC_RECURSE_PLACEHOLDERS	/* recurse into PlaceHolderVar argument */
+} PVCPlaceHolderBehavior;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 extern Relids pull_varnos(Node *node);
 
@@ -53,8 +60,13 @@ extern bool contain_vars_of_level(Node *node, int levelsup);
 extern bool contain_vars_of_level_or_above(Node *node, int levelsup);
 extern int	locate_var_of_level(Node *node, int levelsup);
 extern int	locate_var_of_relation(Node *node, int relid, int levelsup);
+<<<<<<< HEAD
 extern List *pull_var_clause(Node *node, PVCAggregateBehavior aggbehavior,
 				PVCPlaceHolderBehavior phbehavior);
+=======
+extern int	find_minimum_var_level(Node *node);
+extern List *pull_var_clause(Node *node, PVCPlaceHolderBehavior behavior);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 extern Node *flatten_join_alias_vars(PlannerInfo *root, Node *node);
 bool contain_vars_of_level_or_above_cbPlaceHolderVar(PlaceHolderVar *placeholdervar, void *unused, int sublevelsup);
 

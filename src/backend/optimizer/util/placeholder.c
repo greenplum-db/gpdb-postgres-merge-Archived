@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/placeholder.c,v 1.3 2009/01/01 17:23:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/placeholder.c,v 1.5 2009/06/11 14:48:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,9 +84,14 @@ find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv)
 	phinfo->phid = phv->phid;
 	phinfo->ph_var = copyObject(phv);
 	phinfo->ph_eval_at = pull_varnos((Node *) phv);
+<<<<<<< HEAD
 	/* ph_eval_at may change later, see update_placeholder_eval_levels */
 	phinfo->ph_needed = NULL;		/* initially it's unused */
 	phinfo->ph_may_need = NULL;
+=======
+	/* ph_eval_at may change later, see fix_placeholder_eval_levels */
+	phinfo->ph_needed = NULL;	/* initially it's unused */
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	/* for the moment, estimate width using just the datatype info */
 	phinfo->ph_width = get_typavgwidth(exprType((Node *) phv->phexpr),
 									   exprTypmod((Node *) phv->phexpr));
@@ -240,6 +245,7 @@ find_placeholders_in_qual(PlannerInfo *root, Node *qual, Relids relids)
  *		Adjust the target evaluation levels for placeholders
  *
  * The initial eval_at level set by find_placeholder_info was the set of
+<<<<<<< HEAD
  * rels used in the placeholder's expression (or the whole subselect below
  * the placeholder's syntactic location, if the expr is variable-free).
  * If the subselect contains any outer joins that can null any of those rels,
@@ -251,6 +257,12 @@ find_placeholders_in_qual(PlannerInfo *root, Node *qual, Relids relids)
  * it's hard to avoid.  Each placeholder's eval_at level must be correct
  * by the time it starts to figure in outer-join delay decisions for higher
  * outer joins.
+=======
+ * rels used in the placeholder's expression (or the whole subselect if
+ * the expr is variable-free).	If the subselect contains any outer joins
+ * that can null any of those rels, we must delay evaluation to above those
+ * joins.
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *
  * In future we might want to put additional policy/heuristics here to
  * try to determine an optimal evaluation level.  The current rules will
@@ -339,6 +351,7 @@ fix_placeholder_input_needed_levels(PlannerInfo *root)
 {
 	ListCell   *lc;
 
+<<<<<<< HEAD
 	/*
 	 * Note that this loop can have side-effects on the ph_needed sets of
 	 * other PlaceHolderInfos; that's okay because we don't examine ph_needed
@@ -354,6 +367,20 @@ fix_placeholder_input_needed_levels(PlannerInfo *root)
 		{
 			List	   *vars = pull_var_clause((Node *) phinfo->ph_var->phexpr,
 											   PVC_RECURSE_AGGREGATES,
+=======
+		/*
+		 * Now that we know where to evaluate the placeholder, make sure that
+		 * any vars or placeholders it uses will be available at that join
+		 * level.  NOTE: this could cause more PlaceHolderInfos to be added to
+		 * placeholder_list.  That is okay because we'll process them before
+		 * falling out of the foreach loop.  Also, it could cause the
+		 * ph_needed sets of existing list entries to expand, which is also
+		 * okay because this loop doesn't examine those.
+		 */
+		if (bms_membership(eval_at) == BMS_MULTIPLE)
+		{
+			List	   *vars = pull_var_clause((Node *) phinfo->ph_var->phexpr,
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 											   PVC_INCLUDE_PLACEHOLDERS);
 
 			add_vars_to_targetlist(root, vars, eval_at);

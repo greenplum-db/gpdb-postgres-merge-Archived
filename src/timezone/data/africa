@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+# <pre>
+# @(#)africa	8.21
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -261,14 +266,27 @@ Rule	Egypt	2007	only	-	Sep	Thu>=1	24:00	0	-
 #
 # timeanddate[2] and another site I've found[3] also support that.
 #
+<<<<<<< HEAD
 # [1] https://bugzilla.redhat.com/show_bug.cgi?id=492263
 # [2] http://www.timeanddate.com/worldclock/clockchange.html?n=53
 # [3] http://wwp.greenwichmeantime.com/time-zone/africa/egypt/
+=======
+# [1] <a href="https://bugzilla.redhat.com/show_bug.cgi?id=492263">
+# https://bugzilla.redhat.com/show_bug.cgi?id=492263
+# </a>
+# [2] <a href="http://www.timeanddate.com/worldclock/clockchange.html?n=53">
+# http://www.timeanddate.com/worldclock/clockchange.html?n=53
+# </a>
+# [3] <a href="http://wwp.greenwichmeantime.com/time-zone/africa/egypt/">
+# http://wwp.greenwichmeantime.com/time-zone/africa/egypt/
+# </a>
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 # From Arthur David Olson (2009-04-20):
 # In 2009 (and for the next several years), Ramadan ends before the fourth
 # Thursday in September; Egypt is expected to revert to the last Thursday
 # in September.
+<<<<<<< HEAD
 
 # From Steffen Thorsen (2009-08-11):
 # We have been able to confirm the August change with the Egyptian Cabinet
@@ -352,6 +370,10 @@ Rule	Egypt	2014	only	-	May	15	24:00	1:00	S
 Rule	Egypt	2014	only	-	Jun	26	24:00	0	-
 Rule	Egypt	2014	only	-	Jul	31	24:00	1:00	S
 Rule	Egypt	2014	only	-	Sep	lastThu	24:00	0	-
+=======
+Rule	Egypt	2008	only	-	Aug	lastThu	23:00s	0	-
+Rule	Egypt	2009	max	-	Sep	lastThu	23:00s	0	-
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Africa/Cairo	2:05:09 -	LMT	1900 Oct
@@ -548,7 +570,13 @@ Zone	Africa/Tripoli	0:52:44 -	LMT	1920
 
 # From Riad M. Hossen Ally (2008-08-03):
 # The Government of Mauritius weblink
+<<<<<<< HEAD
 # http://www.gov.mu/portal/site/pmosite/menuitem.4ca0efdee47462e7440a600248a521ca/?content_id=4728ca68b2a5b110VgnVCM1000000a04a8c0RCRD
+=======
+# <a href="http://www.gov.mu/portal/site/pmosite/menuitem.4ca0efdee47462e7440a600248a521ca/?content_id=4728ca68b2a5b110VgnVCM1000000a04a8c0RCRD">
+# http://www.gov.mu/portal/site/pmosite/menuitem.4ca0efdee47462e7440a600248a521ca/?content_id=4728ca68b2a5b110VgnVCM1000000a04a8c0RCRD
+# </a>
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 # Cabinet Decision of July 18th, 2008 states as follows:
 #
 # 4. ...Cabinet has agreed to the introduction into the National Assembly
@@ -655,10 +683,15 @@ Zone Indian/Mauritius	3:50:00 -	LMT	1907 # Port Louis
 #
 # We have some further details posted here:
 # http://www.timeanddate.com/news/time/morocco-ends-dst-early-2008.html
+<<<<<<< HEAD
+=======
+# </a>
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 # From Steffen Thorsen (2009-03-17):
 # Morocco will observe DST from 2009-06-01 00:00 to 2009-08-21 00:00 according
 # to many sources, such as
+<<<<<<< HEAD
 # http://news.marweb.com/morocco/entertainment/morocco-daylight-saving.html
 # http://www.medi1sat.ma/fr/depeche.aspx?idp=2312
 # (French)
@@ -671,10 +704,31 @@ Zone Indian/Mauritius	3:50:00 -	LMT	1907 # Port Louis
 # Ministère de la Modernisation des Secteurs Publics
 #
 # Under Article 1 of Royal Decree No. 455-67 of Act 23 safar 1387 (2 June 1967)
+=======
+# <a href="http://news.marweb.com/morocco/entertainment/morocco-daylight-saving.html">
+# http://news.marweb.com/morocco/entertainment/morocco-daylight-saving.html
+# </a>
+# <a href="http://www.medi1sat.ma/fr/depeche.aspx?idp=2312">
+# http://www.medi1sat.ma/fr/depeche.aspx?idp=2312
+# </a>
+# (French)
+#
+# Our summary:
+# <a href="http://www.timeanddate.com/news/time/morocco-starts-dst-2009.html">
+# http://www.timeanddate.com/news/time/morocco-starts-dst-2009.html
+# </a>
+
+# From Alexander Krivenyshev (2009-03-17):
+# Here is a link to official document from Royaume du Maroc Premier Ministre,
+# Ministere de la Modernisation des Secteurs Publics
+#
+# Under Article 1 of Royal Decree No. 455-67 of Act 23 safar 1387 (2 june 1967)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 # concerning the amendment of the legal time, the Ministry of Modernization of
 # Public Sectors announced that the official time in the Kingdom will be
 # advanced 60 minutes from Sunday 31 May 2009 at midnight.
 #
+<<<<<<< HEAD
 # http://www.mmsp.gov.ma/francais/Actualites_fr/PDF_Actualites_Fr/HeureEte_FR.pdf
 # http://www.worldtimezone.com/dst_news/dst_news_morocco03.html
 
@@ -833,6 +887,15 @@ Zone Indian/Mauritius	3:50:00 -	LMT	1907 # Port Louis
 #         (car (cdr (cdr a))) (calendar-month-name (car a) t) (car (cdr a))
 #         (car (cdr (cdr b))) (calendar-month-name (car b) t) (car (cdr b)))))
 #     (setq islamic-year (+ 1 islamic-year))))
+=======
+# <a href="http://www.mmsp.gov.ma/francais/Actualites_fr/PDF_Actualites_Fr/HeureEte_FR.pdf">
+# http://www.mmsp.gov.ma/francais/Actualites_fr/PDF_Actualites_Fr/HeureEte_FR.pdf
+# </a>
+#
+# <a href="http://www.worldtimezone.com/dst_news/dst_news_morocco03.html">
+# http://www.worldtimezone.com/dst_news/dst_news_morocco03.html
+# </a>
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 # RULE	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 
@@ -854,6 +917,7 @@ Rule	Morocco	1978	only	-	Aug	 4	 0:00	0	-
 Rule	Morocco	2008	only	-	Jun	 1	 0:00	1:00	S
 Rule	Morocco	2008	only	-	Sep	 1	 0:00	0	-
 Rule	Morocco	2009	only	-	Jun	 1	 0:00	1:00	S
+<<<<<<< HEAD
 Rule	Morocco	2009	only	-	Aug	21	 0:00	0	-
 Rule	Morocco	2010	only	-	May	 2	 0:00	1:00	S
 Rule	Morocco	2010	only	-	Aug	 8	 0:00	0	-
@@ -891,6 +955,9 @@ Rule	Morocco	2026	max	-	Mar	lastSun	 2:00	1:00	S
 Rule	Morocco	2036	only	-	Oct	19	 3:00	0	-
 Rule	Morocco	2037	only	-	Oct	 4	 3:00	0	-
 
+=======
+Rule	Morocco	2009	only	-	Aug	 21	 0:00	0	-
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Africa/Casablanca	-0:30:20 -	LMT	1913 Oct 26
 			 0:00	Morocco	WE%sT	1984 Mar 16
@@ -1100,12 +1167,27 @@ Link Africa/Khartoum Africa/Juba
 # From Steffen Thorsen (2009-03-16):
 # According to several news sources, Tunisia will not observe DST this year.
 # (Arabic)
+<<<<<<< HEAD
 # http://www.elbashayer.com/?page=viewn&nid=42546
 # http://www.babnet.net/kiwidetail-15295.asp
 #
 # We have also confirmed this with the US embassy in Tunisia.
 # We have a wrap-up about this on the following page:
 # http://www.timeanddate.com/news/time/tunisia-cancels-dst-2009.html
+=======
+# <a href="http://www.elbashayer.com/?page=viewn&nid=42546">
+# http://www.elbashayer.com/?page=viewn&nid=42546
+# </a>
+# <a href="http://www.babnet.net/kiwidetail-15295.asp">
+# http://www.babnet.net/kiwidetail-15295.asp
+# </a>
+#
+# We have also confirmed this with the US embassy in Tunisia.
+# We have a wrap-up about this on the following page:
+# <a href="http://www.timeanddate.com/news/time/tunisia-cancels-dst-2009.html">
+# http://www.timeanddate.com/news/time/tunisia-cancels-dst-2009.html
+# </a>
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 # From Alexander Krivenyshev (2009-03-17):
 # Here is a link to Tunis Afrique Presse News Agency
@@ -1113,6 +1195,7 @@ Link Africa/Khartoum Africa/Juba
 # Standard time to be kept the whole year long (tap.info.tn):
 #
 # (in English)
+<<<<<<< HEAD
 # http://www.tap.info.tn/en/index.php?option=com_content&task=view&id=26813&Itemid=157
 #
 # (in Arabic)
@@ -1138,6 +1221,22 @@ Link Africa/Khartoum Africa/Juba
 # http://www.moheet.com/show_news.aspx?nid=358861&pg=1
 # http://www.almadenahnews.com/newss/news.php?c=118&id=38036
 # http://www.worldtimezone.com/dst_news/dst_news_tunis02.html
+=======
+# <a href="http://www.tap.info.tn/en/index.php?option=com_content&task=view&id=26813&Itemid=157">
+# http://www.tap.info.tn/en/index.php?option=com_content&task=view&id=26813&Itemid=157
+# </a>
+#
+# (in Arabic)
+# <a href="http://www.tap.info.tn/ar/index.php?option=com_content&task=view&id=61240&Itemid=1">
+# http://www.tap.info.tn/ar/index.php?option=com_content&task=view&id=61240&Itemid=1
+# </a>
+
+# From Arthur David Olson (2009--3-18):
+# The Tunis Afrique Presse News Agency notice contains this: "This measure is due to the fact
+# that the fasting month of ramadan coincides with the period concerned by summer time.
+# Therefore, the standard time will be kept unchanged the whole year long."
+# So foregoing DST seems to be an exception (albeit one that may be repeated in the  future).
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Tunisia	1939	only	-	Apr	15	23:00s	1:00	S
@@ -1165,7 +1264,12 @@ Rule	Tunisia	2005	only	-	May	 1	 0:00s	1:00	S
 Rule	Tunisia	2005	only	-	Sep	30	 1:00s	0	-
 Rule	Tunisia	2006	2008	-	Mar	lastSun	 2:00s	1:00	S
 Rule	Tunisia	2006	2008	-	Oct	lastSun	 2:00s	0	-
+<<<<<<< HEAD
 
+=======
+Rule	Tunisia	2010	max	-	Mar	lastSun	 2:00s	1:00	S
+Rule	Tunisia	2010	max	-	Oct	lastSun	 2:00s	0	-
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 # Shanks & Pottenger give 0:09:20 for Paris Mean Time; go with Howse's
 # more precise 0:09:21.
 # Shanks & Pottenger say the 1911 switch was on Mar 9; go with Howse's Mar 11.

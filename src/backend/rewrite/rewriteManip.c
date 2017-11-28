@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.120 2009/01/01 17:23:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.122 2009/06/11 14:49:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,9 +42,9 @@ typedef struct
 } locate_windowfunc_context;
 
 static bool contain_aggs_of_level_walker(Node *node,
-						contain_aggs_of_level_context *context);
+							 contain_aggs_of_level_context *context);
 static bool locate_agg_of_level_walker(Node *node,
-						locate_agg_of_level_context *context);
+						   locate_agg_of_level_context *context);
 static bool contain_windowfuncs_walker(Node *node, void *context);
 static bool locate_windowfunc_walker(Node *node,
 						 locate_windowfunc_context *context);
@@ -59,7 +59,7 @@ static Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
  *	specified query level.
  *
  * The objective of this routine is to detect whether there are aggregates
- * belonging to the given query level.  Aggregates belonging to subqueries
+ * belonging to the given query level.	Aggregates belonging to subqueries
  * or outer queries do NOT cause a true result.  We must recurse into
  * subqueries to detect outer-reference aggregates that logically belong to
  * the specified query level.
@@ -115,7 +115,7 @@ contain_aggs_of_level_walker(Node *node,
  *	  Find the parse location of any aggregate of the specified query level.
  *
  * Returns -1 if no such agg is in the querytree, or if they all have
- * unknown parse location.  (The former case is probably caller error,
+ * unknown parse location.	(The former case is probably caller error,
  * but we don't bother to distinguish it from the latter case.)
  *
  * Note: it might seem appropriate to merge this functionality into
@@ -128,7 +128,7 @@ locate_agg_of_level(Node *node, int levelsup)
 {
 	locate_agg_of_level_context context;
 
-	context.agg_location = -1;		/* in case we find nothing */
+	context.agg_location = -1;	/* in case we find nothing */
 	context.sublevels_up = levelsup;
 
 	/*
@@ -210,7 +210,7 @@ contain_windowfuncs_walker(Node *node, void *context)
  *	  Find the parse location of any windowfunc of the current query level.
  *
  * Returns -1 if no such windowfunc is in the querytree, or if they all have
- * unknown parse location.  (The former case is probably caller error,
+ * unknown parse location.	(The former case is probably caller error,
  * but we don't bother to distinguish it from the latter case.)
  *
  * Note: it might seem appropriate to merge this functionality into
@@ -1451,7 +1451,93 @@ ResolveNew_callback(Var *var,
 
 		/* Must adjust varlevelsup if tlist item is from higher query */
 		if (var->varlevelsup > 0)
+<<<<<<< HEAD
 			IncrementVarSublevelsUp(newnode, var->varlevelsup, 0);
+=======
+			IncrementVarSublevelsUp(n, var->varlevelsup, 0);
+		/* Report it if we are adding a sublink to query */
+		if (!context->inserted_sublink)
+			context->inserted_sublink = checkExprHasSubLink(n);
+		return n;
+	}
+}
+
+static Node *
+ResolveNew_mutator(Node *node, ResolveNew_context *context)
+{
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+		int			this_varno = (int) var->varno;
+		int			this_varlevelsup = (int) var->varlevelsup;
+
+		if (this_varno == context->target_varno &&
+			this_varlevelsup == context->sublevels_up)
+		{
+			if (var->varattno == InvalidAttrNumber)
+			{
+				/* Must expand whole-tuple reference into RowExpr */
+				RowExpr    *rowexpr;
+				List	   *colnames;
+				List	   *fields;
+
+				/*
+				 * If generating an expansion for a var of a named rowtype
+				 * (ie, this is a plain relation RTE), then we must include
+				 * dummy items for dropped columns.  If the var is RECORD (ie,
+				 * this is a JOIN), then omit dropped columns.	Either way,
+				 * attach column names to the RowExpr for use of ruleutils.c.
+				 */
+				expandRTE(context->target_rte,
+						  this_varno, this_varlevelsup, var->location,
+						  (var->vartype != RECORDOID),
+						  &colnames, &fields);
+				/* Adjust the generated per-field Vars... */
+				fields = (List *) ResolveNew_mutator((Node *) fields,
+													 context);
+				rowexpr = makeNode(RowExpr);
+				rowexpr->args = fields;
+				rowexpr->row_typeid = var->vartype;
+				rowexpr->row_format = COERCE_IMPLICIT_CAST;
+				rowexpr->colnames = colnames;
+				rowexpr->location = -1;
+
+				return (Node *) rowexpr;
+			}
+
+			/* Normal case for scalar variable */
+			return resolve_one_var(var, context);
+		}
+		/* otherwise fall through to copy the var normally */
+	}
+	else if (IsA(node, CurrentOfExpr))
+	{
+		CurrentOfExpr *cexpr = (CurrentOfExpr *) node;
+		int			this_varno = (int) cexpr->cvarno;
+
+		if (this_varno == context->target_varno &&
+			context->sublevels_up == 0)
+		{
+			/*
+			 * We get here if a WHERE CURRENT OF expression turns out to apply
+			 * to a view.  Someday we might be able to translate the
+			 * expression to apply to an underlying table of the view, but
+			 * right now it's not implemented.
+			 */
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				   errmsg("WHERE CURRENT OF on a view is not implemented")));
+		}
+		/* otherwise fall through to copy the expr normally */
+	}
+	else if (IsA(node, Query))
+	{
+		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
+		Query	   *newnode;
+		bool		save_inserted_sublink;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		return newnode;
 	}

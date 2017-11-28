@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-lobj.c
+=======
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.68 2009/06/11 14:49:14 momjian Exp $
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +44,13 @@
 #define LO_BUFSIZE		  8192
 
 static int	lo_initialize(PGconn *conn);
+<<<<<<< HEAD
 static Oid	lo_import_internal(PGconn *conn, const char *filename, Oid oid);
+=======
+
+static Oid
+			lo_import_internal(PGconn *conn, const char *filename, const Oid oid);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 /*
  * lo_open

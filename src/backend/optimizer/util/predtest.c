@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.23 2009/01/01 17:23:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.27 2009/06/11 14:48:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
+#include "optimizer/planmain.h"
 #include "optimizer/predtest.h"
 #include "utils/array.h"
 #include "utils/inval.h"
@@ -111,7 +112,7 @@ static Node *extract_strong_not_arg(Node *clause);
 static bool list_member_strip(List *list, Expr *datum);
 static bool btree_predicate_proof(Expr *predicate, Node *clause,
 					  bool refute_it);
-static Oid get_btree_test_op(Oid pred_op, Oid clause_op, bool refute_it);
+static Oid	get_btree_test_op(Oid pred_op, Oid clause_op, bool refute_it);
 static void InvalidateOprProofCacheCallBack(Datum arg, int cacheid, ItemPointer tuplePtr);
 
 static HTAB* CreateNodeSetHashTable();
@@ -148,14 +149,31 @@ static bool simple_equality_predicate_refuted(Node *clause, Node *predicate);
 bool
 predicate_implied_by(List *predicate_list, List *restrictinfo_list)
 {
+	Node	   *p,
+			   *r;
+
 	if (predicate_list == NIL)
 		return true;			/* no predicate: implication is vacuous */
 	if (restrictinfo_list == NIL)
 		return false;			/* no restriction: implication must fail */
 
-	/* Otherwise, away we go ... */
-	return predicate_implied_by_recurse((Node *) restrictinfo_list,
-										(Node *) predicate_list);
+	/*
+	 * If either input is a single-element list, replace it with its lone
+	 * member; this avoids one useless level of AND-recursion.	We only need
+	 * to worry about this at top level, since eval_const_expressions should
+	 * have gotten rid of any trivial ANDs or ORs below that.
+	 */
+	if (list_length(predicate_list) == 1)
+		p = (Node *) linitial(predicate_list);
+	else
+		p = (Node *) predicate_list;
+	if (list_length(restrictinfo_list) == 1)
+		r = (Node *) linitial(restrictinfo_list);
+	else
+		r = (Node *) restrictinfo_list;
+
+	/* And away we go ... */
+	return predicate_implied_by_recurse(r, p);
 }
 
 /*
@@ -189,11 +207,15 @@ predicate_implied_by(List *predicate_list, List *restrictinfo_list)
 bool
 predicate_refuted_by(List *predicate_list, List *restrictinfo_list)
 {
+	Node	   *p,
+			   *r;
+
 	if (predicate_list == NIL)
 		return false;			/* no predicate: no refutation is possible */
 	if (restrictinfo_list == NIL)
 		return false;			/* no restriction: refutation must fail */
 
+<<<<<<< HEAD
 	/* Otherwise, away we go ... */
 	if ( predicate_refuted_by_recurse((Node *) restrictinfo_list,
 										(Node *) predicate_list))
@@ -205,6 +227,25 @@ predicate_refuted_by(List *predicate_list, List *restrictinfo_list)
         return false;
     return simple_equality_predicate_refuted((Node *) restrictinfo_list,
 										(Node *) predicate_list);
+=======
+	/*
+	 * If either input is a single-element list, replace it with its lone
+	 * member; this avoids one useless level of AND-recursion.	We only need
+	 * to worry about this at top level, since eval_const_expressions should
+	 * have gotten rid of any trivial ANDs or ORs below that.
+	 */
+	if (list_length(predicate_list) == 1)
+		p = (Node *) linitial(predicate_list);
+	else
+		p = (Node *) predicate_list;
+	if (list_length(restrictinfo_list) == 1)
+		r = (Node *) linitial(restrictinfo_list);
+	else
+		r = (Node *) restrictinfo_list;
+
+	/* And away we go ... */
+	return predicate_refuted_by_recurse(r, p);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 /*----------
@@ -653,14 +694,26 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 
 		case CLASS_ATOM:
 
+<<<<<<< HEAD
+=======
+#ifdef NOT_USED
+
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			/*
 			 * If A is a strong NOT-clause, A R=> B if B equals A's arg
 			 *
+<<<<<<< HEAD
 			 * We cannot make the stronger conclusion that B is refuted if
 			 * B implies A's arg; that would only prove that B is not-TRUE,
 			 * not that it's not NULL either.  Hence use equal() rather than
 			 * predicate_implied_by_recurse().  We could do the latter if we
 			 * ever had a need for the weak form of refutation.
+=======
+			 * Unfortunately not: this would only prove that B is not-TRUE,
+			 * not that it's not NULL either.  Keep this code as a comment
+			 * because it would be useful if we ever had a need for the weak
+			 * form of refutation.
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			 */
 			not_arg = extract_strong_not_arg(clause);
 			if (not_arg && equal(predicate, not_arg))
@@ -738,7 +791,7 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
  * This function also implements enforcement of MAX_SAOP_ARRAY_SIZE: if a
  * ScalarArrayOpExpr's array has too many elements, we just classify it as an
  * atom.  (This will result in its being passed as-is to the simple_clause
- * functions, which will fail to prove anything about it.)  Note that we
+ * functions, which will fail to prove anything about it.)	Note that we
  * cannot just stop after considering MAX_SAOP_ARRAY_SIZE elements; in general
  * that would result in wrong proofs, rather than failing to prove anything.
  */
@@ -1619,8 +1672,11 @@ btree_predicate_proof(Expr *predicate, Node *clause, bool refute_it)
 							  (Expr *) pred_const,
 							  (Expr *) clause_const);
 
+	/* Fill in opfuncids */
+	fix_opfuncids((Node *) test_expr);
+
 	/* Prepare it for execution */
-	test_exprstate = ExecPrepareExpr(test_expr, estate);
+	test_exprstate = ExecInitExpr(test_expr, NULL);
 
 	/* And execute it. */
 	test_result = ExecEvalExprSwitchContext(test_exprstate,
@@ -1663,8 +1719,8 @@ typedef struct OprProofCacheEntry
 
 	bool		have_implic;	/* do we know the implication result? */
 	bool		have_refute;	/* do we know the refutation result? */
-	Oid			implic_test_op;	/* OID of the operator, or 0 if none */
-	Oid			refute_test_op;	/* OID of the operator, or 0 if none */
+	Oid			implic_test_op; /* OID of the operator, or 0 if none */
+	Oid			refute_test_op; /* OID of the operator, or 0 if none */
 } OprProofCacheEntry;
 
 static HTAB *OprProofCacheHash = NULL;

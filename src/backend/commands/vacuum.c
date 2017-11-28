@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.384 2009/01/01 17:23:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.389 2009/06/11 14:48:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,6 +95,7 @@
  * GUC parameters
  */
 int			vacuum_freeze_min_age;
+int			vacuum_freeze_table_age;
 
 /*
  * VacPage structures keep track of each page on which we find useful
@@ -1609,9 +1610,12 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt, const char *stmttype)
  * vacuum_set_xid_limits() -- compute oldest-Xmin and freeze cutoff points
  */
 void
-vacuum_set_xid_limits(int freeze_min_age, bool sharedRel,
+vacuum_set_xid_limits(int freeze_min_age,
+					  int freeze_table_age,
+					  bool sharedRel,
 					  TransactionId *oldestXmin,
-					  TransactionId *freezeLimit)
+					  TransactionId *freezeLimit,
+					  TransactionId *freezeTableLimit)
 {
 	int			freezemin;
 	TransactionId limit;
@@ -1667,6 +1671,34 @@ vacuum_set_xid_limits(int freeze_min_age, bool sharedRel,
 	}
 
 	*freezeLimit = limit;
+
+	if (freezeTableLimit != NULL)
+	{
+		int			freezetable;
+
+		/*
+		 * Determine the table freeze age to use: as specified by the caller,
+		 * or vacuum_freeze_table_age, but in any case not more than
+		 * autovacuum_freeze_max_age * 0.95, so that if you have e.g nightly
+		 * VACUUM schedule, the nightly VACUUM gets a chance to freeze tuples
+		 * before anti-wraparound autovacuum is launched.
+		 */
+		freezetable = freeze_min_age;
+		if (freezetable < 0)
+			freezetable = vacuum_freeze_table_age;
+		freezetable = Min(freezetable, autovacuum_freeze_max_age * 0.95);
+		Assert(freezetable >= 0);
+
+		/*
+		 * Compute the cutoff XID, being careful not to generate a "permanent"
+		 * XID.
+		 */
+		limit = ReadNewTransactionId() - freezetable;
+		if (!TransactionIdIsNormal(limit))
+			limit = FirstNormalTransactionId;
+
+		*freezeTableLimit = limit;
+	}
 }
 
 
@@ -2157,9 +2189,54 @@ vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_s
 	Oid         aoblkdir_relid = InvalidOid;
 	Oid         aovisimap_relid = InvalidOid;
 	Oid			save_userid;
+<<<<<<< HEAD
 	int			save_sec_context;
 	int			save_nestlevel;
 	bool		heldoff;
+=======
+	bool		save_secdefcxt;
+
+	if (scanned_all)
+		*scanned_all = false;
+
+	/* Begin a transaction for vacuuming this relation */
+	StartTransactionCommand();
+
+	/*
+	 * Functions in indexes may want a snapshot set.  Also, setting a snapshot
+	 * ensures that RecentGlobalXmin is kept truly recent.
+	 */
+	PushActiveSnapshot(GetTransactionSnapshot());
+
+	if (!vacstmt->full)
+	{
+		/*
+		 * In lazy vacuum, we can set the PROC_IN_VACUUM flag, which lets
+		 * other concurrent VACUUMs know that they can ignore this one while
+		 * determining their OldestXmin.  (The reason we don't set it during a
+		 * full VACUUM is exactly that we may have to run user- defined
+		 * functions for functional indexes, and we want to make sure that if
+		 * they use the snapshot set above, any tuples it requires can't get
+		 * removed from other tables.  An index function that depends on the
+		 * contents of other tables is arguably broken, but we won't break it
+		 * here by violating transaction semantics.)
+		 *
+		 * We also set the VACUUM_FOR_WRAPAROUND flag, which is passed down by
+		 * autovacuum; it's used to avoid cancelling a vacuum that was invoked
+		 * in an emergency.
+		 *
+		 * Note: these flags remain set until CommitTransaction or
+		 * AbortTransaction.  We don't want to clear them until we reset
+		 * MyProc->xid/xmin, else OldestXmin might appear to go backwards,
+		 * which is probably Not Good.
+		 */
+		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+		MyProc->vacuumFlags |= PROC_IN_VACUUM;
+		if (for_wraparound)
+			MyProc->vacuumFlags |= PROC_VACUUM_FOR_WRAPAROUND;
+		LWLockRelease(ProcArrayLock);
+	}
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * Check for user-requested abort.	Note we want this to be inside a
@@ -2181,6 +2258,7 @@ vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_s
 				AppendOnlyCompaction_IsRelationEmpty(onerel);
 	}
 
+<<<<<<< HEAD
 
 	/*
 	 * Switch to the table owner's userid, so that any index functions are run
@@ -2192,6 +2270,99 @@ vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_s
 	SetUserIdAndSecContext(onerel->rd_rel->relowner,
 						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
 	save_nestlevel = NewGUCNestLevel();
+=======
+	/*
+	 * Check permissions.
+	 *
+	 * We allow the user to vacuum a table if he is superuser, the table
+	 * owner, or the database owner (but in the latter case, only if it's not
+	 * a shared relation).	pg_class_ownercheck includes the superuser case.
+	 *
+	 * Note we choose to treat permissions failure as a WARNING and keep
+	 * trying to vacuum the rest of the DB --- is this appropriate?
+	 */
+	if (!(pg_class_ownercheck(RelationGetRelid(onerel), GetUserId()) ||
+		  (pg_database_ownercheck(MyDatabaseId, GetUserId()) && !onerel->rd_rel->relisshared)))
+	{
+		if (onerel->rd_rel->relisshared)
+			ereport(WARNING,
+				  (errmsg("skipping \"%s\" --- only superuser can vacuum it",
+						  RelationGetRelationName(onerel))));
+		else if (onerel->rd_rel->relnamespace == PG_CATALOG_NAMESPACE)
+			ereport(WARNING,
+					(errmsg("skipping \"%s\" --- only superuser or database owner can vacuum it",
+							RelationGetRelationName(onerel))));
+		else
+			ereport(WARNING,
+					(errmsg("skipping \"%s\" --- only table or database owner can vacuum it",
+							RelationGetRelationName(onerel))));
+		relation_close(onerel, lmode);
+		PopActiveSnapshot();
+		CommitTransactionCommand();
+		return;
+	}
+
+	/*
+	 * Check that it's a vacuumable table; we used to do this in
+	 * get_rel_oids() but seems safer to check after we've locked the
+	 * relation.
+	 */
+	if (onerel->rd_rel->relkind != RELKIND_RELATION &&
+		onerel->rd_rel->relkind != RELKIND_TOASTVALUE)
+	{
+		ereport(WARNING,
+				(errmsg("skipping \"%s\" --- cannot vacuum indexes, views, or special system tables",
+						RelationGetRelationName(onerel))));
+		relation_close(onerel, lmode);
+		PopActiveSnapshot();
+		CommitTransactionCommand();
+		return;
+	}
+
+	/*
+	 * Silently ignore tables that are temp tables of other backends ---
+	 * trying to vacuum these will lead to great unhappiness, since their
+	 * contents are probably not up-to-date on disk.  (We don't throw a
+	 * warning here; it would just lead to chatter during a database-wide
+	 * VACUUM.)
+	 */
+	if (RELATION_IS_OTHER_TEMP(onerel))
+	{
+		relation_close(onerel, lmode);
+		PopActiveSnapshot();
+		CommitTransactionCommand();
+		return;
+	}
+
+	/*
+	 * Get a session-level lock too. This will protect our access to the
+	 * relation across multiple transactions, so that we can vacuum the
+	 * relation's TOAST table (if any) secure in the knowledge that no one is
+	 * deleting the parent relation.
+	 *
+	 * NOTE: this cannot block, even if someone else is waiting for access,
+	 * because the lock manager knows that both lock requests are from the
+	 * same process.
+	 */
+	onerelid = onerel->rd_lockInfo.lockRelId;
+	LockRelationIdForSession(&onerelid, lmode);
+
+	/*
+	 * Remember the relation's TOAST relation for later, if the caller asked
+	 * us to process it.
+	 */
+	if (do_toast)
+		toast_relid = onerel->rd_rel->reltoastrelid;
+	else
+		toast_relid = InvalidOid;
+
+	/*
+	 * Switch to the table owner's userid, so that any index functions are run
+	 * as that user.  (This is unnecessary, but harmless, for lazy VACUUM.)
+	 */
+	GetUserIdAndContext(&save_userid, &save_secdefcxt);
+	SetUserIdAndContext(onerel->rd_rel->relowner, true);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * Do the actual work --- either FULL or "lazy" vacuum
@@ -2659,8 +2830,9 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt, List *updated_stats)
 	bool		heldoff = false;
 	bool update_relstats = true;
 
-	vacuum_set_xid_limits(vacstmt->freeze_min_age, onerel->rd_rel->relisshared,
-						  &OldestXmin, &FreezeLimit);
+	vacuum_set_xid_limits(vacstmt->freeze_min_age, vacstmt->freeze_table_age,
+						  onerel->rd_rel->relisshared,
+						  &OldestXmin, &FreezeLimit, NULL);
 
 	/*
 	 * Flush any previous async-commit transactions.  This does not guarantee
@@ -3356,13 +3528,13 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		/*
 		 * Add the page to vacuum_pages if it requires reaping, and add it to
 		 * fraged_pages if it has a useful amount of free space.  "Useful"
-		 * means enough for a minimal-sized tuple.  But we don't know that
+		 * means enough for a minimal-sized tuple.	But we don't know that
 		 * accurately near the start of the relation, so add pages
 		 * unconditionally if they have >= BLCKSZ/10 free space.  Also
 		 * forcibly add pages with no live tuples, to avoid confusing the
 		 * empty_end_pages logic.  (In the presence of unreasonably small
-		 * fillfactor, it seems possible that such pages might not pass
-		 * the free-space test, but they had better be in the list anyway.)
+		 * fillfactor, it seems possible that such pages might not pass the
+		 * free-space test, but they had better be in the list anyway.)
 		 */
 		do_frag = (vacpage->free >= min_tlen || vacpage->free >= BLCKSZ / 10 ||
 				   notup);
@@ -3884,7 +4056,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					/* assume block# is OK (see heap_fetch comments) */
 					nextBuf = ReadBufferExtended(onerel, MAIN_FORKNUM,
 										 ItemPointerGetBlockNumber(&nextTid),
-										 RBM_NORMAL, vac_strategy);
+												 RBM_NORMAL, vac_strategy);
 					nextPage = BufferGetPage(nextBuf);
 					/* If bogus or unused slot, assume tp is end of chain */
 					nextOffnum = ItemPointerGetOffsetNumber(&nextTid);
@@ -4030,7 +4202,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					tp.t_self = vtlp->this_tid;
 					Pbuf = ReadBufferExtended(onerel, MAIN_FORKNUM,
 									 ItemPointerGetBlockNumber(&(tp.t_self)),
-									 RBM_NORMAL, vac_strategy);
+											  RBM_NORMAL, vac_strategy);
 					Ppage = BufferGetPage(Pbuf);
 					Pitemid = PageGetItemId(Ppage,
 								   ItemPointerGetOffsetNumber(&(tp.t_self)));
@@ -4114,7 +4286,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					tuple.t_self = vtmove[ti].tid;
 					Cbuf = ReadBufferExtended(onerel, MAIN_FORKNUM,
 								  ItemPointerGetBlockNumber(&(tuple.t_self)),
-								  RBM_NORMAL, vac_strategy);
+											  RBM_NORMAL, vac_strategy);
 
 					/* Get page to move to */
 					dst_buffer = ReadBufferExtended(onerel, MAIN_FORKNUM,
@@ -4830,7 +5002,13 @@ scan_index(Relation indrel, double num_tuples, List *updated_stats, bool isfull,
 	pg_rusage_init(&ru0);
 
 	ivinfo.index = indrel;
+<<<<<<< HEAD
 	ivinfo.vacuum_full = isfull;
+=======
+	ivinfo.vacuum_full = true;
+	ivinfo.analyze_only = false;
+	ivinfo.estimated_count = false;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	ivinfo.message_level = elevel;
 	ivinfo.num_heap_tuples = num_tuples;
 	ivinfo.strategy = vac_strategy;
@@ -4840,10 +5018,21 @@ scan_index(Relation indrel, double num_tuples, List *updated_stats, bool isfull,
 	if (!stats)
 		return;
 
+<<<<<<< HEAD
 	/* now update statistics in pg_class */
 	vac_update_relstats_from_list(indrel,
 						stats->num_pages, stats->num_index_tuples,
 						false, InvalidTransactionId, updated_stats);
+=======
+	/*
+	 * Now update statistics in pg_class, but only if the index says the count
+	 * is accurate.
+	 */
+	if (!stats->estimated_count)
+		vac_update_relstats(indrel,
+							stats->num_pages, stats->num_index_tuples,
+							false, InvalidTransactionId);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	ereport(elevel,
 			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
@@ -4859,7 +5048,12 @@ scan_index(Relation indrel, double num_tuples, List *updated_stats, bool isfull,
 	 * Check for tuple count mismatch.	If the index is partial, then it's OK
 	 * for it to have fewer tuples than the heap; else we got trouble.
 	 */
+<<<<<<< HEAD
 	if (check_stats && stats->num_index_tuples != num_tuples)
+=======
+	if (!stats->estimated_count &&
+		stats->num_index_tuples != num_tuples)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	{
 		if (stats->num_index_tuples > num_tuples ||
 			!vac_is_partial_index(indrel))
@@ -4958,6 +5152,8 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 
 	ivinfo.index = indrel;
 	ivinfo.vacuum_full = true;
+	ivinfo.analyze_only = false;
+	ivinfo.estimated_count = false;
 	ivinfo.message_level = elevel;
 	ivinfo.num_heap_tuples = num_tuples + keep_tuples;
 	ivinfo.strategy = vac_strategy;
@@ -4971,10 +5167,21 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 	if (!stats)
 		return;
 
+<<<<<<< HEAD
 	/* now update statistics in pg_class */
 	vac_update_relstats_from_list(indrel,
 						stats->num_pages, stats->num_index_tuples,
 						false, InvalidTransactionId, updated_stats);
+=======
+	/*
+	 * Now update statistics in pg_class, but only if the index says the count
+	 * is accurate.
+	 */
+	if (!stats->estimated_count)
+		vac_update_relstats(indrel,
+							stats->num_pages, stats->num_index_tuples,
+							false, InvalidTransactionId);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	ereport(elevel,
 			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
@@ -4992,7 +5199,12 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 	 * Check for tuple count mismatch.	If the index is partial, then it's OK
 	 * for it to have fewer tuples than the heap; else we got trouble.
 	 */
+<<<<<<< HEAD
 	if (check_stats && stats->num_index_tuples != num_tuples + keep_tuples)
+=======
+	if (!stats->estimated_count &&
+		stats->num_index_tuples != num_tuples + keep_tuples)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	{
 		if (stats->num_index_tuples > num_tuples + keep_tuples ||
 			!vac_is_partial_index(indrel))
@@ -5403,7 +5615,7 @@ PageGetFreeSpaceWithFillFactor(Relation relation, Page page)
 {
 	/*
 	 * It is correct to use PageGetExactFreeSpace() here, *not*
-	 * PageGetHeapFreeSpace().  This is because (a) we do our own, exact
+	 * PageGetHeapFreeSpace().	This is because (a) we do our own, exact
 	 * accounting for whether line pointers must be added, and (b) we will
 	 * recycle any LP_DEAD line pointers before starting to add rows to a
 	 * page, but that may not have happened yet at the time this function is

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.149 2009/01/01 17:23:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.152 2009/06/11 14:48:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1739,10 +1739,170 @@ create_unique_path(PlannerInfo *root,
     /* Allocate and partially initialize a UniquePath node. */
     pathnode = make_unique_path(subpath);
 
+<<<<<<< HEAD
     /* Share caller's expr list and operators, and relids. */
     pathnode->distinct_on_exprs = distinct_on_exprs;
 	pathnode->distinct_on_eq_operators = distinct_on_operators;
     pathnode->distinct_on_rowid_relids = distinct_on_rowid_relids;
+=======
+	/* If we previously failed, return NULL quickly */
+	if (sjinfo->join_quals == NIL)
+		return NULL;
+
+	/*
+	 * We must ensure path struct and subsidiary data are allocated in main
+	 * planning context; otherwise GEQO memory management causes trouble.
+	 * (Compare best_inner_indexscan().)
+	 */
+	oldcontext = MemoryContextSwitchTo(root->planner_cxt);
+
+	/*----------
+	 * Look to see whether the semijoin's join quals consist of AND'ed
+	 * equality operators, with (only) RHS variables on only one side of
+	 * each one.  If so, we can figure out how to enforce uniqueness for
+	 * the RHS.
+	 *
+	 * Note that the input join_quals list is the list of quals that are
+	 * *syntactically* associated with the semijoin, which in practice means
+	 * the synthesized comparison list for an IN or the WHERE of an EXISTS.
+	 * Particularly in the latter case, it might contain clauses that aren't
+	 * *semantically* associated with the join, but refer to just one side or
+	 * the other.  We can ignore such clauses here, as they will just drop
+	 * down to be processed within one side or the other.  (It is okay to
+	 * consider only the syntactically-associated clauses here because for a
+	 * semijoin, no higher-level quals could refer to the RHS, and so there
+	 * can be no other quals that are semantically associated with this join.
+	 * We do things this way because it is useful to be able to run this test
+	 * before we have extracted the list of quals that are actually
+	 * semantically associated with the particular join.)
+	 *
+	 * Note that the in_operators list consists of the joinqual operators
+	 * themselves (but commuted if needed to put the RHS value on the right).
+	 * These could be cross-type operators, in which case the operator
+	 * actually needed for uniqueness is a related single-type operator.
+	 * We assume here that that operator will be available from the btree
+	 * or hash opclass when the time comes ... if not, create_unique_plan()
+	 * will fail.
+	 *----------
+	 */
+	in_operators = NIL;
+	uniq_exprs = NIL;
+	all_btree = true;
+	all_hash = enable_hashagg;	/* don't consider hash if not enabled */
+	foreach(lc, sjinfo->join_quals)
+	{
+		OpExpr	   *op = (OpExpr *) lfirst(lc);
+		Oid			opno;
+		Node	   *left_expr;
+		Node	   *right_expr;
+		Relids		left_varnos;
+		Relids		right_varnos;
+		Relids		all_varnos;
+
+		/* Is it a binary opclause? */
+		if (!IsA(op, OpExpr) ||
+			list_length(op->args) != 2)
+		{
+			/* No, but does it reference both sides? */
+			all_varnos = pull_varnos((Node *) op);
+			if (!bms_overlap(all_varnos, sjinfo->syn_righthand) ||
+				bms_is_subset(all_varnos, sjinfo->syn_righthand))
+			{
+				/*
+				 * Clause refers to only one rel, so ignore it --- unless it
+				 * contains volatile functions, in which case we'd better
+				 * punt.
+				 */
+				if (contain_volatile_functions((Node *) op))
+					goto no_unique_path;
+				continue;
+			}
+			/* Non-operator clause referencing both sides, must punt */
+			goto no_unique_path;
+		}
+
+		/* Extract data from binary opclause */
+		opno = op->opno;
+		left_expr = linitial(op->args);
+		right_expr = lsecond(op->args);
+		left_varnos = pull_varnos(left_expr);
+		right_varnos = pull_varnos(right_expr);
+		all_varnos = bms_union(left_varnos, right_varnos);
+
+		/* Does it reference both sides? */
+		if (!bms_overlap(all_varnos, sjinfo->syn_righthand) ||
+			bms_is_subset(all_varnos, sjinfo->syn_righthand))
+		{
+			/*
+			 * Clause refers to only one rel, so ignore it --- unless it
+			 * contains volatile functions, in which case we'd better punt.
+			 */
+			if (contain_volatile_functions((Node *) op))
+				goto no_unique_path;
+			continue;
+		}
+
+		/* check rel membership of arguments */
+		if (!bms_is_empty(right_varnos) &&
+			bms_is_subset(right_varnos, sjinfo->syn_righthand) &&
+			!bms_overlap(left_varnos, sjinfo->syn_righthand))
+		{
+			/* typical case, right_expr is RHS variable */
+		}
+		else if (!bms_is_empty(left_varnos) &&
+				 bms_is_subset(left_varnos, sjinfo->syn_righthand) &&
+				 !bms_overlap(right_varnos, sjinfo->syn_righthand))
+		{
+			/* flipped case, left_expr is RHS variable */
+			opno = get_commutator(opno);
+			if (!OidIsValid(opno))
+				goto no_unique_path;
+			right_expr = left_expr;
+		}
+		else
+			goto no_unique_path;
+
+		/* all operators must be btree equality or hash equality */
+		if (all_btree)
+		{
+			/* oprcanmerge is considered a hint... */
+			if (!op_mergejoinable(opno) ||
+				get_mergejoin_opfamilies(opno) == NIL)
+				all_btree = false;
+		}
+		if (all_hash)
+		{
+			/* ... but oprcanhash had better be correct */
+			if (!op_hashjoinable(opno))
+				all_hash = false;
+		}
+		if (!(all_btree || all_hash))
+			goto no_unique_path;
+
+		/* so far so good, keep building lists */
+		in_operators = lappend_oid(in_operators, opno);
+		uniq_exprs = lappend(uniq_exprs, copyObject(right_expr));
+	}
+
+	/* Punt if we didn't find at least one column to unique-ify */
+	if (uniq_exprs == NIL)
+		goto no_unique_path;
+
+	/*
+	 * The expressions we'd need to unique-ify mustn't be volatile.
+	 */
+	if (contain_volatile_functions((Node *) uniq_exprs))
+		goto no_unique_path;
+
+	/*
+	 * If we get here, we can unique-ify using at least one of sorting and
+	 * hashing.  Start building the result Path object.
+	 */
+	pathnode = makeNode(UniquePath);
+
+	pathnode->path.pathtype = T_Unique;
+	pathnode->path.parent = rel;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * Treat the output as always unsorted, since we don't necessarily have
@@ -1761,8 +1921,27 @@ create_unique_path(PlannerInfo *root,
 	}
 	else
 	{
+<<<<<<< HEAD
 		pathnode->rows = subpath_rows;
 		numCols = 1;
+=======
+		/*
+		 * Estimate cost for sort+unique implementation
+		 */
+		cost_sort(&sort_path, root, NIL,
+				  subpath->total_cost,
+				  rel->rows,
+				  rel->width,
+				  -1.0);
+
+		/*
+		 * Charge one cpu_operator_cost per comparison per input tuple. We
+		 * assume all columns get compared at most of the tuples. (XXX
+		 * probably this is an overestimate.)  This should agree with
+		 * make_unique.
+		 */
+		sort_path.total_cost += cpu_operator_cost * rel->rows * numCols;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 
 	/*
@@ -1856,6 +2035,10 @@ create_unique_path(PlannerInfo *root,
 	return pathnode;
 }                               /* create_unique_path */
 
+<<<<<<< HEAD
+=======
+no_unique_path:			/* failure exit */
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 /*
  * create_unique_exprlist_path
@@ -2827,15 +3010,16 @@ create_mergejoin_path(PlannerInfo *root,
 	 * selected as the input of a mergejoin, and they don't support
 	 * mark/restore at present.
 	 *
-	 * Note: Sort supports mark/restore, so no materialize is really needed
-	 * in that case; but one may be desirable anyway to optimize the sort.
-	 * However, since we aren't representing the sort step separately in
-	 * the Path tree, we can't explicitly represent the materialize either.
-	 * So that case is not handled here.  Instead, cost_mergejoin has to
-	 * factor in the cost and create_mergejoin_plan has to add the plan node.
+	 * Note: Sort supports mark/restore, so no materialize is really needed in
+	 * that case; but one may be desirable anyway to optimize the sort.
+	 * However, since we aren't representing the sort step separately in the
+	 * Path tree, we can't explicitly represent the materialize either. So
+	 * that case is not handled here.  Instead, cost_mergejoin has to factor
+	 * in the cost and create_mergejoin_plan has to add the plan node.
 	 */
 	if (!ExecSupportsMarkRestore(inner_path->pathtype))
 	{
+<<<<<<< HEAD
 		/*
 		 * The inner side does not support mark/restore capability.
 		 * Check whether a sort node will be inserted later, and if that is not the case,
@@ -2851,6 +3035,23 @@ create_mergejoin_path(PlannerInfo *root,
 			 * which decides whether a sort node is to be added.
 			*/
 			ListCell   *sortkeycell;
+=======
+		Path	   *mpath;
+
+		mpath = (Path *) create_material_path(inner_path->parent, inner_path);
+
+		/*
+		 * We expect the materialize won't spill to disk (it could only do so
+		 * if there were a whole lot of duplicate tuples, which is a case
+		 * cost_mergejoin will avoid choosing anyway).	Therefore
+		 * cost_material's cost estimate is bogus and we should charge just
+		 * cpu_tuple_cost per tuple.  (Keep this estimate in sync with similar
+		 * ones in cost_mergejoin and create_mergejoin_plan.)
+		 */
+		mpath->startup_cost = inner_path->startup_cost;
+		mpath->total_cost = inner_path->total_cost;
+		mpath->total_cost += cpu_tuple_cost * inner_path->parent->rows;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 			foreach(sortkeycell, innersortkeys)
 			{
@@ -2951,11 +3152,23 @@ create_hashjoin_path(PlannerInfo *root,
 	pathnode->jpath.outerjoinpath = outer_path;
 	pathnode->jpath.innerjoinpath = inner_path;
 	pathnode->jpath.joinrestrictinfo = restrict_clauses;
-	/* A hashjoin never has pathkeys, since its ordering is unpredictable */
+
+	/*
+	 * A hashjoin never has pathkeys, since its output ordering is
+	 * unpredictable due to possible batching.	XXX If the inner relation is
+	 * small enough, we could instruct the executor that it must not batch,
+	 * and then we could assume that the output inherits the outer relation's
+	 * ordering, which might save a sort step.	However there is considerable
+	 * downside if our estimate of the inner relation size is badly off. For
+	 * the moment we don't risk it.  (Note also that if we wanted to take this
+	 * seriously, joinpath.c would have to consider many more paths for the
+	 * outer rel than it does now.)
+	 */
 	pathnode->jpath.path.pathkeys = NIL;
     pathnode->jpath.path.locus = join_locus;
 
 	pathnode->path_hashclauses = hashclauses;
+	/* cost_hashjoin will fill in pathnode->num_batches */
 
     /*
      * If hash table overflows to disk, and an ancestor node requests rescan

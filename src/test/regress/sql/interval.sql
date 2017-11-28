@@ -139,10 +139,13 @@ SELECT interval '999' minute;
 SELECT interval '999' hour;
 SELECT interval '999' day;
 SELECT interval '999' month;
+<<<<<<< HEAD
 
 -- check that '30 days' equals '1 month' according to the hash function
 select '30 days'::interval = '1 month'::interval as t;
 select interval_hash('30 days'::interval) = interval_hash('1 month'::interval) as t;
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 -- test SQL-spec syntaxes for restricted field sets
 SELECT interval '1' year;
@@ -256,3 +259,7 @@ SET IntervalStyle to postgres_verbose;
 select interval '-10 mons -3 days +03:55:06.70';
 select interval '1 year 2 mons 3 days 04:05:06.699999';
 select interval '0:0:0.7', interval '@ 0.70 secs', interval '0.7 seconds'; 
+
+-- check that '30 days' equals '1 month' according to the hash function
+select '30 days'::interval = '1 month'::interval as t;
+select interval_hash('30 days'::interval) = interval_hash('1 month'::interval) as t;

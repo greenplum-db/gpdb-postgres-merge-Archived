@@ -512,7 +512,10 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 
 	bool	   *header_done;	/* Have all header lines been output? */
 	int		   *bytes_output;	/* Bytes output for column value */
+<<<<<<< HEAD
 	printTextLineWrap *wrap;	/* Wrap status for each column */
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	int			output_columns = 0;		/* Width of interactive console */
 	bool		is_pager = false;
 
@@ -670,7 +673,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 		 * Optional optimized word wrap. Shrink columns with a high max/avg
 		 * ratio.  Slighly bias against wider columns. (Increases chance a
 		 * narrow column will fit in its cell.)  If available columns is
-		 * positive...  and greater than the width of the unshrinkable column
+		 * positive...	and greater than the width of the unshrinkable column
 		 * headers
 		 */
 		if (output_columns > 0 && output_columns >= total_header_width)
@@ -735,6 +738,11 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 
 			pg_wcssize((unsigned char *) *ptr, strlen(*ptr), encoding,
 					   &width, &nl_lines, &bytes_required);
+<<<<<<< HEAD
+=======
+			if (opt_numeric_locale && cont->align[i] == 'r')
+				width += additional_numeric_locale_len(*ptr);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 			/*
 			 * A row can have both wrapping and newlines that cause it to
@@ -859,7 +867,12 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 			break;
 
 		/*
+<<<<<<< HEAD
 		 * Format each cell.
+=======
+		 * Format each cell.  Format again, if it's a numeric formatting
+		 * locale (e.g. 123,456 vs. 123456)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		 */
 		for (j = 0; j < col_count; j++)
 		{
@@ -891,6 +904,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 				int			bytes_to_output;
 				int			chars_to_output = width_wrap[j];
 				bool		finalspaces = (opt_border == 2 || j < col_count - 1);
+<<<<<<< HEAD
 
 				/* Print left-hand wrap or newline mark */
 				if (opt_border != 0)
@@ -902,6 +916,8 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 					else
 						fputc(' ', fout);
 				}
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 				if (!this_line->ptr)
 				{
@@ -960,6 +976,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 				wrap[j] = PRINT_LINE_WRAP_NONE;
 				if (col_lineptrs[j][curr_nl_line[j]].ptr != NULL)
 				{
+<<<<<<< HEAD
 					if (bytes_output[j] != 0)
 						wrap[j] = PRINT_LINE_WRAP_WRAP;
 					else if (curr_nl_line[j] != 0)
@@ -998,6 +1015,22 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 						fputs(format->midvrule_blank, fout);
 					else
 						fputs(dformat->midvrule, fout);
+=======
+					if (opt_border == 0)
+						fputc(' ', fout);
+					/* Next value is beyond past newlines? */
+					else if (col_lineptrs[j + 1][curr_nl_line[j + 1]].ptr == NULL)
+						fputs("   ", fout);
+					/* In wrapping of value? */
+					else if (bytes_output[j + 1] != 0)
+						fputs(" ; ", fout);
+					/* After first newline value */
+					else if (curr_nl_line[j + 1] != 0)
+						fputs(" : ", fout);
+					else
+						/* Ordinary line */
+						fputs(" | ", fout);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				}
 			}
 
@@ -2168,7 +2201,7 @@ printTableAddCell(printTableContent *const content, const char *cell,
  * strdup'd, so there is no need to keep the original footer string around.
  *
  * Footers are never translated by the function.  If you want the footer
- * translated you must do so yourself, before calling printTableAddFooter.  The
+ * translated you must do so yourself, before calling printTableAddFooter.	The
  * reason this works differently to headers and cells is that footers tend to
  * be made of up individually translated components, rather than being
  * translated as a whole.
@@ -2418,7 +2451,10 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 		for (c = 0; c < cont.ncolumns; c++)
 		{
 			char	   *cell;
+<<<<<<< HEAD
 			bool		mustfree = false;
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			bool		translate;
 
 			if (PQgetisnull(result, r, c))
@@ -2516,7 +2552,7 @@ get_line_style(const printTableOpt *opt)
 
 /*
  * Compute the byte distance to the end of the string or *target_width
- * display character positions, whichever comes first.  Update *target_width
+ * display character positions, whichever comes first.	Update *target_width
  * to be the number of display character positions actually filled.
  */
 static int

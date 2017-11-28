@@ -24,7 +24,11 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-misc.c
+=======
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.140 2009/06/11 14:49:14 momjian Exp $
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *
  *-------------------------------------------------------------------------
  */
@@ -1227,11 +1231,15 @@ pqSocketPoll(int sock, int forRead, int forWrite, time_t end_time)
 	FD_ZERO(&output_mask);
 	FD_ZERO(&except_mask);
 	if (forRead)
+<<<<<<< HEAD
 		FD_SET(sock, &input_mask);
+=======
+		FD_SET		(sock, &input_mask);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	if (forWrite)
-		FD_SET(sock, &output_mask);
-	FD_SET(sock, &except_mask);
+		FD_SET		(sock, &output_mask);
+	FD_SET		(sock, &except_mask);
 
 	/* Compute appropriate timeout interval */
 	if (end_time == ((time_t) -1))

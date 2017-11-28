@@ -28,7 +28,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.320 2009/01/01 17:23:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.326 2009/06/11 20:46:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@
 #include "access/appendonlywriter.h"
 #include "access/fileam.h"
 #include "access/reloptions.h"
+#include "access/sysattr.h"
 #include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/heap.h"
@@ -112,9 +113,9 @@ extern bool cdbpathlocus_querysegmentcatalogs;
 
 
 /* Hooks for plugins to get control in ExecutorStart/Run/End() */
-ExecutorStart_hook_type	ExecutorStart_hook = NULL;
-ExecutorRun_hook_type	ExecutorRun_hook = NULL;
-ExecutorEnd_hook_type	ExecutorEnd_hook = NULL;
+ExecutorStart_hook_type ExecutorStart_hook = NULL;
+ExecutorRun_hook_type ExecutorRun_hook = NULL;
+ExecutorEnd_hook_type ExecutorEnd_hook = NULL;
 
 typedef struct evalPlanQual
 {
@@ -1244,8 +1245,12 @@ void
 ExecCheckRTEPerms(RangeTblEntry *rte)
 {
 	AclMode		requiredPerms;
+	AclMode		relPerms;
+	AclMode		remainingPerms;
 	Oid			relOid;
 	Oid			userid;
+	Bitmapset  *tmpset;
+	int			col;
 
 	/*
 	 * Only plain-relation RTEs need to be checked here.  Function RTEs are
@@ -1275,8 +1280,11 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 	userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
 
 	/*
-	 * We must have *all* the requiredPerms bits, so use aclmask not aclcheck.
+	 * We must have *all* the requiredPerms bits, but some of the bits can be
+	 * satisfied from column-level rather than relation-level permissions.
+	 * First, remove any bits that are satisfied by relation permissions.
 	 */
+<<<<<<< HEAD
 	if (pg_class_aclmask(relOid, userid, requiredPerms, ACLMASK_ALL)
 		!= requiredPerms)
 	{
@@ -1286,6 +1294,107 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 		 */
 		const char *rel_name = get_rel_name_partition(relOid);
 		aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS, rel_name);
+=======
+	relPerms = pg_class_aclmask(relOid, userid, requiredPerms, ACLMASK_ALL);
+	remainingPerms = requiredPerms & ~relPerms;
+	if (remainingPerms != 0)
+	{
+		/*
+		 * If we lack any permissions that exist only as relation permissions,
+		 * we can fail straight away.
+		 */
+		if (remainingPerms & ~(ACL_SELECT | ACL_INSERT | ACL_UPDATE))
+			aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
+						   get_rel_name(relOid));
+
+		/*
+		 * Check to see if we have the needed privileges at column level.
+		 *
+		 * Note: failures just report a table-level error; it would be nicer
+		 * to report a column-level error if we have some but not all of the
+		 * column privileges.
+		 */
+		if (remainingPerms & ACL_SELECT)
+		{
+			/*
+			 * When the query doesn't explicitly reference any columns (for
+			 * example, SELECT COUNT(*) FROM table), allow the query if we
+			 * have SELECT on any column of the rel, as per SQL spec.
+			 */
+			if (bms_is_empty(rte->selectedCols))
+			{
+				if (pg_attribute_aclcheck_all(relOid, userid, ACL_SELECT,
+											  ACLMASK_ANY) != ACLCHECK_OK)
+					aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
+								   get_rel_name(relOid));
+			}
+
+			tmpset = bms_copy(rte->selectedCols);
+			while ((col = bms_first_member(tmpset)) >= 0)
+			{
+				/* remove the column number offset */
+				col += FirstLowInvalidHeapAttributeNumber;
+				if (col == InvalidAttrNumber)
+				{
+					/* Whole-row reference, must have priv on all cols */
+					if (pg_attribute_aclcheck_all(relOid, userid, ACL_SELECT,
+												  ACLMASK_ALL) != ACLCHECK_OK)
+						aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
+									   get_rel_name(relOid));
+				}
+				else
+				{
+					if (pg_attribute_aclcheck(relOid, col, userid, ACL_SELECT)
+						!= ACLCHECK_OK)
+						aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
+									   get_rel_name(relOid));
+				}
+			}
+			bms_free(tmpset);
+		}
+
+		/*
+		 * Basically the same for the mod columns, with either INSERT or
+		 * UPDATE privilege as specified by remainingPerms.
+		 */
+		remainingPerms &= ~ACL_SELECT;
+		if (remainingPerms != 0)
+		{
+			/*
+			 * When the query doesn't explicitly change any columns, allow the
+			 * query if we have permission on any column of the rel.  This is
+			 * to handle SELECT FOR UPDATE as well as possible corner cases in
+			 * INSERT and UPDATE.
+			 */
+			if (bms_is_empty(rte->modifiedCols))
+			{
+				if (pg_attribute_aclcheck_all(relOid, userid, remainingPerms,
+											  ACLMASK_ANY) != ACLCHECK_OK)
+					aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
+								   get_rel_name(relOid));
+			}
+
+			tmpset = bms_copy(rte->modifiedCols);
+			while ((col = bms_first_member(tmpset)) >= 0)
+			{
+				/* remove the column number offset */
+				col += FirstLowInvalidHeapAttributeNumber;
+				if (col == InvalidAttrNumber)
+				{
+					/* whole-row reference can't happen here */
+					elog(ERROR, "whole-row update is not implemented");
+				}
+				else
+				{
+					if (pg_attribute_aclcheck(relOid, col, userid, remainingPerms)
+						!= ACLCHECK_OK)
+						aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
+									   get_rel_name(relOid));
+				}
+			}
+			bms_free(tmpset);
+		}
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 }
 
@@ -1960,9 +2069,9 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 	/*
 	 * Initialize the junk filter if needed.  SELECT and INSERT queries need a
-	 * filter if there are any junk attrs in the tlist.  UPDATE and
-	 * DELETE always need a filter, since there's always a junk 'ctid'
-	 * attribute present --- no need to look first.
+	 * filter if there are any junk attrs in the tlist.  UPDATE and DELETE
+	 * always need a filter, since there's always a junk 'ctid' attribute
+	 * present --- no need to look first.
 	 *
 	 * This section of code is also a convenient place to verify that the
 	 * output of an INSERT or UPDATE matches the target table(s).
@@ -2452,7 +2561,7 @@ ExecCheckPlanOutput(Relation resultRel, List *targetList)
 						 errdetail("Table has type %s at ordinal position %d, but query expects %s.",
 								   format_type_be(attr->atttypid),
 								   attno,
-								   format_type_be(exprType((Node *) tle->expr)))));
+							 format_type_be(exprType((Node *) tle->expr)))));
 		}
 		else
 		{
@@ -2473,7 +2582,7 @@ ExecCheckPlanOutput(Relation resultRel, List *targetList)
 	if (attno != resultDesc->natts)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("table row type and query-specified row type do not match"),
+		  errmsg("table row type and query-specified row type do not match"),
 				 errdetail("Query has too few columns.")));
 }
 
@@ -2935,7 +3044,7 @@ lnext:	;
 					/* if child rel, must check whether it produced this row */
 					if (erm->rti != erm->prti)
 					{
-						Oid		tableoid;
+						Oid			tableoid;
 
 						datum = ExecGetJunkAttribute(slot,
 													 erm->toidAttNo,
@@ -3217,6 +3326,7 @@ ExecInsert(TupleTableSlot *slot,
 
 	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 
+<<<<<<< HEAD
 	rel_is_heap = RelationIsHeap(resultRelationDesc);
 	rel_is_aocols = RelationIsAoCols(resultRelationDesc);
 	rel_is_aorows = RelationIsAoRows(resultRelationDesc);
@@ -3253,6 +3363,8 @@ ExecInsert(TupleTableSlot *slot,
 			resultRelInfo->ri_extInsertDesc = external_insert_init(resultRelationDesc);
 	}
 
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	/*
 	 * If the result relation has OIDs, force the tuple's OID to zero so that
 	 * heap_insert will assign a fresh OID.  Usually the OID already will be
@@ -3261,6 +3373,7 @@ ExecInsert(TupleTableSlot *slot,
 	 * rowtype.
 	 *
 	 * XXX if we ever wanted to allow users to assign their own OIDs to new
+<<<<<<< HEAD
 	 * rows, this'd be the place to do it.  For the moment, we make a point
 	 * of doing this before calling triggers, so that a user-supplied trigger
 	 * could hack the OID if desired.
@@ -3309,6 +3422,14 @@ ExecInsert(TupleTableSlot *slot,
 	}
 
 	Assert(slot != NULL);
+=======
+	 * rows, this'd be the place to do it.  For the moment, we make a point of
+	 * doing this before calling triggers, so that a user-supplied trigger
+	 * could hack the OID if desired.
+	 */
+	if (resultRelationDesc->rd_rel->relhasoids)
+		HeapTupleSetOid(tuple, InvalidOid);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* BEFORE ROW INSERT Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
@@ -4832,6 +4953,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 	Oid			intoRelationId;
 	TupleDesc	tupdesc;
 	DR_intorel *myState;
+<<<<<<< HEAD
 	char	   *intoTableSpaceName;
     GpPolicy   *targetPolicy;
 	bool		use_wal;
@@ -4843,6 +4965,9 @@ OpenIntoRel(QueryDesc *queryDesc)
 	int64			persistentSerialNum;
 	
 	targetPolicy = queryDesc->plannedstmt->intoPolicy;
+=======
+	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	Assert(into);
 
@@ -4934,6 +5059,8 @@ OpenIntoRel(QueryDesc *queryDesc)
 	/* Parse and validate any reloptions */
 	reloptions = transformRelOptions((Datum) 0,
 									 into->options,
+									 NULL,
+									 validnsps,
 									 true,
 									 false);
 
@@ -4997,9 +5124,22 @@ OpenIntoRel(QueryDesc *queryDesc)
 	 * CommandCounterIncrement(), so that the new tables will be visible for
 	 * insertion.
 	 */
+<<<<<<< HEAD
 	AlterTableCreateToastTable(intoRelationId, false);
 	AlterTableCreateAoSegTable(intoRelationId, false);
 	AlterTableCreateAoVisimapTable(intoRelationId, false);
+=======
+	reloptions = transformRelOptions((Datum) 0,
+									 into->options,
+									 "toast",
+									 validnsps,
+									 true,
+									 false);
+
+	(void) heap_reloptions(RELKIND_TOASTVALUE, reloptions, true);
+
+	AlterTableCreateToastTable(intoRelationId, InvalidOid, reloptions, false);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
     /* don't create AO block directory here, it'll be created when needed */
 	/*
@@ -5030,8 +5170,8 @@ OpenIntoRel(QueryDesc *queryDesc)
 	myState->rel = intoRelationDesc;
 
 	/*
-	 * We can skip WAL-logging the insertions, unless PITR is in use.  We
-	 * can skip the FSM in any case.
+	 * We can skip WAL-logging the insertions, unless PITR is in use.  We can
+	 * skip the FSM in any case.
 	 */
 	myState->hi_options = HEAP_INSERT_SKIP_FSM |
 		(use_wal ? 0 : HEAP_INSERT_SKIP_WAL);
@@ -5212,6 +5352,7 @@ static void
 intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 {
 	DR_intorel *myState = (DR_intorel *) self;
+<<<<<<< HEAD
 	Relation	into_rel = myState->rel;
 
 	Assert(myState->estate->es_result_partitions == NULL);
@@ -5259,6 +5400,27 @@ intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 
 		myState->last_heap_tid = tuple->t_self;
 	}
+=======
+	HeapTuple	tuple;
+
+	/*
+	 * get the heap tuple out of the tuple table slot, making sure we have a
+	 * writable copy
+	 */
+	tuple = ExecMaterializeSlot(slot);
+
+	/*
+	 * force assignment of new OID (see comments in ExecInsert)
+	 */
+	if (myState->rel->rd_rel->relhasoids)
+		HeapTupleSetOid(tuple, InvalidOid);
+
+	heap_insert(myState->rel,
+				tuple,
+				myState->estate->es_output_cid,
+				myState->hi_options,
+				myState->bistate);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* We know this is a newly created relation, so there are no indexes */
 }

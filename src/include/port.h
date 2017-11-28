@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.123 2009/01/01 17:23:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.125 2009/06/11 14:49:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,7 +312,8 @@ extern bool rmtree(const char *path, bool rmtopdir);
  */
 #if defined(WIN32) && !defined(__CYGWIN__) && !defined(UNSAFE_STAT_OK)
 #include <sys/stat.h>
-extern int	pgwin32_safestat(const char *path, struct stat *buf);
+extern int	pgwin32_safestat(const char *path, struct stat * buf);
+
 #define stat(a,b) pgwin32_safestat(a,b)
 #endif
 
@@ -359,11 +360,16 @@ extern char *crypt(const char *key, const char *setting);
 /* WIN32 handled in port/win32.h */
 #ifndef WIN32
 #define pgoff_t off_t
+<<<<<<< HEAD
 #if defined(__bsdi__) || defined(__NetBSD__)
+=======
+#if defined(bsdi) || defined(netbsd)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 extern int	fseeko(FILE *stream, off_t offset, int whence);
 extern off_t ftello(FILE *stream);
 #endif
 #endif
+<<<<<<< HEAD
 
 #ifndef HAVE_ERAND48
 /* we assume all of these are present or missing together */
@@ -371,6 +377,8 @@ extern double erand48(unsigned short xseed[3]);
 extern long lrand48(void);
 extern void srand48(long seed);
 #endif
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 #ifndef HAVE_FSEEKO
 #define fseeko(a, b, c) fseek(a, b, c)

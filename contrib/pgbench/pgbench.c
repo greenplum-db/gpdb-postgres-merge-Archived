@@ -159,9 +159,12 @@ typedef struct
 	char	   *name;			/* variable name */
 	char	   *value;			/* its value */
 } Variable;
+<<<<<<< HEAD
 
 #define MAX_FILES		128		/* max number of SQL script files allowed */
 #define SHELL_COMMAND_SIZE	256	/* maximum size allowed for shell command */
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 #define MAX_FILES		128		/* max number of SQL script files allowed */
 
@@ -186,6 +189,7 @@ typedef struct
 	int			use_file;		/* index in sql_files for this client */
 	bool		prepared[MAX_FILES];
 } CState;
+<<<<<<< HEAD
 
 /*
  * Thread state and result
@@ -205,6 +209,8 @@ typedef struct
 	instr_time		conn_time;
 	int				xacts;
 } TResult;
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 /*
  * queries read from files
@@ -278,7 +284,43 @@ static char *select_only = {
 
 /* Function prototypes */
 static void setalarm(int seconds);
+<<<<<<< HEAD
 static void* threadRun(void *arg);
+=======
+
+
+/* Calculate total time */
+static void
+addTime(struct timeval * t1, struct timeval * t2, struct timeval * result)
+{
+	int			sec = t1->tv_sec + t2->tv_sec;
+	int			usec = t1->tv_usec + t2->tv_usec;
+
+	if (usec >= 1000000)
+	{
+		usec -= 1000000;
+		sec++;
+	}
+	result->tv_sec = sec;
+	result->tv_usec = usec;
+}
+
+/* Calculate time difference */
+static void
+diffTime(struct timeval * t1, struct timeval * t2, struct timeval * result)
+{
+	int			sec = t1->tv_sec - t2->tv_sec;
+	int			usec = t1->tv_usec - t2->tv_usec;
+
+	if (usec < 0)
+	{
+		usec += 1000000;
+		sec--;
+	}
+	result->tv_sec = sec;
+	result->tv_usec = usec;
+}
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 static void
 usage(const char *progname)
@@ -288,8 +330,11 @@ usage(const char *progname)
 		   "  %s [OPTIONS]... [DBNAME]\n"
 		   "\nInitialization options:\n"
 		   "  -i           invokes initialization mode\n"
+<<<<<<< HEAD
 		   "  -x STRING    append this string to the storage clause e.g. 'appendonly=true, orientation=column'\n"
 		   "  -q           make the indexes that are created non-unique indexes (default: unique)\n"
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		   "  -F NUM       fill factor\n"
 		   "  -s NUM       scaling factor\n"
 		   "\nBenchmarking options:\n"
@@ -298,7 +343,10 @@ usage(const char *progname)
 		   "  -D VARNAME=VALUE\n"
 		   "               define variable for use by custom script\n"
 		   "  -f FILENAME  read transaction script from FILENAME\n"
+<<<<<<< HEAD
 		   "  -j NUM       number of threads (default: 1)\n"
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		   "  -l           write transaction times to log file\n"
 		   "  -M {simple|extended|prepared}\n"
 		   "               protocol for submitting queries to server (default: simple)\n"
@@ -317,7 +365,11 @@ usage(const char *progname)
 		   "  --help       show this help, then exit\n"
 		   "  --version    output version information, then exit\n"
 		   "\n"
+<<<<<<< HEAD
 		   "Report bugs to <bugs@greenplum.org>.\n",
+=======
+		   "Report bugs to <pgsql-bugs@postgresql.org>.\n",
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		   progname, progname);
 }
 
@@ -408,6 +460,32 @@ discard_response(CState *state)
 	} while (res);
 }
 
+<<<<<<< HEAD
+=======
+/* check to see if the SQL result was good */
+static int
+check(CState *state, PGresult *res, int n)
+{
+	CState	   *st = &state[n];
+
+	switch (PQresultStatus(res))
+	{
+		case PGRES_COMMAND_OK:
+		case PGRES_TUPLES_OK:
+			/* OK */
+			break;
+		default:
+			fprintf(stderr, "Client %d aborted in state %d: %s",
+					n, st->state, PQerrorMessage(st->con));
+			remains--;			/* I've aborted */
+			PQfinish(st->con);
+			st->con = NULL;
+			return (-1);
+	}
+	return (0);					/* OK */
+}
+
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static int
 compareVariables(const void *v1, const void *v2)
 {
@@ -504,8 +582,8 @@ putVariable(CState *st, char *name, char *value)
 static char *
 parseVariable(const char *sql, int *eaten)
 {
-	int		i = 0;
-	char   *name;
+	int			i = 0;
+	char	   *name;
 
 	do
 	{
@@ -527,12 +605,12 @@ parseVariable(const char *sql, int *eaten)
 static char *
 replaceVariable(char **sql, char *param, int len, char *value)
 {
-	int	valueln = strlen(value);
+	int			valueln = strlen(value);
 
 	if (valueln > len)
 	{
-		char   *tmp;
-		size_t	offset = param - *sql;
+		char	   *tmp;
+		size_t		offset = param - *sql;
 
 		tmp = realloc(*sql, strlen(*sql) - len + valueln + 1);
 		if (tmp == NULL)
@@ -561,7 +639,7 @@ assignVariables(CState *st, char *sql)
 	p = sql;
 	while ((p = strchr(p, ':')) != NULL)
 	{
-		int		eaten;
+		int			eaten;
 
 		name = parseVariable(p, &eaten);
 		if (name == NULL)
@@ -595,6 +673,7 @@ getQueryParams(CState *st, const Command *command, const char **params)
 
 	for (i = 0; i < command->argc - 1; i++)
 		params[i] = getVariable(st, command->argv[i + 1]);
+<<<<<<< HEAD
 }
 
 /*
@@ -703,6 +782,8 @@ runShellCommand(CState *st, char *variable, char **argv, int argc)
 	printf("shell parameter name: %s, value: %s\n", argv[1], res);
 #endif
 	return true;
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 #define MAX_PREPARE_NAME		32
@@ -712,6 +793,7 @@ preparedStatementName(char *buffer, int file, int state)
 	sprintf(buffer, "P%d_%d", file, state);
 }
 
+<<<<<<< HEAD
 static bool
 clientDone(CState *st, bool ok)
 {
@@ -728,6 +810,10 @@ clientDone(CState *st, bool ok)
 /* return false iff client should be disconnected */
 static bool
 doCustom(CState *st, instr_time *conn_time)
+=======
+static void
+doCustom(CState *state, int n, int debug)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	PGresult   *res;
 	Command   **commands;
@@ -830,7 +916,13 @@ top:
 
 	if (st->con == NULL)
 	{
+<<<<<<< HEAD
 		instr_time	start, end;
+=======
+		struct timeval t1,
+					t2,
+					t3;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		INSTR_TIME_SET_CURRENT(start);
 		if ((st->con = doConnect()) == NULL)
@@ -847,8 +939,8 @@ top:
 
 	if (commands[st->state]->type == SQL_COMMAND)
 	{
-		const Command  *command = commands[st->state];
-		int				r;
+		const Command *command = commands[st->state];
+		int			r;
 
 		if (querymode == QUERY_SIMPLE)
 		{
@@ -869,8 +961,8 @@ top:
 		}
 		else if (querymode == QUERY_EXTENDED)
 		{
-			const char		 *sql = command->argv[0];
-			const char		 *params[MAX_ARGS];
+			const char *sql = command->argv[0];
+			const char *params[MAX_ARGS];
 
 			getQueryParams(st, command, params);
 
@@ -886,7 +978,7 @@ top:
 
 			if (!st->prepared[st->use_file])
 			{
-				int		j;
+				int			j;
 
 				for (j = 0; commands[j] != NULL; j++)
 				{
@@ -897,7 +989,7 @@ top:
 						continue;
 					preparedStatementName(name, st->use_file, j);
 					res = PQprepare(st->con, name,
-						commands[j]->argv[0], commands[j]->argc - 1, NULL);
+						  commands[j]->argv[0], commands[j]->argc - 1, NULL);
 					if (PQresultStatus(res) != PGRES_COMMAND_OK)
 						fprintf(stderr, "%s", PQerrorMessage(st->con));
 					PQclear(res);
@@ -1143,7 +1235,11 @@ top:
 
 /* discard connections */
 static void
+<<<<<<< HEAD
 disconnect_all(CState *state, int length)
+=======
+disconnect_all(CState *state)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	int			i;
 
@@ -1172,6 +1268,7 @@ init(void)
 	 */
 	static char *DDLs[] = {
 		"drop table if exists pgbench_branches",
+<<<<<<< HEAD
 		"create table pgbench_branches(bid int not null,bbalance int,filler char(88)) with (fillfactor=%d, %s) DISTRIBUTED BY (bid)",
 		"drop table if exists pgbench_tellers",
 		"create table pgbench_tellers(tid int not null,bid int,tbalance int,filler char(84)) with (fillfactor=%d, %s) DISTRIBUTED BY (tid)",
@@ -1179,17 +1276,29 @@ init(void)
 		"create table pgbench_accounts(aid int not null,bid int,abalance int,filler char(84)) with (fillfactor=%d, %s) DISTRIBUTED BY (aid)",
 		"drop table if exists pgbench_history",
 		"create table pgbench_history(tid int,bid int,aid int,delta int,mtime timestamp,filler char(22)) with (%s) DISTRIBUTED BY (tid)"
+=======
+		"create table pgbench_branches(bid int not null,bbalance int,filler char(88)) with (fillfactor=%d)",
+		"drop table if exists pgbench_tellers",
+		"create table pgbench_tellers(tid int not null,bid int,tbalance int,filler char(84)) with (fillfactor=%d)",
+		"drop table if exists pgbench_accounts",
+		"create table pgbench_accounts(aid int not null,bid int,abalance int,filler char(84)) with (fillfactor=%d)",
+		"drop table if exists pgbench_history",
+		"create table pgbench_history(tid int,bid int,aid int,delta int,mtime timestamp,filler char(22))"
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	};
 	static char *DDLAFTERs[] = {
 		"alter table pgbench_branches add primary key (bid)",
 		"alter table pgbench_tellers add primary key (tid)",
 		"alter table pgbench_accounts add primary key (aid)"
 	};
+<<<<<<< HEAD
 	static char *NON_UNIQUE_INDEX_DDLAFTERs[] = {
 		"CREATE INDEX branch_idx ON pgbench_branches (bid) ",
 		"CREATE INDEX teller_idx ON pgbench_tellers (tid) ",
 		"CREATE INDEX account_idx ON pgbench_accounts (aid) "
 	};
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	PGconn	   *con;
 	PGresult   *res;
@@ -1238,8 +1347,13 @@ init(void)
 
 	for (i = 0; i < ntellers * scale; i++)
 	{
+<<<<<<< HEAD
 		snprintf(sql, 256, "insert into pgbench_tellers(tid,bid,tbalance) values (%d,%d,0)",
 				 i + 1, i / ntellers + 1);
+=======
+		snprintf(sql, 256, "insert into pgbench_tellers(tid,bid,tbalance) values (%d,%d,0)"
+				 ,i + 1, i / ntellers + 1);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		executeStatement(con, sql);
 	}
 
@@ -1335,9 +1449,9 @@ parseQuery(Command *cmd, const char *raw_sql)
 	p = sql;
 	while ((p = strchr(p, ':')) != NULL)
 	{
-		char	var[12];
-		char   *name;
-		int		eaten;
+		char		var[12];
+		char	   *name;
+		int			eaten;
 
 		name = parseVariable(p, &eaten);
 		if (name == NULL)
@@ -1669,8 +1783,14 @@ process_builtin(char *tb)
 
 /* print out results */
 static void
+<<<<<<< HEAD
 printResults(int ttype, int normal_xacts, int nclients, int nthreads,
 			 instr_time total_time, instr_time conn_total_time)
+=======
+printResults(
+			 int ttype, CState *state,
+			 struct timeval * start_time, struct timeval * end_time)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	double		time_include,
 				tps_include,
@@ -1730,10 +1850,15 @@ main(int argc, char **argv)
 	CState	   *state;			/* status of clients */
 	TState	   *threads;		/* array of thread */
 
+<<<<<<< HEAD
 	instr_time	start_time;		/* start up time */
 	instr_time	total_time;
 	instr_time	conn_total_time;
 	int			total_xacts;
+=======
+	struct timeval start_time;	/* start up time */
+	struct timeval end_time;	/* end time */
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	int			i;
 
@@ -2108,7 +2233,36 @@ main(int argc, char **argv)
 	INSTR_TIME_SET_CURRENT(start_time);
 	srandom((unsigned int) INSTR_TIME_GET_MICROSEC(start_time));
 
+<<<<<<< HEAD
 	/* process builtin SQL scripts */
+=======
+	/* get start up time */
+	gettimeofday(&start_time, NULL);
+
+	/* set alarm if duration is specified. */
+	if (duration > 0)
+		setalarm(duration);
+
+	if (is_connect == 0)
+	{
+		struct timeval t,
+					now;
+
+		/* make connections to the database */
+		for (i = 0; i < nclients; i++)
+		{
+			state[i].id = i;
+			if ((state[i].con = doConnect()) == NULL)
+				exit(1);
+		}
+		/* time after connections set up */
+		gettimeofday(&now, NULL);
+		diffTime(&now, &start_time, &t);
+		addTime(&conn_total_time, &t, &conn_total_time);
+	}
+
+	/* process bultin SQL scripts */
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	switch (ttype)
 	{
 		case 0:
@@ -2272,6 +2426,14 @@ threadRun(void *arg)
 				this_usec = st->until - now_usec;
 				if (min_usec > this_usec)
 					min_usec = this_usec;
+<<<<<<< HEAD
+=======
+
+				FD_SET		(sock, &input_mask);
+
+				if (maxsock < sock)
+					maxsock = sock;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			}
 			else if (st->con == NULL)
 			{
@@ -2283,11 +2445,23 @@ threadRun(void *arg)
 				break;
 			}
 
+<<<<<<< HEAD
 			sock = PQsocket(st->con);
 			if (sock < 0)
 			{
 				fprintf(stderr, "bad socket: %s\n", strerror(errno));
 				goto done;
+=======
+				if (sock < 0)
+				{
+					disconnect_all(state);
+					exit(1);
+				}
+				FD_SET		(sock, &input_mask);
+
+				if (maxsock < sock)
+					maxsock = sock;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			}
 
 			FD_SET(sock, &input_mask);
@@ -2372,6 +2546,7 @@ setalarm(int seconds)
 	pqsignal(SIGALRM, handle_sig_alarm);
 	alarm(seconds);
 }
+<<<<<<< HEAD
 
 #ifndef ENABLE_THREAD_SAFETY
 
@@ -2465,6 +2640,8 @@ pthread_join(pthread_t th, void **thread_return)
 
 #endif
 
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #else							/* WIN32 */
 
 static VOID CALLBACK
@@ -2491,6 +2668,7 @@ setalarm(int seconds)
 	}
 }
 
+<<<<<<< HEAD
 /* partial pthread implementation for Windows */
 
 typedef struct win32_pthread
@@ -2557,4 +2735,6 @@ pthread_join(pthread_t th, void **thread_return)
 	return 0;
 }
 
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #endif   /* WIN32 */

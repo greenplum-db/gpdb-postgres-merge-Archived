@@ -12,7 +12,10 @@
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+<<<<<<< HEAD
 #include "utils/xml.h"
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 /* libxml includes */
 
@@ -25,7 +28,32 @@
 
 PG_MODULE_MAGIC;
 
+<<<<<<< HEAD
 /* externally accessible functions */
+=======
+/* declarations */
+
+static void *pgxml_palloc(size_t size);
+static void *pgxml_repalloc(void *ptr, size_t size);
+static void pgxml_pfree(void *ptr);
+static char *pgxml_pstrdup(const char *string);
+static void pgxml_errorHandler(void *ctxt, const char *msg,...);
+
+void		elog_error(int level, char *explain, int force);
+void		pgxml_parser_init(void);
+
+static xmlChar *pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
+				   xmlChar *toptagname, xmlChar *septagname,
+				   xmlChar *plainsep);
+
+text *pgxml_result_to_text(xmlXPathObjectPtr res, xmlChar *toptag,
+					 xmlChar *septag, xmlChar *plainsep);
+
+xmlChar    *pgxml_texttoxmlchar(text *textstring);
+
+static xmlXPathObjectPtr pgxml_xpath(text *document, xmlChar *xpath);
+
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 Datum		xml_is_well_formed(PG_FUNCTION_ARGS);
 Datum		xml_encode_special_chars(PG_FUNCTION_ARGS);
@@ -131,6 +159,7 @@ xml_encode_special_chars(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(tout);
 }
 
+<<<<<<< HEAD
 /*
  * Function translates a nodeset into a text representation
  *
@@ -143,6 +172,10 @@ xml_encode_special_chars(PG_FUNCTION_ARGS)
  * cast to string as output method
  */
 static xmlChar *
+=======
+static xmlChar
+		   *
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
 				   xmlChar *toptagname,
 				   xmlChar *septagname,
@@ -390,8 +423,13 @@ xpath_bool(PG_FUNCTION_ARGS)
 
 /* Core function to evaluate XPath query */
 
+<<<<<<< HEAD
 static xmlXPathObjectPtr
 pgxml_xpath(text *document, xmlChar *xpath, xpath_workspace *workspace)
+=======
+xmlXPathObjectPtr
+pgxml_xpath(text *document, xmlChar *xpath)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	int32		docsize = VARSIZE(document) - VARHDRSZ;
 	xmlXPathObjectPtr res;
@@ -686,7 +724,7 @@ xpath_table(PG_FUNCTION_ARGS)
 		/* Parse the document */
 		if (xmldoc)
 			doctree = xmlParseMemory(xmldoc, strlen(xmldoc));
-		else					/* treat NULL as not well-formed */
+		else	/* treat NULL as not well-formed */
 			doctree = NULL;
 
 		if (doctree == NULL)

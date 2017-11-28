@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.65 2009/01/01 17:23:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.69 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,6 +84,7 @@ ExecMaterial(MaterialState *node)
 		 */
 		if(ma->share_type == SHARE_MATERIAL_XSLICE)
 		{
+<<<<<<< HEAD
 			char rwfile_prefix[100];
 
 			if(ma->driver_slice != currentSliceId)
@@ -91,6 +92,13 @@ ExecMaterial(MaterialState *node)
 				elog(LOG, "Material Exec on CrossSlice, current slice %d", currentSliceId);
 				return NULL;
 			}
+=======
+			/*
+			 * Allocate a second read pointer to serve as the mark. We know it
+			 * must have index 1, so needn't store that.
+			 */
+			int			ptrno;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 			shareinput_create_bufname_prefix(rwfile_prefix, sizeof(rwfile_prefix), ma->share_id);
 			elog(LOG, "Material node creates shareinput rwfile %s", rwfile_prefix);
@@ -193,8 +201,15 @@ ExecMaterial(MaterialState *node)
 
 	if(tsa != NULL && ntuplestore_acc_tell(tsa, NULL))
 	{
+<<<<<<< HEAD
 		ntuplestore_acc_current_tupleslot(tsa, slot);
 		return slot;
+=======
+		if (tuplestore_gettupleslot(tuplestorestate, forward, false, slot))
+			return slot;
+		if (forward)
+			eof_tuplestore = true;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 
 	/*
@@ -282,7 +297,7 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	/*
 	 * Tuplestore's interpretation of the flag bits is subtly different from
 	 * the general executor meaning: it doesn't think BACKWARD necessarily
-	 * means "backwards all the way to start".  If told to support BACKWARD we
+	 * means "backwards all the way to start".	If told to support BACKWARD we
 	 * must include REWIND in the tuplestore eflags, else tuplestore_trim
 	 * might throw away too much.
 	 */

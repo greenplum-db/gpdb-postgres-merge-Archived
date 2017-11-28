@@ -5,7 +5,7 @@
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.179 2009/01/01 17:23:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.184 2009/06/11 14:49:08 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -129,7 +129,7 @@ static int	completion_max_records;
  * Communication variables set by COMPLETE_WITH_FOO macros and then used by
  * the completion callback functions.  Ugly but there is no better way.
  */
-static const char *completion_charp;			/* to pass a string */
+static const char *completion_charp;	/* to pass a string */
 static const char *const * completion_charpp;	/* to pass a list of strings */
 static const char *completion_info_charp;		/* to pass a second string */
 static const char *completion_info_charp2;		/* to pass a third string */
@@ -435,11 +435,14 @@ static const SchemaQuery Query_for_list_of_views = {
 "  UNION ALL SELECT 'all') ss "\
 " WHERE substring(name,1,%d)='%s'"
 
+<<<<<<< HEAD
 #define Query_for_list_of_resgroups \
 " SELECT pg_catalog.quote_ident(rsgname) "\
 "   FROM pg_catalog.pg_resgroup "\
 "  WHERE substring(pg_catalog.quote_ident(rsgname),1,%d)='%s'"
 
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #define Query_for_list_of_roles \
 " SELECT pg_catalog.quote_ident(rolname) "\
 "   FROM pg_catalog.pg_roles "\
@@ -663,7 +666,11 @@ psql_completion(char *text, int start, int end)
 		"\\a", "\\connect", "\\conninfo", "\\C", "\\cd", "\\copy", "\\copyright",
 		"\\d", "\\da", "\\db", "\\dc", "\\dC", "\\dd", "\\dD", "\\des", "\\deu", "\\dew", "\\df",
 		"\\dF", "\\dFd", "\\dFp", "\\dFt", "\\dg", "\\di", "\\dl",
+<<<<<<< HEAD
 		"\\dn", "\\do", "\\dp", "\\drds", "\\ds", "\\dS", "\\dt", "\\dT", "\\dv", "\\du",
+=======
+		"\\dn", "\\do", "\\dp", "\\ds", "\\dS", "\\dt", "\\dT", "\\dv", "\\du",
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		"\\e", "\\echo", "\\ef", "\\encoding",
 		"\\f", "\\g", "\\h", "\\help", "\\H", "\\i", "\\l",
 		"\\lo_import", "\\lo_export", "\\lo_list", "\\lo_unlink",
@@ -724,8 +731,13 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev3_wd, "TABLE") != 0)
 	{
 		static const char *const list_ALTER[] =
+<<<<<<< HEAD
 		{"AGGREGATE", "CONVERSION", "DATABASE", "DEFAULT PRIVILEGES", "DOMAIN", "EXTENSION", "FOREIGN DATA WRAPPER", "FUNCTION",
 		"GROUP", "INDEX", "LANGUAGE", "LARGE OBJECT", "OPERATOR", "ROLE", "SCHEMA", "SERVER", "SEQUENCE", "TABLE",
+=======
+		{"AGGREGATE", "CONVERSION", "DATABASE", "DOMAIN", "FOREIGN DATA WRAPPER", "FUNCTION",
+			"GROUP", "INDEX", "LANGUAGE", "OPERATOR", "ROLE", "SCHEMA", "SERVER", "SEQUENCE", "TABLE",
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		"TABLESPACE", "TEXT SEARCH", "TRIGGER", "TYPE", "USER", "USER MAPPING FOR", "VIEW", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER);
@@ -795,7 +807,7 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "WRAPPER") == 0)
 	{
 		static const char *const list_ALTER_FDW[] =
-		{"LIBRARY", "OPTIONS", "OWNER TO", NULL};
+		{"VALIDATOR", "OPTIONS", "OWNER TO", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER_FDW);
 	}
@@ -1487,12 +1499,7 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev4_wd, "FOREIGN") == 0 &&
 			 pg_strcasecmp(prev3_wd, "DATA") == 0 &&
 			 pg_strcasecmp(prev2_wd, "WRAPPER") == 0)
-		COMPLETE_WITH_CONST("LIBRARY");
-
-	else if (pg_strcasecmp(prev5_wd, "DATA") == 0 &&
-			 pg_strcasecmp(prev4_wd, "WRAPPER") == 0 &&
-			 pg_strcasecmp(prev2_wd, "LIBRARY") == 0)
-		COMPLETE_WITH_CONST("LANGUAGE C");
+		COMPLETE_WITH_CONST("VALIDATOR");
 
 	/* CREATE INDEX */
 	/* First off we complete CREATE UNIQUE with "INDEX" */
@@ -2096,8 +2103,13 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_ATTR(prev2_wd, "");
 
 	/*
+<<<<<<< HEAD
 	 * Complete INSERT INTO <table> with "(" or "VALUES" or "SELECT" or
 	 * "TABLE" or "DEFAULT VALUES"
+=======
+	 * Complete INSERT INTO <table> with "VALUES" or "SELECT" or "TABLE" or
+	 * "DEFAULT VALUES"
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	else if (pg_strcasecmp(prev3_wd, "INSERT") == 0 &&
 			 pg_strcasecmp(prev2_wd, "INTO") == 0)
@@ -2562,8 +2574,12 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes, NULL);
 	else if (strncmp(prev_wd, "\\dn", strlen("\\dn")) == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_schemas);
+<<<<<<< HEAD
 	else if (strncmp(prev_wd, "\\dp", strlen("\\dp")) == 0
 			 || strncmp(prev_wd, "\\z", strlen("\\z")) == 0)
+=======
+	else if (strncmp(prev_wd, "\\dp", strlen("\\dp")) == 0)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsv, NULL);
 	else if (strncmp(prev_wd, "\\ds", strlen("\\ds")) == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_sequences, NULL);
@@ -2571,8 +2587,12 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
 	else if (strncmp(prev_wd, "\\dT", strlen("\\dT")) == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_datatypes, NULL);
+<<<<<<< HEAD
 	else if (strncmp(prev_wd, "\\du", strlen("\\du")) == 0
 			 || (strncmp(prev_wd, "\\dg", strlen("\\dg")) == 0))
+=======
+	else if (strncmp(prev_wd, "\\du", strlen("\\du")) == 0)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
 	else if (strncmp(prev_wd, "\\dv", strlen("\\dv")) == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_views, NULL);

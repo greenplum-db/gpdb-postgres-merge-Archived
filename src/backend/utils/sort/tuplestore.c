@@ -29,7 +29,7 @@
  * When the caller requests backward-scan capability, we write the temp file
  * in a format that allows either forward or backward scan.  Otherwise, only
  * forward scan is allowed.  A request for backward scan must be made before
- * putting any tuples into the tuplestore.  Rewind is normally allowed but
+ * putting any tuples into the tuplestore.	Rewind is normally allowed but
  * can be turned off via tuplestore_set_eflags; turning off rewind for all
  * read pointers enables truncation of the tuplestore at the oldest read point
  * for minimal memory usage.  (The caller must explicitly call tuplestore_trim
@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.46 2009/01/01 17:23:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.48 2009/06/11 14:49:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,7 @@ typedef enum
  *
  * Special case: if eof_reached is true, then the pointer's read position is
  * implicitly equal to the write position, and current/file/offset aren't
- * maintained.  This way we need not update all the read pointers each time
+ * maintained.	This way we need not update all the read pointers each time
  * we write.
  */
 typedef struct
@@ -175,6 +175,7 @@ struct Tuplestorestate
 	int			readptrsize;	/* allocated length of readptrs array */
 
 	int			writepos_file;	/* file# (valid if READFILE state) */
+<<<<<<< HEAD
 	off_t		writepos_offset; /* offset (valid if READFILE state) */
 
     /*
@@ -189,6 +190,9 @@ struct Tuplestorestate
 	 * MemTupleBinding used for putvalues of tuplestore.
 	 */
 	 MemTupleBinding	*mt_bind;
+=======
+	off_t		writepos_offset;	/* offset (valid if READFILE state) */
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 };
 
 #define COPYTUP(state,tup)	((*(state)->copytup) (state, tup))
@@ -407,7 +411,7 @@ tuplestore_alloc_read_pointer(Tuplestorestate *state, int eflags)
 	/* Make room for another read pointer if needed */
 	if (state->readptrcount >= state->readptrsize)
 	{
-		int		newcnt = state->readptrsize * 2;
+		int			newcnt = state->readptrsize * 2;
 
 		state->readptrs = (TSReadPointer *)
 			repalloc(state->readptrs, newcnt * sizeof(TSReadPointer));
@@ -728,6 +732,7 @@ tuplestore_puttuple_common(Tuplestorestate *state, void *tuple)
 			 * the temp file(s) are created in suitable temp tablespaces.
 			 */
 			PrepareTempTablespaces();
+<<<<<<< HEAD
 
 			/* associate the file with the store's resource owner */
 			oldowner = CurrentResourceOwner;
@@ -738,6 +743,9 @@ tuplestore_puttuple_common(Tuplestorestate *state, void *tuple)
 			state->myfile = BufFileCreateTemp(tmpprefix, state->interXact);
 
 			CurrentResourceOwner = oldowner;
+=======
+			state->myfile = BufFileCreateTemp(state->interXact);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 			/*
 			 * Freeze the decision about whether trailing length words will be
@@ -1011,6 +1019,7 @@ tuplestore_gettupleslot(Tuplestorestate *state, bool forward,
 	{
 		if (copy && !should_free)
 		{
+<<<<<<< HEAD
 			if (is_memtuple(tuple))
 				tuple = (GenericTuple) memtuple_copy_to((MemTuple) tuple, NULL, NULL);
 			else
@@ -1018,6 +1027,12 @@ tuplestore_gettupleslot(Tuplestorestate *state, bool forward,
 			should_free = true;
 		}
 		ExecStoreGenericTuple(tuple, slot, should_free);
+=======
+			tuple = heap_copy_minimal_tuple(tuple);
+			should_free = true;
+		}
+		ExecStoreMinimalTuple(tuple, slot, should_free);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		return true;
 	}
 	else
@@ -1119,7 +1134,7 @@ tuplestore_rescan(Tuplestorestate *state)
 }
 
 /*
- * tuplestore_copy_read_pointer	- copy a read pointer's state to another
+ * tuplestore_copy_read_pointer - copy a read pointer's state to another
  */
 void
 tuplestore_copy_read_pointer(Tuplestorestate *state,
@@ -1138,8 +1153,8 @@ tuplestore_copy_read_pointer(Tuplestorestate *state,
 	if (dptr->eflags != sptr->eflags)
 	{
 		/* Possible change of overall eflags, so copy and then recompute */
-		int		eflags;
-		int		i;
+		int			eflags;
+		int			i;
 
 		*dptr = *sptr;
 		eflags = state->readptrs[0].eflags;
@@ -1354,8 +1369,19 @@ copytup_heap(Tuplestorestate *state, void *tup)
 static void
 writetup_heap(Tuplestorestate *state, void *tup)
 {
+<<<<<<< HEAD
 	uint32 tuplen = 0;
 	Size         memsize = 0;
+=======
+	MinimalTuple tuple = (MinimalTuple) tup;
+
+	/* the part of the MinimalTuple we'll write: */
+	char	   *tupbody = (char *) tuple + MINIMAL_TUPLE_DATA_OFFSET;
+	unsigned int tupbodylen = tuple->t_len - MINIMAL_TUPLE_DATA_OFFSET;
+
+	/* total on-disk footprint: */
+	unsigned int tuplen = tupbodylen + sizeof(int);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	if (is_memtuple((GenericTuple) tup))
 		tuplen = memtuple_get_size((MemTuple) tup);
@@ -1383,6 +1409,7 @@ writetup_heap(Tuplestorestate *state, void *tup)
 static void *
 readtup_heap(Tuplestorestate *state, unsigned int len)
 {
+<<<<<<< HEAD
 	void *tup = NULL;
 	uint32 tuplen = 0;
 
@@ -1426,6 +1453,20 @@ readtup_heap(Tuplestorestate *state, unsigned int len)
 	}
 
 	if (state->backward)	/* need trailing length word? */
+=======
+	unsigned int tupbodylen = len - sizeof(int);
+	unsigned int tuplen = tupbodylen + MINIMAL_TUPLE_DATA_OFFSET;
+	MinimalTuple tuple = (MinimalTuple) palloc(tuplen);
+	char	   *tupbody = (char *) tuple + MINIMAL_TUPLE_DATA_OFFSET;
+
+	USEMEM(state, GetMemoryChunkSpace(tuple));
+	/* read in the tuple proper */
+	tuple->t_len = tuplen;
+	if (BufFileRead(state->myfile, (void *) tupbody,
+					tupbodylen) != (size_t) tupbodylen)
+		elog(ERROR, "unexpected end of data");
+	if (state->backward)		/* need trailing length word? */
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		if (BufFileRead(state->myfile, (void *) &tuplen,
 						sizeof(tuplen)) != sizeof(tuplen))
 		{

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/intarray/_int.h,v 1.16 2008/05/17 01:28:19 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/intarray/_int.h,v 1.17 2009/06/11 14:48:51 momjian Exp $
  */
 #ifndef ___INT_H__
 #define ___INT_H__
@@ -73,7 +73,7 @@ typedef struct
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int4		flag;
 	char		data[1];
-}	GISTTYPE;
+} GISTTYPE;
 
 #define ALLISTRUE		0x04
 
@@ -126,14 +126,20 @@ typedef struct ITEM
 	int2		type;
 	int2		left;
 	int4		val;
-}	ITEM;
+} ITEM;
 
 typedef struct QUERYTYPE
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
+<<<<<<< HEAD
 	int4		size;			/* number of ITEMs */
 	ITEM		items[1];		/* variable length array */
 }	QUERYTYPE;
+=======
+	int4		size;
+	char		data[1];
+} QUERYTYPE;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 #define HDRSIZEQT	offsetof(QUERYTYPE, items)
 #define COMPUTESIZE(size)	( HDRSIZEQT + (size) * sizeof(ITEM) )
@@ -147,6 +153,7 @@ typedef struct QUERYTYPE
 #define OPEN	4
 #define CLOSE	5
 
+<<<<<<< HEAD
 /* fmgr macros for QUERYTYPE objects */
 #define DatumGetQueryTypeP(X)		  ((QUERYTYPE *) PG_DETOAST_DATUM(X))
 #define DatumGetQueryTypePCopy(X)	  ((QUERYTYPE *) PG_DETOAST_DATUM_COPY(X))
@@ -158,6 +165,12 @@ bool		execconsistent(QUERYTYPE * query, ArrayType *array, bool calcnot);
 bool		gin_bool_consistent(QUERYTYPE *query, bool *check);
 bool		query_has_required_values(QUERYTYPE *query);
 int4		shorterquery(ITEM * q, int4 len);
+=======
+bool		signconsistent(QUERYTYPE *query, BITVEC sign, bool calcnot);
+bool		execconsistent(QUERYTYPE *query, ArrayType *array, bool calcnot);
+bool		ginconsistent(QUERYTYPE *query, bool *check);
+int4		shorterquery(ITEM *q, int4 len);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 int			compASC(const void *a, const void *b);
 
@@ -172,4 +185,4 @@ int			compDESC(const void *a, const void *b);
 				  (direction) ? compASC : compDESC ); \
 	} while(0)
 
-#endif /* ___INT_H__ */
+#endif   /* ___INT_H__ */

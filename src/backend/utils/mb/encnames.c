@@ -307,6 +307,7 @@ sizeof(pg_encname_tbl) / sizeof(pg_encname_tbl[0]) - 1;
 #endif
 pg_enc2name pg_enc2name_tbl[] =
 {
+<<<<<<< HEAD
 	DEF_ENC2NAME(SQL_ASCII, 0),
 	DEF_ENC2NAME(EUC_JP, 20932),
 	DEF_ENC2NAME(EUC_CN, 20936),
@@ -349,6 +350,134 @@ pg_enc2name pg_enc2name_tbl[] =
 	DEF_ENC2NAME(GB18030, 54936),
 	DEF_ENC2NAME(JOHAB, 0),
 	DEF_ENC2NAME(SHIFT_JIS_2004, 932)
+=======
+	{
+		"SQL_ASCII", PG_SQL_ASCII
+	},
+	{
+		"EUC_JP", PG_EUC_JP
+	},
+	{
+		"EUC_CN", PG_EUC_CN
+	},
+	{
+		"EUC_KR", PG_EUC_KR
+	},
+	{
+		"EUC_TW", PG_EUC_TW
+	},
+	{
+		"EUC_JIS_2004", PG_EUC_JIS_2004
+	},
+	{
+		"UTF8", PG_UTF8
+	},
+	{
+		"MULE_INTERNAL", PG_MULE_INTERNAL
+	},
+	{
+		"LATIN1", PG_LATIN1
+	},
+	{
+		"LATIN2", PG_LATIN2
+	},
+	{
+		"LATIN3", PG_LATIN3
+	},
+	{
+		"LATIN4", PG_LATIN4
+	},
+	{
+		"LATIN5", PG_LATIN5
+	},
+	{
+		"LATIN6", PG_LATIN6
+	},
+	{
+		"LATIN7", PG_LATIN7
+	},
+	{
+		"LATIN8", PG_LATIN8
+	},
+	{
+		"LATIN9", PG_LATIN9
+	},
+	{
+		"LATIN10", PG_LATIN10
+	},
+	{
+		"WIN1256", PG_WIN1256
+	},
+	{
+		"WIN1258", PG_WIN1258
+	},
+	{
+		"WIN866", PG_WIN866
+	},
+	{
+		"WIN874", PG_WIN874
+	},
+	{
+		"KOI8R", PG_KOI8R
+	},
+	{
+		"WIN1251", PG_WIN1251
+	},
+	{
+		"WIN1252", PG_WIN1252
+	},
+	{
+		"ISO_8859_5", PG_ISO_8859_5
+	},
+	{
+		"ISO_8859_6", PG_ISO_8859_6
+	},
+	{
+		"ISO_8859_7", PG_ISO_8859_7
+	},
+	{
+		"ISO_8859_8", PG_ISO_8859_8
+	},
+	{
+		"WIN1250", PG_WIN1250
+	},
+	{
+		"WIN1253", PG_WIN1253
+	},
+	{
+		"WIN1254", PG_WIN1254
+	},
+	{
+		"WIN1255", PG_WIN1255
+	},
+	{
+		"WIN1257", PG_WIN1257
+	},
+	{
+		"KOI8U", PG_KOI8U
+	},
+	{
+		"SJIS", PG_SJIS
+	},
+	{
+		"BIG5", PG_BIG5
+	},
+	{
+		"GBK", PG_GBK
+	},
+	{
+		"UHC", PG_UHC
+	},
+	{
+		"GB18030", PG_GB18030
+	},
+	{
+		"JOHAB", PG_JOHAB
+	},
+	{
+		"SHIFT_JIS_2004", PG_SHIFT_JIS_2004
+	}
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 };
 
 /* ----------

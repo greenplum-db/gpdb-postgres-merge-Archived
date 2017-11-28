@@ -4,14 +4,18 @@
  *
  * Portions Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.43 2009/01/01 17:23:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.50 2009/06/11 14:49:03 momjian Exp $
  *
  *-----------------------------------------------------------------------
  */
 
 /*----------
  * Here is how the locale stuff is handled: LC_COLLATE and LC_CTYPE
+<<<<<<< HEAD
  * are fixed at CREATE DATABASE time, stored in pg_database, and cannot 
+=======
+ * are fixed at CREATE DATABASE time, stored in pg_database, and cannot
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  * be changed. Thus, the effects of strcoll(), strxfrm(), isupper(),
  * toupper(), etc. are always in the same fixed locale.
  *
@@ -57,7 +61,10 @@
 #include "utils/string_wrapper.h"
 
 #ifdef WIN32
+<<<<<<< HEAD
 #undef StrNCpy
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #include <shlwapi.h>
 #endif
 
@@ -102,7 +109,7 @@ static char lc_numeric_envbuf[LC_ENV_BUFSIZE];
 static char lc_time_envbuf[LC_ENV_BUFSIZE];
 
 #if defined(WIN32) && defined(LC_MESSAGES)
-static char *IsoLocaleName(const char *); /* MSVC specific */
+static char *IsoLocaleName(const char *);		/* MSVC specific */
 #endif
 
 
@@ -168,9 +175,9 @@ pg_perm_setlocale(int category, const char *locale)
 			result = IsoLocaleName(locale);
 			if (result == NULL)
 				result = (char *) locale;
-#endif /* WIN32 */
+#endif   /* WIN32 */
 			break;
-#endif /* LC_MESSAGES */
+#endif   /* LC_MESSAGES */
 		case LC_MONETARY:
 			envvar = "LC_MONETARY";
 			envbuf = lc_monetary_envbuf;
@@ -586,28 +593,49 @@ PGLC_localeconv(void)
  * pg_strftime(), which isn't locale-aware and does not need to be replaced.
  */
 static size_t
+<<<<<<< HEAD
 strftime_win32(char *dst, size_t dstlen, const wchar_t *format, const struct tm *tm)
 {
 	size_t	len;
 	wchar_t	wbuf[MAX_L10N_DATA];
 	int		encoding;
+=======
+strftime_win32(char *dst, size_t dstlen, const wchar_t *format, const struct tm * tm)
+{
+	size_t		len;
+	wchar_t		wbuf[MAX_L10N_DATA];
+	int			encoding;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	encoding = GetDatabaseEncoding();
 
 	len = wcsftime(wbuf, MAX_L10N_DATA, format, tm);
 	if (len == 0)
+<<<<<<< HEAD
 		/* strftime call failed - return 0 with the contents of dst unspecified */
+=======
+
+		/*
+		 * strftime call failed - return 0 with the contents of dst
+		 * unspecified
+		 */
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		return 0;
 
 	len = WideCharToMultiByte(CP_UTF8, 0, wbuf, len, dst, dstlen, NULL, NULL);
 	if (len == 0)
 		elog(ERROR,
-			"could not convert string to UTF-8:error %lu", GetLastError());
+			 "could not convert string to UTF-8:error %lu", GetLastError());
 
 	dst[len] = '\0';
 	if (encoding != PG_UTF8)
 	{
+<<<<<<< HEAD
 		char *convstr = pg_do_encoding_conversion(dst, len, PG_UTF8, encoding);
+=======
+		char	   *convstr = pg_do_encoding_conversion(dst, len, PG_UTF8, encoding);
+
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		if (dst != convstr)
 		{
 			strlcpy(dst, convstr, dstlen);
@@ -619,8 +647,12 @@ strftime_win32(char *dst, size_t dstlen, const wchar_t *format, const struct tm 
 }
 
 #define strftime(a,b,c,d) strftime_win32(a,b,L##c,d)
+<<<<<<< HEAD
 
 #endif /* WIN32 */
+=======
+#endif   /* WIN32 */
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 
 /*
@@ -629,12 +661,16 @@ strftime_win32(char *dst, size_t dstlen, const wchar_t *format, const struct tm 
 void
 cache_locale_time(void)
 {
-	char		*save_lc_time;
+	char	   *save_lc_time;
 	time_t		timenow;
-	struct tm	*timeinfo;
+	struct tm  *timeinfo;
 	char		buf[MAX_L10N_DATA];
 	char	   *ptr;
 	int			i;
+#ifdef WIN32
+	char	   *save_lc_ctype;
+#endif
+
 #ifdef WIN32
 	char	   *save_lc_ctype;
 #endif
@@ -729,10 +765,18 @@ cache_locale_time(void)
  *	contains the iso formatted locale name.
  */
 static
+<<<<<<< HEAD
 char *IsoLocaleName(const char *winlocname)
 {
 #if (_MSC_VER >= 1400) /* VC8.0 or later */
 	static char	iso_lc_messages[32];
+=======
+char *
+IsoLocaleName(const char *winlocname)
+{
+#if (_MSC_VER >= 1400)			/* VC8.0 or later */
+	static char iso_lc_messages[32];
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	_locale_t	loct = NULL;
 
 	if (pg_strcasecmp("c", winlocname) == 0 ||
@@ -745,8 +789,14 @@ char *IsoLocaleName(const char *winlocname)
 	loct = _create_locale(LC_CTYPE, winlocname);
 	if (loct != NULL)
 	{
+<<<<<<< HEAD
 		char	isolang[32], isocrty[32];
 		LCID	lcid;
+=======
+		char		isolang[32],
+					isocrty[32];
+		LCID		lcid;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		lcid = loct->locinfo->lc_handle[LC_CTYPE];
 		if (lcid == 0)
@@ -762,8 +812,16 @@ char *IsoLocaleName(const char *winlocname)
 	}
 	return NULL;
 #else
+<<<<<<< HEAD
 	return NULL; /* Not supported on this version of msvc/mingw */
 #endif /* _MSC_VER >= 1400 */
 }
 #endif /* WIN32 && LC_MESSAGES */
 
+=======
+	return NULL;				/* Not supported on this version of msvc/mingw */
+#endif   /* _MSC_VER >= 1400 */
+}
+
+#endif   /* WIN32 && LC_MESSAGES */
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805

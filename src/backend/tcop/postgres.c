@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.564 2009/01/01 17:23:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.568 2009/06/18 10:08:08 heikki Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -113,7 +113,7 @@ extern char *optarg;
  *		global variables
  * ----------------
  */
-const char *debug_query_string; /* for pgmonitor and log_min_error_statement */
+const char *debug_query_string; /* client-supplied query string */
 
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
 CommandDest whereToSendOutput = DestDebug;
@@ -3377,14 +3377,22 @@ quickdie_impl()
 
 	in_quickdie=true;
 	/*
-	 * DO NOT proc_exit() -- we're here because shared memory may be
-	 * corrupted, so we don't want to try to clean up our transaction. Just
-	 * nail the windows shut and get out of town.
-	 *
+	 * We DO NOT want to run proc_exit() callbacks -- we're here because
+	 * shared memory may be corrupted, so we don't want to try to clean up our
+	 * transaction.  Just nail the windows shut and get out of town.  Now that
+	 * there's an atexit callback to prevent third-party code from breaking
+	 * things by calling exit() directly, we have to reset the callbacks
+	 * explicitly to make this work as intended.
+	 */
+	on_exit_reset();
+
+	/*
 	 * Note we do exit(2) not exit(0).	This is to force the postmaster into a
 	 * system reset cycle if some idiot DBA sends a manual SIGQUIT to a random
 	 * backend.  This is necessary precisely because we don't clean up our
-	 * shared memory state.
+	 * shared memory state.  (The "dead man switch" mechanism in pmsignal.c
+	 * should ensure the postmaster sees this as a crash, too, but no harm in
+	 * being doubly sure.)
 	 */
 
 	/*
@@ -3490,8 +3498,12 @@ die(SIGNAL_ARGS)
 void
 authdie(SIGNAL_ARGS)
 {
+<<<<<<< HEAD
 	if (!proc_exit_inprogress)
 		proc_exit(1);
+=======
+	proc_exit(1);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 /*
@@ -4092,12 +4104,50 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 #ifdef HAVE_INT_OPTERR
 
 	/*
+<<<<<<< HEAD
 	 * Turn this off because it's either printed to stderr and not the log
 	 * where we'd want it, or argv[0] is now "--single", which would make for
 	 * a weird error message.  We print our own error message below.
 	 */
 	opterr = 0;
 #endif
+=======
+	 * Set default values for command-line options.
+	 */
+	EchoQuery = false;
+
+	if (!IsUnderPostmaster)
+		InitializeGUCOptions();
+
+	/* ----------------
+	 *	parse command line arguments
+	 *
+	 *	There are now two styles of command line layout for the backend:
+	 *
+	 *	For interactive use (not started from postmaster) the format is
+	 *		postgres [switches] [databasename]
+	 *	If the databasename is omitted it is taken to be the user name.
+	 *
+	 *	When started from the postmaster, the format is
+	 *		postgres [secure switches] -y databasename [insecure switches]
+	 *	Switches appearing after -y came from the client (via "options"
+	 *	field of connection request).  For security reasons we restrict
+	 *	what these switches can do.
+	 * ----------------
+	 */
+
+	/* Ignore the initial --single argument, if present */
+	if (argc > 1 && strcmp(argv[1], "--single") == 0)
+	{
+		argv++;
+		argc--;
+	}
+
+	/* all options are allowed until '-y' */
+	secure = true;
+	ctx = PGC_POSTMASTER;
+	gucsource = PGC_S_ARGV;		/* initial switches came from command line */
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * Parse command-line options.	CAUTION: keep this in sync with

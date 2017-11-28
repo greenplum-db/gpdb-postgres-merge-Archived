@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.419 2009/01/01 17:23:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.432 2009/06/18 01:27:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,7 +328,7 @@ _copySequence(Sequence *from)
 static RecursiveUnion *
 _copyRecursiveUnion(RecursiveUnion *from)
 {
-	RecursiveUnion	   *newnode = makeNode(RecursiveUnion);
+	RecursiveUnion *newnode = makeNode(RecursiveUnion);
 
 	/*
 	 * copy node superclass fields
@@ -758,7 +758,7 @@ _copyValuesScan(ValuesScan *from)
 static CteScan *
 _copyCteScan(CteScan *from)
 {
-	CteScan *newnode = makeNode(CteScan);
+	CteScan    *newnode = makeNode(CteScan);
 
 	/*
 	 * copy node superclass fields
@@ -1084,6 +1084,10 @@ _copyHash(Hash *from)
 	/*
 	 * copy remainder of node
 	 */
+	COPY_SCALAR_FIELD(skewTable);
+	COPY_SCALAR_FIELD(skewColumn);
+	COPY_SCALAR_FIELD(skewColType);
+	COPY_SCALAR_FIELD(skewColTypmod);
 
 	return newnode;
 }
@@ -2160,7 +2164,8 @@ _copyRestrictInfo(RestrictInfo *from)
 	/* EquivalenceClasses are never copied, so shallow-copy the pointers */
 	COPY_SCALAR_FIELD(parent_ec);
 	COPY_SCALAR_FIELD(eval_cost);
-	COPY_SCALAR_FIELD(this_selec);
+	COPY_SCALAR_FIELD(norm_selec);
+	COPY_SCALAR_FIELD(outer_selec);
 	COPY_NODE_FIELD(mergeopfamilies);
 	/* EquivalenceClasses are never copied, so shallow-copy the pointers */
 	COPY_SCALAR_FIELD(left_ec);
@@ -2284,6 +2289,8 @@ _copyRangeTblEntry(RangeTblEntry *from)
 	COPY_SCALAR_FIELD(inFromCl);
 	COPY_SCALAR_FIELD(requiredPerms);
 	COPY_SCALAR_FIELD(checkAsUser);
+	COPY_BITMAPSET_FIELD(selectedCols);
+	COPY_BITMAPSET_FIELD(modifiedCols);
 
 	COPY_STRING_FIELD(ctename);
 	COPY_SCALAR_FIELD(ctelevelsup);
@@ -2521,7 +2528,7 @@ _copyFuncCall(FuncCall *from)
 static A_Star *
 _copyAStar(A_Star *from)
 {
-	A_Star  *newnode = makeNode(A_Star);
+	A_Star	   *newnode = makeNode(A_Star);
 
 	return newnode;
 }
@@ -2723,9 +2730,11 @@ _copyDefElem(DefElem *from)
 {
 	DefElem    *newnode = makeNode(DefElem);
 
+	COPY_STRING_FIELD(defnamespace);
 	COPY_STRING_FIELD(defname);
 	COPY_NODE_FIELD(arg);
 	COPY_SCALAR_FIELD(defaction);
+<<<<<<< HEAD
 
 	return newnode;
 }
@@ -2737,6 +2746,8 @@ _copyOptionDefElem(OptionDefElem *from)
 
 	COPY_SCALAR_FIELD(alter_op);
 	COPY_NODE_FIELD(def);
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	return newnode;
 }
@@ -3103,6 +3114,17 @@ _copyFuncWithArgs(FuncWithArgs *from)
 	return newnode;
 }
 
+static AccessPriv *
+_copyAccessPriv(AccessPriv *from)
+{
+	AccessPriv *newnode = makeNode(AccessPriv);
+
+	COPY_STRING_FIELD(priv_name);
+	COPY_NODE_FIELD(cols);
+
+	return newnode;
+}
+
 static GrantRoleStmt *
 _copyGrantRoleStmt(GrantRoleStmt *from)
 {
@@ -3147,7 +3169,7 @@ _copyClusterStmt(ClusterStmt *from)
 
 	COPY_NODE_FIELD(relation);
 	COPY_STRING_FIELD(indexname);
-	COPY_SCALAR_FIELD(verbose) ;
+	COPY_SCALAR_FIELD(verbose);
 
 	return newnode;
 }
@@ -3875,7 +3897,7 @@ _copyVacuumStmt(VacuumStmt *from)
 	COPY_SCALAR_FIELD(verbose);
 	COPY_SCALAR_FIELD(rootonly);
 	COPY_SCALAR_FIELD(freeze_min_age);
-	COPY_SCALAR_FIELD(scan_all);
+	COPY_SCALAR_FIELD(freeze_table_age);
 	COPY_NODE_FIELD(relation);
 	COPY_NODE_FIELD(va_cols);
 
@@ -4060,7 +4082,7 @@ _copyCreateFdwStmt(CreateFdwStmt *from)
 	CreateFdwStmt *newnode = makeNode(CreateFdwStmt);
 
 	COPY_STRING_FIELD(fdwname);
-	COPY_STRING_FIELD(library);
+	COPY_NODE_FIELD(validator);
 	COPY_NODE_FIELD(options);
 
 	return newnode;
@@ -4072,7 +4094,8 @@ _copyAlterFdwStmt(AlterFdwStmt *from)
 	AlterFdwStmt *newnode = makeNode(AlterFdwStmt);
 
 	COPY_STRING_FIELD(fdwname);
-	COPY_STRING_FIELD(library);
+	COPY_NODE_FIELD(validator);
+	COPY_SCALAR_FIELD(change_validator);
 	COPY_NODE_FIELD(options);
 
 	return newnode;
@@ -4176,7 +4199,7 @@ _copyCreateTrigStmt(CreateTrigStmt *from)
 	COPY_NODE_FIELD(args);
 	COPY_SCALAR_FIELD(before);
 	COPY_SCALAR_FIELD(row);
-	strcpy(newnode->actions, from->actions);	/* in-line string field */
+	COPY_SCALAR_FIELD(events);
 	COPY_SCALAR_FIELD(isconstraint);
 	COPY_SCALAR_FIELD(deferrable);
 	COPY_SCALAR_FIELD(initdeferred);
@@ -5507,9 +5530,6 @@ copyObject(void *from)
 		case T_DefElem:
 			retval = _copyDefElem(from);
 			break;
-		case T_OptionDefElem:
-			retval = _copyOptionDefElem(from);
-			break;
 		case T_LockingClause:
 			retval = _copyLockingClause(from);
 			break;
@@ -5575,6 +5595,9 @@ copyObject(void *from)
 			break;
 		case T_FuncWithArgs:
 			retval = _copyFuncWithArgs(from);
+			break;
+		case T_AccessPriv:
+			retval = _copyAccessPriv(from);
 			break;
 		case T_XmlSerialize:
 			retval = _copyXmlSerialize(from);

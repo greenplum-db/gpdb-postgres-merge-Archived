@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.68 2008/10/29 08:04:53 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.73 2009/06/11 14:49:05 momjian Exp $
  *
  */
 /* can be used in either frontend or backend */
@@ -1505,6 +1505,7 @@ pg_utf8_islegal(const unsigned char *source, int length)
  *-------------------------------------------------------------------
  */
 pg_wchar_tbl pg_wchar_table[] = {
+<<<<<<< HEAD
 	{pg_ascii2wchar_with_len, pg_wchar2single_with_len, pg_ascii_mblen, pg_ascii_dsplen, pg_ascii_verifier, 1},	/* PG_SQL_ASCII */
 	{pg_eucjp2wchar_with_len, pg_wchar2euc_with_len, pg_eucjp_mblen, pg_eucjp_dsplen, pg_eucjp_verifier, 3},	/* PG_EUC_JP */
 	{pg_euccn2wchar_with_len, pg_wchar2euc_with_len, pg_euccn_mblen, pg_euccn_dsplen, pg_euccn_verifier, 2},	/* PG_EUC_CN */
@@ -1547,6 +1548,50 @@ pg_wchar_tbl pg_wchar_table[] = {
 	{0, 0, pg_gb18030_mblen, pg_gb18030_dsplen, pg_gb18030_verifier, 4},	/* PG_GB18030 */
 	{0, 0, pg_johab_mblen, pg_johab_dsplen, pg_johab_verifier, 3}, /* PG_JOHAB */
 	{0, 0, pg_sjis_mblen, pg_sjis_dsplen, pg_sjis_verifier, 2}		/* PG_SHIFT_JIS_2004 */
+=======
+	{pg_ascii2wchar_with_len, pg_ascii_mblen, pg_ascii_dsplen, pg_ascii_verifier, 1},	/* PG_SQL_ASCII */
+	{pg_eucjp2wchar_with_len, pg_eucjp_mblen, pg_eucjp_dsplen, pg_eucjp_verifier, 3},	/* PG_EUC_JP */
+	{pg_euccn2wchar_with_len, pg_euccn_mblen, pg_euccn_dsplen, pg_euccn_verifier, 2},	/* PG_EUC_CN */
+	{pg_euckr2wchar_with_len, pg_euckr_mblen, pg_euckr_dsplen, pg_euckr_verifier, 3},	/* PG_EUC_KR */
+	{pg_euctw2wchar_with_len, pg_euctw_mblen, pg_euctw_dsplen, pg_euctw_verifier, 4},	/* PG_EUC_TW */
+	{pg_eucjp2wchar_with_len, pg_eucjp_mblen, pg_eucjp_dsplen, pg_eucjp_verifier, 3},	/* PG_EUC_JIS_2004 */
+	{pg_utf2wchar_with_len, pg_utf_mblen, pg_utf_dsplen, pg_utf8_verifier, 4},	/* PG_UTF8 */
+	{pg_mule2wchar_with_len, pg_mule_mblen, pg_mule_dsplen, pg_mule_verifier, 4},		/* PG_MULE_INTERNAL */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_LATIN1 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_LATIN2 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_LATIN3 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_LATIN4 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_LATIN5 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_LATIN6 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_LATIN7 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_LATIN8 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_LATIN9 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_LATIN10 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_WIN1256 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_WIN1258 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_WIN866 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_WIN874 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_KOI8R */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_WIN1251 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_WIN1252 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* ISO-8859-5 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* ISO-8859-6 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* ISO-8859-7 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* ISO-8859-8 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_WIN1250 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_WIN1253 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_WIN1254 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_WIN1255 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_WIN1257 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_KOI8U */
+	{0, pg_sjis_mblen, pg_sjis_dsplen, pg_sjis_verifier, 2},	/* PG_SJIS */
+	{0, pg_big5_mblen, pg_big5_dsplen, pg_big5_verifier, 2},	/* PG_BIG5 */
+	{0, pg_gbk_mblen, pg_gbk_dsplen, pg_gbk_verifier, 2},		/* PG_GBK */
+	{0, pg_uhc_mblen, pg_uhc_dsplen, pg_uhc_verifier, 2},		/* PG_UHC */
+	{0, pg_gb18030_mblen, pg_gb18030_dsplen, pg_gb18030_verifier, 4},	/* PG_GB18030 */
+	{0, pg_johab_mblen, pg_johab_dsplen, pg_johab_verifier, 3}, /* PG_JOHAB */
+	{0, pg_sjis_mblen, pg_sjis_dsplen, pg_sjis_verifier, 2}		/* PG_SHIFT_JIS_2004 */
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 };
 
 /* returns the byte length of a word for mule internal code */
@@ -1802,25 +1847,12 @@ report_untranslatable_char(int src_encoding, int dest_encoding,
 	for (j = 0; j < jlimit; j++)
 		p += sprintf(p, "%02x", (unsigned char) mbstr[j]);
 
-	/*
-	 * In an error recursion situation, don't try to translate the message.
-	 * This gets us out of trouble if the problem is failure to convert
-	 * this very message (after translation) to the client encoding.
-	 */
-	if (in_error_recursion_trouble())
-		ereport(ERROR,
-				(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
-				 errmsg_internal("character 0x%s of encoding \"%s\" has no equivalent in \"%s\"",
-								 buf,
-								 pg_enc2name_tbl[src_encoding].name,
-								 pg_enc2name_tbl[dest_encoding].name)));
-	else
-		ereport(ERROR,
-				(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
-				 errmsg("character 0x%s of encoding \"%s\" has no equivalent in \"%s\"",
-						buf,
-						pg_enc2name_tbl[src_encoding].name,
-						pg_enc2name_tbl[dest_encoding].name)));
+	ereport(ERROR,
+			(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
+	  errmsg("character 0x%s of encoding \"%s\" has no equivalent in \"%s\"",
+			 buf,
+			 pg_enc2name_tbl[src_encoding].name,
+			 pg_enc2name_tbl[dest_encoding].name)));
 }
 
 #endif

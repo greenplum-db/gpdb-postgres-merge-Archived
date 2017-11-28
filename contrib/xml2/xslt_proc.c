@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/xml2/xslt_proc.c,v 1.15.2.1 2009/07/10 00:32:06 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/xml2/xslt_proc.c,v 1.15 2009/06/11 14:48:53 momjian Exp $
  *
  * XSLT processing functions (requiring libxslt)
  *
@@ -12,9 +12,12 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+<<<<<<< HEAD
 #include "utils/xml.h"
 
 #ifdef USE_LIBXSLT
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 /* libxml includes */
 

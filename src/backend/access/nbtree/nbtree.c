@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.167 2009/01/01 17:23:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.171 2009/06/11 14:48:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,6 @@
 #include "catalog/pg_namespace.h"
 #include "catalog/storage.h"
 #include "commands/vacuum.h"
-#include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
 #include "storage/indexfsm.h"
@@ -575,8 +574,12 @@ btgetbitmap(PG_FUNCTION_ARGS)
 	MIRROREDLOCK_BUFMGR_VERIFY_NO_LOCK_LEAK_DECLARE;
 
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+<<<<<<< HEAD
 	Node *n = (Node *)PG_GETARG_POINTER(1);
 	HashBitmap	*tbm;
+=======
+	TIDBitmap  *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	int64		ntids = 0;
 	ItemPointer heapTid;
@@ -624,8 +627,6 @@ btgetbitmap(PG_FUNCTION_ARGS)
 		 */
 		if (++so->currPos.itemIndex > so->currPos.lastItem)
 		{
-			CHECK_FOR_INTERRUPTS();
-
 			/* let _bt_next do the heavy lifting */
 			if (!_bt_next(scan, ForwardScanDirection))
 				break;
@@ -909,7 +910,13 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	IndexVacuumInfo *info = (IndexVacuumInfo *) PG_GETARG_POINTER(0);
 	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
 
+<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_VERIFY_NO_LOCK_LEAK_ENTER;
+=======
+	/* No-op in ANALYZE ONLY mode */
+	if (info->analyze_only)
+		PG_RETURN_POINTER(stats);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * If btbulkdelete was called, we need not do anything, just return the
@@ -932,10 +939,10 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	/*
 	 * During a non-FULL vacuum it's quite possible for us to be fooled by
 	 * concurrent page splits into double-counting some index tuples, so
-	 * disbelieve any total that exceeds the underlying heap's count. (We
-	 * can't check this during btbulkdelete.)
+	 * disbelieve any total that exceeds the underlying heap's count ... if we
+	 * know that accurately.  Otherwise this might just make matters worse.
 	 */
-	if (!info->vacuum_full)
+	if (!info->vacuum_full && !info->estimated_count)
 	{
 		if (stats->num_index_tuples > info->num_heap_tuples)
 			stats->num_index_tuples = info->num_heap_tuples;
@@ -977,6 +984,7 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	 * Reset counts that will be incremented during the scan; needed in case
 	 * of multiple scans during a single VACUUM command
 	 */
+	stats->estimated_count = false;
 	stats->num_index_tuples = 0;
 	stats->pages_deleted = 0;
 

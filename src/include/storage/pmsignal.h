@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/pmsignal.h,v 1.21 2009/01/01 17:24:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/pmsignal.h,v 1.25 2009/06/11 14:49:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,9 +61,13 @@ extern void SendPostmasterSignal(PMSignalReason reason);
 extern bool CheckPostmasterSignal(PMSignalReason reason);
 extern int	AssignPostmasterChildSlot(void);
 extern bool ReleasePostmasterChildSlot(int slot);
+<<<<<<< HEAD
 extern bool IsPostmasterChildWalSender(int slot);
 extern void MarkPostmasterChildActive(void);
 extern void MarkPostmasterChildWalSender(void);
+=======
+extern void MarkPostmasterChildActive(void);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 extern void MarkPostmasterChildInactive(void);
 extern bool PostmasterIsAlive(bool amDirectChild);
 extern bool ParentProcIsAlive(void);

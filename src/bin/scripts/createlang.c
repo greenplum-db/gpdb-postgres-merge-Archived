@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createlang.c,v 1.32 2009/01/01 17:23:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createlang.c,v 1.34 2009/02/26 16:02:39 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,5 +226,9 @@ help(const char *progname)
 	printf(_("  -U, --username=USERNAME   user name to connect as\n"));
 	printf(_("  -w, --no-password         never prompt for password\n"));
 	printf(_("  -W, --password            force password prompt\n"));
+<<<<<<< HEAD
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
+=======
+	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }

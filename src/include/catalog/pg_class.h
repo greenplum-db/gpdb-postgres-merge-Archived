@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.111 2009/01/01 17:23:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.114 2009/06/11 14:49:09 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -44,6 +44,7 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP
 	Oid			reltoastidxid;	/* if toast table, OID of chunk_id index */
 	bool		relhasindex;	/* T if has (or has had) any indexes */
 	bool		relisshared;	/* T if shared across databases */
+	bool		relistemp;		/* T if temporary relation */
 	char		relkind;		/* see RELKIND_xxx constants below */
 	char		relstorage;		/* see RELSTORAGE_xxx constants below */
 	int2		relnatts;		/* number of user attributes */
@@ -57,7 +58,7 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP
 	bool		relhasoids;		/* T if we generate OIDs for rows of rel */
 	bool		relhaspkey;		/* has (or has had) PRIMARY KEY index */
 	bool		relhasrules;	/* has (or has had) any rules */
-	bool		relhastriggers;	/* has (or has had) any TRIGGERs */
+	bool		relhastriggers; /* has (or has had) any TRIGGERs */
 	bool		relhassubclass; /* has (or has had) derived classes */
 	TransactionId relfrozenxid; /* all Xids < this are frozen in this rel */
 
@@ -110,8 +111,13 @@ typedef FormData_pg_class *Form_pg_class;
 #define Anum_pg_class_reltoastidxid		11
 #define Anum_pg_class_relhasindex		12
 #define Anum_pg_class_relisshared		13
+<<<<<<< HEAD
 #define Anum_pg_class_relkind			14
 #define Anum_pg_class_relstorage		15
+=======
+#define Anum_pg_class_relistemp			14
+#define Anum_pg_class_relkind			15
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #define Anum_pg_class_relnatts			16
 #define Anum_pg_class_relchecks			17
 #define Anum_pg_class_relhasoids		18
@@ -133,6 +139,7 @@ typedef FormData_pg_class *Form_pg_class;
  */
 
 /* Note: "3" in the relfrozenxid column stands for FirstNormalTransactionId */
+<<<<<<< HEAD
 DATA(insert OID = 1247 (  pg_type		PGNSP 71 PGUID 0 1247 0 0 0 0 0 f f r h 28 0 t f f f f 3 _null_ _null_ ));
 DESCR("");
 DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 PGUID 0 1249 0 0 0 0 0 f f r h 17 0 f f f f f 3 _null_ _null_ ));
@@ -140,6 +147,15 @@ DESCR("");
 DATA(insert OID = 1255 (  pg_proc		PGNSP 81 PGUID 0 1255 0 0 0 0 0 f f r h 27 0 t f f f f 3 _null_ _null_ ));
 DESCR("");
 DATA(insert OID = 1259 (  pg_class		PGNSP 83 PGUID 0 1259 0 0 0 0 0 f f r h 25 0 t f f f f 3 _null_ _null_ ));
+=======
+DATA(insert OID = 1247 (  pg_type		PGNSP 71 PGUID 0 1247 0 0 0 0 0 f f f r 28 0 t f f f f 3 _null_ _null_ ));
+DESCR("");
+DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 PGUID 0 1249 0 0 0 0 0 f f f r 18 0 f f f f f 3 _null_ _null_ ));
+DESCR("");
+DATA(insert OID = 1255 (  pg_proc		PGNSP 81 PGUID 0 1255 0 0 0 0 0 f f f r 25 0 t f f f f 3 _null_ _null_ ));
+DESCR("");
+DATA(insert OID = 1259 (  pg_class		PGNSP 83 PGUID 0 1259 0 0 0 0 0 f f f r 25 0 t f f f f 3 _null_ _null_ ));
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 DESCR("");
 
 /* abstract tuple types */

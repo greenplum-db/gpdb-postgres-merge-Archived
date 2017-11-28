@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.117 2009/01/01 17:24:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.118 2009/06/11 14:49:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,8 +126,8 @@ extern SubqueryScan *make_subqueryscan(PlannerInfo *root, List *qptlist, List *q
 				  Index scanrelid, Plan *subplan, List *subrtable);
 extern Append *make_append(List *appendplans, bool isTarget, List *tlist);
 extern RecursiveUnion *make_recursive_union(List *tlist,
-			   Plan *lefttree, Plan *righttree, int wtParam,
-			   List *distinctList, long numGroups);
+					 Plan *lefttree, Plan *righttree, int wtParam,
+					 List *distinctList, long numGroups);
 extern Sort *make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree,
 						List *pathkeys, double limit_tuples, bool add_keys_to_targetlist);
 extern Sort *make_sort_from_sortclauses(PlannerInfo *root, List *sortcls,
@@ -256,10 +256,15 @@ extern void set_opfuncid(OpExpr *opexpr);
 extern void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);
 extern void record_plan_function_dependency(PlannerGlobal *glob, Oid funcid);
 extern void extract_query_dependencies(List *queries,
+<<<<<<< HEAD
 									   List **relationOids,
 									   List **invalItems);
 extern void cdb_extract_plan_dependencies(PlannerGlobal *glob, Plan *plan);
 
 extern int num_distcols_in_grouplist(List *gc);
+=======
+						   List **relationOids,
+						   List **invalItems);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 #endif   /* PLANMAIN_H */

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/test/regress/regress.c,v 1.71 2008/03/25 22:42:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/regress.c,v 1.72 2009/01/07 13:44:37 tgl Exp $
  */
 
 #include "postgres.h"
@@ -14,7 +14,10 @@
 #include "commands/trigger.h"
 #include "executor/executor.h"
 #include "executor/spi.h"
+<<<<<<< HEAD
 #include "port/atomics.h"
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #include "utils/builtins.h"
 #include "utils/geo_decls.h"
 

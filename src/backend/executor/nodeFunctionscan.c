@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.50 2009/01/01 17:23:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.52 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,6 +91,7 @@ FunctionNext(FunctionScanState *node)
 	 * Get the next tuple from tuplestore. Return NULL if no more tuples.
 	 */
 	slot = node->ss.ss_ScanTupleSlot;
+<<<<<<< HEAD
 	if (tuplestore_gettupleslot(tuplestorestate, 
 				ScanDirectionIsForward(direction),
 				false,
@@ -116,6 +117,12 @@ FunctionNext(FunctionScanState *node)
 		ExecEagerFreeFunctionScan((FunctionScanState *)(&node->ss.ps));
 	}
 
+=======
+	(void) tuplestore_gettupleslot(tuplestorestate,
+								   ScanDirectionIsForward(direction),
+								   false,
+								   slot);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	return slot;
 }
 
@@ -340,7 +347,7 @@ ExecFunctionReScan(FunctionScanState *node, ExprContext *exprCtxt)
 	/*
 	 * Here we have a choice whether to drop the tuplestore (and recompute the
 	 * function outputs) or just rescan it.  We must recompute if the
-	 * expression contains parameters, else we rescan.  XXX maybe we should
+	 * expression contains parameters, else we rescan.	XXX maybe we should
 	 * recompute if the function is volatile?
 	 */
 	if (node->ss.ps.chgParam != NULL)

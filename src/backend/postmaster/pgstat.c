@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2009, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.187 2009/01/01 17:23:46 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.189 2009/06/11 14:49:01 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -228,6 +228,7 @@ static PgStat_GlobalStats globalStats;
 
 /* Last time the collector successfully wrote the stats file */
 static TimestampTz last_statwrite;
+
 /* Latest statistics request time from backends */
 static TimestampTz last_statrequest;
 
@@ -1243,14 +1244,14 @@ pgstat_report_analyze(Relation rel, PgStat_Counter livetuples,
 		return;
 
 	/*
-	 * Unlike VACUUM, ANALYZE might be running inside a transaction that
-	 * has already inserted and/or deleted rows in the target table.
-	 * ANALYZE will have counted such rows as live or dead respectively.
-	 * Because we will report our counts of such rows at transaction end,
-	 * we should subtract off these counts from what we send to the collector
-	 * now, else they'll be double-counted after commit.  (This approach also
-	 * ensures that the collector ends up with the right numbers if we abort
-	 * instead of committing.)
+	 * Unlike VACUUM, ANALYZE might be running inside a transaction that has
+	 * already inserted and/or deleted rows in the target table. ANALYZE will
+	 * have counted such rows as live or dead respectively. Because we will
+	 * report our counts of such rows at transaction end, we should subtract
+	 * off these counts from what we send to the collector now, else they'll
+	 * be double-counted after commit.	(This approach also ensures that the
+	 * collector ends up with the right numbers if we abort instead of
+	 * committing.)
 	 */
 	if (rel->pgstat_info != NULL)
 	{
@@ -1271,7 +1272,7 @@ pgstat_report_analyze(Relation rel, PgStat_Counter livetuples,
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_ANALYZE);
 	msg.m_databaseid = rel->rd_rel->relisshared ? InvalidOid : MyDatabaseId;
 	msg.m_tableoid = RelationGetRelid(rel);
-	msg.m_autovacuum = IsAutoVacuumWorkerProcess();	/* is this autovacuum? */
+	msg.m_autovacuum = IsAutoVacuumWorkerProcess();		/* is this autovacuum? */
 	msg.m_analyzetime = GetCurrentTimestamp();
 	msg.m_live_tuples = livetuples;
 	msg.m_dead_tuples = deadtuples;
@@ -1324,7 +1325,7 @@ pgstat_init_function_usage(FunctionCallInfoData *fcinfo,
 						   PgStat_FunctionCallUsage *fcu)
 {
 	PgStat_BackendFunctionEntry *htabent;
-	bool 		found;
+	bool		found;
 
 	if (pgstat_track_functions <= fcinfo->flinfo->fn_stats)
 	{
@@ -2102,7 +2103,10 @@ pgstat_fetch_global(void)
 
 static PgBackendStatus *BackendStatusArray = NULL;
 static PgBackendStatus *MyBEEntry = NULL;
+<<<<<<< HEAD
 static char *BackendAppnameBuffer = NULL;
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static char *BackendActivityBuffer = NULL;
 
 
@@ -2503,7 +2507,10 @@ pgstat_read_current_status(void)
 	volatile PgBackendStatus *beentry;
 	PgBackendStatus *localtable;
 	PgBackendStatus *localentry;
+<<<<<<< HEAD
 	char	   *localappname;
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	char	   *localactivity;
 	int			i;
 
@@ -2582,12 +2589,12 @@ pgstat_read_current_status(void)
  * pgstat_get_backend_current_activity() -
  *
  *	Return a string representing the current activity of the backend with
- *	the specified PID.  This looks directly at the BackendStatusArray,
+ *	the specified PID.	This looks directly at the BackendStatusArray,
  *	and so will provide current information regardless of the age of our
  *	transaction's snapshot of the status array.
  *
  *	It is the caller's responsibility to invoke this only for backends whose
- *	state is expected to remain stable while the result is in use.  The
+ *	state is expected to remain stable while the result is in use.	The
  *	only current use is in deadlock reporting, where we can expect that
  *	the target backend is blocked on a lock.  (There are corner cases
  *	where the target's wait could get aborted while we are looking at it,
@@ -2825,7 +2832,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	 *
 	 * For performance reasons, we don't want to do a PostmasterIsAlive() test
 	 * after every message; instead, do it only when select()/poll() is
-	 * interrupted by timeout.  In essence, we'll stay alive as long as
+	 * interrupted by timeout.	In essence, we'll stay alive as long as
 	 * backends keep sending us stuff often, even if the postmaster is gone.
 	 */
 	for (;;)
@@ -2883,7 +2890,7 @@ PgstatCollectorMain(int argc, char *argv[])
 		got_data = (input_fd.revents != 0);
 #else							/* !HAVE_POLL */
 
-		FD_SET(pgStatSock, &rfds);
+		FD_SET		(pgStatSock, &rfds);
 
 		/*
 		 * timeout struct is modified by select() on some operating systems,
@@ -2990,6 +2997,13 @@ PgstatCollectorMain(int argc, char *argv[])
 					pgstat_recv_funcstat((PgStat_MsgFuncstat *) &msg, len);
 					break;
 
+<<<<<<< HEAD
+=======
+				case PGSTAT_MTYPE_FUNCSTAT:
+					pgstat_recv_funcstat((PgStat_MsgFuncstat *) &msg, len);
+					break;
+
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				case PGSTAT_MTYPE_FUNCPURGE:
 					pgstat_recv_funcpurge((PgStat_MsgFuncpurge *) &msg, len);
 					break;
@@ -3486,7 +3500,7 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 					break;
 
 				funcentry = (PgStat_StatFuncEntry *) hash_search(funchash,
-													(void *) &funcbuf.functionid,
+												(void *) &funcbuf.functionid,
 														 HASH_ENTER, &found);
 
 				if (found)
@@ -3617,14 +3631,14 @@ backend_read_statsfile(void)
 
 	/*
 	 * We set the minimum acceptable timestamp to PGSTAT_STAT_INTERVAL msec
-	 * before now.  This indirectly ensures that the collector needn't write
+	 * before now.	This indirectly ensures that the collector needn't write
 	 * the file more often than PGSTAT_STAT_INTERVAL.  In an autovacuum
 	 * worker, however, we want a lower delay to avoid using stale data, so we
 	 * use PGSTAT_RETRY_DELAY (since the number of worker is low, this
 	 * shouldn't be a problem).
 	 *
 	 * Note that we don't recompute min_ts after sleeping; so we might end up
-	 * accepting a file a bit older than PGSTAT_STAT_INTERVAL.  In practice
+	 * accepting a file a bit older than PGSTAT_STAT_INTERVAL.	In practice
 	 * that shouldn't happen, though, as long as the sleep time is less than
 	 * PGSTAT_STAT_INTERVAL; and we don't want to lie to the collector about
 	 * what our cutoff time really is.
@@ -3638,7 +3652,8 @@ backend_read_statsfile(void)
 
 	/*
 	 * Loop until fresh enough stats file is available or we ran out of time.
-	 * The stats inquiry message is sent repeatedly in case collector drops it.
+	 * The stats inquiry message is sent repeatedly in case collector drops
+	 * it.
 	 */
 	for (count = 0; count < PGSTAT_POLL_LOOP_COUNT; count++)
 	{
@@ -4004,7 +4019,19 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 	tabentry->n_dead_tuples = 0;
 	if (msg->m_analyze)
 	{
+<<<<<<< HEAD
 		tabentry->last_anl_tuples = msg->m_tuples;
+=======
+		if (msg->m_scanned_all)
+			tabentry->last_anl_tuples = msg->m_tuples;
+		else
+		{
+			/* last_anl_tuples must never exceed n_live_tuples+n_dead_tuples */
+			tabentry->last_anl_tuples = Min(tabentry->last_anl_tuples,
+											tabentry->n_live_tuples);
+		}
+
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		if (msg->m_autovacuum)
 			tabentry->autovac_analyze_timestamp = msg->m_vacuumtime;
 		else
@@ -4286,8 +4313,8 @@ pgstat_recv_funcstat(PgStat_MsgFuncstat *msg, int len)
 	for (i = 0; i < msg->m_nentries; i++, funcmsg++)
 	{
 		funcentry = (PgStat_StatFuncEntry *) hash_search(dbentry->functions,
-												  (void *) &(funcmsg->f_id),
-													   HASH_ENTER, &found);
+												   (void *) &(funcmsg->f_id),
+														 HASH_ENTER, &found);
 
 		if (!found)
 		{

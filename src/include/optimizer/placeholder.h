@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/placeholder.h,v 1.2 2009/01/01 17:24:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/placeholder.h,v 1.3 2009/06/11 14:49:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,14 +19,19 @@
 
 
 extern PlaceHolderVar *make_placeholder_expr(PlannerInfo *root, Expr *expr,
-											 Relids phrels);
+					  Relids phrels);
 extern PlaceHolderInfo *find_placeholder_info(PlannerInfo *root,
+<<<<<<< HEAD
 											  PlaceHolderVar *phv);
 extern void find_placeholders_in_jointree(PlannerInfo *root);
 extern void update_placeholder_eval_levels(PlannerInfo *root,
 											  SpecialJoinInfo *new_sjinfo);
 extern void fix_placeholder_input_needed_levels(PlannerInfo *root);
+=======
+					  PlaceHolderVar *phv);
+extern void fix_placeholder_eval_levels(PlannerInfo *root);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 extern void add_placeholders_to_joinrel(PlannerInfo *root,
-										RelOptInfo *joinrel);
+							RelOptInfo *joinrel);
 
 #endif   /* PLACEHOLDER_H */

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.20 2009/01/01 17:23:34 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.24 2009/06/11 14:48:53 momjian Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -37,8 +37,8 @@ ginbeginscan(PG_FUNCTION_ARGS)
 
 static void
 fillScanKey(GinState *ginstate, GinScanKey key, OffsetNumber attnum, Datum query,
-			Datum *entryValues, bool *partial_matches, uint32 nEntryValues, 
-			StrategyNumber strategy)
+			Datum *entryValues, bool *partial_matches, uint32 nEntryValues,
+			StrategyNumber strategy, Pointer *extra_data)
 {
 	uint32		i,
 				j;
@@ -48,6 +48,7 @@ fillScanKey(GinState *ginstate, GinScanKey key, OffsetNumber attnum, Datum query
 	key->scanEntry = (GinScanEntry) palloc(sizeof(GinScanEntryData) * nEntryValues);
 	key->strategy = strategy;
 	key->attnum = attnum;
+	key->extra_data = extra_data;
 	key->query = query;
 	key->firstCall = TRUE;
 	ItemPointerSet(&(key->curItem), InvalidBlockNumber, InvalidOffsetNumber);
@@ -57,15 +58,18 @@ fillScanKey(GinState *ginstate, GinScanKey key, OffsetNumber attnum, Datum query
 		key->scanEntry[i].pval = key->entryRes + i;
 		key->scanEntry[i].entry = entryValues[i];
 		key->scanEntry[i].attnum = attnum;
+		key->scanEntry[i].extra_data = (extra_data) ? extra_data[i] : NULL;
 		ItemPointerSet(&(key->scanEntry[i].curItem), InvalidBlockNumber, InvalidOffsetNumber);
 		key->scanEntry[i].offset = InvalidOffsetNumber;
 		key->scanEntry[i].buffer = InvalidBuffer;
 		key->scanEntry[i].partialMatch = NULL;
+		key->scanEntry[i].partialMatchIterator = NULL;
+		key->scanEntry[i].partialMatchResult = NULL;
 		key->scanEntry[i].strategy = strategy;
 		key->scanEntry[i].list = NULL;
 		key->scanEntry[i].nlist = 0;
-		key->scanEntry[i].isPartialMatch = ( ginstate->canPartialMatch[attnum - 1] && partial_matches ) 
-												? partial_matches[i] : false;
+		key->scanEntry[i].isPartialMatch = (ginstate->canPartialMatch[attnum - 1] && partial_matches)
+			? partial_matches[i] : false;
 
 		/* link to the equals entry in current scan key */
 		key->scanEntry[i].master = NULL;
@@ -107,6 +111,7 @@ resetScanKeys(GinScanKey keys, uint32 nkeys)
 			key->scanEntry[j].list = NULL;
 			key->scanEntry[j].nlist = 0;
 			key->scanEntry[j].partialMatch = NULL;
+			key->scanEntry[j].partialMatchIterator = NULL;
 			key->scanEntry[j].partialMatchResult = NULL;
 		}
 	}
@@ -132,6 +137,8 @@ freeScanKeys(GinScanKey keys, uint32 nkeys)
 				ReleaseBuffer(key->scanEntry[j].buffer);
 			if (key->scanEntry[j].list)
 				pfree(key->scanEntry[j].list);
+			if (key->scanEntry[j].partialMatchIterator)
+				tbm_end_iterate(key->scanEntry[j].partialMatchIterator);
 			if (key->scanEntry[j].partialMatch)
 				tbm_free((HashBitmap *) key->scanEntry[j].partialMatch);
 		}
@@ -151,20 +158,22 @@ newScanKey(IndexScanDesc scan)
 	int			i;
 	uint32		nkeys = 0;
 
-	so->keys = (GinScanKey) palloc(scan->numberOfKeys * sizeof(GinScanKeyData));
-
 	if (scan->numberOfKeys < 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("GIN indexes do not support whole-index scans")));
 
+	so->keys = (GinScanKey) palloc(scan->numberOfKeys * sizeof(GinScanKeyData));
+
 	so->isVoidRes = false;
 
 	for (i = 0; i < scan->numberOfKeys; i++)
 	{
+		ScanKey		skey = &scankey[i];
 		Datum	   *entryValues;
 		int32		nEntryValues = 0;
 		bool	   *partial_matches = NULL;
+<<<<<<< HEAD
 
 		/* XXX can't we treat nulls by just setting isVoidRes? */
 		/* This would amount to assuming that all GIN operators are strict */
@@ -186,25 +195,62 @@ newScanKey(IndexScanDesc scan)
 			so->isVoidRes = true;
 			break;
 		}
+=======
+		Pointer    *extra_data = NULL;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		/*
-		 * extractQueryFn signals that everything matches
+		 * Assume, that GIN-indexable operators are strict, so nothing could
+		 * be found
 		 */
-		if (entryValues == NULL || nEntryValues == 0)
-			/* full scan... */
-			continue;
+		if (skey->sk_flags & SK_ISNULL)
+		{
+			so->isVoidRes = true;
+			break;
+		}
 
-		fillScanKey(&so->ginstate, &(so->keys[nkeys]), scankey[i].sk_attno, scankey[i].sk_argument,
-					entryValues, partial_matches, nEntryValues, scankey[i].sk_strategy);
+		entryValues = (Datum *)
+			DatumGetPointer(FunctionCall5(&so->ginstate.extractQueryFn[skey->sk_attno - 1],
+										  skey->sk_argument,
+										  PointerGetDatum(&nEntryValues),
+										  UInt16GetDatum(skey->sk_strategy),
+										  PointerGetDatum(&partial_matches),
+										  PointerGetDatum(&extra_data)));
+
+		if (nEntryValues < 0)
+		{
+			/*
+			 * extractQueryFn signals that nothing can match, so we can just
+			 * set isVoidRes flag.	No need to examine any more keys.
+			 */
+			so->isVoidRes = true;
+			break;
+		}
+
+		if (entryValues == NULL || nEntryValues == 0)
+		{
+			/*
+			 * extractQueryFn signals that everything matches.	This would
+			 * require a full scan, which we can't do, but perhaps there is
+			 * another scankey that provides a restriction to use.	So we keep
+			 * going and check only at the end.
+			 */
+			continue;
+		}
+
+		fillScanKey(&so->ginstate, &(so->keys[nkeys]),
+					skey->sk_attno, skey->sk_argument,
+					entryValues, partial_matches, nEntryValues,
+					skey->sk_strategy, extra_data);
 		nkeys++;
 	}
 
-	so->nkeys = nkeys;
-
-	if (so->nkeys == 0 && !so->isVoidRes)
+	if (nkeys == 0 && !so->isVoidRes)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("GIN index does not support search with void query")));
+				 errmsg("GIN indexes do not support whole-index scans")));
+
+	so->nkeys = nkeys;
 
 	pgstat_count_index_scan(scan->indexRelation);
 }

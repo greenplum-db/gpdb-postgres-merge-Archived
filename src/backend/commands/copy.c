@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.304 2009/01/02 20:42:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.312 2009/06/11 14:48:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,75 @@ typedef struct
 	CopyState	cstate;			/* CopyStateData for the command */
 } DR_copy;
 
+<<<<<<< HEAD
+=======
+
+/*
+ * These macros centralize code used to process line_buf and raw_buf buffers.
+ * They are macros because they often do continue/break control and to avoid
+ * function call overhead in tight COPY loops.
+ *
+ * We must use "if (1)" because the usual "do {...} while(0)" wrapper would
+ * prevent the continue/break processing from working.	We end the "if (1)"
+ * with "else ((void) 0)" to ensure the "if" does not unintentionally match
+ * any "else" in the calling code, and to avoid any compiler warnings about
+ * empty statements.  See http://www.cit.gu.edu.au/~anthony/info/C/C.macros.
+ */
+
+/*
+ * This keeps the character read at the top of the loop in the buffer
+ * even if there is more than one read-ahead.
+ */
+#define IF_NEED_REFILL_AND_NOT_EOF_CONTINUE(extralen) \
+if (1) \
+{ \
+	if (raw_buf_ptr + (extralen) >= copy_buf_len && !hit_eof) \
+	{ \
+		raw_buf_ptr = prev_raw_ptr; /* undo fetch */ \
+		need_data = true; \
+		continue; \
+	} \
+} else ((void) 0)
+
+/* This consumes the remainder of the buffer and breaks */
+#define IF_NEED_REFILL_AND_EOF_BREAK(extralen) \
+if (1) \
+{ \
+	if (raw_buf_ptr + (extralen) >= copy_buf_len && hit_eof) \
+	{ \
+		if (extralen) \
+			raw_buf_ptr = copy_buf_len; /* consume the partial character */ \
+		/* backslash just before EOF, treat as data char */ \
+		result = true; \
+		break; \
+	} \
+} else ((void) 0)
+
+/*
+ * Transfer any approved data to line_buf; must do this to be sure
+ * there is some room in raw_buf.
+ */
+#define REFILL_LINEBUF \
+if (1) \
+{ \
+	if (raw_buf_ptr > cstate->raw_buf_index) \
+	{ \
+		appendBinaryStringInfo(&cstate->line_buf, \
+							 cstate->raw_buf + cstate->raw_buf_index, \
+							   raw_buf_ptr - cstate->raw_buf_index); \
+		cstate->raw_buf_index = raw_buf_ptr; \
+	} \
+} else ((void) 0)
+
+/* Undo any read-ahead and jump out of the block. */
+#define NO_END_OF_COPY_GOTO \
+if (1) \
+{ \
+	raw_buf_ptr = prev_raw_ptr + 1; \
+	goto not_end_of_copy; \
+} else ((void) 0)
+
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static const char BinarySignature[11] = "PGCOPY\n\377\r\n\0";
 
 
@@ -1073,7 +1142,7 @@ void ValidateControlChars(bool copy, bool load, bool csv_mode, char *delim,
  * or write to a file.
  *
  * Do not allow the copy if user doesn't have proper permission to access
- * the table.
+ * the table or the specifically requested columns.
  */
 uint64
 DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
@@ -1084,7 +1153,8 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 	List	   *force_quote = NIL;
 	List	   *force_notnull = NIL;
 	AclMode		required_access = (is_from ? ACL_INSERT : ACL_SELECT);
-	AclResult	aclresult;
+	AclMode		relPerms;
+	AclMode		remainingPerms;
 	ListCell   *option;
 	TupleDesc	tupDesc;
 	int			num_phys_attrs;
@@ -1271,11 +1341,42 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 			cstate->escape = cstate->quote;
 	}
 
+<<<<<<< HEAD
 	if (!cstate->csv_mode && !cstate->escape)
 		cstate->escape = "\\";			/* default escape for text mode */
 
 	/*
 	 * Error handling setup
+=======
+	/* Only single-byte delimiter strings are supported. */
+	if (strlen(cstate->delim) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			  errmsg("COPY delimiter must be a single one-byte character")));
+
+	/* Disallow end-of-line characters */
+	if (strchr(cstate->delim, '\r') != NULL ||
+		strchr(cstate->delim, '\n') != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("COPY delimiter cannot be newline or carriage return")));
+
+	if (strchr(cstate->null_print, '\r') != NULL ||
+		strchr(cstate->null_print, '\n') != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("COPY null representation cannot use newline or carriage return")));
+
+	/*
+	 * Disallow unsafe delimiter characters in non-CSV mode.  We can't allow
+	 * backslash because it would be ambiguous.  We can't allow the other
+	 * cases because data characters matching the delimiter must be
+	 * backslashed, and certain backslash combinations are interpreted
+	 * non-literally by COPY IN.  Disallowing all lower case ASCII letters is
+	 * more than strictly necessary, but seems best for consistency and
+	 * future-proofing.  Likewise we disallow all digits though only octal
+	 * digits are actually dangerous.
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	if(stmt->sreh)
 	{
@@ -1285,10 +1386,17 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 
 		sreh = (SingleRowErrorDesc *)stmt->sreh;
 
+<<<<<<< HEAD
 		if (!is_from)
 			ereport(ERROR,
 					(errcode(ERRCODE_GP_FEATURE_NOT_SUPPORTED),
 					 errmsg("COPY single row error handling only available using COPY FROM")));
+=======
+	if (cstate->csv_mode && strlen(cstate->quote) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("COPY quote must be a single one-byte character")));
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		if (sreh->into_file)
 		{
@@ -1314,12 +1422,19 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 
 	cstate->skip_ext_partition = stmt->skip_ext_partition;
 
+<<<<<<< HEAD
 	/* We must be a QE if we received the partitioning config */
 	if (stmt->partitions)
 	{
 		Assert(Gp_role == GP_ROLE_EXECUTE);
 		cstate->partitions = stmt->partitions;
 	}
+=======
+	if (cstate->csv_mode && strlen(cstate->escape) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("COPY escape must be a single one-byte character")));
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * Validate our control characters and their combination
@@ -1487,20 +1602,39 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 		cstate->rel = heap_openrv(stmt->relation,
 							 (is_from ? RowExclusiveLock : AccessShareLock));
 
+<<<<<<< HEAD
 		/* save relation oid for auto-stats call later */
 		relationOid = RelationGetRelid(cstate->rel);
+=======
+		tupDesc = RelationGetDescr(cstate->rel);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		/* Check relation permissions. */
-		aclresult = pg_class_aclcheck(RelationGetRelid(cstate->rel),
-									  GetUserId(),
-									  required_access);
-		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_CLASS,
-						   RelationGetRelationName(cstate->rel));
+		relPerms = pg_class_aclmask(RelationGetRelid(cstate->rel), GetUserId(),
+									required_access, ACLMASK_ALL);
+		remainingPerms = required_access & ~relPerms;
+		if (remainingPerms != 0)
+		{
+			/* We don't have table permissions, check per-column permissions */
+			List	   *attnums;
+			ListCell   *cur;
+
+			attnums = CopyGetAttnums(tupDesc, cstate->rel, attnamelist);
+			foreach(cur, attnums)
+			{
+				int			attnum = lfirst_int(cur);
+
+				if (pg_attribute_aclcheck(RelationGetRelid(cstate->rel),
+										  attnum,
+										  GetUserId(),
+										  remainingPerms) != ACLCHECK_OK)
+					aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
+								   RelationGetRelationName(cstate->rel));
+			}
+		}
 
 		/* check read-only transaction */
-		if (XactReadOnly && is_from &&
-			!isTempNamespace(RelationGetNamespace(cstate->rel)))
+		if (XactReadOnly && is_from && !cstate->rel->rd_islocaltemp)
 			ereport(ERROR,
 					(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
 					 errmsg("transaction is read-only")));
@@ -1511,12 +1645,15 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("table \"%s\" does not have OIDs",
 							RelationGetRelationName(cstate->rel))));
+<<<<<<< HEAD
 
 		tupDesc = RelationGetDescr(cstate->rel);
 
 		/* Update error log info */
 		if (cstate->cdbsreh)
 			cstate->cdbsreh->relid = RelationGetRelid(cstate->rel);
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 	else
 	{
@@ -5735,9 +5872,137 @@ DetectLineEnd(CopyState cstate, size_t bytesread  __attribute__((unused)))
 				}
 				else
 				{
+<<<<<<< HEAD
 					cstate->eol_type = EOL_CR;
 					cstate->eol_ch[0] = '\r';
 					cstate->eol_ch[1] = '\0';
+=======
+					/* found \r, but no \n */
+					if (cstate->eol_type == EOL_CRNL)
+						ereport(ERROR,
+								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+								 !cstate->csv_mode ?
+							errmsg("literal carriage return found in data") :
+							errmsg("unquoted carriage return found in data"),
+								 !cstate->csv_mode ?
+						errhint("Use \"\\r\" to represent carriage return.") :
+								 errhint("Use quoted CSV field to represent carriage return.")));
+
+					/*
+					 * if we got here, it is the first line and we didn't find
+					 * \n, so don't consume the peeked character
+					 */
+					cstate->eol_type = EOL_CR;
+				}
+			}
+			else if (cstate->eol_type == EOL_NL)
+				ereport(ERROR,
+						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+						 !cstate->csv_mode ?
+						 errmsg("literal carriage return found in data") :
+						 errmsg("unquoted carriage return found in data"),
+						 !cstate->csv_mode ?
+					   errhint("Use \"\\r\" to represent carriage return.") :
+						 errhint("Use quoted CSV field to represent carriage return.")));
+			/* If reach here, we have found the line terminator */
+			break;
+		}
+
+		/* Process \n */
+		if (c == '\n' && (!cstate->csv_mode || !in_quote))
+		{
+			if (cstate->eol_type == EOL_CR || cstate->eol_type == EOL_CRNL)
+				ereport(ERROR,
+						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+						 !cstate->csv_mode ?
+						 errmsg("literal newline found in data") :
+						 errmsg("unquoted newline found in data"),
+						 !cstate->csv_mode ?
+						 errhint("Use \"\\n\" to represent newline.") :
+					 errhint("Use quoted CSV field to represent newline.")));
+			cstate->eol_type = EOL_NL;	/* in case not set yet */
+			/* If reach here, we have found the line terminator */
+			break;
+		}
+
+		/*
+		 * In CSV mode, we only recognize \. alone on a line.  This is because
+		 * \. is a valid CSV data value.
+		 */
+		if (c == '\\' && (!cstate->csv_mode || first_char_in_line))
+		{
+			char		c2;
+
+			IF_NEED_REFILL_AND_NOT_EOF_CONTINUE(0);
+			IF_NEED_REFILL_AND_EOF_BREAK(0);
+
+			/* -----
+			 * get next character
+			 * Note: we do not change c so if it isn't \., we can fall
+			 * through and continue processing for client encoding.
+			 * -----
+			 */
+			c2 = copy_raw_buf[raw_buf_ptr];
+
+			if (c2 == '.')
+			{
+				raw_buf_ptr++;	/* consume the '.' */
+
+				/*
+				 * Note: if we loop back for more data here, it does not
+				 * matter that the CSV state change checks are re-executed; we
+				 * will come back here with no important state changed.
+				 */
+				if (cstate->eol_type == EOL_CRNL)
+				{
+					/* Get the next character */
+					IF_NEED_REFILL_AND_NOT_EOF_CONTINUE(0);
+					/* if hit_eof, c2 will become '\0' */
+					c2 = copy_raw_buf[raw_buf_ptr++];
+
+					if (c2 == '\n')
+					{
+						if (!cstate->csv_mode)
+							ereport(ERROR,
+									(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+									 errmsg("end-of-copy marker does not match previous newline style")));
+						else
+							NO_END_OF_COPY_GOTO;
+					}
+					else if (c2 != '\r')
+					{
+						if (!cstate->csv_mode)
+							ereport(ERROR,
+									(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+									 errmsg("end-of-copy marker corrupt")));
+						else
+							NO_END_OF_COPY_GOTO;
+					}
+				}
+
+				/* Get the next character */
+				IF_NEED_REFILL_AND_NOT_EOF_CONTINUE(0);
+				/* if hit_eof, c2 will become '\0' */
+				c2 = copy_raw_buf[raw_buf_ptr++];
+
+				if (c2 != '\r' && c2 != '\n')
+				{
+					if (!cstate->csv_mode)
+						ereport(ERROR,
+								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+								 errmsg("end-of-copy marker corrupt")));
+					else
+						NO_END_OF_COPY_GOTO;
+				}
+
+				if ((cstate->eol_type == EOL_NL && c2 != '\n') ||
+					(cstate->eol_type == EOL_CRNL && c2 != '\n') ||
+					(cstate->eol_type == EOL_CR && c2 != '\r'))
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+							 errmsg("end-of-copy marker does not match previous newline style")));
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				}
 
 				cstate->in_quote = save_inquote; /* see comment at declaration */
@@ -5864,6 +6129,7 @@ CopyReadAttributesText(CopyState cstate, bool * __restrict nulls,
 	 */
 	while (cstate->line_buf.cursor < cstate->line_buf.len)
 	{
+<<<<<<< HEAD
 		bytes_remaining = cstate->line_buf.len - cstate->line_buf.cursor;
 		stop = scan_start + bytes_remaining;
 		/*
@@ -5887,6 +6153,26 @@ CopyReadAttributesText(CopyState cstate, bool * __restrict nulls,
 		scan_end = (*scanner != '\0' ? (char *) scanner : NULL);
 
 		if (scan_end == NULL)
+=======
+		bool		found_delim = false;
+		char	   *start_ptr;
+		char	   *end_ptr;
+		int			input_len;
+		bool		saw_non_ascii = false;
+
+		/* Make sure space remains in fieldvals[] */
+		if (fieldno >= maxfields)
+			ereport(ERROR,
+					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+					 errmsg("extra data after last expected column")));
+
+		/* Remember start of field on both input and output sides */
+		start_ptr = cur_ptr;
+		fieldvals[fieldno] = output_ptr;
+
+		/* Scan data for field */
+		for (;;)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		{
 			/* GOT TO END OF LINE BUFFER */
 
@@ -6053,6 +6339,12 @@ CopyReadAttributesText(CopyState cstate, bool * __restrict nulls,
 								skip++;
 								oct_val = (oct_val << 3) + OCTVALUE(nextc);
 							}
+<<<<<<< HEAD
+=======
+							c = val & 0377;
+							if (c == '\0' || IS_HIGHBIT_SET(c))
+								saw_non_ascii = true;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 						}
 						newc = oct_val & 0377;	/* the escaped byte value */
 						if (IS_HIGHBIT_SET(newc))
@@ -6071,8 +6363,26 @@ CopyReadAttributesText(CopyState cstate, bool * __restrict nulls,
 
 							if (isxdigit((unsigned char)nextc))
 							{
+<<<<<<< HEAD
 								skip++;
 								hex_val = (hex_val << 4) + GetDecimalFromHex(nextc);
+=======
+								int			val = GetDecimalFromHex(hexchar);
+
+								cur_ptr++;
+								if (cur_ptr < line_end_ptr)
+								{
+									hexchar = *cur_ptr;
+									if (isxdigit((unsigned char) hexchar))
+									{
+										cur_ptr++;
+										val = (val << 4) + GetDecimalFromHex(hexchar);
+									}
+								}
+								c = val & 0xff;
+								if (c == '\0' || IS_HIGHBIT_SET(c))
+									saw_non_ascii = true;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 							}
 							newc = hex_val & 0xff;
 							if (IS_HIGHBIT_SET(newc))
@@ -6157,6 +6467,7 @@ CopyReadAttributesText(CopyState cstate, bool * __restrict nulls,
 
 	}							/* end line buffer scan. */
 
+<<<<<<< HEAD
 	/*
 	 * Replace all delimiters with NULL for string termination.
 	 * NOTE: only delimiters (NOT necessarily all delimc) are replaced.
@@ -6181,6 +6492,14 @@ CopyReadAttributesText(CopyState cstate, bool * __restrict nulls,
 	if(saw_high_bit)
 	{
 		for (attribute = 0; attribute < num_phys_attrs; attribute++)
+=======
+		/*
+		 * If we de-escaped a non-7-bit-ASCII char, make sure we still have
+		 * valid data for the db encoding. Avoid calling strlen here for the
+		 * sake of efficiency.
+		 */
+		if (saw_non_ascii)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		{
 			char *fld = cstate->attribute_buf.data + attr_offsets[attribute];
 			pg_verifymbstr(fld, strlen(fld), false);
@@ -6237,8 +6556,29 @@ CopyReadAttributesCSV(CopyState cstate, bool *nulls, int *attr_offsets,
 	{
 		end_cursor = cstate->line_buf.cursor;
 
+<<<<<<< HEAD
 		/* finished processing attributes in line */
 		if (cstate->line_buf.cursor >= cstate->line_buf.len - 1)
+=======
+		/* Make sure space remains in fieldvals[] */
+		if (fieldno >= maxfields)
+			ereport(ERROR,
+					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+					 errmsg("extra data after last expected column")));
+
+		/* Remember start of field on both input and output sides */
+		start_ptr = cur_ptr;
+		fieldvals[fieldno] = output_ptr;
+
+		/*
+		 * Scan data for field,
+		 *
+		 * The loop starts in "not quote" mode and then toggles between that
+		 * and "in quote" mode. The loop exits normally if it is in "not
+		 * quote" mode and a delimiter or line end is seen.
+		 */
+		for (;;)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		{
 			input_len = end_cursor - start_cursor;
 
@@ -6389,6 +6729,7 @@ CopyReadAttributesCSV(CopyState cstate, bool *nulls, int *attr_offsets,
 
 				if (nextc == escapec || nextc == quotec)
 				{
+<<<<<<< HEAD
 					appendStringInfoCharMacro(&cstate->attribute_buf, nextc);
 					cstate->line_buf.cursor++;
 					cstate->attribute_buf.cursor++;
@@ -6396,6 +6737,38 @@ CopyReadAttributesCSV(CopyState cstate, bool *nulls, int *attr_offsets,
 				}
 			}
 		}
+=======
+					/*
+					 * peek at the next char if available, and escape it if it
+					 * is an escape char or a quote char
+					 */
+					if (cur_ptr < line_end_ptr)
+					{
+						char		nextc = *cur_ptr;
+
+						if (nextc == escapec || nextc == quotec)
+						{
+							*output_ptr++ = nextc;
+							cur_ptr++;
+							continue;
+						}
+					}
+				}
+
+				/*
+				 * end of quoted field. Must do this test after testing for
+				 * escape in case quote char and escape char are the same
+				 * (which is the common case).
+				 */
+				if (c == quotec)
+					break;
+
+				/* Add c to output string */
+				*output_ptr++ = c;
+			}
+		}
+endfield:
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		/*
 		 * end of quoted field. Must do this test after testing for escape
@@ -6612,11 +6985,11 @@ CopyAttributeOutText(CopyState cstate, char *string)
 			if ((unsigned char) c < (unsigned char) 0x20)
 			{
 				/*
-				 * \r and \n must be escaped, the others are traditional.
-				 * We prefer to dump these using the C-like notation, rather
-				 * than a backslash and the literal character, because it
-				 * makes the dump file a bit more proof against Microsoftish
-				 * data mangling.
+				 * \r and \n must be escaped, the others are traditional. We
+				 * prefer to dump these using the C-like notation, rather than
+				 * a backslash and the literal character, because it makes the
+				 * dump file a bit more proof against Microsoftish data
+				 * mangling.
 				 */
 				switch (c)
 				{

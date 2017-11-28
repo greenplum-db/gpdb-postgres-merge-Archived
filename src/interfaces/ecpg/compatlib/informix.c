@@ -1012,8 +1012,13 @@ ECPG_informix_set_var(int number, void *pointer, int lineno)
 		char my_msg[5] = { 'Y', 'E', '0', '0', '1' };
 
 		sqlca->sqlcode = ECPG_OUT_OF_MEMORY;
+<<<<<<< HEAD
 		strncpy(sqlca->sqlstate, my_msg, sizeof(my_msg));
 		snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc), "Out of memory in line %d.", lineno);
+=======
+		strncpy(sqlca->sqlstate, "YE001", sizeof("YE001"));
+		snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc), "out of memory on line %d", lineno);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		sqlca->sqlerrm.sqlerrml = strlen(sqlca->sqlerrm.sqlerrmc);
 		/* free all memory we have allocated for the user */
 		ECPGfree_auto_mem();

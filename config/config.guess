@@ -1,8 +1,16 @@
 #! /bin/sh
 # Attempt to guess a canonical system name.
+<<<<<<< HEAD
 #   Copyright 1992-2017 Free Software Foundation, Inc.
 
 timestamp='2017-01-01'
+=======
+#   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+#   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
+#   Free Software Foundation, Inc.
+
+timestamp='2009-02-03'
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -50,7 +58,12 @@ version="\
 GNU config.guess ($timestamp)
 
 Originally written by Per Bothner.
+<<<<<<< HEAD
 Copyright 1992-2017 Free Software Foundation, Inc.
+=======
+Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
+2002, 2003, 2004, 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
@@ -383,6 +396,7 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
 	exit ;;
     i86pc:SunOS:5.*:* | i86xen:SunOS:5.*:*)
 	eval $set_cc_for_build
+<<<<<<< HEAD
 	SUN_ARCH=i386
 	# If there is a compiler, see if it is configured for 64-bit objects.
 	# Note that the Sun cc does not turn __LP64__ into 1 like gcc does.
@@ -393,6 +407,18 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
 		grep IS_64BIT_ARCH >/dev/null
 	    then
 		SUN_ARCH=x86_64
+=======
+	SUN_ARCH="i386"
+	# If there is a compiler, see if it is configured for 64-bit objects.
+	# Note that the Sun cc does not turn __LP64__ into 1 like gcc does.
+	# This test works for both compilers.
+	if [ "$CC_FOR_BUILD" != 'no_compiler_found' ]; then
+	    if (echo '#ifdef __amd64'; echo IS_64BIT_ARCH; echo '#endif') | \
+		(CCOPTS= $CC_FOR_BUILD -E - 2>/dev/null) | \
+		grep IS_64BIT_ARCH >/dev/null
+	    then
+		SUN_ARCH="x86_64"
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	    fi
 	fi
 	echo ${SUN_ARCH}-pc-solaris2`echo ${UNAME_RELEASE}|sed -e 's/[^.]*//'`
@@ -596,7 +622,11 @@ EOF
 		echo rs6000-ibm-aix3.2
 	fi
 	exit ;;
+<<<<<<< HEAD
     *:AIX:*:[4567])
+=======
+    *:AIX:*:[456])
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	IBM_CPU_ID=`/usr/sbin/lsdev -C -c processor -S available | sed 1q | awk '{ print $1 }'`
 	if /usr/sbin/lsattr -El ${IBM_CPU_ID} | grep ' POWER' >/dev/null 2>&1; then
 		IBM_ARCH=rs6000
@@ -866,7 +896,11 @@ EOF
 	    x86)
 		echo i586-pc-interix${UNAME_RELEASE}
 		exit ;;
+<<<<<<< HEAD
 	    authenticamd | genuineintel | EM64T)
+=======
+	    EM64T | authenticamd | genuineintel)
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		echo x86_64-unknown-interix${UNAME_RELEASE}
 		exit ;;
 	    IA64)
@@ -908,8 +942,20 @@ EOF
     i*86:Minix:*:*)
 	echo ${UNAME_MACHINE}-pc-minix
 	exit ;;
+<<<<<<< HEAD
     aarch64:Linux:*:*)
 	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
+=======
+    arm*:Linux:*:*)
+	eval $set_cc_for_build
+	if echo __ARM_EABI__ | $CC_FOR_BUILD -E - 2>/dev/null \
+	    | grep -q __ARM_EABI__
+	then
+	    echo ${UNAME_MACHINE}-unknown-linux-gnu
+	else
+	    echo ${UNAME_MACHINE}-unknown-linux-gnueabi
+	fi
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	exit ;;
     aarch64_be:Linux:*:*)
 	UNAME_MACHINE=aarch64_be
@@ -1015,6 +1061,9 @@ EOF
     parisc64:Linux:*:* | hppa64:Linux:*:*)
 	echo hppa64-unknown-linux-${LIBC}
 	exit ;;
+    padre:Linux:*:*)
+	echo sparc-unknown-linux-gnu
+	exit ;;
     parisc:Linux:*:* | hppa:Linux:*:*)
 	# Look for CPU level
 	case `grep '^cpu[^a-z]*:' /proc/cpuinfo 2>/dev/null | cut -d' ' -f2` in
@@ -1060,8 +1109,73 @@ EOF
 	echo ${UNAME_MACHINE}-pc-linux-${LIBC}
 	exit ;;
     xtensa*:Linux:*:*)
+<<<<<<< HEAD
 	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
 	exit ;;
+=======
+    	echo ${UNAME_MACHINE}-unknown-linux-gnu
+	exit ;;
+    i*86:Linux:*:*)
+	# The BFD linker knows what the default object file format is, so
+	# first see if it will tell us. cd to the root directory to prevent
+	# problems with other programs or directories called `ld' in the path.
+	# Set LC_ALL=C to ensure ld outputs messages in English.
+	ld_supported_targets=`cd /; LC_ALL=C ld --help 2>&1 \
+			 | sed -ne '/supported targets:/!d
+				    s/[ 	][ 	]*/ /g
+				    s/.*supported targets: *//
+				    s/ .*//
+				    p'`
+        case "$ld_supported_targets" in
+	  elf32-i386)
+		TENTATIVE="${UNAME_MACHINE}-pc-linux-gnu"
+		;;
+	  a.out-i386-linux)
+		echo "${UNAME_MACHINE}-pc-linux-gnuaout"
+		exit ;;
+	  "")
+		# Either a pre-BFD a.out linker (linux-gnuoldld) or
+		# one that does not give us useful --help.
+		echo "${UNAME_MACHINE}-pc-linux-gnuoldld"
+		exit ;;
+	esac
+	# Determine whether the default compiler is a.out or elf
+	eval $set_cc_for_build
+	sed 's/^	//' << EOF >$dummy.c
+	#include <features.h>
+	#ifdef __ELF__
+	# ifdef __GLIBC__
+	#  if __GLIBC__ >= 2
+	LIBC=gnu
+	#  else
+	LIBC=gnulibc1
+	#  endif
+	# else
+	LIBC=gnulibc1
+	# endif
+	#else
+	#if defined(__INTEL_COMPILER) || defined(__PGI) || defined(__SUNPRO_C) || defined(__SUNPRO_CC)
+	LIBC=gnu
+	#else
+	LIBC=gnuaout
+	#endif
+	#endif
+	#ifdef __dietlibc__
+	LIBC=dietlibc
+	#endif
+EOF
+	eval "`$CC_FOR_BUILD -E $dummy.c 2>/dev/null | sed -n '
+	    /^LIBC/{
+		s: ::g
+		p
+	    }'`"
+	test x"${LIBC}" != x && {
+		echo "${UNAME_MACHINE}-pc-linux-${LIBC}"
+		exit
+	}
+	test x"${TENTATIVE}" != x && { echo "${TENTATIVE}"; exit; }
+	;;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
     i*86:DYNIX/ptx:4*:*)
 	# ptx 4.0 does uname -s correctly, with DYNIX/ptx in there.
 	# earlier versions are messed up and put the nodename in both
@@ -1174,8 +1288,8 @@ EOF
 	/bin/uname -p 2>/dev/null | /bin/grep entium >/dev/null \
 	  && { echo i586-ncr-sysv4.3${OS_REL}; exit; } ;;
     3[34]??:*:4.0:* | 3[34]??,*:*:4.0:*)
-	/bin/uname -p 2>/dev/null | grep 86 >/dev/null \
-	  && { echo i486-ncr-sysv4; exit; } ;;
+        /bin/uname -p 2>/dev/null | grep 86 >/dev/null \
+          && { echo i486-ncr-sysv4; exit; } ;;
     NCR*:*:4.2:* | MPRAS*:*:4.2:*)
 	OS_REL='.3'
 	test -r /etc/.relid \
@@ -1264,9 +1378,12 @@ EOF
     BePC:Haiku:*:*)	# Haiku running on Intel PC compatible.
 	echo i586-pc-haiku
 	exit ;;
+<<<<<<< HEAD
     x86_64:Haiku:*:*)
 	echo x86_64-unknown-haiku
 	exit ;;
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
     SX-4:SUPER-UX:*:*)
 	echo sx4-nec-superux${UNAME_RELEASE}
 	exit ;;
@@ -1406,12 +1523,15 @@ EOF
     i*86:AROS:*:*)
 	echo ${UNAME_MACHINE}-pc-aros
 	exit ;;
+<<<<<<< HEAD
     x86_64:VMkernel:*:*)
 	echo ${UNAME_MACHINE}-unknown-esx
 	exit ;;
     amd64:Isilon\ OneFS:*:*)
 	echo x86_64-unknown-onefs
 	exit ;;
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 esac
 
 cat >&2 <<EOF
@@ -1421,9 +1541,15 @@ This script (version $timestamp), has failed to recognize the
 operating system you are using. If your script is old, overwrite
 config.guess and config.sub with the latest versions from:
 
+<<<<<<< HEAD
   http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess
 and
   http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub
+=======
+  http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD
+and
+  http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 If $0 has already been updated, send the following data and any
 information you think might be pertinent to config-patches@gnu.org to

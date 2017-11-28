@@ -8,18 +8,21 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.211 2009/01/01 17:23:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.216 2009/06/11 14:49:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+<<<<<<< HEAD
 #include "access/heapam.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_partition_rule.h"
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #include "catalog/pg_proc.h"
 #include "catalog/pg_proc_callback.h"
 #include "catalog/pg_type.h"
@@ -36,10 +39,8 @@
 #include "parser/parse_type.h"
 #include "parser/parsetree.h"
 #include "utils/builtins.h"
-#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 
 
 static void unify_hypothetical_args(ParseState *pstate,
@@ -128,8 +129,10 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	if (list_length(fargs) > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				 errmsg("cannot pass more than %d arguments to a function",
-						FUNC_MAX_ARGS),
+			 errmsg_plural("cannot pass more than %d argument to a function",
+						   "cannot pass more than %d arguments to a function",
+						   FUNC_MAX_ARGS,
+						   FUNC_MAX_ARGS),
 				 parser_errposition(pstate, location)));
 
 	/*
@@ -493,20 +496,22 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * If there are default arguments, we have to include their types in
 	 * actual_arg_types for the purpose of checking generic type consistency.
 	 * However, we do NOT put them into the generated parse node, because
-	 * their actual values might change before the query gets run.  The
+	 * their actual values might change before the query gets run.	The
 	 * planner has to insert the up-to-date values at plan time.
 	 */
 	nargsplusdefs = nargs;
 	foreach(l, argdefaults)
 	{
-		Node	*expr = (Node *) lfirst(l);
+		Node	   *expr = (Node *) lfirst(l);
 
 		/* probably shouldn't happen ... */
 		if (nargsplusdefs >= FUNC_MAX_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-					 errmsg("cannot pass more than %d arguments to a function",
-							FUNC_MAX_ARGS),
+			 errmsg_plural("cannot pass more than %d argument to a function",
+						   "cannot pass more than %d arguments to a function",
+						   FUNC_MAX_ARGS,
+						   FUNC_MAX_ARGS),
 					 parser_errposition(pstate, location)));
 
 		actual_arg_types[nargsplusdefs++] = exprType(expr);
@@ -560,7 +565,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("could not find array type for data type %s",
 							format_type_be(newa->element_typeid)),
-					 parser_errposition(pstate, exprLocation((Node *) vargs))));
+				  parser_errposition(pstate, exprLocation((Node *) vargs))));
 		newa->multidims = false;
 		newa->location = exprLocation((Node *) vargs);
 
@@ -661,7 +666,18 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		wfunc->aggfilter = agg_filter;
 		wfunc->location = location;
 
+<<<<<<< HEAD
 		wfunc->windistinct = agg_distinct;
+=======
+		/*
+		 * agg_star is allowed for aggregate functions but distinct isn't
+		 */
+		if (agg_distinct)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				  errmsg("DISTINCT is not implemented for window functions"),
+					 parser_errposition(pstate, location)));
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		/*
 		 * Reject attempt to call a parameterless aggregate without (*)
@@ -854,7 +870,7 @@ func_select_candidate(int nargs,
 				nmatch,
 				nunknowns;
 	Oid			input_base_typeids[FUNC_MAX_ARGS];
-	TYPCATEGORY	slot_category[FUNC_MAX_ARGS],
+	TYPCATEGORY slot_category[FUNC_MAX_ARGS],
 				current_category;
 	bool		current_is_preferred;
 	bool		slot_has_preferred_type[FUNC_MAX_ARGS];
@@ -864,8 +880,10 @@ func_select_candidate(int nargs,
 	if (nargs > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				 errmsg("cannot pass more than %d arguments to a function",
-						FUNC_MAX_ARGS)));
+			 errmsg_plural("cannot pass more than %d argument to a function",
+						   "cannot pass more than %d arguments to a function",
+						   FUNC_MAX_ARGS,
+						   FUNC_MAX_ARGS)));
 
 	/*
 	 * If any input types are domains, reduce them to their base types. This
@@ -1372,8 +1390,8 @@ func_get_detail(List *funcname,
 
 		/*
 		 * If expanding variadics or defaults, the "best candidate" might
-		 * represent multiple equivalently good functions; treat this case
-		 * as ambiguous.
+		 * represent multiple equivalently good functions; treat this case as
+		 * ambiguous.
 		 */
 		if (!OidIsValid(best_candidate->oid))
 			return FUNCDETAIL_MULTIPLE;
@@ -1439,6 +1457,7 @@ func_get_detail(List *funcname,
 
 
 /*
+<<<<<<< HEAD
  * Given two type OIDs, determine whether the first is a complex type
  * (class type) that inherits from the second.
  */
@@ -1625,6 +1644,8 @@ unify_hypothetical_args(ParseState *pstate,
 
 
 /*
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  * make_fn_arguments()
  *
  * Given the actual argument expressions for a function, and the desired
@@ -1923,8 +1944,10 @@ LookupFuncNameTypeNames(List *funcname, List *argtypes, bool noError)
 	if (argcount > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				 errmsg("functions cannot have more than %d arguments",
-						FUNC_MAX_ARGS)));
+				 errmsg_plural("functions cannot have more than %d argument",
+							   "functions cannot have more than %d arguments",
+							   FUNC_MAX_ARGS,
+							   FUNC_MAX_ARGS)));
 
 	args_item = list_head(argtypes);
 	for (i = 0; i < argcount; i++)
@@ -1961,8 +1984,10 @@ LookupAggNameTypeNames(List *aggname, List *argtypes, bool noError)
 	if (argcount > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				 errmsg("functions cannot have more than %d arguments",
-						FUNC_MAX_ARGS)));
+				 errmsg_plural("functions cannot have more than %d argument",
+							   "functions cannot have more than %d arguments",
+							   FUNC_MAX_ARGS,
+							   FUNC_MAX_ARGS)));
 
 	i = 0;
 	foreach(lc, argtypes)

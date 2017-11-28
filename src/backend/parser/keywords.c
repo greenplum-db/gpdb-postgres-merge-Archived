@@ -3,12 +3,16 @@
  * keywords.c
  *	  lexical token lookup for key words in PostgreSQL
  *
+<<<<<<< HEAD
+=======
+ *
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.209 2009/01/01 17:23:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.212 2009/03/08 16:53:30 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1609,8 +1609,13 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| LANGUAGE			{ $$ = make_str("language"); }
 		| LARGE_P			{ $$ = make_str("large"); }
 		| LAST_P			{ $$ = make_str("last"); }
+<<<<<<< HEAD
 /*		| LC_COLLATE_P		{ $$ = make_str("lc_collate"); }
 		| LC_CTYPE_P		{ $$ = make_str("lc_ctype"); }*/
+=======
+		| LC_COLLATE_P		{ $$ = make_str("lc_collate"); }
+		| LC_CTYPE_P		{ $$ = make_str("lc_ctype"); }
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		| LEVEL				{ $$ = make_str("level"); }
 		| LISTEN			{ $$ = make_str("listen"); }
 		| LOAD				{ $$ = make_str("load"); }

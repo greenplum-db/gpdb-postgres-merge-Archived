@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/tablecmds.h,v 1.42 2009/01/01 17:23:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/tablecmds.h,v 1.43 2009/06/11 14:49:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ extern void ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing);
 extern void AlterTableInternal(Oid relid, List *cmds, bool recurse);
 
 extern void AlterTableNamespace(RangeVar *relation, const char *newschema,
-								ObjectType stmttype);
+					ObjectType stmttype);
 
 extern void AlterTableNamespaceInternal(Relation rel, Oid oldNspOid,
 							Oid nspOid, ObjectAddresses *objsMoved);
@@ -85,6 +85,7 @@ extern void renameatt(Oid myrelid,
 		  bool recursing);
 
 extern void RenameRelation(Oid myrelid,
+<<<<<<< HEAD
 		  const char *newrelname,
 		  ObjectType reltype,
 		  RenameStmt *stmt /* MPP */);
@@ -92,10 +93,14 @@ extern void RenameRelation(Oid myrelid,
 extern void find_composite_type_dependencies(Oid typeOid,
 											 const char *origTblName,
 											 const char *origTypeName);
+=======
+			   const char *newrelname,
+			   ObjectType reltype);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 extern void RenameRelationInternal(Oid myrelid,
-		  const char *newrelname,
-		  Oid namespaceId);
+					   const char *newrelname,
+					   Oid namespaceId);
 
 extern void find_composite_type_dependencies(Oid typeOid,
 								 const char *origTblName,

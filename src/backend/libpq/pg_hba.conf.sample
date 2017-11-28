@@ -38,10 +38,16 @@
 # the server's own IP addresses, or "samenet" to match any address in
 # any subnet that the server is directly connected to.
 #
+<<<<<<< HEAD
 # METHOD can be "trust", "reject", "md5", "password", "gss", "sspi",
 # "krb5", "ident", "pam", "ldap", "radius" or "cert".  Note that
 # "password" sends passwords in clear text; "md5" is preferred since
 # it sends encrypted passwords.
+=======
+# METHOD can be "trust", "reject", "md5", "password", "gss", "sspi", "krb5",
+# "ident", "pam", "ldap" or "cert".  Note that "password" sends passwords
+# in clear text; "md5" is preferred since it sends encrypted passwords.
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #
 # OPTIONS are a set of options for the authentication in the format
 # NAME=VALUE.  The available options depend on the different

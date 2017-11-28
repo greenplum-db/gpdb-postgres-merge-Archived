@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.280 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.287 2009/06/11 14:49:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -839,8 +839,6 @@ AllocateRelationDesc(Form_pg_class relp)
 static void
 RelationParseRelOptions(Relation relation, HeapTuple tuple)
 {
-	Datum		datum;
-	bool		isnull;
 	bytea	   *options;
 
 	relation->rd_options = NULL;
@@ -864,6 +862,7 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 	 * we might not have any other for pg_class yet (consider executing this
 	 * code for pg_class itself)
 	 */
+<<<<<<< HEAD
 	datum = fastgetattr(tuple,
 						Anum_pg_class_reloptions,
 						GetPgClassDescriptor(),
@@ -892,6 +891,12 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 			options = NULL;		/* keep compiler quiet */
 			break;
 	}
+=======
+	options = extractRelOptions(tuple,
+								GetPgClassDescriptor(),
+								relation->rd_rel->relkind == RELKIND_INDEX ?
+								relation->rd_am->amoptions : InvalidOid);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * Copy parsed data into CacheMemoryContext.  To guard against the
@@ -1352,6 +1357,7 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 	relation->rd_isnailed = false;
 	relation->rd_createSubid = InvalidSubTransactionId;
 	relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
+<<<<<<< HEAD
 	relation->rd_istemp = isTempOrToastNamespace(relation->rd_rel->relnamespace);
 	relation->rd_issyscat = (strncmp(relation->rd_rel->relname.data, "pg_", 3) == 0);
 
@@ -1366,6 +1372,13 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 		relation->rd_isLocalBuf = true;
 	else
 		relation->rd_isLocalBuf = false;
+=======
+	relation->rd_istemp = relation->rd_rel->relistemp;
+	if (relation->rd_istemp)
+		relation->rd_islocaltemp = isTempOrToastNamespace(relation->rd_rel->relnamespace);
+	else
+		relation->rd_islocaltemp = false;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * initialize the tuple descriptor (relation->rd_att).
@@ -1678,7 +1691,7 @@ IndexSupportInitialize(oidvector *indclass,
  * Note there is no provision for flushing the cache.  This is OK at the
  * moment because there is no way to ALTER any interesting properties of an
  * existing opclass --- all you can do is drop it, which will result in
- * a useless but harmless dead entry in the cache.  To support altering
+ * a useless but harmless dead entry in the cache.	To support altering
  * opclass membership (not the same as opfamily membership!), we'd need to
  * be able to flush this cache as well as the contents of relcache entries
  * for indexes.
@@ -1745,10 +1758,10 @@ LookupOpclassInfo(Oid operatorClassOid,
 
 	/*
 	 * When testing for cache-flush hazards, we intentionally disable the
-	 * operator class cache and force reloading of the info on each call.
-	 * This is helpful because we want to test the case where a cache flush
-	 * occurs while we are loading the info, and it's very hard to provoke
-	 * that if this happens only once per opclass per backend.
+	 * operator class cache and force reloading of the info on each call. This
+	 * is helpful because we want to test the case where a cache flush occurs
+	 * while we are loading the info, and it's very hard to provoke that if
+	 * this happens only once per opclass per backend.
 	 */
 #if defined(CLOBBER_CACHE_ALWAYS)
 	opcentry->valid = false;
@@ -1933,8 +1946,12 @@ formrdesc(const char *relationName, Oid relationReltype,
 	relation->rd_createSubid = InvalidSubTransactionId;
 	relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
 	relation->rd_istemp = false;
+<<<<<<< HEAD
 	relation->rd_issyscat = (strncmp(relationName, "pg_", 3) == 0);	/* GP */
     relation->rd_isLocalBuf = false;    /*CDB*/
+=======
+	relation->rd_islocaltemp = false;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * initialize relation tuple form
@@ -1959,8 +1976,19 @@ formrdesc(const char *relationName, Oid relationReltype,
 	if (isshared)
 		relation->rd_rel->reltablespace = GLOBALTABLESPACE_OID;
 
+<<<<<<< HEAD
 	relation->rd_rel->relpages = 0;
 	relation->rd_rel->reltuples = 0;
+=======
+	/*
+	 * Likewise, we must know if a relation is temp ... but formrdesc is not
+	 * used for any temp relations.
+	 */
+	relation->rd_rel->relistemp = false;
+
+	relation->rd_rel->relpages = 1;
+	relation->rd_rel->reltuples = 1;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	relation->rd_rel->relkind = RELKIND_RELATION;
 	relation->rd_rel->relstorage = RELSTORAGE_HEAP;
 	relation->rd_rel->relhasoids = hasoids;
@@ -1992,9 +2020,15 @@ formrdesc(const char *relationName, Oid relationReltype,
 	for (i = 0; i < natts; i++)
 	{
 		memcpy(relation->rd_att->attrs[i],
+<<<<<<< HEAD
 			   &attrs[i],
 			   ATTRIBUTE_FIXED_PART_SIZE);
 		has_not_null |= attrs[i].attnotnull;
+=======
+			   &att[i],
+			   ATTRIBUTE_FIXED_PART_SIZE);
+		has_not_null |= att[i].attnotnull;
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		/* make sure attcacheoff is valid */
 		relation->rd_att->attrs[i]->attcacheoff = -1;
 	}
@@ -3149,8 +3183,9 @@ RelationBuildLocalRelation(const char *relname,
 	/* must flag that we have rels created in this transaction */
 	need_eoxact_work = true;
 
-	/* is it a temporary relation? */
+	/* it is temporary if and only if it is in my temp-table namespace */
 	rel->rd_istemp = isTempOrToastNamespace(relnamespace);
+	rel->rd_islocaltemp = rel->rd_istemp;
 
 	/* is it a system catalog? */
 	rel->rd_issyscat = (strncmp(relname, "pg_", 3) == 0);
@@ -3227,6 +3262,7 @@ RelationBuildLocalRelation(const char *relname,
 	 * pg_upgrade gets confused if they don't match.
 	 */
 	rel->rd_rel->relisshared = shared_relation;
+	rel->rd_rel->relistemp = rel->rd_istemp;
 
 	RelationGetRelid(rel) = relid;
 
@@ -3785,7 +3821,7 @@ AttrDefaultFetch(Relation relation)
 					 RelationGetRelationName(relation));
 			else
 				attrdef[i].adbin = MemoryContextStrdup(CacheMemoryContext,
-													TextDatumGetCString(val));
+												   TextDatumGetCString(val));
 			break;
 		}
 

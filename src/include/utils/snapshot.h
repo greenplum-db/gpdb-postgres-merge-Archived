@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/snapshot.h,v 1.4 2009/01/01 17:24:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/snapshot.h,v 1.5 2009/06/11 14:49:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,8 +30,13 @@ typedef struct SnapshotData *Snapshot;
  * The specific semantics of a snapshot are encoded by the "satisfies"
  * function.
  */
+<<<<<<< HEAD
 typedef bool (*SnapshotSatisfiesFunc) (Relation relation, HeapTupleHeader tuple,
 									   Snapshot snapshot, Buffer buffer);
+=======
+typedef bool (*SnapshotSatisfiesFunc) (HeapTupleHeader tuple,
+										   Snapshot snapshot, Buffer buffer);
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 typedef struct SnapshotData
 {
@@ -87,4 +92,4 @@ typedef enum
 	HeapTupleBeingUpdated
 } HTSU_Result;
 
-#endif /* SNAPSHOT_H */
+#endif   /* SNAPSHOT_H */

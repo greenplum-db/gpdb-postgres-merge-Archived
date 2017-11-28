@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.172 2009/01/05 13:57:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.175 2009/06/11 14:49:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,10 @@
 #endif
 
 #include "catalog/pg_authid.h"
+<<<<<<< HEAD
 #include "cdb/cdbvars.h"
+=======
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "postmaster/autovacuum.h"
@@ -406,7 +409,7 @@ GetAuthenticatedUserId(void)
  * ever throw any kind of error.  This is because they are used by
  * StartTransaction and AbortTransaction to save/restore the settings,
  * and during the first transaction within a backend, the value to be saved
- * and perhaps restored is indeed invalid.  We have to be able to get
+ * and perhaps restored is indeed invalid.	We have to be able to get
  * through AbortTransaction without asserting in case InitPostgres fails.
  */
 void
@@ -1329,7 +1332,7 @@ load_libraries(const char *libraries, const char *gucname, bool restricted)
 
 	/*
 	 * Choose notice level: avoid repeat messages when re-loading a library
-	 * that was preloaded into the postmaster.  (Only possible in EXEC_BACKEND
+	 * that was preloaded into the postmaster.	(Only possible in EXEC_BACKEND
 	 * configurations)
 	 */
 #ifdef EXEC_BACKEND

@@ -94,6 +94,34 @@ ERROR:  table "no_oids" does not have OIDs
 COPY x TO stdout;
 COPY x (c, e) TO stdout;
 COPY x (b, e) TO stdout WITH NULL 'I''m null';
+<<<<<<< HEAD
+=======
+I'm null	before trigger fired
+21	before trigger fired
+22	before trigger fired
+23	before trigger fired
+24	before trigger fired
+25	before trigger fired
+26	before trigger fired
+I'm null	before trigger fired
+I'm null	before trigger fired
+I'm null	before trigger fired
+I'm null	before trigger fired
+I'm null	before trigger fired
+1	before trigger fired
+2	before trigger fired
+3	before trigger fired
+4	before trigger fired
+5	before trigger fired
+6	before trigger fired
+7	before trigger fired
+8	before trigger fired
+1	after trigger fired
+2	after trigger fired
+3	after trigger fired
+4	after trigger fired
+5	after trigger fired
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 CREATE TEMP TABLE y (
 	col1 text,
 	col2 text

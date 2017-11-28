@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.96 2009/01/02 20:42:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.97 2009/06/11 14:48:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -362,7 +362,25 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 		Oid			expected_type_id = param_types[i];
 		Oid			given_type_id;
 
+<<<<<<< HEAD
 		expr = transformExpr(pstate, expr, EXPR_KIND_EXECUTE_PARAMETER);
+=======
+		expr = transformExpr(pstate, expr);
+
+		/* Cannot contain subselects or aggregates */
+		if (pstate->p_hasSubLinks)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot use subquery in EXECUTE parameter")));
+		if (pstate->p_hasAggs)
+			ereport(ERROR,
+					(errcode(ERRCODE_GROUPING_ERROR),
+			  errmsg("cannot use aggregate function in EXECUTE parameter")));
+		if (pstate->p_hasWindowFuncs)
+			ereport(ERROR,
+					(errcode(ERRCODE_WINDOWING_ERROR),
+				 errmsg("cannot use window function in EXECUTE parameter")));
+>>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		given_type_id = exprType(expr);
 
