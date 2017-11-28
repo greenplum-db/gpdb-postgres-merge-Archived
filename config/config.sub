@@ -1,16 +1,8 @@
 #! /bin/sh
 # Configuration validation subroutine script.
-<<<<<<< HEAD
 #   Copyright 1992-2017 Free Software Foundation, Inc.
 
 timestamp='2017-01-01'
-=======
-#   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-#   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
-#   Free Software Foundation, Inc.
-
-timestamp='2009-02-03'
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -75,12 +67,7 @@ Report bugs and patches to <config-patches@gnu.org>."
 version="\
 GNU config.sub ($timestamp)
 
-<<<<<<< HEAD
 Copyright 1992-2017 Free Software Foundation, Inc.
-=======
-Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-2002, 2003, 2004, 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
@@ -127,16 +114,10 @@ esac
 # Here we must recognize all the valid KERNEL-OS combinations.
 maybe_os=`echo $1 | sed 's/^\(.*\)-\([^-]*-[^-]*\)$/\2/'`
 case $maybe_os in
-<<<<<<< HEAD
   nto-qnx* | linux-gnu* | linux-android* | linux-dietlibc | linux-newlib* | \
   linux-musl* | linux-uclibc* | uclinux-uclibc* | uclinux-gnu* | kfreebsd*-gnu* | \
   knetbsd*-gnu* | netbsd*-gnu* | netbsd*-eabi* | \
   kopensolaris*-gnu* | cloudabi*-eabi* | \
-=======
-  nto-qnx* | linux-gnu* | linux-dietlibc | linux-newlib* | linux-uclibc* | \
-  uclinux-uclibc* | uclinux-gnu* | kfreebsd*-gnu* | knetbsd*-gnu* | netbsd*-gnu* | \
-  kopensolaris*-gnu* | \
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
   storm-chaos* | os2-emx* | rtmk-nova*)
     os=-$maybe_os
     basic_machine=`echo $1 | sed 's/^\(.*\)-\([^-]*-[^-]*\)$/\1/'`
@@ -284,17 +265,11 @@ case $basic_machine in
 	| hexagon \
 	| i370 | i860 | i960 | ia64 \
 	| ip2k | iq2000 \
-<<<<<<< HEAD
 	| k1om \
 	| le32 | le64 \
 	| lm32 \
 	| m32c | m32r | m32rle | m68000 | m68k | m88k \
 	| maxq | mb | microblaze | microblazeel | mcore | mep | metag \
-=======
-	| lm32 \
-	| m32c | m32r | m32rle | m68000 | m68k | m88k \
-	| maxq | mb | microblaze | mcore | mep | metag \
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	| mips | mipsbe | mipseb | mipsel | mipsle \
 	| mips16 \
 	| mips64 | mips64el \
@@ -331,11 +306,7 @@ case $basic_machine in
 	| riscv32 | riscv64 \
 	| rl78 | rx \
 	| score \
-<<<<<<< HEAD
 	| sh | sh[1234] | sh[24]a | sh[24]aeb | sh[23]e | sh[234]eb | sheb | shbe | shle | sh[1234]le | sh3ele \
-=======
-	| sh | sh[1234] | sh[24]a | sh[24]aeb | sh[23]e | sh[34]eb | sheb | shbe | shle | sh[1234]le | sh3ele \
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	| sh64 | sh64le \
 	| sparc | sparc64 | sparc64b | sparc64v | sparc86x | sparclet | sparclite \
 	| sparcv8 | sparcv9 | sparcv9b | sparcv9v \
@@ -345,11 +316,7 @@ case $basic_machine in
 	| v850 | v850e | v850e1 | v850e2 | v850es | v850e2v3 \
 	| visium \
 	| we32k \
-<<<<<<< HEAD
 	| x86 | xc16x | xstormy16 | xtensa \
-=======
-	| x86 | xc16x | xscale | xscalee[bl] | xstormy16 | xtensa \
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	| z8k | z80)
 		basic_machine=$basic_machine-unknown
 		;;
@@ -423,19 +390,13 @@ case $basic_machine in
 	| hexagon-* \
 	| i*86-* | i860-* | i960-* | ia64-* \
 	| ip2k-* | iq2000-* \
-<<<<<<< HEAD
 	| k1om-* \
 	| le32-* | le64-* \
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	| lm32-* \
 	| m32c-* | m32r-* | m32rle-* \
 	| m68000-* | m680[012346]0-* | m68360-* | m683?2-* | m68k-* \
 	| m88110-* | m88k-* | maxq-* | mcore-* | metag-* \
-<<<<<<< HEAD
 	| microblaze-* | microblazeel-* \
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	| mips-* | mipsbe-* | mipseb-* | mipsel-* | mipsle-* \
 	| mips16-* \
 	| mips64-* | mips64el-* \
@@ -470,37 +431,23 @@ case $basic_machine in
 	| powerpc-* | powerpc64-* | powerpc64le-* | powerpcle-* \
 	| pru-* \
 	| pyramid-* \
-<<<<<<< HEAD
 	| riscv32-* | riscv64-* \
 	| rl78-* | romp-* | rs6000-* | rx-* \
-=======
-	| romp-* | rs6000-* \
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	| sh-* | sh[1234]-* | sh[24]a-* | sh[24]aeb-* | sh[23]e-* | sh[34]eb-* | sheb-* | shbe-* \
 	| shle-* | sh[1234]le-* | sh3ele-* | sh64-* | sh64le-* \
 	| sparc-* | sparc64-* | sparc64b-* | sparc64v-* | sparc86x-* | sparclet-* \
 	| sparclite-* \
-<<<<<<< HEAD
 	| sparcv8-* | sparcv9-* | sparcv9b-* | sparcv9v-* | sv1-* | sx*-* \
 	| tahoe-* \
 	| tic30-* | tic4x-* | tic54x-* | tic55x-* | tic6x-* | tic80-* \
 	| tile*-* \
-=======
-	| sparcv8-* | sparcv9-* | sparcv9b-* | sparcv9v-* | strongarm-* | sv1-* | sx?-* \
-	| tahoe-* | thumb-* \
-	| tic30-* | tic4x-* | tic54x-* | tic55x-* | tic6x-* | tic80-* | tile-* \
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	| tron-* \
 	| ubicom32-* \
 	| v850-* | v850e-* | v850e1-* | v850es-* | v850e2-* | v850e2v3-* \
 	| vax-* \
 	| visium-* \
 	| we32k-* \
-<<<<<<< HEAD
 	| x86-* | x86_64-* | xc16x-* | xps100-* \
-=======
-	| x86-* | x86_64-* | xc16x-* | xps100-* | xscale-* | xscalee[bl]-* \
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	| xstormy16-* | xtensa*-* \
 	| ymp-* \
 	| z8k-* | z80-*)
@@ -575,12 +522,9 @@ case $basic_machine in
 		basic_machine=i386-pc
 		os=-aros
 		;;
-<<<<<<< HEAD
 	asmjs)
 		basic_machine=asmjs-unknown
 		;;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	aux)
 		basic_machine=m68k-apple
 		os=-aux
@@ -597,7 +541,6 @@ case $basic_machine in
 		basic_machine=bfin-`echo $basic_machine | sed 's/^[^-]*-//'`
 		os=-linux
 		;;
-<<<<<<< HEAD
 	bluegene*)
 		basic_machine=powerpc-ibm
 		os=-cnk
@@ -611,13 +554,11 @@ case $basic_machine in
 	c6x-*)
 		basic_machine=tic6x-`echo $basic_machine | sed 's/^[^-]*-//'`
 		;;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	c90)
 		basic_machine=c90-cray
 		os=-unicos
 		;;
-        cegcc)
+	cegcc)
 		basic_machine=arm-unknown
 		os=-cegcc
 		;;
@@ -853,12 +794,9 @@ case $basic_machine in
 		basic_machine=m68k-isi
 		os=-sysv
 		;;
-<<<<<<< HEAD
 	leon-*|leon[3-9]-*)
 		basic_machine=sparc-`echo $basic_machine | sed 's/-.*//'`
 		;;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	m68knommu)
 		basic_machine=m68k-unknown
 		os=-linux
@@ -1253,10 +1191,6 @@ case $basic_machine in
 		basic_machine=$basic_machine-unknown
 		os=-linux-gnu
 		;;
-	tile*)
-		basic_machine=tile-unknown
-		os=-linux-gnu
-		;;
 	tx39)
 		basic_machine=mipstx39-unknown
 		;;
@@ -1450,19 +1384,11 @@ case $os in
 	# Each alternative MUST END IN A *, to match a version number.
 	# -sysv* is not here because it comes later, after sysvr4.
 	-gnu* | -bsd* | -mach* | -minix* | -genix* | -ultrix* | -irix* \
-<<<<<<< HEAD
 	      | -*vms* | -sco* | -esix* | -isc* | -aix* | -cnk* | -sunos | -sunos[34]*\
 	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
 	      | -sym* | -kopensolaris* | -plan9* \
 	      | -amigaos* | -amigados* | -msdos* | -newsos* | -unicos* | -aof* \
 	      | -aos* | -aros* | -cloudabi* | -sortix* \
-=======
-	      | -*vms* | -sco* | -esix* | -isc* | -aix* | -sunos | -sunos[34]*\
-	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -solaris* | -sym* \
-	      | -kopensolaris* \
-	      | -amigaos* | -amigados* | -msdos* | -newsos* | -unicos* | -aof* \
-	      | -aos* | -aros* \
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	      | -nindy* | -vxsim* | -vxworks* | -ebmon* | -hms* | -mvs* \
 	      | -clix* | -riscos* | -uniplus* | -iris* | -rtu* | -xenix* \
 	      | -hiux* | -386bsd* | -knetbsd* | -mirbsd* | -netbsd* \
@@ -1471,18 +1397,11 @@ case $os in
 	      | -bosx* | -nextstep* | -cxux* | -aout* | -elf* | -oabi* \
 	      | -ptx* | -coff* | -ecoff* | -winnt* | -domain* | -vsta* \
 	      | -udi* | -eabi* | -lites* | -ieee* | -go32* | -aux* \
-<<<<<<< HEAD
 	      | -chorusos* | -chorusrdb* | -cegcc* | -glidix* \
 	      | -cygwin* | -msys* | -pe* | -psos* | -moss* | -proelf* | -rtems* \
 	      | -midipix* | -mingw32* | -mingw64* | -linux-gnu* | -linux-android* \
 	      | -linux-newlib* | -linux-musl* | -linux-uclibc* \
 	      | -uxpv* | -beos* | -mpeix* | -udk* | -moxiebox* \
-=======
-	      | -chorusos* | -chorusrdb* | -cegcc* \
-	      | -cygwin* | -pe* | -psos* | -moss* | -proelf* | -rtems* \
-	      | -mingw32* | -linux-gnu* | -linux-newlib* | -linux-uclibc* \
-	      | -uxpv* | -beos* | -mpeix* | -udk* \
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	      | -interix* | -uwin* | -mks* | -rhapsody* | -darwin* | -opened* \
 	      | -openstep* | -oskit* | -conix* | -pw32* | -nonstopux* \
 	      | -storm-chaos* | -tops10* | -tenex* | -tops20* | -its* \
@@ -1620,13 +1539,10 @@ case $os in
 	-dicos*)
 		os=-dicos
 		;;
-<<<<<<< HEAD
 	-nacl*)
 		;;
 	-ios)
 		;;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	-none)
 		;;
 	*)

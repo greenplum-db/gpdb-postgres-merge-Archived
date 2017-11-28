@@ -17,16 +17,12 @@ dnl Read the Autoconf manual for details.
 dnl
 m4_pattern_forbid(^PGAC_)dnl to catch undefined macros
 
-<<<<<<< HEAD
 dnl The PACKAGE_VERSION from upstream PostgreSQL is maintained in the
 dnl PG_PACKAGE_VERSION variable, when merging make sure to update this
 dnl variable with the merge conflict from the AC_INIT() statement.
 AC_INIT([Greenplum Database], [6.0.0-alpha.0], [support@greenplum.org])
-[PG_PACKAGE_VERSION=8.4devel]
+[PG_PACKAGE_VERSION=8.4.0]
 AC_SUBST(PG_PACKAGE_VERSION)
-=======
-AC_INIT([PostgreSQL], [8.4.0], [pgsql-bugs@postgresql.org])
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 dnl m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.63], [], [m4_fatal([Autoconf version 2.63 is required.
 dnl Untested combinations of 'autoconf' and PostgreSQL versions are not
@@ -98,11 +94,7 @@ PostgreSQL has apparently not been ported to your platform yet.
 To try a manual configuration, look into the src/template directory
 for a similar platform and use the '--with-template=' option.
 
-<<<<<<< HEAD
 Please also contact <bugs@greenplum.org> to see about
-=======
-Please also contact <pgsql-bugs@postgresql.org> to see about
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 rectifying this.  Include the above 'checking host system type...'
 line.
 *******************************************************************
@@ -470,11 +462,7 @@ unset CFLAGS
 # If the user specifies something in the environment, that is used.
 # else:  If the template file set something, that is used.
 # else:  If coverage was enabled, don't set anything.
-<<<<<<< HEAD
 # else:  If the compiler is GCC, then we use -O3.
-=======
-# else:  If the compiler is GCC, then we use -O2.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 # else:  If the compiler is something else, then we use -O, unless debugging.
 
 if test "$ac_env_CFLAGS_set" = set; then
@@ -728,56 +716,6 @@ done
 
 AC_PROG_CPP
 AC_SUBST(GCC)
-
-<<<<<<< HEAD
-[BLD_ARCH=`echo $BLD_ARCH`]
-AC_SUBST(BLD_ARCH)
-
-# Get the Greenplum version string from VERSION
-bash getversion > VERSION
-GP_VERSION=`cat VERSION`
-
-GP_VERSION_SHORT=`bash ./getversion --short`
-AC_SUBST(GP_VERSION_SHORT)
-
-GP_VERSION_IN="src/include/catalog/gp_version.in"
-GP_VERSION_HEADER="src/include/catalog/gp_version.h"
-if grep '\$\$' $GP_VERSION_IN > /dev/null 2>&1 ; then
-    sed "s,\\$.*\\$\\$,$GP_VERSION," $GP_VERSION_IN > $GP_VERSION_HEADER
-fi
-
-GP_BASH_VERSION_IN="gpMgmt/bin/lib/gp_bash_version.sh.in"
-GP_BASH_VERSION_SH="gpMgmt/bin/lib/gp_bash_version.sh"
-if grep '##' $GP_BASH_VERSION_IN > /dev/null 2>&1 ; then
-    sed "s,##.*##,$GP_VERSION," $GP_BASH_VERSION_IN > $GP_BASH_VERSION_SH
-fi
-
-GPTEST_IN="src/test/regress/GPTest.pm.in"
-GPTEST_PM="src/test/regress/GPTest.pm"
-if grep '##' $GPTEST_IN > /dev/null 2>&1 ; then
-    sed "s,##.*##,$GP_VERSION," $GPTEST_IN > $GPTEST_PM
-fi
-
-# Create compiler version string
-if test x"$GCC" = x"yes" ; then
-  cc_string="GCC `${CC} --version | sed q`"
-else
-  cc_string=$CC
-fi
-AC_DEFINE_UNQUOTED(PG_VERSION_STR,
-                   ["PostgreSQL $PG_PACKAGE_VERSION (Greenplum Database $GP_VERSION) on $host, compiled by $cc_string"],
-                   [A string containing the version number, platform, and C compiler])
-
-AC_DEFINE_UNQUOTED(GP_VERSION,
-                   ["$GP_VERSION"],
-                   [A string containing the Greenplum version number])
-
-[GP_MAJORVERSION=`expr "$GP_VERSION" : '\([0-9][0-9]*\)'`]
-AC_SUBST(GP_MAJORVERSION)
-AC_DEFINE_UNQUOTED(GP_MAJORVERSION, "$GP_MAJORVERSION", [Greenplum major version as a string])
-
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 #
 # Set up TAS assembly code if needed; the template file has now had its
@@ -1233,15 +1171,11 @@ AC_SUBST(ELF_SYS)
 CPPFLAGS="$CPPFLAGS $INCLUDES"
 LDFLAGS="$LDFLAGS $LIBDIRS"
 
-<<<<<<< HEAD
 AC_ARG_VAR(LDFLAGS_EX, [extra linker flags for linking executables only])
 AC_ARG_VAR(LDFLAGS_SL, [extra linker flags for linking shared libraries only])
 
 AC_MSG_NOTICE([using CPPFLAGS=$CPPFLAGS])
 AC_MSG_NOTICE([using LDFLAGS=$LDFLAGS])
-=======
-AC_ARG_VAR(LDFLAGS_SL, [linker flags for shared library linking])
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 PGAC_PROG_LD
 AC_SUBST(LD)
@@ -1303,7 +1237,6 @@ program to use during the build.])
   fi
 fi
 
-<<<<<<< HEAD
 AC_SUBST(ADDON_DIR)
 
 # Supply a numeric version string for use by 3rd party add-ons
@@ -1312,8 +1245,6 @@ AC_SUBST(ADDON_DIR)
 tr '.' '	' |
 $AWK '{printf "%d%02d%02d", $1, $2, (NF >= 3) ? $3 : 0}'`"]
 AC_DEFINE_UNQUOTED(PG_VERSION_NUM, $PG_VERSION_NUM, [PostgreSQL version as a number])
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 #
 [GP_VERSION_NUM="`echo "$PACKAGE_VERSION" | sed 's/[A-Za-z].*$//' |
@@ -1771,11 +1702,8 @@ PGAC_FUNC_GETTIMEOFDAY_1ARG
 LIBS_including_readline="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-<<<<<<< HEAD
 AC_CHECK_FUNCS([cbrt dlopen fcvt fdatasync getifaddrs getpeereid getpeerucred getrlimit memmove poll pstat readlink setproctitle setsid sigprocmask symlink sysconf towlower utime utimes waitpid wcstombs])
 
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 # posix_fadvise() is a no-op on Solaris, so don't incur function overhead
 # by calling it, 2009-04-02
 # http://src.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/lib/libc/port/gen/posix_fadvise.c
@@ -1882,26 +1810,10 @@ fi
 pgac_save_LIBS="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-<<<<<<< HEAD
 # net-snmp has the same problem..
 LIBS=`echo "$LIBS" | sed -e 's/-lnetsnmp//g'`
-=======
-AC_REPLACE_FUNCS([crypt getopt getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul])
 
-case $host_os in
-
-        # Windows uses a specialised env handler
-        mingw*)
-                AC_DEFINE(HAVE_UNSETENV, 1, [Define to 1 because replacement version used.])
-                ac_cv_func_unsetenv=yes;;
-        *)
-                AC_REPLACE_FUNCS([unsetenv])
-		;;
-esac
-
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
-
-AC_REPLACE_FUNCS([crypt fseeko getopt getpeereid getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul unsetenv])
+AC_REPLACE_FUNCS([crypt fseeko getopt getpeereid getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul])
 
 case $host_os in
 
@@ -2503,6 +2415,42 @@ AC_MSG_NOTICE([using CFLAGS=$CFLAGS])
 AC_MSG_NOTICE([using CPPFLAGS=$CPPFLAGS])
 AC_MSG_NOTICE([using LDFLAGS=$LDFLAGS])
 AC_MSG_NOTICE([using LIBS=$LIBS])
+
+[BLD_ARCH=`echo $BLD_ARCH`]
+AC_SUBST(BLD_ARCH)
+
+# Get the Greenplum version string from VERSION
+bash getversion > VERSION
+GP_VERSION=`cat VERSION`
+
+GP_VERSION_SHORT=`bash ./getversion --short`
+AC_SUBST(GP_VERSION_SHORT)
+
+GP_VERSION_IN="src/include/catalog/gp_version.in"
+GP_VERSION_HEADER="src/include/catalog/gp_version.h"
+if grep '\$\$' $GP_VERSION_IN > /dev/null 2>&1 ; then
+    sed "s,\\$.*\\$\\$,$GP_VERSION," $GP_VERSION_IN > $GP_VERSION_HEADER
+fi
+
+GP_BASH_VERSION_IN="gpMgmt/bin/lib/gp_bash_version.sh.in"
+GP_BASH_VERSION_SH="gpMgmt/bin/lib/gp_bash_version.sh"
+if grep '##' $GP_BASH_VERSION_IN > /dev/null 2>&1 ; then
+    sed "s,##.*##,$GP_VERSION," $GP_BASH_VERSION_IN > $GP_BASH_VERSION_SH
+fi
+
+GPTEST_IN="src/test/regress/GPTest.pm.in"
+GPTEST_PM="src/test/regress/GPTest.pm"
+if grep '##' $GPTEST_IN > /dev/null 2>&1 ; then
+    sed "s,##.*##,$GP_VERSION," $GPTEST_IN > $GPTEST_PM
+fi
+
+AC_DEFINE_UNQUOTED(GP_VERSION,
+                   ["$GP_VERSION"],
+                   [A string containing the Greenplum version number])
+
+[GP_MAJORVERSION=`expr "$GP_VERSION" : '\([0-9][0-9]*\)'`]
+AC_SUBST(GP_MAJORVERSION)
+AC_DEFINE_UNQUOTED(GP_MAJORVERSION, "$GP_MAJORVERSION", [Greenplum major version as a string])
 
 # Create compiler version string
 if test x"$GCC" = x"yes" ; then
