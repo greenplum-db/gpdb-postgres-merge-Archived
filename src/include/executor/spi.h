@@ -16,11 +16,7 @@
 #include "nodes/parsenodes.h"
 #include "utils/portal.h"
 #include "utils/relcache.h"
-<<<<<<< HEAD
-#include "utils/syscache.h"
-=======
 #include "utils/snapshot.h"
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 
 typedef struct SPITupleTable
