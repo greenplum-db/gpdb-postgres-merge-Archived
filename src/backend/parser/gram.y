@@ -294,11 +294,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 				index_name name file_name cluster_index_specification
 
 %type <list>	func_name handler_name qual_Op qual_all_Op subquery_Op
-<<<<<<< HEAD
 				opt_class opt_inline_handler opt_validator validator_clause
-=======
-				opt_class opt_validator validator_clause
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 %type <range>	qualified_name OptConstrFromTable
 
@@ -314,13 +310,9 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <list>	function_with_argtypes_list
 
 %type <list>	stmtblock stmtmulti
-<<<<<<< HEAD
 				OptTableElementList OptExtTableElementList TableElementList ExtTableElementList
 				OptInherit definition
-=======
-				OptTableElementList TableElementList OptInherit definition
 				reloptions opt_reloptions
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				OptWith opt_distinct opt_definition func_args func_args_list
 				func_args_with_defaults func_args_with_defaults_list
 				aggr_args aggr_args_list
@@ -337,11 +329,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 				target_list insert_column_list set_target_list
 				set_clause_list set_clause multiple_set_clause
 				ctext_expr_list ctext_row def_list indirection opt_indirection
-<<<<<<< HEAD
-				group_clause group_elem_list group_elem TriggerFuncArgs select_limit
-=======
-				reloption_list group_clause TriggerFuncArgs select_limit
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+				reloption_list group_clause group_elem_list group_elem TriggerFuncArgs select_limit
 				opt_select_limit opclass_item_list opclass_drop_list
 				opt_opfamily transaction_mode_list_or_empty
 				TableFuncElementList opt_type_modifiers
@@ -350,13 +338,10 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 				opt_enum_val_list enum_val_list
 				table_func_column_list scatter_clause dostmt_opt_list
 				create_generic_options alter_generic_options
-<<<<<<< HEAD
+				relation_expr_list
 				columnListUnique
 
 %type <node>    table_value_select_clause
-=======
-				relation_expr_list
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 %type <range>	OptTempTableName
 %type <into>	into_clause create_as_target
@@ -408,14 +393,10 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <vsetstmt> set_rest SetResetClause
 %type <node>	TableElement ConstraintElem TableFuncElement
 %type <node>	columnDef
-<<<<<<< HEAD
-%type <defelt>	def_elem old_aggr_elem keyvalue_pair
+%type <defelt>	def_elem reloption_elem old_aggr_elem keyvalue_pair
 %type <node>	ExtTableElement
 %type <node>	ExtcolumnDef
 %type <node>	cdb_string
-=======
-%type <defelt>	def_elem reloption_elem old_aggr_elem
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 %type <node>	def_arg columnElem where_clause where_or_current_clause
 				a_expr b_expr c_expr AexprConst indirection_el
 				columnref in_expr having_clause func_table array_expr
@@ -578,15 +559,9 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 	KEY
 
-<<<<<<< HEAD
-	LANGUAGE LARGE_P LAST_P LEADING LEAST LEFT LEVEL
-	LIBRARY LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
-	LOCK_P LOGIN_P
-=======
-	LANCOMPILER LANGUAGE LARGE_P LAST_P LC_COLLATE_P LC_CTYPE_P LEADING
-	LEAST LEFT LEVEL LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP
+	LANGUAGE LARGE_P LAST_P LC_COLLATE_P LC_CTYPE_P LEADING
+	LEAST LEFT LEVEL LIBRARY LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP
 	LOCATION LOCK_P LOGIN_P
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	MAPPING MATCH MAXVALUE MEMORY_LIMIT MEMORY_SHARED_QUOTA MEMORY_SPILL_RATIO
 	MINUTE_P MINVALUE MODE MONTH_P MOVE
@@ -633,7 +608,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 	ZONE
 
-<<<<<<< HEAD
 
 /* GPDB-added keywords, in alphabetical order */
 %token <keyword>
@@ -679,8 +653,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 	XMLEXISTS
 
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 /* The grammar thinks these are keywords, but they are not in the kwlist.h
  * list and so can never be entered directly.  The filter in parser.c
  * creates these tokens when required.
@@ -2315,7 +2287,6 @@ AlterTableStmt:
 					n->relkind = OBJECT_TABLE;
 					$$ = (Node *)n;
 				}
-<<<<<<< HEAD
 		|	ALTER EXTERNAL TABLE relation_expr alter_table_cmds
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
@@ -2324,10 +2295,7 @@ AlterTableStmt:
 					n->relkind = OBJECT_EXTTABLE;
 					$$ = (Node *)n;
 				}
-		|	ALTER INDEX relation_expr alter_table_cmds
-=======
 		|	ALTER INDEX qualified_name alter_table_cmds
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->relation = $3;
@@ -5052,7 +5020,6 @@ handler_name:
 			| name attrs				{ $$ = lcons(makeString($1), $2); }
 		;
 
-<<<<<<< HEAD
 opt_inline_handler:
 			INLINE_P handler_name					{ $$ = $2; }
 			| /*EMPTY*/								{ $$ = NIL; }
@@ -5061,16 +5028,6 @@ opt_inline_handler:
 validator_clause:
 			VALIDATOR handler_name					{ $$ = $2; }
 			| NO VALIDATOR							{ $$ = NIL; }
-=======
-validator_clause:
-			VALIDATOR handler_name					{ $$ = $2; }
-			| NO VALIDATOR							{ $$ = NIL; }
-		;
-
-opt_validator:
-			validator_clause						{ $$ = $1; }
-			| /*EMPTY*/								{ $$ = NIL; }
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		;
 
 opt_validator:
@@ -7090,7 +7047,7 @@ privilege_target:
 				}
 			| PROTOCOL name_list
 				{
-					PrivTarget *n = makeNode(PrivTarget);
+					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->objtype = ACL_OBJECT_EXTPROTOCOL;
 					n->objs = $2;
 					$$ = n;
@@ -9612,11 +9569,7 @@ using_clause:
  *
  *****************************************************************************/
 
-<<<<<<< HEAD
-LockStmt:	LOCK_P opt_table qualified_name_list opt_lock opt_nowait
-=======
 LockStmt:	LOCK_P opt_table relation_expr_list opt_lock opt_nowait
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				{
 					LockStmt *n = makeNode(LockStmt);
 
@@ -13674,22 +13627,14 @@ unreserved_keyword:
 			| INVOKER
 			| ISOLATION
 			| KEY
-<<<<<<< HEAD
-			| LANGUAGE
-			| LARGE_P
-			| LAST_P
-			| LEVEL
-			| LIBRARY
-			| LIST
-=======
-			| LANCOMPILER
 			| LANGUAGE
 			| LARGE_P
 			| LAST_P
 			| LC_COLLATE_P
 			| LC_CTYPE_P
 			| LEVEL
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+			| LIBRARY
+			| LIST
 			| LISTEN
 			| LOAD
 			| LOCAL

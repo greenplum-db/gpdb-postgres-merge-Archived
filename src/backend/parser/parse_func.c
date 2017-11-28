@@ -14,15 +14,10 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
-#include "access/heapam.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_constraint.h"
-#include "catalog/pg_inherits.h"
 #include "catalog/pg_partition_rule.h"
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #include "catalog/pg_proc.h"
 #include "catalog/pg_proc_callback.h"
 #include "catalog/pg_type.h"
@@ -39,6 +34,7 @@
 #include "parser/parse_type.h"
 #include "parser/parsetree.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -666,18 +662,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		wfunc->aggfilter = agg_filter;
 		wfunc->location = location;
 
-<<<<<<< HEAD
 		wfunc->windistinct = agg_distinct;
-=======
-		/*
-		 * agg_star is allowed for aggregate functions but distinct isn't
-		 */
-		if (agg_distinct)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				  errmsg("DISTINCT is not implemented for window functions"),
-					 parser_errposition(pstate, location)));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		/*
 		 * Reject attempt to call a parameterless aggregate without (*)
@@ -1457,98 +1442,6 @@ func_get_detail(List *funcname,
 
 
 /*
-<<<<<<< HEAD
- * Given two type OIDs, determine whether the first is a complex type
- * (class type) that inherits from the second.
- */
-bool
-typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
-{
-	bool		result = false;
-	Oid			relid;
-	Relation	inhrel;
-	List	   *visited,
-			   *queue;
-	ListCell   *queue_item;
-
-	if (!ISCOMPLEX(subclassTypeId) || !ISCOMPLEX(superclassTypeId))
-		return false;
-	relid = typeidTypeRelid(subclassTypeId);
-	if (relid == InvalidOid)
-		return false;
-
-	/*
-	 * Begin the search at the relation itself, so add relid to the queue.
-	 */
-	queue = list_make1_oid(relid);
-	visited = NIL;
-
-	inhrel = heap_open(InheritsRelationId, AccessShareLock);
-
-	/*
-	 * Use queue to do a breadth-first traversal of the inheritance graph from
-	 * the relid supplied up to the root.  Notice that we append to the queue
-	 * inside the loop --- this is okay because the foreach() macro doesn't
-	 * advance queue_item until the next loop iteration begins.
-	 */
-	foreach(queue_item, queue)
-	{
-		Oid			this_relid = lfirst_oid(queue_item);
-		ScanKeyData skey;
-		HeapScanDesc inhscan;
-		HeapTuple	inhtup;
-
-		/* If we've seen this relid already, skip it */
-		if (list_member_oid(visited, this_relid))
-			continue;
-
-		/*
-		 * Okay, this is a not-yet-seen relid. Add it to the list of
-		 * already-visited OIDs, then find all the types this relid inherits
-		 * from and add them to the queue. The one exception is we don't add
-		 * the original relation to 'visited'.
-		 */
-		if (queue_item != list_head(queue))
-			visited = lappend_oid(visited, this_relid);
-
-		ScanKeyInit(&skey,
-					Anum_pg_inherits_inhrelid,
-					BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(this_relid));
-
-		inhscan = heap_beginscan(inhrel, SnapshotNow, 1, &skey);
-
-		while ((inhtup = heap_getnext(inhscan, ForwardScanDirection)) != NULL)
-		{
-			Form_pg_inherits inh = (Form_pg_inherits) GETSTRUCT(inhtup);
-			Oid			inhparent = inh->inhparent;
-
-			/* If this is the target superclass, we're done */
-			if (get_rel_type_id(inhparent) == superclassTypeId)
-			{
-				result = true;
-				break;
-			}
-
-			/* Else add to queue */
-			queue = lappend_oid(queue, inhparent);
-		}
-
-		heap_endscan(inhscan);
-
-		if (result)
-			break;
-	}
-
-	heap_close(inhrel, AccessShareLock);
-
-	list_free(visited);
-	list_free(queue);
-
-	return result;
-}
-
-/*
  * unify_hypothetical_args()
  *
  * Ensure that each hypothetical direct argument of a hypothetical-set
@@ -1644,8 +1537,6 @@ unify_hypothetical_args(ParseState *pstate,
 
 
 /*
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  * make_fn_arguments()
  *
  * Given the actual argument expressions for a function, and the desired

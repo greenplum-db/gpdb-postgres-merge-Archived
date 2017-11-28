@@ -210,14 +210,6 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 													 elementType,
 													 targetTypmod);
 					}
-<<<<<<< HEAD
-=======
-
-					/*
-					 * Corner case: ARRAY[] cast to a non-array type. Fall
-					 * through to do it the standard way.
-					 */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				}
 
 				result = transformTypeCast(pstate, tc);
@@ -1703,11 +1695,7 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 		}
 		else
 		{
-<<<<<<< HEAD
 			newe = transformExprRecurse(pstate, e);
-=======
-			newe = transformExpr(pstate, e);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 			/*
 			 * Check for sub-array expressions, if we haven't already found

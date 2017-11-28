@@ -44,15 +44,10 @@ bool		add_missing_from;
 static RangeTblEntry *scanNameSpaceForRefname(ParseState *pstate,
 						const char *refname, int location);
 static RangeTblEntry *scanNameSpaceForRelid(ParseState *pstate, Oid relid,
-<<<<<<< HEAD
-											int location);
-static LockingClause *getLockingClause(ParseState *pstate, char *refname);
-=======
 					  int location);
 static void markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
 					 int rtindex, AttrNumber col);
-static bool isLockedRel(ParseState *pstate, char *refname);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+static LockingClause *getLockingClause(ParseState *pstate, char *refname);
 static void expandRelation(Oid relid, Alias *eref,
 			   int rtindex, int sublevels_up,
 			   int location, bool include_dropped,

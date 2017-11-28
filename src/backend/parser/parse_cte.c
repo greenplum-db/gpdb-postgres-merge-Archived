@@ -838,7 +838,6 @@ checkWellFormedRecursionWalker(Node *node, CteState *cstate)
 		}
 		else
 			checkWellFormedSelectStmt(stmt, cstate);
-<<<<<<< HEAD
 
 		if (cstate->context == RECURSION_OK)
 		{
@@ -860,8 +859,6 @@ checkWellFormedRecursionWalker(Node *node, CteState *cstate)
 
 		checkSelfRefInRangeSubSelect(stmt, cstate);
 
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		/* We're done examining the SelectStmt */
 		return false;
 	}

@@ -104,15 +104,11 @@ static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformValuesClause(ParseState *pstate, SelectStmt *stmt);
 static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt);
 static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
-<<<<<<< HEAD
-									   List **colInfo);
+						  List **colInfo);
 static Node *transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 												setop_types_ctx *setop_types);
 static void coerceSetOpTypes(ParseState *pstate, Node *sop, List *coltypes, List *coltypmods,
 							 List **colInfo);
-=======
-						  List **colInfo);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static void applyColumnNames(List *dst, List *src);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static Query *transformDeclareCursorStmt(ParseState *pstate,
@@ -570,35 +566,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		 * Otherwise this fails:  INSERT INTO foo SELECT 'bar', ... FROM baz
 		 *----------
 		 */
-<<<<<<< HEAD
 		expandRTE(rte, rtr->rtindex, 0, -1, false, NULL, &exprList);
-=======
-		exprList = NIL;
-		foreach(lc, selectQuery->targetList)
-		{
-			TargetEntry *tle = (TargetEntry *) lfirst(lc);
-			Expr	   *expr;
-
-			if (tle->resjunk)
-				continue;
-			if (tle->expr &&
-				(IsA(tle->expr, Const) ||IsA(tle->expr, Param)) &&
-				exprType((Node *) tle->expr) == UNKNOWNOID)
-				expr = tle->expr;
-			else
-			{
-				Var		   *var = makeVar(rtr->rtindex,
-										  tle->resno,
-										  exprType((Node *) tle->expr),
-										  exprTypmod((Node *) tle->expr),
-										  0);
-
-				var->location = exprLocation((Node *) tle->expr);
-				expr = (Expr *) var;
-			}
-			exprList = lappend(exprList, expr);
-		}
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		/* Prepare row for assignment to target table */
 		exprList = transformInsertRow(pstate, exprList,
@@ -1886,23 +1854,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	qry->jointree = makeFromExpr(pstate->p_joinlist, NULL);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
-<<<<<<< HEAD
 	qry->hasFuncsWithExecRestrictions = pstate->p_hasFuncsWithExecRestrictions;
-=======
-	/* aggregates not allowed (but subselects are okay) */
-	if (pstate->p_hasAggs)
-		ereport(ERROR,
-				(errcode(ERRCODE_GROUPING_ERROR),
-				 errmsg("cannot use aggregate function in VALUES"),
-				 parser_errposition(pstate,
-						   locate_agg_of_level((Node *) newExprsLists, 0))));
-	if (pstate->p_hasWindowFuncs)
-		ereport(ERROR,
-				(errcode(ERRCODE_WINDOWING_ERROR),
-				 errmsg("cannot use window function in VALUES"),
-				 parser_errposition(pstate,
-								locate_windowfunc((Node *) newExprsLists))));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	return qry;
 }

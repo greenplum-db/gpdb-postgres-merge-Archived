@@ -35,6 +35,7 @@
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_type_encoding.h"
@@ -2563,7 +2564,9 @@ transformIndexStmt_recurse(IndexStmt *stmt, const char *queryString,
 		nameCache = parser_get_namecache(masterpstate);
 
 		/* Loop over all partition children */
-		children = find_inheritance_children(RelationGetRelid(rel));
+		/* GPDB_84_MERGE_FIXME: do we need another lock here, or did the above
+		 * heap_openrv() take care of it? */
+		children = find_inheritance_children(RelationGetRelid(rel), NoLock);
 
 		foreach(l, children)
 		{
@@ -2820,19 +2823,6 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("rule WHERE condition cannot contain references to other relations")));
 
-<<<<<<< HEAD
-=======
-	/* aggregates not allowed (but subselects are okay) */
-	if (pstate->p_hasAggs)
-		ereport(ERROR,
-				(errcode(ERRCODE_GROUPING_ERROR),
-		   errmsg("cannot use aggregate function in rule WHERE condition")));
-	if (pstate->p_hasWindowFuncs)
-		ereport(ERROR,
-				(errcode(ERRCODE_WINDOWING_ERROR),
-			  errmsg("cannot use window function in rule WHERE condition")));
-
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	/*
 	 * 'instead nothing' rules with a qualification need a query rangetable so
 	 * the rewrite handler can add the negated rule qualification to the
@@ -3622,6 +3612,9 @@ transformStorageEncodingClause(List *options)
 	 */
 	d = transformRelOptions(PointerGetDatum(NULL),
 									  list_concat(extra, options),
+									  /* GPDB_84_MERGE_FIXME: do we need any
+									   * namespaces? */
+									  NULL, NULL,
 									  true, false);
 	(void)heap_reloptions(RELKIND_RELATION, d, true);
 

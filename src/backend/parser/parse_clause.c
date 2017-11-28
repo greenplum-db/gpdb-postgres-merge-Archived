@@ -43,25 +43,10 @@
 #include "utils/syscache.h"
 #include "utils/rel.h"
 
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 #include "cdb/cdbpartition.h"
 #include "catalog/catalog.h"
 #include "miscadmin.h"
-=======
-
-#define ORDER_CLAUSE 0
-#define GROUP_CLAUSE 1
-#define DISTINCT_ON_CLAUSE 2
-#define PARTITION_CLAUSE 3
-
-static const char *const clauseText[] = {
-	"ORDER BY",
-	"GROUP BY",
-	"DISTINCT ON",
-	"PARTITION BY"
-};
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 static void extractRemainingColumns(List *common_colnames,
 						List *src_colnames, List *src_colvars,
@@ -87,7 +72,6 @@ static Node *transformFromClauseItem(ParseState *pstate, Node *n,
 						Relids *containedRels);
 static Node *buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 				   Var *l_colvar, Var *r_colvar);
-<<<<<<< HEAD
 static void checkExprIsVarFree(ParseState *pstate, Node *n,
 				   const char *constructName);
 static TargetEntry *findTargetlistEntrySQL92(ParseState *pstate, Node *node,
@@ -99,8 +83,8 @@ static List *findListTargetlistEntries(ParseState *pstate, Node *node,
 									   bool ignore_in_grpext,
 									   ParseExprKind exprKind,
                                        bool useSQL99);
-static int	get_matching_location(int sortgroupref,
-								  List *sortgrouprefs, List *exprs);
+static int get_matching_location(int sortgroupref,
+					  List *sortgrouprefs, List *exprs);
 static List *addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
 					 List *grouplist, List *targetlist, int location,
 					 bool resolveUnknown);
@@ -111,15 +95,6 @@ static List *transformRowExprToList(ParseState *pstate, RowExpr *rowexpr,
 static List *transformRowExprToGroupClauses(ParseState *pstate, RowExpr *rowexpr,
 											List *groupsets, List *targetList);
 static void freeGroupList(List *grouplist);
-=======
-static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
-					List **tlist, int clause);
-static int get_matching_location(int sortgroupref,
-					  List *sortgrouprefs, List *exprs);
-static List *addTargetToSortList(ParseState *pstate, TargetEntry *tle,
-					List *sortlist, List *targetlist, SortBy *sortby,
-					bool resolveUnknown);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static List *addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
 					 List *grouplist, List *targetlist, int location,
 					 bool resolveUnknown);
@@ -876,28 +851,6 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	}
 
 	/*
-<<<<<<< HEAD
-=======
-	 * Disallow aggregate functions in the expression.	(No reason to postpone
-	 * this check until parseCheckAggregates.)
-	 */
-	if (pstate->p_hasAggs &&
-		checkExprHasAggs(funcexpr))
-		ereport(ERROR,
-				(errcode(ERRCODE_GROUPING_ERROR),
-				 errmsg("cannot use aggregate function in function expression in FROM"),
-				 parser_errposition(pstate,
-									locate_agg_of_level(funcexpr, 0))));
-	if (pstate->p_hasWindowFuncs &&
-		checkExprHasWindowFuncs(funcexpr))
-		ereport(ERROR,
-				(errcode(ERRCODE_WINDOWING_ERROR),
-		 errmsg("cannot use window function in function expression in FROM"),
-				 parser_errposition(pstate,
-									locate_windowfunc(funcexpr))));
-
-	/*
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 * OK, build an RTE for the function.
 	 */
 	rte = addRangeTableEntryForFunction(pstate, funcname, funcexpr,
@@ -2217,7 +2170,6 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 		{
 			tle = (TargetEntry*)lfirst(tl_cell);
 
-<<<<<<< HEAD
 			/* if tlist item is an UNKNOWN literal, change it to TEXT */
 			restype = exprType((Node *) tle->expr);
 
@@ -2281,20 +2233,6 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 		}
 
 		else if (IsA(node, RowExpr))
-=======
-		/*
-		 * If the GROUP BY tlist entry also appears in ORDER BY, copy operator
-		 * info from the (first) matching ORDER BY item.  This means that if
-		 * you write something like "GROUP BY foo ORDER BY foo USING <<<", the
-		 * GROUP BY operation silently takes on the equality semantics implied
-		 * by the ORDER BY.  There are two reasons to do this: it improves the
-		 * odds that we can implement both GROUP BY and ORDER BY with a single
-		 * sort step, and it allows the user to choose the equality semantics
-		 * used by GROUP BY, should she be working with a datatype that has
-		 * more than one equality operator.
-		 */
-		if (tle->ressortgroupref > 0)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		{
 			/* The top level RowExprs are handled differently with other expressions.
 			 * We convert each argument into GroupClause and append them
@@ -2346,14 +2284,9 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 		ListCell *lc;
 
 		/*
-<<<<<<< HEAD
 		 * Find all unique target entries appeared in reorder_grouplist.
 		 * We stash them in the ParseState, to be processed later by
 		 * processExtendedGrouping().
-=======
-		 * If no match in ORDER BY, just add it to the result using default
-		 * sort/group semantics.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		 */
 		foreach (lc, reorder_grouplist)
 		{
@@ -2482,11 +2415,7 @@ transformWindowDefinitions(ParseState *pstate,
 	 */
 	foreach(lc, windowdefs)
 	{
-<<<<<<< HEAD
 		WindowDef  *windef = lfirst(lc);
-=======
-		WindowDef  *windef = (WindowDef *) lfirst(lc);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		WindowClause *refwc = NULL;
 		List	   *partitionClause;
 		List	   *orderClause;
@@ -2520,13 +2449,8 @@ transformWindowDefinitions(ParseState *pstate,
 
 		/*
 		 * Transform PARTITION and ORDER specs, if any.  These are treated
-<<<<<<< HEAD
 		 * almost exactly like top-level GROUP BY and ORDER BY clauses,
 		 * including the special handling of nondefault operator semantics.
-=======
-		 * exactly like top-level GROUP BY and ORDER BY clauses, including the
-		 * special handling of nondefault operator semantics.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		 */
 		orderClause =
 			transformSortClause(pstate,
@@ -2553,7 +2477,6 @@ transformWindowDefinitions(ParseState *pstate,
 		/*
 		 * Per spec, a windowdef that references a previous one copies the
 		 * previous partition clause (and mustn't specify its own).  It can
-<<<<<<< HEAD
 		 * specify its own ordering clause, but only if the previous one had
 		 * none.  It always specifies its own frame clause, and the previous
 		 * one must not have a frame clause.  Yeah, it's bizarre that each of
@@ -2564,13 +2487,6 @@ transformWindowDefinitions(ParseState *pstate,
 		 * error if foo has a nondefault frame clause.  Well, ours not to
 		 * reason why, but we do go out of our way to throw a useful error
 		 * message for such cases.
-=======
-		 * specify its own ordering clause. but only if the previous one had
-		 * none.  It always specifies its own frame clause, and the previous
-		 * one must not have a frame clause.  (Yeah, it's bizarre that each of
-		 * these cases works differently, but SQL:2008 says so; see 7.11
-		 * <window clause> syntax rule 10 and general rule 1.)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		 */
 		if (refwc)
 		{
