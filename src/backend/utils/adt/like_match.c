@@ -101,11 +101,7 @@ MatchText(char *t, int tlen, char *p, int plen)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
 				 errmsg("LIKE pattern must not end with escape character")));
-<<<<<<< HEAD
 			if (GETCHAR(*p) != GETCHAR(*t))
-=======
-			if (TCHAR (*p) != TCHAR (*t))
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				return LIKE_FALSE;
 		}
 		else if (*p == '%')
@@ -143,18 +139,10 @@ MatchText(char *t, int tlen, char *p, int plen)
 					break;		/* Reached a non-wildcard pattern char */
 			}
 
-<<<<<<< HEAD
 			/*
 			 * If we're at end of pattern, match: we have a trailing % which
 			 * matches any remaining text string.
 			 */
-=======
-			/* %% is the same as % according to the SQL standard */
-			/* Advance past all %'s */
-			while (plen > 0 && *p == '%')
-				NextByte(p, plen);
-			/* Trailing percent matches everything. */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			if (plen <= 0)
 				return LIKE_TRUE;
 
@@ -167,7 +155,6 @@ MatchText(char *t, int tlen, char *p, int plen)
 			 * have to consider a match to the zero-length substring at the
 			 * end of the text.
 			 */
-<<<<<<< HEAD
 			if (*p == '\\')
 			{
 				if (plen < 2)
@@ -180,71 +167,14 @@ MatchText(char *t, int tlen, char *p, int plen)
 			while (tlen > 0)
 			{
 				if (GETCHAR(*t) == firstpat)
-=======
-			if (*p == '_')
-			{
-				/* %_ is the same as _% - avoid matching _ repeatedly */
-
-				do
-				{
-					NextChar(t, tlen);
-					NextByte(p, plen);
-				} while (tlen > 0 && plen > 0 && *p == '_');
-
-				/*
-				 * If we are at the end of the pattern, succeed: % followed by
-				 * n _'s matches any string of at least n characters, and we
-				 * have now found there are at least n characters.
-				 */
-				if (plen <= 0)
-					return LIKE_TRUE;
-
-				/* Look for a place that matches the rest of the pattern */
-				while (tlen > 0)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				{
 					int			matched = MatchText(t, tlen, p, plen);
 
 					if (matched != LIKE_FALSE)
-<<<<<<< HEAD
 						return matched;		/* TRUE or ABORT */
 				}
 
 				NextChar(t, tlen);
-=======
-						return matched; /* TRUE or ABORT */
-
-					NextChar(t, tlen);
-				}
-			}
-			else
-			{
-				char		firstpat = TCHAR (*p);
-
-				if (*p == '\\')
-				{
-					if (plen < 2)
-						return LIKE_FALSE;
-					firstpat = TCHAR (p[1]);
-				}
-
-				while (tlen > 0)
-				{
-					/*
-					 * Optimization to prevent most recursion: don't recurse
-					 * unless first pattern byte matches first text byte.
-					 */
-					if (TCHAR (*t) == firstpat)
-					{
-						int			matched = MatchText(t, tlen, p, plen);
-
-						if (matched != LIKE_FALSE)
-							return matched;		/* TRUE or ABORT */
-					}
-
-					NextChar(t, tlen);
-				}
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			}
 
 			/*
@@ -260,11 +190,7 @@ MatchText(char *t, int tlen, char *p, int plen)
 			NextByte(p, plen);
 			continue;
 		}
-<<<<<<< HEAD
 		else if (GETCHAR(*p) != GETCHAR(*t))
-=======
-		else if (TCHAR (*p) != TCHAR (*t))
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		{
 			/* non-wildcard pattern char fails to match text char */
 			return LIKE_FALSE;
@@ -289,17 +215,11 @@ MatchText(char *t, int tlen, char *p, int plen)
 	if (tlen > 0)
 		return LIKE_FALSE;		/* end of pattern, but not of text */
 
-<<<<<<< HEAD
 	/*
 	 * End of text, but perhaps not of pattern.  Match iff the remaining
 	 * pattern can match a zero-length string, ie, it's zero or more %'s.
 	 */
 	while (plen > 0 && *p == '%')
-=======
-	/* End of text string.	Do we have matching pattern remaining? */
-	while (plen > 0 && *p == '%')		/* allow multiple %'s at end of
-										 * pattern */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		NextByte(p, plen);
 	if (plen <= 0)
 		return LIKE_TRUE;

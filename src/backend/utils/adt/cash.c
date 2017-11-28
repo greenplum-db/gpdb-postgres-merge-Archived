@@ -205,28 +205,12 @@ cash_in(PG_FUNCTION_ARGS)
 		/* decimal point? then start counting fractions... */
 		else if (*s == dsymbol && !seen_dot)
 		{
-<<<<<<< HEAD
 			seen_dot = true;
 		}
 		/* ignore if "thousands" separator, else we're done */
 		else if (strncmp(s, ssymbol, strlen(ssymbol)) == 0)
 			s += strlen(ssymbol) - 1;
 		else
-=======
-			seen_dot = 1;
-		}
-		/* ignore if "thousands" separator, else we're done */
-		else if (*s != ssymbol)
-		{
-			/* round off */
-			if (isdigit((unsigned char) *s) && *s >= '5')
-				value++;
-
-			/* adjust for less than required decimal places */
-			for (; dec < fpoint; dec++)
-				value *= 10;
-
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			break;
 	}
 
@@ -358,21 +342,9 @@ cash_out(PG_FUNCTION_ARGS)
 		digit_pos--;
 	} while (value || digit_pos >= 0);
 
-<<<<<<< HEAD
 	/* prepend csymbol */
 	bufptr -= strlen(csymbol);
 	memcpy(bufptr, csymbol, strlen(csymbol));
-=======
-	strncpy((buf + count - strlen(csymbol) + 1), csymbol, strlen(csymbol));
-	count -= strlen(csymbol) - 1;
-
-	/*
-	 * If points == 0 and the number of digits % mon_group == 0, the code
-	 * above adds a trailing ssymbol on the far right, so remove it.
-	 */
-	if (buf[LAST_DIGIT] == ssymbol)
-		buf[LAST_DIGIT] = '\0';
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* see if we need to signify negative amount */
 	if (minus)
