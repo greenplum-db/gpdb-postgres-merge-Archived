@@ -69,12 +69,9 @@ typedef struct
 #define VirtualTransactionIdEquals(vxid1, vxid2) \
 	((vxid1).backendId == (vxid2).backendId && \
 	 (vxid1).localTransactionId == (vxid2).localTransactionId)
-<<<<<<< HEAD
-=======
 #define SetInvalidVirtualTransactionId(vxid) \
 	((vxid).backendId = InvalidBackendId, \
 	 (vxid).localTransactionId = InvalidLocalTransactionId)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #define GET_VXID_FROM_PGPROC(vxid, proc) \
 	((vxid).backendId = (proc).backendId, \
 	 (vxid).localTransactionId = (proc).lxid)

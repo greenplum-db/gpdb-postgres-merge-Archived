@@ -141,13 +141,9 @@ typedef struct RelationData
 	BlockNumber rd_targblock;	/* current insertion target block, or
 								 * InvalidBlockNumber */
 	int			rd_refcnt;		/* reference count */
-<<<<<<< HEAD
 	bool		rd_istemp;		/* CDB: true => skip locking, logging, fsync */
-	bool		rd_issyscat;	/* GP: true => system catalog table (has "pg_" prefix) */
-=======
-	bool		rd_istemp;		/* rel is a temporary relation */
 	bool		rd_islocaltemp; /* rel is a temp rel of this session */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	bool		rd_issyscat;	/* GP: true => system catalog table (has "pg_" prefix) */
 	bool		rd_isnailed;	/* rel is nailed in cache */
 	bool		rd_isvalid;		/* relcache entry is valid */
 	char		rd_indexvalid;	/* state of rd_indexlist: 0 = not valid, 1 =
@@ -278,7 +274,6 @@ typedef struct StdRdOptions
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int			fillfactor;		/* page fill factor in percent (0..100) */
 	AutoVacOpts autovacuum;		/* autovacuum-related options */
-<<<<<<< HEAD
 
 	bool		appendonly;		/* is this an appendonly relation? */
 	int			blocksize;		/* max varblock size (AO rels only) */
@@ -287,8 +282,6 @@ typedef struct StdRdOptions
 	bool		checksum;		/* checksum (AO rels only) */
 	bool 		columnstore;	/* columnstore (AO only) */
 	char	   *orientation;	/* orientation (AO only) */
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 } StdRdOptions;
 
 #define HEAP_MIN_FILLFACTOR			10

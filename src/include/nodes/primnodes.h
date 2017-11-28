@@ -650,12 +650,7 @@ typedef struct SubPlan
 	char	   *plan_name;		/* A name assigned during planning */
 	/* Extra data useful for determining subplan's output type: */
 	Oid			firstColType;	/* Type of first column of subplan result */
-<<<<<<< HEAD
-	int32		firstColTypmod;	/* Typmod of first column of subplan result */
-
-=======
 	int32		firstColTypmod; /* Typmod of first column of subplan result */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	/* Information about execution strategy: */
 	bool		useHashTable;	/* TRUE to store subselect output in a hash
 								 * table (implies we are doing "IN") */

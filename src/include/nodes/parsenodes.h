@@ -427,11 +427,8 @@ typedef struct WindowDef
 	List	   *partitionClause;	/* PARTITION BY expression list */
 	List	   *orderClause;	/* ORDER BY (list of SortBy) */
 	int			frameOptions;	/* frame_clause options, see below */
-<<<<<<< HEAD
 	Node	   *startOffset;	/* expression for starting bound, if any */
 	Node	   *endOffset;		/* expression for ending bound, if any */
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	int			location;		/* parse location, or -1 if none/unknown */
 } WindowDef;
 
@@ -453,7 +450,6 @@ typedef struct WindowDef
 #define FRAMEOPTION_END_UNBOUNDED_FOLLOWING		0x00080 /* end is U. F. */
 #define FRAMEOPTION_START_CURRENT_ROW			0x00100 /* start is C. R. */
 #define FRAMEOPTION_END_CURRENT_ROW				0x00200 /* end is C. R. */
-<<<<<<< HEAD
 #define FRAMEOPTION_START_VALUE_PRECEDING		0x00400 /* start is V. P. */
 #define FRAMEOPTION_END_VALUE_PRECEDING			0x00800 /* end is V. P. */
 #define FRAMEOPTION_START_VALUE_FOLLOWING		0x01000 /* start is V. F. */
@@ -463,8 +459,6 @@ typedef struct WindowDef
 	(FRAMEOPTION_START_VALUE_PRECEDING | FRAMEOPTION_START_VALUE_FOLLOWING)
 #define FRAMEOPTION_END_VALUE \
 	(FRAMEOPTION_END_VALUE_PRECEDING | FRAMEOPTION_END_VALUE_FOLLOWING)
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 #define FRAMEOPTION_DEFAULTS \
 	(FRAMEOPTION_RANGE | FRAMEOPTION_START_UNBOUNDED_PRECEDING | \
@@ -560,7 +554,6 @@ typedef struct IndexElem
 } IndexElem;
 
 /*
-<<<<<<< HEAD
  * column reference encoding clause for storage
  */
 typedef struct ColumnReferenceStorageDirective
@@ -581,17 +574,6 @@ typedef struct ColumnReferenceStorageDirective
  * where they are relevant; C code can just ignore those fields in other
  * statements.)
  */
-=======
- * DefElem - a generic "name = value" option definition
- *
- * In some contexts the name can be qualified.	Also, certain SQL commands
- * allow a SET/ADD/DROP action to be attached to option settings, so it's
- * convenient to carry a field for that too.  (Note: currently, it is our
- * practice that the grammar allows namespace and action only in statements
- * where they are relevant; C code can just ignore those fields in other
- * statements.)
- */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 typedef enum DefElemAction
 {
 	DEFELEM_UNSPEC,				/* no action given */
@@ -807,7 +789,8 @@ typedef struct RangeTblEntry
 	bool		inFromCl;		/* present in FROM clause? */
 	AclMode		requiredPerms;	/* bitmask of required access permissions */
 	Oid			checkAsUser;	/* if valid, check access as this role */
-<<<<<<< HEAD
+	Bitmapset  *selectedCols;	/* columns needing SELECT permission */
+	Bitmapset  *modifiedCols;	/* columns needing INSERT/UPDATE permission */
 
     List       *pseudocols;     /* CDB: List of CdbRelColumnInfo nodes defining
                                  *  pseudo columns for targetlist of scan node.
@@ -816,10 +799,6 @@ typedef struct RangeTblEntry
                                  *  the 0-based position in the list.  Used
                                  *  only in planner & EXPLAIN, not in executor.
                                  */
-=======
-	Bitmapset  *selectedCols;	/* columns needing SELECT permission */
-	Bitmapset  *modifiedCols;	/* columns needing INSERT/UPDATE permission */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 } RangeTblEntry;
 
 /*
@@ -942,13 +921,9 @@ typedef struct WindowClause
 	char	   *refname;		/* referenced window name, if any */
 	List	   *partitionClause;	/* PARTITION BY list */
 	List	   *orderClause;	/* ORDER BY list */
-<<<<<<< HEAD
 	int			frameOptions;	/* frame_clause options, copied from WindowDef */
 	Node	   *startOffset;	/* expression for starting bound, if any */
 	Node	   *endOffset;		/* expression for ending bound, if any */
-=======
-	int			frameOptions;	/* frame_clause options, see WindowDef */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	Index		winref;			/* ID referenced by window functions */
 	bool		copiedOrder;	/* did we copy orderClause from refname? */
 } WindowClause;
@@ -2803,11 +2778,7 @@ typedef struct VacuumStmt
 	bool		full;			/* do FULL (non-concurrent) vacuum */
 	bool		analyze;		/* do ANALYZE step */
 	bool		verbose;		/* print progress info */
-<<<<<<< HEAD
 	bool		rootonly;		/* only ANALYZE root partition tables */
-	bool		scan_all;		/* force scan of all pages */
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	int			freeze_min_age; /* min freeze age, or -1 to use default */
 	int			freeze_table_age;		/* age at which to scan whole table */
 	RangeVar   *relation;		/* single table to process, or NULL */

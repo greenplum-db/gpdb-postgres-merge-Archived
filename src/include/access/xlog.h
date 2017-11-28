@@ -215,19 +215,14 @@ extern bool XLOG_DEBUG;
 /* These are important to RequestCheckpoint */
 #define CHECKPOINT_WAIT			0x0010	/* Wait for completion */
 /* These indicate the cause of a checkpoint request */
-<<<<<<< HEAD
-#define CHECKPOINT_CAUSE_XLOG	0x0010	/* XLOG consumption */
-#define CHECKPOINT_CAUSE_TIME	0x0020	/* Elapsed time */
+#define CHECKPOINT_CAUSE_XLOG	0x0020	/* XLOG consumption */
+#define CHECKPOINT_CAUSE_TIME	0x0040	/* Elapsed time */
 /*
  * This falls in two categories, affects behavior of CreateCheckPoint and also
  * indicates request is coming from ResyncManager process to switch primary
  * segment from resync mode to sync mode.
  */
 #define CHECKPOINT_RESYNC_TO_INSYNC_TRANSITION 0x0040
-=======
-#define CHECKPOINT_CAUSE_XLOG	0x0020	/* XLOG consumption */
-#define CHECKPOINT_CAUSE_TIME	0x0040	/* Elapsed time */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 /* Checkpoint statistics */
 typedef struct CheckpointStatsData
@@ -262,6 +257,8 @@ extern void XLogFileRepFlushCache(
 extern void XLogGetLastRemoved(uint32 *log, uint32 *seg);
 extern XLogRecPtr XLogSaveBufferForHint(Buffer buffer, Relation relation);
 
+extern void RestoreBkpBlocks(XLogRecPtr lsn, XLogRecord *record, bool cleanup);
+
 extern void xlog_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __attribute__((unused)), XLogRecord *record);
 extern void xlog_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
 
@@ -271,17 +268,6 @@ extern void XLogAsyncCommitFlush(void);
 extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
 
 extern void XLogSetAsyncCommitLSN(XLogRecPtr record);
-
-<<<<<<< HEAD
-extern bool RecoveryInProgress(void);
-extern XLogRecPtr GetInsertRecPtr(void);
-extern XLogRecPtr GetFlushRecPtr(void);
-=======
-extern void RestoreBkpBlocks(XLogRecPtr lsn, XLogRecord *record, bool cleanup);
-
-extern void xlog_redo(XLogRecPtr lsn, XLogRecord *record);
-extern void xlog_desc(StringInfo buf, uint8 xl_info, char *rec);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 extern bool RecoveryInProgress(void);
 extern bool XLogInsertAllowed(void);
@@ -308,9 +294,9 @@ extern void XLogPutNextOid(Oid nextOid);
 extern void XLogPutNextRelfilenode(Oid nextRelfilenode);
 extern XLogRecPtr GetRedoRecPtr(void);
 extern XLogRecPtr GetInsertRecPtr(void);
+extern XLogRecPtr GetFlushRecPtr(void);
 extern void GetNextXidAndEpoch(TransactionId *xid, uint32 *epoch);
 
-<<<<<<< HEAD
 extern void XLogGetRecoveryStart(char *callerStr, char *reasonStr, XLogRecPtr *redoCheckPointLoc, CheckPoint *redoCheckPoint);
 extern void XLogPrintLogNames(void);
 extern char *XLogLocationToString(XLogRecPtr *loc);
@@ -386,8 +372,5 @@ extern void do_pg_abort_backup(void);
 
 extern bool
 IsBkpBlockApplied(XLogRecord *record, uint8 block_id);
-=======
-extern void StartupProcessMain(void);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 #endif   /* XLOG_H */

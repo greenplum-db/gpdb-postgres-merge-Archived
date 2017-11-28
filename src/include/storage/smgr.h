@@ -99,7 +99,6 @@ extern void smgrclosenode(RelFileNode rnode);
 extern void smgrcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo);
 extern void smgrdounlink(SMgrRelation reln, ForkNumber forknum,
 			 bool isTemp, bool isRedo);
-<<<<<<< HEAD
 
 extern void smgrcreatefilespacedirpending(Oid filespaceOid,
 							  int16 primaryDbId,
@@ -211,29 +210,21 @@ extern void smgrdormdbdir(DbDirNode *dropDbDirNode,
 			  bool mirrorOnly,
 			  bool ignoreNonExistence,
 			  bool *mirrorDataLossOccurred);
-extern void smgrextend(SMgrRelation reln, ForkNumber forknum, 
-					   BlockNumber blocknum, char *buffer, bool isTemp);
-=======
 extern void smgrextend(SMgrRelation reln, ForkNumber forknum,
 		   BlockNumber blocknum, char *buffer, bool isTemp);
 extern void smgrprefetch(SMgrRelation reln, ForkNumber forknum,
 			 BlockNumber blocknum);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 extern void smgrread(SMgrRelation reln, ForkNumber forknum,
 		 BlockNumber blocknum, char *buffer);
 extern void smgrwrite(SMgrRelation reln, ForkNumber forknum,
 		  BlockNumber blocknum, char *buffer, bool isTemp);
 extern BlockNumber smgrnblocks(SMgrRelation reln, ForkNumber forknum);
 extern void smgrtruncate(SMgrRelation reln, ForkNumber forknum,
-<<<<<<< HEAD
-						 BlockNumber nblocks, bool isTemp);
+			 BlockNumber nblocks, bool isTemp);
 extern bool smgrgetpersistentinfo(XLogRecord *record,
 					  RelFileNode *relFileNode,
 					  ItemPointer persistentTid,
 					  int64 *persistentSerialNum);
-=======
-			 BlockNumber nblocks, bool isTemp);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 extern void smgrimmedsync(SMgrRelation reln, ForkNumber forknum);
 extern int smgrGetPendingFileSysWork(EndXactRecKind endXactRecKind,
 						  PersistentEndXactFileSysActionInfo **ptr);
@@ -263,34 +254,24 @@ extern void mdmirroredunlink(RelFileNode rnode,
 		 bool isRedo,
 		 bool ignoreNonExistence,
 		 bool *mirrorDataLossOccurred);
-extern void mdextend(SMgrRelation reln,  ForkNumber forknum,
-		 BlockNumber blocknum, char *buffer, bool isTemp);
 extern void mdunlink(RelFileNode rnode, ForkNumber forknum, bool isRedo);
-<<<<<<< HEAD
-=======
-extern void mdextend(SMgrRelation reln, ForkNumber forknum,
+extern void mdextend(SMgrRelation reln,  ForkNumber forknum,
 		 BlockNumber blocknum, char *buffer, bool isTemp);
 extern void mdprefetch(SMgrRelation reln, ForkNumber forknum,
 		   BlockNumber blocknum);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 extern void mdread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	   char *buffer);
 extern void mdwrite(SMgrRelation reln, ForkNumber forknum,
 		BlockNumber blocknum, char *buffer, bool isTemp);
 extern BlockNumber mdnblocks(SMgrRelation reln, ForkNumber forknum);
 extern void mdtruncate(SMgrRelation reln, ForkNumber forknum,
-<<<<<<< HEAD
 					   BlockNumber nblocks, bool isTemp,
 					   bool allowedNotFound);
-=======
-		   BlockNumber nblocks, bool isTemp);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 extern void mdimmedsync(SMgrRelation reln, ForkNumber forknum);
 extern void mdpreckpt(void);
 extern void mdsync(void);
 extern void mdpostckpt(void);
 
-<<<<<<< HEAD
 /* md_gp.c */
 extern int	errdetail_nonexistent_relation(int error, RelFileNode *relFileNode);
 extern void mdcreatefilespacedir(Oid filespaceOid,
@@ -361,9 +342,7 @@ PendingDelete_AddCreatePendingEntryWrapper(PersistentFileSysObjName *fsObjName,
 										   ItemPointer persistentTid,
 										   int64 persistentSerialNum);
 
-=======
 extern void SetForwardFsyncRequests(void);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 extern void RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum,
 					 BlockNumber segno);
 extern void ForgetRelationFsyncRequests(RelFileNode rnode, ForkNumber forknum);

@@ -55,14 +55,11 @@ extern bool memory_protect_buffer_pool;
 extern bool zero_damaged_pages;
 extern int	bgwriter_lru_maxpages;
 extern double bgwriter_lru_multiplier;
-<<<<<<< HEAD
+extern int	target_prefetch_pages;
 extern bool bgwriter_flush_all_buffers;
 
 extern PGDLLIMPORT bool IsUnderPostmaster; /* from utils/init/globals.c */
 #define ShouldMemoryProtectBufferPool() (memory_protect_buffer_pool && IsUnderPostmaster)
-=======
-extern int	target_prefetch_pages;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 /* in buf_init.c */
 extern PGDLLIMPORT char *BufferBlocks;
@@ -345,20 +342,12 @@ extern void PrefetchBuffer(Relation reln, ForkNumber forkNum,
 			   BlockNumber blockNum);
 extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
 extern Buffer ReadBufferExtended(Relation reln, ForkNumber forkNum,
-<<<<<<< HEAD
-								 BlockNumber blockNum, ReadBufferMode mode,
-								 BufferAccessStrategy strategy);
-extern Buffer ReadBuffer_Resync(SMgrRelation reln, BlockNumber blockNum);
-extern Buffer ReadBufferWithoutRelcache(RelFileNode rnode, bool isLocalBuf,
-						ForkNumber forkNum, BlockNumber blockNum,
-						ReadBufferMode mode, BufferAccessStrategy strategy);
-=======
 				   BlockNumber blockNum, ReadBufferMode mode,
 				   BufferAccessStrategy strategy);
-extern Buffer ReadBufferWithoutRelcache(RelFileNode rnode, bool isTemp,
+extern Buffer ReadBuffer_Resync(SMgrRelation reln, BlockNumber blockNum);
+extern Buffer ReadBufferWithoutRelcache(RelFileNode rnode, bool isLocalBuf,
 						  ForkNumber forkNum, BlockNumber blockNum,
 						  ReadBufferMode mode, BufferAccessStrategy strategy);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 extern void ReleaseBuffer(Buffer buffer);
 extern void UnlockReleaseBuffer(Buffer buffer);
 extern void MarkBufferDirty(Buffer buffer);
