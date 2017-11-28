@@ -360,16 +360,11 @@ extern char *crypt(const char *key, const char *setting);
 /* WIN32 handled in port/win32.h */
 #ifndef WIN32
 #define pgoff_t off_t
-<<<<<<< HEAD
 #if defined(__bsdi__) || defined(__NetBSD__)
-=======
-#if defined(bsdi) || defined(netbsd)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 extern int	fseeko(FILE *stream, off_t offset, int whence);
 extern off_t ftello(FILE *stream);
 #endif
 #endif
-<<<<<<< HEAD
 
 #ifndef HAVE_ERAND48
 /* we assume all of these are present or missing together */
@@ -377,8 +372,6 @@ extern double erand48(unsigned short xseed[3]);
 extern long lrand48(void);
 extern void srand48(long seed);
 #endif
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 #ifndef HAVE_FSEEKO
 #define fseeko(a, b, c) fseek(a, b, c)
