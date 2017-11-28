@@ -1084,14 +1084,11 @@ typedef struct Unique
 typedef struct Hash
 {
 	Plan		plan;
-<<<<<<< HEAD
 	bool		rescannable;            /* CDB: true => save rows for rescan */
-=======
 	Oid			skewTable;		/* outer join key's table OID, or InvalidOid */
 	AttrNumber	skewColumn;		/* outer join key's column #, or zero */
 	Oid			skewColType;	/* datatype of the outer key column */
 	int32		skewColTypmod;	/* typmod of the outer key column */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	/* all other info is in the parent HashJoin node */
 } Hash;
 

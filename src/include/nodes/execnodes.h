@@ -21,10 +21,7 @@
 #include "access/skey.h"
 #include "nodes/params.h"
 #include "nodes/plannodes.h"
-<<<<<<< HEAD
 #include "nodes/relation.h"
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #include "nodes/tidbitmap.h"
 #include "utils/hsearch.h"
 #include "utils/rel.h"
@@ -1396,7 +1393,6 @@ typedef struct PlanState
 	TupleTableSlot *ps_ResultTupleSlot; /* slot for my result tuples */
 	ExprContext *ps_ExprContext;	/* node's expression-evaluation context */
 	ProjectionInfo *ps_ProjInfo;	/* info for doing tuple projection */
-<<<<<<< HEAD
 
 	/* The manager manages all the code generators and generation process */
 	void *CodegenManager;
@@ -1414,10 +1410,6 @@ typedef struct PlanState
 	 */
 	int		gpmon_plan_tick;
 	gpmon_packet_t gpmon_pkt;
-=======
-	bool		ps_TupFromTlist;/* state flag for processing set-valued
-								 * functions in targetlist */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 } PlanState;
 
 /* Gpperfmon helper functions defined in execGpmon.c */
@@ -1827,12 +1819,8 @@ typedef struct BitmapHeapScanState
 	ScanState	ss;				/* its first field is NodeTag */
 	struct HeapScanDescData *ss_currentScanDesc;
 	List	   *bitmapqualorig;
-<<<<<<< HEAD
 	Node	   *tbm;
-=======
-	TIDBitmap  *tbm;
 	TBMIterator *tbmiterator;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	TBMIterateResult *tbmres;
 	TBMIterator *prefetch_iterator;
 	int			prefetch_pages;
@@ -2518,7 +2506,6 @@ typedef struct WindowAggState
 	FmgrInfo   *ordEqfunctions; /* equality funcs for ordering columns */
 	Tuplestorestate *buffer;	/* stores rows of current partition */
 	int			current_ptr;	/* read pointer # for current */
-<<<<<<< HEAD
 	int64		spooled_rows;	/* total # of rows in buffer */
 	int64		currentpos;		/* position of current row in partition */
 	int64		frameheadpos;	/* current frame head position */
@@ -2566,28 +2553,14 @@ typedef struct WindowAggState
 	ExprContext *tmpcontext;	/* short-term evaluation context */
 
 	bool		all_first;		/* true if the scan is starting */
-=======
-	int			agg_ptr;		/* read pointer # for aggregates */
-	int64		spooled_rows;	/* total # of rows in buffer */
-	int64		currentpos;		/* position of current row in partition */
-	int64		frametailpos;	/* current frame tail position */
-	int64		aggregatedupto; /* rows before this one are aggregated */
-
-	MemoryContext wincontext;	/* context for partition-lifespan data */
-	ExprContext *tmpcontext;	/* short-term evaluation context */
-
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	bool		all_done;		/* true if the scan is finished */
 	bool		partition_spooled;		/* true if all tuples in current
 										 * partition have been spooled into
 										 * tuplestore */
 	bool		more_partitions;/* true if there's more partitions after this
 								 * one */
-<<<<<<< HEAD
 	bool		framehead_valid;/* true if frameheadpos is known up to date
 								 * for current row */
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	bool		frametail_valid;/* true if frametailpos is known up to date
 								 * for current row */
 

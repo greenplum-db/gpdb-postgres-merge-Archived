@@ -613,23 +613,10 @@ find_window_functions_walker(Node *node, WindowFuncLists *lists)
 		lists->numWindowFuncs++;
 
 		/*
-<<<<<<< HEAD
 		 * We assume that the parser checked that there are no window
 		 * functions in the arguments or filter clause.  Hence, we need not
 		 * recurse into them.  (If either the parser or the planner screws up
 		 * on this point, the executor will still catch it; see ExecInitExpr.)
-=======
-		 * Complain if the window function's arguments contain window
-		 * functions
-		 */
-		if (contain_window_function((Node *) wfunc->args))
-			ereport(ERROR,
-					(errcode(ERRCODE_WINDOWING_ERROR),
-					 errmsg("window function calls cannot be nested")));
-
-		/*
-		 * Having checked that, we need not recurse into the argument.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		 */
 		return false;
 	}
@@ -3217,7 +3204,6 @@ eval_const_expressions_mutator(Node *node,
 		newbtest->booltesttype = btest->booltesttype;
 		return (Node *) newbtest;
 	}
-<<<<<<< HEAD
 	if (IsA(node, PlaceHolderVar) && context->estimate)
 	{
 		/*
@@ -3257,24 +3243,6 @@ eval_const_expressions_mutator(Node *node,
 					eval_const_expressions_mutator,
 					(void *) context,
 					0);
-	}
-
-	if (IsA(node, PlaceHolderVar) && context->estimate)
-=======
-	if (IsA(node, PlaceHolderVar) &&context->estimate)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
-	{
-		/*
-		 * In estimation mode, just strip the PlaceHolderVar node altogether;
-		 * this amounts to estimating that the contained value won't be forced
-		 * to null by an outer join.  In regular mode we just use the default
-		 * behavior (ie, simplify the expression but leave the PlaceHolderVar
-		 * node intact).
-		 */
-		PlaceHolderVar *phv = (PlaceHolderVar *) node;
-		
-		return eval_const_expressions_mutator((Node *) phv->phexpr,
-											  context);
 	}
 
 	/*

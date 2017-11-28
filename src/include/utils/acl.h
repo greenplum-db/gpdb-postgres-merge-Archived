@@ -286,13 +286,9 @@ extern AclMode pg_tablespace_aclmask(Oid spc_oid, Oid roleid,
 extern AclMode pg_foreign_data_wrapper_aclmask(Oid fdw_oid, Oid roleid,
 								AclMode mask, AclMaskHow how);
 extern AclMode pg_foreign_server_aclmask(Oid srv_oid, Oid roleid,
-<<<<<<< HEAD
-					  AclMode mask, AclMaskHow how);
+						  AclMode mask, AclMaskHow how);
 extern AclMode pg_extprotocol_aclmask(Oid ptc_oid, Oid roleid,
 					   AclMode mask, AclMaskHow how);
-=======
-						  AclMode mask, AclMaskHow how);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 extern AclResult pg_attribute_aclcheck(Oid table_oid, AttrNumber attnum,
 					  Oid roleid, AclMode mode);

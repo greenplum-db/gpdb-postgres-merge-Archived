@@ -235,13 +235,8 @@ typedef struct PlannerInfo
 	List	   *join_info_list; /* list of SpecialJoinInfos */
 
 	List	   *append_rel_list;	/* list of AppendRelInfos */
-<<<<<<< HEAD
-	
-	List	   *placeholder_list;	/* list of PlaceHolderInfos */
-=======
 
 	List	   *placeholder_list;		/* list of PlaceHolderInfos */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	List	   *query_pathkeys; /* desired pathkeys for query_planner(), and
 								 * actual pathkeys afterwards */
@@ -584,16 +579,13 @@ typedef struct IndexOptInfo
 	bool		unique;			/* true if a unique index */
 	bool		amoptionalkey;	/* can query omit key for the first column? */
 	bool		amsearchnulls;	/* can AM search for NULL index entries? */
-<<<<<<< HEAD
+	bool		amhasgettuple;	/* does AM have amgettuple interface? */
+	bool		amhasgetbitmap; /* does AM have amgetbitmap interface? */
     bool        cdb_default_stats_used; /* true if ANALYZE needed */
     int         num_leading_eq; /* CDB: always 0, except amcostestimate proc may
                                  * set it briefly; it is transferred forthwith
                                  * to the IndexPath (q.v.), then reset. Kludge.
                                  */
-=======
-	bool		amhasgettuple;	/* does AM have amgettuple interface? */
-	bool		amhasgetbitmap; /* does AM have amgetbitmap interface? */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 } IndexOptInfo;
 
 
@@ -1362,15 +1354,12 @@ typedef struct RestrictInfo
 	/* The set of relids required to evaluate the clause: */
 	Relids		required_relids;
 
-<<<<<<< HEAD
 	/*
 	 * The set of relids required to evaluate the clause because this is an outer
 	 * join clause. required_relids is a union of this and clause_relids.
 	 */
 	Relids		ojscope_relids;
 
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	/* The relids used in the clause that are nullable by lower outer joins: */
 	Relids		nullable_relids;
 

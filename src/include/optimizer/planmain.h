@@ -256,15 +256,10 @@ extern void set_opfuncid(OpExpr *opexpr);
 extern void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);
 extern void record_plan_function_dependency(PlannerGlobal *glob, Oid funcid);
 extern void extract_query_dependencies(List *queries,
-<<<<<<< HEAD
-									   List **relationOids,
-									   List **invalItems);
+						   List **relationOids,
+						   List **invalItems);
 extern void cdb_extract_plan_dependencies(PlannerGlobal *glob, Plan *plan);
 
 extern int num_distcols_in_grouplist(List *gc);
-=======
-						   List **relationOids,
-						   List **invalItems);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 #endif   /* PLANMAIN_H */
