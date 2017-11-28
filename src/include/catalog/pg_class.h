@@ -97,7 +97,7 @@ typedef FormData_pg_class *Form_pg_class;
  * ----------------
  */
 
-#define Natts_pg_class					25
+#define Natts_pg_class					26
 #define Anum_pg_class_relname			1
 #define Anum_pg_class_relnamespace		2
 #define Anum_pg_class_reltype			3
@@ -111,23 +111,19 @@ typedef FormData_pg_class *Form_pg_class;
 #define Anum_pg_class_reltoastidxid		11
 #define Anum_pg_class_relhasindex		12
 #define Anum_pg_class_relisshared		13
-<<<<<<< HEAD
-#define Anum_pg_class_relkind			14
-#define Anum_pg_class_relstorage		15
-=======
 #define Anum_pg_class_relistemp			14
 #define Anum_pg_class_relkind			15
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
-#define Anum_pg_class_relnatts			16
-#define Anum_pg_class_relchecks			17
-#define Anum_pg_class_relhasoids		18
-#define Anum_pg_class_relhaspkey		19
-#define Anum_pg_class_relhasrules		20
-#define Anum_pg_class_relhastriggers	21
-#define Anum_pg_class_relhassubclass	22
-#define Anum_pg_class_relfrozenxid		23
-#define Anum_pg_class_relacl			24
-#define Anum_pg_class_reloptions		25
+#define Anum_pg_class_relstorage		16
+#define Anum_pg_class_relnatts			17
+#define Anum_pg_class_relchecks			18
+#define Anum_pg_class_relhasoids		19
+#define Anum_pg_class_relhaspkey		20
+#define Anum_pg_class_relhasrules		21
+#define Anum_pg_class_relhastriggers	22
+#define Anum_pg_class_relhassubclass	23
+#define Anum_pg_class_relfrozenxid		24
+#define Anum_pg_class_relacl			25
+#define Anum_pg_class_reloptions		26
 
 /* ----------------
  *		initial contents of pg_class
@@ -139,23 +135,13 @@ typedef FormData_pg_class *Form_pg_class;
  */
 
 /* Note: "3" in the relfrozenxid column stands for FirstNormalTransactionId */
-<<<<<<< HEAD
-DATA(insert OID = 1247 (  pg_type		PGNSP 71 PGUID 0 1247 0 0 0 0 0 f f r h 28 0 t f f f f 3 _null_ _null_ ));
+DATA(insert OID = 1247 (  pg_type		PGNSP 71 PGUID 0 1247 0 0 0 0 0 f f f r h 28 0 t f f f f 3 _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 PGUID 0 1249 0 0 0 0 0 f f r h 17 0 f f f f f 3 _null_ _null_ ));
+DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 PGUID 0 1249 0 0 0 0 0 f f f r h 18 0 f f f f f 3 _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1255 (  pg_proc		PGNSP 81 PGUID 0 1255 0 0 0 0 0 f f r h 27 0 t f f f f 3 _null_ _null_ ));
+DATA(insert OID = 1255 (  pg_proc		PGNSP 81 PGUID 0 1255 0 0 0 0 0 f f f r h 27 0 t f f f f 3 _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1259 (  pg_class		PGNSP 83 PGUID 0 1259 0 0 0 0 0 f f r h 25 0 t f f f f 3 _null_ _null_ ));
-=======
-DATA(insert OID = 1247 (  pg_type		PGNSP 71 PGUID 0 1247 0 0 0 0 0 f f f r 28 0 t f f f f 3 _null_ _null_ ));
-DESCR("");
-DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 PGUID 0 1249 0 0 0 0 0 f f f r 18 0 f f f f f 3 _null_ _null_ ));
-DESCR("");
-DATA(insert OID = 1255 (  pg_proc		PGNSP 81 PGUID 0 1255 0 0 0 0 0 f f f r 25 0 t f f f f 3 _null_ _null_ ));
-DESCR("");
-DATA(insert OID = 1259 (  pg_class		PGNSP 83 PGUID 0 1259 0 0 0 0 0 f f f r 25 0 t f f f f 3 _null_ _null_ ));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+DATA(insert OID = 1259 (  pg_class		PGNSP 83 PGUID 0 1259 0 0 0 0 0 f f f r h 26 0 t f f f f 3 _null_ _null_ ));
 DESCR("");
 
 /* abstract tuple types */
@@ -168,7 +154,7 @@ DATA(insert OID = 3250    ( nb_classification PGNSP 3251 PGUID 0 3250 0 0 0 0 0 
 #define Class_pg_class \
   {"pg_class"}, PG_CATALOG_NAMESPACE, PG_CLASS_RELTYPE_OID, BOOTSTRAP_SUPERUSERID, 0, \
                RelationRelationId, GLOBALTABLESPACE_OID, \
-               0, 0, 0, 0, false, false, RELKIND_RELATION, RELSTORAGE_HEAP, Natts_pg_class, \
+               0, 0, 0, 0, false, false, false, RELKIND_RELATION, RELSTORAGE_HEAP, Natts_pg_class, \
                0, true, false, false, false, false, FirstNormalTransactionId, {0}, {{{'\0','\0','\0','\0'},{'\0'}}}
 
 
