@@ -3,11 +3,7 @@
  * 1996-06-05 by Arthur David Olson.
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/timezone/localtime.c
-=======
- *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.21 2009/06/11 14:49:15 momjian Exp $
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  */
 
 /*
@@ -1434,11 +1430,7 @@ pg_next_dst_boundary(const pg_time_t *timep,
 	/* Else search to find the boundary following t */
 	{
 		int			lo = 1;
-<<<<<<< HEAD
 		int			hi = sp->timecnt - 1;
-=======
-		int			hi = sp->timecnt;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		while (lo < hi)
 		{
