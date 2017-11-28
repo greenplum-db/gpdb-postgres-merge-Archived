@@ -36,7 +36,7 @@
  * the confusion in this file, use this macro to check for "heap or AO/CO
  * table".
  */
-#define KIND_IS_RELATION(kind) ((kind) == RELOPT_KIND_HEAP)
+#define KIND_IS_RELATION(kind) (((kind) & RELOPT_KIND_HEAP) != 0)
 
 /*
  * GPDB reloptions specification.

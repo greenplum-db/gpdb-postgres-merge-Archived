@@ -903,14 +903,9 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 				parsed = parse_bool(value, &option->values.bool_val);
 				if (validate && !parsed)
 					ereport(ERROR,
-<<<<<<< HEAD
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("invalid value for boolean option \"%s\": %s",
-									option->gen->name, value)));
-=======
-					   (errmsg("invalid value for boolean option \"%s\": %s",
+						errmsg("invalid value for boolean option \"%s\": %s",
 							   option->gen->name, value)));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			}
 			break;
 		case RELOPT_TYPE_INT:
@@ -920,10 +915,9 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 				parsed = parse_int(value, &option->values.int_val, 0, NULL);
 				if (validate && !parsed)
 					ereport(ERROR,
-<<<<<<< HEAD
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("invalid value for integer option \"%s\": %s",
-									option->gen->name, value)));
+						errmsg("invalid value for integer option \"%s\": %s",
+							   option->gen->name, value)));
 				if (validate && (option->values.int_val < optint->min ||
 								 option->values.int_val > optint->max))
 					ereport(ERROR,
@@ -932,17 +926,6 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 									value, option->gen->name),
 							 errdetail("Valid values are between \"%d\" and \"%d\".",
 									   optint->min, optint->max)));
-=======
-					   (errmsg("invalid value for integer option \"%s\": %s",
-							   option->gen->name, value)));
-				if (validate && (option->values.int_val < optint->min ||
-								 option->values.int_val > optint->max))
-					ereport(ERROR,
-						  (errmsg("value %s out of bounds for option \"%s\"",
-								  value, option->gen->name),
-					 errdetail("Valid values are between \"%d\" and \"%d\".",
-							   optint->min, optint->max)));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			}
 			break;
 		case RELOPT_TYPE_REAL:
@@ -958,18 +941,11 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 				if (validate && (option->values.real_val < optreal->min ||
 								 option->values.real_val > optreal->max))
 					ereport(ERROR,
-<<<<<<< HEAD
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("value %s out of bounds for option \"%s\"",
-									value, option->gen->name),
-							 errdetail("Valid values are between \"%f\" and \"%f\".",
-									   optreal->min, optreal->max)));
-=======
-						  (errmsg("value %s out of bounds for option \"%s\"",
+							 errmsg("invalid value for floating point option \"%s\": %s",
 								  value, option->gen->name),
 					 errdetail("Valid values are between \"%f\" and \"%f\".",
 							   optreal->min, optreal->max)));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			}
 			break;
 		case RELOPT_TYPE_STRING:
@@ -1099,38 +1075,28 @@ fillRelOptions(void *rdopts, Size basesize,
 	SET_VARSIZE(rdopts, offset);
 }
 
-<<<<<<< HEAD
-/*
- * Option parser for anything that uses StdRdOptions (i.e. fillfactor only)
-=======
 
 /*
  * Option parser for anything that uses StdRdOptions (i.e. fillfactor and
  * autovacuum)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  */
 bytea *
 default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 {
-<<<<<<< HEAD
-	relopt_value   *options;
-	StdRdOptions   *rdopts;
-	int				numoptions;
-	/* The type of columnstores are different in StdRdOptions and options */
+	relopt_value *options;
+	StdRdOptions *rdopts;
+	int			numoptions;
 	static const relopt_parse_elt tab[] = {
 		{"fillfactor", RELOPT_TYPE_INT, offsetof(StdRdOptions, fillfactor)},
+
+		/* AO table options */
 		{SOPT_APPENDONLY, RELOPT_TYPE_BOOL, offsetof(StdRdOptions, appendonly)},
 		{SOPT_BLOCKSIZE, RELOPT_TYPE_INT, offsetof(StdRdOptions, blocksize)},
 		{SOPT_COMPLEVEL, RELOPT_TYPE_INT, offsetof(StdRdOptions, compresslevel)},
 		{SOPT_COMPTYPE, RELOPT_TYPE_STRING, offsetof(StdRdOptions, compresstype)},
 		{SOPT_CHECKSUM, RELOPT_TYPE_BOOL, offsetof(StdRdOptions, checksum)},
 		{SOPT_ORIENTATION, RELOPT_TYPE_STRING, offsetof(StdRdOptions, orientation)}
-=======
-	relopt_value *options;
-	StdRdOptions *rdopts;
-	int			numoptions;
-	static const relopt_parse_elt tab[] = {
-		{"fillfactor", RELOPT_TYPE_INT, offsetof(StdRdOptions, fillfactor)},
+
 		{"autovacuum_enabled", RELOPT_TYPE_BOOL,
 		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, enabled)},
 		{"autovacuum_vacuum_threshold", RELOPT_TYPE_INT,
@@ -1151,7 +1117,6 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, vacuum_scale_factor)},
 		{"autovacuum_analyze_scale_factor", RELOPT_TYPE_REAL,
 		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, analyze_scale_factor)}
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	};
 
 	options = parseRelOptions(reloptions, validate, kind, &numoptions);
@@ -1164,11 +1129,8 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 
 	fillRelOptions((void *) rdopts, sizeof(StdRdOptions), options, numoptions,
 				   validate, tab, lengthof(tab));
-<<<<<<< HEAD
 
 	validate_and_refill_options(rdopts, options, numoptions, kind, validate);
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	pfree(options);
 
@@ -1183,27 +1145,13 @@ heap_reloptions(char relkind, Datum reloptions, bool validate)
 {
 	switch (relkind)
 	{
-<<<<<<< HEAD
-		case RELKIND_RELATION:
-			return default_reloptions(reloptions, validate, RELOPT_KIND_HEAP);
-		case RELKIND_TOASTVALUE:
-		case RELKIND_AOSEGMENTS:
-		case RELKIND_AOBLOCKDIR:
-		case RELKIND_AOVISIMAP:
-		case RELKIND_VIEW:
-		case RELKIND_COMPOSITE_TYPE:
-		case RELKIND_SEQUENCE:
-			return default_reloptions(reloptions, validate, RELOPT_KIND_INTERNAL);
-		default:
-			 /* sequences, composite types and views are not supported */
-=======
 		case RELKIND_TOASTVALUE:
 			return default_reloptions(reloptions, validate, RELOPT_KIND_TOAST);
 		case RELKIND_RELATION:
 			return default_reloptions(reloptions, validate, RELOPT_KIND_HEAP);
 		default:
 			/* sequences, composite types and views are not supported */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+			/* Neither are AO aux tables (AO segments, blockdir, visimap) */
 			return NULL;
 	}
 }

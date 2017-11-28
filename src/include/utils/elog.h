@@ -32,13 +32,8 @@
 #define COMMERROR	16			/* Client communication problems; same as LOG
 								 * for server reporting, but never sent to
 								 * client. */
-<<<<<<< HEAD
-#define INFO		17			/* Messages specifically requested by user
-								 * (eg VACUUM VERBOSE output); always sent to
-=======
 #define INFO		17			/* Messages specifically requested by user (eg
 								 * VACUUM VERBOSE output); always sent to
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 								 * client regardless of client_min_messages,
 								 * but by default not sent to server log. */
 #define NOTICE		18			/* Helpful messages to users about query
@@ -240,11 +235,7 @@ __attribute__((format(printf, 1, 2)));
 
 extern int
 errmsg_plural(const char *fmt_singular, const char *fmt_plural,
-<<<<<<< HEAD
-			  unsigned long n, ...)
-=======
 			  unsigned long n,...)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(printf, 1, 4)))
@@ -264,11 +255,7 @@ __attribute__((format(printf, 1, 2)));
 
 extern int
 errdetail_plural(const char *fmt_singular, const char *fmt_plural,
-<<<<<<< HEAD
-				 unsigned long n, ...)
-=======
 				 unsigned long n,...)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(printf, 1, 4)))

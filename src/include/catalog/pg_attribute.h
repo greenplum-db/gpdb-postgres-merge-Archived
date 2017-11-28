@@ -154,10 +154,7 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS
 	 */
 
 	/* Column-level access permissions */
-<<<<<<< HEAD
-=======
 	aclitem		attacl[1];
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 } FormData_pg_attribute;
 
 /* GPDB added foreign key definitions for gpcheckcat. */
@@ -171,13 +168,6 @@ FOREIGN_KEY(atttypid REFERENCES pg_type(oid));
  * can access fields beyond attinhcount except in a real tuple!
  */
 #define ATTRIBUTE_FIXED_PART_SIZE \
-<<<<<<< HEAD
-	(offsetof(FormData_pg_attribute,attinhcount) + sizeof(int4))
-
-/* Old version of the define */
-#define ATTRIBUTE_TUPLE_SIZE \
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	(offsetof(FormData_pg_attribute,attinhcount) + sizeof(int4))
 
 /* ----------------
