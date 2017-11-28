@@ -804,15 +804,10 @@ relation_excluded_by_constraints(PlannerInfo *root,
 	List	   *safe_constraints;
 	ListCell   *lc;
 
-<<<<<<< HEAD
-	/* Skip the test if constraint exclusion is disabled */
-	if (!root->config->constraint_exclusion)
-=======
 	/* Skip the test if constraint exclusion is disabled for the rel */
-	if (constraint_exclusion == CONSTRAINT_EXCLUSION_OFF ||
-		(constraint_exclusion == CONSTRAINT_EXCLUSION_PARTITION &&
+	if (root->config->constraint_exclusion == CONSTRAINT_EXCLUSION_OFF ||
+		(root->config->constraint_exclusion == CONSTRAINT_EXCLUSION_PARTITION &&
 		 rel->reloptkind != RELOPT_OTHER_MEMBER_REL))
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		return false;
 
 	/*
@@ -1112,90 +1107,8 @@ join_selectivity(PlannerInfo *root,
 	return (Selectivity) result;
 }
 
-static int
-oid_cmp(const void *left, const void *right)
-{
-	if (*(Oid *)left < *(Oid *)right)
-		return -1;
-	if (*(Oid *)left > *(Oid *)right)
-		return 1;
-	return 0;
-}
 
 /*
-<<<<<<< HEAD
- * find_inheritance_children
- *
- * Returns a list containing the OIDs of all relations which
- * inherit *directly* from the relation with OID 'inhparent'.
- *
- * XXX might be a good idea to create an index on pg_inherits' inhparent
- * field, so that we can use an indexscan instead of sequential scan here.
- * However, in typical databases pg_inherits won't have enough entries to
- * justify an indexscan...
- */
-List *
-find_inheritance_children(Oid inhparent)
-{
-	List	   *list = NIL;
-	Relation	relation;
-	HeapScanDesc scan;
-	HeapTuple	inheritsTuple;
-	Oid			inhrelid;
-	ScanKeyData key[1];
-	ListCell   *item;
-	int         i;
-	Oid        *ordered_list;
-
-	/*
-	 * Can skip the scan if pg_class shows the relation has never had a
-	 * subclass.
-	 */
-	if (!has_subclass_fast(inhparent))
-		return NIL;
-
-	ScanKeyInit(&key[0],
-				Anum_pg_inherits_inhparent,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(inhparent));
-	relation = heap_open(InheritsRelationId, AccessShareLock);
-	scan = heap_beginscan(relation, SnapshotNow, 1, key);
-	while ((inheritsTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
-	{
-		inhrelid = ((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhrelid;
-		list = lappend_oid(list, inhrelid);
-	}
-	heap_endscan(scan);
-	heap_close(relation, AccessShareLock);
-
-	/*
-	 * The order in which child OIDs are scanned on master may not be
-	 * the same on segments.  When a partitioned table needs to be
-	 * rewritten during ALTER TABLE, master generates new OIDs for
-	 * every child in this list.  Segments scan pg_inherits and
-	 * correlate the list of OIDs dispatched by master with each
-	 * child.  To guarantee that the child <--> new OID pairs are
-	 * identical on master and segments, we need the following sort.
-	 */
-	ordered_list = (Oid *) palloc(sizeof(Oid) * list_length(list));
-	i = 0;
-	foreach(item, list)
-	{
-		ordered_list[i++] = lfirst_oid(item);
-	}
-	qsort(ordered_list, list_length(list), sizeof(Oid), oid_cmp);
-	i = 0;
-	foreach(item, list)
-	{
-		lfirst_oid(item) = ordered_list[i++];
-	}
-	pfree(ordered_list);
-	return list;
-}
-
-/*
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  * has_unique_index
  *
  * Detect whether there is a unique index on the specified attribute

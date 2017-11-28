@@ -53,12 +53,8 @@ typedef struct
 typedef struct
 {
 	List	   *varlist;
-<<<<<<< HEAD
 	PVCAggregateBehavior aggbehavior;
 	PVCPlaceHolderBehavior phbehavior;
-=======
-	PVCPlaceHolderBehavior behavior;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 } pull_var_clause_context;
 
 typedef struct
@@ -75,13 +71,7 @@ static bool contain_vars_of_level_walker(Node *node, int *sublevels_up);
 static bool locate_var_of_level_walker(Node *node,
 						   locate_var_of_level_context *context);
 static bool locate_var_of_relation_walker(Node *node,
-<<<<<<< HEAD
-									locate_var_of_relation_context *context);
-=======
 							  locate_var_of_relation_context *context);
-static bool find_minimum_var_level_walker(Node *node,
-							  find_minimum_var_level_context *context);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static bool pull_var_clause_walker(Node *node,
 					   pull_var_clause_context *context);
 static Node *flatten_join_alias_vars_mutator(Node *node,
@@ -630,7 +620,6 @@ contain_vars_of_level_or_above(Node *node, int levelsup)
  * pull_var_clause
  *	  Recursively pulls all Var nodes from an expression clause.
  *
-<<<<<<< HEAD
  *	  Aggrefs are handled according to 'aggbehavior':
  *		PVC_REJECT_AGGREGATES		throw error if Aggref found
  *		PVC_INCLUDE_AGGREGATES		include Aggrefs in output list
@@ -642,15 +631,6 @@ contain_vars_of_level_or_above(Node *node, int levelsup)
  *		PVC_INCLUDE_PLACEHOLDERS	include PlaceHolderVars in output list
  *		PVC_RECURSE_PLACEHOLDERS	recurse into PlaceHolderVar arguments
  *	  Vars within a PHV's expression are included only in the last case.
-=======
- *	  PlaceHolderVars are handled according to 'behavior':
- *		PVC_REJECT_PLACEHOLDERS		throw error if PlaceHolderVar found
- *		PVC_INCLUDE_PLACEHOLDERS	include PlaceHolderVars in output list
- *		PVC_RECURSE_PLACEHOLDERS	recurse into PlaceHolderVar argument
- *	  Vars within a PHV's expression are included only in the last case.
- *
- *	  CurrentOfExpr nodes are ignored in all cases.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *
  *	  CurrentOfExpr nodes are ignored in all cases.
  *
@@ -664,22 +644,14 @@ contain_vars_of_level_or_above(Node *node, int levelsup)
  * of sublinks to subplans!
  */
 List *
-<<<<<<< HEAD
 pull_var_clause(Node *node, PVCAggregateBehavior aggbehavior,
 				PVCPlaceHolderBehavior phbehavior)
-=======
-pull_var_clause(Node *node, PVCPlaceHolderBehavior behavior)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	pull_var_clause_context context;
 
 	context.varlist = NIL;
-<<<<<<< HEAD
 	context.aggbehavior = aggbehavior;
 	context.phbehavior = phbehavior;
-=======
-	context.behavior = behavior;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	pull_var_clause_walker(node, &context);
 	return context.varlist;
@@ -699,7 +671,6 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
 	}
 	else if (IsA(node, Aggref))
 	{
-<<<<<<< HEAD
 		if (((Aggref *) node)->agglevelsup != 0)
 			elog(ERROR, "Upper-level Aggref found where not expected");
 		switch (context->aggbehavior)
@@ -721,20 +692,12 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
 		if (((PlaceHolderVar *) node)->phlevelsup != 0)
 			elog(ERROR, "Upper-level PlaceHolderVar found where not expected");
 		switch (context->phbehavior)
-=======
-		switch (context->behavior)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		{
 			case PVC_REJECT_PLACEHOLDERS:
 				elog(ERROR, "PlaceHolderVar found where not expected");
 				break;
 			case PVC_INCLUDE_PLACEHOLDERS:
-<<<<<<< HEAD
 				context->varlist = lappend(context->varlist, node);
-=======
-				if (((PlaceHolderVar *) node)->phlevelsup == 0)
-					context->varlist = lappend(context->varlist, node);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				/* we do NOT descend into the contained expression */
 				return false;
 			case PVC_RECURSE_PLACEHOLDERS:
@@ -859,7 +822,6 @@ flatten_join_alias_vars_mutator(Node *node,
 		}
 
 		/* Recurse in case join input is itself a join */
-<<<<<<< HEAD
 		newvar = flatten_join_alias_vars_mutator(newvar, context);
 
 		/* Detect if we are adding a sublink to query */
@@ -867,9 +829,6 @@ flatten_join_alias_vars_mutator(Node *node,
 			context->inserted_sublink = checkExprHasSubLink(newvar);
 
 		return newvar;
-=======
-		return flatten_join_alias_vars_mutator(newvar, context);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 	if (IsA(node, PlaceHolderVar))
 	{

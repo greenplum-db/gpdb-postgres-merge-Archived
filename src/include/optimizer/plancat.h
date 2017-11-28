@@ -38,11 +38,6 @@ extern bool relation_excluded_by_constraints(PlannerInfo *root,
 
 extern List *build_physical_tlist(PlannerInfo *root, RelOptInfo *rel);
 
-<<<<<<< HEAD
-extern List *find_inheritance_children(Oid inhparent);
-
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 extern bool has_unique_index(RelOptInfo *rel, AttrNumber attno);
 
 extern Selectivity restriction_selectivity(PlannerInfo *root,

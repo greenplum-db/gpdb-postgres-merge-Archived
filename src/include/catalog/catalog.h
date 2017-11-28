@@ -45,17 +45,10 @@ extern char* GetReservedPrefix(const char *name);
 
 extern bool IsSharedRelation(Oid relationId);
 
-extern Oid	GetNewOid(Relation relation);
-<<<<<<< HEAD
-extern Oid	GetNewOidWithIndex(Relation relation, Oid indexId,
-							   AttrNumber oidcolumn);
-extern Oid	GetNewSequenceRelationOid(Relation relation);
-extern Oid GetNewRelFileNode(Oid reltablespace, bool relisshared);
-=======
+extern Oid GetNewOid(Relation relation);
 extern Oid GetNewOidWithIndex(Relation relation, Oid indexId,
 				   AttrNumber oidcolumn);
-extern Oid GetNewRelFileNode(Oid reltablespace, bool relisshared,
-				  Relation pg_class);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+extern Oid GetNewSequenceRelationOid(Relation relation);
+extern Oid GetNewRelFileNode(Oid reltablespace, bool relisshared);
 
 #endif   /* CATALOG_H */

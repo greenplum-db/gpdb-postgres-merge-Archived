@@ -43,11 +43,7 @@ extern void AtSubAbort_Snapshot(int level);
 extern void AtEarlyCommit_Snapshot(void);
 extern void AtEOXact_Snapshot(bool isCommit);
 
-<<<<<<< HEAD
 extern void LogDistributedSnapshotInfo(Snapshot snapshot, const char *prefix);
 extern DistributedSnapshotWithLocalMapping *GetCurrentDistributedSnapshotWithLocalMapping(void);
 
-#endif /* SNAPMGR_H */
-=======
 #endif   /* SNAPMGR_H */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805

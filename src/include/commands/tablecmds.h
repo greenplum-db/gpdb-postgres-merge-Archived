@@ -85,18 +85,13 @@ extern void renameatt(Oid myrelid,
 		  bool recursing);
 
 extern void RenameRelation(Oid myrelid,
-<<<<<<< HEAD
-		  const char *newrelname,
-		  ObjectType reltype,
-		  RenameStmt *stmt /* MPP */);
+			   const char *newrelname,
+			   ObjectType reltype,
+			   RenameStmt *stmt /* MPP */);
 
 extern void find_composite_type_dependencies(Oid typeOid,
 											 const char *origTblName,
 											 const char *origTypeName);
-=======
-			   const char *newrelname,
-			   ObjectType reltype);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 extern void RenameRelationInternal(Oid myrelid,
 					   const char *newrelname,

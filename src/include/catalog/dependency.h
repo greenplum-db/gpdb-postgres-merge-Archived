@@ -108,20 +108,6 @@ typedef enum SharedDependencyType
 	SHARED_DEPENDENCY_INVALID = 0
 } SharedDependencyType;
 
-<<<<<<< HEAD
-=======
-
-/*
- * The two objects related by a dependency are identified by ObjectAddresses.
- */
-typedef struct ObjectAddress
-{
-	Oid			classId;		/* Class Id from pg_class */
-	Oid			objectId;		/* OID of the object */
-	int32		objectSubId;	/* Subitem within object (eg column), or 0 */
-} ObjectAddress;
-
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 /* expansible list of ObjectAddresses (private in dependency.c) */
 typedef struct ObjectAddresses ObjectAddresses;
 
@@ -241,17 +227,13 @@ extern void recordSharedDependencyOn(ObjectAddress *depender,
 						 ObjectAddress *referenced,
 						 SharedDependencyType deptype);
 
-<<<<<<< HEAD
 extern Oid	getExtensionOfObject(Oid classId, Oid objectId);
 
 extern void recordDependencyOnCurrentExtension(const ObjectAddress *object,
 								   bool isReplace);
 
-extern void deleteSharedDependencyRecordsFor(Oid classId, Oid objectId);
-=======
 extern void deleteSharedDependencyRecordsFor(Oid classId, Oid objectId,
 								 int32 objectSubId);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 extern void recordDependencyOnOwner(Oid classId, Oid objectId, Oid owner);
 
