@@ -521,11 +521,7 @@ addFlagValue(IspellDict *Conf, char *s, uint32 val)
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("multibyte flag character is not allowed")));
 
-<<<<<<< HEAD
-	Conf->flagval[*(unsigned char*) s] = (unsigned char) val;
-=======
 	Conf->flagval[*(unsigned char *) s] = (unsigned char) val;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	Conf->usecompound = true;
 }
 
@@ -658,11 +654,7 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 				ptr = repl + (ptr - prepl) + 1;
 				while (*ptr)
 				{
-<<<<<<< HEAD
-					aflg |= Conf->flagval[*(unsigned char*) ptr];
-=======
 					aflg |= Conf->flagval[*(unsigned char *) ptr];
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 					ptr++;
 				}
 			}
@@ -743,11 +735,7 @@ NIImportAffixes(IspellDict *Conf, const char *filename)
 
 				if (*s && pg_mblen(s) == 1)
 				{
-<<<<<<< HEAD
-					Conf->flagval[*(unsigned char*) s] = FF_COMPOUNDFLAG;
-=======
 					Conf->flagval[*(unsigned char *) s] = FF_COMPOUNDFLAG;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 					Conf->usecompound = true;
 				}
 				oldformat = true;
@@ -803,11 +791,7 @@ NIImportAffixes(IspellDict *Conf, const char *filename)
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("multibyte flag character is not allowed")));
 
-<<<<<<< HEAD
-			flag = *(unsigned char*) s;
-=======
 			flag = *(unsigned char *) s;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			goto nextline;
 		}
 		if (STRNCMP(recoded, "COMPOUNDFLAG") == 0 || STRNCMP(recoded, "COMPOUNDMIN") == 0 ||
@@ -867,11 +851,7 @@ makeCompoundFlags(IspellDict *Conf, int affix)
 
 	while (str && *str)
 	{
-<<<<<<< HEAD
-		flag |= Conf->flagval[*(unsigned char*) str];
-=======
 		flag |= Conf->flagval[*(unsigned char *) str];
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		str++;
 	}
 
