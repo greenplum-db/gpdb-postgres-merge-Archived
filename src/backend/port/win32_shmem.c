@@ -136,21 +136,6 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 	/*
 	 * When recycling a shared memory segment, it may take a short while
 	 * before it gets dropped from the global namespace. So re-try after
-<<<<<<< HEAD
-	 * sleeping for a second, and continue retrying 10 times.
-	 * (both the 1 second time and the 10 retries are completely arbitrary)
-	 */
-	for (i = 0; i < 10; i++)
-	{
-		/* In case CreateFileMapping() doesn't set the error code to 0 on success */
-		SetLastError(0);
-
-		hmap = CreateFileMapping((HANDLE) 0xFFFFFFFF,		/* Use the pagefile */
-								 NULL,		/* Default security attrs */
-								 PAGE_READWRITE,	/* Memory is Read/Write */
-								 0L,	/* Size Upper 32 Bits	*/
-								 (DWORD) size,		/* Size Lower 32 bits */
-=======
 	 * sleeping for a second, and continue retrying 10 times. (both the 1
 	 * second time and the 10 retries are completely arbitrary)
 	 */
@@ -167,7 +152,6 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 								 PAGE_READWRITE,		/* Memory is Read/Write */
 								 0L,	/* Size Upper 32 Bits	*/
 								 (DWORD) size,	/* Size Lower 32 bits */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 								 szShareMem);
 
 		if (!hmap)

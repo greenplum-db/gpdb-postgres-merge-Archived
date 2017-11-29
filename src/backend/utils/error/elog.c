@@ -279,7 +279,6 @@ err_gettext(const char *str)
 
 
 /*
-<<<<<<< HEAD
  * elog_internalerror -- report an internal error
  *
  * GPDB only
@@ -305,8 +304,6 @@ elog_internalerror(const char *filename, int lineno, const char *funcname)
 
 
 /*
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  * errstart --- begin an error-reporting cycle
  *
  * Create a stack entry and store the given parameters in it.  Subsequently,
@@ -511,10 +508,7 @@ errstart(int elevel, const char *filename, int lineno,
 	edata->funcname = funcname;
 	/* the default text domain is the backend's */
 	edata->domain = domain ? domain : PG_TEXTDOMAIN("postgres");
-<<<<<<< HEAD
 	edata->omit_location = true;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	/* Select default errcode based on elevel */
 	if (elevel >= ERROR)
 	{
@@ -1075,29 +1069,6 @@ errmsg_plural(const char *fmt_singular, const char *fmt_plural,
 
 
 /*
- * errmsg_plural --- add a primary error message text to the current error,
- * with support for pluralization of the message text
- */
-int
-errmsg_plural(const char *fmt_singular, const char *fmt_plural,
-			  unsigned long n,...)
-{
-	ErrorData  *edata = &errordata[errordata_stack_depth];
-	MemoryContext oldcontext;
-
-	recursion_depth++;
-	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(ErrorContext);
-
-	EVALUATE_MESSAGE_PLURAL(message, false);
-
-	MemoryContextSwitchTo(oldcontext);
-	recursion_depth--;
-	return 0;					/* return value does not matter */
-}
-
-
-/*
  * errdetail --- add a detail error message text to the current error
  */
 int
@@ -1170,29 +1141,6 @@ errdetail_log(const char *fmt,...)
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
 	errno = edata->saved_errno; /*CDB*/
-	return 0;					/* return value does not matter */
-}
-
-
-/*
- * errdetail_plural --- add a detail error message text to the current error,
- * with support for pluralization of the message text
- */
-int
-errdetail_plural(const char *fmt_singular, const char *fmt_plural,
-				 unsigned long n,...)
-{
-	ErrorData  *edata = &errordata[errordata_stack_depth];
-	MemoryContext oldcontext;
-
-	recursion_depth++;
-	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(ErrorContext);
-
-	EVALUATE_MESSAGE_PLURAL(detail, false);
-
-	MemoryContextSwitchTo(oldcontext);
-	recursion_depth--;
 	return 0;					/* return value does not matter */
 }
 
@@ -2344,13 +2292,8 @@ setup_formatted_log_time(void)
 	tz = log_timezone ? log_timezone : gmt_timezone;
 
 	pg_strftime(formatted_log_time, FORMATTED_TS_LEN,
-<<<<<<< HEAD
 				/* leave room for microseconds... */
 				"%Y-%m-%d %H:%M:%S        %Z",
-=======
-	/* leave room for milliseconds... */
-				"%Y-%m-%d %H:%M:%S     %Z",
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				pg_localtime(&stamp_time, tz));
 
 	/* 'paste' microseconds into place... */

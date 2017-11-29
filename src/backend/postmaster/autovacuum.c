@@ -1004,13 +1004,8 @@ rebuild_database_list(Oid newdb)
 		qsort(dbary, nelems, sizeof(avl_dbase), db_comparator);
 
 		/*
-<<<<<<< HEAD
-		 * Determine the time interval between databases in the schedule.
-		 * If we see that the configured naptime would take us to sleep times
-=======
 		 * Determine the time interval between databases in the schedule. If
 		 * we see that the configured naptime would take us to sleep times
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		 * lower than our min sleep time (which launcher_determine_sleep is
 		 * coded not to allow), silently use a larger naptime (but don't touch
 		 * the GUC variable).
