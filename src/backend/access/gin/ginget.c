@@ -633,7 +633,7 @@ entryGetItem(Relation index, GinScanEntry entry)
 				entry->offset >= entry->partialMatchResult->ntuples)
 			{
 <<<<<<< HEAD
-				tbm_iterate( (Node *) entry->partialMatch, entry->partialMatchResult );
+				tbm_generic_iterate( entry->partialMatch, entry->partialMatchResult );
 =======
 				entry->partialMatchResult = tbm_iterate(entry->partialMatchIterator);
 >>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805

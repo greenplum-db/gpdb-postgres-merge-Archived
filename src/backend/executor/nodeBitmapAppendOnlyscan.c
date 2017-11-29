@@ -328,7 +328,7 @@ BitmapAppendOnlyScanNext(BitmapAppendOnlyScanState *node)
 			 * convert the (psuedo) heap block number and item number to an
 			 * Append-Only TID.
 			 */
-			if (!tbm_iterate(tbm, tbmres))
+			if (!tbm_generic_iterate(tbm, tbmres))
 			{
 				/* no more entries in the bitmap */
 				break;

@@ -185,7 +185,7 @@ fetchNextBitmapPage(BitmapTableScanState *scanState)
 
 	while (gotBitmapPage && tbmres->ntuples == 0)
 	{
-		gotBitmapPage = tbm_iterate(scanState->tbm, (TBMIterateResult *)scanState->tbmres);
+		gotBitmapPage = tbm_generic_iterate(scanState->tbm, (TBMIterateResult *)scanState->tbmres);
 	}
 
 	if (gotBitmapPage)

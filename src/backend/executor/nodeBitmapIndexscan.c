@@ -106,7 +106,7 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 
 		/* CDB: If EXPLAIN ANALYZE, let bitmap share our Instrumentation. */
 		if (node->ss.ps.instrument)
-			tbm_bitmap_set_instrument(bitmap, node->ss.ps.instrument);
+			tbm_generic_set_instrument(bitmap, node->ss.ps.instrument);
 
 		if (node->biss_result == NULL)
 			node->biss_result = (Node *) bitmap;
@@ -191,7 +191,7 @@ ExecBitmapIndexReScan(BitmapIndexScanState *node, ExprContext *exprCtxt)
 
 	if (NULL != node->biss_result)
 	{
-		tbm_bitmap_free(node->biss_result);
+		tbm_generic_free(node->biss_result);
 		node->biss_result = NULL;
 	}
 }
@@ -228,7 +228,7 @@ ExecEndBitmapIndexScan(BitmapIndexScanState *node)
 	if (indexRelationDesc)
 		index_close(indexRelationDesc, NoLock);
 
-	tbm_bitmap_free(node->biss_result);
+	tbm_generic_free(node->biss_result);
 	node->biss_result = NULL;
 
 	EndPlanStateGpmonPkt(&node->ss.ps);
