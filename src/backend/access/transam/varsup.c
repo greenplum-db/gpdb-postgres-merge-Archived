@@ -96,12 +96,7 @@ GetNewTransactionId(bool isSubXact, bool setProcXid)
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 					 errmsg("database is not accepting commands to avoid wraparound data loss in database \"%s\"",
 							NameStr(ShmemVariableCache->limit_datname)),
-<<<<<<< HEAD
 					 errhint("Shutdown Greenplum Database. Lower the xid_stop_limit GUC. Execute a database-wide VACUUM in \"%s\". Reset the xid_stop_limit GUC.",
-=======
-					 errhint("Stop the postmaster and use a standalone backend to vacuum database \"%s\".\n"
-							 "You might also need to commit or roll back old prepared transactions.",
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 							 NameStr(ShmemVariableCache->limit_datname))));
 		else if (TransactionIdFollowsOrEquals(xid, ShmemVariableCache->xidWarnLimit))
 			ereport(WARNING,

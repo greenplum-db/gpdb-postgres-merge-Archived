@@ -197,7 +197,9 @@ static bool InArchiveRecovery = false;
 static bool restoredFromArchive = false;
 
 /* options taken from recovery.conf */
+#ifdef NOT_USED
 static char *recoveryRestoreCommand = NULL;
+#endif
 static char *recoveryEndCommand = NULL;
 static bool recoveryTarget = false;
 static bool recoveryTargetExact = false;
@@ -695,15 +697,19 @@ static bool StartupXLOG_Pass4_GetDBForPTCatVerification(void);
 static bool XLogPageRead(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt,
 			 bool randAccess);
 
+#ifdef NOT_USED
 static bool RestoreArchivedFile(char *path, const char *xlogfname,
 					const char *recovername, off_t expectedSize);
 static void ExecuteRecoveryEndCommand(void);
+#endif
 static void PreallocXlogFiles(XLogRecPtr endptr);
 static void UpdateLastRemovedPtr(char *filename);
 static void ValidateXLOGDirectoryStructure(void);
 static void CleanupBackupHistory(void);
 static void UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force);
+#ifdef NOT_USED
 static XLogRecord *ReadRecord(XLogRecPtr *RecPtr, int emode);
+#endif
 static XLogRecord *ReadCheckpointRecord(XLogRecPtr RecPtr, int whichChkpt);
 static bool ValidXLOGHeader(XLogPageHeader hdr, int emode, bool segmentonly);
 
@@ -3225,11 +3231,17 @@ XLogFileClose(void)
 	 * is active, because archiver process could use the cache to read the WAL
 	 * segment.
 	 */
+	/* GPDB_84_MERGE_FIXME: Disabled for now, because I'm not sure if this
+	 * would make sense with file replication. Like with WAL replication, you
+	 * don't want to DONTNEED the file, if it's just about to be read by 
+	 * mirroring, to be transmitted to the mirror.
+	 */
+#ifdef NOT_USED
 #if defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED)
 	if (!XLogIsNeeded())
 		(void) posix_fadvise(openLogFile, 0, 0, POSIX_FADV_DONTNEED);
-x#endif
-
+#endif
+#endif
 	MirroredFlatFile_Close(&mirroredLogFileOpen);
 }
 
@@ -3500,6 +3512,7 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 }
 #endif
 
+#ifdef NOT_USED
 /*
  * Attempt to execute the recovery_end_command.
  */
@@ -3607,6 +3620,7 @@ ExecuteRecoveryEndCommand(void)
 						xlogRecoveryEndCmd, rc)));
 	}
 }
+#endif
 
 /*
  * Preallocate log files beyond the specified log endpoint.
@@ -6376,6 +6390,8 @@ XLogReadRecoveryCommandFile(int emode)
 {
 	FILE	   *fd;
 	char		cmdline[MAXPGPATH];
+	TimeLineID	rtli = 0;
+	bool		rtliGiven = false;
 	bool		syntaxError = false;
 
 	fd = AllocateFile(RECOVERY_COMMAND_FILE, "r");
@@ -6861,7 +6877,7 @@ printEndOfXLogFile(XLogRecPtr	*loc)
 }
 
 static void
-StartupXLOG_InProduction(void)
+StartupXLOG_InProduction(bool bgwriterLaunched)
 {
 	TransactionId oldestActiveXID;
 
@@ -6925,6 +6941,7 @@ StartupXLOG_InProduction(void)
 	else
 		CreateCheckPoint(CHECKPOINT_END_OF_RECOVERY | CHECKPOINT_IMMEDIATE);
 
+#ifdef NOT_USED
 	/*
 	 * And finally, execute the recovery_end_command, if any.
 	 */
@@ -6932,6 +6949,7 @@ StartupXLOG_InProduction(void)
 		ExecuteRecoveryCommand(recoveryEndCommand,
 							   "recovery_end_command",
 							   true);
+#endif
 
 	/*
 	 * If this system was a standby which was promoted (or whose catalog is not
@@ -7043,6 +7061,9 @@ ApplyStartupRedo(
 
 	XLogRecord		*record)
 {
+	/* use volatile pointer to prevent code rearrangement */
+	volatile XLogCtlData *xlogctl = XLogCtl;
+
 	MIRROREDLOCK_BUFMGR_VERIFY_NO_LOCK_LEAK_DECLARE;
 	RedoErrorCallBack redoErrorCallBack;
 
@@ -7680,7 +7701,6 @@ StartupXLOG(void)
 			bool		lastReadRecWasCheckpoint=false;
 			CurrentResourceOwner = ResourceOwnerCreate(NULL, "xlog");
 			bool		reachedMinRecoveryPoint = false;
-			ErrorContextCallback errcontext;
 
 			/* use volatile pointer to prevent code rearrangement */
 			volatile XLogCtlData *xlogctl = XLogCtl;
@@ -8110,7 +8130,7 @@ StartupXLOG(void)
 	{
 		Assert(!multipleRecoveryPassesNeeded);
 
-		StartupXLOG_InProduction();
+		StartupXLOG_InProduction(bgwriterLaunched);
 
 		ereport(LOG,
 				(errmsg("Finished single backend startup")));
@@ -8131,7 +8151,7 @@ StartupXLOG(void)
 
 		if (!XLogCtl->multipleRecoveryPassesNeeded)
 		{
-			StartupXLOG_InProduction();
+			StartupXLOG_InProduction(bgwriterLaunched);
 
 			ereport(LOG,
 					(errmsg("Finished normal startup for clean shutdown case")));
@@ -8505,7 +8525,8 @@ StartupXLOG_Pass3(void)
 
 	InRecovery = false;
 
-	StartupXLOG_InProduction();
+	/* postmaster ensures that bgwriter is already running in pass 3. */
+	StartupXLOG_InProduction(true);
 
 	ereport(LOG,
 			(errmsg("Finished startup crash recovery pass 3")));
@@ -9025,47 +9046,6 @@ RecoveryInProgress(void)
 		SpinLockAcquire(&xlogctl->info_lck);
 		xlogctl->SharedRecoveryInProgress = false;
 		SpinLockRelease(&xlogctl->info_lck);
-	}
-}
-
-/*
- * Is the system still in recovery?
- *
- * Unlike testing InRecovery, this works in any process that's connected to
- * shared memory.
- *
- * As a side-effect, we initialize the local TimeLineID and RedoRecPtr
- * variables the first time we see that recovery is finished.
- */
-bool
-RecoveryInProgress(void)
-{
-	/*
-	 * We check shared state each time only until we leave recovery mode.
-	 * We can't re-enter recovery, so there's no need to keep checking after
-	 * the shared variable has once been seen false.
-	 */
-	if (!LocalRecoveryInProgress)
-		return false;
-	else
-	{
-		/* use volatile pointer to prevent code rearrangement */
-		volatile XLogCtlData *xlogctl = XLogCtl;
-
-		/* spinlock is essential on machines with weak memory ordering! */
-		SpinLockAcquire(&xlogctl->info_lck);
-		LocalRecoveryInProgress = xlogctl->SharedRecoveryInProgress;
-		SpinLockRelease(&xlogctl->info_lck);
-
-		/*
-		 * Initialize TimeLineID and RedoRecPtr when we discover that recovery
-		 * is finished.  (If you change this, see also
-		 * LocalSetXLogInsertAllowed.)
-		 */
-		if (!LocalRecoveryInProgress)
-			InitXLOGAccess();
-
-		return LocalRecoveryInProgress;
 	}
 }
 
@@ -9683,6 +9663,15 @@ CreateCheckPoint(int flags)
 	VirtualTransactionId *vxids;
 	int     nvxids;
 	bool resync_to_sync_transition = (flags & CHECKPOINT_RESYNC_TO_INSYNC_TRANSITION) != 0;
+
+	/*
+	 * An end-of-recovery checkpoint is really a shutdown checkpoint, just
+	 * issued at a different time.
+	 */
+	if (flags & (CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_END_OF_RECOVERY))
+		shutdown = true;
+	else
+		shutdown = false;
 
 	if (shutdown && ControlFile->state == DB_STARTUP)
 	{
@@ -10344,8 +10333,6 @@ static void
 RecoveryRestartPoint(const CheckPoint *checkPoint)
 {
 	int			rmid;
-	uint32 _logId = 0;
-	uint32 _logSeg = 0;
 
 	/* use volatile pointer to prevent code rearrangement */
 	volatile XLogCtlData *xlogctl = XLogCtl;
@@ -10400,6 +10387,8 @@ CreateRestartPoint(int flags)
 {
 	XLogRecPtr	lastCheckPointRecPtr;
 	CheckPoint	lastCheckPoint;
+	uint32		_logId = 0;
+	uint32		_logSeg = 0;
 
 	/* use volatile pointer to prevent code rearrangement */
 	volatile XLogCtlData *xlogctl = XLogCtl;

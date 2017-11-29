@@ -2085,12 +2085,10 @@ multixact_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __att
 
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
-<<<<<<< HEAD
 	MIRRORED_LOCK;
-=======
+
 	/* Backup blocks are not used in multixact records */
 	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	if (info == XLOG_MULTIXACT_ZERO_OFF_PAGE)
 	{

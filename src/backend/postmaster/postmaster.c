@@ -4511,6 +4511,21 @@ do_reaper()
 				continue;
 			}
 
+			/*
+			 * Start the bgwriter if not running.
+			 *
+			 * In archive recovery, the startup process already asked us
+			 * to start it. There's no particular reason the pass 3 needs it
+			 * it to be running, except that it needs to know whether it's
+			 * running or not, when it wants to create a checkpoint. The
+			 * easiest way to deal with that is to ensure it's always
+			 * running.
+			 */
+			if (BgWriterPID == 0 )
+			{
+				SetBGWriterPID(StartBackgroundWriter());
+			}
+
 		    Assert(StartupPass3PID == 0);
 			StartupPass3PID = StartupPass3DataBase();
 			Assert(StartupPass3PID != 0);

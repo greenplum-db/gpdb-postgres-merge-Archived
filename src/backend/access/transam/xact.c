@@ -25,6 +25,7 @@
 #include "access/subtrans.h"
 #include "access/transam.h"
 #include "access/twophase.h"
+#include "access/xact.h"
 #include "access/xlogutils.h"
 #include "access/fileam.h"
 #include "catalog/catalog.h"
@@ -689,7 +690,8 @@ TransactionIdIsCurrentTransactionIdInternal(TransactionId xid)
 		if ((s->state != TRANS_ABORT) &&
 				(TransactionIdIsValid(s->transactionId)))
 		{
-			int low, high;
+			int			low,
+						high;
 
 			if (TransactionIdEquals(xid, s->transactionId))
 				return true;
@@ -848,30 +850,11 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
     if (DistributedTransactionContext == DTX_CONTEXT_QE_READER ||
 		DistributedTransactionContext == DTX_CONTEXT_QE_ENTRY_DB_SINGLETON)
 	{
-<<<<<<< HEAD
 		isCurrentTransactionId = IsCurrentTransactionIdForReader(xid);
 
 		ereport((Debug_print_full_dtm ? LOG : DEBUG5),
 				(errmsg("qExec Reader CheckSharedSnapshotForSubtransaction(xid = %u) = %s -- Subtransaction",
 						xid, (isCurrentTransactionId ? "true" : "false"))));
-=======
-		int			low,
-					high;
-
-		if (s->state == TRANS_ABORT)
-			continue;
-		if (!TransactionIdIsValid(s->transactionId))
-			continue;			/* it can't have any child XIDs either */
-		if (TransactionIdEquals(xid, s->transactionId))
-			return true;
-		/* As the childXids array is ordered, we can use binary search */
-		low = 0;
-		high = s->nChildXids - 1;
-		while (low <= high)
-		{
-			int			middle;
-			TransactionId probe;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		return isCurrentTransactionId;
 	}
@@ -2856,7 +2839,6 @@ PrepareTransaction(void)
 	/* NOTIFY and flatfiles will be handled below */
 
 	/*
-<<<<<<< HEAD
 	 * In Postgres, MyXactAccessedTempRel is used to error out if PREPARE TRANSACTION
 	 * operated on temp table.
 	 *
@@ -2873,12 +2855,8 @@ PrepareTransaction(void)
 	 */
 #if 0 /* Upstream code not applicable to GPDB */
 	/*
-	 * Don't allow PREPARE TRANSACTION if we've accessed a temporary table
-	 * in this transaction.  Having the prepared xact hold locks on another
-=======
 	 * Don't allow PREPARE TRANSACTION if we've accessed a temporary table in
 	 * this transaction.  Having the prepared xact hold locks on another
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 * backend's temp table seems a bad idea --- for instance it would prevent
 	 * the backend from exiting.  There are other problems too, such as how to
 	 * clean up the source backend's local buffers and ON COMMIT state if the
@@ -3139,13 +3117,8 @@ AbortTransaction(void)
 	/*
 	 * Reset user ID which might have been changed transiently.  We need this
 	 * to clean up in case control escaped out of a SECURITY DEFINER function
-<<<<<<< HEAD
-	 * or other local change of CurrentUserId; therefore, the prior value
-	 * of SecurityRestrictionContext also needs to be restored.
-=======
 	 * or other local change of CurrentUserId; therefore, the prior value of
 	 * SecurityDefinerContext also needs to be restored.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 *
 	 * (Note: it is not necessary to restore session authorization or role
 	 * settings here because those can only be changed via GUC, and GUC will
@@ -3257,7 +3230,6 @@ AbortTransaction(void)
 		pgstat_report_xact_timestamp(0);
 	}
 
-<<<<<<< HEAD
 	/*
 	 * Do abort to all QE. NOTE: we don't process
 	 * signals to prevent recursion until we've notified the QEs.
@@ -3274,18 +3246,6 @@ AbortTransaction(void)
 	rollbackDtxTransaction();
 
 	MyProc->localDistribXactData.state = LOCALDISTRIBXACT_STATE_NONE;
-=======
-	AtEOXact_GUC(false, 1);
-	AtEOXact_SPI(false);
-	AtEOXact_on_commit_actions(false);
-	AtEOXact_Namespace(false);
-	AtEOXact_Files();
-	AtEOXact_ComboCid();
-	AtEOXact_HashTables(false);
-	AtEOXact_PgStat(false);
-	AtEOXact_Snapshot(false);
-	pgstat_report_xact_timestamp(0);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * State remains TRANS_ABORT until CleanupTransaction().
@@ -6266,7 +6226,6 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 		appendStringInfo(buf, "; drop file-system objects:");
 		for (i = 0; i < persistentCommitObjects.typed.fileSysActionInfosCount; i++)
 		{
-<<<<<<< HEAD
 			PersistentEndXactFileSysActionInfo	*fileSysActionInfo =
 						&persistentCommitObjects.typed.fileSysActionInfos[i];
 
@@ -6281,12 +6240,6 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 				appendStringInfo(buf, " %s",
 								 PersistentFileSysObjName_TypeAndObjectName(&fileSysActionInfo->fsObjName));
 			}
-=======
-			char	   *path = relpath(xlrec->xnodes[i], MAIN_FORKNUM);
-
-			appendStringInfo(buf, " %s", path);
-			pfree(path);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		}
 	}
 
@@ -6357,7 +6310,6 @@ xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
 		appendStringInfo(buf, "; aborted create file-system objects:");
 		for (i = 0; i < persistentAbortObjects.typed.fileSysActionInfosCount; i++)
 		{
-<<<<<<< HEAD
 			PersistentEndXactFileSysActionInfo	*fileSysActionInfo =
 						&persistentAbortObjects.typed.fileSysActionInfos[i];
 
@@ -6369,12 +6321,6 @@ xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
 
 			appendStringInfo(buf, " %s",
 							 PersistentFileSysObjName_TypeAndObjectName(&fileSysActionInfo->fsObjName));
-=======
-			char	   *path = relpath(xlrec->xnodes[i], MAIN_FORKNUM);
-
-			appendStringInfo(buf, " %s", path);
-			pfree(path);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		}
 	}
 	if (xlrec->nsubxacts > 0)

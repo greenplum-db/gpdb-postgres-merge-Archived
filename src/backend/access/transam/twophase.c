@@ -1626,22 +1626,12 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	 * NB: this code knows that we couldn't be dropping any temp rels ...
 	 */
 
-<<<<<<< HEAD
 	PersistentFileSysObj_PreparedEndXactAction(
 			xid,
 			gid,
 			&persistentPrepareObjects,
 			isCommit,
 			prepareAppendOnlyIntentCount);
-=======
-		for (fork = 0; fork <= MAX_FORKNUM; fork++)
-		{
-			if (smgrexists(srel, fork))
-				smgrdounlink(srel, fork, false, false);
-		}
-		smgrclose(srel);
-	}
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* And now do the callbacks */
 	if (isCommit)
