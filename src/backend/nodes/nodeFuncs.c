@@ -1323,19 +1323,6 @@ expression_tree_walker(Node *node,
 		case T_Query:
 			/* Do nothing with a sub-Query, per discussion above */
 			break;
-<<<<<<< HEAD
-=======
-		case T_WindowClause:
-			{
-				WindowClause *wc = (WindowClause *) node;
-
-				if (walker(wc->partitionClause, context))
-					return true;
-				if (walker(wc->orderClause, context))
-					return true;
-			}
-			break;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		case T_CommonTableExpr:
 			{
 				CommonTableExpr *cte = (CommonTableExpr *) node;
@@ -1597,10 +1584,7 @@ range_table_walker(List *rtable,
 		{
 			case RTE_RELATION:
 			case RTE_SPECIAL:
-<<<<<<< HEAD
 			case RTE_VOID:
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			case RTE_CTE:
 				/* nothing to do */
 				break;

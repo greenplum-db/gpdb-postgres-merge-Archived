@@ -368,10 +368,7 @@ makeDefElem(char *name, Node *arg)
 	res->defname = name;
 	res->arg = arg;
 	res->defaction = DEFELEM_UNSPEC;
-<<<<<<< HEAD
-=======
 
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	return res;
 }
 

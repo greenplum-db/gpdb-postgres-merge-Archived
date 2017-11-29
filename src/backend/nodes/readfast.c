@@ -1025,6 +1025,8 @@ _readRangeTblEntry(void)
 	READ_BOOL_FIELD(inFromCl);
 	READ_UINT_FIELD(requiredPerms);
 	READ_OID_FIELD(checkAsUser);
+	WRITE_BITMAPSET_FIELD(selectedCols);
+	WRITE_BITMAPSET_FIELD(modifiedCols);
 
 	READ_BOOL_FIELD(forceDistRandom);
 	/* 'pseudocols' is intentionally missing, see out function */
@@ -2136,6 +2138,12 @@ _readHash(void)
 	READ_LOCALS(Hash);
 
 	readPlanInfo((Plan *)local_node);
+
+	READ_OID_FIELD(skewTable);
+	READ_INT_FIELD(skewColumn);
+	READ_OID_FIELD(skewColType);
+	READ_INT_FIELD(skewColTypmod);
+
     READ_BOOL_FIELD(rescannable);           /*CDB*/
 
 	READ_DONE();
@@ -2785,17 +2793,6 @@ _readDropUserMappingStmt(void)
 	READ_STRING_FIELD(username);
 	READ_STRING_FIELD(servername);
 	READ_BOOL_FIELD(missing_ok);
-
-	READ_DONE();
-}
-
-static OptionDefElem *
-_readOptionDefElem(void)
-{
-	READ_LOCALS(OptionDefElem);
-
-	READ_ENUM_FIELD(alter_op, AlterOptionOp);
-	READ_NODE_FIELD(def);
 
 	READ_DONE();
 }
@@ -3554,9 +3551,6 @@ readNodeBinary(void)
 				break;
 			case T_DefElem:
 				return_value = _readDefElem();
-				break;
-			case T_OptionDefElem:
-				return_value = _readOptionDefElem();
 				break;
 			case T_CreateSchemaStmt:
 				return_value = _readCreateSchemaStmt();

@@ -2734,20 +2734,6 @@ _copyDefElem(DefElem *from)
 	COPY_STRING_FIELD(defname);
 	COPY_NODE_FIELD(arg);
 	COPY_SCALAR_FIELD(defaction);
-<<<<<<< HEAD
-
-	return newnode;
-}
-
-static OptionDefElem *
-_copyOptionDefElem(OptionDefElem *from)
-{
-	OptionDefElem    *newnode = makeNode(OptionDefElem);
-
-	COPY_SCALAR_FIELD(alter_op);
-	COPY_NODE_FIELD(def);
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	return newnode;
 }

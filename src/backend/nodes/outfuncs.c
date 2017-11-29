@@ -861,11 +861,7 @@ _outWindowAgg(StringInfo str, WindowAgg *node)
 
 	WRITE_INT_FIELD(ordNumCols);
 
-<<<<<<< HEAD
 	appendStringInfoString(str, " :ordColIdx");
-=======
-	appendStringInfo(str, " :ordColIdx");
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	for (i = 0; i < node->ordNumCols; i++)
 		appendStringInfo(str, " %d", node->ordColIdx[i]);
 
@@ -982,15 +978,13 @@ _outHash(StringInfo str, Hash *node)
 	WRITE_NODE_TYPE("HASH");
 
 	_outPlanInfo(str, (Plan *) node);
-<<<<<<< HEAD
-	WRITE_BOOL_FIELD(rescannable);          /*CDB*/
-=======
 
 	WRITE_OID_FIELD(skewTable);
 	WRITE_INT_FIELD(skewColumn);
 	WRITE_OID_FIELD(skewColType);
 	WRITE_INT_FIELD(skewColTypmod);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+
+	WRITE_BOOL_FIELD(rescannable);          /*CDB*/
 }
 
 #ifndef COMPILING_BINARY_FUNCS
@@ -3732,18 +3726,17 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 	WRITE_BOOL_FIELD(inFromCl);
 	WRITE_UINT_FIELD(requiredPerms);
 	WRITE_OID_FIELD(checkAsUser);
-<<<<<<< HEAD
+	WRITE_BITMAPSET_FIELD(selectedCols);
+	WRITE_BITMAPSET_FIELD(modifiedCols);
 
 	WRITE_BOOL_FIELD(forceDistRandom);
 	/*
 	 * pseudocols is intentionally not serialized. It's only used in the planning
 	 * stage, so no need to transfer it to the QEs.
 	 */
+	/* GPDB_84_MERGE_FIXME: um, pick either "serialized" or "not serialized".
+	   Then update the fast serialization functions to match. */
     WRITE_NODE_FIELD(pseudocols);                                       /*CDB*/
-=======
-	WRITE_BITMAPSET_FIELD(selectedCols);
-	WRITE_BITMAPSET_FIELD(modifiedCols);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 #endif /* COMPILING_BINARY_FUNCS */
 

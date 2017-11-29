@@ -908,6 +908,8 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 	WRITE_BOOL_FIELD(inFromCl);
 	WRITE_UINT_FIELD(requiredPerms);
 	WRITE_OID_FIELD(checkAsUser);
+	WRITE_BITMAPSET_FIELD(selectedCols);
+	WRITE_BITMAPSET_FIELD(modifiedCols);
 
 	WRITE_BOOL_FIELD(forceDistRandom);
 	/*
@@ -1213,15 +1215,6 @@ _outDropUserMappingStmt(StringInfo str, DropUserMappingStmt *node)
 	WRITE_STRING_FIELD(username);
 	WRITE_STRING_FIELD(servername);
 	WRITE_BOOL_FIELD(missing_ok);
-}
-
-static void
-_outOptionDefElem(StringInfo str, OptionDefElem *node)
-{
-	WRITE_NODE_TYPE("OPTIONDEFELEM");
-
-	WRITE_ENUM_FIELD(alter_op, AlterOptionOp);
-	WRITE_NODE_FIELD(def);
 }
 
 /*
@@ -2135,10 +2128,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_CreateFdwStmt:
 				_outCreateFdwStmt(str, obj);
-				break;
-
-			case T_OptionDefElem:
-				_outOptionDefElem(str, obj);
 				break;
 
 			default:

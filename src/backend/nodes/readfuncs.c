@@ -1119,6 +1119,7 @@ _readDefElem(void)
 {
 	READ_LOCALS(DefElem);
 
+	READ_STRING_FIELD(defnamespace);
 	READ_STRING_FIELD(defname);
 	READ_NODE_FIELD(arg);
 	READ_ENUM_FIELD(defaction, DefElemAction);
