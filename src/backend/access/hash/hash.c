@@ -290,22 +290,14 @@ hashgettuple(PG_FUNCTION_ARGS)
 Datum
 hashgetbitmap(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_DECLARE;
-=======
+
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	TIDBitmap  *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
+	Node	   *n = (Node *) PG_GETARG_POINTER(1);
+	HashBitmap *tbm;
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	bool		res;
 	int64		ntids = 0;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
-
-	IndexScanDesc 	scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	Node		   *n = (Node *) PG_GETARG_POINTER(1);
-	HashBitmap	   *tbm;
-	HashScanOpaque	so = (HashScanOpaque) scan->opaque;
-	bool			res;
-	int64			ntids = 0;
 
 	if (n == NULL)
 		tbm = tbm_create(work_mem * 1024L);
@@ -322,11 +314,6 @@ hashgetbitmap(PG_FUNCTION_ARGS)
 	while (res)
 	{
 		bool		add_tuple;
-<<<<<<< HEAD
-
-		CHECK_FOR_INTERRUPTS();
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		/*
 		 * Skip killed tuples if asked to.
@@ -521,12 +508,8 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 	MIRROREDLOCK_BUFMGR_LOCK;
 	
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
-<<<<<<< HEAD
 	_hash_checkpage(rel, metabuf, LH_META_PAGE);
-	metap =  HashPageGetMeta(BufferGetPage(metabuf));
-=======
 	metap = HashPageGetMeta(BufferGetPage(metabuf));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	orig_maxbucket = metap->hashm_maxbucket;
 	orig_ntuples = metap->hashm_ntuples;
 	memcpy(&local_metapage, metap, sizeof(local_metapage));
