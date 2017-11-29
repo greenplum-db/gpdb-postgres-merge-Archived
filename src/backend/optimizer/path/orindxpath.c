@@ -180,14 +180,9 @@ create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 	if (or_selec > 0 && or_selec < 1)
 	{
 		orig_selec = clause_selectivity(root, (Node *) bestrinfo,
-<<<<<<< HEAD
 										0, JOIN_INNER, NULL,
 										false /* use_damping */);
-		bestrinfo->this_selec = orig_selec / or_selec;
-=======
-										0, JOIN_INNER, NULL);
 		bestrinfo->norm_selec = orig_selec / or_selec;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		/* clamp result to sane range */
 		if (bestrinfo->norm_selec > 1)
 			bestrinfo->norm_selec = 1;

@@ -517,13 +517,10 @@ ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate, List *hashOper
 
 void
 ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
+						uint64 operatorMemKB,
 						int *numbuckets,
 						int *numbatches,
-<<<<<<< HEAD
-						uint64 operatorMemKB)
-=======
 						int *num_skew_mcvs)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	int			tupsize;
 	double		inner_rel_bytes;

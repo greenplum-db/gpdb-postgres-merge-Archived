@@ -723,10 +723,7 @@ generate_base_implied_equalities_no_const(PlannerInfo *root,
 	{
 		EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc);
 		List	   *vars = pull_var_clause((Node *) cur_em->em_expr,
-<<<<<<< HEAD
 										   PVC_RECURSE_AGGREGATES,
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 										   PVC_INCLUDE_PLACEHOLDERS);
 
 		add_vars_to_targetlist(root, vars, ec->ec_relids);

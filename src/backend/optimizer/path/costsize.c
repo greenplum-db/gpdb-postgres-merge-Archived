@@ -73,11 +73,8 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/placeholder.h"
 #include "optimizer/planmain.h"
-<<<<<<< HEAD
-#include "parser/parse_expr.h"
-=======
 #include "optimizer/restrictinfo.h"
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+#include "parser/parse_expr.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
@@ -103,11 +100,7 @@ double		cpu_operator_cost = DEFAULT_CPU_OPERATOR_COST;
 
 int			effective_cache_size = DEFAULT_EFFECTIVE_CACHE_SIZE;
 
-<<<<<<< HEAD
-Cost		disable_cost = 1.0e9;
-=======
 Cost		disable_cost = 1.0e10;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 bool		enable_seqscan = true;
 bool		enable_indexscan = true;
@@ -137,12 +130,7 @@ static bool adjust_semi_join(PlannerInfo *root, JoinPath *path,
 				 Selectivity *match_count,
 				 bool *indexed_join_quals);
 static double approx_tuple_count(PlannerInfo *root, JoinPath *path,
-<<<<<<< HEAD
-								 List *quals, SpecialJoinInfo *sjinfo);
-=======
 				   List *quals);
-static void set_rel_width(PlannerInfo *root, RelOptInfo *rel);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static double relation_byte_size(double tuples, int width);
 static double page_size(double tuples, int width);
 static Selectivity adjust_selectivity_for_nulltest(Selectivity selec,
@@ -152,9 +140,12 @@ static Selectivity adjust_selectivity_for_nulltest(Selectivity selec,
 												RelOptInfo *left,
 												RelOptInfo *right);
 
-static void hash_table_size(double ntuples, int tupwidth, double memory_bytes,
+static void hash_table_size(double ntuples, int tupwidth,
+						bool useskew,
+						double memory_bytes,
 						int *numbuckets,
-						int *numbatches);
+						int *numbatches,
+						int *num_skew_mcvs);
 
 /* CDB: The clamp_row_est() function definition has been moved to cost.h */
 
@@ -2248,12 +2239,6 @@ cost_hashjoin(HashPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 		* inner_path_rows;
 	run_cost += cpu_operator_cost * num_hashclauses * outer_path_rows;
 
-<<<<<<< HEAD
-	/* Get hash table size that executor would use for inner relation */
-	hash_table_size(inner_path_rows,
-							inner_path->parent->width,
-							global_work_mem(root),
-=======
 	/*
 	 * Get hash table size that executor would use for inner relation.
 	 *
@@ -2264,10 +2249,10 @@ cost_hashjoin(HashPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	 * XXX at some point it might be interesting to try to account for skew
 	 * optimization in the cost estimate, but for now, we don't.
 	 */
-	ExecChooseHashTableSize(inner_path_rows,
+	hash_table_size(inner_path_rows,
 							inner_path->parent->width,
 							true,		/* useskew */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+							global_work_mem(root),
 							&numbuckets,
 							&numbatches,
 							&num_skew_mcvs);
@@ -2377,32 +2362,6 @@ cost_hashjoin(HashPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 
 	/* CPU costs */
 
-<<<<<<< HEAD
-	/*
-	 * The number of tuple comparisons needed is the number of outer tuples
-	 * times the typical number of tuples in a hash bucket, which is the inner
-	 * relation size times its bucketsize fraction.  At each one, we need to
-	 * evaluate the hashjoin quals.  But actually, charging the full qual eval
-	 * cost at each tuple is pessimistic, since we don't evaluate the quals
-	 * unless the hash values match exactly.  For lack of a better idea, halve
-	 * the cost estimate to allow for that.
-     *
-     * CDB: Assume there are no rows that pass the hash value comparison but
-     * fail the full qual eval.  Thus the full comparison is charged for just 
-     * 'hashjointuples', i.e. those rows that pass the hashjoin quals.
-	 */
-	startup_cost += hash_qual_cost.startup;
-	/*	run_cost += hash_qual_cost.per_tuple *
-		outer_path_rows * clamp_row_est(inner_path_rows * innerbucketsize) *
-		joininfactor * 0.5;*/
-	run_cost += hash_qual_cost.per_tuple * hashjointuples;
-
-	if (gp_cost_hashjoin_chainwalk)
-	{
-		/* CDB: Add a small charge for walking the hash chains. */
-		run_cost += 0.05 * cpu_operator_cost * 
-			outer_path_rows * inner_path_rows * innerbucketsize;
-=======
 	if (adjust_semi_join(root, &path->jpath, sjinfo,
 						 &outer_match_frac,
 						 &match_count,
@@ -2474,7 +2433,6 @@ cost_hashjoin(HashPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 		 * JOIN_INNER semantics.
 		 */
 		hashjointuples = approx_tuple_count(root, &path->jpath, hashclauses);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 
 	/*
@@ -2900,7 +2858,8 @@ adjust_semi_join(PlannerInfo *root, JoinPath *path, SpecialJoinInfo *sjinfo,
 									joinquals,
 									0,
 									jointype,
-									sjinfo);
+									sjinfo,
+									gp_selectivity_damping_for_scans);
 
 	/*
 	 * Also get the normal inner-join selectivity of the join clauses.
@@ -2920,7 +2879,8 @@ adjust_semi_join(PlannerInfo *root, JoinPath *path, SpecialJoinInfo *sjinfo,
 									joinquals,
 									0,
 									JOIN_INNER,
-									&norm_sjinfo);
+									&norm_sjinfo,
+									gp_selectivity_damping_for_scans);
 
 	/* Avoid leaking a lot of ListCells */
 	if (jointype == JOIN_ANTI)
@@ -2977,15 +2937,13 @@ adjust_semi_join(PlannerInfo *root, JoinPath *path, SpecialJoinInfo *sjinfo,
  * The quals can be either an implicitly-ANDed list of boolean expressions,
  * or a list of RestrictInfo nodes (typically the latter).
  *
-<<<<<<< HEAD
  * Currently this is only used in join estimation, so sjinfo should never
  * be NULL.
-=======
+ *
  * We intentionally compute the selectivity under JOIN_INNER rules, even
  * if it's some type of outer join.  This is appropriate because we are
  * trying to figure out how many tuples pass the initial merge or hash
  * join step.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *
  * This is quick-and-dirty because we bypass clauselist_selectivity, and
  * simply multiply the independent clause selectivities together.  Now
@@ -3028,12 +2986,8 @@ approx_tuple_count(PlannerInfo *root, JoinPath *path, List *quals)
 		Node	   *qual = (Node *) lfirst(l);
 
 		/* Note that clause_selectivity will be able to cache its result */
-<<<<<<< HEAD
-		selec *= clause_selectivity(root, qual, 0, sjinfo->jointype, sjinfo,
+		selec *= clause_selectivity(root, qual, 0, JOIN_INNER, &sjinfo,
 									false /* use_damping */);
-=======
-		selec *= clause_selectivity(root, qual, 0, JOIN_INNER, &sjinfo);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 
 	/* Apply it to the input relation sizes */
@@ -3638,6 +3592,7 @@ Cost incremental_hashjoin_cost(double rows, int inner_width, int outer_width, Li
 	QualCost hash_qual_cost;
 	int numbuckets;
 	int numbatches;
+	int			num_skew_mcvs;
 	double virtualbuckets;
 	Selectivity innerbucketsize;
 	int num_hashclauses = list_length(hashclauses);
@@ -3655,7 +3610,13 @@ Cost incremental_hashjoin_cost(double rows, int inner_width, int outer_width, Li
 	run_cost += cpu_operator_cost * num_hashclauses * rows;
 
 	/* Get hash table size that executor would use for inner relation */
-	hash_table_size(rows, inner_width, global_work_mem(root), &numbuckets, &numbatches);
+	hash_table_size(rows,
+					inner_width,
+					true /* useSkew */,
+					global_work_mem(root),
+					&numbuckets,
+					&numbatches,
+					&num_skew_mcvs);
 	virtualbuckets = (double) numbuckets *(double) numbatches;
 
 	/*
@@ -3751,9 +3712,13 @@ Cost incremental_mergejoin_cost(double rows, List *mergeclauses, PlannerInfo *ro
  * 	numbuckets - number of buckets in hash table
  * 	numbatches - number of batches needed
  */
-static void hash_table_size(double ntuples, int tupwidth, double memory_bytes,
-						int *numbuckets,
-						int *numbatches)
+static void hash_table_size(double ntuples,
+							int tupwidth,
+							bool useSkew,
+							double memory_bytes,
+							int *numbuckets,
+							int *numbatches,
+							int *num_skew_mcvs)
 {
 	int			tupsize;
 	double		inner_rel_bytes;

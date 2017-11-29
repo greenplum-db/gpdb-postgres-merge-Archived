@@ -232,7 +232,6 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel,
 	{
 		IndexPath  *ipath = (IndexPath *) lfirst(l);
 
-<<<<<<< HEAD
 		/* CDB: Flag RelOptInfo if at most one row can satisfy index quals. */
 		if (ipath->num_leading_eq > 0 &&
 			ipath->num_leading_eq == ipath->indexinfo->ncolumns &&
@@ -240,19 +239,13 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel,
 			rel->onerow = true;
 
 		/* Add index path to caller's list. */
-		*pindexpathlist = lappend(*pindexpathlist, ipath);
-
-		if (!root->config->enable_seqscan ||
-			(ipath->indexselectivity < 1.0 &&
-			 !ScanDirectionIsBackward(ipath->indexscandir)))
-=======
 		if (ipath->indexinfo->amhasgettuple)
-			add_path(rel, (Path *) ipath);
+			*pindexpathlist = lappend(*pindexpathlist, ipath);
 
 		if (ipath->indexinfo->amhasgetbitmap &&
-			ipath->indexselectivity < 1.0 &&
-			!ScanDirectionIsBackward(ipath->indexscandir))
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+			(!root->config->enable_seqscan ||
+			 (ipath->indexselectivity < 1.0 &&
+			  !ScanDirectionIsBackward(ipath->indexscandir))))
 			bitindexpaths = lappend(bitindexpaths, ipath);
 	}
 
@@ -1916,12 +1909,6 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 												clause_list, NIL,
 												false, outer_rel));
 
-	/*
-<<<<<<< HEAD
-	 * Include the regular index paths in bitindexpaths.
-	 */
-	bitindexpaths = list_concat(bitindexpaths, list_copy(indexpaths));
-
 	rte = rt_fetch(rel->relid, root->parse->rtable);
 	Assert(rel->relstorage != '\0');
 
@@ -1935,8 +1922,6 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 		indexpaths = NIL;
 
 	/*
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 * If we found anything usable, generate a BitmapHeapPath for the most
 	 * promising combination of bitmap index paths.
 	 */
@@ -2262,11 +2247,7 @@ match_special_index_operator(Expr *clause, Oid opfamily,
 	Oid			expr_op;
 	Const	   *patt;
 	Const	   *prefix = NULL;
-<<<<<<< HEAD
-=======
-	Const	   *rest = NULL;
 	Pattern_Prefix_Status pstatus = Pattern_Prefix_None;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * Currently, all known special operators require the indexkey on the
@@ -2292,67 +2273,42 @@ match_special_index_operator(Expr *clause, Oid opfamily,
 		case OID_BPCHAR_LIKE_OP:
 		case OID_NAME_LIKE_OP:
 			/* the right-hand const is type text for all of these */
-<<<<<<< HEAD
-			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like,
-									  &prefix, NULL) != Pattern_Prefix_None;
-			break;
-
-		case OID_BYTEA_LIKE_OP:
-			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like,
-									  &prefix, NULL) != Pattern_Prefix_None;
-=======
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like,
-										   &prefix, &rest);
+										   &prefix, NULL);
 			isIndexable = (pstatus != Pattern_Prefix_None);
 			break;
 
 		case OID_BYTEA_LIKE_OP:
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like,
-										   &prefix, &rest);
+										   &prefix, NULL);
 			isIndexable = (pstatus != Pattern_Prefix_None);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			break;
 
 		case OID_TEXT_ICLIKE_OP:
 		case OID_BPCHAR_ICLIKE_OP:
 		case OID_NAME_ICLIKE_OP:
 			/* the right-hand const is type text for all of these */
-<<<<<<< HEAD
-			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
-									  &prefix, NULL) != Pattern_Prefix_None;
-=======
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
-										   &prefix, &rest);
+										   &prefix, NULL);
 			isIndexable = (pstatus != Pattern_Prefix_None);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			break;
 
 		case OID_TEXT_REGEXEQ_OP:
 		case OID_BPCHAR_REGEXEQ_OP:
 		case OID_NAME_REGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
-<<<<<<< HEAD
-			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex,
-									  &prefix, NULL) != Pattern_Prefix_None;
-=======
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex,
-										   &prefix, &rest);
+										   &prefix, NULL);
 			isIndexable = (pstatus != Pattern_Prefix_None);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			break;
 
 		case OID_TEXT_ICREGEXEQ_OP:
 		case OID_BPCHAR_ICREGEXEQ_OP:
 		case OID_NAME_ICREGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
-<<<<<<< HEAD
-			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
-									  &prefix, NULL) != Pattern_Prefix_None;
-=======
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
-										   &prefix, &rest);
+										   &prefix, NULL);
 			isIndexable = (pstatus != Pattern_Prefix_None);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			break;
 
 		case OID_INET_SUB_OP:

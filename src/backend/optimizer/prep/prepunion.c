@@ -117,13 +117,8 @@ static void make_inh_translation_list(Relation oldrelation,
 						  Relation newrelation,
 						  Index newvarno,
 						  List **translated_vars);
-<<<<<<< HEAD
-=======
 static Bitmapset *translate_col_privs(const Bitmapset *parent_privs,
 					List *translated_vars);
-static Node *adjust_appendrel_attrs_mutator(Node *node,
-							   AppendRelInfo *context);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static Relids adjust_relid_set(Relids relids, Index oldrelid, Index newrelid);
 static List *adjust_inherited_tlist(List *tlist,
 					   AppendRelInfo *apprelinfo);
@@ -1276,6 +1271,8 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		return;
 	}
 
+	parent_is_partitioned = rel_is_partitioned(parentOID);
+
 	/*
 	 * The rewriter should already have obtained an appropriate lock on each
 	 * relation named in the query.  However, for each child relation we add
@@ -1297,9 +1294,6 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	else
 		lockmode = AccessShareLock;
 
-<<<<<<< HEAD
-	parent_is_partitioned = rel_is_partitioned(parentOID);
-=======
 	/* Scan for all members of inheritance set, acquire needed locks */
 	inhOIDs = find_all_inheritors(parentOID, lockmode);
 
@@ -1328,7 +1322,6 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	 * it; we assume the rewriter already did.
 	 */
 	oldrelation = heap_open(parentOID, NoLock);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* Scan the inheritance set and expand it */
 	appinfos = NIL;
@@ -1356,7 +1349,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		{
 			heap_close(newrelation, lockmode);
 			continue;
-<<<<<<< HEAD
+		}
 
 		/*
 		 * show root and leaf partitions
@@ -1371,9 +1364,6 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 			newrelation = heap_open(childOID, lockmode);
 		else
 			newrelation = oldrelation;
-=======
-		}
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		/*
 		 * Build an RTE for the child, and attach to query's rangetable list.

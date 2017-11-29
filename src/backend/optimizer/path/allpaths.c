@@ -692,23 +692,9 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	double		tuple_fraction;
 	PlannerInfo *subroot;
 	List	   *pathkeys;
-<<<<<<< HEAD
 	bool		forceDistRand;
 	Path	   *subquery_path;
 	PlannerConfig *config;
-=======
-
-	/*
-	 * Must copy the Query so that planning doesn't mess up the RTE contents
-	 * (really really need to fix the planner to not scribble on its input,
-	 * someday).
-	 */
-	subquery = copyObject(subquery);
-
-	/* We need a workspace for keeping track of set-op type coercions */
-	differentTypes = (bool *)
-		palloc0((list_length(subquery->targetList) + 1) * sizeof(bool));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * Must copy the Query so that planning doesn't mess up the RTE contents
@@ -958,14 +944,6 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 			elog(ERROR, "bad levelsup for CTE \"%s\"", rte->ctename);
 	}
 
-<<<<<<< HEAD
-=======
-	/*
-	 * Note: cte_plan_ids can be shorter than cteList, if we are still working
-	 * on planning the CTEs (ie, this is a side-reference from another CTE).
-	 * So we mustn't use forboth here.
-	 */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	ndx = 0;
 	foreach(lc, cteroot->parse->cteList)
 	{
@@ -1652,12 +1630,8 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 
 	/*
 	 * It would be unsafe to push down window function calls, but at least for
-<<<<<<< HEAD
 	 * the moment we could never see any in a qual anyhow.  (The same applies
 	 * to aggregates, which we check for in pull_var_clause below.)
-=======
-	 * the moment we could never see any in a qual anyhow.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	Assert(!contain_window_function(qual));
 
@@ -1665,13 +1639,9 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 	 * Examine all Vars used in clause; since it's a restriction clause, all
 	 * such Vars must refer to subselect output columns.
 	 */
-<<<<<<< HEAD
 	vars = pull_var_clause(qual,
 						   PVC_REJECT_AGGREGATES,
 						   PVC_INCLUDE_PLACEHOLDERS);
-=======
-	vars = pull_var_clause(qual, PVC_INCLUDE_PLACEHOLDERS);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	foreach(vl, vars)
 	{
 		Var		   *var = (Var *) lfirst(vl);

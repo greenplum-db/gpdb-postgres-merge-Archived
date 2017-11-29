@@ -28,28 +28,18 @@ static RestrictInfo *make_restrictinfo_internal(Expr *clause,
 						   bool outerjoin_delayed,
 						   bool pseudoconstant,
 						   Relids required_relids,
-<<<<<<< HEAD
 						   Relids nullable_relids,
 						   Relids ojscope_relids);
-=======
-						   Relids nullable_relids);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static Expr *make_sub_restrictinfos(Expr *clause,
 					   bool is_pushed_down,
 					   bool outerjoin_delayed,
 					   bool pseudoconstant,
 					   Relids required_relids,
-<<<<<<< HEAD
 					   Relids nullable_relids,
 					   Relids ojscope_relids);
-static bool join_clause_is_redundant(PlannerInfo *root,
-						 RestrictInfo *rinfo,
-=======
-					   Relids nullable_relids);
 static List *select_nonredundant_join_list(List *restrictinfo_list,
 							  List *reference_list);
 static bool join_clause_is_redundant(RestrictInfo *rinfo,
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 						 List *reference_list);
 
 /*
@@ -72,12 +62,8 @@ make_restrictinfo(Expr *clause,
 				  bool outerjoin_delayed,
 				  bool pseudoconstant,
 				  Relids required_relids,
-<<<<<<< HEAD
 				  Relids nullable_relids,
 				  Relids ojscope_relids)
-=======
-				  Relids nullable_relids)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	/*
 	 * If it's an OR clause, build a modified copy with RestrictInfos inserted
@@ -89,12 +75,8 @@ make_restrictinfo(Expr *clause,
 													   outerjoin_delayed,
 													   pseudoconstant,
 													   required_relids,
-<<<<<<< HEAD
 													   nullable_relids,
 													   ojscope_relids);
-=======
-													   nullable_relids);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* Shouldn't be an AND clause, else AND/OR flattening messed up */
 	Assert(!and_clause((Node *) clause));
@@ -105,12 +87,8 @@ make_restrictinfo(Expr *clause,
 									  outerjoin_delayed,
 									  pseudoconstant,
 									  required_relids,
-<<<<<<< HEAD
 									  nullable_relids,
 									  ojscope_relids);
-=======
-									  nullable_relids);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 /*
@@ -257,10 +235,7 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 													  false,
 													  false,
 													  NULL,
-<<<<<<< HEAD
 													  NULL,
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 													  NULL));
 		}
 	}
@@ -288,10 +263,7 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 													   false,
 													   false,
 													   NULL,
-<<<<<<< HEAD
 													   NULL,
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 													   NULL));
 			}
 		}
@@ -317,12 +289,8 @@ make_restrictinfo_internal(Expr *clause,
 						   bool outerjoin_delayed,
 						   bool pseudoconstant,
 						   Relids required_relids,
-<<<<<<< HEAD
 						   Relids nullable_relids,
 						   Relids ojscope_relids)
-=======
-						   Relids nullable_relids)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	RestrictInfo *restrictinfo = makeNode(RestrictInfo);
 
@@ -333,7 +301,6 @@ make_restrictinfo_internal(Expr *clause,
 	restrictinfo->pseudoconstant = pseudoconstant;
 	restrictinfo->can_join = false;		/* may get set below */
 	restrictinfo->nullable_relids = nullable_relids;
-<<<<<<< HEAD
 	restrictinfo->ojscope_relids = ojscope_relids;
 
 	/**
@@ -348,8 +315,6 @@ make_restrictinfo_internal(Expr *clause,
 			clause = bt->arg;
 		}
 	}
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * If it's a binary opclause, set up left/right relids info. In any case
@@ -448,12 +413,8 @@ make_sub_restrictinfos(Expr *clause,
 					   bool outerjoin_delayed,
 					   bool pseudoconstant,
 					   Relids required_relids,
-<<<<<<< HEAD
 					   Relids nullable_relids,
 					   Relids ojscope_relids)
-=======
-					   Relids nullable_relids)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	if (or_clause((Node *) clause))
 	{
@@ -467,24 +428,16 @@ make_sub_restrictinfos(Expr *clause,
 													outerjoin_delayed,
 													pseudoconstant,
 													NULL,
-<<<<<<< HEAD
 													nullable_relids,
 													ojscope_relids));
-=======
-													nullable_relids));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		return (Expr *) make_restrictinfo_internal(clause,
 												   make_orclause(orlist),
 												   is_pushed_down,
 												   outerjoin_delayed,
 												   pseudoconstant,
 												   required_relids,
-<<<<<<< HEAD
 												   nullable_relids,
 												   ojscope_relids);
-=======
-												   nullable_relids);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 	else if (and_clause((Node *) clause))
 	{
@@ -498,12 +451,8 @@ make_sub_restrictinfos(Expr *clause,
 													 outerjoin_delayed,
 													 pseudoconstant,
 													 required_relids,
-<<<<<<< HEAD
 													 nullable_relids,
 													 ojscope_relids));
-=======
-													 nullable_relids));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		return make_andclause(andlist);
 	}
 	else
@@ -513,12 +462,8 @@ make_sub_restrictinfos(Expr *clause,
 												   outerjoin_delayed,
 												   pseudoconstant,
 												   required_relids,
-<<<<<<< HEAD
 												   nullable_relids,
 												   ojscope_relids);
-=======
-												   nullable_relids);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 /*

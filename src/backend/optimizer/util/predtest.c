@@ -41,6 +41,7 @@
 #define INT32MAX (2147483647)
 #define INT32MIN (-2147483648)
 
+/* GPDB_84_MERGE_FIXME: this is pointless. */
 static const bool kUseFnEvaluationForPredicates = true;
 
 /*
@@ -215,19 +216,6 @@ predicate_refuted_by(List *predicate_list, List *restrictinfo_list)
 	if (restrictinfo_list == NIL)
 		return false;			/* no restriction: refutation must fail */
 
-<<<<<<< HEAD
-	/* Otherwise, away we go ... */
-	if ( predicate_refuted_by_recurse((Node *) restrictinfo_list,
-										(Node *) predicate_list))
-    {
-        return true;
-    }
-
-    if ( ! kUseFnEvaluationForPredicates )
-        return false;
-    return simple_equality_predicate_refuted((Node *) restrictinfo_list,
-										(Node *) predicate_list);
-=======
 	/*
 	 * If either input is a single-element list, replace it with its lone
 	 * member; this avoids one useless level of AND-recursion.	We only need
@@ -244,8 +232,12 @@ predicate_refuted_by(List *predicate_list, List *restrictinfo_list)
 		r = (Node *) restrictinfo_list;
 
 	/* And away we go ... */
-	return predicate_refuted_by_recurse(r, p);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	if ( predicate_refuted_by_recurse(r, p))
+        return true;
+
+    if ( ! kUseFnEvaluationForPredicates )
+        return false;
+    return simple_equality_predicate_refuted(r, p);
 }
 
 /*----------
@@ -694,26 +686,14 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 
 		case CLASS_ATOM:
 
-<<<<<<< HEAD
-=======
-#ifdef NOT_USED
-
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			/*
 			 * If A is a strong NOT-clause, A R=> B if B equals A's arg
 			 *
-<<<<<<< HEAD
 			 * We cannot make the stronger conclusion that B is refuted if
 			 * B implies A's arg; that would only prove that B is not-TRUE,
 			 * not that it's not NULL either.  Hence use equal() rather than
 			 * predicate_implied_by_recurse().  We could do the latter if we
 			 * ever had a need for the weak form of refutation.
-=======
-			 * Unfortunately not: this would only prove that B is not-TRUE,
-			 * not that it's not NULL either.  Keep this code as a comment
-			 * because it would be useful if we ever had a need for the weak
-			 * form of refutation.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			 */
 			not_arg = extract_strong_not_arg(clause);
 			if (not_arg && equal(predicate, not_arg))

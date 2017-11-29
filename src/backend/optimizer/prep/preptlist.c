@@ -28,6 +28,7 @@
 #include "access/heapam.h"
 #include "access/sysattr.h"
 #include "catalog/gp_policy.h"     /* CDB: POLICYTYPE_PARTITIONED */
+#include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/plancat.h"
@@ -246,10 +247,7 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 		ListCell   *l;
 
 		vars = pull_var_clause((Node *) parse->returningList,
-<<<<<<< HEAD
 							   PVC_RECURSE_AGGREGATES,
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 							   PVC_INCLUDE_PLACEHOLDERS);
 		foreach(l, vars)
 		{
@@ -507,7 +505,7 @@ supplement_simply_updatable_targetlist(List *range_table, List *tlist)
 	 * our ability to uniquely identify a tuple. Without inheritance, we omit tableoid
 	 * to avoid the overhead of carrying tableoid for each tuple in the result set.
 	 */
-	if (find_inheritance_children(reloid) != NIL)
+	if (find_inheritance_children(reloid, NoLock) != NIL)
 	{
 		Var         *varTableoid = makeVar(varno,
 										   TableOidAttributeNumber,
