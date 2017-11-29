@@ -2,11 +2,7 @@
 #
 # Makefile for backend/catalog
 #
-<<<<<<< HEAD
 # src/backend/catalog/Makefile
-=======
-# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.70 2009/05/12 00:56:05 tgl Exp $
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #
 #-------------------------------------------------------------------------
 
@@ -19,21 +15,15 @@ QUICKLZ_COMPRESSION = quicklz_compression.o
 endif
 
 OBJS = catalog.o dependency.o heap.o index.o indexing.o namespace.o aclchk.o \
-<<<<<<< HEAD
        objectaddress.o pg_aggregate.o pg_constraint.o pg_conversion.o pg_depend.o pg_enum.o \
-       pg_largeobject.o pg_namespace.o pg_operator.o pg_proc.o pg_shdepend.o \
-       pg_type.o storage.o toasting.o \
+       pg_inherits.o pg_largeobject.o pg_namespace.o pg_operator.o pg_proc.o \
+       pg_shdepend.o pg_type.o storage.o toasting.o \
        pg_exttable.o pg_extprotocol.o \
        pg_proc_callback.o \
        aoseg.o aoblkdir.o gp_fastsequence.o gp_segment_config.o \
        pg_attribute_encoding.o pg_compression.o aovisimap.o \
        gp_global_sequence.o gp_persistent.o pg_appendonly.o \
        oid_dispatch.o aocatalog.o $(QUICKLZ_COMPRESSION)
-=======
-       pg_aggregate.o pg_constraint.o pg_conversion.o pg_depend.o pg_enum.o \
-       pg_inherits.o pg_largeobject.o pg_namespace.o pg_operator.o pg_proc.o \
-       pg_shdepend.o pg_type.o storage.o toasting.o
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 BKIFILES = postgres.bki postgres.description postgres.shdescription
 
@@ -48,14 +38,9 @@ all: $(BKIFILES) $(CATALOG_JSON)
 # indexing.h had better be last, and toasting.h just before it.
 # And pg_proc_gp.h must be immediately after pg_proc.h
 
-<<<<<<< HEAD
 POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/, \
 	pg_proc.h pg_proc_gp.h \
-	pg_type.h pg_attribute.h pg_class.h pg_autovacuum.h \
-=======
-POSTGRES_BKI_SRCS = $(addprefix $(top_srcdir)/src/include/catalog/,\
-	pg_proc.h pg_type.h pg_attribute.h pg_class.h \
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	pg_type.h pg_attribute.h pg_class.h \
 	pg_attrdef.h pg_constraint.h pg_inherits.h pg_index.h pg_operator.h \
 	pg_opfamily.h pg_opclass.h pg_am.h pg_amop.h pg_amproc.h \
 	pg_language.h pg_largeobject.h pg_aggregate.h pg_statistic.h \

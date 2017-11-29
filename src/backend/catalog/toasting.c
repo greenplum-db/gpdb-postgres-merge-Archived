@@ -34,11 +34,7 @@
 
 
 static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
-<<<<<<< HEAD
-							   bool is_part_child);
-=======
-				   Datum reloptions, bool force);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+				   Datum reloptions, bool force, bool is_part_child);
 static bool needs_toast_table(Relation rel);
 
 
@@ -61,12 +57,8 @@ static bool needs_toast_table(Relation rel);
  * to end with CommandCounterIncrement if it makes any changes.
  */
 void
-<<<<<<< HEAD
-AlterTableCreateToastTable(Oid relOid, bool is_part_child)
-=======
 AlterTableCreateToastTable(Oid relOid, Oid toastOid,
-						   Datum reloptions, bool force)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+						   Datum reloptions, bool force, bool is_part_child)
 {
 	Relation	rel;
 
@@ -81,11 +73,7 @@ AlterTableCreateToastTable(Oid relOid, Oid toastOid,
 		rel = heap_open(relOid, AccessExclusiveLock);
 
 	/* create_toast_table does all the work */
-<<<<<<< HEAD
-	(void) create_toast_table(rel, InvalidOid, InvalidOid, is_part_child);
-=======
-	(void) create_toast_table(rel, toastOid, InvalidOid, reloptions, force);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions, force, is_part_child);
 
 	heap_close(rel, NoLock);
 }
@@ -111,11 +99,7 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
 						relName)));
 
 	/* create_toast_table does all the work */
-<<<<<<< HEAD
-	if (!create_toast_table(rel, toastOid, toastIndexOid, false))
-=======
-	if (!create_toast_table(rel, toastOid, toastIndexOid, (Datum) 0, false))
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	if (!create_toast_table(rel, toastOid, toastIndexOid, (Datum) 0, false, false))
 		elog(ERROR, "\"%s\" does not require a toast table",
 			 relName);
 
@@ -132,11 +116,7 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
  */
 static bool
 create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
-<<<<<<< HEAD
-				   bool is_part_child)
-=======
-				   Datum reloptions, bool force)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+				   Datum reloptions, bool force, bool is_part_child)
 {
 	Oid			relOid = RelationGetRelid(rel);
 	HeapTuple	reltup;
@@ -179,8 +159,6 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 				 errmsg("shared tables cannot be toasted after initdb")));
 
 	/*
-<<<<<<< HEAD
-=======
 	 * Is it already toasted?
 	 */
 	if (rel->rd_rel->reltoastrelid != InvalidOid)
@@ -197,7 +175,6 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 		return false;
 
 	/*
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 * Create the toast table and its index
 	 */
 	snprintf(toast_relname, sizeof(toast_relname),
@@ -253,17 +230,12 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 										   /* bufferPoolBulkLoad */ false,
 										   0,
 										   ONCOMMIT_NOOP,
-<<<<<<< HEAD
 										   NULL, /* CDB POLICY */
-										   (Datum) 0,
+										   reloptions,
 										   true,
 										   /* valid_opts */ false,
 										   /* persistentTid */ NULL,
 										   /* persistentSerialNum */ NULL);
-=======
-										   reloptions,
-										   true);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* make the toast relation visible, else index creation will fail */
 	CommandCounterIncrement();

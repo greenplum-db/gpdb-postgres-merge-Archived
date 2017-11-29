@@ -487,11 +487,7 @@ Exec_Listen(Relation lRel, const char *relname)
 
 	namestrcpy(&condname, relname);
 	values[Anum_pg_listener_relname - 1] = NameGetDatum(&condname);
-<<<<<<< HEAD
 	values[Anum_pg_listener_listenerpid - 1] = Int32GetDatum(MyProcPid);
-=======
-	values[Anum_pg_listener_pid - 1] = Int32GetDatum(MyProcPid);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	values[Anum_pg_listener_notify - 1] = Int32GetDatum(0);		/* no notifies pending */
 
 	tuple = heap_form_tuple(RelationGetDescr(lRel), values, nulls);

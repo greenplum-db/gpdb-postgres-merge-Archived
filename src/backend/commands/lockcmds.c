@@ -23,15 +23,11 @@
 #include "storage/lmgr.h"
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
-<<<<<<< HEAD
-#include "utils/rel.h"
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
-=======
 
 static void LockTableRecurse(Oid reloid, RangeVar *rv,
 				 LOCKMODE lockmode, bool nowait, bool recurse);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 
 /*
@@ -112,7 +108,7 @@ LockTableRecurse(Oid reloid, RangeVar *rv,
 	 * Now that we have the lock, check to see if the relation really exists
 	 * or not.
 	 */
-	rel = try_relation_open(reloid, NoLock);
+	rel = try_relation_open(reloid, NoLock, false);
 
 	if (!rel)
 	{

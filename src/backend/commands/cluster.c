@@ -812,20 +812,6 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace,
 	 * CommandCounterIncrement(), so that the new tables will be visible for
 	 * insertion.
 	 */
-<<<<<<< HEAD
-	AlterTableCreateToastTable(OIDNewHeap, is_part);
-	AlterTableCreateAoSegTable(OIDNewHeap, is_part);
-	AlterTableCreateAoVisimapTable(OIDNewHeap, is_part);
-
-    if (createAoBlockDirectory)
-	    AlterTableCreateAoBlkdirTable(OIDNewHeap, is_part);
-
-	CacheInvalidateRelcacheByRelid(OIDNewHeap);
-
-	cloneAttributeEncoding(OIDOldHeap,
-						   OIDNewHeap,
-						   RelationGetNumberOfAttributes(OldHeap));
-=======
 	toastid = OldHeap->rd_rel->reltoastrelid;
 	reloptions = (Datum) 0;
 	if (OidIsValid(toastid))
@@ -840,11 +826,21 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace,
 		if (isNull)
 			reloptions = (Datum) 0;
 	}
-	AlterTableCreateToastTable(OIDNewHeap, InvalidOid, reloptions, false);
+	AlterTableCreateToastTable(OIDNewHeap, InvalidOid, reloptions, false, is_part);
+	AlterTableCreateAoSegTable(OIDNewHeap, is_part);
+	AlterTableCreateAoVisimapTable(OIDNewHeap, is_part);
+
+    if (createAoBlockDirectory)
+	    AlterTableCreateAoBlkdirTable(OIDNewHeap, is_part);
+
+	CacheInvalidateRelcacheByRelid(OIDNewHeap);
+
+	cloneAttributeEncoding(OIDOldHeap,
+						   OIDNewHeap,
+						   RelationGetNumberOfAttributes(OldHeap));
 
 	if (OidIsValid(toastid))
 		ReleaseSysCache(tuple);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	heap_close(OldHeap, NoLock);
 

@@ -179,7 +179,6 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 	Relation   *Irel;
 	int			nindexes;
 	bool		hasindex;
-	bool		analyzableindex;
 	VacAttrStats **vacattrstats;
 	AnlIndexData *indexdata;
 	int			targrows,
@@ -295,12 +294,8 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 
 	/*
 	 * Switch to the table owner's userid, so that any index functions are run
-<<<<<<< HEAD
 	 * as that user.  Also lock down security-restricted operations and
 	 * arrange to make GUC variable changes local to this command.
-=======
-	 * as that user.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 	SetUserIdAndSecContext(onerel->rd_rel->relowner,
@@ -371,7 +366,6 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 	vac_open_indexes(onerel, AccessShareLock, &nindexes, &Irel);
 	hasindex = (nindexes > 0);
 	indexdata = NULL;
-	analyzableindex = false;
 	if (hasindex)
 	{
 		indexdata = (AnlIndexData *) palloc0(nindexes * sizeof(AnlIndexData));
@@ -418,10 +412,7 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 						thisdata->vacattrstats[tcnt] =
 							examine_attribute(Irel[ind], i + 1);
 						if (thisdata->vacattrstats[tcnt] != NULL)
-						{
 							tcnt++;
-							analyzableindex = true;
-						}
 					}
 				}
 				thisdata->attr_cnt = tcnt;
@@ -430,21 +421,10 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Quit if no analyzable columns.
-	 */
-	if (attr_cnt <= 0 && !analyzableindex && vacstmt->vacuum)
-=======
-	 * Quit if no analyzable columns and no pg_class update needed.
-	 */
-	if (attr_cnt <= 0 && !analyzableindex && !update_reltuples)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
-		goto cleanup;
-
-	/*
 	 * Determine how many rows we need to sample, using the worst case from
 	 * all analyzable columns.	We use a lower bound of 100 rows to avoid
-	 * possible overflow in Vitter's algorithm.
+	 * possible overflow in Vitter's algorithm.  (Note: that will also be
+	 * the target in the corner case where there are no analyzable columns.)
 	 */
 	targrows = 100;
 	for (i = 0; i < attr_cnt; i++)
@@ -641,9 +621,6 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 						   asubtype
 			);
 	}
-
-	/* We skip to here if there were no analyzable columns */
-cleanup:
 
 	/* If this isn't part of VACUUM ANALYZE, let index AMs do cleanup */
 	if (!vacstmt->vacuum)
@@ -901,19 +878,11 @@ examine_attribute(Relation onerel, int attnum)
 	 * fixed fields of the pg_attribute tuple.
 	 */
 	stats = (VacAttrStats *) palloc0(sizeof(VacAttrStats));
-<<<<<<< HEAD
-	stats->attr = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
-	memcpy(stats->attr, attr, ATTRIBUTE_TUPLE_SIZE);
-	typtuple = SearchSysCacheCopy(TYPEOID,
-								  ObjectIdGetDatum(attr->atttypid),
-								  0, 0, 0);
-=======
 	stats->attr = (Form_pg_attribute) palloc(ATTRIBUTE_FIXED_PART_SIZE);
 	memcpy(stats->attr, attr, ATTRIBUTE_FIXED_PART_SIZE);
-	typtuple = SearchSysCache(TYPEOID,
+	typtuple = SearchSysCacheCopy(TYPEOID,
 							  ObjectIdGetDatum(attr->atttypid),
 							  0, 0, 0);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	if (!HeapTupleIsValid(typtuple))
 		elog(ERROR, "cache lookup failed for type %u", attr->atttypid);
 	stats->attrtype = (Form_pg_type) GETSTRUCT(typtuple);

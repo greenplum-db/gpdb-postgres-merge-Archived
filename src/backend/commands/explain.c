@@ -564,15 +564,11 @@ void
 ExplainPrintPlan(StringInfo str, QueryDesc *queryDesc,
 				 bool analyze, bool verbose)
 {
-<<<<<<< HEAD
 	EState     *estate = queryDesc->estate;
 	ExplainState es;
 	int			indent = 0;
 	CmdType		cmd = queryDesc->plannedstmt->commandType;
 	Plan	   *childPlan = queryDesc->plannedstmt->planTree;
-=======
-	ExplainState es;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	Assert(queryDesc->plannedstmt != NULL);
 
