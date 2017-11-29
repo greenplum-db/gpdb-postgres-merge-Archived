@@ -464,24 +464,14 @@ SysLoggerMain(int argc, char *argv[])
 		}
 #ifndef WIN32
 
-<<<<<<< HEAD
         /*
          * Wait for some data, timing out after 1 second
          */
         FD_ZERO(&rfds);
         FD_SET(syslogPipe[0], &rfds);
+
         timeout.tv_sec = 1;
         timeout.tv_usec = 0;
-=======
-		/*
-		 * Wait for some data, timing out after 1 second
-		 */
-		FD_ZERO(&rfds);
-		FD_SET		(syslogPipe[0], &rfds);
-
-		timeout.tv_sec = 1;
-		timeout.tv_usec = 0;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
         rc = select(syslogPipe[0] + 1, &rfds, NULL, NULL, &timeout);
 
@@ -1916,30 +1906,7 @@ void write_syslogger_file_binary(const char *buffer, int count, int destination)
  */
 void write_syslogger_file(const char *buffer, int count, int destination)
 {
-<<<<<<< HEAD
     write_syslogger_file_binary(buffer,count, destination);
-=======
-	int			rc;
-	FILE	   *logfile;
-
-	if (destination == LOG_DESTINATION_CSVLOG && csvlogFile == NULL)
-		open_csvlogfile();
-
-#ifdef WIN32
-	EnterCriticalSection(&sysfileSection);
-#endif
-
-	logfile = destination == LOG_DESTINATION_CSVLOG ? csvlogFile : syslogFile;
-	rc = fwrite(buffer, 1, count, logfile);
-
-#ifdef WIN32
-	LeaveCriticalSection(&sysfileSection);
-#endif
-
-	/* can't use ereport here because of possible recursion */
-	if (rc != count)
-		write_stderr("could not write to log file: %s\n", strerror(errno));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 #ifdef WIN32
 
@@ -2141,24 +2108,9 @@ logfile_getname(pg_time_t timestamp, const char *suffix, const char *log_directo
 
 	len = strlen(filename);
 
-<<<<<<< HEAD
-	if (strchr(log_file_pattern, '%'))
-	{
-		/* treat it as a strftime pattern */
-		pg_strftime(filename + len, MAXPGPATH - len, log_file_pattern,
-				   pg_localtime(&timestamp, log_timezone));
-	}
-	else
-	{
-		/* no strftime escapes, so append timestamp to new filename */
-		snprintf(filename + len, MAXPGPATH - len, "%s.%lu",
-				 log_file_pattern, (unsigned long) timestamp);
-	}
-=======
 	/* treat it as a strftime pattern */
-	pg_strftime(filename + len, MAXPGPATH - len, Log_filename,
+	pg_strftime(filename + len, MAXPGPATH - len, log_file_pattern,
 				pg_localtime(&timestamp, log_timezone));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * If the logging format is 'TEXT' and the filename ends with ".csv",

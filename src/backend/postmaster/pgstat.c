@@ -2103,10 +2103,7 @@ pgstat_fetch_global(void)
 
 static PgBackendStatus *BackendStatusArray = NULL;
 static PgBackendStatus *MyBEEntry = NULL;
-<<<<<<< HEAD
 static char *BackendAppnameBuffer = NULL;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static char *BackendActivityBuffer = NULL;
 
 
@@ -2507,10 +2504,7 @@ pgstat_read_current_status(void)
 	volatile PgBackendStatus *beentry;
 	PgBackendStatus *localtable;
 	PgBackendStatus *localentry;
-<<<<<<< HEAD
 	char	   *localappname;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	char	   *localactivity;
 	int			i;
 
@@ -2997,13 +2991,6 @@ PgstatCollectorMain(int argc, char *argv[])
 					pgstat_recv_funcstat((PgStat_MsgFuncstat *) &msg, len);
 					break;
 
-<<<<<<< HEAD
-=======
-				case PGSTAT_MTYPE_FUNCSTAT:
-					pgstat_recv_funcstat((PgStat_MsgFuncstat *) &msg, len);
-					break;
-
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				case PGSTAT_MTYPE_FUNCPURGE:
 					pgstat_recv_funcpurge((PgStat_MsgFuncpurge *) &msg, len);
 					break;
@@ -4019,19 +4006,7 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 	tabentry->n_dead_tuples = 0;
 	if (msg->m_analyze)
 	{
-<<<<<<< HEAD
 		tabentry->last_anl_tuples = msg->m_tuples;
-=======
-		if (msg->m_scanned_all)
-			tabentry->last_anl_tuples = msg->m_tuples;
-		else
-		{
-			/* last_anl_tuples must never exceed n_live_tuples+n_dead_tuples */
-			tabentry->last_anl_tuples = Min(tabentry->last_anl_tuples,
-											tabentry->n_live_tuples);
-		}
-
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		if (msg->m_autovacuum)
 			tabentry->autovac_analyze_timestamp = msg->m_vacuumtime;
 		else
