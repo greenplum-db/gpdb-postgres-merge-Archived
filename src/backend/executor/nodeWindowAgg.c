@@ -171,10 +171,7 @@ static void release_partition(WindowAggState *winstate);
 
 static bool row_is_in_frame(WindowAggState *winstate, int64 pos,
 				TupleTableSlot *slot);
-<<<<<<< HEAD
 static void update_frameheadpos(WindowObject winobj, TupleTableSlot *slot);
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static void update_frametailpos(WindowObject winobj, TupleTableSlot *slot);
 
 static WindowStatePerAggData *initialize_peragg(WindowAggState *winstate,
@@ -186,7 +183,6 @@ static bool are_peers(WindowAggState *winstate, TupleTableSlot *slot1,
 		  TupleTableSlot *slot2);
 static bool window_gettupleslot(WindowObject winobj, int64 pos,
 					TupleTableSlot *slot);
-<<<<<<< HEAD
 
 static void compute_start_end_offsets(WindowAggState *winstate);
 static void initialize_range_bound_exprs(WindowAggState *winstate);
@@ -197,8 +193,6 @@ static Datum eval_bound_value(WindowAggState *winstate,
 							  ExprState *offsetIsNegativeExpr,
 							  Datum offset,
 							  bool *isnull);
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 
 /*
@@ -373,14 +367,10 @@ finalize_windowaggregate(WindowAggState *winstate,
 	 */
 	if (OidIsValid(peraggstate->finalfn_oid))
 	{
-<<<<<<< HEAD
 		int			numFinalArgs = peraggstate->numFinalArgs;
 		FunctionCallInfoData fcinfo;
 		bool		anynull;
 		int			i;
-=======
-		FunctionCallInfoData fcinfo;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		InitFunctionCallInfoData(fcinfo, &(peraggstate->finalfn),
 								 numFinalArgs,
@@ -445,10 +435,7 @@ eval_windowaggregates(WindowAggState *winstate)
 	int			i;
 	MemoryContext oldContext;
 	ExprContext *econtext;
-<<<<<<< HEAD
 	WindowObject agg_winobj;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	TupleTableSlot *agg_row_slot;
 
 	numaggs = winstate->numaggs;
@@ -462,7 +449,6 @@ eval_windowaggregates(WindowAggState *winstate)
 
 	/*
 	 * Currently, we support only a subset of the SQL-standard window framing
-<<<<<<< HEAD
 	 * rules.
 	 *
 	 * If the frame start is UNBOUNDED_PRECEDING, the window frame consists of
@@ -481,20 +467,6 @@ eval_windowaggregates(WindowAggState *winstate)
 	 * the aggregates whenever the frame head row moves.  We can still
 	 * optimize as above whenever successive rows share the same frame head.
 	 *
-=======
-	 * rules.  In all the supported cases, the window frame always consists of
-	 * a contiguous group of rows extending forward from the start of the
-	 * partition, and rows only enter the frame, never exit it, as the current
-	 * row advances forward.  This makes it possible to use an incremental
-	 * strategy for evaluating aggregates: we run the transition function for
-	 * each row added to the frame, and run the final function whenever we
-	 * need the current aggregate value.  This is considerably more efficient
-	 * than the naive approach of re-running the entire aggregate calculation
-	 * for each current row.  It does assume that the final function doesn't
-	 * damage the running transition value, but we have the same assumption
-	 * in nodeAgg.c too (when it rescans an existing hash table).
-	 *
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 * In many common cases, multiple rows share the same frame and hence the
 	 * same aggregate value. (In particular, if there's no ORDER BY in a RANGE
 	 * window, then all rows are peers and so they all have window frame equal
@@ -506,30 +478,15 @@ eval_windowaggregates(WindowAggState *winstate)
 	 * accumulated into the aggregate transition values.  Whenever we start a
 	 * new peer group, we accumulate forward to the end of the peer group.
 	 *
-<<<<<<< HEAD
 	 * TODO: Rerunning aggregates from the frame start can be pretty slow. For
 	 * some aggregates like SUM and COUNT we could avoid that by implementing
 	 * a "negative transition function" that would be called for each row as
 	 * it exits the frame.  We'd have to think about avoiding recalculation of
-=======
-	 * TODO: In the future, we should implement the full SQL-standard set of
-	 * framing rules.  We could implement the other cases by recalculating the
-	 * aggregates whenever a row exits the frame.  That would be pretty slow,
-	 * though.	For aggregates like SUM and COUNT we could implement a
-	 * "negative transition function" that would be called for each row as it
-	 * exits the frame.  We'd have to think about avoiding recalculation of
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 * volatile arguments of aggregate functions, too.
 	 */
 
 	/*
-<<<<<<< HEAD
 	 * First, update the frame head position.
-=======
-	 * If we've already aggregated up through current row, reuse the saved
-	 * result values.  NOTE: this test works for the currently supported
-	 * framing rules, but will need fixing when more are added.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	update_frameheadpos(agg_winobj, winstate->temp_slot_1);
 
@@ -597,29 +554,16 @@ eval_windowaggregates(WindowAggState *winstate)
 	 * Advance until we reach a row not in frame (or end of partition).
 	 *
 	 * Note the loop invariant: agg_row_slot is either empty or holds the row
-<<<<<<< HEAD
 	 * at position aggregatedupto.  We advance aggregatedupto after processing
 	 * a row.
-=======
-	 * at position aggregatedupto.	The agg_ptr read pointer must always point
-	 * to the next row to read into agg_row_slot.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	for (;;)
 	{
 		/* Fetch next row if we didn't already */
 		if (TupIsNull(agg_row_slot))
 		{
-<<<<<<< HEAD
 			if (!window_gettupleslot(agg_winobj, winstate->aggregatedupto,
 									 agg_row_slot))
-=======
-			spool_tuples(winstate, winstate->aggregatedupto);
-			tuplestore_select_read_pointer(winstate->buffer,
-										   winstate->agg_ptr);
-			if (!tuplestore_gettupleslot(winstate->buffer, true, true,
-										 agg_row_slot))
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				break;			/* must be end of partition */
 		}
 
@@ -1323,15 +1267,7 @@ compute_start_end_offsets(WindowAggState *winstate)
 	bool		byval;
 
 	/*
-<<<<<<< HEAD
 	 * Compute frame offset values, if any
-=======
-	 * Else we have to search for the first non-peer of the current row. We
-	 * assume the current value of frametailpos is a lower bound on the
-	 * possible frame tail location, ie, frame tail never goes backward, and
-	 * that currentpos is also a lower bound, ie, current row is always in
-	 * frame.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	if (!winstate->start_offset_valid)
 	{
@@ -2474,11 +2410,7 @@ window_gettupleslot(WindowObject winobj, int64 pos, TupleTableSlot *slot)
 	 * There's no API to refetch the tuple at the current position. We have to
 	 * move one tuple forward, and then one backward.  (We don't do it the
 	 * other way because we might try to fetch the row before our mark, which
-<<<<<<< HEAD
 	 * isn't allowed.)  XXX this case could stand to be optimized.
-=======
-	 * isn't allowed.)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	if (winobj->seekpos == pos)
 	{
