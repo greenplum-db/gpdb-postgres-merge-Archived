@@ -390,20 +390,11 @@ AggregateCreate(const char *aggName,
 							  false,	/* isStrict (not needed for agg) */
 							  PROVOLATILE_IMMUTABLE,	/* volatility (not
 														 * needed for agg) */
-<<<<<<< HEAD
 							  parameterTypes,	/* paramTypes */
 							  allParameterTypes,		/* allParamTypes */
 							  parameterModes,	/* parameterModes */
 							  parameterNames,	/* parameterNames */
 							  parameterDefaults,		/* parameterDefaults */
-=======
-							  buildoidvector(aggArgTypes,
-											 numArgs),	/* paramTypes */
-							  PointerGetDatum(NULL),	/* allParamTypes */
-							  PointerGetDatum(NULL),	/* parameterModes */
-							  PointerGetDatum(NULL),	/* parameterNames */
-							  NIL,		/* parameterDefaults */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 							  PointerGetDatum(NULL),	/* proconfig */
 							  1,				/* procost */
 							  0,				/* prorows */

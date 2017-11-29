@@ -91,7 +91,6 @@ FunctionNext(FunctionScanState *node)
 	 * Get the next tuple from tuplestore. Return NULL if no more tuples.
 	 */
 	slot = node->ss.ss_ScanTupleSlot;
-<<<<<<< HEAD
 	if (tuplestore_gettupleslot(tuplestorestate, 
 				ScanDirectionIsForward(direction),
 				false,
@@ -117,12 +116,6 @@ FunctionNext(FunctionScanState *node)
 		ExecEagerFreeFunctionScan((FunctionScanState *)(&node->ss.ps));
 	}
 
-=======
-	(void) tuplestore_gettupleslot(tuplestorestate,
-								   ScanDirectionIsForward(direction),
-								   false,
-								   slot);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	return slot;
 }
 

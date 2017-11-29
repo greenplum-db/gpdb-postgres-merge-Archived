@@ -1240,22 +1240,14 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 					ExecGrantStmt_oids(&istmt);
 					break;
 				case SHARED_DEPENDENCY_OWNER:
-<<<<<<< HEAD
 					/* If a local object, save it for deletion below */
 					if (sdepForm->dbid == MyDatabaseId)
 					{
 						obj.classId = sdepForm->classid;
 						obj.objectId = sdepForm->objid;
-						obj.objectSubId = 0;
+						obj.objectSubId = sdepForm->objsubid;
 						add_exact_object_address(&obj, deleteobjs);
 					}
-=======
-					/* Save it for deletion below */
-					obj.classId = sdepForm->classid;
-					obj.objectId = sdepForm->objid;
-					obj.objectSubId = sdepForm->objsubid;
-					add_exact_object_address(&obj, deleteobjs);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 					break;
 			}
 		}

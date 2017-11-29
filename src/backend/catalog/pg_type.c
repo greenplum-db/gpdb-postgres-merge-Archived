@@ -430,18 +430,11 @@ TypeCreateWithOptions(Oid newTypeOid,
 		 * Okay to update existing shell type tuple
 		 */
 		tup = heap_modify_tuple(tup,
-<<<<<<< HEAD
-							   RelationGetDescr(pg_type_desc),
-							   values,
-							   nulls,
-							   replaces);
-=======
 								RelationGetDescr(pg_type_desc),
 								values,
 								nulls,
 								replaces);
 
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		simple_heap_update(pg_type_desc, &tup->t_self, tup);
 
 		typeObjectId = HeapTupleGetOid(tup);
@@ -596,13 +589,8 @@ GenerateTypeDependencies(Oid typeNamespace,
 
 	if (rebuild)
 	{
-<<<<<<< HEAD
 		deleteDependencyRecordsFor(TypeRelationId, typeObjectId, true);
-		deleteSharedDependencyRecordsFor(TypeRelationId, typeObjectId);
-=======
-		deleteDependencyRecordsFor(TypeRelationId, typeObjectId);
 		deleteSharedDependencyRecordsFor(TypeRelationId, typeObjectId, 0);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 
 	myself.classId = TypeRelationId;

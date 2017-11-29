@@ -119,12 +119,7 @@ static void StoreRelCheck(Relation rel, char *ccname, Node *expr,
 			  bool is_local, int inhcount);
 static void StoreConstraints(Relation rel, List *cooked_constraints);
 static bool MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
-<<<<<<< HEAD
-										bool allow_merge, bool is_local);
-=======
 							bool allow_merge, bool is_local);
-static void SetRelationNumChecks(Relation rel, int numchecks);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static Node *cookConstraint(ParseState *pstate,
 			   Node *raw_constraint,
 			   char *relname);
@@ -1729,7 +1724,6 @@ heap_create_with_catalog(const char *relname,
 	 * creating the same type name in parallel but hadn't committed yet when
 	 * we checked for a duplicate name above.
 	 */
-<<<<<<< HEAD
 	if (existing_rowtype_oid != InvalidOid)
 		new_type_oid = existing_rowtype_oid;
 	else
@@ -1741,14 +1735,6 @@ heap_create_with_catalog(const char *relname,
 										  ownerid,
 										  new_array_oid);
 	}
-=======
-	new_type_oid = AddNewRelationType(relname,
-									  relnamespace,
-									  relid,
-									  relkind,
-									  ownerid,
-									  new_array_oid);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * Now make the array type if wanted.
@@ -2726,13 +2712,9 @@ StoreRelCheck(Relation rel, char *ccname, Node *expr,
 	 * in check constraints; it would fail to examine the contents of
 	 * subselects.
 	 */
-<<<<<<< HEAD
 	varList = pull_var_clause(expr,
 							  PVC_REJECT_AGGREGATES,
 							  PVC_REJECT_PLACEHOLDERS);
-=======
-	varList = pull_var_clause(expr, PVC_REJECT_PLACEHOLDERS);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	keycount = list_length(varList);
 
 	if (keycount > 0)
@@ -3026,13 +3008,9 @@ AddRelationNewConstraints(Relation rel,
 			List	   *vars;
 			char	   *colname;
 
-<<<<<<< HEAD
 			vars = pull_var_clause(expr,
 								   PVC_REJECT_AGGREGATES,
 								   PVC_REJECT_PLACEHOLDERS);
-=======
-			vars = pull_var_clause(expr, PVC_REJECT_PLACEHOLDERS);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 			/* eliminate duplicates */
 			vars = list_union(NIL, vars);
@@ -3263,25 +3241,6 @@ cookDefault(ParseState *pstate,
 				 errmsg("default expression must not return a set")));
 
 	/*
-<<<<<<< HEAD
-=======
-	 * No subplans or aggregates, either...
-	 */
-	if (pstate->p_hasSubLinks)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot use subquery in default expression")));
-	if (pstate->p_hasAggs)
-		ereport(ERROR,
-				(errcode(ERRCODE_GROUPING_ERROR),
-			 errmsg("cannot use aggregate function in default expression")));
-	if (pstate->p_hasWindowFuncs)
-		ereport(ERROR,
-				(errcode(ERRCODE_WINDOWING_ERROR),
-				 errmsg("cannot use window function in default expression")));
-
-	/*
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 * Coerce the expression to the correct type and typmod, if given. This
 	 * should match the parser's processing of non-defaulted expressions ---
 	 * see transformAssignedExpr().
@@ -3341,25 +3300,6 @@ cookConstraint(ParseState *pstate,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 			errmsg("only table \"%s\" can be referenced in check constraint",
 				   relname)));
-<<<<<<< HEAD
-=======
-
-	/*
-	 * No subplans or aggregates, either...
-	 */
-	if (pstate->p_hasSubLinks)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot use subquery in check constraint")));
-	if (pstate->p_hasAggs)
-		ereport(ERROR,
-				(errcode(ERRCODE_GROUPING_ERROR),
-			   errmsg("cannot use aggregate function in check constraint")));
-	if (pstate->p_hasWindowFuncs)
-		ereport(ERROR,
-				(errcode(ERRCODE_WINDOWING_ERROR),
-				 errmsg("cannot use window function in check constraint")));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	return expr;
 }

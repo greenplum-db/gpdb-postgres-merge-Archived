@@ -267,16 +267,11 @@ ExecInitRecursiveUnion(RecursiveUnion *node, EState *estate, int eflags)
 	innerPlanState(rustate) = ExecInitNode(innerPlan(node), estate, eflags | EXEC_FLAG_REWIND);
 
 	/*
-<<<<<<< HEAD
-	 * If hashing, precompute fmgr lookup data for inner loop, and create
-	 * the hash table.
+	 * If hashing, precompute fmgr lookup data for inner loop, and create the
+	 * hash table.
 	 *
 	 * GPDB_84_MERGE_FIXME: It suppose plan->numCols should be 0 if we don't
 	 * support recursive union. QP should fix this later.
-=======
-	 * If hashing, precompute fmgr lookup data for inner loop, and create the
-	 * hash table.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	if (node->numCols > 0)
 	{

@@ -457,7 +457,6 @@ AuxiliaryProcessMain(int argc, char *argv[])
 
 		case StartupProcess:
 			/* don't set signals, startup process has its own agenda */
-<<<<<<< HEAD
 			StartupProcessMain(1);
 			proc_exit(1);		/* should never return */
 
@@ -474,9 +473,6 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		case StartupPass4Process:
 			/* don't set signals, startup process has its own agenda */
 			StartupProcessMain(4);
-=======
-			StartupProcessMain();
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			proc_exit(1);		/* should never return */
 
 		case BgWriterProcess:

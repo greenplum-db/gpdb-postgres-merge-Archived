@@ -517,18 +517,13 @@ ProcedureCreate(const char *procedureName,
 			if (oldproc->proisagg)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("function \"%s\" is an aggregate",
+						 errmsg("function \"%s\" is an aggregate function",
 								procedureName)));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-<<<<<<< HEAD
-						 errmsg("function \"%s\" is not an aggregate",
-								procedureName)));
-=======
 					   errmsg("function \"%s\" is not an aggregate function",
 							  procedureName)));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		}
 		if (oldproc->proiswindow != isWindowFunc)
 		{
@@ -579,13 +574,8 @@ ProcedureCreate(const char *procedureName,
 	 */
 	if (is_update)
 	{
-<<<<<<< HEAD
 		deleteDependencyRecordsFor(ProcedureRelationId, retval, true);
 		deleteProcCallbacks(retval);
-=======
-		deleteDependencyRecordsFor(ProcedureRelationId, retval);
-		deleteSharedDependencyRecordsFor(ProcedureRelationId, retval, 0);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 
 	myself.classId = ProcedureRelationId;
