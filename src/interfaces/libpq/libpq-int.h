@@ -13,11 +13,7 @@
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
  * src/interfaces/libpq/libpq-int.h
-=======
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.143 2009/06/23 18:13:23 mha Exp $
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *
  *-------------------------------------------------------------------------
  */
@@ -86,8 +82,6 @@ typedef struct
 #define USE_SSL_ENGINE
 #endif
 #endif   /* USE_SSL */
-
-#endif /* USE_SSL */
 
 /*
  * POSTGRES backend dependent Constants.
@@ -365,10 +359,7 @@ struct pg_conn
 	char	   *keepalives_count;		/* maximum number of TCP keepalive
 										 * retransmits */
 	char	   *sslmode;		/* SSL mode (require,prefer,allow,disable) */
-<<<<<<< HEAD
 	char	   *sslcompression; /* SSL compression (0 or 1) */
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	char	   *sslkey;			/* client key filename */
 	char	   *sslcert;		/* client certificate filename */
 	char	   *sslrootcert;	/* root certificate filename */
@@ -479,7 +470,6 @@ struct pg_conn
 								 * attempting normal connection */
 	SSL		   *ssl;			/* SSL status, if have SSL connection */
 	X509	   *peer;			/* X509 cert of server */
-<<<<<<< HEAD
 #ifdef USE_SSL_ENGINE
 	ENGINE	   *engine;			/* SSL engine, if any */
 #else
@@ -487,17 +477,6 @@ struct pg_conn
 								 * OpenSSL version changes */
 #endif
 #endif   /* USE_SSL */
-=======
-	char		peer_dn[256 + 1];		/* peer distinguished name */
-	char		peer_cn[SM_USER + 1];	/* peer common name */
-#ifdef USE_SSL_ENGINE
-	ENGINE	   *engine;			/* SSL engine, if any */
-#else
-	void	   *engine;			/* dummy field to keep struct the same
-								   if OpenSSL version changes */
-#endif
-#endif /* USE_SSL */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 #ifdef ENABLE_GSS
 	gss_ctx_id_t gctx;			/* GSS context */

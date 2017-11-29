@@ -104,16 +104,11 @@ typedef struct LVRelStats
 	bool		hasindex;
 	bool		scanned_all;	/* have we scanned all pages (this far)? */
 	/* Overall statistics about rel */
-<<<<<<< HEAD
 	BlockNumber rel_pages;		/* total number of pages */
 	BlockNumber scanned_pages;	/* number of pages we examined */
 	double		scanned_tuples;	/* counts only tuples on scanned pages */
-	double		new_rel_tuples; /* new estimated total # of tuples */
-=======
-	BlockNumber rel_pages;
 	double		old_rel_tuples; /* previous value of pg_class.reltuples */
-	double		rel_tuples;		/* counts only tuples on scanned pages */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	double		new_rel_tuples; /* new estimated total # of tuples */
 	BlockNumber pages_removed;
 	double		tuples_deleted;
 	BlockNumber nonempty_pages; /* actually, last nonempty page + 1 */
@@ -182,12 +177,9 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	BlockNumber possibly_freeable;
 	PGRUsage	ru0;
 	TimestampTz starttime = 0;
-<<<<<<< HEAD
-	bool		heldoff = false;
-=======
-	bool		scan_all;
+	bool		scan_all;		/* should we scan all pages? */
 	TransactionId freezeTableLimit;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	bool		heldoff = false;
 
 	pg_rusage_init(&ru0);
 
@@ -247,13 +239,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 
 	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
 
-<<<<<<< HEAD
 	/* heap relation */
 
-=======
-	vacrelstats->scanned_all = true;	/* will be cleared if we skip a page */
-	vacrelstats->old_rel_tuples = onerel->rd_rel->reltuples;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	vacrelstats->num_index_scans = 0;
 
 	/* Open all indexes of the relation */
@@ -261,11 +248,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	vacrelstats->hasindex = (nindexes > 0);
 
 	/* Do the vacuuming */
-<<<<<<< HEAD
-	lazy_scan_heap(onerel, vacrelstats, Irel, nindexes, vacstmt->scan_all, updated_stats);
-=======
-	lazy_scan_heap(onerel, vacrelstats, Irel, nindexes, scan_all);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	lazy_scan_heap(onerel, vacrelstats, Irel, nindexes, scan_all, updated_stats);
 
 	/* Done with indexes */
 	vac_close_indexes(nindexes, Irel, NoLock);
@@ -286,12 +269,9 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	if (possibly_freeable > 0 &&
 		(possibly_freeable >= REL_TRUNCATE_MINIMUM ||
 		 possibly_freeable >= vacrelstats->rel_pages / REL_TRUNCATE_FRACTION))
-<<<<<<< HEAD
 	{
 		HOLD_INTERRUPTS();
 		heldoff = true;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		lazy_truncate_heap(onerel, vacrelstats);
 	}
 
@@ -540,9 +520,6 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			all_visible_according_to_vm =
 				visibilitymap_test(onerel, blkno, &vmbuffer);
 			if (all_visible_according_to_vm)
-<<<<<<< HEAD
-				continue;
-=======
 			{
 				all_visible_streak++;
 				if (all_visible_streak >= SKIP_PAGES_THRESHOLD)
@@ -553,7 +530,6 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			}
 			else
 				all_visible_streak = 0;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		}
 
 		vacuum_delay_point();
@@ -1189,12 +1165,7 @@ lazy_cleanup_index(Relation indrel,
 	ivinfo.analyze_only = false;
 	ivinfo.estimated_count = !vacrelstats->scanned_all;
 	ivinfo.message_level = elevel;
-<<<<<<< HEAD
 	ivinfo.num_heap_tuples = vacrelstats->new_rel_tuples;
-=======
-	/* use rel_tuples only if we scanned all pages, else fall back */
-	ivinfo.num_heap_tuples = vacrelstats->scanned_all ? vacrelstats->rel_tuples : vacrelstats->old_rel_tuples;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	ivinfo.strategy = vac_strategy;
 
 	stats = index_vacuum_cleanup(&ivinfo, stats);
@@ -1202,22 +1173,15 @@ lazy_cleanup_index(Relation indrel,
 	if (!stats)
 		return;
 
-<<<<<<< HEAD
-	/* now update statistics in pg_class */
-	vac_update_relstats_from_list(indrel,
-						stats->num_pages, stats->num_index_tuples,
-						false, InvalidTransactionId,
-						updated_stats);
-=======
 	/*
 	 * Now update statistics in pg_class, but only if the index says the count
 	 * is accurate.
 	 */
 	if (!stats->estimated_count)
-		vac_update_relstats(indrel,
+		vac_update_relstats_from_list(indrel,
 							stats->num_pages, stats->num_index_tuples,
-							false, InvalidTransactionId);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+							false, InvalidTransactionId,
+							updated_stats);
 
 	ereport(elevel,
 			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
