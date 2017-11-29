@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/backend/storage/ipc/sinvaladt.c
-=======
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.78 2009/06/11 14:49:02 momjian Exp $
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *
  *-------------------------------------------------------------------------
  */
@@ -272,17 +268,9 @@ SharedInvalBackendInit(bool sendOnly)
 	SISeg	   *segP = shmInvalBuffer;
 
 	/*
-<<<<<<< HEAD
 	 * This can run in parallel with read operations, but not with write
 	 * operations, since SIInsertDataEntries relies on lastBackend to set
 	 * hasMessages appropriately.
-=======
-	 * This can run in parallel with read operations, and for that matter with
-	 * write operations; but not in parallel with additions and removals of
-	 * backends, nor in parallel with SICleanupQueue.  It doesn't seem worth
-	 * having a third lock, so we choose to use SInvalWriteLock to serialize
-	 * additions/removals.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	LWLockAcquire(SInvalWriteLock, LW_EXCLUSIVE);
 
@@ -434,10 +422,7 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
 		int			nthistime = Min(n, WRITE_QUANTUM);
 		int			numMsgs;
 		int			max;
-<<<<<<< HEAD
 		int			i;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		n -= nthistime;
 
@@ -533,11 +518,6 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
 	ProcState  *stateP;
 	int			max;
 	int			n;
-<<<<<<< HEAD
-=======
-
-	LWLockAcquire(SInvalReadLock, LW_SHARED);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	segP = shmInvalBuffer;
 	stateP = &segP->procState[MyBackendId - 1];
@@ -659,13 +639,9 @@ SICleanupQueue(bool callerHasWriteLock, int minFree)
 	/*
 	 * Recompute minMsgNum = minimum of all backends' nextMsgNum, identify the
 	 * furthest-back backend that needs signaling (if any), and reset any
-<<<<<<< HEAD
 	 * backends that are too far back.	Note that because we ignore sendOnly
 	 * backends here it is possible for them to keep sending messages without
 	 * a problem even when they are the only active backend.
-=======
-	 * backends that are too far back.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	min = segP->maxMsgNum;
 	minsig = min - SIG_THRESHOLD;
@@ -738,10 +714,7 @@ SICleanupQueue(bool callerHasWriteLock, int minFree)
 	if (needSig)
 	{
 		pid_t		his_pid = needSig->procPid;
-<<<<<<< HEAD
 		BackendId	his_backendId = (needSig - &segP->procState[0]) + 1;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		needSig->signaled = true;
 		LWLockRelease(SInvalReadLock);
