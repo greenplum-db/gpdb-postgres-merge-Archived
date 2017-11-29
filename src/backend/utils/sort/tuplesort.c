@@ -932,19 +932,8 @@ tuplesort_end(Tuplesortstate *state)
 			elog(LOG, "internal sort ended, %ld KB used: %s",
 				 spaceUsed, pg_rusage_show(&state->ru_start));
 	}
-<<<<<<< HEAD
-=======
 
 	TRACE_POSTGRESQL_SORT_DONE(state->tapeset != NULL, spaceUsed);
-#else
-
-	/*
-	 * If you disabled TRACE_SORT, you can still probe sort__done, but you
-	 * ain't getting space-used stats.
-	 */
-	TRACE_POSTGRESQL_SORT_DONE(state->tapeset != NULL, 0L);
-#endif
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -2986,20 +2975,9 @@ copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup)
 static void
 writetup_heap(Tuplesortstate *state, LogicalTape *lt, SortTuple *stup)
 {
-<<<<<<< HEAD
 	uint32 tuplen = memtuple_get_size(stup->tuple);
 
 	LogicalTapeWrite(state->tapeset, lt, (void *) stup->tuple, tuplen);
-=======
-	MinimalTuple tuple = (MinimalTuple) stup->tuple;
-
-	/* the part of the MinimalTuple we'll write: */
-	char	   *tupbody = (char *) tuple + MINIMAL_TUPLE_DATA_OFFSET;
-	unsigned int tupbodylen = tuple->t_len - MINIMAL_TUPLE_DATA_OFFSET;
-
-	/* total on-disk footprint: */
-	unsigned int tuplen = tupbodylen + sizeof(int);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	if (state->randomAccess)	/* need trailing length word? */
 		LogicalTapeWrite(state->tapeset, lt, (void *) &tuplen, sizeof(tuplen));
