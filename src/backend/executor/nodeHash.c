@@ -525,11 +525,8 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	int			tupsize;
 	double		inner_rel_bytes;
 	long		hash_table_bytes;
-<<<<<<< HEAD
-	long		max_pointers;
-=======
 	long		skew_table_bytes;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	long		max_pointers;
 	int			nbatch;
 	int			nbuckets;
 	int			i;
@@ -558,9 +555,6 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	hash_table_bytes = operatorMemKB * 1024L;
 
 	/*
-<<<<<<< HEAD
-	 * Set nbuckets to achieve an average bucket load of gp_hashjoin_tuples_per_bucket when
-=======
 	 * If skew optimization is possible, estimate the number of skew buckets
 	 * that will fit in the memory allowed, and decrement the assumed space
 	 * available for the main hash table accordingly.
@@ -596,8 +590,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		*num_skew_mcvs = 0;
 
 	/*
-	 * Set nbuckets to achieve an average bucket load of NTUP_PER_BUCKET when
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	 * Set nbuckets to achieve an average bucket load of gp_hashjoin_tuples_per_bucket when
 	 * memory is filled.  Set nbatch to the smallest power of 2 that appears
 	 * sufficient.  The Min() steps limit the results so that the pointer
 	 * arrays we'll try to allocate do not exceed work_mem.

@@ -3714,7 +3714,7 @@ Cost incremental_mergejoin_cost(double rows, List *mergeclauses, PlannerInfo *ro
  */
 static void hash_table_size(double ntuples,
 							int tupwidth,
-							bool useSkew,
+							bool useskew,
 							double memory_bytes,
 							int *numbuckets,
 							int *numbatches,
@@ -3722,6 +3722,7 @@ static void hash_table_size(double ntuples,
 {
 	int			tupsize;
 	double		inner_rel_bytes;
+	long		skew_table_bytes;
 	int			nbatch;
 	int			nbuckets;
 
@@ -3737,6 +3738,41 @@ static void hash_table_size(double ntuples,
 	tupsize = HJTUPLE_OVERHEAD + MAXALIGN(sizeof(MemTupleData)) +
 			MAXALIGN(tupwidth);
 	inner_rel_bytes = ntuples * tupsize;
+
+	/*
+	 * If skew optimization is possible, estimate the number of skew buckets
+	 * that will fit in the memory allowed, and decrement the assumed space
+	 * available for the main hash table accordingly.
+	 *
+	 * We make the optimistic assumption that each skew bucket will contain
+	 * one inner-relation tuple.  If that turns out to be low, we will recover
+	 * at runtime by reducing the number of skew buckets.
+	 *
+	 * hashtable->skewBucket will have up to 8 times as many HashSkewBucket
+	 * pointers as the number of MCVs we allow, since ExecHashBuildSkewHash
+	 * will round up to the next power of 2 and then multiply by 4 to reduce
+	 * collisions.
+	 */
+	if (useskew)
+	{
+		skew_table_bytes = memory_bytes * SKEW_WORK_MEM_PERCENT / 100;
+
+		*num_skew_mcvs = skew_table_bytes / (
+		/* size of a hash tuple */
+											 tupsize +
+		/* worst-case size of skewBucket[] per MCV */
+											 (8 * sizeof(HashSkewBucket *)) +
+		/* size of skewBucketNums[] entry */
+											 sizeof(int) +
+		/* size of skew bucket struct itself */
+											 SKEW_BUCKET_OVERHEAD
+			);
+
+		if (*num_skew_mcvs > 0)
+			memory_bytes -= skew_table_bytes;
+	}
+	else
+		*num_skew_mcvs = 0;
 
 	/*
 	 * Set nbuckets to achieve an average bucket load of gp_hashjoin_tuples_per_bucket when
