@@ -281,11 +281,7 @@ supportSecondarySplit(Relation r, GISTSTATE *giststate, int attno, GIST_SPLITVEC
 }
 
 /*
-<<<<<<< HEAD
- * Trivial picksplit implementaion. Function called only 
-=======
  * Trivial picksplit implementaion. Function called only
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  * if user-defined picksplit puts all keys to the one page.
  * That is a bug of user-defined picksplit but we'd like
  * to "fix" that.
@@ -324,23 +320,6 @@ genericPickSplit(GISTSTATE *giststate, GistEntryVector *entryvec, GIST_SPLITVEC 
 	 * Form unions of each page
 	 */
 
-<<<<<<< HEAD
-	evec = palloc( sizeof(GISTENTRY) * entryvec->n + GEVHDRSZ );
-
-	evec->n = v->spl_nleft;
-	memcpy(evec->vector, entryvec->vector + FirstOffsetNumber, 
-						 sizeof(GISTENTRY) * evec->n);
-    v->spl_ldatum = FunctionCall2(&giststate->unionFn[attno],
-									PointerGetDatum(evec),
-									PointerGetDatum(&nbytes));
-
-	evec->n = v->spl_nright;
-	memcpy(evec->vector, entryvec->vector + FirstOffsetNumber + v->spl_nleft, 
-						 sizeof(GISTENTRY) * evec->n);
-    v->spl_rdatum = FunctionCall2(&giststate->unionFn[attno],
-									PointerGetDatum(evec),
-									PointerGetDatum(&nbytes));
-=======
 	evec = palloc(sizeof(GISTENTRY) * entryvec->n + GEVHDRSZ);
 
 	evec->n = v->spl_nleft;
@@ -356,7 +335,6 @@ genericPickSplit(GISTSTATE *giststate, GistEntryVector *entryvec, GIST_SPLITVEC 
 	v->spl_rdatum = FunctionCall2(&giststate->unionFn[attno],
 								  PointerGetDatum(evec),
 								  PointerGetDatum(&nbytes));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 /*
@@ -387,19 +365,6 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 				  PointerGetDatum(entryvec),
 				  PointerGetDatum(sv));
 
-<<<<<<< HEAD
-	if ( sv->spl_nleft == 0 || sv->spl_nright == 0 )
-	{
-		ereport(DEBUG1,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("picksplit method for column %d of index \"%s\" failed",
-											attno+1, RelationGetRelationName(r)),
-				 errhint("The index is not optimal. To optimize it, contact a developer, or try to use the column as the second one in the CREATE INDEX command.")));
-
-		/*
-		 * Reinit GIST_SPLITVEC. Although that fields are not used
-		 * by genericPickSplit(), let us set up it for further processing 
-=======
 	if (sv->spl_nleft == 0 || sv->spl_nright == 0)
 	{
 		ereport(DEBUG1,
@@ -411,7 +376,6 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 		/*
 		 * Reinit GIST_SPLITVEC. Although that fields are not used by
 		 * genericPickSplit(), let us set up it for further processing
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		 */
 		sv->spl_ldatum_exists = (v->spl_lisnull[attno]) ? false : true;
 		sv->spl_rdatum_exists = (v->spl_risnull[attno]) ? false : true;
@@ -433,11 +397,7 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 
 		if (sv->spl_ldatum_exists || sv->spl_rdatum_exists)
 		{
-<<<<<<< HEAD
-			elog(LOG, "PickSplit method of %d columns of index '%s' doesn't support secondary split",
-=======
 			elog(LOG, "picksplit method for column %d of index \"%s\" doesn't support secondary split",
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				 attno + 1, RelationGetRelationName(r));
 
 			supportSecondarySplit(r, giststate, attno, sv, v->spl_lattr[attno], v->spl_rattr[attno]);

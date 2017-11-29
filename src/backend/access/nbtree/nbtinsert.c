@@ -1146,19 +1146,12 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		sbuf = _bt_getbuf(rel, oopaque->btpo_next, BT_WRITE);
 		spage = BufferGetPage(sbuf);
 		sopaque = (BTPageOpaque) PageGetSpecialPointer(spage);
-<<<<<<< HEAD
 		if (sopaque->btpo_prev != origpagenumber)
 		{
 			memset(rightpage, 0, BufferGetPageSize(rbuf));
 			elog(ERROR, "right sibling's left-link doesn't match: "
 				 "block %u links to %u instead of expected %u in index \"%s\"",
 				 oopaque->btpo_next, sopaque->btpo_prev, origpagenumber,
-=======
-		if (sopaque->btpo_prev != ropaque->btpo_prev)
-			elog(PANIC, "right sibling's left-link doesn't match: "
-			   "block %u links to %u instead of expected %u in index \"%s\"",
-				 ropaque->btpo_next, sopaque->btpo_prev, ropaque->btpo_prev,
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				 RelationGetRelationName(rel));
 		}
 

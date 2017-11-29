@@ -574,12 +574,8 @@ btgetbitmap(PG_FUNCTION_ARGS)
 	MIRROREDLOCK_BUFMGR_VERIFY_NO_LOCK_LEAK_DECLARE;
 
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-<<<<<<< HEAD
-	Node *n = (Node *)PG_GETARG_POINTER(1);
+	Node	   *n = (Node *) PG_GETARG_POINTER(1);
 	HashBitmap	*tbm;
-=======
-	TIDBitmap  *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	int64		ntids = 0;
 	ItemPointer heapTid;
@@ -910,13 +906,11 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	IndexVacuumInfo *info = (IndexVacuumInfo *) PG_GETARG_POINTER(0);
 	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
 
-<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_VERIFY_NO_LOCK_LEAK_ENTER;
-=======
+
 	/* No-op in ANALYZE ONLY mode */
 	if (info->analyze_only)
 		PG_RETURN_POINTER(stats);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * If btbulkdelete was called, we need not do anything, just return the

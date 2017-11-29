@@ -157,13 +157,8 @@ initscan(HeapScanDesc scan, ScanKey key, bool is_rescan)
 	if (is_rescan)
 	{
 		/*
-<<<<<<< HEAD
-		 * If rescan, keep the previous startblock setting so that rewinding
-		 * a cursor doesn't generate surprising results.  Reset the syncscan
-=======
 		 * If rescan, keep the previous startblock setting so that rewinding a
 		 * cursor doesn't generate surprising results.  Reset the syncscan
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		 * setting, though.
 		 */
 		scan->rs_syncscan = (allow_sync && synchronize_seqscans);
@@ -1192,64 +1187,6 @@ CdbOpenRelationRv(const RangeVar *relation, LOCKMODE reqmode, bool noWait,
 
 
 /* ----------------
-<<<<<<< HEAD
- *		relation_open_nowait - open but don't wait for lock
- *
- *		Same as relation_open, except throw an error instead of waiting
- *		when the requested lock is not immediately obtainable.
- * ----------------
- */
-Relation
-relation_open_nowait(Oid relationId, LOCKMODE lockmode)
-{
-	Relation	r;
-
-	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
-
-	/* Get the lock before trying to open the relcache entry */
-	if (lockmode != NoLock)
-	{
-		if (!ConditionalLockRelationOid(relationId, lockmode))
-		{
-			/* try to throw error by name; relation could be deleted... */
-			char	   *relname = get_rel_name(relationId);
-
-			if (relname)
-				ereport(ERROR,
-						(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-						 errmsg("could not obtain lock on relation \"%s\"",
-								relname)));
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-					  errmsg("could not obtain lock on relation with OID %u",
-							 relationId)));
-		}
-	}
-
-	/* The relcache does all the real work... */
-	r = RelationIdGetRelation(relationId);
-
-	if (!RelationIsValid(r))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_TABLE),
-				 errmsg("relation not found (OID %u)", relationId),
-				 errdetail("This can be validly caused by a concurrent delete operation on this object.")));
-	}
-
-	/* Make note that we've accessed a temporary relation */
-	if (r->rd_istemp)
-		MyXactAccessedTempRel = true;
-
-	pgstat_initstats(r);
-
-	return r;
-}
-
-/* ----------------
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *		relation_openrv - open any relation specified by a RangeVar
  *
  *		Same as relation_open, but the relation is specified by a RangeVar.
@@ -5322,11 +5259,7 @@ heap_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 	blkno = ItemPointerGetBlockNumber(&(xlrec->target.tid));
 
 	/*
-<<<<<<< HEAD
-	 * The visibility map may need to be fixed even if the heap page is
-=======
 	 * The visibility map always needs to be updated, even if the heap page is
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 * already up-to-date.
 	 */
 	if (xlrec->all_visible_cleared)
@@ -5438,11 +5371,7 @@ heap_xlog_insert(XLogRecPtr lsn, XLogRecord *record)
 	blkno = ItemPointerGetBlockNumber(&(xlrec->target.tid));
 
 	/*
-<<<<<<< HEAD
-	 * The visibility map may need to be fixed even if the heap page is
-=======
 	 * The visibility map always needs to be updated, even if the heap page is
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 * already up-to-date.
 	 */
 	if (xlrec->all_visible_cleared)
@@ -5583,11 +5512,7 @@ heap_xlog_update(XLogRecPtr lsn, XLogRecord *record, bool move, bool hot_update)
 	Size		freespace;
 
 	/*
-<<<<<<< HEAD
-	 * The visibility map may need to be fixed even if the heap page is
-=======
 	 * The visibility map always needs to be updated, even if the heap page is
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 * already up-to-date.
 	 */
 	if (xlrec->all_visible_cleared)
@@ -5694,11 +5619,7 @@ heap_xlog_update(XLogRecPtr lsn, XLogRecord *record, bool move, bool hot_update)
 
 newt:;
 	/*
-<<<<<<< HEAD
-	 * The visibility map may need to be fixed even if the heap page is
-=======
 	 * The visibility map always needs to be updated, even if the heap page is
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 * already up-to-date.
 	 */
 	if (xlrec->new_all_visible_cleared)

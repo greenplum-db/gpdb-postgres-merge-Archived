@@ -111,10 +111,9 @@ Datum
 gistgetbitmap(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-<<<<<<< HEAD
-	Node		   *n = (Node *) PG_GETARG_POINTER(1);
-	HashBitmap	   *tbm;
-	int64			ntids;
+	Node	   *n = (Node *) PG_GETARG_POINTER(1);
+	HashBitmap *tbm;
+	int64		ntids;
 
 	if (n == NULL)
 		tbm = tbm_create(work_mem * 1024L);
@@ -122,10 +121,6 @@ gistgetbitmap(PG_FUNCTION_ARGS)
 		elog(ERROR, "non hash bitmap");
 	else
 		tbm = (HashBitmap *) n;
-=======
-	TIDBitmap  *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
-	int64		ntids;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	ntids = gistnext(scan, tbm);
 
@@ -164,12 +159,9 @@ gistnext(IndexScanDesc scan, HashBitmap *tbm)
 	if (so->qual_ok == false)
 		return 0;
 
-<<<<<<< HEAD
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
 
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	if (so->curbuf == InvalidBuffer)
 	{
 		if (ItemPointerIsValid(&so->curpos) == false)
@@ -212,23 +204,14 @@ gistnext(IndexScanDesc scan, HashBitmap *tbm)
 			scan->xs_ctup.t_self = so->pageData[so->curPageData].heapPtr;
 			scan->xs_recheck = so->pageData[so->curPageData].recheck;
 
-<<<<<<< HEAD
 			ItemPointerSet(&(so->curpos),
-						   BufferGetBlockNumber(so->curbuf),
-						   so->pageData[ so->curPageData ].pageOffset);
-
-				
-			so->curPageData++;
-
-			MIRROREDLOCK_BUFMGR_UNLOCK;
-			// -------- MirroredLock ----------
-=======
-			ItemPointerSet(&so->curpos,
 						   BufferGetBlockNumber(so->curbuf),
 						   so->pageData[so->curPageData].pageOffset);
 
 			so->curPageData++;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+
+			MIRROREDLOCK_BUFMGR_UNLOCK;
+			// -------- MirroredLock ----------
 
 			return 1;
 		}
