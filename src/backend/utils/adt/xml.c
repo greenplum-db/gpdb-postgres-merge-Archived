@@ -7,11 +7,7 @@
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
  * src/backend/utils/adt/xml.c
-=======
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.92 2009/06/11 14:49:04 momjian Exp $
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *
  *-------------------------------------------------------------------------
  */
@@ -84,19 +80,15 @@
 
 
 /* GUC variables */
-int			xmlbinary;
-int			xmloption;
+int xmlbinary;
+int xmloption;
 
 #ifdef USE_LIBXML
 
 static StringInfo xml_err_buf = NULL;
 
-<<<<<<< HEAD
 static xmlParserInputPtr xmlPgEntityLoader(const char *URL, const char *ID,
 				  xmlParserCtxtPtr ctxt);
-=======
-static void xml_ereport(int level, int sqlcode, const char *msg);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static void xml_errorHandler(void *ctxt, const char *msg,...);
 static void xml_ereport_by_code(int level, int sqlcode,
 					const char *msg, int errcode);
@@ -112,21 +104,13 @@ static void xml_pfree(void *ptr);
 static char *xml_pstrdup(const char *string);
 #endif   /* USE_LIBXMLCONTEXT */
 
-<<<<<<< HEAD
-=======
-static void xml_init(void);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static xmlChar *xml_text2xmlChar(text *in);
 static int parse_xml_decl(const xmlChar *str, size_t *lenp,
 			   xmlChar **version, xmlChar **encoding, int *standalone);
 static bool print_xml_decl(StringInfo buf, const xmlChar *version,
 			   pg_enc encoding, int standalone);
 static xmlDocPtr xml_parse(text *data, XmlOptionType xmloption_arg,
-<<<<<<< HEAD
 		  bool preserve_whitespace, int encoding);
-=======
-		  bool preserve_whitespace, xmlChar *encoding);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static text *xml_xmlnodetoxmltype(xmlNodePtr cur);
 #endif   /* USE_LIBXML */
 
@@ -904,12 +888,9 @@ pg_xml_init(void)
 		/* Now that xml_err_buf exists, safe to call xml_errorHandler */
 		xmlSetGenericErrorFunc(NULL, xml_errorHandler);
 
-<<<<<<< HEAD
 		/* set up our entity loader, too */
 		xmlSetExternalEntityLoader(xmlPgEntityLoader);
 
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #ifdef USE_LIBXMLCONTEXT
 		/* Set up memory allocation our way, too */
 		xml_memory_init();
@@ -927,19 +908,16 @@ pg_xml_init(void)
 		resetStringInfo(xml_err_buf);
 
 		/*
-		 * We re-establish the error callback function every time.	This makes
+		 * We re-establish the error callback function every time.  This makes
 		 * it safe for other subsystems (PL/Perl, say) to also use libxml with
 		 * their own callbacks ... so long as they likewise set up the
 		 * callbacks on every use. It's cheap enough to not be worth worrying
 		 * about, anyway.
 		 */
 		xmlSetGenericErrorFunc(NULL, xml_errorHandler);
-<<<<<<< HEAD
 
 		/* set up our entity loader, too */
 		xmlSetExternalEntityLoader(xmlPgEntityLoader);
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 }
 
@@ -1153,11 +1131,7 @@ static bool
 print_xml_decl(StringInfo buf, const xmlChar *version,
 			   pg_enc encoding, int standalone)
 {
-<<<<<<< HEAD
 	pg_xml_init();				/* why is this here? */
-=======
-	xml_init();					/* why is this here? */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	if ((version && strcmp((char *) version, PG_XML_DEFAULT_VERSION) != 0)
 		|| (encoding && encoding != PG_UTF8)
@@ -1204,11 +1178,7 @@ print_xml_decl(StringInfo buf, const xmlChar *version,
  */
 static xmlDocPtr
 xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
-<<<<<<< HEAD
 		  int encoding)
-=======
-		  xmlChar *encoding)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	int32		len;
 	xmlChar    *string;
@@ -1225,11 +1195,7 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 										   PG_UTF8);
 
 	/* Start up libxml and its parser (no-ops if already done) */
-<<<<<<< HEAD
 	pg_xml_init();
-=======
-	xml_init();
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	xmlInitParser();
 
 	ctxt = xmlNewParserCtxt();
@@ -1244,16 +1210,10 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 		{
 			/*
 			 * Note, that here we try to apply DTD defaults
-<<<<<<< HEAD
 			 * (XML_PARSE_DTDATTR) according to SQL/XML:2008 GR 10.16.7.d:
 			 * 'Default values defined by internal DTD are applied'. As for
 			 * external DTDs, we try to support them too, (see SQL/XML:2008 GR
 			 * 10.16.7.e)
-=======
-			 * (XML_PARSE_DTDATTR) according to SQL/XML:10.16.7.d: 'Default
-			 * values defined by internal DTD are applied'. As for external
-			 * DTDs, we try to support them too, (see SQL/XML:10.16.7.e)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			 */
 			doc = xmlCtxtReadDoc(ctxt, utf8string,
 								 NULL,
@@ -1268,13 +1228,8 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 		{
 			int			res_code;
 			size_t		count;
-<<<<<<< HEAD
 			xmlChar    *version;
 			int			standalone;
-=======
-			xmlChar    *version = NULL;
-			int			standalone = -1;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 			res_code = parse_xml_decl(utf8string,
 									  &count, &version, NULL, &standalone);
@@ -1678,7 +1633,6 @@ map_xml_name_to_sql_identifier(char *name)
 }
 
 /*
-<<<<<<< HEAD
  * Map SQL value to XML value; see SQL/XML:2008 section 9.8.
  *
  * When xml_escape_strings is true, then certain characters in string
@@ -1687,18 +1641,6 @@ map_xml_name_to_sql_identifier(char *name)
  * wanted.  The false case is mainly useful when the resulting value
  * is used with xmlTextWriterWriteAttribute() to write out an
  * attribute, because that function does the escaping itself.
-=======
- * Map SQL value to XML value; see SQL/XML:2003 section 9.16.
- *
- * When xml_escape_strings is true, then certain characters in string
- * values are replaced by entity references (&lt; etc.), as specified
- * in SQL/XML:2003 section 9.16 GR 8) ii).	This is normally what is
- * wanted.	The false case is mainly useful when the resulting value
- * is used with xmlTextWriterWriteAttribute() to write out an
- * attribute, because that function does the escaping itself.  The SQL
- * standard of 2003 is somewhat buggy in this regard, so we do our
- * best to make sense.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  */
 char *
 map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
@@ -3343,7 +3285,6 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
 	if (cur->type == XML_ELEMENT_NODE)
 	{
 		xmlBufferPtr buf;
-<<<<<<< HEAD
 		xmlNodePtr	cur_copy;
 
 		buf = xmlBufferCreate();
@@ -3362,29 +3303,16 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
 		PG_TRY();
 		{
 			xmlNodeDump(buf, NULL, cur_copy, 0, 1);
-=======
-
-		buf = xmlBufferCreate();
-		PG_TRY();
-		{
-			xmlNodeDump(buf, NULL, cur, 0, 1);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			result = xmlBuffer_to_xmltype(buf);
 		}
 		PG_CATCH();
 		{
-<<<<<<< HEAD
 			xmlFreeNode(cur_copy);
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			xmlBufferFree(buf);
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
-<<<<<<< HEAD
 		xmlFreeNode(cur_copy);
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		xmlBufferFree(buf);
 	}
 	else
@@ -3421,17 +3349,10 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
  * a context node being known.
  */
 #ifdef USE_LIBXML
-<<<<<<< HEAD
 static void
 xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 			   int *res_nitems, ArrayBuildState **astate)
 {
-=======
-	text	   *xpath_expr_text = PG_GETARG_TEXT_P(0);
-	xmltype    *data = PG_GETARG_XML_P(1);
-	ArrayType  *namespaces = PG_GETARG_ARRAYTYPE_P(2);
-	ArrayBuildState *astate = NULL;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	xmlParserCtxtPtr ctxt = NULL;
 	xmlDocPtr	doc = NULL;
 	xmlXPathContextPtr xpathctx = NULL;
@@ -3502,11 +3423,7 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 	memcpy(xpath_expr, VARDATA(xpath_expr_text), xpath_len);
 	xpath_expr[xpath_len] = '\0';
 
-<<<<<<< HEAD
 	pg_xml_init();
-=======
-	xml_init();
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	xmlInitParser();
 
 	PG_TRY();
@@ -3561,7 +3478,6 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
 						"invalid XPath expression");
 
-<<<<<<< HEAD
 		/*
 		 * Version 2.6.27 introduces a function named
 		 * xmlXPathCompiledEvalToBoolean, which would be enough for xmlexists,
@@ -3569,8 +3485,6 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 		 * thereby preventing a library version upgrade and keeping the code
 		 * the same.
 		 */
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		xpathobj = xmlXPathCompiledEval(xpathcomp, xpathctx);
 		if (xpathobj == NULL)	/* TODO: reason? */
 			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
@@ -3578,7 +3492,6 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 
 		/* return empty array in cases when nothing is found */
 		if (xpathobj->nodesetval == NULL)
-<<<<<<< HEAD
 			*res_nitems = 0;
 		else
 			*res_nitems = xpathobj->nodesetval->nodeNr;
@@ -3586,29 +3499,15 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 		if (*res_nitems && astate)
 		{
 			*astate = NULL;
-=======
-			res_nitems = 0;
-		else
-			res_nitems = xpathobj->nodesetval->nodeNr;
-
-		if (res_nitems)
-		{
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			for (i = 0; i < xpathobj->nodesetval->nodeNr; i++)
 			{
 				Datum		elem;
 				bool		elemisnull = false;
 
 				elem = PointerGetDatum(xml_xmlnodetoxmltype(xpathobj->nodesetval->nodeTab[i]));
-<<<<<<< HEAD
 				*astate = accumArrayResult(*astate, elem,
 										   elemisnull, XMLOID,
 										   CurrentMemoryContext);
-=======
-				astate = accumArrayResult(astate, elem,
-										  elemisnull, XMLOID,
-										  CurrentMemoryContext);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			}
 		}
 	}
