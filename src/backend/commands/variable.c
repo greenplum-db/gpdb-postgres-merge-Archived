@@ -832,27 +832,6 @@ assign_role(const char *value, bool doit, GucSource source)
 		}
 	}
 
-<<<<<<< HEAD
-=======
-	if (roleid == InvalidOid && InSecurityDefinerContext())
-	{
-		/*
-		 * Disallow SET ROLE inside a security definer context.  We need to do
-		 * this because when we exit the context, GUC won't be notified,
-		 * leaving things out of sync.	Note that this test is arranged so
-		 * that restoring a previously saved setting isn't prevented.
-		 *
-		 * XXX it would be nice to allow this case in future, with the
-		 * behavior being that the SET ROLE's effects end when the security
-		 * definer context is exited.
-		 */
-		ereport(GUC_complaint_elevel(source),
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot set role within security-definer function")));
-		return NULL;
-	}
-
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	if (roleid == InvalidOid &&
 		strcmp(actual_rolename, "none") != 0)
 	{

@@ -890,25 +890,15 @@ createdb(CreatedbStmt *stmt)
 		  encoding == PG_UTF8 ||
 #endif
 		  (encoding == PG_SQL_ASCII && superuser())))
-<<<<<<< HEAD
 	{
-
 		ereport(gp_encoding_check_locale_compatibility ? ERROR : WARNING,
-				(errmsg("encoding %s does not match server's locale %s",
-						pg_encoding_to_char(encoding),
-						dbctype),
-			 errdetail("The chosen CTYPE setting requires encoding %s.",
-					   pg_encoding_to_char(ctype_encoding))));
-	}
-=======
-		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("encoding %s does not match locale %s",
 						pg_encoding_to_char(encoding),
 						dbctype),
 			   errdetail("The chosen LC_CTYPE setting requires encoding %s.",
 						 pg_encoding_to_char(ctype_encoding))));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	}
 
 	if (!(collate_encoding == encoding ||
 		  collate_encoding == PG_SQL_ASCII ||

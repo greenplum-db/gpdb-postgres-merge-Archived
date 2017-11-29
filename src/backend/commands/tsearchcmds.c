@@ -329,16 +329,10 @@ RemoveTSParsers(DropStmt *drop)
 			}
 			else
 			{
-<<<<<<< HEAD
 				if (Gp_role != GP_ROLE_EXECUTE)
 					ereport(NOTICE,
 						(errmsg("text search parser \"%s\" does not exist, skipping",
 								NameListToString(names))));
-=======
-				ereport(NOTICE,
-				(errmsg("text search parser \"%s\" does not exist, skipping",
-						NameListToString(names))));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			}
 			continue;
 		}
@@ -710,12 +704,8 @@ RemoveTSDictionaries(DropStmt *drop)
 			}
 			else
 			{
-<<<<<<< HEAD
 				if (Gp_role != GP_ROLE_EXECUTE)
 					ereport(NOTICE,
-=======
-				ereport(NOTICE,
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 						(errmsg("text search dictionary \"%s\" does not exist, skipping",
 								NameListToString(names))));
 			}
@@ -1328,13 +1318,8 @@ makeConfigurationDependencies(HeapTuple tuple, bool removeOld,
 	/* for ALTER case, first flush old dependencies, except extension deps */
 	if (removeOld)
 	{
-<<<<<<< HEAD
 		deleteDependencyRecordsFor(myself.classId, myself.objectId, true);
-		deleteSharedDependencyRecordsFor(myself.classId, myself.objectId);
-=======
-		deleteDependencyRecordsFor(myself.classId, myself.objectId);
 		deleteSharedDependencyRecordsFor(myself.classId, myself.objectId, 0);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 
 	/*

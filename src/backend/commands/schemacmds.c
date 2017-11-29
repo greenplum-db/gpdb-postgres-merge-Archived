@@ -218,12 +218,8 @@ void
 RemoveSchemas(DropStmt *drop)
 {
 	ObjectAddresses *objects;
-<<<<<<< HEAD
-	ListCell		*cell;
-	List			*namespaceIdList = NIL;
-=======
 	ListCell   *cell;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	List	   *namespaceIdList = NIL;
 
 	/*
 	 * First we identify all the schemas, then we delete them in a single

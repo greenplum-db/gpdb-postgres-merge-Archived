@@ -376,33 +376,6 @@ interpret_function_parameter_list(List *parameters,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 						 errmsg("cannot use table references in parameter default value")));
 
-<<<<<<< HEAD
-=======
-			/*
-			 * It can't return a set either --- but coerce_to_specific_type
-			 * already checked that for us.
-			 *
-			 * No subplans or aggregates, either...
-			 *
-			 * Note: the point of these restrictions is to ensure that an
-			 * expression that, on its face, hasn't got subplans, aggregates,
-			 * etc cannot suddenly have them after function default arguments
-			 * are inserted.
-			 */
-			if (pstate->p_hasSubLinks)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				  errmsg("cannot use subquery in parameter default value")));
-			if (pstate->p_hasAggs)
-				ereport(ERROR,
-						(errcode(ERRCODE_GROUPING_ERROR),
-						 errmsg("cannot use aggregate function in parameter default value")));
-			if (pstate->p_hasWindowFuncs)
-				ereport(ERROR,
-						(errcode(ERRCODE_WINDOWING_ERROR),
-						 errmsg("cannot use window function in parameter default value")));
-
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			*parameterDefaults = lappend(*parameterDefaults, def);
 			have_defaults = true;
 		}

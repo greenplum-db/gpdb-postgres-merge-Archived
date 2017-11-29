@@ -56,6 +56,7 @@
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
+#include "catalog/pg_inherits_fn.h"
 #include "cdb/cdbcat.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbdispatchresult.h"
@@ -243,18 +244,12 @@ DefineIndex(RangeVar *heapRelation,
 	LockRelId	heaprelid;
 	LOCKTAG		heaplocktag;
 	Snapshot	snapshot;
-<<<<<<< HEAD
 	LOCKMODE	heap_lockmode;
 	bool		need_longlock = true;
 	bool		shouldDispatch = Gp_role == GP_ROLE_DISPATCH && !IsBootstrapProcessingMode();
 	List	   *dispatch_oids;
 	char	   *altconname = stmt ? stmt->altconname : NULL;
-=======
-	Relation	pg_index;
-	HeapTuple	indexTuple;
-	Form_pg_index indexForm;
 	int			i;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * count attributes in index
@@ -900,22 +895,11 @@ DefineIndex(RangeVar *heapRelation,
 	 * GetCurrentVirtualXIDs.  If, during any iteration, a particular vxid
 	 * doesn't show up in the output, we know we can forget about it.
 	 */
-<<<<<<< HEAD
-#if 0  /* Upstream code not applicable to GPDB */
-	old_snapshots = GetCurrentVirtualXIDs(snapshot->xmax, false,
-										  PROC_IS_AUTOVACUUM | PROC_IN_VACUUM);
-#else
-	old_snapshots = GetCurrentVirtualXIDs(snapshot->xmax, false,
-										  PROC_IS_AUTOVACUUM);
-#endif
-	while (VirtualTransactionIdIsValid(*old_snapshots))
-=======
 	old_snapshots = GetCurrentVirtualXIDs(snapshot->xmin, true, false,
-										  PROC_IS_AUTOVACUUM | PROC_IN_VACUUM,
+										  PROC_IS_AUTOVACUUM /* not in GPDB: | PROC_IN_VACUUM */,
 										  &n_old_snapshots);
 
 	for (i = 0; i < n_old_snapshots; i++)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	{
 		if (!VirtualTransactionIdIsValid(old_snapshots[i]))
 			continue;			/* found uninteresting in previous cycle */
@@ -930,7 +914,7 @@ DefineIndex(RangeVar *heapRelation,
 
 			newer_snapshots = GetCurrentVirtualXIDs(snapshot->xmin,
 													true, false,
-										 PROC_IS_AUTOVACUUM | PROC_IN_VACUUM,
+													PROC_IS_AUTOVACUUM /* not in GPDB: | PROC_IN_VACUUM */,
 													&n_newer_snapshots);
 			for (j = i; j < n_old_snapshots; j++)
 			{
@@ -1733,7 +1717,7 @@ ReindexTable(ReindexStmt *stmt)
 		prels = all_partition_relids(pn);
 	}
 	else if (rel_is_child_partition(relid))
-		prels = find_all_inheritors(relid);
+		prels = find_all_inheritors(relid, NoLock);
 
 	/*
 	 * Create a memory context that will survive forced transaction commits we

@@ -102,17 +102,10 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 					   NameListToString(func_name));
 
 	/*
-<<<<<<< HEAD
-	 * Check that the conversion function is suitable for the requested
-	 * source and target encodings. We do that by calling the function with
-	 * an empty string; the conversion function should throw an error if it
-	 * can't perform the requested conversion.
-=======
 	 * Check that the conversion function is suitable for the requested source
 	 * and target encodings. We do that by calling the function with an empty
 	 * string; the conversion function should throw an error if it can't
 	 * perform the requested conversion.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	OidFunctionCall5(funcoid,
 					 Int32GetDatum(from_encoding),
