@@ -94,7 +94,7 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 		bitmap = index_getbitmap(scandesc, node->biss_result);
 
 		if ((NULL != bitmap) &&
-			!(IsA(bitmap, HashBitmap) || IsA(bitmap, StreamBitmap)))
+			!(IsA(bitmap, TIDBitmap) || IsA(bitmap, StreamBitmap)))
 		{
 			elog(ERROR, "unrecognized result from bitmap index scan");
 		}
@@ -182,7 +182,7 @@ ExecBitmapIndexReScan(BitmapIndexScanState *node, ExprContext *exprCtxt)
 
 	/* Sanity check */
 	if (node->biss_result &&
-		(!IsA(node->biss_result, HashBitmap) && !IsA(node->biss_result, StreamBitmap)))
+		(!IsA(node->biss_result, TIDBitmap) && !IsA(node->biss_result, StreamBitmap)))
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_GP_INTERNAL_ERROR),

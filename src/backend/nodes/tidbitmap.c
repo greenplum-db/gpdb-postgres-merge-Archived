@@ -55,8 +55,8 @@
 #define BITNUM(x)	((x) % TBM_BITS_PER_BITMAPWORD)
 
 static bool tbm_iterate_page(PagetableEntry *page, TBMIterateResult *output);
-static bool tbm_iterate_hash(HashBitmap *tbm, TBMIterateResult *output);
-static PagetableEntry *tbm_next_page(HashBitmap *tbm, bool *more);
+static bool tbm_iterate_hash(TIDBitmap *tbm, TBMIterateResult *output);
+static PagetableEntry *tbm_next_page(TIDBitmap *tbm, bool *more);
 
 /*
  * dynahash.c is optimized for relatively large, long-lived hash tables.
@@ -71,15 +71,15 @@ static PagetableEntry *tbm_next_page(HashBitmap *tbm, bool *more);
  */
 typedef enum
 {
-	HASHBM_EMPTY,				/* no hashtable, nentries == 0 */
-	HASHBM_ONE_PAGE,			/* entry1 contains the single entry */
-	HASHBM_HASH					/* pagetable is valid, entry1 is not */
+	TBM_EMPTY,					/* no hashtable, nentries == 0 */
+	TBM_ONE_PAGE,				/* entry1 contains the single entry */
+	TBM_HASH					/* pagetable is valid, entry1 is not */
 } TBMStatus;
 
 /*
- * Here is the representation for a whole HashBitmap.
+ * Here is the representation for a whole TIDBitMap:
  */
-struct HashBitmap
+struct TIDBitmap
 {
 	NodeTag		type;			/* to make it a valid Node */
 	MemoryContext mcxt;			/* memory context containing me */
@@ -92,7 +92,7 @@ struct HashBitmap
 	int			nchunks;		/* number of lossy entries in pagetable */
 	bool		iterating;		/* tbm_begin_iterate called? */
 <<<<<<< HEAD
-	PagetableEntry entry1;		/* used when status == HASHBM_ONE_PAGE */
+	PagetableEntry entry1;		/* used when status == TBM_ONE_PAGE */
 	/* the remaining fields are used while producing sorted output: */
 =======
 	PagetableEntry entry1;		/* used when status == TBM_ONE_PAGE */
@@ -120,24 +120,23 @@ struct TBMIterator
 	Size		bytesperentry;
 };
 
-/* A struct to hide away HashBitmap state for a streaming bitmap */
+/* A struct to hide away TIDBitmap state for a streaming bitmap */
 typedef struct HashStreamOpaque
 {
-	HashBitmap *tbm;  /* HashStreamOpaque will not take the ownership of freeing HashBitmap */
+	TIDBitmap *tbm;  /* HashStreamOpaque will not take the ownership of freeing TIDBitmap*/
 	PagetableEntry *entry;
 }	HashStreamOpaque;
 
 /* Local function prototypes */
-static void tbm_union_page(HashBitmap *a, const PagetableEntry *bpage);
-static bool tbm_intersect_page(HashBitmap *a, PagetableEntry *apage,
-				   const HashBitmap *b);
-static const PagetableEntry *tbm_find_pageentry(const HashBitmap *tbm,
+static void tbm_union_page(TIDBitmap *a, const PagetableEntry *bpage);
+static bool tbm_intersect_page(TIDBitmap *a, PagetableEntry *apage,
+				   const TIDBitmap *b);
+static const PagetableEntry *tbm_find_pageentry(const TIDBitmap *tbm,
 				   BlockNumber pageno);
-
-static PagetableEntry *tbm_get_pageentry(HashBitmap *tbm, BlockNumber pageno);
-static bool tbm_page_is_lossy(const HashBitmap *tbm, BlockNumber pageno);
-static void tbm_mark_page_lossy(HashBitmap *tbm, BlockNumber pageno);
-static void tbm_lossify(HashBitmap *tbm);
+static PagetableEntry *tbm_get_pageentry(TIDBitmap *tbm, BlockNumber pageno);
+static bool tbm_page_is_lossy(const TIDBitmap *tbm, BlockNumber pageno);
+static void tbm_mark_page_lossy(TIDBitmap *tbm, BlockNumber pageno);
+static void tbm_lossify(TIDBitmap *tbm);
 static int	tbm_comparator(const void *left, const void *right);
 static bool tbm_stream_block(StreamNode * self, PagetableEntry *e);
 static void tbm_stream_free(StreamNode * self);
@@ -151,10 +150,10 @@ static void tbm_stream_upd_instrument(StreamNode * self);
  * at the time of this call.  It will be limited to (approximately) maxbytes
  * total memory consumption.
  */
-HashBitmap *
+TIDBitmap *
 tbm_create(long maxbytes)
 {
-	HashBitmap *tbm;
+	TIDBitmap  *tbm;
 	long		nbuckets;
 
 <<<<<<< HEAD
@@ -166,9 +165,9 @@ tbm_create(long maxbytes)
 	COMPILE_ASSERT(MaxHeapTuplesPerPage <= (INT16_MAX + 1));
 
 	/*
-	 * Create the HashBitmap struct.
+	 * Create the TIDBitmap struct.
 	 */
-	tbm = (HashBitmap *) palloc0(sizeof(HashBitmap));
+	tbm = (TIDBitmap *) palloc0(sizeof(TIDBitmap));
 
 	tbm->type = T_HashBitmap;	/* Set NodeTag */
 =======
@@ -177,7 +176,7 @@ tbm_create(long maxbytes)
 
 >>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	tbm->mcxt = CurrentMemoryContext;
-	tbm->status = HASHBM_EMPTY;
+	tbm->status = TBM_EMPTY;
 	tbm->instrument = NULL;
 
 	/*
@@ -203,11 +202,11 @@ tbm_create(long maxbytes)
  * proposition, we don't do it until we have to.
  */
 static void
-tbm_create_pagetable(HashBitmap *tbm)
+tbm_create_pagetable(TIDBitmap *tbm)
 {
 	HASHCTL		hash_ctl;
 
-	Assert(tbm->status != HASHBM_HASH);
+	Assert(tbm->status != TBM_HASH);
 	Assert(tbm->pagetable == NULL);
 
 	/* Create the hashtable proper */
@@ -216,13 +215,13 @@ tbm_create_pagetable(HashBitmap *tbm)
 	hash_ctl.entrysize = sizeof(PagetableEntry);
 	hash_ctl.hash = tag_hash;
 	hash_ctl.hcxt = tbm->mcxt;
-	tbm->pagetable = hash_create("HashBitmap",
+	tbm->pagetable = hash_create("TIDBitmap",
 								 128,	/* start small and extend */
 								 &hash_ctl,
 								 HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
 
 	/* If entry1 is valid, push it into the hashtable */
-	if (tbm->status == HASHBM_ONE_PAGE)
+	if (tbm->status == TBM_ONE_PAGE)
 	{
 		PagetableEntry *page;
 		bool		found;
@@ -234,14 +233,14 @@ tbm_create_pagetable(HashBitmap *tbm)
 		memcpy(page, &tbm->entry1, sizeof(PagetableEntry));
 	}
 
-	tbm->status = HASHBM_HASH;
+	tbm->status = TBM_HASH;
 }
 
 /*
- * tbm_free - free a HashBitmap
+ * tbm_free - free a TIDBitmap
  */
 void
-tbm_free(HashBitmap *tbm)
+tbm_free(TIDBitmap *tbm)
 {
 	if (tbm->instrument)
 		tbm_bitmap_upd_instrument((Node *) tbm);
@@ -256,10 +255,10 @@ tbm_free(HashBitmap *tbm)
 
 
 /*
- * tbm_upd_instrument - Update the Instrumentation attached to a HashBitmap.
+ * tbm_upd_instrument - Update the Instrumentation attached to a TIDBitmap.
  */
 static void
-tbm_upd_instrument(HashBitmap *tbm)
+tbm_upd_instrument(TIDBitmap *tbm)
 {
 	Instrumentation *instr = tbm->instrument;
 	Size		workmemused;
@@ -278,13 +277,13 @@ tbm_upd_instrument(HashBitmap *tbm)
 
 /*
  * tbm_set_instrument
- *	Attach caller's Instrumentation object to a HashBitmap, unless the
- *	HashBitmap already has one.  We want the statistics to be associated
+ *	Attach caller's Instrumentation object to a TIDBitmap, unless the
+ *	TIDBitmap already has one.  We want the statistics to be associated
  *	with the plan node which originally created the bitmap, rather than a
  *	downstream consumer of the bitmap.
  */
 static void
-tbm_set_instrument(HashBitmap *tbm, struct Instrumentation *instr)
+tbm_set_instrument(TIDBitmap *tbm, struct Instrumentation *instr)
 {
 	if (instr == NULL ||
 		tbm->instrument == NULL)
@@ -296,10 +295,10 @@ tbm_set_instrument(HashBitmap *tbm, struct Instrumentation *instr)
 
 
 /*
- * tbm_add_tuples - add some tuple IDs to a HashBitmap
+ * tbm_add_tuples - add some tuple IDs to a TIDBitmap
  */
 void
-tbm_add_tuples(HashBitmap *tbm, const ItemPointer tids, int ntids,
+tbm_add_tuples(TIDBitmap *tbm, const ItemPointer tids, int ntids,
 			   bool recheck)
 {
 	int			i;
@@ -367,21 +366,21 @@ tbm_add_page(TIDBitmap *tbm, BlockNumber pageno)
  * a is modified in-place, b is not changed
  */
 void
-tbm_union(HashBitmap *a, const HashBitmap *b)
+tbm_union(TIDBitmap *a, const TIDBitmap *b)
 {
 	Assert(!a->iterating);
 	/* Nothing to do if b is empty */
 	if (b->nentries == 0)
 		return;
 	/* Scan through chunks and pages in b, merge into a */
-	if (b->status == HASHBM_ONE_PAGE)
+	if (b->status == TBM_ONE_PAGE)
 		tbm_union_page(a, &b->entry1);
 	else
 	{
 		HASH_SEQ_STATUS status;
 		PagetableEntry *bpage;
 
-		Assert(b->status == HASHBM_HASH);
+		Assert(b->status == TBM_HASH);
 		hash_seq_init(&status, b->pagetable);
 		while ((bpage = (PagetableEntry *) hash_seq_search(&status)) != NULL)
 			tbm_union_page(a, bpage);
@@ -390,7 +389,7 @@ tbm_union(HashBitmap *a, const HashBitmap *b)
 
 /* Process one page of b during a union op */
 static void
-tbm_union_page(HashBitmap *a, const PagetableEntry *bpage)
+tbm_union_page(TIDBitmap *a, const PagetableEntry *bpage)
 {
 	PagetableEntry *apage;
 	int			wordnum;
@@ -448,7 +447,7 @@ tbm_union_page(HashBitmap *a, const PagetableEntry *bpage)
  * a is modified in-place, b is not changed
  */
 void
-tbm_intersect(HashBitmap *a, const HashBitmap *b)
+tbm_intersect(TIDBitmap *a, const TIDBitmap *b)
 {
 	Assert(!a->iterating);
 	/* Nothing to do if a is empty */
@@ -458,7 +457,7 @@ tbm_intersect(HashBitmap *a, const HashBitmap *b)
 	a->nentries_hwm = Max(a->nentries_hwm, a->nentries);
 
 	/* Scan through chunks and pages in a, try to match to b */
-	if (a->status == HASHBM_ONE_PAGE)
+	if (a->status == TBM_ONE_PAGE)
 	{
 		if (tbm_intersect_page(a, &a->entry1, b))
 		{
@@ -467,7 +466,7 @@ tbm_intersect(HashBitmap *a, const HashBitmap *b)
 			a->npages--;
 			a->nentries--;
 			Assert(a->nentries == 0);
-			a->status = HASHBM_EMPTY;
+			a->status = TBM_EMPTY;
 		}
 	}
 	else
@@ -475,7 +474,7 @@ tbm_intersect(HashBitmap *a, const HashBitmap *b)
 		HASH_SEQ_STATUS status;
 		PagetableEntry *apage;
 
-		Assert(a->status == HASHBM_HASH);
+		Assert(a->status == TBM_HASH);
 		hash_seq_init(&status, a->pagetable);
 		while ((apage = (PagetableEntry *) hash_seq_search(&status)) != NULL)
 		{
@@ -502,7 +501,7 @@ tbm_intersect(HashBitmap *a, const HashBitmap *b)
  * Returns TRUE if apage is now empty and should be deleted from a
  */
 static bool
-tbm_intersect_page(HashBitmap *a, PagetableEntry *apage, const HashBitmap *b)
+tbm_intersect_page(TIDBitmap *a, PagetableEntry *apage, const TIDBitmap *b)
 {
 	const PagetableEntry *bpage;
 	int			wordnum;
@@ -580,16 +579,16 @@ tbm_intersect_page(HashBitmap *a, PagetableEntry *apage, const HashBitmap *b)
 }
 
 /*
- * tbm_is_empty - is a HashBitmap completely empty?
+ * tbm_is_empty - is a TIDBitmap completely empty?
  */
 bool
-tbm_is_empty(const HashBitmap *tbm)
+tbm_is_empty(const TIDBitmap *tbm)
 {
 	return (tbm->nentries == 0);
 }
 
 /*
- * tbm_begin_iterate - prepare to iterate through a HashBitmap
+ * tbm_begin_iterate - prepare to iterate through a TIDBitmap
  *
  * The TBMIterator struct is created in the caller's memory context.
  * For a clean shutdown of the iteration, call tbm_end_iterate; but it's
@@ -603,7 +602,7 @@ tbm_is_empty(const HashBitmap *tbm)
  */
 <<<<<<< HEAD
 void
-tbm_begin_iterate(HashBitmap *tbm)
+tbm_begin_iterate(TIDBitmap *tbm)
 =======
 TBMIterator *
 tbm_begin_iterate(TIDBitmap *tbm)
@@ -680,7 +679,7 @@ tbm_begin_iterate(TIDBitmap *tbm)
 	/*
 	 * Nothing else to do if no entries, nor if we don't have a hashtable.
 	 */
-	if (tbm->nentries == 0 || tbm->status != HASHBM_HASH)
+	if (tbm->nentries == 0 || tbm->status != TBM_HASH)
 		return;
 
 	/*
@@ -716,18 +715,18 @@ tbm_begin_iterate(TIDBitmap *tbm)
 }
 
 /*
- * tbm_iterate - scan through next page of a HashBitmap or a StreamBitmap.
+ * tbm_iterate - scan through next page of a TIDBitmap or a StreamBitmap.
  */
 bool
 tbm_iterate(Node *tbm, TBMIterateResult *output)
 {
-	Assert(IsA(tbm, HashBitmap) || IsA(tbm, StreamBitmap));
+	Assert(IsA(tbm, TIDBitmap) || IsA(tbm, StreamBitmap));
 
 	switch (tbm->type)
 	{
-		case T_HashBitmap:
+		case T_TIDBitmap:
 			{
-				HashBitmap *hashBitmap = (HashBitmap *) tbm;
+				TIDBitmap *hashBitmap = (TIDBitmap *) tbm;
 
 				if (!hashBitmap->iterating)
 					tbm_begin_iterate(hashBitmap);
@@ -800,7 +799,7 @@ tbm_iterate_page(PagetableEntry *page, TBMIterateResult *output)
 }
 
 /*
- * tbm_iterate_hash - scan through next page of a HashBitmap
+ * tbm_iterate_hash - scan through next page of a TIDBitmap
  *
  * Gets a TBMIterateResult representing one page, or NULL if there are
  * no more pages to scan.  Pages are guaranteed to be delivered in numerical
@@ -809,11 +808,11 @@ tbm_iterate_page(PagetableEntry *page, TBMIterateResult *output)
  * examine all tuples on the page and check if they meet the intended
  * condition.
  *
- * If 'output' is NULL, simple advance the HashBitmap by one.
+ * If 'output' is NULL, simple advance the TIDBitmap by one.
  */
 <<<<<<< HEAD
 static bool
-tbm_iterate_hash(HashBitmap *tbm, TBMIterateResult *output)
+tbm_iterate_hash(TIDBitmap *tbm, TBMIterateResult *output)
 {
 	PagetableEntry *e;
 	bool		more;
@@ -835,13 +834,13 @@ tbm_iterate(TBMIterator *iterator)
 }
 
 /*
- * tbm_next_page - actually traverse the HashBitmap
+ * tbm_next_page - actually traverse the TIDBitmap
  *
  * Store the next block of matches in nextpage.
  */
 
 static PagetableEntry *
-tbm_next_page(HashBitmap *tbm, bool *more)
+tbm_next_page(TIDBitmap *tbm, bool *more)
 {
 	Assert(tbm->iterating);
 
@@ -916,7 +915,7 @@ tbm_next_page(HashBitmap *tbm, bool *more)
 		PagetableEntry *e;
 
 		/* In ONE_PAGE state, we don't allocate an spages[] array */
-		if (tbm->status == HASHBM_ONE_PAGE)
+		if (tbm->status == TBM_ONE_PAGE)
 			e = &tbm->entry1;
 		else
 <<<<<<< HEAD
@@ -978,14 +977,14 @@ tbm_end_iterate(TBMIterator *iterator)
  * Returns NULL if there is no non-lossy entry for the pageno.
  */
 static const PagetableEntry *
-tbm_find_pageentry(const HashBitmap *tbm, BlockNumber pageno)
+tbm_find_pageentry(const TIDBitmap *tbm, BlockNumber pageno)
 {
 	const PagetableEntry *page;
 
 	if (tbm->nentries == 0)		/* in case pagetable doesn't exist */
 		return NULL;
 
-	if (tbm->status == HASHBM_ONE_PAGE)
+	if (tbm->status == TBM_ONE_PAGE)
 	{
 		page = &tbm->entry1;
 		if (page->blockno != pageno)
@@ -1013,21 +1012,21 @@ tbm_find_pageentry(const HashBitmap *tbm, BlockNumber pageno)
  * up to the caller to call tbm_lossify() at the next safe point if so.
  */
 static PagetableEntry *
-tbm_get_pageentry(HashBitmap *tbm, BlockNumber pageno)
+tbm_get_pageentry(TIDBitmap *tbm, BlockNumber pageno)
 {
 	PagetableEntry *page;
 	bool		found;
 
-	if (tbm->status == HASHBM_EMPTY)
+	if (tbm->status == TBM_EMPTY)
 	{
 		/* Use the fixed slot */
 		page = &tbm->entry1;
 		found = false;
-		tbm->status = HASHBM_ONE_PAGE;
+		tbm->status = TBM_ONE_PAGE;
 	}
 	else
 	{
-		if (tbm->status == HASHBM_ONE_PAGE)
+		if (tbm->status == TBM_ONE_PAGE)
 		{
 			page = &tbm->entry1;
 			if (page->blockno == pageno)
@@ -1059,7 +1058,7 @@ tbm_get_pageentry(HashBitmap *tbm, BlockNumber pageno)
  * tbm_page_is_lossy - is the page marked as lossily stored?
  */
 static bool
-tbm_page_is_lossy(const HashBitmap *tbm, BlockNumber pageno)
+tbm_page_is_lossy(const TIDBitmap *tbm, BlockNumber pageno)
 {
 	PagetableEntry *page;
 	BlockNumber chunk_pageno;
@@ -1068,7 +1067,7 @@ tbm_page_is_lossy(const HashBitmap *tbm, BlockNumber pageno)
 	/* we can skip the lookup if there are no lossy chunks */
 	if (tbm->nchunks == 0)
 		return false;
-	Assert(tbm->status == HASHBM_HASH);
+	Assert(tbm->status == TBM_HASH);
 
 	bitno = pageno % PAGES_PER_CHUNK;
 	chunk_pageno = pageno - bitno;
@@ -1093,7 +1092,7 @@ tbm_page_is_lossy(const HashBitmap *tbm, BlockNumber pageno)
  * up to the caller to call tbm_lossify() at the next safe point if so.
  */
 static void
-tbm_mark_page_lossy(HashBitmap *tbm, BlockNumber pageno)
+tbm_mark_page_lossy(TIDBitmap *tbm, BlockNumber pageno)
 {
 	PagetableEntry *page;
 	bool		found;
@@ -1103,7 +1102,7 @@ tbm_mark_page_lossy(HashBitmap *tbm, BlockNumber pageno)
 	int			bitnum;
 
 	/* We force the bitmap into hashtable mode whenever it's lossy */
-	if (tbm->status != HASHBM_HASH)
+	if (tbm->status != TBM_HASH)
 		tbm_create_pagetable(tbm);
 
 	bitno = pageno % PAGES_PER_CHUNK;
@@ -1164,7 +1163,7 @@ tbm_mark_page_lossy(HashBitmap *tbm, BlockNumber pageno)
  * tbm_lossify - lose some information to get back under the memory limit
  */
 static void
-tbm_lossify(HashBitmap *tbm)
+tbm_lossify(TIDBitmap *tbm)
 {
 	HASH_SEQ_STATUS status;
 	PagetableEntry *page;
@@ -1179,7 +1178,7 @@ tbm_lossify(HashBitmap *tbm)
 	 * just end up doing this again very soon.  We shoot for maxentries/2.
 	 */
 	Assert(!tbm->iterating);
-	Assert(tbm->status == HASHBM_HASH);
+	Assert(tbm->status == TBM_HASH);
 
 	hash_seq_init(&status, tbm->pagetable);
 	while ((page = (PagetableEntry *) hash_seq_search(&status)) != NULL)
@@ -1370,11 +1369,11 @@ stream_add_node(StreamBitmap *sbm, StreamNode *node, StreamType kind)
 }
 
 /*
- * tbm_create_stream_node() - turn a HashBitmap into a stream
+ * tbm_create_stream_node() - turn a TIDBitmap into a stream
  */
 
 StreamNode *
-tbm_create_stream_node(HashBitmap *tbm)
+tbm_create_stream_node(TIDBitmap *tbm)
 {
 	IndexStream *is;
 	HashStreamOpaque *op;
@@ -1398,7 +1397,7 @@ tbm_create_stream_node(HashBitmap *tbm)
 }
 
 /*
- * tbm_stream_block() - Fetch the next block from HashBitmap stream
+ * tbm_stream_block() - Fetch the next block from TIDBitmap stream
  *
  * Notice that the IndexStream passed in as opaque will tell us the
  * desired block to stream. If the block requrested is greater than or equal
@@ -1410,7 +1409,7 @@ tbm_stream_block(StreamNode *self, PagetableEntry *e)
 {
 	IndexStream *is = self;
 	HashStreamOpaque *op = (HashStreamOpaque *) is->opaque;
-	HashBitmap *tbm = op->tbm;
+	TIDBitmap *tbm = op->tbm;
 	PagetableEntry *next = op->entry;
 	bool		more;
 
@@ -1492,8 +1491,8 @@ bitmap_stream_iterate(StreamNode *n, PagetableEntry *e)
 		 * those together to get the resulting page entries.
 		 *
 		 * Now, BatchWords are specific to bitmap indexes so we'd have to
-		 * translate HashBitmaps. All the infrastructure is available to
-		 * translate bitmap indexes into the HashBitmap mechanism so we'll do
+		 * translate TIDBitmaps. All the infrastructure is available to
+		 * translate bitmap indexes into the TIDBitmap mechanism so we'll do
 		 * that for now.
 		 */
 		ListCell   *map;
@@ -1507,8 +1506,8 @@ bitmap_stream_iterate(StreamNode *n, PagetableEntry *e)
 
 		/*
 		 * First, iterate through each input bitmap stream and save the block
-		 * which is returned. HashBitmaps are designed such that they do not
-		 * return blocks with no matches -- that is, say a HashBitmap has
+		 * which is returned. TIDBitmaps are designed such that they do not
+		 * return blocks with no matches -- that is, say a TIDBitmap has
 		 * matches for block 1, 4 and 5 it store matches only for those
 		 * blocks. Therefore, we may have one stream return a match for block
 		 * 10, another for block 15 and another yet for block 10 again. In
@@ -1649,12 +1648,12 @@ restart:
 
 
 /*
- * --------- These functions accept either HashBitmap or StreamBitmap ---------
+ * --------- These functions accept either TIDBitmap or StreamBitmap ---------
  */
 
 
 /*
- * tbm_bitmap_free - free a HashBitmap or StreamBitmap
+ * tbm_bitmap_free - free a TIDBitmap or StreamBitmap
  */
 void
 tbm_bitmap_free(Node *bm)
@@ -1664,8 +1663,8 @@ tbm_bitmap_free(Node *bm)
 
 	switch (bm->type)
 	{
-		case T_HashBitmap:
-			tbm_free((HashBitmap *) bm);
+		case T_TIDBitmap:
+			tbm_free((TIDBitmap *) bm);
 			break;
 		case T_StreamBitmap:
 			{
@@ -1698,8 +1697,8 @@ tbm_bitmap_set_instrument(Node *bm, struct Instrumentation *instr)
 
 	switch (bm->type)
 	{
-		case T_HashBitmap:
-			tbm_set_instrument((HashBitmap *) bm, instr);
+		case T_TIDBitmap:
+			tbm_set_instrument((TIDBitmap *) bm, instr);
 			break;
 		case T_StreamBitmap:
 			{
@@ -1732,8 +1731,8 @@ tbm_bitmap_upd_instrument(Node *bm)
 
 	switch (bm->type)
 	{
-		case T_HashBitmap:
-			tbm_upd_instrument((HashBitmap *) bm);
+		case T_TIDBitmap:
+			tbm_upd_instrument((TIDBitmap *) bm);
 			break;
 		case T_StreamBitmap:
 			{

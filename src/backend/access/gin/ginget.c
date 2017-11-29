@@ -117,7 +117,7 @@ scanForItems(Relation index, GinScanEntry scanEntry, BlockNumber rootPostingTree
 		if ((GinPageGetOpaque(page)->flags & GIN_DELETED) == 0 && GinPageGetOpaque(page)->maxoff >= FirstOffsetNumber)
 		{
 <<<<<<< HEAD
-			tbm_add_tuples( (HashBitmap *) scanEntry->partialMatch,
+			tbm_add_tuples( (TIDBitmap *) scanEntry->partialMatch,
 							(ItemPointer)GinDataPageGetItem(page, FirstOffsetNumber),
 						 	GinPageGetOpaque(page)->maxoff, false);
 =======
@@ -265,7 +265,7 @@ computePartialMatchList(GinBtreeData *btree, GinBtreeStack *stack, GinScanEntry 
 		else
 		{
 <<<<<<< HEAD
-			tbm_add_tuples( (HashBitmap *) scanEntry->partialMatch, GinGetPosting(itup),  GinGetNPosting(itup), false);
+			tbm_add_tuples( (TIDBitmap *) scanEntry->partialMatch, GinGetPosting(itup),  GinGetNPosting(itup), false);
 			scanEntry->predictNumberResult +=  GinGetNPosting(itup);
 =======
 			tbm_add_tuples(scanEntry->partialMatch, GinGetPosting(itup), GinGetNPosting(itup), false);
@@ -368,7 +368,7 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 			if (entry->partialMatch)
 			{
 <<<<<<< HEAD
-				tbm_free( (HashBitmap *) entry->partialMatch );
+				tbm_free( (TIDBitmap *) entry->partialMatch );
 =======
 				if (entry->partialMatchIterator)
 					tbm_end_iterate(entry->partialMatchIterator);
@@ -385,9 +385,9 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 		}
 
 <<<<<<< HEAD
-		if ( (HashBitmap *) entry->partialMatch && !tbm_is_empty((HashBitmap *) entry->partialMatch) )
+		if ( (TIDBitmap *) entry->partialMatch && !tbm_is_empty((TIDBitmap *) entry->partialMatch) )
 		{
-			tbm_begin_iterate((HashBitmap *) entry->partialMatch);
+			tbm_begin_iterate((TIDBitmap *) entry->partialMatch);
 =======
 		if (entry->partialMatch && !tbm_is_empty(entry->partialMatch))
 		{
@@ -1300,7 +1300,7 @@ gingetbitmap(PG_FUNCTION_ARGS)
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 <<<<<<< HEAD
 	Node 		   *n = (Node *) PG_GETARG_POINTER(1);
-	HashBitmap	   *tbm;
+	TIDBitmap	   *tbm;
 	int64			ntids;
 =======
 	TIDBitmap  *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
@@ -1310,10 +1310,10 @@ gingetbitmap(PG_FUNCTION_ARGS)
 	if (n == NULL)
 		/* XXX should we use less than work_mem for this? */
 		tbm = tbm_create(work_mem * 1024L);
-	else if (!IsA(n, HashBitmap))
+	else if (!IsA(n, TIDBitmap))
 		elog(ERROR, "non hash bitmap");
 	else
-		tbm = (HashBitmap *)n;
+		tbm = (TIDBitmap *)n;
  
 	if (GinIsNewKey(scan))
 		newScanKey(scan);

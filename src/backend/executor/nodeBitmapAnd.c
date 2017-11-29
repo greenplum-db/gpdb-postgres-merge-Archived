@@ -124,7 +124,7 @@ MultiExecBitmapAnd(BitmapAndState *node)
 	int			nplans;
 	int			i;
 	bool		empty = false;
-	HashBitmap *hbm = NULL;
+	TIDBitmap  *hbm = NULL;
 
 	/* must provide our own instrumentation support */
 	if (node->ps.instrument)
@@ -159,7 +159,7 @@ MultiExecBitmapAnd(BitmapAndState *node)
 			break;
 		}
 
-		if (!(IsA(subresult, HashBitmap) ||
+		if (!(IsA(subresult, TIDBitmap) ||
 			  IsA(subresult, StreamBitmap)))
 			elog(ERROR, "unrecognized result from subplan");
 
@@ -168,14 +168,14 @@ MultiExecBitmapAnd(BitmapAndState *node)
 		 * If we encounter some streamed bitmaps we'll add this hash bitmap
 		 * as a stream to it.
 		 */
-		if (IsA(subresult, HashBitmap))
+		if (IsA(subresult, TIDBitmap))
 		{
 			/* first subplan that generates a hash bitmap */
 			if (hbm == NULL)
-				hbm = (HashBitmap *) subresult;
+				hbm = (TIDBitmap *) subresult;
 			else
 			{
-				tbm_intersect(hbm, (HashBitmap *)subresult);
+				tbm_intersect(hbm, (TIDBitmap *)subresult);
 			}
 
 			/* If tbm is empty, short circuit, per logic outlined above */

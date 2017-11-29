@@ -140,7 +140,7 @@ freeScanKeys(GinScanKey keys, uint32 nkeys)
 			if (key->scanEntry[j].partialMatchIterator)
 				tbm_end_iterate(key->scanEntry[j].partialMatchIterator);
 			if (key->scanEntry[j].partialMatch)
-				tbm_free((HashBitmap *) key->scanEntry[j].partialMatch);
+				tbm_free((TIDBitmap *) key->scanEntry[j].partialMatch);
 		}
 
 		pfree(key->entryRes);
