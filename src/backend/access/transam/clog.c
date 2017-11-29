@@ -932,12 +932,10 @@ clog_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
-<<<<<<< HEAD
 	MIRRORED_LOCK;
-=======
+
 	/* Backup blocks are not used in clog records */
 	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	if (info == CLOG_ZEROPAGE)
 	{
