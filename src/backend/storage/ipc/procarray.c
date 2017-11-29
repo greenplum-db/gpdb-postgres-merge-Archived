@@ -1926,19 +1926,11 @@ CountActiveBackends(void)
 		 *
 		 * If someone just decremented numProcs, 'proc' could also point to a
 		 * PGPROC entry that's no longer in the array. It still points to a
-<<<<<<< HEAD
-		 * PGPROC struct, though, because freed PGPPROC entries just go to
-		 * the free list and are recycled. Its contents are nonsense in that
-		 * case, but that's acceptable for this function.
-		 */
-		if (proc == NULL)
-=======
 		 * PGPROC struct, though, because freed PGPPROC entries just go to the
 		 * free list and are recycled. Its contents are nonsense in that case,
 		 * but that's acceptable for this function.
 		 */
-		if (proc != NULL)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+		if (proc == NULL)
 			continue;
 
 		if (proc == MyProc)

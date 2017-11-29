@@ -45,14 +45,9 @@ bool		proc_exit_inprogress = false;
  * (or in the parent postmaster).
  */
 static bool atexit_callback_setup = false;
-<<<<<<< HEAD
+
+/* GPDB_84_MERGE_FIXME: externs in .c files like this are dangerous */
 extern void WaitInterconnectQuit(void);
-=======
-
-/* local functions */
-static void proc_exit_prepare(int code);
-
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 /* ----------------------------------------------------------------
  *						exit() handling stuff
@@ -98,11 +93,8 @@ static int	on_proc_exit_index,
 void
 proc_exit(int code)
 {
-<<<<<<< HEAD
 	pqsignal(SIGALRM, SIG_IGN);
 
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	/* Clean up everything that must be cleaned up */
 	proc_exit_prepare(code);
 
@@ -153,7 +145,6 @@ proc_exit(int code)
  * normal exit through proc_exit, this will actually be called twice ...
  * but the second call will have nothing to do.
  */
-<<<<<<< HEAD
 void
 proc_exit_prepare(int code)
 {
@@ -168,12 +159,6 @@ proc_exit_prepare(int code)
 		elog(PANIC, "process is dying from critical section");
 
 	/*
-=======
-static void
-proc_exit_prepare(int code)
-{
-	/*
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 * Once we set this flag, we are committed to exit.  Any ereport() will
 	 * NOT send control back to the main loop, but right back here.
 	 */
@@ -192,7 +177,6 @@ proc_exit_prepare(int code)
 	InterruptHoldoffCount = 1;
 	CritSectionCount = 0;
 
-<<<<<<< HEAD
 	/*
 	 * Also clear the error context stack, to prevent error callbacks
 	 * from being invoked by any elog/ereport calls made during proc_exit.
@@ -235,8 +219,6 @@ proc_exit_prepare(int code)
 
 	elog(DEBUG3, "proc_exit(%d)", code);
 
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	/* do our shared memory exits first */
 	shmem_exit(code);
 

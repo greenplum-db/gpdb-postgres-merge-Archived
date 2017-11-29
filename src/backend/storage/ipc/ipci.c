@@ -165,7 +165,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 
 		size = add_size(size, SInvalShmemSize());
 		size = add_size(size, PMSignalShmemSize());
-<<<<<<< HEAD
 		size = add_size(size, ProcSignalShmemSize());
 		size = add_size(size, primaryMirrorModeShmemSize());
 		//size = add_size(size, AutoVacuumShmemSize());
@@ -215,9 +214,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		elog(DEBUG1, "Size not including the buffer pool %lu",
 			 (unsigned long) size);
 
-=======
-		size = add_size(size, BgWriterShmemSize());
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		size = add_size(size, AutoVacuumShmemSize());
 		size = add_size(size, BTreeShmemSize());
 		size = add_size(size, SyncScanShmemSize());
@@ -365,7 +361,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	 * Set up interprocess signaling mechanisms
 	 */
 	PMSignalShmemInit();
-<<<<<<< HEAD
 	ProcSignalShmemInit();
 	CheckpointerShmemInit();
 	WalSndShmemInit();
@@ -396,10 +391,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 			SyncBitVector_ShmemInit("SimEx bit vector container", simex_get_subclass_count()));
 	}
 #endif /* USE_TEST_UTILS */
-=======
-	BgWriterShmemInit();
-	AutoVacuumShmemInit();
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * Set up other modules that need some shared memory space
