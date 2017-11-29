@@ -1294,7 +1294,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 		 */
 		if (remainingPerms & ~(ACL_SELECT | ACL_INSERT | ACL_UPDATE))
 			aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
-						   get_rel_name(relOid));
+						   get_rel_name_partition(relOid));
 
 		/*
 		 * Check to see if we have the needed privileges at column level.
@@ -1315,7 +1315,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 				if (pg_attribute_aclcheck_all(relOid, userid, ACL_SELECT,
 											  ACLMASK_ANY) != ACLCHECK_OK)
 					aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
-								   get_rel_name(relOid));
+								   get_rel_name_partition(relOid));
 			}
 
 			tmpset = bms_copy(rte->selectedCols);
@@ -1329,14 +1329,14 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 					if (pg_attribute_aclcheck_all(relOid, userid, ACL_SELECT,
 												  ACLMASK_ALL) != ACLCHECK_OK)
 						aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
-									   get_rel_name(relOid));
+									   get_rel_name_partition(relOid));
 				}
 				else
 				{
 					if (pg_attribute_aclcheck(relOid, col, userid, ACL_SELECT)
 						!= ACLCHECK_OK)
 						aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
-									   get_rel_name(relOid));
+									   get_rel_name_partition(relOid));
 				}
 			}
 			bms_free(tmpset);
@@ -1360,7 +1360,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 				if (pg_attribute_aclcheck_all(relOid, userid, remainingPerms,
 											  ACLMASK_ANY) != ACLCHECK_OK)
 					aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
-								   get_rel_name(relOid));
+								   get_rel_name_partition(relOid));
 			}
 
 			tmpset = bms_copy(rte->modifiedCols);
@@ -1378,7 +1378,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 					if (pg_attribute_aclcheck(relOid, col, userid, remainingPerms)
 						!= ACLCHECK_OK)
 						aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
-									   get_rel_name(relOid));
+									   get_rel_name_partition(relOid));
 				}
 			}
 			bms_free(tmpset);
@@ -4929,6 +4929,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 	Oid			intoRelationId;
 	TupleDesc	tupdesc;
 	DR_intorel *myState;
+	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 	char	   *intoTableSpaceName;
     GpPolicy   *targetPolicy;
 	bool		use_wal;
@@ -4940,7 +4941,6 @@ OpenIntoRel(QueryDesc *queryDesc)
 	int64			persistentSerialNum;
 	
 	targetPolicy = queryDesc->plannedstmt->intoPolicy;
-	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
 	Assert(into);
 
@@ -5097,11 +5097,6 @@ OpenIntoRel(QueryDesc *queryDesc)
 	 * CommandCounterIncrement(), so that the new tables will be visible for
 	 * insertion.
 	 */
-<<<<<<< HEAD
-	AlterTableCreateToastTable(intoRelationId, false);
-	AlterTableCreateAoSegTable(intoRelationId, false);
-	AlterTableCreateAoVisimapTable(intoRelationId, false);
-=======
 	reloptions = transformRelOptions((Datum) 0,
 									 into->options,
 									 "toast",
@@ -5110,9 +5105,10 @@ OpenIntoRel(QueryDesc *queryDesc)
 									 false);
 
 	(void) heap_reloptions(RELKIND_TOASTVALUE, reloptions, true);
+	AlterTableCreateToastTable(intoRelationId, InvalidOid, reloptions, false, false);
 
-	AlterTableCreateToastTable(intoRelationId, InvalidOid, reloptions, false);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	AlterTableCreateAoSegTable(intoRelationId, false);
+	AlterTableCreateAoVisimapTable(intoRelationId, false);
 
     /* don't create AO block directory here, it'll be created when needed */
 	/*

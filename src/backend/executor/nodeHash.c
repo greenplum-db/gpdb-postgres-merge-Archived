@@ -26,11 +26,8 @@
 #include <math.h>
 #include <limits.h>
 
-<<<<<<< HEAD
 #include "access/hash.h"
-=======
 #include "catalog/pg_statistic.h"
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #include "commands/tablespace.h"
 #include "executor/execdebug.h"
 #include "executor/hashjoin.h"
@@ -42,18 +39,28 @@
 #include "utils/dynahash.h"
 #include "utils/memutils.h"
 #include "utils/lsyscache.h"
-<<<<<<< HEAD
 #include "utils/debugbreak.h"
 #include "utils/faultinjector.h"
-=======
 #include "utils/syscache.h"
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 #include "cdb/cdbexplain.h"
 #include "cdb/cdbvars.h"
 
 static void ExecHashIncreaseNumBatches(HashJoinTable hashtable);
-<<<<<<< HEAD
+static void ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node,
+					  int mcvsToUse);
+static void ExecHashSkewTableInsert(HashState *hashState, HashJoinTable hashtable,
+						TupleTableSlot *slot,
+						uint32 hashvalue,
+						int bucketNumber);
+static void ExecHashRemoveNextSkewBucket(HashState *hashState, HashJoinTable hashtable);
+
+void ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
+						uint64 operatorMemKB,
+						int *numbuckets,
+						int *numbatches,
+						int *num_skew_mcvs);
+
 static void ExecHashTableExplainEnd(PlanState *planstate, struct StringInfoData *buf);
 static void
 ExecHashTableExplainBatches(HashJoinTable   hashtable,
@@ -62,21 +69,6 @@ ExecHashTableExplainBatches(HashJoinTable   hashtable,
                             int             ibatch_end,
                             const char     *title);
 static void ExecHashTableReallocBatchData(HashJoinTable hashtable, int new_nbatch);
-=======
-static void ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node,
-					  int mcvsToUse);
-static void ExecHashSkewTableInsert(HashJoinTable hashtable,
-						TupleTableSlot *slot,
-						uint32 hashvalue,
-						int bucketNumber);
-static void ExecHashRemoveNextSkewBucket(HashJoinTable hashtable);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
-
-void ExecChooseHashTableSize(double ntuples, int tupwidth,
-						int *numbuckets,
-						int *numbatches,
-						uint64 operatorMemKB
-						);
 
 #define BLOOMVAL(hk)  (((uint64)1) << (((hk) >> 13) & 0x3f))
 
@@ -150,8 +142,20 @@ MultiExecHash(HashState *node)
 		if (ExecHashGetHashValue(node, hashtable, econtext, hashkeys, false,
 								 node->hs_keepnull, &hashvalue, &hashkeys_null))
 		{
-<<<<<<< HEAD
-			ExecHashTableInsert(node, hashtable, slot, hashvalue);
+			int			bucketNumber;
+
+			bucketNumber = ExecHashGetSkewBucket(hashtable, hashvalue);
+			if (bucketNumber != INVALID_SKEW_BUCKET_NO)
+			{
+				/* It's a skew tuple, so put it into that hash table */
+				ExecHashSkewTableInsert(node, hashtable, slot, hashvalue,
+										bucketNumber);
+			}
+			else
+			{
+				/* Not subject to skew optimization, so insert normally */
+				ExecHashTableInsert(node, hashtable, slot, hashvalue);
+			}
 		}
 
 		if (hashkeys_null)
@@ -162,23 +166,6 @@ MultiExecHash(HashState *node)
 				ExecSquelchNode(outerNode);
 				return NULL;
 			}
-=======
-			int			bucketNumber;
-
-			bucketNumber = ExecHashGetSkewBucket(hashtable, hashvalue);
-			if (bucketNumber != INVALID_SKEW_BUCKET_NO)
-			{
-				/* It's a skew tuple, so put it into that hash table */
-				ExecHashSkewTableInsert(hashtable, slot, hashvalue,
-										bucketNumber);
-			}
-			else
-			{
-				/* Not subject to skew optimization, so insert normally */
-				ExecHashTableInsert(hashtable, slot, hashvalue);
-			}
-			hashtable->totalTuples += 1;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		}
 	}
 	MemoryAccounting_DeclareDone();
@@ -327,12 +314,9 @@ ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate, List *hashOper
 	outerNode = outerPlan(node);
 
 	ExecChooseHashTableSize(outerNode->plan_rows, outerNode->plan_width,
-<<<<<<< HEAD
-							&nbuckets, &nbatch, operatorMemKB);
-=======
+							operatorMemKB,
 							OidIsValid(node->skewTable),
 							&nbuckets, &nbatch, &num_skew_mcvs);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 #ifdef HJDEBUG
     elog(LOG, "HJ: nbatch = %d, nbuckets = %d\n", nbatch, nbuckets);
@@ -352,39 +336,29 @@ ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate, List *hashOper
 	hashtable->nbuckets = nbuckets;
 	hashtable->log2_nbuckets = log2_nbuckets;
 	hashtable->buckets = NULL;
-<<<<<<< HEAD
 	hashtable->bloom = NULL;
-=======
 	hashtable->skewEnabled = false;
 	hashtable->skewBucket = NULL;
 	hashtable->skewBucketLen = 0;
 	hashtable->nSkewBuckets = 0;
 	hashtable->skewBucketNums = NULL;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	hashtable->nbatch = nbatch;
 	hashtable->curbatch = 0;
 	hashtable->nbatch_original = nbatch;
 	hashtable->nbatch_outstart = nbatch;
 	hashtable->growEnabled = true;
 	hashtable->totalTuples = 0;
-<<<<<<< HEAD
 	hashtable->batches = NULL;
 	hashtable->work_set = NULL;
 	hashtable->state_file = NULL;
 	hashtable->spaceAllowed = operatorMemKB * 1024L;
+	hashtable->spaceUsedSkew = 0;
+	hashtable->spaceAllowedSkew =
+		hashtable->spaceAllowed * SKEW_WORK_MEM_PERCENT / 100;
 	hashtable->stats = NULL;
 	hashtable->eagerlyReleased = false;
 	hashtable->hjstate = hjstate;
 	hashtable->first_pass = true;
-=======
-	hashtable->innerBatchFile = NULL;
-	hashtable->outerBatchFile = NULL;
-	hashtable->spaceUsed = 0;
-	hashtable->spaceAllowed = work_mem * 1024L;
-	hashtable->spaceUsedSkew = 0;
-	hashtable->spaceAllowedSkew =
-		hashtable->spaceAllowed * SKEW_WORK_MEM_PERCENT / 100;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * Get info about the hash functions to be used for each hash key. Also
@@ -482,17 +456,15 @@ ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate, List *hashOper
 	hashtable->buckets = (HashJoinTuple *)
 		palloc0(nbuckets * sizeof(HashJoinTuple));
 
-<<<<<<< HEAD
-	if(gp_hashjoin_bloomfilter!=0)
-		hashtable->bloom = (uint64*) palloc0(nbuckets * sizeof(uint64));
-=======
 	/*
 	 * Set up for skew optimization, if possible and there's a need for more
 	 * than one batch.	(In a one-batch join, there's no point in it.)
 	 */
 	if (nbatch > 1)
 		ExecHashBuildSkewHash(hashtable, node, num_skew_mcvs);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+
+	if(gp_hashjoin_bloomfilter!=0)
+		hashtable->bloom = (uint64*) palloc0(nbuckets * sizeof(uint64));
 
 	MemoryContextSwitchTo(oldcxt);
 	}
@@ -1293,23 +1265,17 @@ ExecScanHashBucket(HashState *hashState, HashJoinState *hjstate,
 	 * If the tuple hashed to a skew bucket then scan the skew bucket
 	 * otherwise scan the standard hashtable bucket.
 	 */
-<<<<<<< HEAD
-	if (hashTuple == NULL)
-	{
-		/* if bloom filter fails, then no match - don't even bother to scan */
-		if (gp_hashjoin_bloomfilter == 0 || 0 != (hashtable->bloom[hjstate->hj_CurBucketNo] & BLOOMVAL(hashvalue)))
-			hashTuple = hashtable->buckets[hjstate->hj_CurBucketNo];
-	}
-	else
-		hashTuple = hashTuple->next;
-=======
 	if (hashTuple != NULL)
 		hashTuple = hashTuple->next;
 	else if (hjstate->hj_CurSkewBucketNo != INVALID_SKEW_BUCKET_NO)
 		hashTuple = hashtable->skewBucket[hjstate->hj_CurSkewBucketNo]->tuples;
 	else
-		hashTuple = hashtable->buckets[hjstate->hj_CurBucketNo];
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	{
+		/* GPDB_84_MERGE_FIXME: Should we apply the bloom filter for the skew bucket, too? */
+		/* if bloom filter fails, then no match - don't even bother to scan */
+		if (gp_hashjoin_bloomfilter == 0 || 0 != (hashtable->bloom[hjstate->hj_CurBucketNo] & BLOOMVAL(hashvalue)))
+			hashTuple = hashtable->buckets[hjstate->hj_CurBucketNo];
+	}
 
 	while (hashTuple != NULL)
 	{
@@ -1395,7 +1361,6 @@ ExecReScanHash(HashState *node, ExprContext *exprCtxt)
 
 
 /*
-<<<<<<< HEAD
  * ExecHashTableExplainInit
  *      Called after ExecHashTableCreate to set up EXPLAIN ANALYZE reporting.
  */
@@ -1778,7 +1743,9 @@ ExecHashTableExplainBatchEnd(HashState *hashState, HashJoinTable hashtable)
     }
     END_MEMORY_ACCOUNT();
 }                               /* ExecHashTableExplainBatchEnd */
-=======
+
+
+/*
  * ExecHashBuildSkewHash
  *
  *		Set up for skew optimization if we can identify the most common values
@@ -1874,8 +1841,6 @@ ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node, int mcvsToUse)
 			MemoryContextAllocZero(hashtable->batchCxt,
 								   mcvsToUse * sizeof(int));
 
-		hashtable->spaceUsed += nbuckets * sizeof(HashSkewBucket *)
-			+ mcvsToUse * sizeof(int);
 		hashtable->spaceUsedSkew += nbuckets * sizeof(HashSkewBucket *)
 			+ mcvsToUse * sizeof(int);
 
@@ -1924,7 +1889,6 @@ ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node, int mcvsToUse)
 			hashtable->skewBucket[bucket]->tuples = NULL;
 			hashtable->skewBucketNums[hashtable->nSkewBuckets] = bucket;
 			hashtable->nSkewBuckets++;
-			hashtable->spaceUsed += SKEW_BUCKET_OVERHEAD;
 			hashtable->spaceUsedSkew += SKEW_BUCKET_OVERHEAD;
 		}
 
@@ -1989,35 +1953,39 @@ ExecHashGetSkewBucket(HashJoinTable hashtable, uint32 hashvalue)
  * ExecHashTableInsert.
  */
 static void
-ExecHashSkewTableInsert(HashJoinTable hashtable,
+ExecHashSkewTableInsert(HashState *hashState,
+						HashJoinTable hashtable,
 						TupleTableSlot *slot,
 						uint32 hashvalue,
 						int bucketNumber)
 {
-	MinimalTuple tuple = ExecFetchSlotMinimalTuple(slot);
+	MemTuple tuple = ExecFetchSlotMemTuple(slot, false);
 	HashJoinTuple hashTuple;
 	int			hashTupleSize;
 
 	/* Create the HashJoinTuple */
-	hashTupleSize = HJTUPLE_OVERHEAD + tuple->t_len;
+	hashTupleSize = HJTUPLE_OVERHEAD + memtuple_get_size(tuple);
 	hashTuple = (HashJoinTuple) MemoryContextAlloc(hashtable->batchCxt,
 												   hashTupleSize);
 	hashTuple->hashvalue = hashvalue;
-	memcpy(HJTUPLE_MINTUPLE(hashTuple), tuple, tuple->t_len);
+	memcpy(HJTUPLE_MINTUPLE(hashTuple), tuple, memtuple_get_size(tuple));
 
 	/* Push it onto the front of the skew bucket's list */
 	hashTuple->next = hashtable->skewBucket[bucketNumber]->tuples;
 	hashtable->skewBucket[bucketNumber]->tuples = hashTuple;
 
 	/* Account for space used, and back off if we've used too much */
-	hashtable->spaceUsed += hashTupleSize;
 	hashtable->spaceUsedSkew += hashTupleSize;
 	while (hashtable->spaceUsedSkew > hashtable->spaceAllowedSkew)
-		ExecHashRemoveNextSkewBucket(hashtable);
+		ExecHashRemoveNextSkewBucket(hashState, hashtable);
 
 	/* Check we are not over the total spaceAllowed, either */
+	/* GPDB_84_MERGE_FIXME: spaceUsed has been removed in GPDB. What's the
+	 * right criteria here? Or should we resurrect spaceUsed? */
+#if 0
 	if (hashtable->spaceUsed > hashtable->spaceAllowed)
 		ExecHashIncreaseNumBatches(hashtable);
+#endif
 }
 
 /*
@@ -2027,8 +1995,9 @@ ExecHashSkewTableInsert(HashJoinTable hashtable,
  *		the main hash table.
  */
 static void
-ExecHashRemoveNextSkewBucket(HashJoinTable hashtable)
+ExecHashRemoveNextSkewBucket(HashState *hashState, HashJoinTable hashtable)
 {
+	PlanState *ps = &hashState->ps;
 	int			bucketToRemove;
 	HashSkewBucket *bucket;
 	uint32		hashvalue;
@@ -2054,7 +2023,7 @@ ExecHashRemoveNextSkewBucket(HashJoinTable hashtable)
 	while (hashTuple != NULL)
 	{
 		HashJoinTuple nextHashTuple = hashTuple->next;
-		MinimalTuple tuple;
+		MemTuple	tuple;
 		Size		tupleSize;
 
 		/*
@@ -2063,7 +2032,7 @@ ExecHashRemoveNextSkewBucket(HashJoinTable hashtable)
 		 * TupleTableSlot while we already have HashJoinTuples.
 		 */
 		tuple = HJTUPLE_MINTUPLE(hashTuple);
-		tupleSize = HJTUPLE_OVERHEAD + tuple->t_len;
+		tupleSize = HJTUPLE_OVERHEAD + memtuple_get_size(tuple);
 
 		/* Decide whether to put the tuple in the hash table or a temp file */
 		if (batchno == hashtable->curbatch)
@@ -2078,10 +2047,11 @@ ExecHashRemoveNextSkewBucket(HashJoinTable hashtable)
 		{
 			/* Put the tuple into a temp file for later batches */
 			Assert(batchno > hashtable->curbatch);
-			ExecHashJoinSaveTuple(tuple, hashvalue,
-								  &hashtable->innerBatchFile[batchno]);
+			ExecHashJoinSaveTuple(ps, tuple,
+								  hashvalue,
+								  hashtable,
+								  &hashtable->batches[batchno]->innerside, hashtable->bfCxt);
 			pfree(hashTuple);
-			hashtable->spaceUsed -= tupleSize;
 			hashtable->spaceUsedSkew -= tupleSize;
 		}
 
@@ -2103,7 +2073,6 @@ ExecHashRemoveNextSkewBucket(HashJoinTable hashtable)
 	hashtable->skewBucket[bucketToRemove] = NULL;
 	hashtable->nSkewBuckets--;
 	pfree(bucket);
-	hashtable->spaceUsed -= SKEW_BUCKET_OVERHEAD;
 	hashtable->spaceUsedSkew -= SKEW_BUCKET_OVERHEAD;
 
 	/*
@@ -2117,8 +2086,6 @@ ExecHashRemoveNextSkewBucket(HashJoinTable hashtable)
 		pfree(hashtable->skewBucketNums);
 		hashtable->skewBucket = NULL;
 		hashtable->skewBucketNums = NULL;
-		hashtable->spaceUsed -= hashtable->spaceUsedSkew;
 		hashtable->spaceUsedSkew = 0;
 	}
 }
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805

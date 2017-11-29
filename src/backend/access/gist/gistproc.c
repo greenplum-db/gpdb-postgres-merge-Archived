@@ -280,19 +280,11 @@ chooseLR(GIST_SPLITVEC *v,
 static void
 fallbackSplit(GistEntryVector *entryvec, GIST_SPLITVEC *v)
 {
-<<<<<<< HEAD
-	OffsetNumber	i, 
-					maxoff;
-	BOX			   *unionL = NULL,
-				   *unionR = NULL;
-	int				nbytes;
-=======
 	OffsetNumber i,
 				maxoff;
 	BOX		   *unionL = NULL,
 			   *unionR = NULL;
 	int			nbytes;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	maxoff = entryvec->n - 1;
 
@@ -303,11 +295,7 @@ fallbackSplit(GistEntryVector *entryvec, GIST_SPLITVEC *v)
 
 	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 	{
-<<<<<<< HEAD
-		BOX * cur = DatumGetBoxP(entryvec->vector[i].key);
-=======
 		BOX		   *cur = DatumGetBoxP(entryvec->vector[i].key);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		if (i <= (maxoff - FirstOffsetNumber + 1) / 2)
 		{

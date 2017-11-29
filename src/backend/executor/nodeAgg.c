@@ -978,16 +978,7 @@ hash_agg_entry_size(int numAggs)
 TupleTableSlot *
 ExecAgg(AggState *node)
 {
-<<<<<<< HEAD
-	if (node->agg_done)
-	{
-		ExecEagerFreeAgg(node);
-		return NULL;
-	}
-
 #if 0
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	/*
 	 * Check to see if we're still projecting out tuples from a previous agg
 	 * tuple (because there is a function-returning-set in the projection

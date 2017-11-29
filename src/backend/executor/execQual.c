@@ -77,8 +77,8 @@ static Datum ExecEvalGroupId(ExprState *gstate,
 						 ExprContext *econtext,
 						 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalWindowFunc(WindowFuncExprState *wfunc,
-			   ExprContext *econtext,
-			   bool *isNull, ExprDoneCond *isDone);
+				   ExprContext *econtext,
+				   bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalScalarVar(ExprState *exprstate, ExprContext *econtext,
 				  bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalScalarVarFast(ExprState *exprstate, ExprContext *econtext,
@@ -3921,6 +3921,7 @@ ExecEvalMinMax(MinMaxExprState *minmaxExpr, ExprContext *econtext,
  *		ExecEvalXml
  * ----------------------------------------------------------------
  */
+
 static Datum
 ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 			bool *isNull, ExprDoneCond *isDone)
@@ -6313,54 +6314,6 @@ ExecTargetList(List *targetlist,
 }
 
 /*
- * ExecVariableList
- *		Evaluates a simple-Variable-list projection.
- *
- * Results are stored into the passed values and isnull arrays.
- */
-#ifndef USE_CODEGEN
-static
-#endif
-void
-ExecVariableList(ProjectionInfo *projInfo,
-				 Datum *values,
-				 bool *isnull)
-{
-	ExprContext *econtext = projInfo->pi_exprContext;
-	int		   *varSlotOffsets = projInfo->pi_varSlotOffsets;
-	int		   *varNumbers = projInfo->pi_varNumbers;
-	int			i;
-
-	if (projInfo->pi_directMap)
-	{
-		/* especially simple case where vars go to output in order */
-		for (i = 0; i < numSimpleVars; i++)
-		{
-			char	   *slotptr = ((char *) econtext) + varSlotOffsets[i];
-			TupleTableSlot *varSlot = *((TupleTableSlot **) slotptr);
-			int			varNumber = varNumbers[i] - 1;
-
-			values[i] = slot_getattr(varSlot, varNumber+1, &(isnull[i]));
-		}
-	}
-	else
-	{
-		/* we have to pay attention to varOutputCols[] */
-		int		   *varOutputCols = projInfo->pi_varOutputCols;
-
-		for (i = 0; i < numSimpleVars; i++)
-		{
-			char	   *slotptr = ((char *) econtext) + varSlotOffsets[i];
-			TupleTableSlot *varSlot = *((TupleTableSlot **) slotptr);
-			int			varNumber = varNumbers[i] - 1;
-			int			varOutputCol = varOutputCols[i] - 1;
-
-			values[varOutputCol] = slot_getattr(varSlot, varNumber+1, &(isnull[varOutputCol]));
-		}
-	}
-}
-
-/*
  * ExecProject
  *
  *		projects a tuple based on projection info and stores
@@ -6424,13 +6377,41 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 	numSimpleVars = projInfo->pi_numSimpleVars;
 	if (numSimpleVars > 0)
 	{
-		/* simple Var list: this always succeeds with one result row */
-		if (isDone)
-			*isDone = ExprSingleResult;
+		Datum	   *values = slot_get_values(slot);
+		bool	   *isnull = slot_get_isnull(slot);
+		int		   *varSlotOffsets = projInfo->pi_varSlotOffsets;
+		int		   *varNumbers = projInfo->pi_varNumbers;
+		int			i;
 
-		call_ExecVariableList(projInfo,
-						 slot_get_values(slot),
-						 slot_get_isnull(slot));
+		if (projInfo->pi_directMap)
+		{
+			/* especially simple case where vars go to output in order */
+			for (i = 0; i < numSimpleVars; i++)
+			{
+				char	   *slotptr = ((char *) econtext) + varSlotOffsets[i];
+				TupleTableSlot *varSlot = *((TupleTableSlot **) slotptr);
+				int			varNumber = varNumbers[i] - 1;
+
+				values[i] = slot_get_values(varSlot)[varNumber];
+				isnull[i] = slot_get_values(varSlot)[varNumber];
+			}
+		}
+		else
+		{
+			/* we have to pay attention to varOutputCols[] */
+			int		   *varOutputCols = projInfo->pi_varOutputCols;
+
+			for (i = 0; i < numSimpleVars; i++)
+			{
+				char	   *slotptr = ((char *) econtext) + varSlotOffsets[i];
+				TupleTableSlot *varSlot = *((TupleTableSlot **) slotptr);
+				int			varNumber = varNumbers[i] - 1;
+				int			varOutputCol = varOutputCols[i] - 1;
+
+				values[varOutputCol] = slot_get_values(varSlot)[varNumber];
+				isnull[varOutputCol] = slot_get_isnull(varSlot)[varNumber];
+			}
+		}
 	}
 
 	/*
@@ -6442,11 +6423,11 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 	if (projInfo->pi_targetlist)
 	{
 		if (!ExecTargetList(projInfo->pi_targetlist,
-						   econtext,
-						   slot_get_values(slot),
-						   slot_get_isnull(slot),
-						   projInfo->pi_itemIsDone,
-						   isDone))
+							econtext,
+							slot_get_values(slot),
+							slot_get_isnull(slot),
+							projInfo->pi_itemIsDone,
+							isDone))
 			return slot;		/* no more result rows, return empty slot */
 	}
 

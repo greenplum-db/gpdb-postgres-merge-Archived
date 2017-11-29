@@ -860,37 +860,13 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	while (es && es->status == F_EXEC_DONE)
 		es = es->next;
 
-<<<<<<< HEAD
 	bool orig_gp_enable_gpperfmon = gp_enable_gpperfmon;
-=======
-	/*
-	 * Execute each command in the function one after another until we either
-	 * run out of commands or get a result row from a lazily-evaluated SELECT.
-	 */
-	while (es)
-	{
-		bool		completed;
-
-		if (es->status == F_EXEC_START)
-			postquel_start(es, fcache);
-
-		completed = postquel_getnext(es, fcache);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	PG_TRY();
 	{
 		/*
-<<<<<<< HEAD
 		 * Temporarily disable gpperfmon since we don't send information for internal queries in
 		 * most cases, except when the debugging level is set to DEBUG4 or DEBUG5.
-=======
-		 * If we ran the command to completion, we can shut it down now. Any
-		 * row(s) we need to return are safely stashed in the tuplestore, and
-		 * we want to be sure that, for example, AFTER triggers get fired
-		 * before we return anything.  Also, if the function doesn't return
-		 * set, we can shut it down anyway because it must be a SELECT and we
-		 * don't care about fetching any more result rows.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		 */
 		if (log_min_messages > DEBUG4)
 		{
@@ -900,22 +876,12 @@ fmgr_sql(PG_FUNCTION_ARGS)
 		gp_enable_gpperfmon = orig_gp_enable_gpperfmon;
 
 		/*
-<<<<<<< HEAD
 		 * Execute each command in the function one after another until we either
 		 * run out of commands or get a result row from a lazily-evaluated SELECT.
-=======
-		 * Break from loop if we didn't shut down (implying we got a
-		 * lazily-evaluated row).  Otherwise we'll press on till the whole
-		 * function is done, relying on the tuplestore to keep hold of the
-		 * data to eventually be returned.	This is necessary since an
-		 * INSERT/UPDATE/DELETE RETURNING that sets the result might be
-		 * followed by additional rule-inserted commands, and we want to
-		 * finish doing all those commands before we return anything.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		 */
 		while (es)
 		{
-			bool	completed;
+			bool		completed;
 
 			if (es->status == F_EXEC_START)
 				postquel_start(es, fcache);
@@ -923,22 +889,22 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			completed = postquel_getnext(es, fcache);
 
 			/*
-			 * If we ran the command to completion, we can shut it down now.
-			 * Any row(s) we need to return are safely stashed in the tuplestore,
-			 * and we want to be sure that, for example, AFTER triggers get fired
+			 * If we ran the command to completion, we can shut it down now. Any
+			 * row(s) we need to return are safely stashed in the tuplestore, and
+			 * we want to be sure that, for example, AFTER triggers get fired
 			 * before we return anything.  Also, if the function doesn't return
-			 * set, we can shut it down anyway because it must be a SELECT and
-			 * we don't care about fetching any more result rows.
+			 * set, we can shut it down anyway because it must be a SELECT and we
+			 * don't care about fetching any more result rows.
 			 */
 			if (completed || !fcache->returnsSet)
 				postquel_end(es);
 
 			/*
 			 * Break from loop if we didn't shut down (implying we got a
-			 * lazily-evaluated row).  Otherwise we'll press on till the
-			 * whole function is done, relying on the tuplestore to keep hold
-			 * of the data to eventually be returned.  This is necessary since
-			 * an INSERT/UPDATE/DELETE RETURNING that sets the result might be
+			 * lazily-evaluated row).  Otherwise we'll press on till the whole
+			 * function is done, relying on the tuplestore to keep hold of the
+			 * data to eventually be returned.  This is necessary since an
+			 * INSERT/UPDATE/DELETE RETURNING that sets the result might be
 			 * followed by additional rule-inserted commands, and we want to
 			 * finish doing all those commands before we return anything.
 			 */
@@ -1385,18 +1351,13 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		 * If the target list is of length 1, and the type of the varnode in
 		 * the target list matches the declared return type, this is okay.
 		 * This can happen, for example, where the body of the function is
-<<<<<<< HEAD
-		 * 'SELECT func2()', where func2 has the same composite return type
-		 * as the function that's calling it.
+		 * 'SELECT func2()', where func2 has the same composite return type as
+		 * the function that's calling it.
 		 *
 		 * XXX Note that if rettype is RECORD, the IsBinaryCoercible check
 		 * will succeed for any composite restype.  For the moment we rely on
 		 * runtime type checking to catch any discrepancy, but it'd be nice to
 		 * do better at parse time.
-=======
-		 * 'SELECT func2()', where func2 has the same composite return type as
-		 * the function that's calling it.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		 */
 		if (tlistlen == 1)
 		{

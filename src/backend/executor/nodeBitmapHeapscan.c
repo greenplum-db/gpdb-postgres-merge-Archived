@@ -110,10 +110,14 @@ freeBitmapState(BitmapHeapScanState *scanstate)
 	/* BitmapIndexScan is the owner of the bitmap memory. Don't free it here */
 	scanstate->tbm = NULL;
 	if (scanstate->tbmres != NULL)
-	{
 		pfree(scanstate->tbmres);
-		scanstate->tbmres = NULL;
-	}
+	scanstate->tbmres = NULL;
+	if (scanstate->tbmiterator)
+		tbm_end_iterate(scanstate->tbmiterator);
+	scanstate->tbmiterator = NULL;
+	if (scanstate->prefetch_iterator)
+		tbm_end_iterate(scanstate->prefetch_iterator);
+	scanstate->prefetch_iterator = NULL;
 }
 
 /* ----------------------------------------------------------------
@@ -129,7 +133,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	ExprContext *econtext;
 	HeapScanDesc scan;
 	Index		scanrelid;
-	TIDBitmap  *tbm;
+	Node  		*tbm;
 	TBMIterator *tbmiterator;
 	TBMIterateResult *tbmres;
 	TBMIterator *prefetch_iterator;
@@ -151,7 +155,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	scanrelid = ((BitmapHeapScan *) node->ss.ps.plan)->scan.scanrelid;
 	tbm = node->tbm;
 	tbmiterator = node->tbmiterator;
-	tbmres = node->tbmres;
+	tbmres = (TBMIterateResult *) node->tbmres;
 	prefetch_iterator = node->prefetch_iterator;
 
 	/*
@@ -214,10 +218,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			elog(ERROR, "unrecognized result from subplan");
 
 		node->tbm = tbm;
-<<<<<<< HEAD
-=======
 		node->tbmiterator = tbmiterator = tbm_begin_iterate(tbm);
-		node->tbmres = tbmres = NULL;
 
 #ifdef USE_PREFETCH
 		if (target_prefetch_pages > 0)
@@ -227,7 +228,6 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			node->prefetch_target = -1;
 		}
 #endif   /* USE_PREFETCH */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 
 	for (;;)
@@ -237,7 +237,6 @@ BitmapHeapNext(BitmapHeapScanState *node)
 
 		if (tbmres == NULL || tbmres->ntuples == 0)
 		{
-<<<<<<< HEAD
 			CHECK_FOR_INTERRUPTS();
 
 			if (QueryFinishPending)
@@ -246,13 +245,9 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			if (tbm == NULL)
 				more = false;
 			else
-				more = tbm_iterate(tbm, tbmres);
+				more = tbm_iterate(tbmiterator, tbmres);
 
 			if (!more)
-=======
-			node->tbmres = tbmres = tbm_iterate(tbmiterator);
-			if (tbmres == NULL)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			{
 				/* no more entries in the bitmap */
 				break;
@@ -327,9 +322,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			 * Continuing in previously obtained page; advance rs_cindex
 			 */
 			scan->rs_cindex++;
-<<<<<<< HEAD
 			tbmres->ntuples--;
-=======
 
 #ifdef USE_PREFETCH
 
@@ -340,7 +333,6 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			if (node->prefetch_target < target_prefetch_pages)
 				node->prefetch_target++;
 #endif   /* USE_PREFETCH */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		}
 
 		/*
@@ -585,20 +577,7 @@ ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt)
 	/* rescan to release any page pin */
 	heap_rescan(node->ss_currentScanDesc, NULL);
 
-<<<<<<< HEAD
 	freeBitmapState(node);
-=======
-	if (node->tbmiterator)
-		tbm_end_iterate(node->tbmiterator);
-	if (node->prefetch_iterator)
-		tbm_end_iterate(node->prefetch_iterator);
-	if (node->tbm)
-		tbm_free(node->tbm);
-	node->tbm = NULL;
-	node->tbmiterator = NULL;
-	node->tbmres = NULL;
-	node->prefetch_iterator = NULL;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * Always rescan the input immediately, to ensure we can pass down any
@@ -639,24 +618,7 @@ ExecEndBitmapHeapScan(BitmapHeapScanState *node)
 	 */
 	ExecEndNode(outerPlanState(node));
 
-<<<<<<< HEAD
 	ExecEagerFreeBitmapHeapScan(node);
-=======
-	/*
-	 * release bitmap if any
-	 */
-	if (node->tbmiterator)
-		tbm_end_iterate(node->tbmiterator);
-	if (node->prefetch_iterator)
-		tbm_end_iterate(node->prefetch_iterator);
-	if (node->tbm)
-		tbm_free(node->tbm);
-
-	/*
-	 * close heap scan
-	 */
-	heap_endscan(scanDesc);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * close the heap relation.

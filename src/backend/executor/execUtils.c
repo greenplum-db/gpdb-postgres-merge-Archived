@@ -689,10 +689,6 @@ ExecBuildProjectionInfo(List *targetList,
 		projInfo->pi_itemIsDone = (ExprDoneCond *)
 			palloc(len * sizeof(ExprDoneCond));
 
-#ifdef USE_CODEGEN
-	// Set the default location for ExecVariableList
-	projInfo->ExecVariableList_gen_info.ExecVariableList_fn = ExecVariableList;
-#endif
 	return projInfo;
 }
 
