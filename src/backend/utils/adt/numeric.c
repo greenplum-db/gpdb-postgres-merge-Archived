@@ -276,13 +276,7 @@ static void dump_var(const char *str, NumericVar *var);
 static void alloc_var(NumericVar *var, int ndigits);
 static void zero_var(NumericVar *var);
 
-<<<<<<< HEAD
-static void init_var_from_str(const char *str, NumericVar *dest);
-=======
-static const char *set_var_from_str(const char *str, const char *cp,
-				 NumericVar *dest);
-static void set_var_from_num(Numeric value, NumericVar *dest);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+static const char *init_var_from_str(const char *str, const char *cp, NumericVar *dest);
 static void set_var_from_var(NumericVar *value, NumericVar *dest);
 static void init_var_from_var(NumericVar *value, NumericVar *dest);
 static void init_ro_var_from_var(NumericVar *value, NumericVar *dest);
@@ -393,13 +387,6 @@ numeric_in(PG_FUNCTION_ARGS)
 	{
 		res = make_result(&const_nan);
 
-<<<<<<< HEAD
-	/*
-	 * Use init_var_from_str() to parse the input string and return it in the
-	 * packed DB storage format
-	 */
-	init_var_from_str(str, &value);
-=======
 		/* Should be nothing left but spaces */
 		cp += 3;
 		while (*cp)
@@ -415,17 +402,12 @@ numeric_in(PG_FUNCTION_ARGS)
 	else
 	{
 		/*
-		 * Use set_var_from_str() to parse a normal numeric value
+		 * Use init_var_from_str() to parse the input string and return it in the
+		 * packed DB storage format
 		 */
 		NumericVar	value;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
-		init_var(&value);
-
-<<<<<<< HEAD
-	res = make_result(&value);
-=======
-		cp = set_var_from_str(str, cp, &value);
+		cp = init_var_from_str(str, cp, &value);
 
 		/*
 		 * We duplicate a few lines of code here because we would like to
@@ -448,7 +430,6 @@ numeric_in(PG_FUNCTION_ARGS)
 		res = make_result(&value);
 		free_var(&value);
 	}
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	PG_RETURN_NUMERIC(res);
 }
@@ -2166,7 +2147,8 @@ numeric_li_value(float8 f, Numeric y0, Numeric y1)
 		/* Make a numeric version of f */
 		snprintf(buf, sizeof(buf), "%.*g", DBL_DIG, f);
 
-		init_var_from_str(buf, &vf);
+		/* Assume we need not worry about leading/trailing spaces */
+		(void) init_var_from_str(buf, buf, &vf);
 		
 		mul_var(&vf, &v1, &v1, vf.dscale + v1.dscale);
 		add_var(&v0, &v1, &v1);  
@@ -2421,15 +2403,9 @@ float8_numeric(PG_FUNCTION_ARGS)
 
 	snprintf(buf, sizeof(buf), "%.*g", DBL_DIG, val);
 
-<<<<<<< HEAD
-	init_var_from_str(buf, &result);
-=======
-	init_var(&result);
-
 	/* Assume we need not worry about leading/trailing spaces */
-	(void) set_var_from_str(buf, buf, &result);
+	(void) init_var_from_str(buf, buf, &result);
 
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	res = make_result(&result);
 
 	PG_RETURN_NUMERIC(res);
@@ -2485,15 +2461,9 @@ float4_numeric(PG_FUNCTION_ARGS)
 
 	snprintf(buf, sizeof(buf), "%.*g", FLT_DIG, val);
 
-<<<<<<< HEAD
-	init_var_from_str(buf, &result);
-=======
-	init_var(&result);
-
 	/* Assume we need not worry about leading/trailing spaces */
-	(void) set_var_from_str(buf, buf, &result);
+	(void) init_var_from_str(buf, buf, &result);
 
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	res = make_result(&result);
 
 	PG_RETURN_NUMERIC(res);
@@ -3674,11 +3644,6 @@ zero_var(NumericVar *var)
  *
  *	Parse a string and put the number into a variable
  *
-<<<<<<< HEAD
- */
-static void
-init_var_from_str(const char *str, NumericVar *dest)
-=======
  * This function does not handle leading or trailing spaces, and it doesn't
  * accept "NaN" either.  It returns the end+1 position so that caller can
  * check for trailing spaces/garbage if deemed necessary.
@@ -3687,8 +3652,7 @@ init_var_from_str(const char *str, NumericVar *dest)
  * reports.  (Typically cp would be the same except advanced over spaces.)
  */
 static const char *
-set_var_from_str(const char *str, const char *cp, NumericVar *dest)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+init_var_from_str(const char *str, const char *cp, NumericVar *dest)
 {
 	bool		have_dp = FALSE;
 	int			i;
@@ -3830,18 +3794,11 @@ set_var_from_str(const char *str, const char *cp, NumericVar *dest)
 		i += DEC_DIGITS;
 	}
 
-<<<<<<< HEAD
 	if (decdigits != tdd)
 		pfree(decdigits);
-=======
-	pfree(decdigits);
-
-	/* Strip any leading/trailing zeroes, and normalize weight if zero */
-	strip_var(dest);
 
 	/* Return end+1 position for caller */
 	return cp;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 
@@ -6109,15 +6066,9 @@ power_var(NumericVar *base, NumericVar *exp, NumericVar *result)
 		result->dscale = NUMERIC_MIN_SIG_DIGITS;		/* no need to round */
 		return;
 	}
-<<<<<<< HEAD
-	
+
 	quick_init_var(&ln_base);
 	quick_init_var(&ln_num);
-=======
-
-	init_var(&ln_base);
-	init_var(&ln_num);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* Set scale for ln() calculation --- need extra accuracy here */
 

@@ -27,21 +27,12 @@
 #include "catalog/pg_attribute_encoding.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
-<<<<<<< HEAD
-#include "catalog/pg_partition.h"
-#include "catalog/pg_partition_rule.h"
-=======
 #include "catalog/pg_language.h"
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
-<<<<<<< HEAD
-#include "cdb/cdbpartition.h"
-=======
 #include "catalog/pg_type.h"
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
 #include "commands/tablespace.h"
@@ -70,6 +61,9 @@
 #include "utils/typcache.h"
 #include "utils/xml.h"
 
+#include "cdb/cdbpartition.h"
+#include "catalog/pg_partition.h"
+#include "catalog/pg_partition_rule.h"
 
 /* ----------
  * Pretty formatting constants
@@ -195,12 +189,8 @@ static void get_rule_groupingclause(GroupingClause *grp, List *tlist,
 static Node *get_rule_sortgroupclause(SortGroupClause *srt, List *tlist,
 						 bool force_colno,
 						 deparse_context *context);
-<<<<<<< HEAD
-=======
 static void get_rule_orderby(List *orderList, List *targetList,
 				 bool force_colno, deparse_context *context);
-static void get_rule_windowclause(Query *query, deparse_context *context);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static void get_rule_windowspec(WindowClause *wc, List *targetList,
 					deparse_context *context);
 static void push_plan(deparse_namespace *dpns, Plan *subplan);
@@ -246,14 +236,9 @@ static Node *processIndirection(Node *node, deparse_context *context,
 static void printSubscripts(ArrayRef *aref, deparse_context *context);
 static char *get_relation_name(Oid relid);
 static char *generate_relation_name(Oid relid, List *namespaces);
-<<<<<<< HEAD
 static char *generate_function_name(Oid funcid, int nargs,
 					   Oid *argtypes,
 					   bool has_variadic, bool *use_variadic_p);
-=======
-static char *generate_function_name(Oid funcid, int nargs, Oid *argtypes,
-					   bool *is_variadic);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
 static text *string_to_text(char *str);
 static char *flatten_reloptions(Oid relid);
@@ -1343,11 +1328,7 @@ pg_get_expr_worker(text *expr, Oid relid, const char *relname, int prettyFlags)
 	str = deparse_expression_pretty(node, context, false, false,
 									prettyFlags, 0);
 
-<<<<<<< HEAD
-	return str;
-=======
 	return string_to_text(str);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 
@@ -4967,7 +4948,6 @@ get_rule_expr(Node *node, deparse_context *context,
 					/* WHEN IS NOT DISTINCT FROM */
 					if (not_clause(w))
 					{
-<<<<<<< HEAD
 						Expr *arg = get_notclausearg((Expr *) w);
 
 						if (IsA(arg, DistinctExpr))
@@ -4979,44 +4959,6 @@ get_rule_expr(Node *node, deparse_context *context,
 							rhs = (Node *) lsecond(dexpr->args);
 							get_rule_expr(rhs, context, false);
 						}
-=======
-						/*
-						 * The parser should have produced WHEN clauses of the
-						 * form "CaseTestExpr = RHS"; we want to show just the
-						 * RHS.  If the user wrote something silly like "CASE
-						 * boolexpr WHEN TRUE THEN ...", then the optimizer's
-						 * simplify_boolean_equality() may have reduced this
-						 * to just "CaseTestExpr" or "NOT CaseTestExpr", for
-						 * which we have to show "TRUE" or "FALSE".  Also,
-						 * depending on context the original CaseTestExpr
-						 * might have been reduced to a Const (but we won't
-						 * see "WHEN Const").  We have also to consider the
-						 * possibility that an implicit coercion was inserted
-						 * between the CaseTestExpr and the operator.
-						 */
-						if (IsA(w, OpExpr))
-						{
-							List	   *args = ((OpExpr *) w)->args;
-							Node	   *lhs;
-							Node	   *rhs;
-
-							Assert(list_length(args) == 2);
-							lhs = strip_implicit_coercions(linitial(args));
-							Assert(IsA(lhs, CaseTestExpr) ||
-								   IsA(lhs, Const));
-							rhs = (Node *) lsecond(args);
-							get_rule_expr(rhs, context, false);
-						}
-						else if (IsA(strip_implicit_coercions(w),
-									 CaseTestExpr))
-							appendStringInfo(buf, "TRUE");
-						else if (not_clause(w))
-						{
-							Assert(IsA(strip_implicit_coercions((Node *) get_notclausearg((Expr *) w)),
-									   CaseTestExpr));
-							appendStringInfo(buf, "FALSE");
-						}
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 						else
 							get_rule_expr(w, context, false);
 					}
@@ -7036,7 +6978,6 @@ generate_relation_name(Oid relid, List *namespaces)
  *		given that it is being called with the specified actual arg types.
  *		(Arg types matter because of ambiguous-function resolution rules.)
  *
-<<<<<<< HEAD
  * If we're dealing with a potentially variadic function (in practice, this
  * means a FuncExpr or Aggref, not some other way of calling a function), then
  * has_variadic must specify whether variadic arguments have been merged,
@@ -7045,10 +6986,6 @@ generate_relation_name(Oid relid, List *namespaces)
  * use_variadic_p can be NULL.
  *
  * The result includes all necessary quoting and schema-prefixing.
-=======
- * The result includes all necessary quoting and schema-prefixing.	We can
- * also pass back an indication of whether the function is variadic.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  */
 static char *
 generate_function_name(Oid funcid, int nargs, Oid *argtypes,

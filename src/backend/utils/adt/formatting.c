@@ -2426,11 +2426,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
-<<<<<<< HEAD
 							asc_toupper_z(days[tm->tm_wday]));
-=======
-							str_toupper_z(days[tm->tm_wday]));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				s += strlen(s);
 				break;
 			case DCH_Day:
@@ -2895,11 +2891,7 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 					if (matched != 2)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-<<<<<<< HEAD
 							 errmsg("invalid input string for \"Y,YYY\" in function \"to_date\"")));
-=======
-							  errmsg("invalid input string for \"Y,YYY\"")));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 					years += (millenia * 1000);
 					from_char_set_int(&out->year, years, n);
 					out->yysz = 4;
@@ -3421,7 +3413,6 @@ do_to_timestamp(text *date_txt, text *fmt,
 	if (tmfc.clock == CLOCK_12_HOUR)
 	{
 		if (tm->tm_hour < 1 || tm->tm_hour > 12)
-<<<<<<< HEAD
 		{
 			if (tm->tm_hour > 12 && !tmfc.pm)
 			{
@@ -3440,13 +3431,6 @@ do_to_timestamp(text *date_txt, text *fmt,
 								tm->tm_hour),
 						 errhint("Use the 24-hour clock, or give an hour between 1 and 12.")));
 		}
-=======
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-					 errmsg("hour \"%d\" is invalid for the 12-hour clock",
-							tm->tm_hour),
-					 errhint("Use the 24-hour clock, or give an hour between 1 and 12.")));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		if (tmfc.pm && tm->tm_hour < 12)
 			tm->tm_hour += 12;

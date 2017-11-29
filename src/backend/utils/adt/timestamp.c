@@ -2373,7 +2373,6 @@ timestamptz_cmp_timestamp(PG_FUNCTION_ARGS)
  */
 static inline TimeOffset
 interval_cmp_value(const Interval *interval)
-<<<<<<< HEAD
 {
 	TimeOffset	span;
 
@@ -2386,29 +2385,6 @@ interval_cmp_value(const Interval *interval)
 	span += interval->month * ((double) DAYS_PER_MONTH * SECS_PER_DAY);
 	span += interval->day * ((double) HOURS_PER_DAY * SECS_PER_HOUR);
 #endif
-=======
-{
-	TimeOffset	span;
-
-	span = interval->time;
-
-#ifdef HAVE_INT64_TIMESTAMP
-	span += interval->month * INT64CONST(30) * USECS_PER_DAY;
-	span += interval->day * INT64CONST(24) * USECS_PER_HOUR;
-#else
-	span += interval->month * ((double) DAYS_PER_MONTH * SECS_PER_DAY);
-	span += interval->day * ((double) HOURS_PER_DAY * SECS_PER_HOUR);
-#endif
-
-	return span;
-}
-
-static int
-interval_cmp_internal(Interval *interval1, Interval *interval2)
-{
-	TimeOffset	span1 = interval_cmp_value(interval1);
-	TimeOffset	span2 = interval_cmp_value(interval2);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	return span;
 }
@@ -2733,26 +2709,12 @@ interval_hash(PG_FUNCTION_ARGS)
 {
 	Interval   *interval = PG_GETARG_INTERVAL_P(0);
 	TimeOffset	span = interval_cmp_value(interval);
-<<<<<<< HEAD
-	uint32		thash;
-
-#ifdef HAVE_INT64_TIMESTAMP
-	thash = DatumGetUInt32(DirectFunctionCall1(hashint8,
-											   Int64GetDatumFast(span)));
-#else
-	thash = DatumGetUInt32(DirectFunctionCall1(hashfloat8,
-											   Float8GetDatumFast(span)));
-#endif
-
-	PG_RETURN_UINT32(thash);
-=======
 
 #ifdef HAVE_INT64_TIMESTAMP
 	return DirectFunctionCall1(hashint8, Int64GetDatumFast(span));
 #else
 	return DirectFunctionCall1(hashfloat8, Float8GetDatumFast(span));
 #endif
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 /* overlaps_timestamp() --- implements the SQL92 OVERLAPS operator.

@@ -205,7 +205,6 @@ byteain(PG_FUNCTION_ARGS)
 	char	   *inputText = PG_GETARG_CSTRING(0);
 	char	   *tp;
 	char	   *rp;
-<<<<<<< HEAD
 	int			bc;
 	bytea	   *result;
 
@@ -223,12 +222,6 @@ byteain(PG_FUNCTION_ARGS)
 
 	/* Else, it's the traditional escaped style */
 	for (bc = 0, tp = inputText; *tp != '\0'; bc++)
-=======
-	int byte;
-	bytea	   *result;
-
-	for (byte = 0, tp = inputText; *tp != '\0'; byte ++)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	{
 		if (tp[0] != '\\')
 			tp++;
@@ -251,16 +244,10 @@ byteain(PG_FUNCTION_ARGS)
 		}
 	}
 
-<<<<<<< HEAD
 	bc += VARHDRSZ;
+
 	result = (bytea *) palloc(bc);
 	SET_VARSIZE(result, bc);
-=======
-	byte	  +=VARHDRSZ;
-
-	result = (bytea *) palloc(byte);
-	SET_VARSIZE(result, byte);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	tp = inputText;
 	rp = VARDATA(result);
@@ -273,20 +260,12 @@ byteain(PG_FUNCTION_ARGS)
 				 (tp[2] >= '0' && tp[2] <= '7') &&
 				 (tp[3] >= '0' && tp[3] <= '7'))
 		{
-<<<<<<< HEAD
 			bc = VAL(tp[1]);
 			bc <<= 3;
 			bc += VAL(tp[2]);
 			bc <<= 3;
 			*rp++ = bc + VAL(tp[3]);
-=======
-			byte = VAL(tp[1]);
-			byte	 <<=3;
-			byte	  +=VAL(tp[2]);
-			byte	 <<=3;
-			*rp++ = byte +VAL(tp[3]);
 
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			tp += 4;
 		}
 		else if ((tp[0] == '\\') &&

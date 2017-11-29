@@ -277,7 +277,6 @@ static const datetkn *deltacache[MAXDATEFIELDS] = {NULL};
  */
 static inline int strtoi(const char *nptr, char **endptr, __attribute__((unused)) int base)
 {
-<<<<<<< HEAD
 	/* Assume base = 10 */
 	/* Assume number will not be larger than int32 */
 	/* Assume number isn't hex with 0x prefix */
@@ -286,9 +285,6 @@ static inline int strtoi(const char *nptr, char **endptr, __attribute__((unused)
 	const char *s = nptr;
 	unsigned long acc;
 	unsigned char c;
-=======
-	long		val;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	int			neg = 0,
 				any;
@@ -3809,7 +3805,6 @@ EncodeDateOnly(struct pg_tm * tm, int style, char *str)
 void
 EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str)
 {
-<<<<<<< HEAD
 	str[0] = tm->tm_hour/10 + '0';
 	str[1] = tm->tm_hour % 10 + '0';
 	str[2] = ':';
@@ -3817,9 +3812,6 @@ EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str)
 	str[4] = tm->tm_min % 10 + '0';
 	str[5] = ':';
 	str[6] = '\0';
-=======
-	sprintf(str, "%02d:%02d:", tm->tm_hour, tm->tm_min);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	str += strlen(str);
 
 	AppendSeconds(str, tm->tm_sec, fsec, MAX_TIME_PRECISION, true);
@@ -4086,37 +4078,7 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 	{
 			/* SQL Standard interval format */
 		case INTSTYLE_SQL_STANDARD:
-		{
-			bool has_negative = year < 0 || mon  < 0 ||
-								mday < 0 || hour < 0 ||
-								min  < 0 || sec  < 0 || fsec < 0;
-			bool has_positive = year > 0 || mon  > 0 ||
-								mday > 0 || hour > 0 ||
-								min  > 0 || sec  > 0 || fsec > 0;
-			bool has_year_month = year != 0 || mon  != 0;
-			bool has_day_time   = mday != 0 || hour != 0 ||
-								  min  != 0 || sec  != 0 || fsec != 0;
-			bool has_day        = mday != 0;
-			bool sql_standard_value = !(has_negative && has_positive) &&
-									  !(has_year_month && has_day_time);
-
-			/*
-			 * SQL Standard wants only 1 "<sign>" preceding the whole
-			 * interval ... but can't do that if mixed signs.
-			 */
-			if (has_negative && sql_standard_value)
 			{
-<<<<<<< HEAD
-				*cp++ = '-';
-				year = -year;
-				mon  = -mon;
-				mday = -mday;
-				hour = -hour;
-				min  = -min;
-				sec  = -sec;
-				fsec = -fsec;
-			}
-=======
 				bool		has_negative = year < 0 || mon < 0 ||
 				mday < 0 || hour < 0 ||
 				min < 0 || sec < 0 || fsec < 0;
@@ -4129,25 +4091,11 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 				bool		has_day = mday != 0;
 				bool		sql_standard_value = !(has_negative && has_positive) &&
 				!(has_year_month && has_day_time);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
-			if (!has_negative && !has_positive)
-			{
-				sprintf(cp, "0");
-			}
-			else if (!sql_standard_value)
-			{
 				/*
-					 * For non sql-standard interval values, force outputting
-					 * the signs to avoid ambiguities with intervals with
-					 * mixed sign components.
+				 * SQL Standard wants only 1 "<sign>" preceding the whole
+				 * interval ... but can't do that if mixed signs.
 				 */
-<<<<<<< HEAD
-				char year_sign = (year < 0 || mon < 0) ? '-' : '+';
-				char day_sign = (mday < 0) ? '-' : '+';
-				char sec_sign = (hour < 0 || min < 0 ||
-								 sec < 0 || fsec < 0) ? '-' : '+';
-=======
 				if (has_negative && sql_standard_value)
 				{
 					*cp++ = '-';
@@ -4175,18 +4123,31 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 					char		day_sign = (mday < 0) ? '-' : '+';
 					char		sec_sign = (hour < 0 || min < 0 ||
 											sec < 0 || fsec < 0) ? '-' : '+';
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
-				sprintf(cp, "%c%d-%d %c%d %c%d:%02d:",
-						year_sign, abs(year), abs(mon),
-						day_sign, abs(mday),
-						sec_sign, abs(hour), abs(min));
-				cp += strlen(cp);
-				AppendSeconds(cp, sec, fsec, MAX_INTERVAL_PRECISION, true);
+					sprintf(cp, "%c%d-%d %c%d %c%d:%02d:",
+							year_sign, abs(year), abs(mon),
+							day_sign, abs(mday),
+							sec_sign, abs(hour), abs(min));
+					cp += strlen(cp);
+					AppendSeconds(cp, sec, fsec, MAX_INTERVAL_PRECISION, true);
+				}
+				else if (has_year_month)
+				{
+					sprintf(cp, "%d-%d", year, mon);
+				}
+				else if (has_day)
+				{
+					sprintf(cp, "%d %d:%02d:", mday, hour, min);
+					cp += strlen(cp);
+					AppendSeconds(cp, sec, fsec, MAX_INTERVAL_PRECISION, true);
+				}
+				else
+				{
+					sprintf(cp, "%d:%02d:", hour, min);
+					cp += strlen(cp);
+					AppendSeconds(cp, sec, fsec, MAX_INTERVAL_PRECISION, true);
+				}
 			}
-<<<<<<< HEAD
-			else if (has_year_month)
-=======
 			break;
 
 			/* ISO 8601 "time-intervals by duration only" */
@@ -4194,13 +4155,10 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 			/* special-case zero to avoid printing nothing */
 			if (year == 0 && mon == 0 && mday == 0 &&
 				hour == 0 && min == 0 && sec == 0 && fsec == 0)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			{
-				sprintf(cp, "%d-%d", year, mon);
+				sprintf(cp, "PT0S");
+				break;
 			}
-<<<<<<< HEAD
-			else if (has_day)
-=======
 			*cp++ = 'P';
 			cp = AddISO8601IntPart(cp, year, 'Y');
 			cp = AddISO8601IntPart(cp, mon, 'M');
@@ -4210,22 +4168,25 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 			cp = AddISO8601IntPart(cp, hour, 'H');
 			cp = AddISO8601IntPart(cp, min, 'M');
 			if (sec != 0 || fsec != 0)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			{
-				sprintf(cp, "%d %d:%02d:", mday, hour, min);
+				if (sec < 0 || fsec < 0)
+					*cp++ = '-';
+				AppendSeconds(cp, sec, fsec, MAX_INTERVAL_PRECISION, false);
 				cp += strlen(cp);
-				AppendSeconds(cp, sec, fsec, MAX_INTERVAL_PRECISION, true);
+				*cp++ = 'S';
+				*cp++ = '\0';
 			}
-<<<<<<< HEAD
-			else
-			{
-				sprintf(cp, "%d:%02d:", hour, min);
-=======
 			break;
 
 			/* Compatible with postgresql < 8.4 when DateStyle = 'iso' */
 		case INTSTYLE_POSTGRES:
 			cp = AddPostgresIntPart(cp, year, "year", &is_zero, &is_before);
+
+			/*
+			 * Ideally we should spell out "month" like we do for "year" and
+			 * "day".  However, for backward compatibility, we can't easily
+			 * fix this.  bjm 2011-05-24
+			 */
 			cp = AddPostgresIntPart(cp, mon, "mon", &is_zero, &is_before);
 			cp = AddPostgresIntPart(cp, mday, "day", &is_zero, &is_before);
 			if (is_zero || hour != 0 || min != 0 || sec != 0 || fsec != 0)
@@ -4236,75 +4197,11 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 						is_zero ? "" : " ",
 						(minus ? "-" : (is_before ? "+" : "")),
 						abs(hour), abs(min));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				cp += strlen(cp);
 				AppendSeconds(cp, sec, fsec, MAX_INTERVAL_PRECISION, true);
 			}
-		}
-		break;
-
-	/* ISO 8601 "time-intervals by duration only" */
-	case INTSTYLE_ISO_8601:
-		/* special-case zero to avoid printing nothing */
-		if (year == 0 && mon == 0 && mday == 0 &&
-		    hour == 0 && min == 0 && sec  == 0 && fsec == 0)
-		{
-			sprintf(cp, "PT0S");
 			break;
-		}
-		*cp++ = 'P';
-		cp = AddISO8601IntPart(cp, year, 'Y');
-		cp = AddISO8601IntPart(cp, mon , 'M');
-		cp = AddISO8601IntPart(cp, mday, 'D');
-		if (hour != 0 || min != 0 || sec != 0 || fsec != 0)
-			*cp++ = 'T';
-		cp = AddISO8601IntPart(cp, hour, 'H');
-		cp = AddISO8601IntPart(cp, min , 'M');
-		if (sec != 0 || fsec != 0)
-		{
-			if (sec < 0 || fsec < 0)
-				*cp++ = '-';
-			AppendSeconds(cp, sec, fsec, MAX_INTERVAL_PRECISION, false);
-			cp += strlen(cp);
-			*cp++ = 'S';
-			*cp++ = '\0';
-		}
-		break;
 
-<<<<<<< HEAD
-	/* Compatible with postgresql < 8.4 when DateStyle = 'iso' */
-	case INTSTYLE_POSTGRES:
-		cp = AddPostgresIntPart(cp, year, "year", &is_zero, &is_before);
-		cp = AddPostgresIntPart(cp, mon, "mon", &is_zero, &is_before);
-		cp = AddPostgresIntPart(cp, mday, "day", &is_zero, &is_before);
-		if (is_zero || hour != 0 || min != 0 || sec != 0 || fsec != 0)
-		{
-			bool	minus = (hour < 0 || min < 0 || sec < 0 || fsec < 0);
-
-			sprintf(cp, "%s%s%02d:%02d:",
-					is_zero ? "" : " ",
-					(minus ? "-" : (is_before ? "+" : "")),
-					abs(hour), abs(min));
-			cp += strlen(cp);
-			AppendSeconds(cp, sec, fsec, MAX_INTERVAL_PRECISION, true);
-		}
-		break;
-
-	/* Compatible with postgresql < 8.4 when DateStyle != 'iso' */
-	case INTSTYLE_POSTGRES_VERBOSE:
-	default:
-		strcpy(cp, "@");
-		cp++;
-		cp = AddVerboseIntPart(cp, year, "year", &is_zero, &is_before);
-		cp = AddVerboseIntPart(cp, mon, "mon", &is_zero, &is_before);
-		cp = AddVerboseIntPart(cp, mday, "day", &is_zero, &is_before);
-		cp = AddVerboseIntPart(cp, hour, "hour", &is_zero, &is_before);
-		cp = AddVerboseIntPart(cp, min, "min", &is_zero, &is_before);
-		if (sec != 0 || fsec != 0)
-		{
-			*cp++ = ' ';
-			if (sec < 0 || (sec == 0 && fsec < 0))
-=======
 			/* Compatible with postgresql < 8.4 when DateStyle != 'iso' */
 		case INTSTYLE_POSTGRES_VERBOSE:
 		default:
@@ -4316,27 +4213,29 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 			cp = AddVerboseIntPart(cp, hour, "hour", &is_zero, &is_before);
 			cp = AddVerboseIntPart(cp, min, "min", &is_zero, &is_before);
 			if (sec != 0 || fsec != 0)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			{
-				if (is_zero)
-					is_before = TRUE;
-				else if (!is_before)
+				*cp++ = ' ';
+				if (sec < 0 || (sec == 0 && fsec < 0))
+				{
+					if (is_zero)
+						is_before = TRUE;
+					else if (!is_before)
+						*cp++ = '-';
+				}
+				else if (is_before)
 					*cp++ = '-';
+				AppendSeconds(cp, sec, fsec, MAX_INTERVAL_PRECISION, false);
+				cp += strlen(cp);
+				sprintf(cp, " sec%s",
+						(abs(sec) != 1 || fsec != 0) ? "s" : "");
+				is_zero = FALSE;
 			}
-			else if (is_before)
-				*cp++ = '-';
-			AppendSeconds(cp, sec, fsec, MAX_INTERVAL_PRECISION, false);
-			cp += strlen(cp);
-			sprintf(cp, " sec%s",
-					(abs(sec) != 1 || fsec != 0) ? "s" : "");
-			is_zero = FALSE;
-		}
-		/* identically zero? then put in a unitless zero... */
-		if (is_zero)
-			strcat(cp, " 0");
-		if (is_before)
-			strcat(cp, " ago");
-		break;
+			/* identically zero? then put in a unitless zero... */
+			if (is_zero)
+				strcat(cp, " 0");
+			if (is_before)
+				strcat(cp, " ago");
+			break;
 	}
 }
 

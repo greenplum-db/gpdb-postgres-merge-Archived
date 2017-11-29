@@ -3058,13 +3058,9 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows)
 		 * PlaceHolderVar doesn't change the number of groups, which boils
 		 * down to ignoring the possible addition of nulls to the result set).
 		 */
-<<<<<<< HEAD
 		varshere = pull_var_clause(groupexpr,
 								   PVC_RECURSE_AGGREGATES,
 								   PVC_RECURSE_PLACEHOLDERS);
-=======
-		varshere = pull_var_clause(groupexpr, PVC_RECURSE_PLACEHOLDERS);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		/*
 		 * If we find any variable-free GROUP BY item, then either it is a
@@ -3532,9 +3528,8 @@ convert_numeric_to_scalar(Datum value, Oid typid)
 	return 0;
 }
 
+#ifdef NOT_USED
 /*
-<<<<<<< HEAD
-=======
  * Do convert_to_scalar()'s work for any character-string data type.
  *
  * String datatypes are converted to a scale that ranges from 0 to 1,
@@ -3633,7 +3628,9 @@ convert_string_to_scalar(char *value,
 	*scaledlobound = convert_one_string_to_scalar(lobound, rangelo, rangehi);
 	*scaledhibound = convert_one_string_to_scalar(hibound, rangelo, rangehi);
 }
+#endif
 
+#ifdef NOT_USED
 static double
 convert_one_string_to_scalar(char *value, int rangelo, int rangehi)
 {
@@ -3669,7 +3666,9 @@ convert_one_string_to_scalar(char *value, int rangelo, int rangehi)
 
 	return num;
 }
+#endif
 
+#ifdef NOT_USED
 /*
  * Convert a string-type Datum into a palloc'd, null-terminated string.
  *
@@ -3767,9 +3766,9 @@ convert_string_datum(Datum value, Oid typid)
 
 	return val;
 }
+#endif
 
 /*
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  * Do convert_to_scalar()'s work for any bytea data type.
  *
  * Very similar to the old convert_string_to_scalar except we can't assume
