@@ -588,7 +588,6 @@ pg_server_to_any(const char *s, int len, int encoding)
 /*
  *	Perform default encoding conversion using cached FmgrInfo. Since
  *	this function does not access database at all, it is safe to call
-<<<<<<< HEAD
  *	outside transactions. Explicit setting client encoding required
  *	before calling this function. Otherwise no conversion is
  *	performed.
@@ -597,10 +596,6 @@ pg_server_to_any(const char *s, int len, int encoding)
  *  encoding that is not necessarily ClientEncoding->encoding for client-to-
  *  server conversion. Default value is -1, which means: use ClientEncoding.
  *  See pg_custom_client_to_server for information.
-=======
- *	outside transactions.  If the conversion has not been set up by
- *	SetClientEncoding(), no conversion is performed.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  */
 static char *
 perform_default_encoding_conversion(const char *src, int len, bool is_client_to_server, 

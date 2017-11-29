@@ -992,12 +992,8 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		!(superuser() && gp_maintenance_conn))
 		ereport(FATAL,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-<<<<<<< HEAD
 				 errmsg("maintenance mode: connected by superuser only"),
 				 errSendAlert(false)));
-=======
-		   errmsg("must be superuser to connect during database shutdown")));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * MPP:  If we were started in utility mode then we only want to allow
