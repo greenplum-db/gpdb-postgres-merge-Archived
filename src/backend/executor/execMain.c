@@ -1284,17 +1284,6 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 	 * satisfied from column-level rather than relation-level permissions.
 	 * First, remove any bits that are satisfied by relation permissions.
 	 */
-<<<<<<< HEAD
-	if (pg_class_aclmask(relOid, userid, requiredPerms, ACLMASK_ALL)
-		!= requiredPerms)
-	{
-		/*
-		 * If the table is a partition, return an error message that includes
-		 * the name of the parent table.
-		 */
-		const char *rel_name = get_rel_name_partition(relOid);
-		aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS, rel_name);
-=======
 	relPerms = pg_class_aclmask(relOid, userid, requiredPerms, ACLMASK_ALL);
 	remainingPerms = requiredPerms & ~relPerms;
 	if (remainingPerms != 0)
@@ -1394,7 +1383,6 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 			}
 			bms_free(tmpset);
 		}
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 }
 
@@ -3326,7 +3314,6 @@ ExecInsert(TupleTableSlot *slot,
 
 	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 
-<<<<<<< HEAD
 	rel_is_heap = RelationIsHeap(resultRelationDesc);
 	rel_is_aocols = RelationIsAoCols(resultRelationDesc);
 	rel_is_aorows = RelationIsAoRows(resultRelationDesc);
@@ -3363,8 +3350,6 @@ ExecInsert(TupleTableSlot *slot,
 			resultRelInfo->ri_extInsertDesc = external_insert_init(resultRelationDesc);
 	}
 
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	/*
 	 * If the result relation has OIDs, force the tuple's OID to zero so that
 	 * heap_insert will assign a fresh OID.  Usually the OID already will be
@@ -3373,7 +3358,6 @@ ExecInsert(TupleTableSlot *slot,
 	 * rowtype.
 	 *
 	 * XXX if we ever wanted to allow users to assign their own OIDs to new
-<<<<<<< HEAD
 	 * rows, this'd be the place to do it.  For the moment, we make a point
 	 * of doing this before calling triggers, so that a user-supplied trigger
 	 * could hack the OID if desired.
@@ -3422,14 +3406,6 @@ ExecInsert(TupleTableSlot *slot,
 	}
 
 	Assert(slot != NULL);
-=======
-	 * rows, this'd be the place to do it.  For the moment, we make a point of
-	 * doing this before calling triggers, so that a user-supplied trigger
-	 * could hack the OID if desired.
-	 */
-	if (resultRelationDesc->rd_rel->relhasoids)
-		HeapTupleSetOid(tuple, InvalidOid);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* BEFORE ROW INSERT Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
@@ -4953,7 +4929,6 @@ OpenIntoRel(QueryDesc *queryDesc)
 	Oid			intoRelationId;
 	TupleDesc	tupdesc;
 	DR_intorel *myState;
-<<<<<<< HEAD
 	char	   *intoTableSpaceName;
     GpPolicy   *targetPolicy;
 	bool		use_wal;
@@ -4965,9 +4940,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 	int64			persistentSerialNum;
 	
 	targetPolicy = queryDesc->plannedstmt->intoPolicy;
-=======
 	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	Assert(into);
 
@@ -5352,7 +5325,6 @@ static void
 intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 {
 	DR_intorel *myState = (DR_intorel *) self;
-<<<<<<< HEAD
 	Relation	into_rel = myState->rel;
 
 	Assert(myState->estate->es_result_partitions == NULL);
@@ -5400,27 +5372,6 @@ intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 
 		myState->last_heap_tid = tuple->t_self;
 	}
-=======
-	HeapTuple	tuple;
-
-	/*
-	 * get the heap tuple out of the tuple table slot, making sure we have a
-	 * writable copy
-	 */
-	tuple = ExecMaterializeSlot(slot);
-
-	/*
-	 * force assignment of new OID (see comments in ExecInsert)
-	 */
-	if (myState->rel->rd_rel->relhasoids)
-		HeapTupleSetOid(tuple, InvalidOid);
-
-	heap_insert(myState->rel,
-				tuple,
-				myState->estate->es_output_cid,
-				myState->hi_options,
-				myState->bistate);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* We know this is a newly created relation, so there are no indexes */
 }

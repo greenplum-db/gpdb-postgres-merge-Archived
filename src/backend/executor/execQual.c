@@ -1,38 +1,38 @@
 /*-------------------------------------------------------------------------
- *
- * execQual.c
- *	  Routines to evaluate qualification and targetlist expressions
- *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- *
- * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.250 2009/06/11 17:25:38 tgl Exp $
- *
- *-------------------------------------------------------------------------
- */
+*
+* execQual.c
+*	  Routines to evaluate qualification and targetlist expressions
+*
+* Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+* Portions Copyright (c) 1994, Regents of the University of California
+*
+*
+* IDENTIFICATION
+*	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.250 2009/06/11 17:25:38 tgl Exp $
+*
+*-------------------------------------------------------------------------
+*/
 /*
- *	 INTERFACE ROUTINES
- *		ExecEvalExpr	- (now a macro) evaluate an expression, return a datum
- *		ExecEvalExprSwitchContext - same, but switch into eval memory context
- *		ExecQual		- return true/false if qualification is satisfied
- *		ExecProject		- form a new tuple by projecting the given tuple
- *
- *	 NOTES
- *		The more heavily used ExecEvalExpr routines, such as ExecEvalScalarVar,
- *		are hotspots. Making these faster will speed up the entire system.
- *
- *		ExecProject() is used to make tuple projections.  Rather then
- *		trying to speed it up, the execution plan should be pre-processed
- *		to facilitate attribute sharing between nodes wherever possible,
- *		instead of doing needless copying.	-cim 5/31/91
- *
- *		During expression evaluation, we check_stack_depth only in
- *		ExecMakeFunctionResult (and substitute routines) rather than at every
- *		single node.  This is a compromise that trades off precision of the
- *		stack limit setting to gain speed.
- */
+*	 INTERFACE ROUTINES
+*		ExecEvalExpr	- (now a macro) evaluate an expression, return a datum
+*		ExecEvalExprSwitchContext - same, but switch into eval memory context
+*		ExecQual		- return true/false if qualification is satisfied
+*		ExecProject		- form a new tuple by projecting the given tuple
+*
+*	 NOTES
+*		The more heavily used ExecEvalExpr routines, such as ExecEvalScalarVar,
+*		are hotspots. Making these faster will speed up the entire system.
+*
+*		ExecProject() is used to make tuple projections.  Rather then
+*		trying to speed it up, the execution plan should be pre-processed
+*		to facilitate attribute sharing between nodes wherever possible,
+*		instead of doing needless copying.	-cim 5/31/91
+*
+*		During expression evaluation, we check_stack_depth only in
+*		ExecMakeFunctionResult (and substitute routines) rather than at every
+*		single node.  This is a compromise that trades off precision of the
+*		stack limit setting to gain speed.
+*/
 
 #include "postgres.h"
 
@@ -61,29 +61,24 @@
 
 /* static function decls */
 static Datum ExecEvalArrayRef(ArrayRefExprState *astate,
-				 ExprContext *econtext,
-				 bool *isNull, ExprDoneCond *isDone);
+			 ExprContext *econtext,
+			 bool *isNull, ExprDoneCond *isDone);
 static bool isAssignmentIndirectionExpr(ExprState *exprstate);
 static Datum ExecEvalAggref(AggrefExprState *aggref,
-			   ExprContext *econtext,
-			   bool *isNull, ExprDoneCond *isDone);
+		   ExprContext *econtext,
+		   bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalGroupingFunc(GroupingFuncExprState *gstate,
-								  ExprContext *econtext,
-								  bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalGrouping(ExprState *gstate,
 							  ExprContext *econtext,
 							  bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalGrouping(ExprState *gstate,
+						  ExprContext *econtext,
+						  bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalGroupId(ExprState *gstate,
-							 ExprContext *econtext,
-							 bool *isNull, ExprDoneCond *isDone);
+						 ExprContext *econtext,
+						 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalWindowFunc(WindowFuncExprState *wfunc,
-				   ExprContext *econtext,
-				   bool *isNull, ExprDoneCond *isDone);
-<<<<<<< HEAD
-=======
-static Datum ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
-			bool *isNull, ExprDoneCond *isDone);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+			   ExprContext *econtext,
+			   bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalScalarVar(ExprState *exprstate, ExprContext *econtext,
 				  bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalScalarVarFast(ExprState *exprstate, ExprContext *econtext,
@@ -101,11 +96,6 @@ static Datum ExecEvalConst(ExprState *exprstate, ExprContext *econtext,
 			  bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalParam(ExprState *exprstate, ExprContext *econtext,
 			  bool *isNull, ExprDoneCond *isDone);
-<<<<<<< HEAD
-=======
-static void init_fcache(Oid foid, FuncExprState *fcache,
-			MemoryContext fcacheCxt, bool needDescForSets);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static void ShutdownFuncExpr(Datum arg);
 static TupleDesc get_cached_rowtype(Oid type_id, int32 typmod,
 				   TupleDesc *cache_field, ExprContext *econtext);
@@ -758,49 +748,10 @@ ExecEvalScalarVar(ExprState *exprstate, ExprContext *econtext,
 		{
 			if (variable->vartype != attr->atttypid)
 				ereport(ERROR,
-<<<<<<< HEAD
 						(errmsg("attribute %d has wrong type", attnum),
 						 errdetail("Table has type %s, but query expects %s.",
 								   format_type_be(attr->atttypid),
 								   format_type_be(variable->vartype))));
-=======
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("table row type and query-specified row type do not match"),
-						 errdetail_plural("Table row contains %d attribute, but query expects %d.",
-				   "Table row contains %d attributes, but query expects %d.",
-										  slot_tupdesc->natts,
-										  slot_tupdesc->natts,
-										  var_tupdesc->natts)));
-			else if (var_tupdesc->natts < slot_tupdesc->natts)
-				needslow = true;
-
-			for (i = 0; i < var_tupdesc->natts; i++)
-			{
-				Form_pg_attribute vattr = var_tupdesc->attrs[i];
-				Form_pg_attribute sattr = slot_tupdesc->attrs[i];
-
-				if (vattr->atttypid == sattr->atttypid)
-					continue;	/* no worries */
-				if (!vattr->attisdropped)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("table row type and query-specified row type do not match"),
-							 errdetail("Table has type %s at ordinal position %d, but query expects %s.",
-									   format_type_be(sattr->atttypid),
-									   i + 1,
-									   format_type_be(vattr->atttypid))));
-
-				if (vattr->attlen != sattr->attlen ||
-					vattr->attalign != sattr->attalign)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("table row type and query-specified row type do not match"),
-							 errdetail("Physical storage mismatch on dropped attribute at ordinal position %d.",
-									   i + 1)));
-			}
-
-			ReleaseTupleDesc(var_tupdesc);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		}
 	}
 
@@ -983,8 +934,11 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("table row type and query-specified row type do not match"),
-					 errdetail("Table row contains %d attributes, but query expects %d.",
-							   slot_tupdesc->natts, var_tupdesc->natts)));
+					 errdetail_plural("Table row contains %d attribute, but query expects %d.",
+				   "Table row contains %d attributes, but query expects %d.",
+									  slot_tupdesc->natts,
+									  slot_tupdesc->natts,
+									  var_tupdesc->natts)));
 
 		for (i = 0; i < var_tupdesc->natts; i++)
 		{
@@ -1747,15 +1701,9 @@ restart:
 	 */
 	if (fcache->funcResultStore)
 	{
-<<<<<<< HEAD
-		Assert(isDone);				/* it was provided before ... */
-		if (tuplestore_gettupleslot(fcache->funcResultStore, true,
-									false, fcache->funcResultSlot))
-=======
 		Assert(isDone);			/* it was provided before ... */
 		if (tuplestore_gettupleslot(fcache->funcResultStore, true, false,
 									fcache->funcResultSlot))
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		{
 			*isDone = ExprMultipleResult;
 			if (fcache->funcReturnsTuple)
@@ -3970,8 +3918,6 @@ ExecEvalMinMax(MinMaxExprState *minmaxExpr, ExprContext *econtext,
 }
 
 /* ----------------------------------------------------------------
-<<<<<<< HEAD
-=======
  *		ExecEvalXml
  * ----------------------------------------------------------------
  */
@@ -4191,7 +4137,6 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 }
 
 /* ----------------------------------------------------------------
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *		ExecEvalNullIf
  *
  * Note that this is *always* derived from the equals operator,
@@ -4433,226 +4378,6 @@ ExecEvalBooleanTest(GenericExprState *bstate,
 				 (int) btest->booltesttype);
 			return (Datum) 0;	/* keep compiler quiet */
 	}
-}
-
-/* ----------------------------------------------------------------
- *		ExecEvalXml
- * ----------------------------------------------------------------
- */
-
-static Datum
-ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
-			bool *isNull, ExprDoneCond *isDone)
-{
-	XmlExpr    *xexpr = (XmlExpr *) xmlExpr->xprstate.expr;
-	Datum		value;
-	bool		isnull;
-	ListCell   *arg;
-	ListCell   *narg;
-
-	if (isDone)
-		*isDone = ExprSingleResult;
-	*isNull = true;				/* until we get a result */
-
-	switch (xexpr->op)
-	{
-		case IS_XMLCONCAT:
-			{
-				List	   *values = NIL;
-
-				foreach(arg, xmlExpr->args)
-				{
-					ExprState  *e = (ExprState *) lfirst(arg);
-
-					value = ExecEvalExpr(e, econtext, &isnull, NULL);
-					if (!isnull)
-						values = lappend(values, DatumGetPointer(value));
-				}
-
-				if (list_length(values) > 0)
-				{
-					*isNull = false;
-					return PointerGetDatum(xmlconcat(values));
-				}
-				else
-					return (Datum) 0;
-			}
-			break;
-
-		case IS_XMLFOREST:
-			{
-				StringInfoData buf;
-
-				initStringInfo(&buf);
-				forboth(arg, xmlExpr->named_args, narg, xexpr->arg_names)
-				{
-					ExprState  *e = (ExprState *) lfirst(arg);
-					char	   *argname = strVal(lfirst(narg));
-
-					value = ExecEvalExpr(e, econtext, &isnull, NULL);
-					if (!isnull)
-					{
-						appendStringInfo(&buf, "<%s>%s</%s>",
-										 argname,
-										 map_sql_value_to_xml_value(value, exprType((Node *) e->expr), true),
-										 argname);
-						*isNull = false;
-					}
-				}
-
-				if (*isNull)
-				{
-					pfree(buf.data);
-					return (Datum) 0;
-				}
-				else
-				{
-					text	   *result;
-
-					result = cstring_to_text_with_len(buf.data, buf.len);
-					pfree(buf.data);
-
-					return PointerGetDatum(result);
-				}
-			}
-			break;
-
-		case IS_XMLELEMENT:
-			*isNull = false;
-			return PointerGetDatum(xmlelement(xmlExpr, econtext));
-			break;
-
-		case IS_XMLPARSE:
-			{
-				ExprState  *e;
-				text	   *data;
-				bool		preserve_whitespace;
-
-				/* arguments are known to be text, bool */
-				Assert(list_length(xmlExpr->args) == 2);
-
-				e = (ExprState *) linitial(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (isnull)
-					return (Datum) 0;
-				data = DatumGetTextP(value);
-
-				e = (ExprState *) lsecond(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (isnull)		/* probably can't happen */
-					return (Datum) 0;
-				preserve_whitespace = DatumGetBool(value);
-
-				*isNull = false;
-
-				return PointerGetDatum(xmlparse(data,
-												xexpr->xmloption,
-												preserve_whitespace));
-			}
-			break;
-
-		case IS_XMLPI:
-			{
-				ExprState  *e;
-				text	   *arg;
-
-				/* optional argument is known to be text */
-				Assert(list_length(xmlExpr->args) <= 1);
-
-				if (xmlExpr->args)
-				{
-					e = (ExprState *) linitial(xmlExpr->args);
-					value = ExecEvalExpr(e, econtext, &isnull, NULL);
-					if (isnull)
-						arg = NULL;
-					else
-						arg = DatumGetTextP(value);
-				}
-				else
-				{
-					arg = NULL;
-					isnull = false;
-				}
-
-				return PointerGetDatum(xmlpi(xexpr->name, arg, isnull, isNull));
-			}
-			break;
-
-		case IS_XMLROOT:
-			{
-				ExprState  *e;
-				xmltype    *data;
-				text	   *version;
-				int			standalone;
-
-				/* arguments are known to be xml, text, int */
-				Assert(list_length(xmlExpr->args) == 3);
-
-				e = (ExprState *) linitial(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (isnull)
-					return (Datum) 0;
-				data = DatumGetXmlP(value);
-
-				e = (ExprState *) lsecond(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (isnull)
-					version = NULL;
-				else
-					version = DatumGetTextP(value);
-
-				e = (ExprState *) lthird(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				standalone = DatumGetInt32(value);
-
-				*isNull = false;
-
-				return PointerGetDatum(xmlroot(data,
-											   version,
-											   standalone));
-			}
-			break;
-
-		case IS_XMLSERIALIZE:
-			{
-				ExprState  *e;
-
-				/* argument type is known to be xml */
-				Assert(list_length(xmlExpr->args) == 1);
-
-				e = (ExprState *) linitial(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (isnull)
-					return (Datum) 0;
-
-				*isNull = false;
-
-				return PointerGetDatum(xmltotext_with_xmloption(DatumGetXmlP(value), xexpr->xmloption));
-			}
-			break;
-
-		case IS_DOCUMENT:
-			{
-				ExprState  *e;
-
-				/* optional argument is known to be xml */
-				Assert(list_length(xmlExpr->args) == 1);
-
-				e = (ExprState *) linitial(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (isnull)
-					return (Datum) 0;
-				else
-				{
-					*isNull = false;
-					return BoolGetDatum(xml_is_document(DatumGetXmlP(value)));
-				}
-			}
-			break;
-	}
-
-	elog(ERROR, "unrecognized XML operation");
-	return (Datum) 0;
 }
 
 /*
@@ -6588,7 +6313,6 @@ ExecTargetList(List *targetlist,
 }
 
 /*
-<<<<<<< HEAD
  * ExecVariableList
  *		Evaluates a simple-Variable-list projection.
  *
@@ -6607,23 +6331,36 @@ ExecVariableList(ProjectionInfo *projInfo,
 	int		   *varNumbers = projInfo->pi_varNumbers;
 	int			i;
 
-	/*
-	 * Assign to result by direct extraction of fields from source slots ... a
-	 * mite ugly, but fast ...
-	 */
-	for (i = list_length(projInfo->pi_targetlist) - 1; i >= 0; i--)
+	if (projInfo->pi_directMap)
 	{
-		char	   *slotptr = ((char *) econtext) + varSlotOffsets[i];
-		TupleTableSlot *varSlot = *((TupleTableSlot **) slotptr);
-		int			varNumber = varNumbers[i] - 1;
+		/* especially simple case where vars go to output in order */
+		for (i = 0; i < numSimpleVars; i++)
+		{
+			char	   *slotptr = ((char *) econtext) + varSlotOffsets[i];
+			TupleTableSlot *varSlot = *((TupleTableSlot **) slotptr);
+			int			varNumber = varNumbers[i] - 1;
 
-		values[i] = slot_getattr(varSlot, varNumber+1, &(isnull[i]));
+			values[i] = slot_getattr(varSlot, varNumber+1, &(isnull[i]));
+		}
+	}
+	else
+	{
+		/* we have to pay attention to varOutputCols[] */
+		int		   *varOutputCols = projInfo->pi_varOutputCols;
+
+		for (i = 0; i < numSimpleVars; i++)
+		{
+			char	   *slotptr = ((char *) econtext) + varSlotOffsets[i];
+			TupleTableSlot *varSlot = *((TupleTableSlot **) slotptr);
+			int			varNumber = varNumbers[i] - 1;
+			int			varOutputCol = varOutputCols[i] - 1;
+
+			values[varOutputCol] = slot_getattr(varSlot, varNumber+1, &(isnull[varOutputCol]));
+		}
 	}
 }
 
 /*
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  * ExecProject
  *
  *		projects a tuple based on projection info and stores
@@ -6687,7 +6424,6 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 	numSimpleVars = projInfo->pi_numSimpleVars;
 	if (numSimpleVars > 0)
 	{
-<<<<<<< HEAD
 		/* simple Var list: this always succeeds with one result row */
 		if (isDone)
 			*isDone = ExprSingleResult;
@@ -6695,44 +6431,6 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 		call_ExecVariableList(projInfo,
 						 slot_get_values(slot),
 						 slot_get_isnull(slot));
-		ExecStoreVirtualTuple(slot);
-=======
-		Datum	   *values = slot->tts_values;
-		bool	   *isnull = slot->tts_isnull;
-		int		   *varSlotOffsets = projInfo->pi_varSlotOffsets;
-		int		   *varNumbers = projInfo->pi_varNumbers;
-		int			i;
-
-		if (projInfo->pi_directMap)
-		{
-			/* especially simple case where vars go to output in order */
-			for (i = 0; i < numSimpleVars; i++)
-			{
-				char	   *slotptr = ((char *) econtext) + varSlotOffsets[i];
-				TupleTableSlot *varSlot = *((TupleTableSlot **) slotptr);
-				int			varNumber = varNumbers[i] - 1;
-
-				values[i] = varSlot->tts_values[varNumber];
-				isnull[i] = varSlot->tts_isnull[varNumber];
-			}
-		}
-		else
-		{
-			/* we have to pay attention to varOutputCols[] */
-			int		   *varOutputCols = projInfo->pi_varOutputCols;
-
-			for (i = 0; i < numSimpleVars; i++)
-			{
-				char	   *slotptr = ((char *) econtext) + varSlotOffsets[i];
-				TupleTableSlot *varSlot = *((TupleTableSlot **) slotptr);
-				int			varNumber = varNumbers[i] - 1;
-				int			varOutputCol = varOutputCols[i] - 1;
-
-				values[varOutputCol] = varSlot->tts_values[varNumber];
-				isnull[varOutputCol] = varSlot->tts_isnull[varNumber];
-			}
-		}
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 
 	/*
@@ -6743,23 +6441,13 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 	 */
 	if (projInfo->pi_targetlist)
 	{
-<<<<<<< HEAD
-		if (ExecTargetList(projInfo->pi_targetlist,
-						   projInfo->pi_exprContext,
+		if (!ExecTargetList(projInfo->pi_targetlist,
+						   econtext,
 						   slot_get_values(slot),
 						   slot_get_isnull(slot),
-						   (ExprDoneCond *) projInfo->pi_itemIsDone,
+						   projInfo->pi_itemIsDone,
 						   isDone))
-			ExecStoreVirtualTuple(slot);
-=======
-		if (!ExecTargetList(projInfo->pi_targetlist,
-							econtext,
-							slot->tts_values,
-							slot->tts_isnull,
-							projInfo->pi_itemIsDone,
-							isDone))
 			return slot;		/* no more result rows, return empty slot */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 
 	/*

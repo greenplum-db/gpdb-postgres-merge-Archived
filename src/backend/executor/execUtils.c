@@ -49,11 +49,8 @@
 #include "access/appendonlywriter.h"
 #include "catalog/index.h"
 #include "executor/execdebug.h"
-<<<<<<< HEAD
 #include "executor/execUtils.h"
-=======
 #include "nodes/nodeFuncs.h"
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #include "parser/parsetree.h"
 #include "utils/memutils.h"
 #include "utils/relcache.h"
@@ -608,19 +605,11 @@ ExecBuildProjectionInfo(List *targetList,
 	projInfo->pi_lastScanVar = 0;
 
 	/*
-<<<<<<< HEAD
-	 * Determine whether the target list consists entirely of simple Var
-	 * references (ie, references to non-system attributes) that match the
-	 * input.  If so, we can use the simpler ExecVariableList instead of
-	 * ExecTargetList.	(Note: if there is a type mismatch then ExecEvalScalarVar
-	 * will probably throw an error at runtime, but we leave that to it.)
-=======
 	 * We separate the target list elements into simple Var references and
 	 * expressions which require the full ExecTargetList machinery.  To be a
 	 * simple Var, a Var has to be a user attribute and not mismatch the
 	 * inputDesc.  (Note: if there is a type mismatch then ExecEvalVar will
 	 * probably throw an error at runtime, but we leave that to it.)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	exprlist = NIL;
 	numSimpleVars = 0;
@@ -698,14 +687,7 @@ ExecBuildProjectionInfo(List *targetList,
 		projInfo->pi_itemIsDone = NULL; /* not needed */
 	else
 		projInfo->pi_itemIsDone = (ExprDoneCond *)
-<<<<<<< HEAD
-			palloc0(len * sizeof(ExprDoneCond));
-		projInfo->pi_varSlotOffsets = NULL;
-		projInfo->pi_varNumbers = NULL;
-	}
-=======
 			palloc(len * sizeof(ExprDoneCond));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 #ifdef USE_CODEGEN
 	// Set the default location for ExecVariableList

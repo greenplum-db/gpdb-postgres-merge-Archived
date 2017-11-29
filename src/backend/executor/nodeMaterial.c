@@ -84,7 +84,6 @@ ExecMaterial(MaterialState *node)
 		 */
 		if(ma->share_type == SHARE_MATERIAL_XSLICE)
 		{
-<<<<<<< HEAD
 			char rwfile_prefix[100];
 
 			if(ma->driver_slice != currentSliceId)
@@ -92,13 +91,6 @@ ExecMaterial(MaterialState *node)
 				elog(LOG, "Material Exec on CrossSlice, current slice %d", currentSliceId);
 				return NULL;
 			}
-=======
-			/*
-			 * Allocate a second read pointer to serve as the mark. We know it
-			 * must have index 1, so needn't store that.
-			 */
-			int			ptrno;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 			shareinput_create_bufname_prefix(rwfile_prefix, sizeof(rwfile_prefix), ma->share_id);
 			elog(LOG, "Material node creates shareinput rwfile %s", rwfile_prefix);
@@ -201,15 +193,8 @@ ExecMaterial(MaterialState *node)
 
 	if(tsa != NULL && ntuplestore_acc_tell(tsa, NULL))
 	{
-<<<<<<< HEAD
 		ntuplestore_acc_current_tupleslot(tsa, slot);
 		return slot;
-=======
-		if (tuplestore_gettupleslot(tuplestorestate, forward, false, slot))
-			return slot;
-		if (forward)
-			eof_tuplestore = true;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 
 	/*

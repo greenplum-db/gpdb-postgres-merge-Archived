@@ -129,12 +129,8 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	ExprContext *econtext;
 	HeapScanDesc scan;
 	Index		scanrelid;
-<<<<<<< HEAD
-	Node  		*tbm;
-=======
 	TIDBitmap  *tbm;
 	TBMIterator *tbmiterator;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	TBMIterateResult *tbmres;
 	TBMIterator *prefetch_iterator;
 	OffsetNumber targoffset;
@@ -154,13 +150,9 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	scan = node->ss_currentScanDesc;
 	scanrelid = ((BitmapHeapScan *) node->ss.ps.plan)->scan.scanrelid;
 	tbm = node->tbm;
-<<<<<<< HEAD
-	tbmres = (TBMIterateResult *) node->tbmres;
-=======
 	tbmiterator = node->tbmiterator;
 	tbmres = node->tbmres;
 	prefetch_iterator = node->prefetch_iterator;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * Check if we are evaluating PlanQual for tuple of this relation.
@@ -201,12 +193,6 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	}
 
 	/*
-<<<<<<< HEAD
-	 * If we haven't yet performed the underlying index scan, or
-	 * we have used up the bitmaps from the previous scan, do the next scan,
-	 * and prepare the bitmap to be iterated over.
- 	 */
-=======
 	 * If we haven't yet performed the underlying index scan, do it, and begin
 	 * the iteration over the bitmap.
 	 *
@@ -219,7 +205,6 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	 * a lot of prefetching in a scan that stops after a few tuples because of
 	 * a LIMIT.
 	 */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	if (tbm == NULL)
 	{
 		tbm = (Node *) MultiExecProcNode(outerPlanState(node));
