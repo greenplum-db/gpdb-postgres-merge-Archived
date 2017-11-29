@@ -451,7 +451,6 @@ pg_relation_size(PG_FUNCTION_ARGS)
 	if (Gp_role == GP_ROLE_EXECUTE && Gp_segment == -1)
 		elog(ERROR, "This query is not currently supported by GPDB.");
 
-<<<<<<< HEAD
 	rel = try_relation_open(relOid, AccessShareLock, false);
 
 	/*
@@ -487,10 +486,6 @@ pg_relation_size(PG_FUNCTION_ARGS)
 
 		size += get_size_from_segDBs(buffer.data);
 	}
-=======
-	size = calculate_relation_size(&(rel->rd_node),
-							  forkname_to_number(text_to_cstring(forkName)));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	relation_close(rel, AccessShareLock);
 

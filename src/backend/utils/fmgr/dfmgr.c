@@ -332,7 +332,6 @@ incompatible_module_error(const char *libname,
 						  const Pg_magic_struct *module_magic_data)
 {
 	StringInfoData details;
-<<<<<<< HEAD
 	const char *magic_product     = get_magic_product(&magic_data);
 	const char *mod_magic_product = get_magic_product(module_magic_data);
 
@@ -347,8 +346,6 @@ incompatible_module_error(const char *libname,
 	{
 		lib_internal_version = module_magic_data->headerversion;
 	}
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * If the version doesn't match, just report that, because the rest of the
@@ -361,7 +358,6 @@ incompatible_module_error(const char *libname,
 		ereport(ERROR,
 				(errmsg("incompatible library \"%s\": version mismatch",
 						libname),
-<<<<<<< HEAD
 			  errdetail("Server version is %s %d.%d (header version: %d), library is %s %d.%d (header version: %d).",
 						magic_product,
 						magic_data.version / 100,
@@ -374,13 +370,6 @@ incompatible_module_error(const char *libname,
 				)
 		);
 	}
-=======
-			  errdetail("Server is version %d.%d, library is version %d.%d.",
-						magic_data.version / 100,
-						magic_data.version % 100,
-						module_magic_data->version / 100,
-						module_magic_data->version % 100)));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * Otherwise, spell out which fields don't agree.

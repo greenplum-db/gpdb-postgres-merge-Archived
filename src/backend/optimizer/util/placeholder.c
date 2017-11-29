@@ -240,7 +240,6 @@ find_placeholders_in_qual(PlannerInfo *root, Node *qual, Relids relids)
  *		Adjust the target evaluation levels for placeholders
  *
  * The initial eval_at level set by find_placeholder_info was the set of
-<<<<<<< HEAD
  * rels used in the placeholder's expression (or the whole subselect below
  * the placeholder's syntactic location, if the expr is variable-free).
  * If the subselect contains any outer joins that can null any of those rels,
@@ -252,12 +251,6 @@ find_placeholders_in_qual(PlannerInfo *root, Node *qual, Relids relids)
  * it's hard to avoid.  Each placeholder's eval_at level must be correct
  * by the time it starts to figure in outer-join delay decisions for higher
  * outer joins.
-=======
- * rels used in the placeholder's expression (or the whole subselect if
- * the expr is variable-free).	If the subselect contains any outer joins
- * that can null any of those rels, we must delay evaluation to above those
- * joins.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *
  * In future we might want to put additional policy/heuristics here to
  * try to determine an optimal evaluation level.  The current rules will

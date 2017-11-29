@@ -410,11 +410,7 @@ ProcessInvalidationMessages(InvalidationListHeader *hdr,
  * rather than just one at a time.
  */
 static void
-<<<<<<< HEAD
-ProcessInvalidationMessageMulti(InvalidationListHeader *hdr,
-=======
 ProcessInvalidationMessagesMulti(InvalidationListHeader *hdr,
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				 void (*func) (const SharedInvalidationMessage *msgs, int n))
 {
 	ProcessMessageListMulti(hdr->cclist, func(msgs, n));
@@ -977,8 +973,8 @@ AtEOXact_Inval(bool isCommit)
 		AppendInvalidationMessages(&transInvalInfo->PriorCmdInvalidMsgs,
 								   &transInvalInfo->CurrentCmdInvalidMsgs);
 
-		ProcessInvalidationMessageMulti(&transInvalInfo->PriorCmdInvalidMsgs,
-										SendSharedInvalidMessages);
+		ProcessInvalidationMessagesMulti(&transInvalInfo->PriorCmdInvalidMsgs,
+										 SendSharedInvalidMessages);
 
 		if (transInvalInfo->RelcacheInitFileInval)
 			RelationCacheInitFilePostInvalidate();
@@ -1169,8 +1165,8 @@ EndNonTransactionalInvalidation(void)
 	/* Send out the invals */
 	ProcessInvalidationMessages(&transInvalInfo->CurrentCmdInvalidMsgs,
 								LocalExecuteInvalidationMessage);
-	ProcessInvalidationMessageMulti(&transInvalInfo->CurrentCmdInvalidMsgs,
-									SendSharedInvalidMessages);
+	ProcessInvalidationMessagesMulti(&transInvalInfo->CurrentCmdInvalidMsgs,
+									 SendSharedInvalidMessages);
 
 	/* Clean up and release memory */
 	for (chunk = transInvalInfo->CurrentCmdInvalidMsgs.cclist;

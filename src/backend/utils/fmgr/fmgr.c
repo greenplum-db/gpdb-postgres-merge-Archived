@@ -222,9 +222,6 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 	/*
 	 * If it has prosecdef set, or non-null proconfig, use
 	 * fmgr_security_definer call handler --- unless we are being called again
-<<<<<<< HEAD
-	 * by fmgr_security_definer or fmgr_info_other_lang.
-=======
 	 * by fmgr_security_definer.
 	 *
 	 * When using fmgr_security_definer, function stats tracking is always
@@ -234,7 +231,6 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 	 * overhead of fmgr_security_definer to the function, but gains the
 	 * ability to set the track_functions GUC as a local GUC parameter of an
 	 * interesting function and have the right things happen.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	if (!ignore_security &&
 		(procedureStruct->prosecdef ||

@@ -549,17 +549,12 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->non_recursive_plan = NULL;
 
 	/*
-<<<<<<< HEAD
-	 * If there is a WITH list, process each WITH query and build an
-	 * initplan SubPlan structure for it.
+	 * If there is a WITH list, process each WITH query and build an initplan
+	 * SubPlan structure for it.
 	 *
 	 * Unlike upstrem, we do not use initplan + CteScan, so SS_process_ctes
 	 * will generate unused initplans. Commenting out the following two
 	 * lines.
-=======
-	 * If there is a WITH list, process each WITH query and build an initplan
-	 * SubPlan structure for it.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 #if 0
 	if (parse->cteList)
