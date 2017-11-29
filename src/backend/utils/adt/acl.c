@@ -1548,7 +1548,7 @@ has_table_privilege_name_name(PG_FUNCTION_ARGS)
 
 	roleid = get_roleid_checked(NameStr(*rolename));
 	tableoid = try_convert_table_name(tablename);
-	
+
 	/*
 	 * While we scan pg_class with an MVCC snapshot,
 	 * someone else might drop the table. It's better to return NULL for
@@ -1669,7 +1669,7 @@ has_table_privilege_id_name(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	tableoid = try_convert_table_name(tablename);
-	
+
 	/*
 	 * While we scan pg_class with an MVCC snapshot,
 	 * someone else might drop the table. It's better to return NULL for
@@ -1717,7 +1717,7 @@ has_table_privilege_id_id(PG_FUNCTION_ARGS)
 
 /*
  * Given a table name expressed as a string, try look it up and return Oid if found.
- * If not found return InvalidOid (because we are passing failOK=true to RangeVarGetRelId) 
+ * If not found return InvalidOid (because we are passing failOK=true to RangeVarGetRelId)
  */
 static Oid
 try_convert_table_name(text *tablename)
@@ -1788,7 +1788,16 @@ has_any_column_privilege_name_name(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	roleid = get_roleid_checked(NameStr(*rolename));
-	tableoid = convert_table_name(tablename);
+	tableoid = try_convert_table_name(tablename);
+
+	/*
+	 * While we scan pg_class with an MVCC snapshot,
+	 * someone else might drop the table. It's better to return NULL for
+	 * already-dropped tables than throw an error and abort the whole query.
+	 */
+	if (!OidIsValid(tableoid))
+		PG_RETURN_NULL();
+
 	mode = convert_column_priv_string(priv_type_text);
 
 	/* First check at table level, then examine each column if needed */
@@ -1817,7 +1826,16 @@ has_any_column_privilege_name(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	roleid = GetUserId();
-	tableoid = convert_table_name(tablename);
+	tableoid = try_convert_table_name(tablename);
+
+	/*
+	 * While we scan pg_class with an MVCC snapshot,
+	 * someone else might drop the table. It's better to return NULL for
+	 * already-dropped tables than throw an error and abort the whole query.
+	 */
+	if (!OidIsValid(tableoid))
+		PG_RETURN_NULL();
+
 	mode = convert_column_priv_string(priv_type_text);
 
 	/* First check at table level, then examine each column if needed */
@@ -1908,7 +1926,16 @@ has_any_column_privilege_id_name(PG_FUNCTION_ARGS)
 	AclMode		mode;
 	AclResult	aclresult;
 
-	tableoid = convert_table_name(tablename);
+	tableoid = try_convert_table_name(tablename);
+
+	/*
+	 * While we scan pg_class with an MVCC snapshot,
+	 * someone else might drop the table. It's better to return NULL for
+	 * already-dropped tables than throw an error and abort the whole query.
+	 */
+	if (!OidIsValid(tableoid))
+		PG_RETURN_NULL();
+
 	mode = convert_column_priv_string(priv_type_text);
 
 	/* First check at table level, then examine each column if needed */
@@ -2039,7 +2066,16 @@ has_column_privilege_name_name_name(PG_FUNCTION_ARGS)
 	int			privresult;
 
 	roleid = get_roleid_checked(NameStr(*rolename));
-	tableoid = convert_table_name(tablename);
+	tableoid = try_convert_table_name(tablename);
+
+	/*
+	 * While we scan pg_class with an MVCC snapshot,
+	 * someone else might drop the table. It's better to return NULL for
+	 * already-dropped tables than throw an error and abort the whole query.
+	 */
+	if (!OidIsValid(tableoid))
+		PG_RETURN_NULL();
+
 	colattnum = convert_column_name(tableoid, column);
 	mode = convert_column_priv_string(priv_type_text);
 
@@ -2067,7 +2103,16 @@ has_column_privilege_name_name_attnum(PG_FUNCTION_ARGS)
 	int			privresult;
 
 	roleid = get_roleid_checked(NameStr(*rolename));
-	tableoid = convert_table_name(tablename);
+	tableoid = try_convert_table_name(tablename);
+
+	/*
+	 * While we scan pg_class with an MVCC snapshot,
+	 * someone else might drop the table. It's better to return NULL for
+	 * already-dropped tables than throw an error and abort the whole query.
+	 */
+	if (!OidIsValid(tableoid))
+		PG_RETURN_NULL();
+
 	mode = convert_column_priv_string(priv_type_text);
 
 	privresult = column_privilege_check(tableoid, colattnum, roleid, mode);
@@ -2145,7 +2190,16 @@ has_column_privilege_id_name_name(PG_FUNCTION_ARGS)
 	AclMode		mode;
 	int			privresult;
 
-	tableoid = convert_table_name(tablename);
+	tableoid = try_convert_table_name(tablename);
+
+	/*
+	 * While we scan pg_class with an MVCC snapshot,
+	 * someone else might drop the table. It's better to return NULL for
+	 * already-dropped tables than throw an error and abort the whole query.
+	 */
+	if (!OidIsValid(tableoid))
+		PG_RETURN_NULL();
+
 	colattnum = convert_column_name(tableoid, column);
 	mode = convert_column_priv_string(priv_type_text);
 
@@ -2171,7 +2225,16 @@ has_column_privilege_id_name_attnum(PG_FUNCTION_ARGS)
 	AclMode		mode;
 	int			privresult;
 
-	tableoid = convert_table_name(tablename);
+	tableoid = try_convert_table_name(tablename);
+
+	/*
+	 * While we scan pg_class with an MVCC snapshot,
+	 * someone else might drop the table. It's better to return NULL for
+	 * already-dropped tables than throw an error and abort the whole query.
+	 */
+	if (!OidIsValid(tableoid))
+		PG_RETURN_NULL();
+
 	mode = convert_column_priv_string(priv_type_text);
 
 	privresult = column_privilege_check(tableoid, colattnum, roleid, mode);
@@ -2247,7 +2310,16 @@ has_column_privilege_name_name(PG_FUNCTION_ARGS)
 	int			privresult;
 
 	roleid = GetUserId();
-	tableoid = convert_table_name(tablename);
+	tableoid = try_convert_table_name(tablename);
+
+	/*
+	 * While we scan pg_class with an MVCC snapshot,
+	 * someone else might drop the table. It's better to return NULL for
+	 * already-dropped tables than throw an error and abort the whole query.
+	 */
+	if (!OidIsValid(tableoid))
+		PG_RETURN_NULL();
+
 	colattnum = convert_column_name(tableoid, column);
 	mode = convert_column_priv_string(priv_type_text);
 
@@ -2275,7 +2347,16 @@ has_column_privilege_name_attnum(PG_FUNCTION_ARGS)
 	int			privresult;
 
 	roleid = GetUserId();
-	tableoid = convert_table_name(tablename);
+	tableoid = try_convert_table_name(tablename);
+
+	/*
+	 * While we scan pg_class with an MVCC snapshot,
+	 * someone else might drop the table. It's better to return NULL for
+	 * already-dropped tables than throw an error and abort the whole query.
+	 */
+	if (!OidIsValid(tableoid))
+		PG_RETURN_NULL();
+
 	mode = convert_column_priv_string(priv_type_text);
 
 	privresult = column_privilege_check(tableoid, colattnum, roleid, mode);
