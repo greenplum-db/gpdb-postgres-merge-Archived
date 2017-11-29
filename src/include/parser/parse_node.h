@@ -114,13 +114,8 @@ typedef enum ParseExprKind
  * to make an RTE before you can access a CTE.
  *
  * p_future_ctes: list of CommonTableExprs (WITH items) that are not yet
-<<<<<<< HEAD
- * visible due to scope rules.  This is used to help improve error messages.
-
-=======
  * visible due to scope rules.	This is used to help improve error messages.
  *
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  * p_windowdefs: list of WindowDefs representing WINDOW and OVER clauses.
  * We collect these while transforming expressions and then transform them
  * afterwards (so that any resjunk tlist items needed for the sort/group

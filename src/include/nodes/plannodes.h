@@ -816,7 +816,6 @@ typedef struct MergeJoin
 } MergeJoin;
 
 /* ----------------
-<<<<<<< HEAD
  *		hash join (probe) node
  *
  * CDB:	In order to support hash join on IS NOT DISTINCT FROM (as well as =),
@@ -824,9 +823,6 @@ typedef struct MergeJoin
  *		a match.  This is normally identical to hashclauses (which holds the
  *		equality test), but differs in case of non-equijoin comparisons.
  *		Field hashclauses is retained for use in hash table operations.
-=======
- *		hash join node
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  * ----------------
  */
 typedef struct HashJoin

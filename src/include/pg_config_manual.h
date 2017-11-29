@@ -59,7 +59,6 @@
 #define NUM_USER_DEFINED_LWLOCKS	4
 
 /*
-<<<<<<< HEAD
  * When we have neither spinlocks nor atomic operations support we're
  * implementing atomic operations on top of spinlock on top of semaphores. To
  * be safe against atomic operations while holding a spinlock separate
@@ -68,14 +67,6 @@
 #define NUM_ATOMICS_SEMAPHORES      64
 
 /*
- * Define this if you want psql to _always_ ask for a username and a
- * password for password authentication.
- */
-/* #define PSQL_ALWAYS_GET_PASSWORDS */
-
-/*
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  * Define this if you want to allow the lo_import and lo_export SQL
  * functions to be executed by ordinary users.	By default these
  * functions are only available to the Postgres superuser.	CAUTION:

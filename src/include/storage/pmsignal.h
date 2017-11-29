@@ -61,13 +61,9 @@ extern void SendPostmasterSignal(PMSignalReason reason);
 extern bool CheckPostmasterSignal(PMSignalReason reason);
 extern int	AssignPostmasterChildSlot(void);
 extern bool ReleasePostmasterChildSlot(int slot);
-<<<<<<< HEAD
 extern bool IsPostmasterChildWalSender(int slot);
 extern void MarkPostmasterChildActive(void);
 extern void MarkPostmasterChildWalSender(void);
-=======
-extern void MarkPostmasterChildActive(void);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 extern void MarkPostmasterChildInactive(void);
 extern bool PostmasterIsAlive(bool amDirectChild);
 extern bool ParentProcIsAlive(void);

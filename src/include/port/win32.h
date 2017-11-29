@@ -315,7 +315,6 @@ extern int	pgwin32_ReserveSharedMemoryRegion(HANDLE);
 /* in port/win32error.c */
 extern void _dosmaperr(unsigned long);
 
-<<<<<<< HEAD
 #ifndef			BIG_ENDIAN
 #define			BIG_ENDIAN		4321
 #endif
@@ -331,15 +330,9 @@ extern void _dosmaperr(unsigned long);
 #endif
 
 /* in port/win32env.c */
-extern int pgwin32_putenv(const char *);
-extern void pgwin32_unsetenv(const char *);
-
-=======
-/* in port/win32env.c */
 extern int	pgwin32_putenv(const char *);
 extern void pgwin32_unsetenv(const char *);
 
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #define putenv(x) pgwin32_putenv(x)
 #define unsetenv(x) pgwin32_unsetenv(x)
 
@@ -347,12 +340,9 @@ extern void pgwin32_unsetenv(const char *);
 #ifdef WIN32_ONLY_COMPILER
 #ifndef _WIN64
 typedef long ssize_t;
-<<<<<<< HEAD
 #else
 typedef __int64 ssize_t;
 #endif
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 #ifndef __BORLANDC__
 typedef unsigned short mode_t;
@@ -400,19 +390,10 @@ typedef unsigned short mode_t;
 #ifndef O_RANDOM
 #define O_RANDOM		0x0010	/* File access is primarily random */
 #define O_SEQUENTIAL	0x0020	/* File access is primarily sequential */
-<<<<<<< HEAD
-#define O_TEMPORARY	0x0040	/* Temporary file bit */
-#define O_SHORT_LIVED	0x1000	/* Temporary storage file, try not to flush */
-#define _O_SHORT_LIVED	O_SHORT_LIVED
-#endif /* ifndef O_RANDOM */
-
-#endif /* __BORLANDC__ */
-=======
 #define O_TEMPORARY 0x0040		/* Temporary file bit */
 #define O_SHORT_LIVED	0x1000	/* Temporary storage file, try not to flush */
 #define _O_SHORT_LIVED	O_SHORT_LIVED
 #endif   /* ifndef O_RANDOM */
 #endif   /* __BORLANDC__ */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 #endif

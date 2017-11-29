@@ -73,13 +73,10 @@ typedef struct
 	char	   *krb_server_hostname;
 	char	   *krb_realm;
 	bool		include_realm;
-<<<<<<< HEAD
 	char	   *radiusserver;
 	char	   *radiussecret;
 	char	   *radiusidentifier;
 	int			radiusport;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 } HbaLine;
 
 /* kluge to avoid including libpq/libpq-be.h here */
@@ -98,10 +95,7 @@ extern bool read_pg_database_line(FILE *fp, char *dbname, Oid *dboid,
 extern int check_usermap(const char *usermap_name,
 			  const char *pg_role, const char *auth_user,
 			  bool case_sensitive);
-<<<<<<< HEAD
 extern bool check_same_host_or_net(SockAddr *raddr, IPCompareMethod method);
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 extern bool pg_isblank(const char c);
 
 #endif   /* HBA_H */

@@ -155,16 +155,12 @@ extern void vac_update_relstats(Relation relation,
 					double num_tuples,
 					bool hasindex,
 					TransactionId frozenxid);
-<<<<<<< HEAD
 extern void vac_update_relstats_from_list(Relation rel,
 							  BlockNumber num_pages, double num_tuples,
 							  bool hasindex, TransactionId frozenxid,
 										  List *updated_stats);
-extern void vacuum_set_xid_limits(int freeze_min_age, bool sharedRel,
-=======
 extern void vacuum_set_xid_limits(int freeze_min_age, int freeze_table_age,
 					  bool sharedRel,
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 					  TransactionId *oldestXmin,
 					  TransactionId *freezeLimit,
 					  TransactionId *freezeTableLimit);

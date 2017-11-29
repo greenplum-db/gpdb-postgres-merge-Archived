@@ -689,18 +689,13 @@ typedef enum JoinType
 	 * representing them (e.g., using EXISTS).	The planner recognizes these
 	 * cases and converts them to joins.  So the planner and executor must
 	 * support these codes.  NOTE: in JOIN_SEMI output, it is unspecified
-<<<<<<< HEAD
-	 * which matching RHS row is joined to.  In JOIN_ANTI output, the row
-	 * is guaranteed to be null-extended.
+	 * which matching RHS row is joined to.  In JOIN_ANTI output, the row is
+	 * guaranteed to be null-extended.
      *
      * CDB: We no longer use JOIN_REVERSE_IN, JOIN_UNIQUE_OUTER or
      * JOIN_UNIQUE_INNER.  The definitions are retained in case they
      * might be referenced in the source code of user-defined
      * selectivity functions brought over from PostgreSQL.
-=======
-	 * which matching RHS row is joined to.  In JOIN_ANTI output, the row is
-	 * guaranteed to be null-extended.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	JOIN_SEMI,					/* 1 copy of each LHS row that has match(es) */
 	JOIN_ANTI,					/* 1 copy of each LHS row that has no match */

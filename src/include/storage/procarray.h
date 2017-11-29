@@ -50,13 +50,9 @@ extern int	CountActiveBackends(void);
 extern int	CountDBBackends(Oid databaseid);
 extern int	CountUserBackends(Oid roleid);
 extern bool CountOtherDBBackends(Oid databaseId,
-<<<<<<< HEAD
-								 int *nbackends, int *nprepared);
+					 int *nbackends, int *nprepared);
 extern bool HasSerializableBackends(bool allDbs);
 extern bool HasDropTransaction(bool allDbs);
-=======
-					 int *nbackends, int *nprepared);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 extern void XidCacheRemoveRunningXids(TransactionId xid,
 						  int nxids, const TransactionId *xids,

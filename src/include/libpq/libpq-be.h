@@ -62,13 +62,9 @@ typedef struct
 {
 	void	   *value;
 	int			length;
-<<<<<<< HEAD
-}	gss_buffer_desc;
+} gss_buffer_desc;
 #define GSS_BUFFER_DESC_DEFINED
 #endif
-=======
-} gss_buffer_desc;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #endif
 #endif   /* ENABLE_SSPI */
 

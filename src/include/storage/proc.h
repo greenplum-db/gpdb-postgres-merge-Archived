@@ -208,7 +208,6 @@ typedef struct PROC_HDR
  * We set aside some extra PGPROC structures for auxiliary processes,
  * ie things that aren't full-fledged backends but need shmem access.
  *
-<<<<<<< HEAD
  * Background writer, checkpointer, WAL writer, and autovacuum launcher run
  * during normal operation. Startup process also consumes one slot, but WAL
  * writer and autovacuum launcher are launched only after it has exited (4
@@ -234,12 +233,6 @@ typedef struct PROC_HDR
  *					4) Consumer Append Only
  *					5) Consumer Verification
  *					6) Sender Ack
-=======
- * Background writer, WAL writer, and autovacuum launcher run during
- * normal operation. Startup process also consumes one slot, but WAL
- * writer and autovacuum launcher are launched only after it has
- * exited.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  */
 #define NUM_AUXILIARY_PROCS	 14
 

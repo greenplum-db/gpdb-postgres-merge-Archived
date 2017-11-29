@@ -380,6 +380,9 @@ extern void gin_xlog_startup(void);
 extern void gin_xlog_cleanup(void);
 extern bool gin_safe_restartpoint(void);
 
+extern void gin_mask(char *pagedata, BlockNumber blkno);
+
+
 /* ginbtree.c */
 
 typedef struct GinBtreeStack
@@ -449,11 +452,7 @@ extern IndexTuple ginPageGetLinkItup(Buffer buf);
 
 /* gindatapage.c */
 extern int	compareItemPointers(ItemPointer a, ItemPointer b);
-<<<<<<< HEAD
-extern void MergeItemPointers(ItemPointerData *dst,
-=======
 extern uint32 MergeItemPointers(ItemPointerData *dst,
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				  ItemPointerData *a, uint32 na,
 				  ItemPointerData *b, uint32 nb);
 
@@ -502,12 +501,8 @@ typedef struct GinScanEntryData
 
 	/* partial match support */
 	bool		isPartialMatch;
-<<<<<<< HEAD
 	Node 	   *partialMatch;
-=======
-	TIDBitmap  *partialMatch;
 	TBMIterator *partialMatchIterator;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	TBMIterateResult *partialMatchResult;
 	StrategyNumber strategy;
 
@@ -568,14 +563,6 @@ extern void newScanKey(IndexScanDesc scan);
 /* ginget.c */
 extern PGDLLIMPORT int GinFuzzySearchLimit;
 
-<<<<<<< HEAD
-#define ItemPointerSetMax(p)	ItemPointerSet( (p), (BlockNumber)0xffffffff, (OffsetNumber)0xffff )
-#define ItemPointerIsMax(p) ( GinItemPointerGetBlockNumber(p) == (BlockNumber)0xffffffff && GinItemPointerGetOffsetNumber(p) == (OffsetNumber)0xffff )
-#define ItemPointerSetMin(p)	ItemPointerSet( (p), (BlockNumber)0, (OffsetNumber)0)
-#define ItemPointerIsMin(p) ( GinItemPointerGetBlockNumber(p) == (BlockNumber)0 && GinItemPointerGetOffsetNumber(p) == (OffsetNumber)0 )
-
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 extern Datum gingetbitmap(PG_FUNCTION_ARGS);
 
 /* ginvacuum.c */
@@ -619,11 +606,6 @@ extern void ginInsertRecordBA(BuildAccumulator *accum,
 				  OffsetNumber attnum, Datum *entries, int32 nentry);
 extern ItemPointerData *ginGetEntry(BuildAccumulator *accum, OffsetNumber *attnum, Datum *entry, uint32 *n);
 
-<<<<<<< HEAD
-extern void gin_mask(char *pagedata, BlockNumber blkno);
-
-#endif
-=======
 /* ginfast.c */
 
 typedef struct GinTupleCollector
@@ -643,4 +625,3 @@ extern void ginInsertCleanup(Relation index, GinState *ginstate,
 				 bool vac_delay, IndexBulkDeleteResult *stats);
 
 #endif   /* GIN_H */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
