@@ -26,6 +26,7 @@
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_inherits.h"
+#include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
@@ -4108,7 +4109,7 @@ bool
 has_parquet_children(Oid relationId)
 {
 	Assert(InvalidOid != relationId);
-	List *child_oids = find_all_inheritors(relationId);
+	List *child_oids = find_all_inheritors(relationId, NoLock);
 	ListCell *lc = NULL;
 	
 	foreach (lc, child_oids)
@@ -4168,7 +4169,7 @@ child_distribution_mismatch(Relation rel)
 		return false;
 	}
 
-	List *child_oids = find_all_inheritors(rel->rd_id);
+	List *child_oids = find_all_inheritors(rel->rd_id, NoLock);
 	ListCell *lc = NULL;
 
 	foreach (lc, child_oids)
@@ -4209,7 +4210,7 @@ child_triggers(Oid relationId, int32 triggerType)
 		return false;
 	}
 
-	List *childOids = find_all_inheritors(relationId);
+	List *childOids = find_all_inheritors(relationId, NoLock);
 	ListCell *lc = NULL;
 
 	bool found = false;

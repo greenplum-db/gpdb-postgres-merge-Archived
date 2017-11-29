@@ -862,41 +862,10 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 	 * we might not have any other for pg_class yet (consider executing this
 	 * code for pg_class itself)
 	 */
-<<<<<<< HEAD
-	datum = fastgetattr(tuple,
-						Anum_pg_class_reloptions,
-						GetPgClassDescriptor(),
-						&isnull);
-	if (isnull)
-		return;
-
-	/* Parse into appropriate format; don't error out here */
-	switch (relation->rd_rel->relkind)
-	{
-		case RELKIND_RELATION:
-		case RELKIND_TOASTVALUE:
-		case RELKIND_AOSEGMENTS:
-		case RELKIND_AOBLOCKDIR:
-		case RELKIND_AOVISIMAP:
-		case RELKIND_UNCATALOGED:
-			options = heap_reloptions(relation->rd_rel->relkind, datum,
-									  false);
-			break;
-		case RELKIND_INDEX:
-			options = index_reloptions(relation->rd_am->amoptions, datum,
-									   false);
-			break;
-		default:
-			Assert(false);		/* can't get here */
-			options = NULL;		/* keep compiler quiet */
-			break;
-	}
-=======
 	options = extractRelOptions(tuple,
 								GetPgClassDescriptor(),
 								relation->rd_rel->relkind == RELKIND_INDEX ?
 								relation->rd_am->amoptions : InvalidOid);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * Copy parsed data into CacheMemoryContext.  To guard against the
@@ -1357,8 +1326,11 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 	relation->rd_isnailed = false;
 	relation->rd_createSubid = InvalidSubTransactionId;
 	relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
-<<<<<<< HEAD
-	relation->rd_istemp = isTempOrToastNamespace(relation->rd_rel->relnamespace);
+	relation->rd_istemp = relation->rd_rel->relistemp;
+	if (relation->rd_istemp)
+		relation->rd_islocaltemp = isTempOrToastNamespace(relation->rd_rel->relnamespace);
+	else
+		relation->rd_islocaltemp = false;
 	relation->rd_issyscat = (strncmp(relation->rd_rel->relname.data, "pg_", 3) == 0);
 
 	/*
@@ -1372,13 +1344,6 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 		relation->rd_isLocalBuf = true;
 	else
 		relation->rd_isLocalBuf = false;
-=======
-	relation->rd_istemp = relation->rd_rel->relistemp;
-	if (relation->rd_istemp)
-		relation->rd_islocaltemp = isTempOrToastNamespace(relation->rd_rel->relnamespace);
-	else
-		relation->rd_islocaltemp = false;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * initialize the tuple descriptor (relation->rd_att).
@@ -1946,12 +1911,9 @@ formrdesc(const char *relationName, Oid relationReltype,
 	relation->rd_createSubid = InvalidSubTransactionId;
 	relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
 	relation->rd_istemp = false;
-<<<<<<< HEAD
+	relation->rd_islocaltemp = false;
 	relation->rd_issyscat = (strncmp(relationName, "pg_", 3) == 0);	/* GP */
     relation->rd_isLocalBuf = false;    /*CDB*/
-=======
-	relation->rd_islocaltemp = false;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * initialize relation tuple form
@@ -1976,19 +1938,8 @@ formrdesc(const char *relationName, Oid relationReltype,
 	if (isshared)
 		relation->rd_rel->reltablespace = GLOBALTABLESPACE_OID;
 
-<<<<<<< HEAD
 	relation->rd_rel->relpages = 0;
 	relation->rd_rel->reltuples = 0;
-=======
-	/*
-	 * Likewise, we must know if a relation is temp ... but formrdesc is not
-	 * used for any temp relations.
-	 */
-	relation->rd_rel->relistemp = false;
-
-	relation->rd_rel->relpages = 1;
-	relation->rd_rel->reltuples = 1;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	relation->rd_rel->relkind = RELKIND_RELATION;
 	relation->rd_rel->relstorage = RELSTORAGE_HEAP;
 	relation->rd_rel->relhasoids = hasoids;
@@ -2020,15 +1971,9 @@ formrdesc(const char *relationName, Oid relationReltype,
 	for (i = 0; i < natts; i++)
 	{
 		memcpy(relation->rd_att->attrs[i],
-<<<<<<< HEAD
 			   &attrs[i],
 			   ATTRIBUTE_FIXED_PART_SIZE);
 		has_not_null |= attrs[i].attnotnull;
-=======
-			   &att[i],
-			   ATTRIBUTE_FIXED_PART_SIZE);
-		has_not_null |= att[i].attnotnull;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		/* make sure attcacheoff is valid */
 		relation->rd_att->attrs[i]->attcacheoff = -1;
 	}
