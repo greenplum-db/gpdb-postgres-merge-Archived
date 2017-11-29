@@ -62,7 +62,6 @@ static void distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 						JoinType jointype,
 						Relids qualscope,
 						Relids ojscope,
-<<<<<<< HEAD
 						Relids outerjoin_nonnullable,
 						Relids deduced_nullable_relids,
 						List **postponed_qual_list);
@@ -70,11 +69,6 @@ static bool check_outerjoin_delay(PlannerInfo *root, Relids *relids_p,
 					  Relids *nullable_relids_p, bool is_pushed_down);
 static bool check_equivalence_delay(PlannerInfo *root,
 						RestrictInfo *restrictinfo);
-=======
-						Relids outerjoin_nonnullable);
-static bool check_outerjoin_delay(PlannerInfo *root, Relids *relids_p,
-					  Relids *nullable_relids_p, bool is_pushed_down);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static bool check_redundant_nullability_qual(PlannerInfo *root, Node *clause);
 static void compute_semijoin_info(SpecialJoinInfo* sjinfo, PlannerInfo* root);
 
@@ -419,12 +413,8 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 
 			distribute_qual_to_rels(root, qual,
 									false, below_outer_join, JOIN_INNER,
-<<<<<<< HEAD
 									*qualscope, NULL, NULL, NULL,
 									postponed_qual_list);
-=======
-									*qualscope, NULL, NULL);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		}
 	}
 	else if (IsA(jtnode, JoinExpr))
@@ -488,7 +478,6 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 			case JOIN_SEMI:
 				leftjoinlist = deconstruct_recurse(root, j->larg,
 												   below_outer_join,
-<<<<<<< HEAD
 												   &leftids, &left_inners,
 												   &child_postponed_quals);
 				rightjoinlist = deconstruct_recurse(root, j->rarg,
@@ -501,17 +490,6 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 				/* Semi join adds no restrictions for quals */
 				nonnullable_rels = NULL;
  				break;
-=======
-												   &leftids, &left_inners);
-				rightjoinlist = deconstruct_recurse(root, j->rarg,
-													below_outer_join,
-													&rightids, &right_inners);
-				*qualscope = bms_union(leftids, rightids);
-				*inner_join_rels = bms_union(left_inners, right_inners);
-				/* Semi join adds no restrictions for quals */
-				nonnullable_rels = NULL;
-				break;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			case JOIN_FULL:
 				leftjoinlist = deconstruct_recurse(root, j->larg,
 												   true,
@@ -541,13 +519,8 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 		 * we mustn't add it to join_info_list just yet, because we don't want
 		 * distribute_qual_to_rels to think it is an outer join below us.
 		 *
-<<<<<<< HEAD
-		 * Semijoins are a bit of a hybrid: we build a SpecialJoinInfo,
-		 * but we want ojscope = NULL for distribute_qual_to_rels.
-=======
 		 * Semijoins are a bit of a hybrid: we build a SpecialJoinInfo, but we
 		 * want ojscope = NULL for distribute_qual_to_rels.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		 */
 		if (j->jointype != JOIN_INNER)
 		{
@@ -598,15 +571,9 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 			Node	   *qual = (Node *) lfirst(l);
 
 			distribute_qual_to_rels(root, qual,
-<<<<<<< HEAD
-									false, below_outer_join, JOIN_INNER,
+									false, below_outer_join, j->jointype,
 									*qualscope, ojscope, nonnullable_rels, NULL,
 									postponed_qual_list);
-=======
-									false, below_outer_join, j->jointype,
-									*qualscope,
-									ojscope, nonnullable_rels);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		}
 
 		/* Now we can add the SpecialJoinInfo to join_info_list */
@@ -1080,10 +1047,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	bool		pseudoconstant = false;
 	bool		maybe_equivalence;
 	bool		maybe_outer_join;
-<<<<<<< HEAD
 	bool        maybe_local_equijoin;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	Relids		nullable_relids;
 	RestrictInfo *restrictinfo;
 
@@ -1210,11 +1174,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		Assert(!ojscope);
 		is_pushed_down = true;
 		outerjoin_delayed = false;
-<<<<<<< HEAD
 		nullable_relids = deduced_nullable_relids;
-=======
-		nullable_relids = NULL;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		/* Don't feed it back for more deductions */
 		maybe_equivalence = false;
 		maybe_local_equijoin = false;
@@ -1324,12 +1284,8 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 									 outerjoin_delayed,
 									 pseudoconstant,
 									 relids,
-<<<<<<< HEAD
 									 nullable_relids,
 									 ojscope);
-=======
-									 nullable_relids);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * If it's a join clause (either naturally, or because delayed by
@@ -1344,13 +1300,9 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	 */
 	if (bms_membership(relids) == BMS_MULTIPLE)
 	{
-<<<<<<< HEAD
 		List	   *vars = pull_var_clause(clause,
 										   PVC_RECURSE_AGGREGATES,
 										   PVC_INCLUDE_PLACEHOLDERS);
-=======
-		List	   *vars = pull_var_clause(clause, PVC_INCLUDE_PLACEHOLDERS);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		add_vars_to_targetlist(root, vars, relids);
 		list_free(vars);
@@ -1432,7 +1384,6 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 
 	/* No EC special case applies, so push it into the clause lists */
 	distribute_restrictinfo_to_rels(root, restrictinfo);
-<<<<<<< HEAD
 
 	/*
 	 * The predicate propagation code (gen_implied_quals()) might be able to
@@ -1441,8 +1392,6 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	 * the equivalence classes yet.)
 	 */
 	root->non_eq_clauses = lappend(root->non_eq_clauses, restrictinfo);
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 /*
@@ -1816,14 +1765,9 @@ build_implied_join_equality(Oid opno,
 									 true,		/* is_pushed_down */
 									 false,		/* outerjoin_delayed */
 									 false,		/* pseudoconstant */
-<<<<<<< HEAD
 									 qualscope,	/* required_relids */
 									 nullable_relids,	/* nullable_relids */
 									 qualscope); /* ojscope_relids */
-=======
-									 qualscope, /* required_relids */
-									 NULL);		/* nullable_relids */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* Set mergejoinability info always, and hashjoinability if enabled */
 	check_mergejoinable(restrictinfo);

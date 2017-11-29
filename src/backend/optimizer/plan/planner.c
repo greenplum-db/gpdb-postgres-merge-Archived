@@ -2043,7 +2043,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			 * step.  That's handled internally by make_sort_from_pathkeys,
 			 * but we need the copyObject steps here to ensure that each plan
 			 * node has a separately modifiable tlist.
-<<<<<<< HEAD
 			 *
 			 * Note: it's essential here to use PVC_INCLUDE_AGGREGATES so that
 			 * Vars mentioned only in aggregate expressions aren't pulled out
@@ -2075,15 +2074,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			window_tlist = add_to_flat_tlist_junk(window_tlist,
 												  result_plan->flow->hashExpr,
 												  true /* resjunk */);
-=======
-			 */
-			window_tlist = flatten_tlist(tlist);
-			if (parse->hasAggs)
-				window_tlist = add_to_flat_tlist(window_tlist,
-											pull_agg_clause((Node *) tlist));
-			window_tlist = add_volatile_sort_exprs(window_tlist, tlist,
-												   activeWindows);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			result_plan->targetlist = (List *) copyObject(window_tlist);
 
 			foreach(l, activeWindows)
@@ -2249,11 +2239,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				result_plan = (Plan *)
 					make_windowagg(root,
 								   (List *) copyObject(window_tlist),
-<<<<<<< HEAD
 								   wflists->windowFuncs[wc->winref],
-=======
-							   list_length(wflists->windowFuncs[wc->winref]),
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 								   wc->winref,
 								   partNumCols,
 								   partColIdx,
@@ -2548,7 +2534,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				result_plan = (Plan *) make_sort_from_pathkeys(root,
 															   result_plan,
 															current_pathkeys,
-<<<<<<< HEAD
 															   -1.0,
 															   true);
 				mark_sort_locus(result_plan);
@@ -2567,9 +2552,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 				result_plan = (Plan *) make_motion_gather(root, result_plan, -1,
 														  current_pathkeys);
-=======
-															   -1.0);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			}
 
 			result_plan = (Plan *) make_unique(result_plan,
@@ -2590,15 +2572,10 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		{
 			result_plan = (Plan *) make_sort_from_pathkeys(root,
 														   result_plan,
-<<<<<<< HEAD
-														   root->sort_pathkeys,
+														 root->sort_pathkeys,
 														   limit_tuples,
 														   true);
 			mark_sort_locus(result_plan);
-=======
-														 root->sort_pathkeys,
-														   limit_tuples);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			current_pathkeys = root->sort_pathkeys;
 			result_plan->flow = pull_up_Flow(result_plan, result_plan->lefttree);
 		}
@@ -3403,7 +3380,6 @@ choose_hashed_distinct(PlannerInfo *root,
 	cost_agg(&hashed_p, root, AGG_HASHED, 0,
 			 numDistinctCols, dNumDistinctRows,
 			 input_plan->startup_cost, input_plan->total_cost,
-<<<<<<< HEAD
 			 input_plan->plan_rows,
 			 /* GPDB_84_MERGE_FIXME: What would be appropriate values for these extra
 			  * arguments? */
@@ -3411,10 +3387,7 @@ choose_hashed_distinct(PlannerInfo *root,
 			 0, /* hash_batches */
 			 0, /* hashentry_width */
 			 false /* hash_streaming */);
-=======
-			 input_plan->plan_rows);
 
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	/*
 	 * Result of hashed agg is always unsorted, so if ORDER BY is present we
 	 * need to charge for the final sort.
@@ -3549,17 +3522,12 @@ make_subplanTargetList(PlannerInfo *root,
 	 * window specifications.  Vars used within Aggrefs will be pulled out
 	 * here, too.
 	 */
-<<<<<<< HEAD
 	sub_tlist = flatten_tlist(tlist,
 							  PVC_RECURSE_AGGREGATES,
 							  PVC_INCLUDE_PLACEHOLDERS);
 	extravars = pull_var_clause(parse->havingQual,
 								PVC_RECURSE_AGGREGATES,
 								PVC_INCLUDE_PLACEHOLDERS);
-=======
-	sub_tlist = flatten_tlist(tlist);
-	extravars = pull_var_clause(parse->havingQual, PVC_INCLUDE_PLACEHOLDERS);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	sub_tlist = add_to_flat_tlist(sub_tlist, extravars);
 	list_free(extravars);
 
@@ -3847,20 +3815,14 @@ add_volatile_sort_exprs(List *window_tlist, List *tlist, List *activeWindows)
 {
 	Bitmapset  *sgrefs = NULL;
 	ListCell   *lc;
-<<<<<<< HEAD
 	Bitmapset  *firstOrderColRefs = NULL;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* First, collect the sortgrouprefs of the windows into a bitmapset */
 	foreach(lc, activeWindows)
 	{
 		WindowClause *wc = (WindowClause *) lfirst(lc);
 		ListCell   *lc2;
-<<<<<<< HEAD
 		bool		firstOrderCol = true;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		foreach(lc2, wc->partitionClause)
 		{
@@ -3873,13 +3835,10 @@ add_volatile_sort_exprs(List *window_tlist, List *tlist, List *activeWindows)
 			SortGroupClause *sortcl = (SortGroupClause *) lfirst(lc2);
 
 			sgrefs = bms_add_member(sgrefs, sortcl->tleSortGroupRef);
-<<<<<<< HEAD
 
 			if (firstOrderCol)
 				firstOrderColRefs = bms_add_member(firstOrderColRefs, sortcl->tleSortGroupRef);
 			firstOrderCol = false;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		}
 	}
 
@@ -3897,12 +3856,8 @@ add_volatile_sort_exprs(List *window_tlist, List *tlist, List *activeWindows)
 
 		if (tle->ressortgroupref != 0 &&
 			bms_is_member(tle->ressortgroupref, sgrefs) &&
-<<<<<<< HEAD
 			(bms_is_member(tle->ressortgroupref, firstOrderColRefs) ||
 			 contain_volatile_functions((Node *) tle->expr)))
-=======
-			contain_volatile_functions((Node *) tle->expr))
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		{
 			TargetEntry *newtle;
 
@@ -4066,9 +4021,42 @@ get_column_info_for_window(PlannerInfo *root, WindowClause *wc, List *tlist,
 	}
 }
 
+/*
+ * expression_planner
+ *		Perform planner's transformations on a standalone expression.
+ *
+ * Various utility commands need to evaluate expressions that are not part
+ * of a plannable query.  They can do so using the executor's regular
+ * expression-execution machinery, but first the expression has to be fed
+ * through here to transform it from parser output to something executable.
+ *
+ * Currently, we disallow sublinks in standalone expressions, so there's no
+ * real "planning" involved here.  (That might not always be true though.)
+ * What we must do is run eval_const_expressions to ensure that any function
+ * default arguments get inserted.	The fact that constant subexpressions
+ * get simplified is a side-effect that is useful when the expression will
+ * get evaluated more than once.  Also, we must fix operator function IDs.
+ *
+ * Note: this must not make any damaging changes to the passed-in expression
+ * tree.  (It would actually be okay to apply fix_opfuncids to it, but since
+ * we first do an expression_tree_mutator-based walk, what is returned will
+ * be a new node tree.)
+ */
+Expr *
+expression_planner(Expr *expr)
+{
+	Node	   *result;
+
+	/* Insert default arguments and simplify constant subexprs */
+	result = eval_const_expressions(NULL, (Node *) expr);
+
+	/* Fill in opfuncid values if missing */
+	fix_opfuncids(result);
+
+	return (Expr *) result;
+}
 
 /*
-<<<<<<< HEAD
  * Produce the canonical form of a GROUP BY clause given the parse
  * tree form.
  *
@@ -4586,38 +4574,4 @@ isSimplyUpdatableQuery(Query *query)
 			return true;
 	}
 	return false;
-=======
- * expression_planner
- *		Perform planner's transformations on a standalone expression.
- *
- * Various utility commands need to evaluate expressions that are not part
- * of a plannable query.  They can do so using the executor's regular
- * expression-execution machinery, but first the expression has to be fed
- * through here to transform it from parser output to something executable.
- *
- * Currently, we disallow sublinks in standalone expressions, so there's no
- * real "planning" involved here.  (That might not always be true though.)
- * What we must do is run eval_const_expressions to ensure that any function
- * default arguments get inserted.	The fact that constant subexpressions
- * get simplified is a side-effect that is useful when the expression will
- * get evaluated more than once.  Also, we must fix operator function IDs.
- *
- * Note: this must not make any damaging changes to the passed-in expression
- * tree.  (It would actually be okay to apply fix_opfuncids to it, but since
- * we first do an expression_tree_mutator-based walk, what is returned will
- * be a new node tree.)
- */
-Expr *
-expression_planner(Expr *expr)
-{
-	Node	   *result;
-
-	/* Insert default arguments and simplify constant subexprs */
-	result = eval_const_expressions(NULL, (Node *) expr);
-
-	/* Fill in opfuncid values if missing */
-	fix_opfuncids(result);
-
-	return (Expr *) result;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }

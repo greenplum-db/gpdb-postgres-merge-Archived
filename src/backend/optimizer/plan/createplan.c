@@ -2779,7 +2779,6 @@ create_nestloop_plan(PlannerInfo *root,
 	List	   *otherclauses;
 	NestLoop   *join_plan;
 
-<<<<<<< HEAD
 	bool		prefetch = false;
 
 	/*
@@ -2836,81 +2835,6 @@ create_nestloop_plan(PlannerInfo *root,
 		mat->cdb_strict = true;
 	}
 
-	if (IsA(best_path->innerjoinpath, IndexPath))
-	{
-		/*
-		 * An index is being used to reduce the number of tuples scanned in
-		 * the inner relation.	If there are join clauses being used with the
-		 * index, we may remove those join clauses from the list of clauses
-		 * that have to be checked as qpquals at the join node.
-		 *
-		 * We can also remove any join clauses that are redundant with those
-		 * being used in the index scan; this check is needed because
-		 * find_eclass_clauses_for_index_join() may emit different clauses
-		 * than generate_join_implied_equalities() did.
-		 *
-		 * We can skip this if the index path is an ordinary indexpath and not
-		 * a special innerjoin path, since it then wouldn't be using any join
-		 * clauses.
-		 */
-		IndexPath  *innerpath = (IndexPath *) best_path->innerjoinpath;
-
-		if (innerpath->isjoininner)
-			joinrestrictclauses =
-				select_nonredundant_join_clauses(root,
-												 joinrestrictclauses,
-												 innerpath->indexclauses);
-	}
-	else if (IsA(best_path->innerjoinpath, BitmapHeapPath) ||
-			 IsA(best_path->innerjoinpath, BitmapAppendOnlyPath))
-	{
-		/*
-		 * Same deal for bitmapped index scans.
-		 *
-		 * Note: both here and above, we ignore any implicit index
-		 * restrictions associated with the use of partial indexes.  This is
-		 * OK because we're only trying to prove we can dispense with some
-		 * join quals; failing to prove that doesn't result in an incorrect
-		 * plan.  It is the right way to proceed because adding more quals to
-		 * the stuff we got from the original query would just make it harder
-		 * to detect duplication.  (Also, to change this we'd have to be wary
-		 * of UPDATE/DELETE/SELECT FOR UPDATE target relations; see notes
-		 * above about EvalPlanQual.)
-		 */
-		bool		isjoininner = false;
-		Path	   *bitmapqual = NULL;
-
-		if (IsA(best_path->innerjoinpath, BitmapHeapPath))
-		{
-			BitmapHeapPath *innerpath = (BitmapHeapPath *) best_path->innerjoinpath;
-
-			isjoininner = innerpath->isjoininner;
-			bitmapqual = innerpath->bitmapqual;
-		}
-		else
-		{
-			BitmapAppendOnlyPath *innerpath = (BitmapAppendOnlyPath *) best_path->innerjoinpath;
-
-			Assert(IsA(best_path->innerjoinpath, BitmapAppendOnlyPath));
-			isjoininner = innerpath->isjoininner;
-			bitmapqual = innerpath->bitmapqual;
-		}
-
-		if (isjoininner)
-		{
-			List	   *bitmapclauses;
-
-			bitmapclauses =
-				make_restrictinfo_from_bitmapqual(bitmapqual,
-												  true,
-												  false);
-			joinrestrictclauses =
-				select_nonredundant_join_clauses(root,
-												 joinrestrictclauses,
-												 bitmapclauses);
-		}
-	}
-=======
 	/*
 	 * If the inner path is a nestloop inner indexscan, it might be using some
 	 * of the join quals as index quals, in which case we don't have to check
@@ -2920,7 +2844,6 @@ create_nestloop_plan(PlannerInfo *root,
 		select_nonredundant_join_clauses(root,
 										 joinrestrictclauses,
 										 best_path->innerjoinpath);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* Sort join qual clauses into best execution order */
 	joinrestrictclauses = order_qual_clauses(root, joinrestrictclauses);

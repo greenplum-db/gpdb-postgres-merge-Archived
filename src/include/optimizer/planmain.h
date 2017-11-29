@@ -156,7 +156,11 @@ extern HashJoin *make_hashjoin(List *tlist,
 			  List *hashclauses, List *hashqualclauses,
 			  Plan *lefttree, Plan *righttree,
 			  JoinType jointype);
-extern Hash *make_hash(Plan *lefttree);
+extern Hash *make_hash(Plan *lefttree,
+		  Oid skewTable,
+		  AttrNumber skewColumn,
+		  Oid skewColType,
+		  int32 skewColTypmod);
 extern NestLoop *make_nestloop(List *tlist,
 							   List *joinclauses, List *otherclauses,
 							   Plan *lefttree, Plan *righttree,
