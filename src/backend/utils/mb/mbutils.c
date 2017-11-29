@@ -1126,46 +1126,6 @@ SetDatabaseEncoding(int encoding)
 /*
  * Bind gettext to the codeset equivalent with the database encoding.
  */
-<<<<<<< HEAD
-void
-pg_bind_textdomain_codeset(const char *domainname)
-{
-#if defined(ENABLE_NLS)
-	int			encoding = GetDatabaseEncoding();
-	int			i;
-
-	/*
-	 * gettext() uses the codeset specified by LC_CTYPE by default, so if that
-	 * matches the database encoding we don't need to do anything. In CREATE
-	 * DATABASE, we enforce or trust that the locale's codeset matches
-	 * database encoding, except for the C locale. In C locale, we bind
-	 * gettext() explicitly to the right codeset.
-	 *
-	 * On Windows, though, gettext() tends to get confused so we always bind
-	 * it.
-	 */
-#ifndef WIN32
-	const char *ctype = setlocale(LC_CTYPE, NULL);
-
-	if (pg_strcasecmp(ctype, "C") != 0 && pg_strcasecmp(ctype, "POSIX") != 0)
-		return;
-#endif
-
-	for (i = 0; pg_enc2gettext_tbl[i].name != NULL; i++)
-	{
-		if (pg_enc2gettext_tbl[i].encoding == encoding)
-		{
-			if (bind_textdomain_codeset(domainname,
-										pg_enc2gettext_tbl[i].name) == NULL)
-				elog(LOG, "bind_textdomain_codeset failed");
-			break;
-		}
-	}
-#endif
-}
-
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 void
 pg_bind_textdomain_codeset(const char *domainname)
 {
