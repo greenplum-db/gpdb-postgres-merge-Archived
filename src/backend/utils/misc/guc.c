@@ -183,21 +183,15 @@ static bool assign_autovacuum_max_workers(int newval, bool doit, GucSource sourc
 static bool assign_effective_io_concurrency(int newval, bool doit, GucSource source);
 static const char *assign_pgstat_temp_directory(const char *newval, bool doit, GucSource source);
 
-<<<<<<< HEAD
 static const char *assign_application_name(const char *newval, bool doit, GucSource source);
 
 static int	defunct_int = 0;
 static bool	defunct_bool = false;
 static double defunct_double = 0;
 
-static char *config_enum_get_options(struct config_enum *record, 
-									 const char *prefix, const char *suffix,
-									 const char *separator);
-=======
 static char *config_enum_get_options(struct config_enum * record,
 						const char *prefix, const char *suffix,
 						const char *separator);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 
 /*
@@ -448,12 +442,8 @@ static int	wal_block_size;
 static int	wal_segment_size;
 static bool	data_checksums;
 static bool integer_datetimes;
-<<<<<<< HEAD
-//static bool standard_conforming_strings;
-static char *allow_system_table_mods_str;
-=======
 static int	effective_io_concurrency;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+static char *allow_system_table_mods_str;
 
 /* should be static, but commands/variable.c needs to get at these */
 char	   *role_string;
@@ -727,27 +717,10 @@ static struct config_bool ConfigureNamesBool[] =
 		true, NULL, NULL
 	},
 	{
-<<<<<<< HEAD
-		{"constraint_exclusion", PGC_USERSET, QUERY_TUNING_OTHER,
-			gettext_noop("Enables the planner to use constraints to optimize queries."),
-			gettext_noop("Child table scans will be skipped if their "
-					   "constraints guarantee that no rows match the query."),
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-		},
-		&constraint_exclusion,
-		true, NULL, NULL
-	},
-	{
 		{"geqo", PGC_USERSET, DEFUNCT_OPTIONS,
 			gettext_noop("Unused. Syntax check only for PostgreSQL compatibility."),
             NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-=======
-		{"geqo", PGC_USERSET, QUERY_TUNING_GEQO,
-			gettext_noop("Enables genetic query optimization."),
-			gettext_noop("This algorithm attempts to do planning without "
-						 "exhaustive searching.")
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		},
 		&defunct_bool,
 		false, NULL, NULL
@@ -1644,11 +1617,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&max_prepared_xacts,
-<<<<<<< HEAD
 		50, 1, 1000, NULL, NULL
-=======
-		0, 0, INT_MAX / 4, NULL, NULL
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	},
 
 #ifdef LOCK_DEBUG
@@ -2830,10 +2799,11 @@ static struct config_enum ConfigureNamesEnum[] =
 		{"constraint_exclusion", PGC_USERSET, QUERY_TUNING_OTHER,
 			gettext_noop("Enables the planner to use constraints to optimize queries."),
 			gettext_noop("Table scans will be skipped if their constraints"
-						 " guarantee that no rows match the query.")
+						 " guarantee that no rows match the query."),
+			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&constraint_exclusion,
-		CONSTRAINT_EXCLUSION_PARTITION, constraint_exclusion_options,
+		CONSTRAINT_EXCLUSION_ON, constraint_exclusion_options,
 		NULL, NULL
 	},
 
@@ -4585,10 +4555,6 @@ ReportGUCOption(struct config_generic * record)
 	}
 }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 /*
  * Try to parse value as an integer.  The accepted formats are the
  * usual decimal, octal, or hexadecimal formats, optionally followed by
@@ -6607,12 +6573,8 @@ EmitWarningsOnPlaceholders(const char *className)
 			strncmp(className, var->name, classLen) == 0 &&
 			var->name[classLen] == GUC_QUALIFIER_SEPARATOR)
 		{
-<<<<<<< HEAD
 			if (Gp_role != GP_ROLE_EXECUTE)
-			ereport(INFO,
-=======
-			ereport(WARNING,
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+				ereport(WARNING,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("unrecognized configuration parameter \"%s\"",
 							var->name)));

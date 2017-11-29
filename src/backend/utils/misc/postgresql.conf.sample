@@ -117,23 +117,12 @@
 #shared_buffers = 128MB			# min 128kB
 					# (change requires restart)
 #temp_buffers = 8MB			# min 800kB
-<<<<<<< HEAD
 max_prepared_transactions = 250		# can be 0 or more
 					# (change requires restart)
 # Note:  Increasing max_prepared_transactions costs ~600 bytes of shared memory
 # per transaction slot, plus lock space (see max_locks_per_transaction).
 #work_mem = 32MB			# min 64kB
 #maintenance_work_mem = 64MB		# min 1MB
-=======
-#max_prepared_transactions = 0		# zero disables the feature
-					# (change requires restart)
-# Note:  Increasing max_prepared_transactions costs ~600 bytes of shared memory
-# per transaction slot, plus lock space (see max_locks_per_transaction).
-# It is not advisable to set max_prepared_transactions nonzero unless you
-# actively intend to use prepared transactions.
-#work_mem = 1MB				# min 64kB
-#maintenance_work_mem = 16MB		# min 1MB
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #max_stack_depth = 2MB			# min 100kB
 
 # - Kernel Resource Usage -
@@ -150,59 +139,10 @@ max_prepared_transactions = 250		# can be 0 or more
 #vacuum_cost_page_dirty = 20		# 0-10000 credits
 #vacuum_cost_limit = 200		# 1-10000 credits
 
-<<<<<<< HEAD
-=======
-# - Background Writer -
-
-#bgwriter_delay = 200ms			# 10-10000ms between rounds
-#bgwriter_lru_maxpages = 100		# 0-1000 max buffers written/round
-#bgwriter_lru_multiplier = 2.0		# 0-10.0 multipler on buffers scanned/round
-
 # - Asynchronous Behavior -
 
 #effective_io_concurrency = 1		# 1-1000. 0 disables prefetching
 
-
-#------------------------------------------------------------------------------
-# WRITE AHEAD LOG
-#------------------------------------------------------------------------------
-
-# - Settings -
-
-#fsync = on				# turns forced synchronization on or off
-#synchronous_commit = on		# immediate fsync at commit
-#wal_sync_method = fsync		# the default is the first option 
-					# supported by the operating system:
-					#   open_datasync
-					#   fdatasync
-					#   fsync
-					#   fsync_writethrough
-					#   open_sync
-#full_page_writes = on			# recover from partial page writes
-#wal_buffers = 64kB			# min 32kB
-					# (change requires restart)
-#wal_writer_delay = 200ms		# 1-10000 milliseconds
-
-#commit_delay = 0			# range 0-100000, in microseconds
-#commit_siblings = 5			# range 1-1000
-
-# - Checkpoints -
-
-#checkpoint_segments = 3		# in logfile segments, min 1, 16MB each
-#checkpoint_timeout = 5min		# range 30s-1h
-#checkpoint_completion_target = 0.5	# checkpoint target duration, 0.0 - 1.0
-#checkpoint_warning = 30s		# 0 disables
-
-# - Archiving -
-
-#archive_mode = off		# allows archiving to be done
-				# (change requires restart)
-#archive_command = ''		# command to use to archive a logfile segment
-#archive_timeout = 0		# force a logfile segment switch after this
-				# number of seconds; 0 disables
-
-
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #------------------------------------------------------------------------------
 # QUERY TUNING
 #------------------------------------------------------------------------------
@@ -249,11 +189,6 @@ max_prepared_transactions = 250		# can be 0 or more
 
 # - Other Planner Options -
 
-<<<<<<< HEAD
-=======
-#default_statistics_target = 100	# range 1-10000
-#constraint_exclusion = partition	# on, off, or partition
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #cursor_tuple_fraction = 0.1		# range 0.0-1.0
 #from_collapse_limit = 20
 #join_collapse_limit = 20		# 1 disables collapsing of explicit
@@ -349,37 +284,11 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 #log_disconnections = off
 #log_duration = off
 #log_hostname = off
-<<<<<<< HEAD
 
 #log_statement = 'none'			# none, mod, ddl, all
 #log_temp_files = -1			# Log temporary files equal or larger
 					# than the specified number of kilobytes.
 					# -1 disables;  0 logs all temp files
-=======
-#log_line_prefix = ''			# special values:
-					#   %u = user name
-					#   %d = database name
-					#   %r = remote host and port
-					#   %h = remote host
-					#   %p = process ID
-					#   %t = timestamp without milliseconds
-					#   %m = timestamp with milliseconds
-					#   %i = command tag
-					#   %c = session ID
-					#   %l = session line number
-					#   %s = session start timestamp
-					#   %v = virtual transaction ID
-					#   %x = transaction ID (0 if none)
-					#   %q = stop here in non-session
-					#        processes
-					#   %% = '%'
-					# e.g. '<%u%%%d> '
-#log_lock_waits = off			# log lock waits >= deadlock_timeout
-#log_statement = 'none'			# none, ddl, mod, all
-#log_temp_files = -1			# log temporary files equal or larger
-					# than the specified size in kilobytes;
-					# -1 disables, 0 logs all temp files
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #log_timezone = unknown			# actually, defaults to TZ environment
 					# setting
 
@@ -523,18 +432,11 @@ log_autostats=off	# print additional autostats information
 #default_transaction_isolation = 'read committed'
 #default_transaction_read_only = off
 #session_replication_role = 'origin'
-<<<<<<< HEAD
 #statement_timeout = 0			# 0 is disabled
 #idle_session_gang_timeout = 18s 	# in milliseconds, 0 is disabled
-#vacuum_freeze_min_age = 100000000
-#bytea_output='escape'
-=======
-#statement_timeout = 0			# in milliseconds, 0 is disabled
 #vacuum_freeze_min_age = 50000000
 #vacuum_freeze_table_age = 150000000
-#xmlbinary = 'base64'
-#xmloption = 'content'
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+#bytea_output='escape'
 
 # - Locale and Formatting -
 
