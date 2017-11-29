@@ -3396,16 +3396,6 @@ quickdie_impl()
 	 */
 
 	/*
-	 * MPP-7564: exit(2) will call proc_exit()'s on_exit/at_exit
-	 * hooks.  We want to skip them. (quickdie is equivalent to a
-	 * crash -- we're depending on crash recovery to save us on
-	 * restart). So first we reset the exit hooks.
-	 *
-	 * This is a merge from Postgres.
-	 */
-	on_exit_reset();
-
-	/*
 	 * MPP-17167: We need to release any filrep or primary/mirror spin locks.
 	 * to allow the possibility that filerep itself has sent us a SIGQUIT
 	 * message as part of filerep transition.
@@ -3498,12 +3488,8 @@ die(SIGNAL_ARGS)
 void
 authdie(SIGNAL_ARGS)
 {
-<<<<<<< HEAD
 	if (!proc_exit_inprogress)
 		proc_exit(1);
-=======
-	proc_exit(1);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 /*
@@ -4104,50 +4090,12 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 #ifdef HAVE_INT_OPTERR
 
 	/*
-<<<<<<< HEAD
 	 * Turn this off because it's either printed to stderr and not the log
 	 * where we'd want it, or argv[0] is now "--single", which would make for
 	 * a weird error message.  We print our own error message below.
 	 */
 	opterr = 0;
 #endif
-=======
-	 * Set default values for command-line options.
-	 */
-	EchoQuery = false;
-
-	if (!IsUnderPostmaster)
-		InitializeGUCOptions();
-
-	/* ----------------
-	 *	parse command line arguments
-	 *
-	 *	There are now two styles of command line layout for the backend:
-	 *
-	 *	For interactive use (not started from postmaster) the format is
-	 *		postgres [switches] [databasename]
-	 *	If the databasename is omitted it is taken to be the user name.
-	 *
-	 *	When started from the postmaster, the format is
-	 *		postgres [secure switches] -y databasename [insecure switches]
-	 *	Switches appearing after -y came from the client (via "options"
-	 *	field of connection request).  For security reasons we restrict
-	 *	what these switches can do.
-	 * ----------------
-	 */
-
-	/* Ignore the initial --single argument, if present */
-	if (argc > 1 && strcmp(argv[1], "--single") == 0)
-	{
-		argv++;
-		argc--;
-	}
-
-	/* all options are allowed until '-y' */
-	secure = true;
-	ctx = PGC_POSTMASTER;
-	gucsource = PGC_S_ARGV;		/* initial switches came from command line */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * Parse command-line options.	CAUTION: keep this in sync with

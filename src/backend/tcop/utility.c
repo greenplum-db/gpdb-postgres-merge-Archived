@@ -558,10 +558,11 @@ ProcessUtility(Node *parsetree,
 
 					if (IsA(stmt, CreateStmt))
 					{
-<<<<<<< HEAD
 						CreateStmt *cstmt = (CreateStmt *) stmt;
 						char		relKind = RELKIND_RELATION;
 						char		relStorage = RELSTORAGE_HEAP;
+						Datum		toast_options;
+						static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
 						/*
 						 * If this T_CreateStmt was dispatched and we're a QE
@@ -596,12 +597,6 @@ ProcessUtility(Node *parsetree,
 						 * Create the table itself. Don't dispatch it yet, as we haven't
 						 * created the toast and other auxiliary tables yet.
 						 */
-=======
-						Datum		toast_options;
-						static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
-
-						/* Create the table itself */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 						relOid = DefineRelation((CreateStmt *) stmt,
 												relKind, relStorage, false);
 
@@ -611,12 +606,24 @@ ProcessUtility(Node *parsetree,
 						 */
 						CommandCounterIncrement();
 
-<<<<<<< HEAD
 						DefinePartitionedRelation((CreateStmt *) parsetree, relOid);
 
 						if (relKind != RELKIND_COMPOSITE_TYPE)
 						{
+							/* parse and validate reloptions for the toast table */
+							toast_options = transformRelOptions((Datum) 0,
+																((CreateStmt *) stmt)->options,
+																"toast",
+																validnsps,
+																true, false);
+							(void) heap_reloptions(RELKIND_TOASTVALUE,
+												   toast_options,
+												   true);
+
 							AlterTableCreateToastTable(relOid,
+													   InvalidOid,
+													   toast_options,
+													   false,
 													   cstmt->is_part_child);
 							AlterTableCreateAoSegTable(relOid,
 													   cstmt->is_part_child);
@@ -644,22 +651,6 @@ ProcessUtility(Node *parsetree,
 						 * in the deferred statements cannot see the relfile.
 						 */
 						EvaluateDeferredStatements(cstmt->deferredStmts);
-=======
-						/* parse and validate reloptions for the toast table */
-						toast_options = transformRelOptions((Datum) 0,
-											  ((CreateStmt *) stmt)->options,
-															"toast",
-															validnsps,
-															true, false);
-						(void) heap_reloptions(RELKIND_TOASTVALUE,
-											   toast_options,
-											   true);
-
-						AlterTableCreateToastTable(relOid,
-												   InvalidOid,
-												   toast_options,
-												   false);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 					}
 					else
 					{
@@ -1332,9 +1323,8 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_CreateTrigStmt:
-<<<<<<< HEAD
 			{
-				Oid trigOid = CreateTrigger((CreateTrigStmt *) parsetree, InvalidOid);
+				Oid trigOid = CreateTrigger((CreateTrigStmt *) parsetree, InvalidOid, true);
 				if (Gp_role == GP_ROLE_DISPATCH)
 				{
 					((CreateTrigStmt *) parsetree)->trigOid = trigOid;
@@ -1346,9 +1336,6 @@ ProcessUtility(Node *parsetree,
 												NULL);
 				}
 			}
-=======
-			CreateTrigger((CreateTrigStmt *) parsetree, InvalidOid, true);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			break;
 
 		case T_DropPropertyStmt:

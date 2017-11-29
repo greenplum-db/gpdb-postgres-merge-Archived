@@ -1305,12 +1305,8 @@ RunFromStore(Portal portal, ScanDirection direction, int64 count,
 
 			oldcontext = MemoryContextSwitchTo(portal->holdContext);
 
-<<<<<<< HEAD
-			ok = tuplestore_gettupleslot(portal->holdStore, forward, false, slot);
-=======
 			ok = tuplestore_gettupleslot(portal->holdStore, forward, false,
 										 slot);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 			MemoryContextSwitchTo(oldcontext);
 
