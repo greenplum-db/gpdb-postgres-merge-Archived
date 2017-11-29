@@ -2854,56 +2854,34 @@ usage(const char *progname)
 	printf(_("  -A, --auth=METHOD         default authentication method for local connections\n"));
 	printf(_(" [-D, --pgdata=]DATADIR     location for this database cluster\n"));
 	printf(_("  -E, --encoding=ENCODING   set default encoding for new databases\n"));
-<<<<<<< HEAD
-	printf(_("  --locale=LOCALE           set default locale for new databases\n"));
-	printf(_("  --lc-collate, --lc-ctype, --lc-messages=LOCALE\n"
-			 "  --lc-monetary, --lc-numeric, --lc-time=LOCALE\n"
-			 "                            set default locale in the respective\n"
-			 "                            category for new databases (default\n"
-			 "                            taken from environment)\n"));
-	printf(_("  --is_filerep_mirrored=yes|no whether or not this db directory will be mirrored by file replication\n"));
-	printf(_("  --no-locale               equivalent to --locale=C\n"));
-=======
 	printf(_("      --locale=LOCALE       set default locale for new databases\n"));
 	printf(_("      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
 			 "      --lc-monetary=, --lc-numeric=, --lc-time=LOCALE\n"
 			 "                            set default locale in the respective category for\n"
 			 "                            new databases (default taken from environment)\n"));
 	printf(_("      --no-locale           equivalent to --locale=C\n"));
+	printf(_("      --is_filerep_mirrored=yes|no whether or not this db directory will be mirrored by file replication\n"));
 	printf(_("      --pwfile=FILE         read password for the new superuser from file\n"));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	printf(_("  -T, --text-search-config=CFG\n"
 		 "                            default text search configuration\n"));
 	printf(_("  -U, --username=NAME       database superuser name\n"));
 	printf(_("  -W, --pwprompt            prompt for a password for the new superuser\n"));
-<<<<<<< HEAD
-	printf(_("  --pwfile=FILE             read password for the new superuser from file\n"));
-	printf(_("  -?, --help                show this help, then exit\n"));
-	printf(_("  -V, --version             output version information, then exit\n"));
-	printf(_("  --gp-version             output Greenplum version information, then exit\n"));
+	printf(_("  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"));
 	printf(_("\nShared memory allocation:\n"));
 	printf(_("  --max_connections=MAX-CONNECT  maximum number of allowed connections\n"));
 	printf(_("  --shared_buffers=NBUFFERS number of shared buffers; or, amount of memory for\n"
 			 "                            shared buffers if kB/MB/GB suffix is appended\n"));
-	printf(_("  --max_fsm_pages=MAX-FSM   number of disk pages for which free space is tracked\n"));
 	printf(_("\nLess commonly used options:\n"));
 	printf(_("  -d, --debug               generate lots of debugging output\n"));
+	printf(_("  -L DIRECTORY              where to find the input files\n"));
+	printf(_("  -n, --noclean             do not clean up after errors\n"));
 	printf(_("  -s, --show                show internal settings\n"));
 	printf(_("  -k, --data-checksums      data page checksums\n"));
-	printf(_("  -L DIRECTORY              where to find the input files\n"));
-	printf(_("  -n, --noclean             do not clean up after errors\n"));
 	printf(_("  -m, --formirror           only create data needed to start the backend in mirror mode\n"));
-=======
-	printf(_("  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"));
-	printf(_("\nLess commonly used options:\n"));
-	printf(_("  -d, --debug               generate lots of debugging output\n"));
-	printf(_("  -L DIRECTORY              where to find the input files\n"));
-	printf(_("  -n, --noclean             do not clean up after errors\n"));
-	printf(_("  -s, --show                show internal settings\n"));
 	printf(_("\nOther options:\n"));
 	printf(_("  -?, --help                show this help, then exit\n"));
 	printf(_("  -V, --version             output version information, then exit\n"));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	printf(_("      --gp-version          output Greenplum version information, then exit\n"));
 	printf(_("\nIf the data directory is not specified, the environment variable PGDATA\n"
 			 "is used.\n"));
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
@@ -2933,7 +2911,6 @@ main(int argc, char *argv[])
 		{"pwfile", required_argument, NULL, 9},
 		{"username", required_argument, NULL, 'U'},
         {"max_connections", required_argument, NULL, 1001},     /*CDB*/
-        {"max_fsm_pages", required_argument, NULL, 1002},       /*CDB*/
         {"shared_buffers", required_argument, NULL, 1003},      /*CDB*/
         {"is_filerep_mirrored", required_argument, NULL, 1004},      /*CDB*/
         {"backend_output", optional_argument, NULL, 1005},      /*CDB*/
