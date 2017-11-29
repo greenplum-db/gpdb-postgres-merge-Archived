@@ -11,11 +11,7 @@
 
 /*----------
  * Here is how the locale stuff is handled: LC_COLLATE and LC_CTYPE
-<<<<<<< HEAD
- * are fixed at CREATE DATABASE time, stored in pg_database, and cannot 
-=======
  * are fixed at CREATE DATABASE time, stored in pg_database, and cannot
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  * be changed. Thus, the effects of strcoll(), strxfrm(), isupper(),
  * toupper(), etc. are always in the same fixed locale.
  *
@@ -61,10 +57,6 @@
 #include "utils/string_wrapper.h"
 
 #ifdef WIN32
-<<<<<<< HEAD
-#undef StrNCpy
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #include <shlwapi.h>
 #endif
 

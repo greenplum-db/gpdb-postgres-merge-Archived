@@ -609,17 +609,10 @@ int8div(PG_FUNCTION_ARGS)
 	}
 
 	/*
-<<<<<<< HEAD
 	 * INT64_MIN / -1 is problematic, since the result can't be represented on
 	 * a two's-complement machine.  Some machines produce INT64_MIN, some
 	 * produce zero, some throw an exception.  We can dodge the problem by
 	 * recognizing that division by -1 is the same as negation.
-=======
-	 * Overflow check.	The only possible overflow case is for arg1 =
-	 * INT64_MIN, arg2 = -1, where the correct result is -INT64_MIN, which
-	 * can't be represented on a two's-complement machine.	Most machines
-	 * produce INT64_MIN but it seems some produce zero.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	if (arg2 == -1)
 	{
@@ -880,17 +873,10 @@ int84div(PG_FUNCTION_ARGS)
 	}
 
 	/*
-<<<<<<< HEAD
 	 * INT64_MIN / -1 is problematic, since the result can't be represented on
 	 * a two's-complement machine.  Some machines produce INT64_MIN, some
 	 * produce zero, some throw an exception.  We can dodge the problem by
 	 * recognizing that division by -1 is the same as negation.
-=======
-	 * Overflow check.	The only possible overflow case is for arg1 =
-	 * INT64_MIN, arg2 = -1, where the correct result is -INT64_MIN, which
-	 * can't be represented on a two's-complement machine.	Most machines
-	 * produce INT64_MIN but it seems some produce zero.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	if (arg2 == -1)
 	{
@@ -1084,17 +1070,10 @@ int82div(PG_FUNCTION_ARGS)
 	}
 
 	/*
-<<<<<<< HEAD
 	 * INT64_MIN / -1 is problematic, since the result can't be represented on
 	 * a two's-complement machine.  Some machines produce INT64_MIN, some
 	 * produce zero, some throw an exception.  We can dodge the problem by
 	 * recognizing that division by -1 is the same as negation.
-=======
-	 * Overflow check.	The only possible overflow case is for arg1 =
-	 * INT64_MIN, arg2 = -1, where the correct result is -INT64_MIN, which
-	 * can't be represented on a two's-complement machine.	Most machines
-	 * produce INT64_MIN but it seems some produce zero.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	if (arg2 == -1)
 	{
