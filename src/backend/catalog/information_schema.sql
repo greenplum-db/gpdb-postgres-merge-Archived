@@ -40,13 +40,6 @@ CREATE FUNCTION _pg_expandarray(IN anyarray, OUT x anyelement, OUT n int)
                                         pg_catalog.array_upper($1,1),
                                         1) as g(s)';
 
-<<<<<<< HEAD
--- _pg_keyissubset is deprecated in the 4.0 release
-CREATE FUNCTION _pg_keyissubset(smallint[], smallint[]) RETURNS boolean
-    LANGUAGE internal IMMUTABLE AS 'gp_deprecated';
-
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 CREATE FUNCTION _pg_keysequal(smallint[], smallint[]) RETURNS boolean
     LANGUAGE sql IMMUTABLE  -- intentionally not STRICT, to allow inlining
     AS 'select $1 <@ $2 and $2 <@ $1';
@@ -1128,9 +1121,6 @@ CREATE VIEW referential_constraints AS
             AND pkc.conrelid = con.confrelid
          LEFT JOIN pg_namespace npkc ON pkc.connamespace = npkc.oid
 
-<<<<<<< HEAD
-    WHERE pg_has_role(c.relowner, 'USAGE');
-=======
     WHERE c.relkind = 'r'
           AND con.contype = 'f'
           AND (pkc.contype IN ('p', 'u') OR pkc.contype IS NULL)
@@ -1138,7 +1128,6 @@ CREATE VIEW referential_constraints AS
                -- SELECT privilege omitted, per SQL standard
                OR has_table_privilege(c.oid, 'INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
                OR has_any_column_privilege(c.oid, 'INSERT, UPDATE, REFERENCES') );
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 GRANT SELECT ON referential_constraints TO PUBLIC;
 
@@ -1838,17 +1827,8 @@ CREATE VIEW table_constraints AS
           AND (NOT pg_is_other_temp_schema(nr.oid))
           AND (pg_has_role(r.relowner, 'USAGE')
                -- SELECT privilege omitted, per SQL standard
-<<<<<<< HEAD
-               OR has_table_privilege(r.oid, 'INSERT')
-               OR has_table_privilege(r.oid, 'UPDATE')
-               OR has_table_privilege(r.oid, 'DELETE')
-               OR has_table_privilege(r.oid, 'TRUNCATE')
-               OR has_table_privilege(r.oid, 'REFERENCES')
-               OR has_table_privilege(r.oid, 'TRIGGER') );
-=======
                OR has_table_privilege(r.oid, 'INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
                OR has_any_column_privilege(r.oid, 'INSERT, UPDATE, REFERENCES') );
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 GRANT SELECT ON table_constraints TO PUBLIC;
 
@@ -1933,7 +1913,6 @@ CREATE VIEW tables AS
            CAST(null AS sql_identifier) AS user_defined_type_schema,
            CAST(null AS sql_identifier) AS user_defined_type_name,
 
-<<<<<<< HEAD
            CAST(CASE WHEN (c.relkind != 'r' 
            				   OR (nc.nspname = 'pg_catalog' 
            				       AND (c.relname LIKE 'gp_persistent_%'
@@ -1941,15 +1920,10 @@ CREATE VIEW tables AS
            				   OR c.relstorage = 'f'
            				   OR (c.relstorage = 'x'
            				       AND x.writable = 'f'))
-           
-                THEN 'NO' ELSE 'YES' END AS character_data) AS is_insertable_into,
-=======
-           CAST(CASE WHEN c.relkind = 'r'
                           OR (c.relkind = 'v'
                               AND EXISTS (SELECT 1 FROM pg_rewrite WHERE ev_class = c.oid AND ev_type = '3' AND is_instead))
                 THEN 'YES' ELSE 'NO' END AS character_data) AS is_insertable_into,
 
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
            CAST('NO' AS character_data) AS is_typed,
            CAST(
              CASE WHEN nc.oid = pg_my_temp_schema() THEN 'PRESERVE' -- FIXME

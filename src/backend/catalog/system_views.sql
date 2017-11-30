@@ -1001,15 +1001,6 @@ LANGUAGE SQL STRICT STABLE;
 COMMENT ON FUNCTION ts_debug(text) IS
     'debug function for current text search configuration';
 
-<<<<<<< HEAD
-CREATE OR REPLACE FUNCTION
-  json_populate_record(base anyelement, from_json json, use_json_as_text boolean DEFAULT false)
-  RETURNS anyelement LANGUAGE internal STABLE AS 'json_populate_record';
-
-CREATE OR REPLACE FUNCTION
-  json_populate_recordset(base anyelement, from_json json, use_json_as_text boolean DEFAULT false)
-  RETURNS SETOF anyelement LANGUAGE internal STABLE ROWS 100  AS 'json_populate_recordset';
-=======
 --
 -- Redeclare built-in functions that need default values attached to their
 -- arguments.  It's impractical to set those up directly in pg_proc.h because
@@ -1022,4 +1013,11 @@ CREATE OR REPLACE FUNCTION
 CREATE OR REPLACE FUNCTION
   pg_start_backup(label text, fast boolean DEFAULT false)
   RETURNS text STRICT VOLATILE LANGUAGE internal AS 'pg_start_backup';
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+
+CREATE OR REPLACE FUNCTION
+  json_populate_record(base anyelement, from_json json, use_json_as_text boolean DEFAULT false)
+  RETURNS anyelement LANGUAGE internal STABLE AS 'json_populate_record';
+
+CREATE OR REPLACE FUNCTION
+  json_populate_recordset(base anyelement, from_json json, use_json_as_text boolean DEFAULT false)
+  RETURNS SETOF anyelement LANGUAGE internal STABLE ROWS 100  AS 'json_populate_recordset';
