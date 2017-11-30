@@ -155,13 +155,6 @@ inline static char extended_char(char* token, size_t length)
 	    local_node->fldname = nodeRead(NULL, 0); \
     } while (0)
 
-/* Read a bitmapset field */
-#define READ_BITMAPSET_FIELD(fldname) \
-    do { \
-	    token = pg_strtok(&length);		/* skip :fldname */ \
-	    local_node->fldname = bitmapsetRead(); \
-    } while (0)
-
 /* Read a bytea field */
 #define READ_BYTEA_FIELD(fldname) \
 	local_node->fldname = (bytea *) DatumGetPointer(readDatum(false))
@@ -319,6 +312,7 @@ inline static char extended_char(char* token, size_t length)
 
 static Datum readDatum(bool typbyval);
 
+#ifndef COMPILING_BINARY_FUNCS
 /*
  * _readBitmapset
  */
@@ -359,6 +353,7 @@ _readBitmapset(void)
 
 	return result;
 }
+#endif /* COMPILING_BINARY_FUNCS */
 
 
 #ifndef COMPILING_BINARY_FUNCS
@@ -2703,7 +2698,7 @@ _readVacuumStmt(void)
 	READ_BOOL_FIELD(verbose);
 	READ_BOOL_FIELD(rootonly);
 	READ_INT_FIELD(freeze_min_age);
-	READ_BOOL_FIELD(scan_all);
+	READ_INT_FIELD(freeze_table_age);
 	READ_NODE_FIELD(relation);
 	READ_NODE_FIELD(va_cols);
 	READ_NODE_FIELD(expanded_relids);
@@ -2809,9 +2804,7 @@ _readCreateTrigStmt(void)
 	READ_NODE_FIELD(args);
 	READ_BOOL_FIELD(before);
 	READ_BOOL_FIELD(row);
-	token = pg_strtok(&length);		/* skip :fldname */
-	token = pg_strtok(&length);		/* get field value */
-	strcpy(local_node->actions, debackslash(token, length));
+	READ_INT_FIELD(events);
 	READ_BOOL_FIELD(isconstraint);
 	READ_BOOL_FIELD(deferrable);
 	READ_BOOL_FIELD(initdeferred);

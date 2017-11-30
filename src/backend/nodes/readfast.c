@@ -965,6 +965,8 @@ _readJoinExpr(void)
  *	Stuff from parsenodes.h.
  */
 
+static Bitmapset *bitmapsetRead(void);
+
 /*
  * _readRangeTblEntry
  */
@@ -1025,8 +1027,8 @@ _readRangeTblEntry(void)
 	READ_BOOL_FIELD(inFromCl);
 	READ_UINT_FIELD(requiredPerms);
 	READ_OID_FIELD(checkAsUser);
-	WRITE_BITMAPSET_FIELD(selectedCols);
-	WRITE_BITMAPSET_FIELD(modifiedCols);
+	READ_BITMAPSET_FIELD(selectedCols);
+	READ_BITMAPSET_FIELD(modifiedCols);
 
 	READ_BOOL_FIELD(forceDistRandom);
 	/* 'pseudocols' is intentionally missing, see out function */
@@ -1041,7 +1043,6 @@ _readRangeTblEntry(void)
 static void readPlanInfo(Plan *local_node);
 static void readScanInfo(Scan *local_node);
 static void readJoinInfo(Join *local_node);
-static Bitmapset *bitmapsetRead(void);
 
 
 static CreateExtensionStmt *
@@ -2409,11 +2410,7 @@ _readCreateTrigStmt(void)
 	READ_NODE_FIELD(args);
 	READ_BOOL_FIELD(before);
 	READ_BOOL_FIELD(row);
-	{ int slen;
-		memcpy(&slen, read_str_ptr, sizeof(int));
-		read_str_ptr+=sizeof(int);
-		memcpy(local_node->actions,read_str_ptr,slen);
-		read_str_ptr+=slen; }
+	READ_INT16_FIELD(events);
 	READ_BOOL_FIELD(isconstraint);
 	READ_BOOL_FIELD(deferrable);
 	READ_BOOL_FIELD(initdeferred);
@@ -2692,7 +2689,7 @@ _readCreateFdwStmt(void)
 	READ_LOCALS(CreateFdwStmt);
 
 	READ_STRING_FIELD(fdwname);
-	READ_STRING_FIELD(library);
+	READ_NODE_FIELD(validator);
 	READ_NODE_FIELD(options);
 
 	READ_DONE();
@@ -2704,7 +2701,8 @@ _readAlterFdwStmt(void)
 	READ_LOCALS(AlterFdwStmt);
 
 	READ_STRING_FIELD(fdwname);
-	READ_STRING_FIELD(library);
+	READ_NODE_FIELD(validator);
+	READ_BOOL_FIELD(change_validator);
 	READ_NODE_FIELD(options);
 
 	READ_DONE();

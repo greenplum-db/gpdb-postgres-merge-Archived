@@ -4080,7 +4080,7 @@ _outVacuumStmt(StringInfo str, VacuumStmt *node)
 	WRITE_BOOL_FIELD(verbose);
 	WRITE_BOOL_FIELD(rootonly);
 	WRITE_INT_FIELD(freeze_min_age);
-	WRITE_BOOL_FIELD(scan_all);
+	WRITE_INT_FIELD(freeze_table_age);
 	WRITE_NODE_FIELD(relation);
 	WRITE_NODE_FIELD(va_cols);
 
@@ -4156,7 +4156,7 @@ _outCreateTrigStmt(StringInfo str, CreateTrigStmt *node)
 	WRITE_NODE_FIELD(args);
 	WRITE_BOOL_FIELD(before);
 	WRITE_BOOL_FIELD(row);
-	WRITE_STRING_FIELD(actions);
+	WRITE_INT_FIELD(events);
 	WRITE_BOOL_FIELD(isconstraint);
 	WRITE_BOOL_FIELD(deferrable);
 	WRITE_BOOL_FIELD(initdeferred);
