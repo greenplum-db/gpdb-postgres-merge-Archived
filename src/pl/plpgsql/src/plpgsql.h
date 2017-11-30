@@ -207,22 +207,14 @@ typedef struct PLpgSQL_expr
 	int			expr_simple_generation; /* plancache generation we checked */
 
 	/*
-<<<<<<< HEAD
-	 * if expr is simple AND prepared in current eval_estate,
+	 * if expr is simple AND prepared in current transaction,
 	 * expr_simple_state and expr_simple_in_use are valid. Test validity by
-	 * seeing if expr_simple_id matches eval_estate_simple_id.
+	 * seeing if expr_simple_lxid matches current LXID.  (If not,
+	 * expr_simple_state probably points at garbage!)
 	 */
 	ExprState  *expr_simple_state;		/* eval tree for expr_simple_expr */
 	bool		expr_simple_in_use;		/* true if eval tree is active */
-	long int	expr_simple_id;
-=======
-	 * if expr is simple AND prepared in current transaction,
-	 * expr_simple_state is valid. Test validity by seeing if expr_simple_lxid
-	 * matches current LXID.
-	 */
-	ExprState  *expr_simple_state;
 	LocalTransactionId expr_simple_lxid;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* params to pass to expr */
 	int			nparams;

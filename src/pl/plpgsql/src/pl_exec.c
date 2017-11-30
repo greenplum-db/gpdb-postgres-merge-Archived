@@ -2864,17 +2864,6 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 			errhint("Use a BEGIN block with an EXCEPTION clause instead.")));
 			break;
 
-		case SPI_OK_REWRITTEN:
-			Assert(!stmt->mod_stmt);
-
-			/*
-			 * The command was rewritten into another kind of command. It's
-			 * not clear what FOUND would mean in that case (and SPI doesn't
-			 * return the row count either), so just set it to false.
-			 */
-			exec_set_found(estate, false);
-			break;
-
 		default:
 			elog(ERROR, "SPI_execute_plan failed executing query \"%s\": %s",
 				 expr->query, SPI_result_code_string(rc));
@@ -3841,8 +3830,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 					if (subisnull)
 						ereport(ERROR,
 								(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-<<<<<<< HEAD
-								 errmsg("array subscript in assignment must not be NULL")));
+								 errmsg("array subscript in assignment must not be null")));
 
 					/*
 					 * Clean up in case the subscript expression wasn't simple.
@@ -3854,9 +3842,6 @@ exec_assign_value(PLpgSQL_execstate *estate,
 					if (estate->eval_tuptable != NULL)
 						SPI_freetuptable(estate->eval_tuptable);
 					estate->eval_tuptable = NULL;
-=======
-								 errmsg("array subscript in assignment must not be null")));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				}
 
 				/* Now we can restore caller's SPI_execute result if any. */
@@ -4470,8 +4455,7 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	/*
 	 * If expression is in use in current xact, don't touch it.
 	 */
-	if (expr->expr_simple_in_use &&
-		expr->expr_simple_id == estate->eval_estate_simple_id)
+	if (expr->expr_simple_in_use && expr->expr_simple_lxid == curlxid)
 		return false;
 
 	/*
@@ -4508,14 +4492,9 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	if (expr->expr_simple_lxid != curlxid)
 	{
 		expr->expr_simple_state = ExecPrepareExpr(expr->expr_simple_expr,
-<<<<<<< HEAD
-												  estate->eval_estate);
-		expr->expr_simple_in_use = false;
-		expr->expr_simple_id = estate->eval_estate_simple_id;
-=======
 												  simple_eval_estate);
+		expr->expr_simple_in_use = false;
 		expr->expr_simple_lxid = curlxid;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 
 	/*
@@ -4858,24 +4837,17 @@ make_tuple_from_row(PLpgSQL_execstate *estate,
 static char *
 convert_value_to_string(PLpgSQL_execstate *estate, Datum value, Oid valtype)
 {
-<<<<<<< HEAD
 	char	   *result;
 	MemoryContext oldcontext;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	Oid			typoutput;
 	bool		typIsVarlena;
 
 	oldcontext = MemoryContextSwitchTo(estate->eval_econtext->ecxt_per_tuple_memory);
 	getTypeOutputInfo(valtype, &typoutput, &typIsVarlena);
-<<<<<<< HEAD
 	result = OidOutputFunctionCall(typoutput, value);
 	MemoryContextSwitchTo(oldcontext);
 
 	return result;
-=======
-	return OidOutputFunctionCall(typoutput, value);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 /* ----------
@@ -4908,16 +4880,9 @@ exec_cast_value(PLpgSQL_execstate *estate,
 		{
 			char	   *extval;
 
-<<<<<<< HEAD
 			extval = convert_value_to_string(estate, value, valtype);
 			value = InputFunctionCall(reqinput, extval,
 									  reqtypioparam, reqtypmod);
-=======
-			extval = convert_value_to_string(value, valtype);
-			value = InputFunctionCall(reqinput, extval,
-									  reqtypioparam, reqtypmod);
-			pfree(extval);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		}
 		else
 		{
@@ -4954,12 +4919,8 @@ exec_simple_cast_value(PLpgSQL_execstate *estate,
 
 		fmgr_info(typinput, &finfo_input);
 
-<<<<<<< HEAD
 		value = exec_cast_value(estate,
 								value,
-=======
-		value = exec_cast_value(value,
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 								valtype,
 								reqtype,
 								&finfo_input,
@@ -5326,12 +5287,8 @@ exec_simple_check_plan(PLpgSQL_expr *expr)
 	 */
 	expr->expr_simple_expr = tle->expr;
 	expr->expr_simple_state = NULL;
-<<<<<<< HEAD
 	expr->expr_simple_in_use = false;
-	expr->expr_simple_id = -1;
-=======
 	expr->expr_simple_lxid = InvalidLocalTransactionId;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	/* Also stash away the expression result type */
 	expr->expr_simple_type = exprType((Node *) tle->expr);
 }

@@ -2184,16 +2184,12 @@ make_execsql_stmt(const char *sqlstart, int lineno)
 		if (tok == ';')
 			break;
 		if (tok == 0)
-<<<<<<< HEAD
 		{
 			plpgsql_error_lineno = plpgsql_scanner_lineno();
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("unexpected end of function definition")));
 		}
-=======
-			yyerror("unexpected end of function definition");
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		if (tok == K_INTO && prev_tok != K_INSERT)
 		{

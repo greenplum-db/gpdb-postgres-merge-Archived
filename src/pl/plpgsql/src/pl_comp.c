@@ -750,7 +750,6 @@ PLpgSQL_function *
 plpgsql_compile_inline(FunctionCallInfo fcinfo, char *proc_source)
 {
 	char	   *func_name = "inline_code_block";
-	int			functype = CALLED_AS_TRIGGER(fcinfo) ? T_TRIGGER : T_FUNCTION;
 	PLpgSQL_function *function;
 	ErrorContextCallback plerrcontext;
 	Oid			typinput;
@@ -764,7 +763,7 @@ plpgsql_compile_inline(FunctionCallInfo fcinfo, char *proc_source)
 	 * cannot be invoked recursively, so there's no need to save and restore
 	 * the static variables used here.
 	 */
-	plpgsql_scanner_init(proc_source, functype);
+	plpgsql_scanner_init(proc_source);
 
 	plpgsql_error_funcname = func_name;
 	plpgsql_error_lineno = 0;
