@@ -19,18 +19,6 @@
  * of lossiness.  In theory we could fall back to page ranges at some
  * point, but for now that seems useless complexity.
  *
-<<<<<<< HEAD
-=======
- * We also support the notion of candidate matches, or rechecking.	This
- * means we know that a search need visit only some tuples on a page,
- * but we are not certain that all of those tuples are real matches.
- * So the eventual heap scan must recheck the quals for these tuples only,
- * rather than rechecking the quals for all tuples on the page as in the
- * lossy-bitmap case.  Rechecking can be specified when TIDs are inserted
- * into a bitmap, and it can also happen internally when we AND a lossy
- * and a non-lossy page.
- *
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *
  * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
@@ -91,13 +79,8 @@ struct TIDBitmap
 	int			npages;			/* number of exact entries in pagetable */
 	int			nchunks;		/* number of lossy entries in pagetable */
 	bool		iterating;		/* tbm_begin_iterate called? */
-<<<<<<< HEAD
-	PagetableEntry entry1;		/* used when status == TBM_ONE_PAGE */
-	/* the remaining fields are used while producing sorted output: */
-=======
 	PagetableEntry entry1;		/* used when status == TBM_ONE_PAGE */
 	/* these are valid when iterating is true: */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	PagetableEntry **spages;	/* sorted exact-page list, or NULL */
 	PagetableEntry **schunks;	/* sorted lossy-chunk list, or NULL */
 };
@@ -156,7 +139,6 @@ tbm_create(long maxbytes)
 	TIDBitmap  *tbm;
 	long		nbuckets;
 
-<<<<<<< HEAD
 	/*
 	 * Ensure that we don't have heap tuple offsets going beyond (INT16_MAX +
 	 * 1) or 32768. The executor iterates only over the first 32K tuples for
@@ -164,17 +146,9 @@ tbm_create(long maxbytes)
 	 */
 	COMPILE_ASSERT(MaxHeapTuplesPerPage <= (INT16_MAX + 1));
 
-	/*
-	 * Create the TIDBitmap struct.
-	 */
-	tbm = (TIDBitmap *) palloc0(sizeof(TIDBitmap));
-
-	tbm->type = T_HashBitmap;	/* Set NodeTag */
-=======
 	/* Create the TIDBitmap struct and zero all its fields */
 	tbm = makeNode(TIDBitmap);
 
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	tbm->mcxt = CurrentMemoryContext;
 	tbm->status = TBM_EMPTY;
 	tbm->instrument = NULL;
@@ -600,13 +574,8 @@ tbm_is_empty(const TIDBitmap *tbm)
  * of the bitmap.  However, you can call this multiple times to scan the
  * contents repeatedly, including parallel scans.
  */
-<<<<<<< HEAD
-void
-tbm_begin_iterate(TIDBitmap *tbm)
-=======
 TBMIterator *
 tbm_begin_iterate(TIDBitmap *tbm)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	TBMIterator *iterator;
 
@@ -668,50 +637,7 @@ tbm_begin_iterate(TIDBitmap *tbm)
 
 	tbm->iterating = true;
 
-<<<<<<< HEAD
-	/*
-	 * Reset iteration pointers.
-	 */
-	tbm->spageptr = 0;
-	tbm->schunkptr = 0;
-	tbm->schunkbit = 0;
-
-	/*
-	 * Nothing else to do if no entries, nor if we don't have a hashtable.
-	 */
-	if (tbm->nentries == 0 || tbm->status != TBM_HASH)
-		return;
-
-	/*
-	 * Create and fill the sorted page lists if we didn't already.
-	 */
-	if (!tbm->spages && tbm->npages > 0)
-		tbm->spages = (PagetableEntry **)
-			MemoryContextAlloc(tbm->mcxt,
-							   tbm->npages * sizeof(PagetableEntry *));
-	if (!tbm->schunks && tbm->nchunks > 0)
-		tbm->schunks = (PagetableEntry **)
-			MemoryContextAlloc(tbm->mcxt,
-							   tbm->nchunks * sizeof(PagetableEntry *));
-
-	hash_seq_init(&status, tbm->pagetable);
-	npages = nchunks = 0;
-	while ((page = (PagetableEntry *) hash_seq_search(&status)) != NULL)
-	{
-		if (page->ischunk)
-			tbm->schunks[nchunks++] = page;
-		else
-			tbm->spages[npages++] = page;
-	}
-	Assert(npages == tbm->npages);
-	Assert(nchunks == tbm->nchunks);
-	if (npages > 1)
-		qsort(tbm->spages, npages, sizeof(PagetableEntry *), tbm_comparator);
-	if (nchunks > 1)
-		qsort(tbm->schunks, nchunks, sizeof(PagetableEntry *), tbm_comparator);
-=======
 	return iterator;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 /*
@@ -809,19 +735,11 @@ tbm_iterate_page(PagetableEntry *page, TBMIterateResult *output)
  * examine all tuples on the page and check if they meet the intended
  * condition.
  */
-<<<<<<< HEAD
 bool
-tbm_iterate(TIDBitmap *tbm, TBMIterateResult *output)
+tbm_iterate(TBMIterator *iterator, TBMIterateResult *output)
 {
 	PagetableEntry *e;
 	bool		more;
-=======
-TBMIterateResult *
-tbm_iterate(TBMIterator *iterator)
-{
-	TIDBitmap  *tbm = iterator->tbm;
-	TBMIterateResult *output = &(iterator->output);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	e = tbm_next_page(tbm, &more);
 	if (more && e)
@@ -879,12 +797,8 @@ tbm_next_page(TIDBitmap *tbm, bool *more)
 	 */
 	if (iterator->schunkptr < tbm->nchunks)
 	{
-<<<<<<< HEAD
-		PagetableEntry *chunk = tbm->schunks[tbm->schunkptr];
-		PagetableEntry *nextpage;
-=======
 		PagetableEntry *chunk = tbm->schunks[iterator->schunkptr];
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+		PagetableEntry *nextpage;
 		BlockNumber chunk_blockno;
 
 		chunk_blockno = chunk->blockno + iterator->schunkbit;
@@ -892,20 +806,12 @@ tbm_next_page(TIDBitmap *tbm, bool *more)
 			chunk_blockno < tbm->spages[iterator->spageptr]->blockno)
 		{
 			/* Return a lossy page indicator from the chunk */
-<<<<<<< HEAD
 			nextpage = (PagetableEntry *) palloc(sizeof(PagetableEntry));
 			nextpage->ischunk = true;
 			nextpage->blockno = chunk_blockno;
 			nextpage->recheck = true;
-			tbm->schunkbit++;
-			return nextpage;
-=======
-			output->blockno = chunk_blockno;
-			output->ntuples = -1;
-			output->recheck = true;
 			iterator->schunkbit++;
-			return output;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+			return nextpage;
 		}
 	}
 
@@ -917,39 +823,10 @@ tbm_next_page(TIDBitmap *tbm, bool *more)
 		if (tbm->status == TBM_ONE_PAGE)
 			e = &tbm->entry1;
 		else
-<<<<<<< HEAD
-			e = tbm->spages[tbm->spageptr];
+			e = tbm->spages[iterator->spageptr];
 
-		tbm->spageptr++;
-		return e;
-=======
-			page = tbm->spages[iterator->spageptr];
-
-		/* scan bitmap to extract individual offset numbers */
-		ntuples = 0;
-		for (wordnum = 0; wordnum < WORDS_PER_PAGE; wordnum++)
-		{
-			bitmapword	w = page->words[wordnum];
-
-			if (w != 0)
-			{
-				int			off = wordnum * BITS_PER_BITMAPWORD + 1;
-
-				while (w != 0)
-				{
-					if (w & 1)
-						output->offsets[ntuples++] = (OffsetNumber) off;
-					off++;
-					w >>= 1;
-				}
-			}
-		}
-		output->blockno = page->blockno;
-		output->ntuples = ntuples;
-		output->recheck = page->recheck;
 		iterator->spageptr++;
-		return output;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+		return e;
 	}
 
 	/* Nothing more in the bitmap */
