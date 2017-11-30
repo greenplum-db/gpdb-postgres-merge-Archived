@@ -9,11 +9,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-exec.c
-=======
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.203 2009/06/11 14:49:13 momjian Exp $
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *
  *-------------------------------------------------------------------------
  */
@@ -448,29 +444,6 @@ PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, int len)
 	if (tup_num < 0 || tup_num > res->ntups)
 		return FALSE;
 
-<<<<<<< HEAD
-=======
-	/* need to grow the tuple table? */
-	if (res->ntups >= res->tupArrSize)
-	{
-		int			n = res->tupArrSize ? res->tupArrSize * 2 : 128;
-		PGresAttValue **tups;
-
-		if (res->tuples)
-			tups = (PGresAttValue **) realloc(res->tuples, n * sizeof(PGresAttValue *));
-		else
-			tups = (PGresAttValue **) malloc(n * sizeof(PGresAttValue *));
-
-		if (!tups)
-			return FALSE;
-
-		memset(tups + res->tupArrSize, 0,
-			   (n - res->tupArrSize) * sizeof(PGresAttValue *));
-		res->tuples = tups;
-		res->tupArrSize = n;
-	}
-
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	/* need to allocate a new tuple? */
 	if (tup_num == res->ntups)
 	{
@@ -3517,13 +3490,7 @@ PQescapeByteaInternal(PGconn *conn,
 	vp = from;
 	for (i = from_length; i > 0; i--, vp++)
 	{
-<<<<<<< HEAD
 		unsigned char c = *vp;
-=======
-		if (*vp < 0x20 || *vp > 0x7e)
-		{
-			int			val = *vp;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		if (use_hex)
 		{
@@ -3666,7 +3633,6 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 						buffer[j++] = strtext[i++];
 					else
 					{
-<<<<<<< HEAD
 						if ((ISFIRSTOCTDIGIT(strtext[i])) &&
 							(ISOCTDIGIT(strtext[i + 1])) &&
 							(ISOCTDIGIT(strtext[i + 2])))
@@ -3678,14 +3644,6 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 							byte = (byte << 3) + OCTVAL(strtext[i++]);
 							buffer[j++] = byte;
 						}
-=======
-						int byte;
-
-						byte = OCTVAL(strtext[i++]);
-						byte = (byte <<3) +OCTVAL(strtext[i++]);
-						byte = (byte <<3) +OCTVAL(strtext[i++]);
-						buffer[j++] = byte;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 					}
 
 					/*

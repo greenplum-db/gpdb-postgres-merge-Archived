@@ -19,11 +19,7 @@
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
  * src/interfaces/libpq/pqexpbuffer.h
-=======
- * $PostgreSQL: pgsql/src/interfaces/libpq/pqexpbuffer.h,v 1.23 2009/06/11 14:49:14 momjian Exp $
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *
  *-------------------------------------------------------------------------
  */

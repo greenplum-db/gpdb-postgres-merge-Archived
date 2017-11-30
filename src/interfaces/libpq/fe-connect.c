@@ -9,11 +9,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-connect.c
-=======
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.375 2009/06/11 14:49:13 momjian Exp $
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *
  *-------------------------------------------------------------------------
  */
@@ -285,13 +281,10 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	offsetof(struct pg_conn, sslmode)},
 #endif
 
-<<<<<<< HEAD
 	{"sslcompression", "PGSSLCOMPRESSION", "1", NULL,
 		"SSL-Compression", "", 1,
 	offsetof(struct pg_conn, sslcompression)},
 
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	{"sslcert", "PGSSLCERT", NULL, NULL,
 		"SSL-Client-Cert", "", 64,
 	offsetof(struct pg_conn, sslcert)},
@@ -790,41 +783,7 @@ connectOptions1(PGconn *conn, const char *conninfo)
 	/*
 	 * Move option values into conn structure
 	 */
-<<<<<<< HEAD
 	if (!fillPGconn(conn, connOptions))
-=======
-	tmp = conninfo_getval(connOptions, "hostaddr");
-	conn->pghostaddr = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "host");
-	conn->pghost = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "port");
-	conn->pgport = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "tty");
-	conn->pgtty = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "options");
-	conn->pgoptions = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "dbname");
-	conn->dbName = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "user");
-	conn->pguser = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "password");
-	conn->pgpass = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "connect_timeout");
-	conn->connect_timeout = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslmode");
-	conn->sslmode = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslkey");
-	conn->sslkey = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslcert");
-	conn->sslcert = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslrootcert");
-	conn->sslrootcert = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslcrl");
-	conn->sslcrl = tmp ? strdup(tmp) : NULL;
-#ifdef USE_SSL
-	tmp = conninfo_getval(connOptions, "requiressl");
-	if (tmp && tmp[0] == '1')
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	{
 		conn->status = CONNECTION_BAD;
 		PQconninfoFree(connOptions);
@@ -942,7 +901,6 @@ connectOptions2(PGconn *conn)
 	}
 
 	/*
-<<<<<<< HEAD
 	 * Resolve special "auto" client_encoding from the locale
 	 */
 	/* TODO */
@@ -954,8 +912,6 @@ connectOptions2(PGconn *conn)
 //	}
 
 	/*
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 * Only if we get this far is it appropriate to try to connect. (We need a
 	 * state flag, rather than just the boolean result of this function, in
 	 * case someone tries to PQreset() the PGconn.)
@@ -974,16 +930,9 @@ oom_error:
 /*
  *		PQconndefaults
  *
-<<<<<<< HEAD
  * Construct a default connection options array, which identifies all the
  * available options and shows any default values that are available from the
  * environment etc.  On error (eg out of memory), NULL is returned.
-=======
- * Parse an empty string like PQconnectdb() would do and return the
- * resulting connection options array, ie, all the default values that are
- * available from the environment etc.	On error (eg out of memory),
- * NULL is returned.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *
  * Using this function, an application may determine all possible options
  * and their current default values.
@@ -2233,12 +2182,9 @@ keep_going:						/* We will come back to here until there is
 					}
 					else if (SSLok == 'N')
 					{
-<<<<<<< HEAD
 						/* mark byte consumed */
 						conn->inStart = conn->inCursor;
 						/* OK to do without SSL? */
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 						if (conn->sslmode[0] == 'r' ||	/* "require" */
 							conn->sslmode[0] == 'v')	/* "verify-ca" or
 														 * "verify-full" */
@@ -2255,7 +2201,6 @@ keep_going:						/* We will come back to here until there is
 					}
 					else if (SSLok == 'E')
 					{
-<<<<<<< HEAD
 						/*
 						 * Server failure of some sort, such as failure to
 						 * fork a backend process.	We need to process and
@@ -2267,28 +2212,6 @@ keep_going:						/* We will come back to here until there is
 						 * byte here.
 						 */
 						conn->status = CONNECTION_AWAITING_RESPONSE;
-=======
-						/* Received error - probably protocol mismatch */
-						if (conn->Pfdebug)
-							fprintf(conn->Pfdebug, "received error from server, attempting fallback to pre-7.0\n");
-						if (conn->sslmode[0] == 'r' ||	/* "require" */
-							conn->sslmode[0] == 'v')	/* "verify-ca" or
-														 * "verify-full" */
-						{
-							/* Require SSL, but server is too old */
-							appendPQExpBuffer(&conn->errorMessage,
-											  libpq_gettext("server does not support SSL, but SSL was required\n"));
-							goto error_return;
-						}
-						/* Otherwise, try again without SSL */
-						conn->allow_ssl_try = false;
-						/* Assume it ain't gonna handle protocol 3, either */
-						conn->pversion = PG_PROTOCOL(2, 0);
-						/* Must drop the old connection */
-						closesocket(conn->sock);
-						conn->sock = -1;
-						conn->status = CONNECTION_NEEDED;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 						goto keep_going;
 					}
 					else

@@ -9,11 +9,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-protocol3.c
-=======
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.39 2009/06/11 14:49:14 momjian Exp $
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *
  *-------------------------------------------------------------------------
  */
@@ -1660,17 +1656,10 @@ pqGetCopyData3(PGconn *conn, char **buffer, int async)
 		if (msgLength < 0)
 		{
 			/*
-<<<<<<< HEAD
 			 * On end-of-copy, exit COPY_OUT or COPY_BOTH mode and let caller
 			 * read status with PQgetResult().	The normal case is that it's
 			 * Copy Done, but we let parseInput read that.	If error, we
 			 * expect the state was already changed.
-=======
-			 * On end-of-copy, exit COPY_OUT mode and let caller read status
-			 * with PQgetResult().	The normal case is that it's Copy Done,
-			 * but we let parseInput read that.  If error, we expect the state
-			 * was already changed.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			 */
 			if (msgLength == -1)
 				conn->asyncStatus = PGASYNC_BUSY;

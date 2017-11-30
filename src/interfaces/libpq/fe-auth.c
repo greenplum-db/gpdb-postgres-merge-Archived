@@ -7,11 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-auth.c
-=======
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.142 2009/06/11 14:49:13 momjian Exp $
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  *
  *-------------------------------------------------------------------------
  */
