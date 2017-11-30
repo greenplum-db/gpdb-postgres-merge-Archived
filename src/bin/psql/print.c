@@ -512,10 +512,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 
 	bool	   *header_done;	/* Have all header lines been output? */
 	int		   *bytes_output;	/* Bytes output for column value */
-<<<<<<< HEAD
 	printTextLineWrap *wrap;	/* Wrap status for each column */
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	int			output_columns = 0;		/* Width of interactive console */
 	bool		is_pager = false;
 
@@ -894,7 +891,6 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 				int			bytes_to_output;
 				int			chars_to_output = width_wrap[j];
 				bool		finalspaces = (opt_border == 2 || j < col_count - 1);
-<<<<<<< HEAD
 
 				/* Print left-hand wrap or newline mark */
 				if (opt_border != 0)
@@ -906,8 +902,6 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 					else
 						fputc(' ', fout);
 				}
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 				if (!this_line->ptr)
 				{
@@ -966,7 +960,6 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 				wrap[j] = PRINT_LINE_WRAP_NONE;
 				if (col_lineptrs[j][curr_nl_line[j]].ptr != NULL)
 				{
-<<<<<<< HEAD
 					if (bytes_output[j] != 0)
 						wrap[j] = PRINT_LINE_WRAP_WRAP;
 					else if (curr_nl_line[j] != 0)
@@ -1005,22 +998,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 						fputs(format->midvrule_blank, fout);
 					else
 						fputs(dformat->midvrule, fout);
-=======
-					if (opt_border == 0)
-						fputc(' ', fout);
-					/* Next value is beyond past newlines? */
-					else if (col_lineptrs[j + 1][curr_nl_line[j + 1]].ptr == NULL)
-						fputs("   ", fout);
-					/* In wrapping of value? */
-					else if (bytes_output[j + 1] != 0)
-						fputs(" ; ", fout);
-					/* After first newline value */
-					else if (curr_nl_line[j + 1] != 0)
-						fputs(" : ", fout);
-					else
-						/* Ordinary line */
-						fputs(" | ", fout);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+
 				}
 			}
 
