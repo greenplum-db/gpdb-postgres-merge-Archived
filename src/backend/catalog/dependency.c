@@ -857,13 +857,8 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 
 		/*
 		 * If, at any stage of the recursive search, we reached the object via
-<<<<<<< HEAD
 		 * an AUTO, INTERNAL, or EXTENSION dependency, then it's okay to
 		 * delete it even in RESTRICT mode.
-=======
-		 * an AUTO or INTERNAL dependency, then it's okay to delete it even in
-		 * RESTRICT mode.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		 */
 		if (extra->flags & (DEPFLAG_AUTO |
 							DEPFLAG_INTERNAL |

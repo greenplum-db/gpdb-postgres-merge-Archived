@@ -1661,12 +1661,8 @@ index_build(Relation heapRelation,
 
 	/*
 	 * Switch to the table owner's userid, so that any index functions are run
-<<<<<<< HEAD
 	 * as that user.  Also lock down security-restricted operations and
 	 * arrange to make GUC variable changes local to this command.
-=======
-	 * as that user.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 	SetUserIdAndSecContext(heapRelation->rd_rel->relowner,
@@ -2574,12 +2570,8 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 
 	/*
 	 * Switch to the table owner's userid, so that any index functions are run
-<<<<<<< HEAD
 	 * as that user.  Also lock down security-restricted operations and
 	 * arrange to make GUC variable changes local to this command.
-=======
-	 * as that user.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 	SetUserIdAndSecContext(heapRelation->rd_rel->relowner,
@@ -3074,21 +3066,9 @@ reindex_index(Oid indexId)
 	 * CREATE INDEX CONCURRENTLY), we can now mark it valid.  This allows
 	 * REINDEX to be used to clean up in such cases.
 	 *
-<<<<<<< HEAD
-	 * Note that it is important to not update the pg_index entry if we don't
-	 * have to, because updating it will move the index's usability horizon
-	 * (recorded as the tuple's xmin value) if indcheckxmin is true.  We don't
-	 * really want REINDEX to move the usability horizon forward ever, but we
-	 * have no choice if we are to fix indisvalid or indisready.  Of course,
-	 * clearing indcheckxmin eliminates the issue, so we're happy to do that
-	 * if we can.  Another reason for caution here is that while reindexing
-	 * pg_index itself, we must not try to update it.  We assume that
-	 * pg_index's indexes will always have these flags in their clean state.
-=======
 	 * We can also reset indcheckxmin, because we have now done a
 	 * non-concurrent index build, *except* in the case where index_build
 	 * found some still-broken HOT chains.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
 

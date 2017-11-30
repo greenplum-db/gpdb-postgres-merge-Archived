@@ -3191,7 +3191,6 @@ InitTempTableNamespace(void)
 	}
 
 	/*
-<<<<<<< HEAD
 	 * First use of this temp namespace in this database; create it. The
 	 * temp namespaces are always owned by the superuser.  We leave their
 	 * permissions at default --- i.e., no access except to superuser ---
@@ -3204,12 +3203,8 @@ InitTempTableNamespace(void)
 	CommandCounterIncrement();
 
 	/*
-	 * If the corresponding toast-table namespace doesn't exist yet, create it.
-	 * (We assume there is no need to clean it out if it does exist, since
-=======
 	 * If the corresponding toast-table namespace doesn't exist yet, create
 	 * it. (We assume there is no need to clean it out if it does exist, since
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 * dropping a parent table should make its toast table go away.)
 	 * (in GPDB, though, we drop and recreate it anyway, to make sure it has
 	 * the same OID on master and segments.)

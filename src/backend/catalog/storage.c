@@ -453,14 +453,9 @@ RelationDropStorage(RelFileNode *relFileNode,
 void
 RelationTruncate(Relation rel, BlockNumber nblocks, bool markPersistentAsPhysicallyTruncated)
 {
-<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_DECLARE;
-	bool fsm;
-	bool vm;
-=======
 	bool		fsm;
 	bool		vm;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	// Fetch gp_persistent_relation_node information that will be added to XLOG record.
 	RelationFetchGpRelationNodeForXLog(rel);
@@ -859,13 +854,6 @@ smgrSubTransAbort(void)
 				prev->next = next;
 			else
 				pendingDeletes = next;
-<<<<<<< HEAD
-=======
-			/* do deletion if called for */
-			if (pending->atCommit == isCommit)
-			{
-				int			i;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 			pendingDeletesCount--;
 
