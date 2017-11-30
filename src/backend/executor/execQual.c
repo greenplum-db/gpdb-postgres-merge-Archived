@@ -1,38 +1,38 @@
 /*-------------------------------------------------------------------------
-*
-* execQual.c
-*	  Routines to evaluate qualification and targetlist expressions
-*
-* Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-* Portions Copyright (c) 1994, Regents of the University of California
-*
-*
-* IDENTIFICATION
-*	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.250 2009/06/11 17:25:38 tgl Exp $
-*
-*-------------------------------------------------------------------------
-*/
+ *
+ * execQual.c
+ *	  Routines to evaluate qualification and targetlist expressions
+ *
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ *
+ * IDENTIFICATION
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.250 2009/06/11 17:25:38 tgl Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 /*
-*	 INTERFACE ROUTINES
-*		ExecEvalExpr	- (now a macro) evaluate an expression, return a datum
-*		ExecEvalExprSwitchContext - same, but switch into eval memory context
-*		ExecQual		- return true/false if qualification is satisfied
-*		ExecProject		- form a new tuple by projecting the given tuple
-*
-*	 NOTES
-*		The more heavily used ExecEvalExpr routines, such as ExecEvalScalarVar,
-*		are hotspots. Making these faster will speed up the entire system.
-*
-*		ExecProject() is used to make tuple projections.  Rather then
-*		trying to speed it up, the execution plan should be pre-processed
-*		to facilitate attribute sharing between nodes wherever possible,
-*		instead of doing needless copying.	-cim 5/31/91
-*
-*		During expression evaluation, we check_stack_depth only in
-*		ExecMakeFunctionResult (and substitute routines) rather than at every
-*		single node.  This is a compromise that trades off precision of the
-*		stack limit setting to gain speed.
-*/
+ *	 INTERFACE ROUTINES
+ *		ExecEvalExpr	- (now a macro) evaluate an expression, return a datum
+ *		ExecEvalExprSwitchContext - same, but switch into eval memory context
+ *		ExecQual		- return true/false if qualification is satisfied
+ *		ExecProject		- form a new tuple by projecting the given tuple
+ *
+ *	 NOTES
+ *		The more heavily used ExecEvalExpr routines, such as ExecEvalScalarVar,
+ *		are hotspots. Making these faster will speed up the entire system.
+ *
+ *		ExecProject() is used to make tuple projections.  Rather then
+ *		trying to speed it up, the execution plan should be pre-processed
+ *		to facilitate attribute sharing between nodes wherever possible,
+ *		instead of doing needless copying.	-cim 5/31/91
+ *
+ *		During expression evaluation, we check_stack_depth only in
+ *		ExecMakeFunctionResult (and substitute routines) rather than at every
+ *		single node.  This is a compromise that trades off precision of the
+ *		stack limit setting to gain speed.
+ */
 
 #include "postgres.h"
 
