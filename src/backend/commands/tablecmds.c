@@ -67,12 +67,9 @@
 #include "nodes/nodeFuncs.h"
 #include "nodes/parsenodes.h"
 #include "optimizer/clauses.h"
-<<<<<<< HEAD
 #include "optimizer/plancat.h"
 #include "optimizer/planner.h"
 #include "optimizer/prep.h"
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #include "parser/gramparse.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
@@ -175,11 +172,7 @@ typedef struct AlteredTableInfo
 	List	   *constraints;	/* List of NewConstraint */
 	List	   *newvals;		/* List of NewColumnValue */
 	bool		new_notnull;	/* T if we added new NOT NULL constraints */
-<<<<<<< HEAD
-	bool		new_dropoids;	/* T if we dropped the OID column */
-=======
 	bool		new_changeoids; /* T if we added/dropped the OID column */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	Oid			newTableSpace;	/* new tablespace; 0 means no change */
 	Oid			exchange_relid;	/* for EXCHANGE, the exchanged in rel */
 	/* Objects to rebuild after completing ALTER TYPE operations */
@@ -218,19 +211,11 @@ struct dropmsgstrings
 
 static const struct dropmsgstrings dropmsgstringarray[] = {
 	{RELKIND_RELATION,
-<<<<<<< HEAD
-	 ERRCODE_UNDEFINED_TABLE,
-	 gettext_noop("table \"%s\" does not exist"),
-	 gettext_noop("table \"%s\" does not exist, skipping"),
-	 gettext_noop("\"%s\" is not a table"),
-	 gettext_noop("Use DROP TABLE to remove a table, DROP EXTERNAL TABLE if external, or DROP FOREIGN TABLE if foreign.")},
-=======
 		ERRCODE_UNDEFINED_TABLE,
 		gettext_noop("table \"%s\" does not exist"),
 		gettext_noop("table \"%s\" does not exist, skipping"),
 		gettext_noop("\"%s\" is not a table"),
-	gettext_noop("Use DROP TABLE to remove a table.")},
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	gettext_noop("Use DROP TABLE to remove a table, DROP EXTERNAL TABLE if external, or DROP FOREIGN TABLE if foreign.")},
 	{RELKIND_SEQUENCE,
 		ERRCODE_UNDEFINED_TABLE,
 		gettext_noop("sequence \"%s\" does not exist"),
@@ -699,7 +684,6 @@ DefineRelation(CreateStmt *stmt, char relkind, char relstorage, bool dispatch)
 	}
 
 	/*
-<<<<<<< HEAD
 	 * In executor mode, we received all the defaults and constraints
 	 * in pre-cooked form from the QD, so forget about the lists we
 	 * constructed just above, and use the old_constraints we received
@@ -760,14 +744,9 @@ DefineRelation(CreateStmt *stmt, char relkind, char relstorage, bool dispatch)
 	bool valid_opts = (relstorage == RELSTORAGE_EXTERNAL);
 
 	/*
-	 * Create the relation.  Inherited defaults and constraints are passed
-	 * in for immediate handling --- since they don't need parsing, they
-	 * can be stored immediately.
-=======
 	 * Create the relation.  Inherited defaults and constraints are passed in
 	 * for immediate handling --- since they don't need parsing, they can be
 	 * stored immediately.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	relationId = heap_create_with_catalog(relname,
 										  namespaceId,
@@ -2955,7 +2934,6 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, Oid namespaceId)
 	Form_pg_class relform;
 
 	/*
-<<<<<<< HEAD
 	 * In Postgres:
 	 * Grab an exclusive lock on the target table, index, sequence or view,
 	 * which we will NOT release until end of transaction.
@@ -2964,10 +2942,6 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, Oid namespaceId)
 	 * without AccessExclusiveLock for scenarios like directly modifying system
 	 * catalogs. This will change transaction isolation behaviors, however, this
 	 * won't cause any data corruption.
-=======
-	 * Grab an exclusive lock on the target table, index, sequence or view,
-	 * which we will NOT release until end of transaction.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	if (gp_allow_rename_relation_without_lock)
 		targetrelation = fake_relation_open(myrelid);
@@ -4588,16 +4562,12 @@ ATAddToastIfNeeded(List **wqueue)
 			(tab->subcmds[AT_PASS_ADD_COL] ||
 			 tab->subcmds[AT_PASS_ALTER_TYPE] ||
 			 tab->subcmds[AT_PASS_COL_ATTRS]))
-<<<<<<< HEAD
 		{
 			bool is_part = !rel_needs_long_lock(tab->relid);
 
-			AlterTableCreateToastTable(tab->relid, is_part);
-		}
-=======
 			AlterTableCreateToastTable(tab->relid, InvalidOid,
-									   (Datum) 0, false);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+									   (Datum) 0, false, is_part);
+		}
 	}
 }
 
@@ -4611,15 +4581,10 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	switch (cmd->subtype)
 	{
 		case AT_AddColumn:		/* ADD COLUMN */
-<<<<<<< HEAD
 		case AT_AddColumnRecurse:
-		case AT_AddColumnToView: /* add column via CREATE OR REPLACE VIEW */
-			ATExecAddColumn(tab, rel, (ColumnDef *) cmd->def);
-=======
 		case AT_AddColumnToView:		/* add column via CREATE OR REPLACE
 										 * VIEW */
 			ATExecAddColumn(tab, rel, (ColumnDef *) cmd->def, false);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			break;
 		case AT_ColumnDefault:	/* ALTER COLUMN DEFAULT */
 		case AT_ColumnDefaultRecurse:
@@ -4905,7 +4870,7 @@ ATRewriteTables(List **wqueue)
 		 * We only need to rewrite the table if at least one column needs to
 		 * be recomputed, or we are removing the OID column.
 		 */
-		if (tab->newvals != NIL || tab->new_dropoids)
+		if (tab->newvals != NIL || tab->new_changeoids)
 		{
 			/* Build a temporary relation and copy data */
 			char		NewHeapName[NAMEDATALEN];
@@ -6412,14 +6377,8 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 			Oid			ctypeId;
 			int32		ctypmod;
 
-<<<<<<< HEAD
-			/* Okay if child matches by type */
-			ctypeId = typenameTypeId(NULL, colDef->typeName, &ctypmod);
-
-=======
 			/* Child column must match by type */
 			ctypeId = typenameTypeId(NULL, colDef->typename, &ctypmod);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			if (ctypeId != childatt->atttypid ||
 				ctypmod != childatt->atttypmod)
 				ereport(ERROR,
@@ -6649,13 +6608,10 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 
 		/*
 		 * If the new column is NOT NULL, tell Phase 3 it needs to test that.
-<<<<<<< HEAD
 		 * Also, "create or replace view" won't have constraint on the column.
-=======
 		 * (Note we don't do this for an OID column.  OID will be marked not
 		 * null, but since it's filled specially, there's no need to test
 		 * anything.)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		 */
 		Assert(!colDef->is_not_null || tab);
 		if (tab)
@@ -7384,12 +7340,8 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 					pn)
 				{
 					/* Time to delete this child column, too */
-<<<<<<< HEAD
-					ATExecDropColumn(wqueue, childrel, colName, behavior, true, true);
-=======
 					ATExecDropColumn(wqueue, childrel, colName,
 									 behavior, true, true);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				}
 				else
 				{
@@ -7441,13 +7393,8 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 	performDeletion(&object, behavior);
 
 	/*
-<<<<<<< HEAD
-	 * If we dropped the OID column, must adjust pg_class.relhasoids and
-	 * tell Phase 3 to physically get rid of the column.
-=======
 	 * If we dropped the OID column, must adjust pg_class.relhasoids and tell
 	 * Phase 3 to physically get rid of the column.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 */
 	if (attnum == ObjectIdAttributeNumber)
 	{
@@ -7477,22 +7424,15 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 		tab = ATGetQueueEntry(wqueue, rel);
 
 		/* Tell Phase 3 to physically remove the OID column */
-<<<<<<< HEAD
-		tab->new_dropoids = true;
-=======
 		tab->new_changeoids = true;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 
 	/* MPP-6929: metadata tracking */
-	if ((Gp_role == GP_ROLE_DISPATCH)
-		&& MetaTrackValidKindNsp(rel->rd_rel))
+	if ((Gp_role == GP_ROLE_DISPATCH) && MetaTrackValidKindNsp(rel->rd_rel))
 		MetaTrackUpdObject(RelationRelationId,
 						   RelationGetRelid(rel),
 						   GetUserId(),
-						   "ALTER", "DROP COLUMN"
-				);
-
+						   "ALTER", "DROP COLUMN");
 }
 
 /*
