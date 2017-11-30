@@ -116,15 +116,9 @@ scanForItems(Relation index, GinScanEntry scanEntry, BlockNumber rootPostingTree
 
 		if ((GinPageGetOpaque(page)->flags & GIN_DELETED) == 0 && GinPageGetOpaque(page)->maxoff >= FirstOffsetNumber)
 		{
-<<<<<<< HEAD
-			tbm_add_tuples( (TIDBitmap *) scanEntry->partialMatch,
-							(ItemPointer)GinDataPageGetItem(page, FirstOffsetNumber),
-						 	GinPageGetOpaque(page)->maxoff, false);
-=======
-			tbm_add_tuples(scanEntry->partialMatch,
+			tbm_add_tuples((TIDBitmap *) scanEntry->partialMatch,
 				   (ItemPointer) GinDataPageGetItem(page, FirstOffsetNumber),
 						   GinPageGetOpaque(page)->maxoff, false);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			scanEntry->predictNumberResult += GinPageGetOpaque(page)->maxoff;
 		}
 
@@ -155,11 +149,7 @@ computePartialMatchList(GinBtreeData *btree, GinBtreeStack *stack, GinScanEntry 
 	Datum		idatum;
 	int32		cmp;
 
-<<<<<<< HEAD
-	scanEntry->partialMatch = (Node *) tbm_create( work_mem * 1024L );
-=======
-	scanEntry->partialMatch = tbm_create(work_mem * 1024L);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	scanEntry->partialMatch = (Node *) tbm_create(work_mem * 1024L);
 
 	for (;;)
 	{
@@ -264,13 +254,8 @@ computePartialMatchList(GinBtreeData *btree, GinBtreeStack *stack, GinScanEntry 
 		}
 		else
 		{
-<<<<<<< HEAD
-			tbm_add_tuples( (TIDBitmap *) scanEntry->partialMatch, GinGetPosting(itup),  GinGetNPosting(itup), false);
-			scanEntry->predictNumberResult +=  GinGetNPosting(itup);
-=======
-			tbm_add_tuples(scanEntry->partialMatch, GinGetPosting(itup), GinGetNPosting(itup), false);
+			tbm_add_tuples((TIDBitmap *) scanEntry->partialMatch, GinGetPosting(itup), GinGetNPosting(itup), false);
 			scanEntry->predictNumberResult += GinGetNPosting(itup);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		}
 
 		/*
@@ -291,10 +276,10 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 <<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_DECLARE;
 
-	GinBtreeData 	btreeEntry;
-	GinBtreeStack  *stackEntry;
-	Page			page;
-	bool			needUnlock = TRUE;
+	GinBtreeData btreeEntry;
+	GinBtreeStack *stackEntry;
+	Page		page;
+	bool		needUnlock = TRUE;
 
 	if (entry->master != NULL)
 	{
@@ -453,13 +438,10 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 
 	if (needUnlock)
 		LockBuffer(stackEntry->buffer, GIN_UNLOCK);
-<<<<<<< HEAD
 	
 	MIRROREDLOCK_BUFMGR_UNLOCK;
 	// -------- MirroredLock ----------
 	
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	freeGinBtreeStack(stackEntry);
 }
 
@@ -580,16 +562,11 @@ entryGetNextItem(Relation index, GinScanEntry entry)
 
 				LockBuffer(entry->buffer, GIN_UNLOCK);
 
-<<<<<<< HEAD
 				MIRROREDLOCK_BUFMGR_UNLOCK;
 				// -------- MirroredLock ----------
 
-				if ( !ItemPointerIsValid(&entry->curItem) ||
-					 compareItemPointers( &entry->curItem, entry->list + entry->offset - 1 ) == 0 )
-=======
 				if (!ItemPointerIsValid(&entry->curItem) ||
 					compareItemPointers(&entry->curItem, entry->list + entry->offset - 1) == 0)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				{
 					/*
 					 * First pages are deleted or empty, or we found exact
@@ -1298,14 +1275,9 @@ Datum
 gingetbitmap(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-<<<<<<< HEAD
-	Node 		   *n = (Node *) PG_GETARG_POINTER(1);
-	TIDBitmap	   *tbm;
-	int64			ntids;
-=======
-	TIDBitmap  *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
+	Node 	   *n = (Node *) PG_GETARG_POINTER(1);
+	TIDBitmap  *tbm;
 	int64		ntids;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	if (n == NULL)
 		/* XXX should we use less than work_mem for this? */

@@ -242,19 +242,11 @@ ginBuildCallback(Relation index, ItemPointer tupleId, Datum *values,
 
 	oldCtx = MemoryContextSwitchTo(buildstate->tmpCtx);
 
-<<<<<<< HEAD
-	for(i=0; i<buildstate->ginstate.origTupdesc->natts;i++)
-		if ( !isnull[i] )
-			buildstate->indtuples += ginHeapTupleBulkInsert(buildstate, 
-														(OffsetNumber)(i+1), values[i], 
-														tupleId);
-=======
 	for (i = 0; i < buildstate->ginstate.origTupdesc->natts; i++)
 		if (!isnull[i])
 			buildstate->indtuples += ginHeapTupleBulkInsert(buildstate,
 										   (OffsetNumber) (i + 1), values[i],
-															&htup->t_self);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+															tupleId);
 
 	/* If we've maxed out our available memory, dump everything to the index */
 	/* Also dump if the tree seems to be getting too unbalanced */
@@ -326,23 +318,13 @@ ginbuild(PG_FUNCTION_ARGS)
 		rdata.len = sizeof(RelFileNode);
 		rdata.next = NULL;
 
-<<<<<<< HEAD
-		page = BufferGetPage(buffer);
-
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_CREATE_INDEX, &rdata);
 
 		page = BufferGetPage(RootBuffer);
 		PageSetLSN(page, recptr);
-<<<<<<< HEAD
-=======
-		PageSetTLI(page, ThisTimeLineID);
 
 		page = BufferGetPage(MetaBuffer);
 		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 
 	UnlockReleaseBuffer(MetaBuffer);

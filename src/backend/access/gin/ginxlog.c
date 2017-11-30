@@ -82,18 +82,12 @@ ginRedoCreateIndex(XLogRecPtr lsn, XLogRecord *record)
 				MetaBuffer;
 	Page		page;
 
-<<<<<<< HEAD
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
-	
-	buffer = XLogReadBuffer(*node, GIN_ROOT_BLKNO, true);
-	Assert(BufferIsValid(buffer));
-	page = (Page) BufferGetPage(buffer);
-=======
+
 	MetaBuffer = XLogReadBuffer(*node, GIN_METAPAGE_BLKNO, true);
 	Assert(BufferIsValid(MetaBuffer));
 	GinInitMetabuffer(MetaBuffer);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	page = (Page) BufferGetPage(MetaBuffer);
 	PageSetLSN(page, lsn);
@@ -107,19 +101,13 @@ ginRedoCreateIndex(XLogRecPtr lsn, XLogRecord *record)
 
 	PageSetLSN(page, lsn);
 
-<<<<<<< HEAD
-	MarkBufferDirty(buffer);
-	UnlockReleaseBuffer(buffer);
-	
-	MIRROREDLOCK_BUFMGR_UNLOCK;
-	// -------- MirroredLock ----------
-	
-=======
 	MarkBufferDirty(MetaBuffer);
 	UnlockReleaseBuffer(MetaBuffer);
 	MarkBufferDirty(RootBuffer);
 	UnlockReleaseBuffer(RootBuffer);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+
+	MIRROREDLOCK_BUFMGR_UNLOCK;
+	// -------- MirroredLock ----------
 }
 
 static void
