@@ -400,17 +400,12 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 	if (isExtend)
 		blockNum = smgrnblocks(smgr, forkNum);
 
-<<<<<<< HEAD
-	TRACE_POSTGRESQL_BUFFER_READ_START(forkNum, blockNum, smgr->smgr_rnode.spcNode, smgr->smgr_rnode.dbNode, smgr->smgr_rnode.relNode, isLocalBuf);
-
 //	pgstat_count_buffer_read(smgr);
 	
 	// -------- MirroredLock ----------
 	// UNDONE: Unfortunately, I think we write temp relations to the mirror...
 	//MIRROREDLOCK_BUFMGR_LOCK;
 	
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	if (isLocalBuf)
 	{
 		ReadLocalBufferCount++;
@@ -441,23 +436,7 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 			/* Just need to update stats before we exit */
 //			pgstat_count_buffer_hit(smgr);
 			*hit = true;
-<<<<<<< HEAD
 			goto done;
-=======
-
-			if (VacuumCostActive)
-				VacuumCostBalance += VacuumCostPageHit;
-
-			TRACE_POSTGRESQL_BUFFER_READ_DONE(forkNum, blockNum,
-											  smgr->smgr_rnode.spcNode,
-											  smgr->smgr_rnode.dbNode,
-											  smgr->smgr_rnode.relNode,
-											  isLocalBuf,
-											  isExtend,
-											  found);
-
-			return BufferDescriptorGetBuffer(bufHdr);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		}
 
 		/*
@@ -561,15 +540,9 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_DATA_CORRUPTED),
-<<<<<<< HEAD
 							 errmsg("invalid page in block %u of relation %s",
 									blockNum,
 									relpath(smgr->smgr_rnode, forkNum))));
-=======
-					 errmsg("invalid page header in block %u of relation %s",
-							blockNum,
-							relpath(smgr->smgr_rnode, forkNum))));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			}
 		}
 	}
@@ -744,11 +717,7 @@ BufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 			 * happens to be trying to split the page the first one got from
 			 * StrategyGetBuffer.)
 			 */
-<<<<<<< HEAD
-			if ( ConditionalAcquireContentLock(buf, LW_SHARED))
-=======
-			if (LWLockConditionalAcquire(buf->content_lock, LW_SHARED))
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+			if (ConditionalAcquireContentLock(buf, LW_SHARED))
 			{
 				/*
 				 * If using a nondefault strategy, and writing the buffer

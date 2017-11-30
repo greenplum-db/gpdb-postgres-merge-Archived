@@ -115,20 +115,10 @@ BufFileCreateTemp(const char *filePrefix, bool interXact)
 							  closeAtEOXact); /* closeAtEOXact */
 	Assert(pfile >= 0);
 
-<<<<<<< HEAD
 	file = makeBufFile(pfile);
 	file->isTemp = true;
 
 	return file;
-=======
-	file->files = (File *) repalloc(file->files,
-									(file->numFiles + 1) * sizeof(File));
-	file->offsets = (off_t *) repalloc(file->offsets,
-									   (file->numFiles + 1) * sizeof(off_t));
-	file->files[file->numFiles] = pfile;
-	file->offsets[file->numFiles] = 0L;
-	file->numFiles++;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 /*

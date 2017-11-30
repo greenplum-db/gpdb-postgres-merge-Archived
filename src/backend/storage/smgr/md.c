@@ -1069,10 +1069,7 @@ else
 						blocknum, relpath(reln->smgr_rnode, forknum))));
 
 	nbytes = FileWrite(v->mdfd_vfd, buffer, BLCKSZ);
-<<<<<<< HEAD
 }
-	TRACE_POSTGRESQL_SMGR_MD_WRITE_DONE(forknum, blocknum, reln->smgr_rnode.spcNode, reln->smgr_rnode.dbNode, reln->smgr_rnode.relNode, relpath(reln->smgr_rnode, forknum), nbytes, BLCKSZ);
-=======
 
 	TRACE_POSTGRESQL_SMGR_MD_WRITE_DONE(forknum, blocknum,
 										reln->smgr_rnode.spcNode,
@@ -1080,7 +1077,6 @@ else
 										reln->smgr_rnode.relNode,
 										nbytes,
 										BLCKSZ);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	if (nbytes != BLCKSZ)
 	{

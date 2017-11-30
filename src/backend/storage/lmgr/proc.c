@@ -831,12 +831,8 @@ ProcKill(int code, Datum arg)
 	 * This process is no longer present in shared memory in any meaningful
 	 * way, so tell the postmaster we've cleaned up acceptably well.
 	 */
-<<<<<<< HEAD
 	if (IsUnderPostmaster && !IsAutoVacuumWorkerProcess()
 		&& MyPMChildSlot > 0)
-=======
-	if (IsUnderPostmaster)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		MarkPostmasterChildInactive();
 
 	/* wake autovac launcher if needed -- see comments in FreeWorkerInfo */

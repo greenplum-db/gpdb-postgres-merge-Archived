@@ -162,11 +162,7 @@ typedef struct vfd
 {
 	int			fd;				/* current FD, or VFD_CLOSED if none */
 	unsigned short fdstate;		/* bitflags for VFD's state */
-<<<<<<< HEAD
 	ResourceOwner resowner;		/* owner, for automatic cleanup */
-=======
-	SubTransactionId create_subid;		/* for TEMPORARY fds, creating subxact */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	File		nextFree;		/* link to next free VFD, if in freelist */
 	File		lruMoreRecently;	/* doubly linked recency-of-use list */
 	File		lruLessRecently;
