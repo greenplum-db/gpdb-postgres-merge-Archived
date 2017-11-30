@@ -18,12 +18,8 @@
 #define CONST84
 #endif
 
-<<<<<<< HEAD
-#include "access/heapam.h"
 #include "catalog/namespace.h"
-=======
 #include "access/xact.h"
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"

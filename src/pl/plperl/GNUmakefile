@@ -1,9 +1,5 @@
 # Makefile for PL/Perl
-<<<<<<< HEAD
 # src/pl/plperl/GNUmakefile
-=======
-# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.37 2009/06/05 18:29:56 adunstan Exp $
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 subdir = src/pl/plperl
 top_builddir = ../../..
