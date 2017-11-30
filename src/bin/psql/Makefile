@@ -31,12 +31,8 @@ endif
 
 OBJS=	command.o common.o help.o input.o stringutils.o mainloop.o copy.o \
 	startup.o prompt.o variables.o large_obj.o print.o describe.o \
-<<<<<<< HEAD
 	tab-complete.o mbprint.o dumputils.o keywords.o kwlookup.o \
 	sql_help.o \
-=======
-	psqlscan.o tab-complete.o mbprint.o dumputils.o keywords.o kwlookup.o \
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	$(WIN32RES)
 
 FLEXFLAGS = -Cfe
@@ -47,16 +43,11 @@ LIBS := $(filter-out -lresolv -lbz2, $(LIBS))
 all: submake-libpq submake-libpgport psql
 
 psql: $(OBJS) $(libpq_builddir)/libpq.a
-<<<<<<< HEAD
 	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_EX) $(OBJS) $(libpq_pgport) $(LIBS) -o $@$(X)
-=======
-	$(CC) $(CFLAGS) $(OBJS) $(libpq_pgport) $(LDFLAGS) $(LIBS) -o $@$(X)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 help.o: sql_help.h
 
 dumputils.c keywords.c: % : $(top_srcdir)/src/bin/pg_dump/%
-<<<<<<< HEAD
 	rm -f $@ && $(LN_S) $< .
 
 kwlookup.c: % : $(top_srcdir)/src/backend/parser/%
@@ -68,15 +59,6 @@ sql_help.h: create_help.pl $(wildcard $(REFDOCDIR)/*.sgml)
 
 # psqlscan is compiled as part of mainloop
 mainloop.o: psqlscan.c
-=======
-	rm -f $@ && $(LN_S) $< .
-
-kwlookup.c: % : $(top_srcdir)/src/backend/parser/%
-	rm -f $@ && $(LN_S) $< .
-
-$(srcdir)/sql_help.h: create_help.pl $(wildcard $(REFDOCDIR)/*.sgml)
-	$(PERL) $< $(REFDOCDIR) $@
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 $(srcdir)/psqlscan.c: psqlscan.l
 ifdef FLEX
@@ -85,11 +67,7 @@ else
 	@$(missing) flex $< $@
 endif
 
-<<<<<<< HEAD
 distprep: sql_help.h psqlscan.c
-=======
-distprep: $(srcdir)/sql_help.h $(srcdir)/psqlscan.c
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 install: all installdirs
 	$(INSTALL_PROGRAM) psql$(X) '$(DESTDIR)$(bindir)/psql$(X)'
@@ -103,11 +81,7 @@ uninstall:
 
 # psqlscan.c is in the distribution tarball, so is not cleaned here
 clean distclean:
-<<<<<<< HEAD
 	rm -f psql$(X) $(OBJS) dumputils.c keywords.c kwlookup.c psqlscan.o
-=======
-	rm -f psql$(X) $(OBJS) dumputils.c keywords.c kwlookup.c
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 maintainer-clean: distclean
 	rm -f sql_help.h sql_help.c psqlscan.c

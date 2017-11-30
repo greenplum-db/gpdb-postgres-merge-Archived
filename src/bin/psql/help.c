@@ -83,21 +83,7 @@ usage(void)
 #endif   /* WIN32 */
 	}
 
-<<<<<<< HEAD
-
-
-#if 0
-    /* psql 9.0 does it this way: */
-	printf(_("psql is the PostgreSQL interactive terminal.\n\n"));
-#else
-/* GPDB : for compatibility with 4.0 and 3.3, say this */
-/* >>> If this " is the start of the string then it ought to end there to fit in 80 columns >> " */
-	printf(_("This is psql %s, the PostgreSQL interactive terminal (Greenplum version).\n\n"),
-		   PG_VERSION);
-#endif
-=======
-	printf(_("psql is the PostgreSQL interactive terminal.\n\n"));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	printf(_("psql is the PostgreSQL interactive terminal (Greenplum version).\n\n"));
 	printf(_("Usage:\n"));
 	printf(_("  psql [OPTION]... [DBNAME [USERNAME]]\n\n"));
 
@@ -162,11 +148,7 @@ usage(void)
 	printf(_("\nFor more information, type \"\\?\" (for internal commands) or \"\\help\" (for SQL\n"
 			 "commands) from within psql, or consult the psql section in the PostgreSQL\n"
 			 "documentation.\n\n"));
-<<<<<<< HEAD
 	printf(_("Report bugs to <bugs@greenplum.org>.\n"));
-=======
-	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 
@@ -181,15 +163,11 @@ slashUsage(unsigned short int pager)
 	FILE	   *output;
 	char	   *currdb;
 
-<<<<<<< HEAD
 	currdb = PQdb(pset.db);
 	if (currdb == NULL)
 		currdb = "";
 
 	output = PageOutput(90, pager);
-=======
-	output = PageOutput(86, pager);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* if you add/remove a line here, change the row count above */
 
@@ -223,19 +201,12 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  (options: S = show system objects, + = additional detail)\n"));
 	fprintf(output, _("  \\d[S+]                 list tables, views, and sequences\n"));
 	fprintf(output, _("  \\d[S+]  NAME           describe table, view, sequence, or index\n"));
-<<<<<<< HEAD
 	fprintf(output, _("  \\da[S]  [PATTERN]      list aggregates\n"));
-=======
-	fprintf(output, _("  \\da[+]  [PATTERN]      list aggregates\n"));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	fprintf(output, _("  \\db[+]  [PATTERN]      list tablespaces\n"));
 	fprintf(output, _("  \\dc[S]  [PATTERN]      list conversions\n"));
 	fprintf(output, _("  \\dC     [PATTERN]      list casts\n"));
 	fprintf(output, _("  \\dd[S]  [PATTERN]      show comments on objects\n"));
-<<<<<<< HEAD
 	fprintf(output, _("  \\ddp    [PATTERN]      list default privileges\n"));
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	fprintf(output, _("  \\dD[S]  [PATTERN]      list domains\n"));
 	fprintf(output, _("  \\des[+] [PATTERN]      list foreign servers\n"));
 	fprintf(output, _("  \\deu[+] [PATTERN]      list user mappings\n"));
@@ -245,18 +216,13 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\dFd[+] [PATTERN]      list text search dictionaries\n"));
 	fprintf(output, _("  \\dFp[+] [PATTERN]      list text search parsers\n"));
 	fprintf(output, _("  \\dFt[+] [PATTERN]      list text search templates\n"));
-<<<<<<< HEAD
 	fprintf(output, _("  \\dg[+]  [PATTERN]      list roles (groups)\n"));
 	fprintf(output, _("  \\dx[+]  [PATTERN]      list extensions\n"));
-=======
-	fprintf(output, _("  \\dg     [PATTERN]      list roles (groups)\n"));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	fprintf(output, _("  \\di[S+] [PATTERN]      list indexes\n"));
 	fprintf(output, _("  \\dl                    list large objects, same as \\lo_list\n"));
 	fprintf(output, _("  \\dn[+]  [PATTERN]      list schemas\n"));
 	fprintf(output, _("  \\do[S]  [PATTERN]      list operators\n"));
 	fprintf(output, _("  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"));
-<<<<<<< HEAD
 	fprintf(output, _("  \\dr[S+] [PATTERN]      list foreign tables\n"));  /* GPDB Only */
 	fprintf(output, _("  \\drds [PATRN1 [PATRN2]] list per-database role settings\n"));
 	fprintf(output, _("  \\ds[S+] [PATTERN]      list sequences\n"));
@@ -265,13 +231,6 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\du[+]  [PATTERN]      list roles (users)\n"));
 	fprintf(output, _("  \\dv[S+] [PATTERN]      list views\n"));
 	fprintf(output, _("  \\dE     [PATTERN]      list external tables\n"));
-=======
-	fprintf(output, _("  \\ds[S+] [PATTERN]      list sequences\n"));
-	fprintf(output, _("  \\dt[S+] [PATTERN]      list tables\n"));
-	fprintf(output, _("  \\dT[S+] [PATTERN]      list data types\n"));
-	fprintf(output, _("  \\du     [PATTERN]      list roles (users)\n"));
-	fprintf(output, _("  \\dv[S+] [PATTERN]      list views\n"));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	fprintf(output, _("  \\l[+]                  list all databases\n"));
 	fprintf(output, _("  \\z      [PATTERN]      same as \\dp\n"));
 	fprintf(output, "\n");
@@ -298,10 +257,7 @@ slashUsage(unsigned short int pager)
 			PQdb(pset.db));
 	fprintf(output, _("  \\encoding [ENCODING]   show or set client encoding\n"));
 	fprintf(output, _("  \\password [USERNAME]   securely change the password for a user\n"));
-<<<<<<< HEAD
 	fprintf(output, _("  \\conninfo              display information about current connection\n"));
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	fprintf(output, "\n");
 
 	fprintf(output, _("Operating System\n"));
