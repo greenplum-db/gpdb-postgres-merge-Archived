@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.169 2009/01/23 12:43:32 petere Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.163 2008/02/17 18:14:29 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1172,11 +1172,7 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 						
 			  		}
 				}
-<<<<<<< HEAD
 <INITIAL>{other}|\n     	{ mmerror(PARSE_ERROR, ET_FATAL, "internal error: unreachable state; please report this to <bugs@greenplum.org>"); }
-=======
-<INITIAL>{other}|\n     	{ mmerror(PARSE_ERROR, ET_FATAL, "internal error: unreachable state; please report this to <pgsql-bugs@postgresql.org>"); }
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 %%
 void
 lex_init(void)

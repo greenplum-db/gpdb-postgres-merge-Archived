@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2009, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.142 2009/03/07 00:13:58 alvherre Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.132 2008/03/18 17:46:23 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -81,11 +81,8 @@ uninstall:
 
 clean distclean:
 	rm -f kwlookup.c *.o ecpg$(X)
-<<<<<<< HEAD
 # garbage from partial builds
 	@rm -f y.tab.c y.tab.h preproc.tab.c preproc.tab.y preproc.tab.h
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 # garbage from development
 	@rm -f core a.out *.output *.tab.c
 
