@@ -196,17 +196,11 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	TocEntry   *te;
 	teReqs		reqs;
-<<<<<<< HEAD
 	OutputContext sav =
 	{
 		NULL,					/* OF */
 		0,						/* gzOut */
 	};
-
-	bool		defnDumped;
-=======
-	OutputContext sav;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	AH->ropt = ropt;
 	AH->stage = STAGE_INITIALIZING;
@@ -221,25 +215,12 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	 */
 	if (ropt->createDB && ropt->dropSchema)
 		die_horribly(AH, modulename, "-C and -c are incompatible options\n");
-	/*
-	 * -1 is not compatible with -C, because we can't create a database
-	 *  inside a transaction block.
-	 */
-	if (ropt->createDB && ropt->single_txn)
-		die_horribly(AH, modulename, "-C and -1 are incompatible options\n");
 
 	/*
 	 * -C is not compatible with -1, because we can't create a database inside
 	 * a transaction block.
 	 */
 	if (ropt->createDB && ropt->single_txn)
-		die_horribly(AH, modulename, "-C and -1 are incompatible options\n");
-
-	/*
-	 * -1 is not compatible with -C, because we can't create a database inside
-	 * a transaction block.
-	 */
-	if (ropt->create && ropt->single_txn)
 		die_horribly(AH, modulename, "-C and -1 are incompatible options\n");
 
 	/*
@@ -393,149 +374,9 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		restore_toc_entries_parallel(AH);
 	else
 	{
-<<<<<<< HEAD
-		AH->currentTE = te;
-
-		/* Work out what, if anything, we want from this entry */
-		reqs = _tocEntryRequired(te, ropt, false);
-
-		/* Dump any relevant dump warnings to stderr */
-		if (!ropt->suppressDumpWarnings && strcmp(te->desc, "WARNING") == 0)
-		{
-			if (!ropt->dataOnly && te->defn != NULL && strlen(te->defn) != 0)
-				write_msg(modulename, "warning from original dump file: %s\n", te->defn);
-			else if (te->copyStmt != NULL && strlen(te->copyStmt) != 0)
-				write_msg(modulename, "warning from original dump file: %s\n", te->copyStmt);
-		}
-
-		defnDumped = false;
-
-		if ((reqs & REQ_SCHEMA) != 0)	/* We want the schema */
-		{
-			ahlog(AH, 1, "creating %s %s\n", te->desc, te->tag);
-
-			_printTocEntry(AH, te, ropt, false, false);
-			defnDumped = true;
-
-			/*
-			 * If we could not create a table and --no-data-for-failed-tables
-			 * was given, ignore the corresponding TABLE DATA
-			 */
-			if (ropt->noDataForFailedTables &&
-				AH->lastErrorTE == te &&
-				(strcmp(te->desc, "TABLE") == 0 ||
-				 strcmp(te->desc, "EXTERNAL TABLE") == 0 ||
-				 strcmp(te->desc, "FOREIGN TABLE") == 0))
-			{
-				TocEntry   *tes;
-
-				ahlog(AH, 1, "table \"%s\" could not be created, will not restore its data\n",
-					  te->tag);
-
-				for (tes = te->next; tes != AH->toc; tes = tes->next)
-				{
-					if (strcmp(tes->desc, "TABLE DATA") == 0 &&
-						strcmp(tes->tag, te->tag) == 0 &&
-						strcmp(tes->namespace ? tes->namespace : "",
-							   te->namespace ? te->namespace : "") == 0)
-					{
-						/* mark it unwanted */
-						ropt->idWanted[tes->dumpId - 1] = false;
-						break;
-					}
-				}
-			}
-
-			/* If we created a DB, connect to it... */
-			if (strcmp(te->desc, "DATABASE") == 0)
-			{
-				ahlog(AH, 1, "connecting to new database \"%s\"\n", te->tag);
-				_reconnectToDB(AH, te->tag);
-			}
-		}
-
-		/*
-		 * If we have a data component, then process it
-		 */
-		if ((reqs & REQ_DATA) != 0)
-		{
-			/*
-			 * hadDumper will be set if there is genuine data component for
-			 * this node. Otherwise, we need to check the defn field for
-			 * statements that need to be executed in data-only restores.
-			 */
-			if (te->hadDumper)
-			{
-				/*
-				 * If we can output the data, then restore it.
-				 */
-				if (AH->PrintTocDataPtr !=NULL && (reqs & REQ_DATA) != 0)
-				{
-#ifndef HAVE_LIBZ
-					if (AH->compression != 0)
-						die_horribly(AH, modulename, "cannot restore from compressed archive (compression not supported in this installation)\n");
-#endif
-
-					_printTocEntry(AH, te, ropt, true, false);
-
-					if (strcmp(te->desc, "BLOBS") == 0 ||
-						strcmp(te->desc, "BLOB COMMENTS") == 0)
-					{
-						ahlog(AH, 1, "restoring %s\n", te->desc);
-
-						_selectOutputSchema(AH, "pg_catalog");
-
-						(*AH->PrintTocDataPtr) (AH, te, ropt);
-					}
-					else
-					{
-						_disableTriggersIfNecessary(AH, te, ropt);
-
-						/* Select owner and schema as necessary */
-						_becomeOwner(AH, te);
-						_selectOutputSchema(AH, te->namespace);
-
-						ahlog(AH, 1, "restoring data for table \"%s\"\n",
-							  te->tag);
-
-						/*
-						 * If we have a copy statement, use it.
-						 */
-						if (te->copyStmt && strlen(te->copyStmt) > 0)
-						{
-							ahprintf(AH, "%s", te->copyStmt);
-							AH->outputKind = OUTPUT_COPYDATA;
-						}
-						else
-							AH->outputKind = OUTPUT_OTHERDATA;
-
-						(*AH->PrintTocDataPtr) (AH, te, ropt);
-
-						/*
-						 * Terminate COPY if needed.
-						 */
-						if (AH->outputKind == OUTPUT_COPYDATA &&
-							RestoringToDB(AH))
-							EndDBCopyMode(AH, te);
-						AH->outputKind = OUTPUT_SQLCMDS;
-
-						_enableTriggersIfNecessary(AH, te, ropt);
-					}
-				}
-			}
-			else if (!defnDumped)
-			{
-				/* If we haven't already dumped the defn part, do so now */
-				ahlog(AH, 1, "executing %s %s\n", te->desc, te->tag);
-				_printTocEntry(AH, te, ropt, false, false);
-			}
-		}
-	}							/* end loop over TOC entries */
-=======
 		for (te = AH->toc->next; te != AH->toc; te = te->next)
 			(void) restore_toc_entry(AH, te, ropt, false);
 	}
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * Scan TOC again to output ownership commands and ACLs
@@ -621,7 +462,9 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te,
 		_printTocEntry(AH, te, ropt, false, false);
 		defnDumped = true;
 
-		if (strcmp(te->desc, "TABLE") == 0)
+		if (strcmp(te->desc, "TABLE") == 0 ||
+			strcmp(te->desc, "EXTERNAL TABLE") == 0 ||
+			strcmp(te->desc, "FOREIGN TABLE") == 0)
 		{
 			if (AH->lastErrorTE == te)
 			{
@@ -733,23 +576,24 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te,
 					}
 
 					/*
-					 * If we have a copy statement, use it. As of V1.3, these
-					 * are separate to allow easy import from withing a
-					 * database connection. Pre 1.3 archives can not use DB
-					 * connections and are sent to output only.
-					 *
-					 * For V1.3+, the table data MUST have a copy statement so
-					 * that we can go into appropriate mode with libpq.
+					 * If we have a copy statement, use it.
 					 */
 					if (te->copyStmt && strlen(te->copyStmt) > 0)
 					{
 						ahprintf(AH, "%s", te->copyStmt);
-						AH->writingCopyData = true;
+						AH->outputKind = OUTPUT_COPYDATA;
 					}
-
+					else
+						AH->outputKind = OUTPUT_OTHERDATA;
 					(*AH->PrintTocDataPtr) (AH, te, ropt);
 
-					AH->writingCopyData = false;
+					/*
+					 * Terminate COPY if needed.
+					 */
+					if (AH->outputKind == OUTPUT_COPYDATA &&
+						RestoringToDB(AH))
+						EndDBCopyMode(AH, te);
+					AH->outputKind = OUTPUT_SQLCMDS;
 
 					/* close out the transaction started above */
 					if (is_parallel && te->created)
@@ -784,11 +628,8 @@ NewRestoreOptions(void)
 	/* set any fields that shouldn't default to zeroes */
 	opts->format = archUnknown;
 	opts->promptPassword = TRI_DEFAULT;
-<<<<<<< HEAD
 	opts->suppressDumpWarnings = false;
 	opts->exit_on_error = false;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	return opts;
 }
@@ -937,18 +778,12 @@ void
 PrintTOCSummary(Archive *AHX, RestoreOptions *ropt)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
-<<<<<<< HEAD
-	TocEntry   *te = AH->toc->next;
+	TocEntry   *te;
 	OutputContext sav =
 	{
 		NULL,					/* OF */
 		0,						/* gzOut */
 	};
-
-=======
-	TocEntry   *te;
-	OutputContext sav;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	char	   *fmtName;
 
 	if (ropt->filename)
@@ -3531,7 +3366,8 @@ restore_toc_entries_parallel(ArchiveHandle *AH)
 	 */
 	ConnectDatabase((Archive *) AH, ropt->dbname,
 					ropt->pghost, ropt->pgport, ropt->username,
-					ropt->promptPassword);
+					ropt->promptPassword,
+					false);
 
 	_doSetFixedOutputState(AH);
 
@@ -3831,7 +3667,8 @@ parallel_restore(RestoreArgs *args)
 	 */
 	ConnectDatabase((Archive *) AH, ropt->dbname,
 					ropt->pghost, ropt->pgport, ropt->username,
-					ropt->promptPassword);
+					ropt->promptPassword,
+					false);
 
 	_doSetFixedOutputState(AH);
 
@@ -4198,9 +4035,7 @@ CloneArchive(ArchiveHandle *AH)
 	memcpy(clone, AH, sizeof(ArchiveHandle));
 
 	/* Handle format-independent fields */
-	clone->pgCopyBuf = createPQExpBuffer();
-	clone->sqlBuf = createPQExpBuffer();
-	clone->sqlparse.tagBuf = NULL;
+	memset(&(clone->sqlparse), 0, sizeof(clone->sqlparse));
 
 	/* The clone will have its own connection, so disregard connection state */
 	clone->connection = NULL;
@@ -4234,10 +4069,8 @@ DeCloneArchive(ArchiveHandle *AH)
 	(AH->DeClonePtr) (AH);
 
 	/* Clear state allocated by CloneArchive */
-	destroyPQExpBuffer(AH->pgCopyBuf);
-	destroyPQExpBuffer(AH->sqlBuf);
-	if (AH->sqlparse.tagBuf)
-		destroyPQExpBuffer(AH->sqlparse.tagBuf);
+	if (AH->sqlparse.curCmd)
+		destroyPQExpBuffer(AH->sqlparse.curCmd);
 
 	/* Clear any connection-local state */
 	if (AH->currUser)

@@ -90,12 +90,8 @@ typedef z_stream *z_streamp;
 #define K_VERS_1_11 (( (1 * 256 + 11) * 256 + 0) * 256 + 0)		/* add toc section
 																 * indicator */
 
-<<<<<<< HEAD
 /* Newest format we can read */
-#define K_VERS_MAX (( (1 * 256 + 10) * 256 + 255) * 256 + 0)
-=======
 #define K_VERS_MAX (( (1 * 256 + 11) * 256 + 255) * 256 + 0)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 
 /* Flags to indicate disposition of offsets stored in files */

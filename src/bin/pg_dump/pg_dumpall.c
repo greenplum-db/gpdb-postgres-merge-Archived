@@ -26,10 +26,6 @@
 
 #include "dumputils.h"
 #include "pg_backup.h"
-<<<<<<< HEAD
-
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 /* version string we expect back from pg_dump */
 #define PGDUMP_VERSIONSTR "pg_dump (PostgreSQL) " PG_VERSION "\n"
@@ -39,20 +35,16 @@ static const char *progname;
 
 static void help(void);
 
-<<<<<<< HEAD
+static void dropFilespaces(PGconn *conn);
+static void dumpFilespaces(PGconn *conn);
 static void dumpResQueues(PGconn *conn);
 static void dumpResGroups(PGconn *conn);
-static void dumpRoles(PGconn *conn);
-static void dumpRoleMembership(PGconn *conn);
 static void dumpRoleConstraints(PGconn *conn);
-static void dumpFilespaces(PGconn *conn);
-=======
+
 static void dropRoles(PGconn *conn);
 static void dumpRoles(PGconn *conn);
 static void dumpRoleMembership(PGconn *conn);
-static void dumpGroups(PGconn *conn);
 static void dropTablespaces(PGconn *conn);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static void dumpTablespaces(PGconn *conn);
 static void dropDBs(PGconn *conn);
 static void dumpCreateDB(PGconn *conn);
@@ -76,26 +68,34 @@ static bool skip_acls = false;
 static bool verbose = false;
 static bool filespaces = false;
 
-<<<<<<< HEAD
 static int	resource_queues = 0;
 static int	resource_groups = 0;
-static int	roles_only = 0;
-=======
+
 static int	binary_upgrade = 0;
 static int	column_inserts = 0;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static int	disable_dollar_quoting = 0;
 static int	disable_triggers = 0;
 static int	inserts = 0;
 static int	no_tablespaces = 0;
 static int	use_setsessauth = 0;
 static int	server_version;
-static int	binary_upgrade = 0;
 
 
 static FILE *OPF;
 static char *filename = NULL;
 
+static void error_unsupported_server_version(void) pg_attribute_noreturn();
+
+/*
+ * Similar to function with same name in pg_dump.c. See comments there.
+ */
+static void
+error_unsupported_server_version(void)
+{
+	fprintf(stderr, "%s: unexpected server version %d\n",
+			progname, server_version);
+	exit(1);
+}
 
 int
 main(int argc, char *argv[])
@@ -104,18 +104,12 @@ main(int argc, char *argv[])
 	char	   *pgport = NULL;
 	char	   *pguser = NULL;
 	char	   *pgdb = NULL;
-	enum trivalue prompt_password = TRI_DEFAULT;
 	char	   *use_role = NULL;
-<<<<<<< HEAD
-	bool		data_only = false;
-	bool		globals_only = false;
-=======
 	enum trivalue prompt_password = TRI_DEFAULT;
 	bool		data_only = false;
 	bool		globals_only = false;
 	bool		output_clean = false;
-	bool		roles_only = false;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	int			roles_only = 0;
 	bool		tablespaces_only = false;
 	bool		schema_only = false;
 	bool		gp_syntax = false;
@@ -158,13 +152,10 @@ main(int argc, char *argv[])
 		{"column-inserts", no_argument, &column_inserts, 1},
 		{"disable-dollar-quoting", no_argument, &disable_dollar_quoting, 1},
 		{"disable-triggers", no_argument, &disable_triggers, 1},
-<<<<<<< HEAD
+		{"inserts", no_argument, &inserts, 1},
 		{"resource-queues", no_argument, &resource_queues, 1},
 		{"resource-groups", no_argument, &resource_groups, 1},
 		{"roles-only", no_argument, &roles_only, 1},
-=======
-		{"inserts", no_argument, &inserts, 1},
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		{"lock-wait-timeout", required_argument, NULL, 2},
 		{"no-tablespaces", no_argument, &no_tablespaces, 1},
 		{"role", required_argument, NULL, 3},
@@ -222,11 +213,7 @@ main(int argc, char *argv[])
 
 	pgdumpopts = createPQExpBuffer();
 
-<<<<<<< HEAD
-	while ((c = getopt_long(argc, argv, "acdDf:Fgh:il:oOp:rsS:tU:vwWxX:", long_options, &optindex)) != -1)
-=======
-	while ((c = getopt_long(argc, argv, "acf:gh:il:oOp:rsS:tU:vwWxX:", long_options, &optindex)) != -1)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	while ((c = getopt_long(argc, argv, "acf:Fgh:il:oOp:rsS:tU:vwWxX:", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -390,11 +377,8 @@ main(int argc, char *argv[])
 	/* Add long options to the pg_dump argument list */
 	if (binary_upgrade)
 		appendPQExpBuffer(pgdumpopts, " --binary-upgrade");
-<<<<<<< HEAD
-=======
 	if (column_inserts)
 		appendPQExpBuffer(pgdumpopts, " --column-inserts");
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	if (disable_dollar_quoting)
 		appendPQExpBuffer(pgdumpopts, " --disable-dollar-quoting");
 	if (disable_triggers)
@@ -558,6 +542,9 @@ main(int argc, char *argv[])
 					dropTablespaces(conn);
 			}
 
+			if (!roles_only && !tablespaces_only)
+				dropFilespaces(conn);
+
 			if (!tablespaces_only)
 				dropRoles(conn);
 		}
@@ -624,51 +611,28 @@ help(void)
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]...\n"), progname);
 
+
 	printf(_("\nGeneral options:\n"));
 	printf(_("  -f, --file=FILENAME         output file name\n"));
 	printf(_("  --lock-wait-timeout=TIMEOUT fail after waiting TIMEOUT for a table lock\n"));
 	printf(_("  --help                      show this help, then exit\n"));
 	printf(_("  --version                   output version information, then exit\n"));
 	printf(_("\nOptions controlling the output content:\n"));
-<<<<<<< HEAD
-	printf(_("  -a, --data-only          dump only the data, not the schema\n"));
-	printf(_("  -c, --clean              clean (drop) databases before recreating\n"));
-	printf(_("  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"));
-	printf(_("  -D, --column-inserts     dump data as INSERT commands with column names\n"));
-	printf(_("  -F, --filespaces         dump filespace data\n"));
-	printf(_("  -g, --globals-only       dump only global objects, no databases\n"));
-	printf(_("  -o, --oids               include OIDs in dump\n"));
-	printf(_("  -O, --no-owner           skip restoration of object ownership\n"));
-	printf(_("  -s, --schema-only        dump only the schema, no data\n"));
-	printf(_("  -S, --superuser=NAME     specify the superuser user name to use in the dump\n"));
-	printf(_("  -t, --tablespaces-only   dump only tablespaces, no databases or roles\n"));
-	printf(_("  -x, --no-privileges      do not dump privileges (grant/revoke)\n"));
-	printf(_("  --disable-dollar-quoting\n"
-			 "                           disable dollar quoting, use SQL standard quoting\n"));
-	printf(_("  --disable-triggers       disable triggers during data-only restore\n"));
-	printf(_("  --resource-queues        dump resource queue data\n"));
-	printf(_("  --resource-groups        dump resource group data\n"));
-	printf(_("  --roles-only             dump only roles, no databases or tablespaces\n"));
-	printf(_("  --no-tablespaces         do not dump tablespace assignments\n"));
-	printf(_("  --role=ROLENAME          do SET ROLE before dump\n"));
-	printf(_("  --use-set-session-authorization\n"
-			 "                           use SESSION AUTHORIZATION commands instead of\n"
-			 "                           OWNER TO commands\n"));
-	/* START MPP ADDITION */
-	printf(_("  --gp-syntax              dump with Greenplum Database syntax (default if gpdb)\n"));
-	printf(_("  --no-gp-syntax           dump without Greenplum Database syntax (default if postgresql)\n"));
-	/* END MPP ADDITION */
-=======
+	printf(_("  -a, --data-only             dump only the data, not the schema\n"));
+	printf(_("  -c, --clean                 clean (drop) databases before recreating\n"));
 	printf(_("  -a, --data-only             dump only the data, not the schema\n"));
 	printf(_("  -c, --clean                 clean (drop) databases before recreating\n"));
 	printf(_("  -g, --globals-only          dump only global objects, no databases\n"));
 	printf(_("  -o, --oids                  include OIDs in dump\n"));
 	printf(_("  -O, --no-owner              skip restoration of object ownership\n"));
-	printf(_("  -r, --roles-only            dump only roles, no databases or tablespaces\n"));
+	printf(_("      --roles-only            dump only roles, no databases or tablespaces\n"));
 	printf(_("  -s, --schema-only           dump only the schema, no data\n"));
 	printf(_("  -S, --superuser=NAME        superuser user name to use in the dump\n"));
 	printf(_("  -t, --tablespaces-only      dump only tablespaces, no databases or roles\n"));
 	printf(_("  -x, --no-privileges         do not dump privileges (grant/revoke)\n"));
+	printf(_("  -F, --filespaces            dump filespace data\n"));
+	printf(_("  --resource-queues           dump resource queue data\n"));
+	printf(_("  --resource-groups           dump resource group data\n"));
 	printf(_("  --binary-upgrade            for use by upgrade utilities only\n"));
 	printf(_("  --inserts                   dump data as INSERT commands, rather than COPY\n"));
 	printf(_("  --column-inserts            dump data as INSERT commands with column names\n"));
@@ -679,7 +643,8 @@ help(void)
 	printf(_("  --use-set-session-authorization\n"
 			 "                              use SET SESSION AUTHORIZATION commands instead of\n"
 	"                              ALTER OWNER commands to set ownership\n"));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	printf(_("  --gp-syntax                 dump with Greenplum Database syntax (default if gpdb)\n"));
+	printf(_("  --no-gp-syntax              dump without Greenplum Database syntax (default if postgresql)\n"));
 
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));
@@ -691,16 +656,11 @@ help(void)
 
 	printf(_("\nIf -f/--file is not used, then the SQL script will be written to the standard\n"
 			 "output.\n\n"));
-<<<<<<< HEAD
 	printf(_("Report bugs to <bugs@greenplum.org>.\n"));
-=======
-	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 }
 
 
 /*
-<<<<<<< HEAD
  * Build the WITH clause for resource queue dump
  */
 static void 
@@ -997,7 +957,16 @@ dumpResQueues(PGconn *conn)
 		fprintf(OPF, "%s", buf->data);
 
 		free(prev_rsqname);
-=======
+	}
+
+	PQclear(res);
+
+	destroyPQExpBuffer(buf);
+
+	fprintf(OPF, "\n\n");
+}
+
+/*
  * Drop roles
  */
 static void
@@ -1033,21 +1002,12 @@ dropRoles(PGconn *conn)
 		rolename = PQgetvalue(res, i, i_rolname);
 
 		fprintf(OPF, "DROP ROLE %s;\n", fmtId(rolename));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 
 	PQclear(res);
 
-<<<<<<< HEAD
-	destroyPQExpBuffer(buf);
-
 	fprintf(OPF, "\n\n");
 }
-
-=======
-	fprintf(OPF, "\n\n");
-}
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 /*
  * Dump roles
@@ -1352,6 +1312,42 @@ dumpRoleConstraints(PGconn *conn)
 	fprintf(OPF, "\n\n");
 }
 
+
+/*
+ * Drop filespace.
+ *
+ * GPDB_84_MERGE_FIXME: I wrote this without any testing at all. Needs testing.
+ */
+static void
+dropFilespaces(PGconn *conn)
+{
+	PGresult   *res;
+	int			i;
+
+	/*
+	 * Get all filespaces except built-in ones (which we assume are named
+	 * pg_xxx) (GPDB_84_MERGE_FIXME: are there any built-in filespaces?)
+	 */
+	res = executeQuery(conn, "SELECT fsname "
+					   "FROM pg_catalog.pg_filespace "
+					   "WHERE fsname !~ '^pg_' "
+					   "ORDER BY 1");
+
+	if (PQntuples(res) > 0)
+		fprintf(OPF, "--\n-- Drop filespaces\n--\n\n");
+
+	for (i = 0; i < PQntuples(res); i++)
+	{
+		char	   *fsname = PQgetvalue(res, i, 0);
+
+		fprintf(OPF, "DROP FILESPACE %s;\n", fmtId(fsname));
+	}
+
+	PQclear(res);
+
+	fprintf(OPF, "\n\n");
+}
+
 /*
  * Dump filespaces.
  */
@@ -1396,16 +1392,6 @@ dumpFilespaces(PGconn *conn)
 
 		/* quote name if needed */
 		fsname = strdup(fmtId(fsname));
-
-		/*
-		 * Drop existing filespace if required.
-		 *
-		 * Note: this statement will fail if an existing filespace is not
-		 * empty.  But this is no different from the related code in the rest
-		 * of pg_dump.
-		 */
-		if (output_clean)
-			appendPQExpBuffer(buf, "DROP FILESPACE %s;\n", fsname);
 
 		/* Begin creating the filespace definition */
 		appendPQExpBuffer(buf, "CREATE FILESPACE %s", fsname);
@@ -1543,24 +1529,13 @@ dumpTablespaces(PGconn *conn)
 		/* needed for buildACLCommands() */
 		spcname = strdup(fmtId(spcname));
 
-<<<<<<< HEAD
-		if (output_clean)
-			appendPQExpBuffer(buf, "DROP TABLESPACE %s;\n", spcname);
-
 		appendPQExpBuffer(buf, "CREATE TABLESPACE %s", spcname);
-=======
-		appendPQExpBuffer(buf, "CREATE TABLESPACE %s", fspcname);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		appendPQExpBuffer(buf, " OWNER %s", fmtId(spcowner));
 		appendPQExpBuffer(buf, " FILESPACE %s;\n", fmtId(fsname));
 
 		/* Build Acls */
 		if (!skip_acls &&
-<<<<<<< HEAD
-			!buildACLCommands(spcname, "TABLESPACE", spcacl, spcowner,
-=======
-			!buildACLCommands(fspcname, NULL, "TABLESPACE", spcacl, spcowner,
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+			!buildACLCommands(spcname, NULL, "TABLESPACE", spcacl, spcowner,
 							  server_version, buf))
 		{
 			fprintf(stderr, _("%s: could not parse ACL list (%s) for tablespace \"%s\"\n"),
@@ -1722,58 +1697,10 @@ dumpCreateDB(PGconn *conn)
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
 						   "WHERE datallowconn ORDER BY 1");
-<<<<<<< HEAD
-=======
-	else if (server_version >= 80000)
-		res = executeQuery(conn,
-						   "SELECT datname, "
-						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
-						   "pg_encoding_to_char(d.encoding), "
-		   "null::text AS datcollate, null::text AS datctype, datfrozenxid, "
-						   "datistemplate, datacl, -1 as datconnlimit, "
-						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
-		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
-						   "WHERE datallowconn ORDER BY 1");
-	else if (server_version >= 70300)
-		res = executeQuery(conn,
-						   "SELECT datname, "
-						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
-						   "pg_encoding_to_char(d.encoding), "
-		   "null::text AS datcollate, null::text AS datctype, datfrozenxid, "
-						   "datistemplate, datacl, -1 as datconnlimit, "
-						   "'pg_default' AS dattablespace "
-		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
-						   "WHERE datallowconn ORDER BY 1");
-	else if (server_version >= 70100)
-		res = executeQuery(conn,
-						   "SELECT datname, "
-						   "coalesce("
-					"(select usename from pg_shadow where usesysid=datdba), "
-						   "(select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
-						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, 0 AS datfrozenxid, "
-						   "datistemplate, '' as datacl, -1 as datconnlimit, "
-						   "'pg_default' AS dattablespace "
-						   "FROM pg_database d "
-						   "WHERE datallowconn ORDER BY 1");
 	else
 	{
-		/*
-		 * Note: 7.0 fails to cope with sub-select in COALESCE, so just deal
-		 * with getting a NULL by not printing any OWNER clause.
-		 */
-		res = executeQuery(conn,
-						   "SELECT datname, "
-					"(select usename from pg_shadow where usesysid=datdba), "
-						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, 0 AS datfrozenxid, "
-						   "'f' as datistemplate, "
-						   "'' as datacl, -1 as datconnlimit, "
-						   "'pg_default' AS dattablespace "
-						   "FROM pg_database d "
-						   "ORDER BY 1");
+		error_unsupported_server_version();
 	}
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	for (i = 0; i < PQntuples(res); i++)
 	{

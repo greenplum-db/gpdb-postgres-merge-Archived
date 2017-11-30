@@ -318,12 +318,8 @@ typedef struct _tableInfo
 	 */
 	int			numParents;		/* number of (immediate) parent tables */
 	struct _tableInfo **parents;	/* TableInfos of immediate parents */
-<<<<<<< HEAD
-	struct _tableDataInfo *dataObj;	/* TableDataInfo, if dumping its data */
-	Oid			parrelid;			/* external partition's parent oid */
-=======
 	struct _tableDataInfo *dataObj;		/* TableDataInfo, if dumping its data */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	Oid			parrelid;			/* external partition's parent oid */
 } TableInfo;
 
 typedef struct _attrDefInfo

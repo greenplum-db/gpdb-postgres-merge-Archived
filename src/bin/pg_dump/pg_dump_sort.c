@@ -82,19 +82,6 @@ static const int newObjectTypePriority[] =
 	7,							/* DO_OPCLASS */
 	7,							/* DO_OPFAMILY */
 	9,							/* DO_CONVERSION */
-<<<<<<< HEAD
-	14,							/* DO_TABLE */
-	16,							/* DO_ATTRDEF */
-	21,							/* DO_INDEX */
-	22,							/* DO_RULE */
-	23,							/* DO_TRIGGER */
-	20,							/* DO_CONSTRAINT */
-	24,							/* DO_FK_CONSTRAINT */
-	2,							/* DO_PROCLANG */
-	8,							/* DO_CAST */
-	17,							/* DO_TABLE_DATA */
-	15,							/* DO_DUMMY_TYPE */
-=======
 	16,							/* DO_TABLE */
 	18,							/* DO_ATTRDEF */
 	23,							/* DO_INDEX */
@@ -106,24 +93,17 @@ static const int newObjectTypePriority[] =
 	8,							/* DO_CAST */
 	19,							/* DO_TABLE_DATA */
 	17,							/* DO_DUMMY_TYPE */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	10,							/* DO_TSPARSER */
 	12,							/* DO_TSDICT */
 	11,							/* DO_TSTEMPLATE */
 	13,							/* DO_TSCONFIG */
-<<<<<<< HEAD
-	3,							/* DO_FDW */
-	4,							/* DO_FOREIGN_SERVER */
-	18,							/* DO_BLOBS */
-	19,							/* DO_BLOB_COMMENTS */
-	8,							/* DO_EXTPROTOCOL */
-	19							/* DO_TYPE_STORAGE_OPTIONS */
-=======
 	14,							/* DO_FDW */
 	15,							/* DO_FOREIGN_SERVER */
 	20,							/* DO_BLOBS */
-	21							/* DO_BLOB_COMMENTS */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	21,							/* DO_BLOB_COMMENTS */
+	/* GPDB_84_MERGE_FIXME: Are these priorities sensible? */
+	8,							/* DO_EXTPROTOCOL */
+	22							/* DO_TYPE_STORAGE_OPTIONS */
 };
 
 
