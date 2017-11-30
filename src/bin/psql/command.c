@@ -3,11 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
  * src/bin/psql/command.c
-=======
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.206 2009/06/11 14:49:07 momjian Exp $
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -367,21 +363,12 @@ exec_command(const char *cmd,
 		{
 			case '\0':
 			case '+':
-<<<<<<< HEAD
 			case 'S':  /* GPDB:  This is a change from old behavior: We used to show just system tables */
  				if (pattern)
 					success = describeTableDetails(pattern, show_verbose, show_system);
 				else
 					/* standard listing of interesting things */
-					success = listTables("tvsEr", NULL, show_verbose, show_system);
-=======
-			case 'S':
-				if (pattern)
-					success = describeTableDetails(pattern, show_verbose, show_system);
-				else
-					/* standard listing of interesting things */
-					success = listTables("tvs", NULL, show_verbose, show_system);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+					success = listTables("tvsE", NULL, show_verbose, show_system);
 				break;
 			case 'a':
 				success = describeAggregates(pattern, show_verbose, show_system);
@@ -396,14 +383,10 @@ exec_command(const char *cmd,
 				success = listCasts(pattern);
 				break;
 			case 'd':
-<<<<<<< HEAD
 				if (strncmp(cmd, "ddp", 3) == 0)
 					success = listDefaultACLs(pattern);
 				else
 					success = objectDescription(pattern, show_system);
-=======
-				success = objectDescription(pattern, show_system);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				break;
 			case 'D':
 				success = listDomains(pattern, show_system);
@@ -448,7 +431,6 @@ exec_command(const char *cmd,
 			case 'v':
 			case 'i':
 			case 's':
-<<<<<<< HEAD
 			case 'E':	/* PostgreSQL use dx for extension, change to dE for foreign table */
             /* case 'S':  // GPDB:  We used to show just system tables for this */
 			case 'P':   /* GPDB: Parent-only tables, no children */
@@ -465,12 +447,7 @@ exec_command(const char *cmd,
 					success = listDbRoleSettings(pattern, pattern2);
 				}
 				else
-					//success = PSQL_CMD_UNKNOWN;
-					/* GPDB uses \dr for foreign tables ? */
-					success = listTables(&cmd[1], pattern, show_verbose, show_system);
-=======
-				success = listTables(&cmd[1], pattern, show_verbose, show_system);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+					success = PSQL_CMD_UNKNOWN;
 				break;
 			case 'u':
 				success = describeRoles(pattern, show_verbose);
@@ -1413,11 +1390,7 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	PQsetNoticeProcessor(n_conn, NoticeProcessor, NULL);
 	pset.db = n_conn;
 	SyncVariables();
-<<<<<<< HEAD
 	connection_warnings(false); /* Must be after SyncVariables */
-=======
-	connection_warnings();		/* Must be after SyncVariables */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* Tell the user about the new connection */
 	if (!pset.quiet)

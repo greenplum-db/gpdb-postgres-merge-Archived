@@ -3,11 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
  * src/bin/psql/mainloop.c
-=======
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.95 2009/06/11 14:49:08 momjian Exp $
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  */
 #include "postgres_fe.h"
 #include "mainloop.h"

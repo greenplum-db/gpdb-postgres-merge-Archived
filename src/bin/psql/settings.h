@@ -3,11 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
  * src/bin/psql/settings.h
-=======
- * $PostgreSQL: pgsql/src/bin/psql/settings.h,v 1.35 2009/02/26 16:02:38 petere Exp $
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  */
 #ifndef SETTINGS_H
 #define SETTINGS_H

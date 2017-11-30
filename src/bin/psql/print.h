@@ -3,11 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
  * src/bin/psql/print.h
-=======
- * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.40 2009/06/11 14:49:08 momjian Exp $
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  */
 #ifndef PRINT_H
 #define PRINT_H
@@ -165,11 +161,7 @@ extern void printTableInit(printTableContent *const content,
 extern void printTableAddHeader(printTableContent *const content,
 				 const char *header, const bool translate, const char align);
 extern void printTableAddCell(printTableContent *const content,
-<<<<<<< HEAD
 				const char *cell, const bool translate, const bool mustfree);
-=======
-				  const char *cell, const bool translate);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 extern void printTableAddFooter(printTableContent *const content,
 					const char *footer);
 extern void printTableSetFooter(printTableContent *const content,
@@ -180,10 +172,7 @@ extern void printQuery(const PGresult *result, const printQueryOpt *opt,
 		   FILE *fout, FILE *flog);
 
 extern void setDecimalLocale(void);
-<<<<<<< HEAD
 extern const printTextFormat *get_line_style(const printTableOpt *opt);
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 #ifndef __CYGWIN__
 #define DEFAULT_PAGER "more"

@@ -8,11 +8,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
  * src/bin/psql/describe.c
-=======
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.218 2009/06/13 13:43:34 petere Exp $
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  */
 #include "postgres_fe.h"
 
@@ -3271,11 +3267,7 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
  * v - views
  * s - sequences
  * (any order of the above is fine)
-<<<<<<< HEAD
- * If tabtypes is empty, we default to \dtvsr.
-=======
  * If tabtypes is empty, we default to \dtvs.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  */
 bool
 listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSystem)
@@ -3285,10 +3277,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	bool		showIndexes = strchr(tabtypes, 'i') != NULL;
 	bool		showViews = strchr(tabtypes, 'v') != NULL;
 	bool		showSeq = strchr(tabtypes, 's') != NULL;
-<<<<<<< HEAD
 	bool		showExternal = strchr(tabtypes, 'E') != NULL;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	PQExpBufferData buf;
 	PGresult   *res;
@@ -3368,7 +3357,6 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	appendPQExpBuffer(&buf, "''");		/* dummy */
 	appendPQExpBuffer(&buf, ")\n");
 
-<<<<<<< HEAD
     if (isGPDB())   /* GPDB? */
     {
 	appendPQExpBuffer(&buf, "AND c.relstorage IN (");
@@ -3382,8 +3370,6 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	appendPQExpBuffer(&buf, ")\n");
     }
 
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	if (!showSystem && !pattern)
 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n"
 						  "      AND n.nspname <> 'information_schema'\n");
@@ -3395,12 +3381,9 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	 * shown. Use plain \d if you really need to look at a TOAST table/index.
 	 */
 	appendPQExpBuffer(&buf, "      AND n.nspname !~ '^pg_toast'\n");
-<<<<<<< HEAD
 
 	if (!showChildren)
 		appendPQExpBuffer(&buf, "      AND c.oid NOT IN (select inhrelid from pg_catalog.pg_inherits)\n");
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "c.relname", NULL,

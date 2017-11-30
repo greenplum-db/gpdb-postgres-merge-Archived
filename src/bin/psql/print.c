@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.128 2010/07/06 19:19:00 momjian Exp $
+ * src/bin/psql/print.c
  */
 #include "postgres_fe.h"
 
@@ -738,11 +738,6 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 
 			pg_wcssize((unsigned char *) *ptr, strlen(*ptr), encoding,
 					   &width, &nl_lines, &bytes_required);
-<<<<<<< HEAD
-=======
-			if (opt_numeric_locale && cont->align[i] == 'r')
-				width += additional_numeric_locale_len(*ptr);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 			/*
 			 * A row can have both wrapping and newlines that cause it to
@@ -867,12 +862,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 			break;
 
 		/*
-<<<<<<< HEAD
 		 * Format each cell.
-=======
-		 * Format each cell.  Format again, if it's a numeric formatting
-		 * locale (e.g. 123,456 vs. 123456)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		 */
 		for (j = 0; j < col_count; j++)
 		{
@@ -2451,10 +2441,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 		for (c = 0; c < cont.ncolumns; c++)
 		{
 			char	   *cell;
-<<<<<<< HEAD
 			bool		mustfree = false;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			bool		translate;
 
 			if (PQgetisnull(result, r, c))
