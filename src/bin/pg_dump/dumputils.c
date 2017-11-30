@@ -801,12 +801,6 @@ do { \
 		{
 			/* table only */
 			CONVERT_PRIV('a', "INSERT");
-<<<<<<< HEAD
-			CONVERT_PRIV('d', "DELETE");
-			CONVERT_PRIV('x', "REFERENCES");
-			CONVERT_PRIV('t', "TRIGGER");
-			CONVERT_PRIV('D', "TRUNCATE");
-=======
 			if (remoteVersion >= 70200)
 				CONVERT_PRIV('x', "REFERENCES");
 			/* rest are not applicable to columns */
@@ -820,7 +814,6 @@ do { \
 				if (remoteVersion >= 80400)
 					CONVERT_PRIV('D', "TRUNCATE");
 			}
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		}
 
 		/* UPDATE */

@@ -126,11 +126,7 @@ static void pgwin32_SetServiceStatus(DWORD);
 static void WINAPI pgwin32_ServiceHandler(DWORD);
 static void WINAPI pgwin32_ServiceMain(DWORD, LPTSTR *);
 static void pgwin32_doRunAsService(void);
-<<<<<<< HEAD
-static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo, bool as_service);
-=======
 static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_service);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 static SERVICE_STATUS status;
 static SERVICE_STATUS_HANDLE hStatus = (SERVICE_STATUS_HANDLE) 0;
@@ -611,7 +607,6 @@ test_postmaster_connection(bool do_checkpoint __attribute__((unused)))
 			break;
 
 #if defined(WIN32)
-<<<<<<< HEAD
 		if (do_checkpoint)
 		{
 			/*
@@ -624,27 +619,6 @@ test_postmaster_connection(bool do_checkpoint __attribute__((unused)))
 			status.dwWaitHint += 6000;
 			status.dwCheckPoint++;
 			SetServiceStatus(hStatus, (LPSERVICE_STATUS) &status);
-=======
-			if (do_checkpoint)
-			{
-				/*
-				 * Increment the wait hint by 6 secs (connection timeout +
-				 * sleep) We must do this to indicate to the SCM that our
-				 * startup time is changing, otherwise it'll usually send a
-				 * stop signal after 20 seconds, despite incrementing the
-				 * checkpoint counter.
-				 */
-				status.dwWaitHint += 6000;
-				status.dwCheckPoint++;
-				SetServiceStatus(hStatus, (LPSERVICE_STATUS) &status);
-			}
-
-			else
-#endif
-				print_msg(".");
-
-			pg_usleep(1000000); /* 1 sec */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		}
 
 		else
@@ -718,14 +692,9 @@ read_post_opts(void)
 				 */
 				if ((arg1 = strstr(optline, " \"")) != NULL)
 				{
-<<<<<<< HEAD
-					*arg1 = '\0';	/* terminate so we get only program name */
-					post_opts = strdup(arg1 + 1); /* point past whitespace */
-=======
 					*arg1 = '\0';		/* terminate so we get only program
 										 * name */
-					post_opts = arg1 + 1;		/* point past whitespace */
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+					post_opts = strdup(arg1 + 1); /* point past whitespace */
 				}
 				if (postgres_path == NULL)
 					postgres_path = strdup(optline);
@@ -1521,11 +1490,7 @@ typedef BOOL (WINAPI * __QueryInformationJobObject) (HANDLE, JOBOBJECTINFOCLASS,
  * automatically destroyed when pg_ctl exits.
  */
 static int
-<<<<<<< HEAD
-CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo, bool as_service)
-=======
 CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_service)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	int			r;
 	BOOL		b;
@@ -1708,11 +1673,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 	}
 
 #ifndef __CYGWIN__
-<<<<<<< HEAD
     AddUserToTokenDacl(processInfo->hProcess);
-=======
-	AddUserToDacl(processInfo->hProcess);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 #endif
 
 	CloseHandle(restrictedToken);

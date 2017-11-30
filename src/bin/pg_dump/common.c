@@ -105,22 +105,7 @@ getSchemaData(int *numTablesPtr, int g_role)
 	NamespaceInfo *nspinfo;
 	ExtensionInfo *extinfo;
 	InhInfo    *inhinfo;
-<<<<<<< HEAD
-=======
-	RuleInfo   *ruleinfo;
-	ProcLangInfo *proclanginfo;
-	CastInfo   *castinfo;
-	OpclassInfo *opcinfo;
-	OpfamilyInfo *opfinfo;
-	ConvInfo   *convinfo;
-	TSParserInfo *prsinfo;
-	TSTemplateInfo *tmplinfo;
-	TSDictInfo *dictinfo;
-	TSConfigInfo *cfginfo;
-	FdwInfo    *fdwinfo;
-	ForeignServerInfo *srvinfo;
 	int			numNamespaces;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	int			numAggregates;
 	int			numInherits;
 	int			numRules;

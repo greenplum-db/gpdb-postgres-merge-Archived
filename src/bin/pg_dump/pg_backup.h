@@ -161,12 +161,8 @@ PGconn *ConnectDatabase(Archive *AH,
 				const char *pghost,
 				const char *pgport,
 				const char *username,
-<<<<<<< HEAD
 				enum trivalue prompt_password,
 			   	bool binary_upgrade);
-=======
-				enum trivalue prompt_password);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 /* Called to add a TOC entry */
 extern void ArchiveEntry(Archive *AHX,
@@ -174,13 +170,8 @@ extern void ArchiveEntry(Archive *AHX,
 			 const char *tag,
 			 const char *namespace, const char *tablespace,
 			 const char *owner, bool withOids,
-<<<<<<< HEAD
-			 const char *desc, 
-             const char *defn,
-=======
 			 const char *desc, teSection section,
 			 const char *defn,
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			 const char *dropStmt, const char *copyStmt,
 			 const DumpId *deps, int nDeps,
 			 DataDumperPtr dumpFn, void *dumpArg);
