@@ -19,13 +19,6 @@ enum trivalue
 	TRI_NO,
 	TRI_YES
 };
-<<<<<<< HEAD
-
-#ifndef HAVE_INT_OPTRESET
-extern int	optreset;
-#endif
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 typedef void (*help_handler) (const char *progname);
 

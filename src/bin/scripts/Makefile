@@ -24,15 +24,11 @@ PROGRAMS = createdb createlang createuser dropdb droplang dropuser clusterdb vac
 
 override CPPFLAGS := -I$(top_srcdir)/src/bin/pg_dump -I$(top_srcdir)/src/bin/psql -I$(libpq_srcdir) $(CPPFLAGS)
 
-<<<<<<< HEAD
 # I don't think we really need libpgport for any of the scripts, but
 # if we don't have it, we'd need to filter out -lpgport, otherwise we get a link error on solaris and win32
 # we should revisit this and see if that is the better way to go.
 
 all: submake-libpq submake-libpgport $(PROGRAMS)
-=======
-all: submake-libpq $(PROGRAMS)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 %: %.o $(WIN32RES)
 	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LIBS) -o $@$(X)

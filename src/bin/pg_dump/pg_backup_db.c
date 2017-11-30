@@ -235,12 +235,8 @@ ConnectDatabase(Archive *AHX,
 				const char *pghost,
 				const char *pgport,
 				const char *username,
-<<<<<<< HEAD
 				enum trivalue prompt_password,
 				bool binary_upgrade)
-=======
-				enum trivalue prompt_password)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	char	   *password = AH->savedPassword;
