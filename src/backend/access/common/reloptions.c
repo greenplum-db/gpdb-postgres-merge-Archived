@@ -217,10 +217,11 @@ static void
 initialize_reloptions(void)
 {
 	int			i;
-	int			j = 0;
+	int			j;
 
 	initialize_reloptions_gp();
 
+	j = 0;
 	for (i = 0; boolRelOpts[i].gen.name; i++)
 		j++;
 	for (i = 0; intRelOpts[i].gen.name; i++)
@@ -277,6 +278,9 @@ initialize_reloptions(void)
 
 	/* add a list terminator */
 	relOpts[j] = NULL;
+
+	/* flag the work is complete */
+	need_initialization = false;
 }
 
 /*
