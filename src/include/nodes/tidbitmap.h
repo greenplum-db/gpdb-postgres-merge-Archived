@@ -174,6 +174,7 @@ struct StreamBMIterator
 		TBMIterator	   *hash;		/* for IndexStream */
 		List		   *stream;		/* for OpStream */
 	} input;						/* input iterator(s) */
+	void			   *opaque;		/* for the implementation in bitmap.c */
 
 	PagetableEntry	   *nextentry;	/* for IndexStream, a pointer to the next cached entry */
 	BlockNumber			nextblock;	/* block number we're up to */

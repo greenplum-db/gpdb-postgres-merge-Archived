@@ -37,9 +37,8 @@ static bool words_get_match(BMBatchWords *words, BMIterateResult *result,
                             BlockNumber blockno, PagetableEntry *entry,
 							bool newentry);
 static IndexScanDesc copy_scan_desc(IndexScanDesc scan);
-static void stream_free(StreamNode *self);
 static void indexstream_free(StreamNode *self);
-static bool pull_stream(StreamNode *self, PagetableEntry *e);
+static bool pull_stream(StreamBMIterator *iterator, PagetableEntry *e);
 static void cleanup_pos(BMScanPosition pos);
 
 /* type to hide BM specific stream state */
@@ -50,6 +49,8 @@ typedef struct BMStreamOpaque
 	/* Indicate that this stream contains no more bitmap words. */
 	bool is_done;
 } BMStreamOpaque;
+
+static void stream_free(BMStreamOpaque *so);
 
 /*
  * bmbuild() -- Build a new bitmap index.
@@ -163,6 +164,34 @@ bmgettuple(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(res);
 }
 
+static void
+stream_end_iterate(StreamBMIterator *self)
+{
+	/* opaque may be NULL */
+	if (self->opaque) {
+		stream_free(self->opaque);
+		self->opaque = NULL;
+	}
+}
+
+static void
+stream_begin_iterate(StreamNode *self, StreamBMIterator *iterator)
+{
+	BMStreamOpaque *so;
+	IndexScanDesc scan = self->opaque;
+
+	iterator->pull = pull_stream;
+	iterator->end_iterate = stream_end_iterate;
+
+	/* create a memory context for the stream */
+	so = palloc(sizeof(BMStreamOpaque));
+	so->scan = scan;
+	so->entry = NULL;
+	so->is_done = false;
+
+	iterator->opaque = so;
+}
+
 /*
  * bmgetbitmap() -- return a stream bitmap.
  */
@@ -187,27 +216,16 @@ bmgetbitmap(PG_FUNCTION_ARGS)
 
 	if (res)
 	{
-		BMScanPosition  sp;
-		IndexScanDesc copy = copy_scan_desc(scan);
-		BMStreamOpaque *so;
 		int vec;
 
 		/* perhaps this should be in a special context? */
 		is = (IndexStream *)palloc0(sizeof(IndexStream));
 		is->type = BMS_INDEX;
-		is->pull = pull_stream;
+		is->begin_iterate = stream_begin_iterate;
 		is->free = indexstream_free;
 		is->set_instrument = NULL;
 		is->upd_instrument = NULL;
-
-		/* create a memory context for the stream */
-
-		so = palloc(sizeof(BMStreamOpaque));
-		sp = ((BMScanOpaque)copy->opaque)->bm_currPos;
-		so->scan = copy;
-		so->entry = NULL;
-		so->is_done = false;
-		is->opaque = (void *)so;
+		is->opaque = copy_scan_desc(scan);
 
 		if(!bm)
 		{
@@ -595,18 +613,14 @@ bmbuildCallback(Relation index, ItemPointer tupleId, Datum *attdata,
  */
 
 static void
-stream_free(StreamNode *self)
+stream_free(BMStreamOpaque *so)
 {
-	IndexStream *is = self;
-	BMStreamOpaque *so = (BMStreamOpaque *)is->opaque;
-
 	/* opaque may be NULL */
 	if (so)
 	{
 		IndexScanDesc scan = so->scan;
-		BMScanOpaque s = (BMScanOpaque)scan->opaque;
+		BMScanOpaque s = scan->opaque;
 
-		is->opaque = NULL;
 		if(s->bm_currPos)
 		{
 			cleanup_pos(s->bm_currPos);
@@ -624,6 +638,8 @@ stream_free(StreamNode *self)
 			pfree(so->entry);
 
 		pfree(s);
+		/* GPDB_84_MERGE_FIXME: this scan is supposed to be owned by the
+		 * StreamNode, but we're freeing it here... Something's not right. */
 		pfree(scan);
 		pfree(so);
 	}
@@ -634,8 +650,6 @@ stream_free(StreamNode *self)
  */
 static void
 indexstream_free(StreamNode *self) {
-	stream_free(self);
-
 	pfree(self);
 }
 
@@ -661,42 +675,40 @@ cleanup_pos(BMScanPosition pos)
  */
 
 static bool 
-pull_stream(StreamNode *self, PagetableEntry *e)
+pull_stream(StreamBMIterator *iterator, PagetableEntry *e)
 {
-	StreamNode 	   *n = self;
 	bool			res = false;
 	bool 			newentry = true;
-	IndexStream    *is = (IndexStream *)n;
 	PagetableEntry *next;
 	BMScanPosition	scanPos;
 	IndexScanDesc	scan;
-	BMStreamOpaque *so;
+	BMStreamOpaque *so = iterator->opaque;
 
-	so = (BMStreamOpaque *)is->opaque;
 	/* empty bitmap vector */
 	if(so == NULL)
 		return false;
 	next = so->entry;
 
 	/* have we already got an entry? */
-	/* GDPB_84_MERGE_FIXME: temporarily disabled this just to make it compile */
-#if 0
-	if(next && is->nextblock <= next->blockno)
+	if(next && iterator->nextblock <= next->blockno)
 	{
 		memcpy(e, next, sizeof(PagetableEntry));
 		return true;
 	}
 	else if (so->is_done)
 	{
-		stream_free(n);
-		is->opaque = NULL;
+		/* GPDB_84_MERGE_FIXME: this doesn't seem right; shouldn't we free at
+		 * end_iterate()? */
+		if (iterator->opaque) {
+			stream_free(iterator->opaque);
+			iterator->opaque = NULL;
+		}
 		return false;
 	}
-	MemSet(e, 0, sizeof(PagetableEntry));
 
 	scan = so->scan;
 	scanPos = ((BMScanOpaque)scan->opaque)->bm_currPos;
-	e->blockno = is->nextblock;
+	e->blockno = iterator->nextblock;
 
 	so->is_done = false;
 
@@ -713,7 +725,7 @@ pull_stream(StreamNode *self, PagetableEntry *e)
 			elog(ERROR, "scan position uninitialized");
 
 		found = words_get_match(scanPos->bm_batchWords, &(scanPos->bm_result),
-							   is->nextblock, e, newentry);
+							   iterator->nextblock, e, newentry);
 
 		if(found)
 		{
@@ -736,7 +748,7 @@ pull_stream(StreamNode *self, PagetableEntry *e)
 				 * tell words_get_match() to continue looking at the page
 				 * it finished at
 				 */
-				is->nextblock = e->blockno;
+				iterator->nextblock = e->blockno;
 				newentry = false;
 			}
 		}
@@ -747,15 +759,12 @@ pull_stream(StreamNode *self, PagetableEntry *e)
 	 * contain possible query results, since in AO index cases, this range
 	 * can be very large.
 	 */
-	is->nextblock = e->blockno + 1;
+	iterator->nextblock = e->blockno + 1;
 	if (scanPos->bm_result.nextTid / BM_MAX_TUPLES_PER_PAGE > e->blockno + 1)
-		is->nextblock = scanPos->bm_result.nextTid / BM_MAX_TUPLES_PER_PAGE;
+		iterator->nextblock = scanPos->bm_result.nextTid / BM_MAX_TUPLES_PER_PAGE;
 	if (so->entry == NULL)
 		so->entry = (PagetableEntry *) palloc(sizeof(PagetableEntry));
 	memcpy(so->entry, e, sizeof(PagetableEntry));
-#else
-	elog(ERROR, "broken by merge");
-#endif	
 
 	return res;
 }
