@@ -448,7 +448,6 @@ CheckForExternalTrigger(void)
 		fflush(stderr);
 
 		/*
-<<<<<<< HEAD
 		 * If trigger file found, we *must* delete it. Here's why: When
 		 * recovery completes, we will be asked again for the same file from
 		 * the archive using pg_standby so must remove trigger file so we can
@@ -456,21 +455,13 @@ CheckForExternalTrigger(void)
 		 *
 		 * If it fails, return with an exit code that the server will treat
 		 * as a FATAL error.
-=======
-		 * Turn it into a "smart" trigger by truncating the file. Otherwise if
-		 * the server asks us again to restore a segment that was restored
-		 * already, we would return "not found" and upset the server.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		 */
 		if (ftruncate(fd, 0) < 0)
 		{
 			fprintf(stderr, "WARNING: could not read \"%s\": %s\n",
 					triggerPath, strerror(errno));
 			fflush(stderr);
-<<<<<<< HEAD
 			exit(200);
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		}
 		close(fd);
 
@@ -558,10 +549,6 @@ sighandler(int sig)
 	signaled = true;
 }
 
-<<<<<<< HEAD
-=======
-#ifndef WIN32
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 /* We don't want SIGQUIT to core dump */
 static void
 sigquit_handler(int sig)
@@ -577,31 +564,11 @@ main(int argc, char **argv)
 {
 	int			c;
 
-<<<<<<< HEAD
 #ifndef WIN32
-=======
-	progname = get_progname(argv[0]);
-
-	if (argc > 1)
-	{
-		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
-		{
-			usage();
-			exit(0);
-		}
-		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
-		{
-			puts("pg_standby (PostgreSQL) " PG_VERSION);
-			exit(0);
-		}
-	}
-
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	/*
 	 * You can send SIGUSR1 to trigger failover.
 	 *
 	 * Postmaster uses SIGQUIT to request immediate shutdown. The default
-<<<<<<< HEAD
 	 * action is to core dump, but we don't want that, so trap it and
 	 * commit suicide without core dump.
 	 *
@@ -614,19 +581,6 @@ main(int argc, char **argv)
 	 */
 	(void) signal(SIGUSR1, sighandler);
 	(void) signal(SIGINT, sighandler); /* deprecated, use SIGUSR1 */
-=======
-	 * action is to core dump, but we don't want that, so trap it and commit
-	 * suicide without core dump.
-	 *
-	 * We used to use SIGINT and SIGQUIT to trigger failover, but that turned
-	 * out to be a bad idea because postmaster uses SIGQUIT to request
-	 * immediate shutdown. We still trap SIGINT, but that may change in a
-	 * future release.
-	 */
-	(void) signal(SIGUSR1, sighandler);
-	(void) signal(SIGINT, sighandler);	/* deprecated, use SIGUSR1 */
-#ifndef WIN32
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	(void) signal(SIGQUIT, sigquit_handler);
 #endif
 
@@ -800,15 +754,10 @@ main(int argc, char **argv)
 	 */
 	for (;;)
 	{
-<<<<<<< HEAD
 		if (sleeptime <= 60)
 			pg_usleep(sleeptime * 1000000L);
 
 #ifndef WIN32
-=======
-		/* Check for trigger file or signal first */
-		CheckForExternalTrigger();
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		if (signaled)
 		{
 			Failover = FastFailover;
@@ -818,20 +767,8 @@ main(int argc, char **argv)
 				fflush(stderr);
 			}
 		}
-<<<<<<< HEAD
 		else
 #endif
-=======
-
-		/*
-		 * Check for fast failover immediately, before checking if the
-		 * requested WAL file is available
-		 */
-		if (Failover == FastFailover)
-			exit(1);
-
-		if (CustomizableNextWALFileReady())
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		{
 			/*
 			 * Once we have restored this file successfully we can remove some
