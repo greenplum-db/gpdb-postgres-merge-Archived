@@ -262,7 +262,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			else if (prefetch_iterator)
 			{
 				/* Do not let the prefetch iterator get behind the main one */
-				TBMIterateResult *tbmpre = tbm_iterate(prefetch_iterator);
+				TBMIterateResult *tbmpre = tbm_iterate(prefetch_iterator, tbmpre);
 
 				if (tbmpre == NULL || tbmpre->blockno != tbmres->blockno)
 					elog(ERROR, "prefetch and main iterators are out of sync");
@@ -358,7 +358,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 		{
 			while (node->prefetch_pages < node->prefetch_target)
 			{
-				TBMIterateResult *tbmpre = tbm_iterate(prefetch_iterator);
+				TBMIterateResult *tbmpre = tbm_iterate(prefetch_iterator, tbmpre);
 
 				if (tbmpre == NULL)
 				{

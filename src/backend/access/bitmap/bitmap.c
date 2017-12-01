@@ -196,7 +196,6 @@ bmgetbitmap(PG_FUNCTION_ARGS)
 		is = (IndexStream *)palloc0(sizeof(IndexStream));
 		is->type = BMS_INDEX;
 		is->pull = pull_stream;
-		is->nextblock = 0;
 		is->free = indexstream_free;
 		is->set_instrument = NULL;
 		is->upd_instrument = NULL;
@@ -680,6 +679,8 @@ pull_stream(StreamNode *self, PagetableEntry *e)
 	next = so->entry;
 
 	/* have we already got an entry? */
+	/* GDPB_84_MERGE_FIXME: temporarily disabled this just to make it compile */
+#if 0
 	if(next && is->nextblock <= next->blockno)
 	{
 		memcpy(e, next, sizeof(PagetableEntry));
@@ -691,7 +692,6 @@ pull_stream(StreamNode *self, PagetableEntry *e)
 		is->opaque = NULL;
 		return false;
 	}
-	
 	MemSet(e, 0, sizeof(PagetableEntry));
 
 	scan = so->scan;
@@ -753,6 +753,9 @@ pull_stream(StreamNode *self, PagetableEntry *e)
 	if (so->entry == NULL)
 		so->entry = (PagetableEntry *) palloc(sizeof(PagetableEntry));
 	memcpy(so->entry, e, sizeof(PagetableEntry));
+#else
+	elog(ERROR, "broken by merge");
+#endif	
 
 	return res;
 }
