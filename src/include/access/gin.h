@@ -501,7 +501,7 @@ typedef struct GinScanEntryData
 
 	/* partial match support */
 	bool		isPartialMatch;
-	Node 	   *partialMatch;
+	TIDBitmap  *partialMatch;
 	TBMIterator *partialMatchIterator;
 	TBMIterateResult *partialMatchResult;
 	StrategyNumber strategy;

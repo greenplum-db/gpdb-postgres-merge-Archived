@@ -116,7 +116,7 @@ scanForItems(Relation index, GinScanEntry scanEntry, BlockNumber rootPostingTree
 
 		if ((GinPageGetOpaque(page)->flags & GIN_DELETED) == 0 && GinPageGetOpaque(page)->maxoff >= FirstOffsetNumber)
 		{
-			tbm_add_tuples((TIDBitmap *) scanEntry->partialMatch,
+			tbm_add_tuples(scanEntry->partialMatch,
 				   (ItemPointer) GinDataPageGetItem(page, FirstOffsetNumber),
 						   GinPageGetOpaque(page)->maxoff, false);
 			scanEntry->predictNumberResult += GinPageGetOpaque(page)->maxoff;
@@ -149,7 +149,7 @@ computePartialMatchList(GinBtreeData *btree, GinBtreeStack *stack, GinScanEntry 
 	Datum		idatum;
 	int32		cmp;
 
-	scanEntry->partialMatch = (Node *) tbm_create(work_mem * 1024L);
+	scanEntry->partialMatch = tbm_create(work_mem * 1024L);
 
 	for (;;)
 	{
@@ -254,7 +254,7 @@ computePartialMatchList(GinBtreeData *btree, GinBtreeStack *stack, GinScanEntry 
 		}
 		else
 		{
-			tbm_add_tuples((TIDBitmap *) scanEntry->partialMatch, GinGetPosting(itup), GinGetNPosting(itup), false);
+			tbm_add_tuples(scanEntry->partialMatch, GinGetPosting(itup), GinGetNPosting(itup), false);
 			scanEntry->predictNumberResult += GinGetNPosting(itup);
 		}
 
@@ -330,7 +330,7 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 				if (entry->partialMatchIterator)
 					tbm_end_iterate(entry->partialMatchIterator);
 				entry->partialMatchIterator = NULL;
-				tbm_free( (TIDBitmap *) entry->partialMatch );
+				tbm_free(entry->partialMatch);
 				entry->partialMatch = NULL;
 			}
 			LockBuffer(stackEntry->buffer, GIN_UNLOCK);
@@ -574,7 +574,7 @@ entryGetItem(Relation index, GinScanEntry entry)
 			if (entry->partialMatchResult == NULL ||
 				entry->offset >= entry->partialMatchResult->ntuples)
 			{
-				tbm_generic_iterate( entry->partialMatch, entry->partialMatchResult );
+				entry->partialMatchResult = tbm_iterate(entry->partialMatchIterator);
 
 				if (entry->partialMatchResult == NULL)
 				{
