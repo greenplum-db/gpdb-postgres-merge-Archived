@@ -139,13 +139,6 @@ SELECT interval '999' minute;
 SELECT interval '999' hour;
 SELECT interval '999' day;
 SELECT interval '999' month;
-<<<<<<< HEAD
-
--- check that '30 days' equals '1 month' according to the hash function
-select '30 days'::interval = '1 month'::interval as t;
-select interval_hash('30 days'::interval) = interval_hash('1 month'::interval) as t;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 -- test SQL-spec syntaxes for restricted field sets
 SELECT interval '1' year;

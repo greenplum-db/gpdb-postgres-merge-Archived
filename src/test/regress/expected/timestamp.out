@@ -94,17 +94,6 @@ LINE 1: INSERT INTO TIMESTAMP_TBL VALUES ('current');
                                           ^
 -- Postgres v6.0 standard output format
 INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01 1997 PST');
-<<<<<<< HEAD
-INSERT INTO TIMESTAMP_TBL VALUES ('Invalid Abstime');
-ERROR:  invalid input syntax for type timestamp: "Invalid Abstime"
-LINE 1: INSERT INTO TIMESTAMP_TBL VALUES ('Invalid Abstime');
-                                          ^
-INSERT INTO TIMESTAMP_TBL VALUES ('Undefined Abstime');
-ERROR:  invalid input syntax for type timestamp: "Undefined Abstime"
-LINE 1: INSERT INTO TIMESTAMP_TBL VALUES ('Undefined Abstime');
-                                          ^
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 -- Variations on Postgres v6.1 standard output format
 INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01.000001 1997 PST');
 INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01.999999 1997 PST');

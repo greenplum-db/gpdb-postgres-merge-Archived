@@ -1285,18 +1285,14 @@ LINE 1: INSERT INTO num_input_test(n1) VALUES (' N aN ');
 SELECT * FROM num_input_test;
    n1    
 ---------
-  -93853
- -555.50
-<<<<<<< HEAD
      123
-  555.50
  3245874
-(5 rows)
-=======
+  -93853
+  555.50
+ -555.50
      NaN
      NaN
 (7 rows)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 --
 -- Test some corner cases for division

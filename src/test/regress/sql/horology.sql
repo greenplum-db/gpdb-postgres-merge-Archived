@@ -653,7 +653,6 @@ SELECT to_timestamp('199711xy', 'YYYYMMDD');
 
 -- Input that doesn't fit in an int:
 SELECT to_timestamp('10000000000', 'FMYYYY');
-<<<<<<< HEAD
 
 
 -- Clean up
@@ -664,5 +663,3 @@ DROP TABLE time_horology_tbl;
 DROP TABLE timestamp_horology_tbl;
 DROP TABLE timestamptz_horology_tbl;
 DROP TABLE timetz_horology_tbl;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805

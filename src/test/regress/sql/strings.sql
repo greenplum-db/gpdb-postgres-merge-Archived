@@ -318,11 +318,7 @@ SELECT 'Hawkeye' ILIKE 'h%' AS "true";
 SELECT 'Hawkeye' NOT ILIKE 'h%' AS "false";
 
 --
-<<<<<<< HEAD
 -- test %/_ combination cases, cf bugs #4821 and #5478
-=======
--- test %/_ combination cases, cf bug #4821
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 --
 
 SELECT 'foo' LIKE '_%' as t, 'f' LIKE '_%' as t, '' LIKE '_%' as f;
@@ -331,11 +327,8 @@ SELECT 'foo' LIKE '%_' as t, 'f' LIKE '%_' as t, '' LIKE '%_' as f;
 SELECT 'foo' LIKE '__%' as t, 'foo' LIKE '___%' as t, 'foo' LIKE '____%' as f;
 SELECT 'foo' LIKE '%__' as t, 'foo' LIKE '%___' as t, 'foo' LIKE '%____' as f;
 
-<<<<<<< HEAD
 SELECT 'jack' LIKE '%____%' AS t;
 
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 --
 -- test implicit type conversion
