@@ -1356,14 +1356,9 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		 */
 		if (parent_is_partitioned && !rel_is_leaf_partition(childOID))
 		{
+			heap_close(newrelation, lockmode);
 			continue;
 		}
-
-		/* Open rel, acquire the appropriate lock type */
-		if (childOID != parentOID)
-			newrelation = heap_open(childOID, lockmode);
-		else
-			newrelation = oldrelation;
 
 		/*
 		 * Build an RTE for the child, and attach to query's rangetable list.
