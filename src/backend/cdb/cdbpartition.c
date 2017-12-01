@@ -1446,7 +1446,7 @@ add_partition_rule(PartitionRule *rule)
 
 	if (rule->parreloptions)
 		values[Anum_pg_partition_rule_parreloptions - 1] =
-			transformRelOptions((Datum) 0, rule->parreloptions, true, false);
+			transformRelOptions((Datum) 0, rule->parreloptions, NULL, NULL, true, false);
 	else
 		isnull[Anum_pg_partition_rule_parreloptions - 1] = true;
 
@@ -9088,6 +9088,7 @@ add_partition_encoding(Oid relid, Oid paroid, AttrNumber attnum, List *encoding)
 
 	partoptions = transformRelOptions(PointerGetDatum(NULL),
 									  encoding,
+									  NULL, NULL,
 									  true,
 									  false);
 
