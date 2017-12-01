@@ -99,14 +99,11 @@ static char *generate_relation_name(Relation rel);
 static char *dblink_connstr_check(const char *connstr);
 static void dblink_security_check(PGconn *conn, remoteConn *rconn);
 static void dblink_res_error(const char *conname, PGresult *res, const char *dblink_context_msg, bool fail);
-<<<<<<< HEAD
+static char *get_connect_string(const char *servername);
+static char *escape_param_str(const char *from);
 static void validate_pkattnums(Relation rel,
 				   int2vector *pkattnums_arg, int32 pknumatts_arg,
 				   int **pkattnums, int *pknumatts);
-=======
-static char *get_connect_string(const char *servername);
-static char *escape_param_str(const char *from);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 /* Global */
 static remoteConn *pconn = NULL;
@@ -176,16 +173,12 @@ typedef struct remoteConnHashEnt
 			} \
 			else \
 			{ \
-<<<<<<< HEAD
-				connstr = dblink_connstr_check(conname_or_str); \
-=======
 				connstr = get_connect_string(conname_or_str); \
 				if (connstr == NULL) \
 				{ \
 					connstr = conname_or_str; \
 				} \
 				dblink_connstr_check(connstr); \
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				conn = PQconnectdb(connstr); \
 				if (PQstatus(conn) == CONNECTION_BAD) \
 				{ \
@@ -857,25 +850,6 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async)
 			/* NULL means we're all done with the async results */
 			if (!res)
 			{
-<<<<<<< HEAD
-				res = PQgetResult(conn);
-				/* NULL means we're all done with the async results */
-				if (!res)
-				{
-					MemoryContextSwitchTo(oldcontext);
-					SRF_RETURN_DONE(funcctx);
-				}
-			}
-
-			if (!res ||
-				(PQresultStatus(res) != PGRES_COMMAND_OK &&
-				 PQresultStatus(res) != PGRES_TUPLES_OK))
-			{
-				if (freeconn)
-					PQfinish(conn);
-				dblink_res_error(conname, res, "could not execute query", fail);
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 				MemoryContextSwitchTo(oldcontext);
 				SRF_RETURN_DONE(funcctx);
 			}
@@ -2293,17 +2267,11 @@ dblink_connstr_check(const char *connstr)
 
 	if (!superuser())
 	{
-<<<<<<< HEAD
 		PQconninfoOption   *options;
 		PQconninfoOption   *option;
 		bool				connstr_gives_password = false;
 		bool				username_is_set = false;
 		bool				host_is_set = false;
-=======
-		PQconninfoOption *options;
-		PQconninfoOption *option;
-		bool		connstr_gives_password = false;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		options = PQconninfoParse(connstr, NULL);
 		if (options)
