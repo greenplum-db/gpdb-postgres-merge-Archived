@@ -432,7 +432,7 @@ DefineType(List *names, List *parameters)
 	if (encoding)
 	{
 		encoding = transformStorageEncodingClause(encoding);
-		typoptions = transformRelOptions((Datum) 0, encoding, true, false);
+		typoptions = transformRelOptions((Datum) 0, encoding, NULL, NULL, true, false);
 	}
 
 	/*
@@ -3004,7 +3004,7 @@ AlterType(AlterTypeStmt *stmt)
 	encoding = transformStorageEncodingClause(stmt->encoding);
 
 	typoptions = transformRelOptions(PointerGetDatum(NULL),
-									 encoding,
+									 encoding, NULL, NULL,
 									 false,
 									 false);
 

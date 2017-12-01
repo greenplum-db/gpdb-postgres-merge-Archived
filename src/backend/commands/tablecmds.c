@@ -354,21 +354,15 @@ static void ATExecEnableDisableTrigger(Relation rel, char *trigname,
 						   char fires_when, bool skip_system);
 static void ATExecEnableDisableRule(Relation rel, char *rulename,
 						char fires_when);
-<<<<<<< HEAD
 static void ATExecAddInherit(Relation rel, Node *node);
 static void ATExecDropInherit(Relation rel, RangeVar *parent, bool is_partition);
 static void ATExecSetDistributedBy(Relation rel, Node *node,
 								   AlterTableCmd *cmd);
 static void ATPrepExchange(Relation rel, AlterPartitionCmd *pc);
-static void ATPrepDropConstraint(List **wqueue, Relation rel, AlterTableCmd *cmd, bool recurse, bool recursing);
-=======
-static void ATExecAddInherit(Relation rel, RangeVar *parent);
-static void ATExecDropInherit(Relation rel, RangeVar *parent);
-static void copy_relation_data(SMgrRelation rel, SMgrRelation dst,
-				   ForkNumber forkNum, bool istemp);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+static void ATPrepDropConstraint(List **wqueue, Relation rel,
+					AlterTableCmd *cmd, bool recurse, bool recursing);
 
-const char* synthetic_sql = "(internally generated SQL command)";
+const char *synthetic_sql = "(internally generated SQL command)";
 
 /* ALTER TABLE ... PARTITION */
 
@@ -1412,77 +1406,30 @@ ExecuteTruncate(TruncateStmt *stmt)
 	ResultRelInfo *resultRelInfos;
 	ResultRelInfo *resultRelInfo;
 	ListCell   *cell;
-    int partcheck = 2;
 	List *partList = NIL;
 
 	/*
-	 * Open, exclusive-lock, and check all the explicitly-specified relations
-	 *
 	 * Check if table has partitions and add them too
 	 */
-	while (partcheck)
+	foreach(cell, stmt->relations)
 	{
-		foreach(cell, stmt->relations)
-		{
-			RangeVar   *rv = lfirst(cell);
-			Relation	rel;
-			PartitionNode *pNode;
+		RangeVar   *rv = lfirst(cell);
+		Relation	rel;
+		PartitionNode *pNode;
 
-			rel = heap_openrv(rv, AccessExclusiveLock);
+		rel = heap_openrv(rv, AccessExclusiveLock);
 			
-			truncate_check_rel(rel);
+		pNode = RelationBuildPartitionDesc(rel, false);
 
-			if (partcheck == 2)
-			{
-				pNode = RelationBuildPartitionDesc(rel, false);
-
-				if (pNode)
-				{
-					List *plist = atpxTruncateList(rel, pNode);
-
-					if (plist)
-					{
-						if (partList)
-							partList = list_concat(partList, plist);
-						else
-							partList = plist;
-					}
-				}
-			}
-			heap_close(rel, NoLock);
-		}
-
-		partcheck--;
-
-		if (partList)
+		if (pNode)
 		{
-			/* add the partitions to the relation list and try again */
-			if (partcheck == 1)
-			{
-				stmt->relations = list_concat(partList, stmt->relations);
-
-				cell = list_head(stmt->relations);
-				while (cell != NULL)
-				{
-					RangeVar   *rv = lfirst(cell);
-					Relation	rel;
-
-					cell = lnext(cell);
-					rel = heap_openrv(rv, AccessExclusiveLock);
-					if (RelationIsExternal(rel))
-						ereport(ERROR,
-								(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-								 errmsg("cannot truncate table having external partition: \"%s\"",
-									    RelationGetRelationName(rel))));
-
-					heap_close(rel, NoLock);
-				}
-			}
+			List *plist = atpxTruncateList(rel, pNode);
+			partList = list_concat(partList, plist);
 		}
-		else
-			/* no partitions - no need to try again */
-			partcheck = 0;
-	} /* end while partcheck */
+		heap_close(rel, NoLock);
+	}
+
+	stmt->relations = list_concat(partList, stmt->relations);
 
 	/*
 	 * Open, exclusive-lock, and check all the explicitly-specified relations
@@ -1504,13 +1451,10 @@ ExecuteTruncate(TruncateStmt *stmt)
 		}
 		truncate_check_rel(rel);
 		rels = lappend(rels, rel);
-<<<<<<< HEAD
-		relids = lappend_oid(relids, RelationGetRelid(rel));
+		relids = lappend_oid(relids, myrelid);
 
 		if (MetaTrackValidKindNsp(rel->rd_rel))
-			meta_relids = lappend_oid(meta_relids, RelationGetRelid(rel));
-=======
-		relids = lappend_oid(relids, myrelid);
+			meta_relids = lappend_oid(meta_relids, myrelid);
 
 		if (recurse)
 		{
@@ -1528,12 +1472,20 @@ ExecuteTruncate(TruncateStmt *stmt)
 
 				/* find_all_inheritors already got lock */
 				rel = heap_open(childrelid, NoLock);
+				/*
+				 * This check is performed outside truncate_check_rel() in
+				 * order to provide a more reasonable error message.
+				 */
+				if (RelationIsExternal(rel))
+					ereport(ERROR,
+							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							 errmsg("cannot truncate table having external partition: \"%s\"",
+								    RelationGetRelationName(rel))));
 				truncate_check_rel(rel);
 				rels = lappend(rels, rel);
 				relids = lappend_oid(relids, childrelid);
 			}
 		}
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 
 	/*
@@ -6269,7 +6221,7 @@ ATPrepAddColumn(List **wqueue, Relation rel, bool recurse,
 			List		*children;
 			ListCell	*lchild;
 
-			children = find_inheritance_children(RelationGetRelid(rel));
+			children = find_inheritance_children(RelationGetRelid(rel), NoLock);
 			DestReceiver *dest = None_Receiver;
 			foreach(lchild, children)
 			{
@@ -6362,7 +6314,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 			int32		ctypmod;
 
 			/* Child column must match by type */
-			ctypeId = typenameTypeId(NULL, colDef->typename, &ctypmod);
+			ctypeId = typenameTypeId(NULL, colDef->typeName, &ctypmod);
 			if (ctypeId != childatt->atttypid ||
 				ctypmod != childatt->atttypmod)
 				ereport(ERROR,
@@ -6685,7 +6637,7 @@ ATPrepAddOids(List **wqueue, Relation rel, bool recurse, AlterTableCmd *cmd)
 		ColumnDef  *cdef = makeNode(ColumnDef);
 
 		cdef->colname = pstrdup("oid");
-		cdef->typename = makeTypeNameFromOid(OIDOID, -1);
+		cdef->typeName = makeTypeNameFromOid(OIDOID, -1);
 		cdef->inhcount = 0;
 		cdef->is_local = true;
 		cdef->is_not_null = true;
@@ -6875,7 +6827,7 @@ ATPrepColumnDefault(Relation rel, bool recurse, AlterTableCmd *cmd)
 	 * If we are told not to recurse, there had better not be any child
 	 * tables; else the addition would put them out of step.
 	 */
-	if (!recurse && find_inheritance_children(RelationGetRelid(rel)) != NIL)
+	if (!recurse && find_inheritance_children(RelationGetRelid(rel), NoLock) != NIL)
 	{
 		/*
 		 * In binary upgrade we are handling the children manually when dumping
@@ -6905,7 +6857,7 @@ ATPrepColumnDefault(Relation rel, bool recurse, AlterTableCmd *cmd)
 		List		*children;
 		ListCell	*lchild;
 
-		children = find_inheritance_children(RelationGetRelid(rel));
+		children = find_inheritance_children(RelationGetRelid(rel), NoLock);
 		DestReceiver *dest = None_Receiver;
 		foreach(lchild, children)
 		{
@@ -7474,7 +7426,7 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 	if (Gp_role == GP_ROLE_DISPATCH &&
 		rel_is_partitioned(RelationGetRelid(rel)))
 	{
-		List *children = find_all_inheritors(RelationGetRelid(rel));
+		List *children = find_all_inheritors(RelationGetRelid(rel), NoLock);
 		ListCell *lc;
 		bool prefix_match = false;
 		char *pname = RelationGetRelationName(rel);
@@ -8423,22 +8375,14 @@ CreateFKCheckTrigger(RangeVar *myRel, FkConstraint *fkconstraint,
 	if (on_insert)
 	{
 		fk_trigger->funcname = SystemFuncName("RI_FKey_check_ins");
-<<<<<<< HEAD
-		fk_trigger->actions[0] = 'i';
-		fk_trigger->trigOid = fkconstraint->trig1Oid;
-=======
 		fk_trigger->events = TRIGGER_TYPE_INSERT;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+		fk_trigger->trigOid = fkconstraint->trig1Oid;
 	}
 	else
 	{
 		fk_trigger->funcname = SystemFuncName("RI_FKey_check_upd");
-<<<<<<< HEAD
-		fk_trigger->actions[0] = 'u';
-		fk_trigger->trigOid = fkconstraint->trig2Oid;
-=======
 		fk_trigger->events = TRIGGER_TYPE_UPDATE;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+		fk_trigger->trigOid = fkconstraint->trig2Oid;
 	}
 
 	fk_trigger->isconstraint = true;
@@ -8447,16 +8391,12 @@ CreateFKCheckTrigger(RangeVar *myRel, FkConstraint *fkconstraint,
 	fk_trigger->constrrel = fkconstraint->pktable;
 	fk_trigger->args = NIL;
 
-<<<<<<< HEAD
-	trigobj = CreateTrigger(fk_trigger, constraintOid);
+	trigobj = CreateTrigger(fk_trigger, constraintOid, false);
 
 	if (on_insert)
 		fkconstraint->trig1Oid = trigobj;
 	else
 		fkconstraint->trig2Oid = trigobj;
-=======
-	(void) CreateTrigger(fk_trigger, constraintOid, false);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -8540,11 +8480,7 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	fk_trigger->args = NIL;
 	fk_trigger->trigOid = fkconstraint->trig3Oid;
 
-<<<<<<< HEAD
-	fkconstraint->trig3Oid = CreateTrigger(fk_trigger, constraintOid);
-=======
-	(void) CreateTrigger(fk_trigger, constraintOid, false);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	fkconstraint->trig3Oid = CreateTrigger(fk_trigger, constraintOid, false);
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -8613,13 +8549,9 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	}
 	fk_trigger->args = NIL;
 
-<<<<<<< HEAD
 	fk_trigger->trigOid = fkconstraint->trig4Oid;
 
-	fkconstraint->trig4Oid = CreateTrigger(fk_trigger, constraintOid);
-=======
-	(void) CreateTrigger(fk_trigger, constraintOid, false);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+	fkconstraint->trig4Oid = CreateTrigger(fk_trigger, constraintOid, false);
 }
 
 /*
@@ -8898,23 +8830,6 @@ ATPrepAlterColumnType(List **wqueue,
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("transform expression must not return a set")));
-<<<<<<< HEAD
-=======
-
-		/* No subplans or aggregates, either... */
-		if (pstate->p_hasSubLinks)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot use subquery in transform expression")));
-		if (pstate->p_hasAggs)
-			ereport(ERROR,
-					(errcode(ERRCODE_GROUPING_ERROR),
-			errmsg("cannot use aggregate function in transform expression")));
-		if (pstate->p_hasWindowFuncs)
-			ereport(ERROR,
-					(errcode(ERRCODE_WINDOWING_ERROR),
-			  errmsg("cannot use window function in transform expression")));
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	}
 	else
 	{
@@ -10899,38 +10814,6 @@ ATExecSetTableSpace_Relation(Oid tableOid, Oid newTableSpace)
 	newrnode = rel->rd_node;
 	newrnode.relNode = newrelfilenode;
 	newrnode.spcNode = newTableSpace;
-<<<<<<< HEAD
-=======
-	dstrel = smgropen(newrnode);
-
-	RelationOpenSmgr(rel);
-
-	/*
-	 * Create and copy all forks of the relation, and schedule unlinking of
-	 * old physical files.
-	 *
-	 * NOTE: any conflict in relfilenode value will be caught in
-	 * RelationCreateStorage().
-	 */
-	RelationCreateStorage(newrnode, rel->rd_istemp);
-
-	/* copy main fork */
-	copy_relation_data(rel->rd_smgr, dstrel, MAIN_FORKNUM, rel->rd_istemp);
-
-	/* copy those extra forks that exist */
-	for (forkNum = MAIN_FORKNUM + 1; forkNum <= MAX_FORKNUM; forkNum++)
-	{
-		if (smgrexists(rel->rd_smgr, forkNum))
-		{
-			smgrcreate(dstrel, forkNum, false);
-			copy_relation_data(rel->rd_smgr, dstrel, forkNum, rel->rd_istemp);
-		}
-	}
-
-	/* drop old relation, and close new one */
-	RelationDropStorage(rel);
-	smgrclose(dstrel);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/* update the pg_class row */
 	rd_rel->reltablespace = (newTableSpace == MyDatabaseTableSpace) ? InvalidOid : newTableSpace;
@@ -11305,28 +11188,6 @@ inherit_parent(Relation parent_rel, Relation child_rel, bool is_partition, List 
 	List	   *children;
 
 	/*
-<<<<<<< HEAD
-=======
-	 * AccessShareLock on the parent is what's obtained during normal CREATE
-	 * TABLE ... INHERITS ..., so should be enough here.
-	 */
-	parent_rel = heap_openrv(parent, AccessShareLock);
-
-	/*
-	 * Must be owner of both parent and child -- child was checked by
-	 * ATSimplePermissions call in ATPrepCmd
-	 */
-	ATSimplePermissions(parent_rel, false);
-
-	/* Permanent rels cannot inherit from temporary ones */
-	if (parent_rel->rd_istemp && !child_rel->rd_istemp)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("cannot inherit from temporary relation \"%s\"",
-						RelationGetRelationName(parent_rel))));
-
-	/*
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	 * Check for duplicates in the list of parents, and determine the highest
 	 * inhseqno already present; we'll use the next one for the new parent.
 	 * (Note: get RowExclusiveLock because we will write pg_inherits below.)
@@ -12299,7 +12160,7 @@ new_rel_opts(Relation rel, List *lwith)
 	}
 
 	/* Generate new proposed reloptions (text array) */
-	newOptions = transformRelOptions(newOptions, lwith, false, false);
+	newOptions = transformRelOptions(newOptions, lwith, NULL, NULL, false, false);
 
 	return newOptions;
 }
@@ -16711,7 +16572,7 @@ ATPrepDropConstraint(List **wqueue, Relation rel, AlterTableCmd *cmd, bool recur
 
 		if (is_unique_or_primary_key)
 		{
-			children = find_inheritance_children(RelationGetRelid(rel));
+			children = find_inheritance_children(RelationGetRelid(rel), NoLock);
 
 			foreach(lchild, children)
 			{
@@ -16926,6 +16787,9 @@ char *alterTableCmdString(AlterTableType subtype)
 			
 		case AT_PartTruncate: /* Truncate */
 		case AT_PartAddInternal: /* CREATE TABLE time partition addition */
+			break;
+
+		case AT_AddOids: /* ALTER TABLE SET WITH OIDS */
 			break;
 	}
 	
