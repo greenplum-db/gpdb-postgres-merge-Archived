@@ -340,12 +340,7 @@ mdc_free(void *priv)
 }
 
 static int
-<<<<<<< HEAD
 mdc_finish(PGP_Context *ctx, PullFilter *src, int len)
-=======
-mdc_finish(PGP_Context *ctx, PullFilter *src,
-		   int len, uint8 **data_p)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	int			res;
 	uint8		hash[20];
