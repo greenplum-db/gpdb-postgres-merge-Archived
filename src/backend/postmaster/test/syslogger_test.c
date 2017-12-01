@@ -39,8 +39,8 @@ test__logfile_getname(void **state)
 
 	log_timezone = pg_tzset("UTC");
 
-    alert_file_name = logfile_getname(time(NULL), NULL, "gpperfmon/logs", "alert_log-%F");
-    assert_true(strcmp(alert_file_name, "gpperfmon/logs/alert_log-1970-01-01") == 0);
+	alert_file_name = logfile_getname(time(NULL), NULL, "gpperfmon/logs", "alert_log-%F");
+	assert_true(strcmp(alert_file_name, "gpperfmon/logs/alert_log-1970-01-01") == 0);
 }
 
 int
