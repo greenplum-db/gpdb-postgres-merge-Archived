@@ -12,12 +12,9 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
-<<<<<<< HEAD
 #include "utils/xml.h"
 
 #ifdef USE_LIBXSLT
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 /* libxml includes */
 
