@@ -268,13 +268,7 @@ static int transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 						   List **attnamelist,
 						   int16 *attnums, Oid *atttypids,
 						   Oid *opclasses);
-<<<<<<< HEAD
-=======
-static Oid transformFkeyCheckAttrs(Relation pkrel,
-						int numattrs, int16 *attnums,
-						Oid *opclasses);
 static void checkFkeyPermissions(Relation rel, int16 *attnums, int natts);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 static void validateForeignKeyConstraint(FkConstraint *fkconstraint,
 							 Relation rel, Relation pkrel, Oid constraintOid);
 static void createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
@@ -454,7 +448,6 @@ DefineRelation(CreateStmt *stmt, char relkind, char relstorage, bool dispatch)
 	Datum		reloptions;
 	ListCell   *listptr;
 	AttrNumber	attnum;
-<<<<<<< HEAD
 	bool		isPartitioned;
 
 	ItemPointerData	persistentTid;
@@ -482,9 +475,7 @@ DefineRelation(CreateStmt *stmt, char relkind, char relstorage, bool dispatch)
 			schema = lappend(schema, node);
 	}
 	Assert(cooked_constraints == NIL || Gp_role == GP_ROLE_EXECUTE);
-=======
 	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	/*
 	 * Truncate relname to appropriate length (probably a waste of time, as
@@ -4789,7 +4780,6 @@ ATRewriteTables(List **wqueue)
 	{
 		AlteredTableInfo *tab = (AlteredTableInfo *) lfirst(ltab);
 		/*
-<<<<<<< HEAD
 		 * 'OldHeap' can be an AO or external table, but kept the upstream variable name
 		 * to minimize the diff.
 		 */
@@ -4809,12 +4799,6 @@ ATRewriteTables(List **wqueue)
 		oldTableSpace = OldHeap->rd_rel->reltablespace;
 		newTableSpace = tab->newTableSpace ? tab->newTableSpace : oldTableSpace;
 		relstorage    = OldHeap->rd_rel->relstorage;
-=======
-		 * We only need to rewrite the table if at least one column needs to
-		 * be recomputed, or we are adding/removing the OID column.
-		 */
-		if (tab->newvals != NIL || tab->new_changeoids)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		{
 			List	   *indexIds;
 
@@ -7752,14 +7736,9 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			Relation	childrel;
 			AlteredTableInfo *childtab;
 
-<<<<<<< HEAD
-			childrel = heap_open(childrelid, AccessExclusiveLock);
+			/* find_inheritance_children already got lock */
+			childrel = heap_open(childrelid, NoLock);
 			CheckTableNotInUse(childrel, "ALTER TABLE");
-=======
-		/* find_inheritance_children already got lock */
-		childrel = heap_open(childrelid, NoLock);
-		CheckTableNotInUse(childrel, "ALTER TABLE");
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 			/* Find or create work queue entry for this table */
 			childtab = ATGetQueueEntry(wqueue, childrel);
@@ -7818,17 +7797,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 				 errmsg("referenced relation \"%s\" is not a table",
 						RelationGetRelationName(pkrel))));
 
-<<<<<<< HEAD
-	aclresult = pg_class_aclcheck(RelationGetRelid(pkrel), GetUserId(),
-								  ACL_REFERENCES);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_CLASS,
-					   RelationGetRelationName(pkrel));
-
 	if (!allowSystemTableModsDDL && IsSystemRelation(pkrel))
-=======
-	if (!allowSystemTableMods && IsSystemRelation(pkrel))
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied: \"%s\" is a system catalog",
