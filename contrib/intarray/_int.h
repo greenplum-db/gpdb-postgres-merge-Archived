@@ -135,9 +135,9 @@ typedef struct QUERYTYPE
 	char		data[1];
 } QUERYTYPE;
 
-#define HDRSIZEQT	offsetof(QUERYTYPE, items)
+#define HDRSIZEQT   (VARHDRSZ + sizeof(int4))
 #define COMPUTESIZE(size)	( HDRSIZEQT + (size) * sizeof(ITEM) )
-#define GETQUERY(x)  ( (x)->items )
+#define GETQUERY(x)  (ITEM*)( (char*)(x)+HDRSIZEQT )
 
 /* "type" codes for ITEM */
 #define END		0
