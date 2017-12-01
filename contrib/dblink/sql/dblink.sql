@@ -359,14 +359,12 @@ UNION
 UNION
 (SELECT * from dblink('dbname=contrib_regression','select * from foo where f1 > 2 and f1 < 7') as t3(f1 int, f2 text, f3 text[]))
 ORDER by f1;
-<<<<<<< HEAD
 SELECT * FROM result; 
 DROP TABLE result;
 CREATE TEMPORARY TABLE result (f1 int, f2 text, f3 text[]);
 INSERT INTO result SELECT * FROM dblink ('dbname=contrib_regression','select * from foo') AS t(f1 int, f2 text, f3 text[]);
 SELECT * FROM result;
 SELECT * FROM (SELECT * FROM dblink('dbname=contrib_regression','select * from foo') AS t(f1 int, f2 text, f3 text[])) AS t1;
-=======
 
 -- dblink_get_connections returns an array with elements in a machine-dependent
 -- ordering, so we must resort to unnesting and sorting for a stable result
@@ -417,4 +415,3 @@ DROP USER dblink_regression_test;
 DROP USER MAPPING FOR public SERVER fdtest;
 DROP SERVER fdtest;
 DROP FOREIGN DATA WRAPPER postgresql;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
