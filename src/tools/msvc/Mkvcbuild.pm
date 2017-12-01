@@ -52,11 +52,7 @@ sub mkvcbuild
       getaddrinfo.c gettimeofday.c kill.c open.c rand.c
       snprintf.c strlcat.c strlcpy.c copydir.c dirmod.c exec.c noblock.c path.c pipe.c
       pgsleep.c pgstrcasecmp.c qsort.c qsort_arg.c sprompt.c thread.c
-<<<<<<< HEAD
       getopt.c getopt_long.c dirent.c rint.c win32env.c win32error.c glob.c);
-=======
-      getopt.c getopt_long.c dirent.c rint.c win32env.c win32error.c);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
     $libpgport = $solution->AddProject('libpgport','lib','misc');
     $libpgport->AddDefine('FRONTEND');
@@ -148,13 +144,8 @@ sub mkvcbuild
             }
         }
         $plperl->AddReference($postgres);
-<<<<<<< HEAD
         my @perl_libs =
           grep {/perl\d+.lib$/ }glob($solution->{options}->{perl} . '\lib\CORE\perl*.lib');
-=======
-		my @perl_libs = grep {/perl\d+.lib$/ }
-			glob($solution->{options}->{perl} . '\lib\CORE\perl*.lib');
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
         if (@perl_libs == 1)
         {
             $plperl->AddLibrary($perl_libs[0]);

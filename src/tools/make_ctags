@@ -1,10 +1,6 @@
 #!/bin/sh
 
-<<<<<<< HEAD
 # src/tools/make_ctags
-=======
-# $PostgreSQL: pgsql/src/tools/make_ctags,v 1.12 2009/01/14 21:59:19 momjian Exp $
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 trap "rm -f /tmp/$$" 0 1 2 3 15
 rm -f ./tags
@@ -16,11 +12,7 @@ then	FLAGS="-dt"
 else	FLAGS="--c-types=+dfmstuv"
 fi
 
-<<<<<<< HEAD
 find `pwd` \( -name _deadcode -prune \) -o \
-=======
-find `pwd`/ \( -name _deadcode -prune \) -o \
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		-type f -name '*.[chyl]' -print |
 	xargs ctags "$FLAGS" -a -f tags
 
