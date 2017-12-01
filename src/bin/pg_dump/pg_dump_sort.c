@@ -23,13 +23,8 @@ static const char *modulename = gettext_noop("sorter");
  * Objects are sorted by priority levels, and within an equal priority level
  * by OID.	(This is a relatively crude hack to provide semi-reasonable
  * behavior for old databases without full dependency info.)  Note: text
-<<<<<<< HEAD
- * search objects can't really happen here, so the rather bogus priorities
- * for them don't matter.
-=======
  * search and foreign-data objects can't really happen here, so the rather
  * bogus priorities for them don't matter.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  */
 static const int oldObjectTypePriority[] =
 {
