@@ -127,7 +127,6 @@ writeListPage(Relation index, Buffer buffer,
 
 		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_INSERT_LISTPAGE, rdata);
 		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
 	}
 
 	UnlockReleaseBuffer(buffer);
