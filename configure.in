@@ -1239,19 +1239,6 @@ fi
 
 AC_SUBST(ADDON_DIR)
 
-# Supply a numeric version string for use by 3rd party add-ons
-# awk -F is a regex on some platforms, and not on others, so make "." a tab
-[PG_VERSION_NUM="`echo "$PG_PACKAGE_VERSION" | sed 's/[A-Za-z].*$//' |
-tr '.' '	' |
-$AWK '{printf "%d%02d%02d", $1, $2, (NF >= 3) ? $3 : 0}'`"]
-AC_DEFINE_UNQUOTED(PG_VERSION_NUM, $PG_VERSION_NUM, [PostgreSQL version as a number])
-
-#
-[GP_VERSION_NUM="`echo "$PACKAGE_VERSION" | sed 's/[A-Za-z].*$//' |
-tr '.' '	' |
-$AWK '{printf "%d%02d%02d", $1, $2, (NF >= 3) ? $3 : 0}'`"]
-AC_DEFINE_UNQUOTED(GP_VERSION_NUM, $GP_VERSION_NUM, [Greenplum version as a number])
-
 ##
 ## Libraries
 ##
@@ -2467,10 +2454,16 @@ AC_DEFINE_UNQUOTED(PG_VERSION_STR,
 
 # Supply a numeric version string for use by 3rd party add-ons
 # awk -F is a regex on some platforms, and not on others, so make "." a tab
-[PG_VERSION_NUM="`echo "$PACKAGE_VERSION" | sed 's/[A-Za-z].*$//' |
+[PG_VERSION_NUM="`echo "$PG_PACKAGE_VERSION" | sed 's/[A-Za-z].*$//' |
 tr '.' '	' |
 $AWK '{printf "%d%02d%02d", $1, $2, (NF >= 3) ? $3 : 0}'`"]
 AC_DEFINE_UNQUOTED(PG_VERSION_NUM, $PG_VERSION_NUM, [PostgreSQL version as a number])
+
+#
+[GP_VERSION_NUM="`echo "$PACKAGE_VERSION" | sed 's/[A-Za-z].*$//' |
+tr '.' '	' |
+$AWK '{printf "%d%02d%02d", $1, $2, (NF >= 3) ? $3 : 0}'`"]
+AC_DEFINE_UNQUOTED(GP_VERSION_NUM, $GP_VERSION_NUM, [Greenplum version as a number])
 
 
 # prepare build tree if outside source tree
