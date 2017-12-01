@@ -7,8 +7,6 @@ include $(top_builddir)/src/Makefile.global
 WANTED_DIRS = \
 		auto_explain	\
 		btree_gin	\
-		btree_gist	\
-		chkpass		\
 		citext		\
 		dblink		\
 		dict_int	\
