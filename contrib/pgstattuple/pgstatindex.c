@@ -99,19 +99,11 @@ pgstatindex(PG_FUNCTION_ARGS)
 			 RelationGetRelationName(rel));
 
 	/*
-<<<<<<< HEAD
-	 * Reject attempts to read non-local temporary relations; we would
-	 * be likely to get wrong data since we have no visibility into the
-	 * owning session's local buffers.
-	 */
-	if (isOtherTempNamespace(RelationGetNamespace(rel)))
-=======
 	 * Reject attempts to read non-local temporary relations; we would be
 	 * likely to get wrong data since we have no visibility into the owning
 	 * session's local buffers.
 	 */
 	if (RELATION_IS_OTHER_TEMP(rel))
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot access temporary tables of other sessions")));
