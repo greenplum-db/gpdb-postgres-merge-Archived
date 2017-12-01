@@ -173,31 +173,7 @@ newScanKey(IndexScanDesc scan)
 		Datum	   *entryValues;
 		int32		nEntryValues = 0;
 		bool	   *partial_matches = NULL;
-<<<<<<< HEAD
-
-		/* XXX can't we treat nulls by just setting isVoidRes? */
-		/* This would amount to assuming that all GIN operators are strict */
-		if (scankey[i].sk_flags & SK_ISNULL)
-			elog(ERROR, "GIN doesn't support NULL as scan key");
-
-		entryValues = (Datum *) DatumGetPointer(FunctionCall4(
-												&so->ginstate.extractQueryFn[scankey[i].sk_attno - 1],
-												scankey[i].sk_argument,
-												PointerGetDatum(&nEntryValues),
-												UInt16GetDatum(scankey[i].sk_strategy),
-												PointerGetDatum(&partial_matches)));
-		if (nEntryValues < 0)
-		{
-			/*
-			 * extractQueryFn signals that nothing will be found, so we can
-			 * just set isVoidRes flag...
-			 */
-			so->isVoidRes = true;
-			break;
-		}
-=======
 		Pointer    *extra_data = NULL;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 		/*
 		 * Assume, that GIN-indexable operators are strict, so nothing could

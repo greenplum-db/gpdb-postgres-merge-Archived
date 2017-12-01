@@ -609,10 +609,9 @@ ginbulkdelete(PG_FUNCTION_ARGS)
 	gvs.strategy = info->strategy;
 	initGinState(&gvs.ginstate, index);
 
-<<<<<<< HEAD
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
-=======
+
 	/* first time through? */
 	if (stats == NULL)
 	{
@@ -625,7 +624,6 @@ ginbulkdelete(PG_FUNCTION_ARGS)
 	/* we'll re-count the tuples each time */
 	stats->num_index_tuples = 0;
 	gvs.result = stats;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,
 								RBM_NORMAL, info->strategy);

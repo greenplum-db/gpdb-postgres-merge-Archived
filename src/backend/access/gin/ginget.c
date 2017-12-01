@@ -273,7 +273,6 @@ computePartialMatchList(GinBtreeData *btree, GinBtreeStack *stack, GinScanEntry 
 static void
 startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 {
-<<<<<<< HEAD
 	MIRROREDLOCK_BUFMGR_DECLARE;
 
 	GinBtreeData btreeEntry;
@@ -281,34 +280,6 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 	Page		page;
 	bool		needUnlock = TRUE;
 
-	if (entry->master != NULL)
-	{
-		entry->isFinished = entry->master->isFinished;
-		return;
-	}
-
-	/*
-	 * we should find entry, and begin scan of posting tree
-	 * or just store posting list in memory
-	 */
-
-	prepareEntryScan(&btreeEntry, index, entry->attnum, entry->entry, ginstate);
-	btreeEntry.searchMode = TRUE;
-	
-	// -------- MirroredLock ----------
-	MIRROREDLOCK_BUFMGR_LOCK;
-	
-	stackEntry = ginFindLeafPage(&btreeEntry, NULL);
-	page = BufferGetPage(stackEntry->buffer);
-
-	entry->isFinished = TRUE;
-=======
-	GinBtreeData btreeEntry;
-	GinBtreeStack *stackEntry;
-	Page		page;
-	bool		needUnlock = TRUE;
-
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 	entry->buffer = InvalidBuffer;
 	entry->offset = InvalidOffsetNumber;
 	entry->list = NULL;
@@ -331,6 +302,10 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 
 	prepareEntryScan(&btreeEntry, index, entry->attnum, entry->entry, ginstate);
 	btreeEntry.searchMode = TRUE;
+
+	// -------- MirroredLock ----------
+	MIRROREDLOCK_BUFMGR_LOCK;
+
 	stackEntry = ginFindLeafPage(&btreeEntry, NULL);
 	page = BufferGetPage(stackEntry->buffer);
 
@@ -352,14 +327,10 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 			 */
 			if (entry->partialMatch)
 			{
-<<<<<<< HEAD
-				tbm_free( (TIDBitmap *) entry->partialMatch );
-=======
 				if (entry->partialMatchIterator)
 					tbm_end_iterate(entry->partialMatchIterator);
 				entry->partialMatchIterator = NULL;
-				tbm_free(entry->partialMatch);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+				tbm_free( (TIDBitmap *) entry->partialMatch );
 				entry->partialMatch = NULL;
 			}
 			LockBuffer(stackEntry->buffer, GIN_UNLOCK);
@@ -369,15 +340,9 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 			return;
 		}
 
-<<<<<<< HEAD
-		if ( (TIDBitmap *) entry->partialMatch && !tbm_is_empty((TIDBitmap *) entry->partialMatch) )
-		{
-			tbm_begin_iterate((TIDBitmap *) entry->partialMatch);
-=======
 		if (entry->partialMatch && !tbm_is_empty(entry->partialMatch))
 		{
 			entry->partialMatchIterator = tbm_begin_iterate(entry->partialMatch);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			entry->isFinished = FALSE;
 		}
 	}
@@ -609,11 +574,7 @@ entryGetItem(Relation index, GinScanEntry entry)
 			if (entry->partialMatchResult == NULL ||
 				entry->offset >= entry->partialMatchResult->ntuples)
 			{
-<<<<<<< HEAD
 				tbm_generic_iterate( entry->partialMatch, entry->partialMatchResult );
-=======
-				entry->partialMatchResult = tbm_iterate(entry->partialMatchIterator);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 				if (entry->partialMatchResult == NULL)
 				{
@@ -1278,6 +1239,8 @@ gingetbitmap(PG_FUNCTION_ARGS)
 	Node 	   *n = (Node *) PG_GETARG_POINTER(1);
 	TIDBitmap  *tbm;
 	int64		ntids;
+	ItemPointerData iptr;
+	bool		recheck;
 
 	if (n == NULL)
 		/* XXX should we use less than work_mem for this? */
@@ -1290,12 +1253,8 @@ gingetbitmap(PG_FUNCTION_ARGS)
 	if (GinIsNewKey(scan))
 		newScanKey(scan);
 
-<<<<<<< HEAD
-	startScan(scan);
-=======
 	if (GinIsVoidRes(scan))
 		PG_RETURN_INT64(0);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 	ntids = 0;
 
@@ -1316,11 +1275,10 @@ gingetbitmap(PG_FUNCTION_ARGS)
 	 */
 	startScan(scan);
 
+	ItemPointerSetMin(&iptr);
+
 	for (;;)
 	{
-		ItemPointerData iptr;
-		bool		recheck;
-
 		CHECK_FOR_INTERRUPTS();
 
 		if (!scanGetItem(scan, &iptr, &recheck))
