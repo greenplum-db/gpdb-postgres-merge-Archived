@@ -262,10 +262,13 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			else if (prefetch_iterator)
 			{
 				/* Do not let the prefetch iterator get behind the main one */
-				TBMIterateResult *tbmpre = tbm_iterate(prefetch_iterator, tbmpre);
+				/* GPDB_84_MERGE_FIXME: how should this be done now? */
+#if 0
+				TBMIterateResult *tbmpre = tbm_iterate(prefetch_iterator);
 
 				if (tbmpre == NULL || tbmpre->blockno != tbmres->blockno)
 					elog(ERROR, "prefetch and main iterators are out of sync");
+#endif
 			}
 #endif   /* USE_PREFETCH */
 
@@ -356,6 +359,8 @@ BitmapHeapNext(BitmapHeapScanState *node)
 		 */
 		if (prefetch_iterator)
 		{
+			/* GPDB_84_MERGE_FIXME: how should this be done now? */
+#if 0
 			while (node->prefetch_pages < node->prefetch_target)
 			{
 				TBMIterateResult *tbmpre = tbm_iterate(prefetch_iterator, tbmpre);
@@ -370,6 +375,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 				node->prefetch_pages++;
 				PrefetchBuffer(scan->rs_rd, MAIN_FORKNUM, tbmpre->blockno);
 			}
+#endif
 		}
 #endif   /* USE_PREFETCH */
 
