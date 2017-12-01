@@ -865,15 +865,12 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    into an older server may require manual editing of the dump file
    to remove syntax not understood by the older server.
   </para>
-<<<<<<< HEAD
 
   <para>
    <application>pg_dump</application> also supports a
    <literal>--binary-upgrade</> option for upgrade utility usage.
   </para>
 
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  </refsect1>
 
  <refsect1 id="pg-dump-examples">

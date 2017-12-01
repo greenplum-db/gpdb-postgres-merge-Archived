@@ -892,11 +892,7 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
-<<<<<<< HEAD
         <term><literal>\d[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-=======
-        <term><literal>\d[S+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
         <listitem>
         <para>
@@ -943,11 +939,7 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
-<<<<<<< HEAD
         <term><literal>\da[S] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-=======
-        <term><literal>\da[S] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
         <listitem>
         <para>
@@ -964,11 +956,7 @@ testdb=&gt;
 
 
       <varlistentry>
-<<<<<<< HEAD
         <term><literal>\db[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-=======
-        <term><literal>\db[+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
         <listitem>
         <para>
@@ -983,11 +971,7 @@ testdb=&gt;
 
 
       <varlistentry>
-<<<<<<< HEAD
         <term><literal>\dc[S] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-=======
-        <term><literal>\dc[S] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
         <listitem>
         <para>
         Lists conversions between character-set encodings.
@@ -1016,11 +1000,7 @@ testdb=&gt;
 
 
       <varlistentry>
-<<<<<<< HEAD
         <term><literal>\dd[S] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-=======
-        <term><literal>\dd[S] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
         <listitem>
         <para>
         Shows the descriptions of objects matching the <replaceable
@@ -1053,11 +1033,7 @@ testdb=&gt;
 
 
       <varlistentry>
-<<<<<<< HEAD
         <term><literal>\ddp [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-=======
-        <term><literal>\dD[S] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
         <listitem>
         <para>
         Lists default access privilege settings.  An entry is shown for
@@ -1084,11 +1060,7 @@ testdb=&gt;
         <para>
         Lists domains. If <replaceable
         class="parameter">pattern</replaceable>
-<<<<<<< HEAD
         is specified, only domains whose names match the pattern are shown.
-=======
-        is specified, only matching domains are shown.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
         By default, only user-created objects are shown;  supply a
         pattern or the <literal>S</literal> modifier to include system
         objects.
@@ -1098,11 +1070,7 @@ testdb=&gt;
 
 
       <varlistentry>
-<<<<<<< HEAD
         <term><literal>\des[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-=======
-        <term><literal>\des[+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
         <listitem>
         <para>
         Lists foreign servers (mnemonic: <quote>external
@@ -1118,11 +1086,7 @@ testdb=&gt;
 
 
       <varlistentry>
-<<<<<<< HEAD
         <term><literal>\deu[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-=======
-        <term><literal>\deu[+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
         <listitem>
         <para>
         Lists user mappings (mnemonic: <quote>external
@@ -1145,11 +1109,7 @@ testdb=&gt;
 
 
       <varlistentry>
-<<<<<<< HEAD
         <term><literal>\dew[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-=======
-        <term><literal>\dew[+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
         <listitem>
         <para>
         Lists foreign-data wrappers (mnemonic: <quote>external
@@ -1165,7 +1125,6 @@ testdb=&gt;
 
 
       <varlistentry>
-<<<<<<< HEAD
         <term><literal>\df[antwS+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
 
         <listitem>
@@ -1177,17 +1136,6 @@ testdb=&gt;
         of specific type(s), add the corresponding letters <literal>a</>,
         <literal>n</>, <literal>t</>, or <literal>w</> to the command.
         If <replaceable
-=======
-        <term><literal>\df[antwS+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-
-        <listitem>
-        <para>
-        Lists available functions, together with their arguments,
-        return types, and their function types: 'agg' (aggregate),
-        'normal', 'trigger', and 'window'.  To display only functions
-        of a specific type, use the corresponding letters <literal>a</>,
-        <literal>n</>, <literal>t</>, or <literal>w</>.  If <replaceable
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
         class="parameter">pattern</replaceable> is specified, only
         functions whose names match the pattern are shown.  If the
         form <literal>\df+</literal> is used, additional information
@@ -1200,27 +1148,16 @@ testdb=&gt;
         <tip>
         <para>
         To look up functions taking arguments or returning values of a specific
-<<<<<<< HEAD
         type, use your pager's search capability to scroll through the
         <literal>\df</> output.
         </para>
         </tip>
-=======
-        type, use your pager's search capability to scroll through the <literal>\df</>
-        output.
-        </para>
-        </note>
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
         </listitem>
       </varlistentry>
 
       <varlistentry>
-<<<<<<< HEAD
         <term><literal>\dF[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-=======
-        <term><literal>\dF[+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
         <listitem>
         <para>
          Lists text search configurations.
@@ -1234,11 +1171,7 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
-<<<<<<< HEAD
         <term><literal>\dFd[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-=======
-        <term><literal>\dFd[+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
         <listitem>
         <para>
          Lists text search dictionaries.
@@ -1252,11 +1185,7 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
-<<<<<<< HEAD
         <term><literal>\dFp[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-=======
-        <term><literal>\dFp[+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
         <listitem>
         <para>
          Lists text search parsers.
@@ -1270,11 +1199,7 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
-<<<<<<< HEAD
         <term><literal>\dFt[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-=======
-        <term><literal>\dFt[+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
         <listitem>
         <para>
          Lists text search templates.
@@ -1303,39 +1228,24 @@ testdb=&gt;
 
 
       <varlistentry>
-<<<<<<< HEAD
         <term><literal>\di[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <term><literal>\ds[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <term><literal>\dt[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <term><literal>\dv[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-	<term><literal>\dP[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-	<term><literal>\dx[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-	<term><literal>\dr[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-=======
-        <term><literal>\di[S+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <term><literal>\ds[S+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <term><literal>\dt[S+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <term><literal>\dv[S+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+        <term><literal>\dP[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dx[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dr[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
 
         <listitem>
         <para>
         In this group of commands, the letters
         <literal>i</literal>, <literal>s</literal>,
-<<<<<<< HEAD
         <literal>t</literal>, <literal>v</literal>,
         <literal>P</literal>, <literal>x</literal>, and <literal>r</literal>
         stand for index, sequence, table, view, parent table, external table, and foreign table respectively.
         You can specify any or all of
         these letters, in any order, to obtain a listing of objects
         of these types.  For example, <literal>\dit</> lists indexes
-=======
-        <literal>t</literal>, and <literal>v</literal>
-        stand for index, sequence, table, and view, respectively.
-        You can specify any or all of
-        these letters, in any order, to obtain a listing of all the
-        matching objects.  For example, <literal>\dit</> lists indexes
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
         and tables.  If <literal>+</literal> is
         appended to the command name, each object is listed with its
         physical size on disk and its associated description, if any.
@@ -1367,21 +1277,12 @@ testdb=&gt;
 
 
       <varlistentry>
-<<<<<<< HEAD
         <term><literal>\dn[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
 
         <listitem>
         <para>
         Lists schemas (namespaces). If <replaceable
         class="parameter">pattern</replaceable>
-=======
-        <term><literal>\dn[+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-
-        <listitem>
-        <para>
-        Lists available schemas (namespaces). If <replaceable
-        class="parameter">pattern</replaceable> (a regular expression)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
         is specified, only schemas whose names match the pattern are listed.
         By default, only user-created objects are shown; supply a
         pattern or the <literal>S</literal> modifier to include system objects.
@@ -1393,11 +1294,7 @@ testdb=&gt;
 
 
       <varlistentry>
-<<<<<<< HEAD
         <term><literal>\do[S] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-=======
-        <term><literal>\do[S] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
         <listitem>
         <para>
         Lists operators with their operand and return types.
@@ -1415,11 +1312,7 @@ testdb=&gt;
         <term><literal>\dp [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
-<<<<<<< HEAD
         Lists tables, views and sequences with their
-=======
-        Lists available tables, views and sequences with their
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
         associated access privileges.
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only tables, views and sequences whose names match the
@@ -1459,17 +1352,10 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
-<<<<<<< HEAD
         <term><literal>\dT[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists data types.
-=======
-        <term><literal>\dT[S+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <listitem>
-        <para>
-        Lists available data types.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only types whose names match the pattern are listed.
         If <literal>+</literal> is appended to the command name, each type is
@@ -1487,17 +1373,11 @@ testdb=&gt;
         <term><literal>\du[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
-<<<<<<< HEAD
         Lists database roles. If <replaceable
         class="parameter">pattern</replaceable> is specified, only
         those roles whose names match the pattern are listed.
         If the form <literal>\du+</literal> is used, additional information
         is shown about each role, including the comment for each role.
-=======
-        Lists all database roles. If <replaceable
-        class="parameter">pattern</replaceable> is specified, only
-        those roles whose names match the pattern are listed.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
         </para>
         </listitem>
       </varlistentry>
@@ -2127,21 +2007,12 @@ lo_import 152801
           <term><literal>numericlocale</literal></term>
           <listitem>
           <para>
-<<<<<<< HEAD
           If <replaceable class="parameter">value</replaceable> is specified
           it must be either <literal>on</literal> or <literal>off</literal>
           which will enable or disable display of a locale-specific character
           to separate groups of digits to the left of the decimal marker.
           If <replaceable class="parameter">value</replaceable> is omitted the
           command toggles between regular and locale-specific numeric output.
-=======
-          You can specify an optional second argument, if it is provided it
-          may be either <literal>on</literal> or <literal>off</literal>
-          which will enable or disable display of a locale-aware character
-          to separate groups of digits to the left of the decimal marker.  If
-          the second argument is not provided then we will toggle between
-          on and off.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
           </para>
           </listitem>
           </varlistentry>

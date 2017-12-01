@@ -135,14 +135,9 @@ GRANT { SELECT | INSERT | ALL [PRIVILEGES] }
   <para>
    Depending on the type of object, the initial default privileges might
    include granting some privileges to <literal>PUBLIC</literal>.
-<<<<<<< HEAD
-   The default is no public access for tables, schemas, and tablespaces;
-   <literal>CONNECT</literal> privilege and <literal>TEMP</literal> table creation privilege
-=======
    The default is no public access for tables, columns, schemas, and
    tablespaces;
-   <literal>CONNECT</> privilege and <literal>TEMP</> table creation privilege
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+   <literal>CONNECT</literal> privilege and <literal>TEMP</literal> table creation privilege
    for databases;
    <literal>EXECUTE</literal> privilege for functions; and
    <literal>USAGE</literal> privilege for languages.
@@ -433,9 +428,6 @@ GRANT { SELECT | INSERT | ALL [PRIVILEGES] }
    </para>
 
    <para>
-<<<<<<< HEAD
-    When a non-owner of an object attempts to <command>GRANT</command> privileges
-=======
     A user may perform <command>SELECT</>, <command>INSERT</>, etc. on a
     column if he holds that privilege for either the specific column or
     its whole table.  Granting the privilege at the table level and then
@@ -444,8 +436,7 @@ GRANT { SELECT | INSERT | ALL [PRIVILEGES] }
    </para>
 
    <para>
-    When a non-owner of an object attempts to <command>GRANT</> privileges
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+    When a non-owner of an object attempts to <command>GRANT</command> privileges
     on the object, the command will fail outright if the user has no
     privileges whatsoever on the object.  As long as some privilege is
     available, the command will proceed, but it will grant only those
@@ -499,17 +490,10 @@ GRANT { SELECT | INSERT | ALL [PRIVILEGES] }
    </para>
 
    <para>
-<<<<<<< HEAD
     Granting permission on a table does not automatically extend 
     permissions to any sequences used by the table, including 
     sequences tied to <type>SERIAL</type> columns.  Permissions on 
     sequence must be set separately.
-=======
-    Granting permission on a table does not automatically extend
-    permissions to any sequences used by the table, including
-    sequences tied to <type>SERIAL</> columns.  Permissions on
-    sequences must be set separately.
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
    </para>
 
    <para>
