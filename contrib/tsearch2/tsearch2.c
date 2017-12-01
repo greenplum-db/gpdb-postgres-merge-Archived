@@ -367,11 +367,7 @@ tsa_tsearch2(PG_FUNCTION_ARGS)
 {
 	TriggerData *trigdata;
 	Trigger    *trigger;
-<<<<<<< HEAD
-	char	  **tgargs, 
-=======
 	char	  **tgargs,
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 			  **tgargs_old;
 	int			i;
 	Datum		res;
@@ -429,7 +425,7 @@ tsa_rewrite_accum(PG_FUNCTION_ARGS)
 	if (fcinfo->context && IsA(fcinfo->context, AggState))
 		aggcontext = ((AggState *) fcinfo->context)->aggcontext;
 	else if (fcinfo->context && IsA(fcinfo->context, WindowAggState))
-		aggcontext = ((WindowAggState *) fcinfo->context)->wincontext;
+		aggcontext = ((WindowAggState *) fcinfo->context)->partcontext;
 	else
 	{
 		elog(ERROR, "tsa_rewrite_accum called in non-aggregate context");
