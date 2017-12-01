@@ -3957,51 +3957,21 @@ get_comparison_operator(Oid oidLeft, Oid oidRight, CmpType cmpt)
 }
 
 /*
- * has_subclass_fast
- *
- * In the current implementation, has_subclass returns whether a
- * particular class *might* have a subclass. It will not return the
- * correct result if a class had a subclass which was later dropped.
- * This is because relhassubclass in pg_class is not updated when a
- * subclass is dropped, primarily because of concurrency concerns.
- *
- * Currently has_subclass is only used as an efficiency hack to skip
- * unnecessary inheritance searches, so this is OK.
- */
-bool
-has_subclass_fast(Oid relationId)
-{
-	HeapTuple	tuple;
-	bool		result;
-
-	tuple = SearchSysCache1(RELOID,
-							ObjectIdGetDatum(relationId));
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup failed for relation %u", relationId);
-
-	result = ((Form_pg_class) GETSTRUCT(tuple))->relhassubclass;
-
-	ReleaseSysCache(tuple);
-	return result;
-}
-
-/*
- * has_subclass
+ * has_subclass_slow
  *
  * Performs the exhaustive check whether a relation has a subclass. This is 
- * different from has_subclass_fast, in that the latter can return true if a relation.
- * *might* have a subclass. See comments in has_subclass_fast for more details.
- * 
+ * different from has_subclass(), in that the latter can return true if a relation.
+ * *might* have a subclass. See comments in has_subclass() for more details.
  */
 bool
-has_subclass(Oid relationId)
+has_subclass_slow(Oid relationId)
 {
 	ScanKeyData	scankey;
 	Relation	rel;
 	SysScanDesc sscan;
 	bool		result;
 
-	if (!has_subclass_fast(relationId))
+	if (!has_subclass(relationId))
 	{
 		return false;
 	}

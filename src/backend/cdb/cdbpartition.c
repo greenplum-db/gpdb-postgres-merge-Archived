@@ -28,6 +28,7 @@
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_exttable.h"
 #include "catalog/pg_inherits.h"
+#include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
@@ -8191,7 +8192,7 @@ is_exchangeable(Relation rel, Relation oldrel, Relation newrel, bool throw)
 	}
 
 	/* The new part table must not be involved in inheritance. */
-	if (congruent && has_subclass_fast(RelationGetRelid(newrel)))
+	if (congruent && has_subclass(RelationGetRelid(newrel)))
 	{
 		congruent = FALSE;
 		if (throw)

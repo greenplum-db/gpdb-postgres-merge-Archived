@@ -69,7 +69,7 @@ find_inheritance_children(Oid parentrelId, LOCKMODE lockmode)
 	 * Can skip the scan if pg_class shows the relation has never had a
 	 * subclass.
 	 */
-	if (!has_subclass_fast(parentrelId))
+	if (!has_subclass(parentrelId))
 		return NIL;
 
 	/*
