@@ -176,6 +176,10 @@
 },
 
 {
+	"invalid_limit_value", ERRCODE_INVALID_LIMIT_VALUE
+},
+
+{
 	"invalid_parameter_value", ERRCODE_INVALID_PARAMETER_VALUE
 },
 
