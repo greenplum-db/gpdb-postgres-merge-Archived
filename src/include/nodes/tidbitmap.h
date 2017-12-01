@@ -125,20 +125,7 @@ typedef struct StreamBitmap
 } StreamBitmap;
 
 /* A version of TBMIterator for StreamBitmap */
-typedef struct StreamBMIterator
-{
-	const struct StreamNode *node;	/* the root node to iterate out of */
-	union
-	{
-		TBMIterator	   *hash;		/* for IndexStream */
-		List		   *stream;		/* for OpStream */
-	} input;						/* input iterator(s) */
-	PagetableEntry	   *nextentry;	/* for IndexStream, a pointer to the next cached entry */
-	BlockNumber			nextblock;	/* block number we're up to */
-	PagetableEntry		entry;		/* storage for a page of tids in this stream bitmap */
-	bool    	      (*pull)(struct StreamBMIterator *self, PagetableEntry *e);
-	void			  (*end_iterate)(struct StreamBMIterator *self);
-} StreamBMIterator;
+typedef struct StreamBMIterator StreamBMIterator;
 
 /* A version of TBMIterator that handles both TIDBitmap and StreamBitmap */
 typedef struct GenericBMIterator GenericBMIterator;
@@ -178,6 +165,26 @@ typedef struct
 	OffsetNumber offsets[1];	/* VARIABLE LENGTH ARRAY */
 } TBMIterateResult;				/* VARIABLE LENGTH STRUCT */
 
+/* Make this visible for bitmap.c */
+struct StreamBMIterator
+{
+	const struct StreamNode *node;	/* the root node to iterate out of */
+	union
+	{
+		TBMIterator	   *hash;		/* for IndexStream */
+		List		   *stream;		/* for OpStream */
+	} input;						/* input iterator(s) */
+
+	PagetableEntry	   *nextentry;	/* for IndexStream, a pointer to the next cached entry */
+	BlockNumber			nextblock;	/* block number we're up to */
+	PagetableEntry		entry;		/* storage for a page of tids in this stream bitmap */
+
+	bool    	      (*pull)(struct StreamBMIterator *self, PagetableEntry *e);
+	void			  (*end_iterate)(struct StreamBMIterator *self);
+
+	TBMIterateResult	output;		/* MUST BE LAST (because variable-size) */
+};
+
 /* function prototypes in nodes/tidbitmap.c */
 extern TIDBitmap *tbm_create(long maxbytes);
 extern void tbm_free(TIDBitmap *tbm);
@@ -191,7 +198,7 @@ extern void tbm_intersect(TIDBitmap *a, const TIDBitmap *b);
 extern bool tbm_is_empty(const TIDBitmap *tbm);
 
 extern TBMIterator *tbm_begin_iterate(TIDBitmap *tbm);
-extern bool tbm_iterate(TBMIterator *iterator, TBMIterateResult *output);
+extern TBMIterateResult *tbm_iterate(TBMIterator *iterator);
 extern void tbm_end_iterate(TBMIterator *iterator);
 
 extern void stream_move_node(StreamBitmap *strm, StreamBitmap *other, StreamType kind);
@@ -200,7 +207,7 @@ extern StreamNode *tbm_create_stream_node(TIDBitmap *tbm);
 
 /* These functions accept either a TIDBitmap or a StreamBitmap... */
 extern GenericBMIterator *tbm_generic_begin_iterate(Node *bm);
-extern bool tbm_generic_iterate(GenericBMIterator *iterator, TBMIterateResult *output);
+extern TBMIterateResult *tbm_generic_iterate(GenericBMIterator *iterator);
 extern void tbm_generic_end_iterate(GenericBMIterator *iterator);
 extern void tbm_generic_free(Node *bm);
 extern void tbm_generic_set_instrument(Node *bm, struct Instrumentation *instr);

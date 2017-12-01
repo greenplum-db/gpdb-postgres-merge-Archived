@@ -101,6 +101,7 @@ struct TBMIterator
 	int			spageptr;		/* next spages index */
 	int			schunkptr;		/* next schunks index */
 	int			schunkbit;		/* next bit to check in current schunk */
+	TBMIterateResult output;	/* MUST BE LAST (because variable-size) */
 };
 
 struct GenericBMIterator
@@ -662,7 +663,12 @@ tbm_begin_iterate(TIDBitmap *tbm)
 static StreamBMIterator *
 tbm_stream_begin_iterate(StreamNode *node)
 {
-	StreamBMIterator *iterator = palloc0(sizeof(*iterator));
+	/*
+	 * Create the StreamBMIterator struct, with enough trailing space to serve
+	 * the needs of the TBMIterateResult sub-struct.
+	 */
+	StreamBMIterator *iterator = palloc0(sizeof(StreamBMIterator) +
+								 MAX_TUPLES_PER_PAGE * sizeof(OffsetNumber));
 
 	iterator->node = node;
 	node->begin_iterate(node, iterator);
@@ -718,8 +724,8 @@ tbm_generic_begin_iterate(Node *bm)
  * tbm_generic_iterate - scan through next page of a TIDBitmap or a
  * StreamBitmap.
  */
-bool
-tbm_generic_iterate(GenericBMIterator *iterator, TBMIterateResult *output)
+TBMIterateResult *
+tbm_generic_iterate(GenericBMIterator *iterator)
 {
 	const Node *tbm = iterator->bm;
 
@@ -735,26 +741,27 @@ tbm_generic_iterate(GenericBMIterator *iterator, TBMIterateResult *output)
 				Assert(hashIterator->tbm == hashBitmap);
 				Assert(hashBitmap->iterating);
 
-				return tbm_iterate(hashIterator, output);
+				return tbm_iterate(hashIterator);
 			}
 		case T_StreamBitmap:
 			{
 				StreamBMIterator *streamIterator = iterator->impl.stream;
-				bool		status;
+				TBMIterateResult *output = NULL;
 
 				MemSet(&streamIterator->entry, 0, sizeof(PagetableEntry));
-				status = streamIterator->pull(streamIterator, &streamIterator->entry);
+				if (streamIterator->pull(streamIterator, &streamIterator->entry))
+				{
+					output = &streamIterator->output;
+					tbm_iterate_page(&streamIterator->entry, output);
+				}
 
-				/* XXX: perhaps we should only do this if status == true ? */
-				tbm_iterate_page(&streamIterator->entry, output);
-
-				return status;
+				return output;
 			}
 		default:
 			elog(ERROR, "unrecoganized node type");
 	}
 
-	return false;
+	return NULL;
 }
 
 /*
@@ -810,19 +817,20 @@ tbm_iterate_page(PagetableEntry *page, TBMIterateResult *output)
  * examine all tuples on the page and check if they meet the intended
  * condition.
  */
-bool
-tbm_iterate(TBMIterator *iterator, TBMIterateResult *output)
+TBMIterateResult *
+tbm_iterate(TBMIterator *iterator)
 {
 	PagetableEntry *e;
 	bool		more;
+	TBMIterateResult *output = &(iterator->output);
 
 	e = tbm_next_page(iterator, &more);
 	if (more && e)
 	{
 		tbm_iterate_page(e, output);
-		return true;
+		return output;
 	}
-	return false;
+	return NULL;
 }
 
 /*
