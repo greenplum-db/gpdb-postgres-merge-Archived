@@ -53,6 +53,8 @@ dbState(DBState state)
 			return _("shutting down");
 		case DB_IN_CRASH_RECOVERY:
 			return _("in crash recovery");
+		case DB_IN_ARCHIVE_RECOVERY:
+			return _("in archive recovery");
 		case DB_IN_STANDBY_MODE:
 			return _("in standby mode");
 		case DB_IN_STANDBY_PROMOTED:
