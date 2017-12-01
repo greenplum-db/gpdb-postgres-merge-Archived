@@ -1543,25 +1543,30 @@ heap_create_with_catalog(const char *relname,
 	 * Was "appendonly" specified in the relopts? If yes, fix our relstorage.
 	 * Also, check for override (debug) GUCs.
 	 */
-	stdRdOptions = (StdRdOptions*) heap_reloptions(
-			relkind, reloptions, !valid_opts);
-	appendOnlyRel = stdRdOptions->appendonly;
-	validateAppendOnlyRelOptions(appendOnlyRel,
-								 stdRdOptions->blocksize,
-								 safefswritesize,
-								 stdRdOptions->compresslevel,
-								 stdRdOptions->compresstype,
-								 stdRdOptions->checksum,
-								 relkind,
-								 stdRdOptions->columnstore);
-	if(appendOnlyRel)
+	if (relkind == RELKIND_RELATION)
 	{
-		if(stdRdOptions->columnstore)
-            relstorage = RELSTORAGE_AOCOLS;
-		else
-			relstorage = RELSTORAGE_AOROWS;
-		reloptions = transformAOStdRdOptions(stdRdOptions, reloptions);
+		stdRdOptions = (StdRdOptions*) heap_reloptions(
+			relkind, reloptions, !valid_opts);
+		appendOnlyRel = stdRdOptions->appendonly;
+		validateAppendOnlyRelOptions(appendOnlyRel,
+									 stdRdOptions->blocksize,
+									 safefswritesize,
+									 stdRdOptions->compresslevel,
+									 stdRdOptions->compresstype,
+									 stdRdOptions->checksum,
+									 relkind,
+									 stdRdOptions->columnstore);
+		if(appendOnlyRel)
+		{
+			if(stdRdOptions->columnstore)
+				relstorage = RELSTORAGE_AOCOLS;
+			else
+				relstorage = RELSTORAGE_AOROWS;
+			reloptions = transformAOStdRdOptions(stdRdOptions, reloptions);
+		}
 	}
+	else
+		appendOnlyRel = false;
 
 	/* MPP-8058: disallow OIDS on column-oriented tables */
 	if (tupdesc->tdhasoid && 
