@@ -238,9 +238,11 @@ RelationCreateStorage(RelFileNode rnode, bool isLocalBuf,
 					  int64 mirrorDataLossTrackingSessionNum,
 					  bool *mirrorDataLossOccurred) /* FIXME: is this arg still needed? */
 {
+#ifdef USE_SEGWALREP
 	XLogRecPtr	lsn;
 	XLogRecData rdata;
 	xl_smgr_create xlrec;
+#endif
 	SMgrRelation srel;
 
 	srel = smgropen(rnode);
