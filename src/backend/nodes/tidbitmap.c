@@ -124,10 +124,23 @@ static bool tbm_page_is_lossy(const TIDBitmap *tbm, BlockNumber pageno);
 static void tbm_mark_page_lossy(TIDBitmap *tbm, BlockNumber pageno);
 static void tbm_lossify(TIDBitmap *tbm);
 static int	tbm_comparator(const void *left, const void *right);
-static bool tbm_stream_block(StreamBMIterator *iterator, PagetableEntry *e);
-static void tbm_stream_free(StreamNode * self);
 static void tbm_stream_set_instrument(StreamNode * self, struct Instrumentation *instr);
 static void tbm_stream_upd_instrument(StreamNode * self);
+
+static StreamBMIterator *tbm_stream_begin_iterate(StreamNode *node);
+static void tbm_stream_end_iterate(StreamBMIterator *iterator);
+
+/* IndexStream callbacks */
+static void index_stream_begin_iterate(StreamNode *self, StreamBMIterator *iterator);
+static bool tbm_stream_block(StreamBMIterator *iterator, PagetableEntry *e);
+static void index_stream_end_iterate(StreamBMIterator *self);
+static void tbm_stream_free(StreamNode *self);
+
+/* OpStream callbacks */
+static void opstream_begin_iterate(StreamNode *self, StreamBMIterator *iterator);
+static bool opstream_iterate(StreamBMIterator *iterator, PagetableEntry *e);
+static void opstream_end_iterate(StreamBMIterator *self);
+static void opstream_free(StreamNode *self);
 
 /*
  * tbm_create - create an initially-empty bitmap
@@ -652,39 +665,7 @@ tbm_stream_begin_iterate(StreamNode *node)
 	StreamBMIterator *iterator = palloc0(sizeof(*iterator));
 
 	iterator->node = node;
-
-	switch (node->type)
-	{
-		case BMS_INDEX:
-		{
-			TIDBitmap *tbm = node->opaque;
-			iterator->input.hash = tbm_begin_iterate(tbm);
-			break;
-		}
-
-		case BMS_AND:
-		case BMS_OR:
-		{
-			ListCell *cell;
-			List	 *input = node->opaque;
-
-			/* Recursively initialize an iterator for each StreamNode. */
-			foreach(cell, input)
-			{
-				StreamNode 		 *inNode = lfirst(cell);
-				StreamBMIterator *inIter = tbm_stream_begin_iterate(inNode);
-
-				iterator->input.stream = lappend(iterator->input.stream, inIter);
-			}
-
-			break;
-		}
-
-		default:
-			Assert((node->type == BMS_INDEX)
-				   || (node->type == BMS_AND)
-				   || (node->type == BMS_OR));
-	}
+	node->begin_iterate(node, iterator);
 
 	return iterator;
 }
@@ -761,7 +742,8 @@ tbm_generic_iterate(GenericBMIterator *iterator, TBMIterateResult *output)
 				StreamBMIterator *streamIterator = iterator->impl.stream;
 				bool		status;
 
-				status = bitmap_stream_iterate(streamIterator, &streamIterator->entry);
+				MemSet(&streamIterator->entry, 0, sizeof(PagetableEntry));
+				status = streamIterator->pull(streamIterator, &streamIterator->entry);
 
 				/* XXX: perhaps we should only do this if status == true ? */
 				tbm_iterate_page(&streamIterator->entry, output);
@@ -947,36 +929,8 @@ tbm_end_iterate(TBMIterator *iterator)
 static void
 tbm_stream_end_iterate(StreamBMIterator *iterator)
 {
-	const StreamNode *node = iterator->node;
-
-	switch (node->type)
-	{
-		case BMS_INDEX:
-			tbm_end_iterate(iterator->input.hash);
-			break;
-
-		case BMS_AND:
-		case BMS_OR:
-		{
-			ListCell *cell;
-
-			/* Recursively free all iterators in the stream "tree". */
-			foreach(cell, iterator->input.stream)
-			{
-				StreamBMIterator *inIter = lfirst(cell);
-				tbm_stream_end_iterate(inIter);
-			}
-			list_free(iterator->input.stream);
-
-			break;
-		}
-
-		default:
-			Assert((node->type == BMS_INDEX)
-				   || (node->type == BMS_AND)
-				   || (node->type == BMS_OR));
-	}
-
+	/* end_iterate() will clean up whatever begin_iterate() set up. */
+	iterator->end_iterate(iterator);
 	pfree(iterator);
 }
 
@@ -1340,7 +1294,7 @@ make_opstream(StreamType kind, StreamNode *n1, StreamNode *n2)
 	op = (OpStream *) palloc0(sizeof(OpStream));
 	op->type = kind;
 	op->opaque = list_make2(n1, n2);
-	op->pull = bitmap_stream_iterate;
+	op->begin_iterate = opstream_begin_iterate;
 	op->free = opstream_free;
 	op->set_instrument = opstream_set_instrument;
 	op->upd_instrument = opstream_upd_instrument;
@@ -1420,12 +1374,34 @@ tbm_create_stream_node(TIDBitmap *tbm)
 
 	is->type = BMS_INDEX;
 	is->opaque = tbm;
-	is->pull = tbm_stream_block;
+	is->begin_iterate = index_stream_begin_iterate;
 	is->free = tbm_stream_free;
 	is->set_instrument = tbm_stream_set_instrument;
 	is->upd_instrument = tbm_stream_upd_instrument;
 
 	return is;
+}
+
+/*
+ * IndexStream iteration callbacks
+ */
+
+static void
+index_stream_begin_iterate(StreamNode *self, StreamBMIterator *iterator)
+{
+	TIDBitmap *tbm = self->opaque;
+
+	iterator->pull = tbm_stream_block;
+	iterator->end_iterate = index_stream_end_iterate;
+
+	/* Begin iterating on the underlying TIDBitmap. */
+	iterator->input.hash = tbm_begin_iterate(tbm);
+}
+
+static void
+index_stream_end_iterate(StreamBMIterator *self)
+{
+	tbm_end_iterate(self->input.hash);
 }
 
 /*
@@ -1490,189 +1466,215 @@ tbm_stream_upd_instrument(StreamNode *self)
 	tbm_upd_instrument(tbm);
 }
 
+/*
+ * OpStream iteration callbacks
+ */
+
+static void
+opstream_begin_iterate(StreamNode *self, StreamBMIterator *iterator)
+{
+	List	 *input = self->opaque;
+	ListCell *cell;
+
+	iterator->pull = opstream_iterate;
+	iterator->end_iterate = opstream_end_iterate;
+
+	/* Recursively initialize an iterator for each StreamNode. */
+	foreach(cell, input)
+	{
+		StreamNode 		 *inNode = lfirst(cell);
+		StreamBMIterator *inIter = tbm_stream_begin_iterate(inNode);
+
+		iterator->input.stream = lappend(iterator->input.stream, inIter);
+	}
+}
+
+static void
+opstream_end_iterate(StreamBMIterator *self)
+{
+	ListCell *cell;
+
+	/* Recursively free all iterators in the stream "tree". */
+	foreach(cell, self->input.stream)
+	{
+		StreamBMIterator *inIter = lfirst(cell);
+		tbm_stream_end_iterate(inIter);
+	}
+	list_free(self->input.stream);
+}
 
 /*
- * bitmap_stream_iterate()
+ * opstream_iterate()
  *
- * This is a generic iterator for bitmap streams. The function doesn't
+ * This is an iterator for OpStreams. The function doesn't
  * know anything about the streams it is actually iterating.
  *
  * Returns false when no more results can be obtained, otherwise true.
  */
-
-bool
-bitmap_stream_iterate(StreamBMIterator *iterator, PagetableEntry *e)
+static bool
+opstream_iterate(StreamBMIterator *iterator, PagetableEntry *e)
 {
 	const StreamNode   *n = iterator->node;
 	bool				res = false;
 
-	MemSet(e, 0, sizeof(PagetableEntry));
-
-	if (n->type == BMS_INDEX)
-	{
-		res = n->pull(iterator, e);
-	}
-	else if (n->type == BMS_OR || n->type == BMS_AND)
-	{
-		/*
-		 * There are two ways we can do this: either, we could maintain our
-		 * own top level BatchWords structure and pull blocks out of that OR
-		 * we could maintain batch words for each sub map and union/intersect
-		 * those together to get the resulting page entries.
-		 *
-		 * Now, BatchWords are specific to bitmap indexes so we'd have to
-		 * translate TIDBitmaps. All the infrastructure is available to
-		 * translate bitmap indexes into the TIDBitmap mechanism so we'll do
-		 * that for now.
-		 */
-		ListCell   *map;
-		BlockNumber minblockno;
-		ListCell   *cell;
-		int			wordnum;
-		List	   *matches;
-		bool		empty;
+	/*
+	 * There are two ways we can do this: either, we could maintain our
+	 * own top level BatchWords structure and pull blocks out of that OR
+	 * we could maintain batch words for each sub map and union/intersect
+	 * those together to get the resulting page entries.
+	 *
+	 * Now, BatchWords are specific to bitmap indexes so we'd have to
+	 * translate TIDBitmaps. All the infrastructure is available to
+	 * translate bitmap indexes into the TIDBitmap mechanism so we'll do
+	 * that for now.
+	 */
+	ListCell   *map;
+	BlockNumber minblockno;
+	ListCell   *cell;
+	int			wordnum;
+	List	   *matches;
+	bool		empty;
 
 
-		/*
-		 * First, iterate through each input bitmap stream and save the block
-		 * which is returned. TIDBitmaps are designed such that they do not
-		 * return blocks with no matches -- that is, say a TIDBitmap has
-		 * matches for block 1, 4 and 5 it store matches only for those
-		 * blocks. Therefore, we may have one stream return a match for block
-		 * 10, another for block 15 and another yet for block 10 again. In
-		 * this case, we cannot include block 15 in the union/intersection
-		 * because it represents matches on some page later in the scan. We'll
-		 * get around to it in good time.
-		 *
-		 * In this case, if we're doing a union, we perform the operation
-		 * without reference to block 15. If we're performing an intersection
-		 * we cannot perform it on block 10 because we didn't get any matches
-		 * for block 10 for one of the streams: the intersection with fail.
-		 * So, we set the desired block (op->nextblock) to block 15 and loop
-		 * around to the `restart' label.
-		 */
+	/*
+	 * First, iterate through each input bitmap stream and save the block
+	 * which is returned. TIDBitmaps are designed such that they do not
+	 * return blocks with no matches -- that is, say a TIDBitmap has
+	 * matches for block 1, 4 and 5 it store matches only for those
+	 * blocks. Therefore, we may have one stream return a match for block
+	 * 10, another for block 15 and another yet for block 10 again. In
+	 * this case, we cannot include block 15 in the union/intersection
+	 * because it represents matches on some page later in the scan. We'll
+	 * get around to it in good time.
+	 *
+	 * In this case, if we're doing a union, we perform the operation
+	 * without reference to block 15. If we're performing an intersection
+	 * we cannot perform it on block 10 because we didn't get any matches
+	 * for block 10 for one of the streams: the intersection with fail.
+	 * So, we set the desired block (op->nextblock) to block 15 and loop
+	 * around to the `restart' label.
+	 */
 restart:
-		e->blockno = InvalidBlockNumber;
-		empty = false;
-		matches = NIL;
-		minblockno = InvalidBlockNumber;
-		Assert(PointerIsValid(iterator->input.stream));
-		foreach(map, iterator->input.stream)
-		{
-			StreamBMIterator *inIter = lfirst(map);
-			const StreamNode *in = inIter->node;
-			PagetableEntry *new;
-			bool		r;
+	e->blockno = InvalidBlockNumber;
+	empty = false;
+	matches = NIL;
+	minblockno = InvalidBlockNumber;
+	Assert(PointerIsValid(iterator->input.stream));
+	foreach(map, iterator->input.stream)
+	{
+		StreamBMIterator *inIter = lfirst(map);
+		PagetableEntry *new;
+		bool		r;
 
-			new = (PagetableEntry *) palloc(sizeof(PagetableEntry));
+		new = (PagetableEntry *) palloc0(sizeof(PagetableEntry));
 
-			/* set the desired block */
-			inIter->nextblock = iterator->nextblock;
-			r = in->pull(inIter, new);
-
-			/*
-			 * Let to caller know we got a result from some input bitmap. This
-			 * doesn't hold true if we're doing an intersection, and that is
-			 * handled below
-			 */
-			res = res || r;
-
-			/* only include a match if the pull function tells us to */
-			if (r)
-			{
-				if (minblockno == InvalidBlockNumber)
-					minblockno = new->blockno;
-				else if (n->type == BMS_OR)
-					minblockno = Min(minblockno, new->blockno);
-				else
-					minblockno = Max(minblockno, new->blockno);
-				matches = lappend(matches, (void *) new);
-			}
-			else
-			{
-				pfree(new);
-
-				if (n->type == BMS_AND)
-				{
-					/*
-					 * No more results for this stream and since we're doing
-					 * an intersection we wont get any valid results from now
-					 * on, so tell our caller that
-					 */
-					iterator->nextblock = minblockno + 1;	/* seems safe */
-					return false;
-				}
-				else if (n->type == BMS_OR)
-					continue;
-			}
-		}
+		/* set the desired block */
+		inIter->nextblock = iterator->nextblock;
+		r = inIter->pull(inIter, new);
 
 		/*
-		 * Now we iterate through the actual matches and perform the desired
-		 * operation on those from the same minimum block
+		 * Let to caller know we got a result from some input bitmap. This
+		 * doesn't hold true if we're doing an intersection, and that is
+		 * handled below
 		 */
-		foreach(cell, matches)
+		res = res || r;
+
+		/* only include a match if the pull function tells us to */
+		if (r)
 		{
-			PagetableEntry *tmp = (PagetableEntry *) lfirst(cell);
-
-			if (tmp->blockno == minblockno)
-			{
-				if (e->blockno == InvalidBlockNumber)
-				{
-					memcpy(e, tmp, sizeof(PagetableEntry));
-					continue;
-				}
-
-				/* already initialised, so OR together */
-				if (tmp->ischunk == true)
-				{
-					/*
-					 * Okay, new entry is lossy so match our output as lossy
-					 */
-					e->ischunk = true;
-					/* XXX: we can just return now... I think :) */
-					iterator->nextblock = minblockno + 1;
-					list_free_deep(matches);
-					return res;
-				}
-				/* union/intersect existing output and new matches */
-				for (wordnum = 0; wordnum < WORDS_PER_PAGE; wordnum++)
-				{
-					if (n->type == BMS_OR)
-						e->words[wordnum] |= tmp->words[wordnum];
-					else
-						e->words[wordnum] &= tmp->words[wordnum];
-				}
-			}
-			else if (n->type == BMS_AND)
-			{
-				/*
-				 * One of our input maps didn't return a block for the desired
-				 * block number so, we loop around again.
-				 *
-				 * Notice that we don't set the next block as minblockno + 1.
-				 * We don't know if the other streams will find a match for
-				 * minblockno, so we cannot skip past it yet.
-				 */
-
-				iterator->nextblock = minblockno;
-				empty = true;
-				break;
-			}
-		}
-		if (empty)
-		{
-			/* start again */
-			empty = false;
-			MemSet(e->words, 0, sizeof(tbm_bitmapword) * WORDS_PER_PAGE);
-			list_free_deep(matches);
-			goto restart;
+			if (minblockno == InvalidBlockNumber)
+				minblockno = new->blockno;
+			else if (n->type == BMS_OR)
+				minblockno = Min(minblockno, new->blockno);
+			else
+				minblockno = Max(minblockno, new->blockno);
+			matches = lappend(matches, (void *) new);
 		}
 		else
-			list_free_deep(matches);
-		if (res)
-			iterator->nextblock = minblockno + 1;
+		{
+			pfree(new);
+
+			if (n->type == BMS_AND)
+			{
+				/*
+				 * No more results for this stream and since we're doing
+				 * an intersection we wont get any valid results from now
+				 * on, so tell our caller that
+				 */
+				iterator->nextblock = minblockno + 1;	/* seems safe */
+				return false;
+			}
+			else if (n->type == BMS_OR)
+				continue;
+		}
 	}
+
+	/*
+	 * Now we iterate through the actual matches and perform the desired
+	 * operation on those from the same minimum block
+	 */
+	foreach(cell, matches)
+	{
+		PagetableEntry *tmp = (PagetableEntry *) lfirst(cell);
+
+		if (tmp->blockno == minblockno)
+		{
+			if (e->blockno == InvalidBlockNumber)
+			{
+				memcpy(e, tmp, sizeof(PagetableEntry));
+				continue;
+			}
+
+			/* already initialised, so OR together */
+			if (tmp->ischunk == true)
+			{
+				/*
+				 * Okay, new entry is lossy so match our output as lossy
+				 */
+				e->ischunk = true;
+				/* XXX: we can just return now... I think :) */
+				iterator->nextblock = minblockno + 1;
+				list_free_deep(matches);
+				return res;
+			}
+			/* union/intersect existing output and new matches */
+			for (wordnum = 0; wordnum < WORDS_PER_PAGE; wordnum++)
+			{
+				if (n->type == BMS_OR)
+					e->words[wordnum] |= tmp->words[wordnum];
+				else
+					e->words[wordnum] &= tmp->words[wordnum];
+			}
+		}
+		else if (n->type == BMS_AND)
+		{
+			/*
+			 * One of our input maps didn't return a block for the desired
+			 * block number so, we loop around again.
+			 *
+			 * Notice that we don't set the next block as minblockno + 1.
+			 * We don't know if the other streams will find a match for
+			 * minblockno, so we cannot skip past it yet.
+			 */
+
+			iterator->nextblock = minblockno;
+			empty = true;
+			break;
+		}
+	}
+	if (empty)
+	{
+		/* start again */
+		empty = false;
+		MemSet(e->words, 0, sizeof(tbm_bitmapword) * WORDS_PER_PAGE);
+		list_free_deep(matches);
+		goto restart;
+	}
+	else
+		list_free_deep(matches);
+	if (res)
+		iterator->nextblock = minblockno + 1;
+
 	return res;
 }
 

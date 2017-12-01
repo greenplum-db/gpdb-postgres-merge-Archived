@@ -136,6 +136,8 @@ typedef struct StreamBMIterator
 	PagetableEntry	   *nextentry;	/* for IndexStream, a pointer to the next cached entry */
 	BlockNumber			nextblock;	/* block number we're up to */
 	PagetableEntry		entry;		/* storage for a page of tids in this stream bitmap */
+	bool    	      (*pull)(struct StreamBMIterator *self, PagetableEntry *e);
+	void			  (*end_iterate)(struct StreamBMIterator *self);
 } StreamBMIterator;
 
 /* A version of TBMIterator that handles both TIDBitmap and StreamBitmap */
@@ -148,7 +150,7 @@ typedef struct StreamNode
 {
 	StreamType      type;       /* one of: BMS_INDEX, BMS_AND, BMS_OR */
 	void		   *opaque;		/* implementation-specific data */
-	bool          (*pull)(StreamBMIterator *iterator, PagetableEntry *e);
+	void 		  (*begin_iterate)(struct StreamNode *self, StreamBMIterator *iterator);
 	void          (*free)(struct StreamNode *self);
 	void          (*set_instrument)(struct StreamNode *self, struct Instrumentation *instr);
 	void          (*upd_instrument)(struct StreamNode *self);
@@ -195,7 +197,6 @@ extern void tbm_end_iterate(TBMIterator *iterator);
 extern void stream_move_node(StreamBitmap *strm, StreamBitmap *other, StreamType kind);
 extern void stream_add_node(StreamBitmap *strm, StreamNode *node, StreamType kind);
 extern StreamNode *tbm_create_stream_node(TIDBitmap *tbm);
-extern bool bitmap_stream_iterate(StreamBMIterator *iterator, PagetableEntry *e);
 
 /* These functions accept either a TIDBitmap or a StreamBitmap... */
 extern GenericBMIterator *tbm_generic_begin_iterate(Node *bm);
