@@ -6393,7 +6393,7 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 				int			varNumber = varNumbers[i] - 1;
 
 				values[i] = slot_get_values(varSlot)[varNumber];
-				isnull[i] = slot_get_values(varSlot)[varNumber];
+				isnull[i] = slot_get_isnull(varSlot)[varNumber];
 			}
 		}
 		else
