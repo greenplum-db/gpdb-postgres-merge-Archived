@@ -611,7 +611,7 @@ createdb(CreatedbStmt *stmt)
 {
 	Oid			src_dboid = InvalidOid;
 	Oid			src_owner;
-	int			src_encoding;
+	int			src_encoding = 0;
 	char	   *src_collate = NULL;
 	char	   *src_ctype = NULL;
 	bool		src_istemplate;
