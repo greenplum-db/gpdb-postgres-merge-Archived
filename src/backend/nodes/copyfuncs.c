@@ -3074,7 +3074,6 @@ _copyGrantStmt(GrantStmt *from)
 	COPY_NODE_FIELD(grantees);
 	COPY_SCALAR_FIELD(grant_option);
 	COPY_SCALAR_FIELD(behavior);
-	COPY_NODE_FIELD(cooked_privs);
 
 	return newnode;
 }
