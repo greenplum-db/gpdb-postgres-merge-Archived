@@ -357,14 +357,6 @@ InitProcess(void)
 		MarkPostmasterChildActive();
 
 	/*
-	 * Now that we have a PGPROC, mark ourselves as an active postmaster
-	 * child; this is so that the postmaster can detect it if we exit without
-	 * cleaning up.
-	 */
-	if (IsUnderPostmaster)
-		MarkPostmasterChildActive();
-
-	/*
 	 * Initialize all fields of MyProc, except for the semaphore which was
 	 * prepared for us by InitProcGlobal.
 	 */
