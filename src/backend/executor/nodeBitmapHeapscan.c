@@ -109,14 +109,14 @@ freeBitmapState(BitmapHeapScanState *scanstate)
 {
 	/* BitmapIndexScan is the owner of the bitmap memory. Don't free it here */
 	scanstate->tbm = NULL;
-	if (scanstate->tbmres != NULL)
-		pfree(scanstate->tbmres);
+	/* Likewise, the tbmres member is owned by the iterator. It'll be freed
+	 * during end_iterate. */
 	scanstate->tbmres = NULL;
 	if (scanstate->tbmiterator)
-		tbm_end_iterate(scanstate->tbmiterator);
+		tbm_generic_end_iterate(scanstate->tbmiterator);
 	scanstate->tbmiterator = NULL;
 	if (scanstate->prefetch_iterator)
-		tbm_end_iterate(scanstate->prefetch_iterator);
+		tbm_generic_end_iterate(scanstate->prefetch_iterator);
 	scanstate->prefetch_iterator = NULL;
 }
 
@@ -134,9 +134,9 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	HeapScanDesc scan;
 	Index		scanrelid;
 	Node  		*tbm;
-	TBMIterator *tbmiterator;
+	GenericBMIterator *tbmiterator;
 	TBMIterateResult *tbmres;
-	TBMIterator *prefetch_iterator;
+	GenericBMIterator *prefetch_iterator;
 	OffsetNumber targoffset;
 	TupleTableSlot *slot;
 	bool		more = true;
@@ -218,12 +218,12 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			elog(ERROR, "unrecognized result from subplan");
 
 		node->tbm = tbm;
-		node->tbmiterator = tbmiterator = tbm_begin_iterate(tbm);
+		node->tbmiterator = tbmiterator = tbm_generic_begin_iterate(tbm);
 
 #ifdef USE_PREFETCH
 		if (target_prefetch_pages > 0)
 		{
-			node->prefetch_iterator = prefetch_iterator = tbm_begin_iterate(tbm);
+			node->prefetch_iterator = prefetch_iterator = tbm_generic_begin_iterate(tbm);
 			node->prefetch_pages = 0;
 			node->prefetch_target = -1;
 		}
@@ -245,7 +245,10 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			if (tbm == NULL)
 				more = false;
 			else
-				more = tbm_generic_iterate(tbmiterator, tbmres);
+			{
+				tbmres = tbm_generic_iterate(tbmiterator);
+				more = (tbmres != NULL);
+			}
 
 			if (!more)
 			{
@@ -262,13 +265,10 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			else if (prefetch_iterator)
 			{
 				/* Do not let the prefetch iterator get behind the main one */
-				/* GPDB_84_MERGE_FIXME: how should this be done now? */
-#if 0
-				TBMIterateResult *tbmpre = tbm_iterate(prefetch_iterator);
+				TBMIterateResult *tbmpre = tbm_generic_iterate(prefetch_iterator);
 
 				if (tbmpre == NULL || tbmpre->blockno != tbmres->blockno)
 					elog(ERROR, "prefetch and main iterators are out of sync");
-#endif
 			}
 #endif   /* USE_PREFETCH */
 
@@ -359,11 +359,9 @@ BitmapHeapNext(BitmapHeapScanState *node)
 		 */
 		if (prefetch_iterator)
 		{
-			/* GPDB_84_MERGE_FIXME: how should this be done now? */
-#if 0
 			while (node->prefetch_pages < node->prefetch_target)
 			{
-				TBMIterateResult *tbmpre = tbm_iterate(prefetch_iterator, tbmpre);
+				TBMIterateResult *tbmpre = tbm_generic_iterate(prefetch_iterator);
 
 				if (tbmpre == NULL)
 				{
@@ -375,7 +373,6 @@ BitmapHeapNext(BitmapHeapScanState *node)
 				node->prefetch_pages++;
 				PrefetchBuffer(scan->rs_rd, MAIN_FORKNUM, tbmpre->blockno);
 			}
-#endif
 		}
 #endif   /* USE_PREFETCH */
 

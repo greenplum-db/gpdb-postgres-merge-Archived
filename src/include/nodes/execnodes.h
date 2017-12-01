@@ -1820,9 +1820,9 @@ typedef struct BitmapHeapScanState
 	struct HeapScanDescData *ss_currentScanDesc;
 	List	   *bitmapqualorig;
 	Node	   *tbm;
-	TBMIterator *tbmiterator;
+	GenericBMIterator *tbmiterator;
 	TBMIterateResult *tbmres;
-	TBMIterator *prefetch_iterator;
+	GenericBMIterator *prefetch_iterator;
 	int			prefetch_pages;
 	int			prefetch_target;
 } BitmapHeapScanState;
@@ -1843,7 +1843,7 @@ typedef struct BitmapAppendOnlyScanState
 	struct AOCSFetchDescData *baos_currentAOCSFetchDesc;
 	struct AOCSFetchDescData *baos_currentAOCSLossyFetchDesc;
 	List	   *baos_bitmapqualorig;
-	Node  		*baos_tbm;
+	GenericBMIterator *baos_iterator;
 	TBMIterateResult *baos_tbmres;
 	bool		baos_gotpage;
 	int			baos_cindex;
@@ -1872,6 +1872,7 @@ typedef struct BitmapTableScanState
 	void 						*scanDesc;
 	List           				*bitmapqualorig;
 	Node  						*tbm;
+	GenericBMIterator			*tbmiterator;
 	TBMIterateResult 	*tbmres;
 	bool						isLossyBitmapPage;
 	bool						recheckTuples;
