@@ -314,8 +314,8 @@ ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate, List *hashOper
 	outerNode = outerPlan(node);
 
 	ExecChooseHashTableSize(outerNode->plan_rows, outerNode->plan_width,
-							operatorMemKB,
 							OidIsValid(node->skewTable),
+							operatorMemKB,
 							&nbuckets, &nbatch, &num_skew_mcvs);
 
 #ifdef HJDEBUG
