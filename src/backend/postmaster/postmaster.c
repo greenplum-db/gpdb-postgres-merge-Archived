@@ -4520,11 +4520,14 @@ do_reaper()
 			 * running or not, when it wants to create a checkpoint. The
 			 * easiest way to deal with that is to ensure it's always
 			 * running.
+			 *
+			 * In GPDB, it's actually the checkpointer process that we case
+			 * about. So launch that too.
 			 */
-			if (BgWriterPID == 0 )
-			{
+			if (BgWriterPID == 0)
 				SetBGWriterPID(StartBackgroundWriter());
-			}
+			if (CheckpointerPID == 0)
+				CheckpointerPID = StartCheckpointer();
 
 		    Assert(StartupPass3PID == 0);
 			StartupPass3PID = StartupPass3DataBase();
