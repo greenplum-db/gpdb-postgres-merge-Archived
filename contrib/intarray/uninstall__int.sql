@@ -3,15 +3,12 @@
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
-<<<<<<< HEAD
-=======
 DROP OPERATOR CLASS gin__int_ops USING gin;
 
 DROP FUNCTION ginint4_queryextract(internal, internal, int2, internal, internal);
 
 DROP FUNCTION ginint4_consistent(internal, int2, internal, int4, internal, internal);
 
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 DROP OPERATOR CLASS gist__intbig_ops USING gist;
 
 DROP FUNCTION g_intbig_same(internal, internal, internal);

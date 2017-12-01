@@ -131,15 +131,9 @@ typedef struct ITEM
 typedef struct QUERYTYPE
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
-<<<<<<< HEAD
-	int4		size;			/* number of ITEMs */
-	ITEM		items[1];		/* variable length array */
-}	QUERYTYPE;
-=======
 	int4		size;
 	char		data[1];
 } QUERYTYPE;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 
 #define HDRSIZEQT	offsetof(QUERYTYPE, items)
 #define COMPUTESIZE(size)	( HDRSIZEQT + (size) * sizeof(ITEM) )
@@ -153,24 +147,11 @@ typedef struct QUERYTYPE
 #define OPEN	4
 #define CLOSE	5
 
-<<<<<<< HEAD
-/* fmgr macros for QUERYTYPE objects */
-#define DatumGetQueryTypeP(X)		  ((QUERYTYPE *) PG_DETOAST_DATUM(X))
-#define DatumGetQueryTypePCopy(X)	  ((QUERYTYPE *) PG_DETOAST_DATUM_COPY(X))
-#define PG_GETARG_QUERYTYPE_P(n)	  DatumGetQueryTypeP(PG_GETARG_DATUM(n))
-#define PG_GETARG_QUERYTYPE_P_COPY(n) DatumGetQueryTypePCopy(PG_GETARG_DATUM(n))
-
-bool		signconsistent(QUERYTYPE * query, BITVEC sign, bool calcnot);
-bool		execconsistent(QUERYTYPE * query, ArrayType *array, bool calcnot);
-bool		gin_bool_consistent(QUERYTYPE *query, bool *check);
-bool		query_has_required_values(QUERYTYPE *query);
-int4		shorterquery(ITEM * q, int4 len);
-=======
 bool		signconsistent(QUERYTYPE *query, BITVEC sign, bool calcnot);
 bool		execconsistent(QUERYTYPE *query, ArrayType *array, bool calcnot);
 bool		ginconsistent(QUERYTYPE *query, bool *check);
 int4		shorterquery(ITEM *q, int4 len);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+bool		query_has_required_values(QUERYTYPE *query);
 
 int			compASC(const void *a, const void *b);
 
@@ -184,5 +165,11 @@ int			compDESC(const void *a, const void *b);
 			qsort((void*) ARRPTR(a), _nelems_, sizeof(int4), \
 				  (direction) ? compASC : compDESC ); \
 	} while(0)
+
+/* fmgr macros for QUERYTYPE objects */
+#define DatumGetQueryTypeP(X)		  ((QUERYTYPE *) PG_DETOAST_DATUM(X))
+#define DatumGetQueryTypePCopy(X)	  ((QUERYTYPE *) PG_DETOAST_DATUM_COPY(X))
+#define PG_GETARG_QUERYTYPE_P(n)	  DatumGetQueryTypeP(PG_GETARG_DATUM(n))
+#define PG_GETARG_QUERYTYPE_P_COPY(n) DatumGetQueryTypePCopy(PG_GETARG_DATUM(n))
 
 #endif   /* ___INT_H__ */

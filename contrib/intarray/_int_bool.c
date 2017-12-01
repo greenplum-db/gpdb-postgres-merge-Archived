@@ -274,12 +274,7 @@ checkcondition_bit(void *checkval, ITEM *item)
  * evaluate boolean expression, using chkcond() to test the primitive cases
  */
 static bool
-<<<<<<< HEAD
-execute(ITEM *curitem, void *checkval, bool calcnot,
-		bool (*chkcond) (void *checkval, ITEM *item))
-=======
 execute(ITEM *curitem, void *checkval, bool calcnot, bool (*chkcond) (void *checkval, ITEM *item))
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
@@ -349,11 +344,7 @@ checkcondition_gin(void *checkval, ITEM *item)
 }
 
 bool
-<<<<<<< HEAD
-gin_bool_consistent(QUERYTYPE *query, bool *check)
-=======
 ginconsistent(QUERYTYPE *query, bool *check)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 {
 	GinChkVal	gcv;
 	ITEM	   *items = GETQUERY(query);
