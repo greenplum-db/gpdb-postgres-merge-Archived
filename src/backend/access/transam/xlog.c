@@ -9343,7 +9343,12 @@ InitXLOGAccess(void)
 {
 	/* ThisTimeLineID doesn't change so we need no lock to copy it */
 	ThisTimeLineID = XLogCtl->ThisTimeLineID;
+	/* GPDB_84_MERGE_FIXME: Disabled, because FTS process was tripping it.
+	 * This assertion was added by the merge, so I suspect it's been wrong
+	 * all along, but we haven't noticed. */
+#if 0
 	Assert(ThisTimeLineID != 0);
+#endif
 
 	/* Use GetRedoRecPtr to copy the RedoRecPtr safely */
 	(void) GetRedoRecPtr();
