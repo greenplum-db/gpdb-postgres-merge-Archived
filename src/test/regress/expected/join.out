@@ -2338,7 +2338,25 @@ where a.unique1 = 42 and
 (0 rows)
 
 --
-<<<<<<< HEAD
+-- test proper positioning of one-time quals in EXISTS (8.4devel bug)
+--
+prepare foo(bool) as
+select count(*) from tenk1 a left join tenk1 b
+on (a.unique2 = b.unique1 and exists
+(select 1 from tenk1 c where c.thousand = b.unique2 and $1));
+execute foo(true);
+ count
+-------
+ 10000
+(1 row)
+
+execute foo(false);
+ count 
+-------
+ 10000
+(1 row)
+
+--
 -- test for sane behavior with noncanonical merge clauses, per bug #4926
 --
 begin;
@@ -2371,40 +2389,6 @@ select f1, unique2, case when unique2 is null then f1 else 0 end
   0 |       0 |    0
 (1 row)
 
---
--- test proper positioning of one-time quals in EXISTS (8.4devel bug)
---
-prepare foo(bool) as
-select count(*) from tenk1 a left join tenk1 b
-on (a.unique2 = b.unique1 and exists
-(select 1 from tenk1 c where c.thousand = b.unique2 and $1));
-execute foo(true);
- count
-=======
--- test proper positioning of one-time quals in EXISTS (8.4devel bug)
---
-prepare foo(bool) as
-  select count(*) from tenk1 a left join tenk1 b
-    on (a.unique2 = b.unique1 and exists
-        (select 1 from tenk1 c where c.thousand = b.unique2 and $1));
-execute foo(true);
- count 
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
--------
- 10000
-(1 row)
-
-execute foo(false);
-<<<<<<< HEAD
- count
-=======
- count 
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
--------
- 10000
-(1 row)
-
-<<<<<<< HEAD
 --
 -- test NULL behavior of whole-row Vars, per bug #5025
 --
@@ -2476,5 +2460,3 @@ order by 1,2;
  4567890123456789 | 4567890123456789 | 4567890123456789 | 42
 (8 rows)
 
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805

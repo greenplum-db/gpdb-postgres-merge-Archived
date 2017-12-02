@@ -501,7 +501,16 @@ where a.unique1 = 42 and
       ((b.unique2 is null and a.ten = 2) or b.hundred = 3);
 
 --
-<<<<<<< HEAD
+-- test proper positioning of one-time quals in EXISTS (8.4devel bug)
+--
+prepare foo(bool) as
+  select count(*) from tenk1 a left join tenk1 b
+    on (a.unique2 = b.unique1 and exists
+        (select 1 from tenk1 c where c.thousand = b.unique2 and $1));
+execute foo(true);
+execute foo(false);
+
+--
 -- test for sane behavior with noncanonical merge clauses, per bug #4926
 --
 
@@ -572,13 +581,3 @@ select * from
 where
   1 = (select 1 from int8_tbl t3 where ss.y is not null limit 1)
 order by 1,2;
-=======
--- test proper positioning of one-time quals in EXISTS (8.4devel bug)
---
-prepare foo(bool) as
-  select count(*) from tenk1 a left join tenk1 b
-    on (a.unique2 = b.unique1 and exists
-        (select 1 from tenk1 c where c.thousand = b.unique2 and $1));
-execute foo(true);
-execute foo(false);
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
