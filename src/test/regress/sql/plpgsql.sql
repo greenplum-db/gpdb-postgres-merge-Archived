@@ -2949,7 +2949,63 @@ select * from tftest(10);
 
 drop function tftest(int);
 
-<<<<<<< HEAD
+create or replace function rttest()
+returns setof int as $$
+declare rc int;
+begin
+  return query values(10),(20);
+  get diagnostics rc = row_count;
+  raise notice '% %', found, rc;
+  return query select * from (values(10),(20)) f(a) where false;
+  get diagnostics rc = row_count;
+  raise notice '% %', found, rc;
+  return query execute 'values(10),(20)';
+  get diagnostics rc = row_count;
+  raise notice '% %', found, rc;
+  return query execute 'select * from (values(10),(20)) f(a) where false';
+  get diagnostics rc = row_count;
+  raise notice '% %', found, rc;
+end;
+$$ language plpgsql;
+
+select * from rttest();
+
+drop function rttest();
+
+-- Test for proper cleanup at subtransaction exit.  This example
+-- exposed a bug in PG 8.2.
+
+CREATE FUNCTION leaker_1(fail BOOL) RETURNS INTEGER AS $$
+DECLARE
+  v_var INTEGER;
+BEGIN
+  BEGIN
+    v_var := (leaker_2(fail)).error_code;
+  EXCEPTION
+    WHEN others THEN RETURN 0;
+  END;
+  RETURN 1;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE FUNCTION leaker_2(fail BOOL, OUT error_code INTEGER, OUT new_id INTEGER)
+  RETURNS RECORD AS $$
+BEGIN
+  IF fail THEN
+    RAISE EXCEPTION 'fail ...';
+  END IF;
+  error_code := 1;
+  new_id := 1;
+  RETURN;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT * FROM leaker_1(false);
+SELECT * FROM leaker_1(true);
+
+DROP FUNCTION leaker_1(bool);
+DROP FUNCTION leaker_2(bool);
+
 -- Test for appropriate cleanup of non-simple expression evaluations
 -- (bug in all versions prior to August 2010)
 
@@ -3032,106 +3088,6 @@ rollback;
 drop function error2(p_name_table text);
 drop function error1(text);
 
--- Test anonymous code blocks.
-
-DO $$
-DECLARE r record;
-BEGIN
-    FOR r IN SELECT rtrim(roomno) AS roomno, comment FROM Room ORDER BY roomno
-    LOOP
-        RAISE NOTICE '%, %', r.roomno, r.comment;
-    END LOOP;
-END$$;
-
--- these are to check syntax error reporting
-DO LANGUAGE plpgsql $$begin return 1; end$$;
-
-DO $$
-DECLARE r record;
-BEGIN
-    FOR r IN SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomno
-    LOOP
-        RAISE NOTICE '%, %', r.roomno, r.comment;
-    END LOOP;
-END$$;
-
--- Check handling of errors thrown from/into anonymous code blocks.
-do $outer$
-begin
-  for i in 1..10 loop
-   begin
-    execute $ex$
-      do $$
-      declare x int = 0;
-      begin
-        x := 1 / x;
-      end;
-      $$;
-    $ex$;
-  exception when division_by_zero then
-    raise notice 'caught division by zero';
-  end;
-  end loop;
-end;
-$outer$;
-=======
-create or replace function rttest()
-returns setof int as $$
-declare rc int;
-begin
-  return query values(10),(20);
-  get diagnostics rc = row_count;
-  raise notice '% %', found, rc;
-  return query select * from (values(10),(20)) f(a) where false;
-  get diagnostics rc = row_count;
-  raise notice '% %', found, rc;
-  return query execute 'values(10),(20)';
-  get diagnostics rc = row_count;
-  raise notice '% %', found, rc;
-  return query execute 'select * from (values(10),(20)) f(a) where false';
-  get diagnostics rc = row_count;
-  raise notice '% %', found, rc;
-end;
-$$ language plpgsql;
-
-select * from rttest();
-
-drop function rttest();
-
--- Test for proper cleanup at subtransaction exit.  This example
--- exposed a bug in PG 8.2.
-
-CREATE FUNCTION leaker_1(fail BOOL) RETURNS INTEGER AS $$
-DECLARE
-  v_var INTEGER;
-BEGIN
-  BEGIN
-    v_var := (leaker_2(fail)).error_code;
-  EXCEPTION
-    WHEN others THEN RETURN 0;
-  END;
-  RETURN 1;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE FUNCTION leaker_2(fail BOOL, OUT error_code INTEGER, OUT new_id INTEGER)
-  RETURNS RECORD AS $$
-BEGIN
-  IF fail THEN
-    RAISE EXCEPTION 'fail ...';
-  END IF;
-  error_code := 1;
-  new_id := 1;
-  RETURN;
-END;
-$$ LANGUAGE plpgsql;
-
-SELECT * FROM leaker_1(false);
-SELECT * FROM leaker_1(true);
-
-DROP FUNCTION leaker_1(bool);
-DROP FUNCTION leaker_2(bool);
-
 -- Test handling of string literals.
 
 set standard_conforming_strings = off;
@@ -3175,4 +3131,46 @@ $$ language plpgsql;
 select strtest();
 
 drop function strtest();
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+
+-- Test anonymous code blocks.
+
+DO $$
+DECLARE r record;
+BEGIN
+    FOR r IN SELECT rtrim(roomno) AS roomno, comment FROM Room ORDER BY roomno
+    LOOP
+        RAISE NOTICE '%, %', r.roomno, r.comment;
+    END LOOP;
+END$$;
+
+-- these are to check syntax error reporting
+DO LANGUAGE plpgsql $$begin return 1; end$$;
+
+DO $$
+DECLARE r record;
+BEGIN
+    FOR r IN SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomno
+    LOOP
+        RAISE NOTICE '%, %', r.roomno, r.comment;
+    END LOOP;
+END$$;
+
+-- Check handling of errors thrown from/into anonymous code blocks.
+do $outer$
+begin
+  for i in 1..10 loop
+   begin
+    execute $ex$
+      do $$
+      declare x int = 0;
+      begin
+        x := 1 / x;
+      end;
+      $$;
+    $ex$;
+  exception when division_by_zero then
+    raise notice 'caught division by zero';
+  end;
+  end loop;
+end;
+$outer$;

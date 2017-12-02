@@ -2788,31 +2788,6 @@ _readVariableSetStmt(void)
 	READ_DONE();
 }
 
-
-#ifndef COMPILING_BINARY_FUNCS
-static CreateTrigStmt *
-_readCreateTrigStmt(void)
-{
-	READ_LOCALS(CreateTrigStmt);
-
-	READ_STRING_FIELD(trigname);
-	READ_NODE_FIELD(relation);
-	READ_NODE_FIELD(funcname);
-	READ_NODE_FIELD(args);
-	READ_BOOL_FIELD(before);
-	READ_BOOL_FIELD(row);
-	READ_INT_FIELD(events);
-	READ_BOOL_FIELD(isconstraint);
-	READ_BOOL_FIELD(deferrable);
-	READ_BOOL_FIELD(initdeferred);
-	READ_NODE_FIELD(constrrel);
-	READ_OID_FIELD(trigOid);
-
-	READ_DONE();
-}
-#endif /* COMPILING_BINARY_FUNCS */
-
-
 static TableValueExpr *
 _readTableValueExpr(void)
 {
@@ -3043,8 +3018,6 @@ parseNodeString(void)
 		return_value = _readCreateSeqStmt();
 	else if (MATCHX("CREATESTMT"))
 		return_value = _readCreateStmt();
-	else if (MATCHX("CREATETRIGSTMT"))
-		return_value = _readCreateTrigStmt();
 	else if (MATCHX("CURSORPOSINFO"))
 		return_value = _readCursorPosInfo();
 	else if (MATCHX("DEFELEM"))

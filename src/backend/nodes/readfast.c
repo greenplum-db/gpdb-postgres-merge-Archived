@@ -2394,7 +2394,7 @@ _readCreateTrigStmt(void)
 	READ_NODE_FIELD(args);
 	READ_BOOL_FIELD(before);
 	READ_BOOL_FIELD(row);
-	READ_INT16_FIELD(events);
+	READ_INT_FIELD(events);
 	READ_BOOL_FIELD(isconstraint);
 	READ_BOOL_FIELD(deferrable);
 	READ_BOOL_FIELD(initdeferred);
