@@ -64,6 +64,12 @@ select b from orca.r group by b having  count(*) <= avg(a) + (select count(*) fr
 select sum(a) from orca.r group by b having count(*) > 2 order by b+1;
 select sum(a) from orca.r group by b having count(*) > 2 order by b+1;
 
+-- test interruption requests to optimization
+CREATE EXTENSION IF NOT EXISTS gp_inject_fault;
+select gp_inject_fault('opt_relcache_translator_catalog_access', 'reset', 1);
+select gp_inject_fault('opt_relcache_translator_catalog_access', 'interrupt', 1);
+select count(*) from orca.s;
+
 -- constants
 
 select 0.001::numeric from orca.r;
@@ -1346,7 +1352,7 @@ EXPLAIN SELECT * FROM btree_test WHERE a in ('1', '2', 47);
 -- Test Bitmap index scan with in list
 CREATE TABLE bitmap_test as SELECT * FROM generate_series(1,100) as a distributed randomly;
 CREATE INDEX bitmap_index ON bitmap_test USING BITMAP(a);
-EXPLAIN SELECT * FROM bitmap_test WHERE a in (select 1);
+EXPLAIN SELECT * FROM bitmap_test WHERE a in (1);
 EXPLAIN SELECT * FROM bitmap_test WHERE a in (1, 47);
 EXPLAIN SELECT * FROM bitmap_test WHERE a in ('2', 47);
 EXPLAIN SELECT * FROM bitmap_test WHERE a in ('1', '2');

@@ -980,17 +980,15 @@ validate_and_adjust_options(StdRdOptions *result,
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("compresstype can\'t be used with compresslevel 0")));
-		if (result->compresslevel < 0 || result->compresslevel > 9)
+		if (result->compresslevel < 0)
 		{
 			if (validate)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("compresslevel=%d is out of range (should be "
-								"between 0 and 9)",
+						 errmsg("compresslevel=%d is out of range (should be positive)",
 								result->compresslevel)));
 
-			result->compresslevel = setDefaultCompressionLevel(
-															   result->compresstype);
+			result->compresslevel = setDefaultCompressionLevel(result->compresstype);
 		}
 
 		/*
@@ -1001,6 +999,36 @@ validate_and_adjust_options(StdRdOptions *result,
 		if (result->compresslevel > 0 && !result->compresstype)
 			result->compresstype = pstrdup(AO_DEFAULT_COMPRESSTYPE);
 
+		/* Check upper bound of compresslevel for each compression type */
+
+		if (result->compresstype &&
+			(pg_strcasecmp(result->compresstype, "zlib") == 0) &&
+			(result->compresslevel > 9))
+		{
+			if (validate)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("compresslevel=%d is out of range for zlib "
+								"(should be in the range 1 to 9)",
+								result->compresslevel)));
+
+			result->compresslevel = setDefaultCompressionLevel(result->compresstype);
+		}
+
+		if (result->compresstype &&
+			(pg_strcasecmp(result->compresstype, "zstd") == 0) &&
+			(result->compresslevel > 19))
+		{
+			if (validate)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("compresslevel=%d is out of range for zstd "
+								"(should be in the range 1 to 19)",
+								result->compresslevel)));
+
+			result->compresslevel = setDefaultCompressionLevel(result->compresstype);
+		}
+
 		if (result->compresstype &&
 			(pg_strcasecmp(result->compresstype, "quicklz") == 0) &&
 			(result->compresslevel != 1))
@@ -1008,12 +1036,11 @@ validate_and_adjust_options(StdRdOptions *result,
 			if (validate)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("compresslevel=%d is out of range for "
-								"quicklz (should be 1)",
+						 errmsg("compresslevel=%d is out of range for quicklz "
+								"(should be 1)",
 								result->compresslevel)));
 
-			result->compresslevel = setDefaultCompressionLevel(
-															   result->compresstype);
+			result->compresslevel = setDefaultCompressionLevel(result->compresstype);
 		}
 
 		if (result->compresstype &&
@@ -1023,12 +1050,11 @@ validate_and_adjust_options(StdRdOptions *result,
 			if (validate)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("compresslevel=%d is out of range for rle_type"
-								" (should be in the range 1 to 4)",
+						 errmsg("compresslevel=%d is out of range for rle_type "
+								"(should be in the range 1 to 4)",
 								result->compresslevel)));
 
-			result->compresslevel = setDefaultCompressionLevel(
-															   result->compresstype);
+			result->compresslevel = setDefaultCompressionLevel(result->compresstype);
 		}
 	}
 
@@ -1096,8 +1122,7 @@ validate_and_adjust_options(StdRdOptions *result,
 
 	if (result->appendonly && result->compresstype != NULL)
 		if (result->compresslevel == AO_DEFAULT_COMPRESSLEVEL)
-			result->compresslevel = setDefaultCompressionLevel(
-															   result->compresstype);
+			result->compresslevel = setDefaultCompressionLevel(result->compresstype);
 }
 
 void
@@ -1189,9 +1214,9 @@ validateAppendOnlyRelOptions(bool ao,
 	if (comptype &&
 		(pg_strcasecmp(comptype, "quicklz") == 0 ||
 		 pg_strcasecmp(comptype, "zlib") == 0 ||
-		 pg_strcasecmp(comptype, "rle_type") == 0))
+		 pg_strcasecmp(comptype, "rle_type") == 0 ||
+		 pg_strcasecmp(comptype, "zstd") == 0))
 	{
-
 		if (!co &&
 			pg_strcasecmp(comptype, "rle_type") == 0)
 		{
@@ -1206,11 +1231,23 @@ validateAppendOnlyRelOptions(bool ao,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("compresstype cannot be used with compresslevel 0")));
 
-		if (complevel < 0 || complevel > 9)
+		if (comptype && (pg_strcasecmp(comptype, "zlib") == 0) &&
+			(complevel < 0 || complevel > 9))
+		{
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("compresslevel=%d is out of range (should be between 0 and 9)",
 							complevel)));
+		}
+
+		if (comptype && (pg_strcasecmp(comptype, "zstd") == 0) &&
+			(complevel < 0 || complevel > 19))
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("compresslevel=%d is out of range for zstd "
+							"(should be in the range 1 to 19)", complevel)));
+		}
 
 		if (comptype && (pg_strcasecmp(comptype, "quicklz") == 0) &&
 			(complevel != 1))
@@ -1221,7 +1258,7 @@ validateAppendOnlyRelOptions(bool ao,
 							"(should be 1)", complevel)));
 		}
 		if (comptype && (pg_strcasecmp(comptype, "rle_type") == 0) &&
-			(complevel > 4))
+			(complevel < 0 || complevel > 4))
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1255,7 +1292,7 @@ validateAppendOnlyRelOptions(bool ao,
 
 /*
  * if no compressor type was specified, we set to no compression (level 0)
- * otherwise default for both zlib, quicklz and RLE to level 1.
+ * otherwise default for both zlib, quicklz, zstd and RLE to level 1.
  */
 static int
 setDefaultCompressionLevel(char *compresstype)
