@@ -62,7 +62,7 @@ initScanDesc(BitmapHeapScanState *scanstate)
 {
 	Relation currentRelation = scanstate->ss.ss_currentRelation;
 	EState *estate = scanstate->ss.ps.state;
-	
+
 	if (scanstate->ss_currentScanDesc == NULL)
 	{
 		/*
@@ -170,10 +170,10 @@ BitmapHeapNext(BitmapHeapScanState *node)
 		if (estate->es_evTupleNull[scanrelid - 1])
 		{
 			ExecEagerFreeBitmapHeapScan(node);
-			
+
 			return ExecClearTuple(slot);
 		}
-		
+
 
 		ExecStoreHeapTuple(estate->es_evTuple[scanrelid - 1],
 						   slot, InvalidBuffer, false);
@@ -247,6 +247,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			else
 			{
 				tbmres = tbm_generic_iterate(tbmiterator);
+				node->tbmres = tbmres;
 				more = (tbmres != NULL);
 			}
 
@@ -446,10 +447,10 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 	 * Acquire pin on the target heap page, trading in any pin we held before.
 	 */
 	Assert(page < scan->rs_nblocks);
-	
+
 	// -------- MirroredLock ----------
 	MIRROREDLOCK_BUFMGR_LOCK;
-	
+
 	scan->rs_cbuf = ReleaseAndReadBuffer(scan->rs_cbuf,
 										 scan->rs_rd,
 										 page);
@@ -520,10 +521,10 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 	}
 
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	
+
 	MIRROREDLOCK_BUFMGR_UNLOCK;
 	// -------- MirroredLock ----------
-	
+
 	Assert(ntup <= MaxHeapTuplesPerPage);
 	scan->rs_ntuples = ntup;
 }
