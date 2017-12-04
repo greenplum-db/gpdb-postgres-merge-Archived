@@ -608,7 +608,6 @@ select * from outer_7597 where (f1, f2) not in (select * from inner_7597);
 (2 rows)
 
 --
-<<<<<<< HEAD
 -- Test case for premature memory release during hashing of subplan output
 --
 select '1'::text in (select '1'::name union all select '1'::name);
@@ -656,16 +655,3 @@ select * from int4_tbl o where (f1, f1) in
 (1 row)
 
 reset enable_hashjoin;
-=======
--- Test case for 8.3 "failed to locate grouping columns" bug
---
-create temp table t1 (f1 numeric(14,0), f2 varchar(30));
-select * from
-  (select distinct f1, f2, (select f2 from t1 x where x.f1 = up.f1) as fs
-   from t1 up) ss
-group by f1,f2,fs;
- f1 | f2 | fs 
-----+----+----
-(0 rows)
-
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805

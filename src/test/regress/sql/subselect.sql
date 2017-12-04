@@ -319,7 +319,6 @@ select * from
   (select distinct f1, f2, (select f2 from t1 x where x.f1 = up.f1) as fs
    from t1 up) ss
 group by f1,f2,fs;
-<<<<<<< HEAD
 
 --
 -- Test case for bug #5514 (mishandling of whole-row Vars in subselects)
@@ -394,5 +393,3 @@ explain select * from int4_tbl o where (f1, f1) in
 select * from int4_tbl o where (f1, f1) in
   (select f1, generate_series(1,2) / 10 g from int4_tbl i group by f1);
 reset enable_hashjoin;
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
