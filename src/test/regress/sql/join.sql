@@ -541,16 +541,6 @@ select f1, unique2, case when unique2 is null then f1 else 0 end
 
 
 --
--- test proper positioning of one-time quals in EXISTS (8.4devel bug)
---
-prepare foo(bool) as
-select count(*) from tenk1 a left join tenk1 b
-on (a.unique2 = b.unique1 and exists
-(select 1 from tenk1 c where c.thousand = b.unique2 and $1));
-execute foo(true);
-execute foo(false);
-
---
 -- test NULL behavior of whole-row Vars, per bug #5025
 --
 select t1.q2, count(t2.*)
