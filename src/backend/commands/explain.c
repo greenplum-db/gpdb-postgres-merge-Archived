@@ -1661,11 +1661,8 @@ explain_outNode(StringInfo str,
                  * for now, just omit the slice id.
                  */
             }
-
             appendStringInfoChar(str, '\n');
-			for (i = 0; i < indent; i++)
-				appendStringInfo(str, "  ");
-			appendStringInfo(str, "  %s\n", sp->plan_name);
+
 			for (i = 0; i < indent; i++)
 				appendStringInfo(str, "  ");
 			appendStringInfo(str, "    ->  ");
