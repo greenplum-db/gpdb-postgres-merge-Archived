@@ -650,6 +650,8 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 
 		if (pitem->abslevel == root->query_level)
 		{
+			splan->parParam = lappend_int(splan->parParam, paramid);
+
 			Node	   *arg;
 
 			/*
