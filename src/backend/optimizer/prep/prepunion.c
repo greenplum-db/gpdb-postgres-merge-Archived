@@ -1356,7 +1356,8 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		 */
 		if (parent_is_partitioned && !rel_is_leaf_partition(childOID))
 		{
-			heap_close(newrelation, lockmode);
+			if (childOID != parentOID)
+				heap_close(newrelation, lockmode);
 			continue;
 		}
 
