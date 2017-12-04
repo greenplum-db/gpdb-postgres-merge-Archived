@@ -637,10 +637,10 @@ stream_free(BMStreamOpaque *so)
 		if (so->entry != NULL)
 			pfree(so->entry);
 
-		pfree(s);
 		/* GPDB_84_MERGE_FIXME: this scan is supposed to be owned by the
 		 * StreamNode, but we're freeing it here... Something's not right. */
-		pfree(scan);
+		//pfree(scan);
+		//pfree(s);
 		pfree(so);
 	}
 }
