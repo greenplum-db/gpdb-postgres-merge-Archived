@@ -937,7 +937,10 @@ mdprefetch(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum)
 
 	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
 
-	(void) FilePrefetch(v->mdfd_vfd, seekpos, BLCKSZ);
+	if (forknum == MAIN_FORKNUM)
+		(void) FilePrefetch(v->mdmir_open.primaryFile, seekpos, BLCKSZ);
+	else
+		(void) FilePrefetch(v->mdfd_vfd, seekpos, BLCKSZ);
 #endif   /* USE_PREFETCH */
 }
 
