@@ -320,11 +320,7 @@ RESET ROLE;
  s6   | foreign_data_user | foo                  |                   |        | 16.0    | {host=a,dbname=b}
  s7   | foreign_data_user | foo                  |                   | oracle | 17.0    | {host=a,dbname=b}
  s8   | foreign_data_user | postgresql           |                   |        |         | {host=localhost,dbname=s8db}
-<<<<<<< HEAD
- st1  | regress_test_role | foo                  |                   |        |         | 
-=======
  t1   | regress_test_role | foo                  |                   |        |         | 
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 (9 rows)
 
 REVOKE USAGE ON FOREIGN DATA WRAPPER foo FROM regress_test_role;
@@ -348,13 +344,8 @@ CREATE SERVER t2 FOREIGN DATA WRAPPER foo;
  s6   | foreign_data_user | foo                  |                   |        | 16.0    | {host=a,dbname=b}
  s7   | foreign_data_user | foo                  |                   | oracle | 17.0    | {host=a,dbname=b}
  s8   | foreign_data_user | postgresql           |                   |        |         | {host=localhost,dbname=s8db}
-<<<<<<< HEAD
- st1  | regress_test_role | foo                  |                   |        |         | 
- st2  | regress_test_role | foo                  |                   |        |         | 
-=======
  t1   | regress_test_role | foo                  |                   |        |         | 
  t2   | regress_test_role | foo                  |                   |        |         | 
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 (10 rows)
 
 RESET ROLE;
@@ -385,13 +376,8 @@ GRANT USAGE ON FOREIGN SERVER s6 TO regress_test_role2 WITH GRANT OPTION;
                                                  : regress_test_role2=U*/foreign_data_user                      
  s7   | foreign_data_user | foo                  |                                         | oracle | 17.0    | {host=a,dbname=b}
  s8   | foreign_data_user | postgresql           |                                         |        |         | {host=localhost,dbname=s8db}
-<<<<<<< HEAD
- st1  | regress_test_role | foo                  |                                         |        |         | 
- st2  | regress_test_role | foo                  |                                         |        |         | 
-=======
  t1   | regress_test_role | foo                  |                                         |        |         | 
  t2   | regress_test_role | foo                  |                                         |        |         | 
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 (10 rows)
 
 SET ROLE regress_test_role;
@@ -441,13 +427,8 @@ access to foreign-data wrapper foo
                                                      : regress_test_role2=U*/foreign_data_user                      
  s7   | foreign_data_user     | foo                  |                                         | oracle | 17.0    | {host=a,dbname=b}
  s8   | foreign_data_user     | postgresql           |                                         |        |         | {dbname=db1,connect_timeout=30}
-<<<<<<< HEAD
- st1  | regress_test_role     | foo                  |                                         |        |         | 
- st2  | regress_test_role     | foo                  |                                         |        |         | 
-=======
  t1   | regress_test_role     | foo                  |                                         |        |         | 
  t2   | regress_test_role     | foo                  |                                         |        |         | 
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 (10 rows)
 
 -- DROP SERVER
@@ -467,13 +448,8 @@ NOTICE:  server "nonexistent" does not exist, skipping
  s6   | foreign_data_user     | foo
  s7   | foreign_data_user     | foo
  s8   | foreign_data_user     | postgresql
-<<<<<<< HEAD
- st1  | regress_test_role     | foo
- st2  | regress_test_role     | foo
-=======
  t1   | regress_test_role     | foo
  t2   | regress_test_role     | foo
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 (10 rows)
 
 SET ROLE regress_test_role;
@@ -492,13 +468,8 @@ RESET ROLE;
  s6   | foreign_data_user | foo
  s7   | foreign_data_user | foo
  s8   | foreign_data_user | postgresql
-<<<<<<< HEAD
- st1  | regress_test_role | foo
- st2  | regress_test_role | foo
-=======
  t1   | regress_test_role | foo
  t2   | regress_test_role | foo
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 (9 rows)
 
 ALTER SERVER s2 OWNER TO regress_test_role;
@@ -515,13 +486,8 @@ RESET ROLE;
  s6   | foreign_data_user | foo
  s7   | foreign_data_user | foo
  s8   | foreign_data_user | postgresql
-<<<<<<< HEAD
- st1  | regress_test_role | foo
- st2  | regress_test_role | foo
-=======
  t1   | regress_test_role | foo
  t2   | regress_test_role | foo
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 (8 rows)
 
 CREATE USER MAPPING FOR current_user SERVER s3;
@@ -547,13 +513,8 @@ NOTICE:  drop cascades to user mapping for foreign_data_user
  s6   | foreign_data_user | foo
  s7   | foreign_data_user | foo
  s8   | foreign_data_user | postgresql
-<<<<<<< HEAD
- st1  | regress_test_role | foo
- st2  | regress_test_role | foo
-=======
  t1   | regress_test_role | foo
  t2   | regress_test_role | foo
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 (7 rows)
 
 \deu
@@ -585,11 +546,7 @@ ERROR:  permission denied for foreign server s7
 CREATE USER MAPPING FOR public SERVER s8;                   -- ERROR
 ERROR:  must be owner of foreign server s8
 RESET ROLE;
-<<<<<<< HEAD
-ALTER SERVER st1 OWNER TO regress_test_indirect;
-=======
 ALTER SERVER t1 OWNER TO regress_test_indirect;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 SET ROLE regress_test_role;
 CREATE USER MAPPING FOR current_user SERVER t1 OPTIONS (username 'bob', password 'boo');
 CREATE USER MAPPING FOR public SERVER t1;
@@ -603,13 +560,8 @@ RESET ROLE;
  s5     | regress_test_role
  s6     | regress_test_role
  s8     | foreign_data_user
-<<<<<<< HEAD
- st1    | public
- st1    | regress_test_role
-=======
  t1     | public
  t1     | regress_test_role
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 (7 rows)
 
 -- ALTER USER MAPPING
@@ -638,13 +590,8 @@ RESET ROLE;
  s5     | regress_test_role | {modified=1}
  s6     | regress_test_role | {username=test}
  s8     | foreign_data_user | {password=public}
-<<<<<<< HEAD
- st1    | public            | {modified=1}
- st1    | regress_test_role | {username=bob,password=boo}
-=======
  t1     | public            | {modified=1}
  t1     | regress_test_role | {username=bob,password=boo}
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 (7 rows)
 
 -- DROP USER MAPPING
@@ -676,13 +623,8 @@ DROP SERVER s7;
  s6     | regress_test_role
  s8     | foreign_data_user
  s8     | public
-<<<<<<< HEAD
- st1    | public
- st1    | regress_test_role
-=======
  t1     | public
  t1     | regress_test_role
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 (8 rows)
 
 -- Information schema
@@ -707,13 +649,8 @@ SELECT * FROM information_schema.foreign_servers ORDER BY 1, 2;
  regression             | s5                  | regression                   | foo                       |                     | 15.0                   | regress_test_role
  regression             | s6                  | regression                   | foo                       |                     | 16.0                   | regress_test_indirect
  regression             | s8                  | regression                   | postgresql                |                     |                        | foreign_data_user
-<<<<<<< HEAD
- regression             | st1                 | regression                   | foo                       |                     |                        | regress_test_indirect
- regression             | st2                 | regression                   | foo                       |                     |                        | regress_test_role
-=======
  regression             | t1                  | regression                   | foo                       |                     |                        | regress_test_indirect
  regression             | t2                  | regression                   | foo                       |                     |                        | regress_test_role
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 (6 rows)
 
 SELECT * FROM information_schema.foreign_server_options ORDER BY 1, 2, 3;
@@ -734,17 +671,10 @@ SELECT * FROM information_schema.user_mappings ORDER BY lower(authorization_iden
  foreign_data_user        | regression             | s8
  PUBLIC                   | regression             | s4
  PUBLIC                   | regression             | s8
-<<<<<<< HEAD
- PUBLIC                   | regression             | st1
- regress_test_role        | regression             | s5
- regress_test_role        | regression             | s6
- regress_test_role        | regression             | st1
-=======
  PUBLIC                   | regression             | t1
  regress_test_role        | regression             | s5
  regress_test_role        | regression             | s6
  regress_test_role        | regression             | t1
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 (8 rows)
 
 SELECT * FROM information_schema.user_mapping_options ORDER BY lower(authorization_identifier), 2, 3, 4;
@@ -752,19 +682,11 @@ SELECT * FROM information_schema.user_mapping_options ORDER BY lower(authorizati
 --------------------------+------------------------+---------------------+-------------+--------------
  foreign_data_user        | regression             | s8                  | password    | public
  PUBLIC                   | regression             | s4                  | mapping     | is public
-<<<<<<< HEAD
- PUBLIC                   | regression             | st1                 | modified    | 1
- regress_test_role        | regression             | s5                  | modified    | 1
- regress_test_role        | regression             | s6                  | username    | test
- regress_test_role        | regression             | st1                 | password    | boo
- regress_test_role        | regression             | st1                 | username    | bob
-=======
  PUBLIC                   | regression             | t1                  | modified    | 1
  regress_test_role        | regression             | s5                  | modified    | 1
  regress_test_role        | regression             | s6                  | username    | test
  regress_test_role        | regression             | t1                  | password    | boo
  regress_test_role        | regression             | t1                  | username    | bob
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 (7 rows)
 
 SELECT * FROM information_schema.usage_privileges WHERE object_type LIKE 'FOREIGN%' ORDER BY 1, 2, 3, 4, 5;
@@ -1032,11 +954,7 @@ NOTICE:  drop cascades to user mapping for public
 DROP SERVER t2;
 DROP USER MAPPING FOR regress_test_role SERVER s6;
 DROP FOREIGN DATA WRAPPER foo CASCADE;
-<<<<<<< HEAD
-NOTICE:  drop cascades to 4 other objects
-=======
 NOTICE:  drop cascades to 5 other objects
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 DETAIL:  drop cascades to server s4
 drop cascades to user mapping for foreign_data_user
 drop cascades to server s6

@@ -405,12 +405,8 @@ select * from rtest_admin;
 --
 insert into rtest_emp values ('wiecc', '5000.00');
 insert into rtest_emp values ('gates', '80000.00');
-<<<<<<< HEAD
-update rtest_emp set ename = 'wiecx' where ename = 'wiech';
-ERROR:  Cannot parallelize an UPDATE statement that updates the distribution columns
-=======
 update rtest_emp set ename = 'wiecx' where ename = 'wiecc';
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+ERROR:  Cannot parallelize an UPDATE statement that updates the distribution columns
 update rtest_emp set ename = 'wieck', salary = '6000.00' where ename = 'wiecx';
 ERROR:  Cannot parallelize an UPDATE statement that updates the distribution columns
 update rtest_emp set salary = '7000.00' where ename = 'wieck';
@@ -420,15 +416,8 @@ select ename, who = current_user as "matches user", action, newsal, oldsal from 
 ----------------------+--------------+------------+------------+------------
  gates                | t            | fired      |      $0.00 | $80,000.00
  gates                | t            | hired      | $80,000.00 |      $0.00
-<<<<<<< HEAD
- wiech                | t            | hired      |  $5,000.00 |      $0.00
-(3 rows)
-=======
  wiecc                | t            | hired      |  $5,000.00 |      $0.00
- wieck                | t            | honored    |  $6,000.00 |  $5,000.00
- wieck                | t            | honored    |  $7,000.00 |  $6,000.00
-(5 rows)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+(3 rows)
 
 insert into rtest_empmass values ('meyer', '4000.00');
 insert into rtest_empmass values ('maier', '5000.00');
@@ -442,15 +431,8 @@ select ename, who = current_user as "matches user", action, newsal, oldsal from 
  maier                | t            | hired      |  $5,000.00 |      $0.00
  mayr                 | t            | hired      |  $6,000.00 |      $0.00
  meyer                | t            | hired      |  $4,000.00 |      $0.00
-<<<<<<< HEAD
- wiech                | t            | hired      |  $5,000.00 |      $0.00
-(6 rows)
-=======
  wiecc                | t            | hired      |  $5,000.00 |      $0.00
- wieck                | t            | honored    |  $6,000.00 |  $5,000.00
- wieck                | t            | honored    |  $7,000.00 |  $6,000.00
-(8 rows)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+(6 rows)
 
 update rtest_empmass set salary = salary + '1000.00';
 update rtest_emp set salary = rtest_empmass.salary from rtest_empmass where rtest_emp.ename = rtest_empmass.ename;
@@ -465,15 +447,8 @@ select ename, who = current_user as "matches user", action, newsal, oldsal from 
  mayr                 | t            | honored    |  $7,000.00 |  $6,000.00
  meyer                | t            | hired      |  $4,000.00 |      $0.00
  meyer                | t            | honored    |  $5,000.00 |  $4,000.00
-<<<<<<< HEAD
- wiech                | t            | hired      |  $5,000.00 |      $0.00
-(9 rows)
-=======
  wiecc                | t            | hired      |  $5,000.00 |      $0.00
- wieck                | t            | honored    |  $6,000.00 |  $5,000.00
- wieck                | t            | honored    |  $7,000.00 |  $6,000.00
-(11 rows)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+(9 rows)
 
 delete from rtest_emp using rtest_empmass where rtest_emp.ename = rtest_empmass.ename;
 select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
@@ -490,15 +465,8 @@ select ename, who = current_user as "matches user", action, newsal, oldsal from 
  meyer                | t            | fired      |      $0.00 |  $5,000.00
  meyer                | t            | hired      |  $4,000.00 |      $0.00
  meyer                | t            | honored    |  $5,000.00 |  $4,000.00
-<<<<<<< HEAD
- wiech                | t            | hired      |  $5,000.00 |      $0.00
-(12 rows)
-=======
  wiecc                | t            | hired      |  $5,000.00 |      $0.00
- wieck                | t            | honored    |  $6,000.00 |  $5,000.00
- wieck                | t            | honored    |  $7,000.00 |  $6,000.00
-(14 rows)
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+(12 rows)
 
 --
 -- Multiple cascaded qualified instead rule test
@@ -1301,15 +1269,9 @@ drop table cchild;
 --
 -- Check that ruleutils are working
 --
-<<<<<<< HEAD
 SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schema' AND viewname <> 'pg_roles' AND viewname <> 'gp_pgdatabase' AND viewname <> 'pg_locks' AND viewname <> 'gp_max_external_files' AND viewname <> 'pg_resqueue_status' AND viewname <> 'pg_stat_resqueues' ORDER BY viewname;
-         viewname         |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           definition                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
---------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-=======
-SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schema' ORDER BY viewname;
          viewname         |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              definition                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
 --------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
  iexit                    | SELECT ih.name, ih.thepath, interpt_pp(ih.thepath, r.thepath) AS exit FROM ihighway ih, ramp r WHERE (ih.thepath ## r.thepath);
  pg_cursors               | SELECT c.name, c.statement, c.is_holdable, c.is_binary, c.is_scrollable, c.creation_time FROM pg_cursor() c(name, statement, is_holdable, is_binary, is_scrollable, creation_time);
  pg_group                 | SELECT pg_authid.rolname AS groname, pg_authid.oid AS grosysid, ARRAY(SELECT pg_auth_members.member FROM pg_auth_members WHERE (pg_auth_members.roleid = pg_authid.oid)) AS grolist FROM pg_authid WHERE (NOT pg_authid.rolcanlogin);
