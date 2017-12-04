@@ -1242,12 +1242,8 @@ select oid > 0, * from altstartwith;
 drop table altstartwith;
 -- Check inheritance cases
 create table altwithoid (col integer) with oids;
-<<<<<<< HEAD
 NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
--- Inherits parents oid column
-=======
 -- Inherits parents oid column anyway
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 create table altinhoid () inherits (altwithoid) without oids;
 NOTICE:  Table has parent, setting distribution columns to match parent table
 NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
