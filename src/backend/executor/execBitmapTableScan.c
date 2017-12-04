@@ -385,5 +385,8 @@ BitmapTableScanReScan(BitmapTableScanState *node, ExprContext *exprCtxt)
 {
 	ScanState *scanState = &node->ss;
 	DynamicScan_ReScan(scanState, exprCtxt);
+
+	freeBitmapState(node);
+
 	ExecReScan(outerPlanState(node), exprCtxt);
 }
