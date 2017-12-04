@@ -2779,6 +2779,17 @@ _readDropUserMappingStmt(void)
 	READ_DONE();
 }
 
+static AccessPriv *
+_readAccessPriv(void)
+{
+	READ_LOCALS(AccessPriv);
+
+	READ_STRING_FIELD(priv_name);
+	READ_NODE_FIELD(cols);
+
+	READ_DONE();
+}
+
 static Node *
 _readValue(NodeTag nt)
 {
@@ -3186,6 +3197,9 @@ readNodeBinary(void)
 				break;
 			case T_GrantStmt:
 				return_value = _readGrantStmt();
+				break;
+			case T_AccessPriv:
+				return_value = _readAccessPriv();
 				break;
 			case T_PrivGrantee:
 				return_value = _readPrivGrantee();

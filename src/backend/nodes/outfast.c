@@ -1218,6 +1218,15 @@ _outDropUserMappingStmt(StringInfo str, DropUserMappingStmt *node)
 	WRITE_BOOL_FIELD(missing_ok);
 }
 
+static void
+_outAccessPriv(StringInfo str, AccessPriv *node)
+{
+	WRITE_NODE_TYPE("ACCESSPRIV");
+
+	WRITE_STRING_FIELD(priv_name);
+	WRITE_NODE_FIELD(cols);
+}
+
 /*
  * _outNode -
  *	  converts a Node into binary string and append it to 'str'
@@ -1618,6 +1627,9 @@ _outNode(StringInfo str, void *obj)
 
 			case T_GrantStmt:
 				_outGrantStmt(str, obj);
+				break;
+			case T_AccessPriv:
+				_outAccessPriv(str, obj);
 				break;
 			case T_PrivGrantee:
 				_outPrivGrantee(str, obj);
