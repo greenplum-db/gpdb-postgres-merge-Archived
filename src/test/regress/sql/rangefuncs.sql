@@ -345,12 +345,9 @@ select * from tt;
 -- which is expected.
 select * from tt_log;
 
-<<<<<<< HEAD
 -- end of disabled RETURNING tests.
 -- end_ignore
 
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 -- test case for a whole-row-variable bug
 create function foo1(n integer, out a text, out b text)
   returns setof record
@@ -376,26 +373,6 @@ select array_to_set(array['one', 'two']);
 select * from array_to_set(array['one', 'two']) as t(f1 int,f2 text);
 select * from array_to_set(array['one', 'two']); -- fail
 
-<<<<<<< HEAD
--- check handling of a SQL function with multiple OUT params (bug #5777)
-
-create or replace function foobar(out integer, out numeric) as
-$$ select (1, 2.1) $$ language sql;
-
-select * from foobar();
-
-create or replace function foobar(out integer, out numeric) as
-$$ select (1, 2) $$ language sql;
-
-select * from foobar();  -- fail
-
-create or replace function foobar(out integer, out numeric) as
-$$ select (1, 2.1, 3) $$ language sql;
-
-select * from foobar();  -- fail
-
-drop function foobar();
-=======
 create temp table foo(f1 int8, f2 int8);
 
 create function testfoo() returns record as $$
@@ -417,4 +394,22 @@ select * from testfoo() as t(f1 int8,f2 int8);
 select * from testfoo(); -- fail
 
 drop function testfoo();
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+
+-- check handling of a SQL function with multiple OUT params (bug #5777)
+
+create or replace function foobar(out integer, out numeric) as
+$$ select (1, 2.1) $$ language sql;
+
+select * from foobar();
+
+create or replace function foobar(out integer, out numeric) as
+$$ select (1, 2) $$ language sql;
+
+select * from foobar();  -- fail
+
+create or replace function foobar(out integer, out numeric) as
+$$ select (1, 2.1, 3) $$ language sql;
+
+select * from foobar();  -- fail
+
+drop function foobar();

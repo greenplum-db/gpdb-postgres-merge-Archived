@@ -387,11 +387,7 @@ select f3, myaggp03b(*) from t group by f3 order by f3;
  c  | {}
 (3 rows)
 
-<<<<<<< HEAD
-select f3, array_sort(myaggp05a(f1)) as myaggp05a from t group by f3;
-=======
-select f3, myaggp05a(f1) from t group by f3 order by f3;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+select f3, array_sort(myaggp05a(f1)) as myaggp05a from t group by f3 order by f3;
  f3 | myaggp05a 
 ----+-----------
  a  | {1,2,3}
@@ -431,11 +427,7 @@ select f3, myaggp09b(f1) from t group by f3 order by f3;
  c  | {}
 (3 rows)
 
-<<<<<<< HEAD
-select f3, array_sort(myaggp10a(f1)) as myaggp10a from t group by f3;
-=======
-select f3, myaggp10a(f1) from t group by f3 order by f3;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+select f3, array_sort(myaggp10a(f1)) as myaggp10a from t group by f3 order by f3;
  f3 | myaggp10a 
 ----+-----------
  a  | {1,2,3}
@@ -443,11 +435,7 @@ select f3, myaggp10a(f1) from t group by f3 order by f3;
  c  | {1,2}
 (3 rows)
 
-<<<<<<< HEAD
-select f3, array_sort(myaggp10b(f1)) as myaggp10b from t group by f3;
-=======
-select f3, myaggp10b(f1) from t group by f3 order by f3;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+select f3, array_sort(myaggp10b(f1)) as myaggp10b from t group by f3 order by f3;
  f3 | myaggp10b 
 ----+-----------
  a  | {1,2,3}
@@ -455,11 +443,7 @@ select f3, myaggp10b(f1) from t group by f3 order by f3;
  c  | {1,2}
 (3 rows)
 
-<<<<<<< HEAD
-select f3, array_sort(myaggp20a(f1)) as myaggp20a from t group by f3;
-=======
-select f3, myaggp20a(f1) from t group by f3 order by f3;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+select f3, array_sort(myaggp20a(f1)) as myaggp20a from t group by f3 order by f3;
  f3 | myaggp20a 
 ----+-----------
  a  | {1,2,3}
@@ -467,11 +451,7 @@ select f3, myaggp20a(f1) from t group by f3 order by f3;
  c  | {1,2}
 (3 rows)
 
-<<<<<<< HEAD
-select f3, array_sort(myaggp20b(f1)) as myaggp20b from t group by f3;
-=======
-select f3, myaggp20b(f1) from t group by f3 order by f3;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+select f3, array_sort(myaggp20b(f1)) as myaggp20b from t group by f3 order by f3;
  f3 | myaggp20b 
 ----+-----------
  a  | {1,2,3}
@@ -503,11 +483,7 @@ select f3, myaggn03a(*) from t group by f3 order by f3;
  c  | {}
 (3 rows)
 
-<<<<<<< HEAD
-select f3, array_sort(myaggn05a(f1)) as myaggn05a from t group by f3;
-=======
-select f3, myaggn05a(f1) from t group by f3 order by f3;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+select f3, array_sort(myaggn05a(f1)) as myaggn05a from t group by f3 order by f3;
  f3 | myaggn05a 
 ----+-----------
  a  | {1,2,3}
@@ -515,11 +491,7 @@ select f3, myaggn05a(f1) from t group by f3 order by f3;
  c  | {1,2}
 (3 rows)
 
-<<<<<<< HEAD
-select f3, array_sort(myaggn05b(f1)) as myaggn05b from t group by f3;
-=======
-select f3, myaggn05b(f1) from t group by f3 order by f3;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+select f3, array_sort(myaggn05b(f1)) as myaggn05b from t group by f3 order by f3;
  f3 | myaggn05b 
 ----+-----------
  a  | {1,2,3}
@@ -567,11 +539,7 @@ select f3, myaggn09a(f1) from t group by f3 order by f3;
  c  | {}
 (3 rows)
 
-<<<<<<< HEAD
-select f3, array_sort(myaggn10a(f1)) as myaggn10a from t group by f3;
-=======
-select f3, myaggn10a(f1) from t group by f3 order by f3;
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
+select f3, array_sort(myaggn10a(f1)) as myaggn10a from t group by f3 order by f3;
  f3 | myaggn10a 
 ----+-----------
  a  | {1,2,3}
