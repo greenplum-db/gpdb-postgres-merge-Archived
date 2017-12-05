@@ -9670,8 +9670,20 @@ CreateCheckPoint(int flags)
 	uint32		_logId;
 	uint32		_logSeg;
 	VirtualTransactionId *vxids;
-	int     nvxids;
-	bool resync_to_sync_transition = (flags & CHECKPOINT_RESYNC_TO_INSYNC_TRANSITION) != 0;
+	int     	nvxids;
+	bool		resync_to_sync_transition;
+
+	/*
+	 * Only call filerep sync transition when not running as QD or in
+	 * utility mode. With the altered startup procedure the checkpointer
+	 * was calling filerep sync in PMModeMaster where we don't have a
+	 * filerep shmem segment. GPDB_84_MERGE_FIXME: does this make sense
+	 * (or at least enough sense given the future fate of filerep)?
+	 */
+	if (Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_UTILITY)
+		resync_to_sync_transition = false;
+	else
+		resync_to_sync_transition = (flags & CHECKPOINT_RESYNC_TO_INSYNC_TRANSITION) != 0;
 
 	/*
 	 * An end-of-recovery checkpoint is really a shutdown checkpoint, just

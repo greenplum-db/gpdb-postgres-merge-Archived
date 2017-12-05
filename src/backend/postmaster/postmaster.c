@@ -4521,7 +4521,7 @@ do_reaper()
 			 * easiest way to deal with that is to ensure it's always
 			 * running.
 			 *
-			 * In GPDB, it's actually the checkpointer process that we case
+			 * In GPDB, it's actually the checkpointer process that we care
 			 * about. So launch that too.
 			 */
 			if (BgWriterPID == 0)
