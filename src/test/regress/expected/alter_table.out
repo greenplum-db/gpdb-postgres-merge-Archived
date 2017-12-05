@@ -1233,6 +1233,7 @@ select * from altstartwith;
 (1 row)
 
 alter table altstartwith set with oids;
+NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
 select oid > 0, * from altstartwith;
  ?column? | col 
 ----------+-----
@@ -1299,6 +1300,7 @@ NOTICE:  drop cascades to table altinhoid
 create table altwithoid (col integer) without oids;
 -- child can have local oid column
 create table altinhoid () inherits (altwithoid) with oids;
+NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
 insert into altinhoid values (1);
 select oid > 0, * from altwithoid; -- fails
 ERROR:  column "oid" does not exist
@@ -1312,6 +1314,7 @@ select oid > 0, * from altinhoid;
 
 alter table altwithoid set with oids;
 NOTICE:  merging definition of column "oid" for child "altinhoid"
+NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
 select oid > 0, * from altwithoid;
  ?column? | col 
 ----------+-----
