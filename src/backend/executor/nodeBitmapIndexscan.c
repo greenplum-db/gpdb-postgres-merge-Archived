@@ -122,6 +122,10 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 	if (node->ss.ps.instrument)
 		InstrStopNode(node->ss.ps.instrument, 1 /* nTuples */);
 
+	if (NULL == bitmap)
+		/* XXX should we use less than work_mem for this? */
+		bitmap = (Node*) tbm_create(work_mem * 1024L);
+
 	return (Node *) bitmap;
 }
 

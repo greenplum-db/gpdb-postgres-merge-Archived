@@ -213,13 +213,11 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	{
 		tbm = (Node *) MultiExecProcNode(outerPlanState(node));
 
-		if (tbm != NULL && (!(IsA(tbm, TIDBitmap) || IsA(tbm, StreamBitmap))))
+		if (!tbm || !(IsA(tbm, TIDBitmap) || IsA(tbm, StreamBitmap)))
 			elog(ERROR, "unrecognized result from subplan");
 
 		node->tbm = tbm;
-
-		if (tbm != NULL)
-			node->tbmiterator = tbmiterator = tbm_generic_begin_iterate(tbm);
+		node->tbmiterator = tbmiterator = tbm_generic_begin_iterate(tbm);
 
 #ifdef USE_PREFETCH
 		if (target_prefetch_pages > 0)
