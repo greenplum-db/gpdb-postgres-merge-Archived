@@ -103,8 +103,12 @@ GetNewTransactionId(bool isSubXact, bool setProcXid)
 			(errmsg("database \"%s\" must be vacuumed within %u transactions",
 					NameStr(ShmemVariableCache->limit_datname),
 					ShmemVariableCache->xidWrapLimit - xid),
-			 errhint("To avoid a database shutdown, execute a database-wide VACUUM in \"%s\".\n"
-					 "You might also need to commit or roll back old prepared transactions.",
+			 /*
+			  * In GPDB, don't say anything about old prepared transactions, because the system
+			  * only uses prepared transactions internally. PREPARE TRANSACTION is not available
+			  * to users.
+			  */
+			 errhint("To avoid a database shutdown, execute a database-wide VACUUM in \"%s\".",
 					 NameStr(ShmemVariableCache->limit_datname))));
 	}
 
@@ -316,8 +320,12 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid,
 		   (errmsg("database \"%s\" must be vacuumed within %u transactions",
 				   NameStr(*oldest_datname),
 				   xidWrapLimit - curXid),
-			errhint("To avoid a database shutdown, execute a database-wide VACUUM in \"%s\".\n"
-					"You might also need to commit or roll back old prepared transactions.",
+			 /*
+			  * In GPDB, don't say anything about old prepared transactions, because the system
+			  * only uses prepared transactions internally. PREPARE TRANSACTION is not available
+			  * to users.
+			  */
+			errhint("To avoid a database shutdown, execute a database-wide VACUUM in \"%s\".",
 					NameStr(*oldest_datname))));
 }
 
