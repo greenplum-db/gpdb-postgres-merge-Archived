@@ -600,6 +600,7 @@ ExecBuildProjectionInfo(List *targetList,
 	projInfo->pi_varSlotOffsets = varSlotOffsets = workspace;
 	projInfo->pi_varNumbers = varNumbers = workspace + len;
 	projInfo->pi_varOutputCols = varOutputCols = workspace + len * 2;
+
 	projInfo->pi_lastInnerVar = 0;
 	projInfo->pi_lastOuterVar = 0;
 	projInfo->pi_lastScanVar = 0;
@@ -757,10 +758,10 @@ ExecAssignProjectionInfo(PlanState *planstate,
 	ProjectionInfo* pi = planstate->ps_ProjInfo;
 	if (NULL != pi)
 	{
-		if (NULL != pi->pi_varNumbers)
-		{
-			pfree(pi->pi_varNumbers);
-		}
+		/*
+		 * Note that pi->pi_varSlotOffsets, pi->pi_varNumbers, and
+		 * pi->pi_varOutputCols are all pointers into the same allocation.
+		 */
 		if (NULL != pi->pi_varSlotOffsets)
 		{
 			pfree(pi->pi_varSlotOffsets);
