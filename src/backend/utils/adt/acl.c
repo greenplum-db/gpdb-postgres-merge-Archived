@@ -705,8 +705,6 @@ acldefault(GrantObjectType objtype, Oid ownerId)
  *	modechg: ACL_MODECHG_ADD, ACL_MODECHG_DEL, or ACL_MODECHG_EQL
  *	ownerId: Oid of object owner
  *	behavior: RESTRICT or CASCADE behavior for recursive removal
- *	objName: the name of the object to be granted or revoked, used for warning
- *	printing
  *
  * ownerid and behavior are only relevant when the update operation specifies
  * deletion of grant options.
@@ -717,7 +715,7 @@ acldefault(GrantObjectType objtype, Oid ownerId)
  */
 Acl *
 aclupdate(const Acl *old_acl, const AclItem *mod_aip,
-		  int modechg, Oid ownerId, DropBehavior behavior, char *objName)
+		  int modechg, Oid ownerId, DropBehavior behavior)
 {
 	Acl		   *new_acl = NULL;
 	AclItem    *old_aip,
@@ -761,27 +759,6 @@ aclupdate(const Acl *old_acl, const AclItem *mod_aip,
 
 	if (dst == num)
 	{
-		/* if no acl item found to be deleted, raise a warning */
-		if (modechg == ACL_MODECHG_DEL && Gp_role == GP_ROLE_DISPATCH && objName != NULL)
-		{
-			HeapTuple tuple;
-			NameData rolname;
-
-			if (mod_aip->ai_grantee != InvalidOid)
-			{
-				tuple = SearchSysCache(AUTHOID,
-									   ObjectIdGetDatum(mod_aip->ai_grantee),
-									   0, 0, 0);
-				if (!HeapTupleIsValid(tuple))
-					elog(ERROR, "no entry found for the grantee");
-				rolname = ((Form_pg_authid)GETSTRUCT(tuple))->rolname;
-				ReleaseSysCache(tuple);
-			}
-
-			ereport(NOTICE,
-				(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
-				errmsg("no privileges could be revoked from role %s on object %s", mod_aip->ai_grantee ? NameStr(rolname) : "PUBLIC", objName)));
-		}
 		/* need to append a new item */
 		new_acl = allocacl(num + 1);
 		new_aip = ACL_DAT(new_acl);
@@ -793,6 +770,10 @@ aclupdate(const Acl *old_acl, const AclItem *mod_aip,
 		ACLITEM_SET_PRIVS_GOPTIONS(new_aip[dst],
 								   ACL_NO_RIGHTS, ACL_NO_RIGHTS);
 		num++;					/* set num to the size of new_acl */
+	}
+	else
+	{
+		revoked_something = true;
 	}
 
 	old_rights = ACLITEM_GET_RIGHTS(new_aip[dst]);
@@ -999,7 +980,7 @@ cc_restart:
 
 			/* We'll actually zap ordinary privs too, but no matter */
 			new_acl = aclupdate(acl, &aip[i], ACL_MODECHG_DEL,
-								ownerId, DROP_CASCADE, NULL);
+								ownerId, DROP_CASCADE);
 
 			pfree(acl);
 			acl = new_acl;
@@ -1090,7 +1071,7 @@ restart:
 									   revoke_privs);
 
 			new_acl = aclupdate(acl, &mod_acl, ACL_MODECHG_DEL,
-								ownerId, behavior, NULL);
+								ownerId, behavior);
 
 			pfree(acl);
 			acl = new_acl;
