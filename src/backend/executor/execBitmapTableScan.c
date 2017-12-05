@@ -151,8 +151,7 @@ readBitmap(BitmapTableScanState *scanState)
 
 	Node *tbm = (Node *) MultiExecProcNode(outerPlanState(scanState));
 
-	if (tbm != NULL && (!(IsA(tbm, TIDBitmap) ||
-						  IsA(tbm, StreamBitmap))))
+	if (!tbm || (!(IsA(tbm, TIDBitmap) || IsA(tbm, StreamBitmap))))
 	{
 		elog(ERROR, "unrecognized result from subplan");
 	}
