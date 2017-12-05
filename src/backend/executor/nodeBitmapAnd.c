@@ -167,7 +167,13 @@ MultiExecBitmapAnd(BitmapAndState *node)
 			/* If tbm is empty, short circuit, per logic outlined above */
 			if (tbm_is_empty(hbm))
 			{
-				node->bitmap = NULL;
+				/*
+				 * GPDB_84_MERGE_FIXME: We still create an OpStream to AND the
+				 * empty result with the StreamBitmaps we saw already. We could
+				 * just close them now, and return an empty hash bitmap here,
+				 * but I'm not sure how to close the already-opened stream
+				 * bitmaps correctly.
+				 */
 				empty = true;
 				break;
 			}
