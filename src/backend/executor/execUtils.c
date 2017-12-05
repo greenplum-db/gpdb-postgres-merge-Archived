@@ -600,7 +600,6 @@ ExecBuildProjectionInfo(List *targetList,
 	projInfo->pi_varSlotOffsets = varSlotOffsets = workspace;
 	projInfo->pi_varNumbers = varNumbers = workspace + len;
 	projInfo->pi_varOutputCols = varOutputCols = workspace + len * 2;
-
 	projInfo->pi_lastInnerVar = 0;
 	projInfo->pi_lastOuterVar = 0;
 	projInfo->pi_lastScanVar = 0;
