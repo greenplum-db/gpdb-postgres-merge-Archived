@@ -3494,6 +3494,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_ADD_COL;
 			break;
 		case AT_AddColumnRecurse:		/* ADD COLUMN internal */
+		case AT_AddOidsRecurse:			/* SET WITH OIDS internal */
 			ATSimplePermissions(rel, false);
 			/* No need to do ATPartitionCheck */
 			/* Performs own recursion */
@@ -4586,6 +4587,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			ATExecDropCluster(rel);
 			break;
 		case AT_AddOids:		/* SET WITH OIDS */
+		case AT_AddOidsRecurse:	/* SET WITH OIDS */
 			/* Use the ADD COLUMN code, unless prep decided to do nothing */
 			if (cmd->def != NULL)
 				ATExecAddColumn(tab, rel, (ColumnDef *) cmd->def, true);
@@ -6240,7 +6242,13 @@ ATPrepAddColumn(List **wqueue, Relation rel, bool recurse,
 
 				/* Recurse to child */
 				atc = copyObject(cmd);
-				atc->subtype = AT_AddColumnRecurse;
+				if (cmd->subtype == AT_AddColumn || cmd->subtype == AT_AddColumnRecurse)
+					atc->subtype = AT_AddColumnRecurse;
+				else if (cmd->subtype == AT_AddOids)
+					atc->subtype = AT_AddOidsRecurse;
+				else
+					elog(ERROR, "unexpected ALTER TABLE subtype %d in ADD COLUMN command",
+						 cmd->subtype);
 
 				/* Child should see column as singly inherited */
 				((ColumnDef *) atc->def)->inhcount = 1;
@@ -16790,6 +16798,7 @@ char *alterTableCmdString(AlterTableType subtype)
 			break;
 
 		case AT_AddOids: /* ALTER TABLE SET WITH OIDS */
+		case AT_AddOidsRecurse: /* ALTER TABLE SET WITH OIDS */
 			break;
 	}
 	

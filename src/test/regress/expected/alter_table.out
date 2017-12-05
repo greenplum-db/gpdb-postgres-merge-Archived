@@ -1283,6 +1283,8 @@ select * from altinhoid;
 (1 row)
 
 alter table altwithoid set with oids;
+NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
+NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
 select oid > 0, * from altwithoid;
  ?column? | col 
 ----------+-----

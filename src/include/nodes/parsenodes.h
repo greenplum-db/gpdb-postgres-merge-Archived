@@ -1313,6 +1313,7 @@ typedef enum AlterTableType
 	AT_ClusterOn,				/* CLUSTER ON */
 	AT_DropCluster,				/* SET WITHOUT CLUSTER */
 	AT_AddOids,					/* SET WITH OIDS */
+	AT_AddOidsRecurse,			/* Like AddColumnRecurse, but for SET WITH OIDS */
 	AT_DropOids,				/* SET WITHOUT OIDS */
 	AT_SetTableSpace,			/* SET TABLESPACE */
 	AT_SetRelOptions,			/* SET (...) -- AM specific parameters */
