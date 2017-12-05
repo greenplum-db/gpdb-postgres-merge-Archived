@@ -237,7 +237,7 @@ predicate_refuted_by(List *predicate_list, List *restrictinfo_list)
 
     if ( ! kUseFnEvaluationForPredicates )
         return false;
-    return simple_equality_predicate_refuted(r, p);
+    return simple_equality_predicate_refuted((Node*)restrictinfo_list, (Node*)predicate_list);
 }
 
 /*----------
@@ -1287,7 +1287,7 @@ simple_equality_predicate_refuted(Node *clause, Node *predicate)
          *   simply be removed and some test cases built. */
         return false;
     }
-    
+
     /* DONE inspecting the predicate */
 
 	/* clause may have non-immutable functions...don't eval if that's the case:
@@ -2127,7 +2127,7 @@ static void
 AddValue(PossibleValueSet *pvs, Const *valueToCopy)
 {
 	Assert( isGreenplumDbHashable(valueToCopy->consttype));
-	
+
 	if ( pvs->set == NULL)
 	{
 		Assert(pvs->memoryContext == NULL);
@@ -2587,7 +2587,7 @@ DeterminePossibleValueSet( Node *clause, Node *variable)
 			InitPossibleValueSetData(&result);
 			return result;
 	}
-	
+
 
 	/* can't get here */
 	elog(ERROR, "predicate_classify returned a bad value");
