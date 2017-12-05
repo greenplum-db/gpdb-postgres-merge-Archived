@@ -42,11 +42,11 @@ GRANT regressgroup2 TO regressuser4 WITH ADMIN OPTION;
 SET SESSION AUTHORIZATION regressuser1;
 SELECT session_user, current_user;
 
-CREATE TABLE atest1 ( a int, b text );
+CREATE TABLE atest1 ( a int, b text ) distributed randomly;
 SELECT * FROM atest1;
 INSERT INTO atest1 VALUES (1, 'one');
 DELETE FROM atest1;
-UPDATE atest1 SET b = 'blech' WHERE a = 213;
+UPDATE atest1 SET a = 1 WHERE b = 'blech';
 TRUNCATE atest1;
 BEGIN;
 LOCK atest1 IN ACCESS EXCLUSIVE MODE;
@@ -76,7 +76,7 @@ SELECT * FROM atest2; -- ok
 INSERT INTO atest1 VALUES (2, 'two'); -- ok
 INSERT INTO atest2 VALUES ('foo', true); -- fail
 INSERT INTO atest1 SELECT 1, b FROM atest1; -- ok
-UPDATE atest1 SET b = 'twotwo' WHERE a = 2; -- ok
+UPDATE atest1 SET a = 1 WHERE a = 2; -- ok
 UPDATE atest2 SET col2 = NOT col2; -- fail
 SELECT * FROM atest1 FOR UPDATE; -- ok
 SELECT * FROM atest2 FOR UPDATE; -- fail
@@ -101,7 +101,7 @@ SELECT * FROM atest2; -- fail
 INSERT INTO atest1 VALUES (2, 'two'); -- fail
 INSERT INTO atest2 VALUES ('foo', true); -- fail
 INSERT INTO atest1 SELECT 1, b FROM atest1; -- fail
-UPDATE atest1 SET b = 'twotwo' WHERE a = 2; -- fail
+UPDATE atest1 SET a = 1 WHERE a = 2; -- fail
 UPDATE atest2 SET col2 = NULL; -- ok
 UPDATE atest2 SET col2 = NOT col2; -- fails; requires SELECT on atest2
 UPDATE atest2 SET col2 = true FROM atest1 WHERE atest1.a = 5; -- ok
