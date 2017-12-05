@@ -174,7 +174,7 @@ SELECT * FROM atestv2; -- fail (even though regressuser2 can access underlying a
 -- Test column level permissions
 
 SET SESSION AUTHORIZATION regressuser1;
-CREATE TABLE atest5 (one int, two int, three int);
+CREATE TABLE atest5 (one int, two int, three int) distributed randomly;
 CREATE TABLE atest6 (one int, two int, blue int);
 GRANT SELECT (one), INSERT (two), UPDATE (three) ON atest5 TO regressuser4;
 GRANT ALL (one) ON atest5 TO regressuser3;
