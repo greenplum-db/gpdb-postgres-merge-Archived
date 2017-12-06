@@ -219,11 +219,8 @@ SELECT test_void_func1(), test_void_func1() IS NULL AS "is null";
 
 SELECT test_void_func2(); -- should fail
 ERROR:  PL/Python function with return type "void" did not return None
-<<<<<<< HEAD
 CONTEXT:  while creating return value
 PL/Python function "test_void_func2"
-=======
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 SELECT test_return_none(), test_return_none() IS NULL AS "is null";
  test_return_none | is null 
 ------------------+---------
@@ -594,13 +591,9 @@ SELECT * FROM test_in_out_params('test_in');
 
 -- this doesn't work yet :-(
 SELECT * FROM test_in_out_params_multi('test_in');
-<<<<<<< HEAD
 ERROR:  length of returned sequence did not match number of columns in row
 CONTEXT:  while creating return value
 PL/Python function "test_in_out_params_multi"
-=======
-ERROR:  PL/Python functions cannot return type record
->>>>>>> 4d53a2f9699547bdc12831d2860c9d44c465e805
 SELECT * FROM test_inout_params('test_in');
      first     
 ---------------
