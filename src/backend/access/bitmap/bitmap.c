@@ -185,7 +185,7 @@ stream_begin_iterate(StreamNode *self, StreamBMIterator *iterator)
 
 	/* create a memory context for the stream */
 	so = palloc(sizeof(BMStreamOpaque));
-	so->scan = scan;
+	so->scan = copy_scan_desc(scan);
 	so->entry = NULL;
 	so->is_done = false;
 
@@ -614,6 +614,51 @@ bmbuildCallback(Relation index, ItemPointer tupleId, Datum *attdata,
 }
 
 /*
+ * Free an IndexScanDesc created by copy_scan_desc(). If releaseBuffers is true,
+ * any Buffers pointed to by the BMScanPositions will be released as well.
+ */
+static void
+free_scan_desc(IndexScanDesc scan, bool releaseBuffers)
+{
+	BMScanOpaque s = scan->opaque;
+	int vec;
+
+	if (s->bm_currPos)
+	{
+		if (!releaseBuffers)
+		{
+			for (vec = 0; vec < s->bm_currPos->nvec; vec++)
+			{
+				BMVector bmvec = &(s->bm_currPos->posvecs[vec]);
+				bmvec->bm_lovBuffer = InvalidBuffer;
+			}
+		}
+
+		cleanup_pos(s->bm_currPos);
+		pfree(s->bm_currPos);
+		s->bm_currPos = NULL;
+	}
+	if (s->bm_markPos)
+	{
+		if (!releaseBuffers)
+		{
+			for (vec = 0; vec < s->bm_markPos->nvec; vec++)
+			{
+				BMVector bmvec = &(s->bm_markPos->posvecs[vec]);
+				bmvec->bm_lovBuffer = InvalidBuffer;
+			}
+		}
+
+		cleanup_pos(s->bm_markPos);
+		pfree(s->bm_markPos);
+		s->bm_markPos = NULL;
+	}
+
+	pfree(s);
+	pfree(scan);
+}
+
+/*
  * free the memory associated with the stream
  */
 
@@ -623,29 +668,13 @@ stream_free(BMStreamOpaque *so)
 	/* opaque may be NULL */
 	if (so)
 	{
-		IndexScanDesc scan = so->scan;
-		BMScanOpaque s = scan->opaque;
-
-		if(s->bm_currPos)
-		{
-			cleanup_pos(s->bm_currPos);
-			pfree(s->bm_currPos);
-			s->bm_currPos = NULL;
-		}
-		if(s->bm_markPos)
-		{
-			cleanup_pos(s->bm_markPos);
-			pfree(s->bm_markPos);
-			s->bm_markPos = NULL;
-		}
+		free_scan_desc(so->scan, false /* we can't release the underlying
+										  Buffers yet as there may be other
+										  iterators in operation */);
 
 		if (so->entry != NULL)
 			pfree(so->entry);
 
-		/* GPDB_84_MERGE_FIXME: this scan is supposed to be owned by the
-		 * StreamNode, but we're freeing it here... Something's not right. */
-		//pfree(scan);
-		//pfree(s);
 		pfree(so);
 	}
 }
@@ -655,6 +684,8 @@ stream_free(BMStreamOpaque *so)
  */
 static void
 indexstream_free(StreamNode *self) {
+	IndexScanDesc scan = self->opaque;
+	free_scan_desc(scan, true /* we can release the scanned Buffers now */);
 	pfree(self);
 }
 
