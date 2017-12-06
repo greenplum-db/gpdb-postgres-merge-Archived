@@ -9680,7 +9680,7 @@ CreateCheckPoint(int flags)
 	 * filerep shmem segment. GPDB_84_MERGE_FIXME: does this make sense
 	 * (or at least enough sense given the future fate of filerep)?
 	 */
-	if (Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_UTILITY)
+	if (Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_UTILITY)
 		resync_to_sync_transition = false;
 	else
 		resync_to_sync_transition = (flags & CHECKPOINT_RESYNC_TO_INSYNC_TRANSITION) != 0;
