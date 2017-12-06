@@ -364,7 +364,10 @@ bmendscan(PG_FUNCTION_ARGS)
 		 * bitmap vector.
 		 */
 		if (so->bm_currPos->nvec > 1)
+		{
+			/* GPDB_84_MERGE_FIXME: does ->bm_batchWords need to be pfree'd? */
 			 _bitmap_cleanup_batchwords(so->bm_currPos->bm_batchWords);
+		}
 		_bitmap_cleanup_scanpos(so->bm_currPos->posvecs,
 								so->bm_currPos->nvec);
 		pfree(so->bm_currPos);
@@ -374,7 +377,10 @@ bmendscan(PG_FUNCTION_ARGS)
 	if (so->bm_markPos != NULL)
 	{
 		if (so->bm_markPos->nvec > 1)
+		{
+			/* GPDB_84_MERGE_FIXME: does ->bm_batchWords need to be pfree'd? */
 			 _bitmap_cleanup_batchwords(so->bm_markPos->bm_batchWords);
+		}
 		_bitmap_cleanup_scanpos(so->bm_markPos->posvecs,
 								so->bm_markPos->nvec);
 		so->bm_markPos = NULL;
@@ -701,7 +707,11 @@ cleanup_pos(BMScanPosition pos)
 	 * case.
 	 */
 	if (pos->nvec > 1)
-		 _bitmap_cleanup_batchwords(pos->bm_batchWords);
+	{
+		_bitmap_cleanup_batchwords(pos->bm_batchWords);
+		if (pos->bm_batchWords != NULL)
+			pfree(pos->bm_batchWords);
+	}
 	_bitmap_cleanup_scanpos(pos->posvecs, pos->nvec);
 }
 
@@ -823,8 +833,6 @@ copy_scan_desc(IndexScanDesc scan)
 	/* we only need a few fields */
 	s = (IndexScanDesc)palloc0(sizeof(IndexScanDescData));
 	s->opaque = palloc(sizeof(BMScanOpaqueData));
-	spcopy = palloc0(sizeof(BMScanPositionData));
-	w = (BMBatchWords *)palloc(sizeof(BMBatchWords));
 
 	s->indexRelation = scan->indexRelation;
 	so = (BMScanOpaque)scan->opaque;
@@ -834,29 +842,20 @@ copy_scan_desc(IndexScanDesc scan)
 	{
 		int vec;
 
+		spcopy = palloc0(sizeof(BMScanPositionData));
+
 		spcopy->done = sp->done;
 		spcopy->nvec = sp->nvec;
-		spcopy->bm_batchWords = w;
 
 		/* now the batch words */
-		w->maxNumOfWords = sp->bm_batchWords->maxNumOfWords;
-		w->nwordsread = sp->bm_batchWords->nwordsread;
-		w->nextread = sp->bm_batchWords->nextread;
-		w->firstTid = sp->bm_batchWords->firstTid;
-		w->startNo = sp->bm_batchWords->startNo;
-		w->nwords = sp->bm_batchWords->nwords;
-
-		/* the actual words now */
-		/* use copy */
+		w = (BMBatchWords *)palloc(sizeof(BMBatchWords));
 	    w->hwords = palloc0(sizeof(BM_HRL_WORD) * 
 					BM_CALC_H_WORDS(sp->bm_batchWords->maxNumOfWords));
     	w->cwords = palloc0(sizeof(BM_HRL_WORD) * 
 					sp->bm_batchWords->maxNumOfWords);
 
-		memcpy(w->hwords, sp->bm_batchWords->hwords,
-			BM_CALC_H_WORDS(sp->bm_batchWords->maxNumOfWords) * sizeof(BM_HRL_WORD));
-		memcpy(w->cwords, sp->bm_batchWords->cwords,
-			sp->bm_batchWords->maxNumOfWords * sizeof(BM_HRL_WORD));
+		_bitmap_copy_batchwords(sp->bm_batchWords, w);
+		spcopy->bm_batchWords = w;
 
 		memcpy(&spcopy->bm_result, &sp->bm_result, sizeof(BMIterateResult));
 

@@ -95,10 +95,7 @@ freeScanDesc(BitmapHeapScanState *scanstate)
 static inline void
 initBitmapState(BitmapHeapScanState *scanstate)
 {
-	if (scanstate->tbmres == NULL)
-		scanstate->tbmres =
-			palloc0(sizeof(TBMIterateResult) +
-					MAX_TUPLES_PER_PAGE * sizeof(OffsetNumber));
+	/* GPDB_84_MERGE_FIXME: nothing to do? */
 }
 
 /*
@@ -366,7 +363,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 				if (tbmpre == NULL)
 				{
 					/* No more pages to prefetch */
-					tbm_end_iterate(prefetch_iterator);
+					tbm_generic_end_iterate(prefetch_iterator);
 					node->prefetch_iterator = prefetch_iterator = NULL;
 					break;
 				}
