@@ -754,7 +754,7 @@ SELECT dblink_build_sql_delete('test_dropped', '2', 1,
 -- test foreign data wrapper functionality
 CREATE USER dblink_regression_test;
 CREATE FOREIGN DATA WRAPPER postgresql;
-CREATE SERVER fdtest FOREIGN DATA WRAPPER postgresql OPTIONS (dbname 'contrib_regression');
+CREATE SERVER fdtest FOREIGN DATA WRAPPER postgresql OPTIONS (dbname 'contrib_regression', host 'localhost');
 CREATE USER MAPPING FOR public SERVER fdtest;
 GRANT USAGE ON FOREIGN SERVER fdtest TO dblink_regression_test;
 GRANT EXECUTE ON FUNCTION dblink_connect_u(text, text) TO dblink_regression_test;
