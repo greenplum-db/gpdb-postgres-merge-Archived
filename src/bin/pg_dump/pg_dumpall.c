@@ -512,6 +512,16 @@ main(int argc, char *argv[])
 		fprintf(OPF, "SET escape_string_warning = off;\n");
 	fprintf(OPF, "\n");
 
+	if (binary_upgrade)
+	{
+		/*
+		 * Greenplum doesn't allow altering system catalogs without
+		 * setting the allow_system_table_mods GUC first.
+		 */
+		fprintf(OPF, "SET allow_system_table_mods = 'dml';\n");
+		fprintf(OPF, "\n");
+	}
+
 	if (!data_only)
 	{
 		/*
