@@ -1325,7 +1325,8 @@ ExecGrant_Relation(InternalGrant *istmt)
 void
 CopyRelationAcls(Oid srcId, Oid destId)
 {
-	Relation	relation;
+	Relation	pg_class_rel;
+	Relation	pg_attribute_rel;
 	Datum		aclDatum;
 	bool		isNull;
 	Acl		   *acl;
@@ -1339,8 +1340,11 @@ CopyRelationAcls(Oid srcId, Oid destId)
 	int			nnewmembers;
 	Oid		   *newmembers;
 	Oid			ownerId;
+	CatCList   *attlist;
+	int			i;
 
-	relation = heap_open(RelationRelationId, RowExclusiveLock);
+	pg_class_rel = heap_open(RelationRelationId, RowExclusiveLock);
+	pg_attribute_rel = heap_open(AttributeRelationId, RowExclusiveLock);
 
 	/* Look up the ACL on the source relation. */
 	srcTuple = SearchSysCache1(RELOID, ObjectIdGetDatum(srcId));
@@ -1389,12 +1393,13 @@ CopyRelationAcls(Oid srcId, Oid destId)
 		values[Anum_pg_class_relacl - 1] = (Datum) 0;
 		nulls[Anum_pg_class_relacl - 1] = true;
 	}
-	newTuple = heap_modify_tuple(destTuple, RelationGetDescr(relation), values, nulls, replaces);
+	newTuple = heap_modify_tuple(destTuple, RelationGetDescr(pg_class_rel),
+								 values, nulls, replaces);
 
-	simple_heap_update(relation, &newTuple->t_self, newTuple);
+	simple_heap_update(pg_class_rel, &newTuple->t_self, newTuple);
 
 	/* keep the catalog indexes up to date */
-	CatalogUpdateIndexes(relation, newTuple);
+	CatalogUpdateIndexes(pg_class_rel, newTuple);
 
 	/* Update the shared dependency ACL info */
 	ownerId = pg_class_tuple->relowner;
@@ -1405,11 +1410,73 @@ CopyRelationAcls(Oid srcId, Oid destId)
 						  0, NULL,
 						  nnewmembers, newmembers);
 
-	/* GPDB_84_MERGE_FIXME: Also copy column privileges! */
-	
+	/*
+	 * Now copy column-level privileges.
+	 */
+	attlist = SearchSysCacheList1(ATTNUM, srcId);
+	for (i = 0; i < attlist->n_members; i++)
+	{
+		HeapTuple	attSrcTuple = &attlist->members[i]->tuple;
+		Form_pg_attribute attSrcForm = (Form_pg_attribute) GETSTRUCT(attSrcTuple);
+		AttrNumber	attnum = attSrcForm->attnum;
+		HeapTuple	attDestTuple;
+		Datum		values[Natts_pg_attribute];
+		bool		nulls[Natts_pg_attribute];
+		bool		replaces[Natts_pg_attribute];
+
+		aclDatum = SysCacheGetAttr(ATTNUM, attSrcTuple, Anum_pg_attribute_attacl,
+								   &isNull);
+		if (isNull)
+			continue;
+		acl = DatumGetAclPCopy(aclDatum);
+
+		attDestTuple = SearchSysCache2(ATTNUM, destId, attnum);
+
+		(void) SysCacheGetAttr(ATTNUM, attDestTuple, Anum_pg_attribute_attacl,
+								   &isNull);
+		if (!isNull)
+			elog(ERROR, "cannot copy ACL from parent, because there is an existing ACL");
+
+		MemSet(values, 0, sizeof(values));
+		MemSet(nulls, false, sizeof(nulls));
+		MemSet(replaces, false, sizeof(replaces));
+
+		replaces[Anum_pg_attribute_attacl - 1] = true;
+		if (acl)
+		{
+			values[Anum_pg_attribute_attacl - 1] = PointerGetDatum(acl);
+			nulls[Anum_pg_attribute_attacl - 1] = false;
+		}
+		else
+		{
+			values[Anum_pg_attribute_attacl - 1] = (Datum) 0;
+			nulls[Anum_pg_attribute_attacl - 1] = true;
+		}
+		newTuple = heap_modify_tuple(attDestTuple, RelationGetDescr(pg_attribute_rel),
+									 values, nulls, replaces);
+
+		simple_heap_update(pg_attribute_rel, &newTuple->t_self, newTuple);
+
+		/* keep the catalog indexes up to date */
+		CatalogUpdateIndexes(pg_attribute_rel, newTuple);
+
+		/* Update the shared dependency ACL info */
+		ownerId = pg_class_tuple->relowner;
+		nnewmembers = aclmembers(acl, &newmembers);
+
+		updateAclDependencies(RelationRelationId, destId, attnum,
+							  ownerId, true /* isGrant */,
+							  0, NULL,
+							  nnewmembers, newmembers);
+
+		ReleaseSysCache(attDestTuple);
+	}
+	ReleaseSysCacheList(attlist);
+
 	ReleaseSysCache(srcTuple);
 	ReleaseSysCache(destTuple);
-	heap_close(relation, RowExclusiveLock);
+	heap_close(pg_class_rel, RowExclusiveLock);
+	heap_close(pg_attribute_rel, RowExclusiveLock);
 }
 
 static void

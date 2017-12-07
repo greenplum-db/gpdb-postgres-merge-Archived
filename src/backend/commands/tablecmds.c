@@ -11352,6 +11352,11 @@ ATExecAddInherit(Relation child_rel, Node *node)
 	 */
 	if (is_partition)
 	{
+		/*
+		 * make any previous changes to the pg_class and pg_attribute entries
+		 * visible to us, first.
+		 */
+		CommandCounterIncrement();
 		CopyRelationAcls(RelationGetRelid(parent_rel),
 						 RelationGetRelid(child_rel));
 	}
