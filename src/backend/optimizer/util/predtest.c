@@ -41,7 +41,6 @@
 #define INT32MAX (2147483647)
 #define INT32MIN (-2147483648)
 
-/* GPDB_84_MERGE_FIXME: this is pointless. */
 static const bool kUseFnEvaluationForPredicates = true;
 
 /*
