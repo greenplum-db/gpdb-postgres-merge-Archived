@@ -222,7 +222,7 @@ extern bool XLOG_DEBUG;
  * indicates request is coming from ResyncManager process to switch primary
  * segment from resync mode to sync mode.
  */
-#define CHECKPOINT_RESYNC_TO_INSYNC_TRANSITION 0x0040
+#define CHECKPOINT_RESYNC_TO_INSYNC_TRANSITION 0x0400
 
 /* Checkpoint statistics */
 typedef struct CheckpointStatsData
