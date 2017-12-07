@@ -1151,6 +1151,8 @@ class GpArray:
 
             # Handle regular segments
             elif segdb.isSegmentQE():
+                if segdb.isSegmentMirror():
+                    self.hasMirrors = True
                 self.addSegmentDb(segdb)
 
             else:
@@ -1612,6 +1614,13 @@ class GpArray:
         for seg in self.segments:
             hosts.extend(seg.get_hosts())
         return hosts
+
+    # --------------------------------------------------------------------
+    def get_master_host_names(self):
+        if self.hasStandbyMaster():
+            return [self.master.hostname, self.standbyMaster.hostname]
+        else:
+            return [self.master.hostname]
 
     # --------------------------------------------------------------------
     def get_max_dbid(self,includeExpansionSegs=False):
