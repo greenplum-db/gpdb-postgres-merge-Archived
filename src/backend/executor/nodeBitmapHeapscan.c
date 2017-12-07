@@ -152,7 +152,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	scanrelid = ((BitmapHeapScan *) node->ss.ps.plan)->scan.scanrelid;
 	tbm = node->tbm;
 	tbmiterator = node->tbmiterator;
-	tbmres = (TBMIterateResult *) node->tbmres;
+	tbmres = node->tbmres;
 	prefetch_iterator = node->prefetch_iterator;
 
 	/*
@@ -215,6 +215,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 
 		node->tbm = tbm;
 		node->tbmiterator = tbmiterator = tbm_generic_begin_iterate(tbm);
+		node->tbmres = tbmres = NULL;
 
 #ifdef USE_PREFETCH
 		if (target_prefetch_pages > 0)
@@ -242,8 +243,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 				more = false;
 			else
 			{
-				tbmres = tbm_generic_iterate(tbmiterator);
-				node->tbmres = tbmres;
+				node->tbmres = tbmres = tbm_generic_iterate(tbmiterator);
 				more = (tbmres != NULL);
 			}
 
