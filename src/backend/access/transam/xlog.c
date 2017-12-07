@@ -744,8 +744,6 @@ static bool read_backup_label(XLogRecPtr *checkPointLoc, bool *backupEndRequired
 static void rm_redo_error_callback(void *arg);
 static int	get_sync_bit(int method);
 
-static void ValidateXLOGDirectoryStructure(void);
-
 /* New functions added for WAL replication */
 static void SetCurrentChunkStartTime(TimestampTz xtime);
 static int XLogFileReadAnyTLI(uint32 log, uint32 seg, int emode, int sources);
@@ -7258,7 +7256,11 @@ StartupXLOG(void)
 		pg_usleep(60000000L);
 #endif
 
-	/* Verify that pg_xlog exist */
+	/*
+	 * Verify that pg_xlog and pg_xlog/archive_status exist.  In cases where
+	 * someone has performed a copy for PITR, these directories may have been
+	 * excluded and need to be re-created.
+	 */
 	ValidateXLOGDirectoryStructure();
 
 	/*
@@ -7270,13 +7272,6 @@ StartupXLOG(void)
 	 * first backend startup.
 	 */
 	RelationCacheInitFileRemove();
-
-	/*
-	 * Verify that pg_xlog and pg_xlog/archive_status exist.  In cases where
-	 * someone has performed a copy for PITR, these directories may have been
-	 * excluded and need to be re-created.
-	 */
-	ValidateXLOGDirectoryStructure();
 
 	/*
 	 * Initialize on the assumption we want to recover to the same timeline
