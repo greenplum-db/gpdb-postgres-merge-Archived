@@ -93,7 +93,6 @@ getSchemaData(int *numTablesPtr, int g_role)
 	NamespaceInfo *nspinfo;
 	ExtensionInfo *extinfo;
 	InhInfo    *inhinfo;
-	int			numNamespaces;
 	int			numAggregates;
 	int			numInherits;
 	int			numRules;
