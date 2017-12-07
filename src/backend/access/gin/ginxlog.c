@@ -926,9 +926,7 @@ gin_mask(char *pagedata, BlockNumber blkno)
 	 * GIN metapage doesn't use pd_lower/pd_upper. Other page types do. Hence,
 	 * we need to apply masking for those pages.
 	 */
-// GPDB_84_MERGE_FIXME: re-enable this once we reach the "fastupdate" commit
-// that introduced the metapage */
-//	if (opaque->flags != GIN_META)
+	if (opaque->flags != GIN_META)
 	{
 		/*
 		 * For GIN_DELETED page, the page is initialized to empty. Hence, mask
