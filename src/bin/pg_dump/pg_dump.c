@@ -3782,7 +3782,7 @@ getTables(int *numTables)
 						  "d.refobjsubid AS owning_col, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
 						"array_to_string(c.reloptions, ', ') AS reloptions, "
-						  "p.parrelid as parrelid "
+						  "p.parrelid as parrelid, "
 						  "NULL AS toast_reloptions "
 						  "FROM pg_class c "
 						  "LEFT JOIN pg_depend d ON "
