@@ -164,15 +164,21 @@ MultiExecBitmapAnd(BitmapAndState *node)
 				tbm_intersect(hbm, (TIDBitmap *)subresult);
 			}
 
-			/* If tbm is empty, short circuit, per logic outlined above */
+			/*
+			 * If at any stage we have a completely empty bitmap, we can fall out
+			 * without evaluating the remaining subplans, since ANDing them can no
+			 * longer change the result.  (Note: the fact that indxpath.c orders
+			 * the subplans by selectivity should make this case more likely to
+			 * occur.)
+			 */
 			if (tbm_is_empty(hbm))
 			{
 				/*
-				 * GPDB_84_MERGE_FIXME: We still create an OpStream to AND the
-				 * empty result with the StreamBitmaps we saw already. We could
-				 * just close them now, and return an empty hash bitmap here,
-				 * but I'm not sure how to close the already-opened stream
-				 * bitmaps correctly.
+				 * GPDB_84_MERGE_FIXME: If we saw any StreamBitmap inputs, we
+				 * will create an OpStream to AND the empty result with the
+				 * StreamBitmaps we saw already. We could just close them now,
+				 * and return an empty hash bitmap here, but I'm not sure how
+				 * to close the already-opened stream bitmaps correctly.
 				 */
 				empty = true;
 				break;

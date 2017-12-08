@@ -264,7 +264,7 @@ bmgetbitmap(PG_FUNCTION_ARGS)
 	else
 	{
 		/* Return an empty bitmap */
-		bm = (Node *) tbm_create(work_mem * 1024L);
+		bm = (Node *) tbm_create(10 * 1024L);
 	}
 
 	MIRROREDLOCK_BUFMGR_VERIFY_NO_LOCK_LEAK_EXIT;
