@@ -239,13 +239,8 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			if (QueryFinishPending)
 				return NULL;
 
-			if (tbm == NULL)
-				more = false;
-			else
-			{
-				node->tbmres = tbmres = tbm_generic_iterate(tbmiterator);
-				more = (tbmres != NULL);
-			}
+			node->tbmres = tbmres = tbm_generic_iterate(tbmiterator);
+			more = (tbmres != NULL);
 
 			if (!more)
 			{
