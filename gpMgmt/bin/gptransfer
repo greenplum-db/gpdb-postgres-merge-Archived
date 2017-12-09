@@ -3984,12 +3984,50 @@ class GpTransfer(object):
 
         return mismatch
 
+    def _normalize_column_types(self, src_columns, src_version, dst_columns, dst_version):
+        """
+        There have been some compatibility changes in the information schema
+        through version upgrades; normalize them here if necessary so we don't
+        incorrectly claim a table incompatibility.
+
+        This should perhaps be done with a Comparator instead.
+        """
+
+        def upgrade_date_type(attrs):
+            """
+            GPDB 6 reports a datetime_precision of zero instead of null for the
+            'date' type.
+            """
+            # See _get_table_columns() for the order of attributes in each row.
+            data_type = attrs[1]
+            datetime_precision = attrs[7]
+
+            if (data_type == 'date') and (datetime_precision is None):
+                # Upgrade the datetime_precision attribute.
+                attrs[7] = 0
+
+        if src_version != dst_version:
+            for column in src_columns:
+                upgrade_date_type(column)
+            for column in dst_columns:
+                upgrade_date_type(column)
+
     def _has_same_column_types(self, table_pair):
         """
         Columns at the same position of two partition tables need to be of same type
         """
+        src_partition_info = self._get_partition_info(table_pair.source.database, table_pair.source.schema, table_pair.source.table,
+                                                      self._options.source_host, self._options.source_port, self._options.source_user)
+        dest_partition_info = self._get_partition_info(table_pair.dest.database, table_pair.dest.schema, table_pair.dest.table,
+                                                       self._options.dest_host, self._options.dest_port, self._options.dest_user)
+
         src_tbl_columns = self._get_table_columns(table_pair.source, self._options.source_host, self._options.source_port, self._options.source_user)
         dest_tbl_columns = self._get_table_columns(table_pair.dest, self._options.dest_host, self._options.dest_port, self._options.dest_user)
+
+        # Perform any version-specific normalization before we compare.
+        self._normalize_column_types(src_tbl_columns, src_partition_info['version'],
+                                     dest_tbl_columns, dest_partition_info['version'])
+
         return src_tbl_columns == dest_tbl_columns
 
     def _get_table_columns(self, tbl, host, port, user):
