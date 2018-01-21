@@ -63,13 +63,8 @@ install:
 	$(MAKE) -C gpAux/platform $@
 	@echo "Greenplum Database installation complete."
 
-<<<<<<< HEAD
-installdirs uninstall:
-#	$(MAKE) -C doc $@
-=======
 installdirs uninstall coverage:
-	$(MAKE) -C doc $@
->>>>>>> 78a09145e0
+#	$(MAKE) -C doc $@
 	$(MAKE) -C src $@
 	$(MAKE) -C config $@
 	$(MAKE) -C contrib/xlogdump $@
@@ -208,44 +203,15 @@ dummy	= =install=
 garbage = =*  "#"*  ."#"*  *~*  *.orig  *.rej  core  postgresql-*
 
 dist: $(distdir).tar.gz $(distdir).tar.bz2
-<<<<<<< HEAD
-ifeq ($(split-dist), yes)
-dist: postgresql-base-$(VERSION).tar.gz postgresql-docs-$(VERSION).tar.gz postgresql-opt-$(VERSION).tar.gz postgresql-test-$(VERSION).tar.gz 
-endif
-dist:
-=======
->>>>>>> 78a09145e0
 	rm -rf $(distdir)
 
 $(distdir).tar: distdir
 	$(TAR) chf $@ $(distdir)
 
 .INTERMEDIATE: $(distdir).tar
-<<<<<<< HEAD
-
-opt_files = \
-	src/tools src/tutorial \
-	$(addprefix src/pl/, plperl plpython tcl)
-
-docs_files =
-
-postgresql-base-$(VERSION).tar: distdir
-	$(TAR) -c $(addprefix --exclude $(distdir)/, $(docs_files) $(opt_files) src/test) \
-	  -f $@ $(distdir)
-
-postgresql-docs-$(VERSION).tar: distdir
-	$(TAR) cf $@ $(addprefix $(distdir)/, $(docs_files))
-
-postgresql-opt-$(VERSION).tar: distdir
-	$(TAR) cf $@ $(addprefix $(distdir)/, $(opt_files))
-
-postgresql-test-$(VERSION).tar: distdir
-	$(TAR) cf $@ $(distdir)/src/test
-=======
 
 distdir-location:
 	@echo $(distdir)
->>>>>>> 78a09145e0
 
 distdir:
 	rm -rf $(distdir)* $(dummy)

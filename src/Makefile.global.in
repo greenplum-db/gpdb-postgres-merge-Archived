@@ -18,12 +18,7 @@
 #
 # Meta configuration
 
-<<<<<<< HEAD
-.PHONY: all install install-strip installdirs uninstall clean distclean maintainer-clean distprep check installcheck maintainer-check coverage installcheck-good
-.SILENT: installdirs
-=======
-.PHONY: all install install-strip installdirs uninstall clean distclean maintainer-clean distprep check installcheck maintainer-check coverage html man
->>>>>>> 78a09145e0
+.PHONY: all install install-strip installdirs uninstall clean distclean maintainer-clean distprep check installcheck maintainer-check coverage html man installcheck-good
 
 # make `all' the default target
 all:
@@ -220,15 +215,8 @@ TCL_SHLIB_LD_LIBS	= @TCL_SHLIB_LD_LIBS@
 PTHREAD_CFLAGS		= @PTHREAD_CFLAGS@
 PTHREAD_LIBS		= @PTHREAD_LIBS@
 
-<<<<<<< HEAD
 have_yaml 		= @have_yaml@
-have_docbook	= @have_docbook@
-DOCBOOKSTYLE	= @DOCBOOKSTYLE@
-COLLATEINDEX	= @COLLATEINDEX@
-DOCBOOK2MAN	= @DOCBOOK2MAN@
 
-=======
->>>>>>> 78a09145e0
 
 ##########################################################################
 #
@@ -391,10 +379,6 @@ INSTALL_SHLIB_OPTS = -m 755
 
 MKDIR_P = @MKDIR_P@
 
-<<<<<<< HEAD
-mkinstalldirs	= $(SHELL) $(top_srcdir)/config/mkinstalldirs
-=======
->>>>>>> 78a09145e0
 missing		= $(SHELL) $(top_srcdir)/config/missing
 
 STRIP		= @STRIP@
