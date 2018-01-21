@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.152 2009/06/11 14:48:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.155 2009/11/15 02:45:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,8 +19,11 @@
 #include <math.h>
 
 #include "catalog/pg_operator.h"
+<<<<<<< HEAD
 #include "catalog/pg_proc.h"
 #include "executor/executor.h"
+=======
+>>>>>>> 78a09145e0
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
@@ -1694,7 +1697,11 @@ create_material_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath)
 	pathnode->subpath = subpath;
 
 	cost_material(&pathnode->path,
+<<<<<<< HEAD
 				  root,
+=======
+				  subpath->startup_cost,
+>>>>>>> 78a09145e0
 				  subpath->total_cost,
 				  cdbpath_rows(root, subpath),
 				  rel->width);
@@ -2287,6 +2294,7 @@ distinct_col_search(int colno, List *colnos, List *opids)
 }
 
 /*
+<<<<<<< HEAD
  * hash_safe_operators - can all the specified IN operators be hashed?
  *
  * We assume hashed aggregation will work if each IN operator is marked
@@ -2309,6 +2317,25 @@ hash_safe_operators(List *opids)
 			return false;
 	}
 	return true;
+=======
+ * create_noop_path
+ *	  Creates a path equivalent to the input subpath, but having a different
+ *	  parent rel.  This is used when a join is found to be removable.
+ */
+NoOpPath *
+create_noop_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath)
+{
+	NoOpPath   *pathnode = makeNode(NoOpPath);
+
+	pathnode->path.pathtype = T_Join;			/* by convention */
+	pathnode->path.parent = rel;
+	pathnode->path.startup_cost = subpath->startup_cost;
+	pathnode->path.total_cost = subpath->total_cost;
+	pathnode->path.pathkeys = subpath->pathkeys;
+	pathnode->subpath = subpath;
+
+	return pathnode;
+>>>>>>> 78a09145e0
 }
 
 /*
@@ -2806,6 +2833,7 @@ create_mergejoin_path(PlannerInfo *root,
 		inner_path->pathkeys)
 		innersortkeys = NIL;
 
+<<<<<<< HEAD
     /* If user doesn't want sort, but this MJ requires a sort, fail. */
     if (!root->config->enable_sort &&
         !root->config->mpp_trying_fallback_plan)
@@ -2874,6 +2902,8 @@ create_mergejoin_path(PlannerInfo *root,
 		}
 	}
 
+=======
+>>>>>>> 78a09145e0
 	pathnode->jpath.path.pathtype = T_MergeJoin;
 	pathnode->jpath.path.parent = joinrel;
 	pathnode->jpath.jointype = jointype;
@@ -2890,6 +2920,7 @@ create_mergejoin_path(PlannerInfo *root,
 	pathnode->path_mergeclauses = mergeclauses;
 	pathnode->outersortkeys = outersortkeys;
 	pathnode->innersortkeys = innersortkeys;
+	/* pathnode->materialize_inner will be set by cost_mergejoin */
 
 	cost_mergejoin(pathnode, root, sjinfo);
 

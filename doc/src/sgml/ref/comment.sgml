@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.38 2008/11/14 10:22:45 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.39 2009/09/19 10:23:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -27,16 +27,25 @@ COMMENT ON
   AGGREGATE <replaceable class="PARAMETER">aggregate_name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) |
   CAST (<replaceable>sourcetype</replaceable> AS <replaceable>target_type</replaceable>) |
   COLUMN <replaceable class="PARAMETER">table_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
+<<<<<<< HEAD
   COLLATION <replaceable class="PARAMETER">object_name</replaceable> |
+=======
+  AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> (<replaceable class="PARAMETER">agg_type</replaceable> [, ...] ) |
+  CAST (<replaceable>source_type</replaceable> AS <replaceable>target_type</replaceable>) |
+>>>>>>> 78a09145e0
   CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
   CONVERSION <replaceable class="PARAMETER">object_name</replaceable> |
   DATABASE <replaceable class="PARAMETER">object_name</replaceable> |
   DOMAIN <replaceable class="PARAMETER">object_name</replaceable> |
+<<<<<<< HEAD
   FILESPACE <replaceable class="PARAMETER">object_name</replaceable> |
   FUNCTION <replaceable class="PARAMETER">func_name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) |
+=======
+  FUNCTION <replaceable class="PARAMETER">function_name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) |
+>>>>>>> 78a09145e0
   INDEX <replaceable class="PARAMETER">object_name</replaceable> |
   LARGE OBJECT <replaceable class="PARAMETER">large_object_oid</replaceable> |
-  OPERATOR <replaceable class="PARAMETER">op</replaceable> (<replaceable class="PARAMETER">leftoperand_type</replaceable>, <replaceable class="PARAMETER">rightoperand_type</replaceable>) |
+  OPERATOR <replaceable class="PARAMETER">operator_name</replaceable> (<replaceable class="PARAMETER">left_type</replaceable>, <replaceable class="PARAMETER">right_type</replaceable>) |
   OPERATOR CLASS <replaceable class="PARAMETER">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
   OPERATOR FAMILY <replaceable class="PARAMETER">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
   [ PROCEDURAL ] LANGUAGE <replaceable class="PARAMETER">object_name</replaceable> |
@@ -55,12 +64,15 @@ COMMENT ON
   TYPE <replaceable class="PARAMETER">object_name</replaceable> |
   VIEW <replaceable class="PARAMETER">object_name</replaceable>
 } IS '<replaceable class="PARAMETER">text</replaceable>'
+<<<<<<< HEAD
 
 <phrase>where <replaceable>aggregate_signature</replaceable> is:</phrase>
 
 * |
 [ <replaceable>argmode</replaceable> ] <replaceable>argtype</replaceable> [ , ... ] |
 [ [ <replaceable>argmode</replaceable> ] <replaceable>argtype</replaceable> [ , ... ] ] ORDER BY [ <replaceable>argmode</replaceable> ] <replaceable>argtype</replaceable> [ , ... ]
+=======
+>>>>>>> 78a09145e0
 </synopsis>
  </refsynopsisdiv>
 
@@ -99,7 +111,7 @@ COMMENT ON
     <term><replaceable class="parameter">table_name.column_name</replaceable></term>
     <term><replaceable class="parameter">aggregate_name</replaceable></term>
     <term><replaceable class="parameter">constraint_name</replaceable></term>
-    <term><replaceable class="parameter">func_name</replaceable></term>
+    <term><replaceable class="parameter">function_name</replaceable></term>
     <term><replaceable class="parameter">op</replaceable></term>
     <term><replaceable class="parameter">rule_name</replaceable></term>
     <term><replaceable class="parameter">trigger_name</replaceable></term>
@@ -114,7 +126,22 @@ COMMENT ON
    </varlistentry>
 
    <varlistentry>
+<<<<<<< HEAD
      <term><replaceable>sourcetype</replaceable></term>
+=======
+    <term><replaceable class="parameter">agg_type</replaceable></term>
+    <listitem>
+     <para>
+      An input data type on which the aggregate function operates.
+      To reference a zero-argument aggregate function, write <literal>*</>
+      in place of the list of input data types.
+     </para>
+    </listitem>
+   </varlistentry>
+   
+   <varlistentry>
+     <term><replaceable>source_type</replaceable></term>
+>>>>>>> 78a09145e0
      <listitem>
       <para>
        The name of the source data type of the cast.
@@ -123,7 +150,7 @@ COMMENT ON
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable>targettype</replaceable></term>
+     <term><replaceable>target_type</replaceable></term>
      <listitem>
       <para>
        The name of the target data type of the cast.

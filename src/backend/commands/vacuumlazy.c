@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.121 2009/06/11 14:48:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.124 2009/11/16 21:32:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,7 +186,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration > 0)
 		starttime = GetCurrentTimestamp();
 
-	if (vacstmt->verbose)
+	if (vacstmt->options & VACOPT_VERBOSE)
 		elevel = INFO;
 	else
 		elevel = DEBUG2;
@@ -296,6 +296,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	/* report results to the stats collector, too */
 	pgstat_report_vacuum(RelationGetRelid(onerel),
 						 onerel->rd_rel->relisshared,
+<<<<<<< HEAD
 						 vacstmt->analyze,
 						 vacrelstats->new_rel_tuples);
 
@@ -311,6 +312,11 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 				_bt_validate_vacuum(Irel[i], onerel, OldestXmin);
 		}
 	}
+=======
+						 vacrelstats->scanned_all,
+						 (vacstmt->options & VACOPT_ANALYZE) != 0,
+						 vacrelstats->rel_tuples);
+>>>>>>> 78a09145e0
 
 	/* and log the action if appropriate */
 	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
@@ -334,6 +340,12 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 							pg_rusage_show(&ru0))));
 	}
 
+<<<<<<< HEAD
+=======
+	if (scanned_all)
+		*scanned_all = vacrelstats->scanned_all;
+
+>>>>>>> 78a09145e0
 	return heldoff;
 }
 
@@ -611,7 +623,11 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			if (!PageIsAllVisible(page))
 			{
 				PageSetAllVisible(page);
+<<<<<<< HEAD
 				MarkBufferDirty(buf);
+=======
+				SetBufferCommitInfoNeedsSave(buf);
+>>>>>>> 78a09145e0
 			}
 
 			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
@@ -857,7 +873,11 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		if (!PageIsAllVisible(page) && all_visible)
 		{
 			PageSetAllVisible(page);
+<<<<<<< HEAD
 			MarkBufferDirty(buf);
+=======
+			SetBufferCommitInfoNeedsSave(buf);
+>>>>>>> 78a09145e0
 		}
 		/*
 		 * It's possible for the value returned by GetOldestXmin() to move
@@ -874,10 +894,17 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		 */
 		else if (PageIsAllVisible(page) && has_dead_tuples)
 		{
+<<<<<<< HEAD
 			elog(WARNING, "page containing dead tuples is marked as all-visible in relation \"%s\" page %u",
 				 relname, blkno);
 			PageClearAllVisible(page);
 			MarkBufferDirty(buf);
+=======
+			elog(WARNING, "PD_ALL_VISIBLE flag was incorrectly set in relation \"%s\" page %u",
+				 relname, blkno);
+			PageClearAllVisible(page);
+			SetBufferCommitInfoNeedsSave(buf);
+>>>>>>> 78a09145e0
 
 			/*
 			 * Normally, we would drop the lock on the heap page before

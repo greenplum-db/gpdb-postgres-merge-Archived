@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.64 2009/04/04 21:12:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.65 2009/07/16 06:33:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -319,11 +319,19 @@ makeTypeNameFromNameList(List *names)
  *	build a TypeName node to represent a type already known by OID/typmod.
  */
 TypeName *
+<<<<<<< HEAD
 makeTypeNameFromOid(Oid typid, int32 typmod)
 {
 	TypeName   *n = makeNode(TypeName);
 
 	n->typid = typid;
+=======
+makeTypeNameFromOid(Oid typeOid, int32 typmod)
+{
+	TypeName   *n = makeNode(TypeName);
+
+	n->typeOid = typeOid;
+>>>>>>> 78a09145e0
 	n->typemod = typmod;
 	n->location = -1;
 	return n;
@@ -377,12 +385,12 @@ makeDefElem(char *name, Node *arg)
  *	build a DefElem node with all fields available to be specified
  */
 DefElem *
-makeDefElemExtended(char *namespace, char *name, Node *arg,
+makeDefElemExtended(char *nameSpace, char *name, Node *arg,
 					DefElemAction defaction)
 {
 	DefElem    *res = makeNode(DefElem);
 
-	res->defnamespace = namespace;
+	res->defnamespace = nameSpace;
 	res->defname = name;
 	res->arg = arg;
 	res->defaction = defaction;

@@ -39,6 +39,7 @@ CREATE TABLE xsequences (
 	sequence text not null
 	) DISTRIBUTED BY (pid);
 CREATE INDEX xsequences_pid_idx ON xsequences(pid) ;
+<<<<<<< HEAD
 
 CREATE TABLE unicode_test (
 	testvalue  text NOT NULL
@@ -58,3 +59,5 @@ CREATE TYPE ab_tuple as (
 	a int8, 
 	b int8
 	);
+=======
+>>>>>>> 78a09145e0

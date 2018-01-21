@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.83 2009/06/11 14:48:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.84 2009/10/07 22:14:18 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,12 @@
 #include "catalog/pg_largeobject.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_pltemplate.h"
+<<<<<<< HEAD
 #include "catalog/pg_resqueue.h"
 #include "catalog/pg_resgroup.h"
+=======
+#include "catalog/pg_db_role_setting.h"
+>>>>>>> 78a09145e0
 #include "catalog/pg_shdepend.h"
 #include "catalog/pg_shdescription.h"
 #include "catalog/pg_tablespace.h"
@@ -401,7 +405,8 @@ IsSharedRelation(Oid relationId)
 		relationId == PLTemplateRelationId ||
 		relationId == SharedDescriptionRelationId ||
 		relationId == SharedDependRelationId ||
-		relationId == TableSpaceRelationId)
+		relationId == TableSpaceRelationId ||
+		relationId == DbRoleSettingRelationId)
 		return true;
 
 	/* GPDB additions */
@@ -434,7 +439,8 @@ IsSharedRelation(Oid relationId)
 		relationId == SharedDependDependerIndexId ||
 		relationId == SharedDependReferenceIndexId ||
 		relationId == TablespaceOidIndexId ||
-		relationId == TablespaceNameIndexId)
+		relationId == TablespaceNameIndexId ||
+		relationId == DbRoleSettingDatidRolidIndexId)
 		return true;
 
 	/* GPDB added indexes */
@@ -469,7 +475,9 @@ IsSharedRelation(Oid relationId)
 		relationId == PgDatabaseToastTable ||
 		relationId == PgDatabaseToastIndex ||
 		relationId == PgShdescriptionToastTable ||
-		relationId == PgShdescriptionToastIndex)
+		relationId == PgShdescriptionToastIndex ||
+		relationId == PgDbRoleSettingToastTable ||
+		relationId == PgDbRoleSettingToastIndex)
 		return true;
 
 	/* GPDB added toast tables and their indexes */

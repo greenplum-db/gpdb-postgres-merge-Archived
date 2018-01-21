@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.261 2009/06/11 14:49:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.263 2009/10/21 20:38:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4750,8 +4750,12 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 				   Const **prefix_const, Selectivity *rest_selec)
 {
 	Oid			typeid = patt_const->consttype;
+<<<<<<< HEAD
 	char	   *prefix;
 	bool		exact;
+=======
+	bool		is_multibyte = (pg_database_encoding_max_length() > 1);
+>>>>>>> 78a09145e0
 
 	/*
 	 * Should be unnecessary, there are no bytea regex operators defined. As
@@ -4768,8 +4772,25 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 								 case_insensitive,
 								 &exact);
 
+<<<<<<< HEAD
 	if (prefix == NULL)
 	{
+=======
+	/*
+	 * Check for ARE director prefix.  It's worth our trouble to recognize
+	 * this because similar_escape() used to use it, and some other code
+	 * might still use it, to force ARE mode.
+	 */
+	pos = 0;
+	if (strncmp(patt, "***:", 4) == 0)
+		pos = 4;
+
+	/* Pattern must be anchored left */
+	if (patt[pos] != '^')
+	{
+		rest = patt;
+
+>>>>>>> 78a09145e0
 		*prefix_const = NULL;
 
 		if (rest_selec != NULL)
@@ -4785,7 +4806,26 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 		return Pattern_Prefix_None;
 	}
 
+<<<<<<< HEAD
 	*prefix_const = string_to_const(prefix, typeid);
+=======
+	/* OK, allocate space for pattern */
+	match = palloc(strlen(patt) + 1);
+	prev_match_pos = match_pos = 0;
+
+	/*
+	 * We special-case the syntax '^(...)$' because psql uses it.  But beware:
+	 * sequences beginning "(?" are not what they seem, unless they're "(?:".
+	 * (We must recognize that because of similar_escape().)
+	 */
+	have_leading_paren = false;
+	if (patt[pos] == '(' &&
+		(patt[pos + 1] != '?' || patt[pos + 2] == ':'))
+	{
+		have_leading_paren = true;
+		pos += (patt[pos + 1] != '?' ? 1 : 3);
+	}
+>>>>>>> 78a09145e0
 
 	if (rest_selec != NULL)
 	{
@@ -4794,14 +4834,42 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 			/* Exact match, so there's no additional selectivity */
 			*rest_selec = 1.0;
 		}
+<<<<<<< HEAD
 		else
+=======
+
+		/*
+		 * Check for quantifiers.  Except for +, this means the preceding
+		 * character is optional, so we must remove it from the prefix too!
+		 */
+		if (patt[pos] == '*' ||
+			patt[pos] == '?' ||
+			patt[pos] == '{')
+>>>>>>> 78a09145e0
 		{
 			char   *patt = DatumGetCString(DirectFunctionCall1(textout, patt_const->constvalue));
 
+<<<<<<< HEAD
 			*rest_selec = regex_selectivity(patt, strlen(patt),
 											case_insensitive,
 											strlen(prefix));
 			pfree(patt);
+=======
+		/*
+		 * Normally, backslash quotes the next character.  But in AREs,
+		 * backslash followed by alphanumeric is an escape, not a quoted
+		 * character.  Must treat it as having multiple possible matches.
+		 * Note: since only ASCII alphanumerics are escapes, we don't have to
+		 * be paranoid about multibyte here.
+		 */
+		if (patt[pos] == '\\')
+		{
+			if (isalnum((unsigned char) patt[pos + 1]))
+				break;
+			pos++;
+			if (patt[pos] == '\0')
+				break;
+>>>>>>> 78a09145e0
 		}
 	}
 

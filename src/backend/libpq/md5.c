@@ -14,7 +14,11 @@
  *	Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  $PostgreSQL: pgsql/src/backend/libpq/md5.c,v 1.40 2010/02/26 02:00:43 momjian Exp $
+=======
+ *	  $PostgreSQL: pgsql/src/backend/libpq/md5.c,v 1.37 2009/09/15 02:31:15 tgl Exp $
+>>>>>>> 78a09145e0
  */
 
 /* This is intended to be used in both frontend and backend, so use c.h */
@@ -321,7 +325,10 @@ pg_md5_encrypt(const char *passwd, const char *salt, size_t salt_len,
 			   char *buf)
 {
 	size_t		passwd_len = strlen(passwd);
+<<<<<<< HEAD
 
+=======
+>>>>>>> 78a09145e0
 	/* +1 here is just to avoid risk of unportable malloc(0) */
 	char	   *crypt_buf = malloc(passwd_len + salt_len + 1);
 	bool		ret;

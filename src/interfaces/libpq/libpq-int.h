@@ -13,7 +13,11 @@
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+<<<<<<< HEAD
  * src/interfaces/libpq/libpq-int.h
+=======
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.146 2009/12/02 04:38:35 tgl Exp $
+>>>>>>> 78a09145e0
  *
  *-------------------------------------------------------------------------
  */
@@ -409,7 +413,10 @@ struct pg_conn
 	bool		auth_req_received;		/* true if any type of auth req
 										 * received */
 	bool		password_needed;	/* true if server demanded a password */
+<<<<<<< HEAD
 	bool		dot_pgpass_used;	/* true if used .pgpass */
+=======
+>>>>>>> 78a09145e0
 	bool		sigpipe_so;		/* have we masked SIGPIPE via SO_NOSIGPIPE? */
 	bool		sigpipe_flag;	/* can we mask SIGPIPE via MSG_NOSIGNAL? */
 

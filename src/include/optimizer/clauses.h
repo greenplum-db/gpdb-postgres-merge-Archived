@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/clauses.h,v 1.98 2009/06/11 14:49:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/clauses.h,v 1.99 2009/12/15 17:57:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,11 @@
 typedef struct
 {
 	int			numAggs;		/* total number of aggregate calls */
+<<<<<<< HEAD
 	int			numOrderedAggs; /* number w/ DISTINCT/ORDER BY/WITHIN GROUP */
+=======
+	int			numOrderedAggs; 	/* number that use DISTINCT or ORDER BY */
+>>>>>>> 78a09145e0
 	Size		transitionSpace;	/* for pass-by-ref transition data */
 	List   *dqaArgs;	/* CDB: List of distinct DQA argument exprs. */
 	bool		hasOrderedAggs;	/* any ordered aggs? */

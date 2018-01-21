@@ -345,6 +345,16 @@ select count(*) from tenk1 x where
   x.unique1 = 0 and
   x.unique1 in (select aa.f1 from int4_tbl aa,float8_tbl bb where aa.f1=bb.f1);
 
+-- try that with GEQO too
+begin;
+set geqo = on;
+set geqo_threshold = 2;
+select count(*) from tenk1 x where
+  x.unique1 in (select a.f1 from int4_tbl a,float8_tbl b where a.f1=b.f1) and
+  x.unique1 = 0 and
+  x.unique1 in (select aa.f1 from int4_tbl aa,float8_tbl bb where aa.f1=bb.f1);
+rollback;
+
 
 --
 -- Clean up
@@ -382,6 +392,14 @@ DELETE FROM t4 USING t1 JOIN t2 USING (a) WHERE t4.x > t1.a;
 SELECT * FROM t4;
 DELETE FROM t3 USING t3 t3_other WHERE t3.x = t3_other.x AND t3.y = t3_other.y;
 SELECT * FROM t3;
+
+-- Test join against inheritance tree
+
+create temp table t2a () inherits (t2);
+
+insert into t2a values (200, 2001);
+
+select * from t1 left join t2 on (t1.a = t2.a);
 
 --
 -- regression test for 8.1 merge right join bug
@@ -528,6 +546,7 @@ select * from a left join b on i = x and i = y and x = i;
 rollback;
 
 --
+<<<<<<< HEAD
 -- test handling of potential equivalence clauses above outer joins
 --
 
@@ -541,6 +560,8 @@ select f1, unique2, case when unique2 is null then f1 else 0 end
 
 
 --
+=======
+>>>>>>> 78a09145e0
 -- test NULL behavior of whole-row Vars, per bug #5025
 --
 select t1.q2, count(t2.*)
@@ -560,6 +581,7 @@ from int8_tbl t1 left join
   (select q1, case when q2=1 then 1 else q2 end as q2 from int8_tbl) t2
   on (t1.q2 = t2.q1)
 group by t1.q2 order by 1;
+<<<<<<< HEAD
 
 --
 -- test case where a PlaceHolderVar is propagated into a subquery
@@ -571,3 +593,5 @@ select * from
 where
   1 = (select 1 from int8_tbl t3 where ss.y is not null limit 1)
 order by 1,2;
+=======
+>>>>>>> 78a09145e0

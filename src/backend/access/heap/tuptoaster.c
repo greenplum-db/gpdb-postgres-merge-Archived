@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.93 2009/06/11 14:48:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.95 2009/07/29 20:56:18 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -957,10 +957,19 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 	}
 
 	/*
-	 * Finally we store attributes of type 'm' external, if possible.
+	 * Finally we store attributes of type 'm' externally.  At this point
+	 * we increase the target tuple size, so that 'm' attributes aren't
+	 * stored externally unless really necessary.
 	 */
+<<<<<<< HEAD
 	while (compute_dest_tuplen(tupleDesc, pbind, has_nulls,
 							   toast_values, toast_isnull) > maxDataLen &&
+=======
+	maxDataLen = TOAST_TUPLE_TARGET_MAIN - hoff;
+
+	while (heap_compute_data_size(tupleDesc,
+								  toast_values, toast_isnull) > maxDataLen &&
+>>>>>>> 78a09145e0
 		   rel->rd_rel->reltoastrelid != InvalidOid)
 	{
 		int			biggest_attno = -1;
@@ -1562,7 +1571,9 @@ toast_save_datum(Relation rel, Datum value, bool isFrozen, int options)
 		 */
 		index_insert(toastidx, t_values, t_isnull,
 					 &(toasttup->t_self),
-					 toastrel, toastidx->rd_index->indisunique);
+					 toastrel,
+					 toastidx->rd_index->indisunique ?
+					 UNIQUE_CHECK_YES : UNIQUE_CHECK_NO);
 
 		/*
 		 * Free memory

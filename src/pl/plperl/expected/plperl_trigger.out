@@ -71,7 +71,11 @@ NOTICE:  $_TD->{level} = 'ROW'
 CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{name} = 'show_trigger_data_trig'
 CONTEXT:  PL/Perl function "trigger_data"
+<<<<<<< HEAD
 NOTICE:  $_TD->{new} = {'foo' => {'rfoo' => {'i' => '1'}}, 'i' => '1', 'v' => 'insert'}
+=======
+NOTICE:  $_TD->{new} = {'i' => '1', 'v' => 'insert'}
+>>>>>>> 78a09145e0
 CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{relid} = 'bogus:12345'
 CONTEXT:  PL/Perl function "trigger_data"
@@ -94,9 +98,15 @@ NOTICE:  $_TD->{level} = 'ROW'
 CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{name} = 'show_trigger_data_trig'
 CONTEXT:  PL/Perl function "trigger_data"
+<<<<<<< HEAD
 NOTICE:  $_TD->{new} = {'foo' => {'rfoo' => {'i' => '1'}}, 'i' => '1', 'v' => 'update'}
 CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{old} = {'foo' => {'rfoo' => {'i' => '1'}}, 'i' => '1', 'v' => 'insert'}
+=======
+NOTICE:  $_TD->{new} = {'i' => '1', 'v' => 'update'}
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{old} = {'i' => '1', 'v' => 'insert'}
+>>>>>>> 78a09145e0
 CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{relid} = 'bogus:12345'
 CONTEXT:  PL/Perl function "trigger_data"
@@ -119,7 +129,11 @@ NOTICE:  $_TD->{level} = 'ROW'
 CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{name} = 'show_trigger_data_trig'
 CONTEXT:  PL/Perl function "trigger_data"
+<<<<<<< HEAD
 NOTICE:  $_TD->{old} = {'foo' => {'rfoo' => {'i' => '1'}}, 'i' => '1', 'v' => 'update'}
+=======
+NOTICE:  $_TD->{old} = {'i' => '1', 'v' => 'update'}
+>>>>>>> 78a09145e0
 CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{relid} = 'bogus:12345'
 CONTEXT:  PL/Perl function "trigger_data"
@@ -131,6 +145,10 @@ NOTICE:  $_TD->{table_schema} = 'public'
 CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{when} = 'BEFORE'
 CONTEXT:  PL/Perl function "trigger_data"
+<<<<<<< HEAD
+=======
+	  
+>>>>>>> 78a09145e0
 DROP TRIGGER show_trigger_data_trig on trigger_test;
 DROP FUNCTION trigger_data();
 CREATE OR REPLACE FUNCTION valid_id() RETURNS trigger AS $$

@@ -1,7 +1,11 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
+<<<<<<< HEAD
  *	src/pl/plpython/plpython.c
+=======
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.134 2009/12/15 22:59:54 petere Exp $
+>>>>>>> 78a09145e0
  *
  *********************************************************************
  */
@@ -71,7 +75,10 @@ typedef int Py_ssize_t;
  */
 #if PY_MAJOR_VERSION >= 3
 #define PyInt_FromLong(x) PyLong_FromLong(x)
+<<<<<<< HEAD
 #define PyInt_AsLong(x) PyLong_AsLong(x)
+=======
+>>>>>>> 78a09145e0
 #endif
 
 /*
@@ -80,7 +87,11 @@ typedef int Py_ssize_t;
  * definition is for Python <=2.5
  */
 #ifndef PyVarObject_HEAD_INIT
+<<<<<<< HEAD
 #define PyVarObject_HEAD_INIT(type, size)		\
+=======
+#define PyVarObject_HEAD_INIT(type, size) 		\
+>>>>>>> 78a09145e0
 		PyObject_HEAD_INIT(type) size,
 #endif
 
@@ -134,7 +145,11 @@ PG_MODULE_MAGIC;
  */
 
 struct PLyDatumToOb;
+<<<<<<< HEAD
 typedef PyObject *(*PLyDatumToObFunc) (struct PLyDatumToOb *, Datum);
+=======
+typedef PyObject *(*PLyDatumToObFunc) (struct PLyDatumToOb*, Datum);
+>>>>>>> 78a09145e0
 
 typedef struct PLyDatumToOb
 {
@@ -166,8 +181,15 @@ typedef union PLyTypeInput
  */
 
 struct PLyObToDatum;
+<<<<<<< HEAD
 typedef Datum (*PLyObToDatumFunc) (struct PLyObToDatum *, int32 typmod,
 											   PyObject *, bool inarray);
+=======
+struct PLyTypeInfo;
+typedef Datum (*PLyObToDatumFunc) (struct PLyTypeInfo*,
+								   struct PLyObToDatum*,
+								   PyObject *);
+>>>>>>> 78a09145e0
 
 typedef struct PLyObToDatum
 {
@@ -201,6 +223,7 @@ typedef struct PLyTypeInfo
 {
 	PLyTypeInput in;
 	PLyTypeOutput out;
+<<<<<<< HEAD
 
 	/*
 	 * is_rowtype can be: -1 = not known yet (initial state); 0 = scalar
@@ -211,6 +234,13 @@ typedef struct PLyTypeInfo
 	Oid			typ_relid;
 	TransactionId typrel_xmin;
 	ItemPointerData typrel_tid;
+=======
+	/*
+	 * is_rowtype can be: -1 = not known yet (initial state); 0 = scalar datatype;
+	 * 1 = rowtype; 2 = rowtype, but I/O functions not set up yet
+	 */
+	int			is_rowtype;
+>>>>>>> 78a09145e0
 } PLyTypeInfo;
 
 
@@ -355,9 +385,15 @@ static void *PLy_malloc0(size_t);
 static char *PLy_strdup(const char *);
 static void PLy_free(void *);
 
+<<<<<<< HEAD
 static PyObject *PLyUnicode_Bytes(PyObject *unicode);
 static char *PLyUnicode_AsString(PyObject *unicode);
 
+=======
+static PyObject*PLyUnicode_Str(PyObject *unicode);
+static PyObject*PLyUnicode_Bytes(PyObject *unicode);
+static char *PLyUnicode_AsString(PyObject *unicode);
+>>>>>>> 78a09145e0
 #if PY_MAJOR_VERSION >= 3
 static PyObject *PLyUnicode_FromString(const char *s);
 #endif
@@ -405,10 +441,24 @@ static PyObject *PLyLong_FromInt64(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyBytes_FromBytea(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyString_FromDatum(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyList_FromArray(PLyDatumToOb *arg, Datum d);
+<<<<<<< HEAD
 static PyObject *PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndim, int dim,
 						  char **dataptr_p, bits8 **bitmap_p, int *bitmask_p);
 
 static PyObject *PLyDict_FromTuple(PLyTypeInfo *, HeapTuple, TupleDesc);
+=======
+
+static PyObject *PLyDict_FromTuple(PLyTypeInfo *, HeapTuple, TupleDesc);
+
+static Datum PLyObject_ToBool(PLyTypeInfo *, PLyObToDatum *,
+							  PyObject *);
+static Datum PLyObject_ToBytea(PLyTypeInfo *, PLyObToDatum *,
+							   PyObject *);
+static Datum PLyObject_ToDatum(PLyTypeInfo *, PLyObToDatum *,
+							   PyObject *);
+static Datum PLySequence_ToArray(PLyTypeInfo *, PLyObToDatum *,
+								 PyObject *);
+>>>>>>> 78a09145e0
 
 static Datum PLyObject_ToBool(PLyObToDatum *, int32, PyObject *, bool inarray);
 static Datum PLyObject_ToBytea(PLyObToDatum *, int32, PyObject *, bool inarray);
@@ -482,6 +532,7 @@ static void
 plpython_error_callback(void *arg)
 {
 	if (PLy_curr_procedure)
+<<<<<<< HEAD
 		errcontext("PL/Python function \"%s\"",
 				   PLy_procedure_name(PLy_curr_procedure));
 }
@@ -490,6 +541,9 @@ static void
 plpython_inline_error_callback(void *arg)
 {
 		errcontext("PL/Python anonymous code block");
+=======
+		errcontext("PL/Python function \"%s\"", PLy_procedure_name(PLy_curr_procedure));
+>>>>>>> 78a09145e0
 }
 
 static void
@@ -506,6 +560,7 @@ plpython_return_error_callback(void *arg)
 		errcontext("while creating return value");
 }
 
+<<<<<<< HEAD
 static bool
 PLy_procedure_is_trigger(Form_pg_proc procStruct)
 {
@@ -597,11 +652,17 @@ plpython_validator(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
+=======
+>>>>>>> 78a09145e0
 Datum
 plpython_call_handler(PG_FUNCTION_ARGS)
 {
 	Datum		retval;
 	PLyProcedure *save_curr_proc;
+<<<<<<< HEAD
+=======
+	PLyProcedure *volatile proc = NULL;
+>>>>>>> 78a09145e0
 	ErrorContextCallback plerrcontext;
 
 	if (SPI_connect() != SPI_OK_CONNECT)
@@ -612,11 +673,19 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 	save_curr_proc = PLy_curr_procedure;
 
 	/*
+<<<<<<< HEAD
 	 * Setup error traceback support for ereport()
 	 */
 	plerrcontext.callback = plpython_error_callback;
 	plerrcontext.previous = error_context_stack;
 	error_context_stack = &plerrcontext;
+=======
+     * Setup error traceback support for ereport()
+     */
+    plerrcontext.callback = plpython_error_callback;
+    plerrcontext.previous = error_context_stack;
+    error_context_stack = &plerrcontext;
+>>>>>>> 78a09145e0
 
 	PG_TRY();
 	{
@@ -653,7 +722,11 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 	PG_END_TRY();
 
 	/* Pop the error context stack */
+<<<<<<< HEAD
 	error_context_stack = plerrcontext.previous;
+=======
+    error_context_stack = plerrcontext.previous;
+>>>>>>> 78a09145e0
 
 	PLy_curr_procedure = save_curr_proc;
 
@@ -828,7 +901,11 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 			{
 				ereport(ERROR,
 						(errmsg("TD[\"new\"] dictionary key at ordinal position %d is not a string", i)));
+<<<<<<< HEAD
 				plattstr = NULL;	/* keep compiler quiet */
+=======
+				plattstr = NULL; /* keep compiler quiet */
+>>>>>>> 78a09145e0
 			}
 			attn = SPI_fnumber(tupdesc, plattstr);
 			if (attn == SPI_ERROR_NOATTRIBUTE)
@@ -853,10 +930,14 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 			else if (plval != Py_None)
 			{
 				PLyObToDatum *att = &proc->result.out.r.atts[atti];
+<<<<<<< HEAD
 
 				modvalues[i] = (att->func) (att,
 											tupdesc->attrs[atti]->atttypmod,
 											plval, false );
+=======
+				modvalues[i] = (att->func) (&proc->result, att, plval);
+>>>>>>> 78a09145e0
 				modnulls[i] = ' ';
 			}
 			else
@@ -1090,12 +1171,19 @@ PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc, HeapTuple *r
 static Datum
 PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure *proc)
 {
+<<<<<<< HEAD
 	Datum						rv;
 	FuncCallContext	*volatile	funcctx		   = NULL;
 	PyObject 		*volatile	plargs		   = NULL;
 	PyObject		*volatile	plrv		   = NULL;
 	bool						bFirstTimeCall = false; 
 	ErrorContextCallback		plerrcontext;
+=======
+	Datum		rv;
+	PyObject   *volatile plargs = NULL;
+	PyObject   *volatile plrv = NULL;
+	ErrorContextCallback plerrcontext;
+>>>>>>> 78a09145e0
 
 	PG_TRY();
 	{
@@ -1249,6 +1337,10 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure *proc)
 			}
 		}
 
+		plerrcontext.callback = plpython_return_error_callback;
+		plerrcontext.previous = error_context_stack;
+		error_context_stack = &plerrcontext;
+
 		/*
 		 * Disconnect from SPI manager and then create the return values datum
 		 * (if the input function does a palloc for it this must not be
@@ -1320,13 +1412,20 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure *proc)
 		else
 		{
 			fcinfo->isnull = false;
+<<<<<<< HEAD
 			rv = (proc->result.out.d.func) (&proc->result.out.d, -1, plrv, false);
+=======
+			rv = (proc->result.out.d.func) (&proc->result,
+											&proc->result.out.d,
+											plrv);
+>>>>>>> 78a09145e0
 		}
 	}
 	PG_CATCH();
 	{
 		Py_XDECREF(plargs);
 		Py_XDECREF(plrv);
+<<<<<<< HEAD
 
 		/*
 		 * If there was an error the iterator might have not been exhausted
@@ -1338,6 +1437,8 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure *proc)
 			Py_XDECREF( (PyObject*) funcctx->user_fctx ); 
 			funcctx->user_fctx = NULL; 
 		}
+=======
+>>>>>>> 78a09145e0
 
 		PG_RE_THROW();
 	}
@@ -2327,7 +2428,11 @@ static void
 PLy_output_datum_func2(PLyObToDatum *arg, HeapTuple typeTup)
 {
 	Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+<<<<<<< HEAD
 	Oid			element_type;
+=======
+	Oid element_type;
+>>>>>>> 78a09145e0
 
 	perm_fmgr_info(typeStruct->typinput, &arg->typfunc);
 	arg->typoid = HeapTupleGetOid(typeTup);
@@ -2338,6 +2443,7 @@ PLy_output_datum_func2(PLyObToDatum *arg, HeapTuple typeTup)
 	element_type = get_element_type(arg->typoid);
 
 	/*
+<<<<<<< HEAD
 	 * Select a conversion function to convert Python objects to PostgreSQL
 	 * datums.	Most data types can go through the generic function.
 	 */
@@ -2368,13 +2474,46 @@ PLy_output_datum_func2(PLyObToDatum *arg, HeapTuple typeTup)
 
 		if (type_is_rowtype(element_type))
 			arg->func = PLyObject_ToComposite;
+=======
+	 * Select a conversion function to convert Python objects to
+	 * PostgreSQL datums.  Most data types can go through the generic
+	 * function.
+	 */
+	switch (getBaseType(element_type ? element_type : arg->typoid))
+	{
+		case BOOLOID:
+			arg->func = PLyObject_ToBool;
+			break;
+		case BYTEAOID:
+			arg->func = PLyObject_ToBytea;
+			break;
+		default:
+			arg->func = PLyObject_ToDatum;
+			break;
+	}
+
+	if (element_type)
+	{
+		char dummy_delim;
+		Oid funcid;
+
+		if (type_is_rowtype(element_type))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("PL/Python functions cannot return type %s",
+							format_type_be(arg->typoid)),
+					 errdetail("PL/Python does not support conversion to arrays of row types.")));
+>>>>>>> 78a09145e0
 
 		arg->elm = PLy_malloc0(sizeof(*arg->elm));
 		arg->elm->func = arg->func;
 		arg->func = PLySequence_ToArray;
 
 		arg->elm->typoid = element_type;
+<<<<<<< HEAD
 		arg->elm->typmod = -1;
+=======
+>>>>>>> 78a09145e0
 		get_type_io_data(element_type, IOFunc_input,
 						 &arg->elm->typlen, &arg->elm->typbyval, &arg->elm->typalign, &dummy_delim,
 						 &arg->elm->typioparam, &funcid);
@@ -2395,7 +2534,11 @@ static void
 PLy_input_datum_func2(PLyDatumToOb *arg, Oid typeOid, HeapTuple typeTup)
 {
 	Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+<<<<<<< HEAD
 	Oid			element_type = get_element_type(typeOid);
+=======
+	Oid element_type = get_element_type(typeOid);
+>>>>>>> 78a09145e0
 
 	/* Get the type's conversion information */
 	perm_fmgr_info(typeStruct->typoutput, &arg->typfunc);
@@ -2404,7 +2547,10 @@ PLy_input_datum_func2(PLyDatumToOb *arg, Oid typeOid, HeapTuple typeTup)
 	arg->typioparam = getTypeIOParam(typeTup);
 	arg->typbyval = typeStruct->typbyval;
 	arg->typlen = typeStruct->typlen;
+<<<<<<< HEAD
 	arg->typalign = typeStruct->typalign;
+=======
+>>>>>>> 78a09145e0
 
 	/* Determine which kind of Python object we will convert to */
 	switch (getBaseType(element_type ? element_type : typeOid))
@@ -2440,6 +2586,7 @@ PLy_input_datum_func2(PLyDatumToOb *arg, Oid typeOid, HeapTuple typeTup)
 
 	if (element_type)
 	{
+<<<<<<< HEAD
 		char		dummy_delim;
 		Oid			funcid;
 
@@ -2452,6 +2599,12 @@ PLy_input_datum_func2(PLyDatumToOb *arg, Oid typeOid, HeapTuple typeTup)
 						 &arg->elm->typlen, &arg->elm->typbyval, &arg->elm->typalign, &dummy_delim,
 						 &arg->elm->typioparam, &funcid);
 		perm_fmgr_info(funcid, &arg->elm->typfunc);
+=======
+		arg->elm = PLy_malloc0(sizeof(*arg->elm));
+		arg->elm->func = arg->func;
+		arg->func = PLyList_FromArray;
+		get_typlenbyvalalign(element_type, &arg->elm->typlen, &arg->elm->typbyval, &arg->elm->typalign);
+>>>>>>> 78a09145e0
 	}
 }
 
@@ -2509,12 +2662,21 @@ static PyObject *
 PLyFloat_FromNumeric(PLyDatumToOb *arg, Datum d)
 {
 	/*
+<<<<<<< HEAD
 	 * Numeric is cast to a PyFloat: This results in a loss of precision Would
 	 * it be better to cast to PyString?
 	 */
 	Datum		f = DirectFunctionCall1(numeric_float8, d);
 	double		x = DatumGetFloat8(f);
 
+=======
+	 * Numeric is cast to a PyFloat:
+	 *   This results in a loss of precision
+	 *   Would it be better to cast to PyString?
+	 */
+	Datum  f = DirectFunctionCall1(numeric_float8, d);
+	double x = DatumGetFloat8(f);
+>>>>>>> 78a09145e0
 	return PyFloat_FromDouble(x);
 }
 
@@ -2543,9 +2705,15 @@ PLyLong_FromInt64(PLyDatumToOb *arg, Datum d)
 static PyObject *
 PLyBytes_FromBytea(PLyDatumToOb *arg, Datum d)
 {
+<<<<<<< HEAD
 	text	   *txt = DatumGetByteaP(d);
 	char	   *str = VARDATA(txt);
 	size_t		size = VARSIZE(txt) - VARHDRSZ;
+=======
+	text     *txt = DatumGetByteaP(d);
+	char     *str = VARDATA(txt);
+	size_t    size = VARSIZE(txt) - VARHDRSZ;
+>>>>>>> 78a09145e0
 
 	return PyBytes_FromStringAndSize(str, size);
 }
@@ -2553,9 +2721,14 @@ PLyBytes_FromBytea(PLyDatumToOb *arg, Datum d)
 static PyObject *
 PLyString_FromDatum(PLyDatumToOb *arg, Datum d)
 {
+<<<<<<< HEAD
 	char	   *x = OutputFunctionCall(&arg->typfunc, d);
 	PyObject   *r = PyString_FromString(x);
 
+=======
+	char     *x = OutputFunctionCall(&arg->typfunc, d);
+	PyObject *r = PyString_FromString(x);
+>>>>>>> 78a09145e0
 	pfree(x);
 	return r;
 }
@@ -2564,16 +2737,24 @@ static PyObject *
 PLyList_FromArray(PLyDatumToOb *arg, Datum d)
 {
 	ArrayType  *array = DatumGetArrayTypeP(d);
+<<<<<<< HEAD
 	PLyDatumToOb *elm = arg->elm;
 	int			ndim;
 	int		   *dims;
 	char	   *dataptr;
 	bits8	   *bitmap;
 	int			bitmask;
+=======
+	PyObject   *list;
+	int			length;
+	int			lbound;
+	int			i;
+>>>>>>> 78a09145e0
 
 	if (ARR_NDIM(array) == 0)
 		return PyList_New(0);
 
+<<<<<<< HEAD
 	/* Array dimensions and left bounds */
 	ndim = ARR_NDIM(array);
 	dims = ARR_DIMS(array);
@@ -2663,6 +2844,30 @@ PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndim, int dim,
 		*dataptr_p = dataptr;
 		*bitmap_p = bitmap;
 		*bitmask_p = bitmask;
+=======
+	if (ARR_NDIM(array) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot convert multidimensional array to Python list"),
+				 errdetail("PL/Python only supports one-dimensional arrays.")));
+
+	length = ARR_DIMS(array)[0];
+	lbound = ARR_LBOUND(array)[0];
+	list = PyList_New(length);
+
+	for (i = 0; i < length; i++)
+	{
+		Datum elem;
+		bool isnull;
+		int offset;
+
+		offset = lbound + i;
+		elem = array_ref(array, 1, &offset, arg->typlen, arg->elm->typlen, arg->elm->typbyval, arg->elm->typalign, &isnull);
+		if (isnull)
+			PyList_SET_ITEM(list, i, Py_None);
+		else
+			PyList_SET_ITEM(list, i, arg->elm->func(arg, elem));
+>>>>>>> 78a09145e0
 	}
 
 	return list;
@@ -2719,10 +2924,177 @@ PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc desc)
 }
 
 /*
+<<<<<<< HEAD
  *	Convert a Python object to a PostgreSQL tuple, using all supported
  *	conversion methods: tuple as a sequence, as a mapping or as an object that
  *	has __getattr__ support.
  */
+=======
+ * Convert a Python object to a PostgreSQL bool datum.  This can't go
+ * through the generic conversion function, because Python attaches a
+ * Boolean value to everything, more things than the PostgreSQL bool
+ * type can parse.
+ */
+static Datum
+PLyObject_ToBool(PLyTypeInfo *info,
+				 PLyObToDatum *arg,
+				 PyObject *plrv)
+{
+	Datum		rv;
+
+	Assert(plrv != Py_None);
+	rv = BoolGetDatum(PyObject_IsTrue(plrv));
+
+	if (get_typtype(arg->typoid) == TYPTYPE_DOMAIN)
+		domain_check(rv, false, arg->typoid, &arg->typfunc.fn_extra, arg->typfunc.fn_mcxt);
+
+	return rv;
+}
+
+/*
+ * Convert a Python object to a PostgreSQL bytea datum.  This doesn't
+ * go through the generic conversion function to circumvent problems
+ * with embedded nulls.  And it's faster this way.
+ */
+static Datum
+PLyObject_ToBytea(PLyTypeInfo *info,
+				  PLyObToDatum *arg,
+				  PyObject *plrv)
+{
+	PyObject   *volatile plrv_so = NULL;
+	Datum       rv;
+
+	Assert(plrv != Py_None);
+
+	plrv_so = PyObject_Bytes(plrv);
+	if (!plrv_so)
+		PLy_elog(ERROR, "could not create bytes representation of Python object");
+
+	PG_TRY();
+	{
+		char *plrv_sc = PyBytes_AsString(plrv_so);
+		size_t len = PyBytes_Size(plrv_so);
+		size_t size = len + VARHDRSZ;
+		bytea *result = palloc(size);
+
+		SET_VARSIZE(result, size);
+		memcpy(VARDATA(result), plrv_sc, len);
+		rv = PointerGetDatum(result);
+	}
+	PG_CATCH();
+	{
+		Py_XDECREF(plrv_so);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	Py_XDECREF(plrv_so);
+
+	if (get_typtype(arg->typoid) == TYPTYPE_DOMAIN)
+		domain_check(rv, false, arg->typoid, &arg->typfunc.fn_extra, arg->typfunc.fn_mcxt);
+
+	return rv;
+}
+
+/*
+ * Generic conversion function: Convert PyObject to cstring and
+ * cstring into PostgreSQL type.
+ */
+static Datum
+PLyObject_ToDatum(PLyTypeInfo *info,
+				  PLyObToDatum *arg,
+				  PyObject *plrv)
+{
+	PyObject *volatile plrv_bo = NULL;
+	Datum     rv;
+
+	Assert(plrv != Py_None);
+
+	if (PyUnicode_Check(plrv))
+		plrv_bo = PLyUnicode_Bytes(plrv);
+	else
+	{
+#if PY_MAJOR_VERSION >= 3
+		PyObject *s = PyObject_Str(plrv);
+		plrv_bo = PLyUnicode_Bytes(s);
+		Py_XDECREF(s);
+#else
+		plrv_bo = PyObject_Str(plrv);
+#endif
+	}
+	if (!plrv_bo)
+		PLy_elog(ERROR, "could not create string representation of Python object");
+
+	PG_TRY();
+	{
+		char *plrv_sc = PyBytes_AsString(plrv_bo);
+		size_t plen = PyBytes_Size(plrv_bo);
+		size_t slen = strlen(plrv_sc);
+
+		if (slen < plen)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("could not convert Python object into cstring: Python string representation appears to contain null bytes")));
+		else if (slen > plen)
+			elog(ERROR, "could not convert Python object into cstring: Python string longer than reported length");
+		rv = InputFunctionCall(&arg->typfunc, plrv_sc, arg->typioparam, -1);
+	}
+	PG_CATCH();
+	{
+		Py_XDECREF(plrv_bo);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	Py_XDECREF(plrv_bo);
+
+	return rv;
+}
+
+static Datum
+PLySequence_ToArray(PLyTypeInfo *info,
+					PLyObToDatum *arg,
+					PyObject *plrv)
+{
+	ArrayType *array;
+	int			i;
+	Datum		*elems;
+	bool		*nulls;
+	int			len;
+	int			lbs;
+
+	Assert(plrv != Py_None);
+
+	if (!PySequence_Check(plrv))
+		PLy_elog(ERROR, "return value of function with array return type is not a Python sequence");
+
+	len = PySequence_Length(plrv);
+	elems = palloc(sizeof(*elems) * len);
+	nulls = palloc(sizeof(*nulls) * len);
+
+	for (i = 0; i < len; i++)
+	{
+		PyObject *obj = PySequence_GetItem(plrv, i);
+
+		if (obj == Py_None)
+			nulls[i] = true;
+		else
+		{
+			nulls[i] = false;
+			/* We don't support arrays of row types yet, so the first
+			 * argument can be NULL. */
+			elems[i] = arg->elm->func(NULL, arg->elm, obj);
+		}
+		Py_XDECREF(obj);
+	}
+
+	lbs = 1;
+	array = construct_md_array(elems, nulls, 1, &len, &lbs,
+							   get_element_type(arg->typoid), arg->elm->typlen, arg->elm->typbyval, arg->elm->typalign);
+	return PointerGetDatum(array);
+}
+
+>>>>>>> 78a09145e0
 static HeapTuple
 PLyObject_ToTuple(PLyTypeInfo *info, TupleDesc desc, PyObject *plrv, bool innarray)
 {
@@ -3146,9 +3518,12 @@ PLyMapping_ToTuple(PLyTypeInfo *info, TupleDesc desc, PyObject *mapping)
 		char	   *key;
 		PyObject   *volatile value;
 		PLyObToDatum *att;
+<<<<<<< HEAD
 
 		if (desc->attrs[i]->attisdropped)
 			continue;
+=======
+>>>>>>> 78a09145e0
 
 		key = NameStr(desc->attrs[i]->attname);
 		value = NULL;
@@ -3163,7 +3538,11 @@ PLyMapping_ToTuple(PLyTypeInfo *info, TupleDesc desc, PyObject *mapping)
 			}
 			else if (value)
 			{
+<<<<<<< HEAD
 				values[i] = (att->func) (att, -1, value, false);
+=======
+				values[i] = (att->func) (info, att, value);
+>>>>>>> 78a09145e0
 				nulls[i] = false;
 			}
 			else
@@ -3232,9 +3611,12 @@ PLySequence_ToTuple(PLyTypeInfo *info, TupleDesc desc, PyObject *sequence, bool 
 		PyObject   *volatile value;
 		PLyObToDatum *att;
 
+<<<<<<< HEAD
 		if (desc->attrs[i]->attisdropped)
 			continue;
 
+=======
+>>>>>>> 78a09145e0
 		value = NULL;
 		att = &info->out.r.atts[i];
 		PG_TRY();
@@ -3248,7 +3630,11 @@ PLySequence_ToTuple(PLyTypeInfo *info, TupleDesc desc, PyObject *sequence, bool 
 			}
 			else if (value)
 			{
+<<<<<<< HEAD
 				values[i] = (att->func) (att, -1, value, false);
+=======
+				values[i] = (att->func) (info, att, value);
+>>>>>>> 78a09145e0
 				nulls[i] = false;
 			}
 
@@ -3294,9 +3680,12 @@ PLyGenericObject_ToTuple(PLyTypeInfo *info, TupleDesc desc, PyObject *object, bo
 		char	   *key;
 		PyObject   *volatile value;
 		PLyObToDatum *att;
+<<<<<<< HEAD
 
 		if (desc->attrs[i]->attisdropped)
 			continue;
+=======
+>>>>>>> 78a09145e0
 
 		key = NameStr(desc->attrs[i]->attname);
 		value = NULL;
@@ -3311,7 +3700,11 @@ PLyGenericObject_ToTuple(PLyTypeInfo *info, TupleDesc desc, PyObject *object, bo
 			}
 			else if (value)
 			{
+<<<<<<< HEAD
 				values[i] = (att->func) (att, -1, value, false);
+=======
+				values[i] = (att->func) (info, att, value);
+>>>>>>> 78a09145e0
 				nulls[i] = false;
 			}
 			else
@@ -3386,6 +3779,11 @@ static void PLy_subtransaction_dealloc(PyObject *);
 static PyObject *PLy_subtransaction_enter(PyObject *, PyObject *);
 static PyObject *PLy_subtransaction_exit(PyObject *, PyObject *);
 
+
+static PyMethodDef PLy_plan_methods[] = {
+	{"status", PLy_plan_status, METH_VARARGS, NULL},
+	{NULL, NULL, 0, NULL}
+};
 
 static PyMethodDef PLy_plan_methods[] = {
 	{"status", PLy_plan_status, METH_VARARGS, NULL},
@@ -3476,6 +3874,7 @@ static PyTypeObject PLy_ResultType = {
 	0,							/* tp_iter */
 	0,							/* tp_iternext */
 	PLy_result_methods,			/* tp_tpmethods */
+<<<<<<< HEAD
 };
 
 static PyMethodDef PLy_subtransaction_methods[] = {
@@ -3485,6 +3884,8 @@ static PyMethodDef PLy_subtransaction_methods[] = {
 	{"enter", PLy_subtransaction_enter, METH_VARARGS, NULL},
 	{"exit", PLy_subtransaction_exit, METH_VARARGS, NULL},
 	{NULL, NULL, 0, NULL}
+=======
+>>>>>>> 78a09145e0
 };
 
 static PyTypeObject PLy_SubtransactionType = {
@@ -3575,6 +3976,7 @@ static PyModuleDef PLy_module = {
 	-1,							/* m_size */
 	PLy_methods,				/* m_methods */
 };
+<<<<<<< HEAD
 
 static PyModuleDef PLy_exc_module = {
 	PyModuleDef_HEAD_INIT,		/* m_base */
@@ -3587,6 +3989,8 @@ static PyModuleDef PLy_exc_module = {
 	NULL,						/* m_clear */
 	NULL						/* m_free */
 };
+=======
+>>>>>>> 78a09145e0
 #endif
 
 /* plan object methods */
@@ -3633,7 +4037,11 @@ PLy_plan_dealloc(PyObject *arg)
 
 
 static PyObject *
+<<<<<<< HEAD
 PLy_plan_status(PyObject *self __attribute__((unused)), PyObject *args)
+=======
+PLy_plan_status(PyObject *self, PyObject *args)
+>>>>>>> 78a09145e0
 {
 	if (PyArg_ParseTuple(args, ""))
 	{
@@ -3680,7 +4088,11 @@ PLy_result_dealloc(PyObject *arg)
 }
 
 static PyObject *
+<<<<<<< HEAD
 PLy_result_nrows(PyObject *self, PyObject *args __attribute__((unused)))
+=======
+PLy_result_nrows(PyObject *self, PyObject *args)
+>>>>>>> 78a09145e0
 {
 	PLyResultObject *ob = (PLyResultObject *) self;
 
@@ -3815,9 +4227,75 @@ PLy_spi_prepare(PyObject *self __attribute__((unused)), PyObject *args)
 				sptr = PLyUnicode_AsString(optr);
 			else
 			{
+<<<<<<< HEAD
 				ereport(ERROR,
 						(errmsg("plpy.prepare: type name at ordinal position %d is not a string", i)));
 				sptr = NULL;	/* keep compiler quiet */
+=======
+				plan->nargs = nargs;
+				plan->types = PLy_malloc(sizeof(Oid) * nargs);
+				plan->values = PLy_malloc(sizeof(Datum) * nargs);
+				plan->args = PLy_malloc(sizeof(PLyTypeInfo) * nargs);
+
+				/*
+				 * the other loop might throw an exception, if PLyTypeInfo
+				 * member isn't properly initialized the Py_DECREF(plan) will
+				 * go boom
+				 */
+				for (i = 0; i < nargs; i++)
+				{
+					PLy_typeinfo_init(&plan->args[i]);
+					plan->values[i] = PointerGetDatum(NULL);
+				}
+
+				for (i = 0; i < nargs; i++)
+				{
+					char	   *sptr;
+					HeapTuple	typeTup;
+					Oid			typeId;
+					int32		typmod;
+					Form_pg_type typeStruct;
+
+					optr = PySequence_GetItem(list, i);
+					if (PyString_Check(optr))
+						sptr = PyString_AsString(optr);
+					else if (PyUnicode_Check(optr))
+						sptr = PLyUnicode_AsString(optr);
+					else
+					{
+						ereport(ERROR,
+								(errmsg("plpy.prepare: type name at ordinal position %d is not a string", i)));
+						sptr = NULL; /* keep compiler quiet */
+					}
+
+					/********************************************************
+					 * Resolve argument type names and then look them up by
+					 * oid in the system cache, and remember the required
+					 *information for input conversion.
+					 ********************************************************/
+
+					parseTypeString(sptr, &typeId, &typmod);
+
+					typeTup = SearchSysCache(TYPEOID,
+											 ObjectIdGetDatum(typeId),
+											 0, 0, 0);
+					if (!HeapTupleIsValid(typeTup))
+						elog(ERROR, "cache lookup failed for type %u", typeId);
+
+					Py_DECREF(optr);
+					optr = NULL;	/* this is important */
+
+					plan->types[i] = typeId;
+					typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+					if (typeStruct->typtype != TYPTYPE_COMPOSITE)
+						PLy_output_datum_func(&plan->args[i], typeTup);
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("plpy.prepare does not support composite types")));
+					ReleaseSysCache(typeTup);
+				}
+>>>>>>> 78a09145e0
 			}
 
 			/********************************************************
@@ -3889,6 +4367,7 @@ PLy_spi_prepare(PyObject *self __attribute__((unused)), PyObject *args)
 		FlushErrorState();
 		Py_DECREF(plan);
 		Py_XDECREF(optr);
+<<<<<<< HEAD
 
 		/* Abort the inner transaction */
 		RollbackAndReleaseCurrentSubTransaction();
@@ -3910,6 +4389,12 @@ PLy_spi_prepare(PyObject *self __attribute__((unused)), PyObject *args)
 		exc = entry ? entry->exc : PLy_exc_spi_error;
 		/* Make Python raise the exception */
 		PLy_spi_exception_set(exc, edata);
+=======
+		if (!PyErr_Occurred())
+			PLy_exception_set(PLy_exc_spi_error,
+							  "unrecognized error in PLy_spi_prepare");
+		PLy_elog(WARNING, NULL);
+>>>>>>> 78a09145e0
 		return NULL;
 	}
 	PG_END_TRY();
@@ -4009,6 +4494,17 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 			elem = PySequence_GetItem(list, j);
 			if (elem != Py_None)
 			{
+<<<<<<< HEAD
+=======
+				if (PyUnicode_Check(elem))
+					so = PLyUnicode_Str(elem);
+				else
+					so = PyObject_Str(elem);
+				if (!so)
+					PLy_elog(ERROR, "could not execute plan");
+				Py_DECREF(elem);
+
+>>>>>>> 78a09145e0
 				PG_TRY();
 				{
 					plan->values[j] =
@@ -4081,6 +4577,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 			}
 		}
 
+<<<<<<< HEAD
 		/* Abort the inner transaction */
 		RollbackAndReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
@@ -4101,6 +4598,12 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 		exc = entry ? entry->exc : PLy_exc_spi_error;
 		/* Make Python raise the exception */
 		PLy_spi_exception_set(exc, edata);
+=======
+		if (!PyErr_Occurred())
+			PLy_exception_set(PLy_exc_error,
+							  "unrecognized error in PLy_spi_execute_plan");
+		PLy_elog(WARNING, NULL);
+>>>>>>> 78a09145e0
 		return NULL;
 	}
 	PG_END_TRY();
@@ -4169,6 +4672,7 @@ PLy_spi_execute_query(char *query, long limit)
 		MemoryContextSwitchTo(oldcontext);
 		edata = CopyErrorData();
 		FlushErrorState();
+<<<<<<< HEAD
 
 		/* Abort the inner transaction */
 		RollbackAndReleaseCurrentSubTransaction();
@@ -4190,6 +4694,12 @@ PLy_spi_execute_query(char *query, long limit)
 		exc = entry ? entry->exc : PLy_exc_spi_error;
 		/* Make Python raise the exception */
 		PLy_spi_exception_set(exc, edata);
+=======
+		if (!PyErr_Occurred())
+			PLy_exception_set(PLy_exc_spi_error,
+							  "unrecognized error in PLy_spi_execute_query");
+		PLy_elog(WARNING, NULL);
+>>>>>>> 78a09145e0
 		return NULL;
 	}
 	PG_END_TRY();
@@ -4418,6 +4928,15 @@ PLy_subtransaction_exit(PyObject *self, PyObject *args)
  * language handler and interpreter initialization
  */
 
+#if PY_MAJOR_VERSION >= 3
+static PyMODINIT_FUNC
+PyInit_plpy(void)
+{
+	return PyModule_Create(&PLy_module);
+}
+#endif
+
+
 /*
  * Add exceptions to the plpy module
  */
@@ -4615,11 +5134,18 @@ PLy_init_plpy(void)
 
 #if PY_MAJOR_VERSION >= 3
 	plpy = PyModule_Create(&PLy_module);
+<<<<<<< HEAD
 	/* for Python 3 we initialized the exceptions in PyInit_plpy */
 #else
 	plpy = Py_InitModule("plpy", PLy_methods);
 	PLy_add_exceptions(plpy);
 #endif
+=======
+#else
+	plpy = Py_InitModule("plpy", PLy_methods);
+#endif
+	plpy_dict = PyModule_GetDict(plpy);
+>>>>>>> 78a09145e0
 
 	/* PyDict_SetItemString(plpy, "PlanType", (PyObject *) &PLy_PlanType); */
 
@@ -4691,12 +5217,18 @@ PLy_output(volatile int level, PyObject *self __attribute__((unused)), PyObject 
 
 	if (PyTuple_Size(args) == 1)
 	{
+<<<<<<< HEAD
 		/*
 		 * Treat single argument specially to avoid undesirable ('tuple',)
 		 * decoration.
 		 */
 		PyObject   *o;
 
+=======
+		/* Treat single argument specially to avoid undesirable
+		 * ('tuple',) decoration. */
+		PyObject *o;
+>>>>>>> 78a09145e0
 		PyArg_UnpackTuple(args, "plpy.elog", 1, 1, &o);
 		so = PyObject_Str(o);
 	}
@@ -4722,6 +5254,7 @@ PLy_output(volatile int level, PyObject *self __attribute__((unused)), PyObject 
 		edata = CopyErrorData();
 		FlushErrorState();
 
+<<<<<<< HEAD
 		/*
 		 * Note: If sv came from PyString_AsString(), it points into storage
 		 * owned by so.  So free so after using sv.
@@ -4730,6 +5263,18 @@ PLy_output(volatile int level, PyObject *self __attribute__((unused)), PyObject 
 
 		/* Make Python raise the exception */
 		PLy_exception_set(PLy_exc_error, "%s", edata->message);
+=======
+		PyErr_SetString(PLy_exc_error, sv);
+		/* Note: If sv came from PyString_AsString(), it points into
+		 * storage owned by so.  So free so after using sv. */
+		Py_XDECREF(so);
+
+		/*
+		 * returning NULL here causes the python interpreter to bail. when
+		 * control passes back to PLy_procedure_call, we check for PG
+		 * exceptions and re-throw the error.
+		 */
+>>>>>>> 78a09145e0
 		return NULL;
 	}
 	PG_END_TRY();
@@ -4849,6 +5394,7 @@ PLy_exception_set_plural(PyObject *exc,
 	PyErr_SetString(exc, buf);
 }
 
+<<<<<<< HEAD
 /*
  * Raise a SPIError, passing in it more error details, like the
  * internal query and error position.
@@ -4897,6 +5443,13 @@ failure:
  * NULL, the Python error becomes the primary error message, otherwise
  * it becomes the detail.  If there is a Python traceback, it is put
  * in the context.
+=======
+/* Emit a PG error or notice, together with any available info about
+ * the current Python error, previously set by PLy_exception_set().
+ * This should be used to propagate Python errors into PG.  If fmt is
+ * NULL, the Python error becomes the primary error message, otherwise
+ * it becomes the detail.
+>>>>>>> 78a09145e0
  */
 static void
 PLy_elog(int elevel, const char *fmt,...)
@@ -4947,6 +5500,7 @@ PLy_elog(int elevel, const char *fmt,...)
 		/* Since we have a format string, we cannot have a SPI detail. */
 		Assert(detail == NULL);
 
+<<<<<<< HEAD
 		/* If there's an exception message, it goes in the detail. */
 		if (xmsg)
 			detail = xmsg;
@@ -4955,10 +5509,28 @@ PLy_elog(int elevel, const char *fmt,...)
 	{
 		if (xmsg)
 			primary = xmsg;
+=======
+	if (fmt)
+	{
+		initStringInfo(&emsg);
+		for(;;)
+		{
+			va_list		ap;
+			bool		success;
+
+			va_start(ap, fmt);
+			success = appendStringInfoVA(&emsg, dgettext(TEXTDOMAIN, fmt), ap);
+			va_end(ap);
+			if (success)
+				break;
+			enlargeStringInfo(&emsg, emsg.maxlen);
+		}
+>>>>>>> 78a09145e0
 	}
 
 	PG_TRY();
 	{
+<<<<<<< HEAD
 		ereport(elevel,
 				(errcode(sqlerrcode ? sqlerrcode : ERRCODE_INTERNAL_ERROR),
 				 errmsg("%s", primary ? primary : "no exception data"),
@@ -4967,6 +5539,15 @@ PLy_elog(int elevel, const char *fmt,...)
 				 (hint) ? errhint("%s", hint) : 0,
 				 (query) ? internalerrquery(query) : 0,
 				 (position) ? internalerrposition(position) : 0));
+=======
+		if (fmt)
+			ereport(elevel,
+					(errmsg("PL/Python: %s", emsg.data),
+					 (xmsg) ? errdetail("%s", xmsg) : 0));
+		else
+			ereport(elevel,
+					(errmsg("PL/Python: %s", xmsg)));
+>>>>>>> 78a09145e0
 	}
 	PG_CATCH();
 	{
@@ -5295,6 +5876,7 @@ PLy_free(void *ptr)
 }
 
 /*
+<<<<<<< HEAD
  * Convert a Python unicode object to a Python string/bytes object in
  * PostgreSQL server encoding.	Reference ownership is passed to the
  * caller.
@@ -5308,6 +5890,38 @@ PLyUnicode_Bytes(PyObject *unicode)
 	/*
 	 * Python understands almost all PostgreSQL encoding names, but it doesn't
 	 * know SQL_ASCII.
+=======
+ * Convert a Unicode object to a Python string.
+ */
+static PyObject*
+PLyUnicode_Str(PyObject *unicode)
+{
+#if PY_MAJOR_VERSION >= 3
+	/* In Python 3, this is a noop. */
+	Py_INCREF(unicode);
+	return unicode;
+#else
+	/* In Python 2, this means converting the Unicode to bytes in the
+	 * server encoding. */
+	return PLyUnicode_Bytes(unicode);
+#endif
+}
+
+/*
+ * Convert a Python unicode object to a Python string/bytes object in
+ * PostgreSQL server encoding.  Reference ownership is passed to the
+ * caller.
+ */
+static PyObject*
+PLyUnicode_Bytes(PyObject *unicode)
+{
+	PyObject *rv;
+	const char *serverenc;
+
+	/*
+	 * Python understands almost all PostgreSQL encoding names, but it
+	 * doesn't know SQL_ASCII.
+>>>>>>> 78a09145e0
 	 */
 	if (GetDatabaseEncoding() == PG_SQL_ASCII)
 		serverenc = "ascii";
@@ -5325,7 +5939,11 @@ PLyUnicode_Bytes(PyObject *unicode)
  * function.  The result is palloc'ed.
  *
  * Note that this function is disguised as PyString_AsString() when
+<<<<<<< HEAD
  * using Python 3.	That function retuns a pointer into the internal
+=======
+ * using Python 3.  That function retuns a pointer into the internal
+>>>>>>> 78a09145e0
  * memory of the argument, which isn't exactly the interface of this
  * function.  But in either case you get a rather short-lived
  * reference that you ought to better leave alone.
@@ -5333,9 +5951,14 @@ PLyUnicode_Bytes(PyObject *unicode)
 static char *
 PLyUnicode_AsString(PyObject *unicode)
 {
+<<<<<<< HEAD
 	PyObject   *o = PLyUnicode_Bytes(unicode);
 	char	   *rv = pstrdup(PyBytes_AsString(o));
 
+=======
+	PyObject *o = PLyUnicode_Bytes(unicode);
+	char *rv = pstrdup(PyBytes_AsString(o));
+>>>>>>> 78a09145e0
 	Py_XDECREF(o);
 	return rv;
 }
@@ -5343,21 +5966,33 @@ PLyUnicode_AsString(PyObject *unicode)
 #if PY_MAJOR_VERSION >= 3
 /*
  * Convert a C string in the PostgreSQL server encoding to a Python
+<<<<<<< HEAD
  * unicode object.	Reference ownership is passed to the caller.
+=======
+ * unicode object.  Reference ownership is passed to the caller.
+>>>>>>> 78a09145e0
  */
 static PyObject *
 PLyUnicode_FromString(const char *s)
 {
+<<<<<<< HEAD
 	char	   *utf8string;
 	PyObject   *o;
 
 	utf8string = (char *) pg_do_encoding_conversion((unsigned char *) s,
+=======
+    char       *utf8string;
+	PyObject   *o;
+
+    utf8string = (char *) pg_do_encoding_conversion((unsigned char *) s,
+>>>>>>> 78a09145e0
 													strlen(s),
 													GetDatabaseEncoding(),
 													PG_UTF8);
 
 	o = PyUnicode_FromString(utf8string);
 
+<<<<<<< HEAD
 	if (utf8string != s)
 		pfree(utf8string);
 
@@ -5388,3 +6023,11 @@ plpython2_validator(PG_FUNCTION_ARGS)
 }
 
 #endif   /* PY_MAJOR_VERSION < 3 */
+=======
+    if (utf8string != s)
+        pfree(utf8string);
+
+	return o;
+}
+#endif /* PY_MAJOR_VERSION >= 3 */
+>>>>>>> 78a09145e0

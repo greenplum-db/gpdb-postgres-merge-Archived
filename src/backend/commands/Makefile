@@ -4,7 +4,7 @@
 #    Makefile for backend/commands
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/commands/Makefile,v 1.39 2008/12/19 16:25:17 petere Exp $
+#    $PostgreSQL: pgsql/src/backend/commands/Makefile,v 1.40 2009/07/29 20:56:18 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,8 +14,13 @@ include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 
 OBJS = aggregatecmds.o alter.o analyze.o async.o cluster.o comment.o  \
+<<<<<<< HEAD
 	conversioncmds.o copy.o \
 	dbcommands.o define.o discard.o explain.o extension.o foreigncmds.o functioncmds.o \
+=======
+	constraint.o conversioncmds.o copy.o \
+	dbcommands.o define.o discard.o explain.o foreigncmds.o functioncmds.o \
+>>>>>>> 78a09145e0
 	indexcmds.o lockcmds.o operatorcmds.o opclasscmds.o \
 	portalcmds.o prepare.o proclang.o \
 	schemacmds.o sequence.o tablecmds.o tablespace.o trigger.o \

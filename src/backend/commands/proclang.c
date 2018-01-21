@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.85 2009/06/11 14:48:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.87 2009/09/22 23:43:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,8 +29,8 @@
 #include "commands/defrem.h"
 #include "commands/proclang.h"
 #include "miscadmin.h"
-#include "parser/gramparse.h"
 #include "parser/parse_func.h"
+#include "parser/parser.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -190,8 +190,13 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		}
 
 		/*
+<<<<<<< HEAD
 		 * Likewise for the anonymous block handler, if required; but we don't
 		 * care about its return type.
+=======
+		 * Likewise for the anonymous block handler, if required;
+		 * but we don't care about its return type.
+>>>>>>> 78a09145e0
 		 */
 		if (pltemplate->tmplinline)
 		{
@@ -201,6 +206,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 			if (!OidIsValid(inlineOid))
 			{
 				inlineOid = ProcedureCreate(pltemplate->tmplinline,
+<<<<<<< HEAD
 										 PG_CATALOG_NAMESPACE,
 										 false, /* replace */
 										 false, /* returnsSet */
@@ -226,6 +232,29 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										 PRODATAACCESS_NONE,
 										 PROEXECLOCATION_ANY);
 
+=======
+											PG_CATALOG_NAMESPACE,
+											false, /* replace */
+											false, /* returnsSet */
+											VOIDOID,
+											ClanguageId,
+											F_FMGR_C_VALIDATOR,
+											pltemplate->tmplinline,
+											pltemplate->tmpllibrary,
+											false, /* isAgg */
+											false, /* isWindowFunc */
+											false, /* security_definer */
+											true, /* isStrict */
+											PROVOLATILE_VOLATILE,
+											buildoidvector(funcargtypes, 1),
+											PointerGetDatum(NULL),
+											PointerGetDatum(NULL),
+											PointerGetDatum(NULL),
+											NIL,
+											PointerGetDatum(NULL),
+											1,
+											0);
+>>>>>>> 78a09145e0
 			}
 		}
 		else
@@ -256,7 +285,11 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										 false, /* isWindowFunc */
 										 false, /* security_definer */
 										 true, /* isStrict */
+<<<<<<< HEAD
 										 PROVOLATILE_IMMUTABLE,
+=======
+										 PROVOLATILE_VOLATILE,
+>>>>>>> 78a09145e0
 										 buildoidvector(funcargtypes, 1),
 										 PointerGetDatum(NULL),
 										 PointerGetDatum(NULL),
@@ -350,6 +383,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		/* ok, create it */
 		create_proc_lang(languageName, GetUserId(), handlerOid, inlineOid,
 						 valOid, stmt->pltrusted);
+<<<<<<< HEAD
 	}
 
 	if (Gp_role == GP_ROLE_DISPATCH)
@@ -360,6 +394,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 									DF_NEED_TWO_PHASE,
 									GetAssignedOidsForDispatch(),
 									NULL);
+=======
+>>>>>>> 78a09145e0
 	}
 }
 

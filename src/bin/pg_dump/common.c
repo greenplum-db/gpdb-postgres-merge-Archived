@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.107 2009/06/11 14:49:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.108 2009/10/05 19:24:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,6 +91,23 @@ getSchemaData(int *numTablesPtr)
 	NamespaceInfo *nspinfo;
 	ExtensionInfo *extinfo;
 	InhInfo    *inhinfo;
+<<<<<<< HEAD
+=======
+	RuleInfo   *ruleinfo;
+	ProcLangInfo *proclanginfo;
+	CastInfo   *castinfo;
+	OpclassInfo *opcinfo;
+	OpfamilyInfo *opfinfo;
+	ConvInfo   *convinfo;
+	TSParserInfo *prsinfo;
+	TSTemplateInfo *tmplinfo;
+	TSDictInfo *dictinfo;
+	TSConfigInfo *cfginfo;
+	FdwInfo    *fdwinfo;
+	ForeignServerInfo *srvinfo;
+	DefaultACLInfo *daclinfo;
+	int			numNamespaces;
+>>>>>>> 78a09145e0
 	int			numAggregates;
 	int			numInherits;
 	int			numRules;
@@ -106,6 +123,7 @@ getSchemaData(int *numTablesPtr)
 	int			numTSConfigs;
 	int			numForeignDataWrappers;
 	int			numForeignServers;
+	int			numDefaultACLs;
 
 	/*
 	 * We must read extensions and extension membership info first, because
@@ -204,7 +222,19 @@ getSchemaData(int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined foreign servers\n");
+<<<<<<< HEAD
 	getForeignServers(&numForeignServers);
+=======
+	srvinfo = getForeignServers(&numForeignServers);
+
+	if (g_verbose)
+		write_msg(NULL, "reading default privileges\n");
+	daclinfo = getDefaultACLs(&numDefaultACLs);
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined operator families\n");
+	opfinfo = getOpfamilies(&numOpfamilies);
+>>>>>>> 78a09145e0
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined conversions\n");

@@ -9,7 +9,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-exec.c
+=======
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.205 2009/08/04 18:05:42 tgl Exp $
+>>>>>>> 78a09145e0
  *
  *-------------------------------------------------------------------------
  */
@@ -3252,6 +3256,7 @@ PQescapeString(char *to, const char *from, size_t length)
 }
 
 
+<<<<<<< HEAD
 /*
  * Escape arbitrary strings.  If as_ident is true, we escape the result
  * as an identifier; if false, as a literal.  The result is returned in
@@ -3391,6 +3396,8 @@ PQescapeIdentifier(PGconn *conn, const char *str, size_t len)
 	return PQescapeInternal(conn, str, len, true);
 }
 
+=======
+>>>>>>> 78a09145e0
 /* HEX encoding support for bytea */
 static const char hextbl[] = "0123456789abcdef";
 
@@ -3538,7 +3545,11 @@ PQescapeByteaConn(PGconn *conn,
 		return NULL;
 	return PQescapeByteaInternal(conn, from, from_length, to_length,
 								 conn->std_strings,
+<<<<<<< HEAD
 								 (conn->sversion >= 90000));
+=======
+								 (conn->sversion >= 80500));
+>>>>>>> 78a09145e0
 }
 
 unsigned char *
@@ -3584,9 +3595,15 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 	if (strtext[0] == '\\' && strtext[1] == 'x')
 	{
 		const unsigned char *s;
+<<<<<<< HEAD
 		unsigned char *p;
 
 		buflen = (strtextlen - 2) / 2;
+=======
+		unsigned char	*p;
+
+		buflen = (strtextlen - 2)/2;
+>>>>>>> 78a09145e0
 		/* Avoid unportable malloc(0) */
 		buffer = (unsigned char *) malloc(buflen > 0 ? buflen : 1);
 		if (buffer == NULL)
@@ -3596,8 +3613,13 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 		p = buffer;
 		while (*s)
 		{
+<<<<<<< HEAD
 			char		v1,
 						v2;
+=======
+			char	v1,
+					v2;
+>>>>>>> 78a09145e0
 
 			/*
 			 * Bad input is silently ignored.  Note that this includes
@@ -3610,6 +3632,21 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 			if (v2 != (char) -1)
 				*p++ = (v1 << 4) | v2;
 		}
+<<<<<<< HEAD
+=======
+
+		buflen = p - buffer;
+	}
+	else
+	{
+	/*
+	 * Length of input is max length of output, but add one to avoid
+	 * unportable malloc(0) if input is zero-length.
+	 */
+	buffer = (unsigned char *) malloc(strtextlen + 1);
+	if (buffer == NULL)
+		return NULL;
+>>>>>>> 78a09145e0
 
 		buflen = p - buffer;
 	}
@@ -3662,6 +3699,11 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 		}
 		buflen = j;				/* buflen is the length of the dequoted data */
 	}
+<<<<<<< HEAD
+=======
+	buflen = j;					/* buflen is the length of the dequoted data */
+	}
+>>>>>>> 78a09145e0
 
 	/* Shrink the buffer to be no larger than necessary */
 	/* +1 avoids unportable behavior when buflen==0 */

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.17 2009/06/11 20:46:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.21 2009/12/07 05:22:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,6 +219,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 										   namespaceid,
 										   rel->rd_rel->reltablespace,
 										   toastOid,
+										   InvalidOid,
 										   rel->rd_rel->relowner,
 										   tupdesc,
 										   NIL,
@@ -231,8 +232,13 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 										   ONCOMMIT_NOOP,
 										   NULL, /* CDB POLICY */
 										   reloptions,
+<<<<<<< HEAD
 										   true,
 										   /* valid_opts */ false);
+=======
+										   false,
+										   true);
+>>>>>>> 78a09145e0
 
 	/* make the toast relation visible, else index creation will fail */
 	CommandCounterIncrement();
@@ -257,6 +263,9 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	indexInfo->ii_ExpressionsState = NIL;
 	indexInfo->ii_Predicate = NIL;
 	indexInfo->ii_PredicateState = NIL;
+	indexInfo->ii_ExclusionOps = NULL;
+	indexInfo->ii_ExclusionProcs = NULL;
+	indexInfo->ii_ExclusionStrats = NULL;
 	indexInfo->ii_Unique = true;
 	indexInfo->ii_ReadyForInserts = true;
 	indexInfo->ii_Concurrent = false;
@@ -273,6 +282,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 							   BTREE_AM_OID,
 							   rel->rd_rel->reltablespace,
 							   classObjectId, coloptions, (Datum) 0,
+<<<<<<< HEAD
 							   true, false, true, false, false, NULL);
 
 	/*
@@ -284,6 +294,10 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 		UnlockRelationOid(toast_relid, ShareLock);
 		UnlockRelationOid(toast_idxid, AccessExclusiveLock);
 	}
+=======
+							   true, false, false, false,
+							   true, false, false);
+>>>>>>> 78a09145e0
 
 	/*
 	 * Store the toast table's OID in the parent relation's pg_class row

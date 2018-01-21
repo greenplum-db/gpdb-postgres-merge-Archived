@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2009, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.189 2009/06/11 14:49:01 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.193 2009/11/28 23:38:07 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -264,9 +264,14 @@ static void pgstat_beshutdown_hook(int code, Datum arg);
 static void pgstat_sighup_handler(SIGNAL_ARGS);
 
 static PgStat_StatDBEntry *pgstat_get_db_entry(Oid databaseid, bool create);
+<<<<<<< HEAD
 
 static PgStat_StatQueueEntry *pgstat_get_queue_entry(Oid queueid, bool create); /*GPDB*/
 
+=======
+static PgStat_StatTabEntry *pgstat_get_tab_entry(PgStat_StatDBEntry *dbentry,
+												 Oid tableoid, bool create);
+>>>>>>> 78a09145e0
 static void pgstat_write_statsfile(bool permanent);
 static HTAB *pgstat_read_statsfile(Oid onlydb, bool permanent);
 static void backend_read_statsfile(void);
@@ -2211,7 +2216,8 @@ pgstat_initialize(void)
  * pgstat_bestart() -
  *
  *	Initialize this backend's entry in the PgBackendStatus array.
- *	Called from InitPostgres.  MyDatabaseId and session userid must be set
+ *	Called from InitPostgres.
+ *	MyDatabaseId, session userid, and application_name must be set
  *	(hence, this cannot be combined with pgstat_initialize).
  * ----------
  */
@@ -2267,7 +2273,11 @@ pgstat_bestart(void)
 	beentry->st_userid = userid;
 	beentry->st_session_id = gp_session_id;  /* GPDB only */
 	beentry->st_clientaddr = clientaddr;
+<<<<<<< HEAD
 	beentry->st_waiting = PGBE_WAITING_NONE;
+=======
+	beentry->st_waiting = false;
+>>>>>>> 78a09145e0
 	beentry->st_appname[0] = '\0';
 	beentry->st_activity[0] = '\0';
 	/* Also make sure the last byte in each string area is always 0 */
@@ -2278,11 +2288,14 @@ pgstat_bestart(void)
 	beentry->st_changecount++;
 	Assert((beentry->st_changecount & 1) == 0);
 
+<<<<<<< HEAD
 	/*
 	 * GPDB: Initialize per-portal statistics hash for resource queues.
 	 */
 	pgstat_init_localportalhash();
 	
+=======
+>>>>>>> 78a09145e0
 	/* Update app name to current GUC setting */
 	if (application_name)
 		pgstat_report_appname(application_name);
@@ -2303,8 +2316,13 @@ pgstat_beshutdown_hook(int code, Datum arg)
 	volatile PgBackendStatus *beentry = MyBEEntry;
 
 	/*
+<<<<<<< HEAD
 	 * If we got as far as discovering our own database ID, we can report what
 	 * we did to the collector.  Otherwise, we'd be sending an invalid
+=======
+	 * If we got as far as discovering our own database ID, we can report
+	 * what we did to the collector.  Otherwise, we'd be sending an invalid
+>>>>>>> 78a09145e0
 	 * database ID, so forget it.  (This means that accesses to pg_database
 	 * during failed backend starts might never get counted.)
 	 */
@@ -2504,8 +2522,13 @@ pgstat_read_current_status(void)
 	volatile PgBackendStatus *beentry;
 	PgBackendStatus *localtable;
 	PgBackendStatus *localentry;
+<<<<<<< HEAD
 	char	   *localappname;
 	char	   *localactivity;
+=======
+	char	   *localappname,
+			   *localactivity;
+>>>>>>> 78a09145e0
 	int			i;
 
 	Assert(!pgStatRunningInCollector);
@@ -3088,6 +3111,52 @@ pgstat_get_db_entry(Oid databaseid, bool create)
 										PGSTAT_FUNCTION_HASH_SIZE,
 										&hash_ctl,
 										HASH_ELEM | HASH_FUNCTION);
+	}
+
+	return result;
+}
+
+
+/*
+ * Lookup the hash table entry for the specified table. If no hash
+ * table entry exists, initialize it, if the create parameter is true.
+ * Else, return NULL.
+ */
+static PgStat_StatTabEntry *
+pgstat_get_tab_entry(PgStat_StatDBEntry *dbentry, Oid tableoid, bool create)
+{
+	PgStat_StatTabEntry *result;
+	bool		found;
+	HASHACTION	action = (create ? HASH_ENTER : HASH_FIND);
+
+	/* Lookup or create the hash table entry for this table */
+	result = (PgStat_StatTabEntry *) hash_search(dbentry->tables,
+												 &tableoid,
+												 action, &found);
+
+	if (!create && !found)
+		return NULL;
+
+	/* If not found, initialize the new one. */
+	if (!found)
+	{
+		result->numscans = 0;
+		result->tuples_returned = 0;
+		result->tuples_fetched = 0;
+		result->tuples_inserted = 0;
+		result->tuples_updated = 0;
+		result->tuples_deleted = 0;
+		result->tuples_hot_updated = 0;
+		result->n_live_tuples = 0;
+		result->n_dead_tuples = 0;
+		result->last_anl_tuples = 0;
+		result->blocks_fetched = 0;
+		result->blocks_hit = 0;
+
+		result->vacuum_timestamp = 0;
+		result->autovac_vacuum_timestamp = 0;
+		result->analyze_timestamp = 0;
+		result->autovac_analyze_timestamp = 0;
 	}
 
 	return result;
@@ -3774,10 +3843,10 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 			tabentry->tuples_hot_updated = tabmsg[i].t_counts.t_tuples_hot_updated;
 			tabentry->n_live_tuples = tabmsg[i].t_counts.t_new_live_tuples;
 			tabentry->n_dead_tuples = tabmsg[i].t_counts.t_new_dead_tuples;
+			tabentry->last_anl_tuples = 0;
 			tabentry->blocks_fetched = tabmsg[i].t_counts.t_blocks_fetched;
 			tabentry->blocks_hit = tabmsg[i].t_counts.t_blocks_hit;
 
-			tabentry->last_anl_tuples = 0;
 			tabentry->vacuum_timestamp = 0;
 			tabentry->autovac_vacuum_timestamp = 0;
 			tabentry->analyze_timestamp = 0;
@@ -3955,19 +4024,10 @@ pgstat_recv_autovac(PgStat_MsgAutovacStart *msg, int len)
 	PgStat_StatDBEntry *dbentry;
 
 	/*
-	 * Lookup the database in the hashtable.  Don't create the entry if it
-	 * doesn't exist, because autovacuum may be processing a template
-	 * database.  If this isn't the case, the database is most likely to have
-	 * an entry already.  (If it doesn't, not much harm is done anyway --
-	 * it'll get created as soon as somebody actually uses the database.)
+	 * Store the last autovacuum time in the database's hashtable entry.
 	 */
-	dbentry = pgstat_get_db_entry(msg->m_databaseid, false);
-	if (dbentry == NULL)
-		return;
+	dbentry = pgstat_get_db_entry(msg->m_databaseid, true);
 
-	/*
-	 * Store the last autovacuum time in the database entry.
-	 */
 	dbentry->last_autovac_time = msg->m_start_time;
 }
 
@@ -3984,18 +4044,11 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 	PgStat_StatTabEntry *tabentry;
 
 	/*
-	 * Don't create either the database or table entry if it doesn't already
-	 * exist.  This avoids bloating the stats with entries for stuff that is
-	 * only touched by vacuum and not by live operations.
+	 * Store the data in the table's hashtable entry.
 	 */
-	dbentry = pgstat_get_db_entry(msg->m_databaseid, false);
-	if (dbentry == NULL)
-		return;
+	dbentry = pgstat_get_db_entry(msg->m_databaseid, true);
 
-	tabentry = hash_search(dbentry->tables, &(msg->m_tableoid),
-						   HASH_FIND, NULL);
-	if (tabentry == NULL)
-		return;
+	tabentry = pgstat_get_tab_entry(dbentry, msg->m_tableoid, true);
 
 	if (msg->m_autovacuum)
 		tabentry->autovac_vacuum_timestamp = msg->m_vacuumtime;
@@ -4033,18 +4086,11 @@ pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len)
 	PgStat_StatTabEntry *tabentry;
 
 	/*
-	 * Don't create either the database or table entry if it doesn't already
-	 * exist.  This avoids bloating the stats with entries for stuff that is
-	 * only touched by analyze and not by live operations.
+	 * Store the data in the table's hashtable entry.
 	 */
-	dbentry = pgstat_get_db_entry(msg->m_databaseid, false);
-	if (dbentry == NULL)
-		return;
+	dbentry = pgstat_get_db_entry(msg->m_databaseid, true);
 
-	tabentry = hash_search(dbentry->tables, &(msg->m_tableoid),
-						   HASH_FIND, NULL);
-	if (tabentry == NULL)
-		return;
+	tabentry = pgstat_get_tab_entry(dbentry, msg->m_tableoid, true);
 
 	if (msg->m_autovacuum)
 		tabentry->autovac_analyze_timestamp = msg->m_analyzetime;

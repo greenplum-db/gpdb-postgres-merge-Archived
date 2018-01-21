@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.42 2009/06/11 14:49:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.43 2009/09/27 20:09:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,6 +122,7 @@
 typedef struct TupleTableSlot
 {
 	NodeTag		type;
+<<<<<<< HEAD
 	int         PRIVATE_tts_flags;      /* TTS_xxx flags */
 
 	/* Heap tuple stuff */
@@ -142,6 +143,13 @@ typedef struct TupleTableSlot
 	Datum 	*PRIVATE_tts_values;		/* virtual tuple values */
 	bool 	*PRIVATE_tts_isnull;		/* virtual tuple nulls */
 
+=======
+	bool		tts_isempty;	/* true = slot is empty */
+	bool		tts_shouldFree; /* should pfree tts_tuple? */
+	bool		tts_shouldFreeMin;		/* should pfree tts_mintuple? */
+	bool		tts_slow;		/* saved state for slot_deform_tuple */
+	HeapTuple	tts_tuple;		/* physical tuple, or NULL if virtual */
+>>>>>>> 78a09145e0
 	TupleDesc	tts_tupleDescriptor;	/* slot's tuple descriptor */
 	MemTupleBinding *tts_mt_bind;		/* mem tuple's binding */ 
 	MemoryContext 	tts_mcxt;		/* slot itself is in this context */
@@ -367,19 +375,35 @@ static inline bool slot_attisnull(TupleTableSlot *slot, int attnum)
 #ifdef GPDB_83_MERGE_FIXME
 #define TTS_HAS_PHYSICAL_TUPLE(slot)  \
 	((slot)->tts_tuple != NULL && (slot)->tts_tuple != &((slot)->tts_minhdr))
+<<<<<<< HEAD
 #endif
 
 /* in executor/execTuples.c */
 extern void init_slot(TupleTableSlot *slot, TupleDesc tupdesc);
 
+=======
+
+/*
+ * TupIsNull -- is a TupleTableSlot empty?
+ */
+#define TupIsNull(slot) \
+	((slot) == NULL || (slot)->tts_isempty)
+
+/* in executor/execTuples.c */
+>>>>>>> 78a09145e0
 extern TupleTableSlot *MakeTupleTableSlot(void);
 extern TupleTableSlot *ExecAllocTableSlot(List **tupleTable);
 extern void ExecResetTupleTable(List *tupleTable, bool shouldFree);
 extern TupleTableSlot *MakeSingleTupleTableSlot(TupleDesc tupdesc);
 extern void ExecDropSingleTupleTableSlot(TupleTableSlot *slot);
+<<<<<<< HEAD
 extern void ExecSetSlotDescriptor(TupleTableSlot *slot, TupleDesc tupdesc); 
 
 extern TupleTableSlot *ExecStoreHeapTuple(HeapTuple tuple,
+=======
+extern void ExecSetSlotDescriptor(TupleTableSlot *slot, TupleDesc tupdesc);
+extern TupleTableSlot *ExecStoreTuple(HeapTuple tuple,
+>>>>>>> 78a09145e0
 			   TupleTableSlot *slot,
 			   Buffer buffer,
 			   bool shouldFree);

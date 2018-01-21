@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.256 2009/06/11 14:48:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.262 2009/12/15 17:57:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@
 #ifdef OPTIMIZER_DEBUG
 #include "nodes/print.h"
 #endif
+#include "parser/analyze.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
@@ -81,6 +82,11 @@ static Node *preprocess_expression(PlannerInfo *root, Node *expr, int kind);
 static void preprocess_qual_conditions(PlannerInfo *root, Node *jtnode);
 static Plan *inheritance_planner(PlannerInfo *root);
 static Plan *grouping_planner(PlannerInfo *root, double tuple_fraction);
+<<<<<<< HEAD
+=======
+static bool is_dummy_plan(Plan *plan);
+static void preprocess_rowmarks(PlannerInfo *root);
+>>>>>>> 78a09145e0
 static double preprocess_limit(PlannerInfo *root,
 				 double tuple_fraction,
 				 int64 *offset_est, int64 *count_est);
@@ -178,6 +184,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	PlannerInfo *root;
 	Plan	   *top_plan;
 	ListCell   *lp,
+<<<<<<< HEAD
 			   *lr;
 	PlannerConfig *config;
 	instr_time		starttime;
@@ -231,6 +238,10 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	 */
 	START_MEMORY_ACCOUNT(MemoryAccounting_CreateAccount(0, MEMORY_OWNER_TYPE_Planner));
 	{
+=======
+			   *lrt,
+			   *lrm;
+>>>>>>> 78a09145e0
 
 	/* Cursor options may come from caller or from DECLARE CURSOR stmt */
 	if (parse->utilityStmt &&
@@ -254,8 +265,10 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->paramlist = NIL;
 	glob->subplans = NIL;
 	glob->subrtables = NIL;
+	glob->subrowmarks = NIL;
 	glob->rewindPlanIDs = NULL;
 	glob->finalrtable = NIL;
+	glob->finalrowmarks = NIL;
 	glob->relationOids = NIL;
 	glob->invalItems = NIL;
 	glob->lastPHId = 0;
@@ -342,16 +355,30 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 
 	/* final cleanup of the plan */
 	Assert(glob->finalrtable == NIL);
+<<<<<<< HEAD
 	Assert(parse == root->parse);
 	top_plan = set_plan_references(glob, top_plan, root->parse->rtable);
+=======
+	Assert(glob->finalrowmarks == NIL);
+	top_plan = set_plan_references(glob, top_plan,
+								   root->parse->rtable,
+								   root->rowMarks);
+>>>>>>> 78a09145e0
 	/* ... and the subplans (both regular subplans and initplans) */
 	Assert(list_length(glob->subplans) == list_length(glob->subrtables));
-	forboth(lp, glob->subplans, lr, glob->subrtables)
+	Assert(list_length(glob->subplans) == list_length(glob->subrowmarks));
+	lrt = list_head(glob->subrtables);
+	lrm = list_head(glob->subrowmarks);
+	foreach(lp, glob->subplans)
 	{
 		Plan	   *subplan = (Plan *) lfirst(lp);
-		List	   *subrtable = (List *) lfirst(lr);
+		List	   *subrtable = (List *) lfirst(lrt);
+		List	   *subrowmark = (List *) lfirst(lrm);
 
-		lfirst(lp) = set_plan_references(glob, subplan, subrtable);
+		lfirst(lp) = set_plan_references(glob, subplan,
+										 subrtable, subrowmark);
+		lrt = lnext(lrt);
+		lrm = lnext(lrm);
 	}
 
 	/* walk plan and remove unused initplans and their params */
@@ -415,6 +442,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result = makeNode(PlannedStmt);
 
 	result->commandType = parse->commandType;
+	result->hasReturning = (parse->returningList != NIL);
 	result->canSetTag = parse->canSetTag;
 	result->transientPlan = glob->transientPlan;
 	result->oneoffPlan = glob->oneoffPlan;
@@ -425,10 +453,14 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->intoClause = parse->intoClause;
 	result->subplans = glob->subplans;
 	result->rewindPlanIDs = glob->rewindPlanIDs;
+<<<<<<< HEAD
 	result->returningLists = root->returningLists;
 	result->result_partitions = root->result_partitions;
 	result->result_aosegnos = root->result_aosegnos;
 	result->rowMarks = parse->rowMarks;
+=======
+	result->rowMarks = glob->finalrowmarks;
+>>>>>>> 78a09145e0
 	result->relationOids = glob->relationOids;
 	result->invalItems = glob->invalItems;
 	result->nParamExec = list_length(glob->paramlist);
@@ -539,6 +571,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	}
 
 	root->append_rel_list = NIL;
+	root->rowMarks = NIL;
 
 	Assert(config);
 	root->config = config;
@@ -551,7 +584,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 
 	root->hasRecursion = hasRecursion;
 	if (hasRecursion)
-		root->wt_param_id = SS_assign_worktable_param(root);
+		root->wt_param_id = SS_assign_special_param(root);
 	else
 		root->wt_param_id = -1;
 	root->non_recursive_plan = NULL;
@@ -624,6 +657,14 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 			}
 		}
 	}
+
+	/*
+	 * Preprocess RowMark information.  We need to do this after subquery
+	 * pullup (so that all non-inherited RTEs are present) and before
+	 * inheritance expansion (so that the info is available for
+	 * expand_inherited_tables to examine and modify).
+	 */
+	preprocess_rowmarks(root);
 
 	/*
 	 * Expand any rangetable entries that are inheritance sets into "append
@@ -783,17 +824,66 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 		rt_fetch(parse->resultRelation, parse->rtable)->inh)
 		plan = inheritance_planner(root);
 	else
+	{
 		plan = grouping_planner(root, tuple_fraction);
+		/* If it's not SELECT, we need a ModifyTable node */
+		if (parse->commandType != CMD_SELECT)
+		{
+			List   *returningLists;
+			List   *rowMarks;
+
+			/*
+			 * Deal with the RETURNING clause if any.  It's convenient to pass
+			 * the returningList through setrefs.c now rather than at top
+			 * level (if we waited, handling inherited UPDATE/DELETE would be
+			 * much harder).
+			 */
+			if (parse->returningList)
+			{
+				List	   *rlist;
+
+				Assert(parse->resultRelation);
+				rlist = set_returning_clause_references(root->glob,
+														parse->returningList,
+														plan,
+														parse->resultRelation);
+				returningLists = list_make1(rlist);
+			}
+			else
+				returningLists = NIL;
+
+			/*
+			 * If there was a FOR UPDATE/SHARE clause, the LockRows node will
+			 * have dealt with fetching non-locked marked rows, else we need
+			 * to have ModifyTable do that.
+			 */
+			if (parse->rowMarks)
+				rowMarks = NIL;
+			else
+				rowMarks = root->rowMarks;
+
+			plan = (Plan *) make_modifytable(parse->commandType,
+											 copyObject(root->resultRelations),
+											 list_make1(plan),
+											 returningLists,
+											 rowMarks,
+											 SS_assign_special_param(root));
+		}
+	}
 
 	/*
-	 * If any subplans were generated, or if we're inside a subplan, build
-	 * initPlan list and extParam/allParam sets for plan nodes, and attach the
-	 * initPlans to the top plan node.
+	 * If any subplans were generated, or if there are any parameters to worry
+	 * about, build initPlan list and extParam/allParam sets for plan nodes,
+	 * and attach the initPlans to the top plan node.
 	 */
 	if (list_length(glob->subplans) != num_old_subplans ||
+<<<<<<< HEAD
 		root->query_level > 1)
 	{
 		Assert(root->parse == parse); /* GPDB isn't always careful about this. */
+=======
+		root->glob->paramlist != NIL)
+>>>>>>> 78a09145e0
 		SS_finalize_plan(root, plan, true);
 	}
 
@@ -863,7 +953,8 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	/*
 	 * Simplify constant expressions.
 	 *
-	 * Note: one essential effect here is to insert the current actual values
+	 * Note: an essential effect of this is to convert named-argument function
+	 * calls to positional notation and insert the current actual values
 	 * of any default arguments for functions.	To ensure that happens, we
 	 * *must* process all expressions here.  Previous PG versions sometimes
 	 * skipped const-simplification if it didn't seem worth the trouble, but
@@ -961,9 +1052,7 @@ preprocess_qual_conditions(PlannerInfo *root, Node *jtnode)
  * is an inheritance set. Source inheritance is expanded at the bottom of the
  * plan tree (see allpaths.c), but target inheritance has to be expanded at
  * the top.  The reason is that for UPDATE, each target relation needs a
- * different targetlist matching its own column set.  Also, for both UPDATE
- * and DELETE, the executor needs the Append plan node at the top, else it
- * can't keep track of which table is the current target table.  Fortunately,
+ * different targetlist matching its own column set.  Fortunately,
  * the UPDATE/DELETE target can never be the nullable side of an outer join,
  * so it's OK to generate the plan this way.
  *
@@ -977,7 +1066,13 @@ inheritance_planner(PlannerInfo *root)
 	List	   *subplans = NIL;
 	List	   *resultRelations = NIL;
 	List	   *returningLists = NIL;
+<<<<<<< HEAD
 	List	   *tlist = NIL;
+=======
+	List	   *rtable = NIL;
+	List	   *rowMarks;
+	List	   *tlist;
+>>>>>>> 78a09145e0
 	PlannerInfo subroot;
 	ListCell   *l;
 
@@ -1002,7 +1097,6 @@ inheritance_planner(PlannerInfo *root)
 		subroot.parse = (Query *)
 			adjust_appendrel_attrs(&subroot, (Node *) parse,
 								   appinfo);
-		subroot.returningLists = NIL;
 		subroot.init_plans = NIL;
 		/* We needn't modify the child's append_rel_list */
 		/* There shouldn't be any OJ info to translate, as yet */
@@ -1023,6 +1117,7 @@ inheritance_planner(PlannerInfo *root)
 		if (is_dummy_plan(subplan))
 			continue;
 
+<<<<<<< HEAD
 		/* MPP needs target loci to match. */
 		if (Gp_role == GP_ROLE_DISPATCH)
 		{
@@ -1072,6 +1167,11 @@ inheritance_planner(PlannerInfo *root)
 		{
 			tlist = subplan->targetlist;
 		}
+=======
+		/* Save rtable from first rel for use below */
+		if (subplans == NIL)
+			rtable = subroot.parse->rtable;
+>>>>>>> 78a09145e0
 
 		/**
 		 * The grouping planner scribbles on the rtable e.g. to add pseudo columns.
@@ -1090,12 +1190,17 @@ inheritance_planner(PlannerInfo *root)
 		/* Build list of per-relation RETURNING targetlists */
 		if (parse->returningList)
 		{
-			Assert(list_length(subroot.returningLists) == 1);
-			returningLists = list_concat(returningLists,
-										 subroot.returningLists);
+			List	   *rlist;
+
+			rlist = set_returning_clause_references(root->glob,
+													subroot.parse->returningList,
+													subplan,
+													appinfo->child_relid);
+			returningLists = lappend(returningLists, rlist);
 		}
 	}
 
+<<<<<<< HEAD
 	/**
 	 * If due to constraint exclusions all the result relations have been removed,
 	 * we need something upstream.
@@ -1110,12 +1215,16 @@ inheritance_planner(PlannerInfo *root)
 	}
 	
 	root->returningLists = returningLists;
+=======
+	root->resultRelations = resultRelations;
+>>>>>>> 78a09145e0
 
 	/* Mark result as unordered (probably unnecessary) */
 	root->query_pathkeys = NIL;
 
 	/*
-	 * If we managed to exclude every child rel, return a dummy plan
+	 * If we managed to exclude every child rel, return a dummy plan;
+	 * it doesn't even need a ModifyTable node.
 	 */
 	if (subplans == NIL)
 	{
@@ -1134,6 +1243,7 @@ inheritance_planner(PlannerInfo *root)
 		return plan;
 	}
 
+<<<<<<< HEAD
 	/* Suppress Append if there's only one surviving child rel */
 	if (list_length(subplans) == 1)
 		plan = (Plan *) linitial(subplans);
@@ -1242,6 +1352,38 @@ getAnySubplan(Plan *node)
 	}
 
 	return node->lefttree;
+=======
+	/*
+	 * Planning might have modified the rangetable, due to changes of the
+	 * Query structures inside subquery RTEs.  We have to ensure that this
+	 * gets propagated back to the master copy.  But can't do this until we
+	 * are done planning, because all the calls to grouping_planner need
+	 * virgin sub-Queries to work from.  (We are effectively assuming that
+	 * sub-Queries will get planned identically each time, or at least that
+	 * the impacts on their rangetables will be the same each time.)
+	 *
+	 * XXX should clean this up someday
+	 */
+	parse->rtable = rtable;
+
+	/*
+	 * If there was a FOR UPDATE/SHARE clause, the LockRows node will
+	 * have dealt with fetching non-locked marked rows, else we need
+	 * to have ModifyTable do that.
+	 */
+	if (parse->rowMarks)
+		rowMarks = NIL;
+	else
+		rowMarks = root->rowMarks;
+
+	/* And last, tack on a ModifyTable node to do the UPDATE/DELETE work */
+	return (Plan *) make_modifytable(parse->commandType,
+									 copyObject(root->resultRelations),
+									 subplans, 
+									 returningLists,
+									 rowMarks,
+									 SS_assign_special_param(root));
+>>>>>>> 78a09145e0
 }
 
 /*--------------------
@@ -1563,9 +1705,10 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			bool		can_sort;
 
 			/*
-			 * Executor doesn't support hashed aggregation with DISTINCT
-			 * aggregates.	(Doing so would imply storing *all* the input
-			 * values in the hash table, which seems like a certain loser.)
+			 * Executor doesn't support hashed aggregation with DISTINCT or
+			 * ORDER BY aggregates.  (Doing so would imply storing *all* the
+			 * input values in the hash table, and/or running many sorts in
+			 * parallel, either of which seems like a certain loser.)
 			 */
 			can_hash = (agg_counts.numOrderedAggs == 0 &&
 						grouping_is_hashable(parse->groupClause));
@@ -2599,6 +2742,24 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	}
 
 	/*
+	 * If there is a FOR UPDATE/SHARE clause, add the LockRows node.
+	 * (Note: we intentionally test parse->rowMarks not root->rowMarks here.
+	 * If there are only non-locking rowmarks, they should be handled by
+	 * the ModifyTable node instead.)
+	 */
+	if (parse->rowMarks)
+	{
+		result_plan = (Plan *) make_lockrows(result_plan,
+											 root->rowMarks,
+											 SS_assign_special_param(root));
+		/*
+		 * The result can no longer be assumed sorted, since locking might
+		 * cause the sort key columns to be replaced with new values.
+		 */
+		current_pathkeys = NIL;
+	}
+
+	/*
 	 * Finally, if there is a LIMIT/OFFSET clause, add the LIMIT node.
 	 */
 	if (parse->limitCount || parse->limitOffset)
@@ -2645,6 +2806,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		result_plan->flow = pull_up_Flow(result_plan, result_plan->lefttree);
 	}
 
+<<<<<<< HEAD
 	/*
 	 * Deal with explicit redistribution requirements for TableValueExpr
 	 * subplans with explicit distribitution
@@ -2696,6 +2858,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	else
 		root->returningLists = NIL;
 
+=======
+>>>>>>> 78a09145e0
 	/* Compute result-relations list if needed */
 	if (parse->resultRelation)
 		root->resultRelations = list_make1_int(parse->resultRelation);
@@ -2860,6 +3024,170 @@ is_dummy_plan(Plan *plan)
 	is_dummy_plan_walker((Node *) plan, &is_dummy);
 
 	return is_dummy;
+}
+
+/*
+ * Create a bitmapset of the RT indexes of live base relations
+ *
+ * Helper for preprocess_rowmarks ... at this point in the proceedings,
+ * the only good way to distinguish baserels from appendrel children
+ * is to see what is in the join tree.
+ */
+static Bitmapset *
+get_base_rel_indexes(Node *jtnode)
+{
+	Bitmapset  *result;
+
+	if (jtnode == NULL)
+		return NULL;
+	if (IsA(jtnode, RangeTblRef))
+	{
+		int			varno = ((RangeTblRef *) jtnode)->rtindex;
+
+		result = bms_make_singleton(varno);
+	}
+	else if (IsA(jtnode, FromExpr))
+	{
+		FromExpr   *f = (FromExpr *) jtnode;
+		ListCell   *l;
+
+		result = NULL;
+		foreach(l, f->fromlist)
+			result = bms_join(result,
+							  get_base_rel_indexes(lfirst(l)));
+	}
+	else if (IsA(jtnode, JoinExpr))
+	{
+		JoinExpr   *j = (JoinExpr *) jtnode;
+
+		result = bms_join(get_base_rel_indexes(j->larg),
+						  get_base_rel_indexes(j->rarg));
+	}
+	else
+	{
+		elog(ERROR, "unrecognized node type: %d",
+			 (int) nodeTag(jtnode));
+		result = NULL;			/* keep compiler quiet */
+	}
+	return result;
+}
+
+/*
+ * preprocess_rowmarks - set up PlanRowMarks if needed
+ */
+static void
+preprocess_rowmarks(PlannerInfo *root)
+{
+	Query	   *parse = root->parse;
+	Bitmapset  *rels;
+	List	   *prowmarks;
+	ListCell   *l;
+	int			i;
+
+	if (parse->rowMarks)
+	{
+		/*
+		 * We've got trouble if FOR UPDATE/SHARE appears inside grouping,
+		 * since grouping renders a reference to individual tuple CTIDs
+		 * invalid.  This is also checked at parse time, but that's
+		 * insufficient because of rule substitution, query pullup, etc.
+		 */
+		CheckSelectLocking(parse);
+	}
+	else
+	{
+		/*
+		 * We only need rowmarks for UPDATE, DELETE, or FOR UPDATE/SHARE.
+		 */
+		if (parse->commandType != CMD_UPDATE &&
+			parse->commandType != CMD_DELETE)
+			return;
+	}
+
+	/*
+	 * We need to have rowmarks for all base relations except the target.
+	 * We make a bitmapset of all base rels and then remove the items we
+	 * don't need or have FOR UPDATE/SHARE marks for.
+	 */
+	rels = get_base_rel_indexes((Node *) parse->jointree);
+	if (parse->resultRelation)
+		rels = bms_del_member(rels, parse->resultRelation);
+
+	/*
+	 * Convert RowMarkClauses to PlanRowMark representation.
+	 */
+	prowmarks = NIL;
+	foreach(l, parse->rowMarks)
+	{
+		RowMarkClause *rc = (RowMarkClause *) lfirst(l);
+		RangeTblEntry *rte = rt_fetch(rc->rti, parse->rtable);
+		PlanRowMark *newrc;
+
+		/*
+		 * Currently, it is syntactically impossible to have FOR UPDATE
+		 * applied to an update/delete target rel.  If that ever becomes
+		 * possible, we should drop the target from the PlanRowMark list.
+		 */
+		Assert(rc->rti != parse->resultRelation);
+
+		/*
+		 * Ignore RowMarkClauses for subqueries; they aren't real tables
+		 * and can't support true locking.  Subqueries that got flattened
+		 * into the main query should be ignored completely.  Any that didn't
+		 * will get ROW_MARK_COPY items in the next loop.
+		 */
+		if (rte->rtekind != RTE_RELATION)
+			continue;
+
+		rels = bms_del_member(rels, rc->rti);
+
+		newrc = makeNode(PlanRowMark);
+		newrc->rti = newrc->prti = rc->rti;
+		if (rc->forUpdate)
+			newrc->markType = ROW_MARK_EXCLUSIVE;
+		else
+			newrc->markType = ROW_MARK_SHARE;
+		newrc->noWait = rc->noWait;
+		newrc->isParent = false;
+		/* attnos will be assigned in preprocess_targetlist */
+		newrc->ctidAttNo = InvalidAttrNumber;
+		newrc->toidAttNo = InvalidAttrNumber;
+		newrc->wholeAttNo = InvalidAttrNumber;
+
+		prowmarks = lappend(prowmarks, newrc);
+	}
+
+	/*
+	 * Now, add rowmarks for any non-target, non-locked base relations.
+	 */
+	i = 0;
+	foreach(l, parse->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
+		PlanRowMark *newrc;
+
+		i++;
+		if (!bms_is_member(i, rels))
+			continue;
+
+		newrc = makeNode(PlanRowMark);
+		newrc->rti = newrc->prti = i;
+		/* real tables support REFERENCE, anything else needs COPY */
+		if (rte->rtekind == RTE_RELATION)
+			newrc->markType = ROW_MARK_REFERENCE;
+		else
+			newrc->markType = ROW_MARK_COPY;
+		newrc->noWait = false;			/* doesn't matter */
+		newrc->isParent = false;
+		/* attnos will be assigned in preprocess_targetlist */
+		newrc->ctidAttNo = InvalidAttrNumber;
+		newrc->toidAttNo = InvalidAttrNumber;
+		newrc->wholeAttNo = InvalidAttrNumber;
+
+		prowmarks = lappend(prowmarks, newrc);
+	}
+
+	root->rowMarks = prowmarks;
 }
 
 /*
@@ -4036,9 +4364,10 @@ get_column_info_for_window(PlannerInfo *root, WindowClause *wc, List *tlist,
  * Currently, we disallow sublinks in standalone expressions, so there's no
  * real "planning" involved here.  (That might not always be true though.)
  * What we must do is run eval_const_expressions to ensure that any function
- * default arguments get inserted.	The fact that constant subexpressions
- * get simplified is a side-effect that is useful when the expression will
- * get evaluated more than once.  Also, we must fix operator function IDs.
+ * calls are converted to positional notation and function default arguments
+ * get inserted.  The fact that constant subexpressions get simplified is a
+ * side-effect that is useful when the expression will get evaluated more than
+ * once.  Also, we must fix operator function IDs.
  *
  * Note: this must not make any damaging changes to the passed-in expression
  * tree.  (It would actually be okay to apply fix_opfuncids to it, but since
@@ -4050,7 +4379,10 @@ expression_planner(Expr *expr)
 {
 	Node	   *result;
 
-	/* Insert default arguments and simplify constant subexprs */
+	/*
+	 * Convert named-argument function calls, insert default arguments and
+	 * simplify constant subexprs
+	 */
 	result = eval_const_expressions(NULL, (Node *) expr);
 
 	/* Fill in opfuncid values if missing */

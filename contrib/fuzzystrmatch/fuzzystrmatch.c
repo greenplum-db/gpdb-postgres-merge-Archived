@@ -5,8 +5,13 @@
  *
  * Joe Conway <mail@joeconway.com>
  *
+<<<<<<< HEAD
  * contrib/fuzzystrmatch/fuzzystrmatch.c
  * Copyright (c) 2001-2011, PostgreSQL Global Development Group
+=======
+ * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.c,v 1.31 2009/12/10 01:54:17 rhaas Exp $
+ * Copyright (c) 2001-2009, PostgreSQL Global Development Group
+>>>>>>> 78a09145e0
  * ALL RIGHTS RESERVED;
  *
  * metaphone()
@@ -171,11 +176,94 @@ getcode(char c)
 static bool inline
 rest_of_char_same(const char *s1, const char *s2, int len)
 {
+<<<<<<< HEAD
 	while (len > 0)
 	{
 		len--;
 		if (s1[len] != s2[len])
 			return false;
+=======
+	int			m,
+				n;
+	int		   *prev;
+	int		   *curr;
+	int			i,
+				j;
+	const char *x;
+	const char *y;
+
+	m = strlen(s);
+	n = strlen(t);
+
+	/*
+	 * We can transform an empty s into t with n insertions, or a non-empty t
+	 * into an empty s with m deletions.
+	 */
+	if (!m)
+		return n * ins_c;
+	if (!n)
+		return m * del_c;
+
+	/*
+	 * For security concerns, restrict excessive CPU+RAM usage. (This
+	 * implementation uses O(m) memory and has O(mn) complexity.)
+	 */
+	if (m > MAX_LEVENSHTEIN_STRLEN ||
+		n > MAX_LEVENSHTEIN_STRLEN)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("argument exceeds the maximum length of %d bytes",
+						MAX_LEVENSHTEIN_STRLEN)));
+
+	/* One more cell for initialization column and row. */
+	++m;
+	++n;
+
+	/*
+	 * Instead of building an (m+1)x(n+1) array, we'll use two different
+	 * arrays of size m+1 for storing accumulated values. At each step one
+	 * represents the "previous" row and one is the "current" row of the
+	 * notional large array.
+	 */
+	prev = (int *) palloc(2 * m * sizeof(int));
+	curr = prev + m;
+
+	/* Initialize the "previous" row to 0..cols */
+	for (i = 0; i < m; i++)
+		prev[i] = i * del_c;
+
+	/* Loop through rows of the notional array */
+	for (y = t, j = 1; j < n; y++, j++)
+	{
+		int		   *temp;
+
+		/*
+		 * First cell must increment sequentially, as we're on the j'th row of
+		 * the (m+1)x(n+1) array.
+		 */
+		curr[0] = j * ins_c;
+
+		for (x = s, i = 1; i < m; x++, i++)
+		{
+			int			ins;
+			int			del;
+			int			sub;
+
+			/* Calculate costs for probable operations. */
+			ins = prev[i] + ins_c;		/* Insertion	*/
+			del = curr[i - 1] + del_c;	/* Deletion		*/
+			sub = prev[i - 1] + ((*x == *y) ? 0 : sub_c);		/* Substitution */
+
+			/* Take the one with minimum cost. */
+			curr[i] = Min(ins, del);
+			curr[i] = Min(curr[i], sub);
+		}
+
+		/* Swap current row with previous row. */
+		temp = curr;
+		curr = prev;
+		prev = temp;
+>>>>>>> 78a09145e0
 	}
 	return true;
 }

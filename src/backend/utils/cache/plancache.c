@@ -35,7 +35,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.27 2009/06/11 14:49:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.31 2009/11/04 22:26:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,8 @@
 #include "executor/spi.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/planmain.h"
+#include "optimizer/prep.h"
+#include "parser/parsetree.h"
 #include "storage/lmgr.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
@@ -67,7 +69,6 @@ static void AcquireExecutorLocks(List *stmt_list, bool acquire);
 static void AcquirePlannerLocks(List *stmt_list, bool acquire);
 static void ScanQueryForLocks(Query *parsetree, bool acquire);
 static bool ScanQueryWalker(Node *node, bool *acquire);
-static bool rowmark_member(List *rowMarks, int rt_index);
 static bool plan_list_is_transient(List *stmt_list);
 static bool plan_list_is_oneoff(List *stmt_list);
 static void PlanCacheRelCallback(Datum arg, Oid relid);
@@ -99,8 +100,8 @@ InitPlanCache(void)
  * raw_parse_tree: output of raw_parser()
  * query_string: original query text (as of PG 8.4, must not be NULL)
  * commandTag: compile-time-constant tag for query, or NULL if empty query
- * param_types: array of parameter type OIDs, or NULL if none
- * num_params: number of parameters
+ * param_types: array of fixed parameter type OIDs, or NULL if none
+ * num_params: number of fixed parameters
  * cursor_options: options bitmask that was/will be passed to planner
  * stmt_list: list of PlannedStmts/utility stmts, or list of Query trees
  * fully_planned: are we caching planner or rewriter output?
@@ -158,6 +159,9 @@ CreateCachedPlan(Node *raw_parse_tree,
 	else
 		plansource->param_types = NULL;
 	plansource->num_params = num_params;
+	/* these can be set later with CachedPlanSetParserHook: */
+	plansource->parserSetup = NULL;
+	plansource->parserSetupArg = NULL;
 	plansource->cursor_options = cursor_options;
 	plansource->fully_planned = fully_planned;
 	plansource->fixed_result = fixed_result;
@@ -244,6 +248,9 @@ FastCreateCachedPlan(Node *raw_parse_tree,
 	plansource->commandTag = commandTag;		/* no copying needed */
 	plansource->param_types = param_types;
 	plansource->num_params = num_params;
+	/* these can be set later with CachedPlanSetParserHook: */
+	plansource->parserSetup = NULL;
+	plansource->parserSetupArg = NULL;
 	plansource->cursor_options = cursor_options;
 	plansource->fully_planned = fully_planned;
 	plansource->fixed_result = fixed_result;
@@ -276,6 +283,27 @@ FastCreateCachedPlan(Node *raw_parse_tree,
 	MemoryContextSwitchTo(oldcxt);
 
 	return plansource;
+}
+
+/*
+ * CachedPlanSetParserHook: set up to use parser callback hooks
+ *
+ * Use this when a caller wants to manage parameter information via parser
+ * callbacks rather than a fixed parameter-types list.  Beware that the
+ * information pointed to by parserSetupArg must be valid for as long as
+ * the cached plan might be replanned!
+ */
+void
+CachedPlanSetParserHook(CachedPlanSource *plansource,
+						ParserSetupHook parserSetup,
+						void *parserSetupArg)
+{
+	/* Must not have specified a fixed parameter-types list */
+	Assert(plansource->param_types == NULL);
+	Assert(plansource->num_params == 0);
+	/* OK, save hook info */
+	plansource->parserSetup = parserSetup;
+	plansource->parserSetupArg = parserSetupArg;
 }
 
 /*
@@ -495,6 +523,7 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 	if (!plan)
 	{
 		bool		snapshot_set = false;
+		Node	   *rawtree;
 		List	   *slist;
 		TupleDesc	resultDesc;
 		Node	   *raw_parse_tree;
@@ -545,6 +574,7 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 		/*
 		 * Run parse analysis and rule rewriting.  The parser tends to
 		 * scribble on its input, so we must copy the raw parse tree to
+<<<<<<< HEAD
 		 * prevent corruption of the cache.  Note that we do not use
 		 * parse_analyze_varparams(), assuming that the caller never wants
 		 * the parameter types to change from the original values.
@@ -553,23 +583,49 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 									   plansource->query_string,
 									   plansource->param_types,
 									   plansource->num_params);
+=======
+		 * prevent corruption of the cache.
+		 */
+		rawtree = copyObject(plansource->raw_parse_tree);
+		if (plansource->parserSetup != NULL)
+			slist = pg_analyze_and_rewrite_params(rawtree,
+												  plansource->query_string,
+												  plansource->parserSetup,
+												  plansource->parserSetupArg);
+		else
+			slist = pg_analyze_and_rewrite(rawtree,
+										   plansource->query_string,
+										   plansource->param_types,
+										   plansource->num_params);
+>>>>>>> 78a09145e0
 
 		if (plansource->fully_planned)
 		{
 			/*
 			 * Generate plans for queries.
 			 *
+<<<<<<< HEAD
 			 * The planner may try to call SPI-using functions, which
 			 * causes a problem if we're already inside one.  Rather than
 			 * expect all SPI-using code to do SPI_push whenever a replan
 			 * could happen, it seems best to take care of the case here.
+=======
+			 * The planner may try to call SPI-using functions, which causes
+			 * a problem if we're already inside one.  Rather than expect
+			 * all SPI-using code to do SPI_push whenever a replan could
+			 * happen, it seems best to take care of the case here.
+>>>>>>> 78a09145e0
 			 */
 			bool	pushed;
 
 			pushed = SPI_push_conditional();
 
+<<<<<<< HEAD
 			slist = pg_plan_queries(slist, plansource->cursor_options,
 									boundParams);
+=======
+			slist = pg_plan_queries(slist, plansource->cursor_options, NULL);
+>>>>>>> 78a09145e0
 
 			SPI_pop_conditional(pushed);
 		}
@@ -735,6 +791,7 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 		{
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc2);
 			LOCKMODE	lockmode;
+			PlanRowMark *rc;
 
 			rt_index++;
 
@@ -748,6 +805,7 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 			 * acquire a non-conflicting lock.
 			 */
 			if (list_member_int(plannedstmt->resultRelations, rt_index))
+<<<<<<< HEAD
 			{
 				/*
 				 * RowExclusiveLock is acquired in PostgreSQL here.  Greenplum
@@ -765,6 +823,11 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 					lockmode = RowExclusiveLock;
 			}
 			else if (rowmark_member(plannedstmt->rowMarks, rt_index))
+=======
+				lockmode = RowExclusiveLock;
+			else if ((rc = get_plan_rowmark(plannedstmt->rowMarks, rt_index)) != NULL &&
+					 RowMarkRequiresRowShareLock(rc->markType))
+>>>>>>> 78a09145e0
 				lockmode = RowShareLock;
 			else
 				lockmode = AccessShareLock;
@@ -823,6 +886,7 @@ ScanQueryForLocks(Query *parsetree, bool acquire)
 			case RTE_RELATION:
 				/* Acquire or release the appropriate type of lock */
 				if (rt_index == parsetree->resultRelation)
+<<<<<<< HEAD
 				{
 					/*
 					 * RowExclusiveLock is acquired in PostgreSQL here.
@@ -840,6 +904,10 @@ ScanQueryForLocks(Query *parsetree, bool acquire)
 						lockmode = RowExclusiveLock;
 				}
 				else if (rowmark_member(parsetree->rowMarks, rt_index))
+=======
+					lockmode = RowExclusiveLock;
+				else if (get_parse_rowmark(parsetree, rt_index) != NULL)
+>>>>>>> 78a09145e0
 					lockmode = RowShareLock;
 				else
 					lockmode = AccessShareLock;
@@ -903,24 +971,6 @@ ScanQueryWalker(Node *node, bool *acquire)
 	 */
 	return expression_tree_walker(node, ScanQueryWalker,
 								  (void *) acquire);
-}
-
-/*
- * rowmark_member: check whether an RT index appears in a RowMarkClause list.
- */
-static bool
-rowmark_member(List *rowMarks, int rt_index)
-{
-	ListCell   *l;
-
-	foreach(l, rowMarks)
-	{
-		RowMarkClause *rc = (RowMarkClause *) lfirst(l);
-
-		if (rc->rti == rt_index)
-			return true;
-	}
-	return false;
 }
 
 /*
@@ -1009,8 +1059,8 @@ PlanCacheComputeResultDesc(List *stmt_list)
 			if (IsA(node, PlannedStmt))
 			{
 				pstmt = (PlannedStmt *) node;
-				Assert(pstmt->returningLists);
-				return ExecCleanTypeFromTL((List *) linitial(pstmt->returningLists), false);
+				Assert(pstmt->hasReturning);
+				return ExecCleanTypeFromTL(pstmt->planTree->targetlist, false);
 			}
 			/* other cases shouldn't happen, but return NULL */
 			break;

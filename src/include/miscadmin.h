@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.211 2009/06/11 14:49:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.215 2009/12/09 21:57:51 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -367,9 +367,12 @@ extern char *GetUserNameFromId(Oid roleid);
 extern Oid	GetUserId(void);
 extern Oid	GetOuterUserId(void);
 extern Oid	GetSessionUserId(void);
+<<<<<<< HEAD
 extern void 	SetSessionUserId(Oid, bool);
 extern Oid	GetAuthenticatedUserId(void);
 extern bool IsAuthenticatedUserSuperUser(void);
+=======
+>>>>>>> 78a09145e0
 extern void GetUserIdAndSecContext(Oid *userid, int *sec_context);
 extern void SetUserIdAndSecContext(Oid userid, int sec_context);
 extern bool InLocalUserIdChange(void);
@@ -446,7 +449,10 @@ extern ProcessingMode Mode;
  *****************************************************************************/
 
 /* in utils/init/postinit.c */
+<<<<<<< HEAD
 extern bool FindMyDatabase(const char *dbname, Oid *db_id, Oid *db_tablespace);
+=======
+>>>>>>> 78a09145e0
 extern void pg_split_opts(char **argv, int *argcp, char *optstr);
 extern void InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 			 char *out_dbname);

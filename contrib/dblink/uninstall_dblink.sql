@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/dblink/uninstall_dblink.sql,v 1.7 2008/04/05 02:26:14 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/dblink/uninstall_dblink.sql,v 1.8 2009/08/05 16:11:07 joe Exp $ */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;
@@ -79,4 +79,12 @@ DROP FUNCTION dblink_get_connections();
 
 -- DROP FUNCTION dblink_is_busy(text);
 
+<<<<<<< HEAD
 -- DROP FUNCTION dblink_send_query(text, text);
+=======
+DROP FUNCTION dblink_send_query(text, text);
+
+DROP FUNCTION dblink_get_notify();
+
+DROP FUNCTION dblink_get_notify(text);
+>>>>>>> 78a09145e0

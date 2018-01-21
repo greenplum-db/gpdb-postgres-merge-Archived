@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.175 2009/06/11 14:49:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.179 2009/12/09 21:57:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,8 +44,12 @@
 #include "storage/procarray.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
+<<<<<<< HEAD
 #include "utils/resgroup.h"
 #include "utils/resscheduler.h"
+=======
+#include "utils/memutils.h"
+>>>>>>> 78a09145e0
 #include "utils/syscache.h"
 
 
@@ -134,6 +138,7 @@ ResetReindexProcessing(void)
 void
 SetDatabasePath(const char *path)
 {
+<<<<<<< HEAD
 	if (DatabasePath)
 	{
 		free(DatabasePath);
@@ -148,6 +153,11 @@ SetDatabasePath(const char *path)
 					errmsg("Set database path failed: out of memory")));
 		AssertState(DatabasePath);
 	}
+=======
+	/* This should happen only once per process */
+	Assert(!DatabasePath);
+	DatabasePath = MemoryContextStrdup(TopMemoryContext, path);
+>>>>>>> 78a09145e0
 }
 
 /*
@@ -371,6 +381,7 @@ IsAuthenticatedUserSuperUser()
 }
 
 /*
+<<<<<<< HEAD
  * GetAuthenticatedUserId
  */
 Oid
@@ -402,6 +413,29 @@ GetAuthenticatedUserId(void)
  * where the called functions are really supposed to be side-effect-free
  * anyway, such as VACUUM/ANALYZE/REINDEX.
  *
+=======
+ * GetUserIdAndSecContext/SetUserIdAndSecContext - get/set the current user ID
+ * and the SecurityRestrictionContext flags.
+ *
+ * Currently there are two valid bits in SecurityRestrictionContext:
+ *
+ * SECURITY_LOCAL_USERID_CHANGE indicates that we are inside an operation
+ * that is temporarily changing CurrentUserId via these functions.  This is
+ * needed to indicate that the actual value of CurrentUserId is not in sync
+ * with guc.c's internal state, so SET ROLE has to be disallowed.
+ *
+ * SECURITY_RESTRICTED_OPERATION indicates that we are inside an operation
+ * that does not wish to trust called user-defined functions at all.  This
+ * bit prevents not only SET ROLE, but various other changes of session state
+ * that normally is unprotected but might possibly be used to subvert the
+ * calling session later.  An example is replacing an existing prepared
+ * statement with new code, which will then be executed with the outer
+ * session's permissions when the prepared statement is next used.  Since
+ * these restrictions are fairly draconian, we apply them only in contexts
+ * where the called functions are really supposed to be side-effect-free
+ * anyway, such as VACUUM/ANALYZE/REINDEX.
+ *
+>>>>>>> 78a09145e0
  * Unlike GetUserId, GetUserIdAndSecContext does *not* Assert that the current
  * value of CurrentUserId is valid; nor does SetUserIdAndSecContext require
  * the new value to be valid.  In fact, these routines had better not
@@ -781,7 +815,46 @@ CreateLockFile(const char *filename, bool amPostmaster,
 	int			len;
 	int			encoded_pid;
 	pid_t		other_pid;
-	pid_t		my_pid = getpid();
+	pid_t		my_pid,
+				my_p_pid,
+				my_gp_pid;
+	const char *envvar;
+
+	/*
+	 * If the PID in the lockfile is our own PID or our parent's or
+	 * grandparent's PID, then the file must be stale (probably left over from
+	 * a previous system boot cycle).  We need to check this because of the
+	 * likelihood that a reboot will assign exactly the same PID as we had in
+	 * the previous reboot, or one that's only one or two counts larger and
+	 * hence the lockfile's PID now refers to an ancestor shell process.  We
+	 * allow pg_ctl to pass down its parent shell PID (our grandparent PID)
+	 * via the environment variable PG_GRANDPARENT_PID; this is so that
+	 * launching the postmaster via pg_ctl can be just as reliable as
+	 * launching it directly.  There is no provision for detecting
+	 * further-removed ancestor processes, but if the init script is written
+	 * carefully then all but the immediate parent shell will be root-owned
+	 * processes and so the kill test will fail with EPERM.  Note that we
+	 * cannot get a false negative this way, because an existing postmaster
+	 * would surely never launch a competing postmaster or pg_ctl process
+	 * directly.
+	 */
+	my_pid = getpid();
+
+#ifndef WIN32
+	my_p_pid = getppid();
+#else
+	/*
+	 * Windows hasn't got getppid(), but doesn't need it since it's not
+	 * using real kill() either...
+	 */
+	my_p_pid = 0;
+#endif
+
+	envvar = getenv("PG_GRANDPARENT_PID");
+	if (envvar)
+		my_gp_pid = atoi(envvar);
+	else
+		my_gp_pid = 0;
 
 	/*
 	 * We need a loop here because of race conditions.	But don't loop forever
@@ -843,17 +916,11 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		/*
 		 * Check to see if the other process still exists
 		 *
-		 * If the PID in the lockfile is our own PID or our parent's PID, then
-		 * the file must be stale (probably left over from a previous system
-		 * boot cycle).  We need this test because of the likelihood that a
-		 * reboot will assign exactly the same PID as we had in the previous
-		 * reboot.	Also, if there is just one more process launch in this
-		 * reboot than in the previous one, the lockfile might mention our
-		 * parent's PID.  We can reject that since we'd never be launched
-		 * directly by a competing postmaster.	We can't detect grandparent
-		 * processes unfortunately, but if the init script is written
-		 * carefully then all but the immediate parent shell will be
-		 * root-owned processes and so the kill test will fail with EPERM.
+		 * Per discussion above, my_pid, my_p_pid, and my_gp_pid can be
+		 * ignored as false matches.
+		 *
+		 * Normally kill() will fail with ESRCH if the given PID doesn't
+		 * exist.
 		 *
 		 * We can treat the EPERM-error case as okay because that error
 		 * implies that the existing process has a different userid than we
@@ -870,18 +937,9 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		 * Unix socket file belonging to an instance of Postgres being run by
 		 * someone else, at least on machines where /tmp hasn't got a
 		 * stickybit.)
-		 *
-		 * Windows hasn't got getppid(), but doesn't need it since it's not
-		 * using real kill() either...
-		 *
-		 * Normally kill() will fail with ESRCH if the given PID doesn't
-		 * exist.
 		 */
-		if (other_pid != my_pid
-#ifndef WIN32
-			&& other_pid != getppid()
-#endif
-			)
+		if (other_pid != my_pid && other_pid != my_p_pid &&
+			other_pid != my_gp_pid)
 		{
 			if (kill(other_pid, 0) == 0 ||
 				(errno != ESRCH && errno != EPERM))

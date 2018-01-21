@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.110 2009/06/11 14:49:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.113 2009/10/26 02:26:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,11 @@ typedef struct PlannedStmt
 
 	CmdType		commandType;	/* select|insert|update|delete */
 
+<<<<<<< HEAD
 	PlanGenerator	planGen;		/* optimizer generation */
+=======
+	bool		hasReturning;	/* is it insert|update|delete RETURNING? */
+>>>>>>> 78a09145e0
 
 	bool		canSetTag;		/* do I set the command result tag? */
 
@@ -90,6 +94,7 @@ typedef struct PlannedStmt
 
 	Bitmapset  *rewindPlanIDs;	/* indices of subplans that require REWIND */
 
+<<<<<<< HEAD
 	/*
 	 * If the query has a returningList then the planner will store a list of
 	 * processed targetlists (one per result relation) here.  We must have a
@@ -126,6 +131,9 @@ typedef struct PlannedStmt
 	List	   *numSelectorsPerScanId;
 
 	List	   *rowMarks;		/* a list of RowMarkClause's */
+=======
+	List	   *rowMarks;		/* a list of PlanRowMark's */
+>>>>>>> 78a09145e0
 
 	List	   *relationOids;	/* OIDs of relations the plan depends on */
 
@@ -316,6 +324,7 @@ typedef struct Result
 } Result;
 
 /* ----------------
+<<<<<<< HEAD
  * Repeat node -
  *   Repeatly output the results of the subplan.
  *
@@ -344,24 +353,38 @@ typedef struct Repeat
 	 */
 	uint64 grouping;
 } Repeat;
+=======
+ *	 ModifyTable node -
+ *		Apply rows produced by subplan(s) to result table(s),
+ *		by inserting, updating, or deleting.
+ * ----------------
+ */
+typedef struct ModifyTable
+{
+	Plan		plan;
+	CmdType		operation;			/* INSERT, UPDATE, or DELETE */
+	List	   *resultRelations;	/* integer list of RT indexes */
+	List	   *plans;				/* plan(s) producing source data */
+	List	   *returningLists;		/* per-target-table RETURNING tlists */
+	List	   *rowMarks;			/* PlanRowMarks (non-locking only) */
+	int			epqParam;			/* ID of Param for EvalPlanQual re-eval */
+} ModifyTable;
+>>>>>>> 78a09145e0
 
 /* ----------------
  *	 Append node -
  *		Generate the concatenation of the results of sub-plans.
- *
- * Append nodes are sometimes used to switch between several result relations
- * (when the target of an UPDATE or DELETE is an inheritance set).	Such a
- * node will have isTarget true.  The Append executor is then responsible
- * for updating the executor state to point at the correct target relation
- * whenever it switches subplans.
  * ----------------
  */
 typedef struct Append
 {
 	Plan		plan;
 	List	   *appendplans;
+<<<<<<< HEAD
 	bool		isTarget;
 	bool 		isZapped;
+=======
+>>>>>>> 78a09145e0
 } Append;
 
 /*
@@ -639,7 +662,7 @@ typedef struct TidScan
  *
  * Note: subrtable is used just to carry the subquery rangetable from
  * createplan.c to setrefs.c; it should always be NIL by the time the
- * executor sees the plan.
+ * executor sees the plan.  Similarly for subrowmark.
  * ----------------
  */
 typedef struct SubqueryScan
@@ -647,6 +670,7 @@ typedef struct SubqueryScan
 	Scan		scan;
 	Plan	   *subplan;
 	List	   *subrtable;		/* temporary workspace for planner */
+	List	   *subrowmark;		/* temporary workspace for planner */
 } SubqueryScan;
 
 /* ----------------
@@ -1121,6 +1145,22 @@ typedef struct SetOp
 } SetOp;
 
 /* ----------------
+ *		lock-rows node
+ *
+ * rowMarks identifies the rels to be locked by this node; it should be
+ * a subset of the rowMarks listed in the top-level PlannedStmt.
+ * epqParam is a Param that all scan nodes below this one must depend on.
+ * It is used to force re-evaluation of the plan during EvalPlanQual.
+ * ----------------
+ */
+typedef struct LockRows
+{
+	Plan		plan;
+	List	   *rowMarks;		/* a list of PlanRowMark's */
+	int			epqParam;		/* ID of Param for EvalPlanQual re-eval */
+} LockRows;
+
+/* ----------------
  *		limit node
  *
  * Note: as of Postgres 8.2, the offset and count expressions are expected
@@ -1228,6 +1268,63 @@ typedef struct RowTrigger
 	List		*newValuesColIdx;	/* list of new columns */
 
 } RowTrigger;
+
+/*
+ * RowMarkType -
+ *	  enums for types of row-marking operations
+ *
+ * When doing UPDATE, DELETE, or SELECT FOR UPDATE/SHARE, we have to uniquely
+ * identify all the source rows, not only those from the target relations, so
+ * that we can perform EvalPlanQual rechecking at need.  For plain tables we
+ * can just fetch the TID, the same as for a target relation.  Otherwise (for
+ * example for VALUES or FUNCTION scans) we have to copy the whole row value.
+ * The latter is pretty inefficient but fortunately the case is not
+ * performance-critical in practice.
+ */
+typedef enum RowMarkType
+{
+	ROW_MARK_EXCLUSIVE,			/* obtain exclusive tuple lock */
+	ROW_MARK_SHARE,				/* obtain shared tuple lock */
+	ROW_MARK_REFERENCE,			/* just fetch the TID */
+	ROW_MARK_COPY				/* physically copy the row value */
+} RowMarkType;
+
+#define RowMarkRequiresRowShareLock(marktype)  ((marktype) <= ROW_MARK_SHARE)
+
+/*
+ * PlanRowMark -
+ *	   plan-time representation of FOR UPDATE/SHARE clauses
+ *
+ * When doing UPDATE, DELETE, or SELECT FOR UPDATE/SHARE, we create a separate
+ * PlanRowMark node for each non-target relation in the query.  Relations that
+ * are not specified as FOR UPDATE/SHARE are marked ROW_MARK_REFERENCE (if
+ * real tables) or ROW_MARK_COPY (if not).
+ *
+ * Initially all PlanRowMarks have rti == prti and isParent == false.
+ * When the planner discovers that a relation is the root of an inheritance
+ * tree, it sets isParent true, and adds an additional PlanRowMark to the
+ * list for each child relation (including the target rel itself in its role
+ * as a child).  The child entries have rti == child rel's RT index and
+ * prti == parent's RT index, and can therefore be recognized as children by
+ * the fact that prti != rti.
+ *
+ * The AttrNumbers are filled in during preprocess_targetlist.  We use
+ * different subsets of them for plain relations, inheritance children,
+ * and non-table relations.
+ */
+typedef struct PlanRowMark
+{
+	NodeTag		type;
+	Index		rti;			/* range table index of markable relation */
+	Index		prti;			/* range table index of parent relation */
+	RowMarkType	markType;		/* see enum above */
+	bool		noWait;			/* NOWAIT option */
+	bool		isParent;		/* true if this is a "dummy" parent entry */
+	AttrNumber	ctidAttNo;		/* resno of ctid junk attribute, if any */
+	AttrNumber	toidAttNo;		/* resno of tableoid junk attribute, if any */
+	AttrNumber	wholeAttNo;		/* resno of whole-row junk attribute, if any */
+} PlanRowMark;
+
 
 /*
  * Plan invalidation info

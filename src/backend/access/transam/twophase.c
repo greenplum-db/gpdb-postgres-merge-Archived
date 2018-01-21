@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.54 2009/06/25 19:05:52 heikki Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.56 2009/11/23 09:58:36 heikki Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -960,7 +960,11 @@ TwoPhaseGetDummyProc(TransactionId xid)
 /*
  * Header for a 2PC state file
  */
+<<<<<<< HEAD
 #define TWOPHASE_MAGIC 0x57F94531		/* format identifier */
+=======
+#define TWOPHASE_MAGIC	0x57F94532		/* format identifier */
+>>>>>>> 78a09145e0
 
 typedef struct TwoPhaseFileHeader
 {

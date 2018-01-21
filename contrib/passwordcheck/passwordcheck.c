@@ -3,12 +3,20 @@
  * passwordcheck.c
  *
  *
+<<<<<<< HEAD
  * Copyright (c) 2009-2016, PostgreSQL Global Development Group
+=======
+ * Copyright (c) 2009, PostgreSQL Global Development Group
+>>>>>>> 78a09145e0
  *
  * Author: Laurenz Albe <laurenz.albe@wien.gv.at>
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  contrib/passwordcheck/passwordcheck.c
+=======
+ *	  $PostgreSQL: pgsql/contrib/passwordcheck/passwordcheck.c,v 1.1 2009/11/18 21:57:56 tgl Exp $
+>>>>>>> 78a09145e0
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +32,10 @@
 #include "fmgr.h"
 #include "libpq/md5.h"
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 78a09145e0
 PG_MODULE_MAGIC;
 
 /* passwords shorter than this will be rejected */
@@ -65,12 +77,21 @@ check_password(const char *username,
 	switch (password_type)
 	{
 		case PASSWORD_TYPE_MD5:
+<<<<<<< HEAD
 
 			/*
 			 * Unfortunately we cannot perform exhaustive checks on encrypted
 			 * passwords - we are restricted to guessing. (Alternatively, we
 			 * could insist on the password being presented non-encrypted, but
 			 * that has its own security disadvantages.)
+=======
+			/*
+			 * Unfortunately we cannot perform exhaustive checks on
+			 * encrypted passwords - we are restricted to guessing.
+			 * (Alternatively, we could insist on the password being
+			 * presented non-encrypted, but that has its own security
+			 * disadvantages.)
+>>>>>>> 78a09145e0
 			 *
 			 * We only check for username = password.
 			 */
@@ -83,7 +104,10 @@ check_password(const char *username,
 			break;
 
 		case PASSWORD_TYPE_PLAINTEXT:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 78a09145e0
 			/*
 			 * For unencrypted passwords we can perform better checks
 			 */
@@ -106,8 +130,13 @@ check_password(const char *username,
 			for (i = 0; i < pwdlen; i++)
 			{
 				/*
+<<<<<<< HEAD
 				 * isalpha() does not work for multibyte encodings but let's
 				 * consider non-ASCII characters non-letters
+=======
+				 * isalpha() does not work for multibyte encodings
+				 * but let's consider non-ASCII characters non-letters
+>>>>>>> 78a09145e0
 				 */
 				if (isalpha((unsigned char) password[i]))
 					pwd_has_letter = true;
@@ -117,7 +146,11 @@ check_password(const char *username,
 			if (!pwd_has_letter || !pwd_has_nonletter)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+<<<<<<< HEAD
 				errmsg("password must contain both letters and nonletters")));
+=======
+						 errmsg("password must contain both letters and nonletters")));
+>>>>>>> 78a09145e0
 
 #ifdef USE_CRACKLIB
 			/* call cracklib to check password */

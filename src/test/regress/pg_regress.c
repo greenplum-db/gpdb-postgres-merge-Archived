@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.63 2009/06/11 14:49:15 momjian Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.67 2009/11/23 16:02:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,6 +69,7 @@ static char *makeprog = MAKEPROG;
 static char *shellprog = SHELLPROG;
 #endif
 
+<<<<<<< HEAD
 static char gpdiffprog[MAXPGPATH];
 static char gpstringsubsprog[MAXPGPATH];
 
@@ -76,6 +77,20 @@ static char gpstringsubsprog[MAXPGPATH];
 /* MPP:  Add stuff to ignore all the extra NOTICE messages we give */
 const char *basic_diff_opts = "-w -I HINT: -I CONTEXT: -I GP_IGNORE:";
 const char *pretty_diff_opts = "-w -I HINT: -I CONTEXT: -I GP_IGNORE: -U3";
+=======
+/*
+ * On Windows we use -w in diff switches to avoid problems with inconsistent
+ * newline representation.  The actual result files will generally have
+ * Windows-style newlines, but the comparison files might or might not.
+ */
+#ifndef WIN32
+const char *basic_diff_opts = "";
+const char *pretty_diff_opts = "-C3";
+#else
+const char *basic_diff_opts = "-w";
+const char *pretty_diff_opts = "-w -C3";
+#endif
+>>>>>>> 78a09145e0
 
 /* options settable from command line */
 _stringlist *dblist = NULL;
@@ -2172,10 +2187,17 @@ create_database(const char *dbname)
 	 * not mess up the tests.
 	 */
 	header(_("creating database \"%s\""), dbname);
+<<<<<<< HEAD
 	if (encoding && strlen(encoding) > 0)
 		psql_command("postgres", "CREATE DATABASE \"%s\" TEMPLATE=template0 ENCODING='%s'", dbname, encoding);
+=======
+	if (encoding)
+		psql_command("postgres", "CREATE DATABASE \"%s\" TEMPLATE=template0 ENCODING='%s'%s", dbname, encoding,
+					 (nolocale) ? " LC_COLLATE='C' LC_CTYPE='C'" : "");
+>>>>>>> 78a09145e0
 	else
-		psql_command("postgres", "CREATE DATABASE \"%s\" TEMPLATE=template0", dbname);
+		psql_command("postgres", "CREATE DATABASE \"%s\" TEMPLATE=template0%s", dbname,
+					 (nolocale) ? " LC_COLLATE='C' LC_CTYPE='C'" : "");
 	psql_command(dbname,
 				 "ALTER DATABASE \"%s\" SET lc_messages TO 'C';"
 				 "ALTER DATABASE \"%s\" SET lc_monetary TO 'C';"

@@ -10,7 +10,7 @@
  *	Win32 (NT4 and newer).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.58 2009/06/11 14:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.59 2009/09/13 18:32:08 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,8 +135,13 @@ pgrename(const char *from, const char *to)
 		_dosmaperr(err);
 
 		/*
+<<<<<<< HEAD
 		 * Modern NT-based Windows versions return ERROR_SHARING_VIOLATION if
 		 * another process has the file open without FILE_SHARE_DELETE.
+=======
+		 * Modern NT-based Windows versions return ERROR_SHARING_VIOLATION
+		 * if another process has the file open without FILE_SHARE_DELETE.
+>>>>>>> 78a09145e0
 		 * ERROR_LOCK_VIOLATION has also been seen with some anti-virus
 		 * software. This used to check for just ERROR_ACCESS_DENIED, so
 		 * presumably you can get that too with some OS versions. We don't

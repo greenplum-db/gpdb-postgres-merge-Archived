@@ -4,10 +4,17 @@
  *	  Declarations for BYTEA data type support.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/bytea.h
+=======
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/include/utils/bytea.h,v 1.1 2009/08/04 16:08:36 tgl Exp $
+>>>>>>> 78a09145e0
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +28,11 @@ typedef enum
 {
 	BYTEA_OUTPUT_ESCAPE,
 	BYTEA_OUTPUT_HEX
+<<<<<<< HEAD
 }	ByteaOutputType;
+=======
+} ByteaOutputType;
+>>>>>>> 78a09145e0
 
 extern int	bytea_output;		/* ByteaOutputType, but int for GUC enum */
 
@@ -46,7 +57,10 @@ extern Datum byteacat(PG_FUNCTION_ARGS);
 extern Datum byteapos(PG_FUNCTION_ARGS);
 extern Datum bytea_substr(PG_FUNCTION_ARGS);
 extern Datum bytea_substr_no_len(PG_FUNCTION_ARGS);
+<<<<<<< HEAD
 extern Datum byteaoverlay(PG_FUNCTION_ARGS);
 extern Datum byteaoverlay_no_len(PG_FUNCTION_ARGS);
+=======
+>>>>>>> 78a09145e0
 
 #endif   /* BYTEA_H */

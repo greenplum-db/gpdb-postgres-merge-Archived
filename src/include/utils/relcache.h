@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.63 2009/01/01 17:24:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.65 2009/12/07 05:22:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,10 @@ extern Oid	RelationGetOidIndex(Relation relation);
 extern List *RelationGetIndexExpressions(Relation relation);
 extern List *RelationGetIndexPredicate(Relation relation);
 extern Bitmapset *RelationGetIndexAttrBitmap(Relation relation);
+extern void RelationGetExclusionInfo(Relation indexRelation,
+									 Oid **operators,
+									 Oid **procs,
+									 uint16 **strategies);
 
 extern void RelationSetIndexList(Relation relation,
 					 List *indexIds, Oid oidIndex);
@@ -89,9 +93,10 @@ extern void AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 extern void RelationCacheMarkNewRelfilenode(Relation rel);
 
 /*
- * Routines to help manage rebuilding of relcache init file
+ * Routines to help manage rebuilding of relcache init files
  */
 extern bool RelationIdIsInInitFile(Oid relationId);
+<<<<<<< HEAD
 extern void RelationCacheInitFilePreInvalidate(void);
 extern void RelationCacheInitFilePostInvalidate(void);
 extern void RelationCacheInitFileRemove(void);
@@ -104,6 +109,10 @@ extern void IndexSupportInitialize(oidvector *indclass,
 					   StrategyNumber maxStrategyNumber,
 					   StrategyNumber maxSupportNumber,
 					   AttrNumber maxAttributeNumber);
+=======
+extern void RelationCacheInitFileInvalidate(bool beforeSend);
+extern void RelationCacheInitFileRemove(void);
+>>>>>>> 78a09145e0
 
 /* should be used only by relcache.c and catcache.c */
 extern bool criticalRelcachesBuilt;

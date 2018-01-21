@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.287 2009/06/11 14:49:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.293 2009/12/07 05:22:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,6 @@
 #include <unistd.h>
 
 #include "access/genam.h"
-#include "access/heapam.h"
 #include "access/reloptions.h"
 #include "access/sysattr.h"
 #include "access/xact.h"
@@ -54,7 +53,10 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_tablespace.h"
+<<<<<<< HEAD
 #include "catalog/pg_trigger.h"
+=======
+>>>>>>> 78a09145e0
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"
 #include "miscadmin.h"
@@ -66,9 +68,11 @@
 #include "storage/fd.h"
 #include "storage/lmgr.h"
 #include "storage/smgr.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
+#include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/relcache.h"
 #include "utils/resowner.h"
@@ -84,11 +88,15 @@
 
 
 /*
- * name of relcache init file, used to speed up backend startup
+ *		name of relcache init file(s), used to speed up backend startup
  */
 #define RELCACHE_INIT_FILENAME	"pg_internal.init"
 
+<<<<<<< HEAD
 #define RELCACHE_INIT_FILEMAGIC		0x773264	/* version ID value */
+=======
+#define RELCACHE_INIT_FILEMAGIC		0x573265	/* version ID value */
+>>>>>>> 78a09145e0
 
 /*
  *		hardcoded tuple descriptors.  see include/catalog/pg_attribute.h
@@ -98,8 +106,11 @@ static const FormData_pg_attribute Desc_pg_attribute[Natts_pg_attribute] = {Sche
 static const FormData_pg_attribute Desc_pg_proc[Natts_pg_proc] = {Schema_pg_proc};
 static const FormData_pg_attribute Desc_pg_type[Natts_pg_type] = {Schema_pg_type};
 static const FormData_pg_attribute Desc_pg_database[Natts_pg_database] = {Schema_pg_database};
+<<<<<<< HEAD
 static const FormData_pg_attribute Desc_pg_authid[Natts_pg_authid] = {Schema_pg_authid};
 static const FormData_pg_attribute Desc_pg_auth_members[Natts_pg_auth_members] = {Schema_pg_auth_members};
+=======
+>>>>>>> 78a09145e0
 static const FormData_pg_attribute Desc_pg_index[Natts_pg_index] = {Schema_pg_index};
 
 /*
@@ -124,7 +135,11 @@ bool		criticalRelcachesBuilt = false;
 
 /*
  * This flag is false until we have prepared the critical relcache entries
+<<<<<<< HEAD
  * for shared catalogs (which are the tables needed for login).
+=======
+ * for shared catalogs (specifically, pg_database and its indexes).
+>>>>>>> 78a09145e0
  */
 bool		criticalSharedRelcachesBuilt = false;
 
@@ -228,8 +243,12 @@ static void RelationParseRelOptions(Relation relation, HeapTuple tuple);
 static void RelationBuildTupleDesc(Relation relation);
 static Relation RelationBuildDesc(Oid targetRelId, bool insertIt);
 static void RelationInitPhysicalAddr(Relation relation);
+<<<<<<< HEAD
 static void RelationInitAppendOnlyInfo(Relation relation);
 static void load_critical_index(Oid indexoid, Oid heapoid);
+=======
+static void load_critical_index(Oid indexoid);
+>>>>>>> 78a09145e0
 static TupleDesc GetPgClassDescriptor(void);
 static TupleDesc GetPgIndexDescriptor(void);
 static void AttrDefaultFetch(Relation relation);
@@ -1124,10 +1143,13 @@ RelationInitIndexAccessInfo(Relation relation)
 	memcpy(relation->rd_indoption, indoption->values, natts * sizeof(int16));
 
 	/*
-	 * expressions and predicate cache will be filled later
+	 * expressions, predicate, exclusion caches will be filled later
 	 */
 	relation->rd_indexprs = NIL;
 	relation->rd_indpred = NIL;
+	relation->rd_exclops = NULL;
+	relation->rd_exclprocs = NULL;
+	relation->rd_exclstrats = NULL;
 	relation->rd_amcache = NULL;
 }
 
@@ -1408,9 +1430,14 @@ LookupOpclassInfo(Oid operatorClassOid,
  *		quite a lot since we only need to work for a few basic system
  *		catalogs.
  *
+<<<<<<< HEAD
  * formrdesc is currently used for: pg_database, pg_authid, pg_auth_members,
  * pg_class, pg_attribute, pg_proc, and pg_type
  * (see RelationCacheInitializePhase2/3).
+=======
+ * formrdesc is currently used for: pg_database, pg_class, pg_attribute,
+ * pg_proc, and pg_type (see RelationCacheInitializePhase2/3).
+>>>>>>> 78a09145e0
  *
  * Note that these catalogs can't have constraints (except attnotnull),
  * default values, rules, or triggers, since we don't cope with any of that.
@@ -1461,9 +1488,15 @@ formrdesc(const char *relationName, Oid relationReltype,
 	 * initialize relation tuple form
 	 *
 	 * The data we insert here is pretty incomplete/bogus, but it'll serve to
+<<<<<<< HEAD
 	 * get us launched.  RelationCacheInitializePhase2() will read the real
 	 * data from pg_class and replace what we've done here.  Note in particular
 	 * that relowner is left as zero; this cues RelationCacheInitializePhase2
+=======
+	 * get us launched.  RelationCacheInitializePhase3() will read the real
+	 * data from pg_class and replace what we've done here.  Note in particular
+	 * that relowner is left as zero; this cues RelationCacheInitializePhase3
+>>>>>>> 78a09145e0
 	 * that the real data isn't there yet.
 	 */
 	relation->rd_rel = (Form_pg_class) palloc0(CLASS_TUPLE_SIZE);
@@ -1808,6 +1841,31 @@ RelationReloadIndexInfo(Relation relation)
 	}
 
 	/*
+	 * Must reset targblock, fsm_nblocks and vm_nblocks in case rel was
+	 * truncated
+	 */
+	relation->rd_targblock = InvalidBlockNumber;
+	relation->rd_fsm_nblocks = InvalidBlockNumber;
+	relation->rd_vm_nblocks = InvalidBlockNumber;
+	/* Must free any AM cached data, too */
+	if (relation->rd_amcache)
+		pfree(relation->rd_amcache);
+	relation->rd_amcache = NULL;
+
+	/*
+	 * If it's a shared index, we might be called before backend startup
+	 * has finished selecting a database, in which case we have no way to
+	 * read pg_class yet.  However, a shared index can never have any
+	 * significant schema updates, so it's okay to ignore the invalidation
+	 * signal.  Just mark it valid and return without doing anything more.
+	 */
+	if (relation->rd_rel->relisshared && !criticalRelcachesBuilt)
+	{
+		relation->rd_isvalid = true;
+		return;
+	}
+
+	/*
 	 * Read the pg_class row
 	 *
 	 * Don't try to use an indexscan of pg_class_oid_index to reload the info
@@ -1828,18 +1886,6 @@ RelationReloadIndexInfo(Relation relation)
 	heap_freetuple(pg_class_tuple);
 	/* We must recalculate physical address in case it changed */
 	RelationInitPhysicalAddr(relation);
-
-	/*
-	 * Must reset targblock, fsm_nblocks and vm_nblocks in case rel was
-	 * truncated
-	 */
-	relation->rd_targblock = InvalidBlockNumber;
-	relation->rd_fsm_nblocks = InvalidBlockNumber;
-	relation->rd_vm_nblocks = InvalidBlockNumber;
-	/* Must free any AM cached data, too */
-	if (relation->rd_amcache)
-		pfree(relation->rd_amcache);
-	relation->rd_amcache = NULL;
 
 	/*
 	 * For a non-system index, there are fields of the pg_index row that are
@@ -2607,8 +2653,11 @@ RelationBuildLocalRelation(const char *relname,
 	switch (relid)
 	{
 		case DatabaseRelationId:
+<<<<<<< HEAD
 		case AuthIdRelationId:
 		case AuthMemRelationId:
+=======
+>>>>>>> 78a09145e0
 		case RelationRelationId:
 		case AttributeRelationId:
 		case ProcedureRelationId:
@@ -2826,6 +2875,7 @@ RelationCacheInitialize(void)
 /*
  *		RelationCacheInitializePhase2
  *
+<<<<<<< HEAD
  *		This is called to prepare for access to shared catalogs during startup.
  *		We must at least set up nailed reldescs for pg_database, pg_authid,
  *		and pg_auth_members.  Ideally we'd like to have reldescs for their
@@ -2833,6 +2883,14 @@ RelationCacheInitialize(void)
  *		relcache init file.  If that's missing or broken, just make phony
  *		entries for the catalogs themselves.  RelationCacheInitializePhase3
  *		will clean up as needed.
+=======
+ *		This is called to prepare for access to pg_database during startup.
+ *		We must at least set up a nailed reldesc for pg_database.  Ideally
+ *		we'd like to have reldescs for its indexes, too.  We attempt to
+ *		load this information from the shared relcache init file.  If that's
+ *		missing or broken, just make a phony entry for pg_database.
+ *		RelationCacheInitializePhase3 will clean up as needed.
+>>>>>>> 78a09145e0
  */
 void
 RelationCacheInitializePhase2(void)
@@ -2840,8 +2898,12 @@ RelationCacheInitializePhase2(void)
 	MemoryContext oldcxt;
 
 	/*
+<<<<<<< HEAD
 	 * In bootstrap mode, the shared catalogs aren't there yet anyway, so do
 	 * nothing.
+=======
+	 * In bootstrap mode, pg_database isn't there yet anyway, so do nothing.
+>>>>>>> 78a09145e0
 	 */
 	if (IsBootstrapProcessingMode())
 		return;
@@ -2852,6 +2914,7 @@ RelationCacheInitializePhase2(void)
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/*
+<<<<<<< HEAD
 	 * Try to load the shared relcache cache file.	If unsuccessful, bootstrap
 	 * the cache with pre-made descriptors for the critical shared catalogs.
 	 */
@@ -2865,6 +2928,17 @@ RelationCacheInitializePhase2(void)
 				  false, Natts_pg_auth_members, Desc_pg_auth_members);
 
 #define NUM_CRITICAL_SHARED_RELS	3	/* fix if you change list above */
+=======
+	 * Try to load the shared relcache cache file.  If unsuccessful,
+	 * bootstrap the cache with a pre-made descriptor for pg_database.
+	 */
+	if (!load_relcache_init_file(true))
+	{
+		formrdesc("pg_database", DatabaseRelation_Rowtype_Id, true,
+				  true, Natts_pg_database, Desc_pg_database);
+
+#define NUM_CRITICAL_SHARED_RELS	1	/* fix if you change list above */
+>>>>>>> 78a09145e0
 	}
 
 	MemoryContextSwitchTo(oldcxt);
@@ -2891,6 +2965,7 @@ RelationCacheInitializePhase3(void)
 	RelIdCacheEnt *idhentry;
 	MemoryContext oldcxt;
 	bool		needNewCacheFile = !criticalSharedRelcachesBuilt;
+<<<<<<< HEAD
 
 	/*
 	 * Relation cache initialization or any sort of heap access is
@@ -2898,6 +2973,8 @@ RelationCacheInitializePhase3(void)
 	 */
 	if (!IsBootstrapProcessingMode() && RecoveryInProgress())
 		elog(ERROR, "relation cache initialization during recovery or non-bootstrap processes.");
+=======
+>>>>>>> 78a09145e0
 
 	/*
 	 * switch to cache memory context
@@ -2905,15 +2982,22 @@ RelationCacheInitializePhase3(void)
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/*
+<<<<<<< HEAD
 	 * Try to load the local relcache cache file.  If unsuccessful, bootstrap
 	 * the cache with pre-made descriptors for the critical "nailed-in" system
 	 * catalogs.
+=======
+	 * Try to load the local relcache cache file.  If unsuccessful,
+	 * bootstrap the cache with pre-made descriptors for the critical
+	 * "nailed-in" system catalogs.
+>>>>>>> 78a09145e0
 	 */
 	if (IsBootstrapProcessingMode() ||
 		!load_relcache_init_file(false))
 	{
 		needNewCacheFile = true;
 
+<<<<<<< HEAD
 		formrdesc("pg_class", PG_CLASS_RELTYPE_OID, false,
 				  true, Natts_pg_class, Desc_pg_class);
 		formrdesc("pg_attribute", PG_ATTRIBUTE_RELTYPE_OID, false,
@@ -2924,6 +3008,18 @@ RelationCacheInitializePhase3(void)
 				  true, Natts_pg_type, Desc_pg_type);
 
 #define NUM_CRITICAL_LOCAL_RELS 4		/* fix if you change list above */
+=======
+		formrdesc("pg_class", RelationRelation_Rowtype_Id, false,
+				  true, Natts_pg_class, Desc_pg_class);
+		formrdesc("pg_attribute", AttributeRelation_Rowtype_Id, false,
+				  false, Natts_pg_attribute, Desc_pg_attribute);
+		formrdesc("pg_proc", ProcedureRelation_Rowtype_Id, false,
+				  true, Natts_pg_proc, Desc_pg_proc);
+		formrdesc("pg_type", TypeRelation_Rowtype_Id, false,
+				  true, Natts_pg_type, Desc_pg_type);
+
+#define NUM_CRITICAL_LOCAL_RELS	4	/* fix if you change list above */
+>>>>>>> 78a09145e0
 	}
 
 	MemoryContextSwitchTo(oldcxt);
@@ -2959,6 +3055,7 @@ RelationCacheInitializePhase3(void)
 	 */
 	if (!criticalRelcachesBuilt)
 	{
+<<<<<<< HEAD
 		load_critical_index(ClassOidIndexId,
 							RelationRelationId);
 		load_critical_index(AttributeRelidNumIndexId,
@@ -2979,6 +3076,19 @@ RelationCacheInitializePhase3(void)
 							TriggerRelationId);
 
 #define NUM_CRITICAL_LOCAL_INDEXES	9	/* fix if you change list above */
+=======
+		load_critical_index(ClassOidIndexId);
+		load_critical_index(AttributeRelidNumIndexId);
+		load_critical_index(IndexRelidIndexId);
+		load_critical_index(OpclassOidIndexId);
+		load_critical_index(AccessMethodStrategyIndexId);
+		load_critical_index(AccessMethodProcedureIndexId);
+		load_critical_index(OperatorOidIndexId);
+		load_critical_index(RewriteRelRulenameIndexId);
+		load_critical_index(TriggerRelidNameIndexId);
+
+#define NUM_CRITICAL_LOCAL_INDEXES	9		/* fix if you change list above */
+>>>>>>> 78a09145e0
 
 		criticalRelcachesBuilt = true;
 	}
@@ -2986,6 +3096,7 @@ RelationCacheInitializePhase3(void)
 	/*
 	 * Process critical shared indexes too.
 	 *
+<<<<<<< HEAD
 	 * DatabaseNameIndexId isn't critical for relcache loading, but rather for
 	 * initial lookup of MyDatabaseId, without which we'll never find any
 	 * non-shared catalogs at all.	Autovacuum calls InitPostgres with a
@@ -3007,6 +3118,19 @@ RelationCacheInitializePhase3(void)
 							AuthMemRelationId);
 
 #define NUM_CRITICAL_SHARED_INDEXES 5	/* fix if you change list above */
+=======
+	 * DatabaseNameIndexId isn't critical for relcache loading, but rather
+	 * for initial lookup of MyDatabaseId, without which we'll never find
+	 * any non-shared catalogs at all.  Autovacuum calls InitPostgres with
+	 * a database OID, so it instead depends on DatabaseOidIndexId.
+	 */
+	if (!criticalSharedRelcachesBuilt)
+	{
+		load_critical_index(DatabaseNameIndexId);
+		load_critical_index(DatabaseOidIndexId);
+
+#define NUM_CRITICAL_SHARED_INDEXES	2		/* fix if you change list above */
+>>>>>>> 78a09145e0
 
 		criticalSharedRelcachesBuilt = true;
 	}
@@ -3145,6 +3269,7 @@ RelationCacheInitializePhase3(void)
 
 /*
  * Load one critical system index into the relcache
+<<<<<<< HEAD
  *
  * indexoid is the OID of the target index, heapoid is the OID of the catalog
  * it belongs to.
@@ -3163,12 +3288,25 @@ load_critical_index(Oid indexoid, Oid heapoid)
 	LockRelationOid(heapoid, AccessShareLock);
 	LockRelationOid(indexoid, AccessShareLock);
 	ird = RelationBuildDesc(indexoid, true);
+=======
+ */
+static void
+load_critical_index(Oid indexoid)
+{
+	Relation	ird;
+
+	LockRelationOid(indexoid, AccessShareLock);
+	ird = RelationBuildDesc(indexoid, NULL);
+>>>>>>> 78a09145e0
 	if (ird == NULL)
 		elog(PANIC, "could not open critical system index %u", indexoid);
 	ird->rd_isnailed = true;
 	ird->rd_refcnt = 1;
 	UnlockRelationOid(indexoid, AccessShareLock);
+<<<<<<< HEAD
 	UnlockRelationOid(heapoid, AccessShareLock);
+=======
+>>>>>>> 78a09145e0
 }
 
 /*
@@ -3457,9 +3595,14 @@ RelationGetIndexList(Relation relation)
 		result = insert_ordered_oid(result, index->indexrelid);
 
 		/* Check to see if it is a unique, non-partial btree index on OID */
+<<<<<<< HEAD
 		if (IndexIsValid(index) &&
 			index->indnatts == 1 &&
 			index->indisunique &&
+=======
+		if (index->indnatts == 1 &&
+			index->indisunique && index->indimmediate &&
+>>>>>>> 78a09145e0
 			index->indkey.values[0] == ObjectIdAttributeNumber &&
 			index->indclass.values[0] == OID_BTREE_OPS_OID &&
 			heap_attisnull(htup, Anum_pg_index_indpred))
@@ -3814,6 +3957,130 @@ RelationGetIndexAttrBitmap(Relation relation)
 	return indexattrs;
 }
 
+/*
+ * RelationGetExclusionInfo -- get info about index's exclusion constraint
+ *
+ * This should be called only for an index that is known to have an
+ * associated exclusion constraint.  It returns arrays (palloc'd in caller's
+ * context) of the exclusion operator OIDs, their underlying functions'
+ * OIDs, and their strategy numbers in the index's opclasses.  We cache
+ * all this information since it requires a fair amount of work to get.
+ */
+void
+RelationGetExclusionInfo(Relation indexRelation,
+						 Oid **operators,
+						 Oid **procs,
+						 uint16 **strategies)
+{
+	int			ncols = indexRelation->rd_rel->relnatts;
+	Oid		   *ops;
+	Oid		   *funcs;
+	uint16	   *strats;
+	Relation	conrel;
+	SysScanDesc	conscan;
+	ScanKeyData	skey[1];
+	HeapTuple	htup;
+	bool		found;
+	MemoryContext oldcxt;
+	int			i;
+
+	/* Allocate result space in caller context */
+	*operators = ops = (Oid *) palloc(sizeof(Oid) * ncols);
+	*procs = funcs = (Oid *) palloc(sizeof(Oid) * ncols);
+	*strategies = strats = (uint16 *) palloc(sizeof(uint16) * ncols);
+
+	/* Quick exit if we have the data cached already */
+	if (indexRelation->rd_exclstrats != NULL)
+	{
+		memcpy(ops, indexRelation->rd_exclops, sizeof(Oid) * ncols);
+		memcpy(funcs, indexRelation->rd_exclprocs, sizeof(Oid) * ncols);
+		memcpy(strats, indexRelation->rd_exclstrats, sizeof(uint16) * ncols);
+		return;
+	}
+
+	/*
+	 * Search pg_constraint for the constraint associated with the index.
+	 * To make this not too painfully slow, we use the index on conrelid;
+	 * that will hold the parent relation's OID not the index's own OID.
+	 */
+	ScanKeyInit(&skey[0],
+				Anum_pg_constraint_conrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(indexRelation->rd_index->indrelid));
+
+	conrel = heap_open(ConstraintRelationId, AccessShareLock);
+	conscan = systable_beginscan(conrel, ConstraintRelidIndexId, true,
+								 SnapshotNow, 1, skey);
+	found = false;
+
+	while (HeapTupleIsValid(htup = systable_getnext(conscan)))
+	{
+		Form_pg_constraint	 conform = (Form_pg_constraint) GETSTRUCT(htup);
+		Datum		val;
+		bool		isnull;
+		ArrayType  *arr;
+		int			nelem;
+
+		/* We want the exclusion constraint owning the index */
+		if (conform->contype != CONSTRAINT_EXCLUSION ||
+			conform->conindid != RelationGetRelid(indexRelation))
+			continue;
+
+		/* There should be only one */
+		if (found)
+			elog(ERROR, "unexpected exclusion constraint record found for rel %s",
+				 RelationGetRelationName(indexRelation));
+		found = true;
+
+		/* Extract the operator OIDS from conexclop */
+		val = fastgetattr(htup,
+						  Anum_pg_constraint_conexclop,
+						  conrel->rd_att, &isnull);
+		if (isnull)
+			elog(ERROR, "null conexclop for rel %s",
+				 RelationGetRelationName(indexRelation));
+
+		arr = DatumGetArrayTypeP(val);	/* ensure not toasted */
+		nelem = ARR_DIMS(arr)[0];
+		if (ARR_NDIM(arr) != 1 ||
+			nelem != ncols ||
+			ARR_HASNULL(arr) ||
+			ARR_ELEMTYPE(arr) != OIDOID)
+			elog(ERROR, "conexclop is not a 1-D Oid array");
+
+		memcpy(ops, ARR_DATA_PTR(arr), sizeof(Oid) * ncols);
+	}
+
+	systable_endscan(conscan);
+	heap_close(conrel, AccessShareLock);
+
+	if (!found)
+		elog(ERROR, "exclusion constraint record missing for rel %s",
+			 RelationGetRelationName(indexRelation));
+
+	/* We need the func OIDs and strategy numbers too */
+	for (i = 0; i < ncols; i++)
+	{
+		funcs[i] = get_opcode(ops[i]);
+		strats[i] = get_op_opfamily_strategy(ops[i],
+											 indexRelation->rd_opfamily[i]);
+		/* shouldn't fail, since it was checked at index creation */
+		if (strats[i] == InvalidStrategy)
+			elog(ERROR, "could not find strategy for operator %u in family %u",
+				 ops[i], indexRelation->rd_opfamily[i]);
+	}
+
+	/* Save a copy of the results in the relcache entry. */
+	oldcxt = MemoryContextSwitchTo(indexRelation->rd_indexcxt);
+	indexRelation->rd_exclops = (Oid *) palloc(sizeof(Oid) * ncols);
+	indexRelation->rd_exclprocs = (Oid *) palloc(sizeof(Oid) * ncols);
+	indexRelation->rd_exclstrats = (uint16 *) palloc(sizeof(uint16) * ncols);
+	memcpy(indexRelation->rd_exclops, ops, sizeof(Oid) * ncols);
+	memcpy(indexRelation->rd_exclprocs, funcs, sizeof(Oid) * ncols);
+	memcpy(indexRelation->rd_exclstrats, strats, sizeof(uint16) * ncols);
+	MemoryContextSwitchTo(oldcxt);
+}
+
 
 /*
  *	load_relcache_init_file, write_relcache_init_file
@@ -3840,6 +4107,12 @@ RelationGetIndexAttrBitmap(Relation relation)
  *			  relation descriptors using sequential scans and write 'em to
  *			  the initialization file for use by subsequent backends.
  *
+<<<<<<< HEAD
+=======
+ *		As of Postgres 8.5, there is one local initialization file in each
+ *		database, plus one shared initialization file for shared catalogs.
+ *
+>>>>>>> 78a09145e0
  *		We could dispense with the initialization files and just build the
  *		critical reldescs the hard way on every backend startup, but that
  *		slows down backend startup noticeably.
@@ -3857,9 +4130,11 @@ RelationGetIndexAttrBitmap(Relation relation)
  */
 
 /*
- * load_relcache_init_file -- attempt to load cache from the init file
+ * load_relcache_init_file -- attempt to load cache from the shared
+ * or local cache init file
  *
- * If successful, return TRUE and set criticalRelcachesBuilt to true.
+ * If successful, return TRUE and set criticalRelcachesBuilt or
+ * criticalSharedRelcachesBuilt to true.
  * If not successful, return FALSE.
  *
  * NOTE: we assume we are already switched into CacheMemoryContext.
@@ -3898,7 +4173,6 @@ load_relcache_init_file(bool shared)
 	rels = (Relation *) palloc(max_rels * sizeof(Relation));
 	num_rels = 0;
 	nailed_rels = nailed_indexes = 0;
-	initFileRelationIds = NIL;
 
 	/* check for correct magic number (compatible version) */
 	if (fread(&magic, 1, sizeof(magic), fp) != sizeof(magic))
@@ -3915,7 +4189,8 @@ load_relcache_init_file(bool shared)
 		bool		has_not_null;
 
 		/* first read the relation descriptor length */
-		if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+		nread = fread(&len, 1, sizeof(len), fp);
+		if (nread != sizeof(len))
 		{
 			if (nread == 0)
 				break;			/* end of file */
@@ -3936,15 +4211,15 @@ load_relcache_init_file(bool shared)
 		rel = rels[num_rels++] = (Relation) palloc(len);
 
 		/* then, read the Relation structure */
-		if ((nread = fread(rel, 1, len, fp)) != len)
+		if (fread(rel, 1, len, fp) != len)
 			goto read_failed;
 
 		/* next read the relation tuple form */
-		if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+		if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 			goto read_failed;
 
 		relform = (Form_pg_class) palloc(len);
-		if ((nread = fread(relform, 1, len, fp)) != len)
+		if (fread(relform, 1, len, fp) != len)
 			goto read_failed;
 
 		rel->rd_rel = relform;
@@ -3961,23 +4236,23 @@ load_relcache_init_file(bool shared)
 		has_not_null = false;
 		for (i = 0; i < relform->relnatts; i++)
 		{
-			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 				goto read_failed;
 			if (len != ATTRIBUTE_FIXED_PART_SIZE)
 				goto read_failed;
-			if ((nread = fread(rel->rd_att->attrs[i], 1, len, fp)) != len)
+			if (fread(rel->rd_att->attrs[i], 1, len, fp) != len)
 				goto read_failed;
 
 			has_not_null |= rel->rd_att->attrs[i]->attnotnull;
 		}
 
 		/* next read the access method specific field */
-		if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+		if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 			goto read_failed;
 		if (len > 0)
 		{
 			rel->rd_options = palloc(len);
-			if ((nread = fread(rel->rd_options, 1, len, fp)) != len)
+			if (fread(rel->rd_options, 1, len, fp) != len)
 				goto read_failed;
 			if (len != VARSIZE(rel->rd_options))
 				goto read_failed;		/* sanity check */
@@ -4013,11 +4288,11 @@ load_relcache_init_file(bool shared)
 				nailed_indexes++;
 
 			/* next, read the pg_index tuple */
-			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 				goto read_failed;
 
 			rel->rd_indextuple = (HeapTuple) palloc(len);
-			if ((nread = fread(rel->rd_indextuple, 1, len, fp)) != len)
+			if (fread(rel->rd_indextuple, 1, len, fp) != len)
 				goto read_failed;
 
 			/* Fix up internal pointers in the tuple -- see heap_copytuple */
@@ -4025,11 +4300,11 @@ load_relcache_init_file(bool shared)
 			rel->rd_index = (Form_pg_index) GETSTRUCT(rel->rd_indextuple);
 
 			/* next, read the access method tuple form */
-			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 				goto read_failed;
 
 			am = (Form_pg_am) palloc(len);
-			if ((nread = fread(am, 1, len, fp)) != len)
+			if (fread(am, 1, len, fp) != len)
 				goto read_failed;
 			rel->rd_am = am;
 
@@ -4045,50 +4320,50 @@ load_relcache_init_file(bool shared)
 			rel->rd_indexcxt = indexcxt;
 
 			/* next, read the vector of opfamily OIDs */
-			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 				goto read_failed;
 
 			opfamily = (Oid *) MemoryContextAlloc(indexcxt, len);
-			if ((nread = fread(opfamily, 1, len, fp)) != len)
+			if (fread(opfamily, 1, len, fp) != len)
 				goto read_failed;
 
 			rel->rd_opfamily = opfamily;
 
 			/* next, read the vector of opcintype OIDs */
-			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 				goto read_failed;
 
 			opcintype = (Oid *) MemoryContextAlloc(indexcxt, len);
-			if ((nread = fread(opcintype, 1, len, fp)) != len)
+			if (fread(opcintype, 1, len, fp) != len)
 				goto read_failed;
 
 			rel->rd_opcintype = opcintype;
 
 			/* next, read the vector of operator OIDs */
-			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 				goto read_failed;
 
 			operator = (Oid *) MemoryContextAlloc(indexcxt, len);
-			if ((nread = fread(operator, 1, len, fp)) != len)
+			if (fread(operator, 1, len, fp) != len)
 				goto read_failed;
 
 			rel->rd_operator = operator;
 
 			/* next, read the vector of support procedures */
-			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 				goto read_failed;
 			support = (RegProcedure *) MemoryContextAlloc(indexcxt, len);
-			if ((nread = fread(support, 1, len, fp)) != len)
+			if (fread(support, 1, len, fp) != len)
 				goto read_failed;
 
 			rel->rd_support = support;
 
 			/* finally, read the vector of indoption values */
-			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 				goto read_failed;
 
 			indoption = (int16 *) MemoryContextAlloc(indexcxt, len);
-			if ((nread = fread(indoption, 1, len, fp)) != len)
+			if (fread(indoption, 1, len, fp) != len)
 				goto read_failed;
 
 			rel->rd_indoption = indoption;
@@ -4124,13 +4399,16 @@ load_relcache_init_file(bool shared)
 		 * format is complex and subject to change).  They must be rebuilt if
 		 * needed by RelationCacheInitializePhase3.  This is not expected to
 		 * be a big performance hit since few system catalogs have such. Ditto
-		 * for index expressions and predicates.
+		 * for index expressions, predicates, and exclusion info.
 		 */
 		rel->rd_rules = NULL;
 		rel->rd_rulescxt = NULL;
 		rel->trigdesc = NULL;
 		rel->rd_indexprs = NIL;
 		rel->rd_indpred = NIL;
+		rel->rd_exclops = NULL;
+		rel->rd_exclprocs = NULL;
+		rel->rd_exclstrats = NULL;
 
 		/*
 		 * Reset transient-state fields in the relcache entry
@@ -4180,7 +4458,10 @@ load_relcache_init_file(bool shared)
 			nailed_indexes != NUM_CRITICAL_LOCAL_INDEXES)
 			goto read_failed;
 	}
+<<<<<<< HEAD
 
+=======
+>>>>>>> 78a09145e0
 
 	/*
 	 * OK, all appears well.
@@ -4219,7 +4500,7 @@ read_failed:
 
 /*
  * Write out a new initialization file with the current contents
- * of the relcache.
+ * of the relcache (either shared rels or local rels, as indicated).
  */
 static void
 write_relcache_init_file(bool shared)
@@ -4279,11 +4560,9 @@ write_relcache_init_file(bool shared)
 		elog(FATAL, "could not write init file");
 
 	/*
-	 * Write all the reldescs (in no particular order).
+	 * Write all the appropriate reldescs (in no particular order).
 	 */
 	hash_seq_init(&status, RelationIdCache);
-
-	initFileRelationIds = NIL;
 
 	while ((idhentry = (RelIdCacheEnt *) hash_seq_search(&status)) != NULL)
 	{
@@ -4419,7 +4698,7 @@ write_item(const void *data, Size len, FILE *fp)
 
 /*
  * Detect whether a given relation (identified by OID) is one of the ones
- * we store in the init file.
+ * we store in the local relcache init file.
  *
  * Note that we effectively assume that all backends running in a database
  * would choose to store the same set of relations in the init file;
@@ -4450,9 +4729,14 @@ RelationIdIsInInitFile(Oid relationId)
  * startup sequence gets into the sinval array before trying to load the init
  * file.)
  *
+<<<<<<< HEAD
  * We take the lock and do the unlink in RelationCacheInitFilePreInvalidate,
  * then release the lock in RelationCacheInitFilePostInvalidate.  Caller must
  * send any pending SI messages between those calls.
+=======
+ * Ignore any failure to unlink the file, since it might not be there if
+ * no backend has been started since the last removal.
+>>>>>>> 78a09145e0
  *
  * Notice this deals only with the local init file, not the shared init file.
  * The reason is that there can never be a "significant" change to the
@@ -4496,15 +4780,29 @@ RelationCacheInitFilePostInvalidate(void)
 /*
  * Remove the init files during postmaster startup.
  *
+<<<<<<< HEAD
  * We used to keep the init files across restarts, but that is unsafe even in simple
  * crash-recovery cases as there are windows for the init files to become out-of-sync
  * with the database. So now we just remove them during startup and expect the
  * first backend launch to rebuild them. Of course, this has to happen in each
  * database of the cluster.
+=======
+ * We used to keep the init files across restarts, but that is unsafe in PITR
+ * scenarios, and even in simple crash-recovery cases there are windows for
+ * the init files to become out-of-sync with the database.  So now we just
+ * remove them during startup and expect the first backend launch to rebuild
+ * them.  Of course, this has to happen in each database of the cluster.
+>>>>>>> 78a09145e0
  */
 void
 RelationCacheInitFileRemove(void)
 {
+<<<<<<< HEAD
+=======
+	const char *tblspcdir = "pg_tblspc";
+	DIR		   *dir;
+	struct dirent *de;
+>>>>>>> 78a09145e0
 	char		path[MAXPGPATH];
 
 	/*
@@ -4517,6 +4815,31 @@ RelationCacheInitFileRemove(void)
 
 	/* Scan everything in the default tablespace */
 	RelationCacheInitFileRemoveInDir("base");
+<<<<<<< HEAD
+=======
+
+	/* Scan the tablespace link directory to find non-default tablespaces */
+	dir = AllocateDir(tblspcdir);
+	if (dir == NULL)
+	{
+		elog(LOG, "could not open tablespace link directory \"%s\": %m",
+			 tblspcdir);
+		return;
+	}
+
+	while ((de = ReadDir(dir, tblspcdir)) != NULL)
+	{
+		if (strspn(de->d_name, "0123456789") == strlen(de->d_name))
+		{
+			/* Scan the tablespace dir for per-database dirs */
+			snprintf(path, sizeof(path), "%s/%s",
+					 tblspcdir, de->d_name);
+			RelationCacheInitFileRemoveInDir(path);
+		}
+	}
+
+	FreeDir(dir);
+>>>>>>> 78a09145e0
 }
 
 /* Process one per-tablespace directory for RelationCacheInitFileRemove */

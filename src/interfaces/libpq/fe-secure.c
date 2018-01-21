@@ -11,7 +11,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-secure.c
+=======
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.129 2009/12/09 06:37:06 mha Exp $
+>>>>>>> 78a09145e0
  *
  * NOTES
  *
@@ -158,6 +162,7 @@ struct sigpipe_info
 			pq_reset_sigpipe(&(spinfo).oldsigmask, (spinfo).sigpipe_pending, \
 							 (spinfo).got_epipe); \
 	} while (0)
+<<<<<<< HEAD
 #else							/* !ENABLE_THREAD_SAFETY */
 
 #define DECLARE_SIGPIPE_INFO(spinfo) pqsigfunc spinfo = NULL
@@ -183,6 +188,37 @@ struct sigpipe_info
 #define REMEMBER_EPIPE(spinfo, cond)
 #define RESTORE_SIGPIPE(conn, spinfo)
 #endif   /* WIN32 */
+=======
+
+#else /* !ENABLE_THREAD_SAFETY */
+
+#define DECLARE_SIGPIPE_INFO(spinfo) pqsigfunc spinfo = NULL
+
+#define DISABLE_SIGPIPE(conn, spinfo, failaction) \
+	do { \
+		if (!SIGPIPE_MASKED(conn)) \
+			spinfo = pqsignal(SIGPIPE, SIG_IGN); \
+	} while (0)
+
+#define REMEMBER_EPIPE(spinfo, cond)
+
+#define RESTORE_SIGPIPE(conn, spinfo) \
+	do { \
+		if (!SIGPIPE_MASKED(conn)) \
+			pqsignal(SIGPIPE, spinfo); \
+	} while (0)
+
+#endif	/* ENABLE_THREAD_SAFETY */
+
+#else	/* WIN32 */
+
+#define DECLARE_SIGPIPE_INFO(spinfo)
+#define DISABLE_SIGPIPE(conn, spinfo, failaction)
+#define REMEMBER_EPIPE(spinfo, cond)
+#define RESTORE_SIGPIPE(conn, spinfo)
+
+#endif	/* WIN32 */
+>>>>>>> 78a09145e0
 
 /* ------------------------------------------------------------ */
 /*			 Procedures common to all secure sessions			*/
@@ -261,7 +297,10 @@ pqsecure_open_client(PGconn *conn)
 		/* We cannot use MSG_NOSIGNAL to block SIGPIPE when using SSL */
 		conn->sigpipe_flag = false;
 
+<<<<<<< HEAD
 		/* Create a connection-specific SSL object */
+=======
+>>>>>>> 78a09145e0
 		if (!(conn->ssl = SSL_new(SSL_context)) ||
 			!SSL_set_app_data(conn->ssl, conn) ||
 			!SSL_set_fd(conn->ssl, conn->sock))
@@ -325,6 +364,7 @@ pqsecure_read(PGconn *conn, void *ptr, size_t len)
 	if (conn->ssl)
 	{
 		int			err;
+		DECLARE_SIGPIPE_INFO(spinfo);
 
 		DECLARE_SIGPIPE_INFO(spinfo);
 
@@ -362,10 +402,18 @@ rloop:
 			case SSL_ERROR_SYSCALL:
 				if (n < 0)
 				{
+<<<<<<< HEAD
 					result_errno = SOCK_ERRNO;
 					REMEMBER_EPIPE(spinfo, result_errno == EPIPE);
 					if (result_errno == EPIPE ||
 						result_errno == ECONNRESET)
+=======
+					char		sebuf[256];
+
+					if (n == -1)
+					{
+						REMEMBER_EPIPE(spinfo, SOCK_ERRNO == EPIPE);
+>>>>>>> 78a09145e0
 						printfPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext(
 								"server closed the connection unexpectedly\n"
@@ -493,9 +541,12 @@ ssize_t
 pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 {
 	ssize_t		n;
+<<<<<<< HEAD
 	int			result_errno = 0;
 	char		sebuf[256];
 
+=======
+>>>>>>> 78a09145e0
 	DECLARE_SIGPIPE_INFO(spinfo);
 
 #ifdef USE_SSL
@@ -505,7 +556,10 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 
 		DISABLE_SIGPIPE(conn, spinfo, return -1);
 
+<<<<<<< HEAD
 		SOCK_ERRNO_SET(0);
+=======
+>>>>>>> 78a09145e0
 		n = SSL_write(conn->ssl, ptr, len);
 		err = SSL_get_error(conn->ssl, n);
 		switch (err)
@@ -535,10 +589,18 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 			case SSL_ERROR_SYSCALL:
 				if (n < 0)
 				{
+<<<<<<< HEAD
 					result_errno = SOCK_ERRNO;
 					REMEMBER_EPIPE(spinfo, result_errno == EPIPE);
 					if (result_errno == EPIPE ||
 						result_errno == ECONNRESET)
+=======
+					char		sebuf[256];
+
+					if (n == -1)
+					{
+						REMEMBER_EPIPE(spinfo, SOCK_ERRNO == EPIPE);
+>>>>>>> 78a09145e0
 						printfPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext(
 								"server closed the connection unexpectedly\n"
@@ -596,14 +658,23 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 	else
 #endif   /* USE_SSL */
 	{
+<<<<<<< HEAD
 		int			flags = 0;
+=======
+		int		flags = 0;
+>>>>>>> 78a09145e0
 
 #ifdef MSG_NOSIGNAL
 		if (conn->sigpipe_flag)
 			flags |= MSG_NOSIGNAL;
 
 retry_masked:
+<<<<<<< HEAD
 #endif   /* MSG_NOSIGNAL */
+=======
+
+#endif /* MSG_NOSIGNAL */
+>>>>>>> 78a09145e0
 
 		DISABLE_SIGPIPE(conn, spinfo, return -1);
 
@@ -611,20 +682,28 @@ retry_masked:
 
 		if (n < 0)
 		{
+<<<<<<< HEAD
 			result_errno = SOCK_ERRNO;
 
+=======
+>>>>>>> 78a09145e0
 			/*
 			 * If we see an EINVAL, it may be because MSG_NOSIGNAL isn't
 			 * available on this machine.  So, clear sigpipe_flag so we don't
 			 * try the flag again, and retry the send().
 			 */
 #ifdef MSG_NOSIGNAL
+<<<<<<< HEAD
 			if (flags != 0 && result_errno == EINVAL)
+=======
+			if (flags != 0 && SOCK_ERRNO == EINVAL)
+>>>>>>> 78a09145e0
 			{
 				conn->sigpipe_flag = false;
 				flags = 0;
 				goto retry_masked;
 			}
+<<<<<<< HEAD
 #endif   /* MSG_NOSIGNAL */
 
 			/* Set error message if appropriate */
@@ -662,13 +741,21 @@ retry_masked:
 													sebuf, sizeof(sebuf)));
 					break;
 			}
+=======
+#endif /* MSG_NOSIGNAL */
+
+			REMEMBER_EPIPE(spinfo, SOCK_ERRNO == EPIPE);
+>>>>>>> 78a09145e0
 		}
 	}
 
 	RESTORE_SIGPIPE(conn, spinfo);
+<<<<<<< HEAD
 
 	/* ensure we return the intended errno to caller */
 	SOCK_ERRNO_SET(result_errno);
+=======
+>>>>>>> 78a09145e0
 
 	return n;
 }
@@ -1470,6 +1557,36 @@ open_client_SSL(PGconn *conn)
 		return PGRES_POLLING_FAILED;
 	}
 
+<<<<<<< HEAD
+=======
+	X509_NAME_oneline(X509_get_subject_name(conn->peer),
+					  conn->peer_dn, sizeof(conn->peer_dn));
+	conn->peer_dn[sizeof(conn->peer_dn) - 1] = '\0';
+
+	r = X509_NAME_get_text_by_NID(X509_get_subject_name(conn->peer),
+							  NID_commonName, conn->peer_cn, SM_USER);
+	conn->peer_cn[SM_USER] = '\0'; /* buffer is SM_USER+1 chars! */
+	if (r == -1)
+	{
+		/* Unable to get the CN, set it to blank so it can't be used */
+		conn->peer_cn[0] = '\0';
+	}
+	else
+	{
+		/*
+		 * Reject embedded NULLs in certificate common name to prevent attacks like
+		 * CVE-2009-4034.
+		 */
+		if (r != strlen(conn->peer_cn))
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("SSL certificate's common name contains embedded null\n"));
+			close_SSL(conn);
+			return PGRES_POLLING_FAILED;
+		}
+	}
+
+>>>>>>> 78a09145e0
 	if (!verify_peer_name_matches_certificate(conn))
 	{
 		close_SSL(conn);

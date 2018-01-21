@@ -3,7 +3,11 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * src/bin/psql/command.c
+=======
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.212 2009/12/01 22:34:33 momjian Exp $
+>>>>>>> 78a09145e0
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -383,7 +387,11 @@ exec_command(const char *cmd,
 				success = listCasts(pattern);
 				break;
 			case 'd':
+<<<<<<< HEAD
 				if (strncmp(cmd, "ddp", 3) == 0)
+=======
+				if (strcmp(cmd, "ddp") == 0)
+>>>>>>> 78a09145e0
 					success = listDefaultACLs(pattern);
 				else
 					success = objectDescription(pattern, show_system);
@@ -443,7 +451,11 @@ exec_command(const char *cmd,
 
 					if (pattern)
 						pattern2 = psql_scan_slash_option(scan_state,
+<<<<<<< HEAD
 													  OT_NORMAL, NULL, true);
+=======
+														  OT_NORMAL, NULL, true);
+>>>>>>> 78a09145e0
 					success = listDbRoleSettings(pattern, pattern2);
 				}
 				else

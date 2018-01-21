@@ -4,10 +4,17 @@
  *	  Routines for interprocess signalling
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/procsignal.h
+=======
+ * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/include/storage/procsignal.h,v 1.1 2009/07/31 20:26:23 tgl Exp $
+>>>>>>> 78a09145e0
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +26,11 @@
 
 /*
  * Reasons for signalling a Postgres child process (a backend or an auxiliary
+<<<<<<< HEAD
  * process, like checkpointer).  We can cope with concurrent signals for different
+=======
+ * process, like bgwriter).  We can cope with concurrent signals for different
+>>>>>>> 78a09145e0
  * reasons.  However, if the same reason is signaled multiple times in quick
  * succession, the process is likely to observe only one notification of it.
  * This is okay for the present uses.
@@ -32,8 +43,11 @@ typedef enum
 	PROCSIG_CATCHUP_INTERRUPT,	/* sinval catchup interrupt */
 	PROCSIG_NOTIFY_INTERRUPT,	/* listen/notify interrupt */
 
+<<<<<<< HEAD
 	PROCSIG_QUERY_FINISH,		/* query finish */
 
+=======
+>>>>>>> 78a09145e0
 	NUM_PROCSIGNALS				/* Must be last! */
 } ProcSignalReason;
 
@@ -44,10 +58,17 @@ extern Size ProcSignalShmemSize(void);
 extern void ProcSignalShmemInit(void);
 
 extern void ProcSignalInit(int pss_idx);
+<<<<<<< HEAD
 extern int SendProcSignal(pid_t pid, ProcSignalReason reason,
 			   BackendId backendId);
 
 extern void procsignal_sigusr1_handler(SIGNAL_ARGS);
 extern bool AmIInSIGUSR1Handler(void);
+=======
+extern int  SendProcSignal(pid_t pid, ProcSignalReason reason,
+						   BackendId backendId);
+
+extern void procsignal_sigusr1_handler(SIGNAL_ARGS);
+>>>>>>> 78a09145e0
 
 #endif   /* PROCSIGNAL_H */

@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.51 2009/06/11 14:49:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.53 2009/11/19 02:45:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,10 +180,15 @@ static void flush_pipe_input(char *logbuffer, int *bytes_in_logbuffer);
 
 static unsigned int __stdcall pipeThread(void *arg);
 #endif
+<<<<<<< HEAD
 static void logfile_rotate(bool time_based_rotation, bool size_based_rotation, const char *suffix,
 						   const char *log_directory, const char *log_filename,
                            FILE **fh, char **last_log_file_name);
 static char *logfile_getname(pg_time_t timestamp, const char *suffix, const char *log_directory, const char *log_file_pattern);
+=======
+static void logfile_rotate(bool time_based_rotation, int size_rotation_for);
+static char *logfile_getname(pg_time_t timestamp, const char *suffix);
+>>>>>>> 78a09145e0
 static void set_next_rotation_time(void);
 static void sigHupHandler(SIGNAL_ARGS);
 static void sigUsr1Handler(SIGNAL_ARGS);
@@ -1995,6 +2000,7 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
                FILE **fh_p,
                char **last_log_file_name)
 {
+<<<<<<< HEAD
     char	   *filename;
 	pg_time_t	fntime;
 	FILE	   *fh = *fh_p;
@@ -2017,6 +2023,75 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
      * different from what we were previously logging into.
      */
 	if (time_based_rotation || size_based_rotation)
+=======
+	char	   *filename;
+	FILE	   *fh;
+
+	filename = logfile_getname(time(NULL), ".csv");
+
+	fh = fopen(filename, "a");
+
+	if (!fh)
+		ereport(FATAL,
+				(errcode_for_file_access(),
+				 (errmsg("could not create log file \"%s\": %m",
+						 filename))));
+
+	setvbuf(fh, NULL, LBF_MODE, 0);
+
+#ifdef WIN32
+	_setmode(_fileno(fh), _O_TEXT);		/* use CRLF line endings on Windows */
+#endif
+
+	csvlogFile = fh;
+
+	pfree(filename);
+
+}
+
+/*
+ * perform logfile rotation
+ */
+static void
+logfile_rotate(bool time_based_rotation, int size_rotation_for)
+{
+	char	   *filename;
+	char	   *csvfilename = NULL;
+	pg_time_t	fntime;
+	FILE	   *fh;
+
+	rotation_requested = false;
+
+	/*
+	 * When doing a time-based rotation, invent the new logfile name based on
+	 * the planned rotation time, not current time, to avoid "slippage" in the
+	 * file name when we don't do the rotation immediately.
+	 */
+	if (time_based_rotation)
+		fntime = next_rotation_time;
+	else
+		fntime = time(NULL);
+	filename = logfile_getname(fntime, NULL);
+	if (csvlogFile != NULL)
+		csvfilename = logfile_getname(fntime, ".csv");
+
+	/*
+	 * Decide whether to overwrite or append.  We can overwrite if (a)
+	 * Log_truncate_on_rotation is set, (b) the rotation was triggered by
+	 * elapsed time and not something else, and (c) the computed file name is
+	 * different from what we were previously logging into.
+	 *
+	 * Note: during the first rotation after forking off from the postmaster,
+	 * last_file_name will be NULL.  (We don't bother to set it in the
+	 * postmaster because it ain't gonna work in the EXEC_BACKEND case.) So we
+	 * will always append in that situation, even though truncating would
+	 * usually be safe.
+	 *
+	 * For consistency, we treat CSV logs the same even though they aren't
+	 * opened in the postmaster.
+	 */
+	if (time_based_rotation || (size_rotation_for & LOG_DESTINATION_STDERR))
+>>>>>>> 78a09145e0
 	{
 		if (Log_truncate_on_rotation && time_based_rotation &&
 			*last_log_file_name != NULL &&
@@ -2043,11 +2118,23 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
 			if (saveerrno != ENFILE && saveerrno != EMFILE)
 			{
 				ereport(LOG,
+<<<<<<< HEAD
 						(errmsg("disabling automatic rotation (use SIGHUP to reenable)")));
 				rotation_disabled = true;
 			}
 			if (filename)
 				pfree(filename);
+=======
+						(errmsg("disabling automatic rotation (use SIGHUP to re-enable)")));
+				Log_RotationAge = 0;
+				Log_RotationSize = 0;
+			}
+
+			if (filename)
+				pfree(filename);
+			if (csvfilename)
+				pfree(csvfilename);
+>>>>>>> 78a09145e0
 			return;
 		}
 
@@ -2057,6 +2144,7 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
 		_setmode(_fileno(fh), _O_TEXT); /* use CRLF line endings on Windows */
 #endif
 
+<<<<<<< HEAD
 		if (*fh_p)
 		{
 			/* On Windows, need to interlock against data-transfer thread */
@@ -2075,18 +2163,112 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
 			pfree(*last_log_file_name);
 		*last_log_file_name = filename;
 		filename = NULL;
+=======
+		/* On Windows, need to interlock against data-transfer thread */
+#ifdef WIN32
+		EnterCriticalSection(&sysfileSection);
+#endif
+
+		fclose(syslogFile);
+		syslogFile = fh;
+
+#ifdef WIN32
+		LeaveCriticalSection(&sysfileSection);
+#endif
+
+		/* instead of pfree'ing filename, remember it for next time */
+		if (last_file_name != NULL)
+			pfree(last_file_name);
+		last_file_name = filename;
+		filename = NULL;
+	}
+
+	/* Same as above, but for csv file. */
+
+	if (csvlogFile != NULL &&
+		(time_based_rotation || (size_rotation_for & LOG_DESTINATION_CSVLOG)))
+	{
+		if (Log_truncate_on_rotation && time_based_rotation &&
+			last_csv_file_name != NULL &&
+			strcmp(csvfilename, last_csv_file_name) != 0)
+			fh = fopen(csvfilename, "w");
+		else
+			fh = fopen(csvfilename, "a");
+
+		if (!fh)
+		{
+			int			saveerrno = errno;
+
+			ereport(LOG,
+					(errcode_for_file_access(),
+					 errmsg("could not open new log file \"%s\": %m",
+							csvfilename)));
+
+			/*
+			 * ENFILE/EMFILE are not too surprising on a busy system; just
+			 * keep using the old file till we manage to get a new one.
+			 * Otherwise, assume something's wrong with Log_directory and stop
+			 * trying to create files.
+			 */
+			if (saveerrno != ENFILE && saveerrno != EMFILE)
+			{
+				ereport(LOG,
+						(errmsg("disabling automatic rotation (use SIGHUP to re-enable)")));
+				Log_RotationAge = 0;
+				Log_RotationSize = 0;
+			}
+
+			if (filename)
+				pfree(filename);
+			if (csvfilename)
+				pfree(csvfilename);
+			return;
+		}
+
+		setvbuf(fh, NULL, LBF_MODE, 0);
+
+#ifdef WIN32
+		_setmode(_fileno(fh), _O_TEXT); /* use CRLF line endings on Windows */
+#endif
+
+		/* On Windows, need to interlock against data-transfer thread */
+#ifdef WIN32
+		EnterCriticalSection(&sysfileSection);
+#endif
+
+		fclose(csvlogFile);
+		csvlogFile = fh;
+
+#ifdef WIN32
+		LeaveCriticalSection(&sysfileSection);
+#endif
+
+		/* instead of pfree'ing filename, remember it for next time */
+		if (last_csv_file_name != NULL)
+			pfree(last_csv_file_name);
+		last_csv_file_name = csvfilename;
+		csvfilename = NULL;
+>>>>>>> 78a09145e0
 	}
 
 	if (filename)
 		pfree(filename);
+<<<<<<< HEAD
 
     set_next_rotation_time();
+=======
+	if (csvfilename)
+		pfree(csvfilename);
+
+	set_next_rotation_time();
+>>>>>>> 78a09145e0
 }
 
 
 /*
  * construct logfile name using timestamp information
  *
+<<<<<<< HEAD
  * In Postgres, if suffix isn't NULL, append it to the name, replacing any ".log"
  * that may be in the pattern.
  *
@@ -2096,6 +2278,15 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
  */
 static char *
 logfile_getname(pg_time_t timestamp, const char *suffix, const char *log_directory, const char *log_file_pattern)
+=======
+ * If suffix isn't NULL, append it to the name, replacing any ".log"
+ * that may be in the pattern.
+ *
+ * Result is palloc'd.
+ */
+static char *
+logfile_getname(pg_time_t timestamp, const char *suffix)
+>>>>>>> 78a09145e0
 {
 	char	   *filename;
 	int			len;
@@ -2109,8 +2300,13 @@ logfile_getname(pg_time_t timestamp, const char *suffix, const char *log_directo
 
 	len = strlen(filename);
 
+<<<<<<< HEAD
 	/* treat it as a strftime pattern */
 	pg_strftime(filename + len, MAXPGPATH - len, log_file_pattern,
+=======
+	/* treat Log_filename as a strftime pattern */
+	pg_strftime(filename + len, MAXPGPATH - len, Log_filename,
+>>>>>>> 78a09145e0
 				pg_localtime(&timestamp, log_timezone));
 
 	/*
@@ -2122,6 +2318,7 @@ logfile_getname(pg_time_t timestamp, const char *suffix, const char *log_directo
 	 */
 	if (strlen(filename) - sizeof(CSV_SUFFIX) + 1 > 0)
 	{
+<<<<<<< HEAD
 		tmp_suffix = filename + (strlen(filename) - sizeof(CSV_SUFFIX) + 1);
 	}
 	else
@@ -2147,6 +2344,12 @@ logfile_getname(pg_time_t timestamp, const char *suffix, const char *log_directo
 	if (gp_log_format == 1 && pg_strcasecmp(tmp_suffix, CSV_SUFFIX) != 0)
 	{
 		snprintf(tmp_suffix, sizeof(CSV_SUFFIX), CSV_SUFFIX);
+=======
+		len = strlen(filename);
+		if (len > 4 && (strcmp(filename + (len - 4), ".log") == 0))
+			len -= 4;
+		strlcpy(filename + len, suffix, MAXPGPATH - len);
+>>>>>>> 78a09145e0
 	}
 
 	return filename;

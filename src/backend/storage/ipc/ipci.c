@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.100 2009/05/05 19:59:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.101 2009/07/31 20:26:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,6 +153,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		size = add_size(size, SInvalShmemSize());
 		size = add_size(size, PMSignalShmemSize());
 		size = add_size(size, ProcSignalShmemSize());
+<<<<<<< HEAD
 		size = add_size(size, primaryMirrorModeShmemSize());
 		//size = add_size(size, AutoVacuumShmemSize());
 		size = add_size(size, FtsShmemSize());
@@ -171,6 +172,9 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		elog(DEBUG1, "Size not including the buffer pool %lu",
 			 (unsigned long) size);
 
+=======
+		size = add_size(size, BgWriterShmemSize());
+>>>>>>> 78a09145e0
 		size = add_size(size, AutoVacuumShmemSize());
 		size = add_size(size, BTreeShmemSize());
 		size = add_size(size, SyncScanShmemSize());
@@ -304,6 +308,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	 */
 	PMSignalShmemInit();
 	ProcSignalShmemInit();
+<<<<<<< HEAD
 	CheckpointerShmemInit();
 	WalSndShmemInit();
 	WalRcvShmemInit();
@@ -313,6 +318,10 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 #ifdef FAULT_INJECTOR
 	FaultInjector_ShmemInit();
 #endif
+=======
+	BgWriterShmemInit();
+	AutoVacuumShmemInit();
+>>>>>>> 78a09145e0
 
 	/*
 	 * Set up other modules that need some shared memory space

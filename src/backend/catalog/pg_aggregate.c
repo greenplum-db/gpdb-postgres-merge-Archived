@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.102 2009/06/11 14:48:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.103 2009/10/08 02:39:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -524,9 +524,15 @@ lookup_agg_function(List *fnName,
 	 * function's return value.  it also returns the true argument types to
 	 * the function.
 	 */
+<<<<<<< HEAD
 	fdresult = func_get_detail(fnName, NIL, nargs, input_types, false, false,
 							   &fnOid, rettype, &retset,
 							   &nvargs, &vatype,
+=======
+	fdresult = func_get_detail(fnName, NIL, NIL,
+							   nargs, input_types, false, false,
+							   &fnOid, rettype, &retset, &nvargs,
+>>>>>>> 78a09145e0
 							   &true_oid_array, NULL);
 
 	/* only valid case is a normal function not returning a set */
@@ -534,12 +540,14 @@ lookup_agg_function(List *fnName,
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("function %s does not exist",
-						func_signature_string(fnName, nargs, input_types))));
+						func_signature_string(fnName, nargs,
+											  NIL, input_types))));
 	if (retset)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("function %s returns a set",
-						func_signature_string(fnName, nargs, input_types))));
+						func_signature_string(fnName, nargs,
+											  NIL, input_types))));
 
 	/*
 	 * If the agg is declared to take VARIADIC ANY, the underlying functions
@@ -577,7 +585,8 @@ lookup_agg_function(List *fnName,
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("function %s requires run-time type coercion",
-					 func_signature_string(fnName, nargs, true_oid_array))));
+					 func_signature_string(fnName, nargs,
+										   NIL, true_oid_array))));
 	}
 
 	/* Check aggregate creator has permission to call the function */

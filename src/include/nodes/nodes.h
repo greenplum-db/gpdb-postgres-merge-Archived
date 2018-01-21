@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.223 2009/06/11 14:49:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.231 2009/10/26 02:26:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,11 @@ typedef enum NodeTag
 	 * CteScan will take the form of SubqueryScan.
 	 */
 	T_Result,
+<<<<<<< HEAD
 	T_Plan_Start = T_Result,
+=======
+	T_ModifyTable,
+>>>>>>> 78a09145e0
 	T_Append,
 	T_RecursiveUnion,
 	T_Sequence,
@@ -96,7 +100,9 @@ typedef enum NodeTag
 	T_Unique,
 	T_Hash,
 	T_SetOp,
+	T_LockRows,
 	T_Limit,
+<<<<<<< HEAD
 	T_Motion,
 	T_ShareInputScan,
 	T_Repeat,
@@ -107,6 +113,10 @@ typedef enum NodeTag
 	T_PartitionSelector,
 	T_Plan_End,
 	/* this one isn't a subclass of Plan: */
+=======
+	/* these aren't subclasses of Plan: */
+	T_PlanRowMark,
+>>>>>>> 78a09145e0
 	T_PlanInvalItem,
 
 	/*
@@ -122,6 +132,7 @@ typedef enum NodeTag
 	 * It will take the form of IndexScan, SeqScan, etc.
 	 */
 	T_ResultState,
+	T_ModifyTableState,
 	T_AppendState,
 	T_RecursiveUnionState,
 	T_SequenceState,
@@ -157,6 +168,7 @@ typedef enum NodeTag
 	T_UniqueState,
 	T_HashState,
 	T_SetOpState,
+	T_LockRowsState,
 	T_LimitState,
 	T_MotionState,
 	T_ShareInputScanState,
@@ -181,6 +193,7 @@ typedef enum NodeTag
 	T_WindowFunc,
 	T_ArrayRef,
 	T_FuncExpr,
+	T_NamedArgExpr,
 	T_OpExpr,
 	T_DistinctExpr,
 	T_ScalarArrayOpExpr,
@@ -295,7 +308,11 @@ typedef enum NodeTag
 	T_ResultPath,
 	T_MaterialPath,
 	T_UniquePath,
+<<<<<<< HEAD
 	T_CtePath,
+=======
+	T_NoOpPath,
+>>>>>>> 78a09145e0
 	T_EquivalenceClass,
 	T_EquivalenceMember,
 	T_PathKey,
@@ -356,6 +373,7 @@ typedef enum NodeTag
 	T_SetOperationStmt,
 	T_GrantStmt,
 	T_GrantRoleStmt,
+	T_AlterDefaultPrivilegesStmt,
 	T_ClosePortalStmt,
 	T_ClusterStmt,
 	T_CopyStmt,
@@ -491,8 +509,11 @@ typedef enum NodeTag
 	T_GroupingClause,
 	T_GroupingFunc,
 	T_WindowClause,
+<<<<<<< HEAD
 	T_SortGroupClause,
 	T_FkConstraint,
+=======
+>>>>>>> 78a09145e0
 	T_PrivGrantee,
 	T_FuncWithArgs,
 	T_AccessPriv,
@@ -524,6 +545,7 @@ typedef enum NodeTag
 	T_TriggerData = 950,		/* in commands/trigger.h */
 	T_ReturnSetInfo,			/* in nodes/execnodes.h */
 	T_WindowObjectData,			/* private in nodeWindowAgg.c */
+<<<<<<< HEAD
 	T_InlineCodeBlock,			/* in nodes/parsenodes.h */
 	T_TIDBitmap,				/* in nodes/tidbitmap.h */
     T_StreamBitmap,             /* in nodes/tidbitmap.h */
@@ -536,6 +558,10 @@ typedef enum NodeTag
     /* CDB: tags for random other stuff */
     T_CdbExplain_StatHdr = 1000,             /* in cdb/cdbexplain.c */
 
+=======
+	T_TIDBitmap,				/* in nodes/tidbitmap.h */
+	T_InlineCodeBlock			/* in nodes/parsenodes.h */
+>>>>>>> 78a09145e0
 } NodeTag;
 
 /*

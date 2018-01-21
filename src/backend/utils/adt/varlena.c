@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.171 2009/06/11 14:49:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.172 2009/08/04 16:08:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,9 @@
 
 /* GUC variable */
 int 	bytea_output = BYTEA_OUTPUT_ESCAPE;
+
+/* GUC variable */
+int		bytea_output = BYTEA_OUTPUT_HEX;
 
 typedef struct varlena unknown;
 
@@ -209,6 +212,7 @@ byteain(PG_FUNCTION_ARGS)
 	bytea	   *result;
 
 	/* Recognize hex input */
+<<<<<<< HEAD
 	if (inputText[0] == '\\' && inputText[1] == 'x' )
 	{
 		size_t len = strlen(inputText);
@@ -216,6 +220,16 @@ byteain(PG_FUNCTION_ARGS)
 		result = palloc(bc);
 		bc =  hex_decode(inputText + 2, len - 2, VARDATA(result));
 		SET_VARSIZE(result, bc + VARHDRSZ); /* actual length */
+=======
+	if (inputText[0] == '\\' && inputText[1] == 'x')
+	{
+		size_t len = strlen(inputText);
+
+		bc = (len - 2)/2 + VARHDRSZ;		/* maximum possible length */
+		result = palloc(bc);
+		bc = hex_decode(inputText + 2, len - 2, VARDATA(result));
+		SET_VARSIZE(result, bc + VARHDRSZ);	/* actual length */
+>>>>>>> 78a09145e0
 
 		PG_RETURN_BYTEA_P(result);
 	}

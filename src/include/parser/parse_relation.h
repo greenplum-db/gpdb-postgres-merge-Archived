@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_relation.h,v 1.64 2009/06/11 14:49:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_relation.h,v 1.67 2009/10/31 01:41:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,12 +16,15 @@
 
 #include "parser/parse_node.h"
 
+<<<<<<< HEAD
 #define ERRMSG_GP_WITH_COLUMNS_MISMATCH \
 	"specified number of columns in WITH query \"%s\" must not " \
 	"exceed the number of available columns"
 
 extern bool add_missing_from;
 
+=======
+>>>>>>> 78a09145e0
 extern RangeTblEntry *refnameRangeTblEntry(ParseState *pstate,
 					 const char *schemaname,
 					 const char *refname,
@@ -44,12 +47,6 @@ extern Node *scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte,
 				 char *colname, int location);
 extern Node *colNameToVar(ParseState *pstate, char *colname, bool localonly,
 			 int location);
-extern Node *qualifiedNameToVar(ParseState *pstate,
-				   char *schemaname,
-				   char *refname,
-				   char *colname,
-				   bool implicitRTEOK,
-				   int location);
 extern void markVarForSelectPriv(ParseState *pstate, Var *var,
 					 RangeTblEntry *rte);
 extern Relation parserOpenTable(ParseState *pstate, const RangeVar *relation,
@@ -88,10 +85,11 @@ extern RangeTblEntry *addRangeTableEntryForCTE(ParseState *pstate,
 						 Index levelsup,
 						 Alias *alias,
 						 bool inFromCl);
+extern bool isLockedRefname(ParseState *pstate, const char *refname);
 extern void addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
 			  bool addToJoinList,
 			  bool addToRelNameSpace, bool addToVarNameSpace);
-extern RangeTblEntry *addImplicitRTE(ParseState *pstate, RangeVar *relation);
+extern void errorMissingRTE(ParseState *pstate, RangeVar *relation);
 extern void expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 		  int location, bool include_dropped,
 		  List **colnames, List **colvars);

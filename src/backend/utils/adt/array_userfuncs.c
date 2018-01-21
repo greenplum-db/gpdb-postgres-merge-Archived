@@ -6,7 +6,7 @@
  * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.31 2009/06/20 18:45:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.32 2009/07/23 20:45:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -540,9 +540,15 @@ array_agg_finalfn(PG_FUNCTION_ARGS)
 
 	/*
 	 * Make the result.  We cannot release the ArrayBuildState because
+<<<<<<< HEAD
 	 * sometimes aggregate final functions are re-executed.  Rather, it is
 	 * nodeAgg.c's responsibility to reset the aggcontext when it's safe to do
 	 * so.
+=======
+	 * sometimes aggregate final functions are re-executed.  Rather, it
+	 * is nodeAgg.c's responsibility to reset the aggcontext when it's
+	 * safe to do so.
+>>>>>>> 78a09145e0
 	 */
 	result = makeMdArrayResult(state, 1, dims, lbs,
 							   CurrentMemoryContext,

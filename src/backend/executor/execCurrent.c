@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execCurrent.c,v 1.10 2009/06/11 14:48:56 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execCurrent.c,v 1.14 2009/11/09 02:36:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,12 @@
 #include "cdb/cdbvars.h"
 
 
+<<<<<<< HEAD
 static char *fetch_param_value(ExprContext *econtext, int paramId);
 #ifdef NOT_USED
+=======
+static char *fetch_cursor_param_value(ExprContext *econtext, int paramId);
+>>>>>>> 78a09145e0
 static ScanState *search_plan_tree(PlanState *node, Oid table_oid);
 #endif /* NOT_USED */
 
@@ -147,12 +151,16 @@ getCurrentOf(CurrentOfExpr *cexpr,
 	if (cexpr->cursor_name)
 		cursor_name = cexpr->cursor_name;
 	else
+<<<<<<< HEAD
 	{
 		if (!econtext->ecxt_param_list_info)
 			elog(ERROR, "no cursor name information found");
 
 		cursor_name = fetch_param_value(econtext, cexpr->cursor_param);
 	}
+=======
+		cursor_name = fetch_cursor_param_value(econtext, cexpr->cursor_param);
+>>>>>>> 78a09145e0
 
 	/* Fetch table name for possible use in error messages */
 	table_name = get_rel_name(table_oid);
@@ -250,6 +258,9 @@ getCurrentOf(CurrentOfExpr *cexpr,
 		{
 			ExecRowMark *thiserm = (ExecRowMark *) lfirst(lc);
 
+			if (!RowMarkRequiresRowShareLock(thiserm->markType))
+				continue;		/* ignore non-FOR UPDATE/SHARE items */
+
 			if (RelationGetRelid(thiserm->relation) == table_oid)
 			{
 				if (erm)
@@ -303,8 +314,7 @@ getCurrentOf(CurrentOfExpr *cexpr,
 		 * scan node.  Fail if it's not there or buried underneath
 		 * aggregation.
 		 */
-		scanstate = search_plan_tree(ExecGetActivePlanTree(queryDesc),
-									 table_oid);
+		scanstate = search_plan_tree(queryDesc->planstate, table_oid);
 		if (!scanstate)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_CURSOR_STATE),
@@ -412,12 +422,12 @@ getCurrentOf(CurrentOfExpr *cexpr,
 }
 
 /*
- * fetch_param_value
+ * fetch_cursor_param_value
  *
  * Fetch the string value of a param, verifying it is of type REFCURSOR.
  */
 static char *
-fetch_param_value(ExprContext *econtext, int paramId)
+fetch_cursor_param_value(ExprContext *econtext, int paramId)
 {
 	ParamListInfo paramInfo = econtext->ecxt_param_list_info;
 
@@ -426,9 +436,21 @@ fetch_param_value(ExprContext *econtext, int paramId)
 	{
 		ParamExternData *prm = &paramInfo->params[paramId - 1];
 
+		/* give hook a chance in case parameter is dynamic */
+		if (!OidIsValid(prm->ptype) && paramInfo->paramFetch != NULL)
+			(*paramInfo->paramFetch) (paramInfo, paramId);
+
 		if (OidIsValid(prm->ptype) && !prm->isnull)
 		{
-			Assert(prm->ptype == REFCURSOROID);
+			/* safety check in case hook did something unexpected */
+			if (prm->ptype != REFCURSOROID)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("type of parameter %d (%s) does not match that when preparing the plan (%s)",
+								paramId,
+								format_type_be(prm->ptype),
+								format_type_be(REFCURSOROID))));
+
 			/* We know that refcursor uses text's I/O routines */
 			return TextDatumGetCString(prm->value);
 		}

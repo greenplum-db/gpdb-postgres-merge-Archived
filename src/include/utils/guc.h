@@ -9,7 +9,7 @@
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.102 2009/06/11 14:49:13 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.110 2009/12/09 21:57:51 tgl Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -101,6 +101,7 @@ typedef enum
 	PGC_S_ARGV,					/* postmaster command line */
 	PGC_S_DATABASE,				/* per-database setting */
 	PGC_S_USER,					/* per-user setting */
+	PGC_S_DATABASE_USER,		/* per-user-and-database setting */
 	PGC_S_CLIENT,				/* from client connection request */
 	PGC_S_RESGROUP,				/* per-resgroup setting */
 	PGC_S_OVERRIDE,				/* special case to forcibly set default */
@@ -181,9 +182,13 @@ typedef enum
 #define GUC_UNIT_MIN			0x4000	/* value is in minutes */
 #define GUC_UNIT_TIME			0x7000	/* mask for MS, S, MIN */
 
+<<<<<<< HEAD
 /* GUC lists for gp_guc_list_show().  (List of struct config_generic) */
 extern List    *gp_guc_list_for_explain;
 extern List    *gp_guc_list_for_no_plan;
+=======
+#define GUC_NOT_WHILE_SEC_REST	0x8000	/* can't set if security restricted */
+>>>>>>> 78a09145e0
 
 /* GUC vars that are actually declared in guc.c, rather than elsewhere */
 extern bool log_duration;
@@ -347,6 +352,7 @@ extern char *HbaFileName;
 extern char *IdentFileName;
 extern char *external_pid_file;
 
+<<<<<<< HEAD
 extern char *application_name;
 
 extern char *Debug_dtm_action_sql_command_tag;
@@ -356,6 +362,12 @@ extern char *Debug_dtm_action_target_str;
 /* Enable check for compatibility of encoding and locale in createdb */
 extern bool gp_encoding_check_locale_compatibility;
 
+=======
+extern char *default_do_language;
+
+extern char *application_name;
+
+>>>>>>> 78a09145e0
 extern int	tcp_keepalives_idle;
 extern int	tcp_keepalives_interval;
 extern int	tcp_keepalives_count;
@@ -620,9 +632,8 @@ extern void DefineCustomEnumVariable(
 
 extern void EmitWarningsOnPlaceholders(const char *className);
 
-extern const char *GetConfigOption(const char *name);
+extern const char *GetConfigOption(const char *name, bool restrict_superuser);
 extern const char *GetConfigOptionResetString(const char *name);
-extern bool IsSuperuserConfigOption(const char *name);
 extern void ProcessConfigFile(GucContext context);
 extern void InitializeGUCOptions(void);
 extern bool SelectConfigFiles(const char *userDoption, const char *progname);

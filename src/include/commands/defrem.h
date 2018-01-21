@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.94 2009/04/04 21:12:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.98 2009/12/07 05:22:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,9 +28,12 @@ extern void DefineIndex(RangeVar *heapRelation,
 			List *attributeList,
 			Expr *predicate,
 			List *options,
+			List *exclusionOpNames,
 			bool unique,
 			bool primary,
 			bool isconstraint,
+			bool deferrable,
+			bool initdeferred,
 			bool is_alter_table,
 			bool check_rights,
 			bool skip_build,
@@ -43,10 +46,14 @@ extern void ReindexDatabase(ReindexStmt *stmt);
 extern char *makeObjectName(const char *name1, const char *name2,
 			   const char *label);
 extern char *ChooseRelationName(const char *name1, const char *name2,
+<<<<<<< HEAD
 								const char *label, Oid namespaceName);
 extern char *ChooseRelationNameWithCache(const char *name1, const char *name2,
 								const char *label, Oid namespaceName, 
 								struct HTAB *cache);
+=======
+				   const char *label, Oid namespaceid);
+>>>>>>> 78a09145e0
 extern Oid	GetDefaultOpClass(Oid type_id, Oid am_id);
 
 /* commands/functioncmds.c */
@@ -77,7 +84,11 @@ extern void interpret_function_parameter_list(List *parameters,
 								  Oid *requiredResultType);
 extern void AlterFunctionNamespace(List *name, List *argtypes, bool isagg,
 					   const char *newschema);
+<<<<<<< HEAD
 extern Oid	AlterFunctionNamespace_oid(Oid procOid, Oid nspOid);
+=======
+extern void ExecuteDoStmt(DoStmt *stmt);
+>>>>>>> 78a09145e0
 
 /* commands/operatorcmds.c */
 extern void DefineOperator(List *names, List *parameters);

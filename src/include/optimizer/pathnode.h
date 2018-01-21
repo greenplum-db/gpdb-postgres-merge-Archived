@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/pathnode.h,v 1.80 2009/01/01 17:24:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/pathnode.h,v 1.81 2009/09/17 20:49:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +68,7 @@ extern TidPath *create_tidscan_path(PlannerInfo *root, RelOptInfo *rel,
 					List *tidquals);
 extern AppendPath *create_append_path(PlannerInfo *root, RelOptInfo *rel, List *subpaths);
 extern ResultPath *create_result_path(List *quals);
+<<<<<<< HEAD
 extern MaterialPath *create_material_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath);
 extern UniquePath *create_unique_path(PlannerInfo *root,
 		Path        *subpath,
@@ -80,6 +81,18 @@ extern Path *create_tablefunction_path(PlannerInfo *root, RelOptInfo *rel, Range
 extern Path *create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte);
 extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel, List *pathkeys);
 extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel, CdbLocusType ctelocus);
+=======
+extern MaterialPath *create_material_path(RelOptInfo *rel, Path *subpath);
+extern UniquePath *create_unique_path(PlannerInfo *root, RelOptInfo *rel,
+				   Path *subpath, SpecialJoinInfo *sjinfo);
+extern NoOpPath *create_noop_path(PlannerInfo *root, RelOptInfo *rel,
+								  Path *subpath);
+extern Path *create_subqueryscan_path(RelOptInfo *rel, List *pathkeys);
+extern Path *create_functionscan_path(PlannerInfo *root, RelOptInfo *rel);
+extern Path *create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel);
+extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel);
+extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel);
+>>>>>>> 78a09145e0
 
 extern bool path_contains_inner_index(Path *path);
 extern NestPath *create_nestloop_path(PlannerInfo *root,

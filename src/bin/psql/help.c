@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.150 2009/06/11 14:49:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.154 2009/10/08 16:34:01 alvherre Exp $
  */
 #include "postgres_fe.h"
 
@@ -217,13 +217,19 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\dFp[+] [PATTERN]      list text search parsers\n"));
 	fprintf(output, _("  \\dFt[+] [PATTERN]      list text search templates\n"));
 	fprintf(output, _("  \\dg[+]  [PATTERN]      list roles (groups)\n"));
+<<<<<<< HEAD
 	fprintf(output, _("  \\dx[+]  [PATTERN]      list extensions\n"));
+=======
+>>>>>>> 78a09145e0
 	fprintf(output, _("  \\di[S+] [PATTERN]      list indexes\n"));
 	fprintf(output, _("  \\dl                    list large objects, same as \\lo_list\n"));
 	fprintf(output, _("  \\dn[+]  [PATTERN]      list schemas\n"));
 	fprintf(output, _("  \\do[S]  [PATTERN]      list operators\n"));
 	fprintf(output, _("  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"));
+<<<<<<< HEAD
 	fprintf(output, _("  \\dr[S+] [PATTERN]      list foreign tables\n"));  /* GPDB Only */
+=======
+>>>>>>> 78a09145e0
 	fprintf(output, _("  \\drds [PATRN1 [PATRN2]] list per-database role settings\n"));
 	fprintf(output, _("  \\ds[S+] [PATTERN]      list sequences\n"));
 	fprintf(output, _("  \\dt[S+] [PATTERN]      list tables\n"));

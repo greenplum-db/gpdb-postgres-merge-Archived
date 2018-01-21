@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.216 2009/06/11 14:49:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.219 2009/12/15 17:57:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,9 +45,12 @@ static void unify_hypothetical_args(ParseState *pstate,
 static Oid	FuncNameAsType(List *funcname);
 static Node *ParseComplexProjection(ParseState *pstate, char *funcname,
 					   Node *first_arg, int location);
+<<<<<<< HEAD
 static void unknown_attribute(ParseState *pstate, Node *relref, char *attname,
 				  int location);
 static bool check_pg_get_expr_arg(ParseState *pstate, Node *arg, int netlevelsup);
+=======
+>>>>>>> 78a09145e0
 
 typedef struct
 {
@@ -67,6 +70,7 @@ checkTableFunctions_walker(Node *node, check_table_func_context *context);
  *	a function of a single complex-type argument can be written like a
  *	column reference, allowing functions to act like computed columns.
  *
+<<<<<<< HEAD
  *	Hence, both cases come through here.  If fn is null, we're dealing with
  *	column syntax not function syntax, but in principle that should not
  *	affect the lookup behavior, only which error messages we deliver.
@@ -82,6 +86,25 @@ checkTableFunctions_walker(Node *node, check_table_func_context *context);
 Node *
 ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 				  FuncCall *fn, int location)
+=======
+ *	Hence, both cases come through here.  The is_column parameter tells us
+ *	which syntactic construct is actually being dealt with, but this is
+ *	intended to be used only to deliver an appropriate error message,
+ *	not to affect the semantics.  When is_column is true, we should have
+ *	a single argument (the putative table), unqualified function name
+ *	equal to the column name, and no aggregate or variadic decoration.
+ *	Also, when is_column is true, we return NULL on failure rather than
+ *	reporting a no-such-function error.
+ *
+ *	The argument expressions (in fargs) must have been transformed already.
+ *	But the agg_order expressions, if any, have not been.
+ */
+Node *
+ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
+				  List *agg_order, bool agg_star, bool agg_distinct,
+				  bool func_variadic,
+				  WindowDef *over, bool is_column, int location)
+>>>>>>> 78a09145e0
 {
 	bool		is_column = (fn == NULL);
 	List	   *agg_order = (fn ? fn->agg_order : NIL);
@@ -100,6 +123,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	int			nargsplusdefs;
 	Oid			actual_arg_types[FUNC_MAX_ARGS];
 	Oid		   *declared_arg_types;
+	List	   *argnames;
 	List	   *argdefaults;
 	Node	   *retval;
 	bool		retset;
@@ -160,6 +184,46 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		actual_arg_types[nargs++] = argtype;
 	}
 
+	/*
+	 * Check for named arguments; if there are any, build a list of names.
+	 *
+	 * We allow mixed notation (some named and some not), but only with all
+	 * the named parameters after all the unnamed ones.  So the name list
+	 * corresponds to the last N actual parameters and we don't need any
+	 * extra bookkeeping to match things up.
+	 */
+	argnames = NIL;
+	foreach(l, fargs)
+	{
+		Node   *arg = lfirst(l);
+
+		if (IsA(arg, NamedArgExpr))
+		{
+			NamedArgExpr *na = (NamedArgExpr *) arg;
+			ListCell   *lc;
+
+			/* Reject duplicate arg names */
+			foreach(lc, argnames)
+			{
+				if (strcmp(na->name, (char *) lfirst(lc)) == 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("argument name \"%s\" used more than once",
+									na->name),
+							 parser_errposition(pstate, na->location)));
+			}
+			argnames = lappend(argnames, na->name);
+		}
+		else
+		{
+			if (argnames != NIL)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("positional argument cannot follow named argument"),
+						 parser_errposition(pstate, exprLocation(arg))));
+		}
+	}
+
 	if (fargs)
 	{
 		first_arg = linitial(fargs);
@@ -170,10 +234,15 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * Check for column projection: if function has one argument, and that
 	 * argument is of complex type, and function name is not qualified, then
 	 * the "function call" could be a projection.  We also check that there
-	 * wasn't any aggregate or variadic decoration.
+	 * wasn't any aggregate or variadic decoration, nor an argument name.
 	 */
+<<<<<<< HEAD
 	if (nargs == 1 && agg_order == NIL && agg_filter == NULL && !agg_star &&
 		!agg_distinct && over == NULL && !func_variadic &&
+=======
+	if (nargs == 1 && agg_order == NIL && !agg_star && !agg_distinct &&
+		over == NULL && !func_variadic && argnames == NIL &&
+>>>>>>> 78a09145e0
 		list_length(funcname) == 1)
 	{
 		Oid			argtype = actual_arg_types[0];
@@ -200,12 +269,20 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * disambiguation for polymorphic functions, handles inheritance, and
 	 * returns the funcid and type and set or singleton status of the
 	 * function's return value.  It also returns the true argument types to
-	 * the function.  In the case of a variadic function call, the reported
-	 * "true" types aren't really what is in pg_proc: the variadic argument is
-	 * replaced by a suitable number of copies of its element type.  We'll fix
-	 * it up below.  We may also have to deal with default arguments.
+	 * the function.
+	 *
+	 * Note: for a named-notation or variadic function call, the reported
+	 * "true" types aren't really what is in pg_proc: the types are reordered
+	 * to match the given argument order of named arguments, and a variadic
+	 * argument is replaced by a suitable number of copies of its element
+	 * type.  We'll fix up the variadic case below.  We may also have to deal
+	 * with default arguments.
 	 */
+<<<<<<< HEAD
 	fdresult = func_get_detail(funcname, fargs, nargs,
+=======
+	fdresult = func_get_detail(funcname, fargs, argnames, nargs,
+>>>>>>> 78a09145e0
 							   actual_arg_types,
 							   !func_variadic, true,
 							   &funcid, &rettype, &retset,
@@ -240,6 +317,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("DISTINCT specified, but %s is not an aggregate function",
 							NameListToString(funcname)),
 					 parser_errposition(pstate, location)));
+<<<<<<< HEAD
 		if (agg_within_group)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -259,6 +337,14 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 							NameListToString(funcname)),
 					 parser_errposition(pstate, location)));
 
+=======
+		if (agg_order != NIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+			   errmsg("ORDER BY specified, but %s is not an aggregate function",
+					  NameListToString(funcname)),
+					 parser_errposition(pstate, location)));
+>>>>>>> 78a09145e0
 		if (over)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -441,16 +527,11 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		/*
 		 * Oops.  Time to die.
 		 *
-		 * If we are dealing with the attribute notation rel.function, give an
-		 * error message that is appropriate for that case.
+		 * If we are dealing with the attribute notation rel.function,
+		 * let the caller handle failure.
 		 */
 		if (is_column)
-		{
-			Assert(nargs == 1);
-			Assert(list_length(funcname) == 1);
-			unknown_attribute(pstate, first_arg, strVal(linitial(funcname)),
-							  location);
-		}
+			return NULL;
 
 		/*
 		 * Else generate a detailed complaint for a function
@@ -459,7 +540,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 			ereport(ERROR,
 					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
 					 errmsg("function %s is not unique",
-							func_signature_string(funcname, nargs,
+							func_signature_string(funcname, nargs, argnames,
 												  actual_arg_types)),
 					 errhint("Could not choose a best candidate function. "
 							 "You might need to add explicit type casts."),
@@ -481,7 +562,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
 					 errmsg("function %s does not exist",
-							func_signature_string(funcname, nargs,
+							func_signature_string(funcname, nargs, argnames,
 												  actual_arg_types)),
 					 errhint("No function matches the given name and argument types. "
 							 "You might need to add explicit type casts."),
@@ -611,12 +692,20 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 		aggref->aggfnoid = funcid;
 		aggref->aggtype = rettype;
+<<<<<<< HEAD
 		/* aggdirectargs and args will be set by transformAggregateCall */
 		/* aggorder and aggdistinct will be set by transformAggregateCall */
 		aggref->aggfilter = agg_filter;
 		aggref->aggstar = agg_star;
 		aggref->aggvariadic = func_variadic;
 		aggref->aggkind = aggkind;
+=======
+		/* args and aggorder will be modified by transformAggregateCall */
+		aggref->args = fargs;
+		aggref->aggorder = agg_order;
+		/* aggdistinct will be set by transformAggregateCall */
+		aggref->aggstar = agg_star;
+>>>>>>> 78a09145e0
 		/* agglevelsup will be set by transformAggregateCall */
 		aggref->location = location;
 
@@ -641,7 +730,24 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("aggregates cannot return sets"),
 					 parser_errposition(pstate, location)));
 
+<<<<<<< HEAD
 		transformAggregateCall(pstate, aggref, fargs, agg_order, agg_distinct);
+=======
+		/*
+		 * Currently it's not possible to define an aggregate with named
+		 * arguments, so this case should be impossible.  Check anyway
+		 * because the planner and executor wouldn't cope with NamedArgExprs
+		 * in an Aggref node.
+		 */
+		if (argnames != NIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("aggregates cannot use named arguments"),
+					 parser_errposition(pstate, location)));
+
+		/* parse_agg.c does additional aggregate-specific processing */
+		transformAggregateCall(pstate, aggref, agg_distinct);
+>>>>>>> 78a09145e0
 
 		retval = (Node *) aggref;
 	}
@@ -697,12 +803,36 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("FILTER is not implemented for non-aggregate window functions"),
 					 parser_errposition(pstate, location)));
 
+		/*
+		 * ordered aggs not allowed in windows yet
+		 */
+		if (agg_order != NIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("aggregate ORDER BY is not implemented for window functions"),
+					 parser_errposition(pstate, location)));
+
 		if (retset)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("window functions may not return sets"),
 					 parser_errposition(pstate, location)));
 
+<<<<<<< HEAD
+=======
+		/*
+		 * We might want to support this later, but for now reject it
+		 * because the planner and executor wouldn't cope with NamedArgExprs
+		 * in a WindowFunc node.
+		 */
+		if (argnames != NIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("window functions cannot use named arguments"),
+					 parser_errposition(pstate, location)));
+
+		/* parse_agg.c does additional window-func-specific processing */
+>>>>>>> 78a09145e0
 		transformWindowFuncCall(pstate, wfunc, over);
 
 		retval = (Node *) wfunc;
@@ -1207,14 +1337,29 @@ func_select_candidate(int nargs,
  *	1) check for possible interpretation as a type coercion request
  *	2) apply the ambiguous-function resolution rules
  *
- * Note: we rely primarily on nargs/argtypes as the argument description.
+ * Return values *funcid through *true_typeids receive info about the function.
+ * If argdefaults isn't NULL, *argdefaults receives a list of any default
+ * argument expressions that need to be added to the given arguments.
+ *
+ * When processing a named- or mixed-notation call (ie, fargnames isn't NIL),
+ * the returned true_typeids and argdefaults are ordered according to the
+ * call's argument ordering: first any positional arguments, then the named
+ * arguments, then defaulted arguments (if needed and allowed by
+ * expand_defaults).  Some care is needed if this information is to be compared
+ * to the function's pg_proc entry, but in practice the caller can usually
+ * just work with the call's argument ordering.
+ *
+ * We rely primarily on fargnames/nargs/argtypes as the argument description.
  * The actual expression node list is passed in fargs so that we can check
- * for type coercion of a constant.  Some callers pass fargs == NIL
- * indicating they don't want that check made.
+ * for type coercion of a constant.  Some callers pass fargs == NIL indicating
+ * they don't need that check made.  Note also that when fargnames isn't NIL,
+ * the fargs list must be passed if the caller wants actual argument position
+ * information to be returned into the NamedArgExpr nodes.
  */
 FuncDetailCode
 func_get_detail(List *funcname,
 				List *fargs,
+				List *fargnames,
 				int nargs,
 				Oid *argtypes,
 				bool expand_variadic,
@@ -1240,7 +1385,7 @@ func_get_detail(List *funcname,
 		*argdefaults = NIL;
 
 	/* Get list of possible candidates from namespace search */
-	raw_candidates = FuncnameGetCandidates(funcname, nargs,
+	raw_candidates = FuncnameGetCandidates(funcname, nargs, fargnames,
 										   expand_variadic, expand_defaults);
 
 	/*
@@ -1291,7 +1436,7 @@ func_get_detail(List *funcname,
 		 * coerce_type can't handle, we'll cause infinite recursion between
 		 * this module and coerce_type!
 		 */
-		if (nargs == 1 && fargs != NIL)
+		if (nargs == 1 && fargs != NIL && fargnames == NIL)
 		{
 			Oid			targetType = FuncNameAsType(funcname);
 
@@ -1374,16 +1519,46 @@ func_get_detail(List *funcname,
 		FuncDetailCode result;
 
 		/*
-		 * If expanding variadics or defaults, the "best candidate" might
-		 * represent multiple equivalently good functions; treat this case as
-		 * ambiguous.
+		 * If processing named args or expanding variadics or defaults, the
+		 * "best candidate" might represent multiple equivalently good
+		 * functions; treat this case as ambiguous.
 		 */
 		if (!OidIsValid(best_candidate->oid))
 			return FUNCDETAIL_MULTIPLE;
 
+		/*
+		 * We disallow VARIADIC with named arguments unless the last
+		 * argument (the one with VARIADIC attached) actually matched the
+		 * variadic parameter.  This is mere pedantry, really, but some
+		 * folks insisted.
+		 */
+		if (fargnames != NIL && !expand_variadic && nargs > 0 &&
+			best_candidate->argnumbers[nargs - 1] != nargs - 1)
+			return FUNCDETAIL_NOTFOUND;
+
 		*funcid = best_candidate->oid;
 		*nvargs = best_candidate->nvargs;
 		*true_typeids = best_candidate->args;
+
+		/*
+		 * If processing named args, return actual argument positions into
+		 * NamedArgExpr nodes in the fargs list.  This is a bit ugly but not
+		 * worth the extra notation needed to do it differently.
+		 */
+		if (best_candidate->argnumbers != NULL)
+		{
+			int			i = 0;
+			ListCell   *lc;
+
+			foreach(lc, fargs)
+			{
+				NamedArgExpr *na = (NamedArgExpr *) lfirst(lc);
+
+				if (IsA(na, NamedArgExpr))
+					na->argnumber = best_candidate->argnumbers[i];
+				i++;
+			}
+		}
 
 		ftup = SearchSysCache(PROCOID,
 							  ObjectIdGetDatum(best_candidate->oid),
@@ -1396,36 +1571,73 @@ func_get_detail(List *funcname,
 		*retset = pform->proretset;
 		*vatype = pform->provariadic;
 		/* fetch default args if caller wants 'em */
-		if (argdefaults)
+		if (argdefaults && best_candidate->ndargs > 0)
 		{
-			if (best_candidate->ndargs > 0)
+			Datum		proargdefaults;
+			bool		isnull;
+			char	   *str;
+			List	   *defaults;
+
+			/* shouldn't happen, FuncnameGetCandidates messed up */
+			if (best_candidate->ndargs > pform->pronargdefaults)
+				elog(ERROR, "not enough default arguments");
+
+			proargdefaults = SysCacheGetAttr(PROCOID, ftup,
+											 Anum_pg_proc_proargdefaults,
+											 &isnull);
+			Assert(!isnull);
+			str = TextDatumGetCString(proargdefaults);
+			defaults = (List *) stringToNode(str);
+			Assert(IsA(defaults, List));
+			pfree(str);
+
+			/* Delete any unused defaults from the returned list */
+			if (best_candidate->argnumbers != NULL)
 			{
-				Datum		proargdefaults;
-				bool		isnull;
-				char	   *str;
-				List	   *defaults;
+				/*
+				 * This is a bit tricky in named notation, since the supplied
+				 * arguments could replace any subset of the defaults.  We
+				 * work by making a bitmapset of the argnumbers of defaulted
+				 * arguments, then scanning the defaults list and selecting
+				 * the needed items.  (This assumes that defaulted arguments
+				 * should be supplied in their positional order.)
+				 */
+				Bitmapset *defargnumbers;
+				int	   *firstdefarg;
+				List   *newdefaults;
+				ListCell *lc;
+				int		i;
+
+				defargnumbers = NULL;
+				firstdefarg = &best_candidate->argnumbers[best_candidate->nargs - best_candidate->ndargs];
+				for (i = 0; i < best_candidate->ndargs; i++)
+					defargnumbers = bms_add_member(defargnumbers,
+												   firstdefarg[i]);
+				newdefaults = NIL;
+				i = pform->pronargs - pform->pronargdefaults;
+				foreach(lc, defaults)
+				{
+					if (bms_is_member(i, defargnumbers))
+						newdefaults = lappend(newdefaults, lfirst(lc));
+					i++;
+				}
+				Assert(list_length(newdefaults) == best_candidate->ndargs);
+				bms_free(defargnumbers);
+				*argdefaults = newdefaults;
+			}
+			else
+			{
+				/*
+				 * Defaults for positional notation are lots easier;
+				 * just remove any unwanted ones from the front.
+				 */
 				int			ndelete;
 
-				/* shouldn't happen, FuncnameGetCandidates messed up */
-				if (best_candidate->ndargs > pform->pronargdefaults)
-					elog(ERROR, "not enough default arguments");
-
-				proargdefaults = SysCacheGetAttr(PROCOID, ftup,
-												 Anum_pg_proc_proargdefaults,
-												 &isnull);
-				Assert(!isnull);
-				str = TextDatumGetCString(proargdefaults);
-				defaults = (List *) stringToNode(str);
-				Assert(IsA(defaults, List));
-				pfree(str);
-				/* Delete any unused defaults from the returned list */
 				ndelete = list_length(defaults) - best_candidate->ndargs;
 				while (ndelete-- > 0)
 					defaults = list_delete_first(defaults);
 				*argdefaults = defaults;
 			}
-			else
-				*argdefaults = NIL;
 		}
 		if (pform->proisagg)
 			result = FUNCDETAIL_AGGREGATE;
@@ -1563,13 +1775,36 @@ make_fn_arguments(ParseState *pstate,
 		/* types don't match? then force coercion using a function call... */
 		if (actual_arg_types[i] != declared_arg_types[i])
 		{
-			lfirst(current_fargs) = coerce_type(pstate,
-												lfirst(current_fargs),
-												actual_arg_types[i],
-												declared_arg_types[i], -1,
-												COERCION_IMPLICIT,
-												COERCE_IMPLICIT_CAST,
-												-1);
+			Node   *node = (Node *) lfirst(current_fargs);
+
+			/*
+			 * If arg is a NamedArgExpr, coerce its input expr instead ---
+			 * we want the NamedArgExpr to stay at the top level of the list.
+			 */
+			if (IsA(node, NamedArgExpr))
+			{
+				NamedArgExpr *na = (NamedArgExpr *) node;
+
+				node = coerce_type(pstate,
+								   (Node *) na->arg,
+								   actual_arg_types[i],
+								   declared_arg_types[i], -1,
+								   COERCION_IMPLICIT,
+								   COERCE_IMPLICIT_CAST,
+								   -1);
+				na->arg = (Expr *) node;
+			}
+			else
+			{
+				node = coerce_type(pstate,
+								   node,
+								   actual_arg_types[i],
+								   declared_arg_types[i], -1,
+								   COERCION_IMPLICIT,
+								   COERCE_IMPLICIT_CAST,
+								   -1);
+				lfirst(current_fargs) = node;
+			}
 		}
 		i++;
 	}
@@ -1673,78 +1908,43 @@ ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg,
 }
 
 /*
- * helper routine for delivering "column does not exist" error message
- */
-static void
-unknown_attribute(ParseState *pstate, Node *relref, char *attname,
-				  int location)
-{
-	RangeTblEntry *rte;
-
-	if (IsA(relref, Var) &&
-		((Var *) relref)->varattno == InvalidAttrNumber)
-	{
-		/* Reference the RTE by alias not by actual table name */
-		rte = GetRTEByRangeTablePosn(pstate,
-									 ((Var *) relref)->varno,
-									 ((Var *) relref)->varlevelsup);
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("column %s.%s does not exist",
-						rte->eref->aliasname, attname),
-				 parser_errposition(pstate, location)));
-	}
-	else
-	{
-		/* Have to do it by reference to the type of the expression */
-		Oid			relTypeId = exprType(relref);
-
-		if (ISCOMPLEX(relTypeId))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_COLUMN),
-					 errmsg("column \"%s\" not found in data type %s",
-							attname, format_type_be(relTypeId)),
-					 parser_errposition(pstate, location)));
-		else if (relTypeId == RECORDOID)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_COLUMN),
-			   errmsg("could not identify column \"%s\" in record data type",
-					  attname),
-					 parser_errposition(pstate, location)));
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("column notation .%s applied to type %s, "
-							"which is not a composite type",
-							attname, format_type_be(relTypeId)),
-					 parser_errposition(pstate, location)));
-	}
-}
-
-/*
  * funcname_signature_string
  *		Build a string representing a function name, including arg types.
  *		The result is something like "foo(integer)".
+ *
+ * If argnames isn't NIL, it is a list of C strings representing the actual
+ * arg names for the last N arguments.  This must be considered part of the
+ * function signature too, when dealing with named-notation function calls.
  *
  * This is typically used in the construction of function-not-found error
  * messages.
  */
 const char *
-funcname_signature_string(const char *funcname,
-						  int nargs, const Oid *argtypes)
+funcname_signature_string(const char *funcname, int nargs,
+						  List *argnames, const Oid *argtypes)
 {
 	StringInfoData argbuf;
+	int			numposargs;
+	ListCell   *lc;
 	int			i;
 
 	initStringInfo(&argbuf);
 
 	appendStringInfo(&argbuf, "%s(", funcname);
 
+	numposargs = nargs - list_length(argnames);
+	lc = list_head(argnames);
+
 	for (i = 0; i < nargs; i++)
 	{
 		if (i)
 			appendStringInfoString(&argbuf, ", ");
 		appendStringInfoString(&argbuf, format_type_be(argtypes[i]));
+		if (i >= numposargs)
+		{
+			appendStringInfo(&argbuf, " AS %s", (char *) lfirst(lc));
+			lc = lnext(lc);
+		}
 	}
 
 	appendStringInfoChar(&argbuf, ')');
@@ -1757,10 +1957,11 @@ funcname_signature_string(const char *funcname,
  *		As above, but function name is passed as a qualified name list.
  */
 const char *
-func_signature_string(List *funcname, int nargs, const Oid *argtypes)
+func_signature_string(List *funcname, int nargs,
+					  List *argnames, const Oid *argtypes)
 {
 	return funcname_signature_string(NameListToString(funcname),
-									 nargs, argtypes);
+									 nargs, argnames, argtypes);
 }
 
 /*
@@ -1779,7 +1980,7 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool noError)
 {
 	FuncCandidateList clist;
 
-	clist = FuncnameGetCandidates(funcname, nargs, false, false);
+	clist = FuncnameGetCandidates(funcname, nargs, NIL, false, false);
 
 	while (clist)
 	{
@@ -1792,7 +1993,8 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool noError)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("function %s does not exist",
-						func_signature_string(funcname, nargs, argtypes))));
+						func_signature_string(funcname, nargs,
+											  NIL, argtypes))));
 
 	return InvalidOid;
 }
@@ -1904,8 +2106,8 @@ LookupAggNameTypeNames(List *aggname, List *argtypes, bool noError)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
 					 errmsg("aggregate %s does not exist",
-							func_signature_string(aggname,
-												  argcount, argoids))));
+							func_signature_string(aggname, argcount,
+												  NIL, argoids))));
 	}
 
 	/* Make sure it's an aggregate */
@@ -1925,8 +2127,8 @@ LookupAggNameTypeNames(List *aggname, List *argtypes, bool noError)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("function %s is not an aggregate",
-						func_signature_string(aggname,
-											  argcount, argoids))));
+						func_signature_string(aggname, argcount,
+											  NIL, argoids))));
 	}
 
 	ReleaseSysCache(ftup);

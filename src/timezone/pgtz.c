@@ -6,7 +6,11 @@
  * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/timezone/pgtz.c
+=======
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.64 2009/10/03 18:04:57 tgl Exp $
+>>>>>>> 78a09145e0
  *
  *-------------------------------------------------------------------------
  */
@@ -371,6 +375,7 @@ pg_tzset_offset(long gmtoffset)
 void
 pg_timezone_initialize(void)
 {
+<<<<<<< HEAD
 	/*
 	 * We may not yet know where PGSHAREDIR is (in particular this is true in
 	 * an EXEC_BACKEND subprocess).  So use "GMT", which pg_tzset forces to be
@@ -380,6 +385,32 @@ pg_timezone_initialize(void)
 	 */
 	session_timezone = pg_tzset("GMT");
 	log_timezone = session_timezone;
+=======
+	pg_tz	   *def_tz = NULL;
+
+	/* Do we need to try to figure the session timezone? */
+	if (pg_strcasecmp(GetConfigOption("timezone", false), "UNKNOWN") == 0)
+	{
+		/* Select setting */
+		def_tz = select_default_timezone();
+		session_timezone = def_tz;
+		/* Tell GUC about the value. Will redundantly call pg_tzset() */
+		SetConfigOption("timezone", pg_get_timezone_name(def_tz),
+						PGC_POSTMASTER, PGC_S_ARGV);
+	}
+
+	/* What about the log timezone? */
+	if (pg_strcasecmp(GetConfigOption("log_timezone", false), "UNKNOWN") == 0)
+	{
+		/* Select setting, but don't duplicate work */
+		if (!def_tz)
+			def_tz = select_default_timezone();
+		log_timezone = def_tz;
+		/* Tell GUC about the value. Will redundantly call pg_tzset() */
+		SetConfigOption("log_timezone", pg_get_timezone_name(def_tz),
+						PGC_POSTMASTER, PGC_S_ARGV);
+	}
+>>>>>>> 78a09145e0
 }
 
 

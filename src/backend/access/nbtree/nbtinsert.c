@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.170 2009/06/11 14:48:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.174 2009/10/02 21:14:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,8 +51,9 @@ typedef struct
 static Buffer _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf);
 
 static TransactionId _bt_check_unique(Relation rel, IndexTuple itup,
-				 Relation heapRel, Buffer buf, OffsetNumber ioffset,
-				 ScanKey itup_scankey);
+				 Relation heapRel, Buffer buf, OffsetNumber offset,
+				 ScanKey itup_scankey,
+				 IndexUniqueCheck checkUnique, bool *is_unique);
 static void _bt_findinsertloc(Relation rel,
 				  Buffer *bufptr,
 				  OffsetNumber *offsetptr,
@@ -86,11 +87,24 @@ static void _bt_vacuum_one_page(Relation rel, Buffer buffer);
  *
  *		This routine is called by the public interface routines, btbuild
  *		and btinsert.  By here, itup is filled in, including the TID.
+ *
+ *		If checkUnique is UNIQUE_CHECK_NO or UNIQUE_CHECK_PARTIAL, this
+ *		will allow duplicates.  Otherwise (UNIQUE_CHECK_YES or
+ *		UNIQUE_CHECK_EXISTING) it will throw error for a duplicate.
+ *		For UNIQUE_CHECK_EXISTING we merely run the duplicate check, and
+ *		don't actually insert.
+ *
+ *		The result value is only significant for UNIQUE_CHECK_PARTIAL:
+ *		it must be TRUE if the entry is known unique, else FALSE.
+ *		(In the current implementation we'll also return TRUE after a
+ *		successful UNIQUE_CHECK_YES or UNIQUE_CHECK_EXISTING call, but
+ *		that's just a coding artifact.)
  */
-void
+bool
 _bt_doinsert(Relation rel, IndexTuple itup,
-			 bool index_is_unique, Relation heapRel)
+			 IndexUniqueCheck checkUnique, Relation heapRel)
 {
+	bool		is_unique = false;
 	int			natts = rel->rd_rel->relnatts;
 	ScanKey		itup_scankey;
 	BTStack		stack;
@@ -135,13 +149,18 @@ top:
 	 *
 	 * If we must wait for another xact, we release the lock while waiting,
 	 * and then must start over completely.
+	 *
+	 * For a partial uniqueness check, we don't wait for the other xact.
+	 * Just let the tuple in and return false for possibly non-unique,
+	 * or true for definitely unique.
 	 */
-	if (index_is_unique)
+	if (checkUnique != UNIQUE_CHECK_NO)
 	{
 		TransactionId xwait;
 
 		offset = _bt_binsrch(rel, buf, natts, itup_scankey, false);
-		xwait = _bt_check_unique(rel, itup, heapRel, buf, offset, itup_scankey);
+		xwait = _bt_check_unique(rel, itup, heapRel, buf, offset, itup_scankey,
+								 checkUnique, &is_unique);
 
 		if (TransactionIdIsValid(xwait))
 		{
@@ -159,13 +178,23 @@ top:
 		}
 	}
 
-	/* do the insertion */
-	_bt_findinsertloc(rel, &buf, &offset, natts, itup_scankey, itup);
-	_bt_insertonpg(rel, buf, stack, itup, offset, false);
+	if (checkUnique != UNIQUE_CHECK_EXISTING)
+	{
+		/* do the insertion */
+		_bt_findinsertloc(rel, &buf, &offset, natts, itup_scankey, itup);
+		_bt_insertonpg(rel, buf, stack, itup, offset, false);
+	}
+	else
+	{
+		/* just release the buffer */
+		_bt_relbuf(rel, buf);
+	}
 
 	/* be tidy */
 	_bt_freestack(stack);
 	_bt_freeskey(itup_scankey);
+
+	return is_unique;
 }
 
 /*
@@ -257,10 +286,16 @@ _bt_ao_check_unique(Relation rel, Relation aoRel, ItemPointer tid)
  * Returns InvalidTransactionId if there is no conflict, else an xact ID
  * we must wait for to see if it commits a conflicting tuple.	If an actual
  * conflict is detected, no return --- just ereport().
+ *
+ * However, if checkUnique == UNIQUE_CHECK_PARTIAL, we always return
+ * InvalidTransactionId because we don't want to wait.  In this case we
+ * set *is_unique to false if there is a potential conflict, and the
+ * core code must redo the uniqueness check later.
  */
 static TransactionId
 _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
-				 Buffer buf, OffsetNumber offset, ScanKey itup_scankey)
+				 Buffer buf, OffsetNumber offset, ScanKey itup_scankey,
+				 IndexUniqueCheck checkUnique, bool *is_unique)
 {
 	TupleDesc	itupdesc = RelationGetDescr(rel);
 	int			natts = rel->rd_rel->relnatts;
@@ -269,6 +304,10 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 	Page		page;
 	BTPageOpaque opaque;
 	Buffer		nbuf = InvalidBuffer;
+	bool		found = false;
+
+	/* Assume unique until we find a duplicate */
+	*is_unique = true;
 
 	InitDirtySnapshot(SnapshotDirty);
 
@@ -325,6 +364,7 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 				curitup = (IndexTuple) PageGetItem(page, curitemid);
 
 				/*
+<<<<<<< HEAD
 				 * If the parent relation is an AO/CO table, we have to find out
 				 * if this tuple is actually in the table.
 				 */
@@ -333,8 +373,114 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 					TransactionId xwait =
 						_bt_ao_check_unique(rel, heapRel, &curitup->t_tid);
 
+=======
+				 * If we are doing a recheck, we expect to find the tuple we
+				 * are rechecking.  It's not a duplicate, but we have to keep
+				 * scanning.
+				 */
+				if (checkUnique == UNIQUE_CHECK_EXISTING &&
+					ItemPointerCompare(&htid, &itup->t_tid) == 0)
+				{
+					found = true;
+				}
+
+				/*
+				 * We check the whole HOT-chain to see if there is any tuple
+				 * that satisfies SnapshotDirty.  This is necessary because we
+				 * have just a single index entry for the entire chain.
+				 */
+				else if (heap_hot_search(&htid, heapRel, &SnapshotDirty,
+										 &all_dead))
+				{
+					TransactionId xwait;
+
+					/*
+					 * It is a duplicate. If we are only doing a partial
+					 * check, then don't bother checking if the tuple is
+					 * being updated in another transaction. Just return
+					 * the fact that it is a potential conflict and leave
+					 * the full check till later.
+					 */
+					if (checkUnique == UNIQUE_CHECK_PARTIAL)
+					{
+						if (nbuf != InvalidBuffer)
+							_bt_relbuf(rel, nbuf);
+						*is_unique = false;
+						return InvalidTransactionId;
+					}
+
+					/*
+					 * If this tuple is being updated by other transaction
+					 * then we have to wait for its commit/abort.
+					 */
+					xwait = (TransactionIdIsValid(SnapshotDirty.xmin)) ?
+						SnapshotDirty.xmin : SnapshotDirty.xmax;
+
+>>>>>>> 78a09145e0
 					if (TransactionIdIsValid(xwait))
 						return xwait;
+<<<<<<< HEAD
+=======
+					}
+
+					/*
+					 * Otherwise we have a definite conflict.  But before
+					 * complaining, look to see if the tuple we want to insert
+					 * is itself now committed dead --- if so, don't complain.
+					 * This is a waste of time in normal scenarios but we must
+					 * do it to support CREATE INDEX CONCURRENTLY.
+					 *
+					 * We must follow HOT-chains here because during
+					 * concurrent index build, we insert the root TID though
+					 * the actual tuple may be somewhere in the HOT-chain.
+					 * While following the chain we might not stop at the
+					 * exact tuple which triggered the insert, but that's OK
+					 * because if we find a live tuple anywhere in this chain,
+					 * we have a unique key conflict.  The other live tuple is
+					 * not part of this chain because it had a different index
+					 * entry.
+					 */
+					htid = itup->t_tid;
+					if (heap_hot_search(&htid, heapRel, SnapshotSelf, NULL))
+					{
+						/* Normal case --- it's still live */
+					}
+					else
+					{
+						/*
+						 * It's been deleted, so no error, and no need to
+						 * continue searching
+						 */
+						break;
+					}
+
+					/*
+					 * This is a definite conflict.  Break the tuple down
+					 * into datums and report the error.  But first, make
+					 * sure we release the buffer locks we're holding ---
+					 * BuildIndexValueDescription could make catalog accesses,
+					 * which in the worst case might touch this same index
+					 * and cause deadlocks.
+					 */
+					if (nbuf != InvalidBuffer)
+						_bt_relbuf(rel, nbuf);
+					_bt_relbuf(rel, buf);
+
+					{
+						Datum	values[INDEX_MAX_KEYS];
+						bool	isnull[INDEX_MAX_KEYS];
+
+						index_deform_tuple(itup, RelationGetDescr(rel),
+										   values, isnull);
+						ereport(ERROR,
+								(errcode(ERRCODE_UNIQUE_VIOLATION),
+								 errmsg("duplicate key value violates unique constraint \"%s\"",
+										RelationGetRelationName(rel)),
+								 errdetail("Key %s already exists.",
+										   BuildIndexValueDescription(rel,
+															values, isnull))));
+					}
+>>>>>>> 78a09145e0
 				}
 				else
 				{
@@ -472,6 +618,18 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 		}
 	}
 
+	/*
+	 * If we are doing a recheck then we should have found the tuple we
+	 * are checking.  Otherwise there's something very wrong --- probably,
+	 * the index is on a non-immutable expression.
+	 */
+	if (checkUnique == UNIQUE_CHECK_EXISTING && !found)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("failed to re-find tuple within index \"%s\"",
+						RelationGetRelationName(rel)),
+				 errhint("This may be because of a non-immutable index expression.")));
+
 	if (nbuf != InvalidBuffer)
 		_bt_relbuf(rel, nbuf);
 
@@ -541,9 +699,10 @@ _bt_findinsertloc(Relation rel,
 	if (itemsz > BTMaxItemSize(page))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("index row size %lu exceeds btree maximum, %lu",
+				 errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
 						(unsigned long) itemsz,
-						(unsigned long) BTMaxItemSize(page)),
+						(unsigned long) BTMaxItemSize(page),
+						RelationGetRelationName(rel)),
 		errhint("Values larger than 1/3 of a buffer page cannot be indexed.\n"
 				"Consider a function index of an MD5 hash of the value, "
 				"or use full text indexing.")));

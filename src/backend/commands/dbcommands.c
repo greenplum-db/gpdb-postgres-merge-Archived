@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.225 2009/06/11 14:48:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.228 2009/11/12 02:46:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@
 #include "catalog/pg_class.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_database.h"
+#include "catalog/pg_db_role_setting.h"
 #include "catalog/pg_tablespace.h"
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
@@ -56,9 +57,7 @@
 #include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
-#include "utils/flatfiles.h"
 #include "utils/fmgroids.h"
-#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/pg_locale.h"
 #include "utils/snapmgr.h"
@@ -358,19 +357,21 @@ createdb(CreatedbStmt *stmt)
 	 * Check whether chosen encoding matches chosen locale settings.  This
 	 * restriction is necessary because libc's locale-specific code usually
 	 * fails when presented with data in an encoding it's not expecting. We
-	 * allow mismatch in three cases:
+	 * allow mismatch in four cases:
 	 *
-	 * 1. locale encoding = SQL_ASCII, which means either that the locale is
-	 * C/POSIX which works with any encoding, or that we couldn't determine
+	 * 1. locale encoding = SQL_ASCII, which means that the locale is
+	 * C/POSIX which works with any encoding.
+	 *
+	 * 2. locale encoding = -1, which means that we couldn't determine
 	 * the locale's encoding and have to trust the user to get it right.
-	 *
-	 * 2. selected encoding is SQL_ASCII, but only if you're a superuser. This
-	 * is risky but we have historically allowed it --- notably, the
-	 * regression tests require it.
 	 *
 	 * 3. selected encoding is UTF8 and platform is win32. This is because
 	 * UTF8 is a pseudo codepage that is supported in all locales since it's
 	 * converted to UTF16 before being used.
+	 *
+	 * 4. selected encoding is SQL_ASCII, but only if you're a superuser. This
+	 * is risky but we have historically allowed it --- notably, the
+	 * regression tests require it.
 	 *
 	 * Note: if you change this policy, fix initdb to match.
 	 */
@@ -379,6 +380,7 @@ createdb(CreatedbStmt *stmt)
 
 	if (!(ctype_encoding == encoding ||
 		  ctype_encoding == PG_SQL_ASCII ||
+		  ctype_encoding == -1 ||
 #ifdef WIN32
 		  encoding == PG_UTF8 ||
 #endif
@@ -395,6 +397,7 @@ createdb(CreatedbStmt *stmt)
 
 	if (!(collate_encoding == encoding ||
 		  collate_encoding == PG_SQL_ASCII ||
+		  collate_encoding == -1 ||
 #ifdef WIN32
 		  encoding == PG_UTF8 ||
 #endif
@@ -570,12 +573,10 @@ createdb(CreatedbStmt *stmt)
 	new_record[Anum_pg_database_dattablespace - 1] = ObjectIdGetDatum(dst_deftablespace);
 
 	/*
-	 * We deliberately set datconfig and datacl to defaults (NULL), rather
-	 * than copying them from the template database.  Copying datacl would be
-	 * a bad idea when the owner is not the same as the template's owner. It's
-	 * more debatable whether datconfig should be copied.
+	 * We deliberately set datacl to default (NULL), rather than copying it
+	 * from the template database.  Copying it would be a bad idea when the
+	 * owner is not the same as the template's owner.
 	 */
-	new_record_nulls[Anum_pg_database_datconfig - 1] = true;
 	new_record_nulls[Anum_pg_database_datacl - 1] = true;
 
 	tuple = heap_form_tuple(RelationGetDescr(pg_database_rel),
@@ -766,19 +767,17 @@ createdb(CreatedbStmt *stmt)
 		RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
 
 		/*
-		 * Close pg_database, but keep lock till commit (this is important to
-		 * prevent any risk of deadlock failure while updating flat file)
+		 * Close pg_database, but keep lock till commit.
 		 */
 		heap_close(pg_database_rel, NoLock);
 
 		/*
-		 * Set flag to update flat database file at commit.  Note: this also
-		 * forces synchronous commit, which minimizes the window between
+		 * Force synchronous commit, thus minimizing the window between
 		 * creation of the database files and commital of the transaction. If
 		 * we crash before committing, we'll have a DB that's taking up disk
 		 * space but is not in pg_database, which is not good.
 		 */
-		database_file_update_needed();
+		ForceSyncCommit();
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(createdb_failure_callback,
 								PointerGetDatum(&fparms));
@@ -943,6 +942,11 @@ dropdb(const char *dbname, bool missing_ok)
 	DeleteSharedComments(db_id, DatabaseRelationId);
 
 	/*
+	 * Remove settings associated with this database
+	 */
+	DropSetting(db_id, InvalidOid);
+
+	/*
 	 * Remove shared dependency references for the database.
 	 */
 	dropDatabaseDependencies(db_id);
@@ -983,19 +987,17 @@ dropdb(const char *dbname, bool missing_ok)
 	remove_dbtablespaces(db_id);
 
 	/*
-	 * Close pg_database, but keep lock till commit (this is important to
-	 * prevent any risk of deadlock failure while updating flat file)
+	 * Close pg_database, but keep lock till commit.
 	 */
 	heap_close(pgdbrel, NoLock);
 
 	/*
-	 * Set flag to update flat database file at commit.  Note: this also
-	 * forces synchronous commit, which minimizes the window between removal
+	 * Force synchronous commit, thus minimizing the window between removal
 	 * of the database files and commital of the transaction. If we crash
 	 * before committing, we'll have a DB that's gone on disk but still there
 	 * according to pg_database, which is not good.
 	 */
-	database_file_update_needed();
+	ForceSyncCommit();
 }
 
 
@@ -1086,15 +1088,9 @@ RenameDatabase(const char *oldname, const char *newname)
 				);
 
 	/*
-	 * Close pg_database, but keep lock till commit (this is important to
-	 * prevent any risk of deadlock failure while updating flat file)
+	 * Close pg_database, but keep lock till commit.
 	 */
 	heap_close(rel, NoLock);
-
-	/*
-	 * Set flag to update flat database file at commit.
-	 */
-	database_file_update_needed();
 }
 
 
@@ -1341,17 +1337,15 @@ movedb(const char *dbname, const char *tblspcname)
 		RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
 
 		/*
-		 * Set flag to update flat database file at commit.  Note: this also
-		 * forces synchronous commit, which minimizes the window between
+		 * Force synchronous commit, thus minimizing the window between
 		 * copying the database files and commital of the transaction. If we
 		 * crash before committing, we'll leave an orphaned set of files on
 		 * disk, which is not fatal but not good either.
 		 */
-		database_file_update_needed();
+		ForceSyncCommit();
 
 		/*
-		 * Close pg_database, but keep lock till commit (this is important to
-		 * prevent any risk of deadlock failure while updating flat file)
+		 * Close pg_database, but keep lock till commit.
 		 */
 		heap_close(pgdbrel, NoLock);
 	}
@@ -1540,6 +1534,7 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 
 	/* Close pg_database, but keep lock till commit */
 	heap_close(rel, NoLock);
+<<<<<<< HEAD
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -1560,6 +1555,8 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 	 * We don't bother updating the flat file since the existing options for
 	 * ALTER DATABASE don't affect it.
 	 */
+=======
+>>>>>>> 78a09145e0
 }
 
 
@@ -1569,6 +1566,7 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 void
 AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 {
+<<<<<<< HEAD
 	char	   *valuestr;
 	HeapTuple	tuple,
 				newtuple;
@@ -1582,12 +1580,20 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	char	   *alter_subtype = "SET"; /* metadata tracking */
 
 	valuestr = ExtractSetVariableArgs(stmt->setstmt);
+=======
+	Oid		datid = get_database_oid(stmt->dbname);
+>>>>>>> 78a09145e0
 
+	if (!OidIsValid(datid))
+  		ereport(ERROR,
+  				(errcode(ERRCODE_UNDEFINED_DATABASE),
+  				 errmsg("database \"%s\" does not exist", stmt->dbname)));
+  
 	/*
-	 * Get the old tuple.  We don't need a lock on the database per se,
-	 * because we're not going to do anything that would mess up incoming
-	 * connections.
+	 * Obtain a lock on the database and make sure it didn't go away in the
+	 * meantime.
 	 */
+<<<<<<< HEAD
 	rel = heap_open(DatabaseRelationId, RowExclusiveLock);
 	ScanKeyInit(&scankey,
 				Anum_pg_database_datname,
@@ -1744,6 +1750,17 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	 * We don't bother updating the flat file since ALTER DATABASE SET doesn't
 	 * affect it.
 	 */
+=======
+	shdepLockAndCheckObject(DatabaseRelationId, datid);
+
+	if (!pg_database_ownercheck(datid, GetUserId()))
+  		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
+  					   stmt->dbname);
+
+	AlterSetting(datid, InvalidOid, stmt->setstmt);
+  
+	UnlockSharedObject(DatabaseRelationId, datid, 0, AccessShareLock);
+>>>>>>> 78a09145e0
 }
 
 
@@ -1865,11 +1882,6 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 
 	/* Close pg_database, but keep lock till commit */
 	heap_close(rel, NoLock);
-
-	/*
-	 * We don't bother updating the flat file since ALTER DATABASE OWNER
-	 * doesn't affect it.
-	 */
 }
 
 

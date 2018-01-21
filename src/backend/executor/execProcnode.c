@@ -14,13 +14,12 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.65 2009/01/01 17:23:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.69 2009/12/15 04:57:47 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  *	 INTERFACE ROUTINES
- *		ExecCountSlotsNode -	count tuple slots needed by plan tree
  *		ExecInitNode	-		initialize a plan node and its subplans
  *		ExecProcNode	-		get a tuple by executing the plan node
  *		ExecEndNode		-		shut down a plan node and its subplans
@@ -95,8 +94,10 @@
 #include "executor/nodeHashjoin.h"
 #include "executor/nodeIndexscan.h"
 #include "executor/nodeLimit.h"
+#include "executor/nodeLockRows.h"
 #include "executor/nodeMaterial.h"
 #include "executor/nodeMergejoin.h"
+#include "executor/nodeModifyTable.h"
 #include "executor/nodeNestloop.h"
 #include "executor/nodeRecursiveunion.h"
 #include "executor/nodeResult.h"
@@ -280,6 +281,11 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 												  estate, eflags);
 			}
 			END_MEMORY_ACCOUNT();
+			break;
+
+		case T_ModifyTable:
+			result = (PlanState *) ExecInitModifyTable((ModifyTable *) node,
+													   estate, eflags);
 			break;
 
 		case T_Append:
@@ -661,6 +667,11 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 			END_MEMORY_ACCOUNT();
 			break;
 
+		case T_LockRows:
+			result = (PlanState *) ExecInitLockRows((LockRows *) node,
+													estate, eflags);
+			break;
+
 		case T_Limit:
 			curMemoryAccountId = CREATE_EXECUTOR_MEMORY_ACCOUNT(isAlienPlanNode, node, Limit);
 
@@ -776,8 +787,13 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 	estate->currentExecutingSliceId = origExecutingSliceId;
 
 	/* Set up instrumentation for this node if requested */
+<<<<<<< HEAD
 	if (estate->es_instrument && result != NULL)
 		result->instrument = InstrAlloc(1);
+=======
+	if (estate->es_instrument)
+		result->instrument = InstrAlloc(1, estate->es_instrument);
+>>>>>>> 78a09145e0
 
 	/* Also set up gpmon counters */
 	InitPlanNodeGpmonPkt(node, &result->gpmon_pkt, estate);
@@ -876,6 +892,10 @@ ExecProcNode(PlanState *node)
 			 */
 		case T_ResultState:
 			result = ExecResult((ResultState *) node);
+			break;
+
+		case T_ModifyTableState:
+			result = ExecModifyTable((ModifyTableState *) node);
 			break;
 
 		case T_AppendState:
@@ -999,6 +1019,10 @@ ExecProcNode(PlanState *node)
 
 		case T_SetOpState:
 			result = ExecSetOp((SetOpState *) node);
+			break;
+
+		case T_LockRowsState:
+			result = ExecLockRows((LockRowsState *) node);
 			break;
 
 		case T_LimitState:
@@ -1157,6 +1181,7 @@ MultiExecProcNode(PlanState *node)
 }
 
 
+<<<<<<< HEAD
 /*
  * ExecCountSlotsNode - count up the number of tuple table slots needed
  *
@@ -1320,6 +1345,8 @@ ExecCountSlotsNode(Plan *node)
 	return 0;
 }
 
+=======
+>>>>>>> 78a09145e0
 /* ----------------------------------------------------------------
  *		ExecSquelchNode
  *
@@ -1430,7 +1457,7 @@ ExecUpdateTransportState(PlanState *node, ChunkTransportState * state)
  *		Recursively cleans up all the nodes in the plan rooted
  *		at 'node'.
  *
- *		After this operation, the query plan will not be able to
+ *		After this operation, the query plan will not be able to be
  *		processed any further.	This should be called only after
  *		the query plan has been fully executed.
  * ----------------------------------------------------------------
@@ -1475,6 +1502,10 @@ ExecEndNode(PlanState *node)
 			 */
 		case T_ResultState:
 			ExecEndResult((ResultState *) node);
+			break;
+
+		case T_ModifyTableState:
+			ExecEndModifyTable((ModifyTableState *) node);
 			break;
 
 		case T_AppendState:
@@ -1625,6 +1656,10 @@ ExecEndNode(PlanState *node)
 
 		case T_SetOpState:
 			ExecEndSetOp((SetOpState *) node);
+			break;
+
+		case T_LockRowsState:
+			ExecEndLockRows((LockRowsState *) node);
 			break;
 
 		case T_LimitState:

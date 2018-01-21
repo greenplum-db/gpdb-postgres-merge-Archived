@@ -93,7 +93,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.91 2009/06/11 14:49:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.93 2009/08/10 05:46:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2532,7 +2532,11 @@ tuplesort_restorepos_pos(Tuplesortstate *state, TuplesortPos *pos)
  * printable summary information about how the sort was performed.
  * spaceUsed is measured in kilobytes.
  */
+<<<<<<< HEAD
 static void
+=======
+void
+>>>>>>> 78a09145e0
 tuplesort_get_stats(Tuplesortstate *state,
 					const char **sortMethod,
 					const char **spaceType,

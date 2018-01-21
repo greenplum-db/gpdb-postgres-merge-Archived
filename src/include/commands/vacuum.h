@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.85 2009/06/11 14:49:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.86 2009/11/10 18:00:06 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,6 +178,7 @@ extern bool vacuumStatement_IsInAppendOnlyPseudoCompactionPhase(VacuumStmt* vacs
 
 /* in commands/vacuumlazy.c */
 extern bool lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
+<<<<<<< HEAD
 				BufferAccessStrategy bstrategy, List *updated_stats);
 extern void vacuum_appendonly_rel(Relation aorel, VacuumStmt *vacstmt);
 extern void vacuum_appendonly_fill_stats(Relation aorel, Snapshot snapshot,
@@ -185,6 +186,9 @@ extern void vacuum_appendonly_fill_stats(Relation aorel, Snapshot snapshot,
 										 bool *relhasindex);
 extern int vacuum_appendonly_indexes(Relation aoRelation, VacuumStmt *vacstmt, List* updated_stats);
 extern void vacuum_aocs_rel(Relation aorel, void *vacrelstats, bool isVacFull);
+=======
+				BufferAccessStrategy bstrategy, bool *scanned_all);
+>>>>>>> 78a09145e0
 
 /* in commands/analyze.c */
 extern void analyze_rel(Oid relid, VacuumStmt *vacstmt,

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.207 2009/06/11 14:49:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.209 2009/08/31 19:41:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ ProcGlobalShmemSize(void)
 	size = add_size(size, sizeof(PROC_HDR));
 	/* AuxiliaryProcs */
 	size = add_size(size, mul_size(NUM_AUXILIARY_PROCS, sizeof(PGPROC)));
-	/* MyProcs, including autovacuum */
+	/* MyProcs, including autovacuum workers and launcher */
 	size = add_size(size, mul_size(MaxBackends, sizeof(PGPROC)));
 	/* ProcStructLock */
 	size = add_size(size, sizeof(slock_t));
@@ -225,13 +225,18 @@ InitProcGlobal(int mppLocalProcessCounter)
 	ProcGlobal->procs = procs;
 	ProcGlobal->numFreeProcs = MaxConnections;
 
-	procs = (PGPROC *) ShmemAlloc((autovacuum_max_workers) * sizeof(PGPROC));
+	/*
+	 * Likewise for the PGPROCs reserved for autovacuum.
+	 *
+	 * Note: the "+1" here accounts for the autovac launcher
+	 */
+	procs = (PGPROC *) ShmemAlloc((autovacuum_max_workers + 1) * sizeof(PGPROC));
 	if (!procs)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory")));
-	MemSet(procs, 0, autovacuum_max_workers * sizeof(PGPROC));
-	for (i = 0; i < autovacuum_max_workers; i++)
+	MemSet(procs, 0, (autovacuum_max_workers + 1) * sizeof(PGPROC));
+	for (i = 0; i < autovacuum_max_workers + 1; i++)
 	{
 		PGSemaphoreCreate(&(procs[i].sem));
 		InitSharedLatch(&(procs[i].procLatch));
@@ -239,6 +244,9 @@ InitProcGlobal(int mppLocalProcessCounter)
 		ProcGlobal->autovacFreeProcs = &procs[i];
 	}
 
+	/*
+	 * And auxiliary procs.
+	 */
 	MemSet(AuxiliaryProcs, 0, NUM_AUXILIARY_PROCS * sizeof(PGPROC));
 	for (i = 0; i < NUM_AUXILIARY_PROCS; i++)
 	{
@@ -298,14 +306,14 @@ InitProcess(void)
 
 	set_spins_per_delay(procglobal->spins_per_delay);
 
-	if (IsAutoVacuumWorkerProcess())
+	if (IsAnyAutoVacuumProcess())
 		MyProc = procglobal->autovacFreeProcs;
 	else
 		MyProc = procglobal->freeProcs;
 
 	if (MyProc != NULL)
 	{
-		if (IsAutoVacuumWorkerProcess())
+		if (IsAnyAutoVacuumProcess())
 			procglobal->autovacFreeProcs = (PGPROC *) MyProc->links.next;
 		else
 			procglobal->freeProcs = (PGPROC *) MyProc->links.next;
@@ -347,6 +355,7 @@ InitProcess(void)
 	 * child; this is so that the postmaster can detect it if we exit without
 	 * cleaning up.  (XXX autovac launcher currently doesn't participate in
 	 * this; it probably should.)
+<<<<<<< HEAD
 	 *
 	 * Ideally, we should create functions similar to IsAutoVacuumWorkerProcess()
 	 * for ftsProber, SeqServer etc who call InitProcess().
@@ -354,6 +363,10 @@ InitProcess(void)
 	 */
 	if (IsUnderPostmaster && !IsAutoVacuumWorkerProcess()
 		&& MyPMChildSlot > 0)
+=======
+	 */
+	if (IsUnderPostmaster && !IsAutoVacuumLauncherProcess())
+>>>>>>> 78a09145e0
 		MarkPostmasterChildActive();
 
 	/*
@@ -375,6 +388,7 @@ InitProcess(void)
 	MyProc->roleId = InvalidOid;
 	MyProc->inCommit = false;
 	MyProc->vacuumFlags = 0;
+	/* NB -- autovac launcher intentionally does not set IS_AUTOVACUUM */
 	if (IsAutoVacuumWorkerProcess())
 		MyProc->vacuumFlags |= PROC_IS_AUTOVACUUM;
 	MyProc->lwWaiting = false;
@@ -454,8 +468,8 @@ InitProcess(void)
  * InitProcessPhase2 -- make MyProc visible in the shared ProcArray.
  *
  * This is separate from InitProcess because we can't acquire LWLocks until
- * we've created a PGPROC, but in the EXEC_BACKEND case there is a good deal
- * of stuff to be done before this step that will require LWLock access.
+ * we've created a PGPROC, but in the EXEC_BACKEND case ProcArrayAdd won't
+ * work until after we've done CreateSharedMemoryAndSemaphores.
  */
 void
 InitProcessPhase2(void)
@@ -800,8 +814,8 @@ ProcKill(int code, Datum arg)
 
 	SpinLockAcquire(ProcStructLock);
 
-	/* Return PGPROC structure (and semaphore) to freelist */
-	if (IsAutoVacuumWorkerProcess())
+	/* Return PGPROC structure (and semaphore) to appropriate freelist */
+	if (IsAnyAutoVacuumProcess())
 	{
 		proc->links.next = (SHM_QUEUE *) procglobal->autovacFreeProcs;
 		procglobal->autovacFreeProcs = proc;
@@ -822,14 +836,19 @@ ProcKill(int code, Datum arg)
 	/*
 	 * This process is no longer present in shared memory in any meaningful
 	 * way, so tell the postmaster we've cleaned up acceptably well.
+	 * (XXX autovac launcher should be included here someday)
 	 */
+<<<<<<< HEAD
 	if (IsUnderPostmaster && !IsAutoVacuumWorkerProcess()
 		&& MyPMChildSlot > 0)
+=======
+	if (IsUnderPostmaster && !IsAutoVacuumLauncherProcess())
+>>>>>>> 78a09145e0
 		MarkPostmasterChildInactive();
 
 	/* wake autovac launcher if needed -- see comments in FreeWorkerInfo */
 	if (AutovacuumLauncherPid != 0)
-		kill(AutovacuumLauncherPid, SIGUSR1);
+		kill(AutovacuumLauncherPid, SIGUSR2);
 }
 
 /*

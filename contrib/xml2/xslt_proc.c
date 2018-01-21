@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/xml2/xslt_proc.c,v 1.15 2009/06/11 14:48:53 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/xml2/xslt_proc.c,v 1.16 2009/07/10 00:32:00 tgl Exp $
  *
  * XSLT processing functions (requiring libxslt)
  *
@@ -53,6 +53,11 @@ static void parse_params(const char **params, text *paramstr);
 
 #endif /* USE_LIBXSLT */
 
+<<<<<<< HEAD
+=======
+#define MAXPARAMS 20			/* must be even, see parse_params() */
+
+>>>>>>> 78a09145e0
 
 PG_FUNCTION_INFO_V1(xslt_process);
 

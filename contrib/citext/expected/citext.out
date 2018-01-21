@@ -271,6 +271,7 @@ SELECT name, 'A' = name AS t      FROM try where name = 'A';
 (1 row)
 
 -- expected failures on duplicate key
+<<<<<<< HEAD
 INSERT INTO try (a,name) VALUES ('a','a');
 ERROR:  duplicate key value violates unique constraint "try_a_key"
 DETAIL:  Key (a, name)=(a, a) already exists.
@@ -280,6 +281,17 @@ DETAIL:  Key (a, name)=(a, A) already exists.
 INSERT INTO try (a,name) VALUES ('a','aB');
 ERROR:  duplicate key value violates unique constraint "try_a_key"
 DETAIL:  Key (a, name)=(a, aB) already exists.
+=======
+INSERT INTO try (name) VALUES ('a');
+ERROR:  duplicate key value violates unique constraint "try_pkey"
+DETAIL:  Key (name)=(a) already exists.
+INSERT INTO try (name) VALUES ('A');
+ERROR:  duplicate key value violates unique constraint "try_pkey"
+DETAIL:  Key (name)=(A) already exists.
+INSERT INTO try (name) VALUES ('aB');
+ERROR:  duplicate key value violates unique constraint "try_pkey"
+DETAIL:  Key (name)=(aB) already exists.
+>>>>>>> 78a09145e0
 -- Make sure that citext_smaller() and citext_lager() work properly.
 SELECT citext_smaller( 'aa'::citext, 'ab'::citext ) = 'aa' AS t;
  t 
@@ -735,18 +747,6 @@ SELECT 'f'::"char"::citext = 'f' AS t;
 (1 row)
 
 SELECT 'f'::citext::"char" = 'f'::"char" AS t;
- t 
----
- t
-(1 row)
-
-SELECT 'foo'::bytea::citext = 'foo' AS t;
- t 
----
- t
-(1 row)
-
-SELECT 'foo'::citext::bytea = 'foo'::bytea AS t;
  t 
 ---
  t

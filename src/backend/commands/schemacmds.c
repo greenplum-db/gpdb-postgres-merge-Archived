@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.53 2009/06/11 14:48:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.54 2009/12/09 21:57:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	bool		shouldDispatch = (Gp_role == GP_ROLE_DISPATCH && 
 								  !IsBootstrapProcessingMode());
 
+<<<<<<< HEAD
 	/*
 	 * GPDB: Creation of temporary namespaces is a special case. This statement
 	 * is dispatched by the dispatcher node the first time a temporary table is
@@ -78,6 +79,8 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 		return;
 	}
 
+=======
+>>>>>>> 78a09145e0
 	GetUserIdAndSecContext(&saved_uid, &save_sec_context);
 
 	/*

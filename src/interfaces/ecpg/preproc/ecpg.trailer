@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.9 2009/06/10 23:11:52 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.16 2009/11/26 15:06:47 meskes Exp $ */
 
 statements: /*EMPTY*/
                 | statements statement
@@ -25,16 +25,6 @@ CreateAsStmt: CREATE OptTemp TABLE create_as_target AS {FoundInto = 0;} SelectSt
 				mmerror(PARSE_ERROR, ET_ERROR, "CREATE TABLE AS cannot specify INTO");
 
 			$$ = cat_str(6, make_str("create"), $2, make_str("table"), $4, make_str("as"), $7);
-		}
-	;
-
-RuleStmt: CREATE opt_or_replace RULE name AS
-		{QueryIsRule = 1;}
-		ON event TO qualified_name where_clause
-		DO opt_instead RuleActionList
-		{
-			QueryIsRule=0;
-			$$ = cat_str(12, make_str("create"), $2, make_str("rule"), $4, make_str("as on"), $8, make_str("to"), $10, $11, make_str("do"), $13, $14);
 		}
 	;
 
@@ -213,6 +203,7 @@ char_variable: cvariable
 				{
 					case ECPGt_char:
 					case ECPGt_unsigned_char:
+					case ECPGt_string:
 						$$ = $1;
 						break;
 					case ECPGt_varchar:
@@ -284,9 +275,10 @@ prepared_name: name             {
  * Declare a prepared cursor. The syntax is different from the standard
  * declare statement, so we create a new rule.
  */
-ECPGCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR prepared_name
+ECPGCursorStmt:  DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared_name
 		{
 			struct cursor *ptr, *this;
+			char *cursor_marker = $2[0] == ':' ? make_str("$0") : mm_strdup($2);
 			struct variable *thisquery = (struct variable *)mm_alloc(sizeof(struct variable));
 			const char *con = connection ? connection : "NULL";
 
@@ -303,7 +295,7 @@ ECPGCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR prepared_name
 			this->next = cur;
 			this->name = $2;
 			this->connection = connection;
-			this->command =  cat_str(6, make_str("declare"), mm_strdup($2), $3, make_str("cursor"), $5, make_str("for $1"));
+			this->command =  cat_str(6, make_str("declare"), cursor_marker, $3, make_str("cursor"), $5, make_str("for $1"));
 			this->argsresult = NULL;
 
 			thisquery->type = &ecpg_query;
@@ -313,11 +305,20 @@ ECPGCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR prepared_name
 			sprintf(thisquery->name, "ECPGprepared_statement(%s, %s, __LINE__)", con, $7);
 
 			this->argsinsert = NULL;
+			if ($2[0] == ':')
+			{
+				struct variable *var = find_variable($2 + 1);
+				remove_variable_from_list(&argsinsert, var);
+				add_variable_to_head(&(this->argsinsert), var, &no_indicator);
+			}
 			add_variable_to_head(&(this->argsinsert), thisquery, &no_indicator);
 
 			cur = this;
 
-			$$ = cat_str(3, make_str("/*"), mm_strdup(this->command), make_str("*/"));
+			if (INFORMIX_MODE && braces_open > 0) /* we're in a function */
+				$$ = cat_str(4, make_str("ECPG_informix_reset_sqlca();"), make_str("/*"), mm_strdup(this->command), make_str("*/"));
+			else
+				$$ = cat_str(3, make_str("/*"), mm_strdup(this->command), make_str("*/"));
 		}
 		;
 
@@ -587,6 +588,14 @@ var_type:	simple_type
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
 			}
+			else if ((strcmp($1, "string") == 0) && INFORMIX_MODE)
+			{
+				$$.type_enum = ECPGt_string;
+				$$.type_str = make_str("char");
+				$$.type_dimension = make_str("-1");
+				$$.type_index = make_str("-1");
+				$$.type_sizeof = NULL;
+			}
 			else
 			{
 				/* this is for typedef'ed types */
@@ -849,6 +858,7 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 
 				case ECPGt_char:
 				case ECPGt_unsigned_char:
+				case ECPGt_string:
 					if (atoi(dimension) == -1)
 					{
 						int i = strlen($5);
@@ -944,7 +954,13 @@ ECPGFree:	SQL_FREE name	{ $$ = $2; }
 /*
  * open is an open cursor, at the moment this has to be removed
  */
-ECPGOpen: SQL_OPEN name opt_ecpg_using { $$ = $2; };
+ECPGOpen: SQL_OPEN cursor_name opt_ecpg_using
+		{
+			if ($2[0] == ':')
+				remove_variable_from_list(&argsinsert, find_variable($2 + 1));
+			$$ = $2;
+		}
+		;
 
 opt_ecpg_using: /*EMPTY*/	{ $$ = EMPTY; }
 		| ecpg_using		{ $$ = $1; }
@@ -1269,6 +1285,7 @@ ECPGVar: SQL_VAR
 
 					case ECPGt_char:
 					case ECPGt_unsigned_char:
+					case ECPGt_string:
 						if (atoi(dimension) == -1)
 							type = ECPGmake_simple_type($5.type_enum, length, 0);
 						else
@@ -1429,81 +1446,102 @@ symbol: ColLabel					{ $$ = $1; }
 		;
 
 ECPGColId: ecpg_ident				{ $$ = $1; }
+		| unreserved_keyword		{ $$ = $1; }
+		| col_name_keyword			{ $$ = $1; }
 		| ECPGunreserved_interval	{ $$ = $1; }
-		| ECPGunreserved_con		{ $$ = $1; }
-		| col_name_keyword		{ $$ = $1; }
-		| ECPGKeywords			{ $$ = $1; }
-		| ECPGCKeywords			{ $$ = $1; }
-		| CHAR_P			{ $$ = make_str("char"); }
-		| VALUES			{ $$ = make_str("values"); }
+		| ECPGKeywords				{ $$ = $1; }
+		| ECPGCKeywords				{ $$ = $1; }
+		| CHAR_P					{ $$ = make_str("char"); }
+		| VALUES					{ $$ = make_str("values"); }
 		;
+
+/*
+ * Name classification hierarchy.
+ *
+ * These productions should match those in the core grammar, except that
+ * we use all_unreserved_keyword instead of unreserved_keyword, and
+ * where possible include ECPG keywords as well as core keywords.
+ */
+
+/* Column identifier --- names that can be column, table, etc names.
+ */
+ColId:	ecpg_ident					{ $$ = $1; }
+		| all_unreserved_keyword	{ $$ = $1; }
+		| col_name_keyword			{ $$ = $1; }
+		| ECPGKeywords				{ $$ = $1; }
+		| ECPGCKeywords				{ $$ = $1; }
+		| CHAR_P					{ $$ = make_str("char"); }
+		| VALUES					{ $$ = make_str("values"); }
+		;
+
+/* Type/function identifier --- names that can be type or function names.
+ */
+type_function_name:	ecpg_ident		{ $$ = $1; }
+		| all_unreserved_keyword	{ $$ = $1; }
+		| type_func_name_keyword	{ $$ = $1; }
+		| ECPGKeywords				{ $$ = $1; }
+		| ECPGCKeywords				{ $$ = $1; }
+		| ECPGTypeName				{ $$ = $1; }
+		;
+
 /* Column label --- allowed labels in "AS" clauses.
  * This presently includes *all* Postgres keywords.
  */
 ColLabel:  ECPGColLabel				{ $$ = $1; }
-		| ECPGTypeName			{ $$ = $1; }
-		| CHAR_P			{ $$ = make_str("char"); }
-		| INPUT_P			{ $$ = make_str("input"); }
-		| INT_P				{ $$ = make_str("int"); }
-		| UNION				{ $$ = make_str("union"); }
-		| TO				{ $$ = make_str("to"); }
-		| ECPGCKeywords			{ $$ = $1; }
+		| ECPGTypeName				{ $$ = $1; }
+		| CHAR_P					{ $$ = make_str("char"); }
+		| CURRENT_P					{ $$ = make_str("current"); }
+		| INPUT_P					{ $$ = make_str("input"); }
+		| INT_P						{ $$ = make_str("int"); }
+		| TO						{ $$ = make_str("to"); }
+		| UNION						{ $$ = make_str("union"); }
+		| VALUES					{ $$ = make_str("values"); }
+		| ECPGCKeywords				{ $$ = $1; }
 		| ECPGunreserved_interval	{ $$ = $1; }
 		;
 
-ECPGColLabelCommon:  ecpg_ident			{ $$ = $1; }
-		| col_name_keyword		{ $$ = $1; }
+ECPGColLabel:  ECPGColLabelCommon	{ $$ = $1; }
+		| unreserved_keyword		{ $$ = $1; }
+		| reserved_keyword			{ $$ = $1; }
+		| ECPGKeywords_rest			{ $$ = $1; }
+		| CONNECTION				{ $$ = make_str("connection"); }
+		;
+
+ECPGColLabelCommon:  ecpg_ident		{ $$ = $1; }
+		| col_name_keyword			{ $$ = $1; }
 		| type_func_name_keyword	{ $$ = $1; }
 		| ECPGKeywords_vanames		{ $$ = $1; }
 		;
 
-ECPGColLabel:  ECPGColLabelCommon	{ $$ = $1; }
-		| reserved_keyword		{ $$ = $1; }
-		| ECPGunreserved		{ $$ = $1; }
-		| ECPGKeywords_rest		{ $$ = $1; }
+ECPGCKeywords: S_AUTO				{ $$ = make_str("auto"); }
+		| S_CONST					{ $$ = make_str("const"); }
+		| S_EXTERN					{ $$ = make_str("extern"); }
+		| S_REGISTER				{ $$ = make_str("register"); }
+		| S_STATIC					{ $$ = make_str("static"); }
+		| S_TYPEDEF					{ $$ = make_str("typedef"); }
+		| S_VOLATILE				{ $$ = make_str("volatile"); }
 		;
-
-ECPGCKeywords: S_AUTO			{ $$ = make_str("auto"); }
-		| S_CONST				{ $$ = make_str("const"); }
-		| S_EXTERN				{ $$ = make_str("extern"); }
-		| S_REGISTER			{ $$ = make_str("register"); }
-		| S_STATIC				{ $$ = make_str("static"); }
-		| S_TYPEDEF				{ $$ = make_str("typedef"); }
-		| S_VOLATILE			{ $$ = make_str("volatile"); }
-		;
-
-/*
- * Keyword classification lists.  Generally, every keyword present in
- * the Postgres grammar should appear in exactly one of these lists.
- *
- * Put a new keyword into the first list that it can go into without causing
- * shift or reduce conflicts.  The earlier lists define "less reserved"
- * categories of keywords.
- */
 
 /* "Unreserved" keywords --- available for use as any kind of name.
  */
-/* The following symbols must be excluded from ECPGColLabel and directly included into ColLabel
-   to enable C variables to get names from ECPGColLabel:
-   DAY_P, HOUR_P, MINUTE_P, MONTH_P, SECOND_P, YEAR_P
- */
-unreserved_keyword: ECPGunreserved_interval | ECPGunreserved;
 
-ECPGunreserved_interval: DAY_P			{ $$ = make_str("day"); }
-		| HOUR_P			{ $$ = make_str("hour"); }
-		| MINUTE_P			{ $$ = make_str("minute"); }
-		| MONTH_P			{ $$ = make_str("month"); }
-		| SECOND_P			{ $$ = make_str("second"); }
-		| YEAR_P			{ $$ = make_str("year"); }
+/*
+ * The following symbols must be excluded from ECPGColLabel and directly
+ * included into ColLabel to enable C variables to get names from ECPGColLabel:
+ * DAY_P, HOUR_P, MINUTE_P, MONTH_P, SECOND_P, YEAR_P.
+ *
+ * We also have to exclude CONNECTION, CURRENT, and INPUT for various reasons.
+ * CONNECTION can be added back in all_unreserved_keyword, but CURRENT and
+ * INPUT are reserved for ecpg purposes.
+ *
+ * The mentioned exclusions are done by $replace_line settings in parse.pl.
+ */
+all_unreserved_keyword: unreserved_keyword	{ $$ = $1; }
+		| ECPGunreserved_interval			{ $$ = $1; }
+		| CONNECTION						{ $$ = make_str("connection"); }
 		;
 
-/* The following symbol must be excluded from var_name but still included in ColId
-   to enable ecpg special postgresql variables with this name:  CONNECTION
- */
-ECPGunreserved:	ECPGunreserved_con		{ $$ = $1; }
-		| CONNECTION			{ $$ = make_str("connection"); }
-		;
-
+<<<<<<< HEAD
 ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| ABSOLUTE_P		{ $$ = make_str("absolute"); }
 		| ACCESS			{ $$ = make_str("access"); }
@@ -1736,7 +1774,16 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 /*		| YES_P  			{ $$ = make_str("yes"); }*/
 /*		| YEAR_P			{ $$ = make_str("year"); }*/
 		| ZONE				{ $$ = make_str("zone"); }
+=======
+ECPGunreserved_interval: DAY_P				{ $$ = make_str("day"); }
+		| HOUR_P							{ $$ = make_str("hour"); }
+		| MINUTE_P							{ $$ = make_str("minute"); }
+		| MONTH_P							{ $$ = make_str("month"); }
+		| SECOND_P							{ $$ = make_str("second"); }
+		| YEAR_P							{ $$ = make_str("year"); }
+>>>>>>> 78a09145e0
 		;
+
 
 into_list : coutputvariable | into_list ',' coutputvariable
 		;
@@ -1765,6 +1812,17 @@ civarind: cvariable indicator
 
 			add_variable_to_head(&argsinsert, find_variable($1), find_variable($2));
 			$$ = create_questionmarks($1, false);
+		}
+		;
+
+char_civar: char_variable
+		{
+			char *ptr = strstr($1, ".arr");
+
+			if (ptr) /* varchar, we need the struct name here, not the struct element */
+				*ptr = '\0';
+			add_variable_to_head(&argsinsert, find_variable($1), &no_indicator);
+			$$ = $1;
 		}
 		;
 
@@ -1981,6 +2039,10 @@ execute_rest: /* EMPTY */	{ $$ = EMPTY; }
 
 ecpg_into: INTO into_list	{ $$ = EMPTY; }
         | into_descriptor	{ $$ = $1; }
+	;
+
+opt_ecpg_into:	/* EMPTY */	{ $$ = EMPTY; }
+	| ecpg_into		{ $$ = $1; }
 	;
 
 %%

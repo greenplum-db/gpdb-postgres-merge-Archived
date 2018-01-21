@@ -1,6 +1,6 @@
 # PGXS: PostgreSQL extensions makefile
 
-# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.15 2008/10/03 08:00:16 petere Exp $ 
+# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.17 2009/08/26 22:24:43 petere Exp $ 
 
 # This file contains generic rules to build many kinds of simple
 # extension modules.  You only need to set a few variables and include
@@ -140,7 +140,11 @@ ifneq (,$(EXTENSION))
 	$(MKDIR_P) '$(DESTDIR)$(datadir)/extension'
 endif
 ifneq (,$(DATA)$(DATA_built))
+<<<<<<< HEAD
 	$(MKDIR_P) '$(DESTDIR)$(datadir)/$(datamoduledir)'
+=======
+	$(MKDIR_P) '$(DESTDIR)$(datadir)/contrib'
+>>>>>>> 78a09145e0
 endif
 ifneq (,$(DATA_TSEARCH))
 	$(MKDIR_P) '$(DESTDIR)$(datadir)/tsearch_data'
@@ -150,7 +154,11 @@ ifneq (,$(MODULES))
 endif
 ifdef DOCS
 ifdef docdir
+<<<<<<< HEAD
 	$(MKDIR_P) '$(DESTDIR)$(docdir)/$(docmoduledir)'
+=======
+	$(MKDIR_P) '$(DESTDIR)$(docdir)/contrib'
+>>>>>>> 78a09145e0
 endif # docdir
 endif # DOCS
 ifneq (,$(PROGRAM)$(SCRIPTS)$(SCRIPTS_built))
@@ -272,6 +280,7 @@ installcheck: submake
 check:
 	@echo "'make check' is not supported."
 	@echo "Do 'make install', then 'make installcheck' instead."
+	@exit 1
 endif # REGRESS
 
 

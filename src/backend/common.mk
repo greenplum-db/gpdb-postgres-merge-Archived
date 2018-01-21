@@ -1,7 +1,7 @@
 #
 # Common make rules for backend
 #
-# $PostgreSQL: pgsql/src/backend/common.mk,v 1.8 2008/09/05 12:11:18 petere Exp $
+# $PostgreSQL: pgsql/src/backend/common.mk,v 1.9 2009/08/07 20:50:22 petere Exp $
 #
 
 # When including this file, set OBJS to the object files created in
@@ -46,6 +46,7 @@ ifdef SUBDIRS
 	for dir in $(SUBDIRS); do $(MAKE) -C $$dir clean || exit; done
 endif
 	rm -f $(subsysfilename) $(OBJS)
+<<<<<<< HEAD
 	@if [ -d $(CURDIR)/test ]; then $(MAKE) -C $(CURDIR)/test clean; fi
 
 
@@ -60,3 +61,5 @@ unittest-check:
 ifdef SUBDIRS
 	for dir in $(SUBDIRS); do $(MAKE) -C $$dir unittest-check || exit; done
 endif
+=======
+>>>>>>> 78a09145e0

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.131 2009/06/11 14:49:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.133 2009/12/15 04:57:47 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,7 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 				Snapshot crosscheck_snapshot,
 				DestReceiver *dest,
 				ParamListInfo params,
-				bool doInstrument)
+				int instrument_options)
 {
 	QueryDesc  *qd = (QueryDesc *) palloc(sizeof(QueryDesc));
 
@@ -96,7 +96,7 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 	qd->crosscheck_snapshot = RegisterSnapshot(crosscheck_snapshot);
 	qd->dest = dest;			/* output dest */
 	qd->params = params;		/* parameter values passed into query */
-	qd->doInstrument = doInstrument;	/* instrumentation wanted? */
+	qd->instrument_options = instrument_options;	/* instrumentation wanted? */
 
 	/* null these fields until set by ExecutorStart */
 	qd->tupDesc = NULL;
@@ -151,7 +151,7 @@ CreateUtilityQueryDesc(Node *utilitystmt,
 	qd->crosscheck_snapshot = InvalidSnapshot;	/* RI check snapshot */
 	qd->dest = dest;			/* output dest */
 	qd->params = params;		/* parameter values passed into query */
-	qd->doInstrument = false;	/* uninteresting for utilities */
+	qd->instrument_options = false;	/* uninteresting for utilities */
 
 	/* null these fields until set by ExecutorStart */
 	qd->tupDesc = NULL;
@@ -225,6 +225,7 @@ ProcessQuery(Portal portal,
 	/*
 	 * Create the QueryDesc object
 	 */
+<<<<<<< HEAD
 	Assert(portal);
 
 	if (portal->sourceTag == T_SelectStmt && gp_select_invisible)
@@ -275,6 +276,11 @@ ProcessQuery(Portal portal,
 	}
 
 	portal->status = PORTAL_ACTIVE;
+=======
+	queryDesc = CreateQueryDesc(plan, sourceText,
+								GetActiveSnapshot(), InvalidSnapshot,
+								dest, params, 0);
+>>>>>>> 78a09145e0
 
 	/*
 	 * Set up to collect AFTER triggers
@@ -453,7 +459,7 @@ ChoosePortalStrategy(List *stmts)
 			{
 				if (++nSetTag > 1)
 					return PORTAL_MULTI_QUERY;	/* no need to look further */
-				if (pstmt->returningLists == NIL)
+				if (!pstmt->hasReturning)
 					return PORTAL_MULTI_QUERY;	/* no need to look further */
 			}
 		}
@@ -529,8 +535,8 @@ FetchStatementTargetList(Node *stmt)
 			pstmt->utilityStmt == NULL &&
 			pstmt->intoClause == NULL)
 			return pstmt->planTree->targetlist;
-		if (pstmt->returningLists)
-			return (List *) linitial(pstmt->returningLists);
+		if (pstmt->hasReturning)
+			return pstmt->planTree->targetlist;
 		return NIL;
 	}
 	if (IsA(stmt, FetchStmt))
@@ -639,6 +645,7 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot,
 											InvalidSnapshot,
 											None_Receiver,
 											params,
+<<<<<<< HEAD
 											false);
 				queryDesc->ddesc = ddesc;
 				
@@ -693,6 +700,9 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot,
 				}
 
 				portal->status = PORTAL_ACTIVE;
+=======
+											0);
+>>>>>>> 78a09145e0
 
 				/*
 				 * We do *not* call AfterTriggerBeginQuery() here.	We assume
@@ -746,9 +756,9 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot,
 
 					pstmt = (PlannedStmt *) PortalGetPrimaryStmt(portal);
 					Assert(IsA(pstmt, PlannedStmt));
-					Assert(pstmt->returningLists);
+					Assert(pstmt->hasReturning);
 					portal->tupDesc =
-						ExecCleanTypeFromTL((List *) linitial(pstmt->returningLists),
+						ExecCleanTypeFromTL(pstmt->planTree->targetlist,
 											false);
 				}
 

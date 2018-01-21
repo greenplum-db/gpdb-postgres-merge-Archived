@@ -3,7 +3,11 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * src/bin/psql/print.h
+=======
+ * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.42 2009/11/22 05:20:41 tgl Exp $
+>>>>>>> 78a09145e0
  */
 #ifndef PRINT_H
 #define PRINT_H
@@ -52,6 +56,7 @@ typedef enum printTextLineWrap
 typedef struct printTextFormat
 {
 	/* A complete line style */
+<<<<<<< HEAD
 	const char *name;			/* for display purposes */
 	printTextLineFormat lrule[4];		/* indexed by enum printTextRule */
 	const char *midvrule_nl;	/* vertical line for continue after newline */
@@ -59,12 +64,26 @@ typedef struct printTextFormat
 	const char *midvrule_blank; /* vertical line for blank data */
 	const char *header_nl_left; /* left mark after newline */
 	const char *header_nl_right;	/* right mark for newline */
+=======
+	const char *name;				/* for display purposes */
+	printTextLineFormat lrule[4];	/* indexed by enum printTextRule */
+	const char *midvrule_nl;	/* vertical line for continue after newline */
+	const char *midvrule_wrap;	/* vertical line for wrapped data */
+	const char *midvrule_blank;	/* vertical line for blank data */
+	const char *header_nl_left;	/* left mark after newline */
+	const char *header_nl_right; /* right mark for newline */
+>>>>>>> 78a09145e0
 	const char *nl_left;		/* left mark after newline */
 	const char *nl_right;		/* right mark for newline */
 	const char *wrap_left;		/* left mark after wrapped data */
 	const char *wrap_right;		/* right mark for wrapped data */
+<<<<<<< HEAD
 	bool		wrap_right_border;		/* use right-hand border for wrap
 										 * marks when border=0? */
+=======
+	bool		wrap_right_border;	/* use right-hand border for wrap marks
+									 * when border=0? */
+>>>>>>> 78a09145e0
 } printTextFormat;
 
 typedef struct printTableOpt

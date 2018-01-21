@@ -4,11 +4,19 @@
  *	  Routines for interprocess signalling
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
  *	  src/backend/storage/ipc/procsignal.c
+=======
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procsignal.c,v 1.1 2009/07/31 20:26:23 tgl Exp $
+>>>>>>> 78a09145e0
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +25,7 @@
 #include <signal.h>
 #include <unistd.h>
 
+<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 #include "commands/async.h"
 #include "miscadmin.h"
@@ -26,6 +35,15 @@
 #include "storage/procsignal.h"
 #include "storage/sinval.h"
 #include "tcop/tcopprot.h"
+=======
+#include "bootstrap/bootstrap.h"
+#include "commands/async.h"
+#include "miscadmin.h"
+#include "storage/ipc.h"
+#include "storage/procsignal.h"
+#include "storage/shmem.h"
+#include "storage/sinval.h"
+>>>>>>> 78a09145e0
 
 
 /*
@@ -36,12 +54,20 @@
  * reason is signaled more than once nearly simultaneously, the process may
  * observe it only once.)
  *
+<<<<<<< HEAD
  * Each process that wants to receive signals registers its process ID
+=======
+ * Each process that wants to receive signals registers its process ID 
+>>>>>>> 78a09145e0
  * in the ProcSignalSlots array. The array is indexed by backend ID to make
  * slot allocation simple, and to avoid having to search the array when you
  * know the backend ID of the process you're signalling.  (We do support
  * signalling without backend ID, but it's a bit less efficient.)
+<<<<<<< HEAD
  *
+=======
+ * 
+>>>>>>> 78a09145e0
  * The flags are actually declared as "volatile sig_atomic_t" for maximum
  * portability.  This should ensure that loads and stores of the flag
  * values are atomic, allowing us to dispense with any explicit locking.
@@ -57,17 +83,28 @@ typedef struct
  * possible auxiliary process type.  (This scheme assumes there is not
  * more than one of any auxiliary process type at a time.)
  */
+<<<<<<< HEAD
 #define NumProcSignalSlots	(MaxBackends + NUM_AUXILIARY_PROCS)
 
 static ProcSignalSlot *ProcSignalSlots = NULL;
 static volatile ProcSignalSlot *MyProcSignalSlot = NULL;
 static volatile bool InSIGUSR1Handler = false;
+=======
+#define NumProcSignalSlots  (MaxBackends + NUM_AUXPROCTYPES)
+
+static ProcSignalSlot *ProcSignalSlots = NULL;
+static volatile ProcSignalSlot *MyProcSignalSlot = NULL;
+>>>>>>> 78a09145e0
 
 static bool CheckProcSignal(ProcSignalReason reason);
 static void CleanupProcSignalState(int status, Datum arg);
 
 /*
+<<<<<<< HEAD
  * ProcSignalShmemSize
+=======
+ * ProcSignalShmemInit
+>>>>>>> 78a09145e0
  *		Compute space needed for procsignal's shared memory
  */
 Size
@@ -147,8 +184,13 @@ CleanupProcSignalState(int status, Datum arg)
 	if (slot->pss_pid != MyProcPid)
 	{
 		/*
+<<<<<<< HEAD
 		 * don't ERROR here. We're exiting anyway, and don't want to get into
 		 * infinite loop trying to exit
+=======
+		 * don't ERROR here. We're exiting anyway, and don't want to
+		 * get into infinite loop trying to exit
+>>>>>>> 78a09145e0
 		 */
 		elog(LOG, "process %d releasing ProcSignal slot %d, but it contains %d",
 			 MyProcPid, pss_idx, (int) slot->pss_pid);
@@ -202,7 +244,11 @@ SendProcSignal(pid_t pid, ProcSignalReason reason, BackendId backendId)
 		 * InvalidBackendId means that the target is most likely an auxiliary
 		 * process, which will have a slot near the end of the array.
 		 */
+<<<<<<< HEAD
 		int			i;
+=======
+		int		i;
+>>>>>>> 78a09145e0
 
 		for (i = NumProcSignalSlots - 1; i >= 0; i--)
 		{
@@ -247,6 +293,7 @@ CheckProcSignal(ProcSignalReason reason)
 	return false;
 }
 
+<<<<<<< HEAD
 bool
 AmIInSIGUSR1Handler(void)
 {
@@ -269,12 +316,15 @@ QueryFinishHandler(void)
 	}
 }
 
+=======
+>>>>>>> 78a09145e0
 /*
  * procsignal_sigusr1_handler - handle SIGUSR1 signal.
  */
 void
 procsignal_sigusr1_handler(SIGNAL_ARGS)
 {
+<<<<<<< HEAD
 	int save_errno = errno;
 
 	PG_TRY();
@@ -296,6 +346,15 @@ procsignal_sigusr1_handler(SIGNAL_ARGS)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+=======
+	int		save_errno = errno;
+
+	if (CheckProcSignal(PROCSIG_CATCHUP_INTERRUPT))
+		HandleCatchupInterrupt();
+
+	if (CheckProcSignal(PROCSIG_NOTIFY_INTERRUPT))
+		HandleNotifyInterrupt();
+>>>>>>> 78a09145e0
 
 	errno = save_errno;
 }

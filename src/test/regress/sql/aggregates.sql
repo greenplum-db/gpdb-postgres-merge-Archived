@@ -237,10 +237,13 @@ select max(unique2) from tenk1 order by max(unique2)+1;
 -- MPP: This works in Postgres
 select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
 
+<<<<<<< HEAD
 -- check for correct detection of nested-aggregate errors
 select max(min(unique1)) from tenk1;
 select (select max(min(unique1)) from int8_tbl) from tenk1;
 
+=======
+>>>>>>> 78a09145e0
 --
 -- Test combinations of DISTINCT and/or ORDER BY
 --
@@ -301,12 +304,15 @@ select aggfns(distinct a,b,c order by a,c using ~<~,b)
 
 -- check node I/O via view creation and usage, also deparsing logic
 
+<<<<<<< HEAD
 -- start_ignore
 -- pg_get_viewdef() runs some internal queries on catalogs, and we don't want
 -- fallback notices about those.
 reset optimizer_trace_fallback;
 -- end_ignore
 
+=======
+>>>>>>> 78a09145e0
 create view agg_view1 as
   select aggfns(a,b,c)
     from (values (1,3,'foo'),(0,null,null),(2,2,'bar'),(3,1,'baz')) v(a,b,c);
@@ -361,10 +367,13 @@ select pg_get_viewdef('agg_view1'::regclass);
 
 drop view agg_view1;
 
+<<<<<<< HEAD
 -- start_ignore
 SET optimizer_trace_fallback to on;
 -- end_ignore
 
+=======
+>>>>>>> 78a09145e0
 -- incorrect DISTINCT usage errors
 
 select aggfns(distinct a,b,c order by i)
@@ -375,6 +384,7 @@ select aggfns(distinct a,b,c order by a,b,i,c)
   from (values (1,1,'foo')) v(a,b,c), generate_series(1,2) i;
 select aggfns(distinct a,a,c order by a,b)
   from (values (1,1,'foo')) v(a,b,c), generate_series(1,2) i;
+<<<<<<< HEAD
 
 -- string_agg tests
 select string_agg(a) from (values('aaaa'),('bbbb'),('cccc')) g(a);
@@ -529,3 +539,5 @@ drop view aggordview1;
 -- variadic aggregates
 select least_agg(q1,q2) from int8_tbl;
 select least_agg(variadic array[q1,q2]) from int8_tbl;
+=======
+>>>>>>> 78a09145e0

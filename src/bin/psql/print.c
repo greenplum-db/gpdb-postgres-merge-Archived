@@ -3,7 +3,11 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * src/bin/psql/print.c
+=======
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.119 2009/11/25 20:26:31 tgl Exp $
+>>>>>>> 78a09145e0
  */
 #include "postgres_fe.h"
 
@@ -50,10 +54,17 @@ const printTextFormat pg_asciiformat =
 {
 	"ascii",
 	{
+<<<<<<< HEAD
 		{"-", "+", "+", "+"},
 		{"-", "+", "+", "+"},
 		{"-", "+", "+", "+"},
 		{"", "|", "|", "|"}
+=======
+		{ "-", "+", "+", "+" },
+		{ "-", "+", "+", "+" },
+		{ "-", "+", "+", "+" },
+		{ "",  "|", "|", "|" }
+>>>>>>> 78a09145e0
 	},
 	"|",
 	"|",
@@ -71,10 +82,17 @@ const printTextFormat pg_asciiformat_old =
 {
 	"old-ascii",
 	{
+<<<<<<< HEAD
 		{"-", "+", "+", "+"},
 		{"-", "+", "+", "+"},
 		{"-", "+", "+", "+"},
 		{"", "|", "|", "|"}
+=======
+		{ "-", "+", "+", "+" },
+		{ "-", "+", "+", "+" },
+		{ "-", "+", "+", "+" },
+		{ "",  "|", "|", "|" }
+>>>>>>> 78a09145e0
 	},
 	":",
 	";",
@@ -93,6 +111,7 @@ const printTextFormat pg_utf8format =
 	"unicode",
 	{
 		/* ─, ┌, ┬, ┐ */
+<<<<<<< HEAD
 		{"\342\224\200", "\342\224\214", "\342\224\254", "\342\224\220"},
 		/* ─, ├, ┼, ┤ */
 		{"\342\224\200", "\342\224\234", "\342\224\274", "\342\224\244"},
@@ -100,6 +119,15 @@ const printTextFormat pg_utf8format =
 		{"\342\224\200", "\342\224\224", "\342\224\264", "\342\224\230"},
 		/* N/A, │, │, │ */
 		{"", "\342\224\202", "\342\224\202", "\342\224\202"}
+=======
+		{ "\342\224\200", "\342\224\214", "\342\224\254", "\342\224\220" },
+		/* ─, ├, ┼, ┤ */
+		{ "\342\224\200", "\342\224\234", "\342\224\274", "\342\224\244" },
+		/* ─, └, ┴, ┘ */
+		{ "\342\224\200", "\342\224\224", "\342\224\264", "\342\224\230" },
+		/* N/A, │, │, │ */
+		{ "", "\342\224\202", "\342\224\202", "\342\224\202" }
+>>>>>>> 78a09145e0
 	},
 	/* │ */
 	"\342\224\202",
@@ -184,6 +212,7 @@ additional_numeric_locale_len(const char *my_str)
 	return len;
 }
 
+<<<<<<< HEAD
 /*
  * Format a numeric value per current LC_NUMERIC locale setting
  *
@@ -191,6 +220,17 @@ additional_numeric_locale_len(const char *my_str)
  * caller must free.
  *
  * setDecimalLocale() must have been called earlier.
+=======
+static int
+strlen_with_numeric_locale(const char *my_str)
+{
+	return strlen(my_str) + additional_numeric_locale_len(my_str);
+}
+
+/*
+ * Returns the appropriately formatted string in a new allocated block,
+ * caller must free
+>>>>>>> 78a09145e0
  */
 static char *
 format_numeric_locale(const char *my_str)
@@ -254,6 +294,7 @@ format_numeric_locale(const char *my_str)
 }
 
 
+<<<<<<< HEAD
 /*
  * fputnbytes: print exactly N bytes to a file
  *
@@ -268,6 +309,8 @@ fputnbytes(FILE *f, const char *str, size_t n)
 }
 
 
+=======
+>>>>>>> 78a09145e0
 /*************************/
 /* Unaligned text		 */
 /*************************/
@@ -936,9 +979,14 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 					else	/* Left aligned cell */
 					{
 						/* spaces second */
+<<<<<<< HEAD
 						fputnbytes(fout,
 								 (char *) (this_line->ptr + bytes_output[j]),
 								   bytes_to_output);
+=======
+						fprintf(fout, "%.*s", bytes_to_output,
+								this_line->ptr + bytes_output[j]);
+>>>>>>> 78a09145e0
 					}
 
 					bytes_output[j] += bytes_to_output;
@@ -970,11 +1018,19 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 				 * If left-aligned, pad out remaining space if needed (not
 				 * last column, and/or wrap marks required).
 				 */
+<<<<<<< HEAD
 				if (cont->aligns[j] != 'r')		/* Left aligned cell */
 				{
 					if (finalspaces ||
 						wrap[j] == PRINT_LINE_WRAP_WRAP ||
 						wrap[j] == PRINT_LINE_WRAP_NEWLINE)
+=======
+				if (cont->aligns[j] != 'r') /* Left aligned cell */
+				{
+					if (finalspaces ||
+						wrap[j] == PRINT_LINE_WRAP_WRAP ||
+					    wrap[j] == PRINT_LINE_WRAP_NEWLINE)
+>>>>>>> 78a09145e0
 						fprintf(fout, "%*s",
 								width_wrap[j] - chars_to_output, "");
 				}
@@ -990,15 +1046,24 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 				/* Print column divider, if not the last column */
 				if (opt_border != 0 && j < col_count - 1)
 				{
+<<<<<<< HEAD
 					if (wrap[j + 1] == PRINT_LINE_WRAP_WRAP)
 						fputs(format->midvrule_wrap, fout);
 					else if (wrap[j + 1] == PRINT_LINE_WRAP_NEWLINE)
+=======
+					if (wrap[j+1] == PRINT_LINE_WRAP_WRAP)
+						fputs(format->midvrule_wrap, fout);
+					else if (wrap[j+1] == PRINT_LINE_WRAP_NEWLINE)
+>>>>>>> 78a09145e0
 						fputs(format->midvrule_nl, fout);
 					else if (col_lineptrs[j + 1][curr_nl_line[j + 1]].ptr == NULL)
 						fputs(format->midvrule_blank, fout);
 					else
 						fputs(dformat->midvrule, fout);
+<<<<<<< HEAD
 
+=======
+>>>>>>> 78a09145e0
 				}
 			}
 
@@ -1053,17 +1118,29 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 
 
 static void
+<<<<<<< HEAD
 print_aligned_vertical_line(const printTextFormat *format,
 							const unsigned short opt_border,
+=======
+print_aligned_vertical_line(const printTableContent *cont,
+>>>>>>> 78a09145e0
 							unsigned long record,
 							unsigned int hwidth,
 							unsigned int dwidth,
 							printTextRule pos,
 							FILE *fout)
 {
+<<<<<<< HEAD
 	const printTextLineFormat *lformat = &format->lrule[pos];
 	unsigned int i;
 	int			reclen = 0;
+=======
+	const printTextFormat *format = get_line_style(cont->opt);
+	const printTextLineFormat *lformat = &format->lrule[pos];
+	unsigned short	opt_border = cont->opt->border;
+	unsigned int	i;
+	int		reclen = 0;
+>>>>>>> 78a09145e0
 
 	if (opt_border == 2)
 		fprintf(fout, "%s%s", lformat->leftvrule, lformat->hrule);
@@ -1204,8 +1281,13 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 			break;
 
 		if (i == 0)
+<<<<<<< HEAD
 			pos = PRINT_RULE_TOP;
 		else if (!(*(ptr + 1)))
+=======
+	  		pos = PRINT_RULE_TOP;
+		else if (!(*(ptr+1)))
+>>>>>>> 78a09145e0
 			pos = PRINT_RULE_BOTTOM;
 		else
 			pos = PRINT_RULE_MIDDLE;
@@ -1213,11 +1295,19 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 		if (i % cont->ncolumns == 0)
 		{
 			if (!opt_tuples_only)
+<<<<<<< HEAD
 				print_aligned_vertical_line(format, opt_border, record++,
 											hwidth, dwidth, pos, fout);
 			else if (i != 0 || !cont->opt->start_table || opt_border == 2)
 				print_aligned_vertical_line(format, opt_border, 0, hwidth,
 											dwidth, pos, fout);
+=======
+				print_aligned_vertical_line(cont, record++, hwidth, dwidth,
+											pos, fout);
+			else if (i != 0 || !cont->opt->start_table || opt_border == 2)
+				print_aligned_vertical_line(cont, 0, hwidth, dwidth,
+											pos, fout);
+>>>>>>> 78a09145e0
 		}
 
 		/* Format the header */
@@ -1252,12 +1342,36 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 
 			if (!dcomplete)
 			{
+<<<<<<< HEAD
 				if (opt_border < 2)
 					fprintf(fout, "%s\n", dlineptr[line_count].ptr);
 				else
 					fprintf(fout, "%-s%*s %s\n", dlineptr[line_count].ptr,
 							dwidth - dlineptr[line_count].width, "",
 							dformat->rightvrule);
+=======
+				if (cont->aligns[i % cont->ncolumns] == 'r' && opt_numeric_locale)
+				{
+					char	   *my_cell = format_numeric_locale((char *) dlineptr[line_count].ptr);
+
+					if (opt_border < 2)
+						fprintf(fout, "%s\n", my_cell);
+					else
+						fprintf(fout, "%-s%*s %s\n", my_cell,
+								(int) (dwidth - strlen(my_cell)), "",
+								dformat->rightvrule);
+					free(my_cell);
+				}
+				else
+				{
+					if (opt_border < 2)
+						fprintf(fout, "%s\n", dlineptr[line_count].ptr);
+					else
+						fprintf(fout, "%-s%*s %s\n", dlineptr[line_count].ptr,
+								dwidth - dlineptr[line_count].width, "",
+								dformat->rightvrule);
+				}
+>>>>>>> 78a09145e0
 
 				if (!dlineptr[line_count + 1].ptr)
 					dcomplete = 1;
@@ -1276,7 +1390,11 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 	if (cont->opt->stop_table)
 	{
 		if (opt_border == 2 && !cancel_pressed)
+<<<<<<< HEAD
 			print_aligned_vertical_line(format, opt_border, 0, hwidth, dwidth,
+=======
+			print_aligned_vertical_line(cont, 0, hwidth, dwidth,
+>>>>>>> 78a09145e0
 										PRINT_RULE_BOTTOM, fout);
 
 		/* print footers */
@@ -2505,14 +2623,23 @@ const printTextFormat *
 get_line_style(const printTableOpt *opt)
 {
 	/*
+<<<<<<< HEAD
 	 * Note: this function mainly exists to preserve the convention that a
 	 * printTableOpt struct can be initialized to zeroes to get default
+=======
+	 * Note: this function mainly exists to preserve the convention that
+	 * a printTableOpt struct can be initialized to zeroes to get default
+>>>>>>> 78a09145e0
 	 * behavior.
 	 */
 	if (opt->line_style != NULL)
 		return opt->line_style;
 	else
+<<<<<<< HEAD
 		return &pg_asciiformat_old;   /* GPDB: Use old-ascii format for regression test compatibility */
+=======
+		return &pg_asciiformat;
+>>>>>>> 78a09145e0
 }
 
 /*

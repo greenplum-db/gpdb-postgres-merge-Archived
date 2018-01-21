@@ -71,6 +71,7 @@ create aggregate aggfns(integer,integer,text) (
    sfunc = aggfns_trans, stype = aggtype[],
    initcond = '{}'
 );
+<<<<<<< HEAD
 
 -- variadic aggregate
 create function least_accum(anyelement, variadic anyarray)
@@ -130,3 +131,5 @@ select string_concat(t) from (select * from aggtest2 limit 2000) tmp;
 drop table aggtest2;
 drop aggregate string_concat(text);
 drop function str_concat(text, text);
+=======
+>>>>>>> 78a09145e0

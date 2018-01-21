@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.35 2009/06/11 14:48:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.37 2009/10/26 02:26:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,12 +116,16 @@ freeBitmapState(BitmapHeapScanState *scanstate)
 static TupleTableSlot *
 BitmapHeapNext(BitmapHeapScanState *node)
 {
-	EState	   *estate;
 	ExprContext *econtext;
 	HeapScanDesc scan;
+<<<<<<< HEAD
 	Index		scanrelid;
 	Node  		*tbm;
 	GenericBMIterator *tbmiterator;
+=======
+	TIDBitmap  *tbm;
+	TBMIterator *tbmiterator;
+>>>>>>> 78a09145e0
 	TBMIterateResult *tbmres;
 	GenericBMIterator *prefetch_iterator;
 	OffsetNumber targoffset;
@@ -131,20 +135,24 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	/*
 	 * extract necessary information from index scan node
 	 */
-	estate = node->ss.ps.state;
 	econtext = node->ss.ps.ps_ExprContext;
 	slot = node->ss.ss_ScanTupleSlot;
+<<<<<<< HEAD
 
 	initScanDesc(node);
 
 	scan = node->ss_currentScanDesc;
 	scanrelid = ((BitmapHeapScan *) node->ss.ps.plan)->scan.scanrelid;
+=======
+	scan = node->ss.ss_currentScanDesc;
+>>>>>>> 78a09145e0
 	tbm = node->tbm;
 	tbmiterator = node->tbmiterator;
 	tbmres = node->tbmres;
 	prefetch_iterator = node->prefetch_iterator;
 
 	/*
+<<<<<<< HEAD
 	 * Check if we are evaluating PlanQual for tuple of this relation.
 	 * Additional checking is not good, but no other way for now. We could
 	 * introduce new nodes for this case and handle IndexScan --> NewNode
@@ -183,6 +191,8 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	}
 
 	/*
+=======
+>>>>>>> 78a09145e0
 	 * If we haven't yet performed the underlying index scan, do it, and begin
 	 * the iteration over the bitmap.
 	 *
@@ -500,6 +510,27 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 	scan->rs_ntuples = ntup;
 }
 
+/*
+ * BitmapHeapRecheck -- access method routine to recheck a tuple in EvalPlanQual
+ */
+static bool
+BitmapHeapRecheck(BitmapHeapScanState *node, TupleTableSlot *slot)
+{
+	ExprContext *econtext;
+
+	/*
+	 * extract necessary information from index scan node
+	 */
+	econtext = node->ss.ps.ps_ExprContext;
+
+	/* Does the tuple meet the original qual conditions? */
+	econtext->ecxt_scantuple = slot;
+
+	ResetExprContext(econtext);
+
+	return ExecQual(node->bitmapqualorig, econtext, false);
+}
+
 /* ----------------------------------------------------------------
  *		ExecBitmapHeapScan(node)
  * ----------------------------------------------------------------
@@ -507,10 +538,9 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 TupleTableSlot *
 ExecBitmapHeapScan(BitmapHeapScanState *node)
 {
-	/*
-	 * use BitmapHeapNext as access method
-	 */
-	return ExecScan(&node->ss, (ExecScanAccessMtd) BitmapHeapNext);
+	return ExecScan(&node->ss,
+					(ExecScanAccessMtd) BitmapHeapNext,
+					(ExecScanRecheckMtd) BitmapHeapRecheck);
 }
 
 /* ----------------------------------------------------------------
@@ -520,6 +550,7 @@ ExecBitmapHeapScan(BitmapHeapScanState *node)
 void
 ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt)
 {
+<<<<<<< HEAD
 	EState	   *estate;
 	Index		scanrelid;
 
@@ -530,6 +561,8 @@ ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt)
 
 	/* node->ss.ps.ps_TupFromTlist = false; */
 
+=======
+>>>>>>> 78a09145e0
 	/*
 	 * If we are being passed an outer tuple, link it into the "regular"
 	 * per-tuple econtext for possible qual eval.
@@ -542,17 +575,12 @@ ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt)
 		stdecontext->ecxt_outertuple = exprCtxt->ecxt_outertuple;
 	}
 
-	/* If this is re-scanning of PlanQual ... */
-	if (estate->es_evTuple != NULL &&
-		estate->es_evTuple[scanrelid - 1] != NULL)
-	{
-		estate->es_evTupleNull[scanrelid - 1] = false;
-	}
-
 	/* rescan to release any page pin */
 	heap_rescan(node->ss_currentScanDesc, NULL);
 
 	freeBitmapState(node);
+
+	ExecScanReScan(&node->ss);
 
 	/*
 	 * Always rescan the input immediately, to ensure we can pass down any
@@ -663,8 +691,6 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 		ExecInitExpr((Expr *) node->bitmapqualorig,
 					 (PlanState *) scanstate);
 
-#define BITMAPHEAPSCAN_NSLOTS 2
-
 	/*
 	 * tuple table initialization
 	 */
@@ -703,6 +729,7 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 	 */
 	return scanstate;
 }
+<<<<<<< HEAD
 
 int
 ExecCountSlotsBitmapHeapScan(BitmapHeapScan *node)
@@ -717,3 +744,5 @@ ExecEagerFreeBitmapHeapScan(BitmapHeapScanState *node)
 	freeScanDesc(node);
 	freeBitmapState(node);
 }
+=======
+>>>>>>> 78a09145e0

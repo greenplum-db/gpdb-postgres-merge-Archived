@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.110 2009/06/11 14:48:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.113 2009/11/06 21:57:57 adunstan Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -345,6 +345,39 @@ interpret_function_parameter_list(List *parameters,
 
 		if (fp->name && fp->name[0])
 		{
+			ListCell   *px;
+
+			/*
+			 * As of Postgres 8.5 we disallow using the same name for two
+			 * input or two output function parameters.  Depending on the
+			 * function's language, conflicting input and output names might
+			 * be bad too, but we leave it to the PL to complain if so.
+			 */
+			foreach(px, parameters)
+			{
+				FunctionParameter *prevfp = (FunctionParameter *) lfirst(px);
+
+				if (prevfp == fp)
+					break;
+				/* pure in doesn't conflict with pure out */
+				if ((fp->mode == FUNC_PARAM_IN ||
+					 fp->mode == FUNC_PARAM_VARIADIC) &&
+					(prevfp->mode == FUNC_PARAM_OUT ||
+					 prevfp->mode == FUNC_PARAM_TABLE))
+					continue;
+				if ((prevfp->mode == FUNC_PARAM_IN ||
+					 prevfp->mode == FUNC_PARAM_VARIADIC) &&
+					(fp->mode == FUNC_PARAM_OUT ||
+					 fp->mode == FUNC_PARAM_TABLE))
+					continue;
+				if (prevfp->name && prevfp->name[0] &&
+					strcmp(prevfp->name, fp->name) == 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+							 errmsg("parameter name \"%s\" used more than once",
+									fp->name)));
+			}
+
 			paramNames[i] = CStringGetTextDatum(fp->name);
 			have_names = true;
 		}
@@ -1489,6 +1522,7 @@ RenameFunction(List *name, List *argtypes, const char *newname)
 				 errmsg("function %s already exists in schema \"%s\"",
 						funcname_signature_string(newname,
 												  procForm->pronargs,
+												  NIL,
 											   procForm->proargtypes.values),
 						get_namespace_name(namespaceOid))));
 	}
@@ -2527,4 +2561,112 @@ CheckForModifySystemFunc(Oid funcOid, List *funcName)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission defined: \"%s\" is a system function",
 						NameListToString(funcName))));
+}
+
+
+/*
+ * ExecuteDoStmt
+ *		Execute inline procedural-language code
+ */
+void
+ExecuteDoStmt(DoStmt *stmt)
+{
+	InlineCodeBlock *codeblock = makeNode(InlineCodeBlock);
+	ListCell   *arg;
+	DefElem    *as_item = NULL;
+	DefElem    *language_item = NULL;
+	char	   *language;
+	char	   *languageName;
+	Oid			laninline;
+	HeapTuple	languageTuple;
+	Form_pg_language languageStruct;
+
+	/* Process options we got from gram.y */
+	foreach(arg, stmt->args)
+	{
+		DefElem    *defel = (DefElem *) lfirst(arg);
+
+		if (strcmp(defel->defname, "as") == 0)
+		{
+			if (as_item)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			as_item = defel;
+		}
+		else if (strcmp(defel->defname, "language") == 0)
+		{
+			if (language_item)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			language_item = defel;
+		}
+		else
+			elog(ERROR, "option \"%s\" not recognized",
+				 defel->defname);
+	}
+
+	if (as_item)
+		codeblock->source_text = strVal(as_item->arg);
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("no inline code specified")));
+
+	/* if LANGUAGE option wasn't specified, use the default language */
+	if (language_item)
+		language = strVal(language_item->arg);
+	else
+		language = default_do_language;
+
+	/* Convert language name to canonical case */
+	languageName = case_translate_language_name(language);
+
+	/* Look up the language and validate permissions */
+	languageTuple = SearchSysCache(LANGNAME,
+								   PointerGetDatum(languageName),
+								   0, 0, 0);
+	if (!HeapTupleIsValid(languageTuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("language \"%s\" does not exist", languageName),
+				 (PLTemplateExists(languageName) ?
+				  errhint("Use CREATE LANGUAGE to load the language into the database.") : 0)));
+
+	codeblock->langOid = HeapTupleGetOid(languageTuple);
+	languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
+	codeblock->langIsTrusted = languageStruct->lanpltrusted;
+
+	if (languageStruct->lanpltrusted)
+	{
+		/* if trusted language, need USAGE privilege */
+		AclResult	aclresult;
+
+		aclresult = pg_language_aclcheck(codeblock->langOid, GetUserId(),
+										 ACL_USAGE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_LANGUAGE,
+						   NameStr(languageStruct->lanname));
+	}
+	else
+	{
+		/* if untrusted language, must be superuser */
+		if (!superuser())
+			aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_LANGUAGE,
+						   NameStr(languageStruct->lanname));
+	}
+
+	/* get the handler function's OID */
+	laninline = languageStruct->laninline;
+	if (!OidIsValid(laninline))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("language \"%s\" does not support inline code execution",
+						NameStr(languageStruct->lanname))));
+
+	ReleaseSysCache(languageTuple);
+
+	/* execute the inline handler */
+	OidFunctionCall1(laninline, PointerGetDatum(codeblock));
 }

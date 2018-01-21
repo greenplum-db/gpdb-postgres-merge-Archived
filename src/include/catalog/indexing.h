@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.108 2009/06/11 14:49:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.111 2009/12/11 03:34:56 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,6 +171,9 @@ DECLARE_UNIQUE_INDEX(pg_language_oid_index, 2682, on pg_language using btree(oid
 DECLARE_UNIQUE_INDEX(pg_largeobject_loid_pn_index, 2683, on pg_largeobject using btree(loid oid_ops, pageno int4_ops));
 #define LargeObjectLOidPNIndexId  2683
 
+DECLARE_UNIQUE_INDEX(pg_largeobject_metadata_oid_index, 2996, on pg_largeobject_metadata using btree(oid oid_ops));
+#define LargeObjectMetadataOidIndexId	2996
+
 DECLARE_UNIQUE_INDEX(pg_namespace_nspname_index, 2684, on pg_namespace using btree(nspname name_ops));
 #define NamespaceNameIndexId  2684
 DECLARE_UNIQUE_INDEX(pg_namespace_oid_index, 2685, on pg_namespace using btree(oid oid_ops));
@@ -273,6 +276,7 @@ DECLARE_UNIQUE_INDEX(pg_user_mapping_oid_index, 174, on pg_user_mapping using bt
 DECLARE_UNIQUE_INDEX(pg_user_mapping_user_server_index, 175, on pg_user_mapping using btree(umuser oid_ops, umserver oid_ops));
 #define UserMappingUserServerIndexId	175
 
+<<<<<<< HEAD
 DECLARE_UNIQUE_INDEX(pg_extension_oid_index, 3080, on pg_extension using btree(oid oid_ops));
 #define ExtensionOidIndexId 3080
 
@@ -384,6 +388,15 @@ DECLARE_UNIQUE_INDEX(pg_compression_oid_index, 3058, on pg_compression using btr
 #define CompressionOidIndexId	3058
 DECLARE_UNIQUE_INDEX(pg_compression_compname_index, 3059, on pg_compression using btree(compname name_ops));
 #define CompressionCompnameIndexId	3059
+=======
+DECLARE_UNIQUE_INDEX(pg_default_acl_role_nsp_obj_index, 827, on pg_default_acl using btree(defaclrole oid_ops, defaclnamespace oid_ops, defaclobjtype char_ops));
+#define DefaultAclRoleNspObjIndexId	827
+DECLARE_UNIQUE_INDEX(pg_default_acl_oid_index, 828, on pg_default_acl using btree(oid oid_ops));
+#define DefaultAclOidIndexId	828
+
+DECLARE_UNIQUE_INDEX(pg_db_role_setting_databaseid_rol_index, 2965, on pg_db_role_setting using btree(setdatabase oid_ops, setrole oid_ops));
+#define DbRoleSettingDatidRolidIndexId	2965
+>>>>>>> 78a09145e0
 
 /* last step of initialization script: build the indexes declared above */
 BUILD_INDICES

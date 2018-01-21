@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.122 2009/06/11 14:49:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.125 2009/11/05 23:24:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -420,7 +420,6 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 				RowMarkClause *rc = (RowMarkClause *) lfirst(l);
 
 				rc->rti += offset;
-				rc->prti += offset;
 			}
 		}
 		query_tree_walker(qry, OffsetVarNodes_walker,
@@ -590,8 +589,6 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 
 				if (rc->rti == rt_index)
 					rc->rti = new_index;
-				if (rc->prti == rt_index)
-					rc->prti = new_index;
 			}
 		}
 		query_tree_walker(qry, ChangeVarNodes_walker,
@@ -982,15 +979,15 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 
 	/*
 	 * Currently, this is ONLY applied to rule-action queries, and so we
-	 * expect to find the *OLD* and *NEW* placeholder entries in the given
+	 * expect to find the OLD and NEW placeholder entries in the given
 	 * query.  If they're not there, it must be an INSERT/SELECT in which
 	 * they've been pushed down to the SELECT.
 	 */
 	if (list_length(parsetree->rtable) >= 2 &&
 		strcmp(rt_fetch(PRS2_OLD_VARNO, parsetree->rtable)->eref->aliasname,
-			   "*OLD*") == 0 &&
+			   "old") == 0 &&
 		strcmp(rt_fetch(PRS2_NEW_VARNO, parsetree->rtable)->eref->aliasname,
-			   "*NEW*") == 0)
+			   "new") == 0)
 		return parsetree;
 	Assert(parsetree->jointree && IsA(parsetree->jointree, FromExpr));
 	if (list_length(parsetree->jointree->fromlist) != 1)
@@ -1004,9 +1001,9 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 		elog(ERROR, "expected to find SELECT subquery");
 	if (list_length(selectquery->rtable) >= 2 &&
 		strcmp(rt_fetch(PRS2_OLD_VARNO, selectquery->rtable)->eref->aliasname,
-			   "*OLD*") == 0 &&
+			   "old") == 0 &&
 		strcmp(rt_fetch(PRS2_NEW_VARNO, selectquery->rtable)->eref->aliasname,
-			   "*NEW*") == 0)
+			   "new") == 0)
 	{
 		if (subquery_ptr)
 			*subquery_ptr = &(selectrte->subquery);
@@ -1351,6 +1348,141 @@ map_variable_attnos(Node *node,
 
 
 /*
+ * replace_rte_variables() finds all Vars in an expression tree
+ * that reference a particular RTE, and replaces them with substitute
+ * expressions obtained from a caller-supplied callback function.
+ *
+ * When invoking replace_rte_variables on a portion of a Query, pass the
+ * address of the containing Query's hasSubLinks field as outer_hasSubLinks.
+ * Otherwise, pass NULL, but inserting a SubLink into a non-Query expression
+ * will then cause an error.
+ *
+ * Note: the business with inserted_sublink is needed to update hasSubLinks
+ * in subqueries when the replacement adds a subquery inside a subquery.
+ * Messy, isn't it?  We do not need to do similar pushups for hasAggs,
+ * because it isn't possible for this transformation to insert a level-zero
+ * aggregate reference into a subquery --- it could only insert outer aggs.
+ * Likewise for hasWindowFuncs.
+ *
+ * Note: usually, we'd not expose the mutator function or context struct
+ * for a function like this.  We do so because callbacks often find it
+ * convenient to recurse directly to the mutator on sub-expressions of
+ * what they will return.
+ */
+Node *
+replace_rte_variables(Node *node, int target_varno, int sublevels_up,
+					  replace_rte_variables_callback callback,
+					  void *callback_arg,
+					  bool *outer_hasSubLinks)
+{
+	Node	   *result;
+	replace_rte_variables_context context;
+
+	context.callback = callback;
+	context.callback_arg = callback_arg;
+	context.target_varno = target_varno;
+	context.sublevels_up = sublevels_up;
+
+	/*
+	 * We try to initialize inserted_sublink to true if there is no need to
+	 * detect new sublinks because the query already has some.
+	 */
+	if (node && IsA(node, Query))
+		context.inserted_sublink = ((Query *) node)->hasSubLinks;
+	else if (outer_hasSubLinks)
+		context.inserted_sublink = *outer_hasSubLinks;
+	else
+		context.inserted_sublink = false;
+
+	/*
+	 * Must be prepared to start with a Query or a bare expression tree; if
+	 * it's a Query, we don't want to increment sublevels_up.
+	 */
+	result = query_or_expression_tree_mutator(node,
+											  replace_rte_variables_mutator,
+											  (void *) &context,
+											  0);
+
+	if (context.inserted_sublink)
+	{
+		if (result && IsA(result, Query))
+			((Query *) result)->hasSubLinks = true;
+		else if (outer_hasSubLinks)
+			*outer_hasSubLinks = true;
+		else
+			elog(ERROR, "replace_rte_variables inserted a SubLink, but has noplace to record it");
+	}
+
+	return result;
+}
+
+Node *
+replace_rte_variables_mutator(Node *node,
+							  replace_rte_variables_context *context)
+{
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+
+		if (var->varno == context->target_varno &&
+			var->varlevelsup == context->sublevels_up)
+		{
+			/* Found a matching variable, make the substitution */
+			Node	   *newnode;
+
+			newnode = (*context->callback) (var, context);
+			/* Detect if we are adding a sublink to query */
+			if (!context->inserted_sublink)
+				context->inserted_sublink = checkExprHasSubLink(newnode);
+			return newnode;
+		}
+		/* otherwise fall through to copy the var normally */
+	}
+	else if (IsA(node, CurrentOfExpr))
+	{
+		CurrentOfExpr *cexpr = (CurrentOfExpr *) node;
+
+		if (cexpr->cvarno == context->target_varno &&
+			context->sublevels_up == 0)
+		{
+			/*
+			 * We get here if a WHERE CURRENT OF expression turns out to apply
+			 * to a view.  Someday we might be able to translate the
+			 * expression to apply to an underlying table of the view, but
+			 * right now it's not implemented.
+			 */
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				   errmsg("WHERE CURRENT OF on a view is not implemented")));
+		}
+		/* otherwise fall through to copy the expr normally */
+	}
+	else if (IsA(node, Query))
+	{
+		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
+		Query	   *newnode;
+		bool		save_inserted_sublink;
+
+		context->sublevels_up++;
+		save_inserted_sublink = context->inserted_sublink;
+		context->inserted_sublink = ((Query *) node)->hasSubLinks;
+		newnode = query_tree_mutator((Query *) node,
+									 replace_rte_variables_mutator,
+									 (void *) context,
+									 0);
+		newnode->hasSubLinks |= context->inserted_sublink;
+		context->inserted_sublink = save_inserted_sublink;
+		context->sublevels_up--;
+		return (Node *) newnode;
+	}
+	return expression_tree_mutator(node, replace_rte_variables_mutator,
+								   (void *) context);
+}
+
+
+/*
  * ResolveNew - replace Vars with corresponding items from a targetlist
  *
  * Vars matching target_varno and sublevels_up are replaced by the
@@ -1362,12 +1494,7 @@ map_variable_attnos(Node *node,
  * relation.  This is needed to handle whole-row Vars referencing the target.
  * We expand such Vars into RowExpr constructs.
  *
- * Note: the business with inserted_sublink is needed to update hasSubLinks
- * in subqueries when the replacement adds a subquery inside a subquery.
- * Messy, isn't it?  We do not need to do similar pushups for hasAggs,
- * because it isn't possible for this transformation to insert a level-zero
- * aggregate reference into a subquery --- it could only insert outer aggs.
- * Likewise for hasWindowFuncs.
+ * outer_hasSubLinks works the same as for replace_rte_variables().
  */
 
 typedef struct
@@ -1415,7 +1542,11 @@ ResolveNew_callback(Var *var,
 
 		return (Node *) rowexpr;
 	}
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> 78a09145e0
 	/* Normal case referencing one targetlist element */
 	tle = get_tle_by_resno(rcon->targetlist, var->varattno);
 

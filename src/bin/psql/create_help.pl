@@ -5,7 +5,11 @@
 #
 # Copyright (c) 2000-2010, PostgreSQL Global Development Group
 #
+<<<<<<< HEAD
 # src/bin/psql/create_help.pl
+=======
+# $PostgreSQL: pgsql/src/bin/psql/create_help.pl,v 1.20 2009/09/18 05:00:42 petere Exp $
+>>>>>>> 78a09145e0
 #################################################################
 
 #

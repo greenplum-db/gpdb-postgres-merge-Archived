@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.250 2009/02/18 15:58:41 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.254 2009/12/07 05:22:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
+#include "storage/procsignal.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -55,10 +56,7 @@ static void CheckerModeMain(void);
 static void BootstrapModeMain(void);
 static void bootstrap_signals(void);
 static void ShutdownAuxiliaryProcess(int code, Datum arg);
-static hashnode *AddStr(char *str, int strlength, int mderef);
 static Form_pg_attribute AllocateAttribute(void);
-static int	CompHash(char *str, int len);
-static hashnode *FindStr(char *str, int length, hashnode *mderef);
 static Oid	gettype(char *type);
 static void cleanup(void);
 
@@ -70,30 +68,11 @@ static void cleanup(void);
 Relation	boot_reldesc;		/* current relation descriptor */
 AuxProcType MyAuxProcType = NotAnAuxProcess;
 
+Form_pg_attribute attrtypes[MAXATTR];	/* points to attribute info */
+int			numattr;			/* number of attributes for cur. rel */
+
+
 /*
- * In the lexical analyzer, we need to get the reference number quickly from
- * the string, and the string from the reference number.  Thus we have
- * as our data structure a hash table, where the hashing key taken from
- * the particular string.  The hash table is chained.  One of the fields
- * of the hash table node is an index into the array of character pointers.
- * The unique index number that every string is assigned is simply the
- * position of its string pointer in the array of string pointers.
- */
-
-#define STRTABLESIZE	10000
-#define HASHTABLESIZE	503
-
-/* Hash function numbers */
-#define NUM		23
-#define NUMSQR	529
-#define NUMCUBE 12167
-
-char	   *strtable[STRTABLESIZE];
-hashnode   *hashtable[HASHTABLESIZE];
-
-static int	strtable_end = -1;	/* Tells us last occupied string space */
-
-/*-
  * Basic information associated with each type.  This is used before
  * pg_type is created.
  *
@@ -172,11 +151,8 @@ struct typmap
 static struct typmap **Typ = NULL;
 static struct typmap *Ap = NULL;
 
+static Datum values[MAXATTR];	/* current row's attribute values */
 static bool Nulls[MAXATTR];
-
-Form_pg_attribute attrtypes[MAXATTR];	/* points to attribute info */
-static Datum values[MAXATTR];	/* corresponding attribute values */
-int			numattr;			/* number of attributes for cur. rel */
 
 static MemoryContext nogc = NULL;		/* special no-gc mem context */
 
@@ -417,6 +393,19 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		InitAuxiliaryProcess();
 #endif
 
+		/*
+		 * Assign the ProcSignalSlot for an auxiliary process.  Since it
+		 * doesn't have a BackendId, the slot is statically allocated based on
+		 * the auxiliary process type (auxType).  Backends use slots indexed
+		 * in the range from 1 to MaxBackends (inclusive), so we use
+		 * MaxBackends + AuxProcType + 1 as the index of the slot for an
+		 * auxiliary process.
+		 *
+		 * This will need rethinking if we ever want more than one of a
+		 * particular auxiliary process type.
+		 */
+		ProcSignalInit(MaxBackends + auxType + 1);
+
 		/* finish setting up bufmgr.c */
 		InitBufferPoolBackend();
 
@@ -527,10 +516,6 @@ BootstrapModeMain(void)
 		attrtypes[i] = NULL;
 		Nulls[i] = false;
 	}
-	for (i = 0; i < STRTABLESIZE; ++i)
-		strtable[i] = NULL;
-	for (i = 0; i < HASHTABLESIZE; ++i)
-		hashtable[i] = NULL;
 
 	/*
 	 * Process bootstrap input.
@@ -783,6 +768,7 @@ DefineAttr(char *name, char *type, int attnum)
 	}
 
 	attrtypes[attnum]->attstattarget = -1;
+	attrtypes[attnum]->attdistinct = 0;
 	attrtypes[attnum]->attcacheoff = -1;
 	attrtypes[attnum]->atttypmod = -1;
 	attrtypes[attnum]->attislocal = true;
@@ -1105,6 +1091,7 @@ MapArrayTypeName(char *s)
 	return newStr;
 }
 
+<<<<<<< HEAD
 /* ----------------
  *		EnterString
  *		returns the string table position of the identifier
@@ -1267,6 +1254,8 @@ AddStr(char *str, int strlength, int mderef)
 }
 
 
+=======
+>>>>>>> 78a09145e0
 
 /*
  *	index_register() -- record an index that has been set up for building
@@ -1316,6 +1305,10 @@ index_register(Oid heap,
 	newind->il_info->ii_Predicate = (List *)
 		copyObject(indexInfo->ii_Predicate);
 	newind->il_info->ii_PredicateState = NIL;
+	/* no exclusion constraints at bootstrap time, so no need to copy */
+	Assert(indexInfo->ii_ExclusionOps == NULL);
+	Assert(indexInfo->ii_ExclusionProcs == NULL);
+	Assert(indexInfo->ii_ExclusionStrats == NULL);
 
 	newind->il_next = ILHead;
 	ILHead = newind;

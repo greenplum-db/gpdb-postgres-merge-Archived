@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.222 2009/06/11 14:48:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.228 2009/12/15 17:57:46 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not need to have any readfuncs support, because we
@@ -376,8 +376,12 @@ _readQuery(void)
 	READ_BOOL_FIELD(hasSubLinks);
 	READ_BOOL_FIELD(hasDistinctOn);
 	READ_BOOL_FIELD(hasRecursive);
+<<<<<<< HEAD
 	READ_BOOL_FIELD(hasDynamicFunctions);
 	READ_BOOL_FIELD(hasFuncsWithExecRestrictions);
+=======
+	READ_BOOL_FIELD(hasForUpdate);
+>>>>>>> 78a09145e0
 	READ_NODE_FIELD(cteList);
 	READ_NODE_FIELD(rtable);
 	READ_NODE_FIELD(jointree);
@@ -548,10 +552,9 @@ _readRowMarkClause(void)
 	READ_LOCALS(RowMarkClause);
 
 	READ_UINT_FIELD(rti);
-	READ_UINT_FIELD(prti);
 	READ_BOOL_FIELD(forUpdate);
 	READ_BOOL_FIELD(noWait);
-	READ_BOOL_FIELD(isParent);
+	READ_BOOL_FIELD(pushedDown);
 
 	READ_DONE();
 }
@@ -1286,11 +1289,15 @@ _readAggref(void)
 	READ_NODE_FIELD(args);
 	READ_NODE_FIELD(aggorder);
 	READ_NODE_FIELD(aggdistinct);
+<<<<<<< HEAD
 	READ_NODE_FIELD(aggfilter);
 	READ_BOOL_FIELD(aggstar);
 	READ_BOOL_FIELD(aggvariadic);
 	READ_CHAR_FIELD(aggkind);
 	READ_ENUM_FIELD(aggstage, AggStage);
+=======
+	READ_BOOL_FIELD(aggstar);
+>>>>>>> 78a09145e0
 	READ_UINT_FIELD(agglevelsup);
 	READ_LOCATION_FIELD(location);
 
@@ -1360,6 +1367,22 @@ _readFuncExpr(void)
 }
 
 #ifndef COMPILING_BINARY_FUNCS
+/*
+ * _readNamedArgExpr
+ */
+static NamedArgExpr *
+_readNamedArgExpr(void)
+{
+	READ_LOCALS(NamedArgExpr);
+
+	READ_NODE_FIELD(arg);
+	READ_STRING_FIELD(name);
+	READ_INT_FIELD(argnumber);
+	READ_LOCATION_FIELD(location);
+
+	READ_DONE();
+}
+
 /*
  * _readOpExpr
  */
@@ -1910,8 +1933,12 @@ _readJoinExpr(void)
 	READ_BOOL_FIELD(isNatural);
 	READ_NODE_FIELD(larg);
 	READ_NODE_FIELD(rarg);
+<<<<<<< HEAD
     /* CDB: subqfromlist is used only within planner; don't need to read it */
 	READ_NODE_FIELD(usingClause);   /*CDB*/
+=======
+	READ_NODE_FIELD(usingClause);
+>>>>>>> 78a09145e0
 	READ_NODE_FIELD(quals);
 	READ_NODE_FIELD(alias);
 	READ_INT_FIELD(rtindex);
@@ -2870,6 +2897,8 @@ parseNodeString(void)
 		return_value = _readArrayRef();
 	else if (MATCH("FUNCEXPR", 8))
 		return_value = _readFuncExpr();
+	else if (MATCH("NAMEDARGEXPR", 12))
+		return_value = _readNamedArgExpr();
 	else if (MATCH("OPEXPR", 6))
 		return_value = _readOpExpr();
 	else if (MATCH("DISTINCTEXPR", 12))

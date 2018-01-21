@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.46 2009/06/11 14:49:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.52 2009/12/11 03:34:56 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,7 +130,9 @@ fmtId(const char *rawid)
 		 * Note: ScanKeywordLookup() does case-insensitive comparison, but
 		 * that's fine, since we already know we have all-lower-case.
 		 */
-		const ScanKeyword *keyword = ScanKeywordLookup(rawid);
+		const ScanKeyword *keyword = ScanKeywordLookup(rawid,
+													   ScanKeywords,
+													   NumScanKeywords);
 
 		if (keyword != NULL && keyword->category != UNRESERVED_KEYWORD)
 			need_quotes = true;
@@ -335,6 +337,7 @@ void
 appendByteaLiteral(PQExpBuffer buf, const unsigned char *str, size_t length,
 				   bool std_strings)
 {
+<<<<<<< HEAD
 	const unsigned char *vp;
 	unsigned char *rp;
 	size_t		i;
@@ -398,6 +401,42 @@ appendByteaLiteral(PQExpBuffer buf, const unsigned char *str, size_t length,
 	*rp = '\0';
 
 	buf->len = ((char *) rp) - buf->data;
+=======
+	const unsigned char *source = str;
+	char	   *target;
+
+	static const char hextbl[] = "0123456789abcdef";
+
+	/*
+	 * This implementation is hard-wired to produce hex-format output.
+	 * We do not know the server version the output will be loaded into,
+	 * so making an intelligent format choice is impossible.  It might be
+	 * better to always use the old escaped format.
+	 */
+	if (!enlargePQExpBuffer(buf, 2 * length + 5))
+		return;
+
+	target = buf->data + buf->len;
+	*target++ = '\'';
+	if (!std_strings)
+		*target++ = '\\';
+	*target++ = '\\';
+	*target++ = 'x';
+
+	while (length-- > 0)
+	{
+		unsigned char c = *source++;
+
+		*target++ = hextbl[(c >> 4) & 0xF];
+		*target++ = hextbl[c & 0xF];
+	}
+
+	/* Write the terminating quote and NUL character. */
+	*target++ = '\'';
+	*target = '\0';
+
+	buf->len = target - buf->data;
+>>>>>>> 78a09145e0
 }
 
 
@@ -517,10 +556,14 @@ parsePGArray(const char *atext, char ***itemarray, int *nitems)
  *	acls: the ACL string fetched from the database
  *	owner: username of object owner (will be passed through fmtId); can be
  *		NULL or empty string to indicate "no owner known"
+ *	prefix: string to prefix to each generated command; typically empty
  *	remoteVersion: version of database
  *
  * Returns TRUE if okay, FALSE if could not parse the acl string.
  * The resulting commands (if any) are appended to the contents of 'sql'.
+ *
+ * Note: when processing a default ACL, prefix is "ALTER DEFAULT PRIVILEGES "
+ * or something similar, and name is an empty string.
  *
  * Note: beware of passing a fmtId() result directly as 'name' or 'subname',
  * since this routine uses fmtId() internally.
@@ -528,7 +571,7 @@ parsePGArray(const char *atext, char ***itemarray, int *nitems)
 bool
 buildACLCommands(const char *name, const char *subname,
 				 const char *type, const char *acls, const char *owner,
-				 int remoteVersion,
+				 const char *prefix, int remoteVersion,
 				 PQExpBuffer sql)
 {
 	char	  **aclitems;
@@ -576,7 +619,7 @@ buildACLCommands(const char *name, const char *subname,
 	 * wire-in knowledge about the default public privileges for different
 	 * kinds of objects.
 	 */
-	appendPQExpBuffer(firstsql, "REVOKE ALL");
+	appendPQExpBuffer(firstsql, "%sREVOKE ALL", prefix);
 	if (subname)
 		appendPQExpBuffer(firstsql, "(%s)", subname);
 	appendPQExpBuffer(firstsql, " ON %s %s FROM PUBLIC;\n", type, name);
@@ -591,8 +634,8 @@ buildACLCommands(const char *name, const char *subname,
 	if (remoteVersion < 80200 && strcmp(type, "DATABASE") == 0)
 	{
 		/* database CONNECT priv didn't exist before 8.2 */
-		appendPQExpBuffer(firstsql, "GRANT CONNECT ON %s %s TO PUBLIC;\n",
-						  type, name);
+		appendPQExpBuffer(firstsql, "%sGRANT CONNECT ON %s %s TO PUBLIC;\n",
+						  prefix, type, name);
 	}
 
 	/* Scan individual ACL items */
@@ -625,20 +668,20 @@ buildACLCommands(const char *name, const char *subname,
 					? strcmp(privswgo->data, "ALL") != 0
 					: strcmp(privs->data, "ALL") != 0)
 				{
-					appendPQExpBuffer(firstsql, "REVOKE ALL");
+					appendPQExpBuffer(firstsql, "%sREVOKE ALL", prefix);
 					if (subname)
 						appendPQExpBuffer(firstsql, "(%s)", subname);
 					appendPQExpBuffer(firstsql, " ON %s %s FROM %s;\n",
 									  type, name, fmtId(grantee->data));
 					if (privs->len > 0)
 						appendPQExpBuffer(firstsql,
-										  "GRANT %s ON %s %s TO %s;\n",
-										  privs->data, type, name,
+										  "%sGRANT %s ON %s %s TO %s;\n",
+										  prefix, privs->data, type, name,
 										  fmtId(grantee->data));
 					if (privswgo->len > 0)
 						appendPQExpBuffer(firstsql,
-							  "GRANT %s ON %s %s TO %s WITH GRANT OPTION;\n",
-										  privswgo->data, type, name,
+							  "%sGRANT %s ON %s %s TO %s WITH GRANT OPTION;\n",
+										  prefix, privswgo->data, type, name,
 										  fmtId(grantee->data));
 				}
 			}
@@ -654,8 +697,8 @@ buildACLCommands(const char *name, const char *subname,
 
 				if (privs->len > 0)
 				{
-					appendPQExpBuffer(secondsql, "GRANT %s ON %s %s TO ",
-									  privs->data, type, name);
+					appendPQExpBuffer(secondsql, "%sGRANT %s ON %s %s TO ",
+									  prefix, privs->data, type, name);
 					if (grantee->len == 0)
 						appendPQExpBuffer(secondsql, "PUBLIC;\n");
 					else if (strncmp(grantee->data, "group ",
@@ -667,8 +710,8 @@ buildACLCommands(const char *name, const char *subname,
 				}
 				if (privswgo->len > 0)
 				{
-					appendPQExpBuffer(secondsql, "GRANT %s ON %s %s TO ",
-									  privswgo->data, type, name);
+					appendPQExpBuffer(secondsql, "%sGRANT %s ON %s %s TO ",
+									  prefix, privswgo->data, type, name);
 					if (grantee->len == 0)
 						appendPQExpBuffer(secondsql, "PUBLIC");
 					else if (strncmp(grantee->data, "group ",
@@ -692,7 +735,7 @@ buildACLCommands(const char *name, const char *subname,
 	 */
 	if (!found_owner_privs && owner)
 	{
-		appendPQExpBuffer(firstsql, "REVOKE ALL");
+		appendPQExpBuffer(firstsql, "%sREVOKE ALL", prefix);
 		if (subname)
 			appendPQExpBuffer(firstsql, "(%s)", subname);
 		appendPQExpBuffer(firstsql, " ON %s %s FROM %s;\n",
@@ -711,6 +754,50 @@ buildACLCommands(const char *name, const char *subname,
 	free(aclitems);
 
 	return true;
+}
+
+/*
+ * Build ALTER DEFAULT PRIVILEGES command(s) for single pg_default_acl entry.
+ *
+ *	type: the object type (TABLES, FUNCTIONS, etc)
+ *	nspname: schema name, or NULL for global default privileges
+ *	acls: the ACL string fetched from the database
+ *	owner: username of privileges owner (will be passed through fmtId)
+ *	remoteVersion: version of database
+ *
+ * Returns TRUE if okay, FALSE if could not parse the acl string.
+ * The resulting commands (if any) are appended to the contents of 'sql'.
+ */
+bool
+buildDefaultACLCommands(const char *type, const char *nspname,
+						const char *acls, const char *owner,
+						int remoteVersion,
+						PQExpBuffer sql)
+{
+	bool		result;
+	PQExpBuffer prefix;
+
+	prefix = createPQExpBuffer();
+
+	/*
+	 * We incorporate the target role directly into the command, rather than
+	 * playing around with SET ROLE or anything like that.  This is so that
+	 * a permissions error leads to nothing happening, rather than
+	 * changing default privileges for the wrong user.
+	 */
+	appendPQExpBuffer(prefix, "ALTER DEFAULT PRIVILEGES FOR ROLE %s ",
+					  fmtId(owner));
+	if (nspname)
+		appendPQExpBuffer(prefix, "IN SCHEMA %s ", fmtId(nspname));
+
+	result = buildACLCommands("", NULL,
+							  type, acls, owner,
+							  prefix->data, remoteVersion,
+							  sql);
+
+	destroyPQExpBuffer(prefix);
+
+	return result;
 }
 
 /*
@@ -790,11 +877,13 @@ do { \
 	resetPQExpBuffer(privs);
 	resetPQExpBuffer(privswgo);
 
-	if (strcmp(type, "TABLE") == 0 || strcmp(type, "SEQUENCE") == 0)
+	if (strcmp(type, "TABLE") == 0 || strcmp(type, "SEQUENCE") == 0 ||
+		strcmp(type, "TABLES") == 0 || strcmp(type, "SEQUENCES") == 0)
 	{
 		CONVERT_PRIV('r', "SELECT");
 
-		if (strcmp(type, "SEQUENCE") == 0)
+		if (strcmp(type, "SEQUENCE") == 0 ||
+			strcmp(type, "SEQUENCES") == 0)
 			/* sequence only */
 			CONVERT_PRIV('U', "USAGE");
 		else
@@ -817,9 +906,20 @@ do { \
 		}
 
 		/* UPDATE */
+<<<<<<< HEAD
 		CONVERT_PRIV('w', "UPDATE");
+=======
+		if (remoteVersion >= 70200 ||
+			strcmp(type, "SEQUENCE") == 0 ||
+			strcmp(type, "SEQUENCES") == 0)
+			CONVERT_PRIV('w', "UPDATE");
+		else
+			/* 7.0 and 7.1 have a simpler worldview */
+			CONVERT_PRIV('w', "UPDATE,DELETE");
+>>>>>>> 78a09145e0
 	}
-	else if (strcmp(type, "FUNCTION") == 0)
+	else if (strcmp(type, "FUNCTION") == 0 ||
+			 strcmp(type, "FUNCTIONS") == 0)
 		CONVERT_PRIV('X', "EXECUTE");
 	else if (strcmp(type, "LANGUAGE") == 0)
 		CONVERT_PRIV('U', "USAGE");
@@ -840,10 +940,17 @@ do { \
 		CONVERT_PRIV('U', "USAGE");
 	else if (strcmp(type, "SERVER") == 0)
 		CONVERT_PRIV('U', "USAGE");
+<<<<<<< HEAD
 	else if (strcmp(type, "PROTOCOL") == 0)
 	{
 		CONVERT_PRIV('r', "SELECT");
 		CONVERT_PRIV('a', "INSERT");
+=======
+	else if (strcmp(type, "LARGE OBJECT") == 0)
+	{
+		CONVERT_PRIV('r', "SELECT");
+		CONVERT_PRIV('w', "UPDATE");
+>>>>>>> 78a09145e0
 	}
 	else
 		abort();
@@ -930,7 +1037,8 @@ AddAcl(PQExpBuffer aclbuf, const char *keyword, const char *subname)
  *
  * Scan a wildcard-pattern string and generate appropriate WHERE clauses
  * to limit the set of objects returned.  The WHERE clauses are appended
- * to the already-partially-constructed query in buf.
+ * to the already-partially-constructed query in buf.  Returns whether
+ * any clause was added.
  *
  * conn: connection query will be sent to (consulted for escaping rules).
  * buf: output parameter.
@@ -949,7 +1057,7 @@ AddAcl(PQExpBuffer aclbuf, const char *keyword, const char *subname)
  * Formatting note: the text already present in buf should end with a newline.
  * The appended text, if any, will end with one too.
  */
-void
+bool
 processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 					  bool have_where, bool force_escape,
 					  const char *schemavar, const char *namevar,
@@ -961,9 +1069,11 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 	bool		inquotes;
 	const char *cp;
 	int			i;
+	bool		added_clause = false;
 
 #define WHEREAND() \
-	(appendPQExpBufferStr(buf, have_where ? "  AND " : "WHERE "), have_where = true)
+	(appendPQExpBufferStr(buf, have_where ? "  AND " : "WHERE "), \
+	 have_where = true, added_clause = true)
 
 	if (pattern == NULL)
 	{
@@ -973,7 +1083,7 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 			WHEREAND();
 			appendPQExpBuffer(buf, "%s\n", visibilityrule);
 		}
-		return;
+		return added_clause;
 	}
 
 	initPQExpBuffer(&schemabuf);
@@ -1130,6 +1240,7 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 	termPQExpBuffer(&schemabuf);
 	termPQExpBuffer(&namebuf);
 
+	return added_clause;
 #undef WHEREAND
 }
 

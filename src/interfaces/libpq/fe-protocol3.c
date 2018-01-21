@@ -9,7 +9,11 @@
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-protocol3.c
+=======
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.40 2009/12/02 04:38:35 tgl Exp $
+>>>>>>> 78a09145e0
  *
  *-------------------------------------------------------------------------
  */
@@ -2179,10 +2183,13 @@ build_startup_packet(const PGconn *conn, char *packet,
 		ADD_STARTUP_OPTION("user", conn->pguser);
 	if (conn->dbName && conn->dbName[0])
 		ADD_STARTUP_OPTION("database", conn->dbName);
+<<<<<<< HEAD
 	if (conn->replication && conn->replication[0])
 		ADD_STARTUP_OPTION("replication", conn->replication);
 	if (conn->gpconntype && conn->gpconntype[0])
 		ADD_STARTUP_OPTION(GPCONN_TYPE, conn->gpconntype);
+=======
+>>>>>>> 78a09145e0
 	if (conn->pgoptions && conn->pgoptions[0])
 		ADD_STARTUP_OPTION("options", conn->pgoptions);
 	if (conn->send_appname)

@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.132 2009/01/01 17:23:34 momjian Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.136 2009/09/05 21:14:04 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -31,6 +31,7 @@ endif
 
 include $(srcdir)/common.mk
 
+<<<<<<< HEAD
 # As of 1/2010:
 # The probes.o file is necessary for dtrace support on Solaris, and on recent
 # versions of systemtap.  (Older systemtap releases just produce an empty
@@ -38,6 +39,15 @@ include $(srcdir)/common.mk
 # even recognize the -G option.  So, build probes.o except on Darwin.
 # This might need adjustment as other platforms add dtrace support.
 ifneq ($(PORTNAME), darwin)
+=======
+# As of 9/2009:
+# * The probes.o file is necessary for dtrace support on Solaris.
+# * OS X's dtrace doesn't use it and doesn't even recognize the -G option.
+# * Systemtap's dtrace will take -G, but it produces a useless empty file.
+# So, build probes.o only on Solaris.
+# This will likely need adjustment as other platforms add dtrace support.
+ifeq ($(PORTNAME), solaris)
+>>>>>>> 78a09145e0
 ifeq ($(enable_dtrace), yes)
 LOCALOBJS += utils/probes.o
 endif
@@ -142,7 +152,7 @@ postgres.o: $(OBJS)
 # the make files in our subdirectories. Note that it's important we
 # match the dependencies shown in the subdirectory makefiles!
 
-$(srcdir)/parser/gram.h: parser/gram.y
+parser/gram.h: parser/gram.y
 	$(MAKE) -C parser gram.h
 
 utils/fmgroids.h: utils/Gen_fmgrtab.sh $(top_srcdir)/src/include/catalog/pg_proc.h $(top_srcdir)/src/include/catalog/pg_proc_gp.h
@@ -155,7 +165,7 @@ utils/probes.h: utils/probes.d
 # we can cut down on the -I options. Also, a symlink is automatically
 # up to date when we update the base file.
 
-$(top_builddir)/src/include/parser/gram.h: $(srcdir)/parser/gram.h
+$(top_builddir)/src/include/parser/gram.h: parser/gram.h
 	prereqdir=`cd $(dir $<) >/dev/null && pwd` && \
 	  cd $(dir $@) && rm -f $(notdir $@) && \
 	  $(LN_S) "$$prereqdir/$(notdir $<)" .
@@ -233,7 +243,10 @@ endif
 endif
 ifeq ($(MAKE_EXPORTS), true)
 	$(MKDIR_P) '$(DESTDIR)$(pkglibdir)'
+<<<<<<< HEAD
 	$(MKDIR_P) '$(DESTDIR)$(pgxsdir)/$(MKLDEXPORT_DIR)'
+=======
+>>>>>>> 78a09145e0
 endif
 
 
@@ -280,12 +293,12 @@ distclean: clean
 	rm -f port/tas.s port/dynloader.c port/pg_sema.c port/pg_shmem.c
 
 maintainer-clean: distclean
-	rm -f $(srcdir)/bootstrap/bootparse.c \
-	      $(srcdir)/bootstrap/bootscanner.c \
-	      $(srcdir)/parser/gram.c \
-	      $(srcdir)/parser/scan.c \
-	      $(srcdir)/parser/gram.h \
-	      $(srcdir)/utils/misc/guc-file.c
+	rm -f bootstrap/bootparse.c \
+	      bootstrap/bootscanner.c \
+	      parser/gram.c \
+	      parser/scan.c \
+	      parser/gram.h \
+	      utils/misc/guc-file.c
 
 
 ##########################################################################

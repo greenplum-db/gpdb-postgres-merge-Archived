@@ -1,34 +1,32 @@
 -- first some tests of basic functionality
---
--- better succeed
---
+CREATE LANGUAGE plpython2u;
+
+-- really stupid function just to get the module loaded
+CREATE FUNCTION stupid() RETURNS text AS 'return "zarkon"' LANGUAGE plpythonu;
+
 select stupid();
 
--- check static and global data
---
-SELECT static_test();
-SELECT static_test();
-SELECT global_test_one();
-SELECT global_test_two();
+-- check 2/3 versioning
+CREATE FUNCTION stupidn() RETURNS text AS 'return "zarkon"' LANGUAGE plpython2u;
 
--- import python modules
---
-SELECT import_fail();
-SELECT import_succeed();
-
--- test import and simple argument handling
---
-SELECT import_test_one('sha hash of this string');
-
--- test import and tuple argument handling
---
-select import_test_two(users) from users where fname = 'willem';
+select stupidn();
 
 -- test multiple arguments
---
+CREATE FUNCTION argument_test_one(u users, a1 text, a2 text) RETURNS text
+	AS
+'keys = list(u.keys())
+keys.sort()
+out = []
+for key in keys:
+    out.append("%s: %s" % (key, u[key]))
+words = a1 + " " + a2 + " => {" + ", ".join(out) + "}"
+return words'
+	LANGUAGE plpythonu;
+
 select argument_test_one(users, fname, lname) from users where lname = 'doe' order by 1;
 
 
+<<<<<<< HEAD
 -- spi and nested calls
 --
 select nested_call_one('pass this along');
@@ -183,3 +181,19 @@ union all
 select multiline2() 
 union all 
 select multiline3()
+=======
+CREATE FUNCTION elog_test() RETURNS void
+AS $$
+plpy.debug('debug')
+plpy.log('log')
+plpy.info('info')
+plpy.info(37)
+plpy.info()
+plpy.info('info', 37, [1, 2, 3])
+plpy.notice('notice')
+plpy.warning('warning')
+plpy.error('error')
+$$ LANGUAGE plpythonu;
+
+SELECT elog_test();
+>>>>>>> 78a09145e0

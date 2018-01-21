@@ -33,7 +33,11 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/bin/psql/psqlscan.l
+=======
+ *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.30 2009/11/12 00:13:00 tgl Exp $
+>>>>>>> 78a09145e0
  *
  *-------------------------------------------------------------------------
  */
@@ -136,7 +140,11 @@ static bool var_is_current_source(PsqlScanState state, const char *varname);
 static YY_BUFFER_STATE prepare_buffer(const char *txt, int len,
 									  char **txtcopy);
 static void emit(const char *txt, int len);
+<<<<<<< HEAD
 static void escape_variable(bool as_ident);
+=======
+static bool is_utf16_surrogate_first(uint32 c);
+>>>>>>> 78a09145e0
 
 #ifdef ECHO
 #undef ECHO
@@ -181,11 +189,15 @@ static void escape_variable(bool as_ident);
  *  <xdolq> $foo$ quoted strings
  *  <xui> quoted identifier with Unicode escapes
  *  <xus> quoted string with Unicode escapes
+<<<<<<< HEAD
  *
  * Note: we intentionally don't mimic the backend's <xeu> state; we have
  * no need to distinguish it from <xe> state, and no good way to get out
  * of it in error cases.  The backend just throws yyerror() in those
  * cases, but that's not an option here.
+=======
+ *  <xeu> Unicode surrogate pair in extended quoted string
+>>>>>>> 78a09145e0
  */
 
 %x xb
@@ -197,6 +209,7 @@ static void escape_variable(bool as_ident);
 %x xdolq
 %x xui
 %x xus
+%x xeu
 /* Additional exclusive states for psql only: lex backslash commands */
 %x xslashcmd
 %x xslasharg
@@ -366,6 +379,10 @@ ident_cont		[A-Za-z\200-\377_0-9\$]
 identifier		{ident_start}{ident_cont}*
 
 typecast		"::"
+dot_dot			\.\.
+colon_equals	":="
+
+/* these two token types are used by PL/pgsql, though not in core SQL */
 dot_dot			\.\.
 colon_equals	":="
 
@@ -550,9 +567,25 @@ other			.
 					ECHO;
 				}
 <xe>{xeunicode} {
+<<<<<<< HEAD
 					ECHO;
 				}
 <xe>{xeunicodefail}	{
+=======
+					uint32 c = strtoul(yytext+2, NULL, 16);
+
+					if (is_utf16_surrogate_first(c))
+						BEGIN(xeu);
+					ECHO;
+				}
+<xeu>{xeunicode} {
+					BEGIN(xe);
+					ECHO;
+				}
+<xeu>.			{ ECHO; }
+<xeu>\n			{ ECHO; }
+<xe,xeu>{xeunicodefail}	{
+>>>>>>> 78a09145e0
 					ECHO;
 				}
 <xe>{xeescape}  {
@@ -1840,6 +1873,7 @@ emit(const char *txt, int len)
 	}
 }
 
+<<<<<<< HEAD
 static void
 escape_variable(bool as_ident)
 {
@@ -1886,4 +1920,10 @@ escape_variable(bool as_ident)
 	 */
 	yytext[yyleng - 1] = saved_char;
 	emit(yytext, yyleng);
+=======
+static bool
+is_utf16_surrogate_first(uint32 c)
+{
+	return (c >= 0xD800 && c <= 0xDBFF);
+>>>>>>> 78a09145e0
 }

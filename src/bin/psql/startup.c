@@ -3,7 +3,11 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * src/bin/psql/startup.c
+=======
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.157 2009/12/01 22:34:33 momjian Exp $
+>>>>>>> 78a09145e0
  */
 #include "postgres_fe.h"
 

@@ -9,7 +9,11 @@
  * Portions Copyright (c) 2011 - present, EMC Greenplum.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  *
+<<<<<<< HEAD
  * src/include/parser/parse_cte.h
+=======
+ * $PostgreSQL: pgsql/src/include/parser/parse_cte.h,v 1.3 2009/09/09 03:32:52 tgl Exp $
+>>>>>>> 78a09145e0
  *
  *-------------------------------------------------------------------------
  */
@@ -20,5 +24,8 @@
 
 extern List *transformWithClause(ParseState *pstate, WithClause *withClause);
 extern CommonTableExpr *GetCTEForRTE(ParseState *pstate, RangeTblEntry *rte, int rtelevelsup);
+
+extern void analyzeCTETargetList(ParseState *pstate, CommonTableExpr *cte,
+								 List *tlist);
 
 #endif   /* PARSE_CTE_H */

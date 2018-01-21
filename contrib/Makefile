@@ -1,10 +1,15 @@
-# $PostgreSQL: pgsql/contrib/Makefile,v 1.87 2009/03/25 23:20:01 tgl Exp $
+# $PostgreSQL: pgsql/contrib/Makefile,v 1.90 2009/11/18 21:57:56 tgl Exp $
 
 subdir = contrib
 top_builddir = ..
 include $(top_builddir)/src/Makefile.global
 
+<<<<<<< HEAD
 WANTED_DIRS = \
+=======
+SUBDIRS = \
+		adminpack	\
+>>>>>>> 78a09145e0
 		auto_explain	\
 		btree_gin	\
 		citext		\
@@ -13,6 +18,7 @@ WANTED_DIRS = \
 		dict_xsyn	\
 		fuzzystrmatch	\
 		hstore		\
+<<<<<<< HEAD
 		intarray \
 		pageinspect \
 		pg_stat_statements \
@@ -34,17 +40,43 @@ WANTED_DIRS += \
 		gp_cancel_query \
 		indexscan \
     passwordcheck
+=======
+		intagg		\
+		intarray	\
+		isn		\
+		lo		\
+		ltree		\
+		oid2name	\
+		pageinspect	\
+		passwordcheck	\
+		pg_buffercache	\
+		pg_freespacemap \
+		pg_standby	\
+		pg_stat_statements \
+		pg_trgm		\
+		pgbench		\
+		pgcrypto	\
+		pgrowlocks	\
+		pgstattuple	\
+		seg		\
+		spi		\
+		tablefunc	\
+		test_parser	\
+		tsearch2	\
+		unaccent	\
+		vacuumlo
+>>>>>>> 78a09145e0
 
 ifeq ($(with_openssl),yes)
-WANTED_DIRS += sslinfo
+SUBDIRS += sslinfo
 endif
 
 ifeq ($(with_ossp_uuid),yes)
-WANTED_DIRS += uuid-ossp
+SUBDIRS += uuid-ossp
 endif
 
 ifeq ($(with_libxml),yes)
-WANTED_DIRS += xml2
+SUBDIRS += xml2
 endif
 
 ifeq ($(enable_orca),yes)
@@ -58,13 +90,13 @@ WANTED_DIRS += gp_replica_check
 
 
 all install installdirs uninstall distprep clean distclean maintainer-clean:
-	@for dir in $(WANTED_DIRS); do \
+	@for dir in $(SUBDIRS); do \
 		$(MAKE) -C $$dir $@ || exit; \
 	done
 
 # We'd like check operations to run all the subtests before failing.
 check installcheck:
-	@CHECKERR=0; for dir in $(WANTED_DIRS); do \
+	@CHECKERR=0; for dir in $(SUBDIRS); do \
 		$(MAKE) -C $$dir $@ || CHECKERR=$$?; \
 	done; \
 	exit $$CHECKERR

@@ -20,7 +20,12 @@ create or replace function perl_warn(text) returns void language plperl as $$
 
 $$;
 select perl_warn('implicit elog via warn');
+<<<<<<< HEAD
 WARNING:  implicit elog via warn at line 4.
+=======
+NOTICE:  implicit elog via warn at line 4.
+
+>>>>>>> 78a09145e0
 CONTEXT:  PL/Perl function "perl_warn"
  perl_warn 
 -----------
@@ -37,7 +42,11 @@ create or replace function uses_global() returns text language plperl as $$
 
 $$;
 ERROR:  Global symbol "$global" requires explicit package name at line 3.
+<<<<<<< HEAD
 DETAIL:  Global symbol "$other_global" requires explicit package name at line 4.
+=======
+Global symbol "$other_global" requires explicit package name at line 4.
+>>>>>>> 78a09145e0
 CONTEXT:  compilation of PL/Perl function "uses_global"
 select uses_global();
 ERROR:  function uses_global() does not exist

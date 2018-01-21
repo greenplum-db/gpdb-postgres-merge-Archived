@@ -8,27 +8,35 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.191 2009/06/11 14:49:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.198 2009/10/07 22:14:23 alvherre Exp $
  *
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include <ctype.h>
 #include <fcntl.h>
 #include <unistd.h>
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/sysattr.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
+#include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_database.h"
+#include "catalog/pg_db_role_setting.h"
 #include "catalog/pg_tablespace.h"
+<<<<<<< HEAD
 #include "catalog/indexing.h"
 #include "libpq/auth.h"
 #include "libpq/hba.h"
+=======
+#include "libpq/auth.h"
+>>>>>>> 78a09145e0
 #include "libpq/libpq-be.h"
 #include "cdb/cdbvars.h"
 #include "cdb/cdbutil.h"
@@ -38,8 +46,11 @@
 #include "postmaster/autovacuum.h"
 #include "postmaster/fts.h"
 #include "postmaster/postmaster.h"
+<<<<<<< HEAD
 #include "replication/walsender.h"
 #include "storage/backendid.h"
+=======
+>>>>>>> 78a09145e0
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
@@ -49,24 +60,34 @@
 #include "storage/procsignal.h"
 #include "storage/sinvaladt.h"
 #include "storage/smgr.h"
+#include "tcop/tcopprot.h"
 #include "utils/acl.h"
+<<<<<<< HEAD
 #include "utils/backend_cancel.h"
 #include "utils/flatfiles.h"
+=======
+>>>>>>> 78a09145e0
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
-#include "utils/plancache.h"
+#include "utils/pg_locale.h"
 #include "utils/portal.h"
 #include "utils/ps_status.h"
+<<<<<<< HEAD
 #include "utils/relcache.h"
 #include "utils/resscheduler.h"
 #include "utils/sharedsnapshot.h"
+=======
+>>>>>>> 78a09145e0
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
 #include "utils/session_state.h"
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 78a09145e0
 static HeapTuple GetDatabaseTuple(const char *dbname);
 static HeapTuple GetDatabaseTupleByOid(Oid dboid);
 static void PerformAuthentication(Port *port);
@@ -75,12 +96,16 @@ static void ProcessRoleGUC(void);
 static void InitCommunication(void);
 static void ShutdownPostgres(int code, Datum arg);
 static bool ThereIsAtLeastOneRole(void);
+<<<<<<< HEAD
 static void process_startup_options(Port *port, bool am_superuser);
 
 #ifdef USE_ORCA
 extern void InitGPOPT();
 extern void TerminateGPOPT();
 #endif
+=======
+static void process_settings(Oid databaseid, Oid roleid);
+>>>>>>> 78a09145e0
 
 
 /*** InitPostgres support ***/
@@ -119,12 +144,17 @@ FindMyDatabase(const char *dbname, Oid *db_id, Oid *db_tablespace)
  * GetDatabaseTuple -- fetch the pg_database row for a database
  *
  * This is used during backend startup when we don't yet have any access to
+<<<<<<< HEAD
  * system catalogs in general.	In the worst case, we can seqscan pg_database
+=======
+ * system catalogs in general.  In the worst case, we can seqscan pg_database
+>>>>>>> 78a09145e0
  * using nothing but the hard-wired descriptor that relcache.c creates for
  * pg_database.  In more typical cases, relcache.c was able to load
  * descriptors for both pg_database and its indexes from the shared relcache
  * cache file, and so we can do an indexscan.  criticalSharedRelcachesBuilt
  * tells whether we got the cached descriptors.
+<<<<<<< HEAD
  */
 static HeapTuple
 GetDatabaseTuple(const char *dbname)
@@ -276,10 +306,52 @@ PerformAuthentication(Port *port)
 	set_ps_display("startup", false);
 
 	ClientAuthInProgress = false;		/* client_min_messages is active now */
+=======
+ */
+static HeapTuple
+GetDatabaseTuple(const char *dbname)
+{
+	HeapTuple	tuple;
+	Relation	relation;
+	SysScanDesc scan;
+	ScanKeyData key[1];
+
+	/*
+	 * form a scan key
+	 */
+	ScanKeyInit(&key[0],
+				Anum_pg_database_datname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(dbname));
+
+	/*
+	 * Open pg_database and fetch a tuple.  Force heap scan if we haven't yet
+	 * built the critical shared relcache entries (i.e., we're starting up
+	 * without a shared relcache cache file).
+	 */
+	relation = heap_open(DatabaseRelationId, AccessShareLock);
+	scan = systable_beginscan(relation, DatabaseNameIndexId,
+							  criticalSharedRelcachesBuilt,
+							  SnapshotNow,
+							  1, key);
+
+	tuple = systable_getnext(scan);
+
+	/* Must copy tuple before releasing buffer */
+	if (HeapTupleIsValid(tuple))
+		tuple = heap_copytuple(tuple);
+
+	/* all done */
+	systable_endscan(scan);
+	heap_close(relation, AccessShareLock);
+
+	return tuple;
+>>>>>>> 78a09145e0
 }
 
 
 /*
+<<<<<<< HEAD
  * ProcessRoleGUC --
  * We now process pg_authid.rolconfig separately from InitializeSessionUserId,
  * since it's too early to access toast table before initializing all
@@ -323,6 +395,110 @@ ProcessRoleGUC(void)
 	}
 
 	ReleaseSysCache(roleTup);
+=======
+ * GetDatabaseTupleByOid -- as above, but search by database OID
+ */
+static HeapTuple
+GetDatabaseTupleByOid(Oid dboid)
+{
+	HeapTuple	tuple;
+	Relation	relation;
+	SysScanDesc scan;
+	ScanKeyData key[1];
+
+	/*
+	 * form a scan key
+	 */
+	ScanKeyInit(&key[0],
+				ObjectIdAttributeNumber,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(dboid));
+
+	/*
+	 * Open pg_database and fetch a tuple.  Force heap scan if we haven't yet
+	 * built the critical shared relcache entries (i.e., we're starting up
+	 * without a shared relcache cache file).
+	 */
+	relation = heap_open(DatabaseRelationId, AccessShareLock);
+	scan = systable_beginscan(relation, DatabaseOidIndexId,
+							  criticalSharedRelcachesBuilt,
+							  SnapshotNow,
+							  1, key);
+
+	tuple = systable_getnext(scan);
+
+	/* Must copy tuple before releasing buffer */
+	if (HeapTupleIsValid(tuple))
+		tuple = heap_copytuple(tuple);
+
+	/* all done */
+	systable_endscan(scan);
+	heap_close(relation, AccessShareLock);
+
+	return tuple;
+}
+
+
+/*
+ * PerformAuthentication -- authenticate a remote client
+ *
+ * returns: nothing.  Will not return at all if there's any failure.
+ */
+static void
+PerformAuthentication(Port *port)
+{
+	/* This should be set already, but let's make sure */
+	ClientAuthInProgress = true;	/* limit visibility of log messages */
+
+	/*
+	 * In EXEC_BACKEND case, we didn't inherit the contents of pg_hba.conf
+	 * etcetera from the postmaster, and have to load them ourselves.  Note
+	 * we are loading them into the startup transaction's memory context,
+	 * not PostmasterContext, but that shouldn't matter.
+	 *
+	 * FIXME: [fork/exec] Ugh.	Is there a way around this overhead?
+	 */
+#ifdef EXEC_BACKEND
+	if (!load_hba())
+	{
+		/*
+		 * It makes no sense to continue if we fail to load the HBA file,
+		 * since there is no way to connect to the database in this case.
+		 */
+		ereport(FATAL,
+				(errmsg("could not load pg_hba.conf")));
+	}
+	load_ident();
+#endif
+
+	/*
+	 * Set up a timeout in case a buggy or malicious client fails to respond
+	 * during authentication.  Since we're inside a transaction and might do
+	 * database access, we have to use the statement_timeout infrastructure.
+	 */
+	if (!enable_sig_alarm(AuthenticationTimeout * 1000, true))
+		elog(FATAL, "could not set timer for authorization timeout");
+
+	/*
+	 * Now perform authentication exchange.
+	 */
+	ClientAuthentication(port); /* might not return, if failure */
+
+	/*
+	 * Done with authentication.  Disable the timeout, and log if needed.
+	 */
+	if (!disable_sig_alarm(true))
+		elog(FATAL, "could not disable timer for authorization timeout");
+
+	if (Log_connections)
+		ereport(LOG,
+				(errmsg("connection authorized: user=%s database=%s",
+						port->user_name, port->database_name)));
+
+	set_ps_display("startup", false);
+
+	ClientAuthInProgress = false;		/* client_min_messages is active now */
+>>>>>>> 78a09145e0
 }
 
 /*
@@ -360,7 +536,7 @@ CheckMyDatabase(const char *name, bool am_superuser)
 	 * a way to recover from disabling all access to all databases, for
 	 * example "UPDATE pg_database SET datallowconn = false;".
 	 *
-	 * We do not enforce them for the autovacuum worker processes either.
+	 * We do not enforce them for autovacuum worker processes either.
 	 */
 	if (IsUnderPostmaster && !IsAutoVacuumWorkerProcess())
 	{
@@ -421,14 +597,14 @@ CheckMyDatabase(const char *name, bool am_superuser)
 	collate = NameStr(dbform->datcollate);
 	ctype = NameStr(dbform->datctype);
 
-	if (setlocale(LC_COLLATE, collate) == NULL)
+	if (pg_perm_setlocale(LC_COLLATE, collate) == NULL)
 		ereport(FATAL,
 			(errmsg("database locale is incompatible with operating system"),
 			 errdetail("The database was initialized with LC_COLLATE \"%s\", "
 					   " which is not recognized by setlocale().", collate),
 			 errhint("Recreate the database with another locale or install the missing locale.")));
 
-	if (setlocale(LC_CTYPE, ctype) == NULL)
+	if (pg_perm_setlocale(LC_CTYPE, ctype) == NULL)
 		ereport(FATAL,
 			(errmsg("database locale is incompatible with operating system"),
 			 errdetail("The database was initialized with LC_CTYPE \"%s\", "
@@ -443,29 +619,6 @@ CheckMyDatabase(const char *name, bool am_superuser)
 #ifdef ENABLE_NLS
 	pg_bind_textdomain_codeset(textdomain(NULL));
 #endif
-
-	/*
-	 * Lastly, set up any database-specific configuration variables.
-	 */
-	if (IsUnderPostmaster)
-	{
-		Datum		datum;
-		bool		isnull;
-
-		datum = SysCacheGetAttr(DATABASEOID, tup, Anum_pg_database_datconfig,
-								&isnull);
-		if (!isnull)
-		{
-			ArrayType  *a = DatumGetArrayTypeP(datum);
-
-			/*
-			 * We process all the options at SUSET level.  We assume that the
-			 * right to insert an option into pg_database was checked when it
-			 * was inserted.
-			 */
-			ProcessGUCArray(a, PGC_SUSET, PGC_S_DATABASE, GUC_ACTION_SET);
-		}
-	}
 
 	ReleaseSysCache(tup);
 }
@@ -553,6 +706,38 @@ pg_split_opts(char **argv, int *argcp, char *optstr)
 
 
 /*
+ * pg_split_opts -- split a string of options and append it to an argv array
+ *
+ * NB: the input string is destructively modified!  Also, caller is responsible
+ * for ensuring the argv array is large enough.  The maximum possible number
+ * of arguments added by this routine is (strlen(optstr) + 1) / 2.
+ *
+ * Since no current POSTGRES arguments require any quoting characters,
+ * we can use the simple-minded tactic of assuming each set of space-
+ * delimited characters is a separate argv element.
+ *
+ * If you don't like that, well, we *used* to pass the whole option string
+ * as ONE argument to execl(), which was even less intelligent...
+ */
+void
+pg_split_opts(char **argv, int *argcp, char *optstr)
+{
+	while (*optstr)
+	{
+		while (isspace((unsigned char) *optstr))
+			optstr++;
+		if (*optstr == '\0')
+			break;
+		argv[(*argcp)++] = optstr;
+		while (*optstr && !isspace((unsigned char) *optstr))
+			optstr++;
+		if (*optstr)
+			*optstr++ = '\0';
+	}
+}
+
+
+/*
  * Early initialization of a backend (either standalone or under postmaster).
  * This happens even before InitPostgres.
  *
@@ -602,14 +787,12 @@ static void check_superuser_connection_limit()
  * name can be returned to the caller in out_dbname.  If out_dbname isn't
  * NULL, it must point to a buffer of size NAMEDATALEN.
  *
- * In bootstrap mode no parameters are used.
- *
- * The return value indicates whether the userID is a superuser.  (That
- * can only be tested inside a transaction, so we want to do it during
- * the startup transaction rather than doing a separate one in postgres.c.)
+ * In bootstrap mode no parameters are used.  The autovacuum launcher process
+ * doesn't use any parameters either, because it only goes far enough to be
+ * able to read pg_database; it doesn't connect to any particular database.
  *
  * As of PostgreSQL 8.2, we expect InitProcess() was already called, so we
- * already have a PGPROC struct ... but it's not filled in yet.
+ * already have a PGPROC struct ... but it's not completely filled in yet.
  *
  * Note:
  *		Be very careful with the order of calls in the InitPostgres function.
@@ -620,11 +803,16 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 			 char *out_dbname)
 {
 	bool		bootstrap = IsBootstrapProcessingMode();
-	bool		autovacuum = IsAutoVacuumWorkerProcess();
 	bool		am_superuser;
+	GucContext	gucctx;
 	char	   *fullpath;
 	char		dbname[NAMEDATALEN];
 
+<<<<<<< HEAD
+=======
+	elog(DEBUG3, "InitPostgres");
+
+>>>>>>> 78a09145e0
 	/*
 	 * Add my PGPROC struct to the ProcArray.
 	 *
@@ -697,8 +885,13 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		pgstat_initialize();
 
 	/*
+<<<<<<< HEAD
 	 * Load relcache entries for the shared system catalogs.  This must create
 	 * at least entries for pg_database and catalogs used for authentication.
+=======
+	 * Load relcache entries for the shared system catalogs.  This must
+	 * create at least an entry for pg_database.
+>>>>>>> 78a09145e0
 	 */
 	RelationCacheInitializePhase2();
 
@@ -713,17 +906,29 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 */
 	on_shmem_exit(ShutdownPostgres, 0);
 
+<<<<<<< HEAD
 	/* TODO: autovacuum launcher should be done here? */
+=======
+	/* The autovacuum launcher is done here */
+	if (IsAutoVacuumLauncherProcess())
+		return;
+>>>>>>> 78a09145e0
 
 	/*
 	 * Start a new transaction here before first access to db, and get a
 	 * snapshot.  We don't have a use for the snapshot itself, but we're
 	 * interested in the secondary effect that it sets RecentGlobalXmin.
+<<<<<<< HEAD
 	 *
 	 * Skip these steps if we are responding to a FTS message on mirror.
 	 * Mirror operates in standby mode and is not ready to start a
 	 * transaction or create a snapshot.  Neither are they required to
 	 * respond to a FTS message.
+=======
+	 * (This is critical for anything that reads heap pages, because HOT
+	 * may decide to prune them even if the process doesn't attempt to
+	 * modify any tuples.)
+>>>>>>> 78a09145e0
 	 */
 	if (!bootstrap && !(am_ftshandler && am_mirror))
 	{
@@ -732,6 +937,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	}
 
 	/*
+<<<<<<< HEAD
 	 * Figure out our postgres user id, and see if we are a superuser.
 	 *
 	 * In standalone mode and in the autovacuum process, we use a fixed id,
@@ -852,6 +1058,13 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 *
 	 * We take a shortcut in the bootstrap case, otherwise we have to look up
 	 * the db name in pg_database.
+=======
+	 * Set up the global variables holding database id and default tablespace.
+	 * But note we won't actually try to touch the database just yet.
+	 *
+	 * We take a shortcut in the bootstrap case, otherwise we have to look up
+	 * the db's entry in pg_database.
+>>>>>>> 78a09145e0
 	 */
 	if (bootstrap)
 	{
@@ -860,7 +1073,11 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	}
 	else if (in_dbname != NULL)
 	{
+<<<<<<< HEAD
 		HeapTuple	tuple;
+=======
+		HeapTuple tuple;
+>>>>>>> 78a09145e0
 		Form_pg_database dbform;
 
 		tuple = GetDatabaseTuple(in_dbname);
@@ -873,12 +1090,19 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		MyDatabaseTableSpace = dbform->dattablespace;
 		/* take database name from the caller, just for paranoia */
 		strlcpy(dbname, in_dbname, sizeof(dbname));
+<<<<<<< HEAD
 		pfree(tuple);
+=======
+>>>>>>> 78a09145e0
 	}
 	else
 	{
 		/* caller specified database by OID */
+<<<<<<< HEAD
 		HeapTuple	tuple;
+=======
+		HeapTuple tuple;
+>>>>>>> 78a09145e0
 		Form_pg_database dbform;
 
 		tuple = GetDatabaseTupleByOid(dboid);
@@ -894,7 +1118,10 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		/* pass the database name back to the caller */
 		if (out_dbname)
 			strcpy(out_dbname, dbname);
+<<<<<<< HEAD
 		pfree(tuple);
+=======
+>>>>>>> 78a09145e0
 	}
 
 	/* Now we can mark our PGPROC entry with the database ID */
@@ -903,8 +1130,13 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 
 	/*
 	 * Now, take a writer's lock on the database we are trying to connect to.
+<<<<<<< HEAD
 	 * If there is a concurrently running DROP DATABASE on that database, this
 	 * will block us until it finishes (and has committed its update of
+=======
+	 * If there is a concurrently running DROP DATABASE on that database,
+	 * this will block us until it finishes (and has committed its update of
+>>>>>>> 78a09145e0
 	 * pg_database).
 	 *
 	 * Note that the lock is not held long, only until the end of this startup
@@ -929,7 +1161,11 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 */
 	if (!bootstrap)
 	{
+<<<<<<< HEAD
 		HeapTuple	tuple;
+=======
+		HeapTuple tuple;
+>>>>>>> 78a09145e0
 
 		tuple = GetDatabaseTuple(dbname);
 		if (!HeapTupleIsValid(tuple) ||
@@ -941,6 +1177,13 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 			   errdetail("It seems to have just been dropped or renamed.")));
 	}
 
+<<<<<<< HEAD
+=======
+	/*
+	 * Now we should be able to access the database directory safely. Verify
+	 * it's there and looks reasonable.
+	 */
+>>>>>>> 78a09145e0
 	fullpath = GetDatabasePath(MyDatabaseId, MyDatabaseTableSpace);
 
 	if (!bootstrap)
@@ -975,19 +1218,60 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	RelationCacheInitializePhase3();
 
 	/*
+<<<<<<< HEAD
 	 * Now we have full access to catalog including toast tables,
 	 * we can process pg_authid.rolconfig.  This ought to come before
 	 * processing startup options so that it can override the settings.
 	 */
 	if (!bootstrap)
 		ProcessRoleGUC();
+=======
+	 * Perform client authentication if necessary, then figure out our
+	 * postgres user ID, and see if we are a superuser.
+	 *
+	 * In standalone mode and in autovacuum worker processes, we use a fixed
+	 * ID, otherwise we figure it out from the authenticated user name.
+	 */
+	if (bootstrap || IsAutoVacuumWorkerProcess())
+	{
+		InitializeSessionUserIdStandalone();
+		am_superuser = true;
+	}
+	else if (!IsUnderPostmaster)
+	{
+		InitializeSessionUserIdStandalone();
+		am_superuser = true;
+		if (!ThereIsAtLeastOneRole())
+			ereport(WARNING,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("no roles are defined in this database system"),
+					 errhint("You should immediately run CREATE USER \"%s\" SUPERUSER;.",
+							 username)));
+	}
+	else
+	{
+		/* normal multiuser case */
+		Assert(MyProcPort != NULL);
+		PerformAuthentication(MyProcPort);
+		InitializeSessionUserId(username);
+		am_superuser = superuser();
+	}
+>>>>>>> 78a09145e0
 
 	/* set up ACL framework (so CheckMyDatabase can check permissions) */
 	initialize_acl();
 
+	/* Process pg_db_role_setting options */
+	process_settings(MyDatabaseId, GetSessionUserId());
+
 	/*
+<<<<<<< HEAD
 	 * Re-read the pg_database row for our database, check permissions and set
 	 * up database-specific GUC settings.  We can't do this until all the
+=======
+	 * Re-read the pg_database row for our database, check permissions and
+	 * set up database-specific GUC settings.  We can't do this until all the
+>>>>>>> 78a09145e0
 	 * database-access infrastructure is up.  (Also, it wants to know if the
 	 * user is a superuser, so the above stuff has to happen first.)
 	 */
@@ -1028,9 +1312,79 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 				 errmsg("System was started in master-only utility mode - only utility mode connections are allowed")));
 	}
 
+<<<<<<< HEAD
 	/* Apply PostAuthDelay as soon as we've read all options */
 	if (PostAuthDelay > 0)
 		pg_usleep(PostAuthDelay * 1000000L);
+=======
+	/*
+	 * Now process any command-line switches that were included in the startup
+	 * packet, if we are in a regular backend.  We couldn't do this before
+	 * because we didn't know if client is a superuser.
+	 */
+	gucctx = am_superuser ? PGC_SUSET : PGC_BACKEND;
+
+	if (MyProcPort != NULL &&
+		MyProcPort->cmdline_options != NULL)
+	{
+		/*
+		 * The maximum possible number of commandline arguments that could
+		 * come from MyProcPort->cmdline_options is (strlen + 1) / 2; see
+		 * pg_split_opts().
+		 */
+		char	  **av;
+		int			maxac;
+		int			ac;
+
+		maxac = 2 + (strlen(MyProcPort->cmdline_options) + 1) / 2;
+
+		av = (char **) palloc(maxac * sizeof(char *));
+		ac = 0;
+
+		av[ac++] = "postgres";
+
+		/* Note this mangles MyProcPort->cmdline_options */
+		pg_split_opts(av, &ac, MyProcPort->cmdline_options);
+
+		av[ac] = NULL;
+
+		Assert(ac < maxac);
+
+		(void) process_postgres_switches(ac, av, gucctx);
+	}
+
+	/*
+	 * Process any additional GUC variable settings passed in startup packet.
+	 * These are handled exactly like command-line variables.
+	 */
+	if (MyProcPort != NULL)
+	{
+		ListCell   *gucopts = list_head(MyProcPort->guc_options);
+
+		while (gucopts)
+		{
+			char	   *name;
+			char	   *value;
+
+			name = lfirst(gucopts);
+			gucopts = lnext(gucopts);
+
+			value = lfirst(gucopts);
+			gucopts = lnext(gucopts);
+
+			SetConfigOption(name, value, gucctx, PGC_S_CLIENT);
+		}
+	}
+
+	/* Apply PostAuthDelay as soon as we've read all options */
+	if (PostAuthDelay > 0)
+		pg_usleep(PostAuthDelay * 1000000L);
+
+	/*
+	 * Initialize various default states that can't be set up until we've
+	 * selected the active user and gotten the right GUC settings.
+	 */
+>>>>>>> 78a09145e0
 
 	/* set default namespace search path */
 	InitializeSearchPath();
@@ -1090,6 +1444,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	/* close the transaction we started above */
 	if (!bootstrap)
 		CommitTransactionCommand();
+<<<<<<< HEAD
 
 	return;
 }
@@ -1155,6 +1510,31 @@ process_startup_options(Port *port, bool am_superuser)
 
 		SetConfigOption(name, value, gucctx, PGC_S_CLIENT);
 	}
+=======
+}
+
+/*
+ * Load GUC settings from pg_db_role_setting.
+ *
+ * We try specific settings for the database/role combination, as well as
+ * general for this database and for this user.
+ */
+static void
+process_settings(Oid databaseid, Oid roleid)
+{
+	Relation		relsetting;
+
+	if (!IsUnderPostmaster)
+		return;
+
+	relsetting = heap_open(DbRoleSettingRelationId, AccessShareLock);
+
+	ApplySetting(databaseid, roleid, relsetting, PGC_S_DATABASE_USER);
+	ApplySetting(InvalidOid, roleid, relsetting, PGC_S_USER);
+	ApplySetting(databaseid, InvalidOid, relsetting, PGC_S_DATABASE);
+
+	heap_close(relsetting, AccessShareLock);
+>>>>>>> 78a09145e0
 }
 
 /*

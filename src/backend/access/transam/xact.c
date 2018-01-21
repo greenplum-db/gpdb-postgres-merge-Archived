@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.274 2009/06/11 14:48:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.277 2009/12/09 21:57:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,8 +51,11 @@
 #include "storage/smgr.h"
 #include "storage/freespace.h"
 #include "utils/combocid.h"
+<<<<<<< HEAD
 #include "utils/faultinjector.h"
 #include "utils/flatfiles.h"
+=======
+>>>>>>> 78a09145e0
 #include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
@@ -2322,6 +2325,7 @@ CommitTransaction(void)
 	/* NOTIFY commit must come before lower-level cleanup */
 	AtCommit_Notify();
 
+<<<<<<< HEAD
 	/*
 	 * Update flat files if we changed pg_database, pg_authid or
 	 * pg_auth_members.  This should be the last step before commit.
@@ -2352,6 +2356,8 @@ CommitTransaction(void)
 				 errmsg("Raise an error as directed by Debug_abort_after_distributed_prepared")));
 	}
 
+=======
+>>>>>>> 78a09145e0
 	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();
 
@@ -2603,7 +2609,7 @@ PrepareTransaction(void)
 	/* close large objects before lower-level cleanup */
 	AtEOXact_LargeObject(true);
 
-	/* NOTIFY and flatfiles will be handled below */
+	/* NOTIFY will be handled below */
 
 	/*
 	 * In Postgres, MyXactAccessedTempRel is used to error out if PREPARE TRANSACTION
@@ -2691,7 +2697,6 @@ PrepareTransaction(void)
 	StartPrepare(gxact);
 
 	AtPrepare_Notify();
-	AtPrepare_UpdateFlatFiles();
 	AtPrepare_Inval();
 	AtPrepare_Locks();
 	AtPrepare_PgStat();
@@ -2748,7 +2753,7 @@ PrepareTransaction(void)
 	/* Clean up the snapshot manager */
 	AtEarlyCommit_Snapshot();
 
-	/* notify and flatfiles don't need a postprepare call */
+	/* notify doesn't need a postprepare call */
 
 	PostPrepare_PgStat();
 
@@ -2882,7 +2887,7 @@ AbortTransaction(void)
 	 * Reset user ID which might have been changed transiently.  We need this
 	 * to clean up in case control escaped out of a SECURITY DEFINER function
 	 * or other local change of CurrentUserId; therefore, the prior value of
-	 * SecurityDefinerContext also needs to be restored.
+	 * SecurityRestrictionContext also needs to be restored.
 	 *
 	 * (Note: it is not necessary to restore session authorization or role
 	 * settings here because those can only be changed via GUC, and GUC will
@@ -2909,6 +2914,7 @@ AbortTransaction(void)
 
 	AtEOXact_LargeObject(false);	/* 'false' means it's abort */
 	AtAbort_Notify();
+<<<<<<< HEAD
 	AtEOXact_UpdateFlatFiles(false);
 	AtAbort_Twophase();
 
@@ -2920,6 +2926,8 @@ AbortTransaction(void)
 	}
 	else
 		localXid = GetTopTransactionIdIfAny();
+=======
+>>>>>>> 78a09145e0
 
 	/*
 	 * Advertise the fact that we aborted in pg_clog (assuming that we got as
@@ -4983,8 +4991,6 @@ CommitSubTransaction(void)
 	AtEOSubXact_LargeObject(true, s->subTransactionId,
 							s->parent->subTransactionId);
 	AtSubCommit_Notify();
-	AtEOSubXact_UpdateFlatFiles(true, s->subTransactionId,
-								s->parent->subTransactionId);
 
 	CallSubXactCallbacks(SUBXACT_EVENT_COMMIT_SUB, s->subTransactionId,
 						 s->parent->subTransactionId);
@@ -5105,8 +5111,6 @@ AbortSubTransaction(void)
 		AtEOSubXact_LargeObject(false, s->subTransactionId,
 								s->parent->subTransactionId);
 		AtSubAbort_Notify();
-		AtEOSubXact_UpdateFlatFiles(false, s->subTransactionId,
-									s->parent->subTransactionId);
 
 		/* Advertise the fact that we aborted in pg_clog. */
 		(void) RecordTransactionAbort(true);

@@ -4,7 +4,11 @@
 #   a template for timezones you could need.  See the `Date/Time Support'
 #   appendix in the PostgreSQL documentation for more information.
 #
+<<<<<<< HEAD
 # src/timezone/tznames/Asia.txt
+=======
+# $PostgreSQL: pgsql/src/timezone/tznames/Asia.txt,v 1.4 2009/09/06 15:25:23 tgl Exp $
+>>>>>>> 78a09145e0
 #
 
 AFT     16200    # Afghanistan Time (obsolete)
@@ -103,6 +107,7 @@ GET     Asia/Tbilisi  # Georgia Time (obsolete)
 # CONFLICT! GST is not unique
 # Other timezones:
 # - GST: South Georgia Time (Atlantic)
+<<<<<<< HEAD
 GST     14400    # Gulf Standard Time (obsolete)
 HKT     28800    # Hong Kong Time
                  #     (Asia/Hong_Kong)
@@ -116,6 +121,31 @@ IRKST   Asia/Irkutsk  # Irkutsk Summer Time (obsolete)
 IRKT    Asia/Irkutsk  # Irkutsk Time (obsolete)
 IRST    Asia/Tehran  # Iran Standard Time (obsolete)
 IRT     12600    # Iran Time (not in IANA database)
+=======
+GST     14400    # Gulf Standard Time
+                 #     (Asia/Dubai)
+                 #     (Asia/Muscat)
+HKT     28800    # Hong Kong Time (not in zic)
+HOVST   28800 D  # Hovd Summer Time
+                 #     (Asia/Hovd)
+HOVT    25200    # Hovd Time
+                 #     (Asia/Hovd)
+ICT     25200    # Indochina Time
+                 #     (Asia/Bangkok)
+                 #     (Asia/Phnom_Penh)
+                 #     (Asia/Saigon)
+                 #     (Asia/Vientiane)
+IDT     10800 D  # Israel Daylight Time
+IRDT    16200 D  # Iran Daylight Time
+                 #     (Asia/Tehran)
+IRKST   32400 D  # Irkutsk Summer Time
+                 #     (Asia/Irkutsk)
+IRKT    28800    # Irkutsk Time
+                 #     (Asia/Irkutsk)
+IRST    12600    # Iran Standard Time
+                 #     (Asia/Tehran)
+IRT     12600    # Iran Time (not in zic)
+>>>>>>> 78a09145e0
 # CONFLICT! IST is not unique
 # Other timezones:
 # - IST: Irish Summer Time (Europe)
@@ -127,8 +157,12 @@ IST     19800    # Indian Standard Time
 # - IST: Irish Summer Time (Europe)
 # - IST: Indian Standard Time (Asia)
 IST      7200    # Israel Standard Time
+<<<<<<< HEAD
                  #     (Asia/Jerusalem)
 JAYT    32400    # Jayapura Time (Indonesia) (not in IANA database)
+=======
+JAYT    32400    # Jayapura Time (Indonesia) (not in zic)
+>>>>>>> 78a09145e0
 JST     32400    # Japan Standard Time
                  #     (Asia/Tokyo)
 KDT     36000 D  # Korean Daylight Time (not in IANA database)

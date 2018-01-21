@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.121 2009/06/11 14:48:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.123 2009/10/30 20:58:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -205,8 +205,6 @@ ExecInitHash(Hash *node, EState *estate, int eflags)
 	 */
 	ExecAssignExprContext(estate, &hashstate->ps);
 
-#define HASH_NSLOTS 1
-
 	/*
 	 * initialize our result slot
 	 */
@@ -235,14 +233,6 @@ ExecInitHash(Hash *node, EState *estate, int eflags)
 	hashstate->ps.ps_ProjInfo = NULL;
 
 	return hashstate;
-}
-
-int
-ExecCountSlotsHash(Hash *node)
-{
-	return ExecCountSlotsNode(outerPlan(node)) +
-		ExecCountSlotsNode(innerPlan(node)) +
-		HASH_NSLOTS;
 }
 
 /* ---------------------------------------------------------------
@@ -508,17 +498,18 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	{
 		skew_table_bytes = hash_table_bytes * SKEW_WORK_MEM_PERCENT / 100;
 
-		*num_skew_mcvs = skew_table_bytes / (
-		/* size of a hash tuple */
-											 tupsize +
-		/* worst-case size of skewBucket[] per MCV */
+		/*----------
+		 * Divisor is:
+		 * size of a hash tuple +
+		 * worst-case size of skewBucket[] per MCV +
+		 * size of skewBucketNums[] entry +
+		 * size of skew bucket struct itself
+		 *----------
+		 */
+		*num_skew_mcvs = skew_table_bytes / (tupsize +
 											 (8 * sizeof(HashSkewBucket *)) +
-		/* size of skewBucketNums[] entry */
 											 sizeof(int) +
-		/* size of skew bucket struct itself */
-											 SKEW_BUCKET_OVERHEAD
-			);
-
+											 SKEW_BUCKET_OVERHEAD);
 		if (*num_skew_mcvs > 0)
 			hash_table_bytes -= skew_table_bytes;
 	}
@@ -531,7 +522,11 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	 * sufficient.  The Min() steps limit the results so that the pointer
 	 * arrays we'll try to allocate do not exceed work_mem.
 	 */
+<<<<<<< HEAD
 	max_pointers = (operatorMemKB * 1024L) / sizeof(void *);
+=======
+	max_pointers = (work_mem * 1024L) / sizeof(void *);
+>>>>>>> 78a09145e0
 	/* also ensure we avoid integer overflow in nbatch and nbuckets */
 	max_pointers = Min(max_pointers, INT_MAX / 2);
 
@@ -542,9 +537,14 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		double		dbatch;
 		int			minbatch;
 
+<<<<<<< HEAD
 		lbuckets = (hash_table_bytes / tupsize) / gp_hashjoin_tuples_per_bucket;
 		lbuckets = Min(lbuckets, max_pointers);
 
+=======
+		lbuckets = (hash_table_bytes / tupsize) / NTUP_PER_BUCKET;
+		lbuckets = Min(lbuckets, max_pointers);
+>>>>>>> 78a09145e0
 		nbuckets = (int) lbuckets;
 
 		/*
@@ -603,6 +603,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		double		dbuckets_upper;
 		double		dbuckets;
 
+<<<<<<< HEAD
 		/* divide our tuple row-count estimate by our the number of
 		 * tuples we'd like in a bucket: this produces a small bucket
 		 * count independent of our work_mem setting */
@@ -623,6 +624,10 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		dbuckets = ceil(dbuckets);
 		dbuckets = Min(dbuckets, max_pointers);
 
+=======
+		dbuckets = ceil(ntuples / NTUP_PER_BUCKET);
+		dbuckets = Min(dbuckets, max_pointers);
+>>>>>>> 78a09145e0
 		nbuckets = (int) dbuckets;
 
 		/*
@@ -1656,9 +1661,9 @@ ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node, int mcvsToUse)
 		 * will be at least one null entry, so searches will always
 		 * terminate.)
 		 *
-		 * Note: this code could fail if mcvsToUse exceeds INT_MAX/8, but that
-		 * is not currently possible since we limit pg_statistic entries to
-		 * much less than that.
+		 * Note: this code could fail if mcvsToUse exceeds INT_MAX/8 or
+		 * MaxAllocSize/sizeof(void *)/8, but that is not currently possible
+		 * since we limit pg_statistic entries to much less than that.
 		 */
 		nbuckets = 2;
 		while (nbuckets <= mcvsToUse)

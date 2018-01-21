@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.92 2009/06/11 14:48:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.93 2009/12/09 06:37:06 mha Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -1014,6 +1014,7 @@ aloop:
 	port->peer_cn = NULL;
 	if (port->peer != NULL)
 	{
+<<<<<<< HEAD
 		int len;
 
 		len = X509_NAME_get_text_by_NID(X509_get_subject_name(port->peer),
@@ -1049,6 +1050,38 @@ aloop:
 			}
 
 			port->peer_cn = peer_cn;
+=======
+		strlcpy(port->peer_dn, "(anonymous)", sizeof(port->peer_dn));
+		strlcpy(port->peer_cn, "(anonymous)", sizeof(port->peer_cn));
+	}
+	else
+	{
+		X509_NAME_oneline(X509_get_subject_name(port->peer),
+						  port->peer_dn, sizeof(port->peer_dn));
+		port->peer_dn[sizeof(port->peer_dn) - 1] = '\0';
+		r = X509_NAME_get_text_by_NID(X509_get_subject_name(port->peer),
+					   NID_commonName, port->peer_cn, sizeof(port->peer_cn));
+		port->peer_cn[sizeof(port->peer_cn) - 1] = '\0';
+		if (r == -1)
+		{
+			/* Unable to get the CN, set it to blank so it can't be used */
+			port->peer_cn[0] = '\0';
+		}
+		else
+		{
+			/*
+			 * Reject embedded NULLs in certificate common name to prevent attacks like
+			 * CVE-2009-4034.
+			 */
+			if (r != strlen(port->peer_cn))
+			{
+				ereport(COMMERROR,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("SSL certificate's common name contains embedded null")));
+				close_SSL(port);
+				return -1;
+			}
+>>>>>>> 78a09145e0
 		}
 	}
 

@@ -207,6 +207,7 @@ drop function sillysrf(int);
 -- (see bug #5084)
 select * from (values (2),(null),(1)) v(k) where k = k order by k;
 select * from (values (2),(null),(1)) v(k) where k = k;
+<<<<<<< HEAD
 
 -- Test unsupported sorting operators
 CREATE TABLE nosort (i int);
@@ -237,3 +238,5 @@ select x, select_f(x) from (values (0), (1), (2), (3), (4), (5), (6)) r(x);
 drop table if exists select_t cascade; --ignore
 drop function if exists select_i(int); -- ignore
 drop function if exists select_f(int); -- ignore
+=======
+>>>>>>> 78a09145e0

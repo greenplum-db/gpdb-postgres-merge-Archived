@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.183 2009/06/25 11:30:08 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.188 2009/12/12 21:35:21 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
 #include "libpq/ip.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
+<<<<<<< HEAD
 #include "libpq/md5.h"
 #include "miscadmin.h"
 #include "pgtime.h"
@@ -52,6 +53,11 @@ extern bool gp_reject_internal_tcp_conn;
 #if defined(_AIX)
 int     getpeereid(int, uid_t *__restrict__, gid_t *__restrict__);
 #endif
+=======
+#include "miscadmin.h"
+#include "storage/ipc.h"
+
+>>>>>>> 78a09145e0
 
 /*----------------------------------------------------------------
  * Global authentication functions
@@ -209,6 +215,21 @@ static int	pg_SSPI_recvauth(Port *port);
 #endif
 static int	CheckRADIUSAuth(Port *port);
 
+
+/*
+ * Maximum accepted size of GSS and SSPI authentication tokens.
+ *
+ * Kerberos tickets are usually quite small, but the TGTs issued by Windows
+ * domain controllers include an authorization field known as the Privilege
+ * Attribute Certificate (PAC), which contains the user's Windows permissions
+ * (group memberships etc.). The PAC is copied into all tickets obtained on
+ * the basis of this TGT (even those issued by Unix realms which the Windows
+ * realm trusts), and can be several kB in size. The maximum token size
+ * accepted by Windows systems is determined by the MaxAuthToken Windows
+ * registry setting. Microsoft recommends that it is not set higher than
+ * 65535 bytes, so that seems like a reasonable limit for us as well.
+ */
+#define PG_MAX_AUTH_TOKEN_LENGTH	65535
 
 /*
  * Maximum accepted size of GSS and SSPI authentication tokens.
@@ -457,9 +478,15 @@ ClientAuthentication(Port *port)
 				 errhint("See server log for details.")));
 
 	/*
+<<<<<<< HEAD
 	 * Enable immediate response to SIGTERM/SIGINT/timeout interrupts. (We
 	 * don't want this during hba_getauthmethod() because it might have to do
 	 * database access, eg for role membership checks.)
+=======
+	 * Enable immediate response to SIGTERM/SIGINT/timeout interrupts.
+	 * (We don't want this during hba_getauthmethod() because it might
+	 * have to do database access, eg for role membership checks.)
+>>>>>>> 78a09145e0
 	 */
 	ImmediateInterruptOK = true;
 	/* And don't forget to detect one that already arrived */
@@ -971,11 +998,14 @@ pg_krb5_recvauth(Port *port)
 	char	   *kusername;
 	char	   *cp;
 
+<<<<<<< HEAD
 	/* GPDB: Because we are still using the old flatfile method of getting roles, safest to check here if the role exists */
 	/* Not sure if this is necessary, PG took this test out when getting rid of the pg_authid flatfile */
 	if (get_role_line(port->user_name) == NULL)
 		return STATUS_ERROR;
 
+=======
+>>>>>>> 78a09145e0
 	ret = pg_krb5_init(port);
 	if (ret != STATUS_OK)
 		return ret;
@@ -2161,10 +2191,13 @@ authident(hbaPort *port)
 {
 	char		ident_user[IDENT_USERNAME_MAX + 1];
 
+<<<<<<< HEAD
 	/* GPDB: Because we are still using the old flatfile method of getting roles, safest to check here if the role exists */
 	if (get_role_line(port->user_name) == NULL)
 		return STATUS_ERROR;
 
+=======
+>>>>>>> 78a09145e0
 	switch (port->raddr.addr.ss_family)
 	{
 		case AF_INET:
@@ -2429,6 +2462,7 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 	int			ldapversion = LDAP_VERSION3;
 	int			r;
 
+<<<<<<< HEAD
 	if (strncmp(port->hba->ldapserver, "ldaps://", 8) == 0 ||
 		strncmp(port->hba->ldapserver, "ldap://",  7) == 0)
 	{
@@ -2446,6 +2480,9 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 		*ldap = ldap_init(port->hba->ldapserver, port->hba->ldapport);
 	}
 
+=======
+	*ldap = ldap_init(port->hba->ldapserver, port->hba->ldapport);
+>>>>>>> 78a09145e0
 	if (!*ldap)
 	{
 #ifndef WIN32
@@ -2566,6 +2603,7 @@ CheckLDAPAuth(Port *port)
 	if (port->hba->ldapbasedn)
 	{
 		/*
+<<<<<<< HEAD
 		 * First perform an LDAP search to find the DN for the user we are
 		 * trying to log in as.
 		 */
@@ -2581,6 +2619,22 @@ CheckLDAPAuth(Port *port)
 		 * since they aren't really reasonable in a username anyway. Allowing
 		 * them would make it possible to inject any kind of custom filters in
 		 * the LDAP filter.
+=======
+		 * First perform an LDAP search to find the DN for the user we are trying to log
+		 * in as.
+		 */
+		char		   *filter;
+		LDAPMessage	   *search_message;
+		LDAPMessage	   *entry;
+		char		   *attributes[2];
+		char		   *dn;
+		char		   *c;
+
+		/*
+		 * Disallow any characters that we would otherwise need to escape, since they
+		 * aren't really reasonable in a username anyway. Allowing them would make it
+		 * possible to inject any kind of custom filters in the LDAP filter.
+>>>>>>> 78a09145e0
 		 */
 		for (c = port->user_name; *c; c++)
 		{
@@ -2591,12 +2645,17 @@ CheckLDAPAuth(Port *port)
 				*c == '/')
 			{
 				ereport(LOG,
+<<<<<<< HEAD
 						(errmsg("invalid character in user name for LDAP authentication")));
+=======
+						(errmsg("invalid character in username for LDAP authentication")));
+>>>>>>> 78a09145e0
 				return STATUS_ERROR;
 			}
 		}
 
 		/*
+<<<<<<< HEAD
 		 * Bind with a pre-defined username/password (if available) for
 		 * searching. If none is specified, this turns into an anonymous bind.
 		 */
@@ -2608,6 +2667,19 @@ CheckLDAPAuth(Port *port)
 			ereport(LOG,
 					(errmsg("could not perform initial LDAP bind for ldapbinddn \"%s\" on server \"%s\": %s",
 						  port->hba->ldapbinddn, port->hba->ldapserver, ldap_err2string(r))));
+=======
+		 * Bind with a pre-defined username/password (if available) for searching. If
+		 * none is specified, this turns into an anonymous bind.
+		 */
+		r = ldap_simple_bind_s(ldap,
+							   port->hba->ldapbinddn ? port->hba->ldapbinddn : "",
+							   port->hba->ldapbindpasswd ? port->hba->ldapbindpasswd : "");
+		if (r != LDAP_SUCCESS)
+		{
+			ereport(LOG,
+					(errmsg("could not perform initial LDAP bind for ldapbinddn \"%s\" on server \"%s\": error code %d",
+							port->hba->ldapbinddn, port->hba->ldapserver, r)));
+>>>>>>> 78a09145e0
 			return STATUS_ERROR;
 		}
 
@@ -2615,10 +2687,17 @@ CheckLDAPAuth(Port *port)
 		attributes[0] = port->hba->ldapsearchattribute ? port->hba->ldapsearchattribute : "uid";
 		attributes[1] = NULL;
 
+<<<<<<< HEAD
 		filter = palloc(strlen(attributes[0]) + strlen(port->user_name) + 4);
 		sprintf(filter, "(%s=%s)",
 				attributes[0],
 				port->user_name);
+=======
+		filter = palloc(strlen(attributes[0])+strlen(port->user_name)+4);
+		sprintf(filter, "(%s=%s)",
+				 attributes[0],
+				 port->user_name);
+>>>>>>> 78a09145e0
 
 		r = ldap_search_s(ldap,
 						  port->hba->ldapbasedn,
@@ -2631,8 +2710,13 @@ CheckLDAPAuth(Port *port)
 		if (r != LDAP_SUCCESS)
 		{
 			ereport(LOG,
+<<<<<<< HEAD
 					(errmsg("could not search LDAP for filter \"%s\" on server \"%s\": %s",
 							filter, port->hba->ldapserver, ldap_err2string(r))));
+=======
+					(errmsg("could not search LDAP for filter \"%s\" on server \"%s\": error code %d",
+							filter, port->hba->ldapserver, r)));
+>>>>>>> 78a09145e0
 			pfree(filter);
 			return STATUS_ERROR;
 		}
@@ -2645,9 +2729,14 @@ CheckLDAPAuth(Port *port)
 								filter, port->hba->ldapserver)));
 			else
 				ereport(LOG,
+<<<<<<< HEAD
 						(errmsg("LDAP search failed for filter \"%s\" on server \"%s\": user is not unique (%ld matches)",
 								filter, port->hba->ldapserver,
 						  (long) ldap_count_entries(ldap, search_message))));
+=======
+						(errmsg("LDAP search failed for filter \"%s\" on server \"%s\": user is not unique (%d matches)",
+								filter, port->hba->ldapserver, ldap_count_entries(ldap, search_message))));
+>>>>>>> 78a09145e0
 
 			pfree(filter);
 			ldap_msgfree(search_message);
@@ -2658,12 +2747,20 @@ CheckLDAPAuth(Port *port)
 		dn = ldap_get_dn(ldap, entry);
 		if (dn == NULL)
 		{
+<<<<<<< HEAD
 			int			error;
 
 			(void) ldap_get_option(ldap, LDAP_OPT_ERROR_NUMBER, &error);
 			ereport(LOG,
 					(errmsg("could not get dn for the first entry matching \"%s\" on server \"%s\": %s",
 					filter, port->hba->ldapserver, ldap_err2string(error))));
+=======
+			int error;
+			(void)ldap_get_option(ldap, LDAP_OPT_ERROR_NUMBER, &error);
+			ereport(LOG,
+					(errmsg("could not get dn for the first entry matching \"%s\" on server \"%s\": %s",
+							filter, port->hba->ldapserver, ldap_err2string(error))));
+>>>>>>> 78a09145e0
 			pfree(filter);
 			ldap_msgfree(search_message);
 			return STATUS_ERROR;
@@ -2678,19 +2775,32 @@ CheckLDAPAuth(Port *port)
 		r = ldap_unbind_s(ldap);
 		if (r != LDAP_SUCCESS)
 		{
+<<<<<<< HEAD
 			int			error;
 
 			(void) ldap_get_option(ldap, LDAP_OPT_ERROR_NUMBER, &error);
 			ereport(LOG,
 					(errmsg("could not unbind after searching for user \"%s\" on server \"%s\": %s",
 				  fulluser, port->hba->ldapserver, ldap_err2string(error))));
+=======
+			int error;
+			(void)ldap_get_option(ldap, LDAP_OPT_ERROR_NUMBER, &error);
+			ereport(LOG,
+					(errmsg("could not unbind after searching for user \"%s\" on server \"%s\": %s",
+							fulluser, port->hba->ldapserver, ldap_err2string(error))));
+>>>>>>> 78a09145e0
 			pfree(fulluser);
 			return STATUS_ERROR;
 		}
 
 		/*
+<<<<<<< HEAD
 		 * Need to re-initialize the LDAP connection, so that we can bind to
 		 * it with a different username.
+=======
+		 * Need to re-initialize the LDAP connection, so that we can bind
+		 * to it with a different username.
+>>>>>>> 78a09145e0
 		 */
 		if (InitializeLDAPConnection(port, &ldap) == STATUS_ERROR)
 		{
@@ -2704,6 +2814,7 @@ CheckLDAPAuth(Port *port)
 	{
 		fulluser = palloc((port->hba->ldapprefix ? strlen(port->hba->ldapprefix) : 0) +
 						  strlen(port->user_name) +
+<<<<<<< HEAD
 				(port->hba->ldapsuffix ? strlen(port->hba->ldapsuffix) : 0) +
 						  1);
 
@@ -2711,6 +2822,15 @@ CheckLDAPAuth(Port *port)
 			 port->hba->ldapprefix ? port->hba->ldapprefix : "",
 			 port->user_name,
 			 port->hba->ldapsuffix ? port->hba->ldapsuffix : "");
+=======
+						  (port->hba->ldapsuffix ? strlen(port->hba->ldapsuffix) : 0) +
+						  1);
+
+		sprintf(fulluser, "%s%s%s",
+				 port->hba->ldapprefix ? port->hba->ldapprefix : "",
+				 port->user_name,
+				 port->hba->ldapsuffix ? port->hba->ldapsuffix : "");
+>>>>>>> 78a09145e0
 	}
 
 	r = ldap_simple_bind_s(ldap, fulluser, passwd);
@@ -2719,8 +2839,13 @@ CheckLDAPAuth(Port *port)
 	if (r != LDAP_SUCCESS)
 	{
 		ereport(LOG,
+<<<<<<< HEAD
 				(errmsg("LDAP login failed for user \"%s\" on server \"%s\": %s",
 						fulluser, port->hba->ldapserver, ldap_err2string(r))));
+=======
+				(errmsg("LDAP login failed for user \"%s\" on server \"%s\": error code %d",
+						fulluser, port->hba->ldapserver, r)));
+>>>>>>> 78a09145e0
 		pfree(fulluser);
 		return STATUS_ERROR;
 	}
