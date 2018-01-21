@@ -12,11 +12,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.163 2008/02/17 18:14:29 meskes Exp $
-=======
  *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.170 2009/09/15 08:44:57 meskes Exp $
->>>>>>> 78a09145e0
  *
  *-------------------------------------------------------------------------
  */

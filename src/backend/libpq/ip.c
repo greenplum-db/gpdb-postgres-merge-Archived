@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.51 2010/02/26 02:00:43 momjian Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.48 2009/10/01 01:58:57 tgl Exp $
->>>>>>> 78a09145e0
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -675,11 +671,7 @@ pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
 
 	for (l = ifa; l; l = l->ifa_next)
 		run_ifaddr_callback(callback, cb_data,
-<<<<<<< HEAD
-							l->ifa_addr, l->ifa_netmask);
-=======
 		                    l->ifa_addr, l->ifa_netmask);
->>>>>>> 78a09145e0
 
 	freeifaddrs(ifa);
 	return 0;
@@ -865,15 +857,9 @@ pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
 /* Calculate based on sockaddr.sa_len */
 #ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
 #define _SIZEOF_ADDR_IFREQ(ifr) \
-<<<<<<< HEAD
-		((ifr).ifr_addr.sa_len > sizeof(struct sockaddr) ? \
-		 (sizeof(struct ifreq) - sizeof(struct sockaddr) + \
-		  (ifr).ifr_addr.sa_len) : sizeof(struct ifreq))
-=======
         ((ifr).ifr_addr.sa_len > sizeof(struct sockaddr) ? \
          (sizeof(struct ifreq) - sizeof(struct sockaddr) + \
           (ifr).ifr_addr.sa_len) : sizeof(struct ifreq))
->>>>>>> 78a09145e0
 
 /* Padded ifreq structure, simple */
 #else

@@ -64,13 +64,8 @@ static List *parsed_hba_lines = NIL;
 
 /*
  * These variables hold the pre-parsed contents of the ident usermap
-<<<<<<< HEAD
- * configuration file.	ident_lines is a list of sublists, one sublist for
- * each (non-empty, non-comment) line of the file.	The sublist items are
-=======
  * configuration file.  ident_lines is a list of sublists, one sublist for
  * each (non-empty, non-comment) line of the file.  The sublist items are
->>>>>>> 78a09145e0
  * palloc'd strings, one string per token on the line.  Note there will always
  * be at least one token, since blank lines are not entered in the data
  * structure.  ident_line_nums is an integer list containing the actual line
@@ -975,11 +970,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				if (pg_sockaddr_cidr_mask(&parsedline->mask, cidr_slash + 1,
 										  parsedline->addr.ss_family) < 0)
 				{
-<<<<<<< HEAD
-					*cidr_slash = '/';			/* restore token for message */
-=======
 					*cidr_slash = '/';		/* restore token for message */
->>>>>>> 78a09145e0
 					ereport(LOG,
 							(errcode(ERRCODE_CONFIG_FILE_ERROR),
 							 errmsg("invalid CIDR mask in address \"%s\"",

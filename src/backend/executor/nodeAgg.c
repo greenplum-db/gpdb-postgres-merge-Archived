@@ -786,19 +786,11 @@ process_ordered_aggregate_single(AggState *aggstate,
 								 AggStatePerGroup pergroupstate)
 {
 	Datum		oldVal = (Datum) 0;
-<<<<<<< HEAD
-	bool		oldIsNull = true;
-	bool		haveOldVal = false;
-	MemoryContext workcontext = aggstate->tmpcontext->ecxt_per_tuple_memory;
-	MemoryContext oldContext;
-	bool		isDistinct = (peraggstate->numDistinctCols > 0);
-=======
 	bool        oldIsNull = true;
 	bool		haveOldVal = false;
 	MemoryContext workcontext = aggstate->tmpcontext->ecxt_per_tuple_memory;
 	MemoryContext oldContext;
 	bool        isDistinct = (peraggstate->numDistinctCols > 0);
->>>>>>> 78a09145e0
 	Datum	   *newVal;
 	bool	   *isNull;
 	FunctionCallInfoData fcinfo;

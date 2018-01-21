@@ -1018,19 +1018,11 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 				 * If left-aligned, pad out remaining space if needed (not
 				 * last column, and/or wrap marks required).
 				 */
-<<<<<<< HEAD
-				if (cont->aligns[j] != 'r')		/* Left aligned cell */
-				{
-					if (finalspaces ||
-						wrap[j] == PRINT_LINE_WRAP_WRAP ||
-						wrap[j] == PRINT_LINE_WRAP_NEWLINE)
-=======
 				if (cont->aligns[j] != 'r') /* Left aligned cell */
 				{
 					if (finalspaces ||
 						wrap[j] == PRINT_LINE_WRAP_WRAP ||
 					    wrap[j] == PRINT_LINE_WRAP_NEWLINE)
->>>>>>> 78a09145e0
 						fprintf(fout, "%*s",
 								width_wrap[j] - chars_to_output, "");
 				}

@@ -8,11 +8,7 @@
  *
  * Copyright (c) 2003-2010, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/libpq/ip.h,v 1.24 2010/02/26 02:01:24 momjian Exp $
-=======
  * $PostgreSQL: pgsql/src/include/libpq/ip.h,v 1.22 2009/10/01 01:58:58 tgl Exp $
->>>>>>> 78a09145e0
  *
  *-------------------------------------------------------------------------
  */
@@ -61,10 +57,6 @@ extern void pg_promote_v4_to_v6_addr(struct sockaddr_storage * addr);
 extern void pg_promote_v4_to_v6_mask(struct sockaddr_storage * addr);
 #endif
 
-<<<<<<< HEAD
-extern int	pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data);
-=======
 extern int pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data);
->>>>>>> 78a09145e0
 
 #endif   /* IP_H */

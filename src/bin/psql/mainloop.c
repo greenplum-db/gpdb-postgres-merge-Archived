@@ -423,11 +423,7 @@ MainLoop(FILE *source)
  * psqlscan.c is #include'd here instead of being compiled on its own.
  * This is because we need postgres_fe.h to be read before any system
  * include files, else things tend to break on platforms that have
-<<<<<<< HEAD
- * multiple infrastructures for stdio.h and so on.	flex is absolutely
-=======
  * multiple infrastructures for stdio.h and so on.  flex is absolutely
->>>>>>> 78a09145e0
  * uncooperative about that, so we can't compile psqlscan.c on its own.
  */
 #include "psqlscan.c"

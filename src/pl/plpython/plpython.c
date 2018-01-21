@@ -87,11 +87,7 @@ typedef int Py_ssize_t;
  * definition is for Python <=2.5
  */
 #ifndef PyVarObject_HEAD_INIT
-<<<<<<< HEAD
-#define PyVarObject_HEAD_INIT(type, size)		\
-=======
 #define PyVarObject_HEAD_INIT(type, size) 		\
->>>>>>> 78a09145e0
 		PyObject_HEAD_INIT(type) size,
 #endif
 
@@ -673,19 +669,11 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 	save_curr_proc = PLy_curr_procedure;
 
 	/*
-<<<<<<< HEAD
-	 * Setup error traceback support for ereport()
-	 */
-	plerrcontext.callback = plpython_error_callback;
-	plerrcontext.previous = error_context_stack;
-	error_context_stack = &plerrcontext;
-=======
      * Setup error traceback support for ereport()
      */
     plerrcontext.callback = plpython_error_callback;
     plerrcontext.previous = error_context_stack;
     error_context_stack = &plerrcontext;
->>>>>>> 78a09145e0
 
 	PG_TRY();
 	{
@@ -722,11 +710,7 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 	PG_END_TRY();
 
 	/* Pop the error context stack */
-<<<<<<< HEAD
-	error_context_stack = plerrcontext.previous;
-=======
     error_context_stack = plerrcontext.previous;
->>>>>>> 78a09145e0
 
 	PLy_curr_procedure = save_curr_proc;
 
@@ -901,11 +885,7 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 			{
 				ereport(ERROR,
 						(errmsg("TD[\"new\"] dictionary key at ordinal position %d is not a string", i)));
-<<<<<<< HEAD
-				plattstr = NULL;	/* keep compiler quiet */
-=======
 				plattstr = NULL; /* keep compiler quiet */
->>>>>>> 78a09145e0
 			}
 			attn = SPI_fnumber(tupdesc, plattstr);
 			if (attn == SPI_ERROR_NOATTRIBUTE)
@@ -2428,11 +2408,7 @@ static void
 PLy_output_datum_func2(PLyObToDatum *arg, HeapTuple typeTup)
 {
 	Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
-<<<<<<< HEAD
-	Oid			element_type;
-=======
 	Oid element_type;
->>>>>>> 78a09145e0
 
 	perm_fmgr_info(typeStruct->typinput, &arg->typfunc);
 	arg->typoid = HeapTupleGetOid(typeTup);
@@ -2534,11 +2510,7 @@ static void
 PLy_input_datum_func2(PLyDatumToOb *arg, Oid typeOid, HeapTuple typeTup)
 {
 	Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
-<<<<<<< HEAD
-	Oid			element_type = get_element_type(typeOid);
-=======
 	Oid element_type = get_element_type(typeOid);
->>>>>>> 78a09145e0
 
 	/* Get the type's conversion information */
 	perm_fmgr_info(typeStruct->typoutput, &arg->typfunc);
@@ -2705,15 +2677,9 @@ PLyLong_FromInt64(PLyDatumToOb *arg, Datum d)
 static PyObject *
 PLyBytes_FromBytea(PLyDatumToOb *arg, Datum d)
 {
-<<<<<<< HEAD
-	text	   *txt = DatumGetByteaP(d);
-	char	   *str = VARDATA(txt);
-	size_t		size = VARSIZE(txt) - VARHDRSZ;
-=======
 	text     *txt = DatumGetByteaP(d);
 	char     *str = VARDATA(txt);
 	size_t    size = VARSIZE(txt) - VARHDRSZ;
->>>>>>> 78a09145e0
 
 	return PyBytes_FromStringAndSize(str, size);
 }
@@ -5939,11 +5905,7 @@ PLyUnicode_Bytes(PyObject *unicode)
  * function.  The result is palloc'ed.
  *
  * Note that this function is disguised as PyString_AsString() when
-<<<<<<< HEAD
- * using Python 3.	That function retuns a pointer into the internal
-=======
  * using Python 3.  That function retuns a pointer into the internal
->>>>>>> 78a09145e0
  * memory of the argument, which isn't exactly the interface of this
  * function.  But in either case you get a rather short-lived
  * reference that you ought to better leave alone.
@@ -5966,26 +5928,15 @@ PLyUnicode_AsString(PyObject *unicode)
 #if PY_MAJOR_VERSION >= 3
 /*
  * Convert a C string in the PostgreSQL server encoding to a Python
-<<<<<<< HEAD
- * unicode object.	Reference ownership is passed to the caller.
-=======
  * unicode object.  Reference ownership is passed to the caller.
->>>>>>> 78a09145e0
  */
 static PyObject *
 PLyUnicode_FromString(const char *s)
 {
-<<<<<<< HEAD
-	char	   *utf8string;
-	PyObject   *o;
-
-	utf8string = (char *) pg_do_encoding_conversion((unsigned char *) s,
-=======
     char       *utf8string;
 	PyObject   *o;
 
     utf8string = (char *) pg_do_encoding_conversion((unsigned char *) s,
->>>>>>> 78a09145e0
 													strlen(s),
 													GetDatabaseEncoding(),
 													PG_UTF8);

@@ -23,11 +23,7 @@ PostgreSQL documentation
 <synopsis>
 CREATE [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</replaceable>
 CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</replaceable>
-<<<<<<< HEAD
-	HANDLER <replaceable class="parameter">call_handler</replaceable> [ INLINE <replaceable class="parameter">inline_handler</replaceable> ] [ VALIDATOR <replaceable>valfunction</replaceable> ]
-=======
     HANDLER <replaceable class="parameter">call_handler</replaceable> [ INLINE <replaceable class="parameter">inline_handler</replaceable> ] [ VALIDATOR <replaceable>valfunction</replaceable> ]
->>>>>>> 78a09145e0
 </synopsis>
  </refsynopsisdiv>
 

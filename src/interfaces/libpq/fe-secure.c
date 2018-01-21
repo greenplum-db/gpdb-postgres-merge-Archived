@@ -658,11 +658,7 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 	else
 #endif   /* USE_SSL */
 	{
-<<<<<<< HEAD
-		int			flags = 0;
-=======
 		int		flags = 0;
->>>>>>> 78a09145e0
 
 #ifdef MSG_NOSIGNAL
 		if (conn->sigpipe_flag)

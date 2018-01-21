@@ -780,11 +780,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	PlannerInfo *subroot;
 	int			rtoffset;
 	pullup_replace_vars_context rvcontext;
-<<<<<<< HEAD
-    ListCell   *lc;
-=======
 	ListCell   *lc;
->>>>>>> 78a09145e0
 
 	/*
 	 * Need a modifiable copy of the subquery to hack on.  Even if we didn't
@@ -1014,11 +1010,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 		if (appinfo == containing_appendrel)
 			rvcontext.need_phvs = false;
 		appinfo->translated_vars = (List *)
-<<<<<<< HEAD
-				pullup_replace_vars((Node *) appinfo->translated_vars, &rvcontext);
-=======
 			pullup_replace_vars((Node *) appinfo->translated_vars, &rvcontext);
->>>>>>> 78a09145e0
 		rvcontext.need_phvs = save_need_phvs;
 	}
 
@@ -1535,15 +1527,9 @@ pullup_replace_vars_callback(Var *var,
 		{
 			/* RowExpr is certainly not strict, so always need PHV */
 			newnode = (Node *)
-<<<<<<< HEAD
-			make_placeholder_expr(rcon->root,
-								  (Expr *) newnode,
-								  bms_make_singleton(rcon->varno));
-=======
 				make_placeholder_expr(rcon->root,
 									  (Expr *) newnode,
 									  bms_make_singleton(rcon->varno));
->>>>>>> 78a09145e0
 			/* cache it with the PHV, and with varlevelsup still zero */
 			rcon->rv_cache[InvalidAttrNumber] = copyObject(newnode);
 		}
@@ -1615,15 +1601,9 @@ pullup_replace_vars_callback(Var *var,
 
 			if (wrap)
 				newnode = (Node *)
-<<<<<<< HEAD
-				make_placeholder_expr(rcon->root,
-									  (Expr *) newnode,
-									  bms_make_singleton(rcon->varno));
-=======
 					make_placeholder_expr(rcon->root,
 										  (Expr *) newnode,
 										  bms_make_singleton(rcon->varno));
->>>>>>> 78a09145e0
 
 			/*
 			 * Cache it if possible (ie, if the attno is in range, which it

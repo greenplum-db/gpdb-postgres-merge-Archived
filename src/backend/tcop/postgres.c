@@ -4363,11 +4363,7 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx)
 					const char *tmp = get_stats_option_name(optarg);
 
 					if (tmp)
-<<<<<<< HEAD
-							SetConfigOption(tmp, "true", ctx, gucsource);
-=======
 						SetConfigOption(tmp, "true", ctx, gucsource);
->>>>>>> 78a09145e0
 					else
 						errs++;
 					break;

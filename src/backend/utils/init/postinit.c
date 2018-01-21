@@ -144,11 +144,7 @@ FindMyDatabase(const char *dbname, Oid *db_id, Oid *db_tablespace)
  * GetDatabaseTuple -- fetch the pg_database row for a database
  *
  * This is used during backend startup when we don't yet have any access to
-<<<<<<< HEAD
- * system catalogs in general.	In the worst case, we can seqscan pg_database
-=======
  * system catalogs in general.  In the worst case, we can seqscan pg_database
->>>>>>> 78a09145e0
  * using nothing but the hard-wired descriptor that relcache.c creates for
  * pg_database.  In more typical cases, relcache.c was able to load
  * descriptors for both pg_database and its indexes from the shared relcache
@@ -1073,11 +1069,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	}
 	else if (in_dbname != NULL)
 	{
-<<<<<<< HEAD
-		HeapTuple	tuple;
-=======
 		HeapTuple tuple;
->>>>>>> 78a09145e0
 		Form_pg_database dbform;
 
 		tuple = GetDatabaseTuple(in_dbname);
@@ -1098,11 +1090,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	else
 	{
 		/* caller specified database by OID */
-<<<<<<< HEAD
-		HeapTuple	tuple;
-=======
 		HeapTuple tuple;
->>>>>>> 78a09145e0
 		Form_pg_database dbform;
 
 		tuple = GetDatabaseTupleByOid(dboid);
@@ -1161,11 +1149,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 */
 	if (!bootstrap)
 	{
-<<<<<<< HEAD
-		HeapTuple	tuple;
-=======
 		HeapTuple tuple;
->>>>>>> 78a09145e0
 
 		tuple = GetDatabaseTuple(dbname);
 		if (!HeapTupleIsValid(tuple) ||

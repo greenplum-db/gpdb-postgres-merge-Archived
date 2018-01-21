@@ -7,11 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/include/libpq/pqsignal.h,v 1.41 2010/02/26 02:01:24 momjian Exp $
-=======
  * $PostgreSQL: pgsql/src/include/libpq/pqsignal.h,v 1.36 2009/12/16 23:05:00 petere Exp $
->>>>>>> 78a09145e0
  *
  * NOTES
  *	  This shouldn't be in libpq, but the monitor and some other
@@ -53,11 +49,7 @@ int			pqsigsetmask(int mask);
 
 #define sigaddset(set, signum)	(*(set) |= (sigmask(signum)))
 #define sigdelset(set, signum)	(*(set) &= ~(sigmask(signum)))
-<<<<<<< HEAD
-#endif   /* not HAVE_SIGPROCMASK */
-=======
 #endif /* not HAVE_SIGPROCMASK */
->>>>>>> 78a09145e0
 
 typedef void (*pqsigfunc) (int);
 

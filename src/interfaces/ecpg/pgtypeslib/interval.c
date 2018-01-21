@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.43 2010/08/02 01:24:54 tgl Exp $ */
-=======
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.42 2009/09/03 09:59:20 meskes Exp $ */
->>>>>>> 78a09145e0
 
 #include "postgres_fe.h"
 #include <time.h>

@@ -27,11 +27,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeWindowAgg.c,v 1.13 2010/03/21 00:17:58 petere Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/executor/nodeWindowAgg.c,v 1.7 2009/09/27 21:10:53 tgl Exp $
->>>>>>> 78a09145e0
  *
  *-------------------------------------------------------------------------
  */

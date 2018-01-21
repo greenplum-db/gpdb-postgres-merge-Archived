@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.7.2.1 2009/09/08 04:25:14 tgl Exp $ */
-=======
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.10 2009/11/05 23:24:27 tgl Exp $ */
->>>>>>> 78a09145e0
 
 /* Copyright comment */
 %{

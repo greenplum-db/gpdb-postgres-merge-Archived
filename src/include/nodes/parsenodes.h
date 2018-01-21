@@ -2574,11 +2574,7 @@ typedef struct InlineCodeBlock
 	NodeTag		type;
 	char	   *source_text;	/* source text of anonymous code block */
 	Oid			langOid;		/* OID of selected language */
-<<<<<<< HEAD
-	bool		langIsTrusted;	/* trusted property of the language */
-=======
 	bool        langIsTrusted;  /* trusted property of the language */
->>>>>>> 78a09145e0
 } InlineCodeBlock;
 
 /* ----------------------

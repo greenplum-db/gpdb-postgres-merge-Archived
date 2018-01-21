@@ -2814,15 +2814,6 @@ CheckLDAPAuth(Port *port)
 	{
 		fulluser = palloc((port->hba->ldapprefix ? strlen(port->hba->ldapprefix) : 0) +
 						  strlen(port->user_name) +
-<<<<<<< HEAD
-				(port->hba->ldapsuffix ? strlen(port->hba->ldapsuffix) : 0) +
-						  1);
-
-		sprintf(fulluser, "%s%s%s",
-			 port->hba->ldapprefix ? port->hba->ldapprefix : "",
-			 port->user_name,
-			 port->hba->ldapsuffix ? port->hba->ldapsuffix : "");
-=======
 						  (port->hba->ldapsuffix ? strlen(port->hba->ldapsuffix) : 0) +
 						  1);
 
@@ -2830,7 +2821,6 @@ CheckLDAPAuth(Port *port)
 				 port->hba->ldapprefix ? port->hba->ldapprefix : "",
 				 port->user_name,
 				 port->hba->ldapsuffix ? port->hba->ldapsuffix : "");
->>>>>>> 78a09145e0
 	}
 
 	r = ldap_simple_bind_s(ldap, fulluser, passwd);

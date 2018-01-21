@@ -606,11 +606,7 @@ main(int argc, char **argv)
 	 * There's no way to trigger failover via signal on Windows.
 	 */
 	(void) signal(SIGUSR1, sighandler);
-<<<<<<< HEAD
-	(void) signal(SIGINT, sighandler); /* deprecated, use SIGUSR1 */
-=======
 	(void) signal(SIGINT, sighandler);	/* deprecated, use SIGUSR1 */
->>>>>>> 78a09145e0
 	(void) signal(SIGQUIT, sigquit_handler);
 #endif
 

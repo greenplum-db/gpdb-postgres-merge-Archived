@@ -444,17 +444,10 @@ CreateRole(CreateRoleStmt *stmt)
 	 */
 	if (check_password_hook && password)
 		(*check_password_hook) (stmt->role,
-<<<<<<< HEAD
-				password,
-				isMD5(password) ? PASSWORD_TYPE_MD5 : PASSWORD_TYPE_PLAINTEXT,
-				validUntil_datum,
-				validUntil_null);
-=======
 								password,
 								isMD5(password) ? PASSWORD_TYPE_MD5 : PASSWORD_TYPE_PLAINTEXT,
 								validUntil_datum,
 								validUntil_null);
->>>>>>> 78a09145e0
 
 	/*
 	 * Build a tuple to insert
@@ -1004,28 +997,17 @@ AlterRole(AlterRoleStmt *stmt)
 	if (validUntil)
 	{
 		validUntil_datum = DirectFunctionCall3(timestamptz_in,
-<<<<<<< HEAD
-				CStringGetDatum(validUntil),
-				ObjectIdGetDatum(InvalidOid),
-				Int32GetDatum(-1));
-=======
 											   CStringGetDatum(validUntil),
 											   ObjectIdGetDatum(InvalidOid),
 											   Int32GetDatum(-1));
->>>>>>> 78a09145e0
 		validUntil_null = false;
 	}
 	else
 	{
 		/* fetch existing setting in case hook needs it */
 		validUntil_datum = SysCacheGetAttr(AUTHNAME, tuple,
-<<<<<<< HEAD
-				Anum_pg_authid_rolvaliduntil,
-				&validUntil_null);
-=======
 										   Anum_pg_authid_rolvaliduntil,
 										   &validUntil_null);
->>>>>>> 78a09145e0
 	}
 
 	/*
@@ -1033,17 +1015,10 @@ AlterRole(AlterRoleStmt *stmt)
 	 */
 	if (check_password_hook && password)
 		(*check_password_hook) (stmt->role,
-<<<<<<< HEAD
-				password,
-				isMD5(password) ? PASSWORD_TYPE_MD5 : PASSWORD_TYPE_PLAINTEXT,
-				validUntil_datum,
-				validUntil_null);
-=======
 								password,
 								isMD5(password) ? PASSWORD_TYPE_MD5 : PASSWORD_TYPE_PLAINTEXT,
 								validUntil_datum,
 								validUntil_null);
->>>>>>> 78a09145e0
 
 	/*
 	 * Build an updated tuple, perusing the information just obtained

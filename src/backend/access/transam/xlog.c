@@ -3411,11 +3411,7 @@ RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr)
 				else
 				{
 					/* No need for any more future segments... */
-<<<<<<< HEAD
-					int			rc;
-=======
 					int rc;
->>>>>>> 78a09145e0
 
 					ereport(DEBUG2,
 							(errmsg("removing transaction log file \"%s\"",

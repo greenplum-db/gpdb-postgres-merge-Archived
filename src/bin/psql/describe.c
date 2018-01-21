@@ -943,11 +943,7 @@ listDefaultACLs(const char *pattern)
 	initPQExpBuffer(&buf);
 
 	printfPQExpBuffer(&buf,
-<<<<<<< HEAD
-			   "SELECT pg_catalog.pg_get_userbyid(d.defaclrole) AS \"%s\",\n"
-=======
 					  "SELECT pg_catalog.pg_get_userbyid(d.defaclrole) AS \"%s\",\n"
->>>>>>> 78a09145e0
 					  "  n.nspname AS \"%s\",\n"
 					  "  CASE d.defaclobjtype WHEN 'r' THEN '%s' WHEN 'S' THEN '%s' WHEN 'f' THEN '%s' END AS \"%s\",\n"
 					  "  ",
@@ -961,11 +957,7 @@ listDefaultACLs(const char *pattern)
 	printACLColumn(&buf, "d.defaclacl");
 
 	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_default_acl d\n"
-<<<<<<< HEAD
-					  "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = d.defaclnamespace\n");
-=======
 	   "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = d.defaclnamespace\n");
->>>>>>> 78a09145e0
 
 	processSQLNamePattern(pset.db, &buf, pattern, false, false,
 						  NULL,
@@ -1834,11 +1826,7 @@ describeOneTableDetails(const char *schemaname,
 			appendPQExpBuffer(&buf,
 						"  false AS condeferrable, false AS condeferred,\n");
 		appendPQExpBuffer(&buf, "  a.amname, c2.relname, "
-<<<<<<< HEAD
-					  "pg_catalog.pg_get_expr(i.indpred, i.indrelid, true)\n"
-=======
 						  "pg_catalog.pg_get_expr(i.indpred, i.indrelid, true)\n"
->>>>>>> 78a09145e0
 						  "FROM pg_catalog.pg_index i, pg_catalog.pg_class c, pg_catalog.pg_class c2, pg_catalog.pg_am a\n"
 		  "WHERE i.indexrelid = c.oid AND c.oid = '%s' AND c.relam = a.oid\n"
 						  "AND i.indrelid = c2.oid",
@@ -3243,13 +3231,8 @@ add_role_attribute(PQExpBuffer buf, const char *const str)
 bool
 listDbRoleSettings(const char *pattern, const char *pattern2)
 {
-<<<<<<< HEAD
-	PQExpBufferData buf;
-	PGresult   *res;
-=======
 	PQExpBufferData	buf;
 	PGresult	   *res;
->>>>>>> 78a09145e0
 	printQueryOpt myopt = pset.popt;
 
 	initPQExpBuffer(&buf);
@@ -3289,11 +3272,7 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
 	else
 	{
 		fprintf(pset.queryFout,
-<<<<<<< HEAD
-		_("No per-database role settings support in this server version.\n"));
-=======
 				_("No per-database role settings support in this server version.\n"));
->>>>>>> 78a09145e0
 		return false;
 	}
 

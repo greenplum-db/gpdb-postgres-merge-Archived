@@ -1646,11 +1646,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 	}
 
 #ifndef __CYGWIN__
-<<<<<<< HEAD
-    AddUserToTokenDacl(restrictedToken);
-=======
 	AddUserToTokenDacl(restrictedToken);
->>>>>>> 78a09145e0
 #endif
 
 	r = CreateProcessAsUser(restrictedToken, NULL, cmd, NULL, NULL, TRUE, CREATE_SUSPENDED, NULL, NULL, &si, processInfo);

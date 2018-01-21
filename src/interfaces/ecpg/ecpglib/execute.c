@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.77 2008/03/01 03:26:34 tgl Exp $ */
-=======
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.87 2009/09/03 10:24:48 meskes Exp $ */
->>>>>>> 78a09145e0
 
 /*
  * The aim is to get a simpler inteface to the database routines.

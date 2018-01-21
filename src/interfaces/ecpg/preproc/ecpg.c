@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.104 2008/02/17 18:14:29 meskes Exp $ */
-=======
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.111 2009/08/05 11:42:20 meskes Exp $ */
->>>>>>> 78a09145e0
 
 /* Main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* Copyright (c) 1996-2009, PostgreSQL Global Development Group */

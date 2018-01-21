@@ -813,13 +813,8 @@ GetConstraintByName(Oid relid, const char *conname)
 			if (OidIsValid(conOid))
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_OBJECT),
-<<<<<<< HEAD
-				 errmsg("table \"%s\" has multiple constraints named \"%s\"",
-						get_rel_name(relid), conname)));
-=======
 						 errmsg("table \"%s\" has multiple constraints named \"%s\"",
 								get_rel_name(relid), conname)));
->>>>>>> 78a09145e0
 			conOid = HeapTupleGetOid(tuple);
 		}
 	}

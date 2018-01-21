@@ -1,11 +1,7 @@
 /*
  * this is a small part of c.h since we don't want to leak all postgres
  * definitions into ecpg programs
-<<<<<<< HEAD
- * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpglib.h,v 1.76 2008/03/20 16:29:45 meskes Exp $
-=======
  * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpglib.h,v 1.80 2009/09/18 13:13:32 meskes Exp $
->>>>>>> 78a09145e0
  */
 
 #ifndef _ECPGLIB_H

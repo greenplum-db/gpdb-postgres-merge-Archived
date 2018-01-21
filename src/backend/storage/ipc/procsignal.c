@@ -244,11 +244,7 @@ SendProcSignal(pid_t pid, ProcSignalReason reason, BackendId backendId)
 		 * InvalidBackendId means that the target is most likely an auxiliary
 		 * process, which will have a slot near the end of the array.
 		 */
-<<<<<<< HEAD
-		int			i;
-=======
 		int		i;
->>>>>>> 78a09145e0
 
 		for (i = NumProcSignalSlots - 1; i >= 0; i--)
 		{

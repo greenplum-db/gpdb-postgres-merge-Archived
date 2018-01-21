@@ -55,11 +55,7 @@
 /*
  * compatibility flag for permission checks
  */
-<<<<<<< HEAD
-bool		lo_compat_privileges;
-=======
 bool lo_compat_privileges;
->>>>>>> 78a09145e0
 
 /*#define FSDB 1*/
 #define BUFSIZE			8192
@@ -175,11 +171,7 @@ lo_read(int fd, char *buf, int len)
 		pg_largeobject_aclcheck_snapshot(cookies[fd]->id,
 										 GetUserId(),
 										 ACL_SELECT,
-<<<<<<< HEAD
-									   cookies[fd]->snapshot) != ACLCHECK_OK)
-=======
 										 cookies[fd]->snapshot) != ACLCHECK_OK)
->>>>>>> 78a09145e0
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied for large object %u",
@@ -563,11 +555,7 @@ lo_truncate(PG_FUNCTION_ARGS)
 		pg_largeobject_aclcheck_snapshot(cookies[fd]->id,
 										 GetUserId(),
 										 ACL_UPDATE,
-<<<<<<< HEAD
-									   cookies[fd]->snapshot) != ACLCHECK_OK)
-=======
 										 cookies[fd]->snapshot) != ACLCHECK_OK)
->>>>>>> 78a09145e0
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied for large object %u",

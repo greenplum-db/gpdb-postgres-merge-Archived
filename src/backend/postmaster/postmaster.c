@@ -6098,11 +6098,7 @@ BackendInitialize(Port *port)
 	status = ProcessStartupPacket(port, false);
 
 	/*
-<<<<<<< HEAD
-	 * Stop here if it was bad or a cancel packet.	ProcessStartupPacket
-=======
 	 * Stop here if it was bad or a cancel packet.  ProcessStartupPacket
->>>>>>> 78a09145e0
 	 * already did any appropriate error reporting.
 	 */
 	if (status != STATUS_OK)
