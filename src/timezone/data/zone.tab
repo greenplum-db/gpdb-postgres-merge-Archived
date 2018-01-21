@@ -1,10 +1,5 @@
-<<<<<<< HEAD
 # tz zone descriptions (deprecated version)
 #
-=======
-# <pre>
-# @(#)zone.tab	8.29
->>>>>>> 78a09145e0
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 #
@@ -339,11 +334,7 @@ RU	+5312+05009	Europe/Samara	Moscow+00 (Moscow+01 after 2014-10-26) - Samara, Ud
 RU	+5651+06036	Asia/Yekaterinburg	Moscow+02 - Urals
 RU	+5500+07324	Asia/Omsk	Moscow+03 - west Siberia
 RU	+5502+08255	Asia/Novosibirsk	Moscow+03 - Novosibirsk
-<<<<<<< HEAD
 RU	+5345+08707	Asia/Novokuznetsk	Moscow+03 (Moscow+04 after 2014-10-26) - Kemerovo
-=======
-RU	+5345+08707	Asia/Novokuznetsk	Moscow+03 - Novokuznetsk
->>>>>>> 78a09145e0
 RU	+5601+09250	Asia/Krasnoyarsk	Moscow+04 - Yenisei River
 RU	+5216+10420	Asia/Irkutsk	Moscow+05 - Lake Baikal
 RU	+5203+11328	Asia/Chita	Moscow+06 (Moscow+05 after 2014-10-26) - Zabaykalsky

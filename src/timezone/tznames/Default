@@ -4,11 +4,7 @@
 # timezone_abbreviations to 'Default'.  See the `Date/Time Support'
 # appendix in the PostgreSQL documentation for more information.
 #
-<<<<<<< HEAD
 # src/timezone/tznames/Default
-=======
-# $PostgreSQL: pgsql/src/timezone/tznames/Default,v 1.8 2009/09/06 15:25:23 tgl Exp $
->>>>>>> 78a09145e0
 
 
 #################### AFRICA ####################
@@ -217,7 +213,6 @@ ALMST   25200 D  # Alma-Ata Summer Time (obsolete)
 AMST    Asia/Yerevan  # Armenia Summer Time (obsolete)
 # CONFLICT! AMT is not unique
 # Other timezones:
-<<<<<<< HEAD
 #  - AMT: Armenia Time (Asia)
 AMT    -14400    # Amazon Time (obsolete)
 ANAST   Asia/Anadyr  # Anadyr Summer Time (obsolete)
@@ -239,43 +234,6 @@ IDT     10800 D  # Israel Daylight Time
 IRKST   Asia/Irkutsk  # Irkutsk Summer Time (obsolete)
 IRKT    Asia/Irkutsk  # Irkutsk Time (obsolete)
 IRT     12600    # Iran Time (not in IANA database)
-=======
-#  - AMT: Amazon Time (America)
-AMT     14400    # Armenia Time
-                 #     (Asia/Yerevan)
-ANAST   46800 D  # Anadyr Summer Time
-                 #     (Asia/Anadyr)
-ANAT    43200    # Anadyr Time
-                 #     (Asia/Anadyr)
-AZST    18000 D  # Azerbaijan Summer Time
-                 #     (Asia/Baku)
-AZT     14400    # Azerbaijan Time
-                 #     (Asia/Baku)
-BDT     21600    # Bangladesh Time
-                 #     (Asia/Dhaka)
-BNT     28800    # Brunei Darussalam Time
-                 #     (Asia/Brunei)
-BORT    28800    # Borneo Time (Indonesia) (not in zic)
-BTT     21600    # Bhutan Time
-                 #     (Asia/Thimphu)
-CCT     28800    # China Coastal Time (not in zic)
-GEST    14400 D  # Georgia Summer Time (there was a timezone change in 2004)
-                 #     (Asia/Tbilisi)
-GET     10800    # Georgia Time (there was a timezone change in 2004)
-                 #     (Asia/Tbilisi)
-HKT     28800    # Hong Kong Time (not in zic)
-ICT     25200    # Indochina Time
-                 #     (Asia/Bangkok)
-                 #     (Asia/Phnom_Penh)
-                 #     (Asia/Saigon)
-                 #     (Asia/Vientiane)
-IDT     10800 D  # Israel Daylight Time
-IRKST   32400 D  # Irkutsk Summer Time
-                 #     (Asia/Irkutsk)
-IRKT    28800    # Irkutsk Time
-                 #     (Asia/Irkutsk)
-IRT     12600    # Iran Time (not in zic)
->>>>>>> 78a09145e0
 # CONFLICT! IST is not unique
 # Other timezones:
 # - IST: Irish Summer Time (Europe)
