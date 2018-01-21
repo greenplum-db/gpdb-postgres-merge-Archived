@@ -82,12 +82,8 @@ typedef struct
 /* kluge to avoid including libpq/libpq-be.h here */
 typedef struct Port hbaPort;
 
-extern List *get_role_intervals(const char *role);
 extern bool load_hba(void);
 extern void load_ident(void);
-extern void load_role(void);
-extern void load_role_interval(void);
-extern void force_load_role(void);
 extern int	hba_getauthmethod(hbaPort *port);
 extern int check_usermap(const char *usermap_name,
 			  const char *pg_role, const char *auth_user,

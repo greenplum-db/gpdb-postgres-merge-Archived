@@ -29,13 +29,13 @@
 #include <unistd.h>
 #include <stddef.h>
 
+#include "catalog/pg_authid.h"
 #include "cdb/cdbvars.h"
 #include "libpq/auth.h"
 #include "libpq/crypt.h"
 #include "libpq/ip.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
-<<<<<<< HEAD
 #include "libpq/md5.h"
 #include "miscadmin.h"
 #include "pgtime.h"
@@ -44,6 +44,7 @@
 #include "utils/builtins.h"
 #include "utils/datetime.h"
 #include "utils/guc.h"
+#include "utils/syscache.h"
 #include "utils/timestamp.h"
 /*#include "replication/walsender.h"*/
 #include "storage/ipc.h"
@@ -53,11 +54,6 @@ extern bool gp_reject_internal_tcp_conn;
 #if defined(_AIX)
 int     getpeereid(int, uid_t *__restrict__, gid_t *__restrict__);
 #endif
-=======
-#include "miscadmin.h"
-#include "storage/ipc.h"
-
->>>>>>> 78a09145e0
 
 /*----------------------------------------------------------------
  * Global authentication functions
@@ -478,15 +474,9 @@ ClientAuthentication(Port *port)
 				 errhint("See server log for details.")));
 
 	/*
-<<<<<<< HEAD
 	 * Enable immediate response to SIGTERM/SIGINT/timeout interrupts. (We
 	 * don't want this during hba_getauthmethod() because it might have to do
 	 * database access, eg for role membership checks.)
-=======
-	 * Enable immediate response to SIGTERM/SIGINT/timeout interrupts.
-	 * (We don't want this during hba_getauthmethod() because it might
-	 * have to do database access, eg for role membership checks.)
->>>>>>> 78a09145e0
 	 */
 	ImmediateInterruptOK = true;
 	/* And don't forget to detect one that already arrived */
@@ -998,14 +988,6 @@ pg_krb5_recvauth(Port *port)
 	char	   *kusername;
 	char	   *cp;
 
-<<<<<<< HEAD
-	/* GPDB: Because we are still using the old flatfile method of getting roles, safest to check here if the role exists */
-	/* Not sure if this is necessary, PG took this test out when getting rid of the pg_authid flatfile */
-	if (get_role_line(port->user_name) == NULL)
-		return STATUS_ERROR;
-
-=======
->>>>>>> 78a09145e0
 	ret = pg_krb5_init(port);
 	if (ret != STATUS_OK)
 		return ret;
@@ -1172,48 +1154,52 @@ pg_GSS_error(int severity, char *errmsg, OM_uint32 maj_stat, OM_uint32 min_stat)
 static int
 check_valid_until_for_gssapi(Port *port)
 {
-	int         retval = 0;  
-	char        *valuntil = NULL;
-	char        *shadow_pass = NULL;
-	List        **line = NULL;
-	ListCell    *token = NULL;
-
-	if ((line = get_role_line(port->user_name)) == NULL)
-		return STATUS_ERROR;
-
-	/* Skip over rolename */
-	token = list_head(*line);
-	Assert(token != NULL);
-	if (token)
-		token = lnext(token);
-
-	if (token)
-	{        
-		shadow_pass = (char *) lfirst(token);
-		token = lnext(token);
-		if (token)
-			valuntil = (char *) lfirst(token);
-	}    
-
-	/* Validuntil attribute is not set.
-	 * No time constraint on the user to access the database.
+	/*
+	 * GPDB_90_MERGE_FIXME: this logic is copied from hashed_passwd_verify;
+	 * double-check it (especially the lack of password checks, which we may
+	 * need here) and consolidate it somehow so we don't fall out of sync.
 	 */
-	if (valuntil == NULL || *valuntil == '\0')
+	int			retval = STATUS_ERROR;
+	TimestampTz vuntil = 0;
+	HeapTuple	roleTup;
+	Datum		datum;
+	bool		isnull;
+
+	/*
+	 * Disable immediate interrupts while doing database access.  (Note
+	 * we don't bother to turn this back on if we hit one of the failure
+	 * conditions, since we can expect we'll just exit right away anyway.)
+	 */
+	ImmediateInterruptOK = false;
+
+	/* Get role info from pg_authid */
+	roleTup = SearchSysCache(AUTHNAME,
+							 PointerGetDatum(port->user_name),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(roleTup))
+		return STATUS_ERROR;					/* no such user */
+
+	datum = SysCacheGetAttr(AUTHNAME, roleTup,
+							Anum_pg_authid_rolvaliduntil, &isnull);
+	if (!isnull)
+		vuntil = DatumGetTimestampTz(datum);
+
+	ReleaseSysCache(roleTup);
+
+	/* Re-enable immediate response to SIGTERM/SIGINT/timeout interrupts */
+	ImmediateInterruptOK = true;
+	/* And don't forget to detect one that already arrived */
+	CHECK_FOR_INTERRUPTS();
+
+	/*
+	 * Now check to be sure we are not past rolvaliduntil
+	 */
+	if (isnull)
 		retval = STATUS_OK;
-	else 
-	{       
-		TimestampTz vuntil;
-
-		vuntil = DatumGetTimestampTz(DirectFunctionCall3(timestamptz_in,
-								CStringGetDatum(valuntil),
-								ObjectIdGetDatum(InvalidOid),
-								Int32GetDatum(-1)));
-
-		if (vuntil < GetCurrentTimestamp())
-			retval = STATUS_ERROR;
-		else
-			retval = STATUS_OK;
-	}
+	else if (vuntil < GetCurrentTimestamp())
+		retval = STATUS_ERROR;
+	else
+		retval = STATUS_OK;
 
 	return retval;
 }
@@ -2191,13 +2177,6 @@ authident(hbaPort *port)
 {
 	char		ident_user[IDENT_USERNAME_MAX + 1];
 
-<<<<<<< HEAD
-	/* GPDB: Because we are still using the old flatfile method of getting roles, safest to check here if the role exists */
-	if (get_role_line(port->user_name) == NULL)
-		return STATUS_ERROR;
-
-=======
->>>>>>> 78a09145e0
 	switch (port->raddr.addr.ss_family)
 	{
 		case AF_INET:
@@ -2462,7 +2441,6 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 	int			ldapversion = LDAP_VERSION3;
 	int			r;
 
-<<<<<<< HEAD
 	if (strncmp(port->hba->ldapserver, "ldaps://", 8) == 0 ||
 		strncmp(port->hba->ldapserver, "ldap://",  7) == 0)
 	{
@@ -2480,9 +2458,6 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 		*ldap = ldap_init(port->hba->ldapserver, port->hba->ldapport);
 	}
 
-=======
-	*ldap = ldap_init(port->hba->ldapserver, port->hba->ldapport);
->>>>>>> 78a09145e0
 	if (!*ldap)
 	{
 #ifndef WIN32
@@ -2603,7 +2578,6 @@ CheckLDAPAuth(Port *port)
 	if (port->hba->ldapbasedn)
 	{
 		/*
-<<<<<<< HEAD
 		 * First perform an LDAP search to find the DN for the user we are
 		 * trying to log in as.
 		 */
@@ -2619,22 +2593,6 @@ CheckLDAPAuth(Port *port)
 		 * since they aren't really reasonable in a username anyway. Allowing
 		 * them would make it possible to inject any kind of custom filters in
 		 * the LDAP filter.
-=======
-		 * First perform an LDAP search to find the DN for the user we are trying to log
-		 * in as.
-		 */
-		char		   *filter;
-		LDAPMessage	   *search_message;
-		LDAPMessage	   *entry;
-		char		   *attributes[2];
-		char		   *dn;
-		char		   *c;
-
-		/*
-		 * Disallow any characters that we would otherwise need to escape, since they
-		 * aren't really reasonable in a username anyway. Allowing them would make it
-		 * possible to inject any kind of custom filters in the LDAP filter.
->>>>>>> 78a09145e0
 		 */
 		for (c = port->user_name; *c; c++)
 		{
@@ -2645,17 +2603,12 @@ CheckLDAPAuth(Port *port)
 				*c == '/')
 			{
 				ereport(LOG,
-<<<<<<< HEAD
 						(errmsg("invalid character in user name for LDAP authentication")));
-=======
-						(errmsg("invalid character in username for LDAP authentication")));
->>>>>>> 78a09145e0
 				return STATUS_ERROR;
 			}
 		}
 
 		/*
-<<<<<<< HEAD
 		 * Bind with a pre-defined username/password (if available) for
 		 * searching. If none is specified, this turns into an anonymous bind.
 		 */
@@ -2667,19 +2620,6 @@ CheckLDAPAuth(Port *port)
 			ereport(LOG,
 					(errmsg("could not perform initial LDAP bind for ldapbinddn \"%s\" on server \"%s\": %s",
 						  port->hba->ldapbinddn, port->hba->ldapserver, ldap_err2string(r))));
-=======
-		 * Bind with a pre-defined username/password (if available) for searching. If
-		 * none is specified, this turns into an anonymous bind.
-		 */
-		r = ldap_simple_bind_s(ldap,
-							   port->hba->ldapbinddn ? port->hba->ldapbinddn : "",
-							   port->hba->ldapbindpasswd ? port->hba->ldapbindpasswd : "");
-		if (r != LDAP_SUCCESS)
-		{
-			ereport(LOG,
-					(errmsg("could not perform initial LDAP bind for ldapbinddn \"%s\" on server \"%s\": error code %d",
-							port->hba->ldapbinddn, port->hba->ldapserver, r)));
->>>>>>> 78a09145e0
 			return STATUS_ERROR;
 		}
 
@@ -2687,17 +2627,10 @@ CheckLDAPAuth(Port *port)
 		attributes[0] = port->hba->ldapsearchattribute ? port->hba->ldapsearchattribute : "uid";
 		attributes[1] = NULL;
 
-<<<<<<< HEAD
 		filter = palloc(strlen(attributes[0]) + strlen(port->user_name) + 4);
 		sprintf(filter, "(%s=%s)",
 				attributes[0],
 				port->user_name);
-=======
-		filter = palloc(strlen(attributes[0])+strlen(port->user_name)+4);
-		sprintf(filter, "(%s=%s)",
-				 attributes[0],
-				 port->user_name);
->>>>>>> 78a09145e0
 
 		r = ldap_search_s(ldap,
 						  port->hba->ldapbasedn,
@@ -2710,13 +2643,8 @@ CheckLDAPAuth(Port *port)
 		if (r != LDAP_SUCCESS)
 		{
 			ereport(LOG,
-<<<<<<< HEAD
 					(errmsg("could not search LDAP for filter \"%s\" on server \"%s\": %s",
 							filter, port->hba->ldapserver, ldap_err2string(r))));
-=======
-					(errmsg("could not search LDAP for filter \"%s\" on server \"%s\": error code %d",
-							filter, port->hba->ldapserver, r)));
->>>>>>> 78a09145e0
 			pfree(filter);
 			return STATUS_ERROR;
 		}
@@ -2729,14 +2657,9 @@ CheckLDAPAuth(Port *port)
 								filter, port->hba->ldapserver)));
 			else
 				ereport(LOG,
-<<<<<<< HEAD
 						(errmsg("LDAP search failed for filter \"%s\" on server \"%s\": user is not unique (%ld matches)",
 								filter, port->hba->ldapserver,
 						  (long) ldap_count_entries(ldap, search_message))));
-=======
-						(errmsg("LDAP search failed for filter \"%s\" on server \"%s\": user is not unique (%d matches)",
-								filter, port->hba->ldapserver, ldap_count_entries(ldap, search_message))));
->>>>>>> 78a09145e0
 
 			pfree(filter);
 			ldap_msgfree(search_message);
@@ -2747,20 +2670,12 @@ CheckLDAPAuth(Port *port)
 		dn = ldap_get_dn(ldap, entry);
 		if (dn == NULL)
 		{
-<<<<<<< HEAD
 			int			error;
 
 			(void) ldap_get_option(ldap, LDAP_OPT_ERROR_NUMBER, &error);
 			ereport(LOG,
 					(errmsg("could not get dn for the first entry matching \"%s\" on server \"%s\": %s",
 					filter, port->hba->ldapserver, ldap_err2string(error))));
-=======
-			int error;
-			(void)ldap_get_option(ldap, LDAP_OPT_ERROR_NUMBER, &error);
-			ereport(LOG,
-					(errmsg("could not get dn for the first entry matching \"%s\" on server \"%s\": %s",
-							filter, port->hba->ldapserver, ldap_err2string(error))));
->>>>>>> 78a09145e0
 			pfree(filter);
 			ldap_msgfree(search_message);
 			return STATUS_ERROR;
@@ -2775,32 +2690,19 @@ CheckLDAPAuth(Port *port)
 		r = ldap_unbind_s(ldap);
 		if (r != LDAP_SUCCESS)
 		{
-<<<<<<< HEAD
 			int			error;
 
 			(void) ldap_get_option(ldap, LDAP_OPT_ERROR_NUMBER, &error);
 			ereport(LOG,
 					(errmsg("could not unbind after searching for user \"%s\" on server \"%s\": %s",
 				  fulluser, port->hba->ldapserver, ldap_err2string(error))));
-=======
-			int error;
-			(void)ldap_get_option(ldap, LDAP_OPT_ERROR_NUMBER, &error);
-			ereport(LOG,
-					(errmsg("could not unbind after searching for user \"%s\" on server \"%s\": %s",
-							fulluser, port->hba->ldapserver, ldap_err2string(error))));
->>>>>>> 78a09145e0
 			pfree(fulluser);
 			return STATUS_ERROR;
 		}
 
 		/*
-<<<<<<< HEAD
 		 * Need to re-initialize the LDAP connection, so that we can bind to
 		 * it with a different username.
-=======
-		 * Need to re-initialize the LDAP connection, so that we can bind
-		 * to it with a different username.
->>>>>>> 78a09145e0
 		 */
 		if (InitializeLDAPConnection(port, &ldap) == STATUS_ERROR)
 		{
@@ -2829,13 +2731,8 @@ CheckLDAPAuth(Port *port)
 	if (r != LDAP_SUCCESS)
 	{
 		ereport(LOG,
-<<<<<<< HEAD
 				(errmsg("LDAP login failed for user \"%s\" on server \"%s\": %s",
 						fulluser, port->hba->ldapserver, ldap_err2string(r))));
-=======
-				(errmsg("LDAP login failed for user \"%s\" on server \"%s\": error code %d",
-						fulluser, port->hba->ldapserver, r)));
->>>>>>> 78a09145e0
 		pfree(fulluser);
 		return STATUS_ERROR;
 	}
@@ -3359,6 +3256,11 @@ CheckAuthTimeConstraints(char *rolname)
 bool
 check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp)
 {
+	/*
+	 * GPDB_90_MERGE_FIXME: get_role_intervals() no longer exists. We need to
+	 * walk pg_auth_time_constraint for this information now, instead of relying
+	 * on a flat file.
+	 */
 	List  	  		*role_intervals = get_role_intervals(rolname);
 
 	if (role_intervals == NIL)

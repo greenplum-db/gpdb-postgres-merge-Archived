@@ -23,9 +23,11 @@
 #include "catalog/pg_authid.h"
 #include "libpq/crypt.h"
 #include "libpq/md5.h"
-<<<<<<< HEAD
 #include "libpq/password_hash.h"
 #include "libpq/pg_sha2.h"
+#include "miscadmin.h"
+#include "utils/builtins.h"
+#include "utils/syscache.h"
 
 bool
 hash_password(const char *passwd, char *salt, size_t salt_len, char *buf)
@@ -44,11 +46,6 @@ hash_password(const char *passwd, char *salt, size_t salt_len, char *buf)
 	}
 	return false; /* we never get here */
 }
-=======
-#include "miscadmin.h"
-#include "utils/builtins.h"
-#include "utils/syscache.h"
->>>>>>> 78a09145e0
 
 
 int
