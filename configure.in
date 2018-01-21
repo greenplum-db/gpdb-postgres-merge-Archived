@@ -17,12 +17,11 @@ dnl Read the Autoconf manual for details.
 dnl
 m4_pattern_forbid(^PGAC_)dnl to catch undefined macros
 
-<<<<<<< HEAD
 dnl The PACKAGE_VERSION from upstream PostgreSQL is maintained in the
 dnl PG_PACKAGE_VERSION variable, when merging make sure to update this
 dnl variable with the merge conflict from the AC_INIT() statement.
 AC_INIT([Greenplum Database], [6.0.0-alpha.0], [support@greenplum.org])
-[PG_PACKAGE_VERSION=8.4.0]
+[PG_PACKAGE_VERSION=8.5devel]
 AC_SUBST(PG_PACKAGE_VERSION)
 
 dnl m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.63], [], [m4_fatal([Autoconf version 2.63 is required.
@@ -30,15 +29,6 @@ dnl Untested combinations of 'autoconf' and PostgreSQL versions are not
 dnl recommended.  You can remove the check from 'configure.in' but it is then
 dnl your responsibility whether the result works or not.])])
 AC_COPYRIGHT([Copyright (c) 1996-2010, PostgreSQL Global Development Group])
-=======
-AC_INIT([PostgreSQL], [8.5devel], [pgsql-bugs@postgresql.org])
-
-m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.63], [], [m4_fatal([Autoconf version 2.63 is required.
-Untested combinations of 'autoconf' and PostgreSQL versions are not
-recommended.  You can remove the check from 'configure.in' but it is then
-your responsibility whether the result works or not.])])
-AC_COPYRIGHT([Copyright (c) 1996-2009, PostgreSQL Global Development Group])
->>>>>>> 78a09145e0
 AC_CONFIG_SRCDIR([src/backend/access/common/heaptuple.c])
 AC_CONFIG_AUX_DIR(config)
 AC_PREFIX_DEFAULT(/usr/local/gpdb)
@@ -856,19 +846,8 @@ IFS=$ac_save_IFS
 # Enable thread-safe client libraries
 #
 AC_MSG_CHECKING([allow thread-safe client libraries])
-<<<<<<< HEAD
-# GPDB wants the default here to be "yes", unlike PostgreSQL.
-# it's also required for Win32 client builds.
-PGAC_ARG_BOOL(enable, thread-safety, yes, [do not make client libraries thread-safe])
-
-PGAC_ARG_BOOL(enable, thread-safety-force, no, [force thread-safety despite thread test failure])
-if test "$enable_thread_safety" = yes -o \
-        "$enable_thread_safety_force" = yes; then
-  enable_thread_safety="yes"	# for 'force'
-=======
 PGAC_ARG_BOOL(enable, thread-safety, yes, [disable thread-safety in client libraries])
 if test "$enable_thread_safety" = yes; then
->>>>>>> 78a09145e0
   AC_DEFINE([ENABLE_THREAD_SAFETY], 1,
           [Define to 1 to build client libraries as thread-safe code. (--enable-thread-safety)])
 fi
@@ -1401,11 +1380,7 @@ fi
 ##
 
 dnl sys/socket.h is required by AC_FUNC_ACCEPT_ARGTYPES
-<<<<<<< HEAD
 AC_CHECK_HEADERS([atomic.h crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h pwd.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h kernel/OS.h kernel/image.h SupportDefs.h])
-=======
-AC_CHECK_HEADERS([crypt.h dld.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h poll.h pwd.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h kernel/OS.h kernel/image.h SupportDefs.h])
->>>>>>> 78a09145e0
 
 # On BSD, cpp test for net/if.h will fail unless sys/socket.h
 # is included first.
@@ -1659,7 +1634,6 @@ PGAC_VAR_INT_TIMEZONE
 AC_FUNC_ACCEPT_ARGTYPES
 PGAC_FUNC_GETTIMEOFDAY_1ARG
 
-<<<<<<< HEAD
 # Some versions of libedit contain strlcpy(), setproctitle(), and other
 # symbols that that library has no business exposing to the world.  Pending
 # acquisition of a clue by those developers, ignore libedit (including its
@@ -1667,8 +1641,9 @@ PGAC_FUNC_GETTIMEOFDAY_1ARG
 LIBS_including_readline="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-=======
->>>>>>> 78a09145e0
+# net-snmp has the same problem..
+LIBS=`echo "$LIBS" | sed -e 's/-lnetsnmp//g'`
+
 AC_CHECK_FUNCS([cbrt dlopen fcvt fdatasync getifaddrs getpeereid getpeerucred getrlimit memmove poll pstat readlink setproctitle setsid sigprocmask symlink sysconf towlower utime utimes waitpid wcstombs])
 
 # posix_fadvise() is a no-op on Solaris, so don't incur function overhead
@@ -1772,19 +1747,7 @@ else
   AC_CHECK_FUNCS([fpclass fp_class fp_class_d class], [break])
 fi
 
-# Some versions of libedit contain strlcpy(); so disregard that library while
-# checking for these standard libc functions.
-pgac_save_LIBS="$LIBS"
-LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
-
-<<<<<<< HEAD
-# net-snmp has the same problem..
-LIBS=`echo "$LIBS" | sed -e 's/-lnetsnmp//g'`
-
-AC_REPLACE_FUNCS([crypt fseeko getopt getpeereid getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul])
-=======
-AC_REPLACE_FUNCS([crypt erand48 getopt getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul])
->>>>>>> 78a09145e0
+AC_REPLACE_FUNCS([crypt erand48 fseeko getopt getpeereid getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul])
 
 case $host_os in
 
@@ -1821,18 +1784,17 @@ if test "$PORTNAME" = "solaris"; then
   AC_LIBOBJ(getopt)
 fi
 
-<<<<<<< HEAD
 # mingw has adopted a GNU-centric interpretation of optind/optreset,
 # so always use our version on Windows.
 if test "$PORTNAME" = "win32"; then
   AC_LIBOBJ(getopt)
   AC_LIBOBJ(getopt_long)
-=======
+fi
+
 # Cygwin's erand48() is broken (always returns zero) in some releases,
 # so force use of ours.
 if test "$PORTNAME" = "cygwin"; then
   AC_LIBOBJ(erand48)
->>>>>>> 78a09145e0
 fi
 
 # Win32 support
@@ -1846,16 +1808,6 @@ AC_DEFINE([HAVE_SYMLINK], 1,
           [Define to 1 if you have the `symlink' function.])
 fi
 
-<<<<<<< HEAD
-=======
-if test "$with_readline" = yes; then
-  PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER
-  AC_CHECK_FUNCS([rl_completion_matches rl_filename_completion_function])
-  AC_CHECK_FUNCS([append_history history_truncate_file])
-fi
-
-
->>>>>>> 78a09145e0
 dnl Cannot use AC_CHECK_FUNC because sigsetjmp may be a macro
 dnl (especially on GNU libc)
 dnl See also comments in c.h.
@@ -1926,7 +1878,7 @@ LIBS="$LIBS_including_readline"
 if test "$with_readline" = yes; then
   PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER
   AC_CHECK_FUNCS([rl_completion_matches rl_filename_completion_function])
-  AC_CHECK_FUNCS([replace_history_entry])
+  AC_CHECK_FUNCS([append_history history_truncate_file])
 fi
 
 

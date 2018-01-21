@@ -76,7 +76,6 @@
 # define gettimeofday(a,b) gettimeofday(a)
 #endif
 
-<<<<<<< HEAD
 /* Greenplum major version as a string */
 #undef GP_MAJORVERSION
 
@@ -86,12 +85,11 @@
 /* Greenplum version as a number */
 #undef GP_VERSION_NUM
 
-/* Define to 1 if you have the <apr_getopt.h> header file. */
-#undef HAVE_APR_GETOPT_H
-=======
 /* Define to 1 if you have the `append_history' function. */
 #undef HAVE_APPEND_HISTORY
->>>>>>> 78a09145e0
+
+/* Define to 1 if you have the <apr_getopt.h> header file. */
+#undef HAVE_APR_GETOPT_H
 
 /* Define to 1 if you have the `atexit' function. */
 #undef HAVE_ATEXIT
@@ -165,13 +163,11 @@
 /* Define to 1 if you have the <editline/readline.h> header file. */
 #undef HAVE_EDITLINE_READLINE_H
 
-<<<<<<< HEAD
 /* Define to 1 if you have the <endian.h> header file. */
 #undef HAVE_ENDIAN_H
-=======
+
 /* Define to 1 if you have the `erand48' function. */
 #undef HAVE_ERAND48
->>>>>>> 78a09145e0
 
 /* Define to 1 if you have the `ERR_set_mark' function. */
 #undef HAVE_ERR_SET_MARK
@@ -451,15 +447,12 @@
 /* Define to 1 if you have the <net/if.h> header file. */
 #undef HAVE_NET_IF_H
 
-<<<<<<< HEAD
 /* Define to 1 if you have the <net-snmp/net-snmp-config.h> header file. */
 #undef HAVE_NET_SNMP_NET_SNMP_CONFIG_H
 
 /* Define to 1 if you have the <numa.h> header file. */
 #undef HAVE_NUMA_H
 
-=======
->>>>>>> 78a09145e0
 /* Define to 1 if you have the `on_exit' function. */
 #undef HAVE_ON_EXIT
 
@@ -930,9 +923,6 @@
 
 /* Define to select named POSIX semaphores. */
 #undef USE_NAMED_POSIX_SEMAPHORES
-
-/* Define to 1 to build with NetBackup capabilities. (--enable-netbackup) */
-#undef USE_NETBACKUP
 
 /* Define to 1 to build with Greenplum ORCA optimizer. (--enable-orca) */
 #undef USE_ORCA

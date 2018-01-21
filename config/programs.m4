@@ -77,23 +77,14 @@ else
         echo '%%'  > conftest.l
         if $pgac_candidate -t conftest.l 2>/dev/null | grep FLEX_SCANNER >/dev/null 2>&1; then
           pgac_flex_version=`$pgac_candidate --version 2>/dev/null`
-<<<<<<< HEAD
           if echo "$pgac_flex_version" | sed ['s/[^0-9]/ /g'] | $AWK '{ if ([$]1 == 2 && ([$]2 > 5 || ([$]2 == 5 && [$]3 >= 4))) exit 0; else exit 1;}'
-=======
-          if echo "$pgac_flex_version" | sed ['s/[.a-z]/ /g'] | $AWK '{ if ([$]1 = 2 && [$]2 = 5 && [$]3 >= 31) exit 0; else exit 1;}'
->>>>>>> 78a09145e0
           then
             pgac_cv_path_flex=$pgac_candidate
             break 2
           else
             AC_MSG_WARN([
-<<<<<<< HEAD
 *** The installed version of Flex, $pgac_candidate, is too old to use with Greenplum DB.
 *** Flex version 2.5.4 or later is required, but this is $pgac_flex_version.])
-=======
-*** The installed version of Flex, $pgac_candidate, is too old to use with PostgreSQL.
-*** Flex version 2.5.31 or later is required, but this is $pgac_flex_version.])
->>>>>>> 78a09145e0
           fi
         fi
       fi
