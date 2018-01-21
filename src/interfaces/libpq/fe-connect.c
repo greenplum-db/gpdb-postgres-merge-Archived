@@ -9,11 +9,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-connect.c
-=======
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.381 2009/12/02 04:38:35 tgl Exp $
->>>>>>> 78a09145e0
  *
  *-------------------------------------------------------------------------
  */
@@ -103,18 +99,13 @@ static int ldapServiceLookup(const char *purl, PQconninfoOption *options,
 #endif
 
 /*
-<<<<<<< HEAD
  * Pre-9.0 servers will return this SQLSTATE if asked to set
-=======
- * Pre-8.5 servers will return this SQLSTATE if asked to set
->>>>>>> 78a09145e0
  * application_name in a startup packet.  We hard-wire the value rather
  * than looking into errcodes.h since it reflects historical behavior
  * rather than that of the current code.
  */
 #define ERRCODE_APPNAME_UNKNOWN "42704"
 
-<<<<<<< HEAD
 #undef ERRCODE_INVALID_PASSWORD
 #undef ERRCODE_CANNOT_CONNECT_NOW
 #undef ERRCODE_MIRROR_OR_QUIESCENT
@@ -124,8 +115,6 @@ static int ldapServiceLookup(const char *purl, PQconninfoOption *options,
 #define ERRCODE_CANNOT_CONNECT_NOW "57P03"
 #define ERRCODE_MIRROR_OR_QUIESCENT "57M01"
 
-=======
->>>>>>> 78a09145e0
 /*
  * fall back options if they are not specified by arguments or defined
  * by environment variables
@@ -252,17 +241,8 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	offsetof(struct pg_conn, pgoptions)},
 
 	{"application_name", "PGAPPNAME", NULL, NULL,
-<<<<<<< HEAD
 		"Application-Name", "", 64,
 	offsetof(struct pg_conn, appname)},
-=======
-	"Application-Name", "", 64},
-
-	{"fallback_application_name", NULL, NULL, NULL,
-	"Fallback-Application-Name", "", 64},
-
-#ifdef USE_SSL
->>>>>>> 78a09145e0
 
 	{"fallback_application_name", NULL, NULL, NULL,
 		"Fallback-Application-Name", "", 64,
@@ -803,45 +783,7 @@ connectOptions1(PGconn *conn, const char *conninfo)
 	/*
 	 * Move option values into conn structure
 	 */
-<<<<<<< HEAD
 	if (!fillPGconn(conn, connOptions))
-=======
-	tmp = conninfo_getval(connOptions, "hostaddr");
-	conn->pghostaddr = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "host");
-	conn->pghost = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "port");
-	conn->pgport = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "tty");
-	conn->pgtty = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "options");
-	conn->pgoptions = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "application_name");
-	conn->appname = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "fallback_application_name");
-	conn->fbappname = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "dbname");
-	conn->dbName = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "user");
-	conn->pguser = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "password");
-	conn->pgpass = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "connect_timeout");
-	conn->connect_timeout = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslmode");
-	conn->sslmode = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslkey");
-	conn->sslkey = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslcert");
-	conn->sslcert = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslrootcert");
-	conn->sslrootcert = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslcrl");
-	conn->sslcrl = tmp ? strdup(tmp) : NULL;
-#ifdef USE_SSL
-	tmp = conninfo_getval(connOptions, "requiressl");
-	if (tmp && tmp[0] == '1')
->>>>>>> 78a09145e0
 	{
 		conn->status = CONNECTION_BAD;
 		PQconninfoFree(connOptions);
@@ -1504,10 +1446,7 @@ connectDBStart(PGconn *conn)
 			appendPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("invalid port number: \"%s\"\n"),
 							  conn->pgport);
-<<<<<<< HEAD
 			conn->options_valid = false;
-=======
->>>>>>> 78a09145e0
 			goto connect_errReturn;
 		}
 	}
@@ -1588,10 +1527,7 @@ connectDBStart(PGconn *conn)
 	conn->pversion = PG_PROTOCOL(3 + 0x7000, 0);
 #else
 	conn->pversion = PG_PROTOCOL(3, 0);
-<<<<<<< HEAD
 #endif
-=======
->>>>>>> 78a09145e0
 	conn->send_appname = true;
 	conn->status = CONNECTION_NEEDED;
 
@@ -1856,7 +1792,6 @@ keep_going:						/* We will come back to here until there is
 					}
 #endif   /* F_SETFD */
 
-<<<<<<< HEAD
 					if (!IS_AF_UNIX(addr_cur->ai_family))
 					{
 #ifndef WIN32
@@ -1904,8 +1839,6 @@ keep_going:						/* We will come back to here until there is
 						}
 					}
 
-=======
->>>>>>> 78a09145e0
 					/*----------
 					 * We have three methods of blocking SIGPIPE during
 					 * send() calls to this socket:
@@ -2003,11 +1936,7 @@ keep_going:						/* We will come back to here until there is
 
 		case CONNECTION_STARTED:
 			{
-<<<<<<< HEAD
-				socklen_t optlen = sizeof(optval);
-=======
 				ACCEPT_TYPE_ARG3 optlen = sizeof(optval);
->>>>>>> 78a09145e0
 
 				/*
 				 * Write ready, since we've made it here, so the connection
@@ -2654,13 +2583,8 @@ keep_going:						/* We will come back to here until there is
 					{
 						/*
 						 * If we tried to send application_name, check to see
-<<<<<<< HEAD
 						 * if the error is about that --- pre-9.0 servers will
 						 * reject it at this stage of the process.	If so,
-=======
-						 * if the error is about that --- pre-8.5 servers will
-						 * reject it at this stage of the process.  If so,
->>>>>>> 78a09145e0
 						 * close the connection and retry without sending
 						 * application_name.  We could possibly get a false
 						 * SQLSTATE match here and retry uselessly, but there
@@ -2676,18 +2600,11 @@ keep_going:						/* We will come back to here until there is
 							PQclear(res);
 							conn->send_appname = false;
 							/* Must drop the old connection */
-<<<<<<< HEAD
 							pqDropConnection(conn);
 							conn->status = CONNECTION_NEEDED;
 							/* Discard any unread/unsent data */
 							conn->inStart = conn->inCursor = conn->inEnd = 0;
 							conn->outCount = 0;
-=======
-							pqsecure_close(conn);
-							closesocket(conn->sock);
-							conn->sock = -1;
-							conn->status = CONNECTION_NEEDED;
->>>>>>> 78a09145e0
 							goto keep_going;
 						}
 					}
@@ -4145,14 +4062,10 @@ parseServiceFile(const char *serviceFile,
 
 		if (strlen(line) >= sizeof(buf) - 1)
 		{
-<<<<<<< HEAD
 			fclose(f);
 			printfPQExpBuffer(errorMessage,
 				  libpq_gettext("line %d too long in service file \"%s\"\n"),
 							  linenr,
-=======
-			printfPQExpBuffer(errorMessage, libpq_gettext("service file \"%s\" not found\n"),
->>>>>>> 78a09145e0
 							  serviceFile);
 			return 2;
 		}
@@ -4176,15 +4089,7 @@ parseServiceFile(const char *serviceFile,
 			{
 				/* group info already read */
 				fclose(f);
-<<<<<<< HEAD
 				return 0;
-=======
-				printfPQExpBuffer(errorMessage,
-								  libpq_gettext("line %d too long in service file \"%s\"\n"),
-								  linenr,
-								  serviceFile);
-				return 2;
->>>>>>> 78a09145e0
 			}
 
 			if (strncmp(line + 1, service, strlen(service)) == 0 &&
@@ -4261,7 +4166,6 @@ parseServiceFile(const char *serviceFile,
 					}
 				}
 
-<<<<<<< HEAD
 				if (!found_keyword)
 				{
 					printfPQExpBuffer(errorMessage,
@@ -4273,29 +4177,6 @@ parseServiceFile(const char *serviceFile,
 				}
 			}
 		}
-=======
-					if (!found_keyword)
-					{
-						printfPQExpBuffer(errorMessage,
-										  libpq_gettext("syntax error in service file \"%s\", line %d\n"),
-										  serviceFile,
-										  linenr);
-						fclose(f);
-						return 3;
-					}
-				}
-			}
-		}
-
-		fclose(f);
-
-		if (!group_found)
-		{
-			printfPQExpBuffer(errorMessage,
-							  libpq_gettext("definition of service \"%s\" not found\n"), service);
-			return 3;
-		}
->>>>>>> 78a09145e0
 	}
 
 	fclose(f);

@@ -25,15 +25,9 @@
 #define IS_AF_UNIX(fam) (0)
 #endif
 
-<<<<<<< HEAD
-typedef void (*PgIfAddrCallback) (struct sockaddr * addr,
-											  struct sockaddr * netmask,
-											  void *cb_data);
-=======
 typedef void (*PgIfAddrCallback) (struct sockaddr *addr,
 								  struct sockaddr *netmask,
 								  void *cb_data);
->>>>>>> 78a09145e0
 
 extern int pg_getaddrinfo_all(const char *hostname, const char *servname,
 				   const struct addrinfo * hintp,
