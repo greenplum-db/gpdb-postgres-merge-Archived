@@ -86,13 +86,9 @@
 #include "storage/ipc.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
-<<<<<<< HEAD
 #include "storage/procarray.h"
 #include "storage/procsignal.h"
 #include "storage/sinval.h"
-=======
-#include "storage/procsignal.h"
->>>>>>> 78a09145e0
 #include "storage/sinvaladt.h"
 #include "tcop/tcopprot.h"
 #include "utils/fmgroids.h"
@@ -1482,10 +1478,6 @@ AutoVacWorkerMain(int argc, char *argv[])
 
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
-<<<<<<< HEAD
-	/* We don't listen for async notifies */
-=======
->>>>>>> 78a09145e0
 	pqsignal(SIGUSR2, SIG_IGN);
 	pqsignal(SIGFPE, FloatExceptionHandler);
 	pqsignal(SIGCHLD, SIG_DFL);

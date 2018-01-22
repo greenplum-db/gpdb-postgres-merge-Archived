@@ -264,14 +264,11 @@ static void pgstat_beshutdown_hook(int code, Datum arg);
 static void pgstat_sighup_handler(SIGNAL_ARGS);
 
 static PgStat_StatDBEntry *pgstat_get_db_entry(Oid databaseid, bool create);
-<<<<<<< HEAD
+static PgStat_StatTabEntry *pgstat_get_tab_entry(PgStat_StatDBEntry *dbentry,
+												 Oid tableoid, bool create);
 
 static PgStat_StatQueueEntry *pgstat_get_queue_entry(Oid queueid, bool create); /*GPDB*/
 
-=======
-static PgStat_StatTabEntry *pgstat_get_tab_entry(PgStat_StatDBEntry *dbentry,
-												 Oid tableoid, bool create);
->>>>>>> 78a09145e0
 static void pgstat_write_statsfile(bool permanent);
 static HTAB *pgstat_read_statsfile(Oid onlydb, bool permanent);
 static void backend_read_statsfile(void);
@@ -2273,11 +2270,7 @@ pgstat_bestart(void)
 	beentry->st_userid = userid;
 	beentry->st_session_id = gp_session_id;  /* GPDB only */
 	beentry->st_clientaddr = clientaddr;
-<<<<<<< HEAD
 	beentry->st_waiting = PGBE_WAITING_NONE;
-=======
-	beentry->st_waiting = false;
->>>>>>> 78a09145e0
 	beentry->st_appname[0] = '\0';
 	beentry->st_activity[0] = '\0';
 	/* Also make sure the last byte in each string area is always 0 */
@@ -2288,14 +2281,11 @@ pgstat_bestart(void)
 	beentry->st_changecount++;
 	Assert((beentry->st_changecount & 1) == 0);
 
-<<<<<<< HEAD
 	/*
 	 * GPDB: Initialize per-portal statistics hash for resource queues.
 	 */
 	pgstat_init_localportalhash();
-	
-=======
->>>>>>> 78a09145e0
+
 	/* Update app name to current GUC setting */
 	if (application_name)
 		pgstat_report_appname(application_name);
@@ -2316,13 +2306,8 @@ pgstat_beshutdown_hook(int code, Datum arg)
 	volatile PgBackendStatus *beentry = MyBEEntry;
 
 	/*
-<<<<<<< HEAD
-	 * If we got as far as discovering our own database ID, we can report what
-	 * we did to the collector.  Otherwise, we'd be sending an invalid
-=======
 	 * If we got as far as discovering our own database ID, we can report
 	 * what we did to the collector.  Otherwise, we'd be sending an invalid
->>>>>>> 78a09145e0
 	 * database ID, so forget it.  (This means that accesses to pg_database
 	 * during failed backend starts might never get counted.)
 	 */
@@ -2522,13 +2507,8 @@ pgstat_read_current_status(void)
 	volatile PgBackendStatus *beentry;
 	PgBackendStatus *localtable;
 	PgBackendStatus *localentry;
-<<<<<<< HEAD
-	char	   *localappname;
-	char	   *localactivity;
-=======
 	char	   *localappname,
 			   *localactivity;
->>>>>>> 78a09145e0
 	int			i;
 
 	Assert(!pgStatRunningInCollector);

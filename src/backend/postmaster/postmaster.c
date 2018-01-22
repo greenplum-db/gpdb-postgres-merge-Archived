@@ -488,32 +488,21 @@ extern int	optind,
 extern int	optreset;			/* might not be declared by system headers */
 #endif
 
-<<<<<<< HEAD
 /* some GUC values used in fetching status from status transition */
 extern char	   *locale_monetary;
 extern char	   *locale_numeric;
 extern char    *locale_collate;
 
-=======
 #ifdef USE_BONJOUR
 static DNSServiceRef bonjour_sdref = NULL;
 #endif
->>>>>>> 78a09145e0
 
 /*
  * postmaster.c - function prototypes
  */
 static void getInstallationPaths(const char *argv0);
 static void checkDataDir(void);
-<<<<<<< HEAD
 static void checkPgDir(const char *dir);
-
-#ifdef USE_BONJOUR
-static void reg_reply(DNSServiceRegistrationReplyErrorType errorCode,
-		  void *context);
-#endif
-=======
->>>>>>> 78a09145e0
 static void pmdaemonize(void);
 static Port *ConnCreate(int serverFd);
 static void ConnFree(Port *port);
@@ -1373,14 +1362,11 @@ PostmasterMain(int argc, char *argv[])
 	set_max_safe_fds();
 
 	/*
-<<<<<<< HEAD
 	 * Set reference point for stack-depth checking.
 	 */
 	set_stack_base();
 
 	/*
-=======
->>>>>>> 78a09145e0
 	 * Initialize the list of active backends.
 	 */
 	BackendList = DLNewList();
@@ -1499,28 +1485,10 @@ PostmasterMain(int argc, char *argv[])
 	}
 	load_ident();
 
-
-<<<<<<< HEAD
-=======
-	/*
-	 * Load configuration files for client authentication.
-	 */
-	if (!load_hba())
-	{
-		/*
-		 * It makes no sense to continue if we fail to load the HBA file,
-		 * since there is no way to connect to the database in this case.
-		 */
-		ereport(FATAL,
-				(errmsg("could not load pg_hba.conf")));
-	}
-	load_ident();
-
 	/*
 	 * Remember postmaster startup time
 	 */
 	PgStartTime = GetCurrentTimestamp();
->>>>>>> 78a09145e0
 	/* PostmasterRandom wants its own copy */
 	gettimeofday(&random_start_time, NULL);
 
@@ -1941,38 +1909,17 @@ checkIODataDirectory(void)
 }
 
 /*
-<<<<<<< HEAD
- * empty callback function for DNSServiceRegistrationCreate()
- */
-static void
-reg_reply(DNSServiceRegistrationReplyErrorType errorCode, void *context)
-{
-}
-#endif   /* USE_BONJOUR */
-
-
-/*
-=======
->>>>>>> 78a09145e0
  * Fork away from the controlling terminal (silent_mode option)
  *
  * Since this requires disconnecting from stdin/stdout/stderr (in case they're
  * linked to the terminal), we re-point stdin to /dev/null and stdout/stderr
-<<<<<<< HEAD
- * to "pg_log/startup.log" from the data directory, where we're already chdir'd.
-=======
  * to "postmaster.log" in the data directory, where we're already chdir'd.
->>>>>>> 78a09145e0
  */
 static void
 pmdaemonize(void)
 {
 #ifndef WIN32
-<<<<<<< HEAD
-	const char *pmlogname = "pg_log/startup.log";
-=======
 	const char *pmlogname = "postmaster.log";
->>>>>>> 78a09145e0
 	int			dvnull;
 	int			pmlog;
 	pid_t		pid;
@@ -2483,28 +2430,9 @@ ServerLoop(void)
 		{
 			avlauncher_needs_signal = false;
 			if (AutoVacPID != 0)
-				kill(AutoVacPID, SIGUSR1);
-		}
-
-<<<<<<< HEAD
-=======
-		/* If we have lost the archiver, try to start a new one */
-		if (XLogArchivingActive() && PgArchPID == 0 && pmState == PM_RUN)
-			PgArchPID = pgarch_start();
-
-		/* If we have lost the stats collector, try to start a new one */
-		if (PgStatPID == 0 && pmState == PM_RUN)
-			PgStatPID = pgstat_start();
-
-		/* If we need to signal the autovacuum launcher, do so now */
-		if (avlauncher_needs_signal)
-		{
-			avlauncher_needs_signal = false;
-			if (AutoVacPID != 0)
 				kill(AutoVacPID, SIGUSR2);
 		}
 
->>>>>>> 78a09145e0
 		/*
 		 * Touch the socket and lock file every 58 minutes, to ensure that
 		 * they are not removed by overzealous /tmp-cleaning tasks.  We assume
@@ -2639,14 +2567,9 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 
 	if (proto == CANCEL_REQUEST_CODE || proto == FINISH_REQUEST_CODE)
 	{
-<<<<<<< HEAD
 		processCancelRequest(port, buf, proto);
-		return 127;				/* XXX */
-=======
-		processCancelRequest(port, buf);
 		/* Not really an error, but we don't want to proceed further */
 		return STATUS_ERROR;
->>>>>>> 78a09145e0
 	}
 	else if (proto == PRIMARY_MIRROR_TRANSITION_REQUEST_CODE)
 	{
@@ -3929,7 +3852,6 @@ pmdie(SIGNAL_ARGS)
 					(errmsg("received fast shutdown request"),
 					 errSendAlert(true)));
 
-<<<<<<< HEAD
 			need_call_reaper = true;
 			if ( pmState < PM_CHILD_STOP_BEGIN)
 			    pmState = PM_CHILD_STOP_BEGIN;
@@ -3941,39 +3863,6 @@ pmdie(SIGNAL_ARGS)
             }
             signal_child_if_up(FilerepPeerResetPID, SIGQUIT);
             break;
-=======
-			if (StartupPID != 0)
-				signal_child(StartupPID, SIGTERM);
-			if (pmState == PM_RECOVERY)
-			{
-				/* only bgwriter is active in this state */
-				pmState = PM_WAIT_BACKENDS;
-			}
-			if (pmState == PM_RUN ||
-				pmState == PM_WAIT_BACKUP ||
-				pmState == PM_WAIT_BACKENDS ||
-				pmState == PM_RECOVERY_CONSISTENT)
-			{
-				ereport(LOG,
-						(errmsg("aborting any active transactions")));
-				/* shut down all backends and autovac workers */
-				SignalChildren(SIGTERM);
-				/* and the autovac launcher too */
-				if (AutoVacPID != 0)
-					signal_child(AutoVacPID, SIGTERM);
-				/* and the walwriter too */
-				if (WalWriterPID != 0)
-					signal_child(WalWriterPID, SIGTERM);
-				pmState = PM_WAIT_BACKENDS;
-			}
-
-			/*
-			 * Now wait for backends to exit.  If there are none,
-			 * PostmasterStateMachine will take the next step.
-			 */
-			PostmasterStateMachine();
-			break;
->>>>>>> 78a09145e0
 
 		case SIGQUIT:
 
@@ -6017,7 +5906,6 @@ BackendInitialize(Port *port)
 	 * We arrange for a simple exit(1) if we receive SIGTERM or SIGQUIT
 	 * or timeout while trying to collect the startup packet.  Otherwise the
 	 * postmaster cannot shutdown the database FAST or IMMED cleanly if a
-<<<<<<< HEAD
 	 * buggy client blocks a backend during authentication. XXX it follows that
 	 * the remainder of this function must tolerate losing control at any
 	 * instant.  Likewise, any pg_on_exit_callback registered before or during
@@ -6029,16 +5917,9 @@ BackendInitialize(Port *port)
 	 * is fragile; it ought to instead follow the norm of handling interrupts
 	 * at selected, safe opportunities.
 	 */
-	pqsignal(SIGTERM, authdie);
-	pqsignal(SIGQUIT, authdie);
-	pqsignal(SIGALRM, authdie);
-=======
-	 * buggy client fails to send the packet promptly.
-	 */
 	pqsignal(SIGTERM, startup_die);
 	pqsignal(SIGQUIT, startup_die);
 	pqsignal(SIGALRM, startup_die);
->>>>>>> 78a09145e0
 	PG_SETMASK(&StartupBlockSig);
 
 	/*
@@ -6079,11 +5960,7 @@ BackendInitialize(Port *port)
 	port->remote_port = strdup(remote_port);
 
 	/*
-<<<<<<< HEAD
-	 * Ready to begin client interaction.  We will give up and exit(0) after a
-=======
 	 * Ready to begin client interaction.  We will give up and exit(1) after a
->>>>>>> 78a09145e0
 	 * time delay, so that a broken client can't hog a connection
 	 * indefinitely.  PreAuthDelay and any DNS interactions above don't count
 	 * against the time limit.
@@ -6127,12 +6004,7 @@ BackendInitialize(Port *port)
 					update_process_title ? "authentication" : "");
 
 	/*
-<<<<<<< HEAD
-	 * Done with authentication.  Disable timeout, and prevent SIGTERM/SIGQUIT
-	 * again until backend startup is complete.
-=======
 	 * Disable the timeout, and prevent SIGTERM/SIGQUIT again.
->>>>>>> 78a09145e0
 	 */
 	if (!disable_sig_alarm(false))
 		elog(FATAL, "could not disable timer for startup packet timeout");
@@ -6175,11 +6047,7 @@ BackendRun(Port *port)
 	 * from ExtraOptions is (strlen(ExtraOptions) + 1) / 2; see
 	 * pg_split_opts().
 	 */
-<<<<<<< HEAD
-	maxac = 2;					/* for fixed args supplied below */
-=======
 	maxac = 5;					/* for fixed args supplied below */
->>>>>>> 78a09145e0
 	maxac += (strlen(ExtraOptions) + 1) / 2;
 
 	av = (char **) MemoryContextAlloc(TopMemoryContext,
@@ -6190,23 +6058,11 @@ BackendRun(Port *port)
 
 	/*
 	 * Pass any backend switches specified with -o on the postmaster's own
-<<<<<<< HEAD
-	 * command line.  We assume these are secure.
-	 */
-	pg_split_opts(av, &ac, ExtraOptions);
-
-=======
 	 * command line.  We assume these are secure.  (It's OK to mangle
 	 * ExtraOptions now, since we're safely inside a subprocess.)
 	 */
 	pg_split_opts(av, &ac, ExtraOptions);
 
-	/*
-	 * Tell the backend which database to use.
-	 */
-	av[ac++] = port->database_name;
-
->>>>>>> 78a09145e0
 	av[ac] = NULL;
 
 	Assert(ac < maxac);
@@ -6495,11 +6351,7 @@ internal_forkexec(int argc, char *argv[], Port *port)
 		 * process and give up.
 		 */
 		if (!TerminateProcess(pi.hProcess, 255))
-<<<<<<< HEAD
-			ereport(ERROR,
-=======
 			ereport(LOG,
->>>>>>> 78a09145e0
 					(errmsg_internal("could not terminate process that failed to reserve memory: error code %d",
 									 (int) GetLastError())));
 		CloseHandle(pi.hProcess);
@@ -7076,7 +6928,6 @@ sigusr1_handler(SIGNAL_ARGS)
 }
 
 /*
-<<<<<<< HEAD
  * GPDB_90_MERGE_FIXME: This function should be removed once hot
  * standby can and will be enabled for mirrors.
  */
@@ -7090,7 +6941,7 @@ void SignalPromote(void)
 	}
 }
 
-=======
+/*
  * Timeout or shutdown signal from postmaster while processing startup packet.
  * Cleanup and exit(1).
  *
@@ -7104,7 +6955,6 @@ startup_die(SIGNAL_ARGS)
 {
 	proc_exit(1);
 }
->>>>>>> 78a09145e0
 
 /*
  * Dummy signal handler
