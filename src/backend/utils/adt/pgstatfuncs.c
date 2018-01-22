@@ -448,11 +448,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-<<<<<<< HEAD
 		tupdesc = CreateTemplateTupleDesc(nattr, false);
-=======
-		tupdesc = CreateTemplateTupleDesc(11, false);
->>>>>>> 78a09145e0
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "datid", OIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "procpid", INT4OID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "usesysid", OIDOID, -1, 0);
@@ -464,7 +460,6 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupdesc, (AttrNumber) 9, "backend_start", TIMESTAMPTZOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 10, "client_addr", INETOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 11, "client_port", INT4OID, -1, 0);
-<<<<<<< HEAD
 		TupleDescInitEntry(tupdesc, (AttrNumber) 12, "sess_id", INT4OID, -1, 0);  /* GPDB */
 
 		if (nattr > 12)
@@ -476,8 +471,6 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			TupleDescInitEntry(tupdesc, (AttrNumber) 15, "rsgname", TEXTOID, -1, 0);
 			TupleDescInitEntry(tupdesc, (AttrNumber) 16, "rsgqueueduration", INTERVALOID, -1, 0);
 		}
-=======
->>>>>>> 78a09145e0
 
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
 
@@ -529,13 +522,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 	if (funcctx->call_cntr < funcctx->max_calls)
 	{
 		/* for each row */
-<<<<<<< HEAD
 		Datum		values[16];
 		bool		nulls[16];
-=======
-		Datum		values[11];
-		bool		nulls[11];
->>>>>>> 78a09145e0
 		HeapTuple	tuple;
 		PgBackendStatus *beentry;
 
@@ -708,7 +696,6 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			nulls[8] = true;
 			nulls[9] = true;
 			nulls[10] = true;
-<<<<<<< HEAD
 			values[11] = Int32GetDatum(beentry->st_session_id);
 			if (funcctx->tuple_desc->natts > 12)
 				nulls[12] = true;
@@ -718,8 +705,6 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 				nulls[14] = true;
 				nulls[15] = true;
 			}
-=======
->>>>>>> 78a09145e0
 		}
 
 		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);

@@ -635,9 +635,6 @@ typedef struct PgBackendStatus
 	/* application name; MUST be null-terminated */
 	char	   *st_appname;
 
-	/* application name; MUST be null-terminated */
-	char       *st_appname;
-
 	/* current command string; MUST be null-terminated */
 	char	   *st_activity;
 
@@ -725,14 +722,10 @@ extern void pgstat_report_analyze(Relation rel,
 extern void pgstat_initialize(void);
 extern void pgstat_bestart(void);
 
-<<<<<<< HEAD
-extern void pgstat_report_activity(const char *what);
+extern void pgstat_report_activity(const char *cmd_str);
 extern void pgstat_report_txn_timestamp(TimestampTz tstamp);
 extern void pgstat_report_waiting(char reason);
 
-=======
-extern void pgstat_report_activity(const char *cmd_str);
->>>>>>> 78a09145e0
 extern void pgstat_report_appname(const char *appname);
 extern void pgstat_report_xact_timestamp(TimestampTz tstamp);
 extern const char *pgstat_get_backend_current_activity(int pid, bool checkUser);

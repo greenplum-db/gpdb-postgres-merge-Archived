@@ -31,9 +31,6 @@
 #include "utils/memutils.h"
 
 /* GUC variable */
-int 	bytea_output = BYTEA_OUTPUT_ESCAPE;
-
-/* GUC variable */
 int		bytea_output = BYTEA_OUTPUT_HEX;
 
 typedef struct varlena unknown;
@@ -212,15 +209,6 @@ byteain(PG_FUNCTION_ARGS)
 	bytea	   *result;
 
 	/* Recognize hex input */
-<<<<<<< HEAD
-	if (inputText[0] == '\\' && inputText[1] == 'x' )
-	{
-		size_t len = strlen(inputText);
-		bc = (len-2)/2 + VARHDRSZ;		/* maximum possible length */
-		result = palloc(bc);
-		bc =  hex_decode(inputText + 2, len - 2, VARDATA(result));
-		SET_VARSIZE(result, bc + VARHDRSZ); /* actual length */
-=======
 	if (inputText[0] == '\\' && inputText[1] == 'x')
 	{
 		size_t len = strlen(inputText);
@@ -229,7 +217,6 @@ byteain(PG_FUNCTION_ARGS)
 		result = palloc(bc);
 		bc = hex_decode(inputText + 2, len - 2, VARDATA(result));
 		SET_VARSIZE(result, bc + VARHDRSZ);	/* actual length */
->>>>>>> 78a09145e0
 
 		PG_RETURN_BYTEA_P(result);
 	}

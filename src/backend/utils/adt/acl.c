@@ -20,11 +20,8 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
-=======
 #include "catalog/pg_class.h"
->>>>>>> 78a09145e0
 #include "commands/dbcommands.h"
 #include "commands/tablespace.h"
 #include "foreign/foreign.h"
@@ -2047,7 +2044,16 @@ has_sequence_privilege_name_name(PG_FUNCTION_ARGS)
 
 	roleid = get_roleid_checked(NameStr(*rolename));
 	mode = convert_sequence_priv_string(priv_type_text);
-	sequenceoid = convert_table_name(sequencename);
+	sequenceoid = try_convert_table_name(sequencename);
+
+	/*
+	 * While we scan pg_class with an MVCC snapshot,
+	 * someone else might drop the sequence. It's better to return NULL for
+	 * already-dropped sequences than throw an error and abort the whole query.
+	 */
+	if (!OidIsValid(sequenceoid))
+		PG_RETURN_NULL();
+
 	if (get_rel_relkind(sequenceoid) != RELKIND_SEQUENCE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -2077,7 +2083,16 @@ has_sequence_privilege_name(PG_FUNCTION_ARGS)
 
 	roleid = GetUserId();
 	mode = convert_sequence_priv_string(priv_type_text);
-	sequenceoid = convert_table_name(sequencename);
+	sequenceoid = try_convert_table_name(sequencename);
+
+	/*
+	 * While we scan pg_class with an MVCC snapshot,
+	 * someone else might drop the sequence. It's better to return NULL for
+	 * already-dropped sequences than throw an error and abort the whole query.
+	 */
+	if (!OidIsValid(sequenceoid))
+		PG_RETURN_NULL();
+
 	if (get_rel_relkind(sequenceoid) != RELKIND_SEQUENCE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -2169,7 +2184,16 @@ has_sequence_privilege_id_name(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	mode = convert_sequence_priv_string(priv_type_text);
-	sequenceoid = convert_table_name(sequencename);
+	sequenceoid = try_convert_table_name(sequencename);
+
+	/*
+	 * While we scan pg_class with an MVCC snapshot,
+	 * someone else might drop the sequence. It's better to return NULL for
+	 * already-dropped sequences than throw an error and abort the whole query.
+	 */
+	if (!OidIsValid(sequenceoid))
+		PG_RETURN_NULL();
+
 	if (get_rel_relkind(sequenceoid) != RELKIND_SEQUENCE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),

@@ -1066,12 +1066,7 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n, char *func)
 			if (IS_BRACKET(num))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-<<<<<<< HEAD
 						 errmsg("\"9\" must be ahead of \"PR\" for function \"%s\"", func)));
-			}
-=======
-						 errmsg("\"9\" must be ahead of \"PR\"")));
->>>>>>> 78a09145e0
 			if (IS_MULTI(num))
 			{
 				++num->multi;
@@ -1087,12 +1082,7 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n, char *func)
 			if (IS_BRACKET(num))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-<<<<<<< HEAD
 						 errmsg("\"0\" must be ahead of \"PR\" for function \"%s\"", func)));
-			}
-=======
-						 errmsg("\"0\" must be ahead of \"PR\"")));
->>>>>>> 78a09145e0
 			if (!IS_ZERO(num) && !IS_DECIMAL(num))
 			{
 				num->flag |= NUM_F_ZERO;
@@ -1118,21 +1108,11 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n, char *func)
 			if (IS_DECIMAL(num))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-<<<<<<< HEAD
 						 errmsg("multiple decimal points for function \"%s\"", func)));
-			}
-=======
-						 errmsg("multiple decimal points")));
->>>>>>> 78a09145e0
 			if (IS_MULTI(num))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-<<<<<<< HEAD
 					 errmsg("cannot use \"V\" and decimal point together for function \"%s\"", func)));
-			}
-=======
-					 errmsg("cannot use \"V\" and decimal point together")));
->>>>>>> 78a09145e0
 			num->flag |= NUM_F_DECIMAL;
 			break;
 
@@ -1144,21 +1124,11 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n, char *func)
 			if (IS_LSIGN(num))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-<<<<<<< HEAD
 						 errmsg("cannot use \"S\" twice for function \"%s\"", func)));
-			}
-=======
-						 errmsg("cannot use \"S\" twice")));
->>>>>>> 78a09145e0
 			if (IS_PLUS(num) || IS_MINUS(num) || IS_BRACKET(num))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-<<<<<<< HEAD
 						 errmsg("cannot use \"S\" and \"PL\"/\"MI\"/\"SG\"/\"PR\" together for function \"%s\"", func)));
-			}
-=======
-						 errmsg("cannot use \"S\" and \"PL\"/\"MI\"/\"SG\"/\"PR\" together")));
->>>>>>> 78a09145e0
 			if (!IS_DECIMAL(num))
 			{
 				num->lsign = NUM_LSIGN_PRE;
@@ -1178,12 +1148,7 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n, char *func)
 			if (IS_LSIGN(num))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-<<<<<<< HEAD
 						 errmsg("cannot use \"S\" and \"MI\" together for function \"%s\"", func)));
-			}
-=======
-						 errmsg("cannot use \"S\" and \"MI\" together")));
->>>>>>> 78a09145e0
 			num->flag |= NUM_F_MINUS;
 			if (IS_DECIMAL(num))
 				num->flag |= NUM_F_MINUS_POST;
@@ -1193,12 +1158,7 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n, char *func)
 			if (IS_LSIGN(num))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-<<<<<<< HEAD
 						 errmsg("cannot use \"S\" and \"PL\" together for function \"%s\"", func)));
-			}
-=======
-						 errmsg("cannot use \"S\" and \"PL\" together")));
->>>>>>> 78a09145e0
 			num->flag |= NUM_F_PLUS;
 			if (IS_DECIMAL(num))
 				num->flag |= NUM_F_PLUS_POST;
@@ -1208,12 +1168,7 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n, char *func)
 			if (IS_LSIGN(num))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-<<<<<<< HEAD
 						 errmsg("cannot use \"S\" and \"SG\" together for function \"%s\"", func)));
-			}
-=======
-						 errmsg("cannot use \"S\" and \"SG\" together")));
->>>>>>> 78a09145e0
 			num->flag |= NUM_F_MINUS;
 			num->flag |= NUM_F_PLUS;
 			break;
@@ -1222,12 +1177,7 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n, char *func)
 			if (IS_LSIGN(num) || IS_PLUS(num) || IS_MINUS(num))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-<<<<<<< HEAD
 						 errmsg("cannot use \"PR\" and \"S\"/\"PL\"/\"MI\"/\"SG\" together for function \"%s\"", func)));
-			}
-=======
-						 errmsg("cannot use \"PR\" and \"S\"/\"PL\"/\"MI\"/\"SG\" together")));
->>>>>>> 78a09145e0
 			num->flag |= NUM_F_BRACKET;
 			break;
 
@@ -1245,22 +1195,11 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n, char *func)
 			if (IS_DECIMAL(num))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-<<<<<<< HEAD
 					 errmsg("cannot use \"V\" and decimal point together for function \"%s\"", func)));
-			}
-=======
-					 errmsg("cannot use \"V\" and decimal point together")));
->>>>>>> 78a09145e0
 			num->flag |= NUM_F_MULTI;
 			break;
 
 		case NUM_E:
-<<<<<<< HEAD
-			NUM_cache_remove(last_NUMCacheEntry);
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("\"E\" is not supported for function \"%s\"", func)));
-=======
 			if (IS_EEEE(num))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1274,7 +1213,6 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n, char *func)
 						 errdetail("\"EEEE\" may only be used together with digit and decimal point patterns.")));
 			num->flag |= NUM_F_EEEE;
 			break;
->>>>>>> 78a09145e0
 	}
 	}
 	PG_CATCH();
@@ -4452,11 +4390,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 		if (!Np->is_to_char)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-<<<<<<< HEAD
 					 errmsg("\"RN\" not supported with function \"to_number\"")));
-=======
-					 errmsg("\"RN\" not supported for input")));
->>>>>>> 78a09145e0
 
 		Np->Num->lsign = Np->Num->pre_lsign_num = Np->Num->post =
 			Np->Num->pre = Np->num_pre = Np->sign = 0;

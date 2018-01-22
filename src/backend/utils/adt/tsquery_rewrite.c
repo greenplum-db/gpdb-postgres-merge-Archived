@@ -222,11 +222,7 @@ dropvoidsubtree(QTNode *root)
 			QTNFree(root);
 			root = NULL;
 		}
-<<<<<<< HEAD
-		else if (root->nchild == 1 && root->valnode->operator.oper != OP_NOT)
-=======
 		else if (root->nchild == 1 && root->valnode->qoperator.oper != OP_NOT)
->>>>>>> 78a09145e0
 		{
 			QTNode	   *nroot = root->child[0];
 
