@@ -96,11 +96,8 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "storage/ipc.h"
-<<<<<<< HEAD
 #include "storage/proc.h"
-=======
 #include "storage/procsignal.h"
->>>>>>> 78a09145e0
 #include "storage/sinval.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"

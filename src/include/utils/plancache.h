@@ -17,10 +17,7 @@
 
 #include "access/tupdesc.h"
 #include "nodes/params.h"
-<<<<<<< HEAD
 #include "nodes/parsenodes.h"
-=======
->>>>>>> 78a09145e0
 
 /*
  * CachedPlanSource represents the portion of a cached plan that persists

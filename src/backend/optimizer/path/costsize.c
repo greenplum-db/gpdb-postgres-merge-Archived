@@ -1419,23 +1419,14 @@ cost_sort(Path *path, PlannerInfo *root,
  * occur only on rescan, which is estimated in cost_rescan.
  */
 void
-<<<<<<< HEAD
 cost_material(Path *path, PlannerInfo *root,
-			  Cost input_cost, double tuples, int width)
-=======
-cost_material(Path *path,
 			  Cost input_startup_cost, Cost input_total_cost,
 			  double tuples, int width)
->>>>>>> 78a09145e0
 {
 	Cost		startup_cost = input_startup_cost;
 	Cost		run_cost = input_total_cost - input_startup_cost;
 	double		nbytes = relation_byte_size(tuples, width);
 
-<<<<<<< HEAD
-	/* disk costs */
-	if (nbytes > global_work_mem(root))
-=======
 	/*
 	 * Whether spilling or not, charge 2x cpu_tuple_cost per tuple to reflect
 	 * bookkeeping overhead.  (This rate must be more than cpu_tuple_cost;
@@ -1452,8 +1443,7 @@ cost_material(Path *path,
 	 * which isn't exactly accurate but our cost model doesn't allow for
 	 * nonuniform costs within the run phase.
 	 */
-	if (nbytes > work_mem_bytes)
->>>>>>> 78a09145e0
+	if (nbytes > global_work_mem(root))
 	{
 		double		npages = ceil(nbytes / BLCKSZ);
 
@@ -1736,17 +1726,11 @@ cost_nestloop(NestPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	Selectivity match_count;
 	bool		indexed_join_quals;
 
-<<<<<<< HEAD
-=======
-	if (!enable_nestloop)
-		startup_cost += disable_cost;
-
 	/* estimate costs to rescan the inner relation */
 	cost_rescan(root, inner_path,
 				&inner_rescan_start_cost,
 				&inner_rescan_total_cost);
 
->>>>>>> 78a09145e0
 	/* cost of source data */
 
 	/*

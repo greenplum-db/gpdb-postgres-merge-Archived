@@ -504,13 +504,8 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		 * RestrictInfo nodes, do the substitution, do const-simplification,
 		 * and then reconstitute the RestrictInfo layer.
 		 */
-<<<<<<< HEAD
-		childrel->baserestrictinfo = (List *)
-			adjust_appendrel_attrs(root, (Node *) rel->baserestrictinfo,
-								   appinfo);
-=======
 		childquals = get_all_actual_clauses(rel->baserestrictinfo);
-		childquals = (List *) adjust_appendrel_attrs((Node *) childquals,
+		childquals = (List *) adjust_appendrel_attrs(root, (Node *) childquals,
 													 appinfo);
 		childqual = eval_const_expressions(root, (Node *)
 										   make_ands_explicit(childquals));
@@ -522,14 +517,13 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 			 * Restriction reduces to constant FALSE or constant NULL after
 			 * substitution, so this child need not be scanned.
 			 */
-			set_dummy_rel_pathlist(childrel);
+			set_dummy_rel_pathlist(root, childrel);
 			continue;
 		}
 		childquals = make_ands_implicit((Expr *) childqual);
 		childquals = make_restrictinfos_from_actual_clauses(root,
 															childquals);
 		childrel->baserestrictinfo = childquals;
->>>>>>> 78a09145e0
 
 		if (relation_excluded_by_constraints(root, childrel, childRTE))
 		{
@@ -796,24 +790,20 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		rel->subplan = subquery_planner(root->glob, subquery,
 									root,
 									false, tuple_fraction,
-<<<<<<< HEAD
 									&subroot,
 									config);
 		rel->subrtable = subroot->parse->rtable;
+		rel->subrowmark = subroot->rowMarks;
 	}
 	else
 	{
 		/* This is a preplanned sub-query RTE. */
 		rel->subplan = rte->subquery_plan;
 		rel->subrtable = rte->subquery_rtable;
+		rel->subrowmark = NULL; /* GPDB_90_MERGE_FIXME: do we need to get rowmarks from somewhere? */
 		subroot = root;
 		/* XXX rel->onerow = ??? */
 	}
-=======
-									&subroot);
-	rel->subrtable = subroot->parse->rtable;
-	rel->subrowmark = subroot->rowMarks;
->>>>>>> 78a09145e0
 
 	/* Copy number of output rows from subplan */
 	if (rel->onerow)
@@ -1350,13 +1340,9 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels, b
 
 	for (lev = 2; lev <= levels_needed; lev++)
 	{
-<<<<<<< HEAD
-		ListCell   *w = NULL;
-		ListCell   *x;
-		ListCell   *y;
-=======
 		ListCell   *lc;
->>>>>>> 78a09145e0
+		ListCell   *prev;
+		ListCell   *next;
 
 		/*
 		 * Determine all possible pairs of relations to be joined at this
@@ -1368,55 +1354,43 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels, b
 		/*
 		 * Do cleanup work on each just-processed rel.
 		 */
-<<<<<<< HEAD
-		for (x = list_head(joinitems[lev]); x; x = y)	/* cannot use foreach */
+		prev = NULL;
+		for (lc = list_head(root->join_rel_level[lev]);
+			 lc != NULL;
+			 lc = next)
 		{
-			y = lnext(x);
-			rel = (RelOptInfo *) lfirst(x);
-=======
-		foreach(lc, root->join_rel_level[lev])
-		{
+			next = lnext(lc);
 			rel = (RelOptInfo *) lfirst(lc);
->>>>>>> 78a09145e0
 
 			/* Find and save the cheapest paths for this rel */
 			set_cheapest(root, rel);
 
 			/* CDB: Prune this rel if it has no path. */
 			if (!rel->cheapest_total_path)
-				joinitems[lev] = list_delete_cell(joinitems[lev], x, w);
-
-			/* Keep this rel. */
-			else
-				w = x;
+				root->join_rel_level[lev] = list_delete_cell(root->join_rel_level[lev], lc, prev);
 
 #ifdef OPTIMIZER_DEBUG
 			debug_print_rel(root, rel);
 #endif
+
+			prev = lc;
 		}
 		/* If no paths found because enable_xxx=false, enable all & retry. */
-		if (!joinitems[lev] &&
+		if (!root->join_rel_level[lev] &&
 			root->config->gp_enable_fallback_plan &&
 			!root->config->mpp_trying_fallback_plan)
 		{
 			root->config->mpp_trying_fallback_plan = true;
 			lev--;
 		}
-
 	}
 
 	/*
 	 * We should have a single rel at the final level.
 	 */
-<<<<<<< HEAD
-	if (joinitems[levels_needed] == NIL)
-		return NULL;
-	Assert(list_length(joinitems[levels_needed]) == 1);
-=======
 	if (root->join_rel_level[levels_needed] == NIL)
-		elog(ERROR, "failed to build any %d-way joins", levels_needed);
+		return NULL;
 	Assert(list_length(root->join_rel_level[levels_needed]) == 1);
->>>>>>> 78a09145e0
 
 	rel = (RelOptInfo *) linitial(root->join_rel_level[levels_needed]);
 

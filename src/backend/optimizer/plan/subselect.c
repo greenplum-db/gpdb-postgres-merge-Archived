@@ -18,11 +18,8 @@
 #include "catalog/catalog.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
 #include "catalog/gp_policy.h"
-=======
 #include "executor/executor.h"
->>>>>>> 78a09145e0
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -545,19 +542,9 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 							config);
 
 	/* And convert to SubPlan or InitPlan format. */
-<<<<<<< HEAD
-	result = build_subplan(root,
-						   plan,
-						   subroot->parse->rtable,
-						   subLinkType,
-						   testexpr,
-						   true,
-						   isTopQual);
-=======
 	result = build_subplan(root, plan,
 						   subroot->parse->rtable, subroot->rowMarks,
 						   subLinkType, testexpr, true, isTopQual);
->>>>>>> 78a09145e0
 
 	/*
 	 * If it's a correlated EXISTS with an unimportant targetlist, we might be
@@ -811,40 +798,17 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable, List *rowmarks,
 		 * correlated subplans, we add Material unless the subplan's top plan
 		 * node would materialize its output anyway.
 		 */
-<<<<<<< HEAD
 #if 0
 		/*
 		 * In GPDB, don't add a MATERIAL node here. We'll most likely add one
 		 * later anyway, when the SubPlan reference is "parallelized" in
 		 * ParallelizeCorrelatedSubPlan.
 		 */
-		else if (splan->parParam == NIL)
-		{
-			bool		use_material;
-
-			switch (nodeTag(plan))
-			{
-				case T_Material:
-				case T_FunctionScan:
-				case T_CteScan:
-				case T_WorkTableScan:
-				case T_Sort:
-					use_material = false;
-					break;
-				default:
-					use_material = true;
-					break;
-			}
-			if (use_material)
-				plan = materialize_finished_plan(root, plan);
-		}
-#endif
-=======
 		else if (splan->parParam == NIL &&
 				 !ExecMaterializesOutput(nodeTag(plan)))
 			plan = materialize_finished_plan(plan);
+#endif
 
->>>>>>> 78a09145e0
 		result = (Node *) splan;
 	}
 
@@ -1414,10 +1378,7 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	result->isNatural = false;
 	result->larg = NULL;		/* caller must fill this in */
 	result->rarg = (Node *) rtr;
-<<<<<<< HEAD
-=======
 	result->usingClause = NIL;
->>>>>>> 78a09145e0
 	result->quals = quals;
 	result->alias = NULL;
 	result->rtindex = 0;
@@ -1749,10 +1710,7 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 		result->rarg = (Node *) linitial(subselect->jointree->fromlist);
 	else
 		result->rarg = (Node *) subselect->jointree;
-<<<<<<< HEAD
-=======
 	result->usingClause = NIL;
->>>>>>> 78a09145e0
 	result->quals = whereClause;
 	result->alias = NULL;
 	result->rtindex = 0;
@@ -2479,12 +2437,9 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 					bms_add_member(context.paramids,
 								   ((CteScan *) plan)->cteParam);
 #endif
-<<<<<<< HEAD
-=======
 
 				context.paramids = bms_add_members(context.paramids,
 												   scan_params);
->>>>>>> 78a09145e0
 			}
 			break;
 
@@ -2643,14 +2598,9 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 
 		case T_Hash:
 		case T_Agg:
-<<<<<<< HEAD
-		case T_SeqScan:
 		case T_AppendOnlyScan:
 		case T_AOCSScan:
 		case T_ExternalScan:
-=======
-		case T_WindowAgg:
->>>>>>> 78a09145e0
 		case T_Material:
 		case T_Sort:
 		case T_ShareInputScan:
@@ -2665,7 +2615,6 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 	}
 
 	/* Process left and right child plans, if any */
-<<<<<<< HEAD
 	/*
 	 * In a TableFunctionScan, the 'lefttree' is more like a SubQueryScan's
 	 * subplan, and contains a plan that's already been finalized by the
@@ -2673,16 +2622,10 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 	 */
 	if (!IsA(plan, TableFunctionScan))
 		context.paramids = bms_add_members(context.paramids,
-										   finalize_plan(root,
-														 plan->lefttree,
-														 valid_params));
-=======
-	context.paramids = bms_add_members(context.paramids,
 									   finalize_plan(root,
 													 plan->lefttree,
 													 valid_params,
 													 scan_params));
->>>>>>> 78a09145e0
 
 	context.paramids = bms_add_members(context.paramids,
 									   finalize_plan(root,

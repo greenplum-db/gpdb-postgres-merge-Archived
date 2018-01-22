@@ -403,7 +403,7 @@ generate_outer_only(PlannerInfo *root, RelOptInfo *joinrel,
 	{
 		Path   *outerpath = (Path *) lfirst(lc);
 
-		add_path(joinrel, (Path *)
+		add_path(root, joinrel, (Path *)
 				 create_noop_path(root, joinrel, outerpath));
 	}
 }
@@ -657,38 +657,13 @@ match_unsorted_outer(PlannerInfo *root,
 
 	if (nestjoinOK)
 	{
-		bool    materialize_inner = true;
-
 		/*
-<<<<<<< HEAD
-		 * Consider materializing the cheapest inner path unless it is
-		 * cheaply rescannable.
-		 *
-		 * Unlike upstream we choose to materialize pretty much
-		 * everything on the inner side. The original change cited
-		 * performance as the reason.
-		 */
-		if (IsA(inner_cheapest_total, UniquePath))
-		{
-			UniquePath *unique_path = (UniquePath *)inner_cheapest_total;
-
-			if (unique_path->umethod == UNIQUE_PATH_SORT ||
-				unique_path->umethod == UNIQUE_PATH_HASH)
-				materialize_inner = false;
-		}
-		else if (inner_cheapest_total->pathtype == T_WorkTableScan)
-			materialize_inner = false;
-
-		if (materialize_inner)
-			matpath = (Path *)create_material_path(root, innerrel, inner_cheapest_total);
-=======
 		 * Consider materializing the cheapest inner path, unless it is one
 		 * that materializes its output anyway.
 		 */
 		if (!ExecMaterializesOutput(inner_cheapest_total->pathtype))
 			matpath = (Path *)
-				create_material_path(innerrel, inner_cheapest_total);
->>>>>>> 78a09145e0
+				create_material_path(root, innerrel, inner_cheapest_total);
 
 		/*
 		 * Get the best innerjoin indexpaths (if any) for this outer rel.

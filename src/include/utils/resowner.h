@@ -21,10 +21,7 @@
 
 #include "storage/buf.h"
 #include "storage/fd.h"
-<<<<<<< HEAD
 #include "storage/lock.h"
-=======
->>>>>>> 78a09145e0
 #include "utils/catcache.h"
 #include "utils/plancache.h"
 #include "utils/snapshot.h"

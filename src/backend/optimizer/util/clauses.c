@@ -100,19 +100,14 @@ static List *simplify_and_arguments(List *args,
 static Expr *simplify_boolean_equality(Oid opno, List *args);
 static Expr *simplify_function(Oid funcid,
 				  Oid result_type, int32 result_typmod, List **args,
-<<<<<<< HEAD
 				  bool funcvariadic, 
-				  bool allow_inline,
-				  eval_const_expressions_context *context);
-static bool large_const(Expr *expr, Size max_size);
-=======
 				  bool has_named_args,
 				  bool allow_inline,
 				  eval_const_expressions_context *context);
+static bool large_const(Expr *expr, Size max_size);
 static List *reorder_function_arguments(List *args, Oid result_type,
 						   HeapTuple func_tuple,
 						   eval_const_expressions_context *context);
->>>>>>> 78a09145e0
 static List *add_function_defaults(List *args, Oid result_type,
 					  HeapTuple func_tuple,
 					  eval_const_expressions_context *context);
@@ -460,29 +455,9 @@ count_agg_clauses_walker(Node *node, AggClauseCounts *counts)
 		HeapTuple	aggTuple;
 		Form_pg_aggregate aggform;
 		Oid			aggtranstype;
-<<<<<<< HEAD
 		Oid			aggprelimfn;
 
 		Assert(aggref->agglevelsup == 0);
-=======
-		ListCell   *l;
-
-		Assert(aggref->agglevelsup == 0);
-		counts->numAggs++;
-		if (aggref->aggorder != NIL || aggref->aggdistinct != NIL)
-			counts->numOrderedAggs++;
-
-		/* extract argument types (ignoring any ORDER BY expressions) */
-		inputTypes = (Oid *) palloc(sizeof(Oid) * list_length(aggref->args));
-		numArguments = 0;
-		foreach(l, aggref->args)
-		{
-			TargetEntry *tle = (TargetEntry *) lfirst(l);
-
-			if (!tle->resjunk)
-				inputTypes[numArguments++] = exprType((Node *) tle->expr);
-		}
->>>>>>> 78a09145e0
 
 		/* fetch aggregate transition datatype from pg_aggregate */
 		aggTuple = SearchSysCache(AGGFNOID,
@@ -2347,12 +2322,8 @@ eval_const_expressions_mutator(Node *node,
 		simple = simplify_function(expr->funcid,
 								   expr->funcresulttype, exprTypmod(node),
 								   &args,
-<<<<<<< HEAD
 								   expr->funcvariadic,
-								   true, context);
-=======
 								   has_named_args, true, context);
->>>>>>> 78a09145e0
 		if (simple)				/* successfully simplified it */
 			return (Node *) simple;
 
@@ -2412,12 +2383,8 @@ eval_const_expressions_mutator(Node *node,
 		simple = simplify_function(expr->opfuncid,
 								   expr->opresulttype, -1,
 								   &args,
-<<<<<<< HEAD
 								   false,
-								   true, context);
-=======
 								   false, true, context);
->>>>>>> 78a09145e0
 		if (simple)				/* successfully simplified it */
 			return (Node *) simple;
 
@@ -2510,12 +2477,8 @@ eval_const_expressions_mutator(Node *node,
 			simple = simplify_function(expr->opfuncid,
 									   expr->opresulttype, -1,
 									   &args,
-<<<<<<< HEAD
 									   false,
-									   false, context);
-=======
 									   false, false, context);
->>>>>>> 78a09145e0
 			if (simple)			/* successfully simplified it */
 			{
 				/*
@@ -2707,13 +2670,8 @@ eval_const_expressions_mutator(Node *node,
 		simple = simplify_function(outfunc,
 								   CSTRINGOID, -1,
 								   &args,
-<<<<<<< HEAD
 								   false,
-								   true,
-								   context);
-=======
 								   false, true, context);
->>>>>>> 78a09145e0
 		if (simple)				/* successfully simplified output fn */
 		{
 			/*
@@ -2731,13 +2689,8 @@ eval_const_expressions_mutator(Node *node,
 			simple = simplify_function(infunc,
 									   expr->resulttype, -1,
 									   &args,
-<<<<<<< HEAD
 									   false,
-									   true,
-									   context);
-=======
 									   false, true, context);
->>>>>>> 78a09145e0
 			if (simple)			/* successfully simplified input fn */
 				return (Node *) simple;
 		}
@@ -3617,11 +3570,8 @@ simplify_boolean_equality(Oid opno, List *args)
 static Expr *
 simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
 				  List **args,
-<<<<<<< HEAD
 				  bool funcvariadic,
-=======
 				  bool has_named_args,
->>>>>>> 78a09145e0
 				  bool allow_inline,
 				  eval_const_expressions_context *context)
 {

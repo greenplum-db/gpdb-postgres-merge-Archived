@@ -121,18 +121,11 @@ extern bool contain_group_id(Node *node);
 /*
  * prototypes for plan/createplan.c
  */
-<<<<<<< HEAD
-extern Plan *create_plan(PlannerInfo *root, Path *path);
-extern SubqueryScan *make_subqueryscan(PlannerInfo *root, List *qptlist, List *qpqual,
-				  Index scanrelid, Plan *subplan, List *subrtable);
-extern Append *make_append(List *appendplans, bool isTarget, List *tlist);
-=======
 extern Plan *create_plan(PlannerInfo *root, Path *best_path);
-extern SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
+extern SubqueryScan *make_subqueryscan(PlannerInfo *root, List *qptlist, List *qpqual,
 				  Index scanrelid, Plan *subplan,
 				  List *subrtable, List *subrowmark);
 extern Append *make_append(List *appendplans, List *tlist);
->>>>>>> 78a09145e0
 extern RecursiveUnion *make_recursive_union(List *tlist,
 					 Plan *lefttree, Plan *righttree, int wtParam,
 					 List *distinctList, long numGroups);
@@ -199,17 +192,14 @@ extern SetOp *make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
 		   long numGroups, double outputRows);
 extern Result *make_result(PlannerInfo *root, List *tlist,
 			Node *resconstantqual, Plan *subplan);
-<<<<<<< HEAD
 extern Repeat *make_repeat(List *tlist,
 						   List *qual,
 						   Expr *repeatCountExpr,
 						   uint64 grouping,
 						   Plan *subplan);
-=======
 extern ModifyTable *make_modifytable(CmdType operation, List *resultRelations,
 									 List *subplans, List *returningLists,
 									 List *rowMarks, int epqParam);
->>>>>>> 78a09145e0
 extern bool is_projection_capable_plan(Plan *plan);
 extern Plan *add_sort_cost(PlannerInfo *root, Plan *input, 
 						   int numCols, 

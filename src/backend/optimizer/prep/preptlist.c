@@ -161,31 +161,24 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 		Var		   *var;
 		char		resname[32];
 		TargetEntry *tle;
+		RangeTblEntry  *rte;
+		Relation    relation;
+		bool        isdistributed = false;
+
+		/* CDB: Don't try to fetch CTIDs for distributed relation. */
+		rte = rt_fetch(rc->rti, parse->rtable);
+		relation = heap_open(rte->relid, NoLock);
+		if (relation->rd_cdbpolicy &&
+			relation->rd_cdbpolicy->ptype == POLICYTYPE_PARTITIONED)
+			isdistributed = true;
+		heap_close(relation, NoLock);
+		if (isdistributed)
+			continue;
 
 		/* child rels should just use the same junk attrs as their parents */
 		if (rc->rti != rc->prti)
 		{
-<<<<<<< HEAD
-			RowMarkClause *rc = (RowMarkClause *) lfirst(l);
-			Var		   *var;
-			char	   *resname;
-			TargetEntry *tle;
-            RangeTblEntry  *rte;
-            Relation    relation;
-            bool        isdistributed = false;
-
-            /* CDB: Don't try to fetch CTIDs for distributed relation. */
-            rte = rt_fetch(rc->rti, parse->rtable);
-            relation = heap_open(rte->relid, NoLock);
-            if (relation->rd_cdbpolicy &&
-                relation->rd_cdbpolicy->ptype == POLICYTYPE_PARTITIONED)
-                isdistributed = true;
-            heap_close(relation, NoLock);
-            if (isdistributed)
-                continue;
-=======
 			PlanRowMark *prc = get_plan_rowmark(root->rowMarks, rc->prti);
->>>>>>> 78a09145e0
 
 			/* parent should have appeared earlier in list */
 			if (prc == NULL || prc->toidAttNo == InvalidAttrNumber)
@@ -468,7 +461,27 @@ expand_targetlist(List *tlist, int command_type,
 
 
 /*
-<<<<<<< HEAD
+ * Locate PlanRowMark for given RT index, or return NULL if none
+ *
+ * This probably ought to be elsewhere, but there's no very good place
+ */
+PlanRowMark *
+get_plan_rowmark(List *rowmarks, Index rtindex)
+{
+	ListCell   *l;
+
+	foreach(l, rowmarks)
+	{
+		PlanRowMark *rc = (PlanRowMark *) lfirst(l);
+
+		if (rc->rti == rtindex)
+			return rc;
+	}
+	return NULL;
+}
+
+
+/*
  * supplement_simply_updatable_targetlist
  * 
  * For a simply updatable cursor, we supplement the targetlist with junk
@@ -533,23 +546,4 @@ supplement_simply_updatable_targetlist(List *range_table, List *tlist)
 	}
 	
 	return tlist;
-=======
- * Locate PlanRowMark for given RT index, or return NULL if none
- *
- * This probably ought to be elsewhere, but there's no very good place
- */
-PlanRowMark *
-get_plan_rowmark(List *rowmarks, Index rtindex)
-{
-	ListCell   *l;
-
-	foreach(l, rowmarks)
-	{
-		PlanRowMark *rc = (PlanRowMark *) lfirst(l);
-
-		if (rc->rti == rtindex)
-			return rc;
-	}
-	return NULL;
->>>>>>> 78a09145e0
 }

@@ -497,15 +497,12 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 				/* seems OK */
 				Assert(!bms_overlap(joinrelids, sjinfo->min_lefthand));
 			}
-<<<<<<< HEAD
 			else if (sjinfo->consider_dedup &&
 				(bms_is_subset(sjinfo->syn_righthand, rel1->relids) ||
 				bms_is_subset(sjinfo->syn_righthand, rel2->relids)))
 			{
 				/* seems OK */
 			}
-=======
->>>>>>> 78a09145e0
 			else
 				is_valid_inner = false;
 		}

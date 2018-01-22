@@ -94,11 +94,8 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->tuples = 0;
 	rel->subplan = NULL;
 	rel->subrtable = NIL;
-<<<<<<< HEAD
-	rel->extEntry = NULL;
-=======
 	rel->subrowmark = NIL;
->>>>>>> 78a09145e0
+	rel->extEntry = NULL;
 	rel->baserestrictinfo = NIL;
 	rel->baserestrictcost.startup = 0;
 	rel->baserestrictcost.per_tuple = 0;

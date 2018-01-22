@@ -270,13 +270,9 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 							  NIL,
 							  rtr->rtindex,
 							  subplan,
-<<<<<<< HEAD
-							  subroot->parse->rtable);
-		mark_passthru_locus(plan, FALSE, FALSE); /* CDB: no hash/sort keys */
-=======
 							  subroot->parse->rtable,
 							  subroot->rowMarks);
->>>>>>> 78a09145e0
+		mark_passthru_locus(plan, FALSE, FALSE); /* CDB: no hash/sort keys */
 
 		/*
 		 * We don't bother to determine the subquery's output ordering since
@@ -492,12 +488,8 @@ generate_union_plan(SetOperationStmt *op, PlannerInfo *root,
 	/*
 	 * Append the child results together.
 	 */
-<<<<<<< HEAD
-	plan = (Plan *) make_append(planlist, false, tlist);
-	mark_append_locus(plan, optype); /* CDB: Mark the plan result locus. */
-=======
 	plan = (Plan *) make_append(planlist, tlist);
->>>>>>> 78a09145e0
+	mark_append_locus(plan, optype); /* CDB: Mark the plan result locus. */
 
 	/*
 	 * For UNION ALL, we just need the Append plan.  For UNION, need to add
@@ -637,12 +629,8 @@ generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
 	/*
 	 * Append the child results together.
 	 */
-<<<<<<< HEAD
-	plan = (Plan *) make_append(planlist, false, tlist);
-	mark_append_locus(plan, optype); /* CDB: Mark the plan result locus. */
-=======
 	plan = (Plan *) make_append(planlist, tlist);
->>>>>>> 78a09145e0
+	mark_append_locus(plan, optype); /* CDB: Mark the plan result locus. */
 
 	/* Identify the grouping semantics */
 	groupList = generate_setop_grouplist(op, tlist);
@@ -1837,19 +1825,11 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfoContext *ctx)
 												  appinfo->parent_relid,
 												  appinfo->child_relid);
 		newinfo->required_relids = adjust_relid_set(oldinfo->required_relids,
-<<<<<<< HEAD
 													appinfo->parent_relid,
 													appinfo->child_relid);
 		newinfo->nullable_relids = adjust_relid_set(oldinfo->nullable_relids,
 													appinfo->parent_relid,
 													appinfo->child_relid);
-=======
-													context->parent_relid,
-													context->child_relid);
-		newinfo->nullable_relids = adjust_relid_set(oldinfo->nullable_relids,
-													context->parent_relid,
-													context->child_relid);
->>>>>>> 78a09145e0
 		newinfo->left_relids = adjust_relid_set(oldinfo->left_relids,
 												appinfo->parent_relid,
 												appinfo->child_relid);

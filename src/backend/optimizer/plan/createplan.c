@@ -2654,7 +2654,8 @@ create_ctescan_plan(PlannerInfo *root, Path *best_path,
 								  scan_clauses,
 								  scan_relid,
 								  best_path->parent->subplan,
-								  best_path->parent->subrtable);
+								  best_path->parent->subrtable,
+								  best_path->parent->subrowmark);
 
 	copy_path_costsize(root, &scan_plan->scan.plan, best_path);
 
@@ -2810,6 +2811,7 @@ create_nestloop_plan(PlannerInfo *root,
 		/* Set cost data */
 		cost_material(&matpath,
 					  root,
+					  inner_plan->startup_cost,
 					  inner_plan->total_cost,
 					  inner_plan->plan_rows,
 					  inner_plan->plan_width);
@@ -3217,14 +3219,10 @@ create_mergejoin_plan(PlannerInfo *root,
 							   inner_plan,
 							   best_path->jpath.jointype);
 
-<<<<<<< HEAD
 	join_plan->join.prefetch_inner = prefetch;
 
-	copy_path_costsize(root, &join_plan->join.plan, &best_path->jpath.path);
-=======
 	/* Costs of sort and material steps are included in path cost already */
-	copy_path_costsize(&join_plan->join.plan, &best_path->jpath.path);
->>>>>>> 78a09145e0
+	copy_path_costsize(root, &join_plan->join.plan, &best_path->jpath.path);
 
 	return join_plan;
 }
@@ -4152,11 +4150,7 @@ make_append(List *appendplans, List *tlist)
 	plan->lefttree = NULL;
 	plan->righttree = NULL;
 	node->appendplans = appendplans;
-<<<<<<< HEAD
-	node->isTarget = isTarget;
 	node->isZapped = false;
-=======
->>>>>>> 78a09145e0
 
 	return node;
 }
@@ -4970,11 +4964,8 @@ materialize_finished_plan(PlannerInfo *root, Plan *subplan)
 
 	/* Set cost data */
 	cost_material(&matpath,
-<<<<<<< HEAD
 				  root,
-=======
 				  subplan->startup_cost,
->>>>>>> 78a09145e0
 				  subplan->total_cost,
 				  subplan->plan_rows,
 				  subplan->plan_width);

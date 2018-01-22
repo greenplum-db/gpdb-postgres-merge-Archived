@@ -323,6 +323,7 @@ make_restrictinfos_from_actual_clauses(PlannerInfo *root,
 								  false,
 								  pseudoconstant,
 								  NULL,
+								  NULL,
 								  NULL);
 		result = lappend(result, rinfo);
 	}

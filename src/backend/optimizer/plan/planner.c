@@ -82,11 +82,7 @@ static Node *preprocess_expression(PlannerInfo *root, Node *expr, int kind);
 static void preprocess_qual_conditions(PlannerInfo *root, Node *jtnode);
 static Plan *inheritance_planner(PlannerInfo *root);
 static Plan *grouping_planner(PlannerInfo *root, double tuple_fraction);
-<<<<<<< HEAD
-=======
-static bool is_dummy_plan(Plan *plan);
 static void preprocess_rowmarks(PlannerInfo *root);
->>>>>>> 78a09145e0
 static double preprocess_limit(PlannerInfo *root,
 				 double tuple_fraction,
 				 int64 *offset_est, int64 *count_est);
@@ -184,8 +180,8 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	PlannerInfo *root;
 	Plan	   *top_plan;
 	ListCell   *lp,
-<<<<<<< HEAD
-			   *lr;
+			   *lrt,
+			   *lrm;
 	PlannerConfig *config;
 	instr_time		starttime;
 	instr_time		endtime;
@@ -238,10 +234,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	 */
 	START_MEMORY_ACCOUNT(MemoryAccounting_CreateAccount(0, MEMORY_OWNER_TYPE_Planner));
 	{
-=======
-			   *lrt,
-			   *lrm;
->>>>>>> 78a09145e0
 
 	/* Cursor options may come from caller or from DECLARE CURSOR stmt */
 	if (parse->utilityStmt &&
@@ -344,10 +336,10 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	 *
 	 * apply_shareinput will fix shared_id, and change the DAG to a tree.
 	 */
-	forboth(lp, glob->subplans, lr, glob->subrtables)
+	forboth(lp, glob->subplans, lrt, glob->subrtables)
 	{
 		Plan	   *subplan = (Plan *) lfirst(lp);
-		List	   *subrtable = (List *) lfirst(lr);
+		List	   *subrtable = (List *) lfirst(lrt);
 
 		lfirst(lp) = apply_shareinput_dag_to_tree(glob, subplan, subrtable);
 	}
@@ -355,15 +347,11 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 
 	/* final cleanup of the plan */
 	Assert(glob->finalrtable == NIL);
-<<<<<<< HEAD
-	Assert(parse == root->parse);
-	top_plan = set_plan_references(glob, top_plan, root->parse->rtable);
-=======
 	Assert(glob->finalrowmarks == NIL);
+	Assert(parse == root->parse);
 	top_plan = set_plan_references(glob, top_plan,
 								   root->parse->rtable,
 								   root->rowMarks);
->>>>>>> 78a09145e0
 	/* ... and the subplans (both regular subplans and initplans) */
 	Assert(list_length(glob->subplans) == list_length(glob->subrtables));
 	Assert(list_length(glob->subplans) == list_length(glob->subrowmarks));
@@ -453,14 +441,9 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->intoClause = parse->intoClause;
 	result->subplans = glob->subplans;
 	result->rewindPlanIDs = glob->rewindPlanIDs;
-<<<<<<< HEAD
-	result->returningLists = root->returningLists;
 	result->result_partitions = root->result_partitions;
 	result->result_aosegnos = root->result_aosegnos;
-	result->rowMarks = parse->rowMarks;
-=======
 	result->rowMarks = glob->finalrowmarks;
->>>>>>> 78a09145e0
 	result->relationOids = glob->relationOids;
 	result->invalItems = glob->invalItems;
 	result->nParamExec = list_length(glob->paramlist);
@@ -877,13 +860,9 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	 * and attach the initPlans to the top plan node.
 	 */
 	if (list_length(glob->subplans) != num_old_subplans ||
-<<<<<<< HEAD
-		root->query_level > 1)
+		root->glob->paramlist != NIL)
 	{
 		Assert(root->parse == parse); /* GPDB isn't always careful about this. */
-=======
-		root->glob->paramlist != NIL)
->>>>>>> 78a09145e0
 		SS_finalize_plan(root, plan, true);
 	}
 
@@ -1066,13 +1045,8 @@ inheritance_planner(PlannerInfo *root)
 	List	   *subplans = NIL;
 	List	   *resultRelations = NIL;
 	List	   *returningLists = NIL;
-<<<<<<< HEAD
-	List	   *tlist = NIL;
-=======
-	List	   *rtable = NIL;
 	List	   *rowMarks;
 	List	   *tlist;
->>>>>>> 78a09145e0
 	PlannerInfo subroot;
 	ListCell   *l;
 
@@ -1117,7 +1091,6 @@ inheritance_planner(PlannerInfo *root)
 		if (is_dummy_plan(subplan))
 			continue;
 
-<<<<<<< HEAD
 		/* MPP needs target loci to match. */
 		if (Gp_role == GP_ROLE_DISPATCH)
 		{
@@ -1162,17 +1135,6 @@ inheritance_planner(PlannerInfo *root)
 			}
 		}
 
-		/* Save tlist from first rel for use below */
-		if (subplans == NIL)
-		{
-			tlist = subplan->targetlist;
-		}
-=======
-		/* Save rtable from first rel for use below */
-		if (subplans == NIL)
-			rtable = subroot.parse->rtable;
->>>>>>> 78a09145e0
-
 		/**
 		 * The grouping planner scribbles on the rtable e.g. to add pseudo columns.
 		 * We need to keep track of this.
@@ -1200,7 +1162,6 @@ inheritance_planner(PlannerInfo *root)
 		}
 	}
 
-<<<<<<< HEAD
 	/**
 	 * If due to constraint exclusions all the result relations have been removed,
 	 * we need something upstream.
@@ -1213,11 +1174,8 @@ inheritance_planner(PlannerInfo *root)
 	{
 		root->resultRelations = list_make1_int(parse->resultRelation);
 	}
-	
-	root->returningLists = returningLists;
-=======
+
 	root->resultRelations = resultRelations;
->>>>>>> 78a09145e0
 
 	/* Mark result as unordered (probably unnecessary) */
 	root->query_pathkeys = NIL;
@@ -1243,40 +1201,49 @@ inheritance_planner(PlannerInfo *root)
 		return plan;
 	}
 
-<<<<<<< HEAD
-	/* Suppress Append if there's only one surviving child rel */
-	if (list_length(subplans) == 1)
-		plan = (Plan *) linitial(subplans);
+	/*
+	 * If there was a FOR UPDATE/SHARE clause, the LockRows node will
+	 * have dealt with fetching non-locked marked rows, else we need
+	 * to have ModifyTable do that.
+	 */
+	if (parse->rowMarks)
+		rowMarks = NIL;
 	else
+		rowMarks = root->rowMarks;
+
+	/* And last, tack on a ModifyTable node to do the UPDATE/DELETE work */
+	plan = (Plan *) make_modifytable(parse->commandType,
+									 copyObject(root->resultRelations),
+									 subplans, 
+									 returningLists,
+									 rowMarks,
+									 SS_assign_special_param(root));
+
+	/* MPP dispatch needs to know the kind of locus. */
+	if (Gp_role == GP_ROLE_DISPATCH)
 	{
-		plan = (Plan *) make_append(subplans, true, tlist);
-
-		/* MPP dispatch needs to know the kind of locus. */
-		if (Gp_role == GP_ROLE_DISPATCH)
+		switch (append_locustype)
 		{
-			switch (append_locustype)
-			{
-				case CdbLocusType_Entry:
-					mark_plan_entry(plan);
-					break;
+			case CdbLocusType_Entry:
+				mark_plan_entry(plan);
+				break;
 
-				case CdbLocusType_Hashed:
-				case CdbLocusType_HashedOJ:
-				case CdbLocusType_Strewn:
-					/* Depend on caller to avoid incompatible hash keys. */
+			case CdbLocusType_Hashed:
+			case CdbLocusType_HashedOJ:
+			case CdbLocusType_Strewn:
+				/* Depend on caller to avoid incompatible hash keys. */
 
-					/*
-					 * For our purpose (UPD/DEL target), strewn is good
-					 * enough.
-					 */
-					mark_plan_strewn(plan);
-					break;
+				/*
+				 * For our purpose (UPD/DEL target), strewn is good
+				 * enough.
+				 */
+				mark_plan_strewn(plan);
+				break;
 
-				default:
-					ereport(ERROR,
-							(errcode(ERRCODE_INTERNAL_ERROR),
-							 errmsg("unexpected locus assigned to target inheritance set")));
-			}
+			default:
+				ereport(ERROR,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+						 errmsg("unexpected locus assigned to target inheritance set")));
 		}
 	}
 
@@ -1352,38 +1319,6 @@ getAnySubplan(Plan *node)
 	}
 
 	return node->lefttree;
-=======
-	/*
-	 * Planning might have modified the rangetable, due to changes of the
-	 * Query structures inside subquery RTEs.  We have to ensure that this
-	 * gets propagated back to the master copy.  But can't do this until we
-	 * are done planning, because all the calls to grouping_planner need
-	 * virgin sub-Queries to work from.  (We are effectively assuming that
-	 * sub-Queries will get planned identically each time, or at least that
-	 * the impacts on their rangetables will be the same each time.)
-	 *
-	 * XXX should clean this up someday
-	 */
-	parse->rtable = rtable;
-
-	/*
-	 * If there was a FOR UPDATE/SHARE clause, the LockRows node will
-	 * have dealt with fetching non-locked marked rows, else we need
-	 * to have ModifyTable do that.
-	 */
-	if (parse->rowMarks)
-		rowMarks = NIL;
-	else
-		rowMarks = root->rowMarks;
-
-	/* And last, tack on a ModifyTable node to do the UPDATE/DELETE work */
-	return (Plan *) make_modifytable(parse->commandType,
-									 copyObject(root->resultRelations),
-									 subplans, 
-									 returningLists,
-									 rowMarks,
-									 SS_assign_special_param(root));
->>>>>>> 78a09145e0
 }
 
 /*--------------------
@@ -2806,7 +2741,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		result_plan->flow = pull_up_Flow(result_plan, result_plan->lefttree);
 	}
 
-<<<<<<< HEAD
 	/*
 	 * Deal with explicit redistribution requirements for TableValueExpr
 	 * subplans with explicit distribitution
@@ -2839,27 +2773,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 	Insist(result_plan->flow);
 
-	/*
-	 * Deal with the RETURNING clause if any.  It's convenient to pass the
-	 * returningList through setrefs.c now rather than at top level (if we
-	 * waited, handling inherited UPDATE/DELETE would be much harder).
-	 */
-	if (parse->returningList)
-	{
-		List	   *rlist;
-
-		Assert(parse->resultRelation);
-		rlist = set_returning_clause_references(root->glob,
-												parse->returningList,
-												result_plan,
-												parse->resultRelation);
-		root->returningLists = list_make1(rlist);
-	}
-	else
-		root->returningLists = NIL;
-
-=======
->>>>>>> 78a09145e0
 	/* Compute result-relations list if needed */
 	if (parse->resultRelation)
 		root->resultRelations = list_make1_int(parse->resultRelation);

@@ -639,15 +639,18 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 											   rtoffset);
 		case T_TableFunctionScan:
 			{
-				TableFunctionScan	*tplan	   = (TableFunctionScan *) plan;
-				Plan				*subplan   = tplan->scan.plan.lefttree;
-				List				*subrtable = tplan->subrtable;
+				TableFunctionScan *tplan	   = (TableFunctionScan *) plan;
+				Plan	   *subplan   = tplan->scan.plan.lefttree;
+				List	   *subrtable = tplan->subrtable;
 
 				if (cdb_expr_requires_full_eval((Node *)plan->targetlist))
 					return cdb_insert_result_node(glob, plan, rtoffset);
 
 				/* recursively process the subplan */
-				plan->lefttree = set_plan_references(glob, subplan, subrtable);
+				/* GPDB_90_MERGE_FIXME: How about rowmarks here? Do we need to stash them
+				 * in TableFunctionScan? */
+				plan->lefttree = set_plan_references(glob, subplan,
+													 subrtable, NIL);
 
 				/* subrtable is no longer needed in the plan tree */
 				tplan->subrtable = NIL;
@@ -757,7 +760,6 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 			 */
 			Assert(plan->qual == NIL);
 			break;
-<<<<<<< HEAD
 
 		case T_ShareInputScan:
 			{
@@ -819,7 +821,6 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 			}
 			break;
 			
-=======
 		case T_LockRows:
 			{
 				LockRows   *splan = (LockRows *) plan;
@@ -841,7 +842,6 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 				}
 			}
 			break;
->>>>>>> 78a09145e0
 		case T_Limit:
 			{
 				Limit	   *splan = (Limit *) plan;
@@ -916,10 +916,9 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 					fix_scan_expr(glob, splan->resconstantqual, rtoffset);
 			}
 			break;
-<<<<<<< HEAD
 		case T_Repeat:
 			set_upper_references(glob, plan, rtoffset);
-=======
+			break;
 		case T_ModifyTable:
 			{
 				ModifyTable *splan = (ModifyTable *) plan;
@@ -949,7 +948,6 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 											  rtoffset);
 				}
 			}
->>>>>>> 78a09145e0
 			break;
 		case T_Append:
 			{
@@ -1723,36 +1721,31 @@ set_upper_references(PlannerGlobal *glob, Plan *plan, int rtoffset)
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 		Node	   *newexpr;
 
-<<<<<<< HEAD
 		if (IsA(tle->expr, Grouping) ||
 				IsA(tle->expr, GroupId))
 			newexpr = copyObject(tle->expr);
 		else
-			newexpr = fix_upper_expr(glob,
-					(Node *) tle->expr,
-					subplan_itlist,
-					rtoffset);
-=======
-		/* If it's a non-Var sort/group item, first try to match by sortref */
-		if (tle->ressortgroupref != 0 && !IsA(tle->expr, Var))
 		{
-			newexpr = (Node *)
-				search_indexed_tlist_for_sortgroupref((Node *) tle->expr,
-													  tle->ressortgroupref,
-													  subplan_itlist,
-													  OUTER);
-			if (!newexpr)
+			/* If it's a non-Var sort/group item, first try to match by sortref */
+			if (tle->ressortgroupref != 0 && !IsA(tle->expr, Var))
+			{
+				newexpr = (Node *)
+					search_indexed_tlist_for_sortgroupref((Node *) tle->expr,
+														  tle->ressortgroupref,
+														  subplan_itlist,
+														  OUTER);
+				if (!newexpr)
+					newexpr = fix_upper_expr(glob,
+											 (Node *) tle->expr,
+											 subplan_itlist,
+											 rtoffset);
+			}
+			else
 				newexpr = fix_upper_expr(glob,
 										 (Node *) tle->expr,
 										 subplan_itlist,
 										 rtoffset);
 		}
-		else
-			newexpr = fix_upper_expr(glob,
-									 (Node *) tle->expr,
-									 subplan_itlist,
-									 rtoffset);
->>>>>>> 78a09145e0
 		tle = flatCopyTargetEntry(tle);
 		tle->expr = (Expr *) newexpr;
 		output_targetlist = lappend(output_targetlist, tle);

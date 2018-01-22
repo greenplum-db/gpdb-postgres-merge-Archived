@@ -19,11 +19,8 @@
 #include <math.h>
 
 #include "catalog/pg_operator.h"
-<<<<<<< HEAD
 #include "catalog/pg_proc.h"
 #include "executor/executor.h"
-=======
->>>>>>> 78a09145e0
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
@@ -1697,11 +1694,8 @@ create_material_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath)
 	pathnode->subpath = subpath;
 
 	cost_material(&pathnode->path,
-<<<<<<< HEAD
 				  root,
-=======
 				  subpath->startup_cost,
->>>>>>> 78a09145e0
 				  subpath->total_cost,
 				  cdbpath_rows(root, subpath),
 				  rel->width);
@@ -2294,7 +2288,6 @@ distinct_col_search(int colno, List *colnos, List *opids)
 }
 
 /*
-<<<<<<< HEAD
  * hash_safe_operators - can all the specified IN operators be hashed?
  *
  * We assume hashed aggregation will work if each IN operator is marked
@@ -2317,7 +2310,9 @@ hash_safe_operators(List *opids)
 			return false;
 	}
 	return true;
-=======
+}
+
+/*
  * create_noop_path
  *	  Creates a path equivalent to the input subpath, but having a different
  *	  parent rel.  This is used when a join is found to be removable.
@@ -2335,7 +2330,6 @@ create_noop_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath)
 	pathnode->subpath = subpath;
 
 	return pathnode;
->>>>>>> 78a09145e0
 }
 
 /*
@@ -2833,7 +2827,6 @@ create_mergejoin_path(PlannerInfo *root,
 		inner_path->pathkeys)
 		innersortkeys = NIL;
 
-<<<<<<< HEAD
     /* If user doesn't want sort, but this MJ requires a sort, fail. */
     if (!root->config->enable_sort &&
         !root->config->mpp_trying_fallback_plan)
@@ -2844,66 +2837,6 @@ create_mergejoin_path(PlannerInfo *root,
 
     pathnode = makeNode(MergePath);
 
-	/*
-	 * If we are not sorting the inner path, we may need a materialize node to
-	 * ensure it can be marked/restored.
-	 *
-	 * Since the inner side must be ordered, and only Sorts and IndexScans can
-	 * create order to begin with, and they both support mark/restore, you
-	 * might think there's no problem --- but you'd be wrong.  Nestloop and
-	 * merge joins can *preserve* the order of their inputs, so they can be
-	 * selected as the input of a mergejoin, and they don't support
-	 * mark/restore at present.
-	 *
-	 * Note: Sort supports mark/restore, so no materialize is really needed in
-	 * that case; but one may be desirable anyway to optimize the sort.
-	 * However, since we aren't representing the sort step separately in the
-	 * Path tree, we can't explicitly represent the materialize either. So
-	 * that case is not handled here.  Instead, cost_mergejoin has to factor
-	 * in the cost and create_mergejoin_plan has to add the plan node.
-	 */
-	if (!ExecSupportsMarkRestore(inner_path->pathtype))
-	{
-		/*
-		 * The inner side does not support mark/restore capability.
-		 * Check whether a sort node will be inserted later, and if that is not the case,
-		 * add a materialize node.
-		 * */
-		bool need_sort = false;
-		if (innersortkeys != NIL)
-		{
-			/* Check whether all sort keys are constants. If that is the case,
-			 * no sort node is needed.
-			 * The check is essentially the same as the one performed later in the
-			 * make_sort_from_pathkeys() function (optimizer/plan/createplan.c),
-			 * which decides whether a sort node is to be added.
-			*/
-			ListCell   *sortkeycell;
-
-			foreach(sortkeycell, innersortkeys)
-			{
-				PathKey	   *keysublist = (PathKey *) lfirst(sortkeycell);
-
-			    if (!CdbPathkeyEqualsConstant(keysublist))
-			    {
-			    	/* sort key is not a constant - sort will be added later */
-			    	need_sort = true;
-			    	break;
-			    }
-			}
-		}
-		// else: innersortkeys == NIL -> no sort node will be added
-
-		if (!need_sort)
-		{
-			/* no sort node will be added - add a materialize node */
-			inner_path = (Path *)
-							create_material_path(root, inner_path->parent, inner_path);
-		}
-	}
-
-=======
->>>>>>> 78a09145e0
 	pathnode->jpath.path.pathtype = T_MergeJoin;
 	pathnode->jpath.path.parent = joinrel;
 	pathnode->jpath.jointype = jointype;

@@ -900,6 +900,7 @@ ExecMaterializesOutput(NodeTag plantype)
 		case T_CteScan:
 		case T_WorkTableScan:
 		case T_Sort:
+		case T_ShareInputScan:
 			return true;
 
 		default:
