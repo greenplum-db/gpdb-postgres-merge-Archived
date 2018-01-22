@@ -231,14 +231,9 @@ typedef enum AggStage
 /*
  * Aggref
  *
-<<<<<<< HEAD
  * The aggregate's args list is a targetlist, ie, a list of TargetEntry nodes.
  *
  * For a normal (non-ordered-set) aggregate, the non-resjunk TargetEntries
-=======
- * The aggregate's args list is a targetlist, ie, a list of TargetEntry nodes
- * (before Postgres 8.5 it was just bare expressions).  The non-resjunk TLEs
->>>>>>> 78a09145e0
  * represent the aggregate's regular arguments (if any) and resjunk TLEs can
  * be added at the end to represent ORDER BY expressions that are not also
  * arguments.  As in a top-level Query, the TLEs can be marked with
@@ -248,22 +243,18 @@ typedef enum AggStage
  * they are passed to the transition function.  The grammar only allows a
  * simple "DISTINCT" specifier for the arguments, but we use the full
  * query-level representation to allow more code sharing.
-<<<<<<< HEAD
  *
  * For an ordered-set aggregate, the args list represents the WITHIN GROUP
  * (aggregated) arguments, all of which will be listed in the aggorder list.
  * DISTINCT is not supported in this case, so aggdistinct will be NIL.
  * The direct arguments appear in aggdirectargs (as a list of plain
  * expressions, not TargetEntry nodes).
-=======
->>>>>>> 78a09145e0
  */
 typedef struct Aggref
 {
 	Expr		xpr;
 	Oid			aggfnoid;		/* pg_proc Oid of the aggregate */
 	Oid			aggtype;		/* type Oid of result of the aggregate */
-<<<<<<< HEAD
 	List	   *aggdirectargs;	/* direct arguments, if an ordered-set agg */
 	List	   *args;			/* aggregated arguments and sort expressions */
 	List	   *aggorder;		/* ORDER BY (list of SortGroupClause) */
@@ -275,13 +266,6 @@ typedef struct Aggref
 	char		aggkind;		/* aggregate kind (see pg_aggregate.h) */
 	Index		agglevelsup;	/* > 0 if agg belongs to outer query */
 	AggStage	aggstage;		/* MPP: 2-stage? If so, which stage */
-=======
-	List	   *args;			/* arguments and sort expressions */
-	List	   *aggorder;		/* ORDER BY (list of SortGroupClause) */
-	List	   *aggdistinct;	/* DISTINCT (list of SortGroupClause) */
-	bool		aggstar;		/* TRUE if argument list was really '*' */
-	Index		agglevelsup;	/* > 0 if agg belongs to outer query */
->>>>>>> 78a09145e0
 	int			location;		/* token location, or -1 if unknown */
 } Aggref;
 

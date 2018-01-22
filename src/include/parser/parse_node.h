@@ -17,7 +17,6 @@
 #include "nodes/parsenodes.h"
 #include "utils/relcache.h"
 
-<<<<<<< HEAD
 struct HTAB;  /* utils/hsearch.h */
 
 /*
@@ -71,7 +70,7 @@ typedef enum ParseExprKind
 	/* GPDB additions */
 	EXPR_KIND_SCATTER_BY			/* SCATTER BY expression */
 } ParseExprKind;
-=======
+
 
 /*
  * Function signatures for parser hooks
@@ -84,7 +83,6 @@ typedef Node * (*ParseParamRefHook) (ParseState *pstate, ParamRef *pref);
 typedef Node * (*CoerceParamHook) (ParseState *pstate, Param *param,
 								   Oid targetTypeId, int32 targetTypeMod,
 								   int location);
->>>>>>> 78a09145e0
 
 
 /*
@@ -153,12 +151,7 @@ struct ParseState
 	List	   *p_future_ctes;	/* common table exprs not yet in namespace */
 	CommonTableExpr *p_parent_cte;		/* this query's containing CTE */
 	List	   *p_windowdefs;	/* raw representations of window clauses */
-<<<<<<< HEAD
 	ParseExprKind p_expr_kind;	/* what kind of expression we're parsing */
-	Oid		   *p_paramtypes;	/* OIDs of types for $n parameter symbols */
-	int			p_numparams;	/* allocated size of p_paramtypes[] */
-=======
->>>>>>> 78a09145e0
 	int			p_next_resno;	/* next targetlist resno to assign */
 	List	   *p_locking_clause;		/* raw FOR UPDATE/FOR SHARE info */
 	Node	   *p_value_substitute;		/* what to replace VALUE with, if any */
@@ -170,15 +163,13 @@ struct ParseState
 	bool		p_locked_from_parent;
 	Relation	p_target_relation;
 	RangeTblEntry *p_target_rangetblentry;
-<<<<<<< HEAD
+
 	struct HTAB *p_namecache;  /* parse state object name cache */
 	bool        p_hasTblValueExpr;
 	bool        p_hasDynamicFunction; /* function w/unstable return type */
 	bool		p_hasFuncsWithExecRestrictions; /* funcion with EXECUTE ON MASTER / ALL SEGMENTS */
 
 	List	   *p_grp_tles;
-} ParseState;
-=======
 
 	/*
 	 * Optional hook functions for parser callbacks.  These are null unless
@@ -190,7 +181,6 @@ struct ParseState
 	CoerceParamHook p_coerce_param_hook;
 	void	   *p_ref_hook_state;	/* common passthrough link for above */
 };
->>>>>>> 78a09145e0
 
 /* Support for parser_errposition_callback function */
 typedef struct ParseCallbackState

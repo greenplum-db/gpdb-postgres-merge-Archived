@@ -21,17 +21,13 @@ extern Query *parse_analyze(Node *parseTree, const char *sourceText,
 			  Oid *paramTypes, int numParams);
 extern Query *parse_analyze_varparams(Node *parseTree, const char *sourceText,
 						Oid **paramTypes, int *numParams);
-<<<<<<< HEAD
-extern Query *parse_sub_analyze(Node *parseTree, ParseState *parentParseState);
-
-extern List *analyzeCreateSchemaStmt(CreateSchemaStmt *stmt);
-
-=======
 
 extern Query *parse_sub_analyze(Node *parseTree, ParseState *parentParseState,
 								CommonTableExpr *parentCTE,
 								bool locked_from_parent);
->>>>>>> 78a09145e0
+
+extern List *analyzeCreateSchemaStmt(CreateSchemaStmt *stmt);
+
 extern Query *transformStmt(ParseState *pstate, Node *parseTree);
 
 extern bool analyze_requires_snapshot(Node *parseTree);

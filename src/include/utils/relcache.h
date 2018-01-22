@@ -96,7 +96,6 @@ extern void RelationCacheMarkNewRelfilenode(Relation rel);
  * Routines to help manage rebuilding of relcache init files
  */
 extern bool RelationIdIsInInitFile(Oid relationId);
-<<<<<<< HEAD
 extern void RelationCacheInitFilePreInvalidate(void);
 extern void RelationCacheInitFilePostInvalidate(void);
 extern void RelationCacheInitFileRemove(void);
@@ -109,10 +108,6 @@ extern void IndexSupportInitialize(oidvector *indclass,
 					   StrategyNumber maxStrategyNumber,
 					   StrategyNumber maxSupportNumber,
 					   AttrNumber maxAttributeNumber);
-=======
-extern void RelationCacheInitFileInvalidate(bool beforeSend);
-extern void RelationCacheInitFileRemove(void);
->>>>>>> 78a09145e0
 
 /* should be used only by relcache.c and catcache.c */
 extern bool criticalRelcachesBuilt;

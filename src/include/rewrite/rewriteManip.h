@@ -18,15 +18,10 @@
 
 
 typedef struct replace_rte_variables_context replace_rte_variables_context;
-<<<<<<< HEAD
-typedef Node * (*replace_rte_variables_callback) (Var *var,
-													replace_rte_variables_context *context);
-=======
 
 typedef Node * (*replace_rte_variables_callback) (Var *var,
 									replace_rte_variables_context *context);
 
->>>>>>> 78a09145e0
 struct replace_rte_variables_context
 {
 	replace_rte_variables_callback callback;	/* callback function */
@@ -64,26 +59,17 @@ extern int	locate_windowfunc(Node *node);
 extern bool checkExprHasSubLink(Node *node);
 
 extern Node *replace_rte_variables(Node *node,
-<<<<<<< HEAD
-								   int target_varno, int sublevels_up,
-								   replace_rte_variables_callback callback,
-								   void *callback_arg,
-								   bool *outer_hasSubLinks);
-extern Node *replace_rte_variables_mutator(Node *node,
-											replace_rte_variables_context *context);
-
-extern Node *map_variable_attnos(Node *node,
-					int target_varno, int sublevels_up,
-					const AttrNumber *attno_map, int map_length,
-					bool *found_whole_row);
-=======
 					  int target_varno, int sublevels_up,
 					  replace_rte_variables_callback callback,
 					  void *callback_arg,
 					  bool *outer_hasSubLinks);
 extern Node *replace_rte_variables_mutator(Node *node,
 							  replace_rte_variables_context *context);
->>>>>>> 78a09145e0
+
+extern Node *map_variable_attnos(Node *node,
+					int target_varno, int sublevels_up,
+					const AttrNumber *attno_map, int map_length,
+					bool *found_whole_row);
 
 extern Node *ResolveNew(Node *node, int target_varno, int sublevels_up,
 		   RangeTblEntry *target_rte,

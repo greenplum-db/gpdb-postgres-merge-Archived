@@ -66,11 +66,9 @@ typedef struct PlannedStmt
 
 	CmdType		commandType;	/* select|insert|update|delete */
 
-<<<<<<< HEAD
 	PlanGenerator	planGen;		/* optimizer generation */
-=======
+
 	bool		hasReturning;	/* is it insert|update|delete RETURNING? */
->>>>>>> 78a09145e0
 
 	bool		canSetTag;		/* do I set the command result tag? */
 
@@ -93,19 +91,6 @@ typedef struct PlannedStmt
 	List	   *subplans;		/* Plan trees for SubPlan expressions */
 
 	Bitmapset  *rewindPlanIDs;	/* indices of subplans that require REWIND */
-
-<<<<<<< HEAD
-	/*
-	 * If the query has a returningList then the planner will store a list of
-	 * processed targetlists (one per result relation) here.  We must have a
-	 * separate RETURNING targetlist for each result rel because column
-	 * numbers may vary within an inheritance tree.  In the targetlists, Vars
-	 * referencing the result relation will have their original varno and
-	 * varattno, while Vars referencing other rels will be converted to have
-	 * varno OUTER and varattno referencing a resjunk entry in the top plan
-	 * node's targetlist.
-	 */
-	List	   *returningLists; /* list of lists of TargetEntry, or NIL */
 
 	/*
 	 * If the resultRelation turns out to be the parent of an inheritance
@@ -130,10 +115,7 @@ typedef struct PlannedStmt
 	 */
 	List	   *numSelectorsPerScanId;
 
-	List	   *rowMarks;		/* a list of RowMarkClause's */
-=======
 	List	   *rowMarks;		/* a list of PlanRowMark's */
->>>>>>> 78a09145e0
 
 	List	   *relationOids;	/* OIDs of relations the plan depends on */
 
@@ -324,7 +306,6 @@ typedef struct Result
 } Result;
 
 /* ----------------
-<<<<<<< HEAD
  * Repeat node -
  *   Repeatly output the results of the subplan.
  *
@@ -353,7 +334,8 @@ typedef struct Repeat
 	 */
 	uint64 grouping;
 } Repeat;
-=======
+
+/* ----------------
  *	 ModifyTable node -
  *		Apply rows produced by subplan(s) to result table(s),
  *		by inserting, updating, or deleting.
@@ -369,7 +351,6 @@ typedef struct ModifyTable
 	List	   *rowMarks;			/* PlanRowMarks (non-locking only) */
 	int			epqParam;			/* ID of Param for EvalPlanQual re-eval */
 } ModifyTable;
->>>>>>> 78a09145e0
 
 /* ----------------
  *	 Append node -
@@ -380,11 +361,7 @@ typedef struct Append
 {
 	Plan		plan;
 	List	   *appendplans;
-<<<<<<< HEAD
-	bool		isTarget;
 	bool 		isZapped;
-=======
->>>>>>> 78a09145e0
 } Append;
 
 /*

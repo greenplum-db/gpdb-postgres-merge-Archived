@@ -182,13 +182,11 @@ typedef enum
 #define GUC_UNIT_MIN			0x4000	/* value is in minutes */
 #define GUC_UNIT_TIME			0x7000	/* mask for MS, S, MIN */
 
-<<<<<<< HEAD
+#define GUC_NOT_WHILE_SEC_REST	0x8000	/* can't set if security restricted */
+
 /* GUC lists for gp_guc_list_show().  (List of struct config_generic) */
 extern List    *gp_guc_list_for_explain;
 extern List    *gp_guc_list_for_no_plan;
-=======
-#define GUC_NOT_WHILE_SEC_REST	0x8000	/* can't set if security restricted */
->>>>>>> 78a09145e0
 
 /* GUC vars that are actually declared in guc.c, rather than elsewhere */
 extern bool log_duration;
@@ -352,7 +350,8 @@ extern char *HbaFileName;
 extern char *IdentFileName;
 extern char *external_pid_file;
 
-<<<<<<< HEAD
+extern char *default_do_language;
+
 extern char *application_name;
 
 extern char *Debug_dtm_action_sql_command_tag;
@@ -362,12 +361,6 @@ extern char *Debug_dtm_action_target_str;
 /* Enable check for compatibility of encoding and locale in createdb */
 extern bool gp_encoding_check_locale_compatibility;
 
-=======
-extern char *default_do_language;
-
-extern char *application_name;
-
->>>>>>> 78a09145e0
 extern int	tcp_keepalives_idle;
 extern int	tcp_keepalives_interval;
 extern int	tcp_keepalives_count;

@@ -60,11 +60,7 @@ extern RangeVar *makeRangeVar(char *schemaname, char *relname, int location);
 
 extern TypeName *makeTypeName(char *typnam);
 extern TypeName *makeTypeNameFromNameList(List *names);
-<<<<<<< HEAD
-extern TypeName *makeTypeNameFromOid(Oid typid, int32 typmod);
-=======
 extern TypeName *makeTypeNameFromOid(Oid typeOid, int32 typmod);
->>>>>>> 78a09145e0
 
 extern FuncExpr *makeFuncExpr(Oid funcid, Oid rettype,
 			 List *args, CoercionForm fformat);

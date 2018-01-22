@@ -205,12 +205,8 @@ typedef struct TypeName
 {
 	NodeTag		type;
 	List	   *names;			/* qualified name (list of Value strings) */
-<<<<<<< HEAD
-	Oid			typid;		    /* type identified by OID */
-	bool		timezone;		/* timezone specified? */
-=======
 	Oid			typeOid;		/* type identified by OID */
->>>>>>> 78a09145e0
+	bool		timezone;		/* timezone specified? */
 	bool		setof;			/* is a set? */
 	bool		pct_type;		/* %TYPE specified? */
 	List	   *typmods;		/* type modifier expression(s) */
@@ -300,7 +296,6 @@ typedef struct TypeCast
 /*
  * FuncCall - a function or aggregate invocation
  *
-<<<<<<< HEAD
  * agg_order (if not NIL) indicates we saw 'foo(... ORDER BY ...)', or if
  * agg_within_group is true, it was 'foo(...) WITHIN GROUP (ORDER BY ...)'.
  * agg_star indicates we saw a 'foo(*)' construct, while agg_distinct
@@ -308,27 +303,15 @@ typedef struct TypeCast
  * *must* be an aggregate call.  Otherwise, it might be either an
  * aggregate or some other kind of function.  However, if FILTER or OVER is
  * present it had better be an aggregate or window function.
-=======
- * agg_order (if not NIL) indicates we saw 'foo(... ORDER BY ...)'.
- * agg_star indicates we saw a 'foo(*)' construct, while agg_distinct
- * indicates we saw 'foo(DISTINCT ...)'.  In any of these cases, the
- * construct *must* be an aggregate call.  Otherwise, it might be either an
- * aggregate or some other kind of function.  However, if OVER is present
- * it had better be an aggregate or window function.
->>>>>>> 78a09145e0
  */
 typedef struct FuncCall
 {
 	NodeTag		type;
 	List	   *funcname;		/* qualified name of function */
 	List	   *args;			/* the arguments (list of exprs) */
-<<<<<<< HEAD
 	List	   *agg_order;		/* ORDER BY (list of SortBy) */
 	Node	   *agg_filter;		/* FILTER clause, if any */
 	bool		agg_within_group;		/* ORDER BY appeared in WITHIN GROUP */
-=======
-	List       *agg_order;      /* ORDER BY (list of SortBy) */
->>>>>>> 78a09145e0
 	bool		agg_star;		/* argument was really '*' */
 	bool		agg_distinct;	/* arguments were labeled DISTINCT */
 	bool		func_variadic;	/* last argument was labeled VARIADIC */
@@ -526,11 +509,8 @@ typedef struct ColumnDef
 	int			inhcount;		/* number of times column is inherited */
 	bool		is_local;		/* column has local (non-inherited) def'n */
 	bool		is_not_null;	/* NOT NULL constraint specified? */
-<<<<<<< HEAD
 	AttrNumber	attnum;			/* attribute number */
-=======
 	char		storage;		/* attstorage setting, or 0 for default */
->>>>>>> 78a09145e0
 	Node	   *raw_default;	/* default value (untransformed parse tree) */
 	Node	   *cooked_default; /* default value (transformed expr tree) */
 	List	   *constraints;	/* other constraints on column */
@@ -1375,12 +1355,9 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 								 * index, constraint, or parent table */
 	Node	   *transform;		/* transformation expr for ALTER TYPE */
 	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
-<<<<<<< HEAD
 	bool		part_expanded;	/* expands from another command, for partitioning */
 	List	   *partoids;		/* If applicable, OIDs of partition part tables */
-=======
 	bool		missing_ok;		/* skip error if missing? */
->>>>>>> 78a09145e0
 } AlterTableCmd;
 
 
@@ -1778,37 +1755,7 @@ typedef enum ConstrType			/* types of constraints */
 	CONSTR_ATTR_IMMEDIATE
 } ConstrType;
 
-<<<<<<< HEAD
-typedef struct Constraint
-{
-	NodeTag		type;
-	ConstrType	contype;
-	char	   *name;			/* name, or NULL if unnamed */
-	Node	   *raw_expr;		/* expr, as untransformed parse tree */
-	char	   *cooked_expr;	/* expr, as nodeToString representation */
-	List	   *keys;			/* String nodes naming referenced column(s) */
-	List	   *options;		/* options from WITH clause */
-	char	   *indexspace;		/* index tablespace for PKEY/UNIQUE
-								 * constraints; NULL for default */
-} Constraint;
-
-/* ----------
- * Definitions for FOREIGN KEY constraints in CreateStmt
- *
- * Note: FKCONSTR_ACTION_xxx values are stored into pg_constraint.confupdtype
- * and pg_constraint.confdeltype columns; FKCONSTR_MATCH_xxx values are
- * stored into pg_constraint.confmatchtype.  Changing the code values may
- * require an initdb!
- *
- * If skip_validation is true then we skip checking that the existing rows
- * in the table satisfy the constraint, and just install the catalog entries
- * for the constraint.  This is currently used only during CREATE TABLE
- * (when we know the table must be empty).
- * ----------
- */
-=======
 /* Foreign key action codes */
->>>>>>> 78a09145e0
 #define FKCONSTR_ACTION_NOACTION	'a'
 #define FKCONSTR_ACTION_RESTRICT	'r'
 #define FKCONSTR_ACTION_CASCADE		'c'
@@ -1856,12 +1803,11 @@ typedef struct Constraint
 	char		fk_upd_action;	/* ON UPDATE action */
 	char		fk_del_action;	/* ON DELETE action */
 	bool		skip_validation;	/* skip validation of existing rows? */
-<<<<<<< HEAD
 	Oid			trig1Oid;
 	Oid			trig2Oid;
 	Oid			trig3Oid;
 	Oid			trig4Oid;
-} FkConstraint;
+} Constraint;
 
 /* ----------
  * Definitions for Table Partition clauses in CreateStmt
@@ -1965,9 +1911,6 @@ typedef struct PartitionSpec			/* a Partition Specification */
 	bool				istemplate;
 	int					location;		/* token location, or -1 if unknown */
 } PartitionSpec;
-=======
-} Constraint;
->>>>>>> 78a09145e0
 
 /* ----------------------
  *		Create/Drop TableSpace Statements
@@ -2102,12 +2045,8 @@ typedef struct CreateTrigStmt
 	bool		isconstraint;	/* This is a constraint trigger */
 	bool		deferrable;		/* [NOT] DEFERRABLE */
 	bool		initdeferred;	/* INITIALLY {DEFERRED|IMMEDIATE} */
-<<<<<<< HEAD
-	RangeVar   *constrrel;		/* opposite relation */
-	Oid			trigOid;
-=======
 	RangeVar   *constrrel;		/* opposite relation, if RI trigger */
->>>>>>> 78a09145e0
+	Oid			trigOid;
 } CreateTrigStmt;
 
 /* ----------------------
@@ -2483,22 +2422,16 @@ typedef struct IndexStmt
 	List	   *indexParams;	/* a list of IndexElem */
 	List	   *options;		/* options from WITH clause */
 	Node	   *whereClause;	/* qualification (partial-index predicate) */
-<<<<<<< HEAD
-	bool		is_part_child;	/* in service of a part of a partition? */
-	bool		unique;			/* is index unique? */
-	bool		primary;		/* is index on primary key? */
-	bool		isconstraint;	/* is it from a CONSTRAINT clause? */
-	char	   *altconname;		/* constraint name, if desired name differs
-								 * from idxname and isconstraint, else NULL. */
-=======
 	List	   *excludeOpNames;	/* exclusion operator names, or NIL if none */
+	bool		is_part_child;	/* in service of a part of a partition? */
 	bool		unique;			/* is index unique? */
 	bool		primary;		/* is index on primary key? */
 	bool		isconstraint;	/* is it from a CONSTRAINT clause? */
 	bool		deferrable;		/* is the constraint DEFERRABLE? */
 	bool		initdeferred;	/* is the constraint INITIALLY DEFERRED? */
->>>>>>> 78a09145e0
 	bool		concurrent;		/* should this be a concurrent index build? */
+	char	   *altconname;		/* constraint name, if desired name differs
+								 * from idxname and isconstraint, else NULL. */
 	bool		is_split_part;	/* Is this for SPLIT PARTITION command? */
 } IndexStmt;
 
@@ -2848,21 +2781,14 @@ typedef enum VacuumOption
 	VACOPT_ANALYZE		= 1 << 1,	/* do ANALYZE */
 	VACOPT_VERBOSE		= 1 << 2,	/* print progress info */
 	VACOPT_FREEZE		= 1 << 3,	/* FREEZE option */
-	VACOPT_FULL			= 1 << 4	/* FULL (non-concurrent) vacuum */
+	VACOPT_FULL			= 1 << 4,	/* FULL (non-concurrent) vacuum */
+	VACOPT_ROOTONLY		= 1 << 5	/* only ANALYZE root partition tables */
 } VacuumOption;
 
 typedef struct VacuumStmt
 {
 	NodeTag		type;
-<<<<<<< HEAD
-	bool		vacuum;			/* do VACUUM step */
-	bool		full;			/* do FULL (non-concurrent) vacuum */
-	bool		analyze;		/* do ANALYZE step */
-	bool		verbose;		/* print progress info */
-	bool		rootonly;		/* only ANALYZE root partition tables */
-=======
 	int			options;		/* OR of VacuumOption flags */
->>>>>>> 78a09145e0
 	int			freeze_min_age; /* min freeze age, or -1 to use default */
 	int			freeze_table_age;		/* age at which to scan whole table */
 	RangeVar   *relation;		/* single table to process, or NULL */
@@ -2920,13 +2846,7 @@ typedef struct ExplainStmt
 {
 	NodeTag		type;
 	Node	   *query;			/* the query (as a raw parse tree) */
-<<<<<<< HEAD
-	bool		verbose;		/* print plan info */
-	bool		analyze;		/* get statistics by executing plan */
-	bool		dxl;			/* display plan in dxl format */
-=======
 	List	   *options;		/* list of DefElem nodes */
->>>>>>> 78a09145e0
 } ExplainStmt;
 
 /* ----------------------

@@ -278,14 +278,12 @@ typedef struct PlannerInfo
 	int			wt_param_id;	/* PARAM_EXEC ID for the work table */
 	struct Plan *non_recursive_plan;	/* plan for non-recursive term */
 
-<<<<<<< HEAD
 	PlannerConfig *config;		/* Planner configuration */
 
 	List	   *dynamicScans;	/* DynamicScanInfos */
-=======
+
 	/* optional private data for join_search_hook, e.g., GEQO */
 	void	   *join_search_private;
->>>>>>> 78a09145e0
 } PlannerInfo;
 
 /*----------

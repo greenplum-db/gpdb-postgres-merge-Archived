@@ -16,15 +16,10 @@
 
 #include "parser/parse_node.h"
 
-<<<<<<< HEAD
 #define ERRMSG_GP_WITH_COLUMNS_MISMATCH \
 	"specified number of columns in WITH query \"%s\" must not " \
 	"exceed the number of available columns"
 
-extern bool add_missing_from;
-
-=======
->>>>>>> 78a09145e0
 extern RangeTblEntry *refnameRangeTblEntry(ParseState *pstate,
 					 const char *schemaname,
 					 const char *refname,

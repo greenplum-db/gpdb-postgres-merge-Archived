@@ -28,16 +28,10 @@ extern Node *transformLimitClause(ParseState *pstate, Node *clause,
 					 ParseExprKind exprKind, const char *constructName);
 extern List *transformGroupClause(ParseState *pstate, List *grouplist,
 					 List **targetlist, List *sortClause,
-<<<<<<< HEAD
 					 ParseExprKind exprKind, bool useSQL99);
 extern List *transformSortClause(ParseState *pstate, List *orderlist,
 					List **targetlist, ParseExprKind exprKind,
 					bool resolveUnknown, bool useSQL99);
-=======
-					 bool useSQL99);
-extern List *transformSortClause(ParseState *pstate, List *orderlist,
-					List **targetlist, bool resolveUnknown, bool useSQL99);
->>>>>>> 78a09145e0
 
 extern List *transformWindowDefinitions(ParseState *pstate,
 						   List *windowdefs,
