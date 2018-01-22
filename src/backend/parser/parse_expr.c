@@ -202,12 +202,7 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 						 * not a domain, transformTypeCast is a no-op.
 						 */
 						targetType = getBaseTypeAndTypmod(targetType,
-<<<<<<< HEAD
 														  &targetTypmod);
-=======
-														 &targetTypmod);
-							
->>>>>>> 78a09145e0
 						tc = copyObject(tc);
 						tc->arg = transformArrayExpr(pstate,
 													 (A_ArrayExpr *) tc->arg,
@@ -273,7 +268,7 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 			{
 				NamedArgExpr *na = (NamedArgExpr *) expr;
 
-				na->arg = (Expr *) transformExpr(pstate, (Node *) na->arg);
+				na->arg = (Expr *) transformExprRecurse(pstate, (Node *) na->arg);
 				result = expr;
 				break;
 			}
@@ -542,21 +537,14 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 														   NULL);
 			subscripts = NIL;
 
-<<<<<<< HEAD
-			result = ParseFuncOrColumn(pstate,
-									   list_make1(n),
-									   list_make1(result),
-									   NULL, location);
-=======
 			newresult = ParseFuncOrColumn(pstate,
 										  list_make1(n),
 										  list_make1(result),
-										  NIL, false, false, false,
-										  NULL, true, location);
+										  NULL,
+										  location);
 			if (newresult == NULL)
 				unknown_attribute(pstate, result, strVal(n), location);
 			result = newresult;
->>>>>>> 78a09145e0
 		}
 	}
 	/* process trailing subscripts, if any */
@@ -719,13 +707,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(colname)),
 											 list_make1(node),
-<<<<<<< HEAD
 											 NULL,
 											 cref->location);
-=======
-											 NIL, false, false, false,
-											 NULL, true, cref->location);
->>>>>>> 78a09145e0
 				}
 				break;
 			}
@@ -769,13 +752,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(colname)),
 											 list_make1(node),
-<<<<<<< HEAD
 											 NULL,
 											 cref->location);
-=======
-											 NIL, false, false, false,
-											 NULL, true, cref->location);
->>>>>>> 78a09145e0
 				}
 				break;
 			}
@@ -832,13 +810,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(colname)),
 											 list_make1(node),
-<<<<<<< HEAD
 											 NULL,
 											 cref->location);
-=======
-											 NIL, false, false, false,
-											 NULL, true, cref->location);
->>>>>>> 78a09145e0
 				}
 				break;
 			}
@@ -1380,16 +1353,7 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 	return ParseFuncOrColumn(pstate,
 							 fn->funcname,
 							 targs,
-<<<<<<< HEAD
 							 fn,
-=======
-							 fn->agg_order,
-							 fn->agg_star,
-							 fn->agg_distinct,
-							 fn->func_variadic,
-							 fn->over,
-							 false,
->>>>>>> 78a09145e0
 							 fn->location);
 }
 
@@ -1660,15 +1624,11 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 				 parser_errposition(pstate, sublink->location)));
 
 	pstate->p_hasSubLinks = true;
-<<<<<<< HEAD
 
 	/*
 	 * OK, let's transform the sub-SELECT.
 	 */
-	qtree = parse_sub_analyze(sublink->subselect, pstate);
-=======
 	qtree = parse_sub_analyze(sublink->subselect, pstate, NULL, false);
->>>>>>> 78a09145e0
 
 	/*
 	 * Check that we got something reasonable.	Many of these conditions are
@@ -1996,7 +1956,7 @@ transformTableValueExpr(ParseState *pstate, TableValueExpr *t)
 	pstate->p_hasTblValueExpr = true;
 
 	/* Analyze and transform the subquery */
-	query = parse_sub_analyze(t->subquery, pstate);
+	query = parse_sub_analyze(t->subquery, pstate, NULL, false);
 
 	query->isTableValueSelect = true;
 
@@ -2341,19 +2301,14 @@ transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr *cexpr)
 									  &sublevels_up);
 	Assert(sublevels_up == 0);
 
-<<<<<<< HEAD
 	cexpr->target_relid = pstate->p_target_rangetblentry->relid;
 
-	/* If a parameter is used, it must be of type REFCURSOR */
-	if (cexpr->cursor_name == NULL)
-=======
 	/*
 	 * Check to see if the cursor name matches a parameter of type REFCURSOR.
 	 * If so, replace the raw name reference with a parameter reference.
 	 * (This is a hack for the convenience of plpgsql.)
 	 */
 	if (cexpr->cursor_name != NULL)			/* in case already transformed */
->>>>>>> 78a09145e0
 	{
 		ColumnRef  *cref = makeNode(ColumnRef);
 		Node	   *node = NULL;

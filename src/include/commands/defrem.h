@@ -46,14 +46,10 @@ extern void ReindexDatabase(ReindexStmt *stmt);
 extern char *makeObjectName(const char *name1, const char *name2,
 			   const char *label);
 extern char *ChooseRelationName(const char *name1, const char *name2,
-<<<<<<< HEAD
-								const char *label, Oid namespaceName);
-extern char *ChooseRelationNameWithCache(const char *name1, const char *name2,
-								const char *label, Oid namespaceName, 
-								struct HTAB *cache);
-=======
 				   const char *label, Oid namespaceid);
->>>>>>> 78a09145e0
+extern char *ChooseRelationNameWithCache(const char *name1, const char *name2,
+								const char *label, Oid namespaceid, 
+								struct HTAB *cache);
 extern Oid	GetDefaultOpClass(Oid type_id, Oid am_id);
 
 /* commands/functioncmds.c */
@@ -69,7 +65,6 @@ extern void AlterFunction(AlterFunctionStmt *stmt);
 extern void CreateCast(CreateCastStmt *stmt);
 extern void DropCast(DropCastStmt *stmt);
 extern void DropCastById(Oid castOid);
-extern void ExecuteDoStmt(DoStmt *stmt);
 extern Oid  get_cast_oid(Oid sourcetypeid, Oid targettypeid, bool missing_ok);
 extern void interpret_function_parameter_list(List *parameters,
 								  Oid languageOid,
@@ -84,11 +79,8 @@ extern void interpret_function_parameter_list(List *parameters,
 								  Oid *requiredResultType);
 extern void AlterFunctionNamespace(List *name, List *argtypes, bool isagg,
 					   const char *newschema);
-<<<<<<< HEAD
 extern Oid	AlterFunctionNamespace_oid(Oid procOid, Oid nspOid);
-=======
 extern void ExecuteDoStmt(DoStmt *stmt);
->>>>>>> 78a09145e0
 
 /* commands/operatorcmds.c */
 extern void DefineOperator(List *names, List *parameters);

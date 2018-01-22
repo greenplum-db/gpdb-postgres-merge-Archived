@@ -96,12 +96,10 @@ extern void ExecMarkPos(PlanState *node);
 extern void ExecRestrPos(PlanState *node);
 extern bool ExecSupportsMarkRestore(NodeTag plantype);
 extern bool ExecSupportsBackwardScan(Plan *node);
-<<<<<<< HEAD
+extern bool ExecMaterializesOutput(NodeTag plantype);
+
 extern void ExecEagerFree(PlanState *node);
 extern void ExecEagerFreeChildNodes(PlanState *node, bool subplanDone);
-=======
-extern bool ExecMaterializesOutput(NodeTag plantype);
->>>>>>> 78a09145e0
 
 /*
  * prototypes from functions in execCurrent.c
@@ -350,7 +348,7 @@ typedef bool (*ExecScanRecheckMtd) (ScanState *node, TupleTableSlot *slot);
 extern TupleTableSlot *ExecScan(ScanState *node, ExecScanAccessMtd accessMtd,
 								ExecScanRecheckMtd recheckMtd);
 extern void ExecAssignScanProjectionInfo(ScanState *node);
-<<<<<<< HEAD
+extern void ExecScanReScan(ScanState *node);
 extern void InitScanStateRelationDetails(ScanState *scanState, Plan *plan, EState *estate);
 extern void InitScanStateInternal(ScanState *scanState, Plan *plan,
 	EState *estate, int eflags, bool initCurrentRelation);
@@ -417,9 +415,6 @@ extern void BitmapTableScanBegin(BitmapTableScanState *scanState, Plan *plan, ES
 extern void BitmapTableScanEnd(BitmapTableScanState *scanState);
 extern void BitmapTableScanReScan(BitmapTableScanState *node, ExprContext *exprCtxt);
 extern bool BitmapTableScanRecheckTuple(BitmapTableScanState *scanState, TupleTableSlot *slot);
-=======
-extern void ExecScanReScan(ScanState *node);
->>>>>>> 78a09145e0
 
 /*
  * prototypes from functions in execTuples.c

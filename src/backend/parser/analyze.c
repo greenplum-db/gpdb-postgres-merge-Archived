@@ -105,17 +105,14 @@ static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformValuesClause(ParseState *pstate, SelectStmt *stmt);
 static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt);
 static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
-<<<<<<< HEAD
-						  List **colInfo);
+						  bool isTopLevel, List **colInfo);
 static Node *transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 												setop_types_ctx *setop_types);
-static void coerceSetOpTypes(ParseState *pstate, Node *sop, List *coltypes, List *coltypmods,
+static void coerceSetOpTypes(ParseState *pstate, Node *sop, bool isTopLevel,
+							 List *coltypes, List *coltypmods,
 							 List **colInfo);
-=======
-						  bool isTopLevel, List **colInfo);
 static void determineRecursiveColTypes(ParseState *pstate,
 									   Node *larg, List *lcolinfo);
->>>>>>> 78a09145e0
 static void applyColumnNames(List *dst, List *src);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static Query *transformDeclareCursorStmt(ParseState *pstate,
@@ -1534,20 +1531,14 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->sortClause = transformSortClause(pstate,
 										  stmt->sortClause,
 										  &qry->targetList,
-<<<<<<< HEAD
 										  EXPR_KIND_ORDER_BY,
 										  true, /* fix unknowns */
                                           false /* allow SQL92 rules */);
-=======
-										  true /* fix unknowns */,
-										  false /* allow SQL92 rules */);
->>>>>>> 78a09145e0
 
 	qry->groupClause = transformGroupClause(pstate,
 											stmt->groupClause,
 											&qry->targetList,
 											qry->sortClause,
-<<<<<<< HEAD
 											EXPR_KIND_GROUP_BY,
                                             false /* allow SQL92 rules */);
 
@@ -1563,9 +1554,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->scatterClause = transformScatterClause(pstate,
 												stmt->scatterClause,
 												&qry->targetList);
-=======
-											false /* allow SQL92 rules */);
->>>>>>> 78a09145e0
 
 	if (stmt->distinctClause == NIL)
 	{
@@ -1575,7 +1563,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	else if (linitial(stmt->distinctClause) == NULL)
 	{
 		/* We had SELECT DISTINCT */
-<<<<<<< HEAD
 		if (!pstate->p_hasAggs && !pstate->p_hasWindowFuncs && qry->groupClause == NIL)
 		{
 			/*
@@ -1595,12 +1582,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 														  qry->sortClause,
 														  false);
 		}
-=======
-		qry->distinctClause = transformDistinctClause(pstate,
-													  &qry->targetList,
-													  qry->sortClause,
-													  false);
->>>>>>> 78a09145e0
 		qry->hasDistinctOn = false;
 	}
 	else
@@ -1819,14 +1800,9 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	qry->sortClause = transformSortClause(pstate,
 										  stmt->sortClause,
 										  &qry->targetList,
-<<<<<<< HEAD
 										  EXPR_KIND_ORDER_BY,
 										  true, /* fix unknowns */
                                           false /* allow SQL92 rules */);
-=======
-										  true /* fix unknowns */,
-										  false /* allow SQL92 rules */);
->>>>>>> 78a09145e0
 
 	qry->limitOffset = transformLimitClause(pstate, stmt->limitOffset,
 											EXPR_KIND_OFFSET, "OFFSET");
@@ -2084,14 +2060,9 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->sortClause = transformSortClause(pstate,
 										  sortClause,
 										  &qry->targetList,
-<<<<<<< HEAD
 										  EXPR_KIND_ORDER_BY,
 										  false /* no unknowns expected */,
                                           false /* allow SQL92 rules */ );
-=======
-										  false /* no unknowns expected */,
-										  false /* allow SQL92 rules */);
->>>>>>> 78a09145e0
 
 	pstate->p_rtable = list_truncate(pstate->p_rtable, sv_rtable_length);
 	pstate->p_relnamespace = sv_relnamespace;
@@ -2293,7 +2264,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 		selected_typmods = lappend_int(selected_typmods, restypmod);
 	}
 
-	coerceSetOpTypes(pstate, top, selected_types, selected_typmods, colInfo);
+	coerceSetOpTypes(pstate, top, true, selected_types, selected_typmods, colInfo);
 
 	return top;
 }
@@ -2467,7 +2438,6 @@ transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 		/*
 		 * Recursively transform the left child node.
 		 */
-<<<<<<< HEAD
 		op->larg = transformSetOperationTree_internal(pstate, stmt->larg,
 													  setop_types);
 		op->rarg = transformSetOperationTree_internal(pstate, stmt->rarg,
@@ -2488,6 +2458,7 @@ transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
  */
 static void
 coerceSetOpTypes(ParseState *pstate, Node *sop,
+				 bool isTopLevel,
 				 List *preselected_coltypes, List *preselected_coltypmods,
 				 List **colInfo)
 {
@@ -2529,14 +2500,9 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 				   "EXCEPT");
 
 		/* Recurse to determine the children's types first */
-		coerceSetOpTypes(pstate, op->larg, preselected_coltypes, preselected_coltypmods,
+		coerceSetOpTypes(pstate, op->larg, false,
+						 preselected_coltypes, preselected_coltypmods,
 						 &lcolinfo);
-		coerceSetOpTypes(pstate, op->rarg, preselected_coltypes, preselected_coltypmods,
-						 &rcolinfo);
-=======
-		op->larg = transformSetOperationTree(pstate, stmt->larg,
-											 false,
-											 &lcolinfo);
 
 		/*
 		 * If we are processing a recursive union query, now is the time
@@ -2549,13 +2515,9 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 			pstate->p_parent_cte->cterecursive)
 			determineRecursiveColTypes(pstate, op->larg, lcolinfo);
 
-		/*
-		 * Recursively transform the right child node.
-		 */
-		op->rarg = transformSetOperationTree(pstate, stmt->rarg,
-											 false,
-											 &rcolinfo);
->>>>>>> 78a09145e0
+		coerceSetOpTypes(pstate, op->rarg, false,
+						 preselected_coltypes, preselected_coltypmods,
+						 &rcolinfo);
 
 		/*
 		 * Verify that the two children have the same number of non-junk
@@ -2579,18 +2541,12 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 		pcm = list_head(preselected_coltypmods);
 		forboth(lci, lcolinfo, rci, rcolinfo)
 		{
-<<<<<<< HEAD
-			Node	   *lcolnode = lfirst(lci);
-			Node	   *rcolnode = lfirst(rci);
-=======
 			Node	   *lcolnode = (Node *) lfirst(lci);
 			Node	   *rcolnode = (Node *) lfirst(rci);
->>>>>>> 78a09145e0
 			Oid			lcoltype = exprType(lcolnode);
 			Oid			rcoltype = exprType(rcolnode);
 			int32		lcoltypmod = exprTypmod(lcolnode);
 			int32		rcoltypmod = exprTypmod(rcolnode);
-<<<<<<< HEAD
 			Node       *bestexpr = NULL;
 			SetToDefault *rescolnode;
 			Oid			rescoltype = pct ? lfirst_oid(pct) : InvalidOid;
@@ -2612,21 +2568,6 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 				if (lcoltype == rcoltype && lcoltypmod == rcoltypmod)
 					rescoltypmod = lcoltypmod;
 			}
-=======
-			Node	   *bestexpr;
-			SetToDefault *rescolnode;
-			Oid			rescoltype;
-			int32		rescoltypmod;
-
-			/* select common type, same as CASE et al */
-			rescoltype = select_common_type(pstate,
-											list_make2(lcolnode, rcolnode),
-											context,
-											&bestexpr);
-			/* if same type and same typmod, use typmod; else default */
-			if (lcoltype == rcoltype && lcoltypmod == rcoltypmod)
-				rescoltypmod = lcoltypmod;
->>>>>>> 78a09145e0
 			else
 			{
 				/*
@@ -2636,13 +2577,6 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 				bestexpr = lcolnode;
 			}
 
-<<<<<<< HEAD
-			/* verify the coercions are actually possible */
-			(void) coerce_to_common_type(pstate, lcolnode,
-										 rescoltype, context);
-			(void) coerce_to_common_type(pstate, rcolnode,
-										 rescoltype, context);
-=======
 			/*
 			 * Verify the coercions are actually possible.  If not, we'd
 			 * fail later anyway, but we want to fail now while we have
@@ -2665,7 +2599,6 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 				IsA(rcolnode, Const) || IsA(rcolnode, Param))
 				(void) coerce_to_common_type(pstate, rcolnode,
 											 rescoltype, context);
->>>>>>> 78a09145e0
 
 			/* emit results */
 			rescolnode = makeNode(SetToDefault);
@@ -3185,17 +3118,13 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 			switch (rte->rtekind)
 			{
 				case RTE_RELATION:
-<<<<<<< HEAD
 					if(get_rel_relstorage(rte->relid) == RELSTORAGE_EXTERNAL)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to external tables")));
 
-					applyLockingClause(qry, i, lc->forUpdate, lc->noWait);
-=======
 					applyLockingClause(qry, i,
 									   lc->forUpdate, lc->noWait, pushedDown);
->>>>>>> 78a09145e0
 					rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 					break;
 				case RTE_SUBQUERY:
@@ -3356,54 +3285,6 @@ applyLockingClause(Query *qry, Index rtindex,
 	rc->pushedDown = pushedDown;
 	qry->rowMarks = lappend(qry->rowMarks, rc);
 }
-<<<<<<< HEAD
-
-
-/*
- * Traverse a fully-analyzed tree to verify that parameter symbols
- * match their types.  We need this because some Params might still
- * be UNKNOWN, if there wasn't anything to force their coercion,
- * and yet other instances seen later might have gotten coerced.
- */
-static bool
-check_parameter_resolution_walker(Node *node, ParseState *pstate)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, Param))
-	{
-		Param	   *param = (Param *) node;
-
-		if (param->paramkind == PARAM_EXTERN)
-		{
-			int			paramno = param->paramid;
-
-			if (paramno <= 0 || /* shouldn't happen, but... */
-				paramno > pstate->p_numparams)
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_PARAMETER),
-						 errmsg("there is no parameter $%d", paramno),
-						 parser_errposition(pstate, param->location)));
-
-			if (param->paramtype != pstate->p_paramtypes[paramno - 1])
-				ereport(ERROR,
-						(errcode(ERRCODE_AMBIGUOUS_PARAMETER),
-					 errmsg("could not determine data type of parameter $%d",
-							paramno),
-						 parser_errposition(pstate, param->location)));
-		}
-		return false;
-	}
-	if (IsA(node, Query))
-	{
-		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
-		return query_tree_walker((Query *) node,
-								 check_parameter_resolution_walker,
-								 (void *) pstate, 0);
-	}
-	return expression_tree_walker(node, check_parameter_resolution_walker,
-								  (void *) pstate);
-}
 
 static void
 setQryDistributionPolicy(SelectStmt *stmt, Query *qry)
@@ -3474,5 +3355,3 @@ setQryDistributionPolicy(SelectStmt *stmt, Query *qry)
 		}
 	}
 }
-=======
->>>>>>> 78a09145e0

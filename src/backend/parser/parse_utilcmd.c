@@ -35,19 +35,13 @@
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/namespace.h"
-<<<<<<< HEAD
-#include "catalog/pg_inherits_fn.h"
-=======
 #include "catalog/pg_constraint.h"
->>>>>>> 78a09145e0
+#include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
 #include "catalog/pg_type_encoding.h"
-=======
 #include "commands/comment.h"
->>>>>>> 78a09145e0
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
 #include "commands/tablespace.h"
@@ -100,12 +94,7 @@ static void transformColumnDefinition(ParseState *pstate,
 static void transformTableConstraint(ParseState *pstate,
 						 CreateStmtContext *cxt,
 						 Constraint *constraint);
-<<<<<<< HEAD
-=======
-static void transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
-					 InhRelation *inhrelation);
 static char *chooseIndexName(const RangeVar *relation, IndexStmt *index_stmt);
->>>>>>> 78a09145e0
 static IndexStmt *generateClonedIndexStmt(CreateStmtContext *cxt,
 						Relation source_idx,
 						const AttrNumber *attmap, int attmap_length);
@@ -422,22 +411,14 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		{
 			is_serial = true;
 			column->typeName->names = NIL;
-<<<<<<< HEAD
-			column->typeName->typid = INT4OID;
-=======
 			column->typeName->typeOid = INT4OID;
->>>>>>> 78a09145e0
 		}
 		else if (strcmp(typname, "bigserial") == 0 ||
 				 strcmp(typname, "serial8") == 0)
 		{
 			is_serial = true;
 			column->typeName->names = NIL;
-<<<<<<< HEAD
-			column->typeName->typid = INT8OID;
-=======
 			column->typeName->typeOid = INT8OID;
->>>>>>> 78a09145e0
 		}
 
 		/*

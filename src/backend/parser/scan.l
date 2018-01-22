@@ -64,16 +64,10 @@ fprintf_to_ereport(const char *fmt, const char *msg)
 	ereport(ERROR, (errmsg_internal("%s", msg)));
 }
 
-<<<<<<< HEAD
-static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
-static char    *dolqstart;      /* current $foo$ quote start string */
 
 /* first part of UTF16 surrogate for unicode escapes */
 static uint32	utf16_top_part;
 
-
-=======
->>>>>>> 78a09145e0
 /*
  * GUC variables.  This is a DIRECT violation of the warning given at the
  * head of gram.y, ie flex/bison code must not depend on any GUC variables;
@@ -110,10 +104,6 @@ bool			standard_conforming_strings = true;
  */
 #define ADVANCE_YYLLOC(delta)  ( *(yylloc) += (delta) )
 
-<<<<<<< HEAD
-static unsigned char unescape_single_char(unsigned char c);
-static void addunicode(pg_wchar c);
-=======
 #define startlit()  ( yyextra->literallen = 0 )
 static void addlit(char *ytext, int yleng, core_yyscan_t yyscanner);
 static void addlitchar(unsigned char ychar, core_yyscan_t yyscanner);
@@ -141,7 +131,6 @@ static void check_escape_warning(core_yyscan_t yyscanner);
  */
 extern int	core_yyget_column(yyscan_t yyscanner);
 extern void core_yyset_column(int column_no, yyscan_t yyscanner);
->>>>>>> 78a09145e0
 
 %}
 
@@ -180,11 +169,7 @@ extern void core_yyset_column(int column_no, yyscan_t yyscanner);
  *  <xdolq> $foo$ quoted strings
  *  <xui> quoted identifier with Unicode escapes
  *  <xus> quoted string with Unicode escapes
-<<<<<<< HEAD
- *  <xeu> Unicode surrogate escape in extended string
-=======
  *  <xeu> Unicode surrogate pair in extended quoted string
->>>>>>> 78a09145e0
  */
 
 %x xb
@@ -276,11 +261,7 @@ xeescape		[\\][^0-7]
 xeoctesc		[\\][0-7]{1,3}
 xehexesc		[\\]x[0-9A-Fa-f]{1,2}
 xeunicode		[\\](u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})
-<<<<<<< HEAD
-xeunicodebad	[\\]([uU])
-=======
 xeunicodefail	[\\](u[0-9A-Fa-f]{0,3}|U[0-9A-Fa-f]{0,7})
->>>>>>> 78a09145e0
 
 /* Extended quote
  * xqdouble implements embedded quote, ''''
@@ -633,51 +614,6 @@ other			.
 								 errhint("Unicode escapes must be \\uXXXX or \\UXXXXXXXX."),
 								 lexer_errposition()));
 				}
-<xe>{xeunicode} {
-					pg_wchar c = strtoul(yytext+2, NULL, 16);
-
-					check_escape_warning();
-
-					/*
-					 * handle UTF-16 surrogates:
-					 *   [0xD800..0xDC00) - first elem.
-					 *   [0xDC00..0xE000) - second elem.
-					 */
-					if (c >= 0xD800 && c < 0xE000)
-					{
-						if (c >= 0xDC00)
-							yyerror("invalid Unicode surrogate pair");
-
-						utf16_top_part = ((c & 0x3FF) << 10) + 0x10000;
-						BEGIN(xeu);
-					}
-					else
-						addunicode(c);
-				}
-<xeu>{xeunicode} {
-					pg_wchar c = strtoul(yytext+2, NULL, 16);
-
-					if (c < 0xDC00 || c >= 0xE000)
-						yyerror("invalid Unicode surrogate pair");
-
-					c = (c & 0x3FF) + utf16_top_part;
-
-					addunicode(c);
-
-					BEGIN(xe);
-				}
-<xeu>.			|
-<xeu>\n			|
-<xeu><<EOF>>	{ yyerror("invalid Unicode surrogate pair"); }
-
-<xe>{xeunicodebad}	{
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
-								 errmsg("invalid Unicode escape"),
-								 errhint("Unicode escapes must be full-length: \\uXXXX or \\UXXXXXXXX."),
-								 lexer_errposition()));
-					}
-
 <xe>{xeescape}  {
 					if (yytext[1] == '\'')
 					{
@@ -1444,28 +1380,7 @@ unescape_single_char(unsigned char c, core_yyscan_t yyscanner)
 }
 
 static void
-<<<<<<< HEAD
-addunicode(pg_wchar c)
-{
-	char buf[8];
-
-	if (c == 0 || c > 0x10FFFF)
-		yyerror("invalid Unicode escape value");
-	if (c > 0x7F)
-	{
-		if (GetDatabaseEncoding() != PG_UTF8)
-			yyerror("Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8");
-		saw_non_ascii = true;
-	}
-	unicode_to_utf8(c, (unsigned char *)buf);
-	addlit(buf, pg_mblen(buf));
-}
-
-static void
-check_string_escape_warning(unsigned char ychar)
-=======
 check_string_escape_warning(unsigned char ychar, core_yyscan_t yyscanner)
->>>>>>> 78a09145e0
 {
 	if (ychar == '\'')
 	{

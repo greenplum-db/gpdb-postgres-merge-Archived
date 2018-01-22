@@ -577,12 +577,8 @@ extern Datum regexp_split_to_table(PG_FUNCTION_ARGS);
 extern Datum regexp_split_to_table_no_flags(PG_FUNCTION_ARGS);
 extern Datum regexp_split_to_array(PG_FUNCTION_ARGS);
 extern Datum regexp_split_to_array_no_flags(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
-extern bool regex_flavor_is_basic(void);
 extern char *regexp_fixed_prefix(text *text_re, bool case_insensitive,
 								 bool *exact);
-=======
->>>>>>> 78a09145e0
 
 /* regproc.c */
 extern Datum regprocin(PG_FUNCTION_ARGS);
@@ -1155,16 +1151,14 @@ extern Datum window_nth_value(PG_FUNCTION_ARGS);
 /* access/transam/twophase.c */
 extern Datum pg_prepared_xact(PG_FUNCTION_ARGS);
 
-<<<<<<< HEAD
+/* commands/constraint.c */
+extern Datum unique_key_recheck(PG_FUNCTION_ARGS);
+
 /* commands/extension.c */
 extern Datum pg_available_extensions(PG_FUNCTION_ARGS);
 extern Datum pg_available_extension_versions(PG_FUNCTION_ARGS);
 extern Datum pg_extension_update_paths(PG_FUNCTION_ARGS);
 extern Datum pg_extension_config_dump(PG_FUNCTION_ARGS);
-=======
-/* commands/constraint.c */
-extern Datum unique_key_recheck(PG_FUNCTION_ARGS);
->>>>>>> 78a09145e0
 
 /* commands/prepare.c */
 extern Datum pg_prepared_statement(PG_FUNCTION_ARGS);

@@ -66,11 +66,7 @@ LookupTypeName(ParseState *pstate, const TypeName *typeName,
 	if (typeName->names == NIL)
 	{
 		/* We have the OID already if it's an internally generated TypeName */
-<<<<<<< HEAD
-		typoid = typename->typid;
-=======
 		typoid = typeName->typeOid;
->>>>>>> 78a09145e0
 	}
 	else if (typeName->pct_type)
 	{
@@ -368,11 +364,7 @@ appendTypeNameToBuffer(const TypeName *typeName, StringInfo string)
 	else
 	{
 		/* Look up internally-specified type */
-<<<<<<< HEAD
-		appendStringInfoString(string, format_type_be(typename->typid));
-=======
 		appendStringInfoString(string, format_type_be(typeName->typeOid));
->>>>>>> 78a09145e0
 	}
 
 	/*
@@ -644,15 +636,9 @@ parseTypeString(const char *str, Oid *type_id, int32 *typmod_p)
 		typecast->arg == NULL ||
 		!IsA(typecast->arg, A_Const))
 		goto fail;
-<<<<<<< HEAD
-	typename = typecast->typeName;
-	if (typename == NULL ||
-		!IsA(typename, TypeName))
-=======
 	typeName = typecast->typeName;
 	if (typeName == NULL ||
 		!IsA(typeName, TypeName))
->>>>>>> 78a09145e0
 		goto fail;
 	if (typeName->setof)
 		goto fail;

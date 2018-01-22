@@ -546,7 +546,6 @@ typedef struct EState
 
 	/* Stuff used for firing triggers: */
 	List	   *es_trig_target_relations;		/* trigger-only ResultRelInfos */
-<<<<<<< HEAD
 
 	/* partitioning info for target relation */
 	PartitionNode *es_result_partitions;
@@ -554,11 +553,8 @@ typedef struct EState
 	/* AO fileseg info for target relation */
 	List	   *es_result_aosegnos;
 
-	TupleTableSlot *es_trig_tuple_slot; /* for trigger output tuples */
-=======
 	TupleTableSlot *es_trig_tuple_slot;		/* for trigger output tuples */
 	TupleTableSlot *es_trig_oldtup_slot;	/* for trigger old tuples */
->>>>>>> 78a09145e0
 
 	/* Parameter info: */
 	ParamListInfo es_param_list_info;	/* values of external params */
@@ -568,11 +564,8 @@ typedef struct EState
 	MemoryContext es_query_cxt; /* per-query context in which EState lives */
 
 	List	   *es_tupleTable;	/* List of TupleTableSlots */
-<<<<<<< HEAD
-=======
 
 	List	   *es_rowMarks;	/* List of ExecRowMarks */
->>>>>>> 78a09145e0
 
 	uint64		es_processed;	/* # of tuples processed */
 	Oid			es_lastoid;		/* last oid processed (by INSERT) */
@@ -592,13 +585,18 @@ typedef struct EState
 	 */
 	ExprContext *es_per_tuple_exprcontext;
 
-<<<<<<< HEAD
-	/* Below is to re-evaluate plan qual in READ COMMITTED mode */
-	PlannedStmt *es_plannedstmt;	/* link to top of plan tree */
-	struct evalPlanQual *es_evalPlanQual;		/* chain of PlanQual states */
-	bool	   *es_evTupleNull; /* local array of EPQ status */
-	HeapTuple  *es_evTuple;		/* shared array of EPQ substitute tuples */
-	bool		es_useEvalPlan; /* evaluating EPQ tuples? */
+	/*
+	 * These fields are for re-evaluating plan quals when an updated tuple is
+	 * substituted in READ COMMITTED mode.  es_epqTuple[] contains tuples
+	 * that scan plan nodes should return instead of whatever they'd normally
+	 * return, or NULL if nothing to return; es_epqTupleSet[] is true if a
+	 * particular array entry is valid; and es_epqScanDone[] is state to
+	 * remember if the tuple has been returned already.  Arrays are of size
+	 * list_length(es_range_table) and are indexed by scan node scanrelid - 1.
+	 */
+	HeapTuple  *es_epqTuple;		/* array of EPQ substitute tuples */
+	bool	   *es_epqTupleSet;		/* true if EPQ tuple is provided */
+	bool	   *es_epqScanDone;		/* true if EPQ tuple has been fetched */
 
 	/* Additions for MPP plan slicing. */
 	struct SliceTable *es_sliceTable;
@@ -665,20 +663,6 @@ typedef struct EState
 
 	/* Should the executor skip past the alien plan nodes */
 	bool eliminateAliens;
-=======
-	/*
-	 * These fields are for re-evaluating plan quals when an updated tuple is
-	 * substituted in READ COMMITTED mode.  es_epqTuple[] contains tuples
-	 * that scan plan nodes should return instead of whatever they'd normally
-	 * return, or NULL if nothing to return; es_epqTupleSet[] is true if a
-	 * particular array entry is valid; and es_epqScanDone[] is state to
-	 * remember if the tuple has been returned already.  Arrays are of size
-	 * list_length(es_range_table) and are indexed by scan node scanrelid - 1.
-	 */
-	HeapTuple  *es_epqTuple;		/* array of EPQ substitute tuples */
-	bool	   *es_epqTupleSet;		/* true if EPQ tuple is provided */
-	bool	   *es_epqScanDone;		/* true if EPQ tuple has been fetched */
->>>>>>> 78a09145e0
 } EState;
 
 struct PlanState;
@@ -1489,7 +1473,6 @@ typedef struct ResultState
 } ResultState;
 
 /* ----------------
-<<<<<<< HEAD
  *	 RepeatState information
  * ----------------
  */
@@ -1502,7 +1485,8 @@ typedef struct RepeatState
 	int			repeat_count;	/* The number of repeats for the current tuple */
 	ExprState  *expr_state;		/* The state to evaluate the expression */
 } RepeatState;
-=======
+
+/* ----------------
  *	 ModifyTableState information
  * ----------------
  */
@@ -1516,7 +1500,6 @@ typedef struct ModifyTableState
 	EPQState		mt_epqstate;	/* for evaluating EvalPlanQual rechecks */
 	bool			fireBSTriggers;	/* do we need to fire stmt triggers? */
 } ModifyTableState;
->>>>>>> 78a09145e0
 
 /* ----------------
  *	 AppendState information

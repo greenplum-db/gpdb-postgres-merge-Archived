@@ -2706,38 +2706,8 @@ errorMissingRTE(ParseState *pstate, RangeVar *relation)
 							 &sublevels_up) == rte)
 		badAlias = rte->eref->aliasname;
 
-<<<<<<< HEAD
-	if (!add_missing_from)
-	{
-		if (rte)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_TABLE),
-			errmsg("invalid reference to FROM-clause entry for table \"%s\"",
-				   relation->relname),
-					 (badAlias ?
-			errhint("Perhaps you meant to reference the table alias \"%s\".",
-					badAlias) :
-					  errhint("There is an entry for table \"%s\", but it cannot be referenced from this part of the query.",
-							  rte->eref->aliasname)),
-					 parser_errposition(pstate, relation->location)));
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_TABLE),
-					 (pstate->parentParseState ?
-			 errmsg("missing FROM-clause entry in subquery for table \"%s\"",
-					relation->relname) :
-					  errmsg("missing FROM-clause entry for table \"%s\"",
-							 relation->relname)),
-					 parser_errposition(pstate, relation->location)));
-	}
-	else
-	{
-		/* just issue a warning */
-		ereport(NOTICE,
-=======
 	if (rte)
 		ereport(ERROR,
->>>>>>> 78a09145e0
 				(errcode(ERRCODE_UNDEFINED_TABLE),
 				 errmsg("invalid reference to FROM-clause entry for table \"%s\"",
 						relation->relname),

@@ -89,17 +89,6 @@
 #define YYMALLOC palloc
 #define YYFREE   pfree
 
-<<<<<<< HEAD
-
-#define parser_yyerror(msg)  scanner_yyerror(msg)
-#define parser_errposition(pos)  scanner_errposition(pos)
-
-extern List *parsetree;			/* final parse result is delivered here */
-
-static bool QueryIsRule = FALSE;
-
-=======
->>>>>>> 78a09145e0
 /* Private struct for the result of privilege_target production */
 typedef struct PrivTarget
 {
@@ -202,14 +191,10 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 		AlterDatabaseStmt AlterDatabaseSetStmt AlterDomainStmt AlterFdwStmt
 		AlterForeignServerStmt AlterGroupStmt
 		AlterObjectSchemaStmt AlterOwnerStmt AlterSeqStmt AlterTableStmt
-<<<<<<< HEAD
 		AlterExtensionStmt AlterExtensionContentsStmt
-		AlterUserStmt AlterUserMappingStmt AlterUserSetStmt AlterRoleStmt AlterRoleSetStmt
-=======
 		AlterUserStmt AlterUserMappingStmt AlterUserSetStmt
 		AlterRoleStmt AlterRoleSetStmt
 		AlterDefaultPrivilegesStmt DefACLAction
->>>>>>> 78a09145e0
 		AnalyzeStmt ClosePortalStmt ClusterStmt CommentStmt
 		ConstraintsSetStmt CopyStmt CreateAsStmt CreateCastStmt
 		CreateDomainStmt CreateExtensionStmt CreateGroupStmt CreateOpClassStmt
@@ -286,9 +271,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <str>		auth_ident
 %type <str>		opt_in_database
 
-%type <list> 	OptAlterRoleList
-%type <defelt>	OptAlterRoleElem
-
 %type <list>	OptQueueList
 %type <defelt>	OptQueueElem
 
@@ -354,26 +336,18 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 				prep_type_clause
 				execute_param_clause using_clause returning_clause
 				opt_enum_val_list enum_val_list
-				table_func_column_list scatter_clause dostmt_opt_list
+				table_func_column_list scatter_clause
 				create_generic_options alter_generic_options
-<<<<<<< HEAD
-				relation_expr_list
+				relation_expr_list dostmt_opt_list
 				columnListUnique
 
 %type <node>    table_value_select_clause
-=======
-				relation_expr_list dostmt_opt_list
->>>>>>> 78a09145e0
 
 %type <range>	OptTempTableName
 %type <into>	into_clause create_as_target
 
 %type <defelt>	createfunc_opt_item common_func_opt_item dostmt_opt_item
-<<<<<<< HEAD
 %type <fun_param> func_arg func_arg_with_default table_func_column aggr_arg
-=======
-%type <fun_param> func_arg func_arg_with_default table_func_column
->>>>>>> 78a09145e0
 %type <fun_param_mode> arg_class
 %type <typnam>	func_return func_type
 
@@ -578,13 +552,8 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 	CACHE CALLED CASCADE CASCADED CASE CAST CATALOG_P CHAIN CHAR_P
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
-<<<<<<< HEAD
-	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
-	COMMITTED CONCURRENCY CONCURRENTLY CONFIGURATION CONNECTION CONSTRAINT CONSTRAINTS
-=======
 	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMENTS COMMIT
-	COMMITTED CONCURRENTLY CONFIGURATION CONNECTION CONSTRAINT CONSTRAINTS
->>>>>>> 78a09145e0
+	COMMITTED CONCURRENCY CONCURRENTLY CONFIGURATION CONNECTION CONSTRAINT CONSTRAINTS
 	CONTENT_P CONTINUE_P CONVERSION_P COPY COST CREATE CREATEDB
 	CREATEROLE CREATEUSER CROSS CSV CURRENT_P
 	CURRENT_CATALOG CURRENT_DATE CURRENT_ROLE CURRENT_SCHEMA
@@ -595,11 +564,8 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 	DICTIONARY DISABLE_P DISCARD DISTINCT DO DOCUMENT_P DOMAIN_P DOUBLE_P DROP
 
 	EACH ELSE ENABLE_P ENCODING ENCRYPTED END_P ENUM_P ESCAPE EXCEPT
-<<<<<<< HEAD
-	EXCLUDING EXCLUSIVE EXECUTE EXISTS EXPLAIN EXTENSION EXTERNAL EXTRACT
-=======
-	EXCLUDE EXCLUDING EXCLUSIVE EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
->>>>>>> 78a09145e0
+	EXCLUDE EXCLUDING EXCLUSIVE EXECUTE EXISTS EXPLAIN
+	EXTENSION EXTERNAL EXTRACT
 
 	FALSE_P FAMILY FETCH FIRST_P FLOAT_P FOLLOWING FOR FORCE FOREIGN FORWARD
 	FREEZE FROM FULL FUNCTION FUNCTIONS
@@ -618,11 +584,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 	KEY
 
 	LANGUAGE LARGE_P LAST_P LC_COLLATE_P LC_CTYPE_P LEADING
-<<<<<<< HEAD
-	LEAST LEFT LEVEL LIBRARY LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP
-=======
 	LEAST LEFT LEVEL LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP
->>>>>>> 78a09145e0
 	LOCATION LOCK_P LOGIN_P
 
 	MAPPING MATCH MAXVALUE MEMORY_LIMIT MEMORY_SHARED_QUOTA MEMORY_SPILL_RATIO
@@ -632,13 +594,8 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 	NOCREATEROLE NOCREATEUSER NOINHERIT NOLOGIN_P NONE NOSUPERUSER
 	NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF NULLS_P NUMERIC
 
-<<<<<<< HEAD
-	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OPTIONS OR
-	ORDER OUT_P OUTER_P OVERLAPS OVERLAY OWNED OWNER
-=======
 	OBJECT_P OF OFF OFFSET OIDS ON ONLY OPERATOR OPTION OPTIONS OR
-	ORDER OUT_P OUTER_P OVER OVERLAPS OVERLAY OWNED OWNER
->>>>>>> 78a09145e0
+	ORDER OUT_P OUTER_P OVERLAPS OVERLAY OWNED OWNER
 
 	PARSER PARTIAL PASSWORD PLACING PLANS POSITION
 	PRECEDING PRECISION PRESERVE PREPARE PREPARED PRIMARY
@@ -675,7 +632,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 	ZONE
 
-<<<<<<< HEAD
 
 /* GPDB-added keywords, in alphabetical order */
 %token <keyword>
@@ -685,7 +641,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 	DECODE DENY DISTRIBUTED DXL
 
-	ERRORS EVERY EXCHANGE EXCLUDE
+	ERRORS EVERY EXCHANGE
 
 	FIELDS FILL FILTER FORMAT
 
@@ -693,7 +649,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 	HASH HOST
 
-	IGNORE_P INCLUSIVE INLINE_P
+	IGNORE_P INCLUSIVE
 
 	LIST LOG_P
 
@@ -721,11 +677,8 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 	XMLEXISTS
 
-/* The grammar thinks these are keywords, but they are not in the kwlist.h
-=======
 /*
  * The grammar thinks these are keywords, but they are not in the kwlist.h
->>>>>>> 78a09145e0
  * list and so can never be entered directly.  The filter in parser.c
  * creates these tokens when required.
  */
@@ -1712,11 +1665,7 @@ CreateUserStmt:
  *****************************************************************************/
 
 AlterRoleStmt:
-<<<<<<< HEAD
-			ALTER ROLE RoleId opt_with OptAlterRoleList
-=======
 			ALTER ROLE RoleId opt_with AlterOptRoleList
->>>>>>> 78a09145e0
 				 {
 					AlterRoleStmt *n = makeNode(AlterRoleStmt);
 					n->role = $3;
@@ -1742,16 +1691,6 @@ AlterRoleSetStmt:
 				}
 		;
 
-/* OptAlterRoleList is effectively OptRoleList with additional support for DROP DENY FOR. */
-OptAlterRoleList:
-            OptAlterRoleList OptAlterRoleElem       { $$ = lappend($1, $2); }
-            | /*EMPTY*/                             { $$ = NIL; }
-        ;
-
-OptAlterRoleElem:
-			OptRoleElem								{ $$ = $1; }
-			| DROP DENY FOR deny_point				{ $$ = makeDefElem("drop_deny", $4); }
-
 
 
 /*****************************************************************************
@@ -1761,11 +1700,7 @@ OptAlterRoleElem:
  *****************************************************************************/
 
 AlterUserStmt:
-<<<<<<< HEAD
-			ALTER USER RoleId opt_with OptAlterRoleList
-=======
 			ALTER USER RoleId opt_with AlterOptRoleList
->>>>>>> 78a09145e0
 				 {
 					AlterRoleStmt *n = makeNode(AlterRoleStmt);
 					n->role = $3;
@@ -3368,35 +3303,24 @@ ClosePortalStmt:
  *				COPY relname [(columnList)] FROM/TO file [WITH] [(options)]
  *				COPY ( SELECT ... ) TO file [WITH] [(options)]
  *
+ *				where 'file' can be one of:
+ *				{ PROGRAM 'command' | STDIN | STDOUT | 'filename' }
+ *
  *				In the preferred syntax the options are comma-separated
  *				and use generic identifiers instead of keywords.  The pre-8.5
  *				syntax had a hard-wired, space-separated set of options.
  *
-<<<<<<< HEAD
- *				COPY ( SELECT ... ) TO file [WITH options]
- *
- *				where 'file' can be one of:
- *				{ PROGRAM 'command' | STDIN | STDOUT | 'filename' }
- *
- *				This form doesn't have the backwards-compatible option
- *				syntax.
-=======
  *				Really old syntax, from versions 7.2 and prior:
  *				COPY [ BINARY ] table [ WITH OIDS ] FROM/TO file
  *					[ [ USING ] DELIMITERS 'delimiter' ] ]
  *					[ WITH NULL AS 'null string' ]
  *				This option placement is not supported with COPY (SELECT...).
->>>>>>> 78a09145e0
  *
  *****************************************************************************/
 
 CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
-<<<<<<< HEAD
-			copy_from opt_program copy_file_name copy_delimiter opt_with copy_opt_list
+			copy_from opt_program copy_file_name copy_delimiter opt_with copy_options
 			OptSingleRowErrorHandling skip_external_partition
-=======
-			copy_from copy_file_name copy_delimiter opt_with copy_options
->>>>>>> 78a09145e0
 				{
 					CopyStmt *n = makeNode(CopyStmt);
 					n->relation = $3;
@@ -3424,12 +3348,7 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
 
 					$$ = (Node *)n;
 				}
-<<<<<<< HEAD
-			| COPY select_with_parens TO opt_program copy_file_name opt_with
-			  copy_opt_list
-=======
-			| COPY select_with_parens TO copy_file_name opt_with copy_options
->>>>>>> 78a09145e0
+			| COPY select_with_parens TO opt_program copy_file_name opt_with copy_options
 				{
 					CopyStmt *n = makeNode(CopyStmt);
 					n->relation = NULL;
@@ -7243,15 +7162,14 @@ privilege_target:
 					n->objs = $2;
 					$$ = n;
 				}
-<<<<<<< HEAD
 			| PROTOCOL name_list
 				{
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
+					n->targtype = ACL_TARGET_OBJECT;
 					n->objtype = ACL_OBJECT_EXTPROTOCOL;
 					n->objs = $2;
 					$$ = n;
 				}			
-=======
 			| ALL TABLES IN_P SCHEMA name_list
 				{
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
@@ -7276,7 +7194,6 @@ privilege_target:
 					n->objs = $5;
 					$$ = n;
 				}
->>>>>>> 78a09145e0
 		;
 
 
@@ -8169,40 +8086,6 @@ dostmt_opt_item:
 					$$ = makeDefElem("language", (Node *)makeString($2));
 				}
 		;
-
-/*****************************************************************************
- *
- *		DO <anonymous code block> [ LANGUAGE language ]
- *
- * We use a DefElem list for future extensibility, and to allow flexibility
- * in the clause order.
- *
- *****************************************************************************/
-
-DoStmt: DO dostmt_opt_list
-				{
-					DoStmt *n = makeNode(DoStmt);
-					n->args = $2;
-					$$ = (Node *)n;
-				}
-		;
-
-dostmt_opt_list:
-			dostmt_opt_item						{ $$ = list_make1($1); }
-			| dostmt_opt_list dostmt_opt_item	{ $$ = lappend($1, $2); }
-		;
-
-dostmt_opt_item:
-			Sconst
-				{
-					$$ = makeDefElem("as", (Node *)makeString($1));
-				}
-			| LANGUAGE ColId_or_Sconst 
-				{
-					$$ = makeDefElem("language", (Node *)makeString($2));
-				}
-		;
-
 
 /*****************************************************************************
  *
@@ -9610,13 +9493,10 @@ AnalyzeStmt:
 					n->options = VACOPT_ANALYZE;
 					if ($2)
 						n->options |= VACOPT_VERBOSE;
+					if ($3)
+						n->options |= VACOPT_ROOTONLY;
 					n->freeze_min_age = -1;
 					n->freeze_table_age = -1;
-<<<<<<< HEAD
-					n->verbose = $2;
-					n->rootonly = $3;
-=======
->>>>>>> 78a09145e0
 					n->relation = NULL;
 					n->va_cols = NIL;
 					$$ = (Node *)n;
@@ -9629,11 +9509,6 @@ AnalyzeStmt:
 						n->options |= VACOPT_VERBOSE;
 					n->freeze_min_age = -1;
 					n->freeze_table_age = -1;
-<<<<<<< HEAD
-					n->verbose = $2;
-					n->rootonly = false;
-=======
->>>>>>> 78a09145e0
 					n->relation = $3;
 					n->va_cols = $4;
 					$$ = (Node *)n;
@@ -9641,9 +9516,10 @@ AnalyzeStmt:
 			| analyze_keyword opt_verbose ROOTPARTITION qualified_name opt_name_list
 				{
 					VacuumStmt *n = makeNode(VacuumStmt);
-					n->vacuum = false;
-					n->analyze = true;
-					n->full = false;
+					n->options = VACOPT_ANALYZE;
+					if ($2)
+						n->options |= VACOPT_VERBOSE;
+					n->options |= VACOPT_ROOTONLY;
 					n->freeze_min_age = -1;
 					n->verbose = $2;
 					n->rootonly = true;
@@ -9690,20 +9566,6 @@ opt_name_list:
  *
  *****************************************************************************/
 
-<<<<<<< HEAD
-ExplainStmt: EXPLAIN opt_analyze opt_verbose opt_dxl opt_force ExplainableStmt
-				{
-					ExplainStmt *n = makeNode(ExplainStmt);
-					n->analyze = $2;
-					n->verbose = $3;
-					n->dxl = $4;
-					if($5)
-						ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), 
-								errmsg("cannot use force with explain statement")
-							       ));
-					n->query = $6;
-					$$ = (Node *)n;
-=======
 ExplainStmt:
 		EXPLAIN ExplainableStmt
 				{
@@ -9712,21 +9574,27 @@ ExplainStmt:
 					n->options = NIL;
 					$$ = (Node *) n;
 				}
-		| EXPLAIN analyze_keyword opt_verbose ExplainableStmt
+		| EXPLAIN analyze_keyword opt_verbose opt_dxl ExplainableStmt
 				{
 					ExplainStmt *n = makeNode(ExplainStmt);
-					n->query = $4;
+					n->query = $5;
 					n->options = list_make1(makeDefElem("analyze", NULL));
 					if ($3)
 						n->options = lappend(n->options,
 											 makeDefElem("verbose", NULL));
+					if ($4)
+						n->options = lappend(n->options,
+											 makeDefElem("dxl", NULL));
 					$$ = (Node *) n;
 				}
-		| EXPLAIN VERBOSE ExplainableStmt
+		| EXPLAIN VERBOSE opt_dxl ExplainableStmt
 				{
 					ExplainStmt *n = makeNode(ExplainStmt);
-					n->query = $3;
+					n->query = $4;
 					n->options = list_make1(makeDefElem("verbose", NULL));
+					if ($3)
+						n->options = lappend(n->options,
+											 makeDefElem("dxl", NULL));
 					$$ = (Node *) n;
 				}
 		| EXPLAIN '(' explain_option_list ')' ExplainableStmt
@@ -9735,7 +9603,6 @@ ExplainStmt:
 					n->query = $5;
 					n->options = $3;
 					$$ = (Node *) n;
->>>>>>> 78a09145e0
 				}
 		;
 
@@ -9782,6 +9649,7 @@ explain_option_name:
 			ColId					{ $$ = $1; }
 			| analyze_keyword		{ $$ = "analyze"; }
 			| VERBOSE				{ $$ = "verbose"; }
+			| DXL					{ $$ = "dxl"; }
 		;
 
 explain_option_arg:
@@ -12218,11 +12086,7 @@ func_application: func_name '(' ')'
 					n->over = NULL;
 					$$ = (Node *)n;
 				}
-<<<<<<< HEAD
-			| func_name '(' expr_list ')'
-=======
-			| func_name '(' func_arg_list ')' over_clause
->>>>>>> 78a09145e0
+			| func_name '(' func_arg_list ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -12235,11 +12099,7 @@ func_application: func_name '(' ')'
 					n->over = NULL;
 					$$ = (Node *)n;
 				}
-<<<<<<< HEAD
-			| func_name '(' VARIADIC a_expr ')'
-=======
-			| func_name '(' VARIADIC func_arg_expr ')' over_clause
->>>>>>> 78a09145e0
+			| func_name '(' VARIADIC func_arg_expr ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -12253,11 +12113,7 @@ func_application: func_name '(' ')'
 					n->over = NULL;
 					$$ = (Node *)n;
 				}
-<<<<<<< HEAD
-			| func_name '(' expr_list ',' VARIADIC a_expr ')'
-=======
-			| func_name '(' func_arg_list ',' VARIADIC func_arg_expr ')' over_clause
->>>>>>> 78a09145e0
+			| func_name '(' func_arg_list ',' VARIADIC func_arg_expr ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -12271,16 +12127,11 @@ func_application: func_name '(' ')'
 					n->over = NULL;
 					$$ = (Node *)n;
 				}
-<<<<<<< HEAD
-			| func_name '(' expr_list sort_clause ')'
-=======
-			| func_name '(' func_arg_list sort_clause ')' over_clause
->>>>>>> 78a09145e0
+			| func_name '(' func_arg_list sort_clause ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
 					n->args = $3;
-<<<<<<< HEAD
                     n->agg_order = $4;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
@@ -12291,17 +12142,6 @@ func_application: func_name '(' ')'
 					$$ = (Node *)n;
 				}
 			| func_name '(' ALL expr_list opt_sort_clause')'
-=======
-					n->agg_order = $4;
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					n->func_variadic = FALSE;
-					n->over = $6;
-					n->location = @1;
-					$$ = (Node *)n;
-				}
-			| func_name '(' ALL func_arg_list opt_sort_clause ')' over_clause
->>>>>>> 78a09145e0
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -12316,19 +12156,11 @@ func_application: func_name '(' ')'
 					 * for that in FuncCall at the moment.
 					 */
 					n->func_variadic = FALSE;
-<<<<<<< HEAD
-=======
-					n->over = $7;
->>>>>>> 78a09145e0
 					n->location = @1;
 					n->over = NULL;
 					$$ = (Node *)n;
 				}
-<<<<<<< HEAD
-			| func_name '(' DISTINCT expr_list opt_sort_clause')'
-=======
-			| func_name '(' DISTINCT func_arg_list opt_sort_clause ')' over_clause
->>>>>>> 78a09145e0
+			| func_name '(' DISTINCT func_arg_list opt_sort_clause')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -12338,10 +12170,6 @@ func_application: func_name '(' ')'
 					n->agg_distinct = TRUE;
 					n->agg_filter = NULL;
 					n->func_variadic = FALSE;
-<<<<<<< HEAD
-=======
-					n->over = $7;
->>>>>>> 78a09145e0
 					n->location = @1;
 					n->over = NULL;
 					$$ = (Node *)n;
@@ -13166,7 +12994,6 @@ frame_extent: frame_bound
 								(errcode(ERRCODE_WINDOWING_ERROR),
 								 errmsg("frame start cannot be UNBOUNDED FOLLOWING"),
 								 parser_errposition(@1)));
-<<<<<<< HEAD
 					if (n->frameOptions & FRAMEOPTION_START_VALUE_FOLLOWING)
 						ereport(ERROR,
 								(errcode(ERRCODE_WINDOWING_ERROR),
@@ -13181,33 +13008,6 @@ frame_extent: frame_bound
 					WindowDef *n2 = $4;
 					/* form merged options */
 					int		frameOptions = n1->frameOptions;
-=======
-					if ($1 & FRAMEOPTION_START_CURRENT_ROW)
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("frame start at CURRENT ROW is not implemented"),
-								 parser_errposition(@1)));
-					$$ = $1 | FRAMEOPTION_END_CURRENT_ROW;
-				}
-			| BETWEEN frame_bound AND frame_bound
-				{
-					/* reject invalid cases */
-					if ($2 & FRAMEOPTION_START_UNBOUNDED_FOLLOWING)
-						ereport(ERROR,
-								(errcode(ERRCODE_WINDOWING_ERROR),
-								 errmsg("frame start cannot be UNBOUNDED FOLLOWING"),
-								 parser_errposition(@2)));
-					if ($2 & FRAMEOPTION_START_CURRENT_ROW)
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("frame start at CURRENT ROW is not implemented"),
-								 parser_errposition(@2)));
-					if ($4 & FRAMEOPTION_START_UNBOUNDED_PRECEDING)
-						ereport(ERROR,
-								(errcode(ERRCODE_WINDOWING_ERROR),
-								 errmsg("frame end cannot be UNBOUNDED PRECEDING"),
-								 parser_errposition(@4)));
->>>>>>> 78a09145e0
 					/* shift converts START_ options to END_ options */
 					frameOptions |= n2->frameOptions << 1;
 					frameOptions |= FRAMEOPTION_BETWEEN;
@@ -13598,7 +13398,6 @@ case_arg:	a_expr									{ $$ = $1; }
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
-<<<<<<< HEAD
 
 /*
  * Oracle-compatible DECODE function:
@@ -13643,15 +13442,7 @@ decode_default:
 		;
 
 
-/*
- * columnref starts with relation_name not ColId, so that OLD and NEW
- * references can be accepted.	Note that when there are more than two
- * dotted names, the first name is not actually a relation name...
- */
-columnref:	relation_name
-=======
 columnref:	ColId
->>>>>>> 78a09145e0
 				{
 					$$ = makeColumnRef($1, NIL, @1, yyscanner);
 				}
@@ -14144,12 +13935,8 @@ unreserved_keyword:
 			| ENUM_P
 			| ERRORS
 			| ESCAPE
-<<<<<<< HEAD
 			| EVERY
 			| EXCHANGE
-=======
-			| EXCLUDE
->>>>>>> 78a09145e0
 			| EXCLUDING
 			| EXCLUSIVE
 			| EXECUTE
@@ -14200,7 +13987,6 @@ unreserved_keyword:
 			| LC_COLLATE_P
 			| LC_CTYPE_P
 			| LEVEL
-			| LIBRARY
 			| LIST
 			| LISTEN
 			| LOAD

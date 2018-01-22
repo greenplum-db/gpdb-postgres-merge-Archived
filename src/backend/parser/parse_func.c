@@ -45,12 +45,7 @@ static void unify_hypothetical_args(ParseState *pstate,
 static Oid	FuncNameAsType(List *funcname);
 static Node *ParseComplexProjection(ParseState *pstate, char *funcname,
 					   Node *first_arg, int location);
-<<<<<<< HEAD
-static void unknown_attribute(ParseState *pstate, Node *relref, char *attname,
-				  int location);
 static bool check_pg_get_expr_arg(ParseState *pstate, Node *arg, int netlevelsup);
-=======
->>>>>>> 78a09145e0
 
 typedef struct
 {
@@ -70,7 +65,6 @@ checkTableFunctions_walker(Node *node, check_table_func_context *context);
  *	a function of a single complex-type argument can be written like a
  *	column reference, allowing functions to act like computed columns.
  *
-<<<<<<< HEAD
  *	Hence, both cases come through here.  If fn is null, we're dealing with
  *	column syntax not function syntax, but in principle that should not
  *	affect the lookup behavior, only which error messages we deliver.
@@ -86,25 +80,6 @@ checkTableFunctions_walker(Node *node, check_table_func_context *context);
 Node *
 ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 				  FuncCall *fn, int location)
-=======
- *	Hence, both cases come through here.  The is_column parameter tells us
- *	which syntactic construct is actually being dealt with, but this is
- *	intended to be used only to deliver an appropriate error message,
- *	not to affect the semantics.  When is_column is true, we should have
- *	a single argument (the putative table), unqualified function name
- *	equal to the column name, and no aggregate or variadic decoration.
- *	Also, when is_column is true, we return NULL on failure rather than
- *	reporting a no-such-function error.
- *
- *	The argument expressions (in fargs) must have been transformed already.
- *	But the agg_order expressions, if any, have not been.
- */
-Node *
-ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
-				  List *agg_order, bool agg_star, bool agg_distinct,
-				  bool func_variadic,
-				  WindowDef *over, bool is_column, int location)
->>>>>>> 78a09145e0
 {
 	bool		is_column = (fn == NULL);
 	List	   *agg_order = (fn ? fn->agg_order : NIL);
@@ -236,13 +211,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * the "function call" could be a projection.  We also check that there
 	 * wasn't any aggregate or variadic decoration, nor an argument name.
 	 */
-<<<<<<< HEAD
 	if (nargs == 1 && agg_order == NIL && agg_filter == NULL && !agg_star &&
-		!agg_distinct && over == NULL && !func_variadic &&
-=======
-	if (nargs == 1 && agg_order == NIL && !agg_star && !agg_distinct &&
-		over == NULL && !func_variadic && argnames == NIL &&
->>>>>>> 78a09145e0
+		!agg_distinct && over == NULL && !func_variadic && argnames == NIL &&
 		list_length(funcname) == 1)
 	{
 		Oid			argtype = actual_arg_types[0];
@@ -278,11 +248,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * type.  We'll fix up the variadic case below.  We may also have to deal
 	 * with default arguments.
 	 */
-<<<<<<< HEAD
-	fdresult = func_get_detail(funcname, fargs, nargs,
-=======
 	fdresult = func_get_detail(funcname, fargs, argnames, nargs,
->>>>>>> 78a09145e0
 							   actual_arg_types,
 							   !func_variadic, true,
 							   &funcid, &rettype, &retset,
@@ -317,7 +283,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("DISTINCT specified, but %s is not an aggregate function",
 							NameListToString(funcname)),
 					 parser_errposition(pstate, location)));
-<<<<<<< HEAD
 		if (agg_within_group)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -337,14 +302,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 							NameListToString(funcname)),
 					 parser_errposition(pstate, location)));
 
-=======
-		if (agg_order != NIL)
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-			   errmsg("ORDER BY specified, but %s is not an aggregate function",
-					  NameListToString(funcname)),
-					 parser_errposition(pstate, location)));
->>>>>>> 78a09145e0
 		if (over)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -413,6 +370,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 							(errcode(ERRCODE_UNDEFINED_FUNCTION),
 							 errmsg("function %s does not exist",
 									func_signature_string(funcname, nargs,
+														  argnames,
 														  actual_arg_types)),
 							 errhint("There is an ordered-set aggregate %s, but it requires %d direct arguments, not %d.",
 									 NameListToString(funcname),
@@ -441,6 +399,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 								(errcode(ERRCODE_UNDEFINED_FUNCTION),
 								 errmsg("function %s does not exist",
 										func_signature_string(funcname, nargs,
+															  argnames,
 														  actual_arg_types)),
 								 errhint("There is an ordered-set aggregate %s, but it requires %d direct arguments, not %d.",
 										 NameListToString(funcname),
@@ -465,6 +424,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 									(errcode(ERRCODE_UNDEFINED_FUNCTION),
 									 errmsg("function %s does not exist",
 									   func_signature_string(funcname, nargs,
+															 argnames,
 														  actual_arg_types)),
 									 errhint("To use the hypothetical-set aggregate %s, the number of hypothetical direct arguments (here %d) must match the number of ordering columns (here %d).",
 											 NameListToString(funcname),
@@ -478,6 +438,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 									(errcode(ERRCODE_UNDEFINED_FUNCTION),
 									 errmsg("function %s does not exist",
 									   func_signature_string(funcname, nargs,
+															 argnames,
 														  actual_arg_types)),
 									 errhint("There is an ordered-set aggregate %s, but it requires at least %d direct arguments.",
 											 NameListToString(funcname),
@@ -552,6 +513,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
 					 errmsg("function %s does not exist",
 							func_signature_string(funcname, nargs,
+												  argnames,
 												  actual_arg_types)),
 					 errhint("No aggregate function matches the given name and argument types. "
 					  "Perhaps you misplaced ORDER BY; ORDER BY must appear "
@@ -692,20 +654,12 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 		aggref->aggfnoid = funcid;
 		aggref->aggtype = rettype;
-<<<<<<< HEAD
 		/* aggdirectargs and args will be set by transformAggregateCall */
 		/* aggorder and aggdistinct will be set by transformAggregateCall */
 		aggref->aggfilter = agg_filter;
 		aggref->aggstar = agg_star;
 		aggref->aggvariadic = func_variadic;
 		aggref->aggkind = aggkind;
-=======
-		/* args and aggorder will be modified by transformAggregateCall */
-		aggref->args = fargs;
-		aggref->aggorder = agg_order;
-		/* aggdistinct will be set by transformAggregateCall */
-		aggref->aggstar = agg_star;
->>>>>>> 78a09145e0
 		/* agglevelsup will be set by transformAggregateCall */
 		aggref->location = location;
 
@@ -730,14 +684,14 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("aggregates cannot return sets"),
 					 parser_errposition(pstate, location)));
 
-<<<<<<< HEAD
-		transformAggregateCall(pstate, aggref, fargs, agg_order, agg_distinct);
-=======
 		/*
-		 * Currently it's not possible to define an aggregate with named
-		 * arguments, so this case should be impossible.  Check anyway
-		 * because the planner and executor wouldn't cope with NamedArgExprs
-		 * in an Aggref node.
+		 * We might want to support named arguments later, but disallow it for
+		 * now.  We'd need to figure out the parsed representation (should the
+		 * NamedArgExprs go above or below the TargetEntry nodes?) and then
+		 * teach the planner to reorder the list properly.  Or maybe we could
+		 * make transformAggregateCall do that?  However, if you'd also like
+		 * to allow default arguments for aggregates, we'd need to do it in
+		 * planning to avoid semantic problems.
 		 */
 		if (argnames != NIL)
 			ereport(ERROR,
@@ -746,8 +700,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 parser_errposition(pstate, location)));
 
 		/* parse_agg.c does additional aggregate-specific processing */
-		transformAggregateCall(pstate, aggref, agg_distinct);
->>>>>>> 78a09145e0
+		transformAggregateCall(pstate, aggref, fargs, agg_order, agg_distinct);
 
 		retval = (Node *) aggref;
 	}
@@ -803,36 +756,13 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("FILTER is not implemented for non-aggregate window functions"),
 					 parser_errposition(pstate, location)));
 
-		/*
-		 * ordered aggs not allowed in windows yet
-		 */
-		if (agg_order != NIL)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("aggregate ORDER BY is not implemented for window functions"),
-					 parser_errposition(pstate, location)));
-
 		if (retset)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("window functions may not return sets"),
 					 parser_errposition(pstate, location)));
 
-<<<<<<< HEAD
-=======
-		/*
-		 * We might want to support this later, but for now reject it
-		 * because the planner and executor wouldn't cope with NamedArgExprs
-		 * in a WindowFunc node.
-		 */
-		if (argnames != NIL)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("window functions cannot use named arguments"),
-					 parser_errposition(pstate, location)));
-
 		/* parse_agg.c does additional window-func-specific processing */
->>>>>>> 78a09145e0
 		transformWindowFuncCall(pstate, wfunc, over);
 
 		retval = (Node *) wfunc;

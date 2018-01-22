@@ -48,15 +48,11 @@ static List *ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 					bool make_target_entry);
 static List *ExpandAllTables(ParseState *pstate, int location);
 static List *ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind,
-<<<<<<< HEAD
 					  bool make_target_entry, ParseExprKind exprKind);
-=======
-					  bool targetlist);
 static List *ExpandSingleTable(ParseState *pstate, RangeTblEntry *rte,
 							   int location, bool targetlist);
 static List *ExpandRowReference(ParseState *pstate, Node *expr,
 								bool targetlist);
->>>>>>> 78a09145e0
 static int	FigureColnameInternal(Node *node, char **name);
 
 
@@ -1107,7 +1103,7 @@ ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind,
 	expr = transformExpr(pstate, (Node *) ind, exprKind);
 
 	/* Expand the rowtype expression into individual fields */
-	return ExpandRowReference(pstate, expr, targetlist);
+	return ExpandRowReference(pstate, expr, make_target_entry);
 }
 
 /*
@@ -1170,7 +1166,7 @@ ExpandSingleTable(ParseState *pstate, RangeTblEntry *rte,
  */
 static List *
 ExpandRowReference(ParseState *pstate, Node *expr,
-				   bool targetlist)
+				   bool make_target_entry)
 {
 	List	   *result = NIL;
 	TupleDesc	tupleDesc;
@@ -1193,7 +1189,7 @@ ExpandRowReference(ParseState *pstate, Node *expr,
 		RangeTblEntry *rte;
 
 		rte = GetRTEByRangeTablePosn(pstate, var->varno, var->varlevelsup);
-		return ExpandSingleTable(pstate, rte, var->location, targetlist);
+		return ExpandSingleTable(pstate, rte, var->location, make_target_entry);
 	}
 
 	/*

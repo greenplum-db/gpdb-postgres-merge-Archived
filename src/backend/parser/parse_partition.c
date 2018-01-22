@@ -296,7 +296,7 @@ transformPartitionBy(ParseState *pstate, CreateStmtContext *cxt,
 
 				if (lookup_opclass)
 				{
-					typeid = column->typeName->typid;
+					typeid = column->typeName->typeOid;
 
 					if (!OidIsValid(typeid))
 					{
@@ -304,7 +304,7 @@ transformPartitionBy(ParseState *pstate, CreateStmtContext *cxt,
 
 						typeid = typenameTypeId(pstate, column->typeName, &typmod);
 
-						column->typeName->typid = typeid;
+						column->typeName->typeOid = typeid;
 						column->typeName->typemod = typmod;
 					}
 				}
@@ -2592,9 +2592,9 @@ preprocess_range_spec(partValidationState *vstate)
 			if (strcmp(column->colname, colname) == 0)
 			{
 				found = true;
-				if (!OidIsValid(column->typeName->typid))
+				if (!OidIsValid(column->typeName->typeOid))
 				{
-					column->typeName->typid =
+					column->typeName->typeOid =
 						typenameTypeId(vstate->pstate, column->typeName,
 									   &column->typeName->typemod);
 				}
@@ -2741,13 +2741,13 @@ preprocess_range_spec(partValidationState *vstate)
 						Oid			newrtypeId;
 
 						/* first, make sure we can build up an operator */
-						optup = oper(pstate, opname, typ->typid, rtypeId,
+						optup = oper(pstate, opname, typ->typeOid, rtypeId,
 									 true, -1);
 						if (!HeapTupleIsValid(optup))
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("could not identify operator for partitioning operation between type \"%s\" and type \"%s\"",
-											format_type_be(typ->typid),
+											format_type_be(typ->typeOid),
 											format_type_be(rtypeId)),
 									 errhint("Add an explicit cast to the partitioning parameters")));
 
@@ -4262,9 +4262,9 @@ validate_list_partition(partValidationState *vstate)
 			if (strcmp(column->colname, colname) == 0)
 			{
 				found = true;
-				if (!OidIsValid(column->typeName->typid))
+				if (!OidIsValid(column->typeName->typeOid))
 				{
-					column->typeName->typid
+					column->typeName->typeOid
 						= typenameTypeId(vstate->pstate, column->typeName,
 										 &column->typeName->typemod);
 				}
