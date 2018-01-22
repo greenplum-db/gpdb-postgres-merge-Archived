@@ -1349,19 +1349,8 @@ AlterRole(AlterRoleStmt *stmt)
 void
 AlterRoleSet(AlterRoleSetStmt *stmt)
 {
-<<<<<<< HEAD
-	char	   *valuestr;
-	HeapTuple	oldtuple,
-				newtuple;
-	Relation	rel;
-	Datum		repl_val[Natts_pg_authid];
-	bool		repl_null[Natts_pg_authid];
-	bool		repl_repl[Natts_pg_authid];
-	char	   *alter_subtype = "SET"; /* metadata tracking */
-=======
 	HeapTuple	roletuple;
 	Oid			databaseid = InvalidOid;
->>>>>>> 78a09145e0
 
 	roletuple = SearchSysCache(AUTHNAME,
 							   PointerGetDatum(stmt->role),
@@ -1401,87 +1390,6 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 	/* look up and lock the database, if specified */
 	if (stmt->database != NULL)
 	{
-<<<<<<< HEAD
-		ArrayType  *new = NULL;
-		Datum		datum;
-		bool		isnull;
-
-		alter_subtype = "RESET ALL";
-
-		/*
-		 * in RESET ALL, request GUC to reset the settings array; if none
-		 * left, we can set rolconfig to null; otherwise use the returned
-		 * array
-		 */
-		datum = SysCacheGetAttr(AUTHNAME, oldtuple,
-								Anum_pg_authid_rolconfig, &isnull);
-		if (!isnull)
-			new = GUCArrayReset(DatumGetArrayTypeP(datum));
-		if (new)
-		{
-			repl_val[Anum_pg_authid_rolconfig - 1] = PointerGetDatum(new);
-			repl_repl[Anum_pg_authid_rolconfig - 1] = true;
-			repl_null[Anum_pg_authid_rolconfig - 1] = false;
-		}
-		else
-		{
-			repl_null[Anum_pg_authid_rolconfig - 1] = true;
-			repl_val[Anum_pg_authid_rolconfig - 1] = (Datum) 0;
-		}
-	}
-	else
-	{
-		Datum		datum;
-		bool		isnull;
-		ArrayType  *array;
-
-		repl_null[Anum_pg_authid_rolconfig - 1] = false;
-
-		/* Extract old value of rolconfig */
-		datum = SysCacheGetAttr(AUTHNAME, oldtuple,
-								Anum_pg_authid_rolconfig, &isnull);
-		array = isnull ? NULL : DatumGetArrayTypeP(datum);
-
-		/* Update (valuestr is NULL in RESET cases) */
-		if (valuestr)
-			array = GUCArrayAdd(array, stmt->setstmt->name, valuestr);
-		else
-		{
-			alter_subtype = "RESET";
-			array = GUCArrayDelete(array, stmt->setstmt->name);
-		}
-
-		if (array)
-			repl_val[Anum_pg_authid_rolconfig - 1] = PointerGetDatum(array);
-		else
-			repl_null[Anum_pg_authid_rolconfig - 1] = true;
-	}
-
-	newtuple = heap_modify_tuple(oldtuple, RelationGetDescr(rel),
-								 repl_val, repl_null, repl_repl);
-
-	simple_heap_update(rel, &oldtuple->t_self, newtuple);
-	CatalogUpdateIndexes(rel, newtuple);
-
-	/* MPP-6929: metadata tracking */
-	if (Gp_role == GP_ROLE_DISPATCH)
-		MetaTrackUpdObject(AuthIdRelationId,
-						   HeapTupleGetOid(oldtuple),
-						   GetUserId(),
-						   "ALTER", alter_subtype);
-
-	ReleaseSysCache(oldtuple);
-	/* needn't keep lock since we won't be updating the flat file */
-	heap_close(rel, RowExclusiveLock);
-
-	if (Gp_role == GP_ROLE_DISPATCH)
-		CdbDispatchUtilityStatement((Node *) stmt,
-									DF_CANCEL_ON_ERROR|
-									DF_WITH_SNAPSHOT|
-									DF_NEED_TWO_PHASE,
-									NIL,
-									NULL);
-=======
 		databaseid = get_database_oid(stmt->database);
 		if (!OidIsValid(databaseid))
 			ereport(ERROR,
@@ -1492,7 +1400,6 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 
 	AlterSetting(databaseid, HeapTupleGetOid(roletuple), stmt->setstmt);
 	ReleaseSysCache(roletuple);
->>>>>>> 78a09145e0
 }
 
 
@@ -1671,12 +1578,6 @@ DropRole(DropRoleStmt *stmt)
 	 */
 	heap_close(pg_auth_members_rel, NoLock);
 	heap_close(pg_authid_rel, NoLock);
-<<<<<<< HEAD
-
-	/*
-	 * Set flag to update flat auth file at commit.
-	 */
-	auth_file_update_needed();
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -1688,8 +1589,6 @@ DropRole(DropRoleStmt *stmt)
 									NULL);
 
 	}
-=======
->>>>>>> 78a09145e0
 }
 
 /*
@@ -1806,12 +1705,6 @@ RenameRole(const char *oldname, const char *newname)
 	 * Close pg_authid, but keep lock till commit.
 	 */
 	heap_close(rel, NoLock);
-<<<<<<< HEAD
-
-	/*
-	 * Set flag to update flat auth file at commit.
-	 */
-	auth_file_update_needed();
 
 	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH)
@@ -1820,9 +1713,6 @@ RenameRole(const char *oldname, const char *newname)
 						   GetUserId(),
 						   "ALTER", "RENAME"
 				);
-
-=======
->>>>>>> 78a09145e0
 }
 
 /*
@@ -1892,12 +1782,6 @@ GrantRole(GrantRoleStmt *stmt)
 	 * Close pg_authid, but keep lock till commit.
 	 */
 	heap_close(pg_authid_rel, NoLock);
-<<<<<<< HEAD
-
-	/*
-	 * Set flag to update flat auth file at commit.
-	 */
-	auth_file_update_needed();
 
     if (Gp_role == GP_ROLE_DISPATCH)
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -1906,9 +1790,6 @@ GrantRole(GrantRoleStmt *stmt)
 									DF_NEED_TWO_PHASE,
 									NIL,
 									NULL);
-
-=======
->>>>>>> 78a09145e0
 }
 
 /*

@@ -20,6 +20,14 @@
 #include "utils/rel.h"
 #include "utils/tqual.h"
 
+#include "catalog/heap.h"
+#include "catalog/pg_authid.h"
+#include "catalog/pg_database.h"
+#include "cdb/cdbdisp_query.h"
+#include "cdb/cdbvars.h"
+#include "utils/builtins.h"
+#include "utils/syscache.h"
+
 void
 AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 {
@@ -49,18 +57,53 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 	/*
 	 * There are three cases:
 	 *
-	 * - in RESET ALL, simply delete the pg_db_role_setting tuple (if any)
+	 * - in RESET ALL, request GUC to reset the settings array and update the
+	 * catalog if there's anything left, delete it otherwise
 	 *
-	 * - in other commands, if there's a tuple in pg_db_role_setting, update it;
-	 *   if it ends up empty, delete it
+	 * - in other commands, if there's a tuple in pg_db_role_setting, update
+	 * it; if it ends up empty, delete it
 	 *
 	 * - otherwise, insert a new pg_db_role_setting tuple, but only if the
-	 *   command is not RESET
+	 * command is not RESET
 	 */
 	if (setstmt->kind == VAR_RESET_ALL)
 	{
 		if (HeapTupleIsValid(tuple))
-			simple_heap_delete(rel, &tuple->t_self);
+		{
+			ArrayType  *new = NULL;
+			Datum		datum;
+			bool		isnull;
+
+			datum = heap_getattr(tuple, Anum_pg_db_role_setting_setconfig,
+								 RelationGetDescr(rel), &isnull);
+
+			if (!isnull)
+				new = GUCArrayReset(DatumGetArrayTypeP(datum));
+
+			if (new)
+			{
+				Datum		repl_val[Natts_pg_db_role_setting];
+				bool		repl_null[Natts_pg_db_role_setting];
+				bool		repl_repl[Natts_pg_db_role_setting];
+				HeapTuple	newtuple;
+
+				memset(repl_repl, false, sizeof(repl_repl));
+
+				repl_val[Anum_pg_db_role_setting_setconfig - 1] =
+					PointerGetDatum(new);
+				repl_repl[Anum_pg_db_role_setting_setconfig - 1] = true;
+				repl_null[Anum_pg_db_role_setting_setconfig - 1] = false;
+
+				newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
+											 repl_val, repl_null, repl_repl);
+				simple_heap_update(rel, &tuple->t_self, newtuple);
+
+				/* Update indexes */
+				CatalogUpdateIndexes(rel, newtuple);
+			}
+			else
+				simple_heap_delete(rel, &tuple->t_self);
+		}
 	}
 	else if (HeapTupleIsValid(tuple))
 	{
@@ -111,7 +154,7 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 		ArrayType  *a;
 
 		memset(nulls, false, sizeof(nulls));
-		
+
 		a = GUCArrayAdd(NULL, setstmt->name, valuestr);
 
 		values[Anum_pg_db_role_setting_setdatabase - 1] =
@@ -127,6 +170,115 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 	}
 
 	systable_endscan(scan);
+
+	/* MPP-6929: metadata tracking */
+	/* GPDB_90_MERGE_FIXME: What should we report for database-role-combinations? */
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		char	   *alter_subtype;
+
+		if (setstmt->kind == VAR_RESET_ALL)
+			alter_subtype = "RESET ALL";
+		else if (setstmt->kind == VAR_RESET)
+			alter_subtype = "RESET";
+		else
+			alter_subtype = "SET";
+		MetaTrackUpdObject(DatabaseRelationId,
+						   databaseid,
+						   GetUserId(),
+						   "ALTER", alter_subtype);
+	}
+
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		StringInfoData buffer;
+		char	   *rolename;
+		char	   *dbname;
+		HeapTuple	htup;
+
+		if (roleid)
+		{
+			htup = SearchSysCache1(AUTHOID, roleid);
+			if (!HeapTupleIsValid(htup))
+				elog(ERROR, "cache lookup failed for role %u", roleid);
+			rolename = pstrdup(NameStr(((Form_pg_authid) GETSTRUCT(htup))->rolname));
+			ReleaseSysCache(htup);
+		}
+		else
+			rolename = NULL;
+
+		if (databaseid)
+		{
+			htup = SearchSysCache1(DATABASEOID, databaseid);
+			if (!htup)
+				elog(ERROR, "cache lookup failed for database %u", databaseid);
+			dbname = pstrdup(NameStr(((Form_pg_database) GETSTRUCT(htup))->datname));
+			ReleaseSysCache(htup);
+		}
+		else
+			dbname = NULL;
+
+		initStringInfo(&buffer);
+
+		if (databaseid && roleid)
+			appendStringInfo(&buffer, "ALTER ROLE %s IN DATABASE %s ",
+							 quote_identifier(dbname), quote_identifier(rolename));
+		else if (roleid)
+			appendStringInfo(&buffer, "ALTER ROLE %s ",
+							 quote_identifier(rolename));
+		else if (databaseid)
+			appendStringInfo(&buffer, "ALTER DATABASE %s ",
+							 quote_identifier(dbname));
+		else
+			elog(ERROR, "ALTER without DATABASE or ROLE"); /* shouldn't happen */
+
+		if (setstmt->kind ==  VAR_RESET_ALL)
+			appendStringInfo(&buffer, "RESET ALL");
+		else if (valuestr == NULL)
+			appendStringInfo(&buffer, "RESET %s", quote_identifier(setstmt->name));
+		else
+		{
+			ListCell   *l;
+			bool		first;
+
+			appendStringInfo(&buffer, "SET %s TO ", quote_identifier(setstmt->name));
+
+			/* Parse string into list of identifiers */
+			first = true;
+			foreach(l, setstmt->args)
+			{
+				A_Const	   *arg = (A_Const *) lfirst(l);
+
+				if (!first)
+					appendStringInfo(&buffer, ",");
+				first = false;
+
+				switch (nodeTag(&arg->val))
+				{
+					case T_Integer:
+						appendStringInfo(&buffer, "%ld", intVal(&arg->val));
+						break;
+					case T_Float:
+						/* represented as a string, so just copy it */
+						appendStringInfoString(&buffer, strVal(&arg->val));
+						break;
+					case T_String:
+						appendStringInfoString(&buffer, quote_literal_internal(strVal(&arg->val)));
+						break;
+					default:
+						elog(ERROR, "unexpected constant type: %d", nodeTag(&arg->val));
+				}
+			}
+		}
+
+		CdbDispatchCommand(buffer.data,
+						   DF_CANCEL_ON_ERROR|
+						   DF_NEED_TWO_PHASE|
+						   DF_WITH_SNAPSHOT,
+						   NULL);
+
+		pfree(buffer.data);
+	}
 
 	/* Close pg_db_role_setting, but keep lock till commit */
 	heap_close(rel, NoLock);

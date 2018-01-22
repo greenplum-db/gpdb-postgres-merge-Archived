@@ -1558,23 +1558,7 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 void
 AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 {
-<<<<<<< HEAD
-	char	   *valuestr;
-	HeapTuple	tuple,
-				newtuple;
-	Relation	rel;
-	ScanKeyData scankey;
-	SysScanDesc scan;
-	Datum		repl_val[Natts_pg_database];
-	bool		repl_null[Natts_pg_database];
-	bool		repl_repl[Natts_pg_database];
-	Oid			dboid = InvalidOid;
-	char	   *alter_subtype = "SET"; /* metadata tracking */
-
-	valuestr = ExtractSetVariableArgs(stmt->setstmt);
-=======
-	Oid		datid = get_database_oid(stmt->dbname);
->>>>>>> 78a09145e0
+	Oid			datid = get_database_oid(stmt->dbname, false);
 
 	if (!OidIsValid(datid))
   		ereport(ERROR,
@@ -1585,164 +1569,6 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	 * Obtain a lock on the database and make sure it didn't go away in the
 	 * meantime.
 	 */
-<<<<<<< HEAD
-	rel = heap_open(DatabaseRelationId, RowExclusiveLock);
-	ScanKeyInit(&scankey,
-				Anum_pg_database_datname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(stmt->dbname));
-	scan = systable_beginscan(rel, DatabaseNameIndexId, true,
-							  SnapshotNow, 1, &scankey);
-	tuple = systable_getnext(scan);
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				 errmsg("database \"%s\" does not exist", stmt->dbname)));
-
-	dboid = HeapTupleGetOid(tuple);
-
-	if (!pg_database_ownercheck(dboid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
-					   stmt->dbname);
-
-	memset(repl_repl, false, sizeof(repl_repl));
-	repl_repl[Anum_pg_database_datconfig - 1] = true;
-
-	if (stmt->setstmt->kind == VAR_RESET_ALL)
-	{
-		ArrayType  *new = NULL;
-		Datum		datum;
-		bool		isnull;
-
-		alter_subtype = "RESET ALL";
-
-		/*
-		 * in RESET ALL, request GUC to reset the settings array; if none
-		 * left, we can set datconfig to null; otherwise use the returned
-		 * array
-		 */
-		datum = heap_getattr(tuple, Anum_pg_database_datconfig,
-							 RelationGetDescr(rel), &isnull);
-		if (!isnull)
-			new = GUCArrayReset(DatumGetArrayTypeP(datum));
-		if (new)
-		{
-			repl_val[Anum_pg_database_datconfig - 1] = PointerGetDatum(new);
-			repl_repl[Anum_pg_database_datconfig - 1] = true;
-			repl_null[Anum_pg_database_datconfig - 1] = false;
-		}
-		else
-		{
-			repl_null[Anum_pg_database_datconfig - 1] = true;
-			repl_val[Anum_pg_database_datconfig - 1] = (Datum) 0;
-		}
-	}
-	else
-	{
-		Datum		datum;
-		bool		isnull;
-		ArrayType  *a;
-
-		repl_null[Anum_pg_database_datconfig - 1] = false;
-
-		/* Extract old value of datconfig */
-		datum = heap_getattr(tuple, Anum_pg_database_datconfig,
-							 RelationGetDescr(rel), &isnull);
-		a = isnull ? NULL : DatumGetArrayTypeP(datum);
-
-		/* Update (valuestr is NULL in RESET cases) */
-		if (valuestr)
-			a = GUCArrayAdd(a, stmt->setstmt->name, valuestr);
-		else
-		{
-			alter_subtype = "RESET";
-			a = GUCArrayDelete(a, stmt->setstmt->name);
-		}
-		if (a)
-			repl_val[Anum_pg_database_datconfig - 1] = PointerGetDatum(a);
-		else
-			repl_null[Anum_pg_database_datconfig - 1] = true;
-	}
-
-	newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
-								 repl_val, repl_null, repl_repl);
-	simple_heap_update(rel, &tuple->t_self, newtuple);
-
-	/* Update indexes */
-	CatalogUpdateIndexes(rel, newtuple);
-
-	systable_endscan(scan);
-
-	/* MPP-6929: metadata tracking */
-	if (Gp_role == GP_ROLE_DISPATCH)
-		MetaTrackUpdObject(DatabaseRelationId,
-						   dboid,
-						   GetUserId(),
-						   "ALTER", alter_subtype);
-
-	/* Close pg_database, but keep lock till commit */
-	heap_close(rel, NoLock);
-	
-	if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		StringInfoData buffer;
-
-		initStringInfo(&buffer);
-
-		appendStringInfo(&buffer, "ALTER DATABASE %s ", quote_identifier(stmt->dbname));
-
-		if (stmt->setstmt->kind ==  VAR_RESET_ALL)
-			appendStringInfo(&buffer, "RESET ALL");
-		else if (valuestr == NULL)
-			appendStringInfo(&buffer, "RESET %s", quote_identifier(stmt->setstmt->name));
-		else
-		{
-			ListCell   *l;
-			bool		first;
-
-			appendStringInfo(&buffer, "SET %s TO ", quote_identifier(stmt->setstmt->name));
-
-			/* Parse string into list of identifiers */
-			first = true;
-			foreach(l, stmt->setstmt->args)
-			{
-				A_Const    *arg = (A_Const *) lfirst(l);
-
-				if (!first)
-					appendStringInfo(&buffer, ",");
-				first = false;
-
-				switch (nodeTag(&arg->val))
-				{
-					case T_Integer:
-						appendStringInfo(&buffer, "%ld", intVal(&arg->val));
-						break;
-					case T_Float:
-						/* represented as a string, so just copy it */
-						appendStringInfoString(&buffer, strVal(&arg->val));
-						break;
-					case T_String:
-						appendStringInfoString(&buffer, quote_literal_internal(strVal(&arg->val)));
-						break;
-					default:
-						elog(ERROR, "unexpected constant type: %d", nodeTag(&arg->val));
-				}
-			}
-		}
-
-		CdbDispatchCommand(buffer.data,
-							DF_NEED_TWO_PHASE|
-							DF_WITH_SNAPSHOT,
-							NULL);
-
-		pfree(buffer.data);
-	}
-
-	/*
-	 * We don't bother updating the flat file since ALTER DATABASE SET doesn't
-	 * affect it.
-	 */
-=======
 	shdepLockAndCheckObject(DatabaseRelationId, datid);
 
 	if (!pg_database_ownercheck(datid, GetUserId()))
@@ -1752,7 +1578,6 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	AlterSetting(datid, InvalidOid, stmt->setstmt);
   
 	UnlockSharedObject(DatabaseRelationId, datid, 0, AccessShareLock);
->>>>>>> 78a09145e0
 }
 
 
