@@ -1130,13 +1130,6 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 }
 <<<<<<< HEAD
 
-int
-ExecCountSlotsIndexScan(IndexScan *node)
-{
-	return ExecCountSlotsNode(outerPlan((Plan *) node)) +
-		ExecCountSlotsNode(innerPlan((Plan *) node)) + INDEXSCAN_NSLOTS;
-}
-
 void
 ExecEagerFreeIndexScan(IndexScanState *node)
 {

@@ -2637,34 +2637,6 @@ GetAggInitVal(Datum textInitVal, Oid transtype)
 	return initVal;
 }
 
-<<<<<<< HEAD
-/*
- * Standard API to count tuple table slots used by an execution
- * instance of an Agg node.
- *
- * GPDB precomputes tuple table size, but use of projection means
- * aggregates use a slot.  Since the count is needed earlier, we
- * than the determination of then number of different aggregate
- * call that happens during initializaiton, we just count Aggref
- * nodes.  This may be an over count (in case some aggregate
- * calls are duplicated), but shouldn't be too bad.
- */
-int
-ExecCountSlotsAgg(Agg *node)
-{
-	int			nextraslots = 0;
-
-	nextraslots += count_extra_agg_slots((Node *) node->plan.targetlist);
-	nextraslots += count_extra_agg_slots((Node *) node->plan.qual);
-
-	return ExecCountSlotsNode(outerPlan(node)) +
-		ExecCountSlotsNode(innerPlan(node)) +
-		nextraslots +			/* may be high due to duplicate Aggref nodes. */
-		AGG_NSLOTS;
-}
-
-=======
->>>>>>> 78a09145e0
 void
 ExecEndAgg(AggState *node)
 {

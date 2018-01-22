@@ -213,12 +213,4 @@ ExecEndDML(DMLState *node)
 	ExecEndNode(outerPlanState(node));
 	EndPlanStateGpmonPkt(&node->ps);
 }
-
-/* Return number of TupleTableSlots used by nodeDML.*/
-int
-ExecCountSlotsDML(DML *node)
-{
-	return ExecCountSlotsNode(outerPlan(node)) + DML_NSLOTS;
-}
-
 /* EOF */

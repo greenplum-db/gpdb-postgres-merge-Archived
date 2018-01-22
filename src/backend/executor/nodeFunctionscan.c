@@ -277,14 +277,6 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 }
 
 <<<<<<< HEAD
-int
-ExecCountSlotsFunctionScan(FunctionScan *node)
-{
-	return ExecCountSlotsNode(outerPlan(node)) +
-		ExecCountSlotsNode(innerPlan(node)) +
-		FUNCTIONSCAN_NSLOTS;
-}
-
 /*
  * ExecFunctionScanExplainEnd
  *      Called before ExecutorEnd to finish EXPLAIN ANALYZE reporting.

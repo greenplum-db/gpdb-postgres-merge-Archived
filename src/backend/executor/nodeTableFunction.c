@@ -447,12 +447,6 @@ ExecInitTableFunction(TableFunctionScan *node, EState *estate, int eflags)
 	return scanstate;
 }
 
-int
-ExecCountSlotsTableFunction(TableFunctionScan *node)
-{
-	return ExecCountSlotsNode(outerPlan(node)) + 2;
-}
-
 void
 ExecEndTableFunction(TableFunctionState *node)
 {

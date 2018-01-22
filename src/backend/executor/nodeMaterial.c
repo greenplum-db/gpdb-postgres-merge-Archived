@@ -380,15 +380,6 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 }
 
 <<<<<<< HEAD
-int
-ExecCountSlotsMaterial(Material *node)
-{
-	return ExecCountSlotsNode(outerPlan((Plan *) node)) +
-		ExecCountSlotsNode(innerPlan((Plan *) node)) +
-		MATERIAL_NSLOTS;
-}
-
-
 /*
  * ExecMaterialExplainEnd
  *      Called before ExecutorEnd to finish EXPLAIN ANALYZE reporting.

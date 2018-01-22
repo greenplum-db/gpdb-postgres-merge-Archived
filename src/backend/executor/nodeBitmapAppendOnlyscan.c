@@ -661,13 +661,6 @@ ExecInitBitmapAppendOnlyScan(BitmapAppendOnlyScan *node, EState *estate, int efl
 	return scanstate;
 }
 
-int
-ExecCountSlotsBitmapAppendOnlyScan(BitmapAppendOnlyScan *node)
-{
-	return ExecCountSlotsNode(outerPlan((Plan *) node)) +
-		ExecCountSlotsNode(innerPlan((Plan *) node)) + BITMAPAPPENDONLYSCAN_NSLOTS;
-}
-
 void
 ExecEagerFreeBitmapAppendOnlyScan(BitmapAppendOnlyScanState *node)
 {

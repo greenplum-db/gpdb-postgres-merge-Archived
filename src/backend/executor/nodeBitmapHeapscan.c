@@ -731,13 +731,6 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 }
 <<<<<<< HEAD
 
-int
-ExecCountSlotsBitmapHeapScan(BitmapHeapScan *node)
-{
-	return ExecCountSlotsNode(outerPlan((Plan *) node)) +
-		ExecCountSlotsNode(innerPlan((Plan *) node)) + BITMAPHEAPSCAN_NSLOTS;
-}
-
 void
 ExecEagerFreeBitmapHeapScan(BitmapHeapScanState *node)
 {

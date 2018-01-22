@@ -217,13 +217,6 @@ ExecEndSplitUpdate(SplitUpdateState *node)
 	EndPlanStateGpmonPkt(&node->ps);
 }
 
-/* Return number of TupleTableSlots used by SplitUpdate node.*/
-int
-ExecCountSlotsSplitUpdate(SplitUpdate *node)
-{
-	return ExecCountSlotsNode(outerPlan(node)) + SPLITUPDATE_NSLOTS;
-}
-
 /* Tracing execution for GP Monitor. */
 void
 initGpmonPktForSplitUpdate(Plan *planNode, gpmon_packet_t *gpmon_pkt, EState *estate)

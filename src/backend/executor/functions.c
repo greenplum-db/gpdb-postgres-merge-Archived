@@ -548,7 +548,6 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 								 fcache->src,
 								 snapshot, InvalidSnapshot,
 								 dest,
-<<<<<<< HEAD
 								 fcache->paramLI, false);
 
 		if (gp_enable_gpperfmon 
@@ -571,9 +570,6 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 			es->qd->gpmon_pkt = NULL;
 		}
 	}
-=======
-								 fcache->paramLI, 0);
->>>>>>> 78a09145e0
 	else
 		es->qd = CreateUtilityQueryDesc(es->stmt,
 										fcache->src,

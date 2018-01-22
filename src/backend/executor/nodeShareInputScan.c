@@ -303,18 +303,6 @@ ExecSliceDependencyShareInputScan(ShareInputScanState *node)
 }
 
 /* ------------------------------------------------------------------
- * 	ExecCountSlotsShareInputScan 
- * ------------------------------------------------------------------
- */
-int 
-ExecCountSlotsShareInputScan(ShareInputScan* node)
-{
-#define SHAREINPUT_NSLOTS 2
-	return ExecCountSlotsNode(outerPlan((Plan *) node)) 
-		+ SHAREINPUT_NSLOTS;
-}
-
-/* ------------------------------------------------------------------
  * 	ExecEndShareInputScan
  * ------------------------------------------------------------------
  */

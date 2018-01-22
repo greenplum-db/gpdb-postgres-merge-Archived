@@ -281,15 +281,6 @@ ExecInitExternalScan(ExternalScan *node, EState *estate, int eflags)
 	return externalstate;
 }
 
-
-int
-ExecCountSlotsExternalScan(ExternalScan *node)
-{
-	return ExecCountSlotsNode(outerPlan(node)) +
-	ExecCountSlotsNode(innerPlan(node)) +
-	EXTSCAN_NSLOTS;
-}
-
 /* ----------------------------------------------------------------
 *		ExecEndExternalScan
 *
