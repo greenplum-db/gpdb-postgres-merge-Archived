@@ -82,16 +82,11 @@ extern int	FilePrefetch(File file, off_t offset, int amount);
 extern int	FileRead(File file, char *buffer, int amount);
 extern int	FileWrite(File file, char *buffer, int amount);
 extern int	FileSync(File file);
-<<<<<<< HEAD
 extern int64 FileSeek(File file, int64 offset, int whence);
 extern int64 FileNonVirtualCurSeek(File file);
 extern int	FileTruncate(File file, int64 offset);
-extern int64 FileDiskSize(File file);
-=======
-extern off_t FileSeek(File file, off_t offset, int whence);
-extern int	FileTruncate(File file, off_t offset);
 extern char *FilePathName(File file);
->>>>>>> 78a09145e0
+extern int64 FileDiskSize(File file);
 
 /* Operations that allow use of regular stdio --- USE WITH CAUTION */
 extern FILE *AllocateFile(const char *name, const char *mode);

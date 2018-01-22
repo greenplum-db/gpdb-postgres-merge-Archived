@@ -203,7 +203,26 @@ appendStringInfoChar(StringInfo str, char ch)
 }
 
 /*
-<<<<<<< HEAD
+ * appendStringInfoSpaces
+ *
+ * Append the specified number of spaces to a buffer.
+ */
+void
+appendStringInfoSpaces(StringInfo str, int count)
+{
+	if (count > 0)
+	{
+		/* Make more room if needed */
+		enlargeStringInfo(str, count);
+
+		/* OK, append the spaces */
+		while (--count >= 0)
+			str->data[str->len++] = ' ';
+		str->data[str->len] = '\0';
+	}
+}
+
+/*
  * appendStringInfoFill
  *
  * Append a single byte, repeated 0 or more times, to str.
@@ -223,25 +242,6 @@ appendStringInfoFill(StringInfo str, int occurrences, char ch)
     memset(str->data + str->len, ch, occurrences);
     str->len += occurrences;
     str->data[str->len] = '\0';
-=======
- * appendStringInfoSpaces
- *
- * Append the specified number of spaces to a buffer.
- */
-void
-appendStringInfoSpaces(StringInfo str, int count)
-{
-	if (count > 0)
-	{
-		/* Make more room if needed */
-		enlargeStringInfo(str, count);
-
-		/* OK, append the spaces */
-		while (--count >= 0)
-			str->data[str->len++] = ' ';
-		str->data[str->len] = '\0';
-	}
->>>>>>> 78a09145e0
 }
 
 /*

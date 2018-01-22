@@ -134,17 +134,16 @@ extern void appendStringInfoChar(StringInfo str, char ch);
 	 (void)((str)->data[(str)->len] = (ch), (str)->data[++(str)->len] = '\0'))
 
 /*------------------------
-<<<<<<< HEAD
- * appendStringInfoFill
- * Append a single byte, repeated 0 or more times, to str.
- */
-extern void appendStringInfoFill(StringInfo str, int occurrences, char ch);
-=======
  * appendStringInfoSpaces
  * Append a given number of spaces to str.
  */
 extern void appendStringInfoSpaces(StringInfo str, int count);
->>>>>>> 78a09145e0
+
+/*------------------------
+ * appendStringInfoFill
+ * Append a single byte, repeated 0 or more times, to str.
+ */
+extern void appendStringInfoFill(StringInfo str, int occurrences, char ch);
 
 /*------------------------
  * appendBinaryStringInfo
