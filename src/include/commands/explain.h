@@ -31,12 +31,19 @@ typedef struct ExplainState
 	bool		analyze;		/* print actual times */
 	bool		costs;			/* print costs */
 	bool		buffers;		/* print buffer usage */
+	bool		dxl;			/* CDB: print DXL */
 	ExplainFormat format;		/* output format */
 	/* other states */
 	PlannedStmt *pstmt;			/* top of plan */
 	List	   *rtable;			/* range table */
 	int			indent;			/* current indentation level */
 	List	   *grouping_stack;	/* format-specific grouping state */
+
+    /* CDB */
+    struct CdbExplain_ShowStatCtx  *showstatctx;    /* EXPLAIN ANALYZE info */
+    Slice          *currentSlice;   /* slice whose nodes we are visiting */
+
+	Plan	   *parentPlan;
 } ExplainState;
 
 /* Hook for plugins to get control in ExplainOneQuery() */
