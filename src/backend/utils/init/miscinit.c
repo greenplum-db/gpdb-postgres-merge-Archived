@@ -44,12 +44,9 @@
 #include "storage/procarray.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
-<<<<<<< HEAD
+#include "utils/memutils.h"
 #include "utils/resgroup.h"
 #include "utils/resscheduler.h"
-=======
-#include "utils/memutils.h"
->>>>>>> 78a09145e0
 #include "utils/syscache.h"
 
 
@@ -138,26 +135,9 @@ ResetReindexProcessing(void)
 void
 SetDatabasePath(const char *path)
 {
-<<<<<<< HEAD
-	if (DatabasePath)
-	{
-		free(DatabasePath);
-		DatabasePath = NULL;
-	}
-	/* use strdup since this is done before memory contexts are set up */
-	if (path)
-	{
-		DatabasePath = strdup(path);
-		if(!DatabasePath)
-			ereport(ERROR, (errcode(ERRCODE_OUT_OF_MEMORY),
-					errmsg("Set database path failed: out of memory")));
-		AssertState(DatabasePath);
-	}
-=======
 	/* This should happen only once per process */
 	Assert(!DatabasePath);
 	DatabasePath = MemoryContextStrdup(TopMemoryContext, path);
->>>>>>> 78a09145e0
 }
 
 /*
@@ -381,7 +361,6 @@ IsAuthenticatedUserSuperUser()
 }
 
 /*
-<<<<<<< HEAD
  * GetAuthenticatedUserId
  */
 Oid
@@ -413,29 +392,6 @@ GetAuthenticatedUserId(void)
  * where the called functions are really supposed to be side-effect-free
  * anyway, such as VACUUM/ANALYZE/REINDEX.
  *
-=======
- * GetUserIdAndSecContext/SetUserIdAndSecContext - get/set the current user ID
- * and the SecurityRestrictionContext flags.
- *
- * Currently there are two valid bits in SecurityRestrictionContext:
- *
- * SECURITY_LOCAL_USERID_CHANGE indicates that we are inside an operation
- * that is temporarily changing CurrentUserId via these functions.  This is
- * needed to indicate that the actual value of CurrentUserId is not in sync
- * with guc.c's internal state, so SET ROLE has to be disallowed.
- *
- * SECURITY_RESTRICTED_OPERATION indicates that we are inside an operation
- * that does not wish to trust called user-defined functions at all.  This
- * bit prevents not only SET ROLE, but various other changes of session state
- * that normally is unprotected but might possibly be used to subvert the
- * calling session later.  An example is replacing an existing prepared
- * statement with new code, which will then be executed with the outer
- * session's permissions when the prepared statement is next used.  Since
- * these restrictions are fairly draconian, we apply them only in contexts
- * where the called functions are really supposed to be side-effect-free
- * anyway, such as VACUUM/ANALYZE/REINDEX.
- *
->>>>>>> 78a09145e0
  * Unlike GetUserId, GetUserIdAndSecContext does *not* Assert that the current
  * value of CurrentUserId is valid; nor does SetUserIdAndSecContext require
  * the new value to be valid.  In fact, these routines had better not
