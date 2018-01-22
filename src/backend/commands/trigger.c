@@ -30,11 +30,8 @@
 #include "executor/executor.h"
 #include "executor/instrument.h"
 #include "miscadmin.h"
-<<<<<<< HEAD
 #include "nodes/execnodes.h"
-=======
 #include "nodes/bitmapset.h"
->>>>>>> 78a09145e0
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
@@ -75,25 +72,15 @@ static HeapTuple GetTupleForTrigger(EState *estate,
 				   ResultRelInfo *relinfo,
 				   ItemPointer tid,
 				   TupleTableSlot **newSlot);
-<<<<<<< HEAD
-
-static void AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event,
-					  bool row_trigger, HeapTuple oldtup, HeapTuple newtup);
-=======
 static bool TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
 			   Trigger *trigger, TriggerEvent event,
 			   Bitmapset *modifiedCols,
 			   HeapTuple oldtup, HeapTuple newtup);
-static HeapTuple ExecCallTriggerFunc(TriggerData *trigdata,
-					int tgindx,
-					FmgrInfo *finfo,
-					Instrumentation *instr,
-					MemoryContext per_tuple_context);
+
 static void AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 					  int event, bool row_trigger,
 					  HeapTuple oldtup, HeapTuple newtup,
 					  List *recheckIndexes, Bitmapset *modifiedCols);
->>>>>>> 78a09145e0
 
 
 /*
@@ -235,6 +222,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		/* Transform expression.  Copy to be sure we don't modify original */
 		whenClause = transformWhereClause(pstate,
 										  copyObject(stmt->whenClause),
+										  EXPR_KIND_TRIGGER_WHEN,
 										  "WHEN");
 
 		/*
@@ -260,7 +248,9 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		 * subselects in WHEN clauses; it would fail to examine the contents
 		 * of subselects.
 		 */
-		varList = pull_var_clause(whenClause, PVC_REJECT_PLACEHOLDERS);
+		varList = pull_var_clause(whenClause,
+								  PVC_REJECT_AGGREGATES,
+								  PVC_REJECT_PLACEHOLDERS);
 		foreach(lc, varList)
 		{
 			Var		   *var = (Var *) lfirst(lc);
@@ -2042,18 +2032,13 @@ ExecARInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 
 	if (trigdesc && trigdesc->n_after_row[TRIGGER_EVENT_INSERT] > 0)
-<<<<<<< HEAD
 	{
 		if(RelationIsAoCols(relinfo->ri_RelationDesc))
 			elog(ERROR, "Trigger is not supported on AOCS yet");
 
-		AfterTriggerSaveEvent(relinfo, TRIGGER_EVENT_INSERT,
-							  true, NULL, trigtuple);
-	}
-=======
 		AfterTriggerSaveEvent(estate, relinfo, TRIGGER_EVENT_INSERT,
 							  true, NULL, trigtuple, recheckIndexes, NULL);
->>>>>>> 78a09145e0
+	}
 }
 
 void
@@ -2267,16 +2252,10 @@ ExecASUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 							  GetModifiedColumns(relinfo, estate));
 }
 
-<<<<<<< HEAD
 TupleTableSlot *
-ExecBRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
-					 ItemPointer tupleid, TupleTableSlot *slot)
-=======
-HeapTuple
 ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 					 ResultRelInfo *relinfo,
-					 ItemPointer tupleid, HeapTuple newtuple)
->>>>>>> 78a09145e0
+					 ItemPointer tupleid, TupleTableSlot *slot)
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 	int			ntrigs = trigdesc->n_before_row[TRIGGER_EVENT_UPDATE];
@@ -2296,7 +2275,6 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 		return NULL;
 
 	/*
-<<<<<<< HEAD
 	 * In READ COMMITTED isolation level it's possible that target tuple was
 	 * changed due to concurrent update.  In that case we have a raw subplan
 	 * output tuple in newSlot, and need to run it through the junk filter to
@@ -2313,16 +2291,8 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 		slottuple = ExecFetchSlotHeapTuple(slot);
 		newtuple = slottuple;
 	}
-=======
-	 * In READ COMMITTED isolation level it's possible that newtuple was
-	 * changed due to concurrent update.  In that case we have a raw subplan
-	 * output tuple and need to run it through the junk filter.
-	 */
-	if (newSlot != NULL)
-		intuple = newtuple = ExecRemoveJunk(relinfo->ri_junkFilter, newSlot);
 
 	modifiedCols = GetModifiedColumns(relinfo, estate);
->>>>>>> 78a09145e0
 
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_UPDATE |
@@ -2700,7 +2670,7 @@ TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
 			oldslot = estate->es_trig_oldtup_slot;
 			if (oldslot->tts_tupleDescriptor != tupdesc)
 				ExecSetSlotDescriptor(oldslot, tupdesc);
-			ExecStoreTuple(oldtup, oldslot, InvalidBuffer, false);
+			ExecStoreHeapTuple(oldtup, oldslot, InvalidBuffer, false);
 		}
 		if (HeapTupleIsValid(newtup))
 		{
@@ -2713,7 +2683,7 @@ TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
 			newslot = estate->es_trig_tuple_slot;
 			if (newslot->tts_tupleDescriptor != tupdesc)
 				ExecSetSlotDescriptor(newslot, tupdesc);
-			ExecStoreTuple(newtup, newslot, InvalidBuffer, false);
+			ExecStoreHeapTuple(newtup, newslot, InvalidBuffer, false);
 		}
 
 		/*

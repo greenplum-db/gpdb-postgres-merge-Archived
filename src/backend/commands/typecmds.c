@@ -587,17 +587,13 @@ DefineType(List *names, List *parameters)
 	 * now have TypeCreate do all the real work.
 	 */
 	typoid =
-<<<<<<< HEAD
-		TypeCreateWithOptions(InvalidOid,	/* no predetermined type OID */
-=======
 		/*
 		 *	The pg_type.oid is stored in user tables as array elements
 		 *	(base types) in ArrayType and in composite types in
 		 *	DatumTupleFields.  This oid must be preserved by binary
 		 *	upgrades.
 		 */
-		TypeCreate(InvalidOid,	/* no predetermined type OID */
->>>>>>> 78a09145e0
+		TypeCreateWithOptions(InvalidOid,	/* no predetermined type OID */
 				   typeName,	/* type name */
 				   typeNamespace,		/* namespace */
 				   InvalidOid,	/* relation oid (n/a here) */

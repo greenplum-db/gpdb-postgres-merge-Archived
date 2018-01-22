@@ -59,7 +59,6 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	bool		shouldDispatch = (Gp_role == GP_ROLE_DISPATCH && 
 								  !IsBootstrapProcessingMode());
 
-<<<<<<< HEAD
 	/*
 	 * GPDB: Creation of temporary namespaces is a special case. This statement
 	 * is dispatched by the dispatcher node the first time a temporary table is
@@ -79,8 +78,6 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 		return;
 	}
 
-=======
->>>>>>> 78a09145e0
 	GetUserIdAndSecContext(&saved_uid, &save_sec_context);
 
 	/*

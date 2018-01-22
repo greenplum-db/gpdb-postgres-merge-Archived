@@ -621,10 +621,7 @@ DefineIndex(RangeVar *heapRelation,
 	 * Report index creation if appropriate (delay this till after most of the
 	 * error checks)
 	 */
-<<<<<<< HEAD
 	if (isconstraint && !quiet && Gp_role != GP_ROLE_EXECUTE)
-=======
-	if (isconstraint && !quiet)
 	{
 		const char *constraint_type;
 
@@ -640,7 +637,6 @@ DefineIndex(RangeVar *heapRelation,
 			constraint_type = NULL;	/* keep compiler quiet */
 		}
 
->>>>>>> 78a09145e0
 		ereport(NOTICE,
 		  (errmsg("%s %s will create implicit index \"%s\" for table \"%s\"",
 				  is_alter_table ? "ALTER TABLE / ADD" : "CREATE TABLE /",
@@ -682,8 +678,8 @@ DefineIndex(RangeVar *heapRelation,
 		indexRelationId =
 			index_create(relationId, indexRelationName, indexRelationId,
 					  indexInfo, accessMethodId, tablespaceId, classObjectId,
-<<<<<<< HEAD
-						 coloptions, reloptions, primary, isconstraint,
+						 coloptions, reloptions, primary,
+						 isconstraint, deferrable, initdeferred,
 						 allowSystemTableModsDDL, skip_build, concurrent, altconname);
 
 		/*
@@ -705,11 +701,6 @@ DefineIndex(RangeVar *heapRelation,
 			if (!indexInfo->ii_BrokenHotChain)
 				cdb_sync_indcheckxmin_with_segments(indexRelationId);
 		}
-=======
-						 coloptions, reloptions, primary,
-						 isconstraint, deferrable, initdeferred,
-						 allowSystemTableMods, skip_build, concurrent);
->>>>>>> 78a09145e0
 
 		return;					/* We're done, in the standard case */
 	}
@@ -726,14 +717,9 @@ DefineIndex(RangeVar *heapRelation,
 	indexRelationId =
 		index_create(relationId, indexRelationName, indexRelationId,
 					 indexInfo, accessMethodId, tablespaceId, classObjectId,
-<<<<<<< HEAD
-					 coloptions, reloptions, primary, isconstraint,
-					 allowSystemTableModsDDL, true, concurrent, altconname);
-=======
 					 coloptions, reloptions, primary,
 					 isconstraint, deferrable, initdeferred,
-					 allowSystemTableMods, true, concurrent);
->>>>>>> 78a09145e0
+					 allowSystemTableModsDDL, true, concurrent, altconname);
 
 	/*
 	 * We must commit our current transaction so that the index becomes
@@ -1581,12 +1567,12 @@ char *
 ChooseRelationName(const char *name1, const char *name2,
 				   const char *label, Oid namespaceid)
 {
-	return ChooseRelationNameWithCache(name1, name2, label, namespace, NULL);
+	return ChooseRelationNameWithCache(name1, name2, label, namespaceid, NULL);
 }
 
 char *
 ChooseRelationNameWithCache(const char *name1, const char *name2,
-				   const char *label, Oid namespace,
+				   const char *label, Oid namespaceid,
 				   HTAB *cache)
 {
 	int			pass = 0;
@@ -1601,14 +1587,10 @@ ChooseRelationNameWithCache(const char *name1, const char *name2,
 	{
 		relname = makeObjectName(name1, name2, modlabel);
 
-<<<<<<< HEAD
 		if (cache)
 			hash_search(cache, (void *) relname, HASH_FIND, &found);
 
-		if (!found && !OidIsValid(get_relname_relid(relname, namespace)))
-=======
-		if (!OidIsValid(get_relname_relid(relname, namespaceid)))
->>>>>>> 78a09145e0
+		if (!found && !OidIsValid(get_relname_relid(relname, namespaceid)))
 			break;
 
 		/* found a conflict, so try a new name component */
