@@ -14,13 +14,8 @@ include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 
 OBJS = aggregatecmds.o alter.o analyze.o async.o cluster.o comment.o  \
-<<<<<<< HEAD
-	conversioncmds.o copy.o \
-	dbcommands.o define.o discard.o explain.o extension.o foreigncmds.o functioncmds.o \
-=======
 	constraint.o conversioncmds.o copy.o \
-	dbcommands.o define.o discard.o explain.o foreigncmds.o functioncmds.o \
->>>>>>> 78a09145e0
+	dbcommands.o define.o discard.o explain.o extension.o foreigncmds.o functioncmds.o \
 	indexcmds.o lockcmds.o operatorcmds.o opclasscmds.o \
 	portalcmds.o prepare.o proclang.o \
 	schemacmds.o sequence.o tablecmds.o tablespace.o trigger.o \

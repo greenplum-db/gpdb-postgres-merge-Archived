@@ -12,14 +12,10 @@ subdir = src/backend/utils/misc
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-<<<<<<< HEAD
 SUBDIRS     := fstream
 
 
-override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
-=======
 override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS)
->>>>>>> 78a09145e0
 
 OBJS = guc.o help_config.o pg_rusage.o ps_status.o superuser.o tzparser.o uriparser.o \
        faultinjector.o netcheck.o testutils.o \

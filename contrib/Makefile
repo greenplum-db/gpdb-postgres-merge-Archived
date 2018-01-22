@@ -4,12 +4,7 @@ subdir = contrib
 top_builddir = ..
 include $(top_builddir)/src/Makefile.global
 
-<<<<<<< HEAD
-WANTED_DIRS = \
-=======
 SUBDIRS = \
-		adminpack	\
->>>>>>> 78a09145e0
 		auto_explain	\
 		btree_gin	\
 		citext		\
@@ -18,19 +13,19 @@ SUBDIRS = \
 		dict_xsyn	\
 		fuzzystrmatch	\
 		hstore		\
-<<<<<<< HEAD
-		intarray \
-		pageinspect \
+		intarray	\
+		pageinspect	\
+		passwordcheck	\
 		pg_stat_statements \
-		pg_upgrade \
+		pg_upgrade	\
 		pg_upgrade_support \
-		test_parser \
-		pgcrypto
+		pgbench		\
+		pgcrypto	\
+		test_parser
 
 # Greenplum-specific additions (to ease merge pain).
-WANTED_DIRS += \
+SUBDIRS += \
 		xlogdump \
-		pgbench \
 		formatter \
 		formatter_fixedwidth \
 		extprotocol \
@@ -39,33 +34,6 @@ WANTED_DIRS += \
 		gp_inject_fault \
 		gp_cancel_query \
 		indexscan \
-    passwordcheck
-=======
-		intagg		\
-		intarray	\
-		isn		\
-		lo		\
-		ltree		\
-		oid2name	\
-		pageinspect	\
-		passwordcheck	\
-		pg_buffercache	\
-		pg_freespacemap \
-		pg_standby	\
-		pg_stat_statements \
-		pg_trgm		\
-		pgbench		\
-		pgcrypto	\
-		pgrowlocks	\
-		pgstattuple	\
-		seg		\
-		spi		\
-		tablefunc	\
-		test_parser	\
-		tsearch2	\
-		unaccent	\
-		vacuumlo
->>>>>>> 78a09145e0
 
 ifeq ($(with_openssl),yes)
 SUBDIRS += sslinfo
@@ -80,10 +48,10 @@ SUBDIRS += xml2
 endif
 
 ifeq ($(enable_orca),yes)
-WANTED_DIRS += orca_debug
+SUBDIRS += orca_debug
 endif
 
-WANTED_DIRS += gp_replica_check
+SUBDIRS += gp_replica_check
 
 # Missing:
 #		start-scripts	\ (does not have a makefile)

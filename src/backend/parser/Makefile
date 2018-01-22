@@ -12,17 +12,11 @@ include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
 
-<<<<<<< HEAD
-OBJS= analyze.o gram.o keywords.o parser.o parse_agg.o parse_cte.o parse_clause.o \
-      parse_expr.o parse_func.o parse_node.o parse_oper.o parse_relation.o \
-      parse_type.o parse_coerce.o parse_target.o scansup.o parse_utilcmd.o kwlookup.o \
-      parse_partition.o
-=======
 OBJS= analyze.o gram.o keywords.o kwlookup.o parser.o \
       parse_agg.o parse_clause.o parse_coerce.o parse_cte.o parse_expr.o \
       parse_func.o parse_node.o parse_oper.o parse_param.o parse_relation.o \
       parse_target.o parse_type.o parse_utilcmd.o scansup.o
->>>>>>> 78a09145e0
+OBJS+= parse_partition.o
 
 FLEXFLAGS = -CF
 
@@ -47,12 +41,8 @@ endif
 
 gram.h: gram.c ;
 
-<<<<<<< HEAD
-$(srcdir)/gram.c: gram.y
-	$(PERL) $(srcdir)/check_keywords.pl $< $(top_srcdir)/src/include/parser/kwlist.h
-=======
 gram.c: gram.y
->>>>>>> 78a09145e0
+	$(PERL) $(top_srcdir)/src/tools/check_keywords.pl $(top_srcdir)
 ifdef BISON
 	$(BISON) -d $(BISONFLAGS) -o $@ $<
 else

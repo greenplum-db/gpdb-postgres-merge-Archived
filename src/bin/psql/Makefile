@@ -18,7 +18,6 @@ include $(top_builddir)/src/Makefile.global
 
 REFDOCDIR= $(top_srcdir)/doc/src/sgml/ref
 
-<<<<<<< HEAD
 override CPPFLAGS := -DFRONTEND -I. -I$(srcdir) -I$(libpq_srcdir) -I$(top_srcdir)/src/bin/pg_dump $(CPPFLAGS)
 
 # necessary to get flex to play nice with large files on 32bit solaris sparc
@@ -29,9 +28,6 @@ override CFLAGS := -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE=1
 endif
 #endif
 endif
-=======
-override CPPFLAGS := -I. -I$(srcdir) -I$(libpq_srcdir) -I$(top_srcdir)/src/bin/pg_dump $(CPPFLAGS)
->>>>>>> 78a09145e0
 
 OBJS=	command.o common.o help.o input.o stringutils.o mainloop.o copy.o \
 	startup.o prompt.o variables.o large_obj.o print.o describe.o \
@@ -60,12 +56,6 @@ kwlookup.c: % : $(top_srcdir)/src/backend/parser/%
 sql_help.c: sql_help.h ;
 sql_help.h: create_help.pl $(wildcard $(REFDOCDIR)/*.sgml)
 	$(PERL) $< $(REFDOCDIR) $*
-<<<<<<< HEAD
-
-# psqlscan is compiled as part of mainloop
-mainloop.o: psqlscan.c
-=======
->>>>>>> 78a09145e0
 
 # psqlscan is compiled as part of mainloop
 mainloop.o: psqlscan.c

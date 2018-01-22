@@ -17,14 +17,7 @@ top_srcdir = $(top_builddir)
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
-<<<<<<< HEAD
-ifneq ($(PORTNAME), win32)
-override CFLAGS += $(PTHREAD_CFLAGS)
-endif
-
-=======
 
 ifneq ($(PORTNAME), win32)
 override CFLAGS += $(PTHREAD_CFLAGS)
 endif
->>>>>>> 78a09145e0

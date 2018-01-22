@@ -65,13 +65,7 @@ endif
 
 SHLIB_LINK = $(python_libspec) $(python_additional_libs) $(filter -lintl,$(LIBS))
 
-<<<<<<< HEAD
-REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-language=plpythonu --init-file=$(srcdir)/init_file
-REGRESS = plpython_schema plpython_populate plpython_function plpython_test \
-	plpython_subtransaction plpython_composite \
-	plpython_returns plpython_error plpython_drop
-=======
-REGRESS_OPTS = --dbname=$(PL_TESTDB)
+REGRESS_OPTS = --dbname=$(PL_TESTDB) --init-file=$(srcdir)/init_file
 # Only load plpythonu with Python 2.  The test files themselves load
 # the versioned language plpython(2|3)u.
 ifeq ($(python_majorversion),2)
@@ -93,8 +87,14 @@ REGRESS = \
 	plpython_types \
 	plpython_error \
 	plpython_unicode \
+	plpython_composite \
+	plpython_subtransaction \
 	plpython_drop
->>>>>>> 78a09145e0
+
+REGRESS+= \
+	plpython_function \
+	plpython_returns
+
 # where to find psql for running the tests
 PSQLDIR = $(bindir)
 
@@ -141,12 +141,8 @@ installcheck: submake prep3
 clean: clean3
 else
 installcheck: submake
-<<<<<<< HEAD
 	$(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir="$(PSQLDIR)" $(REGRESS_OPTS) $(REGRESS)
-=======
-	$(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS)
 endif
->>>>>>> 78a09145e0
 
 .PHONY: submake
 submake:

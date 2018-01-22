@@ -12,11 +12,9 @@ subdir = src/backend/access/common
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-<<<<<<< HEAD
-OBJS = bufmask.o memtuple.o heaptuple.o indextuple.o printtup.o reloptions.o reloptions_gp.o scankey.o tupdesc.o
-=======
 OBJS = heaptuple.o indextuple.o printtup.o reloptions.o scankey.o \
 	tupconvert.o tupdesc.o
->>>>>>> 78a09145e0
+
+OBJS += bufmask.o memtuple.o reloptions_gp.o
 
 include $(top_srcdir)/src/backend/common.mk
