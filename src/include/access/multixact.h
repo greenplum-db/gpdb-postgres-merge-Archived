@@ -69,23 +69,15 @@ extern void MultiXactSetNextMXact(MultiXactId nextMulti,
 extern void MultiXactAdvanceNextMXact(MultiXactId minMulti,
 						  MultiXactOffset minMultiOffset);
 
-<<<<<<< HEAD
-extern void multixact_redo(XLogRecPtr beginLoc __attribute__((unused)),
-						   XLogRecPtr lsn __attribute__((unused)), XLogRecord *record);
-extern void multixact_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
-=======
->>>>>>> 78a09145e0
 extern void multixact_twophase_recover(TransactionId xid, uint16 info,
 						   void *recdata, uint32 len);
 extern void multixact_twophase_postcommit(TransactionId xid, uint16 info,
 							  void *recdata, uint32 len);
 extern void multixact_twophase_postabort(TransactionId xid, uint16 info,
 							 void *recdata, uint32 len);
-<<<<<<< HEAD
-=======
 
-extern void multixact_redo(XLogRecPtr lsn, XLogRecord *record);
-extern void multixact_desc(StringInfo buf, uint8 xl_info, char *rec);
->>>>>>> 78a09145e0
+extern void multixact_redo(XLogRecPtr beginLoc __attribute__((unused)),
+						   XLogRecPtr lsn __attribute__((unused)), XLogRecord *record);
+extern void multixact_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
 
 #endif   /* MULTIXACT_H */

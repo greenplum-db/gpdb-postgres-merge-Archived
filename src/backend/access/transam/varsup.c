@@ -22,14 +22,12 @@
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "utils/builtins.h"
-<<<<<<< HEAD
 #include "utils/guc.h"
-#include "access/distributedlog.h"
-#include "cdb/cdbvars.h"
-=======
 #include "utils/syscache.h"
 
->>>>>>> 78a09145e0
+#include "access/distributedlog.h"
+#include "cdb/cdbvars.h"
+
 
 /* Number of OIDs to prefetch (preallocate) per XLOG write */
 #define VAR_OID_PREFETCH		8192
@@ -41,9 +39,6 @@ int xid_stop_limit;
 int xid_warn_limit;
 
 /*
-<<<<<<< HEAD
- * Allocate the next XID for my new transaction or subtransaction.
-=======
  * Allocate the next XID for a new transaction or subtransaction.
  *
  * The new XID is also stored into MyProc before returning.
@@ -52,7 +47,6 @@ int xid_warn_limit;
  * transaction, since XIDs are now not allocated until the transaction
  * does something.  So it is safe to do a database lookup if we want to
  * issue a warning about XID wrap.
->>>>>>> 78a09145e0
  */
 TransactionId
 GetNewTransactionId(bool isSubXact)
@@ -91,11 +85,6 @@ GetNewTransactionId(bool isSubXact)
 		TransactionIdIsValid(ShmemVariableCache->xidVacLimit))
 	{
 		/*
-<<<<<<< HEAD
-		 * To avoid swamping the postmaster with signals, we issue the
-		 * autovac request only once per 64K transaction starts.  This
-		 * still gives plenty of chances before we get into real trouble.
-=======
 		 * For safety's sake, we release XidGenLock while sending signals,
 		 * warnings, etc.  This is not so much because we care about
 		 * preserving concurrency in this situation, as to avoid any
@@ -113,7 +102,6 @@ GetNewTransactionId(bool isSubXact)
 		 * To avoid swamping the postmaster with signals, we issue the autovac
 		 * request only once per 64K transaction starts.  This still gives
 		 * plenty of chances before we get into real trouble.
->>>>>>> 78a09145e0
 		 */
 		/* MPP-19652: autovacuum disabled */
 #if 0
@@ -124,30 +112,15 @@ GetNewTransactionId(bool isSubXact)
 		}
 #endif
 		if (IsUnderPostmaster &&
-<<<<<<< HEAD
-		 TransactionIdFollowsOrEquals(xid, ShmemVariableCache->xidStopLimit))
-			ereport(ERROR,
-					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("database is not accepting commands to avoid wraparound data loss in database \"%s\"",
-							NameStr(ShmemVariableCache->limit_datname)),
-					 errhint("Shutdown Greenplum Database. Lower the xid_stop_limit GUC. Execute a database-wide VACUUM in \"%s\". Reset the xid_stop_limit GUC.",
-							 NameStr(ShmemVariableCache->limit_datname))));
-		else if (TransactionIdFollowsOrEquals(xid, ShmemVariableCache->xidWarnLimit))
-			ereport(WARNING,
-			(errmsg("database \"%s\" must be vacuumed within %u transactions",
-					NameStr(ShmemVariableCache->limit_datname),
-					ShmemVariableCache->xidWrapLimit - xid),
+			TransactionIdFollowsOrEquals(xid, xidStopLimit))
+		{
+			char   *oldest_datname = get_database_name(oldest_datoid);
+
 			 /*
 			  * In GPDB, don't say anything about old prepared transactions, because the system
 			  * only uses prepared transactions internally. PREPARE TRANSACTION is not available
 			  * to users.
 			  */
-			 errhint("To avoid a database shutdown, execute a database-wide VACUUM in \"%s\".",
-					 NameStr(ShmemVariableCache->limit_datname))));
-=======
-			TransactionIdFollowsOrEquals(xid, xidStopLimit))
-		{
-			char   *oldest_datname = get_database_name(oldest_datoid);
 
 			/* complain even if that DB has disappeared */
 			if (oldest_datname)
@@ -155,19 +128,25 @@ GetNewTransactionId(bool isSubXact)
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 						 errmsg("database is not accepting commands to avoid wraparound data loss in database \"%s\"",
 								oldest_datname),
-						 errhint("Stop the postmaster and use a standalone backend to vacuum that database.\n"
-								 "You might also need to commit or roll back old prepared transactions.")));
+						 errhint("Stop the postmaster and use a standalone backend to vacuum that database."
+								 )));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 						 errmsg("database is not accepting commands to avoid wraparound data loss in database with OID %u",
 								oldest_datoid),
-						 errhint("Stop the postmaster and use a standalone backend to vacuum that database.\n"
-								 "You might also need to commit or roll back old prepared transactions.")));
+						 errhint("Stop the postmaster and use a standalone backend to vacuum that database."
+								 )));
 		}
 		else if (TransactionIdFollowsOrEquals(xid, xidWarnLimit))
 		{
 			char   *oldest_datname = get_database_name(oldest_datoid);
+
+			 /*
+			  * In GPDB, don't say anything about old prepared transactions, because the system
+			  * only uses prepared transactions internally. PREPARE TRANSACTION is not available
+			  * to users.
+			  */
 
 			/* complain even if that DB has disappeared */
 			if (oldest_datname)
@@ -175,21 +154,20 @@ GetNewTransactionId(bool isSubXact)
 						(errmsg("database \"%s\" must be vacuumed within %u transactions",
 								oldest_datname,
 								xidWrapLimit - xid),
-						 errhint("To avoid a database shutdown, execute a database-wide VACUUM in that database.\n"
-								 "You might also need to commit or roll back old prepared transactions.")));
+						 errhint("To avoid a database shutdown, execute a database-wide VACUUM in that database."
+								 )));
 			else
 				ereport(WARNING,
 						(errmsg("database with OID %u must be vacuumed within %u transactions",
 								oldest_datoid,
 								xidWrapLimit - xid),
-						 errhint("To avoid a database shutdown, execute a database-wide VACUUM in that database.\n"
-								 "You might also need to commit or roll back old prepared transactions.")));
+						 errhint("To avoid a database shutdown, execute a database-wide VACUUM in that database."
+								 )));
 		}
 
 		/* Re-acquire lock and start over */
 		LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
 		xid = ShmemVariableCache->nextXid;
->>>>>>> 78a09145e0
 	}
 
 	/*
@@ -398,19 +376,6 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 
 	/* Give an immediate warning if past the wrap warn point */
 	if (TransactionIdFollowsOrEquals(curXid, xidWarnLimit))
-<<<<<<< HEAD
-		ereport(WARNING,
-		   (errmsg("database \"%s\" must be vacuumed within %u transactions",
-				   NameStr(*oldest_datname),
-				   xidWrapLimit - curXid),
-			 /*
-			  * In GPDB, don't say anything about old prepared transactions, because the system
-			  * only uses prepared transactions internally. PREPARE TRANSACTION is not available
-			  * to users.
-			  */
-			errhint("To avoid a database shutdown, execute a database-wide VACUUM in \"%s\".",
-					NameStr(*oldest_datname))));
-=======
 	{
 		char   *oldest_datname = get_database_name(oldest_datoid);
 
@@ -473,7 +438,6 @@ ForceTransactionIdLimitUpdate(void)
 							  0, 0, 0))
 		return true;			/* could happen, per comments above */
 	return false;
->>>>>>> 78a09145e0
 }
 
 /*

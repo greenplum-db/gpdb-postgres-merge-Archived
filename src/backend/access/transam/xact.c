@@ -51,11 +51,7 @@
 #include "storage/smgr.h"
 #include "storage/freespace.h"
 #include "utils/combocid.h"
-<<<<<<< HEAD
 #include "utils/faultinjector.h"
-#include "utils/flatfiles.h"
-=======
->>>>>>> 78a09145e0
 #include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
@@ -2325,13 +2321,6 @@ CommitTransaction(void)
 	/* NOTIFY commit must come before lower-level cleanup */
 	AtCommit_Notify();
 
-<<<<<<< HEAD
-	/*
-	 * Update flat files if we changed pg_database, pg_authid or
-	 * pg_auth_members.  This should be the last step before commit.
-	 */
-	AtEOXact_UpdateFlatFiles(true);
-
 	/*
 	 * Prepare all QE.
 	 */
@@ -2356,8 +2345,6 @@ CommitTransaction(void)
 				 errmsg("Raise an error as directed by Debug_abort_after_distributed_prepared")));
 	}
 
-=======
->>>>>>> 78a09145e0
 	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();
 
@@ -2914,8 +2901,6 @@ AbortTransaction(void)
 
 	AtEOXact_LargeObject(false);	/* 'false' means it's abort */
 	AtAbort_Notify();
-<<<<<<< HEAD
-	AtEOXact_UpdateFlatFiles(false);
 	AtAbort_Twophase();
 
 	/* Like in CommitTransaction(), treat a QE reader as if there was no XID */
@@ -2926,8 +2911,6 @@ AbortTransaction(void)
 	}
 	else
 		localXid = GetTopTransactionIdIfAny();
-=======
->>>>>>> 78a09145e0
 
 	/*
 	 * Advertise the fact that we aborted in pg_clog (assuming that we got as

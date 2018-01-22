@@ -59,12 +59,8 @@
 #include "storage/smgr.h"
 #include "storage/spin.h"
 #include "utils/builtins.h"
-<<<<<<< HEAD
 #include "utils/nabstime.h"
 #include "utils/faultinjector.h"
-#include "utils/flatfiles.h"
-=======
->>>>>>> 78a09145e0
 #include "utils/guc.h"
 #include "utils/ps_status.h"
 #include "pg_trace.h"
@@ -6590,21 +6586,12 @@ StartupXLOG(void)
 	ValidateXLOGDirectoryStructure();
 
 	/*
-<<<<<<< HEAD
 	 * Clear out any old relcache cache files.	This is *necessary* if we do
 	 * any WAL replay, since that would probably result in the cache files
 	 * being out of sync with database reality.  In theory we could leave them
 	 * in place if the database had been cleanly shut down, but it seems
 	 * safest to just remove them always and let them be rebuilt during the
 	 * first backend startup.
-=======
-	 * Clear out any old relcache cache files.  This is *necessary* if we
-	 * do any WAL replay, since that would probably result in the cache files
-	 * being out of sync with database reality.  In theory we could leave
-	 * them in place if the database had been cleanly shut down, but it
-	 * seems safest to just remove them always and let them be rebuilt
-	 * during the first backend startup.
->>>>>>> 78a09145e0
 	 */
 	RelationCacheInitFileRemove();
 
@@ -6828,13 +6815,10 @@ StartupXLOG(void)
 	ShmemVariableCache->nextRelfilenode = checkPoint.nextRelfilenode;
 	ShmemVariableCache->relfilenodeCount = 0;
 	MultiXactSetNextMXact(checkPoint.nextMulti, checkPoint.nextMultiOffset);
-<<<<<<< HEAD
-	XLogCtl->ckptXidEpoch = checkPoint.nextXidEpoch;
-	XLogCtl->ckptXid = checkPoint.nextXid;
-=======
 	ShmemVariableCache->oldestXid = checkPoint.oldestXid;
 	ShmemVariableCache->oldestXidDB = checkPoint.oldestXidDB;
->>>>>>> 78a09145e0
+	XLogCtl->ckptXidEpoch = checkPoint.nextXidEpoch;
+	XLogCtl->ckptXid = checkPoint.nextXid;
 
 	/*
 	 * We must replay WAL entries using the same TimeLineID they were created
@@ -9438,12 +9422,8 @@ xlog_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
 		CheckpointExtendedRecord ckptExtended;
 
 		appendStringInfo(buf, "checkpoint: redo %X/%X; "
-<<<<<<< HEAD
-						 "tli %u; xid %u/%u; oid %u; relfilenode %u; multi %u; offset %u; %s",
-=======
-						 "tli %u; xid %u/%u; oid %u; multi %u; offset %u; "
+						 "tli %u; xid %u/%u; oid %u; relfilenode %u; multi %u; offset %u; "
 						 "oldest xid %u in DB %u; %s",
->>>>>>> 78a09145e0
 						 checkpoint->redo.xlogid, checkpoint->redo.xrecoff,
 						 checkpoint->ThisTimeLineID,
 						 checkpoint->nextXidEpoch, checkpoint->nextXid,

@@ -960,11 +960,7 @@ TwoPhaseGetDummyProc(TransactionId xid)
 /*
  * Header for a 2PC state file
  */
-<<<<<<< HEAD
-#define TWOPHASE_MAGIC 0x57F94531		/* format identifier */
-=======
 #define TWOPHASE_MAGIC	0x57F94532		/* format identifier */
->>>>>>> 78a09145e0
 
 typedef struct TwoPhaseFileHeader
 {
