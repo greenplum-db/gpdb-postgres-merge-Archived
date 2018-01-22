@@ -179,7 +179,7 @@ static Acl *
 merge_acl_with_grant(Acl *old_acl, bool is_grant,
 					 bool grant_option, DropBehavior behavior,
 					 List *grantees, AclMode privileges,
-					 Oid grantorId, Oid ownerId, char *objName)
+					 Oid grantorId, Oid ownerId)
 {
 	unsigned	modechg;
 	ListCell   *j;
@@ -1686,8 +1686,7 @@ ExecGrant_Attribute(InternalGrant *istmt, Oid relOid, const char *relname,
 								   istmt->grant_option,
 								   istmt->behavior, istmt->grantees,
 								   col_privileges, grantorId,
-								   ownerId,
-								   NameStr(pg_attribute_tuple->attname));
+								   ownerId);
 
 	nnewmembers = aclmembers(new_acl, &newmembers);
 
@@ -1945,8 +1944,7 @@ ExecGrant_Relation(InternalGrant *istmt)
 										   istmt->grantees,
 										   this_privileges,
 										   grantorId,
-										   ownerId,
-										   NameStr(pg_class_tuple->relname));
+										   ownerId);
 
 			nnewmembers = aclmembers(new_acl, &newmembers);
 
@@ -2314,7 +2312,7 @@ ExecGrant_Database(InternalGrant *istmt)
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
 									   istmt->grantees, this_privileges,
-									   grantorId, ownerId, NameStr(pg_database_tuple->datname));
+									   grantorId, ownerId);
 
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
@@ -2441,8 +2439,7 @@ ExecGrant_Fdw(InternalGrant *istmt)
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
 									   istmt->grantees, this_privileges,
-									   grantorId, ownerId,
-									   NameStr(pg_fdw_tuple->fdwname));
+									   grantorId, ownerId);
 
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
@@ -2561,8 +2558,7 @@ ExecGrant_ForeignServer(InternalGrant *istmt)
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
 									   istmt->grantees, this_privileges,
-									   grantorId, ownerId,
-									   NameStr(pg_server_tuple->srvname));
+									   grantorId, ownerId);
 
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
@@ -2680,7 +2676,7 @@ ExecGrant_Function(InternalGrant *istmt)
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
 									   istmt->grantees, this_privileges,
-									   grantorId, ownerId, NameStr(pg_proc_tuple->proname));
+									   grantorId, ownerId);
 
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
@@ -2804,7 +2800,7 @@ ExecGrant_Language(InternalGrant *istmt)
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
 									   istmt->grantees, this_privileges,
-									   grantorId, ownerId, NameStr(pg_language_tuple->lanname));
+									   grantorId, ownerId);
 
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
@@ -3054,7 +3050,7 @@ ExecGrant_Namespace(InternalGrant *istmt)
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
 									   istmt->grantees, this_privileges,
-									   grantorId, ownerId, NameStr(pg_namespace_tuple->nspname));
+									   grantorId, ownerId);
 
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
@@ -3187,7 +3183,7 @@ ExecGrant_Tablespace(InternalGrant *istmt)
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
 									   istmt->grantees, this_privileges,
-									   grantorId, ownerId, NameStr(pg_tablespace_tuple->spcname));
+									   grantorId, ownerId);
 
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
@@ -3365,7 +3361,7 @@ ExecGrant_ExtProtocol(InternalGrant *istmt)
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
 									   istmt->grantees, this_privileges,
-									   grantorId, ownerId, NameStr(*ptcname));
+									   grantorId, ownerId);
 
 		nnewmembers = aclmembers(new_acl, &newmembers);
 

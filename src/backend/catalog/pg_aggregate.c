@@ -262,7 +262,7 @@ AggregateCreate(const char *aggName,
 		
 		elog(DEBUG5,"AggregateCreateWithOid: successfully located preliminary "
 					"function %s with return type %d", 
-					func_signature_string(aggprelimfnName, 2, fnArgs), 
+			 func_signature_string(aggprelimfnName, 2, NIL, fnArgs), 
 					prelimrettype);
 		
 		Assert(OidIsValid(prelimrettype));
@@ -557,7 +557,7 @@ lookup_agg_function(List *fnName,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("function %s must accept VARIADIC ANY to be used in this aggregate",
 						func_signature_string(fnName, nargs,
-											  input_types))));
+											  NIL, input_types))));
 
 	/*
 	 * If there are any polymorphic types involved, enforce consistency, and
