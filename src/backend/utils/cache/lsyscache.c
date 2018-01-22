@@ -1487,7 +1487,6 @@ get_func_name(Oid funcid)
 }
 
 /*
-<<<<<<< HEAD
  * get_type_name
  *	  returns the name of the type with the given oid
  *
@@ -1507,7 +1506,14 @@ get_type_name(Oid oid)
 		char	   *result;
 
 		result = pstrdup(NameStr(typtup->typname));
-=======
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return NULL;
+}
+
+/*
  * get_func_namespace
  *
  *		Returns the pg_namespace OID associated with a given function.
@@ -1526,13 +1532,11 @@ get_func_namespace(Oid funcid)
 		Oid			result;
 
 		result = functup->pronamespace;
->>>>>>> 78a09145e0
 		ReleaseSysCache(tp);
 		return result;
 	}
 	else
-<<<<<<< HEAD
-		return NULL;
+		return InvalidOid;
 }
 
 /*
@@ -1580,12 +1584,6 @@ get_func_rows(Oid funcid)
 /*				---------- RELATION CACHE ----------					 */
  
 /*
-=======
-		return InvalidOid;
-}
-
-/*
->>>>>>> 78a09145e0
  * get_func_rettype
  *		Given procedure id, return the function's result type.
  */

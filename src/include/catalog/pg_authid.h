@@ -130,12 +130,11 @@ DATA(insert OID = 10 ( "POSTGRES" t t t t t t -1 _null_ _null_ 6055 t t t t t 64
 {1260, {"rolconnlimit"}     ,   23, -1,           4,  8, 0, -1, -1,  true, 'p' ,'i', true, false, false, true, 0}, \
 {1260, {"rolpassword"}      ,   25, -1,          -1,  9, 0, -1, -1, false, 'x' ,'i',false, false, false, true, 0}, \
 {1260, {"rolvaliduntil"}    , 1184, -1,           8, 10, 0, -1, -1,  true, 'p' ,'d',false, false, false, true, 0}, \
-{1260, {"rolconfig"}        , 1009, -1,          -1, 11, 1, -1, -1, false, 'x' ,'i',false, false, false, true, 0}, \
-{1260, {"rolresqueue"}      ,   26, -1,           4, 12, 0, -1, -1,  true, 'p' ,'i',false, false, false, true, 0}, \
-{1260, {"rolcreaterextgpfd"},   16, -1,           1, 13, 0, -1, -1,  true, 'p' ,'c',false, false, false, true, 0}, \
-{1260, {"rolcreaterexthttp"},   16, -1,           1, 14, 0, -1, -1,  true, 'p' ,'c',false, false, false, true, 0}, \
-{1260, {"rolcreatewextgpfd"},   16, -1,           1, 15, 0, -1, -1,  true, 'p' ,'c',false, false, false, true, 0}, \
-{1260, {"rolcreaterexthdfs"},   16, -1,           1, 16, 0, -1, -1,  true, 'p' ,'c',false, false, false, true, 0}, \
-{1260, {"rolcreatewexthdfs"},   16, -1,           1, 17, 0, -1, -1,  true, 'p' ,'c',false, false, false, true, 0}, \
-{1260, {"rolresgroup"}      ,   26, -1,           4, 18, 0, -1, -1,  true, 'p' ,'i',false, false, false, true, 0}
+{1260, {"rolresqueue"}      ,   26, -1,           4, 11, 0, -1, -1,  true, 'p' ,'i',false, false, false, true, 0}, \
+{1260, {"rolcreaterextgpfd"},   16, -1,           1, 12, 0, -1, -1,  true, 'p' ,'c',false, false, false, true, 0}, \
+{1260, {"rolcreaterexthttp"},   16, -1,           1, 13, 0, -1, -1,  true, 'p' ,'c',false, false, false, true, 0}, \
+{1260, {"rolcreatewextgpfd"},   16, -1,           1, 14, 0, -1, -1,  true, 'p' ,'c',false, false, false, true, 0}, \
+{1260, {"rolcreaterexthdfs"},   16, -1,           1, 15, 0, -1, -1,  true, 'p' ,'c',false, false, false, true, 0}, \
+{1260, {"rolcreatewexthdfs"},   16, -1,           1, 16, 0, -1, -1,  true, 'p' ,'c',false, false, false, true, 0}, \
+{1260, {"rolresgroup"}      ,   26, -1,           4, 17, 0, -1, -1,  true, 'p' ,'i',false, false, false, true, 0}
 #endif   /* PG_AUTHID_H */

@@ -526,7 +526,6 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 		Node	   *rawtree;
 		List	   *slist;
 		TupleDesc	resultDesc;
-		Node	   *raw_parse_tree;
 
 		/*
 		 * Restore the search_path that was in use when the plan was made.
@@ -566,27 +565,16 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 
 			select->intoClause = copyObject(intoClause);
 
-			raw_parse_tree = (Node *) select;
+			rawtree = (Node *) select;
 		}
 		else
-			raw_parse_tree = copyObject(plansource->raw_parse_tree);
+			rawtree = copyObject(plansource->raw_parse_tree);
 
 		/*
 		 * Run parse analysis and rule rewriting.  The parser tends to
 		 * scribble on its input, so we must copy the raw parse tree to
-<<<<<<< HEAD
-		 * prevent corruption of the cache.  Note that we do not use
-		 * parse_analyze_varparams(), assuming that the caller never wants
-		 * the parameter types to change from the original values.
-		 */
-		slist = pg_analyze_and_rewrite(raw_parse_tree,
-									   plansource->query_string,
-									   plansource->param_types,
-									   plansource->num_params);
-=======
 		 * prevent corruption of the cache.
 		 */
-		rawtree = copyObject(plansource->raw_parse_tree);
 		if (plansource->parserSetup != NULL)
 			slist = pg_analyze_and_rewrite_params(rawtree,
 												  plansource->query_string,
@@ -597,35 +585,23 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 										   plansource->query_string,
 										   plansource->param_types,
 										   plansource->num_params);
->>>>>>> 78a09145e0
 
 		if (plansource->fully_planned)
 		{
 			/*
 			 * Generate plans for queries.
 			 *
-<<<<<<< HEAD
-			 * The planner may try to call SPI-using functions, which
-			 * causes a problem if we're already inside one.  Rather than
-			 * expect all SPI-using code to do SPI_push whenever a replan
-			 * could happen, it seems best to take care of the case here.
-=======
 			 * The planner may try to call SPI-using functions, which causes
 			 * a problem if we're already inside one.  Rather than expect
 			 * all SPI-using code to do SPI_push whenever a replan could
 			 * happen, it seems best to take care of the case here.
->>>>>>> 78a09145e0
 			 */
 			bool	pushed;
 
 			pushed = SPI_push_conditional();
 
-<<<<<<< HEAD
 			slist = pg_plan_queries(slist, plansource->cursor_options,
 									boundParams);
-=======
-			slist = pg_plan_queries(slist, plansource->cursor_options, NULL);
->>>>>>> 78a09145e0
 
 			SPI_pop_conditional(pushed);
 		}
@@ -805,7 +781,6 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 			 * acquire a non-conflicting lock.
 			 */
 			if (list_member_int(plannedstmt->resultRelations, rt_index))
-<<<<<<< HEAD
 			{
 				/*
 				 * RowExclusiveLock is acquired in PostgreSQL here.  Greenplum
@@ -822,12 +797,8 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 				else
 					lockmode = RowExclusiveLock;
 			}
-			else if (rowmark_member(plannedstmt->rowMarks, rt_index))
-=======
-				lockmode = RowExclusiveLock;
 			else if ((rc = get_plan_rowmark(plannedstmt->rowMarks, rt_index)) != NULL &&
 					 RowMarkRequiresRowShareLock(rc->markType))
->>>>>>> 78a09145e0
 				lockmode = RowShareLock;
 			else
 				lockmode = AccessShareLock;
@@ -886,7 +857,6 @@ ScanQueryForLocks(Query *parsetree, bool acquire)
 			case RTE_RELATION:
 				/* Acquire or release the appropriate type of lock */
 				if (rt_index == parsetree->resultRelation)
-<<<<<<< HEAD
 				{
 					/*
 					 * RowExclusiveLock is acquired in PostgreSQL here.
@@ -903,11 +873,7 @@ ScanQueryForLocks(Query *parsetree, bool acquire)
 					else
 						lockmode = RowExclusiveLock;
 				}
-				else if (rowmark_member(parsetree->rowMarks, rt_index))
-=======
-					lockmode = RowExclusiveLock;
 				else if (get_parse_rowmark(parsetree, rt_index) != NULL)
->>>>>>> 78a09145e0
 					lockmode = RowShareLock;
 				else
 					lockmode = AccessShareLock;

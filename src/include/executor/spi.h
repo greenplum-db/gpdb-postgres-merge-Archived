@@ -72,16 +72,11 @@ extern void SPI_pop_conditional(bool pushed);
 extern void SPI_restore_connection(void);
 extern int	SPI_execute(const char *src, bool read_only, int64 tcount);
 extern int SPI_execute_plan(SPIPlanPtr plan, Datum *Values, const char *Nulls,
-<<<<<<< HEAD
 				 bool read_only, int64 tcount);
-extern int	SPI_exec(const char *src, int64 tcount);
-=======
-				 bool read_only, long tcount);
 extern int SPI_execute_plan_with_paramlist(SPIPlanPtr plan,
 										   ParamListInfo params,
-										   bool read_only, long tcount);
-extern int	SPI_exec(const char *src, long tcount);
->>>>>>> 78a09145e0
+										   bool read_only, int64 tcount);
+extern int	SPI_exec(const char *src, int64 tcount);
 extern int SPI_execp(SPIPlanPtr plan, Datum *Values, const char *Nulls,
 		  int64 tcount);
 extern int SPI_execute_snapshot(SPIPlanPtr plan,

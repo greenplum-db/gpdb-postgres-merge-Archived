@@ -53,10 +53,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_tablespace.h"
-<<<<<<< HEAD
 #include "catalog/pg_trigger.h"
-=======
->>>>>>> 78a09145e0
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"
 #include "miscadmin.h"
@@ -92,11 +89,7 @@
  */
 #define RELCACHE_INIT_FILENAME	"pg_internal.init"
 
-<<<<<<< HEAD
-#define RELCACHE_INIT_FILEMAGIC		0x773264	/* version ID value */
-=======
-#define RELCACHE_INIT_FILEMAGIC		0x573265	/* version ID value */
->>>>>>> 78a09145e0
+#define RELCACHE_INIT_FILEMAGIC		0x773265	/* version ID value */
 
 /*
  *		hardcoded tuple descriptors.  see include/catalog/pg_attribute.h
@@ -106,11 +99,8 @@ static const FormData_pg_attribute Desc_pg_attribute[Natts_pg_attribute] = {Sche
 static const FormData_pg_attribute Desc_pg_proc[Natts_pg_proc] = {Schema_pg_proc};
 static const FormData_pg_attribute Desc_pg_type[Natts_pg_type] = {Schema_pg_type};
 static const FormData_pg_attribute Desc_pg_database[Natts_pg_database] = {Schema_pg_database};
-<<<<<<< HEAD
 static const FormData_pg_attribute Desc_pg_authid[Natts_pg_authid] = {Schema_pg_authid};
 static const FormData_pg_attribute Desc_pg_auth_members[Natts_pg_auth_members] = {Schema_pg_auth_members};
-=======
->>>>>>> 78a09145e0
 static const FormData_pg_attribute Desc_pg_index[Natts_pg_index] = {Schema_pg_index};
 
 /*
@@ -135,11 +125,7 @@ bool		criticalRelcachesBuilt = false;
 
 /*
  * This flag is false until we have prepared the critical relcache entries
-<<<<<<< HEAD
  * for shared catalogs (which are the tables needed for login).
-=======
- * for shared catalogs (specifically, pg_database and its indexes).
->>>>>>> 78a09145e0
  */
 bool		criticalSharedRelcachesBuilt = false;
 
@@ -243,12 +229,8 @@ static void RelationParseRelOptions(Relation relation, HeapTuple tuple);
 static void RelationBuildTupleDesc(Relation relation);
 static Relation RelationBuildDesc(Oid targetRelId, bool insertIt);
 static void RelationInitPhysicalAddr(Relation relation);
-<<<<<<< HEAD
 static void RelationInitAppendOnlyInfo(Relation relation);
 static void load_critical_index(Oid indexoid, Oid heapoid);
-=======
-static void load_critical_index(Oid indexoid);
->>>>>>> 78a09145e0
 static TupleDesc GetPgClassDescriptor(void);
 static TupleDesc GetPgIndexDescriptor(void);
 static void AttrDefaultFetch(Relation relation);
@@ -1430,14 +1412,9 @@ LookupOpclassInfo(Oid operatorClassOid,
  *		quite a lot since we only need to work for a few basic system
  *		catalogs.
  *
-<<<<<<< HEAD
  * formrdesc is currently used for: pg_database, pg_authid, pg_auth_members,
  * pg_class, pg_attribute, pg_proc, and pg_type
  * (see RelationCacheInitializePhase2/3).
-=======
- * formrdesc is currently used for: pg_database, pg_class, pg_attribute,
- * pg_proc, and pg_type (see RelationCacheInitializePhase2/3).
->>>>>>> 78a09145e0
  *
  * Note that these catalogs can't have constraints (except attnotnull),
  * default values, rules, or triggers, since we don't cope with any of that.
@@ -1488,15 +1465,9 @@ formrdesc(const char *relationName, Oid relationReltype,
 	 * initialize relation tuple form
 	 *
 	 * The data we insert here is pretty incomplete/bogus, but it'll serve to
-<<<<<<< HEAD
 	 * get us launched.  RelationCacheInitializePhase2() will read the real
 	 * data from pg_class and replace what we've done here.  Note in particular
 	 * that relowner is left as zero; this cues RelationCacheInitializePhase2
-=======
-	 * get us launched.  RelationCacheInitializePhase3() will read the real
-	 * data from pg_class and replace what we've done here.  Note in particular
-	 * that relowner is left as zero; this cues RelationCacheInitializePhase3
->>>>>>> 78a09145e0
 	 * that the real data isn't there yet.
 	 */
 	relation->rd_rel = (Form_pg_class) palloc0(CLASS_TUPLE_SIZE);
@@ -2653,11 +2624,8 @@ RelationBuildLocalRelation(const char *relname,
 	switch (relid)
 	{
 		case DatabaseRelationId:
-<<<<<<< HEAD
 		case AuthIdRelationId:
 		case AuthMemRelationId:
-=======
->>>>>>> 78a09145e0
 		case RelationRelationId:
 		case AttributeRelationId:
 		case ProcedureRelationId:
@@ -2875,7 +2843,6 @@ RelationCacheInitialize(void)
 /*
  *		RelationCacheInitializePhase2
  *
-<<<<<<< HEAD
  *		This is called to prepare for access to shared catalogs during startup.
  *		We must at least set up nailed reldescs for pg_database, pg_authid,
  *		and pg_auth_members.  Ideally we'd like to have reldescs for their
@@ -2883,14 +2850,6 @@ RelationCacheInitialize(void)
  *		relcache init file.  If that's missing or broken, just make phony
  *		entries for the catalogs themselves.  RelationCacheInitializePhase3
  *		will clean up as needed.
-=======
- *		This is called to prepare for access to pg_database during startup.
- *		We must at least set up a nailed reldesc for pg_database.  Ideally
- *		we'd like to have reldescs for its indexes, too.  We attempt to
- *		load this information from the shared relcache init file.  If that's
- *		missing or broken, just make a phony entry for pg_database.
- *		RelationCacheInitializePhase3 will clean up as needed.
->>>>>>> 78a09145e0
  */
 void
 RelationCacheInitializePhase2(void)
@@ -2898,12 +2857,8 @@ RelationCacheInitializePhase2(void)
 	MemoryContext oldcxt;
 
 	/*
-<<<<<<< HEAD
 	 * In bootstrap mode, the shared catalogs aren't there yet anyway, so do
 	 * nothing.
-=======
-	 * In bootstrap mode, pg_database isn't there yet anyway, so do nothing.
->>>>>>> 78a09145e0
 	 */
 	if (IsBootstrapProcessingMode())
 		return;
@@ -2914,7 +2869,6 @@ RelationCacheInitializePhase2(void)
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/*
-<<<<<<< HEAD
 	 * Try to load the shared relcache cache file.	If unsuccessful, bootstrap
 	 * the cache with pre-made descriptors for the critical shared catalogs.
 	 */
@@ -2928,17 +2882,6 @@ RelationCacheInitializePhase2(void)
 				  false, Natts_pg_auth_members, Desc_pg_auth_members);
 
 #define NUM_CRITICAL_SHARED_RELS	3	/* fix if you change list above */
-=======
-	 * Try to load the shared relcache cache file.  If unsuccessful,
-	 * bootstrap the cache with a pre-made descriptor for pg_database.
-	 */
-	if (!load_relcache_init_file(true))
-	{
-		formrdesc("pg_database", DatabaseRelation_Rowtype_Id, true,
-				  true, Natts_pg_database, Desc_pg_database);
-
-#define NUM_CRITICAL_SHARED_RELS	1	/* fix if you change list above */
->>>>>>> 78a09145e0
 	}
 
 	MemoryContextSwitchTo(oldcxt);
@@ -2965,7 +2908,6 @@ RelationCacheInitializePhase3(void)
 	RelIdCacheEnt *idhentry;
 	MemoryContext oldcxt;
 	bool		needNewCacheFile = !criticalSharedRelcachesBuilt;
-<<<<<<< HEAD
 
 	/*
 	 * Relation cache initialization or any sort of heap access is
@@ -2973,8 +2915,6 @@ RelationCacheInitializePhase3(void)
 	 */
 	if (!IsBootstrapProcessingMode() && RecoveryInProgress())
 		elog(ERROR, "relation cache initialization during recovery or non-bootstrap processes.");
-=======
->>>>>>> 78a09145e0
 
 	/*
 	 * switch to cache memory context
@@ -2982,33 +2922,15 @@ RelationCacheInitializePhase3(void)
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/*
-<<<<<<< HEAD
 	 * Try to load the local relcache cache file.  If unsuccessful, bootstrap
 	 * the cache with pre-made descriptors for the critical "nailed-in" system
 	 * catalogs.
-=======
-	 * Try to load the local relcache cache file.  If unsuccessful,
-	 * bootstrap the cache with pre-made descriptors for the critical
-	 * "nailed-in" system catalogs.
->>>>>>> 78a09145e0
 	 */
 	if (IsBootstrapProcessingMode() ||
 		!load_relcache_init_file(false))
 	{
 		needNewCacheFile = true;
 
-<<<<<<< HEAD
-		formrdesc("pg_class", PG_CLASS_RELTYPE_OID, false,
-				  true, Natts_pg_class, Desc_pg_class);
-		formrdesc("pg_attribute", PG_ATTRIBUTE_RELTYPE_OID, false,
-				  false, Natts_pg_attribute, Desc_pg_attribute);
-		formrdesc("pg_proc", PG_PROC_RELTYPE_OID, false,
-				  true, Natts_pg_proc, Desc_pg_proc);
-		formrdesc("pg_type", PG_TYPE_RELTYPE_OID, false,
-				  true, Natts_pg_type, Desc_pg_type);
-
-#define NUM_CRITICAL_LOCAL_RELS 4		/* fix if you change list above */
-=======
 		formrdesc("pg_class", RelationRelation_Rowtype_Id, false,
 				  true, Natts_pg_class, Desc_pg_class);
 		formrdesc("pg_attribute", AttributeRelation_Rowtype_Id, false,
@@ -3018,8 +2940,7 @@ RelationCacheInitializePhase3(void)
 		formrdesc("pg_type", TypeRelation_Rowtype_Id, false,
 				  true, Natts_pg_type, Desc_pg_type);
 
-#define NUM_CRITICAL_LOCAL_RELS	4	/* fix if you change list above */
->>>>>>> 78a09145e0
+#define NUM_CRITICAL_LOCAL_RELS 4		/* fix if you change list above */
 	}
 
 	MemoryContextSwitchTo(oldcxt);
@@ -3055,7 +2976,6 @@ RelationCacheInitializePhase3(void)
 	 */
 	if (!criticalRelcachesBuilt)
 	{
-<<<<<<< HEAD
 		load_critical_index(ClassOidIndexId,
 							RelationRelationId);
 		load_critical_index(AttributeRelidNumIndexId,
@@ -3076,19 +2996,6 @@ RelationCacheInitializePhase3(void)
 							TriggerRelationId);
 
 #define NUM_CRITICAL_LOCAL_INDEXES	9	/* fix if you change list above */
-=======
-		load_critical_index(ClassOidIndexId);
-		load_critical_index(AttributeRelidNumIndexId);
-		load_critical_index(IndexRelidIndexId);
-		load_critical_index(OpclassOidIndexId);
-		load_critical_index(AccessMethodStrategyIndexId);
-		load_critical_index(AccessMethodProcedureIndexId);
-		load_critical_index(OperatorOidIndexId);
-		load_critical_index(RewriteRelRulenameIndexId);
-		load_critical_index(TriggerRelidNameIndexId);
-
-#define NUM_CRITICAL_LOCAL_INDEXES	9		/* fix if you change list above */
->>>>>>> 78a09145e0
 
 		criticalRelcachesBuilt = true;
 	}
@@ -3096,7 +3003,6 @@ RelationCacheInitializePhase3(void)
 	/*
 	 * Process critical shared indexes too.
 	 *
-<<<<<<< HEAD
 	 * DatabaseNameIndexId isn't critical for relcache loading, but rather for
 	 * initial lookup of MyDatabaseId, without which we'll never find any
 	 * non-shared catalogs at all.	Autovacuum calls InitPostgres with a
@@ -3118,19 +3024,6 @@ RelationCacheInitializePhase3(void)
 							AuthMemRelationId);
 
 #define NUM_CRITICAL_SHARED_INDEXES 5	/* fix if you change list above */
-=======
-	 * DatabaseNameIndexId isn't critical for relcache loading, but rather
-	 * for initial lookup of MyDatabaseId, without which we'll never find
-	 * any non-shared catalogs at all.  Autovacuum calls InitPostgres with
-	 * a database OID, so it instead depends on DatabaseOidIndexId.
-	 */
-	if (!criticalSharedRelcachesBuilt)
-	{
-		load_critical_index(DatabaseNameIndexId);
-		load_critical_index(DatabaseOidIndexId);
-
-#define NUM_CRITICAL_SHARED_INDEXES	2		/* fix if you change list above */
->>>>>>> 78a09145e0
 
 		criticalSharedRelcachesBuilt = true;
 	}
@@ -3269,7 +3162,6 @@ RelationCacheInitializePhase3(void)
 
 /*
  * Load one critical system index into the relcache
-<<<<<<< HEAD
  *
  * indexoid is the OID of the target index, heapoid is the OID of the catalog
  * it belongs to.
@@ -3288,25 +3180,12 @@ load_critical_index(Oid indexoid, Oid heapoid)
 	LockRelationOid(heapoid, AccessShareLock);
 	LockRelationOid(indexoid, AccessShareLock);
 	ird = RelationBuildDesc(indexoid, true);
-=======
- */
-static void
-load_critical_index(Oid indexoid)
-{
-	Relation	ird;
-
-	LockRelationOid(indexoid, AccessShareLock);
-	ird = RelationBuildDesc(indexoid, NULL);
->>>>>>> 78a09145e0
 	if (ird == NULL)
 		elog(PANIC, "could not open critical system index %u", indexoid);
 	ird->rd_isnailed = true;
 	ird->rd_refcnt = 1;
 	UnlockRelationOid(indexoid, AccessShareLock);
-<<<<<<< HEAD
 	UnlockRelationOid(heapoid, AccessShareLock);
-=======
->>>>>>> 78a09145e0
 }
 
 /*
@@ -3595,14 +3474,9 @@ RelationGetIndexList(Relation relation)
 		result = insert_ordered_oid(result, index->indexrelid);
 
 		/* Check to see if it is a unique, non-partial btree index on OID */
-<<<<<<< HEAD
 		if (IndexIsValid(index) &&
 			index->indnatts == 1 &&
-			index->indisunique &&
-=======
-		if (index->indnatts == 1 &&
 			index->indisunique && index->indimmediate &&
->>>>>>> 78a09145e0
 			index->indkey.values[0] == ObjectIdAttributeNumber &&
 			index->indclass.values[0] == OID_BTREE_OPS_OID &&
 			heap_attisnull(htup, Anum_pg_index_indpred))
@@ -4107,12 +3981,9 @@ RelationGetExclusionInfo(Relation indexRelation,
  *			  relation descriptors using sequential scans and write 'em to
  *			  the initialization file for use by subsequent backends.
  *
-<<<<<<< HEAD
-=======
  *		As of Postgres 8.5, there is one local initialization file in each
  *		database, plus one shared initialization file for shared catalogs.
  *
->>>>>>> 78a09145e0
  *		We could dispense with the initialization files and just build the
  *		critical reldescs the hard way on every backend startup, but that
  *		slows down backend startup noticeably.
@@ -4458,10 +4329,6 @@ load_relcache_init_file(bool shared)
 			nailed_indexes != NUM_CRITICAL_LOCAL_INDEXES)
 			goto read_failed;
 	}
-<<<<<<< HEAD
-
-=======
->>>>>>> 78a09145e0
 
 	/*
 	 * OK, all appears well.
@@ -4729,14 +4596,9 @@ RelationIdIsInInitFile(Oid relationId)
  * startup sequence gets into the sinval array before trying to load the init
  * file.)
  *
-<<<<<<< HEAD
  * We take the lock and do the unlink in RelationCacheInitFilePreInvalidate,
  * then release the lock in RelationCacheInitFilePostInvalidate.  Caller must
  * send any pending SI messages between those calls.
-=======
- * Ignore any failure to unlink the file, since it might not be there if
- * no backend has been started since the last removal.
->>>>>>> 78a09145e0
  *
  * Notice this deals only with the local init file, not the shared init file.
  * The reason is that there can never be a "significant" change to the
@@ -4780,29 +4642,18 @@ RelationCacheInitFilePostInvalidate(void)
 /*
  * Remove the init files during postmaster startup.
  *
-<<<<<<< HEAD
- * We used to keep the init files across restarts, but that is unsafe even in simple
- * crash-recovery cases as there are windows for the init files to become out-of-sync
- * with the database. So now we just remove them during startup and expect the
- * first backend launch to rebuild them. Of course, this has to happen in each
- * database of the cluster.
-=======
  * We used to keep the init files across restarts, but that is unsafe in PITR
  * scenarios, and even in simple crash-recovery cases there are windows for
  * the init files to become out-of-sync with the database.  So now we just
  * remove them during startup and expect the first backend launch to rebuild
  * them.  Of course, this has to happen in each database of the cluster.
->>>>>>> 78a09145e0
  */
 void
 RelationCacheInitFileRemove(void)
 {
-<<<<<<< HEAD
-=======
 	const char *tblspcdir = "pg_tblspc";
 	DIR		   *dir;
 	struct dirent *de;
->>>>>>> 78a09145e0
 	char		path[MAXPGPATH];
 
 	/*
@@ -4815,8 +4666,6 @@ RelationCacheInitFileRemove(void)
 
 	/* Scan everything in the default tablespace */
 	RelationCacheInitFileRemoveInDir("base");
-<<<<<<< HEAD
-=======
 
 	/* Scan the tablespace link directory to find non-default tablespaces */
 	dir = AllocateDir(tblspcdir);
@@ -4839,7 +4688,6 @@ RelationCacheInitFileRemove(void)
 	}
 
 	FreeDir(dir);
->>>>>>> 78a09145e0
 }
 
 /* Process one per-tablespace directory for RelationCacheInitFileRemove */

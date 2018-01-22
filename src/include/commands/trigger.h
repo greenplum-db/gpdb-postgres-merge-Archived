@@ -153,12 +153,8 @@ extern void ExecBSUpdateTriggers(EState *estate,
 					 ResultRelInfo *relinfo);
 extern void ExecASUpdateTriggers(EState *estate,
 					 ResultRelInfo *relinfo);
-<<<<<<< HEAD
 extern TupleTableSlot *ExecBRUpdateTriggers(EState *estate,
-=======
-extern HeapTuple ExecBRUpdateTriggers(EState *estate,
 					 EPQState *epqstate,
->>>>>>> 78a09145e0
 					 ResultRelInfo *relinfo,
 					 ItemPointer tupleid,
 					 TupleTableSlot *slot);

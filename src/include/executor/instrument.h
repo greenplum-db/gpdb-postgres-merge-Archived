@@ -54,7 +54,8 @@ typedef struct Instrumentation
 	double		total;			/* Total total time (in seconds) */
 	double		ntuples;		/* Total tuples produced */
 	double		nloops;			/* # of run cycles for this node */
-<<<<<<< HEAD
+	BufferUsage	bufusage;		/* Total buffer usage */
+
     double		execmemused;    /* CDB: executor memory used (bytes) */
     double		workmemused;    /* CDB: work_mem actually used (bytes) */
     double		workmemwanted;  /* CDB: work_mem to avoid scratch i/o (bytes) */
@@ -65,9 +66,6 @@ typedef struct Instrumentation
 	const char* sortSpaceType; /*CDB: Sort space type (Memory / Disk) */
 	long			  sortSpaceUsed; /* CDB: Memory / Disk used by sort(KBytes) */
     struct CdbExplain_NodeSummary  *cdbNodeSummary; /* stats from all qExecs */
-=======
-	BufferUsage	bufusage;		/* Total buffer usage */
->>>>>>> 78a09145e0
 } Instrumentation;
 
 extern BufferUsage		pgBufferUsage;
