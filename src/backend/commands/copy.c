@@ -32,11 +32,8 @@
 #include "cdb/cdbaocsam.h"
 #include "cdb/cdbpartition.h"
 #include "commands/copy.h"
-<<<<<<< HEAD
-#include "commands/tablecmds.h"
-=======
 #include "commands/defrem.h"
->>>>>>> 78a09145e0
+#include "commands/tablecmds.h"
 #include "commands/trigger.h"
 #include "commands/queue.h"
 #include "executor/executor.h"
@@ -852,7 +849,7 @@ CopyGetInt16(CopyState cstate, int16 *val)
  */
 void ValidateControlChars(bool copy, bool load, bool csv_mode, char *delim,
 						char *null_print, char *quote, char *escape,
-						List *force_quote, List *force_notnull,
+						  List *force_quote, bool force_quote_all, List *force_notnull,
 						bool header_line, bool fill_missing, char *newline,
 						int num_columns)
 {
@@ -1017,11 +1014,11 @@ void ValidateControlChars(bool copy, bool load, bool csv_mode, char *delim,
 	/*
 	 * FORCE QUOTE
 	 */
-	if (!csv_mode && force_quote != NIL)
+	if (!csv_mode && (force_quote != NIL || force_quote_all))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				errmsg("force quote available only in CSV mode")));
-	if (force_quote != NIL && load)
+	if ((force_quote != NIL || force_quote_all) && load)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				errmsg("force quote only available for data unloading, not loading")));
@@ -1171,8 +1168,7 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-<<<<<<< HEAD
-			cstate->null_print = strVal(defel->arg);
+			cstate->null_print = defGetString(defel);
 
 			/*
 			 * MPP-2010: unfortunately serialization function doesn't
@@ -1182,17 +1178,6 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 			 */
 			if(!cstate->null_print)
 				cstate->null_print = "";
-		}
-		else if (strcmp(defel->defname, "csv") == 0)
-		{
-			if (cstate->csv_mode)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
-			cstate->csv_mode = intVal(defel->arg);
-=======
-			cstate->null_print = defGetString(defel);
->>>>>>> 78a09145e0
 		}
 		else if (strcmp(defel->defname, "header") == 0)
 		{
@@ -1279,22 +1264,15 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 							defel->defname)));
 	}
 
-<<<<<<< HEAD
-	/* Set defaults */
-
-	/* Check for incompatible options */
-=======
 	/*
 	 * Check for incompatible options (must do these two before inserting
 	 * defaults)
 	 */
->>>>>>> 78a09145e0
 	if (cstate->binary && cstate->delim)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("cannot specify DELIMITER in BINARY mode")));
 
-<<<<<<< HEAD
 	if (stmt->is_program && stmt->filename == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1314,13 +1292,6 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("cannot specify HEADER in BINARY mode")));
 
-	if (cstate->binary && cstate->csv_mode)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("cannot specify CSV in BINARY mode")));
-
-=======
->>>>>>> 78a09145e0
 	if (cstate->binary && cstate->null_print)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1394,7 +1365,6 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 		cstate->partitions = stmt->partitions;
 	}
 
-<<<<<<< HEAD
 	/*
 	 * Validate our control characters and their combination
 	 */
@@ -1406,32 +1376,12 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 						 cstate->quote,
 						 cstate->escape,
 						 force_quote,
+						 force_quote_all,
 						 force_notnull,
 						 cstate->header_line,
 						 cstate->fill_missing,
 						 cstate->eol_str,
 						 0 /* pass correct value when COPY supports no delim */);
-=======
-	/* Check force_quote */
-	if (!cstate->csv_mode && (force_quote != NIL || force_quote_all))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY force quote available only in CSV mode")));
-	if ((force_quote != NIL || force_quote_all) && is_from)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY force quote only available using COPY TO")));
-
-	/* Check force_notnull */
-	if (!cstate->csv_mode && force_notnull != NIL)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY force not null available only in CSV mode")));
-	if (force_notnull != NIL && !is_from)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			  errmsg("COPY force not null only available using COPY FROM")));
->>>>>>> 78a09145e0
 
 	if (!pg_strcasecmp(cstate->escape, "off"))
 		cstate->escape_off = true;
@@ -4457,12 +4407,8 @@ CopyFrom(CopyState cstate)
 	CopyInitPartitioningState(estate);
 
 	/* Set up a tuple slot too */
-<<<<<<< HEAD
-	baseSlot = MakeSingleTupleTableSlot(tupDesc);
-=======
-	slot = ExecInitExtraTupleSlot(estate);
-	ExecSetSlotDescriptor(slot, tupDesc);
->>>>>>> 78a09145e0
+	baseSlot = ExecInitExtraTupleSlot(estate);
+	ExecSetSlotDescriptor(baseSlot, tupDesc);
 
 	econtext = GetPerTupleExprContext(estate);
 
@@ -5044,6 +4990,7 @@ PROCESS_SEGMENT_DATA:
 
 				if (!skip_tuple)
 				{
+					List	   *recheckIndexes = NIL;
 					char relstorage = RelinfoGetStorage(resultRelInfo);
 					ItemPointerData insertedTid;
 
@@ -5089,7 +5036,7 @@ PROCESS_SEGMENT_DATA:
 					}
 
 					if (resultRelInfo->ri_NumIndices > 0)
-						ExecInsertIndexTuples(slot, &insertedTid, estate, false);
+						recheckIndexes = ExecInsertIndexTuples(slot, &insertedTid, estate, false);
 
 					/* AFTER ROW INSERT Triggers */
 					if (resultRelInfo->ri_TrigDesc &&
@@ -5098,7 +5045,8 @@ PROCESS_SEGMENT_DATA:
 						HeapTuple tuple;
 
 						tuple = ExecFetchSlotHeapTuple(slot);
-						ExecARInsertTriggers(estate, resultRelInfo, tuple);
+						ExecARInsertTriggers(estate, resultRelInfo, tuple,
+											 recheckIndexes);
 					}
 
 					/*
@@ -5121,16 +5069,9 @@ PROCESS_SEGMENT_DATA:
 		else
 			/* no bytes read, end of data */
 		{
-<<<<<<< HEAD
 			no_more_data = true;
 		}
 	} while (!no_more_data);
-=======
-			List *recheckIndexes = NIL;
-
-			/* Place tuple in tuple slot */
-			ExecStoreTuple(tuple, slot, InvalidBuffer, false);
->>>>>>> 78a09145e0
 
 	/*
 	 * After processed data from QD, which is empty and just for workflow, now
@@ -5155,7 +5096,6 @@ PROCESS_SEGMENT_DATA:
 			char *filename = cstate->filename;
 			cstate->copy_file = AllocateFile(filename, PG_BINARY_R);
 
-<<<<<<< HEAD
 			if (cstate->copy_file == NULL)
 				ereport(ERROR,
 						(errcode_for_file_access(),
@@ -5164,15 +5104,6 @@ PROCESS_SEGMENT_DATA:
 
 			// Increase buffer size to improve performance  (cmcdevitt)
 			setvbuf(cstate->copy_file, NULL, _IOFBF, 393216); // 384 Kbytes
-=======
-			if (resultRelInfo->ri_NumIndices > 0)
-				recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
-													   estate, false);
-
-			/* AFTER ROW INSERT Triggers */
-			ExecARInsertTriggers(estate, resultRelInfo, tuple,
-								 recheckIndexes);
->>>>>>> 78a09145e0
 
 			fstat(fileno(cstate->copy_file), &st);
 			if (S_ISDIR(st.st_mode))
@@ -5232,15 +5163,10 @@ PROCESS_SEGMENT_DATA:
 	if (estate->es_result_partitions && Gp_role == GP_ROLE_EXECUTE)
 		SendAOTupCounts(estate);
 
-<<<<<<< HEAD
 	/* NB: do not pfree baseValues/baseNulls and partValues/partNulls here, since
 	 * there may be duplicate free in ExecDropSingleTupleTableSlot; if not, they
 	 * would be freed by FreeExecutorState anyhow */
-=======
 	ExecResetTupleTable(estate->es_tupleTable, false);
->>>>>>> 78a09145e0
-
-	ExecDropSingleTupleTableSlot(baseSlot);
 
 	/*
 	 * If we skipped writing WAL, then we need to sync the heap (but not

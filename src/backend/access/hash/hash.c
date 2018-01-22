@@ -272,11 +272,7 @@ hashgettuple(PG_FUNCTION_ARGS)
 			/*
 			 * Since this can be redone later if needed, mark as a hint.
 			 */
-<<<<<<< HEAD
 			MarkBufferDirtyHint(so->hashso_curbuf, rel);
-=======
-			SetBufferCommitInfoNeedsSave(buf);
->>>>>>> 78a09145e0
 		}
 
 		/*

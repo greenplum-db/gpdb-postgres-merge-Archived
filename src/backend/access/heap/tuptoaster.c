@@ -755,7 +755,10 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 		maxDataLen = TOAST_TUPLE_TARGET - hoff;
 	}
 	else
+	{
 		maxDataLen = toast_tuple_target;
+		hoff = -1; /* keep compiler quiet about using 'hoff' uninitialized */
+	}
 
 	/*
 	 * Look for attributes with attstorage 'x' to compress.  Also find large
@@ -961,15 +964,15 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 	 * we increase the target tuple size, so that 'm' attributes aren't
 	 * stored externally unless really necessary.
 	 */
-<<<<<<< HEAD
+	/*
+	 * GPDB_90_MERGE_FIXME: Should we do something like this with memtuples on
+	 * AO tables too?
+	 */
+	if (!ismemtuple)
+		maxDataLen = TOAST_TUPLE_TARGET_MAIN - hoff;
+
 	while (compute_dest_tuplen(tupleDesc, pbind, has_nulls,
 							   toast_values, toast_isnull) > maxDataLen &&
-=======
-	maxDataLen = TOAST_TUPLE_TARGET_MAIN - hoff;
-
-	while (heap_compute_data_size(tupleDesc,
-								  toast_values, toast_isnull) > maxDataLen &&
->>>>>>> 78a09145e0
 		   rel->rd_rel->reltoastrelid != InvalidOid)
 	{
 		int			biggest_attno = -1;

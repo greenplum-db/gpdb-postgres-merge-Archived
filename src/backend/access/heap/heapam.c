@@ -3227,10 +3227,6 @@ l2:
 			PageSetLSN(BufferGetPage(newbuf), recptr);
 		}
 		PageSetLSN(BufferGetPage(buffer), recptr);
-<<<<<<< HEAD
-=======
-		PageSetTLI(BufferGetPage(buffer), ThisTimeLineID);
->>>>>>> 78a09145e0
 	}
 
 	END_CRIT_SECTION();

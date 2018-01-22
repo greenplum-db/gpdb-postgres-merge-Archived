@@ -137,34 +137,18 @@ IndexScanEnd(IndexScanDesc scan)
  *
  * Construct a string describing the contents of an index entry, in the
  * form "(key_name, ...)=(key_value, ...)".  This is currently used
-<<<<<<< HEAD
- * only for building unique-constraint error messages, but we don't want
- * to hardwire the spelling of the messages here.
-=======
  * for building unique-constraint and exclusion-constraint error messages.
  *
  * The passed-in values/nulls arrays are the "raw" input to the index AM,
  * e.g. results of FormIndexDatum --- this is not necessarily what is stored
  * in the index, but it's what the user perceives to be stored.
->>>>>>> 78a09145e0
  */
 char *
 BuildIndexValueDescription(Relation indexRelation,
 						   Datum *values, bool *isnull)
 {
-<<<<<<< HEAD
-	/*
-	 * XXX for the moment we use the index's tupdesc as a guide to the
-	 * datatypes of the values.  This is okay for btree indexes but is in
-	 * fact the wrong thing in general.  This will have to be fixed if we
-	 * are ever to support non-btree unique indexes.
-	 */
-	TupleDesc	tupdesc = RelationGetDescr(indexRelation);
-	StringInfoData buf;
-=======
-	StringInfoData buf;
 	int			natts = indexRelation->rd_rel->relnatts;
->>>>>>> 78a09145e0
+	StringInfoData buf;
 	int			i;
 
 	initStringInfo(&buf);
@@ -172,11 +156,7 @@ BuildIndexValueDescription(Relation indexRelation,
 					 pg_get_indexdef_columns(RelationGetRelid(indexRelation),
 											 true));
 
-<<<<<<< HEAD
-	for (i = 0; i < tupdesc->natts; i++)
-=======
 	for (i = 0; i < natts; i++)
->>>>>>> 78a09145e0
 	{
 		char   *val;
 
@@ -187,9 +167,6 @@ BuildIndexValueDescription(Relation indexRelation,
 			Oid		foutoid;
 			bool	typisvarlena;
 
-<<<<<<< HEAD
-			getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
-=======
 			/*
 			 * The provided data is not necessarily of the type stored in
 			 * the index; rather it is of the index opclass's input type.
@@ -201,7 +178,6 @@ BuildIndexValueDescription(Relation indexRelation,
 			 * work okay, but we might have to try harder in future.
 			 */
 			getTypeOutputInfo(indexRelation->rd_opcintype[i],
->>>>>>> 78a09145e0
 							  &foutoid, &typisvarlena);
 			val = OidOutputFunctionCall(foutoid, values[i]);
 		}

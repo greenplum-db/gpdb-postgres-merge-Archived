@@ -490,11 +490,7 @@ Exec_Listen(Relation lRel, const char *relname)
 	namestrcpy(&condname, relname);
 	values[Anum_pg_listener_relname - 1] = NameGetDatum(&condname);
 	values[Anum_pg_listener_listenerpid - 1] = Int32GetDatum(MyProcPid);
-<<<<<<< HEAD
-	values[Anum_pg_listener_notify - 1] = Int32GetDatum(0);		/* no notifies pending */
-=======
 	values[Anum_pg_listener_notification - 1] = Int32GetDatum(0);		/* no notifies pending */
->>>>>>> 78a09145e0
 
 	tuple = heap_form_tuple(RelationGetDescr(lRel), values, nulls);
 
@@ -970,11 +966,7 @@ ProcessIncomingNotify(void)
 	bool		catchup_enabled;
 	bool		client_wait_timeout_enabled;
 
-<<<<<<< HEAD
-	/* Must prevent SIGUSR1 and SIGALRM(for IdleSessionGangTimeout) interrupt while I am running */
-=======
 	/* Must prevent catchup interrupt while I am running */
->>>>>>> 78a09145e0
 	catchup_enabled = DisableCatchupInterrupt();
 	client_wait_timeout_enabled = DisableClientWaitTimeoutInterrupt();
 

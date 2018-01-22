@@ -16,11 +16,8 @@
 
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
-<<<<<<< HEAD
-#include "catalog/pg_namespace.h"
-=======
 #include "catalog/pg_largeobject.h"
->>>>>>> 78a09145e0
+#include "catalog/pg_namespace.h"
 #include "commands/alter.h"
 #include "commands/conversioncmds.h"
 #include "commands/dbcommands.h"

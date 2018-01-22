@@ -1534,7 +1534,6 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 
 	/* Close pg_database, but keep lock till commit */
 	heap_close(rel, NoLock);
-<<<<<<< HEAD
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -1550,13 +1549,6 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 							NULL);
 		pfree(buffer.data);
 	}
-
-	/*
-	 * We don't bother updating the flat file since the existing options for
-	 * ALTER DATABASE don't affect it.
-	 */
-=======
->>>>>>> 78a09145e0
 }
 
 

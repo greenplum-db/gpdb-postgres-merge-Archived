@@ -792,13 +792,9 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace,
 										  ONCOMMIT_NOOP,
                                           NULL,                         /*CDB*/
 										  reloptions,
-<<<<<<< HEAD
+										  false,
 										  allowSystemTableModsDDL,
 										  /* valid_opts */ true);
-=======
-										  false,
-										  allowSystemTableMods);
->>>>>>> 78a09145e0
 
 	ReleaseSysCache(tuple);
 

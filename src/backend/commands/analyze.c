@@ -192,10 +192,7 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 	Oid			save_userid;
 	int			save_sec_context;
 	int			save_nestlevel;
-<<<<<<< HEAD
 	RowIndexes	**colLargeRowIndexes;
-=======
->>>>>>> 78a09145e0
 
 	if (vacstmt->options & VACOPT_VERBOSE)
 		elevel = INFO;
@@ -455,7 +452,9 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 	 * Acquire the sample rows
 	 */
 	numrows = acquire_sample_rows_by_query(onerel, attr_cnt, vacattrstats, &rows, targrows,
-										   &totalrows, &totaldeadrows, &totalpages, vacstmt->rootonly, colLargeRowIndexes);
+										   &totalrows, &totaldeadrows, &totalpages,
+										   (vacstmt->options & VACOPT_ROOTONLY) != 0,
+										   colLargeRowIndexes);
 
 	/*
 	 * Compute the statistics.	Temporary results during the calculations for
@@ -505,7 +504,6 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 			}
 
 			stats->tupDesc = onerel->rd_att;
-<<<<<<< HEAD
 
 			if (validRowsLength > 0)
 			{
@@ -525,17 +523,11 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 				stats->stadistinct = 0.0;		/* "unknown" */
 			}
 			stats->rows = rows; // Reset to original rows
-=======
-			(*stats->compute_stats) (stats,
-									 std_fetch_func,
-									 numrows,
-									 totalrows);
 
 			/* If attdistinct is set, override with that value */
 			if (stats->attr->attdistinct != 0)
 				stats->stadistinct = stats->attr->attdistinct;
 
->>>>>>> 78a09145e0
 			MemoryContextResetAndDeleteChildren(col_context);
 		}
 
