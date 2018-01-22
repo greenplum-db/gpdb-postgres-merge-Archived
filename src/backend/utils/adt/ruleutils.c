@@ -46,11 +46,8 @@
 #include "parser/parse_agg.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
-<<<<<<< HEAD
 #include "parser/parse_cte.h"
-=======
 #include "parser/parser.h"
->>>>>>> 78a09145e0
 #include "parser/parsetree.h"
 #include "rewrite/rewriteHandler.h"
 #include "rewrite/rewriteManip.h"
@@ -156,10 +153,7 @@ static void decompile_column_index_array(Datum column_index_array, Oid relId,
 							 StringInfo buf);
 static char *pg_get_ruledef_worker(Oid ruleoid, int prettyFlags);
 static char *pg_get_indexdef_worker(Oid indexrelid, int colno,
-<<<<<<< HEAD
-=======
 					   const Oid *excludeOps,
->>>>>>> 78a09145e0
 					   bool attrsOnly, bool showTblSpc,
 					   int prettyFlags);
 static char *pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
@@ -243,14 +237,9 @@ static Node *processIndirection(Node *node, deparse_context *context,
 static void printSubscripts(ArrayRef *aref, deparse_context *context);
 static char *get_relation_name(Oid relid);
 static char *generate_relation_name(Oid relid, List *namespaces);
-<<<<<<< HEAD
 static char *generate_function_name(Oid funcid, int nargs,
-					   Oid *argtypes,
+					   List *argnames, Oid *argtypes,
 					   bool has_variadic, bool *use_variadic_p);
-=======
-static char *generate_function_name(Oid funcid, int nargs, List *argnames,
-									Oid *argtypes, bool *is_variadic);
->>>>>>> 78a09145e0
 static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
 static text *string_to_text(char *str);
 static char *flatten_reloptions(Oid relid);
@@ -686,12 +675,8 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 
 	appendStringInfo(&buf, "EXECUTE PROCEDURE %s(",
 					 generate_function_name(trigrec->tgfoid, 0,
-<<<<<<< HEAD
-											NULL,
+											NIL, NULL,
 											false, NULL));
-=======
-											NIL, NULL, NULL));
->>>>>>> 78a09145e0
 
 	if (trigrec->tgnargs > 0)
 	{
@@ -744,10 +729,7 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	Oid			indexrelid = PG_GETARG_OID(0);
 
 	PG_RETURN_TEXT_P(string_to_text(pg_get_indexdef_worker(indexrelid, 0,
-<<<<<<< HEAD
-=======
 														   NULL,
->>>>>>> 78a09145e0
 														   false, false, 0)));
 }
 
@@ -761,10 +743,7 @@ pg_get_indexdef_ext(PG_FUNCTION_ARGS)
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : 0;
 	PG_RETURN_TEXT_P(string_to_text(pg_get_indexdef_worker(indexrelid, colno,
-<<<<<<< HEAD
-=======
 														   NULL,
->>>>>>> 78a09145e0
 														   colno != 0,
 														   false,
 														   prettyFlags)));
@@ -774,21 +753,7 @@ pg_get_indexdef_ext(PG_FUNCTION_ARGS)
 char *
 pg_get_indexdef_string(Oid indexrelid)
 {
-<<<<<<< HEAD
-	return pg_get_indexdef_worker(indexrelid, 0, false, true, 0);
-}
-
-/* Internal version that just reports the column definitions */
-char *
-pg_get_indexdef_columns(Oid indexrelid, bool pretty)
-{
-	int			prettyFlags;
-
-	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : 0;
-	return pg_get_indexdef_worker(indexrelid, 0, true, false, prettyFlags);
-=======
 	return pg_get_indexdef_worker(indexrelid, 0, NULL, false, true, 0);
->>>>>>> 78a09145e0
 }
 
 /* Internal version that just reports the column definitions */
@@ -809,10 +774,7 @@ pg_get_indexdef_columns(Oid indexrelid, bool pretty)
  */
 static char *
 pg_get_indexdef_worker(Oid indexrelid, int colno,
-<<<<<<< HEAD
-=======
 					   const Oid *excludeOps,
->>>>>>> 78a09145e0
 					   bool attrsOnly, bool showTblSpc,
 					   int prettyFlags)
 {
@@ -919,13 +881,6 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 	initStringInfo(&buf);
 
 	if (!attrsOnly)
-<<<<<<< HEAD
-		appendStringInfo(&buf, "CREATE %sINDEX %s ON %s USING %s (",
-						 idxrec->indisunique ? "UNIQUE " : "",
-						 quote_identifier(NameStr(idxrelrec->relname)),
-						 generate_relation_name(indrelid, NIL),
-						 quote_identifier(NameStr(amrec->amname)));
-=======
 	{
 		if (!isConstraint)
 			appendStringInfo(&buf, "CREATE %sINDEX %s ON %s USING %s (",
@@ -937,7 +892,6 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 			appendStringInfo(&buf, "EXCLUDE USING %s (",
 							 quote_identifier(NameStr(amrec->amname)));
 	}
->>>>>>> 78a09145e0
 
 	/*
 	 * Report the indexed attributes
@@ -3745,7 +3699,6 @@ push_plan(deparse_namespace *dpns, Plan *subplan)
 	 */
 	if (IsA(subplan, Append))
 		dpns->outer_plan = (Plan *) linitial(((Append *) subplan)->appendplans);
-<<<<<<< HEAD
 	else if (IsA(subplan, Sequence))
 	{
 		/*
@@ -3757,10 +3710,8 @@ push_plan(deparse_namespace *dpns, Plan *subplan)
 		 */
 		dpns->outer_plan = (Plan *) llast(((Sequence *) subplan)->subplans);
 	}
-=======
 	else if (IsA(subplan, ModifyTable))
 		dpns->outer_plan = (Plan *) linitial(((ModifyTable *) subplan)->plans);
->>>>>>> 78a09145e0
 	else
 		dpns->outer_plan = outerPlan(subplan);
 
@@ -4008,21 +3959,10 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 		if (schemaname)
 			appendStringInfo(buf, "%s.",
 							 quote_identifier(schemaname));
-<<<<<<< HEAD
 
-		if (strcmp(refname, "*NEW*") == 0)
-			appendStringInfoString(buf, "new");
-		else if (strcmp(refname, "*OLD*") == 0)
-			appendStringInfoString(buf, "old");
-		else
-			appendStringInfoString(buf, quote_identifier(refname));
+		appendStringInfoString(buf, quote_identifier(refname));
 
 		appendStringInfoChar(buf, '.');
-=======
-		appendStringInfoString(buf, quote_identifier(refname));
-		if (attname || showstar)
-			appendStringInfoChar(buf, '.');
->>>>>>> 78a09145e0
 	}
 	if (attname)
 		appendStringInfoString(buf, quote_identifier(attname));
@@ -5758,12 +5698,8 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 	Oid			funcoid = expr->funcid;
 	Oid			argtypes[FUNC_MAX_ARGS];
 	int			nargs;
-<<<<<<< HEAD
-	bool		use_variadic;
-=======
 	List	   *argnames;
-	bool		is_variadic;
->>>>>>> 78a09145e0
+	bool		use_variadic;
 	ListCell   *l;
 
 	/*
@@ -5802,36 +5738,27 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 	 * Normal function: display as proname(args).  First we need to extract
 	 * the argument datatypes.
 	 */
+	if (list_length(expr->args) > FUNC_MAX_ARGS)
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+				 errmsg("too many arguments")));
 	nargs = 0;
 	argnames = NIL;
 	foreach(l, expr->args)
 	{
-<<<<<<< HEAD
-		if (nargs >= FUNC_MAX_ARGS)
-			ereport(ERROR,
-					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-					 errmsg("too many arguments")));
-		argtypes[nargs] = exprType((Node *) lfirst(l));
-=======
 		Node   *arg = (Node *) lfirst(l);
 
 		if (IsA(arg, NamedArgExpr))
 			argnames = lappend(argnames, ((NamedArgExpr *) arg)->name);
 		argtypes[nargs] = exprType(arg);
->>>>>>> 78a09145e0
 		nargs++;
 	}
 
 	appendStringInfo(buf, "%s(",
 					 generate_function_name(funcoid, nargs,
-<<<<<<< HEAD
-											argtypes,
+											argnames, argtypes,
 											expr->funcvariadic,
 											&use_variadic));
-=======
-											argnames, argtypes,
-											&is_variadic));
->>>>>>> 78a09145e0
 	nargs = 0;
 	foreach(l, expr->args)
 	{
@@ -5938,12 +5865,10 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 	Oid			argtypes[FUNC_MAX_ARGS];
-	List       *arglist;
 	int			nargs;
 	bool		use_variadic;
 	Oid fnoid;
 
-<<<<<<< HEAD
 	/* Special handling of MEDIAN */
 	if (get_median_expr(aggref, context))
 		return;
@@ -5972,26 +5897,6 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 		case AGGSTAGE_NORMAL:
 		default:
 			break;
-=======
-	/* Extract the regular arguments, ignoring resjunk stuff for the moment */
-	arglist = NIL;
-	nargs = 0;
-	foreach(l, aggref->args)
-	{
-		TargetEntry *tle = (TargetEntry *) lfirst(l);
-		Node   *arg = (Node *) tle->expr;
-
-		Assert(!IsA(arg, NamedArgExpr));
-		if (tle->resjunk)
-			continue;
-		if (nargs >= FUNC_MAX_ARGS)				/* paranoia */
-			ereport(ERROR,
-					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-					 errmsg("too many arguments")));
-		argtypes[nargs] = exprType(arg);
-		arglist = lappend(arglist, arg);
-		nargs++;
->>>>>>> 78a09145e0
 	}
 
 	/* Extract the argument types as seen by the parser */
@@ -5999,9 +5904,8 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 
 	/* Print the aggregate name, schema-qualified if needed */
 	appendStringInfo(buf, "%s(%s",
-<<<<<<< HEAD
 					 generate_function_name(fnoid, nargs,
-											argtypes,
+											NIL, argtypes,
 											aggref->aggvariadic,
 											&use_variadic),
 					 aggref->aggdistinct ? "DISTINCT " : "");
@@ -6056,21 +5960,6 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 		get_rule_expr((Node *) aggref->aggfilter, context, false);
 	}
 
-=======
-					 generate_function_name(aggref->aggfnoid, nargs,
-											NIL, argtypes, NULL),
-					 (aggref->aggdistinct != NIL) ? "DISTINCT " : "");
-	/* aggstar can be set only in zero-argument aggregates */
-	if (aggref->aggstar)
-		appendStringInfoChar(buf, '*');
-	else
-		get_rule_expr((Node *) arglist, context, true);
-	if (aggref->aggorder != NIL)
-	{
-		appendStringInfoString(buf, " ORDER BY ");
-		get_rule_orderby(aggref->aggorder, aggref->args, false, context);
-	}
->>>>>>> 78a09145e0
 	appendStringInfoChar(buf, ')');
 }
 
@@ -6137,6 +6026,7 @@ get_windowfunc_expr(WindowFunc *wfunc, deparse_context *context)
 	StringInfo	buf = context->buf;
 	Oid			argtypes[FUNC_MAX_ARGS];
 	int			nargs;
+	List	   *argnames;
 	ListCell   *l;
 
 	if (list_length(wfunc->args) >= FUNC_MAX_ARGS)
@@ -6144,23 +6034,21 @@ get_windowfunc_expr(WindowFunc *wfunc, deparse_context *context)
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 				 errmsg("too many arguments")));
 	nargs = 0;
+	argnames = NIL;
 	foreach(l, wfunc->args)
 	{
 		Node   *arg = (Node *) lfirst(l);
 
-		Assert(!IsA(arg, NamedArgExpr));
+		if (IsA(arg, NamedArgExpr))
+			argnames = lappend(argnames, ((NamedArgExpr *) arg)->name);
 		argtypes[nargs] = exprType(arg);
 		nargs++;
 	}
 
 	appendStringInfo(buf, "%s(",
 					 generate_function_name(wfunc->winfnoid, nargs,
-<<<<<<< HEAD
-											argtypes,
+											argnames, argtypes,
 											false, NULL));
-=======
-											NIL, argtypes, NULL));
->>>>>>> 78a09145e0
 	/* winstar can be set only in zero-argument aggregates */
 	if (wfunc->winstar)
 		appendStringInfoChar(buf, '*');
@@ -7279,13 +7167,8 @@ generate_relation_name(Oid relid, List *namespaces)
  * The result includes all necessary quoting and schema-prefixing.
  */
 static char *
-<<<<<<< HEAD
-generate_function_name(Oid funcid, int nargs, Oid *argtypes,
+generate_function_name(Oid funcid, int nargs, List *argnames, Oid *argtypes,
 					   bool has_variadic, bool *use_variadic_p)
-=======
-generate_function_name(Oid funcid, int nargs, List *argnames,
-					   Oid *argtypes, bool *is_variadic)
->>>>>>> 78a09145e0
 {
 	char	   *result;
 	HeapTuple	proctup;
@@ -7340,20 +7223,11 @@ generate_function_name(Oid funcid, int nargs, List *argnames,
 	/*
 	 * The idea here is to schema-qualify only if the parser would fail to
 	 * resolve the correct function given the unqualified func name with the
-<<<<<<< HEAD
 	 * specified argtypes and VARIADIC flag.
 	 */
 	p_result = func_get_detail(list_make1(makeString(proname)),
-							   NIL, nargs, argtypes,
-							   !use_variadic, true,
-=======
-	 * specified argtypes.  If the function is variadic, we should presume
-	 * that VARIADIC will be included in the call.
-	 */
-	p_result = func_get_detail(list_make1(makeString(proname)),
 							   NIL, argnames, nargs, argtypes,
-							   !OidIsValid(procform->provariadic), true,
->>>>>>> 78a09145e0
+							   !use_variadic, true,
 							   &p_funcid, &p_rettype,
 							   &p_retset, &p_nvargs, &p_vatype,
 							   &p_true_typeids, NULL);
