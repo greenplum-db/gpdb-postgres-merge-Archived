@@ -319,19 +319,11 @@ makeTypeNameFromNameList(List *names)
  *	build a TypeName node to represent a type already known by OID/typmod.
  */
 TypeName *
-<<<<<<< HEAD
-makeTypeNameFromOid(Oid typid, int32 typmod)
-{
-	TypeName   *n = makeNode(TypeName);
-
-	n->typid = typid;
-=======
 makeTypeNameFromOid(Oid typeOid, int32 typmod)
 {
 	TypeName   *n = makeNode(TypeName);
 
 	n->typeOid = typeOid;
->>>>>>> 78a09145e0
 	n->typemod = typmod;
 	n->location = -1;
 	return n;

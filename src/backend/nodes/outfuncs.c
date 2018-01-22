@@ -288,11 +288,8 @@ _outPlannedStmt(StringInfo str, PlannedStmt *node)
 	WRITE_NODE_TYPE("PLANNEDSTMT");
 
 	WRITE_ENUM_FIELD(commandType, CmdType);
-<<<<<<< HEAD
 	WRITE_ENUM_FIELD(planGen, PlanGenerator);
-=======
 	WRITE_BOOL_FIELD(hasReturning);
->>>>>>> 78a09145e0
 	WRITE_BOOL_FIELD(canSetTag);
 	WRITE_BOOL_FIELD(transientPlan);
 	WRITE_BOOL_FIELD(oneoffPlan);
@@ -304,16 +301,12 @@ _outPlannedStmt(StringInfo str, PlannedStmt *node)
 	WRITE_NODE_FIELD(intoClause);
 	WRITE_NODE_FIELD(subplans);
 	WRITE_BITMAPSET_FIELD(rewindPlanIDs);
-<<<<<<< HEAD
-	WRITE_NODE_FIELD(returningLists);
 
 	WRITE_NODE_FIELD(result_partitions);
 	WRITE_NODE_FIELD(result_aosegnos);
 	WRITE_NODE_FIELD(queryPartOids);
 	WRITE_NODE_FIELD(queryPartsMetadata);
 	WRITE_NODE_FIELD(numSelectorsPerScanId);
-=======
->>>>>>> 78a09145e0
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_NODE_FIELD(relationOids);
 	WRITE_NODE_FIELD(invalItems);
@@ -469,11 +462,7 @@ _outAppend(StringInfo str, Append *node)
 	_outPlanInfo(str, (Plan *) node);
 
 	WRITE_NODE_FIELD(appendplans);
-<<<<<<< HEAD
-	WRITE_BOOL_FIELD(isTarget);
 	WRITE_BOOL_FIELD(isZapped);
-=======
->>>>>>> 78a09145e0
 }
 
 static void
@@ -721,12 +710,8 @@ _outSubqueryScan(StringInfo str, SubqueryScan *node)
 	_outScanInfo(str, (Scan *) node);
 
 	WRITE_NODE_FIELD(subplan);
-<<<<<<< HEAD
-	WRITE_NODE_FIELD(subrtable); /* debugging convenience */
-=======
 	WRITE_NODE_FIELD(subrtable);
 	WRITE_NODE_FIELD(subrowmark);
->>>>>>> 78a09145e0
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
@@ -1322,16 +1307,12 @@ _outAggref(StringInfo str, Aggref *node)
 	WRITE_NODE_FIELD(args);
 	WRITE_NODE_FIELD(aggorder);
 	WRITE_NODE_FIELD(aggdistinct);
-<<<<<<< HEAD
 	WRITE_NODE_FIELD(aggfilter);
 	WRITE_BOOL_FIELD(aggstar);
 	WRITE_BOOL_FIELD(aggvariadic);
 	WRITE_CHAR_FIELD(aggkind);
-	WRITE_ENUM_FIELD(aggstage, AggStage);
-=======
-	WRITE_BOOL_FIELD(aggstar);
->>>>>>> 78a09145e0
 	WRITE_UINT_FIELD(agglevelsup);
+	WRITE_ENUM_FIELD(aggstage, AggStage);
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -1789,11 +1770,7 @@ _outJoinExpr(StringInfo str, JoinExpr *node)
 	WRITE_BOOL_FIELD(isNatural);
 	WRITE_NODE_FIELD(larg);
 	WRITE_NODE_FIELD(rarg);
-<<<<<<< HEAD
-	WRITE_NODE_FIELD_AS(usingClause, using);    /*CDB*/
-=======
 	WRITE_NODE_FIELD(usingClause);
->>>>>>> 78a09145e0
 	WRITE_NODE_FIELD(quals);
 	WRITE_NODE_FIELD(alias);
 	WRITE_INT_FIELD(rtindex);
@@ -2494,21 +2471,16 @@ _outIndexStmt(StringInfo str, IndexStmt *node)
 	WRITE_NODE_FIELD(options);
 
 	WRITE_NODE_FIELD(whereClause);
-<<<<<<< HEAD
-	WRITE_BOOL_FIELD(is_part_child);
-	WRITE_BOOL_FIELD(unique);
-	WRITE_BOOL_FIELD(primary);
-	WRITE_BOOL_FIELD(isconstraint);
-	WRITE_STRING_FIELD(altconname);
-=======
 	WRITE_NODE_FIELD(excludeOpNames);
+	WRITE_BOOL_FIELD(is_part_child);
 	WRITE_BOOL_FIELD(unique);
 	WRITE_BOOL_FIELD(primary);
 	WRITE_BOOL_FIELD(isconstraint);
 	WRITE_BOOL_FIELD(deferrable);
 	WRITE_BOOL_FIELD(initdeferred);
->>>>>>> 78a09145e0
 	WRITE_BOOL_FIELD(concurrent);
+	WRITE_STRING_FIELD(altconname);
+	/* GPDB_90_MERGE_FIXME: should we write is_split_part? */
 }
 
 static void
@@ -2623,6 +2595,7 @@ _outAlterTableCmd(StringInfo str, AlterTableCmd *node)
 	WRITE_ENUM_FIELD(behavior, DropBehavior);
 	WRITE_BOOL_FIELD(part_expanded);
 	WRITE_NODE_FIELD(partoids);
+	WRITE_BOOL_FIELD(missing_ok);
 }
 
 static void
@@ -2948,7 +2921,7 @@ _outInhRelation(StringInfo str, InhRelation *node)
 {
 	WRITE_NODE_TYPE("INHRELATION");
 	WRITE_NODE_FIELD(relation);
-	WRITE_NODE_FIELD(options);
+	WRITE_UINT_FIELD(options);
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
@@ -3353,11 +3326,8 @@ _outFuncCall(StringInfo str, FuncCall *node)
 	WRITE_NODE_FIELD(funcname);
 	WRITE_NODE_FIELD(args);
 	WRITE_NODE_FIELD(agg_order);
-<<<<<<< HEAD
 	WRITE_NODE_FIELD(agg_filter);
 	WRITE_BOOL_FIELD(agg_within_group);
-=======
->>>>>>> 78a09145e0
 	WRITE_BOOL_FIELD(agg_star);
 	WRITE_BOOL_FIELD(agg_distinct);
 	WRITE_BOOL_FIELD(func_variadic);
@@ -3474,19 +3444,12 @@ _outColumnDef(StringInfo str, ColumnDef *node)
 	WRITE_NODE_TYPE("COLUMNDEF");
 
 	WRITE_STRING_FIELD(colname);
-<<<<<<< HEAD
 	WRITE_NODE_FIELD_AS(typeName, typename);
 	WRITE_INT_FIELD(inhcount);
 	WRITE_BOOL_FIELD(is_local);
 	WRITE_BOOL_FIELD(is_not_null);
 	WRITE_INT_FIELD(attnum);
-=======
-	WRITE_NODE_FIELD(typeName);
-	WRITE_INT_FIELD(inhcount);
-	WRITE_BOOL_FIELD(is_local);
-	WRITE_BOOL_FIELD(is_not_null);
-	WRITE_INT_FIELD(storage);
->>>>>>> 78a09145e0
+	WRITE_CHAR_FIELD(storage);
 	WRITE_NODE_FIELD(raw_default);
 	WRITE_NODE_FIELD(cooked_default);
 	WRITE_NODE_FIELD(constraints);
@@ -3501,11 +3464,7 @@ _outTypeName(StringInfo str, TypeName *node)
 	WRITE_NODE_TYPE("TYPENAME");
 
 	WRITE_NODE_FIELD(names);
-<<<<<<< HEAD
-	WRITE_OID_FIELD_AS(typid, typeid);
-=======
 	WRITE_OID_FIELD(typeOid);
->>>>>>> 78a09145e0
 	WRITE_BOOL_FIELD(setof);
 	WRITE_BOOL_FIELD(pct_type);
 	WRITE_NODE_FIELD(typmods);
@@ -3644,14 +3603,11 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_BOOL_FIELD(hasAggs);
 	WRITE_BOOL_FIELD(hasWindowFuncs);
 	WRITE_BOOL_FIELD(hasSubLinks);
-	WRITE_BOOL_FIELD(hasDistinctOn);
-	WRITE_BOOL_FIELD(hasRecursive);
-<<<<<<< HEAD
 	WRITE_BOOL_FIELD(hasDynamicFunctions);
 	WRITE_BOOL_FIELD(hasFuncsWithExecRestrictions);
-=======
+	WRITE_BOOL_FIELD(hasDistinctOn);
+	WRITE_BOOL_FIELD(hasRecursive);
 	WRITE_BOOL_FIELD(hasForUpdate);
->>>>>>> 78a09145e0
 	WRITE_NODE_FIELD(cteList);
 	WRITE_NODE_FIELD(rtable);
 	WRITE_NODE_FIELD(jointree);
@@ -4097,21 +4053,21 @@ _outConstraint(StringInfo str, Constraint *node)
 	switch (node->contype)
 	{
 		case CONSTR_NULL:
-			appendStringInfo(str, "NULL");
+			appendStringInfoLiteral(str, "NULL");
 			break;
 
 		case CONSTR_NOTNULL:
-			appendStringInfo(str, "NOT_NULL");
+			appendStringInfoLiteral(str, "NOT_NULL");
 			break;
 
 		case CONSTR_DEFAULT:
-			appendStringInfo(str, "DEFAULT");
+			appendStringInfoLiteral(str, "DEFAULT");
 			WRITE_NODE_FIELD(raw_expr);
 			WRITE_STRING_FIELD(cooked_expr);
 			break;
 
 		case CONSTR_CHECK:
-			appendStringInfo(str, "CHECK");
+			appendStringInfoLiteral(str, "CHECK");
 			WRITE_NODE_FIELD(raw_expr);
 			WRITE_STRING_FIELD(cooked_expr);
 			break;
@@ -4132,28 +4088,8 @@ _outConstraint(StringInfo str, Constraint *node)
 			/* access_method and where_clause not currently used */
 			break;
 
-<<<<<<< HEAD
-		case CONSTR_CHECK:
-			appendStringInfoLiteral(str, "CHECK");
-			WRITE_NODE_FIELD(raw_expr);
-			WRITE_STRING_FIELD(cooked_expr);
-			break;
-
-		case CONSTR_DEFAULT:
-			appendStringInfoLiteral(str, "DEFAULT");
-			WRITE_NODE_FIELD(raw_expr);
-			WRITE_STRING_FIELD(cooked_expr);
-			break;
-
-		case CONSTR_NOTNULL:
-			appendStringInfoLiteral(str, "NOT_NULL");
-			break;
-
-		default:
-			appendStringInfoLiteral(str, "<unrecognized_constraint>");
-=======
 		case CONSTR_EXCLUSION:
-			appendStringInfo(str, "EXCLUSION");
+			appendStringInfoLiteral(str, "EXCLUSION");
 			WRITE_NODE_FIELD(exclusions);
 			WRITE_NODE_FIELD(options);
 			WRITE_STRING_FIELD(indexspace);
@@ -4162,7 +4098,7 @@ _outConstraint(StringInfo str, Constraint *node)
 			break;
 
 		case CONSTR_FOREIGN:
-			appendStringInfo(str, "FOREIGN_KEY");
+			appendStringInfoLiteral(str, "FOREIGN_KEY");
 			WRITE_NODE_FIELD(pktable);
 			WRITE_NODE_FIELD(fk_attrs);
 			WRITE_NODE_FIELD(pk_attrs);
@@ -4170,61 +4106,40 @@ _outConstraint(StringInfo str, Constraint *node)
 			WRITE_CHAR_FIELD(fk_upd_action);
 			WRITE_CHAR_FIELD(fk_del_action);
 			WRITE_BOOL_FIELD(skip_validation);
+			WRITE_OID_FIELD(trig1Oid);
+			WRITE_OID_FIELD(trig2Oid);
+			WRITE_OID_FIELD(trig3Oid);
+			WRITE_OID_FIELD(trig4Oid);
 			break;
 
 		case CONSTR_ATTR_DEFERRABLE:
-			appendStringInfo(str, "ATTR_DEFERRABLE");
+			appendStringInfoLiteral(str, "ATTR_DEFERRABLE");
 			break;
 
 		case CONSTR_ATTR_NOT_DEFERRABLE:
-			appendStringInfo(str, "ATTR_NOT_DEFERRABLE");
+			appendStringInfoLiteral(str, "ATTR_NOT_DEFERRABLE");
 			break;
 
 		case CONSTR_ATTR_DEFERRED:
-			appendStringInfo(str, "ATTR_DEFERRED");
+			appendStringInfoLiteral(str, "ATTR_DEFERRED");
 			break;
 
 		case CONSTR_ATTR_IMMEDIATE:
-			appendStringInfo(str, "ATTR_IMMEDIATE");
+			appendStringInfoLiteral(str, "ATTR_IMMEDIATE");
 			break;
 
 		default:
 			appendStringInfo(str, "<unrecognized_constraint %d>",
-							 (int) node->contype);
->>>>>>> 78a09145e0
+							(int) node->contype);
 			break;
 	}
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
-<<<<<<< HEAD
-static void
-_outFkConstraint(StringInfo str, FkConstraint *node)
-{
-	WRITE_NODE_TYPE("FKCONSTRAINT");
-
-	WRITE_STRING_FIELD(constr_name);
-	WRITE_NODE_FIELD(pktable);
-	WRITE_NODE_FIELD(fk_attrs);
-	WRITE_NODE_FIELD(pk_attrs);
-	WRITE_CHAR_FIELD(fk_matchtype);
-	WRITE_CHAR_FIELD(fk_upd_action);
-	WRITE_CHAR_FIELD(fk_del_action);
-	WRITE_BOOL_FIELD(deferrable);
-	WRITE_BOOL_FIELD(initdeferred);
-	WRITE_BOOL_FIELD(skip_validation);
-	WRITE_OID_FIELD(trig1Oid);
-	WRITE_OID_FIELD(trig2Oid);
-	WRITE_OID_FIELD(trig3Oid);
-	WRITE_OID_FIELD(trig4Oid);
-}
-
 static void
 _outCreateSchemaStmt(StringInfo str, CreateSchemaStmt *node)
 {
 	WRITE_NODE_TYPE("CREATESCHEMASTMT");
-=======
->>>>>>> 78a09145e0
 
 	WRITE_STRING_FIELD(schemaname);
 	WRITE_STRING_FIELD(authid);
@@ -4259,11 +4174,7 @@ _outVacuumStmt(StringInfo str, VacuumStmt *node)
 {
 	WRITE_NODE_TYPE("VACUUMSTMT");
 
-	WRITE_BOOL_FIELD(vacuum);
-	WRITE_BOOL_FIELD(full);
-	WRITE_BOOL_FIELD(analyze);
-	WRITE_BOOL_FIELD(verbose);
-	WRITE_BOOL_FIELD(rootonly);
+	WRITE_INT_FIELD(options);
 	WRITE_INT_FIELD(freeze_min_age);
 	WRITE_INT_FIELD(freeze_table_age);
 	WRITE_NODE_FIELD(relation);
@@ -4564,13 +4475,11 @@ _outNode(StringInfo str, void *obj)
 			case T_Result:
 				_outResult(str, obj);
 				break;
-<<<<<<< HEAD
 			case T_Repeat:
 				_outRepeat(str, obj);
-=======
+				break;
 			case T_ModifyTable:
 				_outModifyTable(str, obj);
->>>>>>> 78a09145e0
 				break;
 			case T_Append:
 				_outAppend(str, obj);

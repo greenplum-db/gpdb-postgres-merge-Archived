@@ -207,20 +207,14 @@ _equalAggref(Aggref *a, Aggref *b)
 	COMPARE_SCALAR_FIELD(aggtype);
 	COMPARE_NODE_FIELD(aggdirectargs);
 	COMPARE_NODE_FIELD(args);
-<<<<<<< HEAD
     COMPARE_NODE_FIELD(aggorder);
 	COMPARE_NODE_FIELD(aggdistinct);
 	COMPARE_NODE_FIELD(aggfilter);
 	COMPARE_SCALAR_FIELD(aggstar);
 	COMPARE_SCALAR_FIELD(aggvariadic);
 	COMPARE_SCALAR_FIELD(aggkind);
-	COMPARE_SCALAR_FIELD(aggstage);
-=======
-	COMPARE_NODE_FIELD(aggorder);
-	COMPARE_NODE_FIELD(aggdistinct);
-	COMPARE_SCALAR_FIELD(aggstar);
->>>>>>> 78a09145e0
 	COMPARE_SCALAR_FIELD(agglevelsup);
+	COMPARE_SCALAR_FIELD(aggstage);
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -922,14 +916,11 @@ _equalQuery(Query *a, Query *b)
 	COMPARE_SCALAR_FIELD(hasAggs);
 	COMPARE_SCALAR_FIELD(hasWindowFuncs);
 	COMPARE_SCALAR_FIELD(hasSubLinks);
-	COMPARE_SCALAR_FIELD(hasDistinctOn);
-	COMPARE_SCALAR_FIELD(hasRecursive);
-<<<<<<< HEAD
 	COMPARE_SCALAR_FIELD(hasDynamicFunctions);
 	COMPARE_SCALAR_FIELD(hasFuncsWithExecRestrictions);
-=======
+	COMPARE_SCALAR_FIELD(hasDistinctOn);
+	COMPARE_SCALAR_FIELD(hasRecursive);
 	COMPARE_SCALAR_FIELD(hasForUpdate);
->>>>>>> 78a09145e0
 	COMPARE_NODE_FIELD(cteList);
 	COMPARE_NODE_FIELD(rtable);
 	COMPARE_NODE_FIELD(jointree);
@@ -1052,10 +1043,10 @@ _equalAlterTableCmd(AlterTableCmd *a, AlterTableCmd *b)
 	COMPARE_NODE_FIELD(def);
 	COMPARE_NODE_FIELD(transform);
 	COMPARE_SCALAR_FIELD(behavior);
-<<<<<<< HEAD
 	COMPARE_SCALAR_FIELD(part_expanded);
 
 	/* No need to compare AT workspace field, partoids.  */
+	COMPARE_SCALAR_FIELD(missing_ok);
 
 	return true;
 }
@@ -1126,9 +1117,6 @@ _equalAlterPartitionId(AlterPartitionId *a, AlterPartitionId *b)
 {
 	COMPARE_SCALAR_FIELD(idtype);
 	COMPARE_NODE_FIELD(partiddef);
-=======
-	COMPARE_SCALAR_FIELD(missing_ok);
->>>>>>> 78a09145e0
 
 	return true;
 }
@@ -1417,17 +1405,15 @@ _equalIndexStmt(IndexStmt *a, IndexStmt *b)
 	COMPARE_NODE_FIELD(indexParams);
 	COMPARE_NODE_FIELD(options);
 	COMPARE_NODE_FIELD(whereClause);
-<<<<<<< HEAD
-	COMPARE_SCALAR_FIELD(is_part_child);
-=======
 	COMPARE_NODE_FIELD(excludeOpNames);
->>>>>>> 78a09145e0
+	COMPARE_SCALAR_FIELD(is_part_child);
 	COMPARE_SCALAR_FIELD(unique);
 	COMPARE_SCALAR_FIELD(primary);
 	COMPARE_SCALAR_FIELD(isconstraint);
 	COMPARE_SCALAR_FIELD(deferrable);
 	COMPARE_SCALAR_FIELD(initdeferred);
 	COMPARE_SCALAR_FIELD(concurrent);
+	/* GPDB_90_MERGE_FIXME: should we compare altconname? */
 	COMPARE_SCALAR_FIELD(is_split_part);
 
 	return true;
@@ -1493,14 +1479,6 @@ _equalRemoveOpClassStmt(RemoveOpClassStmt *a, RemoveOpClassStmt *b)
 	COMPARE_STRING_FIELD(amname);
 	COMPARE_SCALAR_FIELD(behavior);
 	COMPARE_SCALAR_FIELD(missing_ok);
-
-	return true;
-}
-
-static bool
-_equalDoStmt(DoStmt *a, DoStmt *b)
-{
-	COMPARE_NODE_FIELD(args);
 
 	return true;
 }
@@ -1736,15 +1714,7 @@ _equalDropdbStmt(DropdbStmt *a, DropdbStmt *b)
 static bool
 _equalVacuumStmt(VacuumStmt *a, VacuumStmt *b)
 {
-<<<<<<< HEAD
-	COMPARE_SCALAR_FIELD(vacuum);
-	COMPARE_SCALAR_FIELD(full);
-	COMPARE_SCALAR_FIELD(analyze);
-	COMPARE_SCALAR_FIELD(verbose);
-	COMPARE_SCALAR_FIELD(rootonly);
-=======
 	COMPARE_SCALAR_FIELD(options);
->>>>>>> 78a09145e0
 	COMPARE_SCALAR_FIELD(freeze_min_age);
 	COMPARE_SCALAR_FIELD(freeze_table_age);
 	COMPARE_NODE_FIELD(relation);
@@ -2276,11 +2246,8 @@ _equalFuncCall(FuncCall *a, FuncCall *b)
 	COMPARE_NODE_FIELD(funcname);
 	COMPARE_NODE_FIELD(args);
 	COMPARE_NODE_FIELD(agg_order);
-<<<<<<< HEAD
 	COMPARE_NODE_FIELD(agg_filter);
 	COMPARE_SCALAR_FIELD(agg_within_group);
-=======
->>>>>>> 78a09145e0
 	COMPARE_SCALAR_FIELD(agg_star);
 	COMPARE_SCALAR_FIELD(agg_distinct);
 	COMPARE_SCALAR_FIELD(func_variadic);
@@ -2338,11 +2305,7 @@ static bool
 _equalTypeName(TypeName *a, TypeName *b)
 {
 	COMPARE_NODE_FIELD(names);
-<<<<<<< HEAD
-	COMPARE_SCALAR_FIELD(typid);
-=======
 	COMPARE_SCALAR_FIELD(typeOid);
->>>>>>> 78a09145e0
 	COMPARE_SCALAR_FIELD(setof);
 	COMPARE_SCALAR_FIELD(pct_type);
 	COMPARE_NODE_FIELD(typmods);
@@ -2429,14 +2392,12 @@ _equalColumnDef(ColumnDef *a, ColumnDef *b)
 	COMPARE_SCALAR_FIELD(inhcount);
 	COMPARE_SCALAR_FIELD(is_local);
 	COMPARE_SCALAR_FIELD(is_not_null);
-<<<<<<< HEAD
 	COMPARE_SCALAR_FIELD(attnum);
-=======
 	COMPARE_SCALAR_FIELD(storage);
->>>>>>> 78a09145e0
 	COMPARE_NODE_FIELD(raw_default);
 	COMPARE_NODE_FIELD(cooked_default);
 	COMPARE_NODE_FIELD(constraints);
+	/* GPDB_90_MERGE_FIXME: should we be comparing encoding? */
 
 	return true;
 }
@@ -2464,6 +2425,10 @@ _equalConstraint(Constraint *a, Constraint *b)
 	COMPARE_SCALAR_FIELD(fk_upd_action);
 	COMPARE_SCALAR_FIELD(fk_del_action);
 	COMPARE_SCALAR_FIELD(skip_validation);
+	COMPARE_SCALAR_FIELD(trig1Oid);
+	COMPARE_SCALAR_FIELD(trig2Oid);
+	COMPARE_SCALAR_FIELD(trig3Oid);
+	COMPARE_SCALAR_FIELD(trig4Oid);
 
 	return true;
 }
@@ -2615,28 +2580,6 @@ _equalCommonTableExpr(CommonTableExpr *a, CommonTableExpr *b)
 }
 
 static bool
-<<<<<<< HEAD
-_equalFkConstraint(FkConstraint *a, FkConstraint *b)
-{
-	COMPARE_STRING_FIELD(constr_name);
-	COMPARE_NODE_FIELD(pktable);
-	COMPARE_NODE_FIELD(fk_attrs);
-	COMPARE_NODE_FIELD(pk_attrs);
-	COMPARE_SCALAR_FIELD(fk_matchtype);
-	COMPARE_SCALAR_FIELD(fk_upd_action);
-	COMPARE_SCALAR_FIELD(fk_del_action);
-	COMPARE_SCALAR_FIELD(deferrable);
-	COMPARE_SCALAR_FIELD(initdeferred);
-	COMPARE_SCALAR_FIELD(skip_validation);
-	COMPARE_SCALAR_FIELD(trig1Oid);
-	COMPARE_SCALAR_FIELD(trig2Oid);
-	COMPARE_SCALAR_FIELD(trig3Oid);
-	COMPARE_SCALAR_FIELD(trig4Oid);
-
-	return true;
-}
-
-static bool
 _equalTableValueExpr(TableValueExpr *a, TableValueExpr *b)
 {
 	COMPARE_NODE_FIELD(subquery);
@@ -2654,8 +2597,6 @@ _equalAlterTypeStmt(AlterTypeStmt *a, AlterTypeStmt *b)
 }
 
 static bool
-=======
->>>>>>> 78a09145e0
 _equalXmlSerialize(XmlSerialize *a, XmlSerialize *b)
 {
 	COMPARE_SCALAR_FIELD(xmloption);

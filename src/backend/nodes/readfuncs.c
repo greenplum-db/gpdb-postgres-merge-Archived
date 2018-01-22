@@ -374,14 +374,11 @@ _readQuery(void)
 	READ_BOOL_FIELD(hasAggs);
 	READ_BOOL_FIELD(hasWindowFuncs);
 	READ_BOOL_FIELD(hasSubLinks);
-	READ_BOOL_FIELD(hasDistinctOn);
-	READ_BOOL_FIELD(hasRecursive);
-<<<<<<< HEAD
 	READ_BOOL_FIELD(hasDynamicFunctions);
 	READ_BOOL_FIELD(hasFuncsWithExecRestrictions);
-=======
+	READ_BOOL_FIELD(hasDistinctOn);
+	READ_BOOL_FIELD(hasRecursive);
 	READ_BOOL_FIELD(hasForUpdate);
->>>>>>> 78a09145e0
 	READ_NODE_FIELD(cteList);
 	READ_NODE_FIELD(rtable);
 	READ_NODE_FIELD(jointree);
@@ -716,20 +713,21 @@ _readConstraint(void)
 {
 	READ_LOCALS(Constraint);
 
-	READ_STRING_FIELD(name);			/* name, or NULL if unnamed */
+	READ_STRING_FIELD(conname);			/* name, or NULL if unnamed */
+	READ_BOOL_FIELD(deferrable);
+	READ_BOOL_FIELD(initdeferred);
+	READ_LOCATION_FIELD(location);
+
 	token = pg_strtok(&length);			/* skip:  :contype */
 
-
 	token = pg_strtok(&length);
-
-
-
 	if (strncmp(token, "PRIMARY_KEY", length)==0)
 	{
 		local_node->contype = CONSTR_PRIMARY;
 		READ_NODE_FIELD(keys);
 		READ_NODE_FIELD(options);
 		READ_STRING_FIELD(indexspace);
+		/* access_method and where_clause not currently used */
 	}
 	else if (strncmp(token, "UNIQUE", length)==0)
 	{
@@ -737,6 +735,7 @@ _readConstraint(void)
 		READ_NODE_FIELD(keys);
 		READ_NODE_FIELD(options);
 		READ_STRING_FIELD(indexspace);
+		/* access_method and where_clause not currently used */
 	}
 	else if (strncmp(token, "CHECK", length)==0)
 	{
@@ -750,9 +749,53 @@ _readConstraint(void)
 		READ_NODE_FIELD(raw_expr);
 		READ_STRING_FIELD(cooked_expr);
 	}
+	else if (strncmp(token, "EXCLUSION", length)==0)
+	{
+		local_node->contype = CONSTR_EXCLUSION;
+		READ_NODE_FIELD(exclusions);
+		READ_NODE_FIELD(options);
+		READ_STRING_FIELD(indexspace);
+		READ_STRING_FIELD(access_method);
+		READ_NODE_FIELD(where_clause);
+	}
+	else if (strncmp(token, "FOREIGN_KEY", length)==0)
+	{
+		local_node->contype = CONSTR_FOREIGN;
+		READ_NODE_FIELD(pktable);
+		READ_NODE_FIELD(fk_attrs);
+		READ_NODE_FIELD(pk_attrs);
+		READ_CHAR_FIELD(fk_matchtype);
+		READ_CHAR_FIELD(fk_upd_action);
+		READ_CHAR_FIELD(fk_del_action);
+		READ_BOOL_FIELD(skip_validation);
+		READ_OID_FIELD(trig1Oid);
+		READ_OID_FIELD(trig2Oid);
+		READ_OID_FIELD(trig3Oid);
+		READ_OID_FIELD(trig4Oid);
+	}
+	else if (strncmp(token, "NULL", length)==0)
+	{
+		local_node->contype = CONSTR_NULL;
+	}
 	else if (strncmp(token, "NOT_NULL", length)==0)
 	{
 		local_node->contype = CONSTR_NOTNULL;
+	}
+	else if (strncmp(token, "ATTR_DEFERRABLE", length)==0)
+	{
+		local_node->contype = CONSTR_ATTR_DEFERRABLE;
+	}
+	else if (strncmp(token, "ATTR_NOT_DEFERRABLE", length)==0)
+	{
+		local_node->contype = CONSTR_ATTR_NOT_DEFERRABLE;
+	}
+	else if (strncmp(token, "ATTR_DEFERRED", length)==0)
+	{
+		local_node->contype = CONSTR_ATTR_DEFERRED;
+	}
+	else if (strncmp(token, "ATTR_IMMEDIATE", length)==0)
+	{
+		local_node->contype = CONSTR_ATTR_IMMEDIATE;
 	}
 
 	READ_DONE();
@@ -771,12 +814,15 @@ _readIndexStmt(void)
 	READ_NODE_FIELD(indexParams);
 	READ_NODE_FIELD(options);
 	READ_NODE_FIELD(whereClause);
+	READ_NODE_FIELD(excludeOpNames);
 	READ_BOOL_FIELD(is_part_child);
 	READ_BOOL_FIELD(unique);
 	READ_BOOL_FIELD(primary);
 	READ_BOOL_FIELD(isconstraint);
-	READ_STRING_FIELD(altconname);
+	READ_BOOL_FIELD(deferrable);
+	READ_BOOL_FIELD(initdeferred);
 	READ_BOOL_FIELD(concurrent);
+	READ_STRING_FIELD(altconname);
 
 	READ_DONE();
 }
@@ -912,6 +958,7 @@ _readAlterTableCmd(void)
 	READ_ENUM_FIELD(behavior, DropBehavior);
 	READ_BOOL_FIELD(part_expanded);
 	READ_NODE_FIELD(partoids);
+	READ_BOOL_FIELD(missing_ok);
 
 	READ_DONE();
 }
@@ -1289,16 +1336,12 @@ _readAggref(void)
 	READ_NODE_FIELD(args);
 	READ_NODE_FIELD(aggorder);
 	READ_NODE_FIELD(aggdistinct);
-<<<<<<< HEAD
 	READ_NODE_FIELD(aggfilter);
 	READ_BOOL_FIELD(aggstar);
 	READ_BOOL_FIELD(aggvariadic);
 	READ_CHAR_FIELD(aggkind);
-	READ_ENUM_FIELD(aggstage, AggStage);
-=======
-	READ_BOOL_FIELD(aggstar);
->>>>>>> 78a09145e0
 	READ_UINT_FIELD(agglevelsup);
+	READ_ENUM_FIELD(aggstage, AggStage);
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -1933,12 +1976,8 @@ _readJoinExpr(void)
 	READ_BOOL_FIELD(isNatural);
 	READ_NODE_FIELD(larg);
 	READ_NODE_FIELD(rarg);
-<<<<<<< HEAD
     /* CDB: subqfromlist is used only within planner; don't need to read it */
-	READ_NODE_FIELD(usingClause);   /*CDB*/
-=======
 	READ_NODE_FIELD(usingClause);
->>>>>>> 78a09145e0
 	READ_NODE_FIELD(quals);
 	READ_NODE_FIELD(alias);
 	READ_INT_FIELD(rtindex);
@@ -1977,8 +2016,9 @@ _readColumnDef(void)
 	READ_BOOL_FIELD(is_local);
 	READ_BOOL_FIELD(is_not_null);
 	READ_INT_FIELD(attnum);
+	READ_CHAR_FIELD(storage);
 	READ_NODE_FIELD(raw_default);
-	READ_STRING_FIELD(cooked_default);
+	READ_NODE_FIELD(cooked_default);
 	READ_NODE_FIELD(constraints);
 	READ_NODE_FIELD(encoding);
 
@@ -2002,7 +2042,7 @@ _readTypeName(void)
 	READ_LOCALS(TypeName);
 
 	READ_NODE_FIELD(names);
-	READ_OID_FIELD(typid);
+	READ_OID_FIELD(typeOid);
 	READ_BOOL_FIELD(setof);
 	READ_BOOL_FIELD(pct_type);
 	READ_NODE_FIELD(typmods);
@@ -2275,29 +2315,6 @@ _readCreateExternalStmt(void)
 	READ_DONE();
 }
 #endif /* COMPILING_BINARY_FUNCS */
-
-static FkConstraint *
-_readFkConstraint(void)
-{
-	READ_LOCALS(FkConstraint);
-
-	READ_STRING_FIELD(constr_name);
-	READ_NODE_FIELD(pktable);
-	READ_NODE_FIELD(fk_attrs);
-	READ_NODE_FIELD(pk_attrs);
-	READ_CHAR_FIELD(fk_matchtype);
-	READ_CHAR_FIELD(fk_upd_action);
-	READ_CHAR_FIELD(fk_del_action);
-	READ_BOOL_FIELD(deferrable);
-	READ_BOOL_FIELD(initdeferred);
-	READ_BOOL_FIELD(skip_validation);
-	READ_OID_FIELD(trig1Oid);
-	READ_OID_FIELD(trig2Oid);
-	READ_OID_FIELD(trig3Oid);
-	READ_OID_FIELD(trig4Oid);
-
-	READ_DONE();
-}
 
 static CreateSchemaStmt *
 _readCreateSchemaStmt(void)
@@ -2716,17 +2733,13 @@ _readVacuumStmt(void)
 {
 	READ_LOCALS(VacuumStmt);
 
-	READ_BOOL_FIELD(vacuum);
-	READ_BOOL_FIELD(full);
-	READ_BOOL_FIELD(analyze);
-	READ_BOOL_FIELD(verbose);
-	READ_BOOL_FIELD(rootonly);
+	READ_INT_FIELD(options);
 	READ_INT_FIELD(freeze_min_age);
 	READ_INT_FIELD(freeze_table_age);
 	READ_NODE_FIELD(relation);
 	READ_NODE_FIELD(va_cols);
-	READ_NODE_FIELD(expanded_relids);
 
+	READ_NODE_FIELD(expanded_relids);
 	READ_NODE_FIELD(appendonly_compaction_segno);
 	READ_NODE_FIELD(appendonly_compaction_insert_segno);
 	READ_BOOL_FIELD(appendonly_compaction_vacuum_cleanup);
@@ -3071,8 +3084,6 @@ parseNodeString(void)
 		return_value = _readDropStmt();
 	else if (MATCHX("EXTTABLETYPEDESC"))
 		return_value = _readExtTableTypeDesc();
-	else if (MATCHX("FKCONSTRAINT"))
-		return_value = _readFkConstraint();
 	else if (MATCHX("FUNCCALL"))
 		return_value = _readFuncCall();
 	else if (MATCHX("FUNCTIONPARAMETER"))

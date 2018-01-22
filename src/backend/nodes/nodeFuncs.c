@@ -954,14 +954,12 @@ exprLocation(Node *expr)
 		case T_TypeName:
 			loc = ((TypeName *) expr)->location;
 			break;
-<<<<<<< HEAD
 		case T_FunctionParameter:
 			/* just use typename's location */
 			loc = exprLocation((Node *) ((const FunctionParameter *) expr)->argType);
-=======
+			break;
 		case T_Constraint:
 			loc = ((Constraint *) expr)->location;
->>>>>>> 78a09145e0
 			break;
 		case T_XmlSerialize:
 			/* XMLSERIALIZE keyword should always be the first thing */
@@ -1126,7 +1124,7 @@ expression_tree_walker(Node *node,
 		case T_SetToDefault:
 		case T_CurrentOfExpr:
 		case T_RangeTblRef:
-<<<<<<< HEAD
+		case T_SortGroupClause:
 		case T_DMLActionExpr:
 		case T_PartSelectedExpr:
 		case T_PartDefaultExpr:
@@ -1135,9 +1133,6 @@ expression_tree_walker(Node *node,
 		case T_PartBoundOpenExpr:
 		case T_PartListRuleExpr:
 		case T_PartListNullTestExpr:
-=======
-		case T_SortGroupClause:
->>>>>>> 78a09145e0
 			/* primitive node types with no expression subnodes */
 			break;
 		case T_Aggref:
@@ -1154,12 +1149,10 @@ expression_tree_walker(Node *node,
 				if (expression_tree_walker((Node *) expr->aggorder,
 										   walker, context))
 					return true;
-<<<<<<< HEAD
-				if (walker((Node *) expr->aggfilter, context))
-=======
 				if (expression_tree_walker((Node *) expr->aggdistinct,
 										   walker, context))
->>>>>>> 78a09145e0
+					return true;
+				if (walker((Node *) expr->aggfilter, context))
 					return true;
 			}
 			break;
@@ -1444,7 +1437,6 @@ expression_tree_walker(Node *node,
 			break;
 		case T_Grouping:
 		case T_GroupId:
-		case T_SortGroupClause: /* occurs in WindowClause lists */
 			{
 				/* do nothing */
 			}
@@ -1771,7 +1763,6 @@ expression_tree_mutator(Node *node,
 		case T_SetToDefault:
 		case T_CurrentOfExpr:
 		case T_RangeTblRef:
-<<<<<<< HEAD
 		case T_String:
 		case T_Null:
 		case T_DML:
@@ -1783,9 +1774,6 @@ expression_tree_mutator(Node *node,
 		case T_PartBoundOpenExpr:
 		case T_PartListRuleExpr:
 		case T_PartListNullTestExpr:
-=======
-		case T_SortGroupClause:
->>>>>>> 78a09145e0
 			return (Node *) copyObject(node);
 		case T_Aggref:
 			{
@@ -1797,9 +1785,7 @@ expression_tree_mutator(Node *node,
 				MUTATE(newnode->args, aggref->args, List *);
 				MUTATE(newnode->aggorder, aggref->aggorder, List *);
 				MUTATE(newnode->aggdistinct, aggref->aggdistinct, List *);
-<<<<<<< HEAD
 				MUTATE(newnode->aggfilter, aggref->aggfilter, Expr *);
-=======
 				return (Node *) newnode;
 			}
 			break;
@@ -1810,7 +1796,7 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, wfunc, WindowFunc);
 				MUTATE(newnode->args, wfunc->args, List *);
->>>>>>> 78a09145e0
+				MUTATE(newnode->aggfilter, wfunc->aggfilter, Expr *);
 				return (Node *) newnode;
 			}
 			break;
@@ -1841,7 +1827,6 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
-<<<<<<< HEAD
 		case T_TableValueExpr:
 			{
 				TableValueExpr   *expr = (TableValueExpr *) node;
@@ -1851,7 +1836,9 @@ expression_tree_mutator(Node *node,
 
 				/* The subquery already pulled up into the T_TableFunctionScan node */
 				newnode->subquery = (Node *) NULL;
-=======
+				return (Node *) newnode;
+			}
+			break;
 		case T_NamedArgExpr:
 			{
 				NamedArgExpr *nexpr = (NamedArgExpr *) node;
@@ -1859,7 +1846,6 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, nexpr, NamedArgExpr);
 				MUTATE(newnode->arg, nexpr->arg, Expr *);
->>>>>>> 78a09145e0
 				return (Node *) newnode;
 			}
 			break;
@@ -2264,17 +2250,6 @@ expression_tree_mutator(Node *node,
 			}
 			break;
 
-		case T_WindowFunc:
-			{
-				WindowFunc *wfunc = (WindowFunc *) node;
-				WindowFunc *newnode;
-
-				FLATCOPY(newnode, wfunc, WindowFunc);
-				MUTATE(newnode->args, wfunc->args, List *);
-				MUTATE(newnode->aggfilter, wfunc->aggfilter, Expr *);
-				return (Node *) newnode;
-			}
-			break;
 		case T_GroupingFunc:
 			{
 				GroupingFunc *newnode;
@@ -2708,13 +2683,11 @@ bool
 
 				if (walker(fcall->args, context))
 					return true;
-<<<<<<< HEAD
-				if (walker(fcall->agg_filter, context))
-=======
 				if (walker(fcall->agg_order, context))
 					return true;
+				if (walker(fcall->agg_filter, context))
+					return true;
 				if (walker(fcall->over, context))
->>>>>>> 78a09145e0
 					return true;
 				/* function name is deemed uninteresting */
 			}
