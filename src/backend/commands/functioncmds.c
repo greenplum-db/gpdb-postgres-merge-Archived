@@ -2618,7 +2618,7 @@ ExecuteDoStmt(DoStmt *stmt)
 	if (language_item)
 		language = strVal(language_item->arg);
 	else
-		language = default_do_language;
+		language = "plpgsql";
 
 	/* Convert language name to canonical case */
 	languageName = case_translate_language_name(language);

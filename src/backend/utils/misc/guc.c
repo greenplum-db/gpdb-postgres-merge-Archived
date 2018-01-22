@@ -177,13 +177,10 @@ static bool assign_autovacuum_max_workers(int newval, bool doit, GucSource sourc
 static bool assign_effective_io_concurrency(int newval, bool doit, GucSource source);
 static const char *assign_pgstat_temp_directory(const char *newval, bool doit, GucSource source);
 static const char *assign_application_name(const char *newval, bool doit, GucSource source);
-<<<<<<< HEAD
 
 static int	defunct_int = 0;
 static bool	defunct_bool = false;
 static double defunct_double = 0;
-=======
->>>>>>> 78a09145e0
 
 static char *config_enum_get_options(struct config_enum * record,
 						const char *prefix, const char *suffix,
@@ -393,11 +390,6 @@ char	   *external_pid_file;
 
 char	   *pgstat_temp_directory;
 
-<<<<<<< HEAD
-=======
-char	   *default_do_language;
-
->>>>>>> 78a09145e0
 char	   *application_name;
 
 int			tcp_keepalives_idle;
@@ -1314,21 +1306,22 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-<<<<<<< HEAD
-		{"data_checksums", PGC_INTERNAL, PRESET_OPTIONS,
-			gettext_noop("Shows whether data checksums are turned on for this cluster"),
-			NULL,
-			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
-		},
-		&data_checksums,
-=======
 		{"lo_compat_privileges", PGC_SUSET, COMPAT_OPTIONS_PREVIOUS,
 			gettext_noop("Enables backward compatibility in privilege checks on large objects"),
 			gettext_noop("When turned on, privilege checks on large objects perform "
 						 "with backward compatibility as 8.4.x or earlier releases.")
 		},
 		&lo_compat_privileges,
->>>>>>> 78a09145e0
+		false, NULL, NULL
+	},
+
+	{
+		{"data_checksums", PGC_INTERNAL, PRESET_OPTIONS,
+			gettext_noop("Shows whether data checksums are turned on for this cluster"),
+			NULL,
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
+		&data_checksums,
 		false, NULL, NULL
 	},
 
@@ -2208,18 +2201,7 @@ static struct config_real ConfigureNamesReal[] =
 		&defunct_double,
 		1.0, 0.0, 100.0, NULL, NULL
 	},
-<<<<<<< HEAD
-=======
-	{
-		{"geqo_seed", PGC_USERSET, QUERY_TUNING_GEQO,
-			gettext_noop("GEQO: seed for random path selection."),
-			NULL
-		},
-		&Geqo_seed,
-		0.0, 0.0, 1.0, NULL, NULL
-	},
 
->>>>>>> 78a09145e0
 	{
 		{"bgwriter_lru_multiplier", PGC_SIGHUP, RESOURCES,
 			gettext_noop("Multiple of the average buffer usage to free per round."),
@@ -2736,32 +2718,15 @@ static struct config_string ConfigureNamesString[] =
 #endif   /* USE_SSL */
 
 	{
-<<<<<<< HEAD
 		{"application_name", PGC_USERSET, LOGGING_WHAT,
 			gettext_noop("Sets the application name to be reported in statistics and logs."),
 			NULL,
 			GUC_IS_NAME | GUC_REPORT | GUC_NOT_IN_SAMPLE
-=======
-		{"default_do_language", PGC_USERSET, CLIENT_CONN_STATEMENT,
-			gettext_noop("Sets the language used in DO statement if LANGUAGE is not specified."),
-			NULL
-		},
-		&default_do_language,
-		"plpgsql", NULL, NULL
-	},
-
-	{
-		{"application_name", PGC_USERSET, LOGGING,
-		 gettext_noop("Sets the application name to be reported in statistics and logs."),
-		 NULL,
-		 GUC_IS_NAME | GUC_REPORT | GUC_NOT_IN_SAMPLE
->>>>>>> 78a09145e0
 		},
 		&application_name,
 		"", assign_application_name, NULL
 	},
 
-<<<<<<< HEAD
 	{
 		{"external_pid_file", PGC_POSTMASTER, FILE_LOCATIONS,
 			gettext_noop("Writes the postmaster PID to the specified file."),
@@ -2783,8 +2748,6 @@ static struct config_string ConfigureNamesString[] =
 		assign_wal_consistency_checking, NULL
 	},
 
-=======
->>>>>>> 78a09145e0
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, NULL, NULL, NULL
@@ -2809,18 +2772,10 @@ static struct config_enum ConfigureNamesEnum[] =
 			NULL
 		},
 		&bytea_output,
-<<<<<<< HEAD
-		BYTEA_OUTPUT_ESCAPE, bytea_output_options, NULL, NULL
-	},
-
-	{
-
-=======
 		BYTEA_OUTPUT_HEX, bytea_output_options, NULL, NULL
 	},
 
 	{
->>>>>>> 78a09145e0
 		{"client_min_messages", PGC_USERSET, LOGGING_WHEN,
 			gettext_noop("Sets the message levels that are sent to the client."),
 			gettext_noop("Each level includes all the levels that follow it. The later"
@@ -5099,11 +5054,7 @@ set_config_option(const char *name, const char *value,
 				if (IsUnderPostmaster)
 					return true;
 			}
-<<<<<<< HEAD
-			else if (context != PGC_BACKEND && context != PGC_POSTMASTER &&
-=======
 			else if (context != PGC_POSTMASTER && context != PGC_BACKEND &&
->>>>>>> 78a09145e0
 					 source != PGC_S_CLIENT)
 			{
 				ereport(elevel,
@@ -5970,11 +5921,7 @@ flatten_set_variable_args(const char *name, List *args)
 			TypeCast   *tc = (TypeCast *) arg;
 
 			arg = tc->arg;
-<<<<<<< HEAD
-			typename = tc->typeName;
-=======
 			typeName = tc->typeName;
->>>>>>> 78a09145e0
 		}
 
 		if (!IsA(arg, A_Const))
@@ -8661,7 +8608,6 @@ assign_application_name(const char *newval, bool doit, GucSource source)
 		return newval;
 }
 
-<<<<<<< HEAD
 /*
  * Assign hook routine for "allow_system_table_mods" GUC.
  * Setting it DDL or ALL requires either:
@@ -8720,6 +8666,4 @@ show_allow_system_table_mods(void)
 		return "NONE";
 }
 
-=======
->>>>>>> 78a09145e0
 #include "guc-file.c"

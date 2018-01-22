@@ -178,7 +178,6 @@ extern bool vacuumStatement_IsInAppendOnlyPseudoCompactionPhase(VacuumStmt* vacs
 
 /* in commands/vacuumlazy.c */
 extern bool lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
-<<<<<<< HEAD
 				BufferAccessStrategy bstrategy, List *updated_stats);
 extern void vacuum_appendonly_rel(Relation aorel, VacuumStmt *vacstmt);
 extern void vacuum_appendonly_fill_stats(Relation aorel, Snapshot snapshot,
@@ -186,9 +185,6 @@ extern void vacuum_appendonly_fill_stats(Relation aorel, Snapshot snapshot,
 										 bool *relhasindex);
 extern int vacuum_appendonly_indexes(Relation aoRelation, VacuumStmt *vacstmt, List* updated_stats);
 extern void vacuum_aocs_rel(Relation aorel, void *vacrelstats, bool isVacFull);
-=======
-				BufferAccessStrategy bstrategy, bool *scanned_all);
->>>>>>> 78a09145e0
 
 /* in commands/analyze.c */
 extern void analyze_rel(Oid relid, VacuumStmt *vacstmt,

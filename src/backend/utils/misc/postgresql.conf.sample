@@ -184,19 +184,7 @@ max_prepared_transactions = 250		# can be 0 or more
 #cpu_operator_cost = 0.0025		# same scale as above
 #gp_motion_cost_per_row = 0.0  # (same) (if 0, 2*cpu_tuple_cost is used)
 
-<<<<<<< HEAD
 #effective_cache_size = 4MB
-=======
-# - Genetic Query Optimizer -
-
-#geqo = on
-#geqo_threshold = 12
-#geqo_effort = 5			# range 1-10
-#geqo_pool_size = 0			# selects default based on effort
-#geqo_generations = 0			# selects default based on effort
-#geqo_selection_bias = 2.0		# range 1.5-2.0
-#geqo_seed = 0.0			# range 0.0-1.0
->>>>>>> 78a09145e0
 
 # - Other Planner Options -
 
@@ -234,19 +222,6 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 					# happen after that much log output.
 					# 0 disables.
 
-<<<<<<< HEAD
-=======
-# These are relevant when logging to syslog:
-#syslog_facility = 'LOCAL0'
-#syslog_ident = 'postgres'
-
-#silent_mode = off			# Run server silently.
-					# DO NOT USE without syslog or
-					# logging_collector
-					# (change requires restart)
-
-
->>>>>>> 78a09145e0
 # - When to Log -
 
 #client_min_messages = notice		# values in order of decreasing detail:
@@ -295,10 +270,7 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 					# statements running at least this number
 					# of milliseconds
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 78a09145e0
 # - What to Log -
 
 #debug_print_parse = off
@@ -312,39 +284,11 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 #log_disconnections = off
 #log_duration = off
 #log_hostname = off
-<<<<<<< HEAD
 
 #log_statement = 'none'			# none, mod, ddl, all
 #log_temp_files = -1			# Log temporary files equal or larger
 					# than the specified number of kilobytes.
 					# -1 disables;  0 logs all temp files
-=======
-#log_line_prefix = ''			# special values:
-					#   %a = application name
-					#   %u = user name
-					#   %d = database name
-					#   %r = remote host and port
-					#   %h = remote host
-					#   %p = process ID
-					#   %t = timestamp without milliseconds
-					#   %m = timestamp with milliseconds
-					#   %i = command tag
-					#   %e = SQL state
-					#   %c = session ID
-					#   %l = session line number
-					#   %s = session start timestamp
-					#   %v = virtual transaction ID
-					#   %x = transaction ID (0 if none)
-					#   %q = stop here in non-session
-					#        processes
-					#   %% = '%'
-					# e.g. '<%u%%%d> '
-#log_lock_waits = off			# log lock waits >= deadlock_timeout
-#log_statement = 'none'			# none, ddl, mod, all
-#log_temp_files = -1			# log temporary files equal or larger
-					# than the specified size in kilobytes;
-					# -1 disables, 0 logs all temp files
->>>>>>> 78a09145e0
 #log_timezone = unknown			# actually, defaults to TZ environment
 					# setting
 
@@ -485,7 +429,6 @@ log_autostats=off	# print additional autostats information
 #search_path = '"$user",public'		# schema names
 #default_tablespace = ''		# a tablespace name, '' uses the default
 #check_function_bodies = on
-#default_do_language = 'plpgsql'
 #default_transaction_isolation = 'read committed'
 #default_transaction_read_only = off
 #session_replication_role = 'origin'
@@ -493,14 +436,10 @@ log_autostats=off	# print additional autostats information
 #idle_session_gang_timeout = 18s 	# in milliseconds, 0 is disabled
 #vacuum_freeze_min_age = 50000000
 #vacuum_freeze_table_age = 150000000
-<<<<<<< HEAD
-#bytea_output='escape'
-#gin_fuzzy_search_limit = 0
-=======
 #bytea_output = 'hex'			# hex, escape
 #xmlbinary = 'base64'
 #xmloption = 'content'
->>>>>>> 78a09145e0
+#gin_fuzzy_search_limit = 0
 
 # - Locale and Formatting -
 
@@ -580,14 +519,8 @@ max_appendonly_tables = 10000 # Maximum number of append only tables that can
 #array_nulls = on
 #backslash_quote = safe_encoding	# on, off, or safe_encoding
 #escape_string_warning = on
-<<<<<<< HEAD
-#regex_flavor = advanced		# advanced, extended, or basic
-#standard_conforming_strings = on
-=======
 #lo_compat_privileges = off
-#sql_inheritance = on
-#standard_conforming_strings = off
->>>>>>> 78a09145e0
+#standard_conforming_strings = on
 #synchronize_seqscans = on
 
 # - Other Platforms and Clients -
