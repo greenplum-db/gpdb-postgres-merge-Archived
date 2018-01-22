@@ -1356,14 +1356,6 @@ shdepReassignOwned(List *roleids, Oid newrole)
 					AlterLanguageOwner_oid(sdepForm->objid, newrole);
 					break;
 
-<<<<<<< HEAD
-				case OperatorClassRelationId:
-					AlterOpClassOwner_oid(sdepForm->objid, newrole);
-					break;
-
-				case OperatorFamilyRelationId:
-					AlterOpFamilyOwner_oid(sdepForm->objid, newrole);
-=======
 				case LargeObjectRelationId:
 					LargeObjectAlterOwner(sdepForm->objid, newrole);
 					break;
@@ -1373,7 +1365,14 @@ shdepReassignOwned(List *roleids, Oid newrole)
 					 * Ignore default ACLs; they should be handled by
 					 * DROP OWNED, not REASSIGN OWNED.
 					 */
->>>>>>> 78a09145e0
+					break;
+
+				case OperatorClassRelationId:
+					AlterOpClassOwner_oid(sdepForm->objid, newrole);
+					break;
+
+				case OperatorFamilyRelationId:
+					AlterOpFamilyOwner_oid(sdepForm->objid, newrole);
 					break;
 
 				default:

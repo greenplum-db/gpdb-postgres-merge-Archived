@@ -39,11 +39,8 @@
 #include "catalog/pg_ts_template.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
-<<<<<<< HEAD
 #include "commands/schemacmds.h"
-=======
 #include "funcapi.h"
->>>>>>> 78a09145e0
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_func.h"
@@ -202,12 +199,9 @@ static void recomputeNamespacePath(void);
 static void RemoveTempRelations(Oid tempNamespaceId);
 static void RemoveTempRelationsCallback(int code, Datum arg);
 static void NamespaceCallback(Datum arg, int cacheid, ItemPointer tuplePtr);
-<<<<<<< HEAD
-static bool TempNamespaceValid(bool error_if_removed);
-=======
 static bool MatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 						   int **argnumbers);
->>>>>>> 78a09145e0
+static bool TempNamespaceValid(bool error_if_removed);
 
 /* These don't really need to appear in any header file */
 Datum		pg_table_is_visible(PG_FUNCTION_ARGS);

@@ -52,11 +52,7 @@ typedef FormData_pg_listener *Form_pg_listener;
 #define Natts_pg_listener						3
 #define Anum_pg_listener_relname				1
 #define Anum_pg_listener_listenerpid			2
-<<<<<<< HEAD
-#define Anum_pg_listener_notify					3
-=======
 #define Anum_pg_listener_notification			3
->>>>>>> 78a09145e0
 
 /* ----------------
  *		initial contents of pg_listener are NOTHING.

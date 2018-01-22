@@ -102,10 +102,7 @@ ProcedureCreate(const char *procedureName,
 	bool		internalOutParam = false;
 	Oid			variadicType = InvalidOid;
 	Oid			proowner = GetUserId();
-<<<<<<< HEAD
-=======
 	Acl		   *proacl = NULL;
->>>>>>> 78a09145e0
 	Relation	rel;
 	HeapTuple	tup;
 	HeapTuple	oldtup;
@@ -353,14 +350,9 @@ ProcedureCreate(const char *procedureName,
 		values[Anum_pg_proc_proconfig - 1] = proconfig;
 	else
 		nulls[Anum_pg_proc_proconfig - 1] = true;
-<<<<<<< HEAD
-	/* start out with empty permissions */
-	nulls[Anum_pg_proc_proacl - 1] = true;
+	/* proacl will be determined later */
 	values[Anum_pg_proc_prodataaccess - 1] = CharGetDatum(prodataaccess);
 	values[Anum_pg_proc_proexeclocation - 1] = CharGetDatum(proexeclocation);
-=======
-	/* proacl will be determined later */
->>>>>>> 78a09145e0
 
 	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 	tupDesc = RelationGetDescr(rel);
@@ -376,23 +368,16 @@ ProcedureCreate(const char *procedureName,
 	{
 		/* There is one; okay to replace it? */
 		Form_pg_proc oldproc = (Form_pg_proc) GETSTRUCT(oldtup);
-<<<<<<< HEAD
-		Oid oldOid = HeapTupleGetOid(oldtup);
-=======
 		Datum		proargnames;
 		bool		isnull;
->>>>>>> 78a09145e0
+		Oid oldOid = HeapTupleGetOid(oldtup);
 
 		if (!replace)
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_FUNCTION),
 			errmsg("function \"%s\" already exists with same argument types",
 				   procedureName)));
-<<<<<<< HEAD
 		if (!pg_proc_ownercheck(oldOid, proowner))
-=======
-		if (!pg_proc_ownercheck(HeapTupleGetOid(oldtup), proowner))
->>>>>>> 78a09145e0
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
 						   procedureName);
 
@@ -642,14 +627,10 @@ ProcedureCreate(const char *procedureName,
 	 * shared dependencies do *not* need to change, and we leave them alone.)
 	 */
 	if (is_update)
-<<<<<<< HEAD
 	{
 		deleteDependencyRecordsFor(ProcedureRelationId, retval, true);
 		deleteProcCallbacks(retval);
 	}
-=======
-		deleteDependencyRecordsFor(ProcedureRelationId, retval);
->>>>>>> 78a09145e0
 
 	myself.classId = ProcedureRelationId;
 	myself.objectId = retval;
@@ -701,10 +682,6 @@ ProcedureCreate(const char *procedureName,
 	if (!is_update)
 		recordDependencyOnOwner(ProcedureRelationId, retval, proowner);
 
-<<<<<<< HEAD
-	/* dependency on extension */
-	recordDependencyOnCurrentExtension(&myself, is_update);
-=======
 	/* dependency on any roles mentioned in ACL */
 	if (!is_update && proacl != NULL)
 	{
@@ -717,7 +694,9 @@ ProcedureCreate(const char *procedureName,
 							  0, NULL,
 							  nnewmembers, newmembers);
 	}
->>>>>>> 78a09145e0
+
+	/* dependency on extension */
+	recordDependencyOnCurrentExtension(&myself, is_update);
 
 	heap_freetuple(tup);
 

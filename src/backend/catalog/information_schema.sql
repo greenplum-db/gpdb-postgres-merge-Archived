@@ -217,10 +217,7 @@ CREATE DOMAIN time_stamp AS timestamp(2) with time zone
 
 CREATE DOMAIN yes_or_no AS character varying(3)
     CONSTRAINT yes_or_no_check CHECK (value IN ('YES', 'NO'));
-<<<<<<< HEAD
-=======
 
->>>>>>> 78a09145e0
 
 -- 5.8 ADMINISTRABLE_ROLE_AUTHORIZATIONS view appears later.
 

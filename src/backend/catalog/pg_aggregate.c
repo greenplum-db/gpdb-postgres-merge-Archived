@@ -524,15 +524,10 @@ lookup_agg_function(List *fnName,
 	 * function's return value.  it also returns the true argument types to
 	 * the function.
 	 */
-<<<<<<< HEAD
-	fdresult = func_get_detail(fnName, NIL, nargs, input_types, false, false,
-							   &fnOid, rettype, &retset,
-							   &nvargs, &vatype,
-=======
 	fdresult = func_get_detail(fnName, NIL, NIL,
 							   nargs, input_types, false, false,
-							   &fnOid, rettype, &retset, &nvargs,
->>>>>>> 78a09145e0
+							   &fnOid, rettype, &retset,
+							   &nvargs, &vatype,
 							   &true_oid_array, NULL);
 
 	/* only valid case is a normal function not returning a set */

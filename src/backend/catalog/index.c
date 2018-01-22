@@ -1663,8 +1663,6 @@ index_build(Relation heapRelation,
 										 PointerGetDatum(indexInfo)));
 	Assert(PointerIsValid(stats));
 
-<<<<<<< HEAD
-=======
 	/*
 	 * If it's for an exclusion constraint, make a second pass over the
 	 * heap to verify that the constraint is satisfied.
@@ -1672,7 +1670,6 @@ index_build(Relation heapRelation,
 	if (indexInfo->ii_ExclusionOps != NULL)
 		IndexCheckExclusion(heapRelation, indexRelation, indexInfo);
 
->>>>>>> 78a09145e0
 	/* Roll back any GUC changes executed by index functions */
 	AtEOXact_GUC(false, save_nestlevel);
 

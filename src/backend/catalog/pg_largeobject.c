@@ -22,13 +22,10 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_largeobject.h"
-<<<<<<< HEAD
-=======
 #include "catalog/pg_largeobject_metadata.h"
 #include "catalog/toasting.h"
 #include "miscadmin.h"
 #include "utils/acl.h"
->>>>>>> 78a09145e0
 #include "utils/bytea.h"
 #include "utils/fmgroids.h"
 #include "utils/rel.h"

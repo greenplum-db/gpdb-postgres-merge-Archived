@@ -104,11 +104,8 @@ static void AddNewRelationTuple(Relation pg_class_desc,
 					Oid new_rel_oid, Oid new_type_oid,
 					Oid relowner,
 					char relkind,
-<<<<<<< HEAD
 					char relstorage,
-=======
 					Datum relacl,
->>>>>>> 78a09145e0
 					Datum reloptions);
 static Oid AddNewRelationType(const char *typeName,
 				   Oid typeNamespace,
@@ -1089,11 +1086,8 @@ AddNewRelationTuple(Relation pg_class_desc,
 					Oid new_type_oid,
 					Oid relowner,
 					char relkind,
-<<<<<<< HEAD
 					char relstorage,
-=======
 					Datum relacl,
->>>>>>> 78a09145e0
 					Datum reloptions)
 {
 	Form_pg_class new_rel_reltup;
@@ -1263,13 +1257,9 @@ heap_create_with_catalog(const char *relname,
 						 OnCommitAction oncommit,
                          const struct GpPolicy *policy,
 						 Datum reloptions,
-<<<<<<< HEAD
+						 bool use_user_acl,
 						 bool allow_system_table_mods,
 						 bool valid_opts)
-=======
-						 bool use_user_acl,
-						 bool allow_system_table_mods)
->>>>>>> 78a09145e0
 {
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;
@@ -1533,7 +1523,6 @@ heap_create_with_catalog(const char *relname,
 	 * creating the same type name in parallel but hadn't committed yet when
 	 * we checked for a duplicate name above.
 	 */
-<<<<<<< HEAD
 	if (existing_rowtype_oid != InvalidOid)
 		new_type_oid = existing_rowtype_oid;
 	else
@@ -1543,17 +1532,9 @@ heap_create_with_catalog(const char *relname,
 										  relid,
 										  relkind,
 										  ownerid,
+										  reltypeid,
 										  new_array_oid);
 	}
-=======
-	new_type_oid = AddNewRelationType(relname,
-									  relnamespace,
-									  relid,
-									  relkind,
-									  ownerid,
-									  reltypeid,
-									  new_array_oid);
->>>>>>> 78a09145e0
 
 	/*
 	 * Now make the array type if wanted.
@@ -1610,11 +1591,8 @@ heap_create_with_catalog(const char *relname,
 						new_type_oid,
 						ownerid,
 						relkind,
-<<<<<<< HEAD
 						relstorage,
-=======
 						PointerGetDatum(relacl),
->>>>>>> 78a09145e0
 						reloptions);
 
 	/*
@@ -1673,10 +1651,8 @@ heap_create_with_catalog(const char *relname,
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 		recordDependencyOnOwner(RelationRelationId, relid, ownerid);
-
-<<<<<<< HEAD
 		recordDependencyOnCurrentExtension(&myself, false);
-=======
+
 		if (relacl != NULL)
 		{
 			int			nnewmembers;
@@ -1688,7 +1664,6 @@ heap_create_with_catalog(const char *relname,
 								  0, NULL,
 								  nnewmembers, newmembers);
 		}
->>>>>>> 78a09145e0
 	}
 
 	/*
@@ -3149,19 +3124,6 @@ heap_truncate(List *relids)
 
 		rel = heap_open(rid, AccessExclusiveLock);
 		relations = lappend(relations, rel);
-<<<<<<< HEAD
-
-		/* If there is a toast table, add it to the list too */
-		toastrelid = rel->rd_rel->reltoastrelid;
-		if (OidIsValid(toastrelid))
-		{
-			Relation trel;
-
-			trel = heap_open(toastrelid, AccessExclusiveLock);
-			relations = lappend(relations, trel);
-		}
-=======
->>>>>>> 78a09145e0
 	}
 
 	/* Don't allow truncate on tables that are referenced by foreign keys */
@@ -3172,7 +3134,6 @@ heap_truncate(List *relids)
 	{
 		Relation	rel = lfirst(cell);
 
-<<<<<<< HEAD
 		/*
 		 * Truncating AO and auxiliary tables' relfiles, like in case
 		 * of heap tables, leaves the AO table in an inconsistent
@@ -3198,26 +3159,22 @@ heap_truncate(List *relids)
 
 		if (RelationIsAoRows(rel) || RelationIsAoCols(rel))
 		{
+			/*
+			 * GPDB_90_MERGE_FIXME: see commit cab9a0656, which changed how
+			 * truncation was done for heap tables. Do we need a matching change
+			 * here, and does the removal of filerep change any of the
+			 * assumptions in the above comment?
+			 */
 			TruncateRelfiles(rel);
 			reindex_relation(RelationGetRelid(rel), true);
 		}
 		else
 		{
-			/* Truncate the actual file (and discard buffers) */
-			RelationTruncate(rel, 0);
-
-			/* If this relation has indexes, truncate the indexes too */
-			RelationTruncateIndexes(rel);
+			/* Truncate the relation */
+			heap_truncate_one_rel(rel);
 		}
-		/*
-		 * Close the relation, but keep exclusive lock on it until commit.
-		 */
-=======
-		/* Truncate the relation */
-		heap_truncate_one_rel(rel);
 
 		/* Close the relation, but keep exclusive lock on it until commit */
->>>>>>> 78a09145e0
 		heap_close(rel, NoLock);
 	}
 }

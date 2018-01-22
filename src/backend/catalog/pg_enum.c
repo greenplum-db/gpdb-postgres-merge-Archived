@@ -72,20 +72,12 @@ EnumValuesCreate(Oid enumTypeOid, List *vals,
 	oids = (Oid *) palloc(num_elems * sizeof(Oid));
 	if (OidIsValid(binary_upgrade_next_pg_enum_oid))
 	{
-<<<<<<< HEAD
 		if (num_elems != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("EnumValuesCreate() can only set a single OID")));
 		oids[0] = binary_upgrade_next_pg_enum_oid;
 		binary_upgrade_next_pg_enum_oid = InvalidOid;
-=======
-		/*
-		 *	The pg_enum.oid is stored in user tables.  This oid must be
-		 *	preserved by binary upgrades.
-		 */
-		oids[i] = GetNewOid(pg_enum);
->>>>>>> 78a09145e0
 	}
 	else
 	{

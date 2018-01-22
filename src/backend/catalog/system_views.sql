@@ -20,23 +20,17 @@ CREATE VIEW pg_roles AS
         rolconnlimit,
         '********'::text as rolpassword,
         rolvaliduntil,
-<<<<<<< HEAD
-        rolconfig,
+        setconfig as rolconfig,
 		rolresqueue,
-        oid,
+        pg_authid.oid,
         rolcreaterextgpfd,
         rolcreaterexthttp,
         rolcreatewextgpfd,
         rolcreaterexthdfs,
         rolcreatewexthdfs,
         rolresgroup
-    FROM pg_authid;
-=======
-        setconfig as rolconfig,
-        pg_authid.oid
     FROM pg_authid LEFT JOIN pg_db_role_setting s
     ON (pg_authid.oid = setrole AND setdatabase = 0);
->>>>>>> 78a09145e0
 
 CREATE VIEW pg_shadow AS
     SELECT

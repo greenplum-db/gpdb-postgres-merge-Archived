@@ -161,16 +161,13 @@ static const Oid object_classes[MAX_OCLASS] = {
 	AuthIdRelationId,			/* OCLASS_ROLE */
 	DatabaseRelationId,			/* OCLASS_DATABASE */
 	TableSpaceRelationId,		/* OCLASS_TBLSPACE */
-<<<<<<< HEAD
-	ExtprotocolRelationId,		/* OCLASS_EXTPROTOCOL */
-	CompressionRelationId,		/* OCLASS_COMPRESSION */
-	ExtensionRelationId			/* OCLASS_EXTENSION */
-=======
 	ForeignDataWrapperRelationId,	/* OCLASS_FDW */
 	ForeignServerRelationId,	/* OCLASS_FOREIGN_SERVER */
 	UserMappingRelationId,		/* OCLASS_USER_MAPPING */
-	DefaultAclRelationId		/* OCLASS_DEFACL */
->>>>>>> 78a09145e0
+	DefaultAclRelationId,		/* OCLASS_DEFACL */
+	ExtensionRelationId,		/* OCLASS_EXTENSION */
+	ExtprotocolRelationId,		/* OCLASS_EXTPROTOCOL */
+	CompressionRelationId		/* OCLASS_COMPRESSION */
 };
 
 
@@ -1190,7 +1187,18 @@ doDeletion(const ObjectAddress *object)
 			RemoveForeignDataWrapperById(object->objectId);
 			break;
 
-<<<<<<< HEAD
+		case OCLASS_FOREIGN_SERVER:
+			RemoveForeignServerById(object->objectId);
+			break;
+
+		case OCLASS_USER_MAPPING:
+			RemoveUserMappingById(object->objectId);
+			break;
+
+		case OCLASS_DEFACL:
+			RemoveDefaultACLById(object->objectId);
+			break;
+
 		case OCLASS_EXTENSION:
 			RemoveExtensionById(object->objectId);
 			break;
@@ -1207,19 +1215,6 @@ doDeletion(const ObjectAddress *object)
 			 * OCLASS_ROLE, OCLASS_DATABASE, OCLASS_TBLSPACE intentionally
 			 * not handled here
 			 */
-=======
-		case OCLASS_FOREIGN_SERVER:
-			RemoveForeignServerById(object->objectId);
-			break;
-
-		case OCLASS_USER_MAPPING:
-			RemoveUserMappingById(object->objectId);
-			break;
-
-		case OCLASS_DEFACL:
-			RemoveDefaultACLById(object->objectId);
-			break;
->>>>>>> 78a09145e0
 
 		default:
 			elog(ERROR, "unrecognized object class: %u",
@@ -2183,23 +2178,21 @@ getObjectClass(const ObjectAddress *object)
 			Assert(object->objectSubId == 0);
 			return OCLASS_USER_MAPPING;
 
-<<<<<<< HEAD
-		case ExtprotocolRelationId:
+		case DefaultAclRelationId:
 			Assert(object->objectSubId == 0);
-			return OCLASS_EXTPROTOCOL;
+			return OCLASS_DEFACL;
 
 		case ExtensionRelationId:
 			Assert(object->objectSubId == 0);
 			return OCLASS_EXTENSION;
 
+		case ExtprotocolRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_EXTPROTOCOL;
+
 		case CompressionRelationId:
 			Assert(object->objectSubId == 0);
 			return OCLASS_COMPRESSION;
-=======
-		case DefaultAclRelationId:
-			Assert(object->objectSubId == 0);
-			return OCLASS_DEFACL;
->>>>>>> 78a09145e0
 	}
 
 	/* shouldn't get here */
@@ -2746,29 +2739,6 @@ getObjectDescription(const ObjectAddress *object)
 				break;
 			}
 
-<<<<<<< HEAD
-		case OCLASS_EXTENSION:
-			{
-				char       *extname;
-
-				extname = get_extension_name(object->objectId);
-				if (!extname)
-					elog(ERROR, "cache lookup failed for extension %u",
-						 object->objectId);
-				appendStringInfo(&buffer, _("extension %s"), extname);
-				break;
-			}
-
-		case OCLASS_EXTPROTOCOL:
-			{
-				appendStringInfo(&buffer, _("protocol %s"),
-								 ExtProtocolGetNameByOid(object->objectId));
-				break;
-			}
-		case OCLASS_COMPRESSION:
-			{
-				elog(NOTICE, "NOT YET IMPLEMENTED");
-=======
 		case OCLASS_DEFACL:
 			{
 				Relation	defaclrel;
@@ -2829,7 +2799,30 @@ getObjectDescription(const ObjectAddress *object)
 
 				systable_endscan(rcscan);
 				heap_close(defaclrel, AccessShareLock);
->>>>>>> 78a09145e0
+				break;
+			}
+
+		case OCLASS_EXTENSION:
+			{
+				char       *extname;
+
+				extname = get_extension_name(object->objectId);
+				if (!extname)
+					elog(ERROR, "cache lookup failed for extension %u",
+						 object->objectId);
+				appendStringInfo(&buffer, _("extension %s"), extname);
+				break;
+			}
+
+		case OCLASS_EXTPROTOCOL:
+			{
+				appendStringInfo(&buffer, _("protocol %s"),
+								 ExtProtocolGetNameByOid(object->objectId));
+				break;
+			}
+		case OCLASS_COMPRESSION:
+			{
+				elog(NOTICE, "NOT YET IMPLEMENTED");
 				break;
 			}
 

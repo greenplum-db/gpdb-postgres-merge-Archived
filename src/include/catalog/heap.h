@@ -80,13 +80,9 @@ extern Oid heap_create_with_catalog(const char *relname,
 						 OnCommitAction oncommit,
                          const struct GpPolicy *policy,    /* MPP */
 						 Datum reloptions,
-<<<<<<< HEAD
+						 bool use_user_acl,
 						 bool allow_system_table_mods,
 						 bool valid_opts);
-=======
-						 bool use_user_acl,
-						 bool allow_system_table_mods);
->>>>>>> 78a09145e0
 
 extern void heap_drop_with_catalog(Oid relid);
 

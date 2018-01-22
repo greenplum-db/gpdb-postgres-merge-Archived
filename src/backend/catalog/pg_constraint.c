@@ -768,20 +768,12 @@ AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 }
 
 /*
-<<<<<<< HEAD
  * get_constraint_oid
-=======
- * GetConstraintByName
->>>>>>> 78a09145e0
  *		Find a constraint on the specified relation with the specified name.
  *		Returns constraint's OID.
  */
 Oid
-<<<<<<< HEAD
 get_constraint_oid(Oid relid, const char *conname, bool missing_ok)
-=======
-GetConstraintByName(Oid relid, const char *conname)
->>>>>>> 78a09145e0
 {
 	Relation	pg_constraint;
 	HeapTuple	tuple;
@@ -822,11 +814,7 @@ GetConstraintByName(Oid relid, const char *conname)
 	systable_endscan(scan);
 
 	/* If no such constraint exists, complain */
-<<<<<<< HEAD
 	if (!OidIsValid(conOid) && !missing_ok)
-=======
-	if (!OidIsValid(conOid))
->>>>>>> 78a09145e0
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("constraint \"%s\" for table \"%s\" does not exist",
@@ -836,7 +824,6 @@ GetConstraintByName(Oid relid, const char *conname)
 
 	return conOid;
 }
-<<<<<<< HEAD
 
 
 /**
@@ -933,5 +920,3 @@ ConstraintGetPrimaryKeyOf(Oid relid, AttrNumber attno, Oid *pkrelid, AttrNumber 
 
 	return found;
 }
-=======
->>>>>>> 78a09145e0

@@ -2,11 +2,7 @@
 #
 # Makefile for backend/catalog
 #
-<<<<<<< HEAD
 # src/backend/catalog/Makefile
-=======
-# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.74 2009/12/11 03:34:55 itagaki Exp $
->>>>>>> 78a09145e0
 #
 #-------------------------------------------------------------------------
 
@@ -21,17 +17,13 @@ endif
 OBJS = catalog.o dependency.o heap.o index.o indexing.o namespace.o aclchk.o \
        objectaddress.o pg_aggregate.o pg_constraint.o pg_conversion.o pg_depend.o pg_enum.o \
        pg_inherits.o pg_largeobject.o pg_namespace.o pg_operator.o pg_proc.o \
-<<<<<<< HEAD
-       pg_shdepend.o pg_type.o storage.o toasting.o \
+       pg_db_role_setting.o pg_shdepend.o pg_type.o storage.o toasting.o \
        pg_exttable.o pg_extprotocol.o \
        pg_proc_callback.o \
        aoseg.o aoblkdir.o gp_fastsequence.o gp_segment_config.o \
        pg_attribute_encoding.o pg_compression.o aovisimap.o \
        pg_appendonly.o \
        oid_dispatch.o aocatalog.o zstd_compression.o $(QUICKLZ_COMPRESSION)
-=======
-       pg_db_role_setting.o pg_shdepend.o pg_type.o storage.o toasting.o
->>>>>>> 78a09145e0
 
 BKIFILES = postgres.bki postgres.description postgres.shdescription
 
@@ -51,23 +43,16 @@ POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/, \
 	pg_type.h pg_attribute.h pg_class.h \
 	pg_attrdef.h pg_constraint.h pg_inherits.h pg_index.h pg_operator.h \
 	pg_opfamily.h pg_opclass.h pg_am.h pg_amop.h pg_amproc.h \
-<<<<<<< HEAD
-	pg_language.h pg_largeobject.h pg_aggregate.h pg_statistic.h \
-	pg_rewrite.h pg_trigger.h pg_listener.h pg_description.h pg_cast.h \
-	pg_enum.h pg_namespace.h pg_conversion.h pg_depend.h \
-	pg_database.h pg_tablespace.h pg_pltemplate.h \
-	pg_authid.h pg_auth_members.h pg_shdepend.h pg_shdescription.h pg_resqueue.h pg_resgroup.h\
-=======
 	pg_language.h pg_largeobject_metadata.h pg_largeobject.h pg_aggregate.h \
 	pg_statistic.h pg_rewrite.h pg_trigger.h pg_listener.h pg_description.h \
 	pg_cast.h pg_enum.h pg_namespace.h pg_conversion.h pg_depend.h \
 	pg_database.h pg_db_role_setting.h pg_tablespace.h pg_pltemplate.h \
-	pg_authid.h pg_auth_members.h pg_shdepend.h pg_shdescription.h \
->>>>>>> 78a09145e0
+	pg_authid.h pg_auth_members.h pg_shdepend.h pg_shdescription.h pg_resqueue.h pg_resgroup.h\
 	pg_ts_config.h pg_ts_config_map.h pg_ts_dict.h \
 	pg_ts_parser.h pg_ts_template.h pg_extension.h \
 	pg_foreign_data_wrapper.h pg_foreign_server.h pg_user_mapping.h \
-<<<<<<< HEAD
+	pg_default_acl.h \
+	toasting.h indexing.h \
 	gp_configuration_history.h gp_id.h gp_policy.h gp_version.h \
 	gp_segment_config.h \
 	pg_exttable.h pg_appendonly.h aoseg.h \
@@ -79,10 +64,6 @@ POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/, \
 	pg_proc_callback.h \
 	pg_partition_encoding.h \
 	pg_type_encoding.h \
-=======
-	pg_default_acl.h \
->>>>>>> 78a09145e0
-	toasting.h indexing.h \
     )
 
 pg_includes = $(sort -I$(top_srcdir)/src/include -I$(top_builddir)/src/include)

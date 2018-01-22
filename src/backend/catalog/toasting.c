@@ -232,13 +232,9 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 										   ONCOMMIT_NOOP,
 										   NULL, /* CDB POLICY */
 										   reloptions,
-<<<<<<< HEAD
+										   false,
 										   true,
 										   /* valid_opts */ false);
-=======
-										   false,
-										   true);
->>>>>>> 78a09145e0
 
 	/* make the toast relation visible, else index creation will fail */
 	CommandCounterIncrement();
@@ -282,8 +278,8 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 							   BTREE_AM_OID,
 							   rel->rd_rel->reltablespace,
 							   classObjectId, coloptions, (Datum) 0,
-<<<<<<< HEAD
-							   true, false, true, false, false, NULL);
+							   true, false, false, false,
+							   true, false, false, NULL);
 
 	/*
 	 * If this is a partitioned child, we can unlock since the master is
@@ -294,10 +290,6 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 		UnlockRelationOid(toast_relid, ShareLock);
 		UnlockRelationOid(toast_idxid, AccessExclusiveLock);
 	}
-=======
-							   true, false, false, false,
-							   true, false, false);
->>>>>>> 78a09145e0
 
 	/*
 	 * Store the toast table's OID in the parent relation's pg_class row

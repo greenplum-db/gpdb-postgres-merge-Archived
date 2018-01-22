@@ -36,12 +36,9 @@
 #include "catalog/pg_largeobject.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_pltemplate.h"
-<<<<<<< HEAD
 #include "catalog/pg_resqueue.h"
 #include "catalog/pg_resgroup.h"
-=======
 #include "catalog/pg_db_role_setting.h"
->>>>>>> 78a09145e0
 #include "catalog/pg_shdepend.h"
 #include "catalog/pg_shdescription.h"
 #include "catalog/pg_tablespace.h"

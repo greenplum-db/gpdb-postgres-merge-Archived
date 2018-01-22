@@ -28,12 +28,9 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
-<<<<<<< HEAD
+#include "catalog/pg_default_acl.h"
 #include "catalog/pg_extension.h"
 #include "catalog/pg_extprotocol.h"
-=======
-#include "catalog/pg_default_acl.h"
->>>>>>> 78a09145e0
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/pg_language.h"
@@ -5204,78 +5201,6 @@ pg_conversion_ownercheck(Oid conv_oid, Oid roleid)
 }
 
 /*
-<<<<<<< HEAD
- * Ownership check for an external protocol (specified by OID).
- */
-bool
-pg_extprotocol_ownercheck(Oid protOid, Oid roleid)
-{
-	Relation	pg_extprotocol;
-	ScanKeyData entry[1];
-	SysScanDesc scan;
-	HeapTuple	eptuple;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	/* There's no syscache on pg_extprotocol, so must look the hard way */
-	pg_extprotocol = heap_open(ExtprotocolRelationId, AccessShareLock);
-	ScanKeyInit(&entry[0],
-				ObjectIdAttributeNumber,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(protOid));
-	scan = systable_beginscan(pg_extprotocol, ExtprotocolOidIndexId, true,
-							  SnapshotNow, 1, entry);
-
-	eptuple = systable_getnext(scan);
-
-	if (!HeapTupleIsValid(eptuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("external protocol with OID %u does not exist", protOid)));
-
-	ownerId = ((Form_pg_extprotocol) GETSTRUCT(eptuple))->ptcowner;
-
-	systable_endscan(scan);
-	heap_close(pg_extprotocol, AccessShareLock);
-
-	return has_privs_of_role(roleid, ownerId);
-}
-
-
-/*
- * Check whether specified role has CREATEROLE privilege (or is a superuser)
- *
- * Note: roles do not have owners per se; instead we use this test in
- * places where an ownership-like permissions test is needed for a role.
- * Be sure to apply it to the role trying to do the operation, not the
- * role being operated on!	Also note that this generally should not be
- * considered enough privilege if the target role is a superuser.
- * (We don't handle that consideration here because we want to give a
- * separate error message for such cases, so the caller has to deal with it.)
- */
-bool
-has_createrole_privilege(Oid roleid)
-{
-	bool		result = false;
-	HeapTuple	utup;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
-	if (HeapTupleIsValid(utup))
-	{
-		result = ((Form_pg_authid) GETSTRUCT(utup))->rolcreaterole;
-		ReleaseSysCache(utup);
-	}
-	return result;
-}
-
-/*
  * Ownership check for a extension (specified by OID).
  */
 bool
@@ -5315,7 +5240,79 @@ pg_extension_ownercheck(Oid ext_oid, Oid roleid)
 	heap_close(pg_extension, AccessShareLock);
 
 	return has_privs_of_role(roleid, ownerId);
-=======
+}
+
+/*
+ * Ownership check for an external protocol (specified by OID).
+ */
+bool
+pg_extprotocol_ownercheck(Oid protOid, Oid roleid)
+{
+	Relation	pg_extprotocol;
+	ScanKeyData entry[1];
+	SysScanDesc scan;
+	HeapTuple	eptuple;
+	Oid			ownerId;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(roleid))
+		return true;
+
+	/* There's no syscache on pg_extprotocol, so must look the hard way */
+	pg_extprotocol = heap_open(ExtprotocolRelationId, AccessShareLock);
+	ScanKeyInit(&entry[0],
+				ObjectIdAttributeNumber,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(protOid));
+	scan = systable_beginscan(pg_extprotocol, ExtprotocolOidIndexId, true,
+							  SnapshotNow, 1, entry);
+
+	eptuple = systable_getnext(scan);
+
+	if (!HeapTupleIsValid(eptuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("external protocol with OID %u does not exist", protOid)));
+
+	ownerId = ((Form_pg_extprotocol) GETSTRUCT(eptuple))->ptcowner;
+
+	systable_endscan(scan);
+	heap_close(pg_extprotocol, AccessShareLock);
+
+	return has_privs_of_role(roleid, ownerId);
+}
+
+/*
+ * Check whether specified role has CREATEROLE privilege (or is a superuser)
+ *
+ * Note: roles do not have owners per se; instead we use this test in
+ * places where an ownership-like permissions test is needed for a role.
+ * Be sure to apply it to the role trying to do the operation, not the
+ * role being operated on!	Also note that this generally should not be
+ * considered enough privilege if the target role is a superuser.
+ * (We don't handle that consideration here because we want to give a
+ * separate error message for such cases, so the caller has to deal with it.)
+ */
+bool
+has_createrole_privilege(Oid roleid)
+{
+	bool		result = false;
+	HeapTuple	utup;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(roleid))
+		return true;
+
+	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
+	if (HeapTupleIsValid(utup))
+	{
+		result = ((Form_pg_authid) GETSTRUCT(utup))->rolcreaterole;
+		ReleaseSysCache(utup);
+	}
+	return result;
+}
+
+/*
  * Fetch pg_default_acl entry for given role, namespace and object type
  * (object type must be given in pg_default_acl's encoding).
  * Returns NULL if no such entry.
@@ -5416,5 +5413,4 @@ get_user_default_acl(GrantObjectType objtype, Oid ownerId, Oid nsp_oid)
 		result = NULL;
 
 	return result;
->>>>>>> 78a09145e0
 }
