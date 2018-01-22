@@ -24,17 +24,10 @@
 #include "catalog/pg_auth_time_constraint.h"
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_authid.h"
-<<<<<<< HEAD
-#include "catalog/pg_resgroup.h"
-#include "catalog/pg_resqueue.h"
-#include "commands/comment.h"
-#include "commands/resgroupcmds.h"
-=======
 #include "catalog/pg_database.h"
 #include "catalog/pg_db_role_setting.h"
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
->>>>>>> 78a09145e0
 #include "commands/user.h"
 #include "libpq/auth.h"
 #include "libpq/password_hash.h"
@@ -44,16 +37,15 @@
 #include "storage/lmgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
-<<<<<<< HEAD
 #include "utils/date.h"
-#include "utils/flatfiles.h"
-=======
->>>>>>> 78a09145e0
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
+#include "catalog/pg_resgroup.h"
+#include "catalog/pg_resqueue.h"
+#include "commands/resgroupcmds.h"
 #include "executor/execdesc.h"
 #include "utils/resource_manager.h"
 
@@ -155,16 +147,11 @@ CreateRole(CreateRoleStmt *stmt)
 	List	   *exttabcreate = NIL;		/* external table create privileges being added  */
 	List	   *exttabnocreate = NIL;	/* external table create privileges being removed */
 	char	   *validUntil = NULL;		/* time the login is valid until */
-<<<<<<< HEAD
-    Datum        validUntil_datum;        /* same, as timestamptz Datum */
-    bool        validUntil_null;
+	Datum		validUntil_datum;		/* same, as timestamptz Datum */
+	bool		validUntil_null;
 	char	   *resqueue = NULL;		/* resource queue for this role */
 	char	   *resgroup = NULL;		/* resource group for this role */
 	List	   *addintervals = NIL;	/* list of time intervals for which login should be denied */
-=======
-	Datum		validUntil_datum;		/* same, as timestamptz Datum */
-	bool		validUntil_null;
->>>>>>> 78a09145e0
 	DefElem    *dpassword = NULL;
 	DefElem    *dresqueue = NULL;
 	DefElem    *dresgroup = NULL;
@@ -420,18 +407,10 @@ CreateRole(CreateRoleStmt *stmt)
 	if (validUntil)
 	{
 		validUntil_datum = DirectFunctionCall3(timestamptz_in,
-<<<<<<< HEAD
-				CStringGetDatum(validUntil),
-				ObjectIdGetDatum(InvalidOid),
-				Int32GetDatum(-1));
-		validUntil_null = false;
-
-=======
 											   CStringGetDatum(validUntil),
 											   ObjectIdGetDatum(InvalidOid),
 											   Int32GetDatum(-1));
 		validUntil_null = false;
->>>>>>> 78a09145e0
 	}
 	else
 	{
@@ -501,7 +480,6 @@ CreateRole(CreateRoleStmt *stmt)
 
 	new_record[Anum_pg_authid_rolvaliduntil - 1] = validUntil_datum;
 	new_record_nulls[Anum_pg_authid_rolvaliduntil - 1] = validUntil_null;
-<<<<<<< HEAD
 
 	if (resqueue)
 	{
@@ -591,10 +569,6 @@ CreateRole(CreateRoleStmt *stmt)
 
 	new_record_nulls[Anum_pg_authid_rolresgroup - 1] = false;
 
-	new_record_nulls[Anum_pg_authid_rolconfig - 1] = true;
-=======
->>>>>>> 78a09145e0
-
 	tuple = heap_form_tuple(pg_authid_dsc, new_record, new_record_nulls);
 
 	/*
@@ -636,7 +610,6 @@ CreateRole(CreateRoleStmt *stmt)
 				GetUserId(), false);
 
 	/*
-<<<<<<< HEAD
 	 * Populate pg_auth_time_constraint with intervals for which this
 	 * particular role should be denied access.
 	 */
@@ -650,15 +623,9 @@ CreateRole(CreateRoleStmt *stmt)
 	}
 
 	/*
-	 * Close pg_authid, but keep lock till commit (this is important to
-	 * prevent any risk of deadlock failure while updating flat file)
+	 * Close pg_authid, but keep lock till commit.
 	 */
 	heap_close(pg_authid_rel, NoLock);
-
-	/*
-	 * Set flag to update flat auth file at commit.
-	 */
-	auth_file_update_needed();
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -677,11 +644,6 @@ CreateRole(CreateRoleStmt *stmt)
 						   GetUserId(),
 						   "CREATE", "ROLE");
 	}
-=======
-	 * Close pg_authid, but keep lock till commit.
-	 */
-	heap_close(pg_authid_rel, NoLock);
->>>>>>> 78a09145e0
 }
 
 
@@ -1107,7 +1069,6 @@ AlterRole(AlterRoleStmt *stmt)
 	new_record[Anum_pg_authid_rolvaliduntil - 1] = validUntil_datum;
 	new_record_nulls[Anum_pg_authid_rolvaliduntil - 1] = validUntil_null;
 	new_record_repl[Anum_pg_authid_rolvaliduntil - 1] = true;
-<<<<<<< HEAD
 
 	/* Set the CREATE EXTERNAL TABLE permissions for this role, if specified in ALTER */
 	if (exttabcreate || exttabnocreate)
@@ -1233,8 +1194,6 @@ AlterRole(AlterRoleStmt *stmt)
 					 errhint("To enable set gp_resource_manager=group")));
 		}
 	}
-=======
->>>>>>> 78a09145e0
 
 	new_tuple = heap_modify_tuple(tuple, pg_authid_dsc, new_record,
 								  new_record_nulls, new_record_repl);
@@ -1322,12 +1281,6 @@ AlterRole(AlterRoleStmt *stmt)
 	 * Close pg_authid, but keep lock till commit.
 	 */
 	heap_close(pg_authid_rel, NoLock);
-<<<<<<< HEAD
-
-	/*
-	 * Set flag to update flat auth file at commit.
-	 */
-	auth_file_update_needed();
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -1338,8 +1291,6 @@ AlterRole(AlterRoleStmt *stmt)
 									NIL,
 									NULL);
 	}
-=======
->>>>>>> 78a09145e0
 }
 
 
@@ -1390,11 +1341,7 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 	/* look up and lock the database, if specified */
 	if (stmt->database != NULL)
 	{
-		databaseid = get_database_oid(stmt->database);
-		if (!OidIsValid(databaseid))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("database \"%s\" not found", stmt->database)));
+		databaseid = get_database_oid(stmt->database, false);
 		shdepLockAndCheckObject(DatabaseRelationId, databaseid);
 	}
 
@@ -2607,11 +2554,6 @@ AddRoleDenials(const char *rolename, Oid roleid, List *addintervals)
 	 * prevent any risk of deadlock failure while updating flat file)
 	 */
 	heap_close(pg_auth_time_rel, NoLock);
-
-	/*
-	 * Set flag to update flat auth time constraint file at commit.
-	 */
-	auth_time_file_update_needed();
 }
 
 /*
@@ -2691,9 +2633,4 @@ DelRoleDenials(const char *rolename, Oid roleid, List *dropintervals)
 	 * prevent any risk of deadlock failure while updating flat file)
 	 */
 	heap_close(pg_auth_time_rel, NoLock);
-
-	/*
-	 * Set flag to update flat auth time constraint file at commit.
-	 */
-	auth_time_file_update_needed();
 }
