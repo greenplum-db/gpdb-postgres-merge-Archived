@@ -219,12 +219,8 @@ Boot_CreateStmt:
 												   tupdesc,
 												   /* relam */ InvalidOid,
 												   RELKIND_RELATION,
-<<<<<<< HEAD
 												   RELSTORAGE_HEAP,
-												   $3,
-=======
 												   $5,
->>>>>>> 78a09145e0
 												   true);
 						elog(DEBUG4, "bootstrap relation created");
 					}
@@ -242,24 +238,16 @@ Boot_CreateStmt:
 													  NIL,
 													  /* relam */ InvalidOid,
 													  RELKIND_RELATION,
-<<<<<<< HEAD
 													  RELSTORAGE_HEAP,
-													  $3,
-=======
 													  $5,
->>>>>>> 78a09145e0
 													  true,
 													  0,
 													  ONCOMMIT_NOOP,
 													  NULL,			/*CDB*/
 													  (Datum) 0,
-<<<<<<< HEAD
+													  false,
 													  true,
 													  /* valid_opts */ false);
-=======
-													  false,
-													  true);
->>>>>>> 78a09145e0
 						elog(DEBUG4, "relation created with oid %u", id);
 					}
 					do_end();
@@ -299,16 +287,10 @@ Boot_DeclareIndexStmt:
 								$8,
 								NULL,
 								$10,
-<<<<<<< HEAD
-								NULL, NIL,
-								false, false, false,
-								false, false, true, false, false,
-								NULL);
-=======
 								NULL, NIL, NIL,
 								false, false, false, false, false,
-								false, false, true, false, false);
->>>>>>> 78a09145e0
+								false, false, true, false, false,
+								NULL);
 					do_end();
 				}
 		;
@@ -324,16 +306,10 @@ Boot_DeclareUniqueIndexStmt:
 								$9,
 								NULL,
 								$11,
-<<<<<<< HEAD
-								NULL, NIL,
-								true, false, false,
-								false, false, true, false, false,
-								NULL);
-=======
 								NULL, NIL, NIL,
 								true, false, false, false, false,
-								false, false, true, false, false);
->>>>>>> 78a09145e0
+								false, false, true, false, false,
+								NULL);
 					do_end();
 				}
 		;

@@ -78,19 +78,4 @@ DATA(insert OID = 1 (  template1 PGUID ENCODING "LC_COLLATE" "LC_CTYPE" t t -1 0
 SHDESCR("default template database");
 #define TemplateDbOid			1
 
-#define Schema_pg_database \
-{ 1262, {"datname"}       ,   19,  -1 , NAMEDATALEN,  1, 0, -1, -1 , false, 'p', 'i',  true, false, false, true, 0}, \
-{ 1262, {"datdba"}        ,   26,  -1 ,           4,  2, 0, -1, -1 ,  true, 'p', 'i',  true, false, false, true, 0}, \
-{ 1262, {"encoding"}      ,   23,  -1 ,           4,  3, 0, -1, -1 ,  true, 'p', 'i',  true, false, false, true, 0}, \
-{ 1262, {"datcollate"}    ,   19,  -1 , NAMEDATALEN,  4, 0, -1, -1 , false, 'p', 'i',  true, false, false, true, 0}, \
-{ 1262, {"datctype"}      ,   19,  -1 , NAMEDATALEN,  5, 0, -1, -1 , false, 'p', 'i',  true, false, false, true, 0}, \
-{ 1262, {"datistemplate"} ,   16,  -1 ,           1,  6, 0, -1, -1 ,  true, 'p', 'c',  true, false, false, true, 0}, \
-{ 1262, {"datallowconn"}  ,   16,  -1 ,           1,  7, 0, -1, -1 ,  true, 'p', 'c',  true, false, false, true, 0}, \
-{ 1262, {"datconnlimit"}  ,   23,  -1 ,           4,  8, 0, -1, -1 ,  true, 'p', 'i',  true, false, false, true, 0}, \
-{ 1262, {"datlastsysoid"} ,   26,  -1 ,           4,  9, 0, -1, -1 ,  true, 'p', 'i',  true, false, false, true, 0}, \
-{ 1262, {"datfrozenxid"}  ,   28,  -1 ,           4, 10, 0, -1, -1 ,  true, 'p', 'i',  true, false, false, true, 0}, \
-{ 1262, {"dattablespace"} ,   26,  -1 ,           4, 11, 0, -1, -1 ,  true, 'p', 'i',  true, false, false, true, 0}, \
-{ 1262, {"datconfig"}     , 1009,  -1 ,          -1, 12, 1, -1, -1 , false, 'x', 'i', false, false, false, true, 0}, \
-{ 1262, {"datacl"}        , 1034,  -1 ,          -1, 13, 1, -1, -1 , false, 'x', 'i', false, false, false, true, 0}
-
 #endif   /* PG_DATABASE_H */

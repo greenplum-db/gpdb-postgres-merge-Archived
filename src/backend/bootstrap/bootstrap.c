@@ -396,7 +396,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		/*
 		 * Assign the ProcSignalSlot for an auxiliary process.  Since it
 		 * doesn't have a BackendId, the slot is statically allocated based on
-		 * the auxiliary process type (auxType).  Backends use slots indexed
+		 * the auxiliary process type (MyAuxProcType).  Backends use slots indexed
 		 * in the range from 1 to MaxBackends (inclusive), so we use
 		 * MaxBackends + AuxProcType + 1 as the index of the slot for an
 		 * auxiliary process.
@@ -404,7 +404,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		 * This will need rethinking if we ever want more than one of a
 		 * particular auxiliary process type.
 		 */
-		ProcSignalInit(MaxBackends + auxType + 1);
+		ProcSignalInit(MaxBackends + MyAuxProcType + 1);
 
 		/* finish setting up bufmgr.c */
 		InitBufferPoolBackend();
@@ -1091,171 +1091,6 @@ MapArrayTypeName(char *s)
 	return newStr;
 }
 
-<<<<<<< HEAD
-/* ----------------
- *		EnterString
- *		returns the string table position of the identifier
- *		passed to it.  We add it to the table if we can't find it.
- * ----------------
- */
-int
-EnterString(char *str)
-{
-	hashnode   *node;
-	int			len;
-
-	len = strlen(str);
-
-	node = FindStr(str, len, NULL);
-	if (node)
-		return node->strnum;
-	else
-	{
-		node = AddStr(str, len, 0);
-		return node->strnum;
-	}
-}
-
-/* ----------------
- *		LexIDStr
- *		when given an idnum into the 'string-table' return the string
- *		associated with the idnum
- * ----------------
- */
-char *
-LexIDStr(int ident_num)
-{
-	return strtable[ident_num];
-}
-
-
-/* ----------------
- *		CompHash
- *
- *		Compute a hash function for a given string.  We look at the first,
- *		the last, and the middle character of a string to try to get spread
- *		the strings out.  The function is rather arbitrary, except that we
- *		are mod'ing by a prime number.
- * ----------------
- */
-static int
-CompHash(char *str, int len)
-{
-	int			result;
-	
-	Assert(len >=0 && "string length is negative");
-	if (len == 0) 
-	{
-		return 0;
-	}
-
-	result = (NUM * str[0] + NUMSQR * str[len - 1] + NUMCUBE * str[(len - 1) / 2]);
-
-	return result % HASHTABLESIZE;
-
-}
-
-/* ----------------
- *		FindStr
- *
- *		This routine looks for the specified string in the hash
- *		table.	It returns a pointer to the hash node found,
- *		or NULL if the string is not in the table.
- * ----------------
- */
-static hashnode *
-FindStr(char *str, int length, hashnode *mderef)
-{
-	hashnode   *node;
-
-	node = hashtable[CompHash(str, length)];
-	while (node != NULL)
-	{
-		/*
-		 * We must differentiate between string constants that might have the
-		 * same value as a identifier and the identifier itself.
-		 */
-		if (!strcmp(str, strtable[node->strnum]))
-		{
-			return node;		/* no need to check */
-		}
-		else
-			node = node->next;
-	}
-	/* Couldn't find it in the list */
-	return NULL;
-}
-
-/* ----------------
- *		AddStr
- *
- *		This function adds the specified string, along with its associated
- *		data, to the hash table and the string table.  We return the node
- *		so that the calling routine can find out the unique id that AddStr
- *		has assigned to this string.
- * ----------------
- */
-static hashnode *
-AddStr(char *str, int strlength, int mderef)
-{
-	hashnode   *temp,
-			   *trail,
-			   *newnode;
-	int			hashresult;
-	int			len;
-
-	if (++strtable_end >= STRTABLESIZE)
-		elog(FATAL, "bootstrap string table overflow");
-
-	/*
-	 * Some of the utilites (eg, define type, create relation) assume that the
-	 * string they're passed is a NAMEDATALEN.  We get array bound read
-	 * violations from purify if we don't allocate at least NAMEDATALEN bytes
-	 * for strings of this sort.  Because we're lazy, we allocate at least
-	 * NAMEDATALEN bytes all the time.
-	 */
-
-	if ((len = strlength + 1) < NAMEDATALEN)
-		len = NAMEDATALEN;
-
-	strtable[strtable_end] = malloc((unsigned) len);
-	if (strtable[strtable_end] == NULL)
-		ereport(ERROR, (errcode(ERRCODE_OUT_OF_MEMORY),
-						errmsg("Bootstrap failed: out of memory in AddStr")));
-
-	strcpy(strtable[strtable_end], str);
-
-	/* Now put a node in the hash table */
-	newnode = (hashnode *) malloc(sizeof(hashnode) * 1);
-	if (newnode == NULL)
-		ereport(ERROR, (errcode(ERRCODE_OUT_OF_MEMORY),
-						errmsg("Bootstrap failed: out of memory in AddStr")));
-
-	newnode->strnum = strtable_end;
-	newnode->next = NULL;
-
-	/* Find out where it goes */
-
-	hashresult = CompHash(str, strlength);
-	if (hashtable[hashresult] == NULL)
-		hashtable[hashresult] = newnode;
-	else
-	{							/* There is something in the list */
-		trail = hashtable[hashresult];
-		temp = trail->next;
-		while (temp != NULL)
-		{
-			trail = temp;
-			temp = temp->next;
-		}
-		trail->next = newnode;
-	}
-	return newnode;
-}
-
-
-=======
->>>>>>> 78a09145e0
 
 /*
  *	index_register() -- record an index that has been set up for building

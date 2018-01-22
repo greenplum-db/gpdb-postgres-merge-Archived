@@ -492,8 +492,6 @@ DATA(insert ( 1259 gp_segment_id    23 0 0  4  -8 0 -1 -1 t p i t f f t 0 _null_
  * have hardwired pg_attribute entries in this file.  However, we do need
  * a "Schema_xxx" macro for it --- see relcache.c.
  * ----------------
- *
- * GPDB_90_MERGE_FIXME: this is defined in two places now; where does it go?
  */
 #define Schema_pg_database \
 { 1262, {"datname"},		  19, -1, 0, NAMEDATALEN, 1, 0, -1, -1, false, 'p', 'c', true, false, false, true, 0, { 0 } }, \

@@ -62,27 +62,17 @@ extern bool assign_max_stack_depth(int newval, bool doit, GucSource source);
 
 extern void die(SIGNAL_ARGS);
 extern void quickdie(SIGNAL_ARGS);
-<<<<<<< HEAD
 extern void quickdie_impl(void);
-extern void authdie(SIGNAL_ARGS);
-=======
->>>>>>> 78a09145e0
 extern void StatementCancelHandler(SIGNAL_ARGS);
 extern void FloatExceptionHandler(SIGNAL_ARGS);
 extern void prepare_for_client_read(void);
 extern void client_read_ended(void);
-<<<<<<< HEAD
 extern void prepare_for_client_write(void);
 extern void client_write_ended(void);
 extern void process_postgres_switches(int argc, char *argv[],
 						  GucContext ctx, const char **dbname);
 extern int	PostgresMain(int argc, char *argv[],
 			 const char *dbname, const char *username);
-=======
-extern const char *process_postgres_switches(int argc, char *argv[],
-											 GucContext ctx);
-extern int	PostgresMain(int argc, char *argv[], const char *username);
->>>>>>> 78a09145e0
 extern long get_stack_depth_rlimit(void);
 extern void ResetUsage(void);
 extern void ShowUsage(const char *title);
