@@ -3165,7 +3165,7 @@ heap_truncate(List *relids)
 			 * here, and does the removal of filerep change any of the
 			 * assumptions in the above comment?
 			 */
-			TruncateRelfiles(rel);
+			TruncateRelfiles(rel, InvalidSubTransactionId);
 			reindex_relation(RelationGetRelid(rel), true);
 		}
 		else

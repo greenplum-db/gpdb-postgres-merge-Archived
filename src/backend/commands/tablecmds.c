@@ -55,11 +55,8 @@
 #include "cdb/cdbaocsam.h"
 #include "cdb/cdbpartition.h"
 #include "commands/cluster.h"
-<<<<<<< HEAD
 #include "commands/copy.h"
-=======
 #include "commands/comment.h"
->>>>>>> 78a09145e0
 #include "commands/defrem.h"
 #include "commands/sequence.h"
 #include "commands/tablecmds.h"
@@ -72,13 +69,10 @@
 #include "nodes/nodeFuncs.h"
 #include "nodes/parsenodes.h"
 #include "optimizer/clauses.h"
-<<<<<<< HEAD
 #include "optimizer/plancat.h"
 #include "optimizer/planner.h"
 #include "optimizer/prep.h"
 #include "parser/gramparse.h"
-=======
->>>>>>> 78a09145e0
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
@@ -185,22 +179,6 @@ typedef struct AlteredTableInfo
 	List	   *changedIndexDefs;		/* string definitions of same */
 } AlteredTableInfo;
 
-<<<<<<< HEAD
-=======
-/* Struct describing one new constraint to check in Phase 3 scan */
-/* Note: new NOT NULL constraints are handled elsewhere */
-typedef struct NewConstraint
-{
-	char	   *name;			/* Constraint name, or NULL if none */
-	ConstrType	contype;		/* CHECK or FOREIGN */
-	Oid			refrelid;		/* PK rel, if FOREIGN */
-	Oid			refindid;		/* OID of PK's index, if FOREIGN */
-	Oid			conid;			/* OID of pg_constraint entry, if FOREIGN */
-	Node	   *qual;			/* Check expr or CONSTR_FOREIGN Constraint */
-	List	   *qualstate;		/* Execution state for CHECK */
-} NewConstraint;
-
->>>>>>> 78a09145e0
 /*
  * Struct describing one new column value that needs to be computed during
  * Phase 3 copy (this could be either a new column with a non-null default, or
@@ -384,16 +362,15 @@ static void ATExecAddInherit(Relation rel, Node *node);
 static void ATExecDropInherit(Relation rel, RangeVar *parent, bool is_partition);
 static void copy_relation_data(SMgrRelation rel, SMgrRelation dst,
 				   ForkNumber forkNum, bool istemp);
-<<<<<<< HEAD
+static const char *storage_name(char c);
+
+
 static void copy_append_only_data(RelFileNode src, RelFileNode dst, bool istemp);
 static void ATExecSetDistributedBy(Relation rel, Node *node,
 								   AlterTableCmd *cmd);
 static void ATPrepExchange(Relation rel, AlterPartitionCmd *pc);
 static void ATPrepDropConstraint(List **wqueue, Relation rel,
 					AlterTableCmd *cmd, bool recurse, bool recursing);
-=======
-static const char *storage_name(char c);
->>>>>>> 78a09145e0
 
 const char *synthetic_sql = "(internally generated SQL command)";
 
@@ -1341,7 +1318,7 @@ CheckExclusiveAccess(Relation rel)
  * relation.
  */
 void
-TruncateRelfiles(Relation rel)
+TruncateRelfiles(Relation rel, SubTransactionId mysubid)
 {
 	Oid			heap_relid;
 	Oid			toast_relid;
@@ -1351,31 +1328,53 @@ TruncateRelfiles(Relation rel)
 
 	Assert(CheckExclusiveAccess(rel));
 
-	/*
-	 * Create a new empty storage file for the relation, and assign it as
-	 * the relfilenode value.	The old storage file is scheduled for
-	 * deletion at commit.
-	 */
-	setNewRelfilenode(rel, RecentXmin);
-
 	heap_relid = RelationGetRelid(rel);
-	toast_relid = rel->rd_rel->reltoastrelid;
 
-	if (RelationIsAoRows(rel) ||
-		RelationIsAoCols(rel))
+	if (RelationIsAoRows(rel) || RelationIsAoCols(rel))
 		GetAppendOnlyEntryAuxOids(heap_relid, SnapshotNow,
 								  &aoseg_relid,
 								  &aoblkdir_relid, NULL,
 								  &aovisimap_relid, NULL);
 
 	/*
-	 * The same for the toast table, if any.
+	 * Normally, we need a transaction-safe truncation here.  However,
+	 * if the table was either created in the current (sub)transaction
+	 * or has a new relfilenode in the current (sub)transaction, then
+	 * we can just truncate it in-place, because a rollback would
+	 * cause the whole table or the current physical file to be
+	 * thrown away anyway.
 	 */
-	if (OidIsValid(toast_relid))
+	if (rel->rd_createSubid == mySubid ||
+		rel->rd_newRelfilenodeSubid == mySubid)
 	{
-		rel = relation_open(toast_relid, AccessExclusiveLock);
+		/* Immediate, non-rollbackable truncation is OK */
+		heap_truncate_one_rel(rel);
+	}
+	else
+	{
+		Oid			heap_relid;
+		Oid			toast_relid;
+
+		/*
+		 * Need the full transaction-safe pushups.
+		 *
+		 * Create a new empty storage file for the relation, and assign it
+		 * as the relfilenode value. The old storage file is scheduled for
+		 * deletion at commit.
+		 */
 		setNewRelfilenode(rel, RecentXmin);
-		heap_close(rel, NoLock);
+
+		toast_relid = rel->rd_rel->reltoastrelid;
+
+		/*
+		 * The same for the toast table, if any.
+		 */
+		if (OidIsValid(toast_relid))
+		{
+			rel = relation_open(toast_relid, AccessExclusiveLock);
+			setNewRelfilenode(rel, RecentXmin);
+			heap_close(rel, NoLock);
+		}
 	}
 
 	/*
@@ -1635,19 +1634,16 @@ ExecuteTruncate(TruncateStmt *stmt)
 	/*
 	 * OK, truncate each table.
 	 */
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 		cdb_sync_oid_to_segments();
-=======
+
 	mySubid = GetCurrentSubTransactionId();
->>>>>>> 78a09145e0
 
 	foreach(cell, rels)
 	{
 		Relation	rel = (Relation) lfirst(cell);
 
-<<<<<<< HEAD
-		TruncateRelfiles(rel);
+		TruncateRelfiles(rel, mysubid);
 
 		/*
 		 * Reconstruct the indexes to match, and we're done.
@@ -1681,55 +1677,6 @@ ExecuteTruncate(TruncateStmt *stmt)
 							   GetUserId(),
 							   "TRUNCATE", "");
 		}
-
-=======
-		/*
-		 * Normally, we need a transaction-safe truncation here.  However,
-		 * if the table was either created in the current (sub)transaction
-		 * or has a new relfilenode in the current (sub)transaction, then
-		 * we can just truncate it in-place, because a rollback would
-		 * cause the whole table or the current physical file to be
-		 * thrown away anyway.
-		 */
-		if (rel->rd_createSubid == mySubid ||
-			rel->rd_newRelfilenodeSubid == mySubid)
-		{
-			/* Immediate, non-rollbackable truncation is OK */
-			heap_truncate_one_rel(rel);
-		}
-		else
-		{
-			Oid			heap_relid;
-			Oid			toast_relid;
-
-			/*
-			 * Need the full transaction-safe pushups.
-			 *
-			 * Create a new empty storage file for the relation, and assign it
-			 * as the relfilenode value. The old storage file is scheduled for
-			 * deletion at commit.
-			 */
-			setNewRelfilenode(rel, RecentXmin);
-
-			heap_relid = RelationGetRelid(rel);
-			toast_relid = rel->rd_rel->reltoastrelid;
-
-			/*
-			 * The same for the toast table, if any.
-			 */
-			if (OidIsValid(toast_relid))
-			{
-				rel = relation_open(toast_relid, AccessExclusiveLock);
-				setNewRelfilenode(rel, RecentXmin);
-				heap_close(rel, NoLock);
-			}
-
-			/*
-			 * Reconstruct the indexes to match, and we're done.
-			 */
-			reindex_relation(heap_relid, true);
-		}
->>>>>>> 78a09145e0
 	}
 
 	/*
@@ -2301,8 +2248,6 @@ MergeAttributes(List *schema, List *supers, bool istemp, bool isPartitioned,
 							 errdetail("%s versus %s",
 									   TypeNameToString(def->typeName),
 									   TypeNameToString(newdef->typeName))));
-<<<<<<< HEAD
-=======
 
 				/* Copy storage parameter */
 				if (def->storage == 0)
@@ -2316,7 +2261,6 @@ MergeAttributes(List *schema, List *supers, bool istemp, bool isPartitioned,
 										 storage_name(def->storage),
 										 storage_name(newdef->storage))));
 
->>>>>>> 78a09145e0
 				/* Mark the column as locally defined */
 				def->is_local = true;
 				/* Merge of NOT NULL constraints = OR 'em together */
@@ -2419,105 +2363,6 @@ MergeCheckConstraint(List *constraints, char *name, Node *expr)
 	return false;
 }
 
-<<<<<<< HEAD
-=======
-
-/*
- * Replace varattno values in an expression tree according to the given
- * map array, that is, varattno N is replaced by newattno[N-1].  It is
- * caller's responsibility to ensure that the array is long enough to
- * define values for all user varattnos present in the tree.  System column
- * attnos remain unchanged.
- *
- * Note that the passed node tree is modified in-place!
- */
-void
-change_varattnos_of_a_node(Node *node, const AttrNumber *newattno)
-{
-	/* no setup needed, so away we go */
-	(void) change_varattnos_walker(node, newattno);
-}
-
-static bool
-change_varattnos_walker(Node *node, const AttrNumber *newattno)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, Var))
-	{
-		Var		   *var = (Var *) node;
-
-		if (var->varlevelsup == 0 && var->varno == 1 &&
-			var->varattno > 0)
-		{
-			/*
-			 * ??? the following may be a problem when the node is multiply
-			 * referenced though stringToNode() doesn't create such a node
-			 * currently.
-			 */
-			Assert(newattno[var->varattno - 1] > 0);
-			var->varattno = var->varoattno = newattno[var->varattno - 1];
-		}
-		return false;
-	}
-	return expression_tree_walker(node, change_varattnos_walker,
-								  (void *) newattno);
-}
-
-/*
- * Generate a map for change_varattnos_of_a_node from old and new TupleDesc's,
- * matching according to column name.
- */
-AttrNumber *
-varattnos_map(TupleDesc olddesc, TupleDesc newdesc)
-{
-	AttrNumber *attmap;
-	int			i,
-				j;
-
-	attmap = (AttrNumber *) palloc0(sizeof(AttrNumber) * olddesc->natts);
-	for (i = 1; i <= olddesc->natts; i++)
-	{
-		if (olddesc->attrs[i - 1]->attisdropped)
-			continue;			/* leave the entry as zero */
-
-		for (j = 1; j <= newdesc->natts; j++)
-		{
-			if (strcmp(NameStr(olddesc->attrs[i - 1]->attname),
-					   NameStr(newdesc->attrs[j - 1]->attname)) == 0)
-			{
-				attmap[i - 1] = j;
-				break;
-			}
-		}
-	}
-	return attmap;
-}
-
-/*
- * Generate a map for change_varattnos_of_a_node from a TupleDesc and a list
- * of ColumnDefs
- */
-AttrNumber *
-varattnos_map_schema(TupleDesc old, List *schema)
-{
-	AttrNumber *attmap;
-	int			i;
-
-	attmap = (AttrNumber *) palloc0(sizeof(AttrNumber) * old->natts);
-	for (i = 1; i <= old->natts; i++)
-	{
-		if (old->attrs[i - 1]->attisdropped)
-			continue;			/* leave the entry as zero */
-
-		attmap[i - 1] = findAttrByName(NameStr(old->attrs[i - 1]->attname),
-									   schema);
-	}
-	return attmap;
-}
-
-
->>>>>>> 78a09145e0
 /*
  * StoreCatalogInheritance
  *		Updates the system catalogs with proper inheritance information.
@@ -5770,10 +5615,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 								if (OidIsValid(tab->exchange_relid))
 									ereport(ERROR,
 											(errcode(ERRCODE_CHECK_VIOLATION),
-											 errmsg("exchange table contains "
-													"a row which violates the "
-													"partitioning "
-													"specification of \"%s\"",
+											 errmsg("exchange table contains a row which violates the partitioning specification of \"%s\"",
 													get_rel_name(tab->relid))));
 								else
 									ereport(ERROR,
@@ -5793,7 +5635,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 
 				/* Write the tuple out to the new relation */
 				if (newrel)
-					simple_heap_insert(newrel, htuple);
+					heap_insert(newrel, htuple, mycid, hi_options, bistate);
 
 				ResetExprContext(econtext);
 
@@ -5804,7 +5646,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 			heap_endscan(heapscan);
 
 		}
-		else if(relstorage == RELSTORAGE_AOROWS && Gp_role != GP_ROLE_DISPATCH)
+		else if (relstorage == RELSTORAGE_AOROWS && Gp_role != GP_ROLE_DISPATCH)
 		{
 			/*
 			 * When rewriting an appendonly table we choose to always insert
@@ -5929,10 +5771,10 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 			MemoryContextSwitchTo(oldCxt);
 			appendonly_endscan(aoscan);
 
-			if(newrel)
+			if (newrel)
 				appendonly_insert_finish(aoInsertDesc);
 		}
-		else if(relstorage == RELSTORAGE_AOCOLS && Gp_role != GP_ROLE_DISPATCH)
+		else if (relstorage == RELSTORAGE_AOCOLS && Gp_role != GP_ROLE_DISPATCH)
 		{
 			int segno = RESERVED_SEGNO;
 			AOCSInsertDesc idesc = NULL;
@@ -6023,15 +5865,14 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 					switch(con->contype)
 					{
 						case CONSTR_CHECK:
-							if(!ExecQual(con->qualstate, econtext, true))
+							if (!ExecQual(con->qualstate, econtext, true))
 								ereport(ERROR,
 										(errcode(ERRCODE_CHECK_VIOLATION),
-										 errmsg("check constraint \"%s\" is violated",
-												con->name
-											 )));
+										 errmsg("check constraint \"%s\" is violated by some row",
+												con->name)));
 							break;
 						case CONSTR_FOREIGN:
-							/* Nothing to do */
+							/* Nothing to do here */
 							break;
 						default:
 							elog(ERROR, "Unrecognized constraint type: %d",
@@ -6039,7 +5880,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 					}
 				}
 
-				if(newrel)
+				if (newrel)
 				{
 					MemoryContextSwitchTo(oldCxt);
 					aocs_insert(idesc, newslot);
@@ -6052,20 +5893,14 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 				aocs_getnext(sdesc, ForwardScanDirection, oldslot);
 			}
 
-<<<<<<< HEAD
 			aocs_endscan(sdesc);
-=======
-			/* Write the tuple out to the new relation */
-			if (newrel)
-				heap_insert(newrel, tuple, mycid, hi_options, bistate);
->>>>>>> 78a09145e0
 
 			if(newrel)
 				aocs_insert_finish(idesc);
 
 			pfree(proj);
 		}
-		else if(relstorage_is_ao(relstorage) && Gp_role == GP_ROLE_DISPATCH)
+		else if (relstorage_is_ao(relstorage) && Gp_role == GP_ROLE_DISPATCH)
 		{
 			/*
 			 * All we want to do on the QD during an AO table rewrite
@@ -9652,9 +9487,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 			case OCLASS_TSDICT:
 			case OCLASS_TSTEMPLATE:
 			case OCLASS_TSCONFIG:
-<<<<<<< HEAD
 			case OCLASS_EXTENSION:
-=======
 			case OCLASS_ROLE:
 			case OCLASS_DATABASE:
 			case OCLASS_TBLSPACE:
@@ -9662,7 +9495,6 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 			case OCLASS_FOREIGN_SERVER:
 			case OCLASS_USER_MAPPING:
 			case OCLASS_DEFACL:
->>>>>>> 78a09145e0
 
 				/*
 				 * We don't expect any of these sorts of objects to depend on
