@@ -718,38 +718,7 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 	tupleDesc = RelationGetDescr(relation);
 	constr = tupleDesc->constr;
 
-<<<<<<< HEAD
-	foreach(elem, inhRelation->options)
-	{
-		int			option = lfirst_int(elem);
-
-		switch (option)
-		{
-			case CREATE_TABLE_LIKE_INCLUDING_DEFAULTS:
-				including_defaults = true;
-				break;
-			case CREATE_TABLE_LIKE_EXCLUDING_DEFAULTS:
-				including_defaults = false;
-				break;
-			case CREATE_TABLE_LIKE_INCLUDING_CONSTRAINTS:
-				including_constraints = true;
-				break;
-			case CREATE_TABLE_LIKE_EXCLUDING_CONSTRAINTS:
-				including_constraints = false;
-				break;
-			case CREATE_TABLE_LIKE_INCLUDING_INDEXES:
-				including_indexes = true;
-				break;
-			case CREATE_TABLE_LIKE_EXCLUDING_INDEXES:
-				including_indexes = false;
-				break;
-			default:
-				elog(ERROR, "unrecognized CREATE TABLE LIKE option: %d",
-					 option);
-		}
-	}
-
-	if (forceBareCol && (including_indexes || including_constraints || including_defaults))
+	if (forceBareCol && inhRelation->options != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("LIKE INCLUDING may not be used with this kind of relation")));
@@ -761,8 +730,6 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 	 */
 	attmap = (AttrNumber *) palloc0(sizeof(AttrNumber) * tupleDesc->natts);
 
-=======
->>>>>>> 78a09145e0
 	/*
 	 * Insert the copied attributes into the cxt for the new table definition.
 	 */
@@ -904,8 +871,8 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 
 			/* Copy comment on constraint */
 			if ((inhRelation->options & CREATE_TABLE_LIKE_COMMENTS) &&
-				(comment = GetComment(GetConstraintByName(RelationGetRelid(relation),
-														  n->conname),
+				(comment = GetComment(get_constraint_oid(RelationGetRelid(relation),
+														 n->conname,  false),
 									  ConstraintRelationId,
 									  0)) != NULL)
 			{
@@ -1075,7 +1042,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 	List	   *indexprs;
 	ListCell   *indexpr_item;
 	Oid			indrelid;
-	Oid			conoid = InvalidOid;
+	Oid			constraintId;
 	int			keyno;
 	Oid			keycoltype;
 	Datum		datum;
@@ -1133,7 +1100,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 	 */
 	if (index->primary || index->unique || idxrelrec->relhasexclusion)
 	{
-		Oid		constraintId = get_index_constraint(source_relid);
+		constraintId = get_index_constraint(source_relid);
 
 		if (OidIsValid(constraintId))
 		{
@@ -1206,12 +1173,6 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 	}
 	else
 		index->isconstraint = false;
-<<<<<<< HEAD
-	else
-	{
-		conoid = get_index_constraint(source_relid);
-		index->isconstraint = OidIsValid(conoid);
-	}
 
 	/*
 	 * If the index backs a constraint, use the same name for the constraint
@@ -1223,18 +1184,16 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 	{
 		char	   *conname;
 
-		if (!OidIsValid(conoid))
-			conoid = get_index_constraint(source_relid);
+		if (!OidIsValid(constraintId))
+			constraintId = get_index_constraint(source_relid);
 
-		conname = GetConstraintNameByOid(conoid);
+		conname = GetConstraintNameByOid(constraintId);
 		if (!conname)
 			elog(ERROR, "could not find constraint that index \"%s\" backs in source table",
 				 RelationGetRelationName(source_idx));
 
 		index->altconname = conname;
 	}
-=======
->>>>>>> 78a09145e0
 
 	/* Get the index expressions, if any */
 	datum = SysCacheGetAttr(INDEXRELID, ht_idx,
@@ -1458,7 +1417,6 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 				break;
 
 			case T_Constraint:
-			case T_FkConstraint:
 				/* should never happen. If it does fix gram.y */
 				elog(ERROR, "node type %d not supported for external tables",
 					 (int) nodeTag(element));
@@ -2510,7 +2468,6 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 	index->deferrable = constraint->deferrable;
 	index->initdeferred = constraint->initdeferred;
 
-<<<<<<< HEAD
 	/*
 	 * We used to force the index name to be the constraint name, but they
 	 * are in different namespaces and so have different  requirements for
@@ -2518,13 +2475,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 	 * name in the IndexStmt, for use in DefineIndex.
 	 */
 	index->idxname = NULL;	/* DefineIndex will choose name */
-	index->altconname = constraint->name; /* User may have picked the name. */
-=======
-	if (constraint->conname != NULL)
-		index->idxname = pstrdup(constraint->conname);
-	else
-		index->idxname = NULL;	/* DefineIndex will choose name */
->>>>>>> 78a09145e0
+	index->altconname = pstrdup(constraint->conname); /* User may have picked the name. */
 
 	index->relation = cxt->relation;
 	index->accessMethod = constraint->access_method ? constraint->access_method : DEFAULT_INDEX_TYPE;
@@ -3403,17 +3354,12 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 				{
 					transformTableConstraint(pstate, &cxt,
 											 (Constraint *) cmd->def);
-<<<<<<< HEAD
-				else if (IsA(cmd->def, FkConstraint))
-				{
-					cxt.fkconstraints = lappend(cxt.fkconstraints, cmd->def);
-
-					/* GPDB: always skip validation of foreign keys */
-					skipValidation = true;
-=======
 					if (((Constraint *) cmd->def)->contype == CONSTR_FOREIGN)
-						skipValidation = false;
->>>>>>> 78a09145e0
+					{
+						cxt.fkconstraints = lappend(cxt.fkconstraints, cmd->def);
+						/* GPDB: always skip validation of foreign keys */
+						skipValidation = true;
+					}
 				}
 				else
 					elog(ERROR, "unrecognized node type: %d",

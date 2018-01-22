@@ -160,7 +160,7 @@ struct ParseState
 	bool		p_hasSubLinks;
 	bool		p_is_insert;
 	bool		p_is_update;
-	bool		p_locked_from_parent;
+	LockingClause *p_lockclause_from_parent;
 	Relation	p_target_relation;
 	RangeTblEntry *p_target_rangetblentry;
 

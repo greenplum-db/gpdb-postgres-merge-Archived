@@ -700,7 +700,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	 * Analyze and transform the subquery.
 	 */
 	query = parse_sub_analyze(r->subquery, pstate, NULL,
-							  isLockedRefname(pstate, r->alias->aliasname));
+							  getLockedRefname(pstate, r->alias->aliasname));
 
 	/* Restore state */
 	pstate->p_expr_kind = EXPR_KIND_NONE;

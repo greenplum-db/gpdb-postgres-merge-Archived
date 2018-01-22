@@ -64,10 +64,6 @@ fprintf_to_ereport(const char *fmt, const char *msg)
 	ereport(ERROR, (errmsg_internal("%s", msg)));
 }
 
-
-/* first part of UTF16 surrogate for unicode escapes */
-static uint32	utf16_top_part;
-
 /*
  * GUC variables.  This is a DIRECT violation of the warning given at the
  * head of gram.y, ie flex/bison code must not depend on any GUC variables;

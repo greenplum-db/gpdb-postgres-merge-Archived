@@ -24,7 +24,7 @@ extern Query *parse_analyze_varparams(Node *parseTree, const char *sourceText,
 
 extern Query *parse_sub_analyze(Node *parseTree, ParseState *parentParseState,
 								CommonTableExpr *parentCTE,
-								bool locked_from_parent);
+								LockingClause *lockclause_from_parent);
 
 extern List *analyzeCreateSchemaStmt(CreateSchemaStmt *stmt);
 

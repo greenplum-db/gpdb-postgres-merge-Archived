@@ -121,7 +121,8 @@ static List *check_func_name(List *names, core_yyscan_t yyscanner);
 static List *check_indirection(List *indirection, core_yyscan_t yyscanner);
 static List *extractArgTypes(List *parameters);
 static List *extractAggrArgTypes(List *aggrargs);
-static List *makeOrderedSetArgs(List *directargs, List *orderedargs);
+static List *makeOrderedSetArgs(List *directargs, List *orderedargs,
+								core_yyscan_t yyscanner);
 static SelectStmt *findLeftmostSelect(SelectStmt *node);
 static void insertSelectOptions(SelectStmt *stmt,
 								List *sortClause, List *lockingClause,
@@ -2803,7 +2804,7 @@ alter_table_partition_id_spec:
 			 * code that func_name was RANK, and that the expr_list was a
 			 * NumericOnly.
  			 */
-           | FOR '(' func_name '(' expr_list ')' ')'
+           | FOR '(' func_name '(' func_arg_list ')' ')'
 				{
 					Node		   *arg;
 					Value		   *val;
@@ -2812,21 +2813,21 @@ alter_table_partition_id_spec:
 
                     /* allow RANK only */
 					if (list_length($3) != 1)
-                        yyerror("syntax error");
+                        parser_yyerror("syntax error");
 					fname = linitial($3);
 					if (!(strcmp(strVal(linitial($3)), "rank") == 0))
-                        yyerror("syntax error");
+                        parser_yyerror("syntax error");
 
 					/* expr_list must be a single numeric constant */
 					if (list_length($5) != 1)
-						yyerror("syntax error");
+						parser_yyerror("syntax error");
 
 					arg = linitial($5);
 					if (!IsA(arg, A_Const))
-						yyerror("syntax error");
+						parser_yyerror("syntax error");
 					val = &((A_Const *) arg)->val;
 					if (!IsA(val, Integer) && !IsA(val, Float))
-						yyerror("syntax error");
+						parser_yyerror("syntax error");
 
 					n = makeNode(AlterPartitionId);
 					n->idtype = AT_AP_IDRank;
@@ -3957,7 +3958,7 @@ columnListUnique:
 						ereport(ERROR,
 								(errcode(ERRCODE_DUPLICATE_COLUMN),
 								 errmsg("duplicate column in DISTRIBUTED BY clause"),
-								 scanner_errposition(@3)));
+								 parser_errposition(@3)));
 					$$ = lappend($1, $3);
 				}
 
@@ -4492,7 +4493,7 @@ OptTabPartitionBy:
 					n->subPart  = $7;
 					if (PointerIsValid(n->subPart) &&
 						!IsA(n->subPart, PartitionBy))
-						yyerror("syntax error");
+						parser_yyerror("syntax error");
 
 					n->partSpec = $8;
 					n->partDepth = 0;
@@ -4565,7 +4566,7 @@ list_subparts: TabSubPartitionBy { $$ = $1; }
 
 						/* find deepesh subpart and add it there */
 						if (((PartitionBy *)pby)->partSpec != NULL)
-							yyerror("syntax error");
+							parser_yyerror("syntax error");
 
 						((PartitionBy *)pby)->partSpec = $3;
 					}
@@ -7765,7 +7766,7 @@ aggr_args:	'(' '*' ')'
 			| '(' aggr_args_list ORDER BY aggr_args_list ')'
 				{
 					/* this is the only case requiring consistency checking */
-					$$ = makeOrderedSetArgs($2, $5);
+					$$ = makeOrderedSetArgs($2, $5, yyscanner);
 				}
 		;
 
@@ -9521,8 +9522,6 @@ AnalyzeStmt:
 						n->options |= VACOPT_VERBOSE;
 					n->options |= VACOPT_ROOTONLY;
 					n->freeze_min_age = -1;
-					n->verbose = $2;
-					n->rootonly = true;
 					n->relation = $4;
 					n->va_cols = $5;
 					$$ = (Node *)n;
@@ -9649,7 +9648,6 @@ explain_option_name:
 			ColId					{ $$ = $1; }
 			| analyze_keyword		{ $$ = "analyze"; }
 			| VERBOSE				{ $$ = "verbose"; }
-			| DXL					{ $$ = "dxl"; }
 		;
 
 explain_option_arg:
@@ -9771,7 +9769,7 @@ cdb_string_list:
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 								 errmsg("duplicate location uri"),
-								 scanner_errposition(@3)));
+								 parser_errposition(@3)));
 					$$ = lappend($1, $3);
 				}
 		;
@@ -14986,7 +14984,8 @@ extractAggrArgTypes(List *aggrargs)
  * we have to deal with multiple VARIADIC arguments.
  */
 static List *
-makeOrderedSetArgs(List *directargs, List *orderedargs)
+makeOrderedSetArgs(List *directargs, List *orderedargs,
+				   core_yyscan_t yyscanner)
 {
 	FunctionParameter *lastd = (FunctionParameter *) llast(directargs);
 	int			ndirectargs;

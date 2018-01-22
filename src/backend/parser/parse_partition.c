@@ -26,7 +26,6 @@
 #include "optimizer/clauses.h"
 #include "optimizer/walkers.h"
 #include "parser/analyze.h"
-#include "parser/gramparse.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_node.h"
@@ -699,15 +698,10 @@ transformPartitionBy(ParseState *pstate, CreateStmtContext *cxt,
 
 				if (pConstraint)
 				{
-					StringInfoData sid;
 					Constraint *pCon = makeNode(Constraint);
 
-					initStringInfo(&sid);
-
-					appendStringInfo(&sid, "%s_%s", relname, "check");
-
 					pCon->contype = CONSTR_CHECK;
-					pCon->name = sid.data;
+					pCon->conname = psprintf("%s_check", relname);
 					pCon->raw_expr = pConstraint;
 					pCon->cooked_expr = NULL;
 					pCon->indexspace = NULL;

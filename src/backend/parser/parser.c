@@ -64,63 +64,7 @@ raw_parser(const char *str)
 
 
 /*
-<<<<<<< HEAD
- * pg_parse_string_token - get the value represented by a string literal
- *
- * Given the textual form of a SQL string literal, produce the represented
- * value as a palloc'd string.  It is caller's responsibility that the
- * passed string does represent one single string literal.
- *
- * We export this function to avoid having plpgsql depend on internal details
- * of the core grammar (such as the token code assigned to SCONST).  Note
- * that since the scanner isn't presently re-entrant, this cannot be used
- * during use of the main parser/scanner.
- */
-char *
-pg_parse_string_token(const char *token)
-{
-	int			ctoken;
-
-	/*
-	 * In GDPB, temporarily disable escape_string_warning, if we're in a QE
-	 * node. When we're parsing a PL/pgSQL function, e.g. in a CREATE FUNCTION
-	 * command, you should've gotten the same warning from the QD node already.
-	 * We could probably disable the warning in QE nodes altogether, not just
-	 * in PL/pgSQL, but it can be useful for catching escaping bugs, when
-	 * internal queries are dispatched from QD to QEs.
-	 */
-	bool		save_escape_string_warning = escape_string_warning;
-PG_TRY();
-{
-	if (Gp_role == GP_ROLE_EXECUTE)
-		escape_string_warning = false;
-
-	scanner_init(token);
-
-	ctoken = base_yylex();
-
-	if (ctoken != SCONST)		/* caller error */
-		elog(ERROR, "expected string constant, got token code %d", ctoken);
-
-	scanner_finish();
-
-}
-PG_CATCH();
-{
-	if (Gp_role == GP_ROLE_EXECUTE)
-		escape_string_warning = save_escape_string_warning;
-}
-PG_END_TRY();
-
-	return base_yylval.str;
-}
-
-
-/*
- * Intermediate filter between parser and base lexer (base_yylex in scan.l).
-=======
  * Intermediate filter between parser and core lexer (core_yylex in scan.l).
->>>>>>> 78a09145e0
  *
  * The filter is needed because in some cases the standard SQL grammar
  * requires more than one token lookahead.	We reduce these cases to one-token

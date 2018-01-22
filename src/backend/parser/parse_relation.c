@@ -44,10 +44,6 @@ static RangeTblEntry *scanNameSpaceForRelid(ParseState *pstate, Oid relid,
 					  int location);
 static void markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
 					 int rtindex, AttrNumber col);
-<<<<<<< HEAD
-static LockingClause *getLockingClause(ParseState *pstate, char *refname);
-=======
->>>>>>> 78a09145e0
 static void expandRelation(Oid relid, Alias *eref,
 			   int rtindex, int sublevels_up,
 			   int location, bool include_dropped,
@@ -895,7 +891,7 @@ addRangeTableEntry(ParseState *pstate,
 	 * from postgres to allow for required lock promotion for distributed
 	 * tables.
 	 */
-	locking = getLockingClause(pstate, refname);
+	locking = getLockedRefname(pstate, refname);
 	if (locking)
 	{
 		lockmode = locking->forUpdate ? RowExclusiveLock : RowShareLock;
@@ -908,14 +904,9 @@ addRangeTableEntry(ParseState *pstate,
 	 * to a rel in a statement, be careful to get the right access level
 	 * depending on whether we're doing SELECT FOR UPDATE/SHARE.
 	 */
-<<<<<<< HEAD
 	setup_parser_errposition_callback(&pcbstate, pstate, relation->location);
 	rel = parserOpenTable(pstate, relation, lockmode, nowait, NULL);
 	cancel_parser_errposition_callback(&pcbstate);
-=======
-	lockmode = isLockedRefname(pstate, refname) ? RowShareLock : AccessShareLock;
-	rel = parserOpenTable(pstate, relation, lockmode);
->>>>>>> 78a09145e0
 	rte->relid = RelationGetRelid(rel);
 	rte->alias = alias;
 	rte->rtekind = RTE_RELATION;
@@ -1589,13 +1580,8 @@ addRangeTableEntryForCTE(ParseState *pstate,
  * Note: we pay no attention to whether it's FOR UPDATE vs FOR SHARE,
  * since the table-level lock is the same either way.
  */
-<<<<<<< HEAD
-static LockingClause*
-getLockingClause(ParseState *pstate, char *refname)
-=======
-bool
-isLockedRefname(ParseState *pstate, const char *refname)
->>>>>>> 78a09145e0
+LockingClause *
+getLockedRefname(ParseState *pstate, const char *refname)
 {
 	ListCell   *l;
 
@@ -1603,8 +1589,8 @@ isLockedRefname(ParseState *pstate, const char *refname)
 	 * If we are in a subquery specified as locked FOR UPDATE/SHARE from
 	 * parent level, then act as though there's a generic FOR UPDATE here.
 	 */
-	if (pstate->p_locked_from_parent)
-		return true;
+	if (pstate->p_lockclause_from_parent)
+		return pstate->p_lockclause_from_parent;
 
 	foreach(l, pstate->p_locking_clause)
 	{
@@ -1613,7 +1599,7 @@ isLockedRefname(ParseState *pstate, const char *refname)
 		if (lc->lockedRels == NIL)
 		{
 			/* all tables used in query */
-			return true;
+			return lc;
 		}
 		else
 		{
@@ -1622,26 +1608,10 @@ isLockedRefname(ParseState *pstate, const char *refname)
 
 			foreach(l2, lc->lockedRels)
 			{
-<<<<<<< HEAD
-				return lc;  				/* all tables used in query */
-			}
-			else
-			{
-				/* just the named tables */
-				ListCell	*l2;
-				foreach(l2, lc->lockedRels)
-				{
-					RangeVar   *thisrel = (RangeVar *) lfirst(l2);
-
-					if (strcmp(refname, thisrel->relname) == 0)
-						return lc;         /* refname matched */
-				}
-=======
 				RangeVar   *thisrel = (RangeVar *) lfirst(l2);
 
 				if (strcmp(refname, thisrel->relname) == 0)
-					return true;
->>>>>>> 78a09145e0
+					return lc;
 			}
 		}
 	}

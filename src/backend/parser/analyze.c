@@ -203,13 +203,13 @@ parse_analyze_varparams(Node *parseTree, const char *sourceText,
 Query *
 parse_sub_analyze(Node *parseTree, ParseState *parentParseState,
 				  CommonTableExpr *parentCTE,
-				  bool locked_from_parent)
+				  LockingClause *lockclause_from_parent)
 {
 	ParseState *pstate = make_parsestate(parentParseState);
 	Query	   *query;
 
 	pstate->p_parent_cte = parentCTE;
-	pstate->p_locked_from_parent = locked_from_parent;
+	pstate->p_lockclause_from_parent = lockclause_from_parent;
 
 	query = transformStmt(pstate, parseTree);
 
