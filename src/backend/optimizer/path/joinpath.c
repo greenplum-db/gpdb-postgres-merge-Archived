@@ -123,16 +123,13 @@ add_paths_to_joinrel(PlannerInfo *root,
 	 * interested in doing a mergejoin.  However, mergejoin is currently our
 	 * only way of implementing full outer joins, so override mergejoin
 	 * disable if it's a full join.
-<<<<<<< HEAD
-     *
-     * CDB: Always build mergeclause_list.  We need it for motion planning.
-=======
 	 *
 	 * Note: do this after join_is_removable(), because this sets the
 	 * outer_is_left flags in the mergejoin clauses, while join_is_removable
 	 * uses those flags for its own purposes.  Currently, they set the flags
 	 * the same way anyway, but let's avoid unnecessary entanglement.
->>>>>>> 78a09145e0
+	 *
+	 * CDB: Always build mergeclause_list.  We need it for motion planning.
 	 */
 	mergeclause_list = select_mergejoin_clauses(root,
 												joinrel,

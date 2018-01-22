@@ -2992,7 +2992,6 @@ create_mergejoin_plan(PlannerInfo *root,
 		innerpathkeys = best_path->jpath.innerjoinpath->pathkeys;
 
 	/*
-<<<<<<< HEAD
 	 * MPP-3300: very similar to the nested-loop join motion deadlock cases. But we may have already
 	 * put some slackening operators below (e.g. a sort).
 	 *
@@ -3024,17 +3023,8 @@ create_mergejoin_plan(PlannerInfo *root,
 	}
 
 	/*
-	 * If inner plan is a sort that is expected to spill to disk, add a
-	 * materialize node to shield it from the need to handle mark/restore.
-	 * This will allow it to perform the last merge pass on-the-fly, while in
-	 * most cases not requiring the materialize to spill to disk.
-	 *
-	 * XXX really, Sort oughta do this for itself, probably, to avoid the
-	 * overhead of a separate plan node.
-=======
 	 * If specified, add a materialize node to shield the inner plan from
 	 * the need to handle mark/restore.
->>>>>>> 78a09145e0
 	 */
 	if (best_path->materialize_inner)
 	{
