@@ -118,14 +118,9 @@ BitmapHeapNext(BitmapHeapScanState *node)
 {
 	ExprContext *econtext;
 	HeapScanDesc scan;
-<<<<<<< HEAD
 	Index		scanrelid;
 	Node  		*tbm;
 	GenericBMIterator *tbmiterator;
-=======
-	TIDBitmap  *tbm;
-	TBMIterator *tbmiterator;
->>>>>>> 78a09145e0
 	TBMIterateResult *tbmres;
 	GenericBMIterator *prefetch_iterator;
 	OffsetNumber targoffset;
@@ -137,22 +132,17 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	 */
 	econtext = node->ss.ps.ps_ExprContext;
 	slot = node->ss.ss_ScanTupleSlot;
-<<<<<<< HEAD
 
 	initScanDesc(node);
 
 	scan = node->ss_currentScanDesc;
 	scanrelid = ((BitmapHeapScan *) node->ss.ps.plan)->scan.scanrelid;
-=======
-	scan = node->ss.ss_currentScanDesc;
->>>>>>> 78a09145e0
 	tbm = node->tbm;
 	tbmiterator = node->tbmiterator;
 	tbmres = node->tbmres;
 	prefetch_iterator = node->prefetch_iterator;
 
 	/*
-<<<<<<< HEAD
 	 * Check if we are evaluating PlanQual for tuple of this relation.
 	 * Additional checking is not good, but no other way for now. We could
 	 * introduce new nodes for this case and handle IndexScan --> NewNode
@@ -191,8 +181,6 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	}
 
 	/*
-=======
->>>>>>> 78a09145e0
 	 * If we haven't yet performed the underlying index scan, do it, and begin
 	 * the iteration over the bitmap.
 	 *
@@ -550,19 +538,6 @@ ExecBitmapHeapScan(BitmapHeapScanState *node)
 void
 ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt)
 {
-<<<<<<< HEAD
-	EState	   *estate;
-	Index		scanrelid;
-
-	initScanDesc(node);
-
-	estate = node->ss.ps.state;
-	scanrelid = ((BitmapHeapScan *) node->ss.ps.plan)->scan.scanrelid;
-
-	/* node->ss.ps.ps_TupFromTlist = false; */
-
-=======
->>>>>>> 78a09145e0
 	/*
 	 * If we are being passed an outer tuple, link it into the "regular"
 	 * per-tuple econtext for possible qual eval.
@@ -729,7 +704,6 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 	 */
 	return scanstate;
 }
-<<<<<<< HEAD
 
 void
 ExecEagerFreeBitmapHeapScan(BitmapHeapScanState *node)
@@ -737,5 +711,3 @@ ExecEagerFreeBitmapHeapScan(BitmapHeapScanState *node)
 	freeScanDesc(node);
 	freeBitmapState(node);
 }
-=======
->>>>>>> 78a09145e0
