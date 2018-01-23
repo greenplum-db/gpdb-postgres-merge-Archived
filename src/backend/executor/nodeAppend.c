@@ -189,30 +189,13 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 	ExecInitResultTupleSlot(estate, &appendstate->ps);
 
 	/*
-<<<<<<< HEAD
-	 * Initialize the subplan nodes.
-=======
 	 * call ExecInitNode on each of the plans to be executed and save the
 	 * results into the array "appendplans".
->>>>>>> 78a09145e0
 	 */
 	i = 0;
 	foreach(lc, node->appendplans)
 	{
-<<<<<<< HEAD
-		initNode = (Plan *) list_nth(node->appendplans, i);
-
-		/*
-		 * call ExecInitNode on each of the plans to be executed and save the
-		 * results into the array "appendplans".  Note we *must* set
-		 * estate->es_result_relation_info correctly while we initialize each
-		 * sub-plan; ExecContextForcesOids depends on that!
-		 */
-		appendstate->as_whichplan = i;
-		exec_append_initialize_next(appendstate);
-=======
 		Plan	   *initNode = (Plan *) lfirst(lc);
->>>>>>> 78a09145e0
 
 		appendplanstates[i] = ExecInitNode(initNode, estate, eflags);
 		i++;
@@ -342,7 +325,6 @@ ExecEndAppend(AppendState *node)
 	/*
 	 * shut down each of the subscans
 	 */
-<<<<<<< HEAD
 	for (i = nplans-1; i >= 0; --i) 
 	{
 		if (appendplans[i])
@@ -350,10 +332,6 @@ ExecEndAppend(AppendState *node)
 	}
 
 	EndPlanStateGpmonPkt(&node->ps);
-=======
-	for (i = 0; i < nplans; i++)
-		ExecEndNode(appendplans[i]);
->>>>>>> 78a09145e0
 }
 
 void
