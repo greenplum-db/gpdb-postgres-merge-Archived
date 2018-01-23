@@ -1333,8 +1333,8 @@ do_tup_output(TupOutputState *tstate, Datum *values, bool *isnull)
 	ExecClearTuple(slot);
 
 	/* insert data */
-	memcpy(slot->tts_values, values, natts * sizeof(Datum));
-	memcpy(slot->tts_isnull, isnull, natts * sizeof(bool));
+	memcpy(slot->PRIVATE_tts_values, values, natts * sizeof(Datum));
+	memcpy(slot->PRIVATE_tts_isnull, isnull, natts * sizeof(bool));
 
 	/* mark slot as containing a virtual tuple */
 	ExecStoreVirtualTuple(slot);
