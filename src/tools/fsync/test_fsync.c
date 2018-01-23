@@ -30,13 +30,9 @@
 #define FSYNC_FILENAME	"/var/tmp/test_fsync.out"
 #endif
 
-<<<<<<< HEAD
-#define WRITE_SIZE	(16 * 1024) /* 16k */
-=======
 #define WRITE_SIZE	(8 * 1024) /* 8k */
 
 #define LABEL_FORMAT	"\t%-30s"
->>>>>>> 78a09145e0
 
 void		die(char *str);
 void		print_elapse(struct timeval start_t, struct timeval stop_t);
@@ -80,11 +76,7 @@ main(int argc, char *argv[])
 	/*
 	 *	Simple write
 	 */
-<<<<<<< HEAD
-	printf("Simple write timing:\n");
-=======
 	printf("Simple 8k write timing:\n");
->>>>>>> 78a09145e0
 	/* write only */
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
@@ -100,12 +92,6 @@ main(int argc, char *argv[])
 	print_elapse(start_t, stop_t);
 
 	/*
-<<<<<<< HEAD
-	 *	Fsync another file descriptor?
-	 */
-	printf("\nCompare fsync times on write() and non-write() descriptor:\n");
-	printf("If the times are similar, fsync() can sync data written\non a different descriptor.\n");
-=======
 	 *	Compare file sync methods with one 8k write
 	 */
 	printf("\nCompare file sync methods using one 8k write:\n");
@@ -327,7 +313,6 @@ main(int argc, char *argv[])
 	 */
 	printf("\nCompare fsync times on write() and new file descriptors (if the times\n");
 	printf("are similar, fsync() can sync data written on a different descriptor):\n");
->>>>>>> 78a09145e0
 
 	/* write, fsync, close */
 	gettimeofday(&start_t, NULL);
@@ -365,243 +350,9 @@ main(int argc, char *argv[])
 			die("fsync failed");
 		close(tmpfile);
 	}
-<<<<<<< HEAD
-	gettimeofday(&elapse_t, NULL);
-	printf("\twrite, close, fsync    ");
-	print_elapse(start_t, elapse_t);
-	printf("\n");
-
-	/*
-	 *	Compare 1 to 2 writes
-	 */
-	printf("\nCompare one o_sync write to two:\n");
-
-#ifdef OPEN_SYNC_FLAG
-	/* 16k o_sync write */
-	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG, 0)) == -1)
-		die("Cannot open output file.");
-	gettimeofday(&start_t, NULL);
-	for (i = 0; i < loops; i++)
-	{
-		if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
-			die("write failed");
-		if (lseek(tmpfile, 0, SEEK_SET) == -1)
-			die("seek failed");
-	}
-	gettimeofday(&elapse_t, NULL);
-	close(tmpfile);
-	printf("\tone 16k o_sync write   ");
-	print_elapse(start_t, elapse_t);
-	printf("\n");
-
-	/* Two 8k o_sync writes */
-	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG, 0)) == -1)
-		die("Cannot open output file.");
-	gettimeofday(&start_t, NULL);
-	for (i = 0; i < loops; i++)
-	{
-		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
-			die("write failed");
-		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
-			die("write failed");
-		if (lseek(tmpfile, 0, SEEK_SET) == -1)
-			die("seek failed");
-	}
-	gettimeofday(&elapse_t, NULL);
-	close(tmpfile);
-	printf("\ttwo 8k o_sync writes   ");
-	print_elapse(start_t, elapse_t);
-#else
-	printf("\t(o_sync unavailable)  ");
-#endif
-	printf("\n");
-
-	/*
-	 *	Compare file sync methods with one 8k write
-	 */
-	printf("\nCompare file sync methods with one 8k write:\n");
-
-#ifdef OPEN_DATASYNC_FLAG
-	/* open_dsync, write */
-	if ((tmpfile = open(filename, O_RDWR | O_DSYNC, 0)) == -1)
-		die("Cannot open output file.");
-	gettimeofday(&start_t, NULL);
-	for (i = 0; i < loops; i++)
-	{
-		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
-			die("write failed");
-		if (lseek(tmpfile, 0, SEEK_SET) == -1)
-			die("seek failed");
-	}
-	gettimeofday(&elapse_t, NULL);
-	close(tmpfile);
-	printf("\topen o_dsync, write    ");
-	print_elapse(start_t, elapse_t);
-#else
-	printf("\t(o_dsync unavailable)  ");
-#endif
-	printf("\n");
-
-#ifdef OPEN_SYNC_FLAG
-	/* open_fsync, write */
-	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG, 0)) == -1)
-		die("Cannot open output file.");
-	gettimeofday(&start_t, NULL);
-	for (i = 0; i < loops; i++)
-	{
-		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
-			die("write failed");
-		if (lseek(tmpfile, 0, SEEK_SET) == -1)
-			die("seek failed");
-	}
-	gettimeofday(&elapse_t, NULL);
-	close(tmpfile);
-	printf("\topen o_sync, write     ");
-	print_elapse(start_t, elapse_t);
-#else
-	printf("\t(o_sync unavailable)  ");
-#endif
-	printf("\n");
-
-#ifdef HAVE_FDATASYNC
-	/* write, fdatasync */
-	if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
-		die("Cannot open output file.");
-	gettimeofday(&start_t, NULL);
-	for (i = 0; i < loops; i++)
-	{
-		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
-			die("write failed");
-		fdatasync(tmpfile);
-		if (lseek(tmpfile, 0, SEEK_SET) == -1)
-			die("seek failed");
-	}
-	gettimeofday(&elapse_t, NULL);
-	close(tmpfile);
-	printf("\twrite, fdatasync       ");
-	print_elapse(start_t, elapse_t);
-#else
-	printf("\t(fdatasync unavailable)");
-#endif
-	printf("\n");
-
-	/* write, fsync, close */
-	if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
-		die("Cannot open output file.");
-	gettimeofday(&start_t, NULL);
-	for (i = 0; i < loops; i++)
-	{
-		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
-			die("write failed");
-		if (fsync(tmpfile) != 0)
-			die("fsync failed");
-		if (lseek(tmpfile, 0, SEEK_SET) == -1)
-			die("seek failed");
-	}
-	gettimeofday(&elapse_t, NULL);
-	close(tmpfile);
-	printf("\twrite, fsync           ");
-	print_elapse(start_t, elapse_t);
-	printf("\n");
-
-	/*
-	 *	Compare file sync methods with two 8k write
-	 */
-	printf("\nCompare file sync methods with two 8k writes:\n");
-
-#ifdef OPEN_DATASYNC_FLAG
-	/* open_dsync, write */
-	if ((tmpfile = open(filename, O_RDWR | O_DSYNC, 0)) == -1)
-		die("Cannot open output file.");
-	gettimeofday(&start_t, NULL);
-	for (i = 0; i < loops; i++)
-	{
-		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
-			die("write failed");
-		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
-			die("write failed");
-		if (lseek(tmpfile, 0, SEEK_SET) == -1)
-			die("seek failed");
-	}
-	gettimeofday(&elapse_t, NULL);
-	close(tmpfile);
-	printf("\topen o_dsync, write    ");
-	print_elapse(start_t, elapse_t);
-#else
-	printf("\t(o_dsync unavailable)  ");
-#endif
-	printf("\n");
-
-#ifdef OPEN_SYNC_FLAG
-	/* open_fsync, write */
-	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG, 0)) == -1)
-		die("Cannot open output file.");
-	gettimeofday(&start_t, NULL);
-	for (i = 0; i < loops; i++)
-	{
-		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
-			die("write failed");
-		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
-			die("write failed");
-		if (lseek(tmpfile, 0, SEEK_SET) == -1)
-			die("seek failed");
-	}
-	gettimeofday(&elapse_t, NULL);
-	close(tmpfile);
-	printf("\topen o_sync, write     ");
-	print_elapse(start_t, elapse_t);
-	printf("\n");
-#endif
-
-#ifdef HAVE_FDATASYNC
-	/* write, fdatasync */
-	if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
-		die("Cannot open output file.");
-	gettimeofday(&start_t, NULL);
-	for (i = 0; i < loops; i++)
-	{
-		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
-			die("write failed");
-		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
-			die("write failed");
-		fdatasync(tmpfile);
-		if (lseek(tmpfile, 0, SEEK_SET) == -1)
-			die("seek failed");
-	}
-	gettimeofday(&elapse_t, NULL);
-	close(tmpfile);
-	printf("\twrite, fdatasync       ");
-	print_elapse(start_t, elapse_t);
-#else
-	printf("\t(fdatasync unavailable)");
-#endif
-	printf("\n");
-
-	/* write, fsync, close */
-	if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
-		die("Cannot open output file.");
-	gettimeofday(&start_t, NULL);
-	for (i = 0; i < loops; i++)
-	{
-		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
-			die("write failed");
-		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
-			die("write failed");
-		if (fsync(tmpfile) != 0)
-			die("fsync failed");
-		if (lseek(tmpfile, 0, SEEK_SET) == -1)
-			die("seek failed");
-	}
-	gettimeofday(&elapse_t, NULL);
-	close(tmpfile);
-	printf("\twrite, fsync           ");
-	print_elapse(start_t, elapse_t);
-	printf("\n");
-=======
 	gettimeofday(&stop_t, NULL);
 	printf(LABEL_FORMAT, "write, close, fsync");
 	print_elapse(start_t, stop_t);
->>>>>>> 78a09145e0
 
 	/* cleanup */
 	free(full_buf);
