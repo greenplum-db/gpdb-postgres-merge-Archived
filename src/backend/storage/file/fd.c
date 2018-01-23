@@ -77,7 +77,6 @@
 #include "storage/ipc.h"
 #include "utils/guc.h"
 #include "utils/resowner.h"
-<<<<<<< HEAD
 #include "utils/workfile_mgr.h"
 #include "utils/faultinjector.h"
 #include "postmaster/primary_mirror_mode.h"
@@ -85,8 +84,6 @@
 // Provide some indirection here in case we have problems with lseek and
 // 64 bits on some platforms
 #define pg_lseek64(a,b,c) (int64)lseek(a,b,c)
-=======
->>>>>>> 78a09145e0
 
 
 /*
@@ -948,80 +945,11 @@ PathNameOpenFile(FileName fileName, int fileFlags, int fileMode)
 /*
  * open a file in the database directory ($PGDATA/base/DIROID/)
  *
-<<<<<<< HEAD
  * if we are using the system default filespace. Otherwise open
  * the file in the filespace configured for temporary files.
  * The passed name MUST be a relative path.  Effectively, this
  * prepends DatabasePath or path of the filespace to it and then
  * acts like PathNameOpenFile.
-=======
- * This routine takes care of generating an appropriate tempfile name.
- * There's no need to pass in fileFlags or fileMode either, since only
- * one setting makes any sense for a temp file.
- *
- * Unless interXact is true, the file is remembered by CurrentResourceOwner
- * to ensure it's closed and deleted when it's no longer needed, typically at
- * the end-of-transaction. In most cases, you don't want temporary files to
- * outlive the transaction that created them, so this should be false -- but
- * if you need "somewhat" temporary storage, this might be useful. In either
- * case, the file is removed when the File is explicitly closed.
- */
-File
-OpenTemporaryFile(bool interXact)
-{
-	File		file = 0;
-
-	/*
-	 * If some temp tablespace(s) have been given to us, try to use the next
-	 * one.  If a given tablespace can't be found, we silently fall back to
-	 * the database's default tablespace.
-	 *
-	 * BUT: if the temp file is slated to outlive the current transaction,
-	 * force it into the database's default tablespace, so that it will not
-	 * pose a threat to possible tablespace drop attempts.
-	 */
-	if (numTempTableSpaces > 0 && !interXact)
-	{
-		Oid			tblspcOid = GetNextTempTableSpace();
-
-		if (OidIsValid(tblspcOid))
-			file = OpenTemporaryFileInTablespace(tblspcOid, false);
-	}
-
-	/*
-	 * If not, or if tablespace is bad, create in database's default
-	 * tablespace.	MyDatabaseTableSpace should normally be set before we get
-	 * here, but just in case it isn't, fall back to pg_default tablespace.
-	 */
-	if (file <= 0)
-		file = OpenTemporaryFileInTablespace(MyDatabaseTableSpace ?
-											 MyDatabaseTableSpace :
-											 DEFAULTTABLESPACE_OID,
-											 true);
-
-	/* Mark it for deletion at close */
-	VfdCache[file].fdstate |= FD_TEMPORARY;
-
-	/* Register it with the current resource owner */
-	if (!interXact)
-	{
-		VfdCache[file].fdstate |= FD_XACT_TEMPORARY;
-
-		ResourceOwnerEnlargeFiles(CurrentResourceOwner);
-		ResourceOwnerRememberFile(CurrentResourceOwner, file);
-		VfdCache[file].resowner = CurrentResourceOwner;
-
-		/* ensure cleanup happens at eoxact */
-		have_xact_temporary_files = true;
-	}
-
-	return file;
-}
-
-/*
- * Open a temporary file in a specific tablespace.
- * Subroutine for OpenTemporaryFile, which see for details.
->>>>>>> 78a09145e0
  */
 static File
 FileNameOpenFile(FileName fileName, int fileFlags, int fileMode)
@@ -2173,11 +2101,7 @@ CleanupTempFiles(bool isProcExit)
 				 */
 				if (isProcExit)
 					FileClose(i);
-<<<<<<< HEAD
 				else if (fdstate & FD_CLOSE_AT_EOXACT)
-=======
-				else if (fdstate & FD_XACT_TEMPORARY)
->>>>>>> 78a09145e0
 				{
 					elog(WARNING,
 						 "temporary file %s not closed at end-of-transaction",
@@ -2190,12 +2114,9 @@ CleanupTempFiles(bool isProcExit)
 		have_xact_temporary_files = false;
 	}
 
-<<<<<<< HEAD
 	workfile_mgr_cleanup();
 
-=======
 	/* Clean up "allocated" stdio files and dirs. */
->>>>>>> 78a09145e0
 	while (numAllocatedDescs > 0)
 		FreeDesc(&allocatedDescs[0]);
 }
