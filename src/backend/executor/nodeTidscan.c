@@ -274,36 +274,6 @@ TidNext(TidScanState *node)
 	snapshot = estate->es_snapshot;
 	heapRelation = node->ss.ss_currentRelation;
 	slot = node->ss.ss_ScanTupleSlot;
-<<<<<<< HEAD
-	scanrelid = ((TidScan *) node->ss.ps.plan)->scan.scanrelid;
-
-	/*
-	 * Check if we are evaluating PlanQual for tuple of this relation.
-	 * Additional checking is not good, but no other way for now. We could
-	 * introduce new nodes for this case and handle TidScan --> NewNode
-	 * switching in Init/ReScan plan...
-	 */
-	if (estate->es_evTuple != NULL &&
-		estate->es_evTuple[scanrelid - 1] != NULL)
-	{
-		if (estate->es_evTupleNull[scanrelid - 1])
-			return ExecClearTuple(slot);
-
-		/*
-		 * XXX shouldn't we check here to make sure tuple matches TID list? In
-		 * runtime-key case this is not certain, is it?  However, in the WHERE
-		 * CURRENT OF case it might not match anyway ...
-		 */
-
-		ExecStoreHeapTuple(estate->es_evTuple[scanrelid - 1],
-					   slot, InvalidBuffer, false);
-
-		/* Flag for the next call that no more tuples */
-		estate->es_evTupleNull[scanrelid - 1] = true;
-		return slot;
-	}
-=======
->>>>>>> 78a09145e0
 
 	/*
 	 * First time through, compute the list of TIDs to be visited
@@ -437,17 +407,6 @@ ExecTidScan(TidScanState *node)
 void
 ExecTidReScan(TidScanState *node, ExprContext *exprCtxt)
 {
-<<<<<<< HEAD
-	EState	   *estate;
-	Index		scanrelid;
-
-	estate = node->ss.ps.state;
-	scanrelid = ((TidScan *) node->ss.ps.plan)->scan.scanrelid;
-
-	/*node->ss.ps.ps_TupFromTlist = false;*/
-
-=======
->>>>>>> 78a09145e0
 	/* If we are being passed an outer tuple, save it for runtime key calc */
 	if (exprCtxt != NULL)
 		node->ss.ps.ps_ExprContext->ecxt_outertuple =
