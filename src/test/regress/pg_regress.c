@@ -69,28 +69,22 @@ static char *makeprog = MAKEPROG;
 static char *shellprog = SHELLPROG;
 #endif
 
-<<<<<<< HEAD
 static char gpdiffprog[MAXPGPATH];
 static char gpstringsubsprog[MAXPGPATH];
 
-/* currently we can use the same diff switches on all platforms */
-/* MPP:  Add stuff to ignore all the extra NOTICE messages we give */
-const char *basic_diff_opts = "-w -I HINT: -I CONTEXT: -I GP_IGNORE:";
-const char *pretty_diff_opts = "-w -I HINT: -I CONTEXT: -I GP_IGNORE: -U3";
-=======
 /*
  * On Windows we use -w in diff switches to avoid problems with inconsistent
  * newline representation.  The actual result files will generally have
  * Windows-style newlines, but the comparison files might or might not.
  */
 #ifndef WIN32
-const char *basic_diff_opts = "";
-const char *pretty_diff_opts = "-C3";
+/* GPDB:  Add stuff to ignore all the extra NOTICE messages we give */
+const char *basic_diff_opts = "-I HINT: -I CONTEXT: -I GP_IGNORE:";
+const char *pretty_diff_opts = "-I HINT: -I CONTEXT: -I GP_IGNORE: -U3";
 #else
 const char *basic_diff_opts = "-w";
 const char *pretty_diff_opts = "-w -C3";
 #endif
->>>>>>> 78a09145e0
 
 /* options settable from command line */
 _stringlist *dblist = NULL;
@@ -2187,14 +2181,9 @@ create_database(const char *dbname)
 	 * not mess up the tests.
 	 */
 	header(_("creating database \"%s\""), dbname);
-<<<<<<< HEAD
-	if (encoding && strlen(encoding) > 0)
-		psql_command("postgres", "CREATE DATABASE \"%s\" TEMPLATE=template0 ENCODING='%s'", dbname, encoding);
-=======
 	if (encoding)
 		psql_command("postgres", "CREATE DATABASE \"%s\" TEMPLATE=template0 ENCODING='%s'%s", dbname, encoding,
 					 (nolocale) ? " LC_COLLATE='C' LC_CTYPE='C'" : "");
->>>>>>> 78a09145e0
 	else
 		psql_command("postgres", "CREATE DATABASE \"%s\" TEMPLATE=template0%s", dbname,
 					 (nolocale) ? " LC_COLLATE='C' LC_CTYPE='C'" : "");

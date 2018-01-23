@@ -175,11 +175,7 @@ hooktest:
 ## Run tests
 ##
 
-<<<<<<< HEAD
 pg_regress_call = ./pg_regress --inputdir=$(srcdir) --dlpath=. --multibyte=$(MULTIBYTE) $(MAXCONNOPT) $(NOLOCALE) --init-file=$(srcdir)/init_file
-=======
-pg_regress_call = ./pg_regress --inputdir=$(srcdir) --dlpath=. --multibyte=$(MULTIBYTE) $(NOLOCALE)
->>>>>>> 78a09145e0
 
 check: all
 	$(pg_regress_call) --temp-install=./tmp_check --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule 
