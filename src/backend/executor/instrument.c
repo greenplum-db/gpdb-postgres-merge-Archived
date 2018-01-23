@@ -30,10 +30,6 @@ InstrAlloc(int n, int instrument_options)
 {
 	Instrumentation *instr;
 
-<<<<<<< HEAD
-	/* we don't need to do any initialization except zero 'em */
-	instr->numPartScanned = 0;
-=======
 	/* timer is always required for now */
 	Assert(instrument_options & INSTRUMENT_TIMER);
 
@@ -45,8 +41,8 @@ InstrAlloc(int n, int instrument_options)
 		for (i = 0; i < n; i++)
 			instr[i].needs_bufusage = true;
 	}
->>>>>>> 78a09145e0
 
+	instr->numPartScanned = 0;
 	return instr;
 }
 
@@ -82,8 +78,6 @@ InstrStopNode(Instrumentation *instr, double nTuples)
 	INSTR_TIME_SET_CURRENT(endtime);
 	INSTR_TIME_ACCUM_DIFF(instr->counter, endtime, instr->starttime);
 
-<<<<<<< HEAD
-=======
 	INSTR_TIME_SET_ZERO(instr->starttime);
 
 	/* Adds delta of buffer usage to node's count. */
@@ -91,7 +85,6 @@ InstrStopNode(Instrumentation *instr, double nTuples)
 		BufferUsageAccumDiff(&instr->bufusage,
 			&pgBufferUsage, &instr->bufusage_start);
 
->>>>>>> 78a09145e0
 	/* Is this the first tuple of this cycle? */
 	if (!instr->running)
 	{

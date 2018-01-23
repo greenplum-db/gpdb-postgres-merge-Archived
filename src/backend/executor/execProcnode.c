@@ -787,13 +787,8 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 	estate->currentExecutingSliceId = origExecutingSliceId;
 
 	/* Set up instrumentation for this node if requested */
-<<<<<<< HEAD
 	if (estate->es_instrument && result != NULL)
-		result->instrument = InstrAlloc(1);
-=======
-	if (estate->es_instrument)
 		result->instrument = InstrAlloc(1, estate->es_instrument);
->>>>>>> 78a09145e0
 
 	/* Also set up gpmon counters */
 	InitPlanNodeGpmonPkt(node, &result->gpmon_pkt, estate);
