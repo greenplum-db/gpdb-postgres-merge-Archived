@@ -52,7 +52,6 @@ POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/, \
 	pg_ts_parser.h pg_ts_template.h pg_extension.h \
 	pg_foreign_data_wrapper.h pg_foreign_server.h pg_user_mapping.h \
 	pg_default_acl.h \
-	toasting.h indexing.h \
 	gp_configuration_history.h gp_id.h gp_policy.h gp_version.h \
 	gp_segment_config.h \
 	pg_exttable.h pg_appendonly.h aoseg.h \
@@ -64,6 +63,7 @@ POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/, \
 	pg_proc_callback.h \
 	pg_partition_encoding.h \
 	pg_type_encoding.h \
+	toasting.h indexing.h \
     )
 
 pg_includes = $(sort -I$(top_srcdir)/src/include -I$(top_builddir)/src/include)
