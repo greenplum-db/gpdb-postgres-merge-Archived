@@ -2311,12 +2311,6 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	pl_error_context.arg = prodesc->proname;
 	error_context_stack = &pl_error_context;
 
-	/* Set a callback for error reporting */
-	pl_error_context.callback = plperl_exec_callback;
-	pl_error_context.previous = error_context_stack;
-	pl_error_context.arg = prodesc->proname;
-	error_context_stack = &pl_error_context;
-
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
 	if (prodesc->fn_retisset)
