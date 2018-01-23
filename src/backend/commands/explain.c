@@ -1481,8 +1481,11 @@ ExplainNode(Plan *plan, PlanState *planstate,
 				bitmapqualorig = ((BitmapHeapScan *) plan)->bitmapqualorig;
 			else if (nodeTag(plan) == T_BitmapAppendOnlyScan)
 				bitmapqualorig = ((BitmapAppendOnlyScan *) plan)->bitmapqualorig;
-			else if (nodeTag(plan) == T_BitmapTableScan)
+			else
+			{
+				Assert(nodeTag(plan) == T_BitmapTableScan);
 				bitmapqualorig = ((BitmapTableScan *) plan)->bitmapqualorig;
+			}
 
 			show_scan_qual(bitmapqualorig,
 						   "Recheck Cond", plan, outer_plan, es);

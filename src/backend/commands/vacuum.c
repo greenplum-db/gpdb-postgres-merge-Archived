@@ -5439,8 +5439,6 @@ dispatchVacuum(VacuumStmt *vacstmt, VacuumStatsContext *ctx)
 
 	Assert(Gp_role == GP_ROLE_DISPATCH);
 	Assert(vacstmt);
-	Assert(vacstmt->vacuum);
-	Assert(!vacstmt->analyze);
 
 	/* XXX: Some kinds of VACUUM assign a new relfilenode. bitmap indexes maybe? */
 	CdbDispatchUtilityStatement((Node *) vacstmt,
