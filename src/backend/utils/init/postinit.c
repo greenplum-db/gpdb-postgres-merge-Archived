@@ -914,38 +914,6 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 */
 	RelationCacheInitializePhase3();
 
-	/*
-	 * Perform client authentication if necessary, then figure out our
-	 * postgres user ID, and see if we are a superuser.
-	 *
-	 * In standalone mode and in autovacuum worker processes, we use a fixed
-	 * ID, otherwise we figure it out from the authenticated user name.
-	 */
-	if (bootstrap || IsAutoVacuumWorkerProcess())
-	{
-		InitializeSessionUserIdStandalone();
-		am_superuser = true;
-	}
-	else if (!IsUnderPostmaster)
-	{
-		InitializeSessionUserIdStandalone();
-		am_superuser = true;
-		if (!ThereIsAtLeastOneRole())
-			ereport(WARNING,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("no roles are defined in this database system"),
-					 errhint("You should immediately run CREATE USER \"%s\" SUPERUSER;.",
-							 username)));
-	}
-	else
-	{
-		/* normal multiuser case */
-		Assert(MyProcPort != NULL);
-		PerformAuthentication(MyProcPort);
-		InitializeSessionUserId(username);
-		am_superuser = superuser();
-	}
-
 	/* set up ACL framework (so CheckMyDatabase can check permissions) */
 	initialize_acl();
 
