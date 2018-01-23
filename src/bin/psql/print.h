@@ -3,11 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
  * src/bin/psql/print.h
-=======
- * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.42 2009/11/22 05:20:41 tgl Exp $
->>>>>>> 78a09145e0
  */
 #ifndef PRINT_H
 #define PRINT_H
@@ -67,13 +63,8 @@ typedef struct printTextFormat
 	const char *nl_right;		/* right mark for newline */
 	const char *wrap_left;		/* left mark after wrapped data */
 	const char *wrap_right;		/* right mark for wrapped data */
-<<<<<<< HEAD
 	bool		wrap_right_border;		/* use right-hand border for wrap
 										 * marks when border=0? */
-=======
-	bool		wrap_right_border;	/* use right-hand border for wrap marks
-									 * when border=0? */
->>>>>>> 78a09145e0
 } printTextFormat;
 
 typedef struct printTableOpt

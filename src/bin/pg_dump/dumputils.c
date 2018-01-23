@@ -337,71 +337,6 @@ void
 appendByteaLiteral(PQExpBuffer buf, const unsigned char *str, size_t length,
 				   bool std_strings)
 {
-<<<<<<< HEAD
-	const unsigned char *vp;
-	unsigned char *rp;
-	size_t		i;
-	size_t		len;
-	size_t		bslash_len = (std_strings ? 1 : 2);
-
-	len = 2;					/* for the quote marks */
-	vp = str;
-	for (i = length; i > 0; i--, vp++)
-	{
-		if (*vp < 0x20 || *vp > 0x7e)
-			len += bslash_len + 3;
-		else if (*vp == '\'')
-			len += 2;
-		else if (*vp == '\\')
-			len += bslash_len + bslash_len;
-		else
-			len++;
-	}
-
-	if (!enlargePQExpBuffer(buf, len))
-		return;
-
-	rp = (unsigned char *) (buf->data + buf->len);
-	*rp++ = '\'';
-
-	vp = str;
-	for (i = length; i > 0; i--, vp++)
-	{
-		if (*vp < 0x20 || *vp > 0x7e)
-		{
-			int			val = *vp;
-
-			if (!std_strings)
-				*rp++ = '\\';
-			*rp++ = '\\';
-			*rp++ = (val >> 6) + '0';
-			*rp++ = ((val >> 3) & 07) + '0';
-			*rp++ = (val & 07) + '0';
-		}
-		else if (*vp == '\'')
-		{
-			*rp++ = '\'';
-			*rp++ = '\'';
-		}
-		else if (*vp == '\\')
-		{
-			if (!std_strings)
-			{
-				*rp++ = '\\';
-				*rp++ = '\\';
-			}
-			*rp++ = '\\';
-			*rp++ = '\\';
-		}
-		else
-			*rp++ = *vp;
-	}
-
-	*rp++ = '\'';
-	*rp = '\0';
-
-	buf->len = ((char *) rp) - buf->data;
-=======
 	const unsigned char *source = str;
 	char	   *target;
 
@@ -436,7 +371,6 @@ appendByteaLiteral(PQExpBuffer buf, const unsigned char *str, size_t length,
 	*target = '\0';
 
 	buf->len = target - buf->data;
->>>>>>> 78a09145e0
 }
 
 
@@ -906,17 +840,7 @@ do { \
 		}
 
 		/* UPDATE */
-<<<<<<< HEAD
 		CONVERT_PRIV('w', "UPDATE");
-=======
-		if (remoteVersion >= 70200 ||
-			strcmp(type, "SEQUENCE") == 0 ||
-			strcmp(type, "SEQUENCES") == 0)
-			CONVERT_PRIV('w', "UPDATE");
-		else
-			/* 7.0 and 7.1 have a simpler worldview */
-			CONVERT_PRIV('w', "UPDATE,DELETE");
->>>>>>> 78a09145e0
 	}
 	else if (strcmp(type, "FUNCTION") == 0 ||
 			 strcmp(type, "FUNCTIONS") == 0)
@@ -940,17 +864,15 @@ do { \
 		CONVERT_PRIV('U', "USAGE");
 	else if (strcmp(type, "SERVER") == 0)
 		CONVERT_PRIV('U', "USAGE");
-<<<<<<< HEAD
-	else if (strcmp(type, "PROTOCOL") == 0)
-	{
-		CONVERT_PRIV('r', "SELECT");
-		CONVERT_PRIV('a', "INSERT");
-=======
 	else if (strcmp(type, "LARGE OBJECT") == 0)
 	{
 		CONVERT_PRIV('r', "SELECT");
 		CONVERT_PRIV('w', "UPDATE");
->>>>>>> 78a09145e0
+	}
+	else if (strcmp(type, "PROTOCOL") == 0)
+	{
+		CONVERT_PRIV('r', "SELECT");
+		CONVERT_PRIV('a', "INSERT");
 	}
 	else
 		abort();

@@ -724,13 +724,8 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev3_wd, "TABLE") != 0)
 	{
 		static const char *const list_ALTER[] =
-<<<<<<< HEAD
 		{"AGGREGATE", "CONVERSION", "DATABASE", "DEFAULT PRIVILEGES", "DOMAIN", "EXTENSION", "FOREIGN DATA WRAPPER", "FUNCTION",
 		"GROUP", "INDEX", "LANGUAGE", "LARGE OBJECT", "OPERATOR", "ROLE", "SCHEMA", "SERVER", "SEQUENCE", "TABLE",
-=======
-		{"AGGREGATE", "CONVERSION", "DATABASE", "DOMAIN", "FOREIGN DATA WRAPPER", "FUNCTION",
-			"GROUP", "INDEX", "LANGUAGE", "LARGE OBJECT", "OPERATOR", "ROLE", "SCHEMA", "SERVER", "SEQUENCE", "TABLE",
->>>>>>> 78a09145e0
 		"TABLESPACE", "TEXT SEARCH", "TRIGGER", "TYPE", "USER", "USER MAPPING FOR", "VIEW", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER);
@@ -1102,18 +1097,11 @@ psql_completion(char *text, int start, int end)
 			  pg_strcasecmp(prev2_wd, "ALTER") == 0))
 	{
 		static const char *const list_COLUMNALTER[] =
-<<<<<<< HEAD
 		{"TYPE", "SET", "RESET", "DROP", NULL};
 
 		COMPLETE_WITH_LIST(list_COLUMNALTER);
 	}
 	/* ALTER TABLE ALTER [COLUMN] <foo> SET */
-=======
-		{"TYPE", "SET", "DROP", NULL};
-
-		COMPLETE_WITH_LIST(list_COLUMNALTER);
-	}
->>>>>>> 78a09145e0
 	else if (((pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
 			   pg_strcasecmp(prev3_wd, "COLUMN") == 0) ||
 			  (pg_strcasecmp(prev5_wd, "TABLE") == 0 &&
@@ -1121,23 +1109,15 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "SET") == 0)
 	{
 		static const char *const list_COLUMNSET[] =
-<<<<<<< HEAD
 		{"(", "DEFAULT", "NOT NULL", "STATISTICS", "STORAGE", NULL};
 
 		COMPLETE_WITH_LIST(list_COLUMNSET);
 	}
 	/* ALTER TABLE ALTER [COLUMN] <foo> SET ( */
-=======
-		{"DEFAULT", "NOT NULL", "STATISTICS", "STORAGE", NULL};
-
-		COMPLETE_WITH_LIST(list_COLUMNSET);
-	}
->>>>>>> 78a09145e0
 	else if (((pg_strcasecmp(prev5_wd, "ALTER") == 0 &&
 			   pg_strcasecmp(prev4_wd, "COLUMN") == 0) ||
 			  pg_strcasecmp(prev4_wd, "ALTER") == 0) &&
 			 pg_strcasecmp(prev2_wd, "SET") == 0 &&
-<<<<<<< HEAD
 			 pg_strcasecmp(prev_wd, "(") == 0)
 	{
 		static const char *const list_COLUMNOPTIONS[] =
@@ -1158,15 +1138,6 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_LIST(list_COLUMNSTORAGE);
 	}
 	/* ALTER TABLE ALTER [COLUMN] <foo> DROP */
-=======
-			 pg_strcasecmp(prev_wd, "STATISTICS") == 0)
-	{
-		static const char *const list_COLUMNSETSTATS[] =
-		{"DISTINCT", NULL};
-
-		COMPLETE_WITH_LIST(list_COLUMNSETSTATS);
-	}
->>>>>>> 78a09145e0
 	else if (((pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
 			   pg_strcasecmp(prev3_wd, "COLUMN") == 0) ||
 			  (pg_strcasecmp(prev5_wd, "TABLE") == 0 &&

@@ -8,11 +8,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
  * src/bin/psql/describe.c
-=======
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.232 2009/12/07 05:22:23 tgl Exp $
->>>>>>> 78a09145e0
  */
 #include "postgres_fe.h"
 
@@ -929,11 +925,7 @@ listDefaultACLs(const char *pattern)
 	printQueryOpt myopt = pset.popt;
 	static const bool translate_columns[] = {false, false, true, false};
 
-<<<<<<< HEAD
 	if (pset.sversion < 90000)
-=======
-	if (pset.sversion < 80500)
->>>>>>> 78a09145e0
 	{
 		fprintf(stderr, _("The server (version %d.%d) does not support altering default privileges.\n"),
 				pset.sversion / 10000, (pset.sversion / 100) % 100);
@@ -1322,26 +1314,7 @@ describeOneTableDetails(const char *schemaname,
 	initPQExpBuffer(&tmpbuf);
 
 	/* Get general table info */
-<<<<<<< HEAD
 	if (pset.sversion >= 90000)
-=======
-	if (pset.sversion >= 80500)
-	{
-		printfPQExpBuffer(&buf,
-			  "SELECT c.relchecks, c.relkind, c.relhasindex, c.relhasrules, "
-						  "c.relhastriggers, c.relhasoids, "
-						  "%s, c.reltablespace, c.relhasexclusion\n"
-						  "FROM pg_catalog.pg_class c\n "
-		   "LEFT JOIN pg_catalog.pg_class tc ON (c.reltoastrelid = tc.oid)\n"
-						  "WHERE c.oid = '%s'\n",
-						  (verbose ?
-						   "pg_catalog.array_to_string(c.reloptions || "
-						   "array(select 'toast.' || x from pg_catalog.unnest(tc.reloptions) x), ', ')\n"
-						   : "''"),
-						  oid);
-	}
-	else if (pset.sversion >= 80400)
->>>>>>> 78a09145e0
 	{
 		printfPQExpBuffer(&buf,
 			  "SELECT c.relchecks, c.relkind, c.relhasindex, c.relhasrules, "
@@ -1431,15 +1404,10 @@ describeOneTableDetails(const char *schemaname,
 		strdup(PQgetvalue(res, 0, 6)) : 0;
 	tableinfo.tablespace = (pset.sversion >= 80000) ?
 		atooid(PQgetvalue(res, 0, 7)) : 0;
-<<<<<<< HEAD
 	tableinfo.reloftype = (pset.sversion >= 90000 && strcmp(PQgetvalue(res, 0, 8), "") != 0) ?
 		strdup(PQgetvalue(res, 0, 8)) : 0;
 	/* GPDB Only:  relstorage  */
 	tableinfo.relstorage = (isGPDB()) ? *(PQgetvalue(res, 0, 8)) : 'h';
-=======
-	tableinfo.hasexclusion = (pset.sversion >= 80500) ?
-		strcmp(PQgetvalue(res, 0, 8), "t") == 0 : false;
->>>>>>> 78a09145e0
 	PQclear(res);
 	res = NULL;
 
@@ -1455,7 +1423,6 @@ describeOneTableDetails(const char *schemaname,
 
 		res = PSQLexec(buf.data, false);
 		if (!res)
-<<<<<<< HEAD
 			goto error_return;
 
 		seq_values = pg_malloc((PQnfields(res) + 1) * sizeof(*seq_values));
@@ -1492,16 +1459,6 @@ describeOneTableDetails(const char *schemaname,
 		tableinfo.compressionLevel = pg_strdup(PQgetvalue(result, 0, 1));
 		tableinfo.blockSize = pg_strdup(PQgetvalue(result, 0, 2));
 		tableinfo.checksum = pg_strdup(PQgetvalue(result, 0, 3));
-=======
-			goto error_return;
-
-		seq_values = pg_malloc((PQnfields(res) + 1) * sizeof(*seq_values));
-
-		for (i = 0; i < PQnfields(res); i++)
-			seq_values[i] = pg_strdup(PQgetvalue(res, 0, i));
-		seq_values[i] = NULL;
-
->>>>>>> 78a09145e0
 		PQclear(res);
 		res = NULL;
 	}
@@ -1516,7 +1473,6 @@ describeOneTableDetails(const char *schemaname,
 	if (tableinfo.relkind == 'i')
 		appendPQExpBuffer(&buf, ",\n  pg_catalog.pg_get_indexdef(a.attrelid, a.attnum, TRUE) AS indexdef");
 	if (verbose)
-<<<<<<< HEAD
 	{
 		appendPQExpBuffer(&buf, ",\n  a.attstorage ");
 		if (tableinfo.relstorage == 'c')
@@ -1530,10 +1486,6 @@ describeOneTableDetails(const char *schemaname,
 	  appendPQExpBuffer(&buf, "\nLEFT OUTER JOIN pg_catalog.pg_attribute_encoding e");
 	  appendPQExpBuffer(&buf, "\nON   e.attrelid = a .attrelid AND e.attnum = a.attnum");
 	}
-=======
-		appendPQExpBuffer(&buf, ",\n  a.attstorage, pg_catalog.col_description(a.attrelid, a.attnum)");
-	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_attribute a");
->>>>>>> 78a09145e0
 	appendPQExpBuffer(&buf, "\nWHERE a.attrelid = '%s' AND a.attnum > 0 AND NOT a.attisdropped", oid);
 	appendPQExpBuffer(&buf, "\nORDER BY a.attnum");
 
@@ -1684,20 +1636,12 @@ describeOneTableDetails(const char *schemaname,
 		if (tableinfo.relkind == 'i')
 			printTableAddCell(&cont, PQgetvalue(res, i, 5), false, false);
 
-		/* Expression for index column */
-		if (tableinfo.relkind == 'i')
-			printTableAddCell(&cont, PQgetvalue(res, i, 5), false);
-
 		/* Storage and Description */
 		if (verbose)
 		{
 			int			firstvcol = (tableinfo.relkind == 'i' ? 6 : 5);
-<<<<<<< HEAD
 			int			firstvcol_offset = 0;
 			char	   *storage = PQgetvalue(res, i, firstvcol);
-=======
-			char	   *storage  = PQgetvalue(res, i, firstvcol);
->>>>>>> 78a09145e0
 
 			/* Storage */
 			/* these strings are literal in our syntax, so not translated. */
@@ -1706,7 +1650,6 @@ describeOneTableDetails(const char *schemaname,
 									   (storage[0] == 'x' ? "extended" :
 										(storage[0] == 'e' ? "external" :
 										 "???")))),
-<<<<<<< HEAD
 							  false, false);
 			firstvcol_offset = firstvcol_offset + 1;
 
@@ -1768,10 +1711,6 @@ describeOneTableDetails(const char *schemaname,
 			/* Description */
 			printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + firstvcol_offset),
 							  false, false);
-=======
-							  false);
-			printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + 1), false);
->>>>>>> 78a09145e0
 		}
 	}
 
@@ -1787,7 +1726,6 @@ describeOneTableDetails(const char *schemaname,
 			appendPQExpBuffer(&buf, "i.indisvalid,\n");
 		else
 			appendPQExpBuffer(&buf, "true AS indisvalid,\n");
-<<<<<<< HEAD
 		if (pset.sversion >= 90000)
 			appendPQExpBuffer(&buf,
 							  "  (NOT i.indimmediate) AND "
@@ -1802,26 +1740,6 @@ describeOneTableDetails(const char *schemaname,
 							  "conindid = i.indexrelid AND "
 							  "contype IN ('p','u','x') AND "
 							  "condeferred) AS condeferred,\n");
-=======
-		if (pset.sversion >= 80500)
-			appendPQExpBuffer(&buf,
-							  "  (NOT i.indimmediate) AND "
-							  "EXISTS (SELECT 1 FROM pg_catalog.pg_depend d, "
-							  "pg_catalog.pg_constraint con WHERE "
-							  "d.classid = 'pg_catalog.pg_class'::pg_catalog.regclass AND "
-							  "d.objid = i.indexrelid AND "
-							  "d.refclassid = 'pg_catalog.pg_constraint'::pg_catalog.regclass AND "
-							  "d.refobjid = con.oid AND d.deptype = 'i' AND "
-							  "con.condeferrable) AS condeferrable,\n"
-							  "  (NOT i.indimmediate) AND "
-							  "EXISTS (SELECT 1 FROM pg_catalog.pg_depend d, "
-							  "pg_catalog.pg_constraint con WHERE "
-							  "d.classid = 'pg_catalog.pg_class'::pg_catalog.regclass AND "
-							  "d.objid = i.indexrelid AND "
-							  "d.refclassid = 'pg_catalog.pg_constraint'::pg_catalog.regclass AND "
-							  "d.refobjid = con.oid AND d.deptype = 'i' AND "
-							  "con.condeferred) AS condeferred,\n");
->>>>>>> 78a09145e0
 		else
 			appendPQExpBuffer(&buf,
 						"  false AS condeferrable, false AS condeferred,\n");
@@ -2211,7 +2129,6 @@ describeOneTableDetails(const char *schemaname,
 				appendPQExpBuffer(&buf, "i.indisvalid, ");
 			else
 				appendPQExpBuffer(&buf, "true as indisvalid, ");
-<<<<<<< HEAD
 			appendPQExpBuffer(&buf, "pg_catalog.pg_get_indexdef(i.indexrelid, 0, true),\n  ");
 			if (pset.sversion >= 90000)
 				appendPQExpBuffer(&buf,
@@ -2221,29 +2138,6 @@ describeOneTableDetails(const char *schemaname,
 				appendPQExpBuffer(&buf,
 								  "null AS constraintdef, null AS contype, "
 							 "false AS condeferrable, false AS condeferred");
-=======
-			appendPQExpBuffer(&buf, "pg_catalog.pg_get_indexdef(i.indexrelid, 0, true)");
-			if (pset.sversion >= 80500)
-				appendPQExpBuffer(&buf,
-							  ",\n  (NOT i.indimmediate) AND "
-							  "EXISTS (SELECT 1 FROM pg_catalog.pg_depend d, "
-							  "pg_catalog.pg_constraint con WHERE "
-							  "d.classid = 'pg_catalog.pg_class'::pg_catalog.regclass AND "
-							  "d.objid = i.indexrelid AND "
-							  "d.refclassid = 'pg_catalog.pg_constraint'::pg_catalog.regclass AND "
-							  "d.refobjid = con.oid AND d.deptype = 'i' AND "
-							  "con.condeferrable) AS condeferrable"
-							  ",\n  (NOT i.indimmediate) AND "
-							  "EXISTS (SELECT 1 FROM pg_catalog.pg_depend d, "
-							  "pg_catalog.pg_constraint con WHERE "
-							  "d.classid = 'pg_catalog.pg_class'::pg_catalog.regclass AND "
-							  "d.objid = i.indexrelid AND "
-							  "d.refclassid = 'pg_catalog.pg_constraint'::pg_catalog.regclass AND "
-							  "d.refobjid = con.oid AND d.deptype = 'i' AND "
-							  "con.condeferred) AS condeferred");
-			else
-				appendPQExpBuffer(&buf, ", false AS condeferrable, false AS condeferred");
->>>>>>> 78a09145e0
 			if (pset.sversion >= 80000)
 				appendPQExpBuffer(&buf, ", c2.reltablespace");
 			appendPQExpBuffer(&buf,
@@ -2320,11 +2214,7 @@ describeOneTableDetails(const char *schemaname,
 					/* Print tablespace of the index on the same line */
 					if (pset.sversion >= 80000)
 						add_tablespace_footer(&cont, 'i',
-<<<<<<< HEAD
 										   atooid(PQgetvalue(result, i, 10)),
-=======
-											atooid(PQgetvalue(result, i, 8)),
->>>>>>> 78a09145e0
 											  false);
 				}
 			}
@@ -2349,38 +2239,6 @@ describeOneTableDetails(const char *schemaname,
 			if (tuples > 0)
 			{
 				printTableAddFooter(&cont, _("Check constraints:"));
-				for (i = 0; i < tuples; i++)
-				{
-					/* untranslated contraint name and def */
-					printfPQExpBuffer(&buf, "    \"%s\" %s",
-									  PQgetvalue(result, i, 0),
-									  PQgetvalue(result, i, 1));
-
-					printTableAddFooter(&cont, buf.data);
-				}
-			}
-			PQclear(result);
-		}
-
-		/* print exclusion constraints */
-		if (tableinfo.hasexclusion)
-		{
-			printfPQExpBuffer(&buf,
-							  "SELECT r.conname, "
-							  "pg_catalog.pg_get_constraintdef(r.oid, true)\n"
-							  "FROM pg_catalog.pg_constraint r\n"
-							  "WHERE r.conrelid = '%s' AND r.contype = 'x'\n"
-							  "ORDER BY 1",
-							  oid);
-			result = PSQLexec(buf.data, false);
-			if (!result)
-				goto error_return;
-			else
-				tuples = PQntuples(result);
-
-			if (tuples > 0)
-			{
-				printTableAddFooter(&cont, _("Exclusion constraints:"));
 				for (i = 0; i < tuples; i++)
 				{
 					/* untranslated contraint name and def */
@@ -2553,11 +2411,7 @@ describeOneTableDetails(const char *schemaname,
 			PQclear(result);
 		}
 
-<<<<<<< HEAD
 		/* print triggers (but only user-defined triggers) */
-=======
-		/* print triggers (but ignore RI and unique constraint triggers) */
->>>>>>> 78a09145e0
 		if (tableinfo.hastriggers)
 		{
 			printfPQExpBuffer(&buf,
@@ -2739,7 +2593,6 @@ describeOneTableDetails(const char *schemaname,
 		}
 		PQclear(result);
 
-<<<<<<< HEAD
 		/* Table type */
 		if (tableinfo.reloftype)
 		{
@@ -2747,8 +2600,6 @@ describeOneTableDetails(const char *schemaname,
 			printTableAddFooter(&cont, buf.data);
 		}
 
-=======
->>>>>>> 78a09145e0
 		/* OIDs and options */
 		if (verbose)
 		{
@@ -3237,7 +3088,6 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
 
 	initPQExpBuffer(&buf);
 
-<<<<<<< HEAD
 	if (pset.sversion >= 90000)
 	{
 		/* ACHOI: havewhere is false */
@@ -3252,19 +3102,6 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
 		/* ACHOI: psql 9.0 assing the havewhere here */
 		processSQLNamePattern(pset.db, &buf, pattern, false, false,
 									   NULL, "pg_roles.rolname", NULL, NULL);
-=======
-	if (pset.sversion >= 80500)
-	{
-		bool	havewhere;
-
-		printfPQExpBuffer(&buf, "SELECT rolname AS role, datname AS database,\n"
-						  "pg_catalog.array_to_string(setconfig, E'\\n') AS settings\n"
-						  "FROM pg_db_role_setting AS s\n"
-						  "LEFT JOIN pg_database ON pg_database.oid = setdatabase\n"
-						  "LEFT JOIN pg_roles ON pg_roles.oid = setrole\n");
-		havewhere = processSQLNamePattern(pset.db, &buf, pattern, false, false,
-										  NULL, "pg_roles.rolname", NULL, NULL);
->>>>>>> 78a09145e0
 		processSQLNamePattern(pset.db, &buf, pattern2, havewhere, false,
 							  NULL, "pg_database.datname", NULL, NULL);
 		appendPQExpBufferStr(&buf, "ORDER BY role, database");
@@ -3300,10 +3137,7 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
 	resetPQExpBuffer(&buf);
 	return true;
 }
-<<<<<<< HEAD
-=======
 
->>>>>>> 78a09145e0
 
 /*
  * listTables()

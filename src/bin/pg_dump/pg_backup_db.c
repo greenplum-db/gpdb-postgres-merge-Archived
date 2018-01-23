@@ -548,8 +548,6 @@ CommitTransaction(ArchiveHandle *AH)
 {
 	ExecuteSqlCommand(AH, "COMMIT", "could not commit database transaction");
 }
-<<<<<<< HEAD
-=======
 
 void
 DropBlobIfExists(ArchiveHandle *AH, Oid oid)
@@ -567,33 +565,3 @@ DropBlobIfExists(ArchiveHandle *AH, Oid oid)
 				 oid, oid);
 	}
 }
-
-static bool
-_isIdentChar(unsigned char c)
-{
-	if ((c >= 'a' && c <= 'z')
-		|| (c >= 'A' && c <= 'Z')
-		|| (c >= '0' && c <= '9')
-		|| (c == '_')
-		|| (c == '$')
-		|| (c >= (unsigned char) '\200')		/* no need to check <= \377 */
-		)
-		return true;
-	else
-		return false;
-}
-
-static bool
-_isDQChar(unsigned char c, bool atStart)
-{
-	if ((c >= 'a' && c <= 'z')
-		|| (c >= 'A' && c <= 'Z')
-		|| (c == '_')
-		|| (!atStart && c >= '0' && c <= '9')
-		|| (c >= (unsigned char) '\200')		/* no need to check <= \377 */
-		)
-		return true;
-	else
-		return false;
-}
->>>>>>> 78a09145e0

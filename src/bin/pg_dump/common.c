@@ -91,23 +91,6 @@ getSchemaData(int *numTablesPtr)
 	NamespaceInfo *nspinfo;
 	ExtensionInfo *extinfo;
 	InhInfo    *inhinfo;
-<<<<<<< HEAD
-=======
-	RuleInfo   *ruleinfo;
-	ProcLangInfo *proclanginfo;
-	CastInfo   *castinfo;
-	OpclassInfo *opcinfo;
-	OpfamilyInfo *opfinfo;
-	ConvInfo   *convinfo;
-	TSParserInfo *prsinfo;
-	TSTemplateInfo *tmplinfo;
-	TSDictInfo *dictinfo;
-	TSConfigInfo *cfginfo;
-	FdwInfo    *fdwinfo;
-	ForeignServerInfo *srvinfo;
-	DefaultACLInfo *daclinfo;
-	int			numNamespaces;
->>>>>>> 78a09145e0
 	int			numAggregates;
 	int			numInherits;
 	int			numRules;
@@ -222,19 +205,11 @@ getSchemaData(int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined foreign servers\n");
-<<<<<<< HEAD
 	getForeignServers(&numForeignServers);
-=======
-	srvinfo = getForeignServers(&numForeignServers);
 
 	if (g_verbose)
 		write_msg(NULL, "reading default privileges\n");
-	daclinfo = getDefaultACLs(&numDefaultACLs);
-
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined operator families\n");
-	opfinfo = getOpfamilies(&numOpfamilies);
->>>>>>> 78a09145e0
+	getDefaultACLs(&numDefaultACLs);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined conversions\n");

@@ -140,11 +140,7 @@ static bool var_is_current_source(PsqlScanState state, const char *varname);
 static YY_BUFFER_STATE prepare_buffer(const char *txt, int len,
 									  char **txtcopy);
 static void emit(const char *txt, int len);
-<<<<<<< HEAD
 static void escape_variable(bool as_ident);
-=======
-static bool is_utf16_surrogate_first(uint32 c);
->>>>>>> 78a09145e0
 
 #ifdef ECHO
 #undef ECHO
@@ -382,10 +378,6 @@ typecast		"::"
 dot_dot			\.\.
 colon_equals	":="
 
-/* these two token types are used by PL/pgsql, though not in core SQL */
-dot_dot			\.\.
-colon_equals	":="
-
 /*
  * "self" is the set of chars that should be returned as single-character
  * tokens.  "op_chars" is the set of chars that can make up "Op" tokens,
@@ -567,25 +559,9 @@ other			.
 					ECHO;
 				}
 <xe>{xeunicode} {
-<<<<<<< HEAD
 					ECHO;
 				}
 <xe>{xeunicodefail}	{
-=======
-					uint32 c = strtoul(yytext+2, NULL, 16);
-
-					if (is_utf16_surrogate_first(c))
-						BEGIN(xeu);
-					ECHO;
-				}
-<xeu>{xeunicode} {
-					BEGIN(xe);
-					ECHO;
-				}
-<xeu>.			{ ECHO; }
-<xeu>\n			{ ECHO; }
-<xe,xeu>{xeunicodefail}	{
->>>>>>> 78a09145e0
 					ECHO;
 				}
 <xe>{xeescape}  {
@@ -1873,7 +1849,6 @@ emit(const char *txt, int len)
 	}
 }
 
-<<<<<<< HEAD
 static void
 escape_variable(bool as_ident)
 {
@@ -1920,10 +1895,4 @@ escape_variable(bool as_ident)
 	 */
 	yytext[yyleng - 1] = saved_char;
 	emit(yytext, yyleng);
-=======
-static bool
-is_utf16_surrogate_first(uint32 c)
-{
-	return (c >= 0xD800 && c <= 0xDBFF);
->>>>>>> 78a09145e0
 }

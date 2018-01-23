@@ -50,12 +50,9 @@
 #include "access/transam.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_class.h"
-<<<<<<< HEAD
 #include "catalog/pg_magic_oid.h"
-=======
 #include "catalog/pg_default_acl.h"
 #include "catalog/pg_largeobject.h"
->>>>>>> 78a09145e0
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
@@ -412,7 +409,6 @@ main(int argc, char **argv)
 	static int	outputNoTablespaces = 0;
 	static int	use_setsessauth = 0;
 
-<<<<<<< HEAD
 	/*
 	 * The default value for gp_syntax_option depends upon whether or not the
 	 * backend is a GP or non-GP backend -- a GP backend defaults to ENABLED.
@@ -422,11 +418,8 @@ main(int argc, char **argv)
 		GPS_NOT_SPECIFIED, GPS_DISABLED, GPS_ENABLED
 	}			gp_syntax_option = GPS_NOT_SPECIFIED;
 
-	struct option long_options[] = {
-		{"binary-upgrade", no_argument, &binary_upgrade, 1},	/* not documented */
-=======
 	static struct option long_options[] = {
->>>>>>> 78a09145e0
+		{"binary-upgrade", no_argument, &binary_upgrade, 1},	/* not documented */
 		{"data-only", no_argument, NULL, 'a'},
 		{"blobs", no_argument, NULL, 'b'},
 		{"clean", no_argument, NULL, 'c'},
@@ -2545,27 +2538,8 @@ dumpBlobComments(Archive *AH, void *arg __attribute__((unused)))
 			"FROM (SELECT DISTINCT loid FROM "
 			"pg_description d JOIN pg_largeobject l ON (objoid = loid) "
 			"WHERE classoid = 'pg_largeobject'::regclass) ss";
-<<<<<<< HEAD
 	else
 		error_unsupported_server_version();
-=======
-	else if (AH->remoteVersion >= 70200)
-		blobQry = "DECLARE blobcmt CURSOR FOR SELECT loid, "
-			"obj_description(loid, 'pg_largeobject'), NULL, NULL "
-			"FROM (SELECT DISTINCT loid FROM pg_largeobject) ss";
-	else if (AH->remoteVersion >= 70100)
-		blobQry = "DECLARE blobcmt CURSOR FOR SELECT loid, "
-			"obj_description(loid), NULL, NULL "
-			"FROM (SELECT DISTINCT loid FROM pg_largeobject) ss";
-	else
-		blobQry = "DECLARE blobcmt CURSOR FOR SELECT oid, "
-			"	( "
-			"		SELECT description "
-			"		FROM pg_description pd "
-			"		WHERE pd.objoid=pc.oid "
-			"	), NULL, NULL "
-			"FROM pg_class pc WHERE relkind = 'l'";
->>>>>>> 78a09145e0
 
 	res = PQexec(g_conn, blobQry);
 	check_sql_result(res, g_conn, blobQry, PGRES_COMMAND_OK);
@@ -4282,117 +4256,9 @@ getIndexes(TableInfo tblinfo[], int numTables)
 							  "ORDER BY indexname",
 							  tbinfo->dobj.catId.oid);
 		}
-<<<<<<< HEAD
 		else
 		{
 			error_unsupported_server_version();
-=======
-		else if (g_fout->remoteVersion >= 80000)
-		{
-			appendPQExpBuffer(query,
-							  "SELECT t.tableoid, t.oid, "
-							  "t.relname AS indexname, "
-					 "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
-							  "t.relnatts AS indnkeys, "
-							  "i.indkey, i.indisclustered, "
-							  "c.contype, c.conname, "
-							  "c.condeferrable, c.condeferred, "
-							  "c.tableoid AS contableoid, "
-							  "c.oid AS conoid, "
-							  "null AS condef, "
-							  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
-							  "null AS options "
-							  "FROM pg_catalog.pg_index i "
-					  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
-							  "LEFT JOIN pg_catalog.pg_depend d "
-							  "ON (d.classid = t.tableoid "
-							  "AND d.objid = t.oid "
-							  "AND d.deptype = 'i') "
-							  "LEFT JOIN pg_catalog.pg_constraint c "
-							  "ON (d.refclassid = c.tableoid "
-							  "AND d.refobjid = c.oid) "
-							  "WHERE i.indrelid = '%u'::pg_catalog.oid "
-							  "ORDER BY indexname",
-							  tbinfo->dobj.catId.oid);
-		}
-		else if (g_fout->remoteVersion >= 70300)
-		{
-			appendPQExpBuffer(query,
-							  "SELECT t.tableoid, t.oid, "
-							  "t.relname AS indexname, "
-					 "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
-							  "t.relnatts AS indnkeys, "
-							  "i.indkey, i.indisclustered, "
-							  "c.contype, c.conname, "
-							  "c.condeferrable, c.condeferred, "
-							  "c.tableoid AS contableoid, "
-							  "c.oid AS conoid, "
-							  "null AS condef, "
-							  "NULL AS tablespace, "
-							  "null AS options "
-							  "FROM pg_catalog.pg_index i "
-					  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
-							  "LEFT JOIN pg_catalog.pg_depend d "
-							  "ON (d.classid = t.tableoid "
-							  "AND d.objid = t.oid "
-							  "AND d.deptype = 'i') "
-							  "LEFT JOIN pg_catalog.pg_constraint c "
-							  "ON (d.refclassid = c.tableoid "
-							  "AND d.refobjid = c.oid) "
-							  "WHERE i.indrelid = '%u'::pg_catalog.oid "
-							  "ORDER BY indexname",
-							  tbinfo->dobj.catId.oid);
-		}
-		else if (g_fout->remoteVersion >= 70100)
-		{
-			appendPQExpBuffer(query,
-							  "SELECT t.tableoid, t.oid, "
-							  "t.relname AS indexname, "
-							  "pg_get_indexdef(i.indexrelid) AS indexdef, "
-							  "t.relnatts AS indnkeys, "
-							  "i.indkey, false AS indisclustered, "
-							  "CASE WHEN i.indisprimary THEN 'p'::char "
-							  "ELSE '0'::char END AS contype, "
-							  "t.relname AS conname, "
-							  "false AS condeferrable, "
-							  "false AS condeferred, "
-							  "0::oid AS contableoid, "
-							  "t.oid AS conoid, "
-							  "null AS condef, "
-							  "NULL AS tablespace, "
-							  "null AS options "
-							  "FROM pg_index i, pg_class t "
-							  "WHERE t.oid = i.indexrelid "
-							  "AND i.indrelid = '%u'::oid "
-							  "ORDER BY indexname",
-							  tbinfo->dobj.catId.oid);
-		}
-		else
-		{
-			appendPQExpBuffer(query,
-							  "SELECT "
-							  "(SELECT oid FROM pg_class WHERE relname = 'pg_class') AS tableoid, "
-							  "t.oid, "
-							  "t.relname AS indexname, "
-							  "pg_get_indexdef(i.indexrelid) AS indexdef, "
-							  "t.relnatts AS indnkeys, "
-							  "i.indkey, false AS indisclustered, "
-							  "CASE WHEN i.indisprimary THEN 'p'::char "
-							  "ELSE '0'::char END AS contype, "
-							  "t.relname AS conname, "
-							  "false AS condeferrable, "
-							  "false AS condeferred, "
-							  "0::oid AS contableoid, "
-							  "t.oid AS conoid, "
-							  "null AS condef, "
-							  "NULL AS tablespace, "
-							  "null AS options "
-							  "FROM pg_index i, pg_class t "
-							  "WHERE t.oid = i.indexrelid "
-							  "AND i.indrelid = '%u'::oid "
-							  "ORDER BY indexname",
-							  tbinfo->dobj.catId.oid);
->>>>>>> 78a09145e0
 		}
 
 		res = PQexec(g_conn, query->data);
@@ -5030,29 +4896,11 @@ getProcLangs(int *numProcLangs)
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
 
-<<<<<<< HEAD
 	/*
 	 * The laninline column was added in upstream 90000 but was backported to
 	 * Greenplum 5, so the check needs to go further back than 90000.
 	 */
 	if (g_fout->remoteVersion >= 80300)
-=======
-	if (g_fout->remoteVersion >= 80500)
-	{
-		/* pg_language has a laninline column */
-		appendPQExpBuffer(query, "SELECT tableoid, oid, "
-						  "lanname, lanpltrusted, lanplcallfoid, "
-						  "laninline, lanvalidator,  lanacl, "
-						  "(%s lanowner) AS lanowner "
-						  "FROM pg_language "
-						  "WHERE lanispl "
-						  /* do not dump initdb-installed languages */
-						  "AND oid >= %u "
-						  "ORDER BY oid",
-						  username_subquery, FirstNormalObjectId);
-	}
-	else if (g_fout->remoteVersion >= 80300)
->>>>>>> 78a09145e0
 	{
 		/* pg_language has a laninline column */
 		/* pg_language has a lanowner column */
@@ -5369,48 +5217,9 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 							  "ORDER BY a.attrelid, a.attnum",
 							  tbinfo->dobj.catId.oid);
 		}
-<<<<<<< HEAD
 		else
 		{
 			error_unsupported_server_version();
-=======
-		else if (g_fout->remoteVersion >= 70100)
-		{
-			/*
-			 * attstattarget doesn't exist in 7.1.  It does exist in 7.2, but
-			 * we don't dump it because we can't tell whether it's been
-			 * explicitly set or was just a default.
-			 */
-			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, "
-							  "-1 AS attstattarget, 0 AS attdistinct, "
-							  "a.attstorage, "
-							  "t.typstorage, a.attnotnull, a.atthasdef, "
-							  "false AS attisdropped, a.attlen, "
-							  "a.attalign, false AS attislocal, "
-							  "format_type(t.oid,a.atttypmod) AS atttypname "
-							  "FROM pg_attribute a LEFT JOIN pg_type t "
-							  "ON a.atttypid = t.oid "
-							  "WHERE a.attrelid = '%u'::oid "
-							  "AND a.attnum > 0::int2 "
-							  "ORDER BY a.attrelid, a.attnum",
-							  tbinfo->dobj.catId.oid);
-		}
-		else
-		{
-			/* format_type not available before 7.1 */
-			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, "
-							  "-1 AS attstattarget, 0 AS attdistinct, "
-							  "attstorage, attstorage AS typstorage, "
-							  "attnotnull, atthasdef, false AS attisdropped, "
-							  "attlen, attalign, "
-							  "false AS attislocal, "
-							  "(SELECT typname FROM pg_type WHERE oid = atttypid) AS atttypname "
-							  "FROM pg_attribute a "
-							  "WHERE attrelid = '%u'::oid "
-							  "AND attnum > 0::int2 "
-							  "ORDER BY attrelid, attnum",
-							  tbinfo->dobj.catId.oid);
->>>>>>> 78a09145e0
 		}
 
 		res = PQexec(g_conn, q->data);
@@ -11782,19 +11591,11 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		for (j = 0; j < tbinfo->numatts; j++)
 		{
 			/*
-<<<<<<< HEAD
 			 * Normally, dump if it's locally defined in this table, and not
 			 * dropped.  But for binary upgrade, we'll dump all the columns,
 			 * and then fix up the dropped and nonlocal cases below.
 			 */
 			if (shouldPrintColumn(tbinfo, j))
-=======
-			 * Normally, dump if it's one of the table's own attrs, and not
-			 * dropped.  But for binary upgrade, dump all the columns.
-			 */
-			if ((!tbinfo->inhAttrs[j] && !tbinfo->attisdropped[j]) ||
-				binary_upgrade)
->>>>>>> 78a09145e0
 			{
 				/* Format properly if not first attr */
 				if (actual_atts > 0)
@@ -11828,42 +11629,25 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				}
 
 				/*
-<<<<<<< HEAD
 				 * Default value --- suppress if to be printed separately.
 				 */
 				if (tbinfo->attrdefs[j] != NULL &&
-=======
-				 * Default value --- suppress if inherited (except in
-				 * binary-upgrade case, where we're not doing normal
-				 * inheritance) or if it's to be printed separately.
-				 */
-				if (tbinfo->attrdefs[j] != NULL &&
-					(!tbinfo->inhAttrDef[j] || binary_upgrade) &&
->>>>>>> 78a09145e0
 					!tbinfo->attrdefs[j]->separate)
 					appendPQExpBuffer(q, " DEFAULT %s",
 									  tbinfo->attrdefs[j]->adef_expr);
 
 				/*
-<<<<<<< HEAD
 				 * Not Null constraint --- suppress if inherited, except in
 				 * binary-upgrade mode where taht won't work.
-=======
-				 * Not Null constraint --- suppress if inherited, except
-				 * in binary-upgrade case.
->>>>>>> 78a09145e0
 				 */
 				if (tbinfo->notnull[j] &&
 					(!tbinfo->inhNotNull[j] || binary_upgrade))
 					appendPQExpBuffer(q, " NOT NULL");
-<<<<<<< HEAD
 
 				/* Column Storage attributes */
 				if (tbinfo->attencoding[j] != NULL)
 					appendPQExpBuffer(q, " ENCODING (%s)",
 										tbinfo->attencoding[j]);
-=======
->>>>>>> 78a09145e0
 			}
 		}
 
@@ -11889,12 +11673,9 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 		appendPQExpBuffer(q, "\n)");
 
-<<<<<<< HEAD
 		/*
 		 * Emit the INHERITS clause if this table has parents.
 		 */
-=======
->>>>>>> 78a09145e0
 		if (numParents > 0 && !binary_upgrade)
 		{
 			appendPQExpBuffer(q, "\nINHERITS (");
@@ -12108,15 +11889,12 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			{
 				if (tbinfo->attisdropped[j])
 				{
-<<<<<<< HEAD
 					/*
 					 * Greenplum doesn't allow altering system catalogs without
 					 * setting the allow_system_table_mods GUC first.
 					 */
 					appendPQExpBuffer(q, "SET allow_system_table_mods = 'dml';\n");
 
-=======
->>>>>>> 78a09145e0
 					appendPQExpBuffer(q, "\n-- For binary upgrade, recreate dropped column.\n");
 					appendPQExpBuffer(q, "UPDATE pg_catalog.pg_attribute\n"
 									  "SET attlen = %d, "
@@ -12136,15 +11914,12 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				}
 				else if (!tbinfo->attislocal[j])
 				{
-<<<<<<< HEAD
 					/*
 					 * Greenplum doesn't allow altering system catalogs without
 					 * setting the allow_system_table_mods GUC first.
 					 */
 					appendPQExpBuffer(q, "SET allow_system_table_mods = 'dml';\n");
 
-=======
->>>>>>> 78a09145e0
 					appendPQExpBuffer(q, "\n-- For binary upgrade, recreate inherited column.\n");
 					appendPQExpBuffer(q, "UPDATE pg_catalog.pg_attribute\n"
 									  "SET attislocal = false\n"
@@ -12163,15 +11938,12 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				if (constr->separate || constr->conislocal)
 					continue;
 
-<<<<<<< HEAD
 				/*
 				 * Greenplum doesn't allow altering system catalogs without
 				 * setting the allow_system_table_mods GUC first.
 				 */
 				appendPQExpBuffer(q, "SET allow_system_table_mods = 'dml';\n");
 
-=======
->>>>>>> 78a09145e0
 				appendPQExpBuffer(q, "\n-- For binary upgrade, set up inherited constraint.\n");
 				appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
 								  fmtId(tbinfo->dobj.name));
@@ -12204,22 +11976,12 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				}
 			}
 
-<<<<<<< HEAD
 			/*
 			 * We have probably bumped allow_system_table_mods to 'dml' in the
 			 * above processing, but even we didn't let's just reset it here
 			 * since it doesn't to do any harm to.
 			 */
 			appendPQExpBuffer(q, "RESET allow_system_table_mods;\n");
-=======
-			appendPQExpBuffer(q, "\n-- For binary upgrade, set relfrozenxid.\n");
-			appendPQExpBuffer(q, "UPDATE pg_catalog.pg_class\n"
-							  "SET relfrozenxid = '%u'\n"
-							  "WHERE oid = ",
-							  tbinfo->frozenxid);
-			appendStringLiteralAH(q, fmtId(tbinfo->dobj.name), fout);
-			appendPQExpBuffer(q, "::pg_catalog.regclass;\n");
->>>>>>> 78a09145e0
 		}
 
 		/*
@@ -12387,13 +12149,8 @@ dumpAttrDef(Archive *fout, AttrDefInfo *adinfo)
 	if (!tbinfo->dobj.dump || dataOnly)
 		return;
 
-<<<<<<< HEAD
 	/* Skip if not "separate"; it was dumped in the table's definition */
 	if (!adinfo->separate)
-=======
-	/* Don't print inherited defaults, either, except for binary upgrade */
-	if (tbinfo->inhAttrDef[adnum - 1] && !binary_upgrade)
->>>>>>> 78a09145e0
 		return;
 
 	q = createPQExpBuffer();
@@ -13084,14 +12841,7 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 			if (findx > 0)
 				appendPQExpBuffer(query, " OR DELETE");
 			else
-<<<<<<< HEAD
-			{
-				error_unsupported_server_version();
-			}
-=======
 				appendPQExpBuffer(query, " DELETE");
-			findx++;
->>>>>>> 78a09145e0
 		}
 		if (TRIGGER_FOR_UPDATE(tginfo->tgtype))
 		{
@@ -13133,42 +12883,6 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 				appendPQExpBuffer(query, "IMMEDIATE\n");
 		}
 
-<<<<<<< HEAD
-	/* In 7.3, result of regproc is already quoted */
-	if (g_fout->remoteVersion >= 70300)
-		appendPQExpBuffer(query, "EXECUTE PROCEDURE %s(",
-						  tginfo->tgfname);
-	else
-	{
-		error_unsupported_server_version();
-	}
-
-	tgargs = (char *) PQunescapeBytea((unsigned char *) tginfo->tgargs,
-									  &lentgargs);
-	p = tgargs;
-	for (findx = 0; findx < tginfo->tgnargs; findx++)
-	{
-		/* find the embedded null that terminates this trigger argument */
-		size_t	tlen = strlen(p);
-
-		if (p + tlen >= tgargs + lentgargs)
-		{
-			/* hm, not found before end of bytea value... */
-			write_msg(NULL, "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n",
-					  tginfo->tgargs,
-					  tginfo->dobj.name,
-					  tbinfo->dobj.name);
-			exit_nicely();
-		}
-
-		if (findx > 0)
-			appendPQExpBuffer(query, ", ");
-		appendStringLiteralAH(query, p, fout);
-		p += tlen + 1;
-	}
-	free(tgargs);
-	appendPQExpBuffer(query, ");\n");
-=======
 		if (TRIGGER_FOR_ROW(tginfo->tgtype))
 			appendPQExpBuffer(query, "    FOR EACH ROW\n    ");
 		else
@@ -13179,8 +12893,9 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 			appendPQExpBuffer(query, "EXECUTE PROCEDURE %s(",
 							  tginfo->tgfname);
 		else
-			appendPQExpBuffer(query, "EXECUTE PROCEDURE %s(",
-							  fmtId(tginfo->tgfname));
+		{
+			error_unsupported_server_version();
+		}
 
 		tgargs = (char *) PQunescapeBytea((unsigned char *) tginfo->tgargs,
 										  &lentgargs);
@@ -13208,7 +12923,6 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 		free(tgargs);
 		appendPQExpBuffer(query, ");\n");
 	}
->>>>>>> 78a09145e0
 
 	if (tginfo->tgenabled != 't' && tginfo->tgenabled != 'O')
 	{

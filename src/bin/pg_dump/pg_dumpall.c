@@ -1732,10 +1732,6 @@ dumpUserConfig(PGconn *conn, const char *username)
 	{
 		PGresult   *res;
 
-<<<<<<< HEAD
-		printfPQExpBuffer(buf, "SELECT rolconfig[%d] FROM pg_authid WHERE rolname = ", count);
-
-=======
 		if (server_version >= 80500)
 			printfPQExpBuffer(buf, "SELECT setconfig[%d] FROM pg_db_role_setting WHERE "
 							  "setdatabase = 0 AND setrole = "
@@ -1744,7 +1740,6 @@ dumpUserConfig(PGconn *conn, const char *username)
 			printfPQExpBuffer(buf, "SELECT rolconfig[%d] FROM pg_authid WHERE rolname = ", count);
 		else
 			printfPQExpBuffer(buf, "SELECT useconfig[%d] FROM pg_shadow WHERE usename = ", count);
->>>>>>> 78a09145e0
 		appendStringLiteralConn(buf, username, conn);
 		if (server_version >= 80500)
 			appendPQExpBuffer(buf, ")");

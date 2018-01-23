@@ -3,11 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
  * src/bin/psql/copy.c
-=======
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.83 2009/09/19 21:51:21 tgl Exp $
->>>>>>> 78a09145e0
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -40,12 +36,9 @@
  *	\copy tablename [(columnlist)] from|to filename [options]
  *	\copy ( select stmt ) to filename [options]
  *
-<<<<<<< HEAD
  * where 'filename' can be one of the following:
  *  '<file path>' | PROGRAM '<command>' | stdin | stdout | pstdout | pstdout
  *
-=======
->>>>>>> 78a09145e0
  * An undocumented fact is that you can still write BINARY before the
  * tablename; this is a hangover from the pre-7.3 syntax.  The options
  * syntax varies across backend versions, but we avoid all that mess
@@ -54,10 +47,7 @@
  * table name can be double-quoted and can have a schema part.
  * column names can be double-quoted.
  * filename can be single-quoted like SQL literals.
-<<<<<<< HEAD
  * command must be single-quoted like SQL literals
-=======
->>>>>>> 78a09145e0
  *
  * returns a malloc'ed structure with the options, or NULL on parsing error
  */
@@ -273,7 +263,6 @@ error:
 }
 
 
-<<<<<<< HEAD
 /* \copy command doesn't support on segment option */
 static void
 trim(char *s)
@@ -322,8 +311,6 @@ is_on_segment(char * after_tofrom)
 }
 
 
-=======
->>>>>>> 78a09145e0
 /*
  * Execute a \copy command (frontend copy). We have to open a file, then
  * submit a COPY query to the backend and either feed it data from the
@@ -345,7 +332,6 @@ do_copy(const char *args)
 	if (!options)
 		return false;
 
-<<<<<<< HEAD
 	if (options->after_tofrom && is_on_segment(options->after_tofrom))
 	{
 		psql_error("\\COPY command doesn't support ON SEGMENT\n");
@@ -354,10 +340,6 @@ do_copy(const char *args)
 	}
 	/* prepare to read or write the target file */
 	if (options->file && !options->program)
-=======
-	/* prepare to read or write the target file */
-	if (options->file)
->>>>>>> 78a09145e0
 		canonicalize_path(options->file);
 
 	if (options->from)
@@ -382,7 +364,6 @@ do_copy(const char *args)
 	else
 	{
 		if (options->file)
-<<<<<<< HEAD
 		{
 			if (options->program)
 			{
@@ -397,9 +378,6 @@ do_copy(const char *args)
 			else
 				copystream = fopen(options->file, PG_BINARY_W);
 		}
-=======
-			copystream = fopen(options->file, PG_BINARY_W);
->>>>>>> 78a09145e0
 		else if (!options->psql_inout)
 			copystream = pset.queryFout;
 		else
@@ -486,14 +464,11 @@ do_copy(const char *args)
 		/* if still in COPY IN state, try to get out of it */
 		if (PQresultStatus(result) == PGRES_COPY_IN)
 			PQputCopyEnd(pset.db, _("trying to exit copy mode"));
-<<<<<<< HEAD
 		PQclear(result);
 	}
 
 	if (result != NULL)
 	{
-=======
->>>>>>> 78a09145e0
 		PQclear(result);
 	}
 

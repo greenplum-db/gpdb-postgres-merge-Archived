@@ -278,11 +278,7 @@ do_lo_list(void)
 	char		buf[1024];
 	printQueryOpt myopt = pset.popt;
 
-<<<<<<< HEAD
 	if (pset.sversion >= 90000)
-=======
-	if (pset.sversion >= 80500)
->>>>>>> 78a09145e0
 	{
 		snprintf(buf, sizeof(buf),
 				 "SELECT oid as \"%s\",\n"

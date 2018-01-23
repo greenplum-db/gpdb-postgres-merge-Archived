@@ -487,7 +487,14 @@ typedef struct _foreignServerInfo
 	char	   *srvoptions;
 } ForeignServerInfo;
 
-<<<<<<< HEAD
+typedef struct _defaultACLInfo
+{
+	DumpableObject dobj;
+	char	   *defaclrole;
+	char	    defaclobjtype;
+	char	   *defaclacl;
+} DefaultACLInfo;
+
 /*
  * We build an array of these with an entry for each object that is an
  * extension member according to pg_depend.
@@ -497,15 +504,6 @@ typedef struct _extensionMemberId
 	CatalogId	catId;			/* tableoid+oid of some member object */
 	ExtensionInfo *ext;			/* owning extension */
 } ExtensionMemberId;
-=======
-typedef struct _defaultACLInfo
-{
-	DumpableObject dobj;
-	char	   *defaclrole;
-	char	    defaclobjtype;
-	char	   *defaclacl;
-} DefaultACLInfo;
->>>>>>> 78a09145e0
 
 /* global decls */
 extern bool force_quotes;		/* double-quotes for identifiers flag */
@@ -609,14 +607,10 @@ extern TSTemplateInfo *getTSTemplates(int *numTSTemplates);
 extern TSConfigInfo *getTSConfigurations(int *numTSConfigs);
 extern FdwInfo *getForeignDataWrappers(int *numForeignDataWrappers);
 extern ForeignServerInfo *getForeignServers(int *numForeignServers);
-<<<<<<< HEAD
+extern DefaultACLInfo *getDefaultACLs(int *numDefaultACLs);
 extern void getExtensionMembership(ExtensionInfo extinfo[], int numExtensions);
 extern void processExtensionTables(ExtensionInfo extinfo[], int numExtensions);
 
 extern bool	testExtProtocolSupport(void);
-
-=======
-extern DefaultACLInfo *getDefaultACLs(int *numDefaultACLs);
->>>>>>> 78a09145e0
 
 #endif   /* PG_DUMP_H */
