@@ -3261,7 +3261,7 @@ check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp)
 	 * walk pg_auth_time_constraint for this information now, instead of relying
 	 * on a flat file.
 	 */
-	List  	  		*role_intervals = get_role_intervals(rolname);
+	List  	  		*role_intervals = NIL; // get_role_intervals(rolname);
 
 	if (role_intervals == NIL)
 		return true;
