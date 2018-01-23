@@ -1573,7 +1573,6 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 							  ALLOCSET_DEFAULT_INITSIZE,
 							  ALLOCSET_DEFAULT_MAXSIZE);
 
-<<<<<<< HEAD
 	/* Create mid-lived context for aggregate trans values etc */
 	winstate->aggcontext =
 		AllocSetContextCreate(CurrentMemoryContext,
@@ -1582,8 +1581,6 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 							  ALLOCSET_DEFAULT_INITSIZE,
 							  ALLOCSET_DEFAULT_MAXSIZE);
 
-=======
->>>>>>> 78a09145e0
 	/*
 	 * tuple table initialization
 	 */
@@ -1783,7 +1780,6 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	return winstate;
 }
 
-<<<<<<< HEAD
 /*
  * Initialize expressions to compute the frame boundaries, for "RANGE
  * <value> PRECEDING/FOLLOWING".
@@ -1959,8 +1955,6 @@ initialize_range_bound_exprs(WindowAggState *winstate)
 	}
 }
 
-=======
->>>>>>> 78a09145e0
 /* -----------------
  * ExecEndWindowAgg
  * -----------------
