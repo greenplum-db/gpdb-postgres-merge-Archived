@@ -328,7 +328,6 @@ static const struct cachedesc cacheinfo[] = {
 	},
 	{DefaultAclRelationId,		/* DEFACLROLENSPOBJ */
 		DefaultAclRoleNspObjIndexId,
-		0,
 		3,
 		{
 			Anum_pg_default_acl_defaclrole,
