@@ -118,7 +118,6 @@ BitmapHeapNext(BitmapHeapScanState *node)
 {
 	ExprContext *econtext;
 	HeapScanDesc scan;
-	Index		scanrelid;
 	Node  		*tbm;
 	GenericBMIterator *tbmiterator;
 	TBMIterateResult *tbmres;
@@ -136,49 +135,10 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	initScanDesc(node);
 
 	scan = node->ss_currentScanDesc;
-	scanrelid = ((BitmapHeapScan *) node->ss.ps.plan)->scan.scanrelid;
 	tbm = node->tbm;
 	tbmiterator = node->tbmiterator;
 	tbmres = node->tbmres;
 	prefetch_iterator = node->prefetch_iterator;
-
-	/*
-	 * Check if we are evaluating PlanQual for tuple of this relation.
-	 * Additional checking is not good, but no other way for now. We could
-	 * introduce new nodes for this case and handle IndexScan --> NewNode
-	 * switching in Init/ReScan plan...
-	 */
-	if (estate->es_evTuple != NULL &&
-		estate->es_evTuple[scanrelid - 1] != NULL)
-	{
-		if (estate->es_evTupleNull[scanrelid - 1])
-		{
-			ExecEagerFreeBitmapHeapScan(node);
-
-			return ExecClearTuple(slot);
-		}
-
-
-		ExecStoreHeapTuple(estate->es_evTuple[scanrelid - 1],
-						   slot, InvalidBuffer, false);
-
-		/* Does the tuple meet the original qual conditions? */
-		econtext->ecxt_scantuple = slot;
-
-		ResetExprContext(econtext);
-
-		if (!ExecQual(node->bitmapqualorig, econtext, false))
-		{
-			ExecEagerFreeBitmapHeapScan(node);
-
-			ExecClearTuple(slot);		/* would not be returned by scan */
-		}
-
-		/* Flag for the next call that no more tuples */
-		estate->es_evTupleNull[scanrelid - 1] = true;
-
-		return slot;
-	}
 
 	/*
 	 * If we haven't yet performed the underlying index scan, do it, and begin
