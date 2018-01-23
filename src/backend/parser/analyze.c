@@ -2334,7 +2334,7 @@ transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 		 * of this sub-query, because they are not in the toplevel pstate's
 		 * namespace list.
 		 */
-		selectQuery = parse_sub_analyze((Node *) stmt, pstate, NULL, false);
+		selectQuery = parse_sub_analyze((Node *) stmt, pstate, NULL, NULL);
 
 		/*
 		 * Check for bogus references to Vars on the current query level (but

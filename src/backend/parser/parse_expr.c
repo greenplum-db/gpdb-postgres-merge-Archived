@@ -1628,7 +1628,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 	/*
 	 * OK, let's transform the sub-SELECT.
 	 */
-	qtree = parse_sub_analyze(sublink->subselect, pstate, NULL, false);
+	qtree = parse_sub_analyze(sublink->subselect, pstate, NULL, NULL);
 
 	/*
 	 * Check that we got something reasonable.	Many of these conditions are
@@ -1956,7 +1956,7 @@ transformTableValueExpr(ParseState *pstate, TableValueExpr *t)
 	pstate->p_hasTblValueExpr = true;
 
 	/* Analyze and transform the subquery */
-	query = parse_sub_analyze(t->subquery, pstate, NULL, false);
+	query = parse_sub_analyze(t->subquery, pstate, NULL, NULL);
 
 	query->isTableValueSelect = true;
 
