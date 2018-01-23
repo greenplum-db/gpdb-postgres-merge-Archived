@@ -522,11 +522,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	 * sufficient.  The Min() steps limit the results so that the pointer
 	 * arrays we'll try to allocate do not exceed work_mem.
 	 */
-<<<<<<< HEAD
 	max_pointers = (operatorMemKB * 1024L) / sizeof(void *);
-=======
-	max_pointers = (work_mem * 1024L) / sizeof(void *);
->>>>>>> 78a09145e0
 	/* also ensure we avoid integer overflow in nbatch and nbuckets */
 	max_pointers = Min(max_pointers, INT_MAX / 2);
 
@@ -537,14 +533,9 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		double		dbatch;
 		int			minbatch;
 
-<<<<<<< HEAD
 		lbuckets = (hash_table_bytes / tupsize) / gp_hashjoin_tuples_per_bucket;
 		lbuckets = Min(lbuckets, max_pointers);
 
-=======
-		lbuckets = (hash_table_bytes / tupsize) / NTUP_PER_BUCKET;
-		lbuckets = Min(lbuckets, max_pointers);
->>>>>>> 78a09145e0
 		nbuckets = (int) lbuckets;
 
 		/*
@@ -603,7 +594,6 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		double		dbuckets_upper;
 		double		dbuckets;
 
-<<<<<<< HEAD
 		/* divide our tuple row-count estimate by our the number of
 		 * tuples we'd like in a bucket: this produces a small bucket
 		 * count independent of our work_mem setting */
@@ -624,10 +614,6 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		dbuckets = ceil(dbuckets);
 		dbuckets = Min(dbuckets, max_pointers);
 
-=======
-		dbuckets = ceil(ntuples / NTUP_PER_BUCKET);
-		dbuckets = Min(dbuckets, max_pointers);
->>>>>>> 78a09145e0
 		nbuckets = (int) dbuckets;
 
 		/*
