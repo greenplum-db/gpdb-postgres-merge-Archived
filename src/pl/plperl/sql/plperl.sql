@@ -375,7 +375,6 @@ CREATE OR REPLACE FUNCTION perl_spi_prepared_bad(double precision) RETURNS doubl
 $$ LANGUAGE plperl;
 SELECT perl_spi_prepared_bad(4.35) as "double precision";
 
-<<<<<<< HEAD
 -- Test with a row type
 CREATE OR REPLACE FUNCTION perl_spi_prepared() RETURNS INTEGER AS $$
    my $x = spi_prepare('select $1::footype AS a', 'footype');
@@ -394,8 +393,6 @@ return $q->{rows}->[0]->{a};
 $$ LANGUAGE plperl;
 SELECT * from perl_spi_prepared_row('(1, 2)');
 
-=======
->>>>>>> 78a09145e0
 -- simple test of a DO block
 DO $$
   $a = 'This is a test';
@@ -403,7 +400,6 @@ DO $$
 $$ LANGUAGE plperl;
 
 -- check that restricted operations are rejected in a plperl DO block
-<<<<<<< HEAD
 DO $$ system("/nonesuch"); $$ LANGUAGE plperl;
 DO $$ qx("/nonesuch"); $$ LANGUAGE plperl;
 DO $$ open my $fh, "</nonesuch"; $$ LANGUAGE plperl;
@@ -476,6 +472,3 @@ $$ LANGUAGE plperl;
 
 SELECT self_modify(42);
 SELECT self_modify(42);
-=======
-DO $$ use Config; $$ LANGUAGE plperl;
->>>>>>> 78a09145e0

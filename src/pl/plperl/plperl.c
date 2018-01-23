@@ -1,11 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
-<<<<<<< HEAD
  *	  src/pl/plperl/plperl.c
-=======
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.155 2009/11/29 21:02:16 tgl Exp $
->>>>>>> 78a09145e0
  *
  **********************************************************************/
 
@@ -258,11 +254,8 @@ static void set_interp_require(bool trusted);
 static Datum plperl_func_handler(PG_FUNCTION_ARGS);
 static Datum plperl_trigger_handler(PG_FUNCTION_ARGS);
 
-<<<<<<< HEAD
 static void free_plperl_function(plperl_proc_desc *prodesc);
 
-=======
->>>>>>> 78a09145e0
 static plperl_proc_desc *compile_plperl_function(Oid fn_oid, bool is_trigger);
 
 static SV  *plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc);
@@ -290,7 +283,6 @@ static HV  *plperl_spi_execute_fetch_result(SPITupleTable *, int, int);
 static char *hek2cstr(HE *he);
 static SV **hv_store_string(HV *hv, const char *key, SV *val);
 static SV **hv_fetch_string(HV *hv, const char *key);
-<<<<<<< HEAD
 static void plperl_create_sub(plperl_proc_desc *desc, char *s, Oid fn_oid);
 static SV  *plperl_call_perl_func(plperl_proc_desc *desc,
 					  FunctionCallInfo fcinfo);
@@ -357,13 +349,6 @@ hek2cstr(HE *he)
 
 	return ret;
 }
-=======
-static SV  *plperl_create_sub(const char *proname, const char *s, bool trusted);
-static SV  *plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo);
-static void plperl_compile_callback(void *arg);
-static void plperl_exec_callback(void *arg);
-static void plperl_inline_callback(void *arg);
->>>>>>> 78a09145e0
 
 /*
  * This routine is a crock, and so is everyplace that calls it.  The problem
@@ -783,23 +768,15 @@ select_perl_context(bool trusted)
 }
 
 /*
-<<<<<<< HEAD
  * Make the specified interpreter the active one
  *
  * A call with NULL does nothing.  This is so that "restoring" to a previously
  * null state of plperl_active_interp doesn't result in useless thrashing.
-=======
- * Restore previous interpreter selection, if two are active
->>>>>>> 78a09145e0
  */
 static void
 activate_interpreter(plperl_interp_desc *interp_desc)
 {
-<<<<<<< HEAD
 	if (interp_desc && plperl_active_interp != interp_desc)
-=======
-	if (interp_state == INTERP_BOTH && trusted_context != old_context)
->>>>>>> 78a09145e0
 	{
 		Assert(interp_desc->interp);
 		PERL_SET_CONTEXT(interp_desc->interp);
@@ -1844,16 +1821,12 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 {
 	Datum		retval;
 	plperl_call_data *save_call_data = current_call_data;
-<<<<<<< HEAD
 	plperl_interp_desc *oldinterp = plperl_active_interp;
 	plperl_call_data this_call_data;
 
 	/* Initialize current-call status record */
 	MemSet(&this_call_data, 0, sizeof(this_call_data));
 	this_call_data.fcinfo = fcinfo;
-=======
-	bool		oldcontext = trusted_context;
->>>>>>> 78a09145e0
 
 	PG_TRY();
 	{
@@ -1868,11 +1841,7 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 		if (this_call_data.prodesc)
 			decrement_prodesc_refcount(this_call_data.prodesc);
 		current_call_data = save_call_data;
-<<<<<<< HEAD
 		activate_interpreter(oldinterp);
-=======
-		restore_context(oldcontext);
->>>>>>> 78a09145e0
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -1880,11 +1849,7 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 	if (this_call_data.prodesc)
 		decrement_prodesc_refcount(this_call_data.prodesc);
 	current_call_data = save_call_data;
-<<<<<<< HEAD
 	activate_interpreter(oldinterp);
-=======
-	restore_context(oldcontext);
->>>>>>> 78a09145e0
 	return retval;
 }
 
@@ -1898,7 +1863,6 @@ plperl_inline_handler(PG_FUNCTION_ARGS)
 {
 	InlineCodeBlock *codeblock = (InlineCodeBlock *) PG_GETARG_POINTER(0);
 	FunctionCallInfoData fake_fcinfo;
-<<<<<<< HEAD
 	FmgrInfo	flinfo;
 	plperl_proc_desc desc;
 	plperl_call_data *save_call_data = current_call_data;
@@ -1913,18 +1877,6 @@ plperl_inline_handler(PG_FUNCTION_ARGS)
 	pl_error_context.callback = plperl_inline_callback;
 	pl_error_context.previous = error_context_stack;
 	pl_error_context.arg = NULL;
-=======
-	FmgrInfo flinfo;
-	plperl_proc_desc desc;
-	plperl_call_data *save_call_data = current_call_data;
-	bool		oldcontext = trusted_context;
-	ErrorContextCallback pl_error_context;
-
-	/* Set up a callback for error reporting */
-	pl_error_context.callback = plperl_inline_callback;
-	pl_error_context.previous = error_context_stack;
-	pl_error_context.arg = (Datum) 0;
->>>>>>> 78a09145e0
 	error_context_stack = &pl_error_context;
 
 	/*
@@ -1951,21 +1903,14 @@ plperl_inline_handler(PG_FUNCTION_ARGS)
 	desc.nargs = 0;
 	desc.reference = NULL;
 
-<<<<<<< HEAD
 	this_call_data.fcinfo = &fake_fcinfo;
 	this_call_data.prodesc = &desc;
 	/* we do not bother with refcounting the fake prodesc */
-=======
-	current_call_data = (plperl_call_data *) palloc0(sizeof(plperl_call_data));
-	current_call_data->fcinfo = &fake_fcinfo;
-	current_call_data->prodesc = &desc;
->>>>>>> 78a09145e0
 
 	PG_TRY();
 	{
 		SV		   *perlret;
 
-<<<<<<< HEAD
 		current_call_data = &this_call_data;
 
 		if (SPI_connect() != SPI_OK_CONNECT)
@@ -1974,16 +1919,6 @@ plperl_inline_handler(PG_FUNCTION_ARGS)
 		select_perl_context(desc.lanpltrusted);
 
 		plperl_create_sub(&desc, codeblock->source_text, 0);
-=======
-		if (SPI_connect() != SPI_OK_CONNECT)
-			elog(ERROR, "could not connect to SPI manager");
-
-		check_interp(desc.lanpltrusted);
-
-		desc.reference = plperl_create_sub(desc.proname,
-										   codeblock->source_text,
-										   desc.lanpltrusted);
->>>>>>> 78a09145e0
 
 		if (!desc.reference)	/* can this happen? */
 			elog(ERROR, "could not create internal procedure for anonymous code block");
@@ -1997,35 +1932,20 @@ plperl_inline_handler(PG_FUNCTION_ARGS)
 	}
 	PG_CATCH();
 	{
-<<<<<<< HEAD
 		if (desc.reference)
 			SvREFCNT_dec(desc.reference);
 		current_call_data = save_call_data;
 		activate_interpreter(oldinterp);
-=======
-		current_call_data = save_call_data;
-		restore_context(oldcontext);
-		if (desc.reference)
-			SvREFCNT_dec(desc.reference);
->>>>>>> 78a09145e0
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
-<<<<<<< HEAD
 	if (desc.reference)
 		SvREFCNT_dec(desc.reference);
 
 	current_call_data = save_call_data;
 	activate_interpreter(oldinterp);
 
-=======
-	current_call_data = save_call_data;
-	restore_context(oldcontext);
-	if (desc.reference)
-		SvREFCNT_dec(desc.reference);
-
->>>>>>> 78a09145e0
 	error_context_stack = pl_error_context.previous;
 
 	PG_RETURN_VOID();
@@ -2112,7 +2032,6 @@ plperl_validator(PG_FUNCTION_ARGS)
  * handler functions, and we decide whether a particular function is
  * trusted or not by inspecting the actual pg_language tuple.
  */
-<<<<<<< HEAD
 
 PG_FUNCTION_INFO_V1(plperlu_call_handler);
 
@@ -2146,10 +2065,6 @@ plperlu_validator(PG_FUNCTION_ARGS)
  */
 static void
 plperl_create_sub(plperl_proc_desc *prodesc, char *s, Oid fn_oid)
-=======
-static SV  *
-plperl_create_sub(const char *proname, const char *s, bool trusted)
->>>>>>> 78a09145e0
 {
 	dSP;
 	char		subname[NAMEDATALEN + 40];
@@ -2191,41 +2106,10 @@ plperl_create_sub(const char *proname, const char *s, bool trusted)
 	{
 		SV		   *sub_rv = (SV *) POPs;
 
-<<<<<<< HEAD
 		if (sub_rv && SvROK(sub_rv) && SvTYPE(SvRV(sub_rv)) == SVt_PVCV)
 		{
 			subref = newRV_inc(SvRV(sub_rv));
 		}
-=======
-	if (SvTRUE(ERRSV))
-	{
-		(void) POPs;
-		PUTBACK;
-		FREETMPS;
-		LEAVE;
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("%s", strip_trailing_ws(SvPV(ERRSV, PL_na)))));
-	}
-
-	/*
-	 * need to make a deep copy of the return. it comes off the stack as a
-	 * temporary.
-	 */
-	subref = newSVsv(POPs);
-
-	if (!SvROK(subref) || SvTYPE(SvRV(subref)) != SVt_PVCV)
-	{
-		PUTBACK;
-		FREETMPS;
-		LEAVE;
-
-		/*
-		 * subref is our responsibility because it is not mortal
-		 */
-		SvREFCNT_dec(subref);
-		elog(ERROR, "didn't get a code ref");
->>>>>>> 78a09145e0
 	}
 
 	PUTBACK;
@@ -2330,11 +2214,7 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 		LEAVE;
 		/* XXX need to find a way to assign an errcode here */
 		ereport(ERROR,
-<<<<<<< HEAD
 				(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV)))));
-=======
-				(errmsg("%s", strip_trailing_ws(SvPV(ERRSV, PL_na)))));
->>>>>>> 78a09145e0
 	}
 
 	retval = newSVsv(POPs);
@@ -2396,11 +2276,7 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo,
 		LEAVE;
 		/* XXX need to find a way to assign an errcode here */
 		ereport(ERROR,
-<<<<<<< HEAD
 				(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV)))));
-=======
-				(errmsg("%s", strip_trailing_ws(SvPV(ERRSV, PL_na)))));
->>>>>>> 78a09145e0
 	}
 
 	retval = newSVsv(POPs);
@@ -2420,19 +2296,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	SV		   *perlret;
 	Datum		retval = 0;
 	ReturnSetInfo *rsi;
-<<<<<<< HEAD
 	ErrorContextCallback pl_error_context;
-=======
-	SV		   *array_ret = NULL;
-	ErrorContextCallback pl_error_context;
-
-	/*
-	 * Create the call_data beforing connecting to SPI, so that it is not
-	 * allocated in the SPI memory context
-	 */
-	current_call_data = (plperl_call_data *) palloc0(sizeof(plperl_call_data));
-	current_call_data->fcinfo = fcinfo;
->>>>>>> 78a09145e0
 
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "could not connect to SPI manager");
@@ -2536,47 +2400,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	/* Restore the previous error callback */
 	error_context_stack = pl_error_context.previous;
 
-<<<<<<< HEAD
 	SvREFCNT_dec(perlret);
-=======
-		/* XXX should cache the attinmeta data instead of recomputing */
-		if (get_call_result_type(fcinfo, NULL, &td) != TYPEFUNC_COMPOSITE)
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("function returning record called in context "
-							"that cannot accept type record")));
-		}
-
-		attinmeta = TupleDescGetAttInMetadata(td);
-		tup = plperl_build_tuple_result((HV *) SvRV(perlret), attinmeta);
-		retval = HeapTupleGetDatum(tup);
-	}
-	else
-	{
-		/* Return a perl string converted to a Datum */
-		char	   *val;
-
-		if (prodesc->fn_retisarray && SvROK(perlret) &&
-			SvTYPE(SvRV(perlret)) == SVt_PVAV)
-		{
-			array_ret = plperl_convert_to_pg_array(perlret);
-			SvREFCNT_dec(perlret);
-			perlret = array_ret;
-		}
-
-		val = SvPV(perlret, PL_na);
-
-		retval = InputFunctionCall(&prodesc->result_in_func, val,
-								   prodesc->result_typioparam, -1);
-	}
-
-	/* Restore the previous error callback */
-	error_context_stack = pl_error_context.previous;
-
-	if (array_ret == NULL)
-		SvREFCNT_dec(perlret);
->>>>>>> 78a09145e0
 
 	return retval;
 }
@@ -2591,16 +2415,6 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	SV		   *svTD;
 	HV		   *hvTD;
 	ErrorContextCallback pl_error_context;
-<<<<<<< HEAD
-=======
-
-	/*
-	 * Create the call_data beforing connecting to SPI, so that it is not
-	 * allocated in the SPI memory context
-	 */
-	current_call_data = (plperl_call_data *) palloc0(sizeof(plperl_call_data));
-	current_call_data->fcinfo = fcinfo;
->>>>>>> 78a09145e0
 
 	/* Connect to SPI manager */
 	if (SPI_connect() != SPI_OK_CONNECT)
@@ -2617,11 +2431,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	pl_error_context.arg = prodesc->proname;
 	error_context_stack = &pl_error_context;
 
-<<<<<<< HEAD
 	activate_interpreter(prodesc->interp);
-=======
-	check_interp(prodesc->lanpltrusted);
->>>>>>> 78a09145e0
 
 	svTD = plperl_trigger_build_args(fcinfo);
 	perlret = plperl_call_perl_trigger_func(prodesc, fcinfo, svTD);
@@ -2761,13 +2571,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 	plperl_proc_ptr *proc_ptr;
 	plperl_proc_desc *prodesc = NULL;
 	int			i;
-<<<<<<< HEAD
 	plperl_interp_desc *oldinterp = plperl_active_interp;
-=======
-	plperl_proc_entry *hash_entry;
-	bool		found;
-	bool		oldcontext = trusted_context;
->>>>>>> 78a09145e0
 	ErrorContextCallback plperl_error_context;
 
 	/* We'll need the pg_proc tuple in any case... */
@@ -2782,7 +2586,6 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 	plperl_error_context.arg = NameStr(procStruct->proname);
 	error_context_stack = &plperl_error_context;
 
-<<<<<<< HEAD
 	/* Try to find function in plperl_proc_hash */
 	proc_key.proc_id = fn_oid;
 	proc_key.is_trigger = is_trigger;
@@ -2793,46 +2596,14 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 
 	if (validate_plperl_function(proc_ptr, procTup))
 		prodesc = proc_ptr->proc_ptr;
-=======
-	/************************************************************
-	 * Build our internal proc name from the function's Oid
-	 ************************************************************/
-	if (!is_trigger)
-		sprintf(internal_proname, "__PLPerl_proc_%u", fn_oid);
->>>>>>> 78a09145e0
 	else
 	{
-<<<<<<< HEAD
 		/* If not found or obsolete, maybe it's plperlu */
 		proc_key.user_id = InvalidOid;
 		proc_ptr = hash_search(plperl_proc_hash, &proc_key,
 							   HASH_FIND, NULL);
 		if (validate_plperl_function(proc_ptr, procTup))
 			prodesc = proc_ptr->proc_ptr;
-=======
-		bool		uptodate;
-
-		prodesc = hash_entry->proc_data;
-
-		/************************************************************
-		 * If it's present, must check whether it's still up to date.
-		 * This is needed because CREATE OR REPLACE FUNCTION can modify the
-		 * function's pg_proc entry without changing its OID.
-		 ************************************************************/
-		uptodate = (prodesc->fn_xmin == HeapTupleHeaderGetXmin(procTup->t_data) &&
-					ItemPointerEquals(&prodesc->fn_tid, &procTup->t_self));
-
-		if (!uptodate)
-		{
-			hash_search(plperl_proc_hash, internal_proname,
-						HASH_REMOVE, NULL);
-			if (prodesc->reference)
-				SvREFCNT_dec(prodesc->reference);
-			free(prodesc->proname);
-			free(prodesc);
-			prodesc = NULL;
-		}
->>>>>>> 78a09145e0
 	}
 
 	/************************************************************
@@ -3364,7 +3135,6 @@ plperl_return_next(SV *sv)
 		Datum		ret;
 		bool		isNull;
 
-<<<<<<< HEAD
 		ret = plperl_sv_to_datum(sv,
 								 prodesc->result_oid,
 								 -1,
@@ -3372,19 +3142,6 @@ plperl_return_next(SV *sv)
 								 &prodesc->result_in_func,
 								 prodesc->result_typioparam,
 								 &isNull);
-=======
-		if (SvOK(sv))
-		{
-			char	   *val;
-
-			if (prodesc->fn_retisarray && SvROK(sv) &&
-				SvTYPE(SvRV(sv)) == SVt_PVAV)
-			{
-				sv = plperl_convert_to_pg_array(sv);
-			}
-
-			val = SvPV(sv, PL_na);
->>>>>>> 78a09145e0
 
 		tuplestore_putvalues(current_call_data->tuple_store,
 							 current_call_data->ret_tdesc,
@@ -4205,37 +3962,4 @@ setlocale_perl(int category, char *locale)
 	return RETVAL;
 }
 
-<<<<<<< HEAD
 #endif
-=======
-/*
- * Provide function name for PL/Perl execution errors
- */
-static void
-plperl_exec_callback(void *arg)
-{
-	char *procname = (char *) arg;
-	if (procname)
-		errcontext("PL/Perl function \"%s\"", procname);
-}
-
-/*
- * Provide function name for PL/Perl compilation errors
- */
-static void
-plperl_compile_callback(void *arg)
-{
-	char *procname = (char *) arg;
-	if (procname)
-		errcontext("compilation of PL/Perl function \"%s\"", procname);
-}
-
-/*
- * Provide error context for the inline handler
- */
-static void
-plperl_inline_callback(void *arg)
-{
-	errcontext("PL/Perl anonymous code block");
-}
->>>>>>> 78a09145e0
