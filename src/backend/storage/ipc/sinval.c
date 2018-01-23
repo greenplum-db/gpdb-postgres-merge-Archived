@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/backend/storage/ipc/sinval.c
-=======
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.91 2009/07/31 20:26:23 tgl Exp $
->>>>>>> 78a09145e0
  *
  *-------------------------------------------------------------------------
  */
@@ -315,7 +311,6 @@ ProcessCatchupEvent(void)
 	bool		client_wait_timeout_enabled;
 	DtxContext  saveDistributedTransactionContext;
 
-<<<<<<< HEAD
 	/*
 	 * Funny indentation to keep the code inside identical to upstream
 	 * while at the same time supporting CMockery which has problems with
@@ -325,10 +320,7 @@ ProcessCatchupEvent(void)
 	{
 	in_process_catchup_event = 1;
 
-	/* Must prevent SIGUSR2 and SIGALRM(for IdleSessionGangTimeout) interrupt while I am running */
-=======
-	/* Must prevent notify interrupt while I am running */
->>>>>>> 78a09145e0
+	/* Must prevent notify and SIGALRM(for IdleSessionGangTimeout) interrupt while I am running */
 	notify_enabled = DisableNotifyInterrupt();
 	client_wait_timeout_enabled = DisableClientWaitTimeoutInterrupt();
 

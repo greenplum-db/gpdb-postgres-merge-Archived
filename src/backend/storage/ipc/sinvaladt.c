@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/backend/storage/ipc/sinvaladt.c
-=======
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.79 2009/07/31 20:26:23 tgl Exp $
->>>>>>> 78a09145e0
  *
  *-------------------------------------------------------------------------
  */

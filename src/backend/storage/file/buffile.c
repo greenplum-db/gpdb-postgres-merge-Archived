@@ -271,13 +271,9 @@ BufFileLoadBuffer(BufFile *file, void* buffer, size_t bufsize)
 
 	/* we choose not to advance curOffset here */
 
-<<<<<<< HEAD
-	BufFileReadCount++;
+	pgBufferUsage.temp_blks_read++;
 
 	return nb;
-=======
-	pgBufferUsage.temp_blks_read++;
->>>>>>> 78a09145e0
 }
 
 /*

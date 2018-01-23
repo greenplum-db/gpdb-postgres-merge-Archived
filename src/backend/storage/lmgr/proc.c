@@ -355,18 +355,13 @@ InitProcess(void)
 	 * child; this is so that the postmaster can detect it if we exit without
 	 * cleaning up.  (XXX autovac launcher currently doesn't participate in
 	 * this; it probably should.)
-<<<<<<< HEAD
 	 *
 	 * Ideally, we should create functions similar to IsAutoVacuumWorkerProcess()
 	 * for ftsProber, SeqServer etc who call InitProcess().
 	 * But MyPMChildSlot helps to get away with it.
 	 */
-	if (IsUnderPostmaster && !IsAutoVacuumWorkerProcess()
-		&& MyPMChildSlot > 0)
-=======
-	 */
-	if (IsUnderPostmaster && !IsAutoVacuumLauncherProcess())
->>>>>>> 78a09145e0
+	if (IsUnderPostmaster && !IsAutoVacuumLauncherProcess()
+		&& !IsAutoVacuumWorkerProcess() && MyPMChildSlot > 0)
 		MarkPostmasterChildActive();
 
 	/*
@@ -838,12 +833,8 @@ ProcKill(int code, Datum arg)
 	 * way, so tell the postmaster we've cleaned up acceptably well.
 	 * (XXX autovac launcher should be included here someday)
 	 */
-<<<<<<< HEAD
-	if (IsUnderPostmaster && !IsAutoVacuumWorkerProcess()
-		&& MyPMChildSlot > 0)
-=======
-	if (IsUnderPostmaster && !IsAutoVacuumLauncherProcess())
->>>>>>> 78a09145e0
+	if (IsUnderPostmaster && !IsAutoVacuumLauncherProcess()
+		&& !IsAutoVacuumWorkerProcess() && MyPMChildSlot > 0)
 		MarkPostmasterChildInactive();
 
 	/* wake autovac launcher if needed -- see comments in FreeWorkerInfo */

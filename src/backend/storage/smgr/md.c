@@ -425,19 +425,11 @@ mdunlink(RelFileNode rnode, ForkNumber forkNum, bool isRedo)
 		}
 		else
 			ret = -1;
-<<<<<<< HEAD
-	}
-	if (ret < 0 && errno != ENOENT)
-		ereport(WARNING,
-				(errcode_for_file_access(),
-				 errmsg("could not remove relation %s: %m", path)));
-=======
 		if (ret < 0 && errno != ENOENT)
 			ereport(WARNING,
 					(errcode_for_file_access(),
 					 errmsg("could not truncate file \"%s\": %m", path)));
 	}
->>>>>>> 78a09145e0
 
 	/*
 	 * Delete any additional segments.

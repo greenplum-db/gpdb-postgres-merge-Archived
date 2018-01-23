@@ -153,7 +153,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		size = add_size(size, SInvalShmemSize());
 		size = add_size(size, PMSignalShmemSize());
 		size = add_size(size, ProcSignalShmemSize());
-<<<<<<< HEAD
 		size = add_size(size, primaryMirrorModeShmemSize());
 		//size = add_size(size, AutoVacuumShmemSize());
 		size = add_size(size, FtsShmemSize());
@@ -172,9 +171,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		elog(DEBUG1, "Size not including the buffer pool %lu",
 			 (unsigned long) size);
 
-=======
-		size = add_size(size, BgWriterShmemSize());
->>>>>>> 78a09145e0
 		size = add_size(size, AutoVacuumShmemSize());
 		size = add_size(size, BTreeShmemSize());
 		size = add_size(size, SyncScanShmemSize());
@@ -308,7 +304,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	 */
 	PMSignalShmemInit();
 	ProcSignalShmemInit();
-<<<<<<< HEAD
 	CheckpointerShmemInit();
 	WalSndShmemInit();
 	WalRcvShmemInit();
@@ -318,10 +313,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 #ifdef FAULT_INJECTOR
 	FaultInjector_ShmemInit();
 #endif
-=======
-	BgWriterShmemInit();
-	AutoVacuumShmemInit();
->>>>>>> 78a09145e0
 
 	/*
 	 * Set up other modules that need some shared memory space
