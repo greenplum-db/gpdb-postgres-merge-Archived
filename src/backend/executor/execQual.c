@@ -703,6 +703,8 @@ ExecEvalScalarVar(ExprState *exprstate, ExprContext *econtext,
 			break;
 	}
 
+	attnum = variable->varattno;
+
 	/* This was checked by ExecInitExpr */
 	Assert(attnum != InvalidAttrNumber);
 

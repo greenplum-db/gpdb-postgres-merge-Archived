@@ -206,6 +206,8 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 	 */
 	ExecAssignResultTypeFromTL(&appendstate->ps);
 
+	// GPDB_90_MERGE_FIXME: Is this code still needed? isTarget is no more.
+#if 0
 	/* 
 	 * determine if need project 
 	 */
@@ -222,6 +224,8 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 	{
 		appendstate->ps.ps_ProjInfo = NULL;
 	}
+#endif
+	appendstate->ps.ps_ProjInfo = NULL;
 
 	/*
 	 * initialize to scan first subplan

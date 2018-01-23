@@ -1367,7 +1367,7 @@ retry:
 		 * Extract the index column values and isnull flags from the existing
 		 * tuple.
 		 */
-		ExecStoreTuple(tup,	existing_slot, InvalidBuffer, false);
+		ExecStoreHeapTuple(tup,	existing_slot, InvalidBuffer, false);
 		FormIndexDatum(indexInfo, existing_slot, estate,
 					   existing_values, existing_isnull);
 
@@ -1701,7 +1701,7 @@ InitSliceTable(EState *estate, int nMotions, int nSubplans)
 	table->nMotions = nMotions;
 	table->nInitPlans = nSubplans;
 	table->slices = NIL;
-    table->doInstrument = false;
+    table->instrument_options = 0;
 
 	/* Each slice table has a unique-id. */
 	table->ic_instance_id = ++gp_interconnect_id;

@@ -74,6 +74,12 @@ lnext:
 		HTSU_Result test;
 		HeapTuple	copyTuple;
 
+		/* CDB: CTIDs were not fetched for distributed relation. */
+		Relation relation = erm->relation;
+		if (relation->rd_cdbpolicy &&
+			relation->rd_cdbpolicy->ptype == POLICYTYPE_PARTITIONED)
+			continue;
+
 		/* clear any leftover test tuple for this rel */
 		if (node->lr_epqstate.estate != NULL)
 			EvalPlanQualSetTuple(&node->lr_epqstate, erm->rti, NULL);
@@ -117,7 +123,8 @@ lnext:
 		test = heap_lock_tuple(erm->relation, &tuple, &buffer,
 							   &update_ctid, &update_xmax,
 							   estate->es_output_cid,
-							   lockmode, erm->noWait);
+							   lockmode,
+							   (erm->noWait ? LockTupleNoWait : LockTupleWait));
 		ReleaseBuffer(buffer);
 		switch (test)
 		{
