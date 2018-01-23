@@ -21,20 +21,13 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-<<<<<<< HEAD
-ALTER ROLE name RENAME TO newname
-ALTER ROLE name SET config_parameter {TO | =} {value | DEFAULT}
-ALTER ROLE name RESET config_parameter
+ALTER ROLE name RENAME TO new_name
+ALTER ROLE name [ IN DATABASE database_name ] SET config_parameter {TO | =} {value | DEFAULT}
+ALTER ROLE name [ IN DATABASE database_name ] RESET config_parameter
 ALTER ROLE name RESOURCE QUEUE {queue_name | NONE}
 ALTER ROLE name RESOURCE GROUP {group_name | NONE}
 ALTER ROLE name [ [WITH] option [ ... ] ]
 where option can be:
-=======
-ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replaceable class="PARAMETER">option</replaceable> [ ... ] ]
-
-<phrase>where <replaceable class="PARAMETER">option</replaceable> can be:</phrase>
-    
->>>>>>> 78a09145e0
       SUPERUSER | NOSUPERUSER
     | CREATEDB | NOCREATEDB
     | CREATEROLE | NOCREATEROLE
@@ -43,24 +36,11 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replace
            where attributes and values are:
            type='readable'|'writable'
            protocol='gpfdist'|'http'|'gphdfs'
-| INHERIT | NOINHERIT
+    | INHERIT | NOINHERIT
     | LOGIN | NOLOGIN
-<<<<<<< HEAD
     | CONNECTION LIMIT connlimit
     | [ENCRYPTED | UNENCRYPTED] PASSWORD 'password'
     | VALID UNTIL 'timestamp'
-=======
-    | CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
-    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
-    | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>' 
-
-ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
-
-ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
-ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> FROM CURRENT
-ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] RESET <replaceable>configuration_parameter</replaceable>
-ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] RESET ALL
->>>>>>> 78a09145e0
 </synopsis>
  </refsynopsisdiv>
 
@@ -159,7 +139,6 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <repl
      </varlistentry>
 
      <varlistentry>
-<<<<<<< HEAD
       <term><literal>RESOURCE GROUP</> <replaceable class="parameter">group_name</replaceable></term>
       <listitem>
        <para>
@@ -187,10 +166,7 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <repl
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable>newname</replaceable></term>
-=======
       <term><replaceable>new_name</replaceable></term>
->>>>>>> 78a09145e0
       <listitem>
        <para>
         The new name of the role.

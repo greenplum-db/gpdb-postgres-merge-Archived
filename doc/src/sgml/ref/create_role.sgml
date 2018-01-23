@@ -21,15 +21,10 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-<<<<<<< HEAD
-CREATE ROLE name [[WITH] option [ ... ]]
-where option can be:
-=======
 CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replaceable class="PARAMETER">option</replaceable> [ ... ] ]
 
 <phrase>where <replaceable class="PARAMETER">option</replaceable> can be:</phrase>
     
->>>>>>> 78a09145e0
       SUPERUSER | NOSUPERUSER
     | CREATEDB | NOCREATEDB
     | CREATEROLE | NOCREATEROLE
@@ -40,16 +35,6 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
            protocol='gpfdist'|'http'|'gphdfs'
     | INHERIT | NOINHERIT
     | LOGIN | NOLOGIN
-<<<<<<< HEAD
-    | CONNECTION LIMIT connlimit
-    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'
-    | VALID UNTIL 'timestamp' 
-    | IN ROLE rolename [, ...]
-    | ROLE rolename [, ...]
-    | ADMIN rolename [, ...]
-    | RESOURCE QUEUE queue_name
-    | RESOURCE GROUP group_name
-=======
     | CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
     | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
     | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>' 
@@ -59,7 +44,8 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
     | ADMIN <replaceable class="PARAMETER">role_name</replaceable> [, ...]
     | USER <replaceable class="PARAMETER">role_name</replaceable> [, ...]
     | SYSID <replaceable class="PARAMETER">uid</replaceable> 
->>>>>>> 78a09145e0
+    | RESOURCE QUEUE queue_name
+    | RESOURCE GROUP group_name
 </synopsis>
  </refsynopsisdiv>
 

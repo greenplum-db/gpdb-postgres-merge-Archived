@@ -155,12 +155,8 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</
        (<xref linkend="sql-do" endterm="sql-do-title"> command)
        in this language.
        If no <replaceable class="parameter">inline_handler</replaceable>
-<<<<<<< HEAD
-       function is specified, the language does not support anonymous code blocks.
-=======
        function is specified, the language does not support anonymous code
        blocks.
->>>>>>> 78a09145e0
        The handler function must take one argument of
        type <type>internal</type>, which will be the <command>DO</> command's
        internal representation, and it will typically return
@@ -242,16 +238,10 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</
 
   <para>
    The call handler function, the inline handler function (if any),
-<<<<<<< HEAD
-   and the validator function (if any) must already exist if the server
-   does not have an entry for the language in <structname>pg_pltemplate</>. 
-   But when there is an entry, the functions need not already exist;
-=======
    and the validator function (if any)
    must already exist if the server does not have an entry for the language
    in <structname>pg_pltemplate</>.  But when there is an entry,
    the functions need not already exist;
->>>>>>> 78a09145e0
    they will be automatically defined if not present in the database.
    (This might result in <command>CREATE LANGUAGE</> failing, if the
    shared library that implements the language is not available in

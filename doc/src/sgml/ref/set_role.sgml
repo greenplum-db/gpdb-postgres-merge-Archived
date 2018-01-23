@@ -32,13 +32,8 @@ RESET ROLE
 
   <para>
    This command sets the current user
-<<<<<<< HEAD
-   identifier of the current SQL-session context to be <replaceable
-   class="parameter">rolename</replaceable>.  The role name may be
-=======
    identifier of the current SQL session to be <replaceable
    class="parameter">role_name</replaceable>.  The role name can be
->>>>>>> 78a09145e0
    written as either an identifier or a string literal.
    After <command>SET ROLE</>, permissions checking for SQL commands
    is carried out as though the named role were the one that had logged

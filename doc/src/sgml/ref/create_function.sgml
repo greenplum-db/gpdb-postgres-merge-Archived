@@ -21,17 +21,10 @@ $PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.88 2009/10/08 02:39
  <refsynopsisdiv>
 <synopsis>
 CREATE [ OR REPLACE ] FUNCTION
-<<<<<<< HEAD
-    <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [ { DEFAULT | = } <replaceable class="parameter">defexpr</replaceable>] [, ...] ] )
-    [ RETURNS [SETOF] <replaceableclass="parameter">rettype</replaceable> |
-      | RETURNS TABLE ( <replaceable class="parameter">colname</replaceable> <replaceable class="parameter">coltype</replaceable> [, ...] ) ]
-  { LANGUAGE <replaceable class="parameter">langname</replaceable>
-=======
     <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [ { DEFAULT | = } <replaceable class="parameter">default_expr</replaceable> ] [, ...] ] )
     [ RETURNS <replaceable class="parameter">rettype</replaceable>
       | RETURNS TABLE ( <replaceable class="parameter">column_name</replaceable> <replaceable class="parameter">column_type</replaceable> [, ...] ) ]
   { LANGUAGE <replaceable class="parameter">lang_name</replaceable>
->>>>>>> 78a09145e0
     | WINDOW
     | IMMUTABLE | STABLE | VOLATILE
     | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
@@ -581,8 +574,6 @@ CREATE FUNCTION foo(int, int default 42) ...
     to replace it (this includes being a member of the owning role).
    </para>
 
-<<<<<<< HEAD
-=======
    <para>
     When replacing an existing function with <command>CREATE OR REPLACE
     FUNCTION</>, there are restrictions on changing parameter names.
@@ -595,7 +586,6 @@ CREATE FUNCTION foo(int, int default 42) ...
     existing calls of the function do not stop working when it is replaced.
    </para>
 
->>>>>>> 78a09145e0
  </refsect1>
 
  <refsect1 id="sql-createfunction-examples">

@@ -22,44 +22,15 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-<<<<<<< HEAD
-COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
-     FROM { '<replaceable class="parameter">filename</replaceable>' | PROGRAM '<replaceable class="parameter">command</replaceable>' | STDIN }
-     [ [ WITH ] 
-       [ BINARY ]
-       [ OIDS ]
-       [ HEADER ]
-       [ DELIMITER [ AS ] '<replaceable class="parameter">delimiter</replaceable>' ]
-       [ NULL [ AS ] '<replaceable class="parameter">null string</replaceable>' ]
-       [ ESCAPE [ AS ] '<replaceable class="parameter">escape</replaceable>' | '<replaceable class="parameter">OFF</replaceable>' ]
-       [ NEWLINE [ AS ] { 'LF' | 'CR' | 'CRLF' } ]
-       [ CSV [QUOTE [ AS ] '<replaceable class="parameter">quote</replaceable>' ] 
-            [FORCE NOT NULL <replaceable class="parameter">column</replaceable> [, ...] ]
-       [ FILL MISSING FIELDS ]
-       [ [LOG ERRORS ]  
-           SEGMENT REJECT LIMIT <replaceable class="parameter">count</replaceable> [ROWS | PERCENT] ]
-
-COPY { <replaceable class="parameter">tablename</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ] | ( <replaceable class="parameter">query</replaceable> ) }
-    TO { '<replaceable class="parameter">filename</replaceable>' | PROGRAM '<replaceable class="parameter">command</replaceable>' | STDOUT }
-    [ [ WITH ]
-          [ ON SEGMENT ]
-          [ BINARY ]
-          [ OIDS ]
-          [ HEADER ] 
-          [ DELIMITER [ AS ] '<replaceable class="parameter">delimiter</replaceable>' ]
-          [ NULL [ AS ] '<replaceable class="parameter">null string</replaceable>' ]
-          [ ESCAPE [ AS ] '<replaceable class="parameter">escape</replaceable>' ]
-          [ CSV [ QUOTE [ AS ] '<replaceable class="parameter">quote</replaceable>' ] 
-                [ FORCE QUOTE <replaceable class="parameter">column</replaceable> [, ...] ]
-          [ IGNORE EXTERNAL PARTITIONS ]
-=======
 COPY <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
-    FROM { '<replaceable class="parameter">filename</replaceable>' | STDIN }
+    FROM { '<replaceable class="parameter">filename</replaceable>' | PROGRAM '<replaceable class="parameter">command</replaceable>' | STDIN }
     [ [ WITH ] ( <replaceable class="parameter">option</replaceable> [, ...] ) ]
+    [ ON SEGMENT ]
 
 COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ] | ( <replaceable class="parameter">query</replaceable> ) }
-    TO { '<replaceable class="parameter">filename</replaceable>' | STDOUT }
+    TO { '<replaceable class="parameter">filename</replaceable>' | PROGRAM '<replaceable class="parameter">command</replaceable>' | STDOUT }
     [ [ WITH ] ( <replaceable class="parameter">option</replaceable> [, ...] ) ]
+    [ ON SEGMENT ]
 
 <phrase>where <replaceable class="parameter">option</replaceable> can be one of:</phrase>
 
@@ -72,7 +43,9 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     ESCAPE '<replaceable class="parameter">escape_character</replaceable>'
     FORCE_QUOTE { ( <replaceable class="parameter">column</replaceable> [, ...] ) | * }
     FORCE_NOT_NULL ( <replaceable class="parameter">column</replaceable> [, ...] )
->>>>>>> 78a09145e0
+    FILL MISSING FIELDS
+    LOG ERRORS [SEGMENT REJECT LIMIT <replaceable class="parameter">count</replaceable> [ROWS | PERCENT] ]
+    IGNORE EXTERNAL PARTITIONS
 </synopsis>
  </refsynopsisdiv>
 
