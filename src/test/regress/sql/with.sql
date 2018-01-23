@@ -536,7 +536,6 @@ select ( with cte(foo) as ( values(f1) )
 from int4_tbl;
 
 --
-<<<<<<< HEAD
 -- test Nested CTE
 --
 WITH outermost(x) AS (
@@ -546,7 +545,8 @@ WITH outermost(x) AS (
          UNION SELECT 3)
 )
 SELECT * FROM outermost;
-=======
+
+--
 -- test for nested-recursive-WITH bug
 --
 WITH RECURSIVE t(j) AS (
@@ -560,4 +560,3 @@ WITH RECURSIVE t(j) AS (
     SELECT j+1 FROM t WHERE j < 10
 )
 SELECT * FROM t;
->>>>>>> 78a09145e0

@@ -1015,7 +1015,6 @@ from int4_tbl;
 (5 rows)
 
 --
-<<<<<<< HEAD
 -- test Nested CTE
 --
 WITH outermost(x) AS (
@@ -1031,7 +1030,8 @@ x
  2
  3
 (3 rows)
-=======
+
+--
 -- test for nested-recursive-WITH bug
 --
 WITH RECURSIVE t(j) AS (
@@ -1103,5 +1103,4 @@ SELECT * FROM t;
  10
  10
 (55 rows)
->>>>>>> 78a09145e0
 

@@ -1,6 +1,6 @@
 -- Currently this tests polymorphic aggregates and indirectly does some
 -- testing of polymorphic SQL functions.  It ought to be extended.
-<<<<<<< HEAD
+-- Tests for other features related to function-calling have snuck in, too.
 -- In GPDB, rows can be returned from segments in any order. Normally, we
 -- mask differences in result set order in regression tests with gpdiff.pl,
 -- but the aggregates in this test file result in arrays that have elements
@@ -12,9 +12,6 @@ $$ language sql;
 -- like a psql result set header, like it does in upstream. atmsort.pl got
 -- confused by it and treated the whole comment as a result set, and re-ordered
 -- it.
-=======
--- Tests for other features related to function-calling have snuck in, too.
->>>>>>> 78a09145e0
 -- Legend:
 -- ---------
 -- A = type is ANY
