@@ -190,11 +190,8 @@ static void setup_dictionary(void);
 static void setup_privileges(void);
 static void set_info_version(void);
 static void setup_schema(void);
-<<<<<<< HEAD
 static void setup_cdb_schema(void);
-=======
 static void load_plpgsql(void);
->>>>>>> 78a09145e0
 static void vacuum_db(void);
 static void make_template0(void);
 static void make_postgres(void);
@@ -511,7 +508,6 @@ readfile(const char *path)
 	int			maxlength = 1,
 				linelen = 0;
 	int			nlines = 0;
-	int			n;
 	char	  **result;
 	char	   *buffer;
 	int			c;
@@ -549,19 +545,13 @@ readfile(const char *path)
 
 	/* now reprocess the file and store the lines */
 	rewind(infile);
-<<<<<<< HEAD
-	n = 0;
-	while (fgets(buffer, maxlength + 1, infile) != NULL && n < nlines)
-		result[n++] = xstrdup(buffer);
-=======
 	nlines = 0;
 	while (fgets(buffer, maxlength + 1, infile) != NULL)
 		result[nlines++] = xstrdup(buffer);
->>>>>>> 78a09145e0
 
 	fclose(infile);
 	free(buffer);
-	result[n] = NULL;
+	result[nlines] = NULL;
 
 	return result;
 }
@@ -1557,26 +1547,6 @@ setup_auth(void)
 	const char **line;
 	static const char *pg_authid_setup[] = {
 		/*
-<<<<<<< HEAD
-		 * Create triggers to ensure manual updates to shared catalogs will be
-		 * reflected into their "flat file" copies.
-		 */
-		"CREATE TRIGGER pg_sync_pg_database "
-		"  AFTER INSERT OR UPDATE OR DELETE ON pg_database "
-		"  FOR EACH STATEMENT EXECUTE PROCEDURE flatfile_update_trigger();\n",
-		"CREATE TRIGGER pg_sync_pg_authid "
-		"  AFTER INSERT OR UPDATE OR DELETE ON pg_authid "
-		"  FOR EACH STATEMENT EXECUTE PROCEDURE flatfile_update_trigger();\n",
-		"CREATE TRIGGER pg_sync_pg_auth_members "
-		"  AFTER INSERT OR UPDATE OR DELETE ON pg_auth_members "
-		"  FOR EACH STATEMENT EXECUTE PROCEDURE flatfile_update_trigger();\n",
-		"CREATE TRIGGER pg_sync_pg_auth_time_constraint "
-		"  AFTER INSERT OR UPDATE OR DELETE ON pg_auth_time_constraint "
-		"  FOR EACH STATEMENT EXECUTE PROCEDURE flatfile_update_trigger();\n",
-
-		/*
-=======
->>>>>>> 78a09145e0
 		 * The authid table shouldn't be readable except through views, to
 		 * ensure passwords are not publicly visible.
 		 */
@@ -3600,14 +3570,10 @@ main(int argc, char *argv[])
 
 		setup_schema();
 
-<<<<<<< HEAD
 		/* sets up the Greenplum Database admin schema */
 		setup_cdb_schema();
-=======
-	load_plpgsql();
 
-	vacuum_db();
->>>>>>> 78a09145e0
+		load_plpgsql();
 
 		vacuum_db();
 
