@@ -24,12 +24,8 @@
 #include "cdb/cdbvars.h"
 
 
-<<<<<<< HEAD
-static char *fetch_param_value(ExprContext *econtext, int paramId);
-#ifdef NOT_USED
-=======
 static char *fetch_cursor_param_value(ExprContext *econtext, int paramId);
->>>>>>> 78a09145e0
+#ifdef NOT_USED
 static ScanState *search_plan_tree(PlanState *node, Oid table_oid);
 #endif /* NOT_USED */
 
@@ -71,7 +67,7 @@ execCurrentOf(CurrentOfExpr *cexpr,
 		if (cexpr->cursor_name)
 			cursor_name = cexpr->cursor_name;
 		else
-			cursor_name = fetch_param_value(econtext, cexpr->cursor_param);
+			cursor_name = fetch_cursor_param_value(econtext, cexpr->cursor_param);
 
 		foreach (lc, econtext->ecxt_estate->es_cursorPositions)
 		{
@@ -151,16 +147,12 @@ getCurrentOf(CurrentOfExpr *cexpr,
 	if (cexpr->cursor_name)
 		cursor_name = cexpr->cursor_name;
 	else
-<<<<<<< HEAD
 	{
 		if (!econtext->ecxt_param_list_info)
 			elog(ERROR, "no cursor name information found");
 
-		cursor_name = fetch_param_value(econtext, cexpr->cursor_param);
-	}
-=======
 		cursor_name = fetch_cursor_param_value(econtext, cexpr->cursor_param);
->>>>>>> 78a09145e0
+	}
 
 	/* Fetch table name for possible use in error messages */
 	table_name = get_rel_name(table_oid);
