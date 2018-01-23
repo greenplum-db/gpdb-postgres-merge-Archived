@@ -545,16 +545,6 @@ void
 ReScanRelation(ScanState *scanState)
 {
 	const ScanMethod *scanMethod;
-	EState *estate = scanState->ps.state;
-	Index scanrelid = ((Scan *)scanState->ps.plan)->scanrelid;
-	
-	/* If this is re-scanning of PlanQual ... */
-	if (estate->es_evTuple != NULL &&
-		estate->es_evTuple[scanrelid - 1] != NULL)
-	{
-		estate->es_evTupleNull[scanrelid - 1] = false;
-		return;
-	}
 
 	scanMethod = getScanMethod(scanState->tableType);
 	if ((scanState->scan_state & SCAN_SCAN) == 0)

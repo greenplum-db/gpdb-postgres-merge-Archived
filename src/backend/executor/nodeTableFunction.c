@@ -257,6 +257,16 @@ TableFunctionNext(TableFunctionState *node)
 }
 
 /*
+ * TableFunctionRecheck -- access method routine to recheck a tuple in EvalPlanQual
+ */
+static bool
+TableFunctionRecheck(TableFunctionState *node, TupleTableSlot *slot)
+{
+	/* nothing to check */
+	return true;
+}
+
+/*
  * ExecTableFunction - wrapper around TableFunctionNext
  */
 TupleTableSlot *
@@ -269,7 +279,9 @@ ExecTableFunction(TableFunctionState *node)
 		node->is_firstcall = false;
 	}
 
-	return ExecScan(&node->ss, (ExecScanAccessMtd) TableFunctionNext);
+	return ExecScan(&node->ss,
+					(ExecScanAccessMtd) TableFunctionNext,
+					(ExecScanRecheckMtd) TableFunctionRecheck);
 }
 
 

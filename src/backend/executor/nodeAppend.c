@@ -106,6 +106,7 @@ exec_append_initialize_next(AppendState *appendstate)
 	}
 }
 
+#if 0 // GPDB_90_MERGE_FIXME: not needed anymore?
 static bool append_need_prj(Append *node)
 {
 	ListCell *lc;
@@ -134,7 +135,8 @@ static bool append_need_prj(Append *node)
 			
 	return false;
 }
-		
+#endif
+
 /* ----------------------------------------------------------------
  *		ExecInitAppend
  *

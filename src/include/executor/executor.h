@@ -397,6 +397,7 @@ extern void ReScanAOCSRelation(ScanState *scanState);
  * prototypes from functions in execBitmapHeapScan.c
  */
 extern TupleTableSlot *BitmapHeapScanNext(ScanState *scanState);
+extern bool BitmapHeapScanRecheck(ScanState *node, TupleTableSlot *slot);
 extern void BitmapHeapScanBegin(ScanState *scanState);
 extern void BitmapHeapScanEnd(ScanState *scanState);
 extern void BitmapHeapScanReScan(ScanState *scanState);
