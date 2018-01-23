@@ -852,6 +852,7 @@ apply_motion_mutator(Node *node, ApplyMotionState *context)
 	int			saveNextMotionID;
 	int			saveNumInitPlans;
 	int			saveSliceDepth;
+	PlannerInfo *root = (PlannerInfo *) context->base.node;
 
 	if (node == NULL)
 		return NULL;
