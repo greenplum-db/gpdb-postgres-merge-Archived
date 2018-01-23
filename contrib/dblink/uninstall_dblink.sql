@@ -79,12 +79,8 @@ DROP FUNCTION dblink_get_connections();
 
 -- DROP FUNCTION dblink_is_busy(text);
 
-<<<<<<< HEAD
 -- DROP FUNCTION dblink_send_query(text, text);
-=======
-DROP FUNCTION dblink_send_query(text, text);
 
 DROP FUNCTION dblink_get_notify();
 
 DROP FUNCTION dblink_get_notify(text);
->>>>>>> 78a09145e0
