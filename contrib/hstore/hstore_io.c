@@ -812,7 +812,7 @@ hstore_from_record(PG_FUNCTION_ARGS)
 		/* Build a temporary HeapTuple control structure */
 		tuple.t_len = HeapTupleHeaderGetDatumLength(rec);
 		ItemPointerSetInvalid(&(tuple.t_self));
-		tuple.t_tableOid = InvalidOid;
+		//tuple.t_tableOid = InvalidOid;
 		tuple.t_data = rec;
 
 		values = (Datum *) palloc(ncolumns * sizeof(Datum));
@@ -958,7 +958,7 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 		/* Build a temporary HeapTuple control structure */
 		tuple.t_len = HeapTupleHeaderGetDatumLength(rec);
 		ItemPointerSetInvalid(&(tuple.t_self));
-		tuple.t_tableOid = InvalidOid;
+		//tuple.t_tableOid = InvalidOid;
 		tuple.t_data = rec;
 	}
 

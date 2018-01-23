@@ -177,7 +177,7 @@ hstore_exists_any(PG_FUNCTION_ARGS)
 		{
 			res = true;
 			break;
-		{
+		}
 	}
 
 	PG_RETURN_BOOL(res);
