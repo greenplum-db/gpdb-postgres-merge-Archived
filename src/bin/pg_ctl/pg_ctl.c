@@ -89,13 +89,9 @@ static char *pgdata_opt = NULL;
 static char *post_opts = NULL;
 static const char *progname;
 static char *log_file = NULL;
-<<<<<<< HEAD
-static char *postgres_path = NULL;
+static char *exec_path = NULL;
 static char *wrapper = NULL;
 static char *wrapper_args = NULL;
-=======
-static char *exec_path = NULL;
->>>>>>> 78a09145e0
 static char *register_servicename = "PostgreSQL";		/* FIXME: + version ID? */
 static char *register_username = NULL;
 static char *register_password = NULL;
@@ -313,15 +309,8 @@ get_pgpid(void)
 static char **
 readfile(const char *path)
 {
-<<<<<<< HEAD
 	int			fd;
 	int			nlines;
-=======
-	FILE	   *infile;
-	int			maxlength = 1,
-				linelen = 0;
-	int			nlines = 0;
->>>>>>> 78a09145e0
 	char	  **result;
 	char	   *buffer;
 	char	   *linebegin;
@@ -455,28 +444,18 @@ start_postmaster(void)
 	 * everything to a shell to process them.
 	 */
 	if (log_file != NULL)
-<<<<<<< HEAD
 	{
 		snprintf(formatstr, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &" SYSTEMQUOTE,
-				 postgres_path, pgdata_opt, post_opts,
-=======
-		snprintf(cmd, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &" SYSTEMQUOTE,
 				 exec_path, pgdata_opt, post_opts,
->>>>>>> 78a09145e0
 				 DEVNULL, log_file);
 	}
 	else
-<<<<<<< HEAD
 	{
 		snprintf(formatstr, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s < \"%s\" 2>&1 &" SYSTEMQUOTE,
-				 postgres_path, pgdata_opt, post_opts, DEVNULL);
+				 exec_path, pgdata_opt, post_opts, DEVNULL);
 	}
 
 	strncat(cmd, formatstr, MAXPGPATH - strlen(cmd) - 1);
-=======
-		snprintf(cmd, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s < \"%s\" 2>&1 &" SYSTEMQUOTE,
-				 exec_path, pgdata_opt, post_opts, DEVNULL);
->>>>>>> 78a09145e0
 
 	return system(cmd);
 #else							/* WIN32 */
@@ -719,13 +698,8 @@ read_post_opts(void)
 										 * name */
 					post_opts = strdup(arg1 + 1); /* point past whitespace */
 				}
-<<<<<<< HEAD
-				if (postgres_path == NULL)
-					postgres_path = strdup(optline);
-=======
 				if (exec_path == NULL)
-					exec_path = optline;
->>>>>>> 78a09145e0
+					exec_path = strdup(optline);
 			}
 
 			/* Free the results of readfile. */
@@ -1747,12 +1721,9 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 		}
 	}
 
-<<<<<<< HEAD
 #ifndef __CYGWIN__
     AddUserToTokenDacl(processInfo->hProcess);
 #endif
-=======
->>>>>>> 78a09145e0
 
 	CloseHandle(restrictedToken);
 
