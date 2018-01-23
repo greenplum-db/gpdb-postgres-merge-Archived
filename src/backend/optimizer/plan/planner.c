@@ -125,6 +125,7 @@ static void sort_canonical_gs_list(List *gs, int *p_nsets, Bitmapset ***p_sets);
 static Plan *pushdown_preliminary_limit(Plan *plan, Node *limitCount, int64 count_est, Node *limitOffset, int64 offset_est);
 static bool is_dummy_plan(Plan *plan);
 
+static Plan *getAnySubplan(Plan *node);
 static bool isSimplyUpdatableQuery(Query *query);
 
 
@@ -851,6 +852,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 											 returningLists,
 											 rowMarks,
 											 SS_assign_special_param(root));
+			plan->flow = pull_up_Flow(plan, getAnySubplan(plan));
 		}
 	}
 
@@ -1316,6 +1318,15 @@ getAnySubplan(Plan *node)
 		SubqueryScan *subqueryScan = (SubqueryScan *) node;
 
 		return subqueryScan->subplan;
+	}
+	else if (IsA(node, ModifyTable))
+	{
+		ModifyTable *mt = (ModifyTable *) node;
+
+		if (!mt->plans)
+			elog(ERROR, "ModifyTable has no child plans");
+
+		return (Plan *) linitial(mt->plans);
 	}
 
 	return node->lefttree;
