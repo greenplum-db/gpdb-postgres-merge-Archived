@@ -25,7 +25,7 @@ SUBDIRS+=pgevent
 endif
 
 ifeq ($(enable_gpfdist), yes)
-DIRS+=gpfdist
+SUBDIRS+=gpfdist
 endif
 
 all install installdirs uninstall distprep clean distclean maintainer-clean:
