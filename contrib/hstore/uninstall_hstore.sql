@@ -61,14 +61,11 @@ DROP FUNCTION hs_contains(hstore,hstore);
 DROP FUNCTION hs_contained(hstore,hstore);
 DROP FUNCTION tconvert(text,text);
 DROP FUNCTION hstore(text,text);
-<<<<<<< HEAD
-=======
 DROP FUNCTION hstore(text[],text[]);
 DROP FUNCTION hstore_to_array(hstore);
 DROP FUNCTION hstore_to_matrix(hstore);
 DROP FUNCTION hstore(record);
 DROP FUNCTION hstore(text[]);
->>>>>>> 78a09145e0
 DROP FUNCTION akeys(hstore);
 DROP FUNCTION avals(hstore);
 DROP FUNCTION skeys(hstore);

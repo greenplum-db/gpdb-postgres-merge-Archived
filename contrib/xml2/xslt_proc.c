@@ -53,11 +53,6 @@ static void parse_params(const char **params, text *paramstr);
 
 #endif /* USE_LIBXSLT */
 
-<<<<<<< HEAD
-=======
-#define MAXPARAMS 20			/* must be even, see parse_params() */
-
->>>>>>> 78a09145e0
 
 PG_FUNCTION_INFO_V1(xslt_process);
 

@@ -140,11 +140,7 @@ ifneq (,$(EXTENSION))
 	$(MKDIR_P) '$(DESTDIR)$(datadir)/extension'
 endif
 ifneq (,$(DATA)$(DATA_built))
-<<<<<<< HEAD
 	$(MKDIR_P) '$(DESTDIR)$(datadir)/$(datamoduledir)'
-=======
-	$(MKDIR_P) '$(DESTDIR)$(datadir)/contrib'
->>>>>>> 78a09145e0
 endif
 ifneq (,$(DATA_TSEARCH))
 	$(MKDIR_P) '$(DESTDIR)$(datadir)/tsearch_data'
@@ -154,11 +150,7 @@ ifneq (,$(MODULES))
 endif
 ifdef DOCS
 ifdef docdir
-<<<<<<< HEAD
 	$(MKDIR_P) '$(DESTDIR)$(docdir)/$(docmoduledir)'
-=======
-	$(MKDIR_P) '$(DESTDIR)$(docdir)/contrib'
->>>>>>> 78a09145e0
 endif # docdir
 endif # DOCS
 ifneq (,$(PROGRAM)$(SCRIPTS)$(SCRIPTS_built))

@@ -244,14 +244,10 @@ dxsyn_lexize(PG_FUNCTION_ARGS)
 			/* The first word is output only if keeporig=true */
 			if (pos != value || d->keeporig)
 			{
-<<<<<<< HEAD
-				res[nsyns].lexeme = pstrdup(syn);
+				res[nsyns].lexeme = pnstrdup(syn, end - syn);
 				res[nsyns].nvariant = 0;
 				res[nsyns].flags = 0;
 
-=======
-				res[nsyns].lexeme = pnstrdup(syn, end - syn);
->>>>>>> 78a09145e0
 				nsyns++;
 			}
 
@@ -261,14 +257,7 @@ dxsyn_lexize(PG_FUNCTION_ARGS)
 			if (!d->keepsynonyms)
 				break;
 		}
-<<<<<<< HEAD
-
 		res[nsyns].lexeme = NULL;
-
-		pfree(value);
-=======
-		res[nsyns].lexeme = NULL;
->>>>>>> 78a09145e0
 	}
 
 	PG_RETURN_POINTER(res);

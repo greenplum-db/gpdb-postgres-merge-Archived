@@ -141,10 +141,7 @@ FILE	   *LOGFILE = NULL;
 bool		use_log;			/* log transaction latencies to a file */
 
 int			is_connect;			/* establish connection for each transaction */
-<<<<<<< HEAD
 int			use_unique_key=1;	/* indexes will be primary key if set, otherwise non-unique indexes */
-=======
->>>>>>> 78a09145e0
 
 char	   *pghost = "";
 char	   *pgport = "";
@@ -165,11 +162,6 @@ typedef struct
 
 #define MAX_FILES		128		/* max number of SQL script files allowed */
 #define SHELL_COMMAND_SIZE	256	/* maximum size allowed for shell command */
-<<<<<<< HEAD
-
-#define MAX_FILES		128		/* max number of SQL script files allowed */
-=======
->>>>>>> 78a09145e0
 
 /*
  * structures used in custom query mode
@@ -1792,11 +1784,7 @@ main(int argc, char **argv)
 
 	memset(state, 0, sizeof(*state));
 
-<<<<<<< HEAD
 	while ((c = getopt(argc, argv, "ih:nvp:dSNc:Cs:t:T:U:lf:D:F:M:j:x:q")) != -1)
-=======
-	while ((c = getopt(argc, argv, "ih:nvp:dSNc:Cs:t:T:U:lf:D:F:M:j:")) != -1)
->>>>>>> 78a09145e0
 	{
 		switch (c)
 		{

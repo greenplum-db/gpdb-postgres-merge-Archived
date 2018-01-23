@@ -564,8 +564,6 @@ main(int argc, char **argv)
 {
 	int			c;
 
-<<<<<<< HEAD
-=======
 	progname = get_progname(argv[0]);
 
 	if (argc > 1)
@@ -582,7 +580,6 @@ main(int argc, char **argv)
 		}
 	}
 
->>>>>>> 78a09145e0
 #ifndef WIN32
 	/*
 	 * You can send SIGUSR1 to trigger failover.
@@ -591,17 +588,10 @@ main(int argc, char **argv)
 	 * action is to core dump, but we don't want that, so trap it and
 	 * commit suicide without core dump.
 	 *
-<<<<<<< HEAD
-	 * We used to use SIGINT and SIGQUIT to trigger failover, but that
-	 * turned out to be a bad idea because postmaster uses SIGQUIT to
-	 * request immediate shutdown. We still trap SIGINT, but that may
-	 * change in a future release.
-=======
 	 * We used to use SIGINT and SIGQUIT to trigger failover, but that turned
 	 * out to be a bad idea because postmaster uses SIGQUIT to request
 	 * immediate shutdown. We still trap SIGINT, but that may change in a
 	 * future release.
->>>>>>> 78a09145e0
 	 *
 	 * There's no way to trigger failover via signal on Windows.
 	 */
@@ -780,14 +770,8 @@ main(int argc, char **argv)
 	 */
 	for (;;)
 	{
-<<<<<<< HEAD
-		if (sleeptime <= 60)
-			pg_usleep(sleeptime * 1000000L);
-
-=======
 		/* Check for trigger file or signal first */
 		CheckForExternalTrigger();
->>>>>>> 78a09145e0
 #ifndef WIN32
 		if (signaled)
 		{
@@ -798,10 +782,6 @@ main(int argc, char **argv)
 				fflush(stderr);
 			}
 		}
-<<<<<<< HEAD
-		else
-#endif
-=======
 #endif
 
 		/*
@@ -812,7 +792,6 @@ main(int argc, char **argv)
 			exit(1);
 
 		if (CustomizableNextWALFileReady())
->>>>>>> 78a09145e0
 		{
 			/*
 			 * Once we have restored this file successfully we can remove some

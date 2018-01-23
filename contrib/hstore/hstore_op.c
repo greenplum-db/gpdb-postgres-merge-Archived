@@ -154,14 +154,6 @@ Datum
 hstore_exists_any(PG_FUNCTION_ARGS)
 {
 	HStore	   *hs = PG_GETARG_HS(0);
-<<<<<<< HEAD
-	text	   *key = PG_GETARG_TEXT_P(1);
-	HEntry	   *entry;
-	bool		res;
-
-	entry = findkey(hs, VARDATA(key), VARSIZE(key) - VARHDRSZ);
-	res = (entry != NULL) ? true : false;
-=======
 	ArrayType  *keys = PG_GETARG_ARRAYTYPE_P(1);
 	int         nkeys;
 	Pairs      *key_pairs = hstoreArrayToPairs(keys, &nkeys);
@@ -175,20 +167,19 @@ hstore_exists_any(PG_FUNCTION_ARGS)
 	 * each search can start one entry past the previous "found"
 	 * entry, or at the lower bound of the last search.
 	 */
->>>>>>> 78a09145e0
 
 	for (i = 0; !res && i < nkeys; ++i)
 	{
 		int idx = hstoreFindKey(hs, &lowbound,
 								key_pairs[i].key, key_pairs[i].keylen);
 
-<<<<<<< HEAD
-=======
 		if (idx >= 0)
+		{
 			res = true;
+			break;
+		{
 	}
 
->>>>>>> 78a09145e0
 	PG_RETURN_BOOL(res);
 }
 
@@ -1070,15 +1061,7 @@ hstore_each(PG_FUNCTION_ARGS)
 		tuple = heap_form_tuple(funcctx->tuple_desc, dvalues, nulls);
 		res = HeapTupleGetDatum(tuple);
 
-<<<<<<< HEAD
-		pfree(DatumGetPointer(dvalues[0]));
-		if (!nulls[1])
-			pfree(DatumGetPointer(dvalues[1]));
-
-		SRF_RETURN_NEXT(funcctx, res);
-=======
 		SRF_RETURN_NEXT(funcctx, PointerGetDatum(res));
->>>>>>> 78a09145e0
 	}
 
 	SRF_RETURN_DONE(funcctx);
