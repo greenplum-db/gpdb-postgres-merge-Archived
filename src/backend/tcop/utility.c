@@ -308,25 +308,6 @@ CheckRestrictedOperation(const char *cmdname)
 
 
 /*
- * CheckRestrictedOperation: throw error for hazardous command if we're
- * inside a security restriction context.
- *
- * This is needed to protect session-local state for which there is not any
- * better-defined protection mechanism, such as ownership.
- */
-static void
-CheckRestrictedOperation(const char *cmdname)
-{
-	if (InSecurityRestrictedOperation())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 /* translator: %s is name of a SQL command, eg PREPARE */
-				 errmsg("cannot execute %s within security-restricted operation",
-						cmdname)));
-}
-
-
-/*
  * ProcessUtility
  *		general utility function invoker
  *
@@ -1294,13 +1275,10 @@ standard_ProcessUtility(Node *parsetree,
 			{
 				ListenStmt *stmt = (ListenStmt *) parsetree;
 
-<<<<<<< HEAD
 				if (Gp_role == GP_ROLE_EXECUTE)
 					ereport(ERROR,(errcode(ERRCODE_GP_COMMAND_ERROR),
 							errmsg("Listen command cannot run in a function running on a segDB.")));
 
-=======
->>>>>>> 78a09145e0
 				CheckRestrictedOperation("LISTEN");
 				Async_Listen(stmt->conditionname);
 			}
@@ -1310,13 +1288,10 @@ standard_ProcessUtility(Node *parsetree,
 			{
 				UnlistenStmt *stmt = (UnlistenStmt *) parsetree;
 
-<<<<<<< HEAD
 				if (Gp_role == GP_ROLE_EXECUTE)
 					ereport(ERROR, (errcode(ERRCODE_GP_COMMAND_ERROR),
 							errmsg("Unlisten command cannot run in a function running on a segDB.")));
 
-=======
->>>>>>> 78a09145e0
 				CheckRestrictedOperation("UNLISTEN");
 				if (stmt->conditionname)
 					Async_Unlisten(stmt->conditionname);
@@ -1381,9 +1356,11 @@ standard_ProcessUtility(Node *parsetree,
 			break;
 
 		case T_CreateTrigStmt:
-<<<<<<< HEAD
 			{
-				Oid trigOid = CreateTrigger((CreateTrigStmt *) parsetree, InvalidOid, true);
+				Oid			trigOid;
+
+				trigOid = CreateTrigger((CreateTrigStmt *) parsetree, queryString,
+										InvalidOid, InvalidOid, NULL, true);
 				if (Gp_role == GP_ROLE_DISPATCH)
 				{
 					((CreateTrigStmt *) parsetree)->trigOid = trigOid;
@@ -1395,10 +1372,6 @@ standard_ProcessUtility(Node *parsetree,
 												NULL);
 				}
 			}
-=======
-			CreateTrigger((CreateTrigStmt *) parsetree, queryString,
-						  InvalidOid, InvalidOid, NULL, true);
->>>>>>> 78a09145e0
 			break;
 
 		case T_DropPropertyStmt:

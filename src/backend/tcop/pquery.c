@@ -225,17 +225,16 @@ ProcessQuery(Portal portal,
 	/*
 	 * Create the QueryDesc object
 	 */
-<<<<<<< HEAD
 	Assert(portal);
 
 	if (portal->sourceTag == T_SelectStmt && gp_select_invisible)
 		queryDesc = CreateQueryDesc(stmt, portal->sourceText,
 									SnapshotAny, InvalidSnapshot,
-									dest, params, false);
+									dest, params, 0);
 	else
 		queryDesc = CreateQueryDesc(stmt, portal->sourceText,
 									GetActiveSnapshot(), InvalidSnapshot,
-									dest, params, false);
+									dest, params, 0);
 	queryDesc->ddesc = portal->ddesc;
 
 	if (gp_enable_gpperfmon && Gp_role == GP_ROLE_DISPATCH)
@@ -276,11 +275,6 @@ ProcessQuery(Portal portal,
 	}
 
 	portal->status = PORTAL_ACTIVE;
-=======
-	queryDesc = CreateQueryDesc(plan, sourceText,
-								GetActiveSnapshot(), InvalidSnapshot,
-								dest, params, 0);
->>>>>>> 78a09145e0
 
 	/*
 	 * Set up to collect AFTER triggers
@@ -645,8 +639,7 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot,
 											InvalidSnapshot,
 											None_Receiver,
 											params,
-<<<<<<< HEAD
-											false);
+											0);
 				queryDesc->ddesc = ddesc;
 				
 				if (gp_enable_gpperfmon && Gp_role == GP_ROLE_DISPATCH)
@@ -700,9 +693,6 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot,
 				}
 
 				portal->status = PORTAL_ACTIVE;
-=======
-											0);
->>>>>>> 78a09145e0
 
 				/*
 				 * We do *not* call AfterTriggerBeginQuery() here.	We assume
