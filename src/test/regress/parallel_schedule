@@ -106,8 +106,7 @@ test: misc
 # ----------
 # Another group of parallel tests
 # ----------
-<<<<<<< HEAD
-test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts foreign_data window json
+test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts foreign_data window xmlmap json
 
 # GPDB_84_MERGE_FIXME: While disabling this was not really an effect of the 8.4
 # merge, it was done a long time ago, it's time to revisit this so we can re-
@@ -125,9 +124,6 @@ test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts f
 # 'foreign_key' test is disabled, because it contains several tables with
 # multiple UNIQUE constraints, which is not supported in GPDB.
 #test: foreign_key
-=======
-test: select_views portals_p2 rules foreign_key cluster dependency guc bitmapops combocid tsearch tsdicts foreign_data window xmlmap
->>>>>>> 78a09145e0
 
 # ----------
 # Another group of parallel tests
@@ -144,7 +140,6 @@ test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid c
 #test: returning
 
 # run stats by itself because its delay may be insufficient under heavy load
-<<<<<<< HEAD
 #
 # 'stats' test has been disabled in GPDB, because it tries to set stats-related
 # GUCs stats_block_level and stats_row_level, which have been removed from
@@ -155,6 +150,3 @@ test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid c
 # Disabled because tablespaces live in filespaces in GPDB, so the syntax
 # is quite different.
 test: tablespace
-=======
-test: stats
->>>>>>> 78a09145e0
