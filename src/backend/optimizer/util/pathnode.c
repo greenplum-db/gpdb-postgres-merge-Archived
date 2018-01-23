@@ -171,6 +171,7 @@ pathnode_walk_kids(Path            *path,
             case T_CteScan:
             case T_TableFunctionScan:
             case T_Result:
+			case T_Join: /* Plain Join is used for NoOpPaths */
                     return CdbVisit_Walk;
             case T_BitmapHeapScan:
                     v = pathnode_walk_node(((BitmapHeapPath *)path)->bitmapqual, walker, context);
@@ -186,7 +187,6 @@ pathnode_walk_kids(Path            *path,
                     break;
             case T_HashJoin:
             case T_MergeJoin:
-			case T_Join: /* Plain Join is used for NoOpPaths */
                     v = pathnode_walk_node(((JoinPath *)path)->outerjoinpath, walker, context);
                     if (v != CdbVisit_Walk)     /* stop */
                             break;
