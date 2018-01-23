@@ -2181,7 +2181,7 @@ create_database(const char *dbname)
 	 * not mess up the tests.
 	 */
 	header(_("creating database \"%s\""), dbname);
-	if (encoding)
+	if (encoding && strlen(encoding) > 0)
 		psql_command("postgres", "CREATE DATABASE \"%s\" TEMPLATE=template0 ENCODING='%s'%s", dbname, encoding,
 					 (nolocale) ? " LC_COLLATE='C' LC_CTYPE='C'" : "");
 	else
