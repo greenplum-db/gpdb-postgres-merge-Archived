@@ -852,7 +852,6 @@ apply_motion_mutator(Node *node, ApplyMotionState *context)
 	int			saveNextMotionID;
 	int			saveNumInitPlans;
 	int			saveSliceDepth;
-	PlannerInfo *root = (PlannerInfo *) context->base.node;
 
 	Assert(root && IsA(root, PlannerInfo));
 
@@ -1533,8 +1532,11 @@ doesUpdateAffectPartitionCols(PlannerInfo *root,
 	 */
 	append = (Append *) plan;
 
+	// GPDB_90_MERGE_FIXME: The inherited update plans don't look like that
+	// anymore. ModifyTable nodes are now used.
+	
 	Insist(IsA(append, Append) &&
-		   append->isTarget &&
+//		   append->isTarget &&
 		   list_length(append->appendplans) == list_length(root->resultRelations));
 
 	forboth(rticell, root->resultRelations,

@@ -737,12 +737,8 @@ DefineRelation(CreateStmt *stmt, char relkind, char relstorage, bool dispatch)
 										  namespaceId,
 										  tablespaceId,
 										  InvalidOid,
-<<<<<<< HEAD
-										  stmt->ownerid,
-=======
 										  InvalidOid,
-										  GetUserId(),
->>>>>>> 78a09145e0
+										  stmt->ownerid,
 										  descriptor,
 										  cooked_constraints,
 										  /* relam */ InvalidOid,
@@ -752,16 +748,11 @@ DefineRelation(CreateStmt *stmt, char relkind, char relstorage, bool dispatch)
 										  localHasOids,
 										  stmt->parentOidCount,
 										  stmt->oncommit,
-<<<<<<< HEAD
                                           stmt->policy,  /*CDB*/
                                           reloptions,
+										  true,
 										  allowSystemTableModsDDL,
 										  valid_opts);
-=======
-										  reloptions,
-										  true,
-										  allowSystemTableMods);
->>>>>>> 78a09145e0
 
 	StoreCatalogInheritance(relationId, stmt->inhOids);
 
@@ -1318,10 +1309,9 @@ CheckExclusiveAccess(Relation rel)
  * relation.
  */
 void
-TruncateRelfiles(Relation rel, SubTransactionId mysubid)
+TruncateRelfiles(Relation rel, SubTransactionId mySubid)
 {
 	Oid			heap_relid;
-	Oid			toast_relid;
 	Oid			aoseg_relid = InvalidOid;
 	Oid			aoblkdir_relid = InvalidOid;
 	Oid			aovisimap_relid = InvalidOid;
@@ -1352,7 +1342,6 @@ TruncateRelfiles(Relation rel, SubTransactionId mysubid)
 	}
 	else
 	{
-		Oid			heap_relid;
 		Oid			toast_relid;
 
 		/*
@@ -1643,7 +1632,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 	{
 		Relation	rel = (Relation) lfirst(cell);
 
-		TruncateRelfiles(rel, mysubid);
+		TruncateRelfiles(rel, mySubid);
 
 		/*
 		 * Reconstruct the indexes to match, and we're done.
@@ -5635,7 +5624,8 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 
 				/* Write the tuple out to the new relation */
 				if (newrel)
-					heap_insert(newrel, htuple, mycid, hi_options, bistate);
+					heap_insert(newrel, htuple, mycid, hi_options, bistate,
+								GetCurrentTransactionId());
 
 				ResetExprContext(econtext);
 
@@ -8648,17 +8638,13 @@ CreateFKCheckTrigger(RangeVar *myRel, Constraint *fkconstraint,
 	fk_trigger->constrrel = fkconstraint->pktable;
 	fk_trigger->args = NIL;
 
-<<<<<<< HEAD
-	trigobj = CreateTrigger(fk_trigger, constraintOid, false);
+	trigobj = CreateTrigger(fk_trigger, NULL, constraintOid, indexOid,
+						 "RI_ConstraintTrigger", false);
 
 	if (on_insert)
 		fkconstraint->trig1Oid = trigobj;
 	else
 		fkconstraint->trig2Oid = trigobj;
-=======
-	(void) CreateTrigger(fk_trigger, NULL, constraintOid, indexOid,
-						 "RI_ConstraintTrigger", false);
->>>>>>> 78a09145e0
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -8696,16 +8682,16 @@ createForeignKeyTriggers(Relation rel, Constraint *fkconstraint,
 	CommandCounterIncrement();
 
 	/*
-<<<<<<< HEAD
-=======
 	 * Build and execute a CREATE CONSTRAINT TRIGGER statement for the CHECK
 	 * action for both INSERTs and UPDATEs on the referencing table.
 	 */
+	/* Not in GPDB */
+#if 0
 	CreateFKCheckTrigger(myRel, fkconstraint, constraintOid, indexOid, true);
 	CreateFKCheckTrigger(myRel, fkconstraint, constraintOid, indexOid, false);
-
+#endif
+	
 	/*
->>>>>>> 78a09145e0
 	 * Build and execute a CREATE CONSTRAINT TRIGGER statement for the ON
 	 * DELETE action on the referenced table.
 	 */
@@ -8754,12 +8740,8 @@ createForeignKeyTriggers(Relation rel, Constraint *fkconstraint,
 	fk_trigger->args = NIL;
 	fk_trigger->trigOid = fkconstraint->trig3Oid;
 
-<<<<<<< HEAD
-	fkconstraint->trig3Oid = CreateTrigger(fk_trigger, constraintOid, false);
-=======
-	(void) CreateTrigger(fk_trigger, NULL, constraintOid, indexOid,
+	fkconstraint->trig3Oid = CreateTrigger(fk_trigger, NULL, constraintOid, indexOid,
 						 "RI_ConstraintTrigger", false);
->>>>>>> 78a09145e0
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -8779,8 +8761,10 @@ createForeignKeyTriggers(Relation rel, Constraint *fkconstraint,
 	 * and the use of self-referential FKs is rare enough, that we live with
 	 * it for now.  There will be a real fix in PG 9.2.
 	 */
-	CreateFKCheckTrigger(myRel, fkconstraint, constraintOid, true);
-	CreateFKCheckTrigger(myRel, fkconstraint, constraintOid, false);
+	CreateFKCheckTrigger(myRel, fkconstraint, constraintOid,
+						 indexOid, true);
+	CreateFKCheckTrigger(myRel, fkconstraint, constraintOid,
+						 indexOid, false);
 
 	/*
 	 * Build and execute a CREATE CONSTRAINT TRIGGER statement for the ON
@@ -8830,14 +8814,10 @@ createForeignKeyTriggers(Relation rel, Constraint *fkconstraint,
 	}
 	fk_trigger->args = NIL;
 
-<<<<<<< HEAD
 	fk_trigger->trigOid = fkconstraint->trig4Oid;
 
-	fkconstraint->trig4Oid = CreateTrigger(fk_trigger, constraintOid, false);
-=======
-	(void) CreateTrigger(fk_trigger, NULL, constraintOid, indexOid,
+	fkconstraint->trig4Oid = CreateTrigger(fk_trigger, NULL, constraintOid, indexOid,
 						 "RI_ConstraintTrigger", false);
->>>>>>> 78a09145e0
 }
 
 /*
@@ -11834,7 +11814,7 @@ build_ctas_with_dist(Relation rel, List *dist_clause,
 
 	q = parse_analyze((Node *) n, synthetic_sql, NULL, 0);
 
-	AcquireRewriteLocks(q);
+	AcquireRewriteLocks(q, false);
 
 	/* Rewrite through rule system */
 	rewritten = QueryRewrite(q);
@@ -14932,9 +14912,9 @@ ATPExecPartSplit(Relation *rel,
 		/* 1) Create temp table */
 		rv = makeRangeVar(nspname, relname, -1);
 		inh->relation = copyObject(rv);
-        inh->options = list_make3_int(CREATE_TABLE_LIKE_INCLUDING_DEFAULTS,
-									  CREATE_TABLE_LIKE_INCLUDING_CONSTRAINTS,
-									  CREATE_TABLE_LIKE_INCLUDING_INDEXES);
+        inh->options = CREATE_TABLE_LIKE_DEFAULTS
+			| CREATE_TABLE_LIKE_CONSTRAINTS
+			| CREATE_TABLE_LIKE_INDEXES;
 		ct->tableElts = list_make1(inh);
 		ct->distributedBy = list_copy(distro); /* must preserve the list for later */
 
@@ -16461,8 +16441,9 @@ char *alterTableCmdString(AlterTableType subtype)
 			cmdstring = pstrdup("alter a column null setting of");
 			break;
 			
-		case AT_SetStatistics: /* alter column statistics */
-		case AT_SetStorage: /* alter column storage */
+		case AT_SetStatistics: /* alter column set statistics */
+		case AT_SetDistinct: /* alter column set statistics distinct */
+		case AT_SetStorage: /* alter column set storage */
 			break;
 			
 		case AT_DropColumn: /* drop column */

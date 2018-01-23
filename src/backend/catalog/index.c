@@ -2514,7 +2514,7 @@ IndexCheckExclusion(Relation heapRelation,
 		MemoryContextReset(econtext->ecxt_per_tuple_memory);
 
 		/* Set up for predicate or expression evaluation */
-		ExecStoreTuple(heapTuple, slot, InvalidBuffer, false);
+		ExecStoreHeapTuple(heapTuple, slot, InvalidBuffer, false);
 
 		/*
 		 * In a partial index, ignore tuples that don't satisfy the predicate.

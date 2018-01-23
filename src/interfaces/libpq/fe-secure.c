@@ -327,8 +327,6 @@ pqsecure_read(PGconn *conn, void *ptr, size_t len)
 		int			err;
 		DECLARE_SIGPIPE_INFO(spinfo);
 
-		DECLARE_SIGPIPE_INFO(spinfo);
-
 		/* SSL_read can write to the socket, so we need to disable SIGPIPE */
 		DISABLE_SIGPIPE(conn, spinfo, return -1);
 
