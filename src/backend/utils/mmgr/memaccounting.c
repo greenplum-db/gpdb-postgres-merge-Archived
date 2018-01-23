@@ -1157,6 +1157,8 @@ MemoryAccounting_GetOwnerName(MemoryOwnerType ownerType)
 		return "X_WindowAgg";
 	case MEMORY_OWNER_TYPE_Exec_Repeat:
 		return "X_Repeat";
+	case MEMORY_OWNER_TYPE_Exec_ModifyTable:
+		return "X_ModifyTable";
 	case MEMORY_OWNER_TYPE_Exec_DML:
 		return "X_DML";
 	case MEMORY_OWNER_TYPE_Exec_SplitUpdate:
