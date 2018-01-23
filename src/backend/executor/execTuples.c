@@ -118,7 +118,6 @@ static TupleDesc ExecTypeFromTLInternal(List *targetList,
  *		Basic routine to make an empty TupleTableSlot.
  * --------------------------------
  */
-<<<<<<< HEAD
 void init_slot(TupleTableSlot *slot, TupleDesc tupdesc)
 {
     MemSet(slot, 0, sizeof(*slot));
@@ -175,24 +174,6 @@ MakeTupleTableSlot(void)
 	TupleTableSlot *slot = makeNode(TupleTableSlot);
 
 	init_slot(slot, NULL);
-=======
-TupleTableSlot *
-MakeTupleTableSlot(void)
-{
-	TupleTableSlot *slot = makeNode(TupleTableSlot);
-
-	slot->tts_isempty = true;
-	slot->tts_shouldFree = false;
-	slot->tts_shouldFreeMin = false;
-	slot->tts_tuple = NULL;
-	slot->tts_tupleDescriptor = NULL;
-	slot->tts_mcxt = CurrentMemoryContext;
-	slot->tts_buffer = InvalidBuffer;
-	slot->tts_nvalid = 0;
-	slot->tts_values = NULL;
-	slot->tts_isnull = NULL;
-	slot->tts_mintuple = NULL;
->>>>>>> 78a09145e0
 
 	return slot;
 }
@@ -238,28 +219,11 @@ ExecResetTupleTable(List *tupleTable,	/* tuple table */
 		/* Always release resources and reset the slot to empty */
 		ExecClearTuple(slot);
 		if (slot->tts_tupleDescriptor)
-<<<<<<< HEAD
 			cleanup_slot(slot);
 
 		/* If shouldFree, release memory occupied by the slot itself */
 		if (shouldFree)
 			pfree(slot);
-=======
-		{
-			ReleaseTupleDesc(slot->tts_tupleDescriptor);
-			slot->tts_tupleDescriptor = NULL;
-		}
-
-		/* If shouldFree, release memory occupied by the slot itself */
-		if (shouldFree)
-		{
-			if (slot->tts_values)
-				pfree(slot->tts_values);
-			if (slot->tts_isnull)
-				pfree(slot->tts_isnull);
-			pfree(slot);
-		}
->>>>>>> 78a09145e0
 	}
 
 	/* If shouldFree, release the list structure */
@@ -298,17 +262,7 @@ ExecDropSingleTupleTableSlot(TupleTableSlot *slot)
 {
 	/* This should match ExecResetTupleTable's processing of one slot */
 	Assert(IsA(slot, TupleTableSlot));
-<<<<<<< HEAD
 	cleanup_slot(slot);
-=======
-	ExecClearTuple(slot);
-	if (slot->tts_tupleDescriptor)
-		ReleaseTupleDesc(slot->tts_tupleDescriptor);
-	if (slot->tts_values)
-		pfree(slot->tts_values);
-	if (slot->tts_isnull)
-		pfree(slot->tts_isnull);
->>>>>>> 78a09145e0
 	pfree(slot);
 }
 
@@ -1057,7 +1011,6 @@ ExecInitResultTupleSlot(EState *estate, PlanState *planstate)
 void
 ExecInitScanTupleSlot(EState *estate, ScanState *scanstate)
 {
-<<<<<<< HEAD
     TupleTableSlot *slot = ExecAllocTableSlot(&estate->es_tupleTable);
     Scan           *scan = (Scan *)scanstate->ps.plan;
     RangeTblEntry  *rtentry;
@@ -1080,9 +1033,6 @@ ExecInitScanTupleSlot(EState *estate, ScanState *scanstate)
         default:
             break;
     }
-=======
-	scanstate->ss_ScanTupleSlot = ExecAllocTableSlot(&estate->es_tupleTable);
->>>>>>> 78a09145e0
 }
 
 /* ----------------
@@ -1379,10 +1329,6 @@ do_tup_output(TupOutputState *tstate, Datum *values, bool *isnull)
 	TupleTableSlot *slot = tstate->slot;
 	int			natts = slot->tts_tupleDescriptor->natts;
 
-<<<<<<< HEAD
-	/* put it in a slot */
-	ExecStoreHeapTuple(tuple, tstate->slot, InvalidBuffer, true);
-=======
 	/* make sure the slot is clear */
 	ExecClearTuple(slot);
 
@@ -1392,7 +1338,6 @@ do_tup_output(TupOutputState *tstate, Datum *values, bool *isnull)
 
 	/* mark slot as containing a virtual tuple */
 	ExecStoreVirtualTuple(slot);
->>>>>>> 78a09145e0
 
 	/* send the tuple to the receiver */
 	(*tstate->dest->receiveSlot) (slot, tstate->dest);
@@ -1429,15 +1374,9 @@ do_text_output_multiline(TupOutputState *tstate, char *text)
 			eol += len;
 		}
 
-<<<<<<< HEAD
-		/* &text yields a singleton pointer - make sure only one is read */
-		Assert(1 == tstate->metadata->tupdesc->natts);
-		do_tup_output(tstate, &text);
-=======
 		values[0] = PointerGetDatum(cstring_to_text_with_len(text, len));
 		do_tup_output(tstate, values, isnull);
 		pfree(DatumGetPointer(values[0]));
->>>>>>> 78a09145e0
 		text = eol;
 	}
 }
