@@ -1152,7 +1152,7 @@ CommentConstraint(List *qualname, char *comment)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 					   RelationGetRelationName(relation));
 
-	conOid = GetConstraintByName(RelationGetRelid(relation), conName);
+	conOid = get_constraint_oid(RelationGetRelid(relation), conName, false);
 
 	/* Call CreateComments() to create/drop the comments */
 	CreateComments(conOid, ConstraintRelationId, 0, comment);

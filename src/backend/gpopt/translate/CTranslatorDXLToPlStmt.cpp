@@ -2931,7 +2931,8 @@ CTranslatorDXLToPlStmt::PappendFromDXLAppend
 
 	CDXLPhysicalAppend *pdxlopAppend = CDXLPhysicalAppend::PdxlopConvert(pdxlnAppend->Pdxlop());
 
-	pappend->isTarget = pdxlopAppend->FIsTarget();
+	// GPDB_90_MERGE_FIXME: isTarget field is no more.
+	//pappend->isTarget = pdxlopAppend->FIsTarget();
 	pappend->isZapped = pdxlopAppend->FIsZapped();
 
 	// translate operator costs

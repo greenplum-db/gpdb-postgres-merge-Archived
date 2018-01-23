@@ -488,8 +488,7 @@ numeric_out_sci(Numeric num, int scale)
 	if (NUMERIC_IS_NAN(num))
 		return pstrdup("NaN");
 
-	init_var(&x);
-	set_var_from_num(num, &x);
+	init_var_from_num(num, &x);
 
 	str = get_str_from_var_sci(&x, scale);
 
