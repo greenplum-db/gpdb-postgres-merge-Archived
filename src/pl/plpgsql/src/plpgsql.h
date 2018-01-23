@@ -200,10 +200,7 @@ typedef struct PLpgSQL_expr
 	int			dno;
 	char	   *query;
 	SPIPlanPtr	plan;
-<<<<<<< HEAD
 	bool		cachable;			/* true if plan can be cached */
-	Oid		   *plan_argtypes;
-=======
 	Bitmapset  *paramnos;		/* all dnos referenced by this query */
 
 	/* function containing this expr (not set until we first parse query) */
@@ -212,7 +209,6 @@ typedef struct PLpgSQL_expr
 	/* namespace chain visible to this expr */
 	struct PLpgSQL_nsitem *ns;
 
->>>>>>> 78a09145e0
 	/* fields for "simple expression" fast-path execution: */
 	Expr	   *expr_simple_expr;		/* NULL means not a simple expr */
 	Oid			expr_simple_type;
@@ -831,19 +827,6 @@ extern PLpgSQL_plugin **plugin_ptr;
  */
 extern PLpgSQL_function *plpgsql_compile(FunctionCallInfo fcinfo,
 				bool forValidator);
-<<<<<<< HEAD
-extern PLpgSQL_function *plpgsql_compile_inline(FunctionCallInfo fcinfo,
-				char *proc_source);
-extern int	plpgsql_parse_word(const char *word);
-extern int	plpgsql_parse_dblword(const char *word);
-extern int	plpgsql_parse_tripword(const char *word);
-extern int	plpgsql_parse_wordtype(char *word);
-extern int	plpgsql_parse_dblwordtype(char *word);
-extern int	plpgsql_parse_tripwordtype(char *word);
-extern int	plpgsql_parse_wordrowtype(char *word);
-extern int	plpgsql_parse_dblwordrowtype(char *word);
-extern PLpgSQL_type *plpgsql_parse_datatype(const char *string);
-=======
 extern PLpgSQL_function *plpgsql_compile_inline(char *proc_source);
 extern void plpgsql_parser_setup(struct ParseState *pstate,
 								 PLpgSQL_expr *expr);
@@ -857,7 +840,6 @@ extern PLpgSQL_type *plpgsql_parse_wordtype(char *ident);
 extern PLpgSQL_type *plpgsql_parse_cwordtype(List *idents);
 extern PLpgSQL_type *plpgsql_parse_wordrowtype(char *ident);
 extern PLpgSQL_type *plpgsql_parse_cwordrowtype(List *idents);
->>>>>>> 78a09145e0
 extern PLpgSQL_type *plpgsql_build_datatype(Oid typeOid, int32 typmod);
 extern PLpgSQL_variable *plpgsql_build_variable(const char *refname, int lineno,
 					   PLpgSQL_type *dtype,

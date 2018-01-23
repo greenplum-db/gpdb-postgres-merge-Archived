@@ -94,9 +94,6 @@ static PLpgSQL_function *do_compile(FunctionCallInfo fcinfo,
 		   PLpgSQL_function *function,
 		   PLpgSQL_func_hashkey *hashkey,
 		   bool forValidator);
-<<<<<<< HEAD
-static void add_dummy_return(PLpgSQL_function *function);
-=======
 static void plpgsql_compile_error_callback(void *arg);
 static void add_dummy_return(PLpgSQL_function *function);
 static Node *plpgsql_pre_column_ref(ParseState *pstate, ColumnRef *cref);
@@ -104,7 +101,6 @@ static Node *plpgsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *
 static Node *plpgsql_param_ref(ParseState *pstate, ParamRef *pref);
 static Node *resolve_column_ref(PLpgSQL_expr *expr, ColumnRef *cref);
 static Node *make_datum_param(PLpgSQL_expr *expr, int dno, int location);
->>>>>>> 78a09145e0
 static PLpgSQL_row *build_row_from_class(Oid classOid);
 static PLpgSQL_row *build_row_from_vars(PLpgSQL_variable **vars, int numvars);
 static PLpgSQL_type *build_datatype(HeapTuple typeTup, int32 typmod);
@@ -880,152 +876,10 @@ plpgsql_compile_inline(char *proc_source)
 }
 
 
-/* ----------
- * plpgsql_compile_inline	Make an execution tree for an anonymous code block.
- *
- * Note: this is generally parallel to do_compile(); is it worth trying to
- * merge the two?
- *
- * Note: we assume the block will be thrown away so there is no need to build
- * persistent data structures.
- * ----------
- */
-PLpgSQL_function *
-plpgsql_compile_inline(FunctionCallInfo fcinfo, char *proc_source)
-{
-	char	   *func_name = "inline_code_block";
-	PLpgSQL_function *function;
-	ErrorContextCallback plerrcontext;
-	Oid			typinput;
-	PLpgSQL_variable *var;
-	int			parse_rc;
-	MemoryContext func_cxt;
-	int			i;
-
-	/*
-	 * Setup the scanner input and error info.  We assume that this function
-	 * cannot be invoked recursively, so there's no need to save and restore
-	 * the static variables used here.
-	 */
-	plpgsql_scanner_init(proc_source);
-
-	plpgsql_error_funcname = func_name;
-	plpgsql_error_lineno = 0;
-
-	/*
-	 * Setup error traceback support for ereport()
-	 */
-	plerrcontext.callback = plpgsql_compile_error_callback;
-	plerrcontext.arg = proc_source;
-	plerrcontext.previous = error_context_stack;
-	error_context_stack = &plerrcontext;
-
-	plpgsql_ns_init();
-	plpgsql_ns_push(func_name);
-	plpgsql_DumpExecTree = false;
-
-	datums_alloc = 128;
-	plpgsql_nDatums = 0;
-	plpgsql_Datums = palloc(sizeof(PLpgSQL_datum *) * datums_alloc);
-	datums_last = 0;
-
-	/* Do extra syntax checking if check_function_bodies is on */
-	plpgsql_check_syntax = check_function_bodies;
-
-	/* Function struct does not live past current statement */
-	function = (PLpgSQL_function *) palloc0(sizeof(PLpgSQL_function));
-
-	plpgsql_curr_compile = function;
-
-	/*
-	 * All the rest of the compile-time storage (e.g. parse tree) is kept in
-	 * its own memory context, so it can be reclaimed easily.
-	 */
-	func_cxt = AllocSetContextCreate(CurrentMemoryContext,
-									 "PL/pgSQL function context",
-									 ALLOCSET_DEFAULT_MINSIZE,
-									 ALLOCSET_DEFAULT_INITSIZE,
-									 ALLOCSET_DEFAULT_MAXSIZE);
-	compile_tmp_cxt = MemoryContextSwitchTo(func_cxt);
-
-	function->fn_name = pstrdup(func_name);
-	function->fn_cxt = func_cxt;
-	function->out_param_varno = -1;		/* set up for no OUT param */
-
-	/* Set up as though in a function returning VOID */
-	function->fn_rettype = VOIDOID;
-	function->fn_retset = false;
-	function->fn_retistuple = false;
-	/* a bit of hardwired knowledge about type VOID here */
-	function->fn_retbyval = true;
-	function->fn_rettyplen = sizeof(int32);
-	getTypeInputInfo(VOIDOID, &typinput, &function->fn_rettypioparam);
-	fmgr_info(typinput, &(function->fn_retinput));
-
-	/*
-	 * Remember if function is STABLE/IMMUTABLE.  XXX would it be better to
-	 * set this TRUE inside a read-only transaction?  Not clear.
-	 */
-	function->fn_readonly = false;
-
-	/*
-	 * Create the magic FOUND variable.
-	 */
-	var = plpgsql_build_variable("found", 0,
-								 plpgsql_build_datatype(BOOLOID, -1),
-								 true);
-	function->found_varno = var->dno;
-
-	/*
-	 * Now parse the function's text
-	 */
-	parse_rc = plpgsql_yyparse();
-	if (parse_rc != 0)
-		elog(ERROR, "plpgsql parser returned %d", parse_rc);
-	function->action = plpgsql_yylval.program;
-
-	plpgsql_scanner_finish();
-
-	/*
-	 * If it returns VOID (always true at the moment), we allow control to
-	 * fall off the end without an explicit RETURN statement.
-	 */
-	if (function->fn_rettype == VOIDOID)
-		add_dummy_return(function);
-
-	/*
-	 * Complete the function's info
-	 */
-	function->fn_nargs = 0;
-	function->ndatums = plpgsql_nDatums;
-	function->datums = palloc(sizeof(PLpgSQL_datum *) * plpgsql_nDatums);
-	for (i = 0; i < plpgsql_nDatums; i++)
-		function->datums[i] = plpgsql_Datums[i];
-
-	/*
-	 * Pop the error context stack
-	 */
-	error_context_stack = plerrcontext.previous;
-	plpgsql_error_funcname = NULL;
-	plpgsql_error_lineno = 0;
-
-	plpgsql_check_syntax = false;
-
-	MemoryContextSwitchTo(compile_tmp_cxt);
-	compile_tmp_cxt = NULL;
-	return function;
-}
-
-
 /*
  * error context callback to let us supply a call-stack traceback.
  * If we are validating or executing an anonymous code block, the function
  * source text is passed as an argument.
-<<<<<<< HEAD
- *
- * This function is public only for the sake of an assertion in gram.y
-=======
->>>>>>> 78a09145e0
  */
 static void
 plpgsql_compile_error_callback(void *arg)
@@ -1397,41 +1251,6 @@ make_datum_param(PLpgSQL_expr *expr, int dno, int location)
 	param->location = location;
 
 	return (Node *) param;
-}
-
-/*
- * Add a dummy RETURN statement to the given function's body
- */
-static void
-add_dummy_return(PLpgSQL_function *function)
-{
-	/*
-	 * If the outer block has an EXCEPTION clause, we need to make a new outer
-	 * block, since the added RETURN shouldn't act like it is inside the
-	 * EXCEPTION clause.
-	 */
-	if (function->action->exceptions != NULL)
-	{
-		PLpgSQL_stmt_block *new;
-
-		new = palloc0(sizeof(PLpgSQL_stmt_block));
-		new->cmd_type = PLPGSQL_STMT_BLOCK;
-		new->body = list_make1(function->action);
-
-		function->action = new;
-	}
-	if (function->action->body == NIL ||
-		((PLpgSQL_stmt *) llast(function->action->body))->cmd_type != PLPGSQL_STMT_RETURN)
-	{
-		PLpgSQL_stmt_return *new;
-
-		new = palloc0(sizeof(PLpgSQL_stmt_return));
-		new->cmd_type = PLPGSQL_STMT_RETURN;
-		new->expr = NULL;
-		new->retvarno = function->out_param_varno;
-
-		function->action->body = lappend(function->action->body, new);
-	}
 }
 
 

@@ -2363,12 +2363,7 @@ make_execsql_stmt(int firsttoken, int location)
 		if (tok == ';')
 			break;
 		if (tok == 0)
-		{
-			plpgsql_error_lineno = plpgsql_scanner_lineno();
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unexpected end of function definition")));
-		}
+			yyerror("unexpected end of function definition");
 
 		if (tok == K_INTO && prev_tok != K_INSERT)
 		{

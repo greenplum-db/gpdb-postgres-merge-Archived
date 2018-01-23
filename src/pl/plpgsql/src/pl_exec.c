@@ -2496,15 +2496,10 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 				if (paramisnull)
 					extval = "<NULL>";
 				else
-<<<<<<< HEAD
 					extval = convert_value_to_string(estate,
 													 paramvalue,
 													 paramtypeid);
-				plpgsql_dstring_append(&ds, extval);
-=======
-					extval = convert_value_to_string(paramvalue, paramtypeid);
 				appendStringInfoString(&ds, extval);
->>>>>>> 78a09145e0
 				current_param = lnext(current_param);
 				exec_eval_cleanup(estate);
 			}
@@ -2784,14 +2779,8 @@ static int
 exec_stmt_execsql(PLpgSQL_execstate *estate,
 				  PLpgSQL_stmt_execsql *stmt)
 {
-<<<<<<< HEAD
-	Datum	   *values;
-	char	   *nulls;
-	int64		tcount;
-=======
 	ParamListInfo paramLI;
-	long		tcount;
->>>>>>> 78a09145e0
+	int64		tcount;
 	int			rc;
 	PLpgSQL_expr *expr = stmt->sqlstmt;
 
@@ -4640,11 +4629,6 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Mark expression as busy for the duration of the ExecEvalExpr call.
-	 */
-	expr->expr_simple_in_use = true;
-=======
 	 * Create the param list in econtext's temporary memory context.
 	 * We won't need to free it explicitly, since it will go away at the
 	 * next reset of that context.
@@ -4659,7 +4643,11 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 
 	paramLI = setup_param_list(estate, expr);
 	econtext->ecxt_param_list_info = paramLI;
->>>>>>> 78a09145e0
+
+	/*
+	 * Mark expression as busy for the duration of the ExecEvalExpr call.
+	 */
+	expr->expr_simple_in_use = true;
 
 	/*
 	 * Finally we can call the executor to evaluate the expression
@@ -4670,13 +4658,9 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 						   NULL);
 
 	/* Assorted cleanup */
-<<<<<<< HEAD
 	expr->expr_simple_in_use = false;
 
-	MemoryContextSwitchTo(oldcontext);
-=======
 	estate->cur_expr = save_cur_expr;
->>>>>>> 78a09145e0
 
 	if (!estate->readonly_func)
 		PopActiveSnapshot();
@@ -4730,24 +4714,6 @@ setup_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 		paramLI->parserSetupArg = (void *) expr;
 		paramLI->numParams = estate->ndatums;
 
-<<<<<<< HEAD
-		exec_eval_datum(estate, datum, expr->plan_argtypes[i],
-						&paramtypeid, &values[i], &paramisnull);
-		if (paramisnull)
-			nulls[i] = 'n';
-		else
-			nulls[i] = ' ';
-
-		/*
-		 * This is not needed on PostgreSQL. I'm not sure why, but I asw
-		 * assertion failures with ORCA without this. Perhaps because
-		 * some expressions used in the regression suite were "simple"
-		 * with the PostgreSQL planner, but not with ORCA? In any case,
-		 * this code is heavily refactored in PostgreSQL 9.0, so let's
-		 * revisit this then.
-		 */
-		exec_eval_cleanup(estate);
-=======
 		/*
 		 * Set up link to active expr where the hook functions can find it.
 		 * Callers must save and restore cur_expr if there is any chance
@@ -4761,7 +4727,18 @@ setup_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 		 * once set.
 		 */
 		expr->func = estate->func;
->>>>>>> 78a09145e0
+
+		/*
+		 * This is not needed on PostgreSQL. I'm not sure why, but I asw
+		 * assertion failures with ORCA without this. Perhaps because
+		 * some expressions used in the regression suite were "simple"
+		 * with the PostgreSQL planner, but not with ORCA? In any case,
+		 * this code is heavily refactored in PostgreSQL 9.0, so let's
+		 * revisit this then.
+		 *
+		 * GPDB_90_MERGE_FIXME: can we remove this yet?
+		 */
+		exec_eval_cleanup(estate);
 	}
 	else
 		paramLI = NULL;
