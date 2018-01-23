@@ -484,7 +484,6 @@ DATA(insert ( 1259 cmax				29 0 0  4  -6 0 -1 -1 t p i t f f t 0 _null_));
 DATA(insert ( 1259 tableoid			26 0 0  4  -7 0 -1 -1 t p i t f f t 0 _null_));
 DATA(insert ( 1259 gp_segment_id    23 0 0  4  -8 0 -1 -1 t p i t f f t 0 _null_));
 
-
 /* ----------------
  *		pg_database
  *

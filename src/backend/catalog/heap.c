@@ -191,7 +191,7 @@ static FormData_pg_attribute a7 = {
 
 /*CDB*/
 static FormData_pg_attribute a8 = {
-	0, {"gp_segment_id"}, INT4OID, 0, sizeof(gpsegmentId),
+	0, {"gp_segment_id"}, INT4OID, 0, 0, sizeof(gpsegmentId),
 	GpSegmentIdAttributeNumber, 0, -1, -1,
 	true, 'p', 'i', true, false, false, true, 0
 };
