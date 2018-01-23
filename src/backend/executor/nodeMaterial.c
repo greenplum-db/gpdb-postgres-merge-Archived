@@ -379,7 +379,6 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	return matstate;
 }
 
-<<<<<<< HEAD
 /*
  * ExecMaterialExplainEnd
  *      Called before ExecutorEnd to finish EXPLAIN ANALYZE reporting.
@@ -395,8 +394,6 @@ ExecMaterialExplainEnd(PlanState *planstate, struct StringInfoData *buf)
 }                               /* ExecMaterialExplainEnd */
 
 
-=======
->>>>>>> 78a09145e0
 /* ----------------------------------------------------------------
  *		ExecEndMaterial
  * ----------------------------------------------------------------

@@ -100,7 +100,7 @@ ExecScanFetch(ScanState *node,
 				return ExecClearTuple(slot);
 
 			/* Store test tuple in the plan node's scan slot */
-			ExecStoreTuple(estate->es_epqTuple[scanrelid - 1],
+			ExecStoreHeapTuple(estate->es_epqTuple[scanrelid - 1],
 						   slot, InvalidBuffer, false);
 
 			/* Check if it meets the access-method conditions */
@@ -178,14 +178,10 @@ ExecScan(ScanState *node,
 
 		CHECK_FOR_INTERRUPTS();
 
-<<<<<<< HEAD
 		if (QueryFinishPending)
 			return NULL;
 
-		slot = (*accessMtd) (node);
-=======
 		slot = ExecScanFetch(node, accessMtd, recheckMtd);
->>>>>>> 78a09145e0
 
 		/*
 		 * if the slot returned by the accessMtd contains NULL, then it means
@@ -341,7 +337,32 @@ tlist_matches_tupdesc(PlanState *ps, List *tlist, Index varno, TupleDesc tupdesc
 }
 
 /*
-<<<<<<< HEAD
+ * ExecScanReScan
+ *
+ * This must be called within the ReScan function of any plan node type
+ * that uses ExecScan().
+ */
+void
+ExecScanReScan(ScanState *node)
+{
+	EState	   *estate = node->ps.state;
+
+	/* Stop projecting any tuples from SRFs in the targetlist */
+	/* node->ps.ps_TupFromTlist = false; */
+
+	/* Rescan EvalPlanQual tuple if we're inside an EvalPlanQual recheck */
+	if (estate->es_epqScanDone != NULL)
+	{
+		Index		scanrelid = ((Scan *) node->ps.plan)->scanrelid;
+
+		Assert(scanrelid > 0);
+
+		estate->es_epqScanDone[scanrelid - 1] = false;
+	}
+}
+
+
+/*
  * InitScanStateRelationDetails
  *   Opens a relation and sets various relation specific ScanState fields.
  */
@@ -594,29 +615,4 @@ MarkRestrNotAllowed(ScanState *scanState)
 	ereport(ERROR,
 			(errcode(ERRCODE_INTERNAL_ERROR),
 			 errmsg("Mark/Restore is not allowed in %s", scan)));
-	
-=======
- * ExecScanReScan
- *
- * This must be called within the ReScan function of any plan node type
- * that uses ExecScan().
- */
-void
-ExecScanReScan(ScanState *node)
-{
-	EState	   *estate = node->ps.state;
-
-	/* Stop projecting any tuples from SRFs in the targetlist */
-	node->ps.ps_TupFromTlist = false;
-
-	/* Rescan EvalPlanQual tuple if we're inside an EvalPlanQual recheck */
-	if (estate->es_epqScanDone != NULL)
-	{
-		Index		scanrelid = ((Scan *) node->ps.plan)->scanrelid;
-
-		Assert(scanrelid > 0);
-
-		estate->es_epqScanDone[scanrelid - 1] = false;
-	}
->>>>>>> 78a09145e0
 }

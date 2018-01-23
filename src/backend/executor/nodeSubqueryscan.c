@@ -62,8 +62,6 @@ SubqueryNext(SubqueryScanState *node)
 	 * extra cycles for ExecCopySlot().  (Our own ScanTupleSlot is used
 	 * only for EvalPlanQual rechecks.)
 	 */
-<<<<<<< HEAD
-	node->ss.ss_ScanTupleSlot = slot;
 
     /*
      * CDB: Label each row with a synthetic ctid if needed for subquery dedup.
@@ -74,8 +72,6 @@ SubqueryNext(SubqueryScanState *node)
     	slot_set_ctid_from_fake(slot, &node->cdb_fake_ctid);
     }
 
-=======
->>>>>>> 78a09145e0
 	return slot;
 }
 
@@ -159,15 +155,10 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 		ExecInitExpr((Expr *) node->scan.plan.qual,
 					 (PlanState *) subquerystate);
 
-<<<<<<< HEAD
 	/* Check if targetlist or qual contains a var node referencing the ctid column */
 	subquerystate->cdb_want_ctid = contain_ctid_var_reference(&node->scan);
 	ItemPointerSetInvalid(&subquerystate->cdb_fake_ctid);
 
-#define SUBQUERYSCAN_NSLOTS 2
-
-=======
->>>>>>> 78a09145e0
 	/*
 	 * tuple table initialization
 	 */
@@ -211,19 +202,14 @@ ExecEndSubqueryScan(SubqueryScanState *node)
 	/*
 	 * clean out the upper tuple table
 	 */
-<<<<<<< HEAD
 	if (node->ss.ss_ScanTupleSlot != NULL)
 	{
 		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-		node->ss.ss_ScanTupleSlot = NULL;	/* not ours to clear */
+		ExecClearTuple(node->ss.ss_ScanTupleSlot);
 	}
 
 	/* gpmon */
 	EndPlanStateGpmonPkt(&node->ss.ps);
-=======
-	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	ExecClearTuple(node->ss.ss_ScanTupleSlot);
->>>>>>> 78a09145e0
 
 	/*
 	 * close down subquery
@@ -258,12 +244,6 @@ ExecSubqueryReScan(SubqueryScanState *node, ExprContext *exprCtxt)
 	 */
 	if (node->subplan->chgParam == NULL)
 		ExecReScan(node->subplan, NULL);
-<<<<<<< HEAD
-
-	node->ss.ss_ScanTupleSlot = NULL;
-	/*node->ss.ps.ps_TupFromTlist = false;*/
 
 	CheckSendPlanStateGpmonPkt(&node->ss.ps);
-=======
->>>>>>> 78a09145e0
 }

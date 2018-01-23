@@ -307,11 +307,8 @@ ExecCteScanReScan(CteScanState *node, ExprContext *exprCtxt)
 	Tuplestorestate *tuplestorestate = node->leader->cte_table;
 
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-<<<<<<< HEAD
-=======
 
 	ExecScanReScan(&node->ss);
->>>>>>> 78a09145e0
 
 	if (node->leader == node)
 	{

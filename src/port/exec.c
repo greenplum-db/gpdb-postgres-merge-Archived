@@ -711,11 +711,7 @@ AddUserToTokenDacl(HANDLE hToken)
 	}
 
 	/* Add the new ACE for the current user */
-<<<<<<< HEAD
-	if (!AddAccessAllowedAceEx(pacl, ACL_REVISION, OBJECT_INHERIT_ACE, GENERIC_ALL, psidUser))
-=======
 	if (!AddAccessAllowedAceEx(pacl, ACL_REVISION, OBJECT_INHERIT_ACE, GENERIC_ALL, pTokenUser->User.Sid))
->>>>>>> 78a09145e0
 	{
 		log_error("could not add access allowed ACE: %lu", GetLastError());
 		goto cleanup;
