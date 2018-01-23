@@ -217,12 +217,8 @@ static char formatted_log_time[FORMATTED_TS_LEN];
 	} while (0)
 
 
-<<<<<<< HEAD
 static void cdb_tidy_message(ErrorData *edata);
-static void log_line_prefix(StringInfo buf);
-=======
 static void log_line_prefix(StringInfo buf, ErrorData *edata);
->>>>>>> 78a09145e0
 static void send_message_to_server_log(ErrorData *edata);
 static void send_message_to_frontend(ErrorData *edata);
 static char *expand_fmt_string(const char *fmt, ErrorData *edata);
@@ -2173,7 +2169,6 @@ write_eventlog(int level, const char *line, int len)
 }
 #endif   /* WIN32 */
 
-<<<<<<< HEAD
 
 /*
  * CDB: Tidy up the error message
@@ -2302,7 +2297,8 @@ cdb_tidy_message(ErrorData *edata)
 		edata->message = tp;
 	}
 }							   /* cdb_tidy_message */
-=======
+
+
 static void
 write_console(const char *line, int len)
 {
@@ -2348,7 +2344,6 @@ write_console(const char *line, int len)
 
 	write(fileno(stderr), line, len);
 }
->>>>>>> 78a09145e0
 
 /*
  * setup formatted_log_time, for consistent times between CSV and regular logs
@@ -2556,7 +2551,6 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 			case 'x':
 				appendStringInfo(buf, "%u", GetTopTransactionIdIfAny());
 				break;
-<<<<<<< HEAD
 
 			/* MPP SPECIFIC OPTIONS. */
 			case 'C':
@@ -2646,10 +2640,8 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 							appendStringInfo(buf, ", sx%u, ", subXid);
 					}
 				}
-=======
 			case 'e':
 				appendStringInfoString(buf, unpack_sql_state(edata->sqlerrcode));
->>>>>>> 78a09145e0
 				break;
 			case '%':
 				appendStringInfoChar(buf, '%');
@@ -3613,12 +3605,8 @@ send_message_to_server_log(ErrorData *edata)
 
 	formatted_log_time[0] = '\0';
 
-<<<<<<< HEAD
-	log_line_prefix(&buf);
-	nc = buf.len;
-=======
 	log_line_prefix(&buf, edata);
->>>>>>> 78a09145e0
+	nc = buf.len;
 	appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel));
 
 	/* Save copy of prefix for subsequent lines of multi-line message. */
@@ -3680,11 +3668,7 @@ send_message_to_server_log(ErrorData *edata)
 		}
 		else if (edata->detail)
 		{
-<<<<<<< HEAD
 			appendBinaryStringInfo(&buf, prefix.data, prefix.len);
-=======
-			log_line_prefix(&buf, edata);
->>>>>>> 78a09145e0
 			appendStringInfoString(&buf, _("DETAIL:  "));
 			append_with_tabs(&buf, edata->detail);
 			appendStringInfoChar(&buf, '\n');
@@ -3717,11 +3701,7 @@ send_message_to_server_log(ErrorData *edata)
 			/* assume no newlines in funcname or filename... */
 			else if (edata->funcname && edata->filename)
 			{
-<<<<<<< HEAD
 				appendBinaryStringInfo(&buf, prefix.data, prefix.len);
-=======
-				log_line_prefix(&buf, edata);
->>>>>>> 78a09145e0
 				appendStringInfo(&buf, _("LOCATION:  %s, %s:%d\n"),
 								 edata->funcname, edata->filename,
 								 edata->lineno);
@@ -3838,9 +3818,8 @@ send_message_to_server_log(ErrorData *edata)
 		 * If stderr redirection is active, it was OK to write to stderr above
 		 * because that's really a pipe to the syslogger process.
 		 */
-<<<<<<< HEAD
 		else if (pgwin32_is_service() && (!redirection_done || am_syslogger) )
-			write_eventlog(edata->elevel, buf.data);
+			write_eventlog(edata->elevel, buf.data, buf.len);
 #endif
 			/* only use the chunking protocol if we know the syslogger should
 			 * be catching stderr output, and we are not ourselves the
@@ -3849,14 +3828,7 @@ send_message_to_server_log(ErrorData *edata)
 			if (redirection_done && !am_syslogger)
 				write_pipe_chunks(buf.data, buf.len, LOG_DESTINATION_STDERR);
 			else
-				write(fileno(stderr), buf.data, buf.len);
-=======
-		else if (pgwin32_is_service())
-			write_eventlog(edata->elevel, buf.data, buf.len);
-#endif
-		else
-			write_console(buf.data, buf.len);
->>>>>>> 78a09145e0
+				write_console(buf.data, buf.len);
 	}
 
 	/* If in the syslogger process, try to write messages direct to file */
