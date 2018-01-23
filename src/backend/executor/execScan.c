@@ -39,15 +39,16 @@ getScanMethod(int tableType)
 	static const ScanMethod scanMethods[] =
 	{
 		{
-			&HeapScanNext, &BeginScanHeapRelation, &EndScanHeapRelation,
+			&HeapScanNext, &HeapScanRecheck, &BeginScanHeapRelation, &EndScanHeapRelation,
 			&ReScanHeapRelation, &MarkPosHeapRelation, &RestrPosHeapRelation
 		},
+		// GPDB_90_MERGE_FIXME: should we have rechecks for AO / AOCS scans?
 		{
-			&AppendOnlyScanNext, &BeginScanAppendOnlyRelation, &EndScanAppendOnlyRelation,
+			&AppendOnlyScanNext, NULL, &BeginScanAppendOnlyRelation, &EndScanAppendOnlyRelation,
 			&ReScanAppendOnlyRelation, &MarkRestrNotAllowed, &MarkRestrNotAllowed
 		},
 		{
-			&AOCSScanNext, &BeginScanAOCSRelation, &EndScanAOCSRelation,
+			&AOCSScanNext, NULL, &BeginScanAOCSRelation, &EndScanAOCSRelation,
 			&ReScanAOCSRelation, &MarkRestrNotAllowed, &MarkRestrNotAllowed
 		}
 	};
@@ -511,7 +512,9 @@ getTableType(Relation rel)
 TupleTableSlot *
 ExecTableScanRelation(ScanState *scanState)
 {
-	return ExecScan(scanState, getScanMethod(scanState->tableType)->accessMethod);
+	const ScanMethod *scanMethods = getScanMethod(scanState->tableType);
+
+	return ExecScan(scanState, scanMethods->accessMethod, scanMethods->recheckMethod);
 }
 
 /*

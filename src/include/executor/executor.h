@@ -213,29 +213,6 @@ typedef struct AttrMap
 	AttrNumber attr_map[1];
 } AttrMap;
 
-/*
- * ScanMethod
- *   Methods that are relevant to support scans on various table types.
- */
-typedef struct ScanMethod
-{
-	/* Function that scans the table. */
-	TupleTableSlot *(*accessMethod)(ScanState *scanState);
-
-	/* Functions that initiate or terminate a scan. */
-	void (*beginScanMethod)(ScanState *scanState);
-	void (*endScanMethod)(ScanState *scanState);
-
-	/* Function that does rescan. */
-	void (*reScanMethod)(ScanState *scanState);
-
-	/* Function that does MarkPos in a scan. */
-	void (*markPosMethod)(ScanState *scanState);
-
-	/* Function that does RestroPos in a scan. */
-	void (*restrPosMethod)(ScanState *scanState);
-} ScanMethod;
-
 extern void ExecutorStart(QueryDesc *queryDesc, int eflags);
 extern void standard_ExecutorStart(QueryDesc *queryDesc, int eflags);
 extern void ExecutorRun(QueryDesc *queryDesc,
@@ -345,6 +322,31 @@ extern bool isJoinExprNull(List *joinExpr, ExprContext *econtext);
 typedef TupleTableSlot *(*ExecScanAccessMtd) (ScanState *node);
 typedef bool (*ExecScanRecheckMtd) (ScanState *node, TupleTableSlot *slot);
 
+
+/*
+ * ScanMethod
+ *   Methods that are relevant to support scans on various table types.
+ */
+typedef struct ScanMethod
+{
+	/* Function that scans the table. */
+	ExecScanAccessMtd accessMethod;
+	ExecScanRecheckMtd recheckMethod;
+
+	/* Functions that initiate or terminate a scan. */
+	void (*beginScanMethod)(ScanState *scanState);
+	void (*endScanMethod)(ScanState *scanState);
+
+	/* Function that does rescan. */
+	void (*reScanMethod)(ScanState *scanState);
+
+	/* Function that does MarkPos in a scan. */
+	void (*markPosMethod)(ScanState *scanState);
+
+	/* Function that does RestroPos in a scan. */
+	void (*restrPosMethod)(ScanState *scanState);
+} ScanMethod;
+
 extern TupleTableSlot *ExecScan(ScanState *node, ExecScanAccessMtd accessMtd,
 								ExecScanRecheckMtd recheckMtd);
 extern void ExecAssignScanProjectionInfo(ScanState *node);
@@ -368,6 +370,7 @@ extern void MarkRestrNotAllowed(ScanState *scanState);
  * prototypes from functions in execHeapScan.c
  */
 extern TupleTableSlot *HeapScanNext(ScanState *scanState);
+extern bool HeapScanRecheck(ScanState *node, TupleTableSlot *slot);
 extern void BeginScanHeapRelation(ScanState *scanState);
 extern void EndScanHeapRelation(ScanState *scanState);
 extern void ReScanHeapRelation(ScanState *scanState);
