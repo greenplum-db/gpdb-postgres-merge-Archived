@@ -4,17 +4,10 @@
  *	  Declarations for BYTEA data type support.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/bytea.h
-=======
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/include/utils/bytea.h,v 1.1 2009/08/04 16:08:36 tgl Exp $
->>>>>>> 78a09145e0
  *
  *-------------------------------------------------------------------------
  */

@@ -4,14 +4,10 @@
 #define WIN32_ONLY_COMPILER
 #endif
 
-<<<<<<< HEAD
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0501
 #endif
 
-=======
-#define _WIN32_WINNT 0x0501
->>>>>>> 78a09145e0
 /*
  * Always build with SSPI support. Keep it as a #define in case
  * we want a switch to disable it sometime in the future.
