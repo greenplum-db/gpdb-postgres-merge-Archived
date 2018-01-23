@@ -853,8 +853,6 @@ apply_motion_mutator(Node *node, ApplyMotionState *context)
 	int			saveNumInitPlans;
 	int			saveSliceDepth;
 
-	Assert(root && IsA(root, PlannerInfo));
-
 	if (node == NULL)
 		return NULL;
 
@@ -916,8 +914,6 @@ apply_motion_mutator(Node *node, ApplyMotionState *context)
 		{
 			subplan = (SubPlan *) lfirst(cell);
 			Assert(IsA(subplan, SubPlan));
-			Assert(root);
-			Assert(planner_subplan_get_plan(root, subplan));
 
 			context->initPlans = lappend(context->initPlans, subplan);
 		}
