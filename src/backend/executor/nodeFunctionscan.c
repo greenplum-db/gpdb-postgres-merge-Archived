@@ -276,7 +276,6 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 	return scanstate;
 }
 
-<<<<<<< HEAD
 /*
  * ExecFunctionScanExplainEnd
  *      Called before ExecutorEnd to finish EXPLAIN ANALYZE reporting.
@@ -291,9 +290,6 @@ ExecFunctionScanExplainEnd(PlanState *planstate, struct StringInfoData *buf __at
 	ExecEagerFreeFunctionScan((FunctionScanState *) planstate);
 }                               /* ExecFunctionScanExplainEnd */
 
-
-=======
->>>>>>> 78a09145e0
 /* ----------------------------------------------------------------
  *		ExecEndFunctionScan
  *
@@ -329,12 +325,8 @@ void
 ExecFunctionReScan(FunctionScanState *node, ExprContext *exprCtxt)
 {
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-<<<<<<< HEAD
-	/*node->ss.ps.ps_TupFromTlist = false;*/
-=======
 
 	ExecScanReScan(&node->ss);
->>>>>>> 78a09145e0
 
 	/*
 	 * If we haven't materialized yet, just return.
