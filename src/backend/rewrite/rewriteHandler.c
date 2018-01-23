@@ -157,7 +157,7 @@ AcquireRewriteLocks(Query *parsetree, bool forUpdatePushedDown)
 				}
 
 				/* FOR UPDATE/SHARE? */
-				else if (get_rowmark(parsetree, rt_index) != NULL)
+				else if (get_parse_rowmark(parsetree, rt_index) != NULL)
 				{
 					needLockUpgrade = true;
 				}
@@ -538,12 +538,8 @@ rewriteRuleAction(Query *parsetree,
 								parsetree->rtable),
 					   rule_action->returningList,
 					   CMD_SELECT,
-<<<<<<< HEAD
-					   0, &rule_action->hasSubLinks);
-=======
 					   0,
 					   &rule_action->hasSubLinks);
->>>>>>> 78a09145e0
 
 		/*
 		 * There could have been some SubLinks in parsetree's returningList,

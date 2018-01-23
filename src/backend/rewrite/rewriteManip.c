@@ -93,7 +93,6 @@ contain_aggs_of_level_walker(Node *node,
 			return true;		/* abort the tree traversal and return true */
 		/* else fall through to examine argument */
 	}
-
 	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */
@@ -435,7 +434,7 @@ offset_relid_set(Relids relids, int offset)
 	Relids		result = NULL;
 	Relids		tmprelids;
 	int			rtindex;
-	
+
 	tmprelids = bms_copy(relids);
 	while ((rtindex = bms_first_member(tmprelids)) >= 0)
 		result = bms_add_member(result, rtindex + offset);
@@ -511,7 +510,7 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 	if (IsA(node, PlaceHolderVar))
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
-		
+
 		if (phv->phlevelsup == context->sublevels_up)
 		{
 			phv->phrels = adjust_relid_set(phv->phrels,
@@ -1101,6 +1100,7 @@ AddInvertedQual(Query *parsetree, Node *qual)
 	AddQual(parsetree, (Node *) invqual);
 }
 
+
 /*
  * replace_rte_variables() finds all Vars in an expression tree
  * that reference a particular RTE, and replaces them with substitute
@@ -1348,141 +1348,6 @@ map_variable_attnos(Node *node,
 
 
 /*
- * replace_rte_variables() finds all Vars in an expression tree
- * that reference a particular RTE, and replaces them with substitute
- * expressions obtained from a caller-supplied callback function.
- *
- * When invoking replace_rte_variables on a portion of a Query, pass the
- * address of the containing Query's hasSubLinks field as outer_hasSubLinks.
- * Otherwise, pass NULL, but inserting a SubLink into a non-Query expression
- * will then cause an error.
- *
- * Note: the business with inserted_sublink is needed to update hasSubLinks
- * in subqueries when the replacement adds a subquery inside a subquery.
- * Messy, isn't it?  We do not need to do similar pushups for hasAggs,
- * because it isn't possible for this transformation to insert a level-zero
- * aggregate reference into a subquery --- it could only insert outer aggs.
- * Likewise for hasWindowFuncs.
- *
- * Note: usually, we'd not expose the mutator function or context struct
- * for a function like this.  We do so because callbacks often find it
- * convenient to recurse directly to the mutator on sub-expressions of
- * what they will return.
- */
-Node *
-replace_rte_variables(Node *node, int target_varno, int sublevels_up,
-					  replace_rte_variables_callback callback,
-					  void *callback_arg,
-					  bool *outer_hasSubLinks)
-{
-	Node	   *result;
-	replace_rte_variables_context context;
-
-	context.callback = callback;
-	context.callback_arg = callback_arg;
-	context.target_varno = target_varno;
-	context.sublevels_up = sublevels_up;
-
-	/*
-	 * We try to initialize inserted_sublink to true if there is no need to
-	 * detect new sublinks because the query already has some.
-	 */
-	if (node && IsA(node, Query))
-		context.inserted_sublink = ((Query *) node)->hasSubLinks;
-	else if (outer_hasSubLinks)
-		context.inserted_sublink = *outer_hasSubLinks;
-	else
-		context.inserted_sublink = false;
-
-	/*
-	 * Must be prepared to start with a Query or a bare expression tree; if
-	 * it's a Query, we don't want to increment sublevels_up.
-	 */
-	result = query_or_expression_tree_mutator(node,
-											  replace_rte_variables_mutator,
-											  (void *) &context,
-											  0);
-
-	if (context.inserted_sublink)
-	{
-		if (result && IsA(result, Query))
-			((Query *) result)->hasSubLinks = true;
-		else if (outer_hasSubLinks)
-			*outer_hasSubLinks = true;
-		else
-			elog(ERROR, "replace_rte_variables inserted a SubLink, but has noplace to record it");
-	}
-
-	return result;
-}
-
-Node *
-replace_rte_variables_mutator(Node *node,
-							  replace_rte_variables_context *context)
-{
-	if (node == NULL)
-		return NULL;
-	if (IsA(node, Var))
-	{
-		Var		   *var = (Var *) node;
-
-		if (var->varno == context->target_varno &&
-			var->varlevelsup == context->sublevels_up)
-		{
-			/* Found a matching variable, make the substitution */
-			Node	   *newnode;
-
-			newnode = (*context->callback) (var, context);
-			/* Detect if we are adding a sublink to query */
-			if (!context->inserted_sublink)
-				context->inserted_sublink = checkExprHasSubLink(newnode);
-			return newnode;
-		}
-		/* otherwise fall through to copy the var normally */
-	}
-	else if (IsA(node, CurrentOfExpr))
-	{
-		CurrentOfExpr *cexpr = (CurrentOfExpr *) node;
-
-		if (cexpr->cvarno == context->target_varno &&
-			context->sublevels_up == 0)
-		{
-			/*
-			 * We get here if a WHERE CURRENT OF expression turns out to apply
-			 * to a view.  Someday we might be able to translate the
-			 * expression to apply to an underlying table of the view, but
-			 * right now it's not implemented.
-			 */
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				   errmsg("WHERE CURRENT OF on a view is not implemented")));
-		}
-		/* otherwise fall through to copy the expr normally */
-	}
-	else if (IsA(node, Query))
-	{
-		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
-		Query	   *newnode;
-		bool		save_inserted_sublink;
-
-		context->sublevels_up++;
-		save_inserted_sublink = context->inserted_sublink;
-		context->inserted_sublink = ((Query *) node)->hasSubLinks;
-		newnode = query_tree_mutator((Query *) node,
-									 replace_rte_variables_mutator,
-									 (void *) context,
-									 0);
-		newnode->hasSubLinks |= context->inserted_sublink;
-		context->inserted_sublink = save_inserted_sublink;
-		context->sublevels_up--;
-		return (Node *) newnode;
-	}
-	return expression_tree_mutator(node, replace_rte_variables_mutator,
-								   (void *) context);
-}
-
-
-/*
  * ResolveNew - replace Vars with corresponding items from a targetlist
  *
  * Vars matching target_varno and sublevels_up are replaced by the
@@ -1542,11 +1407,7 @@ ResolveNew_callback(Var *var,
 
 		return (Node *) rowexpr;
 	}
-<<<<<<< HEAD
-	
-=======
 
->>>>>>> 78a09145e0
 	/* Normal case referencing one targetlist element */
 	tle = get_tle_by_resno(rcon->targetlist, var->varattno);
 
