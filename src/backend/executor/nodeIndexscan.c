@@ -68,53 +68,6 @@ IndexNext(IndexScanState *node)
 	scandesc = node->iss_ScanDesc;
 	econtext = node->ss.ps.ps_ExprContext;
 	slot = node->ss.ss_ScanTupleSlot;
-<<<<<<< HEAD
-	scanrelid = ((IndexScan *) node->ss.ps.plan)->scan.scanrelid;
-
-	/*
-	 * Check if we are evaluating PlanQual for tuple of this relation.
-	 * Additional checking is not good, but no other way for now. We could
-	 * introduce new nodes for this case and handle IndexScan --> NewNode
-	 * switching in Init/ReScan plan...
-	 */
-	if (estate->es_evTuple != NULL &&
-		estate->es_evTuple[scanrelid - 1] != NULL)
-	{
-		if (estate->es_evTupleNull[scanrelid - 1])
-		{
-			if (!node->ss.ps.delayEagerFree)
-			{
-				ExecEagerFreeIndexScan(node);
-			}
-			
-			return ExecClearTuple(slot);
-		}
-
-		ExecStoreHeapTuple(estate->es_evTuple[scanrelid - 1],
-					   slot, InvalidBuffer, false);
-
-		/* Does the tuple meet the indexqual condition? */
-		econtext->ecxt_scantuple = slot;
-
-		ResetExprContext(econtext);
-
-		if (!ExecQual(node->indexqualorig, econtext, false))
-		{
-			if (!node->ss.ps.delayEagerFree)
-			{
-				ExecEagerFreeIndexScan(node);
-			}
-			
-			ExecClearTuple(slot);		/* would not be returned by scan */
-		}
-
-		/* Flag for the next call that no more tuples */
-		estate->es_evTupleNull[scanrelid - 1] = true;
-
-		return slot;
-	}
-=======
->>>>>>> 78a09145e0
 
 	/*
 	 * ok, now that we have what we need, fetch the next tuple.
@@ -213,12 +166,6 @@ ExecIndexReScan(IndexScanState *node, ExprContext *exprCtxt)
 	ExprContext *econtext;
 
 	econtext = node->iss_RuntimeContext;		/* context for runtime keys */
-<<<<<<< HEAD
-	scanrelid = ((IndexScan *) node->ss.ps.plan)->scan.scanrelid;
-
-	/*node->ss.ps.ps_TupFromTlist = false;*/
-=======
->>>>>>> 78a09145e0
 
 	if (econtext)
 	{
@@ -1128,7 +1075,6 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 	else if (n_array_keys != 0)
 		elog(ERROR, "ScalarArrayOpExpr index qual found where not allowed");
 }
-<<<<<<< HEAD
 
 void
 ExecEagerFreeIndexScan(IndexScanState *node)
@@ -1139,5 +1085,3 @@ ExecEagerFreeIndexScan(IndexScanState *node)
 		node->iss_ScanDesc = NULL;
 	}
 }
-=======
->>>>>>> 78a09145e0
