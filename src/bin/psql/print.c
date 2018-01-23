@@ -3,11 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
  * src/bin/psql/print.c
-=======
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.119 2009/11/25 20:26:31 tgl Exp $
->>>>>>> 78a09145e0
  */
 #include "postgres_fe.h"
 

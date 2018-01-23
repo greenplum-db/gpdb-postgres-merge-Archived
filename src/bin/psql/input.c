@@ -3,11 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
  * src/bin/psql/input.c
-=======
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.67 2009/09/13 22:18:22 tgl Exp $
->>>>>>> 78a09145e0
  */
 #include "postgres_fe.h"
 
@@ -361,13 +357,8 @@ saveHistory(char *fname, int max_lines, bool appendFlag, bool encodeFlag)
 		 * On newer versions of libreadline, truncate the history file as
 		 * needed and then append what we've added.  This avoids overwriting
 		 * history from other concurrent sessions (although there are still
-<<<<<<< HEAD
 		 * race conditions when two sessions exit at about the same time). If
 		 * we don't have those functions, fall back to write_history().
-=======
-		 * race conditions when two sessions exit at about the same time).
-		 * If we don't have those functions, fall back to write_history().
->>>>>>> 78a09145e0
 		 *
 		 * Note: return value of write_history is not standardized across GNU
 		 * readline and libedit.  Therefore, check for errno becoming set to

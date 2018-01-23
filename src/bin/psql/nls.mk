@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 # src/bin/psql/nls.mk
-=======
-# $PostgreSQL: pgsql/src/bin/psql/nls.mk,v 1.24 2009/09/18 05:00:42 petere Exp $
->>>>>>> 78a09145e0
 CATALOG_NAME	:= psql
 AVAIL_LANGUAGES	:= cs de es fr ja pt_BR sv tr
 GETTEXT_FILES	:= command.c common.c copy.c help.c input.c large_obj.c \
