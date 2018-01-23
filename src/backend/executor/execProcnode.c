@@ -284,8 +284,14 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 			break;
 
 		case T_ModifyTable:
+			curMemoryAccountId = CREATE_EXECUTOR_MEMORY_ACCOUNT(isAlienPlanNode, node, ModifyTable);
+
+			START_MEMORY_ACCOUNT(curMemoryAccountId);
+			{
 			result = (PlanState *) ExecInitModifyTable((ModifyTable *) node,
 													   estate, eflags);
+			}
+			END_MEMORY_ACCOUNT();
 			break;
 
 		case T_Append:

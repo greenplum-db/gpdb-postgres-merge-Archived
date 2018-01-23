@@ -436,6 +436,13 @@ plan_tree_walker(Node *node,
 			 */
 			break;
 
+		case T_ModifyTable:
+			if (walk_plan_node_fields((Plan *) node, walker, context))
+				return true;
+			if (walker((Node *) ((ModifyTable *) node)->plans, context))
+				return true;
+			break;
+
 		case T_DML:
 		case T_SplitUpdate:
 		case T_RowTrigger:
