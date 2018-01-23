@@ -145,11 +145,7 @@ sub genbki
         {
             $bki .= "build indices\n";
         }
-<<<<<<< HEAD
-        elsif ($line =~ /^CATALOG\((.*)\)(.*)\s*$/m)
-=======
-        elsif ($line =~ /^CATALOG\(([^)]*)\)(.*)$/m)
->>>>>>> 78a09145e0
+        elsif ($line =~ /^CATALOG\(([^)]*)\)(.*)\s*$/m)
         {
             if ($reln_open)
             {

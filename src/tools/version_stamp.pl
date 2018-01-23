@@ -5,11 +5,7 @@
 #
 # Copyright (c) 2008-2009, PostgreSQL Global Development Group
 #
-<<<<<<< HEAD
 # src/tools/version_stamp.pl
-=======
-# $PostgreSQL: pgsql/src/tools/version_stamp.pl,v 1.4 2009/08/19 15:03:56 tgl Exp $
->>>>>>> 78a09145e0
 #################################################################
 
 #

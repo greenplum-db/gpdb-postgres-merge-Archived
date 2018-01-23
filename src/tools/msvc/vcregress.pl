@@ -1,10 +1,6 @@
 # -*-perl-*- hey - emacs - this is a perl file
 
-<<<<<<< HEAD
 # src/tools/msvc/vcregress.pl
-=======
-# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.11 2009/08/18 22:36:56 adunstan Exp $
->>>>>>> 78a09145e0
 
 use strict;
 

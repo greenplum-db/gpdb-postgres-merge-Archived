@@ -190,11 +190,7 @@ main(int argc, char *argv[])
 	executeCommand(conn, "SET search_path = pg_catalog;", progname, echo);
 
 	/*
-<<<<<<< HEAD
-	 * Make sure the language is installed and find the OIDs of the 
-=======
 	 * Make sure the language is installed and find the OIDs of the
->>>>>>> 78a09145e0
 	 * language support functions
 	 */
 	printfPQExpBuffer(&sql, "SELECT lanplcallfoid, laninline, lanvalidator "
