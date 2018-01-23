@@ -227,11 +227,7 @@ MemoryContextDeleteImpl(MemoryContext context, const char* sfile, const char *fu
 			}
 		}
 	}
-<<<<<<< HEAD
 	(*context->methods.delete_context)(context);
-=======
-	(*context->methods->delete_context) (context);
->>>>>>> 78a09145e0
 	pfree(context);
 }
 

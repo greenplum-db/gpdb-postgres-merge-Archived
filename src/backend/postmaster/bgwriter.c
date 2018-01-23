@@ -115,11 +115,7 @@ BackgroundWriterMain(void)
 	 * tell us it's okay to shut down (via SIGUSR2).
 	 *
 	 * SIGUSR1 is presently unused; keep it spare in case someday we want this
-<<<<<<< HEAD
-	 * process to participate in ProcSignal messaging.
-=======
 	 * process to participate in ProcSignal signalling.
->>>>>>> 78a09145e0
 	 */
 	pqsignal(SIGHUP, BgSigHupHandler);	/* set flag to read config file */
 	pqsignal(SIGINT, SIG_IGN);

@@ -229,7 +229,19 @@ static MemoryContextMethods AllocSetMethods = {
 #endif
 };
 
-<<<<<<< HEAD
+/*
+ * Table for AllocSetFreeIndex
+ */
+#define LT16(n) n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n
+
+static const unsigned char LogTable256[256] =
+{
+	0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4,
+	LT16(5), LT16(6), LT16(6), LT16(7), LT16(7), LT16(7), LT16(7),
+	LT16(8), LT16(8), LT16(8), LT16(8), LT16(8), LT16(8), LT16(8), LT16(8)
+};
+
+
 static void dump_allocset_block(FILE *file, AllocBlock block)
 {
 	// block start/free/end pointer
@@ -321,19 +333,6 @@ void dump_tmc(const char *fname)
 	dump_mc(fname, TopMemoryContext);
 }
 
-=======
-/*
- * Table for AllocSetFreeIndex
- */
-#define LT16(n) n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n
-
-static const unsigned char LogTable256[256] =
-{
-	0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4,
-	LT16(5), LT16(6), LT16(6), LT16(7), LT16(7), LT16(7), LT16(7),
-	LT16(8), LT16(8), LT16(8), LT16(8), LT16(8), LT16(8), LT16(8), LT16(8)
-};
->>>>>>> 78a09145e0
 
 /* ----------
  * Debug macros
