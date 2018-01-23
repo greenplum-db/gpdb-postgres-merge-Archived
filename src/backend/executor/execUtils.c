@@ -46,12 +46,9 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-<<<<<<< HEAD
 #include "access/appendonlywriter.h"
-=======
 #include "access/relscan.h"
 #include "access/transam.h"
->>>>>>> 78a09145e0
 #include "catalog/index.h"
 #include "executor/execdebug.h"
 #include "executor/execUtils.h"
@@ -65,7 +62,6 @@
 #include "nodes/primnodes.h"
 #include "nodes/execnodes.h"
 
-<<<<<<< HEAD
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
@@ -85,14 +81,10 @@
 #include "cdb/memquota.h"
 
 static bool get_last_attnums(Node *node, ProjectionInfo *projInfo);
-static void ShutdownExprContext(ExprContext *econtext);
-=======
-static bool get_last_attnums(Node *node, ProjectionInfo *projInfo);
 static bool index_recheck_constraint(Relation index, Oid *constr_procs,
 						 Datum *existing_values, bool *existing_isnull,
 						 Datum *new_values);
 static void ShutdownExprContext(ExprContext *econtext, bool isCommit);
->>>>>>> 78a09145e0
 
 
 /* ----------------------------------------------------------------
@@ -168,11 +160,8 @@ CreateExecutorState(void)
 	estate->es_query_cxt = qcontext;
 
 	estate->es_tupleTable = NIL;
-<<<<<<< HEAD
-=======
 
 	estate->es_rowMarks = NIL;
->>>>>>> 78a09145e0
 
 	estate->es_processed = 0;
 	estate->es_lastoid = InvalidOid;
@@ -1374,53 +1363,6 @@ retry:
 			continue;
 		}
 
-<<<<<<< HEAD
-	}
-}
-
-/*
- * ExecUpdateAOtupCount
- *		Update the tuple count on the master for an append only relation segfile.
- */
-static void
-ExecUpdateAOtupCount(ResultRelInfo *result_rels,
-					 Snapshot shapshot,
-					 int num_result_rels,
-					 EState* estate,
-					 uint64 tupadded)
-{
-	int		i;
-
-	Assert(Gp_role == GP_ROLE_DISPATCH);
-
-	bool was_delete = estate && estate->es_plannedstmt &&
-		(estate->es_plannedstmt->commandType == CMD_DELETE);
-
-	for (i = num_result_rels; i > 0; i--)
-	{
-		if(RelationIsAoRows(result_rels->ri_RelationDesc) || RelationIsAoCols(result_rels->ri_RelationDesc))
-		{
-			Assert(result_rels->ri_aosegno != InvalidFileSegNumber);
-
-			if (was_delete && tupadded > 0)
-			{
-				/* Touch the ao seg info */
-				UpdateMasterAosegTotals(result_rels->ri_RelationDesc,
-									result_rels->ri_aosegno,
-									0,
-									1);
-			} 
-			else if (!was_delete)
-			{
-				UpdateMasterAosegTotals(result_rels->ri_RelationDesc,
-									result_rels->ri_aosegno,
-									tupadded,
-									1);
-			}
-		}
-
-		result_rels++;
-=======
 		/*
 		 * Extract the index column values and isnull flags from the existing
 		 * tuple.
@@ -1531,10 +1473,54 @@ index_recheck_constraint(Relation index, Oid *constr_procs,
 										   existing_values[i],
 										   new_values[i])))
 			return false;
->>>>>>> 78a09145e0
 	}
 
 	return true;
+}
+
+/*
+ * ExecUpdateAOtupCount
+ *		Update the tuple count on the master for an append only relation segfile.
+ */
+static void
+ExecUpdateAOtupCount(ResultRelInfo *result_rels,
+					 Snapshot shapshot,
+					 int num_result_rels,
+					 EState* estate,
+					 uint64 tupadded)
+{
+	int		i;
+
+	Assert(Gp_role == GP_ROLE_DISPATCH);
+
+	bool was_delete = estate && estate->es_plannedstmt &&
+		(estate->es_plannedstmt->commandType == CMD_DELETE);
+
+	for (i = num_result_rels; i > 0; i--)
+	{
+		if(RelationIsAoRows(result_rels->ri_RelationDesc) || RelationIsAoCols(result_rels->ri_RelationDesc))
+		{
+			Assert(result_rels->ri_aosegno != InvalidFileSegNumber);
+
+			if (was_delete && tupadded > 0)
+			{
+				/* Touch the ao seg info */
+				UpdateMasterAosegTotals(result_rels->ri_RelationDesc,
+									result_rels->ri_aosegno,
+									0,
+									1);
+			} 
+			else if (!was_delete)
+			{
+				UpdateMasterAosegTotals(result_rels->ri_RelationDesc,
+									result_rels->ri_aosegno,
+									tupadded,
+									1);
+			}
+		}
+
+		result_rels++;
+	}
 }
 
 /*
