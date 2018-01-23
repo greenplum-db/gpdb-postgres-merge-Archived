@@ -1097,7 +1097,6 @@ SPI_cursor_open_with_args(const char *name,
 	plan.parserSetup = NULL;
 	plan.parserSetupArg = NULL;
 
-<<<<<<< HEAD
 	/*
 	 * Add this to be compatible with current version of GPDB
 	 *
@@ -1107,9 +1106,7 @@ SPI_cursor_open_with_args(const char *name,
 	 */
 	plan.plancxt = NULL;
 
-=======
 	/* build transient ParamListInfo in executor context */
->>>>>>> 78a09145e0
 	paramLI = _SPI_convert_params(nargs, argtypes,
 								  Values, Nulls,
 								  PARAM_FLAG_CONST);
@@ -1752,30 +1749,6 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan, ParamListInfo boundParams)
 		CachedPlanSource *plansource;
 		CachedPlan *cplan;
 
-<<<<<<< HEAD
-		/* Need a copyObject here to keep parser from modifying raw tree */
-		stmt_list = pg_analyze_and_rewrite(copyObject(parsetree),
-										   src, argtypes, nargs);
-
-		{
-			ListCell *lc;
-
-			foreach (lc, stmt_list)
-			{
-				Query *query = (Query *) lfirst(lc);
-
-				if (Gp_role == GP_ROLE_EXECUTE)
-				{
-					/*
-					 * This method will error out if the query cannot be
-					 * safely executed on segment.
-					 */
-					querytree_safe_for_qe(query);
-				}
-			}
-		}
-
-=======
 		/*
 		 * Parameter datatypes are driven by parserSetup hook if provided,
 		 * otherwise we use the fixed parameter list.
@@ -1797,7 +1770,25 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan, ParamListInfo boundParams)
 											   plan->argtypes,
 											   plan->nargs);
 		}
->>>>>>> 78a09145e0
+
+		{
+			ListCell *lc;
+
+			foreach (lc, stmt_list)
+			{
+				Query *query = (Query *) lfirst(lc);
+
+				if (Gp_role == GP_ROLE_EXECUTE)
+				{
+					/*
+					 * This method will error out if the query cannot be
+					 * safely executed on segment.
+					 */
+					querytree_safe_for_qe(query);
+				}
+			}
+		}
+
 		stmt_list = pg_plan_queries(stmt_list, cursor_options, boundParams);
 
 		plansource = (CachedPlanSource *) palloc0(sizeof(CachedPlanSource));
@@ -1989,8 +1980,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 										plansource->query_string,
 										snap, crosscheck_snapshot,
 										dest,
-<<<<<<< HEAD
-										paramLI, false);
+										paramLI, 0);
 
 				if (gp_enable_gpperfmon 
 						&& Gp_role == GP_ROLE_DISPATCH 
@@ -2011,9 +2001,6 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 					qdesc->gpmon_pkt = NULL;
 				}
 
-=======
-										paramLI, 0);
->>>>>>> 78a09145e0
 				res = _SPI_pquery(qdesc, fire_triggers,
 								  canSetTag ? tcount : 0);
 				FreeQueryDesc(qdesc);
@@ -2294,7 +2281,7 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, int64 tcount)
 		_SPI_current->processed = queryDesc->estate->es_processed;
 		_SPI_current->lastoid = queryDesc->estate->es_lastoid;
 		
-		if ((res == SPI_OK_SELECT || queryDesc->plannedstmt->returningLists) &&
+		if ((res == SPI_OK_SELECT || queryDesc->plannedstmt->hasReturning) &&
 			queryDesc->dest->mydest == DestSPI)
 		{
 			/*
@@ -2320,7 +2307,6 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, int64 tcount)
 		if (Gp_role == GP_ROLE_DISPATCH)
 			autostats_get_cmdtype(queryDesc, &cmdType, &relationOid);
 
-<<<<<<< HEAD
 		ExecutorEnd(queryDesc);
 		/* FreeQueryDesc is done by the caller */
 
@@ -2331,10 +2317,6 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, int64 tcount)
 			auto_stats(cmdType, relationOid, queryDesc->es_processed, true /* inFunction */);
 	}
 	PG_CATCH();
-=======
-	if ((res == SPI_OK_SELECT || queryDesc->plannedstmt->hasReturning) &&
-		queryDesc->dest->mydest == DestSPI)
->>>>>>> 78a09145e0
 	{
 		gp_enable_gpperfmon = orig_gp_enable_gpperfmon;
 		PG_RE_THROW();
