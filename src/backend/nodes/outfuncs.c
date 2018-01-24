@@ -1052,7 +1052,6 @@ _outLimit(StringInfo str, Limit *node)
 	WRITE_NODE_FIELD(limitCount);
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 static void
 _outPlanRowMark(StringInfo str, PlanRowMark *node)
 {
@@ -1068,6 +1067,7 @@ _outPlanRowMark(StringInfo str, PlanRowMark *node)
 	WRITE_INT_FIELD(wholeAttNo);
 }
 
+#ifndef COMPILING_BINARY_FUNCS
 static void
 _outPlanInvalItem(StringInfo str, PlanInvalItem *node)
 {

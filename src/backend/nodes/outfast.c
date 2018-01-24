@@ -1420,6 +1420,9 @@ _outNode(StringInfo str, void *obj)
 			case T_Limit:
 				_outLimit(str, obj);
 				break;
+			case T_PlanRowMark:
+				_outPlanRowMark(str, obj);
+				break;
 			case T_Hash:
 				_outHash(str, obj);
 				break;

@@ -2142,6 +2142,26 @@ _readLimit(void)
 }
 
 /*
+ * _readPlanRowMark
+ */
+static PlanRowMark *
+_readPlanRowMark(void)
+{
+	READ_LOCALS(PlanRowMark);
+
+	READ_UINT_FIELD(rti);
+	READ_UINT_FIELD(prti);
+	READ_ENUM_FIELD(markType, RowMarkType);
+	READ_BOOL_FIELD(noWait);
+	READ_BOOL_FIELD(isParent);
+	READ_INT_FIELD(ctidAttNo);
+	READ_INT_FIELD(toidAttNo);
+	READ_INT_FIELD(wholeAttNo);
+
+	READ_DONE();
+}
+
+/*
  * _readHash
  */
 static Hash *
@@ -3045,6 +3065,9 @@ readNodeBinary(void)
 				break;
 			case T_Limit:
 				return_value = _readLimit();
+				break;
+			case T_PlanRowMark:
+				return_value = _readPlanRowMark();
 				break;
 			case T_Hash:
 				return_value = _readHash();
