@@ -1368,15 +1368,15 @@ retry:
 			/* Find and save the cheapest paths for this rel */
 			set_cheapest(root, rel);
 
-			/* CDB: Prune this rel if it has no path. */
-			if (!rel->cheapest_total_path)
-				root->join_rel_level[lev] = list_delete_cell(root->join_rel_level[lev], lc, prev);
-
 #ifdef OPTIMIZER_DEBUG
 			debug_print_rel(root, rel);
 #endif
 
-			prev = lc;
+			/* CDB: Prune this rel if it has no path. */
+			if (!rel->cheapest_total_path)
+				root->join_rel_level[lev] = list_delete_cell(root->join_rel_level[lev], lc, prev);
+			else
+				prev = lc;
 		}
 
 		/*
