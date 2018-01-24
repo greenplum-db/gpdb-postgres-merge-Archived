@@ -860,8 +860,9 @@ appendGangAndDirectDispatchInfo(StringInfo str, SliceTable *sliceTable, int slic
  * side of a join with the current node.  This is only interesting for
  * deciphering runtime keys of an inner indexscan.
  *
- * parentPlan points to the parent plan node and can be used by PartitionSelector
- * to deparse its printablePredicate.
+ * es->parentPlan points to the parent plan node and can be used by PartitionSelector
+ * to deparse its printablePredicate. (This is passed in ExplainState rather than
+ * as a normal argument, to avoid changing the function signature from upstream.)
  */
 static void
 ExplainNode(Plan *plan, PlanState *planstate,
@@ -869,6 +870,7 @@ ExplainNode(Plan *plan, PlanState *planstate,
 			const char *relationship, const char *plan_name,
 			ExplainState *es)
 {
+	Plan	   *parentPlan;
     Slice      *currentSlice = es->currentSlice;    /* save */
 	const char *pname;			/* node type name for text output */
 	const char *sname;			/* node type name for non-text output */
@@ -880,6 +882,10 @@ ExplainNode(Plan *plan, PlanState *planstate,
 	char       *skip_outer_msg = NULL;
 	float		scaleFactor = 1.0; /* we will divide planner estimates by this factor to produce
 									  per-segment estimates */
+
+	/* Remember who called us. */
+	parentPlan = es->parentPlan;
+	es->parentPlan = plan;
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -1615,7 +1621,7 @@ ExplainNode(Plan *plan, PlanState *planstate,
 			break;
 		case T_PartitionSelector:
 			{
-				explain_partition_selector((PartitionSelector *) plan, es->parentPlan, es);
+				explain_partition_selector((PartitionSelector *) plan, parentPlan, es);
 			}
 			break;
 		default:
