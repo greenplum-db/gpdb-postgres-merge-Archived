@@ -2154,7 +2154,9 @@ select count(*) from tenk1 x where
 -- try that with GEQO too
 begin;
 set geqo = on;
+WARNING:  "geqo": setting is ignored because it is defunct
 set geqo_threshold = 2;
+WARNING:  "geqo_threshold": setting is ignored because it is defunct
 select count(*) from tenk1 x where
   x.unique1 in (select a.f1 from int4_tbl a,float8_tbl b where a.f1=b.f1) and
   x.unique1 = 0 and
@@ -2368,11 +2370,11 @@ where a.unique1 = 42 and
 -- test proper positioning of one-time quals in EXISTS (8.4devel bug)
 --
 prepare foo(bool) as
-select count(*) from tenk1 a left join tenk1 b
-on (a.unique2 = b.unique1 and exists
-(select 1 from tenk1 c where c.thousand = b.unique2 and $1));
+  select count(*) from tenk1 a left join tenk1 b
+    on (a.unique2 = b.unique1 and exists
+        (select 1 from tenk1 c where c.thousand = b.unique2 and $1));
 execute foo(true);
- count
+ count 
 -------
  10000
 (1 row)
@@ -2399,27 +2401,6 @@ select * from a left join b on i = x and i = y and x = i;
 
 rollback;
 --
-<<<<<<< HEAD
--- test handling of potential equivalence clauses above outer joins
---
-select q1, unique2, thousand, hundred
-  from int8_tbl a left join tenk1 b on q1 = unique2
-  where coalesce(thousand,123) = q1 and q1 = coalesce(hundred,123);
- q1 | unique2 | thousand | hundred 
-----+---------+----------+---------
-(0 rows)
-
-select f1, unique2, case when unique2 is null then f1 else 0 end
-  from int4_tbl a left join tenk1 b on f1 = unique2
-  where (case when unique2 is null then f1 else 0 end) = 0;
- f1 | unique2 | case 
-----+---------+------
-  0 |       0 |    0
-(1 row)
-
---
-=======
->>>>>>> 78a09145e0
 -- test NULL behavior of whole-row Vars, per bug #5025
 --
 select t1.q2, count(t2.*)
@@ -2468,7 +2449,6 @@ group by t1.q2 order by 1;
   4567890123456789 |     6
 (4 rows)
 
-<<<<<<< HEAD
 --
 -- test case where a PlaceHolderVar is propagated into a subquery
 --
@@ -2491,5 +2471,21 @@ order by 1,2;
  4567890123456789 | 4567890123456789 | 4567890123456789 | 42
 (8 rows)
 
-=======
->>>>>>> 78a09145e0
+--
+-- test handling of potential equivalence clauses above outer joins
+--
+select q1, unique2, thousand, hundred
+  from int8_tbl a left join tenk1 b on q1 = unique2
+  where coalesce(thousand,123) = q1 and q1 = coalesce(hundred,123);
+ q1 | unique2 | thousand | hundred 
+----+---------+----------+---------
+(0 rows)
+
+select f1, unique2, case when unique2 is null then f1 else 0 end
+  from int4_tbl a left join tenk1 b on f1 = unique2
+  where (case when unique2 is null then f1 else 0 end) = 0;
+ f1 | unique2 | case 
+----+---------+------
+  0 |       0 |    0
+(1 row)
+

@@ -546,22 +546,6 @@ select * from a left join b on i = x and i = y and x = i;
 rollback;
 
 --
-<<<<<<< HEAD
--- test handling of potential equivalence clauses above outer joins
---
-
-select q1, unique2, thousand, hundred
-  from int8_tbl a left join tenk1 b on q1 = unique2
-  where coalesce(thousand,123) = q1 and q1 = coalesce(hundred,123);
-
-select f1, unique2, case when unique2 is null then f1 else 0 end
-  from int4_tbl a left join tenk1 b on f1 = unique2
-  where (case when unique2 is null then f1 else 0 end) = 0;
-
-
---
-=======
->>>>>>> 78a09145e0
 -- test NULL behavior of whole-row Vars, per bug #5025
 --
 select t1.q2, count(t2.*)
@@ -581,7 +565,6 @@ from int8_tbl t1 left join
   (select q1, case when q2=1 then 1 else q2 end as q2 from int8_tbl) t2
   on (t1.q2 = t2.q1)
 group by t1.q2 order by 1;
-<<<<<<< HEAD
 
 --
 -- test case where a PlaceHolderVar is propagated into a subquery
@@ -593,5 +576,15 @@ select * from
 where
   1 = (select 1 from int8_tbl t3 where ss.y is not null limit 1)
 order by 1,2;
-=======
->>>>>>> 78a09145e0
+
+--
+-- test handling of potential equivalence clauses above outer joins
+--
+
+select q1, unique2, thousand, hundred
+  from int8_tbl a left join tenk1 b on q1 = unique2
+  where coalesce(thousand,123) = q1 and q1 = coalesce(hundred,123);
+
+select f1, unique2, case when unique2 is null then f1 else 0 end
+  from int4_tbl a left join tenk1 b on f1 = unique2
+  where (case when unique2 is null then f1 else 0 end) = 0;
