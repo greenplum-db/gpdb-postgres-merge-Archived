@@ -2780,6 +2780,23 @@ _readAccessPriv(void)
 	READ_DONE();
 }
 
+static ModifyTable *
+_readModifyTable(void)
+{
+	READ_LOCALS(ModifyTable);
+
+	readPlanInfo((Plan *)local_node);
+	READ_ENUM_FIELD(operation, CmdType);
+	READ_NODE_FIELD(resultRelations);
+	READ_NODE_FIELD(plans);
+	READ_NODE_FIELD(returningLists);
+	READ_NODE_FIELD(rowMarks);
+	READ_INT_FIELD(epqParam);
+
+	READ_DONE();
+}
+
+
 static Node *
 _readValue(NodeTag nt)
 {
@@ -3664,6 +3681,9 @@ readNodeBinary(void)
 				break;
 			case T_CreateFdwStmt:
 				return_value = _readCreateFdwStmt();
+				break;
+			case T_ModifyTable:
+				return_value = _readModifyTable();
 				break;
 
 
