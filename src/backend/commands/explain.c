@@ -1415,8 +1415,6 @@ ExplainNode(Plan *plan, PlanState *planstate,
 		ExplainPropertyInteger("operatorMem", PlanStateOperatorMemKB(planstate), es);
 	}
 
-	appendStringInfoChar(es->str, '\n');
-
 	/* GPDB_90_MERGE_FIXME: In GPDB, these are printed differently. But does that work
 	 * with the new XML/YAML EXPLAIN output */
 #if 0
