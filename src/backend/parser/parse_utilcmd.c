@@ -2475,7 +2475,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 	 * name in the IndexStmt, for use in DefineIndex.
 	 */
 	index->idxname = NULL;	/* DefineIndex will choose name */
-	index->altconname = pstrdup(constraint->conname); /* User may have picked the name. */
+	index->altconname = constraint->conname; /* User may have picked the name. */
 
 	index->relation = cxt->relation;
 	index->accessMethod = constraint->access_method ? constraint->access_method : DEFAULT_INDEX_TYPE;
