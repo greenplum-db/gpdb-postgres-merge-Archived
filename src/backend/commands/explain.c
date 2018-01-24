@@ -1099,22 +1099,45 @@ ExplainNode(Plan *plan, PlanState *planstate,
 			pname = sname = "Hash";
 			break;
 		case T_Motion:
-			switch (((Motion *) plan)->motionType)
 			{
-				case MOTIONTYPE_HASH:
-					pname = "Redistribute Motion";
-					break;
-				case MOTIONTYPE_FIXED:
-					if (((Motion *) plan)->numOutputSegs == 0)
-						pname = "Broadcast Motion";
-					else
-						pname = "Gather Motion";
-					break;
-				case MOTIONTYPE_EXPLICIT:
-					pname = "Explicit Redistribute Motion";
-					break;
-				default:
-					pname = "Motion ???";
+				Motion	   *pMotion = (Motion *) plan;
+				SliceTable *sliceTable = planstate->state->es_sliceTable;
+				Slice	   *slice = (Slice *) list_nth(sliceTable->slices, pMotion->motionID);
+				int         nSenders = slice->numGangMembersToBeActive;
+				int         nReceivers = 0;
+				const char *motionTypeStr;
+
+				/* scale the number of rows by the number of segments sending data */
+				scaleFactor = nSenders;
+
+				switch (((Motion *) plan)->motionType)
+				{
+					case MOTIONTYPE_HASH:
+						motionTypeStr = "Redistribute";
+						nReceivers = pMotion->numOutputSegs;
+						break;
+					case MOTIONTYPE_FIXED:
+						nReceivers = pMotion->numOutputSegs;
+						if (nReceivers == 0)
+						{
+							motionTypeStr = "Broadcast";
+							nReceivers = getgpsegmentCount();
+						}
+						else
+						{
+							motionTypeStr = "Gather";
+							scaleFactor = 1;
+						}
+						break;
+					case MOTIONTYPE_EXPLICIT:
+						motionTypeStr = "Explicit Redistribute";
+						nReceivers = getgpsegmentCount();
+						break;
+					default:
+						motionTypeStr = "???";
+				}
+				pname = sname = psprintf("%s Motion %d:%d",
+										 motionTypeStr, nSenders, nReceivers);
 			}
 			break;
 		case T_DML:
@@ -1354,35 +1377,6 @@ ExplainNode(Plan *plan, PlanState *planstate,
 		case T_Motion:
 			{
 				Motion	   *pMotion = (Motion *) plan;
-				SliceTable *sliceTable = planstate->state->es_sliceTable;
-				Slice *slice = (Slice *)list_nth(sliceTable->slices, pMotion->motionID);
-
-                int         nSenders = slice->numGangMembersToBeActive;
-				int         nReceivers = 0;
-
-				/* scale the number of rows by the number of segments sending data */
-				scaleFactor = nSenders;
-
-				switch (pMotion->motionType)
-				{
-					case MOTIONTYPE_HASH:
-						nReceivers = pMotion->numOutputSegs;
-						break;
-					case MOTIONTYPE_FIXED:
-						nReceivers = pMotion->numOutputSegs;
-						if (nReceivers == 0)
-							nReceivers = getgpsegmentCount();
-						else
-							scaleFactor = 1;
-						break;
-					case MOTIONTYPE_EXPLICIT:
-						nReceivers = getgpsegmentCount();
-						break;
-					default:
-						break;
-				}
-
-				appendStringInfo(es->str, "%d:%d", nSenders, nReceivers);
 
 				appendGangAndDirectDispatchInfo(es->str, planstate->state->es_sliceTable, pMotion->motionID);
 			}
