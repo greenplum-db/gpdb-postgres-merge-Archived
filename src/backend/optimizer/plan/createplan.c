@@ -44,9 +44,11 @@
 #include "utils/uri.h"
 
 #include "cdb/cdbllize.h"		/* pull_up_Flow() */
+#include "cdb/cdbmutate.h"
 #include "cdb/cdbpath.h"		/* cdbpath_rows() */
 #include "cdb/cdbpathtoplan.h"	/* cdbpathtoplan_create_flow() etc. */
 #include "cdb/cdbpullup.h"		/* cdbpullup_targetlist() */
+#include "cdb/cdbsetop.h"
 #include "cdb/cdbsreh.h"
 #include "cdb/cdbvars.h"
 
@@ -158,6 +160,7 @@ static WorkTableScan *make_worktablescan(List *qptlist, List *qpqual,
 static BitmapAnd *make_bitmap_and(List *bitmapplans);
 static BitmapOr *make_bitmap_or(List *bitmapplans);
 static List *flatten_grouping_list(List *groupcls);
+static void adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node);
 
 
 /*
@@ -192,7 +195,6 @@ create_plan(PlannerInfo *root, Path *path)
 										   path->locus,
 										   path->parent ? path->parent->relids
 										   : NULL,
-										   path->pathkeys,
 										   plan);
 	return plan;
 }	/* create_plan */
@@ -417,7 +419,6 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 										   best_path->locus,
 								best_path->parent ? best_path->parent->relids
 										   : NULL,
-										   best_path->pathkeys,
 										   plan);
 
 	/**
@@ -680,7 +681,6 @@ create_join_plan(PlannerInfo *root, JoinPath *best_path)
 			best_path->path.locus,
 			best_path->path.parent ? best_path->path.parent->relids
 					: NULL,
-					  best_path->path.pathkeys,
 					  plan);
 
 	/**
@@ -5543,7 +5543,7 @@ make_repeat(List *tlist,
  * to make it look better sometime.
  */
 ModifyTable *
-make_modifytable(CmdType operation, List *resultRelations,
+make_modifytable(PlannerInfo *root, CmdType operation, List *resultRelations,
 				 List *subplans, List *returningLists,
 				 List *rowMarks, int epqParam)
 {
@@ -5599,7 +5599,166 @@ make_modifytable(CmdType operation, List *resultRelations,
 	node->rowMarks = rowMarks;
 	node->epqParam = epqParam;
 
+	adjust_modifytable_flow(root, node);
+
 	return node;
+}
+
+/*
+ * Set the Flow in a ModifyTable and its children correctly.
+ *
+ * The input to a ModifyTable node must be distributed according to the
+ * DISTRIBUTED BY of the target table. Adjust the Flows of the child
+ * plans for that. Also set the Flow of the ModifyTable node itself.
+ */
+static void
+adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node)
+{
+	/*
+	 * The input plans must be distributed correctly.
+	 */
+	ListCell   *lcr,
+			   *lcp;
+
+	if (node->operation == CMD_INSERT)
+	{
+		forboth(lcr, node->resultRelations, lcp, node->plans)
+		{
+			int			rti = lfirst_int(lcr);
+			Plan	   *subplan = (Plan *) lfirst(lcp);
+			RangeTblEntry *rte = rt_fetch(rti, root->parse->rtable);
+			List	   *hashExpr;
+			GpPolicy   *targetPolicy;
+			GpPolicyType targetPolicyType;
+
+			Assert(rte->rtekind == RTE_RELATION);
+
+			targetPolicy = GpPolicyFetch(CurrentMemoryContext, rte->relid);
+			targetPolicyType = targetPolicy->ptype;
+
+			if (targetPolicyType == POLICYTYPE_PARTITIONED)
+			{
+				if (gp_enable_fast_sri)
+				{
+					/*
+					 * GPDB_90_MERGE_FIXME: Insert code here, to optimizer
+					 * single-row-inserts with constants. Similar to the logic we
+					 * used to have in apply_motion().
+					 */
+				}
+
+				hashExpr = getExprListFromTargetList(subplan->targetlist,
+													 targetPolicy->nattrs,
+													 targetPolicy->attrs,
+													 false);
+				if (!repartitionPlan(subplan, false, false, hashExpr))
+					ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_YET),
+									errmsg("Cannot parallelize that INSERT yet")));
+				break;
+			}
+			else if (targetPolicyType == POLICYTYPE_ENTRY)
+			{
+				/* Master-only table */
+
+				/* All's well if query result is already on the QD. */
+				if (subplan->flow->flotype == FLOW_SINGLETON &&
+					subplan->flow->segindex < 0)
+					break;
+
+				/*
+				 * Query result needs to be brought back to the QD.
+				 * Ask for motion to a single QE.  Later, apply_motion
+				 * will override that to bring it to the QD instead.
+				 */
+				if (!focusPlan(subplan, false, false))
+					ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_YET),
+									errmsg("Cannot parallelize that INSERT yet")));
+			}
+			else
+				elog(ERROR, "unrecognized policy type %u", targetPolicyType);
+		}
+	}
+	else if (node->operation == CMD_UPDATE || node->operation == CMD_DELETE)
+	{
+		forboth(lcr, node->resultRelations, lcp, node->plans)
+		{
+			int			rti = lfirst_int(lcr);
+			Plan	   *subplan = (Plan *) lfirst(lcp);
+			RangeTblEntry *rte = rt_fetch(rti, root->parse->rtable);
+			GpPolicy   *targetPolicy;
+			GpPolicyType targetPolicyType;
+
+			Assert(rte->rtekind == RTE_RELATION);
+
+			targetPolicy = GpPolicyFetch(CurrentMemoryContext, rte->relid);
+			targetPolicyType = targetPolicy->ptype;
+
+			if (targetPolicyType == POLICYTYPE_PARTITIONED)
+			{
+				/*
+				 * The planner does not support updating any of the
+				 * partitioning columns.
+				 */
+				// GPDB_90_MERGE_FIXME
+#if 0
+				if (query->commandType == CMD_UPDATE &&
+					doesUpdateAffectPartitionCols(root, plan, query))
+				{
+					ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_YET),
+									errmsg("Cannot parallelize an UPDATE statement that updates the distribution columns")));
+				}
+#endif
+				Assert(rti > 0);
+				request_explicit_motion(subplan, rti, root->glob->finalrtable);
+				break;
+			}
+			else if (targetPolicyType == POLICYTYPE_ENTRY)
+			{
+				/* Master-only table */
+				if (subplan->flow->flotype == FLOW_PARTITIONED ||
+					subplan->flow->flotype == FLOW_REPLICATED ||
+					(subplan->flow->flotype == FLOW_SINGLETON && subplan->flow->segindex != -1))
+				{
+					/*
+					 * target table is master-only but flow is
+					 * distributed: add a GatherMotion on top
+					 */
+
+					/* create a shallow copy of the plan flow */
+					Flow	   *flow = subplan->flow;
+
+					subplan->flow = (Flow *) palloc(sizeof(Flow));
+					*(subplan->flow) = *flow;
+
+					/* save original flow information */
+					subplan->flow->flow_before_req_move = flow;
+
+					/* request a GatherMotion node */
+					subplan->flow->req_move = MOVEMENT_FOCUS;
+					subplan->flow->hashExpr = NIL;
+					subplan->flow->segindex = 0;
+				}
+				else
+				{
+					/*
+					 * Source is, presumably, a dispatcher singleton.
+					 */
+					subplan->flow->req_move = MOVEMENT_NONE;
+				}
+			}
+			else
+				elog(ERROR, "unrecognized policy type %u", targetPolicyType);
+		}
+	}
+
+	/*
+	 * Set the distribution of the ModifyTable node itself. If there is only
+	 * one subplan, or all the subplans have a compatible distribution, then
+	 * we could mark the ModifyTable with the same distribution key. However,
+	 * currently, because a ModifyTable node can only be at the top of the
+	 * plan, it won't make any difference to the overall plan.
+	 */
+	mark_plan_strewn((Plan *) node);
 }
 
 /*

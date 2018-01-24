@@ -197,7 +197,7 @@ extern Repeat *make_repeat(List *tlist,
 						   Expr *repeatCountExpr,
 						   uint64 grouping,
 						   Plan *subplan);
-extern ModifyTable *make_modifytable(CmdType operation, List *resultRelations,
+extern ModifyTable *make_modifytable(PlannerInfo *root, CmdType operation, List *resultRelations,
 									 List *subplans, List *returningLists,
 									 List *rowMarks, int epqParam);
 extern bool is_projection_capable_plan(Plan *plan);

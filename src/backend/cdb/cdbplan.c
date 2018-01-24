@@ -182,6 +182,18 @@ plan_tree_mutator(Node *node,
 			}
 			break;
 
+		case T_ModifyTable:
+			{
+				ModifyTable *mt = (ModifyTable *) node;
+				ModifyTable *newmt;
+
+				FLATCOPY(newmt, mt, ModifyTable);
+				PLANMUTATE(newmt, mt);
+				MUTATE(newmt->plans, mt->plans, List *);
+				return (Node *) newmt;
+			}
+			break;
+
 		case T_Repeat:
 			{
 				Repeat	   *repeat = (Repeat *) node;

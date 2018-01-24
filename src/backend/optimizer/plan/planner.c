@@ -846,13 +846,12 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 			else
 				rowMarks = root->rowMarks;
 
-			plan = (Plan *) make_modifytable(parse->commandType,
+			plan = (Plan *) make_modifytable(root, parse->commandType,
 											 copyObject(root->resultRelations),
 											 list_make1(plan),
 											 returningLists,
 											 rowMarks,
 											 SS_assign_special_param(root));
-			plan->flow = pull_up_Flow(plan, getAnySubplan(plan));
 		}
 	}
 
@@ -1214,7 +1213,7 @@ inheritance_planner(PlannerInfo *root)
 		rowMarks = root->rowMarks;
 
 	/* And last, tack on a ModifyTable node to do the UPDATE/DELETE work */
-	plan = (Plan *) make_modifytable(parse->commandType,
+	plan = (Plan *) make_modifytable(root, parse->commandType,
 									 copyObject(root->resultRelations),
 									 subplans, 
 									 returningLists,

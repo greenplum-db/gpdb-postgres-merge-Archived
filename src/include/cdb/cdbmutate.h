@@ -57,4 +57,8 @@ extern Node *exec_make_plan_constant(struct PlannedStmt *stmt, EState *estate,
 						bool is_SRI, List **cursorPositions);
 extern void remove_subquery_in_RTEs(Node *node);
 extern void fixup_subplans(Plan *plan, PlannerInfo *root, SubPlanWalkerContext *context);
+
+extern void request_explicit_motion(Plan *plan, Index resultRelationIdx, List *rtable);
+
+
 #endif   /* CDBMUTATE_H */
