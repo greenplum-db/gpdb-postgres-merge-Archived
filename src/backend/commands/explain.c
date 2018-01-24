@@ -654,12 +654,8 @@ void
 ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 {
 	EState     *estate = queryDesc->estate;
-	int			indent = 0;
-	CmdType		cmd = queryDesc->plannedstmt->commandType;
-	Plan	   *childPlan = queryDesc->plannedstmt->planTree;
 
 	Assert(queryDesc->plannedstmt != NULL);
-
 	es->pstmt = queryDesc->plannedstmt;
 	es->rtable = queryDesc->plannedstmt->rtable;
 	es->showstatctx = queryDesc->showstatctx;
@@ -681,55 +677,7 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
                                      es->showstatctx);
 	}
 
-	/*
-	 * Produce the EXPLAIN report into buf.
-	 */
-	if ( (cmd == CMD_DELETE || cmd == CMD_INSERT || cmd == CMD_UPDATE) &&
-		 queryDesc->plannedstmt->planGen == PLANGEN_PLANNER )
-	{
-		/* Set sliceNum to the slice number of the outer-most query plan node */
-		int sliceNum = 0;
-		int numSegments = getgpsegmentCount();
-		char *cmdName = NULL;
-
-		switch (cmd)
-		{
-			case CMD_DELETE:
-				cmdName = "Delete";
-				break;
-			case CMD_INSERT:
-				cmdName = "Insert";
-				break;
-			case CMD_UPDATE:
-				cmdName = "Update";
-				break;
-			default:
-				/* This should never be reached */
-				Assert(!"Unexpected statement type");
-				break;
-		}
-		appendStringInfo(es->str, "%s", cmdName);
-
-		if (IsA(childPlan, Motion))
-		{
-			Motion	   *pMotion = (Motion *) childPlan;
-			if (pMotion->motionType == MOTIONTYPE_FIXED && pMotion->numOutputSegs != 0)
-			{
-				numSegments = 1;
-			}
-			/* else: other motion nodes execute on all segments */
-		}
-		else if ((childPlan->directDispatch).isDirectDispatch)
-		{
-			numSegments = 1;
-		}
-		appendStringInfo(es->str, " (slice%d; segments: %d)", sliceNum, numSegments);
-		appendStringInfo(es->str, "  (rows=%.0f width=%d)\n", ceil(childPlan->plan_rows / numSegments), childPlan->plan_width);
-		appendStringInfo(es->str, "  ->  ");
-		indent = 3;
-	}
-
-	ExplainNode(childPlan, queryDesc->planstate,
+	ExplainNode(queryDesc->plannedstmt->planTree, queryDesc->planstate,
 				NULL, NULL, NULL, es);
 }
 
