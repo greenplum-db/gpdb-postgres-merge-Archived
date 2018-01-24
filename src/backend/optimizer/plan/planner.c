@@ -852,7 +852,8 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 											 returningLists,
 											 rowMarks,
 											 SS_assign_special_param(root));
-			plan->flow = pull_up_Flow(plan, getAnySubplan(plan));
+			if (!IsA(plan, ModifyTable))
+				plan->flow = pull_up_Flow(plan, getAnySubplan(plan));
 		}
 	}
 
