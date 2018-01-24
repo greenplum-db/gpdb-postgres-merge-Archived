@@ -267,6 +267,27 @@ apply_motion(PlannerInfo *root, Plan *plan, Query *query)
 		targetPolicyType = targetPolicy->ptype;
 	}
 
+	if (IsA(plan, ModifyTable))
+	{
+		ListCell	*l;
+		List		*motioned_plans = NIL;
+
+		Insist(query->commandType != CMD_SELECT);
+
+		foreach(l, ((ModifyTable*) plan)->plans)
+		{
+			Plan	*child_plan = (Plan*) lfirst(l);
+			Plan	*motioned_plan;
+
+			motioned_plan = apply_motion(root, child_plan, query);
+			motioned_plans = lappend(motioned_plans, motioned_plan);
+		}
+
+		list_free(((ModifyTable*) plan)->plans);
+		((ModifyTable*) plan)->plans = motioned_plans;
+		return plan;
+	}
+
 	switch (query->commandType)
 	{
 		case CMD_SELECT:
@@ -3408,6 +3429,13 @@ pre_dispatch_function_evaluation_mutator(Node *node,
 			context->cursorPositions = lappend(context->cursorPositions, cpos);
 		}
 	}
+	else if (IsA(node, ModifyTable))
+	{
+		ModifyTable		*mt = (ModifyTable *) node;
+
+		return (Node *) copyObject(mt);
+	}
+
 
 	/*
 	 * For any node type not handled above, we recurse using
