@@ -1213,42 +1213,12 @@ inheritance_planner(PlannerInfo *root)
 		rowMarks = root->rowMarks;
 
 	/* And last, tack on a ModifyTable node to do the UPDATE/DELETE work */
-	plan = (Plan *) make_modifytable(root, parse->commandType,
+	return (Plan *) make_modifytable(root, parse->commandType,
 									 copyObject(root->resultRelations),
 									 subplans, 
 									 returningLists,
 									 rowMarks,
 									 SS_assign_special_param(root));
-
-	/* MPP dispatch needs to know the kind of locus. */
-	if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		switch (append_locustype)
-		{
-			case CdbLocusType_Entry:
-				mark_plan_entry(plan);
-				break;
-
-			case CdbLocusType_Hashed:
-			case CdbLocusType_HashedOJ:
-			case CdbLocusType_Strewn:
-				/* Depend on caller to avoid incompatible hash keys. */
-
-				/*
-				 * For our purpose (UPD/DEL target), strewn is good
-				 * enough.
-				 */
-				mark_plan_strewn(plan);
-				break;
-
-			default:
-				ereport(ERROR,
-						(errcode(ERRCODE_INTERNAL_ERROR),
-						 errmsg("unexpected locus assigned to target inheritance set")));
-		}
-	}
-
-	return plan;
 }
 
 #ifdef USE_ASSERT_CHECKING
