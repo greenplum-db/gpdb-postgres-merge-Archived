@@ -63,7 +63,15 @@ join_search_one_level(PlannerInfo *root, int level)
 	ListCell   *r;
 	int			k;
 
-	Assert(joinrels[level] == NIL);
+	/*
+	 * There should not be any joins on this level yet, unless we're retrying
+	 * with all plan types enabled, after failing to find any joins that
+	 * satisfy the current enable_*=false restrictions.
+	 */
+	if (!root->config->mpp_trying_fallback_plan)
+	{
+		Assert(joinrels[level] == NIL);
+	}
 
 	/* Set join_cur_level so that new joinrels are added to proper list */
 	root->join_cur_level = level;

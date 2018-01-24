@@ -1343,7 +1343,9 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels, b
 		ListCell   *lc;
 		ListCell   *prev;
 		ListCell   *next;
+		List	   *backup;
 
+retry:
 		/*
 		 * Determine all possible pairs of relations to be joined at this
 		 * level, and build paths for making each one from every available
@@ -1354,6 +1356,7 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels, b
 		/*
 		 * Do cleanup work on each just-processed rel.
 		 */
+		backup = list_copy(root->join_rel_level[lev]);
 		prev = NULL;
 		for (lc = list_head(root->join_rel_level[lev]);
 			 lc != NULL;
@@ -1375,13 +1378,17 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels, b
 
 			prev = lc;
 		}
-		/* If no paths found because enable_xxx=false, enable all & retry. */
+
+		/*
+		 * If no paths found because enable_xxx=false, enable all & retry.
+		 */
 		if (!root->join_rel_level[lev] &&
 			root->config->gp_enable_fallback_plan &&
 			!root->config->mpp_trying_fallback_plan)
 		{
 			root->config->mpp_trying_fallback_plan = true;
-			lev--;
+			root->join_rel_level[lev] = backup;
+			goto retry;
 		}
 	}
 
