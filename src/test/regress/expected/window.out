@@ -954,11 +954,7 @@ SELECT rank() OVER (ORDER BY length('abc'));
 
 -- can't order by another window function
 SELECT rank() OVER (ORDER BY rank() OVER (ORDER BY random()));
-<<<<<<< HEAD
 ERROR:  window functions are not allowed in window definitions
-=======
-ERROR:  window functions not allowed in window definition
->>>>>>> 78a09145e0
 LINE 1: SELECT rank() OVER (ORDER BY rank() OVER (ORDER BY random())...
                                      ^
 -- some other errors
