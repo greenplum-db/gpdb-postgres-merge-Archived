@@ -1734,8 +1734,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		PlanRowMark *rc = (PlanRowMark *) lfirst(l);
 		Oid			relid;
 		Relation	relation;
-		LOCKMODE    lockmode;
-		bool        lockUpgraded;
 		ExecRowMark *erm;
 
 		/* ignore "parent" rowmarks; they are irrelevant at runtime */
@@ -1744,17 +1742,20 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 		switch (rc->markType)
 		{
+				/* CDB: On QD, lock whole table in X mode, if distributed. */
+			case ROW_MARK_TABLE_EXCLUSIVE:
+				relid = getrelid(rc->rti, rangeTable);
+				relation = heap_open(relid, ExclusiveLock);
+				break;
+			case ROW_MARK_TABLE_SHARE:
+				/* CDB: On QD, lock whole table in S mode, if distributed. */
+				relid = getrelid(rc->rti, rangeTable);
+				relation = heap_open(relid, RowShareLock);
+				break;
 			case ROW_MARK_EXCLUSIVE:
 			case ROW_MARK_SHARE:
 				relid = getrelid(rc->rti, rangeTable);
-				/* CDB: On QD, lock whole table in S or X mode, if distributed. */
-				lockmode = (rc->markType == ROW_MARK_EXCLUSIVE)  ? RowExclusiveLock : RowShareLock;
-				relation = CdbOpenRelation(relid, lockmode, rc->noWait, &lockUpgraded);
-				if (lockUpgraded)
-				{
-					heap_close(relation, NoLock);
-					continue;
-				}
+				relation = heap_open(relid, RowShareLock);
 				break;
 			case ROW_MARK_REFERENCE:
 				relid = getrelid(rc->rti, rangeTable);

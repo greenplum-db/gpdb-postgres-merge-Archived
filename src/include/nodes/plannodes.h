@@ -1263,7 +1263,11 @@ typedef enum RowMarkType
 	ROW_MARK_EXCLUSIVE,			/* obtain exclusive tuple lock */
 	ROW_MARK_SHARE,				/* obtain shared tuple lock */
 	ROW_MARK_REFERENCE,			/* just fetch the TID */
-	ROW_MARK_COPY				/* physically copy the row value */
+	ROW_MARK_COPY,				/* physically copy the row value */
+	ROW_MARK_TABLE_SHARE,		/* (GPDB) Acquire RowShareLock on table,
+								 * but no tuple locks */
+	ROW_MARK_TABLE_EXCLUSIVE	/* (GPDB) Acquire ExclusiveLock on table,
+								 * blocking all other updates */
 } RowMarkType;
 
 #define RowMarkRequiresRowShareLock(marktype)  ((marktype) <= ROW_MARK_SHARE)

@@ -75,9 +75,8 @@ lnext:
 		HeapTuple	copyTuple;
 
 		/* CDB: CTIDs were not fetched for distributed relation. */
-		Relation relation = erm->relation;
-		if (relation->rd_cdbpolicy &&
-			relation->rd_cdbpolicy->ptype == POLICYTYPE_PARTITIONED)
+		if (erm->markType == ROW_MARK_TABLE_EXCLUSIVE ||
+			erm->markType == ROW_MARK_TABLE_SHARE)
 			continue;
 
 		/* clear any leftover test tuple for this rel */

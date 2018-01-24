@@ -194,6 +194,17 @@ plan_tree_mutator(Node *node,
 			}
 			break;
 
+		case T_LockRows:
+			{
+				LockRows   *lockrows = (LockRows *) node;
+				LockRows   *newlockrows;
+
+				FLATCOPY(newlockrows, lockrows, LockRows);
+				PLANMUTATE(newlockrows, lockrows);
+				return (Node *) newlockrows;
+			}
+			break;
+
 		case T_Repeat:
 			{
 				Repeat	   *repeat = (Repeat *) node;

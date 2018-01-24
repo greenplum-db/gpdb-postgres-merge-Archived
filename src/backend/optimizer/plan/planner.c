@@ -328,7 +328,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 			top_plan = materialize_finished_plan(root, top_plan);
 	}
 
-
 	/*
 	 * Fix sharing id and shared id.
 	 *
@@ -2664,14 +2663,54 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	 */
 	if (parse->rowMarks)
 	{
-		result_plan = (Plan *) make_lockrows(result_plan,
-											 root->rowMarks,
-											 SS_assign_special_param(root));
+		ListCell   *lc;
+		List	   *newmarks = NIL;
+
 		/*
-		 * The result can no longer be assumed sorted, since locking might
-		 * cause the sort key columns to be replaced with new values.
+		 * In case of FOR UPDATE, upgrade the rowmarks so that we will grab an
+		 * ExclusiveLock on the table, instead of locking individual tuples.
+		 *
+		 * Because we don't have a distibuted deadlock detector. See comments
+		 * in CdbTryOpenRelation(). CdbTryOpenRelation() handles the upgrade,
+		 * where heap_open() would otherwise be called, but for FOR UPDATE
+		 * we have this mechanism.
 		 */
-		current_pathkeys = NIL;
+		foreach(lc, root->rowMarks)
+		{
+			PlanRowMark *rc = (PlanRowMark *) lfirst(lc);
+
+			if (rc->markType == ROW_MARK_EXCLUSIVE || rc->markType == ROW_MARK_SHARE)
+			{
+				RelOptInfo *brel = root->simple_rel_array[rc->rti];
+
+				if (brel->cdbpolicy &&
+					brel->cdbpolicy->ptype == POLICYTYPE_PARTITIONED)
+				{
+					if (rc->markType == ROW_MARK_EXCLUSIVE)
+						rc->markType = ROW_MARK_TABLE_EXCLUSIVE;
+					else
+						rc->markType = ROW_MARK_TABLE_SHARE;
+				}
+			}
+
+			/* We only need LockRows for the tuple-level locks */
+			if (rc->markType != ROW_MARK_TABLE_EXCLUSIVE &&
+				rc->markType != ROW_MARK_TABLE_SHARE)
+				newmarks = lappend(newmarks, rc);
+		}
+
+		if (newmarks)
+		{
+			result_plan = (Plan *) make_lockrows(result_plan,
+												 newmarks,
+												 SS_assign_special_param(root));
+			result_plan->flow = pull_up_Flow(result_plan, result_plan->lefttree);
+			/*
+			 * The result can no longer be assumed sorted, since locking might
+			 * cause the sort key columns to be replaced with new values.
+			 */
+			current_pathkeys = NIL;
+		}
 	}
 
 	/*

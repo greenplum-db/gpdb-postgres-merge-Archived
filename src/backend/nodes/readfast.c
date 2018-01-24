@@ -2816,6 +2816,19 @@ _readModifyTable(void)
 	READ_DONE();
 }
 
+static LockRows *
+_readLockRows(void)
+{
+	READ_LOCALS(LockRows);
+
+	readPlanInfo((Plan *) local_node);
+
+	READ_NODE_FIELD(rowMarks);
+	READ_INT_FIELD(epqParam);
+
+	READ_DONE();
+}
+
 
 static Node *
 _readValue(NodeTag nt)
@@ -3707,6 +3720,9 @@ readNodeBinary(void)
 				break;
 			case T_ModifyTable:
 				return_value = _readModifyTable();
+				break;
+			case T_LockRows:
+				return_value = _readLockRows();
 				break;
 
 

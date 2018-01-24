@@ -674,8 +674,14 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 			break;
 
 		case T_LockRows:
+			curMemoryAccountId = CREATE_EXECUTOR_MEMORY_ACCOUNT(isAlienPlanNode, node, LockRows);
+
+			START_MEMORY_ACCOUNT(curMemoryAccountId);
+			{
 			result = (PlanState *) ExecInitLockRows((LockRows *) node,
 													estate, eflags);
+			}
+			END_MEMORY_ACCOUNT();
 			break;
 
 		case T_Limit:
