@@ -332,7 +332,6 @@ WHERE p1.prorettype = 'internal'::regtype AND NOT
  2304 | internal_in
 (1 row)
 
-<<<<<<< HEAD
 -- Look for functions that return a polymorphic type and do not have any
 -- polymorphic argument.  Calls of such functions would be unresolvable
 -- at parse time.  As of 9.4 this query should find only some input functions
@@ -361,8 +360,6 @@ ORDER BY 2;
  3532 | enum_recv
 (9 rows)
 
-=======
->>>>>>> 78a09145e0
 -- Check for length inconsistencies between the various argument-info arrays.
 SELECT p1.oid, p1.proname
 FROM pg_proc as p1
@@ -1246,7 +1243,7 @@ FROM pg_am am JOIN pg_opclass op ON opcmethod = am.oid
 WHERE am.amname <> 'gin'
 GROUP BY amname, amsupport, opcname, amprocfamily
 HAVING count(*) != amsupport OR amprocfamily IS NULL;
-amname | opcname | count 
+ amname | opcname | count 
 --------+---------+-------
 (0 rows)
 

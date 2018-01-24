@@ -260,7 +260,6 @@ FROM pg_proc as p1
 WHERE p1.prorettype = 'internal'::regtype AND NOT
     'internal'::regtype = ANY (p1.proargtypes);
 
-<<<<<<< HEAD
 -- Look for functions that return a polymorphic type and do not have any
 -- polymorphic argument.  Calls of such functions would be unresolvable
 -- at parse time.  As of 9.4 this query should find only some input functions
@@ -278,8 +277,6 @@ WHERE p1.prorettype IN
      'anyenum'::regtype = ANY (p1.proargtypes))
 ORDER BY 2;
 
-=======
->>>>>>> 78a09145e0
 -- Check for length inconsistencies between the various argument-info arrays.
 
 SELECT p1.oid, p1.proname
