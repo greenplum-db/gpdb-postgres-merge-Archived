@@ -33,7 +33,11 @@ pg_authid_tuple_attribute_will_be(HeapTuple tuple, AttrNumber attr, Datum retval
 	expect_value(SysCacheGetAttr, attributeNumber, attr);
 	expect_any(SysCacheGetAttr, isNull);
 
-	will_assign_value(SysCacheGetAttr, isNull, (retval == 0));
+	/*
+	 * The cast to bool here is required; otherwise will_assign_value assumes it
+	 * has an int's worth of space to set and we smash the stack.
+	 */
+	will_assign_value(SysCacheGetAttr, isNull, (bool) (retval == 0));
 	will_return(SysCacheGetAttr, retval);
 }
 
