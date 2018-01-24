@@ -973,7 +973,7 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 	vacstmt = copyObject(vacstmt);
 	/* VACUUM, without ANALYZE */
 	vacstmt->options &= ~VACOPT_ANALYZE;
-	vacstmt->options |= ~VACOPT_VACUUM;
+	vacstmt->options |= VACOPT_VACUUM;
 
 	/*
 	 * We compact segment file by segment file.

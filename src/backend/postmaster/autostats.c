@@ -65,7 +65,7 @@ autostats_issue_analyze(Oid relationOid)
 	relation = makeRangeVar(get_namespace_name(get_rel_namespace(relationOid)), get_rel_name(relationOid), -1);
 	analyzeStmt = makeNode(VacuumStmt);
 	/* Set up command parameters */
-	analyzeStmt->options = 0;
+	analyzeStmt->options = VACOPT_ANALYZE;
 	analyzeStmt->freeze_min_age = -1;
 	analyzeStmt->relation = relation;	/* not used since we pass relids list */
 	analyzeStmt->va_cols = NIL;
