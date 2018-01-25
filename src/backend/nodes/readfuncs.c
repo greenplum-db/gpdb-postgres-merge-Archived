@@ -2654,6 +2654,7 @@ _readGrantStmt(void)
 	READ_LOCALS(GrantStmt);
 
 	READ_BOOL_FIELD(is_grant);
+	READ_ENUM_FIELD(targtype,GrantTargetType);
 	READ_ENUM_FIELD(objtype,GrantObjectType);
 	READ_NODE_FIELD(objects);
 	READ_NODE_FIELD(privileges);

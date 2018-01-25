@@ -3198,6 +3198,7 @@ _outGrantStmt(StringInfo str, GrantStmt *node)
 {
 	WRITE_NODE_TYPE("GRANTSTMT");
 	WRITE_BOOL_FIELD(is_grant);
+	WRITE_ENUM_FIELD(targtype,GrantTargetType);
 	WRITE_ENUM_FIELD(objtype,GrantObjectType);
 	WRITE_NODE_FIELD(objects);
 	WRITE_NODE_FIELD(privileges);
