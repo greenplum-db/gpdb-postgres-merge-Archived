@@ -5688,6 +5688,7 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node)
 			GpPolicy   *targetPolicy;
 			GpPolicyType targetPolicyType;
 
+			Assert(rti > 0);
 			Assert(rte->rtekind == RTE_RELATION);
 
 			targetPolicy = GpPolicyFetch(CurrentMemoryContext, rte->relid);
@@ -5699,16 +5700,15 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node)
 				 * The planner does not support updating any of the
 				 * partitioning columns.
 				 */
-				// GPDB_90_MERGE_FIXME
-#if 0
-				if (query->commandType == CMD_UPDATE &&
-					doesUpdateAffectPartitionCols(root, plan, query))
+				if (node->operation == CMD_UPDATE &&
+					isAnyColChangedByUpdate(rti,
+											subplan->targetlist,
+											targetPolicy->nattrs,
+											targetPolicy->attrs))
 				{
 					ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_YET),
 									errmsg("Cannot parallelize an UPDATE statement that updates the distribution columns")));
 				}
-#endif
-				Assert(rti > 0);
 				request_explicit_motion(subplan, rti, root->glob->finalrtable);
 				break;
 			}

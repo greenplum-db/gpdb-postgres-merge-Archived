@@ -45,6 +45,11 @@ extern Plan *replace_shareinput_targetlists(PlannerGlobal *glob, Plan *plan, Lis
 extern Plan *apply_shareinput_xslice(Plan *plan, PlannerGlobal *glob);
 extern void assign_plannode_id(PlannedStmt *stmt);
 
+extern bool isAnyColChangedByUpdate(Index targetvarno,
+						List *targetlist,
+						int nattrs,
+						AttrNumber *attrs);
+
 extern List *getExprListFromTargetList(List *tlist, int numCols, AttrNumber *colIdx,
 									   bool useExecutorVarFormat);
 extern void remove_unused_initplans(Plan *plan, PlannerInfo *root);

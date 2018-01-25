@@ -101,10 +101,6 @@ static Node *apply_motion_mutator(Node *node, ApplyMotionState *context);
 
 static AttrNumber find_segid_column(List *tlist, Index relid);
 
-static bool doesUpdateAffectPartitionCols(PlannerInfo *root,
-							  Plan *plan,
-							  Query *query);
-
 static bool replace_shareinput_targetlists_walker(Node *node, PlannerGlobal *glob, bool fPop);
 
 static bool fixup_subplan_walker(Node *node, SubPlanWalkerContext *context);
@@ -1053,7 +1049,7 @@ getExprListFromTargetList(List *tlist,
 /*
  * isAnyColChangedByUpdate
  */
-static bool
+bool
 isAnyColChangedByUpdate(Index targetvarno,
 						List *targetlist,
 						int nattrs,
@@ -1152,83 +1148,6 @@ find_segid_column(List *tlist, Index relid)
 	/* no segid column found */
 	return -1;
 }
-
-/*
- * doesUpdateAffectPartitionCols
- */
-bool
-doesUpdateAffectPartitionCols(PlannerInfo *root,
-							  Plan *plan,
-							  Query *query)
-{
-	Append	   *append;
-	ListCell   *rticell;
-	ListCell   *plancell;
-	GpPolicy   *policy;
-
-	if (list_length(root->resultRelations) == 1)
-	{
-		RangeTblEntry *rte;
-		Relation	relation;
-		int			resultRelation = linitial_int(root->resultRelations);
-
-		rte = rt_fetch(resultRelation, query->rtable);
-		Assert(rte->rtekind == RTE_RELATION);
-
-		/* Get a copy of the rel's GpPolicy from the relcache. */
-		relation = relation_open(rte->relid, NoLock);
-		policy = RelationGetPartitioningKey(relation);
-		relation_close(relation, NoLock);
-
-
-		/*
-		 * Single target relation?
-		 */
-
-		return isAnyColChangedByUpdate(resultRelation,
-									   plan->targetlist,
-									   policy->nattrs,
-									   policy->attrs);
-	}
-
-	/*
-	 * Multiple target relations (inheritance)... Plan should have an Append
-	 * node on top, with a subplan per target.
-	 */
-	append = (Append *) plan;
-
-	// GPDB_90_MERGE_FIXME: The inherited update plans don't look like that
-	// anymore. ModifyTable nodes are now used.
-	
-	Insist(IsA(append, Append) &&
-//		   append->isTarget &&
-		   list_length(append->appendplans) == list_length(root->resultRelations));
-
-	forboth(rticell, root->resultRelations,
-			plancell, append->appendplans)
-	{
-		int			rti = lfirst_int(rticell);
-		Plan	   *subplan = (Plan *) lfirst(plancell);
-
-		RangeTblEntry *rte;
-		Relation	relation;
-
-		rte = rt_fetch(rti, query->rtable);
-		Assert(rte->rtekind == RTE_RELATION);
-
-		/* Get a copy of the rel's GpPolicy from the relcache. */
-		relation = relation_open(rte->relid, NoLock);
-		policy = RelationGetPartitioningKey(relation);
-		relation_close(relation, NoLock);
-
-		if (isAnyColChangedByUpdate(rti, subplan->targetlist, policy->nattrs, policy->attrs))
-			return true;
-	}
-
-	return false;
-}								/* doesUpdateAffectPartitionCols */
-
-
 
 /* ----------------------------------------------------------------------- *
  * cdbmutate_warn_ctid_without_segid() warns the user if the plan refers to a
