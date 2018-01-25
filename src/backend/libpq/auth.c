@@ -29,7 +29,9 @@
 #include <unistd.h>
 #include <stddef.h>
 
+#include "catalog/indexing.h"
 #include "catalog/pg_authid.h"
+#include "catalog/pg_auth_time_constraint.h"
 #include "cdb/cdbvars.h"
 #include "libpq/auth.h"
 #include "libpq/crypt.h"
@@ -43,9 +45,12 @@
 #include "replication/walsender.h"
 #include "utils/builtins.h"
 #include "utils/datetime.h"
+#include "utils/fmgroids.h"
 #include "utils/guc.h"
+#include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
+#include "utils/tqual.h"
 /*#include "replication/walsender.h"*/
 #include "storage/ipc.h"
 
@@ -3256,57 +3261,89 @@ CheckAuthTimeConstraints(char *rolname)
 bool
 check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp)
 {
-	/*
-	 * GPDB_90_MERGE_FIXME: get_role_intervals() no longer exists. We need to
-	 * walk pg_auth_time_constraint for this information now, instead of relying
-	 * on a flat file.
-	 */
-	List  	  		*role_intervals = NIL; // get_role_intervals(rolname);
-
-	if (role_intervals == NIL)
-		return true;
-
-	List   	   		*row;
-	ListCell   		*line, *cell;
-	char   	   		*temp;
-	authInterval	given;
+	Oid				roleId;
+	Relation		reltimeconstr;
+	ScanKeyData 	entry[1];
+	SysScanDesc 	scan;
+	HeapTuple		tuple;
 	authPoint 		now;
+	bool			authorized = true;
 
 	timestamptz_to_point(timestamp, &now);
-	
-	foreach (line, role_intervals) 
-	{
-		row = lfirst(line);
-		/* 
-		 * Each row of role_intervals is a List of 5 records
-		 * <rolname> <startday> <starttime> <endday> <endtime> 
-	 	 */
-		cell = list_head(row);
-		cell = lnext(cell);			/* skip first entry in record, which is rolname */
-		temp = lfirst(cell);
-		given.start.day = pg_atoi(temp, sizeof(int16), 0);
 
-		cell = lnext(cell);
-		temp = lfirst(cell);
-		given.start.time = DatumGetTimeADT(DirectFunctionCall1(time_in,
-										   CStringGetDatum(temp)));
-		
-		cell = lnext(cell);
-		temp = lfirst(cell);
-		given.end.day = pg_atoi(temp, sizeof(int16), 0);
-	
-		cell = lnext(cell);
-		temp = lfirst(cell);
-		given.end.time = DatumGetTimeADT(DirectFunctionCall1(time_in,
-										 CStringGetDatum(temp)));
+	/*
+	 * Disable immediate interrupts while doing database access.  (Note
+	 * we don't bother to turn this back on if we hit one of the failure
+	 * conditions, since we can expect we'll just exit right away anyway.)
+	 */
+	ImmediateInterruptOK = false;
+
+	/* Look up this user in pg_authid. */
+	roleId = GetSysCacheOid1(AUTHNAME, CStringGetDatum(rolname));
+	if (!OidIsValid(roleId))
+		return false;					/* no such user */
+
+	/* Walk pg_auth_time_constraint for entries belonging to this user. */
+	reltimeconstr = heap_open(AuthTimeConstraintRelationId, AccessShareLock);
+
+	ScanKeyInit(&entry[0],
+				Anum_pg_auth_time_constraint_authid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(roleId));
+
+	/*
+	 * Since this is called during authentication, we have to make sure we don't
+	 * use the index unless it's already been built. See GetDatabaseTuple for
+	 * another example of this sort of logic.
+	 */
+	scan = systable_beginscan(reltimeconstr, AuthTimeConstraintAuthIdIndexId,
+							  criticalSharedRelcachesBuilt, SnapshotNow, 1,
+							  entry);
+
+	/*
+	 * Check each denied interval to see if the current timestamp is part of it.
+	 */
+	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+	{
+		Form_pg_auth_time_constraint constraint_tuple;
+		Datum 			datum;
+		bool			isnull;
+		authInterval	given;
+
+		constraint_tuple = (Form_pg_auth_time_constraint) GETSTRUCT(tuple);
+		Assert(constraint_tuple->authid == roleId);
+
+		/* Retrieve the start of the interval. */
+		datum = heap_getattr(tuple, Anum_pg_auth_time_constraint_start_time,
+							 RelationGetDescr(reltimeconstr), &isnull);
+		Assert(!isnull);
+
+		given.start.day = constraint_tuple->start_day;
+		given.start.time = DatumGetTimeADT(datum);
+
+		/* Repeat for the end. */
+		datum = heap_getattr(tuple, Anum_pg_auth_time_constraint_end_time,
+							 RelationGetDescr(reltimeconstr), &isnull);
+		Assert(!isnull);
+
+		given.end.day = constraint_tuple->end_day;
+		given.end.time = DatumGetTimeADT(datum);
 
 		if (interval_contains(&given, &now))
 		{
-			list_free(role_intervals);
-			return false;
+			authorized = false;
+			break;
 		}
 	}
+
+	/* Clean up. */
+	systable_endscan(scan);
+	heap_close(reltimeconstr, AccessShareLock);
+
+	/* Re-enable immediate response to SIGTERM/SIGINT/timeout interrupts */
+	ImmediateInterruptOK = true;
+	/* And don't forget to detect one that already arrived */
+	CHECK_FOR_INTERRUPTS();
 	
-	list_free(role_intervals);
-	return true;
+	return authorized;
 }

@@ -1097,18 +1097,6 @@ check_auth_time_constraints(PG_FUNCTION_ARGS)
 	char		   *rolname = PG_GETARG_CSTRING(0);
 	TimestampTz 	timestamp = PG_GETARG_TIMESTAMPTZ(1);
 
-	/*
-	 * For the sake of unit testing, we must ensure that the role information
-	 * is accessible to the backend process. This function call will ensure the
-	 * role information is reloaded. This is a moot point for the traditional
-	 * auth. checking where this data already resides in the PostmasterContext.
-	 * For more information, see force_load_role().
-	 *
-	 * GPDB_90_MERGE_FIXME: IIUC this should no longer be needed once we rewrite
-	 * the auth_time_constraints logic. Commenting for now to get things
-	 * building.
-	 */
-	/* force_load_role(); */
 	PG_RETURN_BOOL(check_auth_time_constraints_internal(rolname, timestamp));
 }
 

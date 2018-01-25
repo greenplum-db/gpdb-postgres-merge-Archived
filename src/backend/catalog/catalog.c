@@ -461,7 +461,8 @@ IsSharedRelation(Oid relationId)
 		relationId == AuthIdRolResQueueIndexId ||
 		relationId == AuthIdRolResGroupIndexId ||
 		relationId == GpSegmentConfigContentPreferred_roleIndexId ||
-		relationId == GpSegmentConfigDbidIndexId)
+		relationId == GpSegmentConfigDbidIndexId ||
+		relationId == AuthTimeConstraintAuthIdIndexId)
 	{
 		return true;
 	}

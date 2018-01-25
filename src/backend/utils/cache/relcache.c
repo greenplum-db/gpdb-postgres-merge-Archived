@@ -45,6 +45,7 @@
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_auth_members.h"
+#include "catalog/pg_auth_time_constraint.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_namespace.h"
@@ -101,6 +102,7 @@ static const FormData_pg_attribute Desc_pg_type[Natts_pg_type] = {Schema_pg_type
 static const FormData_pg_attribute Desc_pg_database[Natts_pg_database] = {Schema_pg_database};
 static const FormData_pg_attribute Desc_pg_authid[Natts_pg_authid] = {Schema_pg_authid};
 static const FormData_pg_attribute Desc_pg_auth_members[Natts_pg_auth_members] = {Schema_pg_auth_members};
+static const FormData_pg_attribute Desc_pg_auth_time_constraint_members[Natts_pg_auth_time_constraint] = {Schema_pg_auth_time_constraint};
 static const FormData_pg_attribute Desc_pg_index[Natts_pg_index] = {Schema_pg_index};
 
 /*
@@ -1413,7 +1415,7 @@ LookupOpclassInfo(Oid operatorClassOid,
  *		catalogs.
  *
  * formrdesc is currently used for: pg_database, pg_authid, pg_auth_members,
- * pg_class, pg_attribute, pg_proc, and pg_type
+ * pg_auth_time_constraint, pg_class, pg_attribute, pg_proc, and pg_type
  * (see RelationCacheInitializePhase2/3).
  *
  * Note that these catalogs can't have constraints (except attnotnull),
@@ -2626,6 +2628,7 @@ RelationBuildLocalRelation(const char *relname,
 		case DatabaseRelationId:
 		case AuthIdRelationId:
 		case AuthMemRelationId:
+		case AuthTimeConstraintRelationId:
 		case RelationRelationId:
 		case AttributeRelationId:
 		case ProcedureRelationId:
@@ -2880,8 +2883,11 @@ RelationCacheInitializePhase2(void)
 				  true, Natts_pg_authid, Desc_pg_authid);
 		formrdesc("pg_auth_members", AuthMemRelation_Rowtype_Id, true,
 				  false, Natts_pg_auth_members, Desc_pg_auth_members);
+		formrdesc("pg_auth_time_constraint", AuthTimeConstraint_Rowtype_Id,
+				  true, false, Natts_pg_auth_time_constraint,
+				  Desc_pg_auth_time_constraint_members);
 
-#define NUM_CRITICAL_SHARED_RELS	3	/* fix if you change list above */
+#define NUM_CRITICAL_SHARED_RELS	4	/* fix if you change list above */
 	}
 
 	MemoryContextSwitchTo(oldcxt);
@@ -3009,6 +3015,8 @@ RelationCacheInitializePhase3(void)
 	 * database OID, so it instead depends on DatabaseOidIndexId.  We also
 	 * need to nail up some indexes on pg_authid and pg_auth_members for use
 	 * during client authentication.
+	 *
+	 * GPDB: pg_auth_time_constraint is added to the above list.
 	 */
 	if (!criticalSharedRelcachesBuilt)
 	{
@@ -3022,8 +3030,10 @@ RelationCacheInitializePhase3(void)
 							AuthIdRelationId);
 		load_critical_index(AuthMemMemRoleIndexId,
 							AuthMemRelationId);
+		load_critical_index(AuthTimeConstraintAuthIdIndexId,
+							AuthTimeConstraintRelationId);
 
-#define NUM_CRITICAL_SHARED_INDEXES 5	/* fix if you change list above */
+#define NUM_CRITICAL_SHARED_INDEXES 6	/* fix if you change list above */
 
 		criticalSharedRelcachesBuilt = true;
 	}
