@@ -511,7 +511,8 @@ ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt)
 	}
 
 	/* rescan to release any page pin */
-	heap_rescan(node->ss_currentScanDesc, NULL);
+	if (node->ss_currentScanDesc)
+		heap_rescan(node->ss_currentScanDesc, NULL);
 
 	freeBitmapState(node);
 
@@ -556,7 +557,15 @@ ExecEndBitmapHeapScan(BitmapHeapScanState *node)
 	 */
 	ExecEndNode(outerPlanState(node));
 
+	/*
+	 * release bitmap if any
+	 */
 	ExecEagerFreeBitmapHeapScan(node);
+
+	/*
+	 * close heap scan
+	 */
+	freeScanDesc(node);
 
 	/*
 	 * close the heap relation.
