@@ -1718,6 +1718,15 @@ planstate_walk_kids(PlanState *planstate,
 				break;
 			}
 
+		case T_ModifyTableState:
+			{
+				ModifyTableState *mts = (ModifyTableState *) planstate;
+
+				v = planstate_walk_array(mts->mt_plans, mts->mt_nplans, walker, context, flags);
+				Assert(!planstate->lefttree && !planstate->righttree);
+				break;
+			}
+
 		case T_SequenceState:
 			{
 				SequenceState *ss = (SequenceState *) planstate;
