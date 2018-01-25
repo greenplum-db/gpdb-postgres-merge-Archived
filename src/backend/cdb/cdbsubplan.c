@@ -306,6 +306,7 @@ addRemoteExecParamsToParamList(PlannedStmt *stmt, ParamListInfo extPrm, ParamExe
 
 		augPrm->params[j].ptype = paramType;
 		augPrm->params[j].isnull = intPrm[i].isnull;
+		augPrm->params[j].pflags = 0;
 		augPrm->params[j].value = intPrm[i].value;
 
 		j++;
