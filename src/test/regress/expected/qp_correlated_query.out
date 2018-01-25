@@ -717,7 +717,7 @@ explain select A.i, B.i, C.j from A, B, C where A.j = (select sum(C.j) from C wh
                                                    Hash Key: a.j
                                                    ->  Seq Scan on a  (cost=0.00..3.05 rows=2 width=8)
                                              ->  Hash  (cost=17.32..17.32 rows=2 width=12)
-                                                   ->  Subquery Scan "Expr_SUBQUERY"  (cost=17.21..17.32 rows=2 width=12)
+                                                   ->  Subquery on Scan "Expr_SUBQUERY"  (cost=17.21..17.32 rows=2 width=12)
                                                          ->  HashAggregate  (cost=17.21..17.28 rows=2 width=12)
                                                                Filter: pg_catalog.sum((sum(qp_correlated_query.c.j))) = qp_correlated_query.c.j
                                                                Group By: qp_correlated_query.c.j

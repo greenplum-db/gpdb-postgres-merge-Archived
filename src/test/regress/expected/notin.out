@@ -403,7 +403,7 @@ explain select x,y from l1 where (x,y) not in
                ->  Seq Scan on l1  (cost=0.00..3.10 rows=4 width=8)
                ->  Materialize  (cost=3.44..3.53 rows=3 width=12)
                      ->  Broadcast Motion 3:3  (slice2; segments: 3)  (cost=3.25..3.43 rows=3 width=12)
-                           ->  Subquery Scan "NotIn_SUBQUERY"  (cost=3.25..3.31 rows=1 width=12)
+                           ->  Subquery Scan on "NotIn_SUBQUERY"  (cost=3.25..3.31 rows=1 width=12)
                                  ->  HashAggregate  (cost=3.25..3.28 rows=1 width=16)
                                        Group By: notin.l1.y
                                        ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=3.14..3.20 rows=1 width=12)
@@ -541,7 +541,7 @@ explain select c1 from t1 where c1 not in
          ->  Seq Scan on t1  (cost=0.00..3.10 rows=4 width=4)
          ->  Hash  (cost=2.21..2.21 rows=2 width=8)
                ->  Broadcast Motion 3:3  (slice1; segments: 3)  (cost=2.09..2.21 rows=2 width=8)
-                     ->  Subquery Scan "NotIn_SUBQUERY"  (cost=2.09..2.13 rows=1 width=8)
+                     ->  Subquery Scan on "NotIn_SUBQUERY"  (cost=2.09..2.13 rows=1 width=8)
                            ->  HashAggregate  (cost=2.09..2.11 rows=1 width=16)
                                  Group By: t2.c2
                                  ->  Seq Scan on t2  (cost=0.00..2.08 rows=1 width=4)
@@ -767,7 +767,7 @@ explain select c1 from t1 where c1 not in (select c2 from t2 order by c2 limit 3
                ->  Seq Scan on t1  (cost=0.00..3.10 rows=4 width=4)
                ->  Hash  (cost=2.33..2.33 rows=3 width=4)
                      ->  Broadcast Motion 1:3  (slice2; segments: 1)  (cost=2.11..2.33 rows=9 width=4)
-                           ->  Subquery Scan "NotIn_SUBQUERY"  (cost=2.11..2.21 rows=3 width=4)
+                           ->  Subquery Scan on "NotIn_SUBQUERY"  (cost=2.11..2.21 rows=3 width=4)
                                  ->  Limit  (cost=2.11..2.18 rows=3 width=4)
                                        ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=2.11..2.18 rows=3 width=4)
                                              Merge Key: t2.c2

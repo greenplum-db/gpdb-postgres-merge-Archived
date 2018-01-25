@@ -84,7 +84,7 @@ explain analyze select count(*) from (select i, t, d, count(*) from bigt group b
          Rows out:  3 rows at destination with 855 ms to first row, 926 ms to end, start offset by 0.423 ms.
          ->  Aggregate  (cost=24194.46..24194.47 rows=1 width=8)
                Rows out:  Avg 1.0 rows x 3 workers.  Max 1 rows (seg0) with 866 ms to end, start offset by 1.300 ms.
-               ->  Subquery Scan tmp  (cost=21639.28..23938.94 rows=34069 width=0)
+               ->  Subquery Scan on tmp  (cost=21639.28..23938.94 rows=34069 width=0)
                      Rows out:  Avg 44444.3 rows x 3 workers.  Max 44568 rows (seg0) with 748 ms to first row, 847 ms to end, start offset by 1.301 ms.
                      ->  HashAggregate  (cost=21639.28..22916.87 rows=34069 width=48)
                            Group By: bigt.i, bigt.t, bigt.d
@@ -1455,7 +1455,7 @@ where i < (select count(*) from smallt where smallt.i = smallt2.i);
          Join Filter: smallt2.i < "Expr_SUBQUERY".csq_c1
          ->  Seq Scan on smallt2  (cost=0.00..2.50 rows=17 width=15)
          ->  Hash  (cost=5.02..5.02 rows=4 width=12)
-               ->  Subquery Scan "Expr_SUBQUERY"  (cost=4.75..5.02 rows=4 width=12)
+               ->  Subquery Scan on "Expr_SUBQUERY"  (cost=4.75..5.02 rows=4 width=12)
                      ->  HashAggregate  (cost=4.75..4.92 rows=4 width=12)
                            Filter: smallt.i < count(*)
                            Group By: smallt.i

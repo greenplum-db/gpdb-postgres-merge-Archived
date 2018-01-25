@@ -678,7 +678,7 @@ explain select * from csq_pullup t0 where 1= (select count(*) from csq_pullup t1
          Hash Cond: t0.t = "Expr_SUBQUERY".csq_c0
          ->  Seq Scan on csq_pullup t0  (cost=0.00..1.01 rows=1 width=19)
          ->  Hash  (cost=1.04..1.04 rows=1 width=32)
-               ->  Subquery Scan "Expr_SUBQUERY"  (cost=1.02..1.04 rows=1 width=32)
+               ->  Subquery Scan on "Expr_SUBQUERY"  (cost=1.02..1.04 rows=1 width=32)
                      ->  HashAggregate  (cost=1.02..1.03 rows=1 width=40)
                            Filter: count(*) = 1
                            Group By: t1.t
@@ -706,7 +706,7 @@ explain select * from csq_pullup t0 where 1= (select count(*) from csq_pullup t1
          Hash Cond: t0.t = "Expr_SUBQUERY".csq_c0
          ->  Seq Scan on csq_pullup t0  (cost=0.00..1.01 rows=1 width=19)
          ->  Hash  (cost=1.08..1.08 rows=1 width=32)
-               ->  Subquery Scan "Expr_SUBQUERY"  (cost=1.05..1.08 rows=1 width=32)
+               ->  Subquery Scan on "Expr_SUBQUERY"  (cost=1.05..1.08 rows=1 width=32)
                      ->  HashAggregate  (cost=1.05..1.07 rows=1 width=40)
                            Filter: count(partial_aggregation.unnamed_attr_2) = 1
                            Group By: "?column1?"
@@ -740,7 +740,7 @@ explain select * from csq_pullup t0 where 1= (select count(*) from csq_pullup t1
                Hash Key: t0.n
                ->  Seq Scan on csq_pullup t0  (cost=0.00..1.01 rows=1 width=19)
          ->  Hash  (cost=1.08..1.08 rows=1 width=32)
-               ->  Subquery Scan "Expr_SUBQUERY"  (cost=1.05..1.08 rows=1 width=32)
+               ->  Subquery Scan on "Expr_SUBQUERY"  (cost=1.05..1.08 rows=1 width=32)
                      ->  HashAggregate  (cost=1.05..1.07 rows=1 width=40)
                            Filter: count(partial_aggregation.unnamed_attr_2) = 1
                            Group By: t1.n
@@ -774,7 +774,7 @@ explain select * from csq_pullup t0 where 1= (select count(*) from csq_pullup t1
                Hash Key: t0.n + 1::numeric
                ->  Seq Scan on csq_pullup t0  (cost=0.00..1.01 rows=1 width=19)
          ->  Hash  (cost=1.09..1.09 rows=1 width=32)
-               ->  Subquery Scan "Expr_SUBQUERY"  (cost=1.06..1.09 rows=1 width=32)
+               ->  Subquery Scan on "Expr_SUBQUERY"  (cost=1.06..1.09 rows=1 width=32)
                      ->  HashAggregate  (cost=1.06..1.08 rows=1 width=40)
                            Filter: count(partial_aggregation.unnamed_attr_2) = 1
                            Group By: "?column1?"
@@ -808,7 +808,7 @@ explain select * from csq_pullup t0 where 1= (select count(*) from csq_pullup t1
                Hash Key: t0.n + 1::numeric
                ->  Seq Scan on csq_pullup t0  (cost=0.00..1.01 rows=1 width=19)
          ->  Hash  (cost=1.09..1.09 rows=1 width=32)
-               ->  Subquery Scan "Expr_SUBQUERY"  (cost=1.06..1.09 rows=1 width=32)
+               ->  Subquery Scan on "Expr_SUBQUERY"  (cost=1.06..1.09 rows=1 width=32)
                      ->  HashAggregate  (cost=1.06..1.08 rows=1 width=40)
                            Filter: count(partial_aggregation.unnamed_attr_2) = 1
                            Group By: "?column1?"

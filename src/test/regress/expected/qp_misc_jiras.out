@@ -2394,12 +2394,12 @@ explain select i as a, i as b from qp_misc_jiras.tbl7553_test group by grouping 
  Gather Motion 3:1  (slice2; segments: 3)  (cost=116.12..139.79 rows=2367 width=20)
    ->  HashAggregate  (cost=116.12..139.79 rows=789 width=20)
          Group By: "rollup".a, "rollup".a, "rollup"."grouping", "rollup"."group_id"
-         ->  Subquery Scan "rollup"  (cost=51.58..109.67 rows=215 width=20)
+         ->  Subquery Scan on "rollup"  (cost=51.58..109.67 rows=215 width=20)
                ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=51.58..103.22 rows=215 width=20)
                      Hash Key: "rollup".a, "rollup".a, "grouping", group_id()
                      ->  GroupAggregate  (cost=51.58..90.32 rows=215 width=20)
                            Group By: "rollup".a, "rollup"."grouping", "rollup"."group_id"
-                           ->  Subquery Scan "rollup"  (cost=51.58..75.26 rows=287 width=20)
+                           ->  Subquery Scan on "rollup"  (cost=51.58..75.26 rows=287 width=20)
                                  ->  GroupAggregate  (cost=51.58..66.65 rows=287 width=20)
                                        Group By: tbl7553_test.i, tbl7553_test.i
                                        ->  Sort  (cost=51.58..53.74 rows=287 width=4)
@@ -2422,12 +2422,12 @@ explain select j as a, j as b from qp_misc_jiras.tbl7553_test group by grouping 
  Gather Motion 3:1  (slice2; segments: 3)  (cost=116.12..139.79 rows=2367 width=8)
    ->  HashAggregate  (cost=116.12..139.79 rows=789 width=8)
          Group By: partial_aggregation.a, partial_aggregation.a, partial_aggregation."grouping", partial_aggregation."group_id"
-         ->  Subquery Scan partial_aggregation  (cost=51.58..109.67 rows=215 width=20)
+         ->  Subquery Scan on partial_aggregation  (cost=51.58..109.67 rows=215 width=20)
                ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=51.58..103.22 rows=215 width=20)
                      Hash Key: "rollup".a, "rollup".a
                      ->  GroupAggregate  (cost=51.58..90.32 rows=215 width=20)
                            Group By: "rollup".a, "rollup"."grouping", "rollup"."group_id"
-                           ->  Subquery Scan "rollup"  (cost=51.58..75.26 rows=287 width=20)
+                           ->  Subquery Scan on "rollup"  (cost=51.58..75.26 rows=287 width=20)
                                  ->  GroupAggregate  (cost=51.58..66.65 rows=287 width=20)
                                        Group By: tbl7553_test.j, tbl7553_test.j
                                        ->  Sort  (cost=51.58..53.74 rows=287 width=4)
