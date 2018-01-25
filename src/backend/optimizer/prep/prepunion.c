@@ -1882,12 +1882,14 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfoContext *ctx)
 			PlannerInfo *root = ctx->root;
 			Plan *newsubplan = (Plan *) copyObject(planner_subplan_get_plan(root, sp));
 			List *newrtable = (List *) copyObject(planner_subplan_get_rtable(root, sp));
+			List *newrowmarks = (List *) copyObject(planner_subplan_get_rowmarks(root, sp));
 
 			/*
 			 * Add the subplan and its rtable to the global lists.
 			 */
 			root->glob->subplans = lappend(root->glob->subplans, newsubplan);
 			root->glob->subrtables = lappend(root->glob->subrtables, newrtable);
+			root->glob->subrowmarks = lappend(root->glob->subrowmarks, newrowmarks);
 
 			/*
 			 * expression_tree_mutator made a copy of the SubPlan already, so

@@ -343,6 +343,14 @@ static inline struct List *planner_subplan_get_rtable(struct PlannerInfo *root, 
 	return (List *) list_nth(root->glob->subrtables, subplan->plan_id - 1);
 }
 
+/**
+ * Fetch the rowmarks list for a subplan
+ */
+static inline struct List *planner_subplan_get_rowmarks(struct PlannerInfo *root, SubPlan *subplan)
+{
+	return (List *) list_nth(root->glob->subrowmarks, subplan->plan_id - 1);
+}
+
 /*
  * Rewrite the Plan associated with a SubPlan node during planning.
  */
