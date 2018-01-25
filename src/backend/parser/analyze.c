@@ -107,10 +107,11 @@ static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt);
 static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 						  bool isTopLevel, List **colInfo);
 static Node *transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
-												setop_types_ctx *setop_types);
-static void coerceSetOpTypes(ParseState *pstate, Node *sop, bool isTopLevel,
+												bool isTopLevel, setop_types_ctx *setop_types);
+static void coerceSetOpTypes(ParseState *pstate, Node *sop,
 							 List *coltypes, List *coltypmods,
 							 List **colInfo);
+static void select_setop_types(ParseState *pstate, setop_types_ctx *ctx, SetOperation op, List **selected_types, List **selected_typmods);
 static void determineRecursiveColTypes(ParseState *pstate,
 									   Node *larg, List *lcolinfo);
 static void applyColumnNames(List *dst, List *src);
@@ -2137,14 +2138,13 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 	Node	   *top;
 	List	   *selected_types;
 	List	   *selected_typmods;
-	int			i;
 
 	/*
 	 * Transform all the subtrees.
 	 */
 	ctx.ncols = -1;
 	ctx.leafinfos = NULL;
-	top = transformSetOperationTree_internal(pstate, stmt, &ctx);
+	top = transformSetOperationTree_internal(pstate, stmt, isTopLevel, &ctx);
 	Assert(ctx.ncols >= 0);
 
 	/*
@@ -2159,11 +2159,23 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 	 * There are also some hacks to more leniently coerce between types, to
 	 * make some cases not error out.
 	 */
-	selected_types = NIL;
-	selected_typmods = NIL;
-	for (i = 0; i < ctx.ncols; i++)
+	select_setop_types(pstate, &ctx, stmt->op, &selected_types, &selected_typmods);
+
+	coerceSetOpTypes(pstate, top, selected_types, selected_typmods, colInfo);
+
+	return top;
+}
+
+static void
+select_setop_types(ParseState *pstate, setop_types_ctx *ctx, SetOperation op, List **selected_types, List **selected_typmods)
+{
+	int			i;
+
+	*selected_types = NIL;
+	*selected_typmods = NIL;
+	for (i = 0; i < ctx->ncols; i++)
 	{
-		List	   *typinfos = ctx.leafinfos[i];
+		List	   *typinfos = ctx->leafinfos[i];
 		ListCell   *lci2;
 		Oid			ptype;
 		int32		ptypmod;
@@ -2172,8 +2184,8 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 		bool		allsame, hasnontext;
 		char	   *context;
 
-		context = (stmt->op == SETOP_UNION ? "UNION" :
-				   stmt->op == SETOP_INTERSECT ? "INTERSECT" :
+		context = (op == SETOP_UNION ? "UNION" :
+				   op == SETOP_INTERSECT ? "INTERSECT" :
 				   "EXCEPT");
 		allsame = true;
 		hasnontext = false;
@@ -2260,18 +2272,17 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 			}
 		}
 
-		selected_types = lappend_oid(selected_types, restype);
-		selected_typmods = lappend_int(selected_typmods, restypmod);
+		*selected_types = lappend_oid(*selected_types, restype);
+		*selected_typmods = lappend_int(*selected_typmods, restypmod);
 	}
-
-	coerceSetOpTypes(pstate, top, true, selected_types, selected_typmods, colInfo);
-
-	return top;
 }
+
+
+
 
 static Node *
 transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
-								   setop_types_ctx *setop_types)
+								   bool isTopLevel, setop_types_ctx *setop_types)
 {
 	bool		isLeaf;
 
@@ -2439,9 +2450,47 @@ transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 		 * Recursively transform the left child node.
 		 */
 		op->larg = transformSetOperationTree_internal(pstate, stmt->larg,
-													  setop_types);
+													  false, setop_types);
+
+		/*
+		 * If we are processing a recursive union query, now is the time
+		 * to examine the non-recursive term's output columns and mark the
+		 * containing CTE as having those result columns.  We should do this
+		 * only at the topmost setop of the CTE, of course.
+		 *
+		 * In PostgreSQL, transformSetOperationTree() runs as a single pass,
+		 * and we coerce the column types as we go. In GDPB, it's a two-pass
+		 * process. This function is part of the first pass, where we just
+		 * collect datatype information, and in the second pass we coerce
+		 * the targetlist of each branch of the setop tree to have compatible
+		 * types. Unfortunately, WITH RECURSIVE puts a fly in the ointment.
+		 * In order to make the columns of the WITH RECURSIVE itself visible
+		 * to the second branch of the UNION, we must fully process the first
+		 * branch before the second branch. So if this is WITH RECURSIVE,
+		 * proceed with the type coercion after processing the first branch.
+		 * We will do another coercion at the top, after processing the second
+		 * branch.
+		 */
+		if (isTopLevel &&
+			pstate->p_parent_cte &&
+			pstate->p_parent_cte->cterecursive)
+		{
+			List *lcolinfo;
+			List *selected_types;
+			List *selected_typmods;
+
+			select_setop_types(pstate, setop_types, stmt->op, &selected_types, &selected_typmods);
+
+			coerceSetOpTypes(pstate, op->larg, selected_types, selected_typmods, &lcolinfo);
+
+			determineRecursiveColTypes(pstate, op->larg, lcolinfo);
+		}
+
+		/*
+		 * Recursively transform the right child node.
+		 */
 		op->rarg = transformSetOperationTree_internal(pstate, stmt->rarg,
-													  setop_types);
+													  false, setop_types);
 
 		/*
 		 * In PostgreSQL, we select the common type for each column here.
@@ -2458,7 +2507,6 @@ transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
  */
 static void
 coerceSetOpTypes(ParseState *pstate, Node *sop,
-				 bool isTopLevel,
 				 List *preselected_coltypes, List *preselected_coltypmods,
 				 List **colInfo)
 {
@@ -2500,22 +2548,11 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 				   "EXCEPT");
 
 		/* Recurse to determine the children's types first */
-		coerceSetOpTypes(pstate, op->larg, false,
+		coerceSetOpTypes(pstate, op->larg,
 						 preselected_coltypes, preselected_coltypmods,
 						 &lcolinfo);
 
-		/*
-		 * If we are processing a recursive union query, now is the time
-		 * to examine the non-recursive term's output columns and mark the
-		 * containing CTE as having those result columns.  We should do this
-		 * only at the topmost setop of the CTE, of course.
-		 */
-		if (isTopLevel &&
-			pstate->p_parent_cte &&
-			pstate->p_parent_cte->cterecursive)
-			determineRecursiveColTypes(pstate, op->larg, lcolinfo);
-
-		coerceSetOpTypes(pstate, op->rarg, false,
+		coerceSetOpTypes(pstate, op->rarg,
 						 preselected_coltypes, preselected_coltypmods,
 						 &rcolinfo);
 
