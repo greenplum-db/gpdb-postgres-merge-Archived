@@ -266,6 +266,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 %type <list>	OptRoleList AlterOptRoleList
 %type <defelt>	CreateOptRoleElem AlterOptRoleElem
+%type <defelt>	AlterOnlyOptRoleElem
 
 %type <str>		opt_type
 %type <str>		foreign_server_version opt_foreign_server_version
@@ -1460,8 +1461,19 @@ OptRoleList:
 		;
 
 AlterOptRoleList:
-			AlterOptRoleList AlterOptRoleElem		{ $$ = lappend($1, $2); }
+			AlterOptRoleList AlterOnlyOptRoleElem	{ $$ = lappend($1, $2); }
 			| /* EMPTY */							{ $$ = NIL; }
+		;
+
+/*
+ * GPDB: Options that are allowed in ALTER ROLE, but *not* CREATE ROLE.
+ * AlterOptRoleElem is for elements that are allowed in either.
+ *
+ * At the moment this applies only to ALTER ROLE ... DROP DENY.
+ */
+AlterOnlyOptRoleElem:
+			AlterOptRoleElem			{ $$ = $1; }
+			| DROP DENY FOR deny_point	{ $$ = makeDefElem("drop_deny", $4); }
 		;
 
 AlterOptRoleElem:
@@ -1554,6 +1566,10 @@ AlterOptRoleElem:
 				{
 					$$ = makeDefElem("rolemembers", (Node *)$2);
 				}
+			| deny_login_role
+				{
+					$$ = makeDefElem("deny", (Node *)$1);
+				}
 		;
 
 CreateOptRoleElem:
@@ -1587,10 +1603,6 @@ CreateOptRoleElem:
 				{
 					$$ = makeDefElem("exttabnoauth", (Node *)$2);
 				}			
-			| deny_login_role
-				{
-					$$ = makeDefElem("deny", (Node *)$1);
-				}
 		;
 
 deny_login_role: DENY deny_interval { $$ = (Node *)$2; }
