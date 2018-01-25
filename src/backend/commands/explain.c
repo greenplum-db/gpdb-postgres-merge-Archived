@@ -1014,7 +1014,7 @@ ExplainNode(Plan *plan, PlanState *planstate,
 			pname = sname = "WindowAgg";
 			break;
 		case T_TableFunctionScan:
-			pname = "Table Function Scan";
+			pname = sname = "Table Function Scan";
 			break;
 		case T_Unique:
 			pname = sname = "Unique";
@@ -2234,7 +2234,6 @@ ExplainScanTarget(Scan *plan, ExplainState *es)
 			{
 				RangeTblEntry	*rte;
 				FuncExpr		*funcexpr;
-				char			*proname;
 
 				/* Get the range table, it should be a TableFunction */
 				rte = rt_fetch(((Scan *) plan)->scanrelid, es->rtable);
@@ -2248,16 +2247,14 @@ ExplainScanTarget(Scan *plan, ExplainState *es)
 				 */
 				Insist(rte->funcexpr && IsA(rte->funcexpr, FuncExpr));
 				funcexpr = (FuncExpr *) rte->funcexpr;
-				proname	 = get_func_name(funcexpr->funcid);
+				objectname = get_func_name(funcexpr->funcid);
 
-				/* Build the output description */
-				appendStringInfo(es->str, " on %s", quote_identifier(proname));
-				if (strcmp(rte->eref->aliasname, proname) != 0)
-					appendStringInfo(es->str, " %s",
-									 quote_identifier(rte->eref->aliasname));
+				if (es->verbose)
+					namespace =
+						get_namespace_name(get_func_namespace(funcexpr->funcid));
 
 				/* might be nice to add order by and scatter by info */
-
+				objecttag = "Function Name";
 			}
 			break;
 		case T_ValuesScan:
