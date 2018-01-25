@@ -351,15 +351,6 @@ DATA(insert OID = 75 (	pg_attribute	PGNSP PGUID -1 f c C f t \054 1249 0 0 recor
 DATA(insert OID = 81 (	pg_proc			PGNSP PGUID -1 f c C f t \054 1255 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 83 (	pg_class		PGNSP PGUID -1 f c C f t \054 1259 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
 
-DATA(insert OID = 2842 (	pg_authid	   PGNSP PGUID -1 f c C f t \054 1260 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
-#define PG_AUTHID_RELTYPE_OID 2842
-
-DATA(insert OID = 2843 (	pg_auth_members	   PGNSP PGUID -1 f c C f t \054 1261 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
-#define PG_AUTH_MEMBERS_RELTYPE_OID 2843
-
-DATA(insert OID = 6996 (	pg_database	   PGNSP PGUID -1 f c C f t \054 1262 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
-#define PG_DATABASE_RELTYPE_OID 6996
-
 /* OIDS 100 - 199 */
 DATA(insert OID = 142 ( xml		   PGNSP PGUID -1 f b U f t \054 0 0 143 xml_in xml_out xml_recv xml_send - - - i x f 0 -1 0 _null_ _null_ ));
 DESCR("XML content");

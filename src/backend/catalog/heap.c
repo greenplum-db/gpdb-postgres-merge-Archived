@@ -1270,42 +1270,7 @@ heap_create_with_catalog(const char *relname,
 	bool		appendOnlyRel;
 	StdRdOptions *stdRdOptions;
 	int			safefswritesize = gp_safefswritesize;
-	Oid			existing_rowtype_oid = InvalidOid;
 	char	   *relarrayname = NULL;
-
-	/*
-	 * Don't create the row type if the bootstrapper tells us it already
-	 * knows what it is.
-	 */
-	if (IsBootstrapProcessingMode())
-	{
-		/*
-		 * Some relations need to have a fixed relation type
-		 * OID, because it is referenced in code.
-		 *
-		 * GPDB_90_MERGE_FIXME: In PostgreSQL 9.0, there's a
-		 * new BKI directive, BKI_ROWTYPE_OID(<oid>), for
-		 * doing the same. Replace this hack with that once
-		 * we merge with 9.0.
-		 */
-		switch (relid)
-		{
-			case DatabaseRelationId:
-				existing_rowtype_oid = PG_DATABASE_RELTYPE_OID;
-				break;
-
-			case AuthIdRelationId:
-				existing_rowtype_oid = PG_AUTHID_RELTYPE_OID;
-				break;
-
-			case AuthMemRelationId:
-				existing_rowtype_oid = PG_AUTH_MEMBERS_RELTYPE_OID;
-				break;
-
-			default:
-				break;
-		}
-	}
 
 	pg_class_desc = heap_open(RelationRelationId, RowExclusiveLock);
 
@@ -1381,7 +1346,7 @@ heap_create_with_catalog(const char *relname,
 								  CStringGetDatum(relname),
 								  ObjectIdGetDatum(relnamespace),
 								  0, 0);
-	if (OidIsValid(old_type_oid) && !OidIsValid(existing_rowtype_oid))
+	if (OidIsValid(old_type_oid))
 	{
 		if (!moveArrayTypeName(old_type_oid, relname, relnamespace))
 			ereport(ERROR,
@@ -1523,18 +1488,13 @@ heap_create_with_catalog(const char *relname,
 	 * creating the same type name in parallel but hadn't committed yet when
 	 * we checked for a duplicate name above.
 	 */
-	if (existing_rowtype_oid != InvalidOid)
-		new_type_oid = existing_rowtype_oid;
-	else
-	{
-		new_type_oid = AddNewRelationType(relname,
-										  relnamespace,
-										  relid,
-										  relkind,
-										  ownerid,
-										  reltypeid,
-										  new_array_oid);
-	}
+	new_type_oid = AddNewRelationType(relname,
+									  relnamespace,
+									  relid,
+									  relkind,
+									  ownerid,
+									  reltypeid,
+									  new_array_oid);
 
 	/*
 	 * Now make the array type if wanted.

@@ -467,9 +467,7 @@ IsSharedRelation(Oid relationId)
 	}
 
 	/* These are their toast tables and toast indexes (see toasting.h) */
-	if (relationId == PgAuthidToastTable ||
-		relationId == PgAuthidToastIndex ||
-		relationId == PgDatabaseToastTable ||
+	if (relationId == PgDatabaseToastTable ||
 		relationId == PgDatabaseToastIndex ||
 		relationId == PgShdescriptionToastTable ||
 		relationId == PgShdescriptionToastIndex ||

@@ -2874,11 +2874,11 @@ RelationCacheInitializePhase2(void)
 	 */
 	if (!load_relcache_init_file(true))
 	{
-		formrdesc("pg_database", PG_DATABASE_RELTYPE_OID, true,
+		formrdesc("pg_database", DatabaseRelation_Rowtype_Id, true,
 				  true, Natts_pg_database, Desc_pg_database);
-		formrdesc("pg_authid", PG_AUTHID_RELTYPE_OID, true,
+		formrdesc("pg_authid", AuthIdRelation_Rowtype_Id, true,
 				  true, Natts_pg_authid, Desc_pg_authid);
-		formrdesc("pg_auth_members", PG_AUTH_MEMBERS_RELTYPE_OID, true,
+		formrdesc("pg_auth_members", AuthMemRelation_Rowtype_Id, true,
 				  false, Natts_pg_auth_members, Desc_pg_auth_members);
 
 #define NUM_CRITICAL_SHARED_RELS	3	/* fix if you change list above */

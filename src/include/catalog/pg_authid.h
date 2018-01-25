@@ -42,8 +42,9 @@
  * ----------------
  */
 #define AuthIdRelationId	1260
+#define AuthIdRelation_Rowtype_Id	2842
 
-CATALOG(pg_authid,1260) BKI_SHARED_RELATION
+CATALOG(pg_authid,1260) BKI_SHARED_RELATION BKI_ROWTYPE_OID(2842)
 {
 	NameData	rolname;		/* name of role */
 	bool		rolsuper;		/* read this field via superuser() only! */
