@@ -1827,33 +1827,33 @@ PL/pgSQL function "tg_backlink_a" line 6 at assignment
 insert into PHone values ('PH.hc001', 'Hicom standard', 'WS.001.1a');
 ERROR:  function cannot execute on a QE slice because it accesses relation "public.wslot"  (seg2 127.0.0.1:40002 pid=1762)
 DETAIL:  
-SQL statement "select * from WSlot where slotname =  $1 "
+SQL statement "select          * from WSlot where slotname = myname"
 PL/pgSQL function "tg_slotlink_set" line 37 at SQL statement
-SQL statement "SELECT  tg_slotlink_set( $1 ,  $2 )"
+SQL statement "SELECT tg_slotlink_set(new.slotlink, new.slotname)"
 PL/pgSQL function "tg_slotlink_a" line 6 at assignment
 update PSlot set slotlink = 'PS.base.ta1' where slotname = 'PS.base.a1';
 insert into PHone values ('PH.hc002', 'Hicom standard', 'WS.002.1a');
 ERROR:  function cannot execute on a QE slice because it accesses relation "public.wslot"  (seg2 127.0.0.1:40002 pid=1762)
 DETAIL:  
-SQL statement "select * from WSlot where slotname =  $1 "
+SQL statement "select          * from WSlot where slotname = myname"
 PL/pgSQL function "tg_slotlink_set" line 37 at SQL statement
-SQL statement "SELECT  tg_slotlink_set( $1 ,  $2 )"
+SQL statement "SELECT tg_slotlink_set(new.slotlink, new.slotname)"
 PL/pgSQL function "tg_slotlink_a" line 6 at assignment
 update PSlot set slotlink = 'PS.base.ta5' where slotname = 'PS.base.b1';
 insert into PHone values ('PH.hc003', 'Hicom standard', 'WS.002.2a');
 ERROR:  function cannot execute on a QE slice because it accesses relation "public.wslot"  (seg0 127.0.0.1:40000 pid=1760)
 DETAIL:  
-SQL statement "select * from WSlot where slotname =  $1 "
+SQL statement "select          * from WSlot where slotname = myname"
 PL/pgSQL function "tg_slotlink_set" line 37 at SQL statement
-SQL statement "SELECT  tg_slotlink_set( $1 ,  $2 )"
+SQL statement "SELECT tg_slotlink_set(new.slotlink, new.slotname)"
 PL/pgSQL function "tg_slotlink_a" line 6 at assignment
 update PSlot set slotlink = 'PS.base.tb2' where slotname = 'PS.base.b3';
 insert into PHone values ('PH.fax001', 'Canon fax', 'WS.001.2a');
 ERROR:  function cannot execute on a QE slice because it accesses relation "public.wslot"  (seg0 127.0.0.1:40000 pid=1760)
 DETAIL:  
-SQL statement "select * from WSlot where slotname =  $1 "
+SQL statement "select          * from WSlot where slotname = myname"
 PL/pgSQL function "tg_slotlink_set" line 37 at SQL statement
-SQL statement "SELECT  tg_slotlink_set( $1 ,  $2 )"
+SQL statement "SELECT tg_slotlink_set(new.slotlink, new.slotname)"
 PL/pgSQL function "tg_slotlink_a" line 6 at assignment
 update PSlot set slotlink = 'PS.base.ta2' where slotname = 'PS.base.a3';
 --
@@ -1863,15 +1863,16 @@ update PSlot set slotlink = 'PS.base.ta2' where slotname = 'PS.base.a3';
 insert into Hub values ('base.hub1', 'Patchfield PF0_1 hub', 16);
 ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement  (seg1 127.0.0.1:40001 pid=1761)
 DETAIL:  
-SQL statement "insert into HSlot (slotname, hubname, slotno, slotlink) values ('HS.dummy',  $1 ,  $2 , '')"
+SQL statement "insert into HSlot (slotname, hubname, slotno, slotlink)
+		values ('HS.dummy', hname, i, '')"
 PL/pgSQL function "tg_hub_adjustslots" line 10 at SQL statement
-SQL statement "SELECT  tg_hub_adjustslots( $1 , 0,  $2 )"
+SQL statement "SELECT tg_hub_adjustslots(new.name, 0, new.nslots)"
 PL/pgSQL function "tg_hub_a" line 6 at assignment
 insert into System values ('orion', 'PC');
 insert into IFace values ('IF', 'orion', 'eth0', 'WS.002.1b');
 ERROR:  function cannot execute on a QE slice because it accesses relation "public.system"  (seg2 127.0.0.1:40002 pid=1762)
 DETAIL:  
-SQL statement "select * from system where name =  $1 "
+SQL statement "select             * from system where name = new.sysname"
 PL/pgSQL function "tg_iface_biu" line 5 at SQL statement
 update PSlot set slotlink = 'HS.base.hub1.1' where slotname = 'PS.base.b2';
 --
@@ -1891,41 +1892,32 @@ select * from PField_v1 where pfname = 'PF0_2' order by slotname;
 -- Finally we want errors
 --
 insert into PField values ('PF1_1', 'should fail due to unique index');
-<<<<<<< HEAD
-ERROR:  duplicate key value violates unique constraint "pfield_name"  (seg2 127.0.0.1:40002 pid=1762)
-=======
 ERROR:  duplicate key value violates unique constraint "pfield_name"
->>>>>>> 78a09145e0
 DETAIL:  Key (name)=(PF1_1) already exists.
 update PSlot set backlink = 'WS.not.there' where slotname = 'PS.base.a1';
 update PSlot set backlink = 'XX.illegal' where slotname = 'PS.base.a1';
 update PSlot set slotlink = 'PS.not.there' where slotname = 'PS.base.a1';
 update PSlot set slotlink = 'XX.illegal' where slotname = 'PS.base.a1';
 insert into HSlot values ('HS', 'base.hub1', 1, '');
-<<<<<<< HEAD
 ERROR:  function cannot execute on a QE slice because it accesses relation "public.hub"  (seg2 127.0.0.1:40002 pid=1762)
 DETAIL:  
-SQL statement "select * from Hub where name =  $1 "
+SQL statement "select             * from Hub where name = new.hubname"
 PL/pgSQL function "tg_hslot_biu" line 6 at SQL statement
-=======
-ERROR:  duplicate key value violates unique constraint "hslot_name"
-DETAIL:  Key (slotname)=(HS.base.hub1.1      ) already exists.
->>>>>>> 78a09145e0
 insert into HSlot values ('HS', 'base.hub1', 20, '');
 ERROR:  function cannot execute on a QE slice because it accesses relation "public.hub"  (seg2 127.0.0.1:40002 pid=1762)
 DETAIL:  
-SQL statement "select * from Hub where name =  $1 "
+SQL statement "select             * from Hub where name = new.hubname"
 PL/pgSQL function "tg_hslot_biu" line 6 at SQL statement
 delete from HSlot;
 insert into IFace values ('IF', 'notthere', 'eth0', '');
 ERROR:  function cannot execute on a QE slice because it accesses relation "public.system"  (seg2 127.0.0.1:40002 pid=1762)
 DETAIL:  
-SQL statement "select * from system where name =  $1 "
+SQL statement "select             * from system where name = new.sysname"
 PL/pgSQL function "tg_iface_biu" line 5 at SQL statement
 insert into IFace values ('IF', 'orion', 'ethernet_interface_name_too_long', '');
 ERROR:  function cannot execute on a QE slice because it accesses relation "public.system"  (seg2 127.0.0.1:40002 pid=1762)
 DETAIL:  
-SQL statement "select * from system where name =  $1 "
+SQL statement "select             * from system where name = new.sysname"
 PL/pgSQL function "tg_iface_biu" line 5 at SQL statement
 --
 -- The following tests are unrelated to the scenario outlined above;
@@ -4154,7 +4146,7 @@ NOTICE:  t 2
 NOTICE:  f 0
 NOTICE:  t 2
 NOTICE:  f 0
- rttest
+ rttest 
 --------
      10
      20
@@ -4189,13 +4181,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 SELECT * FROM leaker_1(false);
- leaker_1
+ leaker_1 
 ----------
         1
 (1 row)
 
 SELECT * FROM leaker_1(true);
- leaker_1
+ leaker_1 
 ----------
         0
 (1 row)
@@ -4375,11 +4367,7 @@ BEGIN
     LOOP
         RAISE NOTICE '%, %', r.roomno, r.comment;
     END LOOP;
-<<<<<<< HEAD
 END$$;
-=======
-END$$ LANGUAGE plpgsql;
->>>>>>> 78a09145e0
 NOTICE:  001, Entrance
 NOTICE:  002, Office
 NOTICE:  003, Office
@@ -4392,17 +4380,10 @@ NOTICE:  105, Office
 NOTICE:  106, Office
 -- these are to check syntax error reporting
 DO LANGUAGE plpgsql $$begin return 1; end$$;
-<<<<<<< HEAD
-ERROR:  RETURN cannot have a parameter in function returning void at or near "1"
-LINE 1: DO LANGUAGE plpgsql $$begin return 1; end$$;
-                                           ^
-DO $$
-=======
 ERROR:  RETURN cannot have a parameter in function returning void
 LINE 1: DO LANGUAGE plpgsql $$begin return 1; end$$;
                                            ^
-DO LANGUAGE plpgsql $$
->>>>>>> 78a09145e0
+DO $$
 DECLARE r record;
 BEGIN
     FOR r IN SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomno
@@ -4411,10 +4392,9 @@ BEGIN
     END LOOP;
 END$$;
 ERROR:  column "foo" does not exist
-<<<<<<< HEAD
-LINE 1:  SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY room...
-                                         ^
-QUERY:   SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomno
+LINE 1: SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomn...
+                                        ^
+QUERY:  SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomno
 CONTEXT:  PL/pgSQL function "inline_code_block" line 3 at FOR over SELECT rows
 -- Check handling of errors thrown from/into anonymous code blocks.
 do $outer$
@@ -4445,11 +4425,6 @@ NOTICE:  caught division by zero
 NOTICE:  caught division by zero
 NOTICE:  caught division by zero
 NOTICE:  caught division by zero
-=======
-LINE 1: SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomn...
-                                        ^
-QUERY:  SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomno
-CONTEXT:  PL/pgSQL function "inline_code_block" line 3 at FOR over SELECT rows
 -- Check variable scoping -- a var is not available in its own or prior
 -- default expressions.
 create function scope_test() returns int as $$
@@ -4544,4 +4519,3 @@ select unreserved_test();
 (1 row)
 
 drop function unreserved_test();
->>>>>>> 78a09145e0

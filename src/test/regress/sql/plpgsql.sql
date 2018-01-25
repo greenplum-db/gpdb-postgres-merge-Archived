@@ -3224,20 +3224,12 @@ BEGIN
     LOOP
         RAISE NOTICE '%, %', r.roomno, r.comment;
     END LOOP;
-<<<<<<< HEAD
 END$$;
-=======
-END$$ LANGUAGE plpgsql;
->>>>>>> 78a09145e0
 
 -- these are to check syntax error reporting
 DO LANGUAGE plpgsql $$begin return 1; end$$;
 
-<<<<<<< HEAD
 DO $$
-=======
-DO LANGUAGE plpgsql $$
->>>>>>> 78a09145e0
 DECLARE r record;
 BEGIN
     FOR r IN SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomno
@@ -3246,7 +3238,6 @@ BEGIN
     END LOOP;
 END$$;
 
-<<<<<<< HEAD
 -- Check handling of errors thrown from/into anonymous code blocks.
 do $outer$
 begin
@@ -3266,7 +3257,7 @@ begin
   end loop;
 end;
 $outer$;
-=======
+
 -- Check variable scoping -- a var is not available in its own or prior
 -- default expressions.
 
@@ -3343,4 +3334,3 @@ $$ language plpgsql;
 select unreserved_test();
 
 drop function unreserved_test();
->>>>>>> 78a09145e0
