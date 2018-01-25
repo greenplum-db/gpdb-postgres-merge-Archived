@@ -1227,48 +1227,63 @@ exec_mpp_query(const char *query_string,
 	paramLI = NULL;
 	if (serializedParams != NULL && serializedParamslen > 0)
 	{
-		ParamListInfoData   paramhdr;
-		Size                length;
-		const char         *cpos;
-		const char         *epos;
+		int32		numparams;
+		Size		arrlength;
+		const char *cpos;
+		const char *epos;
 
-		/* Peek at header using an aligned workarea. */
-		length = offsetof(ParamListInfoData, params);
-		Insist(length <= serializedParamslen);
-		memcpy(&paramhdr, serializedParams, length);
+		cpos = serializedParams;
+		epos = serializedParams + serializedParamslen;
+		if (epos - cpos < sizeof(int32))
+			elog(ERROR, "could not deserialize query parameters");
+
+		/* First read the number of params */
+		memcpy(&numparams, cpos, sizeof(int32));
+		cpos += sizeof(int32);
+		if (numparams <= 0)
+			elog(ERROR, "could not deserialize query parameters");
 
 		/* Get ParamListInfoData header and ParamExternData array. */
-		length += paramhdr.numParams * sizeof(paramhdr.params[0]);
-		Insist(paramhdr.numParams > 0 &&
-			   length <= serializedParamslen);
-		paramLI = palloc(length);
-		memcpy(paramLI, serializedParams, length);
+		arrlength = numparams * sizeof(ParamExternData);
+		if (epos - cpos < arrlength)
+			elog(ERROR, "could not deserialize query parameters");
+
+		/* Allocate ParamListInfo and initialize header. */
+		paramLI = palloc(offsetof(ParamListInfoData, params) + arrlength);
+		memset(paramLI, 0, offsetof(ParamListInfoData, params));
+		paramLI->numParams = numparams;
+
+		/* Read the ParamExternData array */
+		memcpy(paramLI->params, cpos, arrlength);
+		cpos += arrlength;
 
 		/* Get pass-by-reference data. */
-		cpos = serializedParams + length;
-		epos = serializedParams + serializedParamslen;
 		while (cpos < epos)
 		{
-			ParamExternData    *pxd;
-			int32               iparam;
+			ParamExternData *pxd;
+			int32		iparam;
+			int32		length;
 
-			/* param index */
+			if (epos - cpos < sizeof(iparam))
+				elog(ERROR, "could not deserialize query parameters");
+
+			/* read param index */
 			memcpy(&iparam, cpos, sizeof(iparam));
 			cpos += sizeof(iparam);
-			Insist(cpos <= epos &&
-				   iparam >= 0 &&
-				   iparam < paramhdr.numParams);
+			if (iparam < 0 || iparam >= numparams)
+				elog(ERROR, "could not deserialize query parameters");
 
-			/* length */
+			/* Get length. It was stashed in the 'value' field in the array */
 			pxd = &paramLI->params[iparam];
 			length = DatumGetInt32(pxd->value);
 
-			/* value */
-			Insist((int)length >= 0 &&
-				   length <= epos - cpos);
+			if (length < 0 || length > epos - cpos)
+				elog(ERROR, "could not deserialize query parameters");
+
+			/* Read value */
 			if (length > 0)
 			{
-				char   *v = (char *)palloc(length);
+				char   *v = (char *) palloc(length);
 
 				pxd->value = PointerGetDatum(v);
 				memcpy(v, cpos, length);
