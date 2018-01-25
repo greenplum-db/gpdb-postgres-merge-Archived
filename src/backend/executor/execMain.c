@@ -1777,33 +1777,36 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		 * In most cases parser and/or planner should have noticed this
 		 * already, but they don't cover all cases.
 		 */
-		switch (relation->rd_rel->relkind)
+		if (relation)
 		{
-			case RELKIND_RELATION:
-				/* OK */
-				break;
-			case RELKIND_SEQUENCE:
-				/* Must disallow this because we don't vacuum sequences */
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("cannot lock rows in sequence \"%s\"",
-								RelationGetRelationName(relation))));
-				break;
-			case RELKIND_TOASTVALUE:
-				/* This will be disallowed in 9.1, but for now OK */
-				break;
-			case RELKIND_VIEW:
-				/* Should not get here */
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("cannot lock rows in view \"%s\"",
-								RelationGetRelationName(relation))));
-				break;
-			default:
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("cannot lock rows in relation \"%s\"",
-								RelationGetRelationName(relation))));
+			switch (relation->rd_rel->relkind)
+			{
+				case RELKIND_RELATION:
+					/* OK */
+					break;
+				case RELKIND_SEQUENCE:
+					/* Must disallow this because we don't vacuum sequences */
+					ereport(ERROR,
+							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							 errmsg("cannot lock rows in sequence \"%s\"",
+									RelationGetRelationName(relation))));
+					break;
+				case RELKIND_TOASTVALUE:
+					/* This will be disallowed in 9.1, but for now OK */
+					break;
+				case RELKIND_VIEW:
+					/* Should not get here */
+					ereport(ERROR,
+							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							 errmsg("cannot lock rows in view \"%s\"",
+									RelationGetRelationName(relation))));
+					break;
+				default:
+					ereport(ERROR,
+							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							 errmsg("cannot lock rows in relation \"%s\"",
+									RelationGetRelationName(relation))));
+			}
 		}
 
 		erm = (ExecRowMark *) palloc(sizeof(ExecRowMark));
