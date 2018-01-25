@@ -1409,7 +1409,6 @@ _readFuncExpr(void)
 	READ_DONE();
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 /*
  * _readNamedArgExpr
  */
@@ -1426,6 +1425,7 @@ _readNamedArgExpr(void)
 	READ_DONE();
 }
 
+#ifndef COMPILING_BINARY_FUNCS
 /*
  * _readOpExpr
  */

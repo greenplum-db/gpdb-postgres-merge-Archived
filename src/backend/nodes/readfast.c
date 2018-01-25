@@ -3133,6 +3133,9 @@ readNodeBinary(void)
 			case T_FuncExpr:
 				return_value = _readFuncExpr();
 				break;
+			case T_NamedArgExpr:
+				return_value = _readNamedArgExpr();
+				break;
 			case T_OpExpr:
 				return_value = _readOpExpr();
 				break;
