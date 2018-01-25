@@ -618,49 +618,28 @@ cdbdisp_buildPlanQueryParms(struct QueryDesc *queryDesc,
 
 	if (queryDesc->params != NULL && queryDesc->params->numParams > 0)
 	{
-		ParamListInfoData *pli = queryDesc->params;
+		ParamListInfoData *pli;
 		ParamExternData *pxd;
 		StringInfoData parambuf;
-		int			arrlength;
+		Size		length;
 		int32		iparam;
-		int			arroffset = 0;
-		int			numparams;
-
-		/*
-		 * First, use paramFetch to fetch any "lazy" parameters. (The
-		 * callback function is of no use in the QE.)
-		 */
-		if (pli->paramFetch)
-		{
-			for (iparam = 0; iparam < queryDesc->params->numParams; iparam++)
-			{
-				ParamExternData *prm = &pli->params[iparam];
-
-				if (!OidIsValid(prm->ptype))
-					(*pli->paramFetch) (pli, iparam + 1);
-			}
-		}
 
 		/*
 		 * Allocate buffer for params
 		 */
 		initStringInfo(&parambuf);
 
-		/* Copy the number of params first. */
-		numparams = pli->numParams;
-		appendBinaryStringInfo(&parambuf, &numparams, sizeof(int32));
-
 		/*
-		 * Copy the ParamExternData array
+		 * Copy ParamListInfoData header and ParamExternData array
 		 */
-		arroffset = parambuf.len;
-		arrlength = (char *) &pli->params[pli->numParams] - (char *) &pli->params[0];
-		appendBinaryStringInfo(&parambuf, (char *) &pli->params[0], arrlength);
+		pli = queryDesc->params;
+		length = (char *) &pli->params[pli->numParams] - (char *) pli;
+		appendBinaryStringInfo(&parambuf, pli, length);
 
 		/*
 		 * Copy pass-by-reference param values.
 		 */
-		for (iparam = 0; iparam < numparams; iparam++)
+		for (iparam = 0; iparam < queryDesc->params->numParams; iparam++)
 		{
 			int16		typlen;
 			bool		typbyval;
@@ -668,7 +647,8 @@ cdbdisp_buildPlanQueryParms(struct QueryDesc *queryDesc,
 			/*
 			 * Recompute pli each time in case parambuf.data is repalloc'ed
 			 */
-			pxd = &((ParamExternData *) parambuf.data + arroffset)[iparam];
+			pli = (ParamListInfoData *) parambuf.data;
+			pxd = &pli->params[iparam];
 
 			if (pxd->ptype == InvalidOid)
 				continue;
@@ -688,7 +668,7 @@ cdbdisp_buildPlanQueryParms(struct QueryDesc *queryDesc,
 				}
 				else
 				{
-					int32		length = datumGetSize(pxd->value, typbyval, typlen);
+					length = datumGetSize(pxd->value, typbyval, typlen);
 
 					/*
 					 * We *must* set this before we append. Appending may
