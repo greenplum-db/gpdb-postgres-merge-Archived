@@ -974,6 +974,7 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 	/* VACUUM, without ANALYZE */
 	vacstmt->options &= ~VACOPT_ANALYZE;
 	vacstmt->options |= VACOPT_VACUUM;
+	vacstmt->va_cols = NIL;		/* A plain VACUUM cannot list columns */
 
 	/*
 	 * We compact segment file by segment file.
