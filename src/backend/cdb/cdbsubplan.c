@@ -312,6 +312,16 @@ addRemoteExecParamsToParamList(PlannedStmt *stmt, ParamListInfo extPrm, ParamExe
 		j++;
 	}
 
+	/*
+	 * Set number of params. Note that we don't copy the hook functions from
+	 * the original ParamListInfo, on purpose. The code that set the hooks
+	 * might get confused, if we called the hook with a different ParamListInfo
+	 * struct, with more parameters, than it originally set the hook on.
+	 * (PL/pgSQL has an assertion for the number of params, at least.)
+	 * This function is used just before serializing all the parameters,
+	 * and the caller has already "fetched" any parameters it can, so we don't
+	 * really need the hook anymore, anyway.
+	 */
 	augPrm->numParams = j;
 
 	list_free(context.params);

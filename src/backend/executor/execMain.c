@@ -664,6 +664,26 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 			 */
 			if (queryDesc->plannedstmt->nParamExec > 0)
 			{
+				ParamListInfoData *pli = queryDesc->params;
+
+				/*
+				 * First, use paramFetch to fetch any "lazy" parameters, so that
+				 * they are dispatched along with the queries. The QE nodes cannot
+				 * call the callback function on their own.
+				 */
+				if (pli && pli->paramFetch)
+				{
+					int			iparam;
+
+					for (iparam = 0; iparam < queryDesc->params->numParams; iparam++)
+					{
+						ParamExternData *prm = &pli->params[iparam];
+
+						if (!OidIsValid(prm->ptype))
+							(*pli->paramFetch) (pli, iparam + 1);
+					}
+				}
+
 				preprocess_initplans(queryDesc);
 
 				/*
