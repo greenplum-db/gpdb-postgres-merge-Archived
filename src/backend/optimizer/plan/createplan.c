@@ -5627,7 +5627,7 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node)
 			int			rti = lfirst_int(lcr);
 			Plan	   *subplan = (Plan *) lfirst(lcp);
 			RangeTblEntry *rte = rt_fetch(rti, root->parse->rtable);
-			List	   *hashExpr;
+			List	   *hashExpr = NIL;
 			GpPolicy   *targetPolicy;
 			GpPolicyType targetPolicyType;
 
@@ -5638,19 +5638,15 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node)
 
 			if (targetPolicyType == POLICYTYPE_PARTITIONED)
 			{
-				if (gp_enable_fast_sri)
-				{
-					/*
-					 * GPDB_90_MERGE_FIXME: Insert code here, to optimizer
-					 * single-row-inserts with constants. Similar to the logic we
-					 * used to have in apply_motion().
-					 */
-				}
+				if (gp_enable_fast_sri && IsA(subplan, Result))
+					sri_optimize_for_result(root, subplan, rte, &targetPolicy, &hashExpr);
 
-				hashExpr = getExprListFromTargetList(subplan->targetlist,
-													 targetPolicy->nattrs,
-													 targetPolicy->attrs,
-													 false);
+				if (!hashExpr)
+					hashExpr = getExprListFromTargetList(subplan->targetlist,
+														 targetPolicy->nattrs,
+														 targetPolicy->attrs,
+														 false);
+
 				if (!repartitionPlan(subplan, false, false, hashExpr))
 					ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_YET),
 									errmsg("Cannot parallelize that INSERT yet")));
