@@ -2511,7 +2511,7 @@ get_line_style(const printTableOpt *opt)
 	if (opt->line_style != NULL)
 		return opt->line_style;
 	else
-		return &pg_asciiformat_old;   /* GPDB: Use old-ascii format for regression test compatibility */
+		return &pg_asciiformat;
 }
 
 /*
