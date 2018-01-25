@@ -472,7 +472,6 @@ SELECT has_table_privilege('regressuser3', 'atest4', 'SELECT'); -- false
 SELECT has_table_privilege('regressuser1', 'atest4', 'SELECT WITH GRANT OPTION'); -- true
 
 
-<<<<<<< HEAD
 -- Admin options
 
 SET SESSION AUTHORIZATION regressuser4;
@@ -500,29 +499,6 @@ DROP FUNCTION dogrant_ok();
 REVOKE regressgroup2 FROM regressuser5;
 
 
--- test that dependent privileges are revoked (or not) properly
-\c -
-
-set session role regressuser1;
-create table dep_priv_test (a int);
-grant select on dep_priv_test to regressuser2 with grant option;
-grant select on dep_priv_test to regressuser3 with grant option;
-set session role regressuser2;
-grant select on dep_priv_test to regressuser4 with grant option;
-set session role regressuser3;
-grant select on dep_priv_test to regressuser4 with grant option;
-set session role regressuser4;
-grant select on dep_priv_test to regressuser5;
-\dp dep_priv_test
-set session role regressuser2;
-revoke select on dep_priv_test from regressuser4 cascade;
-\dp dep_priv_test
-set session role regressuser3;
-revoke select on dep_priv_test from regressuser4 cascade;
-\dp dep_priv_test
-set session role regressuser1;
-drop table dep_priv_test;
-=======
 -- has_sequence_privilege tests
 \c -
 
@@ -720,7 +696,30 @@ SELECT has_function_privilege('regressuser1', 'testns.testfunc(int)', 'EXECUTE')
 SET client_min_messages TO 'warning';
 DROP SCHEMA testns CASCADE;
 RESET client_min_messages;
->>>>>>> 78a09145e0
+
+
+-- test that dependent privileges are revoked (or not) properly
+\c -
+
+set session role regressuser1;
+create table dep_priv_test (a int);
+grant select on dep_priv_test to regressuser2 with grant option;
+grant select on dep_priv_test to regressuser3 with grant option;
+set session role regressuser2;
+grant select on dep_priv_test to regressuser4 with grant option;
+set session role regressuser3;
+grant select on dep_priv_test to regressuser4 with grant option;
+set session role regressuser4;
+grant select on dep_priv_test to regressuser5;
+\dp dep_priv_test
+set session role regressuser2;
+revoke select on dep_priv_test from regressuser4 cascade;
+\dp dep_priv_test
+set session role regressuser3;
+revoke select on dep_priv_test from regressuser4 cascade;
+\dp dep_priv_test
+set session role regressuser1;
+drop table dep_priv_test;
 
 
 -- clean up
@@ -763,8 +762,4 @@ DROP USER regressuser2;
 DROP USER regressuser3;
 DROP USER regressuser4;
 DROP USER regressuser5;
-<<<<<<< HEAD
-reset optimizer;
-=======
 DROP USER regressuser6;
->>>>>>> 78a09145e0
