@@ -1109,6 +1109,9 @@ set_subqueryscan_references(PlannerGlobal *glob,
 			ctle->resorigtbl = ptle->resorigtbl;
 			ctle->resorigcol = ptle->resorigcol;
 		}
+
+		/* Honor the flow of the SubqueryScan, by copying it to the subplan. */
+		result->flow = plan->scan.plan.flow;
 	}
 	else
 	{
