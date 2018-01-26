@@ -5619,6 +5619,7 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node)
 	 */
 	ListCell   *lcr,
 			   *lcp;
+	bool		all_subplans_entry = true;
 
 	if (node->operation == CMD_INSERT)
 	{
@@ -5638,6 +5639,8 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node)
 
 			if (targetPolicyType == POLICYTYPE_PARTITIONED)
 			{
+				all_subplans_entry = false;
+
 				if (gp_enable_fast_sri)
 				{
 					/*
@@ -5696,6 +5699,8 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node)
 
 			if (targetPolicyType == POLICYTYPE_PARTITIONED)
 			{
+				all_subplans_entry = false;
+
 				/*
 				 * The planner does not support updating any of the
 				 * partitioning columns.
@@ -5757,8 +5762,19 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node)
 	 * we could mark the ModifyTable with the same distribution key. However,
 	 * currently, because a ModifyTable node can only be at the top of the
 	 * plan, it won't make any difference to the overall plan.
+	 *
+	 * GPDB_90_MERGE_FIXME: I've hacked a basic implementation of the above for
+	 * the case where all the subplans are POLICYTYPE_ENTRY, but it seems like
+	 * there should be a more general way to do this.
 	 */
-	mark_plan_strewn((Plan *) node);
+	if (all_subplans_entry)
+	{
+		mark_plan_entry((Plan *) node);
+	}
+	else
+	{
+		mark_plan_strewn((Plan *) node);
+	}
 }
 
 /*
