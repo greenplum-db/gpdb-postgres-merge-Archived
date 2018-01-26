@@ -2294,10 +2294,19 @@ ExecGetTriggerResultRel(EState *estate, Oid relid)
 bool
 ExecContextForcesOids(PlanState *planstate, bool *hasoids)
 {
-	ResultRelInfo *ri = planstate->state->es_result_relation_info;
+	/*
+	 * In PostgreSQL, we check the "currently active" result relation,
+	 * es_result_relation_info. In GPDB, however, the node that produces
+	 * the tuple can be in a different slice than the ModifyTable node,
+	 * and thanks to "alien elimination" in InitPlan, we might not have
+	 * initialized the ModifyTable node at all in this process. Therefore,
+	 * force OIDs if there are any result relations that need OIDs.
+	 */
+	int			i;
 
-	if (ri != NULL)
+	for (i = 0; i < planstate->state->es_num_result_relations; i++)
 	{
+		ResultRelInfo *ri = &planstate->state->es_result_relations[i];
 		Relation	rel = ri->ri_RelationDesc;
 
 		if (rel != NULL)
