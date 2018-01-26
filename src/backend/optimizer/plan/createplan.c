@@ -5657,25 +5657,24 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node)
 				if (!repartitionPlan(subplan, false, false, hashExpr))
 					ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_YET),
 									errmsg("Cannot parallelize that INSERT yet")));
-				break;
 			}
 			else if (targetPolicyType == POLICYTYPE_ENTRY)
 			{
 				/* Master-only table */
 
 				/* All's well if query result is already on the QD. */
-				if (subplan->flow->flotype == FLOW_SINGLETON &&
-					subplan->flow->segindex < 0)
-					break;
-
-				/*
-				 * Query result needs to be brought back to the QD.
-				 * Ask for motion to a single QE.  Later, apply_motion
-				 * will override that to bring it to the QD instead.
-				 */
-				if (!focusPlan(subplan, false, false))
-					ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_YET),
-									errmsg("Cannot parallelize that INSERT yet")));
+				if (!(subplan->flow->flotype == FLOW_SINGLETON &&
+					  subplan->flow->segindex < 0))
+				{
+					/*
+					 * Query result needs to be brought back to the QD.
+					 * Ask for motion to a single QE.  Later, apply_motion
+					 * will override that to bring it to the QD instead.
+					 */
+					if (!focusPlan(subplan, false, false))
+						ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_YET),
+										errmsg("Cannot parallelize that INSERT yet")));
+				}
 			}
 			else
 				elog(ERROR, "unrecognized policy type %u", targetPolicyType);
@@ -5715,7 +5714,6 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node)
 									errmsg("Cannot parallelize an UPDATE statement that updates the distribution columns")));
 				}
 				request_explicit_motion(subplan, rti, root->glob->finalrtable);
-				break;
 			}
 			else if (targetPolicyType == POLICYTYPE_ENTRY)
 			{
