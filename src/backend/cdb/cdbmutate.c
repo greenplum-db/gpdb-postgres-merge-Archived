@@ -2991,13 +2991,6 @@ pre_dispatch_function_evaluation_mutator(Node *node,
 			context->cursorPositions = lappend(context->cursorPositions, cpos);
 		}
 	}
-	else if (IsA(node, ModifyTable))
-	{
-		ModifyTable		*mt = (ModifyTable *) node;
-
-		return (Node *) copyObject(mt);
-	}
-
 
 	/*
 	 * For any node type not handled above, we recurse using
