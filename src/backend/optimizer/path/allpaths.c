@@ -1271,8 +1271,10 @@ make_rel_from_joinlist(PlannerInfo *root, List *joinlist)
 			rel = standard_join_search(root, levels_needed, initial_rels, false);
 			if (rel == NULL && root->config->gp_enable_fallback_plan)
 			{
+				elog(DEBUG1, "failed to build a plan; retrying with all plan types enabled");
 				root->join_rel_hash = NULL;
 				root->join_rel_list = NULL;
+				root->join_rel_level = NULL;
 				rel = standard_join_search(root, levels_needed, initial_rels, true);
 			}
 			return rel;
@@ -1321,7 +1323,8 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels, b
 	 * This function cannot be invoked recursively within any one planning
 	 * problem, so join_rel_level[] can't be in use already.
 	 */
-	Assert(root->join_rel_level == NULL);
+	if (!fallback)
+		Assert(root->join_rel_level == NULL);
 
 	/*
 	 * We employ a simple "dynamic programming" algorithm: we first find all
@@ -1345,7 +1348,6 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels, b
 		ListCell   *next;
 		List	   *backup;
 
-retry:
 		/*
 		 * Determine all possible pairs of relations to be joined at this
 		 * level, and build paths for making each one from every available
@@ -1386,9 +1388,7 @@ retry:
 			root->config->gp_enable_fallback_plan &&
 			!root->config->mpp_trying_fallback_plan)
 		{
-			root->config->mpp_trying_fallback_plan = true;
-			root->join_rel_level[lev] = backup;
-			goto retry;
+			break;
 		}
 	}
 

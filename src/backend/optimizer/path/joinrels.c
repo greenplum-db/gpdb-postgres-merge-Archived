@@ -68,10 +68,7 @@ join_search_one_level(PlannerInfo *root, int level)
 	 * with all plan types enabled, after failing to find any joins that
 	 * satisfy the current enable_*=false restrictions.
 	 */
-	if (!root->config->mpp_trying_fallback_plan)
-	{
-		Assert(joinrels[level] == NIL);
-	}
+	Assert(joinrels[level] == NIL);
 
 	/* Set join_cur_level so that new joinrels are added to proper list */
 	root->join_cur_level = level;
@@ -243,7 +240,12 @@ join_search_one_level(PlannerInfo *root, int level)
 		 *----------
 		 */
 		if (joinrels[level] == NIL && root->join_info_list == NIL)
-			elog(ERROR, "failed to build any %d-way joins", level);
+		{
+			if (root->config->mpp_trying_fallback_plan)
+				elog(ERROR, "failed to build any %d-way joins", level);
+			else
+				elog(DEBUG1, "failed to build any %d-way joins", level);
+		}
 	}
 }
 
