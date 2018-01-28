@@ -5533,7 +5533,7 @@ select partitiontablename,partitionposition,partitionrangestart,
  mpp10223b_1_prt_p1_2_prt_sp2 |                 1 | 20                  | 25
  mpp10223b_1_prt_p1_2_prt_sp3 |                 2 | 25                  | 30
 (3 rows)
- 
+
 select pg_get_partition_def('mpp10223b'::regclass,true);
                    pg_get_partition_def                   
 ----------------------------------------------------------
@@ -5660,19 +5660,19 @@ NOTICE:  CREATE TABLE will create partition "mpp10480_1_prt_10_2_prt_9" for tabl
 select pg_get_partition_template_def('MPP10480'::regclass, true, true);
                     pg_get_partition_template_def                    
 ---------------------------------------------------------------------
- ALTER TABLE mpp10480                                                
- SET SUBPARTITION TEMPLATE                                           
-           (                                                         
-           START (1) END (2) EVERY (1) WITH (tablename='mpp10480'),  
-           START (2) END (3) EVERY (1) WITH (tablename='mpp10480'),  
-           START (3) END (4) EVERY (1) WITH (tablename='mpp10480'),  
-           START (4) END (5) EVERY (1) WITH (tablename='mpp10480'),  
-           START (5) END (6) EVERY (1) WITH (tablename='mpp10480'),  
-           START (6) END (7) EVERY (1) WITH (tablename='mpp10480'),  
-           START (7) END (8) EVERY (1) WITH (tablename='mpp10480'),  
-           START (8) END (9) EVERY (1) WITH (tablename='mpp10480'),  
-           START (9) END (10) EVERY (1) WITH (tablename='mpp10480')  
-           )                                                         
+ ALTER TABLE mpp10480                                               +
+ SET SUBPARTITION TEMPLATE                                          +
+           (                                                        +
+           START (1) END (2) EVERY (1) WITH (tablename='mpp10480'), +
+           START (2) END (3) EVERY (1) WITH (tablename='mpp10480'), +
+           START (3) END (4) EVERY (1) WITH (tablename='mpp10480'), +
+           START (4) END (5) EVERY (1) WITH (tablename='mpp10480'), +
+           START (5) END (6) EVERY (1) WITH (tablename='mpp10480'), +
+           START (6) END (7) EVERY (1) WITH (tablename='mpp10480'), +
+           START (7) END (8) EVERY (1) WITH (tablename='mpp10480'), +
+           START (8) END (9) EVERY (1) WITH (tablename='mpp10480'), +
+           START (9) END (10) EVERY (1) WITH (tablename='mpp10480') +
+           )                                                        +
  
 (1 row)
 
@@ -7699,9 +7699,9 @@ CREATE TABLE test_split_part ( log_id int NOT NULL, f_array int[] NOT NULL)
 DISTRIBUTED BY (log_id)
 PARTITION BY RANGE(log_id)
 (
-       START (1::int) END (100::int) EVERY (5) WITH (appendonly=false),
-       PARTITION "Old" START (101::int) END (201::int) WITH (appendonly=false),
-       DEFAULT PARTITION other_log_ids  WITH (appendonly=false)
+    START (1::int) END (100::int) EVERY (5) WITH (appendonly=false),
+    PARTITION "Old" START (101::int) END (201::int) WITH (appendonly=false),
+    DEFAULT PARTITION other_log_ids  WITH (appendonly=false)
 );
 NOTICE:  CREATE TABLE will create partition "test_split_part_1_prt_other_log_ids" for table "test_split_part"
 NOTICE:  CREATE TABLE will create partition "test_split_part_1_prt_2" for table "test_split_part"
