@@ -402,28 +402,8 @@ select * from testfoo() as t(f1 int8,f2 int8);
 select * from testfoo(); -- fail
 
 drop function testfoo();
-<<<<<<< HEAD
 -- end of disabled RETURNING tests.
 -- end_ignore
-
--- check handling of a SQL function with multiple OUT params (bug #5777)
-
-create or replace function foobar(out integer, out numeric) as
-$$ select (1, 2.1) $$ language sql;
-
-select * from foobar();
-
-create or replace function foobar(out integer, out numeric) as
-$$ select (1, 2) $$ language sql;
-
-select * from foobar();  -- fail
-
-create or replace function foobar(out integer, out numeric) as
-$$ select (1, 2.1, 3) $$ language sql;
-
-select * from foobar();  -- fail
-
-=======
 
 --
 -- Check some cases involving dropped columns in a rowtype result
@@ -461,5 +441,23 @@ language sql stable;
 select foobar();
 select * from foobar();
 
->>>>>>> 78a09145e0
+drop function foobar();
+
+-- check handling of a SQL function with multiple OUT params (bug #5777)
+
+create or replace function foobar(out integer, out numeric) as
+$$ select (1, 2.1) $$ language sql;
+
+select * from foobar();
+
+create or replace function foobar(out integer, out numeric) as
+$$ select (1, 2) $$ language sql;
+
+select * from foobar();  -- fail
+
+create or replace function foobar(out integer, out numeric) as
+$$ select (1, 2.1, 3) $$ language sql;
+
+select * from foobar();  -- fail
+
 drop function foobar();
