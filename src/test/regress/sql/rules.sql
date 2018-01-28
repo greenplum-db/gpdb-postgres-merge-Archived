@@ -852,7 +852,14 @@ insert into rule_and_refint_t3 values (1, 11, 13, 'row7');
 insert into rule_and_refint_t3 values (1, 13, 11, 'row8');
 
 --
-<<<<<<< HEAD
+-- disallow dropping a view's rule (bug #5072)
+--
+
+create view fooview as select 'foo'::text;
+drop rule "_RETURN" on fooview;
+drop view fooview;
+
+--
 -- test conversion of table to view (needed to load some pg_dump files)
 --
 
@@ -865,13 +872,6 @@ create rule "_RETURN" as on select to fooview do instead
 select * from fooview;
 select xmin, * from fooview;  -- fail, views don't have such a column
 
-=======
--- disallow dropping a view's rule (bug #5072)
---
-
-create view fooview as select 'foo'::text;
-drop rule "_RETURN" on fooview;
->>>>>>> 78a09145e0
 drop view fooview;
 
 --
