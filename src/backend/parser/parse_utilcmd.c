@@ -3356,7 +3356,6 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 											 (Constraint *) cmd->def);
 					if (((Constraint *) cmd->def)->contype == CONSTR_FOREIGN)
 					{
-						cxt.fkconstraints = lappend(cxt.fkconstraints, cmd->def);
 						/* GPDB: always skip validation of foreign keys */
 						skipValidation = true;
 					}
