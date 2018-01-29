@@ -3272,6 +3272,19 @@ processPrimaryMirrorTransitionRequest(Port *port, void *pkt)
 	bool wasRead;
 	PrimaryMirrorModeTransitionArguments *args = createNewTransitionArguments();
 
+	/*
+	 * GPDB_90_MERGE_FIXME: When this code was designed, FrontendProtocol was
+	 * always initialized to PG_PROTOCOL_LATEST. As of upstream commit 0a00c9a8,
+	 * this is no longer the case. We've designed ourselves into a bit of a
+	 * catch-22 here: technically we can't safely send data via the protocol
+	 * without knowing what protocol version the client is using, but we've used
+	 * the protocol version field in the opening message to signal a transition
+	 * request...
+	 *
+	 * For now, hardcode FrontendProtocol to revert to our previous behavior.
+	 */
+	FrontendProtocol = PG_PROTOCOL_LATEST;
+
 	length = (int)ntohl(transition->dataLength);
 	if (length > 10000000 || length < 1)
 	{
