@@ -4647,7 +4647,7 @@ coerce_partition_value(Node *node, Oid typid, int32 typmod,
 
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("cannot coerce %s partition parameter %s to column type (%s)",
+				 errmsg("cannot coerce %s partition parameter %sto column type (%s)",
 						(partype == PARTTYP_LIST) ? "LIST" : "RANGE",
 						sid.data,
 						format_type_be(typid))));
