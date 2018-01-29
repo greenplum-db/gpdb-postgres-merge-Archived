@@ -1561,6 +1561,14 @@ AlterOptRoleElem:
 				{
 					$$ = makeDefElem("resourceGroup", (Node *)$3);
 				}
+			| CREATEEXTTABLE exttab_auth_list
+				{
+					$$ = makeDefElem("exttabauth", (Node *)$2);
+				}
+			| NOCREATEEXTTABLE exttab_auth_list
+				{
+					$$ = makeDefElem("exttabnoauth", (Node *)$2);
+				}
 		/*	Supported but not documented for roles, for use by ALTER GROUP. */
 			| USER name_list
 				{
@@ -1595,14 +1603,6 @@ CreateOptRoleElem:
 				{
 					$$ = makeDefElem("addroleto", (Node *)$3);
 				}
-			| CREATEEXTTABLE exttab_auth_list
-				{
-					$$ = makeDefElem("exttabauth", (Node *)$2);
-				}
-			| NOCREATEEXTTABLE exttab_auth_list
-				{
-					$$ = makeDefElem("exttabnoauth", (Node *)$2);
-				}			
 		;
 
 deny_login_role: DENY deny_interval { $$ = (Node *)$2; }
