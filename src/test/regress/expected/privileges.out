@@ -995,6 +995,7 @@ GRANT SELECT ON LARGE OBJECT 1005 TO regressuser3;
 GRANT UPDATE ON LARGE OBJECT 1006 TO regressuser3;	-- to be denied
 ERROR:  large object 1006 does not exist
 REVOKE ALL ON LARGE OBJECT 2001, 2002 FROM PUBLIC;
+NOTICE:  no privileges could be revoked
 GRANT ALL ON LARGE OBJECT 2001 TO regressuser3;
 SELECT lo_unlink(1001);		-- to be denied
 ERROR:  must be owner of large object 1001
@@ -1276,12 +1277,12 @@ grant select on dep_priv_test to regressuser5;
                                        Access privileges
  Schema |     Name      | Type  |         Access privileges         | Column access privileges 
 --------+---------------+-------+-----------------------------------+--------------------------
- public | dep_priv_test | table | regressuser1=arwdDxt/regressuser1 | 
-                                : regressuser2=r*/regressuser1        
-                                : regressuser3=r*/regressuser1        
-                                : regressuser4=r*/regressuser2        
-                                : regressuser4=r*/regressuser3        
-                                : regressuser5=r/regressuser4         
+ public | dep_priv_test | table | regressuser1=arwdDxt/regressuser1+| 
+        |               |       | regressuser2=r*/regressuser1     +| 
+        |               |       | regressuser3=r*/regressuser1     +| 
+        |               |       | regressuser4=r*/regressuser2     +| 
+        |               |       | regressuser4=r*/regressuser3     +| 
+        |               |       | regressuser5=r/regressuser4       | 
 (1 row)
 
 set session role regressuser2;
@@ -1290,11 +1291,11 @@ revoke select on dep_priv_test from regressuser4 cascade;
                                        Access privileges
  Schema |     Name      | Type  |         Access privileges         | Column access privileges 
 --------+---------------+-------+-----------------------------------+--------------------------
- public | dep_priv_test | table | regressuser1=arwdDxt/regressuser1 | 
-                                : regressuser2=r*/regressuser1        
-                                : regressuser3=r*/regressuser1        
-                                : regressuser4=r*/regressuser3        
-                                : regressuser5=r/regressuser4         
+ public | dep_priv_test | table | regressuser1=arwdDxt/regressuser1+| 
+        |               |       | regressuser2=r*/regressuser1     +| 
+        |               |       | regressuser3=r*/regressuser1     +| 
+        |               |       | regressuser4=r*/regressuser3     +| 
+        |               |       | regressuser5=r/regressuser4       | 
 (1 row)
 
 set session role regressuser3;
@@ -1303,9 +1304,9 @@ revoke select on dep_priv_test from regressuser4 cascade;
                                        Access privileges
  Schema |     Name      | Type  |         Access privileges         | Column access privileges 
 --------+---------------+-------+-----------------------------------+--------------------------
- public | dep_priv_test | table | regressuser1=arwdDxt/regressuser1 | 
-                                : regressuser2=r*/regressuser1        
-                                : regressuser3=r*/regressuser1        
+ public | dep_priv_test | table | regressuser1=arwdDxt/regressuser1+| 
+        |               |       | regressuser2=r*/regressuser1     +| 
+        |               |       | regressuser3=r*/regressuser1      | 
 (1 row)
 
 set session role regressuser1;
