@@ -4727,18 +4727,6 @@ setup_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 		 * once set.
 		 */
 		expr->func = estate->func;
-
-		/*
-		 * This is not needed on PostgreSQL. I'm not sure why, but I asw
-		 * assertion failures with ORCA without this. Perhaps because
-		 * some expressions used in the regression suite were "simple"
-		 * with the PostgreSQL planner, but not with ORCA? In any case,
-		 * this code is heavily refactored in PostgreSQL 9.0, so let's
-		 * revisit this then.
-		 *
-		 * GPDB_90_MERGE_FIXME: can we remove this yet?
-		 */
-		exec_eval_cleanup(estate);
 	}
 	else
 		paramLI = NULL;
