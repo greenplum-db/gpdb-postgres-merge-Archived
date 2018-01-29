@@ -776,7 +776,7 @@ explain select A.i, B.i, C.j from A, B, C where A.j < all ( select C.j from C wh
          ->  Limit  (cost=198.55..198.58 rows=4 width=12)
                ->  Sort  (cost=198.55..198.78 rows=30 width=12)
                      Sort Key: qp_correlated_query.a.i, b.i, qp_correlated_query.c.j
-                     ->  Nested Loop Left Anti Semi Join (Not-In)  (cost=9.84..196.61 rows=30 width=12)
+                     ->  Nested Loop Left Anti Semi (Not-In) Join  (cost=9.84..196.61 rows=30 width=12)
                            Join Filter: qp_correlated_query.a.j >= qp_correlated_query.c.j
                            ->  Nested Loop  (cost=6.36..29.10 rows=90 width=16)
                                  ->  Nested Loop  (cost=3.10..9.64 rows=18 width=8)
