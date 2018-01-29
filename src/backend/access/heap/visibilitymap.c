@@ -364,7 +364,7 @@ visibilitymap_truncate(Relation rel, BlockNumber nheapblocks)
 	}
 
 	smgrtruncate(rel->rd_smgr, VISIBILITYMAP_FORKNUM, newnblocks,
-				 rel->rd_istemp);
+				 rel->rd_isLocalBuf);
 
 	/*
 	 * Need to invalidate the relcache entry, because rd_vm_nblocks seen by
