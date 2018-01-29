@@ -608,10 +608,14 @@ DROP ROLE temp_reset_user;
 -- Tests for function-local GUC settings
 --
 set work_mem = '3MB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 create function report_guc(text) returns text as
 $$ select current_setting($1) $$ language sql
 set work_mem = '1MB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 select report_guc('work_mem'), current_setting('work_mem');
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
  report_guc | current_setting 
 ------------+-----------------
  1MB        | 3MB
@@ -622,9 +626,12 @@ alter function report_guc(text) set search_path = no_such_schema;
 NOTICE:  schema "no_such_schema" does not exist
 -- with error occurring here
 select report_guc('work_mem'), current_setting('work_mem');
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 ERROR:  schema "no_such_schema" does not exist
 alter function report_guc(text) reset search_path set work_mem = '2MB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 select report_guc('work_mem'), current_setting('work_mem');
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
  report_guc | current_setting 
 ------------+-----------------
  2MB        | 3MB
@@ -645,27 +652,30 @@ begin
 end $$
 language plpgsql
 set work_mem = '1MB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 select myfunc(0), current_setting('work_mem');
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+CONTEXT:  SQL statement "set local work_mem = '2MB'"
+PL/pgSQL function "myfunc" line 2 at SQL statement
  myfunc | current_setting 
 --------+-----------------
  2MB    | 3MB
 (1 row)
 
 alter function myfunc(int) reset all;
-<<<<<<< HEAD
-select myfunc(0), current_setting('regex_flavor');
-  myfunc  | current_setting 
-----------+-----------------
- extended | advanced
-=======
 select myfunc(0), current_setting('work_mem');
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+CONTEXT:  SQL statement "set local work_mem = '2MB'"
+PL/pgSQL function "myfunc" line 2 at SQL statement
  myfunc | current_setting 
 --------+-----------------
- 2MB    | 2MB
->>>>>>> 78a09145e0
+ 2MB    | 3MB
 (1 row)
 
 set work_mem = '3MB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 -- but SET isn't
 create or replace function myfunc(int) returns text as $$
 begin
@@ -673,33 +683,32 @@ begin
   return current_setting('work_mem');
 end $$
 language plpgsql
-<<<<<<< HEAD
-set regex_flavor = basic;
-select myfunc(0), current_setting('regex_flavor');
-  myfunc  | current_setting 
-----------+-----------------
- extended | advanced
+set work_mem = '1MB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+select myfunc(0), current_setting('work_mem');
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+CONTEXT:  SQL statement "set work_mem = '2MB'"
+PL/pgSQL function "myfunc" line 2 at SQL statement
+ myfunc | current_setting 
+--------+-----------------
+ 2MB    | 3MB
 (1 row)
 
 -- In GPDB, the plan looks somewhat different from what you get on
 -- PostgreSQL, so that the current_setting() in previous query is
--- evaluated before myfunc(0), and therefore it shows 'advanced'.
--- Query again to show that the myfunc(0) call actually changed
+-- evaluated before myfunc(0), and therefore it shows the old value,
+-- '3 MB'. Query again to show that the myfunc(0) call actually changed
 -- the setting.
-select current_setting('regex_flavor');
+select current_setting('work_mem');
  current_setting 
 -----------------
- extended
-=======
-set work_mem = '1MB';
-select myfunc(0), current_setting('work_mem');
- myfunc | current_setting 
---------+-----------------
- 2MB    | 2MB
->>>>>>> 78a09145e0
+ 2MB
 (1 row)
 
 set work_mem = '3MB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 -- it should roll back on error, though
 create or replace function myfunc(int) returns text as $$
 begin
@@ -709,7 +718,13 @@ begin
 end $$
 language plpgsql
 set work_mem = '1MB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 select myfunc(0);
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+CONTEXT:  SQL statement "set work_mem = '2MB'"
+PL/pgSQL function "myfunc" line 2 at SQL statement
 ERROR:  division by zero
 CONTEXT:  SQL statement "SELECT 1/$1"
 PL/pgSQL function "myfunc" line 3 at PERFORM
@@ -719,16 +734,13 @@ select current_setting('work_mem');
  3MB
 (1 row)
 
-<<<<<<< HEAD
-select myfunc(1), current_setting('regex_flavor');
-  myfunc  | current_setting 
-----------+-----------------
- extended | advanced
-=======
 select myfunc(1), current_setting('work_mem');
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+CONTEXT:  SQL statement "set work_mem = '2MB'"
+PL/pgSQL function "myfunc" line 2 at SQL statement
  myfunc | current_setting 
 --------+-----------------
- 2MB    | 2MB
->>>>>>> 78a09145e0
+ 2MB    | 3MB
 (1 row)
 

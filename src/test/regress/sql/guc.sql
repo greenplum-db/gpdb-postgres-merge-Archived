@@ -236,18 +236,14 @@ set work_mem = '1MB';
 
 select myfunc(0), current_setting('work_mem');
 
-<<<<<<< HEAD
 -- In GPDB, the plan looks somewhat different from what you get on
 -- PostgreSQL, so that the current_setting() in previous query is
--- evaluated before myfunc(0), and therefore it shows 'advanced'.
--- Query again to show that the myfunc(0) call actually changed
+-- evaluated before myfunc(0), and therefore it shows the old value,
+-- '3 MB'. Query again to show that the myfunc(0) call actually changed
 -- the setting.
-select current_setting('regex_flavor');
+select current_setting('work_mem');
 
-set regex_flavor = advanced;
-=======
 set work_mem = '3MB';
->>>>>>> 78a09145e0
 
 -- it should roll back on error, though
 create or replace function myfunc(int) returns text as $$
