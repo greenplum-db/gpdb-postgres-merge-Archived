@@ -22,6 +22,7 @@
 #include "parser/scanner.h"
 #include "parser/scansup.h"
 
+#include "cdb/cdbvars.h"
 
 /* Location tracking support --- simpler than bison's default */
 #define YYLLOC_DEFAULT(Current, Rhs, N) \
