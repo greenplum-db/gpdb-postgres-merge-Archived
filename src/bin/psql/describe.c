@@ -3088,7 +3088,9 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
 
 	initPQExpBuffer(&buf);
 
-	if (pset.sversion >= 90000)
+	// GPDB_90_MERGE_FIXME: change this to '90000' once we bump the version
+	// number
+	if (pset.sversion >= 80500)
 	{
 		/* ACHOI: havewhere is false */
 		bool		havewhere = false;

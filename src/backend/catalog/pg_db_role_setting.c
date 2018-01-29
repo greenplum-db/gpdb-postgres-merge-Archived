@@ -222,7 +222,7 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 
 		if (databaseid && roleid)
 			appendStringInfo(&buffer, "ALTER ROLE %s IN DATABASE %s ",
-							 quote_identifier(dbname), quote_identifier(rolename));
+							 quote_identifier(rolename), quote_identifier(dbname));
 		else if (roleid)
 			appendStringInfo(&buffer, "ALTER ROLE %s ",
 							 quote_identifier(rolename));
