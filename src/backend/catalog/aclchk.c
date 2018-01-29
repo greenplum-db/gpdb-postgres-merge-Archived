@@ -744,6 +744,13 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 			}
 			break;
 		case ACL_OBJECT_LARGEOBJECT:
+			/*
+			 * GPDB_90_MERGE_FIXME: large objects are a mess in GPDB. There's no
+			 * enforcement of where they get created. Here, we assume that they
+			 * only exist in the QD node. Hence do nothing in a QE node:
+			 */
+			if (Gp_role == GP_ROLE_EXECUTE)
+				break;
 			foreach(cell, objnames)
 			{
 				Oid		lobjOid = intVal(lfirst(cell));

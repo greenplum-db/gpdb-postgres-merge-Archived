@@ -89,6 +89,7 @@
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/pg_language.h"
+#include "catalog/pg_largeobject_metadata.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
@@ -410,6 +411,16 @@ CreateKeyFromCatalogTuple(Relation catalogrel, HeapTuple tuple,
 		case PartitionRuleRelationId:
 			*exempt = true;
 			 break;
+
+		/*
+		 * Large objects don't work very consistently in GPDB. They are not
+		 * distributed in the segments, but rather stored in the master node.
+		 * Or actually, it depends on which node the lo_create() function
+		 * happens to run, which isn't very deterministic.
+		 */
+		case LargeObjectMetadataRelationId:
+			*exempt = true;
+			break;
 
 		 /*
 		  * These objects need to have their OIDs synchronized, but there is bespoken
