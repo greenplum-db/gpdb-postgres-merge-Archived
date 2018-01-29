@@ -418,22 +418,20 @@ FETCH FROM c1;
 DELETE FROM ucview WHERE CURRENT OF c1; -- fail, views not supported
 ROLLBACK;
 
-<<<<<<< HEAD
 -- Check cursors for functions.
 BEGIN;
 DECLARE c1 CURSOR FOR SELECT * FROM LOWER('TEST');
 FETCH ALL FROM c1;
 COMMIT;
-=======
+
 -- Make sure snapshot management works okay, per bug report in
 -- 235395b90909301035v7228ce63q392931f15aa74b31@mail.gmail.com
 BEGIN; 
 SET TRANSACTION ISOLATION LEVEL SERIALIZABLE; 
-CREATE TABLE cursor (a int); 
-INSERT INTO cursor VALUES (1); 
+CREATE TABLE cursor (a int, b int); 
+INSERT INTO cursor VALUES (1, 1); 
 DECLARE c1 NO SCROLL CURSOR FOR SELECT * FROM cursor FOR UPDATE; 
-UPDATE cursor SET a = 2; 
+UPDATE cursor SET b = 2; 
 FETCH ALL FROM c1; 
 COMMIT; 
 DROP TABLE cursor;
->>>>>>> 78a09145e0

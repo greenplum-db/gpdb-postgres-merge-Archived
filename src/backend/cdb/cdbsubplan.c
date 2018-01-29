@@ -400,6 +400,11 @@ param_walker(Node *node, ParamWalkerContext *context)
 		ModifyTable	*mt	= (ModifyTable *) node;
 		context->epqParams = bms_add_member(context->epqParams, mt->epqParam);
 	}
+	else if (IsA(node, LockRows))
+	{
+		LockRows	*lr = (LockRows*) node;
+		context->epqParams = bms_add_member(context->epqParams, lr->epqParam);
+	}
 	return plan_tree_walker(node, param_walker, context);
 }
 
