@@ -83,6 +83,7 @@
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
+#include "catalog/pg_default_acl.h"
 #include "catalog/pg_enum.h"
 #include "catalog/pg_extension.h"
 #include "catalog/pg_extprotocol.h"
@@ -210,6 +211,15 @@ CreateKeyFromCatalogTuple(Relation catalogrel, HeapTuple tuple,
 				Form_pg_database datForm = (Form_pg_database) GETSTRUCT(tuple);
 
 				key.objname = (char *) NameStr(datForm->datname);
+				break;
+			}
+		case DefaultAclRelationId:
+			{
+				Form_pg_default_acl daclForm = (Form_pg_default_acl) GETSTRUCT(tuple);
+
+				key.keyOid1 = daclForm->defaclrole;
+				key.namespaceOid = daclForm->defaclnamespace;
+				key.keyOid2 = (Oid) daclForm->defaclobjtype;
 				break;
 			}
 		case EnumRelationId:

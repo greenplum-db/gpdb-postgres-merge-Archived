@@ -784,6 +784,14 @@ _outAlterDomainStmt(StringInfo str, AlterDomainStmt *node)
 }
 
 static void
+_outAlterDefaultPrivilegesStmt(StringInfo str, AlterDefaultPrivilegesStmt *node)
+{
+	WRITE_NODE_TYPE("ALTERDEFAULTPRIVILEGESSTMT");
+	WRITE_NODE_FIELD(options);
+	WRITE_NODE_FIELD(action);
+}
+
+static void
 _outColumnDef(StringInfo str, ColumnDef *node)
 {
 	WRITE_NODE_TYPE("COLUMNDEF");
@@ -1885,6 +1893,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_AlterDomainStmt:
 				_outAlterDomainStmt(str, obj);
+				break;
+			case T_AlterDefaultPrivilegesStmt:
+				_outAlterDefaultPrivilegesStmt(str, obj);
 				break;
 
 			case T_TransactionStmt:

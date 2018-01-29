@@ -1332,6 +1332,17 @@ _readAlterDomainStmt(void)
 	READ_DONE();
 }
 
+static AlterDefaultPrivilegesStmt *
+_readAlterDefaultPrivilegesStmt(void)
+{
+	READ_LOCALS(AlterDefaultPrivilegesStmt);
+
+	READ_NODE_FIELD(options);
+	READ_NODE_FIELD(action);
+
+	READ_DONE();
+}
+
 static RemoveFuncStmt *
 _readRemoveFuncStmt(void)
 {
@@ -3459,6 +3470,9 @@ readNodeBinary(void)
 				break;
 			case T_AlterDomainStmt:
 				return_value = _readAlterDomainStmt();
+				break;
+			case T_AlterDefaultPrivilegesStmt:
+				return_value = _readAlterDefaultPrivilegesStmt();
 				break;
 
 			case T_NotifyStmt:
