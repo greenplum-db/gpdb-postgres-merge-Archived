@@ -744,10 +744,13 @@ ClientAuthentication(Port *port)
 	}
 
 	if (status == STATUS_OK)
-		if (!CheckAuthTimeConstraints(port->user_name))
+	{
+		if (CheckAuthTimeConstraints(port->user_name) != STATUS_OK)
 			ereport(FATAL,
 					 (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-					  errmsg("authentication failed for user \"%s\": login not permitted at this time", port->user_name)));
+					  errmsg("authentication failed for user \"%s\": login not permitted at this time",
+							 port->user_name)));
+	}
 
 	if (status == STATUS_OK)
 		sendAuthRequest(port, AUTH_REQ_OK);
@@ -3235,7 +3238,7 @@ timestamptz_to_point(TimestampTz in, authPoint *out)
  *
  * Invokes check_auth_time_constraints_internal against the current timestamp
  */
-bool
+int
 CheckAuthTimeConstraints(char *rolname) 
 {
 	if (gp_auth_time_override_str != NULL && gp_auth_time_override_str[0] != '\0')
@@ -3255,10 +3258,10 @@ CheckAuthTimeConstraints(char *rolname)
  * Called out as separate function to facilitate unit testing, where the provided
  * timestamp is likely to be hardcoded for deterministic test runs
  *
- * Returns false iff it finds an interval that contains timestamp from among the
- * entries of pg_auth_time_constraint that pertain to rolname
+ * Returns STATUS_ERROR iff it finds an interval that contains timestamp from
+ * among the entries of pg_auth_time_constraint that pertain to rolname
  */
-bool
+int
 check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp)
 {
 	Oid				roleId;
@@ -3267,7 +3270,7 @@ check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp)
 	SysScanDesc 	scan;
 	HeapTuple		tuple;
 	authPoint 		now;
-	bool			authorized = true;
+	int				status;
 
 	timestamptz_to_point(timestamp, &now);
 
@@ -3281,7 +3284,13 @@ check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp)
 	/* Look up this user in pg_authid. */
 	roleId = GetSysCacheOid1(AUTHNAME, CStringGetDatum(rolname));
 	if (!OidIsValid(roleId))
-		return false;					/* no such user */
+	{
+		/*
+		 * No such user. We don't error out here; it's up to other
+		 * authentication steps to deny access to nonexistent roles.
+		 */
+		return STATUS_OK;
+	}
 
 	/* Walk pg_auth_time_constraint for entries belonging to this user. */
 	reltimeconstr = heap_open(AuthTimeConstraintRelationId, AccessShareLock);
@@ -3303,6 +3312,8 @@ check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp)
 	/*
 	 * Check each denied interval to see if the current timestamp is part of it.
 	 */
+	status = STATUS_OK;
+
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 	{
 		Form_pg_auth_time_constraint constraint_tuple;
@@ -3331,7 +3342,7 @@ check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp)
 
 		if (interval_contains(&given, &now))
 		{
-			authorized = false;
+			status = STATUS_ERROR;
 			break;
 		}
 	}
@@ -3345,5 +3356,5 @@ check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp)
 	/* And don't forget to detect one that already arrived */
 	CHECK_FOR_INTERRUPTS();
 	
-	return authorized;
+	return status;
 }

@@ -1097,7 +1097,7 @@ check_auth_time_constraints(PG_FUNCTION_ARGS)
 	char		   *rolname = PG_GETARG_CSTRING(0);
 	TimestampTz 	timestamp = PG_GETARG_TIMESTAMPTZ(1);
 
-	PG_RETURN_BOOL(check_auth_time_constraints_internal(rolname, timestamp));
+	PG_RETURN_BOOL(check_auth_time_constraints_internal(rolname, timestamp) == STATUS_OK);
 }
 
 /*
