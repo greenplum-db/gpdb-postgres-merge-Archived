@@ -332,7 +332,6 @@ _copyAppend(Append *from)
 	 * copy remainder of node
 	 */
 	COPY_NODE_FIELD(appendplans);
-	COPY_SCALAR_FIELD(isZapped);
 
 	return newnode;
 }

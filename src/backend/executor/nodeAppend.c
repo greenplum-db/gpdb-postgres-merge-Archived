@@ -106,37 +106,6 @@ exec_append_initialize_next(AppendState *appendstate)
 	}
 }
 
-#if 0 // GPDB_90_MERGE_FIXME: not needed anymore?
-static bool append_need_prj(Append *node)
-{
-	ListCell *lc;
-	int attno=1;
-
-	if(!node->isZapped)
-		return false;
-
-	if(node->plan.qual)
-		return true;
-
-	foreach(lc, node->plan.targetlist)
-	{
-		Var *var;
-		TargetEntry *te = (TargetEntry *) lfirst(lc);
-		if(!IsA(te->expr, Var))
-			return true;
-		
-		var = (Var *) te->expr;
-
-		if(var->varattno != attno)
-			return true;
-
-		++attno;
-	}
-			
-	return false;
-}
-#endif
-
 /* ----------------------------------------------------------------
  *		ExecInitAppend
  *
@@ -207,26 +176,6 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 	 * initialize output tuple type
 	 */
 	ExecAssignResultTypeFromTL(&appendstate->ps);
-
-	// GPDB_90_MERGE_FIXME: Is this code still needed? isTarget is no more.
-#if 0
-	/* 
-	 * determine if need project 
-	 */
-	if(!node->isTarget && append_need_prj(node))
-	{
-		ExecAssignExprContext(estate, &appendstate->ps);
-		appendstate->ps.targetlist = (List *)
-			ExecInitExpr((Expr *) node->plan.targetlist, (PlanState *) appendstate);
-		appendstate->ps.qual = (List *)
-			ExecInitExpr((Expr *) node->plan.qual, (PlanState *) appendstate);
-		ExecAssignProjectionInfo(&appendstate->ps, NULL);
-	}
-	else
-	{
-		appendstate->ps.ps_ProjInfo = NULL;
-	}
-#endif
 	appendstate->ps.ps_ProjInfo = NULL;
 
 	/*
@@ -266,23 +215,6 @@ ExecAppend(AppendState *node)
 
 		if (!TupIsNull(result))
 		{
-
-			if(node->ps.ps_ProjInfo != NULL)
-			{
-				ExprContext *econtext = node->ps.ps_ExprContext;
-				ExprDoneCond isDone;
-
-				ResetExprContext(econtext);
-
-				/*
-				 * XXX gross hack. use outer tuple as scan tuple for projection
-				 */
-				econtext->ecxt_outertuple = result;
-				econtext->ecxt_scantuple = result;
-
-				result = ExecProject(node->ps.ps_ProjInfo, &isDone);
-			}
-
 			/*
 			 * If the subplan gave us something then return it as-is. We do
 			 * NOT make use of the result slot that was set up in

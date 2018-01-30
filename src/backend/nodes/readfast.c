@@ -1542,7 +1542,6 @@ _readAppend(void)
 	readPlanInfo((Plan *)local_node);
 
 	READ_NODE_FIELD(appendplans);
-	READ_BOOL_FIELD(isZapped);
 
 	READ_DONE();
 }

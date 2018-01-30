@@ -462,7 +462,6 @@ _outAppend(StringInfo str, Append *node)
 	_outPlanInfo(str, (Plan *) node);
 
 	WRITE_NODE_FIELD(appendplans);
-	WRITE_BOOL_FIELD(isZapped);
 }
 
 static void

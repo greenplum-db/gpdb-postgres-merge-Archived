@@ -4140,7 +4140,6 @@ make_append(List *appendplans, List *tlist)
 	plan->lefttree = NULL;
 	plan->righttree = NULL;
 	node->appendplans = appendplans;
-	node->isZapped = false;
 
 	return node;
 }
