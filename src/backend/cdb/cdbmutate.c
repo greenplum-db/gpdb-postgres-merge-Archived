@@ -485,6 +485,7 @@ apply_motion(PlannerInfo *root, Plan *plan, Query *query)
 
 		case CMD_UPDATE:
 		case CMD_DELETE:
+			needToAssignDirectDispatchContentIds = root->config->gp_enable_direct_dispatch;
 			break;
 
 		default:
