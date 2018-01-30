@@ -2929,12 +2929,6 @@ CTranslatorDXLToPlStmt::PappendFromDXLAppend
 	Plan *pplan = &(pappend->plan);
 	pplan->plan_node_id = m_pctxdxltoplstmt->UlNextPlanId();
 
-	CDXLPhysicalAppend *pdxlopAppend = CDXLPhysicalAppend::PdxlopConvert(pdxlnAppend->Pdxlop());
-
-	// GPDB_90_MERGE_FIXME: isTarget field is no more.
-	//pappend->isTarget = pdxlopAppend->FIsTarget();
-	pappend->isZapped = pdxlopAppend->FIsZapped();
-
 	// translate operator costs
 	TranslatePlanCosts
 		(
