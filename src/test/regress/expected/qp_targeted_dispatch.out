@@ -457,7 +457,7 @@ select * from bytea where bytea1='d' and cidr1='0.0.0.1';
 INFO:  Dispatch command to SINGLE content
  bytea1 |   cidr1    
 --------+------------
- d      | 0.0.0.1/32
+ \x64   | 0.0.0.1/32
 (1 row)
 
 --start_ignore
