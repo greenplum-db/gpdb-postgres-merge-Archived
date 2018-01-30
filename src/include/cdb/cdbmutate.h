@@ -64,6 +64,8 @@ extern void remove_subquery_in_RTEs(Node *node);
 extern void fixup_subplans(Plan *plan, PlannerInfo *root, SubPlanWalkerContext *context);
 
 extern void request_explicit_motion(Plan *plan, Index resultRelationIdx, List *rtable);
+extern void sri_optimize_for_result(PlannerInfo *root, Plan *plan, RangeTblEntry *rte,
+									GpPolicy **targetPolicy, List **hashExpr);
 
 
 #endif   /* CDBMUTATE_H */
