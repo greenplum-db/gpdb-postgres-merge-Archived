@@ -57,7 +57,6 @@
 
 #include "postgres.h"
 
-#include "cdb/cdbvars.h"
 #include "executor/execdebug.h"
 #include "executor/nodeAppend.h"
 
@@ -205,8 +204,6 @@ ExecAppend(AppendState *node)
 		 * figure out which subplan we are currently processing
 		 */
 		subnode = node->appendplans[node->as_whichplan];
-
-		Assert(subnode != NULL);
 
 		/*
 		 * get a tuple from the subplan

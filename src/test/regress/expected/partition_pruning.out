@@ -114,16 +114,15 @@ $$ language plpgsql stable;
 PREPARE prep_prune AS select * from pt_lt_tab WHERE col2 = stabletestfunc();
 -- The plan should only scan one partition, where col2 = 10.
 EXPLAIN EXECUTE prep_prune;
-                                            QUERY PLAN                                            
---------------------------------------------------------------------------------------------------
+                                         QUERY PLAN                                         
+--------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..3.12 rows=1 width=14)
-   ->  Result  (cost=0.00..3.12 rows=1 width=14)
-         ->  Append  (cost=0.00..3.12 rows=1 width=14)
-               ->  Seq Scan on pt_lt_tab_1_prt_part1 pt_lt_tab  (cost=0.00..3.12 rows=1 width=14)
-                     Filter: col2 = 10::numeric
+   ->  Append  (cost=0.00..3.12 rows=1 width=14)
+         ->  Seq Scan on pt_lt_tab_1_prt_part1 pt_lt_tab  (cost=0.00..3.12 rows=1 width=14)
+               Filter: col2 = 10::numeric
  Settings:  enable_bitmapscan=on; enable_indexscan=on; enable_seqscan=off; optimizer=off
  Optimizer status: legacy query optimizer
-(7 rows)
+(6 rows)
 
 -- @description B-tree single index key = non-partitioning key
 CREATE INDEX idx1 on pt_lt_tab(col1);
@@ -238,29 +237,28 @@ SELECT * FROM pt_lt_tab WHERE col1 <> 10 ORDER BY col2,col3 LIMIT 5;
 (5 rows)
 
 EXPLAIN SELECT * FROM pt_lt_tab WHERE col1 <> 10 ORDER BY col2,col3 LIMIT 5;
-                                                     QUERY PLAN                                                     
---------------------------------------------------------------------------------------------------------------------
+                                                  QUERY PLAN                                                  
+--------------------------------------------------------------------------------------------------------------
  Limit  (cost=16.37..16.48 rows=5 width=14)
    ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=16.37..16.48 rows=5 width=14)
-           Merge Key: partition_pruning.pt_lt_tab.col2, partition_pruning.pt_lt_tab.col3
+         Merge Key: public.pt_lt_tab.col2, public.pt_lt_tab.col3
          ->  Limit  (cost=16.37..16.38 rows=2 width=14)
                ->  Sort  (cost=16.37..16.48 rows=15 width=14)
-                     Sort Key: partition_pruning.pt_lt_tab.col2, partition_pruning.pt_lt_tab.col3
-                     ->  Result  (cost=0.00..15.62 rows=15 width=14)
-                           ->  Append  (cost=0.00..15.62 rows=15 width=14)
-                                 ->  Seq Scan on pt_lt_tab_1_prt_part1 pt_lt_tab  (cost=0.00..3.12 rows=3 width=14)
-                                       Filter: col1 <> 10
-                                 ->  Seq Scan on pt_lt_tab_1_prt_part2 pt_lt_tab  (cost=0.00..3.12 rows=3 width=14)
-                                       Filter: col1 <> 10
-                                 ->  Seq Scan on pt_lt_tab_1_prt_part3 pt_lt_tab  (cost=0.00..3.12 rows=3 width=14)
-                                       Filter: col1 <> 10
-                                 ->  Seq Scan on pt_lt_tab_1_prt_part4 pt_lt_tab  (cost=0.00..3.12 rows=3 width=14)
-                                       Filter: col1 <> 10
-                                 ->  Seq Scan on pt_lt_tab_1_prt_part5 pt_lt_tab  (cost=0.00..3.12 rows=3 width=14)
-                                       Filter: col1 <> 10
- Settings:  enable_bitmapscan=on; enable_indexscan=on; enable_seqscan=off; optimizer=off
+                     Sort Key: public.pt_lt_tab.col2, public.pt_lt_tab.col3
+                     ->  Append  (cost=0.00..15.62 rows=15 width=14)
+                           ->  Seq Scan on pt_lt_tab_1_prt_part1 pt_lt_tab  (cost=0.00..3.12 rows=3 width=14)
+                                 Filter: col1 <> 10
+                           ->  Seq Scan on pt_lt_tab_1_prt_part2 pt_lt_tab  (cost=0.00..3.12 rows=3 width=14)
+                                 Filter: col1 <> 10
+                           ->  Seq Scan on pt_lt_tab_1_prt_part3 pt_lt_tab  (cost=0.00..3.12 rows=3 width=14)
+                                 Filter: col1 <> 10
+                           ->  Seq Scan on pt_lt_tab_1_prt_part4 pt_lt_tab  (cost=0.00..3.12 rows=3 width=14)
+                                 Filter: col1 <> 10
+                           ->  Seq Scan on pt_lt_tab_1_prt_part5 pt_lt_tab  (cost=0.00..3.12 rows=3 width=14)
+                                 Filter: col1 <> 10
+ Settings:  enable_bitmapscan=on; enable_indexscan=on; enable_seqscan=off
  Optimizer status: legacy query optimizer
-(20 rows)
+(19 rows)
 
 SELECT * FROM pt_lt_tab WHERE col1 > 10 AND col1 < 50 ORDER BY col2,col3 LIMIT 5;
  col1 | col2 | col3 | col4 
