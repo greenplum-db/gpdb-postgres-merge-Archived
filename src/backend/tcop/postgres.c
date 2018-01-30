@@ -1224,75 +1224,10 @@ exec_mpp_query(const char *query_string,
 	/*
 	 * Get (possibly 0) parameters.
 	 */
-	paramLI = NULL;
 	if (serializedParams != NULL && serializedParamslen > 0)
-	{
-		int32		numparams;
-		Size		arrlength;
-		const char *cpos;
-		const char *epos;
-
-		cpos = serializedParams;
-		epos = serializedParams + serializedParamslen;
-		if (epos - cpos < sizeof(int32))
-			elog(ERROR, "could not deserialize query parameters");
-
-		/* First read the number of params */
-		memcpy(&numparams, cpos, sizeof(int32));
-		cpos += sizeof(int32);
-		if (numparams <= 0)
-			elog(ERROR, "could not deserialize query parameters");
-
-		/* Get ParamListInfoData header and ParamExternData array. */
-		arrlength = numparams * sizeof(ParamExternData);
-		if (epos - cpos < arrlength)
-			elog(ERROR, "could not deserialize query parameters");
-
-		/* Allocate ParamListInfo and initialize header. */
-		paramLI = palloc(offsetof(ParamListInfoData, params) + arrlength);
-		memset(paramLI, 0, offsetof(ParamListInfoData, params));
-		paramLI->numParams = numparams;
-
-		/* Read the ParamExternData array */
-		memcpy(paramLI->params, cpos, arrlength);
-		cpos += arrlength;
-
-		/* Get pass-by-reference data. */
-		while (cpos < epos)
-		{
-			ParamExternData *pxd;
-			int32		iparam;
-			int32		length;
-
-			if (epos - cpos < sizeof(iparam))
-				elog(ERROR, "could not deserialize query parameters");
-
-			/* read param index */
-			memcpy(&iparam, cpos, sizeof(iparam));
-			cpos += sizeof(iparam);
-			if (iparam < 0 || iparam >= numparams)
-				elog(ERROR, "could not deserialize query parameters");
-
-			/* Get length. It was stashed in the 'value' field in the array */
-			pxd = &paramLI->params[iparam];
-			length = DatumGetInt32(pxd->value);
-
-			if (length < 0 || length > epos - cpos)
-				elog(ERROR, "could not deserialize query parameters");
-
-			/* Read value */
-			if (length > 0)
-			{
-				char   *v = (char *) palloc(length);
-
-				pxd->value = PointerGetDatum(v);
-				memcpy(v, cpos, length);
-				cpos += length;
-			}
-		}
-		Insist(cpos == epos);
-	}
-
+		paramLI = deserializeParamListInfo(serializedParams, serializedParamslen);
+	else
+		paramLI = NULL;
 
 	/*
 	 * Switch back to transaction context to enter the loop.

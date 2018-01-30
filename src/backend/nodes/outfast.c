@@ -33,6 +33,7 @@
 #include <ctype.h>
 
 #include "lib/stringinfo.h"
+#include "nodes/params.h"
 #include "nodes/parsenodes.h"
 #include "nodes/plannodes.h"
 #include "nodes/relation.h"
@@ -1126,6 +1127,12 @@ _outAlterResourceGroupStmt(StringInfo str, AlterResourceGroupStmt *node)
 	WRITE_NODE_FIELD(options); /* List of DefElem nodes */
 }
 
+/*
+ * Support for serializing TupleDescs and ParamListInfos.
+ *
+ * TupleDescs and ParamListInfos are not Nodes as such, but if you wrap them
+ * in TupleDescNode and ParamListInfoNode structs, we allow serializing them.
+ */
 static void
 _outTupleDescNode(StringInfo str, TupleDescNode *node)
 {
@@ -1147,6 +1154,22 @@ _outTupleDescNode(StringInfo str, TupleDescNode *node)
 	WRITE_BOOL_FIELD(tuple->tdhasoid);
 	WRITE_INT_FIELD(tuple->tdrefcount);
 }
+
+static void
+_outSerializedParamExternData(StringInfo str, SerializedParamExternData *node)
+{
+	WRITE_NODE_TYPE("SERIALIZEDPARAMEXTERNDATA");
+
+	WRITE_BOOL_FIELD(isnull);
+	WRITE_INT16_FIELD(pflags);
+	WRITE_OID_FIELD(ptype);
+	WRITE_INT16_FIELD(plen);
+	WRITE_BOOL_FIELD(pbyval);
+
+	if (!node->isnull)
+		_outDatum(str, node->value, node->plen, node->pbyval);
+}
+
 
 static void
 _outCookedConstraint(StringInfo str, CookedConstraint *node)
@@ -2134,8 +2157,12 @@ _outNode(StringInfo str, void *obj)
 			case T_AlterExtensionContentsStmt:
 				_outAlterExtensionContentsStmt(str, obj);
 				break;
+
 			case T_TupleDescNode:
 				_outTupleDescNode(str, obj);
+				break;
+			case T_SerializedParamExternData:
+				_outSerializedParamExternData(str, obj);
 				break;
 
 			case T_AlterTSConfigurationStmt:
@@ -2196,7 +2223,7 @@ _outNode(StringInfo str, void *obj)
  *	   returns a binary representation of the Node as a palloc'd string
  */
 char *
-nodeToBinaryStringFast(void *obj, int * length)
+nodeToBinaryStringFast(void *obj, int *length)
 {
 	StringInfoData str;
 	int16 tg = (int16) 0xDEAD;
@@ -2212,4 +2239,3 @@ nodeToBinaryStringFast(void *obj, int * length)
 	*length = str.len;
 	return str.data;
 }
-
