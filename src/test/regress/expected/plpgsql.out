@@ -3356,12 +3356,8 @@ begin
 end;
 $$ language plpgsql;
 select * from sc_test();
-   sc_test   
--------------
- -2147483647
-      123456
-(2 rows)
-
+ERROR:  backward scan is not supported in this version of Greenplum Database
+CONTEXT:  PL/pgSQL function "sc_test" line 6 at FETCH
 create or replace function sc_test() returns setof integer as $$
 declare
   c cursor for select * from generate_series(1, 10);
@@ -3404,11 +3400,8 @@ begin
 end;
 $$ language plpgsql;
 select * from sc_test();
- sc_test 
----------
-      10
-(1 row)
-
+ERROR:  backward scan is not supported in this version of Greenplum Database
+CONTEXT:  PL/pgSQL function "sc_test" line 7 at FETCH
 drop function sc_test();
 -- test qualified variable names
 create function pl_qual_names (param1 int) returns void as $$
@@ -3644,7 +3637,7 @@ NOTICE:  1000, 20
  
 (1 row)
 
-select * from forc_test;
+select i, j from forc_test;
    i    | j  
 --------+----
   10000 |  4

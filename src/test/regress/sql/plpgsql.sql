@@ -2707,7 +2707,7 @@ $$ language plpgsql;
 
 select forc01();
 
-select * from forc_test;
+select i, j from forc_test;
 
 drop function forc01();
 
