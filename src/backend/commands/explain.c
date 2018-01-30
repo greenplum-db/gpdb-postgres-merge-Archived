@@ -34,6 +34,7 @@
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
+#include "utils/metrics_utils.h"
 #include "utils/tuplesort.h"
 #include "utils/snapmgr.h"
 #include "utils/xml.h"
@@ -486,6 +487,10 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainState *es,
 				GetResqueueName(GetResQueueId()),
 				GetResqueuePriority(GetResQueueId()));
 	}
+
+	/* GPDB hook for collecting query info */
+	if (query_info_collect_hook)
+		(*query_info_collect_hook)(METRICS_QUERY_SUBMIT, queryDesc);
 
 	/*
 	 * Start timing.
@@ -1569,7 +1574,7 @@ ExplainNode(Plan *plan, PlanState *planstate,
 	}
 
     /* CDB: Show actual row count, etc. */
-	if (planstate->instrument)
+	if (planstate->instrument && planstate->instrument->need_cdb)
 	{
         cdbexplain_showExecStats(planstate,
                                  es->str,

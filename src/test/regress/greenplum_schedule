@@ -14,11 +14,18 @@
 #   to the segments, and therefore has to run in smaller groups to avoid
 #   hitting max_connections limit on segments.
 #
+
+# enable query metrics cluster GUC
+test: instr_in_shmem_setup
+# run separately - because slot counter may influenced by other parallel queries
+test: instr_in_shmem
+
 test: gp_tablespace gp_aggregates gp_metadata variadic_parameters default_parameters function_extensions spi gp_xml pgoptions shared_scan
 test: spi_processed64bit
 
 test: leastsquares opr_sanity_gp decode_expr bitmapscan bitmapscan_ao case_gp limit_gp notin percentile join_gp union_gp gpcopy gp_create_table gp_create_view window_views
 test: filter gpctas gpdist matrix toast sublink table_functions olap_setup complex opclass_ddl information_schema guc_env_var guc_gp gp_explain
+
 test: bitmap_index gp_dump_query_oids analyze gp_owner_permission
 test: indexjoin as_alias regex_gp gpparams with_clause transient_types gp_rules
 # dispatch should always run seperately from other cases.
@@ -32,6 +39,9 @@ test: workfile/hashagg_spill workfile/hashjoin_spill workfile/materialize_spill 
 # test workfiles compressed using zlib
 # 'zlib' utilizes fault injectors so it needs to be in a group by itself
 test: zlib
+
+# Check for shmem leak for instrumentation slots before gpdb restart
+test: instr_in_shmem_verify
 
 # This test will change the gp_workfile_limit_per_segment and will need to restart the DB.
 # It will also use faultinjector - so it needs to be in a group by itself.
@@ -67,8 +77,9 @@ test: sreh
 # ERROR:  parameter "gp_interconnect_type" cannot be set after connection start
 
 ignore: gp_portal_error
-test: external_table external_table_create_privs column_compression compression_zstd eagerfree gpdtm_plpgsql alter_table_aocs alter_table_aocs2 alter_distribution_policy ic aoco_privileges aocs
+test: external_table external_table_create_privs column_compression compression_zstd eagerfree gpdtm_plpgsql alter_table_aocs alter_table_aocs2 alter_distribution_policy aoco_privileges aocs
 test: alter_table_set alter_table_gp alter_table_ao ao_create_alter_valid_table subtransaction_visibility oid_consistency udf_exception_blocks
+test: ic
 ignore: icudp_full
 
 test: resource_queue
@@ -131,6 +142,9 @@ test: qp_olap_group qp_olap_group2
 
 test: hooktest partition_rank
 
+# Test query_info_collect_hook are called in expected sequence on normal query, query error/abort
+test: query_info_hook_test
+
 ignore: tpch500GB_orca
 
 # Tests for "compaction", i.e. VACUUM, of updatable append-only tables
@@ -187,5 +201,8 @@ test: metadata_track
 test: workfile_mgr_test
 
 test: psql_gp_commands pg_resetxlog
+
+# Check for shmem leak for instrumentation slots
+test: instr_in_shmem_verify
 
 # end of tests

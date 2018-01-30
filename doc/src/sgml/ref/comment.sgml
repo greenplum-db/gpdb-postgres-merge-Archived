@@ -21,7 +21,6 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-
 COMMENT ON
 {
   AGGREGATE <replaceable class="PARAMETER">aggregate_name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) |

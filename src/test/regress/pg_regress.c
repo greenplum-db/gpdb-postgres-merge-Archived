@@ -1020,7 +1020,7 @@ initialize_environment(void)
 	/*
 	 * Set multibyte as requested
 	 */
-	if (encoding && strlen(encoding) > 0)
+	if (encoding)
 		doputenv("PGCLIENTENCODING", encoding);
 	else
 		unsetenv("PGCLIENTENCODING");
@@ -2181,9 +2181,8 @@ create_database(const char *dbname)
 	 * not mess up the tests.
 	 */
 	header(_("creating database \"%s\""), dbname);
-	if (encoding && strlen(encoding) > 0)
-		psql_command("postgres", "CREATE DATABASE \"%s\" TEMPLATE=template0 ENCODING='%s'%s", dbname, encoding,
-					 (nolocale) ? " LC_COLLATE='C' LC_CTYPE='C'" : "");
+	if (encoding)
+		psql_command("postgres", "CREATE DATABASE \"%s\" TEMPLATE=template0 ENCODING='%s'", dbname, encoding);
 	else
 		psql_command("postgres", "CREATE DATABASE \"%s\" TEMPLATE=template0%s", dbname,
 					 (nolocale) ? " LC_COLLATE='C' LC_CTYPE='C'" : "");

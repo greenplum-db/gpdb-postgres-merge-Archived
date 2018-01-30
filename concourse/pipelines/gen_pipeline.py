@@ -55,6 +55,10 @@ def create_pipeline():
     else:
         test_trigger = "false"
 
+    stagger_sections = False
+    if ARGS.pipeline_type == "prod" or len(ARGS.test_sections) > 2:
+        stagger_sections = True
+
     context = {
         'template_filename': ARGS.template_filename,
         'generator_filename': os.path.basename(__file__),
@@ -62,16 +66,17 @@ def create_pipeline():
         'os_types': ARGS.os_types,
         'test_sections': ARGS.test_sections,
         'pipeline_type': ARGS.pipeline_type,
+        'stagger_sections': stagger_sections,
         'test_trigger': test_trigger
     }
 
     with open(ARGS.output_filename, 'w') as output:
-        html = render_template('pipeline_header.yml', context)
-        output.write(html)
+        yml = render_template('pipeline_header.yml', context)
+        output.write(yml)
 
     with open(ARGS.output_filename, 'a') as output:
-        html = render_template(ARGS.template_filename, context)
-        output.write(html)
+        yml = render_template(ARGS.template_filename, context)
+        output.write(yml)
 
 if __name__ == "__main__":
     PARSER = argparse.ArgumentParser(
@@ -128,17 +133,6 @@ if __name__ == "__main__":
     if ARGS.pipeline_type == 'prod':
         ARGS.os_types = ['centos6', 'centos7', 'sles', 'aix7', 'win', 'ubuntu16']
         ARGS.test_sections = ['ICW', 'CS', 'MPP', 'MM', 'DPM', 'UD']
-        print "======================================================================"
-        print "Validate Pipeline Release Jobs"
-        print "----------------------------------------------------------------------"
-        try:
-            env = os.environ.copy()
-            env['PIPELINE_FILE'] = ARGS.output_filename
-            subprocess.check_call(["python",
-                                   "../scripts/validate_pipeline_release_jobs.py"],
-                                  env=env)
-        except subprocess.CalledProcessError:
-            exit(1)
 
     if ARGS.pipeline_type != 'prod' and ARGS.output_filename == 'gpdb_master-generated.yml':
         ARGS.output_filename = 'gpdb-' + ARGS.pipeline_type + '-' + ARGS.user + '.yml'
@@ -176,7 +170,22 @@ if __name__ == "__main__":
         MSG += '    -l ~/workspace/continuous-integration/secrets/gpdb_master-ci-secrets.yml \\\n'
         MSG += '    -v tf-bucket-path=dev/' + ARGS.pipeline_type + '/ \\\n'
         MSG += '    -v bucket-name=gpdb5-concourse-builds-dev\n'
+        MSG += '    -v gpdb-git-branch=<the-three-point-line>\n'
+
+    create_pipeline()
+
+    if ARGS.pipeline_type == 'prod':
+        print "======================================================================"
+        print "Validate Pipeline Release Jobs"
+        print "----------------------------------------------------------------------"
+        try:
+            env = os.environ.copy()
+            env['PIPELINE_FILE'] = ARGS.output_filename
+            subprocess.check_call(["python",
+                                   "../scripts/validate_pipeline_release_jobs.py"],
+                                  env=env)
+        except subprocess.CalledProcessError:
+            exit(1)
 
     print MSG
 
-    create_pipeline()

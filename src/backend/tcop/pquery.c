@@ -35,6 +35,7 @@
 #include "postmaster/autostats.h"
 #include "postmaster/backoff.h"
 #include "utils/resscheduler.h"
+#include "utils/metrics_utils.h"
 #include "utils/tqual.h"
 
 
@@ -230,11 +231,13 @@ ProcessQuery(Portal portal,
 	if (portal->sourceTag == T_SelectStmt && gp_select_invisible)
 		queryDesc = CreateQueryDesc(stmt, portal->sourceText,
 									SnapshotAny, InvalidSnapshot,
-									dest, params, 0);
+									dest, params,
+									GP_INSTRUMENT_OPTS);
 	else
 		queryDesc = CreateQueryDesc(stmt, portal->sourceText,
 									GetActiveSnapshot(), InvalidSnapshot,
-									dest, params, 0);
+									dest, params,
+									GP_INSTRUMENT_OPTS);
 	queryDesc->ddesc = portal->ddesc;
 
 	if (gp_enable_gpperfmon && Gp_role == GP_ROLE_DISPATCH)
@@ -247,6 +250,10 @@ ProcessQuery(Portal portal,
 				GetResqueueName(portal->queueId),
 				GetResqueuePriority(portal->queueId));
 	}
+
+	/* GPDB hook for collecting query info */
+	if (query_info_collect_hook)
+		(*query_info_collect_hook)(METRICS_QUERY_SUBMIT, queryDesc);
 
 	queryDesc->plannedstmt->query_mem = ResourceManagerGetQueryMemoryLimit(queryDesc->plannedstmt);
 
@@ -639,7 +646,7 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot,
 											InvalidSnapshot,
 											None_Receiver,
 											params,
-											0);
+											GP_INSTRUMENT_OPTS);
 				queryDesc->ddesc = ddesc;
 				
 				if (gp_enable_gpperfmon && Gp_role == GP_ROLE_DISPATCH)
@@ -652,6 +659,10 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot,
 							GetResqueueName(portal->queueId),
 							GetResqueuePriority(portal->queueId));
 				}
+
+				/* GPDB hook for collecting query info */
+				if (query_info_collect_hook)
+					(*query_info_collect_hook)(METRICS_QUERY_SUBMIT, queryDesc);
 
 				/* 
 				 * let queryDesc know that it is running a query in stages

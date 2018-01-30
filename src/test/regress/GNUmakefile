@@ -26,9 +26,6 @@ PGPORT?=15432
 # where to find psql for testing an existing installation
 PSQLDIR = $(bindir)
 
-# default encoding
-##MULTIBYTE = LATIN1
-
 # maximum simultaneous connections for parallel tests
 MAXCONNOPT =
 ifdef MAX_CONNECTIONS
@@ -138,7 +135,7 @@ installdirs-tests: installdirs
 
 # Get some extra C modules from contrib/spi...
 
-all: refint$(DLSUFFIX) autoinc$(DLSUFFIX) tablespace-setup includecheck hooktest
+all: refint$(DLSUFFIX) autoinc$(DLSUFFIX) tablespace-setup includecheck hooktest query_info_hook_test
 
 refint$(DLSUFFIX): $(top_builddir)/contrib/spi/refint$(DLSUFFIX)
 	cp $< $@
@@ -171,11 +168,15 @@ includecheck:
 hooktest:
 	$(MAKE) -C $< $@
 
+.PHONY: query_info_hook_test
+query_info_hook_test:
+	$(MAKE) -C $< $@
+
 ##
 ## Run tests
 ##
 
-pg_regress_call = ./pg_regress --inputdir=$(srcdir) --dlpath=. --multibyte=$(MULTIBYTE) $(MAXCONNOPT) $(NOLOCALE) --init-file=$(srcdir)/init_file
+pg_regress_call = ./pg_regress --inputdir=$(srcdir) --dlpath=. $(if $(MULTIBYTE),--multibyte=$(MULTIBYTE)) $(MAXCONNOPT) $(NOLOCALE) --init-file=$(srcdir)/init_file
 
 check: all
 	$(pg_regress_call) --temp-install=./tmp_check --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule 
@@ -183,7 +184,7 @@ check: all
 installcheck: all
 	$(pg_regress_call)  --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule 
 
-installcheck-good: all twophase_pqexecparams hooktest
+installcheck-good: all twophase_pqexecparams hooktest query_info_hook_test
 	if [ -z "$(INSTALLCHECK_GOOD_KERBEROS)" ]; then \
 	$(pg_regress_call)  --psqldir=$(PSQLDIR) --schedule=$(srcdir)/parallel_schedule --schedule=$(srcdir)/greenplum_schedule --ao-dir=uao; \
 	else \
@@ -219,6 +220,7 @@ clean distclean maintainer-clean: clean-lib
 # things built by `all' target
 	$(MAKE) -C $(top_builddir)/contrib/spi clean
 	$(MAKE) -C hooktest/ clean
+	$(MAKE) -C query_info_hook_test/ clean
 	rm -f twophase_pqexecparams
 # things created by dynamic configs
 	find sql -type l | xargs rm -f

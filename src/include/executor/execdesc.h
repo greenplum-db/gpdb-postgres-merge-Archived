@@ -132,7 +132,7 @@ typedef struct SliceTable
 	int			nInitPlans;		/* The number of initplan slices allocated */
 	int			localSlice;		/* Index of the slice to execute. */
 	List	   *slices;			/* List of slices */
-	int			instrument_options;		/* OR of InstrumentOption flags */
+	int			instrument_options;	/* OR of InstrumentOption flags */
 	uint32		ic_instance_id;
 } SliceTable;
 

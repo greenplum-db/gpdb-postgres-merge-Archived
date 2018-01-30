@@ -132,6 +132,7 @@
 #include "executor/nodeTableScan.h"
 #include "pg_trace.h"
 #include "tcop/tcopprot.h"
+#include "utils/metrics_utils.h"
 
  /* flags bits for planstate walker */
 #define PSW_IGNORE_INITPLAN    0x01
@@ -800,7 +801,7 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 
 	/* Set up instrumentation for this node if requested */
 	if (estate->es_instrument && result != NULL)
-		result->instrument = InstrAlloc(1, estate->es_instrument);
+		result->instrument = GpInstrAlloc(node, estate->es_instrument);
 
 	/* Also set up gpmon counters */
 	InitPlanNodeGpmonPkt(node, &result->gpmon_pkt, estate);
@@ -887,10 +888,18 @@ ExecProcNode(PlanState *node)
 		ExecReScan(node, NULL); /* let ReScan handle this */
 
 	if (node->instrument)
-		InstrStartNode(node->instrument);
+		INSTR_START_NODE(node->instrument);
 
 	if(!node->fHadSentGpmon)
 		CheckSendPlanStateGpmonPkt(node);
+
+	if(!node->fHadSentNodeStart)
+	{
+		/* GPDB hook for collecting query info */
+		if (query_info_collect_hook)
+			(*query_info_collect_hook)(METRICS_PLAN_NODE_EXECUTING, node);
+		node->fHadSentNodeStart = true;
+	}
 
 	switch (nodeTag(node))
 	{
@@ -1085,7 +1094,7 @@ ExecProcNode(PlanState *node)
 	}
 
 	if (node->instrument)
-		InstrStopNode(node->instrument, TupIsNull(result) ? 0.0 : 1.0);
+		INSTR_STOP_NODE(node->instrument, TupIsNull(result) ? 0 : 1);
 
 	if (node->plan)
 		TRACE_POSTGRESQL_EXECPROCNODE_EXIT(Gp_segment, currentSliceId, nodeTag(node), node->plan->plan_node_id);
@@ -1537,6 +1546,9 @@ ExecEndNode(PlanState *node)
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
 			break;
 	}
+	/* GPDB hook for collecting query info */
+	if (query_info_collect_hook)
+		(*query_info_collect_hook)(METRICS_PLAN_NODE_FINISHED, node);
 
 	estate->currentSliceIdInPlan = origSliceIdInPlan;
 	estate->currentExecutingSliceId = origExecutingSliceId;
