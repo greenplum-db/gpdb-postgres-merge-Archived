@@ -2329,7 +2329,9 @@ create_noop_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath)
 	pathnode->path.total_cost = subpath->total_cost;
 	pathnode->path.pathkeys = subpath->pathkeys;
 	pathnode->subpath = subpath;
-	CdbPathLocus_MakeGeneral(&pathnode->path.locus);
+
+	/* copy the locus from the subpath. */
+	pathnode->path.locus = subpath->locus;
 
 	return pathnode;
 }
