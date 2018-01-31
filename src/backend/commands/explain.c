@@ -749,7 +749,7 @@ report_triggers(ResultRelInfo *rInfo, bool show_relname, ExplainState *es)
 				appendStringInfo(es->str, " for constraint %s", conname);
 			if (show_relname)
 				appendStringInfo(es->str, " on %s", relname);
-			appendStringInfo(es->str, ": time=%.3f calls=%.0f\n",
+			appendStringInfo(es->str, ": time=%.3f calls=%.ld\n",
 							 1000.0 * instr->total, instr->ntuples);
 		}
 		else
