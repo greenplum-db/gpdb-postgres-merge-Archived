@@ -1766,20 +1766,25 @@ cdbexplain_showExecStats(struct PlanState *planstate, ExplainState *es)
 	}
 
 	/*
-	 * Extra message text.
+	 * Extra message text. The text is preformatted in the nodeXXX code into
+	 * TEXT format output, it's a GPDB_90_MERGE_FIXME to transform this into
+	 * something that all formats can consume
 	 */
-	for (i = 0; i < ns->ninst; i++)
+	if (es->format == EXPLAIN_FORMAT_TEXT)
 	{
-		CdbExplain_StatInst *nsi = &ns->insts[i];
-
-		if (nsi->bnotes < nsi->enotes)
+		for (i = 0; i < ns->ninst; i++)
 		{
-			cdbexplain_formatExtraText(str,
-									   indent,
-									   (ns->ninst == 1) ? -1
-									   : ns->segindex0 + i,
-									   ctx->extratextbuf.data + nsi->bnotes,
-									   nsi->enotes - nsi->bnotes);
+			CdbExplain_StatInst *nsi = &ns->insts[i];
+
+			if (nsi->bnotes < nsi->enotes)
+			{
+				cdbexplain_formatExtraText(es->str,
+										   es->indent,
+										   (ns->ninst == 1) ? -1
+										   : ns->segindex0 + i,
+										   ctx->extratextbuf.data + nsi->bnotes,
+										   nsi->enotes - nsi->bnotes);
+			}
 		}
 	}
 
