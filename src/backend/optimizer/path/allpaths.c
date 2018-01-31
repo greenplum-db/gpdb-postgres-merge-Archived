@@ -1897,7 +1897,7 @@ cdb_no_path_for_query(void)
 	}
 	else
 		elog(ERROR, "Could not devise a query plan for the given query.");
-}	/* cdb_no_path_for_query */
+}
 
 
 

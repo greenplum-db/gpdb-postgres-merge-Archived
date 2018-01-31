@@ -848,8 +848,9 @@ ExplainNode(Plan *plan, PlanState *planstate,
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
-		/**
-		 * Estimates will have to be scaled down to be per-segment (except in a few cases).
+		/*
+		 * Estimates will have to be scaled down to be per-segment (except in a
+		 * few cases).
 		 */
 		if ((plan->directDispatch).isDirectDispatch)
 		{
@@ -857,16 +858,19 @@ ExplainNode(Plan *plan, PlanState *planstate,
 		}
 		else if (plan->flow != NULL && CdbPathLocus_IsBottleneck(*(plan->flow)))
 		{
-			/**
-			 * Data is unified in one place (singleQE or QD), or executed on a single segment.
-			 * We scale up estimates to make it global.
-			 * We will later amend this for Motion nodes.
+			/*
+			 * Data is unified in one place (singleQE or QD), or executed on a
+			 * single segment.  We scale up estimates to make it global.  We
+			 * will later amend this for Motion nodes.
 			 */
 			scaleFactor = 1.0;
 		}
 		else
 		{
-			/* the plan node is executed on multiple nodes, so scale down the number of rows seen by each segment */
+			/*
+			 * The plan node is executed on multiple nodes, so scale down the
+			 * number of rows seen by each segment
+			 */
 			scaleFactor = getgpsegmentCount();
 		}
 	}
@@ -1495,9 +1499,8 @@ ExplainNode(Plan *plan, PlanState *planstate,
 			 * hashqualclauses instead of hashclauses.
 			 */
 			List *cond_to_show = hash_join->hashclauses;
-			if (list_length(hash_join->hashqualclauses) > 0) {
+			if (list_length(hash_join->hashqualclauses) > 0)
 				cond_to_show = hash_join->hashqualclauses;
-			}
 
 			show_upper_qual(cond_to_show,
 							"Hash Cond", plan, es);
@@ -1518,14 +1521,9 @@ ExplainNode(Plan *plan, PlanState *planstate,
 			show_windowagg_keys((WindowAggState *) planstate, es);
 			break;
 		case T_TableFunctionScan:
-		{
 			show_scan_qual(plan->qual, "Filter", plan, outer_plan, es);
-
-			/* Partitioning and ordering information */
-
-		}
-		break;
-
+			/* TODO: Partitioning and ordering information */
+			break;
 		case T_Unique:
 			show_motion_keys(plan,
                              NIL,
@@ -1561,19 +1559,15 @@ ExplainNode(Plan *plan, PlanState *planstate,
 
                 /* Descending into a new slice. */
                 if (sliceTable)
-                    es->currentSlice = (Slice *)list_nth(sliceTable->slices,
-                                                         pMotion->motionID);
+                    es->currentSlice = (Slice *) list_nth(sliceTable->slices,
+														  pMotion->motionID);
 			}
 			break;
 		case T_AssertOp:
-			{
-				show_upper_qual(plan->qual, "Assert Cond", plan, es);
-			}
+			show_upper_qual(plan->qual, "Assert Cond", plan, es);
 			break;
 		case T_PartitionSelector:
-			{
-				explain_partition_selector((PartitionSelector *) plan, parentPlan, es);
-			}
+			explain_partition_selector((PartitionSelector *) plan, parentPlan, es);
 			break;
 		default:
 			break;
@@ -2107,8 +2101,9 @@ show_sort_group_keys(PlanState *planstate, const char *qlabel,
 }
 
 /*
- * Explain a partition selector node, including partition elimination expression
- * and number of statically selected partitions, if available.
+ * Explain a partition selector node, including partition elimination
+ * expression and number of statically selected partitions, if available.
+ * GPDB_90_MERGE_FIXME: move to new style and cdbexplain.c
  */
 static void
 explain_partition_selector(PartitionSelector *ps, Plan *parent,

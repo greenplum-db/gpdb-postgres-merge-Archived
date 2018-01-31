@@ -12,6 +12,7 @@
  *
  *-------------------------------------------------------------------------
  */
+
 #include "postgres.h"
 #include "portability/instr_time.h"
 
@@ -76,7 +77,13 @@ typedef enum
  *
  * E.g. sort_method_enum_str[TOP_N_HEAP_SORT-1]
  */
-const char *sort_method_enum_str[] = {TOP_N_HEAP_SORT_STR, QUICK_SORT_STR, EXTERNAL_SORT_STR, EXTERNAL_MERGE_STR, IN_PROGRESS_SORT_STR};
+const char *sort_method_enum_str[] = {
+	TOP_N_HEAP_SORT_STR,
+	QUICK_SORT_STR,
+	EXTERNAL_SORT_STR,
+	EXTERNAL_MERGE_STR,
+	IN_PROGRESS_SORT_STR
+};
 
 /* EXPLAIN ANALYZE statistics for one plan node of a slice */
 typedef struct CdbExplain_StatInst
@@ -310,25 +317,23 @@ typedef struct CdbExplain_LocalStatCtx
 } CdbExplain_LocalStatCtx;
 
 
-static CdbVisitOpt
-			cdbexplain_localStatWalker(PlanState *planstate, void *context);
-static CdbVisitOpt
-			cdbexplain_sendStatWalker(PlanState *planstate, void *context);
-static CdbVisitOpt
-			cdbexplain_recvStatWalker(PlanState *planstate, void *context);
-
+static CdbVisitOpt cdbexplain_localStatWalker(PlanState *planstate,
+											  void *context);
+static CdbVisitOpt cdbexplain_sendStatWalker(PlanState *planstate,
+											 void *context);
+static CdbVisitOpt cdbexplain_recvStatWalker(PlanState *planstate,
+											 void *context);
 static void cdbexplain_collectSliceStats(PlanState *planstate,
-							 CdbExplain_SliceWorker *out_worker);
+										 CdbExplain_SliceWorker *out_worker);
 static void cdbexplain_depositSliceStats(CdbExplain_StatHdr *hdr,
-							 CdbExplain_RecvStatCtx *recvstatctx);
-static void
-			cdbexplain_collectStatsFromNode(PlanState *planstate, CdbExplain_SendStatCtx *ctx);
-static void
-			cdbexplain_depositStatsToNode(PlanState *planstate, CdbExplain_RecvStatCtx *ctx);
-static int
-			cdbexplain_collectExtraText(PlanState *planstate, StringInfo notebuf);
-static int
-			cdbexplain_countLeafPartTables(PlanState *planstate);
+										 CdbExplain_RecvStatCtx *recvstatctx);
+static void cdbexplain_collectStatsFromNode(PlanState *planstate,
+											CdbExplain_SendStatCtx *ctx);
+static void cdbexplain_depositStatsToNode(PlanState *planstate,
+										  CdbExplain_RecvStatCtx *ctx);
+static int cdbexplain_collectExtraText(PlanState *planstate,
+									   StringInfo notebuf);
+static int cdbexplain_countLeafPartTables(PlanState *planstate);
 
 /*
  * Convert the sort method in string to corresponding
@@ -1268,8 +1273,7 @@ cdbexplain_collectExtraText(PlanState *planstate, StringInfo notebuf)
 	 * Append contents of node's extra message buffer.  This allows nodes to
 	 * contribute EXPLAIN ANALYZE info without having to set up a callback.
 	 */
-	if (planstate->cdbexplainbuf &&
-		planstate->cdbexplainbuf->len > 0)
+	if (planstate->cdbexplainbuf && planstate->cdbexplainbuf->len > 0)
 	{
 		/* If callback added to notebuf, make sure text ends with a newline. */
 		if (bnotes < notebuf->len &&
@@ -1909,9 +1913,7 @@ cdbexplain_showExecStats(struct PlanState *planstate,
 	/*
 	 * Dump stats for all workers.
 	 */
-	if (gp_enable_explain_allstat &&
-		ns->segindex0 >= 0 &&
-		ns->ninst > 0)
+	if (gp_enable_explain_allstat && ns->segindex0 >= 0 && ns->ninst > 0)
 	{
 		/*
 		 * create a header for all stats: separate each individual stat by an
