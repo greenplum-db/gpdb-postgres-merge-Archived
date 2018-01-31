@@ -99,6 +99,8 @@ static void ExplainProperty(const char *qlabel, const char *value,
 							bool numeric, ExplainState *es);
 #define ExplainPropertyText(qlabel, value, es)  \
 	ExplainProperty(qlabel, value, false, es)
+static void ExplainPropertyStringInfo(const char *qlabel, ExplainState *es,
+									  const char *fmt,...);
 static void ExplainPropertyInteger(const char *qlabel, int value,
 								   ExplainState *es);
 static void ExplainPropertyLong(const char *qlabel, long value,
@@ -597,12 +599,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainState *es,
 		ExplainProperty("Optimizer", "legacy query optimizer", false, es);
 #ifdef USE_ORCA
 	else
-	{
-		char	orca[NAMEDATALEN];
-
-		snprintf(orca, sizeof(orca), "PQO version %s", false, OptVersion()); 
-		ExplainProperty("Optimizer", orca, es);
-	}
+		ExplainPropertyStringInfo("Optimizer", es, "PQO version %s", OptVersion());
 #endif
 
 	/* We only list the non-default GUCs in verbose mode */
@@ -2227,8 +2224,7 @@ explain_partition_selector(PartitionSelector *ps, Plan *parent,
 		int nPartsSelected = list_length(ps->staticPartOids);
 		int nPartsTotal = countLeafPartTables(ps->relid);
 
-		appendStringInfoSpaces(es->str, es->indent * 2);
-		appendStringInfo(es->str, "  Partitions selected: %d (out of %d)\n", nPartsSelected, nPartsTotal);
+		ExplainPropertyStringInfo("Partitions selected", es, "%d (out of %d)", nPartsSelected, nPartsTotal);
 	}
 }
 
@@ -2599,6 +2595,34 @@ ExplainProperty(const char *qlabel, const char *value, bool numeric,
 			escape_yaml(es->str, value);
 			break;
 	}
+}
+
+static void
+ExplainPropertyStringInfo(const char *qlabel, ExplainState *es, const char *fmt,...)
+{
+	StringInfoData buf;
+
+	initStringInfo(&buf);
+
+	for (;;)
+	{
+		va_list		args;
+		bool		success;
+
+		/* Try to format the data. */
+		va_start(args, fmt);
+		success = appendStringInfoVA(&buf, fmt, args);
+		va_end(args);
+
+		if (success)
+			break;
+
+		/* Double the buffer size and try again. */
+		enlargeStringInfo(&buf, buf.maxlen);
+	}
+
+	ExplainPropertyText(qlabel, buf.data, es);
+	pfree(buf.data);
 }
 
 /*
