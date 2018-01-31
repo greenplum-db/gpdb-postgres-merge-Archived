@@ -1372,7 +1372,7 @@ ExplainNode(Plan *plan, PlanState *planstate,
 				segments = get_dispatch_info(planstate->state->es_sliceTable, pMotion->motionID);
 
 				if (es->format == EXPLAIN_FORMAT_TEXT)
-					appendStringInfo(es->str, " (slice%d; segments: %d)",
+					appendStringInfo(es->str, "  (slice%d; segments: %d)",
 									 pMotion->motionID, segments);
 				else
 				{
@@ -1608,7 +1608,7 @@ ExplainNode(Plan *plan, PlanState *planstate,
 			break;
 	}
 
-    /* CDB: Show actual row count, etc. */
+    /* Show executor statistics */
 	if (planstate->instrument && planstate->instrument->need_cdb)
 		cdbexplain_showExecStats(planstate, es);
 
@@ -2214,9 +2214,7 @@ explain_partition_selector(PartitionSelector *ps, Plan *parent,
 		/* Deparse the expression */
 		exprstr = deparse_expr_sweet(ps->printablePredicate, context, useprefix, false);
 
-		/* And add to str */
-		appendStringInfoSpaces(es->str, es->indent * 2);
-		appendStringInfo(es->str, "  %s: %s\n", "Filter", exprstr);
+		ExplainPropertyText("Filter", exprstr, es);
 	}
 
 	if (ps->staticSelection)
