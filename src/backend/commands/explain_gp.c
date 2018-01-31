@@ -1,36 +1,39 @@
 /*-------------------------------------------------------------------------
  *
- * cdbexplain.c
- *	  Functions supporting the Greenplum EXPLAIN ANALYZE command
+ * explain_gp.c
+ *	  Functions supporting the Greenplum extensions to EXPLAIN ANALYZE
  *
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  *
  *
  * IDENTIFICATION
- *	    src/backend/cdb/cdbexplain.c
+ *	    src/backend/commands/explain_gp.c
  *
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
 #include "portability/instr_time.h"
 
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "cdb/cdbconn.h"		/* SegmentDatabaseDescriptor */
+#include "cdb/cdbdisp.h"                /* CheckDispatchResult() */
 #include "cdb/cdbdispatchresult.h"	/* CdbDispatchResults */
 #include "cdb/cdbexplain.h"		/* me */
 #include "cdb/cdbpartition.h"
+#include "cdb/cdbpathlocus.h"
+#include "cdb/cdbpullup.h"              /* cdbpullup_targetlist() */
+#include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"		/* Gp_segment */
-#include "executor/execUtils.h"
-#include "executor/instrument.h"	/* Instrumentation */
-#include "lib/stringinfo.h"		/* StringInfo */
-#include "libpq/pqformat.h"		/* pq_beginmessage() etc. */
-#include "utils/memutils.h"		/* MemoryContextGetPeakSpace() */
 #include "cdb/memquota.h"
+#include "libpq/pqformat.h"		/* pq_beginmessage() etc. */
+#include "miscadmin.h"
+#include "utils/resscheduler.h"
+#include "utils/memutils.h"		/* MemoryContextGetPeakSpace() */
 #include "utils/vmem_tracker.h"
-#include "parser/parsetree.h"
+
+#include "cdb/cdbexplain.h"             /* cdbexplain_recvExecStats */
 
 #define NUM_SORT_METHOD 5
 

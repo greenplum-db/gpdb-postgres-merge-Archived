@@ -13,6 +13,8 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 
+explain.o: explain_gp.c
+
 OBJS = aggregatecmds.o alter.o analyze.o async.o cluster.o comment.o  \
 	constraint.o conversioncmds.o copy.o \
 	dbcommands.o define.o discard.o explain.o extension.o foreigncmds.o functioncmds.o \

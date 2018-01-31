@@ -39,17 +39,6 @@
 #include "utils/snapmgr.h"
 #include "utils/xml.h"
 
-#include "cdb/cdbdisp.h"                /* CheckDispatchResult() */
-#include "cdb/cdbexplain.h"             /* cdbexplain_recvExecStats */
-#include "cdb/cdbpartition.h"
-#include "cdb/cdbpullup.h"              /* cdbpullup_targetlist() */
-#include "cdb/cdbutil.h"
-#include "cdb/cdbvars.h"
-#include "cdb/cdbpathlocus.h"
-#include "cdb/memquota.h"
-#include "miscadmin.h"
-#include "utils/resscheduler.h"
-
 #ifdef USE_ORCA
 extern char *SzDXLPlan(Query *parse);
 extern const char *OptVersion();
@@ -142,7 +131,8 @@ show_motion_keys(Plan *plan, List *hashExpr, int nkeys, AttrNumber *keycols,
 static void explain_partition_selector(PartitionSelector *ps, Plan *parent,
 						   ExplainState *es);
 
-#include "../cdb/cdbexplain.c"
+/* Include the Greenplum EXPLAIN extensions */
+#include "explain_gp.c"
 
 /*
  * ExplainQuery -
