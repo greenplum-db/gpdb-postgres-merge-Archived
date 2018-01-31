@@ -1477,33 +1477,6 @@ nodeSupportWorkfileCaching(PlanState *planstate)
 }
 
 /*
- * nodeSupportWorkfileCaching
- *	 Prints the sort method and memory used by sort operator.
- */
-static void
-show_cumulative_sort_info(struct StringInfoData *str,
-						  int indent,
-						  const char *sort_method,
-						  const char *sort_space_type,
-						  CdbExplain_Agg *agg)
-{
-	if (agg->vcnt > 0)
-	{
-		if (agg->vcnt > 1)
-		{
-			appendStringInfo(str, "Sort Method:  %s  Max %s: %ldKB  Avg %s: %ldKB (%d segments)\n",
-							 sort_method, sort_space_type, (long) (agg->vmax), sort_space_type, (long) (agg->vsum / agg->vcnt), agg->vcnt);
-			appendStringInfoFill(str, 2 * indent, ' ');
-		}
-		else
-		{
-			appendStringInfo(str, "Sort Method:  %s  %s: %ldKB\n", sort_method, sort_space_type, (long) (agg->vsum));
-			appendStringInfoFill(str, 2 * indent, ' ');
-		}
-	}
-}
-
-/*
  * cdbexplain_showExecStats
  *	  Called by qDisp process to format a node's EXPLAIN ANALYZE statistics.
  *
@@ -1522,11 +1495,8 @@ cdbexplain_showExecStats(struct PlanState *planstate,
 	Instrumentation *instr = planstate->instrument;
 	CdbExplain_NodeSummary *ns = instr->cdbNodeSummary;
 	instr_time	timediff;
-	double		ntuples_avg;
 	int			i;
 
-	const char *s_row = " row";
-	char		firstbuf[50];
 	char		totalbuf[50];
 	char		avgbuf[50];
 	char		maxbuf[50];
@@ -1544,115 +1514,6 @@ cdbexplain_showExecStats(struct PlanState *planstate,
 	{
 		noRowRequested = "(No row requested) ";
 	}
-
-	/*
-	 * Row counts.  Also, timings from the worker with the most output rows.
-	 */
-	appendStringInfoFill(str, 2 * indent, ' ');
-	cdbexplain_formatSeg(segbuf, sizeof(segbuf), ns->ntuples.imax, ns->ninst);
-	ntuples_avg = cdbexplain_agg_avg(&ns->ntuples);
-	switch (planstate->type)
-	{
-		case T_BitmapAndState:
-		case T_BitmapOrState:
-		case T_BitmapIndexScanState:
-		case T_DynamicBitmapIndexScanState:
-			s_row = "";
-			if (ns->ntuples.vcnt > 1)
-				appendStringInfo(str,
-								 "Bitmaps out:  Avg %.1f x %d workers."
-								 "  Max %.0f%s",
-								 ntuples_avg,
-								 ns->ntuples.vcnt,
-								 ns->ntuples.vmax,
-								 segbuf);
-			else
-				appendStringInfo(str,
-								 "Bitmaps out:  %s%.0f%s",
-								 noRowRequested,
-								 ns->ntuples.vmax,
-								 segbuf);
-			break;
-		case T_HashState:
-			if (ns->ntuples.vcnt > 1)
-				appendStringInfo(str,
-								 "Rows in:  Avg %.1f rows x %d workers."
-								 "  Max %.0f rows%s",
-								 ntuples_avg,
-								 ns->ntuples.vcnt,
-								 ns->ntuples.vmax,
-								 segbuf);
-			else
-				appendStringInfo(str,
-								 "Rows in:  %s%.0f rows%s",
-								 noRowRequested,
-								 ns->ntuples.vmax,
-								 segbuf);
-			break;
-		case T_MotionState:
-			if (ns->ntuples.vcnt > 1)
-				appendStringInfo(str,
-								 "Rows out:  Avg %.1f rows x %d workers"
-								 " at destination.  Max %.0f rows%s",
-								 ntuples_avg,
-								 ns->ntuples.vcnt,
-								 ns->ntuples.vmax,
-								 segbuf);
-			else
-				appendStringInfo(str,
-								 "Rows out:  %s%.0f rows at destination%s",
-								 noRowRequested,
-								 ns->ntuples.vmax,
-								 segbuf);
-			break;
-		case T_SortState:
-			for (int idx = 0; idx < NUM_SORT_METHOD; ++idx)
-			{
-				show_cumulative_sort_info(str, indent, sort_method_enum_str[idx], MEMORY_STR_SORT_SPACE_TYPE, &ns->sortSpaceUsed[MEMORY_SORT_SPACE_TYPE - 1][idx]);
-				show_cumulative_sort_info(str, indent, sort_method_enum_str[idx], DISK_STR_SORT_SPACE_TYPE, &ns->sortSpaceUsed[DISK_SORT_SPACE_TYPE - 1][idx]);
-			}
-			/* no break */
-		default:
-			if (ns->ntuples.vcnt > 1)
-				appendStringInfo(str,
-								 "Rows out:  Avg %.1f rows x %d workers."
-								 "  Max %.0f rows%s",
-								 ntuples_avg,
-								 ns->ntuples.vcnt,
-								 ns->ntuples.vmax,
-								 segbuf);
-			else
-				appendStringInfo(str,
-								 "Rows out:  %s%.0f rows%s",
-								 noRowRequested,
-								 ns->ntuples.vmax,
-								 segbuf);
-	}
-
-	/* Time from this worker's first InstrStartNode() to its first result row */
-	cdbexplain_formatSeconds(firstbuf, sizeof(firstbuf), instr->startup);
-
-	/* Time from this worker's first InstrStartNode() to end of its results */
-	cdbexplain_formatSeconds(totalbuf, sizeof(totalbuf), instr->total);
-
-	/*
-	 * Show elapsed time just once if they are the same or if we don't have
-	 * any valid elapsed time for first tuple.
-	 */
-	if ((instr->ntuples > 0) && (strcmp(firstbuf, totalbuf) != 0))
-		appendStringInfo(str,
-						 " with %s to first%s, %s to end",
-						 firstbuf,
-						 s_row,
-						 totalbuf);
-	else
-		appendStringInfo(str,
-						 " with %s to end",
-						 totalbuf);
-
-	/* Number of rescans */
-	if (instr->nloops > 1)
-		appendStringInfo(str, " of %ld scans", instr->nloops);
 
 	/* Time from start of query on qDisp to this worker's first result row */
 	if (!(INSTR_TIME_IS_ZERO(instr->firststart)))

@@ -93,6 +93,7 @@ static void show_scan_qual(List *qual, const char *qlabel,
 static void show_upper_qual(List *qual, const char *qlabel, Plan *plan,
 				ExplainState *es);
 static void show_sort_keys(SortState *sortstate, ExplainState *es);
+static void show_sort_info(SortState *sortstate, ExplainState *es);
 static void show_sort_group_keys(PlanState *planstate, const char *qlabel,
 					 int nkeys, AttrNumber *keycols,
 					 ExplainState *es);
@@ -1375,7 +1376,6 @@ ExplainNode(Plan *plan, PlanState *planstate,
 
 	/* GPDB_90_MERGE_FIXME: In GPDB, these are printed differently. But does that work
 	 * with the new XML/YAML EXPLAIN output */
-#if 0
 	if (planstate->instrument && planstate->instrument->nloops > 0)
 	{
  		double		nloops = planstate->instrument->nloops;
@@ -1409,7 +1409,6 @@ ExplainNode(Plan *plan, PlanState *planstate,
 			ExplainPropertyFloat("Actual Loops", 0.0, 0, es);
 		}
 	}
-#endif
 
 	/* in text format, first line ends here */
 	if (es->format == EXPLAIN_FORMAT_TEXT)
@@ -1515,7 +1514,7 @@ ExplainNode(Plan *plan, PlanState *planstate,
 			show_grouping_keys(plan,
 						       ((Agg *) plan)->numCols,
 						       ((Agg *) plan)->grpColIdx,
-						       "Group By",
+						       "Group Key",
 						       es);
 			break;
 		case T_WindowAgg:
@@ -1530,12 +1529,12 @@ ExplainNode(Plan *plan, PlanState *planstate,
                              NIL,
 						     ((Unique *) plan)->numCols,
 						     ((Unique *) plan)->uniqColIdx,
-						     "Group By",
+						     "Group Key",
 						     es);
 			break;
 		case T_Sort:
 			show_sort_keys((SortState *) planstate, es);
-			//show_sort_info((SortState *) planstate, es);
+			show_sort_info((SortState *) planstate, es);
 			break;
 		case T_Result:
 			show_upper_qual((List *) ((Result *) plan)->resconstantqual,
@@ -1882,6 +1881,81 @@ show_sort_keys(SortState *sortstate, ExplainState *es)
 	show_sort_group_keys((PlanState *) sortstate, SortKeystr,
 						 plan->numCols, plan->sortColIdx,
 						 es);
+}
+
+/*
+ * If it's EXPLAIN ANALYZE, show tuplesort stats for a sort node
+ *
+ * GPDB_90_MERGE_FIXME: The sort statistics are stored quite differently from
+ * upstream, it would be nice to rewrite this to avoid looping over all the
+ * sort methods and instead have a _get_stats() function as in upstream.
+ */
+static void
+show_sort_info(SortState *sortstate, ExplainState *es)
+{
+	CdbExplain_NodeSummary *ns;
+	int			i;
+
+	if (!es->analyze)
+		return;
+
+	ns = ((PlanState *) sortstate)->instrument->cdbNodeSummary;
+	for (i = 0; i < NUM_SORT_METHOD; i++)
+	{
+		CdbExplain_Agg	*agg;
+		const char *sortMethod;
+		const char *spaceType;
+
+		sortMethod = sort_method_enum_str[i];
+
+		/*
+		 * Memory and disk usage statistics are saved separately in GPDB so
+		 * need to pull out the one in question first
+		 */
+		spaceType = "Memory";
+		agg = &ns->sortSpaceUsed[MEMORY_SORT_SPACE_TYPE - 1][i];
+		if (agg->vcnt > 0)
+			spaceType = "Memory";
+		else
+		{
+			spaceType = "Disk";
+			agg = &ns->sortSpaceUsed[DISK_SORT_SPACE_TYPE - 1][i];
+		}
+
+		/*
+		 * If the current sort method in question hasn't been used, skip to
+		 * next one
+		 */
+		if (agg->vcnt  == 0)
+			continue;
+
+		if (es->format == EXPLAIN_FORMAT_TEXT)
+		{
+			appendStringInfoSpaces(es->str, es->indent * 2);
+			appendStringInfo(es->str, "Sort Method:  %s  %s: %ldkB",
+				sortMethod, spaceType, (long) agg->vsum);
+			if (es->verbose)
+			{
+				appendStringInfo(es->str, "  Max Memory: %ldkB  Avg Memory: %ldkb (%d segments)",
+								 (long) agg->vmax,
+								 (long) (agg->vsum / agg->vcnt),
+								 agg->vcnt);
+			}
+			appendStringInfo(es->str, "\n");
+		}
+		else
+		{
+			ExplainPropertyText("Sort Method", sortMethod, es);
+			ExplainPropertyLong("Sort Space Used", (long) agg->vsum, es);
+			ExplainPropertyText("Sort Space Type", spaceType, es);
+			if (es->verbose)
+			{
+				ExplainPropertyLong("Sort Max Segment Memory", (long) agg->vmax, es);
+				ExplainPropertyLong("Sort Avg Segment Memory", (long) (agg->vsum / agg->vcnt), es);
+				ExplainPropertyInteger("Sort Segments", agg->vcnt, es);
+			}
+		}
+	}
 }
 
 static void
