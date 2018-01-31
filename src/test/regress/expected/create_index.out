@@ -122,16 +122,15 @@ SELECT * FROM fast_emp4000
                                 QUERY PLAN                                
 --------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-     Merge Key: ((home_base[0])[0])
+   Merge Key: ((home_base[0])[0])
    ->  Sort
          Sort Key: ((home_base[0])[0])
          ->  Bitmap Heap Scan on fast_emp4000
                Recheck Cond: home_base @ '(2000,1000),(200,200)'::box
                ->  Bitmap Index Scan on grect2ind
                      Index Cond: home_base @ '(2000,1000),(200,200)'::box
- Settings:  enable_bitmapscan=on; enable_indexscan=on; enable_seqscan=off
- Optimizer status: legacy query optimizer
-(10 rows)
+ Optimizer: legacy query optimizer
+(9 rows)
 
 SELECT * FROM fast_emp4000
     WHERE home_base @ '(200,200),(2000,1000)'::box
@@ -153,9 +152,8 @@ SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
                      Recheck Cond: home_base && '(1000,1000),(0,0)'::box
                      ->  Bitmap Index Scan on grect2ind
                            Index Cond: home_base && '(1000,1000),(0,0)'::box
- Settings:  enable_bitmapscan=on; enable_indexscan=on; enable_seqscan=off
- Optimizer status: legacy query optimizer
-(9 rows)
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
  count 
@@ -165,8 +163,8 @@ SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
-                                QUERY PLAN                                
---------------------------------------------------------------------------
+                       QUERY PLAN                        
+---------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
@@ -174,9 +172,8 @@ SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
                      Recheck Cond: home_base IS NULL
                      ->  Bitmap Index Scan on grect2ind
                            Index Cond: home_base IS NULL
- Settings:  enable_bitmapscan=on; enable_indexscan=on; enable_seqscan=off
- Optimizer status: legacy query optimizer
-(9 rows)
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
  count 
@@ -187,17 +184,16 @@ SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
 EXPLAIN (COSTS OFF)
 SELECT * FROM polygon_tbl WHERE f1 ~ '((1,1),(2,2),(2,1))'::polygon
     ORDER BY (poly_center(f1))[0];
-                                QUERY PLAN                                
---------------------------------------------------------------------------
+                          QUERY PLAN                           
+---------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-     Merge Key: ((poly_center(f1))[0])
+   Merge Key: ((poly_center(f1))[0])
    ->  Sort
          Sort Key: ((poly_center(f1))[0])
          ->  Index Scan using gpolygonind on polygon_tbl
                Index Cond: f1 ~ '((1,1),(2,2),(2,1))'::polygon
- Settings:  enable_bitmapscan=on; enable_indexscan=on; enable_seqscan=off
- Optimizer status: legacy query optimizer
-(8 rows)
+ Optimizer: legacy query optimizer
+(7 rows)
 
 SELECT * FROM polygon_tbl WHERE f1 ~ '((1,1),(2,2),(2,1))'::polygon
     ORDER BY (poly_center(f1))[0];
@@ -209,17 +205,16 @@ SELECT * FROM polygon_tbl WHERE f1 ~ '((1,1),(2,2),(2,1))'::polygon
 EXPLAIN (COSTS OFF)
 SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
     ORDER BY area(f1);
-                                QUERY PLAN                                
---------------------------------------------------------------------------
+                      QUERY PLAN                       
+-------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-     Merge Key: (area(f1))
+   Merge Key: (area(f1))
    ->  Sort
          Sort Key: (area(f1))
          ->  Index Scan using gcircleind on circle_tbl
                Index Cond: f1 && '<(1,-2),1>'::circle
- Settings:  enable_bitmapscan=on; enable_indexscan=on; enable_seqscan=off
- Optimizer status: legacy query optimizer
-(8 rows)
+ Optimizer: legacy query optimizer
+(7 rows)
 
 SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
     ORDER BY area(f1);
@@ -242,9 +237,8 @@ SELECT count(*) FROM gpolygon_tbl WHERE f1 && '(1000,1000,0,0)'::polygon;
                      Recheck Cond: f1 && '((1000,1000),(0,0))'::polygon
                      ->  Bitmap Index Scan on ggpolygonind
                            Index Cond: f1 && '((1000,1000),(0,0))'::polygon
- Settings:  enable_bitmapscan=on; enable_indexscan=on; enable_seqscan=off
- Optimizer status: legacy query optimizer
-(9 rows)
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM gpolygon_tbl WHERE f1 && '(1000,1000,0,0)'::polygon;
  count 
@@ -254,8 +248,8 @@ SELECT count(*) FROM gpolygon_tbl WHERE f1 && '(1000,1000,0,0)'::polygon;
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM gcircle_tbl WHERE f1 && '<(500,500),500>'::circle;
-                                QUERY PLAN                                
---------------------------------------------------------------------------
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
@@ -263,9 +257,8 @@ SELECT count(*) FROM gcircle_tbl WHERE f1 && '<(500,500),500>'::circle;
                      Recheck Cond: f1 && '<(500,500),500>'::circle
                      ->  Bitmap Index Scan on ggcircleind
                            Index Cond: f1 && '<(500,500),500>'::circle
- Settings:  enable_bitmapscan=on; enable_indexscan=on; enable_seqscan=off
- Optimizer status: legacy query optimizer
-(9 rows)
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM gcircle_tbl WHERE f1 && '<(500,500),500>'::circle;
  count 
