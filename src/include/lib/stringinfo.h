@@ -140,12 +140,6 @@ extern void appendStringInfoChar(StringInfo str, char ch);
 extern void appendStringInfoSpaces(StringInfo str, int count);
 
 /*------------------------
- * appendStringInfoFill
- * Append a single byte, repeated 0 or more times, to str.
- */
-extern void appendStringInfoFill(StringInfo str, int occurrences, char ch);
-
-/*------------------------
  * appendBinaryStringInfo
  * Append arbitrary binary data to a StringInfo, allocating more space
  * if necessary.

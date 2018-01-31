@@ -1022,7 +1022,7 @@ MemoryAccountToString(MemoryAccountTree *memoryAccountTreeNode, void *context, u
 
 	MemoryAccountSerializerCxt *memAccountCxt = (MemoryAccountSerializerCxt*) context;
 
-	appendStringInfoFill(memAccountCxt->buffer, 2 * depth, ' ');
+	appendStringInfoSpaces(memAccountCxt->buffer, 2 * depth);
 
 	Assert(memoryAccount->peak >= MemoryAccounting_GetBalance(memoryAccount));
 	/* We print only integer valued memory consumption, in standard GPDB KB unit */

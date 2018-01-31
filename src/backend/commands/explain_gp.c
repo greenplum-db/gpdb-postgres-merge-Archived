@@ -1332,7 +1332,7 @@ cdbexplain_formatExtraText(StringInfo str,
 		/* Add to output buffer. */
 		if (cp < dp)
 		{
-			appendStringInfoFill(str, 2 * indent, ' ');
+			appendStringInfoSpaces(str, indent * 2);
 			if (segindex >= 0)
 			{
 				appendStringInfo(str, "(seg%d) ", segindex);
@@ -1546,7 +1546,7 @@ cdbexplain_showExecStats(struct PlanState *planstate, ExplainState *es)
 
 		for (int iWorker = 0; iWorker < ctx->slices[curSliceId].nworker; iWorker++)
 		{
-			appendStringInfoFill(es->str, 2 * es->indent, ' ');
+			appendStringInfoSpaces(es->str, es->indent * 2);
 			appendStringInfo(es->str, "slice %d, seg %d\n", curSliceId, iWorker);
 
 			MemoryAccounting_CombinedAccountArrayToString(ctx->slices[curSliceId].memoryAccounts[iWorker],
@@ -1623,7 +1623,7 @@ cdbexplain_showExecStats(struct PlanState *planstate, ExplainState *es)
 		/*
 		 * Memory account balance without overhead
 		 */
-		appendStringInfoFill(es->str, 2 * es->indent, ' ');
+		appendStringInfoSpaces(es->str, es->indent * 2);
 		cdbexplain_formatMemory(maxbuf, sizeof(maxbuf), ns->peakMemBalance.vmax);
 		if (ns->peakMemBalance.vcnt == 1)
 		{
@@ -1648,7 +1648,7 @@ cdbexplain_showExecStats(struct PlanState *planstate, ExplainState *es)
 	 */
 	if (es->analyze && es->verbose && ns->workmemwanted.vcnt > 0)
 	{
-		appendStringInfoFill(es->str, 2 * es->indent, ' ');
+		appendStringInfoSpaces(es->str, es->indent * 2);
 		cdbexplain_formatMemory(maxbuf, sizeof(maxbuf), ns->workmemwanted.vmax);
 		if (ns->ninst == 1)
 		{
@@ -1697,7 +1697,7 @@ cdbexplain_showExecStats(struct PlanState *planstate, ExplainState *es)
 			{
 				int			numTotalLeafParts = cdbexplain_countLeafPartTables(planstate);
 
-				appendStringInfoFill(es->str, 2 * es->indent, ' ');
+				appendStringInfoSpaces(es->str, es->indent * 2);
 				appendStringInfo(es->str,
 								 "Partitions scanned:  0 (out of %d).\n",
 								 numTotalLeafParts);
@@ -1708,7 +1708,7 @@ cdbexplain_showExecStats(struct PlanState *planstate, ExplainState *es)
 			cdbexplain_formatSeg(segbuf, sizeof(segbuf), ns->totalPartTableScanned.imax, ns->ninst);
 			int			numTotalLeafParts = cdbexplain_countLeafPartTables(planstate);
 
-			appendStringInfoFill(es->str, 2 * es->indent, ' ');
+			appendStringInfoSpaces(es->str, es->indent * 2);
 
 			/* only 1 segment scans partitions */
 			if (1 == ns->totalPartTableScanned.vcnt)
@@ -1800,7 +1800,7 @@ cdbexplain_showExecStats(struct PlanState *planstate, ExplainState *es)
 		 * create a header for all stats: separate each individual stat by an
 		 * underscore, separate the grouped stats for each node by a slash
 		 */
-		appendStringInfoFill(es->str, 2 * es->indent, ' ');
+		appendStringInfoSpaces(es->str, es->indent * 2);
 		appendStringInfoString(es->str,
 							   "allstat: "
 
