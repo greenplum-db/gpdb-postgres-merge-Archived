@@ -780,39 +780,42 @@ elapsed_time(instr_time *starttime)
 	return INSTR_TIME_GET_DOUBLE(endtime);
 }
 
-
-static void
-appendGangAndDirectDispatchInfo(StringInfo str, SliceTable *sliceTable, int sliceId)
+static int
+get_dispatch_info(SliceTable *sliceTable, int sliceId)
 {
-	Slice *slice = (Slice *)list_nth(sliceTable->slices, sliceId);
+	Slice  *slice = (Slice *) list_nth(sliceTable->slices, sliceId);
+	int		segments;
 
 	switch (slice->gangType)
 	{
 		case GANGTYPE_UNALLOCATED:
 		case GANGTYPE_ENTRYDB_READER:
-			appendStringInfo(str, "  (slice%d)", sliceId);
+			segments = 0;
 			break;
 
 		case GANGTYPE_PRIMARY_WRITER:
 		case GANGTYPE_PRIMARY_READER:
 		case GANGTYPE_SINGLETON_READER:
 		{
-			int numSegments;
-			appendStringInfo(str, "  (slice%d;", sliceId);
-
 			if (slice->directDispatch.isDirectDispatch)
 			{
-				Assert( list_length(slice->directDispatch.contentIds) == 1);
-				numSegments = list_length(slice->directDispatch.contentIds);
+				Assert(list_length(slice->directDispatch.contentIds) == 1);
+				segments = list_length(slice->directDispatch.contentIds);
 			}
 			else
 			{
-				numSegments = slice->numGangMembersToBeActive;
+				segments = slice->numGangMembersToBeActive;
 			}
-			appendStringInfo(str, " segments: %d)", numSegments);
 			break;
 		}
+
+		default:
+			segments = 0;		/* keep compiler happy */
+			Assert(false);
+			break;
 	}
+
+	return segments;
 }
 
 /*
