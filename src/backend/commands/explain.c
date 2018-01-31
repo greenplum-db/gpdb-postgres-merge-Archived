@@ -119,20 +119,6 @@ static void ExplainYAMLLineStarting(ExplainState *es);
 static void escape_json(StringInfo buf, const char *str);
 static void escape_yaml(StringInfo buf, const char *str);
 
-static void
-show_grouping_keys(Plan        *plan,
-                   int          numCols,
-                   AttrNumber  *subplanColIdx,
-                   const char  *qlabel,
-			       ExplainState *es);
-static void
-show_motion_keys(Plan *plan, List *hashExpr, int nkeys, AttrNumber *keycols,
-			     const char *qlabel,
-                 ExplainState *es);
-
-static void explain_partition_selector(PartitionSelector *ps, Plan *parent,
-						   ExplainState *es);
-
 /* Include the Greenplum EXPLAIN extensions */
 #include "explain_gp.c"
 
@@ -2008,144 +1994,6 @@ show_windowagg_keys(WindowAggState *waggstate, ExplainState *es)
 
 
 /*
- * CDB: Show GROUP BY keys for an Agg or Group node.
- * GPDB_94_MERGE_FIXME: Replace with show_sort_group_keys()
- */
-static void
-show_grouping_keys(Plan *plan, int nkeys, AttrNumber *subplanColIdx,
-                   const char *qlabel, ExplainState *es)
-{
-    Plan       *subplan = plan->lefttree;
-    List	   *context;
-	List	   *result = NIL;
-    char	   *exprstr;
-    bool		useprefix = list_length(es->rtable) > 1;
-    int			keyno;
-	int         num_null_cols = 0;
-	int         rollup_gs_times = 0;
-
-    if (nkeys <= 0)
-		return;
-
-    Node *outerPlan = (Node *) outerPlan(subplan);
-
-	/*
-	 * Dig the child nodes of the subplan. This logic should match that in
-	 * push_plan function, in ruleutils.c!
-	 */
-	if (IsA(subplan, Append))
-		outerPlan = linitial(((Append *) subplan)->appendplans);
-	else if (IsA(subplan, Sequence))
-		outerPlan = (Node *) llast(((Sequence *) subplan)->subplans);
-
-	/* Set up deparse context */
-	context = deparse_context_for_plan((Node *) subplan,
-									   outerPlan,
-									   es->rtable,
-									   es->pstmt->subplans);
-
-	if (IsA(plan, Agg))
-	{
-		num_null_cols = ((Agg*)plan)->numNullCols;
-		rollup_gs_times = ((Agg*)plan)->rollupGSTimes;
-	}
-
-    for (keyno = 0; keyno < nkeys - num_null_cols; keyno++)
-    {
-	    /* find key expression in tlist */
-	    AttrNumber      keyresno = subplanColIdx[keyno];
-	    TargetEntry    *target = get_tle_by_resno(subplan->targetlist, keyresno);
-		char grping_str[50];
-
-	    if (!target)
-		    elog(ERROR, "no tlist entry for key %d", keyresno);
-
-		if (IsA(target->expr, Grouping))
-		{
-			sprintf(grping_str, "grouping");
-			/* Append "grouping" explicitly. */
-			exprstr = grping_str;
-		}
-		else if (IsA(target->expr, GroupId))
-		{
-			sprintf(grping_str, "groupid");
-			/* Append "groupid" explicitly. */
-			exprstr = grping_str;
-		}
-		else
-			/* Deparse the expression, showing any top-level cast */
-			exprstr = deparse_expr_sweet((Node *) target->expr, context,
-										 useprefix, true);
-
-		result = lappend(result, exprstr);
-    }
-
-	ExplainPropertyList(qlabel, result, es);
-
-	/*
-	 * GPDB_90_MERGE_FIXME: handle rollup times printing
-	 * if (rollup_gs_times > 1)
-	 *	appendStringInfo(es->str, " (%d times)", rollup_gs_times);
-	 */
-}                               /* show_grouping_keys */
-
-/*
- * CDB: Show the hash and merge keys for a Motion node.
- * GPDB_90_MERGE_FIXME: move to cdbexplain.c
- */
-void
-show_motion_keys(Plan *plan, List *hashExpr, int nkeys, AttrNumber *keycols,
-			     const char *qlabel, ExplainState *es)
-{
-	List	   *context;
-	char	   *exprstr;
-	bool		useprefix = list_length(es->rtable) > 1;
-	int			keyno;
-	List	   *result = NIL;
-
-	if (!nkeys && !hashExpr)
-		return;
-
-	/* Set up deparse context */
-	context = deparse_context_for_plan((Node *) plan,
-									   (Node *) outerPlan(plan),
-									   es->rtable,
-									   es->pstmt->subplans);
-
-    /* Merge Receive ordering key */
-    for (keyno = 0; keyno < nkeys; keyno++)
-    {
-	    /* find key expression in tlist */
-	    AttrNumber	keyresno = keycols[keyno];
-	    TargetEntry *target = get_tle_by_resno(plan->targetlist, keyresno);
-
-	    /* Deparse the expression, showing any top-level cast */
-	    if (target)
-	        exprstr = deparse_expr_sweet((Node *) target->expr, context,
-								         useprefix, true);
-        else
-        {
-            elog(WARNING, "Gather Motion %s error: no tlist item %d",
-                 qlabel, keyresno);
-            exprstr = "*BOGUS*";
-        }
-
-		result = lappend(result, exprstr);
-    }
-
-	if (list_length(result) > 0)
-		ExplainPropertyList(qlabel, result, es);
-
-    /* Hashed repartitioning key */
-    if (hashExpr)
-    {
-	    /* Deparse the expression */
-	    exprstr = deparse_expr_sweet((Node *)hashExpr, context, useprefix, true);
-		ExplainPropertyText("Hash Key", exprstr, es);
-    }
-}
-
-/*
  * Common code to show sort/group keys, which are represented in plan nodes
  * as arrays of targetlist indexes
  */
@@ -2187,43 +2035,6 @@ show_sort_group_keys(PlanState *planstate, const char *qlabel,
 	}
 
 	ExplainPropertyList(qlabel, result, es);
-}
-
-/*
- * Explain a partition selector node, including partition elimination
- * expression and number of statically selected partitions, if available.
- * GPDB_90_MERGE_FIXME: move to new style and cdbexplain.c
- */
-static void
-explain_partition_selector(PartitionSelector *ps, Plan *parent,
-						   ExplainState *es)
-{
-	if (ps->printablePredicate)
-	{
-		List	   *context;
-		bool		useprefix;
-		char	   *exprstr;
-
-		/* Set up deparsing context */
-		context = deparse_context_for_plan((Node *) parent,
-										   (Node *) outerPlan(parent),
-										   es->rtable,
-										   es->pstmt->subplans);
-		useprefix = list_length(es->rtable) > 1;
-
-		/* Deparse the expression */
-		exprstr = deparse_expr_sweet(ps->printablePredicate, context, useprefix, false);
-
-		ExplainPropertyText("Filter", exprstr, es);
-	}
-
-	if (ps->staticSelection)
-	{
-		int nPartsSelected = list_length(ps->staticPartOids);
-		int nPartsTotal = countLeafPartTables(ps->relid);
-
-		ExplainPropertyStringInfo("Partitions selected", es, "%d (out of %d)", nPartsSelected, nPartsTotal);
-	}
 }
 
 /*
