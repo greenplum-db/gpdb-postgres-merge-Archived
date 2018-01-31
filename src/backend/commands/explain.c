@@ -141,6 +141,7 @@ show_motion_keys(Plan *plan, List *hashExpr, int nkeys, AttrNumber *keycols,
 static void explain_partition_selector(PartitionSelector *ps, Plan *parent,
 						   ExplainState *es);
 
+#include "../cdb/cdbexplain.c"
 
 /*
  * ExplainQuery -
