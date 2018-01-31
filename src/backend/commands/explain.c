@@ -595,7 +595,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainState *es,
      */
     if (es->analyze)
         cdbexplain_showExecStatsEnd(queryDesc->plannedstmt, queryDesc->showstatctx,
-									es->str, queryDesc->estate);
+									es->str, queryDesc->estate, es);
 
     /*
      * Show non-default GUC settings that might have affected the plan.
@@ -1575,12 +1575,7 @@ ExplainNode(Plan *plan, PlanState *planstate,
 
     /* CDB: Show actual row count, etc. */
 	if (planstate->instrument && planstate->instrument->need_cdb)
-	{
-        cdbexplain_showExecStats(planstate,
-                                 es->str,
-                                 es->indent + 1,
-                                 es->showstatctx);
-	}
+		cdbexplain_showExecStats(planstate, es);
 
 	/* Show buffer usage */
 	if (es->buffers)
