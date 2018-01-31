@@ -2022,27 +2022,23 @@ show_windowagg_keys(WindowAggState *waggstate, ExplainState *es)
 
 /*
  * CDB: Show GROUP BY keys for an Agg or Group node.
+ * GPDB_94_MERGE_FIXME: Replace with show_sort_group_keys()
  */
-void
-show_grouping_keys(Plan        *plan,
-                   int          numCols,
-                   AttrNumber  *subplanColIdx,
-                   const char  *qlabel,
-			       ExplainState *es)
+static void
+show_grouping_keys(Plan *plan, int nkeys, AttrNumber *subplanColIdx,
+                   const char *qlabel, ExplainState *es)
 {
     Plan       *subplan = plan->lefttree;
     List	   *context;
+	List	   *result = NIL;
     char	   *exprstr;
     bool		useprefix = list_length(es->rtable) > 1;
     int			keyno;
 	int         num_null_cols = 0;
 	int         rollup_gs_times = 0;
 
-    if (numCols <= 0)
+    if (nkeys <= 0)
 		return;
-
-	appendStringInfoSpaces(es->str, es->indent * 2);
-    appendStringInfo(es->str, "  %s: ", qlabel);
 
     Node *outerPlan = (Node *) outerPlan(subplan);
 
@@ -2067,7 +2063,7 @@ show_grouping_keys(Plan        *plan,
 		rollup_gs_times = ((Agg*)plan)->rollupGSTimes;
 	}
 
-    for (keyno = 0; keyno < numCols - num_null_cols; keyno++)
+    for (keyno = 0; keyno < nkeys - num_null_cols; keyno++)
     {
 	    /* find key expression in tlist */
 	    AttrNumber      keyresno = subplanColIdx[keyno];
@@ -2083,43 +2079,42 @@ show_grouping_keys(Plan        *plan,
 			/* Append "grouping" explicitly. */
 			exprstr = grping_str;
 		}
-
 		else if (IsA(target->expr, GroupId))
 		{
 			sprintf(grping_str, "groupid");
 			/* Append "groupid" explicitly. */
 			exprstr = grping_str;
 		}
-
 		else
 			/* Deparse the expression, showing any top-level cast */
 			exprstr = deparse_expr_sweet((Node *) target->expr, context,
 										 useprefix, true);
 
-		/* And add to str */
-		if (keyno > 0)
-			appendStringInfoString(es->str, ", ");
-		appendStringInfoString(es->str, exprstr);
+		result = lappend(result, exprstr);
     }
 
-	if (rollup_gs_times > 1)
-		appendStringInfo(es->str, " (%d times)", rollup_gs_times);
+	ExplainPropertyList(qlabel, result, es);
 
-    appendStringInfoChar(es->str, '\n');
+	/*
+	 * GPDB_90_MERGE_FIXME: handle rollup times printing
+	 * if (rollup_gs_times > 1)
+	 *	appendStringInfo(es->str, " (%d times)", rollup_gs_times);
+	 */
 }                               /* show_grouping_keys */
 
 /*
  * CDB: Show the hash and merge keys for a Motion node.
+ * GPDB_90_MERGE_FIXME: move to cdbexplain.c
  */
 void
 show_motion_keys(Plan *plan, List *hashExpr, int nkeys, AttrNumber *keycols,
-			     const char *qlabel,
-                 ExplainState *es)
+			     const char *qlabel, ExplainState *es)
 {
 	List	   *context;
 	char	   *exprstr;
 	bool		useprefix = list_length(es->rtable) > 1;
 	int			keyno;
+	List	   *result = NIL;
 
 	if (!nkeys && !hashExpr)
 		return;
@@ -2131,48 +2126,37 @@ show_motion_keys(Plan *plan, List *hashExpr, int nkeys, AttrNumber *keycols,
 									   es->pstmt->subplans);
 
     /* Merge Receive ordering key */
-    if (nkeys > 0)
+    for (keyno = 0; keyno < nkeys; keyno++)
     {
-		appendStringInfoSpaces(es->str, es->indent * 2);
-        appendStringInfo(es->str, "  %s: ", qlabel);
+	    /* find key expression in tlist */
+	    AttrNumber	keyresno = keycols[keyno];
+	    TargetEntry *target = get_tle_by_resno(plan->targetlist, keyresno);
 
-	    for (keyno = 0; keyno < nkeys; keyno++)
-	    {
-		    /* find key expression in tlist */
-		    AttrNumber	keyresno = keycols[keyno];
-		    TargetEntry *target = get_tle_by_resno(plan->targetlist, keyresno);
+	    /* Deparse the expression, showing any top-level cast */
+	    if (target)
+	        exprstr = deparse_expr_sweet((Node *) target->expr, context,
+								         useprefix, true);
+        else
+        {
+            elog(WARNING, "Gather Motion %s error: no tlist item %d",
+                 qlabel, keyresno);
+            exprstr = "*BOGUS*";
+        }
 
-		    /* Deparse the expression, showing any top-level cast */
-		    if (target)
-		        exprstr = deparse_expr_sweet((Node *) target->expr, context,
-									         useprefix, true);
-            else
-            {
-                elog(WARNING, "Gather Motion %s error: no tlist item %d",
-                     qlabel, keyresno);
-                exprstr = "*BOGUS*";
-            }
-
-		    /* And add to str */
-		    if (keyno > 0)
-			    appendStringInfoString(es->str, ", ");
-		    appendStringInfoString(es->str, exprstr);
-	    }
-
-	    appendStringInfoChar(es->str, '\n');
+		result = lappend(result, exprstr);
     }
+
+	if (list_length(result) > 0)
+		ExplainPropertyList(qlabel, result, es);
 
     /* Hashed repartitioning key */
     if (hashExpr)
     {
 	    /* Deparse the expression */
 	    exprstr = deparse_expr_sweet((Node *)hashExpr, context, useprefix, true);
-
-	    /* And add to str */
-		appendStringInfoSpaces(es->str, es->indent * 2);
-	    appendStringInfo(es->str, "  %s: %s\n", "Hash Key", exprstr);
+		ExplainPropertyText("Hash Key", exprstr, es);
     }
-}                               /* show_motion_keys */
+}
 
 /*
  * Common code to show sort/group keys, which are represented in plan nodes
