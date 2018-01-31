@@ -1880,7 +1880,7 @@ recurse_push_qual(Node *setOp, Query *topquery,
  * Raise error when the set of allowable paths for a query is empty.
  * Does not return.
  */
-void
+static void
 cdb_no_path_for_query(void)
 {
 	char	   *settings;

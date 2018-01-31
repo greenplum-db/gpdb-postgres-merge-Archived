@@ -1239,7 +1239,7 @@ ExecHashTableExplainInit(HashState *hashState, HashJoinState *hjstate,
  * ExecHashTableExplainEnd
  *      Called before ExecutorEnd to finish EXPLAIN ANALYZE reporting.
  */
-void
+static void
 ExecHashTableExplainEnd(PlanState *planstate, struct StringInfoData *buf)
 {
     HashJoinState      *hjstate = (HashJoinState *)planstate;
@@ -1366,7 +1366,7 @@ ExecHashTableExplainEnd(PlanState *planstate, struct StringInfoData *buf)
  * ExecHashTableExplainBatches
  *      Report summary of EXPLAIN ANALYZE stats for a set of batches.
  */
-void
+static void
 ExecHashTableExplainBatches(HashJoinTable   hashtable,
                             StringInfo      buf,
                             int             ibatch_begin,

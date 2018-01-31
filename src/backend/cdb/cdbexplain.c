@@ -1257,7 +1257,7 @@ cdbexplain_depositStatsToNode(PlanState *planstate, CdbExplain_RecvStatCtx *ctx)
  * The caller can compute the length as notebuf->len minus the starting offset.
  * If the node did not provide any extra message text, the length will be 0.
  */
-int
+static int
 cdbexplain_collectExtraText(PlanState *planstate, StringInfo notebuf)
 {
 	int			bnotes = notebuf->len;
