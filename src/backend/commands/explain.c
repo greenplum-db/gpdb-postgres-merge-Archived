@@ -2444,6 +2444,7 @@ ExplainSubPlans(List *plans, const char *relationship, ExplainState *es, SliceTa
 {
 	ListCell   *lst;
 	Slice      *saved_slice = es->currentSlice;
+	int			segments;
 
 	foreach(lst, plans)
 	{
@@ -2455,7 +2456,17 @@ ExplainSubPlans(List *plans, const char *relationship, ExplainState *es, SliceTa
 		{
 			es->currentSlice = (Slice *)list_nth(sliceTable->slices,
 												 sp->qDispSliceId);
-			appendGangAndDirectDispatchInfo(es->str, sliceTable, sp->qDispSliceId );
+
+			segments = get_dispatch_info(sliceTable, sp->qDispSliceId);
+
+			if (es->format == EXPLAIN_FORMAT_TEXT)
+				appendStringInfo(es->str, " (slice%d; segments: %d)",
+								 sp->qDispSliceId, segments);
+			else
+			{
+				ExplainPropertyInteger("Slice", sp->qDispSliceId, es);
+				ExplainPropertyInteger("Segments", segments, es);
+			}
 		}
 		else
 		{
