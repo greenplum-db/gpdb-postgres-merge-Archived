@@ -850,6 +850,8 @@ ExplainNode(Plan *plan, PlanState *planstate,
 	bool		haschildren;
 	bool		skip_outer=false;
 	char       *skip_outer_msg = NULL;
+	int			motion_recv;
+	int			motion_snd;
 	float		scaleFactor = 1.0; /* we will divide planner estimates by this factor to produce
 									  per-segment estimates */
 
@@ -1077,41 +1079,41 @@ ExplainNode(Plan *plan, PlanState *planstate,
 				Motion	   *pMotion = (Motion *) plan;
 				SliceTable *sliceTable = planstate->state->es_sliceTable;
 				Slice	   *slice = (Slice *) list_nth(sliceTable->slices, pMotion->motionID);
-				int         nSenders = slice->numGangMembersToBeActive;
-				int         nReceivers = 0;
-				const char *motionTypeStr;
+
+				motion_snd = slice->numGangMembersToBeActive;
+				motion_recv = 0;
 
 				/* scale the number of rows by the number of segments sending data */
-				scaleFactor = nSenders;
+				scaleFactor = motion_snd;
 
 				switch (((Motion *) plan)->motionType)
 				{
 					case MOTIONTYPE_HASH:
-						motionTypeStr = "Redistribute";
-						nReceivers = pMotion->numOutputSegs;
+						sname = "Redistribute Motion";
+						motion_recv = pMotion->numOutputSegs;
 						break;
 					case MOTIONTYPE_FIXED:
-						nReceivers = pMotion->numOutputSegs;
-						if (nReceivers == 0)
+						motion_recv = pMotion->numOutputSegs;
+						if (motion_recv == 0)
 						{
-							motionTypeStr = "Broadcast";
-							nReceivers = getgpsegmentCount();
+							sname = "Broadcast Motion";
+							motion_recv = getgpsegmentCount();
 						}
 						else
 						{
-							motionTypeStr = "Gather";
+							sname = "Gather Motion";
 							scaleFactor = 1;
 						}
 						break;
 					case MOTIONTYPE_EXPLICIT:
-						motionTypeStr = "Explicit Redistribute";
-						nReceivers = getgpsegmentCount();
+						sname = "Explicit Redistribute Motion";
+						motion_recv = getgpsegmentCount();
 						break;
 					default:
-						motionTypeStr = "???";
+						sname = "???";
+						break;
 				}
-				pname = sname = psprintf("%s Motion %d:%d",
-										 motionTypeStr, nSenders, nReceivers);
+				pname = psprintf("%s %d:%d", sname, motion_snd, motion_recv);
 			}
 			break;
 		case T_DML:
@@ -1174,6 +1176,11 @@ ExplainNode(Plan *plan, PlanState *planstate,
 	else
 	{
 		ExplainPropertyText("Node Type", sname, es);
+		if (nodeTag(plan) == T_Motion)
+		{
+			ExplainPropertyInteger("Senders", motion_snd, es);
+			ExplainPropertyInteger("Receivers", motion_recv, es);
+		}
 		if (strategy)
 			ExplainPropertyText("Strategy", strategy, es);
 		if (operation)
@@ -1333,26 +1340,58 @@ ExplainNode(Plan *plan, PlanState *planstate,
 		case T_ShareInputScan:
 			{
 				ShareInputScan *sisc = (ShareInputScan *) plan;
-				appendStringInfo(es->str, "(share slice:id %d:%d)",
-						currentSlice ? currentSlice->sliceIndex : -1, sisc->share_id);
+				int				slice_id = -1;
+
+				if (currentSlice)
+					slice_id = currentSlice->sliceIndex;
+
+				if (es->format == EXPLAIN_FORMAT_TEXT)
+					appendStringInfo(es->str, "(share slice:id %d:%d)",
+									 slice_id, sisc->share_id);
+				else
+				{
+					ExplainPropertyInteger("Share ID", sisc->share_id, es);
+					ExplainPropertyInteger("Slice ID", slice_id, es);
+				}
 			}
 			break;
 		case T_PartitionSelector:
 			{
-				PartitionSelector *ps = (PartitionSelector *)plan;
-				char *relname = get_rel_name(ps->relid);
-				appendStringInfo(es->str, " for %s", quote_identifier(relname));
-				if (0 != ps->scanId)
+				PartitionSelector  *ps = (PartitionSelector *)plan;
+				char			   *relname = get_rel_name(ps->relid);
+
+				if (es->format == EXPLAIN_FORMAT_TEXT)
 				{
-					appendStringInfo(es->str, " (dynamic scan id: %d)", ps->scanId);
+					if (ps->scanId != 0)
+						appendStringInfo(es->str, " for %s (dynamic scan id: %d)",
+										 quote_identifier(relname),
+										 ps->scanId);
+					else
+						appendStringInfo(es->str, " for %s", quote_identifier(relname));
+				}
+				else
+				{
+					ExplainPropertyText("Relation", relname, es);
+					if (ps->scanId != 0)
+						ExplainPropertyInteger("Dynamic Scan Id", ps->scanId, es);
 				}
 			}
 			break;
 		case T_Motion:
 			{
 				Motion	   *pMotion = (Motion *) plan;
+				int 		segments;
 
-				appendGangAndDirectDispatchInfo(es->str, planstate->state->es_sliceTable, pMotion->motionID);
+				segments = get_dispatch_info(planstate->state->es_sliceTable, pMotion->motionID);
+
+				if (es->format == EXPLAIN_FORMAT_TEXT)
+					appendStringInfo(es->str, " (slice%d; segments: %d)",
+									 pMotion->motionID, segments);
+				else
+				{
+					ExplainPropertyInteger("Slice", pMotion->motionID, es);
+					ExplainPropertyInteger("Segments", segments, es);
+				}
 			}
 			break;
 		default:
