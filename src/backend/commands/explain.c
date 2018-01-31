@@ -848,6 +848,8 @@ ExplainNode(Plan *plan, PlanState *planstate,
 	parentPlan = es->parentPlan;
 	es->parentPlan = plan;
 
+	Assert(plan);
+
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		/*
@@ -876,8 +878,6 @@ ExplainNode(Plan *plan, PlanState *planstate,
 			scaleFactor = getgpsegmentCount();
 		}
 	}
-
-	Assert(plan);
 
 	switch (nodeTag(plan))
 	{
