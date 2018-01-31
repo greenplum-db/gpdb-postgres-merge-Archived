@@ -3199,21 +3199,17 @@ gp_guc_list_init(void)
 /*
  * gp_guc_list_show
  *
- * Given a list of GUCs (a List of struct config_generic), construct a
- * human-readable string of the option names and current values, skipping
+ * Given a list of GUCs (a List of struct config_generic), construct a list
+ * of human-readable strings of the option names and current values, skipping
  * any whose source <= 'excluding'.
- *
- * The result is a palloc'd string. If no options match, returns an
- * empty string.
  */
-char *
+List *
 gp_guc_list_show(GucSource excluding, List *guclist)
 {
+	List	   *options = NIL;
 	ListCell   *cell;
 	char	   *value;
-	StringInfoData buf;
-
-	initStringInfo(&buf);
+	char	 	buf[NAMEDATALEN];
 
 	foreach(cell, guclist)
 	{
@@ -3221,16 +3217,17 @@ gp_guc_list_show(GucSource excluding, List *guclist)
 
 		if (gconf->source > excluding)
         {
-			if (buf.len > 0)
-				appendStringInfoString(&buf, "; ");
             value = _ShowOption(gconf, true);
-            appendStringInfo(&buf, "%s=%s", gconf->name, value);
+			snprintf(buf, sizeof(buf), "%s=%s", gconf->name, value);
+			options = lappend(options, pstrdup(buf));
+
+			memset(&buf, '\0', sizeof(buf));
             pfree(value);
         }
 	}
 
-	return buf.data;
-}                               /* gp_guc_list_show */
+	return options;
+}
 
 
 /*

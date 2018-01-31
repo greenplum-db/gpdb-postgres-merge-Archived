@@ -598,29 +598,35 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainState *es,
 									es->str, queryDesc->estate, es);
 
     /*
-     * Show non-default GUC settings that might have affected the plan.
+	 * Show non-default GUC settings that might have affected the plan as well
+	 * as optimizer settings etc.
      */
-	{
-		char	   *settings;
-
-		settings = gp_guc_list_show(PGC_S_DEFAULT, gp_guc_list_for_explain);
-		if (*settings)
-			appendStringInfo(es->str, "Settings:  %s\n", settings);
-		pfree(settings);
-	}
-
-    /* Display optimizer status: either 'legacy query optimizer' or Orca version number */
-	appendStringInfo(es->str, "Optimizer status: ");
+	ExplainOpenGroup("Settings", "Settings", true, es);
+	
 	if (queryDesc->plannedstmt->planGen == PLANGEN_PLANNER)
-	{
-		appendStringInfo(es->str, "legacy query optimizer\n");
-	}
+		ExplainProperty("Optimizer", "legacy query optimizer", false, es);
 #ifdef USE_ORCA
-	else /* PLANGEN_OPTIMIZER */
+	else
 	{
-		appendStringInfo(es->str, "PQO version %s\n", OptVersion());
+		char	orca[NAMEDATALEN];
+
+		snprintf(orca, sizeof(orca), "PQO version %s", false, OptVersion()); 
+		ExplainProperty("Optimizer", orca, es);
 	}
 #endif
+
+	/* We only list the non-default GUCs in verbose mode */
+	if (es->verbose)
+	{
+		List	*settings;
+
+		settings = gp_guc_list_show(PGC_S_DEFAULT, gp_guc_list_for_explain);
+
+		if (list_length(settings) > 0)
+			ExplainPropertyList("Settings", settings, es);
+	}
+
+	ExplainCloseGroup("Settings", "Settings", true, es);
 
 	/*
 	 * Close down the query and free resources.  Include time for this in the
