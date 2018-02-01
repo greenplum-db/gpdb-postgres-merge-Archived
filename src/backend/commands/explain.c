@@ -753,11 +753,16 @@ elapsed_time(instr_time *starttime)
 	return INSTR_TIME_GET_DOUBLE(endtime);
 }
 
-static int
-get_dispatch_info(SliceTable *sliceTable, int sliceId)
+static void
+show_dispatch_info(Slice *slice, ExplainState *es)
 {
-	Slice  *slice = (Slice *) list_nth(sliceTable->slices, sliceId);
-	int		segments;
+	int			segments;
+
+	/*
+	 * In non-parallel query, there is no slice information.
+	 */
+	if (!slice)
+		return;
 
 	switch (slice->gangType)
 	{
@@ -788,7 +793,19 @@ get_dispatch_info(SliceTable *sliceTable, int sliceId)
 			break;
 	}
 
-	return segments;
+	if (es->format == EXPLAIN_FORMAT_TEXT)
+	{
+		if (segments == 0)
+			appendStringInfo(es->str, "  (slice%d)", slice->sliceIndex);
+		else
+			appendStringInfo(es->str, "  (slice%d; segments: %d)",
+							 slice->sliceIndex, segments);
+	}
+	else
+	{
+		ExplainPropertyInteger("Slice", slice->sliceIndex, es);
+		ExplainPropertyInteger("Segments", segments, es);
+	}
 }
 
 /*
@@ -814,7 +831,7 @@ ExplainNode(Plan *plan, PlanState *planstate,
 			ExplainState *es)
 {
 	Plan	   *parentPlan;
-    Slice      *currentSlice = es->currentSlice;    /* save */
+    Slice      *save_currentSlice = es->currentSlice;    /* save */
 	const char *pname;			/* node type name for text output */
 	const char *sname;			/* node type name for non-text output */
 	const char *strategy = NULL;
@@ -861,6 +878,19 @@ ExplainNode(Plan *plan, PlanState *planstate,
 			 */
 			scaleFactor = getgpsegmentCount();
 		}
+	}
+
+	/*
+	 * If this is a Motion node, we're descending into a new slice.
+	 */
+	if (IsA(plan, Motion))
+	{
+		Motion	   *pMotion = (Motion *) plan;
+		SliceTable *sliceTable = planstate->state->es_sliceTable;
+
+		if (sliceTable)
+			es->currentSlice = (Slice *) list_nth(sliceTable->slices,
+												  pMotion->motionID);
 	}
 
 	switch (nodeTag(plan))
@@ -1050,16 +1080,14 @@ ExplainNode(Plan *plan, PlanState *planstate,
 		case T_Motion:
 			{
 				Motion	   *pMotion = (Motion *) plan;
-				SliceTable *sliceTable = planstate->state->es_sliceTable;
-				Slice	   *slice = (Slice *) list_nth(sliceTable->slices, pMotion->motionID);
 
-				motion_snd = slice->numGangMembersToBeActive;
+				motion_snd = es->currentSlice->numGangMembersToBeActive;
 				motion_recv = 0;
 
 				/* scale the number of rows by the number of segments sending data */
 				scaleFactor = motion_snd;
 
-				switch (((Motion *) plan)->motionType)
+				switch (pMotion->motionType)
 				{
 					case MOTIONTYPE_HASH:
 						sname = "Redistribute Motion";
@@ -1134,7 +1162,17 @@ ExplainNode(Plan *plan, PlanState *planstate,
 		if (plan_name)
 		{
 			appendStringInfoSpaces(es->str, es->indent * 2);
-			appendStringInfo(es->str, "%s\n", plan_name);
+			appendStringInfo(es->str, "%s", plan_name);
+
+			/*
+			 * Show slice information after the plan name.
+			 *
+			 * Note: If the top node was a Motion node, we print the slice
+			 * *above* the Motion here. We will print the slice below the
+			 * Motion, below.
+			 */
+			show_dispatch_info(save_currentSlice, es);
+			appendStringInfoChar(es->str, '\n');
 			es->indent++;
 		}
 		if (es->indent)
@@ -1144,6 +1182,16 @@ ExplainNode(Plan *plan, PlanState *planstate,
 			es->indent += 2;
 		}
 		appendStringInfoString(es->str, pname);
+
+		/*
+		 * Print information about the current slice. In order to not make
+		 * the output too verbose, only print it at the slice boundaries,
+		 * ie. at Motion nodes. (We already switched the "current slice"
+		 * to the slice below the Motion.)
+		 */
+		if (IsA(plan, Motion))
+			show_dispatch_info(es->currentSlice, es);
+
 		es->indent++;
 	}
 	else
@@ -1162,6 +1210,8 @@ ExplainNode(Plan *plan, PlanState *planstate,
 			ExplainPropertyText("Parent Relationship", relationship, es);
 		if (plan_name)
 			ExplainPropertyText("Subplan Name", plan_name, es);
+
+		show_dispatch_info(es->currentSlice, es);
 	}
 
 	switch (nodeTag(plan))
@@ -1315,8 +1365,8 @@ ExplainNode(Plan *plan, PlanState *planstate,
 				ShareInputScan *sisc = (ShareInputScan *) plan;
 				int				slice_id = -1;
 
-				if (currentSlice)
-					slice_id = currentSlice->sliceIndex;
+				if (es->currentSlice)
+					slice_id = es->currentSlice->sliceIndex;
 
 				if (es->format == EXPLAIN_FORMAT_TEXT)
 					appendStringInfo(es->str, "(share slice:id %d:%d)",
@@ -1347,23 +1397,6 @@ ExplainNode(Plan *plan, PlanState *planstate,
 					ExplainPropertyText("Relation", relname, es);
 					if (ps->scanId != 0)
 						ExplainPropertyInteger("Dynamic Scan Id", ps->scanId, es);
-				}
-			}
-			break;
-		case T_Motion:
-			{
-				Motion	   *pMotion = (Motion *) plan;
-				int 		segments;
-
-				segments = get_dispatch_info(planstate->state->es_sliceTable, pMotion->motionID);
-
-				if (es->format == EXPLAIN_FORMAT_TEXT)
-					appendStringInfo(es->str, "  (slice%d; segments: %d)",
-									 pMotion->motionID, segments);
-				else
-				{
-					ExplainPropertyInteger("Slice", pMotion->motionID, es);
-					ExplainPropertyInteger("Segments", segments, es);
 				}
 			}
 			break;
@@ -1568,7 +1601,6 @@ ExplainNode(Plan *plan, PlanState *planstate,
 		case T_Motion:
 			{
 				Motion	   *pMotion = (Motion *) plan;
-                SliceTable *sliceTable = planstate->state->es_sliceTable;
 
 				if (pMotion->sendSorted || pMotion->motionType == MOTIONTYPE_HASH)
 					show_motion_keys(plan,
@@ -1577,11 +1609,6 @@ ExplainNode(Plan *plan, PlanState *planstate,
 							pMotion->sortColIdx,
 							"Merge Key",
 							es);
-
-                /* Descending into a new slice. */
-                if (sliceTable)
-                    es->currentSlice = (Slice *) list_nth(sliceTable->slices,
-														  pMotion->motionID);
 			}
 			break;
 		case T_AssertOp:
@@ -1775,6 +1802,8 @@ ExplainNode(Plan *plan, PlanState *planstate,
 	ExplainCloseGroup("Plan",
 					  relationship ? NULL : "Plan",
 					  true, es);
+
+	es->currentSlice = save_currentSlice;
 }
 
 /*
@@ -2239,7 +2268,6 @@ ExplainSubPlans(List *plans, const char *relationship, ExplainState *es, SliceTa
 {
 	ListCell   *lst;
 	Slice      *saved_slice = es->currentSlice;
-	int			segments;
 
 	foreach(lst, plans)
 	{
@@ -2251,25 +2279,6 @@ ExplainSubPlans(List *plans, const char *relationship, ExplainState *es, SliceTa
 		{
 			es->currentSlice = (Slice *)list_nth(sliceTable->slices,
 												 sp->qDispSliceId);
-
-			segments = get_dispatch_info(sliceTable, sp->qDispSliceId);
-
-			if (es->format == EXPLAIN_FORMAT_TEXT)
-				appendStringInfo(es->str, " (slice%d; segments: %d)",
-								 sp->qDispSliceId, segments);
-			else
-			{
-				ExplainPropertyInteger("Slice", sp->qDispSliceId, es);
-				ExplainPropertyInteger("Segments", segments, es);
-			}
-		}
-		else
-		{
-			/*
-			 * CDB TODO: In non-parallel query, all qDispSliceId's are 0.
-			 * Should fill them in properly before ExecutorStart(), but
-			 * for now, just omit the slice id.
-			 */
 		}
 
 		ExplainNode(exec_subplan_get_plan(es->pstmt, sp),
