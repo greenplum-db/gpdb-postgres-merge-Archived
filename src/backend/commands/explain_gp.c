@@ -474,7 +474,7 @@ cdbexplain_localExecStats(struct PlanState *planstate,
 /*
  * cdbexplain_localStatWalker
  */
-CdbVisitOpt
+static CdbVisitOpt
 cdbexplain_localStatWalker(PlanState *planstate, void *context)
 {
 	CdbExplain_LocalStatCtx *ctx = (CdbExplain_LocalStatCtx *) context;
@@ -594,7 +594,7 @@ cdbexplain_sendExecStats(QueryDesc *queryDesc)
 /*
  * cdbexplain_sendStatWalker
  */
-CdbVisitOpt
+static CdbVisitOpt
 cdbexplain_sendStatWalker(PlanState *planstate, void *context)
 {
 	CdbExplain_SendStatCtx *ctx = (CdbExplain_SendStatCtx *) context;
@@ -784,7 +784,7 @@ cdbexplain_recvExecStats(struct PlanState *planstate,
  *	  received from qExecs.  Attach a CdbExplain_NodeSummary block to
  *	  the Instrument node.  At a MotionState node, descend to child slice.
  */
-CdbVisitOpt
+static CdbVisitOpt
 cdbexplain_recvStatWalker(PlanState *planstate, void *context)
 {
 	CdbExplain_RecvStatCtx *ctx = (CdbExplain_RecvStatCtx *) context;
