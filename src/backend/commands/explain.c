@@ -573,7 +573,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainState *es,
      */
     if (es->analyze)
         cdbexplain_showExecStatsEnd(queryDesc->plannedstmt, queryDesc->showstatctx,
-									es->str, queryDesc->estate, es);
+									queryDesc->estate, es);
 
     /*
 	 * Show non-default GUC settings that might have affected the plan as well

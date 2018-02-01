@@ -326,7 +326,6 @@ typedef struct CdbExplain_LocalStatCtx
 static void
 cdbexplain_showExecStatsEnd(struct PlannedStmt *stmt,
 							struct CdbExplain_ShowStatCtx  *showstatctx,
-                            struct StringInfoData          *str,
                             struct EState                  *estate,
 							ExplainState *es);
 
@@ -1856,7 +1855,6 @@ cdbexplain_showExecStats(struct PlanState *planstate, ExplainState *es)
  *		cdbexplain_showExecStatsBegin() and contains statistics which have
  *		been accumulated over a series of calls to cdbexplain_showExecStats().
  *		Invalid on return (it is freed).
- * 'str' is the output buffer.
  *
  * This doesn't free the CdbExplain_ShowStatCtx object or buffers, because
  * they will be free'd shortly by the end of statement anyway.
@@ -1864,7 +1862,6 @@ cdbexplain_showExecStats(struct PlanState *planstate, ExplainState *es)
 static void
 cdbexplain_showExecStatsEnd(struct PlannedStmt *stmt,
 							struct CdbExplain_ShowStatCtx *showstatctx,
-							struct StringInfoData *str,
 							struct EState *estate,
 							ExplainState *es)
 {
@@ -1888,12 +1885,12 @@ cdbexplain_showExecStatsEnd(struct PlannedStmt *stmt,
 		CdbExplain_SliceSummary *ss = &showstatctx->slices[sliceIndex];
 		CdbExplain_DispatchSummary *ds = &ss->dispatchSummary;
 
-		appendStringInfo(str, "  (slice%d) ", sliceIndex);
+		appendStringInfo(es->str, "  (slice%d) ", sliceIndex);
 		if (sliceIndex < 10)
-			appendStringInfoChar(str, ' ');
+			appendStringInfoChar(es->str, ' ');
 
-		flag = str->len;
-		appendStringInfoString(str, "  ");
+		flag = es->str->len;
+		appendStringInfoString(es->str, "  ");
 
 		/* Worker counts */
 		slice = getCurrentSlice(estate, sliceIndex);
@@ -1903,47 +1900,47 @@ cdbexplain_showExecStatsEnd(struct PlannedStmt *stmt,
 		{
 			int			nNotDispatched = slice->numGangMembersToBeActive - ds->nResult + ds->nNotDispatched;
 
-			str->data[flag] = (ss->dispatchSummary.nError > 0) ? 'X' : '_';
+			es->str->data[flag] = (ss->dispatchSummary.nError > 0) ? 'X' : '_';
 
-			appendStringInfoString(str, "Workers:");
+			appendStringInfoString(es->str, "Workers:");
 			if (ds->nError == 1)
 			{
-				appendStringInfo(str,
+				appendStringInfo(es->str,
 								 " %d error;",
 								 ds->nError);
 			}
 			else if (ds->nError > 1)
 			{
-				appendStringInfo(str,
+				appendStringInfo(es->str,
 								 " %d errors;",
 								 ds->nError);
 			}
 			if (ds->nCanceled > 0)
 			{
-				appendStringInfo(str,
+				appendStringInfo(es->str,
 								 " %d canceled;",
 								 ds->nCanceled);
 			}
 			if (nNotDispatched > 0)
 			{
-				appendStringInfo(str,
+				appendStringInfo(es->str,
 								 " %d not dispatched;",
 								 nNotDispatched);
 			}
 			if (ds->nIgnorableError > 0)
 			{
-				appendStringInfo(str,
+				appendStringInfo(es->str,
 								 " %d aborted;",
 								 ds->nIgnorableError);
 			}
 			if (ds->nOk > 0)
 			{
-				appendStringInfo(str,
+				appendStringInfo(es->str,
 								 " %d ok;",
 								 ds->nOk);
 			}
-			str->len--;
-			appendStringInfoString(str, ".  ");
+			es->str->len--;
+			appendStringInfoString(es->str, ".  ");
 		}
 
 		/* Executor memory high-water mark */
@@ -1965,7 +1962,7 @@ cdbexplain_showExecStatsEnd(struct PlannedStmt *stmt,
 			{
 				seg = "";
 			}
-			appendStringInfo(str,
+			appendStringInfo(es->str,
 							 "Executor memory: %s%s.",
 							 maxbuf,
 							 seg);
@@ -1974,7 +1971,7 @@ cdbexplain_showExecStatsEnd(struct PlannedStmt *stmt,
 		{
 			cdbexplain_formatMemory(avgbuf, sizeof(avgbuf), cdbexplain_agg_avg(&ss->peakmemused));
 			cdbexplain_formatSeg(segbuf, sizeof(segbuf), ss->peakmemused.imax, ss->nworker);
-			appendStringInfo(str,
+			appendStringInfo(es->str,
 							 "Executor memory: %s avg x %d workers, %s max%s.",
 							 avgbuf,
 							 ss->peakmemused.vcnt,
@@ -2005,7 +2002,7 @@ cdbexplain_showExecStatsEnd(struct PlannedStmt *stmt,
 				{
 					seg = "";
 				}
-				appendStringInfo(str,
+				appendStringInfo(es->str,
 								 "  Peak memory: %s%s.",
 								 maxbuf,
 								 seg);
@@ -2017,7 +2014,7 @@ cdbexplain_showExecStatsEnd(struct PlannedStmt *stmt,
 				kilobytes = floor((kilobytes + 1023.0) / 1024.0);
 				cdbexplain_formatMemory(avgbuf, sizeof(avgbuf), kilobytes);
 				cdbexplain_formatSeg(segbuf, sizeof(segbuf), ss->memory_accounting_global_peak.imax, ss->nworker);
-				appendStringInfo(str,
+				appendStringInfo(es->str,
 								 "  Peak memory: %s avg x %d workers, %s max%s.",
 								 avgbuf,
 								 ss->memory_accounting_global_peak.vcnt,
@@ -2047,7 +2044,7 @@ cdbexplain_showExecStatsEnd(struct PlannedStmt *stmt,
 				{
 					seg = "";
 				}
-				appendStringInfo(str,
+				appendStringInfo(es->str,
 								 "  Vmem reserved: %s%s.",
 								 maxbuf,
 								 seg);
@@ -2056,7 +2053,7 @@ cdbexplain_showExecStatsEnd(struct PlannedStmt *stmt,
 			{
 				cdbexplain_formatMemory(avgbuf, sizeof(avgbuf), cdbexplain_agg_avg(&ss->vmem_reserved));
 				cdbexplain_formatSeg(segbuf, sizeof(segbuf), ss->vmem_reserved.imax, ss->nworker);
-				appendStringInfo(str,
+				appendStringInfo(es->str,
 								 "  Vmem reserved: %s avg x %d workers, %s max%s.",
 								 avgbuf,
 								 ss->vmem_reserved.vcnt,
@@ -2069,23 +2066,23 @@ cdbexplain_showExecStatsEnd(struct PlannedStmt *stmt,
 		if (ss->workmemused_max + ss->workmemwanted_max > 0)
 		{
 			cdbexplain_formatMemory(maxbuf, sizeof(maxbuf), ss->workmemused_max);
-			appendStringInfo(str, "  Work_mem: %s max", maxbuf);
+			appendStringInfo(es->str, "  Work_mem: %s max", maxbuf);
 			if (ss->workmemwanted_max > 0)
 			{
-				str->data[flag] = '*';	/* draw attention to this slice */
+				es->str->data[flag] = '*';	/* draw attention to this slice */
 				cdbexplain_formatMemory(maxbuf, sizeof(maxbuf), ss->workmemwanted_max);
-				appendStringInfo(str, ", %s wanted", maxbuf);
+				appendStringInfo(es->str, ", %s wanted", maxbuf);
 			}
-			appendStringInfoChar(str, '.');
+			appendStringInfoChar(es->str, '.');
 		}
 
-		appendStringInfoChar(str, '\n');
+		appendStringInfoChar(es->str, '\n');
 	}
 
 
 	if (total_memory_across_slices > 0)
 	{
-		appendStringInfo(str, "Total memory used across slices: %.0fK bytes \n", total_memory_across_slices);
+		appendStringInfo(es->str, "Total memory used across slices: %.0fK bytes \n", total_memory_across_slices);
 	}
 
 	ExplainCloseGroup("Slice statistics", "Slice statistics", true, es);
