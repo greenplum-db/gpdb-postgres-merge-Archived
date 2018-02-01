@@ -548,26 +548,31 @@ MemoryAccounting_SaveToLog()
 }
 
 /*
- * Get string output of the current Optimizer Memory account. This is used only in
+ * Get memory information of the current Optimizer Memory account for EXPLAIN
  */
-void
-MemoryAccounting_ExplainAppendCurrentOptimizerAccountInfo(StringInfoData *str)
+MemoryAccountExplain *
+MemoryAccounting_ExplainCurrentOptimizerAccountInfo(void)
 {
+	MemoryAccountIdType		shortLivingCount = shortLivingMemoryAccountArray->accountCount;
+	MemoryAccountIdType		shortLivingArrayIdx;
+	MemoryAccountExplain   *exp = NULL;
 
-	MemoryAccountIdType shortLivingCount = shortLivingMemoryAccountArray->accountCount;
-
-	for (MemoryAccountIdType shortLivingArrayIdx = 0; shortLivingArrayIdx < shortLivingCount; ++shortLivingArrayIdx)
+	for (shortLivingArrayIdx = 0; shortLivingArrayIdx < shortLivingCount; ++shortLivingArrayIdx)
 	{
 		MemoryAccount *shortLivingAccount = shortLivingMemoryAccountArray->allAccounts[shortLivingArrayIdx];
 		if (shortLivingAccount->ownerType == MEMORY_OWNER_TYPE_Optimizer)
 		{
-			appendStringInfo(str, "\n  ORCA Memory used: peak %.0fK bytes  allocated %.0fK bytes  freed %.0fK bytes ",
-							 ceil((double) shortLivingAccount->peak / 1024L),
-							 ceil((double) shortLivingAccount->allocated / 1024L),
-							 ceil((double) shortLivingAccount->freed / 1024L));
+			exp = palloc(sizeof(MemoryAccountExplain));
+
+			exp->peak = ceil((double) shortLivingAccount->peak / 1024L);
+			exp->allocated = ceil((double) shortLivingAccount->allocated / 1024L);
+			exp->freed = ceil((double) shortLivingAccount->freed / 1024L);
+
 			break;
 		}
 	}
+
+	return exp;
 }
 
 /*****************************************************************************

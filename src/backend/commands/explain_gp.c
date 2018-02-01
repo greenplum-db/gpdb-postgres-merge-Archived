@@ -30,6 +30,7 @@
 #include "libpq/pqformat.h"		/* pq_beginmessage() etc. */
 #include "miscadmin.h"
 #include "utils/resscheduler.h"
+#include "utils/memaccounting.h"
 #include "utils/memutils.h"		/* MemoryContextGetPeakSpace() */
 #include "utils/vmem_tracker.h"
 
@@ -2099,7 +2100,24 @@ cdbexplain_showExecStatsEnd(struct PlannedStmt *stmt,
 
 		if (optimizer && explain_memory_verbosity == EXPLAIN_MEMORY_VERBOSITY_SUMMARY)
 		{
-			MemoryAccounting_ExplainAppendCurrentOptimizerAccountInfo(str);
+			MemoryAccountExplain *acct = MemoryAccounting_ExplainCurrentOptimizerAccountInfo();
+
+			if (es->format == EXPLAIN_FORMAT_TEXT)
+			{
+				appendStringInfo(es->str, "ORCA Memory used: peak %ldkB  allocated %ldkB  freed %ldkB",
+								 ceil((double) acct->peak / 1024L),
+								 ceil((double) acct->allocated / 1024L),
+								 ceil((double) acct->freed / 1024L));
+			}
+			else
+			{
+				ExplainPropertyLong("ORCA Memory Used Peak",
+									ceil((double) acct->peak / 1024L), es);
+				ExplainPropertyLong("ORCA Memory Used Allocated",
+									ceil((double) acct->allocated / 1024L), es);
+				ExplainPropertyLong("ORCA Memory Used Freed",
+									ceil((double) acct->freed / 1024L), es);
+			}
 		}
 
 		if (showstatctx->workmemwanted_max > 0)
