@@ -1546,8 +1546,6 @@ cdbexplain_showExecStats(struct PlanState *planstate, ExplainState *es)
 		appendStringInfo(es->str, ", start offset by %s", startbuf);
 	}
 
-	appendStringInfoString(es->str, ".\n");
-
 	if ((EXPLAIN_MEMORY_VERBOSITY_DETAIL <= explain_memory_verbosity)
 		&& planstate->type == T_MotionState)
 	{
