@@ -23,7 +23,7 @@ BEGIN
 END;
 $$ LANGUAGE 'plpgsql';
 SELECT * FROM write_lots_of_files(20);
- write_lots_of_files
+ write_lots_of_files 
 ---------------------
  Insert 20 files
 (1 row)
