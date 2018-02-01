@@ -2092,7 +2092,11 @@ cdbexplain_showExecStatsEnd(struct PlannedStmt *stmt,
 	if (!IsResManagerMemoryPolicyNone())
 	{
 		ExplainOpenGroup("Statement statistics", "Statement statistics", true, es);
-		appendStringInfo(str, "  Memory used: %.0fK bytes", ceil((double) stmt->query_mem / 1024.0));
+		if (es->format == EXPLAIN_FORMAT_TEXT)
+			appendStringInfo(es->str, "Memory used:  %ldkB\n", (long) kb(stmt->query_mem));
+		else
+			ExplainPropertyLong("Memory used", (long) kb(stmt->query_mem), es);
+
 		if (optimizer && explain_memory_verbosity == EXPLAIN_MEMORY_VERBOSITY_SUMMARY)
 		{
 			MemoryAccounting_ExplainAppendCurrentOptimizerAccountInfo(str);
@@ -2100,8 +2104,15 @@ cdbexplain_showExecStatsEnd(struct PlannedStmt *stmt,
 
 		if (showstatctx->workmemwanted_max > 0)
 		{
-			appendStringInfo(str, "\n  Memory wanted: %.0fK bytes",
-							 (double) PolicyAutoStatementMemForNoSpillKB(stmt, (uint64) showstatctx->workmemwanted_max / 1024L));
+			long mem_wanted;
+
+			mem_wanted = (long) PolicyAutoStatementMemForNoSpillKB(stmt,
+							(uint64) showstatctx->workmemwanted_max / 1024L);
+
+			if (es->format == EXPLAIN_FORMAT_TEXT)
+				appendStringInfo(es->str, "Memory wanted:  %ldkB\n", mem_wanted);
+			else
+				ExplainPropertyLong("Memory wanted", mem_wanted, es);
 		}
 
 		ExplainCloseGroup("Statement statistics", "Statement statistics", true, es);
