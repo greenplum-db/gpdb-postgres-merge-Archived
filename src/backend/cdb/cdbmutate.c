@@ -37,11 +37,13 @@
 
 #include "commands/tablecmds.h"
 #include "commands/tablespace.h"
+#include "commands/trigger.h"
 #include "catalog/catalog.h"
 #include "catalog/gp_policy.h"
 #include "catalog/pg_type.h"
 
 #include "catalog/pg_proc.h"
+#include "catalog/pg_trigger.h"
 
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbhash.h"		/* isGreenplumDbHashable() */
@@ -50,6 +52,7 @@
 #include "cdb/cdbpartition.h"
 #include "cdb/cdbplan.h"
 #include "cdb/cdbpullup.h"
+#include "cdb/cdbsetop.h"
 #include "cdb/cdbvars.h"
 #include "cdb/cdbtargeteddispatch.h"
 
@@ -1113,6 +1116,375 @@ request_explicit_motion(Plan *plan, Index resultRelationsIdx, List *rtable)
 	plan->flow->segidColIdx = segidColIdx;
 }
 
+typedef struct
+{
+	plan_tree_base_prefix	base;	/* Required prefix for
+									 * plan_tree_walker/mutator */
+
+	List					*absent_vars;
+	Index					result_relation_idx;
+	bool					found;
+} append_absent_targetlist_context;
+
+static void
+append_absent_targetlist_mutator(Plan *plan,
+								 append_absent_targetlist_context *pcontext)
+{
+	Node	*node;
+	int		targetResno;
+
+	node = (Node *) plan;
+
+	Assert(is_plan_node(node));
+
+	/*
+	 * GPDB_90_MERGE_FIXME: We also need to change width and cost here. But since the plan has been
+	 * generated at this stage, it is not clear how we could recalculate the cost.
+	 */
+	if (node->type >= T_SeqScan && node->type <=T_WorkTableScan)
+	{
+		Scan		*scan;
+		ListCell	*lcv;
+
+		scan = (Scan *) node;
+		if (scan->scanrelid != pcontext->result_relation_idx)
+			return;
+
+		targetResno = list_length(plan->targetlist) + 1;
+		foreach(lcv, pcontext->absent_vars)
+		{
+			TargetEntry	*newTle;
+			ListCell	*lct;
+
+			Assert(IsA(lfirst(lcv), Var));
+
+			foreach(lct, plan->targetlist)
+			{
+				TargetEntry	*tle;
+
+				Assert(IsA(lfirst(lct), TargetEntry));
+
+				tle = (TargetEntry *) lfirst(lct);
+				if (IsA(tle->expr, Var) &&
+					(((Var *) (tle->expr))->varattno == ((Var *) lfirst(lcv))->varattno))
+					break;
+			}
+
+			if (!lct)
+			{
+				newTle = makeTargetEntry((Expr *) lfirst(lcv), targetResno,
+										 "" /* resname */, false /* resjunk */);
+				plan->targetlist = lappend(plan->targetlist, newTle);
+				++targetResno;
+			}
+		}
+		pcontext->found = true;
+
+		return;
+	}
+
+	if (plan->lefttree)
+	{
+		append_absent_targetlist_mutator(plan->lefttree, pcontext);
+
+		if (!pcontext->found && plan->righttree)
+			append_absent_targetlist_mutator(plan->righttree, pcontext);
+
+		if (pcontext->found)
+		{
+			ListCell	*lcv;
+			int			targetResno;
+
+			targetResno = list_length(plan->targetlist) + 1;
+
+			foreach(lcv, pcontext->absent_vars)
+			{
+				Var			*var;
+				ListCell	*lct;
+				TargetEntry *tle;
+
+				Assert(IsA(lfirst(lcv), Var));
+
+				var = (Var *) lfirst(lcv);
+
+				foreach(lct, plan->targetlist)
+				{
+					tle = (TargetEntry *) lfirst(lct);
+
+					if (IsA(tle->expr, Var) &&
+						((Var *) tle->expr)->varno == pcontext->result_relation_idx &&
+						((Var *) tle->expr)->varattno == var->varattno)
+						break;
+				}
+
+				if (!lct)
+				{
+
+					tle = makeTargetEntry(lfirst(lcv), targetResno++, "" /* resname */, false /* junk */);
+					plan->targetlist = lappend(plan->targetlist, tle);
+				}
+			}
+
+			return;
+		}
+	}
+
+	return;
+}
+
+
+/*
+ * Add absent vars to targetlist recursively. We just go into plan node, not subplan or
+ * other kind of nodes.
+ */
+static void
+append_absent_targetlist(struct PlannerInfo *root, Plan *plan,
+						 List *varsAbsent, Index resultRelationsIdx)
+{
+	append_absent_targetlist_context context;
+
+	planner_init_plan_tree_base(&context.base, root);
+
+	context.absent_vars = varsAbsent;
+	context.result_relation_idx = resultRelationsIdx;
+	context.found = false;
+
+	return append_absent_targetlist_mutator(plan, &context);
+}
+
+static void
+failIfUpdateTriggers(Relation relation)
+{
+	bool	found = false;
+
+	if (relation->rd_rel->relhastriggers && NULL == relation->trigdesc)
+		RelationBuildTriggers(relation);
+
+	if (!relation->trigdesc)
+		return;
+
+	if (relation->rd_rel->relhastriggers)
+	{
+		for (int i = 0; i < relation->trigdesc->numtriggers && !found; i++)
+		{
+			Trigger trigger = relation->trigdesc->triggers[i];
+			found = trigger_enabled(trigger.tgoid) &&
+					(get_trigger_type(trigger.tgoid) & TRIGGER_TYPE_UPDATE) == TRIGGER_TYPE_UPDATE;
+			if (found)
+				break;
+		}
+	}
+
+	if (found || child_triggers(relation->rd_id, TRIGGER_TYPE_UPDATE))
+	{
+		ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_YET),
+						errmsg("Cannot parallelize an UPDATE statement that updates the distribution columns")));
+		relation_close(relation, NoLock);
+	}
+}
+
+/*
+ * In legacy planner, we add a SplitUpdate node at top so that updating on distribution
+ * columns could be handled. The SplitUpdate will split each update into delete + insert.
+ */
+SplitUpdate*
+make_splitupdate(PlannerInfo *root, Plan *mt, Plan *subplan, RangeTblEntry *rte, Index resultRelationsIdx)
+{
+	AttrNumber		ctidColIdx = 0;
+	ListCell		*lct;
+	ListCell		*currAppendCell = NULL;
+	List			*deleteColIdx = NIL;
+	List			*insertColIdx = NIL;
+	List			*varsAbsent = NIL;
+	int				actionColIdx;
+	int				oidColIdx = 0;
+	int				attrIdx;
+	int				appendStart;
+	List			*splitUpdateTargetList = NIL;
+	Var				*var;
+	TargetEntry		*newTargetEntry;
+	SplitUpdate		*splitupdate;
+	DMLActionExpr	*actionExpr;
+	Relation		resultRelation;
+	TupleDesc		resultDesc;
+	bool			hasOids = false;
+
+	Assert(IsA(mt, ModifyTable));
+
+	/* Suppose we already hold locks before caller */
+	resultRelation = relation_open(rte->relid, NoLock);
+
+	failIfUpdateTriggers(resultRelation);
+
+	resultDesc = RelationGetDescr(resultRelation);
+
+	for (attrIdx = 1; attrIdx <= resultDesc->natts; ++attrIdx)
+	{
+		TargetEntry			*tle;
+		Var					*splitVar;
+		TargetEntry			*splitTargetEntry;
+		Form_pg_attribute	attr;
+
+		insertColIdx = lappend_int(insertColIdx, attrIdx);
+		deleteColIdx = lappend_int(deleteColIdx, attrIdx);
+
+		tle = (TargetEntry *) list_nth(subplan->targetlist, attrIdx - 1);
+
+		Assert(tle);
+
+		attr = resultDesc->attrs[attrIdx - 1];
+		if (attr->attisdropped)
+		{
+			Assert(IsA(tle->expr, Const) && ((Const *) tle->expr)->constisnull);
+
+			splitTargetEntry = makeTargetEntry((Expr *) copyObject(tle->expr), tle->resno, tle->resname, tle->resjunk);
+			splitUpdateTargetList = lappend(splitUpdateTargetList, splitTargetEntry);
+			continue;
+		}
+		else
+		{
+			splitVar = makeVar(OUTER, attrIdx, exprType((Node *) tle->expr),
+							   exprTypmod((Node *) tle->expr), 0 /* varlevelsup */);
+			splitTargetEntry = makeTargetEntry((Expr *) splitVar, tle->resno, tle->resname, tle->resjunk);
+			splitUpdateTargetList = lappend(splitUpdateTargetList, splitTargetEntry);
+		}
+
+		if (IsA(tle->expr, Var) &&
+			((Var *) tle->expr)->varnoold == resultRelationsIdx &&
+			((Var *) tle->expr)->varoattno == attrIdx)
+			continue;
+
+		varsAbsent = lappend(varsAbsent,
+							 makeVar(resultRelationsIdx, attrIdx, exprType((Node *) tle->expr),
+									 exprTypmod((Node *) tle->expr), 0 /* varlevelsup */));
+	}
+
+	if (resultRelation->rd_rel->relhasoids)
+		hasOids = true;
+
+
+	relation_close(resultRelation, NoLock);
+
+	Assert(attrIdx <= list_length(subplan->targetlist));
+	Assert(IsA(((TargetEntry *) list_nth(subplan->targetlist, attrIdx - 1))->expr, Var));
+
+	var = (Var *) ((TargetEntry *) list_nth(subplan->targetlist, attrIdx - 1))->expr;
+
+	/* Ctid should follow after normal attributes */
+	Assert((var->varno == resultRelationsIdx &&
+			var->varattno == SelfItemPointerAttributeNumber) ||
+		   (var->varnoold == resultRelationsIdx &&
+			var->varoattno == SelfItemPointerAttributeNumber));
+
+	ctidColIdx = attrIdx;
+
+	currAppendCell = list_nth_cell(subplan->targetlist, attrIdx - 1);
+	for_each_cell(lct, currAppendCell)
+	{
+		Assert(IsA(lfirst(lct), TargetEntry) && IsA(((TargetEntry *) lfirst(lct))->expr, Var));
+
+		var = copyObject(((TargetEntry *) lfirst(lct))->expr);
+		var->varno = OUTER;
+		var->varnoold = OUTER;
+		var->varattno = ((TargetEntry *) lfirst(lct))->resno;
+		var->varoattno = ((TargetEntry *) lfirst(lct))->resno;
+
+		newTargetEntry = makeTargetEntry((Expr *) var, attrIdx, ((TargetEntry *) lfirst(lct))->resname,
+										 true);
+		splitUpdateTargetList = lappend(splitUpdateTargetList, newTargetEntry);
+		++attrIdx;
+	}
+
+	appendStart = list_length(subplan->targetlist);
+
+	append_absent_targetlist(root, subplan, varsAbsent, resultRelationsIdx);
+
+	Assert(list_length(subplan->targetlist) >= appendStart);
+
+	if (list_length(subplan->targetlist) > appendStart)
+		currAppendCell = list_nth_cell(subplan->targetlist, appendStart);
+
+	foreach(lct, varsAbsent)
+	{
+		TargetEntry	*appendTarget;
+
+		Assert(currAppendCell);
+
+		attrIdx = (int) ((Var *) lfirst(lct))->varattno;
+		appendTarget = lfirst(currAppendCell);
+		currAppendCell = lnext(currAppendCell);
+
+		Assert(IsA(appendTarget->expr, Var));
+		list_nth_cell(deleteColIdx, attrIdx - 1)->data.int_value = appendTarget->resno;
+	}
+
+	if (hasOids)
+	{
+		Var			*appendVar;
+		Var			*splitVar;
+		TargetEntry	*splitTargetEntry;
+		int			oidIdx = 0;
+
+		appendVar = makeVar(resultRelationsIdx, ObjectIdAttributeNumber, OIDOID,
+							-1 /* type mod */, 0 /* varlevelsup */);
+
+		append_absent_targetlist(root, subplan, list_make1(appendVar), resultRelationsIdx);
+
+		foreach(lct, subplan->targetlist)
+		{
+			TargetEntry	*tle = (TargetEntry *) lfirst(lct);
+			if (IsA(tle->expr, Var) &&
+				((Var *) (tle->expr))->varno == resultRelationsIdx &&
+				((Var *) (tle->expr))->varattno == ObjectIdAttributeNumber)
+			{
+				break;
+			}
+			++oidIdx;
+		}
+
+		Assert(oidIdx < list_length(subplan->targetlist));
+
+		oidColIdx = list_length(splitUpdateTargetList) + 1;
+		splitVar = makeVar(OUTER, oidIdx + 1, OIDOID, -1 /* type mod */, 0 /* varlevelsup */);
+		splitVar->varnoold = resultRelationsIdx;
+		splitVar->varoattno = ObjectIdAttributeNumber;
+		splitTargetEntry = makeTargetEntry((Expr *) splitVar, oidColIdx, "oid", true);
+		splitUpdateTargetList = lappend(splitUpdateTargetList, splitTargetEntry);
+	}
+
+	actionExpr = makeNode(DMLActionExpr);
+	actionColIdx = list_length(splitUpdateTargetList) + 1;
+	newTargetEntry = makeTargetEntry((Expr *) actionExpr, actionColIdx, "ColRef", true);
+	splitUpdateTargetList = lappend(splitUpdateTargetList, newTargetEntry);
+
+	splitupdate = makeNode(SplitUpdate);
+	splitupdate->actionColIdx = actionColIdx;
+
+	Assert(ctidColIdx > 0);
+
+	splitupdate->ctidColIdx = ctidColIdx;
+	splitupdate->tupleoidColIdx = oidColIdx;
+	splitupdate->insertColIdx = insertColIdx;
+	splitupdate->deleteColIdx = deleteColIdx;
+	splitupdate->plan.targetlist = splitUpdateTargetList;
+	splitupdate->plan.lefttree = subplan;
+
+	splitupdate->plan.startup_cost = subplan->startup_cost;
+	splitupdate->plan.total_cost = subplan->total_cost;
+	splitupdate->plan.plan_rows = 2 * subplan->plan_rows;
+	splitupdate->plan.plan_width = subplan->plan_width;
+
+	mark_plan_strewn((Plan *) splitupdate);
+
+	((ModifyTable *)mt)->action_col_idxes = lappend_int(
+		((ModifyTable *)mt)->action_col_idxes, actionColIdx);
+	((ModifyTable *)mt)->ctid_col_idxes = lappend_int(
+		((ModifyTable *)mt)->ctid_col_idxes, ctidColIdx);
+	((ModifyTable *)mt)->oid_col_idxes = lappend_int(
+		((ModifyTable *)mt)->oid_col_idxes, oidColIdx);
+
+	return splitupdate;
+}
 
 /*
  * Find the index of the segid column of the requested relation (relid) in the
@@ -1149,6 +1521,7 @@ find_segid_column(List *tlist, Index relid)
 	/* no segid column found */
 	return -1;
 }
+
 
 /* ----------------------------------------------------------------------- *
  * cdbmutate_warn_ctid_without_segid() warns the user if the plan refers to a
