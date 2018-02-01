@@ -2099,21 +2099,26 @@ cdbexplain_showExecStatsEnd(struct PlannedStmt *stmt,
 		{
 			MemoryAccountExplain *acct = MemoryAccounting_ExplainCurrentOptimizerAccountInfo();
 
-			if (es->format == EXPLAIN_FORMAT_TEXT)
+			if (acct != NULL)
 			{
-				appendStringInfo(es->str, "ORCA Memory used: peak %ldkB  allocated %ldkB  freed %ldkB",
-								 (long) ceil((double) acct->peak / 1024L),
-								 (long) ceil((double) acct->allocated / 1024L),
-								 (long) ceil((double) acct->freed / 1024L));
-			}
-			else
-			{
-				ExplainPropertyLong("ORCA Memory Used Peak",
-									ceil((double) acct->peak / 1024L), es);
-				ExplainPropertyLong("ORCA Memory Used Allocated",
-									ceil((double) acct->allocated / 1024L), es);
-				ExplainPropertyLong("ORCA Memory Used Freed",
-									ceil((double) acct->freed / 1024L), es);
+				if (es->format == EXPLAIN_FORMAT_TEXT)
+				{
+					appendStringInfo(es->str, "ORCA Memory used: peak %ldkB  allocated %ldkB  freed %ldkB",
+									 (long) ceil((double) acct->peak / 1024L),
+									 (long) ceil((double) acct->allocated / 1024L),
+									 (long) ceil((double) acct->freed / 1024L));
+				}
+				else
+				{
+					ExplainPropertyLong("ORCA Memory Used Peak",
+										ceil((double) acct->peak / 1024L), es);
+					ExplainPropertyLong("ORCA Memory Used Allocated",
+										ceil((double) acct->allocated / 1024L), es);
+					ExplainPropertyLong("ORCA Memory Used Freed",
+										ceil((double) acct->freed / 1024L), es);
+				}
+
+				pfree(acct);
 			}
 		}
 
