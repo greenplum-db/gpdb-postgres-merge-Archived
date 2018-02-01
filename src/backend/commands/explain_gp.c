@@ -2102,9 +2102,9 @@ cdbexplain_showExecStatsEnd(struct PlannedStmt *stmt,
 			if (es->format == EXPLAIN_FORMAT_TEXT)
 			{
 				appendStringInfo(es->str, "ORCA Memory used: peak %ldkB  allocated %ldkB  freed %ldkB",
-								 ceil((double) acct->peak / 1024L),
-								 ceil((double) acct->allocated / 1024L),
-								 ceil((double) acct->freed / 1024L));
+								 (long) ceil((double) acct->peak / 1024L),
+								 (long) ceil((double) acct->allocated / 1024L),
+								 (long) ceil((double) acct->freed / 1024L));
 			}
 			else
 			{
