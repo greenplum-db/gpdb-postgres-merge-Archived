@@ -24,7 +24,7 @@ function gen_env(){
 					DIFF FILE: \${diff_file}
 					----------------------------------------------------------------------
 
-					\$(head -1000 "\${diff_file}")
+					\$(head -25000 "\${diff_file}")
 
 				FEOF
 		fi
