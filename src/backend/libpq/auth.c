@@ -3268,6 +3268,7 @@ check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp)
 	Relation		reltimeconstr;
 	ScanKeyData 	entry[1];
 	SysScanDesc 	scan;
+	HeapTuple		roleTup;
 	HeapTuple		tuple;
 	authPoint 		now;
 	int				status;
@@ -3282,8 +3283,8 @@ check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp)
 	ImmediateInterruptOK = false;
 
 	/* Look up this user in pg_authid. */
-	roleId = GetSysCacheOid1(AUTHNAME, CStringGetDatum(rolname));
-	if (!OidIsValid(roleId))
+	roleTup = SearchSysCache(AUTHNAME, CStringGetDatum(rolname), 0, 0, 0);
+	if (!HeapTupleIsValid(roleTup))
 	{
 		/*
 		 * No such user. We don't error out here; it's up to other
@@ -3292,6 +3293,13 @@ check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp)
 		return STATUS_OK;
 	}
 
+	if (((Form_pg_authid) GETSTRUCT(roleTup))->rolsuper)
+		ereport(WARNING,
+				(errmsg("time constraints added on superuser role")));
+
+	roleId = HeapTupleGetOid(roleTup);
+
+	ReleaseSysCache(roleTup);
 	/* Walk pg_auth_time_constraint for entries belonging to this user. */
 	reltimeconstr = heap_open(AuthTimeConstraintRelationId, AccessShareLock);
 
