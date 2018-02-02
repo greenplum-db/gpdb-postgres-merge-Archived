@@ -21,7 +21,7 @@ $$
 declare
   explainrow text;
 begin
-  for explainrow in execute 'EXPLAIN (analyze, verbose) ' || explain_query
+  for explainrow in execute 'EXPLAIN ANALYZE ' || explain_query
   loop
     return next explainrow;
   end loop;
@@ -96,12 +96,12 @@ WHERE et like '%Filter: %';
 --
 create table foo (a int) distributed randomly;
 -- "outer", "inner" prefix must also be prefixed to variable name as length of rtable > 1
-SELECT trim(et) et from
+SELECT * from
 get_explain_output($$ 
 	select * from (values (1)) as f(a) join (values(2)) b(b) on a = b join foo on true join foo as foo2 on true $$) as et
-WHERE et like '%Join Filter:%';
+WHERE et like '%Hash Cond:%';
 
-SELECT trim(et) et from
+SELECT * from
 get_explain_output($$
 	select * from (values (1)) as f(a) join (values(2)) b(b) on a = b$$) as et
 WHERE et like '%Hash Cond:%';
