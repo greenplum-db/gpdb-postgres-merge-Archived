@@ -1674,9 +1674,6 @@ _outNode(StringInfo str, void *obj)
 			case T_IndexOptInfo:
 				_outIndexOptInfo(str, obj);
 				break;
-			case T_CdbRelDedupInfo:
-				_outCdbRelDedupInfo(str, obj);
-				break;
 			case T_PathKey:
 				_outPathKey(str, obj);
 				break;
