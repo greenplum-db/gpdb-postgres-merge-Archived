@@ -2692,9 +2692,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			}
 
 			/* We only need LockRows for the tuple-level locks */
-			if (rc->markType != ROW_MARK_TABLE_EXCLUSIVE &&
-				rc->markType != ROW_MARK_TABLE_SHARE)
-				newmarks = lappend(newmarks, rc);
+			newmarks = lappend(newmarks, rc);
 		}
 
 		if (newmarks)
