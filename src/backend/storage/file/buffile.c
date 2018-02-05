@@ -107,13 +107,8 @@ BufFileCreateTemp(const char *filePrefix, bool interXact)
 {
 	BufFile	   *file;
 	File		pfile;
-	bool		closeAtEOXact = !interXact;
 
-	pfile = OpenTemporaryFile(filePrefix,
-							  true, /* makenameunique */
-							  true, /* create */
-							  true, /* delOnClose */
-							  closeAtEOXact); /* closeAtEOXact */
+	pfile = OpenTemporaryFile(interXact, filePrefix);
 	Assert(pfile >= 0);
 
 	file = makeBufFile(pfile);
@@ -125,7 +120,7 @@ BufFileCreateTemp(const char *filePrefix, bool interXact)
 /*
  * Create a BufFile for a new file.
  *
- * Does not add the pgsql_tmp/ prefix to the file path before creating.
+ * Adds the pgsql_tmp/ prefix to the file path before creating.
  *
  * If interXact is true, the temp file will not be automatically deleted
  * at end of transaction.
@@ -134,76 +129,52 @@ BufFileCreateTemp(const char *filePrefix, bool interXact)
  * memory context that will survive across transaction boundaries.
  */
 BufFile *
-BufFileCreateFile(const char *fileName, bool delOnClose, bool interXact)
+BufFileCreateNamedTemp(const char *fileName, bool delOnClose, bool interXact)
 {
-	return BufFileOpenFile(fileName,
-			true, /* create */
-			delOnClose,
-			interXact);
+	File		pfile;
+	BufFile	   *file;
+
+	pfile = OpenNamedTemporaryFile(fileName,
+								   true, /* create */
+								   delOnClose,
+								   interXact);
+	Assert(pfile >= 0);
+
+	file = makeBufFile(pfile);
+	file->isTemp = delOnClose;
+
+	return file;
 }
 
 /*
  * Opens an existing file as BufFile
  *
- * If create is true, the file is created if it doesn't exist.
- *
- * Does not add the pgsql_tmp/ prefix to the file path before opening.
- *
+ * Adds the pgsql_tmp/ prefix to the file path before opening.
  */
 BufFile *
-BufFileOpenFile(const char *fileName, bool create, bool delOnClose, bool interXact)
+BufFileOpenNamedTemp(const char *fileName, bool delOnClose, bool interXact)
 {
-	bool closeAtEOXact = !interXact;
-	File pfile = OpenNamedFile(fileName,
-							  create,
-							  delOnClose,
-							  closeAtEOXact); /* closeAtEOXact */
+	File		pfile;
+	BufFile	   *file;
+
+	pfile = OpenNamedTemporaryFile(fileName,
+								   false,	/* create */
+								   delOnClose,
+								   interXact);
 	/*
 	 * If we are trying to open an existing file and it failed,
 	 * signal this to the caller.
 	 */
-	if (!create && pfile <= 0)
-	{
+	if (pfile <= 0)
 		return NULL;
-	}
 
 	Assert(pfile >= 0);
 
-	BufFile *file = makeBufFile(pfile);
+	file = makeBufFile(pfile);
 	file->isTemp = delOnClose;
-	if (!create)
-	{
-		/* Open existing file, initialize its size */
-		file->maxoffset = FileDiskSize(file->file);
-	}
 
-	return file;
-
-}
-
-/*
- * Create a BufFile for a new temporary file used for writer-reader exchange.
- *
- * Adds the pgsql_tmp/ prefix to the file path before creating.
- *
- */
-BufFile *
-BufFileCreateTemp_ReaderWriter(const char *filePrefix, bool isWriter,
-							   bool interXact)
-{
-	bool closeAtEOXact = !interXact;
-	File pfile = OpenTemporaryFile(filePrefix,
-								   false, /* makenameunique */
-								   isWriter, /* create */
-								   isWriter, /* delOnClose */
-								   closeAtEOXact); /* closeAtEOXact */
-	if (pfile < 0)
-	{
-		elog(ERROR, "could not open temporary file \"%s\": %m", filePrefix);
-	}
-
-	BufFile *file = makeBufFile(pfile);
-	file->isTemp = true;
+	/* Open existing file, initialize its size */
+	file->maxoffset = FileDiskSize(file->file);
 
 	return file;
 }

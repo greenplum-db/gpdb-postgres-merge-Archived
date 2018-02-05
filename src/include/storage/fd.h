@@ -64,18 +64,11 @@ extern int	max_files_per_process;
 /* Operations on virtual Files --- equivalent to Unix kernel file ops */
 extern File PathNameOpenFile(FileName fileName, int fileFlags, int fileMode);
 
-File
-OpenTemporaryFile(const char   *fileName,
-                  bool          makenameunique,
-                  bool          create,
-                  bool          delOnClose,
-                  bool          closeAtEOXact);
-
-File
-OpenNamedFile(const char   *fileName,
-                  bool          create,
-                  bool          delOnClose,
-                  bool          closeAtEOXact);
+extern File OpenNamedTemporaryFile(const char *fileName,
+								   bool create,
+								   bool delOnClose,
+								   bool interXact);
+extern File OpenTemporaryFile(bool interXact, const char *filePrefix);
 
 extern void FileClose(File file);
 extern int	FilePrefetch(File file, off_t offset, int amount);
@@ -126,10 +119,6 @@ extern int gp_retry_close(int fd);
 #define PG_TEMP_FILES_DIR "pgsql_tmp"
 #define PG_TEMP_FILE_PREFIX "pgsql_tmp"
 
-extern size_t GetTempFilePrefix(char * buf, size_t buflen, const char * fileName);
-
-// WALREP_FIXME: Need to chase all the places that use this, and replace them
-// with something that uses temp_tablespaces properly.
-#define getCurrentTempFilePath "base"
+extern char *GetTempFilePath(const char *filename, bool createdir);
 
 #endif   /* FD_H */

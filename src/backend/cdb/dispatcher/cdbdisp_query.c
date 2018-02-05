@@ -1468,23 +1468,23 @@ buildSliceIndexGangIdMap(SliceVec *sliceVec, int numSlices, int numTotalSlices)
  * query parameters, contained in the ParamListInfo struct. We need to
  * serialize ParamListInfo, but there are a few complications:
  *
- * 1. ParamListInfo is not a Node type, so we cannot use the usual
+ * - ParamListInfo is not a Node type, so we cannot use the usual
  * nodeToStringBinary() function directly. We turn the array of
  * ParamExternDatas into a List of SerializedParamExternData nodes,
  * which we can then pass to nodeToStringBinary().
  *
- * 2. The paramFetch callback, which could be used in this process to fetch
+ * - The paramFetch callback, which could be used in this process to fetch
  * parameter values on-demand, cannot be used in a different process.
  * Therefore, fetch all parameters before serializing them. When
  * deserializing, leave the callbacks NULL.
  *
- * 3. In order to deserialize correctly, the receiver needs the typlen and
+ * - In order to deserialize correctly, the receiver needs the typlen and
  * typbyval information for each datatype. The receiver has access to the
  * catalogs, so it could look them up, but for the sake of simplicity and
  * robustness in the receiver, we include that information in
  * SerializedParamExternData.
  *
- * 4. RECORD types. Type information of transient record is kept only in
+ * - RECORD types. Type information of transient record is kept only in
  * backend private memory, indexed by typmod. The recipient will not know
  * what a record type's typmod means. And record types can also be nested.
  * Because of that, if there are any RECORD, we include a copy of the whole

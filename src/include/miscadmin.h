@@ -489,8 +489,6 @@ typedef enum
 	CheckpointerProcess,
 	WalWriterProcess,
 	WalReceiverProcess,
-	FilerepProcess,
-	FilerepResetPeerProcess,
 
 	NUM_AUXPROCTYPES			/* Must be last! */
 } AuxProcType;

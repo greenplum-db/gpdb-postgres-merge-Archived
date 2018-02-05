@@ -5652,17 +5652,7 @@ XLOGShmemInit(void)
 	XLogCtl->haveLastCheckpointLoc = false;
 	memset(&XLogCtl->lastCheckpointLoc, 0, sizeof(XLogRecPtr));
 	memset(&XLogCtl->lastCheckpointEndLoc, 0, sizeof(XLogRecPtr));
-}
 
-/**
- * This should be called when we are sure that it is safe to try to read the control file and BEFORE
- *  we have launched any child processes that need access to collation and ctype data.
- *
- * It is not safe to read the control file on a mirror because it may not be synchronized
- */
-void
-XLogStartupInit(void)
-{
 	/*
 	 * If we are not in bootstrap mode, pg_control should already exist. Read
 	 * and validate it immediately (see comments in ReadControlFile() for the
@@ -10618,7 +10608,6 @@ rm_redo_error_callback(void *arg)
 	pfree(buf.data);
 }
 
-#if 0 /* GPDB doesn't have online backup */
 /*
  * BackupInProgress: check if online backup mode is active
  *
@@ -10667,7 +10656,6 @@ CancelBackup(void)
 						   BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
 	}
 }
-#endif
 
 static char *
 XLogLocationToBuffer(char *buffer, XLogRecPtr *loc, bool longFormat)

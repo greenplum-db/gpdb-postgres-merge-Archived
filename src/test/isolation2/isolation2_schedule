@@ -1,20 +1,14 @@
-test: pg_terminate_backend
-test: deadlock_under_entry_db_singleton
-test: starve_case
+test: pg_terminate_backend deadlock_under_entry_db_singleton starve_case pg_views_concurrent_drop alter_blocks_for_update_and_viceversa drop_rename reader_waits_for_lock resource_queue
+
 test: commit_transaction_block_checkpoint
-test: pg_views_concurrent_drop
-test: resource_queue
-test: alter_blocks_for_update_and_viceversa
-test: reader_waits_for_lock
-test: drop_rename
 test: master_panic_after_phase1_commit
 test: instr_in_shmem_setup
 test: instr_in_shmem_terminate
+test: vacuum_full_recently_dead_tuple_due_to_distributed_snapshot
 
 test: setup
 # Tests on Append-Optimized tables (row-oriented).
-test: uao/alter_while_vacuum_row
-test: uao/alter_while_vacuum2_row
+test: uao/alter_while_vacuum_row uao/alter_while_vacuum2_row
 test: uao/compaction_full_stats_row
 test: uao/compaction_utility_row
 test: uao/compaction_utility_insert_row
@@ -59,8 +53,7 @@ test: uao/vacuum_while_vacuum_row
 test: uao/vacuum_cleanup_row
 
 # Tests on Append-Optimized tables (column-oriented).
-test: uao/alter_while_vacuum_column
-test: uao/alter_while_vacuum2_column
+test: uao/alter_while_vacuum_column uao/alter_while_vacuum2_column
 test: uao/compaction_full_stats_column
 test: uao/compaction_utility_column
 test: uao/compaction_utility_insert_column
@@ -114,3 +107,5 @@ test: segwalrep/mirror_promotion
 # Tests for crash recovery
 test: crash_recovery
 test: crash_recovery_redundant_dtx
+test: uao_crash_compaction_row
+test: uao_crash_compaction_column
