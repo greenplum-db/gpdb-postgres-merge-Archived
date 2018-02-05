@@ -171,7 +171,6 @@ pathnode_walk_kids(Path            *path,
             case T_CteScan:
             case T_TableFunctionScan:
             case T_Result:
-			case T_Join: /* Plain Join is used for NoOpPaths */
                     return CdbVisit_Walk;
             case T_BitmapHeapScan:
                     v = pathnode_walk_node(((BitmapHeapPath *)path)->bitmapqual, walker, context);
@@ -2311,29 +2310,6 @@ hash_safe_operators(List *opids)
 			return false;
 	}
 	return true;
-}
-
-/*
- * create_noop_path
- *	  Creates a path equivalent to the input subpath, but having a different
- *	  parent rel.  This is used when a join is found to be removable.
- */
-NoOpPath *
-create_noop_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath)
-{
-	NoOpPath   *pathnode = makeNode(NoOpPath);
-
-	pathnode->path.pathtype = T_Join;			/* by convention */
-	pathnode->path.parent = rel;
-	pathnode->path.startup_cost = subpath->startup_cost;
-	pathnode->path.total_cost = subpath->total_cost;
-	pathnode->path.pathkeys = subpath->pathkeys;
-	pathnode->subpath = subpath;
-
-	/* copy the locus from the subpath. */
-	pathnode->path.locus = subpath->locus;
-
-	return pathnode;
 }
 
 /*

@@ -1532,12 +1532,6 @@ cdbpath_dedup_fixup_walker(Path *path, void *context)
 	if (path->pathtype == T_Unique)
 		return cdbpath_dedup_fixup_unique((UniquePath *) path, ctx);
 
-	if (IsA(path, NoOpPath))
-	{
-		/* A no-op path will be not appear in the final plan. Ignore it */
-		return CdbVisit_Skip;
-	}
-
 	/* Leave node unchanged unless a downstream Unique op needs row ids. */
 	if (!bms_overlap(path->parent->relids, ctx->distinct_on_rowid_relids))
 		return CdbVisit_Walk;	/* visit descendants */

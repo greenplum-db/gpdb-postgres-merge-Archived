@@ -1650,9 +1650,6 @@ _outNode(StringInfo str, void *obj)
 			case T_UniquePath:
 				_outUniquePath(str, obj);
 				break;
-			case T_NoOpPath:
-				_outNoOpPath(str, obj);
-				break;
 			case T_NestPath:
 				_outNestPath(str, obj);
 				break;

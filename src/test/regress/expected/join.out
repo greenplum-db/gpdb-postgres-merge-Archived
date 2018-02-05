@@ -2489,3 +2489,115 @@ select f1, unique2, case when unique2 is null then f1 else 0 end
   0 |       0 |    0
 (1 row)
 
+--
+-- test join removal
+--
+begin;
+CREATE TEMP TABLE a (id int PRIMARY KEY, b_id int);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "a_pkey" for table "a"
+CREATE TEMP TABLE b (id int PRIMARY KEY, c_id int);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "b_pkey" for table "b"
+CREATE TEMP TABLE c (id int PRIMARY KEY);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "c_pkey" for table "c"
+INSERT INTO a VALUES (0, 0), (1, NULL);
+INSERT INTO b VALUES (0, 0), (1, NULL);
+INSERT INTO c VALUES (0), (1);
+-- all three cases should be optimizable into a simple seqscan
+explain (costs off) SELECT a.* FROM a LEFT JOIN b ON a.b_id = b.id;
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Seq Scan on a
+ Optimizer: legacy query optimizer
+(3 rows)
+
+explain (costs off) SELECT b.* FROM b LEFT JOIN c ON b.c_id = c.id;
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Seq Scan on b
+ Optimizer: legacy query optimizer
+(3 rows)
+
+explain (costs off)
+  SELECT a.* FROM a LEFT JOIN (b left join c on b.c_id = c.id)
+  ON (a.b_id = b.id);
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Seq Scan on a
+ Optimizer: legacy query optimizer
+(3 rows)
+
+rollback;
+create temp table parent (k int primary key, pd int);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "parent_pkey" for table "parent"
+create temp table child (k int unique, cd int);
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "child_k_key" for table "child"
+insert into parent values (1, 10), (2, 20), (3, 30);
+insert into child values (1, 100), (4, 400);
+-- this case is optimizable
+select p.* from parent p left join child c on (p.k = c.k);
+ k | pd 
+---+----
+ 1 | 10
+ 2 | 20
+ 3 | 30
+(3 rows)
+
+explain (costs off)
+  select p.* from parent p left join child c on (p.k = c.k);
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Seq Scan on parent p
+ Optimizer: legacy query optimizer
+(3 rows)
+
+-- this case is not
+select p.*, linked from parent p
+  left join (select c.*, true as linked from child c) as ss
+  on (p.k = ss.k);
+ k | pd | linked 
+---+----+--------
+ 1 | 10 | t
+ 2 | 20 | 
+ 3 | 30 | 
+(3 rows)
+
+explain (costs off)
+  select p.*, linked from parent p
+    left join (select c.*, true as linked from child c) as ss
+    on (p.k = ss.k);
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Hash Left Join
+         Hash Cond: p.k = c.k
+         ->  Seq Scan on parent p
+         ->  Hash
+               ->  Seq Scan on child c
+ Optimizer: legacy query optimizer
+(7 rows)
+
+-- bug 5255: this is not optimizable by join removal
+begin;
+CREATE TEMP TABLE a (id int PRIMARY KEY);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "a_pkey" for table "a"
+CREATE TEMP TABLE b (id int PRIMARY KEY, a_id int);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "b_pkey" for table "b"
+INSERT INTO a VALUES (0), (1);
+INSERT INTO b VALUES (0, 0), (1, NULL);
+SELECT * FROM b LEFT JOIN a ON (b.a_id = a.id) WHERE (a.id IS NULL OR a.id > 0);
+ id | a_id | id 
+----+------+----
+  1 |      |   
+(1 row)
+
+SELECT b.* FROM b LEFT JOIN a ON (b.a_id = a.id) WHERE (a.id IS NULL OR a.id > 0);
+ id | a_id 
+----+------
+  1 |     
+(1 row)
+
+rollback;

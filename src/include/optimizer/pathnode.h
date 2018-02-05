@@ -74,8 +74,6 @@ extern UniquePath *create_unique_path(PlannerInfo *root,
 		List        *distinct_on_exprs,
 		List		   *distinct_on_operators,
 		Relids       distinct_on_rowid_relids);
-extern NoOpPath *create_noop_path(PlannerInfo *root, RelOptInfo *rel,
-								  Path *subpath);
 extern Path *create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel, List *pathkeys);
 extern Path *create_functionscan_path(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte);
 extern Path *create_tablefunction_path(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte);

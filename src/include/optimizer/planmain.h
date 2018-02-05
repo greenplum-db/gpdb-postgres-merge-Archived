@@ -247,6 +247,11 @@ extern void check_mergejoinable(RestrictInfo *restrictinfo);
 extern void check_hashjoinable(RestrictInfo *restrictinfo);
 
 /*
+ * prototypes for plan/analyzejoins.c
+ */
+extern List *remove_useless_joins(PlannerInfo *root, List *joinlist);
+
+/*
  * prototypes for plan/setrefs.c
  */
 extern Plan *set_plan_references(PlannerGlobal *glob,

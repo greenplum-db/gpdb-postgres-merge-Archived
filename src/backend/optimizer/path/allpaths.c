@@ -2005,10 +2005,6 @@ print_path(PlannerInfo *root, Path *path, int indent)
 			ptype = "Unique";
 			subpath = ((UniquePath *) path)->subpath;
 			break;
-		case T_NoOpPath:
-			ptype = "NoOp";
-			subpath = ((NoOpPath *) path)->subpath;
-			break;
 		case T_NestPath:
 			ptype = "NestLoop";
 			join = true;
