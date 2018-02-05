@@ -1369,7 +1369,7 @@ ExplainNode(Plan *plan, PlanState *planstate,
 					slice_id = es->currentSlice->sliceIndex;
 
 				if (es->format == EXPLAIN_FORMAT_TEXT)
-					appendStringInfo(es->str, "(share slice:id %d:%d)",
+					appendStringInfo(es->str, " (share slice:id %d:%d)",
 									 slice_id, sisc->share_id);
 				else
 				{
