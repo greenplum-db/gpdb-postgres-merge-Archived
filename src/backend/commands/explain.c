@@ -1763,6 +1763,11 @@ ExplainNode(Plan *plan, PlanState *planstate,
 							   ((AppendState *) planstate)->appendplans,
 							   outer_plan, es);
 			break;
+		case T_Sequence:
+			ExplainMemberNodes(((Sequence *) plan)->subplans,
+							   ((SequenceState *) planstate)->subplans,
+							   outer_plan, es);
+			break;
 		case T_BitmapAnd:
 			ExplainMemberNodes(((BitmapAnd *) plan)->bitmapplans,
 							   ((BitmapAndState *) planstate)->bitmapplans,
