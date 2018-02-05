@@ -16,19 +16,22 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/analyzejoins.c,v 1.1 2010/03/28 22:59:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/analyzejoins.c,v 1.3.2.1 2010/09/14 23:15:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
+#include "optimizer/var.h"
 
 /* local functions */
 static bool join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo);
-static void remove_rel_from_query(PlannerInfo *root, int relid);
+static void remove_rel_from_query(PlannerInfo *root, int relid,
+								  Relids joinrelids);
 static List *remove_rel_from_joinlist(List *joinlist, int relid, int *nremoved);
 
 
@@ -46,15 +49,15 @@ remove_useless_joins(PlannerInfo *root, List *joinlist)
 	ListCell   *lc;
 
 	/*
-	 * We are only interested in relations that are left-joined to, so we
-	 * can scan the join_info_list to find them easily.
+	 * We are only interested in relations that are left-joined to, so we can
+	 * scan the join_info_list to find them easily.
 	 */
 restart:
 	foreach(lc, root->join_info_list)
 	{
 		SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(lc);
-		int		innerrelid;
-		int		nremoved;
+		int			innerrelid;
+		int			nremoved;
 
 		/* Skip if not removable */
 		if (!join_is_removable(root, sjinfo))
@@ -67,7 +70,9 @@ restart:
 		 */
 		innerrelid = bms_singleton_member(sjinfo->min_righthand);
 
-		remove_rel_from_query(root, innerrelid);
+		remove_rel_from_query(root, innerrelid,
+							  bms_union(sjinfo->min_lefthand,
+										sjinfo->min_righthand));
 
 		/* We verify that exactly one reference gets removed from joinlist */
 		nremoved = 0;
@@ -102,7 +107,7 @@ restart:
  * We already know that the clause is a binary opclause referencing only the
  * rels in the current join.  The point here is to check whether it has the
  * form "outerrel_expr op innerrel_expr" or "innerrel_expr op outerrel_expr",
- * rather than mixing outer and inner vars on either side.	If it matches,
+ * rather than mixing outer and inner vars on either side.  If it matches,
  * we set the transient flag outer_is_left to identify which side is which.
  */
 static inline bool
@@ -149,7 +154,7 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 
 	/*
 	 * Currently, we only know how to remove left joins to a baserel with
-	 * unique indexes.	We can check most of these criteria pretty trivially
+	 * unique indexes.  We can check most of these criteria pretty trivially
 	 * to avoid doing useless extra work.  But checking whether any of the
 	 * indexes are unique would require iterating over the indexlist, so for
 	 * now we just make sure there are indexes of some sort or other.  If none
@@ -193,16 +198,23 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	}
 
 	/*
-	 * Similarly check that the inner rel doesn't produce any PlaceHolderVars
-	 * that will be used above the join.
+	 * Similarly check that the inner rel isn't needed by any PlaceHolderVars
+	 * that will be used above the join.  We only need to fail if such a PHV
+	 * actually references some inner-rel attributes; but the correct check
+	 * for that is relatively expensive, so we first check against ph_eval_at,
+	 * which must mention the inner rel if the PHV uses any inner-rel attrs.
 	 */
 	foreach(l, root->placeholder_list)
 	{
 		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(l);
 
-		if (bms_is_subset(phinfo->ph_eval_at, innerrel->relids) &&
-			!bms_is_subset(phinfo->ph_needed, joinrelids))
-			return false;
+		if (bms_is_subset(phinfo->ph_needed, joinrelids))
+			continue;			/* PHV is not used above the join */
+		if (!bms_overlap(phinfo->ph_eval_at, innerrel->relids))
+			continue;			/* it definitely doesn't reference innerrel */
+		if (bms_overlap(pull_varnos((Node *) phinfo->ph_var),
+						innerrel->relids))
+			return false;		/* it does reference innerrel */
 	}
 
 	/*
@@ -216,19 +228,25 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	{
 		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(l);
 
-		/* Ignore clauses not pertinent to this join */
-		if (!bms_is_subset(restrictinfo->required_relids, joinrelids))
-			continue;
-
 		/*
-		 * If we find a pushed-down clause, it must have come from above the
-		 * outer join and it must contain references to the inner rel.	(If it
-		 * had only outer-rel variables, it'd have been pushed down into the
-		 * outer rel.)	Therefore, we can conclude that join removal is unsafe
-		 * without any examination of the clause contents.
+		 * If it's not a join clause for this outer join, we can't use it.
+		 * Note that if the clause is pushed-down, then it is logically from
+		 * above the outer join, even if it references no other rels (it might
+		 * be from WHERE, for example).
 		 */
-		if (restrictinfo->is_pushed_down)
-			return false;
+		if (restrictinfo->is_pushed_down ||
+			!bms_equal(restrictinfo->required_relids, joinrelids))
+		{
+			/*
+			 * If such a clause actually references the inner rel then
+			 * join removal has to be disallowed.  We have to check this
+			 * despite the previous attr_needed checks because of the
+			 * possibility of pushed-down clauses referencing the rel.
+			 */
+			if (bms_is_member(innerrelid, restrictinfo->clause_relids))
+				return false;
+			continue;			/* else, ignore; not useful here */
+		}
 
 		/* Ignore if it's not a mergejoinable clause */
 		if (!restrictinfo->can_join ||
@@ -299,14 +317,14 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
  * We are not terribly thorough here.  We must make sure that the rel is
  * no longer treated as a baserel, and that attributes of other baserels
  * are no longer marked as being needed at joins involving this rel.
- * In particular, we don't bother removing join quals involving the rel from
- * the joininfo lists; they'll just get ignored, since we will never form a
- * join relation at which they could be evaluated.
+ * Also, join quals involving the rel have to be removed from the joininfo
+ * lists, but only if they belong to the outer join identified by joinrelids.
  */
 static void
-remove_rel_from_query(PlannerInfo *root, int relid)
+remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 {
 	RelOptInfo *rel = find_base_rel(root, relid);
+	List	   *joininfos;
 	Index		rti;
 	ListCell   *l;
 
@@ -328,7 +346,7 @@ remove_rel_from_query(PlannerInfo *root, int relid)
 		if (otherrel == NULL)
 			continue;
 
-		Assert(otherrel->relid == rti);		/* sanity check on array */
+		Assert(otherrel->relid == rti); /* sanity check on array */
 
 		/* no point in processing target rel itself */
 		if (otherrel == rel)
@@ -344,6 +362,24 @@ remove_rel_from_query(PlannerInfo *root, int relid)
 	}
 
 	/*
+	 * Likewise remove references from SpecialJoinInfo data structures.
+	 *
+	 * This is relevant in case the outer join we're deleting is nested inside
+	 * other outer joins: the upper joins' relid sets have to be adjusted.
+	 * The RHS of the target outer join will be made empty here, but that's OK
+	 * since caller will delete that SpecialJoinInfo entirely.
+	 */
+	foreach(l, root->join_info_list)
+	{
+		SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(l);
+
+		sjinfo->min_lefthand = bms_del_member(sjinfo->min_lefthand, relid);
+		sjinfo->min_righthand = bms_del_member(sjinfo->min_righthand, relid);
+		sjinfo->syn_lefthand = bms_del_member(sjinfo->syn_lefthand, relid);
+		sjinfo->syn_righthand = bms_del_member(sjinfo->syn_righthand, relid);
+	}
+
+	/*
 	 * Likewise remove references from PlaceHolderVar data structures.
 	 *
 	 * Here we have a special case: if a PHV's eval_at set is just the target
@@ -356,10 +392,86 @@ remove_rel_from_query(PlannerInfo *root, int relid)
 		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(l);
 
 		phinfo->ph_eval_at = bms_del_member(phinfo->ph_eval_at, relid);
-		if (bms_is_empty(phinfo->ph_eval_at))		/* oops, belay that */
+		if (bms_is_empty(phinfo->ph_eval_at))	/* oops, belay that */
 			phinfo->ph_eval_at = bms_add_member(phinfo->ph_eval_at, relid);
 
 		phinfo->ph_needed = bms_del_member(phinfo->ph_needed, relid);
+		/* ph_may_need probably isn't used after this, but fix it anyway */
+		phinfo->ph_may_need = bms_del_member(phinfo->ph_may_need, relid);
+	}
+
+	/*
+	 * Remove any joinquals referencing the rel from the joininfo lists.
+	 *
+	 * In some cases, a joinqual has to be put back after deleting its
+	 * reference to the target rel.  This can occur for pseudoconstant and
+	 * outerjoin-delayed quals, which can get marked as requiring the rel in
+	 * order to force them to be evaluated at or above the join.  We can't
+	 * just discard them, though.  Only quals that logically belonged to the
+	 * outer join being discarded should be removed from the query.
+	 *
+	 * We must make a copy of the rel's old joininfo list before starting the
+	 * loop, because otherwise remove_join_clause_from_rels would destroy the
+	 * list while we're scanning it.
+	 */
+	joininfos = list_copy(rel->joininfo);
+	foreach(l, joininfos)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+
+		remove_join_clause_from_rels(root, rinfo, rinfo->required_relids);
+
+		if (rinfo->is_pushed_down ||
+			!bms_equal(rinfo->required_relids, joinrelids))
+		{
+			/* Recheck that qual doesn't actually reference the target rel */
+			Assert(!bms_is_member(relid, rinfo->clause_relids));
+			/*
+			 * The required_relids probably aren't shared with anything else,
+			 * but let's copy them just to be sure.
+			 */
+			rinfo->required_relids = bms_copy(rinfo->required_relids);
+			rinfo->required_relids = bms_del_member(rinfo->required_relids,
+													relid);
+			distribute_restrictinfo_to_rels(root, rinfo);
+		}
+	}
+
+	/*
+	 * Remove any joinquals referencing the rel from the joininfo lists.
+	 *
+	 * In some cases, a joinqual has to be put back after deleting its
+	 * reference to the target rel.  This can occur for pseudoconstant and
+	 * outerjoin-delayed quals, which can get marked as requiring the rel in
+	 * order to force them to be evaluated at or above the join.  We can't
+	 * just discard them, though.  Only quals that logically belonged to the
+	 * outer join being discarded should be removed from the query.
+	 *
+	 * We must make a copy of the rel's old joininfo list before starting the
+	 * loop, because otherwise remove_join_clause_from_rels would destroy the
+	 * list while we're scanning it.
+	 */
+	joininfos = list_copy(rel->joininfo);
+	foreach(l, joininfos)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+
+		remove_join_clause_from_rels(root, rinfo, rinfo->required_relids);
+
+		if (rinfo->is_pushed_down ||
+			!bms_equal(rinfo->required_relids, joinrelids))
+		{
+			/* Recheck that qual doesn't actually reference the target rel */
+			Assert(!bms_is_member(relid, rinfo->clause_relids));
+			/*
+			 * The required_relids probably aren't shared with anything else,
+			 * but let's copy them just to be sure.
+			 */
+			rinfo->required_relids = bms_copy(rinfo->required_relids);
+			rinfo->required_relids = bms_del_member(rinfo->required_relids,
+													relid);
+			distribute_restrictinfo_to_rels(root, rinfo);
+		}
 	}
 }
 
@@ -394,7 +506,7 @@ remove_rel_from_joinlist(List *joinlist, int relid, int *nremoved)
 		else if (IsA(jlnode, List))
 		{
 			/* Recurse to handle subproblem */
-			List   *sublist;
+			List	   *sublist;
 
 			sublist = remove_rel_from_joinlist((List *) jlnode,
 											   relid, nremoved);

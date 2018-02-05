@@ -609,6 +609,12 @@ explain (costs off)
   SELECT a.* FROM a LEFT JOIN (b left join c on b.c_id = c.id)
   ON (a.b_id = b.id);
 
+-- check optimization of outer join within another special join
+explain (costs off)
+select id from a where id in (
+	select b.id from b left join c on b.id = c.id
+);
+
 rollback;
 
 create temp table parent (k int primary key, pd int);
@@ -630,6 +636,23 @@ explain (costs off)
     left join (select c.*, true as linked from child c) as ss
     on (p.k = ss.k);
 
+-- check for a 9.0rc1 bug: join removal breaks pseudoconstant qual handling
+select p.* from
+  parent p left join child c on (p.k = c.k)
+  where p.k = 1 and p.k = 2;
+explain (costs off)
+select p.* from
+  parent p left join child c on (p.k = c.k)
+  where p.k = 1 and p.k = 2;
+
+select p.* from
+  (parent p left join child c on (p.k = c.k)) join parent x on p.k = x.k
+  where p.k = 1 and p.k = 2;
+explain (costs off)
+select p.* from
+  (parent p left join child c on (p.k = c.k)) join parent x on p.k = x.k
+  where p.k = 1 and p.k = 2;
+
 -- bug 5255: this is not optimizable by join removal
 begin;
 
@@ -640,5 +663,20 @@ INSERT INTO b VALUES (0, 0), (1, NULL);
 
 SELECT * FROM b LEFT JOIN a ON (b.a_id = a.id) WHERE (a.id IS NULL OR a.id > 0);
 SELECT b.* FROM b LEFT JOIN a ON (b.a_id = a.id) WHERE (a.id IS NULL OR a.id > 0);
+
+rollback;
+
+-- another join removal bug: this is not optimizable, either
+begin;
+
+create temp table innertab (id int8 primary key, dat1 int8);
+insert into innertab values(123, 42);
+
+SELECT * FROM
+    (SELECT 1 AS x) ss1
+  LEFT JOIN
+    (SELECT q1, q2, COALESCE(dat1, q1) AS y
+     FROM int8_tbl LEFT JOIN innertab ON q2 = id) ss2
+  ON true;
 
 rollback;
