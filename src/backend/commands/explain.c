@@ -2107,6 +2107,7 @@ ExplainScanTarget(Scan *plan, ExplainState *es)
 	char	   *namespace = NULL;
 	const char *objecttag = NULL;
 	RangeTblEntry *rte;
+	int			dynamicScanId = 0;
 
 	if (plan->scanrelid <= 0)	/* Is this still possible? */
 		return;
@@ -2136,8 +2137,7 @@ ExplainScanTarget(Scan *plan, ExplainState *es)
 			/* Print dynamic scan id for dytnamic scan operators */
 			if (isDynamicScan((Scan *)plan))
 			{
-				appendStringInfo(es->str, " (dynamic scan id: %d)",
-								 ((Scan *)plan)->partIndexPrintable);
+				dynamicScanId = ((Scan *)plan)->partIndexPrintable;
 			}
 
 			break;
@@ -2227,6 +2227,10 @@ ExplainScanTarget(Scan *plan, ExplainState *es)
 			strcmp(rte->eref->aliasname, objectname) != 0)
 			appendStringInfo(es->str, " %s",
 							 quote_identifier(rte->eref->aliasname));
+
+		if (dynamicScanId != 0)
+			appendStringInfo(es->str, " (dynamic scan id: %d)",
+							 dynamicScanId);
 	}
 	else
 	{
@@ -2235,6 +2239,9 @@ ExplainScanTarget(Scan *plan, ExplainState *es)
 		if (namespace != NULL)
 			ExplainPropertyText("Schema", namespace, es);
 		ExplainPropertyText("Alias", rte->eref->aliasname, es);
+
+		if (dynamicScanId != 0)
+			ExplainPropertyInteger("Dynamic Scan Id", dynamicScanId, es);
 	}
 }
 
