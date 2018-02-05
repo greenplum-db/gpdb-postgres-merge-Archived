@@ -3376,12 +3376,8 @@ begin
 end;
 $$ language plpgsql;
 select * from sc_test();
-   sc_test   
--------------
- -2147483647
-      123456
-(2 rows)
-
+ERROR:  backward scan is not supported in this version of Greenplum Database
+CONTEXT:  PL/pgSQL function "sc_test" line 6 at FETCH
 create or replace function sc_test() returns setof integer as $$
 declare
   c cursor for select * from generate_series(1, 10);
@@ -3424,11 +3420,8 @@ begin
 end;
 $$ language plpgsql;
 select * from sc_test();
- sc_test 
----------
-      10
-(1 row)
-
+ERROR:  backward scan is not supported in this version of Greenplum Database
+CONTEXT:  PL/pgSQL function "sc_test" line 7 at FETCH
 drop function sc_test();
 -- test qualified variable names
 create function pl_qual_names (param1 int) returns void as $$
@@ -3605,7 +3598,7 @@ $$ language plpgsql;
 select forc01();
 NOTICE:  1, 1
 ERROR:  cursor "c" is not a simply updatable scan of table "forc_test"
-CONTEXT:  SQL statement "update forc_test set i = i * 100, j =  $1  * 2 where current of  $2 "
+CONTEXT:  SQL statement "update forc_test set i = i * 100, j = r.j * 2 where current of c"
 PL/pgSQL function "forc01" line 6 at SQL statement
 select i, j from forc_test;
  i  | j  
@@ -3620,6 +3613,41 @@ select i, j from forc_test;
   3 |  3
   4 |  4
   7 |  7
+(10 rows)
+
+-- same, with a cursor whose portal name doesn't match variable name
+create or replace function forc01() returns void as $$
+declare
+  c refcursor := 'fooled_ya';
+  r record;
+begin
+  open c for select * from forc_test;
+  loop
+    fetch c into r;
+    exit when not found;
+    raise notice '%, %', r.i, r.j;
+    update forc_test set i = i * 100, j = r.j * 2 where current of c;
+  end loop;
+end;
+$$ language plpgsql;
+select forc01();
+NOTICE:  1, 1
+ERROR:  cursor "fooled_ya" is not a simply updatable scan of table "forc_test"
+CONTEXT:  SQL statement "update forc_test set i = i * 100, j = r.j * 2 where current of c"
+PL/pgSQL function "forc01" line 10 at SQL statement
+select i, j from forc_test;
+ i  | j  
+----+----
+  1 |  1
+  2 |  2
+  3 |  3
+  4 |  4
+  5 |  5
+  6 |  6
+  7 |  7
+  8 |  8
+  9 |  9
+ 10 | 10
 (10 rows)
 
 drop function forc01();
