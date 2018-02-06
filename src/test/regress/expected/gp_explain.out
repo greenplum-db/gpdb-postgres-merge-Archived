@@ -13,13 +13,13 @@ begin
   end loop;
 end;
 $$ language plpgsql;
--- Same, for EXPLAIN ANALYZE
+-- Same, for EXPLAIN ANALYZE VERBOSE
 create or replace function get_explain_analyze_output(explain_query text) returns setof text as
 $$
 declare
   explainrow text;
 begin
-  for explainrow in execute 'EXPLAIN ANALYZE ' || explain_query
+  for explainrow in execute 'EXPLAIN (ANALYZE, VERBOSE) ' || explain_query
   loop
     return next explainrow;
   end loop;
