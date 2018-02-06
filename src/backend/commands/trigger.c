@@ -457,7 +457,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	/*
 	 * Special for Greenplum Database: Ignore foreign keys for now
 	 */
-	if ((stmt->isconstraint) && (Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_EXECUTE))
+	if ((stmt->constrrel) && (Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_EXECUTE))
 	{
 		/*
 		 * Create the tigger as disabled 
