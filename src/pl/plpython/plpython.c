@@ -2755,8 +2755,8 @@ PLyObject_ToBool(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
 	Assert(plrv != Py_None);
 	rv = BoolGetDatum(PyObject_IsTrue(plrv));
 
-	//if (get_typtype(arg->typoid) == TYPTYPE_DOMAIN)
-	//	domain_check(rv, false, arg->typoid, &arg->typfunc.fn_extra, arg->typfunc.fn_mcxt);
+	if (get_typtype(arg->typoid) == TYPTYPE_DOMAIN)
+		domain_check(rv, false, arg->typoid, &arg->typfunc.fn_extra, arg->typfunc.fn_mcxt);
 
 	return rv;
 }
@@ -2798,8 +2798,8 @@ PLyObject_ToBytea(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool innarray
 
 	Py_XDECREF(plrv_so);
 
-	//if (get_typtype(arg->typoid) == TYPTYPE_DOMAIN)
-	//	domain_check(rv, false, arg->typoid, &arg->typfunc.fn_extra, arg->typfunc.fn_mcxt);
+	if (get_typtype(arg->typoid) == TYPTYPE_DOMAIN)
+		domain_check(rv, false, arg->typoid, &arg->typfunc.fn_extra, arg->typfunc.fn_mcxt);
 
 	return rv;
 }
@@ -3069,8 +3069,8 @@ PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarra
 	 * checked.
 	 */
 	rv = PointerGetDatum(array);
-	//if (get_typtype(arg->typoid) == TYPTYPE_DOMAIN)
-		//domain_check(rv, false, arg->typoid, &arg->typfunc.fn_extra, arg->typfunc.fn_mcxt);
+	if (get_typtype(arg->typoid) == TYPTYPE_DOMAIN)
+		domain_check(rv, false, arg->typoid, &arg->typfunc.fn_extra, arg->typfunc.fn_mcxt);
 	return rv;
 }
 
