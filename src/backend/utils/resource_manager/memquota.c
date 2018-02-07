@@ -292,7 +292,6 @@ static bool PolicyAutoPrelimWalker(Node *node, PolicyAutoContext *context)
 		return false;
 	}
 
-	Assert(node);
 	Assert(context);
 	if (is_plan_node(node))
 	{
@@ -322,7 +321,6 @@ static bool PolicyAutoAssignWalker(Node *node, PolicyAutoContext *context)
 		return false;
 	}
 
-	Assert(node);
 	Assert(context);
 
 	if (is_plan_node(node))
@@ -770,7 +768,6 @@ PolicyEagerFreePrelimWalker(Node *node, PolicyEagerFreeContext *context)
 		return false;
 	}
 
-	Assert(node);
 	Assert(context);
 
 	OperatorGroupNode *parentGroupNode = NULL;
@@ -803,7 +800,7 @@ PolicyEagerFreePrelimWalker(Node *node, PolicyEagerFreeContext *context)
 	Assert(!result);
 
 	/*
-	 * If this node is the top nodoe in a group, at this point, we should have all info about
+	 * If this node is the top node in a group, at this point, we should have all info about
 	 * its child groups. We then calculate the maximum number of potential concurrently
 	 * active memory-intensive operators and non-memory-intensive operators in all
 	 * child groups.
@@ -849,7 +846,6 @@ PolicyEagerFreeAssignWalker(Node *node, PolicyEagerFreeContext *context)
 		return false;
 	}
 
-	Assert(node);
 	Assert(context);
 
 	const uint64 nonMemIntenseOpMemKB = (uint64)(*gp_resmanager_memory_policy_auto_fixed_mem);
