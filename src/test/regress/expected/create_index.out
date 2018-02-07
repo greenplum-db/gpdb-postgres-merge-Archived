@@ -113,6 +113,7 @@ SELECT count(*) FROM gcircle_tbl WHERE f1 && '<(500,500),500>'::circle;
 (1 row)
 
 SET enable_seqscan = OFF;
+SET optimizer_enable_tablescan = OFF;
 SET enable_indexscan = ON;
 SET enable_bitmapscan = ON;
 EXPLAIN (COSTS OFF)
@@ -267,12 +268,14 @@ SELECT count(*) FROM gcircle_tbl WHERE f1 && '<(500,500),500>'::circle;
 (1 row)
 
 RESET enable_seqscan;
+RESET optimizer_enable_tablescan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
 --
 -- GIN over int[] and text[]
 --
 SET enable_seqscan = OFF;
+SET optimizer_enable_tablescan = OFF;
 SET enable_indexscan = ON;
 SET enable_bitmapscan = OFF;
 CREATE INDEX intarrayidx ON array_index_op_test USING gin (i);
@@ -520,6 +523,7 @@ SELECT * FROM array_index_op_test WHERE i = '{47,77}' ORDER BY seqno;
 DROP INDEX intarrayidx, textarrayidx;
 CREATE INDEX botharrayidx ON array_index_op_test USING gin (i, t);
 SET enable_seqscan = OFF;
+RESET optimizer_enable_tablescan;
 SET enable_indexscan = ON;
 SET enable_bitmapscan = OFF;
 SELECT * FROM array_index_op_test WHERE i @> '{32}' ORDER BY seqno;
@@ -641,6 +645,7 @@ SELECT * FROM array_index_op_test WHERE i && '{32}' AND t @> '{AAAAAAA80240}' OR
 (1 row)
 
 RESET enable_seqscan;
+RESET optimizer_enable_tablescan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
 --
@@ -754,6 +759,7 @@ CREATE TABLE onek_with_null AS SELECT unique1, unique2 FROM onek DISTRIBUTED BY 
 INSERT INTO onek_with_null (unique1,unique2) VALUES (NULL, -1), (NULL, NULL);
 CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2,unique1);
 SET enable_seqscan = OFF;
+SET optimizer_enable_tablescan = OFF;
 SET enable_indexscan = ON;
 SET enable_bitmapscan = ON;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
@@ -811,6 +817,7 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
 (1 row)
 
 RESET enable_seqscan;
+RESET optimizer_enable_tablescan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
  
