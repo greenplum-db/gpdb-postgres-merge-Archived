@@ -5400,7 +5400,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 		bistate = GetBulkInsertState();
 
 		hi_options = HEAP_INSERT_SKIP_FSM;
-		if (!XLogArchivingActive())
+		if (!XLogIsNeeded())
 			hi_options |= HEAP_INSERT_SKIP_WAL;
 	}
 	else
