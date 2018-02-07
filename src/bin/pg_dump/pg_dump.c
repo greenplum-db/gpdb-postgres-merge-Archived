@@ -2273,6 +2273,7 @@ dumpDatabase(Archive *AH)
 		i_relfrozenxid = PQfnumber(lo_res, "relfrozenxid");
 
 		appendPQExpBuffer(loOutQry, "\n-- For binary upgrade, set pg_largeobject relfrozenxid.\n");
+		appendPQExpBuffer(loOutQry, "SET allow_system_table_mods = 'dml';\n");
 		appendPQExpBuffer(loOutQry, "UPDATE pg_catalog.pg_class\n"
 						  "SET relfrozenxid = '%u'\n"
 						  "WHERE oid = %d;\n",
