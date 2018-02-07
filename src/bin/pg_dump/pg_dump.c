@@ -5295,7 +5295,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			tbinfo->inhNotNull[j] = false;
 
 			/* column storage attributes */
-			if (gp_attribute_encoding_available && !PQgetisnull(res, j, i_attencoding))
+			if (gp_attribute_encoding_available && i_attencoding > 0 && !PQgetisnull(res, j, i_attencoding))
 				tbinfo->attencoding[j] = strdup(PQgetvalue(res, j, i_attencoding));
 			else
 				tbinfo->attencoding[j] = NULL;
