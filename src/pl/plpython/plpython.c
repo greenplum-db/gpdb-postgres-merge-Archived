@@ -3086,10 +3086,10 @@ PLySequence_ToArray_recurse(PLyObToDatum *elm, PyObject *list,
 	int			i;
 
 	if (PySequence_Length(list) != dims[dim])
-		PLy_elog(ERROR,
-				 "multidimensional arrays must have array expressions with matching dimensions. "
-				 "PL/Python function return value has sequence length %d while expected %d",
-				 (int) PySequence_Length(list), dims[dim]);
+		ereport(ERROR,
+				(errmsg("wrong length of inner sequence: has length %d, but %d was expected",
+						(int) PySequence_Length(list), dims[dim]),
+				 (errdetail("To construct a multidimensional array, the inner sequences must all have the same length."))));
 
 	if (dim < ndim - 1)
 	{
