@@ -299,7 +299,9 @@ SELECT * FROM test_in_out_params('test_in');
 
 -- this doesn't work yet :-(
 SELECT * FROM test_in_out_params_multi('test_in');
-ERROR:  PL/Python functions cannot return type record
+ERROR:  length of returned sequence did not match number of columns in row
+CONTEXT:  while creating return value
+PL/Python function "test_in_out_params_multi"
 SELECT * FROM test_inout_params('test_in');
      first     
 ---------------

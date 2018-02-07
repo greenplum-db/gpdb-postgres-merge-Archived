@@ -89,11 +89,9 @@ REGRESS = \
 	plpython_unicode \
 	plpython_composite \
 	plpython_subtransaction \
+	plpython_returns \
+	plpython_gpdb \
 	plpython_drop
-
-REGRESS+= \
-	plpython_function \
-	plpython_returns
 
 # where to find psql for running the tests
 PSQLDIR = $(bindir)

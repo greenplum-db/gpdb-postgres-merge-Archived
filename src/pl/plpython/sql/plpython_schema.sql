@@ -40,10 +40,6 @@ CREATE TABLE xsequences (
 	) DISTRIBUTED BY (pid);
 CREATE INDEX xsequences_pid_idx ON xsequences(pid) ;
 
-CREATE TABLE unicode_test (
-	testvalue  text NOT NULL
-) DISTRIBUTED BY (testvalue);
-
 CREATE TYPE ab_tuple as (
 	a int8, 
 	b int8
