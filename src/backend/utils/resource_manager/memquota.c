@@ -56,6 +56,7 @@ typedef struct PolicyAutoContext
 static bool PolicyAutoPrelimWalker(Node *node, PolicyAutoContext *context);
 static bool	PolicyAutoAssignWalker(Node *node, PolicyAutoContext *context);
 static bool IsAggMemoryIntensive(Agg *agg);
+static bool IsMemoryIntensiveOperator(Node *node, PlannedStmt *stmt);
 
 struct OperatorGroupNode;
 
@@ -210,7 +211,7 @@ IsBlockingOperator(Node *node)
  * Is a result node memory intensive? It is if it contains function calls.
  */
 bool
-IsResultMemoryIntesive(Result *res)
+IsResultMemoryIntensive(Result *res)
 {
 
 	List *funcNodes = extract_nodes(NULL /* glob */,
@@ -234,7 +235,7 @@ IsResultMemoryIntesive(Result *res)
 /**
  * Is an operator memory intensive?
  */
-bool
+static bool
 IsMemoryIntensiveOperator(Node *node, PlannedStmt *stmt)
 {
 	Assert(is_plan_node(node));
@@ -257,7 +258,7 @@ IsMemoryIntensiveOperator(Node *node, PlannedStmt *stmt)
 		case T_Result:
 			{
 				Result *res = (Result *) node;
-				return IsResultMemoryIntesive(res);
+				return IsResultMemoryIntensive(res);
 			}
 		default:
 			return false;
