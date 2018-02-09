@@ -1501,6 +1501,9 @@ typedef struct ModifyTableState
 	int				mt_whichplan;	/* which one is being executed (0..n-1) */
 	EPQState		mt_epqstate;	/* for evaluating EvalPlanQual rechecks */
 	bool			fireBSTriggers;	/* do we need to fire stmt triggers? */
+	AttrNumber		*mt_action_col_idxes;
+	AttrNumber		*mt_ctid_col_idxes;
+	AttrNumber		*mt_oid_col_idxes;
 } ModifyTableState;
 
 /* ----------------
