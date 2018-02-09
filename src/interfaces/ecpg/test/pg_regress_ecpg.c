@@ -161,19 +161,7 @@ ecpg_start_test(const char *testname,
 static void
 ecpg_init(void)
 {
-<<<<<<< HEAD
-	/* no reason to set -w for ecpg checks, except for when on windows */
-	if (strstr(host_platform, "-win32") || strstr(host_platform, "-mingw32"))
-		basic_diff_opts = "-w -I NOTICE: -I HINT: -I CONTEXT: -I GP_IGNORE:";
-	else
-		basic_diff_opts = " -I NOTICE: -I HINT: -I CONTEXT: -I GP_IGNORE:";
-	if (strstr(host_platform, "-win32") || strstr(host_platform, "-mingw32"))
-		pretty_diff_opts = "-C3 -w -I NOTICE: -I HINT: -I CONTEXT: -I GP_IGNORE:";
-	else
-		pretty_diff_opts = "-C3 -I NOTICE: -I HINT: -I CONTEXT: -I GP_IGNORE:";
-=======
 	/* nothing to do here at the moment */
->>>>>>> 78a09145e0
 }
 
 int
