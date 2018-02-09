@@ -5186,11 +5186,17 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 							  "a.attnotnull, a.atthasdef, a.attisdropped, "
 							  "a.attlen, a.attalign, a.attislocal, "
 				   "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname "
+				   " %s "
 			 "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
 							  "ON a.atttypid = t.oid "
+							  " %s "
 							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
 							  "AND a.attnum > 0::pg_catalog.int2 "
 							  "ORDER BY a.attrelid, a.attnum",
+							  (gp_attribute_encoding_available ?
+								", pg_catalog.array_to_string(e.attoptions, ',') AS attencoding " : ""),
+							  (gp_attribute_encoding_available ?
+								"LEFT OUTER JOIN pg_catalog.pg_attribute_encoding e ON e.attrelid = a.attrelid AND e.attnum = a.attnum " : ""),
 							  tbinfo->dobj.catId.oid);
 		}
 		else if (g_fout->remoteVersion >= 70300)
@@ -5248,6 +5254,16 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		i_attalign = PQfnumber(res, "attalign");
 		i_attencoding = PQfnumber(res, "attencoding");
 
+		/*
+		 * attencoding is a Greenplum specific column in the query, make sure
+		 * it wasn't missed in a merge with PostgreSQL.
+		 */
+		if (gp_attribute_encoding_available && i_attencoding < 0)
+		{
+			write_msg(NULL, "attencoding column required in table attributes query");
+			exit_nicely();
+		}
+
 		tbinfo->numatts = ntups;
 		tbinfo->attnames = (char **) malloc(ntups * sizeof(char *));
 		tbinfo->atttypnames = (char **) malloc(ntups * sizeof(char *));
@@ -5295,7 +5311,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			tbinfo->inhNotNull[j] = false;
 
 			/* column storage attributes */
-			if (gp_attribute_encoding_available && i_attencoding > 0 && !PQgetisnull(res, j, i_attencoding))
+			if (gp_attribute_encoding_available && !PQgetisnull(res, j, i_attencoding))
 				tbinfo->attencoding[j] = strdup(PQgetvalue(res, j, i_attencoding));
 			else
 				tbinfo->attencoding[j] = NULL;
