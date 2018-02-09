@@ -295,15 +295,7 @@ ExplainDXL(Query *query, ExplainState *es, const char *queryString,
 				ParamListInfo params)
 {
 	MemoryContext oldcxt = CurrentMemoryContext;
-	StringInfoData buf;
 	bool		save_enumerate;
-
-	/* Initialize ExplainState structure. */
-	memset(es, 0, sizeof(*es));
-	es->showstatctx = NULL;
-	es->pstmt = NULL;
-
-	initStringInfo(&buf);
 
 	save_enumerate = optimizer_enumerate_plans;
 
