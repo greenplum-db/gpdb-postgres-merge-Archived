@@ -4,13 +4,9 @@
  * bootparse.y
  *	  yacc grammar for the "bootstrap" mode (BKI file format)
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -238,13 +234,9 @@ Boot_CreateStmt:
 												   tupdesc,
 												   /* relam */ InvalidOid,
 												   RELKIND_RELATION,
-<<<<<<< HEAD
 												   RELSTORAGE_HEAP,
-												   $5,
-=======
 												   shared_relation,
 												   mapped_relation,
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 												   true);
 						elog(DEBUG4, "bootstrap relation created");
 					}
@@ -263,13 +255,9 @@ Boot_CreateStmt:
 													  NIL,
 													  /* relam */ InvalidOid,
 													  RELKIND_RELATION,
-<<<<<<< HEAD
 													  RELSTORAGE_HEAP,
-													  $5,
-=======
 													  shared_relation,
 													  mapped_relation,
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 													  true,
 													  0,
 													  ONCOMMIT_NOOP,

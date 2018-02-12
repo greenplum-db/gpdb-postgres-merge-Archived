@@ -33,11 +33,8 @@
 #include "postmaster/bgwriter.h"
 #include "postmaster/walwriter.h"
 #include "replication/walreceiver.h"
-<<<<<<< HEAD
-#include "storage/bufpage.h"
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "storage/bufmgr.h"
+#include "storage/bufpage.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/procsignal.h"
@@ -329,14 +326,11 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			case WalWriterProcess:
 				statmsg = "wal writer process";
 				break;
-<<<<<<< HEAD
-			case CheckpointerProcess:
-				statmsg = "checkpointer process";
-				break;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			case WalReceiverProcess:
 				statmsg = "wal receiver process";
+				break;
+			case CheckpointerProcess:
+				statmsg = "checkpointer process";
 				break;
 			default:
 				statmsg = "??? process";
@@ -451,11 +445,6 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			/* don't set signals, walwriter has its own agenda */
 			InitXLOGAccess();
 			WalWriterMain();
-			proc_exit(1);		/* should never return */
-
-		case WalReceiverProcess:
-			/* don't set signals, walreceiver has its own agenda */
-			WalReceiverMain();
 			proc_exit(1);		/* should never return */
 
 		default:

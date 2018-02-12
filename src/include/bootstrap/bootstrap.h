@@ -17,21 +17,6 @@
 #include "catalog/index.h"
 #include "nodes/execnodes.h"
 
-<<<<<<< HEAD
-=======
-typedef enum
-{
-	CheckerProcess,
-	BootstrapProcess,
-	StartupProcess,
-	BgWriterProcess,
-	WalWriterProcess,
-	WalReceiverProcess,
-
-	NUM_AUXPROCTYPES			/* Must be last! */
-} AuxProcType;
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 /*
  * MAXATTR is the maximum number of attributes in a relation supported
  * at bootstrap time (i.e., the max possible in a system table).
